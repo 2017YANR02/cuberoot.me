@@ -245,7 +245,7 @@ export function importCstimerJson(text: string): Record<string, Solve[]> | null 
 
 const CSV_HEADER = ['event', 'index', 'time_ms', 'penalty', 'scramble', 'comment', 'date_iso'];
 
-function csvEscape(field: string): string {
+export function csvEscape(field: string): string {
   if (/[",\r\n]/.test(field)) {
     return '"' + field.replace(/"/g, '""') + '"';
   }

@@ -17,14 +17,19 @@ import { peekWca, nextWca, prefetchWca, hasWcaSource, type WcaSourceSpec } from 
 import { fromWcaSpelling, toWcaSpelling, type EventId } from '@/app/[lang]/timer/_lib/types';
 import { persistItem } from '@/lib/safe-storage';
 import {
+  BATTLE_EVENT_IDS,
   LOCAL_BATTLE_MAX_PLAYERS,
   assignLocalBattlePlayerKey,
   groupLocalBattlePlayersByEvent,
   isLocalBattleScrambleHidden,
   localBattlePlayerForKey,
   localBattlePlayerSlots,
+  localBattleRoundWinners,
   localBattleWinnerIndices,
   normalizeLocalBattlePlayerCount,
+  decodeLocalBattleRounds,
+  type LocalBattleRound,
+  type Solve as SharedSolve,
 } from '@cuberoot/shared/timer';
 
 // Battle puzzle id ⇄ timer EventId. Both directions come from the ONE mapping
@@ -79,6 +84,180 @@ const localStorage: Storage = typeof window !== 'undefined'
       removeItem: () => undefined,
       clear: () => undefined,
     };
+
+const battleRoundsKey = (sessionId: string) => `${LS_PREFIX}rounds_v1_${sessionId}`;
+const battleRoundsRecoveryKey = (sessionId: string) => `${LS_PREFIX}rounds_v1_recovery_${sessionId}`;
+export type BattleHistoryWarning = 'corrupt' | 'write-failed' | 'legacy-mirror-stale';
+
+function loadStoredBattleRounds(sessionId: string): {
+  rounds: LocalBattleRound[];
+  warning: BattleHistoryWarning | null;
+} {
+  try {
+    const raw = localStorage.getItem(battleRoundsKey(sessionId));
+    if (!raw) return { rounds: [], warning: null };
+    const parsed = JSON.parse(raw) as unknown;
+    const decoded = decodeLocalBattleRounds(parsed);
+    if (decoded) return { rounds: decoded, warning: null };
+
+    // Never turn one damaged/future round into an empty history that the next
+    // save silently overwrites. Keep the original bytes once, then salvage
+    // only independently valid rounds for the visible canonical list.
+    if (!localStorage.getItem(battleRoundsRecoveryKey(sessionId))) {
+      persistItem(battleRoundsRecoveryKey(sessionId), raw);
+    }
+    const rounds: LocalBattleRound[] = [];
+    if (Array.isArray(parsed)) {
+      for (const candidate of parsed) {
+        const decodedRound = decodeLocalBattleRounds([candidate])?.[0];
+        if (!decodedRound) continue;
+        const cumulative = decodeLocalBattleRounds([...rounds, decodedRound]);
+        if (cumulative) rounds.push(decodedRound);
+      }
+    }
+    return { rounds, warning: 'corrupt' };
+  } catch {
+    try {
+      const raw = localStorage.getItem(battleRoundsKey(sessionId));
+      if (raw && !localStorage.getItem(battleRoundsRecoveryKey(sessionId))) {
+        persistItem(battleRoundsRecoveryKey(sessionId), raw);
+      }
+    } catch { /* storage itself may be unavailable */ }
+    return { rounds: [], warning: 'corrupt' };
+  }
+}
+
+function persistBattleRounds(sessionId: string, rounds: readonly LocalBattleRound[]): boolean {
+  // Do not silently discard old rounds by count. A quota failure leaves the
+  // previous value intact and is surfaced by battleHistoryWarning instead.
+  if (typeof window === 'undefined') return true;
+  return persistItem(battleRoundsKey(sessionId), JSON.stringify(rounds));
+}
+
+function warningAfterBattleHistoryWrite(
+  current: BattleHistoryWarning | null,
+  canonicalPersisted: boolean,
+  legacyPersisted = true,
+): BattleHistoryWarning | null {
+  if (!canonicalPersisted) return 'write-failed';
+  if (current === 'corrupt') return 'corrupt';
+  if (!legacyPersisted) return 'legacy-mirror-stale';
+  return null;
+}
+
+function createLocalBattleRoundId(): string {
+  const cryptoApi = globalThis.crypto;
+  if (cryptoApi && typeof cryptoApi.randomUUID === 'function') return cryptoApi.randomUUID();
+  if (cryptoApi && typeof cryptoApi.getRandomValues === 'function') {
+    const bytes = cryptoApi.getRandomValues(new Uint8Array(16));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+}
+
+export interface LegacyBattleRecord {
+  event: EventId;
+  playerId: number;
+  entry: SolveEntry;
+}
+
+/**
+ * Read pre-atomic per-player records without inventing round membership.
+ * The history panel exposes unmatched entries separately; migration must never
+ * pair them by parallel-array index.
+ */
+export function loadLegacyBattleRecords(sessionId: string): {
+  records: LegacyBattleRecord[];
+  skippedKeys: number;
+} {
+  if (typeof window === 'undefined') return { records: [], skippedKeys: 0 };
+  const prefix = `${LS_PREFIX}1v1_history_${sessionId}_`;
+  const allowedEvents = new Set<EventId>(BATTLE_EVENT_IDS);
+  const records: LegacyBattleRecord[] = [];
+  let skippedKeys = 0;
+  try {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (!key?.startsWith(prefix)) continue;
+      const suffix = key.slice(prefix.length);
+      const splitAt = suffix.lastIndexOf('_');
+      if (splitAt <= 0) continue;
+      const event = battleToTimerEvent(suffix.slice(0, splitAt));
+      const playerId = Number(suffix.slice(splitAt + 1));
+      if (!allowedEvents.has(event)
+        || !Number.isInteger(playerId)
+        || playerId < 0
+        || playerId >= LOCAL_BATTLE_MAX_PLAYERS) continue;
+      try {
+        const parsed = JSON.parse(window.localStorage.getItem(key) || '[]') as unknown;
+        if (!Array.isArray(parsed)) {
+          skippedKeys++;
+          continue;
+        }
+        for (const candidate of parsed) {
+          if (!candidate || typeof candidate !== 'object') continue;
+          const entry = candidate as Partial<SolveEntry>;
+          if (typeof entry.time !== 'number'
+            || !Number.isFinite(entry.time)
+            || entry.time < 0
+            || (entry.penalty !== 'ok' && entry.penalty !== '+2' && entry.penalty !== 'dnf')
+            || typeof entry.scramble !== 'string'
+            || typeof entry.date !== 'string'
+            || !Number.isFinite(Date.parse(entry.date))) continue;
+          records.push({ event, playerId, entry: entry as SolveEntry });
+        }
+      } catch {
+        skippedKeys++;
+      }
+    }
+  } catch { /* an entirely unavailable storage area cannot expose legacy records */ }
+  return {
+    records: records.sort((a, b) => Date.parse(a.entry.date) - Date.parse(b.entry.date)),
+    skippedKeys,
+  };
+}
+
+function legacyBattleRecordIdentity(record: LegacyBattleRecord): string {
+  return JSON.stringify([
+    record.event,
+    record.playerId,
+    record.entry.time,
+    record.entry.penalty,
+    record.entry.scramble,
+    Date.parse(record.entry.date),
+  ]);
+}
+
+/** Remove only exact atomic compatibility mirrors; unmatched old data remains visible. */
+export function filterUnpairedLegacyBattleRecords(
+  records: readonly LegacyBattleRecord[],
+  rounds: readonly LocalBattleRound[],
+): LegacyBattleRecord[] {
+  const mirrored = new Map<string, number>();
+  for (const round of rounds) {
+    for (const attempt of round.attempts) {
+      const identity = JSON.stringify([
+        attempt.solve.event,
+        attempt.playerId,
+        attempt.solve.timeMs,
+        attempt.solve.penalty === 'DNF' ? 'dnf' : attempt.solve.penalty,
+        attempt.solve.scramble,
+        attempt.solve.ts,
+      ]);
+      mirrored.set(identity, (mirrored.get(identity) ?? 0) + 1);
+    }
+  }
+  return records.filter((record) => {
+    const identity = legacyBattleRecordIdentity(record);
+    const count = mirrored.get(identity) ?? 0;
+    if (count === 0) return true;
+    mirrored.set(identity, count - 1);
+    return false;
+  });
+}
 
 // NOTE: createPlayer 工厂函数 — 1:1 翻译自 battle.js（行 143~171）
 function createPlayer(id: number): PlayerState {
@@ -267,6 +446,10 @@ export interface BattleState {
   scrambleLoadings: boolean[];
   // 赢家标识
   winners: number[];
+  /** Atomic multiplayer history; never reconstructed from per-player array indexes. */
+  battleRounds: LocalBattleRound[];
+  /** Visible persistence/recovery warning; failures must never look saved. */
+  battleHistoryWarning: BattleHistoryWarning | null;
   // NOTE: 红灯→绿灯的延时计时器 ID,按玩家槽位存(各自开始模式下每人一条独立延时)。
   //   同时开始模式只有一条延时,写进全部参战槽位(同一 handle,clearTimeout 幂等)。
   readyTimers: (ReturnType<typeof setTimeout> | null)[];
@@ -384,6 +567,9 @@ export interface BattleState {
 
 // ===== Store 实现 =====
 
+const initialBattleSessionId = localStorage.getItem(LS_PREFIX + 'sessionId') || '1';
+const initialBattleHistory = loadStoredBattleRounds(initialBattleSessionId);
+
 export const useBattleStore = create<BattleState>((set, get) => ({
   // NOTE: 初始值 — 1:1 翻译自 battle.js state 对象（行 99~141）
   mode: (localStorage.getItem(LS_PREFIX + 'mode') as BattleMode) || '1v1',
@@ -422,10 +608,12 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   scrambleImageUrls: Array.from({ length: MAX_PLAYERS }, () => null),
   scrambleLoadings: Array.from({ length: MAX_PLAYERS }, () => false),
   winners: [],
+  battleRounds: initialBattleHistory.rounds,
+  battleHistoryWarning: initialBattleHistory.warning,
   readyTimers: Array.from({ length: MAX_PLAYERS }, () => null),
   players: freshPlayers(),
   undoStack: [],
-  sessionId: localStorage.getItem(LS_PREFIX + 'sessionId') || '1',
+  sessionId: initialBattleSessionId,
   sessions: JSON.parse(localStorage.getItem(LS_PREFIX + 'sessions') || '[{"id":"1","name":"Session 1"}]'),
   locale: (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('lang') : null) || 'en',
   activeTab: 'timer',
@@ -966,6 +1154,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     // === 1v1 原有逻辑(推广到 N 人:全员停表才记轮) ===
     if (s.players.slice(0, s.playerCount).every(pl => pl.hasFinished)) {
       // NOTE: 记录成绩到历史
+      const roundTs = Date.now();
+      const roundDate = new Date(roundTs).toISOString();
       const newPlayers = [...s.players];
       for (let i = 0; i < s.playerCount; i++) {
         const pi = s.players[i];
@@ -975,12 +1165,40 @@ export const useBattleStore = create<BattleState>((set, get) => ({
             time: pi.time,
             penalty: pi.penalty === PENALTY.DNF ? 'dnf' : (pi.penalty === PENALTY.PLUS2 ? '+2' : 'ok'),
             scramble: s.scrambles[i] || '',
-            date: new Date().toISOString(),
+            date: roundDate,
           }],
         };
       }
       set({ players: newPlayers });
       get().computeWinner();
+      const finalized = get();
+      const roundId = createLocalBattleRoundId();
+      const attempts = finalized.players.slice(0, finalized.playerCount).map((player, playerId) => {
+        const solve: SharedSolve = {
+          id: `${roundId}-${playerId}`,
+          timeMs: player.time,
+          penalty: player.penalty === PENALTY.DNF ? 'DNF' : player.penalty,
+          scramble: finalized.scrambles[playerId] || '',
+          event: battleToTimerEvent(finalized.puzzleIds[playerId]),
+          ts: roundTs,
+        };
+        return { playerId, solve };
+      });
+      const round: LocalBattleRound = {
+        id: roundId,
+        ts: roundTs,
+        attempts,
+        winners: finalized.winners,
+      };
+      const battleRounds = [...finalized.battleRounds, round];
+      const persisted = persistBattleRounds(finalized.sessionId, battleRounds);
+      set({
+        battleRounds,
+        battleHistoryWarning: warningAfterBattleHistoryWrite(
+          finalized.battleHistoryWarning,
+          persisted,
+        ),
+      });
       get().saveSolveHistory();
       get().loadNewScramble();
     }
@@ -1076,6 +1294,34 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     if (newPlayers.slice(0, s.playerCount).every(pl => pl.hasFinished)) {
       get().removeLastWinner();
       get().computeWinner();
+      const finalized = get();
+      const latest = finalized.battleRounds.at(-1);
+      if (latest) {
+        const updatedRound: LocalBattleRound = {
+          ...latest,
+          attempts: latest.attempts.map((attempt) => (
+            attempt.playerId === playerId
+              ? {
+                  ...attempt,
+                  solve: {
+                    ...attempt.solve,
+                    penalty: penaltyType === PENALTY.DNF ? 'DNF' : penaltyType,
+                  },
+                }
+              : attempt
+          )),
+        };
+        updatedRound.winners = localBattleRoundWinners(updatedRound);
+        const battleRounds = [...finalized.battleRounds.slice(0, -1), updatedRound];
+        const persisted = persistBattleRounds(finalized.sessionId, battleRounds);
+        set({
+          battleRounds,
+          battleHistoryWarning: warningAfterBattleHistoryWrite(
+            finalized.battleHistoryWarning,
+            persisted,
+          ),
+        });
+      }
       get().saveSolveHistory();
     }
   },
@@ -1111,6 +1357,27 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     }
     // === 1v1 原有逻辑(推广到 N 人) ===
     if (!s.players.slice(0, s.playerCount).every(pl => pl.hasFinished)) return;
+    if (s.battleRounds.length > 0) {
+      // Atomic history is the source of truth for all newly recorded rounds.
+      // Reuse its exact-identity deletion path so mixed-event legacy mirrors
+      // cannot be truncated by an unrelated array index.
+      get().deleteVsRound(s.battleRounds.length - 1);
+      const afterDelete = get();
+      const resetPlayers = [...afterDelete.players];
+      for (let i = 0; i < afterDelete.playerCount; i++) {
+        resetPlayers[i] = {
+          ...afterDelete.players[i],
+          time: 0,
+          hasFinished: false,
+          penalty: PENALTY.OK,
+        };
+      }
+      set({ players: resetPlayers, winners: [] });
+      get().saveSolveHistory();
+      return;
+    }
+    // Legacy-only sessions predate atomic rounds. Preserve their old undo
+    // behaviour without pretending the parallel arrays form canonical rounds.
     get().removeLastWinner();
     const newPlayers = [...s.players];
     for (let i = 0; i < s.playerCount; i++) {
@@ -1135,13 +1402,26 @@ export const useBattleStore = create<BattleState>((set, get) => ({
 
   // 1:1 翻译自 battle.js resetAll()（行 1151~1182）
   resetAll: () => {
+    const beforeReset = get();
+    if (beforeReset.mode === '1v1') {
+      const legacyPrefix = `${LS_PREFIX}1v1_history_${beforeReset.sessionId}_`;
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key?.startsWith(legacyPrefix)) localStorage.removeItem(key);
+      }
+      localStorage.removeItem(battleRoundsKey(beforeReset.sessionId));
+      localStorage.removeItem(battleRoundsRecoveryKey(beforeReset.sessionId));
+    }
     const newPlayers = freshPlayers();
     set({
       winners: [],
+      battleRounds: [],
+      battleHistoryWarning: null,
       players: newPlayers,
       undoStack: [],
     });
     const s = get();
+    localStorage.removeItem(battleRoundsRecoveryKey(s.sessionId));
     s.saveSolveHistory();
     s.loadNewScramble();
   },
@@ -1401,9 +1681,12 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     s.saveSolveHistory();
     persistItem(LS_PREFIX + 'sessionId', newSessionId);
     const newPlayers = freshPlayers();
+    const history = loadStoredBattleRounds(newSessionId);
     set({
       sessionId: newSessionId,
       winners: [],
+      battleRounds: history.rounds,
+      battleHistoryWarning: history.warning,
       players: newPlayers,
     });
     get().loadSolveHistory();
@@ -1423,6 +1706,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       sessions: newSessions,
       sessionId: newId,
       winners: [],
+      battleRounds: [],
+      battleHistoryWarning: null,
       players: newPlayers,
     });
     get().loadNewScramble();
@@ -1445,7 +1730,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const s = get();
     if (s.sessions.length <= 1) return;
     if (!confirm('Delete this session and all its data?')) return;
-    // NOTE: 删除当前 session 的所有 localStorage 数据（solo + 1v1）
+    // NOTE: 删除当前 session 的所有 localStorage 数据（solo + legacy 1v1 + atomic rounds）
     const soloPrefix = `${LS_PREFIX}solo_history_${s.sessionId}_`;
     const vsPrefix = `${LS_PREFIX}1v1_history_${s.sessionId}_`;
     for (let i = localStorage.length - 1; i >= 0; i--) {
@@ -1454,15 +1739,20 @@ export const useBattleStore = create<BattleState>((set, get) => ({
         localStorage.removeItem(key);
       }
     }
+    localStorage.removeItem(battleRoundsKey(s.sessionId));
+    localStorage.removeItem(battleRoundsRecoveryKey(s.sessionId));
     const newSessions = s.sessions.filter(ses => ses.id !== s.sessionId);
     persistItem(LS_PREFIX + 'sessions', JSON.stringify(newSessions));
     const newSessionId = newSessions[0].id;
     persistItem(LS_PREFIX + 'sessionId', newSessionId);
     const newPlayers = freshPlayers();
+    const history = loadStoredBattleRounds(newSessionId);
     set({
       sessions: newSessions,
       sessionId: newSessionId,
       winners: [],
+      battleRounds: history.rounds,
+      battleHistoryWarning: history.warning,
       players: newPlayers,
     });
     get().loadSolveHistory();
@@ -1501,51 +1791,83 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     get().saveSolveHistory();
   },
 
-  // NOTE: 1v1 删除某一轮 — 同时去掉所有参战玩家在 index 处的 entry。
-  //   只有最后一轮能精准撤销 points(中间轮次的胜负已固定,不重算历史)。
+  // NOTE: 删除一条原子 round；legacy per-player history 只按该 attempt 的完整身份清理，
+  // 绝不再用平行数组的同一个 index 猜测它们属于同一场。
   deleteVsRound: (index: number) => {
     const s = get();
     if (s.mode !== '1v1') return;
-    const n = s.playerCount;
-    const total = Math.max(...s.players.slice(0, n).map(p => p.solveHistory.length));
-    if (index < 0 || index >= total) return;
-
-    const isLast = index === total - 1;
+    if (index < 0 || index >= s.battleRounds.length) return;
+    const round = s.battleRounds[index];
+    const isLast = index === s.battleRounds.length - 1;
+    const battleRounds = s.battleRounds.filter((_, roundIndex) => roundIndex !== index);
+    const persisted = persistBattleRounds(s.sessionId, battleRounds);
+    if (!persisted) {
+      set({ battleHistoryWarning: 'write-failed' });
+      return;
+    }
     const newPoints = s.players.map(p => p.points);
-
-    // NOTE: 仅对最新一轮撤销 points——按该轮 entry 重算胜者(可并列),逐一减分
-    if (isLast) {
-      const entries = s.players.slice(0, n).map(p => p.solveHistory[index]);
-      if (entries.every(e => e !== undefined)) {
-        const tEff = (e: SolveEntry) =>
-          e.penalty === 'dnf' ? Infinity : (e.penalty === '+2' ? e.time + 2000 : e.time);
-        const times = entries.map(e => tEff(e as SolveEntry));
-        const min = Math.min(...times);
-        if (min !== Infinity) {
-          for (let i = 0; i < n; i++) {
-            if (times[i] === min) newPoints[i] = Math.max(0, newPoints[i] - 1);
-          }
-        }
-      }
+    if (isLast) for (const winner of round.winners) {
+      newPoints[winner] = Math.max(0, (newPoints[winner] ?? 0) - 1);
     }
 
     const newPlayers = [...s.players];
-    for (let i = 0; i < n; i++) {
-      const p = s.players[i];
-      if (index < p.solveHistory.length) {
-        const newH = [...p.solveHistory];
-        newH.splice(index, 1);
-        newPlayers[i] = { ...p, solveHistory: newH };
+    let legacyPersisted = true;
+    for (const attempt of round.attempts) {
+      const legacyPenalty = attempt.solve.penalty === 'DNF' ? 'dnf' : attempt.solve.penalty;
+      const matches = (entry: SolveEntry) => entry.time === attempt.solve.timeMs
+        && entry.penalty === legacyPenalty
+        && entry.scramble === attempt.solve.scramble
+        && Date.parse(entry.date) === attempt.solve.ts;
+      const player = newPlayers[attempt.playerId];
+      const legacyEvent = timerToBattleEvent(attempt.solve.event);
+      if (player && s.puzzleIds[attempt.playerId] === legacyEvent) {
+        const position = player.solveHistory.findIndex(matches);
+        if (position !== -1) {
+          const solveHistory = [...player.solveHistory];
+          solveHistory.splice(position, 1);
+          newPlayers[attempt.playerId] = { ...player, solveHistory };
+        }
       }
-      newPlayers[i] = { ...newPlayers[i], points: newPoints[i] };
+      try {
+        const key = `${LS_PREFIX}1v1_history_${s.sessionId}_${legacyEvent}_${attempt.playerId}`;
+        const raw = localStorage.getItem(key);
+        const history = raw ? JSON.parse(raw) as unknown : [];
+        if (Array.isArray(history)) {
+          const position = history.findIndex((entry) => typeof entry === 'object'
+            && entry !== null && matches(entry as SolveEntry));
+          if (position !== -1) {
+            const next = [...history];
+            next.splice(position, 1);
+            legacyPersisted = persistItem(key, JSON.stringify(next)) && legacyPersisted;
+          }
+        }
+      } catch { /* corrupted legacy history is ignored; the atomic round is still deleted */ }
+    }
+    for (let i = 0; i < newPlayers.length; i++) {
+      const deletedCurrentResult = isLast
+        && round.attempts.some((attempt) => attempt.playerId === i)
+        && newPlayers[i].hasFinished;
+      newPlayers[i] = {
+        ...newPlayers[i],
+        points: newPoints[i],
+        ...(deletedCurrentResult ? {
+          time: 0,
+          hasFinished: false,
+          penalty: PENALTY.OK,
+        } : {}),
+      };
     }
 
     set({
       players: newPlayers,
-      // NOTE: 删除的是当前一轮 → 撤销当前 winners 显示
+      battleRounds,
       winners: isLast ? [] : s.winners,
+      battleHistoryWarning: warningAfterBattleHistoryWrite(
+        s.battleHistoryWarning,
+        true,
+        legacyPersisted,
+      ),
     });
-    get().saveSolveHistory();
   },
 
   // ===== 数据持久化（Solo + 1v1 共用） =====
@@ -1560,12 +1882,21 @@ export const useBattleStore = create<BattleState>((set, get) => ({
         const toSave = h.length > 1000 ? h.slice(-1000) : h;
         persistItem(key, JSON.stringify(toSave));
       } else {
+        let legacyPersisted = true;
         for (let i = 0; i < s.playerCount; i++) {
           const key = `${LS_PREFIX}1v1_history_${s.sessionId}_${s.puzzleIds[i]}_${i}`;
           const h = s.players[i].solveHistory;
           const toSave = h.length > 1000 ? h.slice(-1000) : h;
-          persistItem(key, JSON.stringify(toSave));
+          legacyPersisted = persistItem(key, JSON.stringify(toSave)) && legacyPersisted;
         }
+        const canonicalPersisted = persistBattleRounds(s.sessionId, s.battleRounds);
+        set({
+          battleHistoryWarning: warningAfterBattleHistoryWrite(
+            s.battleHistoryWarning,
+            canonicalPersisted,
+            legacyPersisted,
+          ),
+        });
       }
     } catch (e) {
       console.warn('Failed to save solve history:', e);
@@ -1588,7 +1919,12 @@ export const useBattleStore = create<BattleState>((set, get) => ({
           const data = localStorage.getItem(key);
           newPlayers[i] = { ...s.players[i], solveHistory: data ? JSON.parse(data) : [] };
         }
-        set({ players: newPlayers });
+        const history = loadStoredBattleRounds(s.sessionId);
+        set({
+          players: newPlayers,
+          battleRounds: history.rounds,
+          battleHistoryWarning: history.warning,
+        });
       }
     } catch (e) {
       console.warn('Failed to load solve history:', e);

@@ -1,5 +1,12 @@
 /** Runtime-neutral rules for the 2–4 player local timer. */
 
+import {
+  BATTLE_EVENT_IDS,
+  type EventId,
+  type Solve,
+} from './types';
+import { decodeTimerSolve } from './persistence';
+
 export const LOCAL_BATTLE_MIN_PLAYERS = 2;
 export const LOCAL_BATTLE_MAX_PLAYERS = 4;
 
@@ -13,6 +20,96 @@ export interface LocalBattleTimingState {
 export interface LocalBattleResultLike {
   time: number;
   penalty: LocalBattlePenalty;
+}
+
+export interface LocalBattleAttempt {
+  playerId: number;
+  solve: Solve;
+}
+
+/** One indivisible local matchup; never reconstruct rounds by parallel array index. */
+export interface LocalBattleRound {
+  id: string;
+  ts: number;
+  attempts: LocalBattleAttempt[];
+  winners: number[];
+}
+
+const LOCAL_BATTLE_EVENT_IDS = new Set<EventId>(BATTLE_EVENT_IDS);
+const MAX_DATE_TIMESTAMP_MS = 8_640_000_000_000_000;
+const DANGEROUS_IDS = new Set(['__proto__', 'constructor', 'prototype']);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isSafeLocalBattleId(value: unknown): value is string {
+  return typeof value === 'string'
+    && value.length > 0
+    && value.length <= 512
+    && !DANGEROUS_IDS.has(value);
+}
+
+function decodeLocalBattleSolve(value: unknown): Solve | null {
+  if (!isRecord(value)
+    || typeof value.event !== 'string'
+    || !LOCAL_BATTLE_EVENT_IDS.has(value.event as EventId)) return null;
+  const solve = decodeTimerSolve(value, value.event as EventId);
+  return solve && solve.penalty !== 'DNS' ? solve : null;
+}
+
+export function decodeLocalBattleRounds(value: unknown): LocalBattleRound[] | null {
+  if (!Array.isArray(value)) return null;
+  const rounds: LocalBattleRound[] = [];
+  const roundIds = new Set<string>();
+  const solveIds = new Set<string>();
+  for (const raw of value) {
+    if (!isRecord(raw)
+      || !isSafeLocalBattleId(raw.id)
+      || roundIds.has(raw.id)
+      || typeof raw.ts !== 'number'
+      || !Number.isFinite(raw.ts)
+      || raw.ts < 0
+      || raw.ts > MAX_DATE_TIMESTAMP_MS
+      || !Array.isArray(raw.attempts)
+      || !Array.isArray(raw.winners)) return null;
+    const attempts: LocalBattleAttempt[] = [];
+    const playerIds = new Set<number>();
+    for (const candidate of raw.attempts) {
+      if (!isRecord(candidate)
+        || !Number.isInteger(candidate.playerId)
+        || (candidate.playerId as number) < 0
+        || (candidate.playerId as number) >= LOCAL_BATTLE_MAX_PLAYERS
+        || playerIds.has(candidate.playerId as number)) return null;
+      const solve = decodeLocalBattleSolve(candidate.solve);
+      if (!solve || solve.ts !== raw.ts || solveIds.has(solve.id)) return null;
+      const playerId = candidate.playerId as number;
+      playerIds.add(playerId);
+      solveIds.add(solve.id);
+      attempts.push({ playerId, solve });
+    }
+    if (attempts.length < LOCAL_BATTLE_MIN_PLAYERS
+      || attempts.length > LOCAL_BATTLE_MAX_PLAYERS
+      || attempts.some((attempt, index) => attempt.playerId !== index)
+      || !raw.winners.every((winner) => Number.isInteger(winner))) return null;
+    const round = { id: raw.id, ts: raw.ts, attempts, winners: [] as number[] };
+    round.winners = localBattleRoundWinners(round);
+    roundIds.add(raw.id);
+    rounds.push(round);
+  }
+  return rounds;
+}
+
+export function localBattleRoundWinners(round: Pick<LocalBattleRound, 'attempts'>): number[] {
+  const ranked = [...round.attempts].sort((a, b) => a.playerId - b.playerId);
+  const winningPositions = localBattleWinnerIndices(ranked.map(({ solve }) => ({
+    time: solve.timeMs,
+    penalty:
+      solve.penalty === 'DNF' || solve.penalty === 'DNS'
+        ? 'dnf'
+        : solve.penalty,
+  })));
+  return winningPositions.map((position) => ranked[position].playerId);
 }
 
 export function normalizeLocalBattlePlayerCount(value: number): number {

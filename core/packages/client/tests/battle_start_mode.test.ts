@@ -45,6 +45,7 @@ function resetTwoPlayer(syncStart: boolean) {
     playerCount: 2,
     syncStart,
     winners: [],
+    battleRounds: [],
     puzzleIds: ['333', '333', '333', '333'],
     scrambles: ["R U R' U'", "R U R' U'", null, null],
     scrambleLoadings: [false, false, false, false],
@@ -132,6 +133,127 @@ describe('各自开始(默认)', () => {
     // 用时短的那位胜出(P0 跑 5s,P1 跑 8s)
     expect(winners).toEqual([0]);
     expect(players[0].points).toBe(1);
+    expect(useBattleStore.getState().battleRounds).toMatchObject([{
+      winners: [0],
+      attempts: [
+        { playerId: 0, solve: { event: '333', timeMs: expect.any(Number) } },
+        { playerId: 1, solve: { event: '333', timeMs: expect.any(Number) } },
+      ],
+    }]);
+  });
+
+  it('stores mixed-project matchups as atomic rounds instead of parallel history indexes', () => {
+    startSolve(0);
+    startSolve(1);
+    stopSolve(0, 5_000);
+    stopSolve(1, 1_000);
+
+    useBattleStore.getState().resetForNextRound();
+    useBattleStore.setState({
+      puzzleIds: ['222', '333', '333', '333'],
+      scrambles: ['R U', "F R U R'", null, null],
+    });
+    startSolve(0);
+    startSolve(1);
+    stopSolve(0, 4_000);
+    stopSolve(1, 2_000);
+
+    const { battleRounds } = useBattleStore.getState();
+    expect(battleRounds).toHaveLength(2);
+    expect(battleRounds[0].attempts.map((attempt) => attempt.solve.event)).toEqual(['333', '333']);
+    expect(battleRounds[1].attempts.map((attempt) => attempt.solve.event)).toEqual(['222', '333']);
+    expect(new Set(battleRounds.map((round) => round.id)).size).toBe(2);
+  });
+
+  it('keeps penalties, winners, points, and delete-last in sync with the atomic round', () => {
+    startSolve(0);
+    startSolve(1);
+    stopSolve(0, 5_000);
+    stopSolve(1, 3_000);
+
+    expect(useBattleStore.getState().battleRounds[0].winners).toEqual([0]);
+    useBattleStore.getState().handlePenalty(0, 'dnf');
+
+    let state = useBattleStore.getState();
+    expect(state.battleRounds[0].attempts[0].solve.penalty).toBe('DNF');
+    expect(state.battleRounds[0].winners).toEqual([1]);
+    expect(state.players.slice(0, 2).map((player) => player.points)).toEqual([0, 1]);
+
+    state.deleteLast();
+    state = useBattleStore.getState();
+    expect(state.battleRounds).toEqual([]);
+    expect(state.players.slice(0, 2).map((player) => ({
+      points: player.points,
+      hasFinished: player.hasFinished,
+      history: player.solveHistory.length,
+    }))).toEqual([
+      { points: 0, hasFinished: false, history: 0 },
+      { points: 0, hasFinished: false, history: 0 },
+    ]);
+  });
+
+  it('cannot mutate an earlier round after the latest round is deleted from history', () => {
+    startSolve(0);
+    startSolve(1);
+    stopSolve(0, 3_000);
+    stopSolve(1, 2_000);
+    useBattleStore.getState().resetForNextRound();
+    startSolve(0);
+    startSolve(1);
+    stopSolve(0, 4_000);
+    stopSolve(1, 2_000);
+
+    const firstRound = structuredClone(useBattleStore.getState().battleRounds[0]);
+    useBattleStore.getState().deleteVsRound(1);
+    expect(useBattleStore.getState().players.slice(0, 2).every((player) => !player.hasFinished)).toBe(true);
+
+    useBattleStore.getState().handlePenalty(0, 'dnf');
+    useBattleStore.getState().deleteLast();
+    expect(useBattleStore.getState().battleRounds).toEqual([firstRound]);
+  });
+
+  it('deleting an old mixed-event round does not delete a matching current-event mirror', () => {
+    useBattleStore.setState({
+      puzzleIds: ['222', '333', '333', '333'],
+      scrambles: ['R U', 'R U', null, null],
+    });
+    startSolve(0);
+    startSolve(1);
+    stopSolve(0, 3_000);
+    stopSolve(1, 2_000);
+
+    const oldRound = useBattleStore.getState().battleRounds[0];
+    const oldAttempt = oldRound.attempts[0];
+    const matchingCurrentEntry = {
+      time: oldAttempt.solve.timeMs,
+      penalty: oldAttempt.solve.penalty === 'DNF' ? 'dnf' as const : oldAttempt.solve.penalty,
+      scramble: oldAttempt.solve.scramble,
+      date: new Date(oldAttempt.solve.ts).toISOString(),
+    };
+    const players = [...useBattleStore.getState().players];
+    players[0] = { ...players[0], solveHistory: [matchingCurrentEntry] };
+    useBattleStore.setState({
+      puzzleIds: ['333', '333', '333', '333'],
+      players,
+    });
+
+    useBattleStore.getState().deleteVsRound(0);
+    expect(useBattleStore.getState().players[0].solveHistory).toEqual([matchingCurrentEntry]);
+  });
+
+  it('finalizes one indivisible round only after all four active players finish', () => {
+    useBattleStore.setState({
+      playerCount: 4,
+      scrambles: ["R U R'", "R U R'", "R U R'", "R U R'"],
+    });
+    for (let playerId = 0; playerId < 4; playerId++) startSolve(playerId);
+    for (let playerId = 0; playerId < 3; playerId++) stopSolve(playerId, 1_000);
+    expect(useBattleStore.getState().battleRounds).toEqual([]);
+
+    stopSolve(3, 1_000);
+    const [round] = useBattleStore.getState().battleRounds;
+    expect(round.attempts.map((attempt) => attempt.playerId)).toEqual([0, 1, 2, 3]);
+    expect(round.attempts.every((attempt) => attempt.solve.event === '333')).toBe(true);
   });
 
   it('红灯期间松手只作废自己那条延时', () => {
