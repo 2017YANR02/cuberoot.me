@@ -62,7 +62,7 @@ describe('mini program account page', () => {
 
     page.onLoad();
 
-    expect(accountConfig).toEqual({ navigationBarTitleText: 'CubeRoot 登录入口' });
+    expect(accountConfig).toEqual({ navigationBarTitleText: '' });
     expect(page.data).toMatchObject({
       isTimelineEntry: false,
       loginRequired: true,
