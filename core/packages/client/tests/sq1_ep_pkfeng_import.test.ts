@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { applySq1Scramble } from '@cuberoot/shared/sq1-notation';
 import { classifySq1EpParity, sq1EpNumericCaseName } from '@/lib/sq1-ep-parity';
+import { sq1StateShapes } from '@/lib/sq1-shapes';
+import { traceSq1Algorithm } from '@/lib/sq1-tools';
 import { workspaceFixturePath } from './workspace-fixture-path';
 
 type SourceAlg = {
@@ -77,6 +79,40 @@ describe('Pk Feng SQ1 EP complete import', () => {
         expect(applySq1Scramble(`${entry.setup} ${entry.alg}`), item.numericName).toEqual(solved);
       }
     }
+  });
+
+  it('completes source formulas that omitted their final U or D alignment', () => {
+    const completedAufEntries: Array<[numericName: string, algIndex: number]> = [
+      ['1.3+', 0],
+      ['2.2', 0],
+      ['2.2', 1],
+      ['2.2', 2],
+      ['3+.//', 0],
+    ];
+
+    for (const [numericName, algIndex] of completedAufEntries) {
+      const item = fixture.cases.find(entry => entry.numericName === numericName);
+      const entry = item?.algs[algIndex];
+      expect(entry, `${numericName} alg ${algIndex}`).toBeDefined();
+      if (!entry) continue;
+
+      const trace = traceSq1Algorithm(entry.alg, entry.setup);
+      expect(trace, `${numericName} alg ${algIndex}`).toMatchObject({ ok: true });
+      if (!trace.ok) continue;
+
+      const initialShapes = sq1StateShapes(trace.steps[0].state);
+      expect(initialShapes.top?.id, `${numericName} top shape`).toBe('square');
+      expect(initialShapes.bottom?.id, `${numericName} bottom shape`).toBe('square');
+      expect(trace.steps.at(-1)?.state, `${numericName} final alignment`).toEqual(solved);
+    }
+
+    const adj = fixture.cases.find(item => item.numericName === '2.2');
+    expect(adj?.algs.map(entry => entry.alg)).toEqual([
+      '1,0/0,3/-1,-1/1,-2/-1',
+      '0,-1/-3,0/1,1/2,-1/0,1',
+      '1,0/3,0/-1,-1/-2,1/-1',
+      '0,-1/1,-2/-1,-1/0,3/0,1',
+    ]);
   });
 
   it('keeps the generated migration tied to the source hash and final-count guards', () => {
