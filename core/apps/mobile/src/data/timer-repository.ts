@@ -1,12 +1,25 @@
 import {
   MAX_TIMER_BACKUP_BYTES,
+  activateTimerSession,
+  activateTimerSessionForEvent,
+  associateTimerSessionEvent,
+  clearTimerSession,
+  clearTimerSessionEvent,
+  createTimerSession,
   createTimerStoreData,
   decodeTimerStoreData,
+  deleteTimerSession,
+  moveTimerSolveToSession,
   parseTimerStoreJson,
+  renameTimerSession,
+  restoreTimerHistorySolve,
   serializeTimerStoreData,
   summarizeTimerDatabase,
+  timerSessionEvent,
   type EventId,
   type Solve,
+  type TimerSessionMutationFailure,
+  type TimerSessionMutationResult,
   type TimerStoreData,
   type TimerStoreSettings,
 } from '@cuberoot/shared/timer';
@@ -34,6 +47,23 @@ export class CorruptTimerStoreError extends Error {
     super('Stored timer data is invalid');
     this.name = 'CorruptTimerStoreError';
   }
+}
+
+export type TimerSessionRepositoryFailure = TimerSessionMutationFailure | 'write-failure';
+
+export class TimerSessionRepositoryError extends Error {
+  constructor(
+    readonly failure: TimerSessionRepositoryFailure,
+    options?: ErrorOptions,
+  ) {
+    super(`Timer session operation failed: ${failure}`, options);
+    this.name = 'TimerSessionRepositoryError';
+  }
+}
+
+export interface TimerRepositorySessionSelection {
+  data: TimerStoreData;
+  sessionId: string | null;
 }
 
 function defaultEnvironment(): TimerRepositoryEnvironment {
@@ -81,6 +111,37 @@ export class TimerRepository {
       : undefined;
     if (storedSchemaVersion !== decoded.schemaVersion) await this.driver.write(decoded);
     return decoded;
+  }
+
+  private async writeSessionData(data: TimerStoreData): Promise<TimerStoreData> {
+    const decoded = decodeTimerStoreData(data);
+    if (!decoded) throw new CorruptTimerStoreError();
+    try {
+      await this.driver.write(decoded);
+    } catch (cause) {
+      throw new TimerSessionRepositoryError('write-failure', { cause });
+    }
+    return decoded;
+  }
+
+  private async persistSessionMutation(
+    data: TimerStoreData,
+    mutation: TimerSessionMutationResult,
+    selectedSessionId: string | null = null,
+  ): Promise<TimerStoreData> {
+    if (mutation.failure) throw new TimerSessionRepositoryError(mutation.failure);
+    const associatedEvent = selectedSessionId && data.settings.autoEventForSession
+      ? timerSessionEvent(mutation.database, selectedSessionId)
+      : null;
+    const settingsChanged = associatedEvent !== null && associatedEvent !== data.settings.event;
+    if (!mutation.changed && !settingsChanged) return data;
+    return this.writeSessionData({
+      ...data,
+      database: mutation.database,
+      settings: settingsChanged
+        ? { ...data.settings, event: associatedEvent }
+        : data.settings,
+    });
   }
 
   load(): Promise<TimerStoreData> {
@@ -145,6 +206,26 @@ export class TimerRepository {
     });
   }
 
+  restoreSolve(sessionId: string, solve: Solve): Promise<TimerStoreData> {
+    return this.run(async () => {
+      const data = await this.loadUnlocked();
+      const byEvent = data.database.dataBySession[sessionId];
+      if (!byEvent) throw new TimerSessionRepositoryError('unknown-session');
+      const restored = restoreTimerHistorySolve(byEvent[solve.event] ?? [], solve);
+      if (!restored.changed) return data;
+      return this.writeSessionData({
+        ...data,
+        database: {
+          ...data.database,
+          dataBySession: {
+            ...data.database.dataBySession,
+            [sessionId]: { ...byEvent, [solve.event]: restored.solves },
+          },
+        },
+      });
+    });
+  }
+
   updateSettings(changes: Partial<TimerStoreSettings>): Promise<TimerStoreData> {
     return this.run(async () => {
       const data = await this.loadUnlocked();
@@ -153,6 +234,150 @@ export class TimerRepository {
       if (!decoded) throw new CorruptTimerStoreError();
       await this.driver.write(decoded);
       return decoded;
+    });
+  }
+
+  activateSession(sessionId: string): Promise<TimerStoreData> {
+    return this.run(async () => {
+      const data = await this.loadUnlocked();
+      const mutation = activateTimerSession(data.database, sessionId);
+      return this.persistSessionMutation(
+        data,
+        mutation,
+        mutation.sessionId,
+      );
+    });
+  }
+
+  /** Create and activate with one queued IndexedDB write. */
+  createSession(name: string, event: EventId): Promise<TimerStoreData> {
+    return this.run(async () => {
+      const data = await this.loadUnlocked();
+      let sessionId = this.environment.createId();
+      let created = createTimerSession(data.database, {
+        id: sessionId,
+        name,
+        createdTs: this.environment.now(),
+        fallbackName: this.environment.language() === 'zh' ? '默认' : 'Default',
+        event,
+      });
+      while (created.failure === 'duplicate-session-id') {
+        sessionId = this.environment.createId();
+        created = createTimerSession(data.database, {
+          id: sessionId,
+          name,
+          createdTs: this.environment.now(),
+          fallbackName: this.environment.language() === 'zh' ? '默认' : 'Default',
+          event,
+        });
+      }
+      if (created.failure) throw new TimerSessionRepositoryError(created.failure);
+      const activated = activateTimerSession(created.database, sessionId);
+      return this.persistSessionMutation(
+        data,
+        activated,
+        activated.sessionId,
+      );
+    });
+  }
+
+  renameSession(sessionId: string, name: string): Promise<TimerStoreData> {
+    return this.run(async () => {
+      const data = await this.loadUnlocked();
+      return this.persistSessionMutation(
+        data,
+        renameTimerSession(data.database, sessionId, name),
+      );
+    });
+  }
+
+  clearSession(sessionId: string): Promise<TimerStoreData> {
+    return this.run(async () => {
+      const data = await this.loadUnlocked();
+      return this.persistSessionMutation(data, clearTimerSession(data.database, sessionId));
+    });
+  }
+
+  clearSessionEvent(sessionId: string, event: EventId): Promise<TimerStoreData> {
+    return this.run(async () => {
+      const data = await this.loadUnlocked();
+      return this.persistSessionMutation(
+        data,
+        clearTimerSessionEvent(data.database, sessionId, event),
+      );
+    });
+  }
+
+  deleteSession(sessionId: string): Promise<TimerStoreData> {
+    return this.run(async () => {
+      const data = await this.loadUnlocked();
+      const mutation = deleteTimerSession(data.database, sessionId);
+      return this.persistSessionMutation(data, mutation, mutation.sessionId);
+    });
+  }
+
+  setSessionEvent(sessionId: string, event: EventId): Promise<TimerStoreData> {
+    return this.run(async () => {
+      const data = await this.loadUnlocked();
+      return this.persistSessionMutation(
+        data,
+        associateTimerSessionEvent(data.database, sessionId, event),
+      );
+    });
+  }
+
+  activateSessionForEvent(event: EventId): Promise<TimerRepositorySessionSelection> {
+    return this.run(async () => {
+      const data = await this.loadUnlocked();
+      const mutation = activateTimerSessionForEvent(data.database, event);
+      if (mutation.failure === 'no-matching-session') return { data, sessionId: null };
+      const persisted = await this.persistSessionMutation(data, mutation);
+      return { data: persisted, sessionId: mutation.sessionId };
+    });
+  }
+
+  /**
+   * Match Web's event/session coupling atomically: auto-match selects an
+   * existing associated session when possible; otherwise the active session
+   * is associated with the newly selected event.
+   */
+  selectEvent(event: EventId): Promise<TimerStoreData> {
+    return this.run(async () => {
+      const data = await this.loadUnlocked();
+      const matched = data.settings.autoSessionForEvent
+        ? activateTimerSessionForEvent(data.database, event)
+        : null;
+      if (matched && matched.failure !== 'no-matching-session') {
+        if (matched.failure) throw new TimerSessionRepositoryError(matched.failure);
+        if (data.settings.event === event && !matched.changed) return data;
+        return this.writeSessionData({
+          ...data,
+          database: matched.database,
+          settings: { ...data.settings, event },
+        });
+      }
+      const association = associateTimerSessionEvent(
+        data.database,
+        data.database.activeSessionId,
+        event,
+      );
+      if (association.failure) throw new TimerSessionRepositoryError(association.failure);
+      if (data.settings.event === event && !association.changed) return data;
+      return this.writeSessionData({
+        ...data,
+        database: association.database,
+        settings: { ...data.settings, event },
+      });
+    });
+  }
+
+  moveSolveToSession(solveId: string, targetSessionId: string): Promise<TimerStoreData> {
+    return this.run(async () => {
+      const data = await this.loadUnlocked();
+      return this.persistSessionMutation(
+        data,
+        moveTimerSolveToSession(data.database, solveId, targetSessionId),
+      );
     });
   }
 

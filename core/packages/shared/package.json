@@ -17,6 +17,9 @@
       "./wca-events": "runtime-neutral",
       "./scramble-length": "runtime-neutral",
       "./comp-schedule": "runtime-neutral",
+      "./comp-localize": "runtime-neutral",
+      "./city-localize": "runtime-neutral",
+      "./competition-index": "runtime-neutral",
       "./alg": "mixed",
       "./alg-notation": "runtime-neutral",
       "./alg-transform": "runtime-neutral",
@@ -30,6 +33,7 @@
       "./account": "runtime-neutral",
       "./account-avatar": "runtime-neutral",
       "./auth/web-session": "runtime-neutral",
+      "./mobile-embed": "runtime-neutral",
       "./result-penalty": "runtime-neutral",
       "./recon-ground-truth": "runtime-neutral",
       "./recon-completion": "runtime-neutral",
@@ -57,13 +61,19 @@
       "./tz": "runtime-neutral",
       "./recur": "runtime-neutral",
       "./calendar": "runtime-neutral",
+      "./iso-date": "runtime-neutral",
+      "./country-flag": "runtime-neutral",
       "./timer": "runtime-neutral",
+      "./timer/by-steps": "runtime-neutral",
+      "./timer/scramble-variants": "runtime-neutral",
+      "./timer/worker-rpc": "runtime-neutral",
       "./smart-cube/giiker": "runtime-neutral",
       "./smart-cube/gocube": "runtime-neutral",
       "./smart-cube/moyu": "runtime-neutral",
       "./smart-cube/cubie": "runtime-neutral",
       "./smart-cube/gan-crypto": "runtime-neutral",
       "./smart-cube/gan-move-sync": "runtime-neutral",
+      "./smart-cube/move-clock": "runtime-neutral",
       "./smart-cube/gan-v2": "runtime-neutral",
       "./smart-cube/gan-v3": "runtime-neutral",
       "./smart-cube/gan-v4": "runtime-neutral",
@@ -95,6 +105,9 @@
       "node": "./dist/comp_schedule.js",
       "default": "./src/comp_schedule.ts"
     },
+    "./comp-localize": "./src/comp_localize.ts",
+    "./city-localize": "./src/city_localize.ts",
+    "./competition-index": "./src/competition_index.ts",
     "./alg": "./src/alg.ts",
     "./alg-notation": {
       "node": "./dist/alg_notation.js",
@@ -141,6 +154,7 @@
       "node": "./dist/auth/web_session.js",
       "default": "./src/auth/web_session.ts"
     },
+    "./mobile-embed": "./src/mobile_embed.ts",
     "./result-penalty": {
       "node": "./dist/result_penalty.js",
       "default": "./src/result_penalty.ts"
@@ -225,13 +239,19 @@
       "node": "./dist/calendar.js",
       "default": "./src/calendar.ts"
     },
+    "./iso-date": "./src/iso-date.ts",
+    "./country-flag": "./src/country_flag.ts",
     "./timer": "./src/timer/index.ts",
+    "./timer/by-steps": "./src/timer/by-steps.ts",
+    "./timer/scramble-variants": "./src/timer/scramble-variants.ts",
+    "./timer/worker-rpc": "./src/timer/worker-rpc.ts",
     "./smart-cube/giiker": "./src/smart_cube/giiker.ts",
     "./smart-cube/gocube": "./src/smart_cube/gocube.ts",
     "./smart-cube/moyu": "./src/smart_cube/moyu.ts",
     "./smart-cube/cubie": "./src/smart_cube/cubie.ts",
     "./smart-cube/gan-crypto": "./src/smart_cube/gan_crypto.ts",
     "./smart-cube/gan-move-sync": "./src/smart_cube/gan_move_sync.ts",
+    "./smart-cube/move-clock": "./src/smart_cube/move_clock.ts",
     "./smart-cube/gan-v2": "./src/smart_cube/gan_v2.ts",
     "./smart-cube/gan-v3": "./src/smart_cube/gan_v3.ts",
     "./smart-cube/gan-v4": "./src/smart_cube/gan_v4.ts",
@@ -244,6 +264,7 @@
   },
   "scripts": {
     "build": "tsc -b",
+    "generate:timer-trainer-cases": "node scripts/build-timer-trainer-case-data.mjs",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
@@ -253,9 +274,11 @@
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "opencc-js": "^1.0.5",
     "typescript": "~5.7.0"
   },
   "dependencies": {
+    "@cuberoot/puzzle-solvers": "workspace:*",
     "axios": "^1.13.6",
     "cubing": "^0.63.3"
   }

@@ -21,7 +21,9 @@ import { stepPuzzleOf } from '../_lib/scramble/step-metrics';
 import { canTrainerDifficulty } from '../_lib/scramble/trainer-source';
 import { tr } from '@/i18n/tr';
 import Scramble222ModePicker from '@/components/Scramble222ModePicker';
-import { SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, use222Type, type Scramble222Type } from '@/lib/scramble-222-mode';
+import { use222Type } from '@/lib/scramble-222-mode';
+import { SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, type Scramble222Type } from '@cuberoot/shared/timer';
+import { ManualScrambleQueueEditor } from '@cuberoot/timer-ui';
 
 interface Props {
   event: EventId;
@@ -54,18 +56,11 @@ export default function ScrambleSourceBar({ event, isZh, diffSlot }: Props) {
       )}
 
       {src === 'manual' && (
-        <div className="settings-row scramble-src-manual">
-          <textarea
-            className="scramble-src-manual-input"
-            value={s.manualScrambles}
-            onChange={(e) => updateSettings({ manualScrambles: e.target.value })}
-            rows={3}
-            spellCheck={false}
-            autoCapitalize="none"
-            autoCorrect="off"
-            aria-label={tr({ zh: '手动输入打乱', en: 'Manual scrambles' })}
-          />
-        </div>
+        <ManualScrambleQueueEditor
+          ariaLabel={tr({ zh: '手动输入打乱', en: 'Manual scrambles' })}
+          onChange={(manualScrambles) => updateSettings({ manualScrambles })}
+          value={s.manualScrambles}
+        />
       )}
 
       {/* 随机状态来源的难度 = 直接生成该难度的状态(3×3 族;真题那边的难度筛在 WcaSourceConfig 里)。 */}
@@ -80,6 +75,7 @@ export default function ScrambleSourceBar({ event, isZh, diffSlot }: Props) {
             <Scramble222ModePicker
               active222
               showLabel={false}
+              showModeWithSpecialType={src === 'wca'}
               showSpecialTypes
               typeOptions={type222Options ?? undefined}
             />

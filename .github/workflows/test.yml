@@ -302,14 +302,15 @@ jobs:
           pnpm --filter @cuberoot/shared build
           pnpm --filter @cuberoot/visualcube build
 
-      - name: Verify Android brand assets
+      - name: Verify native brand assets
         working-directory: core
         run: |
           pnpm --filter @cuberoot/mobile assets:android
+          pnpm --filter @cuberoot/mobile assets:ios
           WEB_DIR="${{ steps.workspace.outputs.web }}"
           MOBILE_DIR="${{ steps.workspace.outputs.mobile }}"
-          git diff --exit-code -- "assets/brand" "$WEB_DIR/public/icons" "$MOBILE_DIR/android/app/src/main/res"
-          if [[ -n "$(git ls-files --others --exclude-standard -- "assets/brand" "$WEB_DIR/public/icons" "$MOBILE_DIR/android/app/src/main/res")" ]]; then
+          git diff --exit-code -- "assets/brand" "$WEB_DIR/public/icons" "$MOBILE_DIR/android/app/src/main/res" "$MOBILE_DIR/ios/App/App/Assets.xcassets"
+          if [[ -n "$(git ls-files --others --exclude-standard -- "assets/brand" "$WEB_DIR/public/icons" "$MOBILE_DIR/android/app/src/main/res" "$MOBILE_DIR/ios/App/App/Assets.xcassets")" ]]; then
             echo "Asset generation produced untracked files"
             exit 1
           fi

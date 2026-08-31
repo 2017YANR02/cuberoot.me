@@ -1,0 +1,101 @@
+.timer-wca-difficulty-config { display: contents; }
+
+.timer-wca-difficulty-top-row,
+.timer-wca-difficulty-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.timer-wca-difficulty-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.timer-wca-difficulty-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.timer-wca-difficulty-help {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 50%;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.timer-wca-difficulty-body {
+  min-width: 0;
+  margin-top: 6px;
+}
+
+.timer-wca-difficulty-select {
+  align-self: flex-start;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--input, var(--border-default));
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+}
+
+.timer-wca-color-select-wrap {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.timer-wca-color-swatch {
+  z-index: 1;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin-right: -27px;
+  margin-left: 5px;
+  border: 1px solid color-mix(in srgb, var(--foreground) 24%, transparent);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.timer-wca-color-select { padding-left: 32px; }
+
+.timer-wca-difficulty-range {
+  width: min(100%, 440px);
+  min-width: 0;
+  padding: 0 8px 14px;
+}
+
+.timer-wca-difficulty-warning {
+  margin: 4px 0 0;
+  color: var(--signal-warning);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+  .timer-wca-difficulty-select { font-size: 16px; }
+}
+
+@media (max-width: 340px) {
+  .timer-wca-difficulty-options > * { max-width: 100%; }
+  .timer-wca-color-select-wrap { width: 100%; }
+  .timer-wca-color-select { width: 100%; }
+}

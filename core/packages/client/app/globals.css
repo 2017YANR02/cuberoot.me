@@ -2,7 +2,7 @@
 /* battle dark-lock removed — battle now dual-theme (2026-06-01) */
 @source "../app/**/*.{tsx,ts,jsx,js}";
 @source "../components/**/*.{tsx,ts,jsx,js}";
-@import "flag-icons/css/flag-icons.min.css";
+@import "@cuberoot/timer-ui/country-flag.css";
 
 /* Ported from packages/client-vite/src/index.css (tokens + base only — page-specific
    styles will land beside their pages during migration). */
@@ -803,11 +803,6 @@ html[data-appearance-preview] body {
    渲染 TW 自定义 SVG 时无 width/height 约束 → 撑爆容器。
    对齐 Vite 的 src/index.css。 */
 
-/* 国旗是定宽图标,放进 flex 行(如 .comp-cell inline-flex)时禁被长比赛名挤窄。
-   挂在 flag-icons span 基类 .fi(Flag.tsx 给每个 span 国旗恒定挂)+ 下方 TW img
-   基类 .cr-flag-img 上 → 站内所有国旗统一兜底,不止 CompCell。 */
-.fi { flex-shrink: 0; }
-
 .country-flag {
   display: inline-block !important;
   vertical-align: middle;
@@ -822,20 +817,6 @@ html[data-appearance-preview] body {
   margin-right: 5px;
   width: 1.25em !important;
   height: 0.9em !important;
-}
-
-/* 源头兜底:TW(中华台北)是唯一渲染成真 <img> 的国旗(SVG,无 flag-icons 内禀尺寸)。
-   Flag.tsx 给它恒定挂 .cr-flag-img,默认按相邻 flag-icons span(1.33em 宽)排版、
-   height:auto 保持 4:3 比例。低特异度(单类,且 globals 先于页面 CSS 加载)=> 调用方
-   显式设宽的类(country-flag-ct / recon-person-flag 头像 / rc-flag-img 等)按源序覆盖,
-   大旗不受影响。根因:调用方传错类名或不传类名时 TW SVG 不再撑成 640×480。 */
-.cr-flag-img {
-  display: inline-block;
-  width: 1.33em;
-  height: auto;
-  object-fit: cover;
-  vertical-align: middle;
-  flex-shrink: 0;
 }
 
 /* 搜索输入框的全站默认外观。WCA 两套历史选择器与 SearchInput 共用这一契约；
@@ -875,51 +856,6 @@ html[data-appearance-preview] body {
 :where(.search-control):disabled {
   cursor: not-allowed;
   opacity: 0.55;
-}
-
-/* 通用清空 ×(components/ClearButton.tsx 共享样式)—— Vite index.css 漏移植,补回。
- * 苹果风:实心灰圆 + SVG 细线 ×,token 派生自动跟主题。inline 浮在 input 内,
- * standalone 流式独立圆。缺这段时按钮塌成 0×0 看不见。 */
-.clear-btn {
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--foreground) 32%, transparent);
-  color: var(--background);
-  cursor: pointer;
-  padding: 0;
-  font-family: inherit;
-  flex-shrink: 0;
-  transition: background 0.15s;
-}
-.clear-btn:hover {
-  background: color-mix(in srgb, var(--foreground) 50%, transparent);
-}
-.clear-btn-icon {
-  width: 10px;
-  height: 10px;
-  display: block;
-}
-/* 流式布局独立按钮(不浮在输入框上)— 比赛标题 / 日期区间清空等场景 */
-.clear-btn--standalone {
-  position: static;
-  transform: none;
-  width: 20px;
-  height: 20px;
-}
-/* input[type=search] 与 ClearButton 并存时隐藏 WebKit 原生 ✕,防双叉(wiki / wca results 搜索框) */
-input[type='search']:has(~ .clear-btn)::-webkit-search-cancel-button {
-  -webkit-appearance: none;
-  appearance: none;
-  display: none;
 }
 
 /* 屏幕键盘(components/OnScreenKeyboard.tsx)—— Vite index.css 漏移植,补回。
@@ -980,22 +916,6 @@ input[type='search']:has(~ .clear-btn)::-webkit-search-cancel-button {
   .kbd-btn:not(:active):hover {
     background: transparent;
   }
-}
-
-/* WCA 多地代码(XW/XA/XE…)没有国旗,渲染成"空描边"占位(Flag.tsx 产出 flag-multi)。
- * Vite index.css 漏移植,补回。复用 flag-icons .fi 尺寸,空底 + 边框对齐 WCA 配色。 */
-.fi.flag-multi {
-  background: transparent !important;
-  background-image: none !important;
-  box-sizing: border-box;
-}
-.fi.flag-multi-world {
-  border: 1.5px solid;
-  border-image: linear-gradient(to right, #1f4ea3 0%, #2a4fa3 30%, #c8102e 70%, #c8102e 100%) 1;
-}
-.fi.flag-multi-continent {
-  border: 1.5px solid #2c5aa0;
-  border-radius: 3px;
 }
 
 /* 全站统一表头排序箭头(components/SortArrow.tsx):跟在表头文字右侧,继承色。 */

@@ -50,6 +50,20 @@ describe('timer session event associations', () => {
     expect(db.getSessionEvent(id)).toBe('222');
   });
 
+  it('creates and activates atomically for the shared UI host', async () => {
+    seed([{ id: 'a', name: 'A', createdTs: 1 }], 'a', { a: {} });
+    const db = await loadDb();
+    const write = vi.spyOn(storage, 'setItem');
+
+    const id = db.createAndActivateSession('  Pocket  ', '222');
+
+    expect(write).toHaveBeenCalledTimes(1);
+    expect(db.getActiveSessionId()).toBe(id);
+    expect(db.listSessions().find((session) => session.id === id)).toMatchObject({
+      name: 'Pocket', event: '222',
+    });
+  });
+
   it('activates a matching session and safely infers legacy single-event data', async () => {
     seed(
       [
@@ -137,5 +151,31 @@ describe('timer session event associations', () => {
       },
     ])).toBeNull();
     expect(storage.getItem(DB_KEY)).toBe(before);
+  });
+
+  it('surfaces session write failure and keeps the persisted database unchanged', async () => {
+    seed([{ id: 'a', name: 'Existing', createdTs: 1 }], 'a', { a: {} });
+    const before = storage.getItem(DB_KEY);
+    const db = await loadDb();
+    vi.spyOn(storage, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+
+    expect(() => db.renameSession('a', 'Changed')).toThrow(db.TimerSessionWriteError);
+    expect(storage.getItem(DB_KEY)).toBe(before);
+  });
+
+  it('preserves the legacy unknown/delete and empty-rename adapter behavior', async () => {
+    seed([{ id: 'a', name: 'Existing', createdTs: 1 }], 'a', { a: {} });
+    const db = await loadDb();
+    const write = vi.spyOn(storage, 'setItem');
+
+    db.setActiveSession('missing');
+    db.renameSession('missing', 'Ignored');
+    db.renameSession('a', '   ');
+    db.clearSession('missing');
+
+    expect(db.deleteSession('missing')).toBe('a');
+    expect(db.deleteSession('a')).toBeNull();
+    expect(write).not.toHaveBeenCalled();
+    expect(db.listSessions()).toEqual([{ id: 'a', name: 'Existing', createdTs: 1 }]);
   });
 });

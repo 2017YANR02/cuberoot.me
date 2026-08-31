@@ -29,8 +29,8 @@ import { applyOneToken } from '@/app/[lang]/timer/_lib/reconstruct/stage_segment
 import { applyScramble } from '@/app/[lang]/timer/_lib/cube/state';
 import type { CubeFaces } from '@/app/[lang]/timer/_lib/cube/state';
 import { isCross } from '@/app/[lang]/timer/_lib/cube/cfop_detect';
-import { F2L_SLOT_FLAG, solveF2lTo } from '@/app/[lang]/timer/_lib/solver/methods';
-import { faceTurnToken } from '@/app/[lang]/timer/_lib/solver/cube3x3';
+import { F2L_SLOT_FLAG, solveF2lTo } from '@cuberoot/puzzle-solvers/timer-333-step';
+import { faceTurnToken } from '@cuberoot/puzzle-solvers/timer-333-cube';
 
 // 与 f2l_slots.test.ts / stage_segments_attach.test.ts 同一条真解法。
 const SCRAMBLE = "D R' D' R B' U' R' F2 L' F2 D' U2 L' D2 F L' B R'";

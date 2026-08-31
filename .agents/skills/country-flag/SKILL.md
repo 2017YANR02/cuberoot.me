@@ -1,11 +1,14 @@
 ---
 name: country-flag
-description: "Use when rendering country flags anywhere in UI (JSX or popup innerHTML). Single entry point: utils/flag.tsx. TW special case (WCA uses Chinese Taipei SVG not flag-icons default) is handled there — do not hand-write. Triggers: \"国旗\", \"flag\", \"flag-icons\", \"ChineseTaipei\", \"台湾国旗\"."
+description: "Use when rendering country flags anywhere in Web or Mobile UI (JSX or popup innerHTML). Canonical entry: @cuberoot/timer-ui/country-flag; the Web Flag file is only a compatibility re-export. The offline WCA Chinese Taipei special case is handled there—never hand-write or direct-link it. Triggers: \"国旗\", \"flag\", \"flag-icons\", \"ChineseTaipei\", \"台湾国旗\"."
 ---
 
 # 国旗渲染
 
-唯一入口：`core/packages/client/components/Flag.tsx`。TW 特判只在这里。
+canonical 实现：`@cuberoot/timer-ui/country-flag`（源码
+`core/packages/timer-ui/src/CountryFlag.tsx`）。Web 既有调用继续从
+`core/packages/client/components/Flag.tsx` 导入；该文件只能是薄 re-export，不能再放实现。
+Mobile 直接从 `@cuberoot/timer-ui` 或其 `country-flag` 子路径导入。
 
 ```tsx
 <Flag iso2="us" className="cuber-flag" />                              // JSX
@@ -19,9 +22,17 @@ flagHtml(iso2, { spanClassName: 'flag-span', imgClassName: 'flag-img' }) // inne
 ## 禁止
 
 - 手写 `iso2 === 'tw' ? <img .../> : <span .../>` —— 就是要消灭这个
-- 直接写 `/tools/assets/images/ChineseTaipei.svg` —— 路径只应出现在 `Flag.tsx`
-- **TW SVG 撑爆兜底**：`Flag.tsx` 给 TW `<img>` 恒定挂低特异度 `.cr-flag-img`(globals.css,1.33em 宽 / height:auto),裸 Flag 或传错类名都不会撑成 640×480;调用方显式设宽的类按源序覆盖。**别删这个兜底**,也别在 per-page CSS 重定义 `.cr-flag-img`。
-- **标准 className**：`spanClassName="country-flag" imgClassName="country-flag-ct"`。尺寸/圆角规则唯一来源 = 全局 `app/globals.css`(client)/`src/index.css`(Vite)。**禁止任何 per-page CSS 重新定义 `.country-flag` / `.country-flag-ct`** —— 裸类名(无页面前缀)重复定义会静默全局覆盖,导致改全局一处不生效(曾在 `_wca_stats.css` 踩过,已清)。
+- 直接写 `/tools/assets/images/ChineseTaipei.svg`、外网旗帜 URL 或调用系统 emoji。TW
+  渲染资产属于 `timer-ui` package，必须由 Next/Vite 打包，确保 Capacitor 离线可用；旧
+  `tools` 文件只留给非 React 历史消费者。
+- **TW SVG 撑爆兜底**：`CountryFlag.tsx` 给 TW `<img>` 恒定挂低特异度
+  `.cr-flag-img`（`country-flag.css`，1.33em 宽 / height:auto），裸 Flag 或传错类名都
+  不会撑成 640×480；调用方显式设宽的类按源序覆盖。别删这个兜底，也别在 per-page
+  CSS 重定义 `.cr-flag-img`。
+- **标准 className**：`spanClassName="country-flag" imgClassName="country-flag-ct"`。
+  flag-icons、TW 兜底和多地区样式唯一来源是
+  `@cuberoot/timer-ui/country-flag.css`；Web 的 `app/globals.css` 只保留站点尺寸类。
+  **禁止任何 per-page CSS 重新定义 `.country-flag` / `.country-flag-ct`**。
 - **国旗无圆角**：统一直角矩形(flag-icons 标准),禁给 `.country-flag` 加 `border-radius`。
 - **TW 还是大** → playwright 看 `<img>` computed width;先确认 `.cr-flag-img` 兜底已在 stylesheet(改 globals.css 后 dev 不重编需重启/build),再查 className 是否写反或加了页面前缀盖掉了尺寸。
 

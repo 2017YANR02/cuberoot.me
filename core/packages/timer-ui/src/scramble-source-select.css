@@ -1,0 +1,115 @@
+/* Timer scramble-source menu. Shared by Web and Capacitor; host tokens own color. */
+
+.timer-scramble-source-select {
+  position: relative;
+  display: inline-flex;
+  align-self: flex-start;
+  width: fit-content;
+}
+
+.shell-topbar-left .shell-scramble-source-select {
+  align-self: center;
+}
+
+.timer-scramble-source-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 20px;
+  background: var(--popover);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.timer-scramble-source-trigger:where(:not(:disabled)):hover {
+  background: color-mix(in srgb, var(--foreground) 8%, var(--popover));
+}
+
+.timer-scramble-source-trigger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 65%, transparent);
+  outline-offset: 2px;
+}
+
+.timer-scramble-source-trigger:disabled {
+  color: var(--faint-foreground);
+  cursor: not-allowed;
+}
+
+.shell-scramble-source-select .timer-scramble-source-trigger {
+  font-weight: 400;
+}
+
+.timer-scramble-source-current {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timer-scramble-source-arrow {
+  flex: 0 0 auto;
+  color: var(--muted-foreground);
+  transition: transform 0.2s;
+}
+
+.timer-scramble-source-arrow.open { transform: rotate(180deg); }
+
+.timer-scramble-source-popup {
+  /* anchored-panel: clamped (body portal + fixed viewport positioning in TimerScrambleSourceSelect) */
+  position: fixed;
+  visibility: hidden;
+  z-index: 200;
+  width: max-content;
+  min-width: 160px;
+  max-width: min(86vw, 280px);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--popover);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 20%, transparent);
+}
+
+.shell-scramble-source-popup {
+  min-width: 0;
+}
+
+.timer-scramble-source-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.timer-scramble-source-option {
+  display: block;
+  width: 100%;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.timer-scramble-source-option:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.timer-scramble-source-option.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}

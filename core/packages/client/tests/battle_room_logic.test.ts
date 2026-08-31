@@ -188,7 +188,7 @@ describe('event id 映射', () => {
 
 // history 各轮的构造:round 递增,results 存该轮成绩(默认全 333 单项目)
 function hist(round: number, results: Record<string, NetResult>, winners: string[] = []): NetRoundHistory {
-  const playerEvents: Record<string, string> = {};
+  const playerEvents: NetRoundHistory['playerEvents'] = {};
   for (const id of Object.keys(results)) playerEvents[id] = '333';
   return { round, scrambles: { '333': `S${round}` }, playerEvents, results, winners };
 }

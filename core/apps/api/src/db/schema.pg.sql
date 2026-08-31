@@ -338,6 +338,27 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- /timer online battle rooms. The room code is public; player_auth contains
+-- only {pid: sha256(capability)} and is never serialized in room state.
+CREATE TABLE IF NOT EXISTS battle_rooms (
+  code         VARCHAR(12) PRIMARY KEY,
+  revision     BIGINT NOT NULL DEFAULT 1,
+  event        VARCHAR(16) NOT NULL,
+  round        INT NOT NULL DEFAULT 1,
+  scrambles    JSONB NOT NULL DEFAULT '{}'::jsonb,
+  players      JSONB NOT NULL DEFAULT '{}'::jsonb,
+  results      JSONB NOT NULL DEFAULT '{}'::jsonb,
+  history      JSONB NOT NULL DEFAULT '[]'::jsonb,
+  scores       JSONB NOT NULL DEFAULT '{}'::jsonb,
+  player_auth  JSONB NOT NULL DEFAULT '{}'::jsonb,
+  admin        VARCHAR(16),
+  sync_start   BOOLEAN NOT NULL DEFAULT FALSE,
+  start_at     BIGINT,
+  created_at   BIGINT NOT NULL,
+  updated_at   BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_battle_rooms_updated ON battle_rooms(updated_at);
+
 -- Platform depends on the canonical account and public teacher-directory
 -- identities, so their final table definitions precede the Platform schema.
 CREATE TABLE app_users (

@@ -294,6 +294,112 @@ export function applyCubieAlg(state: CubieState, alg: string): CubieState {
   return cur;
 }
 
+export const SOLVED_SMART_CUBE_FACELETS =
+  'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB';
+
+/**
+ * Parse canonical URFDLB facelets into the packed cubie model used by every
+ * smart-cube protocol. Returns null for malformed or physically unreachable
+ * states, so a transport never has to maintain its own state parser.
+ */
+export function cubieStateFromFacelets(facelets: string): CubieState | null {
+  if (facelets.length !== 54) return null;
+  const colors = new Array<number>(54);
+  const counts = new Array<number>(6).fill(0);
+  for (let index = 0; index < facelets.length; index++) {
+    const color = 'URFDLB'.indexOf(facelets[index]);
+    if (color < 0) return null;
+    colors[index] = color;
+    counts[color]++;
+  }
+  if (counts.some((count) => count !== 9)) return null;
+
+  const ca = new Array<number>(8);
+  for (let position = 0; position < 8; position++) {
+    let orientation = 0;
+    for (; orientation < 3; orientation++) {
+      const color = colors[CORNER_FACELET[position][orientation]];
+      if (color === 0 || color === 3) break;
+    }
+    if (orientation === 3) return null;
+    const color1 = colors[CORNER_FACELET[position][(orientation + 1) % 3]];
+    const color2 = colors[CORNER_FACELET[position][(orientation + 2) % 3]];
+    let piece = -1;
+    for (let candidate = 0; candidate < 8; candidate++) {
+      if (color1 === Math.trunc(CORNER_FACELET[candidate][1] / 9)
+        && color2 === Math.trunc(CORNER_FACELET[candidate][2] / 9)) {
+        piece = candidate;
+        break;
+      }
+    }
+    if (piece < 0) return null;
+    ca[position] = (orientation << 3) | piece;
+  }
+
+  const ea = new Array<number>(12);
+  for (let position = 0; position < 12; position++) {
+    const color0 = colors[EDGE_FACELET[position][0]];
+    const color1 = colors[EDGE_FACELET[position][1]];
+    let packed = -1;
+    for (let candidate = 0; candidate < 12; candidate++) {
+      const candidate0 = Math.trunc(EDGE_FACELET[candidate][0] / 9);
+      const candidate1 = Math.trunc(EDGE_FACELET[candidate][1] / 9);
+      if (color0 === candidate0 && color1 === candidate1) {
+        packed = candidate << 1;
+        break;
+      }
+      if (color0 === candidate1 && color1 === candidate0) {
+        packed = (candidate << 1) | 1;
+        break;
+      }
+    }
+    if (packed < 0) return null;
+    ea[position] = packed;
+  }
+
+  const state = { ca, ea };
+  if (!isValidCubieState(state)) return null;
+  return cubieToFacelets(state) === facelets ? state : null;
+}
+
+/**
+ * Transport-neutral move-stream tracker shared by Web and native apps. The
+ * tracker advances before hosts are notified, can adopt a cube-reported state,
+ * and uses the same cubie model as the GAN/MoYu/QiYi protocol decoders.
+ */
+export class SmartCubeStateTracker {
+  private state = solvedCubie();
+
+  reset(): void {
+    this.state = solvedCubie();
+  }
+
+  adoptFacelets(facelets: string): boolean {
+    const state = cubieStateFromFacelets(facelets);
+    if (!state) return false;
+    this.state = state;
+    return true;
+  }
+
+  applyMove(move: string): boolean {
+    try {
+      this.state = applyCubieAlg(this.state, move);
+    } catch {
+      // Drivers are expected to emit one outer-face token. Ignore an unknown
+      // token rather than corrupting the last trusted state.
+    }
+    return this.isSolved();
+  }
+
+  isSolved(): boolean {
+    return cubieToFacelets(this.state) === SOLVED_SMART_CUBE_FACELETS;
+  }
+
+  getFacelets(): string {
+    return cubieToFacelets(this.state);
+  }
+}
+
 /**
  * Split a cubie state back into the 7 corners + 11 edges the wire carries.
  * Inverse of `completeCubieState`, for building protocol frames.

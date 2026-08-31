@@ -34,6 +34,36 @@
   justify-self: start;
 }
 
+/* One shared players control for Web and Capacitor. Hosts own mode routing;
+   the visible control and its option contract must not drift between apps. */
+.shell-players-select {
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--shell-divider, var(--border-strong));
+  border-radius: 9px;
+  outline: none;
+  background: var(--shell-chip, var(--background));
+  color: var(--foreground);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.shell-topbar-left .shell-players-select {
+  padding-inline: 4px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.shell-players-select:focus-visible {
+  border-color: var(--accent);
+}
+
+.shell-players-select--readonly {
+  display: inline-flex;
+  align-items: center;
+  cursor: default;
+}
+
 .shell-device-actions {
   position: absolute;
   bottom: 10px;

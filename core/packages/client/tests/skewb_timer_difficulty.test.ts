@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   genByStepsScramble,
-  scrambleStepMetric,
+  genByStepsSig,
   wcaStepFilter,
 } from '@/app/[lang]/timer/_lib/scramble/gen-by-steps';
+import {
+  generateTimerNon222ByStepsScramble,
+  timerNon222StepMetricOfScramble,
+} from '@cuberoot/puzzle-solvers/timer-by-steps';
 import {
   STEP_METRICS,
   stepMetricSpec,
@@ -35,12 +39,14 @@ describe('计时器斜转难度', () => {
     expect(skewbDistanceOfScramble(scramble)).toBe(distance);
   });
 
-  it('通用按步数链路生成并复算斜转难度', () => {
-    const generated = genByStepsScramble('skewb', enabled([9]));
-    expect(generated?.key).toBe('byst|skewb|htm|9.9');
-    const scramble = generated!.gen();
-    expect(scrambleStepMetric('skewb', 'htm', scramble)).toBe(9);
-    expect(scrambleStepMetric('skewb', 'bad', scramble)).toBeNull();
+  it('Web 只保留 Worker identity，共享引擎生成并复算斜转难度', () => {
+    expect(genByStepsSig('skewb', enabled([9]))).toBe('byst|skewb|htm|9.9');
+    expect(genByStepsScramble('skewb', enabled([9]))).toBeNull();
+    const scramble = generateTimerNon222ByStepsScramble({
+      event: 'skewb', metric: 'htm', lo: 9, hi: 9,
+    }, () => 0);
+    expect(timerNon222StepMetricOfScramble('skewb', 'htm', scramble)).toBe(9);
+    expect(timerNon222StepMetricOfScramble('skewb', 'bad', scramble)).toBeNull();
   });
 
   it('WCA 过滤沿用同一范围，并拒绝非法生成边界', () => {

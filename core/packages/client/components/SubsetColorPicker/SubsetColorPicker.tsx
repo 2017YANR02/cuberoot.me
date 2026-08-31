@@ -9,34 +9,28 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import './SubsetColorPicker.css';
 import { tr } from '@/i18n/tr';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
+import {
+  TIMER_COLOR_DUAL_PAIRS,
+  TIMER_COLOR_GRADIENT_ORDER,
+  TIMER_COLOR_HEX,
+  TIMER_COLOR_LETTERS,
+  TIMER_COLOR_NAMES,
+  timerColorSubsetKey,
+  timerColorSubsetOptions,
+  type TimerColorLetter,
+  type TimerColorMode,
+} from '@cuberoot/shared/timer';
 
-export type ColorLetter = 'B' | 'G' | 'O' | 'R' | 'W' | 'Y';
-export type ColorMode = 'cn' | 'quad' | 'dual' | 'single';
+export type ColorLetter = TimerColorLetter;
+export type ColorMode = TimerColorMode;
+export const COLOR_LETTERS = TIMER_COLOR_LETTERS;
+export const COLOR_HEX = TIMER_COLOR_HEX;
+export const COLOR_NAME = TIMER_COLOR_NAMES;
+export const GRADIENT_ORDER = TIMER_COLOR_GRADIENT_ORDER;
+export const DUAL_PAIRS = TIMER_COLOR_DUAL_PAIRS;
 
-export const COLOR_LETTERS: ColorLetter[] = ['B', 'G', 'O', 'R', 'W', 'Y'];
-// 魔方面固定色(色字母版),非主题色 —— 与 lib/cube-colors 同值,这里集中一份供两页共用。
-export const COLOR_HEX: Record<ColorLetter, string> = {
-  W: '#FFFFFF', Y: '#FEFE00', R: '#EE0000', O: '#FFA100', B: '#0000F2', G: '#00D800',
-};
-export const COLOR_NAME: Record<ColorLetter, { zh: string; en: string
- }> = {
-  W: { zh: '白', en: 'White' }, Y: { zh: '黄', en: 'Yellow'
-}, R: { zh: '红', en: 'Red'
-},
-  O: { zh: '橙', en: 'Orange' }, B: { zh: '蓝', en: 'Blue'
-}, G: { zh: '绿', en: 'Green'
-},
-};
-// 渐变里颜色自上而下顺序(与直方图 fillColors 一致)。
-export const GRADIENT_ORDER: ColorLetter[] = ['W', 'Y', 'G', 'B', 'R', 'O'];
-export const DUAL_PAIRS: { key: string; letters: [ColorLetter, ColorLetter] }[] = [
-  { key: 'WY', letters: ['W', 'Y'] },
-  { key: 'BG', letters: ['B', 'G'] },
-  { key: 'OR', letters: ['O', 'R'] },
-];
-
-export function subsetKeyFromLetters(letters: ColorLetter[]): string {
-  return [...letters].sort().join('');
+export function subsetKeyFromLetters(letters: readonly ColorLetter[]): string {
+  return timerColorSubsetKey(letters);
 }
 export function fillColorsForSubset(letters: ColorLetter[]): string[] {
   const set = new Set(letters);
@@ -103,7 +97,7 @@ function SubsetSwatchPie({ colors, hiIndex }: { colors: ColorLetter[]; hiIndex: 
 }
 
 // 菜单里的行序(用户指定):双 → 六 → 单 → 四。
-const MODE_ORDER: ColorMode[] = ['dual', 'cn', 'single', 'quad'];
+const MODE_ORDER: readonly ColorMode[] = ['dual', 'cn', 'single', 'quad'];
 const MODE_LABEL: Record<ColorMode, { zh: string; en: string
  }> = {
   cn: { zh: '六色', en: 'CN' },
@@ -118,21 +112,11 @@ export interface SubsetOption { id: string; key: string; colors: ColorLetter[] }
 
 /** 某档模式下的全部子集选项(菜单一次摊开四档,所以要能脱离当前 mode 取)。 */
 export function subsetOptionsFor(mode: ColorMode): SubsetOption[] {
-  switch (mode) {
-    case 'single':
-      // 白/黄放前(GRADIENT_ORDER,与直方图配色序一致),不用 COLOR_LETTERS 的字母序。
-      return GRADIENT_ORDER.map((c) => ({ id: c, key: c, colors: [c] }));
-    case 'dual':
-      return DUAL_PAIRS.map((p) => ({ id: p.key, key: subsetKeyFromLetters(p.letters), colors: [...p.letters] }));
-    case 'quad':
-      return DUAL_PAIRS.map((p) => {
-        const cs = COLOR_LETTERS.filter((c) => !(p.letters as string[]).includes(c));
-        return { id: p.key, key: subsetKeyFromLetters(cs), colors: cs };
-      });
-    case 'cn':
-    default:  // 六色 = 用全部色,无子选,单个「全色」块代表这一档
-      return [{ id: 'cn', key: subsetKeyFromLetters([...COLOR_LETTERS]), colors: [...COLOR_LETTERS] }];
-  }
+  return timerColorSubsetOptions(mode).map((option) => ({
+    colors: [...option.colors],
+    id: option.id,
+    key: option.key,
+  }));
 }
 export interface SubsetSelection {
   colorMode: ColorMode;
@@ -201,7 +185,7 @@ export function useSubsetSelection(initialMode: ColorMode = 'cn', initialSubsetK
         activeOptionId = quadExcludedPairKey;
         {
           const p = DUAL_PAIRS.find((x) => x.key === quadExcludedPairKey) ?? DUAL_PAIRS[0];
-          selectedColors = COLOR_LETTERS.filter((c) => !(p.letters as string[]).includes(c));
+          selectedColors = COLOR_LETTERS.filter((c) => !(p.letters as readonly string[]).includes(c));
         }
         selectOption = (id) => setQuadExcludedPairKey(id);
         break;

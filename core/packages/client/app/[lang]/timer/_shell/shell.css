@@ -5,28 +5,12 @@
    auto-flip light/dark. lucide icons only, no emoji.
    ============================================================ */
 
-/* Scramble notation font — same self-hosted face as /scramble/gen sheet rows,
-   so the scramble strip reads identically across the two tools. */
-@font-face {
-  font-family: 'LiberationMono';
-  src: url('/fonts/LiberationMono-Regular.ttf') format('truetype');
-  font-display: block;
-}
-
 :root {
   /* hairline divider used across the shell */
   --shell-divider: color-mix(in srgb, var(--foreground) 8%, transparent);
   --shell-hover: color-mix(in srgb, var(--foreground) 6%, transparent);
   --shell-chip: color-mix(in srgb, var(--foreground) 5%, transparent);
-  /* Scramble text: pure black/white (user request — not the gray muted token).
-     Flips with the GLOBAL theme so it always contrasts the shell background,
-     which also follows --background. Shared by Solo (here) and Battle. */
-  --scramble-fg: #000;
 }
-@media (prefers-color-scheme: dark) {
-  html:not([data-theme=light]) { --scramble-fg: #fff; }
-}
-html[data-theme=dark] { --scramble-fg: #fff; }
 
 .timer-shell {
   position: relative;
@@ -47,41 +31,8 @@ html[data-theme=dark] { --scramble-fg: #fff; }
    没有可用难度时槽是空的,contents 让它彻底不占位。 */
 .shell-topbar-diff { display: contents; }
 .shell-topbar-diff .settings-row-tight-group { font-size: 13px; }
-/* 人数、打乱来源在顶栏普通态只显示内容；项目菜单由 PuzzlePicker 自己统一处理。 */
-.shell-topbar-left .shell-players-select {
-  padding-inline: 4px;
-  border-color: transparent;
-  background: transparent;
-}
-.shell-topbar-left .shell-players-select:focus-visible { border-color: var(--accent); }
 /* 品牌 logo:占第 1 列贴左(与对战 middle-bar 的 logo 同一份资源 + 主页链接). */
 .shell-topbar-brand img { height: 24px; width: auto; display: block; }
-
-/* 人数下拉 — 替代旧 solo/duo 模式 pill,solo topbar 和 battle middle-bar 共用 */
-.shell-players-select {
-  height: 32px;
-  padding: 0 8px;
-  border-radius: 9px;
-  background: var(--shell-chip, var(--background));
-  border: 1px solid var(--shell-divider, var(--border-strong));
-  color: var(--foreground);
-  font-size: 13px;
-  cursor: pointer;
-  outline: none;
-}
-.shell-players-select:focus-visible {
-  border-color: var(--accent);
-}
-.shell-topbar-left .shell-scramble-source-select {
-  align-self: center;
-}
-.shell-scramble-source-select .shell-players-select {
-  font-weight: 400;
-}
-.shell-scramble-source-popup {
-  min-width: 0;
-}
-
 /* ── Main column ────────────────────────────────────────── */
 .shell-main {
   flex: 1;
@@ -92,7 +43,8 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 }
 
 /* Scramble slot — sits in the sub stack directly above the cube net. */
-/* /timer 打乱展示的共享尺寸令牌 —— 单人(.timing-surface 内 .scramble-strip /
+/* /timer 打乱展示尺寸令牌 —— 共享 TimerScrambleStrip 消费 --timer-scramble-fs；单人
+   (.timing-surface 内 .scramble-strip /
    .shell-corner-net / .scramble-src)与双人 side 共享打乱(battle.css 的
    .side-scramble-row)引用同一套尺寸的唯一真源。两棵子树不共享 DOM 祖先(TimerShell
    只渲染其一),故挂在各自根(.timing-surface / .battle-container)上,一处改两边一起变。 */
@@ -109,127 +61,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   display: flex;
   justify-content: center;
 }
-.timing-surface-scramble .scramble-strip {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 4px 8px;
-  margin: 0;
-  border: 0;
-  background: transparent;
-  font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
-  --scramble-fs: calc(var(--timer-scramble-fs) * var(--scramble-scale, 1));
-  font-size: var(--scramble-fs);
-  line-height: 1.5;
-  text-align: center;
-  cursor: pointer;
-  flex-wrap: wrap;
-}
-/* 打乱字体档位(sf-liberation = 默认,即上面的基础声明)。
-   battle.css(同页共载)对子元素 .scramble-text 直接钉了 LiberationMono,
-   光改 strip 会被它盖掉 —— 档位必须同时覆盖 .scramble-text。 */
-.timing-surface-scramble .scramble-strip.sf-mono,
-.timing-surface-scramble .scramble-strip.sf-mono .scramble-text { font-family: var(--font-mono); }
-.timing-surface-scramble .scramble-strip.sf-sans,
-.timing-surface-scramble .scramble-strip.sf-sans .scramble-text { font-family: var(--font-sans); }
-.timing-surface-scramble .scramble-strip.compact { --scramble-fs: calc(clamp(24px, 3.6vw, 30px) * var(--scramble-scale, 1)); }
-/* Visible text lives in .scramble-text; battle.css (co-loaded) sets BOTH its
-   color (gray via --muted-foreground) AND its own font-size on the bare
-   `.scramble-text` selector, so the strip's font-size never reaches the glyphs.
-   Set both here (0,2,0 > battle's 0,1,0): color from the token, size from the
-   strip's --scramble-fs var (same trap the sf-* font-family rules work around). */
-.timing-surface-scramble .scramble-text {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
-  gap: 0 8px; color: var(--scramble-fg); font-size: var(--scramble-fs);
-}
-/* Moves wrap internally as one block, so the "non-optimal" tag always sits AFTER
-   the whole scramble (to its right, or below when the scramble wraps) — never
-   interleaved between moves. */
-.timing-surface-scramble .scramble-moves { word-break: break-word; }
-.timing-surface-scramble .scramble-empty { color: var(--faint-foreground); }
-/* 「太稀有」旁边的重试:行内文字按钮,跟提示同一行,不做成方块。 */
-.timing-surface-scramble .scramble-empty-retry {
-  color: var(--accent);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-/* Smart-cube step-by-step hinting: which move the cube is waiting for.
-   Rendered only while a connected cube is partway through the scramble — done
-   and complete both fall back to plain text, so the strip never looks "off"
-   when there is nothing to hint. Colour only — no box, no underline, no weight
-   change: dimming the finished moves is what makes the current one findable,
-   and it also leaves a cue that survives without colour, since the move you owe
-   is always the first one that ISN'T dim. Decorating it on top of that only
-   draws marks over the scramble. */
-.timing-surface-scramble .scramble-move[data-hint='done'] { color: var(--faint-foreground); }
-.timing-surface-scramble .scramble-move[data-hint='pending'] { color: var(--scramble-fg); }
-.timing-surface-scramble .scramble-move[data-hint='current'] { color: var(--accent); }
-
-/* "non-optimal" hint — shown to the right of the scramble when 最优打乱 is on but
-   this difficulty bin had no optimal-equivalent, so the original WCA scramble is
-   served instead. Small, muted, non-interactive tag. */
-/* Smart-cube scramble check. Same pill as .scramble-nonopt, recoloured by
-   verdict: green = the cube's own state matches this scramble, warning = it
-   doesn't. Only rendered when a cube is connected and has been turned, so its
-   absence is "unknown", never "wrong". */
-.scramble-verify {
-  flex: none;
-  font-size: 11px;
-  line-height: 1;
-  padding: 3px 7px;
-  border-radius: 999px;
-  white-space: nowrap;
-  cursor: default;
-}
-.scramble-verify[data-ok='true'] {
-  background: color-mix(in srgb, var(--signal-success) 16%, transparent);
-  color: var(--signal-success);
-}
-.scramble-verify[data-ok='false'] {
-  background: color-mix(in srgb, var(--signal-warning) 16%, transparent);
-  color: var(--signal-warning);
-}
-/* A correction path is not an error state — the strip is already showing the
-   way out, so this label only has to explain what those moves are. */
-.scramble-verify[data-ok='fix'] {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: var(--accent);
-}
-
-.scramble-nonopt {
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1;
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--muted-foreground) 14%, transparent);
-  color: var(--muted-foreground);
-  white-space: nowrap;
-  cursor: default;
-}
-
-/* Click-to-copy success: a green check pinned to the LAST move. The last move sits
-   in .scramble-copied-tail (position:relative, nowrap) and the check is absolutely
-   positioned at its right edge — fully OUT of the text flow, so it adds neither a
-   wrap opportunity nor width. Verified (playwright): an inline/inline-block check
-   forces an extra line when the last text line is near-full; absolute never does.
-   Sizes with the scramble font; reuses --signal-success (same as analyzer copied). */
-.scramble-copied-tail { position: relative; white-space: nowrap; }
-.scramble-copied-check {
-  position: absolute;
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 0.8em;
-  height: 0.8em;
-  margin-left: 0.25em;
-  color: var(--signal-success);
-}
-
 /* Cube net — centered directly under the digits (Battle-style). Lives inside
    the absolute .timing-surface-sub, so showing/hiding it never shifts the
    digits. */
@@ -830,25 +661,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   justify-content: center;
   gap: 4px;
 }
-/* 手动输入队列:整行让位给全宽文本域(不走 label+control 两列)。 */
-.scramble-src-bar .scramble-src-manual { display: block; flex: 1 1 100%; }
-.scramble-src-manual-input {
-  width: 100%;
-  box-sizing: border-box;
-  resize: vertical;
-  min-height: 3.4em;
-  padding: 8px 10px;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-mono);
-  font-size: 14px;
-  line-height: 1.5;
-}
-.scramble-src-manual-input:focus { outline: none; border-color: var(--accent); }
-.scramble-src-manual-input::placeholder { color: var(--faint-foreground); }
-
 /* ── 停表后就地摊开的复盘 ───────────────────────────────
    在文档流里,不是浮层:它把计时区顶上去而不是盖住它,所以读数、打乱、实时魔方
    照旧在上面,空格照按。
@@ -1063,221 +875,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   background-clip: padding-box;
 }
 
-/* ── Session switcher (top of Times tab) ────────────────── */
-.session-switcher { position: relative; margin-bottom: 10px; }
-.session-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--shell-divider);
-  border-radius: 10px;
-  background: var(--shell-chip);
-  color: var(--foreground);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 120ms, border-color 120ms;
-}
-.session-trigger:hover { background: var(--shell-hover); }
-.session-trigger-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.session-trigger-caret { color: var(--muted-foreground); flex: none; }
-.session-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  z-index: 50;
-  border-radius: 12px;
-  background: var(--popover);
-  color: var(--popover-foreground);
-  border: 1px solid var(--border-default);
-  box-shadow: 0 8px 28px color-mix(in srgb, var(--foreground) 18%, transparent);
-  overflow: hidden;
-}
-.session-menu-list { max-height: 280px; overflow-y: auto; padding: 4px; }
-.session-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  border-radius: 8px;
-  padding: 2px;
-}
-.session-item.active { background: var(--accent-soft); }
-.session-name-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-  min-width: 0;
-  padding: 7px 8px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--foreground);
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
-}
-.session-name-btn:hover { background: var(--shell-hover); }
-.session-item.active .session-name-btn { color: var(--accent); }
-.session-check { color: var(--accent); flex: none; }
-.session-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.session-item-actions { display: flex; align-items: center; gap: 1px; flex: none; }
-.session-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--muted-foreground);
-  cursor: pointer;
-  transition: background 120ms, color 120ms;
-}
-.session-icon-btn:hover { background: var(--shell-hover); color: var(--foreground); }
-.session-icon-btn.danger:hover { color: var(--destructive); }
-.session-icon-btn.confirm { color: var(--signal-success); }
-.session-icon-btn:disabled { opacity: 0.35; cursor: default; }
-.session-icon-btn:disabled:hover { background: transparent; color: var(--muted-foreground); }
-.session-menu-footer { border-top: 1px solid var(--shell-divider); padding: 4px; }
-.session-add-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 10px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--accent);
-  font-size: 13px;
-  cursor: pointer;
-}
-.session-add-btn:hover { background: var(--shell-hover); }
-.session-rename {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  width: 100%;
-  padding: 2px;
-}
-.session-rename-input-wrap { position: relative; flex: 1; min-width: 0; }
-.session-rename-input-wrap .session-rename-input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 6px 28px 6px 8px;
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  background: var(--background);
-  color: var(--foreground);
-  font-size: 13px;
-  font-family: inherit;
-}
-.session-rename-input-wrap .session-rename-input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
-/* ── Time-list quick-action menu (right-click / long-press) ─ */
-.row-quick-menu {
-  position: fixed;
-  z-index: 90;
-  min-width: 180px;
-  padding: 4px;
-  border-radius: 10px;
-  background: var(--popover);
-  color: var(--popover-foreground);
-  border: 1px solid var(--border-default);
-  box-shadow: 0 8px 28px color-mix(in srgb, var(--foreground) 22%, transparent);
-}
-.row-quick-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 9px 10px;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--foreground);
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
-}
-.row-quick-item:hover { background: var(--shell-hover); }
-.row-quick-item.active { color: var(--accent); }
-.row-quick-item.active::after { content: ''; }
-.row-quick-item.danger { color: var(--destructive); }
-.row-quick-item svg { flex: none; color: var(--muted-foreground); }
-.row-quick-item.active svg { color: var(--accent); }
-.row-quick-item.danger svg { color: var(--destructive); }
-.row-quick-glyph {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--muted-foreground);
-  flex: none;
-}
-.row-quick-item.active .row-quick-glyph { color: var(--accent); }
-.row-quick-sep {
-  height: 1px;
-  margin: 4px 6px;
-  background: var(--shell-divider);
-}
-
-/* Mobile: bottom action-sheet variant. */
-.row-quick-sheet-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  background: color-mix(in srgb, var(--foreground) 32%, transparent);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-/* 这个上滑还留着 —— 快捷操作条真的是从屏幕底下升上来的一小条(见 .row-quick-sheet)。 */
-@keyframes shell-sheet-up {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
-}
-.row-quick-sheet {
-  width: 100%;
-  padding: 6px 8px calc(10px + env(safe-area-inset-bottom));
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  background: var(--card);
-  color: var(--card-foreground);
-  border-top: 1px solid var(--border-default);
-  box-shadow: 0 -8px 28px color-mix(in srgb, var(--foreground) 20%, transparent);
-  animation: shell-sheet-up 200ms ease;
-}
-.row-quick-sheet-head {
-  padding: 12px 12px 8px;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--muted-foreground);
-  border-bottom: 1px solid var(--shell-divider);
-  margin-bottom: 4px;
-}
-.row-quick-sheet .row-quick-item { padding: 13px 12px; font-size: 15px; }
-.row-quick-sheet .row-quick-sep { margin: 4px 8px; }
-@media (prefers-reduced-motion: reduce) {
-  .row-quick-sheet { animation: none; }
-}
-
 /* Chart tab */
 .shell-chart-tab { display: flex; flex-direction: column; gap: 12px; }
 .shell-chart-switch { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -1333,36 +930,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   .shell-topbar-right .tb-btn { width: 30px; height: 30px; }
   .timing-surface-scramble { top: 8px; }
 }
-.shell-info-toast {
-  position: fixed;
-  left: 50%;
-  /* 底部导航条撤掉后这里没有东西要让,贴近底边即可(仍留出安全区)。 */
-  bottom: calc(20px + env(safe-area-inset-bottom));
-  transform: translateX(-50%);
-  z-index: 70;
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: var(--popover);
-  color: var(--popover-foreground);
-  border: 1px solid var(--border-default);
-  box-shadow: 0 4px 18px color-mix(in srgb, var(--foreground) 18%, transparent);
-  font-size: 13px;
-}
-.shell-info-toast .shell-info-toast-btn {
-  border: 0;
-  background: transparent;
-  color: var(--accent);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-@media (prefers-reduced-motion: reduce) {
-  .row-quick-sheet { animation: none; }
-}
-
 /* tb-btn used in topbar. */
 .shell-topbar .tb-btn {
   display: inline-flex;
@@ -1438,8 +1005,8 @@ body:has(.timer-shell .shell-panel--sheet) .clawd-deskpet,
 /* 解法提示浮层 portal 到 body(不在 .timer-shell 里),所以这条不带 .timer-shell 前缀。 */
 body:has(.solver-sheet) .clawd-deskpet,
 body:has(.timer-shell .shell-penalty-sheet) .clawd-deskpet,
-body:has(.timer-shell .row-quick-sheet-backdrop) .clawd-deskpet,
-body:has(.timer-shell .row-quick-menu) .clawd-deskpet,
+body:has(.timer-history-quick-backdrop) .clawd-deskpet,
+body:has(.timer-history-quick-popup) .clawd-deskpet,
 body:has(.timer-shell .pp-popup) .clawd-deskpet,
 body:has(.battle-container .settings-overlay.visible) .clawd-deskpet,
 body:has(.battle-container .history-overlay.visible) .clawd-deskpet,

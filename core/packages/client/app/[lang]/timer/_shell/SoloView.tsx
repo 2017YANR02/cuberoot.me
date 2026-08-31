@@ -20,13 +20,10 @@ import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 'nuqs';
 import {
-  Trash2, Settings as SettingsIcon, Maximize2, Minimize2,
-  BarChart3, Plus, Wrench, ListPlus, Printer,
-  AlertTriangle, Target, Crosshair, Link2, Globe,
-  Brain, X, Check, CheckCircle2, Footprints, Repeat,
+  Settings as SettingsIcon,
+  AlertTriangle, Target,
+  X, CheckCircle2, Repeat,
 } from 'lucide-react';
-import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
-import { CompactSelect } from '@/components/CompactSelect';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { petReact } from '@/lib/deskpet';
@@ -39,12 +36,58 @@ import MoreMenu, { type MoreMenuItem } from '../_components/MoreMenu';
 import { syncLangToUrl } from '@/i18n/i18n-client';
 
 import { generateScramble, registerScramble } from '../_lib/scramble';
-import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, isWcaCompUnindexed, probeCompCoverage, getCompCoverage, wcaEventId, wcaMetaFor, wcaPoolProgress, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
+import {
+  peekWcaRow,
+  nextWcaRow,
+  prefetchWca,
+  hasWcaSource,
+  isWcaSourceEmpty,
+  isWcaCompUnindexed,
+  probeCompCoverage,
+  getCompCoverage,
+  wcaEventId,
+  wcaMetaFor,
+  wcaMetaForSlot,
+  wcaPoolProgress,
+  type WcaDispensedScramble,
+  type WcaSourceSpec,
+} from '../_lib/scramble/wca_pool';
 import { takeScramble } from '../_lib/scramble/scramble_pool';
 import { preScrambleFor } from '../_lib/scramble/pre_scramble';
 import { applyOrientationPrefix } from '@/lib/cube-orientation';
-import { cstimer222Spec, isCube222StateType, use222Mode, use222Type } from '@/lib/scramble-222-mode';
+import { use222Mode, use222Type } from '@/lib/scramble-222-mode';
+import {
+  isCube222StateType,
+  resolveTimerWcaSourceCore,
+  stepPuzzleOf,
+  timerWcaDifficultyFilter,
+  timerWcaDifficultyIdentity,
+  timerWcaOptimalRequested,
+  timerWcaSourceIdentity,
+  TIMER_MORE_ACTION_COPY,
+  timerClearCurrentEventConfirmation,
+  timerCanHandleAttemptPress,
+  timerCanStartAttempt,
+  timerEventSupportsDrill,
+  timerCanUseGestureWheel,
+  timerGestureActionAt,
+  timerGestureActionStates,
+  formatTimerTimingDisplay,
+  timerShouldStopFromExternalPointer,
+  timerPrintScrambleSource,
+  timerScrambleAllowsEmptySlot,
+  timerTracksTrainerCase,
+  usesStepsIndex,
+  visibleTimerMoreActions,
+  type TimerGestureActionId,
+  type TimerNon222StepPuzzle,
+} from '@cuberoot/shared/timer';
+import type { Cube222SpecialType } from '@cuberoot/puzzle-solvers/cube222';
 import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
+import {
+  nextWebNon222ByStepsScramble,
+  takeWebNon222ByStepsScramble,
+} from '../_lib/scramble/non222-steps-pool';
 import { trainerSpecOf, trainerSig } from '../_lib/scramble/trainer-source';
 import { aliasTrainerMeta, peekTrainer, awaitTrainer, prefetchTrainer, releaseTrainer, retryTrainer } from '../_lib/scramble/trainer_pool';
 import {
@@ -62,7 +105,6 @@ import { Flag } from '@/components/Flag';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
-import { usesStepsIndex, variantDataRef } from '@/lib/scramble-variants';
 import { useAuthStore } from '@/lib/auth-store';
 import { cloudOptimalScramble } from '@/lib/cloud-optimal-scramble';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
@@ -71,20 +113,38 @@ import { fetchMarks, addMark, markKey, type ScrambleMark } from '../_lib/marks';
 import { getLastPickedCase, type TrainerKind } from '../_lib/scramble/training';
 import { warmup333, randomState333, randomState333Sync } from '../_lib/scramble/kociemba/random_state';
 import { useTimer, type TimerPhase } from '../_shared/useTimer';
-import { formatInspectionDisplay, inspectionPenalty } from '../_shared/inspection';
+import { inspectionPenalty } from '../_shared/inspection';
 import { formatMs, bestSingle, bestAverageOfN, bestMbldSolve, compareMbld, summarize } from '../_lib/stats';
 import type { EventId, Penalty, Solve } from '../_lib/types';
-import { EVENTS, isBldEvent, toWcaSpelling, fromWcaSpelling } from '../_lib/types';
+import { EVENTS, isBldEvent } from '../_lib/types';
+import {
+  deleteTimerHistorySolve,
+  restoreTimerHistorySolve,
+  timerHistoryMoveTargets,
+  updateTimerHistorySolve,
+} from '../_lib/history';
+import {
+  parseManualScrambleQueue,
+  takeManualScramble,
+  TIMER_EVENT_PICKER_GROUPS,
+  TIMER_REAL_SCRAMBLE_CONFIRMED_EMPTY,
+  TIMER_REAL_SCRAMBLE_TRANSIENT_ERROR,
+  startTimerRealScrambleRetry,
+  timerEventIdFromSelector,
+  timerRealScrambleReady,
+} from '@cuberoot/shared/timer';
 import { stageSegmentsFor } from '../_lib/reconstruct/stage_segments';
 import { shouldAutoRecap } from '../_lib/reconstruct/recap';
 import {
   isNonWcaEvent,
-  nextCstimerScramble,
   nextNonWcaScramble,
-  prefetchCstimerScramble,
   prefetchNonWca,
-  takeCstimerScramble,
 } from '../_lib/scramble/nonwca';
+import {
+  nextCube222SpecialScramble,
+  prefetchCube222SpecialScramble,
+  takeCube222SpecialScramble,
+} from '../_lib/scramble/cube222-special-pool';
 import {
   loadAll, saveAll, makeSolve,
   listSessions, getActiveSessionId, moveSolveToSession,
@@ -103,11 +163,17 @@ import { mirrorForBrand, readDevQuatSource, sensorBasisForBrand, type Quat } fro
 import { GyroRecorder, encodeGyroTrack } from '../_lib/bluetooth/gyro_track';
 import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
 import { hintScramble, type ScrambleHint } from '../_lib/bluetooth/scramble_hint';
-import ScrambleHintText from '../_components/ScrambleHintText';
 import { createFixupRequester } from '../_lib/bluetooth/scramble_fixup';
 import { installFakeCube } from '../_lib/bluetooth/fake_cube';
 import { nxnSizeForEvent } from '../_lib/cube/colors';
-import { DIGIT_OPENS_SOLVE, bindingForEvent, resolveKeymap } from '../_lib/keymap';
+import {
+  resolveKeymap,
+  timerCanSwitchScramble,
+  timerKeyDownDecision,
+  timerKeyboardTargetContext,
+  timerKeyUpDecision,
+  type TimerKeyboardModalState,
+} from '../_lib/keymap';
 import { useAutoReady } from '../_lib/bluetooth/auto_ready';
 import { useBluetoothTimer } from '../_lib/bluetooth/timer';
 import { useStackmat } from '../_lib/stackmat';
@@ -138,15 +204,23 @@ import PracticeHeatmap from '../_components/charts/PracticeHeatmap';
 import { CubePreview } from '../_lib/cube';
 import LiveCubeState from '../_components/LiveCubeState';
 import {
+  GestureWheel,
   SegmentTime,
   TimerDeviceActions,
+  TimerInfoToast,
+  TimerPuzzlePicker,
+  TimerPrintController,
+  TimerScrambleStrip,
+  TimerScrambleSourceSelect,
   TimerStatRail,
   TimerTopbar,
   TimingSurface,
+  browserPrintTransport,
+  useGestureWheel,
+  type TimerPrintControllerHandle,
+  type TimerPuzzlePickerGroup,
 } from '@cuberoot/timer-ui';
-import GestureWheel from '@/components/GestureWheel';
-import { useGestureWheel } from '@/hooks/useGestureWheel';
-import { histBack, histForward, histPush } from '@/lib/scramble-history';
+import { histBack, histForward, histPush } from '@cuberoot/shared/timer';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import { persistItem } from '@/lib/safe-storage';
 import { onIdle } from '@/lib/on-idle';
@@ -154,8 +228,6 @@ import RankBadge from './RankBadge';
 import SessionSwitcher from './SessionSwitcher';
 import { useRankCountry } from '@/app/[lang]/timer/_shared/use-rank-country';
 import { Spinner } from '@/components/Spinner/Spinner';
-import { ALL_EVENT_IDS } from '@/lib/event-constants';
-import { eventDisplayName } from '@/lib/wca-events';
 
 import '../timer.css';
 import '../_components/charts/charts.css';
@@ -188,63 +260,22 @@ const DevFakeCubePanel = dynamic(() => import('../_components/DevFakeCubePanel')
 import './shell.css';
 import { tr } from '@/i18n/tr';
 
-const TRAINER_KINDS = new Set<EventId>(['oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2']);
-
 /** Rolling window for the live TPS readout, in moves. Short enough to react to
  *  a pause or a lockup, long enough not to swing wildly on a single fast pair. */
 const TPS_WINDOW_MOVES = 12;
 
-/** Timer EventIds that map to a real WCA event (drive WcaEventSelector
- *  active state). The rest render via appendEvents. */
-const WCA_SELECTABLE = new Set<string>([
-  '333', '222', '444', '555', '666', '777', '333oh', '333fm',
-  '333bf', 'minx', 'pyram', 'clock', 'skewb', 'sq1', '444bf', '555bf', '333mbf',
-]);
+interface TimerScrambleHistoryEntry {
+  scramble: string;
+  /** Stable occurrence provenance; separate official slots may share text. */
+  wca: WcaDispensedScramble | null;
+}
 
-/** Non-WCA / training events surfaced in the shared picker's "Other" group. */
-const APPEND_EVENTS: ReadonlyArray<{ id: string; iconClass: string; textLabel?: string }> = [
-  { id: '333ni',  iconClass: 'event-333bf' },
-  { id: '333mr',  iconClass: '', textLabel: 'MR' },
-  { id: '666bld', iconClass: '', textLabel: '6BLD' },
-  { id: '777bld', iconClass: '', textLabel: '7BLD' },
-  // magic / mmagic render in the main grid (they're in ALL_EVENT_IDS with
-  // proper labels) — keeping them here too would duplicate under onlyAvailable.
-  { id: 'r3',     iconClass: '', textLabel: 'R3' },
-  { id: 'r4',     iconClass: '', textLabel: 'R4' },
-  { id: 'r5',     iconClass: '', textLabel: 'R5' },
-  { id: 'cross',  iconClass: '', textLabel: 'Cross' },
-  { id: 'f2l',    iconClass: '', textLabel: 'F2L' },
-  { id: 'll',     iconClass: '', textLabel: 'LL' },
-  { id: 'oll',    iconClass: '', textLabel: 'OLL' },
-  { id: 'pll',    iconClass: '', textLabel: 'PLL' },
-  { id: 'coll',   iconClass: '', textLabel: 'COLL' },
-  { id: 'cmll',   iconClass: '', textLabel: 'CMLL' },
-  { id: 'zbll',   iconClass: '', textLabel: 'ZBLL' },
-  { id: 'eg1',    iconClass: '', textLabel: 'EG-1' },
-  { id: 'eg2',    iconClass: '', textLabel: 'EG-2' },
-  { id: 'custom', iconClass: '', textLabel: 'Custom' },
-  // 非 WCA puzzle(打乱来自 vendored csTimer 引擎,见 _lib/scramble/nonwca.ts)。
-  // 清单从 EVENTS 的 'nonwca' 组派生 —— 加一个 puzzle 只改 types.ts + nonwca.ts。
-  ...EVENTS.filter(e => e.group === 'nonwca').map(e => ({
-    id: e.id as string,
-    iconClass: e.icon ?? '',
-    textLabel: e.nameEn,
-  })),
-];
-
-const SOLO_WCA_PICKER_IDS = ALL_EVENT_IDS.filter((id) =>
-  WCA_SELECTABLE.has(id) || id === 'magic' || id === 'mmagic');
-
-const timerEventName = (id: string, isZh: boolean): string => {
-  const info = EVENTS.find((item) => item.id === id || toWcaSpelling(item.id) === id);
-  return info ? [info.nameEn, info.nameZh][Number(isZh)] : eventDisplayName(id, isZh);
-};
-
-/** Map a timer EventId -> the id the WcaEventSelector renders as active, and
- *  back. Both directions come from the shared table in _lib/types.ts (the same
- *  one the battle engine's puzzle ids are derived from). */
-const eventToSelectorId = toWcaSpelling;
-const selectorIdToEvent = fromWcaSpelling;
+function timerScrambleHistoryEntry(
+  scramble: string,
+  wca: WcaDispensedScramble | null = null,
+): TimerScrambleHistoryEntry {
+  return { scramble, wca };
+}
 
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState<boolean>(() =>
@@ -305,6 +336,7 @@ function submitTimerTrainingEvidence(
 export default function SoloView({ playersControl, presenceControl, onPresenceChange }: SoloViewProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  const printControllerRef = useRef<TimerPrintControllerHandle>(null);
   const settings = useSettings();
   const authUser = useAuthStore((st) => st.user);
   const rankCountry = useRankCountry();
@@ -399,6 +431,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, [event, reloadActiveSession, setEvent, settings.autoEventForSession]);
 
   const solves = useMemo(() => byEvent[event] ?? [], [byEvent, event]);
+  const activePrintSessionName = useMemo(() => {
+    const activeSessionId = getActiveSessionId();
+    return listSessions().find((session) => session.id === activeSessionId)?.name;
+  }, [byEvent]);
 
   // ── Kociemba warmup (3x3 random-state) ─────────────────────────
   const [kociembaReady, setKociembaReady] = useState(false);
@@ -419,7 +455,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // ── Drill mode ──────────────────────────────────────────────────
   const [drillTarget, setDrillTarget] = useState<{ type: DrillType; id: string } | null>(null);
   const [drillModalOpen, setDrillModalOpen] = useState(false);
-  const drillAllowed = ['333', '333oh', '333fm', 'oll', 'pll'].includes(event);
+  const drillAllowed = timerEventSupportsDrill(event);
   useEffect(() => {
     if (!drillAllowed && drillTarget) setDrillTarget(null);
   }, [drillAllowed, drillTarget]);
@@ -434,11 +470,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // ref so the (stable-identity) scramble callbacks read the live value; the
   // `sig` string is the *meaningful* identity (excludes compName, which changes
   // per keystroke while typing in the comp picker) used as the reset trigger.
-  // 难度过滤(date 模式)签名:开启且选了步数才生效,变了即重置打乱队列。
-  // merged 也进签名:合并/分开是两个不同的取题池,切换后必须重置队列,否则继续出旧池的题。
-  const wcaDiffSig = settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
-    ? `${settings.wcaDiffVariant}:${settings.wcaDiffStage}:${settings.wcaDiffColors}:${[...settings.wcaDiffSteps].sort((a, b) => a - b).join('.')}${settings.wcaDiffMerged ? ':m' : ''}`
-    : '';
   // 「按步数」WCA 过滤(2×2 / 金字塔):把真实打乱按度量步数筛到 [lo,hi]。与随机来源共用同一组设置。
   const wcaStep = wcaStepFilter(event, settings);
   const wcaStepSig = wcaStep ? `${wcaStep.metric}:${wcaStep.lo}.${wcaStep.hi}` : '';
@@ -448,9 +479,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   useEffect(() => {
     const w = wcaEventId(event);
     // 「整体」/「打乱」不查阶段步数索引 → 该场有没有回填与它们无关,不旁路(见 usesStepsIndex)。
+    const requestedDifficulty = timerWcaDifficultyFilter(w, settings);
     if (settings.scrambleSource !== 'wca' || settings.wcaScrambleMode !== 'comp'
-        || !settings.wcaComp || !settings.wcaDifficultyOn || !w
-        || !usesStepsIndex(settings.wcaDiffVariant)) { setWcaCompUnindexed(false); return; }
+        || !settings.wcaComp || !w || !requestedDifficulty
+        || !usesStepsIndex(requestedDifficulty.variant)) { setWcaCompUnindexed(false); return; }
     const cached = getCompCoverage(settings.wcaComp, w);
     if (cached !== null) { setWcaCompUnindexed(cached === false); return; }
     let cancelled = false;
@@ -469,61 +501,78 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const wca222Type = event === '222' && settings.scrambleSource === 'wca' && !settings.syncSeed
     && isCube222StateType(type222) ? type222 : undefined;
   const wca222TypeSig = wca222Type ?? '';
-  // 随机来源继续让 csTimer 直接生成专项状态；WCA 来源在既有真题池里用同一状态谓词筛选。
-  const special222Spec = useMemo(
-    () => event === '222' && settings.scrambleSource === 'random' && !settings.syncSeed
-      ? cstimer222Spec(type222)
-      : null,
+  // 随机来源的专项状态由 @cuberoot/puzzle-solvers 的同一状态模型生成；Web 只加 Worker 调度层。
+  // WCA 来源继续在既有真题池里用同一个状态谓词筛选，两条路径不会维护两份类型判定。
+  const special222Type = useMemo<Cube222SpecialType | null>(
+    () => {
+      if (event !== '222' || settings.scrambleSource !== 'random' || settings.syncSeed) return null;
+      return type222 === '3gen' || isCube222StateType(type222) ? type222 : null;
+    },
     [event, settings.scrambleSource, settings.syncSeed, type222],
   );
-  const special222SpecRef = useRef(special222Spec);
-  special222SpecRef.current = special222Spec;
-  const special222Sig = special222Spec
-    ? `${special222Spec.key}|${special222Spec.length ?? 0}`
-    : '';
-  const wcaOptimalOn = event === '222' ? mode222 === 'optimal' : settings.wcaUseOptimal;
-  const wcaDiffRef = variantDataRef(settings.wcaDiffVariant, settings.wcaDiffStage);
-  const wcaDiffIsConditionalOnly = wcaDiffRef.variant === 'second_layer';
+  const special222TypeRef = useRef(special222Type);
+  special222TypeRef.current = special222Type;
+  const special222Sig = special222Type ?? '';
+  const mappedWcaEvent = wcaEventId(event);
+  const optimalOverride = event === '222' ? mode222 === 'optimal' : undefined;
+  const wcaDifficulty = timerWcaDifficultyFilter(mappedWcaEvent, settings, {
+    competitionUnindexed: wcaCompUnindexed,
+    suppress: !!wca222Type,
+  });
+  const wcaDifficultySig = timerWcaDifficultyIdentity(mappedWcaEvent, settings, {
+    competitionUnindexed: wcaCompUnindexed,
+    suppress: !!wca222Type,
+  });
+  const wcaOptimalOn = timerWcaOptimalRequested(mappedWcaEvent, settings, {
+    competitionUnindexed: wcaCompUnindexed,
+    optimalOverride,
+    suppressDifficulty: !!wca222Type,
+  });
   const wcaSpec = useMemo<WcaSourceSpec>(() => {
-    const compMissing = settings.wcaScrambleMode === 'comp' && !settings.wcaComp;
+    const source = resolveTimerWcaSourceCore(settings);
     return {
       event,
-      mode: compMissing ? 'date' : settings.wcaScrambleMode,
-      comp: settings.wcaComp,
-      compName: settings.wcaCompName,
-      round: compMissing ? '' : settings.wcaRound,
-      group: compMissing ? '' : settings.wcaGroup,
-      from: compMissing ? '' : settings.wcaDateFrom,
-      to: compMissing ? '' : settings.wcaDateTo,
+      mode: source.mode,
+      comp: source.comp,
+      compName: source.compName,
+      round: source.round,
+      group: source.group,
+      from: source.from,
+      to: source.to,
       optimal: wcaOptimalOn,
       // 难度过滤:未入库的比赛旁路(见 wcaCompUnindexed)。空比赛回退成「全时段随机真题」时仍生效——
       // 难度控件此时照常显示可操作(WcaSourceConfig 只看开关不看有无选中比赛),丢弃会静默出不符条件的
       // 打乱(如选了 0 步十字却拿到普通打乱);date 池服务端 /random 对空 from/to 走飞镖采样带环绕补齐,
       // 稀有档(0 步十字)也能出题。
-      diff: !wca222Type && !wcaDiffIsConditionalOnly && !wcaCompUnindexed && settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
-        ? {
-          variant: wcaDiffRef.variant, stage: wcaDiffRef.stage,
-          colors: settings.wcaDiffColors, steps: settings.wcaDiffSteps,
-          merged: settings.wcaDiffMerged,
-        }
-        : undefined,
+      diff: wcaDifficulty ?? undefined,
       // 二阶专项与「按步数」互斥:隐藏的旧步数偏好不能继续叠加过滤。
       stepFilter: wca222Type ? undefined : wcaStep ?? undefined,
       typeFilter: wca222Type,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, wcaOptimalOn, settings.wcaDifficultyOn, wcaDiffRef.variant, wcaDiffRef.stage, settings.wcaDiffColors, settings.wcaDiffSteps, settings.wcaDiffMerged, wcaStepSig, wca222TypeSig, wcaCompUnindexed]);
+  }, [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, wcaOptimalOn, wcaDifficultySig, wcaStepSig, wca222TypeSig]);
   const wcaSpecRef = useRef(wcaSpec);
   wcaSpecRef.current = wcaSpec;
+  const sharedWcaSourceSig = timerWcaSourceIdentity(event, mappedWcaEvent, settings, {
+    competitionUnindexed: wcaCompUnindexed,
+    optimalOverride,
+    suppressDifficulty: !!wca222Type,
+  });
   const wcaSourceSig = settings.scrambleSource === 'wca'
-    ? `${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}|${event}|${wcaDiffSig}|${wcaStepSig}|${wca222TypeSig}|${wcaCompUnindexed ? 'U' : ''}|${wcaOptimalOn ? 'O' : ''}`
+    ? `${sharedWcaSourceSig ?? 'unmapped'}|${wcaStepSig}|${wca222TypeSig}`
     : 'random';
   // 按步数生成签名:随机来源一律生效；非 WCA 项目即便全局来源仍记着「真题」也只能本地生成，
   // 因此同样要让难度变化重置打乱队列。WCA 项目的真题来源由 wcaStepSig 负责。
-  const genStepsSig = !special222Spec && (settings.scrambleSource === 'random'
+  const genStepsSig = !special222Type && (settings.scrambleSource === 'random'
     || (settings.scrambleSource === 'wca' && !wcaEventId(event)))
-    ? genByStepsSig(event, settings)
+    ? genByStepsSig(event, settings, mode222)
     : '';
+  const stepPuzzle = stepPuzzleOf(event);
+  const non222ByStepsEvent: TimerNon222StepPuzzle | null = genStepsSig
+    && stepPuzzle
+    && stepPuzzle !== '222'
+    ? stepPuzzle
+    : null;
   // 随机来源的「难度」(3×3 族):按所选阶段的最优步数直接生成状态(lib/cross-trainer)。
   // 与真题难度筛互斥 —— 那边筛真题,这边生成,二者只按当前来源取其一。
   const trainerSpec = settings.scrambleSource === 'random' ? trainerSpecOf(event, settings) : null;
@@ -574,7 +623,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 手动输入队列:每行一条打乱(去空行);source==='manual' 时按游标顺序取用(走完循环回队首),
   // ←/→ 仍走 scrambleHist 历史。队列内容变了即重置打乱历史(经 genScramble 身份变化)+ 游标。
   const manualQueue = useMemo(
-    () => settings.manualScrambles.split('\n').map((l) => l.trim()).filter(Boolean),
+    () => parseManualScrambleQueue(settings.manualScrambles),
     [settings.manualScrambles],
   );
   const manualQueueRef = useRef(manualQueue);
@@ -597,65 +646,83 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     return (p === 'idle' || p === 'stopped' || p === 'inspecting') && !getSettings().syncSeed;
   }, []);
 
-  const genScramble = useCallback((): string => {
+  const genScramble = useCallback((): TimerScrambleHistoryEntry => {
     // Manual queue: walk the user-typed lines in order, wrapping at the end.
     // Empty queue → '' placeholder (the strip shows a "paste scrambles" hint).
     if (settings.scrambleSource === 'manual') {
-      const q = manualQueueRef.current;
-      if (q.length === 0) return '';
-      const s = q[manualCursorRef.current % q.length];
-      manualCursorRef.current += 1;
-      return s;
+      const taken = takeManualScramble(manualQueueRef.current, manualCursorRef.current);
+      manualCursorRef.current = taken.nextCursor;
+      return timerScrambleHistoryEntry(taken.scramble);
     }
     // Buffered async path: a ready optimal scramble is instant; '' is filled by
     // the effect below while the pool keeps the next three states warm.
     if (randomOptimalRequested) {
       const source = randomOptimalSourceRef.current;
-      return source ? peekOptimal333(source) : '';
+      return timerScrambleHistoryEntry(source ? peekOptimal333(source) : '');
     }
     if (drillTarget && drillAllowed) {
       const ds = generateDrillScramble(drillTarget.type, drillTarget.id);
-      if (ds) return ds.scramble;
+      if (ds) return timerScrambleHistoryEntry(ds.scramble);
     }
     // WCA real-scramble mode: take from the pool synchronously when available;
     // '' is a loading placeholder filled async by the effect below.
     if (settings.scrambleSource === 'wca' && hasWcaSource(wcaSpecRef.current)) {
-      return peekWca(wcaSpecRef.current) ?? '';
+      const row = peekWcaRow(wcaSpecRef.current);
+      return timerScrambleHistoryEntry(row?.scramble ?? '', row);
     }
     // Local generation: serve from the background buffer (instant), except in
     // deterministic seeded-sync mode where consumption order must stay exact.
     const s = getSettings();
-    if (s.syncSeed) return generateScramble(event);
-    // 二阶专项类型复用 vendored csTimer worker 与统一队列。目标条件已由对应 scrambler 保证,
+    if (s.syncSeed) return timerScrambleHistoryEntry(generateScramble(event));
+    // 二阶专项类型复用 runtime-neutral provider 与 Web Worker 队列。目标条件由共享状态谓词保证,
     // 因此它优先于普通难度 / 按步数链；空串只表示 worker 尚未返回,由下方 effect 补位。
-    const special = special222SpecRef.current;
-    if (special) return takeCstimerScramble(special);
+    const special = special222TypeRef.current;
+    if (special) return timerScrambleHistoryEntry(takeCube222SpecialScramble(special));
     // 「按难度生成」(3×3 族):状态在 worker 里按阶段最优步数采样,再由 min2phase 转成打乱 ——
     // 同样是异步的,队列干了就先出 '',由下面的 effect 补上(期间转圈)。
-    if (trainerSpecRef.current) return peekTrainer(trainerSpecRef.current);
+    if (trainerSpecRef.current) return timerScrambleHistoryEntry(peekTrainer(trainerSpecRef.current));
     // 「按步数生成」(2×2 / 金字塔 / 斜转 / 枫叶 / 齿轮):从完整状态空间均匀采样、
     // 按所选度量最优步数生成(非案例库)。必须先于 non-WCA worker 分支,否则后两项会绕过难度。
     // 度量+区间进 pool key,改设置即换 buffer;拒绝采样 + IDA* 在后台 idle 生成,不阻塞计时。
-    const byStepsScr = genByStepsScramble(event, s);
-    if (byStepsScr) return takeScramble(byStepsScr.key, byStepsScr.gen, canGenScramble);
+    if (non222ByStepsEvent) {
+      return timerScrambleHistoryEntry(takeWebNon222ByStepsScramble(non222ByStepsEvent, s));
+    }
+    const byStepsScr = genByStepsScramble(event, s, mode222);
+    if (byStepsScr) return timerScrambleHistoryEntry(
+      takeScramble(byStepsScr.key, byStepsScr.gen, canGenScramble),
+    );
     // 其余非 WCA puzzle:打乱在 csTimer Worker 里算,nonwca.ts 自带队列。别再套一层
     // scramble_pool —— 那会把「还在生成」的 '' 也缓存进 buffer。'' 由下面的 effect 补。
-    if (isNonWcaEvent(event)) return generateScramble(event);
-    return takeScramble(`${event}|${s.cnMode}|${event === '222' ? mode222 : ''}`, () => generateScramble(event), canGenScramble);
+    if (isNonWcaEvent(event)) return timerScrambleHistoryEntry(generateScramble(event));
+    return timerScrambleHistoryEntry(
+      takeScramble(`${event}|${s.cnMode}|${event === '222' ? mode222 : ''}`, () => generateScramble(event), canGenScramble),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, special222Sig, genStepsSig, trainerSigVal, manualSig, canGenScramble, mode222, randomOptimalRequested, randomOptimalKey]);
+  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, special222Sig, genStepsSig, trainerSigVal, manualSig, canGenScramble, mode222, randomOptimalRequested, randomOptimalKey, non222ByStepsEvent]);
 
-  const [scrambleHist, setScrambleHist] = useState<{ list: string[]; idx: number }>(
+  const [scrambleHist, setScrambleHist] = useState<{ list: TimerScrambleHistoryEntry[]; idx: number }>(
     () => ({ list: [genScramble()], idx: 0 }),
   );
+  // The displayed history belongs to the generator identity that produced its
+  // current context. A source/event/config render happens before the reset
+  // effect below; fail closed during that render instead of allowing the old
+  // non-empty scramble to start under the new settings.
+  const scrambleGeneratorAtHistoryResetRef = useRef(genScramble);
   // Write-through ref so the nav callbacks read the latest history without a
   // stale closure and without re-creating themselves each push.
   const scrambleHistRef = useRef(scrambleHist);
-  const applyScrambleHist = useCallback((next: { list: string[]; idx: number }) => {
+  const cancelArmForScrambleChangeRef = useRef<() => void>(() => {});
+  const applyScrambleHist = useCallback((next: { list: TimerScrambleHistoryEntry[]; idx: number }) => {
+    // A source/config/history change creates a different attempt. Cancel every
+    // pre-run phase first so a later key/pointer release cannot start the new
+    // scramble using the old hold or inspection state.
+    cancelArmForScrambleChangeRef.current();
     scrambleHistRef.current = next;
     setScrambleHist(next);
   }, []);
-  const scramble = scrambleHist.list[scrambleHist.idx] ?? '';
+  const currentScrambleEntry = scrambleHist.list[scrambleHist.idx]
+    ?? timerScrambleHistoryEntry('');
+  const scramble = currentScrambleEntry.scramble;
   // 「预打乱朝向」只进打乱图,不改打乱正文(同 csTimer:正文保持官方口径,图按你手持的朝向画)。
   const previewScramble = applyOrientationPrefix(
     scramble,
@@ -701,14 +768,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       }
       if (status !== 'ready') return;
       const cur = scrambleHistRef.current;
-      if (cur.list[cur.idx] !== '') {
+      if (cur.list[cur.idx]?.scramble !== '') {
         setRandomOptimalLoading(false);
         return;
       }
       const optimal = peekOptimal333(source);
       if (!optimal) return;
       const list = [...cur.list];
-      list[cur.idx] = optimal;
+      list[cur.idx] = timerScrambleHistoryEntry(optimal);
       setRandomOptimalLoading(false);
       applyScrambleHist({ list, idx: cur.idx });
     });
@@ -729,41 +796,82 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       setWcaSourceEmpty(false);
       return;
     }
-    let cancelled = false;
-    let retryTimer = 0;
     setScrambleLoading(true);
     setWcaSourceEmpty(false);
     // Fetch a real scramble; retry transient failures (cold start / slow query /
     // network) with backoff while staying in the loading state — only a *confirmed*
     // empty source (404) shows the notice, and we never substitute a generated one.
-    const attempt = (n: number) => {
-      void nextWca(wcaSpecRef.current).then((real) => {
-        if (cancelled) return;
-        const cur = scrambleHistRef.current;
-        if (cur.list[cur.idx] !== '') { setScrambleLoading(false); return; }
-        if (real) {
-          setScrambleLoading(false);
-          const list = [...cur.list];
-          list[cur.idx] = real;
-          applyScrambleHist({ list, idx: cur.idx });
-        } else if (isWcaSourceEmpty(wcaSpecRef.current)) {
-          setScrambleLoading(false);
-          setWcaSourceEmpty(true); // 确认无真题(端点 404)→ 显式提示,不伪造生成打乱
-        } else if (n < 6) {
-          // 暂态(冷启动 503 / 慢查询 / 网络)→ 保持「加载中」,退避重试,不伪造、不误报空。
-          retryTimer = window.setTimeout(() => attempt(n + 1), Math.min(1000 + n * 1500, 6000));
-        } else {
-          setScrambleLoading(false); // 多次仍失败 → 收起转圈(显示 — ),换打乱 / 改设置可再试
-        }
-      });
-    };
-    attempt(0);
-    return () => { cancelled = true; if (retryTimer) window.clearTimeout(retryTimer); };
+    const sourceSpec = wcaSpecRef.current;
+    const retryRun = startTimerRealScrambleRetry(async () => {
+      const real = await nextWcaRow(sourceSpec);
+      if (real) return timerRealScrambleReady(real);
+      return isWcaSourceEmpty(sourceSpec)
+        ? TIMER_REAL_SCRAMBLE_CONFIRMED_EMPTY
+        : TIMER_REAL_SCRAMBLE_TRANSIENT_ERROR;
+    });
+    void retryRun.result.then((outcome) => {
+      if (outcome.kind === 'cancelled') return;
+      const cur = scrambleHistRef.current;
+      if (cur.list[cur.idx]?.scramble !== '') { setScrambleLoading(false); return; }
+      setScrambleLoading(false);
+      if (outcome.kind === 'ready') {
+        const list = [...cur.list];
+        list[cur.idx] = timerScrambleHistoryEntry(outcome.value.scramble, outcome.value);
+        applyScrambleHist({ list, idx: cur.idx });
+      } else if (outcome.kind === 'confirmed-empty') {
+        // 确认无真题(端点 404)→ 显式提示,不伪造生成打乱。
+        setWcaSourceEmpty(true);
+      }
+      // exhausted = 多次仍失败:收起转圈(显示 — ),换打乱 / 改设置可再试。
+    });
+    return () => retryRun.cancel();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scramble, settings.scrambleSource, wcaSourceSig, applyScrambleHist]);
 
-  // csTimer worker 打乱(二阶专项 / FTO / 二阶五魔 / 齿轮…):与 WCA 真题一样是异步的 ——
-  // 队列干了就先出 '',这里补上；队列身份包含 scrambler key + length,专项之间不会串题。
+  // Exact non-2x2 move-count generation is Worker-only. The history slot owns
+  // only the current semantic identity; an A→B→A switch cancels the stale A
+  // waiter while the shared per-identity queue may still satisfy the new A.
+  const [byStepsLoading, setByStepsLoading] = useState(false);
+  const [byStepsFailed, setByStepsFailed] = useState(false);
+  const [byStepsRetry, setByStepsRetry] = useState(0);
+  useEffect(() => {
+    const requestEvent = non222ByStepsEvent;
+    if (!requestEvent || scramble !== '') {
+      setByStepsLoading(false);
+      setByStepsFailed(false);
+      return;
+    }
+    const requestSignature = genStepsSig;
+    const requestSettings = getSettings();
+    if (genByStepsSig(event, requestSettings, mode222) !== requestSignature) return;
+    const controller = new AbortController();
+    let cancelled = false;
+    setByStepsLoading(true);
+    setByStepsFailed(false);
+    void nextWebNon222ByStepsScramble(requestEvent, requestSettings, controller.signal).then((generated) => {
+      if (cancelled) return;
+      setByStepsLoading(false);
+      if (!generated) {
+        setByStepsFailed(true);
+        return;
+      }
+      if (genByStepsSig(event, getSettings(), mode222) !== requestSignature) return;
+      const cur = scrambleHistRef.current;
+      if (cur.list[cur.idx]?.scramble !== '') return;
+      const list = [...cur.list];
+      list[cur.idx] = timerScrambleHistoryEntry(generated);
+      applyScrambleHist({ list, idx: cur.idx });
+    });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [event, mode222, non222ByStepsEvent, genStepsSig, scramble, byStepsRetry, applyScrambleHist]);
+
+  // 后台 worker 打乱(共享二阶专项 provider / csTimer 的 FTO、二阶五魔等):
+  // 与 WCA 真题一样是异步的 ——
+  // 队列干了就先出 '',这里补上；共享二阶队列按语义 type 隔离,csTimer 队列按 key + length
+  // 隔离,专项之间不会串题。
   // 期间显示转圈(而不是掉进 '—' 或退化成三阶打乱)。队列已有货时只做后台预取,不动当前打乱。
   // 手动输入模式例外:那里的 '' 表示「队列是空的,去粘贴打乱」(strip 有对应提示),
   // 不是「还在生成」—— 塞一条生成打乱进去会把提示吞掉。
@@ -771,29 +879,33 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   useEffect(() => {
     // 枫叶/齿轮启用精确难度后由完整图生成，不再启动 csTimer Worker 补位；尤其 0 步的
     // 恒等打乱也不能被当成「Worker 尚未返回」。
-    const special = special222SpecRef.current;
+    const special = special222TypeRef.current;
     if ((!special && !isNonWcaEvent(event)) || settings.scrambleSource === 'manual' || genStepsSig) {
       setCstimerLoading(false);
       return;
     }
-    if (special) prefetchCstimerScramble(special);
+    if (special) prefetchCube222SpecialScramble(special);
     else prefetchNonWca(event);
     if (scramble !== '') { setCstimerLoading(false); return; }
     let cancelled = false;
+    const waiter = new AbortController();
     setCstimerLoading(true);
     const pending = special
-      ? nextCstimerScramble(special, `222:${type222}`)
-      : nextNonWcaScramble(event);
+      ? nextCube222SpecialScramble(special, waiter.signal)
+      : nextNonWcaScramble(event, waiter.signal);
     void pending.then((real) => {
       if (cancelled) return;
       setCstimerLoading(false);
       const cur = scrambleHistRef.current;
-      if (!real || cur.list[cur.idx] !== '') return;
+      if (!real || cur.list[cur.idx]?.scramble !== '') return;
       const list = [...cur.list];
-      list[cur.idx] = real;
+      list[cur.idx] = timerScrambleHistoryEntry(real);
       applyScrambleHist({ list, idx: cur.idx });
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      waiter.abort();
+    };
   }, [event, scramble, settings.scrambleSource, special222Sig, genStepsSig, type222, applyScrambleHist]);
 
   // 「按难度生成」:状态采样在 worker(冷启建表 0.3~10s),打乱文本由 min2phase 现算 —— 首条要等,
@@ -819,16 +931,30 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       if (status === 'empty' || status === 'rare') { setTrainerMiss(status); return; }
       if (status !== 'ready') return;
       const cur = scrambleHistRef.current;
-      if (cur.list[cur.idx] !== '') return;
+      if (cur.list[cur.idx]?.scramble !== '') return;
       const real = peekTrainer(spec);
       if (!real) return;
       const list = [...cur.list];
-      list[cur.idx] = real;
+      list[cur.idx] = timerScrambleHistoryEntry(real);
       applyScrambleHist({ list, idx: cur.idx });
     });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scramble, trainerSigVal, trainerRetry, applyScrambleHist]);
+
+  const attemptCanStart = timerCanStartAttempt({
+    availability: randomOptimalLoading || scrambleLoading || cstimerLoading
+      || trainerLoading || byStepsLoading
+      ? 'loading'
+      : randomOptimalFailed || byStepsFailed || trainerMiss !== null || wcaSourceEmpty
+        ? 'unavailable'
+        : 'ready',
+    emptyScrambleAllowed: timerScrambleAllowsEmptySlot(event, settings.scrambleSource),
+    scramble,
+    sourceMatches: scrambleGeneratorAtHistoryResetRef.current === genScramble,
+  });
+  const attemptCanStartRef = useRef(attemptCanStart);
+  attemptCanStartRef.current = attemptCanStart;
 
   // Warm the WCA pool ahead of demand (on source change / when mode turns on).
   useEffect(() => {
@@ -848,7 +974,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (settings.scrambleSource !== 'wca') return;
     void loadFlagData().then((v) => setFlagVer((cur) => (v !== cur ? v : cur)));
   }, [settings.scrambleSource]);
-  const wcaSource = settings.scrambleSource === 'wca' && !scrambleLoading ? wcaMetaFor(scramble) : null;
+  const wcaSource = settings.scrambleSource === 'wca' && !scrambleLoading
+    ? wcaMetaFor(currentScrambleEntry.wca ?? scramble)
+    : null;
   // 稀有筛选(如 8 步双色十字,全库仅 2 条)下真题总数是确切已知的(见 wca_pool 的封闭集)——
   // 从第一条起就显示「已练 n/N」,让用户一眼知道池子有多小;练满 N 条后转成「已全部练过」,
   // 明确告知之后是重复出题,免得以为出题坏了。常见档总数未知 → 返回 null,整块不渲染。
@@ -921,7 +1049,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     lastSolveSigRef.current[event] = sig;
     if (prev === undefined || !s || !authUser) return;
     if (s.penalty === 'DNF' || s.penalty === 'DNS') return;
-    const meta = wcaMetaFor(s.scramble);
+    const meta = s.scrambleSource?.kind === 'wca'
+      ? wcaMetaForSlot(s.scrambleSource.identity)
+      : wcaMetaFor(s.scramble);
     if (!meta) return;
     const key = markKey(meta);
     const alreadyMine = marksCache[key]?.marks.some((m) => m.wcaId === myKey);
@@ -938,7 +1068,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [scrambleCopied, setScrambleCopied] = useState(false);
   const copiedTimerRef = useRef<number | null>(null);
   const copyScrambleFlash = useCallback(() => {
-    const s = scrambleHistRef.current.list[scrambleHistRef.current.idx] ?? '';
+    const s = scrambleHistRef.current.list[scrambleHistRef.current.idx]?.scramble ?? '';
     if (!s) return;
     try { void navigator.clipboard.writeText(formatScrambleForEvent(event, s)); } catch { /* ignore */ }
     setScrambleCopied(true);
@@ -958,7 +1088,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const useScramble = useCallback((text: string) => {
     const t = (text ?? '').trim();
     if (!t) return;
-    applyScrambleHist(histPush(scrambleHistRef.current, t));
+    applyScrambleHist(histPush(scrambleHistRef.current, timerScrambleHistoryEntry(t)));
   }, [applyScrambleHist]);
 
   const prevScramble = useCallback(() => {
@@ -971,6 +1101,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const scrambleResetRef = useRef(true);
   useEffect(() => {
     if (scrambleResetRef.current) { scrambleResetRef.current = false; return; }
+    scrambleGeneratorAtHistoryResetRef.current = genScramble;
     applyScrambleHist({ list: [genScramble()], idx: 0 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [genScramble, kociembaReady]);
@@ -978,10 +1109,16 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // ── Solve recording ─────────────────────────────────────────────
   const [lastPenalty, setLastPenalty] = useState<Penalty | null>(null);
   // Generic undo/info toast for swipe-delete etc.
-  const [infoToast, setInfoToast] = useState<{ msg: string; undo?: () => void } | null>(null);
+  type InfoToastPayload = { msg: string; undo?: () => void };
+  const infoToastSequenceRef = useRef(0);
+  const [infoToast, setInfoToastState] = useState<(InfoToastPayload & { sequence: number }) | null>(null);
+  const setInfoToast = useCallback((next: InfoToastPayload | null) => {
+    setInfoToastState(next ? { ...next, sequence: ++infoToastSequenceRef.current } : null);
+  }, []);
   const byEventRef = useRef(byEvent);
   useEffect(() => { byEventRef.current = byEvent; }, [byEvent]);
   const scrambleAtStartRef = useRef<string>(scramble);
+  const wcaAtStartRef = useRef<WcaDispensedScramble | null>(currentScrambleEntry.wca);
   const eventAtStartRef = useRef<EventId>(event);
   const caseIdAtStartRef = useRef<string | null>(null);
   const movesRef = useRef<Array<{ m: string; ts: number }>>([]);
@@ -1012,6 +1149,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       event: ev,
       penalty: res.autoPenalty,
     });
+    if (wcaAtStartRef.current?.slot) {
+      solve.scrambleSource = { kind: 'wca', identity: wcaAtStartRef.current.slot };
+    }
     if (stages) solve.stages = stages;
     if (bld) solve.bld = bld;
     if (caseIdAtStartRef.current) solve.caseId = caseIdAtStartRef.current;
@@ -1069,6 +1209,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, [nextScramble, settings.multiStage, settings.bldMemo, settings.precision, settings.autoRecap]);
 
   const timer = useTimer(recordSolve);
+  cancelArmForScrambleChangeRef.current = timer.cancelArm;
 
   const multiStage = useMultiStage({ phase: timer.phase, displayMs: timer.displayMs, enabled: multiStageActive });
   useEffect(() => { multiStageRef.current = multiStage; }, [multiStage]);
@@ -1085,8 +1226,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (timer.phase !== 'running') {
       cubeStartedRef.current = false;
       scrambleAtStartRef.current = scramble;
+      wcaAtStartRef.current = currentScrambleEntry.wca;
       eventAtStartRef.current = event;
-      caseIdAtStartRef.current = TRAINER_KINDS.has(event)
+      caseIdAtStartRef.current = timerTracksTrainerCase(event)
         ? getLastPickedCase(event as TrainerKind)
         : null;
       const bt = bluetoothCubeRef.current?.status;
@@ -1099,11 +1241,28 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       gyroRecRef.current.reset();
       gyroStartRef.current = solveStartTsRef.current;
     }
-  }, [timer.phase, scramble, event]);
+  }, [timer.phase, scramble, event, currentScrambleEntry.wca]);
 
   // ── Bluetooth smart cube ────────────────────────────────────────
   const phaseSnapshotRef = useRef(timer.phase);
   useEffect(() => { phaseSnapshotRef.current = timer.phase; }, [timer.phase]);
+  const onPressDown = useCallback((withWarmup = false): boolean => {
+    if (!timerCanHandleAttemptPress(
+      phaseSnapshotRef.current,
+      attemptCanStartRef.current,
+    )) return false;
+    if (withWarmup) warmupSound();
+    timer.onPressDown();
+    return true;
+  }, [timer.onPressDown]);
+  const onPressUp = useCallback((): boolean => {
+    if (!attemptCanStartRef.current && phaseSnapshotRef.current !== 'running') {
+      timer.cancelArm();
+      return false;
+    }
+    timer.onPressUp();
+    return true;
+  }, [timer.cancelArm, timer.onPressUp]);
   const consumeFacesRef = useRef<(faces: import('../_lib/cube/state').CubeFaces) => void>(() => {});
   useEffect(() => { consumeFacesRef.current = multiStage.consumeFromState; }, [multiStage.consumeFromState]);
   const bluetoothSubscribersRef = useRef<Set<(m: string, ts: number) => void>>(new Set());
@@ -1149,6 +1308,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const startFromCubeRef = useRef<(ts: number) => void>(() => {});
   startFromCubeRef.current = (ts: number) => {
     if (!getSettings().timingEnabled) return; // 练习模式:换题不计时
+    if (!attemptCanStartRef.current) return;
     // The phase check lives inside startFromCube, against the timer's own
     // synchronous phase — two turns from one BLE batch must not start twice.
     if (!timer.startFromCube(ts)) return;
@@ -1260,8 +1420,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       if (!getSettings().timingEnabled) return; // 练习模式不自动预备计时
       const ph = timer.phase;
       if (ph === 'idle' || ph === 'inspecting' || ph === 'stopped') {
-        warmupSound();
-        timer.onPressDown();
+        onPressDown(true);
       }
     },
     onMoveSubscriber: (cb) => {
@@ -1522,8 +1681,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (s.bluetoothAutoReady !== 'scrambled' || !s.timingEnabled) return;
     const ph = phaseSnapshotRef.current;
     if (ph !== 'idle' && ph !== 'stopped') return;
-    warmupSound();
-    timer.onPressDown();
+    onPressDown(true);
   };
 
   /** Ask the solver for a path from where the cube is to `target`, then hint. */
@@ -1702,7 +1860,17 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     submitTimerTrainingEvidence(trainingDestinationRef.current, solve);
     nextScramble();
   };
-  const stackmat = useStackmat({ onStop: (ms) => externalTimeRecordRef.current?.(ms) });
+  const stackmatAttemptRef = useRef<ExternalAttempt | null>(null);
+  const stackmat = useStackmat({
+    onStart: () => {
+      stackmatAttemptRef.current = attemptCanStartRef.current ? { event, scramble } : null;
+    },
+    onStop: (ms) => {
+      const attempt = stackmatAttemptRef.current;
+      stackmatAttemptRef.current = null;
+      if (attempt) externalTimeRecordRef.current?.(ms, attempt);
+    },
+  });
 
   const [bluetoothTimerMacPrompt, setBluetoothTimerMacPrompt] = useState<{
     deviceName: string;
@@ -1737,9 +1905,19 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       if (timerEvent.state === 'HANDS_ON'
         || timerEvent.state === 'GET_SET'
         || timerEvent.state === 'INSPECTION') {
-        bluetoothTimerAttemptRef.current ??= { event, scramble };
+        if (attemptCanStartRef.current) {
+          bluetoothTimerAttemptRef.current ??= { event, scramble };
+        } else {
+          bluetoothTimerAttemptRef.current = null;
+        }
       }
       if (timerEvent.state === 'RUNNING') {
+        if (!attemptCanStartRef.current) {
+          bluetoothTimerAttemptRef.current = null;
+          timer.reset();
+          phaseSnapshotRef.current = 'idle';
+          return;
+        }
         bluetoothTimerAttemptRef.current ??= { event, scramble };
         // QiYi reports the device reading when RUNNING begins, then csTimer
         // advances the browser display locally until the exact STOPPED frame.
@@ -1749,7 +1927,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       }
     },
     onStop: (ms, timerEvent) => {
-      const attempt = bluetoothTimerAttemptRef.current ?? { event, scramble };
+      const attempt = bluetoothTimerAttemptRef.current;
+      if (phaseSnapshotRef.current !== 'running' || attempt === null) return;
       eventAtStartRef.current = attempt.event;
       scrambleAtStartRef.current = attempt.scramble;
       timer.stopExternal(ms, timerEvent.inspectTime);
@@ -1782,17 +1961,16 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   useEffect(() => () => setMetronomeHold('timer', false), []);
 
   // ── Press input wiring (pointer + mouse fallback) ───────────────
-  const { onPressDown, onPressUp, reset, cancelArm } = timer;
+  const { reset, cancelArm, cancelPress } = timer;
   const solvesRef = useRef(solves);
   useEffect(() => { solvesRef.current = solves; }, [solves]);
 
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const digitsRef = useRef<HTMLDivElement | null>(null);
 
-  // Stable ref to the 8 radial-gesture actions, indexed by direction
-  // (0=right, then counter-clockwise: 1=up-right … 7=down-right). Populated
-  // below once the solve mutators exist.
-  const gestureActionsRef = useRef<Array<() => void>>([]);
+  // Stable host effects keyed by the shared eight-direction action IDs. The
+  // direction order and enabled rules live in @cuberoot/shared/timer.
+  const gestureActionsRef = useRef<Partial<Record<TimerGestureActionId, () => void>>>({});
 
   // Radial press-and-drag dial (idle/stopped) — shared with the /alg trainer run page via the
   // useGestureWheel hook. A plain hold still times; only a drag fires a slot.
@@ -1800,17 +1978,24 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     surfaceRef,
     canGesture: () => {
       const ph = phaseSnapshotRef.current;
-      return ph === 'idle' || ph === 'stopped';
+      return timerCanUseGestureWheel(ph);
     },
     enabledFor: () => {
-      const hasLast = solvesRef.current.length > 0;
-      const canPrev = scrambleHistRef.current.idx > 0;
-      // index: 0 next · 1 OK · 2 +2 · 3 DNF · 4 prev · 5 note · 6 del · 7 copy
-      return [true, hasLast, hasLast, hasLast, canPrev, hasLast, hasLast, true];
+      return timerGestureActionStates({
+        hasLastSolve: solvesRef.current.length > 0,
+        hasPreviousScramble: scrambleHistRef.current.idx > 0,
+      }).map((action) => action.enabled);
     },
-    fireAction: (i) => gestureActionsRef.current[i]?.(),
+    fireAction: (direction) => {
+      const action = timerGestureActionAt(direction);
+      if (action) gestureActionsRef.current[action.id]?.();
+    },
     // 计时关(练习模式):按下不预备,松开(未拖动)直接下一个打乱,不计时不记成绩。同 /alg 训练器。
-    onPressDown: () => { if (!getSettings().timingEnabled) return; warmupSound(); onPressDown(); },
+    onPressDown: () => {
+      if (!getSettings().timingEnabled) return;
+      onPressDown(true);
+    },
+    onPressCancel: () => cancelPress(),
     onPressUp: () => { if (!getSettings().timingEnabled) { nextScramble(); return; } onPressUp(); },
     onArmCancel: () => cancelArm(),
     ignoreTarget: shouldIgnoreTimerTarget,
@@ -1826,17 +2011,21 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // ── Solve mutators ──────────────────────────────────────────────
   const updateSolve = useCallback((solveId: string, patch: Partial<Solve>) => {
     if (patch.penalty === 'DNF' || patch.penalty === 'DNS') petReact('error');
-    setByEvent(prev => ({
-      ...prev,
-      [event]: (prev[event] ?? []).map(s => s.id === solveId ? { ...s, ...patch } : s),
-    }));
+    setByEvent(prev => {
+      const result = updateTimerHistorySolve(prev[event] ?? [], solveId, patch);
+      return result.changed
+        ? { ...prev, [event]: result.solves as Solve[] }
+        : prev;
+    });
   }, [event]);
 
   const deleteSolve = useCallback((solveId: string) => {
-    setByEvent(prev => ({
-      ...prev,
-      [event]: (prev[event] ?? []).filter(s => s.id !== solveId),
-    }));
+    setByEvent(prev => {
+      const result = deleteTimerHistorySolve(prev[event] ?? [], solveId);
+      return result.changed
+        ? { ...prev, [event]: result.solves as Solve[] }
+        : prev;
+    });
   }, [event]);
 
   const changeLastPenalty = useCallback((p: Penalty) => {
@@ -1858,7 +2047,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       msg: tr({ zh: '已删除最后一次成绩', en: 'Deleted last solve'
     }),
       undo: () => {
-        setByEvent(prev => ({ ...prev, [ev]: [...(prev[ev] ?? []), last] }));
+        setByEvent(prev => {
+          const result = restoreTimerHistorySolve(prev[ev] ?? [], last);
+          return result.changed ? { ...prev, [ev]: result.solves as Solve[] } : prev;
+        });
         setLastPenalty(last.penalty);
       },
     });
@@ -1867,10 +2059,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const clearAll = useCallback(() => {
     if (!solves.length) return;
     const evName = EVENTS.find(e => e.id === event);
-    if (!confirm((isZh
-              ? `清空当前项目「${evName?.nameZh}」的所有 ${solves.length} 次成绩？`
-              : `Clear all ${solves.length} solves of "${evName?.nameEn}"?`),
-    )) return;
+    const name = tr({ en: evName?.nameEn ?? event, zh: evName?.nameZh ?? event });
+    if (!confirm(tr(timerClearCurrentEventConfirmation(name, solves.length)))) return;
     setByEvent(prev => ({ ...prev, [event]: [] }));
     setLastPenalty(null);
   }, [event, isZh, solves.length]);
@@ -1924,20 +2114,19 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     setModalSolve({ s: last, idx: cur.length - 1 });
   }, []);
 
-  // Wire the 8 radial-gesture directions (0=right, then counter-clockwise).
-  // Each action is a no-op when its target is absent, so disabled directions
-  // (greyed on the wheel) are also safe to fire.
+  // Wire the shared gesture IDs to Web effects. Availability is resolved by
+  // timerGestureActionStates above; this map contains no placeholder effects.
   useEffect(() => {
-    gestureActionsRef.current = [
-      nextScramble,                                                  // 0 → next scramble
-      () => changeLastPenalty('ok'),                                 // 1 ↗ OK
-      () => changeLastPenalty(lastPenalty === '+2' ? 'ok' : '+2'),   // 2 ↑ +2
-      () => changeLastPenalty(lastPenalty === 'DNF' ? 'ok' : 'DNF'), // 3 ↖ DNF
-      prevScramble,                                                  // 4 ← prev scramble
-      commentLast,                                                   // 5 ↙ note
-      swipeDeleteLast,                                               // 6 ↓ delete last
-      copyScrambleFlash,                                             // 7 ↘ copy scramble
-    ];
+    gestureActionsRef.current = {
+      'next-scramble': nextScramble,
+      'penalty-ok': () => changeLastPenalty('ok'),
+      'toggle-plus2': () => changeLastPenalty(lastPenalty === '+2' ? 'ok' : '+2'),
+      'toggle-dnf': () => changeLastPenalty(lastPenalty === 'DNF' ? 'ok' : 'DNF'),
+      'prev-scramble': prevScramble,
+      'comment-last': commentLast,
+      'delete-last': swipeDeleteLast,
+      'copy-scramble': copyScrambleFlash,
+    };
   }, [nextScramble, prevScramble, changeLastPenalty, lastPenalty, commentLast, swipeDeleteLast, copyScrambleFlash]);
 
   // ?replay= is a consume-once deep link: decode it into an ephemeral solve, open
@@ -2126,8 +2315,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   useEffect(() => { hintsOnlyRef.current = hintsSheetOpen && !otherModalOpen; }, [hintsSheetOpen, otherModalOpen]);
   // 换题(浮层里的键盘 / 手势共用):计时、预备、观察进行中不换 —— 那会把正在解的题换掉。
   const canSwitchScramble = useCallback(() => {
-    const ph = phaseRef.current;
-    return !(ph === 'running' || ph === 'holding' || ph === 'ready' || ph === 'inspecting');
+    return timerCanSwitchScramble(phaseRef.current);
   }, []);
   const sheetPrevScramble = useCallback(() => { if (canSwitchScramble()) prevScramble(); }, [canSwitchScramble, prevScramble]);
   const sheetNextScramble = useCallback(() => { if (canSwitchScramble()) nextScramble(); }, [canSwitchScramble, nextScramble]);
@@ -2137,104 +2325,99 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const keymapRef = useRef(resolvedKeymap);
   useEffect(() => { keymapRef.current = resolvedKeymap; }, [resolvedKeymap]);
   useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (anyModalOpenRef.current) {
-        // 解法全屏浮层:只放行「上/下一个打乱」这两个动作(见 hintsOnlyRef 处的注释),
-        // 走的是同一份可改键位表,所以用户改过键位在浮层里也照样生效。
-        if (!hintsOnlyRef.current || e.repeat) return;
-        const t = e.target as HTMLElement | null;
-        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
-        const b = bindingForEvent(e);
-        const a = b ? keymapRef.current[b] : undefined;
-        if (a !== 'next-scramble' && a !== 'prev-scramble') return;
-        e.preventDefault();
-        (a === 'prev-scramble' ? sheetPrevScramble : sheetNextScramble)();
-        return;
+    const executeKeyboardDecision = (
+      decision: ReturnType<typeof timerKeyDownDecision>,
+      event: KeyboardEvent,
+      modal: TimerKeyboardModalState,
+    ) => {
+      if (decision.preventDefault) event.preventDefault();
+      if (decision.blurActiveElement && document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
       }
-      const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
-      // Focus inside an always-present in-page control region (解法提示面板 / 打乱来源栏的
-      // selects/buttons) must not arm the timer or fire other shortcuts —— 唯独左右键仍要能
-      // 切上一个/下一个打乱:面板常驻且可竖向滚动,不该把换题键吞给滚动条。原生 <select>
-      // (左右键=切换选项)与计时进行中例外。
-      if (target && target.closest('[data-no-timer]')) {
-        const ph = phaseRef.current;
-        const busy = ph === 'running' || ph === 'holding' || ph === 'ready' || ph === 'inspecting';
-        if (!busy && !e.repeat && target.tagName !== 'SELECT'
-            && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) {
-          e.preventDefault();
-          (e.code === 'ArrowLeft' ? prevScramble : nextScramble)();
-        }
-        return;
-      }
-      // Holding Space auto-repeats keydown; swallow the page-scroll default on
-      // every repeat, but only arm the timer once (first non-repeat keydown).
-      if (e.code === 'Space') {
-        e.preventDefault();
-        if (e.repeat) return;
-        // Settings restores focus to its trigger for keyboard accessibility.
-        // Once Space is claimed by the timer, release that old button focus so
-        // the top-bar control does not retain a keyboard focus ring while timing.
-        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-        // 计时关(练习模式):空格 = 下一个打乱,不预备/不计时。
-        if (!getSettings().timingEnabled) { nextScramble(); return; }
-        warmupSound(); onPressDown(); return;
-      }
-      if (e.repeat) return;
-      if (e.code === 'Escape') { reset(); return; }
-      const ph = phaseRef.current;
-      if (ph === 'running' && multiStageActive) {
-        if (e.code === 'Digit1' && !e.shiftKey && !e.ctrlKey && !e.metaKey) { multiStageRef.current?.markStage('cross'); return; }
-        if (e.code === 'Digit2' && !e.shiftKey && !e.ctrlKey && !e.metaKey) { multiStageRef.current?.markStage('f2l'); return; }
-        if (e.code === 'Digit3' && !e.shiftKey && !e.ctrlKey && !e.metaKey) { multiStageRef.current?.markStage('oll'); return; }
-      }
-      if (ph === 'running' && bldMemoActive && e.code === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault(); bldMemoRef.current?.markMemo(); return;
-      }
-      // 计时进行中按任意键停止(stage 标记 / BLD memo 等功能键已在上面 return)。
-      if (ph === 'running') { e.preventDefault(); onPressDown(); return; }
-      if (ph === 'holding' || ph === 'ready' || ph === 'inspecting') return;
-      // ── Rebindable tail. Everything above this point is fixed: it either
-      //    guards the handler or owns Space/Escape, which must always work.
-      const cur = solvesRef.current;
-      const last = cur[cur.length - 1];
-      const binding = bindingForEvent(e);
-      const action = binding ? keymapRef.current[binding] : undefined;
-      const togglePenalty = (p: Penalty) => {
+
+      const command = decision.command;
+      const currentSolves = solvesRef.current;
+      const last = currentSolves[currentSolves.length - 1];
+      const togglePenalty = (penalty: Penalty) => {
         if (!last) return;
-        const next: Penalty = last.penalty === p ? 'ok' : p;
+        const next: Penalty = last.penalty === penalty ? 'ok' : penalty;
         updateSolve(last.id, { penalty: next });
         setLastPenalty(next);
       };
-      switch (action) {
-        case 'delete-last':
-          if (last) { deleteSolve(last.id); setLastPenalty(null); }
+
+      switch (command.id) {
+        case 'none':
           return;
-        case 'toggle-plus2': togglePenalty('+2'); return;
-        case 'toggle-dnf': togglePenalty('DNF'); return;
-        case 'toggle-dns': togglePenalty('DNS'); return;
-        // Arrow keys scroll the page by default; the others don't need it.
-        case 'next-scramble': e.preventDefault(); nextScramble(); return;
-        case 'prev-scramble': e.preventDefault(); prevScramble(); return;
-        case 'toggle-fullscreen': toggleFullscreen(); return;
-        default: break;
-      }
-      // Digit1-9 opens the Nth-from-last solve. Not rebindable (it's a family,
-      // not one action) and checked after the keymap, so a digit bound to an
-      // action — Digit2 → +2 by default — keeps shadowing it, as it always has.
-      const m = e.code.match(DIGIT_OPENS_SOLVE);
-      if (m && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
-        const n = Number(m[1]);
-        const idx = cur.length - n;
-        if (idx >= 0) setModalSolve({ s: cur[idx], idx });
+        case 'press-down':
+          onPressDown(command.warmupSound);
+          return;
+        case 'press-up':
+          onPressUp();
+          return;
+        case 'reset':
+          reset();
+          return;
+        case 'mark-stage':
+          multiStageRef.current?.markStage(command.stage);
+          return;
+        case 'mark-bld-memo':
+          bldMemoRef.current?.markMemo();
+          return;
+        case 'delete-last':
+          if (last) {
+            deleteSolve(last.id);
+            setLastPenalty(null);
+          }
+          return;
+        case 'toggle-plus2':
+          togglePenalty('+2');
+          return;
+        case 'toggle-dnf':
+          togglePenalty('DNF');
+          return;
+        case 'toggle-dns':
+          togglePenalty('DNS');
+          return;
+        case 'next-scramble':
+          (modal === 'hints-only' ? sheetNextScramble : nextScramble)();
+          return;
+        case 'prev-scramble':
+          (modal === 'hints-only' ? sheetPrevScramble : prevScramble)();
+          return;
+        case 'toggle-fullscreen':
+          void toggleFullscreen();
+          return;
+        case 'open-solve': {
+          const index = currentSolves.length - command.offsetFromLast;
+          if (index >= 0) setModalSolve({ s: currentSolves[index], idx: index });
+          return;
+        }
       }
     };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const modal: TimerKeyboardModalState = !anyModalOpenRef.current
+        ? 'none'
+        : hintsOnlyRef.current ? 'hints-only' : 'blocking';
+      executeKeyboardDecision(timerKeyDownDecision({
+        input: e,
+        target: timerKeyboardTargetContext(e.target),
+        modal,
+        phase: phaseRef.current,
+        timingEnabled: getSettings().timingEnabled,
+        multiStageActive,
+        bldMemoActive,
+        keymap: keymapRef.current,
+        solveCount: solvesRef.current.length,
+      }), e, modal);
+    };
     const onKeyUp = (e: KeyboardEvent) => {
-      if (anyModalOpenRef.current) return;
-      const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
-      if (target && target.closest('[data-no-timer]')) return;
-      if (e.code === 'Space') { e.preventDefault(); if (!getSettings().timingEnabled) return; onPressUp(); }
+      executeKeyboardDecision(timerKeyUpDecision({
+        input: e,
+        target: timerKeyboardTargetContext(e.target),
+        modalOpen: anyModalOpenRef.current,
+        timingEnabled: getSettings().timingEnabled,
+      }), e, 'none');
     };
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
@@ -2249,10 +2432,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 这里只补面板之外的区域,并跳过面板内目标避免双触发(双触发会停表后立即重新进入 hold/观察)。
   useEffect(() => {
     const onDocDown = (e: PointerEvent) => {
-      if (phaseSnapshotRef.current !== 'running') return;
       const t = e.target as Node | null;
-      if (surfaceRef.current && t && surfaceRef.current.contains(t)) return;
-      onPressDown();
+      const insideSurface = !!(surfaceRef.current && t && surfaceRef.current.contains(t));
+      if (timerShouldStopFromExternalPointer(phaseSnapshotRef.current, insideSurface)) {
+        onPressDown();
+      }
     };
     document.addEventListener('pointerdown', onDocDown);
     return () => document.removeEventListener('pointerdown', onDocDown);
@@ -2263,45 +2447,49 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     || bluetoothTimer.status.connected
     || stackmat.status.listening;
 
-  const moreItems = useMemo<MoreMenuItem[]>(() => [
-    {
-      icon: <Footprints size={14} />,
-      label: tr({ zh: '打乱足迹', en: 'Scramble marks' }),
-      href: '/timer/marks',
-    },
-    ...(isMobile ? [
-      { icon: <BarChart3 size={14} />, label: tr({ zh: '统计', en: 'Stats'
-    }), onClick: () => setStatsModalOpen(true) },
-      {
-        icon: <Globe size={14} />, label: tr({ zh: '语言：EN', en: 'Language: 中文'
-        }),
-        onClick: () => { const next = (i18n.language.startsWith('zh') ? 'en' : 'zh'); i18n.changeLanguage(next); syncLangToUrl(next); },
-      },
-    ] : []),
-    ...(drillAllowed && !drillTarget ? [{
-      icon: <Crosshair size={14} />, label: tr({ zh: '专项练习', en: 'Drill mode'
-    }), onClick: () => setDrillModalOpen(true),
-    }] : []),
-    // Speffz 记忆读数只对 3x3 盲拧有意义。原来写的是 startsWith('333'),于是 3x3 / OH / FM / MR
-    // 这些非盲项目也挂着这一项。三个 3x3 盲拧项目都要:三盲、三盲 NI(不给观察)、多盲(逐个
-    // 魔方还是同一套编码)。4BLD 以上不算 —— 那是另一套编码,这个助手只读 3x3 打乱。
-    ...(event === '333bld' || event === '333ni' || event === '333mbld' ? [{
-      icon: <Brain size={14} />, label: tr({ zh: '盲拧助手', en: 'BLD helper'
-    }), onClick: () => setBldHelperOpen(true),
-    }] : []),
-    { icon: fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />, label: tr({ zh: '全屏', en: 'Fullscreen' }), onClick: toggleFullscreen },
-    { icon: <Plus size={14} />, label: tr({ zh: '手动录入', en: 'Manual entry'
-    }), onClick: () => setManualEntryOpen(true) },
-    { icon: <Link2 size={14} />, label: tr({ zh: '粘贴 replay 链接', en: 'Paste replay URL'
-    }), onClick: handlePasteReplay },
-    { icon: <Wrench size={14} />, label: tr({ zh: '通用求解器', en: 'Solver' }), onClick: () => setSolverOpen(true) },
-    { icon: <ListPlus size={14} />, label: tr({ zh: '批量打乱', en: 'Bulk scrambles'
-    }), onClick: () => setBulkScrambleOpen(true) },
-    { icon: <Printer size={14} />, label: tr({ zh: '打印', en: 'Print'
-    }), onClick: () => window.print() },
-    { icon: <Trash2 size={14} />, label: tr({ zh: '清空当前项目', en: 'Clear current event'
-    }), onClick: clearAll, danger: true, disabled: !solves.length },
-  ], [isZh, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, i18n, event]);
+  const moreItems = useMemo<MoreMenuItem[]>(() => visibleTimerMoreActions({
+    compactViewport: isMobile,
+    drillActive: drillTarget !== null,
+    event,
+    fullscreen,
+    solveCount: solves.length,
+  }).map((action): MoreMenuItem => {
+    const base = { ...action, label: tr(TIMER_MORE_ACTION_COPY[action.id]) };
+    switch (action.id) {
+      case 'more.marks':
+        return { ...base, href: '/timer/marks' };
+      case 'more.stats-mobile':
+        return { ...base, onSelect: () => setStatsModalOpen(true) };
+      case 'more.language-mobile':
+        return {
+          ...base,
+          onSelect: () => {
+            let next: 'en' | 'zh' = 'zh';
+            if (i18n.language.startsWith('zh')) next = 'en';
+            void i18n.changeLanguage(next);
+            syncLangToUrl(next);
+          },
+        };
+      case 'more.drill':
+        return { ...base, onSelect: () => setDrillModalOpen(true) };
+      case 'more.bld-helper':
+        return { ...base, onSelect: () => setBldHelperOpen(true) };
+      case 'more.fullscreen':
+        return { ...base, onSelect: toggleFullscreen };
+      case 'more.manual-entry':
+        return { ...base, onSelect: () => setManualEntryOpen(true) };
+      case 'more.replay':
+        return { ...base, onSelect: handlePasteReplay };
+      case 'more.solver':
+        return { ...base, onSelect: () => setSolverOpen(true) };
+      case 'more.bulk':
+        return { ...base, onSelect: () => setBulkScrambleOpen(true) };
+      case 'more.print':
+        return { ...base, onSelect: () => printControllerRef.current?.print() };
+      case 'more.clear-event':
+        return { ...base, onSelect: clearAll };
+    }
+  }), [clearAll, drillTarget, event, fullscreen, handlePasteReplay, i18n, isMobile, isZh, solves.length, toggleFullscreen]);
 
   const allSolves = useMemo(() => {
     const out: Solve[] = [];
@@ -2311,7 +2499,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // ── Derived display (digits text + color class) ─────────────────
   const stats = useMemo(() => summarize(solves, event), [solves, event]);
-  const inspectionLimit = settings.inspection;
+  const inspectionLimit = settings.inspectionSec;
   const colorClass = useMemo(() => {
     if (timer.phase === 'holding') return 'holding';
     if (timer.phase === 'ready') return 'ready';
@@ -2330,20 +2518,17 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, [timer.phase, timer.inspectionDisplayMs, inspectionLimit, lastPenalty]);
 
   const digitsText = useMemo(() => {
-    // 练习模式(计时关):不显示任何读数 —— 按压只换打乱,没有时间可言。
-    if (!settings.timingEnabled) return '';
-    if (timer.phase === 'inspecting') {
-      return formatInspectionDisplay(timer.inspectionDisplayMs, inspectionLimit);
-    }
-    // 按住变绿代表已经可以起表；此时清掉上一把读数，让松手前的状态明确显示为零。
-    if (timer.phase === 'ready') return formatMs(0, settings.precision);
-    if (timer.phase === 'running') {
-      return settings.hideTime ? '' : formatMs(timer.displayMs, settings.runningPrecision);
-    }
-    if (timer.phase === 'stopped' && lastPenalty === 'DNS') return 'DNS';
-    if (timer.phase === 'stopped' && lastPenalty === 'DNF') return 'DNF';
-    if (timer.phase === 'stopped' && lastPenalty === '+2') return formatMs(timer.displayMs + 2000, settings.precision) + '+';
-    return formatMs(timer.displayMs, settings.precision);
+    return formatTimerTimingDisplay({
+      displayMs: timer.displayMs,
+      hideTime: settings.hideTime,
+      inspectionDisplayMs: timer.inspectionDisplayMs,
+      inspectionLimitSec: inspectionLimit,
+      lastPenalty,
+      phase: timer.phase,
+      precision: settings.precision,
+      runningPrecision: settings.runningPrecision,
+      timingEnabled: settings.timingEnabled,
+    });
   }, [timer.phase, timer.inspectionDisplayMs, timer.displayMs, inspectionLimit, lastPenalty, settings.hideTime, settings.precision, settings.runningPrecision, settings.timingEnabled]);
 
   const fontSize = `calc(clamp(48px, 10vw, 132px) * ${settings.timerFontScale})`;
@@ -2362,30 +2547,18 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     return Math.round(ms / 10);
   }, [rankBadgePhase, timer.lastMs, lastPenalty, settings.timingEnabled]);
 
-  const eventInfoCurrent = EVENTS.find(e => e.id === event);
-  const printEventName = eventInfoCurrent
-    ? [eventInfoCurrent.nameEn, eventInfoCurrent.nameZh][Number(isZh)]
-    : event;
-
-  const selectorActiveId = eventToSelectorId(event);
-  const eventPickerGroups = useMemo<readonly PuzzlePickerGroup[]>(() => [{
-    id: 'wca',
-    label: tr({ zh: 'WCA 项目', en: 'WCA events' }),
-    items: SOLO_WCA_PICKER_IDS.map((id) => ({
-      id,
-      label: eventDisplayName(id, isZh),
-      iconClass: `event-${id}`,
-    })),
-  }, {
-    id: 'other',
-    label: tr({ zh: '其他项目', en: 'Other puzzles' }),
-    items: APPEND_EVENTS.map((item) => ({
-      id: item.id,
-      label: timerEventName(item.id, isZh),
-      iconClass: item.iconClass || undefined,
-      textLabel: item.textLabel,
-    })),
-  }], [isZh]);
+  const eventPickerGroups = useMemo<readonly TimerPuzzlePickerGroup[]>(() => (
+    TIMER_EVENT_PICKER_GROUPS.map((group) => ({
+      id: group.id,
+      label: [group.nameEn, group.nameZh][Number(isZh)],
+      items: group.items.map((item) => ({
+        id: item.id,
+        label: [item.nameEn, item.nameZh][Number(isZh)],
+        iconClass: item.iconClass,
+        textLabel: item.textLabel,
+      })),
+    }))
+  ), [isZh]);
 
   // 「难度」开关的挂点。开关的可用性归打乱来源那两个配置组件(只有它们知道当前项目 / 当前
   // 比赛能不能按难度筛),但它属于顶栏这排常驻控件 —— 所以状态留在原处,DOM 用 portal 送上来。
@@ -2398,13 +2571,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // NOT gated on prefers-reduced-motion — the user asked for things to be
   // hidden, not animated; the reduced-motion block below drops the transition.
   const hideAllUi = timer.phase === 'running' && settings.hideAllUiWhileRunning;
-
-  // Auto-dismiss the info toast.
-  useEffect(() => {
-    if (!infoToast) return;
-    const h = window.setTimeout(() => setInfoToast(null), 5000);
-    return () => window.clearTimeout(h);
-  }, [infoToast]);
 
   // ── Side-panel body ─────────────────────────────────────────────
   const renderPanelBody = () => {
@@ -2507,11 +2673,21 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       className={`timer-shell${fullscreen ? ' fullscreen' : ''}${distractionFree ? ' is-solving' : ''}${hideAllUi ? ' hide-ui' : ''}${isDesktop && panelTab ? ' panel-open' : ''}`}
       data-solving={timer.phase === 'running' ? 'true' : undefined}
     >
-      <div className="print-only-header">
-        <h1>{tr({ zh: '魔方计时器 — ', en: 'Cube Timer — '
-        })}{printEventName}</h1>
-        <div className="print-meta"><span>{new Date().toLocaleString()}</span><span>{solves.length} {tr({ zh: '次', en: 'solves' })}</span></div>
-      </div>
+      <TimerPrintController
+        currentResult={digitsText}
+        currentScramble={displayScramble}
+        currentScrambleSource={timerPrintScrambleSource(
+          settings.scrambleSource,
+          isZh ? 'zh' : 'en',
+          wcaSrcDisplay ? `${wcaSrcDisplay.name} · ${wcaSrcDisplay.meta}` : undefined,
+        )}
+        event={event}
+        language={isZh ? 'zh' : 'en'}
+        ref={printControllerRef}
+        sessionName={activePrintSessionName}
+        solves={solves}
+        transport={browserPrintTransport}
+      />
 
       {/* ── Topbar ──────────────────────────────────────────── */}
       <TimerTopbar
@@ -2519,32 +2695,33 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         controls={(
           <>
           {playersControl}
-          <PuzzlePicker
-            isZh={isZh}
-            selectedEvent={selectorActiveId}
+          <TimerPuzzlePicker
+            selectedEvent={event}
             groups={eventPickerGroups}
-            onSelect={(id) => selectEvent(selectorIdToEvent(id))}
+            onSelect={(id) => {
+              const nextEvent = timerEventIdFromSelector(id);
+              if (nextEvent) selectEvent(nextEvent);
+            }}
+            puzzleLabel={tr({ zh: '项目', en: 'Puzzle' })}
             dataNoTimer
           />
           {/* 收起态用短名称,菜单保留完整名称。放在项目选择器右侧,和「人数」下拉同一组。 */}
-          <CompactSelect
+          <TimerScrambleSourceSelect
             className="shell-scramble-source-select"
             triggerClassName="shell-players-select"
             popupClassName="shell-scramble-source-popup"
-            label={{
-              wca: tr({ zh: '真题', en: 'Real' }),
+            labels={{
+              ariaLabel: tr({ zh: '打乱来源', en: 'Scramble source' }),
+              real: tr({ zh: '真题', en: 'Real' }),
+              realOption: tr({ zh: 'WCA 真题', en: 'WCA real' }),
               random: tr({ zh: '随机', en: 'Random' }),
+              randomOption: tr({ zh: '随机状态', en: 'Random state' }),
               manual: tr({ zh: '手动', en: 'Manual' }),
-            }[settings.scrambleSource]}
-            items={[
-              { value: 'wca', label: tr({ zh: 'WCA 真题', en: 'WCA real' }) },
-              { value: 'random', label: tr({ zh: '随机状态', en: 'Random state' }) },
-              { value: 'manual', label: tr({ zh: '手动输入', en: 'Manual input' }) },
-            ]}
+              manualOption: tr({ zh: '手动输入', en: 'Manual input' }),
+            }}
             value={settings.scrambleSource}
             onChange={(scrambleSource) => updateSettings({ scrambleSource })}
-            ariaLabel={tr({ zh: '打乱来源', en: 'Scramble source' })}
-            dataNoTimer
+            realValue="wca"
           />
           {/* 「难度」开关的落点(内容由 ScrambleSourceBar 里的两个配置组件 portal 过来)。
               摆在「解法」左边,和来源下拉同一组:难度讲的就是这条打乱怎么来的。
@@ -2592,19 +2769,96 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           onMouseDown={onCenterMouseDown}
           onMouseUp={onCenterMouseUp}
           scrambleSlot={
-            <div
-              className={`scramble-strip sf-${settings.scrambleFont}${settings.compactScramble ? ' compact' : ''}`}
-              // Smart-cube scramble check: 'ok' once the cube's tracked state
-              // equals this scramble applied to a solved cube. Absent when
-              // there's no cube, no comparable state, or nothing turned yet.
-              data-scramble-match={scrambleMatch === null ? undefined : scrambleMatch ? 'ok' : 'off'}
-              style={{ '--scramble-scale': settings.scrambleFontScale } as React.CSSProperties}
-              onClick={() => {
+            <TimerScrambleStrip
+              compact={settings.compactScramble}
+              copied={scrambleCopied}
+              copiedLabel={tr({ zh: '已复制', en: 'Copied' })}
+              correctionActive={fixupActive}
+              fallback={randomOptimalLoading || scrambleLoading || cstimerLoading || trainerLoading || byStepsLoading
+                ? <Spinner size={22} label={randomOptimalLoading
+                    ? tr({ zh: '生成最优打乱', en: 'Generating optimal scramble' })
+                    : cstimerLoading || trainerLoading || byStepsLoading
+                      ? tr({ zh: '生成打乱', en: 'Generating scramble' })
+                      : tr({ zh: '加载真实打乱', en: 'Loading real scramble' })} />
+                : byStepsFailed
+                  ? <>{tr({
+                      zh: '按步数打乱生成失败。',
+                      en: 'Could not generate a move-count scramble.',
+                    })}{' '}<button
+                      type="button"
+                      className="scramble-empty-retry"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setByStepsRetry((value) => value + 1);
+                      }}
+                    >{tr({ zh: '再试一次', en: 'Try again' })}</button></>
+                  : randomOptimalFailed
+                    ? <>{tr({
+                        zh: '最优打乱生成失败。',
+                        en: 'Could not generate an optimal scramble.',
+                      })}{' '}<button
+                        type="button"
+                        className="scramble-empty-retry"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          const source = randomOptimalSourceRef.current;
+                          if (!source) return;
+                          retryOptimal333(source);
+                          setRandomOptimalRetry((value) => value + 1);
+                        }}
+                      >{tr({ zh: '再试一次', en: 'Try again' })}</button></>
+                    : trainerMiss
+                      ? trainerMiss === 'empty'
+                        ? tr({
+                            zh: '没有任何打乱是这个难度,把步数范围放宽一点',
+                            en: 'No scramble has this difficulty — widen the step range',
+                          })
+                        : <>{tr({
+                            zh: '这个难度太稀有,一时找不出来。',
+                            en: 'This difficulty is too rare to find quickly.',
+                          })}{' '}<button type="button" className="scramble-empty-retry" onClick={() => {
+                            const spec = trainerSpecRef.current;
+                            if (!spec) return;
+                            retryTrainer(spec);
+                            setTrainerRetry((value) => value + 1);
+                          }}>{tr({ zh: '再试一次', en: 'Try again' })}</button></>
+                      : wcaSourceEmpty
+                        ? wca222Type
+                          ? tr({ zh: '该范围没有匹配此类型的 WCA 真题,换个类型或范围试试', en: 'No WCA scramble of this type matches the range — try another type or range' })
+                          : wcaStep
+                            ? tr({ zh: '该步数范围没有匹配的 WCA 真题,换个步数试试', en: 'No WCA scramble matches this move-count range — try another range' })
+                            : wcaSpec.diff
+                              ? wcaSpec.mode === 'comp'
+                                ? isWcaCompUnindexed(wcaSpec)
+                                  ? tr({ zh: '难度库待更新', en: 'Difficulty index not updated yet' })
+                                  : tr({ zh: '该比赛没有匹配此难度的真题,换个步数或配色试试', en: 'This competition has no scramble at this difficulty — try other step counts or colors' })
+                                : tr({ zh: '该难度组合没有匹配的 WCA 真题,换个步数或配色试试', en: 'No WCA scramble matches this difficulty — try other step counts or colors' })
+                              : wcaSpec.mode === 'comp'
+                                ? tr({ zh: '该比赛没有此项目的打乱', en: 'This competition has no scrambles for this event' })
+                                : tr({ zh: '该时间段内没有 WCA 真题', en: 'No WCA scrambles in this date range' })
+                        : settings.scrambleSource === 'manual' && manualQueue.length === 0
+                          ? tr({ zh: '在上方「打乱来源」粘贴打乱,每行一条', en: 'Paste scrambles above — one per line' })
+                          : '—'}
+              fallbackKind={randomOptimalLoading || scrambleLoading || cstimerLoading || trainerLoading || byStepsLoading
+                ? 'custom'
+                : 'empty'}
+              font={settings.scrambleFont}
+              fontScale={settings.scrambleFontScale}
+              hint={scrambleHint}
+              match={scrambleMatch}
+              nonOptimal={wcaNonOptimal ? {
+                label: tr({ zh: '非最优', en: 'non-optimal' }),
+                title: tr({ zh: '该难度档暂无最优等态打乱,显示原始 WCA 打乱', en: 'No optimal-equivalent scramble for this difficulty — showing the original WCA scramble' }),
+              } : undefined}
+              onActivate={settings.scrambleClickAction === 'none' ? undefined : () => {
                 const action = settings.scrambleClickAction;
-                if (action === 'none') return;
                 if (action === 'copy') { copyScrambleFlash(); return; }
                 nextScramble();
               }}
+              scramble={randomOptimalLoading || scrambleLoading || cstimerLoading || trainerLoading
+                || byStepsLoading || byStepsFailed || randomOptimalFailed || !!trainerMiss || wcaSourceEmpty
+                ? ''
+                : displayScramble}
               title={settings.scrambleClickAction === 'copy'
                 ? tr({ zh: '点击复制打乱', en: 'Click to copy'
                                   })
@@ -2613,143 +2867,19 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                                       })
                   : tr({ zh: '点击换一个打乱', en: 'Click to refresh'
                                       })}
+              verificationLabels={{
+                copiedCorrection: tr({ zh: '已复制原打乱', en: 'Copied the scramble' }),
+                correction: tr({ zh: '拧回原打乱', en: 'Back to scramble' }),
+                correctionTitle: tr({
+                  zh: '拧歪了。这些不是上面那条打乱,而是从魔方现在的状态回到同一个打乱状态的步骤,拧完成绩记的还是原打乱。',
+                  en: 'Off the scramble path. These moves are not the printed scramble — they lead from where the cube is now to the same scrambled state, and the solve still records the original scramble.',
+                }),
+                mismatch: tr({ zh: '与打乱不符', en: 'Doesn’t match' }),
+                ready: tr({ zh: '打乱已就绪', en: 'Scrambled' }),
+              }}
             >
-              <span className="scramble-text">{randomOptimalLoading || scrambleLoading || cstimerLoading || trainerLoading
-                // 转圈取代了原来的「加载真实打乱…」文字,所以它是唯一的加载提示 → 传 label 供读屏。
-                // 原来包在外面的 .scramble-loading 没有任何 CSS 规则也没有别的消费者,一并去掉。
-                ? <Spinner size={22} label={randomOptimalLoading
-                    ? tr({ zh: '生成最优打乱', en: 'Generating optimal scramble' })
-                    : cstimerLoading || trainerLoading
-                      ? tr({ zh: '生成打乱', en: 'Generating scramble' })
-                      : tr({ zh: '加载真实打乱', en: 'Loading real scramble' })} />
-                : randomOptimalFailed
-                  ? <span className="scramble-empty">{tr({
-                      zh: '最优打乱生成失败。',
-                      en: 'Could not generate an optimal scramble.',
-                    })}{' '}<button
-                      type="button"
-                      className="scramble-empty-retry"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const source = randomOptimalSourceRef.current;
-                        if (!source) return;
-                        retryOptimal333(source);
-                        setRandomOptimalRetry((n) => n + 1);
-                      }}
-                    >{tr({ zh: '再试一次', en: 'Try again' })}</button></span>
-                  : trainerMiss
-                  ? <span className="scramble-empty">{trainerMiss === 'empty'
-                      ? tr({
-                          zh: '没有任何打乱是这个难度,把步数范围放宽一点',
-                          en: 'No scramble has this difficulty — widen the step range',
-                        })
-                      // “太稀有”是预算用完,不是证明不存在 —— 所以得给一个重试入口,
-                      // 否则这个 spec 就锁死了,只能换难度才能脱身。
-                      : <>{tr({
-                          zh: '这个难度太稀有,一时找不出来。',
-                          en: 'This difficulty is too rare to find quickly.',
-                        })}{' '}<button type="button" className="scramble-empty-retry" onClick={() => {
-                          const sp = trainerSpecRef.current;
-                          if (!sp) return;
-                          retryTrainer(sp);
-                          setTrainerRetry((n) => n + 1);
-                        }}>{tr({ zh: '再试一次', en: 'Try again' })}</button></>}</span>
-                  : wcaSourceEmpty
-                    ? <span className="scramble-empty">{
-                        // 二阶状态类型和「按步数」在 comp/date 两模式都生效；专项优先判，避免隐藏的
-                        // 旧步数偏好让空结果提示张冠李戴。
-                        wca222Type
-                          ? tr({ zh: '该范围没有匹配此类型的 WCA 真题,换个类型或范围试试', en: 'No WCA scramble of this type matches the range — try another type or range' })
-                          : wcaStep
-                            ? tr({ zh: '该步数范围没有匹配的 WCA 真题,换个步数试试', en: 'No WCA scramble matches this move-count range — try another range' })
-                          // 难度过滤 date/comp 两模式都生效(wcaSpec.diff 仅在难度实际生效时有值)——
-                          // 先判难度,再判 comp 缺项目,避免 comp+难度为空时误报「该比赛没有此项目」。
-                          // comp 模式再按覆盖探测(isWcaCompUnindexed)细分:该场压根没进难度库(离线管道
-                          // 还没算,常见新赛)→ 换步数/配色也没用,提示改用日期模式;已入库只是此难度档无匹配
-                          // → 提示换步数/配色。
-                            : wcaSpec.diff
-                            ? wcaSpec.mode === 'comp'
-                              ? isWcaCompUnindexed(wcaSpec)
-                                ? tr({ zh: '难度库待更新', en: 'Difficulty index not updated yet' })
-                                : tr({ zh: '该比赛没有匹配此难度的真题,换个步数或配色试试', en: 'This competition has no scramble at this difficulty — try other step counts or colors' })
-                              : tr({ zh: '该难度组合没有匹配的 WCA 真题,换个步数或配色试试', en: 'No WCA scramble matches this difficulty — try other step counts or colors' })
-                            : wcaSpec.mode === 'comp'
-                              ? tr({ zh: '该比赛没有此项目的打乱', en: 'This competition has no scrambles for this event' })
-                              : tr({ zh: '该时间段内没有 WCA 真题', en: 'No WCA scrambles in this date range' })
-                      }</span>
-                    : displayScramble
-                      ? <><span className="scramble-moves">{(() => {
-                        // 复制成功的绿勾必须绝对不换行(即使不另起、也不能把最后一步挤下去)。
-                        // 做法:把最后一步单独包进 .scramble-copied-tail(relative),绿勾在其中
-                        // 绝对定位(left:100%),完全脱离文本流 → 既不新增断行点、也不占宽度,永不换行。
-                        //
-                        // 但修正路径上不挂勾:那时条上这串**不是**打乱,剪贴板里的才是,
-                        // 一个贴在末尾的勾等于说「复制的就是你看到的这串」。那种情况改在右边
-                        // 出一个写明白的绿标(见下面 data-ok="true" 那条)。
-                        const copiedCheck = scrambleCopied && !fixupActive && (
-                          <Check className="scramble-copied-check" aria-label={tr({ zh: '已复制', en: 'Copied' })} />
-                        );
-                        // 智能魔方逐步提示:已拧的变暗、当前这步高亮、剩下的正常。
-                        // 打乱拧完(complete)就整条恢复正常 —— 此时右侧「打乱已就绪」已经说明一切,
-                        // 再留一堆暗字反而像出错。拧歪(hint === null)也回到纯文本。
-                        if (scrambleHint && !scrambleHint.complete) {
-                          return <ScrambleHintText hint={scrambleHint} tailExtra={copiedCheck} />;
-                        }
-                        const i = displayScramble.lastIndexOf(' ');
-                        const head = i >= 0 ? displayScramble.slice(0, i + 1) : '';
-                        const tail = i >= 0 ? displayScramble.slice(i + 1) : displayScramble;
-                        return (
-                          <>{head}<span className="scramble-copied-tail">{tail}{copiedCheck}</span></>
-                        );
-                      })()}</span>{wcaNonOptimal && (
-                        <span
-                          className="scramble-nonopt"
-                          data-no-timer
-                          title={tr({ zh: '该难度档暂无最优等态打乱,显示原始 WCA 打乱', en: 'No optimal-equivalent scramble for this difficulty — showing the original WCA scramble' })}
-                        >{tr({ zh: '非最优', en: 'non-optimal' })}</span>
-                      )}</>
-                    : settings.scrambleSource === 'manual' && manualQueue.length === 0
-                      ? <span className="scramble-empty">{tr({ zh: '在上方「打乱来源」粘贴打乱,每行一条', en: 'Paste scrambles above — one per line' })}</span>
-                      : <span className="scramble-empty">—</span>}</span>
-              {/* While the hint is live the strip itself is the status — being
-                  "不符" halfway through applying a scramble is progress, not an
-                  error, and a red pill there reads as one. The pill comes back
-                  for the two states the hint cannot express: done, and off the
-                  scramble's path entirely.
-
-                  The exception is a correction path: those moves are NOT the
-                  printed scramble, and the user has to be told that, or the
-                  strip looks like it silently rewrote itself. It ends at the
-                  same state, so the solve still records the original scramble. */}
-              {scrambleHint && !scrambleHint.complete
-                ? fixupActive && (
-                    <>
-                      <span
-                        className="scramble-verify"
-                        data-ok="fix"
-                        title={tr({
-                          zh: '拧歪了。这些不是上面那条打乱,而是从魔方现在的状态回到同一个打乱状态的步骤,拧完成绩记的还是原打乱。',
-                          en: 'Off the scramble path. These moves are not the printed scramble — they lead from where the cube is now to the same scrambled state, and the solve still records the original scramble.',
-                        })}
-                      >{tr({ zh: '拧回原打乱', en: 'Back to scramble' })}</span>
-                      {/* 点击复制永远给的是打乱本身(成绩记的也是它),可这会儿条上写着的是
-                          修正路径 —— 不说一声,用户就会以为复制错了。 */}
-                      {scrambleCopied && (
-                        <span className="scramble-verify" data-ok="true">
-                          {tr({ zh: '已复制原打乱', en: 'Copied the scramble' })}
-                        </span>
-                      )}
-                    </>
-                  )
-                : scrambleMatch !== null && (
-                    <span className="scramble-verify" data-ok={scrambleMatch ? 'true' : 'false'}>
-                      {scrambleMatch
-                        ? tr({ zh: '打乱已就绪', en: 'Scrambled' })
-                        : tr({ zh: '与打乱不符', en: 'Doesn’t match' })}
-                    </span>
-                  )}
               {/* 「按难度生成」的打乱 + 答案(只在该来源下有 meta 时出现)。 */}
-              {!randomOptimalLoading && !scrambleLoading && !trainerLoading && <TrainerCaseBar scramble={scramble} isZh={isZh} />}
+              {!randomOptimalLoading && !scrambleLoading && !trainerLoading && !byStepsLoading && <TrainerCaseBar scramble={scramble} isZh={isZh} />}
               {wcaSrcDisplay && (
                 <div className="scramble-src-row">
                 <a
@@ -2820,7 +2950,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                 )}
                 </div>
               )}
-            </div>
+            </TimerScrambleStrip>
           }
           cornerSlot={centerCubeSlot}
           digitsCorner={settings.showRankBadge !== false && rankBadgePhase && solves.length > 0 ? (
@@ -3033,7 +3163,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               updateSolve(modalSolve.s.id, { reconOk: ok });
               setModalSolve(m => (m ? { ...m, s: { ...m.s, reconOk: ok } } : m));
             }}
-            moveTargets={listSessions().filter(s => s.id !== getActiveSessionId()).map(s => ({ id: s.id, name: s.name }))}
+            moveTargets={timerHistoryMoveTargets(listSessions(), getActiveSessionId())}
             onMoveToSession={(toId) => {
               if (moveSolveToSession(modalSolve.s.id, toId)) {
                 setByEvent(loadAll());
@@ -3066,13 +3196,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       {settingsOpen && <SettingsPanel event={event} onClose={closeSettings} onDataReplaced={() => setByEvent(loadAll())} />}
 
       {infoToast && (
-        <div className="shell-info-toast" role="status">
-          <span>{infoToast.msg}</span>
-          {infoToast.undo && (
-            <button type="button" className="shell-info-toast-btn" onClick={() => { infoToast.undo?.(); setInfoToast(null); }}>{tr({ zh: '撤销', en: 'Undo'
-            })}</button>
-          )}
-        </div>
+        <TimerInfoToast
+          key={infoToast.sequence}
+          message={infoToast.msg}
+          onDismiss={() => setInfoToast(null)}
+          onUndo={infoToast.undo}
+          undoLabel={tr({ zh: '撤销', en: 'Undo' })}
+        />
       )}
 
       {trainerSubsetOpen && <TrainerSubsetModal kind={trainerSubsetOpen} isZh={isZh} onClose={() => setTrainerSubsetOpen(null)} />}
@@ -3128,7 +3258,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         <ManualEntryModal
           event={event}
           currentScramble={displayScramble}
-          isZh={isZh}
           onClose={() => setManualEntryOpen(false)}
           onSubmit={(solve) => {
             setByEvent(prev => ({ ...prev, [solve.event]: [...(prev[solve.event] ?? []), solve] }));

@@ -58,7 +58,9 @@ describe('cross-trainer / scramble text', () => {
         }
       }
     }
-  }, 120_000);
+  // This exact all-variant oracle is ~30s alone, but can exceed two minutes
+  // while the full suite builds the other cross/xcross tables in parallel.
+  }, 240_000);
 
   it('cross: the notation really has the requested cross length, per colour', () => {
     const rng = lcg(4242);

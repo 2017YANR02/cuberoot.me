@@ -294,9 +294,9 @@
   {
     "name": "thewca/tnoodle-lib",
     "url": "https://github.com/thewca/tnoodle-lib",
-    "zh": "WCA 官方打乱程序库:魔表的 18 位状态模型与转动表(ClockPuzzle.java)移植为 clock_svg.ts,也是本站魔表求解器 @cuberoot/puzzle-solvers/clock 的转动语义锚点;打乱图渲染与各项目配色方案亦照其实现",
-    "en": "The WCA's official scrambling library: the Clock's 18-dial state model and move table (ClockPuzzle.java) are ported as clock_svg.ts and are the move-semantics anchor for our Clock solver (@cuberoot/puzzle-solvers/clock); the scramble-image renderer and per-event colour schemes follow its implementation too",
-    "long_en": "TNoodle is the World Cube Association's official scramble generator. Its `ClockPuzzle.java` (18-dial posit model, the 18 pin-subset move rows, the y2 presentation flip, and the default per-part colour scheme) is ported verbatim to `clock_svg.ts`, which then serves as the independent gold standard the pure-TS optimal Clock solver is cross-validated against, cell by cell"
+    "zh": "WCA 官方打乱程序库:二阶 TwoByTwoCubePuzzle / TwoByTwoSolver 的均匀随机状态、恰好 11 步求解与 computeCost 握位代价已移植为共享 WCA 二阶打乱生成器;魔表的 18 位状态模型与转动表(ClockPuzzle.java)移植为 clock_svg.ts,也是本站魔表求解器 @cuberoot/puzzle-solvers/clock 的转动语义锚点;打乱图渲染与各项目配色方案亦照其实现",
+    "en": "The WCA's official scrambling library: TwoByTwoCubePuzzle / TwoByTwoSolver's uniform random states, exact 11-move search, and computeCost grip model are ported as the shared WCA 2×2 generator; the Clock's 18-dial state model and move table (ClockPuzzle.java) are ported as clock_svg.ts and anchor our Clock solver's move semantics; the scramble-image renderer and per-event colour schemes follow TNoodle too",
+    "long_en": "TNoodle is the World Cube Association's official scramble generator. CubeRoot's runtime-neutral WCA 2×2 generator faithfully ports `TwoByTwoCubePuzzle` / `TwoByTwoSolver`: it samples a uniform normalized state, enumerates exact 11-move URF solutions, and selects the lowest-cost sequence under TNoodle's `computeCost` grip model. Its `ClockPuzzle.java` (18-dial posit model, the 18 pin-subset move rows, the y2 presentation flip, and the default per-part colour scheme) is also ported to `clock_svg.ts`, which serves as the independent gold standard for cell-by-cell cross-validation of the pure-TS optimal Clock solver"
   },
   {
     "name": "Jaap Scherphuis — Jaap's Puzzle Page",

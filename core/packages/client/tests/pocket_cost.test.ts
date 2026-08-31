@@ -6,7 +6,7 @@
 //   pocketCost(A) === oracleComputeCost(invert(A)) - cU3
 // 其中 invert(A) 把 A 解析成 moveToString code、reverse 并逐招取逆。5000 例 fuzz + 手算样本。
 import { describe, it, expect } from 'vitest';
-import { pocketCost, POCKET_COSTS } from '@/lib/pocket-cost';
+import { pocketCost, POCKET_COSTS } from '@cuberoot/shared/timer';
 
 const c = POCKET_COSTS;
 

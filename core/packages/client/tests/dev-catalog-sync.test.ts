@@ -38,6 +38,10 @@ describe('hooks/ are all registered in /dev/utils', () => {
   for (const f of hookFiles) {
     const src = readFileSync(join(ROOT, 'hooks', f), 'utf8');
     for (const m of src.matchAll(/export\s+(?:function|const)\s+(use[A-Z]\w*)/g)) exported.add(m[1]);
+    // Compatibility hooks may be identity re-exports after their sole
+    // implementation moves into a shared package. They remain valid public
+    // Web hook paths and must stay registered without copying a wrapper body.
+    for (const m of src.matchAll(/export\s*\{\s*(use[A-Z]\w*)\s*\}\s*from/g)) exported.add(m[1]);
   }
   const registered = new Set(UTILS.filter((e) => e.category === 'hook').map((e) => e.name));
 

@@ -1,4 +1,33 @@
 import { EVENTS, type EventId, type Penalty, type Solve } from './types';
+import {
+  DEFAULT_SCRAMBLE_222_MODE,
+  DEFAULT_SCRAMBLE_222_TYPE,
+  isScramble222Mode,
+  isScramble222Type,
+  type Scramble222Mode,
+  type Scramble222Type,
+} from './scramble-222';
+import {
+  DEFAULT_TIMER_BY_STEPS_SETTINGS,
+  type TimerByStepsSettings,
+} from './by-steps';
+import {
+  DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
+  isTimerIsoDate,
+  normalizeTimerWcaSourceSettings,
+  type TimerWcaSourceSettings,
+} from './wca-source-config';
+import {
+  DEFAULT_TIMER_TIMING_SETTINGS,
+  normalizeTimerTimingSettings,
+  type TimerTimingSettings,
+} from './settings-contract';
+import {
+  DEFAULT_ROLLING_STAT_COLUMNS,
+  normalizeRollingStatColumns,
+  parseRollingStatKey,
+  type RollingStatKey,
+} from './rolling-stats';
 
 export const TIMER_DATABASE_VERSION = 3;
 export const TIMER_STORE_SCHEMA_VERSION = 2;
@@ -17,10 +46,23 @@ export interface TimerSessionMeta {
   event?: EventId;
 }
 
-export interface TimerStoreSettings {
+export interface TimerStoreSettings extends
+  TimerWcaSourceSettings,
+  TimerByStepsSettings,
+  TimerTimingSettings {
   event: EventId;
-  inspectionSec: number;
-  holdMs: number;
+  /** Shared 2x2 full-state generation style; also selects WCA original vs optimal-equivalent rows. */
+  scramble222Mode: Scramble222Mode;
+  /** Shared 2x2 specialist state family. A real-WCA source treats 3-gen as full state. */
+  scramble222Type: Scramble222Type;
+  /**
+   * Raw persisted text for the manual scramble source. Each non-empty line is
+   * one scramble; the source selector itself is intentionally visit-local and
+   * resets to real WCA scrambles on a fresh website/App launch.
+   */
+  manualScrambles: string;
+  /** The two compact current/best statistic columns shared with the website. */
+  statsRollingColumns: RollingStatKey[];
   language: 'en' | 'zh';
   theme: 'system' | 'light' | 'dark';
 }
@@ -183,6 +225,19 @@ export function decodeTimerSolve(value: unknown, event: EventId): Solve | null {
     if (typeof value.caseId !== 'string') return null;
     decoded.caseId = value.caseId;
   }
+  if (value.scrambleSource !== undefined) {
+    if (!isRecord(value.scrambleSource)
+      || (value.scrambleSource.kind !== 'wca'
+        && value.scrambleSource.kind !== 'random'
+        && value.scrambleSource.kind !== 'manual')
+      || typeof value.scrambleSource.identity !== 'string'
+      || value.scrambleSource.identity.length === 0
+      || value.scrambleSource.identity.length > 1024) return null;
+    decoded.scrambleSource = {
+      kind: value.scrambleSource.kind,
+      identity: value.scrambleSource.identity,
+    };
+  }
   if (value.moves !== undefined) {
     if (!Array.isArray(value.moves)) return null;
     const moves: NonNullable<Solve['moves']> = [];
@@ -240,12 +295,126 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
   if (!isRecord(value) || !isEventId(value.event)) return null;
   if (!isFiniteNonNegative(value.inspectionSec) || value.inspectionSec > 60) return null;
   if (!isFiniteNonNegative(value.holdMs) || value.holdMs > 5000) return null;
+  // Early v2 Mobile envelopes predate the remaining Web timing fields. A
+  // missing field migrates to the shared Web default; a present malformed
+  // value remains corrupt so restore/import can never silently change intent.
+  for (const key of [
+    'timingEnabled',
+    'autoSessionForEvent',
+    'autoEventForSession',
+    'hideTime',
+  ] as const) {
+    if (value[key] !== undefined && typeof value[key] !== 'boolean') return null;
+  }
+  if (value.runningPrecision !== undefined
+    && value.runningPrecision !== 0
+    && value.runningPrecision !== 1
+    && value.runningPrecision !== 2
+    && value.runningPrecision !== 3) return null;
+  if (value.precision !== undefined
+    && value.precision !== 2
+    && value.precision !== 3) return null;
+  // Store v1 and early v2 envelopes predate manual input. Missing means the
+  // canonical empty queue; a present non-string value is corrupt, not data we
+  // should silently discard.
+  if (value.manualScrambles !== undefined && typeof value.manualScrambles !== 'string') return null;
+  // Early Mobile envelopes predate the shared rolling-stat column picker.
+  // Missing values migrate to the website default; malformed explicit values
+  // remain corrupt instead of silently changing the user's saved choice.
+  if (value.statsRollingColumns !== undefined
+    && (!Array.isArray(value.statsRollingColumns)
+      || !value.statsRollingColumns.every((column) => parseRollingStatKey(column) !== null))) return null;
+  // Early v2 envelopes predate the shared 2x2 controls. Missing values migrate
+  // to the website's canonical defaults; present invalid values remain corrupt.
+  if (value.scramble222Mode !== undefined && !isScramble222Mode(value.scramble222Mode)) return null;
+  if (value.scramble222Type !== undefined && !isScramble222Type(value.scramble222Type)) return null;
+  // Early v2 envelopes predate shared by-steps settings. Missing fields migrate
+  // to canonical defaults; present malformed fields make the backup corrupt.
+  if (value.genByStepsOn !== undefined && typeof value.genByStepsOn !== 'boolean') return null;
+  if (value.genStepsMetric !== undefined
+    && (typeof value.genStepsMetric !== 'string' || value.genStepsMetric.length > 32)) return null;
+  if (value.genSteps !== undefined
+    && (!Array.isArray(value.genSteps)
+      || !value.genSteps.every((step) => Number.isSafeInteger(step) && step >= 0 && step <= 100))) return null;
+  if (value.wcaScrambleMode !== undefined
+    && value.wcaScrambleMode !== 'comp'
+    && value.wcaScrambleMode !== 'date') return null;
+  for (const key of [
+    'wcaComp',
+    'wcaCompName',
+    'wcaCompCountry',
+    'wcaRound',
+    'wcaGroup',
+    'wcaDateFrom',
+    'wcaDateTo',
+  ] as const) {
+    if (value[key] !== undefined && typeof value[key] !== 'string') return null;
+  }
+  if (typeof value.wcaDateFrom === 'string'
+    && value.wcaDateFrom !== ''
+    && !isTimerIsoDate(value.wcaDateFrom)) return null;
+  if (typeof value.wcaDateTo === 'string'
+    && value.wcaDateTo !== ''
+    && !isTimerIsoDate(value.wcaDateTo)) return null;
+  for (const key of ['wcaUseOptimal', 'wcaDifficultyOn', 'wcaDiffMerged'] as const) {
+    if (value[key] !== undefined && typeof value[key] !== 'boolean') return null;
+  }
+  for (const key of ['wcaDiffVariant', 'wcaDiffStage', 'wcaDiffColors'] as const) {
+    if (value[key] !== undefined
+      && (typeof value[key] !== 'string' || value[key].length > 64)) return null;
+  }
+  if (value.wcaDiffSteps !== undefined
+    && (!Array.isArray(value.wcaDiffSteps)
+      || !value.wcaDiffSteps.every((step) => (
+        Number.isSafeInteger(step) && step >= 0 && step <= 500
+      )))) return null;
   if (value.language !== 'en' && value.language !== 'zh') return null;
   if (value.theme !== 'system' && value.theme !== 'light' && value.theme !== 'dark') return null;
-  return {
-    event: value.event,
+  const wcaSource = normalizeTimerWcaSourceSettings({
+    wcaScrambleMode: value.wcaScrambleMode as TimerWcaSourceSettings['wcaScrambleMode'] | undefined,
+    wcaComp: value.wcaComp as string | undefined,
+    wcaCompName: value.wcaCompName as string | undefined,
+    wcaCompCountry: value.wcaCompCountry as string | undefined,
+    wcaRound: value.wcaRound as string | undefined,
+    wcaGroup: value.wcaGroup as string | undefined,
+    wcaDateFrom: value.wcaDateFrom as string | undefined,
+    wcaDateTo: value.wcaDateTo as string | undefined,
+    wcaUseOptimal: value.wcaUseOptimal as boolean | undefined,
+    wcaDifficultyOn: value.wcaDifficultyOn as boolean | undefined,
+    wcaDiffVariant: value.wcaDiffVariant as string | undefined,
+    wcaDiffStage: value.wcaDiffStage as string | undefined,
+    wcaDiffColors: value.wcaDiffColors as string | undefined,
+    wcaDiffSteps: value.wcaDiffSteps as number[] | undefined,
+    wcaDiffMerged: value.wcaDiffMerged as boolean | undefined,
+  });
+  const timing = normalizeTimerTimingSettings({
+    timingEnabled: value.timingEnabled,
     inspectionSec: value.inspectionSec,
     holdMs: value.holdMs,
+    autoSessionForEvent: value.autoSessionForEvent,
+    autoEventForSession: value.autoEventForSession,
+    hideTime: value.hideTime,
+    runningPrecision: value.runningPrecision,
+    precision: value.precision,
+  });
+  return {
+    event: value.event,
+    // Early Mobile builds offered a wider timing range than Web. Normalize at
+    // the shared migration boundary: 300 remains a valid user choice, while
+    // legacy 0/out-of-Web-range values gain the canonical Web meaning.
+    ...timing,
+    scramble222Mode: value.scramble222Mode ?? DEFAULT_SCRAMBLE_222_MODE,
+    scramble222Type: value.scramble222Type ?? DEFAULT_SCRAMBLE_222_TYPE,
+    genByStepsOn: value.genByStepsOn ?? DEFAULT_TIMER_BY_STEPS_SETTINGS.genByStepsOn,
+    genStepsMetric: value.genStepsMetric ?? DEFAULT_TIMER_BY_STEPS_SETTINGS.genStepsMetric,
+    genSteps: value.genSteps === undefined
+      ? [...DEFAULT_TIMER_BY_STEPS_SETTINGS.genSteps]
+      : [...value.genSteps] as number[],
+    manualScrambles: value.manualScrambles ?? '',
+    statsRollingColumns: value.statsRollingColumns === undefined
+      ? [...DEFAULT_ROLLING_STAT_COLUMNS]
+      : normalizeRollingStatColumns(value.statsRollingColumns),
+    ...wcaSource,
     language: value.language,
     theme: value.theme,
   };
@@ -392,8 +561,13 @@ export function createTimerStoreData(
     database,
     settings: {
       event: '333',
-      inspectionSec: 0,
-      holdMs: 300,
+      ...DEFAULT_TIMER_TIMING_SETTINGS,
+      scramble222Mode: DEFAULT_SCRAMBLE_222_MODE,
+      scramble222Type: DEFAULT_SCRAMBLE_222_TYPE,
+      ...DEFAULT_TIMER_BY_STEPS_SETTINGS,
+      manualScrambles: '',
+      statsRollingColumns: [...DEFAULT_ROLLING_STAT_COLUMNS],
+      ...DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
       language,
       theme: 'system',
     },

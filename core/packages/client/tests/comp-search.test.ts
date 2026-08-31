@@ -1,9 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveCnProvince } from '@/lib/city-localize';
-import { searchComps, type Comp } from '@/lib/comp-search';
+import { loadComps, searchComps, type Comp } from '@/lib/comp-search';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 
@@ -59,5 +64,34 @@ describe('competition province search', () => {
 
     expect(expected.length).toBeGreaterThan(0);
     expect(expected.filter((comp) => !found.has(comp.id))).toEqual([]);
+  });
+});
+
+describe('competition index loading', () => {
+  it('does not permanently cache an all-source failure as an empty list', async () => {
+    const attempts = new Map<string, number>();
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (!url.includes('all_past_comps') && !url.includes('all_upcoming_comps')) {
+        return new Response('unavailable', { status: 503 });
+      }
+      const attempt = (attempts.get(url) ?? 0) + 1;
+      attempts.set(url, attempt);
+      if (attempt === 1) return new Response('unavailable', { status: 503 });
+      if (url.includes('all_past_comps')) {
+        return new Response(JSON.stringify([{
+          id: 'Recovered2026',
+          name: 'Recovered Open 2026',
+          city: 'Recovered City',
+          country: 'US',
+          start_date: '2026-08-30',
+          end_date: '2026-08-30',
+        }]), { status: 200 });
+      }
+      return new Response('[]', { status: 200 });
+    }));
+
+    await expect(loadComps()).rejects.toThrow('competition indexes unavailable');
+    await expect(loadComps()).resolves.toMatchObject([{ id: 'Recovered2026' }]);
   });
 });

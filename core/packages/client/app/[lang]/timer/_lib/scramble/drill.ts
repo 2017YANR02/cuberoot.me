@@ -36,7 +36,7 @@ function findCase(type: DrillType, caseName: string): { id: string; alg: string 
   const list = type === 'oll' ? OLL_CASES : PLL_CASES;
   const hit = list.find(c => c.id === caseName);
   if (!hit) return null;
-  return { id: hit.id, alg: hit.alg };
+  return { id: hit.id, alg: hit.solutionAlg };
 }
 
 export function generateDrillScramble(

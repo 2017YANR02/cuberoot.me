@@ -1,17 +1,20 @@
-import { SecureStorage, KeychainAccess } from '@aparajita/capacitor-secure-storage';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import {
   decodeMobileAuthCallback,
   decodeWebSession,
+  decodeWebSessionTicketEnvelope,
   decodeWebSessionUserEnvelope,
   isMobileAuthCallbackUrl,
   isMobileAuthRandomValue,
+  type MobileAuthProvider,
   type WebSession,
+  type WebSessionTicketEnvelope,
 } from '@cuberoot/shared/auth/web-session';
 
 import type { SupportedLanguage } from '../copy';
+import { nativeMobileSecureStorage } from '../native/secure-storage';
 
 const API_ORIGIN = 'https://api.cuberoot.me';
 const SITE_ORIGIN = 'https://cuberoot.me';
@@ -177,7 +180,10 @@ export class MobileAuthClient {
     }
   }
 
-  async start(language: SupportedLanguage): Promise<void> {
+  async start(
+    language: SupportedLanguage,
+    provider: MobileAuthProvider | null = null,
+  ): Promise<void> {
     const appId = await this.runtime.getAppId();
     const callbackUrl = `${appId}://auth/callback`;
     if (!isMobileAuthCallbackUrl(callbackUrl)) throw new Error('unsupported app identity');
@@ -205,12 +211,32 @@ export class MobileAuthClient {
     url.searchParams.set('code_challenge', codeChallenge);
     url.searchParams.set('lang', language);
     url.searchParams.set('state', state);
+    if (provider) url.searchParams.set('provider', provider);
     try {
       await this.runtime.openBrowser(url.toString());
     } catch (error) {
       await this.runtime.storage.removeItem(PENDING_KEY);
       throw error;
     }
+  }
+
+  async issueWebSessionTicket(): Promise<WebSessionTicketEnvelope> {
+    const session = await this.readSession();
+    if (!session) throw new Error('mobile auth session unavailable');
+    const response = await fetchWithTimeout(
+      this.runtime.fetcher,
+      `${API_ORIGIN}/v1/auth/web-session/ticket`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.token}` },
+        cache: 'no-store',
+      },
+    );
+    if (response.status === 401) await this.clearSession();
+    if (!response.ok) throw new Error('web session ticket request failed');
+    const ticket = decodeWebSessionTicketEnvelope(await response.json());
+    if (!ticket) throw new Error('invalid web session ticket response');
+    return ticket;
   }
 
   finish(callbackUrl: string): Promise<WebSession | null> {
@@ -268,36 +294,8 @@ export class MobileAuthClient {
   }
 }
 
-let secureStorageReady: Promise<void> | null = null;
-
-function prepareSecureStorage(): Promise<void> {
-  if (!secureStorageReady) {
-    secureStorageReady = Promise.all([
-      SecureStorage.setKeyPrefix('cuberoot_mobile_'),
-      SecureStorage.setSynchronize(false),
-      SecureStorage.setDefaultKeychainAccess(KeychainAccess.whenUnlockedThisDeviceOnly),
-    ]).then(() => undefined);
-  }
-  return secureStorageReady;
-}
-
-const nativeStorage: MobileAuthStorage = {
-  async getItem(key) {
-    await prepareSecureStorage();
-    return SecureStorage.getItem(key);
-  },
-  async setItem(key, value) {
-    await prepareSecureStorage();
-    await SecureStorage.set(key, value, false, false, KeychainAccess.whenUnlockedThisDeviceOnly);
-  },
-  async removeItem(key) {
-    await prepareSecureStorage();
-    await SecureStorage.removeItem(key);
-  },
-};
-
 export const nativeMobileAuth = new MobileAuthClient({
-  storage: nativeStorage,
+  storage: nativeMobileSecureStorage,
   fetcher: fetch,
   now: () => Date.now(),
   randomBytes(length) {

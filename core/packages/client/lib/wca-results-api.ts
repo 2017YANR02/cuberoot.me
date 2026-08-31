@@ -7,6 +7,7 @@ import { toWcaEventId } from './wca-events';
 import { apiUrl } from './api-base';
 import { judgeRecordTag, type JudgedRecord, type KeatonedInfo, type RecordsSnapshot } from './record-tag';
 import type { WcaResultRow as WcaPersonResultRow } from './wca-person-api';
+import { parseTimerWcaCompetitionScrambles } from '@cuberoot/shared/timer';
 
 /** Recon round (`1`/`2`/`3`/`f`) → WCA round_type_id variants (incl. combined / cutoff). */
 export const ROUND_VARIANTS: Record<string, string[]> = {
@@ -164,19 +165,57 @@ export interface WcaScrambleRow {
 
 const scrambleCache = new Map<string, Promise<WcaScrambleRow[] | null>>();
 
-export function fetchWcaScrambles(compId: string): Promise<WcaScrambleRow[] | null> {
-  const hit = scrambleCache.get(compId);
+export function fetchWcaScrambles(
+  compId: string,
+  signal?: AbortSignal,
+): Promise<WcaScrambleRow[] | null> {
+  const cacheable = signal === undefined;
+  const hit = cacheable ? scrambleCache.get(compId) : undefined;
   if (hit) return hit;
   const proxyUrl = apiUrl(`/v1/wca/scrambles?compId=${encodeURIComponent(compId)}`);
   const directUrl = `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(compId)}/scrambles`;
-  const parse = (j: unknown): WcaScrambleRow[] | null => Array.isArray(j) ? j as WcaScrambleRow[] : null;
-  const p = fetch(proxyUrl)
+  const parse = (payload: unknown): WcaScrambleRow[] | null => {
+    const rows = parseTimerWcaCompetitionScrambles(payload);
+    return rows?.map((row) => ({
+      event_id: row.eventId,
+      round_type_id: row.roundTypeId,
+      group_id: row.groupId,
+      is_extra: row.isExtra,
+      scramble_num: row.scrambleNumber,
+      scramble: row.scramble,
+      optimal_scramble: row.optimalScramble,
+    })) ?? null;
+  };
+  const p = fetch(proxyUrl, { signal })
     .then(r => r.ok ? r.json() : Promise.reject(new Error(`proxy ${r.status}`)))
-    .then(parse)
-    .catch(() =>
-      fetch(directUrl).then(r => r.ok ? r.json() : null).then(parse).catch(() => null),
-    );
-  scrambleCache.set(compId, p);
+    .then((payload) => {
+      const rows = parse(payload);
+      if (rows === null) throw new Error('invalid competition scramble response');
+      return rows;
+    })
+    .catch((error: unknown) => {
+      if (signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) {
+        throw error;
+      }
+      return fetch(directUrl, { signal })
+        .then(r => r.ok ? r.json() : null)
+        .then(parse)
+        .catch((directError: unknown) => {
+          if (signal?.aborted
+            || (directError instanceof DOMException && directError.name === 'AbortError')) {
+            throw directError;
+          }
+          return null;
+        });
+    });
+  if (cacheable) {
+    scrambleCache.set(compId, p);
+    void p.then((rows) => {
+      if (rows === null && scrambleCache.get(compId) === p) scrambleCache.delete(compId);
+    }, () => {
+      if (scrambleCache.get(compId) === p) scrambleCache.delete(compId);
+    });
+  }
   return p;
 }
 

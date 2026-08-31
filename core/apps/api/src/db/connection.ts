@@ -46,6 +46,19 @@ export async function query<T = unknown>(
   return rows as unknown as T[];
 }
 
+export type QueryRunner = <T = unknown>(text: string, params?: unknown[]) => Promise<T[]>;
+
+/** Run existing `?`-placeholder queries on one PostgreSQL transaction/connection. */
+export async function withTransaction<T>(run: (transactionQuery: QueryRunner) => Promise<T>): Promise<T> {
+  return await sql.begin(async (tx) => run(async <Row = unknown>(
+    text: string,
+    params: unknown[] = [],
+  ): Promise<Row[]> => {
+    const rows = await tx.unsafe(rewriteQ(text), params as unknown as never[]);
+    return rows as unknown as Row[];
+  })) as T;
+}
+
 /** 健康检查:ping 数据库 */
 export async function pingDb(): Promise<boolean> {
   try {

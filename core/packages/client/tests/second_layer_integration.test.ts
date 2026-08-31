@@ -1,6 +1,10 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import {
+  DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
+  timerWcaDifficultyFilter,
+} from '@cuberoot/shared/timer';
 import { workspaceFixturePath } from './workspace-fixture-path';
 import { METHOD_KEYS } from '@/components/StageSolver';
 import { TABLE_SETS } from '@/lib/rust-cross-client';
@@ -151,8 +155,15 @@ describe('第一层已还原条件下的第二层分布', () => {
   it('旧本地设置即使残留 second_layer，也不会发成 WCA 难度查询', () => {
     const timer = read('core/packages/client/app/[lang]/timer/_shell/SoloView.tsx');
     const analyzer = read('core/packages/client/app/[lang]/scramble/analyzer/page.tsx');
-    expect(timer).toContain("wcaDiffRef.variant === 'second_layer'");
-    expect(timer).toContain('!wcaDiffIsConditionalOnly && !wcaCompUnindexed');
+    expect(timerWcaDifficultyFilter('333', {
+      ...DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
+      wcaDifficultyOn: true,
+      wcaDiffVariant: 'second_layer',
+      wcaDiffStage: 'second_layer',
+      wcaDiffSteps: [4, 5, 6],
+    })).toBeNull();
+    expect(timer).toContain('timerWcaDifficultyFilter(mappedWcaEvent, settings');
+    expect(timer).not.toContain('wcaDiffIsConditionalOnly');
     expect(analyzer).toContain("diffRef.variant === 'second_layer'");
     expect(analyzer).toContain('!conditionalOnly && s.wcaDifficultyOn');
   });

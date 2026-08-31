@@ -17,6 +17,7 @@ export function mobileAuthRequestPath(request: MobileAuthRequest): string {
     lang: request.language,
     state: request.state,
   });
+  if (request.provider) params.set('provider', request.provider);
   return `/auth/mobile?${params.toString()}`;
 }
 
@@ -26,6 +27,7 @@ export function mobileAuthAccountHref(request: MobileAuthRequest): string {
     auth: 'mobile',
     next: mobileAuthRequestPath(request),
   });
+  if (request.provider) params.set('provider', request.provider);
   return `${prefix}/account?${params.toString()}`;
 }
 

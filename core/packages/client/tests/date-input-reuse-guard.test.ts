@@ -22,7 +22,6 @@ describe('date-only controls reuse DateInput / DateRangeInput', () => {
     const offenders: string[] = [];
     for (const root of ['app', 'components']) {
       for (const file of walk(join(CLIENT_ROOT, root))) {
-        if (file.endsWith(join('components', 'DateInput.tsx'))) continue;
         const count = scanRawDateInputs(readFileSync(file, 'utf8')).length;
         if (count) offenders.push(`${count}\t${relative(CLIENT_ROOT, file)}`);
       }
@@ -30,9 +29,11 @@ describe('date-only controls reuse DateInput / DateRangeInput', () => {
     expect(offenders, `Use DateInput / DateRangeInput:\n${offenders.join('\n')}`).toEqual([]);
   });
 
-  it('allows the one native date control inside DateInput', () => {
+  it('keeps the Web DateInput path as a thin shared-component wrapper', () => {
     const source = readFileSync(join(CLIENT_ROOT, 'components/DateInput.tsx'), 'utf8');
-    expect(scanRawDateInputs(source)).toHaveLength(1);
+    expect(scanRawDateInputs(source)).toHaveLength(0);
+    expect(source).toContain("from '@cuberoot/timer-ui'");
+    expect(source).toContain('<SharedDateInput');
   });
 
   it('detects both raw and text-lookalike date controls in writes', () => {

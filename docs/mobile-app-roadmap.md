@@ -1,8 +1,12 @@
 # CubeRoot Android / iOS App 完整路线图
 
+> 顶层产品结构已由仓库所有者于 2026-08-30 明确为“计时 / 工具 / 我的”三栏，且 Android/iOS 共用同一 React 实现；网站首页、子页面和未改写的 `/account` 必须直接复用，不在 App 复制。页面或按钮可见不等于完成；所有当前已配置登录方式、子页交互与会话状态都要真机端到端验收。唯一合同与成本回退规则见 [mobile-three-tab-contract.md](./mobile-three-tab-contract.md)。
+>
+> 计时器产品面的 Web/Android/iOS 完整 UI/UX 一致性已由仓库所有者于 2026-08-30 提升为明确合同，逐项状态与验收证据统一记录在 [mobile-timer-parity-tracker.md](./mobile-timer-parity-tracker.md)。本路线图继续负责 App 总体范围与发布门槛，不再用“首版不覆盖网站 100%”解释 `/timer` 内的假控件或交互缺失。
+
 > 状态：执行中
 >
-> 更新日期：2026-08-28
+> 更新日期：2026-08-30
 >
 > 目标：以最低长期维护成本，把 CubeRoot 的高频能力发布到 Google Play 和 Apple App Store，并逐步覆盖全球可用地区。
 >
@@ -23,10 +27,10 @@
 - [ ] 核对 Apple Developer Program 个人会员已激活，并在 Xcode 选择付费 Team。（个人独资企业当前走 Apple 个人路线，不把 Google 的 D-U-N-S 当作 Apple 组织验证）
 - [ ] 建立 Android 真机和测试者名单。（组织账号不预设个人账号的 12 人/14 天门槛；质量测试仍建议 15 到 20 人）
 - [ ] 建立发布账号 2FA、恢复方式、密码管理和签名密钥备份规则。（需要账号所有者参与）
-- [x] 完成当前本地 MVP 的数据与 SDK 清单：本地计时数据、网络状态、Capacitor Browser/Network；无广告、分析或敏感权限。
+- [x] 完成当前构建的数据与 SDK 清单：本地计时数据、可选账号、网络状态、Browser/Network/Haptics/Secure Storage/BLE；无广告、分析或用户画像 SDK。
 - [x] 完成双语移动端隐私政策源码、App 内隐私入口、支持邮箱和版本信息。
 - [ ] 在提交商店前，把最终组织法定名称及公开地址、电话补进隐私政策，并与商店开发者资料逐字核对。（需要所有者确认公开资料）
-- [ ] 在加入登录、同步、分析、崩溃上报、BLE 或付费前，补齐对应数据声明、账号删除和商店问卷。
+- [x] 当前可选登录与 BLE 已补齐数据声明、账号删除入口、权限/SDK 清单和商店问卷草稿；未来加入同步、分析、崩溃上报或付费时重新复核。
 
 ### 阶段 1：技术验证
 
@@ -34,11 +38,11 @@
 - [x] 已建立 `core/apps/mobile` React + Vite + Capacitor workspace，Web 资源从本地 `dist` 打包。
 - [x] Debug 使用独立 application ID `me.cuberoot.app.debug`，Release 保留 `me.cuberoot.app`。
 - [x] 已构建并在 MuMu 模拟器安装 Debug APK，验证启动、横屏布局和 Android 返回键。
-- [x] 已验证 HTTPS 网络访问；当前远程网站入口仅为过渡验证，不计作正式 App 核心体验。
-- [x] 已用本地计时、记录和设置替换自动打开远程网站的过渡界面；网站只保留为用户主动打开的外链。
-- [ ] 在实体 Android 设备验证启动、触摸、键盘、安全区、旋转、后台恢复和 adb 日志。（当前没有 Android 真机）
-- [ ] 用实体 Android 设备和智能魔方完成 BLE 扫描、连接、读写和通知 spike。（模拟器无法代替）
-- [ ] 输出 BLE 插件能力报告和“现成插件或自有桥”架构决定。（依赖 BLE spike）
+- [x] 已验证 HTTPS 网络访问；计时仍是打包进 App 的本地核心体验，工具/我的是三栏合同明确的在线网站 surface，不是过渡入口。
+- [x] 已用本地计时、记录和设置替换“启动即跳整站”的过渡界面；工具/我的在同一 React 底栏中直接显示网站 canonical 页面，不复制卡片、子路由或账号 UI。
+- [ ] 在实体 Android 设备完成启动、触摸、键盘、安全区、旋转、后台恢复和 adb 日志的完整矩阵。当前 OPPO Reno7 Pro 5G 已完成安装、冷启动、基本触摸计时、手动打乱 IME 与 GAN 16 UI 主链实测；旋转、后台/系统中断、大字与全弹层安全区仍未关闭。
+- [x] 用实体 Android 设备和智能魔方完成 BLE 扫描、连接、读写和通知 spike。（OPPO Reno7 Pro 5G + GAN 16 UI）
+- [x] 输出 BLE 插件能力报告和“现成插件或自有桥”架构决定。
 
 当前证据：
 
@@ -52,6 +56,8 @@
 - MuMu 实测完成一次 `6.93` 计时，修改为 `+2` 后显示 `8.93`，添加备注后杀进程重启，记录数和最佳成绩均保留。
 - MuMu 已实测桌面启动图标；Android 12 系统启动页已完成原生主题迁移并通过构建。录屏只能确认背景和交接过程，未把系统图标层作为已验证证据。
 - Debug APK：`core/apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk`。
+- 2026-08-30 真机已接入：OPPO Reno7 Pro 5G `PFDM00`，Android 13 / ColorOS 13.1，1080×2400、arm64；Debug APK 安装成功，冷启动约 0.9 秒，无崩溃或 ANR，登录 deep link 由系统正确解析。触摸计时由所有者实测可用。
+- 首个 BLE 验证组合已跑通：上述 Reno7 Pro + GAN 16 UI。Android 13“附近设备”授权、扫描、选择、GATT 连接、FFF5 写入、FFF6 notify、GAN v4 解密和真实 `L` / `L'` 转动解析均有 adb 证据。
 
 ### 阶段 2：共享核心边界
 
@@ -60,7 +66,7 @@
   - [x] 计时记录模型、观察罚时规则和统计函数已迁入 `@cuberoot/shared/timer`，网站原路径保留兼容导出。
   - [x] 输入校验和版本化序列化已共享；App 的 IndexedDB 仓储只接受通过统一 schema 校验的数据。
 - [x] 提取无框架依赖的三阶打乱生成核心，网站与 App 使用同一实现。
-- [ ] 定义 BLE transport，并逐步让现有 Web 驱动与未来原生驱动共用协议层。
+- [x] 定义 BLE transport，并让 Web/Native transport 共用协议、设备时钟和状态跟踪层。
 - [x] 共享层回归测试和移动端 adapter contract tests 全部通过。
   - [x] 既有共享包构建、网站 typecheck、93 个计时/统计测试和 4 个复盘真值 fixture 已通过；本轮 47 个计时、迁移、元数据和品牌资源定向测试再次通过。
   - [x] 移动端仓储 adapter 的 contract tests 已通过，覆盖初始化、并发写、修改/删除、跨网站/App 导入导出、逐版本迁移、损坏数据、导入预览和单次撤销。
@@ -71,6 +77,7 @@
 - 共享计时状态机提交：`fba563fc35`。
 - 版本化 schema、IndexedDB 仓储和 adapter contract tests 提交：`ac5a88bf39`。
 - 共享三阶打乱生成器和边界回归测试提交：`968d330692`。
+- 2026-08-30 BLE 复用边界：Mobile 只保留 Capacitor `BleTransport`；GAN v4、补帧、`MoveClock` 和 `SmartCubeStateTracker` 位于 `@cuberoot/shared`，网站旧路径只作兼容导出。移动端 28 项与网站智能魔方/时钟定向 30 项测试通过。
 
 ### 阶段 3：PWA 补强和网站兜底
 
@@ -98,6 +105,9 @@
 - [ ] 英文/简体中文、深浅主题、保亮、震动、分享和深链闭环。
   - [x] 英文、简体中文、系统/浅色/深色主题和 JSON 文件导入导出已完成。
   - [x] 观察和计时阶段已接入标准屏幕保亮，停止后立即释放；ready/stop 已接入官方 Capacitor Haptics，并有状态策略测试与 Android 构建证据。
+  - [x] 计时器打印已由 Web/Android/iOS 共用同一 React 报告 DOM 和生命周期；Android/iOS 只保留薄系统打印桥，中文/英文 A4 PDF 已完成自动化与逐页渲染验收。
+  - [x] OPPO Reno7 Pro 5G 已从 App 共用 More 菜单打开 ColorOS 系统打印预览；中文报告可见，取消后返回 App 且打印 portal/body class 清理完成。
+  - [ ] iOS 原生打印面板、取消/完成回调，以及 Android/iOS 真实保存/纸张输出仍须分别实测；当前只有 Xcode 26.6 / iOS 26.5 Simulator SDK 编译与 iPhone 17 模拟器安装启动证据。
   - [ ] 系统文件分享、保亮和震动仍需 Android 真机实测；深链尚未完成。
 - [ ] API client 的超时、认证、错误和版本头统一。
 - [ ] TalkBack、动态字号、对比度和触摸目标基础检查通过。
@@ -112,7 +122,7 @@
 - 移动端仓储 10 项测试、网站计时/迁移/元数据/品牌资源 47 项定向测试、共享包构建、网站与移动端 typecheck 全部通过。
 - `cap:sync`、`assembleDebug`、`assembleRelease` 和 `bundleRelease` 已通过；本地签名 AAB 经 `jarsigner` 验证。
 - JDK 21、Android API 36、Gradle 8.14.3 与硬件加速模拟器已在 macOS 命令行复核；保亮/震动增量通过移动端测试、typecheck、Capacitor Android sync 与 Debug APK 构建。Pixel API 36 模拟器实测运行时持有 App 的 `SCREEN_BRIGHT_WAKE_LOCK`，停表后释放；`dumpsys vibrator_manager` 记录到 `me.cuberoot.app.debug` 的 ready/stop 触觉事件。
-- Release 元数据实测为 `versionName 0.1.0`、`versionCode 1000`、`targetSdk 36`；合并 manifest 只有网络访问、网络状态和应用签名级动态 receiver 权限，没有相机、麦克风或定位权限。
+- Release 元数据实测为 `versionName 0.1.0`、`versionCode 1000`、`targetSdk 36`；当前 Debug APK 合并 manifest 已复核网络、震动、Android 12+ 附近设备，以及仅限 API 30 以下的旧版 Bluetooth/定位兼容权限。没有相机、麦克风、存储或通知权限，BLE 硬件 `required=false`。
 - MuMu 冷启动约 1.25 秒；杀进程后的记录、语言和主题仍保留，设置页可见隐私、支持和版本入口。
 - 品牌资源由网站现有图标生成，CI 会重新生成并检查差异，避免维护第二套手工图片。
 
@@ -120,22 +130,32 @@
 
 - [ ] Android BLE 权限、可选硬件声明和权限拒绝恢复完成。
 - [ ] Native BLE transport 的扫描、连接、读写、通知、MTU 和断线事件完成。
-- [ ] 至少一个真实型号端到端跑通，并建立设备/固件/系统矩阵。
+- [x] 至少一个真实型号端到端跑通，并建立首条设备/系统矩阵记录。（OPPO Reno7 Pro 5G + GAN 16 UI）
 - [ ] 掉通知、后台、蓝牙关闭、距离中断和最终一步恢复验证通过。
 - [ ] 脱敏诊断导出和无需实体魔方的审核 demo 模式完成。
 
+当前决策与目标设备：
+
+- 首测手机：OPPO Reno7 Pro 5G `PFDM00`（Android 13 / ColorOS 13.1）；首测魔方：GAN 16 UI（GAN v4）。
+- 原生 transport 采用 `@capacitor-community/bluetooth-le` 8.x 的薄 adapter；选择依据是 Capacitor 8 同主版本、Android/iOS central BLE、manufacturer data、读写、通知、断线和 MTU 能力齐全。GAN 协议继续复用 `@cuberoot/shared/smart-cube/gan-v4`；网站保留 Web Bluetooth adapter，不复制协议、不从 client deep import。
+- Capawesome BLE 因本项目不需要其付费的 peripheral/headless/foreground 扩展而不选；Capgo Web Bluetooth shim 因设备选择语义受限且会把 Mobile 重新耦合到浏览器 GATT 对象而不选。只有社区插件真机 spike 暴露无法补齐的硬阻断时，才重开插件或自有原生桥决策。
+- 真机证据已覆盖 Android 13 附近设备授权、扫描、选择、连接、服务发现、写命令、通知、GAN v4 解密、状态帧与真实转动解析。2026-08-30 进一步实测打乱匹配后自动预备、第一手起表、复原自动停表并保存 `5.20`，统计从 `3/3` 更新为 `4/4` 后自动切换下一条比赛打乱。权限拒绝恢复、后台、蓝牙关闭、距离中断和反复重连仍是独立未完成门槛。
+
 ### 阶段 6：账号、同步和合规闭环
 
-- [x] 首发登录固定为系统浏览器复用网站邮箱/手机号；移动交接页隐藏 WCA、Google、微信、QQ、支付宝，暂不触发第三方登录的 Apple 4.8 等价登录路径。每次提交仍须按当时规则复核。
+- [x] 原生安全会话交接固定为系统浏览器复用网站唯一 `LoginForm`；Account iframe 的邮箱/手机/密码和全部 SSO 交互都委托该 Browser PKCE 流。provider-null 交接只显示第一方凭据，provider-tagged 交接显示 canonical SSO 列表，不另建 Mobile 表单。
+- [ ] 底栏“我的”使用未改写的 `/account` 并完整显示网站当前 provider 集；源码已移除 `auth=mobile`，待 Android 重装、iOS 和全 provider 真实账号验证。
+- [ ] Account iframe、系统浏览器与 Keychain/Keystore 安全会话的登录、退出和注销双向同步完成。源码已接 Browser PKCE→secure session→90 秒 web ticket→iframe、iframe logout/delete→native clear、App logout→iframe clear；不传长期 JWT，不建第二套表单。待部署与 Android/iOS 全 provider E2E；iframe-only 旧会话和外部 Browser 独立 logout 仍未自动衔接。
+- [ ] iOS 第三方主账号登录的 Apple 4.8 等价方式与发布证据完成。当前是 P0 `BLOCKED`；优先在网站唯一 `LoginForm`/后端同源实现 Sign in with Apple，不隐藏 provider 冒充 parity。
 - [ ] 原生安全存储、token 刷新、匿名数据合并和多设备同步全部完成。
   - [x] Android/iOS 共用 PKCE + 一次性票据登录客户端，JWT 进入 Keychain/Keystore 保护的安全存储，并实现刷新、`/auth/me` 校验、离线保留和 401 清理。
   - [ ] 登录前本地记录合并、outbox、冲突和多设备同步尚未实现；App 已明确提示计时记录仍只在本机。
 - [ ] outbox、幂等重试、冲突策略和旧版 API 兼容测试通过。
 - [ ] App 内账号注销和网页删除入口端到端验证通过。（App 已提供退出、网站账号管理和网站注销入口；待部署与真实账号端到端验收）
-- [x] 当前“可选登录、无计时数据同步”版本的双语隐私政策、支持入口、版本信息、本地数据删除方法、账号删除入口和 SDK 清单已进入源码。
+- [ ] 三栏与完整 Account provider 数据流下的双语隐私政策、支持入口、本地数据删除、账号删除和 SDK/provider 清单重新核对完成。旧“只有邮箱/手机系统浏览器登录”草稿不再是最终构建事实。
 - [ ] 当前本地 MVP 的隐私政策补入最终组织身份并线上发布。（当前未 push，线上 URL 尚不可作为证据）
 - [ ] 服务条款、最终发布主体、服务端数据保留规则和数据请求流程完成发布验收。
-- [x] 当前 `0.1.0` 的 Google Data safety、Google Play 内容表和未来 Apple App Privacy 草稿已与代码事实核对，见 `docs/mobile-store-submission.md`；任何数据功能或 SDK 变化都必须重审。
+- [ ] 重新核对 `0.1.0` 的 Google Data safety、Google Play 内容表和 Apple App Privacy 草稿。`docs/mobile-store-submission.md` 已更新为三栏 Web surface、完整 provider 和冷离线失败的当前事实，但仍明确标为 `NOT SUBMISSION READY`，最终包/账号/控制台尚未复核。
 
 ### 阶段 7：Google Play 封闭测试
 
@@ -143,7 +163,7 @@
 - [ ] 根据组织账号 Play Console 显示的实际要求完成测试；若账号被明确要求 closed test，再按控制台给出的测试人数和时长执行。
 - [ ] 离线、同步、BLE、后台、升级、注销和设备矩阵反馈闭环。
 - [ ] Production access 获批，商店说明、截图、图标、内容评级和隐私资料完成。
-  - [x] 双语商店说明、版本说明、审核备注、Data safety、内容表和提交前复核清单已写入 `docs/mobile-store-submission.md`。
+  - [ ] 双语商店说明、版本说明、审核备注、Data safety、内容表和提交前复核清单已有草稿，但须按最终 provider、权限、archive 隐私报告和真机证据复核后才能完成。
   - [ ] feature graphic、Android 真机截图、公开组织资料、目标受众及控制台实际问卷尚待完成。
 
 ### 阶段 8：Android 正式发布
@@ -159,21 +179,24 @@
 - [ ] iOS 工程、签名、Core Bluetooth、Keychain、Universal Links 和分享完成。
 - [x] 已在同一个 React + Vite + Capacitor 8 App 中加入并维护 iOS 工程；`@capacitor/ios` 与 Core/CLI/Android 同为 `8.5.0`，App ID 为 `me.cuberoot.app`，未另写 iOS 业务 UI。
 - [x] 已完成 mobile 测试、typecheck、production build、`cap sync ios`、无签名 iOS Simulator 编译、安装和启动验证；iOS 26.5 的 iPhone 模拟器可见并运行 CubeRoot。
+- [x] iOS App Icon 与深浅启动图复用网站 canonical SVG，经 `assets:ios` 机械生成并纳入 CI 漂移检查；Xcode asset catalog 编译通过。模拟器因系统启动快照缓存尚未留下“启动 logo 可见”的截图证据，因此这里只记录生成与编译事实。
+- [x] React 主应用保持异步加载，HTML 与 `Suspense` 两层均复用同一个 `loading-screen` 品牌壳；最终 Simulator 安装后的时间点截图显示约 1 秒仍为 iOS 缓存的原生启动快照、约 3 秒出现 `CubeRoot` 品牌壳、约 5 秒进入共用计时器，且由启动壳回归测试锁定。
 - [x] iOS 模拟器已验证真实比赛打乱在线获取、共享项目图标、共享七段计时界面和共享展开魔方图。
-- [x] 真实比赛打乱采用 50 条、固定抓取时间起算 7 天的有界缓存；缓存过期、去重以及错误项目/记号过滤由移动端测试覆盖，不把 130 万条比赛打乱打进安装包。冷离线本地生成兜底已实现，但实际断网取证仍见下一项。
+- [x] 真实比赛打乱采用 50 条、固定抓取时间起算 7 天的有界缓存；缓存过期、去重以及错误项目/记号过滤由移动端测试覆盖，不把 130 万条比赛打乱打进安装包。已映射项目冷离线无缓存时明确失败，不用随机题冒充比赛真题；无映射项目才按网站契约使用同项目本地 provider。
 - [ ] 在 iOS 模拟器实际执行一次无缓存断网冷启动并保存取证。（当前只有在线模拟器画面和自动化测试证据）
 - [x] Xcode 工程当前保持 Automatic Signing，Debug/Release Bundle ID 均为 `me.cuberoot.app`；付费 Team 尚未选择，不能作为签名成功证据。
-- [x] 同一移动端 Web 构建已重新同步 Android，并在本机用 JDK 21 完成 `assembleDebug`，生成 4.0 MB Debug APK，未发现本轮 iOS/共享 UI 引入的 Android 编译回归。
+- [ ] iOS GAN v4 transport 已能在原生 picker 返回 UUID 后，通过 manufacturer advertisement 提取协议所需 MAC，并有握手单测；仍需 Apple 账号恢复后用 iPhone + GAN 16 UI 验证扫描、连接、解密、转动、自动起停与断线恢复。
+- [x] 同一移动端 Web 构建已重新同步 Android，并在本机用 JDK 21 完成 274-task `assembleDebug`；当前 Debug APK 为 7,537,782 bytes（SHA-256 `09c5fccc9c16208834c234c0e75b66757e3d30a2d8ee9f587be3e4d71f690440`），未发现本轮 iOS/共享 UI 引入的 Android 编译回归。
 - [ ] iOS 权限、后台、系统中断、安全区、动态字体和 VoiceOver 验证通过。
-- [ ] Sign in with Apple/登录合规、TestFlight 和 App Store 审核资料完成。
+- [ ] 网站唯一 `LoginForm`/后端提供满足 Apple 4.8 的等价登录（优先 Sign in with Apple），且完成全 provider、会话衔接、TestFlight 和 App Store 审核取证。（当前 P0 `BLOCKED`）
 - [ ] App Store 审核通过，且业务逻辑未复制为 iOS 专属实现。
 
 当前 iOS 证据与阻塞：
 
 - `xcodebuild` 使用 Xcode 26.6、iOS Simulator SDK 26.5 完成 Debug 构建；`simctl install` 和 `simctl launch` 对 `me.cuberoot.app` 成功。
 - iOS 原生工程只承载 Capacitor 壳，计时 UI、项目图标和魔方展开图分别复用 `@cuberoot/timer-ui`、`@cuberoot/event-icon` 和 `@cuberoot/visualcube`；架构边界守卫与相关定向测试通过。
-- 小程序的计时页已确认只是指向网站 `/zh/timer` 的 WebView；移动 App 以该真实网站界面为视觉参照，但不跨 app 导入小程序源码。本轮在共享移动端 React 界面中补齐了真实“更多”菜单，并移除尚无对应能力的难度占位和假下拉提示，避免为追求外观一致而复制或伪造功能。
-- Android/iOS 登录共用一个 React/Capacitor 客户端和网站现有邮箱/手机号表单；服务端使用 90 秒单次 ticket、PKCE S256 与原子核销，原生会话进入 Keychain/Keystore 保护的安全存储。协议、错误和账号响应复用 shared 契约，未建设第二套账号系统；模拟器构建只能证明接线，真实浏览器回跳和账号注销仍需部署与双平台端到端验收。
+- 小程序的计时页已确认只是指向网站 `/zh/timer` 的 WebView；移动 App 以该真实网站界面为产品事实源，但不跨 app 导入小程序源码。计时器全部状态按 `docs/mobile-timer-parity-tracker.md` 与零遗漏审计迁到 shared/timer-ui；未接真实行为的控件不能用占位、外跳或隐藏冒充完成。当前仍是 `ACTIVE — NOT COMPLETE`。
+- Android/iOS 原生安全会话交接共用一个 React/Capacitor 客户端和网站唯一 `LoginForm`；服务端使用 90 秒单次 ticket、PKCE S256 与原子核销，原生会话进入 Keychain/Keystore 保护的安全存储。底栏 Account 是未改写的网站 `/account` surface并显示全部当前 provider；源码已把其所有登录入口交给 Browser，并用另一张 90 秒 web ticket 回灌 iframe，也同步 iframe/App logout。协议、错误和账号响应继续复用 shared 契约，不建第二套账号系统；生产部署、真实 OAuth 回跳、异常恢复、绑定/解绑、退出和注销仍需双平台端到端验收。
 - Apple Developer 账号当前登录异常，所有者计划联系 Apple；因此会员 Active、付费 Team、真机签名、Archive 和 TestFlight 均保持未勾选。
 
 ### 阶段 10：全球发布和长期维护
@@ -185,7 +208,7 @@
 
 ## 1. 先说结论
 
-CubeRoot 最适合的路线不是把整个网站原样塞进 WebView，也不是重新用 Flutter、Swift 和 Kotlin 各写一遍，而是：
+CubeRoot 最适合的路线不是把 App 启动运行时整体改成远程网站 WebView，也不是重新用 Flutter、Swift 和 Kotlin 各写一遍，而是：本地计时保留离线与原生能力，工具/我的在共享底栏内显示网站唯一页面。
 
 1. 网站继续负责完整内容、SEO、后台、长文和重型工具。
 2. 新建一个独立的 React + Vite + Capacitor 移动端壳，先做 Android，再做 iOS。
@@ -202,7 +225,7 @@ CubeRoot 最适合的路线不是把整个网站原样塞进 WebView，也不是
 - 登录、同步、语言、主题、深链和分享。
 - 少量真正适合手机的 WCA/比赛提醒。
 
-首发暂不搬进 App：
+首发暂不原生重写（仍可从“工具”进入网站唯一页面）：
 
 - 管理后台和内容编辑器。
 - 大型统计图表和低频 WCA 数据页。
@@ -275,6 +298,8 @@ CubeRoot 最适合的路线不是把整个网站原样塞进 WebView，也不是
 
 成熟产品通常不是把网站完整复刻到手机，而是共享账号、数据和后端，再为移动场景挑选高频工作流、离线能力和系统能力。
 
+本节是 App 总体信息架构的行业背景，不得覆盖仓库所有者后来明确提出的 `/timer` 完整一致合同：计时器的数据与 UI/UX parity 同为硬门槛，不能再用“移动端聚焦”删减网站已有计时功能。工具和“我的”继续通过网站唯一 surface 避免复制。
+
 | 产品 | 移动端重点 | 对 CubeRoot 的启发 | 官方资料 |
 |---|---|---|---|
 | GitHub | 通知、收件箱、评审和移动工作流与网站同步 | App 聚焦随手处理，不必搬完整开发后台 | [GitHub 通知设置](https://docs.github.com/en/subscriptions-and-notifications/get-started/configuring-notifications) |
@@ -287,7 +312,7 @@ CubeRoot 最适合的路线不是把整个网站原样塞进 WebView，也不是
 可复用的行业规律：
 
 1. 一个账号和一个后端，而不是网站账号与 App 账号分裂。
-2. 数据同步优先于页面长得完全一致。
+2. 默认产品面先共享账号和数据；已明确列入 parity 合同的 `/timer` 则必须同时达到完整功能与 UI/UX 一致。
 3. 手机端围绕高频动作和硬件能力设计。
 4. 离线是明确选择和状态，不是“缓存应该碰巧能用”。
 5. 管理、长文和重型操作可以留在网站。
@@ -300,7 +325,7 @@ CubeRoot 最适合的路线不是把整个网站原样塞进 WebView，也不是
 | 方案 | 现有代码复用 | 原生 BLE | iOS | 长期维护 | 审核风险 | 结论 |
 |---|---:|---:|---:|---:|---:|---|
 | 纯 PWA | 高 | Android 部分可用，iOS 不可用 | 无商店级原生能力 | 最低 | 无 App Store 产品 | 保留为网站增强，不是最终 App |
-| 纯 WebView / 远程 URL 套壳 | 很高 | 需要额外桥接 | 可做 | 表面低、实际易碎 | Apple 4.2 风险高 | 不作为正式路线 |
+| 纯 WebView / 启动即远程 URL 整站套壳 | 很高 | 需要额外桥接 | 可做 | 表面低、实际易碎 | Apple 4.2 风险高 | 不作为正式路线；不否定三栏内受控的工具/Account 在线 surface |
 | Android TWA | 很高 | 仍受 Web 能力限制 | 不支持 | 低 | Android 可行但价值有限 | 不选 |
 | React Native / Expo | 中低 | 可用 | 可用 | 中 | 低 | 会重写较多 DOM/CSS 组件 |
 | Flutter | 低 | 可用 | 可用 | 高 | 低 | 对本项目复用率太低 |
@@ -643,7 +668,7 @@ Apple 公布的数据是 90% 的提交在 24 小时内完成审核，但这不�
 
 这些功能不能阻塞计时、BLE、离线和同步的可靠性。
 
-### 11.3 暂留网站
+### 11.3 只保留网站唯一实现
 
 - `/dev`、管理后台和运维页面。
 - 完整 `/wca` 数据探索、大地图和复杂图表。
@@ -652,7 +677,7 @@ Apple 公布的数据是 90% 的提交在 24 小时内完成审核，但这不�
 - 需要大表、COOP/COEP 或高内存的求解器。
 - fork 工具和只适合桌面的页面。
 
-App 可用真实链接打开这些页面，保留中键/系统浏览器语义，不在壳内伪装成本地页面。
+App 的“工具”可用真实链接进入这些网站页面，保留站内导航与需要时的系统浏览器回退，不在壳内伪装成本地页面，也不复制它们的 UI/路由。
 
 ### 11.4 iOS v1
 
@@ -867,9 +892,9 @@ Android 官方权限依据：[Bluetooth permissions](https://developer.android.c
 
 任务：
 
-1. 决定 App 首发显示哪些登录方式。
-2. 审计 Google/WCA/其他第三方登录是否触发 Apple 4.8 等价登录要求。
-3. 如果需要，在 iOS 阶段加入 Sign in with Apple；不要到审核当天才处理。
+1. Account tab 保持与网站当前 provider 集完整一致；`auth=mobile` 只用于原生 PKCE ticket 交接。
+2. 完成 WCA/Google/微信/QQ/支付宝的 Browser OAuth 回退与 Account iframe 会话衔接，复用现有单次 ticket 端点，不传长期 JWT。
+3. 在 iOS 提交前由网站唯一 `LoginForm`/后端提供满足 Apple 4.8 的等价登录，实施优先考虑 Sign in with Apple；当前保持 P0 `BLOCKED`。
 4. token 存原生安全存储，不放普通 localStorage。
 5. 完成匿名数据合并、多设备同步、失败重试和冲突策略。
 6. App 内提供账号注销；网页提供可访问的删除入口。
@@ -987,7 +1012,7 @@ Android 官方权限依据：[Bluetooth permissions](https://developer.android.c
 3. 配置蓝牙、通知、相机等用途说明，只声明实际使用的权限。
 4. 验证前台、锁屏、后台和系统中断下的计时/连接行为。
 5. 接入 Keychain、Universal Links 和分享。
-6. 处理 Sign in with Apple / 登录合规。
+6. 在网站 canonical `LoginForm`/后端实现并验证满足 Apple 4.8 的等价登录（优先 Sign in with Apple）；禁止另写 iOS 表单。
 7. 测试动态字体、VoiceOver、安全区、键盘和不同屏幕。
 8. 建立 TestFlight 内部和外部测试。
 9. 准备审核账号、demo 模式、BLE 使用说明和测试视频。
@@ -1049,8 +1074,9 @@ CubeRoot 应以这些证据证明不是简单套壳：
 
 ### 13.2 登录
 
-- 如果在 iOS App 中展示 Google 等第三方社交登录，检查 Apple 4.8 是否要求提供等价登录，通常需要 Sign in with Apple，除非满足明确例外。
-- WCA OAuth 是否属于特定服务账号例外要按最终登录流程和当时指南判断，不能只凭名称假设。
+- iOS Account tab 会展示网站现有 Google、微信等第三方主账号登录，明确进入 Apple 4.8 等价登录审核边界；当前 iOS App Store 发布为 P0 `BLOCKED`。
+- 网站唯一 `LoginForm`/后端必须提供满足当时 4.8 隐私条件的等价方式，实施优先考虑 Sign in with Apple；现有邮箱/手机方式尚无满足“可隐藏邮箱”的完整证据。
+- WCA 不得凭名称假定为公民电子身份或特定服务账号例外；隐藏网站已有 provider 也不是同时满足产品 parity 与合规的解法。
 - 审核账号不能依赖短信、人工批准或仅开发者能完成的步骤。
 - OAuth callback、Universal Link 和隐私页必须在审核环境可达。
 
@@ -1243,11 +1269,11 @@ CubeRoot 应以这些证据证明不是简单套壳：
 
 ## 17. 最常见的坑，以及如何避免
 
-### 坑 1：把整站套壳当成正式 App
+### 坑 1：把 App 整个启动运行时改成远程整站套壳
 
 后果：Apple 4.2 风险、离线差、导航怪、BLE 仍难用。
 
-避免：核心计时/训练做成本地 bundle 和本地数据，网站只承载适合网页的内容。
+避免：核心计时/训练做成本地 bundle 和本地数据；工具/Account 在受控三栏中显示网站唯一实现，但不把 App 启动地址指向远程整站，不复制网站 UI/路由。
 
 ### 坑 2：为了“共用代码”强行共用所有 UI
 

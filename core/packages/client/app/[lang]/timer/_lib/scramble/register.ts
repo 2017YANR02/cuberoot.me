@@ -8,9 +8,9 @@
  *   2. Add the generator to the appropriate sibling file (bld/relay/etc.).
  *   3. Add a registerScramble(...) line below.
  *
- * For a non-WCA puzzle the vendored csTimer engine already scrambles, step 2 is
- * just one line in `nonwca.ts`'s NON_WCA table — the loop at the bottom picks it
- * up automatically. Do not hand-write a scrambler for those.
+ * Worker-only non-WCA puzzles stay in `nonwca.ts`. Runtime-neutral puzzle
+ * engines such as Gear/Ivy are registered from @cuberoot/puzzle-solvers so
+ * Web and Mobile do not maintain separate generators.
  */
 
 import { registerScramble } from './index';
@@ -74,8 +74,7 @@ registerScramble('eg2', scrambleEg2);
 registerScramble('magic', scrambleMagic);
 registerScramble('mmagic', scrambleMmagic);
 registerScramble('custom', scrambleCustom);
-
-// Non-WCA puzzles (FTO / Kilominx / …). The scrambles come from the vendored
+// Remaining non-WCA puzzles (FTO / Kilominx / …) come from the vendored
 // csTimer engine in a Web Worker, so the sync generator here just drains the
 // queue nonwca.ts keeps topped up; '' means "still generating", and SoloView
 // fills it in (spinner) rather than falling through to a 3x3 scramble.

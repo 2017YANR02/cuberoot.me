@@ -340,36 +340,36 @@
       "driftPolicy": "icons_drift.yml does not prove SVG-map freshness. Until a cheap generator-diff guard is added, explicitly regenerate and review all three category maps after SVG changes."
     },
     {
-      "id": "client.place-zh",
+      "id": "shared.place-zh",
       "kind": "checked-in-generated",
       "source": {
         "locator": "WCA city data, GeoNames data, and the reviewed localization tail",
         "paths": [
-          "core/packages/client/scripts/gen-place-zh.mjs",
-          "core/packages/client/scripts/merge-place-zh.mjs",
-          "core/packages/client/scripts/place-tail-zh.json"
+          "core/packages/shared/scripts/gen-place-zh.mjs",
+          "core/packages/shared/scripts/merge-place-zh.mjs",
+          "core/packages/shared/scripts/place-tail-zh.json"
         ]
       },
       "license": { "spdx": "NOASSERTION", "evidence": "each external input retains its own terms; repository code is covered by LICENSE" },
-      "owner": "core/packages/client",
-      "workingDirectory": "core/packages/client",
+      "owner": "core/packages/shared",
+      "workingDirectory": "core/packages/shared",
       "command": "node scripts/gen-place-zh.mjs; node scripts/merge-place-zh.mjs",
-      "outputs": ["core/packages/client/lib/data/place-zh.ts"],
+      "outputs": ["core/packages/shared/src/data/place_zh.ts"],
       "verification": ["the place localization coverage test checks newly observed cities"],
       "driftPolicy": "External inputs and the manually reviewed tail are sources. Update them and rerun both generators instead of editing the output directly."
     },
     {
-      "id": "client.cn-region",
+      "id": "shared.cn-region",
       "kind": "checked-in-generated",
       "source": {
         "locator": "cubingchina data.sql supplied explicitly or by the documented local convenience path",
-        "paths": ["core/packages/client/scripts/gen-cn-region.mjs"]
+        "paths": ["core/packages/shared/scripts/gen-cn-region.mjs"]
       },
       "license": { "spdx": "NOASSERTION", "evidence": "the external data source retains its own terms; repository code is covered by LICENSE" },
-      "owner": "core/packages/client",
+      "owner": "core/packages/shared",
       "workingDirectory": "core",
-      "command": "node packages/client/scripts/gen-cn-region.mjs [data.sql]",
-      "outputs": ["core/packages/client/lib/data/cn-region.ts"],
+      "command": "node packages/shared/scripts/gen-cn-region.mjs [data.sql]",
+      "outputs": ["core/packages/shared/src/data/cn_region.ts"],
       "verification": ["review the deterministic generated diff from the explicitly selected data.sql input"],
       "driftPolicy": "The generated header forbids hand edits. The default machine path is only a local convenience and CI must not claim to possess the external source."
     },
@@ -387,6 +387,28 @@
       "outputs": ["core/packages/client/public/account-locations/*.json"],
       "verification": ["pnpm check:account-locations"],
       "driftPolicy": "Regenerate the compact per-country files through the pinned development dependency; never hand-edit them."
+    },
+    {
+      "id": "shared.timer-trainer-case-data",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "canonical shared OLL, PLL and ZBLL case maps",
+        "paths": [
+          "core/packages/shared/data/oll.json",
+          "core/packages/shared/data/pll.json",
+          "core/packages/shared/data/zbll.json"
+        ]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and the canonical case-map provenance" },
+      "owner": "core/packages/shared/scripts/build-timer-trainer-case-data.mjs",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/shared generate:timer-trainer-cases --write",
+      "outputs": ["core/packages/shared/src/timer/trainer-case-data.generated.ts"],
+      "verification": [
+        "pnpm --filter @cuberoot/shared generate:timer-trainer-cases --check",
+        "pnpm --filter @cuberoot/client exec vitest run tests/timer_trainer_scramble_shared.test.ts"
+      ],
+      "driftPolicy": "The three JSON maps remain the only authored truth. Regenerate this compact Timer-only projection and review the deterministic diff; never edit the generated TypeScript directly."
     },
     {
       "id": "client.pg-facts",

@@ -7,6 +7,7 @@
 // 直连,本文件不参与任何媒体传输。对战状态仍走 battle-room-api 的 1s 轮询,两套互不干扰。
 import { apiUrl } from './api-base';
 import { getSessionToken } from './auth-store';
+import { NET_BATTLE_TOKEN_HEADER } from '@cuberoot/shared/timer';
 
 /**
  * 单路视频最大码率(bps)。1080p30 取 LiveKit h1080 预设的 3 Mbps。
@@ -117,12 +118,14 @@ export async function getVideoConfig(): Promise<VideoConfig | null> {
 }
 
 /**
- * 换取 LiveKit 连接凭证。服务端会回库确认该 pid 确实在该对战房里,并过一遍带宽预算,
+ * 换取 LiveKit 连接凭证。服务端会回库确认 pid 与私有玩家 capability 匹配,并过一遍带宽预算,
  * 所以这里拿到 token 就意味着「授权通过 + 有带宽」。被拒时抛 VideoDeniedError,
  * 调用方据 reason 给不同文案。
  */
-export async function getVideoToken(code: string, pid: string): Promise<VideoToken> {
-  return postToken('/v1/video/token', { code, pid });
+export async function getVideoToken(code: string, pid: string, playerToken: string): Promise<VideoToken> {
+  return postToken('/v1/video/token', { code, pid }, false, {
+    [NET_BATTLE_TOKEN_HEADER]: playerToken,
+  });
 }
 
 /**
@@ -149,8 +152,13 @@ export async function createMeetCode(): Promise<string> {
   return data.code;
 }
 
-async function postToken(path: string, body: Record<string, string>, authed = false): Promise<VideoToken> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+async function postToken(
+  path: string,
+  body: Record<string, string>,
+  authed = false,
+  extraHeaders: Record<string, string> = {},
+): Promise<VideoToken> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...extraHeaders };
   if (authed) headers.Authorization = `Bearer ${getSessionToken()}`;
   const res = await fetch(apiUrl(path), { method: 'POST', headers, body: JSON.stringify(body) });
   if (!res.ok) return throwVideoDenied(res);

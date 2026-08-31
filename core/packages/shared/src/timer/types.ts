@@ -39,6 +39,15 @@ export type EventId =
  */
 export type Penalty = 'ok' | '+2' | 'DNF' | 'DNS';
 
+export type TimerScrambleSourceKind = 'wca' | 'random' | 'manual';
+
+/** Immutable provider identity captured when an attempt starts. */
+export interface TimerScrambleSourceSnapshot {
+  kind: TimerScrambleSourceKind;
+  /** Same identity used by provider pools, caches and stale-result guards. */
+  identity: string;
+}
+
 export interface Solve {
   /** Sortable id: timestamp + random suffix; sorted by ts not id */
   id: string;
@@ -46,6 +55,8 @@ export interface Solve {
   timeMs: number;
   penalty: Penalty;
   scramble: string;
+  /** Source/configuration that produced this exact scramble slot. */
+  scrambleSource?: TimerScrambleSourceSnapshot;
   event: EventId;
   /** Unix ms */
   ts: number;
@@ -157,19 +168,19 @@ export interface EventInfo {
 
 export const EVENTS: EventInfo[] = [
   // WCA standard
-  { id: '333',    nameEn: '3x3',         nameZh: '三阶',       group: 'wca'
+  { id: '333',    nameEn: '3×3',         nameZh: '三阶',       group: 'wca'
 },
-  { id: '222',    nameEn: '2x2',         nameZh: '二阶',       group: 'wca'
+  { id: '222',    nameEn: '2×2',         nameZh: '二阶',       group: 'wca'
 },
-  { id: '444',    nameEn: '4x4',         nameZh: '四阶',       group: 'wca'
+  { id: '444',    nameEn: '4×4',         nameZh: '四阶',       group: 'wca'
 },
-  { id: '555',    nameEn: '5x5',         nameZh: '五阶',       group: 'wca'
+  { id: '555',    nameEn: '5×5',         nameZh: '五阶',       group: 'wca'
 },
-  { id: '666',    nameEn: '6x6',         nameZh: '六阶',       group: 'wca'
+  { id: '666',    nameEn: '6×6',         nameZh: '六阶',       group: 'wca'
 },
-  { id: '777',    nameEn: '7x7',         nameZh: '七阶',       group: 'wca'
+  { id: '777',    nameEn: '7×7',         nameZh: '七阶',       group: 'wca'
 },
-  { id: '333oh',  nameEn: '3x3 OH',      nameZh: '三阶单手',   group: 'wca'
+  { id: '333oh',  nameEn: 'OH',          nameZh: '单手',       group: 'wca'
 },
   { id: '333fm',  nameEn: 'FMC',         nameZh: '最少步',     group: 'wca' },
 
@@ -188,17 +199,17 @@ export const EVENTS: EventInfo[] = [
   { id: 'r5',     nameEn: '2-5 Relay',   nameZh: '2-5 接力',   group: 'relay' },
 
   // Other puzzles
-  { id: 'pyra',   nameEn: 'Pyraminx',    nameZh: '金字塔',     group: 'puzzle' },
+  { id: 'pyra',   nameEn: 'Pyra',        nameZh: '金字塔',     group: 'puzzle' },
   { id: 'skewb',  nameEn: 'Skewb',       nameZh: '斜转',       group: 'puzzle'
 },
-  { id: 'sq1',    nameEn: 'Square-1',    nameZh: 'SQ-1',       group: 'puzzle' },
-  { id: 'mega',   nameEn: 'Megaminx',    nameZh: '五魔',       group: 'puzzle' },
+  { id: 'sq1',    nameEn: 'SQ1',         nameZh: 'SQ1',        group: 'puzzle' },
+  { id: 'mega',   nameEn: 'Mega',        nameZh: '五魔',       group: 'puzzle' },
   { id: 'clock',  nameEn: 'Clock',       nameZh: '魔表',       group: 'puzzle'
 },
   { id: '333mr',  nameEn: 'Mirror Blocks', nameZh: '镜面',     group: 'puzzle'
 },
-  { id: 'magic',  nameEn: 'Magic',       nameZh: '魔板',       group: 'puzzle' },
-  { id: 'mmagic', nameEn: 'Master Magic',nameZh: '六块魔板',   group: 'puzzle'
+  { id: 'magic',  nameEn: 'Magic',       nameZh: '八板',       group: 'puzzle' },
+  { id: 'mmagic', nameEn: 'M.Magic',     nameZh: '十二板',     group: 'puzzle'
 },
 
   // Non-WCA puzzles. Names follow wiki/glossary.json (the site's term base),
@@ -233,7 +244,9 @@ export const EVENTS: EventInfo[] = [
 ];
 
 export function eventInfo(id: EventId): EventInfo {
-  return EVENTS.find(e => e.id === id) ?? EVENTS[0];
+  const info = EVENTS.find(e => e.id === id);
+  if (!info) throw new Error(`Unknown timer event: ${id}`);
+  return info;
 }
 
 /* ------------------------------------------------------------------ */

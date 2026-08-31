@@ -172,6 +172,59 @@ describe('已删除的观察启动方式', () => {
   });
 });
 
+describe('计时核心设置改用 Web/Mobile 共享键与归一化', () => {
+  beforeEach(() => { vi.unstubAllGlobals(); });
+
+  it('把 Web 旧 inspection 键迁到 inspectionSec 并只保存新键', async () => {
+    const mem = installStorage({
+      [KEY]: JSON.stringify({
+        inspection: 15,
+        holdMs: 300,
+        scrambleClickMigrated: true,
+        recordGyroMigrated: true,
+        bluetoothAutoReadyMigrated: true,
+      }),
+    });
+    const { getSettings } = await freshSettings();
+    expect(getSettings()).toMatchObject({ inspectionSec: 15, holdMs: 300 });
+    expect(getSettings()).not.toHaveProperty('inspection');
+
+    const saved = JSON.parse(mem.get(KEY) as string);
+    expect(saved.inspectionSec).toBe(15);
+    expect(saved).not.toHaveProperty('inspection');
+  });
+
+  it('加载与运行时更新都使用 shared timing normalizer', async () => {
+    const mem = installStorage({
+      [KEY]: JSON.stringify({
+        inspectionSec: 8,
+        holdMs: 9_999,
+        runningPrecision: 9,
+        precision: 1,
+        scrambleClickMigrated: true,
+        recordGyroMigrated: true,
+        bluetoothAutoReadyMigrated: true,
+      }),
+    });
+    const { getSettings, updateSettings } = await freshSettings();
+    expect(getSettings()).toMatchObject({
+      inspectionSec: 15,
+      holdMs: 2_000,
+      runningPrecision: 3,
+      precision: 3,
+    });
+
+    updateSettings({ holdMs: 0, runningPrecision: 2, precision: 2 });
+    expect(getSettings()).toMatchObject({ holdMs: 550, runningPrecision: 2, precision: 2 });
+    expect(JSON.parse(mem.get(KEY) as string)).toMatchObject({
+      inspectionSec: 15,
+      holdMs: 550,
+      runningPrecision: 2,
+      precision: 2,
+    });
+  });
+});
+
 describe('滚动统计列设置迁移', () => {
   beforeEach(() => { vi.unstubAllGlobals(); });
 
