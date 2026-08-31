@@ -17,7 +17,8 @@ function player(joined: number, over: Partial<NetPlayerEntry> = {}): NetPlayerEn
 
 function state(over: Partial<NetRoomState>): NetRoomState {
   return {
-    code: '0427', event: '333', round: 1, scrambles: { '333': "R U R' U'" },
+    code: '0427', revision: 0, videoGeneration: 'test', event: '333', round: 1,
+    scrambles: { '333': "R U R' U'" },
     players: {}, results: {}, history: [], scores: {},
     admin: '', syncStart: false, startAt: null, now: NOW, ...over,
   };
