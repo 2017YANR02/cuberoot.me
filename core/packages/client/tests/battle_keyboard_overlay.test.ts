@@ -27,6 +27,7 @@ vi.mock('@/app/[lang]/timer/_lib/scramble/wca_pool', () => ({
 localStorage.clear();
 const { useBattleStore } = await import('@/app/[lang]/timer/_battle/engine/battle_store');
 const {
+  battlePointerReleaseAction,
   isBattleKeyboardExcludedTarget,
   useKeyboardControls,
 } = await import('@/app/[lang]/timer/_shell/BattleView');
@@ -59,6 +60,12 @@ beforeEach(() => {
 });
 
 describe('battle overlay keyboard suppression', () => {
+  it('maps a real pointer release to start and platform cancellation to cancel', () => {
+    expect(battlePointerReleaseAction('pointerup')).toBe('up');
+    expect(battlePointerReleaseAction('pointercancel')).toBe('cancel');
+    expect(battlePointerReleaseAction('lostpointercapture')).toBe('cancel');
+  });
+
   it('treats every descendant of data-no-timer as excluded input', () => {
     const overlay = document.createElement('div');
     overlay.dataset.noTimer = '';
