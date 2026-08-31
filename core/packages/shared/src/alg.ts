@@ -519,6 +519,9 @@ export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: b
   // Keep this versioned query until every pre-migration one-hour cache has expired,
   // otherwise a new client can briefly pair migrated user keys with stale case data.
   if (puzzle === 'sq1' && set === 'cs') query.set('v', '2026-08-15-squanmate');
+  // Five EP source formulas omitted their final U/D alignment. Bust the public
+  // cache so their corrected setups and thumbnails replace the malformed state immediately.
+  if (puzzle === 'sq1' && set === 'ep') query.set('v', '2026-08-31-ep-auf');
   // PF/TL setups changed from a fully-solved target to their real intermediate stages.
   // Bust the public one-hour cache so deployed clients do not keep the old states.
   if (puzzle === 'fto' && (set === 'pf' || set === 'tl')) query.set('v', '2026-08-19-fto-stages');
