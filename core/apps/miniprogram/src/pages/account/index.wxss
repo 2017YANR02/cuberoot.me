@@ -1,7 +1,12 @@
-.account-entry-page,
 .account-login-page,
 .account-user-page {
   padding-top: 72rpx;
+}
+
+.account-entry-page {
+  align-items: center;
+  display: flex;
+  justify-content: center;
 }
 
 .account-entry-copy,
@@ -15,7 +20,7 @@
 .account-entry-copy {
   font-size: 28rpx;
   line-height: 1.65;
-  margin-top: 64rpx;
+  text-align: center;
 }
 
 .account-primary-button {
