@@ -268,7 +268,7 @@ Web 当前有 8 类、63 个可达偏好/命令 surface；稳定 ID 与交互策
 
 ## 5. 本地多人模式（2～4 人）
 
-Web `BattleView` 是完整产品面，不是“一个外部网址”。Mobile 当前不渲染 2～4 人入口，因此本节全部未完成。
+Web `BattleView` 是完整产品面，不是“一个外部网址”。Mobile 当前不渲染 2～4 人入口，因此本节 UI/UX 与设备能力全部未完成。2026-08-31 第一批 runtime-neutral 规则已经由 Web 真正改用 `@cuberoot/shared/timer`：2～4 人、active slots、按键映射/冲突交换、同项目分组、共享打乱显隐、罚时与并列胜者；旋转不再重置业务态，pointer cancel 也不再误起表。这只是未来 Web/Mobile 共用 reducer 的起点，不是 Mobile 页面完成。
 
 - 2 人左右对战，3/4 人田字格，3/4 人上排翻转，手机/横屏布局。
 - 每人独立项目、计时状态、OK/+2/DNF、分数、ao5、按键、打乱图、背景。
@@ -281,9 +281,27 @@ Web `BattleView` 是完整产品面，不是“一个外部网址”。Mobile �
 - 成绩历史、VS 历史、轮次详情、复盘、删除、CSV 导出。
 - 高级功能：手动录入、导入、CSV/JSON、模拟、分享、heatmap、撤销、里程碑/疲劳提示。
 
+对抗审查已锁定以下迁移前阻断项，不得把旧实现原样复制到 Mobile：
+
+- 历史必须改成原子 `LocalBattleRound`；当前每位玩家按 `session + event + playerIndex` 各存数组、再按下标拼轮，换项目后可能把不同日期/对局拼成假轮次。
+- Web WCA 异步打乱必须增加 source identity + revision，旧请求不得覆盖新请求；网络失败、确认无题、耗尽都不能静默随机回退，未知项目也不能回退 3×3。
+- 任一玩家活动时必须锁定项目/source 等上下文变更；目前换项目会重置其他玩家当前轮。
+- 多人设置中的观察、语音、分段必须在共用 reducer 中产生真实 effect，或 Web/Mobile 同时移除；当前可见 no-op 不能成为 App 验收范围。
+- `pointerId`、timer handle、RAF、语音、震动、BLE channel 属于平台 adapter，不进入持久化共享 DTO；Mobile “每人一颗”还需要最多四路 native BLE channel pool。
+- 首个用户可见版本必须让 Web 与 Mobile 同时消费同一个 `LocalBattleView`；在此之前 Mobile 人数入口继续诚实禁用，不能外跳网站或显示半成品。
+
 ## 6. 联机模式
 
 Web `NetBattleView` 同样是完整产品面。Mobile 当前仍不渲染联机入口，因此本节 UI/UX 与设备验收全部未完成。2026-08-31 已先完成不得绕过的共享安全底座：Web/API/Mobile 复用 `@cuberoot/shared/timer` 的房间 DTO、13 项白名单、runtime decoder、结算和注入式 transport；create/join 单次签发私有玩家 capability，服务端只存 SHA-256 摘要，所有心跳/写操作/视频凭证都同时验证 pid + capability，Mobile session 复用现有 SecureStorage。该底座不等于大厅、房间或计时 UI 已进入 App。
+
+发布不得假设同一次 push 能让已经打开的 Web 页面、已安装 Mobile 和 API 原子切换。当前安全契约拒绝无 capability 的旧写请求，直接覆盖原 `/v1/battle/rooms` 会让旧页面在部署瞬间失效；为了兼顾安全与不中断，发布前必须选择并验证以下 staged rollout，且旧公开 `pid` 绝不能获得换取 capability 的兼容入口：
+
+1. 先以版本化路径或默认关闭的服务端 feature gate 部署新增的 capability + 服务端权威打乱契约；旧路径只能承接部署前客户端，不能把公开 `pid` 升级成私有凭据。
+2. Web 与 Mobile 切到新契约；用遥测确认新建房间均含 `player_auth`，并让已打开的旧 Web 收到明确的刷新/重进提示。
+3. 等待旧房间 24 小时 TTL 全部过期；期间不得让旧路径创建新房。
+4. 删除旧路径/feature gate 和兼容代码，再把 API、Web、Mobile 的安全矩阵与真实两设备流程重跑一遍。
+
+版本化路径或 gate 尚未落地，所以当前代码只能作为本地安全基础，不能推送上线；这也是联机模式的明确发布阻断项。
 
 - 大厅：创建、输入房间码加入、邀请 URL 自动加入、加载/重试/房间过期/退出。
 - 身份：昵称或 WCA 姓名/ID 搜索、登录后自动同步名字、房内改名。

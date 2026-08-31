@@ -42,6 +42,18 @@ export function isNetBattleEventId(value: unknown): value is NetBattleEventId {
 export type NetPhase = 'idle' | 'ready' | 'inspecting' | 'solving' | 'done';
 export type NetPenalty = 'ok' | '+2' | 'dnf';
 
+export function isNetPhase(value: unknown): value is NetPhase {
+  return value === 'idle' || value === 'ready' || value === 'inspecting' || value === 'solving' || value === 'done';
+}
+
+export function isNetWritablePhase(value: unknown): value is Exclude<NetPhase, 'done'> {
+  return value === 'idle' || value === 'ready' || value === 'inspecting' || value === 'solving';
+}
+
+export function isNetPenalty(value: unknown): value is NetPenalty {
+  return value === 'ok' || value === '+2' || value === 'dnf';
+}
+
 export interface NetPlayerEntry {
   name: string;
   wcaId?: string;
@@ -118,6 +130,10 @@ export interface NetRoomState {
   code: string;
   /** Monotonic server version; clients reject delayed responses with a lower revision. */
   revision: number;
+  /** Opaque media-room generation rotated when membership is revoked on self-hosted LiveKit. */
+  videoGeneration: string;
+  /** Fixed participant set once a synchronized countdown starts; empty before that. */
+  roundRoster: string[];
   event: NetBattleEventId;
   round: number;
   scrambles: Record<string, string>;
@@ -136,8 +152,49 @@ export interface NetBattleClientOptions {
   fetcher?: typeof fetch;
 }
 
+export interface NetAdmissionGate {
+  /** Starts a create/join that must be exclusive. Null means one is already pending. */
+  beginExclusive(): number | null;
+  /** Starts a restore that may be superseded by a later explicit user choice. */
+  beginBackground(): number | null;
+  isCurrent(intent: number): boolean;
+  /** Releases exclusive busy state only for the still-current owner. */
+  finish(intent: number): boolean;
+  /** Invalidates every delayed response and releases the synchronous busy latch. */
+  cancel(): void;
+}
+
+/** Runtime-neutral latest-intent gate shared by Web and the future native multiplayer host. */
+export function createNetAdmissionGate(): NetAdmissionGate {
+  let current = 0;
+  let exclusive: number | null = null;
+  return {
+    beginExclusive() {
+      if (exclusive !== null) return null;
+      current += 1;
+      exclusive = current;
+      return current;
+    },
+    beginBackground() {
+      if (exclusive !== null) return null;
+      current += 1;
+      return current;
+    },
+    isCurrent(intent) { return intent === current; },
+    finish(intent) {
+      if (intent !== current || exclusive !== intent) return false;
+      exclusive = null;
+      return true;
+    },
+    cancel() {
+      current += 1;
+      exclusive = null;
+    },
+  };
+}
+
 export interface NetBattleClient {
-  createNetRoom(event: NetBattleEventId, scramble: string, identity: NetIdentity): Promise<NetBattleAdmission>;
+  createNetRoom(event: NetBattleEventId, identity: NetIdentity): Promise<NetBattleAdmission>;
   joinNetRoom(code: string, identity: NetIdentity): Promise<NetBattleAdmission>;
   getNetRoom(code: string, credentials?: NetBattleCredentials): Promise<NetRoomState>;
   postNetStatus(code: string, credentials: NetBattleCredentials, phase: Exclude<NetPhase, 'done'>): Promise<NetRoomState>;
@@ -145,10 +202,10 @@ export interface NetBattleClient {
   postNetAdmin(code: string, credentials: NetBattleCredentials, target: string): Promise<NetRoomState>;
   postNetKick(code: string, credentials: NetBattleCredentials, target: string): Promise<NetRoomState>;
   renameNetPlayer(code: string, credentials: NetBattleCredentials, identity: NetIdentity): Promise<NetRoomState>;
-  postNetEvent(code: string, credentials: NetBattleCredentials, event: NetBattleEventId, scramble: string): Promise<NetRoomState>;
-  ensureNetScramble(code: string, credentials: NetBattleCredentials, event: NetBattleEventId, scramble: string): Promise<NetRoomState>;
+  postNetEvent(code: string, credentials: NetBattleCredentials, event: NetBattleEventId): Promise<NetRoomState>;
+  ensureNetScramble(code: string, credentials: NetBattleCredentials, event: NetBattleEventId): Promise<NetRoomState>;
   postNetResult(code: string, credentials: NetBattleCredentials, round: number, timeMs: number, penalty: NetPenalty): Promise<NetRoomState & { advanced?: boolean }>;
-  nextNetRound(code: string, credentials: NetBattleCredentials, round: number, scramble: string): Promise<NetRoomState>;
+  nextNetRound(code: string, credentials: NetBattleCredentials, round: number, force?: boolean): Promise<NetRoomState>;
   leaveNetRoom(code: string, credentials: NetBattleCredentials): Promise<void>;
 }
 
@@ -199,8 +256,8 @@ export function createNetBattleClient(options: NetBattleClientOptions): NetBattl
   }
 
   return {
-    createNetRoom(event, scramble, identity) {
-      return postJoin('/v1/battle/rooms', { event, scramble, name: identity.name, wcaId: identity.wcaId, iso2: identity.iso2 });
+    createNetRoom(event, identity) {
+      return postJoin('/v1/battle/rooms', { event, name: identity.name, wcaId: identity.wcaId, iso2: identity.iso2 });
     },
     joinNetRoom(code, identity) {
       return postJoin(roomPath(code, '/join'), { name: identity.name, wcaId: identity.wcaId, iso2: identity.iso2 });
@@ -228,11 +285,11 @@ export function createNetBattleClient(options: NetBattleClientOptions): NetBattl
     renameNetPlayer(code, credentials, identity) {
       return postState(roomPath(code, '/name'), { pid: credentials.playerId, name: identity.name, wcaId: identity.wcaId, iso2: identity.iso2 }, credentials);
     },
-    postNetEvent(code, credentials, event, scramble) {
-      return postState(roomPath(code, '/event'), { pid: credentials.playerId, event, scramble }, credentials);
+    postNetEvent(code, credentials, event) {
+      return postState(roomPath(code, '/event'), { pid: credentials.playerId, event }, credentials);
     },
-    ensureNetScramble(code, credentials, event, scramble) {
-      return postState(roomPath(code, '/scramble'), { pid: credentials.playerId, event, scramble }, credentials);
+    ensureNetScramble(code, credentials, event) {
+      return postState(roomPath(code, '/scramble'), { pid: credentials.playerId, event }, credentials);
     },
     async postNetResult(code, credentials, round, timeMs, penalty) {
       const value = await postPayload(
@@ -245,8 +302,8 @@ export function createNetBattleClient(options: NetBattleClientOptions): NetBattl
         ...(isRecord(value) && typeof value.advanced === 'boolean' ? { advanced: value.advanced } : {}),
       };
     },
-    nextNetRound(code, credentials, round, scramble) {
-      return postState(roomPath(code, '/next'), { pid: credentials.playerId, round, scramble }, credentials);
+    nextNetRound(code, credentials, round, force = false) {
+      return postState(roomPath(code, '/next'), { pid: credentials.playerId, round, force }, credentials);
     },
     async leaveNetRoom(code, credentials) {
       const response = await request(options.apiUrl(roomPath(code, '/leave')), {
@@ -270,6 +327,18 @@ export function netErrorMessage(error: unknown): { zh: string; en: string } {
   if (message === 'room not found') return { zh: '房间不存在或已过期', en: 'Room not found or expired' };
   if (message === 'room full') return { zh: '房间人数已满', en: 'Room is full' };
   if (message === 'round in progress') return { zh: '本轮正在进行，请等下一轮再加入', en: 'This round is in progress — join on the next round' };
+  if (message === 'round already submitted') return { zh: '本轮已经交卷，不能再更换项目', en: 'This round is already submitted, so the event cannot be changed' };
+  if (message === 'round already active') return { zh: '本轮已有成绩或正在计时，请下一轮再开启同时起表', en: 'This round already has results or active timers — enable synchronized start next round' };
+  if (message === 'player is timing') return { zh: '计时过程中不能更换项目', en: 'You cannot change events while timing' };
+  if (message === 'event does not match player') return { zh: '只能填写自己当前项目的打乱', en: 'You can only fill the scramble for your current event' };
+  if (message === 'scramble unavailable') return { zh: '打乱暂时生成失败，请重试', en: 'The scramble could not be generated — retry' };
+  if (message === 'submit a result before advancing') return { zh: '请先提交本轮成绩', en: 'Submit your result before advancing' };
+  if (message === 'players are still solving') return { zh: '还有在线玩家没有完成本轮', en: 'Online players are still solving this round' };
+  if (message === 'round is ahead of room') return { zh: '客户端轮次超前，请等待房间同步', en: 'Your round is ahead of the room — wait for it to sync' };
+  if (message === 'round limit reached') return { zh: '房间轮次已达上限，请新建房间', en: 'This room reached its round limit — create a new room' };
+  if (message === 'wait for next round') return { zh: '本轮已经开始，请等下一轮', en: 'This round has started — wait for the next round' };
+  if (message === 'wait for synchronized start') return { zh: '请先等待全员准备完成并同时起表', en: 'Wait for everyone to be ready and the synchronized start' };
+  if (message === 'result rejected') return { zh: '本轮成绩未被接受，请刷新房间状态', en: 'The result was not accepted — refresh the room state' };
   if (message === 'name taken') return { zh: '这个名字房里已经有人用了,换一个', en: 'That name is already taken in this room' };
   if (message === 'not admin') return { zh: '你已不是房主了', en: 'You are no longer the host' };
   if (message === 'player not in room') return { zh: 'TA 已经不在房间里了', en: 'That player is no longer in the room' };
@@ -334,7 +403,14 @@ export function roundWinners(results: Record<string, NetResult> | undefined, pla
 }
 
 export function playerEventOf(state: NetRoomState, playerId: string): NetBattleEventId {
-  return state.players[playerId]?.event || state.event;
+  return netPlayerEvent(state.players[playerId], state.event);
+}
+
+export function netPlayerEvent(
+  player: NetPlayerEntry | undefined,
+  roomDefault: NetBattleEventId,
+): NetBattleEventId {
+  return player?.event || roomDefault;
 }
 
 export function myScramble(state: NetRoomState, playerId: string): string | null {
@@ -367,17 +443,41 @@ export function preferLatestNetRoomState(previous: NetRoomState | null, incoming
     : incoming;
 }
 
+/** Reject responses from a room lifecycle that has already left or switched codes. */
+export function acceptNetRoomResponse(
+  activeCode: string | null,
+  previous: NetRoomState | null,
+  incoming: NetRoomState,
+): NetRoomState | null {
+  if (activeCode !== incoming.code) return null;
+  return preferLatestNetRoomState(previous, incoming);
+}
+
 export function isRoundComplete(state: NetRoomState): boolean {
-  const online = sortedNetPlayers(state.players).filter((player) => isNetOnline(player, state.now));
+  const roster = new Set(state.roundRoster);
+  const online = sortedNetPlayers(state.players).filter((player) => (
+    isNetOnline(player, state.now) && (state.startAt === null || roster.has(player.id))
+  ));
   if (online.length < 2) return false;
   const results = state.results[String(state.round)] ?? {};
   return online.every((player) => !!results[player.id]);
 }
 
 export function pendingCount(state: NetRoomState): number {
-  const online = sortedNetPlayers(state.players).filter((player) => isNetOnline(player, state.now));
+  const roster = new Set(state.roundRoster);
+  const online = sortedNetPlayers(state.players).filter((player) => (
+    isNetOnline(player, state.now) && (state.startAt === null || roster.has(player.id))
+  ));
   const results = state.results[String(state.round)] ?? {};
   return online.filter((player) => !results[player.id]).length;
+}
+
+/** A synchronized start freezes eligibility even if its roster later becomes empty. */
+export function isNetRoundParticipant(
+  state: Pick<NetRoomState, 'startAt' | 'roundRoster'>,
+  playerId: string | null,
+): boolean {
+  return !!playerId && (state.startAt === null || state.roundRoster.includes(playerId));
 }
 
 export function isNetAdmin(state: NetRoomState, playerId: string | null): boolean {
@@ -385,6 +485,17 @@ export function isNetAdmin(state: NetRoomState, playerId: string | null): boolea
 }
 
 export interface NetSyncGate { gated: boolean; ready: boolean; waiting: number }
+
+/** Exact online, unfinished roster eligible to start a synchronized round. */
+export function netReadyRoster(
+  state: Pick<NetRoomState, 'players' | 'results' | 'round' | 'now'>,
+): string[] | null {
+  const results = state.results[String(state.round)] ?? {};
+  const contenders = sortedNetPlayers(state.players)
+    .filter((player) => isNetOnline(player, state.now) && !results[player.id]);
+  if (contenders.length < 2 || !contenders.every((player) => player.ph === 'ready')) return null;
+  return contenders.map((player) => player.id);
+}
 
 export function syncGate(state: NetRoomState, playerId: string | null): NetSyncGate {
   const results = state.results[String(state.round)] ?? {};
@@ -478,14 +589,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function isNetPhase(value: unknown): value is NetPhase {
-  return value === 'idle' || value === 'ready' || value === 'inspecting' || value === 'solving' || value === 'done';
-}
-
-function isNetPenalty(value: unknown): value is NetPenalty {
-  return value === 'ok' || value === '+2' || value === 'dnf';
-}
-
 function decodeResults(value: unknown): Record<string, NetResult> {
   if (!isRecord(value)) throw new Error('invalid battle room response');
   const results: Record<string, NetResult> = {};
@@ -527,10 +630,14 @@ function decodeEventMap(value: unknown): Record<string, NetBattleEventId> {
 export function decodeNetRoomState(value: unknown): NetRoomState {
   if (!isRecord(value)
     || !isNetBattleRoomCode(value.code)
-    || !Number.isInteger(value.revision)
+    || !Number.isSafeInteger(value.revision)
     || (value.revision as number) < 1
+    || typeof value.videoGeneration !== 'string'
+    || !/^[a-f0-9-]{36}$/.test(value.videoGeneration)
+    || !Array.isArray(value.roundRoster)
+    || !value.roundRoster.every(isNetBattlePlayerId)
     || !isNetBattleEventId(value.event)
-    || !Number.isInteger(value.round)
+    || !Number.isSafeInteger(value.round)
     || (value.round as number) < 1
     || !isRecord(value.players)
     || !isRecord(value.results)
@@ -570,6 +677,12 @@ export function decodeNetRoomState(value: unknown): NetRoomState {
     };
   }
 
+  const roundRoster = value.roundRoster as string[];
+  if (new Set(roundRoster).size !== roundRoster.length
+    || roundRoster.some((id) => !players[id])) {
+    throw new Error('invalid battle room response');
+  }
+
   const results: Record<string, Record<string, NetResult>> = {};
   for (const [round, raw] of Object.entries(value.results)) {
     if (!/^[1-9]\d*$/.test(round)) throw new Error('invalid battle room response');
@@ -578,7 +691,7 @@ export function decodeNetRoomState(value: unknown): NetRoomState {
 
   const history: NetRoundHistory[] = value.history.map((raw) => {
     if (!isRecord(raw)
-      || !Number.isInteger(raw.round)
+      || !Number.isSafeInteger(raw.round)
       || (raw.round as number) < 1
       || !Array.isArray(raw.winners)
       || !raw.winners.every(isNetBattlePlayerId)) {
@@ -597,7 +710,7 @@ export function decodeNetRoomState(value: unknown): NetRoomState {
   for (const [id, score] of Object.entries(value.scores)) {
     if (!isNetBattlePlayerId(id)
       || typeof score !== 'number'
-      || !Number.isInteger(score)
+      || !Number.isSafeInteger(score)
       || score < 0) throw new Error('invalid battle room response');
     scores[id] = score;
   }
@@ -605,6 +718,8 @@ export function decodeNetRoomState(value: unknown): NetRoomState {
   return {
     code: value.code,
     revision: value.revision as number,
+    videoGeneration: value.videoGeneration,
+    roundRoster,
     event: value.event,
     round: value.round as number,
     scrambles: decodeStringMap(value.scrambles),

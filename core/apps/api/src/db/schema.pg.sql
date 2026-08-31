@@ -343,6 +343,8 @@ $$ LANGUAGE plpgsql;
 CREATE TABLE IF NOT EXISTS battle_rooms (
   code         VARCHAR(12) PRIMARY KEY,
   revision     BIGINT NOT NULL DEFAULT 1,
+  video_generation UUID NOT NULL DEFAULT gen_random_uuid(),
+  round_roster JSONB NOT NULL DEFAULT '[]'::jsonb,
   event        VARCHAR(16) NOT NULL,
   round        INT NOT NULL DEFAULT 1,
   scrambles    JSONB NOT NULL DEFAULT '{}'::jsonb,
