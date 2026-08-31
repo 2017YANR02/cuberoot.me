@@ -5,55 +5,51 @@
  * SoloView just takes the pool.
  */
 
-import { generate222ByMetric, cube222MetricOfScramble, type Cube222Metric } from '@cuberoot/puzzle-solvers/cube222';
-import { generateGearByDistance, gearDistanceOfScramble } from '@/lib/gear-solver';
-import { generateIvyByDistance, ivyDistanceOfScramble } from '@/lib/ivy-solver';
-import { generateSkewbByDistance, skewbDistanceOfScramble } from '@/lib/skewb-solver';
-import { generatePyramByMetric, pyramMetricOf, type PyramMetric } from './pyram-metric';
-import { stepPuzzleOf, stepMetricSpec } from './step-metrics';
+import {
+  generate222ByMetric,
+  cube222MetricOfScramble,
+} from '@cuberoot/puzzle-solvers/cube222';
+import {
+  generateTimer222ByStepsScramble,
+  stepPuzzleOf,
+  timer222StepMetricOfScramble,
+  timerByStepsFilter,
+  timerByStepsIdentity,
+  type Timer222ByStepsEngine,
+  type TimerByStepsSettings,
+  type Scramble222Mode,
+} from '@cuberoot/shared/timer';
 
-interface ByStepsSettings {
-  genByStepsOn: boolean;
-  genStepsMetric: string;
-  genSteps: number[];
-}
+const CUBE_222_STEPS_ENGINE: Timer222ByStepsEngine = {
+  generate: (metric, lo, hi, random) => generate222ByMetric(metric, lo, hi, random),
+  measure: cube222MetricOfScramble,
+};
 
-/** Clamp the stored [lo,hi] into the metric's real range. */
-function bounds(event: string, metric: string, steps: number[]): { lo: number; hi: number } | null {
-  const spec = stepMetricSpec(event, metric);
-  if (!spec || steps.length === 0) return null;
-  const [rMin, rMax] = spec.range;
-  const lo = Math.max(steps[0], rMin);
-  const hi = Math.min(steps[steps.length - 1], rMax);
-  return lo <= hi ? { lo, hi } : null;
-}
-
-/** A pooled by-steps generator for `event`, or null when by-steps doesn't apply (off / other event / empty). */
+/** The legacy synchronous 2x2 adapter. Other puzzles always use the Worker host. */
 export function genByStepsScramble(
   event: string,
-  s: ByStepsSettings,
+  s: TimerByStepsSettings,
+  scramble222Mode: Scramble222Mode = 'optimal',
 ): { key: string; gen: () => string } | null {
   const puzzle = stepPuzzleOf(event);
   if (!puzzle || !s.genByStepsOn) return null;
-  const metric = s.genStepsMetric;
-  const b = bounds(event, metric, s.genSteps);
-  if (!b) return null;
-  const key = `byst|${event}|${metric}|${b.lo}.${b.hi}`;
-  if (puzzle === '222') {
-    return { key, gen: () => generate222ByMetric(metric as Cube222Metric, b.lo, b.hi, Math.random) };
-  }
-  if (puzzle === 'pyra') {
-    return { key, gen: () => generatePyramByMetric(metric as PyramMetric, b.lo, b.hi, Math.random) };
-  }
-  if (puzzle === 'skewb') return { key, gen: () => generateSkewbByDistance(b.lo, b.hi, Math.random) };
-  if (puzzle === 'ivy') return { key, gen: () => generateIvyByDistance(b.lo, b.hi, Math.random) };
-  return { key, gen: () => generateGearByDistance(b.lo, b.hi, Math.random) };
+  const filter = timerByStepsFilter(event, 'random', s);
+  if (!filter) return null;
+  const key = timerByStepsIdentity(event, 'random', s, scramble222Mode);
+  if (puzzle !== '222') return null;
+  return {
+    key,
+    gen: () => generateTimer222ByStepsScramble(s, CUBE_222_STEPS_ENGINE, Math.random, scramble222Mode),
+  };
 }
 
 /** Stable signature of the by-steps settings for regenerate-on-change (empty when inactive). */
-export function genByStepsSig(event: string, s: ByStepsSettings): string {
-  const g = genByStepsScramble(event, s);
-  return g ? g.key : '';
+export function genByStepsSig(
+  event: string,
+  s: TimerByStepsSettings,
+  scramble222Mode: Scramble222Mode = 'optimal',
+): string {
+  return timerByStepsIdentity(event, 'random', s, scramble222Mode);
 }
 
 /** The chosen step-metric value of a real scramble string (for the WCA filter), or null if it can't be
@@ -61,19 +57,15 @@ export function genByStepsSig(event: string, s: ByStepsSettings): string {
 export function scrambleStepMetric(event: string, metric: string, scramble: string): number | null {
   const puzzle = stepPuzzleOf(event);
   if (!puzzle) return null;
-  if (puzzle === '222') return cube222MetricOfScramble(scramble, metric as Cube222Metric);
-  if (puzzle === 'pyra') return pyramMetricOf(scramble, metric as PyramMetric);
-  if (puzzle === 'skewb') return metric === 'htm' ? skewbDistanceOfScramble(scramble) : null;
-  if (puzzle === 'ivy') return metric === 'htm' ? ivyDistanceOfScramble(scramble) : null;
-  return metric === 'ftm' ? gearDistanceOfScramble(scramble) : null;
+  return puzzle === '222'
+    ? timer222StepMetricOfScramble(scramble, metric, CUBE_222_STEPS_ENGINE)
+    : null;
 }
 
 /** WCA-filter bounds for this event+settings, or null when the step filter isn't active. */
 export function wcaStepFilter(
   event: string,
-  s: ByStepsSettings,
+  s: TimerByStepsSettings,
 ): { metric: string; lo: number; hi: number } | null {
-  if (!stepPuzzleOf(event) || !s.genByStepsOn) return null;
-  const b = bounds(event, s.genStepsMetric, s.genSteps);
-  return b ? { metric: s.genStepsMetric, lo: b.lo, hi: b.hi } : null;
+  return timerByStepsFilter(event, 'wca', s);
 }

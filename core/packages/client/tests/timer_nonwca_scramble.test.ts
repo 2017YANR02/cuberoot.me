@@ -33,13 +33,13 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { Alg } from 'cubing/alg';
 import { puzzles } from 'cubing/puzzles';
-import { solveIvy, IVY_GODS_NUMBER } from '@/lib/ivy-solver';
-import { solveGear, GEAR_GODS_NUMBER } from '@/lib/gear-solver';
+import { solveIvy, IVY_GODS_NUMBER } from '@cuberoot/puzzle-solvers/ivy';
+import { solveGear, GEAR_GODS_NUMBER } from '@cuberoot/puzzle-solvers/gear';
 import { MPYR_MOVE_NAMES, mpyrFacelets, mpyrSolvedFacelets } from '@/lib/mpyr-solver';
 import { NON_WCA_EVENT_IDS, cstimerKeyForEvent } from '@/app/[lang]/timer/_lib/scramble/nonwca';
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
 import { pocketFaceletFromMoves } from '@/lib/pocket-facelet';
-import { SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, cstimer222Spec } from '@/lib/scramble-222-mode';
+import { SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, cstimer222Spec } from '@cuberoot/shared/timer';
 import { CUBE222_STATE_TYPES, cube222StateTypeMatchesScramble } from '@cuberoot/puzzle-solvers/cube222';
 
 const BUNDLE = path.join(
@@ -217,7 +217,8 @@ describe('ivy (ivyso)', () => {
     for (let i = 0; i < 3; i++) {
       const s = ask('ivyso');
       const { solution, length } = solveIvy(s); // throws on an illegal token
-      expect(length).toBeGreaterThan(0);
+      expect(tokens(s).length).toBeGreaterThanOrEqual(6);
+      expect(length).toBeGreaterThan(1);
       expect(length).toBeLessThanOrEqual(IVY_GODS_NUMBER);
       expect(solveIvy(`${s} ${solution}`).length, `solution did not solve ${s}`).toBe(0);
     }
@@ -229,6 +230,7 @@ describe('gear (gearso)', () => {
     for (let i = 0; i < 3; i++) {
       const s = ask('gearso');
       const { solution, length } = solveGear(s); // throws on an illegal token
+      expect(tokens(s).length).toBeGreaterThanOrEqual(4);
       expect(length).toBeGreaterThan(0);
       expect(length).toBeLessThanOrEqual(GEAR_GODS_NUMBER);
       expect(solveGear(`${s} ${solution}`).length, `solution did not solve ${s}`).toBe(0);

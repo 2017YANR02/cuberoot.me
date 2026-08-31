@@ -1,5 +1,8 @@
 import { App as CapacitorApp } from '@capacitor/app';
-import type { WebSession } from '@cuberoot/shared/auth/web-session';
+import type {
+  MobileAuthProvider,
+  WebSession,
+} from '@cuberoot/shared/auth/web-session';
 import { useCallback, useEffect, useState } from 'react';
 
 import type { SupportedLanguage } from '../copy';
@@ -64,15 +67,20 @@ export function useMobileAuth(language: SupportedLanguage) {
     };
   }, []);
 
-  const login = useCallback(async () => {
+  const login = useCallback(async (provider: MobileAuthProvider | null = null) => {
     setState((current) => ({ ...current, busy: true, error: false }));
     try {
-      await nativeMobileAuth.start(language);
+      await nativeMobileAuth.start(language, provider);
       setState((current) => ({ ...current, busy: false }));
     } catch {
       setState((current) => ({ ...current, busy: false, error: true }));
     }
   }, [language]);
+
+  const issueWebSessionTicket = useCallback(
+    () => nativeMobileAuth.issueWebSessionTicket(),
+    [],
+  );
 
   const logout = useCallback(async () => {
     setState((current) => ({ ...current, busy: true, error: false }));
@@ -84,5 +92,5 @@ export function useMobileAuth(language: SupportedLanguage) {
     }
   }, []);
 
-  return { ...state, login, logout };
+  return { ...state, issueWebSessionTicket, login, logout };
 }

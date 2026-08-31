@@ -7,14 +7,14 @@
  *   custom  — empty string; UI lets the user type their own scramble.
  */
 
-const MAGIC_DIRS = ['Forward', 'Backward'] as const;
+import { formatTimerCompoundScramble } from '@cuberoot/shared/timer';
 
 export function scrambleMagic(rng: () => number): string {
-  return MAGIC_DIRS[Math.floor(rng() * MAGIC_DIRS.length)];
+  return formatTimerCompoundScramble('magic', [], rng);
 }
 
 export function scrambleMmagic(rng: () => number): string {
-  return `M ${scrambleMagic(rng)}`;
+  return formatTimerCompoundScramble('mmagic', [], rng);
 }
 
 // Underscore-prefixed param so eslint's no-unused-vars accepts it.

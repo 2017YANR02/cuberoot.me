@@ -12,6 +12,7 @@
     "test": "vitest run",
     "typecheck": "tsgo --noEmit",
     "assets:android": "node scripts/gen-android-assets.mjs",
+    "assets:ios": "node scripts/gen-ios-assets.mjs",
     "cap:add:android": "cap add android",
     "cap:sync": "pnpm cap:sync:android",
     "cap:sync:android": "pnpm build && cap sync android",
@@ -25,6 +26,7 @@
   },
   "dependencies": {
     "@aparajita/capacitor-secure-storage": "8.0.0",
+    "@capacitor-community/bluetooth-le": "8.3.0",
     "@capacitor/android": "8.5.0",
     "@capacitor/app": "8.1.1",
     "@capacitor/browser": "8.0.4",
@@ -33,6 +35,7 @@
     "@capacitor/ios": "8.5.0",
     "@capacitor/network": "8.0.1",
     "@cuberoot/event-icon": "workspace:*",
+    "@cuberoot/puzzle-solvers": "workspace:*",
     "@cuberoot/shared": "workspace:*",
     "@cuberoot/timer-ui": "workspace:*",
     "@cuberoot/visualcube": "workspace:*",

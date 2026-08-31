@@ -14,6 +14,14 @@ export const GAN_V4_SERVICE_UUID = '00000010-0000-fff7-fff6-fff5fff4fff0';
 export const GAN_V4_NOTIFY_CHARACTERISTIC_UUID = '0000fff6-0000-1000-8000-00805f9b34fb';
 export const GAN_V4_WRITE_CHARACTERISTIC_UUID = '0000fff5-0000-1000-8000-00805f9b34fb';
 
+/**
+ * Company identifiers observed across GAN firmware generations. The low byte
+ * stays 0x01 while the high byte varies, matching cstimer's discovery range.
+ */
+export const GAN_V4_MANUFACTURER_DATA_CICS: readonly number[] = Object.freeze(
+  Array.from({ length: 256 }, (_value, index) => (index << 8) | 0x01),
+);
+
 export const GAN_V4_KEY_BASE = new Uint8Array([
   0x01, 0x02, 0x42, 0x28, 0x31, 0x91, 0x16, 0x07,
   0x20, 0x05, 0x18, 0x54, 0x42, 0x11, 0x12, 0x53,

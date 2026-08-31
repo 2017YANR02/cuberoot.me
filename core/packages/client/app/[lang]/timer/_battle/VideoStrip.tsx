@@ -9,8 +9,8 @@
  * 默认**不连接**:进房不等于开摄像头,要用户自己点。这样既不吓人,也不会让只想计时的人白白
  * 占带宽 —— 服务端的带宽预算是按「已连接的人」算的。
  *
- * 身份复用对战房的 {code, pid}:服务端签 token 前会回库确认该 pid 确实在该房间的 players
- * 里(房间码只有 4 位数字,可猜),所以这里不需要额外的登录态。视频房名 `battle-<code>`,
+ * 身份复用对战房的 {code, pid, playerToken}:服务端签 token 前会同时确认在册玩家与私有
+ * capability。pid 会出现在公开房态里,不能单独作为凭据。视频房名 `battle-<code>`,
  * 与对战房一一对应。/meet 会议室是另一套授权(必须登录,身份取自 session token),而且它
  * 用的是会议软件那套完整界面;与这里共用的只有 components/video/video-call.ts 里的连接参数
  * 和失败文案。
@@ -58,7 +58,7 @@ export interface VideoRoom {
  * @param code 对战房房间码;@param pid 本人在房里的 playerId。
  * 任一为空 = 身份还没落定(正在加入 / 恢复),此时签不出 token,整套 UI 不出现。
  */
-export function useVideoRoom(code: string | null, pid: string | null): VideoRoom {
+export function useVideoRoom(code: string | null, pid: string | null, playerToken: string | null): VideoRoom {
   /** null = 还没问过站点配置;enabled:false = 本站没开视频。 */
   const [cfg, setCfg] = useState<VideoConfig | null>(null);
   const [token, setToken] = useState<VideoToken | null>(null);
@@ -85,20 +85,20 @@ export function useVideoRoom(code: string | null, pid: string | null): VideoRoom
 
   const toggle = useCallback(() => {
     if (token) { leave(); return; }
-    if (!code || !pid) return;
+    if (!code || !pid || !playerToken) return;
     setBusy(true);
     setErr(null);
-    getVideoToken(code, pid)
+    getVideoToken(code, pid, playerToken)
       .then(setToken)
       .catch((e: unknown) => fail(e instanceof VideoDeniedError ? e.reason : 'connect'))
       .finally(() => setBusy(false));
-  }, [token, code, pid, leave, fail]);
+  }, [token, code, pid, playerToken, leave, fail]);
 
   // 换房间(或换身份)时必须断开:旧 token 是签给旧房间的,留着会连到别人的房里。
-  useEffect(() => { setToken(null); setErr(null); }, [code, pid]);
+  useEffect(() => { setToken(null); setErr(null); }, [code, pid, playerToken]);
 
   return {
-    enabled: !!cfg?.enabled && !!code && !!pid,
+    enabled: !!cfg?.enabled && !!code && !!pid && !!playerToken,
     token, busy, err, maxParticipants, toggle, leave, fail,
   };
 }

@@ -26,6 +26,8 @@ import {
 import { applyColorNeutral, isCnEligible } from './cn';
 import { getSettings, updateSettings } from '../settings';
 import { rngFor } from './seeded_rng';
+import { generateGearTimerScramble } from '@cuberoot/puzzle-solvers/gear';
+import { generateIvyTimerScramble } from '@cuberoot/puzzle-solvers/ivy';
 
 // Round 1B will export these — soft import via dynamic require so absent files
 // don't break the build. We use a runtime registry instead.
@@ -45,6 +47,8 @@ const REG: Partial<Record<EventId, Gen>> = {
   '333oh': scramble333,
   '333fm': scramble333,
   '333mr': scramble333,
+  gear:    generateGearTimerScramble,
+  ivy:     generateIvyTimerScramble,
 };
 
 /**

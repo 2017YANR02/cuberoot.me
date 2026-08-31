@@ -1,10 +1,18 @@
 'use client';
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { X, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical, Check, Clipboard, MessageSquare } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical } from 'lucide-react';
 import type { Solve, Penalty } from '../_lib/types';
-import { effectiveMs } from '../_lib/types';
-import { formatMs, formatEventMs, formatSolveResult } from '../_lib/stats';
+import { formatMs, formatEventMs } from '../_lib/stats';
+import {
+  TIMER_HISTORY_PENALTIES,
+  TIMER_HISTORY_QUICK_ACTION_COPY,
+  TIMER_HISTORY_QUICK_ACTION_IDS,
+  filterTimerHistorySolves,
+  timerHistoryCopyText,
+  toggleTimerHistoryPenalty,
+  type TimerHistoryQuickActionId,
+} from '../_lib/history';
 import {
   DEFAULT_ROLLING_STAT_COLUMNS,
   parseRollingStatKey,
@@ -21,6 +29,11 @@ import { ClearButton } from '@/components/ClearButton';
 import { DateRangeInput } from '@/components/DateRangeInput';
 import { RecordBadge } from '@/components/RecordBadge';
 import { tr } from '@/i18n/tr';
+import {
+  TimerHistoryRow,
+  type TimerHistoryQuickMenuLabels,
+  type TimerHistoryRowQuickMenu,
+} from '@cuberoot/timer-ui';
 
 interface Props {
   solves: Solve[];
@@ -42,47 +55,6 @@ interface Props {
   /** Per-row rolling-stat columns ending at each solve. */
   rollingStatColumns?: RollingStatKey[];
 }
-
-/** Parse a "5.0" / "1:23.45" / "12.3" string into ms. Returns null on failure. */
-function parseTimeSeconds(input: string): number | null {
-  const t = input.trim();
-  if (!t) return null;
-  // Support "m:ss.xx" or plain seconds.
-  const colonMatch = t.match(/^(\d+):(\d+(?:\.\d+)?)$/);
-  if (colonMatch) {
-    const m = parseInt(colonMatch[1], 10);
-    const s = parseFloat(colonMatch[2]);
-    if (!Number.isFinite(m) || !Number.isFinite(s)) return null;
-    return Math.round((m * 60 + s) * 1000);
-  }
-  const n = parseFloat(t);
-  if (!Number.isFinite(n) || n < 0) return null;
-  return Math.round(n * 1000);
-}
-
-/** Parse YYYY-MM-DD into Unix-ms at start-of-local-day, or null. */
-function parseDateStart(input: string): number | null {
-  if (!input) return null;
-  const m = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return null;
-  const y = +m[1], mo = +m[2] - 1, d = +m[3];
-  const dt = new Date(y, mo, d, 0, 0, 0, 0);
-  if (Number.isNaN(dt.getTime())) return null;
-  return dt.getTime();
-}
-
-/** Parse YYYY-MM-DD into Unix-ms at end-of-local-day (exclusive next-day start). */
-function parseDateEnd(input: string): number | null {
-  if (!input) return null;
-  const m = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return null;
-  const y = +m[1], mo = +m[2] - 1, d = +m[3];
-  const dt = new Date(y, mo, d + 1, 0, 0, 0, 0);
-  if (Number.isNaN(dt.getTime())) return null;
-  return dt.getTime();
-}
-
-const ALL_PENALTIES: Penalty[] = ['ok', '+2', 'DNF', 'DNS'];
 
 const MOBILE_QUERY = '(max-width: 480px)';
 const MOBILE_TAG_CAP = 2;
@@ -141,99 +113,33 @@ export default function HistoryPanel({
     return () => document.removeEventListener('mousedown', onDocClick);
   }, [actionsOpen]);
 
-  // ── Quick-action menu (right-click desktop / long-press mobile) ────────
-  // Reuses SoloView's penalty/delete/comment handlers — no duplicate logic.
-  const quickEnabled = !!(onQuickPenalty || onQuickDelete || onQuickComment);
-  const [quickMenu, setQuickMenu] = useState<{ solve: Solve; index: number; x: number; y: number } | null>(null);
-  const quickMenuRef = useRef<HTMLDivElement | null>(null);
-  const longPressTimerRef = useRef<number | null>(null);
-  const longPressFiredRef = useRef(false);
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const quickMenuLabels = useMemo<TimerHistoryQuickMenuLabels>(() => ({
+    actions: Object.fromEntries(TIMER_HISTORY_QUICK_ACTION_IDS.map(actionId => (
+      [actionId, tr(TIMER_HISTORY_QUICK_ACTION_COPY[actionId])]
+    ))) as Record<TimerHistoryQuickActionId, string>,
+    actionTitles: {
+      'history.quick.penalty-dns': tr({ zh: '未开始（DNS）', en: 'Did Not Start' }),
+    },
+    menu: tr({ zh: '更多操作', en: 'More actions' }),
+  }), [isZh]);
 
-  const closeQuickMenu = useCallback(() => setQuickMenu(null), []);
-
-  // Dismiss on outside-tap / Esc / scroll.
-  useEffect(() => {
-    if (!quickMenu) return;
-    const onDown = (e: MouseEvent | TouchEvent) => {
-      if (quickMenuRef.current && quickMenuRef.current.contains(e.target as Node)) return;
-      closeQuickMenu();
+  // All persistence/clipboard/detail effects remain host injected. The shared
+  // row owns only DOM, action ordering, focus, dismiss, and long-press behavior.
+  const rowQuickMenu = useMemo<TimerHistoryRowQuickMenu | undefined>(() => {
+    if (!onQuickPenalty && !onQuickDelete && !onQuickComment) return undefined;
+    return {
+      labels: quickMenuLabels,
+      onChangePenalty: onQuickPenalty
+        ? (solve, penalty) => onQuickPenalty(solve.id, penalty)
+        : undefined,
+      onComment: onQuickComment,
+      onCopyScramble: async solve => {
+        try { await navigator.clipboard.writeText(timerHistoryCopyText(solve)); } catch { /* ignore */ }
+      },
+      onDelete: onQuickDelete ? solve => onQuickDelete(solve.id) : undefined,
+      variant: isMobile ? 'sheet' : 'popup',
     };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeQuickMenu(); };
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('touchstart', onDown);
-    document.addEventListener('keydown', onKey);
-    window.addEventListener('scroll', closeQuickMenu, true);
-    window.addEventListener('resize', closeQuickMenu);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('touchstart', onDown);
-      document.removeEventListener('keydown', onKey);
-      window.removeEventListener('scroll', closeQuickMenu, true);
-      window.removeEventListener('resize', closeQuickMenu);
-    };
-  }, [quickMenu, closeQuickMenu]);
-
-  const openQuickMenuAt = useCallback((s: Solve, index: number, x: number, y: number) => {
-    if (!quickEnabled) return;
-    if (compareMode || selectMode) return;
-    setQuickMenu({ solve: s, index, x, y });
-  }, [quickEnabled, compareMode, selectMode]);
-
-  const handleRowContextMenu = useCallback((e: React.MouseEvent, s: Solve, index: number) => {
-    if (!quickEnabled || compareMode || selectMode) return;
-    e.preventDefault();
-    openQuickMenuAt(s, index, e.clientX, e.clientY);
-  }, [quickEnabled, compareMode, selectMode, openQuickMenuAt]);
-
-  const LONG_PRESS_MS = 450;
-  const cancelLongPress = useCallback(() => {
-    if (longPressTimerRef.current !== null) {
-      window.clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-  }, []);
-
-  const handleRowTouchStart = useCallback((e: React.TouchEvent, s: Solve, index: number) => {
-    if (!quickEnabled || compareMode || selectMode) return;
-    const t = e.touches[0];
-    if (!t) return;
-    touchStartRef.current = { x: t.clientX, y: t.clientY };
-    longPressFiredRef.current = false;
-    cancelLongPress();
-    longPressTimerRef.current = window.setTimeout(() => {
-      longPressFiredRef.current = true;
-      // Bottom action-sheet: coordinates ignored on mobile (CSS pins it).
-      openQuickMenuAt(s, index, 0, 0);
-    }, LONG_PRESS_MS);
-  }, [quickEnabled, compareMode, selectMode, cancelLongPress, openQuickMenuAt]);
-
-  const handleRowTouchMove = useCallback((e: React.TouchEvent) => {
-    const start = touchStartRef.current;
-    const t = e.touches[0];
-    if (!start || !t) return;
-    if (Math.hypot(t.clientX - start.x, t.clientY - start.y) > 10) cancelLongPress();
-  }, [cancelLongPress]);
-
-  const handleRowTouchEnd = useCallback(() => { cancelLongPress(); }, [cancelLongPress]);
-
-  // Build the menu items for a given solve.
-  const setQuickPenalty = (s: Solve, p: Penalty) => {
-    onQuickPenalty?.(s.id, p);
-    closeQuickMenu();
-  };
-  const doQuickDelete = (s: Solve) => {
-    onQuickDelete?.(s.id);
-    closeQuickMenu();
-  };
-  const doQuickComment = (s: Solve, index: number) => {
-    onQuickComment?.(s, index);
-    closeQuickMenu();
-  };
-  const doCopyScramble = async (s: Solve) => {
-    try { await navigator.clipboard.writeText(s.scramble ?? ''); } catch { /* ignore */ }
-    closeQuickMenu();
-  };
+  }, [isMobile, onQuickComment, onQuickDelete, onQuickPenalty, quickMenuLabels]);
 
   // Structured filters
   const [filtersExpanded, setFiltersExpanded] = useState(false);
@@ -241,7 +147,7 @@ export default function HistoryPanel({
   const [dateTo, setDateTo] = useState('');
   const [timeMin, setTimeMin] = useState('');
   const [timeMax, setTimeMax] = useState('');
-  const [penaltySet, setPenaltySet] = useState<Set<Penalty>>(new Set(ALL_PENALTIES));
+  const [penaltySet, setPenaltySet] = useState<Set<Penalty>>(new Set(TIMER_HISTORY_PENALTIES));
   const [ollFilter, setOllFilter] = useState('');
   const [pllFilter, setPllFilter] = useState('');
   // Tag filter: only solves with at least one of these tags are kept.
@@ -324,71 +230,24 @@ export default function HistoryPanel({
   if (visibleStatColumns.includes('ao5')) visiblePbTagIds.add('pb-ao5');
   if (visibleStatColumns.includes('ao12')) visiblePbTagIds.add('pb-ao12');
 
-  const trimmed = query.trim().toLowerCase();
-
-  const dateFromMs = parseDateStart(dateFrom);
-  const dateToMs = parseDateEnd(dateTo);
-  const timeMinMs = parseTimeSeconds(timeMin);
-  const timeMaxMs = parseTimeSeconds(timeMax);
-  const ollTrim = ollFilter.trim().toLowerCase();
-  const pllTrim = pllFilter.trim().toLowerCase();
-
-  // Count of active non-default filters (excluding the comment/scramble query).
-  const activeFilterCount =
-    (dateFromMs !== null ? 1 : 0) +
-    (dateToMs !== null ? 1 : 0) +
-    (timeMinMs !== null ? 1 : 0) +
-    (timeMaxMs !== null ? 1 : 0) +
-    (penaltySet.size !== ALL_PENALTIES.length ? 1 : 0) +
-    (ollTrim ? 1 : 0) +
-    (pllTrim ? 1 : 0) +
-    (tagSet.size > 0 ? 1 : 0);
-
-  const filteredReversed = useMemo(() => {
-    return reversed.filter((s) => {
-      // Comment / scramble substring
-      if (trimmed) {
-        const c = (s.comment ?? '').toLowerCase();
-        const sc = (s.scramble ?? '').toLowerCase();
-        if (!c.includes(trimmed) && !sc.includes(trimmed)) return false;
-      }
-      // Date range (uses solve.ts)
-      if (dateFromMs !== null && s.ts < dateFromMs) return false;
-      if (dateToMs !== null && s.ts >= dateToMs) return false;
-      // Time range (effective ms; DNF excluded if a time bound is set)
-      if (timeMinMs !== null || timeMaxMs !== null) {
-        const eff = effectiveMs(s);
-        if (!Number.isFinite(eff)) return false;
-        if (timeMinMs !== null && eff < timeMinMs) return false;
-        if (timeMaxMs !== null && eff > timeMaxMs) return false;
-      }
-      // Penalty
-      if (!penaltySet.has(s.penalty)) return false;
-      // OLL / PLL case substring
-      if (ollTrim) {
-        const oll = (s.stageSegments?.ollCase ?? '').toLowerCase();
-        if (!oll.includes(ollTrim)) return false;
-      }
-      if (pllTrim) {
-        const pll = (s.stageSegments?.pllCase ?? '').toLowerCase();
-        if (!pll.includes(pllTrim)) return false;
-      }
-      // Tag filter: require at least one selected tag to be present.
-      if (tagSet.size > 0) {
-        const t = tagsByid.get(s.id) ?? [];
-        let hit = false;
-        for (const tg of t) {
-          if (tagSet.has(tg)) { hit = true; break; }
-        }
-        if (!hit) return false;
-      }
-      return true;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trimmed, solves, dateFromMs, dateToMs, timeMinMs, timeMaxMs, penaltySet, ollTrim, pllTrim, tagSet, tagsByid]);
-
+  const historyFilterResult = useMemo(() => filterTimerHistorySolves(solves, {
+    query,
+    dateFrom,
+    dateTo,
+    timeMin,
+    timeMax,
+    penalties: penaltySet,
+    ollCase: ollFilter,
+    pllCase: pllFilter,
+    tags: tagSet,
+  }, tagsByid), [
+    solves, query, dateFrom, dateTo, timeMin, timeMax,
+    penaltySet, ollFilter, pllFilter, tagSet, tagsByid,
+  ]);
+  const filteredReversed = historyFilterResult.solves;
+  const activeFilterCount = historyFilterResult.activeStructuredFilterCount;
   const matchCount = filteredReversed.length;
-  const hasAnyFilter = !!trimmed || activeFilterCount > 0;
+  const hasAnyFilter = historyFilterResult.hasAnyFilter;
 
   /** 每个日期分隔行右边那个数。数的是**筛选后**留下的把数 —— 分隔行下面摆着几行,
    *  它就该写几,否则筛完之后两者对不上。 */
@@ -407,7 +266,7 @@ export default function HistoryPanel({
     setDateTo('');
     setTimeMin('');
     setTimeMax('');
-    setPenaltySet(new Set(ALL_PENALTIES));
+    setPenaltySet(new Set(TIMER_HISTORY_PENALTIES));
     setOllFilter('');
     setPllFilter('');
     setTagSet(new Set());
@@ -423,18 +282,7 @@ export default function HistoryPanel({
   };
 
   const togglePenalty = (p: Penalty) => {
-    setPenaltySet(prev => {
-      const next = new Set(prev);
-      if (next.has(p)) {
-        // Avoid leaving an empty set (which would hide everything silently);
-        // re-enable all when user toggles off the last one.
-        if (next.size === 1) return new Set(ALL_PENALTIES);
-        next.delete(p);
-      } else {
-        next.add(p);
-      }
-      return next;
-    });
+    setPenaltySet(prev => toggleTimerHistoryPenalty(prev, p));
   };
 
   const exitCompareMode = () => {
@@ -876,7 +724,7 @@ export default function HistoryPanel({
               <label style={labelStyle}>{tr({ zh: '罚时', en: 'Penalty'
             })}</label>
               <div style={{ display: 'flex', gap: 4 }}>
-                {ALL_PENALTIES.map(p => {
+                {TIMER_HISTORY_PENALTIES.map(p => {
                   const label = p === 'ok' ? 'OK' : p;
                   const active = penaltySet.has(p);
                   return (
@@ -1063,25 +911,12 @@ export default function HistoryPanel({
           const isSelected = compareMode && selectedIds.includes(s.id);
           const isBulkSelected = selectMode && bulkSelected.has(s.id);
 
-          const classNames = ['history-row'];
-
-          let rowStyle: React.CSSProperties = {};
-          if (isSelected) {
-            rowStyle = { background: 'rgba(77, 122, 153, 0.18)', boxShadow: 'inset 2px 0 0 #4d7a99' };
-          } else if (isBulkSelected) {
-            rowStyle = { background: 'rgba(153, 90, 77, 0.18)', boxShadow: 'inset 2px 0 0 #995a4d' };
-          }
           const lead = (compareMode || selectMode) ? '14px ' : '';
-          rowStyle = {
-            ...rowStyle,
+          const rowStyle: React.CSSProperties = {
             gridTemplateColumns: `${lead}32px ${timeColumnWidth}${statTemplate} minmax(0,1fr)`,
           };
 
           const handleRowClick = () => {
-            // A long-press just opened the quick-action sheet — swallow the
-            // synthetic click that follows touchend so we don't also open the
-            // full modal.
-            if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
             if (compareMode) {
               handleSelectInCompare(s);
             } else if (selectMode) {
@@ -1090,6 +925,44 @@ export default function HistoryPanel({
               onRowClick(s, realIdx);
             }
           };
+
+          // Auto-tagged PBs move into their matching visible columns. If the
+          // user replaces that column, keep the tag beside the shared result.
+          const rowTags = (() => {
+            const ts = (tagsByid.get(s.id) ?? []).filter(t => (
+              !visiblePbTagIds.has(t) && t !== 'dnf' && t !== 'dns' && t !== 'plus2'
+            ));
+            if (ts.length === 0) return null;
+            const cap = isMobile ? MOBILE_TAG_CAP : ts.length;
+            const shown = ts.slice(0, cap);
+            const overflow = ts.length - shown.length;
+            const fullList = ts
+              .map(tid => (isZh ? TAG_DEFS[tid].labelZh : TAG_DEFS[tid].labelEn))
+              .join(' · ');
+            return (
+              <span
+                style={{ display: 'inline-flex', gap: 3, marginLeft: 6, flexWrap: 'wrap', verticalAlign: 'middle' }}
+                title={overflow > 0 ? fullList : undefined}
+              >
+                {shown.map(tid => {
+                  const def = TAG_DEFS[tid];
+                  if (tid === 'pb-single') {
+                    return <RecordBadge key={tid} record={def.labelEn} variant="standalone" />;
+                  }
+                  return (
+                    <span key={tid} style={tagChipStyle(def.tone)}>
+                      {(isZh ? def.labelZh : def.labelEn)}
+                    </span>
+                  );
+                })}
+                {overflow > 0 && (
+                  <span style={tagChipStyle('muted')} title={fullList}>
+                    +{overflow}
+                  </span>
+                )}
+              </span>
+            );
+          })();
 
           return (
             <Fragment key={s.id}>
@@ -1101,100 +974,16 @@ export default function HistoryPanel({
                 </span>
               </div>
             )}
-            <div
-              className={classNames.join(' ')}
+            <TimerHistoryRow
+              index={realIdx}
+              onActivate={handleRowClick}
+              quickMenu={rowQuickMenu}
+              resultExtras={rowTags}
+              selected={isSelected || isBulkSelected}
+              selectionMode={compareMode ? 'compare' : selectMode ? 'select' : 'none'}
+              solve={s}
               style={rowStyle}
-              onClick={handleRowClick}
-              onContextMenu={(e) => handleRowContextMenu(e, s, realIdx)}
-              onTouchStart={(e) => handleRowTouchStart(e, s, realIdx)}
-              onTouchMove={handleRowTouchMove}
-              onTouchEnd={handleRowTouchEnd}
-              onTouchCancel={handleRowTouchEnd}
-            >
-              {compareMode && (
-                <div
-                  aria-hidden="true"
-                  style={{
-                    width: 14,
-                    height: 14,
-                    borderRadius: '50%',
-                    border: '1.5px solid ' + (isSelected ? '#4d7a99' : '#444'),
-                    background: isSelected ? '#4d7a99' : 'transparent',
-                    marginLeft: -6,
-                    marginRight: 2,
-                    flexShrink: 0,
-                  }}
-                />
-              )}
-              {selectMode && (
-                <div
-                  aria-hidden="true"
-                  style={{
-                    width: 14,
-                    height: 14,
-                    borderRadius: 3,
-                    border: '1.5px solid ' + (isBulkSelected ? '#995a4d' : '#444'),
-                    background: isBulkSelected ? '#995a4d' : 'transparent',
-                    marginLeft: -6,
-                    marginRight: 2,
-                    flexShrink: 0,
-                  }}
-                />
-              )}
-              <div className="idx">{realIdx + 1}</div>
-              <div className="time">
-                {/* formatSolveResult, not formatMs: it renders DNS as "DNS"
-                    (formatMs only sees Infinity, same as a DNF), FMC as a
-                    move count rather than "27.330", and an MBLD attempt as its
-                    WCA result string ("11/13 58:02") rather than a bare time. */}
-                {formatSolveResult(s)}
-                {s.penalty === '+2' && <span className="penalty-flag">(+2)</span>}
-                {/* DNF / DNS already shown by the time column — no extra
-                    flag/tag (penalty also drops the 'dnf'/'dns'/'plus2' chips below). */}
-                {s.comment && <span className="comment-flag" title={s.comment}>·</span>}
-                {(() => {
-                  // Auto-tagged PBs move into their matching visible columns.
-                  // If the user replaces that column, keep the tag beside the time.
-                  // 'dnf'/'dns'/'plus2' are conveyed by the time column + (+2) flag —
-                  // drop the redundant chips.
-                  const ts = (tagsByid.get(s.id) ?? []).filter(t => (
-                    !visiblePbTagIds.has(t) && t !== 'dnf' && t !== 'dns' && t !== 'plus2'
-                  ));
-                  if (ts.length === 0) return null;
-                  const cap = isMobile ? MOBILE_TAG_CAP : ts.length;
-                  const shown = ts.slice(0, cap);
-                  const overflow = ts.length - shown.length;
-                  const fullList = ts
-                    .map(tid => (isZh ? TAG_DEFS[tid].labelZh : TAG_DEFS[tid].labelEn))
-                    .join(' · ');
-                  return (
-                    <span
-                      style={{ display: 'inline-flex', gap: 3, marginLeft: 6, flexWrap: 'wrap', verticalAlign: 'middle' }}
-                      title={overflow > 0 ? fullList : undefined}
-                    >
-                      {shown.map(tid => {
-                        const def = TAG_DEFS[tid];
-                        // Single PB uses the shared RecordBadge (PR style) so it reads
-                        // the same as record badges elsewhere on the site.
-                        if (tid === 'pb-single') {
-                          return <RecordBadge key={tid} record={def.labelEn} variant="standalone" />;
-                        }
-                        return (
-                          <span key={tid} style={tagChipStyle(def.tone)}>
-                            {(isZh ? def.labelZh : def.labelEn)}
-                          </span>
-                        );
-                      })}
-                      {overflow > 0 && (
-                        <span style={tagChipStyle('muted')} title={fullList}>
-                          +{overflow}
-                        </span>
-                      )}
-                    </span>
-                  );
-                })()}
-              </div>
-              {visibleStatColumns.map(key => (
+              trailing={visibleStatColumns.map(key => (
                 <div className="hao" key={key}>
                   <span className="record-num-cell">
                     {fmtRollingStat(statCols[key]?.[realIdx] ?? null)}
@@ -1202,7 +991,7 @@ export default function HistoryPanel({
                   </span>
                 </div>
               ))}
-            </div>
+            />
             </Fragment>
           );
         })}
@@ -1313,98 +1102,6 @@ export default function HistoryPanel({
           onClose={closeCompareModal}
         />
       )}
-      {quickMenu && (() => {
-        const s = quickMenu.solve;
-        const items = (
-          <>
-            <button
-              type="button"
-              role="menuitem"
-              className={`row-quick-item${s.penalty === 'ok' ? ' active' : ''}`}
-              onClick={() => setQuickPenalty(s, 'ok')}
-            >
-              <Check size={14} />
-              <span>{tr({ zh: '无罚时', en: 'OK'
-            })}</span>
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              className={`row-quick-item${s.penalty === '+2' ? ' active' : ''}`}
-              onClick={() => setQuickPenalty(s, '+2')}
-            >
-              <span className="row-quick-glyph">+2</span>
-              <span>+2</span>
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              className={`row-quick-item${s.penalty === 'DNF' ? ' active' : ''}`}
-              onClick={() => setQuickPenalty(s, 'DNF')}
-            >
-              <span className="row-quick-glyph">DNF</span>
-              <span>DNF</span>
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              className={`row-quick-item${s.penalty === 'DNS' ? ' active' : ''}`}
-              onClick={() => setQuickPenalty(s, 'DNS')}
-              title={tr({ zh: '未开始（DNS）', en: 'Did Not Start' })}
-            >
-              <span className="row-quick-glyph">DNS</span>
-              <span>DNS</span>
-            </button>
-            <div className="row-quick-sep" role="separator" />
-            <button type="button" role="menuitem" className="row-quick-item" onClick={() => doQuickComment(s, quickMenu.index)}>
-              <MessageSquare size={14} />
-              <span>{tr({ zh: '评论', en: 'Comment'
-            })}</span>
-            </button>
-            <button type="button" role="menuitem" className="row-quick-item" onClick={() => doCopyScramble(s)}>
-              <Clipboard size={14} />
-              <span>{tr({ zh: '复制打乱', en: 'Copy scramble'
-            })}</span>
-            </button>
-            <div className="row-quick-sep" role="separator" />
-            <button type="button" role="menuitem" className="row-quick-item danger" onClick={() => doQuickDelete(s)}>
-              <Trash2 size={14} />
-              <span>{tr({ zh: '删除', en: 'Delete'
-            })}</span>
-            </button>
-          </>
-        );
-        if (isMobile) {
-          return (
-            <div className="row-quick-sheet-backdrop" data-no-timer onClick={closeQuickMenu}>
-              <div className="row-quick-sheet" ref={quickMenuRef} role="menu" onClick={(e) => e.stopPropagation()}>
-                <div className="row-quick-sheet-head">
-                  #{quickMenu.index + 1} · {formatSolveResult(s)}
-                </div>
-                {items}
-              </div>
-            </div>
-          );
-        }
-        // Desktop: anchored popup. Clamp to viewport.
-        // Height must cover every item (OK / +2 / DNF / DNS / comment / copy /
-        // delete + 2 separators) or the viewport clamp lets the menu overflow.
-        const MENU_W = 184, MENU_H = 336;
-        const left = Math.min(quickMenu.x, (typeof window !== 'undefined' ? window.innerWidth : 1280) - MENU_W - 8);
-        const top = Math.min(quickMenu.y, (typeof window !== 'undefined' ? window.innerHeight : 800) - MENU_H - 8);
-        return (
-          <div
-            className="row-quick-menu"
-            data-no-timer
-            ref={quickMenuRef}
-            role="menu"
-            style={{ left: Math.max(8, left), top: Math.max(8, top) }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {items}
-          </div>
-        );
-      })()}
     </div>
   );
 }

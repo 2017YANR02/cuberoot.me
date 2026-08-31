@@ -18,13 +18,7 @@
  */
 
 import { scramble333 } from './nxnxn';
-import { invertAlg } from './invert';
-import { OLL_ALGS } from './algs/oll';
-import { PLL_ALGS } from './algs/pll';
-
-function pick<T>(arr: readonly T[], rng: () => number): T {
-  return arr[Math.floor(rng() * arr.length)];
-}
+import { generateTimerTrainerScramble } from '@cuberoot/shared/timer';
 
 export function scrambleCross(rng: () => number): string {
   return scramble333(rng);
@@ -36,9 +30,5 @@ export function scrambleF2l(rng: () => number): string {
 }
 
 export function scrambleLl(rng: () => number): string {
-  const oll = pick(OLL_ALGS, rng);
-  const pll = pick(PLL_ALGS, rng);
-  // Solving sequence = OLL then PLL. Setup = inverse of (OLL PLL) = PLL' OLL'.
-  const combined = `${oll} ${pll}`;
-  return invertAlg(combined);
+  return generateTimerTrainerScramble('ll', { random: rng }).scramble;
 }

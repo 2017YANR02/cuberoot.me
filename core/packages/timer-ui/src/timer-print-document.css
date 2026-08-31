@@ -1,0 +1,236 @@
+/* Screen UI never duplicates the printable report. Both Web and native shells
+   expose the same component only when the browser/WebView enters print media. */
+.timer-print-document {
+  display: none;
+}
+
+.timer-print-portal {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  width: 186mm;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.timer-print-portal > .timer-print-document {
+  display: block;
+}
+
+@media print {
+  /* Paper output is intentionally fixed to white/black and neutral grays;
+     theme tokens must not tint a physical page or saved PDF. */
+  html,
+  body {
+    overflow: visible !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  body.timer-printing > :not(.timer-print-portal) {
+    display: none !important;
+  }
+
+  body.timer-printing > .timer-print-portal {
+    display: block !important;
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+    padding: 12mm !important;
+    background: #fff !important;
+    color: #000 !important;
+    user-select: text !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+
+  .timer-print-portal > .timer-print-document {
+    display: block !important;
+  }
+
+  .timer-print-document {
+    color: #000;
+    /* Chrome's macOS PDF path can emit SFNS as fragile Type 3 subsets on later
+       pages. Arial Unicode MS embeds as CID TrueType; other platforms simply
+       continue through the normal system stack. */
+    font-family: "Arial Unicode MS", Inter, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", sans-serif;
+    font-size: 9pt;
+    line-height: 1.35;
+  }
+
+  .timer-print-document:lang(zh-Hans) {
+    font-family: "Arial Unicode MS", "PingFang SC", "Hiragino Sans GB", "STHeiti",
+      "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  }
+
+  .timer-print-header {
+    margin-bottom: 6mm;
+    padding-bottom: 4mm;
+    border-bottom: 0.35mm solid #000;
+  }
+
+  .timer-print-brand {
+    margin: 0 0 1mm;
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .timer-print-header h1 {
+    margin: 0;
+    color: #000;
+    font-size: 18pt;
+    line-height: 1.2;
+  }
+
+  .timer-print-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2mm 8mm;
+    margin-top: 2mm;
+    color: #444;
+    font-size: 8pt;
+  }
+
+  .timer-print-document h2 {
+    margin: 0 0 2mm;
+    color: #000;
+    font-size: 11pt;
+  }
+
+  .timer-print-current {
+    display: grid;
+    grid-template-columns: 1fr 3fr;
+    gap: 4mm;
+    margin-bottom: 6mm;
+    padding: 3mm;
+    border: 0.3mm solid #bbb;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .timer-print-current > div {
+    min-width: 0;
+  }
+
+  .timer-print-current span {
+    display: block;
+    margin-bottom: 1mm;
+    color: #555;
+    font-size: 8pt;
+  }
+
+  .timer-print-current strong {
+    display: block;
+    color: #000;
+    font-size: 10pt;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+
+  .timer-print-current small {
+    display: block;
+    margin-top: 1.5mm;
+    color: #555;
+    font-size: 8pt;
+    overflow-wrap: anywhere;
+  }
+
+  .timer-print-current > div:first-child strong {
+    font-size: 18pt;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .timer-print-summary {
+    margin-bottom: 6mm;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .timer-print-summary dl {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5mm 4mm;
+    margin: 0;
+  }
+
+  .timer-print-summary dl > div {
+    display: flex;
+    min-width: 0;
+    justify-content: space-between;
+    gap: 2mm;
+    padding-bottom: 1mm;
+    border-bottom: 0.2mm solid #ddd;
+  }
+
+  .timer-print-summary dt {
+    min-width: 0;
+    color: #555;
+    overflow-wrap: anywhere;
+  }
+
+  .timer-print-summary dd {
+    margin: 0;
+    color: #000;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .timer-print-results table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  .timer-print-results thead {
+    display: table-header-group;
+  }
+
+  .timer-print-results tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .timer-print-results th,
+  .timer-print-results td {
+    padding: 1.7mm 1.3mm;
+    border-bottom: 0.2mm solid #ddd;
+    color: #000;
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+  }
+
+  .timer-print-results th {
+    border-bottom-color: #777;
+    font-size: 8pt;
+  }
+
+  .timer-print-result {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+
+  .timer-print-scramble,
+  .timer-print-comment {
+    white-space: pre-wrap;
+  }
+
+  .timer-print-col-number { width: 6%; }
+  .timer-print-col-result { width: 12%; }
+  .timer-print-col-date { width: 18%; }
+  .timer-print-col-scramble { width: 44%; }
+  .timer-print-col-comment { width: 20%; }
+
+  .timer-print-empty {
+    margin: 0;
+    padding: 5mm 0;
+    color: #555;
+  }
+}

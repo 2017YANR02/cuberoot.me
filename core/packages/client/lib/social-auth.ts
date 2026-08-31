@@ -3,13 +3,41 @@
 // 国内三方登录(微信/QQ/支付宝)浏览器端:授权码重定向流。
 // state 由服务端签名(内含 provider/intent/exp/签名),嵌进授权 URL、回调时原样回来,服务端验签做 CSRF。
 // **不依赖 sessionStorage**:手机唤起支付宝 App 授权后,回调常落到另一浏览器上下文(系统浏览器 /
-// App 内置浏览器),sessionStorage 会丢 → 校验必须无状态。sessionStorage 只留 returnUrl(同上下文回来时
-// 用来跳回原页,丢了就回首页,不影响登录成败)。
+// App 内置浏览器),sessionStorage 会丢 → 校验必须无状态。returnUrl 同时存 sessionStorage 和
+// localStorage；后者让系统浏览器经外部 OAuth App 回来时仍能继续 Mobile PKCE handoff。
 
 import { fetchSocialAuthorizeUrl, type SocialProvider } from './account-api';
 
 // 回跳目标页(best-effort;跨浏览器上下文丢失时回调兜底回首页)。
 export const SOCIAL_RETURN_KEY = 'social_oauth_return';
+
+type ReturnStorage = Pick<Storage, 'getItem' | 'removeItem' | 'setItem'>;
+
+export function rememberSocialReturnUrl(
+  returnUrl: string,
+  session: ReturnStorage = window.sessionStorage,
+  local: ReturnStorage = window.localStorage,
+): void {
+  try { session.setItem(SOCIAL_RETURN_KEY, returnUrl); } catch { /* 隐私模式忽略 */ }
+  try { local.setItem(SOCIAL_RETURN_KEY, returnUrl); } catch { /* 隐私模式忽略 */ }
+}
+
+export function takeSocialReturnUrl(
+  session: ReturnStorage = window.sessionStorage,
+  local: ReturnStorage = window.localStorage,
+): string | null {
+  let sessionValue: string | null = null;
+  let localValue: string | null = null;
+  try {
+    sessionValue = session.getItem(SOCIAL_RETURN_KEY);
+    session.removeItem(SOCIAL_RETURN_KEY);
+  } catch { /* 隐私模式忽略 */ }
+  try {
+    localValue = local.getItem(SOCIAL_RETURN_KEY);
+    local.removeItem(SOCIAL_RETURN_KEY);
+  } catch { /* 隐私模式忽略 */ }
+  return sessionValue || localValue;
+}
 
 /** startSocialLogin 结果:navigated=true 整页已跳授权页(页面即将卸载,spinner 保持到离开);
  *  navigated=false 只是用 `alipays://` scheme 唤起了 App,**当前页不卸载**,调用方须收起 spinner
@@ -21,7 +49,7 @@ export interface StartSocialResult { navigated: boolean }
 export async function startSocialLogin(provider: SocialProvider, intent: 'login' | 'link'): Promise<StartSocialResult> {
   if (typeof window === 'undefined') return { navigated: false };
   const url = await fetchSocialAuthorizeUrl(provider, intent);
-  try { sessionStorage.setItem(SOCIAL_RETURN_KEY, window.location.href); } catch { /* 隐私模式忽略 */ }
+  rememberSocialReturnUrl(window.location.href);
   const target = alipayMobileWakeUrl(provider, url);
   const navigated = target === url; // 被包成 alipays:// scheme 时页面不卸载(只唤起 App)
   window.location.href = target;

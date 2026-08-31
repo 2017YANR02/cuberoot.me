@@ -6,13 +6,21 @@
   --background: #faf9f7;
   --foreground: #191817;
   --muted-foreground: #716d68;
+  --faint-foreground: #9b9690;
+  --popover: #ffffff;
   --subtle: #eeebe7;
   --accent: #bd5d3d;
   --accent-foreground: #ffffff;
   --accent-soft: color-mix(in srgb, var(--accent) 13%, transparent);
+  --destructive-foreground: #ffffff;
+  --toggle-on: #34c759;
   --border-default: color-mix(in srgb, var(--foreground) 13%, transparent);
+  --border-strong: color-mix(in srgb, var(--foreground) 24%, transparent);
+  --input: var(--border-default);
+  --ring: var(--accent);
   --modal-overlay: #000000;
   --shell-divider: color-mix(in srgb, var(--foreground) 8%, transparent);
+  --shell-chip: color-mix(in srgb, var(--foreground) 5%, transparent);
   --shell-hover: color-mix(in srgb, var(--foreground) 6%, transparent);
   --success: #39724f;
   --danger: #a13f36;
@@ -36,11 +44,15 @@
   --background: #181716;
   --foreground: #f0eeeb;
   --muted-foreground: #aaa49e;
+  --faint-foreground: #7f7974;
+  --popover: #262321;
   --subtle: #262321;
   --accent: #df7958;
   --accent-foreground: #181716;
+  --toggle-on: #30d158;
   --accent-soft: color-mix(in srgb, var(--accent) 17%, transparent);
   --border-default: color-mix(in srgb, var(--foreground) 14%, transparent);
+  --border-strong: color-mix(in srgb, var(--foreground) 24%, transparent);
   --success: #77ad89;
   --danger: #e07a70;
 }
@@ -51,11 +63,15 @@
     --background: #181716;
     --foreground: #f0eeeb;
     --muted-foreground: #aaa49e;
+    --faint-foreground: #7f7974;
+    --popover: #262321;
     --subtle: #262321;
     --accent: #df7958;
     --accent-foreground: #181716;
+    --toggle-on: #30d158;
     --accent-soft: color-mix(in srgb, var(--accent) 17%, transparent);
     --border-default: color-mix(in srgb, var(--foreground) 14%, transparent);
+    --border-strong: color-mix(in srgb, var(--foreground) 24%, transparent);
     --success: #77ad89;
     --danger: #e07a70;
   }
@@ -107,8 +123,13 @@ button {
   height: 100dvh;
   min-height: 100vh;
   min-height: 100dvh;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto;
   padding-top: env(safe-area-inset-top);
+}
+
+.app-shell--history,
+.app-shell--settings {
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
 .app-titlebar {
@@ -125,6 +146,24 @@ button {
   grid-column: 2;
   font-size: 1rem;
   font-weight: 700;
+}
+
+.app-titlebar-close {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  grid-column: 1;
+  grid-row: 1;
+  place-items: center;
+  justify-self: start;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+.app-titlebar-close:active {
+  background: var(--shell-hover);
+  color: var(--foreground);
 }
 
 .network {
@@ -151,13 +190,34 @@ button {
 }
 
 .view-container {
+  min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-padding-block: 8px;
+}
+
+.web-surface {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--background);
+}
+
+.web-surface iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: var(--background);
 }
 
 .timer-view {
   display: flex;
   width: min(100%, 760px);
+  min-width: 0;
   min-height: 100%;
   flex-direction: column;
   margin: 0 auto;
@@ -167,8 +227,7 @@ button {
   flex: 0 0 auto;
 }
 
-.timer-toolbar-control,
-.timer-source-select {
+.timer-toolbar-control {
   display: inline-flex;
   min-height: 32px;
   align-items: center;
@@ -182,15 +241,6 @@ button {
 .timer-toolbar-event > .cubing-icon {
   color: var(--accent);
   font-size: 1.05rem;
-}
-
-.timer-source-select select {
-  max-width: 5rem;
-  border: 0;
-  outline: 0;
-  appearance: none;
-  background: transparent;
-  font-weight: 650;
 }
 
 .timer-toolbar-icon {
@@ -208,50 +258,76 @@ button {
   color: var(--foreground);
 }
 
-.timer-solution-row {
-  min-height: 31px;
-  padding: 1px max(16px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left));
-  border-bottom: 1px solid var(--shell-divider);
-  color: var(--muted-foreground);
-  font-size: 0.78rem;
-  font-weight: 650;
-}
-
-.timer-source-bar {
+.mobile-solution-hints {
   display: flex;
-  min-height: 58px;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 10px;
-  padding: 10px max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left));
-}
-
-.timer-source-kind,
-.timer-source-name {
-  display: inline-flex;
-  min-height: 40px;
-  align-items: center;
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  background: var(--background);
-}
-
-.timer-source-kind {
-  flex: 0 0 auto;
-  gap: 4px;
-  padding: 0 12px;
-  font-weight: 650;
-}
-
-.timer-source-name {
+  width: 100%;
   min-width: 0;
-  flex: 1;
-  overflow: hidden;
-  padding: 0 12px;
-  color: var(--muted-foreground);
-  font-size: 0.78rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  flex: 0 0 auto;
+  justify-content: center;
+  padding: 4px max(16px, env(safe-area-inset-right)) 6px max(16px, env(safe-area-inset-left));
+}
+
+.mobile-solution-hints > .timer-small-hints {
+  width: min(100%, 44rem);
+}
+
+.mobile-scramble-source-config {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-inline-size: 0;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 8px max(16px, env(safe-area-inset-right)) 9px max(16px, env(safe-area-inset-left));
+  border: 0;
+  border-bottom: 1px solid var(--shell-divider);
+}
+
+.mobile-scramble-source-config .scramble-src-manual {
+  width: min(100%, 44rem);
+  margin: 0 auto;
+}
+
+.mobile-scramble-source-config .scramble-src-manual-input {
+  min-height: 4.75rem;
+}
+
+.mobile-scramble-source-config:disabled .scramble-src-manual-input {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.mobile-scramble-222-config {
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.mobile-wca-source-config > .timer-wca-source-config {
+  width: min(100%, 44rem);
+  margin: 0 auto;
+}
+
+/* WCA source, optimal and difficulty are full-width stacked sections.  The
+ * shared difficulty root uses display:contents, so leaving this fieldset as a
+ * horizontal flex row compresses those sections into overlapping columns on
+ * 320/340px screens. */
+.mobile-wca-source-config {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.mobile-wca-source-config > .mobile-wca-optimal-row,
+.mobile-wca-source-config > .timer-wca-difficulty-top-row,
+.mobile-wca-source-config > .timer-wca-difficulty-body {
+  width: min(100%, 44rem);
+  margin-inline: auto;
+}
+
+.mobile-wca-date-range {
+  flex: 1 1 310px;
 }
 
 .mobile-timer-stage {
@@ -259,43 +335,8 @@ button {
   display: flex;
   min-height: 520px;
   flex: 1;
-  overflow: hidden;
-}
-
-.mobile-scramble {
-  display: flex;
-  width: min(91vw, 36rem);
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.mobile-scramble p {
-  max-width: 32rem;
-  margin: 0;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: clamp(1.05rem, 4.7vw, 1.55rem);
-  line-height: 1.48;
-  text-align: center;
-}
-
-.mobile-scramble button {
-  display: grid;
-  width: 44px;
-  min-width: 44px;
-  height: 44px;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 1.25rem;
-}
-
-.mobile-scramble-stack {
-  display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  overflow: hidden;
 }
 
 .mobile-scramble-source {
@@ -319,6 +360,12 @@ button {
   white-space: nowrap;
 }
 
+.mobile-scramble-source > svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
 .mobile-cube-preview {
   display: inline-flex;
   width: 152px;
@@ -331,18 +378,31 @@ button {
   height: 100%;
 }
 
-.mobile-scramble button:disabled {
-  cursor: default;
-  opacity: 0.45;
-}
-
 .mobile-timer-stage > .timing-surface {
   min-height: 0;
-  flex: 1;
+  flex: 1 0 280px;
   margin: 0;
-  padding: 12px 0 132px;
+  padding: 12px 0;
   background: transparent;
   outline: none;
+}
+
+/* Mobile keeps the Web DOM order (surface → stats → hints → devices), but
+ * places all four in normal flow so the narrow screen never stacks controls
+ * on top of one another. The shared chrome defaults remain absolute for Web. */
+.mobile-timer-stage > .shell-stat-rail {
+  position: static;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  margin-inline-start: max(12px, env(safe-area-inset-left));
+}
+
+.mobile-timer-stage > .shell-device-actions {
+  position: static;
+  flex: 0 0 auto;
+  align-self: center;
+  margin: 2px 0 10px;
+  transform: none;
 }
 
 .mobile-timer-stage .timing-surface-core {
@@ -383,6 +443,126 @@ button {
   color: var(--muted-foreground);
 }
 
+.mobile-session-switcher {
+  margin-top: 18px;
+}
+
+.mobile-stats-panel {
+  margin-top: 12px;
+}
+
+.mobile-history-filters {
+  min-width: 0;
+  margin-top: 16px;
+}
+
+.mobile-history-search-row {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.mobile-history-search {
+  position: relative;
+  min-width: 0;
+  flex: 1 1 13rem;
+}
+
+.mobile-history-search input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 36px 0 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  outline: 0;
+  background: transparent;
+}
+
+.mobile-history-search input:focus {
+  border-color: var(--accent);
+}
+
+.mobile-history-match-count {
+  flex: 0 0 auto;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.mobile-history-filter-actions {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  margin-top: 4px;
+}
+
+.mobile-history-filter-panel {
+  display: grid;
+  min-width: 0;
+  gap: 14px;
+  padding: 12px 0 16px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.mobile-history-date-range {
+  width: 100%;
+  min-width: 0;
+}
+
+.mobile-history-filter-grid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mobile-history-filter-grid label,
+.history-move-field {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.mobile-history-filter-grid input,
+.history-move-field select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 9px;
+  outline: 0;
+  background: transparent;
+}
+
+.mobile-history-filter-grid input:focus,
+.history-move-field select:focus {
+  border-color: var(--accent);
+}
+
+.mobile-history-penalties {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.mobile-history-penalties legend {
+  width: 100%;
+  margin-bottom: 2px;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
 .empty-state {
   max-width: 28rem;
   margin-top: 40px;
@@ -394,37 +574,11 @@ button {
   margin-top: 22px;
 }
 
-.history-row {
-  border-bottom: 1px solid var(--border-default);
-}
-
-.history-row summary {
-  display: grid;
-  min-height: 58px;
-  grid-template-columns: auto auto minmax(0, 1fr);
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  list-style: none;
-}
-
-.history-row summary::-webkit-details-marker {
-  display: none;
-}
-
-.history-row summary strong {
-  font-size: 1.15rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.history-index,
-.history-row time {
+.mobile-history-date {
+  min-width: 0;
+  overflow: hidden;
   color: var(--muted-foreground);
   font-size: 0.75rem;
-}
-
-.history-row time {
-  overflow: hidden;
   text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -432,9 +586,20 @@ button {
 
 .history-scramble {
   margin: 2px 0 16px;
+  overflow-wrap: anywhere;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 0.82rem;
   line-height: 1.55;
+}
+
+.history-row-detail {
+  min-width: 0;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.history-move-field {
+  margin-top: 14px;
 }
 
 .penalty-actions,
@@ -475,19 +640,6 @@ button {
   margin-top: 14px;
   color: var(--muted-foreground);
   font-size: 0.78rem;
-}
-
-.comment-field input {
-  width: 100%;
-  min-height: 44px;
-  border: 0;
-  border-bottom: 1px solid var(--border-default);
-  outline: 0;
-  background: transparent;
-}
-
-.comment-field input:focus {
-  border-color: var(--accent);
 }
 
 .history-actions {
@@ -534,6 +686,95 @@ button {
   margin-top: 34px;
 }
 
+.settings-view .settings-section-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.settings-view .settings-section-head h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.settings-view .settings-row {
+  display: flex;
+  min-width: 0;
+  min-height: 58px;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.settings-view .settings-row-label {
+  min-width: 0;
+  flex: 1 1 auto;
+  color: var(--foreground);
+  line-height: 1.35;
+}
+
+.settings-view .settings-row-control {
+  display: flex;
+  min-width: 0;
+  min-height: 44px;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.settings-view .settings-row-control-input,
+.settings-view .settings-row-control-select {
+  max-width: min(48vw, 12rem);
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 1rem;
+  text-align: right;
+}
+
+.settings-view .settings-row-control-input:focus,
+.settings-view .settings-row-control-select:focus {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+.settings-view .settings-row-boolean .timer-222-mode-toggle--switch {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+}
+
+.settings-view .settings-row-boolean .timer-222-mode-toggle--switch::before {
+  position: absolute;
+  top: 11px;
+  left: 3px;
+  width: 38px;
+  height: 22px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--subtle);
+  content: '';
+}
+
+.settings-view .settings-row-boolean .timer-222-mode-toggle--switch.is-on::before {
+  border-color: var(--toggle-on);
+  background: var(--toggle-on);
+}
+
+.settings-view .settings-row-boolean .timer-222-mode-toggle--switch .timer-222-mode-toggle-dot {
+  left: 5px;
+}
+
+.settings-view .settings-row-boolean .timer-222-mode-toggle--switch.is-on .timer-222-mode-toggle-dot {
+  left: 21px;
+}
+
 .settings-section h2 {
   margin: 0;
   font-size: 1rem;
@@ -578,92 +819,6 @@ button {
   color: var(--muted-foreground);
 }
 
-.more-dialog {
-  width: min(100%, 620px);
-  max-width: none;
-  margin: auto auto 0;
-  padding: 0;
-  border: 0;
-  border-radius: 18px 18px 0 0;
-  background: var(--background);
-  color: var(--foreground);
-}
-
-.more-dialog::backdrop {
-  background: color-mix(in srgb, var(--modal-overlay) 42%, transparent);
-}
-
-.more-sheet {
-  padding: 14px max(18px, env(safe-area-inset-right)) max(18px, calc(env(safe-area-inset-bottom) + 12px)) max(18px, env(safe-area-inset-left));
-}
-
-.more-sheet-header {
-  display: flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border-default);
-}
-
-.more-sheet-header h2 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.more-sheet-header button {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  background: transparent;
-  color: var(--muted-foreground);
-}
-
-.more-sheet-actions {
-  display: grid;
-}
-
-.more-sheet-actions button,
-.more-sheet-actions a {
-  display: flex;
-  min-height: 52px;
-  align-items: center;
-  border-bottom: 1px solid var(--border-default);
-  background: transparent;
-  color: var(--foreground);
-  cursor: pointer;
-  font-weight: 650;
-  text-align: left;
-  text-decoration: none;
-}
-
-.more-sheet-actions > :last-child {
-  border-bottom: 0;
-}
-
-.bottom-nav {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-  padding: 6px max(12px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
-  border-top: 1px solid var(--border-default);
-  background: color-mix(in srgb, var(--background) 92%, transparent);
-}
-
-.bottom-nav button {
-  min-height: 48px;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--muted-foreground);
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.bottom-nav button[aria-current="page"] {
-  background: transparent;
-  color: var(--accent);
-}
-
 .toast {
   position: fixed;
   z-index: 10;
@@ -680,6 +835,69 @@ button {
   pointer-events: none;
   transform: translateY(8px);
   transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.primary-nav {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  padding: 5px max(8px, env(safe-area-inset-right)) max(5px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  border-top: 1px solid var(--border-default);
+  background: var(--background);
+}
+
+.primary-nav button {
+  display: flex;
+  min-width: 0;
+  min-height: 50px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.primary-nav button[aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.primary-nav button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Match Web timer fullscreen semantics: the current scramble and timing
+ * surface remain, while navigation/config/results/device chrome gets out of
+ * the solve. This class is also the fallback for WebViews without the native
+ * Fullscreen API. */
+.app-shell--timer-fullscreen {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.app-shell--timer-fullscreen .timer-view > .shell-topbar,
+.app-shell--timer-fullscreen .timer-view > .mobile-scramble-source-config,
+.app-shell--timer-fullscreen .mobile-timer-stage > .shell-stat-rail,
+.app-shell--timer-fullscreen .mobile-timer-stage > .mobile-solution-hints,
+.app-shell--timer-fullscreen .mobile-timer-stage > .shell-device-actions,
+.app-shell--timer-fullscreen > .primary-nav {
+  display: none;
+}
+
+.app-shell--timer-fullscreen .view-container,
+.app-shell--timer-fullscreen .timer-view,
+.app-shell--timer-fullscreen .mobile-timer-stage {
+  height: 100%;
+  min-height: 0;
+}
+
+.app-shell--timer-fullscreen .mobile-timer-stage > .timing-surface {
+  min-height: 100%;
+  flex-basis: 100%;
 }
 
 .toast:not(:empty) {
@@ -722,12 +940,36 @@ button {
   }
 
   .mobile-timer-stage > .timing-surface {
-    padding-bottom: 110px;
+    flex-basis: 220px;
+    padding-block: 8px;
   }
 
   .mobile-cube-preview {
     display: none;
   }
+}
+
+/* The IME can leave only ~461 CSS px on the OPPO test device. Keep the
+   focused editor in the outer scroll container, then compact the timer stage
+   enough that digits, scramble, preview and bottom actions are reachable
+   together above the three-tab navigation. */
+.app-shell--compact-viewport .mobile-timer-stage {
+  min-height: 350px;
+}
+
+.app-shell--compact-viewport .mobile-timer-stage > .timing-surface {
+  flex-basis: 220px;
+  padding: 8px 0;
+}
+
+.app-shell--compact-viewport .mobile-timer-stage .timing-surface-core,
+.app-shell--compact-viewport .mobile-timer-stage .timing-surface-sub {
+  gap: 5px;
+}
+
+.app-shell--compact-viewport .mobile-cube-preview {
+  width: 120px;
+  height: 90px;
 }
 
 @media (prefers-reduced-motion: reduce) {

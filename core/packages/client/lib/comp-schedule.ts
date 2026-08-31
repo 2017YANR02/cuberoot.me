@@ -12,6 +12,7 @@ import {
   parseActivityCode, trimWcif,
   type RawWcif, type ScheduleData, type ScheduleActivity, type RoundInfo,
 } from '@cuberoot/shared/comp-schedule';
+import { timerWcaScrambleSourceLine } from '@cuberoot/shared/timer';
 
 // Re-export the shared shapes so existing local imports keep working unchanged.
 export type {
@@ -156,9 +157,8 @@ export function roundTypeShort(id: string, isZh: boolean): string {
 // 来源行: 轮次 + 组别 + 打乱序号（近期打乱 / scramble 示例卡片共用），逗号分隔,如「Fi,A,2」。
 // 备用打乱(extra)用 E1/E2 标识,而非 1/2（WCA 备打有独立序号,从 1 起）。中英文同一套记号。
 export function compSourceLine(round: string, group: string, num: number, isZh: boolean, isExtra = false): string {
-  const r = roundTypeShort(round, isZh);
-  const tag = isExtra ? `E${num}` : String(num);
-  return [r, group, tag].filter(Boolean).join(',');
+  void isZh;
+  return timerWcaScrambleSourceLine(round, group, num, isExtra);
 }
 
 const FORMAT_NAME: Record<string, { zh: string; enShort: string }> = {

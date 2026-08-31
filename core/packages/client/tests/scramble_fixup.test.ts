@@ -378,22 +378,25 @@ describe('solvedCubie sanity', () => {
  * 所以:修正路径上不挂勾,改成右边一个写明白的绿标。
  */
 describe('复制反馈不能骑在修正路径上(2026-08-04)', () => {
-  const src = readFileSync(
+  const hostSrc = readFileSync(
     join(dirname(fileURLToPath(import.meta.url)), '..', 'app', '[lang]', 'timer', '_shell', 'SoloView.tsx'),
+    'utf8',
+  );
+  const stripSrc = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'timer-ui', 'src', 'TimerScrambleStrip.tsx'),
     'utf8',
   );
 
   it('绿勾在 fixup 亮着时不渲染', () => {
-    expect(src).toMatch(/const copiedCheck = scrambleCopied && !fixupActive &&/);
+    expect(stripSrc).toMatch(/const copiedCheck = copied && !correctionActive/);
   });
 
   it('改成一条说清楚复制了什么的绿标', () => {
-    expect(src).toMatch(/已复制原打乱/);
-    expect(src).toMatch(/Copied the scramble/);
+    expect(hostSrc).toMatch(/copiedCorrection: tr\(\{ zh: '已复制原打乱', en: 'Copied the scramble' \}\)/);
   });
 
   it('复制的仍然是打乱本身,不是条上那串', () => {
     // 取 scrambleHist 当前项 → 就是成绩会记下的那条打乱。
-    expect(src).toMatch(/scrambleHistRef\.current\.list\[scrambleHistRef\.current\.idx\]/);
+    expect(hostSrc).toMatch(/scrambleHistRef\.current\.list\[scrambleHistRef\.current\.idx\]/);
   });
 });

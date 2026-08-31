@@ -6,7 +6,13 @@
  * re-render when settings change.
  */
 
-import { DEFAULT_ROUND_CONFIG, type RoundConfig } from '@cuberoot/shared/timer';
+import {
+  DEFAULT_ROUND_CONFIG,
+  DEFAULT_TIMER_TIMING_SETTINGS,
+  normalizeTimerTimingSettings,
+  type RoundConfig,
+  type TimerTimingSettings,
+} from '@cuberoot/shared/timer';
 import { useSyncExternalStore } from 'react';
 import { persistItem } from '@/lib/safe-storage';
 import {
@@ -21,36 +27,17 @@ const KEY = 'cuberoot-timer.settings.v1';
 /** Big-digit typeface ids — shared vocabulary with the /alg trainer's picker. */
 export type TimerFontId = 'lcd' | 'mono' | 'liberation' | 'sans';
 
-export interface TimerSettings {
-  /** Inspection time in seconds. 0 = disabled. WCA standard = 15. */
-  inspection: number;
-
+export interface TimerSettings extends TimerTimingSettings {
   /** Play start/stop/8s/12s sounds via Web Audio. */
   soundsEnabled: boolean;
   /** 0..1 master volume. */
   volume: number;
-
-  /** Hide the running-time display until the timer stops. */
-  hideTime: boolean;
-
-  /** When the event changes, activate a session associated with that event. */
-  autoSessionForEvent: boolean;
-
-  /** When the active session changes, select its associated event. */
-  autoEventForSession: boolean;
 
   /** Show the cube net preview alongside the scramble. */
   showCubePreview: boolean;
 
   /** Show the development-only fake-cube controls in the timer topbar. */
   showDevFakeCube: boolean;
-
-  /** Final-result precision: 2 = centiseconds (x.xx), 3 = milliseconds (x.xxx). */
-  precision: 2 | 3;
-
-  /** Running (live) display precision: 0 = whole seconds (cstimer style),
-   *  1 = x.x, 2 = x.xx, 3 = x.xxx. */
-  runningPrecision: 0 | 1 | 2 | 3;
 
   /** Scale factor for the big timer display (0.5..2). */
   timerFontScale: number;
@@ -65,9 +52,6 @@ export interface TimerSettings {
   /** Scramble strip typeface. 'liberation' = LiberationMono (the long-standing
    *  default); no 'lcd' here — 7-seg has no usable letterforms for notation. */
   scrambleFont: TimerFontId;
-
-  /** Hold-to-ready threshold in ms (cstimer default = 550). */
-  holdMs: number;
 
   /** Show only the latest scramble line on phones (compact mode). */
   compactScramble: boolean;
@@ -111,11 +95,6 @@ export interface TimerSettings {
    *  ignored; the timer walks the non-empty lines in order (wrapping) as the scramble
    *  queue when scrambleSource === 'manual'. ←/→ navigate the shown history as usual. */
   manualScrambles: string;
-
-  /** Timing on/off. Off = practice mode: press / space / tap just advances to the next
-   *  scramble, no timer runs and no solve is recorded (mirrors the /alg trainer run page).
-   *  Default on. */
-  timingEnabled: boolean;
 
   /** WCA sub-mode: 'date' = uniformly random within a date range, 'comp' = a specific
    *  competition (optionally narrowed to one round / group). */
@@ -321,21 +300,15 @@ export interface TimerSettings {
 }
 
 export const DEFAULTS: TimerSettings = {
-  inspection: 0,
+  ...DEFAULT_TIMER_TIMING_SETTINGS,
   soundsEnabled: false,
   volume: 0.5,
-  hideTime: false,
-  autoSessionForEvent: false,
-  autoEventForSession: false,
   showCubePreview: true,
   showDevFakeCube: true,
-  precision: 3,
-  runningPrecision: 3,
   timerFontScale: 1,
   timerFont: 'lcd',
   scrambleFontScale: 1,
   scrambleFont: 'liberation',
-  holdMs: 550,
   compactScramble: false,
   prefer3D: false,
   multiStage: false,
@@ -347,7 +320,6 @@ export const DEFAULTS: TimerSettings = {
   statsRollingColumns: [...DEFAULT_ROLLING_STAT_COLUMNS],
   scrambleSource: 'wca',
   manualScrambles: '',
-  timingEnabled: true,
   wcaScrambleMode: 'comp',
   wcaComp: '',
   wcaCompName: '',
@@ -461,9 +433,26 @@ function load(): TimerSettings {
     if (!raw) return { ...DEFAULTS };
     const parsed = JSON.parse(raw) as Partial<TimerSettings> & {
       statsAoWindows?: unknown;
+      /** Legacy Web key; shared Web/Mobile timing settings now use inspectionSec. */
+      inspection?: unknown;
       inspectionTrigger?: unknown;
     };
-    const merged = { ...DEFAULTS, ...parsed };
+    const normalizedTiming = normalizeTimerTimingSettings({
+      ...parsed,
+      inspectionSec: parsed.inspectionSec ?? parsed.inspection,
+    });
+    const merged = { ...DEFAULTS, ...parsed, ...normalizedTiming } as TimerSettings & {
+      statsAoWindows?: unknown;
+      inspection?: unknown;
+      inspectionTrigger?: unknown;
+    };
+
+    // Shared timing normalization is also the migration boundary for malformed
+    // legacy values. Missing fields still use defaults without forcing a write.
+    let dirty = 'inspection' in parsed;
+    for (const key of Object.keys(normalizedTiming) as Array<keyof TimerTimingSettings>) {
+      if (key in parsed && parsed[key] !== normalizedTiming[key]) dirty = true;
+    }
 
     // These two controls are entry defaults, not preferences to restore. A
     // fresh /timer visit (including a reload) always starts from real WCA
@@ -475,7 +464,6 @@ function load(): TimerSettings {
     merged.wcaDifficultyOn = false;
 
     // 迁移都先改 `merged`,末尾只落一次盘 —— 每条自己 `save()` 会在一次加载里写三遍。
-    let dirty = false;
     // One-shot migration: scramble-click now copies by default. Flip the legacy
     // 'next' default once (leave a deliberate 'none' alone), then persist the marker.
     if (!merged.scrambleClickMigrated) {
@@ -518,6 +506,10 @@ function load(): TimerSettings {
       delete (merged as TimerSettings & { inspectionTrigger?: unknown }).inspectionTrigger;
       dirty = true;
     }
+    if ('inspection' in merged) {
+      delete merged.inspection;
+      dirty = true;
+    }
     if (dirty) save(merged);
     return merged;
   } catch {
@@ -537,7 +529,8 @@ export function updateSettings(patch: Partial<TimerSettings>): void {
   const normalizedPatch: Partial<TimerSettings> = 'statsRollingColumns' in patch
     ? { ...patch, statsRollingColumns: normalizeRollingStatColumns(patch.statsRollingColumns) }
     : patch;
-  _cache = { ...(_cache), ...normalizedPatch };
+  const candidate = { ...(_cache), ...normalizedPatch };
+  _cache = { ...candidate, ...normalizeTimerTimingSettings(candidate) };
   save(_cache);
   for (const fn of _listeners) fn();
 }

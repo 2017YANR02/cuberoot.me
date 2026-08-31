@@ -17,13 +17,6 @@
    引用它,却让每次 /timer 加载(单人也算)多发一条 render-blocking 的 fonts.googleapis.com
    跨域请求。字体一律自托管,见 app/fonts.css。 */
 
-/* NOTE: 打乱记号字体 — 与 /scramble/gen 表格一致（自托管 LiberationMono） */
-@font-face {
-    font-family: 'LiberationMono';
-    src: url('/fonts/LiberationMono-Regular.ttf') format('truetype');
-    font-display: block;
-}
-
 :root {
     --scramble-scale: 1;
 }

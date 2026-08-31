@@ -160,6 +160,9 @@ importers:
       '@aparajita/capacitor-secure-storage':
         specifier: 8.0.0
         version: 8.0.0
+      '@capacitor-community/bluetooth-le':
+        specifier: 8.3.0
+        version: 8.3.0(@capacitor/core@8.5.0)
       '@capacitor/android':
         specifier: 8.5.0
         version: 8.5.0(@capacitor/core@8.5.0)
@@ -184,6 +187,9 @@ importers:
       '@cuberoot/event-icon':
         specifier: workspace:*
         version: link:../../packages/event-icon
+      '@cuberoot/puzzle-solvers':
+        specifier: workspace:*
+        version: link:../../packages/puzzle-solvers
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -522,9 +528,6 @@ importers:
       fflate:
         specifier: 0.8.2
         version: 0.8.2
-      flag-icons:
-        specifier: ^7.5.0
-        version: 7.5.0
       fuse.js:
         specifier: ^7.3.0
         version: 7.3.0
@@ -743,6 +746,10 @@ importers:
         version: 5.9.3
 
   packages/puzzle-solvers:
+    dependencies:
+      cstimer_module:
+        specifier: ^0.1.5
+        version: 0.1.5
     devDependencies:
       typescript:
         specifier: ^5
@@ -753,6 +760,9 @@ importers:
 
   packages/shared:
     dependencies:
+      '@cuberoot/puzzle-solvers':
+        specifier: workspace:*
+        version: link:../puzzle-solvers
       axios:
         specifier: ^1.13.6
         version: 1.13.6
@@ -772,6 +782,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.0
         version: 19.2.3(@types/react@19.2.14)
+      opencc-js:
+        specifier: ^1.0.5
+        version: 1.0.5
       typescript:
         specifier: ~5.7.0
         version: 5.7.3
@@ -780,6 +793,18 @@ importers:
 
   packages/timer-ui:
     dependencies:
+      '@cuberoot/event-icon':
+        specifier: workspace:*
+        version: link:../event-icon
+      '@cuberoot/puzzle-solvers':
+        specifier: workspace:*
+        version: link:../puzzle-solvers
+      '@cuberoot/shared':
+        specifier: workspace:*
+        version: link:../shared
+      flag-icons:
+        specifier: ^7.5.0
+        version: 7.5.0
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -787,9 +812,15 @@ importers:
       '@types/react':
         specifier: ^19
         version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.3(@types/react@19.2.14)
       lucide-react:
         specifier: 1.8.0
         version: 1.8.0(react@19.2.4)
+      react-dom:
+        specifier: 19.2.4
+        version: 19.2.4(react@19.2.4)
       typescript:
         specifier: ^5
         version: 5.9.3
@@ -896,6 +927,11 @@ packages:
 
   '@bufbuild/protobuf@1.10.1':
     resolution: {integrity: sha512-wJ8ReQbHxsAfXhrf9ixl0aYbZorRuOWpBNzm8pL8ftmSxQx/wnJD5Eg861NwJU/czy2VXFIebCeZnZrI9rktIQ==}
+
+  '@capacitor-community/bluetooth-le@8.3.0':
+    resolution: {integrity: sha512-bjI+m8mZ2AB9xIgwPu9T40QoAC7NErYt6q13zMHBzW3hIAITqQKFiElKOUsX813ItXzb81GoRqjlbSeHlKEzQg==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@capacitor/android@8.5.0':
     resolution: {integrity: sha512-Rb3prJeQiTp0pQhSSOReJuG9VgibOGMG4ECs+UhMwr6TCCHZ3NCZO811bDA0HxD0xrT/gCrJAsY5yfEATu84JQ==}
@@ -5689,6 +5725,11 @@ snapshots:
       css-tree: 3.2.1
 
   '@bufbuild/protobuf@1.10.1': {}
+
+  '@capacitor-community/bluetooth-le@8.3.0(@capacitor/core@8.5.0)':
+    dependencies:
+      '@capacitor/core': 8.5.0
+      '@types/web-bluetooth': 0.0.20
 
   '@capacitor/android@8.5.0(@capacitor/core@8.5.0)':
     dependencies:

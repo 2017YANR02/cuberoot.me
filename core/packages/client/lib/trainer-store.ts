@@ -15,7 +15,7 @@ import {
   normalizeStoredSq1CsKeys,
   normalizeStoredSq1CsName,
 } from './sq1-cs-storage';
-import { histBack, histForward, histPush, type ScrambleHist } from './scramble-history';
+import { histBack, histForward, histPush, type ScrambleHist } from '@cuberoot/shared/timer';
 import { caseOrbit } from './alg_probability';
 import { petReact } from './deskpet';
 import { persistItem } from './safe-storage';
@@ -350,7 +350,7 @@ interface TrainerState {
    * 再下一题(二级 lookahead):出下一题时它递补为 peek,三条一屏时它是屏上第 3 条。
    */
   peek2: TrainerHistEntry | null;
-  /** ←/→ 打乱历史(与 /timer 同一套环形队列,lib/scramble-history)。 */
+  /** ←/→ 打乱历史(与 /timer 共用 `@cuberoot/shared/timer` 契约)。 */
   hist: ScrambleHist<TrainerHistEntry>;
   /** 出题用哪一种打乱。非 `inv` 的几套来自站长 1LLL 表的 meta,只有部分 set 有。 */
   scrambleKind: ScrambleKind;

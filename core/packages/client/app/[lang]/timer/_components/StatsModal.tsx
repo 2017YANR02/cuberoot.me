@@ -19,7 +19,14 @@ import {
   formatEventMs,
   formatSolveResult,
 } from '../_lib/stats';
-import { bucketStats, bucketBoundaries, type BucketStats } from '../_lib/stats_buckets';
+import {
+  bucketStats,
+  bucketBoundaries,
+  filterSolvesByStatsDateRange,
+  longestSolveDayStreak,
+  type BucketStats,
+  type TimerStatsDateRange,
+} from '../_lib/stats_buckets';
 import ScatterChart from './charts/ScatterChart';
 import HistogramChart from './charts/HistogramChart';
 import HourChart from './charts/HourChart';
@@ -35,41 +42,11 @@ interface Props {
   onClose: () => void;
 }
 
-type DateRange = 'all' | '7d' | '30d' | '90d' | '365d';
 type StatsTab = 'overview' | 'daily' | 'charts' | 'cases';
-
-const RANGE_DAYS: Record<Exclude<DateRange, 'all'>, number> = {
-  '7d': 7,
-  '30d': 30,
-  '90d': 90,
-  '365d': 365,
-};
-
-/** Largest run of consecutive calendar days containing ≥1 solve. */
-function longestStreak(solves: Solve[]): number {
-  if (solves.length === 0) return 0;
-  const days = new Set<string>();
-  for (const s of solves) {
-    const d = new Date(s.ts);
-    days.add(`${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`);
-  }
-  const sorted = Array.from(days).map(k => {
-    const [y, m, d] = k.split('-').map(Number);
-    return new Date(y, m - 1, d).getTime();
-  }).sort((a, b) => a - b);
-  let best = 1;
-  let cur = 1;
-  for (let i = 1; i < sorted.length; i++) {
-    const diff = (sorted[i] - sorted[i - 1]) / 86400000;
-    if (Math.round(diff) === 1) { cur++; if (cur > best) best = cur; }
-    else cur = 1;
-  }
-  return best;
-}
 
 export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: Props) {
   const [copied, setCopied] = useState(false);
-  const [range, setRange] = useState<DateRange>('all');
+  const [range, setRange] = useState<TimerStatsDateRange>('all');
   const [tab, setTab] = useState<StatsTab>('overview');
 
   useEffect(() => {
@@ -79,11 +56,10 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
   }, [onClose]);
 
   // Apply date-range filter before any aggregate computation.
-  const solves = useMemo(() => {
-    if (range === 'all') return rawSolves;
-    const cutoff = Date.now() - RANGE_DAYS[range] * 86400000;
-    return rawSolves.filter(s => s.ts >= cutoff);
-  }, [rawSolves, range]);
+  const solves = useMemo(
+    () => filterSolvesByStatsDateRange(rawSolves, range),
+    [rawSolves, range],
+  );
 
   const evInfo = EVENTS.find(e => e.id === event);
   const evName = evInfo ? ((isZh ? evInfo.nameZh : evInfo.nameEn)) : event;
@@ -97,7 +73,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
   // Whole-solve render so a DNS-flavoured row can't come out as a time.
   const pbStr = pbIdx >= 0 ? formatSolveResult(solves[pbIdx]) : '—';
   const subX = useMemo(() => subXBreakdown(solves), [solves]);
-  const streak = useMemo(() => longestStreak(solves), [solves]);
+  const streak = useMemo(() => longestSolveDayStreak(solves), [solves]);
   const best = bestSingle(solves, event);
 
   // Numeric ms values for the WCA records overlay. We can't reuse the
@@ -281,10 +257,10 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
         <div className="modal-section" data-tab="overview">
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
             {(['all', '7d', '30d', '90d', '365d'] as const).map(r => {
-              const labelZh: Record<DateRange, string> = {
+              const labelZh: Record<TimerStatsDateRange, string> = {
                 all: '全部', '7d': '近7天', '30d': '近30天', '90d': '近90天', '365d': '近一年',
               };
-              const labelEn: Record<DateRange, string> = {
+              const labelEn: Record<TimerStatsDateRange, string> = {
                 all: 'All', '7d': '7d', '30d': '30d', '90d': '90d', '365d': '365d',
               };
               const active = range === r;

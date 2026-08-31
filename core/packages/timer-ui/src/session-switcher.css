@@ -1,0 +1,233 @@
+.tsession {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 10px;
+}
+
+.tsession-trigger {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--foreground) 4%, var(--background));
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+}
+
+.tsession-trigger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 10%, var(--background));
+}
+
+.tsession-trigger:focus-visible,
+.tsession-icon-btn:focus-visible,
+.tsession-name-btn:focus-visible,
+.tsession-add-btn:focus-visible,
+.tsession-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.tsession-trigger:disabled,
+.tsession-panel[aria-busy='true'] button:disabled,
+.tsession-panel[aria-busy='true'] input:disabled {
+  cursor: wait;
+}
+
+.tsession-trigger-name,
+.tsession-name-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tsession-trigger-caret,
+.tsession-check {
+  flex: none;
+  color: var(--muted-foreground);
+}
+
+/* anchored-panel: clamped (fixed portal + visualViewport bounds in component) */
+.tsession-panel {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  box-sizing: border-box;
+  visibility: hidden;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: var(--popover);
+  color: var(--foreground);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--foreground) 18%, transparent);
+  font-family: inherit;
+}
+
+.tsession-list {
+  min-height: 0;
+  padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.tsession-item {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+  border-radius: 8px;
+}
+
+.tsession-item--active {
+  background: var(--accent-soft);
+}
+
+.tsession-name-btn {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tsession-name-btn:hover:not(:disabled),
+.tsession-icon-btn:hover:not(:disabled),
+.tsession-add-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.tsession-item--active .tsession-name-btn,
+.tsession-item--active .tsession-check {
+  color: var(--accent);
+}
+
+.tsession-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 1px;
+}
+
+.tsession-icon-btn {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+
+.tsession-icon-btn:hover:not(:disabled) {
+  color: var(--foreground);
+}
+
+.tsession-icon-btn--danger:hover:not(:disabled) {
+  color: var(--destructive);
+}
+
+.tsession-icon-btn--confirm,
+.tsession-icon-btn--confirm:hover:not(:disabled) {
+  color: var(--signal-success);
+}
+
+.tsession-icon-btn:disabled,
+.tsession-name-btn:disabled,
+.tsession-add-btn:disabled {
+  opacity: 0.45;
+}
+
+.tsession-footer {
+  flex: none;
+  padding: 4px;
+  border-top: 1px solid var(--border-default);
+}
+
+.tsession-error {
+  margin: 2px 4px 6px;
+  color: var(--destructive);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.tsession-add-btn {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tsession-edit {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+}
+
+.tsession-input-wrap {
+  position: relative;
+  min-width: 0;
+  flex: 1;
+}
+
+.tsession-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 6px 30px 6px 8px;
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+}
+
+.tsession-input::placeholder {
+  color: var(--faint-foreground);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tsession-trigger,
+  .tsession-icon-btn {
+    transition: none;
+  }
+}

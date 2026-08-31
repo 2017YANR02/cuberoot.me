@@ -21,13 +21,14 @@
  */
 
 import { persistItem } from '@/lib/safe-storage';
+import { GAN_V4_MANUFACTURER_DATA_CICS } from '@cuberoot/shared/smart-cube/gan-v4';
 
 /**
  * Company Identifier Codes GAN cubes may advertise under. cstimer fills the
  * full range [0x0001, 0xFF01] stepping by 0x0100 (256 values), because GAN's
  * CIC has changed across firmware batches.
  */
-export const GAN_CIC_LIST: number[] = Array.from({ length: 256 }, (_v, i) => (i << 8) | 0x01);
+export const GAN_CIC_LIST: number[] = [...GAN_V4_MANUFACTURER_DATA_CICS];
 
 /**
  * Company Identifier Codes MoYu32 (WCU_MY32_*) cubes advertise under:

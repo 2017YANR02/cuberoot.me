@@ -1,0 +1,135 @@
+/* Canonical Web/Android/iOS scramble strip. Hosts provide --timer-scramble-fs
+   when they need a shell-specific size; the fallback is the website value. */
+@font-face {
+  font-family: 'LiberationMono';
+  src: url('/fonts/LiberationMono-Regular.ttf') format('truetype');
+  font-display: block;
+}
+
+:root { --scramble-fg: #000; }
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme=light]) { --scramble-fg: #fff; }
+}
+html[data-theme=dark] { --scramble-fg: #fff; }
+
+.scramble-strip,
+.timing-surface-scramble .scramble-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 8px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
+  --scramble-fs: calc(var(--timer-scramble-fs, clamp(26px, 4.4vw, 36px)) * var(--scramble-scale, 1));
+  font-size: var(--scramble-fs);
+  line-height: 1.5;
+  text-align: center;
+  white-space: pre-wrap;
+  word-spacing: 0.25em;
+  overflow-wrap: anywhere;
+}
+
+.scramble-strip.sf-mono,
+.timing-surface-scramble .scramble-strip.sf-mono,
+.scramble-strip.sf-mono .scramble-text { font-family: var(--font-mono); }
+.scramble-strip.sf-sans,
+.timing-surface-scramble .scramble-strip.sf-sans,
+.scramble-strip.sf-sans .scramble-text { font-family: var(--font-sans); }
+.scramble-strip.compact,
+.timing-surface-scramble .scramble-strip.compact {
+  --scramble-fs: calc(clamp(24px, 3.6vw, 30px) * var(--scramble-scale, 1));
+}
+
+.scramble-strip .scramble-text,
+.timing-surface-scramble .scramble-strip .scramble-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0 8px;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--scramble-fg);
+  font-size: var(--scramble-fs);
+}
+.scramble-strip .scramble-moves,
+.timing-surface-scramble .scramble-strip .scramble-moves {
+  min-width: 0;
+  max-width: 100%;
+  word-break: break-word;
+}
+.scramble-strip .scramble-empty { color: var(--faint-foreground); font-style: italic; }
+.scramble-strip .scramble-empty-retry {
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.scramble-strip .scramble-move[data-hint='done'] { color: var(--faint-foreground); }
+.scramble-strip .scramble-move[data-hint='pending'] { color: var(--scramble-fg); }
+.scramble-strip .scramble-move[data-hint='current'] { color: var(--accent); }
+
+.scramble-verify {
+  flex: none;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  cursor: default;
+}
+.scramble-verify[data-ok='true'] {
+  background: color-mix(in srgb, var(--signal-success) 16%, transparent);
+  color: var(--signal-success);
+}
+.scramble-verify[data-ok='false'] {
+  background: color-mix(in srgb, var(--signal-warning) 16%, transparent);
+  color: var(--signal-warning);
+}
+.scramble-verify[data-ok='fix'] {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+
+.scramble-nonopt {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted-foreground) 14%, transparent);
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  cursor: default;
+}
+
+.scramble-copied-tail { position: relative; white-space: nowrap; }
+.scramble-copied-check {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.8em;
+  height: 0.8em;
+  margin-left: 0.25em;
+  color: var(--signal-success);
+}
+
+@media (max-width: 540px) {
+  .scramble-strip,
+  .timing-surface-scramble .scramble-strip {
+    padding-inline: 8px;
+    overflow-x: clip;
+  }
+}

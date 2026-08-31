@@ -1,0 +1,588 @@
+/**
+ * Method definitions for step-by-step solvers (CFOP / Roux / Petrus / ZZ /
+ * EODR). Mask strings are copied verbatim from cstimer
+ * `tools/gsolver.js` (`cfmeta`, `sabmeta`, `petrusmeta`, `zzmeta`,
+ * `eodrmeta`).
+ *
+ * All six method drivers are exposed through one runtime-neutral registry.
+ * Web and Mobile hosts schedule the same synchronous engine instead of
+ * copying masks, method order, stage labels or cancellation rules.
+ */
+
+import {
+  cubeMove, applyScramble, parsedToCstimer,
+  MOVES_FULL, MOVES_NO_D, MOVES_ROUX_SB, MOVES_ZZ_F2L,
+} from '@cuberoot/puzzle-solvers/timer-333-cube';
+import { GSolver, solveParallel, matches, type ParallelTarget } from '@cuberoot/puzzle-solvers/cstimer-gsolver';
+import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
+import { solveThistle, type ThistleResult } from '@cuberoot/puzzle-solvers/timer-333-thistle';
+
+export interface StepDef {
+  /** Allowed moves for this step (move-name → axis/face byte). */
+  move: Record<string, number>;
+  /** IDA* depth bound for this step. */
+  maxl: number;
+  /** Optional pre-step "free moves" tried as a one-move prefix. */
+  fmov?: string[];
+  /** Display name. */
+  head: string;
+  /**
+   * Map from mask-string target to a bitflag used to track which sub-goals
+   * are now solved. The bitflags compose with OR; a solver whose mask is
+   * already a subset of the running mask is skipped.
+   */
+  step: Record<string, number>;
+}
+
+export const CFOP_METHOD: StepDef[] = [
+  {
+    move: MOVES_FULL,
+    maxl: 8,
+    head: 'Cross',
+    step: {
+      '----U--------R--R-----F--F--D-DDD-D-----L--L-----B--B-': 0x0,
+    },
+  },
+  {
+    move: MOVES_NO_D,
+    maxl: 10,
+    head: 'F2L-1',
+    step: {
+      '----U-------RR-RR-----FF-FF-DDDDD-D-----L--L-----B--B-': 0x1,
+      '----U--------R--R----FF-FF-DD-DDD-D-----LL-LL----B--B-': 0x2,
+      '----U--------RR-RR----F--F--D-DDD-DD----L--L----BB-BB-': 0x4,
+      '----U--------R--R-----F--F--D-DDDDD----LL-LL-----BB-BB': 0x8,
+    },
+  },
+  {
+    move: MOVES_NO_D,
+    maxl: 10,
+    head: 'F2L-2',
+    step: {
+      '----U-------RR-RR----FFFFFFDDDDDD-D-----LL-LL----B--B-': 0x3,
+      '----U-------RRRRRR----FF-FF-DDDDD-DD----L--L----BB-BB-': 0x5,
+      '----U--------RR-RR---FF-FF-DD-DDD-DD----LL-LL---BB-BB-': 0x6,
+      '----U-------RR-RR-----FF-FF-DDDDDDD----LL-LL-----BB-BB': 0x9,
+      '----U--------R--R----FF-FF-DD-DDDDD----LLLLLL----BB-BB': 0xa,
+      '----U--------RR-RR----F--F--D-DDDDDD---LL-LL----BBBBBB': 0xc,
+    },
+  },
+  {
+    move: MOVES_NO_D,
+    maxl: 10,
+    head: 'F2L-3',
+    step: {
+      '----U-------RRRRRR---FFFFFFDDDDDD-DD----LL-LL---BB-BB-': 0x7,
+      '----U-------RR-RR----FFFFFFDDDDDDDD----LLLLLL----BB-BB': 0xb,
+      '----U-------RRRRRR----FF-FF-DDDDDDDD---LL-LL----BBBBBB': 0xd,
+      '----U--------RR-RR---FF-FF-DD-DDDDDD---LLLLLL---BBBBBB': 0xe,
+    },
+  },
+  {
+    move: MOVES_NO_D,
+    maxl: 10,
+    head: 'F2L-4',
+    step: {
+      '----U-------RRRRRR---FFFFFFDDDDDDDDD---LLLLLL---BBBBBB': 0xf,
+    },
+  },
+];
+
+// --- Stubs for other methods (mask data only; not surfaced in UI yet) ---
+
+export const ROUX_METHOD: StepDef[] = [
+  {
+    move: MOVES_FULL,
+    maxl: 10,
+    fmov: ['x ', 'x2', "x'"],
+    head: 'Step 1',
+    step: {
+      '---------------------F--F--D--D--D-----LLLLLL-----B--B': 0x0,
+    },
+  },
+  {
+    move: MOVES_ROUX_SB,
+    maxl: 16,
+    head: 'Step 2',
+    step: {
+      '------------RRRRRR---F-FF-FD-DD-DD-D---LLLLLL---B-BB-B': 0x1,
+    },
+  },
+];
+
+export const PETRUS_METHOD: StepDef[] = [
+  {
+    move: MOVES_FULL,
+    maxl: 8,
+    head: '2x2x2',
+    step: {
+      '---------------------FF-FF-DD-DD--------LL-LL---------': 0x1,
+      '------------------------------DD-DD----LL-LL-----BB-BB': 0x2,
+    },
+  },
+  {
+    move: MOVES_FULL,
+    maxl: 10,
+    head: '2x2x3',
+    step: {
+      '---------------------FF-FF-DD-DD-DD----LLLLLL----BB-BB': 0x3,
+    },
+  },
+];
+
+export const ZZ_METHOD: StepDef[] = [
+  {
+    move: MOVES_FULL,
+    maxl: 10,
+    head: 'EOLine',
+    step: {
+      '-H-HUH-H-----R-------HFH-F--D-HDH-D-----L-------HBH-B-': 0x0,
+    },
+  },
+  {
+    move: MOVES_ZZ_F2L,
+    maxl: 16,
+    head: 'ZZF2L1',
+    step: {
+      '-H-HUH-H----RRRRRR---HFF-FF-DDHDD-DD----L-------BBHBB-': 0x1,
+      '-H-HUH-H-----R-------FFHFF-DD-DDHDD----LLLLLL---HBB-BB': 0x2,
+    },
+  },
+  {
+    move: MOVES_ZZ_F2L,
+    maxl: 16,
+    head: 'ZZF2L2',
+    step: {
+      '-H-HUH-H----RRRRRR---FFFFFFDDDDDDDDD---LLLLLL---BBBBBB': 0x3,
+    },
+  },
+];
+
+export const EODR_METHOD: StepDef[] = [
+  {
+    move: MOVES_FULL,
+    maxl: 7,
+    head: 'EO',
+    step: {
+      '-H-HUH-H-----R-------HFH----H-HDH-H-----L-------HBH---': 0x0,
+    },
+  },
+  {
+    move: MOVES_FULL,
+    maxl: 10,
+    head: 'DR',
+    step: {
+      'UUUUUUUUU---RRR------FFF---UUUUUUUUU---RRR------FFF---': 0x1,
+    },
+  },
+];
+
+// --- Driver ---
+
+interface CompiledStep {
+  head: string;
+  maxl: number;
+  fmov: string[];
+  targets: ParallelTarget[];
+}
+
+const compiledCache = new WeakMap<StepDef[], CompiledStep[]>();
+
+function compile(method: StepDef[]): CompiledStep[] {
+  const cached = compiledCache.get(method);
+  if (cached) return cached;
+  const out: CompiledStep[] = [];
+  for (const step of method) {
+    const targets: ParallelTarget[] = [];
+    for (const target in step.step) {
+      targets.push({
+        solver: new GSolver([target], cubeMove, step.move),
+        mask: step.step[target],
+        target,
+      });
+    }
+    out.push({
+      head: step.head,
+      maxl: step.maxl,
+      fmov: step.fmov ?? [],
+      targets,
+    });
+  }
+  compiledCache.set(method, out);
+  return out;
+}
+
+/** Convert a scramble string into the cstimer-style two-char move tokens
+ *  that `cubeMove` accepts (face + suffix). Wide / slice / rotation moves
+ *  in the scramble are skipped (consistent with `applyScramble`). */
+function scrambleToTokens(scramble: string): string[] {
+  const out: string[] = [];
+  for (const mv of parseScramble(scramble)) {
+    const tok = parsedToCstimer(mv);
+    if (tok !== null) out.push(tok);
+  }
+  return out;
+}
+
+export interface SolveStage {
+  head: string;
+  /** Empty array means "skip" (already solved before the step started). */
+  moves: string[];
+  /** True if no solution was found within `maxl`. */
+  failed?: boolean;
+}
+
+export interface SolveResult {
+  stages: SolveStage[];
+  totalMoves: number;
+}
+
+/**
+ * Drive a method end-to-end. The "state" passed to each step's parallel
+ * solver is the *target mask* permuted by (scramble + all previously
+ * found solution moves). Stops early if a stage fails to find a solution
+ * within its depth bound.
+ */
+export function solveMethod(scramble: string, method: StepDef[]): SolveResult {
+  return solveMethodFrom(scrambleToTokens(scramble), method, 0);
+}
+
+/**
+ * Same driver, but starting from an arbitrary move prefix and an arbitrary
+ * step index — "given the position this prefix leaves the cube in, what does
+ * the rest of the method cost?".
+ *
+ * The prefix must be cstimer two-char tokens (see `faceTurnToken`); it is
+ * consumed exactly like a scramble, because to this engine that is what it
+ * is. Steps before `fromIdx` are not reported at all, and the running mask
+ * starts empty — so a step whose goal the prefix already achieved comes back
+ * as a legitimate 0-move solution rather than being skipped.
+ *
+ * `stepCount` stops after that many steps ("just the cross, please"). Pass
+ * the SAME `method` array every time rather than a `.slice()` of it: the
+ * compiled solvers (and their pruning tables) are cached per array identity.
+ */
+export function solveMethodFrom(
+  prefixTokens: string[],
+  method: StepDef[],
+  fromIdx = 0,
+  stepCount?: number,
+): SolveResult {
+  const all = compile(method);
+  const compiled = all.slice(
+    fromIdx,
+    stepCount === undefined ? undefined : fromIdx + stepCount,
+  );
+  const prefix = prefixTokens.slice(); // accumulates: prefix + sol1 + sol2 + ...
+  const stages: SolveStage[] = [];
+  let total = 0;
+  let mask = 0;
+  for (const step of compiled) {
+    const { sol, mask: newMask } = solveParallel(
+      cubeMove,
+      prefix,
+      step.targets,
+      mask,
+      step.maxl,
+      step.fmov,
+    );
+    if (sol === undefined) {
+      stages.push({ head: step.head, moves: [], failed: true });
+      break;
+    }
+    mask = newMask;
+    for (const m of sol) prefix.push(m);
+    stages.push({ head: step.head, moves: sol });
+    total += sol.length;
+  }
+  return { stages, totalMoves: total };
+}
+
+/* ---- One F2L pair at a time ------------------------------------------- */
+//
+// The F2L block of CFOP_METHOD above already carries a target for EVERY subset
+// of the four slots — stage F2L-1 holds the four singletons, F2L-2 the six
+// pairs, F2L-3 the four triples, F2L-4 the full set — each tagged with the
+// bitflags of the slots it keeps standing. That is exactly what pricing one
+// pair needs: "solve THIS slot without taking apart the ones already in".
+// So the per-slot reference is a lookup in that table, not a new mask set.
+//
+// The slot ↔ bit correspondence is read off the masks: 0x1 adds the R-face
+// stickers of the FR pair to the cross, 0x2 the F/L pair, and so on.
+// `tests/f2l_slot_reference.test.ts` proves it by solving and then asking
+// `isSlotSolved`, rather than trusting the reading.
+export const F2L_SLOT_FLAG = { FR: 0x1, FL: 0x2, BR: 0x4, BL: 0x8 } as const;
+export type F2lSlotName = keyof typeof F2L_SLOT_FLAG;
+
+let f2lByFlags: Map<number, { target: ParallelTarget; maxl: number }> | null = null;
+
+function f2lTargetIndex(): Map<number, { target: ParallelTarget; maxl: number }> {
+  if (f2lByFlags) return f2lByFlags;
+  const compiled = compile(CFOP_METHOD);
+  const index = new Map<number, { target: ParallelTarget; maxl: number }>();
+  // Stage 0 is the cross; every later stage is an F2L subset.
+  for (let i = 1; i < compiled.length; i++) {
+    for (const t of compiled[i].targets) index.set(t.mask, { target: t, maxl: compiled[i].maxl });
+  }
+  f2lByFlags = index;
+  return index;
+}
+
+/**
+ * Shortest line from `prefixTokens` to "cross plus exactly the slots in
+ * `flags`", in the F2L alphabet (no D turns — cstimer's convention, so the
+ * cross is never disturbed and then repaired).
+ *
+ * Returns null when the flag set names no target (0, or out of range) or when
+ * nothing was found inside the table's own depth bound.
+ */
+export function solveF2lTo(prefixTokens: string[], flags: number): string[] | null {
+  const entry = f2lTargetIndex().get(flags);
+  if (!entry) return null;
+  const { sol } = solveParallel(cubeMove, prefixTokens, [entry.target], 0, entry.maxl);
+  return sol ?? null;
+}
+
+export function solveCFOP(scramble: string): SolveResult {
+  return solveMethod(scramble, CFOP_METHOD);
+}
+
+export function solveRoux(scramble: string): SolveResult {
+  return solveMethod(scramble, ROUX_METHOD);
+}
+
+export function solvePetrus(scramble: string): SolveResult {
+  return solveMethod(scramble, PETRUS_METHOD);
+}
+
+export function solveZZ(scramble: string): SolveResult {
+  return solveMethod(scramble, ZZ_METHOD);
+}
+
+export function solveEODR(scramble: string): SolveResult {
+  return solveMethod(scramble, EODR_METHOD);
+}
+
+export type MethodId = 'cfop' | 'roux' | 'petrus' | 'zz' | 'eodr' | 'thistle';
+
+export interface Timer333MethodEntry {
+  readonly id: MethodId;
+  readonly def: StepDef[] | null;
+  readonly nameEn: string;
+  readonly nameZh: string;
+}
+
+export const METHOD_REGISTRY: readonly Timer333MethodEntry[] = [
+  { id: 'cfop', def: CFOP_METHOD, nameEn: 'CFOP', nameZh: 'CFOP' },
+  { id: 'roux', def: ROUX_METHOD, nameEn: 'Roux', nameZh: '桥式方法' },
+  { id: 'petrus', def: PETRUS_METHOD, nameEn: 'Petrus', nameZh: '彼得鲁斯法' },
+  { id: 'zz', def: ZZ_METHOD, nameEn: 'ZZ', nameZh: 'ZZ' },
+  { id: 'eodr', def: EODR_METHOD, nameEn: 'EODR', nameZh: 'EODR' },
+  // Thistle is driven by its own solver (not the mask engine); `def` is null.
+  { id: 'thistle', def: null, nameEn: 'Thistle', nameZh: 'Thistle' },
+] as const;
+
+export type Timer333SolverLanguage = 'en' | 'zh' | 'zh-Hans';
+
+const STAGE_LABELS: Readonly<Record<MethodId, Readonly<Record<string, { en: string; zh: string }>>>> = {
+  cfop: {
+    Cross: { en: 'Cross', zh: '十字' },
+    'F2L-1': { en: 'F2L-1', zh: 'F2L-1' },
+    'F2L-2': { en: 'F2L-2', zh: 'F2L-2' },
+    'F2L-3': { en: 'F2L-3', zh: 'F2L-3' },
+    'F2L-4': { en: 'F2L-4', zh: 'F2L-4' },
+  },
+  roux: {
+    'Step 1': { en: 'First block', zh: '左桥' },
+    'Step 2': { en: 'Second block', zh: '右桥' },
+  },
+  petrus: {
+    '2x2x2': { en: '2×2×2', zh: '2×2×2' },
+    '2x2x3': { en: '2×2×3', zh: '2×2×3' },
+  },
+  zz: {
+    EOLine: { en: 'EOLine', zh: 'EOLine' },
+    ZZF2L1: { en: 'ZZF2L-1', zh: 'ZZF2L-1' },
+    ZZF2L2: { en: 'ZZF2L-2', zh: 'ZZF2L-2' },
+  },
+  eodr: {
+    EO: { en: 'EO', zh: 'EO' },
+    DR: { en: 'DR', zh: 'DR' },
+  },
+  thistle: {
+    EO: { en: 'EO', zh: 'EO' },
+    DR: { en: 'DR', zh: 'DR' },
+    Finish: { en: 'Finish', zh: '还原' },
+  },
+};
+
+export function timer333MethodLabel(
+  method: Pick<Timer333MethodEntry, 'nameEn' | 'nameZh'>,
+  language: Timer333SolverLanguage,
+): string {
+  return language === 'en' ? method.nameEn : method.nameZh;
+}
+
+export function timer333StageLabel(
+  methodId: MethodId,
+  stageId: string,
+  language: Timer333SolverLanguage,
+): string {
+  const label = STAGE_LABELS[methodId][stageId];
+  if (!label) return stageId;
+  return language === 'en' ? label.en : label.zh;
+}
+
+function thistleToSolveResult(r: ThistleResult): SolveResult {
+  return {
+    stages: r.stages.map(s => ({ head: s.head, moves: s.moves, failed: s.failed })),
+    totalMoves: r.totalMoves,
+  };
+}
+
+export function solveByMethodId(scramble: string, id: MethodId): SolveResult {
+  if (id === 'thistle') return thistleToSolveResult(solveThistle(scramble));
+  const entry = METHOD_REGISTRY.find(m => m.id === id);
+  if (!entry || !entry.def) throw new Error(`unknown method: ${id}`);
+  return solveMethod(scramble, entry.def);
+}
+
+export interface Timer333StepSolveRequest {
+  readonly methodId: MethodId;
+  readonly scramble: string;
+}
+
+export type Timer333StepSolveOutcome =
+  | { readonly status: 'ready'; readonly result: SolveResult }
+  | { readonly status: 'error'; readonly error: string };
+
+/**
+ * A host-injected scheduler keeps this contract usable in browsers, a
+ * Capacitor WebView and deterministic tests. The returned cleanup is the
+ * canonical stale-result guard: once called, this request can never publish.
+ */
+export function scheduleTimer333StepSolve(
+  request: Timer333StepSolveRequest,
+  publish: (outcome: Timer333StepSolveOutcome) => void,
+  schedule: (run: () => void) => () => void,
+): () => void {
+  let cancelled = false;
+  const unschedule = schedule(() => {
+    if (cancelled) return;
+    try {
+      const result = solveByMethodId(request.scramble, request.methodId);
+      if (!cancelled) publish({ status: 'ready', result });
+    } catch (error: unknown) {
+      if (!cancelled) publish({
+        status: 'error',
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+  return () => {
+    if (cancelled) return;
+    cancelled = true;
+    unschedule();
+  };
+}
+
+// ---- 2x2x2 first-step (single-stage) ----
+//
+// Reuses the Petrus first-stage targets (DFL and DBL corners). Returns the
+// shortest 2x2x2 sub-block solution across those two corners. Single
+// stage; intended as a small hint on the 333 panel.
+const SOLVE_222_TARGETS: { mask: string; corner: string }[] = [
+  { mask: '---------------------FF-FF-DD-DD--------LL-LL---------', corner: 'DFL' },
+  { mask: '------------------------------DD-DD----LL-LL-----BB-BB', corner: 'DBL' },
+];
+
+let solver222: GSolver | null = null;
+
+function get222Solver(): GSolver {
+  if (!solver222) {
+    solver222 = new GSolver(SOLVE_222_TARGETS.map(t => t.mask), cubeMove, MOVES_FULL);
+  }
+  return solver222;
+}
+
+export interface Solve222Result {
+  /** Shortest 2x2x2 corner block found ('DFL' / 'DBL'), or null if none. */
+  corner: string | null;
+  moves: string[];
+  length: number;
+}
+
+export function solve222Step(scramble: string): Solve222Result {
+  const solver = get222Solver();
+  const prefix = scrambleToTokens(scramble);
+  const MAXL = 9;
+  // Try each corner; gsolver's BFS visits all targets in parallel
+  // automatically (since solver was constructed with both as solvedStates),
+  // but we still need to pick the right starting state — apply scramble to
+  // either target. Either works since BFS terminates on any target match;
+  // we use the first.
+  let start = SOLVE_222_TARGETS[0].mask;
+  for (const m of prefix) start = cubeMove(start, m);
+  const sol = solver.search(start, 0, MAXL);
+  if (sol === undefined) return { corner: null, moves: [], length: -1 };
+
+  // Determine which corner the solution actually solved by applying
+  // scramble + sol to the cube and matching against each target.
+  let state = applyScramble(scramble);
+  for (const m of sol) state = cubeMove(state, m);
+  let cornerLabel: string | null = null;
+  for (const t of SOLVE_222_TARGETS) {
+    if (matches(state, t.mask)) { cornerLabel = t.corner; break; }
+  }
+  return { corner: cornerLabel, moves: sol, length: sol.length };
+}
+
+// --- Self-test ---
+
+/**
+ * Sanity-check the engine on a known scramble. Asserts:
+ *  - All 5 CFOP stages return a solution (no failures within depth bound).
+ *  - After applying scramble + every stage's moves, the cube fully matches
+ *    the F2L-4 target (cross + 4 F2L pairs solved).
+ *
+ * Returns a string summary; throws on failure.
+ */
+export function __gsolverSelfTest(): string {
+  const scramble = "R U R' U' R' F R2 U' R' U' R U R' F'";
+  const result = solveCFOP(scramble);
+  if (result.stages.length !== CFOP_METHOD.length) {
+    throw new Error(`expected ${CFOP_METHOD.length} stages, got ${result.stages.length}`);
+  }
+  for (const s of result.stages) {
+    if (s.failed) throw new Error(`stage ${s.head} failed`);
+  }
+  // Apply scramble + all stage moves to the actual cube; check the final
+  // state matches the F2L-4 mask (cross + 4 pairs).
+  let state = applyScramble(scramble);
+  for (const s of result.stages) {
+    for (const m of s.moves) state = cubeMove(state, m);
+  }
+  const f2l4Target = Object.keys(CFOP_METHOD[CFOP_METHOD.length - 1].step)[0];
+  if (!matches(state, f2l4Target)) {
+    throw new Error(`final state does not match F2L-4 target: ${state}`);
+  }
+  // Spot-check the other 4 methods compile + run on the same scramble; we
+  // don't assert their final state here (different goals per method) but
+  // every stage must find a solution within its depth bound.
+  const otherIds: MethodId[] = ['roux', 'petrus', 'zz', 'eodr', 'thistle'];
+  const otherSummaries: string[] = [];
+  for (const id of otherIds) {
+    const r = solveByMethodId(scramble, id);
+    for (const s of r.stages) {
+      if (s.failed) throw new Error(`method=${id} stage=${s.head} failed`);
+    }
+    otherSummaries.push(`${id}=${r.totalMoves}`);
+  }
+  // 222 first-step also runs on the same scramble; expect a non-null corner.
+  const s222 = solve222Step(scramble);
+  if (s222.length < 0) throw new Error(`solve222Step failed`);
+  return `OK: ${result.totalMoves} total moves; stages=` +
+    result.stages.map(s => `${s.head}=${s.moves.length}`).join(',') +
+    ` | others: ` + otherSummaries.join(',') +
+    ` | 222=${s222.length}(${s222.corner})`;
+}

@@ -14,7 +14,7 @@
  * Megaminx / Clock remain random-move (separate problem).
  */
 
-import { solvePyra } from '@cuberoot/puzzle-solvers/pyra';
+import { generatePyraTimerScramble } from '@cuberoot/puzzle-solvers/pyra';
 import { solveSkewb } from '@/lib/skewb-face-solver';
 import { scrambleSq1RandomState } from './sq1_rs';
 
@@ -46,42 +46,7 @@ function formatSolverMove(m: string): string {
  * {none, CW, CCW} uniformly).
  */
 export function scramblePyra(rng: () => number): string {
-  const faces = ['R', 'U', 'L', 'B'] as const;
-  // Apply 30 random body moves to a solved cube to mix into a (near-)uniform
-  // state on the ~933K-state orbit. Avoid same-face repeats. solvePyra takes
-  // a scramble string, so we record the WCA-format tokens to feed it.
-  const recorded: string[] = [];
-  let lastFace = '';
-  for (let i = 0; i < 30; i++) {
-    let f: string;
-    let attempts = 0;
-    do {
-      f = pick(faces, rng);
-      attempts++;
-      if (attempts > 30) break;
-    } while (f === lastFace);
-    const prime = pick(SUFFIX2, rng) === "'";
-    recorded.push(f + (prime ? "'" : ''));
-    lastFace = f;
-  }
-  // IDA* optimal solve from the mixed state. Body moves are uppercase
-  // (R/U/L/B), tip-fix moves lowercase. We never applied tips so tip-fix is
-  // empty; filter for safety.
-  const sol = solvePyra(recorded.join(' ')).moves;
-  const bodySol = sol.filter(m => /^[RULB]/.test(m));
-  // Scramble = inverse of solution: reverse order + flip each direction.
-  const scrambleBody: string[] = [];
-  for (let i = bodySol.length - 1; i >= 0; i--) {
-    scrambleBody.push(formatSolverMove(invertSolverMove(bodySol[i])));
-  }
-  // Random tips: WCA emits each of 4 tips as one of {none, CW, CCW} uniformly.
-  const tipTokens: string[] = [];
-  for (const t of ['u', 'l', 'r', 'b']) {
-    const r = Math.floor(rng() * 3);
-    if (r === 0) continue;
-    tipTokens.push(t + (r === 1 ? '' : "'"));
-  }
-  return [...scrambleBody, ...tipTokens].join(' ');
+  return generatePyraTimerScramble(rng);
 }
 
 /**

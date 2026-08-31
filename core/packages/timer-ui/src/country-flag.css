@@ -1,0 +1,36 @@
+@import "flag-icons/css/flag-icons.min.css";
+
+/* Both span flags and the Chinese Taipei SVG are fixed-width flex icons. */
+.fi,
+.cr-flag-img {
+  flex-shrink: 0;
+}
+
+.cr-flag-img {
+  display: inline-block;
+  width: 1.33em;
+  height: auto;
+  object-fit: cover;
+  vertical-align: middle;
+}
+
+/* WCA multi-region identifiers have no true flag. */
+.fi.flag-multi {
+  box-sizing: border-box;
+  border: 1.5px solid var(--border-strong);
+  background: transparent !important;
+  background-image: none !important;
+}
+
+.fi.flag-multi-world {
+  border-image: linear-gradient(
+    to right,
+    var(--signal-info) 0 50%,
+    var(--signal-danger) 50% 100%
+  ) 1;
+}
+
+.fi.flag-multi-continent {
+  border-color: var(--signal-info);
+  border-radius: 3px;
+}

@@ -45,6 +45,7 @@ const HTM_FACE: number[] = [];
 });
 // QTM cost of each HTM move: quarter turn (U/U'/…) = 1, half turn (U2/…) = 2.
 const HTM_QCOST = HTM_NAMES.map((n) => (n.endsWith('2') ? 2 : 1));
+const HTM_INDEX_BY_TOKEN = new Map(HTM_NAMES.map((name, index) => [name, index]));
 
 type State = { cp: Int8Array; co: Int8Array };
 function solvedState(): State { return { cp: Int8Array.from([0, 1, 2, 3, 4, 5, 6, 7]), co: new Int8Array(8) }; }
@@ -263,6 +264,47 @@ function dfsHTM(s: State, bound: number, lastFace: number, path: number[]): bool
   return false;
 }
 
+/**
+ * One reduced HTM solution with at least `minDepth` moves. csTimer's 2x2
+ * training scramblers deliberately ask their solver for a minimum depth of 9:
+ * an easy case should not be given away by a two- or three-move scramble.
+ *
+ * This is intentionally separate from `solveHTM`, whose optimal result is a
+ * public metric contract. The exact-depth search keeps the same admissible
+ * orientation/permutation lower bound and same-face pruning. Exhaustive
+ * reduced-word reachability over all 3,674,160 fixed-gauge states proves exact
+ * depth 11 reaches every state (depth 9: 3,017,632; depth 10: 3,671,300;
+ * depth 11: 3,674,160), so 9..11 is a total contract rather than a sample-based
+ * assumption.
+ */
+function solveHTMAtLeast(s: State, minDepth: number): number[] {
+  buildPruneTables();
+  const path: number[] = [];
+  for (let bound = Math.max(minDepth, hFull(s)); bound <= 11; bound++) {
+    if (dfsHTMExact(s, bound, -1, path)) return path;
+    path.length = 0;
+  }
+  // Every valid 2x2 state has an HTM solution at depth <= 11. Reaching this
+  // branch means the requested minimum is incompatible with the reduced-word
+  // graph, which is a contract failure rather than permission to return a
+  // wrong-family scramble.
+  throw new Error(`2x2 state has no reduced solution at depth ${minDepth}..11`);
+}
+
+function dfsHTMExact(s: State, bound: number, lastFace: number, path: number[]): boolean {
+  const h = hFull(s);
+  if (path.length + h > bound) return false;
+  if (path.length === bound) return isSolved(s);
+  for (let mi = 0; mi < 9; mi++) {
+    if (HTM_FACE[mi] === lastFace) continue;
+    const ns = applyMove(s, HTM[mi]);
+    path.push(mi);
+    if (dfsHTMExact(ns, bound, HTM_FACE[mi], path)) return true;
+    path.pop();
+  }
+  return false;
+}
+
 /** QTM-optimal solution length of state s (quarter-turn metric). Searches the 9 HTM moves with QTM cost, so a half
  *  turn (cost 2) and "U then U" (two quarters) are both reachable; hFull (HTM count ≤ QTM cost) is admissible. */
 function distQTM(s: State): number {
@@ -346,10 +388,104 @@ function scrambleFor(s: State): string {
   return inv.join(' ');
 }
 
+function scrambleForMinDepth(s: State, minDepth: number): string {
+  const sol = solveHTMAtLeast(s, minDepth);
+  const inv: string[] = [];
+  for (let i = sol.length - 1; i >= 0; i--) {
+    const name = HTM_NAMES[sol[i]];
+    inv.push(name.endsWith('2') ? name : name.endsWith("'") ? name.slice(0, -1) : `${name}'`);
+  }
+  return inv.join(' ');
+}
+
+export type Cube222SpecialType = Cube222StateType | '3gen';
+
 /**
- * Generate a WCA-style 2×2 scramble whose chosen metric value lies in [lo, hi], sampled uniformly from the full
- * 3,674,160-state space (rejection sampling on uniform states). Returns a fallback (nearest accepted, or a plain
- * random state) if no in-range state is found within `maxTries` — never throws, never blocks indefinitely.
+ * Runtime-neutral provider for every special 2x2 type offered by the timer.
+ *
+ * State families are sampled uniformly from the complete 3,674,160-state
+ * space, then accepted by `stateTypeFlags` — the exact same predicate used by
+ * `cube222StateTypeMatchesScramble` and the offline WCA tagging pipeline. Only
+ * the accepted state is solved, so even the rarest families do not repeatedly
+ * pay the IDA* cost. Like csTimer's training scramblers, the returned scramble
+ * has at least 9 reduced HTM moves and states solvable in <= 2 are skipped.
+ *
+ * `3gen` is a generation process rather than a final-state family. It matches
+ * csTimer's `2223, 25` contract: exactly 25 uniformly chosen U/R/F turns, with
+ * no consecutive turns of the same face.
+ *
+ * The function is synchronous and runtime-neutral. Browser hosts that must not
+ * block timing input should call it in a Worker; native hosts can use it from
+ * their own background/queue adapter.
+ */
+export function generate222SpecialScramble(
+  type: Cube222SpecialType,
+  rng: () => number = Math.random,
+  maxStateDraws = 1_000_000,
+): string {
+  if (type === '3gen') return generate222ThreeGen(rng);
+  for (let draw = 0; draw < maxStateDraws; draw++) {
+    const state = randomState(rng);
+    if (!stateTypeFlags(state)[type]) continue;
+    // csTimer rejects states already solvable within two moves before asking
+    // for its minimum-nine-move training scramble. Keep that visible contract
+    // without solving every rejected random state.
+    if (solveHTM(state).length <= 2) continue;
+    return scrambleForMinDepth(state, 9);
+  }
+  throw new Error(`unable to sample 2x2 state family: ${type}`);
+}
+
+function generate222ThreeGen(rng: () => number): string {
+  const out: string[] = [];
+  let previousFace = -1;
+  for (let i = 0; i < 25; i++) {
+    // scrMgr.mega repeatedly draws from all three faces until it differs from
+    // the preceding one. Drawing directly from the two remaining faces is the
+    // same uniform distribution and cannot loop forever with a deterministic
+    // test RNG.
+    const draw = Math.floor(rng() * (previousFace < 0 ? 3 : 2));
+    const face = previousFace < 0 || draw < previousFace ? draw : draw + 1;
+    const power = Math.floor(rng() * 3);
+    out.push(`${(['U', 'R', 'F'] as const)[face]}${(['', '2', "'"] as const)[power]}`);
+    previousFace = face;
+  }
+  return out.join(' ');
+}
+
+// A deepest-QTM state from stats/scramble/2x2_essential_cases.json. The stored
+// HTM solution has Q|H=Q=14, so its inverse is a verified QTM-14 scramble. Keep
+// this solver-owned: shared timer orchestration must not embed puzzle fixtures.
+const QTM_14_REPRESENTATIVE = "U R F' R2 U2 F' R' U R2 F' U'";
+
+function randomReducedMetricCandidate(
+  metric: 'htm' | 'qtm',
+  target: number,
+  rng: () => number,
+): State {
+  let state = solvedState();
+  let previousFace = -1;
+  for (let index = 0; index < target; index++) {
+    const draw = Math.floor(rng() * (previousFace < 0 ? 3 : 2));
+    const face = previousFace < 0 || draw < previousFace ? draw : draw + 1;
+    // HTM candidates use all three powers. QTM candidates deliberately use
+    // only quarter turns, so their unreduced word has the requested QTM cost.
+    const power = metric === 'htm'
+      ? Math.floor(rng() * 3)
+      : (rng() < 0.5 ? 0 : 2);
+    state = applyMove(state, HTM[face * 3 + power]);
+    previousFace = face;
+  }
+  return state;
+}
+
+/**
+ * Generate a 2×2 scramble whose chosen metric value lies in [lo, hi]. Full
+ * metrics first sample reduced words at the requested depth so rare exact
+ * shells (for example HTM 1) do not require millions of uniform-state draws.
+ * Face/layer and the fallback path retain uniform-state rejection. Every
+ * returned state is remeasured; failure throws instead of returning a nearby,
+ * contract-breaking scramble.
  */
 export function generate222ByMetric(
   metric: Cube222Metric,
@@ -358,16 +494,38 @@ export function generate222ByMetric(
   rng: () => number,
   maxTries = 20000,
 ): string {
-  let best: { s: State; d: number } | null = null;
+  const [metricMin, metricMax] = CUBE222_METRIC_RANGE[metric];
+  if (!Number.isSafeInteger(lo) || !Number.isSafeInteger(hi)
+    || lo < metricMin || hi > metricMax || lo > hi) {
+    throw new RangeError(`invalid 2x2 ${metric} range: ${lo}..${hi}`);
+  }
+
+  if ((metric === 'htm' || metric === 'qtm') && lo === 0) {
+    if (hi === 0) return '';
+    // Avoid selecting the solved state when a non-zero shell is also valid;
+    // timer hosts reserve an empty string as their async loading sentinel.
+    lo = 1;
+  }
+
+  if (metric === 'qtm' && lo === 14) return QTM_14_REPRESENTATIVE;
+
+  if (metric === 'htm' || metric === 'qtm') {
+    const directTries = Math.min(Math.max(maxTries, 1), 20_000);
+    for (let t = 0; t < directTries; t++) {
+      const target = lo + Math.floor(rng() * (hi - lo + 1));
+      const state = randomReducedMetricCandidate(metric, target, rng);
+      const value = metricOf(state, metric);
+      if (value >= lo && value <= hi) return scrambleFor(state);
+    }
+  }
+
   for (let t = 0; t < maxTries; t++) {
     const s = randomState(rng);
     const d = metricOf(s, metric);
     if (d >= lo && d <= hi) return scrambleFor(s);
-    // track nearest-to-range as a graceful fallback
-    const dist = d < lo ? lo - d : d - hi;
-    if (!best || dist < best.d) best = { s, d: dist };
   }
-  return best ? scrambleFor(best.s) : scrambleFor(randomState(rng));
+  if (metric === 'qtm' && hi === 14) return QTM_14_REPRESENTATIVE;
+  throw new Error(`unable to generate 2x2 ${metric} in ${lo}..${hi} after ${maxTries} draws`);
 }
 
 /** Apply a scramble string (U/R/F tokens, the only faces WCA 2×2 scrambles use) to solved. Returns null if
@@ -375,12 +533,92 @@ export function generate222ByMetric(
 function stateFromScramble(scramble: string): State | null {
   let s = solvedState();
   for (const tok of scramble.trim().split(/\s+/).filter(Boolean)) {
-    const f = tok[0];
-    if (f !== 'U' && f !== 'R' && f !== 'F') return null;
-    const n = tok.length === 1 ? 1 : tok[1] === '2' ? 2 : 3;
-    for (let i = 0; i < n; i++) s = applyMove(s, Q[f as 'U' | 'R' | 'F']);
+    const moveIndex = HTM_INDEX_BY_TOKEN.get(tok);
+    if (moveIndex === undefined) return null;
+    s = applyMove(s, HTM[moveIndex]);
   }
   return s;
+}
+
+export interface Cube222TimerHintLine {
+  /** Solved face colour, using the Timer's URFDLB display letters. */
+  face: string;
+  /** One shortest U/R/F sequence from the scrambled state to this target. */
+  moves: string[];
+}
+
+export interface Cube222TimerHints {
+  full: { moves: string[]; length: number };
+  faces: Cube222TimerHintLine[];
+}
+
+function faceColorSolved(state: State, targetColor: number): boolean {
+  for (let face = 0; face < FACE_SLOTS.length; face++) {
+    const slots = FACE_SLOTS[face];
+    if (slots.every((slot) => showColor(state, slot, face) === targetColor)) return true;
+  }
+  return false;
+}
+
+function shortestGoalPath(
+  state: State,
+  goal: (candidate: State) => boolean,
+  maxDepth: number,
+): number[] | null {
+  if (goal(state)) return [];
+  const path: number[] = [];
+  const search = (candidate: State, remaining: number, lastFace: number): boolean => {
+    if (remaining === 0) return goal(candidate);
+    for (let move = 0; move < HTM.length; move++) {
+      if (HTM_FACE[move] === lastFace) continue;
+      path.push(move);
+      if (search(applyMove(candidate, HTM[move]), remaining - 1, HTM_FACE[move])) return true;
+      path.pop();
+    }
+    return false;
+  };
+  for (let depth = 1; depth <= maxDepth; depth++) {
+    path.length = 0;
+    if (search(state, depth, -1)) return [...path];
+  }
+  return null;
+}
+
+/**
+ * Exact Timer hint payload for one WCA-style 2×2 scramble.
+ *
+ * This reuses the same fixed-DBL state and move tables as 2×2 generation and
+ * metric filtering. The UI therefore does not carry the historical second
+ * facelet model merely to answer the "full solve / six colours" panel.
+ */
+export function solve222TimerHints(scramble: string): Cube222TimerHints {
+  const state = stateFromScramble(scramble);
+  if (!state) throw new Error('cube222-timer-hints: expected a U/R/F scramble');
+  const fullPath = solveHTM(state);
+  // The internal colour order is U,D,F,B,R,L; Timer presents URFDLB.
+  const displayColors = [0, 4, 2, 1, 5, 3] as const;
+  const displayNames = ['U', 'R', 'F', 'D', 'L', 'B'] as const;
+  // GSolver's historical Timer contract keeps a trailing space on bare
+  // quarter turns. Preserve it in this compatibility payload so migrating
+  // the two hosts does not silently rewrite displayed algorithms.
+  const timerToken = (move: number): string => {
+    const name = HTM_NAMES[move];
+    return name.length === 1 ? `${name} ` : name;
+  };
+  return {
+    full: {
+      moves: fullPath.map(timerToken),
+      length: fullPath.length,
+    },
+    faces: displayColors.map((color, index) => {
+      const path = shortestGoalPath(state, (candidate) => faceColorSolved(candidate, color), 7);
+      if (!path) throw new Error(`cube222-timer-hints: no ${displayNames[index]} face solution`);
+      return {
+        face: displayNames[index],
+        moves: path.map(timerToken),
+      };
+    }),
+  };
 }
 
 /** The chosen metric's value for a 2×2 scramble string, or null if it isn't a U/R/F-only 2×2 scramble. */

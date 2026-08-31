@@ -11,6 +11,10 @@
  */
 
 import {
+  formatBigBlindScramble,
+  formatMultiBlindScrambles,
+} from '@cuberoot/shared/timer';
+import {
   scramble333,
   scramble444,
   scramble555,
@@ -44,11 +48,9 @@ export function scramble333Ni(rng: () => number): string {
 const MBLD_DEFAULT_N = 3;
 
 export function scrambleMbld(rng: () => number, n: number = MBLD_DEFAULT_N): string {
-  const lines: string[] = [];
-  for (let i = 1; i <= n; i++) {
-    lines.push(`Solve ${i} of ${n}: ${scramble333(rng)}`);
-  }
-  return lines.join('\n');
+  return formatMultiBlindScrambles(
+    Array.from({ length: n }, () => scramble333(rng)),
+  );
 }
 
 export function scramble444Bld(rng: () => number): string {
@@ -60,9 +62,9 @@ export function scramble555Bld(rng: () => number): string {
 }
 
 export function scramble666Bld(rng: () => number): string {
-  return `${scramble666(rng)} 3Rw Uw`;
+  return formatBigBlindScramble('666bld', scramble666(rng));
 }
 
 export function scramble777Bld(rng: () => number): string {
-  return `${scramble777(rng)} 3Rw 3Uw`;
+  return formatBigBlindScramble('777bld', scramble777(rng));
 }

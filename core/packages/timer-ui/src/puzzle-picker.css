@@ -1,0 +1,119 @@
+/* Timer puzzle picker. Shared by Web and Capacitor; colors use host theme tokens. */
+
+.pp {
+  position: relative;
+  display: inline-flex;
+}
+
+.pp-trigger {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.25rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.pp-trigger:hover { color: var(--foreground); }
+.pp-trigger:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.pp-trigger--active { color: var(--accent); }
+.pp-trigger-icon { flex-shrink: 0; font-size: 1.05rem; }
+.pp-trigger-label { font-weight: 600; }
+.pp-trigger-chevron { color: var(--muted-foreground); flex-shrink: 0; }
+
+.pp-popup {
+  /* anchored-panel: clamped (TimerPuzzlePicker layout effect) */
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: max-content;
+  max-width: min(560px, calc(100vw - 32px));
+  max-height: 70vh;
+  overflow-y: auto;
+  /* Host token with an opaque page-background fallback for any future consumer. */
+  background: var(--popover, var(--background));
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  padding: 6px;
+  z-index: 200;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 22%, transparent);
+}
+
+.pp-group + .pp-group { margin-top: 4px; }
+.pp-group-title {
+  padding: 6px 10px 3px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--faint-foreground, var(--muted-foreground));
+}
+.pp-group-items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px 4px;
+}
+
+.pp-item {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.pp-item:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+.pp-item--active {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  font-weight: 600;
+}
+.pp-item-icon {
+  flex-shrink: 0;
+  font-size: 1.05rem;
+  color: var(--muted-foreground);
+}
+.pp-item--active .pp-item-icon { color: var(--accent); }
+.pp-item-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.05em;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.pp-item-label { line-height: 1.2; white-space: nowrap; }
+
+@media (max-width: 480px) {
+  .pp-popup { max-width: calc(100vw - 32px); }
+  .pp-group-items { grid-template-columns: 1fr; }
+}
+
+/* Runtime viewport fallback for Android System WebViews that do not parse the
+   modern range media-query syntax emitted by the Mobile production build. */
+.pp--compact .pp-popup { max-width: calc(100vw - 32px); }
+.pp--compact .pp-group-items { grid-template-columns: 1fr; }

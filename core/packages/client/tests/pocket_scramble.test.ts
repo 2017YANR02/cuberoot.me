@@ -1,8 +1,12 @@
 // lib/pocket-scramble —— WCA 二阶打乱(TNoodle 移植)的正确性 + 性能。
 import { describe, it, expect } from 'vitest';
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { wcaPocketScramble, optimalPocketScramble } from '@/lib/pocket-scramble';
-import { pocketCost } from '@/lib/pocket-cost';
+import {
+  isWcaPocketScramble,
+  optimalPocketScramble,
+  pocketCost,
+  wcaPocketScramble,
+} from '@cuberoot/shared/timer';
 import { create222MetricEvaluator } from '@cuberoot/puzzle-solvers/cube222';
 
 function rng(seed: number): () => number {
@@ -16,6 +20,7 @@ describe('wcaPocketScramble', () => {
     const r = rng(1);
     for (let i = 0; i < 300; i++) {
       const s = wcaPocketScramble(r);
+      expect(isWcaPocketScramble(s)).toBe(true);
       const toks = s.split(' ');
       expect(toks.length).toBe(11);
       let prevFace = '';
@@ -25,6 +30,13 @@ describe('wcaPocketScramble', () => {
         prevFace = tk[0];
       }
     }
+  });
+
+  it('validator rejects malformed, non-canonical, and wrong-length input', () => {
+    expect(isWcaPocketScramble("U R F U2 R2 F2 U' R' F' U R")).toBe(true);
+    expect(isWcaPocketScramble("U U F U2 R2 F2 U' R' F' U R")).toBe(false);
+    expect(isWcaPocketScramble("U R F U2 R2 F2 U' R' F' U")).toBe(false);
+    expect(isWcaPocketScramble("U R F U2 R2 F2 U' R' F' U Rfoo")).toBe(false);
   });
 
   it('打乱确实把还原态打乱成对应状态(可被 11 步内解回)', () => {

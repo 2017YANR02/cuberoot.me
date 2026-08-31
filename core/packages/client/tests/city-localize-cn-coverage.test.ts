@@ -1,10 +1,10 @@
 // CI 守卫:保证每个 upcoming 比赛城市在中文界面下都有中文译名,不回退成拉丁原文
 // (如「Eagan, Minnesota」「Sollentuna」)。覆盖全部国家(大中华区走 CN_PLACE_ZH,
-// 其余走生成的全球字典 lib/data/place-zh.ts)。
+// 其余走 shared 中生成的全球字典)。
 //
 // 触发场景:WCA 新办了一场比赛,落在某个生成字典还没收录的城市(以前没办过比赛)。
 // upcoming 管道刷新 all_upcoming_comps.json 后这条测试就红 —— 重跑 scripts/gen-place-zh.mjs
-// + scripts/merge-place-zh.mjs(新城市进 LLM 兜底 scripts/place-tail-zh.json)即可。
+// + packages/shared/scripts/merge-place-zh.mjs(新城市进 shared LLM 兜底)即可。
 //
 // 判定:中文化后整串含 CJK 即视为已覆盖(逐段译,城市段译出即够;纯数字邮编段例外)。
 import { describe, it, expect } from 'vitest';
@@ -55,7 +55,7 @@ describe('city-localize coverage (all countries)', () => {
       missing.size === 0
         ? ''
         : `以下 upcoming 比赛城市缺中文译名。重跑 scripts/gen-place-zh.mjs + merge-place-zh.mjs`
-          + `(必要时往 scripts/place-tail-zh.json 补译):\n${hint}`,
+          + `(必要时往 shared scripts 的 place-tail-zh.json 补译):\n${hint}`,
     ).toBe(0);
   });
 });

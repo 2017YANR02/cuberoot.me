@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   genByStepsScramble,
-  scrambleStepMetric,
+  genByStepsSig,
 } from '@/app/[lang]/timer/_lib/scramble/gen-by-steps';
+import {
+  generateTimerNon222ByStepsScramble,
+  timerNon222StepMetricOfScramble,
+} from '@cuberoot/puzzle-solvers/timer-by-steps';
 import { STEP_METRICS, stepPuzzleOf } from '@/app/[lang]/timer/_lib/scramble/step-metrics';
 import { generateGearByDistance, solveGear } from '@/lib/gear-solver';
 import { generateIvyByDistance, solveIvy } from '@/lib/ivy-solver';
@@ -40,13 +44,15 @@ describe('计时器非 WCA 小状态项目难度', () => {
     expect(solveGear(scramble).length).toBe(distance);
   });
 
-  it('通用按步数链路分别分发并复算难度', () => {
-    const ivy = genByStepsScramble('ivy', enabled('htm', [7]));
-    const gear = genByStepsScramble('gear', enabled('ftm', [5]));
-    expect(ivy?.key).toBe('byst|ivy|htm|7.7');
-    expect(gear?.key).toBe('byst|gear|ftm|5.5');
-    expect(scrambleStepMetric('ivy', 'htm', ivy!.gen())).toBe(7);
-    expect(scrambleStepMetric('gear', 'ftm', gear!.gen())).toBe(5);
+  it('Web 只保留 Worker identity，精确生成和复算来自共享引擎', () => {
+    expect(genByStepsSig('ivy', enabled('htm', [7]))).toBe('byst|ivy|htm|7.7');
+    expect(genByStepsSig('gear', enabled('ftm', [5]))).toBe('byst|gear|ftm|5.5');
+    expect(genByStepsScramble('ivy', enabled('htm', [7]))).toBeNull();
+    expect(genByStepsScramble('gear', enabled('ftm', [5]))).toBeNull();
+    const ivy = generateTimerNon222ByStepsScramble({ event: 'ivy', metric: 'htm', lo: 7, hi: 7 }, () => 0);
+    const gear = generateTimerNon222ByStepsScramble({ event: 'gear', metric: 'ftm', lo: 5, hi: 5 }, () => 0);
+    expect(timerNon222StepMetricOfScramble('ivy', 'htm', ivy)).toBe(7);
+    expect(timerNon222StepMetricOfScramble('gear', 'ftm', gear)).toBe(5);
   });
 
   it('拒绝越界、反向、非整数和非法随机数', () => {

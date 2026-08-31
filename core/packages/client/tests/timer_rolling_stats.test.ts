@@ -10,6 +10,10 @@ import {
   rollingStatReplacementOptions,
   sanitizeRollingStatColumns,
 } from '@/app/[lang]/timer/_lib/rolling_stats';
+import {
+  parseRollingStatKey as sharedParseRollingStatKey,
+  rollingStatCurrent as sharedRollingStatCurrent,
+} from '@cuberoot/shared/timer';
 
 function solve(timeMs: number, index: number): Solve {
   return {
@@ -23,6 +27,11 @@ function solve(timeMs: number, index: number): Solve {
 }
 
 describe('rolling statistic columns', () => {
+  it('keeps the retired Web module as shared identity re-exports', () => {
+    expect(parseRollingStatKey).toBe(sharedParseRollingStatKey);
+    expect(rollingStatCurrent).toBe(sharedRollingStatCurrent);
+  });
+
   it('keeps mo3 distinct from the trimmed ao3', () => {
     const solves = [10_000, 20_000, 60_000].map(solve);
     expect(rollingStatCurrent(solves, 'mo3')).toBe(30_000);

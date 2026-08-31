@@ -16,25 +16,24 @@
  * scramble string and looked up via wcaMetaFor().
  */
 import { apiUrl } from '@/lib/api-base';
-import { statsUrl } from '@/lib/stats-base';
 import { fetchWcaScrambles } from '@/lib/wca-results-api';
-import { fetchByDifficulty } from '@/lib/scramble-by-difficulty';
-import { groupIdxOf } from '@/lib/wca-scramble-group';
-import { LENGTH_VARIANT } from '@/lib/scramble-variants';
+import { webTimerWcaDifficultyAdapter } from '@/lib/timer-wca-difficulty-adapter';
 import { fetchPuzzleExamples, type PuzzleExampleSample, type PuzzleExamplesJson } from '@/lib/puzzle-examples';
 import { cube222StateTypeMatchesScramble, type Cube222StateType } from '@cuberoot/puzzle-solvers/cube222';
+import {
+  compareTimerWcaCompetitionScrambleOrder,
+  timerWcaCompetitionScrambleSlotIdentity,
+  normalizeTimerWcaSourceSettings,
+  timerWcaOptimalRequested,
+  timerWcaRandomRequestQuery,
+  timerWcaScrambleEventId,
+  timerWcaSourceIdentity,
+  type TimerWcaSourceSettings,
+} from '@cuberoot/shared/timer';
 import { scrambleStepMetric } from './gen-by-steps';
+import { filterWebNon222BySteps } from './non222-steps-pool';
+import type { TimerNon222StepPuzzle } from '@cuberoot/shared/timer';
 import type { EventId } from '../types';
-
-// timer EventId → WCA scrambles event_id. Events absent here have no real
-// competition scrambles (relays / CFOP-step training / 6-7 BLD / magic) and
-// always fall back to locally generated scrambles.
-const EVENT_MAP: Partial<Record<EventId, string>> = {
-  '222': '222', '333': '333', '444': '444', '555': '555', '666': '666', '777': '777',
-  '333oh': '333oh', '333fm': '333fm', '333mr': '333', '333ni': '333',
-  '333bld': '333bf', '333mbld': '333mbf', '444bld': '444bf', '555bld': '555bf',
-  pyra: 'pyram', skewb: 'skewb', sq1: 'sq1', mega: 'minx', clock: 'clock',
-};
 
 // WCA event_ids (mapped values above) with a God's-number optimal-equivalent scramble available
 // (see wca_scramble_optimal in the DB, computed by an exact solver for these homogeneous events
@@ -43,13 +42,29 @@ const EVENT_MAP: Partial<Record<EventId, string>> = {
 // switching away from one of these events would silently filter out every real scramble of an
 // event that has no optimal data (e.g. clock) — filtering here is what actually matters; the UI
 // toggle is just a convenience that mirrors this set.
-export const WCA_OPTIMAL_EVENTS = new Set(['333', '333oh', '333ft', '333fm', '222', 'pyram', 'skewb']);
-function supportsOptimal(w: string): boolean { return WCA_OPTIMAL_EVENTS.has(w); }
-// 「打乱」难度筛(按原打乱招式数取题)与「最优打乱」互斥:最优打乱是同态最短打乱,长度 = 整解最优
-// HTM,拿它去配「原打乱 19 步」只会显示一条 17 步的打乱 —— 用户看到的步数与所选对不上(而且那已经
-// 是「整体」这个方法的语义)。故长度筛一律出原打乱,忽略粘滞的 wcaUseOptimal。
-const isLengthDiff = (spec: WcaSourceSpec): boolean => spec.diff?.variant === LENGTH_VARIANT && spec.diff.steps.length > 0;
-const wantOptimal = (spec: WcaSourceSpec, w: string): boolean => !!spec.optimal && supportsOptimal(w) && !isLengthDiff(spec);
+function sourceSettings(spec: WcaSourceSpec): TimerWcaSourceSettings {
+  return normalizeTimerWcaSourceSettings({
+    wcaScrambleMode: spec.mode,
+    wcaComp: spec.comp,
+    wcaCompName: spec.compName,
+    wcaCompCountry: '',
+    wcaRound: spec.round,
+    wcaGroup: spec.group,
+    wcaDateFrom: spec.from,
+    wcaDateTo: spec.to,
+    wcaUseOptimal: spec.optimal,
+    wcaDifficultyOn: !!spec.diff?.steps.length,
+    wcaDiffVariant: spec.diff?.variant,
+    wcaDiffStage: spec.diff?.stage,
+    wcaDiffColors: spec.diff?.colors,
+    wcaDiffSteps: spec.diff?.steps,
+    wcaDiffMerged: spec.diff?.merged,
+  });
+}
+
+const wantOptimal = (spec: WcaSourceSpec, wcaEventId: string): boolean => (
+  timerWcaOptimalRequested(wcaEventId, sourceSettings(spec))
+);
 
 // 一次向 /random 要几条。服务端把 count 钳在 SERVER_MAX_COUNT 内,本值必须 <= 它,
 // 否则「回得比要的少」不再等价于「已穷尽」,封闭集判定(见 closedFor)会误判。
@@ -57,11 +72,6 @@ const SERVER_MAX_COUNT = 50; // 与 server routes/wca_scrambles.ts 的 Math.min(
 const FETCH_COUNT = Math.min(50, SERVER_MAX_COUNT);
 const REFILL_AT = 8;
 const META_CAP = 1000; // 元数据 Map 软上限,超出按插入序丢最旧。
-
-// 比赛轮次先后(初赛→决赛),用于 comp 模式按真实赛程顺序排打乱。
-const ROUND_SEQ: Record<string, number> = {
-  '1': 0, 'd': 0, 'h': 0, '2': 1, 'e': 1, 'g': 1, '3': 2, 'b': 3, 'c': 3, 'f': 3,
-};
 
 /** Where the timer should draw real scrambles from (derived from TimerSettings). */
 export interface WcaSourceSpec {
@@ -80,7 +90,7 @@ export interface WcaSourceSpec {
   // 与 /scramble/stats 难度 tab 一致)。关掉则只在当前项目里找。
   diff?: { variant: string; stage: string; colors: string; steps: number[]; merged: boolean };
   // 「按步数」过滤(2×2 / 金字塔 / 斜转):客户端算每条真题的度量步数,只留 [lo,hi] 内的。
-  // date + comp 两种模式都生效(真题分布近上帝数,低步数可能全被过滤 → knownEmpty → UI 提示)。
+  // date + comp 两种模式都生效。date 随机采样未命中只是 transient,不能推导全集为空。
   stepFilter?: { metric: string; lo: number; hi: number };
   // 二阶专项状态过滤。只接受能从最终状态精确判定的类型；3-gen 不属于这个集合。
   typeFilter?: Cube222StateType;
@@ -92,13 +102,28 @@ export interface WcaScrambleMeta {
   // 开了「最优打乱」却拿到原打乱(该难度档无最优等态,服务器回退)→ UI 标「非最优」。
   nonOptimal?: boolean;
 }
+/** One dispensed occurrence. Keep this object in UI history: scramble text is
+ * not an occurrence identity because separate official slots may be equal. */
+export interface WcaDispensedScramble {
+  readonly scramble: string;
+  readonly slot: string | null;
+  readonly meta: WcaScrambleMeta | null;
+}
 interface RandomItem extends WcaScrambleMeta { scramble: string; o?: string } // o = 最优打乱(server 带,见 wca_scramble_optimal)
+type CompRow = { slot: string; scramble: string; meta: WcaScrambleMeta };
 
 const pools: Record<string, string[]> = {};
 const inflight: Record<string, Promise<void> | undefined> = {};
 const metaByScramble = new Map<string, WcaScrambleMeta>();
+const metaBySlot = new Map<string, WcaScrambleMeta>();
 // comp 模式:过滤 + 排序后的整场打乱(按 specKey 缓存,refill 时循环灌回队列)。
-const compRows: Record<string, { scramble: string; meta: WcaScrambleMeta }[]> = {};
+const compRows: Record<string, CompRow[]> = {};
+// comp 队列不能只存字符串:不同官方 slot 可能有完全相同的打乱文本。队列携带 slot + meta,
+// 只有真正端出一条时才把它登记给 wcaMetaFor,避免后面的同文本 slot 提前覆盖当前出处。
+const compQueues: Record<string, CompRow[]> = {};
+// 最后一次排入 comp 队列的官方 slot。持久化只保留队首 50 条；重启后以缓存窗口末尾为锚点,
+// 重新拉整场时先续上未缓存的尾部,而不是从第一题重复。
+const compAppendAfter: Record<string, string | undefined> = {};
 // 已确认「确实没有真题」的来源 key:难度组合无匹配(端点 404)/ 选定比赛缺此项目。
 // 用于让 UI 显式提示,而不是悄悄伪造一条本地生成打乱(无比赛来源、且不符所选难度)。
 // 与「瞬时空(还在加载 / 网络失败)」区分:后者不进此集合,稍后重取。
@@ -106,13 +131,12 @@ const knownEmpty = new Set<string>();
 // comp + 难度:某场比赛此(方法/阶段/配色)在难度库(wca_scramble_steps)是否有任何步数数据。
 // true=已入库(空只是此难度档无匹配)/ false=未入库(离线管道还没算这场,常见于新赛)。
 // 让 UI 区分「换步数/配色」与「改用日期模式/等回填」两种提示(见 compHasAnyStepData)。undetermined 不入。
-const compCoverage = new Map<string, boolean>();
 // 「按步数」date 模式客户端过滤:一次 fillDate 内最多连抓这么多批(每批 FETCH_COUNT 条)找匹配,
-// 命中即停(常见区间一批即够,秒出);全空才判 knownEmpty。放在同一次 fill 内连抓(而非拆成
+// 命中即停(常见区间一批即够,秒出);全部未命中仍只是有界采样 miss,不能判 knownEmpty。放在同一次 fill 内连抓(而非拆成
 // SoloView 的退避重试)避免累计几秒才提示。批数上限要够大以覆盖稀有但真实存在的区间:实测 2000 条
 // 真题里 2×2 底层=0 占 ~1/400、底层=1 占 ~1/180,4 批(200 条)会 ~60% 概率漏掉 → 误报「无匹配」;
 // 30 批(1500 条)对 1/400 有 ~98% 命中率。命中即停,所以常见区间仍是一批秒出、稀有区间平均抓 ~8 批
-// 即出;只有真正空的区间(如底层=7、htm≤3)才抓满 30 批才提示「无匹配」(~3s,之后 knownEmpty 缓存)。
+// 即出;抓满 30 批后保持 transient,下一次可继续采样。只有端点 404 或 comp 有限全集过滤为空才确认无题。
 const MAX_FILTER_BATCHES = 30;
 
 // 「按步数」预计算真题桶:stats/scramble/puzzle_examples.json 的 metrics.<度量>.bins 存了每个步数值的
@@ -129,22 +153,6 @@ function loadExamples(): Promise<PuzzleExamplesJson | null> {
       .catch(() => { examplesPromise = null; return null; }); // 失败重置,下次可重试
   }
   return examplesPromise;
-}
-// 难度直方图(distribution.json):每 (方法,阶段,底色) 的真实步数 min/max —— 用作 comp 覆盖探测的 bin 全域。
-// 与 WcaSourceConfig 用同一份 JSON(浏览器缓存命中),这里只在 comp+难度为空的兜底路径按需拉一次(模块缓存)。
-interface DiffHist { min: number; max: number }
-interface DiffDistJson { sets: Record<string, { variants: Record<string, { data: Record<string, Record<string, DiffHist>> }> }> }
-let distCache: DiffDistJson | null = null;
-let distPromise: Promise<DiffDistJson | null> | null = null;
-function loadDist(): Promise<DiffDistJson | null> {
-  if (distCache) return Promise.resolve(distCache);
-  if (!distPromise) {
-    distPromise = fetch(statsUrl('/stats/scramble/distribution.json'))
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => { if (j?.sets) distCache = j as DiffDistJson; return distCache; })
-      .catch(() => { distPromise = null; return null; }); // 失败重置,下次可重试
-  }
-  return distPromise;
 }
 
 const precomputedSeeded = new Set<string>();       // 已建过预计算桶的 key(每 key 只 seed 一次)
@@ -188,9 +196,57 @@ export function wcaPoolProgress(spec: WcaSourceSpec): { total: number; seen: num
 // have no localStorage; every access is guarded.
 const STORE_KEY = 'cuberoot.wca-pool.v1';
 const STORE_TTL = 7 * 24 * 3600 * 1000; // 7 天后视为过期,丢弃
-const STORE_KEYS_CAP = 8;               // 最多缓存几个来源(按 pools 顺序保留最近的)
+const STORE_KEYS_CAP = 8;               // date + comp 合计最多缓存几个来源
 const STORE_PER_KEY = 50;               // 每个来源最多缓存几条
 let hydrated = false;
+
+type PersistedCompRow = [scramble: string, meta: WcaScrambleMeta];
+interface PersistedWcaPools {
+  t: number;
+  pools?: Record<string, string[]>;
+  meta?: [string, WcaScrambleMeta][];
+  comp?: Record<string, PersistedCompRow[]>;
+}
+
+function compSlot(meta: WcaScrambleMeta): string {
+  return timerWcaCompetitionScrambleSlotIdentity({
+    competitionId: meta.ci,
+    eventId: meta.e,
+    roundTypeId: meta.r,
+    groupId: meta.g,
+    isExtra: meta.x === 1,
+    scrambleNumber: meta.n,
+  });
+}
+
+function makeCompRow(scramble: string, meta: WcaScrambleMeta): CompRow {
+  return { slot: compSlot(meta), scramble, meta };
+}
+
+function isWcaScrambleMeta(value: unknown): value is WcaScrambleMeta {
+  if (!value || typeof value !== 'object') return false;
+  const meta = value as Partial<WcaScrambleMeta>;
+  return typeof meta.ci === 'string'
+    && typeof meta.cn === 'string'
+    && typeof meta.e === 'string'
+    && typeof meta.r === 'string'
+    && typeof meta.g === 'string'
+    && Number.isFinite(meta.n)
+    && (meta.x === 0 || meta.x === 1);
+}
+
+function restoreCompRow(value: unknown): CompRow | null {
+  if (!Array.isArray(value) || value.length !== 2
+    || typeof value[0] !== 'string' || !isWcaScrambleMeta(value[1])) return null;
+  return makeCompRow(value[0], value[1]);
+}
+
+// v1 stored every queue as string[]. Competition keys from that legacy shape
+// lack official-slot identity, so they must be cold-refetched instead of
+// reintroducing the duplicate-text and >50-row continuity bugs.
+function isCompetitionPoolKey(key: string): boolean {
+  return key.startsWith('["c",');
+}
 
 function lsAvailable(): Storage | null {
   try { return typeof localStorage !== 'undefined' ? localStorage : null; } catch { return null; }
@@ -205,10 +261,25 @@ function hydrate(): void {
   try {
     const raw = ls.getItem(STORE_KEY);
     if (!raw) return;
-    const data = JSON.parse(raw) as { t: number; pools: Record<string, string[]>; meta: [string, WcaScrambleMeta][] };
+    const data = JSON.parse(raw) as PersistedWcaPools;
     if (!data || typeof data.t !== 'number' || Date.now() - data.t > STORE_TTL) return;
-    for (const [k, q] of Object.entries(data.pools ?? {})) if (Array.isArray(q) && q.length) pools[k] ??= q.slice();
-    for (const [s, m] of data.meta ?? []) if (!metaByScramble.has(s)) metaByScramble.set(s, m);
+    for (const [k, q] of Object.entries(data.pools ?? {})) {
+      if (!isCompetitionPoolKey(k) && Array.isArray(q) && q.length) pools[k] ??= q.slice();
+    }
+    for (const [s, m] of data.meta ?? []) {
+      if (typeof s === 'string' && isWcaScrambleMeta(m) && !metaByScramble.has(s)) {
+        rememberMeta(s, m);
+      }
+    }
+    for (const [k, values] of Object.entries(data.comp ?? {})) {
+      if (!Array.isArray(values) || values.length === 0) continue;
+      const restored = values.slice(0, STORE_PER_KEY)
+        .map(restoreCompRow)
+        .filter((row): row is CompRow => row !== null);
+      if (restored.length === 0) continue;
+      compQueues[k] ??= restored;
+      compAppendAfter[k] = restored[restored.length - 1]!.slot;
+    }
   } catch { /* corrupt / unavailable — ignore */ }
 }
 
@@ -220,16 +291,27 @@ function persist(): void {
   persistTimer = (setTimeout as typeof window.setTimeout)(() => {
     persistTimer = 0;
     try {
-      const keys = Object.keys(pools).filter((k) => pools[k]?.length).slice(-STORE_KEYS_CAP);
+      const dateKeys = Object.keys(pools)
+        .filter((k) => !isCompetitionPoolKey(k) && pools[k]?.length);
+      const compKeys = Object.keys(compQueues).filter((k) => compQueues[k]?.length);
+      const keys = [...dateKeys, ...compKeys].slice(-STORE_KEYS_CAP);
+      const selected = new Set(keys);
       const out: Record<string, string[]> = {};
+      const comp: Record<string, PersistedCompRow[]> = {};
       const meta: [string, WcaScrambleMeta][] = [];
       const seen = new Set<string>();
-      for (const k of keys) {
+      for (const k of dateKeys) {
+        if (!selected.has(k)) continue;
         const q = pools[k]!.slice(0, STORE_PER_KEY);
         out[k] = q;
         for (const s of q) { if (!seen.has(s)) { const m = metaByScramble.get(s); if (m) { meta.push([s, m]); seen.add(s); } } }
       }
-      ls.setItem(STORE_KEY, JSON.stringify({ t: Date.now(), pools: out, meta }));
+      for (const k of compKeys) {
+        if (!selected.has(k)) continue;
+        comp[k] = compQueues[k]!.slice(0, STORE_PER_KEY)
+          .map((row): PersistedCompRow => [row.scramble, row.meta]);
+      }
+      ls.setItem(STORE_KEY, JSON.stringify({ t: Date.now(), pools: out, meta, comp }));
     } catch { /* quota / unavailable — ignore */ }
   }, 600);
 }
@@ -241,7 +323,7 @@ function normalize(s: string): string {
 }
 
 function wev(spec: WcaSourceSpec): string | undefined {
-  return EVENT_MAP[spec.event];
+  return timerWcaScrambleEventId(spec.event) ?? undefined;
 }
 
 /** Stable cache key for this source. null = no real scrambles possible (event
@@ -249,70 +331,107 @@ function wev(spec: WcaSourceSpec): string | undefined {
 function specKey(spec: WcaSourceSpec): string | null {
   const w = wev(spec);
   if (!w) return null;
-  // 该项目不支持最优等态(见 supportsOptimal)时忽略 spec.optimal —— 否则粘滞的 wcaUseOptimal=true
-  // 残留到切换后的项目,会算出一个「最优池」key,而这个项目永远没有 optimal_scramble,查回空。
-  const opt = wantOptimal(spec, w) ? '|opt' : ''; // 原始/最优打乱用不同池,切换即重灌
+  const source = timerWcaSourceIdentity(spec.event, w, sourceSettings(spec), {
+    competitionUnindexed: spec.mode === 'comp' && !!spec.comp
+      && webTimerWcaDifficultyAdapter.getCompetitionCoverage(spec.comp, w) === false,
+  });
+  if (!source) return null;
   // 「按步数」过滤两种模式都生效,进 key(切换度量/区间即重灌)。
   const sf = spec.stepFilter ? `|S:${spec.stepFilter.metric}:${spec.stepFilter.lo}.${spec.stepFilter.hi}` : '';
   const tf = spec.typeFilter ? `|T:${spec.typeFilter}` : '';
-  // 难度过滤 date + comp 两模式都生效;steps 非空才计入池 key(切换难度即重灌)。
-  // merged 也进 key:同一组难度参数在合并/分开两种口径下是两个不同的池,不进 key 会切换后吃到旧池。
-  const d = spec.diff && spec.diff.steps.length > 0
-    ? `|D:${spec.diff.variant}:${spec.diff.stage}:${spec.diff.colors}:${[...spec.diff.steps].sort((a, b) => a - b).join('.')}${spec.diff.merged ? ':m' : ''}`
-    : '';
-  if (spec.mode === 'comp') return spec.comp ? `c|${spec.comp}|${w}|${spec.round}|${spec.group}${opt}${sf}${tf}${d}` : null;
-  return `d|${w}|${spec.from}|${spec.to}${opt}${d}${sf}${tf}`;
+  return `${source}${sf}${tf}`;
 }
 
 function rememberMeta(s: string, m: WcaScrambleMeta): void {
   metaByScramble.set(s, m);
+  metaBySlot.set(compSlot(m), m);
   while (metaByScramble.size > META_CAP) {
     const oldest = metaByScramble.keys().next().value;
     if (oldest === undefined) break;
     metaByScramble.delete(oldest);
   }
+  while (metaBySlot.size > META_CAP) {
+    const oldest = metaBySlot.keys().next().value;
+    if (oldest === undefined) break;
+    metaBySlot.delete(oldest);
+  }
 }
 
-/** 「按步数」过滤:该条真题的度量步数是否落在 [lo,hi] 内。无 stepFilter 或无法度量(非 2×2/金字塔/斜转、
- *  记号超出 gauge)时放行(不误杀)。 */
-function stepPass(spec: WcaSourceSpec, scramble: string): boolean {
+/** 「按步数」过滤:该条真题的度量步数是否落在 [lo,hi] 内。
+ *  开启了精确过滤却无法度量时必须 fail closed,不能把错记号当作符合。 */
+function usesWorkerStepFilter(spec: WcaSourceSpec): spec is WcaSourceSpec & {
+  event: TimerNon222StepPuzzle;
+  stepFilter: NonNullable<WcaSourceSpec['stepFilter']>;
+} {
+  return !!spec.stepFilter && (spec.event === 'pyra' || spec.event === 'skewb');
+}
+
+function stepPassSync(spec: WcaSourceSpec, scramble: string): boolean {
   if (!spec.stepFilter) return true;
+  if (usesWorkerStepFilter(spec)) return true;
   const d = scrambleStepMetric(spec.event, spec.stepFilter.metric, scramble);
-  if (d == null) return true;
+  if (d == null) return false;
   return d >= spec.stepFilter.lo && d <= spec.stepFilter.hi;
 }
 
 function localPass(spec: WcaSourceSpec, scramble: string): boolean {
-  if (!stepPass(spec, scramble)) return false;
+  if (!stepPassSync(spec, scramble)) return false;
   return !spec.typeFilter || cube222StateTypeMatchesScramble(scramble, spec.typeFilter);
 }
 
-type CompRow = { scramble: string; meta: WcaScrambleMeta };
+async function localFilterRows<T extends { scramble: string }>(
+  spec: WcaSourceSpec,
+  rows: readonly T[],
+): Promise<T[]> {
+  const locallyValid = rows.filter((row) => localPass(spec, row.scramble));
+  if (!usesWorkerStepFilter(spec)) return locallyValid;
+  return filterWebNon222BySteps(
+    spec.event,
+    locallyValid,
+    spec.stepFilter,
+    new AbortController().signal,
+  );
+}
 
 /** 比赛序比较器(初赛→决赛 → 组别 → 正式在前额外在后 → 把序号)。 */
 function compOrder(a: WcaScrambleMeta, b: WcaScrambleMeta): number {
-  const ra = ROUND_SEQ[a.r] ?? 9, rb = ROUND_SEQ[b.r] ?? 9;
-  if (ra !== rb) return ra - rb;
-  if (a.g !== b.g) return groupIdxOf(a.g) - groupIdxOf(b.g);
-  if (a.x !== b.x) return a.x ? 1 : -1;
-  return a.n - b.n;
+  return compareTimerWcaCompetitionScrambleOrder({
+    roundTypeId: a.r,
+    groupId: a.g,
+    isExtra: a.x === 1,
+    scrambleNumber: a.n,
+  }, {
+    roundTypeId: b.r,
+    groupId: b.g,
+    isExtra: b.x === 1,
+    scrambleNumber: b.n,
+  });
 }
 
 /** comp 全量(默认):拉整场打乱 → 过滤 event/round/group(+ 可选最优)→ 竞赛序。 */
 async function compRowsAll(spec: WcaSourceSpec, w: string, useOptimal: boolean): Promise<CompRow[]> {
   const all = await fetchWcaScrambles(spec.comp);
-  return (all ?? [])
+  const rows = (all ?? [])
     .filter((r) => r.event_id === w
       && (!spec.round || r.round_type_id === spec.round)
       && (!spec.group || r.group_id === spec.group)
       // 最优模式:只留有最优等态的真题,不再静默回退原打乱(无则该比赛队列空 -> 回退随机生成)。
       && (!useOptimal || !!r.optimal_scramble))
-    .map((r) => ({
+    .map((r) => {
       // 最优模式且该打乱有最优等态(同态项目)→ 用最优打乱,否则原打乱。
-      scramble: normalize(useOptimal && r.optimal_scramble ? r.optimal_scramble : r.scramble),
-      meta: { ci: spec.comp, cn: spec.compName || spec.comp, e: w, r: r.round_type_id, g: r.group_id, n: r.scramble_num, x: (r.is_extra ? 1 : 0) as 0 | 1 },
-    }))
-    .filter((it) => localPass(spec, it.scramble)) // 本地精确过滤(该比赛无匹配 → rows 空 → 提示)
+      const scramble = normalize(useOptimal && r.optimal_scramble ? r.optimal_scramble : r.scramble);
+      const meta: WcaScrambleMeta = {
+        ci: spec.comp,
+        cn: spec.compName || spec.comp,
+        e: w,
+        r: r.round_type_id,
+        g: r.group_id,
+        n: r.scramble_num,
+        x: (r.is_extra ? 1 : 0) as 0 | 1,
+      };
+      return makeCompRow(scramble, meta);
+    });
+  return (await localFilterRows(spec, rows))
     .sort((A, B) => compOrder(A.meta, B.meta));
 }
 
@@ -324,7 +443,7 @@ async function compRowsByDifficulty(spec: WcaSourceSpec, w: string, useOptimal: 
   const bins = [...new Set(d.steps)].sort((a, b) => a - b);
   // 合并口径下省略 event = 本场所有 3x3 族轮次的真题都算(与 /random 的 family=1 同义);
   // 分开则只要本项目的。
-  const results = await Promise.all(bins.map((bin) => fetchByDifficulty({
+  const results = await Promise.all(bins.map((bin) => webTimerWcaDifficultyAdapter.fetchByDifficulty({
     variant: d.variant, stage: d.stage, colors: d.colors, bin, event: d.merged ? undefined : w,
     names: spec.compName ? [spec.compName] : undefined, pageSize: 200,
   })));
@@ -338,62 +457,36 @@ async function compRowsByDifficulty(spec: WcaSourceSpec, w: string, useOptimal: 
       if (spec.group && row.g !== spec.group) continue;
       if (useOptimal && !row.o) continue;                    // 最优模式:只留有最优等态的
       // 合并口径下同一 (轮次,组,序号) 在不同项目里各有一条,去重键必须带 event,否则会互相吞掉。
-      const dk = `${row.e}|${row.r}|${row.g}|${row.x}|${row.n}`;
+      const meta: WcaScrambleMeta = {
+        ci: spec.comp,
+        cn: spec.compName || spec.comp,
+        e: row.e || w,
+        r: row.r,
+        g: row.g,
+        n: row.n,
+        x: row.x,
+      };
+      const dk = compSlot(meta);
       if (seen.has(dk)) continue;
       seen.add(dk);
-      out.push({
-        scramble: normalize(useOptimal && row.o ? row.o : row.scramble),
-        // e 取真实来源项目(合并时可能不是当前练习的项目),来源角标才不会张冠李戴。
-        meta: { ci: spec.comp, cn: spec.compName || spec.comp, e: row.e || w, r: row.r, g: row.g, n: row.n, x: row.x },
-      });
+      // e 取真实来源项目(合并时可能不是当前练习的项目),来源角标才不会张冠李戴。
+      out.push(makeCompRow(
+        normalize(useOptimal && row.o ? row.o : row.scramble),
+        meta,
+      ));
     }
   }
-  return out.sort((A, B) => compOrder(A.meta, B.meta));
-}
-
-// comp 覆盖探测用 canonical std/cross/六色:难度库对一场比赛要么全有(所有 方法/阶段 同布局一起回填)、
-// 要么全无,用最基础的 std/cross 即可判「这场是否入库」,不必逐 变体/阶段 探。键只按 (comp, event)。
-const COV_VARIANT = 'std', COV_STAGE = 'cross', COV_COLORS = 'BGORWY';
-function coverageKey(comp: string, w: string): string { return `${comp}|${w}`; }
-const coverageInflight = new Map<string, Promise<boolean | null>>();
-
-/** 该场此 event 在难度库(wca_scramble_steps)里有无任何步数数据。拉直方图全域 [min,max]、按本场官方名
- *  逐 bin 探(pageSize=1 只判有无),任一 bin 有真题即已入库。
- *  true=已入库 / false=未入库(离线难度管道还没算这场)/ null=判不了(直方图或全部请求不可用,不缓存)。 */
-async function fetchCompCoverage(compName: string, w: string): Promise<boolean | null> {
-  const dist = await loadDist();
-  const h = dist?.sets?.wca?.variants?.[COV_VARIANT]?.data?.[COV_STAGE]?.[COV_COLORS];
-  if (!h || !Number.isFinite(h.min) || !Number.isFinite(h.max) || h.max < h.min) return null;
-  const bins: number[] = [];
-  for (let b = h.min; b <= h.max; b++) bins.push(b);
-  const results = await Promise.all(bins.map((bin) => fetchByDifficulty({
-    variant: COV_VARIANT, stage: COV_STAGE, colors: COV_COLORS, bin, event: w,
-    names: compName ? [compName] : undefined, pageSize: 1,
-  })));
-  if (results.every((r) => r == null)) return null;      // 全失败 → 判不了,稍后重试
-  return results.some((r) => (r?.total ?? 0) > 0);        // 官方名唯一,total>0 即本场有数据
+  return (await localFilterRows(spec, out)).sort((A, B) => compOrder(A.meta, B.meta));
 }
 
 /** 主动探测并缓存 comp 覆盖(inflight 去重,已缓存直接返回)。UI 在选中比赛时提前调,好在难度开关上分诊。 */
 export async function probeCompCoverage(comp: string, compName: string, wcaEvent: string): Promise<boolean | null> {
-  if (!comp || !wcaEvent) return null;
-  const ck = coverageKey(comp, wcaEvent);
-  if (compCoverage.has(ck)) return compCoverage.get(ck)!;
-  let p = coverageInflight.get(ck);
-  if (!p) {
-    p = fetchCompCoverage(compName, wcaEvent)
-      .then((r) => { if (r !== null) compCoverage.set(ck, r); return r; })
-      .catch(() => null)
-      .finally(() => { coverageInflight.delete(ck); });
-    coverageInflight.set(ck, p);
-  }
-  return p;
+  return webTimerWcaDifficultyAdapter.probeCompetitionCoverage(comp, compName, wcaEvent);
 }
 
 /** 同步读已探测的 comp 覆盖:true=已入库 / false=未入库 / null=未知(尚未探测 / 判不了)。 */
 export function getCompCoverage(comp: string, wcaEvent: string): boolean | null {
-  const v = compCoverage.get(coverageKey(comp, wcaEvent));
-  return v === undefined ? null : v;
+  return webTimerWcaDifficultyAdapter.getCompetitionCoverage(comp, wcaEvent);
 }
 
 /** comp mode: load the comp once (cached), filter to event + round + group (+ 可选难度),
@@ -416,8 +509,17 @@ async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
     knownEmpty.add(key); return; // 该比赛没有此 event / 该难度无匹配 → 显式提示,不伪造生成
   }
   knownEmpty.delete(key);
-  const q = (pools[key] ??= []);
-  for (const it of rows) { q.push(it.scramble); rememberMeta(it.scramble, it.meta); }
+  const q = (compQueues[key] ??= []);
+  const anchor = compAppendAfter[key];
+  const anchorIndex = anchor ? rows.findIndex((row) => row.slot === anchor) : -1;
+  const start = anchorIndex >= 0 ? (anchorIndex + 1) % rows.length : 0;
+  // Append exactly one official cycle. A hydrated queue contains at most the
+  // first 50 pending rows; starting after its final cached slot restores the
+  // uncached competition tail before cycling to slot one.
+  for (let offset = 0; offset < rows.length; offset++) {
+    q.push(rows[(start + offset) % rows.length]!);
+  }
+  compAppendAfter[key] = q[q.length - 1]!.slot;
   persist();
 }
 
@@ -443,14 +545,18 @@ async function seedPrecomputed(spec: WcaSourceSpec, key: string): Promise<number
   if (samples.length === 0) return 0;
   // 最优模式与 live 语义一致:只端有最优等态的示例(最优打乱同态,度量值不变),不静默回退原打乱。
   const useOptimal = wantOptimal(spec, wev(spec)!);
-  const list: string[] = [];
+  const candidates: Array<{ scramble: string; sample: PuzzleExampleSample }> = [];
   for (const smp of samples) {
     const raw = useOptimal ? smp[2] : smp[1];
     if (!raw) continue;
-    const s = normalize(raw);
-    list.push(s);
-    const m = entry.idMeta[smp[0]];
-    if (m) rememberMeta(s, { ci: m[0], cn: entry.comps[m[0]]?.[0] ?? m[0], e: m[1], r: m[3], g: m[4], n: m[2], x: m[5] as 0 | 1 });
+    candidates.push({ scramble: normalize(raw), sample: smp });
+  }
+  const filtered = await localFilterRows(spec, candidates);
+  const list: string[] = [];
+  for (const candidate of filtered) {
+    list.push(candidate.scramble);
+    const m = entry.idMeta[candidate.sample[0]];
+    if (m) rememberMeta(candidate.scramble, { ci: m[0], cn: entry.comps[m[0]]?.[0] ?? m[0], e: m[1], r: m[3], g: m[4], n: m[2], x: m[5] as 0 | 1 });
   }
   precomputedFor.set(key, list);
   return list.length;
@@ -479,19 +585,7 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
   if (!w) return;
   const useOptimal = wantOptimal(spec, w);
   const buildQs = () => {
-    const qs = new URLSearchParams({ event: w, count: String(FETCH_COUNT) });
-    if (spec.from) qs.set('from', spec.from);
-    if (spec.to) qs.set('to', spec.to);
-    if (useOptimal) qs.set('optimal', '1'); // 服务端只回有最优等态的真题,池内每条都可切最优
-    // 难度过滤(date 模式):只回该 (方法,阶段,配色) 最优步数 ∈ steps 的真题。
-    if (spec.diff && spec.diff.steps.length > 0) {
-      qs.set('variant', spec.diff.variant);
-      qs.set('stage', spec.diff.stage);
-      qs.set('colors', spec.diff.colors);
-      qs.set('steps', [...spec.diff.steps].sort((a, b) => a - b).join(','));
-      if (spec.diff.merged) qs.set('family', '1'); // 跨 3x3 族取题(非 3x3 族服务端忽略)
-    }
-    return qs;
+    return timerWcaRandomRequestQuery(w, sourceSettings(spec), FETCH_COUNT);
   };
   const q = (pools[key] ??= []);
   const hasLocalFilter = !!spec.stepFilter || !!spec.typeFilter;
@@ -530,21 +624,31 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
     if (!res.ok) return; // 其它失败(5xx / 网络)= 瞬时,不标空,稍后重取
     const data = (await res.json()) as { scrambles?: RandomItem[] };
     const items = Array.isArray(data.scrambles) ? data.scrambles : [];
-    if (items.length === 0) { if (!hasPrecomputed) knownEmpty.add(key); return; }
-    let added = 0;
+    if (items.length === 0) return; // 200 + 空批没有全集证明:保持 transient,下次重试。
+    const candidates: Array<{
+      scramble: string;
+      item: RandomItem;
+      usedOptimal: boolean;
+    }> = [];
+    for (const item of items) {
+      if (!item?.scramble) continue;
+      const usedOptimal = useOptimal && !!item.o;
+      candidates.push({
+        scramble: normalize(usedOptimal ? item.o! : item.scramble),
+        item,
+        usedOptimal,
+      });
+    }
+    const accepted = await localFilterRows(spec, candidates);
+    const added = accepted.length;
     const got: string[] = [];
-    for (const it of items) {
-      if (!it?.scramble) continue;
-      // 最优模式且该条带最优等态 → 用最优打乱(同态,更短);否则用原打乱(服务器在稀有难度档无最优时回退)。
-      const useOpt = useOptimal && !!it.o;
-      const s = normalize(useOpt ? it.o! : it.scramble);
-      if (!localPass(spec, s)) continue; // 客户端精确过滤(服务端不懂小魔方步数 / 二阶状态族)
-      q.push(s);
-      got.push(s);
-      added++;
-      rememberMeta(s, {
-        ci: it.ci, cn: it.cn, e: it.e, r: it.r, g: it.g, n: it.n, x: it.x,
-        ...(useOptimal && !useOpt ? { nonOptimal: true } : {}),
+    for (const candidate of accepted) {
+      q.push(candidate.scramble);
+      got.push(candidate.scramble);
+      const item = candidate.item;
+      rememberMeta(candidate.scramble, {
+        ci: item.ci, cn: item.cn, e: item.e, r: item.r, g: item.g, n: item.n, x: item.x,
+        ...(useOptimal && !candidate.usedOptimal ? { nonOptimal: true } : {}),
       });
     }
     // 要 FETCH_COUNT 条却回得更少 = 服务端已扫完全集 → 这批就是匹配全集,登记后不再联网。
@@ -553,8 +657,9 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
     totalAdded += added;
     if (added > 0) break; // 已找到匹配,不再多抓(短路,常态一批即够)
   }
-  // 连抓 maxBatches 批仍一条不落且无预计算 → 当前步数区间 / 状态类型没有真题 → 确认空。
-  if (hasLocalFilter && !hasPrecomputed && totalAdded === 0) { knownEmpty.add(key); return; }
+  // 连抓 maxBatches 批仍一条不落 = 有界采样 miss,不是全集为空的证明。
+  // 保持 transient,让 nextWca / 退避重试继续找;严禁写入 knownEmpty 永久锁死。
+  if (hasLocalFilter && !hasPrecomputed && totalAdded === 0) return;
   knownEmpty.delete(key);
   persist();
 }
@@ -572,7 +677,8 @@ function fill(spec: WcaSourceSpec): Promise<void> {
       if (spec.mode === 'comp') await fillComp(spec, key);
       else await fillDate(spec, key);
     } catch {
-      /* network error — caller falls back to a generated scramble */
+      /* Transient failure stays distinguishable from an empty source; the
+         caller keeps the real-source slot empty and retries without substitution. */
     } finally {
       inflight[key] = undefined;
     }
@@ -583,7 +689,7 @@ function fill(spec: WcaSourceSpec): Promise<void> {
 
 /** Whether this source can yield real scrambles (event mapped + comp picked in
  *  comp mode). Whether the picked comp actually has the event is resolved async;
- *  an empty result falls back to a generated scramble. */
+ *  an empty result is reported explicitly and never replaced with generated data. */
 export function hasWcaSource(spec: WcaSourceSpec): boolean {
   return specKey(spec) !== null;
 }
@@ -605,7 +711,30 @@ export function isWcaSourceEmpty(spec: WcaSourceSpec): boolean {
 export function isWcaCompUnindexed(spec: WcaSourceSpec): boolean {
   const w = wev(spec);
   if (!w || spec.mode !== 'comp' || !spec.comp) return false;
-  return compCoverage.get(coverageKey(spec.comp, w)) === false;
+  return webTimerWcaDifficultyAdapter.getCompetitionCoverage(spec.comp, w) === false;
+}
+
+function queuedCount(spec: WcaSourceSpec, key: string): number {
+  return spec.mode === 'comp'
+    ? (compQueues[key]?.length ?? 0)
+    : (pools[key]?.length ?? 0);
+}
+
+function shiftQueued(spec: WcaSourceSpec, key: string): WcaDispensedScramble | null {
+  if (spec.mode === 'comp') {
+    const row = compQueues[key]?.shift();
+    if (!row) return null;
+    // Register provenance at dispense time. Registering an entire competition
+    // by scramble text would let a later identical-text slot overwrite this one.
+    const meta = { ...row.meta };
+    rememberMeta(row.scramble, meta);
+    return { scramble: row.scramble, slot: row.slot, meta };
+  }
+  const scramble = pools[key]?.shift();
+  if (!scramble) return null;
+  const sourceMeta = metaByScramble.get(scramble);
+  const meta = sourceMeta ? { ...sourceMeta } : null;
+  return { scramble, slot: meta ? compSlot(meta) : null, meta };
 }
 
 /** Warm the pool ahead of time (on spec change / when WCA mode turns on). */
@@ -613,42 +742,58 @@ export function prefetchWca(spec: WcaSourceSpec): void {
   hydrate();
   const key = specKey(spec);
   if (!key) return;
-  if ((pools[key]?.length ?? 0) < REFILL_AT) void fill(spec);
+  if (queuedCount(spec, key) < REFILL_AT) void fill(spec);
 }
 
-/** Synchronous take — returns a scramble if the queue has one (and tops it up in
- *  the background), else null so the caller can show loading and await nextWca. */
+/** Synchronous occurrence take. Consumers with history must retain this row so
+ * duplicate scramble text never loses its official-slot provenance. */
+export function peekWcaRow(spec: WcaSourceSpec): WcaDispensedScramble | null {
+  hydrate();
+  const key = specKey(spec);
+  if (!key) return null;
+  const row = shiftQueued(spec, key);
+  if (row) { noteServed(key, row.scramble); persist(); } // 反映已消费,避免重开时端出同一条
+  if (queuedCount(spec, key) < REFILL_AT) void fill(spec);
+  return row;
+}
+
+/** Backwards-compatible text-only take for consumers without navigation. */
 export function peekWca(spec: WcaSourceSpec): string | null {
-  hydrate();
-  const key = specKey(spec);
-  if (!key) return null;
-  const s = pools[key]?.shift() ?? null;
-  if (s) { noteServed(key, s); persist(); } // 反映已消费,避免重开时端出同一条
-  if ((pools[key]?.length ?? 0) < REFILL_AT) void fill(spec);
-  return s;
+  return peekWcaRow(spec)?.scramble ?? null;
 }
 
-/** Async take — ensures the queue is filled, then returns one. null if the source
- *  has no real scrambles (e.g. picked comp lacks the event) or the fetch failed. */
-export async function nextWca(spec: WcaSourceSpec): Promise<string | null> {
+/** Async occurrence take; see peekWcaRow for the history contract. */
+export async function nextWcaRow(spec: WcaSourceSpec): Promise<WcaDispensedScramble | null> {
   hydrate();
   const key = specKey(spec);
   if (!key) return null;
-  if ((pools[key]?.length ?? 0) === 0) await fill(spec);
-  const s = pools[key]?.shift() ?? null;
-  if (s) { noteServed(key, s); persist(); }
-  return s;
+  if (queuedCount(spec, key) === 0) await fill(spec);
+  const row = shiftQueued(spec, key);
+  if (row) { noteServed(key, row.scramble); persist(); }
+  return row;
+}
+
+/** Backwards-compatible text-only async take. */
+export async function nextWca(spec: WcaSourceSpec): Promise<string | null> {
+  return (await nextWcaRow(spec))?.scramble ?? null;
 }
 
 /** Source metadata for a scramble previously dispensed by this pool, else null
  *  (locally generated scramble, or one evicted from the capped meta map). */
-export function wcaMetaFor(scramble: string): WcaScrambleMeta | null {
+export function wcaMetaFor(scramble: string | WcaDispensedScramble): WcaScrambleMeta | null {
+  if (typeof scramble !== 'string') return scramble.meta;
   hydrate();
   return metaByScramble.get(normalize(scramble)) ?? null;
+}
+
+/** Stable lookup for a persisted Solve.scrambleSource identity. */
+export function wcaMetaForSlot(slot: string): WcaScrambleMeta | null {
+  hydrate();
+  return metaBySlot.get(slot) ?? null;
 }
 
 /** timer EventId → WCA scrambles event_id (undefined if this event has no real
  *  competition scrambles). Exposed for the source-config UI (round/group derivation). */
 export function wcaEventId(event: EventId): string | undefined {
-  return EVENT_MAP[event];
+  return timerWcaScrambleEventId(event) ?? undefined;
 }

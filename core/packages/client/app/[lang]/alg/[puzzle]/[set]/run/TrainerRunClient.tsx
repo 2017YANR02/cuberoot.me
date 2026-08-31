@@ -15,10 +15,9 @@ import {
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
-import { useGestureWheel } from '@/hooks/useGestureWheel';
+import { GestureWheel, useGestureWheel } from '@cuberoot/timer-ui';
 import { useCopy } from '@/hooks/useCopy';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
-import GestureWheel from '@/components/GestureWheel';
 import BoolToggle from '@/components/BoolToggle';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import AlgCaseMetaModal from '@/components/AlgCaseMetaModal';
@@ -889,6 +888,12 @@ export default function TrainerRunClient() {
       const st = useTrainerStore.getState().timerState;
       if (st === TimerState.RUNNING) stopTimer();
       else if (st === TimerState.NOT_RUNNING) getTimerReady(TIMER_DELAY_MS);
+    },
+    onPressCancel: () => {
+      const st = useTrainerStore.getState().timerState;
+      if (st === TimerState.READY
+        || st === TimerState.AWAITING_READY
+        || st === TimerState.STOPPING) setTimerState(TimerState.NOT_RUNNING);
     },
     onPressUp: () => {
       // 不计时模式:单击(未拖动)= 下一个打乱(三条一屏时 = 下一屏三条)

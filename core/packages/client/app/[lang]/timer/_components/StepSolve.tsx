@@ -10,11 +10,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronRight, Play } from 'lucide-react';
 import {
-  solveByMethodId,
   METHOD_REGISTRY,
+  scheduleTimer333StepSolve,
+  timer333MethodLabel,
+  timer333StageLabel,
   type MethodId,
   type SolveResult,
-} from '../_lib/solver/methods';
+} from '@cuberoot/puzzle-solvers/timer-333-step';
 import SolverCompareModal from './SolverCompareModal';
 import CuberReconPlayer from '@/components/CuberReconPlayer';
 import type { ReconPlayerHandle } from '@/components/recon/ReconPlayerBase';
@@ -47,6 +49,7 @@ export default function StepSolve({ scramble, isZh }: Props) {
   const [methodId, setMethodId] = useState<MethodId>(loadSavedMethod);
   const [results, setResults] = useState<Record<MethodId, SolveResult | null>>(() => ({ ...EMPTY }));
   const [computing, setComputing] = useState(false);
+  const [errorKey, setErrorKey] = useState<string | null>(null);
   const [compareOpen, setCompareOpen] = useState(false);
   const [selStage, setSelStage] = useState(-1); // -1 = 完整解法,否则单阶段索引
   // 共享 3D 播放器句柄(CuberReconPlayer 回填),供阶段行 ▷ 跳到开头并播放。
@@ -57,28 +60,42 @@ export default function StepSolve({ scramble, isZh }: Props) {
   }, [methodId]);
 
   // 打乱变了 → 清缓存(各方法重算)。
-  useEffect(() => { setResults({ ...EMPTY }); }, [scramble]);
+  useEffect(() => {
+    setResults({ ...EMPTY });
+    setErrorKey(null);
+  }, [scramble]);
   // 切方法 / 打乱 → 演示回到「完整」。
   useEffect(() => { setSelStage(-1); }, [methodId, scramble]);
 
   // 展开后按需算当前方法(未缓存才算);BFS 推到微任务,首帧不卡。
   useEffect(() => {
-    if (!open || results[methodId]) return;
+    if (!open || results[methodId]) {
+      setComputing(false);
+      return;
+    }
+    const requestKey = `${methodId}\u0000${scramble}`;
     setComputing(true);
-    let cancelled = false;
-    const t = setTimeout(() => {
-      if (cancelled) return;
-      try {
-        const r = solveByMethodId(scramble, methodId);
-        if (!cancelled) { setResults((p) => ({ ...p, [methodId]: r })); setComputing(false); }
-      } catch {
-        if (!cancelled) { setResults((p) => ({ ...p, [methodId]: { stages: [], totalMoves: 0 } })); setComputing(false); }
-      }
-    }, 0);
-    return () => { cancelled = true; clearTimeout(t); };
+    setErrorKey(null);
+    return scheduleTimer333StepSolve(
+      { scramble, methodId },
+      (outcome) => {
+        setComputing(false);
+        if (outcome.status === 'ready') {
+          setResults((previous) => ({ ...previous, [methodId]: outcome.result }));
+        } else {
+          setErrorKey(requestKey);
+        }
+      },
+      (run) => {
+        const timer = window.setTimeout(run, 0);
+        return () => window.clearTimeout(timer);
+      },
+    );
   }, [open, scramble, methodId, results]);
 
   const result = results[methodId];
+  const requestKey = `${methodId}\u0000${scramble}`;
+  const language = isZh ? 'zh' : 'en';
 
   const fullMoves = useMemo(() => (result ? result.stages.flatMap((s) => s.moves) : []), [result]);
   // prefix[i] = 前 i 个阶段的全部步骤(该阶段动画的起手 setup)。
@@ -126,7 +143,7 @@ export default function StepSolve({ scramble, isZh }: Props) {
                 className={`stepsolve-tab${methodId === m.id ? ' is-active' : ''}`}
                 onClick={() => setMethodId(m.id)}
               >
-                {isZh ? m.nameZh : m.nameEn}
+                {timer333MethodLabel(m, language)}
               </button>
             ))}
             <button type="button" className="stepsolve-compare" onClick={() => setCompareOpen(true)}>
@@ -136,6 +153,12 @@ export default function StepSolve({ scramble, isZh }: Props) {
 
           {computing && !result && (
             <div className="stepsolve-status">{tr({ zh: '计算中…', en: 'Computing…' })}</div>
+          )}
+
+          {errorKey === requestKey && !result && (
+            <div className="stepsolve-status" role="alert">
+              {tr({ zh: '未能计算解法', en: 'Unable to compute solution' })}
+            </div>
           )}
 
           {result && (
@@ -149,7 +172,7 @@ export default function StepSolve({ scramble, isZh }: Props) {
                       className={`stepsolve-row${selStage === i ? ' is-active' : ''}${playable ? '' : ' is-static'}`}
                       onClick={playable ? () => selectStage(i) : undefined}
                     >
-                      <span className="stepsolve-label">{s.head}</span>
+                      <span className="stepsolve-label">{timer333StageLabel(methodId, s.head, language)}</span>
                       <span className="stepsolve-count">{s.failed ? '—' : s.moves.length}</span>
                       <code className="stepsolve-alg">
                         {s.failed

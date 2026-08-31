@@ -1,0 +1,105 @@
+.more-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.more-menu-btn.open {
+  border-color: var(--border-strong);
+  background: var(--shell-hover);
+}
+
+/* anchored-panel: clamped (fixed portal + visualViewport bounds in component) */
+.more-menu-panel {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  width: max-content;
+  max-width: calc(100vw - 16px);
+  flex-direction: column;
+  align-self: flex-start;
+  box-sizing: border-box;
+  visibility: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--popover);
+  color: var(--foreground);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--foreground) 40%, transparent);
+}
+
+.more-menu-item {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.more-menu-item:hover:not(:disabled),
+.more-menu-item:focus-visible {
+  background: var(--shell-hover);
+}
+
+.more-menu-item:focus-visible,
+.more-menu-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.more-menu-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.more-menu-item.danger {
+  color: var(--destructive);
+}
+
+.more-menu-item.danger:hover:not(:disabled),
+.more-menu-item.danger:focus-visible {
+  background: color-mix(in srgb, var(--destructive) 14%, transparent);
+}
+
+.more-menu-icon {
+  display: inline-flex;
+  width: 16px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+}
+
+.more-menu-item.danger .more-menu-icon {
+  color: var(--destructive);
+}
+
+.more-menu-label {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow-wrap: anywhere;
+}
+
+.more-menu-link-slot {
+  display: contents;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .more-menu-item {
+    scroll-behavior: auto;
+  }
+}

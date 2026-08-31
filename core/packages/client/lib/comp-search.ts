@@ -1,4 +1,8 @@
 // Ported from packages/client-vite/src/utils/comp_search.ts.
+import {
+  CompetitionIndexContractError,
+  mergeCompetitionIndexes,
+} from '@cuberoot/shared/competition-index';
 import { compNameZh, countryToIso2, loadFlagData } from './country-flags';
 import { localizeCity, resolveCnProvince } from './city-localize';
 import { statsUrl } from './stats-base';
@@ -57,18 +61,34 @@ export async function loadComps(): Promise<Comp[]> {
   if (cache) return cache;
   if (!inflight) {
     inflight = (async () => {
+      const loadList = async (path: string): Promise<{ ok: boolean; rows: Comp[] }> => {
+        try {
+          const response = await fetch(statsUrl(path));
+          if (!response.ok) return { ok: false, rows: [] };
+          const payload: unknown = await response.json();
+          return Array.isArray(payload)
+            ? { ok: true, rows: payload as Comp[] }
+            : { ok: false, rows: [] };
+        } catch {
+          return { ok: false, rows: [] };
+        }
+      };
       const [past, upcoming] = await Promise.all([
-        fetch(statsUrl('/stats/all_past_comps.json')).then(r => r.ok ? r.json() : []).catch(() => []),
-        fetch(statsUrl('/stats/all_upcoming_comps.json')).then(r => r.ok ? r.json() : []).catch(() => []),
+        loadList('/stats/all_past_comps.json'),
+        loadList('/stats/all_upcoming_comps.json'),
         loadFlagData().catch(() => 0),
       ]);
-      const map = new Map<string, Comp>();
+      if (!past.ok || !upcoming.ok) throw new Error('competition indexes unavailable');
       const norm = (c: Comp): Comp => ({ ...c, country: normalizeCountry(c.country) });
-      for (const c of past as Comp[]) map.set(c.id, norm(c));
-      for (const c of upcoming as Comp[]) map.set(c.id, norm(c));
-      cache = [...map.values()];
+      cache = mergeCompetitionIndexes(past.rows, upcoming.rows, {
+        past: 'all_past_comps.json',
+        upcoming: 'all_upcoming_comps.json',
+      }).map(norm);
       return cache;
-    })();
+    })().catch((error) => {
+      inflight = null;
+      throw error;
+    });
   }
   return inflight;
 }
@@ -94,12 +114,15 @@ export async function loadLandingComps(): Promise<Comp[]> {
       }),
       loadFlagData({ persons: false }).catch(() => 0),
     ]).then(([past, upcoming]) => {
-      const rows = new Map<string, Comp>();
-      for (const comp of past) rows.set(comp.id, comp);
-      for (const comp of upcoming) rows.set(comp.id, comp);
-      landingCache = [...rows.values()].map((c) => ({ ...c, country: normalizeCountry(c.country) }));
+      landingCache = mergeCompetitionIndexes(past, upcoming, {
+        past: 'recent_past_comps.json',
+        upcoming: 'all_upcoming_comps.json',
+      }).map((c) => ({ ...c, country: normalizeCountry(c.country) }));
       return landingCache;
-    }).catch(() => loadComps());
+    }).catch((error: unknown) => {
+      if (error instanceof CompetitionIndexContractError) throw error;
+      return loadComps();
+    });
   }
   return landingInflight;
 }
