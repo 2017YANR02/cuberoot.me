@@ -243,7 +243,7 @@ SELECT
   ARRAY(SELECT jsonb_array_elements_text(organizer_ids::jsonb)::integer),
   CASE WHEN contact = '__EMPTY_STRING__' THEN '' ELSE NULLIF(contact, '') END,
   CASE WHEN description = '__EMPTY_STRING__' THEN '' ELSE NULLIF(description, '') END,
-  competitor_limit::integer,
+  COALESCE(NULLIF(competitor_limit, '')::integer, 0),
   participants::integer,
   NULLIF(schedule, '')::jsonb,
   created_at::timestamp,
