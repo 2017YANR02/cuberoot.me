@@ -6,7 +6,7 @@
  * the generic engine. cubing.js is NOT imported here.
  *
  * To add a puzzle: `node scripts/gen-net.mts <id>` to emit _nets/<id>.ts, then
- * register it below and in ScramblePreview2D's HAS_PREVIEW.
+ * register it below and in components/scramble-preview-svg.ts.
  */
 import { renderNet, type PuzzleNetDef } from './_net_render';
 import { FTO } from './_nets/fto';

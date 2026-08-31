@@ -23,24 +23,11 @@
 import { jsPDF } from 'jspdf';
 import { FONT_MONO, FONT_SANS, FONT_CJK, loadPdfFonts, ensureCjkFont } from '@/lib/pdf-fonts';
 import { svgStringToElement, embedSvg } from '@/lib/pdf-svg';
-import { renderUnfoldedSvgForEvent, eventToCubeSize } from '@cuberoot/shared/cube-unfolded-svg';
-import { renderClockScrambleSvg, DEFAULT_CLOCK_COLORS } from './_svg/clock_svg';
-import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@/lib/sq1-svg';
-import { renderMirrorBlocksScrambleSvg } from './_svg/mirror_blocks_svg';
-import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from './_svg/mega_svg';
-import { renderPyraScrambleSvg, PYRA_DEFAULT_COLORS } from './_svg/pyraminx_svg';
-import { renderSkewbScrambleSvg, SKEWB_DEFAULT_COLORS } from './_svg/skewb_svg';
+import { eventToCubeSize, renderUnfoldedSvgForEvent } from '@cuberoot/shared/cube-unfolded-svg';
+import { renderScramblePreviewSvg } from '@/components/scramble-preview-svg';
 import { groupLetter, type WcaFormat } from './_wca-round';
 import { eventDisplayName } from '@/lib/wca-events';
 import { tFmc, fontForLocale, type TnoodleLocale } from './_tnoodle-translate';
-
-// Stub for getScramble2DSvg (removed cubing_2d_svg.ts since it requires
-// TwistyPlayer which conflicts with Turbopack worker handling). All currently
-// supported events have a custom synchronous SVG renderer above; this stub
-// just returns null for anything that falls through.
-async function getScramble2DSvg(_event: string, _scramble: string): Promise<string | null> {
-  return null;
-}
 
 // ─── Tnoodle constants (verbatim) ─────────────────────────────────────────
 const MAX_SCRAMBLES_PER_PAGE = 7;
@@ -550,30 +537,18 @@ async function renderPage(
         doc.text(line, textLeft, lineY, { baseline: 'alphabetic' });
       });
 
-      // Image rendering priority:
-      //   NxN cube → synchronous unfolded SVG renderer (fast)
-      //   clock / sq1 / mega → tnoodle puzzle port (recolorable, synchronous)
-      //   pyra / skewb → cubing.js TwistyPlayer 2D extraction (slow)
+      // Web thumbnails and PDF rows deliberately use the same synchronous
+      // renderer registry, so a visible preview cannot become an empty PDF cell.
       // isExtra unused — state computation identical for main vs extras.
       void isExtra;
       if (hdr.showPreview) {
-        let portedSvg: string | null = null;
-        if (sheet.event === 'mirror_333') {
-          portedSvg = renderMirrorBlocksScrambleSvg(a.scramble);
-        } else if (sheet.event === 'clock') {
-          portedSvg = renderClockScrambleSvg(a.scramble, hdr.eventColors?.clock ?? DEFAULT_CLOCK_COLORS);
-        } else if (sheet.event === 'sq1') {
-          portedSvg = renderSq1ScrambleSvg(a.scramble, hdr.eventColors?.sq1 ?? DEFAULT_SQ1_COLORS);
-        } else if (sheet.event === 'minx') {
-          portedSvg = renderMegaScrambleSvg(a.scramble, hdr.eventColors?.minx ?? DEFAULT_MEGA_COLORS);
-        } else if (sheet.event === 'pyram') {
-          portedSvg = renderPyraScrambleSvg(a.scramble, hdr.eventColors?.pyram ?? PYRA_DEFAULT_COLORS);
-        } else if (sheet.event === 'skewb') {
-          portedSvg = renderSkewbScrambleSvg(a.scramble, hdr.eventColors?.skewb ?? SKEWB_DEFAULT_COLORS);
-        }
-        const svgStr = portedSvg
-          ?? renderUnfoldedSvgForEvent(sheet.event, a.scramble)
-          ?? await getScramble2DSvg(sheet.event, a.scramble);
+        const svgStr = renderScramblePreviewSvg({
+          event: sheet.event,
+          scramble: a.scramble,
+          clockColors: hdr.eventColors?.clock,
+          sq1Colors: hdr.eventColors?.sq1,
+          megaColors: hdr.eventColors?.minx,
+        });
         if (svgStr) {
           const svgEl = svgStringToElement(svgStr);
           await embedSvg(doc, svgEl, imgX + DEFAULT_CELL_PADDING, rowTop + DEFAULT_CELL_PADDING,

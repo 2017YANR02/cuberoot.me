@@ -22,7 +22,7 @@
  * face interior), so it dips concavely between the two non-turning corners regardless of which
  * diagonal the turning corners sit on.
  */
-import { ivyApply, MOVE_CENTERS } from '@/lib/ivy-solver';
+import { ivyApplyStandard, MOVE_CENTERS } from '@/lib/ivy-solver';
 
 // Face order U R F B L D = 0..5 (matches lib/ivy-solver). Home colors (WCA-ish scheme).
 export const IVY_DEFAULT_COLORS: string[] = [
@@ -92,7 +92,7 @@ export function renderIvyScrambleSvg(scramble: string, colors: string[] = IVY_DE
   let centers = [0, 1, 2, 3, 4, 5];
   let corners = [0, 0, 0, 0];
   try {
-    const st = ivyApply(scramble);
+    const st = ivyApplyStandard(scramble);
     centers = st.centers;
     corners = st.corners;
   } catch (e) {
