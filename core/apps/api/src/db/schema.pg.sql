@@ -437,6 +437,12 @@ CREATE INDEX idx_drive_uploads_owner_expiry
 CREATE TRIGGER drive_uploads_updated_at BEFORE UPDATE ON drive_uploads
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
+CREATE TABLE drive_shares (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  node_id    UUID NOT NULL UNIQUE REFERENCES drive_nodes(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE user_friendships (
   user_low_id          BIGINT      NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
   user_high_id         BIGINT      NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,

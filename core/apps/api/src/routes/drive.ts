@@ -47,6 +47,7 @@ interface NodeRow {
   parent_id: string | null;
   name: string;
   kind: 'file' | 'folder';
+  shared?: boolean;
   mime_type: string | null;
   size_bytes: number | string;
   storage_key: string | null;
@@ -104,6 +105,7 @@ function nodeJson(row: NodeRow): DriveNode {
     parentId: row.parent_id,
     name: row.name,
     kind: row.kind,
+    shared: row.shared === true,
     mimeType: row.mime_type,
     sizeBytes: Number(row.size_bytes),
     createdAt: asIso(row.created_at),
@@ -259,16 +261,20 @@ driveRoutes.get('/drive', async (c) => {
   const [nodes, uploads, currentQuota, currentBreadcrumbs] = await Promise.all([
     trash
       ? sql<NodeRow[]>`
-          SELECT id, parent_id, name, kind, mime_type, size_bytes, storage_key, status, created_at, updated_at
-            FROM drive_nodes
-           WHERE owner_user_id = ${current.userId} AND trashed_at IS NOT NULL AND trash_root_id = id
-           ORDER BY trashed_at DESC, id`
+          SELECT n.id, n.parent_id, n.name, n.kind, n.mime_type, n.size_bytes, n.storage_key,
+                 n.status, n.created_at, n.updated_at, share.id IS NOT NULL AS shared
+            FROM drive_nodes n
+            LEFT JOIN drive_shares share ON share.node_id = n.id
+           WHERE n.owner_user_id = ${current.userId} AND n.trashed_at IS NOT NULL AND n.trash_root_id = n.id
+           ORDER BY n.trashed_at DESC, n.id`
       : sql<NodeRow[]>`
-          SELECT id, parent_id, name, kind, mime_type, size_bytes, storage_key, status, created_at, updated_at
-            FROM drive_nodes
-           WHERE owner_user_id = ${current.userId} AND parent_id IS NOT DISTINCT FROM ${parentId}
-             AND trashed_at IS NULL AND status = 'ready'
-           ORDER BY CASE WHEN kind = 'folder' THEN 0 ELSE 1 END, LOWER(name), id`,
+          SELECT n.id, n.parent_id, n.name, n.kind, n.mime_type, n.size_bytes, n.storage_key,
+                 n.status, n.created_at, n.updated_at, share.id IS NOT NULL AS shared
+            FROM drive_nodes n
+            LEFT JOIN drive_shares share ON share.node_id = n.id
+           WHERE n.owner_user_id = ${current.userId} AND n.parent_id IS NOT DISTINCT FROM ${parentId}
+             AND n.trashed_at IS NULL AND n.status = 'ready'
+           ORDER BY CASE WHEN n.kind = 'folder' THEN 0 ELSE 1 END, LOWER(n.name), n.id`,
     sql<UploadRow[]>`
       SELECT u.id, u.node_id, u.owner_user_id, n.parent_id, n.name, n.mime_type,
              u.expected_bytes, u.received_bytes, u.chunk_bytes, u.client_last_modified, u.expires_at
@@ -616,6 +622,20 @@ driveRoutes.post('/drive/nodes/:id/trash', async (c) => {
   if (!nodeId) return c.json({ error: 'valid node id is required' }, 400);
   const outcome = await sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(${QUOTA_LOCK_ID})`;
+    const locked = await tx`
+      SELECT id FROM drive_nodes
+       WHERE id IN (
+         WITH RECURSIVE subtree AS (
+           SELECT id FROM drive_nodes
+            WHERE id = ${nodeId} AND owner_user_id = ${current.userId} AND status = 'ready' AND trashed_at IS NULL
+           UNION ALL
+           SELECT child.id FROM drive_nodes child JOIN subtree ON child.parent_id = subtree.id
+            WHERE child.owner_user_id = ${current.userId} AND child.trashed_at IS NULL
+         )
+         SELECT id FROM subtree
+       )
+       FOR UPDATE`;
+    if (!locked.length) return 'missing' as const;
     const uploads = await tx`
       WITH RECURSIVE subtree AS (
         SELECT id FROM drive_nodes
@@ -628,6 +648,15 @@ driveRoutes.post('/drive/nodes/:id/trash', async (c) => {
        WHERE upload.node_id IN (SELECT id FROM subtree)
        LIMIT 1`;
     if (uploads.length) return 'active-upload' as const;
+    await tx`
+      WITH RECURSIVE subtree AS (
+        SELECT id FROM drive_nodes
+         WHERE id = ${nodeId} AND owner_user_id = ${current.userId} AND status = 'ready' AND trashed_at IS NULL
+        UNION ALL
+        SELECT child.id FROM drive_nodes child JOIN subtree ON child.parent_id = subtree.id
+         WHERE child.owner_user_id = ${current.userId} AND child.trashed_at IS NULL
+      )
+      DELETE FROM drive_shares WHERE node_id IN (SELECT id FROM subtree)`;
     const rows = await tx`
       WITH RECURSIVE subtree AS (
         SELECT id FROM drive_nodes
@@ -734,9 +763,102 @@ driveRoutes.post('/drive/files/:id/access', async (c) => {
   return c.json({ url: `${origin}/v1/drive/content/${file.id}?token=${encodeURIComponent(token)}`, inline });
 });
 
+driveRoutes.post('/drive/files/:id/share', async (c) => {
+  noStore(c);
+  checkRateLimit(getIp(c), { bucket: 'drive-write', max: 120 });
+  const current = await requireDrive(c);
+  const nodeId = uuid(c.req.param('id'));
+  if (!nodeId) return c.json({ error: 'valid file id is required' }, 400);
+  const shareId = await sql.begin(async (tx) => {
+    if (!current.isAdmin) {
+      const members = await tx<{ enabled: boolean }[]>`
+        SELECT enabled FROM drive_members WHERE user_id = ${current.userId} FOR UPDATE`;
+      if (members[0]?.enabled !== true) return null;
+    }
+    const files = await tx<{ id: string }[]>`
+      SELECT id FROM drive_nodes
+       WHERE id = ${nodeId} AND owner_user_id = ${current.userId}
+         AND kind = 'file' AND status = 'ready' AND trashed_at IS NULL
+       FOR UPDATE`;
+    if (!files[0]) return null;
+    const rows = await tx<{ id: string }[]>`
+      INSERT INTO drive_shares (node_id) VALUES (${nodeId})
+      ON CONFLICT (node_id) DO UPDATE SET node_id = EXCLUDED.node_id
+      RETURNING id`;
+    return rows[0]?.id ?? null;
+  });
+  if (!shareId) return c.json({ error: 'file not found' }, 404);
+  return c.json({ id: shareId });
+});
+
+driveRoutes.delete('/drive/files/:id/share', async (c) => {
+  noStore(c);
+  checkRateLimit(getIp(c), { bucket: 'drive-write', max: 120 });
+  const current = await requireDrive(c);
+  const nodeId = uuid(c.req.param('id'));
+  if (!nodeId) return c.json({ error: 'valid file id is required' }, 400);
+  const found = await sql.begin(async (tx) => {
+    const files = await tx`
+      SELECT 1 FROM drive_nodes
+       WHERE id = ${nodeId} AND owner_user_id = ${current.userId}
+         AND kind = 'file' AND status = 'ready' AND trashed_at IS NULL
+       FOR UPDATE`;
+    if (!files.length) return false;
+    await tx`DELETE FROM drive_shares WHERE node_id = ${nodeId}`;
+    return true;
+  });
+  if (!found) return c.json({ error: 'file not found' }, 404);
+  return c.json({ ok: true });
+});
+
 function contentDisposition(name: string, inline: boolean): string {
   const fallback = name.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_') || 'download';
   return `${inline ? 'inline' : 'attachment'}; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(name)}`;
+}
+
+type StoredFileRow = NodeRow & { owner_wca_id: string | null; drive_enabled: boolean | null };
+
+async function streamDriveFile(
+  c: Context,
+  file: StoredFileRow,
+  inline: boolean,
+  cacheControl = 'private, no-store',
+): Promise<Response> {
+  if (!file.storage_key || (!file.drive_enabled && !isAdminWcaId(file.owner_wca_id ?? ''))) {
+    return c.json({ error: 'file not found' }, 404);
+  }
+  const filePath = driveStoredPath(file.storage_key);
+  const size = Number(file.size_bytes);
+  try {
+    const stat = await fs.stat(filePath);
+    if (!stat.isFile() || stat.size !== size) return c.json({ error: 'stored file unavailable' }, 404);
+  } catch {
+    return c.json({ error: 'stored file unavailable' }, 404);
+  }
+
+  const rangeHeader = c.req.header('Range');
+  const range = parseByteRange(rangeHeader, size);
+  if (rangeHeader && !range) {
+    return new Response(null, {
+      status: 416,
+      headers: { 'Content-Range': `bytes */${size}`, 'Accept-Ranges': 'bytes', 'Cache-Control': cacheControl },
+    });
+  }
+  const start = range?.start ?? 0;
+  const end = range?.end ?? size - 1;
+  const headers = new Headers({
+    'Accept-Ranges': 'bytes',
+    'Cache-Control': cacheControl,
+    'Content-Disposition': contentDisposition(file.name, inline),
+    'Content-Length': String(end - start + 1),
+    'Content-Type': file.mime_type ?? 'application/octet-stream',
+    'Cross-Origin-Resource-Policy': 'cross-origin',
+    'X-Content-Type-Options': 'nosniff',
+  });
+  if (range) headers.set('Content-Range', `bytes ${start}-${end}/${size}`);
+  if (c.req.method === 'HEAD') return new Response(null, { status: range ? 206 : 200, headers });
+  const body = Readable.toWeb(createReadStream(filePath, { start, end })) as ReadableStream<Uint8Array>;
+  return new Response(body, { status: range ? 206 : 200, headers });
 }
 
 async function driveContent(c: Context): Promise<Response> {
@@ -756,7 +878,7 @@ async function driveContent(c: Context): Promise<Response> {
   if (payload.driveFile !== nodeId || ticketUserId == null || ticketUserId <= 0) {
     return c.json({ error: 'file access token invalid' }, 401);
   }
-  const rows = await sql<(NodeRow & { owner_wca_id: string | null; drive_enabled: boolean | null })[]>`
+  const rows = await sql<StoredFileRow[]>`
     SELECT n.id, n.parent_id, n.name, n.kind, n.mime_type, n.size_bytes, n.storage_key,
            n.status, n.created_at, n.updated_at, owner.wca_id AS owner_wca_id,
            member.enabled AS drive_enabled
@@ -767,46 +889,33 @@ async function driveContent(c: Context): Promise<Response> {
        AND n.kind = 'file' AND n.status = 'ready' AND n.trashed_at IS NULL
      LIMIT 1`;
   const file = rows[0];
-  if (!file?.storage_key || (!file.drive_enabled && !isAdminWcaId(file.owner_wca_id ?? ''))) {
-    return c.json({ error: 'file not found' }, 404);
-  }
-  const filePath = driveStoredPath(file.storage_key);
-  const size = Number(file.size_bytes);
-  try {
-    const stat = await fs.stat(filePath);
-    if (!stat.isFile() || stat.size !== size) return c.json({ error: 'stored file unavailable' }, 404);
-  } catch {
-    return c.json({ error: 'stored file unavailable' }, 404);
-  }
+  if (!file) return c.json({ error: 'file not found' }, 404);
+  return streamDriveFile(c, file, payload.inline === true && isDrivePreviewableMime(file.mime_type));
+}
 
-  const rangeHeader = c.req.header('Range');
-  const range = parseByteRange(rangeHeader, size);
-  if (rangeHeader && !range) {
-    return new Response(null, {
-      status: 416,
-      headers: { 'Content-Range': `bytes */${size}`, 'Accept-Ranges': 'bytes', 'Cache-Control': 'private, no-store' },
-    });
-  }
-  const start = range?.start ?? 0;
-  const end = range?.end ?? size - 1;
-  const inline = payload.inline === true && isDrivePreviewableMime(file.mime_type);
-  const headers = new Headers({
-    'Accept-Ranges': 'bytes',
-    'Cache-Control': 'private, no-store',
-    'Content-Disposition': contentDisposition(file.name, inline),
-    'Content-Length': String(end - start + 1),
-    'Content-Type': file.mime_type ?? 'application/octet-stream',
-    'Cross-Origin-Resource-Policy': 'cross-origin',
-    'X-Content-Type-Options': 'nosniff',
-  });
-  if (range) headers.set('Content-Range', `bytes ${start}-${end}/${size}`);
-  if (c.req.method === 'HEAD') return new Response(null, { status: range ? 206 : 200, headers });
-  const body = Readable.toWeb(createReadStream(filePath, { start, end })) as ReadableStream<Uint8Array>;
-  return new Response(body, { status: range ? 206 : 200, headers });
+async function driveSharedContent(c: Context): Promise<Response> {
+  const shareId = uuid(c.req.param('id'));
+  if (!shareId) return c.json({ error: 'file not found' }, 404);
+  const rows = await sql<StoredFileRow[]>`
+    SELECT n.id, n.parent_id, n.name, n.kind, n.mime_type, n.size_bytes, n.storage_key,
+           n.status, n.created_at, n.updated_at, owner.wca_id AS owner_wca_id,
+           member.enabled AS drive_enabled
+      FROM drive_shares share
+      JOIN drive_nodes n ON n.id = share.node_id
+      JOIN app_users owner ON owner.id = n.owner_user_id
+      LEFT JOIN drive_members member ON member.user_id = n.owner_user_id
+     WHERE share.id = ${shareId}
+       AND n.kind = 'file' AND n.status = 'ready' AND n.trashed_at IS NULL
+     LIMIT 1`;
+  const file = rows[0];
+  if (!file) return c.json({ error: 'file not found' }, 404);
+  return streamDriveFile(c, file, false, 'no-store');
 }
 
 driveRoutes.get('/drive/content/:id', driveContent);
 driveRoutes.on('HEAD', '/drive/content/:id', driveContent);
+driveRoutes.get('/drive/shared/:id', driveSharedContent);
+driveRoutes.on('HEAD', '/drive/shared/:id', driveSharedContent);
 
 driveRoutes.get('/drive/members', async (c) => {
   noStore(c);
@@ -852,8 +961,16 @@ driveRoutes.delete('/drive/members/:userId', async (c) => {
   await requireAdmin(c);
   const userId = safeInteger(c.req.param('userId'));
   if (userId == null || userId <= 0) return c.json({ error: 'valid userId is required' }, 400);
-  const rows = await sql`
-    UPDATE drive_members SET enabled = FALSE WHERE user_id = ${userId} AND enabled RETURNING user_id`;
-  if (!rows.length) return c.json({ error: 'Drive member not found' }, 404);
+  const removed = await sql.begin(async (tx) => {
+    const rows = await tx`
+      UPDATE drive_members SET enabled = FALSE WHERE user_id = ${userId} AND enabled RETURNING user_id`;
+    if (!rows.length) return false;
+    await tx`
+      DELETE FROM drive_shares share
+       USING drive_nodes node
+       WHERE share.node_id = node.id AND node.owner_user_id = ${userId}`;
+    return true;
+  });
+  if (!removed) return c.json({ error: 'Drive member not found' }, 404);
   return c.json({ ok: true });
 });

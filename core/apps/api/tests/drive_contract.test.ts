@@ -14,8 +14,9 @@ const normalizeSql = (sql: string) => sql.replace(/\s+/g, ' ').trim();
 
 describe('Drive contract', () => {
   it('keeps its migration and schema snapshot aligned', async () => {
-    const [migration, schema] = await Promise.all([
+    const [migration, shareMigration, schema] = await Promise.all([
       read('../migrations/0184_drive.sql'),
+      read('../migrations/0189_drive_shares.sql'),
       read('../src/db/schema.pg.sql'),
     ]);
 
@@ -23,7 +24,10 @@ describe('Drive contract', () => {
     expect(migration).toContain('CREATE TABLE drive_nodes');
     expect(migration).toContain('CREATE TABLE drive_uploads');
     expect(migration).toContain('expected_bytes <= 21474836480');
+    expect(shareMigration).toContain('CREATE TABLE drive_shares');
+    expect(shareMigration).toContain('node_id    UUID NOT NULL UNIQUE REFERENCES drive_nodes(id) ON DELETE CASCADE');
     expect(normalizeSql(schema)).toContain(normalizeSql(migration));
+    expect(normalizeSql(schema)).toContain(normalizeSql(shareMigration));
   });
 
   it('locks the 20 GB shared quota and resumable-upload boundaries', () => {
@@ -57,11 +61,14 @@ describe('Drive contract', () => {
     expect(nginx).toContain('location ~ ^/v1/drive/uploads/[0-9a-fA-F-]+$');
     expect(nginx).toContain('client_max_body_size 9m');
     expect(nginx).toContain('location ^~ /v1/drive/content/');
+    expect(nginx).toContain('location ^~ /v1/drive/shared/');
     expect(route).toContain("c.req.header('Upload-Checksum')");
     expect(route).toContain("createHash('sha256')");
     expect(route).toContain('pg_advisory_xact_lock');
     expect(route).toContain('cancel active uploads before trashing this item');
     expect(route).toContain("driveRoutes.on('HEAD', '/drive/uploads/:id'");
     expect(route).toContain("driveRoutes.on('HEAD', '/drive/content/:id'");
+    expect(route).toContain("driveRoutes.on('HEAD', '/drive/shared/:id'");
+    expect(route).toContain('DELETE FROM drive_shares WHERE node_id IN (SELECT id FROM subtree)');
   });
 });

@@ -1,5 +1,5 @@
 import type { DriveNode, DriveSnapshot, DriveUpload } from '@cuberoot/shared/drive';
-import { apiUrl, directApiUrl } from './api-base';
+import { apiUrl, directApiUrl, publicApiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
 export interface DriveMember {
@@ -12,6 +12,10 @@ export interface DriveMember {
 export interface DriveAccess {
   url: string;
   inline: boolean;
+}
+
+export interface DriveShare {
+  url: string;
 }
 
 export interface DriveDownloadSink {
@@ -149,6 +153,15 @@ export const deleteDriveNode = (nodeId: string) => (
 
 export const createDriveAccess = (nodeId: string, inline: boolean) => (
   write<DriveAccess>(`/v1/drive/files/${encodeURIComponent(nodeId)}/access`, 'POST', { inline })
+);
+
+export async function createDriveShare(nodeId: string): Promise<DriveShare> {
+  const result = await write<{ id: string }>(`/v1/drive/files/${encodeURIComponent(nodeId)}/share`, 'POST');
+  return { url: publicApiUrl(`/v1/drive/shared/${encodeURIComponent(result.id)}`) };
+}
+
+export const revokeDriveShare = (nodeId: string) => (
+  write<{ ok: boolean }>(`/v1/drive/files/${encodeURIComponent(nodeId)}/share`, 'DELETE')
 );
 
 export async function downloadDriveFile(
