@@ -462,6 +462,12 @@ function ScramblePanel({ ids, imgHeight }: { ids: number[]; imgHeight?: string }
 // ===== TimerArea 组件 =====
 // 1:1 翻译自 battle/index.html player-area 结构
 
+export function battlePointerReleaseAction(
+  eventType: 'pointerup' | 'pointercancel' | 'lostpointercapture',
+): 'up' | 'cancel' {
+  return eventType === 'pointerup' ? 'up' : 'cancel';
+}
+
 function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner }: { playerId: number; rotated?: boolean; hideScramble?: boolean; cellClass?: string; controlsCorner?: 'left' | 'right' | 'center' }) {
   const player = useBattleStore(s => s.players[playerId]);
   const store = useBattleStore();
@@ -492,7 +498,10 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner 
       curr.playerDown(playerId);
     };
 
-    const onUp = (e: PointerEvent) => {
+    const onRelease = (
+      e: PointerEvent,
+      eventType: 'pointerup' | 'pointercancel' | 'lostpointercapture',
+    ) => {
       const curr = useBattleStore.getState();
       const p = curr.players[playerId];
       if (p.pointerId !== e.pointerId) return;
@@ -501,31 +510,23 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner 
       newPlayers[playerId] = { ...p, pointerId: null };
       useBattleStore.setState({ players: newPlayers });
 
-      curr.playerCancel(playerId);
+      if (battlePointerReleaseAction(eventType) === 'up') curr.playerUp(playerId);
+      else curr.playerCancel(playerId);
     };
-
-    const onCancel = (e: PointerEvent) => {
-      const curr = useBattleStore.getState();
-      const p = curr.players[playerId];
-      if (p.pointerId !== e.pointerId) return;
-
-      const newPlayers = [...curr.players];
-      newPlayers[playerId] = { ...p, pointerId: null };
-      useBattleStore.setState({ players: newPlayers });
-
-      curr.playerUp(playerId);
-    };
+    const onUp = (e: PointerEvent) => onRelease(e, 'pointerup');
+    const onCancel = (e: PointerEvent) => onRelease(e, 'pointercancel');
+    const onLostCapture = (e: PointerEvent) => onRelease(e, 'lostpointercapture');
 
     el.addEventListener('pointerdown', onDown);
     el.addEventListener('pointerup', onUp);
     el.addEventListener('pointercancel', onCancel);
-    el.addEventListener('lostpointercapture', onCancel);
+    el.addEventListener('lostpointercapture', onLostCapture);
 
     return () => {
       el.removeEventListener('pointerdown', onDown);
       el.removeEventListener('pointerup', onUp);
       el.removeEventListener('pointercancel', onCancel);
-      el.removeEventListener('lostpointercapture', onCancel);
+      el.removeEventListener('lostpointercapture', onLostCapture);
       const curr = useBattleStore.getState();
       const p = curr.players[playerId];
       if (p.pointerId !== null) {
