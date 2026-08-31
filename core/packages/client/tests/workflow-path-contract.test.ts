@@ -437,13 +437,29 @@ describe('deployment workflow path contracts', () => {
   it('builds every workspace package consumed through Node exports in clean CI', () => {
     const renderBuild = 'pnpm --filter @cuberoot/puzzle-render-core build';
     const solverBuild = 'pnpm --filter @cuberoot/puzzle-solvers build';
-    const testBuilds = readStepRun('test.yml', 'Build shared deps').split('\n');
+    const clientPackage = JSON.parse(readFileSync(
+      join(REPO_ROOT, 'core', 'packages', 'client', 'package.json'),
+      'utf8',
+    )) as { scripts: Record<string, string> };
+    const clientDepBuilds = clientPackage.scripts['build:deps'].split(' && ');
     const coreBuilds = readStepRun('deploy_core.yml', 'Build shared deps').split('\n');
 
-    expect(testBuilds).toContain(renderBuild);
-    expect(testBuilds).toContain(solverBuild);
+    expect(readStepRun('test.yml', 'Build shared deps')).toBe(
+      'pnpm --filter @cuberoot/client build:deps',
+    );
+    expect(clientPackage.scripts.build).toMatch(/^pnpm run build:deps && /);
+    expect(clientDepBuilds).toContain(renderBuild);
+    expect(clientDepBuilds).toContain(solverBuild);
     expect(coreBuilds).toContain(renderBuild);
     expect(coreBuilds).not.toContain(solverBuild);
+  });
+
+  it('uses the clean client dependency build and non-failing summary channel for pnpm bumps', () => {
+    const workflow = readWorkflow('pnpm_bump.yml');
+    const verify = readStepRun('pnpm_bump.yml', '拿候选 pnpm 真跑一遍');
+    expect(verify).toContain('pnpm --filter @cuberoot/client build:deps');
+    expect(workflow).toContain('$GITHUB_STEP_SUMMARY');
+    expect(workflow).not.toContain('$GITHUB_SUMMARY');
   });
 
   it('runs the package and analyzer gates explicitly in CI', () => {

@@ -181,11 +181,7 @@ jobs:
       - name: Build shared deps
         working-directory: core
         run: |
-          pnpm --filter @cuberoot/shared build
-          pnpm --filter @cuberoot/visualcube build
-          pnpm --filter @cuberoot/vendor-sr-puzzlegen build
-          pnpm --filter @cuberoot/puzzle-render-core build
-          pnpm --filter @cuberoot/puzzle-solvers build
+          pnpm --filter @cuberoot/client build:deps
 
       - name: Verify stats-build producer contracts
         working-directory: core
