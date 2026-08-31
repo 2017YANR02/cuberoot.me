@@ -83,6 +83,7 @@ import {
   classifySq1EpParity,
   partitionSq1EpCases,
   sq1EpNumericCaseName,
+  sq1EpNumericGroupName,
   sq1EpNumericLayerName,
   sq1EpTopLayerName,
   type Sq1EpParity,
@@ -1062,8 +1063,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         ? ((c, orientation) => ohAlgsForCase(c, data?.cases ?? [], orientation, 'right'))
         : undefined,
       // 组标题印展示名:库里的 `AS/ASD` 在页面上叫 `S-D`,打印表不该露出 DB 里那一串
-      groupLabel: (sub) => ollByGroup.get(sub)
+      groupLabel: (sub) => (isSq1Ep && sq1EpNumericNames ? sq1EpNumericGroupName(sub) : null)
+        ?? ollByGroup.get(sub)
         ?? (set === 'zbll' ? displayZbllToken(sub.split('/').pop() ?? sub) : sub),
+      caseLabel: isSq1Ep && sq1EpNumericNames
+        ? (c => sq1EpNumericCaseName(c.name) ?? primaryCaseName(puzzleParam, set, c))
+        : undefined,
       // ZBLL 一页一类:每个子组 12 个 case 正好是一张练习表,翻到哪页就练哪一类
       groupPerPage: set === 'zbll',
       sq1BlackTop,
@@ -1587,9 +1592,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         <div className="alg-case-info">
                           <div className="alg-case-name">
                             <span className="alg-case-letter">{cardName}</span>
-                            {isSq1Ep && classifySq1EpParity(c.name) === 'parity' && (
-                              <span className="alg-ep-parity-badge">{tr({ zh: '特', en: 'Parity' })}</span>
-                            )}
                             {/* 字母制主名接管之后,站上原来那个名字(`1LLL 6 7` / `ZBLL L 34`)降为副名 —— 不丢。
                                 但 PLL 的 OLLCP 名剥掉 `PLL-` 前缀后就等于站上的名字,再挂一个副名纯属重复。 */}
                             {(() => {

@@ -41,6 +41,8 @@ export interface FromCasesOptions {
   algsFor?: (c: AlgCase, orientation: number) => readonly AlgEntry[];
   /** 子组名 → 打印用的标题(1LLL 组号换字母制 OLL 名之类) */
   groupLabel?: (subgroup: string) => string;
+  /** case → PDF 中显示的名字；默认与网页的标准主名一致。 */
+  caseLabel?: (c: AlgCase) => string;
   /**
    * 不剥收尾 AUF。3BLD 换位子那两套**必须**开:818 条里有 229 条真的以 U/U'/U2
    * 收尾,剥了就是条错公式(见 alg/3bld/comm 页头注)。
@@ -102,7 +104,7 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
       const sub = c.subgroup || '';
       const oriName = oris.length > 1 ? shortOriName(c.oriNames?.[oriIdx] ?? '') : '';
       out.push({
-        name: primaryCaseName(puzzle, set, c),
+        name: o.caseLabel?.(c) ?? primaryCaseName(puzzle, set, c),
         sub: oriName || (subOf ? subOf(c) : (c.number != null ? `#${c.number}` : undefined)),
         group: showGroups ? (groupLabel?.(sub) ?? sub ?? undefined) : undefined,
         setup: setups && setup ? formatScrambleForEvent(puzzle, setup) : undefined,
