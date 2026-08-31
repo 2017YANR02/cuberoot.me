@@ -182,23 +182,32 @@
     white-space: nowrap;
   }
 
-  .timer-print-results table {
+  .timer-print-table {
     width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
   }
 
-  .timer-print-results thead {
-    display: table-header-group;
+  .timer-print-page-group--paged:first-child {
+    break-before: page;
+    page-break-before: always;
   }
 
-  .timer-print-results tr {
-    break-inside: avoid;
-    page-break-inside: avoid;
+  .timer-print-page-group--paged:not(:last-child) {
+    /* A 1 mm overshoot keeps each six-row block on the next physical A4 page;
+       Chromium corrupts intrinsic row heights when a long block is fragmented. */
+    min-height: 298mm;
+    box-sizing: border-box;
   }
 
-  .timer-print-results th,
-  .timer-print-results td {
+  .timer-print-row {
+    width: 100%;
+    font-size: 0;
+  }
+
+  .timer-print-row > span {
+    display: inline-block;
+    min-width: 0;
+    box-sizing: border-box;
+    font-size: 9pt;
     padding: 1.7mm 1.3mm;
     border-bottom: 0.2mm solid #ddd;
     color: #000;
@@ -207,7 +216,13 @@
     overflow-wrap: anywhere;
   }
 
-  .timer-print-results th {
+  .timer-print-row > span:nth-child(1) { width: 6%; }
+  .timer-print-row > span:nth-child(2) { width: 12%; }
+  .timer-print-row > span:nth-child(3) { width: 18%; }
+  .timer-print-row > span:nth-child(4) { width: 44%; }
+  .timer-print-row > span:nth-child(5) { width: 20%; }
+
+  .timer-print-table-head span {
     border-bottom-color: #777;
     font-size: 8pt;
   }
@@ -221,12 +236,6 @@
   .timer-print-comment {
     white-space: pre-wrap;
   }
-
-  .timer-print-col-number { width: 6%; }
-  .timer-print-col-result { width: 12%; }
-  .timer-print-col-date { width: 18%; }
-  .timer-print-col-scramble { width: 44%; }
-  .timer-print-col-comment { width: 20%; }
 
   .timer-print-empty {
     margin: 0;

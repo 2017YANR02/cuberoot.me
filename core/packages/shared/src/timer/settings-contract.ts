@@ -104,6 +104,7 @@ export interface TimerSettingValueContract {
 
 export type TimerSettingVisibility =
   | 'always'
+  | 'development-only'
   | 'event-not-222'
   | 'wca-source'
   | 'stage-split-event'
@@ -158,6 +159,7 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.timer.result-precision', category: 'timer', copy: { en: 'Result precision', zh: '成绩精度' }, storagePath: 'precision', value: { kind: 'enum', values: [2, 3] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-result-precision' },
 
   // Smart cube
+  { id: 'settings.smart-cube.fake-cube', category: 'smart-cube', copy: { en: 'Fake cube', zh: '假魔方' }, storagePath: 'showDevFakeCube', value: bool, visibility: 'development-only', disabledWhen: 'never', effect: 'persist-development-fake-cube-controls' },
   { id: 'settings.smart-cube.auto-ready', category: 'smart-cube', copy: { en: 'Smart-cube auto-ready', zh: '智能魔方自动预备' }, storagePath: 'bluetoothAutoReady', value: { kind: 'enum', values: ['scrambled', 'off', 'still', 'double-flick'] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-smart-cube-auto-ready' },
   { id: 'settings.smart-cube.live-view', category: 'smart-cube', copy: { en: 'Live cube', zh: '实况魔方' }, storagePath: 'liveCubeView', value: { kind: 'enum', values: ['3d', 'q2look', 'net', '2d'] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-view' },
   { id: 'settings.smart-cube.record-orientation', category: 'smart-cube', copy: { en: 'Record orientation for replay', zh: '录姿态用于回放' }, storagePath: 'recordGyro', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-record-orientation' },
@@ -245,6 +247,7 @@ export function timerSettingFieldContract(id: TimerSettingFieldId): (typeof TIME
 export interface TimerSettingFieldContext {
   event: EventId;
   source: TimerScrambleSourceKind;
+  development: boolean;
   signedIn: boolean;
   optimalAvailable: boolean;
   roundEnabled: boolean;
@@ -282,6 +285,7 @@ function settingVisible(
 ): boolean {
   switch (visibility) {
     case 'always': return true;
+    case 'development-only': return context.development;
     case 'event-not-222': return context.event !== '222';
     case 'wca-source': return context.source === 'wca';
     case 'stage-split-event': return STAGE_SPLIT_EVENTS.has(context.event);

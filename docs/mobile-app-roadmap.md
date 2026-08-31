@@ -1,6 +1,6 @@
 # CubeRoot 五端 App 完整路线图
 
-> Android、iOS、HarmonyOS NEXT、Windows 和 macOS 已由仓库所有者于 2026-08-31 确认为同一个完整产品目标。五端一次设计，但绝不维护五套业务代码；宿主、共享层、能力接口、总体完成口径和当前状态以 [cross-platform-app-contract.md](./cross-platform-app-contract.md) 为最高优先级合同。网站继续作为第六个在线 surface 与内容事实源。
+> Android、iOS、HarmonyOS NEXT、Windows 和 macOS 已由仓库所有者于 2026-08-31 确认为同一个完整产品目标。五端一次设计，但绝不维护五套业务代码；宿主、共享层、能力接口和总体完成口径以 [cross-platform-app-contract.md](./cross-platform-app-contract.md) 为最高优先级合同，当前状态只在本路线图记录。网站继续作为第六个在线 surface 与内容事实源。
 
 > 顶层产品结构已由仓库所有者于 2026-08-30 明确为“计时 / 工具 / 我的”三栏，且 Android/iOS 共用同一 React 实现；网站首页、子页面和未改写的 `/account` 必须直接复用，不在 App 复制。页面或按钮可见不等于完成；所有当前已配置登录方式、子页交互与会话状态都要真机端到端验收。唯一合同与成本回退规则见 [mobile-three-tab-contract.md](./mobile-three-tab-contract.md)。
 >
@@ -51,10 +51,7 @@
 - 基础工程提交：`b2328f45f3`。
 - Debug/Release application ID 隔离提交：`73ca6bb116`。
 - MuMu 过渡网络壳验证提交：`0c6cb4d55c`。
-- 本地离线计时 MVP 提交：`68955879ba`；中断按压边界修复：`1c2b57edcb`。
-- Android 构建 CI 提交：`b910dceccd`；复用网站品牌资源的图标和系统启动页提交：`eca3ee0a15`。
-- Release 签名、权限收口、统一迁移、导入恢复、隐私页和发布 CI 提交：`774004d2a2`。
-- 三路审计修复提交：`8eaeacabd2`。
+- 早期移动端提交已经过 rebase，不再用会失效的旧短 SHA 作路线图证据；以下可重跑命令、产物和设备记录为准。
 - MuMu 实测完成一次 `6.93` 计时，修改为 `+2` 后显示 `8.93`，添加备注后杀进程重启，记录数和最佳成绩均保留。
 - MuMu 已实测桌面启动图标；Android 12 系统启动页已完成原生主题迁移并通过构建。录屏只能确认背景和交接过程，未把系统图标层作为已验证证据。
 - Debug APK：`core/apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk`。
@@ -89,12 +86,35 @@
 - [ ] 第二个非 Capacitor 宿主落地时，从 Mobile 提取有两个真实消费者的 `@cuberoot/app-ui`；不得提前建空包，也不得让新宿主 import Mobile 源码或 `dist`。
 - [ ] 建立 `core/apps/desktop`，由同一个 Tauri 工程构建 Windows 和 macOS。
 - [ ] 建立 `core/apps/harmony`，由 ArkTS/ArkWeb 薄宿主加载本地共享 React App。
-- [ ] 统一 BLE、安全存储、认证、文件、分享、打印、保亮和生命周期 capability ports，并为每个宿主提供薄 adapter。
+- [ ] 第二个真实宿主需要时，逐项提取 BLE、安全存储、认证、文件、分享、打印、保亮和生命周期 capability contracts，并为真实消费者提供薄 adapter；不预建八套空接口。
 - [ ] 建立五端 build/安装/真机或实体电脑/签名/发布矩阵；五端全部通过前总体状态保持 `NOT COMPLETE`。
 
 当前证据：
 
 - 2026-08-31 只有五端目标与边界合同已经确定；HarmonyOS、Windows、macOS 宿主尚未创建，不得把本节的架构决定误报为三个平台已经适配。
+
+#### 三栏验收进度
+
+稳定 ID 和验收含义定义在 [mobile-three-tab-contract.md](./mobile-three-tab-contract.md)；状态和证据只在本表更新。
+
+| ID | 状态 | 当前证据/缺口 |
+| --- | --- | --- |
+| NAV-01 | 待 iOS | OPPO 三栏点击通过；待 iOS 同一 React 源码验收 |
+| NAV-02 | 进行中 | 两个 iframe 持久挂载，共享返回协议已接线；待部署后双平台回归 |
+| WEB-01 | 待 iOS | OPPO 已加载生产 `/zh`；待 iOS |
+| WEB-02 | 进行中 | OPPO 已实点“模拟”进入 `/zh/sim?puzzle=3&img_dist=6`；全卡片及页内功能矩阵未完成 |
+| WEB-03 | 进行中 | shared 导航协议 + Native back 已实现；下载/分享/文件/全屏和部署后真机待验 |
+| WEB-04 | 未开始 | 待建立受限页面清单、Browser 回退和明确提示 |
+| ACC-01 | 待 iOS | OPPO 已实证未改写的 `/zh/account`；待 iOS 同状态确认 |
+| ACC-02 | 进行中 | canonical LoginForm 交互已委托 Browser；待生产部署、双平台各 provider 真实账号与绑定/解绑验收 |
+| ACC-03 | 进行中 | Browser PKCE→secure session→web ticket→iframe 及双向 logout clear 已接线；待生产/双平台 E2E |
+| IOS-01 | 进行中 | Android/iOS 当前只有 `core/apps/mobile/src` 一份业务源码；待 iOS 同步后完整互动验收 |
+| IOS-LOGIN-01 | BLOCKED | 网站唯一 LoginForm/后端尚无已验证的 Apple 4.8 等价登录 |
+| QA-01 | 未开始 | 待断网、弱网、网站 5xx 与 frame 拒绝故障注入 |
+| QA-02 | 进行中 | OPPO 已修复一次菜单重叠和旧 WebView 视口问题；双平台全弹层/键盘/安全区/动态字号仍未关闭 |
+| XPLAT-01 | 未开始 | 第二真实宿主落地时提取 `@cuberoot/app-ui` |
+| DESKTOP-01 | 未开始 | `core/apps/desktop` 尚未创建；PWA 不算完成 |
+| HARMONY-01 | 未开始 | `core/apps/harmony` 尚未创建；Android 兼容包不算完成 |
 
 ### 阶段 3：PWA 补强和网站兜底
 
@@ -108,9 +128,7 @@
 
 ### 阶段 4：Android 基础 MVP
 
-- [ ] 本地导航完成：计时、训练、资料/设置。
-  - [x] 计时、记录和设置三个本地视图已完成。
-  - [ ] 训练和资料视图尚未进入 App。
+- [ ] 固定“计时 / 工具 / 我的”三栏按 [mobile-three-tab-contract.md](./mobile-three-tab-contract.md) 全部验收；基础三栏已落地，子页、会话、返回、异常和双平台真机矩阵未完成。
 - [x] 触摸计时、检查时间、`+2`、DNF、删除和备注闭环。
 - [ ] WCA 打乱、项目、session、PB、平均和基础趋势闭环。
   - [x] 三阶 WCA 风格打乱、记录数、最佳、ao5 和 ao12 已完成。
@@ -131,11 +149,11 @@
 - [ ] 生成并验证 Android 内部测试 AAB。
   - [x] 本机已用临时上传密钥生成并验证签名 Release APK/AAB；CI 也使用临时密钥强制验证 release 签名、版本和完整权限白名单。
   - [ ] Play App Signing 的真实上传密钥、internal track 安装/升级和回滚尚未验证；需要已通过验证的发布账号。
-- [x] 完成代码正确性、复用维护性、发布合规三路 agent 审计；审计发现已修复并通过只读复审，无上架代码阻断。
+- [x] 完成当时 Android MVP 范围的代码正确性、复用维护性和发布合规三路 agent 审计；当时范围无新增阻断，iOS Apple 4.8 等后续 P0 仍保持未完成。
 
 当前阶段 4 证据：
 
-- 本地 MVP 提交：`68955879ba`；中断按压修复：`1c2b57edcb`。
+- 本地 MVP 以本节可重跑测试、构建产物和设备记录为证据；不保留 rebase 前的失效短 SHA。
 - 移动端仓储 10 项测试、网站计时/迁移/元数据/品牌资源 47 项定向测试、共享包构建、网站与移动端 typecheck 全部通过。
 - `cap:sync`、`assembleDebug`、`assembleRelease` 和 `bundleRelease` 已通过；本地签名 AAB 经 `jarsigner` 验证。
 - JDK 21、Android API 36、Gradle 8.14.3 与硬件加速模拟器已在 macOS 命令行复核；保亮/震动增量通过移动端测试、typecheck、Capacitor Android sync 与 Debug APK 构建。Pixel API 36 模拟器实测运行时持有 App 的 `SCREEN_BRIGHT_WAKE_LOCK`，停表后释放；`dumpsys vibrator_manager` 记录到 `me.cuberoot.app.debug` 的 ready/stop 触觉事件。
@@ -212,7 +230,7 @@
 
 - `xcodebuild` 使用 Xcode 26.6、iOS Simulator SDK 26.5 完成 Debug 构建；`simctl install` 和 `simctl launch` 对 `me.cuberoot.app` 成功。
 - iOS 原生工程只承载 Capacitor 壳，计时 UI、项目图标和魔方展开图分别复用 `@cuberoot/timer-ui`、`@cuberoot/event-icon` 和 `@cuberoot/visualcube`；架构边界守卫与相关定向测试通过。
-- 小程序的计时页已确认只是指向网站 `/zh/timer` 的 WebView；移动 App 以该真实网站界面为产品事实源，但不跨 app 导入小程序源码。计时器全部状态按 `docs/mobile-timer-parity-tracker.md` 与零遗漏审计迁到 shared/timer-ui；未接真实行为的控件不能用占位、外跳或隐藏冒充完成。当前仍是 `ACTIVE — NOT COMPLETE`。
+- 小程序的计时页已确认只是指向网站 `/zh/timer` 的 WebView；移动 App 以该真实网站界面为产品事实源，但不跨 app 导入小程序源码。计时器状态正按 `docs/mobile-timer-parity-tracker.md` 与零遗漏审计迁到 shared/timer-ui；迁移未完成，未接真实行为的控件不能用占位、外跳或隐藏冒充完成。当前仍是 `ACTIVE — NOT COMPLETE`。
 - Android/iOS 原生安全会话交接共用一个 React/Capacitor 客户端和网站唯一 `LoginForm`；服务端使用 90 秒单次 ticket、PKCE S256 与原子核销，原生会话进入 Keychain/Keystore 保护的安全存储。底栏 Account 是未改写的网站 `/account` surface并显示全部当前 provider；源码已把其所有登录入口交给 Browser，并用另一张 90 秒 web ticket 回灌 iframe，也同步 iframe/App logout。协议、错误和账号响应继续复用 shared 契约，不建第二套账号系统；生产部署、真实 OAuth 回跳、异常恢复、绑定/解绑、退出和注销仍需双平台端到端验收。
 - Apple Developer 账号当前登录异常，所有者计划联系 Apple；因此会员 Active、付费 Team、真机签名、Archive 和 TestFlight 均保持未勾选。
 
@@ -220,7 +238,7 @@
 
 - [x] 建立仓库内 `cuberoot-mobile` Codex skill，统一单代码库、双机交接、iOS 发版与签名安全流程。（结构校验、成对 eval 和独立审计通过）
 - [x] 将 skill 和路线图升级为五端单一来源合同；未来 AI 不得为 HarmonyOS、Windows 或 macOS 新建业务 UI 分叉。
-- [ ] 五端宿主、统一 capability ports、跨端 CI 和完整验收矩阵全部落地。
+- [ ] 五端宿主、按真实消费者提取的 capability contracts、跨端 CI 和完整验收矩阵全部落地。
 - [ ] 按地区和质量指标逐步扩大可用范围。
 - [ ] 发布 runbook、版本支持矩阵、政策/证书日历和质量看板完成。
 - [ ] 建立每月发版、季度兼容测试、半年隐私复核和年度账号维护节奏。
@@ -414,7 +432,7 @@ core/
   packages/
     client/             # 现有 Next 网站
     shared/             # 已有共享类型和轻量纯函数
-    timer-ui/           # Web/五端唯一计时 React UI
+    timer-ui/           # 迁移中：目标为 Web/五端唯一计时 React UI
     app-ui/             # 第二宿主落地时提取：五端三栏 React 产品组合
 ```
 
@@ -430,28 +448,14 @@ core/
 
 智能魔方代码应拆为两层：
 
-```ts
-interface BleTransport {
-  scan(options: ScanOptions): Promise<DeviceRef[]>;
-  connect(device: DeviceRef): Promise<void>;
-  discover(serviceIds: string[]): Promise<void>;
-  read(serviceId: string, characteristicId: string): Promise<DataView>;
-  write(serviceId: string, characteristicId: string, value: Uint8Array): Promise<void>;
-  subscribe(
-    serviceId: string,
-    characteristicId: string,
-    onValue: (value: DataView) => void,
-  ): Promise<() => Promise<void>>;
-  disconnect(): Promise<void>;
-}
-```
+当前真实 Mobile transport 契约只以 `core/apps/mobile/src/bluetooth/transport.ts` 为准；路线图不复制一份会漂移的 TypeScript 接口。
 
 - Web adapter：包装现有 `navigator.bluetooth`，网站继续使用。
 - Native adapter：包装 Android BLE / iOS Core Bluetooth 插件。
 - Protocol layer：GAN、MoYu、QiYi 等解密、校验、时钟拟合、掉步恢复和状态机。
 - UI layer：设备选择、连接状态、错误提示和权限引导。
 
-先把传输接口定义清楚，再迁移协议。不要在每个设备 driver 里分别调用 Capacitor 插件，否则未来每个 bug 都要改很多份。
+协议与平台 transport 保持分层；新宿主出现时从真实调用面逐项提取共享 contract，不在路线图或共享包中预造接口。
 
 ### 6.3 数据和同步规则
 
@@ -731,371 +735,7 @@ iOS v1 原则上与已稳定的 Android v1 同功能，不在移植阶段额外�
 
 ## 12. 分阶段实施计划
 
-所有工期都是单人投入的规划值。可以并行的事项会明确标出。
-
-### 阶段 0：身份、账号和合规底座
-
-时间：2 到 7 天主动工作，账号验证可能更久。
-
-目标：先启动最慢的外部等待，避免代码完成后卡一个月。
-
-任务：
-
-1. 确定发布者身份：个人或组织。
-2. 确定公开开发者名称、支持邮箱、地址和联系电话。
-3. 注册 Google Play Console，完成 25 美元付费和身份验证。
-4. Google Play 组织路线申请或核对 D-U-N-S；Apple 按法律实体类型单独判断。当前个人独资企业采用 Apple 个人会员路线，不混用 Google 的组织核验结果。
-5. 建立覆盖多种 Android 版本和机型的测试名单，质量测试建议 15 到 20 人；只有控制台明确要求时才把 12 人/14 天当作发布门槛。
-6. 暂定不可变标识：Android application ID / Apple Bundle ID 推荐 `me.cuberoot.app`，最终创建前再核对。
-7. 确定产品名 CubeRoot、默认语言英文、第二语言简体中文。
-8. 建立专用发布账号的 2FA、恢复方式、密码管理和密钥备份规则。
-9. 列出真实数据清单和第三方 SDK 清单。
-10. 建立隐私政策、账号删除网页、支持页的待办。
-
-交付物：
-
-- Google 开发者账号已提交或完成验证。
-- 发布者身份决定记录。
-- Android 真机与测试者名单和联系渠道。
-- App 标识、名称和支持信息草案。
-- 第一版数据收集表。
-
-退出标准：
-
-- 不再存在“发布后显示个人名还是 CubeRoot 组织名”的未知项。
-- 账号所有者和恢复方式明确。
-- 测试设备有代表性；若控制台给出最低人数要求，测试者数量留有冗余。
-
-### 阶段 1：技术验证，不做完整产品
-
-时间：3 到 7 天。
-
-目标：用最小工程证明 Windows → Android 真机 → Capacitor 原生能力链路可行。
-
-任务：
-
-1. 安装 Android Studio、Android SDK、JDK 和 adb。
-2. 在 `core/apps/mobile` 创建最小 React + Vite + Capacitor workspace。
-3. 使用临时开发 application ID 构建 debug APK；正式 ID 锁定后再创建 release app。
-4. 真机安装，验证启动、热重载、日志和返回键。
-5. 验证主题、安全区、键盘、触摸和横竖屏策略。
-6. 接一个无敏感数据的现有 API，确认 dev/prod base 配置。
-7. 做最小 BLE spike：扫描一个已拥有的智能魔方，读取一条 characteristic 通知。
-8. 记录插件是否满足 manufacturer data、写入、通知和断线恢复；不满足则决定自有原生插件范围。
-
-交付物：
-
-- 可安装 debug APK。
-- 真机启动截图和 adb 日志。
-- BLE 插件能力报告。
-- 架构决策记录：继续使用插件或自研桥。
-
-退出标准：
-
-- Windows 能稳定构建 Android。
-- 至少一台真机能完成 BLE 扫描、连接和收到数据。
-- 没有把 `server.url` 指向线上网站作为正式运行方案。
-
-失败时怎么处理：
-
-- BLE 插件拿不到必要广播字段：先做最小 Android 原生桥，不换整个前端技术栈。
-- Next 组件无法复用：提取纯逻辑，不强行复制服务端组件。
-- 模拟器能跑、真机不行：以真机结果为准。
-
-### 阶段 2：共享核心边界
-
-时间：1 到 2 周。
-
-目标：在不破坏网站的前提下，提取移动端真正需要的逻辑。
-
-任务：
-
-1. 列出计时器、训练、BLE、API、设置模块的依赖图。
-2. 标记纯 TypeScript、React DOM、Next、Web Bluetooth 和原生依赖。
-3. 先提取计时状态机、记录模型和序列化。
-4. 再提取智能魔方协议解析和设备无关逻辑。
-5. 为 BLE 定义 transport 接口，现有网站实现 web adapter。
-6. 把已有 fixture 和协议回归测试指向共享层。
-7. 增加移动端 adapter contract tests。
-8. 只在出现第二个真实消费者时提取组件，避免先造抽象。
-
-交付物：
-
-- 网站继续通过原测试。
-- 移动端可调用相同计时和协议核心。
-- Web Bluetooth 行为无回归。
-
-退出标准：
-
-- 同一段协议解码逻辑不存在 Web/Android 两份 copy-paste。
-- transport 层可以替换而不改设备协议主体。
-
-### 阶段 3：PWA 补强和网站兜底
-
-时间：1 到 2 周，可与阶段 2/4 部分并行。
-
-目标：即使用户不装 App，网站在移动端仍有更可靠的安装和基础离线体验。
-
-任务：
-
-1. 审核 manifest、图标、启动 URL 和 standalone 行为。
-2. 设计新的 Service Worker，而不是直接移除现有 kill-switch 后恢复旧缓存。
-3. 只缓存 App shell、字体、图标和明确允许的训练内容。
-4. 计时记录写入 IndexedDB，不依赖网络请求成功。
-5. 显示离线状态、缓存大小、内容更新时间和清除入口。
-6. 排除认证响应、用户敏感数据、动态 API 和不适合缓存的重型 solver 资源。
-7. 单独测试有 COOP/COEP 要求的求解器路由，不能为了 PWA 改成全站头。
-8. 验证从旧 kill-switch 迁移后不会让历史客户端长期卡在旧缓存。
-
-交付物：
-
-- 可安装 PWA。
-- 基础离线计时和选定训练内容。
-- 缓存升级、回滚和清理测试。
-
-退出标准：
-
-- 断网刷新后不会白屏。
-- 旧版本缓存不会覆盖新内容或泄漏跨账号数据。
-- 明确承认 iOS PWA 仍不能替代原生智能魔方 BLE。
-
-### 阶段 4：Android 基础 MVP
-
-时间：2 到 4 周。
-
-目标：没有智能魔方也能作为独立计时和训练 App 使用。
-
-任务：
-
-1. 建立底部导航或最小页面结构：计时、训练、资料/设置。
-2. 完成计时器核心交互和本地数据库。
-3. 完成打乱、session、统计和记录编辑。
-4. 完成公式集拉取、缓存和训练流程。
-5. 完成语言、主题、保亮、震动和分享。
-6. 建立 API client，统一超时、认证、错误和版本头。
-7. 建立深链路由，未知或不支持的链接回退到网站。
-8. 实现数据导出或备份，避免本地数据库成为单点。
-9. 做基础无障碍：语义、TalkBack、字号、对比度和触摸目标。
-
-交付物：
-
-- 普通计时器闭环。
-- 训练闭环。
-- 断网启动和记录保存。
-- Android 内部测试包。
-
-退出标准：
-
-- 关闭网络、杀进程、重启后记录仍在。
-- 计时不因滚动、系统返回、通知或旋转意外丢失。
-- App 即使没有 BLE 也达到 Apple 4.2 意义上的基本实用性。
-
-### 阶段 5：原生智能魔方
-
-时间：2 到 4 周，取决于设备数量。
-
-目标：把现有 CubeRoot 智能魔方能力迁移到 Android 原生 BLE transport。
-
-任务：
-
-1. Android 12+ 请求 `BLUETOOTH_SCAN` 和 `BLUETOOTH_CONNECT`。
-2. 对旧 Android 版本按系统要求处理位置权限。
-3. BLE 功能声明 `required=false`，让无 BLE 设备仍可安装。
-4. 将扫描结果归一化为共享 `DeviceRef`。
-5. 接通订阅、读写、manufacturer data、MTU 和断线事件。
-6. 按型号逐个复用协议层，不能一次宣布全支持。
-7. 验证自动停止、最终一步丢通知恢复、时钟拟合和状态校正。
-8. 建立设备/固件/手机/Android 版本矩阵。
-9. 建立连接诊断导出，默认去除账号 token 和敏感标识。
-10. 准备审核 demo 模式和明确说明，不要求审核员拥有特定魔方才能理解 App。
-
-Android 官方权限依据：[Bluetooth permissions](https://developer.android.com/develop/connectivity/bluetooth/bt-permissions)。
-
-交付物：
-
-- 至少一个主力型号完整跑通。
-- 每个宣称支持的型号都有真机证据。
-- 连接失败有可操作原因，不只显示“未知错误”。
-
-退出标准：
-
-- 连续多次连接/断开无资源泄漏。
-- 蓝牙关闭、权限拒绝、设备离开范围和 App 切后台均有确定行为。
-- 真实 solve 的最后一步不会因通知缺失而静默丢失。
-
-### 阶段 6：账号、同步和合规闭环
-
-时间：1 到 3 周。
-
-目标：用户能安全登录、恢复数据、退出和注销；商店问卷与代码事实一致。
-
-任务：
-
-1. Account tab 保持与网站当前 provider 集完整一致；`auth=mobile` 只用于原生 PKCE ticket 交接。
-2. 完成 WCA/Google/微信/QQ/支付宝的 Browser OAuth 回退与 Account iframe 会话衔接，复用现有单次 ticket 端点，不传长期 JWT。
-3. 在 iOS 提交前由网站唯一 `LoginForm`/后端提供满足 Apple 4.8 的等价登录，实施优先考虑 Sign in with Apple；当前保持 P0 `BLOCKED`。
-4. token 存原生安全存储，不放普通 localStorage。
-5. 完成匿名数据合并、多设备同步、失败重试和冲突策略。
-6. App 内提供账号注销；网页提供可访问的删除入口。
-7. 对照现有后端 `account_delete` 清单跑端到端注销验证。
-8. 创建隐私政策、服务条款、支持页和数据保留说明。
-9. 列出所有第三方 SDK 的收集、用途、关联身份和跟踪情况。
-10. 填写 Google Data safety 草稿和 Apple App Privacy 草稿。
-11. 检查日志、崩溃报告、推送 token、设备标识和 BLE 标识是否进入声明。
-
-官方要求：
-
-- Google 即使不收集数据也要求填写 Data safety，并提供隐私政策：[Data safety](https://support.google.com/googleplay/android-developer/answer/10787469?hl=en)。
-- Apple 隐私标签包含第三方 SDK 行为：[App privacy details](https://developer.apple.com/app-store/app-privacy-details/)。
-- Apple 对支持账号创建的 App 要求在 App 内发起删除：[账号删除](https://developer.apple.com/support/offering-account-deletion-in-your-app/)。
-- Google 要求 App 内删除入口和可访问的网页删除入口：[账号删除要求](https://support.google.com/googleplay/android-developer/answer/13327111?hl=en)。
-
-交付物：
-
-- 同步和恢复测试报告。
-- 账号删除端到端证据。
-- 隐私政策、删除页和支持页可公开访问。
-- 两个平台隐私问卷草稿与 SDK 清单一一对应。
-
-退出标准：
-
-- 删除账号不是只删除本机 token。
-- 商店声明与网络抓包、数据库和 SDK 行为一致。
-- 旧版 App 遇到新 API 时不会崩溃或写坏数据。
-
-### 阶段 7：Google Play 封闭测试
-
-时间：组织账号按 Play Console 实际要求和质量门槛安排；若账号被要求 12 人/14 天流程，则额外预留至少 14 天连续测试，加准备和申请通常 3 到 5 周日历。
-
-目标：用真实用户发现问题，并满足该开发者账号在 Play Console 中显示的实际发布要求。
-
-任务：
-
-1. 创建内部测试 track，验证签名 AAB、升级和回滚。
-2. 创建 closed test，质量测试建议邀请 15 到 20 人并覆盖不同 Android 版本和机型。
-3. 如果 Play Console 对该账号明确显示最低人数和持续时间，按控制台要求确认测试者真正 opt-in，并检查人数没有掉线。
-4. 给测试者一份任务：安装、登录、离线计时、恢复、BLE、切后台、升级和注销。
-5. 收集手机型号、Android 版本、魔方型号/固件、问题和复现步骤。
-6. 每个版本都验证从上一版升级后本地数据库不丢。
-7. 修复崩溃后发布新 closed build，不随意重建测试名单。
-8. 如果控制台要求 production access 问卷，在测试门槛满足后提交，并说明测试反馈和改进。
-9. 同时完成商店说明、截图、图标、feature graphic、内容评级和隐私资料。
-
-建议内部放行门槛，这些是 CubeRoot 自定质量标准，不是商店官方阈值：
-
-- 关键计时流程无已知 P0/P1 缺陷。
-- 连续 100 次本地计时没有记录丢失。
-- 离线创建、联网同步和重复重试不产生重复记录。
-- 主力 BLE 设备 30 次连接/断开测试无永久卡死。
-- 最近 7 天测试版 crash-free sessions 目标至少 99.5%。
-- 隐私和账号删除检查全部通过。
-
-交付物：
-
-- 测试记录；若账号有强制人数/时长门槛，附对应合格记录。
-- 测试反馈与修复清单。
-- production access 申请。
-- 完整 Google Play listing。
-
-退出标准：
-
-- Play Console 授予 production access。
-- 控制台要求的测试人数和持续时间均满足，不因测试者掉线重新计时。
-- 商店资料与当前最终 AAB 一致。
-
-### 阶段 8：Android 正式发布
-
-时间：1 到 2 周，含审核和逐步放量。
-
-目标：低风险发布并建立运维节奏。
-
-任务：
-
-1. 从 closed/internal track 推广已测试的同一个构建，不临时换未经测试的包。
-2. 先小比例 staged rollout。
-3. 观察崩溃、ANR、登录、同步、BLE 和 API 错误。
-4. 验证商店深链、隐私页、删除页、支持邮箱和版本更新。
-5. 若指标正常逐步扩大到 100%。
-6. 保留上一版服务端兼容和快速暂停发布能力。
-7. 发布后记录最终版本号、commit SHA、AAB digest 和商店状态。
-
-交付物：
-
-- Google Play production 版本。
-- 发布报告和已知问题清单。
-- 下一版本 backlog。
-
-退出标准：
-
-- 100% 放量后没有 P0/P1。
-- 服务端能区分 App 版本并监控旧版错误率。
-- 签名密钥、上传密钥和恢复资料已安全备份。
-
-### 阶段 9：iOS 移植与 TestFlight
-
-时间：2 到 4 周主动开发，另加设备、账号和审核等待。
-
-目标：不重写业务逻辑，把稳定 Android 产品移植到 iOS。
-
-前置条件：
-
-- 有受支持的 Mac 或可信 macOS 构建环境。
-- 有 iPhone 真机。
-- Apple Developer Program 已通过。
-- Xcode 满足提交时 SDK 要求。自 2026-04-28 起，Apple 要求提交使用 Xcode 26 和 iOS 26 SDK 或更高版本，提交时仍应再次核对。[官方要求](https://developer.apple.com/news/upcoming-requirements/?id=02032026a)
-
-任务：
-
-1. 生成和维护 iOS 工程、签名、证书和 provisioning。
-2. 实现 Core Bluetooth adapter；共享协议层不改或只做平台无关修复。
-3. 配置蓝牙、通知、相机等用途说明，只声明实际使用的权限。
-4. 验证前台、锁屏、后台和系统中断下的计时/连接行为。
-5. 接入 Keychain、Universal Links 和分享。
-6. 在网站 canonical `LoginForm`/后端实现并验证满足 Apple 4.8 的等价登录（优先 Sign in with Apple）；禁止另写 iOS 表单。
-7. 测试动态字体、VoiceOver、安全区、键盘和不同屏幕。
-8. 建立 TestFlight 内部和外部测试。
-9. 准备审核账号、demo 模式、BLE 使用说明和测试视频。
-10. 提交 App Store，处理审核反馈。
-
-iOS BLE 依据：[Core Bluetooth](https://developer.apple.com/documentation/corebluetooth)。
-
-Windows 可以先做完整 Android；Xcode 本身需要 macOS，见[Xcode 系统要求](https://developer.apple.com/xcode/system-requirements/)。
-
-交付物：
-
-- TestFlight 版本。
-- iOS 设备和 BLE 测试矩阵。
-- App Store listing 和审核说明。
-
-退出标准：
-
-- iOS 不再依赖 Bluefy。
-- App Store 审核员不连接实体魔方也能理解和检查核心体验。
-- Android 业务逻辑没有被复制成 iOS 专属版本。
-
-### 阶段 10：全球发布和长期维护
-
-时间：持续。
-
-目标：让发版成为低风险例行工作，而不是每次手工救火。
-
-任务：
-
-1. 按国家和崩溃指标逐步扩大可用范围。
-2. 监控商店政策、target SDK、Xcode SDK、隐私问卷和证书到期。
-3. Android 2026-08-31 起的新 App 和更新应满足 Android 16 / API 36 target 要求，提交时再次核对。[Google target API 要求](https://support.google.com/googleplay/android-developer/answer/11926878?hl=en)
-4. 每月集中一个功能/修复版本；严重崩溃、数据丢失和 BLE 回归走热修。
-5. 每季度测试旧版 App 与当前 API 的兼容性。
-6. 每半年复核隐私政策、SDK、权限和账号删除。
-7. 每年提前处理 Apple 会员、证书、协议和税务资料。
-8. 用真实用户数据决定是否增加语言、设备型号或中国大陆 Android 渠道。
-
-交付物：
-
-- 可重复的发布 runbook。
-- 版本支持矩阵。
-- 政策和证书日历。
-- 线上质量看板。
+阶段状态、勾选项与证据只维护在本文第 0 节。实施时按第 0 节当前未完成项推进，并使用第 6 节架构、第 11 节范围、第 14 节测试和第 15 节发布规则；不得在这里再建立第二套阶段清单。
 
 ## 13. 商店审核注意事项
 
@@ -1404,108 +1044,13 @@ CubeRoot 应以这些证据证明不是简单套壳：
 
 避免：账号 2FA、恢复码、上传密钥、证书和 CI 权限都纳入运维备份。
 
-## 18. 第一步：今天就做什么
+## 18. 当前下一步
 
-第一步不是写 UI，而是确定发布身份并启动 Google Play 最长等待项。以下操作不需要 Mac，Windows 可以完成。
+早期“从零开始”的注册、建壳和 Windows 准备清单已经完成或失效，不再作为执行计划保留。当前动作、外部账号阻塞和设备证据只按第 0 节推进；Android/iOS 日常命令见 `core/apps/mobile/README.md`，五端宿主顺序见第 22 节。
 
-### 18.1 先选个人还是组织
+## 19. 开发环境
 
-| 你的真实情况 | 建议 |
-|---|---|
-| 已有可验证的公司/组织，且希望商店显示 CubeRoot 品牌 | 选组织账号，准备法律名称、地址和 D-U-N-S |
-| 没有法律实体，希望尽快做 Android | 选个人账号，接受公开信息可能包含法定姓名和个人账号测试要求 |
-| 正在注册公司，且非常在意发布者品牌 | 先做本地技术验证，商店账号等实体资料确定后再注册 |
-
-不要为上架伪造组织，也不要因为急着点下一步而选一个未来会后悔的身份。
-
-### 18.2 准备材料
-
-在打开控制台前准备：
-
-- 专用 Google 账号，开启 2FA。
-- 恢复邮箱、恢复电话和恢复码。
-- 与身份文件一致的姓名、地址和联系电话。
-- 可支付 25 美元注册费的支付方式。
-- 对外支持邮箱，优先使用自有域名邮箱。
-- 网站首页、隐私政策页和账号删除页的计划 URL。
-- 组织账号额外准备法律实体名称、注册地址、网站和 D-U-N-S。
-
-不要把日常私人邮箱作为唯一不可替代的发布资产；至少确保恢复资料和权限交接方案完整。
-
-### 18.3 注册 Google Play Console
-
-1. 打开[Google Play Console 注册说明](https://support.google.com/googleplay/android-developer/answer/6112435?hl=en)。
-2. 使用专用账号进入 Play Console。
-3. 按上一步的真实决定选择 personal 或 organization。
-4. 填写与证件/组织资料完全一致的信息。
-5. 支付一次性 25 美元注册费。
-6. 完成身份、联系方式和设备验证要求。
-7. 保存开发者账号 ID、验证状态和支持渠道，不在仓库保存证件或支付资料。
-8. 在账号通过前可以继续本地开发，但不要反复创建多个开发者账号绕过验证。
-
-### 18.4 建立真机测试名单
-
-CubeRoot 走组织账号，不预设新个人账号的 12 人/14 天门槛。为了质量仍建议准备 15 到 20 名测试者；如果 Play Console 明确要求最低人数和持续时间，再把名单按该门槛管理。每人记录：
-
-- Google 账号邮箱。
-- 手机品牌和型号。
-- Android 版本。
-- 是否有智能魔方，具体型号和固件。
-- 能否在控制台要求的整个测试周期保持加入测试。
-- 是否愿意提交错误截图和复现步骤。
-
-此时只是招募。若控制台要求连续测试，计时要等 closed test build 上线且测试者完成 opt-in 才开始。
-
-### 18.5 锁定 App 身份草案
-
-先记录，正式创建前复核：
-
-```text
-Product name: CubeRoot
-Default store language: English
-Second store language: Simplified Chinese
-Recommended application / bundle ID: me.cuberoot.app
-Website: https://cuberoot.me
-Support email: 使用真实可长期维护的域名邮箱
-Business model for v1: Free, no in-app purchase entry
-Primary v1 value: offline timer + native smart-cube BLE + algorithm training
-```
-
-`me.cuberoot.app` 一旦作为正式 application ID / Bundle ID 发布就不应再改。正式创建应用记录前，再检查命名、账号归属和商店唯一性。
-
-### 18.6 第一步完成标准
-
-今天做到以下四项就算完成阶段 0 的第一段：
-
-- 已明确个人或组织账号。
-- Google Play 注册已提交，或材料缺口已列清楚。
-- 已建立 Android 真机测试名单；如控制台有最低测试者要求，名单已有冗余。
-- 已保存 App 身份草案，但尚未在不确定时草率锁死正式 ID。
-
-完成后，下一步才是安装 Android Studio，并在 `core/apps/mobile` 做一个只验证启动和 BLE 扫描的技术壳。不要第一天就搬计时器全功能。
-
-## 19. 阶段 1 的 Windows 开发准备预览
-
-阶段 0 完成后使用：
-
-- Windows 10/11。
-- PowerShell 7。
-- 当前仓库使用的 Node.js / pnpm 版本。
-- Android Studio 稳定版和 Android SDK。
-- USB 调试开启的 Android 真机。
-- 一只已经被现有网站支持且手头可测试的智能魔方。
-
-Android Studio 官方支持 Windows，安装要求见[官方文档](https://developer.android.com/studio/install)。
-
-技术验证只回答五个问题：
-
-1. 能否从 workspace 构建 Vite Web bundle？
-2. Capacitor 能否同步到 Android 工程？
-3. debug APK 能否在真机启动？
-4. App 能否访问现有 API？
-5. 原生 BLE 能否收到一条真实魔方通知？
-
-这五个问题全部通过后，再开始迁移业务功能。
+现有 Android/iOS 工程已经成立。开发者必须现场读取 Node、pnpm、JDK、Android SDK、Xcode 和设备状态，不得按早期计划重新创建技术壳或重复验证已完成的 BLE spike。
 
 ## 20. 决策检查表
 
@@ -1565,15 +1110,14 @@ Android Studio 官方支持 Windows，安装要求见[官方文档](https://deve
 ```text
 现在
   1. 完成网站/Mobile 计时器零遗漏迁移，关闭共享层中的已知重复和缺口
-  2. 定义并测试 BLE、storage、auth、file、share、print、lifecycle capability ports
-  3. 保持现有 Android/iOS 同一 Capacitor 宿主，完成双平台真机与发布门槛
-  4. 第二宿主落地时提取有真实消费者的 @cuberoot/app-ui
-  5. 建立一个 core/apps/desktop，同时产出 Windows 和 macOS
-  6. 建立 core/apps/harmony，以 ArkWeb 本地 bundle 接入同一 React App
-  7. 五端接入同一账号、同步、多人、智能魔方和三栏完整功能
-  8. 建立五端 CI、安装产物、依赖方向和生成物漂移守卫
-  9. 完成五端输入/窗口/离线/生命周期/辅助功能/BLE/升级矩阵
- 10. 各平台按商店或安装渠道独立分阶段发布，但五端总体全部通过前保持 NOT COMPLETE
+  2. 保持现有 Android/iOS 同一 Capacitor 宿主，完成双平台真机与发布门槛
+  3. 创建首个非 Capacitor 真实宿主时，在同一变更中提取它实际消费的 @cuberoot/app-ui 和 capability contracts
+  4. 用同一 core/apps/desktop 产出 Windows 和 macOS
+  5. 建立 core/apps/harmony，以 ArkWeb 本地 bundle 接入同一 React App
+  6. 五端接入同一账号、同步、多人、智能魔方和三栏完整功能
+  7. 建立五端 CI、安装产物、依赖方向和生成物漂移守卫
+  8. 完成五端输入/窗口/离线/生命周期/辅助功能/BLE/升级矩阵
+  9. 各平台按商店或安装渠道独立分阶段发布，但五端总体全部通过前保持 NOT COMPLETE
 
 长期
  11. 内容继续走网站/API 即时更新
