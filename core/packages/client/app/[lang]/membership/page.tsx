@@ -7,14 +7,14 @@
  * 在线支付未开通时引导走打赏 + 联系站长手动开通。admin 登录后见管理面板。
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Crown, Check, RefreshCw, AlertTriangle, CalendarClock } from 'lucide-react';
+import { Check, RefreshCw, AlertTriangle, CalendarClock } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { tr, useLang } from '@/i18n/tr';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
 import { fmtPrice, fmtDate } from '@/lib/membership-format';
 import AppLink from '@/components/AppLink';
+import CubeRootLogo from '@/components/CubeRootLogo';
 import DonateModal from '@/components/DonateModal';
-import MembershipBadge from '@/components/MembershipBadge';
 import { Spinner } from '@/components/Spinner/Spinner';
 import {
   listPlans, getMyMembership, getOrderStatus, membershipExpiry,
@@ -39,6 +39,7 @@ const PERK_LABEL: Record<string, { zh: string; en: string }> = {
   badge: { zh: '专属会员徽章', en: 'Exclusive member badge' },
   early: { zh: '新功能抢先体验', en: 'Early access to new features' },
   thanks: { zh: '致谢名单署名', en: 'Listed in the acknowledgments' },
+  platform_follow: { zh: '获得魔方根在各平台的关注', en: 'Get followed by CubeRoot across platforms' },
   lifetime: { zh: '一次付费,永久有效', en: 'Pay once, valid forever' },
   teacher_student_profile_ranking: {
     zh: '老师主页展示学生，学生主页展示老师，排名页展示老师',
@@ -53,6 +54,12 @@ const PERK_LABEL: Record<string, { zh: string; en: string }> = {
     en: 'Cloud storage for tutorials, articles, images, and videos, plus customized enterprise course plans',
   },
 };
+
+function intersectPerks(plans: MembershipPlan[]): string[] {
+  if (plans.length === 0) return [];
+  return [...new Set(plans[0].perks)].filter((perk) =>
+    plans.slice(1).every((plan) => plan.perks.includes(perk)));
+}
 
 function planUnit(plan: MembershipPlan, isZh: boolean): string {
   if (plan.period === 'lifetime') return isZh ? '一次性' : 'one-time';
@@ -166,17 +173,62 @@ export default function MembershipPage() {
   const sortedPlans = useMemo(() => plans ?? [], [plans]);
   const autoRenewPlans = sortedPlans.filter((plan) => isAutoRenewPlanSlug(plan.slug));
   const oneTimePlans = sortedPlans.filter((plan) => !isAutoRenewPlanSlug(plan.slug));
+  const enterprisePlans = oneTimePlans.filter((plan) => plan.slug.startsWith('enterprise_'));
+  const personalPlans = oneTimePlans.filter((plan) => !plan.slug.startsWith('enterprise_'));
   const showAutoRenew = autoRenewPlans.length > 0;
+  const universalPerks = intersectPerks(sortedPlans);
+  if (!universalPerks.includes('platform_follow')) universalPerks.push('platform_follow');
+  const universalPerkSet = new Set(universalPerks);
+  const enterpriseSharedPerks = intersectPerks(enterprisePlans)
+    .filter((perk) => !universalPerkSet.has(perk));
+  const enterpriseSharedPerkSet = new Set(enterpriseSharedPerks);
 
   const handlePlanUpdated = useCallback((updatedPlan: MembershipPlan) => {
     setPlans((current) => current ? reconcileVisiblePlan(current, updatedPlan) : current);
   }, []);
 
+  function renderPerks(perks: string[]) {
+    if (perks.length === 0) return null;
+    return (
+      <ul className="mem-plan-perks">
+        {perks.map((perk) => (
+          <li key={perk}><Check size={13} /> {tr(PERK_LABEL[perk] ?? { zh: perk, en: perk })}</li>
+        ))}
+      </ul>
+    );
+  }
+
+  function renderOneTimePlan(plan: MembershipPlan, sectionPerks: Set<string> = new Set()) {
+    const current = activeMember && membership?.planSlug === plan.slug && !membership.lifetime;
+    const planOnlyPerks = plan.perks.filter((perk) =>
+      !universalPerkSet.has(perk) && !sectionPerks.has(perk));
+    return (
+      <div key={plan.slug} className={`mem-plan${plan.period === 'lifetime' ? ' is-feature' : ''}`}>
+        {plan.period === 'lifetime' && (
+          <span className="mem-plan-tag">{tr({ zh: '最超值', en: 'Best value' })}</span>
+        )}
+        <div className="mem-plan-name">{isZh ? plan.nameZh : plan.nameEn}</div>
+        <div className="mem-plan-price">
+          <span className="mem-plan-amount">{fmtPrice(plan.priceCents, plan.currency)}</span>
+          <span className="mem-plan-unit">/ {planUnit(plan, isZh)}</span>
+        </div>
+        {renderPerks(planOnlyPerks)}
+        <button className="mem-plan-cta" onClick={() => handleChoose(plan)}>
+          {!loggedIn
+            ? tr({ zh: '登录后开通', en: 'Sign in to join' })
+            : current
+              ? tr({ zh: '续费', en: 'Renew' })
+              : tr({ zh: '开通', en: 'Subscribe' })}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="mem-page">
       <header className="mem-head">
         <h1 className="mem-title">
-          <Crown size={22} strokeWidth={2} className="mem-title-icon" />
+          <CubeRootLogo className="mem-title-logo" height={22} variant="mark" />
           {tr({ zh: '成为 CubeRoot 会员', en: 'Become a CubeRoot member'
         })}
         </h1>
@@ -185,9 +237,7 @@ export default function MembershipPage() {
       {/* 当前会员状态 / 到期提醒 */}
       {membership && (activeMember || expiry?.expired) && (
         <div className={`mem-status${expiry?.expiringSoon ? ' is-warning' : ''}${expiry?.expired ? ' is-expired' : ''}`}>
-          {expiry?.expired
-            ? <AlertTriangle size={16} className="mem-status-icon" />
-            : <MembershipBadge lifetime={membership.lifetime} size={15} />}
+          {expiry?.expired && <AlertTriangle size={16} className="mem-status-icon" />}
           <span className="mem-status-text">
             {membership.lifetime
               ? tr({ zh: '你是永久会员,感谢长期的支持 ♡', en: "You're a lifetime member — thank you for the support ♡"
@@ -232,73 +282,68 @@ export default function MembershipPage() {
         <div className="mem-empty">{tr({ zh: '你已经是永久会员,无需再次购买。', en: 'You already have lifetime membership — nothing to buy.'
         })}</div>
       ) : (
-        <div className="mem-plans">
-          {autoRenewPlans.map((plan) => {
-            const copy = plan.period === 'year'
-              ? {
-                  name: { zh: '连续包年', en: 'Annual auto-renewal' },
-                  unit: { zh: '年', en: 'year' },
-                  cadence: { zh: '每年自动延长会员', en: 'Membership renews annually' },
-                  cta: { zh: '开通连续包年', en: 'Start annual auto-renewal' },
-                }
-              : {
-                  name: { zh: '连续包月', en: 'Monthly auto-renewal' },
-                  unit: { zh: '月', en: 'month' },
-                  cadence: { zh: '每月自动延长会员', en: 'Membership renews monthly' },
-                  cta: { zh: '开通连续包月', en: 'Start monthly auto-renewal' },
-                };
-            return (
-              <div key={plan.slug} className="mem-plan is-autorenew">
-                <span className="mem-plan-tag">{tr({ zh: '自动续费', en: 'Auto-renew' })}</span>
-                <div className="mem-plan-name">{tr(copy.name)}</div>
-                <div className="mem-plan-price">
-                  <span className="mem-plan-amount">{fmtPrice(plan.priceCents, plan.currency)}</span>
-                  <span className="mem-plan-unit">/ {tr(copy.unit)}</span>
-                </div>
-                <ul className="mem-plan-perks">
-                  <li><CalendarClock size={13} /> {tr(copy.cadence)}</li>
-                  <li><Check size={13} /> {tr({ zh: '扣费前发送通知', en: 'Notice before every charge' })}</li>
-                  <li><Check size={13} /> {tr({ zh: '可随时关闭自动续费', en: 'Cancel anytime' })}</li>
-                  {plan.perks.map((p) => (
-                    <li key={p}><Check size={13} /> {tr(PERK_LABEL[p] ?? { zh: p, en: p })}</li>
-                  ))}
-                </ul>
-                <button className="mem-plan-cta" onClick={() => setSelectedAutoRenewPlan(plan)}>
-                  {tr(copy.cta)}
-                </button>
-              </div>
-            );
-          })}
-          {oneTimePlans.map((plan) => {
-            const current = activeMember && membership?.planSlug === plan.slug && !membership.lifetime;
-            return (
-              <div key={plan.slug} className={`mem-plan${plan.period === 'lifetime' ? ' is-feature' : ''}`}>
-                {plan.period === 'lifetime' && (
-                  <span className="mem-plan-tag">{tr({ zh: '最超值', en: 'Best value' })}</span>
-                )}
-                <div className="mem-plan-name">{isZh ? plan.nameZh : plan.nameEn}</div>
-                <div className="mem-plan-price">
-                  <span className="mem-plan-amount">{fmtPrice(plan.priceCents, plan.currency)}</span>
-                  <span className="mem-plan-unit">/ {planUnit(plan, isZh)}</span>
-                </div>
-                <ul className="mem-plan-perks">
-                  {plan.perks.map((p) => (
-                    <li key={p}><Check size={13} /> {tr(PERK_LABEL[p] ?? { zh: p, en: p })}</li>
-                  ))}
-                </ul>
-                <button className="mem-plan-cta" onClick={() => handleChoose(plan)}>
-                  {!loggedIn
-                    ? tr({ zh: '登录后开通', en: 'Sign in to join'
-                    })
-                    : current
-                      ? tr({ zh: '续费', en: 'Renew'
-                    })
-                      : tr({ zh: '开通', en: 'Subscribe'
-                    })}
-                </button>
-              </div>
-            );
-          })}
+        <div className="mem-plan-sections">
+          <section className="mem-plan-section" aria-labelledby="universal-perks-title">
+            <h2 id="universal-perks-title" className="mem-plan-section-title">
+              {tr({ zh: '所有会员共有权益', en: 'Benefits included with every membership' })}
+            </h2>
+            {renderPerks(universalPerks)}
+          </section>
+
+          <section className="mem-plan-section" aria-labelledby="personal-plans-title">
+            <h2 id="personal-plans-title" className="mem-plan-section-title">
+              {tr({ zh: '个人用户', en: 'Individual' })}
+            </h2>
+            <div className="mem-plans">
+              {autoRenewPlans.map((plan) => {
+                const copy = plan.period === 'year'
+                  ? {
+                      name: { zh: '连续包年', en: 'Annual auto-renewal' },
+                      unit: { zh: '年', en: 'year' },
+                      cadence: { zh: '每年自动延长会员', en: 'Membership renews annually' },
+                      cta: { zh: '开通连续包年', en: 'Start annual auto-renewal' },
+                    }
+                  : {
+                      name: { zh: '连续包月', en: 'Monthly auto-renewal' },
+                      unit: { zh: '月', en: 'month' },
+                      cadence: { zh: '每月自动延长会员', en: 'Membership renews monthly' },
+                      cta: { zh: '开通连续包月', en: 'Start monthly auto-renewal' },
+                    };
+                return (
+                  <div key={plan.slug} className="mem-plan is-autorenew">
+                    <span className="mem-plan-tag">{tr({ zh: '自动续费', en: 'Auto-renew' })}</span>
+                    <div className="mem-plan-name">{tr(copy.name)}</div>
+                    <div className="mem-plan-price">
+                      <span className="mem-plan-amount">{fmtPrice(plan.priceCents, plan.currency)}</span>
+                      <span className="mem-plan-unit">/ {tr(copy.unit)}</span>
+                    </div>
+                    <ul className="mem-plan-perks">
+                      <li><CalendarClock size={13} /> {tr(copy.cadence)}</li>
+                      <li><Check size={13} /> {tr({ zh: '扣费前发送通知', en: 'Notice before every charge' })}</li>
+                      <li><Check size={13} /> {tr({ zh: '可随时关闭自动续费', en: 'Cancel anytime' })}</li>
+                      {plan.perks.filter((perk) => !universalPerkSet.has(perk)).map((p) => (
+                        <li key={p}><Check size={13} /> {tr(PERK_LABEL[p] ?? { zh: p, en: p })}</li>
+                      ))}
+                    </ul>
+                    <button className="mem-plan-cta" onClick={() => setSelectedAutoRenewPlan(plan)}>
+                      {tr(copy.cta)}
+                    </button>
+                  </div>
+                );
+              })}
+              {personalPlans.map((plan) => renderOneTimePlan(plan))}
+            </div>
+          </section>
+
+          <section className="mem-plan-section" aria-labelledby="enterprise-plans-title">
+            <h2 id="enterprise-plans-title" className="mem-plan-section-title">
+              {tr({ zh: '企业用户', en: 'Enterprise' })}
+            </h2>
+            {renderPerks(enterpriseSharedPerks)}
+            <div className="mem-plans">
+              {enterprisePlans.map((plan) => renderOneTimePlan(plan, enterpriseSharedPerkSet))}
+            </div>
+          </section>
         </div>
       )}
 
@@ -329,8 +374,12 @@ export default function MembershipPage() {
               en: "Membership is a one-time payment per period — no auto-charge. We'll remind you before it expires, and renewing takes one click."
             })}
         {' '}
-        <AppLink href="/support">{tr({ zh: '查看致谢名单 →', en: 'See supporters →'
-        })}</AppLink>
+        <span className="mem-foot-links">
+          <AppLink href="/support">{tr({ zh: '查看致谢名单 →', en: 'See supporters →'
+          })}</AppLink>
+          <AppLink href="/contact">{tr({ zh: '联系我们 →', en: 'Contact us →'
+          })}</AppLink>
+        </span>
       </p>
 
       {/* 会员联系方式(续费提醒 / 账号找回) */}

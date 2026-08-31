@@ -3,6 +3,7 @@
 import BackHome from '@/components/BackHome';
 import AppLink from '@/components/AppLink';
 import { T, tr } from '@/i18n/tr';
+import { useIsAdmin } from '@/lib/auth-store';
 import ContactDetails from './ContactDetails';
 import './contact.css';
 
@@ -209,6 +210,8 @@ function GroupName({ name }: { name: Bi }) {
 }
 
 export default function ContactPage() {
+  const admin = useIsAdmin();
+
   return (
     <main className="contact-page">
       <header className="contact-header">
@@ -230,6 +233,13 @@ export default function ContactPage() {
           })}</p>
           <span className="contact-site-label">{tr({ zh: '网站', en: 'Website' })}</span>
           <AppLink href="/" className="contact-site">cuberoot.me</AppLink>
+          {admin && (
+            <div className="contact-membership-link">
+              <AppLink href="/membership" className="contact-site">
+                {tr({ zh: '会员页面 →', en: 'Membership page →' })}
+              </AppLink>
+            </div>
+          )}
           <ContactDetails />
         </div>
         <img

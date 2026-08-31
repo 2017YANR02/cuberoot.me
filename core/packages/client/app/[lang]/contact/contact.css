@@ -82,6 +82,10 @@
   text-decoration: underline;
 }
 
+.contact-membership-link {
+  margin-top: 0.45rem;
+}
+
 .contact-details {
   display: grid;
   gap: 0.55rem;
