@@ -524,7 +524,7 @@
   font-size: 0.8rem;
   resize: vertical;
 }
-.sponsor-claim-review-actions button {
+.sponsor-claim-review-actions .sponsor-claim-action-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -537,8 +537,8 @@
   font-size: 0.78rem;
   cursor: pointer;
 }
-.sponsor-claim-review-actions button:hover { border-color: var(--accent); color: var(--accent); }
-.sponsor-claim-review-actions button:disabled { opacity: 0.55; cursor: default; }
+.sponsor-claim-review-actions .sponsor-claim-action-btn:hover { border-color: var(--accent); color: var(--accent); }
+.sponsor-claim-review-actions .sponsor-claim-action-btn:disabled { opacity: 0.55; cursor: default; }
 .sponsor-claim-review-actions .sponsor-claim-danger { color: var(--destructive); }
 .sponsor-claim-review-actions .sponsor-claim-danger:hover { border-color: var(--destructive); color: var(--destructive); }
 

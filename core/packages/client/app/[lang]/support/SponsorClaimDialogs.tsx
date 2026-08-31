@@ -224,10 +224,10 @@ export function SponsorClaimAdminDialog({ onClose, onChanged }: { onClose: () =>
                         ? tr({ zh: '审核备注；驳回时必填', en: 'Review note; required when declining' })
                         : tr({ zh: '解除原因，必填', en: 'Revocation reason, required' })} />
                     {claim.status === 'pending' ? (
-                      <><button disabled={busyId === claim.id} onClick={() => review(claim, 'approve')}><BadgeCheck size={14} /> {tr({ zh: '通过', en: 'Approve' })}</button>
-                        <button className="sponsor-claim-danger" disabled={busyId === claim.id} onClick={() => review(claim, 'reject')}>{tr({ zh: '驳回', en: 'Decline' })}</button></>
+                      <><button className="sponsor-claim-action-btn" disabled={busyId === claim.id} onClick={() => review(claim, 'approve')}><BadgeCheck size={14} /> {tr({ zh: '通过', en: 'Approve' })}</button>
+                        <button className="sponsor-claim-action-btn sponsor-claim-danger" disabled={busyId === claim.id} onClick={() => review(claim, 'reject')}>{tr({ zh: '驳回', en: 'Decline' })}</button></>
                     ) : (
-                      <button className="sponsor-claim-danger" disabled={busyId === claim.id} onClick={() => revoke(claim)}>{tr({ zh: '解除认领', en: 'Revoke claim' })}</button>
+                      <button className="sponsor-claim-action-btn sponsor-claim-danger" disabled={busyId === claim.id} onClick={() => revoke(claim)}>{tr({ zh: '解除认领', en: 'Revoke claim' })}</button>
                     )}
                   </div>
                 ) : null}
