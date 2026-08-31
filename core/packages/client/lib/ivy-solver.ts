@@ -181,6 +181,21 @@ export function parseIvyScramble(scramble: string): number[] {
   return out;
 }
 
+/**
+ * Translate the standard notation used by `/sim` and printed scramble sheets
+ * into cstimer's inverted Ivy power convention consumed by this solver.
+ */
+export function ivyStandardToCstimer(scramble: string): string {
+  const out: string[] = [];
+  for (const tok of scramble.trim().split(/\s+/)) {
+    if (!tok) continue;
+    const m = TOKEN_RE.exec(tok);
+    if (!m) throw new Error(`bad: ${tok}`);
+    out.push(m[1].toUpperCase() + (m[2] ? '' : "'"));
+  }
+  return out.join(' ');
+}
+
 export interface IvyTokenSpan { text: string; bad: boolean; }
 
 /** Split a scramble/alg string into spans (whitespace preserved), flagging any
@@ -249,6 +264,11 @@ export function ivyApply(scramble: string): IvyState {
     corners[axis] = (corners[axis] + times) % 3;
   }
   return { centers, corners };
+}
+
+/** Apply the standard `/sim`/sheet notation rather than cstimer's inverted powers. */
+export function ivyApplyStandard(scramble: string): IvyState {
+  return ivyApply(ivyStandardToCstimer(scramble));
 }
 
 /** Shortest scramble producing state `idx` = inverse of its optimal solution (reverse + invert). */

@@ -6,16 +6,26 @@
 import HomeLink from '@/components/HomeLink';
 import { useEffectiveTheme } from '@/lib/theme';
 import { tr } from '@/i18n/tr';
+import { useEffect, useState } from 'react';
 
 export default function CubeRootLogo({
   className,
   height = 24,
+  variant = 'lockup',
 }: {
   className?: string;
   height?: number;
+  variant?: 'lockup' | 'mark';
 }) {
   const eff = useEffectiveTheme();
-  const src = eff === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png';
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  const isDark = mounted && eff === 'dark';
+  const src = variant === 'mark'
+    ? (isDark ? '/icons/CubeRoot-mark-dark.svg' : '/icons/CubeRoot-mark.svg')
+    : (isDark ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png');
   return (
     <HomeLink className={className} aria-label={tr({ zh: '主页', en: 'Home'
     })}>
