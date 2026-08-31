@@ -30,6 +30,7 @@ import { normalizeAlg } from '@/lib/alg_normalize';
 import { displayAlg } from '@/lib/alg_display';
 import { goalOf, reachesGoal, type AlgGoal } from '@/lib/alg_goals';
 import { ftoEifState, invertFtoEifAlgorithm, isFtoEifSolved, parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
+import { tr } from '@/i18n/tr';
 
 /**
  * PF must finish at the start of Top Layer, not at a solved FTO. This reference
@@ -50,6 +51,11 @@ export interface ValidateAlgResult {
   reason?: string;
   /** face 类:入库前要补在公式末尾的收尾 AUF(`''` = 不用补)。ok=false 时无意义。 */
   auf?: string;
+}
+
+interface ValidateAlgOptions {
+  /** 入库/全库扫描时不允许校验器隐式补 AUF；SQ1 EP 还必须精确对齐上下层。 */
+  storedAlg?: boolean;
 }
 
 /** `''` 排最前 —— 已经写全的公式不该被改；五魔方 U 是五阶，金字塔 U 是三阶。 */
@@ -112,6 +118,7 @@ export async function validateAlgCase(
   sticker: AlgSticker,
   puzzle: string,
   set?: string,
+  options: ValidateAlgOptions = {},
 ): Promise<ValidateAlgResult> {
   const goalKind = goalOf(puzzle, set, sticker.kind);
   if (goalKind === 'unregistered') {
@@ -164,7 +171,10 @@ export async function validateAlgCase(
     return { ok: false, reason: `公式语法错误: ${(e as Error).message}` };
   }
 
-  const goal = (p: KPattern) => reachesGoal(p, kp, puzzle, goalKind);
+  // SQ1 EP 的阶段目标允许上下层各自任意 AUF；库内公式则必须把两层都转回准确位置，
+  // 否则校验看似通过，按原文渲染的缩略图却仍是错态。
+  const effectiveGoal = options.storedAlg && goalKind === 'sq1-ep' ? 'solve' : goalKind;
+  const goal = (p: KPattern) => reachesGoal(p, kp, puzzle, effectiveGoal);
   const head = (cleanSetup ? cleanSetup + ' ' : '') + cleanAlg;
   const run = (tail: string): KPattern | null => {
     try { return kp.defaultPattern().applyAlg(tail ? `${head} ${tail}` : head); }
@@ -182,11 +192,34 @@ export async function validateAlgCase(
 
   // 其余:允许差一个收尾 AUF。至多一个成立 —— U 转不是整体旋转,`setup+A` 和 `setup+A+U`
   // 不可能同时达标,所以「补哪个 U」没有歧义。
-  for (const auf of AUF_CANDIDATES[puzzle] ?? ['', 'U', 'U2', "U'"]) {
+  const aufCandidates = options.storedAlg
+    ? ['']
+    : (AUF_CANDIDATES[puzzle] ?? ['', 'U', 'U2', "U'"]);
+  for (const auf of aufCandidates) {
     const p = run(auf);
     if (p && goal(p)) return { ok: true, auf };
   }
+  if (options.storedAlg && goalKind === 'sq1-ep') {
+    return {
+      ok: false,
+      reason: tr({
+        zh: 'SQ1 EP 公式末尾的 U/D 层没有完全对齐，不能入库',
+        en: 'The final U/D layers are not fully aligned; this SQ1 EP alg cannot be saved',
+      }),
+    };
+  }
   return { ok: false, reason: GOAL_MISS[goalKind] };
+}
+
+/** 校验数据库最终要保存/已经保存的完整公式，不接受隐式收尾。 */
+export function validateStoredAlgCase(
+  setup: string,
+  alg: string,
+  sticker: AlgSticker,
+  puzzle: string,
+  set?: string,
+): Promise<ValidateAlgResult> {
+  return validateAlgCase(setup, alg, sticker, puzzle, set, { storedAlg: true });
 }
 
 /** 没达标时给人看的话 —— 每个目标态一句,别再一律说「没有还原魔方」。 */

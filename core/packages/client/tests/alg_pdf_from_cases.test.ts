@@ -5,6 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import type { AlgCase } from '@cuberoot/shared';
 import { algSheetFromCases, DEFAULT_MAX_ALGS } from '@/lib/alg_pdf/from_cases';
+import { sq1EpNumericCaseName, sq1EpNumericGroupName } from '@/lib/sq1-ep-parity';
 
 function mkCase(over: Partial<AlgCase> & { name: string }): AlgCase {
   return {
@@ -103,6 +104,24 @@ describe('algSheetFromCases', () => {
     });
     expect(black.cases[0].thumb?.sq1BlackTop).toBe(true);
     expect(yellow.cases[0].thumb?.sq1BlackTop).toBe(false);
+  });
+
+  it('caseLabel 和 groupLabel 让 Square-1 PDF 完整跟随页面的数字命名', () => {
+    const cases = [
+      mkCase({ name: 'Adj / H', subgroup: 'Top Adj', algs: [[{ alg: '(1,0) / (-1,0)' }]] }),
+      mkCase({ name: 'H / Opp', subgroup: 'Top H', algs: [[{ alg: '(1,0) / (-1,0)' }]] }),
+    ];
+    const sheet = algSheetFromCases({
+      ...base,
+      puzzle: 'sq1',
+      set: 'ep',
+      cases,
+      caseLabel: c => sq1EpNumericCaseName(c.name) ?? c.name,
+      groupLabel: subgroup => sq1EpNumericGroupName(subgroup) ?? subgroup,
+    });
+    expect(sheet.cases.map(item => item.name)).toEqual(['2.+', '+.1']);
+    expect(sheet.cases.map(item => item.group)).toEqual(['2.*', '+.*']);
+    expect(cases.map(item => item.name)).toEqual(['Adj / H', 'H / Opp']);
   });
 
   it('PDF 缩略图跟随网页的识别简化开关', () => {
