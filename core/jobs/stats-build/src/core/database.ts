@@ -1,7 +1,7 @@
 // NOTE: MySQL 数据库连接
 // 从 database.yml 读取凭据
 import mysql from 'mysql2/promise';
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { parse as parseYaml } from 'yaml';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -19,8 +19,44 @@ export interface DbConfig {
   host: string;
 }
 
-// NOTE: 导出配置供 update_database.ts 复用
-export const DB_CONFIG: DbConfig = parseYaml(readFileSync(CONFIG_PATH, 'utf-8'));
+let DB_CONFIG: DbConfig | null = null;
+
+function loadDbConfigFromEnv(): DbConfig | null {
+  const host = process.env.MYSQL_HOST;
+  const username = process.env.MYSQL_USER;
+  const password = process.env.MYSQL_PASS;
+  const database = process.env.MYSQL_DB;
+  if (!host && !username && !password && !database) return null;
+  if (!host || !username || !database) {
+    throw new Error('MYSQL_* env vars must include MYSQL_HOST MYSQL_USER MYSQL_DB when using env DB config');
+  }
+  return {
+    host,
+    username,
+    password: password ?? '',
+    database,
+  };
+}
+
+export function getDbConfig(): DbConfig {
+  if (DB_CONFIG !== null) return DB_CONFIG;
+
+  const envConfig = loadDbConfigFromEnv();
+  if (envConfig) {
+    DB_CONFIG = envConfig;
+    return DB_CONFIG;
+  }
+
+  if (!existsSync(CONFIG_PATH)) {
+    throw new Error(
+      `database.yml is missing at ${CONFIG_PATH}; ` +
+      'provide MYSQL_* env vars or create database.yml from the template.',
+    );
+  }
+
+  DB_CONFIG = parseYaml(readFileSync(CONFIG_PATH, 'utf-8'));
+  return DB_CONFIG;
+}
 
 // NOTE: CI 导入时仅保留这些表;改一处影响整个 stats build / wca_stats_extra build.
 // `eligible_country_iso2s_for_championship`(2026-05 加):wca_stats_extra_build 用来
@@ -45,11 +81,12 @@ let pool: mysql.Pool | null = null;
 
 export function getPool(): mysql.Pool {
   if (!pool) {
+    const dbConfig = getDbConfig();
     pool = mysql.createPool({
-      host: DB_CONFIG.host,
-      user: DB_CONFIG.username,
-      password: DB_CONFIG.password,
-      database: DB_CONFIG.database,
+      host: dbConfig.host,
+      user: dbConfig.username,
+      password: dbConfig.password,
+      database: dbConfig.database,
       // NOTE: session 初始化
       connectionLimit: 4,
       multipleStatements: false,
@@ -75,4 +112,3 @@ export async function closePool(): Promise<void> {
 
 // 从 result_attempts 表中获取各次成绩值（逗号分隔）
 export const ATTEMPTS_SUBQUERY = '(SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number) FROM result_attempts ra WHERE ra.result_id = result.id)';
-

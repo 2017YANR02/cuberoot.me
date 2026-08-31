@@ -13,7 +13,7 @@ import { createInterface } from 'readline';
 import { execSync } from 'child_process';
 import { pipeline } from 'stream/promises';
 import { tmpdir } from 'os';
-import { DB_CONFIG, REQUIRED_TABLES, INDICES } from '../core/database.js';
+import { getDbConfig, REQUIRED_TABLES, INDICES } from '../core/database.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -25,9 +25,10 @@ const SQL_FILENAME = 'wca-developer-database-dump.sql';
 // --default-character-set=binary: dump 含非 utf8mb4 字节 (RDS 里 latin1 column 的遗留数据等),
 //   不加这个 flag 整条 INSERT 会因 Incorrect string value 静默失败 → 多个表 0 行
 function mysqlCmd(): string {
-  const parts = ['mysql', '--default-character-set=binary', `--user=${DB_CONFIG.username}`];
-  if (DB_CONFIG.password) parts.push(`--password=${DB_CONFIG.password}`);
-  if (DB_CONFIG.host && DB_CONFIG.host !== 'localhost') parts.push(`--host=${DB_CONFIG.host}`);
+  const dbConfig = getDbConfig();
+  const parts = ['mysql', '--default-character-set=binary', `--user=${dbConfig.username}`];
+  if (dbConfig.password) parts.push(`--password=${dbConfig.password}`);
+  if (dbConfig.host && dbConfig.host !== 'localhost') parts.push(`--host=${dbConfig.host}`);
   return parts.join(' ');
 }
 
@@ -112,7 +113,7 @@ async function enableRedoLog(): Promise<void> {
 async function importTables(sqlPath: string, workDir: string): Promise<Date> {
   const requiredSet = new Set<string>(REQUIRED_TABLES);
   const mysql = mysqlCmd();
-  const db = DB_CONFIG.database;
+  const db = getDbConfig().database;
 
   // NOTE: 先删除并重建数据库
   execSync(`${mysql} -e "DROP DATABASE IF EXISTS ${db}"`, { stdio: 'pipe' });
@@ -300,7 +301,7 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
 // NOTE: 步骤 5——建覆盖索引 + 存储 metadata
 async function postImport(exportTimestamp: Date): Promise<void> {
   const mysql = mysqlCmd();
-  const db = DB_CONFIG.database;
+  const db = getDbConfig().database;
 
   await timedTask('Creating covering index on result_attempts', () => {
     execSync(
