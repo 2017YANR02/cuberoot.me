@@ -81,6 +81,8 @@ export type VideoDenyReason =
   | 'unavailable'
   /** 该 pid 不在该房间(房间过期 / 被踢 / 伪造)。 */
   | 'not in room'
+  /** Battle membership rotated repeatedly while admission was being checked; retryable. */
+  | 'changed'
   /** 会议码不合法(手抄错了)。 */
   | 'invalid'
   /** 会议室要求登录。 */
@@ -170,6 +172,11 @@ async function throwVideoDenied(res: Response): Promise<never> {
   const msg = (await res.json().catch(() => ({}))) as { error?: string };
   // 服务端的 400 文案是 'invalid code/id/name' 这种带细节的串,收敛成一个 reason。
   const raw = msg.error ?? '';
-  const reason: VideoDenyReason = raw.startsWith('invalid') ? 'invalid' : (raw as VideoDenyReason);
-  throw new VideoDeniedError(reason || 'unavailable');
+  const known: ReadonlySet<string> = new Set([
+    'full', 'bandwidth', 'unavailable', 'not in room', 'changed', 'auth', 'video not configured',
+  ]);
+  const reason: VideoDenyReason = raw.startsWith('invalid')
+    ? 'invalid'
+    : known.has(raw) ? raw as VideoDenyReason : 'unavailable';
+  throw new VideoDeniedError(reason);
 }

@@ -144,6 +144,18 @@ describe('各自开始(默认)', () => {
     expect(players[0].canStart).toBe(false);
     expect(players[1].canStart).toBe(true); // P1 的延时照常走完
   });
+
+  it('系统取消触摸只撤销预备，绝不能当作松手起表', () => {
+    useBattleStore.getState().playerDown(0);
+    vi.advanceTimersByTime(DELAY + 1);
+    expect(useBattleStore.getState().players[0].canStart).toBe(true);
+
+    useBattleStore.getState().playerCancel(0);
+
+    const { players } = useBattleStore.getState();
+    expect(players[0]).toMatchObject({ isReady: false, canStart: false, isTiming: false });
+    expect(players[1]).toMatchObject({ isReady: false, canStart: false, isTiming: false });
+  });
 });
 
 describe('同时开始', () => {
@@ -178,6 +190,36 @@ describe('同时开始', () => {
     const { players } = useBattleStore.getState();
     expect(players[0].canStart).toBe(false);
     expect(players[1].canStart).toBe(false);
+  });
+
+  it('绿灯时任一触摸被系统取消会整组回 idle，而不是误起表或留下死锁', () => {
+    useBattleStore.getState().playerDown(0);
+    useBattleStore.getState().playerDown(1);
+    vi.advanceTimersByTime(DELAY + 1);
+
+    useBattleStore.getState().playerCancel(0);
+
+    const { players } = useBattleStore.getState();
+    expect(players.slice(0, 2).every((player) => (
+      !player.isReady && !player.canStart && !player.isTiming
+    ))).toBe(true);
+  });
+});
+
+describe('纯布局变化', () => {
+  it('旋转视口只换布局，不停表、不换打乱、不清赢家', () => {
+    resetTwoPlayer(false);
+    startSolve(0);
+    useBattleStore.setState({ winners: [0] });
+    const before = useBattleStore.getState();
+
+    before.setLayout(before.layout === 'side' ? 'versus' : 'side');
+
+    const after = useBattleStore.getState();
+    expect(after.players).toBe(before.players);
+    expect(after.players[0].isTiming).toBe(true);
+    expect(after.scrambles).toBe(before.scrambles);
+    expect(after.winners).toEqual([0]);
   });
 });
 

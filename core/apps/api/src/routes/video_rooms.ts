@@ -22,8 +22,9 @@ import { pickAvailableRoomCode, ROOM_CODE_RE } from '../utils/room_code.js';
  *
  * 两种房的授权模型是**不同**的,这是本文件最要紧的一处区别:
  *
- *   对战房 `battle-<code>`  免账号登录。房间码和 pid 都可从公开房态得到,不能当凭据 ——
- *                           必须回库验证 create/join 单次签发的私有玩家 capability。
+ *   对战房 `battle-<code>-<generation>` 免账号登录。房间码和 pid 都可从公开房态得到,
+ *                           不能当凭据 —— 必须回库验证 create/join 单次签发的私有 capability。
+ *                           踢人/离开时轮换随机 generation,隔离自托管 LiveKit 的旧 token。
  *                           identity = pid,显示名取房里的昵称(不接受客户端自报)。
  *   会议室 `meet-<code>`    **必须登录**。进哪一间由 4 位数字会议码决定;新建时服务端会避开
  *                           活跃房与刚分配的码,但短码不是秘密。identity 与
@@ -83,7 +84,10 @@ const MAX_VIDEO_PARTICIPANTS = 4;
  */
 const MAX_MEET_PARTICIPANTS = 6;
 
-/** token 有效期:只用于建立连接,连上之后会话由 LiveKit 自己维持,不需要长 TTL。 */
+/**
+ * 初始 token 短 TTL。自托管 LiveKit 连接后仍会发可重连的刷新 token，所以撤权边界不是
+ * 这个 1m，而是 battle room 的随机 video_generation 轮换。
+ */
 const TOKEN_TTL = '1m';
 
 /** 房间在最后一个人离开后保留多久(秒),方便短暂断线后回到原房。 */
@@ -126,19 +130,30 @@ function svc(): RoomServiceClient {
 }
 
 /**
- * Disconnect a player and revoke every previously issued battle-room JWT for that identity.
- * Membership mutation remains authoritative even if LiveKit is down; the short JWT TTL limits
- * the residual window while the failed removal is logged for operations.
+ * Retire the entire old media generation. Self-hosted LiveKit cannot revoke cached participant
+ * tokens, so removing only the kicked identity leaves the remaining legitimate members in G1
+ * where that identity can reconnect. Deleting G1 disconnects everyone; members still authorized
+ * in PostgreSQL immediately mint G2, while an old G1 token can at most recreate an isolated room.
  */
-export async function evictBattleVideoParticipant(code: string, playerId: string): Promise<void> {
+export async function retireBattleVideoGeneration(code: string, videoGeneration: string): Promise<void> {
   if (!videoEnabled()) return;
-  try {
-    await svc().removeParticipant(`battle-${code}`, playerId, {
-      revokeTokenTs: BigInt(Math.floor(Date.now() / 1000)),
-    });
-  } catch (error) {
-    console.error('[video] failed to evict battle participant', { code, playerId, error });
+  const room = `battle-${code}-${videoGeneration}`;
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await svc().deleteRoom(room);
+      return;
+    } catch (error) {
+      lastError = error;
+      // Yield before a bounded retry so a transient RPC/channel failure does not turn a kick
+      // response into fire-and-forget retirement. A missing room is also safe: all future valid
+      // tokens already target the new generation, and no legitimate participant remains in G1.
+      if (attempt < 3) await Promise.resolve();
+    }
   }
+  console.error('[video] failed to retire battle media generation after retries', {
+    code, videoGeneration, error: lastError,
+  });
 }
 
 /**
@@ -289,47 +304,56 @@ videoRoomsRoutes.post('/video/token', async (c) => {
     return c.json({ error: 'invalid code/pid' }, 400);
   }
 
-  // pid 会出现在公开房态里,不是凭据;必须同时验证只在 create/join 返回的 capability。
-  const rows = await query<{ name: string | null; auth_hash: string | null }>(
-    `SELECT players -> ? ->> 'name' AS name, player_auth ->> ? AS auth_hash
-       FROM battle_rooms
-      WHERE code = ? AND jsonb_exists(players, ?)`,
-    [pid, pid, code, pid],
-  );
-  if (!rows[0] || !battlePlayerTokenMatchesHash(playerToken, rows[0].auth_hash)) {
-    return c.json({ error: 'not in room' }, 403);
-  }
-
-  const roomName = `battle-${code}`;
-  const cap = await capacityCheck(roomName, pid, MAX_VIDEO_PARTICIPANTS);
-  if (!cap.ok) {
-    const status = cap.reason === 'unavailable' ? 503 : 429;
-    return c.json({ error: cap.reason }, status);
-  }
-  // Re-check under the battle_rooms row lock after the asynchronous LiveKit capacity RPC.
-  // kick/leave UPDATEs then happen either before this check (no token) or after minting, in
-  // which case they immediately remove the participant and revoke this JWT's nbf.
-  const admission = await withTransaction<
-    { ok: true; token: Awaited<ReturnType<typeof mintToken>> } | { ok: false }
-  >(async (transactionQuery) => {
-    const current = await transactionQuery<{ name: string | null; auth_hash: string | null }>(
-      `SELECT players -> ? ->> 'name' AS name, player_auth ->> ? AS auth_hash
+  // A generation can rotate while the LiveKit capacity RPC is in flight. Retry against the new
+  // room; never use a G1 capacity decision to mint a G2 token.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const rows = await query<{ name: string | null; auth_hash: string | null; video_generation: string }>(
+      `SELECT players -> ? ->> 'name' AS name, player_auth ->> ? AS auth_hash, video_generation
          FROM battle_rooms
-        WHERE code = ? AND jsonb_exists(players, ?)
-        FOR UPDATE`,
+        WHERE code = ? AND jsonb_exists(players, ?)`,
       [pid, pid, code, pid],
     );
-    if (!current[0] || !battlePlayerTokenMatchesHash(playerToken, current[0].auth_hash)) {
-      return { ok: false };
+    if (!rows[0] || !battlePlayerTokenMatchesHash(playerToken, rows[0].auth_hash)) {
+      return c.json({ error: 'not in room' }, 403);
     }
-    return {
-      ok: true,
-      token: await mintToken(roomName, pid, current[0].name ?? pid, MAX_VIDEO_PARTICIPANTS),
-    };
-  });
-  return admission.ok
-    ? c.json(admission.token)
-    : c.json({ error: 'not in room' }, 403);
+
+    const checkedGeneration = rows[0].video_generation;
+    const roomName = `battle-${code}-${checkedGeneration}`;
+    const cap = await capacityCheck(roomName, pid, MAX_VIDEO_PARTICIPANTS);
+
+    const admission = await withTransaction<
+      | { kind: 'token'; token: Awaited<ReturnType<typeof mintToken>> }
+      | { kind: 'denied' }
+      | { kind: 'retry' }
+      | { kind: 'capacity'; reason: 'full' | 'bandwidth' | 'unavailable' }
+    >(async (transactionQuery) => {
+      const current = await transactionQuery<{ name: string | null; auth_hash: string | null; video_generation: string }>(
+        `SELECT players -> ? ->> 'name' AS name, player_auth ->> ? AS auth_hash, video_generation
+           FROM battle_rooms
+          WHERE code = ? AND jsonb_exists(players, ?)
+          FOR UPDATE`,
+        [pid, pid, code, pid],
+      );
+      if (!current[0] || !battlePlayerTokenMatchesHash(playerToken, current[0].auth_hash)) {
+        return { kind: 'denied' };
+      }
+      if (current[0].video_generation !== checkedGeneration) return { kind: 'retry' };
+      // A denial calculated for G1 is not valid after membership rotated the room to G2.
+      // Recheck generation under the same row lock before returning either allow or deny.
+      if (!cap.ok) return { kind: 'capacity', reason: cap.reason };
+      return {
+        kind: 'token',
+        token: await mintToken(roomName, pid, current[0].name ?? pid, MAX_VIDEO_PARTICIPANTS),
+      };
+    });
+    if (admission.kind === 'denied') return c.json({ error: 'not in room' }, 403);
+    if (admission.kind === 'capacity') {
+      const status = admission.reason === 'unavailable' ? 503 : 429;
+      return c.json({ error: admission.reason }, status);
+    }
+    if (admission.kind === 'token') return c.json(admission.token);
+  }
+  return c.json({ error: 'room changed' }, 409);
 });
 
 // POST /video/meet/code — 给「新建会议」分配一个当前未占用的四位数字码。

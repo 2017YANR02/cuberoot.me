@@ -16,6 +16,16 @@ import { getSettings } from '@/app/[lang]/timer/_lib/settings';
 import { peekWca, nextWca, prefetchWca, hasWcaSource, type WcaSourceSpec } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
 import { fromWcaSpelling, toWcaSpelling, type EventId } from '@/app/[lang]/timer/_lib/types';
 import { persistItem } from '@/lib/safe-storage';
+import {
+  LOCAL_BATTLE_MAX_PLAYERS,
+  assignLocalBattlePlayerKey,
+  groupLocalBattlePlayersByEvent,
+  isLocalBattleScrambleHidden,
+  localBattlePlayerForKey,
+  localBattlePlayerSlots,
+  localBattleWinnerIndices,
+  normalizeLocalBattlePlayerCount,
+} from '@cuberoot/shared/timer';
 
 // Battle puzzle id ⇄ timer EventId. Both directions come from the ONE mapping
 // table in timer/_lib/types.ts (`toWcaSpelling` / `fromWcaSpelling`) — battle
@@ -37,12 +47,7 @@ export function timerToBattleEvent(id: string): string {
 // KeyboardEvent.key → player slot, given the store's (possibly user-customized)
 // playerKeys. Single-letter keys compare case-insensitively (so 'q'/'Q' both hit
 // the slot bound to 'q'); Space/Enter/etc. compare exactly.
-export function keyToPlayer(playerKeys: string[], key: string): number | undefined {
-  const normalize = (k: string) => (k.length === 1 ? k.toLowerCase() : k);
-  const nk = normalize(key);
-  const idx = playerKeys.findIndex(k => normalize(k) === nk);
-  return idx === -1 ? undefined : idx;
-}
+export const keyToPlayer = localBattlePlayerForKey;
 
 /** Build the WCA source spec for a battle puzzle, reading the shared timer
  *  settings (scramble source config is shared across Solo + Duo). */
@@ -119,14 +124,11 @@ function isBLD(puzzleId: string): boolean {
  *   - 各自开始 —— 先起表的人不能把打乱从还没起表的队友眼前抽走,得等最后一个人也起表。
  * 全员停表后 isTiming 全假 → 重新显示(下一轮的新打乱由 checkBothFinished 换上)。
  */
-export function isScrambleHidden(players: PlayerState[], ids: number[]): boolean {
-  if (!ids.some(i => players[i].isTiming)) return false;
-  return !ids.some(i => !players[i].isTiming && !players[i].hasFinished);
-}
+export const isScrambleHidden = isLocalBattleScrambleHidden;
 
 // NOTE: 引擎固定承载 4 个玩家槽位;实际参战人数由 playerCount (2~4) 决定,
 //   多余槽位保持空闲,不参与状态机/渲染。
-export const MAX_PLAYERS = 4;
+export const MAX_PLAYERS = LOCAL_BATTLE_MAX_PLAYERS;
 
 function freshPlayers(): PlayerState[] {
   return Array.from({ length: MAX_PLAYERS }, (_, i) => createPlayer(i));
@@ -288,6 +290,8 @@ export interface BattleState {
   // NOTE: 状态机核心
   playerDown: (playerId: number) => boolean;
   playerUp: (playerId: number) => void;
+  /** Abort a held/armed press without starting; used by pointercancel and lifecycle loss. */
+  playerCancel: (playerId: number) => void;
   /**
    * 智能魔方三件套。和按键那条路**并存**而不是互相翻译 —— 合成假的按键事件会
    * 把「按住多久」这种按键才有的语义强加给一颗魔方。
@@ -462,12 +466,12 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       : [playerId];
 
     // NOTE: 按 puzzle 分组——每组共享一条打乱
-    const groups = new Map<string, number[]>();
-    for (const t of targets) {
-      const puz = s.puzzleIds[t];
-      if (groups.has(puz)) continue;
-      groups.set(puz, Array.from({ length: n }, (_, i) => i).filter(i => s.puzzleIds[i] === puz));
-    }
+    const targetEvents = new Set(targets.map((target) => s.puzzleIds[target]));
+    const activeSlots = n === 1 ? [0] : localBattlePlayerSlots(n);
+    const groups = groupLocalBattlePlayersByEvent(
+      s.puzzleIds,
+      activeSlots.filter((playerId) => targetEvents.has(s.puzzleIds[playerId])),
+    );
     const affected = [...groups.values()].flat();
     // WCA 真实打乱模式(打乱来源在共享的 timer 设置里,Solo / Duo 同一份配置)
     const useWca = getSettings().scrambleSource === 'wca';
@@ -839,6 +843,28 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     }
   },
 
+  playerCancel: (playerId: number) => {
+    const s = get();
+    if (!inPlay(s, playerId)) return;
+    const player = s.players[playerId];
+    // Stopping happens on pointer/key down. If that already completed a solve, a later platform
+    // cancel must not rewrite the finished state or disturb another player's live timer.
+    if (player.isTiming || player.hasFinished) return;
+    const synchronized = s.mode !== 'solo' && s.syncStart;
+    get().cancelReadyTimer(synchronized ? undefined : playerId);
+    const targets = synchronized
+      ? Array.from({ length: s.playerCount }, (_, index) => index)
+      : [playerId];
+    const players = [...s.players];
+    for (const target of targets) {
+      const current = players[target];
+      if (!current.isTiming && !current.hasFinished) {
+        players[target] = { ...current, isReady: false, canStart: false };
+      }
+    }
+    set({ players });
+  },
+
   // ===== 内部辅助方法（挂在 action 上但不对外暴露接口） =====
 
   // 1:1 翻译自 battle.js checkBothReady()（行 785~815）
@@ -997,15 +1023,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   // 1:1 翻译自 battle.js computeWinner()（行 963~1001;推广到 N 人,最小有效成绩者胜,可并列）
   computeWinner: () => {
     const s = get();
-    const effectiveTimeFn = (player: PlayerState) => {
-      if (player.penalty === PENALTY.DNF) return Infinity;
-      if (player.penalty === PENALTY.PLUS2) return player.time + 2000;
-      return player.time;
-    };
-    const times = s.players.slice(0, s.playerCount).map(effectiveTimeFn);
-    const min = Math.min(...times);
-    // 全 DNF → 无胜者(不加分);并列最快 → 共享胜利各 +1
-    const winners = min === Infinity ? [] : times.flatMap((t, i) => (t === min ? [i] : []));
+    // 全 DNF → 无胜者(不加分);并列最快 → 共享胜利各 +1。Web/Mobile 共用此规则。
+    const winners = localBattleWinnerIndices(s.players.slice(0, s.playerCount));
 
     const newPlayers = [...s.players];
     for (const i of winners) {
@@ -1178,17 +1197,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
 
   setPlayerKey: (target: number, key: string) => {
     const s = get();
-    const normalize = (k: string) => (k.length === 1 ? k.toLowerCase() : k);
-    const nk = normalize(key);
-    const newKeys = [...s.playerKeys];
-    const conflictIdx = newKeys.findIndex((k, i) => i !== target && normalize(k) === nk);
-    if (conflictIdx !== -1) {
-      // 冲突:和目标玩家互换,谁都不会丢键
-      newKeys[conflictIdx] = s.playerKeys[target];
-      persistItem(LS_PREFIX + `key_${conflictIdx}`, newKeys[conflictIdx]);
-    }
-    newKeys[target] = key;
-    persistItem(LS_PREFIX + `key_${target}`, key);
+    const newKeys = assignLocalBattlePlayerKey(s.playerKeys, target, key);
+    newKeys.forEach((next, index) => {
+      if (next !== s.playerKeys[index]) persistItem(LS_PREFIX + `key_${index}`, next);
+    });
     set({ playerKeys: newKeys });
   },
 
@@ -1214,25 +1226,14 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const s = get();
     if (s.layout === layout) return; // NOTE: 避免重复设置
     persistItem(LS_PREFIX + 'layout', layout);
-    // NOTE: 保留玩家累积数据（solveHistory, points），仅重置当前回合状态
-    const newPlayers = [...s.players];
-    for (let i = 0; i < s.playerCount; i++) {
-      newPlayers[i] = {
-        ...s.players[i],
-        isReady: false,
-        canStart: false,
-        isTiming: false,
-        hasFinished: false,
-        pointerId: null,
-      };
-    }
-    set({ layout, winners: [], players: newPlayers });
-    get().loadNewScramble();
+    // Layout is presentation state. Orientation/viewport changes must never stop timers, clear
+    // winners, or replace a scramble; Mobile and Web can derive different layouts over one round.
+    set({ layout });
   },
 
   // NOTE: 参战人数(2~4)。切换 = 开新一局:重置回合/比分,按槽位重新加载各自历史
   setPlayerCount: (n: number) => {
-    const count = Math.max(2, Math.min(MAX_PLAYERS, n));
+    const count = normalizeLocalBattlePlayerCount(n);
     const s = get();
     if (s.playerCount === count) return;
     s.saveSolveHistory();

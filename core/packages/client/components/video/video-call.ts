@@ -29,6 +29,8 @@ export function denyMessage(reason: FailReason, maxParticipants: number): string
       return tr({ zh: '服务器视频带宽已满,过一会儿再试', en: 'Server video capacity is full — try again shortly' });
     case 'unavailable':
       return tr({ zh: '视频服务暂时连不上', en: 'Video service is unreachable' });
+    case 'changed':
+      return tr({ zh: '房间成员刚刚发生变化，请再试一次', en: 'Room membership just changed — try once more' });
     case 'not in room':
       return tr({ zh: '你已不在这个房间里', en: 'You are no longer in this room' });
     case 'invalid':

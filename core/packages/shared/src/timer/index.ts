@@ -1,4 +1,5 @@
 export * from './inspection';
+export * from './local-battle';
 export * from './async-scramble-pool';
 export * from './by-steps';
 export * from './by-steps-worker';

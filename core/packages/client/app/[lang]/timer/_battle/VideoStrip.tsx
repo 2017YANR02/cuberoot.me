@@ -10,8 +10,9 @@
  * 占带宽 —— 服务端的带宽预算是按「已连接的人」算的。
  *
  * 身份复用对战房的 {code, pid, playerToken}:服务端签 token 前会同时确认在册玩家与私有
- * capability。pid 会出现在公开房态里,不能单独作为凭据。视频房名 `battle-<code>`,
- * 与对战房一一对应。/meet 会议室是另一套授权(必须登录,身份取自 session token),而且它
+ * capability。pid 会出现在公开房态里,不能单独作为凭据。视频房名还绑定服务端随机
+ * videoGeneration；成员被移出时 generation 轮换，仍在房内的人自动断开旧媒体房并重连。
+ * /meet 会议室是另一套授权(必须登录,身份取自 session token),而且它
  * 用的是会议软件那套完整界面;与这里共用的只有 components/video/video-call.ts 里的连接参数
  * 和失败文案。
  *
@@ -22,9 +23,9 @@
  * 对战计时本身照常跑。
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { LiveKitRoom } from '@livekit/components-react';
-import type { DisconnectReason } from 'livekit-client';
+import { DisconnectReason } from 'livekit-client';
 import { Video } from 'lucide-react';
 
 import VideoTiles from '@/components/video/VideoTiles';
@@ -50,7 +51,7 @@ export interface VideoRoom {
   maxParticipants: number;
   /** 开 / 关视频。已连接时再点就是挂断。 */
   toggle: () => void;
-  leave: (reason?: DisconnectReason) => void;
+  leave: (reason?: DisconnectReason, disconnectedToken?: string) => void;
   fail: (reason: FailReason) => void;
 }
 
@@ -58,12 +59,20 @@ export interface VideoRoom {
  * @param code 对战房房间码;@param pid 本人在房里的 playerId。
  * 任一为空 = 身份还没落定(正在加入 / 恢复),此时签不出 token,整套 UI 不出现。
  */
-export function useVideoRoom(code: string | null, pid: string | null, playerToken: string | null): VideoRoom {
+export function useVideoRoom(
+  code: string | null,
+  pid: string | null,
+  playerToken: string | null,
+  videoGeneration: string | null,
+): VideoRoom {
   /** null = 还没问过站点配置;enabled:false = 本站没开视频。 */
   const [cfg, setCfg] = useState<VideoConfig | null>(null);
   const [token, setToken] = useState<VideoToken | null>(null);
+  const [wanted, setWanted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [retryNonce, setRetryNonce] = useState(0);
+  const changedRetriesRef = useRef(0);
 
   useEffect(() => {
     let dead = false;
@@ -78,27 +87,64 @@ export function useVideoRoom(code: string | null, pid: string | null, playerToke
     [maxParticipants],
   );
 
-  const leave = useCallback((reason?: DisconnectReason) => {
-    setToken(null);
-    setErr(disconnectMessage(reason));
+  const leave = useCallback((reason?: DisconnectReason, disconnectedToken?: string) => {
+    setToken((current) => {
+      if (disconnectedToken && current?.token !== disconnectedToken) return current;
+      // Membership rotation retires the entire old LiveKit room. Preserve the user's video
+      // intent so this authorized member immediately asks the API for the new generation.
+      if (reason !== DisconnectReason.ROOM_DELETED && reason !== DisconnectReason.ROOM_CLOSED) {
+        setWanted(false);
+      }
+      setErr(disconnectMessage(reason));
+      return null;
+    });
   }, []);
 
   const toggle = useCallback(() => {
-    if (token) { leave(); return; }
-    if (!code || !pid || !playerToken) return;
+    if (wanted) {
+      setWanted(false);
+      setToken(null);
+      setErr(null);
+      return;
+    }
+    if (!code || !pid || !playerToken || !videoGeneration) return;
+    setWanted(true);
+  }, [wanted, code, pid, playerToken, videoGeneration]);
+
+  // 换房间/身份是新会话，不继承视频意图；generation 轮换则保留意图并自动换 token。
+  useEffect(() => {
+    changedRetriesRef.current = 0;
+    setWanted(false); setToken(null); setErr(null);
+  }, [code, pid, playerToken]);
+  useEffect(() => { changedRetriesRef.current = 0; setToken(null); }, [videoGeneration]);
+
+  useEffect(() => {
+    if (!wanted || token || !code || !pid || !playerToken || !videoGeneration) return;
+    let dead = false;
     setBusy(true);
     setErr(null);
-    getVideoToken(code, pid, playerToken)
-      .then(setToken)
-      .catch((e: unknown) => fail(e instanceof VideoDeniedError ? e.reason : 'connect'))
-      .finally(() => setBusy(false));
-  }, [token, code, pid, playerToken, leave, fail]);
-
-  // 换房间(或换身份)时必须断开:旧 token 是签给旧房间的,留着会连到别人的房里。
-  useEffect(() => { setToken(null); setErr(null); }, [code, pid, playerToken]);
+    void getVideoToken(code, pid, playerToken)
+      .then((next) => {
+        if (dead) return;
+        changedRetriesRef.current = 0;
+        setToken(next);
+      })
+      .catch((e: unknown) => {
+        if (dead) return;
+        if (e instanceof VideoDeniedError && e.reason === 'changed' && changedRetriesRef.current < 2) {
+          changedRetriesRef.current += 1;
+          window.setTimeout(() => { if (!dead) setRetryNonce((value) => value + 1); }, 150);
+          return;
+        }
+        setWanted(false);
+        fail(e instanceof VideoDeniedError ? e.reason : 'connect');
+      })
+      .finally(() => { if (!dead) setBusy(false); });
+    return () => { dead = true; };
+  }, [wanted, token, code, pid, playerToken, videoGeneration, retryNonce, fail]);
 
   return {
-    enabled: !!cfg?.enabled && !!code && !!pid && !!playerToken,
+    enabled: !!cfg?.enabled && !!code && !!pid && !!playerToken && !!videoGeneration,
     token, busy, err, maxParticipants, toggle, leave, fail,
   };
 }
@@ -144,7 +190,7 @@ export default function VideoStrip({ video }: { video: VideoRoom }) {
         video
         audio
         options={LIVEKIT_ROOM_OPTIONS}
-        onDisconnected={video.leave}
+        onDisconnected={(reason) => video.leave(reason, video.token?.token)}
         onError={() => video.fail('connect')}
         onMediaDeviceFailure={() => video.fail('media')}
       >
