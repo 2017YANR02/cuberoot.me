@@ -207,7 +207,6 @@ export const STAGE_SECTIONS: StageSection[] = [
       { label: 'Roux_DR', mask: 'roux_dr' },
       { label: 'Roux_DRonly', mask: 'roux_dronly' },
       { label: 'Cross_Center', mask: 'cross' },
-      { label: 'Cross_Full', mask: 'cross_full' },
       { label: 'Cross_NoCenter', mask: 'cross_partial' },
       { label: 'Half_Cross', mask: 'cross_half' },
       { label: 'Half_Cross_Opp', mask: 'cross_half_opp' },

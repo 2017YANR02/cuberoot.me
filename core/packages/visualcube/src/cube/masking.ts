@@ -25,9 +25,6 @@ const stringMasksBySize: { [cubeSize: number]: { [masking: string]: string } } =
     [Masking.TWO_BY_TWO_BY_TWO]: '000000000000110110000011011011011000000000000000000000',
     [Masking.TWO_BY_TWO_BY_THREE]: '000000000000110110000111111111111000000011011000000000',
     [Masking.CROSS_PARTIAL]: '000000000000000010000000010010111010000000010000000010',
-    // CROSS_FULL = CROSS_PARTIAL ∪ 全部 6 个中心(含 U 中心)。PHP 的 "cross" 少了 U 中心,
-    // 想「十字 + 全中心」看朝向时得用这条。
-    [Masking.CROSS_FULL]: '000010000000010010000010010010111010000010010000010010',
     [Masking.CROSS_HALF]: '000000000000000010000000010010011000000000000000000000',      // PHP cross_fr
     [Masking.CROSS_HALF_OPP]: '000000000000000000000000010010010010000000000000000010',  // PHP cross_fb
     [Masking.XCROSS]: '000000000000110110000011011011111010000010010000010010',           // PHP xcross_fr
@@ -300,6 +297,8 @@ const maskingFunctions: MaskingFunctions = {
 }
 
 export function makeMasking(masking: Masking, cubeSize: number): FaceValues {
+  // 旧图片 URL 兼容:Cross_Full 已由标准 Cross 完全取代。
+  if ((masking as string) === 'cross_full') masking = Masking.CROSS
   // Data-driven masks ported from PHP take precedence — they cover shapes
   // (DR, Mehta, EOLR, big-cube centers/edges) that don't decompose cleanly
   // into row/col predicates.
