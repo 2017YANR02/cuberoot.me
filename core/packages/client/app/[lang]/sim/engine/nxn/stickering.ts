@@ -301,9 +301,9 @@ export function stickeringGroupsFor(order: number): StickeringGroup[] {
   if (order === 3) {
     return [
       { group: "Stickering", items: ["full", "custom"] },
+      { group: "CFOP", items: ["F2L", "Daisy", "Cross"] },
       { group: "Last Layer", items: LL_GROUP },
       { group: "Last Slot", items: LS_GROUP },
-      { group: "CFOP", items: ["F2L", "Daisy", "Cross"] },
       { group: "ZZ", items: ["EO", "EOline", "EOcross"] },
       { group: "Roux", items: ["FirstBlock", "SecondBlock", "CMLL", "L10P", "L6E", "L6EO"] },
       { group: "Petrus", items: ["2x2x2", "2x2x3"] },
