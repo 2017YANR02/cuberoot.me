@@ -1,9 +1,8 @@
 'use client';
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { X, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical } from 'lucide-react';
 import { eventInfo, type Solve, type Penalty } from '../_lib/types';
-import { formatMs, formatEventMs } from '../_lib/stats';
 import {
   TIMER_HISTORY_PENALTIES,
   TIMER_HISTORY_QUICK_ACTION_COPY,
@@ -21,22 +20,23 @@ import {
 } from '../_lib/history';
 import {
   DEFAULT_ROLLING_STAT_COLUMNS,
-  parseRollingStatKey,
-  rollingStatCurrent,
-  sanitizeRollingStatColumns,
+  projectRollingStats,
+  rollingStatColumnsForEvent,
   type RollingStatKey,
 } from '../_lib/rolling_stats';
 import RollingStatsPicker from './RollingStatsPicker';
-import { dayKeyOf } from '../_lib/stats_buckets';
+import { groupSolvesByLocalDay } from '../_lib/stats_buckets';
 import { ClearButton } from '@/components/ClearButton';
 import { DateRangeInput } from '@/components/DateRangeInput';
-import { RecordBadge } from '@/components/RecordBadge';
 import { tr } from '@/i18n/tr';
 import {
   TimerHistoryCompareActions,
   TimerHistoryCompareModal,
   TimerHistoryCompareStatus,
+  TimerHistoryColumnsHeader,
+  TimerHistoryDayDivider,
   TimerHistoryRow,
+  TimerHistoryRollingCells,
   TimerHistoryTagBadges,
   TimerHistoryTagFilter,
   type TimerHistoryCompareLabels,
@@ -233,61 +233,13 @@ export default function HistoryPanel({
   const panelEvent = solves.length > 0 ? solves[0].event : null;
   // MBLD ranks on points, not time — a rolling mean of its attempt durations is
   // a garbage number, so the columns are dropped rather than filled with one.
-  const visibleStatColumns = panelEvent === '333mbld'
-    ? []
-    : sanitizeRollingStatColumns(rollingStatColumns);
+  const visibleStatColumns = rollingStatColumnsForEvent(panelEvent, rollingStatColumns);
   const statColumnKey = visibleStatColumns.join(',');
-  const { statCols, statPb } = useMemo(() => {
-    const cols: Partial<Record<RollingStatKey, (number | null)[]>> = {};
-    const pb: Partial<Record<RollingStatKey, boolean[]>> = {};
-    for (const key of visibleStatColumns) {
-      const definition = parseRollingStatKey(key);
-      if (!definition) continue;
-      const arr: (number | null)[] = new Array(solves.length).fill(null);
-      const pbArr: boolean[] = new Array(solves.length).fill(false);
-      let best = Infinity;
-      for (let i = definition.size - 1; i < solves.length; i++) {
-        const v = rollingStatCurrent(solves.slice(i - definition.size + 1, i + 1), key);
-        arr[i] = v;
-        if (v != null && Number.isFinite(v) && v < best) { best = v; pbArr[i] = true; }
-      }
-      cols[key] = arr;
-      pb[key] = pbArr;
-    }
-    return { statCols: cols, statPb: pb };
+  const rollingProjection = useMemo(
+    () => projectRollingStats(solves, visibleStatColumns),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [solves, statColumnKey]);
-
-  // Each history row is its own grid, so `auto` ao columns would size to that
-  // row's own content and never line up across rows. Pin a FIXED ao width =
-  // widest rendered value/label + room for the PB badge, so every row's grid
-  // resolves identically (and adapts per event: 3x3 is narrow, big cubes wider).
-  // The rolling-average columns are formatted per-event — FMC renders move
-  // counts, not times.
-  const fmtRollingStat = useCallback(
-    (v: number | null) => (panelEvent === null ? formatMs(v) : formatEventMs(panelEvent, v)),
-    [panelEvent],
+    [solves, statColumnKey],
   );
-  const statMaxLen = useMemo(() => {
-    let max = 4; // "0.00"
-    for (const key of visibleStatColumns) {
-      max = Math.max(max, key.length);
-      for (const value of (statCols[key] ?? [])) {
-        max = Math.max(max, (value == null ? '-' : fmtRollingStat(value)).length);
-      }
-    }
-    return max;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statCols, statColumnKey, fmtRollingStat]);
-  const statColumnWidth = `calc(${statMaxLen}ch + 36px)`;
-  const statTemplate = visibleStatColumns.length
-    ? ' ' + visibleStatColumns.map(() => statColumnWidth).join(' ')
-    : '';
-  const timeColumnWidth = '12ch';
-  const headTmpl = `32px ${timeColumnWidth}${statTemplate} minmax(0,1fr)`;
-  const visiblePbTagIds = new Set<TimerHistoryTagId>();
-  if (visibleStatColumns.includes('ao5')) visiblePbTagIds.add('pb-ao5');
-  if (visibleStatColumns.includes('ao12')) visiblePbTagIds.add('pb-ao12');
 
   const historyFilterResult = useMemo(() => filterTimerHistorySolves(solves, {
     query,
@@ -308,16 +260,10 @@ export default function HistoryPanel({
   const matchCount = filteredReversed.length;
   const hasAnyFilter = historyFilterResult.hasAnyFilter;
 
-  /** 每个日期分隔行右边那个数。数的是**筛选后**留下的把数 —— 分隔行下面摆着几行,
-   *  它就该写几,否则筛完之后两者对不上。 */
-  const dayCounts = useMemo(() => {
-    const out = new Map<string, number>();
-    for (const s of filteredReversed) {
-      const k = dayKeyOf(s.ts);
-      out.set(k, (out.get(k) ?? 0) + 1);
-    }
-    return out;
-  }, [filteredReversed]);
+  const historyDayGroups = useMemo(
+    () => groupSolvesByLocalDay(filteredReversed),
+    [filteredReversed],
+  );
 
   const clearAllFilters = () => {
     setQuery('');
@@ -878,30 +824,25 @@ export default function HistoryPanel({
           </div>
         )}
         {filteredReversed.length > 0 && !visibleCompareMode && !selectMode && (
-          <div className="history-cols-head" style={{ gridTemplateColumns: headTmpl }}>
-            <span className="idx">#</span>
-            {/* MBLD's column holds "11/13 58:02", not a time. */}
-            <span>{panelEvent === '333mbld'
+          <TimerHistoryColumnsHeader
+            picker={visibleStatColumns.length > 0
+              ? <RollingStatsPicker triggerColumns={visibleStatColumns} />
+              : undefined}
+            resultLabel={panelEvent === '333mbld'
               ? tr({ zh: '成绩', en: 'Result' })
-              : tr({ zh: '时间', en: 'Time' })}</span>
-            {visibleStatColumns.length > 0 && (
-              <RollingStatsPicker triggerColumns={visibleStatColumns} />
-            )}
-          </div>
+              : tr({ zh: '时间', en: 'Time' })}
+          />
         )}
-        {filteredReversed.map((s, listIdx) => {
+        {historyDayGroups.map((group, groupIndex) => (
+          <Fragment key={`${group.day}-${groupIndex}`}>
+            <TimerHistoryDayDivider
+              countLabel={tr({ zh: `${group.solves.length} 次`, en: `${group.solves.length}` })}
+              day={group.day}
+            />
+            {group.solves.map((s) => {
           const realIdx = idToRealIdx.get(s.id) ?? -1;
-          // 日期分隔行。列表是新到旧,所以每天的第一行上面插一条 —— 而不是给每行加
-          // 一列日期:同一天的几十把会把同一个日期重复几十遍,窄屏还得为它让出一列。
-          const dayKey = dayKeyOf(s.ts);
-          const newDay = listIdx === 0 || dayKeyOf(filteredReversed[listIdx - 1].ts) !== dayKey;
           const isSelected = visibleCompareMode && visibleSelectedIds.includes(s.id);
           const isBulkSelected = selectMode && bulkSelected.has(s.id);
-
-          const lead = (visibleCompareMode || selectMode) ? '14px ' : '';
-          const rowStyle: React.CSSProperties = {
-            gridTemplateColumns: `${lead}32px ${timeColumnWidth}${statTemplate} minmax(0,1fr)`,
-          };
 
           const handleRowClick = () => {
             if (visibleCompareMode) {
@@ -917,23 +858,17 @@ export default function HistoryPanel({
           // user replaces that column, keep the tag beside the shared result.
           const rowTags = (
             <TimerHistoryTagBadges
-              hiddenTagIds={visiblePbTagIds}
               language={tagLanguage}
+              rollingColumns={visibleStatColumns}
               tagIds={tagsById.get(s.id) ?? []}
             />
           );
 
-          return (
-            <Fragment key={s.id}>
-            {newDay && (
-              <div className="history-day">
-                <span className="history-day-key">{dayKey}</span>
-                <span className="history-day-n">
-                  {tr({ zh: `${dayCounts.get(dayKey) ?? 0} 次`, en: `${dayCounts.get(dayKey) ?? 0}` })}
-                </span>
-              </div>
-            )}
-            <TimerHistoryRow
+              return <TimerHistoryRow
+              accessibleTimestamp={new Intl.DateTimeFormat(tagLanguage === 'zh' ? 'zh-CN' : 'en', {
+                dateStyle: 'long',
+                timeStyle: 'short',
+              }).format(s.ts)}
               index={realIdx}
               onActivate={handleRowClick}
               quickMenu={rowQuickMenu}
@@ -941,19 +876,19 @@ export default function HistoryPanel({
               selected={isSelected || isBulkSelected}
               selectionMode={visibleCompareMode ? 'compare' : selectMode ? 'select' : 'none'}
               solve={s}
-              style={rowStyle}
-              trailing={visibleStatColumns.map(key => (
-                <div className="hao" key={key}>
-                  <span className="record-num-cell">
-                    {fmtRollingStat(statCols[key]?.[realIdx] ?? null)}
-                    {statPb[key]?.[realIdx] && <RecordBadge record="PB" variant="inline" />}
-                  </span>
-                </div>
-              ))}
-            />
-            </Fragment>
-          );
-        })}
+              trailing={panelEvent && visibleStatColumns.length > 0 ? (
+                <TimerHistoryRollingCells
+                  columns={visibleStatColumns}
+                  event={panelEvent}
+                  index={realIdx}
+                  projection={rollingProjection}
+                />
+              ) : undefined}
+              key={s.id}
+            />;
+            })}
+          </Fragment>
+        ))}
       </div>
       {visibleCompareMode && (
         <TimerHistoryCompareActions

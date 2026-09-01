@@ -41,6 +41,7 @@ import {
   createTimerHistoryFilters,
   computeTimerHistoryTags,
   filterTimerHistorySolves,
+  groupSolvesByLocalDay,
   formatTimerTimingDisplay,
   generateTimerScramble,
   histBack,
@@ -50,9 +51,11 @@ import {
   normalizeTimerByStepsSettings,
   normalizeTimerWcaSourceSettings,
   parseManualScrambleQueue,
+  projectRollingStats,
   pruneTimerHistoryCompareSelection,
   resolveKeymap,
   resolveTimerHistoryComparePair,
+  rollingStatColumnsForEvent,
   summarize,
   takeManualScramble,
   timerEventIdFromSelector,
@@ -107,6 +110,8 @@ import {
   type TimerHistoryFilters,
   type TimerHistoryTagId,
   type TimerHistoryQuickActionId,
+  type RollingStatKey,
+  type RollingStatProjection,
   type TimerGestureActionId,
   type TimerPhase,
   type TimerStoreData,
@@ -134,7 +139,10 @@ import {
   TimerHistoryCompareActions,
   TimerHistoryCompareModal,
   TimerHistoryCompareStatus,
+  TimerHistoryColumnsHeader,
+  TimerHistoryDayDivider,
   TimerHistoryRow,
+  TimerHistoryRollingCells,
   TimerSolveDetailModal,
   TimerCubePreview,
   TimerHistoryTagBadges,
@@ -154,6 +162,7 @@ import {
   TimerSessionSwitcher,
   TimerStatRail,
   TimerStatsPanel,
+  TimerRollingStatsPicker,
   TimerTimingSettingsSections,
   TimerTopbar,
   TimerWcaSourceConfig,
@@ -167,6 +176,7 @@ import {
   type TimerHistoryQuickMenuLabels,
   type TimerHistoryCompareLabels,
   type TimerHistoryRowQuickMenu,
+  type TimerRollingStatsPickerLabels,
   type TimerOverlayId,
   type TimerOverlayOpenChangeDetails,
   type TimerPrintControllerHandle,
@@ -187,6 +197,7 @@ import {
   X,
 } from 'lucide-react';
 import {
+  Fragment,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -341,6 +352,8 @@ function MobileHistoryItem({
   selected,
   solve,
   tagIds,
+  rollingColumns,
+  rollingProjection,
 }: {
   compareMode: boolean;
   copy: (typeof COPY)[SupportedLanguage];
@@ -356,10 +369,12 @@ function MobileHistoryItem({
   selected: boolean;
   solve: Solve;
   tagIds: readonly TimerHistoryTagId[];
+  rollingColumns: readonly RollingStatKey[];
+  rollingProjection: RollingStatProjection;
 }) {
-  const date = useMemo(() => new Intl.DateTimeFormat(
+  const accessibleTimestamp = useMemo(() => new Intl.DateTimeFormat(
     language === 'zh' ? 'zh-CN' : 'en',
-    { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' },
+    { dateStyle: 'long', timeStyle: 'short' },
   ).format(solve.ts), [language, solve.ts]);
 
   const quickMenuLabels = useMemo<TimerHistoryQuickMenuLabels>(() => ({
@@ -386,6 +401,7 @@ function MobileHistoryItem({
   return (
     <article className="mobile-history-item">
       <TimerHistoryRow
+        accessibleTimestamp={accessibleTimestamp}
         index={index}
         onActivate={() => {
           if (compareMode) onCompareToggle(solve);
@@ -393,16 +409,23 @@ function MobileHistoryItem({
         }}
         quickMenu={quickMenu}
         resultExtras={(
-          <TimerHistoryTagBadges language={language} tagIds={tagIds} />
+          <TimerHistoryTagBadges
+            language={language}
+            rollingColumns={rollingColumns}
+            tagIds={tagIds}
+          />
         )}
         selected={selected}
         selectionMode={compareMode ? 'compare' : 'none'}
         solve={solve}
-        trailing={(
-          <time className="mobile-history-date" dateTime={new Date(solve.ts).toISOString()}>
-            {date}
-          </time>
-        )}
+        trailing={rollingColumns.length > 0 ? (
+          <TimerHistoryRollingCells
+            columns={rollingColumns}
+            event={solve.event}
+            index={index}
+            projection={rollingProjection}
+          />
+        ) : undefined}
       />
     </article>
   );
@@ -590,6 +613,24 @@ export function App({ host }: { host: InstalledAppHost }) {
     () => filterTimerHistorySolves(solves, historyFilters, historyTagsById),
     [historyFilters, historyTagsById, solves],
   );
+  const visibleHistoryRollingColumns = useMemo(
+    () => rollingStatColumnsForEvent(activeEvent, store?.settings.statsRollingColumns ?? []),
+    [activeEvent, store?.settings.statsRollingColumns],
+  );
+  const visibleHistoryRollingColumnKey = visibleHistoryRollingColumns.join(',');
+  const historyRollingProjection = useMemo(
+    () => projectRollingStats(solves, visibleHistoryRollingColumns),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [solves, visibleHistoryRollingColumnKey],
+  );
+  const historyIndexById = useMemo(
+    () => new Map(solves.map((solve, index) => [solve.id, index])),
+    [solves],
+  );
+  const historyDayGroups = useMemo(
+    () => groupSolvesByLocalDay(filteredHistory.solves),
+    [filteredHistory.solves],
+  );
   const historyCompareContext = historyContext;
   const historyCompareContextMatches = historyCompareSelectionContext === historyCompareContext;
   const visibleHistoryCompareMode = historyCompareMode && historyCompareContextMatches;
@@ -712,6 +753,13 @@ export function App({ host }: { host: InstalledAppHost }) {
     total: copy.compareTotal,
     tps: 'TPS',
   }), [copy, language]);
+  const rollingPickerLabels = useMemo<TimerRollingStatsPickerLabels>(() => ({
+    changeColumn: copy.statsChangeColumn,
+    clear: copy.clear,
+    customPlaceholder: copy.statsCustomPlaceholder,
+    customSize: copy.statsCustomSize,
+    replace: copy.replace,
+  }), [copy]);
   const wcaSourceAdapter = useMemo<TimerWcaSourceDataAdapter>(() => ({
     loadCompetitions: () => loadMobileWcaCompetitions(language),
     loadCompetitionScrambles: (competitionId, signal) => (
@@ -3314,13 +3362,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                 current: copy.current,
                 hideExtras: copy.hideExtras,
                 mean: copy.mean,
-                rollingPicker: {
-                  changeColumn: copy.statsChangeColumn,
-                  clear: copy.clear,
-                  customPlaceholder: copy.statsCustomPlaceholder,
-                  customSize: copy.statsCustomSize,
-                  replace: copy.replace,
-                },
+                rollingPicker: rollingPickerLabels,
                 showAllStats: copy.showAllStats,
                 single: copy.single,
                 subX: copy.subX,
@@ -3458,24 +3500,50 @@ export function App({ host }: { host: InstalledAppHost }) {
                 <p className="empty-state">{copy.noHistoryMatches}</p>
               ) : (
               <div className="history-list">
-                {filteredHistory.solves.map((solve) => (
-                  <MobileHistoryItem
-                    compareMode={visibleHistoryCompareMode}
-                    copy={copy}
-                    index={solves.findIndex((entry) => entry.id === solve.id)}
-                    key={solve.id}
-                    language={language}
-                    onCopy={copyHistoryScramble}
-                    onQuickDelete={quickDeleteSolve}
-                    onOpenDetail={openHistorySolveDetail}
-                    onQuickMenuOpenChange={handleTimerOverlayOpenChange}
-                    onCompareToggle={toggleHistoryCompareSolve}
-                    onUpdate={updateSolve}
-                    quickMenuOpen={openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu}
-                    selected={visibleHistoryCompareSelectedIds.includes(solve.id)}
-                    solve={solve}
-                    tagIds={historyTagsById.get(solve.id) ?? []}
+                {!visibleHistoryCompareMode && (
+                  <TimerHistoryColumnsHeader
+                    picker={visibleHistoryRollingColumns.length > 0 ? (
+                      <TimerRollingStatsPicker
+                        columns={store!.settings.statsRollingColumns}
+                        labels={rollingPickerLabels}
+                        onColumnsChange={(statsRollingColumns) => updateSettings({ statsRollingColumns })}
+                        triggerColumns={visibleHistoryRollingColumns}
+                        viewportBottomInset={96}
+                      />
+                    ) : undefined}
+                    resultLabel={activeEvent === '333mbld' ? copy.result : copy.historyTime}
                   />
+                )}
+                {historyDayGroups.map((group, groupIndex) => (
+                  <Fragment key={`${group.day}-${groupIndex}`}>
+                    <TimerHistoryDayDivider
+                      countLabel={language === 'zh'
+                        ? `${group.solves.length} 次`
+                        : `${group.solves.length}`}
+                      day={group.day}
+                    />
+                    {group.solves.map((solve) => (
+                      <MobileHistoryItem
+                        compareMode={visibleHistoryCompareMode}
+                        copy={copy}
+                        index={historyIndexById.get(solve.id) ?? -1}
+                        language={language}
+                        onCopy={copyHistoryScramble}
+                        onQuickDelete={quickDeleteSolve}
+                        onOpenDetail={openHistorySolveDetail}
+                        onQuickMenuOpenChange={handleTimerOverlayOpenChange}
+                        onCompareToggle={toggleHistoryCompareSolve}
+                        onUpdate={updateSolve}
+                        quickMenuOpen={openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu}
+                        rollingColumns={visibleHistoryRollingColumns}
+                        rollingProjection={historyRollingProjection}
+                        selected={visibleHistoryCompareSelectedIds.includes(solve.id)}
+                        solve={solve}
+                        tagIds={historyTagsById.get(solve.id) ?? []}
+                        key={solve.id}
+                      />
+                    ))}
+                  </Fragment>
                 ))}
               </div>
             )}

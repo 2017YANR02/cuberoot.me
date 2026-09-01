@@ -1378,11 +1378,11 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared scramble-preview visibility and 2D/3D settings for Web and all five installed clients. Field identity, defaults, disabled behavior, and help copy live in one implementation; hosts inject persistence and their existing switch style while TimerCubePreview remains the sole renderer.',
   },
   {
-    name: 'TimerHistoryRow / TimerHistoryCommentEditor / TimerHistoryTags',
-    import: "import { TimerHistoryRow, TimerHistoryCommentEditor, TimerHistoryTagBadges, TimerHistoryTagFilter } from '@cuberoot/timer-ui';",
+    name: 'TimerHistoryRow / TimerHistoryColumns / TimerHistoryTags',
+    import: "import { TimerHistoryRow, TimerHistoryColumnsHeader, TimerHistoryDayDivider, TimerHistoryRollingCells, TimerHistoryTagBadges } from '@cuberoot/timer-ui';",
     category: 'more',
-    zh: 'Web 与五个安装端计时器共用的完整成绩行、快捷菜单、注释编辑器、派生标签徽标和标签筛选器。结果格式、动作顺序、右键/长按、键盘焦点、隐藏标签的完整读屏文案和标签顺序只维护一份；宿主只注入真实持久化/剪贴板/详情副作用和共享标签计算结果。',
-    en: 'The complete solve row, quick menu, comment editor, derived-tag badges, and tag filter shared by Web and all five installed clients. Result formatting, action order, context-menu/long-press, keyboard focus, full accessible copy for hidden tags, and tag order live in one implementation; hosts only inject real persistence/clipboard/detail effects and the shared derived-tag result.',
+    zh: 'Web 与五个安装端计时器共用的完整成绩行、rolling 列头/逐行值/PB、日期分组、快捷菜单、派生标签和筛选器。算法来自 shared；FMC、MBLD、窄屏换行、触控高度和读屏顺序只维护一份。宿主只注入设置持久化与真实副作用。',
+    en: 'The complete solve row, rolling header/values/PBs, day groups, quick menu, derived tags, and filters shared by Web and all five installed clients. Algorithms come from shared; FMC, MBLD, narrow-screen wrapping, touch height, and reading order live in one implementation. Hosts only inject setting persistence and real effects.',
   },
   {
     name: 'TimerInfoToast',

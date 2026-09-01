@@ -4,6 +4,7 @@ export {
   bucketStats,
   dayKeyOf,
   filterSolvesByStatsDateRange,
+  groupSolvesByLocalDay,
   longestSolveDayStreak,
   solveDayKeys,
   TIMER_STATS_DATE_RANGES,
@@ -14,4 +15,5 @@ export type {
   TimerBucketBoundaries,
   TimerBucketStats,
   TimerStatsDateRange,
+  TimerHistoryDayGroup,
 } from '@cuberoot/shared/timer';

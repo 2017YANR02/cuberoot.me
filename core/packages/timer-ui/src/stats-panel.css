@@ -276,6 +276,24 @@
   }
 }
 
+@media (max-width: 480px) {
+  .rolling-stats-menu .compact-select-option,
+  .rolling-stats-menu .rolling-stats-custom-input,
+  .rolling-stats-menu .rolling-stats-custom-add {
+    min-height: 44px;
+  }
+
+  .rolling-stats-menu .rolling-stats-custom-input { padding-right: 48px; }
+
+  .rolling-stats-menu .clear-btn {
+    right: 0;
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    color: var(--muted-foreground);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .compact-select-trigger,
   .compact-select-arrow,

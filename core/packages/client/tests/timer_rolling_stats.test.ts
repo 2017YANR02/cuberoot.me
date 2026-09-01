@@ -3,11 +3,14 @@ import type { Solve } from '@/app/[lang]/timer/_lib/types';
 import {
   parseRollingStatKey,
   normalizeRollingStatColumns,
+  projectRollingStats,
   replaceRollingStatColumn,
   rollingStatBest,
   rollingStatColumnsFromLegacy,
   rollingStatCurrent,
+  rollingStatColumnsForEvent,
   rollingStatReplacementOptions,
+  rollingStatSeries,
   sanitizeRollingStatColumns,
 } from '@/app/[lang]/timer/_lib/rolling_stats';
 import {
@@ -42,6 +45,26 @@ describe('rolling statistic columns', () => {
     const solves = [10_000, 20_000, 60_000, 12_000].map(solve);
     expect(rollingStatBest(solves, 'mo3')).toBe(30_000);
     expect(rollingStatBest(solves, 'ao3')).toBe(20_000);
+  });
+
+  it('projects aligned strict running PBs once for every host', () => {
+    const history = [10_000, 20_000, 30_000, 10_000, 5_000].map(solve);
+    expect(rollingStatSeries(history, 'mo3')).toEqual([
+      { isPb: false, value: null },
+      { isPb: false, value: null },
+      { isPb: true, value: 20_000 },
+      { isPb: false, value: 20_000 },
+      { isPb: true, value: 15_000 },
+    ]);
+
+    const projected = projectRollingStats(history, ['mo3', 'ao5']);
+    expect(projected.get('ao5')).toEqual(rollingStatSeries(history, 'ao5'));
+    expect(projected.get('mo3')).toHaveLength(history.length);
+  });
+
+  it('drops duration rolling columns for MBLD only', () => {
+    expect(rollingStatColumnsForEvent('333mbld', ['ao5', 'ao12'])).toEqual([]);
+    expect(rollingStatColumnsForEvent('333fm', ['ao12', 'mo3'])).toEqual(['mo3', 'ao12']);
   });
 
   it('normalizes, sorts, deduplicates, caps, and rejects invalid keys', () => {

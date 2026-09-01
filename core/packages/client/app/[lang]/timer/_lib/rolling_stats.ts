@@ -7,14 +7,19 @@ export {
   ROLLING_STAT_PRESETS,
   normalizeRollingStatColumns,
   parseRollingStatKey,
+  projectRollingStats,
   replaceRollingStatColumn,
   rollingStatBest,
   rollingStatColumnsFromLegacy,
   rollingStatCurrent,
+  rollingStatColumnsForEvent,
   rollingStatReplacementOptions,
+  rollingStatSeries,
   sanitizeRollingStatColumns,
 } from '@cuberoot/shared/timer';
 export type {
   RollingStatDefinition,
   RollingStatKey,
+  RollingStatPoint,
+  RollingStatProjection,
 } from '@cuberoot/shared/timer';

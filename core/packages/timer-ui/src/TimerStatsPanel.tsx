@@ -15,8 +15,8 @@ import {
   meanOfN,
   parseRollingStatKey,
   rollingStatBest,
+  rollingStatColumnsForEvent,
   rollingStatCurrent,
-  sanitizeRollingStatColumns,
   stdDev,
   subXBreakdown,
   worstSingle,
@@ -95,8 +95,8 @@ export function TimerStatsPanel({
 }: TimerStatsPanelProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const columns = useMemo(
-    () => sanitizeRollingStatColumns(rollingColumns),
-    [rollingColumns],
+    () => rollingStatColumnsForEvent(event, rollingColumns),
+    [event, rollingColumns],
   );
 
   const table = useMemo<StatsTableRow[]>(() => {
