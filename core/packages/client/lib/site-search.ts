@@ -15,6 +15,7 @@ import { API_ORIGIN } from '@/lib/api-base';
 import { STACK_TOOLS_META, type StackToolMeta } from '@/app/[lang]/dev/stack/_lib/stack_meta';
 import GLOSSARY_DATA from '@/app/[lang]/wiki/glossary.json';
 import { WR_METRICS, resultsQueryForMetric } from '@/lib/wr-metrics';
+import { ALG_CATALOG } from '@cuberoot/shared/alg';
 
 export interface SiteSearchCard {
   id: string;
@@ -58,7 +59,13 @@ export interface GlossaryHit { head: string; body: string; slug: string }
 export interface AboutHit { id: string; titleZh: string; titleEn: string
  }
 export interface StackHit extends StackToolMeta {}
-export interface AlgSetHit { puzzle: string; setSlug: string; path: string }
+export interface AlgSetHit {
+  puzzle: string;
+  setSlug: string;
+  path: string;
+  nameEn: string;
+  nameZh: string;
+}
 
 /**
  * DB 里有、但 `/alg/<puzzle>/<slug>` 这条路由**不存在**的 set。
@@ -124,7 +131,7 @@ function tokenize(q: string): string[] {
     .replace(/([a-z0-9.])([^\x00-\x7F])/gi, '$1 $2');
   return withBoundary.split(/\s+/).map(t => t.trim()).filter(t => t.length > 0);
 }
-function allTokensIn(haystack: string, tokens: string[]): boolean {
+function allTokensIn(haystack: string, tokens: readonly string[]): boolean {
   for (const t of tokens) if (!haystack.includes(t)) return false;
   return true;
 }
@@ -249,20 +256,66 @@ function loadReconRecords(): Promise<ReconRecord[] | null> {
 
 interface AlgSetRow { puzzle: string; setSlug: string }
 interface AlgSetRecord { hit: AlgSetHit; hay: string }
-let algSetsPromise: Promise<AlgSetRecord[] | null> | null = null;
-function loadAlgSets(): Promise<AlgSetRecord[] | null> {
+const CATALOG_ALG_SET_RECORDS: AlgSetRecord[] = [
+  {
+    hit: { puzzle: '3x3', setSlug: 'cross', path: '/alg/3x3/cross', nameEn: 'Cross', nameZh: '十字' },
+    hay: '3x3\ncross\n十字',
+  },
+  ...Object.entries(ALG_CATALOG).flatMap(([puzzle, sets]) => sets.map(meta => ({
+    hit: {
+      puzzle,
+      setSlug: meta.slug,
+      path: `/alg/${puzzle}/${meta.slug}`,
+      nameEn: meta.short ?? meta.en,
+      nameZh: meta.short ?? meta.zh,
+    },
+    hay: `${puzzle}\n${meta.slug}\n${meta.short ?? ''}\n${meta.en}\n${meta.zh}`.toLowerCase(),
+  }))),
+  {
+    hit: { puzzle: '3x3', setSlug: 'lsll', path: '/alg/lsll', nameEn: 'LSLL', nameZh: 'LSLL' },
+    hay: '3x3\nlsll\nlast slot and last layer',
+  },
+];
+
+function matchAlgSetRecords(records: readonly AlgSetRecord[], tokens: readonly string[]): AlgSetHit[] {
+  const hits: AlgSetHit[] = [];
+  for (const rec of records) {
+    if (allTokensIn(rec.hay, tokens)) hits.push(rec.hit);
+    if (hits.length >= MATCH_HARD_CAP) break;
+  }
+  return hits;
+}
+
+export function searchKnownAlgSets(query: string): AlgSetHit[] {
+  const tokens = tokenize(query.trim().toLowerCase());
+  return tokens.length > 0 ? matchAlgSetRecords(CATALOG_ALG_SET_RECORDS, tokens) : [];
+}
+
+let algSetsPromise: Promise<AlgSetRecord[]> | null = null;
+function loadAlgSets(): Promise<AlgSetRecord[]> {
   if (algSetsPromise) return algSetsPromise;
   algSetsPromise = fetch(`${API_ORIGIN}/v1/alg/sets`)
     .then(r => (r.ok ? r.json() as Promise<AlgSetRow[]> : null))
-    .then(rows => rows?.map(r => ({
-      hit: {
-        puzzle: r.puzzle,
-        setSlug: r.setSlug,
-        path: ALG_SET_PATH_OVERRIDE[`${r.puzzle}/${r.setSlug}`] ?? `/alg/${r.puzzle}/${r.setSlug}`,
-      },
-      hay: `${r.puzzle}\n${r.setSlug}`.toLowerCase(),
-    })) ?? null)
-    .catch(() => null);
+    .then(rows => {
+      const records = [...CATALOG_ALG_SET_RECORDS];
+      const known = new Set(records.map(r => `${r.hit.puzzle}/${r.hit.setSlug}`));
+      for (const row of rows ?? []) {
+        const key = `${row.puzzle}/${row.setSlug}`;
+        if (known.has(key)) continue;
+        records.push({
+          hit: {
+            puzzle: row.puzzle,
+            setSlug: row.setSlug,
+            path: ALG_SET_PATH_OVERRIDE[key] ?? `/alg/${key}`,
+            nameEn: row.setSlug,
+            nameZh: row.setSlug,
+          },
+          hay: key.toLowerCase(),
+        });
+      }
+      return records;
+    })
+    .catch(() => CATALOG_ALG_SET_RECORDS);
   return algSetsPromise;
 }
 
@@ -411,12 +464,7 @@ export function useSiteSearch(
       }
 
       if (algSetsRef.current && tokens.length > 0) {
-        const hits: AlgSetHit[] = [];
-        for (const rec of algSetsRef.current) {
-          if (allTokensIn(rec.hay, tokens)) hits.push(rec.hit);
-          if (hits.length >= MATCH_HARD_CAP) break;
-        }
-        setAlgSetMatches(hits);
+        setAlgSetMatches(matchAlgSetRecords(algSetsRef.current, tokens));
       } else {
         setAlgSetMatches([]);
       }
