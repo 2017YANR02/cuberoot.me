@@ -2,6 +2,7 @@ import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import {
   decodeMobileEmbedAuthClear,
   decodeMobileEmbedAuthRequest,
+  decodeMobileEmbedExternal,
   decodeMobileEmbedNavigation,
   decodeMobileEmbedWebSessionResult,
   MOBILE_EMBED_FRAME_NAMES,
@@ -232,13 +233,19 @@ import {
   visibleViewportHeight,
 } from './mobile-viewport';
 import type { InstalledAppHost } from './platform';
+import { startWebSurfaceHandshake } from './web-surface-handshake';
 
 const SITE_ORIGIN = 'https://cuberoot.me';
+const MOBILE_EMBED_SURFACES = ['tools', 'account'] as const;
+const MOBILE_EMBED_INIT_RETRY_MS = 400;
+const MOBILE_EMBED_INIT_RETRIES = 25;
+const MOBILE_EMBED_AUTH_TIMEOUT_MS = 10_000;
 const repository = new TimerRepository(new IndexedDbTimerStoreDriver());
 
 type AppView = 'timer' | 'tools' | 'account' | 'history' | 'settings';
 type PrimaryView = Extract<AppView, 'timer' | 'tools' | 'account'>;
 type ConnectionState = 'checking' | 'offline' | 'online';
+type WebSurfaceStatus = 'loading' | 'ready' | 'error';
 type RealPoolFillOutcome = 'ready' | 'confirmed-empty' | 'exhausted' | 'cancelled';
 
 interface RealPoolRequest {
@@ -455,6 +462,18 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [battleModeActive, setBattleModeActive] = useState(false);
   const [openedWebViews, setOpenedWebViews] = useState({ tools: false, account: false });
   const [toolsEntryRoute, setToolsEntryRoute] = useState<string | null>(null);
+  const [webSurfaceStatus, setWebSurfaceStatus] = useState<Record<MobileEmbedSurface, WebSurfaceStatus>>({
+    account: 'loading',
+    tools: 'loading',
+  });
+  const [webSurfaceRevision, setWebSurfaceRevision] = useState<Record<MobileEmbedSurface, number>>({
+    account: 0,
+    tools: 0,
+  });
+  const [webSurfaceReloadUrl, setWebSurfaceReloadUrl] = useState<Record<MobileEmbedSurface, string | null>>({
+    account: null,
+    tools: null,
+  });
   const [viewportHeight, setViewportHeight] = useState(visibleViewportHeight);
   const [connection, setConnection] = useState<ConnectionState>('checking');
   const [wcaDifficultyCoverage, setWcaDifficultyCoverage] = useState<TimerWcaDifficultyCoverage>('idle');
@@ -490,9 +509,27 @@ export function App({ host }: { host: InstalledAppHost }) {
     account: null,
     tools: null,
   });
+  const webLastHrefRef = useRef<Record<MobileEmbedSurface, string>>({
+    account: SITE_ORIGIN,
+    tools: SITE_ORIGIN,
+  });
+  const webHandshakeRetryRef = useRef<Record<MobileEmbedSurface, (() => void) | null>>({
+    account: null,
+    tools: null,
+  });
+  const webSurfaceLoadedRef = useRef<Record<MobileEmbedSurface, boolean>>({
+    account: false,
+    tools: false,
+  });
+  const previousConnectionRef = useRef<ConnectionState>('checking');
   const webDepthRef = useRef<Record<MobileEmbedSurface, number>>({ account: 0, tools: 0 });
-  const accountBridgeReadyRef = useRef(false);
-  const accountSyncInFlightRef = useRef<string | null>(null);
+  const webBridgeReadyRef = useRef<Record<MobileEmbedSurface, boolean>>({
+    account: false,
+    tools: false,
+  });
+  const accountLoginRequestedRef = useRef(false);
+  const accountSyncInFlightRef = useRef<{ requestId: string; token: string } | null>(null);
+  const accountSyncTimeoutRef = useRef<number | null>(null);
   const accountSyncedTokenRef = useRef<string | null>(null);
   const viewRef = useRef(view);
   const timerModeRef = useRef<TimerPlayersValue>(timerMode);
@@ -513,6 +550,10 @@ export function App({ host }: { host: InstalledAppHost }) {
   const fallbackLanguage = preferredLanguage();
   const language = store?.settings.language ?? fallbackLanguage;
   const copy = COPY[language];
+  const toolsWebUrl = toolsEntryRoute
+    ? siteRouteUrl(language, toolsEntryRoute)
+    : siteUrl(language);
+  const accountWebUrl = accountUrl(language);
   const auth = host.useAuth(language);
   const setLocalBattleSmartCubeHandlers = useCallback((handlers: LocalBattleSmartCubeHandlers | null) => {
     localBattleSmartCubeHandlersRef.current = handlers;
@@ -1180,22 +1221,191 @@ export function App({ host }: { host: InstalledAppHost }) {
     }
   }, [activeEvent, openOverlay, scrambleSource, view]);
 
+  const clearWebSurfaceHandshake = useCallback((surface: MobileEmbedSurface) => {
+    webHandshakeRetryRef.current[surface]?.();
+    webHandshakeRetryRef.current[surface] = null;
+  }, []);
+
+  const beginWebSurfaceHandshake = useCallback((surface: MobileEmbedSurface) => {
+    clearWebSurfaceHandshake(surface);
+    if (connection !== 'online') return;
+    const postInit = () => webFrameRefs.current[surface]?.contentWindow?.postMessage(
+      mobileEmbedInitMessage(surface),
+      SITE_ORIGIN,
+    );
+    webHandshakeRetryRef.current[surface] = startWebSurfaceHandshake(
+      postInit,
+      MOBILE_EMBED_INIT_RETRY_MS,
+      MOBILE_EMBED_INIT_RETRIES,
+    );
+  }, [clearWebSurfaceHandshake, connection]);
+
+  const markWebSurfaceLoaded = useCallback((surface: MobileEmbedSurface) => {
+    webSurfaceLoadedRef.current[surface] = true;
+    setWebSurfaceStatus((current) => (
+      current[surface] === 'ready' ? current : { ...current, [surface]: 'ready' }
+    ));
+  }, []);
+
+  const finishWebSurfaceHandshake = useCallback((surface: MobileEmbedSurface) => {
+    clearWebSurfaceHandshake(surface);
+    webBridgeReadyRef.current[surface] = true;
+    webSurfaceLoadedRef.current[surface] = true;
+    setWebSurfaceStatus((current) => (
+      current[surface] === 'ready' ? current : { ...current, [surface]: 'ready' }
+    ));
+  }, [clearWebSurfaceHandshake]);
+
+  const clearAccountSyncTimeout = useCallback(() => {
+    if (accountSyncTimeoutRef.current !== null) window.clearTimeout(accountSyncTimeoutRef.current);
+    accountSyncTimeoutRef.current = null;
+  }, []);
+
+  const retryWebSurface = useCallback((surface: MobileEmbedSurface) => {
+    clearWebSurfaceHandshake(surface);
+    webBridgeReadyRef.current[surface] = false;
+    webSurfaceLoadedRef.current[surface] = false;
+    if (surface === 'account') {
+      clearAccountSyncTimeout();
+      accountSyncInFlightRef.current = null;
+      accountSyncedTokenRef.current = null;
+    }
+    const fallbackUrl = surface === 'tools' ? toolsWebUrl : accountWebUrl;
+    let nextUrl = webLastHrefRef.current[surface] || fallbackUrl;
+    try {
+      if (new URL(nextUrl).origin !== SITE_ORIGIN) nextUrl = fallbackUrl;
+    } catch {
+      nextUrl = fallbackUrl;
+    }
+    setWebSurfaceStatus((current) => ({ ...current, [surface]: 'loading' }));
+    setWebSurfaceReloadUrl((current) => ({ ...current, [surface]: nextUrl }));
+    setWebSurfaceRevision((current) => ({ ...current, [surface]: current[surface] + 1 }));
+  }, [accountWebUrl, clearAccountSyncTimeout, clearWebSurfaceHandshake, toolsWebUrl]);
+
+  useEffect(() => {
+    for (const surface of MOBILE_EMBED_SURFACES) {
+      if (connection === 'online'
+        && openedWebViews[surface]
+        && webSurfaceStatus[surface] === 'loading'
+        && webFrameRefs.current[surface]) {
+        beginWebSurfaceHandshake(surface);
+      } else if (connection !== 'online') {
+        clearWebSurfaceHandshake(surface);
+        webBridgeReadyRef.current[surface] = false;
+        if (surface === 'account') {
+          clearAccountSyncTimeout();
+          accountSyncInFlightRef.current = null;
+        }
+        if (openedWebViews[surface]) {
+          setWebSurfaceStatus((current) => current[surface] === 'loading'
+            ? current
+            : { ...current, [surface]: 'loading' });
+        }
+      }
+    }
+  }, [
+    beginWebSurfaceHandshake,
+    clearAccountSyncTimeout,
+    clearWebSurfaceHandshake,
+    connection,
+    openedWebViews.account,
+    openedWebViews.tools,
+    webSurfaceRevision.account,
+    webSurfaceRevision.tools,
+    webSurfaceStatus.account,
+    webSurfaceStatus.tools,
+  ]);
+
+  useEffect(() => {
+    const previous = previousConnectionRef.current;
+    previousConnectionRef.current = connection;
+    if (previous === 'online' || connection !== 'online') return;
+    for (const surface of MOBILE_EMBED_SURFACES) {
+      if (!openedWebViews[surface]) continue;
+      if (webSurfaceLoadedRef.current[surface]) {
+        setWebSurfaceStatus((current) => current[surface] === 'ready'
+          ? current
+          : { ...current, [surface]: 'ready' });
+        beginWebSurfaceHandshake(surface);
+        continue;
+      }
+      setWebSurfaceStatus((current) => ({ ...current, [surface]: 'loading' }));
+      setWebSurfaceRevision((current) => ({ ...current, [surface]: current[surface] + 1 }));
+    }
+  }, [
+    beginWebSurfaceHandshake,
+    connection,
+    openedWebViews.account,
+    openedWebViews.tools,
+  ]);
+
+  useEffect(() => () => {
+    for (const surface of MOBILE_EMBED_SURFACES) clearWebSurfaceHandshake(surface);
+    clearAccountSyncTimeout();
+  }, [clearAccountSyncTimeout, clearWebSurfaceHandshake]);
+
+  useEffect(() => {
+    webLastHrefRef.current.tools = toolsWebUrl;
+    webBridgeReadyRef.current.tools = false;
+    webSurfaceLoadedRef.current.tools = false;
+    setWebSurfaceStatus((current) => current.tools === 'loading'
+      ? current
+      : { ...current, tools: 'loading' });
+    setWebSurfaceReloadUrl((current) => current.tools === null
+      ? current
+      : { ...current, tools: null });
+  }, [toolsWebUrl]);
+
+  useEffect(() => {
+    clearAccountSyncTimeout();
+    webBridgeReadyRef.current.account = false;
+    accountSyncInFlightRef.current = null;
+    webLastHrefRef.current.account = accountWebUrl;
+    webSurfaceLoadedRef.current.account = false;
+    setWebSurfaceStatus((current) => current.account === 'loading'
+      ? current
+      : { ...current, account: 'loading' });
+    setWebSurfaceReloadUrl((current) => current.account === null
+      ? current
+      : { ...current, account: null });
+  }, [accountWebUrl, clearAccountSyncTimeout]);
+
   const syncAccountWebSession = useCallback(async () => {
     const token = auth.session?.token;
     const frame = webFrameRefs.current.account;
-    if (!token || !frame?.contentWindow || !accountBridgeReadyRef.current) return;
-    if (accountSyncedTokenRef.current === token || accountSyncInFlightRef.current === token) return;
-    accountSyncInFlightRef.current = token;
+    if (!token || !frame?.contentWindow || !webBridgeReadyRef.current.account) return;
+    if (accountSyncedTokenRef.current === token
+      || accountSyncInFlightRef.current?.token === token) return;
+    clearAccountSyncTimeout();
+    const requestId = crypto.randomUUID();
+    accountSyncInFlightRef.current = { requestId, token };
+    accountSyncTimeoutRef.current = window.setTimeout(() => {
+      if (accountSyncInFlightRef.current?.requestId !== requestId) return;
+      accountSyncInFlightRef.current = null;
+      accountSyncTimeoutRef.current = null;
+      setWebSurfaceStatus((current) => ({ ...current, account: 'error' }));
+      announce(copy.authError);
+    }, MOBILE_EMBED_AUTH_TIMEOUT_MS);
     try {
       const envelope = await auth.issueWebSessionTicket();
-      frame.contentWindow.postMessage(mobileEmbedWebSessionMessage(envelope.ticket), SITE_ORIGIN);
+      if (accountSyncInFlightRef.current?.requestId !== requestId
+        || webFrameRefs.current.account !== frame
+        || !webBridgeReadyRef.current.account) return;
+      frame.contentWindow.postMessage(
+        mobileEmbedWebSessionMessage(envelope.ticket, requestId),
+        SITE_ORIGIN,
+      );
     } catch {
-      if (accountSyncInFlightRef.current === token) accountSyncInFlightRef.current = null;
+      if (accountSyncInFlightRef.current?.requestId !== requestId) return;
+      clearAccountSyncTimeout();
+      accountSyncInFlightRef.current = null;
+      setWebSurfaceStatus((current) => ({ ...current, account: 'error' }));
       announce(copy.authError);
     }
-  }, [announce, auth.issueWebSessionTicket, auth.session?.token, copy.authError]);
+  }, [announce, auth.issueWebSessionTicket, auth.session?.token, clearAccountSyncTimeout, copy.authError]);
 
   const logoutEverywhere = useCallback(async () => {
+    clearAccountSyncTimeout();
     accountSyncInFlightRef.current = null;
     accountSyncedTokenRef.current = null;
     webFrameRefs.current.account?.contentWindow?.postMessage(
@@ -1203,7 +1413,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       SITE_ORIGIN,
     );
     await auth.logout();
-  }, [auth.logout]);
+  }, [auth.logout, clearAccountSyncTimeout]);
 
   const selectPrimaryView = useCallback((next: PrimaryView) => {
     if (timingRunningRef.current
@@ -1239,12 +1449,14 @@ export function App({ host }: { host: InstalledAppHost }) {
 
       const authRequest = decodeMobileEmbedAuthRequest(event.data);
       if (accountSource && authRequest) {
+        accountLoginRequestedRef.current = true;
         void auth.login(authRequest.provider);
         return;
       }
 
       const authClear = decodeMobileEmbedAuthClear(event.data);
       if (accountSource && authClear) {
+        clearAccountSyncTimeout();
         accountSyncInFlightRef.current = null;
         accountSyncedTokenRef.current = null;
         void auth.logout();
@@ -1253,10 +1465,23 @@ export function App({ host }: { host: InstalledAppHost }) {
 
       const webSessionResult = decodeMobileEmbedWebSessionResult(event.data);
       if (accountSource && webSessionResult) {
-        const pendingToken = accountSyncInFlightRef.current;
+        const pending = accountSyncInFlightRef.current;
+        if (!pending || pending.requestId !== webSessionResult.requestId) return;
+        clearAccountSyncTimeout();
         accountSyncInFlightRef.current = null;
-        if (webSessionResult.ok && pendingToken) accountSyncedTokenRef.current = pendingToken;
-        else if (!webSessionResult.ok) announce(copy.authError);
+        if (webSessionResult.ok) accountSyncedTokenRef.current = pending.token;
+        else {
+          setWebSurfaceStatus((current) => ({ ...current, account: 'error' }));
+          announce(copy.authError);
+        }
+        return;
+      }
+
+      const external = decodeMobileEmbedExternal(event.data);
+      if (external) {
+        const frame = webFrameRefs.current[external.surface];
+        if (!frame || event.source !== frame.contentWindow) return;
+        void host.openExternal(external.href).catch(() => announce(copy.actionFailed));
         return;
       }
 
@@ -1264,24 +1489,50 @@ export function App({ host }: { host: InstalledAppHost }) {
       if (!navigation) return;
       const frame = webFrameRefs.current[navigation.surface];
       if (!frame || event.source !== frame.contentWindow) return;
+      try {
+        if (new URL(navigation.href).origin !== SITE_ORIGIN) return;
+      } catch {
+        return;
+      }
+      webLastHrefRef.current[navigation.surface] = navigation.href;
       webDepthRef.current[navigation.surface] = navigation.depth;
+      finishWebSurfaceHandshake(navigation.surface);
       if (navigation.surface === 'account') {
-        accountBridgeReadyRef.current = true;
         void syncAccountWebSession();
       }
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [announce, auth.login, auth.logout, copy.authError, syncAccountWebSession]);
+  }, [
+    announce,
+    auth.login,
+    auth.logout,
+    clearAccountSyncTimeout,
+    copy.actionFailed,
+    copy.authError,
+    finishWebSurfaceHandshake,
+    host,
+    syncAccountWebSession,
+  ]);
+
+  useEffect(() => {
+    if (!accountLoginRequestedRef.current || auth.busy) return;
+    accountLoginRequestedRef.current = false;
+    if (auth.error) {
+      setWebSurfaceStatus((current) => ({ ...current, account: 'error' }));
+      announce(copy.authError);
+    }
+  }, [announce, auth.busy, auth.error, copy.authError]);
 
   useEffect(() => {
     if (!auth.session) {
+      clearAccountSyncTimeout();
       accountSyncInFlightRef.current = null;
       accountSyncedTokenRef.current = null;
       return;
     }
     void syncAccountWebSession();
-  }, [auth.session?.token, syncAccountWebSession]);
+  }, [auth.session?.token, clearAccountSyncTimeout, syncAccountWebSession]);
 
   useEffect(() => {
     if (!host.isInstalled() || !host.addBackButtonListener) return;
@@ -1307,7 +1558,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         phase: timerPhaseRef.current,
         view: current,
         webDepth: current === 'tools' || current === 'account'
-          ? webDepthRef.current[current]
+          ? (webBridgeReadyRef.current[current] ? webDepthRef.current[current] : 0)
           : 0,
       });
       if (action === 'close-overlay') {
@@ -2697,41 +2948,78 @@ export function App({ host }: { host: InstalledAppHost }) {
           />
         )}
 
-        {openedWebViews.tools && (
-          <section className="web-surface" hidden={view !== 'tools'} aria-label={copy.tools}>
-            <iframe
-              allow="clipboard-write; fullscreen"
-              name={MOBILE_EMBED_FRAME_NAMES.tools}
-              onLoad={(event) => event.currentTarget.contentWindow?.postMessage(
-                mobileEmbedInitMessage('tools'),
-                SITE_ORIGIN,
+        {MOBILE_EMBED_SURFACES.map((surface) => {
+          if (!openedWebViews[surface]) return null;
+          const status = webSurfaceStatus[surface];
+          const title = surface === 'tools' ? copy.tools : copy.my;
+          const canonicalUrl = surface === 'tools' ? toolsWebUrl : accountWebUrl;
+          const frameUrl = webSurfaceReloadUrl[surface] ?? canonicalUrl;
+          const showState = connection !== 'online' || status !== 'ready';
+          const stateLabel = connection === 'offline'
+            ? copy.offline
+            : status === 'error' ? copy.actionFailed : copy.checking;
+          return (
+            <section
+              aria-label={title}
+              className="web-surface"
+              hidden={view !== surface}
+              key={surface}
+            >
+              {showState && (
+                <div className="web-surface-state" role={status === 'error' ? 'alert' : 'status'}>
+                  <p>{stateLabel}</p>
+                  {status === 'error' && connection === 'online' && (
+                    <div className="action-row">
+                      <button
+                        className="primary-action"
+                        onClick={() => retryWebSurface(surface)}
+                        type="button"
+                      >{copy.retry}</button>
+                      <button
+                        className="secondary-action"
+                        onClick={() => void host.openExternal(frameUrl).catch(() => announce(copy.actionFailed))}
+                        type="button"
+                      >{copy.openFullSite}</button>
+                    </div>
+                  )}
+                </div>
               )}
-              ref={(frame) => { webFrameRefs.current.tools = frame; }}
-              referrerPolicy="strict-origin-when-cross-origin"
-              src={toolsEntryRoute
-                ? siteRouteUrl(language, toolsEntryRoute)
-                : siteUrl(language)}
-              title={copy.tools}
-            />
-          </section>
-        )}
-
-        {openedWebViews.account && (
-          <section className="web-surface" hidden={view !== 'account'} aria-label={copy.my}>
-            <iframe
-              allow="clipboard-write; fullscreen"
-              name={MOBILE_EMBED_FRAME_NAMES.account}
-              onLoad={(event) => event.currentTarget.contentWindow?.postMessage(
-                mobileEmbedInitMessage('account'),
-                SITE_ORIGIN,
-              )}
-              ref={(frame) => { webFrameRefs.current.account = frame; }}
-              referrerPolicy="strict-origin-when-cross-origin"
-              src={accountUrl(language)}
-              title={copy.my}
-            />
-          </section>
-        )}
+              <iframe
+                allow="clipboard-write; fullscreen"
+                aria-hidden={showState}
+                key={`${surface}-${webSurfaceRevision[surface]}`}
+                name={MOBILE_EMBED_FRAME_NAMES[surface]}
+                onLoad={() => {
+                  webBridgeReadyRef.current[surface] = false;
+                  if (connection === 'offline') {
+                    webSurfaceLoadedRef.current[surface] = false;
+                    return;
+                  }
+                  if (surface === 'account') {
+                    clearAccountSyncTimeout();
+                    accountSyncInFlightRef.current = null;
+                  }
+                  markWebSurfaceLoaded(surface);
+                  beginWebSurfaceHandshake(surface);
+                }}
+                onError={() => {
+                  if (connection !== 'online') return;
+                  clearWebSurfaceHandshake(surface);
+                  webBridgeReadyRef.current[surface] = false;
+                  webSurfaceLoadedRef.current[surface] = false;
+                  setWebSurfaceStatus((current) => ({ ...current, [surface]: 'error' }));
+                }}
+                ref={(frame) => {
+                  webFrameRefs.current[surface] = frame;
+                }}
+                referrerPolicy="strict-origin-when-cross-origin"
+                src={frameUrl}
+                tabIndex={showState ? -1 : undefined}
+                title={title}
+              />
+            </section>
+          );
+        })}
 
         {view === 'history' && (
           <section className="history-view" aria-labelledby="history-title">

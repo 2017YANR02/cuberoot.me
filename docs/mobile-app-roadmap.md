@@ -109,18 +109,18 @@
 | ID | 状态 | 当前证据/缺口 |
 | --- | --- | --- |
 | NAV-01 | 进行中 | 五端源码均消费 `@cuberoot/app-ui`；OPPO 三栏点击通过，其余四端交互验收未齐 |
-| NAV-02 | 进行中 | 两个 iframe 持久挂载，共享返回协议已接线；待部署后五端回归 |
-| WEB-01 | 进行中 | OPPO 已加载生产 `/zh`；其余四端尚无同状态实证 |
+| NAV-02 | 进行中 | 两个 iframe 持久挂载并复用同一生命周期；本地 bridge 重试/可信 ACK 与返回协议已接线，但生产站 bridge 尚未部署，OPPO 子页系统返回仍会直接回计时；待部署后五端回归 |
+| WEB-01 | 进行中 | OPPO 已加载生产 `/zh`，62 个真实链接/卡片可枚举，360 CSS px 无横向溢出；其余四端尚无同状态实证 |
 | WEB-02 | 进行中 | OPPO 已实点“模拟”进入 `/zh/sim?puzzle=3&img_dist=6`；全卡片及页内功能矩阵未完成 |
-| WEB-03 | 进行中 | shared 导航协议与宿主 back/external 已局部实现；下载/分享/文件/全屏和五端实机待验 |
+| WEB-03 | 进行中 | shared 导航/外链协议与宿主 back/openExternal 已在本地源码实现；生产 bridge 尚未部署，下载/分享/文件/全屏和五端实机待验 |
 | WEB-04 | 未开始 | 待建立受限页面清单、Browser 回退和明确提示 |
-| ACC-01 | 进行中 | OPPO 已实证未改写的 `/zh/account`；其余四端尚无同状态确认 |
+| ACC-01 | 进行中 | OPPO 已实证未改写的 `/zh/account`，邮箱/密码/手机/WCA/Google/微信/支付宝全部可见且 360 CSS px 无横向溢出；其余四端尚无同状态确认 |
 | ACC-02 | 进行中 | canonical LoginForm 交互已委托系统浏览器；待生产部署、五端各 provider 真实账号与绑定/解绑验收 |
-| ACC-03 | 进行中 | Browser PKCE→secure session→web ticket→iframe 及双向 logout clear 已接线；待生产/五端 E2E |
+| ACC-03 | 进行中 | Browser PKCE→secure session→带 requestId 的 web ticket→iframe 及双向 logout clear 已接线；协议兼容、并发启动和未完成 PKCE 重开复用已有单测，10 秒票据超时已实现但迟到结果/真实 provider 仍待生产 E2E |
 | IOS-01 | 进行中 | Android/iOS 共用 `@cuberoot/app-ui` 和同一 Capacitor 宿主；待 iOS 完整互动验收 |
 | IOS-LOGIN-01 | BLOCKED | 网站唯一 LoginForm/后端尚无已验证的 Apple 4.8 等价登录 |
-| QA-01 | 未开始 | 待断网、弱网、网站 5xx 与 frame 拒绝故障注入 |
-| QA-02 | 进行中 | OPPO 已修复一次菜单重叠和旧 WebView 视口问题；五端全弹层/键盘/安全区/动态字号仍未关闭 |
+| QA-01 | 进行中 | OPPO 已实测 Wi-Fi/移动数据同时关闭时 Tools 保留 iframe 上下文并显示“离线”，遮罩期间 iframe 退出无障碍焦点且系统返回直接回计时；恢复网络后自动回到生产 `/zh`，全程 360/360；弱网、网站 5xx 与 frame 拒绝仍待可观测 bridge 或通用宿主能力后注入 |
+| QA-02 | 进行中 | OPPO Tools/Account 主内容为 360/360，但生产首页 DeskPet 固定层右缘仍约溢出 30 CSS px；五端全弹层/键盘/安全区/动态字号仍未关闭 |
 | XPLAT-01 | 已完成 | `@cuberoot/app-ui` 已有 Mobile、Desktop 和 Harmony 真实消费者，无 app→app import |
 | DESKTOP-01 | 进行中 | 同一 Tauri 工程与 BLEC adapter 已落地；macOS `.app` 已启动、未签名 DMG 已校验，Windows CI 定义未实际跑；签名/公证、Windows 构建安装和两端 BLE 证据未齐 |
 | HARMONY-01 | 进行中 | ArkWeb 本地 bundle、ArkTS/系统 bridge 与 unsigned HAP 已构建；当前 Intel Mac 不支持 DevEco 本地模拟器且无 `hdc` 设备。待 Apple silicon Mac mini 到货后创建模拟器，安装、运行、BLE、签名和发布证据仍待验 |
@@ -230,7 +230,7 @@
 - [ ] 在 iOS 模拟器实际执行一次无缓存断网冷启动并保存取证。（当前只有在线模拟器画面和自动化测试证据）
 - [x] Xcode 工程当前保持 Automatic Signing，Debug/Release Bundle ID 均为 `me.cuberoot.app`；付费 Team 尚未选择，不能作为签名成功证据。
 - [ ] iOS GAN v4 transport 已能在原生 picker 返回 UUID 后，通过 manufacturer advertisement 提取协议所需 MAC，并有握手单测；仍需 Apple 账号恢复后用 iPhone + GAN 16 UI 验证扫描、连接、解密、转动、自动起停与断线恢复。
-- [x] 同一移动端 Web 构建已重新同步 Android，并在本机用 JDK 21 完成既有 `assembleRelease`/`bundleRelease` 与本轮 `assembleDebug`；当前 Debug APK 为 8,788,813 bytes（SHA-256 `86af867cfe0a923c52f53297bdcad081df60b1a66a40f91d0ef567a01a6bd1f5`），已重装到 OPPO Reno7 Pro 5G，真实 3×3 打乱与 Capacitor Clipboard 均通过真机回归。
+- [x] 同一移动端 Web 构建已重新同步 Android，并在本机用 JDK 21 完成既有 `assembleRelease`/`bundleRelease` 与本轮 `assembleDebug`；当前 Debug APK 为 8,788,813 bytes（SHA-256 `04553497db3a00d8b2d702d9ade9566212e263b0f9b2030cb2b4b9c6857f0fb9`），已重装到 OPPO Reno7 Pro 5G；真实 3×3 打乱、Capacitor Clipboard、Tools 断网恢复、断网时系统返回回计时和完整 Account 首屏均通过真机回归。
 - [ ] iOS 权限、后台、系统中断、安全区、动态字体和 VoiceOver 验证通过。
 - [ ] 网站唯一 `LoginForm`/后端提供满足 Apple 4.8 的等价登录（优先 Sign in with Apple），且完成全 provider、会话衔接、TestFlight 和 App Store 审核取证。（当前 P0 `BLOCKED`）
 - [ ] App Store 审核通过，且业务逻辑未复制为 iOS 专属实现。

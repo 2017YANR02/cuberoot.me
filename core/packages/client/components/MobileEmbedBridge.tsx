@@ -7,7 +7,9 @@ import {
   decodeMobileEmbedBack,
   decodeMobileEmbedInit,
   decodeMobileEmbedWebSession,
+  isMobileEmbedExternalHref,
   mobileEmbedAuthClearMessage,
+  mobileEmbedExternalMessage,
   mobileEmbedNavigationMessage,
   mobileEmbedSurfaceFromFrameName,
   mobileEmbedWebSessionResultMessage,
@@ -87,9 +89,16 @@ export default function MobileEmbedBridge() {
         return;
       }
       const anchor = target instanceof Element ? target.closest<HTMLAnchorElement>('a[href]') : null;
-      if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download')) return;
+      if (!anchor || anchor.hasAttribute('download')) return;
       const next = new URL(anchor.href, window.location.href);
-      if (next.origin !== window.location.origin || next.href === window.location.href) return;
+      if (next.origin !== window.location.origin || anchor.target === '_blank') {
+        if (!isMobileEmbedExternalHref(next.href)) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        postToParent(mobileEmbedExternalMessage(surface, next.href));
+        return;
+      }
+      if (next.href === window.location.href) return;
       window.setTimeout(() => recordRoute(next.href), 0);
     };
     const onKeyDown = (event: KeyboardEvent) => {
@@ -129,10 +138,10 @@ export default function MobileEmbedBridge() {
       void exchangeWebSessionTicket(webSession.ticket).then((session) => {
         const persisted = applySession(session.token, session.user);
         const ok = persisted && getSessionToken() === session.token;
-        postToParent(mobileEmbedWebSessionResultMessage(ok));
+        postToParent(mobileEmbedWebSessionResultMessage(ok, webSession.requestId));
         if (ok) window.location.reload();
       }).catch(() => {
-        postToParent(mobileEmbedWebSessionResultMessage(false));
+        postToParent(mobileEmbedWebSessionResultMessage(false, webSession.requestId));
       }).finally(() => {
         pendingWebTicket = null;
       });
