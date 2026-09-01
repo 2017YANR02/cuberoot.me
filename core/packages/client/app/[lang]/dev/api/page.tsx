@@ -44,6 +44,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'feedback', zh: '反馈', en: 'Feedback' },
   { key: 'notification', zh: '通知', en: 'Notifications' },
   { key: 'friend', zh: '好友', en: 'Friends' },
+  { key: 'vault', zh: '私密资料库', en: 'Private vault' },
   { key: 'drive', zh: '网盘', en: 'Drive' },
   { key: 'forum', zh: '论坛', en: 'Forum' },
   { key: 'documents', zh: '协作文档与表格', en: 'Collaborative docs & sheets' },
@@ -64,7 +65,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
 //   account_auth alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps article auth battle_rooms calendar cn_comp_names colpi
-//   comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends health historical_ranks pb
+//   comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends health historical_ranks pb private_vault
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
@@ -614,6 +615,14 @@ const ENDPOINTS: Ep[] = [
   { d: 'friend', m: 'DELETE', p: '/v1/friends/:userId', g: 'login', c: 'no-store', zh: '删除好友', en: 'Remove a friend' },
   { d: 'friend', m: 'POST', p: '/v1/friends/blocks', g: 'login', c: 'no-store', zh: '拉黑用户并清理双方好友 / 申请关系', en: 'Block a user and clear friendship/request state for the pair' },
   { d: 'friend', m: 'DELETE', p: '/v1/friends/blocks/:userId', g: 'login', c: 'no-store', zh: '解除拉黑', en: 'Unblock a user' },
+
+  // ---- vault ----
+  { d: 'vault', m: 'GET', p: '/v1/vault', g: 'login', c: 'no-store', zh: '读取本人密钥包及获授权的加密内容；服务端不持有明文', en: 'Read the user key envelope and authorized ciphertext; the server never holds plaintext' },
+  { d: 'vault', m: 'PUT', p: '/v1/vault/key', g: 'login', c: 'no-store', zh: '首次登记公钥与口令加密的私钥，建立后不可覆盖', en: 'Register a public key and passphrase-encrypted private key once; existing keys cannot be overwritten' },
+  { d: 'vault', m: 'GET', p: '/v1/vault/users', g: 'admin', c: 'no-store', zh: '搜索管理员可指定的已注册账号及其资料库公钥', en: 'Search registered accounts an admin may designate and return their vault public keys' },
+  { d: 'vault', m: 'POST', p: '/v1/vault/items', g: 'admin', c: 'no-store', zh: '创建密文，并给管理员与指定账号保存各自的加密内容密钥', en: 'Create ciphertext with separately wrapped content keys for the admin and designated accounts' },
+  { d: 'vault', m: 'PUT', p: '/v1/vault/items/:id', g: 'admin', c: 'no-store', zh: '以版本校验更新密文、轮换内容密钥并替换指定账号', en: 'Update ciphertext with version checking, rotate the content key, and replace designated accounts' },
+  { d: 'vault', m: 'DELETE', p: '/v1/vault/items/:id', g: 'admin', c: 'no-store', zh: '删除管理员拥有的加密内容及全部授权', en: 'Delete admin-owned ciphertext and all access grants' },
 
   // ---- drive ----
   { d: 'drive', m: 'GET', p: '/v1/drive', g: 'login', c: 'no-store', zh: '读取当前文件夹、回收站、面包屑、未完成上传与共享 20 GB 配额', en: 'Read the current folder, Trash, breadcrumbs, incomplete uploads, and the shared 20 GB quota' },
