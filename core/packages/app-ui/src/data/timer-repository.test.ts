@@ -21,6 +21,8 @@ class MemoryDriver implements TimerStoreDriver {
   data: TimerStoreData | unknown | undefined;
   recovery: unknown | undefined;
   failWrites = false;
+  failWritesRemaining = 0;
+  commitThenFailOnce = false;
   writeCount = 0;
 
   async read(): Promise<unknown | undefined> {
@@ -29,8 +31,16 @@ class MemoryDriver implements TimerStoreDriver {
 
   async write(data: TimerStoreData): Promise<void> {
     if (this.failWrites) throw new Error('disk full');
+    if (this.failWritesRemaining > 0) {
+      this.failWritesRemaining -= 1;
+      throw new Error('transient write failure');
+    }
     this.writeCount += 1;
     this.data = structuredClone(data);
+    if (this.commitThenFailOnce) {
+      this.commitThenFailOnce = false;
+      throw new Error('ambiguous write completion');
+    }
   }
 
   async readRecovery(): Promise<unknown | undefined> {
@@ -74,6 +84,99 @@ describe('mobile timer repository contract', () => {
       repo.addSolve({ timeMs: 2_000, penalty: '+2', scramble: 'U', event: '333' }),
     ]);
     expect(activeTimerSolves(await repo.load(), '333').map((solve) => solve.timeMs)).toEqual([1_000, 2_000]);
+  });
+
+  it('retries one failed solve write without losing or duplicating the solve', async () => {
+    const { driver, repo } = repository();
+    await repo.load();
+    driver.failWritesRemaining = 1;
+    await repo.addSolve({ timeMs: 1_000, penalty: 'ok', scramble: 'R', event: '333' });
+    expect(activeTimerSolves(await repo.load(), '333')).toHaveLength(1);
+
+    driver.commitThenFailOnce = true;
+    await repo.addSolve({ timeMs: 2_000, penalty: 'ok', scramble: 'U', event: '333' });
+    expect(activeTimerSolves(await repo.load(), '333').map((solve) => solve.timeMs)).toEqual([1_000, 2_000]);
+  });
+
+  it('can save once after a persistent failure is cleared', async () => {
+    const { driver, repo } = repository();
+    await repo.load();
+    const solve = { timeMs: 1_000, penalty: 'ok' as const, scramble: 'R', event: '333' as const };
+    driver.failWritesRemaining = 2;
+    await expect(repo.addSolve(solve)).rejects.toThrow('transient write failure');
+
+    await repo.addSolve(solve);
+    expect(activeTimerSolves(await repo.load(), '333')).toHaveLength(1);
+  });
+
+  it('confirms a final ambiguous write before exposing a retry', async () => {
+    const { driver, repo } = repository();
+    await repo.load();
+    driver.failWritesRemaining = 1;
+    driver.commitThenFailOnce = true;
+
+    await repo.addSolve({ timeMs: 1_000, penalty: 'ok', scramble: 'R', event: '333' });
+    expect(activeTimerSolves(await repo.load(), '333')).toHaveLength(1);
+  });
+
+  it('retries pending solves into their original sessions', async () => {
+    const { driver, repo } = repository();
+    const first = await repo.load();
+    const firstId = first.database.activeSessionId;
+    const second = await repo.createSession('Second', '222');
+    const secondId = second.database.activeSessionId;
+    const third = await repo.createSession('Third', '333oh');
+    const thirdId = third.database.activeSessionId;
+
+    driver.failWritesRemaining = 2;
+    const firstSolve = { timeMs: 1_000, penalty: 'ok' as const, scramble: 'R', event: '333' as const };
+    await expect(repo.addSolve(firstSolve, firstId)).rejects.toThrow('transient write failure');
+    await repo.addSolve(firstSolve, firstId);
+    await repo.addSolve({ timeMs: 2_000, penalty: 'ok', scramble: 'U', event: '222' }, secondId);
+
+    const data = await repo.load();
+    expect(data.database.activeSessionId).toBe(thirdId);
+    expect(data.database.dataBySession[firstId]?.['333']).toHaveLength(1);
+    expect(data.database.dataBySession[secondId]?.['222']).toHaveLength(1);
+    expect(data.database.dataBySession[thirdId]?.['333']).toBeUndefined();
+  });
+
+  it('does not redirect a pending solve when its original session was deleted', async () => {
+    const { repo } = repository();
+    const first = await repo.load();
+    const firstId = first.database.activeSessionId;
+    await repo.createSession('Second', '222');
+    await repo.deleteSession(firstId);
+
+    await expect(repo.addSolve(
+      { timeMs: 1_000, penalty: 'ok', scramble: 'R', event: '333' },
+      firstId,
+    )).rejects.toMatchObject({ failure: 'unknown-session' });
+  });
+
+  it('round-trips the shared smart-cube reconstruction payload', async () => {
+    const { repo } = repository();
+    const stageSegments = {
+      crossDoneMs: 300, f2lDoneMs: 700, ollDoneMs: 900, solvedMs: 1_000,
+      crossMs: 300, f2lMs: 400, ollMs: 200, pllMs: 100,
+      crossHtm: 4, f2lHtm: 8, ollHtm: 7, pllHtm: 11,
+      crossSide: 'D-cross', ollCase: 'OLL skip', pllCase: 'PLL T',
+    };
+    await repo.addSolve({
+      device: { model: 'gan-v4', name: 'GAN 16 ui' },
+      event: '333',
+      moves: [{ m: 'R', ts: 0 }, { m: "R'", ts: 1_000 }],
+      penalty: 'ok',
+      scramble: 'R',
+      stageSegments,
+      timeMs: 1_000,
+    });
+
+    expect(activeTimerSolves(await repo.load(), '333')[0]).toMatchObject({
+      device: { model: 'gan-v4', name: 'GAN 16 ui' },
+      moves: [{ m: 'R', ts: 0 }, { m: "R'", ts: 1_000 }],
+      stageSegments,
+    });
   });
 
   it('persists the exact reviewed WCA occurrence identity even when move text repeats', async () => {

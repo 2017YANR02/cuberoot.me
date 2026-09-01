@@ -79,7 +79,7 @@
 - 共享三阶打乱生成器和边界回归测试提交：`968d330692`。
 - 2026-08-30 BLE 复用边界：Mobile 只保留 Capacitor `BleTransport`；GAN v4、补帧、`MoveClock` 和 `SmartCubeStateTracker` 位于 `@cuberoot/shared`，网站旧路径只作兼容导出。移动端 28 项与网站智能魔方/时钟定向 30 项测试通过。
 - 2026-09-01 智能魔方逐步提示、匹配、偏离修正 requester、Solo 生命周期 controller 与模式 capability 已收敛到 shared；Kociemba cubie 逆运算只保留在 puzzle-solvers，Web 与五端产品层共用 `TimerScrambleStrip`，各宿主只保留 facelets/Worker/BLE 适配。最新 debug APK 已覆盖安装到 OPPO，但安装时手机锁屏，因此新版提示、故意偏离、修正完成和首个 Worker 冷启动延迟仍须解锁后用 GAN 16 UI 实测，不能沿用旧版自动计时证据冒充。
-- 2026-09-01 成绩历史的 8 类自动标签、PB/ao/MBLD 计算、OR 筛选、徽标和响应式折叠已由 Web 与五端共用 shared/timer-ui 实现；新 Android APK 已覆盖安装并回读核对。手机锁屏，所以标签点击/TalkBack 未记为通过；App 智能魔方新成绩仍须共享化 `moves/stageSegments` producer 才能自产跳O/跳P。
+- 2026-09-01 成绩历史的 8 类自动标签、PB/ao/MBLD 计算、OR 筛选、徽标和响应式折叠已由 Web 与五端共用 shared/timer-ui 实现。随后智能魔方动作收集、相对时钟、cube state、CFOP 检测/识别、HTM、朝向归一化和 `stageSegmentsFor` 也收敛到 runtime-neutral shared；Web Solo、Web 本地/联机与五端 App 共用同一 recorder/producer，App 新成绩会把 `moves/device/stageSegments` 一起写入，可自产跳O/跳P。写入先由仓储稳定 ID 幂等重试，持续失败则保留带原 session 的待保存成绩并给出常驻重试入口；切换或删除原 session 不会把成绩误写进当前 session。最终 8,788,904-byte Debug APK SHA-256 为 `65ea300af612de852f515fec72d29b16fb416e1a3ffd51ab867a92b28b1bb31a`，已覆盖安装并从 OPPO 回读一致；手机锁屏，所以 GAN 16 UI 实拧、标签点击和 TalkBack 仍未记为通过。
 
 ### 阶段 2A：五端一次到位架构
 
@@ -96,7 +96,7 @@
 当前证据：
 
 - `@cuberoot/app-ui` 已是五端唯一 React 产品层；`@cuberoot/app-ui` typecheck 与自动化测试已本地通过。
-- Desktop 源码已共用 Tauri 宿主、系统 keyring、深链、外链和 BLEC transport，BLEC 复用 `@cuberoot/app-ui` 中的同一 GAN connection 逻辑。2026-08-31 macOS `CubeRoot.app` 已稳定启动；`CubeRoot_0.1.0_x64.dmg` 为 6,367,389 bytes，`hdiutil verify` 通过，SHA-256 为 `92205b0a06538c6515f7659cd37446a41373ae71b40e150fd403d192749304a8`。该包未签名、未公证，也没有实机 BLE 证据。Windows CI 矩阵只是已定义的待运行检查，不是 Windows 构建/安装证据。
+- Desktop 源码已共用 Tauri 宿主、系统 keyring、深链、外链和 BLEC transport，BLEC 复用 `@cuberoot/app-ui` 中的同一 GAN connection 逻辑。2026-09-01 当前源码的 macOS `CubeRoot.app` 已启动；`CubeRoot_0.1.0_x64.dmg` 为 6,297,645 bytes，`hdiutil verify` 通过，SHA-256 为 `94af17fe41d3dade835ebe929a83858d6d2ea0ff2acfc386c5fea29bf3d61fea`。该包未签名、未公证，也没有实机 BLE 证据。Windows CI 矩阵只是已定义的待运行检查；本机交叉 `cargo check` 缺 Windows `llvm-rc`，不能当作 Windows 构建/安装证据。
 - Harmony 的本地 Web bundle、ArkWeb/ArkTS bridge、ConnectivityKit BLE bridge、安全存储与 unsigned HAP 已通过官方 Hvigor 构建。2026-09-01 在当前 Intel `x86_64` Mac 上使用 DevEco Studio `26.0.0.821` 的官方 SDK 再次执行 `assembleHap`，日志为 `BUILD SUCCESSFUL`，产物是 `entry-default-unsigned.hap`。当前 `hdc list targets` 为 `[Empty]`，所以安装、ArkWeb 运行、系统交互、真实 GAN 16 UI BLE、签名和发布仍未验收，`HARMONY-01` 保持进行中。
 - Harmony 首次 BLE 现由 `UIAbilityContext` 显式请求 `ACCESS_BLUETOOTH`，Asset Store 机密限定为 `DEVICE_UNLOCKED`，系统备份关闭，native 版本由 build guard 对齐 `package.json`；BLE connect 以 generation + GATT identity 拒绝超时连接的迟到回调，避免同设备快速重连被旧请求断开。ArkTS/HAP 目前只能在已安装的官方 CLT 上本地编译；GitHub CI 尚无官方 Harmony SDK runner，不能把 Vite build 当成 native 回归。所有者已完成华为企业开发者认证；自动调试签名现因未连接 HarmonyOS NEXT 设备而无法生成 profile，`build-profile.json5` 的 `signingConfigs` 仍为空，Hvigor 明确跳过签名。模拟器不需要签名，真机才需要把设备写入调试 profile；不得为绕过设备门槛手填、生成或提交 `.p12`、密码或本机 profile。
 - Desktop BLE 扫描已按插件真实异步回调等待并在 8 秒后 `stopScan`；但 `tauri-plugin-blec 0.12.0` 的通知队列容量为 1，快速转动时的上游 `try_send(...).expect(...)` 仍须用 GAN 16 UI 做压力测试，复现后优先升级或最小 patch upstream，不能用 mock test 宣布稳定。

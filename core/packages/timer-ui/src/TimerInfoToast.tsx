@@ -3,6 +3,8 @@
 import { useEffect, useRef, type CSSProperties } from 'react';
 
 export interface TimerInfoToastProps {
+  actionBusy?: boolean;
+  actionDisabled?: boolean;
   /** Default matches the existing Web undo window. Set null to keep it open. */
   durationMs?: number | null;
   message: string;
@@ -15,6 +17,8 @@ export interface TimerInfoToastProps {
 
 /** Shared timer status/undo toast used by gesture and history mutations. */
 export function TimerInfoToast({
+  actionBusy = false,
+  actionDisabled = false,
   durationMs = 5000,
   message,
   onDismiss,
@@ -41,6 +45,7 @@ export function TimerInfoToast({
   return (
     <div
       aria-live="polite"
+      aria-busy={actionBusy || undefined}
       className="timer-info-toast"
       data-no-timer
       role="status"
@@ -50,6 +55,7 @@ export function TimerInfoToast({
       {onUndo && (
         <button
           className="timer-info-toast-undo"
+          disabled={actionDisabled}
           onClick={() => {
             onUndo();
             dismissRef.current();

@@ -1,10 +1,8 @@
 /**
  * Persisted CFOP reconstruction summary.
  *
- * This shape lives in the shared package because it is embedded in a timer
- * solve. The reconstruction engine that produces it remains a website concern;
- * mobile consumers can safely read or preserve the data without importing the
- * cube recognizer and its browser-facing dependencies.
+ * This shape and its producer live in the shared package because every timer
+ * client records and reads the same reconstruction data.
  */
 export interface StageSegments {
   crossDoneMs: number | null;
@@ -27,3 +25,5 @@ export interface StageSegments {
   ollCase: string | null;
   pllCase: string | null;
 }
+
+export type { SolveMove } from './types';

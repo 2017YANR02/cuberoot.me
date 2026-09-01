@@ -38,7 +38,10 @@
  */
 
 import { useCallback, useEffect, useRef } from 'react';
-import { timerSupportsLocalBattleSmartCube } from '@cuberoot/shared/timer';
+import {
+  TimerSmartCubeMoveRecorder,
+  timerSupportsLocalBattleSmartCube,
+} from '@cuberoot/shared/timer';
 
 import { useBluetoothCube } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle } from '../_lib/bluetooth';
@@ -117,13 +120,17 @@ function attemptKey(owner: number, startTime: number): string {
 interface Track {
   /** 这份缓冲属于哪一把(`attemptKey`)。`''` = 空的,不属于任何一把。 */
   attempt: string;
-  moves: Array<{ m: string; ts: number }>;
-  t0: number;
+  recorder: TimerSmartCubeMoveRecorder;
   scramble: string;
   event: string;
 }
 
-const emptyTrack = (): Track => ({ attempt: '', moves: [], t0: 0, scramble: '', event: '333' });
+const emptyTrack = (): Track => ({
+  attempt: '',
+  recorder: new TimerSmartCubeMoveRecorder(),
+  scramble: '',
+  event: '333',
+});
 
 export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
   // 回调可能每次渲染都是新的;用 ref 打住,免得四路连接跟着重挂。
@@ -182,11 +189,11 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     if (trackRef.current[slot].attempt !== key) {
       trackRef.current[slot] = {
         attempt: key,
-        moves: [],
-        t0: p.startTime,
+        recorder: new TimerSmartCubeMoveRecorder(),
         scramble: st.scrambles[owner] ?? '',
         event: st.puzzleIds[owner],
       };
+      trackRef.current[slot].recorder.begin(p.startTime);
       gyroRecRef.current[slot].reset();
       gyroStartRef.current[slot] = p.startTime;
     }
@@ -201,14 +208,14 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     const p = st.players[owner];
     if (p.isTiming) {
       const track = syncTrack(slot, owner);
-      track.moves.push({ m: move, ts: ts - track.t0 });
+      track.recorder.record(move, ts);
       return;
     }
     if (armedRef.current[slot] && p.canStart) {
       armedRef.current[slot] = false;
       if (!st.cubeStart(owner, ts)) return;
       // 起表那一手也属于这一把 —— cubeStart 已经把 startTime 定在它身上了。
-      syncTrack(slot, owner).moves.push({ m: move, ts: 0 });
+      syncTrack(slot, owner).recorder.record(move, ts);
       return;
     }
     // 没预备就转动 —— 可能正在拧打乱。下面的 checkArm 会在拧到位时把预备补上。
@@ -227,12 +234,13 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     armedRef.current[slot] = false;
     // 缓冲无论如何都要清空:这一路已经不在这一把里了,留着只会漏给下一把。
     const track = trackRef.current[slot];
+    const moves = track.recorder.take();
     const gyro = encodeGyroTrack(gyroRecRef.current[slot].take());
     trackRef.current[slot] = emptyTrack();
     if (!stopped) return;                       // 没成把(太短 / 没在计时)就不留档
     if (track.attempt !== attempt) return;      // 缓冲不是这一把的(上一把没清干净)
     if (!recordsToLocalHistory(slot, st.cubeMode, st.cubeHolder)) return;   // 别人的把,不进我的历史
-    if (track.moves.length === 0 || !track.scramble) return;
+    if (moves.length === 0 || !track.scramble) return;
     const ev = battleToTimerEvent(track.event) as EventId;
     // 停表已经把观察罚时结算进 player.penalty 了,照抄过来 —— 本机记录和对战记分板
     // 对同一把不该给出两个判罚。
@@ -243,7 +251,7 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
       event: ev,
       penalty: done.penalty === PENALTY.DNF ? 'DNF' : done.penalty === PENALTY.PLUS2 ? '+2' : 'ok',
     });
-    solve.moves = track.moves;
+    solve.moves = moves;
     // 没开录 / 魔方不报姿态 / 一次都没动 → 编码是 null,字段整个不出现 —— 回放面板
     // 就是靠「有没有这个字段」决定要不要给陀螺仪开关的。
     if (gyro) solve.gyro = gyro;

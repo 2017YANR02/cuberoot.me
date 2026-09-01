@@ -13,7 +13,15 @@
  */
 import { describe, it, expect } from 'vitest';
 
-import { stageSegmentsFor, STAGE_SEGMENT_EVENTS } from '@/app/[lang]/timer/_lib/reconstruct/stage_segments';
+import {
+  computeStageSegments as adapterComputeStageSegments,
+  stageSegmentsFor as adapterStageSegmentsFor,
+  STAGE_SEGMENT_EVENTS,
+} from '@/app/[lang]/timer/_lib/reconstruct/stage_segments';
+import {
+  computeStageSegments,
+  stageSegmentsFor,
+} from '@cuberoot/shared/timer';
 import type { Solve } from '@/app/[lang]/timer/_lib/types';
 
 /** 真题打乱 + 一条真的 CFOP 解法(浏览器里用假魔方跑过同一条)。
@@ -44,6 +52,10 @@ function solveOf(over: Partial<Solve> = {}): Solve {
 }
 
 describe('stageSegmentsFor', () => {
+  it('keeps the website adapter on the exact shared producer', () => {
+    expect(adapterStageSegmentsFor).toBe(stageSegmentsFor);
+    expect(adapterComputeStageSegments).toBe(computeStageSegments);
+  });
   it('给带动作流的三阶还原算出分段,阶段名是真的', () => {
     const segs = stageSegmentsFor(solveOf());
     expect(segs).not.toBeNull();
