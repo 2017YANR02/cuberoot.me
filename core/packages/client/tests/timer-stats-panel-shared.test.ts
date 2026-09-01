@@ -127,6 +127,10 @@ describe('shared compact TimerStatsPanel', () => {
     const row = container.querySelector('[data-stat-row="time"]')!;
     expect(row.querySelector('.st-cur')?.textContent).toBe('10/14 11:40');
     expect(row.querySelector('.st-best')?.textContent).toBe('8/10 10:00');
+    expect(Array.from(container.querySelectorAll('[data-stat-row]')).map(node => (
+      node.getAttribute('data-stat-row')
+    ))).toEqual(['time']);
+    expect(container.querySelector('.rolling-stats-column-pickers')).toBeNull();
   });
 });
 

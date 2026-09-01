@@ -4,7 +4,7 @@ import {
   bestMeanOfN,
   meanOfN,
 } from './stats';
-import type { Solve } from './types';
+import type { EventId, Solve } from './types';
 
 export type RollingStatKey = 'mo3' | `ao${number}`;
 
@@ -29,6 +29,13 @@ export interface RollingStatDefinition {
   kind: 'mean' | 'average';
   size: number;
 }
+
+export interface RollingStatPoint {
+  isPb: boolean;
+  value: number | null;
+}
+
+export type RollingStatProjection = ReadonlyMap<RollingStatKey, readonly RollingStatPoint[]>;
 
 export function parseRollingStatKey(raw: unknown): RollingStatDefinition | null {
   if (raw === 'mo3') return { key: 'mo3', kind: 'mean', size: 3 };
@@ -97,6 +104,41 @@ export function rollingStatCurrent(solves: Solve[], key: RollingStatKey): number
   return definition.kind === 'mean'
     ? meanOfN(solves, definition.size)
     : averageOfN(solves, definition.size);
+}
+
+/** Per-solve rolling values and strict running PBs for chronological history. */
+export function rollingStatSeries(
+  solves: readonly Solve[],
+  key: RollingStatKey,
+): RollingStatPoint[] {
+  const definition = parseRollingStatKey(key);
+  const points: RollingStatPoint[] = solves.map(() => ({ isPb: false, value: null }));
+  if (!definition) return points;
+
+  let best = Infinity;
+  for (let index = definition.size - 1; index < solves.length; index += 1) {
+    const window = solves.slice(index - definition.size + 1, index + 1);
+    const value = rollingStatCurrent(window, key);
+    const isPb = value !== null && Number.isFinite(value) && value < best;
+    points[index] = { isPb, value };
+    if (isPb) best = value;
+  }
+  return points;
+}
+
+/** MBLD ranks by points, so duration rolling columns are intentionally absent. */
+export function rollingStatColumnsForEvent(
+  event: EventId | null | undefined,
+  columns: readonly RollingStatKey[],
+): RollingStatKey[] {
+  return event === '333mbld' ? [] : sanitizeRollingStatColumns(columns);
+}
+
+export function projectRollingStats(
+  solves: readonly Solve[],
+  columns: readonly RollingStatKey[],
+): RollingStatProjection {
+  return new Map(columns.map(key => [key, rollingStatSeries(solves, key)]));
 }
 
 export function rollingStatBest(solves: Solve[], key: RollingStatKey): number | null {

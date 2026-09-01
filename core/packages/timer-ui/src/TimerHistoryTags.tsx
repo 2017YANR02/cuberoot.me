@@ -2,6 +2,7 @@ import {
   TIMER_HISTORY_TAG_DEFS,
   TIMER_HISTORY_TAG_IDS,
   type TimerHistoryTagId,
+  type RollingStatKey,
 } from '@cuberoot/shared/timer';
 
 export type TimerHistoryTagLanguage = 'en' | 'zh';
@@ -9,6 +10,7 @@ export type TimerHistoryTagLanguage = 'en' | 'zh';
 export interface TimerHistoryTagBadgesProps {
   hiddenTagIds?: ReadonlySet<TimerHistoryTagId>;
   language: TimerHistoryTagLanguage;
+  rollingColumns?: readonly RollingStatKey[];
   tagIds: readonly TimerHistoryTagId[];
 }
 
@@ -17,9 +19,16 @@ const RESULT_REDUNDANT_TAGS = new Set<TimerHistoryTagId>(['dnf', 'dns', 'plus2']
 export function TimerHistoryTagBadges({
   hiddenTagIds = new Set(),
   language,
+  rollingColumns = [],
   tagIds,
 }: TimerHistoryTagBadgesProps) {
-  const visible = tagIds.filter(tagId => !RESULT_REDUNDANT_TAGS.has(tagId) && !hiddenTagIds.has(tagId));
+  const hidden = new Set(hiddenTagIds);
+  if (rollingColumns.includes('ao5')) hidden.add('pb-ao5');
+  if (rollingColumns.includes('ao12')) hidden.add('pb-ao12');
+  const selected = new Set(tagIds);
+  const visible = TIMER_HISTORY_TAG_IDS.filter(
+    tagId => selected.has(tagId) && !RESULT_REDUNDANT_TAGS.has(tagId) && !hidden.has(tagId),
+  );
   if (visible.length === 0) return null;
   const overflow = visible.length - 2;
   const fullLabel = visible.map(tagId => TIMER_HISTORY_TAG_DEFS[tagId].label[language]).join(', ');

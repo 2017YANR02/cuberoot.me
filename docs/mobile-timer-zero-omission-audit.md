@@ -196,7 +196,7 @@ shared 映射快照是 19 个 Timer ID：
 | --- | --- | --- |
 | `session.switcher` | 切换/新建/重命名/清空/删除，项目关联 | 数据 schema 有 session，UI 缺 |
 | `history.search-filter` | 文本搜索、日期、时间、罚时、case、tag 筛选 | 8 个 filter ID 与 8 类派生 tag 的解析/计算/筛选/清空语义已迁 shared，Web 和五端产品层共用同一 tag 徽标/筛选器；筛选不跨重启持久化，与网站一致。App 新产生的智能魔方成绩已通过 shared recorder/producer 落盘 `moves/device/stageSegments`，可自产跳O/跳P；OPPO 实拧、点击/TalkBack/全视口仍待验 |
-| `history.columns` | 可选 rolling columns，日分组，空态 | 缺 |
+| `history.columns` | 可选 rolling columns，日分组，空态 | rolling series/strict running PB/MBLD 排除规则已迁 `@cuberoot/shared/timer`，Web 与五端共用 `TimerHistoryColumnsHeader/DayDivider/RollingCells`、同一 picker 和设置持久化；FMC 按步数显示，筛选只改变可见行与日计数、不重算历史列。≤480px 统计列折到第二行且成绩行最小 44px，PB 标签优先可见。Client 60 项、App 全集 232 项、四包 typecheck、五端共享 Web build 与当前 Mac 可运行的四类原生构建均通过；三名独立 agent 最终 GO，等宽 Chrome 320/360、200% 字号、normal/compare、长成绩、多标签、44px 触点和 AX 审计通过。最新 APK 已覆盖安装到 OPPO 且回读一致、无 crash/ANR；设备仍锁屏，真实点击、TalkBack 与横竖屏矩阵待关闭 |
 | `history.quick-actions` | OK/+2/DNF/DNS、备注、复制、删除 | 7 个稳定 action ID/effect/visible/disabled/active、完整成绩行与单一快捷菜单/底部操作表（右键/长按、焦点、Escape/点外/scroll/resize、viewport clamp、quick-delete once/no-confirm）已迁 `timer-ui` 并由 Web/Mobile 共用。Mobile quick delete 已接 repository restore + 共用 5 秒 Undo；菜单也接入受控 overlay。OPPO 600ms 原位长按打开 sheet，七项、360px 宽度、64px 底部预留及真实 Back 只关菜单已验；备注 textarea 在 461px IME 视口完整可见且无横向溢出。iPhone 17 模拟器只验证了当前共享构建安装/启动，History 交互与全状态矩阵仍缺 |
 | `history.compare` | 二选/取消/第三项替换、结果/阶段/HTM/TPS/case 差异、删改与上下文清理、焦点/关闭/返回 | 选择和比较模型在 shared，完整 UI 在 timer-ui；Web/五端共用，render-time context gate 与定向回归通过。最新 APK 已安装，OPPO 仍锁屏，窄屏点击/可读/无遮挡真机验收待补 |
 | `history.bulk` | 选择、批量删除 | `HistoryPanel` 保留可选代码，但网站 `SoloView` 当前未传 `onBulkDelete`，主路径不可达；不为 App 复制死代码。若网站重新开放，先提取 shared 原子操作与共用 UI 再五端接入 |

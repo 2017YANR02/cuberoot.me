@@ -3,6 +3,7 @@
 import {
   TIMER_HISTORY_QUICK_ACTION_IDS,
   TIMER_HISTORY_TAG_IDS,
+  projectRollingStats,
   type Solve,
   type TimerHistoryTagId,
   type TimerHistoryQuickActionId,
@@ -12,7 +13,10 @@ import {
   TimerHistoryCompareActions,
   TimerHistoryCompareModal,
   TimerHistoryCompareStatus,
+  TimerHistoryColumnsHeader,
+  TimerHistoryDayDivider,
   TimerHistoryRow,
+  TimerHistoryRollingCells,
   TimerHistoryTagBadges,
   TimerHistoryTagFilter,
   TimerInfoToast,
@@ -198,7 +202,7 @@ describe('shared TimerHistoryRow DOM and interaction contract', () => {
 
     expect(row.type).toBe('button');
     expect(row.querySelector('.idx')?.textContent).toBe('5');
-    expect(row.querySelector('.time')?.textContent).toBe('14.34(+2)PR');
+    expect(row.querySelector('.time')?.textContent).toBe('14.34(+2), PR');
     expect(row.querySelector('[data-trailing]')?.textContent).toBe('ao5');
     expect(row.getAttribute('aria-haspopup')).toBe('menu');
     expect(row.getAttribute('aria-expanded')).toBe('false');
@@ -486,6 +490,91 @@ describe('shared history tag surfaces', () => {
     expect(group.querySelector<HTMLElement>('.timer-history-tag-overflow')?.title)
       .toBe('PB, PB ao5, PB ao12, OLL skip');
   });
+
+  it('keeps PB tags visible before skip tags on narrow history rows', async () => {
+    await act(async () => root.render(createElement(TimerHistoryTagBadges, {
+      language: 'en',
+      tagIds: ['oll-skip', 'pll-skip', 'pb-single', 'pb-ao5'],
+    })));
+    expect([...host.querySelectorAll<HTMLElement>('.timer-history-tag-item')]
+      .map(item => item.dataset.tagId)).toEqual([
+      'pb-single', 'pb-ao5', 'oll-skip', 'pll-skip',
+    ]);
+  });
+
+  it('renders one shared header, semantic day divider, and event-aware rolling cells', async () => {
+    const solves = [10_000, 20_000, 30_000].map((timeMs, index) => makeSolve({
+      id: `rolling-${index}`,
+      penalty: 'ok',
+      timeMs,
+      ts: index + 1,
+    }));
+    const projection = projectRollingStats(solves, ['mo3']);
+    await act(async () => root.render(createElement('div', {},
+      createElement(TimerHistoryColumnsHeader, {
+        picker: createElement('button', { type: 'button' }, 'mo3'),
+        resultLabel: 'Time',
+      }),
+      createElement(TimerHistoryDayDivider, { countLabel: '3', day: '2026-09-01' }),
+      createElement(TimerHistoryRollingCells, {
+        columns: ['mo3'],
+        event: '333',
+        index: 2,
+        projection,
+      }),
+    )));
+    expect(host.querySelector('.timer-history-columns-head')?.textContent).toBe('#Timemo3');
+    expect(host.querySelector('h2 time')?.getAttribute('datetime')).toBe('2026-09-01');
+    expect(host.querySelector('[data-stat="mo3"]')?.getAttribute('aria-label'))
+      .toBe('; mo3: 20.00, PB');
+    expect(host.querySelector('[data-stat="mo3"] [aria-hidden="true"]')?.textContent)
+      .toBe('20.00');
+  });
+
+  it('moves matching ao PB tags into columns and restores them after replacement', async () => {
+    await act(async () => root.render(createElement(TimerHistoryTagBadges, {
+      language: 'en',
+      rollingColumns: ['ao5'],
+      tagIds: ['pb-single', 'pb-ao5', 'pb-ao12'],
+    })));
+    expect([...host.querySelectorAll<HTMLElement>('[data-tag-id]')]
+      .map(item => item.dataset.tagId)).toEqual(['pb-single', 'pb-ao12']);
+
+    await act(async () => root.render(createElement(TimerHistoryTagBadges, {
+      language: 'en',
+      rollingColumns: ['ao50'],
+      tagIds: ['pb-single', 'pb-ao5', 'pb-ao12'],
+    })));
+    expect([...host.querySelectorAll<HTMLElement>('[data-tag-id]')]
+      .map(item => item.dataset.tagId)).toEqual(['pb-single', 'pb-ao5', 'pb-ao12']);
+  });
+
+  it('formats FMC rolling means as moves and leaves MBLD rows in the two-column layout', async () => {
+    const fmc = [25_000, 26_000, 26_000].map((timeMs, index) => makeSolve({
+      event: '333fm',
+      id: `fmc-${index}`,
+      penalty: 'ok',
+      timeMs,
+      ts: index + 1,
+    }));
+    await act(async () => root.render(createElement(TimerHistoryRollingCells, {
+      columns: ['mo3'],
+      event: '333fm',
+      index: 2,
+      projection: projectRollingStats(fmc, ['mo3']),
+    })));
+    expect(host.querySelector('[data-stat="mo3"]')?.getAttribute('aria-label'))
+      .toBe('; mo3: 25.67, PB');
+
+    await act(async () => root.render(createElement(TimerHistoryRow, {
+      index: 0,
+      onActivate: vi.fn(),
+      solve: makeSolve({ event: '333mbld', mbld: { attempted: 13, solved: 11 } }),
+      trailing: undefined,
+    })));
+    expect(host.querySelector('.timer-history-row')?.classList.contains('timer-history-row--with-trailing'))
+      .toBe(false);
+  });
 });
 
 describe('history UI reuse, i18n, theme, and overflow guards', () => {
@@ -504,7 +593,7 @@ describe('history UI reuse, i18n, theme, and overflow guards', () => {
     expect(history).toContain('onDelete:');
     expect(history).not.toContain('LONG_PRESS_MS');
     expect(history).not.toContain('row-quick-');
-    expect(detail).toContain('<TimerHistoryCommentEditor');
+    expect(detail).toContain('<TimerSolveDetailModal');
     expect(detail).not.toContain('<textarea');
     expect(solo).toContain('<TimerInfoToast');
     expect(solo).toContain('key={infoToast.sequence}');
@@ -519,6 +608,7 @@ describe('history UI reuse, i18n, theme, and overflow guards', () => {
     const component = readFileSync(new URL('./TimerHistoryRow.tsx', timerUiEntry), 'utf8');
     const toast = readFileSync(new URL('./TimerInfoToast.tsx', timerUiEntry), 'utf8');
     const rowCss = readFileSync(new URL('./history-row.css', timerUiEntry), 'utf8');
+    const columnsCss = readFileSync(new URL('./history-columns.css', timerUiEntry), 'utf8');
     const toastCss = readFileSync(new URL('./info-toast.css', timerUiEntry), 'utf8');
     const tagCss = readFileSync(new URL('./history-tags.css', timerUiEntry), 'utf8');
 
@@ -532,13 +622,16 @@ describe('history UI reuse, i18n, theme, and overflow guards', () => {
     expect(rowCss).toContain('anchored-panel: clamped');
     expect(rowCss).toContain('max-width: calc(100vw - 16px)');
     expect(rowCss).toContain('env(safe-area-inset-bottom)');
+    expect(rowCss).toMatch(/\.timer-history-row\s*\{[\s\S]*?min-height: 44px/);
+    expect(columnsCss).toMatch(/@media \(max-width: 480px\)[\s\S]*?grid-row: 2/);
+    expect(columnsCss).toContain('grid-auto-columns: minmax(0, 1fr)');
     expect(rowCss).toMatch(/\.timer-history-quick-sheet\s*\{[\s\S]*?align-self: flex-end/);
     expect(toastCss).toContain('env(safe-area-inset-bottom)');
     expect(tagCss).toMatch(/@media \(max-width: 480px\)[\s\S]*?\.timer-history-tag-item:nth-of-type\(n \+ 3\)/);
     expect(tagCss).toMatch(/\.timer-history-tag-filter-option\s*\{[\s\S]*?padding: 2px 8px/);
     expect(tagCss).toMatch(/@media \(max-width: 480px\)[\s\S]*?min-height: 44px/);
-    for (const css of [rowCss, toastCss, tagCss]) {
-      expect(css).toMatch(/var\(--(?:foreground|popover|card|border-default|ring)/);
+    for (const css of [rowCss, columnsCss, toastCss, tagCss]) {
+      expect(css).toMatch(/var\(--(?:foreground|popover|card|border-default|ring|shell-divider|background)/);
       expect(css).not.toMatch(/#[0-9a-f]{3,8}\b/i);
       expect(css).not.toMatch(/\b(?:rgba?|hsla?|oklch)\(/i);
     }

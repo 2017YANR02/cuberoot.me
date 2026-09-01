@@ -247,6 +247,18 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('filterTimerHistorySolves(solves, historyFilters, historyTagsById)');
     expect(app).toContain('<TimerHistoryTagBadges');
     expect(app).toContain('<TimerHistoryTagFilter');
+    expect(app).toContain('<TimerHistoryColumnsHeader');
+    expect(app).toContain('<TimerHistoryDayDivider');
+    expect(app).toContain('<TimerHistoryRollingCells');
+    expect(app).toContain('projectRollingStats(solves, visibleHistoryRollingColumns)');
+    expect(app).toContain('rollingStatColumnsForEvent(activeEvent');
+    expect(app).toContain('groupSolvesByLocalDay(filteredHistory.solves)');
+    expect(app).toContain('historyIndexById.get(solve.id)');
+    expect(app).toContain("activeEvent === '333mbld' ? copy.result : copy.historyTime");
+    expect(app).toContain('trailing={rollingColumns.length > 0 ? (');
+    expect(app).not.toContain('solves.findIndex((entry) => entry.id === solve.id)');
+    expect(app).not.toContain('const historyDayCounts');
+    expect(app).not.toContain('className="mobile-history-date"');
     expect(app).toContain('className="mobile-history-match-count" role="status"');
     expect(app).toContain('toggleTimerHistoryTag(current.tags, tagId)');
     expect(app).toContain("updateHistoryFilter('query'");

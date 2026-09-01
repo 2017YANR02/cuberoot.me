@@ -57,6 +57,7 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
 - 手动输入是跨 43 项共享的 opaque 多行队列：逐非空行 trim、即时持久化、改动重置、顺序循环、
   允许空打乱；不得添加网站没有的校验、提交或独立清空逻辑。
 - 成绩历史的自动标签必须只从 `@cuberoot/shared/timer/history-tags` 读取 ID、文案、顺序、toggle 和 PB/ao/MBLD 派生规则，徽标/筛选器只使用 `@cuberoot/timer-ui`；标签不写入 DB/备份。智能魔方动作只用 shared `TimerSmartCubeMoveRecorder` 收集，分段只调用 shared `stageSegmentsFor`；cube state、CFOP 检测/识别、HTM、朝向归一化和 QTM/TPS/首动/停顿指标均在 `@cuberoot/shared/timer/reconstruct/*`，指标卡只使用 `@cuberoot/timer-ui/TimerReconstructMetrics`，网站旧路径只能兼容 re-export。Web/五端不得再写第二套 move buffer、OLL/PLL、阶段识别器或复盘指标算法；Web 已有完整报告可复用已计算 metrics，完整时间线/回放未迁前不得冒充五端完整复盘。
+- 成绩历史的 rolling 值与 strict running PB 只从 shared `rollingStatSeries/projectRollingStats` 计算，MBLD 列可见性只从 `rollingStatColumnsForEvent` 取得；Web/五端必须共用 timer-ui 的 `TimerHistoryColumnsHeader/DayDivider/RollingCells` 和 `TimerRollingStatsPicker`。投影始终基于完整正序历史，筛选只决定显示行与日期计数；FMC 用 event-aware 格式，≤480px 列折到第二行，不得复制 Web 私有循环或固定宽列。
 - CFOP 分段与 BLD memo 只用 shared `TimerAttemptSplitRecorder` 和 timer-ui `TimerAttemptSplitStatus/Settings`；宿主只传开始/停表时间、按键/触摸命令与 canonical move stream。手动标记 first-sample-wins，自动分段必须复用 `stageSegmentsFor` 并允许 partial normalization 修正；BLD 项目可以连接、核对打乱、录 execution moves 和复原停表，但绝不能由第一手自动起表，否则 memo 时间会丢失。
 - “手动输入打乱”和“手动录入成绩”是两项独立能力。成绩录入必须复用
   `@cuberoot/shared/timer` 的 normal/FMC/MBLD、OK/+2/DNF/DNS 规则与
