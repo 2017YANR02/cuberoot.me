@@ -15,6 +15,7 @@ import { useAuthStore, applySession } from '@/lib/auth-store';
 import { useLang } from '@/i18n/tr';
 import {
   sendEmailCode, verifyEmailCode, sendPhoneCode, verifyPhoneCode,
+  sendPhonePasswordResetCode, verifyPhonePasswordResetCode,
   loginPassword, setPassword as apiSetPassword, removePassword,
   linkEmailSend, linkEmailVerify, linkPhoneSend, linkPhoneVerify,
   unlinkIdentity, fetchIdentities, fetchAuthProviders, loginGoogle, linkGoogle, replaceEmailVerify, replacePhoneVerify,
@@ -134,6 +135,7 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
   if (m.includes('wrong or expired')) return t('验证码错误或已过期', 'Wrong or expired code');
   if (m.includes('wrong email or password')) return t('邮箱或密码错误,或该邮箱未设密码', 'Wrong email or password (or no password set)');
   if (m.includes('wrong current password')) return t('当前密码不正确', 'Current password is incorrect');
+  if (m.includes('phone not linked to an account')) return t('该手机号未绑定账号', 'No account is linked to this phone number');
   if (m.includes('confirmation does not match')) return t('输入的内容与账号标识不一致', "That doesn't match your account identifier");
   if (m.includes('invalid password')) return t('密码至少 8 位', 'Password must be at least 8 characters');
   if (m.includes('not configured')) return t('该登录方式暂未开放', "This sign-in method isn't available yet");
@@ -158,8 +160,9 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
  *   login    验证后登录
  *   link     绑到当前账号
  *   replace  换掉当前账号已有的那条(邮箱 / 手机号)—— 发码与 link 同一条链路,只有最后落库不同
+ *   reset    仅手机找回密码;验证码和登录用途隔离,验证后签出 10 分钟重置授权
  */
-function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' | 'link' | 'replace'; onDone: OnSignedIn }) {
+function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' | 'link' | 'replace' | 'reset'; onDone: OnSignedIn }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const [target, setTarget] = useState('');
@@ -177,6 +180,8 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
     try {
       if (mode === 'link' || mode === 'replace') {
         channel === 'email' ? await linkEmailSend(target) : await linkPhoneSend(target);
+      } else if (mode === 'reset') {
+        await sendPhonePasswordResetCode(target);
       } else {
         channel === 'email' ? await sendEmailCode(target) : await sendPhoneCode(target);
       }
@@ -197,6 +202,10 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
         onDone();
       } else if (mode === 'link') {
         channel === 'email' ? await linkEmailVerify(target, code) : await linkPhoneVerify(target, code);
+        onDone();
+      } else if (mode === 'reset') {
+        const r = await verifyPhonePasswordResetCode(target, code);
+        applySession(r.token, r.user);
         onDone();
       } else {
         const r = channel === 'email' ? await verifyEmailCode(target, code) : await verifyPhoneCode(target, code);
@@ -254,7 +263,7 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
           {error && <p className="auth-error">{error}</p>}
           <button className="auth-primary" disabled={code.length !== CODE_LEN || busy} onClick={() => void verify()}>
             {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
-            {mode === 'login' ? t('登录', 'Sign in') : mode === 'replace' ? t('更换', 'Change') : t('绑定', 'Link')}
+            {mode === 'login' ? t('登录', 'Sign in') : mode === 'replace' ? t('更换', 'Change') : mode === 'reset' ? t('继续', 'Continue') : t('绑定', 'Link')}
           </button>
           <button className="auth-textbtn" onClick={() => { setStep('input'); setCode(''); setError(null); }}>
             {t('改用其它' + label, 'Use another ' + label.toLowerCase())}
@@ -486,6 +495,34 @@ function EmailAuth({ onDone }: { onDone: OnSignedIn }) {
       onDone={(info) => (mode === 'reset' ? setNewPw(true) : onDone(info))}
       toPassword={() => setMode('password')}
     />
+  );
+}
+
+/** 手机登录及独立的找回密码用途。普通登录码不能获得重置权限。 */
+function PhoneAuth({ onDone }: { onDone: OnSignedIn }) {
+  const lang = useLang();
+  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
+  const [reset, setReset] = useState(false);
+  const [newPw, setNewPw] = useState(false);
+
+  if (newPw) {
+    return (
+      <div className="auth-flow">
+        <p className="auth-hint">{t('手机号已验证。现在可以为账号设置新密码。', 'Phone number verified. You can now set a new account password.')}</p>
+        <SetPasswordForm needCurrent={false} label={t('新密码', 'New password')} onDone={onDone} />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {reset && <p className="auth-hint">{t('给已绑定的手机号发一个验证码,验证后即可设置新密码。', "We'll text your linked phone number a code — verify it and you can set a new password.")}</p>}
+      <CodeFlow key={reset ? 'reset' : 'login'} channel="phone" mode={reset ? 'reset' : 'login'} onDone={reset ? () => setNewPw(true) : onDone} />
+      <p className="auth-hint">{t('目前仅支持中国大陆手机号(+86)。', 'Mainland China (+86) numbers only for now.')}</p>
+      <button className="auth-textbtn" onClick={() => setReset((value) => !value)}>
+        {reset ? t('返回手机号登录', 'Back to phone sign-in') : t('用手机号重置密码', 'Reset password with phone')}
+      </button>
+    </>
   );
 }
 
@@ -724,12 +761,7 @@ export function LoginForm({
       <h2 className="auth-title">{t('登录 / 注册', 'Sign in / up')}</h2>
 
       {credMode === 'email' && avail.email && <EmailAuth onDone={onDone} />}
-      {credMode === 'phone' && avail.phone && (
-        <>
-          <CodeFlow channel="phone" mode="login" onDone={onDone} />
-          <p className="auth-hint">{t('目前仅支持中国大陆手机号(+86)。', 'Mainland China (+86) numbers only for now.')}</p>
-        </>
-      )}
+      {credMode === 'phone' && avail.phone && <PhoneAuth onDone={onDone} />}
       {avail.email && avail.phone && (
         <button className="auth-textbtn auth-cred-switch" onClick={() => setCredMode((m) => (m === 'email' ? 'phone' : 'email'))}>
           {credMode === 'email' ? t('用手机号登录', 'Use phone number') : t('用邮箱登录', 'Use email')}

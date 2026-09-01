@@ -37,8 +37,7 @@ export const sendEmailCode = (email: string) => post<{ ok: true }>('/v1/auth/ema
 export const verifyEmailCode = (email: string, code: string) => post<SessionResp>('/v1/auth/email/verify', { email, code });
 // 邮箱 + 密码登录(账号已设密码即可,不依赖邮件服务)
 export const loginPassword = (email: string, password: string) => post<SessionResp>('/v1/auth/email/password', { email, password });
-// 设置 / 修改 / 重置密码(登录态)。改密要 currentPassword;但「刚用邮箱验证码登录」的会话
-// (后端 amr=email_code,15 分钟内)可免旧密码 —— 忘记密码就走这条,等价于别家的重置邮件链接。
+// 设置 / 修改 / 重置密码(登录态)。改密要 currentPassword;刚验证邮箱,或通过专用短信找回流程时可免旧密码。
 export const setPassword = (password: string, currentPassword?: string) =>
   post<{ ok: true; hasPassword: true }>('/v1/auth/password/set', { password, currentPassword }, true);
 // 移除密码,退回纯验证码登录(同 Notion 的 Remove password)。凭据要求同上。
@@ -91,6 +90,10 @@ export const updateAvatar = (avatar: AvatarChoice) =>
   post<{ ok: true; token: string; user: SessionUser }>('/v1/auth/profile', { avatar }, true);
 export const sendPhoneCode = (phone: string) => post<{ ok: true }>('/v1/auth/phone/send', { phone });
 export const verifyPhoneCode = (phone: string, code: string) => post<SessionResp>('/v1/auth/phone/verify', { phone, code });
+export const sendPhonePasswordResetCode = (phone: string) =>
+  post<{ ok: true }>('/v1/auth/phone/send', { phone, purpose: 'password_reset' });
+export const verifyPhonePasswordResetCode = (phone: string, code: string) =>
+  post<SessionResp>('/v1/auth/phone/verify', { phone, code, purpose: 'password_reset' });
 
 // 绑定(登录态)
 export const linkEmailSend = (email: string) => post<{ ok: true }>('/v1/auth/link/email/send', { email }, true);
