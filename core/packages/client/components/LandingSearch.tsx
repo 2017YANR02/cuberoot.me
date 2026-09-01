@@ -671,7 +671,8 @@ export default function LandingSearch({
                     className="landing-search-item"
                     onClick={closeAfter}
                   >
-                    <span className="landing-search-item-name">{a.puzzle} · {a.setSlug}</span>
+                    <span className="landing-search-item-name">{tr({ zh: a.nameZh, en: a.nameEn })}</span>
+                    <span className="landing-search-item-meta">{a.puzzle}</span>
                   </Link>
                 ))}
               </div>
