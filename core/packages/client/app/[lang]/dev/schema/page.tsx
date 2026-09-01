@@ -160,6 +160,9 @@ const TABLES: Table[] = [
   { name: 'user_friendships', domain: 'account', origin: '0175', purpose: { zh: '好友申请与已接受的双向好友关系；每对账号只保留一条规范记录', en: 'Pending requests and accepted two-way friendships, with one canonical row per account pair' } },
   { name: 'user_blocks', domain: 'account', origin: '0175', purpose: { zh: '单向黑名单；拉黑时同步切断好友关系与待处理申请', en: 'Directed blocks; blocking also removes friendships and pending requests' } },
   { name: 'user_wca_friend_contacts', domain: 'account', origin: '0178', purpose: { zh: '账号私有的 WCA 好友条目；对方未注册时只保存在本人列表，不代表双向好友或已发送申请', en: 'Account-private WCA friend entries; an unregistered person is only saved to the owner\'s list and does not imply a mutual friendship or delivered request' } },
+  { name: 'vault_user_keys', domain: 'storage', origin: '0192', purpose: { zh: '资料库公钥与由用户口令加密的私钥；服务端无法解密私钥', en: 'Vault public keys and passphrase-encrypted private keys that the server cannot decrypt' } },
+  { name: 'vault_items', domain: 'storage', origin: '0192', purpose: { zh: '管理员拥有的端到端加密文本、字段和备注密文及乐观并发版本', en: 'Administrator-owned end-to-end encrypted text, fields, notes, and optimistic-concurrency versions' } },
+  { name: 'vault_item_access', domain: 'storage', origin: '0192', purpose: { zh: '每条内容对管理员及指定注册账号分别封装的内容密钥', en: 'Per-item content keys separately wrapped for the administrator and designated registered accounts' } },
   { name: 'auth_identities', domain: 'account', origin: '0064', evolved: [78, 103], purpose: { zh: '账号与外部身份的唯一映射；微信小程序与网站扫码登录共用 UnionID', en: 'Unique account-to-provider identity mappings; Mini Program and website QR sign-in share the Weixin UnionID' } },
   { name: 'auth_codes', domain: 'account', origin: '0064', purpose: { zh: '邮箱与手机登录、绑定使用的短时验证码及核销状态', en: 'Short-lived email and phone verification codes with consumption state' } },
   { name: 'auth_web_session_tickets', domain: 'account', origin: '0139', evolved: [179], purpose: { zh: '小程序与原生 App 跨运行时换取会话的 90 秒单次票据；只存票据 SHA-256，移动端另绑 PKCE challenge', en: '90-second single-use cross-runtime session tickets; ticket hashes only, with mobile tickets additionally bound to a PKCE challenge' } },
@@ -673,6 +676,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 189, slug: 'drive_shares', desc: { zh: '网盘文件增加可撤销的公开下载链接；移入回收站时立即停止分享。', en: 'Add revocable public download links for Drive files and revoke them immediately when moved to Trash.' } },
   { n: 190, slug: 'sq1_ep_complete_layer_alignment', desc: { zh: '补齐 5 条 SQ1 EP 公式末尾缺失的 U/D 层对齐，并在遇到非预期数据状态时整笔回滚。', en: 'Complete the missing final U/D alignment in five SQ1 EP algorithms and roll back the migration on any unexpected data state.' } },
   { n: 191, slug: 'sq1_ep_physical_setups', desc: { zh: '替换 7 条切片路径不合法的 SQ1 EP 公式及其 setup，保证所有 EP 缩略图均从正方形态绘制。', en: 'Replace seven SQ1 EP algorithms with physically invalid slice paths and their setups, ensuring every EP thumbnail starts from cube shape.' } },
+  { n: 192, slug: 'private_vault', desc: { zh: '新增端到端加密的私密资料库；管理员可把密文只授权给指定的已注册账号只读查看。', en: 'Add an end-to-end encrypted private vault whose administrator can grant read-only ciphertext access to designated registered accounts.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
