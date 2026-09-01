@@ -1,4 +1,5 @@
 import type { TimerSessionMeta } from './persistence';
+import type { TimerHistoryTagId } from './history-tags';
 import { effectiveMs, type Penalty, type Solve } from './types';
 
 /** Web `/timer` row-menu actions, in the exact order users reach them. */
@@ -220,7 +221,7 @@ export interface TimerHistoryFilters {
   penalties: ReadonlySet<Penalty>;
   ollCase: string;
   pllCase: string;
-  tags: ReadonlySet<string>;
+  tags: ReadonlySet<TimerHistoryTagId>;
 }
 
 export interface TimerHistoryFilterResult {
@@ -290,7 +291,7 @@ export function toggleTimerHistoryPenalty(
 export function filterTimerHistorySolves(
   solves: readonly Solve[],
   filters: TimerHistoryFilters,
-  tagsBySolveId: ReadonlyMap<string, readonly string[]> = new Map(),
+  tagsBySolveId: ReadonlyMap<string, readonly TimerHistoryTagId[]> = new Map(),
 ): TimerHistoryFilterResult {
   const query = filters.query.trim().toLowerCase();
   const dateFromMs = parseLocalDateBoundary(filters.dateFrom, false);

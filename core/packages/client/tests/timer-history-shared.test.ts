@@ -6,9 +6,12 @@ import {
   TIMER_HISTORY_PENALTIES,
   TIMER_HISTORY_QUICK_ACTION_CONTRACTS,
   TIMER_HISTORY_QUICK_ACTION_IDS,
+  TIMER_HISTORY_TAG_DEFS,
+  TIMER_HISTORY_TAG_IDS,
   TIMER_SOLVE_DETAIL_ACTION_CONTRACTS,
   TIMER_SOLVE_DETAIL_ACTION_IDS,
   createTimerHistoryFilters,
+  computeTimerHistoryTags,
   deleteTimerHistorySolve,
   filterTimerHistorySolves,
   parseTimerHistorySeconds,
@@ -18,10 +21,12 @@ import {
   timerHistoryQuickActionPenalty,
   timerHistoryQuickActionStates,
   timerSolveDetailActionStates,
+  toggleTimerHistoryTag,
   toggleTimerHistoryPenalty,
   updateTimerHistorySolve,
   type Penalty,
   type Solve,
+  type TimerHistoryTagId,
 } from '@cuberoot/shared/timer';
 
 function makeSolve(
@@ -154,9 +159,9 @@ describe('shared timer history filtering', () => {
     makeSolve('c', { timeMs: 4_000, penalty: 'DNF', ts: aug30Evening, comment: 'missed PLL' }),
     makeSolve('d', { timeMs: 0, penalty: 'DNS', ts: aug31 }),
   ];
-  const tags = new Map<string, readonly string[]>([
+  const tags = new Map<string, readonly TimerHistoryTagId[]>([
     ['a', ['pb-single']],
-    ['b', ['plus2', 'lucky']],
+    ['b', ['plus2']],
     ['c', ['dnf']],
   ]);
 
@@ -212,6 +217,94 @@ describe('shared timer history filtering', () => {
   });
 });
 
+describe('shared derived timer history tags', () => {
+  it('locks the exact catalog and toggles immutable tag filters', () => {
+    expect(TIMER_HISTORY_TAG_IDS).toEqual([
+      'pb-single', 'pb-ao5', 'pb-ao12', 'oll-skip', 'pll-skip', 'dnf', 'dns', 'plus2',
+    ]);
+    expect(TIMER_HISTORY_TAG_IDS.map((id) => TIMER_HISTORY_TAG_DEFS[id])).toEqual([
+      { id: 'pb-single', tone: 'gold', label: { en: 'PB', zh: 'PB' } },
+      { id: 'pb-ao5', tone: 'gold', label: { en: 'PB ao5', zh: 'PB ao5' } },
+      { id: 'pb-ao12', tone: 'gold', label: { en: 'PB ao12', zh: 'PB ao12' } },
+      { id: 'oll-skip', tone: 'gold', label: { en: 'OLL skip', zh: '跳O' } },
+      { id: 'pll-skip', tone: 'gold', label: { en: 'PLL skip', zh: '跳P' } },
+      { id: 'dnf', tone: 'muted', label: { en: 'DNF', zh: 'DNF' } },
+      { id: 'dns', tone: 'muted', label: { en: 'DNS', zh: 'DNS' } },
+      { id: 'plus2', tone: 'muted', label: { en: '+2', zh: '+2' } },
+    ]);
+
+    const initial = new Set<TimerHistoryTagId>(['pb-single']);
+    expect([...toggleTimerHistoryTag(initial, 'dnf')]).toEqual(['pb-single', 'dnf']);
+    expect([...toggleTimerHistoryTag(initial, 'pb-single')]).toEqual([]);
+    expect([...initial]).toEqual(['pb-single']);
+  });
+
+  it('derives penalties, skips and strict running PBs from current solve truth', () => {
+    const history = [
+      makeSolve('a', { timeMs: 10_000, penalty: 'ok', ts: 1 }),
+      makeSolve('b', { timeMs: 10_000, penalty: '+2', ts: 2 }),
+      makeSolve('c', { timeMs: 9_000, penalty: 'DNF', ts: 3 }),
+      makeSolve('d', { timeMs: 0, penalty: 'DNS', ts: 4 }),
+      makeSolve('e', {
+        timeMs: 9_990,
+        penalty: 'ok',
+        ts: 5,
+        stageSegments: { ollCase: 'OLL skip', pllCase: 'PLL skip' } as Solve['stageSegments'],
+        tags: ['pb-single'],
+      }),
+    ];
+    const tags = computeTimerHistoryTags(history);
+    expect(tags.get('a')).toEqual(['pb-single']);
+    expect(tags.get('b')).toEqual(['plus2']);
+    expect(tags.get('c')).toEqual(['dnf']);
+    expect(tags.get('d')).toEqual(['dns']);
+    expect(tags.get('e')).toEqual(['oll-skip', 'pll-skip', 'pb-single']);
+  });
+
+  it('uses canonical centisecond averages and rejects invalid DNF windows', () => {
+    const tiedWindow = Array.from({ length: 5 }, (_, index) => makeSolve(`t${index}`, {
+      timeMs: 10_000,
+      penalty: 'ok',
+      ts: index,
+    }));
+    tiedWindow.push(makeSolve('same-cs', { timeMs: 9_999, penalty: 'ok', ts: 6 }));
+    const tiedTags = computeTimerHistoryTags(tiedWindow);
+    expect(tiedTags.get('t4')).toContain('pb-ao5');
+    expect(tiedTags.get('same-cs')).not.toContain('pb-ao5');
+
+    const oneDnf = tiedWindow.slice(0, 4).concat(
+      makeSolve('one-dnf', { timeMs: 10_000, penalty: 'DNF', ts: 7 }),
+    );
+    expect(computeTimerHistoryTags(oneDnf).get('one-dnf')).toContain('pb-ao5');
+    const twoDnfs = oneDnf.slice(1).concat(
+      makeSolve('two-dnf', { timeMs: 10_000, penalty: 'DNS', ts: 8 }),
+    );
+    expect(computeTimerHistoryTags(twoDnfs).get('two-dnf')).not.toContain('pb-ao5');
+  });
+
+  it('ranks MBLD singles canonically and never creates rolling-average tags', () => {
+    const mbld = (id: string, solved: number, attempted: number, timeMs: number, penalty: Penalty = 'ok') => (
+      makeSolve(id, { event: '333mbld', mbld: { solved, attempted }, penalty, timeMs, ts: Number(id.slice(1)) })
+    );
+    const history = [
+      mbld('m1', 8, 10, 600_000),
+      mbld('m2', 10, 14, 500_000),
+      mbld('m3', 9, 11, 700_000),
+      mbld('m4', 1, 2, 300_000),
+      ...Array.from({ length: 8 }, (_, index) => mbld(`m${index + 5}`, 8, 10, 600_000)),
+    ];
+    const tags = computeTimerHistoryTags(history);
+    expect(tags.get('m1')).toContain('pb-single');
+    expect(tags.get('m2')).toContain('pb-single');
+    expect(tags.get('m3')).toContain('pb-single');
+    expect(tags.get('m4')).not.toContain('pb-single');
+    for (const solveTags of tags.values()) {
+      expect(solveTags).not.toContain('pb-ao5');
+      expect(solveTags).not.toContain('pb-ao12');
+    }
+  });
+});
+
 describe('shared timer history mutations and Web consumers', () => {
   it('updates penalty/comment and deletes immutably without changing the shared Solve schema', () => {
     const original = makeSolve('x', {
@@ -248,6 +341,10 @@ describe('shared timer history mutations and Web consumers', () => {
     expect(historySource).toContain("from '@cuberoot/timer-ui'");
     expect(historySource).toContain('<TimerHistoryRow');
     expect(historySource).toContain('filterTimerHistorySolves(solves');
+    expect(historySource).toContain('computeTimerHistoryTags(solves)');
+    expect(historySource).toContain('<TimerHistoryTagBadges');
+    expect(historySource).toContain('<TimerHistoryTagFilter');
+    expect(historySource).toContain('toggleTimerHistoryTag(current, tagId)');
     expect(historySource).toContain('toggleTimerHistoryPenalty(prev, p)');
     expect(historySource).toContain('timerHistoryCopyText(solve)');
     expect(historySource).not.toContain('timerHistoryQuickActionStates({');
@@ -256,6 +353,7 @@ describe('shared timer history mutations and Web consumers', () => {
     expect(historySource).not.toContain('row-quick-');
     expect(historySource).not.toContain('function parseTimeSeconds');
     expect(historySource).not.toContain("const ALL_PENALTIES: Penalty[]");
+    expect(historySource).not.toContain("from '../_lib/storage/auto_tag'");
 
     expect(soloSource).toContain('updateTimerHistorySolve(prev[event] ?? [], solveId, patch)');
     expect(soloSource).toContain('deleteTimerHistorySolve(prev[event] ?? [], solveId)');

@@ -1,0 +1,111 @@
+.timer-history-tag-badges {
+  display: inline-flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.timer-history-tag {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0 5px;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  color: var(--muted-foreground);
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timer-history-tag[data-tone="gold"] {
+  border-color: color-mix(in srgb, var(--signal-warning) 55%, transparent);
+  background: color-mix(in srgb, var(--signal-warning) 16%, transparent);
+  color: var(--signal-warning);
+}
+
+.timer-history-tag[data-tone="green"] {
+  border-color: color-mix(in srgb, var(--signal-success) 55%, transparent);
+  background: color-mix(in srgb, var(--signal-success) 14%, transparent);
+  color: var(--signal-success);
+}
+
+.timer-history-tag[data-tone="red"] {
+  border-color: color-mix(in srgb, var(--destructive) 55%, transparent);
+  background: color-mix(in srgb, var(--destructive) 14%, transparent);
+  color: var(--destructive);
+}
+
+.timer-history-tag[data-tag-id="pb-single"] {
+  border-color: var(--signal-info, var(--accent));
+  background: var(--signal-info, var(--accent));
+  color: var(--accent-foreground);
+}
+
+.timer-history-tag-overflow {
+  display: none;
+}
+
+.timer-history-tag-filter {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.timer-history-tag-filter legend {
+  margin-bottom: 4px;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.timer-history-tag-filter-options {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.timer-history-tag-filter-option {
+  min-width: 0;
+  padding: 2px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.timer-history-tag-filter-option[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.timer-history-tag-filter-option:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .timer-history-tag-item:nth-of-type(n + 3) {
+    display: none;
+  }
+
+  .timer-history-tag-overflow {
+    display: inline-block;
+  }
+
+  .timer-history-tag-filter-option {
+    min-height: 44px;
+    padding: 6px 10px;
+  }
+}

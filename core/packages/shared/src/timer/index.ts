@@ -7,6 +7,7 @@ export * from './compound-scramble';
 export * from './color-subsets';
 export * from './event-catalog';
 export * from './history';
+export * from './history-tags';
 export * from './input-contract';
 export * from './manual-entry';
 export * from './manual-scramble-queue';
