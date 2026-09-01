@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
-import { Bell, BookOpen, Building2, ChevronLeft, HeartHandshake, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, Upload, UserRound, Users } from 'lucide-react';
+import { Bell, BookOpen, Building2, ChevronLeft, HeartHandshake, LockKeyhole, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, Upload, UserRound, Users } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
@@ -626,6 +626,12 @@ export default function AccountPage() {
       href: '/friends',
       icon: <Users size={22} className="account-card-icon" />,
       title: tr({ zh: '好友', en: 'Friends' }),
+    },
+    {
+      key: 'vault',
+      href: '/vault',
+      icon: <LockKeyhole size={22} className="account-card-icon" />,
+      title: tr({ zh: '私密资料库', en: 'Private vault' }),
     },
     {
       key: 'notifications',

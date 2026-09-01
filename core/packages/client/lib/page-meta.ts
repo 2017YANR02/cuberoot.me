@@ -80,6 +80,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'account': { title: { zh: '账号', en: 'Account' } },
+  'vault': {
+    title: { zh: '私密资料库', en: 'Private Vault' },
+    description: {
+      zh: '在浏览器中加密保存文本、密码与个人信息，并只向管理员指定的已注册账号开放查看。',
+      en: 'Encrypt text, passwords, and personal information in the browser, with read access limited to registered accounts designated by an administrator.',
+    },
+  },
   'platform': {
     title: { zh: '课程与学习 Platform', en: 'Courses and learning Platform' },
     description: {
