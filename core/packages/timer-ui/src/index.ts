@@ -118,6 +118,10 @@ export type {
 } from './TimerAttemptSplits';
 export { TimerSolveDetailModal } from './TimerSolveDetailModal';
 export type { TimerSolveDetailModalProps } from './TimerSolveDetailModal';
+export { TimerCubePreview } from './TimerCubePreview';
+export type { TimerCubePreviewProps } from './TimerCubePreview';
+export { TimerScramblePreview } from './TimerScramblePreview';
+export type { TimerScramblePreviewProps } from './TimerScramblePreview';
 export { TimerInfoToast } from './TimerInfoToast';
 export type { TimerInfoToastProps } from './TimerInfoToast';
 export { TimerScrambleHintText, TimerScrambleStrip } from './TimerScrambleStrip';

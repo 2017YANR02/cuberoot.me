@@ -23,7 +23,7 @@
 | GAP-003 | Web 随机来源对 43/43 `EventId` 都有已注册的语义 | shared runtime 42 个 generated；`custom` 的 Real/Random 已按网站接成显式 ready 空槽并可计时，仍待 OPPO 触摸/重启验收 | P0，菜单/生成器数量不等于完整功能 parity |
 | GAP-004 | 真题有比赛/日期、比赛搜索、轮次、组别、难度、步数、2×2 类型、最优口径、来源元数据与空/错误状态 | Mobile 已共享比赛/日期/搜索/国旗/轮组、2×2 配置、完整 WCA 难度/合并/最优、222/pyra/skewb 真题按步数和底层错误/空分型；完整出处元数据、逐类用户文案与全配置/真机异常矩阵仍未关闭 | P0，底层契约通过仍不等于完整真题 UI parity |
 | GAP-005 | 手动来源还包含编辑后重置、顺序循环、已显示打乱历史的上一条/下一条、空打乱可起表与 attempt snapshot | Mobile 已直接消费 shared editor/queue/`ScrambleHistory`，覆盖上一条/下一条、队尾生成、solve 后前进、左右键、空槽和冻结 attempt；仍缺 OPPO/iOS 真机全状态证据 | P0，源码与自动化已接，待设备矩阵 |
-| GAP-006 | Web 有 session 切换/新建/重命名/清空/删除/项目关联、搜索筛选、成绩对比、成绩详情、移动分组 | session CRUD/项目关联、共用成绩行/七项菜单/备注/Undo、行级罚时/复制/删除、完整筛选/tag、成绩对比与基础成绩详情已接五端共享产品层。详情的原始/生效成绩、日期、罚时、打乱、CFOP/BLD/MBLD 分段、备注、移组、删除和关闭只保留一份 `timer-ui` DOM；Web 仅注入重型复盘，App 仅注入预览。非 NxN 预览与完整复盘仍缺。`HistoryPanel` 的批量删除分支当前在网站主路径没有 consumer，不把不可达代码当网站现有功能 | P0，基础详情单源不等于完整预览/复盘 parity |
+| GAP-006 | Web 有 session 切换/新建/重命名/清空/删除/项目关联、搜索筛选、成绩对比、成绩详情、移动分组 | session CRUD/项目关联、共用成绩行/七项菜单/备注/Undo、行级罚时/复制/删除、完整筛选/tag、成绩对比与基础成绩详情已接五端共享产品层。详情的原始/生效成绩、日期、罚时、打乱、CFOP/BLD/MBLD 分段、备注、移组、删除和关闭只保留一份 `timer-ui` DOM；Web 仅注入重型复盘。Web/五端的打乱图也已统一为同一 `TimerCubePreview`，覆盖网站当前的 NxN、Clock、Pyraminx、Skewb、SQ1、Megaminx、FTO 和 relay/custom 分派；完整复盘仍缺。`HistoryPanel` 的批量删除分支当前在网站主路径没有 consumer，不把不可达代码当网站现有功能 | P0，基础详情/预览单源不等于完整复盘 parity |
 | GAP-007 | Web 有成绩/图表/统计三栏、5 图、完整统计、case/跨分组/按天、纪录对比 | 紧凑 current/best 面板与 rolling picker 已迁 timer-ui 并由 Web/Mobile 真实消费；OPPO 已显示 time/ao5/ao12 共用面板且 360px 无横向溢出。完整 StatsModal/五图、case/跨分组/按天与纪录对比仍缺 | P0，紧凑面板接线完成不等于完整统计完成 |
 | GAP-008 | Web 设置有 8 类、64 个字段（其中 1 个仅开发环境） | 8 类与 64 个稳定 ID、copy/value/visibility/disabled/effect 已迁 shared；“计时”8 字段、“训练”的 CFOP 分段/BLD memo 及“外观”的点击打乱动作已由 Web/Mobile 共用真实 UI/effect，App effect ledger 为 11 项。OPPO 已读到 canonical 8/8 计时 ID、20～340px 内容边界与滚动底部，并实证点击打乱三动作；新增两项尚待解锁后验收，其余 53 字段、iOS/其他三端和全视口仍缺 | P0，11 项接线完成不等于 64 项设置 parity |
 | GAP-009 | Web “更多”包含打乱足迹、统计、语言、专项、盲拧助手、全屏、手动录入、replay、求解器、批量打乱、打印、清空 | 12 项 action/条件/effect 已共享；App 已真实接通 10 项：统计复用现有共享统计页，盲拧助手/通用求解器/批量打乱复用 Tools canonical 子路由，其余 6 项保留既有 App effect。专项仍绑定 Web 私有 drill target，replay 仍绑定 Web 私有 decoder/重建状态，未用外跳 Web timer 或占位冒充 | P0，剩余 2 项及深层交互矩阵未完成 |
@@ -82,25 +82,25 @@ shared 映射快照是 19 个 Timer ID：
 | ---: | --- | --- | --- | --- | --- |
 | 1 | `333` | `333` | 3×3；难度直接生成；云端最优；解法/智能魔方/复盘 | cubing `333` | 真题难度/合并/最优已共享；随机难度、解法/复盘与完整 UI 仍缺 |
 | 2 | `222` | `222` | 完整状态 + 3-gen/EG/CLL/EG1/EG2/TCLL+/TCLL-/TCLL/LS/无连色；WCA/最优；底面/底层/HTM/QTM 按步数；解法 | shared pocket + shared specialist Worker | 比赛/日期/轮组、随机 11 类、真题 10 类、WCA/最优与按步数已接共享契约；完整还原+六面解法已共用并通过空/错/stale/窄屏回归，仍待 OPPO 与全类型矩阵 |
-| 3 | `444` | `444` | 4×4 | cubing `444` | 真题详细配置、Web 图与显示状态未对齐 |
+| 3 | `444` | `444` | 4×4 | cubing `444` | 预览已共用；真题详细配置与显示设置矩阵未对齐 |
 | 4 | `555` | `555` | 5×5 | cubing `555` | 同上 |
 | 5 | `666` | `666` | 6×6 | cubing `666` | 同上 |
 | 6 | `777` | `777` | 7×7 | cubing `777` | 同上 |
 | 7 | `333bld` | `333bf` | 3BLD；memo 分段；盲拧助手；复盘 | cubing `333bf` | memo 采集/详情显示已共享；助手/复盘仍缺 |
 | 8 | `333fm` | `333fm` | FMC 打乱；手动录入解法校验与 OBTM 步数 | cubing `333fm` | FMC 录入/统计语义缺 |
 | 9 | `333oh` | `333oh` | 3×3 OH；难度直接生成 | cubing `333oh` | 真题难度已共享；随机难度和全量 UI 仍缺 |
-| 10 | `mega` | `minx` | Megaminx；解法提示 | cubing `minx` | 预览/解法缺 |
+| 10 | `mega` | `minx` | Megaminx；解法提示 | cubing `minx` | 专用预览已共用；解法缺 |
 | 11 | `pyra` | `pyram` | V/整体按步数；解法 | cubing `pyram` | 真题/随机按步数与完整还原+四 V 解法已共享；真机范围矩阵仍缺 |
-| 12 | `clock` | `clock` | Clock 记号与专用预览 | cubing `clock` | 专用预览/视觉缺 |
+| 12 | `clock` | `clock` | Clock 记号与专用预览 | cubing `clock` | 专用预览已共用；真机视觉矩阵缺 |
 | 13 | `skewb` | `skewb` | HTM 按步数；解法 | cubing `skewb` | 真题/随机按步数与完整还原+六面解法已共享；真机范围矩阵仍缺 |
-| 14 | `sq1` | `sq1` | SQ1 紧凑记号；专用预览；解法 | cubing `sq1` | 字符格式/预览/解法未对齐 |
+| 14 | `sq1` | `sq1` | SQ1 紧凑记号；专用预览；解法 | cubing `sq1` | 专用预览已共用；字符格式/解法未对齐 |
 | 15 | `444bld` | `444bf` | 4BLD；memo 分段 | cubing `444bf` | memo 采集/详情显示已共享；复盘仍缺 |
 | 16 | `555bld` | `555bf` | 5BLD；memo 分段 | cubing `555bf` | memo 采集/详情显示已共享；复盘仍缺 |
 | 17 | `333mbld` | `333mbf` | MBLD 打乱；已还原/已尝试/时间录入；WCA 计分/DNF | shared compound | 生成已接；录入、组合显示、统计仍缺 |
 | 18 | `magic` | local | Magic 专用生成 | shared compound | provider 已接；专项显示仍待验 |
 | 19 | `mmagic` | local | Master Magic 专用生成 | shared compound | provider 已接；专项显示仍待验 |
 | 20 | `333ni` | `333` | 3BLD NI；memo/盲拧助手 | cubing `333bf` | 真题 alias 已建表，memo/助手缺 |
-| 21 | `333mr` | `333` | Mirror Blocks 使用 3×3 打乱 | cubing `333` | alias 已建表，显示/预览仍未全量对齐 |
+| 21 | `333mr` | `333` | Mirror Blocks 使用 3×3 打乱 | cubing `333` | alias 与 3×3 预览已共用；专项显示矩阵仍待验 |
 | 22 | `666bld` | local | 6BLD；memo | shared compound | provider 已接，BLD memo/显示仍缺 |
 | 23 | `777bld` | local | 7BLD；memo | shared compound | provider 已接，BLD memo/显示仍缺 |
 | 24 | `r3` | local | 3×3 relay 专用组合打乱 | shared compound | provider 已接，组合显示仍缺 |
@@ -117,7 +117,7 @@ shared 映射快照是 19 个 Timer ID：
 | 35 | `eg1` | local | EG-1 case identity/case stats | shared trainer | provider 已接；Mobile case stats/metadata 保存缺；Web 当前没有逐题答案条 |
 | 36 | `eg2` | local | EG-2 case identity/case stats | shared trainer | provider 已接；Mobile case stats/metadata 保存缺；Web 当前没有逐题答案条 |
 | 37 | `custom` | local | 手动/自定义语义 | manual | 不得将自定义默认成 3×3；完整流程未验收 |
-| 38 | `fto` | local | csTimer FTO random-state worker；专用预览/解法 | cubing `fto` | provider 不同必须证明语义等价；预览/解法缺 |
+| 38 | `fto` | local | csTimer FTO random-state worker；专用预览/解法 | cubing `fto` | 专用预览已共用；provider 等价与解法仍缺 |
 | 39 | `kilominx` | local | csTimer Kilominx random-state worker | shared `cstimer_module` Worker provider | 预览缺 |
 | 40 | `gear` | local | csTimer Gear random-state；FTM 按步数 | shared Gear provider | 按步数缺 |
 | 41 | `ivy` | local | csTimer Ivy random-state；HTM 按步数 | shared Ivy provider | 按步数缺 |
@@ -155,7 +155,7 @@ shared 映射快照是 19 个 Timer ID：
 | `scramble.prev-next` | 已显示打乱历史的上一条/下一条，与生成队列分离 | 已消费 shared `ScrambleHistory` 并覆盖键盘/触摸/队尾生成/solve 后前进，待 OPPO/iOS 真机矩阵 |
 | `scramble.click-action` | 无操作/下一条/复制，复制勾和智能魔方修正路径特例 | 枚举/default/normalizer/persistence 与选择控件已由 Web/五端共用；产品层统一调用宿主剪贴板 capability，Android/iOS 薄宿主使用 Capacitor Clipboard，打乱、历史、联网房间码和二维码邀请链接复用同一 transport。OPPO `PFDM00` 已实证无操作不响应且不可聚焦、下一条更换真题、复制保持原题并提示成功，360px 无横向溢出。仍待 iOS/Harmony/Windows/macOS 三动作、智能魔方修正路径与完整视觉矩阵 |
 | `scramble.format` | SQ1 等项目显示 adapter，存储仍保留 canonical 原文 | 未证明 |
-| `scramble.preview` | 2D/3D/NxN/异形专用 renderer，显示开关、拖动、朝向 | Mobile 仅 shared `ScrambleCube` 已支持的子集 |
+| `scramble.preview` | 2D/3D/NxN/异形专用 renderer，显示开关、拖动、朝向 | Web/五端共用 `TimerCubePreview`/`TimerScramblePreview`；cubing.js 与 SQ1/Megaminx renderer 均为单源，不可解析手动题 fail closed。显示开关、拖动/朝向及全设备视觉矩阵仍待关闭 |
 | `scramble.source-meta` | 国旗、本地化比赛名、项目、轮/组/题号/加赛、深链 | Mobile 仅比赛名 + 项目 + round/group/# |
 | `scramble.source-progress` | 稀有池 `seen/total`、全练过、非最优标志、打乱足迹人数 | 缺 |
 | `scramble.loading` | WCA、csTimer worker、难度 worker、云端最优各自区分 loading | 仅通用 loading |
@@ -200,7 +200,7 @@ shared 映射快照是 19 个 Timer ID：
 | `history.quick-actions` | OK/+2/DNF/DNS、备注、复制、删除 | 7 个稳定 action ID/effect/visible/disabled/active、完整成绩行与单一快捷菜单/底部操作表（右键/长按、焦点、Escape/点外/scroll/resize、viewport clamp、quick-delete once/no-confirm）已迁 `timer-ui` 并由 Web/Mobile 共用。Mobile quick delete 已接 repository restore + 共用 5 秒 Undo；菜单也接入受控 overlay。OPPO 600ms 原位长按打开 sheet，七项、360px 宽度、64px 底部预留及真实 Back 只关菜单已验；备注 textarea 在 461px IME 视口完整可见且无横向溢出。iPhone 17 模拟器只验证了当前共享构建安装/启动，History 交互与全状态矩阵仍缺 |
 | `history.compare` | 二选/取消/第三项替换、结果/阶段/HTM/TPS/case 差异、删改与上下文清理、焦点/关闭/返回 | 选择和比较模型在 shared，完整 UI 在 timer-ui；Web/五端共用，render-time context gate 与定向回归通过。最新 APK 已安装，OPPO 仍锁屏，窄屏点击/可读/无遮挡真机验收待补 |
 | `history.bulk` | 选择、批量删除 | `HistoryPanel` 保留可选代码，但网站 `SoloView` 当前未传 `onBulkDelete`，主路径不可达；不为 App 复制死代码。若网站重新开放，先提取 shared 原子操作与共用 UI 再五端接入 |
-| `solve.detail` | 原始/生效成绩、日期、4 罚时、打乱/图、分段、BLD/MBLD、备注、tag | Web/五端已共用同一 `TimerSolveDetailModal`，基础字段、动作、焦点、关闭、窄屏布局和脏旧分段归一化均为单源；tag 继续属于共用成绩行。App 当前预览只覆盖 NxN，Web 重型复盘仍由动态 slot 注入，故完整 parity 未关闭 |
+| `solve.detail` | 原始/生效成绩、日期、4 罚时、打乱/图、分段、BLD/MBLD、备注、tag | Web/五端已共用同一 `TimerSolveDetailModal` 和同一打乱预览，基础字段、动作、焦点、关闭、窄屏布局、脏旧分段归一化及网站当前预览项目均为单源；tag 继续属于共用成绩行。Web 重型复盘仍由动态 slot 注入，故完整 parity 未关闭 |
 | `solve.move-session` | 移动到其他 session | shared 不可变 move effect、详情 action/目标规则与共用详情入口已由 Web/五端消费；成功写仓储后才关闭，失败保持详情可见 |
 | `solve.reconstruction` | 动作流、谱子、方法/阶段、质量、时间线、回放、反馈 | App 智能魔方成绩的 `moves/device/stageSegments` 已与 Web 共用 producer 并落盘；完整复盘 UI、时间线、回放和反馈仍缺 |
 | `solve.auto-recap` | 智能魔方停表后内联 recap，下一把收起 | 缺 |

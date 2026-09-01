@@ -297,9 +297,6 @@ importers:
       '@cuberoot/timer-ui':
         specifier: workspace:*
         version: link:../../packages/timer-ui
-      '@cuberoot/visualcube':
-        specifier: workspace:*
-        version: link:../../packages/visualcube
       lucide-react:
         specifier: 1.8.0
         version: 1.8.0(react@19.2.4)
@@ -470,9 +467,6 @@ importers:
       '@cuberoot/timer-ui':
         specifier: workspace:*
         version: link:../timer-ui
-      '@cuberoot/visualcube':
-        specifier: workspace:*
-        version: link:../visualcube
     devDependencies:
       '@types/node':
         specifier: ^24.13.3
@@ -940,12 +934,18 @@ importers:
       '@cuberoot/event-icon':
         specifier: workspace:*
         version: link:../event-icon
+      '@cuberoot/puzzle-render-core':
+        specifier: workspace:*
+        version: link:../puzzle-render-core
       '@cuberoot/puzzle-solvers':
         specifier: workspace:*
         version: link:../puzzle-solvers
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../shared
+      cubing:
+        specifier: ^0.63.3
+        version: 0.63.3(patch_hash=026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6)
       flag-icons:
         specifier: ^7.5.0
         version: 7.5.0

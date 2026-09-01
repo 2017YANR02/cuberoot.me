@@ -27,8 +27,7 @@
     "@cuberoot/event-icon": "workspace:*",
     "@cuberoot/puzzle-solvers": "workspace:*",
     "@cuberoot/shared": "workspace:*",
-    "@cuberoot/timer-ui": "workspace:*",
-    "@cuberoot/visualcube": "workspace:*"
+    "@cuberoot/timer-ui": "workspace:*"
   },
   "peerDependencies": {
     "lucide-react": "1.8.0",
