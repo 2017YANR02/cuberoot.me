@@ -11,7 +11,7 @@ import {
 } from '@cuberoot/shared/timer';
 import { useId, type ReactNode } from 'react';
 
-export interface TimerTimingBooleanControlProps {
+export interface TimerBooleanControlProps {
   disabled?: boolean;
   label: string;
   onChange: (value: boolean) => void;
@@ -25,7 +25,7 @@ export interface TimerTimingSettingsSectionsProps {
   localize: (copy: TimerSettingCopy) => string;
   onChange: (patch: Partial<TimerTimingSettings>) => void;
   /** Platform visual primitive; this shared component owns the row and setting behavior. */
-  renderBooleanControl: (props: TimerTimingBooleanControlProps) => ReactNode;
+  renderBooleanControl: (props: TimerBooleanControlProps) => ReactNode;
   value: TimerTimingSettings;
 }
 
@@ -140,14 +140,18 @@ function TimerSettingRow({
   );
 }
 
-function TimerBooleanSettingRow({
+export function TimerBooleanSettingRow({
+  disabled = false,
   field,
+  hint,
   label,
   onChange,
   renderBooleanControl,
   value,
 }: {
+  disabled?: boolean;
   field: TimerSettingFieldContract;
+  hint?: ReactNode;
   label: string;
   onChange: (value: boolean) => void;
   renderBooleanControl: TimerTimingSettingsSectionsProps['renderBooleanControl'];
@@ -158,11 +162,13 @@ function TimerBooleanSettingRow({
       <span className="settings-row-label">{label}</span>
       <span className="settings-row-control">
         {renderBooleanControl({
+          disabled,
           label,
           onChange,
           settingId: field.id as TimerSettingFieldId,
           value,
         })}
+        {hint && <span className="hint">{hint}</span>}
       </span>
     </div>
   );

@@ -23,10 +23,13 @@ import {
 } from './wca-source-config';
 import {
   DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
+  DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
   DEFAULT_TIMER_TIMING_SETTINGS,
   normalizeTimerScrambleClickAction,
+  normalizeTimerScramblePreviewSettings,
   normalizeTimerTimingSettings,
   type TimerScrambleClickAction,
+  type TimerScramblePreviewSettings,
   type TimerTimingSettings,
 } from './settings-contract';
 import {
@@ -57,7 +60,8 @@ export interface TimerStoreSettings extends
   TimerWcaSourceSettings,
   TimerByStepsSettings,
   TimerAttemptSplitOptions,
-  TimerTimingSettings {
+  TimerTimingSettings,
+  TimerScramblePreviewSettings {
   event: EventId;
   /** Shared 2x2 full-state generation style; also selects WCA original vs optimal-equivalent rows. */
   scramble222Mode: Scramble222Mode;
@@ -314,6 +318,8 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     'hideTime',
     'multiStage',
     'bldMemo',
+    'showCubePreview',
+    'prefer3D',
   ] as const) {
     if (value[key] !== undefined && typeof value[key] !== 'boolean') return null;
   }
@@ -410,6 +416,10 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     runningPrecision: value.runningPrecision,
     precision: value.precision,
   });
+  const scramblePreview = normalizeTimerScramblePreviewSettings({
+    showCubePreview: value.showCubePreview,
+    prefer3D: value.prefer3D,
+  });
   return {
     event: value.event,
     // Early Mobile builds offered a wider timing range than Web. Normalize at
@@ -434,6 +444,7 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
       ? value.bldMemo
       : DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS.bldMemo,
     scrambleClickAction: normalizeTimerScrambleClickAction(value.scrambleClickAction),
+    ...scramblePreview,
     ...wcaSource,
     language: value.language,
     theme: value.theme,
@@ -589,6 +600,7 @@ export function createTimerStoreData(
       manualScrambles: '',
       statsRollingColumns: [...DEFAULT_ROLLING_STAT_COLUMNS],
       scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
+      ...DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
       ...DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
       language,
       theme: 'system',

@@ -150,13 +150,18 @@ export {
   TimerTimingSettingsSections,
 } from './TimerTimingSettingsSections';
 export type {
-  TimerTimingBooleanControlProps,
+  TimerBooleanControlProps,
   TimerTimingSettingsSectionsProps,
 } from './TimerTimingSettingsSections';
 export { TimerScrambleClickActionSetting } from './TimerScrambleClickActionSetting';
 export type {
   TimerScrambleClickActionSettingProps,
 } from './TimerScrambleClickActionSetting';
+export {
+  TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
+  TimerScramblePreviewSettings,
+} from './TimerScramblePreviewSettings';
+export type { TimerScramblePreviewSettingsProps } from './TimerScramblePreviewSettings';
 export { TimerPuzzlePicker } from './TimerPuzzlePicker';
 export type {
   TimerPuzzlePickerGroup,

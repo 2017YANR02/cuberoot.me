@@ -1371,6 +1371,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The eight-field Timing settings UI shared by the Web, Android, and iOS timers. Field order, bilingual copy, hold threshold, inspection toggle, and both precision selectors come from @cuberoot/shared/timer settings-contract. Hosts only inject persistence and their existing switch visual primitive; they must not duplicate the field list or normalization.',
   },
   {
+    name: 'TimerScramblePreviewSettings',
+    import: "import { TimerScramblePreviewSettings } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五个安装端共用的打乱图显示和 2D/3D 设置。字段、默认值、禁用关系和说明只维护一份；宿主只注入持久化及已有开关样式，实际预览继续复用 TimerCubePreview。',
+    en: 'Shared scramble-preview visibility and 2D/3D settings for Web and all five installed clients. Field identity, defaults, disabled behavior, and help copy live in one implementation; hosts inject persistence and their existing switch style while TimerCubePreview remains the sole renderer.',
+  },
+  {
     name: 'TimerHistoryRow / TimerHistoryCommentEditor / TimerHistoryTags',
     import: "import { TimerHistoryRow, TimerHistoryCommentEditor, TimerHistoryTagBadges, TimerHistoryTagFilter } from '@cuberoot/timer-ui';",
     category: 'more',

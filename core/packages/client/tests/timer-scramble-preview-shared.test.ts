@@ -14,6 +14,7 @@ vi.mock('cubing/twisty', () => {
     constructor(init: Record<string, unknown>) {
       super();
       this.dataset.puzzle = String(init.puzzle ?? '');
+      this.dataset.visualization = String(init.visualization ?? '');
     }
 
     set experimentalSetupAlg(value: string) {
@@ -96,5 +97,35 @@ describe('shared timer scramble preview', () => {
     })));
     expect(host.querySelector<HTMLElement>('[role="img"]')?.style.visibility).toBe('');
     expect(host.querySelector<HTMLElement>('mock-twisty-player')?.dataset.scramble).toBe("R U' L");
+  });
+
+  it('rebuilds the same shared player for 2D/3D while SQ1 and Megaminx stay on SVG', async () => {
+    await act(async () => root.render(createElement(TimerCubePreview, {
+      event: '333',
+      scramble: 'R',
+      visualization: '2D',
+    })));
+    await vi.waitFor(() => expect(host.querySelector<HTMLElement>('mock-twisty-player')).not.toBeNull());
+    const twoD = host.querySelector<HTMLElement>('mock-twisty-player')!;
+    expect(twoD.dataset.visualization).toBe('2D');
+
+    await act(async () => root.render(createElement(TimerCubePreview, {
+      event: '333',
+      scramble: 'R',
+      visualization: '3D',
+    })));
+    const threeD = host.querySelector<HTMLElement>('mock-twisty-player')!;
+    expect(threeD).not.toBe(twoD);
+    expect(threeD.dataset.visualization).toBe('3D');
+
+    for (const [event, scramble] of [['sq1', '(1,0) /'], ['mega', 'R++']] as const) {
+      await act(async () => root.render(createElement(TimerCubePreview, {
+        event,
+        scramble,
+        visualization: '3D',
+      })));
+      expect(host.querySelector('mock-twisty-player')).toBeNull();
+      expect(host.querySelector('svg')).not.toBeNull();
+    }
   });
 });

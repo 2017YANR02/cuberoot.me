@@ -74,6 +74,7 @@ describe('mobile timer repository contract', () => {
     const data = await repo.load();
     expect(data.database.activeSessionId).toBe('id-0');
     expect(data.settings.scrambleClickAction).toBe('copy');
+    expect(data.settings).toMatchObject({ showCubePreview: true, prefer3D: false });
     expect(driver.data).toEqual(data);
   });
 
@@ -266,6 +267,10 @@ describe('mobile timer repository contract', () => {
     expect(driver.data).toMatchObject({ schemaVersion: 2, database: { version: 3 } });
     expect((driver.data as TimerStoreData).settings.statsRollingColumns).toEqual(['ao5', 'ao12']);
     expect((driver.data as TimerStoreData).settings.scrambleClickAction).toBe('copy');
+    expect((driver.data as TimerStoreData).settings).toMatchObject({
+      showCubePreview: true,
+      prefer3D: false,
+    });
   });
 
   it('updates penalty/comment and deletes one solve', async () => {
@@ -427,6 +432,22 @@ describe('mobile timer repository contract', () => {
     await expect(repo.updateSettings({ runningPrecision: 4 as 3 })).rejects.toBeInstanceOf(CorruptTimerStoreError);
     await expect(repo.updateSettings({ scrambleClickAction: 'invalid' as 'copy' }))
       .rejects.toBeInstanceOf(CorruptTimerStoreError);
+    await expect(repo.updateSettings({ showCubePreview: 'yes' as unknown as boolean }))
+      .rejects.toBeInstanceOf(CorruptTimerStoreError);
+    await expect(repo.updateSettings({ prefer3D: 1 as unknown as boolean }))
+      .rejects.toBeInstanceOf(CorruptTimerStoreError);
+  });
+
+  it('persists scramble preview visibility and 2D/3D preference independently', async () => {
+    const { repo } = repository();
+    await repo.updateSettings({ showCubePreview: false, prefer3D: true });
+    await expect(repo.load()).resolves.toMatchObject({
+      settings: { showCubePreview: false, prefer3D: true },
+    });
+    await repo.updateSettings({ showCubePreview: true });
+    await expect(repo.load()).resolves.toMatchObject({
+      settings: { showCubePreview: true, prefer3D: true },
+    });
   });
 
   it('persists every shared scramble click action', async () => {

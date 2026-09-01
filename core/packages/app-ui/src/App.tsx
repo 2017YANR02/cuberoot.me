@@ -147,6 +147,7 @@ import {
   TimerPrintController,
   TimerScramble222Config,
   TimerScrambleClickActionSetting,
+  TimerScramblePreviewSettings,
   TimerScrambleStrip,
   TimerByStepsConfig,
   TimerScrambleSourceSelect,
@@ -3055,6 +3056,17 @@ export function App({ host }: { host: InstalledAppHost }) {
               <TimingSurface
                 ariaLabel={copy.timer}
                 colorClass={timerColorClass}
+                cornerSlot={store!.settings.showCubePreview && scrambleReady && scramble.length > 0 ? (
+                  <div className="mobile-cube-preview" data-no-timer>
+                    <TimerCubePreview
+                      ariaLabel={copy.cubeState}
+                      event={activeEvent}
+                      fill
+                      scramble={scramble}
+                      visualization={store!.settings.prefer3D ? '3D' : '2D'}
+                    />
+                  </div>
+                ) : undefined}
                 digits={<SegmentTime text={timerText} />}
                 fontSize="clamp(4.8rem, 24vw, 8.5rem)"
                 interactive={scrambleReady}
@@ -3101,11 +3113,6 @@ export function App({ host }: { host: InstalledAppHost }) {
                         )}</span>
                       </p>
                     )}
-                     {scrambleReady && scramble.length > 0 && (
-                       <div className="mobile-cube-preview">
-                         <TimerCubePreview ariaLabel={copy.cubeState} event={activeEvent} fill scramble={scramble} />
-                       </div>
-                     )}
                    </TimerScrambleStrip>
                  )}
                 surfaceRef={surfaceRef}
@@ -3199,6 +3206,7 @@ export function App({ host }: { host: InstalledAppHost }) {
             onSmartCubeHandlersChange={setBattleSmartCubeHandlers}
             precision={resultPrecision}
             runningPrecision={runningPrecision}
+            scramblePreviewSettings={store!.settings}
             smartCube={smartCube}
             writeClipboardText={host.writeClipboardText}
           />
@@ -3592,6 +3600,19 @@ export function App({ host }: { host: InstalledAppHost }) {
               <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
                 category.id === 'appearance'
               ))?.label[language]}</h2>
+              <TimerScramblePreviewSettings
+                localize={(value) => value[language]}
+                onChange={updateSettings}
+                renderBooleanControl={({ disabled, label, onChange, value }) => (
+                  <TimerPillToggle
+                    ariaLabel={label}
+                    disabled={disabled}
+                    onChange={onChange}
+                    value={value}
+                  />
+                )}
+                value={store!.settings}
+              />
               <TimerScrambleClickActionSetting
                 localize={(value) => value[language]}
                 onChange={(scrambleClickAction) => updateSettings({ scrambleClickAction })}

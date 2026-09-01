@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
+  DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
   DEFAULT_TIMER_TIMING_SETTINGS,
   EVENTS,
   TIMER_SETTING_CATEGORY_CONTRACTS,
@@ -11,6 +12,7 @@ import {
   TIMER_SETTING_FIELD_IDS,
   TIMER_SCRAMBLE_CLICK_ACTIONS,
   normalizeTimerScrambleClickAction,
+  normalizeTimerScramblePreviewSettings,
   normalizeTimerTimingSettings,
   timerScrambleClickEffect,
   timerSettingFieldStates,
@@ -18,7 +20,10 @@ import {
   type TimerSettingFieldContext,
   type TimerSettingFieldId,
 } from '@cuberoot/shared/timer';
-import { TIMER_TIMING_SETTING_FIELD_IDS } from '@cuberoot/timer-ui';
+import {
+  TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
+  TIMER_TIMING_SETTING_FIELD_IDS,
+} from '@cuberoot/timer-ui';
 
 const EXPECTED_FIELDS_BY_CATEGORY = {
   timer: [
@@ -215,6 +220,20 @@ describe('canonical timer settings surface manifest', () => {
     expect(timerScrambleClickEffect('none', false, false, true)).toBe('retry');
   });
 
+  it('locks scramble preview defaults and preserves the hidden 3D preference', () => {
+    expect(DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS).toEqual({
+      showCubePreview: true,
+      prefer3D: false,
+    });
+    expect(normalizeTimerScramblePreviewSettings({})).toEqual(
+      DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
+    );
+    expect(normalizeTimerScramblePreviewSettings({
+      showCubePreview: false,
+      prefer3D: true,
+    })).toEqual({ showCubePreview: false, prefer3D: true });
+  });
+
   it('exhaustively resolves event/source visibility and contextual disabled states', () => {
     expect(timerSettingFieldStates({ ...BASE_CONTEXT, development: false })
       .find((field) => field.id === 'settings.smart-cube.fake-cube')?.visible).toBe(false);
@@ -266,13 +285,21 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
   const settings = readFileSync('app/[lang]/timer/_lib/settings/index.ts', 'utf8');
 
   it('references the exact canonical field set, so additions/removals cannot drift silently', () => {
-    const panelIds = [...panel.matchAll(/settings\.[a-z0-9-]+\.[a-z0-9-]+/g)]
+    const directPanelIds = [...panel.matchAll(/settings\.[a-z0-9-]+\.[a-z0-9-]+/g)]
       .map((match) => match[0] as TimerSettingFieldId);
+    const sharedFieldIds = [
+      ...TIMER_TIMING_SETTING_FIELD_IDS,
+      ...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
+    ];
+    expect(directPanelIds.filter((id) => sharedFieldIds.includes(id))).toEqual([]);
+    const panelIds = [...directPanelIds];
     if (panel.includes('<TimerScrambleClickActionSetting')) {
       panelIds.push('settings.appearance.scramble-click-action');
     }
-    expect(panelIds.filter((id) => TIMER_TIMING_SETTING_FIELD_IDS.includes(id))).toEqual([]);
-    expect([...new Set([...panelIds, ...TIMER_TIMING_SETTING_FIELD_IDS])].sort())
+    if (panel.includes('<TimerScramblePreviewSettings')) {
+      panelIds.push(...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS);
+    }
+    expect([...new Set([...panelIds, ...sharedFieldIds])].sort())
       .toEqual([...TIMER_SETTING_FIELD_IDS].sort());
   });
 
@@ -295,6 +322,7 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     expect(panel).toContain('timerSettingFieldStates({');
     expect(panel).toContain('<TimerTimingSettingsSections');
     expect(panel).toContain('<TimerScrambleClickActionSetting');
+    expect(panel).toContain('<TimerScramblePreviewSettings');
     expect(panel).toContain('renderBooleanControl={renderTimingBooleanControl}');
     expect(panel).toContain("settingState('settings.training.stage-splits').visible");
     expect(panel).toContain("settingState('settings.sound.volume').disabled");
@@ -302,10 +330,12 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     expect(panel).not.toContain('normalizeTimerRunningPrecision(Number(e.target.value))');
     expect(panel).not.toContain('normalizeTimerResultPrecision(Number(e.target.value))');
     expect(panel).not.toContain("e.target.value as 'none' | 'next' | 'copy'");
-    expect(settings).toContain('extends TimerTimingSettings');
+    expect(settings).toMatch(/extends\s+TimerTimingSettings/);
     expect(settings).toContain('...DEFAULT_TIMER_TIMING_SETTINGS');
+    expect(settings).toContain('...DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS');
     expect(settings).toContain('scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION');
     expect(settings).toContain('normalizeTimerScrambleClickAction(candidate.scrambleClickAction)');
+    expect(settings).toContain('normalizeTimerScramblePreviewSettings(candidate)');
     expect(settings).toContain('normalizeTimerTimingSettings');
     expect(settings).not.toMatch(/^\s*inspection:\s*number;/m);
   });
