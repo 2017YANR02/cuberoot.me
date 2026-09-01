@@ -68,9 +68,9 @@ html[data-theme=dark] {
    未登录时最宽:三个 28px 图标 + 两层 8px 间距 + 114px 登录胶囊 = 222px。
    14.5rem = 222px + 与 × 的间距,再加窄屏两者右锚点之差(悬浮块 2rem 地板 vs 本条
    0.9rem 内边距);宽屏两个锚点重合,多出的余量无害。 */
-.page-notice-wrap:has(+ .landing-page) .page-notice { padding-right: 14.5rem; }
+body:has(.landing-page) .page-notice-wrap .page-notice { padding-right: 14.5rem; }
 @media (min-width: 481px) {
-  .page-notice-wrap:has(+ .landing-page) .page-notice { padding-left: 10rem; }
+  body:has(.landing-page) .page-notice-wrap .page-notice { padding-left: 10rem; }
 }
 /* admin:编辑入口放最左,与图标同起始行 */
 .page-notice-edit { flex: none; margin: -1px 0 0 -2px; }
