@@ -21,8 +21,8 @@ export async function generateMetadata({ params }: {
   return metadataFromEntry(
     {
       title: {
-        zh: `${name} ${setName}练习`,
-        en: `${name} ${setName} Trainer`,
+        zh: `${name}训练`,
+        en: `${name} Trainer`,
       },
       description: {
         zh: `逐个情况抽题计时,练 ${name} ${setName},并记录每个情况的用时。`,
