@@ -48,6 +48,7 @@ import { clawdAvatarUrl } from '@/lib/account-avatar';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { loadFlagData, personFlagIso2 } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
+import { localizeCity } from '@/lib/city-localize';
 import { prepareImageUpload, uploadImageBlob } from '@/lib/image-upload';
 import { toLocalIsoDate } from '@/lib/iso-date';
 import { ADMIN_WCA_IDS, applySession, useAuthStore, safeNext, takeWcaLinkPrompt } from '@/lib/auth-store';
@@ -322,7 +323,8 @@ function DisplayNameEditor() {
   );
 }
 
-type EditableBasicProfile = Pick<AccountBasicProfile, 'birthDate' | 'gender' | 'countryIso2'>;
+type EditableBasicProfile = Pick<AccountBasicProfile, 'birthDate' | 'gender' | 'countryIso2' | 'regionCode' | 'cityName'>;
+type AccountRegion = { code: string; name: string; cities: string[] };
 
 function BasicProfileEditor() {
   const t = useT();
@@ -332,6 +334,9 @@ function BasicProfileEditor() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [regions, setRegions] = useState<AccountRegion[]>([]);
+  const [locationsLoading, setLocationsLoading] = useState(false);
+  const [locationsError, setLocationsError] = useState(false);
   const today = toLocalIsoDate();
 
   useEffect(() => {
@@ -344,6 +349,8 @@ function BasicProfileEditor() {
           birthDate: next.birthDate,
           gender: next.gender,
           countryIso2: next.countryIso2,
+          regionCode: next.regionCode,
+          cityName: next.cityName,
         });
       })
       .catch(() => {
@@ -351,6 +358,27 @@ function BasicProfileEditor() {
       });
     return () => { cancelled = true; };
   }, [t]);
+
+  useEffect(() => {
+    const countryIso2 = draft?.countryIso2;
+    setRegions([]);
+    setLocationsError(false);
+    if (!countryIso2) {
+      setLocationsLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLocationsLoading(true);
+    fetch(`/account-locations/${countryIso2}.json`, { cache: 'force-cache' })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const next = await response.json() as AccountRegion[];
+        if (!cancelled) setRegions(next);
+      })
+      .catch(() => { if (!cancelled) setLocationsError(true); })
+      .finally(() => { if (!cancelled) setLocationsLoading(false); });
+    return () => { cancelled = true; };
+  }, [draft?.countryIso2]);
 
   if (!profile || !draft) {
     return error
@@ -361,7 +389,9 @@ function BasicProfileEditor() {
   const countryLocked = profile.countrySource === 'wca';
   const dirty = draft.birthDate !== profile.birthDate
     || draft.gender !== profile.gender
-    || (!countryLocked && draft.countryIso2 !== profile.countryIso2);
+    || (!countryLocked && draft.countryIso2 !== profile.countryIso2)
+    || draft.regionCode !== profile.regionCode
+    || draft.cityName !== profile.cityName;
   const updateDraft = (patch: Partial<EditableBasicProfile>) => {
     setDraft((current) => current ? { ...current, ...patch } : current);
     setSaved(false);
@@ -376,12 +406,16 @@ function BasicProfileEditor() {
         birthDate: draft.birthDate,
         gender: draft.gender,
         countryIso2: countryLocked ? profile.countryIso2 : draft.countryIso2,
+        regionCode: draft.regionCode,
+        cityName: draft.cityName,
       });
       setProfile(result.profile);
       setDraft({
         birthDate: result.profile.birthDate,
         gender: result.profile.gender,
         countryIso2: result.profile.countryIso2,
+        regionCode: result.profile.regionCode,
+        cityName: result.profile.cityName,
       });
       setSaved(true);
     } catch {
@@ -398,6 +432,7 @@ function BasicProfileEditor() {
     { value: 'other', label: t('其他', 'Other') },
     { value: 'undisclosed', label: t('不愿透露', 'Prefer not to say') },
   ];
+  const selectedRegion = regions.find((region) => region.code === draft.regionCode);
 
   return (
     <form className="account-basic-profile" onSubmit={(event) => { event.preventDefault(); void save(); }}>
@@ -436,7 +471,7 @@ function BasicProfileEditor() {
           id="account-country-label"
           htmlFor={countryLocked ? undefined : 'account-country'}
         >
-          {t('国籍', 'Nationality')}
+          {t('国家', 'Country')}
         </label>
         {countryLocked ? (
           <div className="account-basic-profile-country" aria-labelledby="account-country-label">
@@ -445,23 +480,81 @@ function BasicProfileEditor() {
                 <Flag iso2={profile.countryIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />
                 <span>{countryName(profile.countryIso2, isZh)}</span>
               </>
-            ) : <span>{t('WCA 暂未返回国籍', 'Nationality is not yet available from WCA')}</span>}
+            ) : <span>{t('WCA 暂未返回国家', 'Country is not yet available from WCA')}</span>}
           </div>
         ) : (
           <CountryInput
             id="account-country"
-            ariaLabel={t('搜索并选择国籍', 'Search and choose nationality')}
+            ariaLabel={t('搜索并选择国家', 'Search and choose country')}
             value={draft.countryIso2 ?? ''}
             placeholder={t('搜索国家或地区', 'Search country or region')}
-            onChange={(iso2) => updateDraft({ countryIso2: iso2 ? iso2.toUpperCase() : null })}
+            onChange={(iso2) => updateDraft({
+              countryIso2: iso2 ? iso2.toUpperCase() : null,
+              regionCode: null,
+              cityName: null,
+            })}
           />
         )}
         {countryLocked && (
           <p className="auth-hint account-basic-profile-lock">
-            {t('已绑定 WCA，国籍由 WCA 资料同步。', 'WCA is linked, so nationality is synced from your WCA profile.')}
+            {t('已绑定 WCA，国家由 WCA 资料同步。', 'WCA is linked, so country is synced from your WCA profile.')}
           </p>
         )}
       </div>
+      {draft.countryIso2 && (
+        <div className="account-basic-profile-field">
+          <label className="auth-label" htmlFor="account-region">{t('省份', 'State or province')}</label>
+          <select
+            id="account-region"
+            className="auth-input account-basic-profile-select"
+            value={draft.regionCode ?? ''}
+            disabled={saving || locationsLoading || locationsError || regions.length === 0}
+            onChange={(event) => updateDraft({ regionCode: event.target.value || null, cityName: null })}
+          >
+            <option value="" hidden>
+              {locationsLoading
+                ? t('正在加载…', 'Loading…')
+                : locationsError
+                  ? t('省份加载失败', 'Could not load states')
+                  : regions.length === 0
+                    ? t('暂无省份', 'No states or provinces')
+                    : t('请选择省份', 'Select a state or province')}
+            </option>
+            {draft.regionCode && !selectedRegion && <option value={draft.regionCode}>{draft.regionCode}</option>}
+            {regions.map((region) => (
+              <option key={region.code} value={region.code}>{localizeCity(region.name, isZh, draft.countryIso2)}</option>
+            ))}
+          </select>
+        </div>
+      )}
+      {draft.regionCode && (
+        <div className="account-basic-profile-field">
+          <label className="auth-label" htmlFor="account-city">{t('城市', 'City')}</label>
+          <select
+            id="account-city"
+            className="auth-input account-basic-profile-select"
+            value={draft.cityName ?? ''}
+            disabled={saving || locationsLoading || locationsError || !selectedRegion || selectedRegion.cities.length === 0}
+            onChange={(event) => updateDraft({ cityName: event.target.value || null })}
+          >
+            <option value="" hidden>
+              {locationsLoading
+                ? t('正在加载…', 'Loading…')
+                : locationsError
+                  ? t('城市加载失败', 'Could not load cities')
+                  : selectedRegion?.cities.length === 0
+                    ? t('暂无城市', 'No cities')
+                    : t('请选择城市', 'Select a city')}
+            </option>
+            {draft.cityName && !selectedRegion?.cities.includes(draft.cityName) && (
+              <option value={draft.cityName}>{localizeCity(draft.cityName, isZh, draft.countryIso2)}</option>
+            )}
+            {selectedRegion?.cities.map((city) => (
+              <option key={city} value={city}>{localizeCity(city, isZh, draft.countryIso2)}</option>
+            ))}
+          </select>
+        </div>
+      )}
       {error && <p className="auth-error" role="alert">{error}</p>}
       {saved && <p className="auth-hint" role="status">{t('基本资料已保存。', 'Basic profile saved.')}</p>}
       <button type="submit" className="auth-primary account-basic-profile-save" disabled={saving || !dirty}>

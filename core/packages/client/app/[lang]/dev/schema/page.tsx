@@ -156,7 +156,7 @@ const TABLES: Table[] = [
   { name: 'wca_users', domain: 'comp', origin: 'snapshot', purpose: { zh: 'WCA OAuth 登录用户(身份 / 头像 / admin)', en: 'WCA OAuth users (identity, avatar, admin flag)' } },
 
   // ── accounts & auth ────────────────────────────────────
-  { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172, 186], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
+  { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172, 186, 194], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
   { name: 'user_friendships', domain: 'account', origin: '0175', purpose: { zh: '好友申请与已接受的双向好友关系；每对账号只保留一条规范记录', en: 'Pending requests and accepted two-way friendships, with one canonical row per account pair' } },
   { name: 'user_blocks', domain: 'account', origin: '0175', purpose: { zh: '单向黑名单；拉黑时同步切断好友关系与待处理申请', en: 'Directed blocks; blocking also removes friendships and pending requests' } },
   { name: 'user_wca_friend_contacts', domain: 'account', origin: '0178', purpose: { zh: '账号私有的 WCA 好友条目；对方未注册时只保存在本人列表，不代表双向好友或已发送申请', en: 'Account-private WCA friend entries; an unregistered person is only saved to the owner\'s list and does not imply a mutual friendship or delivered request' } },
@@ -677,6 +677,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 190, slug: 'sq1_ep_complete_layer_alignment', desc: { zh: '补齐 5 条 SQ1 EP 公式末尾缺失的 U/D 层对齐，并在遇到非预期数据状态时整笔回滚。', en: 'Complete the missing final U/D alignment in five SQ1 EP algorithms and roll back the migration on any unexpected data state.' } },
   { n: 191, slug: 'sq1_ep_physical_setups', desc: { zh: '替换 7 条切片路径不合法的 SQ1 EP 公式及其 setup，保证所有 EP 缩略图均从正方形态绘制。', en: 'Replace seven SQ1 EP algorithms with physically invalid slice paths and their setups, ensuring every EP thumbnail starts from cube shape.' } },
   { n: 192, slug: 'private_vault', desc: { zh: '新增端到端加密的私密资料库；管理员可把密文只授权给指定的已注册账号只读查看。', en: 'Add an end-to-end encrypted private vault whose administrator can grant read-only ciphertext access to designated registered accounts.' } },
+  { n: 194, slug: 'account_location', desc: { zh: '账号基本资料增加省份和城市，并约束国家、省份、城市的层级关系。', en: 'Add state or province and city to private account profiles with country-region-city hierarchy constraints.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

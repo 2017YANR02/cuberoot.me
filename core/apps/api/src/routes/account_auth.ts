@@ -27,6 +27,8 @@ import {
   normalizeDisplayName, isValidDisplayName, updateDisplayName,
   getAccountBasicProfile, updateAccountBasicProfile,
   isAccountGender, isValidBirthDate, normalizeCountryIso2, isValidCountryIso2,
+  normalizeAccountRegionCode, isValidAccountRegionCode,
+  normalizeAccountCityName, isValidAccountCityName, isValidAccountLocation,
   updateClawdAvatar, updateUploadedAvatar, resetAvatarToWca,
   loginWithPassword, setPassword, clearPassword, getPasswordHash, verifyPassword,
   ownerKey, primaryHandle,
@@ -699,12 +701,14 @@ accountAuthRoutes.post('/auth/profile', async (c) => {
     const basic = body.basic !== null && typeof body.basic === 'object'
       ? body.basic as Record<string, unknown>
       : null;
-    const allowedKeys = new Set(['birthDate', 'gender', 'countryIso2']);
+    const allowedKeys = new Set(['birthDate', 'gender', 'countryIso2', 'regionCode', 'cityName']);
     if (!basic
       || Object.keys(basic).some((key) => !allowedKeys.has(key))
       || !Object.hasOwn(basic, 'birthDate')
       || !Object.hasOwn(basic, 'gender')
-      || !Object.hasOwn(basic, 'countryIso2')) {
+      || !Object.hasOwn(basic, 'countryIso2')
+      || !Object.hasOwn(basic, 'regionCode')
+      || !Object.hasOwn(basic, 'cityName')) {
       return c.json({ error: 'invalid basic profile' }, 400);
     }
 
@@ -725,12 +729,33 @@ accountAuthRoutes.post('/auth/profile', async (c) => {
     if (normalizedCountry !== null && !isValidCountryIso2(normalizedCountry)) {
       return c.json({ error: 'invalid country' }, 400);
     }
+    const regionCode = basic.regionCode === null
+      ? null
+      : typeof basic.regionCode === 'string'
+        ? normalizeAccountRegionCode(basic.regionCode)
+        : basic.regionCode;
+    if (regionCode !== null && !isValidAccountRegionCode(regionCode)) {
+      return c.json({ error: 'invalid region' }, 400);
+    }
+    const cityName = basic.cityName === null
+      ? null
+      : typeof basic.cityName === 'string'
+        ? normalizeAccountCityName(basic.cityName)
+        : basic.cityName;
+    if (cityName !== null && !isValidAccountCityName(cityName)) {
+      return c.json({ error: 'invalid city' }, 400);
+    }
+    if (!isValidAccountLocation(normalizedCountry, regionCode, cityName)) {
+      return c.json({ error: 'invalid location hierarchy' }, 400);
+    }
 
     const profile = await updateAccountBasicProfile(uid, {
       birthDate,
       gender,
       countryIso2: normalizedCountry,
-    } as Pick<AccountBasicProfile, 'birthDate' | 'gender' | 'countryIso2'>);
+      regionCode,
+      cityName,
+    } as Pick<AccountBasicProfile, 'birthDate' | 'gender' | 'countryIso2' | 'regionCode' | 'cityName'>);
     if (!profile) return c.json({ error: 'account not found' }, 404);
     return c.json({ ok: true, profile });
   }
