@@ -16,6 +16,8 @@ const IOS_ASSET_CATALOG_RESOURCE =
   /^core\/apps\/mobile\/ios\/App\/App\/Assets\.xcassets\/[^/]+\.(?:appiconset|imageset)\/[^/]+\.(?:png|jpe?g|webp|gif|bmp|avif)$/i;
 const MINIPROGRAM_RUNTIME_ASSET =
   /^core\/apps\/miniprogram\/(?:src\/)?assets\/.+\.(?:png|jpe?g|webp|gif|bmp|avif)$/i;
+const DESKTOP_NATIVE_ICON = /^core\/apps\/desktop\/src-tauri\/icons\/.+\.png$/i;
+const HARMONY_NATIVE_RESOURCE = /^core\/apps\/harmony\/(?:AppScope|entry\/src\/main)\/resources\/base\/media\/.+\.png$/i;
 
 // 整路径豁免(跨端品牌图标的生成源,由 core/scripts/gen-brand-assets.mjs 统一维护)。
 const ALLOWLIST = new Set<string>([
@@ -51,6 +53,8 @@ describe('No stray raster images under core/ (debug-image guard)', () => {
         !ANDROID_GENERATED_RESOURCE.test(f) &&
         !IOS_ASSET_CATALOG_RESOURCE.test(f) &&
         !MINIPROGRAM_RUNTIME_ASSET.test(f) &&
+        !DESKTOP_NATIVE_ICON.test(f) &&
+        !HARMONY_NATIVE_RESOURCE.test(f) &&
         !ALLOWLIST.has(f),
     );
     expect(
