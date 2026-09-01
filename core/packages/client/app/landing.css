@@ -155,14 +155,23 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
 
 /* ── 品牌行 ── */
 .landing-page .brand-line {
+    position: absolute;
+    top: calc(1.1rem + var(--sat));
+    left: max(2rem, var(--sal), calc((100vw - 1100px) / 2));
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    min-height: 28px;
     font-size: 0.9rem;
     font-weight: 500;
     color: var(--text-sub);
     letter-spacing: 0.02em;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0;
+}
+
+body:has(.page-notice-wrap) .landing-page .brand-line {
+    top: calc(var(--sat) - var(--page-notice-h, 0px));
+    min-height: var(--page-notice-h, 0px);
 }
 
 .landing-page .brand-logo {
@@ -333,6 +342,16 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     }
     .landing-page .hero-grids .landing-card-name {
         white-space: nowrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .landing-page .brand-line,
+    body:has(.page-notice-wrap) .landing-page .brand-line {
+        position: static;
+        align-self: flex-start;
+        min-height: 0;
+        margin-bottom: 0.75rem;
     }
 }
 
