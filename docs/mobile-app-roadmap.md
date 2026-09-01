@@ -8,7 +8,7 @@
 
 > 状态：执行中
 >
-> 更新日期：2026-08-31
+> 更新日期：2026-09-01
 >
 > 目标：以最低长期维护成本，把同一个 CubeRoot 产品发布到 Android、iOS、HarmonyOS NEXT、Windows 和 macOS，并逐步覆盖对应商店和安装渠道。
 >
@@ -21,6 +21,7 @@
 ### 阶段 0：身份、账号和合规底座
 
 - [x] 发布者采用组织路线；现有公司和营业执照可用于后续组织验证。
+- [x] 华为开发者联盟企业开发者实名认证已完成。（2026-09-01，所有者提供控制台“已认证 / 企业”截图；这不等于应用注册、调试签名或上架完成）
 - [x] 产品名暂定 `CubeRoot`，正式标识暂定 `me.cuberoot.app`，首发语言为英文和简体中文。
 - [x] 公开支持邮箱暂定 `yrmfxc@gmail.com`，App 内已提供邮件入口；隐私政策 URL 定为 `/privacy` 和 `/zh/privacy`。
 - [ ] 确定公开开发者名称、地址和联系电话。（需要所有者确认公开资料）
@@ -94,8 +95,8 @@
 
 - `@cuberoot/app-ui` 已是五端唯一 React 产品层；`@cuberoot/app-ui` typecheck 与自动化测试已本地通过。
 - Desktop 源码已共用 Tauri 宿主、系统 keyring、深链、外链和 BLEC transport，BLEC 复用 `@cuberoot/app-ui` 中的同一 GAN connection 逻辑。2026-08-31 macOS `CubeRoot.app` 已稳定启动；`CubeRoot_0.1.0_x64.dmg` 为 6,367,389 bytes，`hdiutil verify` 通过，SHA-256 为 `92205b0a06538c6515f7659cd37446a41373ae71b40e150fd403d192749304a8`。该包未签名、未公证，也没有实机 BLE 证据。Windows CI 矩阵只是已定义的待运行检查，不是 Windows 构建/安装证据。
-- Harmony 的本地 Web bundle、ArkWeb/ArkTS bridge、ConnectivityKit BLE bridge、安全存储与 unsigned HAP 已通过官方 Hvigor 构建，日志为 `BUILD SUCCESSFUL`，产物是 `entry-default-unsigned.hap`。当前官方 SDK 的 `hdc list targets` 为 `[Empty]`，所以安装、ArkWeb 运行、系统交互、真实 GAN 16 UI BLE、签名和发布仍未验收，`HARMONY-01` 保持进行中。
-- Harmony 首次 BLE 现由 `UIAbilityContext` 显式请求 `ACCESS_BLUETOOTH`，Asset Store 机密限定为 `DEVICE_UNLOCKED`，系统备份关闭，native 版本由 build guard 对齐 `package.json`；BLE connect 以 generation + GATT identity 拒绝超时连接的迟到回调，避免同设备快速重连被旧请求断开。ArkTS/HAP 目前只能在已安装的官方 CLT 上本地编译；GitHub CI 尚无官方 Harmony SDK runner，不能把 Vite build 当成 native 回归。所有者已完成华为账号登录，但 `build-profile.json5` 的 `signingConfigs` 仍为空，Hvigor 明确跳过签名；开发者团队、证书与 profile 仍须在 DevEco 中完成并验证，因此当前只能产 unsigned HAP。
+- Harmony 的本地 Web bundle、ArkWeb/ArkTS bridge、ConnectivityKit BLE bridge、安全存储与 unsigned HAP 已通过官方 Hvigor 构建。2026-09-01 在当前 Intel `x86_64` Mac 上使用 DevEco Studio `26.0.0.821` 的官方 SDK 再次执行 `assembleHap`，日志为 `BUILD SUCCESSFUL`，产物是 `entry-default-unsigned.hap`。当前 `hdc list targets` 为 `[Empty]`，所以安装、ArkWeb 运行、系统交互、真实 GAN 16 UI BLE、签名和发布仍未验收，`HARMONY-01` 保持进行中。
+- Harmony 首次 BLE 现由 `UIAbilityContext` 显式请求 `ACCESS_BLUETOOTH`，Asset Store 机密限定为 `DEVICE_UNLOCKED`，系统备份关闭，native 版本由 build guard 对齐 `package.json`；BLE connect 以 generation + GATT identity 拒绝超时连接的迟到回调，避免同设备快速重连被旧请求断开。ArkTS/HAP 目前只能在已安装的官方 CLT 上本地编译；GitHub CI 尚无官方 Harmony SDK runner，不能把 Vite build 当成 native 回归。所有者已完成华为企业开发者认证；自动调试签名现因未连接 HarmonyOS NEXT 设备而无法生成 profile，`build-profile.json5` 的 `signingConfigs` 仍为空，Hvigor 明确跳过签名。模拟器不需要签名，真机才需要把设备写入调试 profile；不得为绕过设备门槛手填、生成或提交 `.p12`、密码或本机 profile。
 - Desktop BLE 扫描已按插件真实异步回调等待并在 8 秒后 `stopScan`；但 `tauri-plugin-blec 0.12.0` 的通知队列容量为 1，快速转动时的上游 `try_send(...).expect(...)` 仍须用 GAN 16 UI 做压力测试，复现后优先升级或最小 patch upstream，不能用 mock test 宣布稳定。
 - Android 对不支持安全 main-frame message listener 的旧 WebView 启动即 fail closed，并锁定 release manifest 的 10 项权限及 legacy 权限 `maxSdkVersion=30`/扫描 `neverForLocation`。Capacitor 内部仍注册 Cookies/Http/SystemBars 辅助 JS interface；通用 plugin dispatcher 已主 frame 隔离，但远端 iframe 的 cookie 边界仍是发布前 P2 审核项，文档不得声称“所有原生接口均仅主 frame”。
 - `@cuberoot/app-ui` 已接真实 2/3/4 人 `LocalBattleMode` 与 `NetBattleMode`，三个宿主均注入同一联机 client/session contract；本地模式已有原子轮次、胜场/次数/最佳、按键冲突交换、共享一颗智能魔方轮换与打乱失败的 12 秒超时/原位重试；联机已有 WCA 身份、邀请二维码、房主转让/踢人、历史打乱及 single/ao5/mean。Web 仍有另一套 Battle/Net React 视图，完整设置/视频/每人独立 BLE/高级历史展示、staged API 部署、真实双设备和五平台交互仍未完成。
@@ -122,7 +123,7 @@
 | QA-02 | 进行中 | OPPO 已修复一次菜单重叠和旧 WebView 视口问题；五端全弹层/键盘/安全区/动态字号仍未关闭 |
 | XPLAT-01 | 已完成 | `@cuberoot/app-ui` 已有 Mobile、Desktop 和 Harmony 真实消费者，无 app→app import |
 | DESKTOP-01 | 进行中 | 同一 Tauri 工程与 BLEC adapter 已落地；macOS `.app` 已启动、未签名 DMG 已校验，Windows CI 定义未实际跑；签名/公证、Windows 构建安装和两端 BLE 证据未齐 |
-| HARMONY-01 | 进行中 | ArkWeb 本地 bundle、ArkTS/系统 bridge 与 unsigned HAP 已构建；当前无 `hdc` 设备，安装、运行、BLE、签名和发布证据待验 |
+| HARMONY-01 | 进行中 | ArkWeb 本地 bundle、ArkTS/系统 bridge 与 unsigned HAP 已构建；当前 Intel Mac 不支持 DevEco 本地模拟器且无 `hdc` 设备。待 Apple silicon Mac mini 到货后创建模拟器，安装、运行、BLE、签名和发布证据仍待验 |
 
 ### 阶段 3：PWA 补强和网站兜底
 
@@ -1069,6 +1070,24 @@ CubeRoot 应以这些证据证明不是简单套壳：
 
 现有 Mobile、Desktop 和 Harmony 工程已经成立。开发者必须现场读取 Node、pnpm、Rust/Tauri、DevEco/Harmony SDK、JDK、Android SDK、Xcode 和设备状态，不得按早期计划重新创建技术壳或重复验证已完成的 OPPO + GAN 16 UI BLE spike；也不得把 macOS/Harmony 本机构建证据扩大成其他平台、签名或设备证据。
 
+### 19.1 HarmonyOS 开发主机门槛（先检查，禁止重复踩坑）
+
+开始安装 DevEco 或模拟器前先运行 `uname -m`，只按实际架构选择工具：
+
+| 主机 | DevEco 安装包 | 本地 HarmonyOS 模拟器 | 可作为的证据 |
+| --- | --- | --- | --- |
+| Intel Mac，`x86_64` | Mac X86 | **不支持**；Device Manager 会明确提示只支持 Mac ARM 和 Windows，不得继续下载镜像或反复调整代理/签名 | ArkTS/HAP 编译和 unsigned HAP |
+| Apple silicon Mac，`arm64` | Mac ARM | 支持；从 Device Manager 创建官方手机模拟器 | 模拟器安装、启动、ArkWeb 与 bridge 交互；不替代真机 BLE |
+| Windows 10/11 x64 | Windows 64-bit | 支持 | 与 Mac ARM 相同，仍须独立保存实际运行证据 |
+| HarmonyOS NEXT 真机 | 与开发主机架构无关 | 不适用 | 安装、系统能力、BLE 和真机签名证据 |
+
+当前事实（2026-09-01）：
+
+- 现用 Intel Mac 已安装并验证 DevEco Studio X86、Harmony SDK 和官方 Hvigor；工程可生成 unsigned HAP，但不能在本机创建 HarmonyOS 模拟器。
+- 华为企业开发者实名认证已完成。自动签名提示“缺少设备”是正常的真机 profile 门槛，不是网络、翻墙或账号认证故障；当前 Android OPPO 不能充当 HarmonyOS NEXT 设备。
+- 仓库所有者预计 2026-09-22 收到 Apple silicon Mac mini。到货后的唯一流程是：现场确认 `uname -m` 为 `arm64` → 安装 DevEco Studio Mac ARM 版 → 登录同一企业开发者账号 → 打开现有 `core/apps/harmony` → Device Manager 创建模拟器 → 安装运行同一 HAP。不得复制 Intel 版 DevEco，也不得新建 Harmony 业务工程。
+- 模拟器验证不需要配置签名；需要真机验证时，先连接 HarmonyOS NEXT 设备并确认 `hdc list targets` 可见，再让 DevEco 自动生成调试 profile。证书、密码和本机签名材料不得进入 Git。
+
 ## 20. 决策检查表
 
 在每个大阶段开始前重新确认：
@@ -1115,6 +1134,8 @@ CubeRoot 应以这些证据证明不是简单套壳：
 技术：
 
 - [Capacitor Getting Started](https://capacitorjs.com/docs/getting-started)
+- [DevEco Studio 与当前系统要求](https://developer.huawei.com/consumer/cn/deveco-studio/)
+- [HarmonyOS 开发入门：模拟器无需签名，真机需要签名](https://developer.huawei.com/consumer/cn/develop-novice-guide/)
 - [Android Studio 安装](https://developer.android.com/studio/install)
 - [Android Bluetooth permissions](https://developer.android.com/develop/connectivity/bluetooth/bt-permissions)
 - [Apple Core Bluetooth](https://developer.apple.com/documentation/corebluetooth)
