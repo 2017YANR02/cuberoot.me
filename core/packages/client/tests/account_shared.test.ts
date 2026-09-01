@@ -6,6 +6,7 @@ import {
   DISPLAY_NAME_MAX_LENGTH, displayNameLength, normalizeDisplayName, isValidDisplayName,
   ACCOUNT_BIRTH_DATE_MIN, isAccountGender, isValidBirthDate,
   normalizeCountryIso2, isValidCountryIso2,
+  normalizeAccountRegionCode, normalizeAccountCityName, isValidAccountLocation,
 } from '@cuberoot/shared/account';
 
 describe('ownerKey', () => {
@@ -42,11 +43,20 @@ describe('账号基本资料校验', () => {
     expect(isAccountGender(null)).toBe(false);
   });
 
-  it('国籍代码统一大写并拒绝非法格式', () => {
+  it('国家代码统一大写并拒绝非法格式', () => {
     expect(normalizeCountryIso2(' cn ')).toBe('CN');
     expect(isValidCountryIso2('CN')).toBe(true);
     expect(isValidCountryIso2('cn')).toBe(false);
     expect(isValidCountryIso2('CHN')).toBe(false);
+  });
+
+  it('国家、省份、城市必须按层级填写', () => {
+    expect(normalizeAccountRegionCode(' gd ')).toBe('GD');
+    expect(normalizeAccountCityName('  Shenzhen  ')).toBe('Shenzhen');
+    expect(isValidAccountLocation('CN', 'GD', 'Shenzhen')).toBe(true);
+    expect(isValidAccountLocation('CN', null, null)).toBe(true);
+    expect(isValidAccountLocation(null, 'GD', null)).toBe(false);
+    expect(isValidAccountLocation('CN', null, 'Shenzhen')).toBe(false);
   });
 });
 

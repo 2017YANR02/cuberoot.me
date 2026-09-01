@@ -22,6 +22,8 @@
     "typecheck:tsc": "tsc --noEmit",
     "reg:check": "node scripts/reg-check.mjs",
     "reg:clauses": "node scripts/build-reg-clauses.mjs",
+    "build:account-locations": "node scripts/build-account-locations.mjs",
+    "check:account-locations": "node scripts/build-account-locations.mjs --check",
     "test": "vitest run --exclude tests/cross_trainer_reach.test.ts && vitest run tests/cross_trainer_reach.test.ts",
     "test:recon-ground-truth": "node scripts/recon-ground-truth-gate.mjs run",
     "test:watch": "vitest",
@@ -135,6 +137,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@countrystatecity/countries": "1.0.9",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4.3.0",

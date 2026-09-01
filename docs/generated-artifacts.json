@@ -374,6 +374,21 @@
       "driftPolicy": "The generated header forbids hand edits. The default machine path is only a local convenience and CI must not claim to possess the external source."
     },
     {
+      "id": "client.account-locations",
+      "kind": "checked-in-generated",
+      "source": {
+        "url": "https://github.com/dr5hn/countrystatecity-npm",
+        "paths": ["core/packages/client/scripts/build-account-locations.mjs"]
+      },
+      "license": { "spdx": "ODbL-1.0", "evidence": "https://github.com/dr5hn/countrystatecity-npm/blob/master/LICENSE" },
+      "owner": "core/packages/client/scripts/build-account-locations.mjs",
+      "workingDirectory": "core/packages/client",
+      "command": "pnpm build:account-locations",
+      "outputs": ["core/packages/client/public/account-locations/*.json"],
+      "verification": ["pnpm check:account-locations"],
+      "driftPolicy": "Regenerate the compact per-country files through the pinned development dependency; never hand-edit them."
+    },
+    {
       "id": "client.pg-facts",
       "kind": "checked-in-generated",
       "source": {

@@ -45,6 +45,13 @@ vi.mock('../src/utils/account.js', () => ({
   isValidBirthDate: (value: unknown, today: string) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && value >= '1900-01-01' && value <= today,
   normalizeCountryIso2: (value: string) => value.trim().toUpperCase(),
   isValidCountryIso2: (value: unknown) => typeof value === 'string' && /^[A-Z]{2}$/.test(value),
+  normalizeAccountRegionCode: (value: string) => value.trim().toUpperCase(),
+  isValidAccountRegionCode: (value: unknown) => typeof value === 'string' && /^[A-Z0-9-]{1,8}$/.test(value),
+  normalizeAccountCityName: (value: string) => value.normalize('NFC').trim(),
+  isValidAccountCityName: (value: unknown) => typeof value === 'string' && value.length >= 1 && value.length <= 160,
+  isValidAccountLocation: (country: string | null, region: string | null, city: string | null) => (
+    (region === null || country !== null) && (city === null || region !== null)
+  ),
 }));
 vi.mock('../src/utils/wechat_miniprogram.js', () => ({
   exchangeWechatMiniProgramCode: mocks.exchangeWechatMiniProgramCode,
@@ -301,6 +308,8 @@ describe('auth route wire contracts', () => {
       birthDate: '2000-02-29',
       gender: 'nonbinary',
       countryIso2: 'CN',
+      regionCode: 'GD',
+      cityName: 'Shenzhen',
       countrySource: 'self',
     };
     mocks.requireAppUserId.mockResolvedValue(42);
@@ -318,6 +327,8 @@ describe('auth route wire contracts', () => {
       birthDate: '2000-02-29',
       gender: 'female',
       countryIso2: 'CN',
+      regionCode: 'GD',
+      cityName: 'Shenzhen',
       countrySource: 'self',
     };
     mocks.requireAppUserId.mockResolvedValue(42);
@@ -327,7 +338,10 @@ describe('auth route wire contracts', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        basic: { birthDate: '2000-02-29', gender: 'female', countryIso2: ' cn ' },
+        basic: {
+          birthDate: '2000-02-29', gender: 'female', countryIso2: ' cn ',
+          regionCode: ' gd ', cityName: '  Shenzhen  ',
+        },
       }),
     });
 
@@ -337,6 +351,8 @@ describe('auth route wire contracts', () => {
       birthDate: '2000-02-29',
       gender: 'female',
       countryIso2: 'CN',
+      regionCode: 'GD',
+      cityName: 'Shenzhen',
     });
   });
 
@@ -347,7 +363,7 @@ describe('auth route wire contracts', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        basic: { birthDate: '2099-02-29', gender: null, countryIso2: null },
+        basic: { birthDate: '2099-02-29', gender: null, countryIso2: null, regionCode: null, cityName: null },
       }),
     });
 

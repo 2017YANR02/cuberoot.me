@@ -18,6 +18,8 @@ export {
   ownerKey, isWcaIdFormat, normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
   normalizeDisplayName, isValidDisplayName,
   isAccountGender, isValidBirthDate, normalizeCountryIso2, isValidCountryIso2,
+  normalizeAccountRegionCode, isValidAccountRegionCode,
+  normalizeAccountCityName, isValidAccountCityName, isValidAccountLocation,
   primaryHandle, deletedOwnerKey, isDeletedOwner,
 } from '@cuberoot/shared/account';
 
@@ -249,6 +251,8 @@ type AccountBasicProfileRow = {
   birthDate: string | null;
   gender: AccountGender | null;
   countryIso2: string | null;
+  regionCode: string | null;
+  cityName: string | null;
   wcaId: string | null;
 };
 
@@ -257,6 +261,8 @@ function basicProfileFromRow(row: AccountBasicProfileRow): AccountBasicProfile {
     birthDate: row.birthDate,
     gender: row.gender,
     countryIso2: row.countryIso2,
+    regionCode: row.regionCode,
+    cityName: row.cityName,
     countrySource: row.wcaId ? 'wca' : 'self',
   };
 }
@@ -264,7 +270,8 @@ function basicProfileFromRow(row: AccountBasicProfileRow): AccountBasicProfile {
 export async function getAccountBasicProfile(id: number): Promise<AccountBasicProfile | null> {
   const rows = await query<AccountBasicProfileRow>(
     `SELECT birth_date::text AS "birthDate", gender,
-            country_iso2 AS "countryIso2", wca_id AS "wcaId"
+            country_iso2 AS "countryIso2", region_code AS "regionCode",
+            city_name AS "cityName", wca_id AS "wcaId"
      FROM app_users WHERE id = ?`,
     [id],
   );
@@ -277,17 +284,25 @@ export async function getAccountBasicProfile(id: number): Promise<AccountBasicPr
  */
 export async function updateAccountBasicProfile(
   id: number,
-  profile: Pick<AccountBasicProfile, 'birthDate' | 'gender' | 'countryIso2'>,
+  profile: Pick<AccountBasicProfile, 'birthDate' | 'gender' | 'countryIso2' | 'regionCode' | 'cityName'>,
 ): Promise<AccountBasicProfile | null> {
   const rows = await query<AccountBasicProfileRow>(
     `UPDATE app_users SET
        birth_date = ?,
        gender = ?,
-       country_iso2 = CASE WHEN wca_id IS NULL THEN ? ELSE country_iso2 END
+       country_iso2 = CASE WHEN wca_id IS NULL THEN ? ELSE country_iso2 END,
+       region_code = CASE WHEN wca_id IS NULL OR country_iso2 IS NOT DISTINCT FROM ? THEN ? ELSE NULL END,
+       city_name = CASE WHEN wca_id IS NULL OR country_iso2 IS NOT DISTINCT FROM ? THEN ? ELSE NULL END
      WHERE id = ?
      RETURNING birth_date::text AS "birthDate", gender,
-               country_iso2 AS "countryIso2", wca_id AS "wcaId"`,
-    [profile.birthDate, profile.gender, profile.countryIso2, id],
+               country_iso2 AS "countryIso2", region_code AS "regionCode",
+               city_name AS "cityName", wca_id AS "wcaId"`,
+    [
+      profile.birthDate, profile.gender, profile.countryIso2,
+      profile.countryIso2, profile.regionCode,
+      profile.countryIso2, profile.cityName,
+      id,
+    ],
   );
   return rows[0] ? basicProfileFromRow(rows[0]) : null;
 }
@@ -395,11 +410,15 @@ export async function loginWithIdentity(
         `UPDATE app_users SET
            display_name = CASE WHEN ? = 'wca' THEN ? WHEN display_name = '' THEN ? ELSE display_name END,
            avatar_url = CASE WHEN ? = 'wca' AND avatar_source = 'auto' THEN ? ELSE avatar_url END,
+           region_code = CASE WHEN ? = 'wca' AND country_iso2 IS DISTINCT FROM ? THEN NULL ELSE region_code END,
+           city_name = CASE WHEN ? = 'wca' AND country_iso2 IS DISTINCT FROM ? THEN NULL ELSE city_name END,
            country_iso2 = CASE WHEN ? = 'wca' THEN ? ELSE country_iso2 END
          WHERE id = ?`,
         [
           provider, profile.name ?? '', profile.name ?? '',
           provider, profile.avatar ?? null,
+          provider, profile.countryIso2 ?? null,
+          provider, profile.countryIso2 ?? null,
           provider, profile.countryIso2 ?? null,
           existing.id,
         ],
@@ -469,12 +488,16 @@ export async function addIdentity(
            wca_id = ?,
            display_name = ?,
            avatar_url = CASE WHEN avatar_source = 'auto' THEN ? ELSE avatar_url END,
+           region_code = CASE WHEN country_iso2 IS DISTINCT FROM ? THEN NULL ELSE region_code END,
+           city_name = CASE WHEN country_iso2 IS DISTINCT FROM ? THEN NULL ELSE city_name END,
            country_iso2 = ?
          WHERE id = ?`,
         [
           wcaMirror ?? providerUid,
           verifiedDisplayName,
           verifiedAvatarUrl ?? null,
+          verifiedCountryIso2 ?? null,
+          verifiedCountryIso2 ?? null,
           verifiedCountryIso2 ?? null,
           userId,
         ],
@@ -494,6 +517,14 @@ export async function addIdentity(
             avatar_url = CASE
               WHEN avatar_source = 'auto' THEN ${verifiedAvatarUrl ?? null}
               ELSE avatar_url
+            END,
+            region_code = CASE
+              WHEN country_iso2 IS DISTINCT FROM ${verifiedCountryIso2 ?? null} THEN NULL
+              ELSE region_code
+            END,
+            city_name = CASE
+              WHEN country_iso2 IS DISTINCT FROM ${verifiedCountryIso2 ?? null} THEN NULL
+              ELSE city_name
             END,
             country_iso2 = ${verifiedCountryIso2 ?? null}
           WHERE id = ${userId} AND wca_id IS NULL`;
