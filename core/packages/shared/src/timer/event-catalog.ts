@@ -226,7 +226,15 @@ export function timerEventNxnSize(id: EventId): number | null {
   return null;
 }
 
-/** Current shared device capability; expand only with transport + attempt tests. */
+/** Smart cubes can verify any plain 3x3-shaped scramble used by the Web timer. */
 export function timerSupportsSmartCubeAutoTiming(id: EventId): boolean {
+  return timerEventNxnSize(id) === 3 && id !== '333fm';
+}
+
+export function timerSupportsLocalBattleSmartCube(id: EventId): boolean {
   return id === '333';
+}
+
+export function timerSupportsNetBattleSmartCube(id: EventId): boolean {
+  return id === '333' || id === '333oh';
 }

@@ -107,4 +107,9 @@ describe('mobile visible viewport layout', () => {
     expect(css).toMatch(/\.app-shell--compact-viewport \.mobile-timer-stage \{[^}]*min-height: 350px;/s);
     expect(css).toMatch(/\.app-shell--compact-viewport \.mobile-timer-stage > \.timing-surface \{[^}]*padding: 8px 0;/s);
   });
+
+  it('keeps multiplayer device actions in normal flow without overflowing narrow screens', () => {
+    expect(css).toMatch(/\.battle-local-tools \.shell-device-actions,\s*\.battle-net-timer > \.shell-device-actions \{[^}]*position: static;[^}]*max-width: calc\(100% - 24px\);[^}]*transform: none;/s);
+    expect(css).toMatch(/\.battle-local-tools \.shell-device-connect span,\s*\.battle-net-timer > \.shell-device-actions \.shell-device-connect span \{[^}]*overflow: hidden;[^}]*text-overflow: ellipsis;/s);
+  });
 });

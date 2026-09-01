@@ -38,6 +38,7 @@
  */
 
 import { useCallback, useEffect, useRef } from 'react';
+import { timerSupportsLocalBattleSmartCube } from '@cuberoot/shared/timer';
 
 import { useBluetoothCube } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle } from '../_lib/bluetooth';
@@ -217,6 +218,7 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     const st = useBattleStore.getState();
     if (!slotCounts(slot, st.cubeMode)) return;
     const owner = ownerOf(slot, st.cubeMode, st.cubeHolder);
+    if (!timerSupportsLocalBattleSmartCube(st.puzzleIds[owner] as EventId)) return;
     const attempt = attemptKey(owner, st.players[owner].startTime);
     const stopAt = atMs !== undefined && Number.isFinite(atMs)
       ? atMs
@@ -276,7 +278,7 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     const owner = ownerOf(slot, st.cubeMode, st.cubeHolder);
     const p = st.players[owner];
     if (p.isTiming || p.canStart) return;
-    if (st.puzzleIds[owner] !== '333') return;
+    if (!timerSupportsLocalBattleSmartCube(st.puzzleIds[owner] as EventId)) return;
     const scramble = st.scrambles[owner];
     if (!scramble) return;
     const target = targetFor(scramble);

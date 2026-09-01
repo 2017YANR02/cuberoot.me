@@ -216,6 +216,23 @@ export function invertSequence(idxs: number[]): number[] {
   return out;
 }
 
+/** Inverse state: composing either side with the input yields solved. */
+export function inverseCubie(c: CubieCube): CubieCube {
+  const cp = new Array<number>(8);
+  const co = new Array<number>(8);
+  const ep = new Array<number>(12);
+  const eo = new Array<number>(12);
+  for (let i = 0; i < 8; i++) {
+    cp[c.cp[i]] = i;
+    co[c.cp[i]] = (3 - c.co[i]) % 3;
+  }
+  for (let i = 0; i < 12; i++) {
+    ep[c.ep[i]] = i;
+    eo[c.ep[i]] = c.eo[i];
+  }
+  return { cp, co, ep, eo };
+}
+
 /** Apply a sequence of move indices to a state. */
 export function applySequence(c: CubieCube, idxs: number[]): CubieCube {
   let cur = c;
