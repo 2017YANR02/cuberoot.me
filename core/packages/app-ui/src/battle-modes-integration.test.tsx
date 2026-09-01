@@ -47,6 +47,7 @@ const baseProps = {
   onModeChange: vi.fn(),
   precision: 3 as const,
   runningPrecision: 3 as const,
+  writeClipboardText: vi.fn(async () => undefined),
 };
 
 function roomState(): NetRoomState {
@@ -156,6 +157,7 @@ describe('installed app multiplayer modes', () => {
     const state = roomState();
     const credentials = { playerId: 'abcdef', playerToken: 'x'.repeat(48) };
     const createNetRoom = vi.fn(async () => ({ state, credentials }));
+    const writeClipboardText = vi.fn(async () => undefined);
     let saved: NetBattleSession | null = null;
     const client = {
       createNetRoom,
@@ -181,7 +183,9 @@ describe('installed app multiplayer modes', () => {
       },
     };
 
-    await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} />));
+    await act(async () => root.render(
+      <NetBattleMode {...baseProps} capability={capability} writeClipboardText={writeClipboardText} />,
+    ));
     await act(async () => Promise.resolve());
     await act(async () => host.querySelector<HTMLButtonElement>('.battle-primary-action')!.click());
 
@@ -189,6 +193,11 @@ describe('installed app multiplayer modes', () => {
     expect(saved).toEqual({ code: '1234', name: 'Cuber', ...credentials });
     expect(host.textContent).toContain('1234');
     expect(host.querySelectorAll('.battle-player-list li')).toHaveLength(1);
+    await act(async () => host.querySelector<HTMLButtonElement>(
+      `[aria-label="${COPY.en.battleCopyCode}"]`,
+    )!.click());
+    expect(writeClipboardText).toHaveBeenCalledWith('1234');
+    expect(host.textContent).toContain(COPY.en.battleInviteCopied);
     const syncStart = Array.from(host.querySelectorAll<HTMLButtonElement>('.battle-room-header button'))
       .find((button) => button.textContent === 'Synchronized start')!;
     await act(async () => syncStart.click());

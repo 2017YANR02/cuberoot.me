@@ -738,6 +738,7 @@ export function LocalBattleMode({
 export interface NetBattleModeProps extends BattleModeBaseProps {
   accountIdentity?: NetIdentity;
   capability?: InstalledAppNetBattle;
+  writeClipboardText(text: string): Promise<void>;
 }
 
 function netResultText(timeMs: number, penalty: NetPenalty, precision: 2 | 3): string {
@@ -766,6 +767,7 @@ export function NetBattleMode({
   onModeChange,
   precision,
   runningPrecision,
+  writeClipboardText,
 }: NetBattleModeProps) {
   const [room, setRoom] = useState<NetRoomState | null>(null);
   const [credentials, setCredentials] = useState<NetBattleCredentials | null>(null);
@@ -792,6 +794,8 @@ export function NetBattleMode({
   const autoStartedRef = useRef<number | null>(null);
   const advanceBusyRef = useRef(false);
   const solvingRoundRef = useRef(0);
+  const copiedResetRef = useRef<number | null>(null);
+  const mountedRef = useRef(true);
   const surfaceRef = useRef<HTMLDivElement>(null);
   roomRef.current = room;
   credentialsRef.current = credentials;
@@ -859,6 +863,14 @@ export function NetBattleMode({
   const fail = useCallback((reason: unknown) => {
     setError(netErrorMessage(reason)[language]);
   }, [language]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (copiedResetRef.current !== null) window.clearTimeout(copiedResetRef.current);
+    };
+  }, []);
 
   const onComplete = useCallback((result: SolveResult) => {
     const currentRoom = roomRef.current;
@@ -1290,10 +1302,14 @@ export function NetBattleMode({
           <button
             aria-label={copy.battleCopyCode}
             onClick={() => {
-              void navigator.clipboard.writeText(room.code).then(() => {
+              void writeClipboardText(room.code).then(() => {
+                if (!mountedRef.current) return;
                 setCopied(true);
-                window.setTimeout(() => setCopied(false), 1_500);
-              }).catch(fail);
+                if (copiedResetRef.current !== null) window.clearTimeout(copiedResetRef.current);
+                copiedResetRef.current = window.setTimeout(() => setCopied(false), 1_500);
+              }).catch((reason: unknown) => {
+                if (mountedRef.current) fail(reason);
+              });
             }}
             type="button"
           >{copy.battleRoomCode}: <strong>{room.code}</strong></button>
@@ -1568,11 +1584,13 @@ export function NetBattleMode({
           labels={{
             close: copy.close,
             copied: copy.copied,
+            copyFailed: copy.actionFailed,
             copyInvite: copy.battleCopyInvite,
             scanToJoin: copy.battleScanToJoin,
           }}
           onClose={() => setQrOpen(false)}
           url={`https://cuberoot.me${language === 'zh' ? '/zh' : ''}/timer?players=net&room=${room.code}`}
+          writeClipboardText={writeClipboardText}
         />
       )}
     </section>

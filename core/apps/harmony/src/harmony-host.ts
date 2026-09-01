@@ -7,7 +7,7 @@ import {
   type InstalledAuthPort,
 } from '@cuberoot/app-ui';
 import type { TimerPhase } from '@cuberoot/shared/timer';
-import { browserPrintTransport } from '@cuberoot/timer-ui';
+import { browserClipboardTransport, browserPrintTransport } from '@cuberoot/timer-ui';
 import { useEffect } from 'react';
 
 import packageInfo from '../package.json';
@@ -87,6 +87,7 @@ export const harmonyHost: InstalledAppHost = {
   },
   openExternal: (url) => bridgeCall<void>(nativeBridge().openExternal(url)),
   print: browserPrintTransport,
+  writeClipboardText: browserClipboardTransport,
   useAuth: (language) => useInstalledAuth(language, harmonyAuthPort),
   useSmartCube: (options) => useInstalledSmartCube(() => new HarmonyBleTransport(), options),
   useTimerEffects: useHarmonyTimerEffects,

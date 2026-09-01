@@ -43,7 +43,7 @@
 - [x] 已构建并在 MuMu 模拟器安装 Debug APK，验证启动、横屏布局和 Android 返回键。
 - [x] 已验证 HTTPS 网络访问；计时仍是打包进 App 的本地核心体验，工具/我的是三栏合同明确的在线网站 surface，不是过渡入口。
 - [x] 已用本地计时、记录和设置替换“启动即跳整站”的过渡界面；工具/我的在同一 React 底栏中直接显示网站 canonical 页面，不复制卡片、子路由或账号 UI。
-- [ ] 在实体 Android 设备完成启动、触摸、键盘、安全区、旋转、后台恢复和 adb 日志的完整矩阵。当前 OPPO Reno7 Pro 5G 已完成安装、冷启动、基本触摸计时、手动打乱 IME 与 GAN 16 UI 主链实测；旋转、后台/系统中断、大字与全弹层安全区仍未关闭。
+- [ ] 在实体 Android 设备完成启动、触摸、键盘、安全区、旋转、后台恢复和 adb 日志的完整矩阵。当前 OPPO Reno7 Pro 5G 已完成安装、冷启动、基本触摸计时、手动打乱 IME、点击打乱三动作与 GAN 16 UI 主链实测；旋转、后台/系统中断、大字与全弹层安全区仍未关闭。
 - [x] 用实体 Android 设备和智能魔方完成 BLE 扫描、连接、读写和通知 spike。（OPPO Reno7 Pro 5G + GAN 16 UI）
 - [x] 输出 BLE 插件能力报告和“现成插件或自有桥”架构决定。
 
@@ -230,7 +230,7 @@
 - [ ] 在 iOS 模拟器实际执行一次无缓存断网冷启动并保存取证。（当前只有在线模拟器画面和自动化测试证据）
 - [x] Xcode 工程当前保持 Automatic Signing，Debug/Release Bundle ID 均为 `me.cuberoot.app`；付费 Team 尚未选择，不能作为签名成功证据。
 - [ ] iOS GAN v4 transport 已能在原生 picker 返回 UUID 后，通过 manufacturer advertisement 提取协议所需 MAC，并有握手单测；仍需 Apple 账号恢复后用 iPhone + GAN 16 UI 验证扫描、连接、解密、转动、自动起停与断线恢复。
-- [x] 同一移动端 Web 构建已重新同步 Android，并在本机用 JDK 21 完成 `assembleDebug`、`assembleRelease` 与 `bundleRelease`；当前 Debug APK 为 8,788,754 bytes（SHA-256 `ce47cbee6318eeb2286cf7dda845aabb6acb91108571ccf324858f84b62f39e5`），已重装到 OPPO Reno7 Pro 5G 并显示真实 3×3 打乱，未发现本轮共享 UI 引入的 Android 编译或启动回归。
+- [x] 同一移动端 Web 构建已重新同步 Android，并在本机用 JDK 21 完成既有 `assembleRelease`/`bundleRelease` 与本轮 `assembleDebug`；当前 Debug APK 为 8,788,813 bytes（SHA-256 `86af867cfe0a923c52f53297bdcad081df60b1a66a40f91d0ef567a01a6bd1f5`），已重装到 OPPO Reno7 Pro 5G，真实 3×3 打乱与 Capacitor Clipboard 均通过真机回归。
 - [ ] iOS 权限、后台、系统中断、安全区、动态字体和 VoiceOver 验证通过。
 - [ ] 网站唯一 `LoginForm`/后端提供满足 Apple 4.8 的等价登录（优先 Sign in with Apple），且完成全 provider、会话衔接、TestFlight 和 App Store 审核取证。（当前 P0 `BLOCKED`）
 - [ ] App Store 审核通过，且业务逻辑未复制为 iOS 专属实现。

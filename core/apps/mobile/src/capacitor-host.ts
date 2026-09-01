@@ -1,5 +1,6 @@
 import { App as NativeApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
+import { Clipboard } from '@capacitor/clipboard';
 import { Capacitor } from '@capacitor/core';
 import { Network } from '@capacitor/network';
 import type { InstalledAppHost } from '@cuberoot/app-ui';
@@ -31,6 +32,7 @@ export const capacitorHost: InstalledAppHost = {
   },
   openExternal: async (url) => Browser.open({ url }),
   print: printTimerDocument,
+  writeClipboardText: (text) => Clipboard.write({ string: text }),
   useAuth: useMobileAuth,
   useSmartCube,
   useTimerEffects: useNativeTimerEffects,
