@@ -1,14 +1,15 @@
-// 守卫:「忘记密码」授权窗口(src/utils/session.ts 的 amr=email_code + 15 分钟)。
+// 守卫:「忘记密码」授权窗口(邮箱验证码 15 分钟;专用手机找回验证码 10 分钟)。
 //
 // 这条规矩撑着两个相反方向的安全不变量,任何一边破了都是真事故:
 //   ① 能收邮件的人必须能重设密码 —— 否则忘了密码的账号永久锁死(本次修复前就是这样:
 //      /auth/password/set 无条件要 currentPassword,拿验证码登录进来也改不了)。
 //   ② 除此之外的任何会话都不得免旧密码改密码 —— 偷到 localStorage 里 token 的人若能直接
 //      换密码,就等于接管账号。故密码登录 / WCA / Google / 三方签出的会话一律没有 grant,
-//      邮箱验证码签出的会话也只在 15 分钟内有效。
+//      普通手机登录不算找回;两种找回授权都只在短窗口内有效。
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
-  signSession, hasFreshEmailGrant, EMAIL_GRANT_TTL_S,
+  signSession, hasFreshEmailGrant, hasFreshPhonePasswordResetGrant,
+  EMAIL_GRANT_TTL_S, PHONE_PASSWORD_RESET_GRANT_TTL_S,
 } from '../src/utils/session';
 
 const T0 = new Date('2026-07-13T00:00:00Z').getTime();
@@ -50,8 +51,9 @@ describe('其它任何会话都拿不到 grant(防会话劫持者直接换密码
     expect(hasFreshEmailGrant(signSession({ uid: 1, wcaId: '2017YANR02', name: 'x' }))).toBe(false);
   });
 
-  it('手机验证码会话没有 grant(密码是邮箱凭据,不由短信通道兜底)', () => {
+  it('普通手机验证码登录没有 grant', () => {
     expect(hasFreshEmailGrant(signSession({ uid: 1, name: 'x', amr: 'phone_code' }))).toBe(false);
+    expect(hasFreshPhonePasswordResetGrant(signSession({ uid: 1, name: 'x', amr: 'phone_code' }))).toBe(false);
   });
 
   it('篡改签名后的 token 无效(amr 不可自封)', () => {
@@ -66,8 +68,28 @@ describe('其它任何会话都拿不到 grant(防会话劫持者直接换密码
   });
 });
 
+describe('专用手机找回会话 → 可免旧密码重设密码', () => {
+  it('刚验证找回短信 = 有 grant', () => {
+    vi.useFakeTimers();
+    expect(hasFreshPhonePasswordResetGrant(sessionIssuedAgo(0, 'phone_password_reset'))).toBe(true);
+  });
+
+  it('10 分钟后失效', () => {
+    vi.useFakeTimers();
+    expect(hasFreshPhonePasswordResetGrant(sessionIssuedAgo(PHONE_PASSWORD_RESET_GRANT_TTL_S + 1, 'phone_password_reset'))).toBe(false);
+  });
+
+  it('手机找回 grant 不冒充邮箱 grant', () => {
+    expect(hasFreshEmailGrant(signSession({ uid: 1, name: 'x', amr: 'phone_password_reset' }))).toBe(false);
+  });
+});
+
 describe('窗口长度', () => {
   it('15 分钟 —— 够用完,又不给劫持者留长尾', () => {
     expect(EMAIL_GRANT_TTL_S).toBe(15 * 60);
+  });
+
+  it('短信找回不超过 10 分钟', () => {
+    expect(PHONE_PASSWORD_RESET_GRANT_TTL_S).toBe(10 * 60);
   });
 });

@@ -30,10 +30,12 @@ vi.mock('../src/utils/analytics_helpers.js', () => ({ getIp: () => '127.0.0.1' }
 vi.mock('../src/utils/recon_helpers.js', () => ({ checkRateLimit: mocks.checkRateLimit }));
 vi.mock('../src/utils/session.js', () => ({
   hasFreshEmailGrant: vi.fn(),
+  hasFreshPhonePasswordResetGrant: vi.fn(),
   signSession: mocks.signSession,
 }));
 vi.mock('../src/utils/account.js', () => ({
   getUserById: mocks.getUserById,
+  findUserByIdentity: vi.fn(),
   getAccountBasicProfile: mocks.getAccountBasicProfile,
   loginWithIdentity: mocks.loginWithIdentity,
   publicUser: mocks.publicUser,
