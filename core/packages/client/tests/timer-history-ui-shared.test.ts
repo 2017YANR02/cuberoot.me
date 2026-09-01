@@ -2,12 +2,16 @@
 
 import {
   TIMER_HISTORY_QUICK_ACTION_IDS,
+  TIMER_HISTORY_TAG_IDS,
   type Solve,
+  type TimerHistoryTagId,
   type TimerHistoryQuickActionId,
 } from '@cuberoot/shared/timer';
 import {
   TimerHistoryCommentEditor,
   TimerHistoryRow,
+  TimerHistoryTagBadges,
+  TimerHistoryTagFilter,
   TimerInfoToast,
   type TimerHistoryQuickMenuLabels,
   type TimerHistoryRowQuickMenu,
@@ -417,6 +421,56 @@ describe('shared history comment and undo surfaces', () => {
   });
 });
 
+describe('shared history tag surfaces', () => {
+  let host: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    host = document.createElement('div');
+    document.body.appendChild(host);
+    root = createRoot(host);
+  });
+
+  afterEach(async () => {
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
+  it('renders the canonical bilingual filter order and toggles a real button', async () => {
+    const onToggle = vi.fn();
+    await act(async () => root.render(createElement(TimerHistoryTagFilter, {
+      language: 'zh',
+      legend: '标签',
+      onToggle,
+      selected: new Set<TimerHistoryTagId>(['pb-single']),
+    })));
+    const buttons = [...host.querySelectorAll<HTMLButtonElement>('button')];
+    expect(buttons.map((button) => button.dataset.historyTagId)).toEqual(TIMER_HISTORY_TAG_IDS);
+    expect(buttons.map((button) => button.textContent)).toEqual([
+      'PB', 'PB ao5', 'PB ao12', '跳O', '跳P', 'DNF', 'DNS', '+2',
+    ]);
+    expect(buttons[0]?.getAttribute('aria-pressed')).toBe('true');
+    await act(async () => buttons[5]!.click());
+    expect(onToggle).toHaveBeenCalledWith('dnf');
+  });
+
+  it('hides result-redundant tags and exposes the complete compact label', async () => {
+    await act(async () => root.render(createElement(TimerHistoryTagBadges, {
+      language: 'en',
+      tagIds: ['pb-single', 'pb-ao5', 'pb-ao12', 'oll-skip', 'dnf', 'plus2'],
+    })));
+    const group = host.querySelector<HTMLElement>('[role="group"]')!;
+    expect(group.getAttribute('aria-label')).toBe('PB, PB ao5, PB ao12, OLL skip');
+    expect(group.title).toBe('PB, PB ao5, PB ao12, OLL skip');
+    expect([...group.querySelectorAll<HTMLElement>('.timer-history-tag-item')]
+      .map((item) => item.dataset.tagId)).toEqual(['pb-single', 'pb-ao5', 'pb-ao12', 'oll-skip']);
+    expect(group.querySelector('.timer-history-tag-overflow')?.textContent).toBe('+2');
+    expect(group.querySelector<HTMLElement>('.timer-history-tag-overflow')?.title)
+      .toBe('PB, PB ao5, PB ao12, OLL skip');
+  });
+});
+
 describe('history UI reuse, i18n, theme, and overflow guards', () => {
   it('keeps Web as a thin host and removes its duplicate row/menu/comment/toast implementations', () => {
     const history = readFileSync('app/[lang]/timer/_components/HistoryPanel.tsx', 'utf8');
@@ -427,6 +481,7 @@ describe('history UI reuse, i18n, theme, and overflow guards', () => {
 
     expect(history).toContain("from '@cuberoot/timer-ui'");
     expect(history).toContain('<TimerHistoryRow');
+    expect(history).toContain('className="history-search-count" role="status"');
     expect(history).toContain('onChangePenalty:');
     expect(history).toContain('onCopyScramble:');
     expect(history).toContain('onDelete:');
@@ -448,6 +503,7 @@ describe('history UI reuse, i18n, theme, and overflow guards', () => {
     const toast = readFileSync(new URL('./TimerInfoToast.tsx', timerUiEntry), 'utf8');
     const rowCss = readFileSync(new URL('./history-row.css', timerUiEntry), 'utf8');
     const toastCss = readFileSync(new URL('./info-toast.css', timerUiEntry), 'utf8');
+    const tagCss = readFileSync(new URL('./history-tags.css', timerUiEntry), 'utf8');
 
     expect(component).toContain('TIMER_HISTORY_QUICK_ACTION_CONTRACTS');
     expect(component).toContain('timerHistoryQuickActionStates({');
@@ -461,7 +517,10 @@ describe('history UI reuse, i18n, theme, and overflow guards', () => {
     expect(rowCss).toContain('env(safe-area-inset-bottom)');
     expect(rowCss).toMatch(/\.timer-history-quick-sheet\s*\{[\s\S]*?align-self: flex-end/);
     expect(toastCss).toContain('env(safe-area-inset-bottom)');
-    for (const css of [rowCss, toastCss]) {
+    expect(tagCss).toMatch(/@media \(max-width: 480px\)[\s\S]*?\.timer-history-tag-item:nth-of-type\(n \+ 3\)/);
+    expect(tagCss).toMatch(/\.timer-history-tag-filter-option\s*\{[\s\S]*?padding: 2px 8px/);
+    expect(tagCss).toMatch(/@media \(max-width: 480px\)[\s\S]*?min-height: 44px/);
+    for (const css of [rowCss, toastCss, tagCss]) {
       expect(css).toMatch(/var\(--(?:foreground|popover|card|border-default|ring)/);
       expect(css).not.toMatch(/#[0-9a-f]{3,8}\b/i);
       expect(css).not.toMatch(/\b(?:rgba?|hsla?|oklch)\(/i);

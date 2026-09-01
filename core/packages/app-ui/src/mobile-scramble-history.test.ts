@@ -232,7 +232,12 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('repository.restoreSolve(sessionId, solve)');
     expect(app).not.toContain('function HistoryRow(');
     expect(app).not.toContain('timerHistoryQuickActionStates({');
-    expect(app).toContain('filterTimerHistorySolves(solves, historyFilters)');
+    expect(app).toContain('computeTimerHistoryTags(solves)');
+    expect(app).toContain('filterTimerHistorySolves(solves, historyFilters, historyTagsById)');
+    expect(app).toContain('<TimerHistoryTagBadges');
+    expect(app).toContain('<TimerHistoryTagFilter');
+    expect(app).toContain('className="mobile-history-match-count" role="status"');
+    expect(app).toContain('toggleTimerHistoryTag(current.tags, tagId)');
     expect(app).toContain("updateHistoryFilter('query'");
     expect(app).toContain("updateHistoryFilter('timeMin'");
     expect(app).toContain("updateHistoryFilter('timeMax'");

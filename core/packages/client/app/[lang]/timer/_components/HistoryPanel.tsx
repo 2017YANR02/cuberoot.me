@@ -8,9 +8,12 @@ import {
   TIMER_HISTORY_PENALTIES,
   TIMER_HISTORY_QUICK_ACTION_COPY,
   TIMER_HISTORY_QUICK_ACTION_IDS,
+  computeTimerHistoryTags,
   filterTimerHistorySolves,
   timerHistoryCopyText,
+  toggleTimerHistoryTag,
   toggleTimerHistoryPenalty,
+  type TimerHistoryTagId,
   type TimerHistoryQuickActionId,
 } from '../_lib/history';
 import {
@@ -22,15 +25,15 @@ import {
 } from '../_lib/rolling_stats';
 import CompareSolvesModal from './CompareSolvesModal';
 import RollingStatsPicker from './RollingStatsPicker';
-import { computeAllTags, TAG_DEFS, ALL_TAG_IDS } from '../_lib/storage/auto_tag';
 import { dayKeyOf } from '../_lib/stats_buckets';
-import type { TagId } from '../_lib/storage/auto_tag';
 import { ClearButton } from '@/components/ClearButton';
 import { DateRangeInput } from '@/components/DateRangeInput';
 import { RecordBadge } from '@/components/RecordBadge';
 import { tr } from '@/i18n/tr';
 import {
   TimerHistoryRow,
+  TimerHistoryTagBadges,
+  TimerHistoryTagFilter,
   type TimerHistoryQuickMenuLabels,
   type TimerHistoryRowQuickMenu,
 } from '@cuberoot/timer-ui';
@@ -57,7 +60,6 @@ interface Props {
 }
 
 const MOBILE_QUERY = '(max-width: 480px)';
-const MOBILE_TAG_CAP = 2;
 
 export default function HistoryPanel({
   solves, isZh, onRowClick, onBulkDelete,
@@ -152,12 +154,13 @@ export default function HistoryPanel({
   const [pllFilter, setPllFilter] = useState('');
   // Tag filter: only solves with at least one of these tags are kept.
   // Empty set => no tag filter applied.
-  const [tagSet, setTagSet] = useState<Set<TagId>>(new Set());
+  const [tagSet, setTagSet] = useState<Set<TimerHistoryTagId>>(new Set());
 
   const reversed = [...solves].reverse(); // newest at top
 
   // Auto-tags computed once per history change.
-  const tagsByid = useMemo(() => computeAllTags(solves), [solves]);
+  const tagsById = useMemo(() => computeTimerHistoryTags(solves), [solves]);
+  const tagLanguage = tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh';
 
   // Map each solve's id back to its index in the original (un-reversed) solves
   // array, so PB highlight indices stay correct after filtering.
@@ -226,7 +229,7 @@ export default function HistoryPanel({
     : '';
   const timeColumnWidth = '12ch';
   const headTmpl = `32px ${timeColumnWidth}${statTemplate} minmax(0,1fr)`;
-  const visiblePbTagIds = new Set<TagId>();
+  const visiblePbTagIds = new Set<TimerHistoryTagId>();
   if (visibleStatColumns.includes('ao5')) visiblePbTagIds.add('pb-ao5');
   if (visibleStatColumns.includes('ao12')) visiblePbTagIds.add('pb-ao12');
 
@@ -240,9 +243,9 @@ export default function HistoryPanel({
     ollCase: ollFilter,
     pllCase: pllFilter,
     tags: tagSet,
-  }, tagsByid), [
+  }, tagsById), [
     solves, query, dateFrom, dateTo, timeMin, timeMax,
-    penaltySet, ollFilter, pllFilter, tagSet, tagsByid,
+    penaltySet, ollFilter, pllFilter, tagSet, tagsById,
   ]);
   const filteredReversed = historyFilterResult.solves;
   const activeFilterCount = historyFilterResult.activeStructuredFilterCount;
@@ -272,13 +275,8 @@ export default function HistoryPanel({
     setTagSet(new Set());
   };
 
-  const toggleTag = (t: TagId) => {
-    setTagSet(prev => {
-      const next = new Set(prev);
-      if (next.has(t)) next.delete(t);
-      else next.add(t);
-      return next;
-    });
+  const toggleTag = (tagId: TimerHistoryTagId) => {
+    setTagSet(current => toggleTimerHistoryTag(current, tagId));
   };
 
   const togglePenalty = (p: Penalty) => {
@@ -385,24 +383,6 @@ export default function HistoryPanel({
   const closeCompareModal = () => {
     setComparePair(null);
   };
-
-  // Tone -> { bg, border, color } palette for tag chips.
-  const TAG_TONE_STYLE: Record<'gold' | 'green' | 'red' | 'muted', React.CSSProperties> = {
-    gold:  { background: 'rgba(212, 166, 87, 0.16)',  border: '1px solid #8a7345', color: '#d4a657' },
-    green: { background: 'rgba(106, 168, 100, 0.14)', border: '1px solid #4d7a44', color: '#8fc28a' },
-    red:   { background: 'rgba(217, 122, 122, 0.14)', border: '1px solid #7a4444', color: '#d97a7a' },
-    muted: { background: 'transparent',               border: '1px solid #333',    color: '#888'    },
-  };
-
-  const tagChipStyle = (tone: 'gold' | 'green' | 'red' | 'muted'): React.CSSProperties => ({
-    ...TAG_TONE_STYLE[tone],
-    borderRadius: 3,
-    padding: '0 5px',
-    fontSize: 9,
-    lineHeight: '14px',
-    display: 'inline-block',
-    whiteSpace: 'nowrap',
-  });
 
   // Inline style helpers for the filters panel
   const chipBtn = (active: boolean): React.CSSProperties => ({
@@ -615,7 +595,7 @@ export default function HistoryPanel({
           )}
         </div>
         {hasAnyFilter && (
-          <span className="history-search-count">
+          <span aria-live="polite" className="history-search-count" role="status">
             {(isZh ? `${matchCount} 条匹配` : `${matchCount} matches`)}
           </span>
         )}
@@ -763,27 +743,12 @@ export default function HistoryPanel({
                 />
               </div>
             </div>
-            <div>
-              <label style={labelStyle}>{tr({ zh: '标签', en: 'Tags'
-            })}</label>
-              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                {ALL_TAG_IDS.map(tid => {
-                  const def = TAG_DEFS[tid];
-                  const active = tagSet.has(tid);
-                  return (
-                    <button
-                      key={tid}
-                      type="button"
-                      onClick={() => toggleTag(tid)}
-                      aria-pressed={active}
-                      style={chipBtn(active)}
-                    >
-                      {(isZh ? def.labelZh : def.labelEn)}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <TimerHistoryTagFilter
+              language={tagLanguage}
+              legend={tr({ zh: '标签', en: 'Tags' })}
+              onToggle={toggleTag}
+              selected={tagSet}
+            />
           </div>
         )}
       </div>
@@ -928,41 +893,13 @@ export default function HistoryPanel({
 
           // Auto-tagged PBs move into their matching visible columns. If the
           // user replaces that column, keep the tag beside the shared result.
-          const rowTags = (() => {
-            const ts = (tagsByid.get(s.id) ?? []).filter(t => (
-              !visiblePbTagIds.has(t) && t !== 'dnf' && t !== 'dns' && t !== 'plus2'
-            ));
-            if (ts.length === 0) return null;
-            const cap = isMobile ? MOBILE_TAG_CAP : ts.length;
-            const shown = ts.slice(0, cap);
-            const overflow = ts.length - shown.length;
-            const fullList = ts
-              .map(tid => (isZh ? TAG_DEFS[tid].labelZh : TAG_DEFS[tid].labelEn))
-              .join(' · ');
-            return (
-              <span
-                style={{ display: 'inline-flex', gap: 3, marginLeft: 6, flexWrap: 'wrap', verticalAlign: 'middle' }}
-                title={overflow > 0 ? fullList : undefined}
-              >
-                {shown.map(tid => {
-                  const def = TAG_DEFS[tid];
-                  if (tid === 'pb-single') {
-                    return <RecordBadge key={tid} record={def.labelEn} variant="standalone" />;
-                  }
-                  return (
-                    <span key={tid} style={tagChipStyle(def.tone)}>
-                      {(isZh ? def.labelZh : def.labelEn)}
-                    </span>
-                  );
-                })}
-                {overflow > 0 && (
-                  <span style={tagChipStyle('muted')} title={fullList}>
-                    +{overflow}
-                  </span>
-                )}
-              </span>
-            );
-          })();
+          const rowTags = (
+            <TimerHistoryTagBadges
+              hiddenTagIds={visiblePbTagIds}
+              language={tagLanguage}
+              tagIds={tagsById.get(s.id) ?? []}
+            />
+          );
 
           return (
             <Fragment key={s.id}>
