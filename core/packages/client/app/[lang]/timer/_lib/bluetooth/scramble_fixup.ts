@@ -22,14 +22,11 @@
  */
 
 import type { CubeFaces } from '../cube/state';
-import { fromFaceletString, toFaceletString } from '../cube/state';
+import { toFaceletString } from '../cube/state';
 import type { CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
-import {
-  createSmartCubeFixupRequester,
-  smartCubeFixupState,
-} from '@cuberoot/shared/smart-cube/scramble-hint';
+import { smartCubeFixupState } from '@cuberoot/shared/smart-cube/scramble-hint';
 import { solve333 } from '../scramble/kociemba/random_state';
-import { parseHintableScramble, type ScrambleHint } from './scramble_hint';
+import { parseHintableScramble } from './scramble_hint';
 
 /**
  * The state whose generator takes the cube from `from` to `target`.
@@ -65,75 +62,4 @@ export async function fixupScramble(from: CubeFaces, target: CubeFaces): Promise
   }
   if (!scramble.trim()) return null;
   return parseHintableScramble(scramble) ? scramble : null;
-}
-
-/* ────────────────────────────────────────────────────────────────────── *
- *  Asking for one, at the speed a cube is actually turned
- * ────────────────────────────────────────────────────────────────────── */
-
-export interface FixupDeps {
-  /** Where the cube is right now. Null if there is no cube. */
-  faces: () => CubeFaces | null;
-  /** Solve `from` → `target`. Defaults to `fixupScramble`. */
-  solve?: (from: CubeFaces, target: CubeFaces) => Promise<string | null>;
-  /**
-   * Is a correction still wanted? False once the scramble has been replaced or
-   * the solve has started — checked before every attempt, since each one waits
-   * on the solver.
-   */
-  valid: (target: CubeFaces) => boolean;
-}
-
-export interface FixupResult {
-  /** The state the path starts from — the hint walk needs it. */
-  from: CubeFaces;
-  /** The path, in plain face turns. */
-  seq: string;
-  /** Where the cube is along it, as of now. */
-  hint: ScrambleHint;
-}
-
-export interface FixupRequester {
-  /** Null when there is nothing to offer. Never rejects. */
-  request(target: CubeFaces): Promise<FixupResult | null>;
-  busy(): boolean;
-}
-
-/**
- * Serialises fix-up requests and re-solves when the cube moves mid-solve.
- *
- * The solve takes ~100-200 ms — less than one turn of a cube. So by the time an
- * answer arrives the cube may already be somewhere else, and a path from where
- * it WAS fits nothing. Re-solving from the new state is the difference between
- * a correction that appears every time and one that appears every other time.
- *
- * Lives here rather than in the view because it is the part with branches:
- * fits / cube moved / already home / superseded / still moving.
- */
-export function createFixupRequester(deps: FixupDeps, opts: { attempts?: number } = {}): FixupRequester {
-  const solve = deps.solve ?? fixupScramble;
-  const requester = createSmartCubeFixupRequester({
-    facelets: () => {
-      const faces = deps.faces();
-      return faces ? toFaceletString(faces) : null;
-    },
-    solve: async (fromFacelets, targetFacelets) => {
-      const from = fromFaceletString(fromFacelets);
-      const target = fromFaceletString(targetFacelets);
-      return from && target ? solve(from, target) : null;
-    },
-    valid: (targetFacelets) => {
-      const target = fromFaceletString(targetFacelets);
-      return target ? deps.valid(target) : false;
-    },
-  }, opts.attempts);
-  return {
-    busy: requester.busy,
-    async request(target: CubeFaces): Promise<FixupResult | null> {
-      const result = await requester.request(toFaceletString(target));
-      if (!result) return null;
-      const from = fromFaceletString(result.fromFacelets);
-      return from ? { from, seq: result.scramble, hint: result.hint } : null;
-    },
-  };
 }

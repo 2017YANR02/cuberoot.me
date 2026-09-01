@@ -20,7 +20,6 @@ import { join, dirname } from 'node:path';
 import {
   fixupState,
   fixupScramble,
-  createFixupRequester,
 } from '@/app/[lang]/timer/_lib/bluetooth/scramble_fixup';
 import { hintScramble } from '@/app/[lang]/timer/_lib/bluetooth/scramble_hint';
 import {
@@ -216,219 +215,6 @@ describe('fixupScramble — the async wrapper', () => {
   });
 });
 
-/**
- * The requester's job is everything that happens because solving takes longer
- * than a turn. This whole block exists because the first version bailed out
- * when the cube moved mid-solve, which in the browser meant a correction path
- * appeared only every OTHER time the user went off track.
- */
-describe('createFixupRequester', () => {
-  const TARGET = applyScramble(3, SCRAMBLE);
-  const OFF_PATH = applyScramble(3, "R U F' D2");
-  const OFF_PATH_2 = applyScramble(3, "R U F' D2 B");
-
-  /** The real path, precomputed so the fake solver can be synchronous-ish. */
-  let pathFrom1: string;
-  let pathFrom2: string;
-  beforeAll(() => {
-    pathFrom1 = solveFixup(OFF_PATH, TARGET);
-    pathFrom2 = solveFixup(OFF_PATH_2, TARGET);
-  }, 60_000);
-
-  function solverFor(paths: Map<CubeFaces, string>) {
-    const calls: CubeFaces[] = [];
-    const solve = async (from: CubeFaces) => {
-      calls.push(from);
-      return [...paths].find(([faces]) => facesEqual(faces, from))?.[1] ?? null;
-    };
-    return { solve, calls };
-  }
-
-  it('offers the path when the cube stays put', async () => {
-    const { solve, calls } = solverFor(new Map([[OFF_PATH, pathFrom1]]));
-    const req = createFixupRequester({ faces: () => OFF_PATH, solve, valid: () => true });
-    const res = await req.request(TARGET);
-    expect(res).not.toBeNull();
-    expect(res!.seq).toBe(pathFrom1);
-    expect(facesEqual(res!.from, OFF_PATH)).toBe(true);
-    expect(res!.hint.done).toEqual([]);
-    expect(res!.hint.current).toBe(pathFrom1.split(' ')[0]);
-    expect(calls).toHaveLength(1);
-  });
-
-  it('solves again from the new state when the cube turns mid-solve', async () => {
-    // First call answers for OFF_PATH, but by then the cube has moved on to
-    // OFF_PATH_2, so that path fits nothing and a second solve is needed.
-    let where = OFF_PATH;
-    const { solve, calls } = solverFor(new Map([
-      [OFF_PATH, pathFrom1],
-      [OFF_PATH_2, pathFrom2],
-    ]));
-    const req = createFixupRequester({
-      faces: () => where,
-      solve: async (from) => {
-        const seq = await solve(from);
-        if (facesEqual(from, OFF_PATH)) where = OFF_PATH_2; // turned while we solved
-        return seq;
-      },
-      valid: () => true,
-    });
-    const res = await req.request(TARGET);
-    expect(res).not.toBeNull();
-    expect(res!.seq).toBe(pathFrom2);
-    expect(facesEqual(res!.from, OFF_PATH_2)).toBe(true);
-    expect(calls).toEqual([OFF_PATH, OFF_PATH_2]);
-  });
-
-  it('keeps the current correction after a transient return to the raw path', async () => {
-    let where = OFF_PATH;
-    let wanted = true;
-    let release: (value: string | null) => void = () => {};
-    const calls: CubeFaces[] = [];
-    const req = createFixupRequester({
-      faces: () => where,
-      solve: (from) => {
-        calls.push(from);
-        if (facesEqual(from, OFF_PATH)) return new Promise((resolve) => { release = resolve; });
-        return Promise.resolve(pathFrom2);
-      },
-      valid: () => wanted,
-    });
-
-    const pending = req.request(TARGET);
-    wanted = false;
-    where = solved(3);
-    wanted = true;
-    where = OFF_PATH_2;
-    release(pathFrom1);
-
-    await expect(pending).resolves.toMatchObject({ from: OFF_PATH_2, seq: pathFrom2 });
-    expect(calls).toEqual([OFF_PATH, OFF_PATH_2]);
-  });
-
-  it('offers nothing when the cube reaches the scramble mid-solve', async () => {
-    let where: CubeFaces = OFF_PATH;
-    const req = createFixupRequester({
-      faces: () => where,
-      solve: async () => { where = TARGET; return pathFrom1; },
-      valid: () => true,
-    });
-    // The plain "scrambled" verdict covers this; a spent correction path would
-    // just be noise.
-    await expect(req.request(TARGET)).resolves.toBeNull();
-  });
-
-  it('gives up after three tries if the cube never settles', async () => {
-    // Always answer for a state the cube has already left.
-    const calls: CubeFaces[] = [];
-    let where = OFF_PATH;
-    const req = createFixupRequester({
-      faces: () => where,
-      solve: async (from) => {
-        calls.push(from);
-        where = facesEqual(where, OFF_PATH) ? OFF_PATH_2 : OFF_PATH;
-        return facesEqual(from, OFF_PATH) ? pathFrom1 : pathFrom2;
-      },
-      valid: () => true,
-    });
-    await expect(req.request(TARGET)).resolves.toBeNull();
-    expect(calls).toHaveLength(3);
-    expect(req.busy()).toBe(false);   // and it lets the next turn try again
-  });
-
-  it('runs one solve at a time', async () => {
-    let release: (v: string | null) => void = () => {};
-    const calls: number[] = [];
-    const req = createFixupRequester({
-      faces: () => OFF_PATH,
-      solve: () => { calls.push(1); return new Promise((r) => { release = r; }); },
-      valid: () => true,
-    });
-    const first = req.request(TARGET);
-    expect(req.busy()).toBe(true);
-    // A second off-path turn while the first solve is in flight shares that
-    // answer rather than queuing another solve. This also lets a reconnected
-    // consumer re-attach to a still-valid request for the same scramble.
-    const duplicate = req.request(TARGET);
-    expect(calls).toHaveLength(1);
-    release(pathFrom1);
-    await expect(first).resolves.not.toBeNull();
-    await expect(duplicate).resolves.not.toBeNull();
-    expect(req.busy()).toBe(false);
-  });
-
-  it('runs the latest target after an older target finishes', async () => {
-    const nextTarget = applyScramble(3, "F R U2");
-    let validTarget = toFaceletString(TARGET);
-    let release: (v: string | null) => void = () => {};
-    const calls: string[] = [];
-    const req = createFixupRequester({
-      faces: () => OFF_PATH,
-      solve: async (_from, target) => {
-        calls.push(toFaceletString(target));
-        if (toFaceletString(target) === toFaceletString(TARGET)) {
-          return new Promise((resolve) => { release = resolve; });
-        }
-        return 'R';
-      },
-      valid: (target) => toFaceletString(target) === validTarget,
-    });
-
-    const first = req.request(TARGET);
-    validTarget = toFaceletString(nextTarget);
-    const latest = req.request(nextTarget);
-    release(pathFrom1);
-
-    await expect(first).resolves.toBeNull();
-    await expect(latest).resolves.toMatchObject({ seq: 'R' });
-    expect(calls).toEqual([toFaceletString(TARGET), toFaceletString(nextTarget)]);
-  });
-
-  it('abandons the request when the scramble is replaced under it', async () => {
-    const { calls } = solverFor(new Map());
-    const req = createFixupRequester({
-      faces: () => OFF_PATH,
-      solve: async () => pathFrom1,
-      valid: () => false,   // e.g. the user hit "next scramble", or started solving
-    });
-    await expect(req.request(TARGET)).resolves.toBeNull();
-    expect(calls).toHaveLength(0);
-  });
-
-  it('abandons a pending result after the scramble, timer, or connection becomes invalid', async () => {
-    let valid = true;
-    let release: (value: string | null) => void = () => {};
-    const req = createFixupRequester({
-      faces: () => OFF_PATH,
-      solve: () => new Promise((resolve) => { release = resolve; }),
-      valid: () => valid,
-    });
-    const pending = req.request(TARGET);
-    valid = false;
-    release(pathFrom1);
-    await expect(pending).resolves.toBeNull();
-    expect(req.busy()).toBe(false);
-  });
-
-  it('offers nothing when there is no cube', async () => {
-    const req = createFixupRequester({
-      faces: () => null,
-      solve: async () => pathFrom1,
-      valid: () => true,
-    });
-    await expect(req.request(TARGET)).resolves.toBeNull();
-  });
-
-  it('offers nothing when the solver has nothing to say', async () => {
-    const req = createFixupRequester({
-      faces: () => OFF_PATH,
-      solve: async () => null,
-      valid: () => true,
-    });
-    await expect(req.request(TARGET)).resolves.toBeNull();
-  });
-});
-
 describe('solvedCubie sanity', () => {
   it('is the identity for multiply', () => {
     const c = faceletToCubie(toFaceletString(applyScramble(3, SCRAMBLE)));
@@ -468,5 +254,33 @@ describe('复制反馈不能骑在修正路径上(2026-08-04)', () => {
   it('复制的仍然是打乱本身,不是条上那串', () => {
     // 取 scrambleHist 当前项 → 就是成绩会记下的那条打乱。
     expect(hostSrc).toMatch(/scrambleHistRef\.current\.list\[scrambleHistRef\.current\.idx\]/);
+  });
+});
+
+describe('Solo smart-cube guidance has one shared lifecycle controller', () => {
+  const source = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), '..', 'app', '[lang]', 'timer', '_shell', 'SoloView.tsx'),
+    'utf8',
+  );
+
+  it('keeps only the Web facelet/Worker adapter in SoloView', () => {
+    expect(source).toContain('createSmartCubeGuidanceController');
+    expect(source).toContain('id: currentScrambleEntry.id');
+    expect(source).toContain('scrambleGuidanceController.setConnected(cubeConnected)');
+    expect(source).toContain("scrambleGuidanceController.setRunning(timer.phase === 'running')");
+    expect(source).toContain('scrambleGuidanceController.syncFacelets(bluetoothCube.facelets)');
+    expect(source).toMatch(/syncFacelets\(bluetoothCube\.facelets\);[\s\S]*?cubeConnected,[\s\S]*?currentScrambleEntry\.id,[\s\S]*?scrambleTarget,[\s\S]*?timer\.phase,/);
+    expect(source).toContain('scrambleGuidanceController.observe(toFaceletString(faces))');
+    expect(source).toContain('observation.completedNow');
+    expect(source).not.toContain('verifySmartCubeScramble');
+    expect(source).not.toContain('createFixupRequester');
+    expect(source).not.toContain('scrambleGuidanceCompleteRef');
+  });
+
+  it('starts an armed solve before broadcasting that first move to guidance', () => {
+    const start = source.indexOf('startFromCubeRef.current(ts)');
+    const broadcast = source.indexOf('for (const sub of bluetoothSubscribersRef.current)');
+    expect(start).toBeGreaterThan(-1);
+    expect(broadcast).toBeGreaterThan(start);
   });
 });
