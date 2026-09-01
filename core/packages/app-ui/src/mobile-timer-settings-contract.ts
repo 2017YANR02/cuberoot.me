@@ -1,4 +1,5 @@
 import type { TimerSettingFieldId } from '@cuberoot/shared/timer';
+import { TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS } from '@cuberoot/timer-ui';
 
 /**
  * Current Mobile settings effects, not visual/device parity claims. These
@@ -16,6 +17,7 @@ export const MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS = [
   'settings.timer.result-precision',
   'settings.training.stage-splits',
   'settings.training.bld-memo-split',
+  ...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
   'settings.appearance.scramble-click-action',
 ] as const satisfies readonly TimerSettingFieldId[];
 

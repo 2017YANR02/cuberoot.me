@@ -10,7 +10,7 @@ import {
 import {
   TIMER_TIMING_SETTING_FIELD_IDS,
   TimerTimingSettingsSections,
-  type TimerTimingBooleanControlProps,
+  type TimerBooleanControlProps,
 } from '@cuberoot/timer-ui';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -24,7 +24,7 @@ function renderWebBooleanControl({
   label,
   onChange,
   value,
-}: TimerTimingBooleanControlProps) {
+}: TimerBooleanControlProps) {
   return createElement(BoolToggle, { disabled, label, onChange, value });
 }
 

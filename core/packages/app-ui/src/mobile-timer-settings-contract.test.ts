@@ -9,6 +9,7 @@ import {
 
 import {
   TimerAttemptSplitSettings,
+  TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
   TIMER_TIMING_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
@@ -23,6 +24,7 @@ describe('Mobile timer settings parity ledger', () => {
       ...TIMER_TIMING_SETTING_FIELD_IDS,
       'settings.training.stage-splits',
       'settings.training.bld-memo-split',
+      ...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
       'settings.appearance.scramble-click-action',
     ]);
     expect(MOBILE_TIMER_SETTING_PARITY_FIELD_IDS).toEqual([]);
@@ -50,6 +52,9 @@ describe('Mobile timer settings parity ledger', () => {
     expect(app).toContain('<TimerAttemptSplitSettings');
     expect(app).toContain('<TimerAttemptSplitStatus');
     expect(app).toContain('<TimerScrambleClickActionSetting');
+    expect(app).toContain('<TimerScramblePreviewSettings');
+    expect(app).toContain('store!.settings.showCubePreview && scrambleReady');
+    expect(app).toContain("visualization={store!.settings.prefer3D ? '3D' : '2D'}");
     expect(app).toContain('onChange={updateSettings}');
     expect(app).toContain('value={store!.settings}');
     expect(app).toContain('<TimerPillToggle');

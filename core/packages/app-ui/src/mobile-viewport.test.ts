@@ -112,4 +112,8 @@ describe('mobile visible viewport layout', () => {
     expect(css).toMatch(/\.battle-local-tools \.shell-device-actions,\s*\.battle-net-timer > \.shell-device-actions \{[^}]*position: static;[^}]*max-width: calc\(100% - 24px\);[^}]*transform: none;/s);
     expect(css).toMatch(/\.battle-local-tools \.shell-device-connect span,\s*\.battle-net-timer > \.shell-device-actions \.shell-device-connect span \{[^}]*overflow: hidden;[^}]*text-overflow: ellipsis;/s);
   });
+
+  it('lets shared setting hints wrap within narrow screens', () => {
+    expect(css).toMatch(/\.settings-view \.settings-row-control > \.hint:last-child:not\(:first-child\) \{[^}]*max-width: min\(40vw, 12rem\);[^}]*overflow-wrap: anywhere;[^}]*white-space: normal;/s);
+  });
 });

@@ -726,6 +726,18 @@ button {
   justify-content: flex-end;
 }
 
+.settings-view .settings-row-control > .hint:last-child:not(:first-child) {
+  min-width: 0;
+  max-width: min(40vw, 12rem);
+  margin-inline-start: 8px;
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-align: end;
+  white-space: normal;
+}
+
 .settings-view .settings-row-control-input,
 .settings-view .settings-row-control-select {
   max-width: min(48vw, 12rem);

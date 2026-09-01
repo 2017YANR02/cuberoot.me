@@ -152,6 +152,40 @@ export type TimerScrambleClickAction = (typeof TIMER_SCRAMBLE_CLICK_ACTIONS)[num
 
 export const DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION: TimerScrambleClickAction = 'copy';
 
+export interface TimerScramblePreviewSettings {
+  showCubePreview: boolean;
+  prefer3D: boolean;
+}
+
+export const DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS: TimerScramblePreviewSettings = {
+  showCubePreview: true,
+  prefer3D: false,
+};
+
+function normalizedBoolean(value: unknown, fallback: boolean): boolean {
+  return typeof value === 'boolean' ? value : fallback;
+}
+
+export function normalizeTimerScramblePreviewSettings(value: {
+  showCubePreview?: unknown;
+  prefer3D?: unknown;
+}): TimerScramblePreviewSettings {
+  return {
+    showCubePreview: normalizedBoolean(
+      value.showCubePreview,
+      DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS.showCubePreview,
+    ),
+    prefer3D: normalizedBoolean(
+      value.prefer3D,
+      DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS.prefer3D,
+    ),
+  };
+}
+
+export function timerScramblePreview3DDisabled(value: Pick<TimerScramblePreviewSettings, 'showCubePreview'>): boolean {
+  return !value.showCubePreview;
+}
+
 export type TimerScrambleClickEffect = 'none' | 'next' | 'copy' | 'retry';
 
 export const TIMER_SCRAMBLE_CLICK_TITLE_COPY: Record<TimerScrambleClickEffect, TimerSettingCopy> = {
@@ -343,7 +377,7 @@ function settingDisabled(
   switch (disabledWhen) {
     case 'never': return false;
     case 'optimal-unavailable': return !context.optimalAvailable;
-    case 'scramble-preview-hidden': return !context.showCubePreview;
+    case 'scramble-preview-hidden': return timerScramblePreview3DDisabled(context);
     case 'sounds-disabled': return !context.soundsEnabled;
     case 'sounds-disabled-or-voice-unavailable': return !context.soundsEnabled || !context.voiceAvailable;
     case 'metronome-disabled': return !context.metronomeEnabled;
@@ -414,10 +448,6 @@ export function normalizeTimerRunningPrecision(value: unknown): 0 | 1 | 2 | 3 {
 
 export function normalizeTimerResultPrecision(value: unknown): 2 | 3 {
   return value === 2 || value === 3 ? value : DEFAULT_TIMER_TIMING_SETTINGS.precision;
-}
-
-function normalizedBoolean(value: unknown, fallback: boolean): boolean {
-  return typeof value === 'boolean' ? value : fallback;
 }
 
 export function normalizeTimerTimingSettings(
