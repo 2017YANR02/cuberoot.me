@@ -48,7 +48,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
     description: {
       zh: '魔方工具站:求解器、复盘、公式训练、打乱分析与 WCA 统计,中英双语,全部免费。',
-      en: 'A speedcubing toolkit: puzzle solvers, solve reconstructions, algorithm trainers, scramble analysis and WCA statistics. Free, bilingual, no account needed.',
+      en: "A Rubik's Cube toolkit for speedcubing: puzzle solvers, solve reconstructions, algorithm trainers, scramble analysis and WCA statistics.",
     },
   },
   '2x2x2': {
