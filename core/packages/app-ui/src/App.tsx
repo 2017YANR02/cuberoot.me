@@ -39,6 +39,7 @@ import {
   advanceTimerSourceRevision,
   createTimerSourceRevision,
   createTimerHistoryFilters,
+  computeTimerHistoryTags,
   filterTimerHistorySolves,
   formatTimerTimingDisplay,
   generateTimerScramble,
@@ -87,6 +88,7 @@ import {
   timerSupportsSmartCubeAutoTiming,
   timerTracksTrainerCase,
   toggleTimerHistoryPenalty,
+  toggleTimerHistoryTag,
   type EventId,
   type Penalty,
   type Solve,
@@ -95,6 +97,7 @@ import {
   type Scramble222Type,
   type ScrambleHistory,
   type TimerHistoryFilters,
+  type TimerHistoryTagId,
   type TimerHistoryQuickActionId,
   type TimerGestureActionId,
   type TimerPhase,
@@ -119,6 +122,8 @@ import {
   TimerInfoToast,
   TimerHistoryCommentEditor,
   TimerHistoryRow,
+  TimerHistoryTagBadges,
+  TimerHistoryTagFilter,
   TimerManualEntryModal,
   TimerMoreMenu,
   TimerPillToggle,
@@ -342,6 +347,7 @@ function MobileHistoryItem({
   moveTargets,
   quickMenuOpen,
   solve,
+  tagIds,
 }: {
   copy: (typeof COPY)[SupportedLanguage];
   focusComment: boolean;
@@ -357,6 +363,7 @@ function MobileHistoryItem({
   moveTargets: readonly { id: string; name: string }[];
   quickMenuOpen: boolean;
   solve: Solve;
+  tagIds: readonly TimerHistoryTagId[];
 }) {
   const [expanded, setExpanded] = useState(false);
   const commentRef = useRef<HTMLTextAreaElement>(null);
@@ -407,6 +414,9 @@ function MobileHistoryItem({
         index={index}
         onActivate={() => setExpanded((value) => !value)}
         quickMenu={quickMenu}
+        resultExtras={(
+          <TimerHistoryTagBadges language={language} tagIds={tagIds} />
+        )}
         solve={solve}
         trailing={(
           <time className="mobile-history-date" dateTime={new Date(solve.ts).toISOString()}>
@@ -606,9 +616,10 @@ export function App({ host }: { host: InstalledAppHost }) {
   const solvesRef = useRef(solves);
   solvesRef.current = solves;
   const stats = useMemo(() => summarize(solves, activeEvent), [activeEvent, solves]);
+  const historyTagsById = useMemo(() => computeTimerHistoryTags(solves), [solves]);
   const filteredHistory = useMemo(
-    () => filterTimerHistorySolves(solves, historyFilters),
-    [historyFilters, solves],
+    () => filterTimerHistorySolves(solves, historyFilters, historyTagsById),
+    [historyFilters, historyTagsById, solves],
   );
   const historyMoveTargets = useMemo(() => store
     ? timerHistoryMoveTargets(store.database.sessions, store.database.activeSessionId)
@@ -2100,6 +2111,13 @@ export function App({ host }: { host: InstalledAppHost }) {
     }));
   }, []);
 
+  const toggleHistoryTag = useCallback((tagId: TimerHistoryTagId) => {
+    setHistoryFilters((current) => ({
+      ...current,
+      tags: toggleTimerHistoryTag(current.tags, tagId),
+    }));
+  }, []);
+
   const clearHistoryFilters = useCallback(() => {
     setHistoryFilters(createTimerHistoryFilters());
   }, []);
@@ -3133,7 +3151,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                   )}
                 </label>
                 {filteredHistory.hasAnyFilter && (
-                  <span className="mobile-history-match-count">
+                  <span aria-live="polite" className="mobile-history-match-count" role="status">
                     {copy.historyMatches(filteredHistory.solves.length)}
                   </span>
                 )}
@@ -3214,6 +3232,12 @@ export function App({ host }: { host: InstalledAppHost }) {
                       />
                     </label>
                   </div>
+                  <TimerHistoryTagFilter
+                    language={language}
+                    legend={copy.tags}
+                    onToggle={toggleHistoryTag}
+                    selected={historyFilters.tags}
+                  />
                 </div>
               )}
             </div>
@@ -3239,6 +3263,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                     moveTargets={historyMoveTargets}
                     quickMenuOpen={openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu}
                     solve={solve}
+                    tagIds={historyTagsById.get(solve.id) ?? []}
                   />
                 ))}
               </div>

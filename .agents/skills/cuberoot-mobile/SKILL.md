@@ -56,6 +56,7 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
   以及 WCA 11 步/最优口径；真题不能假换成本地随机，随机专项也不能只画选择器不接 provider。
 - 手动输入是跨 43 项共享的 opaque 多行队列：逐非空行 trim、即时持久化、改动重置、顺序循环、
   允许空打乱；不得添加网站没有的校验、提交或独立清空逻辑。
+- 成绩历史的自动标签必须只从 `@cuberoot/shared/timer/history-tags` 读取 ID、文案、顺序、toggle 和 PB/ao/MBLD 派生规则，徽标/筛选器只使用 `@cuberoot/timer-ui`；标签不写入 DB/备份。跳O/跳P 依赖 `stageSegments`，智能魔方的 move 收集与 stage producer 必须迁入 runtime-neutral shared 后由 Web/五端共用，不得在 App 再写一套识别器。
 - “手动输入打乱”和“手动录入成绩”是两项独立能力。成绩录入必须复用
   `@cuberoot/shared/timer` 的 normal/FMC/MBLD、OK/+2/DNF/DNS 规则与
   `@cuberoot/timer-ui` 的 `TimerManualEntryModal`；Web/已安装客户端只负责各自存储 adapter，

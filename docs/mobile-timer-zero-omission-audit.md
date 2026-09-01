@@ -195,7 +195,7 @@ shared 映射快照是 19 个 Timer ID：
 | Parity ID | Web 可达行为/状态 | Mobile 快照 |
 | --- | --- | --- |
 | `session.switcher` | 切换/新建/重命名/清空/删除，项目关联 | 数据 schema 有 session，UI 缺 |
-| `history.search-filter` | 文本搜索、日期、时间、罚时、case、tag 筛选 | 8 个稳定 filter ID、解析/筛选/清空语义已迁 shared 且 Web 真实消费；Mobile UI/持久化仍缺 |
+| `history.search-filter` | 文本搜索、日期、时间、罚时、case、tag 筛选 | 8 个 filter ID 与 8 类派生 tag 的解析/计算/筛选/清空语义已迁 shared，Web 和五端产品层共用同一 tag 徽标/筛选器；筛选不跨重启持久化，与网站一致。App 新产生的智能魔方成绩尚缺 `moves/stageSegments` producer，故跳O/跳P 只对已有分段数据的记录可用；OPPO 点击/TalkBack/全视口仍待验 |
 | `history.columns` | 可选 rolling columns，日分组，空态 | 缺 |
 | `history.quick-actions` | OK/+2/DNF/DNS、备注、复制、删除 | 7 个稳定 action ID/effect/visible/disabled/active、完整成绩行与单一快捷菜单/底部操作表（右键/长按、焦点、Escape/点外/scroll/resize、viewport clamp、quick-delete once/no-confirm）已迁 `timer-ui` 并由 Web/Mobile 共用。Mobile quick delete 已接 repository restore + 共用 5 秒 Undo；菜单也接入受控 overlay。OPPO 600ms 原位长按打开 sheet，七项、360px 宽度、64px 底部预留及真实 Back 只关菜单已验；备注 textarea 在 461px IME 视口完整可见且无横向溢出。iPhone 17 模拟器只验证了当前共享构建安装/启动，History 交互与全状态矩阵仍缺 |
 | `history.bulk` | 选择、批量删除、成绩对比 | 缺 |

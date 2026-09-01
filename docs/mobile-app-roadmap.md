@@ -79,6 +79,7 @@
 - 共享三阶打乱生成器和边界回归测试提交：`968d330692`。
 - 2026-08-30 BLE 复用边界：Mobile 只保留 Capacitor `BleTransport`；GAN v4、补帧、`MoveClock` 和 `SmartCubeStateTracker` 位于 `@cuberoot/shared`，网站旧路径只作兼容导出。移动端 28 项与网站智能魔方/时钟定向 30 项测试通过。
 - 2026-09-01 智能魔方逐步提示、匹配、偏离修正 requester、Solo 生命周期 controller 与模式 capability 已收敛到 shared；Kociemba cubie 逆运算只保留在 puzzle-solvers，Web 与五端产品层共用 `TimerScrambleStrip`，各宿主只保留 facelets/Worker/BLE 适配。最新 debug APK 已覆盖安装到 OPPO，但安装时手机锁屏，因此新版提示、故意偏离、修正完成和首个 Worker 冷启动延迟仍须解锁后用 GAN 16 UI 实测，不能沿用旧版自动计时证据冒充。
+- 2026-09-01 成绩历史的 8 类自动标签、PB/ao/MBLD 计算、OR 筛选、徽标和响应式折叠已由 Web 与五端共用 shared/timer-ui 实现；新 Android APK 已覆盖安装并回读核对。手机锁屏，所以标签点击/TalkBack 未记为通过；App 智能魔方新成绩仍须共享化 `moves/stageSegments` producer 才能自产跳O/跳P。
 
 ### 阶段 2A：五端一次到位架构
 

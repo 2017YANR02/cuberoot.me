@@ -1364,11 +1364,11 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The eight-field Timing settings UI shared by the Web, Android, and iOS timers. Field order, bilingual copy, hold threshold, inspection toggle, and both precision selectors come from @cuberoot/shared/timer settings-contract. Hosts only inject persistence and their existing switch visual primitive; they must not duplicate the field list or normalization.',
   },
   {
-    name: 'TimerHistoryRow / TimerHistoryCommentEditor',
-    import: "import { TimerHistoryRow, TimerHistoryCommentEditor } from '@cuberoot/timer-ui';",
+    name: 'TimerHistoryRow / TimerHistoryCommentEditor / TimerHistoryTags',
+    import: "import { TimerHistoryRow, TimerHistoryCommentEditor, TimerHistoryTagBadges, TimerHistoryTagFilter } from '@cuberoot/timer-ui';",
     category: 'more',
-    zh: 'Web、Android 与 iOS 计时器共用的完整成绩行、单一快捷菜单/底部操作表和注释编辑器。结果格式、七项动作顺序、右键/长按、键盘焦点、Escape/点外/滚动/缩放关闭、visualViewport clamp 与失焦原文保存只维护这一份；宿主注入真实持久化/剪贴板/详情副作用，没绑定的动作不会画成假入口。快捷删除不二次确认，只调用宿主一次，由宿主负责撤销。',
-    en: 'The complete solve row, single quick-menu/bottom-sheet, and comment editor shared by the Web, Android, and iOS timers. Result formatting, seven-action order, context-menu/long-press, keyboard focus, Escape/outside/scroll/resize dismissal, visualViewport clamping, and exact-text blur saving live in one implementation. Hosts inject real persistence/clipboard/detail effects; unbound effects are omitted instead of rendered as fake entries. Quick delete does not confirm again and invokes its host once; the host owns undo.',
+    zh: 'Web 与五个安装端计时器共用的完整成绩行、快捷菜单、注释编辑器、派生标签徽标和标签筛选器。结果格式、动作顺序、右键/长按、键盘焦点、隐藏标签的完整读屏文案和标签顺序只维护一份；宿主只注入真实持久化/剪贴板/详情副作用和共享标签计算结果。',
+    en: 'The complete solve row, quick menu, comment editor, derived-tag badges, and tag filter shared by Web and all five installed clients. Result formatting, action order, context-menu/long-press, keyboard focus, full accessible copy for hidden tags, and tag order live in one implementation; hosts only inject real persistence/clipboard/detail effects and the shared derived-tag result.',
   },
   {
     name: 'TimerInfoToast',
