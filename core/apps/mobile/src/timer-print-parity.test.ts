@@ -144,7 +144,8 @@ describe('shared timer print document', () => {
   });
 
   it('keeps Mobile native code limited to print transport', () => {
-    const mobile = readFileSync('src/App.tsx', 'utf8');
+    const appUiEntry = new URL(import.meta.resolve('@cuberoot/app-ui'));
+    const mobile = readFileSync(new URL('./App.tsx', appUiEntry), 'utf8');
     const android = readFileSync('android/app/src/main/java/me/cuberoot/app/TimerPrintPlugin.java', 'utf8');
     const ios = readFileSync('ios/App/App/SceneDelegate.swift', 'utf8');
 

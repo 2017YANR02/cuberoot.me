@@ -7,8 +7,8 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "vite build",
+    "dev": "node ../../scripts/build-cubing-worker.mjs apps/mobile/public/cubing-chunks && vite --host 127.0.0.1",
+    "build": "node ../../scripts/build-cubing-worker.mjs apps/mobile/public/cubing-chunks && vite build",
     "test": "vitest run",
     "typecheck": "tsgo --noEmit",
     "assets:android": "node scripts/gen-android-assets.mjs",
@@ -34,6 +34,7 @@
     "@capacitor/haptics": "8.0.2",
     "@capacitor/ios": "8.5.0",
     "@capacitor/network": "8.0.1",
+    "@cuberoot/app-ui": "workspace:*",
     "@cuberoot/event-icon": "workspace:*",
     "@cuberoot/puzzle-solvers": "workspace:*",
     "@cuberoot/shared": "workspace:*",

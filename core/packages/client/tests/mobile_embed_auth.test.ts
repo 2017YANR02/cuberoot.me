@@ -1,8 +1,12 @@
 // @vitest-environment jsdom
 
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { mobileEmbedAccountAuthRequest } from '@/lib/mobile-embed-auth';
+
+const bridgeSource = readFileSync(resolve('components/MobileEmbedBridge.tsx'), 'utf8');
 
 describe('mobile Account login delegation', () => {
   it('delegates email, phone, and password interactions to the first-party Browser flow', () => {
@@ -33,5 +37,12 @@ describe('mobile Account login delegation', () => {
     expect(mobileEmbedAccountAuthRequest(document.getElementById('wca'))?.provider).toBe('wca');
     expect(mobileEmbedAccountAuthRequest(document.getElementById('invalid'))?.provider).toBeNull();
     expect(mobileEmbedAccountAuthRequest(document.getElementById('outside'))).toBeNull();
+  });
+
+  it('sends nothing to an untrusted parent before an origin-bound init handshake', () => {
+    expect(bridgeSource).toContain('let parentOrigin: string | null = null');
+    expect(bridgeSource).toContain('const init = decodeMobileEmbedInit(event.data)');
+    expect(bridgeSource).toContain('parentOrigin = event.origin');
+    expect(bridgeSource).not.toMatch(/postMessage\([^)]*,\s*['"]\*['"]\)/);
   });
 });

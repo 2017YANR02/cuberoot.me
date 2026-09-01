@@ -503,19 +503,24 @@
       "driftPolicy": "The generator requires an explicit TNoodle i18n directory and --write or --check. Generated headers remain repository-relative and must never record a machine-local checkout path."
     },
     {
-      "id": "client.cubing-worker",
+      "id": "runtime.cubing-worker",
       "kind": "build-output",
       "source": {
         "locator": "the installed cubing dependency and the worker bundler",
-        "paths": ["core/packages/client/scripts/build-cubing-worker.mjs"]
+        "paths": ["core/scripts/build-cubing-worker.mjs"]
       },
-      "license": { "spdx": "NOASSERTION", "evidence": "dependency licenses and LICENSE" },
-      "owner": "core/packages/client/scripts/build-cubing-worker.mjs",
+      "license": { "spdx": "(MPL-2.0 OR GPL-3.0-or-later) AND Unlicense AND Apache-2.0", "evidence": "cubing/package.json, random-uint-below/package.json, cubing's vendored Comlink source header, and the generated worker SPDX banner" },
+      "owner": "core/scripts/build-cubing-worker.mjs",
       "workingDirectory": "core",
-      "command": "pnpm --filter @cuberoot/client build",
-      "transientOutputs": ["core/packages/client/public/cubing-chunks/**"],
-      "verification": ["the client production build and bundle smoke checks"],
-      "driftPolicy": "The bundle directory is gitignored build output. Regenerate it through the client build and never commit or edit it as source."
+      "command": "node scripts/build-cubing-worker.mjs <host-public-dir>/cubing-chunks",
+      "transientOutputs": [
+        "core/packages/client/public/cubing-chunks/**",
+        "core/apps/mobile/public/cubing-chunks/**",
+        "core/apps/desktop/public/cubing-chunks/**",
+        "core/apps/harmony/public/cubing-chunks/**"
+      ],
+      "verification": ["each host production build and a real 3x3 scramble smoke check"],
+      "driftPolicy": "The host bundle directories are gitignored build outputs. Regenerate them through each host build and never commit or edit them as source."
     },
     {
       "id": "client.deskpet-cube",
@@ -583,23 +588,128 @@
       "id": "mobile.capacitor-build",
       "kind": "build-output",
       "source": {
-        "locator": "mobile Web source and the tracked Android project",
-        "paths": ["core/apps/mobile/src/**", "core/apps/mobile/android/**"]
+        "locator": "the shared installed-client React product, Capacitor host, and tracked Android/iOS projects",
+        "paths": [
+          "core/packages/app-ui/src/**",
+          "core/apps/mobile/src/**",
+          "core/apps/mobile/android/**",
+          "core/apps/mobile/ios/**"
+        ]
       },
       "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and dependency licenses" },
       "owner": "core/apps/mobile",
       "workingDirectory": "core",
-      "command": "pnpm --filter @cuberoot/mobile build; run the selected Gradle task from the Android project",
+      "command": "pnpm --filter @cuberoot/mobile build; pnpm --filter @cuberoot/mobile cap:sync; run the selected Android Gradle or iOS Xcode task",
       "transientOutputs": [
         "core/apps/mobile/dist/**",
         "core/apps/mobile/android/.gradle/**",
         "core/apps/mobile/android/build/**",
         "core/apps/mobile/android/app/build/**",
         "core/apps/mobile/android/capacitor-cordova-android-plugins/build/**",
-        "core/apps/mobile/android/local.properties"
+        "core/apps/mobile/android/local.properties",
+        "core/apps/mobile/ios/**/DerivedData/**"
       ],
-      "verification": ["the Web build and selected Android Gradle build complete from tracked sources"],
-      "driftPolicy": "These outputs and local configuration are gitignored and never become editable source or tracked generated artifacts."
+      "verification": ["the shared Web build, Capacitor sync, and selected Android or iOS native build complete from tracked sources; record installation, device, signing, and store evidence separately"],
+      "driftPolicy": "These outputs and local configuration are gitignored and never become editable source or tracked generated artifacts. An Android build is not iOS evidence and neither platform's local build is signing or store evidence."
+    },
+    {
+      "id": "desktop.tauri-build",
+      "kind": "build-output",
+      "source": {
+        "locator": "the shared installed-client React product and the single Windows/macOS Tauri host",
+        "paths": [
+          "core/packages/app-ui/src/**",
+          "core/apps/desktop/package.json",
+          "core/apps/desktop/vite.config.ts",
+          "core/apps/desktop/src/**",
+          "core/apps/desktop/src-tauri/Cargo.toml",
+          "core/apps/desktop/src-tauri/Cargo.lock",
+          "core/apps/desktop/src-tauri/build.rs",
+          "core/apps/desktop/src-tauri/Info.plist",
+          "core/apps/desktop/src-tauri/tauri.conf.json",
+          "core/apps/desktop/src-tauri/capabilities/**",
+          "core/apps/desktop/src-tauri/icons/**",
+          "core/apps/desktop/src-tauri/src/**"
+        ]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and dependency licenses" },
+      "owner": "core/apps/desktop",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/desktop build; pnpm --filter @cuberoot/desktop tauri:build",
+      "transientOutputs": [
+        "core/apps/desktop/dist/**",
+        "core/apps/desktop/src-tauri/target/**",
+        "core/apps/desktop/src-tauri/gen/**"
+      ],
+      "verification": [
+        "run the Tauri native build separately on Windows and macOS",
+        "verify each produced installer or bundle independently; record installation, BLE, signing, notarization, and distribution evidence separately"
+      ],
+      "driftPolicy": "The same Tauri source owns both desktop platforms, but an artifact produced on one OS is not build or installation evidence for the other. Unsigned local bundles are not signed, notarized, or released artifacts."
+    },
+    {
+      "id": "harmony.hap-build",
+      "kind": "build-output",
+      "source": {
+        "locator": "the shared installed-client React product and the HarmonyOS NEXT ArkTS/ArkWeb host",
+        "paths": [
+          "core/packages/app-ui/src/**",
+          "core/apps/harmony/package.json",
+          "core/apps/harmony/vite.config.ts",
+          "core/apps/harmony/src/**",
+          "core/apps/harmony/scripts/**",
+          "core/apps/harmony/AppScope/**",
+          "core/apps/harmony/build-profile.json5",
+          "core/apps/harmony/hvigorfile.ts",
+          "core/apps/harmony/oh-package.json5",
+          "core/apps/harmony/entry/build-profile.json5",
+          "core/apps/harmony/entry/hvigorfile.ts",
+          "core/apps/harmony/entry/oh-package.json5",
+          "core/apps/harmony/entry/obfuscation-rules.txt",
+          "core/apps/harmony/entry/src/main/ets/**",
+          "core/apps/harmony/entry/src/main/module.json5",
+          "core/apps/harmony/entry/src/main/resources/base/**",
+          "core/apps/harmony/entry/src/main/resources/dark/**"
+        ]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and dependency licenses" },
+      "owner": "core/apps/harmony",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/harmony build; then run the installed DevEco Studio Hvigor assembleHap task for core/apps/harmony",
+      "transientOutputs": [
+        "core/apps/harmony/dist/**",
+        "core/apps/harmony/entry/src/main/resources/rawfile/app/**",
+        "core/apps/harmony/.hvigor/**",
+        "core/apps/harmony/entry/build/**"
+      ],
+      "verification": [
+        "the Vite build and asset sync complete before the official Hvigor HAP build",
+        "inspect the HAP output and build log; record device installation, ArkWeb/bridge/BLE behavior, signing, and distribution evidence separately"
+      ],
+      "driftPolicy": "The Web bundle copied into rawfile and all HAP build directories are generated and gitignored. A Vite build alone is not HAP evidence; an unsigned HAP is not device, signing, or release evidence."
+    },
+    {
+      "id": "timer.print-pdf-qa",
+      "kind": "build-output",
+      "source": {
+        "locator": "the single shared timer print document plus its bilingual Playwright QA renderer",
+        "paths": [
+          "core/packages/shared/src/timer/print-document.ts",
+          "core/packages/timer-ui/src/TimerPrintDocument.tsx",
+          "core/packages/timer-ui/src/timer-print-document.css",
+          "core/packages/client/scripts/render-mobile-timer-pdfs.cjs"
+        ]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and embedded font dependency licenses" },
+      "owner": ["core/packages/timer-ui", "core/packages/client/scripts/render-mobile-timer-pdfs.cjs"],
+      "workingDirectory": "core",
+      "command": "serve the current installed-client preview, then run node packages/client/scripts/render-mobile-timer-pdfs.cjs <preview-url> ../output/pdf",
+      "transientOutputs": [
+        "output/pdf/cuberoot-timer-zh.pdf",
+        "output/pdf/cuberoot-timer-en.pdf"
+      ],
+      "verification": ["render both PDFs page by page and check fixture markers, embedded Unicode text, pagination, clipping, overlap, and horizontal overflow"],
+      "driftPolicy": "Chinese and English PDFs are generated from the same shared React print document and fixture renderer. They are QA evidence, not separately maintained templates or store documents."
     },
     {
       "id": "miniprogram.dist",

@@ -11,6 +11,11 @@ export const MOBILE_EMBED_FRAME_NAMES = {
 
 export type MobileEmbedSurface = keyof typeof MOBILE_EMBED_FRAME_NAMES;
 
+export interface MobileEmbedInitMessage {
+  surface: MobileEmbedSurface;
+  type: 'cuberoot:mobile:init';
+}
+
 export interface MobileEmbedNavigationMessage {
   depth: number;
   href: string;
@@ -69,6 +74,10 @@ export function mobileEmbedBackMessage(surface: MobileEmbedSurface): MobileEmbed
   return { surface, type: 'cuberoot:mobile:back' };
 }
 
+export function mobileEmbedInitMessage(surface: MobileEmbedSurface): MobileEmbedInitMessage {
+  return { surface, type: 'cuberoot:mobile:init' };
+}
+
 export function mobileEmbedAuthRequestMessage(
   provider: MobileAuthProvider | null = null,
 ): MobileEmbedAuthRequestMessage {
@@ -110,6 +119,16 @@ export function decodeMobileEmbedBack(value: unknown): MobileEmbedBackMessage | 
     return null;
   }
   return candidate as MobileEmbedBackMessage;
+}
+
+export function decodeMobileEmbedInit(value: unknown): MobileEmbedInitMessage | null {
+  if (!value || typeof value !== 'object') return null;
+  const candidate = value as Partial<MobileEmbedInitMessage>;
+  if (candidate.type !== 'cuberoot:mobile:init'
+    || (candidate.surface !== 'tools' && candidate.surface !== 'account')) {
+    return null;
+  }
+  return candidate as MobileEmbedInitMessage;
 }
 
 export function decodeMobileEmbedAuthRequest(value: unknown): MobileEmbedAuthRequestMessage | null {

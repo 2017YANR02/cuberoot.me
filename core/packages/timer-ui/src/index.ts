@@ -20,6 +20,7 @@ import './gesture-wheel.css';
 import './history-row.css';
 import './info-toast.css';
 import './scramble-strip.css';
+import './room-qr-modal.css';
 import './timer-print-document.css';
 
 export { default as TimingSurface } from './TimingSurface';
@@ -105,6 +106,8 @@ export type {
 } from './TimerScrambleStrip';
 export { TimerPrintDocument } from './TimerPrintDocument';
 export type { TimerPrintDocumentProps } from './TimerPrintDocument';
+export { RoomQrModal } from './RoomQrModal';
+export type { RoomQrModalLabels, RoomQrModalProps } from './RoomQrModal';
 export { TimerPrintController } from './TimerPrintController';
 export type {
   TimerPrintControllerHandle,

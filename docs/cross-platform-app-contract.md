@@ -6,17 +6,17 @@
 
 仓库所有者决定：CubeRoot 的已安装客户端从现在起按 Android、iOS、HarmonyOS NEXT、Windows 和 macOS 五个平台一次设计，网站继续作为第六个在线 surface 与内容事实源。五端不是五套产品代码；任何实现都必须优先扩展共享层和平台能力接口，不得为某个平台复制计时器、对战、账号、工具目录、智能魔方协议或业务状态。
 
-“一步到位”在本文中的含义是：现在就锁定五端产品范围、源码归属、宿主边界、能力接口、验收矩阵和总体完成口径，并把后续实现放进同一条路线图。它不表示尚未创建的宿主、未跑过的真机或未通过的商店审核可以提前标记完成。
+“一步到位”在本文中的含义是：现在就锁定五端产品范围、源码归属、宿主边界、能力接口、验收矩阵和总体完成口径，并把后续实现放进同一条路线图。它不表示宿主源码存在就等于已经完成本地构建、安装、真机/实体电脑、签名或发布验收。
 
 ## 1. 五个平台，一个产品
 
 | 平台 | 正式宿主 | 共享内容 | 只允许留在宿主内的代码 |
 | --- | --- | --- | --- |
-| Android | `core/apps/mobile` Capacitor Android | 共享 React App、`@cuberoot/timer-ui`、`@cuberoot/shared`、网站 Tools/Account surface | Android 权限、BLE transport、返回键、深链、Keystore、签名 |
-| iOS | `core/apps/mobile` Capacitor iOS | 与 Android 同一份 React App、UI 和业务逻辑 | Core Bluetooth transport、URL Types、Keychain、系统分享/打印、签名 |
-| HarmonyOS NEXT | 计划中的 `core/apps/harmony` ArkTS + ArkWeb 薄宿主 | 与其他客户端同一份 React App、UI、业务规则和网站 surface | ArkWeb 生命周期、鸿蒙 BLE/权限、安全存储、深链、分享和签名 |
-| Windows | 计划中的 `core/apps/desktop` Tauri 桌面宿主 | 与 macOS 同一桌面工程，并消费同一份 React App、UI 和业务逻辑 | WebView2 窗口、Windows BLE/凭据库、文件、协议唤起、签名/安装包 |
-| macOS | 同一个 `core/apps/desktop` Tauri 桌面宿主 | 与 Windows 同一桌面工程，并消费同一份 React App、UI 和业务逻辑 | WKWebView 窗口、Core Bluetooth/Keychain、文件、URL scheme、签名/公证 |
+| Android | `core/apps/mobile` Capacitor Android | `@cuberoot/app-ui`、`@cuberoot/timer-ui`、`@cuberoot/shared`、网站 Tools/Account surface | Android 权限、BLE transport、返回键、深链、Keystore、签名 |
+| iOS | `core/apps/mobile` Capacitor iOS | 与 Android 同一份 `@cuberoot/app-ui`、UI 和业务逻辑 | Core Bluetooth transport、URL Types、Keychain、系统分享/打印、签名 |
+| HarmonyOS NEXT | `core/apps/harmony` ArkTS + ArkWeb 薄宿主（unsigned HAP 已构建，设备待验） | 与其他客户端同一份 `@cuberoot/app-ui`、UI、业务规则和网站 surface | ArkWeb 生命周期、鸿蒙 BLE/权限、安全存储、深链、分享和签名 |
+| Windows | `core/apps/desktop` Tauri 桌面宿主 | 与 macOS 同一桌面工程，并消费同一份 `@cuberoot/app-ui` | WebView2 窗口、Windows BLE/凭据库、文件、协议唤起、签名/安装包 |
+| macOS | 同一个 `core/apps/desktop` Tauri 桌面宿主 | 与 Windows 同一桌面工程，并消费同一份 `@cuberoot/app-ui` | WKWebView 窗口、Core Bluetooth/Keychain、文件、URL scheme、签名/公证 |
 
 各平台当前状态和证据只见 [mobile-app-roadmap.md](./mobile-app-roadmap.md)。
 
@@ -31,7 +31,7 @@
                   core/packages/client
                             │
 共享 React 产品层 ──────────┼────────── 计时器共享 UI（目标唯一实现）
-@cuberoot/app-ui（第二宿主落地时提取）     @cuberoot/timer-ui
+@cuberoot/app-ui（五端唯一产品层）          @cuberoot/timer-ui
                             │
 共享领域、协议、schema、状态机、能力契约
                   @cuberoot/shared
@@ -47,7 +47,7 @@
 
 - `@cuberoot/shared` 只放运行时中性的模型、schema、算法、协议、状态机和平台能力契约；禁止引用任一 app。
 - `@cuberoot/timer-ui` 必须成为网站和五端计时器 UI 的完整唯一实现；任何宿主不得新增或复制 `SoloView`、本地/联网多人、来源选择、历史、统计、设置或智能魔方交互。迁移进度只见路线图。
-- 五端共用的三栏组合、导航状态、在线 surface 容器和 App 级错误/离线状态，在第二个非 Capacitor 宿主真正落地的同一提交中，从 `core/apps/mobile` 提取为 `@cuberoot/app-ui`。在出现第二个消费者前不创建空包；出现第二个消费者后不得让其 import `core/apps/mobile` 源码或 `dist`。
+- `@cuberoot/app-ui` 是五端共用三栏组合、导航状态、在线 surface 容器和 App 级错误/离线状态的唯一 React 产品层；Mobile、Desktop 与 Harmony 只消费其公开入口，不得 import 其他 app 源码或 `dist`。
 - `core/apps/mobile`、`core/apps/harmony`、`core/apps/desktop` 只能是宿主，不得互相 import 源码、CSS、生成物或私有配置。
 - 平台差异保持小而明确，例如 BLE、安全存储、认证、文件、分享、打印、保亮和生命周期 adapter。现有单宿主接口留在所属 app；只有第二个真实消费者出现时，才在同一变更中逐项提取运行时中性 capability contract 到共享层；系统调用始终留在宿主。
 - 网站的 Next 路由、SEO、Server Component 和服务端代理仍留在 `core/packages/client`；不得为了五端复用把这些依赖拖进 App UI。
@@ -70,11 +70,11 @@
 
 五端是同一个总体里程碑，但实现可以按依赖顺序推进：
 
-1. 先完成共享领域、`@cuberoot/timer-ui` 和现有 Android/iOS 的事实迁移，消除尚存的 Web/Mobile 重复。
-2. 创建第二个宿主时同步提取 `@cuberoot/app-ui`，确保第一天就有两个真实消费者和契约测试。
-3. 建立一个 `core/apps/desktop`，同一源码产出 Windows 和 macOS；不得先复制 Mobile 后再“以后合并”。
-4. 建立一个 `core/apps/harmony`，ArkWeb 加载本地构建的共享 React App；不得用 ArkUI 重写三栏和计时器，也不得把远程整站作为启动运行代码。
-5. 每个真实宿主只接入它实际需要的 adapters；第二消费者出现时同步提取对应 capability contracts，并补契约测试、端到端场景和发布证据。
+1. `@cuberoot/app-ui` 已从 Mobile 提取，Mobile 和 Desktop 是真实消费者，Harmony 也从同一入口构建 Web bundle。
+2. `core/apps/desktop` 始终以同一源码产出 Windows 和 macOS；不得复制 Mobile 或拆成两个业务工程。
+3. `core/apps/harmony` 只用 ArkWeb 加载本地构建的共享 React App；不得用 ArkUI 重写三栏和计时器，也不得把远程整站作为启动运行代码。
+4. 每个宿主只接入它实际需要的 adapters；已有多宿主消费的 capability contract 留在 `@cuberoot/app-ui`，系统调用留在宿主。
+5. 继续完成 `@cuberoot/timer-ui` 零遗漏迁移、各宿主构建/安装与平台矩阵；源码存在不是完成证据。
 
 禁止：
 
@@ -89,8 +89,8 @@
 
 进度只在 [mobile-app-roadmap.md](./mobile-app-roadmap.md) 记账，本文不维护第二份勾选状态。五端总体完成必须同时满足：
 
-- 网站/Mobile 计时器完成零遗漏迁移，`@cuberoot/timer-ui` 是完整唯一实现。
-- 第二宿主落地时建立有真实消费者的 `@cuberoot/app-ui`，并迁移三栏产品组合。
+- 网站/五端计时器完成零遗漏迁移，`@cuberoot/timer-ui` 是完整唯一实现。
+- 五端都消费同一 `@cuberoot/app-ui` 三栏产品层，无 app→app 源码或生成物依赖。
 - `core/apps/desktop` 的同一 Tauri 工程完成 Windows 与 macOS 构建、安装和自动化。
 - `core/apps/harmony` 完成 ArkWeb 本地 bundle 与 ArkTS platform adapters。
 - 五端共用账号、同步、多人、智能魔方和全部三栏功能；无平台私有业务副本。

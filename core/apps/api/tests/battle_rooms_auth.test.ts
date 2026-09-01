@@ -20,9 +20,11 @@ vi.mock('../src/utils/analytics_helpers.js', () => ({ getIp: vi.fn(() => '127.0.
 vi.mock('../src/utils/recon_helpers.js', () => ({ checkRateLimit: vi.fn() }));
 
 import { battleRoomsRoutes } from '../src/routes/battle_rooms.js';
+import { apiCors } from '../src/api_cors.js';
 import { hashBattlePlayerToken } from '../src/utils/battle_room_auth.js';
 
 const app = new Hono().route('/v1', battleRoomsRoutes);
+const corsApp = new Hono().use('*', apiCors);
 const PLAYER_TOKEN = 'a'.repeat(43);
 const PLAYER_ID = 'player1234';
 
@@ -79,11 +81,27 @@ describe('battle-room player capabilities', () => {
     expect(mocks.query).not.toHaveBeenCalled();
   });
 
-  it('allows the private capability header through Web and Capacitor preflights', () => {
-    const source = readFileSync(new URL('../src/index.ts', import.meta.url), 'utf8');
-    expect(source).toContain("allowHeaders: ['Content-Type', 'Authorization', 'X-Battle-Token']");
-    expect(source).toContain("'capacitor://localhost'");
-    expect(source).toContain("'https://localhost'");
+  it('allows Tauri preflights and capability headers while rejecting untrusted origins', async () => {
+    const preflight = (origin: string) => corsApp.request('/v1/battle/rooms', {
+      method: 'OPTIONS',
+      headers: {
+        Origin: origin,
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'authorization,x-battle-token',
+      },
+    });
+
+    for (const origin of ['tauri://localhost', 'https://tauri.localhost']) {
+      const response = await preflight(origin);
+      expect(response.status).toBe(204);
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe(origin);
+      expect(response.headers.get('Access-Control-Allow-Headers')?.toLowerCase().split(','))
+        .toEqual(['content-type', 'authorization', 'x-battle-token']);
+    }
+
+    const rejected = await preflight('https://evil.example');
+    expect(rejected.status).toBe(204);
+    expect(rejected.headers.has('Access-Control-Allow-Origin')).toBe(false);
   });
 
   it('keeps revision and self-hosted media generation in every schema source and write', () => {

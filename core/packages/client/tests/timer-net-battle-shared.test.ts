@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   NET_EVENTS,
+  NET_BATTLE_REQUEST_TIMEOUT_MS,
   acceptNetRoomResponse,
   createNetBattleClient,
+  createNetBattleSessionStore,
   createNetAdmissionGate,
   decodeNetRoomState,
   effectiveNetMs,
@@ -42,6 +44,26 @@ const ROOM: NetRoomState = {
 };
 
 describe('shared online battle migration', () => {
+  it('owns the one secure-session key and JSON codec for every installed host', async () => {
+    let raw: string | null = null;
+    const storage = {
+      getItem: vi.fn(async () => raw),
+      setItem: vi.fn(async (_key: string, value: string) => { raw = value; }),
+      removeItem: vi.fn(async () => { raw = null; }),
+    };
+    const store = createNetBattleSessionStore(storage);
+    const session = { code: '0427', name: 'Cuber', ...AUTH };
+
+    await store.save(session);
+    expect(await store.load()).toEqual(session);
+    expect(storage.setItem).toHaveBeenCalledWith('net_battle_session', JSON.stringify(session));
+    raw = '{bad json';
+    expect(await store.load()).toBeNull();
+    await store.clear();
+    expect(storage.removeItem).toHaveBeenCalledWith('net_battle_session');
+    await expect(store.save({ ...session, playerToken: 'short' })).rejects.toThrow('invalid battle session');
+  });
+
   it('serializes explicit admissions and lets a user choice supersede a delayed restore', () => {
     const gate = createNetAdmissionGate();
     const first = gate.beginExclusive();
@@ -104,7 +126,8 @@ describe('shared online battle migration', () => {
     expect(admission.state).toEqual(ROOM);
     expect(admission.state).not.toHaveProperty('playerId');
     expect(admission.state).not.toHaveProperty('playerToken');
-    expect(fetcher.mock.calls[1][1]).toEqual({ headers: { 'X-Battle-Token': AUTH.playerToken } });
+    expect(fetcher.mock.calls[1][1]).toMatchObject({ headers: { 'X-Battle-Token': AUTH.playerToken } });
+    expect(fetcher.mock.calls[1][1]?.signal).toBeInstanceOf(AbortSignal);
     for (const call of fetcher.mock.calls.slice(1)) {
       expect(new Headers(call[1]?.headers).get('X-Battle-Token')).toBe(AUTH.playerToken);
       expect(String(call[0])).not.toContain(AUTH.playerToken);
@@ -123,6 +146,30 @@ describe('shared online battle migration', () => {
       round: 3,
       force: true,
     });
+  });
+
+  it('aborts a half-open room request after the shared deadline', async () => {
+    vi.useFakeTimers();
+    try {
+      const fetcher = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => (
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            reject(new DOMException('The operation was aborted', 'AbortError'));
+          }, { once: true });
+        })
+      ));
+      const client = createNetBattleClient({
+        apiUrl: (path) => `https://api.example.test${path}`,
+        fetcher,
+      });
+      const request = client.getNetRoom('0427', AUTH);
+      const assertion = expect(request).rejects.toMatchObject({ name: 'AbortError' });
+      await vi.advanceTimersByTimeAsync(NET_BATTLE_REQUEST_TIMEOUT_MS);
+      await assertion;
+      expect(fetcher.mock.calls[0][1]?.signal?.aborted).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('preserves server error messages for the shared bilingual classifier', async () => {

@@ -294,6 +294,15 @@ export function applyCubieAlg(state: CubieState, alg: string): CubieState {
   return cur;
 }
 
+/** One canonical scramble-to-facelets target for solo and multiplayer auto timing. */
+export function smartCubeTargetFacelets(scramble: string): string | null {
+  try {
+    return cubieToFacelets(applyCubieAlg(solvedCubie(), scramble));
+  } catch {
+    return null;
+  }
+}
+
 export const SOLVED_SMART_CUBE_FACELETS =
   'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB';
 

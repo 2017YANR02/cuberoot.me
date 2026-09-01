@@ -1,13 +1,13 @@
 # CubeRoot 会员支付总体方案
 
-状态：网站银行卡适配代码已完成并默认关闭；商户尚未获批/配置，移动端登录与原生内购尚未实现
-最后更新：2026-08-28
+状态：网站银行卡适配代码已完成并默认关闭；商户尚未获批/配置；五端共享登录源码已接线但生产/provider/设备矩阵未完成，原生内购尚未实现
+最后更新：2026-08-31
 
 本文是 CubeRoot 会员支付的设计事实源，供后续开发者和 AI 接续工作。实现前必须重新核对当前源码、商户资质、支付渠道后台和应用商店最新政策，不能把本文中的候选服务商当成已开通能力。
 
 ## 1. 目标
 
-CubeRoot 最终提供一套跨网站、Android 和 iOS 共用的会员权益：
+CubeRoot 最终提供一套跨网站和五端已安装客户端共用的会员权益：
 
 - 网站支持支付宝、微信、中国银行卡和外国银行卡付款。
 - 网站用户可主动打开对应的 Android 或 iOS App，并在 App 内完成原生商店支付。
@@ -43,20 +43,20 @@ CubeRoot 最终提供一套跨网站、Android 和 iOS 共用的会员权益：
 - 支持支付宝、微信、虎皮椒聚合渠道和管理员手动开通。
 - 月度和年度当前都是一次性购买，到期后手动续费，不是真正的自动续费。
 - 订单以 `out_trade_no` 幂等结算，异步回调验签后开通会员。
-- 当前会员和订单主要以 `wca_id` 归属，尚未形成适合网站账号、Android 和 iOS 的统一内部用户所有权。
+- 当前会员和订单主要以 `wca_id` 归属，尚未形成适合网站账号和五端已安装客户端的统一内部用户所有权。
 - 已接入 Airwallex 托管银行卡收银台适配器，包含建单、HMAC webhook 验签、订单金额/币种核对、主动查单和幂等开通。
 - 银行卡入口默认隐藏；只有真实商户凭据、webhook 密钥和对应渠道开关均配置后才会显示。代码就绪不代表中国大陆主体已经获批收单。
 
-### 移动端
+### 已安装客户端
 
-唯一移动端工程是 `core/apps/mobile`，使用 React、Vite 和 Capacitor 8。Android 和 iOS 共用 React UI 与业务代码，平台工程只承载原生能力。
+五端共享产品层是 `core/packages/app-ui`。Android/iOS 使用 `core/apps/mobile` 的 Capacitor 宿主，Windows/macOS 使用同一个 `core/apps/desktop` Tauri 宿主，HarmonyOS NEXT 使用 `core/apps/harmony` ArkWeb 宿主；各平台工程只承载系统能力。
 
 当前 App：
 
-- 没有账号登录和安全会话存储。
+- 已复用网站唯一账号系统、PKCE 单次票据和共享认证客户端；源码 adapter 分别面向 Android/iOS Keychain/Keystore、Desktop 系统 keyring 和 HarmonyOS 系统安全存储。该源码已接线不等于生产部署、设备安全存储或真实 provider 登录已经通过，各平台仍按路线图分别验收。
 - 没有会员页、会员状态或恢复购买。
 - 没有 Google Play Billing、StoreKit 或其他支付 SDK。
-- 没有网站到 App 的已验证 App Links / Universal Links 购买交接。
+- 没有网站到 App 的已验证购买交接。
 - 仍按免费、无订阅 App 填写现有商店资料。
 
 ## 3. 不得混淆的三类付款

@@ -196,6 +196,32 @@ export interface TimerScrambleDependencies {
   readonly generateSharedScramble?: TimerSharedScrambleGenerator;
   /** Deterministic seam for constant-choice recipes such as Magic. */
   readonly random?: () => number;
+  /** Prevent a stalled worker/provider from leaving the visible timer unusable. */
+  readonly requestTimeoutMs?: number;
+}
+
+const DEFAULT_TIMER_SCRAMBLE_REQUEST_TIMEOUT_MS = 12_000;
+
+async function waitForTimerScramble<T>(
+  result: Promise<T>,
+  timeoutMs: number,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeout = setTimeout(
+      () => reject(new Error('timer scramble generation timed out')),
+      timeoutMs,
+    );
+    result.then(
+      (value) => {
+        clearTimeout(timeout);
+        resolve(value);
+      },
+      (error: unknown) => {
+        clearTimeout(timeout);
+        reject(error);
+      },
+    );
+  });
 }
 
 /** Runtime-safe lookup for URL/import values that may only pretend to be EventId. */
@@ -379,28 +405,31 @@ export async function generateTimerScramble(
     const provider: TimerScrambleProviderId = capability.kind === 'cubing'
       ? 'cubing'
       : capability.provider;
-    const generatedValue = capability.kind === 'cubing'
-      ? await (dependencies.generateCubingScramble ?? defaultCubingScrambleGenerator)(
-          capability.cubingEventId,
-          request.event,
-        )
-      : capability.provider === 'wca-pocket'
-          || capability.provider === 'cstimer-nonwca'
-          || capability.provider === 'small-puzzle-random-state'
-        ? dependencies.generateSharedScramble
-          ? await dependencies.generateSharedScramble(capability.provider, request.event, request)
-          : await defaultSharedScrambleGenerator(
+    const generatedValue = await waitForTimerScramble(
+      Promise.resolve(capability.kind === 'cubing'
+        ? (dependencies.generateCubingScramble ?? defaultCubingScrambleGenerator)(
+            capability.cubingEventId,
+            request.event,
+          )
+        : capability.provider === 'wca-pocket'
+            || capability.provider === 'cstimer-nonwca'
+            || capability.provider === 'small-puzzle-random-state'
+          ? dependencies.generateSharedScramble
+            ? dependencies.generateSharedScramble(capability.provider, request.event, request)
+            : defaultSharedScrambleGenerator(
+                capability.provider,
+                request.event,
+                request,
+                dependencies.random,
+              )
+          : defaultSharedScrambleGenerator(
               capability.provider,
               request.event,
               request,
               dependencies.random,
-            )
-        : await defaultSharedScrambleGenerator(
-            capability.provider,
-            request.event,
-            request,
-            dependencies.random,
-          );
+            )),
+      dependencies.requestTimeoutMs ?? DEFAULT_TIMER_SCRAMBLE_REQUEST_TIMEOUT_MS,
+    );
     const generated = typeof generatedValue === 'string'
       ? { scramble: generatedValue }
       : generatedValue;

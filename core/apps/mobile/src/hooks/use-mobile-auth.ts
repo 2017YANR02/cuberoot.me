@@ -1,96 +1,21 @@
 import { App as CapacitorApp } from '@capacitor/app';
-import type {
-  MobileAuthProvider,
-  WebSession,
-} from '@cuberoot/shared/auth/web-session';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  useInstalledAuth,
+  type InstalledAuthPort,
+  type SupportedLanguage,
+} from '@cuberoot/app-ui';
 
-import type { SupportedLanguage } from '../copy';
-import { nativeMobileAuth } from '../auth/mobile-auth';
+import { nativeMobileAuth } from '../mobile-auth';
 
-interface MobileAuthState {
-  busy: boolean;
-  error: boolean;
-  loading: boolean;
-  session: WebSession | null;
-}
+const mobileAuthPort: InstalledAuthPort = {
+  client: nativeMobileAuth,
+  async getLaunchUrls() {
+    const launch = await CapacitorApp.getLaunchUrl();
+    return launch?.url ? [launch.url] : [];
+  },
+  listen: (listener) => CapacitorApp.addListener('appUrlOpen', ({ url }) => listener(url)),
+};
 
 export function useMobileAuth(language: SupportedLanguage) {
-  const [state, setState] = useState<MobileAuthState>({
-    busy: false,
-    error: false,
-    loading: true,
-    session: null,
-  });
-
-  useEffect(() => {
-    let active = true;
-    let callbackApplied = false;
-    let removeUrlListener: (() => Promise<void>) | undefined;
-
-    const acceptCallback = async (url: string) => {
-      try {
-        const session = await nativeMobileAuth.finish(url);
-        if (active && session) {
-          callbackApplied = true;
-          setState({ busy: false, error: false, loading: false, session });
-        }
-      } catch {
-        if (active) setState((current) => ({ ...current, busy: false, error: true, loading: false }));
-      }
-    };
-
-    void CapacitorApp.addListener('appUrlOpen', ({ url }) => {
-      void acceptCallback(url);
-    }).then((handle) => {
-      if (active) removeUrlListener = handle.remove;
-      else void handle.remove();
-    });
-
-    // Cold-start callbacks must finish before restore. Otherwise an older restore result can
-    // overwrite the fresh session that just came back from the browser.
-    void (async () => {
-      const launch = await CapacitorApp.getLaunchUrl();
-      if (launch?.url) await acceptCallback(launch.url);
-      if (!active || callbackApplied) return;
-      const session = await nativeMobileAuth.restore();
-      if (active && !callbackApplied) {
-        setState((current) => ({ ...current, loading: false, session }));
-      }
-    })().catch(() => {
-      if (active) setState((current) => ({ ...current, error: true, loading: false }));
-    });
-
-    return () => {
-      active = false;
-      void removeUrlListener?.();
-    };
-  }, []);
-
-  const login = useCallback(async (provider: MobileAuthProvider | null = null) => {
-    setState((current) => ({ ...current, busy: true, error: false }));
-    try {
-      await nativeMobileAuth.start(language, provider);
-      setState((current) => ({ ...current, busy: false }));
-    } catch {
-      setState((current) => ({ ...current, busy: false, error: true }));
-    }
-  }, [language]);
-
-  const issueWebSessionTicket = useCallback(
-    () => nativeMobileAuth.issueWebSessionTicket(),
-    [],
-  );
-
-  const logout = useCallback(async () => {
-    setState((current) => ({ ...current, busy: true, error: false }));
-    try {
-      await nativeMobileAuth.logout();
-      setState({ busy: false, error: false, loading: false, session: null });
-    } catch {
-      setState((current) => ({ ...current, busy: false, error: true }));
-    }
-  }, []);
-
-  return { ...state, issueWebSessionTicket, login, logout };
+  return useInstalledAuth(language, mobileAuthPort);
 }

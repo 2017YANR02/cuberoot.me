@@ -1,0 +1,102 @@
+.room-qr-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: color-mix(in srgb, var(--background) 55%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.room-qr-modal {
+  position: relative;
+  width: max-content;
+  max-width: min(92vw, 340px);
+  padding: 22px 22px 18px;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.28);
+  text-align: center;
+}
+
+.room-qr-modal h2 {
+  margin: 0 0 14px;
+  color: var(--foreground);
+  font-size: 1rem;
+}
+
+.room-qr-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.room-qr-close:hover { color: var(--foreground); }
+
+/* QR contrast and quiet zone are protocol data, deliberately theme-independent. */
+.room-qr-code {
+  display: inline-flex;
+  padding: 12px;
+  border-radius: 10px;
+  background: white;
+}
+
+.room-qr-code svg {
+  display: block;
+  width: 200px;
+  height: 200px;
+}
+
+.room-qr-code-text {
+  margin-top: 12px;
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.room-qr-link {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  max-width: 100%;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 5px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  color: var(--muted-foreground);
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
+.room-qr-link:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+
+.room-qr-link-text {
+  overflow: hidden;
+  max-width: 240px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .room-qr-modal { padding: 18px 16px 14px; }
+  .room-qr-code svg { width: min(58vw, 200px); height: min(58vw, 200px); }
+  .room-qr-link-text { max-width: 60vw; }
+}

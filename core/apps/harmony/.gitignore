@@ -1,0 +1,15 @@
+/node_modules
+/oh_modules
+/dist
+/public/cubing-chunks/
+/entry/src/main/resources/rawfile/app
+/local.properties
+/.idea
+**/build
+/.hvigor
+.cxx
+/.clangd
+/.clang-format
+/.clang-tidy
+**/.test
+/.appanalyzer

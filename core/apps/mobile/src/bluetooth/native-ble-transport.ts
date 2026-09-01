@@ -10,7 +10,7 @@ import {
   type TimeoutOptions,
 } from '@capacitor-community/bluetooth-le';
 
-import type { BleDeviceRef, BleRequestOptions, BleTransport } from './transport';
+import type { BleDeviceRef, BleRequestOptions, BleTransport } from '@cuberoot/app-ui';
 
 export interface NativeBleClientPort {
   connect(deviceId: string, onDisconnect?: (deviceId: string) => void, options?: ConnectClientOptions): Promise<void>;

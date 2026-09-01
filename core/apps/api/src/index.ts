@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
-import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
+import { apiCors } from './api_cors.js';
 import { authRoutes } from './routes/auth.js';
 import { accountAuthRoutes } from './routes/account_auth.js';
 import { progressRoutes } from './routes/progress.js';
@@ -97,28 +97,7 @@ const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 // maxAge 缓存 preflight 一天,减少 edge 端的 OPTIONS 来回。
 // Phase 4 (2026-05-27): 主域全员切 Next; vite.cuberoot.me 已下线。
 // *.vercel.app 用 function 形式兜底,Vercel preview 每 PR 一个新 URL 全开。
-app.use('*', cors({
-  origin: (origin) => {
-    const allowed = new Set([
-      'http://localhost:3000',              // Next dev server
-      'http://127.0.0.1:3000',              // Next dev server (binds 127.0.0.1; SSE bypasses the dev proxy → direct CORS call)
-      'https://www.cuberoot.me',            // 主域
-      'https://cuberoot.me',                // 裸域
-      'https://next.cuberoot.me',           // Next 子域并行验证
-      'capacitor://localhost',              // Capacitor iOS app webview origin
-      'https://localhost',                  // Capacitor Android app webview origin (androidScheme: https)
-    ]);
-    if (!origin) return '';                 // server-side / curl
-    if (allowed.has(origin)) return origin;
-    // Vercel preview / production deploy URL — *.vercel.app
-    if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) return origin;
-    return null;
-  },
-  credentials: true,                      // 兼容浏览器 sendBeacon / 默认 include 的请求;server 用 Bearer 鉴权,不读 cookie
-  allowHeaders: ['Content-Type', 'Authorization', 'X-Battle-Token'],
-  exposeHeaders: ['Upload-Offset', 'Upload-Length', 'Upload-Expires'],
-  maxAge: 86400,
-}));
+app.use('*', apiCors);
 
 // NOTE: 全局错误处理——把未捕获的 throw new Error(...) 转成 JSON 格式
 // requireAuth / requireAdmin / checkRateLimit 都用 throw，没有全局处理器会变成空 500

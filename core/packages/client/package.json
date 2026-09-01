@@ -12,11 +12,11 @@
     "safari 16.4"
   ],
   "scripts": {
-    "dev": "node scripts/predev-clean.mjs && next dev -H 127.0.0.1 -p 3000",
-    "dev:clean": "node scripts/predev-clean.mjs --wipe-next && next dev -H 127.0.0.1 -p 3000",
+    "dev": "node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs && next dev -H 127.0.0.1 -p 3000",
+    "dev:clean": "node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs --wipe-next && next dev -H 127.0.0.1 -p 3000",
     "dev:safe": "node scripts/dev-safe.mjs",
     "build:deps": "pnpm --filter @cuberoot/shared build && pnpm --filter @cuberoot/visualcube build && pnpm --filter @cuberoot/vendor-sr-puzzlegen build && pnpm --filter @cuberoot/puzzle-render-core build && pnpm --filter @cuberoot/puzzle-solvers build",
-    "build": "pnpm run build:deps && node scripts/build-cubing-worker.mjs && next build",
+    "build": "pnpm run build:deps && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && next build",
     "start": "next start -H 127.0.0.1 -p 3000",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit",

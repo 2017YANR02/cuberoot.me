@@ -18,18 +18,18 @@
 | 工具 | 当前语言的网站首页 `/` 或 `/zh`，以及从其中进入的所有子页面 | 直接显示网站真实页面；站内卡片和链接继续在同一 Web browsing context 导航 | 首页内容、卡片、路由和子页面不复制；真实点击 smoke 通过 |
 | 我的 | 当前语言的网站 `/account` 或 `/zh/account` | 直接显示网站真实账号页和现有登录/账号管理能力 | 使用网站唯一账号系统；不建设 Mobile 第二套账号页 |
 
-“完整网站”在这里是内容事实源，不意味着把 Next 源码复制进 `core/apps/mobile`，也不意味着把整个 App 启动地址改成远程 URL。计时仍保留本地优先和原生能力；工具与我的是明确的在线 Web surface。
+“完整网站”在这里是内容事实源，不意味着把 Next 源码复制进任一宿主，也不意味着把整个 App 启动地址改成远程 URL。计时仍保留本地优先和原生能力；工具与我的是明确的在线 Web surface。
 
 ## 2. 不重复造轮的固定边界
 
 ```text
 计时领域逻辑              → @cuberoot/shared
-Web + Mobile 计时 React UI → @cuberoot/timer-ui
+Web + 五端计时 React UI → @cuberoot/timer-ui
 工具/我的页面与路由         → core/packages/client（线上网站唯一实现）
-五端三栏 React 产品组合       → @cuberoot/app-ui（第二宿主落地时从 Mobile 提取）
+五端三栏 React 产品组合       → @cuberoot/app-ui（当前唯一实现）
 Android/iOS 宿主与 Web 容器   → core/apps/mobile（同一份 React + Capacitor 代码）
-HarmonyOS NEXT 薄宿主         → core/apps/harmony（计划，ArkTS + ArkWeb）
-Windows/macOS 共享桌面宿主    → core/apps/desktop（计划，同一 Tauri 工程）
+HarmonyOS NEXT 薄宿主         → core/apps/harmony（ArkTS + ArkWeb；unsigned HAP 已构建，设备待验）
+Windows/macOS 共享桌面宿主    → core/apps/desktop（同一 Tauri 工程；macOS 本机构建已验，Windows 待验）
 原生 BLE/权限/分享/安全存储   → 各宿主 platform adapter
 ```
 
@@ -58,9 +58,9 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（计划，同一 Taur
 只要生产 `/`、`/zh`、`/account`、`/zh/account` 未通过 `X-Frame-Options` 或 CSP `frame-ancestors` 禁止嵌入，就采用 App 内 iframe Web surface；每次发布前重新验证响应头：
 
 - 工具和我的各自拥有持久 browsing context，切换底栏不丢失当前子页面。
-- iframe 直接访问 `https://cuberoot.me` 的真实路由，站内卡片与子页面无需 Mobile 路由表。
-- 底栏由打包的 Mobile UI 持有，不进入网站源码。
-- 网站与原生壳只通过 `@cuberoot/shared/mobile-embed` 的导航消息契约协作：网站报告当前栏的历史深度，Android/iOS 把系统返回动作送给当前 iframe；不维护 Mobile 页面路由副本。
+- iframe 直接访问 `https://cuberoot.me` 的真实路由，站内卡片与子页面无需客户端路由表。
+- 底栏由打包的 `@cuberoot/app-ui` 持有，不进入网站源码。
+- 网站与原生壳只通过 `@cuberoot/shared/mobile-embed` 的导航消息契约协作：网站报告当前栏的历史深度，宿主把系统返回动作送给当前 iframe；不维护客户端页面路由副本。
 - 工具/我的需要网络；离线时计时仍可用，Web surface 显示明确网络状态。
 
 “我的”必须直接使用未改写的当前语言 `/account` 或 `/zh/account`，不附带 `auth=mobile`。登录入口与网站同样由 `/v1/auth/providers` 的当前配置决定；网站显示邮箱、手机、WCA、Google、微信、QQ 或支付宝中的哪些方式，App 就必须显示并最终支持同一组，不建 Mobile provider 白名单。
@@ -69,20 +69,20 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（计划，同一 Taur
 
 ### 3.2 账号功能与会话一致性
 
-- 页面显示相同按钮只是视觉验收；每个当前已配置的登录、注册、绑定、解绑、退出和注销流程都要 Android/iOS 真实账号端到端通过。
-- Account iframe、系统浏览器和 Keychain/Keystore 是三个不同的会话容器。验收必须覆盖“Account 登录入口 → 系统浏览器 PKCE → 原生安全会话 → 90 秒 web ticket → Account iframe”、双向退出/删除、预存 iframe-only 会话和休眠 App 外部退出等边界。
-- 第三方登录若通过 `X-Frame-Options`、CSP、弹窗或 App 唤起限制 iframe，必须打开同一个 canonical 网站流程的 Browser 回退；每个 provider 仍需 Android/iOS 真实账号端到端验收。
+- 页面显示相同按钮只是视觉验收；每个当前已配置的登录、注册、绑定、解绑、退出和注销流程都要五端分别用真实账号端到端通过。
+- Account iframe、系统浏览器和宿主安全存储是不同的会话容器。验收必须覆盖“Account 登录入口 → 系统浏览器 PKCE → 原生安全会话 → 90 秒 web ticket → Account iframe”、双向退出/删除、预存 iframe-only 会话和休眠 App 外部退出等边界。
+- 第三方登录若通过 `X-Frame-Options`、CSP、弹窗或 App 唤起限制 iframe，必须打开同一个 canonical 网站流程的系统浏览器回退；每个 provider 仍需五端真实账号端到端验收。
 - 认证消息必须走 `@cuberoot/shared/mobile-embed`，并复用 `/v1/auth/mobile-session/*` 与 `/v1/auth/web-session/*` 单次票据。长期 JWT 不得进入 URL 或 `postMessage`；不得复制 `LoginForm` 或 import client 私有源码。
 
 ### 3.3 iOS Apple 4.8 发布门槛
 
 若纯 `/account` 在 iOS App 内展示 Google、微信等第三方主账号登录，[Apple App Review Guidelines 4.8](https://developer.apple.com/app-store/review/guidelines/#login-services) 要求同时提供满足其隐私条件的等价登录；邮箱/手机方式必须逐项证明满足要求，WCA 也不得未经审核就假定为公民电子身份例外。
 
-因此，iOS App Store 发布前，网站唯一 `LoginForm` 和后端必须提供满足 4.8 的等价方式（实施优先考虑 Sign in with Apple），并完成真实 iOS 登录与审核取证。该能力应加入网站的 canonical 账号系统，让 Web/Android/iOS 自动同源；不另写 iOS 表单，也不通过隐藏网站已有 provider 来冒充“完整一致”。
+因此，iOS App Store 发布前，网站唯一 `LoginForm` 和后端必须提供满足 4.8 的等价方式（实施优先考虑 Sign in with Apple），并完成真实 iOS 登录与审核取证。该能力应加入网站的 canonical 账号系统，让 Web 和五端自动同源；不另写 iOS 表单，也不通过隐藏网站已有 provider 来冒充“完整一致”。
 
 ### 3.4 必须实测的嵌入风险
 
-- Android WebView 与 iOS WKWebView 的 Cookie/localStorage 分区是否允许账号页稳定登录。
+- Android WebView、iOS WKWebView、Harmony ArkWeb、Windows WebView2 与 macOS WKWebView 的 Cookie/localStorage 分区是否允许账号页稳定登录。
 - 邮箱/手机号与全部已配置第三方登录、OAuth、账号删除、下载、文件选择、剪贴板、全屏和外链行为。
 - 站内前进/后退、Android 返回键、iOS 边缘返回和底栏切换后的历史恢复。
 - 网站未来若新增 `frame-ancestors`，App 是否自动回退且不会白屏。
@@ -93,18 +93,18 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（计划，同一 Taur
 
 ### 3.5 低维护回退
 
-若某个页面或动作在 iframe 中被浏览器安全模型阻止，使用 Capacitor Browser 打开同一个线上 URL。该回退仍复用网站，但底栏会暂时不可见，所以只能标记为“Web 回退”，不能冒充同 App 内完全一致；生产部署与每个真实 provider 的双平台验收仍是完成条件。
+若某个页面或动作在 iframe 中被浏览器安全模型阻止，通过宿主 `openExternal` 在系统浏览器打开同一线上 URL。该回退仍复用网站，但底栏会暂时不可见，所以只能标记为“Web 回退”，不能冒充同 App 内完全一致；生产部署与每个真实 provider 的五端验收仍是完成条件。
 
 自建 Android WebView + iOS WKWebView 双原生容器、完整 Cookie bridge、下载/权限/导航代理属于高成本方案。除非 iframe/Browser 两条低维护路径都无法满足关键工作流且所有者再次授权，不启动该方案。
 
 ## 4. 五端协作合同
 
-- Android/iOS 当前唯一业务入口是 `core/apps/mobile`；所有平台 AI 都必须先读本文、[cross-platform-app-contract.md](./cross-platform-app-contract.md)、`core/apps/mobile/README.md` 与 `cuberoot-mobile` skill。
+- 五端当前唯一 React 产品入口是 `@cuberoot/app-ui`；所有平台 AI 都必须先读本文、[cross-platform-app-contract.md](./cross-platform-app-contract.md)、`core/apps/mobile/README.md` 与 `cuberoot-mobile` skill。
 - iOS 只补 URL scheme、WKWebView/权限等平台 adapter，不另建 SwiftUI 三栏或复制 React 页面。
 - Android 只补系统返回、WebView/权限等平台 adapter，不另建 Compose 三栏。
 - HarmonyOS 只补 ArkWeb、权限、BLE、安全存储和系统生命周期 adapter，不用 ArkUI 重写三栏或计时器。
 - Windows/macOS 必须由同一个 `core/apps/desktop` 工程输出，只补各自窗口、BLE、凭据、文件、深链、签名/公证 adapter。
-- 第二宿主落地时，同一改动必须从 Mobile 提取有真实消费者的 `@cuberoot/app-ui`；禁止任何 app→app 源码或生成物依赖。
+- Mobile、Desktop 和 Harmony 只消费 `@cuberoot/app-ui` 公开入口；禁止任何 app→app 源码或生成物依赖。
 - 任一 AI 修改共享 App/宿主文件前先检查同文件是否有未提交改动；发现并行重叠时保留对方工作，不覆盖。
 - 新增平台差异必须登记到本文；未登记的五端 UI 或业务分叉视为回归。
 
@@ -127,8 +127,8 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（计划，同一 Taur
 | IOS-LOGIN-01 | iOS 满足 Apple 4.8 等价登录，同时保持 canonical provider parity |
 | QA-01 | 断网、弱网、网站 5xx 和 frame 被拒不影响本地计时，并可恢复 |
 | QA-02 | 全平台无系统栏、挖孔、键盘、底栏、toast、菜单或对话框遮挡、溢出和不可点击 |
-| XPLAT-01 | 第二个真实宿主落地时提取 `@cuberoot/app-ui`，无 app→app import |
-| DESKTOP-01 | 一个 `core/apps/desktop` 工程产出 Windows 和 macOS build/install 证据 |
-| HARMONY-01 | `core/apps/harmony` 通过 ArkWeb 本地 bundle 消费共享 React App |
+| XPLAT-01 | 五端消费同一 `@cuberoot/app-ui`，无 app→app import |
+| DESKTOP-01 | 一个 `core/apps/desktop` 工程分别产出 Windows/macOS build、install、实体机交互与签名/分发证据 |
+| HARMONY-01 | `core/apps/harmony` 通过 ArkWeb 本地 bundle 消费共享 React App，并完成 HAP、设备交互、系统 adapter、签名与分发证据 |
 
 P0/P1 实施顺序与所有阶段证据统一由路线图维护；稳定合同不得用平台暂时缺失来改写。

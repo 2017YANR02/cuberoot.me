@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import {
   decodeMobileEmbedAuthClear,
   decodeMobileEmbedBack,
+  decodeMobileEmbedInit,
   decodeMobileEmbedWebSession,
   mobileEmbedAuthClearMessage,
   mobileEmbedNavigationMessage,
@@ -19,10 +20,13 @@ const MOBILE_PARENT_ORIGINS = new Set([
   'capacitor://localhost',
   'http://localhost',
   'https://localhost',
+  'tauri://localhost',
+  'https://tauri.localhost',
+  'http://127.0.0.1:1420',
 ]);
 
 /**
- * Bridge for the canonical website surfaces reused inside Capacitor. It keeps
+ * Bridge for the canonical website surfaces reused inside installed-app hosts. It keeps
  * navigation in the website, delegates third-party OAuth to the system Browser,
  * and accepts only a short-lived one-time ticket when the native session needs
  * to hydrate the Account iframe. Long-lived JWTs never cross postMessage.
@@ -40,12 +44,18 @@ export default function MobileEmbedBridge() {
     let index = 0;
     let pendingWebTicket: string | null = null;
     let hadWebsiteSession = Boolean(getSessionToken());
+    let parentOrigin: string | null = null;
+
+    const postToParent = (message: object) => {
+      if (parentOrigin) window.parent.postMessage(message, parentOrigin);
+    };
 
     const postNavigation = () => {
-      window.parent.postMessage(
-        mobileEmbedNavigationMessage(surface, stack[index] ?? window.location.href, index),
-        '*',
-      );
+      postToParent(mobileEmbedNavigationMessage(
+        surface,
+        stack[index] ?? window.location.href,
+        index,
+      ));
     };
 
     const recordRoute = (href: string) => {
@@ -73,7 +83,7 @@ export default function MobileEmbedBridge() {
       if (authRequest) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        window.parent.postMessage(authRequest, '*');
+        postToParent(authRequest);
         return;
       }
       const anchor = target instanceof Element ? target.closest<HTMLAnchorElement>('a[href]') : null;
@@ -88,10 +98,17 @@ export default function MobileEmbedBridge() {
       if (!authRequest) return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      window.parent.postMessage(authRequest, '*');
+      postToParent(authRequest);
     };
     const onMessage = (event: MessageEvent) => {
       if (event.source !== window.parent || !MOBILE_PARENT_ORIGINS.has(event.origin)) return;
+      const init = decodeMobileEmbedInit(event.data);
+      if (init?.surface === surface) {
+        parentOrigin = event.origin;
+        postNavigation();
+        return;
+      }
+      if (event.origin !== parentOrigin) return;
       const back = decodeMobileEmbedBack(event.data);
       if (back?.surface === surface) {
         index = Math.max(0, index - 1);
@@ -112,10 +129,10 @@ export default function MobileEmbedBridge() {
       void exchangeWebSessionTicket(webSession.ticket).then((session) => {
         const persisted = applySession(session.token, session.user);
         const ok = persisted && getSessionToken() === session.token;
-        window.parent.postMessage(mobileEmbedWebSessionResultMessage(ok), '*');
+        postToParent(mobileEmbedWebSessionResultMessage(ok));
         if (ok) window.location.reload();
       }).catch(() => {
-        window.parent.postMessage(mobileEmbedWebSessionResultMessage(false), '*');
+        postToParent(mobileEmbedWebSessionResultMessage(false));
       }).finally(() => {
         pendingWebTicket = null;
       });
@@ -124,7 +141,7 @@ export default function MobileEmbedBridge() {
       ? useAuthStore.subscribe((state) => {
         const hasWebsiteSession = Boolean(state.user && getSessionToken());
         if (hadWebsiteSession && !hasWebsiteSession) {
-          window.parent.postMessage(mobileEmbedAuthClearMessage(), '*');
+          postToParent(mobileEmbedAuthClearMessage());
         }
         hadWebsiteSession = hasWebsiteSession;
       })
@@ -133,7 +150,6 @@ export default function MobileEmbedBridge() {
     document.addEventListener('click', onClick, true);
     document.addEventListener('keydown', onKeyDown, true);
     window.addEventListener('message', onMessage);
-    postNavigation();
     return () => {
       recordRouteRef.current = null;
       document.removeEventListener('click', onClick, true);

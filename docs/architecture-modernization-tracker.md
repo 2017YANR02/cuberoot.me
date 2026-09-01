@@ -1,10 +1,10 @@
 # CubeRoot 架构现代化跟踪
 
-最后更新：2026-08-28
+最后更新：2026-08-31
 
 Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b838697e4adfc04156ca5769c3ed8da59`，工作树无未提交改动；本批文档、测试守卫及跟踪文件自身造成的前进不视为基线漂移。每个后续实施批次开始前仍必须重新记录当时的 `HEAD` 和工作树重叠情况。
 
-状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役；仓库所有者于 2026-08-25 明确豁免 RET-04 原定观察等待，非仓库资产处置已完成，仓库删除保留给所有者自行执行。Batch 1、2 已提交发布并完成本地、CI、部署与线上 smoke 验收。Batch 3 在两次生产前置校验安全暴露并修正 store provision 与 opt5/opt6 假设后，最终修正 `6756c599a1` 已由 Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` 全绿发布。生产部署确认 `cubeopt-opt6-legacy-runtime-v1` 制品、启用态 manager 加载与 `R → R'`（1 HTM）真实请求通过，API 健康、启用/配置状态及 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网 smoke 均为 200；因此 BND-02、BND-03、BND-04、BND-06 和 Batch 3 的 PKG-02 最小切片已关闭。BND-04 的共用 AST 检测器置于写入钩子链首后，当前 Codex 宿主已真实拒绝违规跨 app import 且探针未落盘；BND-05 当前覆盖 16 个活跃 workspace package，新增 `timer-ui` 与 `event-icon` 均有 Web/App 两个真实消费者且通过 fail-closed 守卫。Batch 4 的 `auth/web-session` 中性契约试点、小程序真实构建依赖图和首次微信用户空昵称兼容已随 `ba22fd81e1` 发布；Test `32697884591`、Deploy Next `32697884578`、Deploy Core `32697884597` 全部成功，API 健康、缺失 WCA token、畸形票据、未登录取票和 Web 回调壳安全 smoke 均符合预期，CTR-02 已关闭。真实账号登录成功链路没有用生产凭据手工执行，其 producer/consumer 正向路径由可执行 route/session fixture 证明；CTR-03 已在六个认证端点完成稳定错误码兼容切片并通过独立复审，迁移期继续保留旧 `error` 字段，不扩张为全 API 一次性改造。Batch 5 的 Clock 窄切片已随 `1db7804111` 发布；隔离干净工作树、本地门槛与三路独立复核通过，Test `32710563280`、Deploy Next `32710563234`、Deploy Core `32710563241` 全部成功，API 健康及中英文 `/sim` 公网 smoke 为 200 且无模块解析错误，本切片已关闭。Batch 6 的根 PowerShell 治理已随 `b02005a50e` 发布；三路终审、本地与 Linux 合同、Test、Deploy Next、静态工具同步及五条公网 smoke 全绿，PS1-01 至 PS1-04 已关闭。Batch 7 的物理目录整理已完成收益评估并决定不执行；PKG-03 仍以真实消费者和平台中性为重开门槛，本轮两个窄共享包由网站与 Mobile 的实际复用需求触发，不构成泛化 UI 层。
+状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役；仓库所有者于 2026-08-25 明确豁免 RET-04 原定观察等待，非仓库资产处置已完成，仓库删除保留给所有者自行执行。Batch 1、2 已提交发布并完成本地、CI、部署与线上 smoke 验收。Batch 3 在两次生产前置校验安全暴露并修正 store provision 与 opt5/opt6 假设后，最终修正 `6756c599a1` 已由 Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` 全绿发布。生产部署确认 `cubeopt-opt6-legacy-runtime-v1` 制品、启用态 manager 加载与 `R → R'`（1 HTM）真实请求通过，API 健康、启用/配置状态及 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网 smoke 均为 200；因此 BND-02、BND-03、BND-04、BND-06 和 Batch 3 的 PKG-02 最小切片已关闭。BND-04 的共用 AST 检测器置于写入钩子链首后，当前 Codex 宿主已真实拒绝违规跨 app import 且探针未落盘；BND-05 的历史关闭证据保留，当前守卫覆盖 19 个活跃 workspace package（5 apps、4 jobs、10 libraries），其中 `@cuberoot/app-ui` 是 Android、iOS、HarmonyOS NEXT、Windows 和 macOS 唯一 React 产品层，三个宿主不得互相 import。Batch 4 的 `auth/web-session` 中性契约试点、小程序真实构建依赖图和首次微信用户空昵称兼容已随 `ba22fd81e1` 发布；Test `32697884591`、Deploy Next `32697884578`、Deploy Core `32697884597` 全部成功，API 健康、缺失 WCA token、畸形票据、未登录取票和 Web 回调壳安全 smoke 均符合预期，CTR-02 已关闭。真实账号登录成功链路没有用生产凭据手工执行，其 producer/consumer 正向路径由可执行 route/session fixture 证明；CTR-03 已在六个认证端点完成稳定错误码兼容切片并通过独立复审，迁移期继续保留旧 `error` 字段，不扩张为全 API 一次性改造。Batch 5 的 Clock 窄切片已随 `1db7804111` 发布；隔离干净工作树、本地门槛与三路独立复核通过，Test `32710563280`、Deploy Next `32710563234`、Deploy Core `32710563241` 全部成功，API 健康及中英文 `/sim` 公网 smoke 为 200 且无模块解析错误，本切片已关闭。Batch 6 的根 PowerShell 治理已随 `b02005a50e` 发布；三路终审、本地与 Linux 合同、Test、Deploy Next、静态工具同步及五条公网 smoke 全绿，PS1-01 至 PS1-04 已关闭。Batch 7 的物理目录整理已完成收益评估并决定不执行；PKG-03 仍以真实消费者和平台中性为重开门槛，本轮两个窄共享包由真实多端消费者触发，不构成无消费者的泛化 UI 层。
 
 > Batch 8 决策更新：Batch 7 的“不执行物理目录整理”保留为当时的历史裁决。仓库所有者现基于四端长期演进和 AI 可发现性明确重开并授权目录迁移，目标采用 `core/apps/* + core/packages/* + core/jobs/*`；只允许按 [Core 工作区目录迁移方案](./core-workspace-layout-migration-plan.md) 渐进实施。LAY2-00 至 LAY2-09 已完成：workspace、边界守卫与 Knip 接受双布局，Web/API/stats 发布合同按 package identity 解析并覆盖旧新触发路径，四个离线 job 均已移至 `core/jobs`，小程序、Mobile 和 API 已移至 `core/apps`，Web 私有 solver 与跨 app 品牌资产依赖均已收口到中性入口。API 的 npm 身份暂保留 `@cuberoot/server`，留待 LAY2-12 独立改名。
 >
@@ -49,11 +49,11 @@ Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b
 | --- | --- | --- |
 | 主 Web | `core/packages/client`，Next.js 16 + React 19 | 当前保持原位；是否迁到 `apps/web` 最后决定 |
 | API | `core/apps/api`，Hono + PostgreSQL | 运行进程和部署产物已与 Web 分离；源码、资产和部署触发仍需解耦 |
-| Mobile | `core/apps/mobile`，React + Capacitor | Android 与 iOS 原生工程共用同一 React 应用；iOS 已在 Xcode 26.6 / iOS 26.5 Simulator 完成构建、安装和启动，付费 Team 与真机签名仍受 Apple 账号登录异常阻塞 |
+| 已安装客户端 | `core/packages/app-ui` 是唯一 React 产品层；`core/apps/mobile` 为 Android/iOS Capacitor 宿主，`core/apps/desktop` 为 Windows/macOS 单一 Tauri 宿主，`core/apps/harmony` 为 HarmonyOS NEXT ArkTS/ArkWeb 宿主 | 当前 macOS `.app` 可启动、未签名 DMG 已校验；Harmony unsigned HAP 已构建但无设备；Windows 仅有未实跑 CI 定义。源码、本地构建、安装、设备、签名/公证和发布继续分层记账 |
 | 小程序 | `core/apps/miniprogram`，独立运行时 | 保持独立 app，不与 React DOM UI 强行共享 |
 | FMC 求解服务 | `core/apps/fmc-solver`，vendored cubelib Cargo workspace | 作为独立 app 由专用 workflow 构建部署；不加入 pnpm workspace，线上 `/v1/fmc/*` 保持不变 |
 | Platform | 活跃产品已迁入 `client`、`server`、`shared` 并完成 P0-P8 发布验收；P9 的 Test 与两个部署 workflow 已全绿，线上角色态待验收。`core/packages/platform` 是 workspace 外历史归档，不测试、不部署、不新增产品功能 | 不建 `apps/platform-web`；RET-04 非仓库资产处置已完成，仓库删除由所有者自行执行，不阻塞无重叠的架构调查与规划 |
-| 共享能力 | `shared`、`visualcube`、`stack-kernel`、`timer-ui`、`event-icon` 等已有边界 | 先治理公开入口，再按真实跨端消费者决定是否拆包；当前计时 UI 和项目图标均由 Web/App 共用 |
+| 共享能力 | `app-ui`、`shared`、`visualcube`、`stack-kernel`、`timer-ui`、`event-icon` 等已有边界 | `app-ui` 只承载五端 React 产品层；运行时中性契约与多消费者能力进入 shared package，宿主系统调用不进入共享层 |
 | 离线任务 | 四个 builder 已归位到 `core/jobs` | 保持离线运行和生成物所有权边界 |
 | 根脚本 | 根目录只保留统一 `sync_upstream.ps1` 入口，私有实现在 `scripts/upstream` | 新同步能力继续挂入统一入口，不回添散落根脚本 |
 | 大数据与 fork | `stats/`、`tools/` 与当前静态发布链耦合 | 本轮不迁仓、不重排 |
@@ -66,7 +66,7 @@ Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b
 2. 不把 Web 和 API 拆成两个仓库。
 3. Web 与 API 已有独立进程和部署产物，但源码、构建、资产和部署触发仍需继续解耦；无需拆仓重做一次“前后端分离”。
 4. Platform P0-P8 迁移已完成，不再作为架构迁移对象；不恢复独立 Platform app。P9 产品体验验收和所有者自行执行的仓库删除按专门跟踪表处理。
-5. Android 与未来 iOS 默认共用 Mobile 的 React 应用；只有转为两套原生 UI 后才重新评估拆分。
+5. 五端已安装客户端共用 `@cuberoot/app-ui`；Android/iOS 只用 Capacitor Mobile，Windows/macOS 只用同一 Tauri Desktop，HarmonyOS NEXT 只用 ArkWeb 薄宿主，不重开平台私有业务 UI。
 6. 微信小程序保持独立 app。
 7. 跨平台优先共享事实、契约和纯规则，不强行共享各平台 UI。
 8. 不因为两个文件相似就新建 package。
@@ -155,6 +155,8 @@ API     ─X─> Web 源码或 Web public
 | DOC-04 | 建立文档状态约定并标记 Platform 遗留目录 | `完成` | 活跃计划、已完成记录、历史文档和退役说明可被明确区分；归档入口不再把失效命令写成活跃开发入口；变更后独立复审 PASS |
 | DOC-05 | 登记生成物 | `完成` | 33 类工程生成物已由结构化 JSON 清册登记 owner、输入、输出、再生入口、验证与生命周期；5 类 vendored 来源在下次成功同步前诚实保持 pending，TNoodle 26 locale/23 FMC key 快照可确定性复现，运行时 locator 与仓库输出分离，公开署名仍唯一归 `credits_data.json`；独立终审 GO |
 
+> DOC-05 行保留关闭当日的 33 项历史证据；当前 ledger 已扩展为 38 项，新增边界和验证结果见 2026-08-31 变更记录，不把历史审查数字改写成今日快照。
+
 ### B. 真实依赖边界
 
 | ID | 任务 | 状态 | 验收 |
@@ -165,6 +167,8 @@ API     ─X─> Web 源码或 Web public
 | BND-04 | 按边类型增加跨 app 依赖守卫 | `完成` | runtime、build、test、artifact 和 subprocess baseline 已进入 CI；任何新增、重复或陈旧基线都会失败。写入 adapter 先把同一 patch 的全部 writes 一次性交给架构检测器，再逐文件执行一般守卫；真实五文件 `tools.apply_patch` 探针在末尾放置跨 app import，宿主约 6 秒内 deny 且五文件均未落盘；CI 全文件扫描仍为权威兜底 |
 | BND-05 | 收口 package 公开 exports | `完成` | 16 个活跃 workspace package 已登记 package kind、runtime 与公开 subpath runtime 属性；新增 timer-ui 与 event-icon 均有 Web/App 两个真实消费者；守卫拒绝私有 deep import、无可用根 export 时的裸根导入、非法 export key、运行时不匹配与中性闭包中的宿主全局，并沿 `imports` exact/wildcard/condition/array/null 解析；独立终审 GO |
 | BND-06 | 收窄部署触发边界 | `完成` | Test 的 push/PR 与 Deploy Core/Next 由 workspace package.json 依赖递归生成精确路径矩阵；触发/排除矩阵定向测试通过，相关路径推送真实触发并通过 Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` |
+
+> BND-05 行的 16 个 package 是该批关闭时的历史证据；当前守卫期望并覆盖 19 个活跃 workspace package，组成见第 3 节与 2026-08-31 变更记录。
 
 ### C. 多端 API 与领域契约
 
@@ -410,6 +414,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-08-31 | 五端已安装客户端单一产品层与三宿主边界落地 | 19 个活跃 workspace package（5 apps、4 jobs、10 libraries）受现有 fail-closed 守卫约束；`@cuberoot/app-ui` 为唯一 React 产品层，Capacitor/Tauri/Harmony 三宿主只接系统能力。生成物 ledger 当前为 38 项，新增 Desktop、Harmony 与双语 Timer PDF 的唯一 owner/输出边界。macOS `.app` 已启动、未签名 DMG 经 `hdiutil verify`；Harmony unsigned HAP `BUILD SUCCESSFUL` 但 `hdc` 无设备；Windows CI 定义未实跑。本地 API/Web Tauri origins 未 push/部署，整体仍未完成 |
 | 2026-08-25 | LAY2-13 FMC Cargo app 归位及发布验收完成 | 根 `fmc/` 的 72 个 tracked 文件完整迁至 `core/apps/fmc-solver/`；专用 workflow 的触发、稀疏检出、工作目录和制品路径同步，忽略项、系统地图与运行说明更新。Cargo workspace、线上 `/v1/fmc/*` 和远端运行目标不变，14 个 pnpm workspace 不增不减；浮动 nightly 漂移已改为锁定验证版本，Test、Deploy Next、Deploy FMC solver 与服务健康检查全部成功；本地未运行重计算或测试 |
 | 2026-08-25 | Reconer 独立研发项目归位 | 经单独授权将根目录 `reconer/` 完整迁至 `research/reconer/`；项目仍保留自己的 Node、uv、测试与本地素材边界，不纳入 Core workspace，也未改算法或运行视频计算。根系统地图、README、Core onboarding 与迁移历史同步到新路径 |
 | 2026-08-25 | LAY2-06 solver 边界与 `scramble-stats-build` 移动完成 | Web 私有纯 solver 已提取到 `@cuberoot/puzzle-solvers` 公开出口，`scramble-stats-build` 从 `core/packages` 完整移至 `core/jobs`；脚本、lockfile、resolver、生成物清册、runbook 与活动文档同步，旧私有 solver 路径和临时 test-contract 从基线删除。静态架构守卫通过，边界为 279/295/13；按用户要求未运行 fixture、dry run、测试、build 或数据生成 |
