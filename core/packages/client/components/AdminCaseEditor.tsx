@@ -8,6 +8,7 @@
  */
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { X, Save, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
 import { loadAlg, MIRROR_ALG_SYNC_SETS, requires3x3AlgCaseSetup, type AlgCase, type AlgEntry, type AlgPuzzle, type AlgSticker } from '@cuberoot/shared';
 import { mirrorCascadeOnDelete, VIEWS } from '@cuberoot/shared/alg-mirror';
@@ -21,6 +22,8 @@ import AlgInput from '@/components/AlgInput';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer';
 import CubeKeyboardSection from '@/components/CubeKeyboardSection';
 import { syncPlayerToMoveCount } from '@/lib/recon-alg-utils';
+import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
+import { DEFAULT_ALG_CUBE_ORIENTATION } from '@/lib/alg_thumb_plan';
 import { tr } from '@/i18n/tr';
 
 export type AdminEditorState =
@@ -72,6 +75,11 @@ function blankCase(puzzle: string, set: string): AlgCase {
 export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid, onClose, onSaved }: Props) {
   useTranslation(); // subscribe to language changes; text via tr()
   const initial = state.mode === 'edit' ? state.existing : blankCase(puzzle, setSlug);
+  const [orientation] = useQueryState(
+    'orientation',
+    parseAsStringEnum<string>(CUBE_ORIENTATIONS.map(option => option.value))
+      .withDefault(DEFAULT_ALG_CUBE_ORIENTATION),
+  );
 
   const [caseName, setCaseName] = useState(initial.name);
   const [subgroup, setSubgroup] = useState(initial.subgroup);
@@ -396,6 +404,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
                 puzzle={puzzle}
                 set={setSlug}
                 setup={previewSetup}
+                orientation={orientation}
                 fillPane
               />
             ) : (

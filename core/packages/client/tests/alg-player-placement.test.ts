@@ -121,6 +121,8 @@ describe('algorithm player placement', () => {
     expect(simPlayer).toContain("if (puzzle === 'sq1')");
     expect(simPlayer).toContain('(cube as Sq1Cube).setStickering(set)');
     expect(editor).toContain('<AlgPlayer');
+    expect(editor).toMatch(/useQueryState\(\s*'orientation'[\s\S]*?withDefault\(DEFAULT_ALG_CUBE_ORIENTATION\)/);
+    expect(editor).toContain('orientation={orientation}');
     expect(editor).not.toMatch(/<AlgPlayer[\s\S]{0,500}?\bengine=/);
     for (const source of [helper, comm]) {
       expect(source).toContain("import AlgPlayer from '@/components/AlgPlayer'");
