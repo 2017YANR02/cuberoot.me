@@ -450,6 +450,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'platform', m: 'POST', p: '/v1/platform/orders/:id/cancel', g: 'login', c: 'no-store', zh: '取消未支付订单并释放库存或名额', en: 'Cancel an unpaid order and release reservations' },
   { d: 'platform', m: 'POST', p: '/v1/platform/orders/:id/payment-attempts', g: 'login', c: 'no-store', zh: '启动支付尝试', en: 'Start a payment attempt' },
   { d: 'platform', m: 'POST', p: '/v1/platform/payments/:provider/notify', g: 'webhook', c: 'no-store', zh: '验签支付回调并原子履约', en: 'Verify payment callbacks and fulfill atomically' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/integrations/douyin/events', g: 'webhook', c: 'no-store', zh: '验签抖店订单与退款消息并立即反查履约', en: 'Verify Douyin order and refund events and immediately reconcile fulfillment' },
 
   // ---- platform: instructor ----
   { d: 'platform', m: 'GET', p: '/v1/platform/instructor/applications/current', g: 'login', c: 'no-store', zh: '当前讲师申请状态', en: 'Current instructor application' },
