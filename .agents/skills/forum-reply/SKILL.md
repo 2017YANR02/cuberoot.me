@@ -6,7 +6,11 @@ description: Read or reply to a CubeRoot forum thread directly through the API w
 # Forum Reply
 
 1. Extract the numeric thread ID from the URL.
-2. Read `https://api.cuberoot.me/v1/forum/t/<id>?page=1&size=100` with `Invoke-RestMethod`. Fetch later pages only when `total > 100`.
+2. Read the thread with braces around the PowerShell variable before `?`, then fetch later pages only when `total > 100`:
+
+```powershell
+$thread = Invoke-RestMethod -Uri "https://api.cuberoot.me/v1/forum/t/${threadId}?page=1&size=100"
+```
 3. If the user only asks for an explanation or draft, stop without writing.
 4. Post only after the user explicitly asks to reply. Read `ADMIN_API_KEY` from the repository-root `.password.md`, never print it, then call:
 
