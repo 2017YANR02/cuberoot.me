@@ -140,17 +140,8 @@ describe('十字系遮罩:同形状只留一个,换槽靠转体', () => {
     expect([...colored('xxcross_diag', 'y2')].sort()).toEqual([...diag].sort());
   });
 
-  it('cross_full = cross_partial + 全部 6 个中心(cross_partial 只有 D 中心)', () => {
-    const partial = colored('cross_partial', ''), full = colored('cross_full', '');
-    const CENTERS = [
-      [1, 2, 1, F.U], [1, 0, 1, F.D], [1, 1, 2, F.F],
-      [1, 1, 0, F.B], [0, 1, 1, F.L], [2, 1, 1, F.R],
-    ].map(([x, y, z, f]) => `${x + y * N + z * N * N}:${f}`);
-    expect(partial.size).toBe(9);          // 4 条十字棱 ×2 枚 + D 中心
-    expect(full.size).toBe(14);            // 再加 U / F / B / L / R 五个中心
-    for (const k of partial) expect(full.has(k), `partial ⊂ full: ${k}`).toBe(true);
-    for (const c of CENTERS) expect(full.has(c), `center ${c}`).toBe(true);
-    expect([...full].filter((k) => !partial.has(k)).length).toBe(5);  // 补上的 5 个中心
+  it('旧 cross_full 输入由标准 cross 完全替代', () => {
+    expect(makeMasking('cross_full' as Masking, 3)).toEqual(makeMasking(Masking.CROSS, 3));
   });
 
   it('清单里只留这几条十字系遮罩', () => {
@@ -158,7 +149,7 @@ describe('十字系遮罩:同形状只留一个,换槽靠转体', () => {
     for (const keep of ['cross_half', 'cross_half_opp', 'cross_partial', 'xcross', 'xxcross', 'xxcross_diag', 'xxxcross']) {
       expect(items.has(keep), `should keep ${keep}`).toBe(true);
     }
-    for (const drop of ['cross_fr', 'cross_br', 'cross_fb', 'cross_lr', 'xcross_fr', 'xcross_bl', 'dec', 'tec_fr', 'tec_bl']) {
+    for (const drop of ['cross_full', 'cross_fr', 'cross_br', 'cross_fb', 'cross_lr', 'xcross_fr', 'xcross_bl', 'dec', 'tec_fr', 'tec_bl']) {
       expect(items.has(drop), `should drop ${drop}`).toBe(false);
     }
   });

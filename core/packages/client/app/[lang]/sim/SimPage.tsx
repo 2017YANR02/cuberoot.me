@@ -337,7 +337,10 @@ export default function SimPage() {
   // a bare /sim becomes /sim?puzzle=3 so the project is always explicit and never
   // silently resolves to the 3x3 fallback.
   useEffect(() => {
-    setQuery({ puzzle: String(puzzleParam) });
+    setQuery({
+      puzzle: String(puzzleParam),
+      ...(query.stickering === 'cross_full' ? { stickering: 'Cross' } : {}),
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

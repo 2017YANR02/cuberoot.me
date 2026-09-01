@@ -121,7 +121,8 @@ export enum Masking {
   CROSS_HALF = 'cross_half',          // 2 adjacent cross edges (PHP cross_fr)
   CROSS_HALF_OPP = 'cross_half_opp',  // 2 opposite cross edges (PHP cross_fb)
   CROSS_PARTIAL = 'cross_partial',    // PHP "Cross" — 4 cross edges, no side/U centers
-  CROSS_FULL = 'cross_full',          // cross_partial + all 6 centers (PHP "cross" lacks U)
+  /** @deprecated Use CROSS. */
+  CROSS_FULL = 'cross',
   XCROSS = 'xcross',                  // cross + 1 pair (PHP xcross_fr)
   XXCROSS = 'xxcross',                // cross + 2 adjacent pairs (FL+FR)
   XXCROSS_DIAG = 'xxcross_diag',      // cross + 2 diagonal pairs (PHP "DEC" = FR+BL)

@@ -41,7 +41,7 @@ export function parseForumSimLink(raw: string): ForumSimLink | null {
   const puzzleOrder = Number(orderText);
   const alg = (url.searchParams.get('alg') ?? '').trim();
   const setup = (url.searchParams.get('setup') ?? '').trim();
-  const stickering = url.searchParams.get('stickering') ?? 'full';
+  let stickering = url.searchParams.get('stickering') ?? 'full';
   const orientation = (url.searchParams.get('stickeringRot') ?? '').trim();
   if (
     !puzzle ||
@@ -53,6 +53,10 @@ export function parseForumSimLink(raw: string): ForumSimLink | null {
     !ORIENTATION_RE.test(orientation)
   ) {
     return null;
+  }
+  if (stickering === 'cross_full') {
+    stickering = 'Cross';
+    url.searchParams.set('stickering', stickering);
   }
 
   return {
