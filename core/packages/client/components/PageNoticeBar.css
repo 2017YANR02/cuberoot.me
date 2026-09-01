@@ -72,6 +72,9 @@ body:has(.landing-page) .page-notice-wrap .page-notice { padding-right: 14.5rem;
 @media (min-width: 481px) {
   body:has(.landing-page) .page-notice-wrap .page-notice { padding-left: 10rem; }
 }
+@media (max-width: 480px) {
+  body:has(.landing-page) .page-notice-wrap .page-notice { padding-right: 0.9rem; }
+}
 /* admin:编辑入口放最左,与图标同起始行 */
 .page-notice-edit { flex: none; margin: -1px 0 0 -2px; }
 
