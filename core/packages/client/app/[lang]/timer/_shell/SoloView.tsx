@@ -15,7 +15,7 @@
  * The engine itself (_shared/useTimer + _lib/scramble + _lib/storage) is untouched.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 'nuqs';
@@ -85,7 +85,11 @@ import {
   type TimerGestureActionId,
   type TimerNon222StepPuzzle,
 } from '@cuberoot/shared/timer';
-import { verifySmartCubeScramble } from '@cuberoot/shared/smart-cube/scramble-hint';
+import {
+  createSmartCubeGuidanceController,
+  type SmartCubeGuidanceState,
+} from '@cuberoot/shared/smart-cube/scramble-guidance';
+import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import type { Cube222SpecialType } from '@cuberoot/puzzle-solvers/cube222';
 import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
 import {
@@ -165,9 +169,11 @@ import {
 import type { TimerPresenceReport } from '../_lib/presence';
 import { mirrorForBrand, readDevQuatSource, sensorBasisForBrand, type Quat } from '../_lib/bluetooth/orientation';
 import { GyroRecorder, encodeGyroTrack } from '../_lib/bluetooth/gyro_track';
-import { applyScramble, toFaceletString, type CubeFaces } from '../_lib/cube/state';
-import type { ScrambleHint } from '../_lib/bluetooth/scramble_hint';
-import { createFixupRequester } from '../_lib/bluetooth/scramble_fixup';
+import {
+  fromFaceletString,
+  toFaceletString,
+} from '../_lib/cube/state';
+import { fixupScramble } from '../_lib/bluetooth/scramble_fixup';
 import { installFakeCube } from '../_lib/bluetooth/fake_cube';
 import {
   resolveKeymap,
@@ -268,16 +274,19 @@ import { tr } from '@/i18n/tr';
 const TPS_WINDOW_MOVES = 12;
 
 interface TimerScrambleHistoryEntry {
+  id: number;
   scramble: string;
   /** Stable occurrence provenance; separate official slots may share text. */
   wca: WcaDispensedScramble | null;
 }
 
+let nextTimerScrambleHistoryEntryId = 1;
+
 function timerScrambleHistoryEntry(
   scramble: string,
   wca: WcaDispensedScramble | null = null,
 ): TimerScrambleHistoryEntry {
-  return { scramble, wca };
+  return { id: nextTimerScrambleHistoryEntryId++, scramble, wca };
 }
 
 function useMediaQuery(query: string): boolean {
@@ -1636,44 +1645,34 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // Only 3x3: the tracker models a 3x3 (every smart cube on the market is one),
   // and events whose scramble isn't plain face notation (FMC's solution, MBLD's
   // multiple scrambles) have nothing meaningful to compare against.
-  const scrambleTarget = useMemo<CubeFaces | null>(() => {
-    if (!timerSupportsSmartCubeAutoTiming(event)) return null;
-    if (!scramble.trim()) return null;
-    try { return applyScramble(3, scramble); } catch { return null; }
-  }, [event, scramble]);
+  const scrambleTarget = useMemo(() => (
+    timerSupportsSmartCubeAutoTiming(event) && scramble.trim()
+      ? smartCubeTargetFacelets(scramble)
+      : null
+  ), [event, scramble]);
 
-  // null = not applicable / nothing to say yet. The tracker only means anything
-  // once the cube has actually been turned, so we stay quiet until then.
-  const [scrambleMatch, setScrambleMatch] = useState<boolean | null>(null);
-  // Where in the scramble the cube is, for step-by-step hinting. null = we have
-  // nothing to say: no cube, no comparable scramble, or the cube is off the
-  // scramble's path entirely (in which case the binary verdict is all we have).
-  const [scrambleHint, setScrambleHint] = useState<ScrambleHint | null>(null);
-  // A correction path: when the cube leaves the scramble's path, the solver
-  // gives us a way from where it IS to the same scrambled state, and the strip
-  // hints on that instead of just saying "wrong". `from` is the state it was
-  // computed at — the walk has to start there, not at solved.
-  const fixupRef = useRef<{ from: CubeFaces; seq: string } | null>(null);
-  const fixupWantedRef = useRef(false);
-  const scrambleGuidanceCompleteRef = useRef(false);
-  const [fixupActive, setFixupActive] = useState(false);
-  const scrambleTargetRef = useRef<CubeFaces | null>(null);
-  const scrambleTextRef = useRef<string>('');
-  const clearFixup = useCallback(() => {
-    fixupRef.current = null;
-    setFixupActive(false);
-  }, []);
-  useEffect(() => {
-    scrambleTargetRef.current = scrambleTarget;
-    // The hint is computed against the same string the strip renders, so keep
-    // them in lockstep: a stale hint would dim the wrong moves.
-    scrambleTextRef.current = scrambleTarget ? scramble : '';
-    fixupWantedRef.current = false;
-    scrambleGuidanceCompleteRef.current = false;
-    setScrambleMatch(null);
-    setScrambleHint(null);
-    clearFixup();
-  }, [scrambleTarget, scramble, clearFixup]);
+  const [scrambleGuidance, setScrambleGuidance] = useState<SmartCubeGuidanceState>({
+    correctionActive: false,
+    hint: null,
+    match: null,
+  });
+  const scrambleGuidanceController = useMemo(() => createSmartCubeGuidanceController({
+    onChange: setScrambleGuidance,
+    solve: async (fromFacelets, targetFacelets) => {
+      const from = fromFaceletString(fromFacelets);
+      const target = fromFaceletString(targetFacelets);
+      return from && target ? fixupScramble(from, target) : null;
+    },
+  }), []);
+  useLayoutEffect(() => {
+    scrambleGuidanceController.setContext(scrambleTarget
+      ? {
+        id: currentScrambleEntry.id,
+        scramble,
+        targetFacelets: scrambleTarget,
+      }
+      : null);
+  }, [currentScrambleEntry.id, scramble, scrambleGuidanceController, scrambleTarget]);
   /**
    * 「打乱正确即预备」 —— csTimer's default (`giiSD='s'`, `giiker.js:143`). Once the
    * scramble is on the cube there is nothing left for the user to signal: the
@@ -1690,84 +1689,48 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     onPressDown(true);
   };
 
-  /** Ask the solver for a path from where the cube is to `target`, then hint. */
-  const fixupRequester = useMemo(() => createFixupRequester({
-    faces: () => bluetoothCubeRef.current?.getFaces() ?? null,
-    valid: (target) => scrambleTargetRef.current === target
-      && phaseSnapshotRef.current !== 'running'
-      && Boolean(bluetoothCubeRef.current?.status.connected)
-      && fixupWantedRef.current,
-  }), []);
-  const requestFixup = useCallback(async (target: CubeFaces) => {
-    const res = await fixupRequester.request(target);
-    if (!res) return;
-    fixupRef.current = { from: res.from, seq: res.seq };
-    setFixupActive(true);
-    setScrambleHint(res.hint);
-  }, [fixupRequester]);
   useEffect(() => {
     const subs = bluetoothSubscribersRef.current;
     const verify = () => {
-      const target = scrambleTargetRef.current;
-      if (!target) return;
-      // Only meaningful before the solve starts — mid-solve the cube is
-      // deliberately no longer in the scrambled state.
-      const ph = phaseSnapshotRef.current;
-      if (ph === 'running') return;
+      const running = phaseSnapshotRef.current === 'running';
+      scrambleGuidanceController.setRunning(running);
+      if (running) return;
       const faces = bluetoothCubeRef.current?.getFaces();
       if (!faces) return;
-      if (scrambleGuidanceCompleteRef.current) {
-        fixupWantedRef.current = false;
-        setScrambleMatch(null);
-        setScrambleHint(null);
-        clearFixup();
-        return;
-      }
-      const text = scrambleTextRef.current;
-      if (!text) { setScrambleHint(null); clearFixup(); return; }
-      const fx = fixupRef.current;
-      const verification = verifySmartCubeScramble(
-        text,
-        toFaceletString(target),
-        toFaceletString(faces),
-        fx ? { fromFacelets: toFaceletString(fx.from), scramble: fx.seq } : null,
-      );
-      fixupWantedRef.current = verification.needsFixup;
-      setScrambleMatch(verification.match);
-      // 「打乱正确即预备」 belongs here and not in an effect over `scrambleMatch`:
+      const observation = scrambleGuidanceController.observe(toFaceletString(faces));
+      // 「打乱正确即预备」 belongs here and not in an effect over match state:
       // it is the EVENT of a turn completing the scramble, not the state of
       // matching. As state it also fires on the commit where a solve ends —
-      // `scrambleMatch` is still the `true` from before the solve there (the
+      // the match is still `true` from before the solve there (the
       // check skips while running), so every solve armed the next attempt and
       // the next scramble's own turns started the clock.
-      if (verification.match) {
-        scrambleGuidanceCompleteRef.current = true;
-        armFromScrambleRef.current();
-      }
-      if (!verification.correctionActive) clearFixup();
-      setScrambleHint(verification.hint);
-      if (verification.needsFixup) void requestFixup(target);
+      if (observation.completedNow) armFromScrambleRef.current();
     };
     subs.add(verify);
     return () => { subs.delete(verify); };
-  }, [clearFixup, requestFixup]);
+  }, [scrambleGuidanceController]);
+  useLayoutEffect(() => {
+    scrambleGuidanceController.setConnected(cubeConnected);
+    return () => scrambleGuidanceController.setConnected(false);
+  }, [cubeConnected, scrambleGuidanceController]);
   // Mid-solve the strip goes back to plain text: the cube has left the
   // scrambled state on purpose, so "you still owe R" would be nonsense.
-  useEffect(() => {
-    if (timer.phase === 'running') {
-      fixupWantedRef.current = false;
-      setScrambleHint(null);
-      clearFixup();
+  useLayoutEffect(() => {
+    scrambleGuidanceController.setRunning(timer.phase === 'running');
+  }, [scrambleGuidanceController, timer.phase]);
+  useLayoutEffect(() => {
+    if (bluetoothCube.facelets) {
+      scrambleGuidanceController.syncFacelets(bluetoothCube.facelets);
     }
-  }, [timer.phase, clearFixup]);
-  useEffect(() => {
-    if (cubeConnected) return;
-    fixupWantedRef.current = false;
-    scrambleGuidanceCompleteRef.current = false;
-    setScrambleMatch(null);
-    setScrambleHint(null);
-    clearFixup();
-  }, [clearFixup, cubeConnected]);
+  }, [
+    bluetoothCube.facelets,
+    cubeConnected,
+    currentScrambleEntry.id,
+    scramble,
+    scrambleGuidanceController,
+    scrambleTarget,
+    timer.phase,
+  ]);
 
 
   // ── Round simulation ────────────────────────────────────────────
@@ -2827,7 +2790,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               compact={settings.compactScramble}
               copied={scrambleCopied}
               copiedLabel={tr({ zh: '已复制', en: 'Copied' })}
-              correctionActive={fixupActive}
+              correctionActive={scrambleGuidance.correctionActive}
               fallback={randomOptimalLoading || scrambleLoading || cstimerLoading || trainerLoading || byStepsLoading
                 ? <Spinner size={22} label={randomOptimalLoading
                     ? tr({ zh: '生成最优打乱', en: 'Generating optimal scramble' })
@@ -2876,8 +2839,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                 : 'empty'}
               font={settings.scrambleFont}
               fontScale={settings.scrambleFontScale}
-              hint={scrambleHint}
-              match={scrambleMatch}
+              hint={scrambleGuidance.hint}
+              match={scrambleGuidance.match}
               nonOptimal={wcaNonOptimal ? {
                 label: tr({ zh: '非最优', en: 'non-optimal' }),
                 title: tr({ zh: '该难度档暂无最优等态打乱,显示原始 WCA 打乱', en: 'No optimal-equivalent scramble for this difficulty — showing the original WCA scramble' }),

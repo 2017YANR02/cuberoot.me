@@ -78,7 +78,7 @@
 - 版本化 schema、IndexedDB 仓储和 adapter contract tests 提交：`ac5a88bf39`。
 - 共享三阶打乱生成器和边界回归测试提交：`968d330692`。
 - 2026-08-30 BLE 复用边界：Mobile 只保留 Capacitor `BleTransport`；GAN v4、补帧、`MoveClock` 和 `SmartCubeStateTracker` 位于 `@cuberoot/shared`，网站旧路径只作兼容导出。移动端 28 项与网站智能魔方/时钟定向 30 项测试通过。
-- 2026-09-01 智能魔方逐步提示、匹配、偏离修正 requester 与模式 capability 再收敛到 shared；Kociemba cubie 逆运算只保留在 puzzle-solvers，Web 与五端产品层共用 `TimerScrambleStrip`，各宿主不增加业务分叉。最新 debug APK 已覆盖安装到 OPPO，但安装时手机锁屏，因此新版提示、故意偏离、修正完成和首个 Worker 冷启动延迟仍须解锁后用 GAN 16 UI 实测，不能沿用旧版自动计时证据冒充。
+- 2026-09-01 智能魔方逐步提示、匹配、偏离修正 requester、Solo 生命周期 controller 与模式 capability 已收敛到 shared；Kociemba cubie 逆运算只保留在 puzzle-solvers，Web 与五端产品层共用 `TimerScrambleStrip`，各宿主只保留 facelets/Worker/BLE 适配。最新 debug APK 已覆盖安装到 OPPO，但安装时手机锁屏，因此新版提示、故意偏离、修正完成和首个 Worker 冷启动延迟仍须解锁后用 GAN 16 UI 实测，不能沿用旧版自动计时证据冒充。
 
 ### 阶段 2A：五端一次到位架构
 
@@ -185,7 +185,7 @@
 - 原生 transport 采用 `@capacitor-community/bluetooth-le` 8.x 的薄 adapter；选择依据是 Capacitor 8 同主版本、Android/iOS central BLE、manufacturer data、读写、通知、断线和 MTU 能力齐全。GAN 协议继续复用 `@cuberoot/shared/smart-cube/gan-v4`；网站保留 Web Bluetooth adapter，不复制协议、不从 client deep import。
 - Capawesome BLE 因本项目不需要其付费的 peripheral/headless/foreground 扩展而不选；Capgo Web Bluetooth shim 因设备选择语义受限且会把 Mobile 重新耦合到浏览器 GATT 对象而不选。只有社区插件真机 spike 暴露无法补齐的硬阻断时，才重开插件或自有原生桥决策。
 - 真机证据已覆盖 Android 13 附近设备授权、扫描、选择、连接、服务发现、写命令、通知、GAN v4 解密、状态帧与真实转动解析。2026-08-30 进一步实测打乱匹配后自动预备、第一手起表、复原自动停表并保存 `5.20`，统计从 `3/3` 更新为 `4/4` 后自动切换下一条比赛打乱。权限拒绝恢复、后台、蓝牙关闭、距离中断和反复重连仍是独立未完成门槛。
-- 2026-09-01 的 shared 指引/修正版本已通过 Web/App 延迟 requester、同 target coalesce、新 target 续跑、协议错拒绝晚帧、同批帧与 43 项能力矩阵回归；Android APK 为 8,788,904 bytes、SHA-256 `eac89c7054362915f6da93a5c8fcd5ef2054d54103bce9267ef37b81d2309b14`，已安装到同一 OPPO 且与设备内 `base.apk` 字节一致。Web/App 的 React lifecycle coordinator 尚待收敛；实体 GAN 新路径未在解锁屏幕上复验，故本阶段仍不完成。
+- 2026-09-01 的 shared 指引/修正与 Solo lifecycle controller 已通过 Web/App 延迟 requester、同 target coalesce、新 target 续跑、协议错拒绝晚帧、同批帧、连接/切题后 authoritative state 重放、一次性完成 edge 与 43 项能力矩阵回归；Android APK 为 8,788,904 bytes、SHA-256 `5cc6b17112332c4c1e814b7495852365f761e951f0ee6b6fc8d046b3b7935ce7`，已安装到同一 OPPO 且与设备内 `base.apk` 字节一致。实体 GAN 新路径未在解锁屏幕上复验，故本阶段仍不完成。
 
 ### 阶段 6：账号、同步和合规闭环
 
