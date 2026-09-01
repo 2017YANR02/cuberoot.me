@@ -1,6 +1,6 @@
 # CubeRoot 文档索引
 
-状态：`ACTIVE`。最后更新：2026-08-23。
+状态：`ACTIVE`。最后更新：2026-09-01。
 
 本页是文档状态和权威入口的索引，不替代代码、schema、workflow 或各专题跟踪表。
 
@@ -29,6 +29,7 @@
 | Platform 统一方案 | [platform-unification-plan.md](./platform-unification-plan.md) | `COMPLETED` | 已完成阶段的设计和验收依据 |
 | 生成物 | [generated-artifacts.md](./generated-artifacts.md) | `REFERENCE` | source、output、重建入口、owner 和漂移策略 |
 | 开发环境 | [development.md](./development.md) | `REFERENCE` | 本地开发与常用验证 |
+| 部署与运维 | [workflows](../.github/workflows/) / [nginx](../ops/nginx/README.md) / [故障排除](./troubleshooting.md) | `REFERENCE` | workflow 和 ops 是部署、配置、回滚的事实源 |
 | WCA 统计管道 | [stats-pipeline.md](./stats-pipeline.md) | `REFERENCE` | 统计生成、加载和发布边界 |
 | Recon API | [recon-api.md](./recon-api.md) | `REFERENCE` | Recon 接口契约 |
 | SEO/GEO | [seo-geo-plan.md](./seo-geo-plan.md) | `REFERENCE` | metadata、索引和内容策略 |
