@@ -1350,6 +1350,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The compact statistics panel shared by the Web, Android, and iOS timers. Current/best rows, the PR slot, rolling columns, expanded statistics, and Sub-X live in one implementation. Algorithms come from @cuberoot/shared/timer; hosts inject solves, translated copy, settings persistence, and their badge. The full StatsModal and five chart types remain separate product surfaces.',
   },
   {
+    name: 'TimerReconstructMetrics',
+    import: "import { TimerReconstructMetrics } from '@cuberoot/timer-ui';",
+    category: 'display',
+    zh: 'Web 与五个安装端共用的基础复盘指标卡。QTM/QTPS、首动延迟、最长停顿和停顿次数只从 @cuberoot/shared/timer/reconstruct/solve-metrics 计算；组件只接已计算结果，避免 Web 完整报告重复遍历动作流。完整动作谱、时间线、回放和反馈不属于此组件。',
+    en: 'Basic reconstruction metric cards shared by Web and all five installed clients. QTM/QTPS, first-move delay, longest pause, and pause count are computed only by @cuberoot/shared/timer/reconstruct/solve-metrics; the component receives the computed result so the full Web report does not traverse moves twice. The full move stream, timeline, replay, and feedback remain separate surfaces.',
+  },
+  {
     name: 'TimerPrintController / TimerPrintDocument',
     import: "import { TimerPrintController, TimerPrintDocument } from '@cuberoot/timer-ui';",
     category: 'more',

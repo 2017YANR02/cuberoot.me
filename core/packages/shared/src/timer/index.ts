@@ -37,6 +37,7 @@ export * from './source-revision';
 export * from './smart-cube-move-recorder';
 export * from './stage-segments';
 export * from './stage-segments-producer';
+export * from './reconstruct/solve-metrics';
 export * from './stats';
 export * from './stats-buckets';
 export * from './trainer-scramble';

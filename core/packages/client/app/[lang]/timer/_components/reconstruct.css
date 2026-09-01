@@ -42,40 +42,6 @@
   color: var(--signal-info);
 }
 
-.reconstruct-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.reconstruct-stat {
-  background: var(--card);
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  padding: 10px 12px;
-  text-align: center;
-}
-
-.reconstruct-stat-num {
-  font-family: var(--font-mono);
-  font-size: 22px;
-  color: var(--foreground);
-  line-height: 1.2;
-}
-.reconstruct-stat-label {
-  font-size: 11px;
-  color: var(--muted-foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-top: 2px;
-}
-.reconstruct-stat-sub {
-  font-size: 11px;
-  color: var(--muted-foreground);
-  margin-top: 4px;
-}
-
 .reconstruct-section {
   margin-bottom: 14px;
 }
@@ -569,12 +535,6 @@
 }
 
 @media (max-width: 480px) {
-  .reconstruct-stats {
-    grid-template-columns: 1fr;
-  }
-  .reconstruct-stat-num {
-    font-size: 18px;
-  }
   .reconstruct-stage-grid {
     grid-template-columns: repeat(2, 1fr);
   }
