@@ -51,7 +51,10 @@ describe('shared timer solve detail UI', () => {
       onDelete,
       onMoveToSession,
       preview: createElement('span', { 'data-preview': true }, 'preview'),
-      solve: baseSolve,
+      solve: {
+        ...baseSolve,
+        moves: [{ m: 'R', ts: 4_250 }, { m: 'R', ts: 4_800 }],
+      },
     })));
 
     expect(document.body.querySelector('[role="dialog"]')).not.toBeNull();
@@ -62,6 +65,10 @@ describe('shared timer solve detail UI', () => {
     expect(document.body.textContent).toContain('Stage splits');
     expect(document.body.textContent).toContain('Memo / Execution');
     expect(document.body.querySelector('[data-preview]')).not.toBeNull();
+    expect(document.body.querySelectorAll('[data-timer-reconstruct-metrics]')).toHaveLength(1);
+    expect(document.body.textContent).toContain('First move');
+    expect(document.body.textContent).toContain('after memo');
+    expect(document.body.textContent).toContain('0.33 tps');
     expect(document.activeElement).toBe(document.body.querySelector('[data-history-action-id="solve.detail.penalty"]'));
 
     const penalty = document.body.querySelector<HTMLSelectElement>('[data-history-action-id="solve.detail.penalty"]')!;
@@ -105,8 +112,11 @@ describe('shared timer solve detail UI', () => {
       onClose,
       onDelete: vi.fn(),
       preview: createElement('span', { 'data-preview': true }, 'preview'),
-      report: createElement('div', { 'data-report': true }, 'reconstruction'),
-      solve: baseSolve,
+      report: createElement('div', {
+        'data-report': true,
+        'data-timer-reconstruct-metrics': true,
+      }, 'reconstruction'),
+      solve: { ...baseSolve, moves: [{ m: 'R', ts: 4_250 }] },
     })));
 
     const comment = document.body.querySelector<HTMLTextAreaElement>('[data-history-action-id="solve.detail.comment"]')!;
@@ -116,6 +126,7 @@ describe('shared timer solve detail UI', () => {
     expect(onClose).not.toHaveBeenCalled();
     expect(document.body.querySelector('[data-report]')).not.toBeNull();
     expect(document.body.querySelector('[data-preview]')).toBeNull();
+    expect(document.body.querySelectorAll('[data-timer-reconstruct-metrics]')).toHaveLength(1);
     expect(document.body.textContent).not.toContain('Scramble:');
 
     await act(async () => comment.blur());
@@ -130,9 +141,11 @@ describe('shared timer solve detail UI', () => {
       index: 0,
       localize: (copy) => copy.zh,
       onClose: vi.fn(),
-      solve: baseSolve,
+      solve: { ...baseSolve, moves: [{ m: 'R', ts: 4_250 }] },
     })));
     expect(document.body.textContent).toContain('总计');
+    expect(document.body.textContent).toContain('首动延迟');
+    expect(document.body.textContent).toContain('记忆后');
     expect(document.body.textContent).not.toContain('total');
     expect(document.body.querySelector('[data-history-action-id="solve.detail.move-session"]')).toBeNull();
     expect(document.body.querySelector<HTMLSelectElement>('[data-history-action-id="solve.detail.penalty"]')?.disabled).toBe(true);

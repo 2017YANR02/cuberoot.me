@@ -6,6 +6,7 @@ import {
   formatSolveResult,
   isMbldDnf,
   mbldPoints,
+  sliceReconstruction,
   timerSolveDetailActionStates,
   timerSolveDetailBldTimes,
   timerSolveDetailStageRows,
@@ -28,6 +29,7 @@ import { createPortal } from 'react-dom';
 
 import { modalFocusableElements } from './modal-focus';
 import { TimerHistoryCommentEditor } from './TimerHistoryRow';
+import { TimerReconstructMetrics } from './TimerReconstructMetrics';
 
 const COPY = {
   attempted: { en: 'Attempted', zh: '已尝试' },
@@ -143,6 +145,9 @@ export function TimerSolveDetailModal({
   const penaltyRef = useRef<HTMLSelectElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const full = report !== undefined;
+  const reconstructionMetrics = !full && solve.moves?.length
+    ? sliceReconstruction(solve.moves, solve.timeMs, solve.bld?.memoMs)
+    : null;
   const actionStates = timerSolveDetailActionStates({
     canChangePenalty: !!onChangePenalty,
     canClose: true,
@@ -386,6 +391,9 @@ export function TimerSolveDetailModal({
               <div className="timer-solve-detail-scramble">{solve.scramble}</div>
             </section>
             {preview && <section className="timer-solve-detail-preview">{preview}</section>}
+            {reconstructionMetrics && (
+              <TimerReconstructMetrics localize={localize} metrics={reconstructionMetrics} />
+            )}
             {splitSections}
             {comment}
             {move}

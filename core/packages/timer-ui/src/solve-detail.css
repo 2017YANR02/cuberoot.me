@@ -147,6 +147,45 @@
   font-size: 12px;
 }
 
+.timer-reconstruct-metrics {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.timer-reconstruct-metric {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--card, var(--shell-chip));
+  text-align: center;
+}
+
+.timer-reconstruct-metric-num {
+  overflow-wrap: anywhere;
+  color: var(--foreground);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.timer-reconstruct-metric-label {
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.timer-reconstruct-metric-sub {
+  margin-top: 4px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
 .timer-solve-detail-actions {
   display: flex;
   flex-wrap: wrap;
@@ -168,6 +207,11 @@
   color: var(--foreground);
   cursor: pointer;
   font: inherit;
+}
+
+@media (max-width: 480px) {
+  .timer-reconstruct-metrics { grid-template-columns: 1fr; }
+  .timer-reconstruct-metric-num { font-size: 18px; }
 }
 
 .timer-solve-detail-action { padding: 7px 14px; }

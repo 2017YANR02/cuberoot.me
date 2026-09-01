@@ -200,9 +200,9 @@ shared 映射快照是 19 个 Timer ID：
 | `history.quick-actions` | OK/+2/DNF/DNS、备注、复制、删除 | 7 个稳定 action ID/effect/visible/disabled/active、完整成绩行与单一快捷菜单/底部操作表（右键/长按、焦点、Escape/点外/scroll/resize、viewport clamp、quick-delete once/no-confirm）已迁 `timer-ui` 并由 Web/Mobile 共用。Mobile quick delete 已接 repository restore + 共用 5 秒 Undo；菜单也接入受控 overlay。OPPO 600ms 原位长按打开 sheet，七项、360px 宽度、64px 底部预留及真实 Back 只关菜单已验；备注 textarea 在 461px IME 视口完整可见且无横向溢出。iPhone 17 模拟器只验证了当前共享构建安装/启动，History 交互与全状态矩阵仍缺 |
 | `history.compare` | 二选/取消/第三项替换、结果/阶段/HTM/TPS/case 差异、删改与上下文清理、焦点/关闭/返回 | 选择和比较模型在 shared，完整 UI 在 timer-ui；Web/五端共用，render-time context gate 与定向回归通过。最新 APK 已安装，OPPO 仍锁屏，窄屏点击/可读/无遮挡真机验收待补 |
 | `history.bulk` | 选择、批量删除 | `HistoryPanel` 保留可选代码，但网站 `SoloView` 当前未传 `onBulkDelete`，主路径不可达；不为 App 复制死代码。若网站重新开放，先提取 shared 原子操作与共用 UI 再五端接入 |
-| `solve.detail` | 原始/生效成绩、日期、4 罚时、打乱/图、分段、BLD/MBLD、备注、tag | Web/五端已共用同一 `TimerSolveDetailModal` 和同一打乱预览，基础字段、动作、焦点、关闭、窄屏布局、脏旧分段归一化及网站当前预览项目均为单源；tag 继续属于共用成绩行。Web 重型复盘仍由动态 slot 注入，故完整 parity 未关闭 |
+| `solve.detail` | 原始/生效成绩、日期、4 罚时、打乱/图、分段、BLD/MBLD、备注、tag | Web/五端已共用同一 `TimerSolveDetailModal`、同一打乱预览和同一基础复盘指标卡，基础字段、动作、焦点、关闭、窄屏布局、脏旧分段归一化及网站当前预览项目均为单源；tag 继续属于共用成绩行。Web 重型复盘仍由动态 slot 注入，故完整 parity 未关闭 |
 | `solve.move-session` | 移动到其他 session | shared 不可变 move effect、详情 action/目标规则与共用详情入口已由 Web/五端消费；成功写仓储后才关闭，失败保持详情可见 |
-| `solve.reconstruction` | 动作流、谱子、方法/阶段、质量、时间线、回放、反馈 | App 智能魔方成绩的 `moves/device/stageSegments` 已与 Web 共用 producer 并落盘；完整复盘 UI、时间线、回放和反馈仍缺 |
+| `solve.reconstruction` | 动作流、谱子、方法/阶段、质量、时间线、回放、反馈 | App 智能魔方成绩的 `moves/device/stageSegments` 已与 Web 共用 producer 并落盘；QTM/QTPS、首动延迟、最长停顿和停顿次数已由 shared 单次计算并由 Web/五端共用同一指标卡。完整动作谱、方法/阶段质量、时间线、回放和反馈仍缺 |
 | `solve.auto-recap` | 智能魔方停表后内联 recap，下一把收起 | 缺 |
 | `panel.times-chart-stats` | 成绩/图表/统计三 tab，桌面 rail/手机整屏 sheet | 缺 |
 | `chart.types` | 分布/趋势/散点/时段/日历五图 | 缺 |
