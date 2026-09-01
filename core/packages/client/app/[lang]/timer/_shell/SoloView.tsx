@@ -2572,6 +2572,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           />
           {/* 这一档就是这些把本身:会话切换器 + 那张单子。算出来的数都在「统计」那档。 */}
           <HistoryPanel
+            historyContextKey={`${getActiveSessionId()}|${event}`}
             solves={solves}
             isZh={isZh}
             rollingStatColumns={settings.statsRollingColumns}

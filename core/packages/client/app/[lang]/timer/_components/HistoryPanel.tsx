@@ -2,7 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { X, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical } from 'lucide-react';
-import type { Solve, Penalty } from '../_lib/types';
+import { eventInfo, type Solve, type Penalty } from '../_lib/types';
 import { formatMs, formatEventMs } from '../_lib/stats';
 import {
   TIMER_HISTORY_PENALTIES,
@@ -10,7 +10,10 @@ import {
   TIMER_HISTORY_QUICK_ACTION_IDS,
   computeTimerHistoryTags,
   filterTimerHistorySolves,
+  pruneTimerHistoryCompareSelection,
+  resolveTimerHistoryComparePair,
   timerHistoryCopyText,
+  toggleTimerHistoryCompareSelection,
   toggleTimerHistoryTag,
   toggleTimerHistoryPenalty,
   type TimerHistoryTagId,
@@ -23,7 +26,6 @@ import {
   sanitizeRollingStatColumns,
   type RollingStatKey,
 } from '../_lib/rolling_stats';
-import CompareSolvesModal from './CompareSolvesModal';
 import RollingStatsPicker from './RollingStatsPicker';
 import { dayKeyOf } from '../_lib/stats_buckets';
 import { ClearButton } from '@/components/ClearButton';
@@ -31,14 +33,19 @@ import { DateRangeInput } from '@/components/DateRangeInput';
 import { RecordBadge } from '@/components/RecordBadge';
 import { tr } from '@/i18n/tr';
 import {
+  TimerHistoryCompareActions,
+  TimerHistoryCompareModal,
+  TimerHistoryCompareStatus,
   TimerHistoryRow,
   TimerHistoryTagBadges,
   TimerHistoryTagFilter,
+  type TimerHistoryCompareLabels,
   type TimerHistoryQuickMenuLabels,
   type TimerHistoryRowQuickMenu,
 } from '@cuberoot/timer-ui';
 
 interface Props {
+  historyContextKey: string;
   solves: Solve[];
   isZh: boolean;
   onRowClick: (solve: Solve, index: number) => void;
@@ -62,18 +69,33 @@ interface Props {
 const MOBILE_QUERY = '(max-width: 480px)';
 
 export default function HistoryPanel({
-  solves, isZh, onRowClick, onBulkDelete,
+  historyContextKey, solves, isZh, onRowClick, onBulkDelete,
   onQuickPenalty, onQuickDelete, onQuickComment,
   rollingStatColumns = DEFAULT_ROLLING_STAT_COLUMNS,
 }: Props) {
   const [query, setQuery] = useState('');
   const [compareMode, setCompareMode] = useState(false);
-  // Selected solve ids in click-order (oldest first). When a 3rd id is clicked
-  // we drop the oldest (index 0) and keep the most recent two — matches the
-  // spec'd "swap older selection" behavior.
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [compareError, setCompareError] = useState<string | null>(null);
-  const [comparePair, setComparePair] = useState<[Solve, Solve] | null>(null);
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [compareSelectionContext, setCompareSelectionContext] = useState(historyContextKey);
+  const compareContextMatches = compareSelectionContext === historyContextKey;
+  const visibleCompareMode = compareMode && compareContextMatches;
+  const visibleSelectedIds = compareContextMatches ? selectedIds : [];
+  const compareContextRef = useRef(historyContextKey);
+  useEffect(() => {
+    if (compareContextRef.current === historyContextKey) return;
+    compareContextRef.current = historyContextKey;
+    setCompareMode(false);
+    setSelectedIds([]);
+    setCompareOpen(false);
+    setCompareSelectionContext(historyContextKey);
+  }, [historyContextKey]);
+  useEffect(() => {
+    setSelectedIds((current) => {
+      const next = pruneTimerHistoryCompareSelection(solves, current);
+      return next.length === current.length ? current : next;
+    });
+  }, [solves]);
 
   // Select mode (multi-select for bulk delete). Mutually exclusive with
   // compareMode. Selection is a Set keyed by solve id; persists across filter
@@ -123,6 +145,40 @@ export default function HistoryPanel({
       'history.quick.penalty-dns': tr({ zh: '未开始（DNS）', en: 'Did Not Start' }),
     },
     menu: tr({ zh: '更多操作', en: 'More actions' }),
+  }), [isZh]);
+  const compareLabels = useMemo<TimerHistoryCompareLabels>(() => ({
+    bBetter: tr({ zh: 'B 更好', en: 'B better' }),
+    bWorse: tr({ zh: 'B 更差', en: 'B worse' }),
+    cancel: tr({ zh: '取消', en: 'Cancel' }),
+    close: tr({ zh: '关闭', en: 'Close' }),
+    compareSelected: tr({ zh: '对比这 2 个', en: 'Compare these 2' }),
+    delta: tr({ zh: '差异', en: 'Delta' }),
+    deltaDirection: tr({ zh: '差异 (B − A)', en: 'Delta (B − A)' }),
+    eventName: (solve) => {
+      const info = eventInfo(solve.event);
+      return tr({ zh: info.nameZh, en: info.nameEn });
+    },
+    greenMeansBetter: tr({ zh: '绿色 = B 更好', en: 'Green = B better' }),
+    htm: tr({ zh: '步数', en: 'HTM' }),
+    locale: tr({ zh: 'zh-CN', en: 'en' }),
+    moves: tr({ zh: '步', en: 'moves' }),
+    noStageA: tr({ zh: 'A 没有阶段数据 — 可在设置中重新分析', en: 'A has no stage data — try Reanalyze in settings' }),
+    noStageB: tr({ zh: 'B 没有阶段数据 — 可在设置中重新分析', en: 'B has no stage data — try Reanalyze in settings' }),
+    noStageBoth: tr({ zh: '两次成绩都没有阶段数据 — 可在设置中重新分析', en: 'Neither solve has stage data — try Reanalyze in settings' }),
+    selected: (count) => tr({
+      zh: `选择 2 个成绩进行对比 (已选 ${count}/2)`,
+      en: `Pick 2 solves to compare (${count}/2 selected)`,
+    }),
+    stage: {
+      cross: tr({ zh: '十字', en: 'Cross' }),
+      f2l: 'F2L',
+      oll: 'OLL',
+      pll: 'PLL',
+    },
+    tie: tr({ zh: '持平', en: 'tie' }),
+    title: tr({ zh: '对比成绩', en: 'Compare solves' }),
+    total: tr({ zh: '合计', en: 'Total' }),
+    tps: 'TPS',
   }), [isZh]);
 
   // All persistence/clipboard/detail effects remain host injected. The shared
@@ -286,7 +342,8 @@ export default function HistoryPanel({
   const exitCompareMode = () => {
     setCompareMode(false);
     setSelectedIds([]);
-    setCompareError(null);
+    setCompareOpen(false);
+    setCompareSelectionContext(historyContextKey);
   };
 
   const exitSelectMode = () => {
@@ -295,14 +352,14 @@ export default function HistoryPanel({
   };
 
   const toggleCompareMode = () => {
-    if (compareMode) {
+    if (visibleCompareMode) {
       exitCompareMode();
     } else {
       // Compare and select are mutually exclusive.
       if (selectMode) exitSelectMode();
       setCompareMode(true);
       setSelectedIds([]);
-      setCompareError(null);
+      setCompareSelectionContext(historyContextKey);
     }
   };
 
@@ -310,7 +367,7 @@ export default function HistoryPanel({
     if (selectMode) {
       exitSelectMode();
     } else {
-      if (compareMode) exitCompareMode();
+      if (visibleCompareMode) exitCompareMode();
       setSelectMode(true);
       setBulkSelected(new Set());
     }
@@ -353,36 +410,16 @@ export default function HistoryPanel({
 
   /** Compare-mode row click: select / deselect / swap-older. */
   const handleSelectInCompare = (s: Solve) => {
-    setCompareError(null);
-    setSelectedIds(prev => {
-      // Click an already-selected solve → deselect it.
-      if (prev.includes(s.id)) return prev.filter(id => id !== s.id);
-      // 3rd click → drop oldest, append new.
-      if (prev.length >= 2) return [prev[1], s.id];
-      return [...prev, s.id];
-    });
+    setCompareSelectionContext(historyContextKey);
+    setSelectedIds((current) => toggleTimerHistoryCompareSelection(current, s.id));
   };
 
-  const openCompareModal = () => {
-    if (selectedIds.length !== 2) return;
-    if (selectedIds[0] === selectedIds[1]) {
-      setCompareError(tr({ zh: '请选择两个不同的成绩', en: 'Pick two different solves'
-    }));
-      return;
-    }
-    const a = solves.find(x => x.id === selectedIds[0]);
-    const b = solves.find(x => x.id === selectedIds[1]);
-    if (!a || !b) {
-      setCompareError(tr({ zh: '成绩未找到', en: 'Solve not found'
-    }));
-      return;
-    }
-    setComparePair([a, b]);
-  };
-
-  const closeCompareModal = () => {
-    setComparePair(null);
-  };
+  const comparePair = resolveTimerHistoryComparePair(solves, visibleSelectedIds);
+  const compareReady = comparePair !== null;
+  useEffect(() => {
+    if (!compareReady) setCompareOpen(false);
+  }, [compareReady]);
+  const openCompareModal = () => { if (comparePair) setCompareOpen(true); };
 
   // Inline style helpers for the filters panel
   const chipBtn = (active: boolean): React.CSSProperties => ({
@@ -423,12 +460,12 @@ export default function HistoryPanel({
               onClick={toggleCompareMode}
               title={tr({ zh: '对比两次成绩', en: 'Compare two solves'
             })}
-              aria-pressed={compareMode}
+              aria-pressed={visibleCompareMode}
               style={{
-                background: compareMode ? '#2a3d4d' : 'transparent',
+                background: visibleCompareMode ? '#2a3d4d' : 'transparent',
                 border: '1px solid #333',
-                color: compareMode ? '#cde' : '#888',
-                borderColor: compareMode ? '#4d7a99' : '#333',
+                color: visibleCompareMode ? '#cde' : '#888',
+                borderColor: visibleCompareMode ? '#4d7a99' : '#333',
                 borderRadius: 4,
                 padding: '2px 6px',
                 cursor: 'pointer',
@@ -477,9 +514,9 @@ export default function HistoryPanel({
                 aria-expanded={actionsOpen}
                 aria-label={tr({ zh: '更多操作', en: 'More actions' })}
                 style={{
-                  background: (compareMode || selectMode) ? '#2a3d4d' : 'transparent',
-                  border: '1px solid ' + ((compareMode || selectMode) ? '#4d7a99' : '#333'),
-                  color: (compareMode || selectMode) ? '#cde' : '#aaa',
+                  background: (visibleCompareMode || selectMode) ? '#2a3d4d' : 'transparent',
+                  border: '1px solid ' + ((visibleCompareMode || selectMode) ? '#4d7a99' : '#333'),
+                  color: (visibleCompareMode || selectMode) ? '#cde' : '#aaa',
                   borderRadius: 4,
                   width: 32,
                   height: 32,
@@ -514,16 +551,16 @@ export default function HistoryPanel({
                     type="button"
                     role="menuitem"
                     onClick={() => { setActionsOpen(false); toggleCompareMode(); }}
-                    aria-pressed={compareMode}
+                    aria-pressed={visibleCompareMode}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: 8,
                       width: '100%',
                       minHeight: 36,
-                      background: compareMode ? '#2a3d4d' : 'transparent',
+                      background: visibleCompareMode ? '#2a3d4d' : 'transparent',
                       border: 'none',
-                      color: compareMode ? '#cde' : '#ccc',
+                      color: visibleCompareMode ? '#cde' : '#ccc',
                       borderRadius: 3,
                       padding: '8px 10px',
                       cursor: 'pointer',
@@ -752,23 +789,8 @@ export default function HistoryPanel({
           </div>
         )}
       </div>
-      {compareMode && (
-        <div
-          style={{
-            padding: '6px 14px',
-            fontSize: 11,
-            color: '#aaa',
-            borderBottom: '1px solid #1f1f23',
-            background: '#15151a',
-          }}
-        >
-          {(isZh
-                              ? `选择 2 个成绩进行对比 (已选 ${selectedIds.length}/2)`
-                              : `Pick 2 solves to compare (${selectedIds.length}/2 selected)`)}
-          {compareError && (
-            <div style={{ color: '#d97a7a', marginTop: 2 }}>{compareError}</div>
-          )}
-        </div>
+      {visibleCompareMode && (
+        <TimerHistoryCompareStatus count={visibleSelectedIds.length} labels={compareLabels} />
       )}
       {selectMode && (
         <div
@@ -855,7 +877,7 @@ export default function HistoryPanel({
             )}
           </div>
         )}
-        {filteredReversed.length > 0 && !compareMode && !selectMode && (
+        {filteredReversed.length > 0 && !visibleCompareMode && !selectMode && (
           <div className="history-cols-head" style={{ gridTemplateColumns: headTmpl }}>
             <span className="idx">#</span>
             {/* MBLD's column holds "11/13 58:02", not a time. */}
@@ -873,16 +895,16 @@ export default function HistoryPanel({
           // 一列日期:同一天的几十把会把同一个日期重复几十遍,窄屏还得为它让出一列。
           const dayKey = dayKeyOf(s.ts);
           const newDay = listIdx === 0 || dayKeyOf(filteredReversed[listIdx - 1].ts) !== dayKey;
-          const isSelected = compareMode && selectedIds.includes(s.id);
+          const isSelected = visibleCompareMode && visibleSelectedIds.includes(s.id);
           const isBulkSelected = selectMode && bulkSelected.has(s.id);
 
-          const lead = (compareMode || selectMode) ? '14px ' : '';
+          const lead = (visibleCompareMode || selectMode) ? '14px ' : '';
           const rowStyle: React.CSSProperties = {
             gridTemplateColumns: `${lead}32px ${timeColumnWidth}${statTemplate} minmax(0,1fr)`,
           };
 
           const handleRowClick = () => {
-            if (compareMode) {
+            if (visibleCompareMode) {
               handleSelectInCompare(s);
             } else if (selectMode) {
               toggleBulkSelect(s.id);
@@ -917,7 +939,7 @@ export default function HistoryPanel({
               quickMenu={rowQuickMenu}
               resultExtras={rowTags}
               selected={isSelected || isBulkSelected}
-              selectionMode={compareMode ? 'compare' : selectMode ? 'select' : 'none'}
+              selectionMode={visibleCompareMode ? 'compare' : selectMode ? 'select' : 'none'}
               solve={s}
               style={rowStyle}
               trailing={visibleStatColumns.map(key => (
@@ -933,53 +955,13 @@ export default function HistoryPanel({
           );
         })}
       </div>
-      {compareMode && (
-        <div
-          style={{
-            padding: '8px 14px',
-            borderTop: '1px solid #1f1f23',
-            display: 'flex',
-            gap: 8,
-            justifyContent: 'flex-end',
-            background: '#15151a',
-          }}
-        >
-          <button
-            type="button"
-            onClick={exitCompareMode}
-            style={{
-              background: 'transparent',
-              border: '1px solid #444',
-              color: '#aaa',
-              borderRadius: 4,
-              padding: '4px 10px',
-              fontSize: 12,
-              cursor: 'pointer',
-            }}
-          >
-            {tr({ zh: '取消', en: 'Cancel' })}
-          </button>
-          <button
-            type="button"
-            onClick={openCompareModal}
-            disabled={selectedIds.length !== 2}
-            style={{
-              background: selectedIds.length === 2 ? '#2a3d4d' : '#1a1a1d',
-              border: '1px solid ' + (selectedIds.length === 2 ? '#4d7a99' : '#333'),
-              color: selectedIds.length === 2 ? '#cde' : '#555',
-              borderRadius: 4,
-              padding: '4px 10px',
-              fontSize: 12,
-              cursor: selectedIds.length === 2 ? 'pointer' : 'not-allowed',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-            }}
-          >
-            {tr({ zh: '对比这 2 个', en: 'Compare these 2'
-            })}
-          </button>
-        </div>
+      {visibleCompareMode && (
+        <TimerHistoryCompareActions
+          canCompare={compareReady}
+          labels={compareLabels}
+          onCancel={exitCompareMode}
+          onCompare={openCompareModal}
+        />
       )}
       {selectMode && (
         <div
@@ -1031,12 +1013,12 @@ export default function HistoryPanel({
           </button>
         </div>
       )}
-      {comparePair && (
-        <CompareSolvesModal
+      {compareOpen && comparePair && (
+        <TimerHistoryCompareModal
+          labels={compareLabels}
+          onClose={() => setCompareOpen(false)}
           solveA={comparePair[0]}
           solveB={comparePair[1]}
-          isZh={isZh}
-          onClose={closeCompareModal}
         />
       )}
     </div>

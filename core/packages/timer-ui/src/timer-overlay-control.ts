@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 
 export const TIMER_OVERLAY_IDS = {
+  historyCompare: 'timer.history-compare',
   historyQuickMenu: 'timer.history-quick-menu',
   puzzlePicker: 'timer.puzzle-picker',
   scrambleSource: 'timer.scramble-source',
