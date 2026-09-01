@@ -160,7 +160,7 @@ shared 映射快照是 19 个 Timer ID：
 | `scramble.source-progress` | 稀有池 `seen/total`、全练过、非最优标志、打乱足迹人数 | 缺 |
 | `scramble.loading` | WCA、csTimer worker、难度 worker、云端最优各自区分 loading | 仅通用 loading |
 | `scramble.empty-error` | 比赛无项目、日期无题、难度无匹配、难度库待更新、稀有、短暂网络失败各自文案/重试 | 仅通用 error/unsupported |
-| `scramble.smart-hint` | 已拧步骤变暗、当前高亮、打乱完成、不符、拧回原打乱、复制原打乱 | Web/五端产品层已共用 `TimerScrambleStrip` 与 shared 提示/匹配/偏离修正 requester；Web/App 的 React lifecycle coordinator 尚待收敛。Android 最新 APK 已安装，OPPO 新版逐步提示、故意偏离、修正完成和 Worker 冷启动延迟仍待解锁后用 GAN 16 UI 实测，其他四端也未验收 |
+| `scramble.smart-hint` | 已拧步骤变暗、当前高亮、打乱完成、不符、拧回原打乱、复制原打乱 | Web/五端产品层已共用 `TimerScrambleStrip`、shared 提示/匹配/偏离修正 requester 与同一 Solo lifecycle controller；Web/App 只保留 facelets、Worker 和预备回调适配。Android 最新 APK 已安装，OPPO 新版逐步提示、故意偏离、修正完成和 Worker 冷启动延迟仍待解锁后用 GAN 16 UI 实测，其他四端也未验收 |
 | `scramble.trainer-case` | 随机难度直接生成时显示方法/阶段/步数与按需答案；当前 internal EventId 真可达集合是 `333/333oh/333fm` | 缺；不得误当成 LL/OLL/PLL 等 case provider 的逐题答案 |
 | `scramble.trainer-subset` | OLL/PLL 子集选择；LL/OLL/PLL/COLL/CMLL/ZBLL/EG1/EG2 保存 case identity 并进入 case stats | Mobile 丢失/未展示部分 metadata、subset 与 case stats；Web 当前没有这些项目的逐题答案条 |
 | `solution.small` | `222/pyra/skewb/SQ1/Megaminx` 的下方独立提示；前三项为完整还原+逐面/V，SQ1 为异步近最优+WCA 步数，Mega 当前只显示状态/错位贴纸 | 222/pyra/skewb 已接同一 solver/UI，支持 event-only 空打乱、展开/关闭、loading/error/stale、运行淡出；SQ1/Mega 仍缺 |
