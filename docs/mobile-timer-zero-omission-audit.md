@@ -23,7 +23,7 @@
 | GAP-003 | Web 随机来源对 43/43 `EventId` 都有已注册的语义 | shared runtime 42 个 generated；`custom` 的 Real/Random 已按网站接成显式 ready 空槽并可计时，仍待 OPPO 触摸/重启验收 | P0，菜单/生成器数量不等于完整功能 parity |
 | GAP-004 | 真题有比赛/日期、比赛搜索、轮次、组别、难度、步数、2×2 类型、最优口径、来源元数据与空/错误状态 | Mobile 已共享比赛/日期/搜索/国旗/轮组、2×2 配置、完整 WCA 难度/合并/最优、222/pyra/skewb 真题按步数和底层错误/空分型；完整出处元数据、逐类用户文案与全配置/真机异常矩阵仍未关闭 | P0，底层契约通过仍不等于完整真题 UI parity |
 | GAP-005 | 手动来源还包含编辑后重置、顺序循环、已显示打乱历史的上一条/下一条、空打乱可起表与 attempt snapshot | Mobile 已直接消费 shared editor/queue/`ScrambleHistory`，覆盖上一条/下一条、队尾生成、solve 后前进、左右键、空槽和冻结 attempt；仍缺 OPPO/iOS 真机全状态证据 | P0，源码与自动化已接，待设备矩阵 |
-| GAP-006 | Web 有 session 切换/新建/重命名/清空/删除/项目关联、搜索筛选、成绩对比、成绩详情、移动分组 | session CRUD/项目关联、共用成绩行/七项菜单/备注/Undo、行级罚时/复制/删除、详情移组目标、完整筛选/tag 与成绩对比已接五端共享产品层。快捷删除无二次确认并可 5 秒撤销；完整 SolveModal/复盘仍缺。`HistoryPanel` 的批量删除分支当前在网站主路径没有 consumer，不把不可达代码当网站现有功能 | P0，历史主流程增强不等于完整详情/复盘 parity |
+| GAP-006 | Web 有 session 切换/新建/重命名/清空/删除/项目关联、搜索筛选、成绩对比、成绩详情、移动分组 | session CRUD/项目关联、共用成绩行/七项菜单/备注/Undo、行级罚时/复制/删除、完整筛选/tag、成绩对比与基础成绩详情已接五端共享产品层。详情的原始/生效成绩、日期、罚时、打乱、CFOP/BLD/MBLD 分段、备注、移组、删除和关闭只保留一份 `timer-ui` DOM；Web 仅注入重型复盘，App 仅注入预览。非 NxN 预览与完整复盘仍缺。`HistoryPanel` 的批量删除分支当前在网站主路径没有 consumer，不把不可达代码当网站现有功能 | P0，基础详情单源不等于完整预览/复盘 parity |
 | GAP-007 | Web 有成绩/图表/统计三栏、5 图、完整统计、case/跨分组/按天、纪录对比 | 紧凑 current/best 面板与 rolling picker 已迁 timer-ui 并由 Web/Mobile 真实消费；OPPO 已显示 time/ao5/ao12 共用面板且 360px 无横向溢出。完整 StatsModal/五图、case/跨分组/按天与纪录对比仍缺 | P0，紧凑面板接线完成不等于完整统计完成 |
 | GAP-008 | Web 设置有 8 类、64 个字段（其中 1 个仅开发环境） | 8 类与 64 个稳定 ID、copy/value/visibility/disabled/effect 已迁 shared；“计时”8 字段、“训练”的 CFOP 分段/BLD memo 及“外观”的点击打乱动作已由 Web/Mobile 共用真实 UI/effect，App effect ledger 为 11 项。OPPO 已读到 canonical 8/8 计时 ID、20～340px 内容边界与滚动底部，并实证点击打乱三动作；新增两项尚待解锁后验收，其余 53 字段、iOS/其他三端和全视口仍缺 | P0，11 项接线完成不等于 64 项设置 parity |
 | GAP-009 | Web “更多”包含打乱足迹、统计、语言、专项、盲拧助手、全屏、手动录入、replay、求解器、批量打乱、打印、清空 | 12 项 action/条件/effect 已共享；App 已真实接通 10 项：统计复用现有共享统计页，盲拧助手/通用求解器/批量打乱复用 Tools canonical 子路由，其余 6 项保留既有 App effect。专项仍绑定 Web 私有 drill target，replay 仍绑定 Web 私有 decoder/重建状态，未用外跳 Web timer 或占位冒充 | P0，剩余 2 项及深层交互矩阵未完成 |
@@ -86,7 +86,7 @@ shared 映射快照是 19 个 Timer ID：
 | 4 | `555` | `555` | 5×5 | cubing `555` | 同上 |
 | 5 | `666` | `666` | 6×6 | cubing `666` | 同上 |
 | 6 | `777` | `777` | 7×7 | cubing `777` | 同上 |
-| 7 | `333bld` | `333bf` | 3BLD；memo 分段；盲拧助手；复盘 | cubing `333bf` | memo/助手/复盘缺 |
+| 7 | `333bld` | `333bf` | 3BLD；memo 分段；盲拧助手；复盘 | cubing `333bf` | memo 采集/详情显示已共享；助手/复盘仍缺 |
 | 8 | `333fm` | `333fm` | FMC 打乱；手动录入解法校验与 OBTM 步数 | cubing `333fm` | FMC 录入/统计语义缺 |
 | 9 | `333oh` | `333oh` | 3×3 OH；难度直接生成 | cubing `333oh` | 真题难度已共享；随机难度和全量 UI 仍缺 |
 | 10 | `mega` | `minx` | Megaminx；解法提示 | cubing `minx` | 预览/解法缺 |
@@ -94,8 +94,8 @@ shared 映射快照是 19 个 Timer ID：
 | 12 | `clock` | `clock` | Clock 记号与专用预览 | cubing `clock` | 专用预览/视觉缺 |
 | 13 | `skewb` | `skewb` | HTM 按步数；解法 | cubing `skewb` | 真题/随机按步数与完整还原+六面解法已共享；真机范围矩阵仍缺 |
 | 14 | `sq1` | `sq1` | SQ1 紧凑记号；专用预览；解法 | cubing `sq1` | 字符格式/预览/解法未对齐 |
-| 15 | `444bld` | `444bf` | 4BLD；memo 分段 | cubing `444bf` | memo/复盘缺 |
-| 16 | `555bld` | `555bf` | 5BLD；memo 分段 | cubing `555bf` | memo/复盘缺 |
+| 15 | `444bld` | `444bf` | 4BLD；memo 分段 | cubing `444bf` | memo 采集/详情显示已共享；复盘仍缺 |
+| 16 | `555bld` | `555bf` | 5BLD；memo 分段 | cubing `555bf` | memo 采集/详情显示已共享；复盘仍缺 |
 | 17 | `333mbld` | `333mbf` | MBLD 打乱；已还原/已尝试/时间录入；WCA 计分/DNF | shared compound | 生成已接；录入、组合显示、统计仍缺 |
 | 18 | `magic` | local | Magic 专用生成 | shared compound | provider 已接；专项显示仍待验 |
 | 19 | `mmagic` | local | Master Magic 专用生成 | shared compound | provider 已接；专项显示仍待验 |
@@ -181,7 +181,7 @@ shared 映射快照是 19 个 Timer ID：
 | `timer.sound` | start/stop/8/12 提示音、音量/试听 | 缺 |
 | `timer.voice` | 中/英男女语音观察 | 缺 |
 | `timer.metronome` | 开关、BPM、tap tempo、观察提示秒数 | 缺 |
-| `input.space-anykey` | Space 与“任意键停表”规则，Escape，数字快捷键 | Mobile 已接 shared 默认决策，包括 Space、Escape、任意键停表和 Digit 成绩入口；分段/BLD memo 和完整 SolveModal 仍缺 |
+| `input.space-anykey` | Space 与“任意键停表”规则，Escape，数字快捷键 | Mobile 已接 shared 默认决策，包括 Space、Escape、任意键停表、Digit 成绩入口、默认分段/BLD memo 键与 44px 触摸标记；基础成绩详情已共享，自定义改键和完整复盘仍缺 |
 | `input.keymap` | 可重绑、解绑、恢复默认，组合键拒绝与冲突处理 | Mobile 已执行 shared 默认 map/effect，但尚未持久化 overrides，也缺重绑/解绑/恢复 UI |
 | `input.gesture-wheel` | 八向：next/OK/+2/DNF/prev/note/delete/copy，以及撤销 toast | Mobile 已渲染同一 `GestureWheel` 并接通 8 个 effect 及 shared Undo toast；边缘 clamp 和 OPPO/iOS 真机交互仍待验 |
 | `input.pointer-stop` | running 时点击屏幕任何非豁免区停表，不重入 hold | Web/Mobile 已同用 shared policy；门禁只拦截新起表，running 即使来源变为 loading/unavailable 也仍可停表，待真机多区域验收 |
@@ -200,8 +200,8 @@ shared 映射快照是 19 个 Timer ID：
 | `history.quick-actions` | OK/+2/DNF/DNS、备注、复制、删除 | 7 个稳定 action ID/effect/visible/disabled/active、完整成绩行与单一快捷菜单/底部操作表（右键/长按、焦点、Escape/点外/scroll/resize、viewport clamp、quick-delete once/no-confirm）已迁 `timer-ui` 并由 Web/Mobile 共用。Mobile quick delete 已接 repository restore + 共用 5 秒 Undo；菜单也接入受控 overlay。OPPO 600ms 原位长按打开 sheet，七项、360px 宽度、64px 底部预留及真实 Back 只关菜单已验；备注 textarea 在 461px IME 视口完整可见且无横向溢出。iPhone 17 模拟器只验证了当前共享构建安装/启动，History 交互与全状态矩阵仍缺 |
 | `history.compare` | 二选/取消/第三项替换、结果/阶段/HTM/TPS/case 差异、删改与上下文清理、焦点/关闭/返回 | 选择和比较模型在 shared，完整 UI 在 timer-ui；Web/五端共用，render-time context gate 与定向回归通过。最新 APK 已安装，OPPO 仍锁屏，窄屏点击/可读/无遮挡真机验收待补 |
 | `history.bulk` | 选择、批量删除 | `HistoryPanel` 保留可选代码，但网站 `SoloView` 当前未传 `onBulkDelete`，主路径不可达；不为 App 复制死代码。若网站重新开放，先提取 shared 原子操作与共用 UI 再五端接入 |
-| `solve.detail` | 原始/生效成绩、日期、4 罚时、打乱/图、分段、BLD/MBLD、备注、tag | Mobile 简化 `<details>` |
-| `solve.move-session` | 移动到其他 session | shared 既有不可变 move effect 之外新增详情 action 合同与目标列表规则，Web 真实消费；Mobile 入口仍缺 |
+| `solve.detail` | 原始/生效成绩、日期、4 罚时、打乱/图、分段、BLD/MBLD、备注、tag | Web/五端已共用同一 `TimerSolveDetailModal`，基础字段、动作、焦点、关闭、窄屏布局和脏旧分段归一化均为单源；tag 继续属于共用成绩行。App 当前预览只覆盖 NxN，Web 重型复盘仍由动态 slot 注入，故完整 parity 未关闭 |
+| `solve.move-session` | 移动到其他 session | shared 不可变 move effect、详情 action/目标规则与共用详情入口已由 Web/五端消费；成功写仓储后才关闭，失败保持详情可见 |
 | `solve.reconstruction` | 动作流、谱子、方法/阶段、质量、时间线、回放、反馈 | App 智能魔方成绩的 `moves/device/stageSegments` 已与 Web 共用 producer 并落盘；完整复盘 UI、时间线、回放和反馈仍缺 |
 | `solve.auto-recap` | 智能魔方停表后内联 recap，下一把收起 | 缺 |
 | `panel.times-chart-stats` | 成绩/图表/统计三 tab，桌面 rail/手机整屏 sheet | 缺 |
@@ -234,7 +234,7 @@ shared 映射快照是 19 个 Timer ID：
 | `more.print` | 计时器打印布局；中文与英文各可导出 PDF | 已迁入共用 `TimerPrintController/TimerPrintDocument`；Web/Android/iOS 共用同一冻结快照、摘要与完整成绩表，原生层只替换系统 print transport。当前输出目录中的中文、英文 A4 PDF 均为 7 页，已逐页渲染确认长备注换行、嵌入字体且无裁切、遮挡、横向溢出、乱码或缺页。OPPO `PFDM00` 已从 Mobile More 打开 ColorOS 系统打印预览，中文报告可见；取消后返回且打印 portal/body class 清理为零。iOS 由 Xcode 26.6 / iOS 26.5 Simulator SDK 编译成功并安装启动，但 iOS 原生面板、完成回调与双平台真实保存/输出仍待验；不是整个 Timer 完成 |
 | `more.clear-event` | 无成绩 disabled；确认后只清当前项目 | shared 确认文案/纯 session 操作与 Mobile repository 已接；同 session 只清 active event、保留其他项目及重复清空回归通过，待 OPPO 确认/失败恢复验收 |
 | `toast.undo` | 有撤销动作的消息，5 秒自动收起 | 共享 `TimerInfoToast` 已由 Web/Mobile 共用，统一可选 Undo、默认 5 秒、安全区/底栏避让和窄屏换行；Mobile 最后一次与任意历史行 quick delete 均接真实 restore effect。仍缺 OPPO 实点删除/撤销和 iOS 证据 |
-| `modal.close-contract` | 点遮罩、关闭键、Escape/系统返回，焦点恢复，嵌套弹层不串 | 项目、来源、WCA 比赛建议、session、History quick menu 与成绩对比已共用稳定 overlay 合同；Mobile 唯一 `openOverlay` 接入六者。成绩对比另有 modal→compare mode→History 的 Android Back 顺序、焦点恢复和 context fail-closed 回归。OPPO History menu 已验证真实 Back；成绩对比、More/手动录入与其余 modal 的完整真机矩阵仍未验，故整体未完成 |
+| `modal.close-contract` | 点遮罩、关闭键、Escape/系统返回，焦点恢复，嵌套弹层不串 | 项目、来源、WCA 比赛建议、session、History quick menu、成绩对比与成绩详情已共用稳定 overlay 合同；Mobile 唯一 `openOverlay` 接入七者。成绩详情按 session+event context 查找，Android Back 先 blur 保存备注再关闭；自动化已锁定，OPPO 仍待实点。成绩对比另有 modal→compare mode→History 的返回顺序、焦点恢复和 context fail-closed 回归。More/手动录入与其余 modal 的完整真机矩阵仍未验，故整体未完成 |
 
 ### 4.5 设置全量表
 

@@ -556,8 +556,7 @@ button {
   gap: 10px;
 }
 
-.mobile-history-filter-grid label,
-.history-move-field {
+.mobile-history-filter-grid label {
   display: grid;
   min-width: 0;
   gap: 6px;
@@ -565,8 +564,7 @@ button {
   font-size: 0.75rem;
 }
 
-.mobile-history-filter-grid input,
-.history-move-field select {
+.mobile-history-filter-grid input {
   width: 100%;
   min-width: 0;
   min-height: 44px;
@@ -577,8 +575,7 @@ button {
   background: transparent;
 }
 
-.mobile-history-filter-grid input:focus,
-.history-move-field select:focus {
+.mobile-history-filter-grid input:focus {
   border-color: var(--accent);
 }
 
@@ -620,26 +617,7 @@ button {
   white-space: nowrap;
 }
 
-.history-scramble {
-  margin: 2px 0 16px;
-  overflow-wrap: anywhere;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 0.82rem;
-  line-height: 1.55;
-}
-
-.history-row-detail {
-  min-width: 0;
-  padding: 0 14px;
-  border-bottom: 1px solid var(--border-default);
-}
-
-.history-move-field {
-  margin-top: 14px;
-}
-
 .penalty-actions,
-.history-actions,
 .action-row {
   display: flex;
   flex-wrap: wrap;
@@ -668,18 +646,6 @@ button {
 .choice-button[aria-pressed="true"] {
   background: var(--accent-soft);
   color: var(--accent);
-}
-
-.comment-field {
-  display: grid;
-  gap: 6px;
-  margin-top: 14px;
-  color: var(--muted-foreground);
-  font-size: 0.78rem;
-}
-
-.history-actions {
-  margin: 10px 0 16px;
 }
 
 .text-action {

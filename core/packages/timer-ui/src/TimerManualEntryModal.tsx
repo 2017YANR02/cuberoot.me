@@ -18,6 +18,8 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 
+import { modalFocusableElements } from './modal-focus';
+
 export type TimerManualEntryLabels = TimerManualEntryCopy;
 
 export interface TimerManualEntryModalProps {
@@ -29,12 +31,6 @@ export interface TimerManualEntryModalProps {
 }
 
 type FmcLiveStatus = 'idle' | 'checking' | TimerFmcSolvedness;
-
-function focusableElements(dialog: HTMLElement): HTMLElement[] {
-  return [...dialog.querySelectorAll<HTMLElement>(
-    'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
-  )].filter((element) => !element.hidden && element.getAttribute('aria-hidden') !== 'true');
-}
 
 export function TimerManualEntryModal({
   currentScramble,
@@ -119,7 +115,7 @@ export function TimerManualEntryModal({
       return;
     }
     if (keyboardEvent.key !== 'Tab' || !dialogRef.current) return;
-    const focusable = focusableElements(dialogRef.current);
+    const focusable = modalFocusableElements(dialogRef.current);
     if (focusable.length === 0) return;
     const first = focusable[0];
     const last = focusable[focusable.length - 1];

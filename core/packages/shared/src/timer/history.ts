@@ -196,6 +196,53 @@ export function timerSolveDetailActionStates(
   });
 }
 
+export type TimerSolveDetailStageId = 'cross' | 'f2l' | 'oll' | 'pll';
+
+export interface TimerSolveDetailStageRow {
+  cumulativeMs: number | null;
+  durationMs: number | null;
+  id: TimerSolveDetailStageId;
+}
+
+/**
+ * Fail-closed projection for legacy/imported split data. Persistence accepts
+ * partial stages, so detail UI must never derive a negative duration from an
+ * out-of-order cumulative timestamp. PLL is the raw total by definition.
+ */
+export function timerSolveDetailStageRows(solve: Solve): readonly TimerSolveDetailStageRow[] {
+  if (!solve.stages) return [];
+  const totalMs = Number.isFinite(solve.timeMs) ? Math.max(0, solve.timeMs) : 0;
+  const stages: readonly [TimerSolveDetailStageId, number | undefined][] = [
+    ['cross', solve.stages.cross],
+    ['f2l', solve.stages.f2l],
+    ['oll', solve.stages.oll],
+    ['pll', totalMs],
+  ];
+  let previousMs = 0;
+  return stages.map(([id, value]) => {
+    if (value === undefined || !Number.isFinite(value)) {
+      return { cumulativeMs: null, durationMs: null, id };
+    }
+    const cumulativeMs = Math.min(totalMs, Math.max(previousMs, value));
+    const durationMs = cumulativeMs - previousMs;
+    previousMs = cumulativeMs;
+    return { cumulativeMs, durationMs, id };
+  });
+}
+
+export function timerSolveDetailBldTimes(solve: Solve): {
+  executionMs: number;
+  memoMs: number;
+  totalMs: number;
+} | null {
+  if (!solve.bld) return null;
+  const totalMs = Number.isFinite(solve.timeMs) ? Math.max(0, solve.timeMs) : 0;
+  const memoMs = Number.isFinite(solve.bld.memoMs)
+    ? Math.min(totalMs, Math.max(0, solve.bld.memoMs))
+    : 0;
+  return { executionMs: totalMs - memoMs, memoMs, totalMs };
+}
+
 /** Stable filter IDs and effects from the current Web HistoryPanel. */
 export const TIMER_HISTORY_FILTER_CONTRACTS = [
   { id: 'history.filter.search', effect: 'match-comment-or-scramble', visibility: 'always', disabledWhen: 'never' },

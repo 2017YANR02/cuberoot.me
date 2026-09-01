@@ -135,8 +135,8 @@ import {
   TimerHistoryCompareActions,
   TimerHistoryCompareModal,
   TimerHistoryCompareStatus,
-  TimerHistoryCommentEditor,
   TimerHistoryRow,
+  TimerSolveDetailModal,
   TimerHistoryTagBadges,
   TimerHistoryTagFilter,
   TimerManualEntryModal,
@@ -352,18 +352,14 @@ async function shareOrDownloadBackup(text: string): Promise<void> {
 function MobileHistoryItem({
   compareMode,
   copy,
-  focusComment,
   index,
   language,
-  onDelete,
   onQuickDelete,
   onCopy,
-  onMove,
+  onOpenDetail,
   onQuickMenuOpenChange,
-  onCommentFocusHandled,
   onCompareToggle,
   onUpdate,
-  moveTargets,
   quickMenuOpen,
   selected,
   solve,
@@ -371,36 +367,19 @@ function MobileHistoryItem({
 }: {
   compareMode: boolean;
   copy: (typeof COPY)[SupportedLanguage];
-  focusComment: boolean;
   index: number;
   language: SupportedLanguage;
-  onDelete(solve: Solve): void;
   onQuickDelete(solve: Solve): void;
   onCopy(solve: Solve): void;
-  onMove(solve: Solve, targetSessionId: string): void;
+  onOpenDetail(solve: Solve, autoFocusComment?: boolean): void;
   onQuickMenuOpenChange(open: boolean, details: TimerOverlayOpenChangeDetails): void;
-  onCommentFocusHandled(): void;
   onCompareToggle(solve: Solve): void;
-  onUpdate(solve: Solve, changes: Pick<Solve, 'penalty' | 'comment'>): void;
-  moveTargets: readonly { id: string; name: string }[];
+  onUpdate(solve: Solve, changes: Partial<Pick<Solve, 'penalty' | 'comment'>>): void;
   quickMenuOpen: boolean;
   selected: boolean;
   solve: Solve;
   tagIds: readonly TimerHistoryTagId[];
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const commentRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    if (!focusComment) return;
-    setExpanded(true);
-    const frame = window.requestAnimationFrame(() => {
-      commentRef.current?.focus();
-      onCommentFocusHandled();
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [focusComment, onCommentFocusHandled]);
-
   const date = useMemo(() => new Intl.DateTimeFormat(
     language === 'zh' ? 'zh-CN' : 'en',
     { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' },
@@ -417,19 +396,15 @@ function MobileHistoryItem({
     labels: quickMenuLabels,
     onChangePenalty: (entry, penalty) => onUpdate(entry, {
       penalty,
-      comment: entry.comment,
     }),
-    onComment: () => {
-      setExpanded(true);
-      window.requestAnimationFrame(() => commentRef.current?.focus());
-    },
+    onComment: (entry) => onOpenDetail(entry, true),
     onCopyScramble: onCopy,
     onDelete: onQuickDelete,
     onOpenChange: onQuickMenuOpenChange,
     open: quickMenuOpen,
     variant: 'sheet',
     viewportBottomInset: 64,
-  }), [onCopy, onQuickDelete, onQuickMenuOpenChange, onUpdate, quickMenuLabels, quickMenuOpen]);
+  }), [onCopy, onOpenDetail, onQuickDelete, onQuickMenuOpenChange, onUpdate, quickMenuLabels, quickMenuOpen]);
 
   return (
     <article className="mobile-history-item">
@@ -437,7 +412,7 @@ function MobileHistoryItem({
         index={index}
         onActivate={() => {
           if (compareMode) onCompareToggle(solve);
-          else setExpanded((value) => !value);
+          else onOpenDetail(solve);
         }}
         quickMenu={quickMenu}
         resultExtras={(
@@ -452,46 +427,6 @@ function MobileHistoryItem({
           </time>
         )}
       />
-      {expanded && (
-        <div className="history-row-detail">
-          <p className="history-scramble">{solve.scramble}</p>
-          <label className="comment-field">
-            <span>{copy.comment}</span>
-            <TimerHistoryCommentEditor
-              ariaLabel={copy.comment}
-              maxLength={500}
-              onBlurSave={(comment) => onUpdate(solve, {
-                penalty: solve.penalty,
-                comment: comment || undefined,
-              })}
-              ref={commentRef}
-              value={solve.comment}
-            />
-          </label>
-          {moveTargets.length > 0 && (
-            <label className="history-move-field">
-              <span>{copy.moveToSession}</span>
-              <select
-                data-history-action-id="solve.detail.move-session"
-                onChange={(event) => {
-                  if (event.target.value) onMove(solve, event.target.value);
-                }}
-                value=""
-              >
-                <option value="">{copy.chooseSession}</option>
-                {moveTargets.map((target) => (
-                  <option key={target.id} value={target.id}>{target.name}</option>
-                ))}
-              </select>
-            </label>
-          )}
-          <div className="history-actions">
-            <button className="text-action text-action--danger" onClick={() => onDelete(solve)} type="button">
-              {copy.delete}
-            </button>
-          </div>
-        </div>
-      )}
     </article>
   );
 }
@@ -545,7 +480,13 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [scrambleCopied, setScrambleCopied] = useState(false);
   const scrambleCopiedTimerRef = useRef<number | null>(null);
   const [undoToast, setUndoToast] = useState<{ message: string; undo(): void } | null>(null);
-  const [historyCommentSolveId, setHistoryCommentSolveId] = useState<string | null>(null);
+  const [historyDetail, setHistoryDetail] = useState<{
+    autoFocusComment: boolean;
+    context: string;
+    solveId: string;
+  } | null>(null);
+  const historyDetailRef = useRef(historyDetail);
+  historyDetailRef.current = historyDetail;
   const [openOverlay, setOpenOverlay] = useState<TimerOverlayId | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
@@ -654,6 +595,13 @@ export function App({ host }: { host: InstalledAppHost }) {
   })}|unindexed:${wcaDifficultyCoverage === 'unindexed' ? 1 : 0}`;
   const storeLoaded = store !== null;
   const solves = store ? activeTimerSolves(store, activeEvent) : [];
+  const historyContext = `${store?.database.activeSessionId ?? ''}|${activeEvent}`;
+  const historyDetailSolve = historyDetail?.context === historyContext
+    ? solves.find((solve) => solve.id === historyDetail.solveId) ?? null
+    : null;
+  const historyDetailIndex = historyDetailSolve
+    ? solves.findIndex((solve) => solve.id === historyDetailSolve.id)
+    : -1;
   const activePrintSessionName = useMemo(() => store?.database.sessions.find(
     (session) => session.id === store.database.activeSessionId,
   )?.name, [store]);
@@ -665,7 +613,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     () => filterTimerHistorySolves(solves, historyFilters, historyTagsById),
     [historyFilters, historyTagsById, solves],
   );
-  const historyCompareContext = `${store?.database.activeSessionId ?? ''}|${activeEvent}`;
+  const historyCompareContext = historyContext;
   const historyCompareContextMatches = historyCompareSelectionContext === historyCompareContext;
   const visibleHistoryCompareMode = historyCompareMode && historyCompareContextMatches;
   const visibleHistoryCompareSelectedIds = historyCompareContextMatches
@@ -1314,23 +1262,48 @@ export function App({ host }: { host: InstalledAppHost }) {
     });
   }, []);
 
+  const closeHistorySolveDetail = useCallback((expected?: typeof historyDetail) => {
+    if (expected && historyDetailRef.current !== expected) return;
+    const active = document.activeElement;
+    if (active instanceof HTMLTextAreaElement
+      && active.dataset.historyActionId === 'solve.detail.comment') active.blur();
+    historyDetailRef.current = null;
+    setHistoryDetail(null);
+    setOpenOverlay((current) => {
+      const next = current === TIMER_OVERLAY_IDS.solveDetail ? null : current;
+      openOverlayRef.current = next;
+      return next;
+    });
+  }, []);
+
+  const openHistorySolveDetail = useCallback((solve: Solve, autoFocusComment = false) => {
+    const detail = { autoFocusComment, context: historyContext, solveId: solve.id };
+    historyDetailRef.current = detail;
+    setHistoryDetail(detail);
+    openOverlayRef.current = TIMER_OVERLAY_IDS.solveDetail;
+    setOpenOverlay(TIMER_OVERLAY_IDS.solveDetail);
+  }, [historyContext]);
+
   useEffect(() => {
     if (openOverlay === null) return;
     const available = openOverlay === TIMER_OVERLAY_IDS.sessionSwitcher
       || openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu
       || openOverlay === TIMER_OVERLAY_IDS.historyCompare
+      || openOverlay === TIMER_OVERLAY_IDS.solveDetail
       ? view === 'history' && (
-        openOverlay !== TIMER_OVERLAY_IDS.historyCompare || historyCompareReady
+        (openOverlay !== TIMER_OVERLAY_IDS.historyCompare || historyCompareReady)
+        && (openOverlay !== TIMER_OVERLAY_IDS.solveDetail || historyDetailSolve !== null)
       )
       : view === 'timer' && (
         openOverlay !== TIMER_OVERLAY_IDS.wcaCompetition
         || (scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent))
       );
     if (!available) {
+      if (openOverlay === TIMER_OVERLAY_IDS.solveDetail) setHistoryDetail(null);
       openOverlayRef.current = null;
       setOpenOverlay(null);
     }
-  }, [activeEvent, historyCompareReady, openOverlay, scrambleSource, view]);
+  }, [activeEvent, historyCompareReady, historyDetailSolve, openOverlay, scrambleSource, view]);
 
   const clearWebSurfaceHandshake = useCallback((surface: MobileEmbedSurface) => {
     webHandshakeRetryRef.current[surface]?.();
@@ -1674,6 +1647,10 @@ export function App({ host }: { host: InstalledAppHost }) {
           : 0,
       });
       if (action === 'close-overlay') {
+        if (openOverlayRef.current === TIMER_OVERLAY_IDS.solveDetail) {
+          closeHistorySolveDetail();
+          return;
+        }
         openOverlayRef.current = null;
         setOpenOverlay(null);
         return;
@@ -1729,7 +1706,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       active = false;
       void removeListener?.();
     };
-  }, [announce, copy.finishAttemptFirst, host]);
+  }, [announce, closeHistorySolveDetail, copy.finishAttemptFirst, host]);
 
   useEffect(() => {
     const onFullscreenChange = () => setFullscreen(document.fullscreenElement !== null);
@@ -2255,9 +2232,9 @@ export function App({ host }: { host: InstalledAppHost }) {
     });
   }, [activeEvent, announce, applyStoreSnapshot, beginTimerContextMutation, copy.actionFailed, copy.finishAttemptFirst, endTimerContextMutation, invalidateCurrentScramble, recoverLatestStoreSnapshot, smartCube, timer]);
 
-  const updateSolve = useCallback((solve: Solve, changes: Pick<Solve, 'penalty' | 'comment'>) => {
+  const updateSolve = useCallback((solve: Solve, changes: Partial<Pick<Solve, 'penalty' | 'comment'>>) => {
     const last = solvesRef.current[solvesRef.current.length - 1];
-    if (last?.id === solve.id) setLastPenalty(changes.penalty);
+    if (last?.id === solve.id && changes.penalty) setLastPenalty(changes.penalty);
     const revision = storeSnapshotGateRef.current.beginMutation();
     void repository.updateSolve(solve.event, solve.id, changes)
       .then((data) => {
@@ -2338,9 +2315,14 @@ export function App({ host }: { host: InstalledAppHost }) {
     if (view !== 'history' && historyCompareMode) closeHistoryCompare();
   }, [closeHistoryCompare, historyCompareMode, view]);
 
-  const moveSolveToSession = useCallback((solve: Solve, targetSessionId: string) => {
-    void commitSessionMutation(() => repository.moveSolveToSession(solve.id, targetSessionId))
-      .catch(() => announce(copy.actionFailed));
+  const moveSolveToSession = useCallback(async (solve: Solve, targetSessionId: string): Promise<boolean> => {
+    try {
+      await commitSessionMutation(() => repository.moveSolveToSession(solve.id, targetSessionId));
+      return true;
+    } catch {
+      announce(copy.actionFailed);
+      return false;
+    }
   }, [announce, commitSessionMutation, copy.actionFailed]);
 
   const addManualSolve = useCallback((value: TimerManualEntryValue) => {
@@ -2365,11 +2347,6 @@ export function App({ host }: { host: InstalledAppHost }) {
       return false;
     }
   }, [announce, applyStoreSnapshot, copy.actionFailed, recoverLatestStoreSnapshot]);
-
-  const deleteSolve = useCallback((solve: Solve) => {
-    if (!window.confirm(copy.deleteConfirm)) return;
-    void deleteSolveNow(solve);
-  }, [copy.deleteConfirm, deleteSolveNow]);
 
   const quickDeleteSolve = useCallback((solve: Solve) => {
     const sessionId = store?.database.activeSessionId;
@@ -2402,9 +2379,9 @@ export function App({ host }: { host: InstalledAppHost }) {
     const last = solvesRef.current[solvesRef.current.length - 1];
     if (!last) return;
     setHistoryFilters(createTimerHistoryFilters());
-    setHistoryCommentSolveId(last.id);
     setView('history');
-  }, []);
+    openHistorySolveDetail(last, true);
+  }, [openHistorySolveDetail]);
 
   const copyCurrentScramble = useCallback(() => {
     const entry = scrambleHistoryRef.current.list[scrambleHistoryRef.current.idx];
@@ -2716,8 +2693,8 @@ export function App({ host }: { host: InstalledAppHost }) {
           const solve = currentSolves[currentSolves.length - command.offsetFromLast];
           if (!solve) return;
           setHistoryFilters(createTimerHistoryFilters());
-          setHistoryCommentSolveId(solve.id);
           setView('history');
+          openHistorySolveDetail(solve);
         }
       }
     };
@@ -2756,6 +2733,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     deleteLastSolve,
     multiStageActive,
     nextDisplayedScramble,
+    openHistorySolveDetail,
     previousDisplayedScramble,
     timer.pressDown,
     timer.pressUp,
@@ -3498,19 +3476,15 @@ export function App({ host }: { host: InstalledAppHost }) {
                   <MobileHistoryItem
                     compareMode={visibleHistoryCompareMode}
                     copy={copy}
-                    focusComment={historyCommentSolveId === solve.id}
                     index={solves.findIndex((entry) => entry.id === solve.id)}
                     key={solve.id}
                     language={language}
                     onCopy={copyHistoryScramble}
-                    onDelete={deleteSolve}
                     onQuickDelete={quickDeleteSolve}
-                    onMove={moveSolveToSession}
+                    onOpenDetail={openHistorySolveDetail}
                     onQuickMenuOpenChange={handleTimerOverlayOpenChange}
-                    onCommentFocusHandled={() => setHistoryCommentSolveId(null)}
                     onCompareToggle={toggleHistoryCompareSolve}
                     onUpdate={updateSolve}
-                    moveTargets={historyMoveTargets}
                     quickMenuOpen={openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu}
                     selected={visibleHistoryCompareSelectedIds.includes(solve.id)}
                     solve={solve}
@@ -3536,6 +3510,38 @@ export function App({ host }: { host: InstalledAppHost }) {
                 }}
                 solveA={historyComparePair[0]}
                 solveB={historyComparePair[1]}
+              />
+            )}
+            {openOverlay === TIMER_OVERLAY_IDS.solveDetail
+              && historyDetailSolve
+              && historyDetailIndex >= 0 && (
+              <TimerSolveDetailModal
+                autoFocusComment={historyDetail?.autoFocusComment}
+                index={historyDetailIndex}
+                key={historyDetailSolve.id}
+                localize={(text) => text[language]}
+                moveTargets={historyMoveTargets}
+                onChangeComment={(comment) => updateSolve(historyDetailSolve, { comment })}
+                onChangePenalty={(penalty) => updateSolve(historyDetailSolve, { penalty })}
+                onClose={closeHistorySolveDetail}
+                onDelete={() => {
+                  void deleteSolveNow(historyDetailSolve).then((committed) => {
+                    if (committed) closeHistorySolveDetail(historyDetail);
+                  });
+                }}
+                onMoveToSession={(targetSessionId) => {
+                  void moveSolveToSession(historyDetailSolve, targetSessionId).then((moved) => {
+                    if (moved) closeHistorySolveDetail(historyDetail);
+                  });
+                }}
+                preview={(
+                  <ScrambleCube
+                    alt={copy.cubeState}
+                    event={historyDetailSolve.event}
+                    scramble={historyDetailSolve.scramble}
+                  />
+                )}
+                solve={historyDetailSolve}
               />
             )}
           </section>
