@@ -4,6 +4,7 @@ export type MobileBackView = 'timer' | 'tools' | 'account' | 'history' | 'settin
 
 export type MobileBackAction =
   | 'close-overlay'
+  | 'close-history-compare'
   | 'close-more'
   | 'close-manual-entry'
   | 'exit-fullscreen'
@@ -14,6 +15,7 @@ export type MobileBackAction =
   | 'exit-app';
 
 export interface MobileBackContext {
+  historyCompareMode: boolean;
   fullscreen: boolean;
   manualEntryOpen: boolean;
   moreOpen: boolean;
@@ -27,6 +29,7 @@ export interface MobileBackContext {
 /** Android Back priority shared by the real listener and unit tests. */
 export function mobileBackAction(context: MobileBackContext): MobileBackAction {
   if (context.overlayOpen) return 'close-overlay';
+  if (context.view === 'history' && context.historyCompareMode) return 'close-history-compare';
   if (context.moreOpen) return 'close-more';
   if (context.manualEntryOpen) return 'close-manual-entry';
   if (context.fullscreen) return 'exit-fullscreen';

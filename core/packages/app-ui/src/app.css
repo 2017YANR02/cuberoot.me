@@ -480,6 +480,18 @@ button {
   margin-top: 16px;
 }
 
+.history-view > .timer-history-compare-status {
+  margin-top: 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+}
+
+.history-view > .timer-history-compare-actions {
+  margin-top: 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+}
+
 .mobile-history-search-row {
   display: flex;
   min-width: 0;

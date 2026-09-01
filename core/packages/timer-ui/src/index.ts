@@ -18,6 +18,7 @@ import './compact-select.css';
 import './stats-panel.css';
 import './gesture-wheel.css';
 import './history-row.css';
+import './history-compare.css';
 import './history-tags.css';
 import './info-toast.css';
 import './scramble-strip.css';
@@ -95,6 +96,12 @@ export type {
   TimerHistoryRowQuickMenu,
   TimerHistorySelectionMode,
 } from './TimerHistoryRow';
+export {
+  TimerHistoryCompareActions,
+  TimerHistoryCompareModal,
+  TimerHistoryCompareStatus,
+} from './TimerHistoryCompare';
+export type { TimerHistoryCompareLabels } from './TimerHistoryCompare';
 export { TimerHistoryTagBadges, TimerHistoryTagFilter } from './TimerHistoryTags';
 export type {
   TimerHistoryTagBadgesProps,

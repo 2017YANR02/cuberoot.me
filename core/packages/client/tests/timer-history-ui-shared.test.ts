@@ -9,17 +9,22 @@ import {
 } from '@cuberoot/shared/timer';
 import {
   TimerHistoryCommentEditor,
+  TimerHistoryCompareActions,
+  TimerHistoryCompareModal,
+  TimerHistoryCompareStatus,
   TimerHistoryRow,
   TimerHistoryTagBadges,
   TimerHistoryTagFilter,
   TimerInfoToast,
   type TimerHistoryQuickMenuLabels,
+  type TimerHistoryCompareLabels,
   type TimerHistoryRowQuickMenu,
 } from '@cuberoot/timer-ui';
 import { readFileSync } from 'node:fs';
-import { act, createElement } from 'react';
+import { act, createElement, useLayoutEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import HistoryPanel from '../app/[lang]/timer/_components/HistoryPanel';
 
 const labelsEn: TimerHistoryQuickMenuLabels = {
   actions: {
@@ -537,5 +542,233 @@ describe('history UI reuse, i18n, theme, and overflow guards', () => {
       expect(css).not.toMatch(/#[0-9a-f]{3,8}\b/i);
       expect(css).not.toMatch(/\b(?:rgba?|hsla?|oklch)\(/i);
     }
+  });
+});
+
+describe('shared TimerHistoryCompare UI', () => {
+  let host: HTMLDivElement;
+  let root: Root;
+  const labels: TimerHistoryCompareLabels = {
+    bBetter: 'B better',
+    bWorse: 'B worse',
+    cancel: 'Cancel',
+    close: 'Close',
+    compareSelected: 'Compare these 2',
+    delta: 'Delta',
+    deltaDirection: 'Delta (B − A)',
+    eventName: () => '3×3',
+    greenMeansBetter: 'Green = B better',
+    htm: 'HTM',
+    locale: 'en',
+    moves: 'moves',
+    noStageA: 'A missing',
+    noStageB: 'B missing',
+    noStageBoth: 'Both missing',
+    selected: (count) => `${count}/2 selected`,
+    stage: { cross: 'Cross', f2l: 'F2L', oll: 'OLL', pll: 'PLL' },
+    tie: 'tie',
+    title: 'Compare solves',
+    total: 'Total',
+    tps: 'TPS',
+  };
+  const stageSegments = (crossMs: number): NonNullable<Solve['stageSegments']> => ({
+    crossDoneMs: crossMs,
+    f2lDoneMs: null,
+    ollDoneMs: null,
+    solvedMs: null,
+    crossMs,
+    f2lMs: null,
+    ollMs: null,
+    pllMs: null,
+    crossHtm: 1,
+    f2lHtm: null,
+    ollHtm: null,
+    pllHtm: null,
+    crossSide: 'D-cross',
+    ollCase: null,
+    pllCase: null,
+  });
+
+  beforeEach(() => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    host = document.createElement('div');
+    document.body.appendChild(host);
+    root = createRoot(host);
+  });
+
+  afterEach(async () => {
+    await act(async () => root.unmount());
+    host.remove();
+    document.querySelectorAll('.timer-history-compare-backdrop').forEach((node) => node.remove());
+  });
+
+  it('shares the exact selection status and accessible action controls', async () => {
+    const onCancel = vi.fn();
+    const onCompare = vi.fn();
+    await act(async () => root.render(createElement('div', null,
+      createElement(TimerHistoryCompareStatus, { count: 1, labels }),
+      createElement(TimerHistoryCompareActions, {
+        canCompare: false, labels, onCancel, onCompare,
+      }),
+    )));
+    expect(host.querySelector('[role="status"]')?.textContent).toBe('1/2 selected');
+    const buttons = [...host.querySelectorAll<HTMLButtonElement>('button')];
+    expect(buttons.map((button) => button.textContent)).toEqual(['Cancel', 'Compare these 2']);
+    expect(buttons[1]?.disabled).toBe(true);
+    await act(async () => buttons[0]?.click());
+    expect(onCancel).toHaveBeenCalledOnce();
+    await act(async () => root.render(createElement(TimerHistoryCompareActions, {
+      canCompare: true, labels, onCancel, onCompare,
+    })));
+    const compare = host.querySelectorAll<HTMLButtonElement>('button')[1]!;
+    expect(compare.disabled).toBe(false);
+    await act(async () => compare.click());
+    expect(onCompare).toHaveBeenCalledOnce();
+  });
+
+  it('renders canonical results, missing-stage state, backdrop dismissal, Escape and focus restoration', async () => {
+    const trigger = document.createElement('button');
+    document.body.appendChild(trigger);
+    trigger.focus();
+    const onClose = vi.fn();
+    await act(async () => root.render(createElement(TimerHistoryCompareModal, {
+      labels,
+      onClose,
+      solveA: makeSolve({ id: 'a', penalty: '+2', timeMs: 10_000, ts: 1 }),
+      solveB: makeSolve({ id: 'b', penalty: 'DNS', timeMs: 0, ts: 2 }),
+    })));
+    const dialog = document.querySelector<HTMLElement>('.timer-history-compare-modal')!;
+    expect(dialog.getAttribute('role')).toBe('dialog');
+    expect(dialog.textContent).toContain('12.00');
+    expect(dialog.textContent).toContain('DNS');
+    expect(dialog.textContent).toContain('Both missing');
+    expect(document.activeElement?.textContent).toBe('Close');
+
+    await act(async () => dialog.click());
+    expect(onClose).not.toHaveBeenCalled();
+    await act(async () => document.querySelector<HTMLElement>('.timer-history-compare-backdrop')!.click());
+    expect(onClose).toHaveBeenCalledOnce();
+    onClose.mockClear();
+    await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
+    expect(onClose).toHaveBeenCalledOnce();
+    await act(async () => root.render(null));
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
+  });
+
+  it('uses event semantics for FMC and MBLD total deltas', async () => {
+    await act(async () => root.render(createElement(TimerHistoryCompareModal, {
+      labels,
+      onClose: vi.fn(),
+      solveA: makeSolve({ event: '333fm', id: 'a', penalty: 'ok', timeMs: 27_000, ts: 1 }),
+      solveB: makeSolve({ event: '333fm', id: 'b', penalty: 'ok', timeMs: 29_000, ts: 2 }),
+    })));
+    let delta = document.querySelectorAll<HTMLElement>('.timer-history-compare-summary')[2]!
+      .querySelector('strong')!.textContent;
+    expect(delta).toBe('+2 moves');
+
+    await act(async () => root.render(createElement(TimerHistoryCompareModal, {
+      labels,
+      onClose: vi.fn(),
+      solveA: makeSolve({
+        event: '333mbld', id: 'a', mbld: { solved: 11, attempted: 13 },
+        penalty: 'ok', timeMs: 3_000_000, ts: 1,
+      }),
+      solveB: makeSolve({
+        event: '333mbld', id: 'b', mbld: { solved: 10, attempted: 13 },
+        penalty: 'ok', timeMs: 2_900_000, ts: 2,
+      }),
+    })));
+    delta = document.querySelectorAll<HTMLElement>('.timer-history-compare-summary')[2]!
+      .querySelector('strong')!.textContent;
+    expect(delta).toBe('B worse');
+
+    await act(async () => root.render(createElement(TimerHistoryCompareModal, {
+      labels,
+      onClose: vi.fn(),
+      solveA: makeSolve({ event: '333mbld', id: 'a', penalty: 'ok', timeMs: 1_000, ts: 1 }),
+      solveB: makeSolve({ event: '333mbld', id: 'b', penalty: 'ok', timeMs: 2_000, ts: 2 }),
+    })));
+    delta = document.querySelectorAll<HTMLElement>('.timer-history-compare-summary')[2]!
+      .querySelector('strong')!.textContent;
+    expect(delta).toBe('—');
+  });
+
+  it('keeps the exact integer-ms tie boundary for total and stage deltas', async () => {
+    const renderWithDifference = async (difference: number) => {
+      await act(async () => root.render(createElement(TimerHistoryCompareModal, {
+        labels,
+        onClose: vi.fn(),
+        solveA: makeSolve({
+          id: 'a', penalty: 'ok', stageSegments: stageSegments(10_004),
+          timeMs: 10_004, ts: 1,
+        }),
+        solveB: makeSolve({
+          id: 'b', penalty: 'ok', stageSegments: stageSegments(10_004 + difference),
+          timeMs: 10_004 + difference, ts: 2,
+        }),
+      })));
+      return {
+        stage: document.querySelector('.timer-history-compare-cell--delta')?.textContent,
+        total: document.querySelectorAll<HTMLElement>('.timer-history-compare-summary')[2]
+          ?.querySelector('strong')?.textContent,
+      };
+    };
+    expect(await renderWithDifference(4)).toMatchObject({ stage: expect.stringContaining('tie'), total: 'tie' });
+    expect(await renderWithDifference(5)).toMatchObject({ stage: expect.stringContaining('+0.01s'), total: '+0.01s' });
+  });
+
+  it('hides an open comparison before passive cleanup when session/event context changes', async () => {
+    let layoutText = '';
+    let layoutDialogText: string | null = null;
+    function Probe({ historyContextKey, solves }: { historyContextKey: string; solves: Solve[] }) {
+        useLayoutEffect(() => {
+          layoutText = document.body.textContent ?? '';
+          layoutDialogText = document.querySelector('.timer-history-compare-modal')?.textContent ?? null;
+        }, [historyContextKey]);
+        return createElement(HistoryPanel, {
+          historyContextKey,
+          isZh: false,
+          onRowClick: vi.fn(),
+          solves,
+        });
+    }
+    const renderPanel = (historyContextKey: string, solves: Solve[]) => (
+      createElement(Probe, { historyContextKey, solves })
+    );
+    const first = [
+      makeSolve({ id: 'same-a', penalty: 'ok', timeMs: 10_000, ts: 1 }),
+      makeSolve({ id: 'same-b', penalty: 'ok', timeMs: 20_000, ts: 2 }),
+    ];
+    await act(async () => root.render(renderPanel('session-a|333', first)));
+    const compareToggle = [...host.querySelectorAll<HTMLButtonElement>('button')]
+      .find(button => button.textContent === 'Compare')!;
+    await act(async () => compareToggle.click());
+    const rows = [...host.querySelectorAll<HTMLButtonElement>('.timer-history-row')];
+    await act(async () => { rows[0]!.click(); rows[1]!.click(); });
+    const open = [...host.querySelectorAll<HTMLButtonElement>('button')]
+      .find(button => button.textContent === 'Compare these 2')!;
+    await act(async () => open.click());
+    expect(document.body.textContent).toContain('Compare solves');
+
+    layoutText = '';
+    layoutDialogText = 'not-cleared';
+    await act(async () => root.render(renderPanel('session-b|333', [
+      makeSolve({ id: 'same-a', penalty: 'ok', timeMs: 59_000, ts: 3 }),
+      makeSolve({ id: 'same-b', penalty: 'ok', timeMs: 58_000, ts: 4 }),
+    ])));
+    expect(layoutText).not.toContain('Compare solves');
+    expect(layoutDialogText).toBeNull();
+  });
+
+  it('keeps Web on one compare component with token-only overflow-safe CSS', () => {
+    const web = readFileSync('app/[lang]/timer/_components/HistoryPanel.tsx', 'utf8');
+    const timerUiEntry = new URL(import.meta.resolve('@cuberoot/timer-ui'));
+    const css = readFileSync(new URL('./history-compare.css', timerUiEntry), 'utf8');
+    expect(web).toContain('<TimerHistoryCompareModal');
+    expect(css).toContain('overflow-x: hidden');
+    expect(css).toContain('@media (max-width: 340px)');
+    expect(css).not.toMatch(/#[0-9a-f]{3,8}\b/i);
+    expect(css).not.toMatch(/\b(?:rgba?|hsla?|oklch)\(/i);
   });
 });

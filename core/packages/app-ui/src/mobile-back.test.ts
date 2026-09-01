@@ -7,6 +7,7 @@ const app = readFileSync(new URL('./App.tsx', import.meta.url), 'utf8');
 
 const BASE: MobileBackContext = {
   fullscreen: false,
+  historyCompareMode: false,
   manualEntryOpen: false,
   moreOpen: false,
   mutationBusy: false,
@@ -40,6 +41,8 @@ describe('Android Back priority', () => {
     })).toBe('close-overlay');
     expect(mobileBackAction({ ...BASE, moreOpen: true })).toBe('close-more');
     expect(mobileBackAction({ ...BASE, manualEntryOpen: true })).toBe('close-manual-entry');
+    expect(mobileBackAction({ ...BASE, historyCompareMode: true, view: 'history' }))
+      .toBe('close-history-compare');
     expect(mobileBackAction({ ...BASE, view: 'history' })).toBe('close-subview');
     expect(mobileBackAction({ ...BASE, view: 'tools', webDepth: 2 })).toBe('embedded-back');
     expect(mobileBackAction(BASE)).toBe('exit-app');
@@ -55,6 +58,15 @@ describe('Android Back priority', () => {
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.scrambleSource}');
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.wcaCompetition}');
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.sessionSwitcher}');
+    expect(app).toContain('openOverlay === TIMER_OVERLAY_IDS.historyCompare');
+    expect(app).toContain('<TimerHistoryCompareModal');
+    expect(app).toContain('toggleTimerHistoryCompareSelection(current, solve.id)');
+    expect(app).toContain('visibleHistoryCompareSelectedIds,');
+    expect(app).toContain('historyCompareSelectionContext === historyCompareContext');
+    expect(app).toContain('canCompare={historyCompareReady}');
+    expect(app).toContain("if (view !== 'history' && historyCompareMode) closeHistoryCompare()");
+    expect(app).toContain("if (action === 'close-history-compare')");
+    expect(app).toContain('previous !== null && previous !== historyCompareContext');
     expect(app).toContain('overlayOpen: openOverlayRef.current !== null');
     expect(app).toMatch(
       /if \(action === 'close-overlay'\) \{\s*openOverlayRef\.current = null;\s*setOpenOverlay\(null\);/,
