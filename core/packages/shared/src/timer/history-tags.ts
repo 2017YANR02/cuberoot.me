@@ -1,4 +1,5 @@
-import { averageOfN, bestMbldSolve, compareMbld } from './stats';
+import { bestMbldSolve, compareMbld } from './stats';
+import { rollingStatSeries } from './rolling-stats';
 import { effectiveMs, type Solve } from './types';
 
 export type TimerHistoryTagId =
@@ -44,20 +45,15 @@ export function toggleTimerHistoryTag(
   return next;
 }
 
-function averageAt(history: readonly Solve[], end: number, size: 5 | 12): number | null {
-  if (end + 1 < size) return null;
-  return averageOfN(history.slice(end - size + 1, end + 1), size);
-}
-
 /** Derived tags for one chronologically ordered event history. Never persist this map. */
 export function computeTimerHistoryTags(
   history: readonly Solve[],
 ): Map<string, readonly TimerHistoryTagId[]> {
   const tagsBySolveId = new Map<string, readonly TimerHistoryTagId[]>();
+  const ao5 = rollingStatSeries(history, 'ao5');
+  const ao12 = rollingStatSeries(history, 'ao12');
   let bestSingle = Infinity;
   let bestMbld: Solve | null = null;
-  let bestAo5 = Infinity;
-  let bestAo12 = Infinity;
 
   for (let index = 0; index < history.length; index++) {
     const solve = history[index]!;
@@ -85,18 +81,8 @@ export function computeTimerHistoryTags(
       }
     }
 
-    if (!isMbld) {
-      const ao5 = averageAt(history, index, 5);
-      if (ao5 !== null && ao5 < bestAo5) {
-        bestAo5 = ao5;
-        tags.push('pb-ao5');
-      }
-      const ao12 = averageAt(history, index, 12);
-      if (ao12 !== null && ao12 < bestAo12) {
-        bestAo12 = ao12;
-        tags.push('pb-ao12');
-      }
-    }
+    if (!isMbld && ao5[index]?.isPb) tags.push('pb-ao5');
+    if (!isMbld && ao12[index]?.isPb) tags.push('pb-ao12');
 
     tagsBySolveId.set(solve.id, tags);
   }

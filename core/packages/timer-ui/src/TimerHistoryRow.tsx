@@ -62,6 +62,8 @@ export interface TimerHistoryRowQuickMenu extends TimerHistoryQuickMenuActions, 
 }
 
 export interface TimerHistoryRowProps {
+  /** Optional full accessible timestamp appended to the row's button name. */
+  accessibleTimestamp?: string;
   className?: string;
   /** Zero-based index in the canonical oldest-to-newest solve list. */
   index: number;
@@ -371,6 +373,7 @@ function TimerHistoryQuickMenu({
  * identical across Web, Android, and iOS.
  */
 export function TimerHistoryRow({
+  accessibleTimestamp,
   className,
   index,
   onActivate,
@@ -473,6 +476,7 @@ export function TimerHistoryRow({
         className={[
           'history-row',
           'timer-history-row',
+          trailing ? 'timer-history-row--with-trailing' : '',
           selectionMode !== 'none' ? `timer-history-row--${selectionMode}` : '',
           selected ? 'is-selected' : '',
           className ?? '',
@@ -501,14 +505,16 @@ export function TimerHistoryRow({
         {selectionMode !== 'none' && (
           <span aria-hidden="true" className="timer-history-selection-indicator" />
         )}
-        <span className="idx">{index + 1}</span>
+        <span aria-label={`# ${index + 1},`} className="idx">{index + 1}</span>
         <span className="time">
           {formatSolveResult(solve)}
           {solve.penalty === '+2' && <span className="penalty-flag">(+2)</span>}
           {solve.comment && <span className="comment-flag" title={solve.comment}>·</span>}
+          {resultExtras && <span className="sr-only">, </span>}
           {resultExtras}
         </span>
         {trailing}
+        {accessibleTimestamp && <span className="sr-only">, {accessibleTimestamp}</span>}
       </button>
       {menuRequest && quickMenuOpen && quickMenu && (
         <TimerHistoryQuickMenu

@@ -16,6 +16,7 @@ import {
   filterTimerHistorySolves,
   buildTimerHistoryComparison,
   parseTimerHistorySeconds,
+  projectRollingStats,
   pruneTimerHistoryCompareSelection,
   restoreTimerHistorySolve,
   resolveTimerHistoryComparePair,
@@ -286,6 +287,27 @@ describe('shared derived timer history tags', () => {
     expect(computeTimerHistoryTags(twoDnfs).get('two-dnf')).not.toContain('pb-ao5');
   });
 
+  it('keeps rolling PB projection on full history when filters hide its window', () => {
+    const history = [10_000, 11_000, 12_000, 13_000, 14_000].map((timeMs, index) => (
+      makeSolve(`window-${index}`, {
+        comment: index === 4 ? 'keep' : '',
+        penalty: 'ok',
+        timeMs,
+        ts: index,
+      })
+    ));
+    const tags = computeTimerHistoryTags(history);
+    const filtered = filterTimerHistorySolves(history, {
+      ...createTimerHistoryFilters(),
+      query: 'keep',
+    }, tags);
+    const projection = projectRollingStats(history, ['ao5']);
+
+    expect(filtered.solves.map(solve => solve.id)).toEqual(['window-4']);
+    expect(projection.get('ao5')?.[4]).toEqual({ isPb: true, value: 12_000 });
+    expect(tags.get('window-4')).toContain('pb-ao5');
+  });
+
   it('ranks MBLD singles canonically and never creates rolling-average tags', () => {
     const mbld = (id: string, solved: number, attempted: number, timeMs: number, penalty: Penalty = 'ok') => (
       makeSolve(id, { event: '333mbld', mbld: { solved, attempted }, penalty, timeMs, ts: Number(id.slice(1)) })
@@ -346,6 +368,9 @@ describe('shared timer history mutations and Web consumers', () => {
     expect(historySource).toContain('<TimerHistoryRow');
     expect(historySource).toContain('filterTimerHistorySolves(solves');
     expect(historySource).toContain('computeTimerHistoryTags(solves)');
+    expect(historySource).toContain('projectRollingStats(solves, visibleStatColumns)');
+    expect(historySource).toContain('groupSolvesByLocalDay(filteredReversed)');
+    expect(historySource).toContain('panelEvent && visibleStatColumns.length > 0 ? (');
     expect(historySource).toContain('<TimerHistoryTagBadges');
     expect(historySource).toContain('<TimerHistoryTagFilter');
     expect(historySource).toContain('toggleTimerHistoryTag(current, tagId)');
@@ -356,6 +381,8 @@ describe('shared timer history mutations and Web consumers', () => {
     expect(historySource).not.toContain('LONG_PRESS_MS');
     expect(historySource).not.toContain('row-quick-');
     expect(historySource).not.toContain('function parseTimeSeconds');
+    expect(historySource).not.toContain('rollingStatCurrent(');
+    expect(historySource).not.toContain('const dayCounts');
     expect(historySource).not.toContain("const ALL_PENALTIES: Penalty[]");
     expect(historySource).not.toContain("from '../_lib/storage/auto_tag'");
 
@@ -365,12 +392,9 @@ describe('shared timer history mutations and Web consumers', () => {
     expect(soloSource).toContain('timerHistoryMoveTargets(listSessions(), getActiveSessionId())');
     expect(soloSource).toContain('<TimerInfoToast');
     expect(soloSource).not.toContain('shell-info-toast');
-    expect(detailSource).toContain('timerSolveDetailActionStates({');
-    expect(detailSource).toContain('<TimerHistoryCommentEditor');
+    expect(detailSource).toContain('<TimerSolveDetailModal');
     expect(detailSource).not.toContain('<textarea');
 
-    const detailIds = new Set(detailSource.match(/solve\.detail\.[a-z-]+/g) ?? []);
-    expect([...detailIds].sort()).toEqual([...TIMER_SOLVE_DETAIL_ACTION_IDS].sort());
   });
 });
 

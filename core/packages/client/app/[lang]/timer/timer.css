@@ -453,24 +453,6 @@
 }
 .history-row:hover .actions { display: flex; }
 
-/* cstimer-style rolling-average columns (序号 | 时间 | ao5 | ao12). The grid
-   template itself is set inline (column count tracks the configured windows). */
-.history-cols-head {
-  display: grid;
-  gap: 8px;
-  align-items: center;
-  padding: 5px 14px;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: var(--background);
-  border-bottom: 1px solid var(--shell-divider);
-  font-size: 11px;
-  color: var(--muted-foreground);
-}
-.history-cols-head .idx { text-align: right; }
-/* Match .record-num-cell's badge reserve so the label sits over the numbers. */
-.history-cols-head .hao-head { text-align: right; color: var(--signal-info); padding-right: 22px; }
 .history-empty {
   padding: 30px 20px;
   text-align: center;
@@ -1662,16 +1644,3 @@
 }
 .dsp-delta[data-better='true']  { color: var(--signal-success); }
 .dsp-delta[data-better='false'] { color: var(--destructive); }
-
-/* 成绩列表的日期分隔行。列表是新到旧,每天的第一行上面插一条;不给每行加日期列 ——
-   同一天几十把会把同一个日期重复几十遍,窄屏还要为它让出一列。 */
-.history-day {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 10px 14px 4px;
-  font-size: 11px;
-  color: var(--faint-foreground);
-  font-variant-numeric: tabular-nums;
-}
-.history-day-key { font-family: var(--font-mono); }

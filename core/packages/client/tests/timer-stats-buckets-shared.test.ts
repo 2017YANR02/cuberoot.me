@@ -4,6 +4,7 @@ import {
   bucketBoundaries as legacyBucketBoundaries,
   bucketStats as legacyBucketStats,
   dayKeyOf as legacyDayKeyOf,
+  groupSolvesByLocalDay as legacyGroupSolvesByLocalDay,
   solveDayKeys as legacySolveDayKeys,
 } from '@/app/[lang]/timer/_lib/stats_buckets';
 import {
@@ -11,6 +12,7 @@ import {
   bucketStats,
   dayKeyOf,
   filterSolvesByStatsDateRange,
+  groupSolvesByLocalDay,
   longestSolveDayStreak,
   solveDayKeys,
   type Solve,
@@ -32,6 +34,7 @@ describe('shared timer calendar buckets', () => {
     expect(legacyBucketBoundaries).toBe(bucketBoundaries);
     expect(legacyBucketStats).toBe(bucketStats);
     expect(legacyDayKeyOf).toBe(dayKeyOf);
+    expect(legacyGroupSolvesByLocalDay).toBe(groupSolvesByLocalDay);
     expect(legacySolveDayKeys).toBe(solveDayKeys);
   });
 
@@ -76,6 +79,23 @@ describe('shared timer calendar buckets', () => {
       solve('early', 3_000, new Date(2026, 7, 4, 0, 5).getTime()),
     ];
     expect(solveDayKeys(solves)).toEqual(['2026-08-01', '2026-08-04']);
+  });
+
+  it('groups filtered display order by adjacent local days with exact counts', () => {
+    const dayA = new Date(2026, 7, 30, 23, 59).getTime();
+    const dayB = new Date(2026, 7, 29, 12).getTime();
+    const visible = [
+      solve('newest', 1_000, dayA),
+      solve('same-day', 2_000, dayA - 60_000),
+      solve('older', 3_000, dayB),
+    ];
+    expect(groupSolvesByLocalDay(visible).map(group => ({
+      day: group.day,
+      ids: group.solves.map(entry => entry.id),
+    }))).toEqual([
+      { day: dayKeyOf(dayA), ids: ['newest', 'same-day'] },
+      { day: dayKeyOf(dayB), ids: ['older'] },
+    ]);
   });
 
   it('preserves the Web modal rolling-day cutoff including its boundary', () => {

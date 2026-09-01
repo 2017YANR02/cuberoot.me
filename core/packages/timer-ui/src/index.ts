@@ -18,6 +18,7 @@ import './compact-select.css';
 import './stats-panel.css';
 import './gesture-wheel.css';
 import './history-row.css';
+import './history-columns.css';
 import './history-compare.css';
 import './history-tags.css';
 import './attempt-splits.css';
@@ -98,6 +99,16 @@ export type {
   TimerHistoryRowQuickMenu,
   TimerHistorySelectionMode,
 } from './TimerHistoryRow';
+export {
+  TimerHistoryColumnsHeader,
+  TimerHistoryDayDivider,
+  TimerHistoryRollingCells,
+} from './TimerHistoryColumns';
+export type {
+  TimerHistoryColumnsHeaderProps,
+  TimerHistoryDayDividerProps,
+  TimerHistoryRollingCellsProps,
+} from './TimerHistoryColumns';
 export {
   TimerHistoryCompareActions,
   TimerHistoryCompareModal,

@@ -75,6 +75,23 @@ export function dayKeyOf(timestamp: number): string {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
+export interface TimerHistoryDayGroup {
+  day: string;
+  solves: Solve[];
+}
+
+/** Group adjacent solves by local calendar day without changing input order. */
+export function groupSolvesByLocalDay(solves: readonly Solve[]): TimerHistoryDayGroup[] {
+  const groups: TimerHistoryDayGroup[] = [];
+  for (const solve of solves) {
+    const day = dayKeyOf(solve.ts);
+    const current = groups[groups.length - 1];
+    if (current?.day === day) current.solves.push(solve);
+    else groups.push({ day, solves: [solve] });
+  }
+  return groups;
+}
+
 /** Sorted local day keys that contain at least one solve. */
 export function solveDayKeys(solves: readonly Solve[]): string[] {
   const seen = new Set<string>();

@@ -607,16 +607,6 @@ button {
   margin-top: 22px;
 }
 
-.mobile-history-date {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--muted-foreground);
-  font-size: 0.75rem;
-  text-align: right;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .penalty-actions,
 .action-row {
   display: flex;
