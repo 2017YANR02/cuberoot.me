@@ -8,6 +8,7 @@ import {
 } from '@cuberoot/shared/timer';
 
 import {
+  TimerAttemptSplitSettings,
   TIMER_TIMING_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
@@ -20,6 +21,8 @@ describe('Mobile timer settings parity ledger', () => {
   it('records all real shared effects and no unverified device parity', () => {
     expect(MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS).toEqual([
       ...TIMER_TIMING_SETTING_FIELD_IDS,
+      'settings.training.stage-splits',
+      'settings.training.bld-memo-split',
       'settings.appearance.scramble-click-action',
     ]);
     expect(MOBILE_TIMER_SETTING_PARITY_FIELD_IDS).toEqual([]);
@@ -44,6 +47,8 @@ describe('Mobile timer settings parity ledger', () => {
   it('renders the shared settings UI and keeps its runtime effects wired', () => {
     const app = readFileSync('src/App.tsx', 'utf8');
     expect(app).toContain('<TimerTimingSettingsSections');
+    expect(app).toContain('<TimerAttemptSplitSettings');
+    expect(app).toContain('<TimerAttemptSplitStatus');
     expect(app).toContain('<TimerScrambleClickActionSetting');
     expect(app).toContain('onChange={updateSettings}');
     expect(app).toContain('value={store!.settings}');
@@ -56,6 +61,10 @@ describe('Mobile timer settings parity ledger', () => {
     expect(app).toContain('timerScrambleClickEffect(');
     expect(app).toContain('nextDisplayedScramble');
     expect(app).toContain('copyCurrentScramble');
+    expect(app).toContain('new TimerAttemptSplitRecorder');
+    expect(app).toContain('attemptSplitRecorder.markStage');
+    expect(app).toContain('attemptSplitRecorder.markMemo');
+    expect(TimerAttemptSplitSettings).toBeTypeOf('function');
     expect(app).not.toContain('<option value="300">300 ms</option>');
   });
 });

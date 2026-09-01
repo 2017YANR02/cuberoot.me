@@ -46,6 +46,7 @@ import {
   histBack,
   histForward,
   histPush,
+  isBldEvent,
   normalizeTimerByStepsSettings,
   normalizeTimerWcaSourceSettings,
   parseManualScrambleQueue,
@@ -88,7 +89,10 @@ import {
   TIMER_COLOR_NAMES,
   TIMER_WCA_MIN_DATE,
   timerSupportsRealWcaScrambles,
+  timerSmartCubeStartsAttemptOnTurn,
+  timerSupportsStageSplits,
   timerSupportsSmartCubeAutoTiming,
+  TimerAttemptSplitRecorder,
   TimerSmartCubeMoveRecorder,
   timerTracksTrainerCase,
   toggleTimerHistoryPenalty,
@@ -108,6 +112,7 @@ import {
   type TimerPhase,
   type TimerStoreData,
   type TimerStoreSettings,
+  type TimerAttemptSplitState,
   type TimerByStepsSettings,
   type TimerHostSharedScrambleProviderId,
   type TimerManualEntryValue,
@@ -125,6 +130,8 @@ import {
   SegmentTime,
   TimerDeviceActions,
   TimerInfoToast,
+  TimerAttemptSplitSettings,
+  TimerAttemptSplitStatus,
   TimerHistoryCompareActions,
   TimerHistoryCompareModal,
   TimerHistoryCompareStatus,
@@ -609,6 +616,9 @@ export function App({ host }: { host: InstalledAppHost }) {
     battleSmartCubeHandlersRef.current = handlers;
   }, []);
   const activeEvent = store?.settings.event ?? '333';
+  const multiStageActive = (store?.settings.multiStage ?? false)
+    && timerSupportsStageSplits(activeEvent);
+  const bldMemoActive = (store?.settings.bldMemo ?? true) && isBldEvent(activeEvent);
   const timingEnabled = store?.settings.timingEnabled ?? true;
   timingEnabledRef.current = timingEnabled;
   const hideRunningTime = store?.settings.hideTime ?? false;
@@ -1782,9 +1792,14 @@ export function App({ host }: { host: InstalledAppHost }) {
   const smartCubeMoveRecorderRef = useRef(new TimerSmartCubeMoveRecorder());
   const smartCubeDeviceAtStartRef = useRef<Solve['device']>(undefined);
   const connectedSmartCubeRef = useRef<Solve['device']>(undefined);
+  const [attemptSplitState, setAttemptSplitState] = useState<TimerAttemptSplitState>({ stages: {} });
+  const [attemptSplitRecorder] = useState(() => new TimerAttemptSplitRecorder(setAttemptSplitState));
+  const attemptStartedAtRef = useRef(0);
+  const timerDisplayMsRef = useRef(0);
   const completeSolve = useCallback((result: SolveResult) => {
     setLastResult(result);
     setLastPenalty(result.autoPenalty);
+    const splitResult = attemptSplitRecorder.finish(result.timeMs);
     const displayedEntry = currentScrambleEntry;
     const attempt = attemptRef.current
       ?? (displayedEntry ? mobileScrambleAttemptSnapshot(displayedEntry) : null);
@@ -1797,6 +1812,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     const recordedMoves = smartCubeMoveRecorderRef.current.take();
     const moves = recordedMoves.length > 0 ? recordedMoves : undefined;
     const device = moves ? smartCubeDeviceAtStartRef.current : undefined;
+    const { bld, stages } = splitResult;
     smartCubeDeviceAtStartRef.current = undefined;
     advanceDisplayedScramble();
     const revision = storeSnapshotGateRef.current.beginMutation();
@@ -1806,6 +1822,8 @@ export function App({ host }: { host: InstalledAppHost }) {
       event: attempt.event,
       inspectionMs: result.inspectionMs || undefined,
       ...(moves ? { moves } : {}),
+      ...(bld ? { bld } : {}),
+      ...(stages ? { stages } : {}),
       penalty: result.autoPenalty,
       scramble: attempt.scramble,
       scrambleSource: attempt.scrambleSource,
@@ -1825,6 +1843,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     advanceDisplayedScramble,
     announce,
     applyStoreSnapshot,
+    attemptSplitRecorder,
     currentScrambleEntry,
     recoverLatestStoreSnapshot,
   ]);
@@ -1869,6 +1888,12 @@ export function App({ host }: { host: InstalledAppHost }) {
         || entry.source !== scrambleSourceRef.current
         || entry.sourceIdentity !== scrambleIdentityFor(entry.source, entry.event)) return;
       attemptRef.current = mobileScrambleAttemptSnapshot(entry);
+      attemptStartedAtRef.current = startedAtMs;
+      attemptSplitRecorder.begin({
+        bldMemo: (storeRef.current?.settings.bldMemo ?? true) && isBldEvent(entry.event),
+        multiStage: (storeRef.current?.settings.multiStage ?? false)
+          && timerSupportsStageSplits(entry.event),
+      });
       smartCubeMoveRecorderRef.current.begin(startedAtMs);
       smartCubeDeviceAtStartRef.current = connectedSmartCubeRef.current;
       timerPhaseRef.current = 'running';
@@ -1913,23 +1938,34 @@ export function App({ host }: { host: InstalledAppHost }) {
         return;
       }
       const recordMove = () => {
-        smartCubeMoveRecorderRef.current.record(move, timestamp);
+        if (!smartCubeMoveRecorderRef.current.record(move, timestamp)) return;
+        const attempt = attemptRef.current;
+        if (!attempt) return;
+        attemptSplitRecorder.observeMoves({
+          event: attempt.event,
+          moves: smartCubeMoveRecorderRef.current.snapshot(),
+          scramble: attempt.scramble,
+          timeMs: Math.max(0, timestamp - attemptStartedAtRef.current),
+        });
       };
       if (timerPhaseRef.current === 'running') {
         recordMove();
         smartCubeGuidanceController.setRunning(true);
         return;
       }
-      if (!timerSupportsSmartCubeAutoTiming(activeEvent)) return;
+      const event = activeEventRef.current;
+      if (!timerSupportsSmartCubeAutoTiming(event)) return;
       // An armed attempt consumes its first solve turn before scramble guidance
       // sees the deliberately off-target cube state.
-      if (timer.startFromCube(timestamp)) {
+      if (timerSmartCubeStartsAttemptOnTurn(event) && timer.startFromCube(timestamp)) {
         recordMove();
         smartCubeGuidanceController.setRunning(true);
         return;
       }
       const observation = smartCubeGuidanceController.observe(facelets);
-      if (observation.completedNow && timingEnabled) timer.armFromCube();
+      if (observation.completedNow
+        && timingEnabled
+        && timerSmartCubeStartsAttemptOnTurn(event)) timer.armFromCube();
       console.info('[smart-cube] move', move);
     },
     onSolved: (timestamp) => {
@@ -1937,8 +1973,9 @@ export function App({ host }: { host: InstalledAppHost }) {
         battleSmartCubeHandlersRef.current?.onSolved(timestamp);
         return;
       }
+      const event = activeEventRef.current;
       if (timingEnabled
-        && timerSupportsSmartCubeAutoTiming(activeEvent)
+        && timerSupportsSmartCubeAutoTiming(event)
         && timer.stopFromCube(timestamp)) timerPhaseRef.current = 'stopped';
     },
   });
@@ -1998,6 +2035,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const displayMs = timer.machine.phase === 'running'
     ? Math.max(0, timer.nowMs - (timer.machine.startedAtMs ?? timer.nowMs))
     : timer.machine.lastMs ?? 0;
+  timerDisplayMsRef.current = displayMs;
   const timerText = formatTimerTimingDisplay({
     displayMs,
     hideTime: hideRunningTime,
@@ -2648,7 +2686,10 @@ export function App({ host }: { host: InstalledAppHost }) {
           timer.reset();
           return;
         case 'mark-stage':
+          attemptSplitRecorder.markStage(command.stage, timerDisplayMsRef.current);
+          return;
         case 'mark-bld-memo':
+          attemptSplitRecorder.markMemo(timerDisplayMsRef.current);
           return;
         case 'delete-last':
           deleteLastSolve();
@@ -2683,11 +2724,11 @@ export function App({ host }: { host: InstalledAppHost }) {
 
     const onKeyDown = (event: KeyboardEvent) => {
       execute(timerKeyDownDecision({
-        bldMemoActive: false,
+        bldMemoActive,
         input: event,
         keymap: keymapRef.current,
         modal: modalState(),
-        multiStageActive: false,
+        multiStageActive,
         phase: timerPhaseRef.current,
         solveCount: solvesRef.current.length,
         target: timerKeyboardTargetContext(event.target),
@@ -2709,8 +2750,11 @@ export function App({ host }: { host: InstalledAppHost }) {
       window.removeEventListener('keyup', onKeyUp);
     };
   }, [
+    attemptSplitRecorder,
+    bldMemoActive,
     changeLastPenalty,
     deleteLastSolve,
+    multiStageActive,
     nextDisplayedScramble,
     previousDisplayedScramble,
     timer.pressDown,
@@ -3111,6 +3155,17 @@ export function App({ host }: { host: InstalledAppHost }) {
                 surfaceRef={surfaceRef}
               >
                 <span aria-live="polite" className="sr-only">{timerInstruction}</span>
+                {timer.machine.phase === 'running' && (multiStageActive || bldMemoActive) && (
+                  <TimerAttemptSplitStatus
+                    bldMemoActive={bldMemoActive}
+                    localize={(value) => value[language]}
+                    multiStageActive={multiStageActive}
+                    onMarkMemo={() => attemptSplitRecorder.markMemo(timerDisplayMsRef.current)}
+                    onMarkStage={(stage) => attemptSplitRecorder.markStage(stage, timerDisplayMsRef.current)}
+                    precision={resultPrecision}
+                    state={attemptSplitState}
+                  />
+                )}
               </TimingSurface>
               <TimerStatRail
                 disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
@@ -3526,6 +3581,28 @@ export function App({ host }: { host: InstalledAppHost }) {
               )}
               value={store!.settings}
             />
+
+            {(timerSupportsStageSplits(activeEvent) || isBldEvent(activeEvent)) && (
+              <section className="settings-section">
+                <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
+                  category.id === 'training'
+                ))?.label[language]}</h2>
+                <TimerAttemptSplitSettings
+                  bldVisible={isBldEvent(activeEvent)}
+                  localize={(value) => value[language]}
+                  onChange={updateSettings}
+                  renderBooleanControl={({ label, onChange, value }) => (
+                    <TimerPillToggle
+                      ariaLabel={label}
+                      onChange={onChange}
+                      value={value}
+                    />
+                  )}
+                  stageVisible={timerSupportsStageSplits(activeEvent)}
+                  value={store!.settings}
+                />
+              </section>
+            )}
 
             <section className="settings-section">
               <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (

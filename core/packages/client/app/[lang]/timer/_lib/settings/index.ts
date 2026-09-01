@@ -9,12 +9,15 @@
 import {
   DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
   DEFAULT_ROUND_CONFIG,
+  DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
   DEFAULT_TIMER_TIMING_SETTINGS,
+  normalizeTimerAttemptSplitSettings,
   normalizeTimerScrambleClickAction,
   normalizeTimerTimingSettings,
   type RoundConfig,
   type TimerScrambleClickAction,
   type TimerTimingSettings,
+  type TimerAttemptSplitOptions,
 } from '@cuberoot/shared/timer';
 import { useSyncExternalStore } from 'react';
 import { persistItem } from '@/lib/safe-storage';
@@ -30,7 +33,7 @@ const KEY = 'cuberoot-timer.settings.v1';
 /** Big-digit typeface ids — shared vocabulary with the /alg trainer's picker. */
 export type TimerFontId = 'lcd' | 'mono' | 'liberation' | 'sans';
 
-export interface TimerSettings extends TimerTimingSettings {
+export interface TimerSettings extends TimerTimingSettings, TimerAttemptSplitOptions {
   /** Play start/stop/8s/12s sounds via Web Audio. */
   soundsEnabled: boolean;
   /** 0..1 master volume. */
@@ -61,12 +64,6 @@ export interface TimerSettings extends TimerTimingSettings {
 
   /** Render the scramble preview as 3D drag-rotatable cube instead of 2D net. */
   prefer3D: boolean;
-
-  /** Track CFOP stage splits (cross / F2L / OLL / PLL) on NxN events. */
-  multiStage: boolean;
-
-  /** Track memo / execution split on BLD events (Enter to mark memo done). */
-  bldMemo: boolean;
 
   /** OLL trainer case-id whitelist (e.g. ["OLL 21"]). undefined / [] = all 57. */
   ollSubset?: string[];
@@ -304,6 +301,7 @@ export interface TimerSettings extends TimerTimingSettings {
 
 export const DEFAULTS: TimerSettings = {
   ...DEFAULT_TIMER_TIMING_SETTINGS,
+  ...DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
   soundsEnabled: false,
   volume: 0.5,
   showCubePreview: true,
@@ -314,8 +312,6 @@ export const DEFAULTS: TimerSettings = {
   scrambleFont: 'liberation',
   compactScramble: false,
   prefer3D: false,
-  multiStage: false,
-  bldMemo: true,
   preScr: '',    // (UF)
   preScrT: 'z2', // (DF) — LL cases are read yellow-up (csTimer's default)
   cnMode: 'none',
@@ -444,7 +440,8 @@ function load(): TimerSettings {
       ...parsed,
       inspectionSec: parsed.inspectionSec ?? parsed.inspection,
     });
-    const merged = { ...DEFAULTS, ...parsed, ...normalizedTiming } as TimerSettings & {
+    const normalizedSplits = normalizeTimerAttemptSplitSettings(parsed);
+    const merged = { ...DEFAULTS, ...parsed, ...normalizedTiming, ...normalizedSplits } as TimerSettings & {
       statsAoWindows?: unknown;
       inspection?: unknown;
       inspectionTrigger?: unknown;
@@ -455,6 +452,9 @@ function load(): TimerSettings {
     let dirty = 'inspection' in parsed;
     for (const key of Object.keys(normalizedTiming) as Array<keyof TimerTimingSettings>) {
       if (key in parsed && parsed[key] !== normalizedTiming[key]) dirty = true;
+    }
+    for (const key of Object.keys(normalizedSplits) as Array<keyof TimerAttemptSplitOptions>) {
+      if (key in parsed && parsed[key] !== normalizedSplits[key]) dirty = true;
     }
     const normalizedScrambleClickAction = normalizeTimerScrambleClickAction(
       parsed.scrambleClickAction,
@@ -542,6 +542,7 @@ export function updateSettings(patch: Partial<TimerSettings>): void {
   _cache = {
     ...candidate,
     ...normalizeTimerTimingSettings(candidate),
+    ...normalizeTimerAttemptSplitSettings(candidate),
     scrambleClickAction: normalizeTimerScrambleClickAction(candidate.scrambleClickAction),
   };
   save(_cache);

@@ -51,7 +51,10 @@ describe('Mobile capability surface guard', () => {
     expect(onMove!.indexOf('timer.startFromCube(timestamp)'))
       .toBeLessThan(onMove!.indexOf('smartCubeGuidanceController.observe(facelets)'));
     expect(onMove!.indexOf("timerPhaseRef.current === 'running'"))
-      .toBeLessThan(onMove!.indexOf('!timerSupportsSmartCubeAutoTiming(activeEvent)'));
+      .toBeLessThan(onMove!.indexOf('!timerSupportsSmartCubeAutoTiming(event)'));
+    expect(onMove).toContain('timerSmartCubeStartsAttemptOnTurn(event)');
+    expect(onMove).toMatch(/observation\.completedNow[\s\S]*?timerSmartCubeStartsAttemptOnTurn\(event\)[\s\S]*?timer\.armFromCube\(\)/);
+    expect(onMove).toContain('attemptSplitRecorder.observeMoves');
     expect(onMove).not.toContain('!timingEnabled ||');
     expect(app).toContain('createSmartCubeGuidanceController');
     expect(app).toContain('id: currentScrambleEntry.id');

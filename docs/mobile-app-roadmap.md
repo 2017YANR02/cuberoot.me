@@ -188,6 +188,7 @@
 - 真机证据已覆盖 Android 13 附近设备授权、扫描、选择、连接、服务发现、写命令、通知、GAN v4 解密、状态帧与真实转动解析。2026-08-30 进一步实测打乱匹配后自动预备、第一手起表、复原自动停表并保存 `5.20`，统计从 `3/3` 更新为 `4/4` 后自动切换下一条比赛打乱。权限拒绝恢复、后台、蓝牙关闭、距离中断和反复重连仍是独立未完成门槛。
 - 2026-09-01 的 shared 指引/修正与 Solo lifecycle controller 已通过 Web/App 延迟 requester、同 target coalesce、新 target 续跑、协议错拒绝晚帧、同批帧、连接/切题后 authoritative state 重放、一次性完成 edge 与 43 项能力矩阵回归；Android APK 为 8,788,904 bytes、SHA-256 `5cc6b17112332c4c1e814b7495852365f761e951f0ee6b6fc8d046b3b7935ce7`，已安装到同一 OPPO 且与设备内 `base.apk` 字节一致。实体 GAN 新路径未在解锁屏幕上复验，故本阶段仍不完成。
 - 2026-09-01 的成绩对比已由 Web/五端共用 shared model 与 timer-ui modal；selection 携带 session+event context 并在 render 阶段 fail closed。四包 typecheck、32+5 定向回归、Mobile production build、Capacitor Android sync 与 `assembleDebug` 通过。最新 Debug APK SHA-256 为 `9aed714e5107dfdd424556391d0bdc8348ad2aa2aa9440eaf28818795ed258a0`，已覆盖安装到 OPPO；设备仍锁屏，故该条不作为成绩对比视觉/交互或 GAN 实拧证据。
+- 2026-09-01 的 CFOP 分段与 BLD memo 已从 Web 私有 hooks 收敛为 shared `TimerAttemptSplitRecorder`、canonical `stageSegmentsFor` 与 timer-ui status/settings。Web/五端共用键盘、44px 触摸、设置、停表落盘和 legacy migration；BLD 项目禁止智能魔方首手自动起表，避免漏掉记忆时间。当前只有类型检查与自动化证据，Android 新包及解锁后的 OPPO 分段/BLD/GAN 实测仍待本轮后续记录。
 
 ### 阶段 6：账号、同步和合规闭环
 
