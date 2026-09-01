@@ -282,6 +282,22 @@ describe('mobile timer repository contract', () => {
     await expect(repo.restoreSolve(sessionId, solve)).resolves.toEqual(data);
   });
 
+  it('serializes field-level solve updates without reverting a sibling field', async () => {
+    const { repo } = repository();
+    const created = await repo.addSolve({ timeMs: 1_000, penalty: 'ok', scramble: 'R', event: '333' });
+    const solve = activeTimerSolves(created, '333')[0];
+
+    await Promise.all([
+      repo.updateSolve('333', solve.id, { penalty: '+2' }),
+      repo.updateSolve('333', solve.id, { comment: 'PB' }),
+    ]);
+
+    expect(activeTimerSolves(await repo.load(), '333')[0]).toMatchObject({
+      comment: 'PB',
+      penalty: '+2',
+    });
+  });
+
   it('clears only the requested event in the active session', async () => {
     const { repo } = repository();
     await repo.addSolve({ timeMs: 2_220, penalty: 'ok', scramble: "R U R'", event: '222' });

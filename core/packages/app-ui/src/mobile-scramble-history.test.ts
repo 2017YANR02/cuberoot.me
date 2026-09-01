@@ -221,7 +221,7 @@ describe('mobile displayed-scramble history', () => {
     });
     expect(actions.map((action) => action.id)).toEqual(TIMER_HISTORY_QUICK_ACTION_IDS);
     expect(app).toContain('<TimerHistoryRow');
-    expect(app).toContain('<TimerHistoryCommentEditor');
+    expect(app).toContain('<TimerSolveDetailModal');
     expect(app).toContain('TIMER_HISTORY_QUICK_ACTION_IDS.map((actionId)');
     expect(app).toContain('onCopyScramble: onCopy');
     expect(app).toContain('onDelete: onQuickDelete');
@@ -246,8 +246,13 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('toggleTimerHistoryPenalty(current.penalties, penalty)');
     expect(app).toContain('timerHistoryMoveTargets(');
     expect(app).toContain('repository.moveSolveToSession(solve.id, targetSessionId)');
-    expect(app).toContain('data-history-action-id="solve.detail.move-session"');
+    expect(app).toContain('moveTargets={historyMoveTargets}');
+    expect(app).toContain('onChangeComment={(comment) => updateSolve(historyDetailSolve, { comment })}');
+    expect(app).toContain('onChangePenalty={(penalty) => updateSolve(historyDetailSolve, { penalty })}');
+    expect(app).toContain('if (expected && historyDetailRef.current !== expected) return;');
+    expect(app).toContain('if (committed) closeHistorySolveDetail(historyDetail);');
+    expect(app).toContain('if (moved) closeHistorySolveDetail(historyDetail);');
     expect(css).toMatch(/\.mobile-history-filter-grid \{[\s\S]*?min-width: 0;[\s\S]*?minmax\(0, 1fr\)/);
-    expect(css).toMatch(/\.history-row-detail \{[\s\S]*?min-width: 0/);
+    expect(app).toContain('openOverlay === TIMER_OVERLAY_IDS.solveDetail');
   });
 });

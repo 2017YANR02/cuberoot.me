@@ -85,6 +85,11 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
   携带 `session + event` context，并在 render 阶段 fail closed，不能只等 passive effect 清理；普通、
   `+2`、DNF/DNS、FMC、MBLD、阶段、HTM、TPS 和 case 差异属于同一契约。移动返回顺序固定为
   关弹层、退对比模式、离开历史。
+- 成绩详情只从 `@cuberoot/shared/timer/history` 取得分段/BLD 派生规则，只从
+  `@cuberoot/timer-ui/TimerSolveDetailModal` 取得基础 DOM/CSS；Web 与 `app-ui` 不得保留第二套
+  罚时、分段、备注、移组或删除详情。Web 的重型复盘和各宿主预览只能作为 slot 注入，不能反向
+  把 Next/原生依赖带进 `timer-ui`。详情选择必须携带 `session + event` context；删除/移组仅在宿主
+  持久化成功后关闭。Android Back 关闭详情前必须 blur 活动备注输入框，保证 canonical onBlur 保存发生。
 
 ## 开发电脑与 Windows/macOS 客户端
 

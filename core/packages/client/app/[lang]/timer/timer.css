@@ -572,34 +572,6 @@
   word-spacing: 0.25em;
   white-space: pre-wrap;
 }
-.solve-move-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.solve-move-label { color: var(--foreground); }
-.solve-move-select,
-.solve-penalty-select {
-  background: var(--background);
-  color: var(--foreground);
-  border: 1px solid var(--border-default);
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 13px;
-}
-/* 「移到分组」那个装的是分组名,长短不定,撑满剩下的宽度才不会把名字截了。 */
-.solve-move-select { flex: 1; min-width: 120px; }
-
-/* 罚时:标签 + 下拉,贴合内容。四选一互斥,不摊成一排等宽按钮 —— 理由见
-   SolveModal 的 penaltyControl。 */
-.solve-penalty {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-.solve-penalty-label { font-size: 12px; color: var(--muted-foreground); }
 .timer-modal .modal-actions {
   display: flex;
   gap: 8px;
@@ -620,14 +592,6 @@
 .timer-modal .modal-actions .modal-action-btn.danger:hover { background: color-mix(in srgb, var(--destructive) 14%, transparent); }
 .timer-modal .modal-actions .modal-action-btn.primary { background: color-mix(in srgb, var(--signal-info) 14%, transparent); border-color: color-mix(in srgb, var(--signal-info) 45%, transparent); color: var(--foreground); }
 .timer-modal .modal-actions .modal-action-btn.primary:hover { background: color-mix(in srgb, var(--signal-info) 22%, transparent); }
-/* 窄屏上那排竖着堆的动作按钮:44px 是能用拇指点中的下限。 */
-.timer-modal .modal-actions.solve-actions-stacked .modal-action-btn {
-  min-height: 44px;
-  padding: 10px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 .solver-modal-head {
   display: flex;
   align-items: center;
@@ -650,89 +614,6 @@
   cursor: pointer;
 }
 .solver-modal-x:hover { background: var(--shell-hover); color: var(--foreground); }
-
-/* --- SolveModal additions --- */
-.timer-modal .modal-cube-row {
-  display: flex;
-  justify-content: center;
-  padding: 8px 0;
-}
-
-/* --- 成绩详情:录了动作的那些,整屏一页 -------------------------
-   2026-08-02 起复盘不再藏在「查看复盘」后面 —— 详情和报告是同一页。一张八列的
-   分步分析表加三维回放,480px 的小弹窗装不下,所以这一形态铺满视口:标题栏吸顶
-   (罚时随时够得着),下面一路滚。内容列限宽,免得宽屏上被拉成一条线。 */
-.timer-modal-overlay.solve-full-overlay { padding: 0; }
-.timer-modal.solve-full-modal {
-  max-width: none;
-  width: 100%;
-  height: 100dvh;
-  max-height: 100dvh;
-  border: 0;
-  border-radius: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden; /* 滚动归 body,标题栏才吸得住 */
-}
-.solve-full-inner {
-  max-width: 1000px;
-  margin: 0 auto;
-}
-.solve-full-head {
-  flex: none;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--shell-divider);
-}
-.solve-full-head .solve-full-inner {
-  display: flex;
-  align-items: center;
-  gap: 8px 12px;
-  flex-wrap: wrap;
-}
-.solve-full-head h2 { margin: 0; }
-.solve-full-when { font-size: 12px; color: var(--muted-foreground); }
-.solve-full-x { margin-left: auto; }
-.timer-modal .modal-actions.solve-full-danger { justify-content: flex-start; }
-.solve-full-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 16px 16px 40px;
-}
-@media (max-width: 560px) {
-  /* 窄屏放不下一行:罚时换到第二行,关闭还是钉在第一行右上角(它在哪一直是肌肉
-     记忆,不该跟着内容漂)。order 决定谁先排,所以 × 排在罚时前面;× 自己那个
-     margin-left:auto 吃掉整行余量,罚时自然被挤到下一行。 */
-  .solve-full-head .solve-full-inner { row-gap: 8px; }
-  .solve-full-x { order: 0; }
-  .solve-full-head .solve-penalty { order: 1; }
-}
-
-.stage-splits-table {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
-  font-size: 13px;
-}
-.stage-splits-table .stage-row {
-  display: grid;
-  grid-template-columns: 80px 1fr 1fr;
-  gap: 12px;
-  padding: 4px 6px;
-  border-radius: 3px;
-}
-.stage-splits-table .stage-row:nth-child(odd) { background: rgba(255, 255, 255, 0.02); }
-.stage-splits-table .stage-name { color: var(--muted-foreground); }
-.stage-splits-table .stage-dur { color: var(--foreground); }
-.stage-splits-table .stage-cum { color: var(--signal-info); text-align: right; }
-.stage-splits-table .stage-total {
-  border-top: 1px solid var(--shell-divider);
-  padding-top: 6px;
-  margin-top: 4px;
-}
-.stage-splits-table .stage-total .stage-cum { color: var(--signal-warning); font-weight: 700; }
 
 /* --- SettingsPanel --- */
 .timer-modal.settings-modal {
