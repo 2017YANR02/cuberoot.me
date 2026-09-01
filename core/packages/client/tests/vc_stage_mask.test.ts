@@ -220,10 +220,10 @@ describe('vcStageMask — 下拉清单去重 + 标签', () => {
     const groups = visualcubeStageGroups(3);
     expect(groups.map((g) => g.group)).toEqual(['VCMasks']);
     const items = new Set(groups.flatMap((g) => g.items));
-    for (const keep of ['fl', 'wv', 'vh', 'dr', 'xcross', 'mehta_belt2', 'roux_co', 'line', 'oell']) {
+    for (const keep of ['fl', 'dr', 'xcross', 'mehta_belt2', 'roux_co', 'line', 'oell']) {
       expect(items.has(keep), `should keep ${keep}`).toBe(true);
     }
-    for (const drop of ['oll', 'll', 'cll', 'coll', 'ell', 'ocll', 'cross', 'f2l', '2x2x2', '2x2x3', 'cmll', '']) {
+    for (const drop of ['wv', 'vh', 'oll', 'll', 'cll', 'coll', 'ell', 'ocll', 'cross', 'f2l', '2x2x2', '2x2x3', 'cmll', '']) {
       expect(items.has(drop), `should drop ${drop}`).toBe(false);
     }
   });
