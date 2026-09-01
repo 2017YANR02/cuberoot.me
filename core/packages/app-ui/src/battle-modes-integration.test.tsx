@@ -8,7 +8,7 @@ import type {
 import { generateTimerScramble } from '@cuberoot/shared/timer';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
-import { act } from 'react';
+import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -25,6 +25,21 @@ vi.mock('@cuberoot/shared/timer', async (importOriginal) => {
   return {
     ...actual,
     generateTimerScramble: vi.fn(),
+  };
+});
+
+vi.mock('@cuberoot/timer-ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@cuberoot/timer-ui')>();
+  return {
+    ...actual,
+    TimerCubePreview: ({ ariaLabel, visualization }: {
+      ariaLabel?: string;
+      visualization?: '2D' | '3D';
+    }) => createElement('div', {
+      'aria-label': ariaLabel,
+      'data-preview-visualization': visualization,
+      role: 'img',
+    }),
   };
 });
 
@@ -48,8 +63,15 @@ const baseProps = {
   onModeChange: vi.fn(),
   precision: 3 as const,
   runningPrecision: 3 as const,
+  scramblePreviewSettings: { showCubePreview: false, prefer3D: false },
   writeClipboardText: vi.fn(async () => undefined),
 };
+
+function dispatchPointer(target: Element, type: string, pointerId: number): void {
+  const event = new MouseEvent(type, { bubbles: true, button: 0 });
+  Object.defineProperty(event, 'pointerId', { value: pointerId });
+  target.dispatchEvent(event);
+}
 
 function roomState(): NetRoomState {
   return {
@@ -81,14 +103,26 @@ describe('installed app multiplayer modes', () => {
 
   beforeEach(() => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    const captures = new WeakMap<HTMLElement, Set<number>>();
     Object.defineProperty(HTMLElement.prototype, 'setPointerCapture', {
-      configurable: true, value: vi.fn(),
+      configurable: true,
+      value: vi.fn(function setPointerCapture(this: HTMLElement, pointerId: number) {
+        const ids = captures.get(this) ?? new Set<number>();
+        ids.add(pointerId);
+        captures.set(this, ids);
+      }),
     });
     Object.defineProperty(HTMLElement.prototype, 'hasPointerCapture', {
-      configurable: true, value: vi.fn(() => false),
+      configurable: true,
+      value: vi.fn(function hasPointerCapture(this: HTMLElement, pointerId: number) {
+        return captures.get(this)?.has(pointerId) ?? false;
+      }),
     });
     Object.defineProperty(HTMLElement.prototype, 'releasePointerCapture', {
-      configurable: true, value: vi.fn(),
+      configurable: true,
+      value: vi.fn(function releasePointerCapture(this: HTMLElement, pointerId: number) {
+        captures.get(this)?.delete(pointerId);
+      }),
     });
     window.localStorage.clear();
     vi.mocked(generateTimerScramble).mockReset().mockImplementation(async ({ event }) => ({
@@ -185,7 +219,12 @@ describe('installed app multiplayer modes', () => {
     };
 
     await act(async () => root.render(
-      <NetBattleMode {...baseProps} capability={capability} writeClipboardText={writeClipboardText} />,
+      <NetBattleMode
+        {...baseProps}
+        capability={capability}
+        scramblePreviewSettings={{ showCubePreview: true, prefer3D: true }}
+        writeClipboardText={writeClipboardText}
+      />,
     ));
     await act(async () => Promise.resolve());
     await act(async () => host.querySelector<HTMLButtonElement>('.battle-primary-action')!.click());
@@ -194,6 +233,26 @@ describe('installed app multiplayer modes', () => {
     expect(saved).toEqual({ code: '1234', name: 'Cuber', ...credentials });
     expect(host.textContent).toContain('1234');
     expect(host.querySelectorAll('.battle-player-list li')).toHaveLength(1);
+    const preview = host.querySelector<HTMLElement>('.timing-surface-cube .mobile-cube-preview[data-no-timer]');
+    expect(preview).not.toBeNull();
+    expect(preview?.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe(COPY.en.cubeState);
+    expect(preview?.querySelector<HTMLElement>('[role="img"]')
+      ?.dataset.previewVisualization).toBe('3D');
+    const surface = host.querySelector<HTMLElement>('.battle-net-timer .timing-surface')!;
+    const postNetStatus = vi.mocked(client.postNetStatus);
+    await act(async () => {
+      dispatchPointer(surface, 'pointerdown', 1);
+    });
+    expect(surface.querySelector('.timer-display')?.classList).toContain('holding');
+    await act(async () => {
+      dispatchPointer(preview!, 'pointerdown', 2);
+      dispatchPointer(surface, 'pointerup', 2);
+      dispatchPointer(surface, 'pointercancel', 2);
+    });
+    expect(surface.querySelector('.timer-display')?.classList).toContain('holding');
+    expect(postNetStatus).not.toHaveBeenCalled();
+    expect(writeClipboardText).not.toHaveBeenCalled();
+    await act(async () => dispatchPointer(surface, 'pointercancel', 1));
     await act(async () => host.querySelector<HTMLButtonElement>(
       `[aria-label="${COPY.en.battleCopyCode}"]`,
     )!.click());

@@ -53,6 +53,7 @@ import {
   type NetRoomState,
   type Penalty,
   type SolveResult,
+  type TimerScramblePreviewSettings,
 } from '@cuberoot/shared/timer';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { hintSmartCubeScramble } from '@cuberoot/shared/smart-cube/scramble-hint';
@@ -62,10 +63,12 @@ import {
   RoomQrModal,
   TimerDeviceActions,
   TimerPlayersSelect,
+  TimerCubePreview,
   TimerPuzzlePicker,
   TimerScrambleStrip,
   TimerTopbar,
   TimingSurface,
+  shouldIgnoreTimerTarget,
   type TimerPlayersValue,
   type TimerPuzzlePickerGroup,
 } from '@cuberoot/timer-ui';
@@ -745,6 +748,7 @@ export interface NetBattleModeProps extends BattleModeBaseProps {
   accountIdentity?: NetIdentity;
   capability?: InstalledAppNetBattle;
   onSmartCubeHandlersChange?(handlers: BattleSmartCubeHandlers | null): void;
+  scramblePreviewSettings: TimerScramblePreviewSettings;
   smartCube?: InstalledAppSmartCube;
   writeClipboardText(text: string): Promise<void>;
 }
@@ -776,6 +780,7 @@ export function NetBattleMode({
   onSmartCubeHandlersChange,
   precision,
   runningPrecision,
+  scramblePreviewSettings,
   smartCube,
   writeClipboardText,
 }: NetBattleModeProps) {
@@ -1574,15 +1579,33 @@ export function NetBattleMode({
           <TimingSurface
             ariaLabel={copy.timer}
             colorClass={colorClass}
+            cornerSlot={scramblePreviewSettings.showCubePreview && scramble ? (
+              <div className="mobile-cube-preview" data-no-timer>
+                <TimerCubePreview
+                  ariaLabel={copy.cubeState}
+                  event={event}
+                  fill
+                  scramble={scramble}
+                  visualization={scramblePreviewSettings.prefer3D ? '3D' : '2D'}
+                />
+              </div>
+            ) : undefined}
             digits={<SegmentTime text={timerText} />}
             fontSize="clamp(4rem, 20vw, 8rem)"
             interactive={Boolean(scramble && !currentResult && inRoundRoster && (
               gate.gated || canManuallyStart || timerPhase === 'running'
             ))}
             onContextMenu={(event) => event.preventDefault()}
-            onPointerCancel={() => timer.cancelPress()}
+            onPointerCancel={(pointer) => {
+              if (shouldIgnoreTimerTarget(pointer.target)
+                || !pointer.currentTarget.hasPointerCapture(pointer.pointerId)) return;
+              timer.cancelPress();
+            }}
             onPointerDown={(pointer) => {
-              if (pointer.button !== 0 || currentResult || !inRoundRoster) return;
+              if (shouldIgnoreTimerTarget(pointer.target)
+                || pointer.button !== 0
+                || currentResult
+                || !inRoundRoster) return;
               pointer.preventDefault();
               if (gate.gated) {
                 const phase = gate.ready ? 'idle' : 'ready';
@@ -1596,9 +1619,9 @@ export function NetBattleMode({
               timer.pressDown();
             }}
             onPointerUp={(pointer) => {
-              if (pointer.currentTarget.hasPointerCapture(pointer.pointerId)) {
-                pointer.currentTarget.releasePointerCapture(pointer.pointerId);
-              }
+              if (shouldIgnoreTimerTarget(pointer.target)
+                || !pointer.currentTarget.hasPointerCapture(pointer.pointerId)) return;
+              pointer.currentTarget.releasePointerCapture(pointer.pointerId);
               if (!gate.gated && (canManuallyStart || timerPhase === 'running')) timer.pressUp();
             }}
             phase={timer.machine.phase}

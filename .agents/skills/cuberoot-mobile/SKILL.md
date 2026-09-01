@@ -94,7 +94,11 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
   Pyraminx、Skewb 和 FTO 复用该组件内的 `cubing/twisty`；SQ1/Megaminx 复用
   `@cuberoot/puzzle-render-core/{sq1-svg,mega-svg}`。Web 旧 `CubePreview`/`CubingPreview`/renderer 路径
   只能保留 compatibility re-export；`app-ui` 不得恢复私有 `ScrambleCube` 或直接依赖 `visualcube`。
-  宿主响应式尺寸由外层容器控制并给共享预览传 `fill`；不可解析打乱必须隐藏，不能继续显示上一题。
+  显示开关、2D/3D 偏好、默认/归一化和设置行只从 shared `TimerScramblePreviewSettings` 契约与
+  timer-ui 同名组件读取，宿主只持久化；SQ1/Megaminx 忽略 3D 偏好并保持 canonical 2D。App 单人和联网
+  预览均放入独立 `TimingSurface.cornerSlot` 并标记 `data-no-timer`，不得嵌入可点击的打乱条导致拖动
+  复制、换题或起表。宿主响应式尺寸由外层容器控制并给共享预览传 `fill`；不可解析打乱必须隐藏，
+  不能继续显示上一题。
 
 ## 开发电脑与 Windows/macOS 客户端
 

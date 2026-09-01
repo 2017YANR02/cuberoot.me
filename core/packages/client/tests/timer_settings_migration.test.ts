@@ -254,6 +254,45 @@ describe('计时核心设置改用 Web/Mobile 共享键与归一化', () => {
   });
 });
 
+describe('打乱图显示设置迁移', () => {
+  beforeEach(() => { vi.unstubAllGlobals(); });
+
+  it('旧存档缺字段时使用共享默认值', async () => {
+    installStorage({
+      [KEY]: JSON.stringify({
+        scrambleClickMigrated: true,
+        recordGyroMigrated: true,
+        bluetoothAutoReadyMigrated: true,
+      }),
+    });
+    const { getSettings } = await freshSettings();
+    expect(getSettings()).toMatchObject({ showCubePreview: true, prefer3D: false });
+  });
+
+  it('修复显式坏值并保留隐藏时的 3D 偏好', async () => {
+    const mem = installStorage({
+      [KEY]: JSON.stringify({
+        showCubePreview: 'yes',
+        prefer3D: 1,
+        scrambleClickMigrated: true,
+        recordGyroMigrated: true,
+        bluetoothAutoReadyMigrated: true,
+      }),
+    });
+    const { getSettings, updateSettings } = await freshSettings();
+    expect(getSettings()).toMatchObject({ showCubePreview: true, prefer3D: false });
+
+    updateSettings({ showCubePreview: false, prefer3D: true });
+    expect(getSettings()).toMatchObject({ showCubePreview: false, prefer3D: true });
+    updateSettings({ showCubePreview: true });
+    expect(getSettings()).toMatchObject({ showCubePreview: true, prefer3D: true });
+    expect(JSON.parse(mem.get(KEY) as string)).toMatchObject({
+      showCubePreview: true,
+      prefer3D: true,
+    });
+  });
+});
+
 describe('滚动统计列设置迁移', () => {
   beforeEach(() => { vi.unstubAllGlobals(); });
 

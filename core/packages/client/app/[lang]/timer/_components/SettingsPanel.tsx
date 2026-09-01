@@ -58,8 +58,9 @@ import {
 import {
   TimerAttemptSplitSettings,
   TimerScrambleClickActionSetting,
+  TimerScramblePreviewSettings,
   TimerTimingSettingsSections,
-  type TimerTimingBooleanControlProps,
+  type TimerBooleanControlProps,
 } from '@cuberoot/timer-ui';
 import { canUseRandomOptimal333 } from '../_lib/scramble/optimal333_pool';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
@@ -1449,20 +1450,19 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
             value={s.compactScramble}
             onChange={(v) => updateSettings({ compactScramble: v })}
           />
-          <BooleanSettingRow
-            id="settings.appearance.scramble-image"
-            value={s.showCubePreview}
-            onChange={(v) => updateSettings({ showCubePreview: v })}
+          <TimerScramblePreviewSettings
+            localize={tr}
+            onChange={updateSettings}
+            renderBooleanControl={({ disabled, label, onChange, value }) => (
+              <SharedBoolToggle
+                disabled={disabled}
+                label={label}
+                onChange={onChange}
+                value={value}
+              />
+            )}
+            value={s}
           />
-          <BooleanSettingRow
-            id="settings.appearance.cube-3d"
-            value={s.prefer3D}
-            onChange={(v) => updateSettings({ prefer3D: v })}
-            disabled={settingState('settings.appearance.cube-3d').disabled}
-          >
-            <span className="hint">{tr({ zh: '可拖动旋转；关闭则展开 2D 平面', en: 'drag to rotate; off = 2D net'
-            })}</span>
-          </BooleanSettingRow>
           <TimerScrambleClickActionSetting
             localize={tr}
             onChange={(scrambleClickAction) => updateSettings({ scrambleClickAction })}
@@ -1618,7 +1618,7 @@ function renderTimingBooleanControl({
   label,
   onChange,
   value,
-}: TimerTimingBooleanControlProps) {
+}: TimerBooleanControlProps) {
   return (
     <SharedBoolToggle
       disabled={disabled}
