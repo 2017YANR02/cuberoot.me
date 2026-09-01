@@ -23,6 +23,8 @@ import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { visit } from 'unist-util-visit';
 import ArticleAlgEmbed from '@/components/article/ArticleAlgEmbed';
 import ArticleCubeEmbed from '@/components/article/ArticleCubeEmbed';
+import ForumSimEmbed from '@/components/forum/ForumSimEmbed';
+import { parseForumSimLink } from '@/lib/forum-sim-link';
 
 // Derive the public types from the imported functions rather than importing `mdast` /
 // `hast-util-sanitize` directly (both are transitive deps, not in this package's dependencies).
@@ -39,11 +41,7 @@ type SanitizeSchema = Exclude<Parameters<typeof rehypeSanitize>[0], undefined>;
 // render them as literal text (remark-directive's fromMarkdown leaves no hName), never as the
 // raw `:foo` becoming an element, and sanitize would strip any stray tag regardless.
 
-interface DirectiveNode {
-  type: 'textDirective' | 'leafDirective' | 'containerDirective';
-  name: string;
-  attributes?: Record<string, string | null | undefined> | null;
-  children: unknown[];
+interface HastNode {
   data?: {
     hName?: string;
     hProperties?: Record<string, unknown>;
@@ -51,7 +49,14 @@ interface DirectiveNode {
   };
 }
 
-function setHast(node: DirectiveNode, hName: string, hProperties: Record<string, unknown>) {
+interface DirectiveNode extends HastNode {
+  type: 'textDirective' | 'leafDirective' | 'containerDirective';
+  name: string;
+  attributes?: Record<string, string | null | undefined> | null;
+  children: unknown[];
+}
+
+function setHast(node: HastNode, hName: string, hProperties: Record<string, unknown>) {
   const data = node.data || (node.data = {});
   data.hName = hName;
   data.hProperties = hProperties;
@@ -135,6 +140,24 @@ function articleDirectives() {
           // renders its children as text. Nothing dangerous can be smuggled.
           break;
       }
+    });
+
+    // A bare CubeRoot /sim URL gets a native preview. Inline and labelled links remain links.
+    visit(tree, 'paragraph', (node: unknown) => {
+      const paragraph = node as HastNode & {
+        type: 'paragraph';
+        children: Array<{ type?: string; url?: string; children?: Array<{ type?: string; value?: string }> }>;
+      };
+      if (paragraph.children.length !== 1) return;
+      const link = paragraph.children[0];
+      const label = link.children?.length === 1 && link.children[0].type === 'text'
+        ? link.children[0].value
+        : undefined;
+      if (link.type !== 'link' || typeof link.url !== 'string' || label !== link.url) return;
+      const sim = parseForumSimLink(link.url);
+      if (!sim) return;
+      paragraph.children = [];
+      setHast(paragraph, 'sim-embed', { dataHref: sim.href });
     });
   };
 }
@@ -227,6 +250,7 @@ const schema: SanitizeSchema = {
     ...(defaultSchema.tagNames || []),
     'alg-embed',
     'cube-embed',
+    'sim-embed',
     'figure',
     'figcaption',
     // span/a/img/div are already in defaultSchema.tagNames.
@@ -235,6 +259,7 @@ const schema: SanitizeSchema = {
     ...(defaultSchema.attributes || {}),
     'alg-embed': ['dataAlg', 'dataPuzzle'],
     'cube-embed': ['dataAlg', 'dataSetup', 'dataView', 'dataMask', 'dataSize'],
+    'sim-embed': ['dataHref'],
     // CLOSED className allowlist via regex — no wildcard. One merged className rule per tag.
     span: [
       ...withoutClassName(defaultSchema.attributes?.span as AttrRule[] | undefined),
@@ -282,6 +307,9 @@ const components = {
       mask={pick(props, 'data-mask')}
       size={pick(props, 'data-size')}
     />
+  ),
+  'sim-embed': (props: EmbedProps) => (
+    <ForumSimEmbed href={pick(props, 'data-href') ?? ''} />
   ),
   // figure / figcaption / img / span / a / div: default DOM rendering (class already locked
   // by the sanitize schema). No overrides needed.

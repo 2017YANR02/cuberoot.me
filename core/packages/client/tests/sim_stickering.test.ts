@@ -195,6 +195,11 @@ describe('stickeringMaskFn 3x3', () => {
 });
 
 describe('算法公式页顶层配色', () => {
+  it('Cross 只交给站内模拟器', () => {
+    expect(pickStickering('3x3', 'Cross', 'sim')).toBe('Cross');
+    expect(pickStickering('3x3', 'Cross', 'twisty')).toBeUndefined();
+  });
+
   it.each(['pll', 'anti-pll', 'zbll', '1lll'])('%s 使用整层原色的 LL 遮罩', (set) => {
     expect(pickStickering('3x3', set)).toBe('LL');
   });

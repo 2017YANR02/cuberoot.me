@@ -89,6 +89,15 @@ describe('article-markdown directives → whitelisted elements', () => {
     expect(typeof html).toBe('string');
   });
 
+  it('bare CubeRoot /sim URL becomes a preview; inline and foreign links stay links', () => {
+    const url = "http://localhost:3000/zh/sim?puzzle=3&alg=F+R2&stickering=Cross&stickeringRot=z2&setup=x2+L2";
+    const embed = render(url);
+    expect(embed).toContain('forum-sim-embed');
+    expect(embed).toContain('href="/sim?puzzle=3&amp;alg=F+R2');
+    expect(render(`看这里 ${url}`)).not.toContain('forum-sim-embed');
+    expect(render('https://evil.example/zh/sim?puzzle=3')).not.toContain('forum-sim-embed');
+  });
+
   it('legal formatting (bold/italic/link) survives', () => {
     const html = render('**bold** and *italic* and [link](https://example.com)');
     expect(html).toContain('<strong>bold</strong>');
