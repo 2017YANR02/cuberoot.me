@@ -6,7 +6,8 @@
 // the site-search data layer only loads when the user actually opens search.
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Maximize2, Coffee, Heart, Home, Sparkles, Shuffle, Boxes, MessageSquarePlus, Music, Share2 } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Maximize2, Coffee, Heart, Home, Sparkles, Shuffle, Boxes, MessageSquarePlus, Music, Share2, Wrench, Plus, Pencil, Laptop, Globe } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import LandingSearch from '@/components/LandingSearch';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -19,7 +20,14 @@ import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections
 import { isAdmin } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
 import { isInWeChat } from '@/lib/wechat-share';
+import { openPageNoticeEditor, pageKeyFromPathname, type NoticePlacement } from '@/lib/page-notices-api';
+import { useLiveUrlSuffix } from '@/hooks/useLiveUrlSuffix';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
+import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { tr } from '@/i18n/tr';
+
+const LOCAL_ORIGIN = 'http://localhost:3000';
+const PROD_ORIGIN = 'https://cuberoot.me';
 
 const CSS = `
 .deskpet-search-backdrop{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:100010;display:flex;
@@ -47,6 +55,19 @@ const CSS = `
 .deskpet-toolbar .sep{align-self:center;width:1px;height:18px;margin:0 3px;
   background:var(--border-default);}
 .deskpet-toolbar .header-toggles{display:flex;align-items:center;gap:4px;}
+.deskpet-admin-tools{position:relative;display:flex;}
+.deskpet-admin-menu{position:absolute;left:0;bottom:calc(100% + 6px);z-index:1;
+  display:flex;align-items:center;gap:4px;width:max-content;max-width:calc(100vw - 16px);padding:5px;
+  background:var(--popover);border:1px solid var(--border-default);border-radius:9px;
+  box-shadow:0 8px 24px color-mix(in srgb,var(--foreground) 14%,transparent);}
+.deskpet-admin-menu>button{width:auto;white-space:nowrap;}
+.deskpet-admin-menu .env-switch{display:inline-flex;align-items:center;gap:2px;padding:2px;
+  border:1px solid var(--border-default);border-radius:999px;}
+.deskpet-admin-menu .env-switch-opt{display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;padding:0;color:var(--faint-foreground);border-radius:999px;}
+.deskpet-admin-menu .env-switch-opt.is-active{color:var(--foreground);font-weight:500;}
+.deskpet-admin-menu .env-switch-opt.is-active[data-env="local"]{background:color-mix(in srgb,var(--signal-warning) 22%,transparent);}
+.deskpet-admin-menu .env-switch-opt.is-active[data-env="prod"]{background:color-mix(in srgb,var(--signal-success) 22%,transparent);}
 /* Auth control: drop the round outline so it reads as a bare icon in the row. */
 .deskpet-toolbar .wca-auth-btn,.deskpet-toolbar .wca-auth-trigger{
   width:32px;height:32px;border:0;background:transparent;}
@@ -76,6 +97,7 @@ const CSS = `
   /* Mobile toolbar is at the top, so popups open downward and left-aligned to
      their trigger so they don't run off the left edge. */
   .deskpet-toolbar .lang-menu{left:0;right:auto;top:calc(100% + 4px);bottom:auto;}
+  .deskpet-admin-menu{top:calc(100% + 6px);bottom:auto;flex-wrap:wrap;}
   /* Box hugs the keyboard: visualViewport shrinks the backdrop, keep only a
      small breathing gap at the bottom. */
   .deskpet-search-backdrop{padding-bottom:6px;}
@@ -121,9 +143,16 @@ export default function DeskPetSearch({
   const [donateOpen, setDonateOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [adminToolsOpen, setAdminToolsOpen] = useState(false);
   const [wechatShareOpen, setWechatShareOpen] = useState(false);
   const [mobileShareHelp, setMobileShareHelp] = useState<'wechat' | 'browser' | null>(null);
   const fbUnread = useFeedbackUnread();
+  const pathname = usePathname();
+  const liveUrlSuffix = useLiveUrlSuffix();
+  const adminToolsTriggerRef = useRef<HTMLButtonElement>(null);
+  const adminToolsPanelRef = useRef<HTMLDivElement>(null);
+  usePanelClamp(adminToolsOpen, adminToolsPanelRef);
+  usePopoverDismiss(adminToolsOpen, () => setAdminToolsOpen(false), adminToolsPanelRef, adminToolsTriggerRef);
 
   // 反馈按钮红点跟共享未读数;关掉反馈弹窗后复查一次(可能刚读过)。轮询由桌宠统一做。
   useEffect(() => {
@@ -131,6 +160,12 @@ export default function DeskPetSearch({
   }, [feedbackOpen]);
   const zh = lang === 'zh';
   const t = (z: string, e: string) => (zh ? z : e);
+
+  const openNoticeEditor = (placement: NoticePlacement) => {
+    openPageNoticeEditor(placement);
+    setAdminToolsOpen(false);
+    onClose();
+  };
 
   // Entrance: the box grows from the pet's position out to its centered spot.
   useLayoutEffect(() => {
@@ -281,6 +316,50 @@ export default function DeskPetSearch({
           title={t('节拍器,练匀速转动', 'Metronome — train an even turn rate')}>
           <Music size={16} />
         </button>
+        {isAdmin() && (
+          <div className="deskpet-admin-tools">
+            <button ref={adminToolsTriggerRef} type="button" className="icon-only"
+              onClick={() => setAdminToolsOpen((open) => !open)}
+              aria-expanded={adminToolsOpen} aria-haspopup="menu"
+              aria-label={tr({ zh: '页面管理', en: 'Page management' })}
+              title={tr({ zh: '页面管理', en: 'Page management' })}>
+              <Wrench size={16} />
+            </button>
+            {adminToolsOpen && (
+              <div ref={adminToolsPanelRef} className="deskpet-admin-menu" role="menu">
+                {/* anchored-panel: clamped (usePanelClamp) */}
+                <button type="button" role="menuitem" onClick={() => openNoticeEditor('page_top')}>
+                  <Plus size={13} aria-hidden />
+                  {tr({ zh: '添加本页通知', en: 'Add notice for this page' })}
+                </button>
+                {pageKeyFromPathname(pathname || '/') === '/' && (
+                  <button type="button" role="menuitem" onClick={() => openNoticeEditor('home_featured')}>
+                    <Pencil size={13} aria-hidden />
+                    {tr({ zh: '首页焦点', en: 'Homepage feature' })}
+                  </button>
+                )}
+                {liveUrlSuffix && (
+                  <div className="env-switch" role="group" aria-label={tr({ zh: '切换环境', en: 'Switch environment' })}>
+                    {([
+                      { env: 'local' as const, href: LOCAL_ORIGIN + liveUrlSuffix, label: { zh: '本地', en: 'Local' }, Icon: Laptop },
+                      { env: 'prod' as const, href: PROD_ORIGIN + liveUrlSuffix, label: { zh: '线上', en: 'Live' }, Icon: Globe },
+                    ]).map(({ env, href, label, Icon }) => {
+                      const hostname = window.location.hostname;
+                      const active = env === (hostname === 'localhost' || hostname === '127.0.0.1' ? 'local' : 'prod');
+                      return (
+                        <a key={env} href={href} data-env={env} title={tr(label)}
+                          className={`env-switch-opt${active ? ' is-active' : ''}`}
+                          role="menuitem" aria-current={active ? 'page' : undefined} aria-label={tr(label)}>
+                          <Icon size={13} aria-hidden />
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         <span className="sep" />
         <button type="button" className="icon-only char-btn" onClick={onCycleChar}
           title={`${t('形象', 'Character')}: ${charLabel}`}>

@@ -64,31 +64,14 @@ html[data-theme=dark] {
 
 .page-notice-icon { flex: none; color: var(--pn-color); margin-top: 2px; }
 
-/* ── 首页(landing)三行合一(issue #41) ──
-   仅当通知栏的下一个兄弟是 .landing-page(即首页)时生效,其它页保持「通知 + 管理员条」上下两行。
-   目标:通知文字(左) + 管理员环境切换(中右) + 语言/头像(最右,由 landing.css 上提)同处一行。 */
-.page-notice-wrap:has(+ .landing-page) { position: relative; }
-/* 给通知正文右侧留出控件区(语言/外观/致谢/登录常驻;管理员另有环境切换),避免正文和右上角那组控件
-   叠在一起。未登录时最宽:三个 28px 图标 + 两层 8px 间距 + 114px 登录胶囊 = 222px。
+/* 首页通知与语言/登录控件同处一行。给通知正文右侧留出控件区,避免相互重叠。
+   未登录时最宽:三个 28px 图标 + 两层 8px 间距 + 114px 登录胶囊 = 222px。
    14.5rem = 222px + 与 × 的间距,再加窄屏两者右锚点之差(悬浮块 2rem 地板 vs 本条
    0.9rem 内边距);宽屏两个锚点重合,多出的余量无害。 */
 .page-notice-wrap:has(+ .landing-page) .page-notice { padding-right: 14.5rem; }
 @media (min-width: 481px) {
   .page-notice-wrap:has(+ .landing-page) .page-notice { padding-left: 10rem; }
 }
-/* 管理员环境切换 / 添加入口:绝对定位到通知行右侧、语言/登录左边(与那组控件同一右锚点,
-   留出 12.5rem = 最宽控件组减去右侧起点后的间距。 */
-.page-notice-wrap:has(+ .landing-page) .page-notice-adminbar {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: calc(max(2rem, (100vw - var(--pn-max-w)) / 2) + 12.5rem);
-  width: auto;
-  max-width: none;
-  margin: 0;
-  padding: 0;
-}
-
 /* admin:编辑入口放最左,与图标同起始行 */
 .page-notice-edit { flex: none; margin: -1px 0 0 -2px; }
 
@@ -121,63 +104,6 @@ html[data-theme=dark] {
 .page-notice-btn:hover {
   color: var(--foreground);
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
-}
-
-/* admin:通知入口 + 环境切换同处一行,对齐到与通知同一居中列 */
-.page-notice-adminbar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 12px;
-  max-width: var(--pn-max-w);
-  margin-inline: auto;
-  padding-inline: 0.9rem;
-}
-
-/* admin:本地 ↔ 线上 环境切换(高亮当前所在环境,兼作指示) */
-.env-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  margin: 2px 0;
-  padding: 2px;
-  border: 1px solid var(--border-default);
-  border-radius: 999px;
-}
-.env-switch-opt {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  color: var(--faint-foreground);
-  border-radius: 999px;
-}
-.env-switch-opt:hover {
-  color: var(--muted-foreground);
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
-}
-.env-switch-opt.is-active { color: var(--foreground); font-weight: 500; }
-.env-switch-opt.is-active[data-env="local"] { background: color-mix(in srgb, var(--signal-warning) 22%, transparent); }
-.env-switch-opt.is-active[data-env="prod"] { background: color-mix(in srgb, var(--signal-success) 22%, transparent); }
-.env-switch-opt.is-active:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
-.env-switch-opt.is-active[data-env="local"]:hover { background: color-mix(in srgb, var(--signal-warning) 28%, transparent); }
-.env-switch-opt.is-active[data-env="prod"]:hover { background: color-mix(in srgb, var(--signal-success) 28%, transparent); }
-
-/* admin:本页尚无精确通知时的「添加本页通知」低调入口 */
-.page-notice-add {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
-  margin: 2px 0;
-  font-size: 0.75rem;
-  color: var(--faint-foreground);
-  border-radius: 4px;
-}
-.page-notice-add:hover {
-  color: var(--muted-foreground);
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 /* 行内编辑器 */
