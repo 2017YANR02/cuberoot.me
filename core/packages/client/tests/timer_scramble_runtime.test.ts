@@ -424,4 +424,19 @@ describe('shared timer scramble runtime', () => {
       retryable: true,
     });
   });
+
+  it('turns a stalled provider into a retryable failure', async () => {
+    await expect(generateTimerScramble(
+      { event: '333' },
+      {
+        generateCubingScramble: () => new Promise<string>(() => undefined),
+        requestTimeoutMs: 1,
+      },
+    )).resolves.toEqual({
+      ok: false,
+      event: '333',
+      code: 'generation-failed',
+      retryable: true,
+    });
+  });
 });

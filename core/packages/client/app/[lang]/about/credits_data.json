@@ -133,6 +133,20 @@
     "long_en": "design inspiration for the battle timer"
   },
   {
+    "name": "MnlPhlp/tauri-plugin-blec",
+    "url": "https://github.com/MnlPhlp/tauri-plugin-blec",
+    "zh": "Windows/macOS Tauri 宿主的系统 BLE transport；GAN 协议与状态机仍复用 CubeRoot 共享实现（MIT OR Apache-2.0）",
+    "en": "Native BLE transport for the Windows/macOS Tauri host; GAN protocol and state remain in CubeRoot's shared implementation (MIT OR Apache-2.0)",
+    "long_en": "The installed Windows and macOS clients use tauri-plugin-blec only for native scanning, GATT connection, reads, writes, and notifications. Device selection, GAN v4 crypto, packet decoding, cube state, and timing behavior remain in CubeRoot's shared packages."
+  },
+  {
+    "name": "HarmonyOS Samples/BluetoothLowEnergy",
+    "url": "https://gitee.com/harmonyos_samples/BluetoothLowEnergy",
+    "zh": "HarmonyOS NEXT 原生 BLE API 与生命周期参考；宿主 adapter 按本站共享 GAN transport 合同重写（Apache-2.0）",
+    "en": "HarmonyOS NEXT native BLE API and lifecycle reference; the host adapter is reimplemented against CubeRoot's shared GAN transport contract (Apache-2.0)",
+    "long_en": "Huawei's official BluetoothLowEnergy sample anchors the API 22 scan, GATT service, characteristic read/write, notification, and cleanup lifecycle used by the HarmonyOS NEXT thin host. CubeRoot keeps all GAN protocol and product behavior in the shared implementation."
+  },
+  {
     "name": "huizhiLLL/WCA-Nemesizer-API",
     "url": "https://github.com/huizhiLLL/WCA-Nemesizer-API",
     "zh": "宿敌算法参考(client-side TS 重写;UI 灵感 nemesizer.com);数据基于最近的 WCA developer dump,每周自动更新",

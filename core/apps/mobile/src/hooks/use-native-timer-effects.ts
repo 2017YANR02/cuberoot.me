@@ -1,24 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useInstalledTimerEffects } from '@cuberoot/app-ui';
+import type { TimerPhase } from '@cuberoot/shared/timer';
 
-import {
-  playTimerHaptic,
-  startTimerScreenWakeLock,
-  timerHapticCue,
-  timerNeedsScreenAwake,
-  type TimerPhase,
-} from '../native/timer-effects';
+import { playTimerHaptic } from '../native/timer-effects';
 
 export function useNativeTimerEffects(phase: TimerPhase): void {
-  const previousPhase = useRef(phase);
-
-  useEffect(() => {
-    const cue = timerHapticCue(previousPhase.current, phase);
-    previousPhase.current = phase;
-    if (cue) void playTimerHaptic(cue);
-  }, [phase]);
-
-  useEffect(() => {
-    if (!timerNeedsScreenAwake(phase)) return undefined;
-    return startTimerScreenWakeLock();
-  }, [phase]);
+  useInstalledTimerEffects(phase, playTimerHaptic);
 }

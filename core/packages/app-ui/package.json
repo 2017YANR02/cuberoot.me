@@ -1,0 +1,47 @@
+{
+  "name": "@cuberoot/app-ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "cuberoot": {
+    "kind": "library",
+    "externalRuntime": {
+      "lucide-react": "react-dom",
+      "react": "react-dom"
+    },
+    "runtime": {
+      ".": "react-dom",
+      "./app.css": "asset"
+    }
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./app.css": "./src/app.css"
+  },
+  "sideEffects": true,
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cuberoot/event-icon": "workspace:*",
+    "@cuberoot/puzzle-solvers": "workspace:*",
+    "@cuberoot/shared": "workspace:*",
+    "@cuberoot/timer-ui": "workspace:*",
+    "@cuberoot/visualcube": "workspace:*"
+  },
+  "peerDependencies": {
+    "lucide-react": "1.8.0",
+    "react": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "lucide-react": "1.8.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "typescript": "^5",
+    "vitest": "^4.1.6"
+  }
+}

@@ -1,4 +1,5 @@
 dist/
+/public/cubing-chunks/
 android/.gradle/
 android/.idea/
 android/**/build/

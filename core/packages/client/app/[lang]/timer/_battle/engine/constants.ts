@@ -4,6 +4,7 @@
  */
 
 import { BATTLE_EVENT_IDS, eventInfo, toWcaSpelling } from '@/app/[lang]/timer/_lib/types';
+import { LOCAL_BATTLE_DEFAULT_PLAYER_KEYS } from '@cuberoot/shared/timer';
 
 // NOTE: cubing.js event ID → [csTimer scrambler type, 默认步数] 映射
 // 步数来源：csTimer 的 scrdata 定义（WCA 标准值）
@@ -90,7 +91,7 @@ export const LS_PREFIX = 'battle_';
 // NOTE: 桌面端键盘映射默认值 — P1(下左)=空格, P2(下右)=Enter, P3(上左)=Q, P4(上右)=P。
 // 用户可在设置里自定义(battle_store.playerKeys),这里只是初值 + 重置基准。
 // KeyboardEvent.key 原样存(单字母大小写不敏感,由 keyToPlayer 归一化比较)。
-export const DEFAULT_PLAYER_KEYS = [' ', 'Enter', 'q', 'p'];
+export const DEFAULT_PLAYER_KEYS = [...LOCAL_BATTLE_DEFAULT_PLAYER_KEYS];
 
 // NOTE: 双语文本映射（JS 动态设置的文本，无法用 data-i18n 属性）
 export const I18N_TEXT: Record<string, Record<string, string>> = {

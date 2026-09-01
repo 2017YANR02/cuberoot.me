@@ -1,10 +1,12 @@
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import './app.css';
+import '@cuberoot/app-ui/app.css';
+
+import { capacitorHost } from './capacitor-host';
 
 const App = lazy(async () => {
-  const module = await import('./App');
+  const module = await import('@cuberoot/app-ui');
   return { default: module.App };
 });
 
@@ -17,7 +19,7 @@ if (!root) {
 createRoot(root).render(
   <StrictMode>
     <Suspense fallback={<main className="loading-screen"><strong>CubeRoot</strong></main>}>
-      <App />
+      <App host={capacitorHost} />
     </Suspense>
   </StrictMode>,
 );

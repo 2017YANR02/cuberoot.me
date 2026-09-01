@@ -3,7 +3,7 @@ name: cuberoot-mobile
 description: "Use for CubeRoot installed-client work across Android, iOS, HarmonyOS NEXT, Windows, and macOS: shared React App architecture, Capacitor/Harmony/Tauri hosts, native adapters, device testing, signing, stores, or deciding whether a website/App change requires a client release. Do not use for ordinary responsive web work or unrelated computer setup."
 ---
 
-# CubeRoot 移动端开发与发布
+# CubeRoot 五端已安装客户端开发与发布
 
 维护 CubeRoot 已安装客户端时遵循本流程，让 Android、iOS、HarmonyOS NEXT、Windows 和 macOS 共用一套 React 产品与业务代码；平台工程只做宿主和系统能力适配。
 
@@ -11,8 +11,8 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
 
 先读仓库根 `AGENTS.md`，再只加载本次需要的资料：
 
-- 日常实现：`core/apps/mobile/README.md`、`package.json`、`capacitor.config.ts` 和相关源码。
-- 五端架构、HarmonyOS 或桌面客户端：必须完整读取 `docs/cross-platform-app-contract.md`；进度再读 `docs/mobile-app-roadmap.md`。五端目标已确定不等于后三端已实现。
+- 日常产品实现：先读 `core/packages/app-ui/package.json` 与相关 `src/`；再按目标宿主读取 `core/apps/mobile`、`core/apps/desktop` 或 `core/apps/harmony` 的 package/config/源码。Android/iOS 任务另读 `core/apps/mobile/README.md`。
+- 五端架构、HarmonyOS 或桌面客户端：必须完整读取 `docs/cross-platform-app-contract.md`；进度再读 `docs/mobile-app-roadmap.md`。共享源码、宿主源码、本机构建、安装、设备/实体电脑、签名/公证和发布是不同证据层级。
 - 修改 App `/timer`：必须完整读取 `docs/mobile-timer-parity-tracker.md` 与
   `docs/mobile-timer-zero-omission-audit.md`；涉及真题、随机或手动来源时再读
   `docs/mobile-timer-source-adversarial-audit.md`。这些文件仍标记 `NOT COMPLETE` 时，
@@ -29,12 +29,13 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
 ## 守住五端唯一架构
 
 - 五端是一个产品，不是五套业务实现。最高优先级合同是 `docs/cross-platform-app-contract.md`。
-- `core/apps/mobile` 是现有 Android/iOS React + Vite + Capacitor 宿主；两端不各写一套业务 UI，也不为统一原生框架而迁移已经成立的 Capacitor 工程。
-- HarmonyOS NEXT 使用计划中的 `core/apps/harmony` ArkTS + ArkWeb 薄宿主；不得用 ArkUI 重写三栏、计时器或账号。
-- Windows/macOS 使用计划中的同一个 `core/apps/desktop` Tauri 宿主；不得建两个桌面 React 工程。PWA 可作网站入口，但不算桌面客户端完成证据。
-- 第二个非 Capacitor 宿主落地时，在同一变更中把五端共用的 React App 组合提取为有两个真实消费者的 `@cuberoot/app-ui`。此前不建空包；此后禁止 app→app 源码、CSS 或 `dist` 依赖。
+- `core/packages/app-ui` 已是五端唯一 React 产品层；三栏、导航状态、安装端认证客户端、在线 surface 容器和计时产品组合只在这里维护。
+- `core/apps/mobile` 是 Android/iOS 的 React + Vite + Capacitor 薄宿主；两端不各写业务 UI，也不为统一原生框架而迁移已经成立的 Capacitor 工程。
+- `core/apps/harmony` 是 HarmonyOS NEXT 的 ArkTS + ArkWeb 薄宿主；不得用 ArkUI 重写三栏、计时器或账号。源码、unsigned HAP、设备安装、BLE、签名与发布必须分别取证。
+- Windows/macOS 使用同一个 `core/apps/desktop` Tauri 薄宿主；不得建两个桌面 React 工程。PWA 可作网站入口，但不算桌面客户端完成证据。
+- Mobile、Desktop 和 Harmony 只能 import `@cuberoot/app-ui` 的公开入口，禁止 app→app 源码、CSS 或 `dist` 依赖。
 - 稳定、无运行时依赖且已有多端消费者的数据模型、校验、算法、状态机放 `core/packages/shared`；不要从网站或 Android 复制到 iOS。
-- 网站专属 Next 路由、SEO、服务端组件留在 client；移动导航、离线仓储和原生桥留在 mobile。
+- 网站专属 Next 路由、SEO、服务端组件留在 client；共享安装端导航与 IndexedDB 产品仓储留在 `app-ui`，系统桥留在各宿主。
 - 五端只分别实现权限、BLE transport、安全存储、通知、深链、分享、文件、打印、窗口和生命周期等 platform adapters；协议解析、账号契约、数据规则、对战状态和 React 功能必须共享。新 capability contract 只在第二个真实消费者落地时逐项提取，不为计划中宿主预建空接口。
 - `dist/` 和 Capacitor 同步进去的 Web 产物是生成物，不是源码；改 React/shared 后重新 build + sync。
 - 不把远程网站设为 App 的启动运行代码，也不把整站 WebView 当正式产品。
@@ -48,8 +49,8 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
   的完整组合，不是标题、颜色或单张截图相似。
 - 网站出现的每个控件、菜单项、弹层、空态、加载态、错误态和点击结果都必须登记并实现；
   不支持、点击无响应、静态文字冒充按钮、外跳网站或隐藏入口都不能算 parity。
-- 43 项目录和 WCA 映射等纯契约只从 `@cuberoot/shared/timer` 读取；Web/Mobile 共用的
-  React 控件放 `@cuberoot/timer-ui`；Mobile 不得 deep import client，也不得复制
+- 43 项目录和 WCA 映射等纯契约只从 `@cuberoot/shared/timer` 读取；Web/五端 App 共用的
+  React 控件放 `@cuberoot/timer-ui`；`@cuberoot/app-ui` 与各宿主不得 deep import client，也不得复制
   `SoloView`、`BattleView`、来源菜单、二阶类型表、手动队列或重试常量。
 - 二阶必须覆盖网站的完整状态、3-gen、EG/CLL/EG1/EG2/TCLL+/TCLL-/TCLL/LS/无连色，
   以及 WCA 11 步/最优口径；真题不能假换成本地随机，随机专项也不能只画选择器不接 provider。
@@ -57,11 +58,20 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
   允许空打乱；不得添加网站没有的校验、提交或独立清空逻辑。
 - “手动输入打乱”和“手动录入成绩”是两项独立能力。成绩录入必须复用
   `@cuberoot/shared/timer` 的 normal/FMC/MBLD、OK/+2/DNF/DNS 规则与
-  `@cuberoot/timer-ui` 的 `TimerManualEntryModal`；Web/Mobile 宿主只负责存储 adapter，
+  `@cuberoot/timer-ui` 的 `TimerManualEntryModal`；Web/已安装客户端只负责各自存储 adapter，
   禁止再写时间 parser、FMC 计数器、MBLD 9f12c 规则或第二个表单。
 - 43 项里只有 42 项具有随机生成器；`custom` 的 Real/Random 是网站明确允许计时和保存的
   canonical ready 空槽，必须由 shared `timerScrambleAllowsEmptySlot` 显式授权。不得把它伪造成
   第 43 个随机 provider，也不得把其他 provider 的空返回或失败当成同一语义。
+- patched cubing.js 的搜索 worker 固定从同源 `/cubing-chunks/search-worker-entry.js` 加载；Web、Mobile、
+  Desktop、Harmony 的 dev/build 必须共同调用 `core/scripts/build-cubing-worker.mjs` 生成各自 public 资产。
+  禁止每个宿主复制 worker 脚本，也不能把 UI 的超时/重试当成“生成器已可用”的证明；至少实测一条 3×3。
+- 人数入口已支持 1/2/3/4/net：`@cuberoot/app-ui/BattleModes.tsx` 的 App UI 必须消费
+  `@cuberoot/shared/timer` 的 local-battle reducer 与 net-battle client/session contract；Mobile、Desktop、
+  Harmony 只注入 transport/session adapter。不得恢复只读“1人”、`players=` 浏览器 fallback 或再造宿主页面。
+  本地多人打乱必须复用 shared generator/host adapter，并有有界超时、明确 error 状态和原位重试；禁止把失败继续
+  显示成永久“准备中”。但 Web `BattleView/NetBattleView` 与 App `BattleModes` 尚未收敛为同一个完整 React 视图，
+  高级历史 UI、设置、视频、多 BLE、双设备和五平台矩阵未齐，仍不得把多人/联机写成 parity 完成。
 - WCA 真题的身份不是打乱文本。缓存、前后浏览、保存来源和自动打卡必须保留
   `competition/event/round/group/extra/scrambleNumber` slot identity；两道文本相同的官方题仍是
   两个不同槽位，禁止以 `Map<scramble, meta>` 覆盖 occurrence。
@@ -88,7 +98,7 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
 |---|---|
 | API、数据库、公式、统计、公告等服务器数据，且旧 App 契约兼容 | 否 |
 | App 运行时通过版本化 API/静态数据读取的内容 | 否 |
-| `core/apps/mobile/src` 中打包的 React/TS/CSS、离线内置数据 | 是 |
+| `core/packages/app-ui`、`core/packages/timer-ui` 或某一宿主中打包的 React/TS/CSS、离线内置数据 | 是，需要发布所有受影响的已安装客户端 |
 | Capacitor 插件、原生权限、Android/iOS 原生配置和代码 | 是 |
 | 图标、启动图、隐私行为、SDK、登录、支付 | 是，并重新核对商店资料 |
 
@@ -98,8 +108,8 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
 
 - 先检测操作系统和工具链；Windows 不执行 Xcode，Mac 不重写 Android 业务层。
 - App 登录复用网站唯一账号和 `LoginForm`：系统浏览器 → 90 秒单次 mobile ticket → PKCE S256 + state → App deep link。长期 JWT 与 verifier 不得进入 URL；请求、回调、session 契约统一走 `@cuberoot/shared/auth/web-session`。
-- 底栏 Account 始终加载原始 `/account`，不加 `auth=mobile`。iframe 内整个 canonical `LoginForm`（邮箱/手机/密码及 SSO）通过 `@cuberoot/shared/mobile-embed` 委托系统 Browser；native secure session 再申请 90 秒 `web-session` ticket 回灌 iframe。iframe logout/删除与 App logout 要互相清会话；生产/双平台 provider E2E 未验收前不得只凭按钮或单测宣称闭环，外部 Browser 独立 logout 也不能假装会主动通知休眠 App。
-- Android/iOS 共用 `apps/mobile/src/auth/mobile-auth.ts`，会话通过 `@aparajita/capacitor-secure-storage` 进入 iOS Keychain / Android Keystore 保护的存储；不要添加原生凭据表单、第二套账号表或平台各自的 token 管理。
+- 底栏 Account 始终加载原始 `/account`，不加 `auth=mobile`。iframe 内整个 canonical `LoginForm`（邮箱/手机/密码及 SSO）通过 `@cuberoot/shared/mobile-embed` 委托系统 Browser；native secure session 再申请 90 秒 `web-session` ticket 回灌 iframe。iframe logout/删除与 App logout 要互相清会话；生产/五平台 provider E2E 未验收前不得只凭按钮或单测宣称闭环，外部 Browser 独立 logout 也不能假装会主动通知休眠 App。
+- 五端共用 `@cuberoot/app-ui` 的 `InstalledAuthClient` 和同一网站账号/PKCE 契约；`core/apps/mobile/src/mobile-auth.ts` 只接 Capacitor Browser 与 Keychain/Keystore，Desktop 只接系统 keyring，Harmony 只接 ArkTS 系统安全存储 bridge。不要添加原生凭据表单、第二套账号表或平台各自的 token 模型；某个平台源码接线不等于 provider E2E 已通过。
 - 移动交接中，provider-null 路径只显示网站现有邮箱/手机号，provider-tagged 路径显示 canonical SSO 列表并继续同一 PKCE 流。启用 WCA、Google、微信、QQ、支付宝等第三方主账号登录前，必须重新核对当时的 Apple 4.8，并先完成需要的 Sign in with Apple 等价路径。
 - 登录与同步是两个里程碑。当前计时、备注、设置仍只在本机；没有完成匿名数据合并、冲突、删除和多设备验证前，不得把登录文案或路线图写成“已同步”。账号资料、身份绑定和账号注销继续打开网站统一管理页。
 - 修改回跳时同时核对 shared callback allowlist、Android Manifest、iOS URL Types、release/debug application ID 和冷启动 `appUrlOpen` 竞态；不得只修一个平台。
@@ -116,7 +126,7 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
 - GAN 16 UI 按现有网站 registry 归入 GAN v4；服务、特征、加解密、历史补帧和转动解析复用 `@cuberoot/shared/smart-cube/gan-v4`，禁止在 Mobile 复制协议常量或算法。
 - 设备时间映射统一使用 `@cuberoot/shared/smart-cube/move-clock` 的 `MoveClock`；状态帧采纳、转动推进和复原判断统一使用 `@cuberoot/shared/smart-cube/cubie` 的 `SmartCubeStateTracker`。网站旧 `move_clock.ts` / `state_track.ts` 只是兼容 adapter，Mobile 不得复制它们或另建第二套状态模型。
 - 自动计时顺序固定复用 shared timer machine：状态跟踪先应用转动；若此前已预备则该第一手 `start-from-cube` 起表；若应用后状态匹配当前打乱则为下一手预备；只有未复原→复原边沿触发 `stop-from-cube`。不要用 BLE 到达时间代替 `MoveClock` 校准时间，也不要只凭最后一手文字猜复原。
-- 原生 central BLE 默认使用与 Capacitor 8 同主版本的 `@capacitor-community/bluetooth-le`，由 Mobile 的薄 `BleTransport` adapter 包装；网站继续使用 Web Bluetooth adapter。不要从 client app deep import driver，也不要在每个品牌 driver 里直接调用 Capacitor 插件。
+- GAN 连接逻辑统一由 `@cuberoot/app-ui` 的 `useInstalledSmartCube` 消费 shared 协议；Mobile 用 `@capacitor-community/bluetooth-le` 薄 transport，Desktop 用 `@mnlphlp/plugin-blec` 薄 transport，Harmony 用 ArkTS ConnectivityKit bridge。不要从 client app deep import driver，也不要在每个平台或品牌 driver 里复制 GAN 协议。
 - Android 12+ 使用 `BLUETOOTH_SCAN` / `BLUETOOTH_CONNECT` 和运行时“附近设备”授权；扫描不用于定位。BLE feature 必须 `required=false`，无 BLE 设备仍可使用本地计时。
 - 新型号先过真机 spike：扫描结果、广播/MAC、连接、服务发现、读写、通知、至少一条可解析转动。只有这些证据齐全才在路线图标记支持；模拟器、仅搜到名称或仅连上 GATT 都不算完成。
 - 当前 OPPO + GAN 16 UI 已完成上述 spike，并实测打乱匹配后自动预备、第一手起表、复原停表和本地保存，首条硬件计时证据为 `5.20`。以后不要再询问该组合是否能连接；继续测试时从权限拒绝、后台、蓝牙关闭、距离中断和反复重连等尚未完成门槛推进。
@@ -124,10 +134,10 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
 
 ## 验证与进度记账
 
-按变更范围做相关 tests、mobile typecheck/build、目标平台 sync 和 native diff；权限、BLE、分享、后台、升级与 release 需要真机/控制台证据。登录、SDK、数据流或付费变化还要复核商店隐私声明。
+按变更范围先跑 `@cuberoot/app-ui` typecheck/test，再跑受影响宿主的 typecheck/test/Web build 与原生构建：Mobile 做 Capacitor sync 和目标 Android/iOS 构建，Desktop 在 Windows/macOS 分别做 Tauri native build，Harmony 先同步本地 Web bundle再用当前官方 Hvigor 构建 HAP。CI job 已写入但未实际运行时只能记“定义已存在”；`--no-bundle`、Vite build、unsigned HAP、`.app` 或 `.dmg` 也不能替代安装、设备、BLE、签名/公证或发布证据。权限、分享、后台、升级与登录还要在目标平台实测；SDK、数据流或付费变化要复核商店隐私声明。
 
 五端总体状态只有在 Android/iOS/HarmonyOS NEXT/Windows/macOS 都具备各自 build、安装、系统 adapter、设备/实体电脑和发布证据后才能完成。某一端通过、PWA 可安装、Android 兼容层运行或共享代码存在，都不能替代其他平台证据。
 
 `docs/mobile-app-roadmap.md` 是唯一进度账本。只在有实现与验证证据时把 `[ ]` 改为 `[x]`，并在“当前证据”写命令、设备/控制台结果或 commit。用户口头确认设备、安装或付款可记作已具备条件，但不能替代 build、真机、签名或商店状态证据。
 
-用户要求审计或任务涉及签名、发布时，让独立 agent 检查重复实现、跨包边界、双平台回归、凭据泄漏、路线图勾选和发布证据，处理发现后再提交。
+用户要求审计或任务涉及签名、发布时，让独立 agent 检查重复实现、跨包边界、五平台回归、凭据泄漏、路线图勾选和发布证据，处理发现后再提交。

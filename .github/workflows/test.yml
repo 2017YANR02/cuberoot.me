@@ -253,8 +253,8 @@ jobs:
         working-directory: core
         run: pnpm exec knip --include files,dependencies,unlisted,binaries --no-config-hints
 
-  # 移动端与网站共享 timer 内核，但有独立的 Vite/Capacitor/Gradle 构建链。
-  # 单独并行跑，既锁住共享契约，也不会拉长前端快测的关键路径。
+  # Installed App 共用 React 产品层；这里锁住共享层、Harmony Web bundle 与
+  # Capacitor/Gradle 链。Tauri 的双桌面 native backend 由独立矩阵编译。
   mobile:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -317,15 +317,25 @@ jobs:
 
       - name: Typecheck mobile
         working-directory: core
-        run: pnpm --filter @cuberoot/mobile typecheck
+        run: |
+          pnpm --filter @cuberoot/app-ui typecheck
+          pnpm --filter @cuberoot/mobile typecheck
 
-      - name: Test mobile data adapters
+      - name: Test shared installed App and mobile adapters
         working-directory: core
-        run: pnpm --filter @cuberoot/mobile test
+        run: |
+          pnpm --filter @cuberoot/app-ui test
+          pnpm --filter @cuberoot/mobile test
 
-      - name: Build and sync Capacitor assets
+      - name: Build Harmony ArkWeb bundle
         working-directory: core
-        run: pnpm --filter @cuberoot/mobile cap:sync
+        run: pnpm --filter @cuberoot/harmony build
+
+      - name: Build and sync Android and iOS Capacitor assets
+        working-directory: core
+        run: |
+          pnpm --filter @cuberoot/mobile cap:sync:android
+          pnpm --filter @cuberoot/mobile cap:sync:ios
 
       - name: Create ephemeral CI upload key
         run: |
@@ -366,7 +376,13 @@ jobs:
 
           permissions=$("$analyzer" manifest permissions "$apk" | sort)
           expected_permissions=$(printf '%s\n' \
+            "android.permission.ACCESS_COARSE_LOCATION' maxSdkVersion='30" \
+            "android.permission.ACCESS_FINE_LOCATION' maxSdkVersion='30" \
             'android.permission.ACCESS_NETWORK_STATE' \
+            "android.permission.BLUETOOTH' maxSdkVersion='30" \
+            "android.permission.BLUETOOTH_ADMIN' maxSdkVersion='30" \
+            'android.permission.BLUETOOTH_CONNECT' \
+            'android.permission.BLUETOOTH_SCAN' \
             'android.permission.INTERNET' \
             'android.permission.VIBRATE' \
             'me.cuberoot.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION' | sort)
@@ -376,6 +392,54 @@ jobs:
             diff -u <(printf '%s\n' "$expected_permissions") <(printf '%s\n' "$permissions") || true
             exit 1
           fi
+
+          manifest_xml=app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml
+          grep -A1 -F 'android:name="android.permission.BLUETOOTH"' "$manifest_xml" | grep -Fq 'android:maxSdkVersion="30"'
+          grep -A1 -F 'android:name="android.permission.BLUETOOTH_ADMIN"' "$manifest_xml" | grep -Fq 'android:maxSdkVersion="30"'
+          grep -A1 -F 'android:name="android.permission.ACCESS_COARSE_LOCATION"' "$manifest_xml" | grep -Fq 'android:maxSdkVersion="30"'
+          grep -A1 -F 'android:name="android.permission.ACCESS_FINE_LOCATION"' "$manifest_xml" | grep -Fq 'android:maxSdkVersion="30"'
+          grep -A1 -F 'android:name="android.permission.BLUETOOTH_SCAN"' "$manifest_xml" | grep -Fq 'android:usesPermissionFlags="neverForLocation"'
+
+  # Windows/macOS share one React product and one Tauri host, but compile against
+  # different native WebView, keyring and BLE backends. Both runners are required.
+  desktop:
+    name: Desktop (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-15-intel]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .node-version
+            core
+          filter: blob:none
+
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: core/package.json
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.node-version'
+          cache: 'pnpm'
+          cache-dependency-path: core/pnpm-lock.yaml
+
+      - name: Select stable Rust
+        run: rustup default stable
+
+      - name: Install dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+
+      - name: Test desktop adapter and build native host
+        working-directory: core
+        run: |
+          pnpm --filter @cuberoot/desktop test
+          pnpm --filter @cuberoot/desktop exec tauri build --no-bundle
 
   # analyzer_worker 会做深度搜索并加载多份 WASM。独占 runner 可避免与 360+ 个快测文件
   # 互抢 CPU；它与主 test job 并行，所以既保留精确回归，也缩短整条 workflow 墙钟。

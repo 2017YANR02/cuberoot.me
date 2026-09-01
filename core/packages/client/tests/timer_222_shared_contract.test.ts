@@ -109,7 +109,7 @@ describe('2x2 single-source consumers', () => {
   });
 
   it('does not define a second catalog in the native app', () => {
-    const app = readFileSync(`${CORE_ROOT}apps/mobile/src/App.tsx`, 'utf8');
+    const app = readFileSync(`${CORE_ROOT}packages/app-ui/src/App.tsx`, 'utf8');
     expect(app).not.toMatch(/(?:const|export\s+const)\s+SCRAMBLE_222_(?:TYPES|TYPE_CATALOG)\s*=/);
     expect(app).not.toContain("key: '2223'");
     expect(app).not.toContain("key: '222eg'");

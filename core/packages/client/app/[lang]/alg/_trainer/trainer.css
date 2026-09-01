@@ -1505,4 +1505,4 @@
   background: color-mix(in srgb, var(--foreground) 10%, transparent);
   color: var(--foreground);
 }
-/* 邀请二维码弹窗的样式已提到共享层:components/room-qr-modal.css(.room-qr-*)。 */
+/* 邀请二维码弹窗样式由 @cuberoot/timer-ui/room-qr-modal.css 统一提供。 */

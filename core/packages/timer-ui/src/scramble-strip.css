@@ -2,7 +2,7 @@
    when they need a shell-specific size; the fallback is the website value. */
 @font-face {
   font-family: 'LiberationMono';
-  src: url('/fonts/LiberationMono-Regular.ttf') format('truetype');
+  src: url('./assets/LiberationMono-Regular.ttf') format('truetype');
   font-display: block;
 }
 

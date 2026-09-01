@@ -2,11 +2,11 @@
 
 审计日期：2026-08-30
 
-状态：**未达到完整 Web parity**。本报告只记录当前 Android/iOS 共用 React App 的打乱来源边界、已验证证据和未完成项，不把显式报错或缺少 provider 计作“已经支持”。
+状态：**未达到完整 Web parity**。本报告记录 2026-08-30 起形成的 Android/iOS 打乱来源证据，以及后来迁入 `@cuberoot/app-ui` 的共享边界；不把显式报错、缺少 provider、源码存在或某一宿主构建成功计作五端“已经支持”。既有 OPPO/iOS 行保持历史证据含义，HarmonyOS NEXT、Windows 和 macOS 必须另取设备/实体电脑证据。
 
 ## 审计范围
 
-- Mobile：`core/apps/mobile/src/App.tsx`、`data/real-scramble-pool.ts`、Timer repository 与相关测试。
+- 五端 App：`core/packages/app-ui/src/App.tsx`、`data/real-scramble-pool.ts`、Timer repository 与相关测试；平台宿主只提供 capability adapter。
 - 跨端契约：`core/packages/shared/src/timer/event-catalog.ts`、`scramble-runtime.ts`、`manual-scramble-queue.ts`。
 - 共享 UI：`core/packages/timer-ui` 的来源选择器与手动队列编辑器。
 - Web 事实源：`core/packages/client/app/[lang]/timer/_shell/SoloView.tsx` 与 `_lib/scramble/wca_pool.ts`。

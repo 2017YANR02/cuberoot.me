@@ -1,0 +1,30 @@
+{
+  "name": "@cuberoot/harmony",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "cuberoot": {
+    "kind": "app"
+  },
+  "scripts": {
+    "dev": "node ../../scripts/build-cubing-worker.mjs apps/harmony/public/cubing-chunks && vite --host 127.0.0.1 --port 1430",
+    "build": "node scripts/check-native-config.mjs && pnpm run typecheck && pnpm run build:web",
+    "build:web": "node ../../scripts/build-cubing-worker.mjs apps/harmony/public/cubing-chunks && vite build && node scripts/sync-web-assets.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cuberoot/app-ui": "workspace:*",
+    "@cuberoot/shared": "workspace:*",
+    "@cuberoot/timer-ui": "workspace:*",
+    "lucide-react": "1.8.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.0.5",
+    "typescript": "^5",
+    "vite": "8.0.1"
+  }
+}

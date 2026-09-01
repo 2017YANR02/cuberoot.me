@@ -35,6 +35,7 @@ import { loadScrambleEngine } from '@/app/[lang]/timer/_battle/engine/engine_loa
 import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format';
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
+import { isLocalBattleAssignableKey } from '@cuberoot/shared/timer';
 import type { PenaltyType } from '@/app/[lang]/timer/_battle/engine/constants';
 import { BattleCubesProvider, BattleCubeSettingsGroup, BattleCubeDot, useBattleCubesCtx } from '@/app/[lang]/timer/_battle/BattleCubes';
 import HistoryPanel from '@/app/[lang]/timer/_battle/HistoryPanel';
@@ -936,7 +937,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
       e.stopPropagation();
       const s = useBattleStore.getState();
       if (e.key === 'Escape') { s.setRecordingKeyFor(null); return; }
-      if (['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return; // 纯修饰键跳过,继续等
+      if (!isLocalBattleAssignableKey(e.key)) return;
       s.setPlayerKey(target, e.key);
       s.setRecordingKeyFor(null);
     };
