@@ -35,7 +35,6 @@ export const EXTENDED_MASKS: MaskOption[] = [
   { value: Masking.TWO_BY_TWO_BY_THREE, label: '223' },
   { value: Masking.ONE_ONE_TWO, label: '112' },
   { value: Masking.ONE_TWO_TWO, label: '122' },
-  { value: Masking.CROSS_FULL, label: 'Cross' },
   { value: Masking.CROSS_PARTIAL, label: 'Cross (no center)' },
   // 同形状只留一个代表 —— 换槽/换底色靠播放条的拿方朝向下拉转过去(24 档)。
   { value: Masking.CROSS_HALF, label: 'Half cross' },
