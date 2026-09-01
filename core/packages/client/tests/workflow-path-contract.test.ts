@@ -144,6 +144,7 @@ const NEXT_PATHS = [
   corePath('tsconfig.base.json'),
   corePath('patches', '**'),
   corePath('scripts', 'resolve-workspace-path.mjs'),
+  corePath('scripts', 'build-cubing-worker.mjs'),
   repoPath('ops', 'systemd', 'cuberoot-next.service'),
   repoPath('.github', 'workflows', 'deploy_next.yml'),
 ] as const;
@@ -341,6 +342,7 @@ describe('deployment workflow path contracts', () => {
       [corePath('tsconfig.base.json'), true],
       [corePath('patches', 'cubing@0.63.3.patch'), true],
       [corePath('scripts', 'resolve-workspace-path.mjs'), true],
+      [corePath('scripts', 'build-cubing-worker.mjs'), true],
       [repoPath('ops', 'systemd', 'cuberoot-next.service'), true],
       [repoPath('.github', 'workflows', 'deploy_next.yml'), true],
       [packagePath('server', 'src', 'index.ts'), false],
