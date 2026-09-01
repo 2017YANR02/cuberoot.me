@@ -280,12 +280,6 @@ function downloadBackup(text: string): void {
   window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
 }
 
-async function writeClipboardText(text: string): Promise<void> {
-  const writeText = navigator.clipboard?.writeText?.bind(navigator.clipboard);
-  if (!writeText) throw new Error('clipboard unavailable');
-  await writeText(text);
-}
-
 function ScrambleCube({ alt, event, scramble }: { alt: string; event: EventId; scramble: string }) {
   const cubeSize = timerEventNxnSize(event);
   const svg = useMemo(() => {
@@ -1888,7 +1882,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const copyCurrentScramble = useCallback(() => {
     const entry = scrambleHistoryRef.current.list[scrambleHistoryRef.current.idx];
     if (!entry?.scramble) return;
-    void writeClipboardText(formatScrambleForEvent(entry.event, entry.scramble))
+    void host.writeClipboardText(formatScrambleForEvent(entry.event, entry.scramble))
       .then(() => {
         announce(copy.copiedScramble);
         setScrambleCopied(true);
@@ -1901,7 +1895,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         }, 1200);
       })
       .catch(() => announce(copy.actionFailed));
-  }, [announce, copy.actionFailed, copy.copiedScramble]);
+  }, [announce, copy.actionFailed, copy.copiedScramble, host]);
 
   useEffect(() => () => {
     if (scrambleCopiedTimerRef.current !== null) {
@@ -1910,10 +1904,10 @@ export function App({ host }: { host: InstalledAppHost }) {
   }, []);
 
   const copyHistoryScramble = useCallback((solve: Solve) => {
-    void writeClipboardText(timerHistoryCopyText(solve))
+    void host.writeClipboardText(timerHistoryCopyText(solve))
       .then(() => announce(copy.copiedScramble))
       .catch(() => announce(copy.actionFailed));
-  }, [announce, copy.actionFailed, copy.copiedScramble]);
+  }, [announce, copy.actionFailed, copy.copiedScramble, host]);
 
   const deleteLastSolve = useCallback(() => {
     const last = solvesRef.current[solvesRef.current.length - 1];
@@ -2699,6 +2693,7 @@ export function App({ host }: { host: InstalledAppHost }) {
             }}
             precision={resultPrecision}
             runningPrecision={runningPrecision}
+            writeClipboardText={host.writeClipboardText}
           />
         )}
 

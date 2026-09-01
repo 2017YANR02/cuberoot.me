@@ -14,7 +14,7 @@ import {
   createNetBattleClient,
   createNetBattleSessionStore,
 } from '@cuberoot/shared/timer';
-import { browserPrintTransport } from '@cuberoot/timer-ui';
+import { browserClipboardTransport, browserPrintTransport } from '@cuberoot/timer-ui';
 
 import packageInfo from '../package.json';
 import { TauriBleTransport } from './tauri-ble-transport';
@@ -71,6 +71,7 @@ export const desktopHost: InstalledAppHost = {
   netBattle: desktopNetBattle,
   openExternal: openUrl,
   print: browserPrintTransport,
+  writeClipboardText: browserClipboardTransport,
   useAuth: (language) => useInstalledAuth(language, desktopAuthPort),
   useSmartCube: (options) => useInstalledSmartCube(() => new TauriBleTransport(), options),
   useTimerEffects: useInstalledTimerEffects,

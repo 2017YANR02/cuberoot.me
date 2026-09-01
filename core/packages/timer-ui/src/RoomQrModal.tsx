@@ -8,6 +8,7 @@ import './room-qr-modal.css';
 export interface RoomQrModalLabels {
   close: string;
   copied: string;
+  copyFailed: string;
   copyInvite: string;
   scanToJoin: string;
 }
@@ -17,6 +18,7 @@ export interface RoomQrModalProps {
   labels: RoomQrModalLabels;
   onClose(): void;
   url: string;
+  writeClipboardText(text: string): Promise<void>;
 }
 
 const FOCUSABLE_SELECTOR = [
@@ -29,10 +31,11 @@ const FOCUSABLE_SELECTOR = [
 ].join(',');
 
 /** Runtime-shared invite modal used by Web and every installed React host. */
-export function RoomQrModal({ code, labels, onClose, url }: RoomQrModalProps) {
-  const [copied, setCopied] = useState(false);
+export function RoomQrModal({ code, labels, onClose, url, writeClipboardText }: RoomQrModalProps) {
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const mountedRef = useRef(true);
   const onCloseRef = useRef(onClose);
   const resetRef = useRef<number | null>(null);
   const titleId = useId();
@@ -43,6 +46,7 @@ export function RoomQrModal({ code, labels, onClose, url }: RoomQrModalProps) {
   );
 
   useEffect(() => {
+    mountedRef.current = true;
     const previousFocus = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
@@ -85,6 +89,7 @@ export function RoomQrModal({ code, labels, onClose, url }: RoomQrModalProps) {
     document.addEventListener('focusin', onFocusIn);
     closeRef.current?.focus();
     return () => {
+      mountedRef.current = false;
       window.removeEventListener('keydown', onKey);
       document.removeEventListener('focusin', onFocusIn);
       if (resetRef.current !== null) window.clearTimeout(resetRef.current);
@@ -119,17 +124,27 @@ export function RoomQrModal({ code, labels, onClose, url }: RoomQrModalProps) {
         <button
           className="room-qr-link"
           onClick={() => {
-            void navigator.clipboard.writeText(url).then(() => {
-              setCopied(true);
+            void writeClipboardText(url).then(() => {
+              if (!mountedRef.current) return;
+              setCopyStatus('copied');
               if (resetRef.current !== null) window.clearTimeout(resetRef.current);
-              resetRef.current = window.setTimeout(() => setCopied(false), 1_200);
-            }).catch(() => setCopied(false));
+              resetRef.current = window.setTimeout(() => setCopyStatus('idle'), 1_200);
+            }).catch(() => {
+              if (!mountedRef.current) return;
+              setCopyStatus('failed');
+              if (resetRef.current !== null) window.clearTimeout(resetRef.current);
+              resetRef.current = window.setTimeout(() => setCopyStatus('idle'), 1_200);
+            });
           }}
           title={labels.copyInvite}
           type="button"
         >
-          {copied ? <Check size={13} /> : <Copy size={13} />}
-          <span className="room-qr-link-text">{copied ? labels.copied : url}</span>
+          {copyStatus === 'copied' ? <Check size={13} /> : <Copy size={13} />}
+          <span aria-live="polite" className="room-qr-link-text">
+            {copyStatus === 'copied'
+              ? labels.copied
+              : copyStatus === 'failed' ? labels.copyFailed : url}
+          </span>
         </button>
       </div>
     </div>,

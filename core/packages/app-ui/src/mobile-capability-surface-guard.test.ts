@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const app = readFileSync(new URL('./App.tsx', import.meta.url), 'utf8');
+const battleModes = readFileSync(new URL('./BattleModes.tsx', import.meta.url), 'utf8');
 const copy = readFileSync(new URL('./copy.ts', import.meta.url), 'utf8');
 
 describe('Mobile capability surface guard', () => {
@@ -26,5 +27,11 @@ describe('Mobile capability surface guard', () => {
     expect(deviceActions).not.toContain('onMicrophone');
     expect(deviceActions).not.toContain('microphoneAriaLabel');
     expect(copy).not.toMatch(/coming soon|即将推出|暂未开放/i);
+  });
+
+  it('routes clipboard writes through the installed host capability', () => {
+    expect(app).toContain('host.writeClipboardText');
+    expect(battleModes).toContain('writeClipboardText(room.code)');
+    expect(`${app}\n${battleModes}`).not.toContain('navigator.clipboard');
   });
 });

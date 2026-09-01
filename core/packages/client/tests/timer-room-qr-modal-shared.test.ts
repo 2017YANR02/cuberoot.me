@@ -3,6 +3,7 @@
 import { readFileSync } from 'node:fs';
 
 import { RoomQrModal } from '@cuberoot/timer-ui/room-qr-modal';
+import { browserClipboardTransport } from '@cuberoot/timer-ui';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -10,9 +11,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const labels = {
   close: 'Close',
   copied: 'Copied',
+  copyFailed: 'Copy failed. Try again.',
   copyInvite: 'Copy invite link',
   scanToJoin: 'Scan to join',
 };
+const roomQrSource = readFileSync(
+  new URL(import.meta.resolve('@cuberoot/timer-ui/room-qr-modal')),
+  'utf8',
+);
 
 describe('shared RoomQrModal accessibility', () => {
   let host: HTMLDivElement;
@@ -39,11 +45,13 @@ describe('shared RoomQrModal accessibility', () => {
 
   it('labels the dialog, traps focus, closes with Escape, and restores prior focus', async () => {
     const onClose = vi.fn();
+    const writeClipboardText = vi.fn(async () => undefined);
     await act(async () => root.render(createElement(RoomQrModal, {
       code: '1234',
       labels,
       onClose,
       url: 'https://cuberoot.me/timer?players=net&room=1234',
+      writeClipboardText,
     })));
 
     const dialog = document.querySelector<HTMLElement>('.room-qr-modal')!;
@@ -64,6 +72,11 @@ describe('shared RoomQrModal accessibility', () => {
       shiftKey: true,
     }));
     expect(document.activeElement).toBe(copy);
+    await act(async () => copy.click());
+    expect(writeClipboardText).toHaveBeenCalledWith(
+      'https://cuberoot.me/timer?players=net&room=1234',
+    );
+    expect(copy.textContent).toContain(labels.copied);
     trigger.focus();
     expect(document.activeElement).toBe(close);
 
@@ -80,5 +93,26 @@ describe('shared RoomQrModal accessibility', () => {
     );
     expect(css).toMatch(/\.room-qr-close \{[^}]*width: 44px;[^}]*height: 44px;/s);
     expect(css).toMatch(/\.room-qr-link \{[^}]*min-width: 44px;[^}]*min-height: 44px;/s);
+  });
+
+  it('delegates clipboard access instead of assuming a browser transport', () => {
+    expect(roomQrSource).toContain('writeClipboardText(url)');
+    expect(roomQrSource).not.toContain('navigator.clipboard');
+  });
+
+  it('shows a retryable failure when the injected clipboard transport rejects', async () => {
+    await act(async () => root.render(createElement(RoomQrModal, {
+      code: '1234',
+      labels,
+      onClose: vi.fn(),
+      url: 'https://cuberoot.me/timer?players=net&room=1234',
+      writeClipboardText: vi.fn(async () => Promise.reject(new Error('denied'))),
+    })));
+    await act(async () => document.querySelector<HTMLButtonElement>('.room-qr-link')!.click());
+    expect(document.querySelector('.room-qr-link-text')?.textContent).toBe(labels.copyFailed);
+  });
+
+  it('rejects cleanly when the browser has no clipboard transport', async () => {
+    await expect(browserClipboardTransport('1234')).rejects.toThrow('clipboard unavailable');
   });
 });
