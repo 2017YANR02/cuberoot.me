@@ -49,7 +49,9 @@ import {
   normalizeTimerByStepsSettings,
   normalizeTimerWcaSourceSettings,
   parseManualScrambleQueue,
+  pruneTimerHistoryCompareSelection,
   resolveKeymap,
+  resolveTimerHistoryComparePair,
   summarize,
   takeManualScramble,
   timerEventNxnSize,
@@ -91,6 +93,7 @@ import {
   timerTracksTrainerCase,
   toggleTimerHistoryPenalty,
   toggleTimerHistoryTag,
+  toggleTimerHistoryCompareSelection,
   type EventId,
   type Penalty,
   type Solve,
@@ -122,6 +125,9 @@ import {
   SegmentTime,
   TimerDeviceActions,
   TimerInfoToast,
+  TimerHistoryCompareActions,
+  TimerHistoryCompareModal,
+  TimerHistoryCompareStatus,
   TimerHistoryCommentEditor,
   TimerHistoryRow,
   TimerHistoryTagBadges,
@@ -151,6 +157,7 @@ import {
   timerKeyboardTargetContext,
   useGestureWheel,
   type TimerHistoryQuickMenuLabels,
+  type TimerHistoryCompareLabels,
   type TimerHistoryRowQuickMenu,
   type TimerOverlayId,
   type TimerOverlayOpenChangeDetails,
@@ -336,6 +343,7 @@ async function shareOrDownloadBackup(text: string): Promise<void> {
 }
 
 function MobileHistoryItem({
+  compareMode,
   copy,
   focusComment,
   index,
@@ -346,12 +354,15 @@ function MobileHistoryItem({
   onMove,
   onQuickMenuOpenChange,
   onCommentFocusHandled,
+  onCompareToggle,
   onUpdate,
   moveTargets,
   quickMenuOpen,
+  selected,
   solve,
   tagIds,
 }: {
+  compareMode: boolean;
   copy: (typeof COPY)[SupportedLanguage];
   focusComment: boolean;
   index: number;
@@ -362,9 +373,11 @@ function MobileHistoryItem({
   onMove(solve: Solve, targetSessionId: string): void;
   onQuickMenuOpenChange(open: boolean, details: TimerOverlayOpenChangeDetails): void;
   onCommentFocusHandled(): void;
+  onCompareToggle(solve: Solve): void;
   onUpdate(solve: Solve, changes: Pick<Solve, 'penalty' | 'comment'>): void;
   moveTargets: readonly { id: string; name: string }[];
   quickMenuOpen: boolean;
+  selected: boolean;
   solve: Solve;
   tagIds: readonly TimerHistoryTagId[];
 }) {
@@ -415,11 +428,16 @@ function MobileHistoryItem({
     <article className="mobile-history-item">
       <TimerHistoryRow
         index={index}
-        onActivate={() => setExpanded((value) => !value)}
+        onActivate={() => {
+          if (compareMode) onCompareToggle(solve);
+          else setExpanded((value) => !value);
+        }}
         quickMenu={quickMenu}
         resultExtras={(
           <TimerHistoryTagBadges language={language} tagIds={tagIds} />
         )}
+        selected={selected}
+        selectionMode={compareMode ? 'compare' : 'none'}
         solve={solve}
         trailing={(
           <time className="mobile-history-date" dateTime={new Date(solve.ts).toISOString()}>
@@ -530,6 +548,9 @@ export function App({ host }: { host: InstalledAppHost }) {
     createTimerHistoryFilters,
   );
   const [historyFiltersExpanded, setHistoryFiltersExpanded] = useState(false);
+  const [historyCompareMode, setHistoryCompareMode] = useState(false);
+  const [historyCompareSelectedIds, setHistoryCompareSelectedIds] = useState<string[]>([]);
+  const [historyCompareSelectionContext, setHistoryCompareSelectionContext] = useState<string | null>(null);
   const [timerContextMutationBusy, setTimerContextMutationBusy] = useState(false);
   const [canUndoImport, setCanUndoImport] = useState(false);
   const webFrameRefs = useRef<Record<MobileEmbedSurface, HTMLIFrameElement | null>>({
@@ -558,6 +579,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   const accountSyncInFlightRef = useRef<{ requestId: string; token: string } | null>(null);
   const accountSyncTimeoutRef = useRef<number | null>(null);
   const accountSyncedTokenRef = useRef<string | null>(null);
+  const historyCompareContextRef = useRef<string | null>(null);
+  const historyCompareModeRef = useRef(historyCompareMode);
   const viewRef = useRef(view);
   const timerModeRef = useRef<TimerPlayersValue>(timerMode);
   const battleSmartCubeHandlersRef = useRef<BattleSmartCubeHandlers | null>(null);
@@ -632,6 +655,24 @@ export function App({ host }: { host: InstalledAppHost }) {
     () => filterTimerHistorySolves(solves, historyFilters, historyTagsById),
     [historyFilters, historyTagsById, solves],
   );
+  const historyCompareContext = `${store?.database.activeSessionId ?? ''}|${activeEvent}`;
+  const historyCompareContextMatches = historyCompareSelectionContext === historyCompareContext;
+  const visibleHistoryCompareMode = historyCompareMode && historyCompareContextMatches;
+  const visibleHistoryCompareSelectedIds = historyCompareContextMatches
+    ? historyCompareSelectedIds
+    : [];
+  const historyComparePair = resolveTimerHistoryComparePair(
+    solves,
+    visibleHistoryCompareSelectedIds,
+  );
+  const historyCompareReady = historyComparePair !== null;
+  historyCompareModeRef.current = visibleHistoryCompareMode;
+  useEffect(() => {
+    setHistoryCompareSelectedIds((current) => {
+      const next = pruneTimerHistoryCompareSelection(solves, current);
+      return next.length === current.length ? current : next;
+    });
+  }, [solves]);
   const historyMoveTargets = useMemo(() => store
     ? timerHistoryMoveTargets(store.database.sessions, store.database.activeSessionId)
     : [], [store]);
@@ -713,6 +754,29 @@ export function App({ host }: { host: InstalledAppHost }) {
   const manualEntryLabels = useMemo(() => timerManualEntryCopy(language), [language]);
   const dateRangeLabels = useMemo(() => dateRangeInputLabels(language), [language]);
   const sessionLabels = useMemo(() => timerSessionSwitcherLabels(language), [language]);
+  const historyCompareLabels = useMemo<TimerHistoryCompareLabels>(() => ({
+    bBetter: copy.compareBBetter,
+    bWorse: copy.compareBWorse,
+    cancel: copy.compareCancel,
+    close: copy.compareClose,
+    compareSelected: copy.compareSelected,
+    delta: copy.compareDelta,
+    deltaDirection: copy.compareDeltaDirection,
+    eventName: (solve) => timerEventPickerName(solve.event, language),
+    greenMeansBetter: copy.compareGreenMeansBetter,
+    htm: copy.compareHtm,
+    locale: ['en', 'zh-CN'][Number(language === 'zh')],
+    moves: copy.compareMoves,
+    noStageA: copy.compareNoStageA,
+    noStageB: copy.compareNoStageB,
+    noStageBoth: copy.compareNoStageBoth,
+    selected: copy.compareSelection,
+    stage: { cross: ['Cross', '十字'][Number(language === 'zh')], f2l: 'F2L', oll: 'OLL', pll: 'PLL' },
+    tie: copy.compareTie,
+    title: copy.compareTitle,
+    total: copy.compareTotal,
+    tps: 'TPS',
+  }), [copy, language]);
   const wcaSourceAdapter = useMemo<TimerWcaSourceDataAdapter>(() => ({
     loadCompetitions: () => loadMobileWcaCompetitions(language),
     loadCompetitionScrambles: (competitionId, signal) => (
@@ -1244,7 +1308,10 @@ export function App({ host }: { host: InstalledAppHost }) {
     if (openOverlay === null) return;
     const available = openOverlay === TIMER_OVERLAY_IDS.sessionSwitcher
       || openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu
-      ? view === 'history'
+      || openOverlay === TIMER_OVERLAY_IDS.historyCompare
+      ? view === 'history' && (
+        openOverlay !== TIMER_OVERLAY_IDS.historyCompare || historyCompareReady
+      )
       : view === 'timer' && (
         openOverlay !== TIMER_OVERLAY_IDS.wcaCompetition
         || (scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent))
@@ -1253,7 +1320,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       openOverlayRef.current = null;
       setOpenOverlay(null);
     }
-  }, [activeEvent, openOverlay, scrambleSource, view]);
+  }, [activeEvent, historyCompareReady, openOverlay, scrambleSource, view]);
 
   const clearWebSurfaceHandshake = useCallback((surface: MobileEmbedSurface) => {
     webHandshakeRetryRef.current[surface]?.();
@@ -1585,6 +1652,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       }
       const action = mobileBackAction({
         fullscreen: fullscreenRef.current,
+        historyCompareMode: historyCompareModeRef.current,
         manualEntryOpen: manualEntryOpenRef.current,
         moreOpen: moreOpenRef.current,
         mutationBusy: timerContextMutationBusyRef.current,
@@ -1598,6 +1666,13 @@ export function App({ host }: { host: InstalledAppHost }) {
       if (action === 'close-overlay') {
         openOverlayRef.current = null;
         setOpenOverlay(null);
+        return;
+      }
+      if (action === 'close-history-compare') {
+        historyCompareModeRef.current = false;
+        setHistoryCompareMode(false);
+        setHistoryCompareSelectedIds([]);
+        setHistoryCompareSelectionContext(null);
         return;
       }
       if (action === 'close-more') {
@@ -2181,6 +2256,50 @@ export function App({ host }: { host: InstalledAppHost }) {
     setHistoryFilters(createTimerHistoryFilters());
   }, []);
 
+  const closeHistoryCompare = useCallback(() => {
+    historyCompareModeRef.current = false;
+    setHistoryCompareMode(false);
+    setHistoryCompareSelectedIds([]);
+    setHistoryCompareSelectionContext(null);
+    setOpenOverlay((current) => {
+      const next = current === TIMER_OVERLAY_IDS.historyCompare ? null : current;
+      openOverlayRef.current = next;
+      return next;
+    });
+  }, []);
+
+  const toggleHistoryCompareMode = useCallback(() => {
+    const next = !visibleHistoryCompareMode;
+    historyCompareModeRef.current = next;
+    setHistoryCompareMode(next);
+    setHistoryCompareSelectionContext(next ? historyCompareContext : null);
+    setHistoryCompareSelectedIds([]);
+    openOverlayRef.current = null;
+    setOpenOverlay(null);
+  }, [historyCompareContext, visibleHistoryCompareMode]);
+
+  const toggleHistoryCompareSolve = useCallback((solve: Solve) => {
+    setHistoryCompareSelectionContext(historyCompareContext);
+    setHistoryCompareSelectedIds((current) => (
+      toggleTimerHistoryCompareSelection(current, solve.id)
+    ));
+  }, [historyCompareContext]);
+
+  const openHistoryCompare = useCallback(() => {
+    if (!historyCompareReady) return;
+    openOverlayRef.current = TIMER_OVERLAY_IDS.historyCompare;
+    setOpenOverlay(TIMER_OVERLAY_IDS.historyCompare);
+  }, [historyCompareReady]);
+
+  useEffect(() => {
+    const previous = historyCompareContextRef.current;
+    historyCompareContextRef.current = historyCompareContext;
+    if (previous !== null && previous !== historyCompareContext) closeHistoryCompare();
+  }, [closeHistoryCompare, historyCompareContext]);
+  useEffect(() => {
+    if (view !== 'history' && historyCompareMode) closeHistoryCompare();
+  }, [closeHistoryCompare, historyCompareMode, view]);
+
   const moveSolveToSession = useCallback((solve: Solve, targetSessionId: string) => {
     void commitSessionMutation(() => repository.moveSolveToSession(solve.id, targetSessionId))
       .catch(() => announce(copy.actionFailed));
@@ -2709,7 +2828,10 @@ export function App({ host }: { host: InstalledAppHost }) {
           <button
             aria-label={copy.close}
             className="app-titlebar-close"
-            onClick={() => setView('timer')}
+            onClick={() => {
+              if (view === 'history') closeHistoryCompare();
+              setView('timer');
+            }}
             type="button"
           ><X aria-hidden="true" size={20} /></button>
           <span
@@ -3222,6 +3344,12 @@ export function App({ host }: { host: InstalledAppHost }) {
                   onClick={() => setHistoryFiltersExpanded((value) => !value)}
                   type="button"
                 >{copy.filters}</button>
+                <button
+                  aria-pressed={visibleHistoryCompareMode}
+                  className="text-action"
+                  onClick={toggleHistoryCompareMode}
+                  type="button"
+                >{copy.compare}</button>
                 {filteredHistory.hasAnyFilter && (
                   <button className="text-action" onClick={clearHistoryFilters} type="button">
                     {copy.clearFilters}
@@ -3300,6 +3428,12 @@ export function App({ host }: { host: InstalledAppHost }) {
                 </div>
               )}
             </div>
+            {visibleHistoryCompareMode && (
+              <TimerHistoryCompareStatus
+                count={visibleHistoryCompareSelectedIds.length}
+                labels={historyCompareLabels}
+              />
+            )}
             {solves.length === 0 ? <p className="empty-state">{copy.emptyHistory}</p>
               : filteredHistory.solves.length === 0 ? (
                 <p className="empty-state">{copy.noHistoryMatches}</p>
@@ -3307,6 +3441,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               <div className="history-list">
                 {filteredHistory.solves.map((solve) => (
                   <MobileHistoryItem
+                    compareMode={visibleHistoryCompareMode}
                     copy={copy}
                     focusComment={historyCommentSolveId === solve.id}
                     index={solves.findIndex((entry) => entry.id === solve.id)}
@@ -3318,14 +3453,35 @@ export function App({ host }: { host: InstalledAppHost }) {
                     onMove={moveSolveToSession}
                     onQuickMenuOpenChange={handleTimerOverlayOpenChange}
                     onCommentFocusHandled={() => setHistoryCommentSolveId(null)}
+                    onCompareToggle={toggleHistoryCompareSolve}
                     onUpdate={updateSolve}
                     moveTargets={historyMoveTargets}
                     quickMenuOpen={openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu}
+                    selected={visibleHistoryCompareSelectedIds.includes(solve.id)}
                     solve={solve}
                     tagIds={historyTagsById.get(solve.id) ?? []}
                   />
                 ))}
               </div>
+            )}
+            {visibleHistoryCompareMode && (
+              <TimerHistoryCompareActions
+                canCompare={historyCompareReady}
+                labels={historyCompareLabels}
+                onCancel={closeHistoryCompare}
+                onCompare={openHistoryCompare}
+              />
+            )}
+            {openOverlay === TIMER_OVERLAY_IDS.historyCompare && historyComparePair && (
+              <TimerHistoryCompareModal
+                labels={historyCompareLabels}
+                onClose={() => {
+                  openOverlayRef.current = null;
+                  setOpenOverlay(null);
+                }}
+                solveA={historyComparePair[0]}
+                solveB={historyComparePair[1]}
+              />
             )}
           </section>
         )}

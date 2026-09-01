@@ -79,6 +79,11 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
 - 每项完成前至少要有共享契约测试、宿主集成测试、集合差分、无遮挡/无横向溢出检查，及 OPPO
   真机证据；关键结论再由独立 agent 做反例审查。Android 通过不替代 iOS，二者均通过前整体仍是
   `NOT COMPLETE`。
+- 成绩对比只从 `@cuberoot/shared/timer/history-compare` 取得选择、清理与比较模型，只从
+  `@cuberoot/timer-ui` 取得 status/actions/modal；Web 或 `app-ui` 不得恢复私有 modal。选择状态必须
+  携带 `session + event` context，并在 render 阶段 fail closed，不能只等 passive effect 清理；普通、
+  `+2`、DNF/DNS、FMC、MBLD、阶段、HTM、TPS 和 case 差异属于同一契约。移动返回顺序固定为
+  关弹层、退对比模式、离开历史。
 
 ## 开发电脑与 Windows/macOS 客户端
 

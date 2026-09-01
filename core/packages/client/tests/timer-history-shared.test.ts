@@ -14,8 +14,11 @@ import {
   computeTimerHistoryTags,
   deleteTimerHistorySolve,
   filterTimerHistorySolves,
+  buildTimerHistoryComparison,
   parseTimerHistorySeconds,
+  pruneTimerHistoryCompareSelection,
   restoreTimerHistorySolve,
+  resolveTimerHistoryComparePair,
   timerHistoryCopyText,
   timerHistoryMoveTargets,
   timerHistoryQuickActionPenalty,
@@ -23,6 +26,7 @@ import {
   timerSolveDetailActionStates,
   toggleTimerHistoryTag,
   toggleTimerHistoryPenalty,
+  toggleTimerHistoryCompareSelection,
   updateTimerHistorySolve,
   type Penalty,
   type Solve,
@@ -367,5 +371,103 @@ describe('shared timer history mutations and Web consumers', () => {
 
     const detailIds = new Set(detailSource.match(/solve\.detail\.[a-z-]+/g) ?? []);
     expect([...detailIds].sort()).toEqual([...TIMER_SOLVE_DETAIL_ACTION_IDS].sort());
+  });
+});
+
+describe('shared timer history comparison', () => {
+  const segments: NonNullable<Solve['stageSegments']> = {
+    crossDoneMs: 1_000,
+    f2lDoneMs: 6_000,
+    ollDoneMs: 7_000,
+    solvedMs: 10_000,
+    crossMs: 1_000,
+    f2lMs: 5_000,
+    ollMs: 1_000,
+    pllMs: 3_000,
+    crossHtm: 6,
+    f2lHtm: 24,
+    ollHtm: null,
+    pllHtm: 10,
+    crossSide: 'D-cross',
+    ollCase: 'OLL 21',
+    pllCase: 'PLL T',
+  };
+
+  it('selects, deselects, evicts the oldest third choice, and resolves hidden-but-existing solves', () => {
+    expect(toggleTimerHistoryCompareSelection([], 'a')).toEqual(['a']);
+    expect(toggleTimerHistoryCompareSelection(['a'], 'a')).toEqual([]);
+    expect(toggleTimerHistoryCompareSelection(['a'], 'b')).toEqual(['a', 'b']);
+    expect(toggleTimerHistoryCompareSelection(['a', 'b'], 'c')).toEqual(['b', 'c']);
+
+    const solves = [
+      makeSolve('a', { timeMs: 1_000, penalty: 'ok', ts: 1 }),
+      makeSolve('b', { timeMs: 2_000, penalty: 'ok', ts: 2 }),
+    ];
+    expect(resolveTimerHistoryComparePair(solves, ['a', 'b'])?.map((solve) => solve.id))
+      .toEqual(['a', 'b']);
+    expect(resolveTimerHistoryComparePair([solves[0]], ['a', 'b'])).toBeNull();
+    expect(resolveTimerHistoryComparePair(solves, ['a', 'a'])).toBeNull();
+    expect(pruneTimerHistoryCompareSelection([solves[0]], ['a', 'b'])).toEqual(['a']);
+  });
+
+  it('prefers stored segments, totals partial HTM, and computes TPS from raw time', () => {
+    const a = makeSolve('a', {
+      timeMs: 10_000,
+      penalty: '+2',
+      ts: 1,
+      stageSegments: segments,
+      moves: [{ m: 'R', ts: 100 }],
+    });
+    const b = makeSolve('b', { timeMs: 0, penalty: 'DNS', ts: 2 });
+    const comparison = buildTimerHistoryComparison(a, b);
+    expect(comparison.a.stageSegments).toBe(segments);
+    expect(comparison.a.result).toBe('12.00');
+    expect(comparison.a.totalHtm).toBe(40);
+    expect(comparison.a.totalTps).toBe(4);
+    expect(comparison.stages.map((stage) => [stage.key, stage.a.htm, stage.a.caseLabel]))
+      .toEqual([
+        ['cross', 6, 'D-cross'],
+        ['f2l', 24, null],
+        ['oll', null, 'OLL 21'],
+        ['pll', 10, 'PLL T'],
+      ]);
+    expect(comparison.b.result).toBe('DNS');
+    expect(comparison.b.stageSegments).toBeNull();
+    expect(comparison.b.totalHtm).toBeNull();
+    expect(comparison.b.totalTps).toBeNull();
+  });
+
+  it('uses canonical FMC, DNF and MBLD result formatting', () => {
+    const fmc = makeSolve('fmc', { event: '333fm', timeMs: 27_000, penalty: 'ok', ts: 1 });
+    const dnf = makeSolve('dnf', { timeMs: 4_000, penalty: 'DNF', ts: 2 });
+    const mbld = makeSolve('mbld', {
+      event: '333mbld',
+      timeMs: 3_482_000,
+      penalty: 'ok',
+      ts: 3,
+      mbld: { solved: 11, attempted: 13 },
+    });
+    expect(buildTimerHistoryComparison(fmc, dnf).a.result).toBe('27');
+    expect(buildTimerHistoryComparison(fmc, dnf).b.result).toBe('DNF');
+    expect(buildTimerHistoryComparison(mbld, fmc).a.result).toBe('11/13 58:02');
+  });
+
+  it('falls back to the shared stage producer when stored segments are absent', () => {
+    const solve = makeSolve('moves', {
+      timeMs: 1_000,
+      penalty: 'ok',
+      ts: 1,
+      scramble: 'R',
+      moves: [{ m: "R'", ts: 1_000 }],
+    });
+    expect(buildTimerHistoryComparison(solve, solve).a.stageSegments).not.toBeNull();
+  });
+
+  it('keeps Web on the shared selection/model/modal and removes its private modal', () => {
+    expect(historySource).toContain('toggleTimerHistoryCompareSelection(current, s.id)');
+    expect(historySource).toContain('resolveTimerHistoryComparePair(solves, visibleSelectedIds)');
+    expect(historySource).toContain('const compareContextMatches = compareSelectionContext === historyContextKey');
+    expect(historySource).toContain('<TimerHistoryCompareModal');
+    expect(historySource).not.toContain('CompareSolvesModal');
   });
 });
