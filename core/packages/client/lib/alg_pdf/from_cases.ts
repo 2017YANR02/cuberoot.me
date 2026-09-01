@@ -41,6 +41,8 @@ export interface FromCasesOptions {
   algsFor?: (c: AlgCase, orientation: number) => readonly AlgEntry[];
   /** 子组名 → 打印用的标题(1LLL 组号换字母制 OLL 名之类) */
   groupLabel?: (subgroup: string) => string;
+  /** case → PDF 一级分节标题；SQ1 EP 用它先分“无特 / 有特”，再按顶层 case 分组。 */
+  sectionOf?: (c: AlgCase) => string | undefined;
   /** case → PDF 中显示的名字；默认与网页的标准主名一致。 */
   caseLabel?: (c: AlgCase) => string;
   /**
@@ -106,6 +108,7 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
       out.push({
         name: o.caseLabel?.(c) ?? primaryCaseName(puzzle, set, c),
         sub: oriName || (subOf ? subOf(c) : (c.number != null ? `#${c.number}` : undefined)),
+        section: o.sectionOf?.(c),
         group: showGroups ? (groupLabel?.(sub) ?? sub ?? undefined) : undefined,
         setup: setups && setup ? formatScrambleForEvent(puzzle, setup) : undefined,
         algs: picked.map(e => {

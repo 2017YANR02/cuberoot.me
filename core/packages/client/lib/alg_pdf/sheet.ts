@@ -20,6 +20,8 @@ export interface AlgPdfCase {
   name: string;
   /** 副名或编号(`#12`);跟在主名后面,灰色小字 */
   sub?: string;
+  /** 一级分节标题。相邻同名只印一次；用于 SQ1 EP 的“无特 / 有特”。 */
+  section?: string;
   /** 子组标题。相邻同名归一段,变了就起一条新的横贯标题。 */
   group?: string;
   /** 摆出这个 case 的打乱 */
@@ -63,6 +65,7 @@ const CONTENT_W = PAGE_W - 2 * MARGIN;
 const FOOT_H = 22;              // 页脚(页码)占高
 const TITLE_SIZE = 15;
 const SUB_SIZE = 8;
+const SECTION_SIZE = 12;
 const GROUP_SIZE = 9.5;
 const NAME_SIZE = 8.5;
 const ALG_SIZE = 8;             // 公式字号上限(放不下会往 7 降,见 pickLayout)
@@ -161,7 +164,7 @@ export async function buildAlgSheet({
 
   // 中文只可能出现在标题 / 子组名这类「文案」里(公式和 case 名都是记号),
   // 真有才拖那 4MB 的字体。
-  const proseText = [title, subtitle ?? '', ...cases.map(c => `${c.name}${c.sub ?? ''}${c.group ?? ''}`)].join('');
+  const proseText = [title, subtitle ?? '', ...cases.map(c => `${c.name}${c.sub ?? ''}${c.section ?? ''}${c.group ?? ''}`)].join('');
   const cjk = hasCjk(proseText);
   if (cjk) await ensureCjkFont(doc);
   const SANS = cjk ? FONT_CJK : FONT_SANS;
@@ -175,7 +178,7 @@ export async function buildAlgSheet({
   // 组内顺序不动 —— 和列表页 `grouped` 那个 Map 同一套。
   const byGroup = new Map<string, AlgPdfCase[]>();
   for (const c of cases) {
-    const k = c.group ?? '';
+    const k = `${c.section ?? ''}\u0000${c.group ?? ''}`;
     const arr = byGroup.get(k);
     if (arr) arr.push(c); else byGroup.set(k, [c]);
   }
@@ -300,15 +303,22 @@ export async function buildAlgSheet({
   y += 10;
 
   let i = 0;
+  let lastSection: string | undefined;
   let lastGroup: string | undefined;
   let done = 0;
   while (i < laid.length) {
     if (shouldCancel?.()) return null;
 
     // 这一行取 `cols` 个(同组内),行高 = 里面最高的那个
+    const section = laid[i].c.section;
     const g = laid[i].c.group;
     const row: Laid[] = [];
-    while (row.length < cols && i + row.length < laid.length && laid[i + row.length].c.group === g) {
+    while (
+      row.length < cols
+      && i + row.length < laid.length
+      && laid[i + row.length].c.section === section
+      && laid[i + row.length].c.group === g
+    ) {
       row.push(laid[i + row.length]);
     }
     const rowH = Math.max(...row.map(r => r.h));
@@ -316,10 +326,20 @@ export async function buildAlgSheet({
     // 子组换了 ⟹ 先落一条横贯标题(整行独占,后面的格子从新行起)。
     // 换页判据把**跟在它后面那一行**也算进去 —— 否则标题会孤零零留在页底,
     // 它的 case 全翻到下一页。一页一组时子组一换就翻页,首页因此只剩刊头(封面)。
-    const newGroup = g !== lastGroup;
+    const newSection = section !== lastSection;
+    const newGroup = newSection || g !== lastGroup;
+    const sectionHeadH = section && newSection ? SECTION_SIZE + 10 : 0;
     const headH = g && newGroup ? GROUP_SIZE + 8 : 0;
+    lastSection = section;
     lastGroup = g;
-    if ((perPage && newGroup) || y + headH + rowH > pageBottom()) await newPage();
+    if ((perPage && newGroup) || y + sectionHeadH + headH + rowH > pageBottom()) await newPage();
+    if (sectionHeadH) {
+      doc.setFont(SANS, 'bold');
+      doc.setFontSize(SECTION_SIZE);
+      doc.setTextColor(pal.title);
+      doc.text(section!, MARGIN, y + SECTION_SIZE);
+      y += sectionHeadH;
+    }
     if (headH) {
       doc.setFont(SANS, 'bold');
       doc.setFontSize(GROUP_SIZE);
