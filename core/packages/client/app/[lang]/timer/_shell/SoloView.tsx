@@ -65,6 +65,7 @@ import {
   timerWcaOptimalRequested,
   timerWcaSourceIdentity,
   TIMER_MORE_ACTION_COPY,
+  TIMER_SCRAMBLE_CLICK_TITLE_COPY,
   timerClearCurrentEventConfirmation,
   timerCanHandleAttemptPress,
   timerCanStartAttempt,
@@ -76,6 +77,7 @@ import {
   timerShouldStopFromExternalPointer,
   timerPrintScrambleSource,
   timerScrambleAllowsEmptySlot,
+  timerScrambleClickEffect,
   timerTracksTrainerCase,
   usesStepsIndex,
   visibleTimerMoreActions,
@@ -2668,6 +2670,35 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       )
     : null;
 
+  const retryableScramble = byStepsFailed
+    || randomOptimalFailed
+    || trainerMiss === 'rare';
+  const retryDisplayedScramble = () => {
+    if (byStepsFailed) {
+      setByStepsRetry((value) => value + 1);
+      return;
+    }
+    if (randomOptimalFailed) {
+      const source = randomOptimalSourceRef.current;
+      if (!source) return;
+      retryOptimal333(source);
+      setRandomOptimalRetry((value) => value + 1);
+      return;
+    }
+    if (trainerMiss === 'rare') {
+      const spec = trainerSpecRef.current;
+      if (!spec) return;
+      retryTrainer(spec);
+      setTrainerRetry((value) => value + 1);
+    }
+  };
+  const scrambleClickEffect = timerScrambleClickEffect(
+    settings.scrambleClickAction,
+    displayScramble.length > 0,
+    attemptCanStart,
+    retryableScramble,
+  );
+
   return (
     <div
       className={`timer-shell${fullscreen ? ' fullscreen' : ''}${distractionFree ? ' is-solving' : ''}${hideAllUi ? ' hide-ui' : ''}${isDesktop && panelTab ? ' panel-open' : ''}`}
@@ -2784,29 +2815,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                   ? <>{tr({
                       zh: '按步数打乱生成失败。',
                       en: 'Could not generate a move-count scramble.',
-                    })}{' '}<button
-                      type="button"
-                      className="scramble-empty-retry"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setByStepsRetry((value) => value + 1);
-                      }}
-                    >{tr({ zh: '再试一次', en: 'Try again' })}</button></>
+                    })} {tr(TIMER_SCRAMBLE_CLICK_TITLE_COPY.retry)}</>
                   : randomOptimalFailed
                     ? <>{tr({
                         zh: '最优打乱生成失败。',
                         en: 'Could not generate an optimal scramble.',
-                      })}{' '}<button
-                        type="button"
-                        className="scramble-empty-retry"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          const source = randomOptimalSourceRef.current;
-                          if (!source) return;
-                          retryOptimal333(source);
-                          setRandomOptimalRetry((value) => value + 1);
-                        }}
-                      >{tr({ zh: '再试一次', en: 'Try again' })}</button></>
+                      })} {tr(TIMER_SCRAMBLE_CLICK_TITLE_COPY.retry)}</>
                     : trainerMiss
                       ? trainerMiss === 'empty'
                         ? tr({
@@ -2816,12 +2830,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                         : <>{tr({
                             zh: '这个难度太稀有,一时找不出来。',
                             en: 'This difficulty is too rare to find quickly.',
-                          })}{' '}<button type="button" className="scramble-empty-retry" onClick={() => {
-                            const spec = trainerSpecRef.current;
-                            if (!spec) return;
-                            retryTrainer(spec);
-                            setTrainerRetry((value) => value + 1);
-                          }}>{tr({ zh: '再试一次', en: 'Try again' })}</button></>
+                          })} {tr(TIMER_SCRAMBLE_CLICK_TITLE_COPY.retry)}</>
                       : wcaSourceEmpty
                         ? wca222Type
                           ? tr({ zh: '该范围没有匹配此类型的 WCA 真题,换个类型或范围试试', en: 'No WCA scramble of this type matches the range — try another type or range' })
@@ -2850,23 +2859,16 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                 label: tr({ zh: '非最优', en: 'non-optimal' }),
                 title: tr({ zh: '该难度档暂无最优等态打乱,显示原始 WCA 打乱', en: 'No optimal-equivalent scramble for this difficulty — showing the original WCA scramble' }),
               } : undefined}
-              onActivate={settings.scrambleClickAction === 'none' ? undefined : () => {
-                const action = settings.scrambleClickAction;
-                if (action === 'copy') { copyScrambleFlash(); return; }
-                nextScramble();
-              }}
+              onActivate={scrambleClickEffect === 'retry'
+                ? retryDisplayedScramble
+                : scrambleClickEffect === 'copy'
+                  ? copyScrambleFlash
+                  : scrambleClickEffect === 'next' ? nextScramble : undefined}
               scramble={randomOptimalLoading || scrambleLoading || cstimerLoading || trainerLoading
                 || byStepsLoading || byStepsFailed || randomOptimalFailed || !!trainerMiss || wcaSourceEmpty
                 ? ''
                 : displayScramble}
-              title={settings.scrambleClickAction === 'copy'
-                ? tr({ zh: '点击复制打乱', en: 'Click to copy'
-                                  })
-                : settings.scrambleClickAction === 'none'
-                  ? tr({ zh: '点击无操作', en: 'Click disabled'
-                                      })
-                  : tr({ zh: '点击换一个打乱', en: 'Click to refresh'
-                                      })}
+              title={tr(TIMER_SCRAMBLE_CLICK_TITLE_COPY[scrambleClickEffect])}
               verificationLabels={{
                 copiedCorrection: tr({ zh: '已复制原打乱', en: 'Copied the scramble' }),
                 correction: tr({ zh: '拧回原打乱', en: 'Back to scramble' }),

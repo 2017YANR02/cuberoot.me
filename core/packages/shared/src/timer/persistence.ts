@@ -18,8 +18,11 @@ import {
   type TimerWcaSourceSettings,
 } from './wca-source-config';
 import {
+  DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
   DEFAULT_TIMER_TIMING_SETTINGS,
+  normalizeTimerScrambleClickAction,
   normalizeTimerTimingSettings,
+  type TimerScrambleClickAction,
   type TimerTimingSettings,
 } from './settings-contract';
 import {
@@ -63,6 +66,7 @@ export interface TimerStoreSettings extends
   manualScrambles: string;
   /** The two compact current/best statistic columns shared with the website. */
   statsRollingColumns: RollingStatKey[];
+  scrambleClickAction: TimerScrambleClickAction;
   language: 'en' | 'zh';
   theme: 'system' | 'light' | 'dark';
 }
@@ -314,6 +318,8 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
   if (value.precision !== undefined
     && value.precision !== 2
     && value.precision !== 3) return null;
+  if (value.scrambleClickAction !== undefined
+    && normalizeTimerScrambleClickAction(value.scrambleClickAction) !== value.scrambleClickAction) return null;
   // Store v1 and early v2 envelopes predate manual input. Missing means the
   // canonical empty queue; a present non-string value is corrupt, not data we
   // should silently discard.
@@ -414,6 +420,7 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     statsRollingColumns: value.statsRollingColumns === undefined
       ? [...DEFAULT_ROLLING_STAT_COLUMNS]
       : normalizeRollingStatColumns(value.statsRollingColumns),
+    scrambleClickAction: normalizeTimerScrambleClickAction(value.scrambleClickAction),
     ...wcaSource,
     language: value.language,
     theme: value.theme,
@@ -567,6 +574,7 @@ export function createTimerStoreData(
       ...DEFAULT_TIMER_BY_STEPS_SETTINGS,
       manualScrambles: '',
       statsRollingColumns: [...DEFAULT_ROLLING_STAT_COLUMNS],
+      scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
       ...DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
       language,
       theme: 'system',

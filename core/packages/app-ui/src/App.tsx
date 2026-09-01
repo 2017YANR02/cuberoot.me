@@ -27,6 +27,8 @@ import {
   TIMER_HISTORY_PENALTIES,
   TIMER_HISTORY_QUICK_ACTION_COPY,
   TIMER_HISTORY_QUICK_ACTION_IDS,
+  TIMER_SCRAMBLE_CLICK_TITLE_COPY,
+  TIMER_SETTING_CATEGORY_CONTRACTS,
   WCA_SCRAMBLE_222_TYPES,
   activeTimerSolves,
   advanceTimerSourceRevision,
@@ -67,6 +69,7 @@ import {
   timerByStepsIdentity,
   timerScrambleCapability,
   timerScrambleAllowsEmptySlot,
+  timerScrambleClickEffect,
   timerWcaRoundShortLabel,
   timerWcaCompetitionScrambleSlotIdentity,
   timerWcaScrambleEventId,
@@ -118,6 +121,7 @@ import {
   TimerPuzzlePicker,
   TimerPrintController,
   TimerScramble222Config,
+  TimerScrambleClickActionSetting,
   TimerScrambleStrip,
   TimerByStepsConfig,
   TimerScrambleSourceSelect,
@@ -2295,6 +2299,12 @@ export function App({ host }: { host: InstalledAppHost }) {
     );
   }
 
+  const scrambleClickEffect = timerScrambleClickEffect(
+    store!.settings.scrambleClickAction,
+    scramble.length > 0,
+    scrambleReady,
+    scrambleAvailability === 'error' && currentScrambleEntry !== undefined,
+  );
   const shellViewport = mobileShellViewportLayout(viewportHeight);
 
   return (
@@ -2573,13 +2583,15 @@ export function App({ host }: { host: InstalledAppHost }) {
                      fallback={scrambleText}
                      fallbackKind={scrambleAvailability === 'loading' ? 'custom' : 'empty'}
                      match={smartCubeScrambleMatch}
-                     onActivate={scrambleAvailability === 'error' && currentScrambleEntry
+                     onActivate={scrambleClickEffect === 'retry' && currentScrambleEntry
                        ? () => {
                          if (canSwitchScramble()) fillScrambleHistoryEntry(currentScrambleEntry);
                        }
-                       : scrambleReady && scramble.length > 0 ? copyCurrentScramble : undefined}
+                       : scrambleClickEffect === 'next'
+                         ? nextDisplayedScramble
+                         : scrambleClickEffect === 'copy' ? copyCurrentScramble : undefined}
                      scramble={scrambleReady && scramble.length > 0 ? scrambleText : ''}
-                     title={scrambleAvailability === 'error' ? copy.retry : copy.scrambleClickCopy}
+                     title={TIMER_SCRAMBLE_CLICK_TITLE_COPY[scrambleClickEffect][language]}
                      verificationLabels={{
                        copiedCorrection: copy.scrambleCorrectionCopied,
                        correction: copy.scrambleCorrection,
@@ -2945,6 +2957,17 @@ export function App({ host }: { host: InstalledAppHost }) {
               )}
               value={store!.settings}
             />
+
+            <section className="settings-section">
+              <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
+                category.id === 'appearance'
+              ))?.label[language]}</h2>
+              <TimerScrambleClickActionSetting
+                localize={(value) => value[language]}
+                onChange={(scrambleClickAction) => updateSettings({ scrambleClickAction })}
+                value={store!.settings.scrambleClickAction}
+              />
+            </section>
 
             <div className="settings-section">
               <h2>{copy.account}</h2>

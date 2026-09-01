@@ -79,6 +79,20 @@ describe('录姿态:老存档里的 false 要翻过来', () => {
     const { getSettings } = await freshSettings();
     expect(getSettings().recordGyro).toBe(true);
   });
+
+  it('非法点击打乱动作按共享默认值修复并落盘', async () => {
+    const mem = installStorage({
+      [KEY]: JSON.stringify({
+        scrambleClickAction: 'invalid',
+        scrambleClickMigrated: true,
+        recordGyroMigrated: true,
+        bluetoothAutoReadyMigrated: true,
+      }),
+    });
+    const { getSettings } = await freshSettings();
+    expect(getSettings().scrambleClickAction).toBe('copy');
+    expect(JSON.parse(mem.get(KEY) as string).scrambleClickAction).toBe('copy');
+  });
 });
 
 describe('智能魔方自动预备:老存档里的 off 要翻过来', () => {
