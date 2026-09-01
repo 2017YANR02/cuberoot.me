@@ -11,6 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
+import { parseForumSimLink } from '@/lib/forum-sim-link';
 
 function render(md: string): string {
   return renderToStaticMarkup(renderArticleMarkdown(md));
@@ -96,6 +97,12 @@ describe('article-markdown directives → whitelisted elements', () => {
     expect(embed).toContain('href="/sim?puzzle=3&amp;alg=F+R2');
     expect(render(`看这里 ${url}`)).not.toContain('forum-sim-embed');
     expect(render('https://evil.example/zh/sim?puzzle=3')).not.toContain('forum-sim-embed');
+  });
+
+  it('旧 cross_full 论坛链接归一成 CFOP Cross', () => {
+    const parsed = parseForumSimLink('/sim?puzzle=3&stickering=cross_full');
+    expect(parsed?.stickering).toBe('Cross');
+    expect(parsed?.href).toContain('stickering=Cross');
   });
 
   it('legal formatting (bold/italic/link) survives', () => {

@@ -350,7 +350,7 @@ export default function AlgPuzzleClient() {
                 <VisualCube
                   setup=""
                   view="iso"
-                  mask="cross_full"
+                  mask="cross"
                   size={thumbSize}
                   alt={tr({ zh: '十字训练', en: 'Cross training' })}
                   local
