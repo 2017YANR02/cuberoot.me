@@ -7,10 +7,13 @@
  */
 
 import {
+  DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
   DEFAULT_ROUND_CONFIG,
   DEFAULT_TIMER_TIMING_SETTINGS,
+  normalizeTimerScrambleClickAction,
   normalizeTimerTimingSettings,
   type RoundConfig,
+  type TimerScrambleClickAction,
   type TimerTimingSettings,
 } from '@cuberoot/shared/timer';
 import { useSyncExternalStore } from 'react';
@@ -149,7 +152,7 @@ export interface TimerSettings extends TimerTimingSettings {
   autoMarkWcaScramble: boolean;
 
   /** Action when user clicks the scramble strip. */
-  scrambleClickAction: 'none' | 'next' | 'copy';
+  scrambleClickAction: TimerScrambleClickAction;
 
   /** One-shot marker: the scramble-click default flipped to 'copy' (migrate legacy 'next'). */
   scrambleClickMigrated?: boolean;
@@ -345,7 +348,7 @@ export const DEFAULTS: TimerSettings = {
   genDiffSlot: -1,
   genDiffSteps: [],
   autoMarkWcaScramble: true,
-  scrambleClickAction: 'copy',
+  scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
   scrambleClickMigrated: false,
   recordGyroMigrated: false,
   hideAllUiWhileRunning: false,
@@ -453,6 +456,12 @@ function load(): TimerSettings {
     for (const key of Object.keys(normalizedTiming) as Array<keyof TimerTimingSettings>) {
       if (key in parsed && parsed[key] !== normalizedTiming[key]) dirty = true;
     }
+    const normalizedScrambleClickAction = normalizeTimerScrambleClickAction(
+      parsed.scrambleClickAction,
+    );
+    if ('scrambleClickAction' in parsed
+      && parsed.scrambleClickAction !== normalizedScrambleClickAction) dirty = true;
+    merged.scrambleClickAction = normalizedScrambleClickAction;
 
     // These two controls are entry defaults, not preferences to restore. A
     // fresh /timer visit (including a reload) always starts from real WCA
@@ -530,7 +539,11 @@ export function updateSettings(patch: Partial<TimerSettings>): void {
     ? { ...patch, statsRollingColumns: normalizeRollingStatColumns(patch.statsRollingColumns) }
     : patch;
   const candidate = { ...(_cache), ...normalizedPatch };
-  _cache = { ...candidate, ...normalizeTimerTimingSettings(candidate) };
+  _cache = {
+    ...candidate,
+    ...normalizeTimerTimingSettings(candidate),
+    scrambleClickAction: normalizeTimerScrambleClickAction(candidate.scrambleClickAction),
+  };
   save(_cache);
   for (const fn of _listeners) fn();
 }

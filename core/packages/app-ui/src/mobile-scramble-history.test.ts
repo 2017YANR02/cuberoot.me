@@ -192,9 +192,13 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('<TimerScrambleStrip');
     expect(app).not.toContain('mobile-scramble-nav-button');
     expect(css).not.toContain('.mobile-scramble {');
-    expect(app).toContain("onActivate={scrambleAvailability === 'error' && currentScrambleEntry");
+    expect(app).toContain("scrambleClickEffect === 'retry' && currentScrambleEntry");
     expect(app).toContain('if (canSwitchScramble()) fillScrambleHistoryEntry(currentScrambleEntry);');
-    expect(app).toContain(': scrambleReady && scramble.length > 0 ? copyCurrentScramble : undefined}');
+    expect(app).toContain('timerScrambleClickEffect(');
+    expect(app).toContain('scramble.length > 0');
+    expect(app).toContain("scrambleClickEffect === 'next'");
+    expect(app).toContain('? nextDisplayedScramble');
+    expect(app).toContain("scrambleClickEffect === 'copy' ? copyCurrentScramble : undefined}");
   });
 
   it('makes fullscreen a real layout/back state instead of a request-only action', () => {

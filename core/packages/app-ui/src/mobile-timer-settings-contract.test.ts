@@ -17,8 +17,11 @@ import {
 } from './mobile-timer-settings-contract';
 
 describe('Mobile timer settings parity ledger', () => {
-  it('records all eight real shared timing effects and no unverified device parity', () => {
-    expect(MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS).toEqual(TIMER_TIMING_SETTING_FIELD_IDS);
+  it('records all real shared effects and no unverified device parity', () => {
+    expect(MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS).toEqual([
+      ...TIMER_TIMING_SETTING_FIELD_IDS,
+      'settings.appearance.scramble-click-action',
+    ]);
     expect(MOBILE_TIMER_SETTING_PARITY_FIELD_IDS).toEqual([]);
   });
 
@@ -38,9 +41,10 @@ describe('Mobile timer settings parity ledger', () => {
     ))).toEqual([8, 4, 5, 9, 11, 6, 15, 5]);
   });
 
-  it('renders the shared eight-field UI and keeps its runtime effects wired', () => {
+  it('renders the shared settings UI and keeps its runtime effects wired', () => {
     const app = readFileSync('src/App.tsx', 'utf8');
     expect(app).toContain('<TimerTimingSettingsSections');
+    expect(app).toContain('<TimerScrambleClickActionSetting');
     expect(app).toContain('onChange={updateSettings}');
     expect(app).toContain('value={store!.settings}');
     expect(app).toContain('<TimerPillToggle');
@@ -49,6 +53,9 @@ describe('Mobile timer settings parity ledger', () => {
     expect(app).toContain('hideTime: hideRunningTime');
     expect(app).toContain('runningPrecision,');
     expect(app).toContain('precision: resultPrecision');
+    expect(app).toContain('timerScrambleClickEffect(');
+    expect(app).toContain('nextDisplayedScramble');
+    expect(app).toContain('copyCurrentScramble');
     expect(app).not.toContain('<option value="300">300 ms</option>');
   });
 });

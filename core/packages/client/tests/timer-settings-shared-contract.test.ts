@@ -2,13 +2,17 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 import {
+  DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
   DEFAULT_TIMER_TIMING_SETTINGS,
   EVENTS,
   TIMER_SETTING_CATEGORY_CONTRACTS,
   TIMER_SETTING_CATEGORY_IDS,
   TIMER_SETTING_FIELD_CONTRACTS,
   TIMER_SETTING_FIELD_IDS,
+  TIMER_SCRAMBLE_CLICK_ACTIONS,
+  normalizeTimerScrambleClickAction,
   normalizeTimerTimingSettings,
+  timerScrambleClickEffect,
   timerSettingFieldStates,
   type TimerSettingCategoryId,
   type TimerSettingFieldContext,
@@ -195,6 +199,22 @@ describe('canonical timer settings surface manifest', () => {
     })).toEqual(DEFAULT_TIMER_TIMING_SETTINGS);
   });
 
+  it('locks the scramble click action options, default, and invalid fallback', () => {
+    expect(TIMER_SCRAMBLE_CLICK_ACTIONS).toEqual(['none', 'next', 'copy']);
+    expect(DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION).toBe('copy');
+    expect(TIMER_SCRAMBLE_CLICK_ACTIONS.map(normalizeTimerScrambleClickAction))
+      .toEqual(TIMER_SCRAMBLE_CLICK_ACTIONS);
+    expect(normalizeTimerScrambleClickAction('invalid')).toBe('copy');
+    expect(normalizeTimerScrambleClickAction(undefined)).toBe('copy');
+    expect(timerScrambleClickEffect('none', true, true, false)).toBe('none');
+    expect(timerScrambleClickEffect('copy', false, true, false)).toBe('none');
+    expect(timerScrambleClickEffect('copy', true, true, false)).toBe('copy');
+    expect(timerScrambleClickEffect('next', false, true, false)).toBe('next');
+    expect(timerScrambleClickEffect('copy', true, false, false)).toBe('none');
+    expect(timerScrambleClickEffect('next', false, false, false)).toBe('none');
+    expect(timerScrambleClickEffect('none', false, false, true)).toBe('retry');
+  });
+
   it('exhaustively resolves event/source visibility and contextual disabled states', () => {
     expect(timerSettingFieldStates({ ...BASE_CONTEXT, development: false })
       .find((field) => field.id === 'settings.smart-cube.fake-cube')?.visible).toBe(false);
@@ -248,6 +268,9 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
   it('references the exact canonical field set, so additions/removals cannot drift silently', () => {
     const panelIds = [...panel.matchAll(/settings\.[a-z0-9-]+\.[a-z0-9-]+/g)]
       .map((match) => match[0] as TimerSettingFieldId);
+    if (panel.includes('<TimerScrambleClickActionSetting')) {
+      panelIds.push('settings.appearance.scramble-click-action');
+    }
     expect(panelIds.filter((id) => TIMER_TIMING_SETTING_FIELD_IDS.includes(id))).toEqual([]);
     expect([...new Set([...panelIds, ...TIMER_TIMING_SETTING_FIELD_IDS])].sort())
       .toEqual([...TIMER_SETTING_FIELD_IDS].sort());
@@ -271,14 +294,18 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     expect(panel).toContain('timerSettingFieldContract(id).copy');
     expect(panel).toContain('timerSettingFieldStates({');
     expect(panel).toContain('<TimerTimingSettingsSections');
+    expect(panel).toContain('<TimerScrambleClickActionSetting');
     expect(panel).toContain('renderBooleanControl={renderTimingBooleanControl}');
     expect(panel).toContain("settingState('settings.training.stage-splits').visible");
     expect(panel).toContain("settingState('settings.sound.volume').disabled");
     expect(panel).not.toContain('normalizeTimerHoldMs(Number(e.target.value))');
     expect(panel).not.toContain('normalizeTimerRunningPrecision(Number(e.target.value))');
     expect(panel).not.toContain('normalizeTimerResultPrecision(Number(e.target.value))');
+    expect(panel).not.toContain("e.target.value as 'none' | 'next' | 'copy'");
     expect(settings).toContain('extends TimerTimingSettings');
     expect(settings).toContain('...DEFAULT_TIMER_TIMING_SETTINGS');
+    expect(settings).toContain('scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION');
+    expect(settings).toContain('normalizeTimerScrambleClickAction(candidate.scrambleClickAction)');
     expect(settings).toContain('normalizeTimerTimingSettings');
     expect(settings).not.toMatch(/^\s*inspection:\s*number;/m);
   });
