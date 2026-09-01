@@ -4,11 +4,12 @@ import { physicalBundleCredentialHash, revokePhysicalBundleInvite } from './phys
 
 const API_BASE = 'https://openapi-fxg.jinritemai.com';
 const ORDER_METHOD = 'order.searchList';
+const TOKEN_METHOD = 'token.create';
 
 interface DouyinConfig {
   appKey: string;
   appSecret: string;
-  accessToken: string;
+  accessToken?: string;
   shopId: string;
   productId: string;
   courseId: string;
@@ -26,6 +27,7 @@ type DouyinWebhookResult = 'accepted' | 'disabled' | 'invalid_body' | 'unauthori
 
 let activeConfig: DouyinConfig | null = null;
 let triggerSync: (() => void) | null = null;
+let accessTokenCache: { key: string; token: string; refreshAt: number } | null = null;
 
 function sortedJsonValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(sortedJsonValue);
@@ -112,7 +114,6 @@ function loadConfig(): DouyinConfig | null {
   const names = [
     'DOUYIN_APP_KEY',
     'DOUYIN_APP_SECRET',
-    'DOUYIN_ACCESS_TOKEN',
     'DOUYIN_SHOP_ID',
     'DOUYIN_COURSE_PRODUCT_ID',
     'DOUYIN_COURSE_ID',
@@ -130,7 +131,7 @@ function loadConfig(): DouyinConfig | null {
   return {
     appKey: values.DOUYIN_APP_KEY!,
     appSecret: values.DOUYIN_APP_SECRET!,
-    accessToken: values.DOUYIN_ACCESS_TOKEN!,
+    accessToken: requiredEnv('DOUYIN_ACCESS_TOKEN'),
     shopId: values.DOUYIN_SHOP_ID!,
     productId: values.DOUYIN_COURSE_PRODUCT_ID!,
     courseId: values.DOUYIN_COURSE_ID!,
@@ -139,12 +140,71 @@ function loadConfig(): DouyinConfig | null {
   };
 }
 
+export async function createDouyinAccessToken(
+  appKey: string,
+  appSecret: string,
+  shopId: string,
+  now = Date.now(),
+): Promise<{ token: string; refreshAt: number }> {
+  const params = { code: '', grant_type: 'authorization_self', shop_id: shopId };
+  const paramJson = doudianParamJson(params);
+  const timestamp = String(Math.floor(now / 1_000));
+  const query = new URLSearchParams({
+    app_key: appKey,
+    method: TOKEN_METHOD,
+    param_json: paramJson,
+    sign: doudianSign(appKey, appSecret, paramJson, timestamp, TOKEN_METHOD),
+    sign_method: 'hmac-sha256',
+    timestamp,
+    v: '2',
+  });
+  const response = await fetch(`${API_BASE}/token/create?${query}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: paramJson,
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!response.ok) throw new Error(`Douyin token API returned HTTP ${response.status}`);
+  const body = await response.json() as {
+    code?: number | string;
+    msg?: string;
+    sub_msg?: string;
+    data?: { access_token?: string; expires_in?: number | string; shop_id?: number | string };
+  };
+  if (Number(body.code) !== 10_000) {
+    throw new Error(`Douyin token API failed: ${body.sub_msg || body.msg || body.code || 'unknown error'}`);
+  }
+  const token = body.data?.access_token?.trim();
+  const expiresIn = Number(body.data?.expires_in);
+  if (!token || !Number.isFinite(expiresIn) || expiresIn <= 0) {
+    throw new Error('Douyin token API response is missing access_token or expires_in');
+  }
+  if (body.data?.shop_id != null && String(body.data.shop_id) !== shopId) {
+    throw new Error('Douyin token API response shop_id does not match DOUYIN_SHOP_ID');
+  }
+  const nowSeconds = Math.floor(now / 1_000);
+  const expiresAt = expiresIn > nowSeconds ? expiresIn * 1_000 : now + expiresIn * 1_000;
+  return { token, refreshAt: Math.max(now, expiresAt - 3_600_000) };
+}
+
+async function getAccessToken(config: DouyinConfig): Promise<string> {
+  if (config.accessToken) return config.accessToken;
+  const key = `${config.appKey}:${config.shopId}`;
+  if (accessTokenCache?.key === key && Date.now() < accessTokenCache.refreshAt) {
+    return accessTokenCache.token;
+  }
+  const created = await createDouyinAccessToken(config.appKey, config.appSecret, config.shopId);
+  accessTokenCache = { key, ...created };
+  return created.token;
+}
+
 async function searchOrders(
   config: DouyinConfig,
   window: { start: number; end: number },
   afterSaleStatus: 'refund_success' | undefined,
   visit: (order: DouyinOrder) => Promise<void>,
 ): Promise<number> {
+  const accessToken = await getAccessToken(config);
   let visited = 0;
   for (let page = 0; page < 500; page += 1) {
     const params = {
@@ -160,7 +220,7 @@ async function searchOrders(
     const paramJson = doudianParamJson(params);
     const timestamp = String(Math.floor(Date.now() / 1_000));
     const query = new URLSearchParams({
-      access_token: config.accessToken,
+      access_token: accessToken,
       app_key: config.appKey,
       method: ORDER_METHOD,
       sign: doudianSign(config.appKey, config.appSecret, paramJson, timestamp),
