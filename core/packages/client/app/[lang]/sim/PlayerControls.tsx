@@ -35,7 +35,7 @@ import {
   Play,
   FlipHorizontal2, FlipVertical2, Eraser,
   Shuffle, Link2, Check,
-  Search, Loader2, Pipette,
+  Search, Loader2,
   Keyboard, Grid3x3, ImagePlus, Upload, Trash2, Crop,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
@@ -150,6 +150,7 @@ import {
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { resolveCaps } from './simCaps';
 import StickeringSelect from './StickeringSelect';
+import SwatchCell, { SwatchPopup } from './SwatchCell';
 import type { PickGrain, CustomTreatment } from './engine/nxn/customStickering';
 import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
 import { stm, stripGripMarks } from '@cuberoot/shared/alg-notation';
@@ -2264,6 +2265,7 @@ export default function PlayerControls({
       <StickeringSelect
         puzzleKind={puzzleKind} value={stickering} onChange={onStickeringChange}
         orientation={stickeringRot} onOrientationChange={onStickeringRotChange}
+        faceColors={settings.faceColors}
         mask={stickeringMask} onMaskClear={onStickeringMaskClear}
         pick={customPick} onPickChange={onCustomPickChange}
         rest={customRest} onRestChange={onCustomRestChange}
@@ -2666,89 +2668,6 @@ const FACE_ORDER = ['U', 'L', 'F', 'R', 'B', 'D'] as const;
 const FACE_LABELS_ZH: Record<typeof FACE_ORDER[number], string> = {
   U: '顶', D: '底', L: '左', R: '右', F: '前', B: '后',
 };
-
-function SwatchCell({
-  color, label, title, active, onPick, onClick, custom,
-}: {
-  color: string;
-  label?: string;
-  title?: string;
-  active?: boolean;
-  onPick?: (c: string) => void;
-  onClick?: () => void;
-  /** 自定义取色格:角标 Pipette + 区别于预设色块,明示「点这里自选」。 */
-  custom?: boolean;
-}) {
-  const labelEl = label ? <span className="sim-swatch-label">{label}</span> : null;
-  const boxEl = custom ? (
-    <span className="sim-swatch-box-wrap">
-      <span className="sim-swatch-box" style={{ background: color }} />
-      <span className="sim-swatch-custom-badge" aria-hidden><Pipette size={9} /></span>
-    </span>
-  ) : (
-    <span className="sim-swatch-box" style={{ background: color }} />
-  );
-  const cls = 'sim-swatch' + (active ? ' active' : '');
-  if (onPick) {
-    return (
-      <label className={cls} title={title}>
-        {labelEl}
-        <input
-          type="color"
-          className="sim-swatch-input"
-          value={color}
-          onChange={(e) => onPick(e.target.value)}
-        />
-        {boxEl}
-      </label>
-    );
-  }
-  return (
-    <button type="button" className={cls} onClick={onClick} title={title}>
-      {labelEl}
-      {boxEl}
-    </button>
-  );
-}
-
-/** 弹出色块选择器外壳:trigger 显当前格,点开弹出 panel 列 children(各 .sim-swatch)。
- *  内核色 / 镜面 / 面色(ModeColorSelect)与背景共用同一套交互 + 样式,避免每处重写
- *  open / 点外关闭 / trigger / panel。children 是 render prop,收一个 close() 关弹层。 */
-function SwatchPopup({
-  trigger, title, children,
-}: {
-  trigger: ReactNode;
-  title: string;
-  children: (close: () => void) => ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('pointerdown', onDoc);
-    return () => document.removeEventListener('pointerdown', onDoc);
-  }, [open]);
-  return (
-    <div className="sim-color-select" ref={ref}>
-      <button
-        type="button"
-        className="sim-color-select-trigger"
-        title={title}
-        onClick={() => setOpen((o) => !o)}
-      >
-        {trigger}
-      </button>
-      {open && (
-        <div className="sim-color-select-panel">
-          {children(() => setOpen(false))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 /** 模式 + 取色合并下拉:把一个「特殊模式」(镜面六色 / 内核原核)与单色取色收进一个菜单。
  *  trigger 普通态显当前色块、特殊态显特殊图标格;面板顶部一个特殊项 + 自定义取色 + 预设色板。
