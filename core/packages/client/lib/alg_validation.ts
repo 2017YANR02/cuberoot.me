@@ -30,6 +30,8 @@ import { normalizeAlg } from '@/lib/alg_normalize';
 import { displayAlg } from '@/lib/alg_display';
 import { goalOf, reachesGoal, type AlgGoal } from '@/lib/alg_goals';
 import { ftoEifState, invertFtoEifAlgorithm, isFtoEifSolved, parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
+import { sq1StateShapes } from '@/lib/sq1-shapes';
+import { traceSq1Algorithm } from '@/lib/sq1-tools';
 import { tr } from '@/i18n/tr';
 
 /**
@@ -169,6 +171,34 @@ export async function validateAlgCase(
     if (cleanSetup) new Alg(cleanSetup);
   } catch (e) {
     return { ok: false, reason: `公式语法错误: ${(e as Error).message}` };
+  }
+
+  if (options.storedAlg && goalKind === 'sq1-ep') {
+    const trace = traceSq1Algorithm(alg, setup);
+    if (!trace.ok) {
+      return {
+        ok: false,
+        reason: trace.reason === 'unsliceable'
+          ? tr({
+              zh: `SQ1 EP 公式第 ${trace.step ?? '?'} 步无法切片，不能入库`,
+              en: `SQ1 EP move ${trace.step ?? '?'} cannot be sliced; this alg cannot be saved`,
+            })
+          : tr({
+              zh: 'SQ1 EP 公式含有无法识别的记号，不能入库',
+              en: 'The SQ1 EP alg contains unrecognized notation and cannot be saved',
+            }),
+      };
+    }
+    const initialShapes = sq1StateShapes(trace.steps[0].state);
+    if (initialShapes.top?.id !== 'square' || initialShapes.bottom?.id !== 'square') {
+      return {
+        ok: false,
+        reason: tr({
+          zh: 'SQ1 EP 的 setup 必须让上下层都保持正方形，不能入库',
+          en: 'An SQ1 EP setup must keep both layers square and cannot be saved otherwise',
+        }),
+      };
+    }
   }
 
   // SQ1 EP 的阶段目标允许上下层各自任意 AUF；库内公式则必须把两层都转回准确位置，

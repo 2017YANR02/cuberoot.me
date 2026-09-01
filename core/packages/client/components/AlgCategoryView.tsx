@@ -1047,13 +1047,19 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const buildPdfSheet = () => {
     const listing = !showSubgroupPicker && !showSubSubgroupPicker;
     const pdfCases = listing || subgroupSlug ? visibleCases : orderedCases;
+    const orderedPdfCases = isSq1Ep
+      ? (() => {
+          const sections = partitionSq1EpCases(pdfCases);
+          return [...sections.noParity, ...sections.parity, ...sections.unclassified];
+        })()
+      : pdfCases;
     const title = collection
       ? `${puzzleParam} ${tr(collection.heading)}`
       : `${puzzleParam} ${tr(meta)}${subgroupDisplay ? ` ${subgroupDisplay}` : ''}`;
     return algSheetFromCases({
       puzzle: puzzleParam as AlgPuzzle,
       set,
-      cases: pdfCases,
+      cases: orderedPdfCases,
       title,
       sourcePath: collection?.sourcePath ?? `/alg/${puzzleParam}/${set}${subgroupSlug ? `/${subgroupSlug}` : ''}`,
       filename: collection?.filename ?? `${puzzleParam}-${set}${subgroupSlug ? `-${subgroupSlug}` : ''}`,
@@ -1066,6 +1072,13 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       groupLabel: (sub) => (isSq1Ep && sq1EpNumericNames ? sq1EpNumericGroupName(sub) : null)
         ?? ollByGroup.get(sub)
         ?? (set === 'zbll' ? displayZbllToken(sub.split('/').pop() ?? sub) : sub),
+      sectionOf: isSq1Ep
+        ? (c => classifySq1EpParity(c.name) === 'no-parity'
+          ? tr({ zh: '无特', en: 'No parity' })
+          : classifySq1EpParity(c.name) === 'parity'
+            ? tr({ zh: '有特', en: 'Parity' })
+            : undefined)
+        : undefined,
       caseLabel: isSq1Ep && sq1EpNumericNames
         ? (c => sq1EpNumericCaseName(c.name) ?? primaryCaseName(puzzleParam, set, c))
         : undefined,

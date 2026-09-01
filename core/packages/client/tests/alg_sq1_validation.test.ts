@@ -31,7 +31,7 @@ describe('Square-1 EP stored-alg validation', () => {
   const setup = '(1,0) / (2,-1) / (1,1) / (-3,0) / (-1,0)';
   const complete = '1,0 / 3,0 / -1,-1 / -2,1 / -1';
   // 等价于漏掉最后的 (-1,0)：EP 已完成，但顶层仍偏转一步。
-  const missingFinalLayerTurn = `${complete} 1,0`;
+  const missingFinalLayerTurn = '1,0 / 3,0 / -1,-1 / -2,1 /';
 
   it('keeps stage validation AUF-tolerant but requires stored formulas to align both layers', async () => {
     await expect(validateAlgCase(setup, missingFinalLayerTurn, RAW_STICKER, 'sq1', 'ep'))
@@ -54,5 +54,13 @@ describe('Square-1 EP stored-alg validation', () => {
     }]);
     expect(failures).toHaveLength(1);
     expect(failures[0]).toMatchObject({ alg: missingFinalLayerTurn, oriIdx: 0, algIdx: 0 });
+  });
+
+  it('rejects a formula whose slash tries to cut through a piece', async () => {
+    const legacySetup = '(1,0)/(-1,-1)/(-6,0)/(1,1)/(-1,0)/(0,-3)/(-1,-1)/(-6,0)/(1,1)/(-1,0)';
+    const legacyAlg = '1,0/-1,-1/6,0/1,1/0,3/1,0/-1,-1/6,0/1,1/-1,0';
+    const result = await validateStoredAlgCase(legacySetup, legacyAlg, RAW_STICKER, 'sq1', 'ep');
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/无法切片|cannot be sliced/);
   });
 });
