@@ -170,6 +170,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 干净 worktree/新 clone 先 `pnpm -F @cuberoot/shared build && pnpm -F @cuberoot/visualcube build`(否则 typecheck/dev 报缺 `@cuberoot/visualcube`/`@cuberoot/shared/admin`)。
 - `pnpm --filter @cuberoot/client typecheck`(tsgo)。
 - Playwright 开 `127.0.0.1:3000/zh/sim?puzzle=x`:① solved 看花纹(非实色,对账参考图);② 随机打乱看乱态(招式动画 + 颜色跨面);③ 拖某可抓件 → 单件转动 + 解法框追加 token,拖中心/空白 → 转视角(合成 PointerEvent 打 canvas、读第 2 个 `<textarea>`.value)。
+- 图像浮层逐个 kind 实测 solved 和打乱态与 3D 的可见面、切分数、颜色、状态一致;测试锁 `schematicPoly` 朝外绕向和可见小面数,禁只验主画布或拿一个 kind 代测。
 - 转动动画抓中间帧(首尾帧 bake 后一定对,bug 只在中间):临时 `window.__sim={world,renderer,THREE}` → `beginMove` 取 anims → 逐 v 设 pivot+`render`+截图 ≥5 帧;端态受影响面应混色、开口应是平滑曲面非平板/尖扇形(开「结构着色」:core 品红、body 青);验完删句柄。
 - occlusion 别只截图猜:藏掉所有 `simRole==='body'/'core'` mesh 重渲,弧立刻完整 = 贴片对、body 盖前;定位用逐像素 CPU raycast 出 ASCII 角色图(每格取最近命中 `simRole`/色),按 hit 的 pivot quaternion 分类 moving/stationary。
 - Windows Next dev 截图写进 `.tmp/` 会触发 HMR remount 把 cube state 重置成 solved(见 [[feedback_windows_next_dev_restart]])→ scene-graph 取证一律「单次 eval 内 setup turn + raycast 出文本」(不截图);Playwright MCP 截图只能落 `core/.tmp/png`。

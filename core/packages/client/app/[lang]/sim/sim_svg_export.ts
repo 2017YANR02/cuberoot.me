@@ -47,6 +47,39 @@ export interface SimSvgExportOptions {
   maxTriangles?: number;
 }
 
+export type SimSvgView = Pick<World, 'scene' | 'camera' | 'width' | 'height'>;
+
+/**
+ * Low-cost signature for deciding whether the live companion SVG needs a refresh.
+ * Include every affine matrix term: center-pivot puzzles such as SQ2/SQ4 can move
+ * only through rotation, and opposite rotation directions share the same diagonal.
+ */
+export function simSceneSignature(world: SimSvgView): string {
+  let hash = 0;
+  const mix = (value: number): void => {
+    hash = (hash * 31 + Math.round(value * 1000)) | 0;
+  };
+  mix(world.width);
+  mix(world.height);
+  for (const value of world.camera.matrixWorld.elements) mix(value);
+  for (const value of world.camera.projectionMatrix.elements) mix(value);
+  world.scene.traverseVisible((object) => {
+    const mesh = object as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    for (const value of mesh.matrixWorld.elements) mix(value);
+    const instanced = mesh as THREE.InstancedMesh;
+    if (instanced.isInstancedMesh) mix(instanced.instanceMatrix.version);
+    // cubing.js PG3D mutates vertex attributes instead of object transforms.
+    const geometry = mesh.geometry as THREE.BufferGeometry | undefined;
+    if (!geometry?.attributes) return;
+    const position = geometry.getAttribute('position');
+    if (position) mix((position as THREE.BufferAttribute).version);
+    const color = geometry.getAttribute('color');
+    if (color) mix((color as THREE.BufferAttribute).version);
+  });
+  return String(hash);
+}
+
 const DEFAULT_MAX_TRIS = 400_000;
 /** 贴图网格 ≤ 此三角形数时走逐三角仿射 <image>(logo 平面 = 2),更大走质心采样。 */
 const AFFINE_TEX_TRI_LIMIT = 128;
