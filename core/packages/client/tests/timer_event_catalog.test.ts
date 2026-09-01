@@ -11,6 +11,8 @@ import {
   timerEventPickerItem,
   timerEventPickerName,
   timerEventSelectorId,
+  timerSupportsLocalBattleSmartCube,
+  timerSupportsNetBattleSmartCube,
   timerSupportsSmartCubeAutoTiming,
   timerSupportsRealWcaScrambles,
   timerWcaScrambleEventId,
@@ -147,7 +149,11 @@ describe('shared timer event picker catalog', () => {
     for (const { id } of EVENTS) {
       expect(timerEventNxnSize(id), id).toBe(expectedNxnSizes[id] ?? null);
       expect(nxnSizeForEvent(id), `Web adapter: ${id}`).toBe(timerEventNxnSize(id));
-      expect(timerSupportsSmartCubeAutoTiming(id), id).toBe(id === '333');
+      expect(timerSupportsSmartCubeAutoTiming(id), id).toBe(
+        (expectedNxnSizes[id] ?? null) === 3 && id !== '333fm',
+      );
+      expect(timerSupportsLocalBattleSmartCube(id), `local: ${id}`).toBe(id === '333');
+      expect(timerSupportsNetBattleSmartCube(id), `net: ${id}`).toBe(id === '333' || id === '333oh');
     }
   });
 

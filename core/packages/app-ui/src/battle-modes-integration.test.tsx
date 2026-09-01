@@ -7,6 +7,7 @@ import type {
 } from '@cuberoot/shared/timer';
 import { generateTimerScramble } from '@cuberoot/shared/timer';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
+import { SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -14,7 +15,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   LocalBattleMode,
   NetBattleMode,
-  type LocalBattleSmartCubeHandlers,
+  type BattleSmartCubeHandlers,
 } from './BattleModes';
 import { COPY } from './copy';
 import type { InstalledAppNetBattle } from './platform';
@@ -212,13 +213,71 @@ describe('installed app multiplayer modes', () => {
     await act(async () => document.querySelector<HTMLButtonElement>('.room-qr-close')!.click());
   });
 
-  it('routes one installed smart cube through the shared local-battle timer and hands it off', async () => {
-    let handlers: LocalBattleSmartCubeHandlers | null = null;
+  it('routes a batched smart-cube scramble completion and first solve move through the online timer', async () => {
+    const state = roomState();
+    const credentials = { playerId: 'abcdef', playerToken: 'x'.repeat(48) };
+    const postNetResult = vi.fn(async () => state);
+    const client = {
+      createNetRoom: vi.fn(async () => ({ state, credentials })),
+      getNetRoom: vi.fn(async () => state),
+      ensureNetScramble: vi.fn(async () => state),
+      postNetResult,
+      postNetStatus: vi.fn(async () => state),
+      nextNetRound: vi.fn(async () => state),
+      leaveNetRoom: vi.fn(async () => undefined),
+    } as unknown as NetBattleClient;
+    const capability: InstalledAppNetBattle = {
+      client,
+      sessions: {
+        clear: vi.fn(async () => undefined),
+        load: vi.fn(async () => null),
+        save: vi.fn(async () => undefined),
+      },
+    };
+    let handlers: BattleSmartCubeHandlers | null = null;
     const smartCube = {
       connect: vi.fn(async () => 'GAN16ui'),
       deviceName: 'GAN16ui',
       disconnect: vi.fn(async () => undefined),
-      facelets: '',
+      facelets: smartCubeTargetFacelets("R U R'")!,
+      lastMove: '',
+      phase: 'connected' as const,
+    };
+
+    await act(async () => root.render(
+      <NetBattleMode
+        {...baseProps}
+        capability={capability}
+        onSmartCubeHandlersChange={(next) => { handlers = next; }}
+        smartCube={smartCube}
+      />,
+    ));
+    await act(async () => host.querySelector<HTMLButtonElement>('.battle-primary-action')!.click());
+    expect(handlers).not.toBeNull();
+
+    const startedAt = performance.now();
+    await act(async () => {
+      handlers!.onMove('F', startedAt - 20, SOLVED_3X3);
+      handlers!.onSolved(startedAt - 10);
+    });
+    expect(postNetResult).not.toHaveBeenCalled();
+
+    await act(async () => {
+      handlers!.onMove("R'", startedAt, smartCubeTargetFacelets("R U R'")!);
+      handlers!.onMove('R', startedAt + 10, 'U'.repeat(54));
+      handlers!.onSolved(startedAt + 1_010);
+    });
+    await act(async () => Promise.resolve());
+    expect(postNetResult).toHaveBeenCalledTimes(1);
+  });
+
+  it('routes one installed smart cube through the shared local-battle timer and hands it off', async () => {
+    let handlers: BattleSmartCubeHandlers | null = null;
+    const smartCube = {
+      connect: vi.fn(async () => 'GAN16ui'),
+      deviceName: 'GAN16ui',
+      disconnect: vi.fn(async () => undefined),
+      facelets: smartCubeTargetFacelets("R U R'")!,
       lastMove: '',
       phase: 'connected' as const,
     };
@@ -234,6 +293,10 @@ describe('installed app multiplayer modes', () => {
     expect(handlers).not.toBeNull();
     const target = smartCubeTargetFacelets("R U R'")!;
     const at = performance.now();
+    await act(async () => handlers!.onMove('F', at - 20, SOLVED_3X3));
+    await act(async () => handlers!.onSolved(at - 10));
+    expect(host.querySelectorAll('.battle-penalties')).toHaveLength(0);
+
     await act(async () => handlers!.onMove('R', at, target));
     await act(async () => handlers!.onMove('U', at + 10, 'U'.repeat(54)));
     await act(async () => handlers!.onSolved(at + 1_010));

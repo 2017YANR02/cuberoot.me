@@ -22,11 +22,14 @@
  */
 
 import type { CubeFaces } from '../cube/state';
-import { toFaceletString } from '../cube/state';
-import { faceletToCubie, validateCubie, type CubieCube } from '@/lib/cube-facelet';
-import { inverseCubie, isSolvedCubie, multiply } from '../scramble/kociemba/cube';
+import { fromFaceletString, toFaceletString } from '../cube/state';
+import type { CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
+import {
+  createSmartCubeFixupRequester,
+  smartCubeFixupState,
+} from '@cuberoot/shared/smart-cube/scramble-hint';
 import { solve333 } from '../scramble/kociemba/random_state';
-import { hintScramble, parseHintableScramble, type ScrambleHint } from './scramble_hint';
+import { parseHintableScramble, type ScrambleHint } from './scramble_hint';
 
 /**
  * The state whose generator takes the cube from `from` to `target`.
@@ -39,18 +42,7 @@ import { hintScramble, parseHintableScramble, type ScrambleHint } from './scramb
  * Split out from `fixupScramble` so it is testable without a Web Worker.
  */
 export function fixupState(from: CubeFaces, target: CubeFaces): CubieCube | null {
-  let a: CubieCube;
-  let b: CubieCube;
-  try {
-    a = faceletToCubie(toFaceletString(from));
-    b = faceletToCubie(toFaceletString(target));
-  } catch {
-    return null;
-  }
-  const composite = multiply(inverseCubie(a), b);
-  if (isSolvedCubie(composite)) return null;
-  if (validateCubie(composite) !== null) return null;
-  return composite;
+  return smartCubeFixupState(toFaceletString(from), toFaceletString(target));
 }
 
 /**
@@ -120,33 +112,28 @@ export interface FixupRequester {
  */
 export function createFixupRequester(deps: FixupDeps, opts: { attempts?: number } = {}): FixupRequester {
   const solve = deps.solve ?? fixupScramble;
-  const attempts = opts.attempts ?? 3;
-  let working = false;
+  const requester = createSmartCubeFixupRequester({
+    facelets: () => {
+      const faces = deps.faces();
+      return faces ? toFaceletString(faces) : null;
+    },
+    solve: async (fromFacelets, targetFacelets) => {
+      const from = fromFaceletString(fromFacelets);
+      const target = fromFaceletString(targetFacelets);
+      return from && target ? solve(from, target) : null;
+    },
+    valid: (targetFacelets) => {
+      const target = fromFaceletString(targetFacelets);
+      return target ? deps.valid(target) : false;
+    },
+  }, opts.attempts);
   return {
-    busy: () => working,
+    busy: requester.busy,
     async request(target: CubeFaces): Promise<FixupResult | null> {
-      // One at a time: every off-path turn would otherwise queue another solve.
-      if (working) return null;
-      working = true;
-      try {
-        for (let i = 0; i < attempts; i++) {
-          const from = deps.faces();
-          if (!from) return null;
-          if (!deps.valid(target)) return null;
-          const seq = await solve(from, target);
-          if (!seq) return null;
-          const now = deps.faces() ?? from;
-          const hint = hintScramble(seq, now, from);
-          // Reached the scramble while we were solving — the plain "scrambled"
-          // verdict says everything, so offer nothing.
-          if (hint?.complete) return null;
-          if (hint) return { from, seq, hint };
-          // Turned again mid-solve: try from wherever it is now.
-        }
-        return null;
-      } finally {
-        working = false;
-      }
+      const result = await requester.request(toFaceletString(target));
+      if (!result) return null;
+      const from = fromFaceletString(result.fromFacelets);
+      return from ? { from, seq: result.scramble, hint: result.hint } : null;
     },
   };
 }

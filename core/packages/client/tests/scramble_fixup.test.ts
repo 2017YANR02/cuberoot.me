@@ -239,7 +239,7 @@ describe('createFixupRequester', () => {
     const calls: CubeFaces[] = [];
     const solve = async (from: CubeFaces) => {
       calls.push(from);
-      return paths.get(from) ?? null;
+      return [...paths].find(([faces]) => facesEqual(faces, from))?.[1] ?? null;
     };
     return { solve, calls };
   }
@@ -250,7 +250,7 @@ describe('createFixupRequester', () => {
     const res = await req.request(TARGET);
     expect(res).not.toBeNull();
     expect(res!.seq).toBe(pathFrom1);
-    expect(res!.from).toBe(OFF_PATH);
+    expect(facesEqual(res!.from, OFF_PATH)).toBe(true);
     expect(res!.hint.done).toEqual([]);
     expect(res!.hint.current).toBe(pathFrom1.split(' ')[0]);
     expect(calls).toHaveLength(1);
@@ -268,7 +268,7 @@ describe('createFixupRequester', () => {
       faces: () => where,
       solve: async (from) => {
         const seq = await solve(from);
-        if (from === OFF_PATH) where = OFF_PATH_2; // turned while we solved
+        if (facesEqual(from, OFF_PATH)) where = OFF_PATH_2; // turned while we solved
         return seq;
       },
       valid: () => true,
@@ -276,7 +276,33 @@ describe('createFixupRequester', () => {
     const res = await req.request(TARGET);
     expect(res).not.toBeNull();
     expect(res!.seq).toBe(pathFrom2);
-    expect(res!.from).toBe(OFF_PATH_2);
+    expect(facesEqual(res!.from, OFF_PATH_2)).toBe(true);
+    expect(calls).toEqual([OFF_PATH, OFF_PATH_2]);
+  });
+
+  it('keeps the current correction after a transient return to the raw path', async () => {
+    let where = OFF_PATH;
+    let wanted = true;
+    let release: (value: string | null) => void = () => {};
+    const calls: CubeFaces[] = [];
+    const req = createFixupRequester({
+      faces: () => where,
+      solve: (from) => {
+        calls.push(from);
+        if (facesEqual(from, OFF_PATH)) return new Promise((resolve) => { release = resolve; });
+        return Promise.resolve(pathFrom2);
+      },
+      valid: () => wanted,
+    });
+
+    const pending = req.request(TARGET);
+    wanted = false;
+    where = solved(3);
+    wanted = true;
+    where = OFF_PATH_2;
+    release(pathFrom1);
+
+    await expect(pending).resolves.toMatchObject({ from: OFF_PATH_2, seq: pathFrom2 });
     expect(calls).toEqual([OFF_PATH, OFF_PATH_2]);
   });
 
@@ -300,8 +326,8 @@ describe('createFixupRequester', () => {
       faces: () => where,
       solve: async (from) => {
         calls.push(from);
-        where = where === OFF_PATH ? OFF_PATH_2 : OFF_PATH;
-        return from === OFF_PATH ? pathFrom1 : pathFrom2;
+        where = facesEqual(where, OFF_PATH) ? OFF_PATH_2 : OFF_PATH;
+        return facesEqual(from, OFF_PATH) ? pathFrom1 : pathFrom2;
       },
       valid: () => true,
     });
@@ -320,13 +346,42 @@ describe('createFixupRequester', () => {
     });
     const first = req.request(TARGET);
     expect(req.busy()).toBe(true);
-    // A second off-path turn while the first solve is in flight must not queue
-    // another one — that is how you get a backlog of stale paths.
-    await expect(req.request(TARGET)).resolves.toBeNull();
+    // A second off-path turn while the first solve is in flight shares that
+    // answer rather than queuing another solve. This also lets a reconnected
+    // consumer re-attach to a still-valid request for the same scramble.
+    const duplicate = req.request(TARGET);
     expect(calls).toHaveLength(1);
     release(pathFrom1);
     await expect(first).resolves.not.toBeNull();
+    await expect(duplicate).resolves.not.toBeNull();
     expect(req.busy()).toBe(false);
+  });
+
+  it('runs the latest target after an older target finishes', async () => {
+    const nextTarget = applyScramble(3, "F R U2");
+    let validTarget = toFaceletString(TARGET);
+    let release: (v: string | null) => void = () => {};
+    const calls: string[] = [];
+    const req = createFixupRequester({
+      faces: () => OFF_PATH,
+      solve: async (_from, target) => {
+        calls.push(toFaceletString(target));
+        if (toFaceletString(target) === toFaceletString(TARGET)) {
+          return new Promise((resolve) => { release = resolve; });
+        }
+        return 'R';
+      },
+      valid: (target) => toFaceletString(target) === validTarget,
+    });
+
+    const first = req.request(TARGET);
+    validTarget = toFaceletString(nextTarget);
+    const latest = req.request(nextTarget);
+    release(pathFrom1);
+
+    await expect(first).resolves.toBeNull();
+    await expect(latest).resolves.toMatchObject({ seq: 'R' });
+    expect(calls).toEqual([toFaceletString(TARGET), toFaceletString(nextTarget)]);
   });
 
   it('abandons the request when the scramble is replaced under it', async () => {
@@ -338,6 +393,21 @@ describe('createFixupRequester', () => {
     });
     await expect(req.request(TARGET)).resolves.toBeNull();
     expect(calls).toHaveLength(0);
+  });
+
+  it('abandons a pending result after the scramble, timer, or connection becomes invalid', async () => {
+    let valid = true;
+    let release: (value: string | null) => void = () => {};
+    const req = createFixupRequester({
+      faces: () => OFF_PATH,
+      solve: () => new Promise((resolve) => { release = resolve; }),
+      valid: () => valid,
+    });
+    const pending = req.request(TARGET);
+    valid = false;
+    release(pathFrom1);
+    await expect(pending).resolves.toBeNull();
+    expect(req.busy()).toBe(false);
   });
 
   it('offers nothing when there is no cube', async () => {
