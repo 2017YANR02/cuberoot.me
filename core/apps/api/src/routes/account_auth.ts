@@ -19,10 +19,10 @@ import {
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { checkRateLimit, requireAdmin } from '../utils/recon_helpers.js';
-import { signSession, hasFreshEmailGrant } from '../utils/session.js';
+import { signSession, hasFreshEmailGrant, hasFreshPhonePasswordResetGrant } from '../utils/session.js';
 import {
   issueCode, verifyCode, loginWithIdentity, addIdentity, removeIdentity, replaceCredentialIdentity,
-  getIdentities, getUserById, publicUser,
+  getIdentities, getUserById, findUserByIdentity, publicUser,
   normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
   normalizeDisplayName, isValidDisplayName, updateDisplayName,
   getAccountBasicProfile, updateAccountBasicProfile,
@@ -73,6 +73,17 @@ function langOf(c: Context): 'zh' | 'en' {
 function emailGrant(c: Context): boolean {
   const h = c.req.header('Authorization');
   return h?.startsWith('Bearer ') ? hasFreshEmailGrant(h.slice(7)) : false;
+}
+
+/** 本次会话是否由「找回密码」用途的手机验证码签出。普通短信登录明确不算。 */
+function phonePasswordResetGrant(c: Context): boolean {
+  const h = c.req.header('Authorization');
+  return h?.startsWith('Bearer ') ? hasFreshPhonePasswordResetGrant(h.slice(7)) : false;
+}
+
+function parsePhoneCodePurpose(value: unknown): 'login' | 'password_reset' | null {
+  if (value == null || value === 'login') return 'login';
+  return value === 'password_reset' ? value : null;
 }
 
 /** Keep the six auth contract endpoints on a stable error wire shape. */
@@ -359,10 +370,11 @@ accountAuthRoutes.post('/auth/phone/send', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   if (!smsConfigured()) return c.json({ error: 'sms not configured' }, 503);
-  const { phone } = await c.req.json<{ phone?: string }>().catch(() => ({ phone: undefined }));
+  const { phone, purpose: rawPurpose } = await c.req.json<{ phone?: string; purpose?: unknown }>().catch(() => ({ phone: undefined, purpose: undefined }));
   const norm = normalizePhone(phone ?? '');
-  if (!isValidPhone(norm)) return c.json({ error: 'invalid phone' }, 400);
-  const issued = await issueCode('phone', norm, 'login');
+  const purpose = parsePhoneCodePurpose(rawPurpose);
+  if (!isValidPhone(norm) || !purpose) return c.json({ error: 'invalid phone' }, 400);
+  const issued = await issueCode('phone', norm, purpose);
   if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
   try {
     await sendSmsCode(norm, issued.code);
@@ -378,11 +390,18 @@ accountAuthRoutes.post('/auth/phone/send', async (c) => {
 accountAuthRoutes.post('/auth/phone/verify', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const { phone, code } = await c.req.json<{ phone?: string; code?: string }>().catch(() => ({ phone: undefined, code: undefined }));
+  const { phone, code, purpose: rawPurpose } = await c.req.json<{ phone?: string; code?: string; purpose?: unknown }>().catch(() => ({ phone: undefined, code: undefined, purpose: undefined }));
   const norm = normalizePhone(phone ?? '');
-  if (!isValidPhone(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
-  const ok = await verifyCode('phone', norm, 'login', code as string);
+  const purpose = parsePhoneCodePurpose(rawPurpose);
+  if (!isValidPhone(norm) || !purpose || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
+  const ok = await verifyCode('phone', norm, purpose, code as string);
   if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
+  if (purpose === 'password_reset') {
+    const user = await findUserByIdentity('phone', norm);
+    if (!user) return c.json({ error: 'phone not linked to an account' }, 404);
+    const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name, amr: 'phone_password_reset' });
+    return c.json({ token, user: publicUser(user) });
+  }
   const name = `尾号${norm.slice(-4)}`;
   const { user, isNew } = await loginWithIdentity('phone', norm, { name });
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
@@ -408,7 +427,7 @@ accountAuthRoutes.post('/auth/email/password', async (c) => {
 // 业界(GitHub / Figma / Notion)把这件事分成两条路,凭据要求不同:
 //   修改(知道旧密码)  → 必须先验旧密码,防「会话被劫持者直接换密码」。
 //   重置(忘了 / 没设) → 邮件通道证明邮箱所有权即可,不问旧密码。
-// 我们的 amr=email_code 会话就是后者的凭据(等价于别家的重置链接),故 grant 在手时跳过旧密码校验。
+// 邮箱验证码或「找回密码」用途的手机验证码会话就是后者的凭据,故 grant 在手时跳过旧密码校验。
 accountAuthRoutes.post('/auth/password/set', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
@@ -416,7 +435,7 @@ accountAuthRoutes.post('/auth/password/set', async (c) => {
   const { password, currentPassword } = await c.req.json<{ password?: string; currentPassword?: string }>().catch(() => ({ password: undefined, currentPassword: undefined }));
   if (!isValidPassword(password)) return c.json({ error: 'invalid password' }, 400);
   const existing = await getPasswordHash(uid);
-  if (existing && !emailGrant(c) && !(typeof currentPassword === 'string' && await verifyPassword(currentPassword, existing))) {
+  if (existing && !emailGrant(c) && !phonePasswordResetGrant(c) && !(typeof currentPassword === 'string' && await verifyPassword(currentPassword, existing))) {
     return c.json({ error: 'wrong current password' }, 401);
   }
   await setPassword(uid, password);

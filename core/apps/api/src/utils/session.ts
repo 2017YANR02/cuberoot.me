@@ -20,7 +20,7 @@ export const SESSION_TTL = '365d';
 
 /**
  * 令牌载荷。uid = 内部账号 id;wcaId = 真实 WCA id(未绑定则不带);name = 展示名。
- * amr = 本次会话的认证方式(RFC 8176);仅 'email_code' 有特殊语义,见 EMAIL_GRANT_TTL_S。
+ * amr = 本次会话的认证方式(RFC 8176);重置密码授权见下方两个 fresh-grant helper。
  */
 export interface SessionPayload {
   uid?: number;
@@ -40,6 +40,9 @@ export interface SessionPayload {
  */
 export const EMAIL_GRANT_TTL_S = 15 * 60;
 
+/** 短信找回密码授权窗口。短信验证码本身 10 分钟过期,签出的重置授权也不延长。 */
+export const PHONE_PASSWORD_RESET_GRANT_TTL_S = 10 * 60;
+
 /**
  * 签发会话 JWT。wcaId 为空(纯邮箱/手机账号)时不写入该字段,前端据此判断
  * 「是否为 WCA 选手」。
@@ -57,6 +60,18 @@ export function hasFreshEmailGrant(token: string): boolean {
     const p = verifySession(token);
     if (p.amr !== 'email_code' || typeof p.iat !== 'number') return false;
     return Date.now() / 1000 - p.iat < EMAIL_GRANT_TTL_S;
+  } catch {
+    return false;
+  }
+}
+
+/** 仅「找回密码」用途的手机验证码会话可免旧密码重设密码;普通手机登录没有此权限。 */
+export function hasFreshPhonePasswordResetGrant(token: string): boolean {
+  try {
+    const p = verifySession(token);
+    if (p.amr !== 'phone_password_reset' || typeof p.iat !== 'number') return false;
+    const age = Date.now() / 1000 - p.iat;
+    return age >= 0 && age < PHONE_PASSWORD_RESET_GRANT_TTL_S;
   } catch {
     return false;
   }

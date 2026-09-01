@@ -23,7 +23,7 @@ export {
 
 export type Provider = 'email' | 'phone' | 'wca' | 'apple' | 'google' | 'wechat' | 'douyin' | 'alipay' | 'qq';
 export type Channel = 'email' | 'phone';
-export type CodePurpose = 'login' | 'link';
+export type CodePurpose = 'login' | 'link' | 'password_reset';
 
 export interface AppUser {
   id: number;
