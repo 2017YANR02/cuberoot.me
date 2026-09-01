@@ -112,9 +112,9 @@ export function visualcubeStageGroups(order: number): StickeringGroup[] {
   const items = (arr: MaskOption[]): string[] => arr.filter(keep).map((m) => m.value);
   const { core, extra } = vcArraysFor(order);
   const out: StickeringGroup[] = [];
-  const coreItems = items(core);
+  const coreItems = [...items(core), ...(order === 3 ? items(extra) : [])];
   if (coreItems.length) out.push({ group: 'VCMasks', items: coreItems });
-  const extraItems = items(extra);
-  if (extraItems.length) out.push({ group: order === 3 ? 'VCMasksExt' : 'VCMasksSize', items: extraItems });
+  const extraItems = order === 3 ? [] : items(extra);
+  if (extraItems.length) out.push({ group: 'VCMasksSize', items: extraItems });
   return out;
 }
