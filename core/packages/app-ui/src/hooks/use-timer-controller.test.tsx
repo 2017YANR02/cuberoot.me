@@ -13,11 +13,13 @@ function Probe({
   canStart,
   enabled,
   inspectionSec,
+  onStart,
   onController,
 }: {
   canStart: boolean;
   enabled: boolean;
   inspectionSec: number;
+  onStart?(startedAtMs: number): void;
   onController(controller: TimerController): void;
 }) {
   const controller = useTimerController({
@@ -26,6 +28,7 @@ function Probe({
     holdMs: 10,
     inspectionSec,
     onComplete: () => undefined,
+    onStart,
   });
   useEffect(() => onController(controller), [controller, onController]);
   return null;
@@ -50,13 +53,19 @@ describe('mobile timer controller source invalidation', () => {
     vi.useRealTimers();
   });
 
-  const render = async (enabled: boolean, inspectionSec: number, canStart = true) => {
+  const render = async (
+    enabled: boolean,
+    inspectionSec: number,
+    canStart = true,
+    onStart?: (startedAtMs: number) => void,
+  ) => {
     await act(async () => {
       root.render(
         <Probe
           canStart={canStart}
           enabled={enabled}
           inspectionSec={inspectionSec}
+          onStart={onStart}
           onController={(value) => { controller = value; }}
         />,
       );
@@ -173,5 +182,18 @@ describe('mobile timer controller source invalidation', () => {
     await press();
     expect(controller.machine.phase).toBe('stopped');
     expect(controller.machine.lastMs).toBe(1_000);
+  });
+
+  it('reports the machine-clamped smart-cube start clock to move recorders', async () => {
+    const onStart = vi.fn();
+    await render(true, 0, true, onStart);
+    await act(async () => vi.advanceTimersByTime(10_000));
+    expect(controller.armFromCube()).toBe(true);
+
+    await act(async () => {
+      expect(controller.startFromCube(5_000)).toBe(true);
+    });
+
+    expect(onStart).toHaveBeenCalledWith(8_000);
   });
 });

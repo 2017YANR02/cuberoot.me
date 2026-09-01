@@ -7,6 +7,11 @@ export const COPY = {
     account: 'Account',
     accountDetail: 'Use the same CubeRoot email or phone as the website. Sign-in opens the secure system browser.',
     actionFailed: 'That did not work. Your existing data was kept.',
+    saveFailed: (count: number) => count === 1
+      ? 'One solve is waiting to be saved. Try again to keep it.'
+      : `${count} solves are waiting to be saved. Try again to keep them.`,
+    saveRetryFailed: 'Still not saved. Try again.',
+    saveSessionMissing: 'The original session was deleted. This solve is still waiting to be saved.',
     all: 'All',
     authError: 'Account sign-in is temporarily unavailable. Try again.',
     ao5: 'ao5',
@@ -263,6 +268,9 @@ export const COPY = {
     account: '账号',
     accountDetail: '使用与网站相同的 CubeRoot 邮箱或手机号。登录会打开安全的系统浏览器。',
     actionFailed: '操作失败，原有数据已保留。',
+    saveFailed: (count: number) => `${count} 条成绩正在等待保存，请点击重试保留。`,
+    saveRetryFailed: '仍未保存，请再次重试。',
+    saveSessionMissing: '原计时分组已被删除，本次成绩仍在等待保存。',
     all: '全部',
     authError: '账号登录暂时不可用，请重试。',
     ao5: 'ao5',
