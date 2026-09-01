@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { exportSimSvg } from '@/app/[lang]/sim/sim_svg_export';
+import { exportSimSvg, simSceneSignature } from '@/app/[lang]/sim/sim_svg_export';
 
 const W = 200;
 const H = 200;
@@ -25,6 +25,21 @@ function pathNumbers(svg: string): number[] {
 }
 
 describe('exportSimSvg', () => {
+  it('场景签名能区分绕中心轴的正反旋转', () => {
+    const world = makeWorld();
+    const pivot = new THREE.Group();
+    pivot.add(new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.MeshBasicMaterial()));
+    world.scene.add(pivot);
+
+    pivot.rotation.y = Math.PI / 6;
+    world.scene.updateMatrixWorld(true);
+    const clockwise = simSceneSignature(world);
+    pivot.rotation.y = -Math.PI / 6;
+    world.scene.updateMatrixWorld(true);
+
+    expect(simSceneSignature(world)).not.toBe(clockwise);
+  });
+
   it('正对相机的平面渲染,大面片细分但同色合并为一条 path,屏幕坐标正确', () => {
     const world = makeWorld();
     const mesh = new THREE.Mesh(

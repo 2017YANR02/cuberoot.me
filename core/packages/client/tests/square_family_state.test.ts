@@ -156,6 +156,34 @@ describe.each(KINDS)('%s equal-sector state', (kind) => {
 });
 
 describe.each(KINDS)('%s geometry/state synchronization', (kind) => {
+  it('exports every schematic sticker with an outward-facing polygon', () => {
+    const cube = new SquareFamilyCube(kind);
+    let stickers = 0;
+    let schematicStickers = 0;
+    cube.traverse((object) => {
+      if (object.userData.simRole !== 'sticker') return;
+      stickers++;
+      const flat = object.userData.schematicPoly as number[] | undefined;
+      const outward = object.userData.simStickerNormal as THREE.Vector3 | undefined;
+      expect(flat, `${kind} ${object.userData.stickerKey} schematic polygon`).toBeDefined();
+      expect(outward, `${kind} ${object.userData.stickerKey} outward normal`).toBeDefined();
+      if (!flat || !outward) return;
+      schematicStickers++;
+      const points = Array.from({ length: flat.length / 3 }, (_, index) => (
+        new THREE.Vector3(flat[index * 3], flat[index * 3 + 1], flat[index * 3 + 2])
+      ));
+      const normal = new THREE.Vector3()
+        .subVectors(points[1], points[0])
+        .cross(new THREE.Vector3().subVectors(points[2], points[0]))
+        .normalize();
+      expect(normal.dot(outward.clone().normalize()), `${kind} ${object.userData.stickerKey} winding`)
+        .toBeCloseTo(1, 10);
+    });
+    expect(stickers).toBe(cube.spec.slotsPerLayer * 4 + 6);
+    expect(schematicStickers).toBe(stickers);
+    cube.dispose();
+  });
+
   it('keeps the physical top and bottom piece sets aligned after mixed moves', () => {
     const cube = new SquareFamilyCube(kind);
     const n = cube.spec.slotsPerLayer;

@@ -12,6 +12,12 @@ import './_raf_stub'; // 必须最先:nxn/cube 的 import 链在模块加载期�
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import Cube from '@/app/[lang]/sim/engine/nxn/cube';
+import SquareFamilyCube from '@/app/[lang]/sim/engine/squareFamily/SquareFamilyCube';
+import {
+  SQUARE_FAMILY_COLORS,
+  SQUARE_FAMILY_HALF_SIDE,
+} from '@/app/[lang]/sim/engine/squareFamily/squareFamilyGeometry';
+import type { SquareFamilyKind } from '@/app/[lang]/sim/engine/squareFamily/squareFamilyState';
 import { exportSimSvgSchematic, hasSchematicFacelets } from '@/app/[lang]/sim/sim_svg_export_schematic';
 import { buildPyraPiece, buildCore, EDGE_PAIRS, PYRA_A } from '@/app/[lang]/sim/engine/pyra/pyraGeometry';
 import {
@@ -555,6 +561,42 @@ describe('exportSimSvgSchematic — NxN (InstancedRenderer)', () => {
     const world = worldFor(scene, new THREE.Vector3(0, 0, 1), 400);
     expect(() => exportSimSvgSchematic({ world, maxFacelets: 4 }))
       .toThrow(/^SVG_TOO_COMPLEX/);
+  });
+});
+
+describe.each([
+  ['sq2', 12],
+  ['sq4', 20],
+] as const)('exportSimSvgSchematic — %s', (kind: SquareFamilyKind, sectors) => {
+  const hexOfInt = (n: number): string => `#${n.toString(16).padStart(6, '0')}`;
+
+  function buildSquareFamilyScene(): THREE.Scene {
+    const scene = new THREE.Scene();
+    scene.add(new SquareFamilyCube(kind));
+    return scene;
+  }
+
+  it(`solved 俯视:${sectors} 个顶层扇区全部可见`, () => {
+    const scene = buildSquareFamilyScene();
+    const world = worldFor(scene, new THREE.Vector3(0, 1, 0), SQUARE_FAMILY_HALF_SIDE * 4);
+    const svg = latticeExport({ world });
+    expect(faceletDs(svg)).toHaveLength(sectors);
+    expect(svg.toLowerCase()).toContain(hexOfInt(SQUARE_FAMILY_COLORS.U));
+    expect(svg.toLowerCase()).not.toContain(hexOfInt(SQUARE_FAMILY_COLORS.D));
+  });
+
+  it(`solved 斜视:顶面、两个侧面共 ${sectors * 2 + 3} 个可见小面`, () => {
+    const scene = buildSquareFamilyScene();
+    const world = worldFor(
+      scene,
+      new THREE.Vector3(1, 0.8, 1),
+      SQUARE_FAMILY_HALF_SIDE * 4.5,
+    );
+    const svg = latticeExport({ world });
+    expect(faceletDs(svg)).toHaveLength(sectors * 2 + 3);
+    expect(svg.toLowerCase()).toContain(hexOfInt(SQUARE_FAMILY_COLORS.U));
+    expect(svg.toLowerCase()).toContain(hexOfInt(SQUARE_FAMILY_COLORS.F));
+    expect(svg.toLowerCase()).toContain(hexOfInt(SQUARE_FAMILY_COLORS.R));
   });
 });
 

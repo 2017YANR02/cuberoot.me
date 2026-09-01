@@ -36,7 +36,7 @@ import { attachInteraction } from './worldInteraction';
 import HandsRig from './engine/hands/handsRig';
 import { loadSmplxFullBody } from './engine/hands/handModelMano';
 import { bspSceneAudit, exportSimSvgBsp } from './sim_svg_export_bsp';
-import { exportSimSvg } from './sim_svg_export';
+import { exportSimSvg, simSceneSignature, type SimSvgView } from './sim_svg_export';
 import { exportSimSvgSchematic, hasSchematicFacelets } from './sim_svg_export_schematic';
 import { renderCubeNetSvg } from '@/lib/cube-net-svg';
 import { exportSimPlanSvg } from './sim_plan_export';
@@ -1728,32 +1728,6 @@ export default function SimPage() {
     let stable = 0;
     let exportedSig = '';
     let disposed = false;
-    type SvgView = Pick<World, 'scene' | 'camera' | 'width' | 'height'>;
-    const sigOf = (world: SvgView): string => {
-      let h = 0;
-      const mix = (v: number): void => { h = (h * 31 + Math.round(v * 1000)) | 0; };
-      mix(world.width); mix(world.height);
-      const ce = world.camera.matrixWorld.elements;
-      mix(ce[12]); mix(ce[13]); mix(ce[14]);
-      world.scene.traverseVisible((o) => {
-        const m = o as THREE.Mesh;
-        if (!m.isMesh) return;
-        const e = m.matrixWorld.elements;
-        mix(e[12]); mix(e[13]); mix(e[14]); mix(e[0]); mix(e[5]); mix(e[9]);
-        const im = m as THREE.InstancedMesh;
-        if (im.isInstancedMesh) mix(im.instanceMatrix.version);
-        // twisty(cubing.js PG3D)转动/换色改的是顶点属性不是变换矩阵 —— 把
-        // position/color 的 version 掺进签名,静止检测才看得见它的变化。
-        const g = m.geometry as THREE.BufferGeometry | undefined;
-        if (g?.attributes) {
-          const pos = g.getAttribute('position');
-          if (pos) mix((pos as THREE.BufferAttribute).version);
-          const col = g.getAttribute('color');
-          if (col) mix((col as THREE.BufferAttribute).version);
-        }
-      });
-      return String(h);
-    };
     // twisty 拼图(PG 目录 / 自定义切割 / cubing.js 渲染的 fto)无引擎 world:伴图
     // 从 TwistyPlayer vantage 取 scene+camera,喂截图 SVG 同款投影导出器(painter,
     // 颜色 sRGB 直存)。vantage 异步解析,缓存供采样拍同步用;每拍都发起刷新(不只
@@ -1786,7 +1760,7 @@ export default function SimPage() {
           // in-between orientation, this prevents rebuilding every sticker object
           // at 7.5 Hz while the cube is idle (important for higher-order NxN).
           world.scene.updateMatrixWorld(true);
-          const sig = `picture|${nxn.order}|${sigOf(world)}`;
+          const sig = `picture|${nxn.order}|${simSceneSignature(world)}`;
           if (sig !== lastSig) { lastSig = sig; stable = 0; return; }
           if (stable < 1) { stable++; return; }
           if (sig === exportedSig) return;
@@ -1874,7 +1848,7 @@ export default function SimPage() {
           }
         }
         world.scene.updateMatrixWorld(true);
-        const sig = sigOf(world);
+        const sig = simSceneSignature(world);
         if (sig !== lastSig) { lastSig = sig; stable = 0; return; }
         if (stable < 1) { stable++; return; }
         if (sig === exportedSig) return;
@@ -1935,14 +1909,14 @@ export default function SimPage() {
       refreshTwistyView(tp); // 每拍刷新缓存(异步),本拍仍用手头这份
       if (!twistyView) return;
       const rect = twistyView.el.getBoundingClientRect();
-      const view: SvgView = {
+      const view: SimSvgView = {
         scene: twistyView.scene,
         camera: twistyView.camera,
         width: Math.max(1, Math.round(rect.width)),
         height: Math.max(1, Math.round(rect.height)),
       };
       view.scene.updateMatrixWorld(true);
-      const sig = sigOf(view);
+      const sig = simSceneSignature(view);
       if (sig !== lastSig) { lastSig = sig; stable = 0; return; }
       if (stable < 1) { stable++; return; }
       if (sig === exportedSig) return;

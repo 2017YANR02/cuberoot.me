@@ -124,8 +124,17 @@ function sideForOuterEdge(a: V2, b: V2): { normal: THREE.Vector3; color: number 
   return null;
 }
 
-function schematic(mesh: THREE.Mesh, points: THREE.Vector3[]): void {
-  mesh.userData.schematicPoly = points.flatMap((point) => [point.x, point.y, point.z]);
+function schematic(
+  mesh: THREE.Mesh,
+  points: readonly THREE.Vector3[],
+  outwardNormal: THREE.Vector3,
+): void {
+  const edgeA = new THREE.Vector3().subVectors(points[1], points[0]);
+  const edgeB = new THREE.Vector3().subVectors(points[2], points[0]);
+  const ordered = edgeA.cross(edgeB).dot(outwardNormal) >= 0
+    ? points
+    : points.slice().reverse();
+  mesh.userData.schematicPoly = ordered.flatMap((point) => [point.x, point.y, point.z]);
   mesh.userData.schematicInParent = true;
 }
 
@@ -155,7 +164,7 @@ function addHorizontalSticker(
     bodyMaterial,
     { stickerKey: key, simStickerNormal: normal },
   );
-  schematic(sticker, poly.map(([x, z]) => new THREE.Vector3(x, y, z)));
+  schematic(sticker, poly.map(([x, z]) => new THREE.Vector3(x, y, z)), normal);
   pivot.add(sticker);
 }
 
@@ -200,7 +209,7 @@ function addVerticalSticker(
     new THREE.Vector3(b[0], y0, b[1]),
     new THREE.Vector3(b[0], y1, b[1]),
     new THREE.Vector3(a[0], y1, a[1]),
-  ]);
+  ], side.normal);
   pivot.add(sticker);
 }
 
