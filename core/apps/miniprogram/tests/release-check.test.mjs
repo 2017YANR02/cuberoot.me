@@ -123,9 +123,12 @@ const validInput = {
 };
 
 describe('mini program release check', () => {
-  it('builds the public share cover from the canonical website icon', async () => {
+  it('builds the public share cover from its canonical source image', async () => {
     expect(BUILD_ASSETS).toHaveLength(1);
     expect(BUILD_ASSETS[0].output).toBe('assets/share-cover.png');
+    expect(BUILD_ASSETS[0].source.replaceAll('\\', '/')).toMatch(
+      /\/apps\/miniprogram\/assets\/share-cover\.png$/,
+    );
     const packageRoot = resolve(import.meta.dirname, '..');
     const coreRoot = resolve(packageRoot, '..', '..');
     const sharedRoot = resolve(coreRoot, resolveWorkspacePath('@cuberoot/shared'));
