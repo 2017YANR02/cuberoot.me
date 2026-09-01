@@ -464,6 +464,30 @@ export default function LandingSearch({
               抑制这些泛文本匹配类,否则 tagline/术语里碰巧含 "2026" 的会混进来 */}
           {!yearMatch && (
           <>
+          {algSetMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <Library size={14} strokeWidth={1.75} />
+                <h3>{tr({ zh: '公式库', en: 'Algorithms'
+                })}</h3>
+              </div>
+              <div className="landing-search-grid">
+                {algSetMatches.map(a => (
+                  <Link
+                    key={`${a.puzzle}/${a.setSlug}`}
+                    href={a.path}
+                    prefetch={false}
+                    className="landing-search-item"
+                    onClick={closeAfter}
+                  >
+                    <span className="landing-search-item-name">{tr({ zh: a.nameZh, en: a.nameEn })}</span>
+                    <span className="landing-search-item-meta">{a.puzzle}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
           {cardMatches.length > 0 && (
             <section className="landing-search-section">
               <div className="landing-search-section-header">
@@ -655,29 +679,6 @@ export default function LandingSearch({
             </section>
           )}
 
-          {algSetMatches.length > 0 && (
-            <section className="landing-search-section">
-              <div className="landing-search-section-header">
-                <Library size={14} strokeWidth={1.75} />
-                <h3>{tr({ zh: '公式库', en: 'Algorithms'
-                })}</h3>
-              </div>
-              <div className="landing-search-grid">
-                {algSetMatches.map(a => (
-                  <Link
-                    key={`${a.puzzle}/${a.setSlug}`}
-                    href={a.path}
-                    prefetch={false}
-                    className="landing-search-item"
-                    onClick={closeAfter}
-                  >
-                    <span className="landing-search-item-name">{tr({ zh: a.nameZh, en: a.nameEn })}</span>
-                    <span className="landing-search-item-meta">{a.puzzle}</span>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
           </>
           )}
 
