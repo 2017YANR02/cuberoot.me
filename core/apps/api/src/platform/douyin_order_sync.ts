@@ -1,4 +1,4 @@
-import { createHmac } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { platformQuery, platformTransaction } from './db.js';
 import { physicalBundleCredentialHash, revokePhysicalBundleInvite } from './physical_bundle.js';
 
@@ -21,6 +21,11 @@ interface DouyinOrder {
   shop_id?: string | number;
   pay_time?: string | number;
 }
+
+type DouyinWebhookResult = 'accepted' | 'disabled' | 'invalid_body' | 'unauthorized';
+
+let activeConfig: DouyinConfig | null = null;
+let triggerSync: (() => void) | null = null;
 
 function sortedJsonValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(sortedJsonValue);
@@ -47,6 +52,45 @@ export function doudianSign(
 ): string {
   const payload = `${appSecret}app_key${appKey}method${method}param_json${paramJson}timestamp${timestamp}v2${appSecret}`;
   return createHmac('sha256', appSecret).update(payload, 'utf8').digest('hex');
+}
+
+export function doudianEventSign(appId: string, appSecret: string, rawBody: string): string {
+  return createHmac('sha256', appSecret)
+    .update(`${appId}${rawBody}${appSecret}`, 'utf8')
+    .digest('hex');
+}
+
+export function acceptDouyinOrderWebhook(
+  rawBody: string,
+  appId: string,
+  eventSign: string,
+): DouyinWebhookResult {
+  if (!activeConfig || !triggerSync) return 'disabled';
+  if (appId !== activeConfig.appKey || !/^[0-9a-f]{64}$/i.test(eventSign)) return 'unauthorized';
+  const expected = doudianEventSign(appId, activeConfig.appSecret, rawBody);
+  if (!timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(eventSign, 'hex'))) return 'unauthorized';
+
+  let messages: unknown;
+  try {
+    messages = JSON.parse(rawBody);
+  } catch {
+    return 'invalid_body';
+  }
+  if (!Array.isArray(messages) || messages.length > 50) return 'invalid_body';
+
+  const matchesShop = messages.some((message) => {
+    if (!message || typeof message !== 'object') return false;
+    const data = (message as { data?: unknown }).data;
+    try {
+      const parsed = typeof data === 'string' ? JSON.parse(data) as unknown : data;
+      return Boolean(parsed && typeof parsed === 'object'
+        && String((parsed as { shop_id?: unknown }).shop_id ?? '') === activeConfig?.shopId);
+    } catch {
+      return false;
+    }
+  });
+  if (matchesShop) setTimeout(triggerSync, 0);
+  return 'accepted';
 }
 
 function requiredEnv(name: string): string | undefined {
@@ -90,7 +134,7 @@ function loadConfig(): DouyinConfig | null {
     shopId: values.DOUYIN_SHOP_ID!,
     productId: values.DOUYIN_COURSE_PRODUCT_ID!,
     courseId: values.DOUYIN_COURSE_ID!,
-    intervalMs: boundedIntegerEnv('DOUYIN_SYNC_INTERVAL_MINUTES', 15, 5, 1_440) * 60_000,
+    intervalMs: boundedIntegerEnv('DOUYIN_SYNC_INTERVAL_MINUTES', 5, 5, 1_440) * 60_000,
     lookbackSeconds: boundedIntegerEnv('DOUYIN_SYNC_LOOKBACK_HOURS', 48, 1, 2_160) * 3_600,
   };
 }
@@ -239,6 +283,7 @@ export function startDouyinOrderSync(): void {
     return;
   }
   if (!config) return;
+  activeConfig = config;
   let running = false;
   const run = async () => {
     if (running) return;
@@ -251,6 +296,7 @@ export function startDouyinOrderSync(): void {
       running = false;
     }
   };
+  triggerSync = () => void run();
   // ponytail: one process-local lock is enough for today's single API instance; use a DB lease if replicas are added.
   setTimeout(() => {
     void run();

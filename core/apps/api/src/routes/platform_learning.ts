@@ -14,6 +14,7 @@ import {
 } from '../platform/db.js';
 import { badRequest, conflict, notFound, PlatformApiError } from '../platform/errors.js';
 import { physicalBundleCredentialHash, revokePhysicalBundleInvite } from '../platform/physical_bundle.js';
+import { acceptDouyinOrderWebhook } from '../platform/douyin_order_sync.js';
 import { platformRouter, privateNoStore, publicCache } from '../platform/http.js';
 import {
   createPlatformMediaToken,
@@ -41,6 +42,19 @@ import {
 } from '../platform/validation.js';
 
 export const platformLearningRoutes = platformRouter();
+
+platformLearningRoutes.post('/integrations/douyin/events', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const result = acceptDouyinOrderWebhook(
+    await c.req.text(),
+    c.req.header('app-id') ?? '',
+    c.req.header('event-sign') ?? '',
+  );
+  if (result === 'accepted') return c.json({ code: 0, msg: 'success' });
+  if (result === 'disabled') return c.json({ code: 1, msg: 'disabled' }, 503);
+  if (result === 'invalid_body') return c.json({ code: 1, msg: 'invalid body' }, 400);
+  return c.json({ code: 1, msg: 'invalid signature' }, 401);
+});
 
 async function requireLessonAccess(
   actor: Awaited<ReturnType<typeof requirePlatformActor>>,
