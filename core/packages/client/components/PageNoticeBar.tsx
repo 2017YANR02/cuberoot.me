@@ -2,20 +2,19 @@
 
 // 每页顶部管理员通知条(维护中 / WIP / 已知 bug)。全站注入(见 app/[lang]/layout.tsx)。
 //   - 访客:看到匹配当前页的 enabled 通知,可关闭(内容变更后重新出现)。
-//   - 管理员:任意页顶部直接 添加 / 编辑 / 删除本页通知,作用路径默认当前页、可改 /* 覆盖全站。
+//   - 管理员:从桌宠打开新增编辑器;已有通知仍可在顶部直接编辑 / 删除。
 // 数据走 /v1/page-notices(公开读 + admin 写),鉴权 authHeaders(WCA OAuth / X-Admin-Key)。
-import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
 import { usePathname } from 'next/navigation';
-import { X, Pencil, Plus, Trash2, Laptop, Globe } from 'lucide-react';
+import { X, Pencil, Trash2 } from 'lucide-react';
 import { useIsAdmin } from '@/lib/auth-store';
-import { useLiveUrlSuffix } from '@/hooks/useLiveUrlSuffix';
 import { tr, T, useLang } from '@/i18n/tr';
 import BoolToggle from './BoolToggle';
 import { persistItem } from '@/lib/safe-storage';
 import {
   type PageNotice, type NoticeLevel, type NoticePlacement, type PageNoticeInput,
   fetchPageNotices, fetchAllPageNotices, savePageNotice, deletePageNotice,
-  pageKeyFromPathname, matchNotices,
+  PAGE_NOTICE_EDITOR_EVENT, pageKeyFromPathname, matchNotices,
 } from '@/lib/page-notices-api';
 import {
   ICONS, ICON_KEYS, LEVEL_ICON, COLOR_KEYS, isColorKey as isColor, colorVar, iconFor,
@@ -23,39 +22,6 @@ import {
 import './PageNoticeBar.css';
 
 const DISMISS_KEY = 'pn-dismissed';
-
-// 管理员本地 / 线上环境切换目标 origin(切换时保留当前 path+query+hash)。
-const LOCAL_ORIGIN = 'http://localhost:3000';
-const PROD_ORIGIN = 'https://cuberoot.me';
-
-// 管理员专用:在任意页原地切换 本地 ↔ 线上,便于调试对照。
-// 高亮当前所在环境(本地=琥珀、线上=绿),同时充当「我现在在哪个环境」的指示。
-// 两端都用真 <a>(跨 origin,故非 AppLink):支持中键 / Ctrl 点在新标签打开,本地与线上并排对比。
-// URL 走 useLiveUrlSuffix:本条通知栏常驻 layout,nuqs 的 shallow 写不会让它重渲染,
-// render 时读 window.location 会把 ?q=... 这类页内状态漏在快照外。
-function EnvSwitch() {
-  const rest = useLiveUrlSuffix();
-  if (!rest) return null; // SSR / 未 hydrate:还没有可用的 window.location
-  // hostname 不随页内状态变(换 origin 必然整页导航),render 时读即可。
-  const { hostname } = window.location;
-  const active: 'local' | 'prod' = hostname === 'localhost' || hostname === '127.0.0.1' ? 'local' : 'prod';
-  const opts = [
-    { env: 'local' as const, href: LOCAL_ORIGIN + rest, label: { en: 'Local', zh: '本地' }, Icon: Laptop },
-    { env: 'prod' as const, href: PROD_ORIGIN + rest, label: { en: 'Live', zh: '线上' }, Icon: Globe },
-  ];
-  return (
-    <div className="env-switch" role="group" aria-label={tr({ en: 'Switch environment', zh: '切换环境' })}>
-      {opts.map(({ env, href, label, Icon }) => (
-        <a key={env} href={href} data-env={env} title={tr(label)}
-          className={`env-switch-opt${env === active ? ' is-active' : ''}`}
-          aria-current={env === active ? 'page' : undefined}
-          aria-label={tr(label)}>
-          <Icon size={13} aria-hidden />
-        </a>
-      ))}
-    </div>
-  );
-}
 
 // 常用模板:点一下填 级别 + 图标 + 颜色 + 中英文,填完仍可自由改。
 // 颜色刻意八个各不相同(红/蓝/琥珀/青/紫/赤陶/绿/粉),让通知一眼能按语义区分,不再清一色蓝。
@@ -197,7 +163,7 @@ export default function PageNoticeBar() {
     });
   };
 
-  const openNew = async () => {
+  const openNew = useCallback(async () => {
     setErr(null);
     // 拉 manage(含 disabled)看本页 key 是否已有被关掉的通知,有则预填避免重复。
     let existing: PageNotice | undefined;
@@ -209,9 +175,9 @@ export default function PageNoticeBar() {
     setForm(existing
       ? formForNotice(existing)
       : { id: null, path: key, placement: 'page_top', level: 'info', icon: '', color: '', bodyZh: '', bodyEn: '', href: '', enabled: true, dismissible: true, startsAt: '', endsAt: '' });
-  };
+  }, [key]);
 
-  const openFeatured = async () => {
+  const openFeatured = useCallback(async () => {
     setErr(null);
     let existing: PageNotice | undefined;
     try {
@@ -222,7 +188,17 @@ export default function PageNoticeBar() {
     setForm(existing
       ? formForNotice(existing)
       : { id: null, path: '/', placement: 'home_featured', level: 'info', icon: 'megaphone', color: 'terracotta', bodyZh: '', bodyEn: '', href: '', enabled: true, dismissible: false, startsAt: '', endsAt: '' });
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const openEditor = (event: Event) => {
+      const placement = (event as CustomEvent<NoticePlacement>).detail;
+      void (placement === 'home_featured' ? openFeatured() : openNew());
+    };
+    window.addEventListener(PAGE_NOTICE_EDITOR_EVENT, openEditor);
+    return () => window.removeEventListener(PAGE_NOTICE_EDITOR_EVENT, openEditor);
+  }, [isAdmin, openFeatured, openNew]);
 
   const openEdit = (n: PageNotice) => {
     setErr(null);
@@ -278,14 +254,10 @@ export default function PageNoticeBar() {
 
   const matched = matchNotices(notices, key);
   const visible = matched.filter((n) => isAdmin || !(n.dismissible && dismissed[n.id] === n.updatedAt));
-  const hasExact = notices.some(
-    (n) => n.path === key && (n.placement ?? 'page_top') === 'page_top',
-  ); // 本页是否已有精确顶部通知 → 决定显 编辑 还是 添加
-
-  const renders = isAdmin || visible.length > 0;
+  const renders = form != null || visible.length > 0;
 
   // 把本条实际高度写进 --page-notice-h,供全屏页(position:fixed;inset:0,如 /sim /paint)
-  // 顶部让位——否则那些页会盖住整条通知栏(含管理员的 添加 / 环境切换)。无内容时置 0。
+  // 顶部让位——否则那些页会盖住通知或编辑器。无内容时置 0。
   const wrapRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const root = document.documentElement;
@@ -331,24 +303,6 @@ export default function PageNoticeBar() {
           </div>
         );
       })}
-
-      {isAdmin && !form && (
-        <div className="page-notice-adminbar">
-          {!hasExact && (
-            <button type="button" className="page-notice-add" onClick={openNew}>
-              <Plus size={13} aria-hidden />
-              <T en="Add notice for this page" zh="添加本页通知" />
-            </button>
-          )}
-          {key === '/' && (
-            <button type="button" className="page-notice-add" onClick={openFeatured}>
-              <Pencil size={13} aria-hidden />
-              <T en="Homepage feature" zh="首页焦点" />
-            </button>
-          )}
-          <EnvSwitch />
-        </div>
-      )}
 
       {isAdmin && form && (
         <div className="page-notice-editor">
