@@ -35,6 +35,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import { TimerReconstructMetrics } from '@cuberoot/timer-ui';
 import { Forward, Check, ChevronDown, ChevronRight, ThumbsUp, ThumbsDown, Info } from 'lucide-react';
 import type { Solve, EventId } from '../_lib/types';
 import { effectiveMs } from '../_lib/types';
@@ -433,32 +434,7 @@ export default function ReconstructReport({
         </div>
       )}
 
-      {/* 这里以前第一张是 HTM 卡(步数 + 步/秒)。删了:顶上那排摘要里「步数」和
-          「TPS」就是这两个数,同一页上写两遍。QTM 留着 —— 它数的是四分之一圈,
-          和 HTM 不是同一个口径。 */}
-      <div className="reconstruct-stats">
-        <div className="reconstruct-stat">
-          <div className="reconstruct-stat-num">{slices.qtmCount}</div>
-          <div className="reconstruct-stat-label">QTM</div>
-          <div className="reconstruct-stat-sub">{slices.qtps.toFixed(2)} {tr({ zh: '步/秒', en: 'tps' })}</div>
-        </div>
-        <div className="reconstruct-stat">
-          <div className="reconstruct-stat-num">{formatSec(slices.firstMoveLatencyMs)}</div>
-          <div className="reconstruct-stat-label">{tr({ zh: '首动延迟', en: 'First move'
-          })}</div>
-          <div className="reconstruct-stat-sub">
-            {memoMs !== undefined ? tr({ zh: '记忆后', en: 'after memo'
-                                    }) : tr({ zh: '从计时开始', en: 'from start'
-                                        })}
-          </div>
-        </div>
-        <div className="reconstruct-stat">
-          <div className="reconstruct-stat-num">{formatSec(slices.longestPauseMs)}</div>
-          <div className="reconstruct-stat-label">{tr({ zh: '最长停顿', en: 'Longest pause'
-          })}</div>
-          <div className="reconstruct-stat-sub">{slices.pauseCount} × &gt;0.5s</div>
-        </div>
-      </div>
+      <TimerReconstructMetrics localize={tr} metrics={slices} />
     </>
   );
 

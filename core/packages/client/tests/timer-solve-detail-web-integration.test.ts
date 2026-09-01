@@ -5,6 +5,14 @@ const source = readFileSync(
   new URL('../app/[lang]/timer/_components/SolveModal.tsx', import.meta.url),
   'utf8',
 );
+const reportSource = readFileSync(
+  new URL('../app/[lang]/timer/_components/ReconstructReport.tsx', import.meta.url),
+  'utf8',
+);
+const reportCss = readFileSync(
+  new URL('../app/[lang]/timer/_components/reconstruct.css', import.meta.url),
+  'utf8',
+);
 
 describe('Web solve detail shared integration', () => {
   it('keeps only Web adapters around the canonical detail UI', () => {
@@ -14,5 +22,8 @@ describe('Web solve detail shared integration', () => {
     expect(source).toContain('<ReconstructReport');
     expect(source).not.toMatch(/function (StageSplits|BldSplits|MbldBreakdown)/);
     expect(source).not.toContain('stage-splits-table');
+    expect(reportSource.match(/<TimerReconstructMetrics/g)).toHaveLength(1);
+    expect(reportSource).toContain('metrics={slices}');
+    expect(reportCss).not.toContain('reconstruct-stats');
   });
 });
