@@ -1,6 +1,6 @@
-# CubeRoot 微信小程序
+# CubeRoot 微信 / 抖音小程序
 
-现役原生小程序外壳。成熟业务页面通过 `web-view` 复用网站运行界面，不导入 Web 源码；微信登录和未来的蓝牙等平台能力使用原生实现。`package.json`、`src/`、`project.config.json` 与 [`../../docs/MINIPROGRAM.md`](../../docs/MINIPROGRAM.md) 是局部事实源。
+微信与抖音共用这一份原生外壳源码。成熟业务页面通过 `web-view` 复用网站运行界面，不导入 Web 源码；登录、BLE 和网页桥接只在平台适配层分流。`package.json`、`src/`、两个项目配置模板与 [`../../docs/MINIPROGRAM.md`](../../docs/MINIPROGRAM.md) 是局部事实源。
 
 ## 开发
 
@@ -8,14 +8,15 @@
 
 ```powershell
 pnpm --filter @cuberoot/miniprogram dev
-pnpm --filter @cuberoot/miniprogram check
+pnpm --filter @cuberoot/miniprogram check:all
 ```
 
-微信开发者工具导入本目录，工具会读取 `dist/`。开发监听会处理 TS、WXML、WXSS 和 JSON 的变化。
+微信开发者工具导入本目录并读取 `dist/`；抖音开发者工具直接导入 `dist-douyin/`。`check:all` 只跑一次类型检查和测试，再构建两个目标；单独检查抖音时运行 `check:douyin`。
+抖音构建后可打开 `.tmp/wx-to-tt-log/__wxToTT/report/index.html` 查看官方转换器的逐文件报告；它包含本机路径并且每次可重建，因此不提交生成页。
 构建会先验证本机项目配置和全部源码 JSON，并在 `.tmp` 生成完整候选产物后再替换 `dist/`；配置或编译失败时保留上一份可用产物和小程序身份。
 跨包源码依赖由 esbuild 的实际解析图统一驱动构建指纹和开发监听；新增 `@cuberoot/shared` 子路径后不需要维护额外文件清单。
 
-首次构建可用 `WECHAT_MINI_APP_ID` 生成本机 `project.config.json`；后续构建会保留已有正式 AppID 和明确的数字基础库。没有配置时才使用游客 AppID。开发时可以使用测试身份，但 `release:check` 只接受 CubeRoot 官方小程序 AppID，避免把正式包上传到其他账号。
+首次构建可分别用 `WECHAT_MINI_APP_ID` 和 `DOUYIN_MINI_APP_ID` 生成并保留被忽略的本机项目配置。微信 `release:check` 只接受 CubeRoot 官方身份；抖音尚未做上传闸门，`check:douyin` 只证明工程产物可生成。
 
 ## 单一来源
 
@@ -23,15 +24,16 @@ pnpm --filter @cuberoot/miniprogram check
 - API 和网站域名：`src/lib/runtime-config.ts`
 - 网页加载状态：`src/lib/web-view-page.ts`
 - 登录与会话：`src/lib/auth.ts`
+- 平台 API、登录端点和网页标记：`src/lib/platform.ts`
 - 必须原生化的跨端纯逻辑：先提取到 `@cuberoot/shared`，确认有调用方后再添加依赖
 
-不要把网站页面再实现一遍。只有微信 API、离线能力或明确的性能需求无法通过 `web-view` 满足时，才新增原生页面。
+不要按平台复制页面。只有平台 API、离线能力或明确的性能需求无法通过 `web-view` 满足时，才新增原生页面。
 
 ## 安全和发布
 
-后端需要 `WECHAT_MINI_APP_ID` 和 `WECHAT_MINI_APP_SECRET`。AppSecret 只放服务端环境变量，不写入本目录、构建产物、URL 或文档。
+后端按目标需要 `WECHAT_MINI_APP_ID` / `WECHAT_MINI_APP_SECRET` 或 `DOUYIN_MINI_APP_ID` / `DOUYIN_MINI_APP_SECRET`。密钥只放服务端环境变量，不写入本目录、构建产物、URL 或文档。
 
-小程序后台必须配置 request 合法域名和业务域名。上传前选择稳定基础库，并在模拟器和真机各完成一次回归。
+两个平台后台都必须配置网络、业务域名和真实隐私声明。抖音登录会在用户手动同意用户协议与隐私政策后调用 `tt.login({ force: true })`，本机退出只清除本机小程序会话。抖音资质审核期间可以继续开发；正式 AppID、后台能力与域名配置、开发者工具和真机回归、平台审核全部完成前不得宣称上线。
 
 上传前必须在开发者工具确认稳定基础库，再运行：
 

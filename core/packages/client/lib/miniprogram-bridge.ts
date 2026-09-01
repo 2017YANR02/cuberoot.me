@@ -2,22 +2,49 @@
 
 import {
   loadWeChatJsSdk,
-  supportsWeChatMiniProgramNavigation,
-  type WeChatMiniProgramApi,
 } from '@/lib/wechat-js-sdk';
+
+export interface MiniProgramNavigationApi {
+  getEnv?(callback: (result: { miniprogram?: boolean }) => void): void;
+  navigateTo(options: {
+    url: string;
+    fail?(error: { errMsg?: string }): void;
+    success?(): void;
+  }): void;
+}
+
+interface MiniProgramWebViewSdk {
+  miniProgram?: MiniProgramNavigationApi;
+}
 
 declare global {
   interface Window {
     __wxjs_environment?: string;
+    tt?: MiniProgramWebViewSdk;
   }
 }
 
 const ENVIRONMENT_TIMEOUT_MS = 2_000;
+const DOUYIN_JSSDK_SRC = '/vendor/douyin-webview-jssdk-1.2.0.js';
+const SDK_LOAD_TIMEOUT_MS = 10_000;
+let douyinSdkPromise: Promise<MiniProgramWebViewSdk | null> | null = null;
+
+function supportsMiniProgramNavigation(
+  sdk: MiniProgramWebViewSdk | null | undefined,
+): sdk is MiniProgramWebViewSdk & { miniProgram: MiniProgramNavigationApi } {
+  return typeof sdk?.miniProgram?.navigateTo === 'function';
+}
+
+function isDouyinWebViewCandidate(): boolean {
+  if (typeof window === 'undefined') return false;
+  return /toutiaomicroapp/i.test(window.navigator?.userAgent ?? '')
+    || supportsMiniProgramNavigation(window.tt);
+}
 
 export function isMiniProgramWebView(): boolean {
   if (typeof window === 'undefined') return false;
   return window.__wxjs_environment === 'miniprogram'
-    || /miniProgram/i.test(window.navigator?.userAgent ?? '');
+    || /miniProgram|toutiaomicroapp/i.test(window.navigator?.userAgent ?? '');
 }
 
 /**
@@ -27,32 +54,59 @@ export function isMiniProgramWebView(): boolean {
 export function mayUseMiniProgramBridge(): boolean {
   if (typeof window === 'undefined') return false;
   return isMiniProgramWebView()
-    || /MicroMessenger/i.test(window.navigator?.userAgent ?? '')
-    || Boolean(window.wx && supportsWeChatMiniProgramNavigation(window.wx))
-    || Boolean(window.jWeixin && supportsWeChatMiniProgramNavigation(window.jWeixin));
+    || /MicroMessenger|toutiaomicroapp/i.test(window.navigator?.userAgent ?? '')
+    || supportsMiniProgramNavigation(window.tt)
+    || supportsMiniProgramNavigation(window.wx)
+    || supportsMiniProgramNavigation(window.jWeixin);
 }
 
-export function getInstalledMiniProgramNavigationApi(): WeChatMiniProgramApi | null {
+export function getInstalledMiniProgramNavigationApi(): MiniProgramNavigationApi | null {
   if (typeof window === 'undefined') return null;
-  const installed = [window.wx, window.jWeixin].find(
-    (sdk) => Boolean(sdk && supportsWeChatMiniProgramNavigation(sdk)),
-  );
-  if (installed && supportsWeChatMiniProgramNavigation(installed)) {
-    return installed.miniProgram;
-  }
-  return null;
+  return [window.tt, window.wx, window.jWeixin]
+    .find(supportsMiniProgramNavigation)?.miniProgram ?? null;
 }
 
-export async function loadMiniProgramNavigationApi(): Promise<WeChatMiniProgramApi | null> {
+async function loadDouyinJsSdk(): Promise<MiniProgramWebViewSdk | null> {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return null;
+  if (supportsMiniProgramNavigation(window.tt)) return window.tt;
+  if (douyinSdkPromise) return douyinSdkPromise;
+
+  douyinSdkPromise = new Promise((resolve) => {
+    const script = document.createElement('script');
+    let settled = false;
+    const finish = (): void => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      resolve(supportsMiniProgramNavigation(window.tt) ? window.tt : null);
+    };
+    const timeout = window.setTimeout(finish, SDK_LOAD_TIMEOUT_MS);
+    script.src = DOUYIN_JSSDK_SRC;
+    script.async = true;
+    script.onload = finish;
+    script.onerror = finish;
+    try {
+      document.head.appendChild(script);
+    } catch {
+      finish();
+    }
+  });
+  return douyinSdkPromise;
+}
+
+export async function loadMiniProgramNavigationApi(): Promise<MiniProgramNavigationApi | null> {
   const installed = getInstalledMiniProgramNavigationApi();
   if (installed) return installed;
+  if (isDouyinWebViewCandidate()) {
+    return (await loadDouyinJsSdk())?.miniProgram ?? null;
+  }
   return (
-    await loadWeChatJsSdk(supportsWeChatMiniProgramNavigation)
+    await loadWeChatJsSdk(supportsMiniProgramNavigation)
   )?.miniProgram ?? null;
 }
 
 export async function confirmMiniProgramEnvironment(
-  miniProgram: WeChatMiniProgramApi,
+  miniProgram: MiniProgramNavigationApi,
 ): Promise<boolean> {
   if (isMiniProgramWebView()) return true;
   const getEnv = miniProgram.getEnv;

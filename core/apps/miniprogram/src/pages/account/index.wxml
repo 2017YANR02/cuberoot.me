@@ -1,32 +1,51 @@
 <view wx:if="{{isTimelineEntry}}" class="page account-entry-page">
-  <text class="account-entry-copy" aria-role="status">点击右下角进入魔方根</text>
+  <text class="account-entry-copy" aria-role="status">{{copy.entryCopy}}</text>
 </view>
 
 <view wx:elif="{{loginRequired}}" class="page account-login-page">
   <text class="eyebrow">ACCOUNT</text>
-  <text class="page-title">我的</text>
-  <text class="page-intro">
-    登录后使用与网站相同的 CubeRoot 账号。已在网站通过微信登录过时，会自动识别为同一账号。
-  </text>
+  <text class="page-title">{{copy.pageTitle}}</text>
+  <text class="page-intro">{{loginIntro}}</text>
+  <view wx:if="{{requiresAgreement}}" class="account-policy">
+    <view class="account-policy-links">
+      <button
+        class="text-button account-policy-link"
+        hover-class="press-feedback"
+        bindtap="openPolicy"
+      >{{copy.userAgreementLabel}}</button>
+      <button
+        class="text-button account-policy-link"
+        hover-class="press-feedback"
+        bindtap="openPolicy"
+      >{{copy.privacyLabel}}</button>
+    </view>
+    <button
+      class="text-button account-consent-toggle"
+      aria-label="{{copy.agreementLabel}}"
+      aria-pressed="{{agreementAccepted}}"
+      hover-class="press-feedback"
+      bindtap="toggleAgreement"
+    >{{agreementAccepted ? '✓' : '○'}} {{copy.agreementLabel}}</button>
+  </view>
   <button
     wx:if="{{!loginStorageUnavailable}}"
     class="primary-button account-primary-button"
     aria-busy="{{loginBusy}}"
-    aria-label="{{loginBusy ? '微信登录处理中' : '微信登录'}}"
-    disabled="{{loginBusy}}"
+    aria-label="{{loginBusy ? loginButtonBusyLabel : loginButtonLabel}}"
+    disabled="{{loginBusy || (requiresAgreement && !agreementAccepted)}}"
     hover-class="press-feedback"
-    bindtap="loginWithWechat"
+    bindtap="loginWithMiniProgram"
   >
-    {{loginBusy ? '正在登录' : '微信登录'}}
+    {{loginBusy ? copy.signingInLabel : loginButtonLabel}}
   </button>
   <button
     wx:else
     class="primary-button account-primary-button"
-    aria-label="重新读取设备登录状态"
+    aria-label="{{copy.retrySessionAria}}"
     hover-class="press-feedback"
     bindtap="retryMiniProgramSession"
   >
-    重新读取
+    {{copy.retrySessionLabel}}
   </button>
   <text
     wx:if="{{loginError}}"
@@ -35,9 +54,7 @@
     aria-live="polite"
     aria-atomic="true"
   >{{loginError}}</text>
-  <text class="account-note">
-    不会读取微信昵称或手机号。无法获得 UnionID 时会停止登录，避免创建重复账号。
-  </text>
+  <text class="account-note">{{loginNote}}</text>
 </view>
 
 <view wx:else class="page account-user-page">
@@ -47,12 +64,17 @@
   <text wx:if="{{wcaId}}" class="account-user-meta">{{wcaId}}</text>
   <button
     class="primary-button account-primary-button"
-    aria-label="打开 CubeRoot 账号管理"
+    aria-label="{{copy.accountButtonAria}}"
     hover-class="press-feedback"
     bindtap="openAccount"
   >
-    打开账号管理
+    {{copy.accountButtonLabel}}
   </button>
+  <button
+    class="text-button account-logout-button"
+    hover-class="press-feedback"
+    bindtap="logout"
+  >{{copy.logoutLabel}}</button>
   <text
     wx:if="{{accountError}}"
     class="status-text status-text--error"
@@ -60,5 +82,5 @@
     aria-live="polite"
     aria-atomic="true"
   >{{accountError}}</text>
-  <text class="account-note">从右上角“…”可分享 CubeRoot 登录入口到朋友圈。</text>
+  <text class="account-note">{{shareNote}}</text>
 </view>

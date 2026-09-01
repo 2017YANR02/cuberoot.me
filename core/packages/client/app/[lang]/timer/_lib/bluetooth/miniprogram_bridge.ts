@@ -12,8 +12,8 @@ import {
   isMiniProgramWebView,
   loadMiniProgramNavigationApi,
   mayUseMiniProgramBridge,
+  type MiniProgramNavigationApi,
 } from '@/lib/miniprogram-bridge';
-import type { WeChatMiniProgramApi } from '@/lib/wechat-js-sdk';
 
 export { isMiniProgramWebView, mayUseMiniProgramBridge };
 
@@ -53,7 +53,7 @@ export async function connectMiniProgramCubeBridge(
   const loadedMiniProgramApi = getInstalledMiniProgramNavigationApi()
     ?? await loadMiniProgramNavigationApi();
   if (!loadedMiniProgramApi) throw new Error('MINIPROGRAM_BRIDGE_UNAVAILABLE');
-  const miniProgramApi: WeChatMiniProgramApi = loadedMiniProgramApi;
+  const miniProgramApi: MiniProgramNavigationApi = loadedMiniProgramApi;
   if (!isMiniProgramWebView() && !(await confirmMiniProgramEnvironment(miniProgramApi))) {
     throw new Error('NOT_MINIPROGRAM_WEBVIEW');
   }

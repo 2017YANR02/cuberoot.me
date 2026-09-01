@@ -1,3 +1,5 @@
+import { miniProgramApi } from '../platform';
+import { tr } from '../i18n';
 import {
   MOYU_GYRO_CHARACTERISTIC_UUID,
   MOYU_READ_CHARACTERISTIC_UUID,
@@ -9,7 +11,9 @@ import {
 } from '@cuberoot/shared/smart-cube/moyu';
 import {
   beginBleResourceCleanup,
+  bluetoothAdapterErrorMessage,
   claimBleResourceLease,
+  getBleSubscriptionType,
   ignoreBleFailure,
   invokeBleCleanupForLease,
   invokeBleForLease,
@@ -24,6 +28,7 @@ import {
   type BleConnectionStateChange,
   type BleResourceLease,
   type BleService,
+  type BleSubscriptionType,
   type CharacteristicValueChange,
   type DiscoveredDevice,
   type MiniProgramBleApi,
@@ -94,7 +99,7 @@ async function findMoyu(
     if (settled) return;
     timer = setTimeout(() => finish(new MoyuBleError(
       'device-not-found',
-      '未发现 MoYu AI 旧协议智能魔方',
+      tr({ en: 'No MoYu AI smart cube using the legacy protocol was found', zh: '未发现 MoYu AI 旧协议智能魔方' }),
     )), timeoutMs);
 
     const stop = (): Promise<unknown> => invokeBleCleanupForLease(
@@ -116,7 +121,7 @@ async function findMoyu(
       ? error
       : new MoyuBleError(
         'adapter-unavailable',
-        error instanceof Error ? error.message : '无法开始搜索智能魔方',
+        error instanceof Error ? error.message : tr({ en: 'Unable to start searching for a smart cube', zh: '无法开始搜索智能魔方' }),
         { cause: error },
       )));
   });
@@ -125,7 +130,7 @@ async function findMoyu(
 export async function connectMoyu(
   options: ConnectMoyuOptions = {},
 ): Promise<MoyuBleConnection> {
-  const api = options.api ?? (wx as unknown as MoyuBleApi);
+  const api = options.api ?? (miniProgramApi() as unknown as MoyuBleApi);
   const scanTimeoutMs = options.scanTimeoutMs ?? 10_000;
   if (!Number.isFinite(scanTimeoutMs) || scanTimeoutMs < 1_000 || scanTimeoutMs > 30_000) {
     throw new RangeError('scanTimeoutMs must be between 1000 and 30000.');
@@ -138,6 +143,9 @@ export async function connectMoyu(
   let turnCharacteristicId: string | null = null;
   let readCharacteristicId: string | null = null;
   let gyroCharacteristicId: string | null = null;
+  let turnSubscriptionType: BleSubscriptionType | null = null;
+  let readSubscriptionType: BleSubscriptionType | null = null;
+  let gyroSubscriptionType: BleSubscriptionType | null = null;
   let turnNotificationsEnabled = false;
   let readNotificationsEnabled = false;
   let gyroNotificationsEnabled = false;
@@ -158,8 +166,12 @@ export async function connectMoyu(
       if (stateListener) api.offBLEConnectionStateChange?.(stateListener);
       stateListener = null;
       try {
-        const disable = async (enabled: boolean, characteristicId: string | null): Promise<void> => {
-          if (!enabled || !connectedDeviceId || !serviceId || !characteristicId) return;
+        const disable = async (
+          enabled: boolean,
+          characteristicId: string | null,
+          subscriptionType: BleSubscriptionType | null,
+        ): Promise<void> => {
+          if (!enabled || !connectedDeviceId || !serviceId || !characteristicId || !subscriptionType) return;
           await ignoreBleFailure(() => invokeBleCleanupForLease(
             lease,
             (callbacks) => api.notifyBLECharacteristicValueChange({
@@ -168,12 +180,13 @@ export async function connectMoyu(
               deviceId: connectedDeviceId as string,
               serviceId: serviceId as string,
               state: false,
+              type: subscriptionType,
             }),
           ));
         };
-        await disable(turnNotificationsEnabled, turnCharacteristicId);
-        await disable(readNotificationsEnabled, readCharacteristicId);
-        await disable(gyroNotificationsEnabled, gyroCharacteristicId);
+        await disable(turnNotificationsEnabled, turnCharacteristicId, turnSubscriptionType);
+        await disable(readNotificationsEnabled, readCharacteristicId, readSubscriptionType);
+        await disable(gyroNotificationsEnabled, gyroCharacteristicId, gyroSubscriptionType);
         turnNotificationsEnabled = false;
         readNotificationsEnabled = false;
         gyroNotificationsEnabled = false;
@@ -203,7 +216,7 @@ export async function connectMoyu(
 
   const ensureConnected = (): void => {
     if (closing || !active) {
-      throw new MoyuBleError('connection-failed', '智能魔方连接已断开');
+      throw new MoyuBleError('connection-failed', tr({ en: 'Smart cube disconnected', zh: '智能魔方连接已断开' }));
     }
   };
 
@@ -225,7 +238,7 @@ export async function connectMoyu(
       adapterOpen = true;
     } catch (error) {
       if (error instanceof BleOperationAbortedError) throw error;
-      throw new MoyuBleError('adapter-unavailable', '蓝牙不可用，请开启系统蓝牙后重试', {
+      throw new MoyuBleError('adapter-unavailable', bluetoothAdapterErrorMessage(error), {
         cause: error,
       });
     }
@@ -252,13 +265,13 @@ export async function connectMoyu(
       );
     } catch (error) {
       if (error instanceof BleOperationAbortedError) throw error;
-      throw new MoyuBleError('connection-failed', '智能魔方连接失败', { cause: error });
+      throw new MoyuBleError('connection-failed', tr({ en: 'Failed to connect to the smart cube', zh: '智能魔方连接失败' }), { cause: error });
     }
     active = true;
     stateListener = (result): void => {
       if (active && !closing && result.deviceId === connectedDeviceId && !result.connected) {
         safeBleCallback(options.onDisconnect
-          ? () => options.onDisconnect?.('智能魔方连接已断开')
+          ? () => options.onDisconnect?.(tr({ en: 'Smart cube disconnected', zh: '智能魔方连接已断开' }))
           : undefined);
         void disconnect();
       }
@@ -273,7 +286,7 @@ export async function connectMoyu(
     ensureConnected();
     const service = services.services.find((candidate) =>
       normalizeBleUuid(candidate.uuid) === MOYU_SERVICE_UUID);
-    if (!service) throw new MoyuBleError('gatt-unavailable', '智能魔方通信服务不可用');
+    if (!service) throw new MoyuBleError('gatt-unavailable', tr({ en: 'Smart cube communication service is unavailable', zh: '智能魔方通信服务不可用' }));
     serviceId = service.uuid;
 
     const characteristics = await raceBleAbort(
@@ -289,15 +302,19 @@ export async function connectMoyu(
     const notifyCharacteristic = (uuid: string): BleCharacteristic | undefined => (
       characteristics.characteristics.find((candidate) =>
         normalizeBleUuid(candidate.uuid) === uuid
-        && Boolean(candidate.properties?.notify || candidate.properties?.indicate))
+        && Boolean(getBleSubscriptionType(candidate)))
     );
     const turn = notifyCharacteristic(MOYU_TURN_CHARACTERISTIC_UUID);
-    if (!turn) throw new MoyuBleError('gatt-unavailable', '智能魔方转动特征不可用');
+    const selectedTurnSubscriptionType = turn ? getBleSubscriptionType(turn) : undefined;
+    if (!turn || !selectedTurnSubscriptionType) throw new MoyuBleError('gatt-unavailable', tr({ en: 'Smart cube move characteristic is unavailable', zh: '智能魔方转动特征不可用' }));
     const read = notifyCharacteristic(MOYU_READ_CHARACTERISTIC_UUID);
     const gyro = notifyCharacteristic(MOYU_GYRO_CHARACTERISTIC_UUID);
     turnCharacteristicId = turn.uuid;
     readCharacteristicId = read?.uuid ?? null;
     gyroCharacteristicId = gyro?.uuid ?? null;
+    turnSubscriptionType = selectedTurnSubscriptionType;
+    readSubscriptionType = read ? getBleSubscriptionType(read) ?? null : null;
+    gyroSubscriptionType = gyro ? getBleSubscriptionType(gyro) ?? null : null;
 
     valueListener = (result): void => {
       if (!active || result.deviceId !== connectedDeviceId
@@ -317,11 +334,15 @@ export async function connectMoyu(
         deviceId: device.deviceId,
         serviceId: service.uuid,
         state: true,
+        type: selectedTurnSubscriptionType,
       })), options.signal);
     turnNotificationsEnabled = true;
 
-    const subscribeOptional = async (characteristic?: BleCharacteristic): Promise<boolean> => {
-      if (!characteristic) return false;
+    const subscribeOptional = async (
+      characteristic: BleCharacteristic | undefined,
+      subscriptionType: BleSubscriptionType | null,
+    ): Promise<boolean> => {
+      if (!characteristic || !subscriptionType) return false;
       try {
         await raceBleAbort(invokeBleForLease(lease, (callbacks) =>
           api.notifyBLECharacteristicValueChange({
@@ -330,6 +351,7 @@ export async function connectMoyu(
             deviceId: device.deviceId,
             serviceId: service.uuid,
             state: true,
+            type: subscriptionType,
           })), options.signal);
         ensureConnected();
         return true;
@@ -338,8 +360,8 @@ export async function connectMoyu(
         return false;
       }
     };
-    readNotificationsEnabled = await subscribeOptional(read);
-    gyroNotificationsEnabled = await subscribeOptional(gyro);
+    readNotificationsEnabled = await subscribeOptional(read, readSubscriptionType);
+    gyroNotificationsEnabled = await subscribeOptional(gyro, gyroSubscriptionType);
 
     return {
       deviceId: device.deviceId,

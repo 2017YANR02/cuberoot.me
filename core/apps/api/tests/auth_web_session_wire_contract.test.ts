@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
   checkRateLimit: vi.fn(),
   consumeMobileSessionTicket: vi.fn(),
   consumeWebSessionTicket: vi.fn(),
+  douyinMiniProgramConfigured: vi.fn(),
+  exchangeDouyinMiniProgramCode: vi.fn(),
   exchangeWechatMiniProgramCode: vi.fn(),
   getAccountBasicProfile: vi.fn(),
   getUserById: vi.fn(),
@@ -52,6 +54,16 @@ vi.mock('../src/utils/wechat_miniprogram.js', () => ({
   },
   wechatMiniProgramConfigured: mocks.wechatMiniProgramConfigured,
 }));
+vi.mock('../src/utils/douyin_miniprogram.js', () => ({
+  douyinMiniProgramConfigured: mocks.douyinMiniProgramConfigured,
+  exchangeDouyinMiniProgramCode: mocks.exchangeDouyinMiniProgramCode,
+  DouyinMiniProgramError: class DouyinMiniProgramError extends Error {
+    constructor(public readonly code: string, message: string) {
+      super(message);
+      this.name = 'DouyinMiniProgramError';
+    }
+  },
+}));
 vi.mock('../src/utils/web_session_ticket.js', () => ({
   consumeMobileSessionTicket: mocks.consumeMobileSessionTicket,
   consumeWebSessionTicket: mocks.consumeWebSessionTicket,
@@ -61,6 +73,7 @@ vi.mock('../src/utils/web_session_ticket.js', () => ({
 vi.mock('../src/utils/app_user_auth.js', () => ({ requireAppUserId: mocks.requireAppUserId }));
 
 import { accountAuthRoutes } from '../src/routes/account_auth.js';
+import { DouyinMiniProgramError } from '../src/utils/douyin_miniprogram.js';
 import { WechatMiniProgramError } from '../src/utils/wechat_miniprogram.js';
 
 const account = {
@@ -113,6 +126,46 @@ describe('auth route wire contracts', () => {
     expect(body).toEqual({ token, user: publicAccount, isNew: true });
     expect(decodeWebSession(body)).toEqual({ token, user: publicAccount });
     expect(mocks.loginWithIdentity).toHaveBeenCalledWith('wechat', 'unionid-1', { name: '' });
+  });
+
+  it('uses only Douyin openid in the existing identity and session flow', async () => {
+    mocks.douyinMiniProgramConfigured.mockReturnValue(true);
+    mocks.exchangeDouyinMiniProgramCode.mockResolvedValue({ openid: 'douyin-openid-1' });
+    mocks.loginWithIdentity.mockResolvedValue({ user: account, isNew: true });
+
+    const response = await accountAuthRoutes.request('/auth/douyin/miniprogram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: 'douyin-code' }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ token, user: publicAccount, isNew: true });
+    expect(mocks.loginWithIdentity).toHaveBeenCalledWith(
+      'douyin',
+      'douyin-openid-1',
+      { name: '' },
+    );
+  });
+
+  it('maps an expired Douyin code to the stable auth error envelope', async () => {
+    mocks.douyinMiniProgramConfigured.mockReturnValue(true);
+    mocks.exchangeDouyinMiniProgramCode.mockRejectedValue(
+      new DouyinMiniProgramError('invalid-code', 'expired code'),
+    );
+
+    const response = await accountAuthRoutes.request('/auth/douyin/miniprogram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: 'douyin-code' }),
+    });
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({
+      code: 'INVALID_DOUYIN_CODE',
+      message: 'invalid douyin code',
+      error: 'invalid douyin code',
+    });
   });
 
   it('returns a decodable short-lived ticket envelope', async () => {

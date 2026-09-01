@@ -1,6 +1,10 @@
+import { tr } from '../i18n';
+
 export interface BleFailure {
-  errCode?: number;
+  errCode?: number | string;
   errMsg?: string;
+  errNo?: number | string;
+  errorCode?: number | string;
 }
 
 export interface BleCallbacks<T> {
@@ -30,6 +34,16 @@ export interface BleCharacteristic {
     writeNoResponse?: boolean;
   };
   uuid: string;
+}
+
+export type BleSubscriptionType = 'indication' | 'notification';
+
+export function getBleSubscriptionType(
+  characteristic: BleCharacteristic,
+): BleSubscriptionType | undefined {
+  if (characteristic.properties?.notify) return 'notification';
+  if (characteristic.properties?.indicate) return 'indication';
+  return undefined;
 }
 
 export interface CharacteristicValueChange {
@@ -66,7 +80,10 @@ const BLE_RESOURCE_LEASE_STATES = new WeakMap<BleResourceLease, BleResourceState
 
 export class BleResourceBusyError extends Error {
   constructor() {
-    super('蓝牙资源仍在清理，请稍后重试；若持续无响应，请重启小程序');
+    super(tr({
+      en: 'Bluetooth resources are still being released. Try again shortly. If it remains unresponsive, restart the Mini Program.',
+      zh: '蓝牙资源仍在清理，请稍后重试；若持续无响应，请重启小程序',
+    }));
     this.name = 'BleResourceBusyError';
   }
 }
@@ -167,6 +184,7 @@ export interface MiniProgramBleApi {
     deviceId: string;
     serviceId: string;
     state: boolean;
+    type: BleSubscriptionType;
   } & BleCallbacks<BleFailure>): void;
   readBLECharacteristicValue?(options: {
     characteristicId: string;
@@ -195,7 +213,7 @@ export interface MiniProgramBleApi {
 
 export class BleOperationAbortedError extends Error {
   constructor() {
-    super('蓝牙连接已取消');
+    super(tr({ en: 'Bluetooth connection canceled', zh: '蓝牙连接已取消' }));
     this.name = 'BleOperationAbortedError';
   }
 }
@@ -221,9 +239,54 @@ export function waitForBleCleanupDrain(
 
 export class BleOperationTimeoutError extends Error {
   constructor() {
-    super('微信蓝牙接口响应超时，请重试');
+    super(tr({ en: 'The Mini Program Bluetooth API timed out. Try again.', zh: '小程序蓝牙接口响应超时，请重试' }));
     this.name = 'BleOperationTimeoutError';
   }
+}
+
+export class BleApiError extends Error {
+  readonly errCode?: number | string;
+  readonly errNo?: number | string;
+  readonly errorCode?: number | string;
+
+  constructor(failure: BleFailure) {
+    super(failure.errMsg ?? tr({
+      en: 'The Mini Program Bluetooth API call failed',
+      zh: '小程序蓝牙接口调用失败',
+    }));
+    this.name = 'BleApiError';
+    this.errCode = failure.errCode;
+    this.errNo = failure.errNo;
+    this.errorCode = failure.errorCode;
+  }
+}
+
+function numericBleErrorCodes(error: unknown): number[] {
+  if (!error || typeof error !== 'object') return [];
+  const failure = error as Pick<BleFailure, 'errCode' | 'errNo' | 'errorCode'>;
+  return [failure.errorCode, failure.errCode, failure.errNo]
+    .map(Number)
+    .filter(Number.isFinite);
+}
+
+export function bluetoothAdapterErrorMessage(error: unknown): string {
+  const codes = numericBleErrorCodes(error);
+  if (codes.includes(186679) || codes.includes(10202)) {
+    return tr({
+      en: "Bluetooth use is not declared in this Mini Program's privacy agreement. Contact the developer.",
+      zh: '小程序尚未在隐私协议中声明蓝牙用途，请联系开发者',
+    });
+  }
+  if (codes.includes(186680) || codes.includes(10201)) {
+    return tr({
+      en: 'Bluetooth privacy permission is not authorized. Allow it and try again.',
+      zh: '蓝牙隐私权限尚未授权，请授权后重试',
+    });
+  }
+  return tr({
+    en: 'Bluetooth is unavailable. Turn on Bluetooth and try again.',
+    zh: '蓝牙不可用，请开启系统蓝牙后重试',
+  });
 }
 
 export function invokeBle<T>(
@@ -286,7 +349,7 @@ function invokeBleInternal<T>(
           settleNative();
           settle(
             'failure',
-            () => reject(new Error(error.errMsg ?? '微信蓝牙接口调用失败')),
+            () => reject(new BleApiError(error)),
           );
         },
       });

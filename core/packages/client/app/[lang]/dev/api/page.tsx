@@ -78,6 +78,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'POST', p: '/v1/auth/refresh', g: 'login', zh: '刷新 JWT', en: 'Refresh JWT' },
   { d: 'auth', m: 'GET', p: '/v1/auth/me', g: 'login', zh: '当前登录用户信息', en: 'Current signed-in user' },
   { d: 'auth', m: 'POST', p: '/v1/auth/wechat/miniprogram', g: 'public', zh: '用小程序登录码换取 UnionID 并签发 JWT', en: 'Exchange a Mini Program login code for UnionID and issue a JWT' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/douyin/miniprogram', g: 'public', zh: '用抖音小程序登录码换取 openid 并签发 JWT', en: 'Exchange a Douyin Mini Program login code for openid and issue a JWT' },
   { d: 'auth', m: 'POST', p: '/v1/auth/web-session/ticket', g: 'login', zh: '为小程序 web-view 签发 90 秒单次网页登录票据', en: 'Issue a 90-second single-use web session ticket for a Mini Program web-view' },
   { d: 'auth', m: 'POST', p: '/v1/auth/web-session/exchange', g: 'public', zh: '原子核销单次票据并签发网站 JWT', en: 'Atomically consume a single-use ticket and issue a website JWT' },
   { d: 'auth', m: 'POST', p: '/v1/auth/mobile-session/ticket', g: 'login', c: 'no-store', zh: '网站登录态签发绑定 PKCE 的 90 秒移动端票据', en: 'Issue a 90-second PKCE-bound mobile ticket from a website session' },

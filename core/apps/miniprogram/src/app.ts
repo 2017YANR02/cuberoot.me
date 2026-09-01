@@ -2,12 +2,15 @@ import {
   createPlatformActionGuard,
   PLATFORM_INTERACTION_LOCK_TIMEOUT_MS,
 } from './lib/platform-action-guard';
+import { applyLocalizedTabBar, tr } from './lib/i18n';
+import { miniProgramApi } from './lib/platform';
 
 export function setupAppUpdate(): void {
-  if (typeof wx.getUpdateManager !== 'function') return;
+  const api = miniProgramApi();
+  if (typeof api.getUpdateManager !== 'function') return;
 
   try {
-    const updateManager = wx.getUpdateManager();
+    const updateManager = api.getUpdateManager();
     const updatePrompts = createPlatformActionGuard(
       PLATFORM_INTERACTION_LOCK_TIMEOUT_MS,
     );
@@ -19,8 +22,8 @@ export function setupAppUpdate(): void {
       const promptAttempt = updatePrompts.begin(updatePromptOwner);
       if (promptAttempt === null) {
         try {
-          wx.showToast({
-            title: '重开小程序更新',
+          api.showToast({
+            title: tr({ en: 'Reopen to update', zh: '重开小程序更新' }),
             icon: 'none',
           });
         } catch {
@@ -30,11 +33,14 @@ export function setupAppUpdate(): void {
       }
       let updateApplyStarted = false;
       try {
-        wx.showModal({
-          title: '新版本已准备好',
-          content: '重启后即可使用最新版本。',
-          confirmText: '立即重启',
-          cancelText: '稍后',
+        api.showModal({
+          title: tr({ en: 'Update ready', zh: '新版本已准备好' }),
+          content: tr({
+            en: 'Restart now to use the latest version.',
+            zh: '重启后即可使用最新版本。',
+          }),
+          confirmText: tr({ en: 'Restart', zh: '立即重启' }),
+          cancelText: tr({ en: 'Later', zh: '稍后' }),
           success(result) {
             if (!updatePrompts.settle(updatePromptOwner, promptAttempt)) return;
             updatePromptResolved = true;
@@ -59,8 +65,8 @@ export function setupAppUpdate(): void {
       if (updateFailureShown) return;
       updateFailureShown = true;
       try {
-        wx.showToast({
-          title: '更新失败，请稍后重试',
+        api.showToast({
+          title: tr({ en: 'Update failed. Try again later.', zh: '更新失败，请稍后重试' }),
           icon: 'none',
         });
       } catch {
@@ -75,6 +81,7 @@ export function setupAppUpdate(): void {
 
 App({
   onLaunch() {
+    applyLocalizedTabBar();
     setupAppUpdate();
   },
   globalData: {},

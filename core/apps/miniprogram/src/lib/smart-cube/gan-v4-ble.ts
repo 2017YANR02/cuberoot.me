@@ -1,3 +1,5 @@
+import { miniProgramApi } from '../platform';
+import { tr } from '../i18n';
 import {
   GAN_V4_NOTIFY_CHARACTERISTIC_UUID,
   GAN_V4_SERVICE_UUID,
@@ -39,8 +41,10 @@ import {
 } from '@cuberoot/shared/smart-cube/gan-v3';
 import {
   beginBleResourceCleanup,
+  bluetoothAdapterErrorMessage,
   claimBleResourceLease,
   createBleNativeOperationQueue,
+  getBleSubscriptionType,
   ignoreBleFailure,
   invokeBleCleanupForLease,
   invokeBleForLease,
@@ -59,6 +63,7 @@ import {
   type DiscoveredDevice,
   type MiniProgramBleApi,
   type BleResourceLease,
+  type BleSubscriptionType,
 } from './ble-api';
 
 // Keep the historical v4 file/API name stable for session callers; this adapter
@@ -203,8 +208,14 @@ async function findGan(
     timer = setTimeout(() => finish(new GanV4BleError(
       sawGan ? 'mac-unavailable' : 'device-not-found',
       sawGan
-        ? '已发现 GAN，但未读取到设备地址。请让魔方保持唤醒并重新搜索'
-        : '未发现 GAN 智能魔方，请唤醒魔方后重试',
+        ? tr({
+          en: 'GAN was found, but its device address could not be read. Keep the cube awake and search again.',
+          zh: '已发现 GAN，但未读取到设备地址。请让魔方保持唤醒并重新搜索',
+        })
+        : tr({
+          en: 'No GAN smart cube found. Wake the cube and try again.',
+          zh: '未发现 GAN 智能魔方，请唤醒魔方后重试',
+        }),
     )), timeoutMs);
 
     const stopDiscovery = (): Promise<unknown> => invokeBleCleanupForLease(
@@ -230,7 +241,10 @@ async function findGan(
       }
       finish(new GanV4BleError(
         'adapter-unavailable',
-        error instanceof Error ? error.message : '无法开始搜索 GAN 智能魔方',
+        error instanceof Error ? error.message : tr({
+          en: 'Unable to start searching for a GAN smart cube',
+          zh: '无法开始搜索 GAN 智能魔方',
+        }),
         { cause: error },
       ));
     });
@@ -240,7 +254,7 @@ async function findGan(
 export async function connectGanV4(
   options: ConnectGanV4Options = {},
 ): Promise<GanV4BleConnection> {
-  const api = options.api ?? (wx as unknown as MiniProgramBleApi);
+  const api = options.api ?? (miniProgramApi() as unknown as MiniProgramBleApi);
   const scanTimeoutMs = options.scanTimeoutMs ?? 12_000;
   if (!Number.isFinite(scanTimeoutMs) || scanTimeoutMs < 1_000 || scanTimeoutMs > 30_000) {
     throw new RangeError('scanTimeoutMs must be between 1000 and 30000.');
@@ -250,10 +264,11 @@ export async function connectGanV4(
   let adapterOpen = false;
   let active = false;
   let connectedDeviceId: string | null = null;
-  let deviceName = 'GAN 智能魔方';
+  let deviceName = tr({ en: 'GAN smart cube', zh: 'GAN 智能魔方' });
   let serviceId: string | null = null;
   let writeCharacteristicId: string | null = null;
   let notifyCharacteristicId: string | null = null;
+  let notifySubscriptionType: BleSubscriptionType | null = null;
   let notificationsEnabled = false;
   let notificationListener: ((result: CharacteristicValueChange) => void) | null = null;
   let connectionStateListener: ((result: BleConnectionStateChange) => void) | null = null;
@@ -288,7 +303,8 @@ export async function connectGanV4(
           // transport quarantined until its real callback arrives, even if the
           // public write promise has already timed out.
           await pendingWrites;
-          if (notificationsEnabled && connectedDeviceId && serviceId && notifyCharacteristicId) {
+          const subscriptionType = notifySubscriptionType;
+          if (notificationsEnabled && connectedDeviceId && serviceId && notifyCharacteristicId && subscriptionType) {
             await ignoreBleFailure(
               () => invokeBleCleanupForLease(lease, (callbacks) => api.notifyBLECharacteristicValueChange({
                 ...callbacks,
@@ -296,6 +312,7 @@ export async function connectGanV4(
                 deviceId: connectedDeviceId as string,
                 serviceId: serviceId as string,
                 state: false,
+                type: subscriptionType,
               })),
             );
             notificationsEnabled = false;
@@ -346,7 +363,7 @@ export async function connectGanV4(
       adapterOpen = true;
     } catch (error) {
       if (error instanceof BleOperationAbortedError) throw error;
-      throw new GanV4BleError('adapter-unavailable', '蓝牙不可用，请开启系统蓝牙后重试', {
+      throw new GanV4BleError('adapter-unavailable', bluetoothAdapterErrorMessage(error), {
         cause: error,
       });
     }
@@ -377,12 +394,18 @@ export async function connectGanV4(
       );
     } catch (error) {
       if (error instanceof BleOperationAbortedError) throw error;
-      throw new GanV4BleError('connection-failed', 'GAN 智能魔方连接失败', { cause: error });
+      throw new GanV4BleError('connection-failed', tr({
+        en: 'Failed to connect to the GAN smart cube',
+        zh: 'GAN 智能魔方连接失败',
+      }), { cause: error });
     }
     active = true;
     connectionStateListener = (result): void => {
       if (result.deviceId === connectedDeviceId && !result.connected) {
-        reportUnexpectedDisconnect('GAN 智能魔方连接已断开');
+        reportUnexpectedDisconnect(tr({
+          en: 'GAN smart cube disconnected',
+          zh: 'GAN 智能魔方连接已断开',
+        }));
       }
     };
     api.onBLEConnectionStateChange?.(connectionStateListener);
@@ -397,8 +420,8 @@ export async function connectGanV4(
       ? services.services.find((candidate) =>
         normalizeBleUuid(candidate.uuid) === protocol.serviceUuid)
       : undefined;
-    if (!service) throw new GanV4BleError('gatt-unavailable', 'GAN 通信服务不可用');
-    if (!protocol) throw new GanV4BleError('gatt-unavailable', 'GAN 协议不可识别');
+    if (!service) throw new GanV4BleError('gatt-unavailable', tr({ en: 'GAN communication service is unavailable', zh: 'GAN 通信服务不可用' }));
+    if (!protocol) throw new GanV4BleError('gatt-unavailable', tr({ en: 'GAN protocol was not recognized', zh: 'GAN 协议不可识别' }));
     serviceId = service.uuid;
 
     const characteristics = await raceBleAbort(invokeBleForLease<{ characteristics: BleCharacteristic[] }>(lease, (callbacks) => api.getBLEDeviceCharacteristics({
@@ -411,12 +434,16 @@ export async function connectGanV4(
       && Boolean(candidate.properties?.write || candidate.properties?.writeNoResponse));
     const notifyCharacteristic = characteristics.characteristics.find((candidate) =>
       normalizeBleUuid(candidate.uuid) === protocol.notifyCharacteristicUuid
-      && Boolean(candidate.properties?.notify || candidate.properties?.indicate));
-    if (!writeCharacteristic || !notifyCharacteristic) {
-      throw new GanV4BleError('gatt-unavailable', 'GAN 通信特征不可用');
+      && Boolean(getBleSubscriptionType(candidate)));
+    const subscriptionType = notifyCharacteristic
+      ? getBleSubscriptionType(notifyCharacteristic)
+      : undefined;
+    if (!writeCharacteristic || !notifyCharacteristic || !subscriptionType) {
+      throw new GanV4BleError('gatt-unavailable', tr({ en: 'GAN communication characteristic is unavailable', zh: 'GAN 通信特征不可用' }));
     }
     writeCharacteristicId = writeCharacteristic.uuid;
     notifyCharacteristicId = notifyCharacteristic.uuid;
+    notifySubscriptionType = subscriptionType;
 
     const cipher = protocol.family === 'v4'
       ? createGanV4Cipher(discovery.mac)
@@ -426,7 +453,7 @@ export async function connectGanV4(
     const sendCommand = (command: Uint8Array): Promise<void> => {
       return writeQueue.enqueue(() => {
         if (closing || !connectedDeviceId || !serviceId || !writeCharacteristicId) {
-          throw new GanV4BleError('connection-failed', 'GAN 智能魔方连接已断开');
+          throw new GanV4BleError('connection-failed', tr({ en: 'GAN smart cube disconnected', zh: 'GAN 智能魔方连接已断开' }));
         }
         const encrypted = cipher.encrypt(command);
         return invokeBleForLease(lease, (callbacks) => api.writeBLECharacteristicValue({
@@ -562,7 +589,10 @@ export async function connectGanV4(
         recordDecodeFailure();
       }
       if (badFrameCount() >= 5) {
-        reportUnexpectedDisconnect('GAN 通信数据连续异常，请重新连接');
+        reportUnexpectedDisconnect(tr({
+          en: 'Repeated invalid GAN data. Reconnect the cube.',
+          zh: 'GAN 通信数据连续异常，请重新连接',
+        }));
       }
     };
     api.onBLECharacteristicValueChange(notificationListener);
@@ -572,6 +602,7 @@ export async function connectGanV4(
       deviceId: discovery.device.deviceId,
       serviceId: service.uuid,
       state: true,
+      type: subscriptionType,
     })), options.signal);
     notificationsEnabled = true;
     for (const command of initialCommands) await sendCommand(command);

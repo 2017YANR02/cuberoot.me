@@ -28,6 +28,25 @@
   width: 100%;
 }
 
+.account-policy {
+  margin-top: 24rpx;
+}
+
+.account-policy-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.account-policy-link {
+  flex: none;
+}
+
+.account-consent-toggle,
+.account-logout-button {
+  margin-top: 8rpx;
+}
+
 .account-note {
   font-size: 24rpx;
   line-height: 1.6;

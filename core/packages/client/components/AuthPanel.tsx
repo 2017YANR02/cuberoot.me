@@ -58,6 +58,9 @@ const WcaGlyph = ({ size = 16 }: { size?: number }) => (
 const WechatGlyph = ({ size = 16 }: { size?: number }) => <SiWechat size={size} color="#07C160" aria-hidden="true" />;
 const QqGlyph = ({ size = 16 }: { size?: number }) => <SiQq size={size} color="#1EBAFC" aria-hidden="true" />;
 const AlipayGlyph = ({ size = 16 }: { size?: number }) => <SiAlipay size={size} color="#1677FF" aria-hidden="true" />;
+const DouyinGlyph = ({ size = 16 }: { size?: number }) => (
+  <img src="/assets/douyin_logo.svg" alt="" width={size} height={size} aria-hidden="true" />
+);
 
 /** 国内三方 provider 配置(标 + 名),供 SSO 按钮 / 账号绑定 chip 共用。 */
 const SOCIALS: { key: SocialProvider; Glyph: (p: { size?: number }) => React.ReactNode; name: { zh: string; en: string } }[] = [
@@ -76,6 +79,7 @@ const PROVIDER_GLYPH: Record<string, (p: { size?: number }) => React.ReactNode> 
   wechat: WechatGlyph,
   qq: QqGlyph,
   alipay: AlipayGlyph,
+  douyin: DouyinGlyph,
   email: ({ size = 16 }) => <Mail size={size} />,
   phone: ({ size = 16 }) => <Smartphone size={size} />,
   password: ({ size = 16 }) => <KeyRound size={size} />,
@@ -811,6 +815,7 @@ const PROVIDER_LABEL: Record<string, { zh: string; en: string }> = {
   wechat: { zh: '微信', en: 'WeChat' },
   alipay: { zh: '支付宝', en: 'Alipay' },
   qq: { zh: 'QQ', en: 'QQ' },
+  douyin: { zh: '抖音', en: 'Douyin' },
 };
 
 /**
