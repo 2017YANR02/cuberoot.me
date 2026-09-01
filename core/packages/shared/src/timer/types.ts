@@ -8,6 +8,13 @@
 // Type-only import — fully erased at runtime, does not pull cube/recognizer deps.
 import type { StageSegments } from './stage-segments';
 
+export interface SolveMove {
+  /** Move token (e.g. "R", "U'", "F2"). */
+  m: string;
+  /** Milliseconds since solve start. */
+  ts: number;
+}
+
 export type EventId =
   // NxN
   | '222' | '333' | '444' | '555' | '666' | '777'
@@ -96,7 +103,7 @@ export interface Solve {
    * NOT recorded — with a smart cube the first turn of an armed attempt
    * IS the start signal, so there is no window in which an inspection
    * turn could exist without starting the clock. */
-  moves?: Array<{ m: string; ts: number }>;
+  moves?: SolveMove[];
   /** Inspection time actually used before the start, ms. Recorded only when
    *  inspection ran (settings.inspection > 0 and the countdown was entered);
    *  absent on old solves and on attempts started without inspection. */

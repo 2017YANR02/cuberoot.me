@@ -42,11 +42,16 @@ describe('Mobile capability surface guard', () => {
     expect(onMove).toContain('if (timerModeRef.current !== 1)');
     expect(onMove).toContain('battleSmartCubeHandlersRef.current?.onMove');
     expect(onMove).toContain('timer.startFromCube(timestamp)');
+    expect(onMove).not.toContain('smartCubeMoveRecorderRef.current.begin(timestamp)');
+    expect(onMove).toContain('smartCubeMoveRecorderRef.current.record(move, timestamp)');
+    expect(app).toContain('smartCubeMoveRecorderRef.current.begin(startedAtMs)');
     expect(onMove).toContain('smartCubeGuidanceController.setRunning(true)');
     expect(onMove).toContain('smartCubeGuidanceController.observe(facelets)');
     expect(onMove).toContain('observation.completedNow');
     expect(onMove!.indexOf('timer.startFromCube(timestamp)'))
       .toBeLessThan(onMove!.indexOf('smartCubeGuidanceController.observe(facelets)'));
+    expect(onMove!.indexOf("timerPhaseRef.current === 'running'"))
+      .toBeLessThan(onMove!.indexOf('!timerSupportsSmartCubeAutoTiming(activeEvent)'));
     expect(onMove).not.toContain('!timingEnabled ||');
     expect(app).toContain('createSmartCubeGuidanceController');
     expect(app).toContain('id: currentScrambleEntry.id');
@@ -59,6 +64,14 @@ describe('Mobile capability surface guard', () => {
     expect(app).not.toContain('verifySmartCubeScramble');
     expect(app).not.toContain('createSmartCubeFixupRequester');
     expect(app).not.toContain('smartCubeGuidanceCompleteRef');
+    expect(app).toMatch(/smartCubeMoveRecorderRef\.current\.take\(\)[\s\S]*?stageSegmentsFor\(solve\)[\s\S]*?repository\.addSolve\(solve, sessionId\)/);
+    expect(app).toMatch(/repository\.addSolve\(solve, sessionId\)[\s\S]*?setPendingSolves/);
+    expect(app).toContain('repository.addSolve(pending.solve, pending.sessionId)');
+    expect(app).toContain('onUndo={retryPendingSolve}');
+    expect(app).toContain('durationMs={null}');
+    expect(app).toContain('actionBusy={retryingPendingSolve}');
+    expect(app).toContain('copy.saveFailed(pendingSolves.length)');
+    expect(app).toMatch(/timer\.stopFromCube\(timestamp\)\) timerPhaseRef\.current = 'stopped'/);
     expect(app.match(/timer\.armFromCube\(\)/g)).toHaveLength(1);
     expect(battleModes.match(/timer\.armFromCube\(\)/g)).toHaveLength(1);
   });

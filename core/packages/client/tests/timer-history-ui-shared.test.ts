@@ -408,6 +408,18 @@ describe('shared history comment and undo surfaces', () => {
     await act(async () => toast.querySelector<HTMLButtonElement>('button')!.click());
     expect(calls).toEqual(['undo', 'dismiss']);
 
+    await act(async () => root.render(createElement(TimerInfoToast, {
+      actionBusy: true,
+      actionDisabled: true,
+      message: 'Saving',
+      onDismiss: () => undefined,
+      onUndo: () => undefined,
+      undoLabel: 'Retry',
+    })));
+    const busyToast = host.querySelector<HTMLElement>('[role="status"]')!;
+    expect(busyToast.getAttribute('aria-busy')).toBe('true');
+    expect(busyToast.querySelector<HTMLButtonElement>('button')!.disabled).toBe(true);
+
     calls.length = 0;
     await act(async () => root.render(createElement(TimerInfoToast, {
       message: 'Copied',

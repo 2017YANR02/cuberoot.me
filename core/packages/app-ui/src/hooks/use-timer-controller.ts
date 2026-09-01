@@ -21,7 +21,7 @@ interface TimerControllerOptions {
   holdMs: number;
   inspectionSec: number;
   onComplete(result: SolveResult): void;
-  onStart?(): void;
+  onStart?(startedAtMs: number): void;
 }
 
 export interface TimerController {
@@ -88,7 +88,9 @@ export function useTimerController({
     if (transition.effects.includes('hold-cancelled') || transition.effects.includes('run-started')) {
       clearHoldTimeout();
     }
-    if (transition.effects.includes('run-started')) onStartRef.current?.();
+    if (transition.effects.includes('run-started')) {
+      onStartRef.current?.(transition.state.startedAtMs ?? performance.now());
+    }
     if (transition.solve) onCompleteRef.current(transition.solve);
     return transition;
   }, [clearHoldTimeout, holdMs]);

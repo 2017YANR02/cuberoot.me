@@ -72,6 +72,7 @@ import {
   stepMetricsFor,
   stepPuzzleOf,
   stageLabel,
+  stageSegmentsFor,
   timerByStepsIdentity,
   timerScrambleCapability,
   timerScrambleAllowsEmptySlot,
@@ -86,6 +87,7 @@ import {
   TIMER_WCA_MIN_DATE,
   timerSupportsRealWcaScrambles,
   timerSupportsSmartCubeAutoTiming,
+  TimerSmartCubeMoveRecorder,
   timerTracksTrainerCase,
   toggleTimerHistoryPenalty,
   toggleTimerHistoryTag,
@@ -191,6 +193,7 @@ import {
   CorruptTimerStoreError,
   IndexedDbTimerStoreDriver,
   TimerRepository,
+  TimerSessionRepositoryError,
 } from './data/timer-repository';
 import {
   mergeRealScramblePool,
@@ -470,6 +473,8 @@ function MobileHistoryItem({
 
 export function App({ host }: { host: InstalledAppHost }) {
   const [store, setStore] = useState<TimerStoreData | null>(null);
+  const storeRef = useRef(store);
+  storeRef.current = store;
   const [lastResult, setLastResult] = useState<SolveResult | null>(null);
   const [lastPenalty, setLastPenalty] = useState<Penalty | null>(null);
   const [loadError, setLoadError] = useState<Error | null>(null);
@@ -506,6 +511,12 @@ export function App({ host }: { host: InstalledAppHost }) {
   const scrambleRequestRef = useRef(0);
   const randomScrambleGateRef = useRef(new MobileVisibleScrambleRequestGate());
   const [toast, setToast] = useState('');
+  const [pendingSolves, setPendingSolves] = useState<Array<{
+    sessionId: string;
+    solve: Omit<Solve, 'id' | 'ts'>;
+  }>>([]);
+  const retryingPendingSolveRef = useRef(false);
+  const [retryingPendingSolve, setRetryingPendingSolve] = useState(false);
   const [scrambleCopied, setScrambleCopied] = useState(false);
   const scrambleCopiedTimerRef = useRef<number | null>(null);
   const [undoToast, setUndoToast] = useState<{ message: string; undo(): void } | null>(null);
@@ -753,6 +764,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   }, []);
 
   const applyStoreSnapshot = useCallback((data: TimerStoreData) => {
+    storeRef.current = data;
     activeEventRef.current = data.settings.event;
     scramble222ModeRef.current = data.settings.scramble222Mode;
     scramble222TypeRef.current = data.settings.scramble222Type;
@@ -1692,6 +1704,9 @@ export function App({ host }: { host: InstalledAppHost }) {
     sourceMatches: slotMatchesActiveSource,
   });
   const attemptRef = useRef<MobileScrambleAttemptSnapshot | null>(null);
+  const smartCubeMoveRecorderRef = useRef(new TimerSmartCubeMoveRecorder());
+  const smartCubeDeviceAtStartRef = useRef<Solve['device']>(undefined);
+  const connectedSmartCubeRef = useRef<Solve['device']>(undefined);
   const completeSolve = useCallback((result: SolveResult) => {
     setLastResult(result);
     setLastPenalty(result.autoPenalty);
@@ -1699,34 +1714,65 @@ export function App({ host }: { host: InstalledAppHost }) {
     const attempt = attemptRef.current
       ?? (displayedEntry ? mobileScrambleAttemptSnapshot(displayedEntry) : null);
     attemptRef.current = null;
-    if (!attempt) {
+    const sessionId = storeRef.current?.database.activeSessionId;
+    if (!attempt || !sessionId) {
       announce(copy.actionFailed);
       return;
     }
+    const recordedMoves = smartCubeMoveRecorderRef.current.take();
+    const moves = recordedMoves.length > 0 ? recordedMoves : undefined;
+    const device = moves ? smartCubeDeviceAtStartRef.current : undefined;
+    smartCubeDeviceAtStartRef.current = undefined;
     advanceDisplayedScramble();
     const revision = storeSnapshotGateRef.current.beginMutation();
-    void repository.addSolve({
+    const solve: Omit<Solve, 'id' | 'ts'> = {
       ...(attempt.caseId ? { caseId: attempt.caseId } : {}),
+      ...(device ? { device } : {}),
       event: attempt.event,
       inspectionMs: result.inspectionMs || undefined,
+      ...(moves ? { moves } : {}),
       penalty: result.autoPenalty,
       scramble: attempt.scramble,
       scrambleSource: attempt.scrambleSource,
       timeMs: result.timeMs,
-    }).then((data) => {
+    };
+    const stageSegments = stageSegmentsFor(solve);
+    if (stageSegments) solve.stageSegments = stageSegments;
+    void repository.addSolve(solve, sessionId).then((data) => {
       storeSnapshotGateRef.current.commitIfLatest(revision, data, applyStoreSnapshot);
     }).catch(() => {
+      setPendingSolves((current) => current.some((pending) => pending.solve === solve)
+        ? current
+        : [...current, { sessionId, solve }]);
       void recoverLatestStoreSnapshot(revision).catch(() => undefined);
-      announce(copy.actionFailed);
     });
   }, [
     advanceDisplayedScramble,
     announce,
     applyStoreSnapshot,
-    copy.actionFailed,
     currentScrambleEntry,
     recoverLatestStoreSnapshot,
   ]);
+
+  const retryPendingSolve = useCallback(() => {
+    const pending = pendingSolves[0];
+    if (!pending || retryingPendingSolveRef.current) return;
+    retryingPendingSolveRef.current = true;
+    setRetryingPendingSolve(true);
+    const revision = storeSnapshotGateRef.current.beginMutation();
+    void repository.addSolve(pending.solve, pending.sessionId).then((data) => {
+      setPendingSolves((current) => current.filter((candidate) => candidate !== pending));
+      storeSnapshotGateRef.current.commitIfLatest(revision, data, applyStoreSnapshot);
+    }).catch((error: unknown) => {
+      void recoverLatestStoreSnapshot(revision).catch(() => undefined);
+      announce(error instanceof TimerSessionRepositoryError && error.failure === 'unknown-session'
+        ? copy.saveSessionMissing
+        : copy.saveRetryFailed);
+    }).finally(() => {
+      retryingPendingSolveRef.current = false;
+      setRetryingPendingSolve(false);
+    });
+  }, [announce, applyStoreSnapshot, copy.saveRetryFailed, copy.saveSessionMissing, pendingSolves, recoverLatestStoreSnapshot]);
 
   const timer = useTimerController({
     canStart: attemptCanStart,
@@ -1740,7 +1786,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     holdMs: store?.settings.holdMs ?? 550,
     inspectionSec: store?.settings.inspectionSec ?? 0,
     onComplete: completeSolve,
-    onStart: () => {
+    onStart: (startedAtMs) => {
       const entry = scrambleHistoryRef.current.list[scrambleHistoryRef.current.idx];
       if (!entry
         || entry.availability !== 'ready'
@@ -1748,6 +1794,9 @@ export function App({ host }: { host: InstalledAppHost }) {
         || entry.source !== scrambleSourceRef.current
         || entry.sourceIdentity !== scrambleIdentityFor(entry.source, entry.event)) return;
       attemptRef.current = mobileScrambleAttemptSnapshot(entry);
+      smartCubeMoveRecorderRef.current.begin(startedAtMs);
+      smartCubeDeviceAtStartRef.current = connectedSmartCubeRef.current;
+      timerPhaseRef.current = 'running';
     },
   });
   timingRunningRef.current = timer.machine.phase === 'running';
@@ -1788,14 +1837,19 @@ export function App({ host }: { host: InstalledAppHost }) {
         battleSmartCubeHandlersRef.current?.onMove(move, timestamp, facelets);
         return;
       }
+      const recordMove = () => {
+        smartCubeMoveRecorderRef.current.record(move, timestamp);
+      };
+      if (timerPhaseRef.current === 'running') {
+        recordMove();
+        smartCubeGuidanceController.setRunning(true);
+        return;
+      }
       if (!timerSupportsSmartCubeAutoTiming(activeEvent)) return;
       // An armed attempt consumes its first solve turn before scramble guidance
       // sees the deliberately off-target cube state.
       if (timer.startFromCube(timestamp)) {
-        smartCubeGuidanceController.setRunning(true);
-        return;
-      }
-      if (timerPhaseRef.current === 'running') {
+        recordMove();
         smartCubeGuidanceController.setRunning(true);
         return;
       }
@@ -1808,9 +1862,14 @@ export function App({ host }: { host: InstalledAppHost }) {
         battleSmartCubeHandlersRef.current?.onSolved(timestamp);
         return;
       }
-      if (timingEnabled && timerSupportsSmartCubeAutoTiming(activeEvent)) timer.stopFromCube(timestamp);
+      if (timingEnabled
+        && timerSupportsSmartCubeAutoTiming(activeEvent)
+        && timer.stopFromCube(timestamp)) timerPhaseRef.current = 'stopped';
     },
   });
+  connectedSmartCubeRef.current = smartCube.phase === 'connected' && smartCube.deviceName
+    ? { model: 'gan-v4', name: smartCube.deviceName }
+    : undefined;
   const smartCubeScrambleMatch = timerMode === 1
     && timer.machine.phase !== 'running'
     && smartCube.phase === 'connected'
@@ -3452,7 +3511,18 @@ export function App({ host }: { host: InstalledAppHost }) {
 
       <GestureWheel ref={gestureWheelRef} isZh={language === 'zh'} />
 
-      {undoToast && (
+      {pendingSolves.length > 0 ? (
+        <TimerInfoToast
+          durationMs={null}
+          actionBusy={retryingPendingSolve}
+          actionDisabled={retryingPendingSolve}
+          message={copy.saveFailed(pendingSolves.length)}
+          onDismiss={() => undefined}
+          onUndo={retryPendingSolve}
+          undoLabel={copy.retry}
+          viewportBottomInset={64}
+        />
+      ) : undoToast && (
         <TimerInfoToast
           message={undoToast.message}
           onDismiss={() => setUndoToast(null)}

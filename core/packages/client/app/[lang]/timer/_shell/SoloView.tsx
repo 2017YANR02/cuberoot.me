@@ -137,6 +137,7 @@ import {
   TIMER_EVENT_PICKER_GROUPS,
   TIMER_REAL_SCRAMBLE_CONFIRMED_EMPTY,
   TIMER_REAL_SCRAMBLE_TRANSIENT_ERROR,
+  TimerSmartCubeMoveRecorder,
   startTimerRealScrambleRetry,
   timerEventIdFromSelector,
   timerRealScrambleReady,
@@ -1133,8 +1134,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const wcaAtStartRef = useRef<WcaDispensedScramble | null>(currentScrambleEntry.wca);
   const eventAtStartRef = useRef<EventId>(event);
   const caseIdAtStartRef = useRef<string | null>(null);
-  const movesRef = useRef<Array<{ m: string; ts: number }>>([]);
-  const solveStartTsRef = useRef<number>(0);
+  const moveRecorderRef = useRef(new TimerSmartCubeMoveRecorder());
   /** The smart cube connected when the attempt STARTED. Snapshotted with the
    *  other at-start refs so a mid-solve disconnect can't erase who solved it. */
   const deviceAtStartRef = useRef<{ model: string; name: string } | null>(null);
@@ -1167,7 +1167,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (stages) solve.stages = stages;
     if (bld) solve.bld = bld;
     if (caseIdAtStartRef.current) solve.caseId = caseIdAtStartRef.current;
-    if (movesRef.current.length > 0) solve.moves = movesRef.current.slice();
+    const moves = moveRecorderRef.current.snapshot();
+    if (moves.length > 0) solve.moves = moves;
     // 姿态流。没开录 / 魔方没报姿态 / 一次都没动 → take() 是空的,编码给 null,
     // 字段整个不出现 —— 回放面板就是靠「有没有这个字段」决定要不要给陀螺仪开关的。
     const gyro = encodeGyroTrack(gyroRecRef.current.take());
@@ -1231,7 +1232,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // Set when the smart cube started this attempt. That path has already done
   // the bookkeeping below — at the true start instant, with the turn that
-  // started the clock already in `movesRef` — so redoing it here would throw
+  // started the clock already in the shared move recorder — so redoing it here would throw
   // away the solve's first move.
   const cubeStartedRef = useRef(false);
   useEffect(() => {
@@ -1248,10 +1249,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         ? { model: bt.brand, name: bt.deviceName }
         : null;
     } else if (!cubeStartedRef.current) {
-      movesRef.current = [];
-      solveStartTsRef.current = performance.now();
+      const startedAtMs = performance.now();
+      moveRecorderRef.current.begin(startedAtMs);
       gyroRecRef.current.reset();
-      gyroStartRef.current = solveStartTsRef.current;
+      gyroStartRef.current = startedAtMs;
     }
   }, [timer.phase, scramble, event, currentScrambleEntry.wca]);
 
@@ -1297,8 +1298,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // entire shell at gyro cadence for a number nothing here reads.
   const gyroQuatRef = useRef<Quat | null>(null);
   const [calibrateNonce, setCalibrateNonce] = useState(0);
-  // 姿态流录制。样本时刻用 performance.now() 而不是 solveStartTsRef —— 后者在
-  // 「魔方起表」那条路上存的是**设备时钟**,而陀螺仪回调根本不带时间戳,两个
+  // 姿态流录制。样本时刻用 performance.now() 而不是动作 recorder 的起点 ——
+  // 「魔方起表」那条路用的是**设备时钟**,而陀螺仪回调根本不带时间戳,两个
   // 时钟相减出来的是垃圾。这里自己记一个本地起点。
   const gyroRecRef = useRef(new GyroRecorder());
   const gyroStartRef = useRef(0);
@@ -1326,8 +1327,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (!timer.startFromCube(ts)) return;
     phaseSnapshotRef.current = 'running';
     cubeStartedRef.current = true;
-    movesRef.current = [];
-    solveStartTsRef.current = ts;
+    moveRecorderRef.current.begin(ts);
     gyroRecRef.current.reset();
     gyroStartRef.current = performance.now();
   };
@@ -1448,7 +1448,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     const subs = bluetoothSubscribersRef.current;
     const recorder = (m: string, ts: number) => {
       if (phaseSnapshotRef.current !== 'running') return;
-      movesRef.current.push({ m, ts: ts - solveStartTsRef.current });
+      moveRecorderRef.current.record(m, ts);
     };
     subs.add(recorder);
     return () => { subs.delete(recorder); };
@@ -1764,7 +1764,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // over the whole solve barely moves after a few seconds, which makes it
   // useless as feedback — a short window actually tracks what the hands do.
   const [liveTps, setLiveTps] = useState<{ count: number; tps: number } | null>(null);
-  // Own window rather than reading movesRef: subscriber order in the Set is an
+  // Own window rather than reading the move recorder: subscriber order in the Set is an
   // implementation detail, and depending on the recorder having already pushed
   // this move would be a silent off-by-one if that ever changed.
   const tpsWindowRef = useRef<number[]>([]);

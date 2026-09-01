@@ -157,21 +157,42 @@ export class TimerRepository {
     });
   }
 
-  addSolve(input: Omit<Solve, 'id' | 'ts'>): Promise<TimerStoreData> {
+  addSolve(
+    input: Omit<Solve, 'id' | 'ts'>,
+    targetSessionId?: string,
+  ): Promise<TimerStoreData> {
     return this.run(async () => {
-      const data = await this.loadUnlocked();
       const solve: Solve = {
         ...input,
         id: this.environment.createId(),
         ts: this.environment.now(),
       };
-      const byEvent = data.database.dataBySession[data.database.activeSessionId];
-      byEvent[input.event] = [...(byEvent[input.event] ?? []), solve]
-        .sort((a, b) => a.ts - b.ts);
-      const decoded = decodeTimerStoreData(data);
-      if (!decoded) throw new CorruptTimerStoreError();
-      await this.driver.write(decoded);
-      return decoded;
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const data = await this.loadUnlocked();
+        const sessionId = targetSessionId ?? data.database.activeSessionId;
+        const byEvent = data.database.dataBySession[sessionId];
+        if (!byEvent) throw new TimerSessionRepositoryError('unknown-session');
+        const solves = byEvent[input.event] ?? [];
+        if (solves.some((entry) => entry.id === solve.id)) return data;
+        byEvent[input.event] = [...solves, solve].sort((a, b) => a.ts - b.ts);
+        const decoded = decodeTimerStoreData(data);
+        if (!decoded) throw new CorruptTimerStoreError();
+        try {
+          await this.driver.write(decoded);
+          return decoded;
+        } catch (error) {
+          if (attempt === 1) {
+            const confirmed = await this.loadUnlocked().catch(() => null);
+            const confirmedSolves = confirmed?.database
+              .dataBySession[sessionId]?.[input.event] ?? [];
+            if (confirmed && confirmedSolves.some((entry) => entry.id === solve.id)) {
+              return confirmed;
+            }
+            throw error;
+          }
+        }
+      }
+      throw new Error('Unreachable timer write retry state');
     });
   }
 
