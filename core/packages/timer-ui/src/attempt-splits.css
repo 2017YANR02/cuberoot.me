@@ -1,0 +1,44 @@
+.timing-surface .timer-stage-splits {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.timing-surface .stage-chip {
+  min-width: 56px;
+  padding: 4px 10px;
+  border: 1px solid var(--shell-divider);
+  border-radius: 999px;
+  background: var(--shell-chip);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-align: center;
+}
+
+.timing-surface .stage-chip.done {
+  border-color: color-mix(in srgb, var(--signal-success) 45%, transparent);
+  color: var(--signal-success);
+}
+
+.timing-surface .stage-chip-action {
+  min-height: 44px;
+  min-width: 0;
+  border-color: var(--border-default);
+  color: var(--foreground);
+  cursor: pointer;
+  font: inherit;
+}
+
+.timer-attempt-split-setting .settings-row-control {
+  flex-wrap: wrap;
+}
+
+.timer-attempt-split-setting .timer-attempt-split-hint {
+  flex-basis: 100%;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}

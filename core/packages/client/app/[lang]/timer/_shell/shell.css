@@ -117,28 +117,6 @@
   white-space: nowrap;
 }
 
-/* Stage splits + bld chips */
-.timing-surface .timer-stage-splits {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-.timing-surface .stage-chip {
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--shell-chip);
-  color: var(--muted-foreground);
-  font-size: 13px;
-  font-family: var(--font-mono);
-}
-.timing-surface .stage-chip.done { color: var(--signal-success); }
-.timing-surface .stage-chip-action {
-  border: 1px solid var(--border-default);
-  color: var(--foreground);
-  cursor: pointer;
-}
-
 /* Target indicator */
 .timing-surface .timer-target-indicator {
   display: inline-flex;

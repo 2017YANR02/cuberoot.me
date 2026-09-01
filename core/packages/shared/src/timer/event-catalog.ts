@@ -1,4 +1,4 @@
-import { EVENTS, eventInfo, fromWcaSpelling, toWcaSpelling, type EventId } from './types';
+import { EVENTS, eventInfo, fromWcaSpelling, isBldEvent, toWcaSpelling, type EventId } from './types';
 
 /** The two sections shown by the canonical solo-timer event picker. */
 export type TimerEventPickerGroupId = 'wca' | 'other';
@@ -229,6 +229,11 @@ export function timerEventNxnSize(id: EventId): number | null {
 /** Smart cubes can verify any plain 3x3-shaped scramble used by the Web timer. */
 export function timerSupportsSmartCubeAutoTiming(id: EventId): boolean {
   return timerEventNxnSize(id) === 3 && id !== '333fm';
+}
+
+/** BLD timing includes memorization, so its first solve turn must never start the clock. */
+export function timerSmartCubeStartsAttemptOnTurn(id: EventId): boolean {
+  return timerSupportsSmartCubeAutoTiming(id) && !isBldEvent(id);
 }
 
 export function timerSupportsLocalBattleSmartCube(id: EventId): boolean {

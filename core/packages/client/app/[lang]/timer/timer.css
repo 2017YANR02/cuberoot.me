@@ -335,21 +335,6 @@
   color: var(--muted-foreground);
 }
 
-/* 弹性排布由 shell.css 的 .timing-surface .timer-stage-splits 定。 */
-.timer-stage-splits { margin-top: 12px; }
-/* 阶段计时 chip:底色 / 文字色 / 内距 / 字体都由 shell.css 的 .timing-surface .stage-chip
-   接管,这里只补它没设的边框和宽度。 */
-.stage-chip {
-  border: 1px solid var(--shell-divider);
-  min-width: 56px;
-  text-align: center;
-}
-.stage-chip.done { border-color: color-mix(in srgb, var(--signal-success) 45%, transparent); }
-.stage-chip-action {
-  font: inherit;
-  min-width: 0;
-}
-
 /* --- Target time (time-attack mode) ------------------------- */
 /* Live indicator under the running timer: small monospace pill with a target
    icon, the target time, and the live delta (target - current). */

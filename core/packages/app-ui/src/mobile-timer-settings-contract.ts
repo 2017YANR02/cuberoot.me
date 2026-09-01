@@ -14,6 +14,8 @@ export const MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS = [
   'settings.timer.hide-running-time',
   'settings.timer.running-precision',
   'settings.timer.result-precision',
+  'settings.training.stage-splits',
+  'settings.training.bld-memo-split',
   'settings.appearance.scramble-click-action',
 ] as const satisfies readonly TimerSettingFieldId[];
 

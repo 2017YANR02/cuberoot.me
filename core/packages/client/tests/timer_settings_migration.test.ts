@@ -93,6 +93,21 @@ describe('录姿态:老存档里的 false 要翻过来', () => {
     expect(getSettings().scrambleClickAction).toBe('copy');
     expect(JSON.parse(mem.get(KEY) as string).scrambleClickAction).toBe('copy');
   });
+
+  it('分段开关复用共享默认值并修复显式坏值', async () => {
+    const mem = installStorage({
+      [KEY]: JSON.stringify({
+        multiStage: 'yes',
+        bldMemo: 1,
+        scrambleClickMigrated: true,
+        recordGyroMigrated: true,
+        bluetoothAutoReadyMigrated: true,
+      }),
+    });
+    const { getSettings } = await freshSettings();
+    expect(getSettings()).toMatchObject({ multiStage: false, bldMemo: true });
+    expect(JSON.parse(mem.get(KEY) as string)).toMatchObject({ multiStage: false, bldMemo: true });
+  });
 });
 
 describe('智能魔方自动预备:老存档里的 off 要翻过来', () => {

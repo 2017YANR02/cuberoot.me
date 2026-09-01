@@ -8,6 +8,10 @@ import {
   type Scramble222Type,
 } from './scramble-222';
 import {
+  DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
+  type TimerAttemptSplitOptions,
+} from './attempt-splits';
+import {
   DEFAULT_TIMER_BY_STEPS_SETTINGS,
   type TimerByStepsSettings,
 } from './by-steps';
@@ -52,6 +56,7 @@ export interface TimerSessionMeta {
 export interface TimerStoreSettings extends
   TimerWcaSourceSettings,
   TimerByStepsSettings,
+  TimerAttemptSplitOptions,
   TimerTimingSettings {
   event: EventId;
   /** Shared 2x2 full-state generation style; also selects WCA original vs optimal-equivalent rows. */
@@ -307,6 +312,8 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     'autoSessionForEvent',
     'autoEventForSession',
     'hideTime',
+    'multiStage',
+    'bldMemo',
   ] as const) {
     if (value[key] !== undefined && typeof value[key] !== 'boolean') return null;
   }
@@ -420,6 +427,12 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     statsRollingColumns: value.statsRollingColumns === undefined
       ? [...DEFAULT_ROLLING_STAT_COLUMNS]
       : normalizeRollingStatColumns(value.statsRollingColumns),
+    multiStage: typeof value.multiStage === 'boolean'
+      ? value.multiStage
+      : DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS.multiStage,
+    bldMemo: typeof value.bldMemo === 'boolean'
+      ? value.bldMemo
+      : DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS.bldMemo,
     scrambleClickAction: normalizeTimerScrambleClickAction(value.scrambleClickAction),
     ...wcaSource,
     language: value.language,
@@ -572,6 +585,7 @@ export function createTimerStoreData(
       scramble222Mode: DEFAULT_SCRAMBLE_222_MODE,
       scramble222Type: DEFAULT_SCRAMBLE_222_TYPE,
       ...DEFAULT_TIMER_BY_STEPS_SETTINGS,
+      ...DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
       manualScrambles: '',
       statsRollingColumns: [...DEFAULT_ROLLING_STAT_COLUMNS],
       scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,

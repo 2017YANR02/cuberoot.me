@@ -13,6 +13,7 @@ import {
   timerEventSelectorId,
   timerSupportsLocalBattleSmartCube,
   timerSupportsNetBattleSmartCube,
+  timerSmartCubeStartsAttemptOnTurn,
   timerSupportsSmartCubeAutoTiming,
   timerSupportsRealWcaScrambles,
   timerWcaScrambleEventId,
@@ -151,6 +152,11 @@ describe('shared timer event picker catalog', () => {
       expect(nxnSizeForEvent(id), `Web adapter: ${id}`).toBe(timerEventNxnSize(id));
       expect(timerSupportsSmartCubeAutoTiming(id), id).toBe(
         (expectedNxnSizes[id] ?? null) === 3 && id !== '333fm',
+      );
+      expect(timerSmartCubeStartsAttemptOnTurn(id), `turn-start: ${id}`).toBe(
+        (expectedNxnSizes[id] ?? null) === 3
+          && id !== '333fm'
+          && !['333bld', '333mbld', '333ni'].includes(id),
       );
       expect(timerSupportsLocalBattleSmartCube(id), `local: ${id}`).toBe(id === '333');
       expect(timerSupportsNetBattleSmartCube(id), `net: ${id}`).toBe(id === '333' || id === '333oh');
