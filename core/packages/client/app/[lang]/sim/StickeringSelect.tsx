@@ -18,9 +18,10 @@ import SimMaskAdmin from './SimMaskAdmin';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
 import type { SimPuzzle } from './PlayerControls';
+import SwatchCell, { SwatchPopup } from './SwatchCell';
 import { SQ1_STAGE_ITEMS } from '@/lib/sq1-stage-mask';
 import { faceShowingColor, orientationForBottomFace, orientedFaceColors } from '@/lib/cube-orientation';
-import { BADGE_FACE_ORDER, CUBE_COLOR_NAMES, type CubeFace } from '@/lib/cube-colors';
+import { BADGE_FACE_ORDER, CUBE_COLOR_NAMES, CUBE_FILL, type CubeFace } from '@/lib/cube-colors';
 
 // cubing.js megaminx 注册的 stickering(cubeLikeStickeringList("megaminx")):full + LL/LS 组。
 const MEGAMINX_GROUPS: StickeringGroup[] = [
@@ -90,6 +91,7 @@ function groupLabel(group: string, t: (zh: string, en: string) => string): strin
 
 export default function StickeringSelect({
   puzzleKind, value, onChange, orientation = '', onOrientationChange,
+  faceColors = CUBE_FILL,
   mask = '', onMaskClear, editing = true, onEditingChange, grain = 'sticker', onGrainChange,
   pick = 'regular', onPickChange, rest = 'ignored', onRestChange,
 }: {
@@ -101,6 +103,7 @@ export default function StickeringSelect({
    *  cubing.js 原生 stickering,无重定向参数,不显示。 */
   orientation?: string;
   onOrientationChange?: (v: string) => void;
+  faceColors?: Record<CubeFace, string>;
   /** 自定义阶段:选中的贴纸清单 + 作图开关(仅 value==='custom' 时显示)。 */
   mask?: string;
   onMaskClear?: () => void;
@@ -145,6 +148,7 @@ export default function StickeringSelect({
   const isCustom = value === CUSTOM_STICKERING;
   // 自定义阶段的清单是绝对的(用户点的就是这几枚),没有「整套转到某朝向」可言。
   const showOrientation = typeof puzzleKind === 'number' && value !== 'full' && !isCustom && !!onOrientationChange;
+  const crossBaseFace = faceShowingColor(orientedFaceColors(orientation), 'D');
   const picked = isCustom ? countSids(mask) : 0;
   return (
     <>
@@ -165,17 +169,20 @@ export default function StickeringSelect({
         {!known && <option value={value}>{value}</option>}
       </select>
       {showOrientation && (value === 'Cross' ? (
-        <select
-          className="sim-player-mode sim-player-stickering"
-          value={faceShowingColor(orientedFaceColors(orientation), 'D')}
-          onChange={(e) => onOrientationChange?.(orientationForBottomFace(e.target.value as CubeFace))}
+        <SwatchPopup
           title={t('十字底色', 'Cross base color')}
-          aria-label={t('十字底色', 'Cross base color')}
+          trigger={<span className="sim-swatch-box" style={{ background: faceColors[crossBaseFace] }} />}
         >
-          {BADGE_FACE_ORDER.map((face) => (
-            <option key={face} value={face}>{t(`${CUBE_COLOR_NAMES[face].zh}底`, `${CUBE_COLOR_NAMES[face].en} base`)}</option>
+          {(close) => BADGE_FACE_ORDER.map((face) => (
+            <SwatchCell
+              key={face}
+              color={faceColors[face]}
+              title={t(`${CUBE_COLOR_NAMES[face].zh}底`, `${CUBE_COLOR_NAMES[face].en} base`)}
+              active={crossBaseFace === face}
+              onClick={() => { onOrientationChange?.(orientationForBottomFace(face)); close(); }}
+            />
           ))}
-        </select>
+        </SwatchPopup>
       ) : (
         <CubeOrientationSelect
           className="sim-player-mode sim-player-stickering"
