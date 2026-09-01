@@ -22,6 +22,8 @@ describe('shared timer persistence schema', () => {
       hideTime: false,
       runningPrecision: 3,
       precision: 3,
+      multiStage: false,
+      bldMemo: true,
     });
 
     const deliberateLegacyChoice = createTimerStoreData(0, 'choice');
@@ -222,6 +224,8 @@ describe('shared timer persistence schema', () => {
     delete earlyV2.settings.hideTime;
     delete earlyV2.settings.runningPrecision;
     delete earlyV2.settings.precision;
+    delete earlyV2.settings.multiStage;
+    delete earlyV2.settings.bldMemo;
     delete earlyV2.settings.scramble222Mode;
     delete earlyV2.settings.scramble222Type;
     delete earlyV2.settings.wcaScrambleMode;
@@ -246,6 +250,8 @@ describe('shared timer persistence schema', () => {
       hideTime: false,
       runningPrecision: 3,
       precision: 3,
+      multiStage: false,
+      bldMemo: true,
       manualScrambles: '',
       scramble222Mode: 'optimal',
       scramble222Type: 'full',
@@ -269,6 +275,9 @@ describe('shared timer persistence schema', () => {
     expect(decodeTimerStoreData(invalidTiming)).toBeNull();
     invalidTiming.settings.runningPrecision = 3;
     invalidTiming.settings.autoSessionForEvent = 'yes';
+    expect(decodeTimerStoreData(invalidTiming)).toBeNull();
+    invalidTiming.settings.autoSessionForEvent = false;
+    invalidTiming.settings.multiStage = 'yes';
     expect(decodeTimerStoreData(invalidTiming)).toBeNull();
 
     earlyV2.settings.manualScrambles = ['R', 'U'];

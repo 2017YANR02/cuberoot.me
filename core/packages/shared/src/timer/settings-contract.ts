@@ -307,6 +307,10 @@ const STAGE_SPLIT_EVENTS: ReadonlySet<EventId> = new Set([
   '222', '333', '444', '555', '666', '777', '333oh', '333fm',
 ]);
 
+export function timerSupportsStageSplits(event: EventId): boolean {
+  return STAGE_SPLIT_EVENTS.has(event);
+}
+
 const COLOR_NEUTRAL_EVENTS: ReadonlySet<EventId> = new Set([
   '333', '333oh', '333fm', '333bld', '333ni', '333mbld',
 ]);
@@ -320,7 +324,7 @@ function settingVisible(
     case 'development-only': return context.development;
     case 'event-not-222': return context.event !== '222';
     case 'wca-source': return context.source === 'wca';
-    case 'stage-split-event': return STAGE_SPLIT_EVENTS.has(context.event);
+    case 'stage-split-event': return timerSupportsStageSplits(context.event);
     case 'bld-event': return isBldEvent(context.event);
     case 'color-neutral-event': return COLOR_NEUTRAL_EVENTS.has(context.event);
     case 'rank-enabled-and-signed-out': return context.rankEnabled && !context.signedIn;

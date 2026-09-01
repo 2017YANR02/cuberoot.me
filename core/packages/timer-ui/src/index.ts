@@ -20,6 +20,7 @@ import './gesture-wheel.css';
 import './history-row.css';
 import './history-compare.css';
 import './history-tags.css';
+import './attempt-splits.css';
 import './info-toast.css';
 import './scramble-strip.css';
 import './room-qr-modal.css';
@@ -108,6 +109,12 @@ export type {
   TimerHistoryTagFilterProps,
   TimerHistoryTagLanguage,
 } from './TimerHistoryTags';
+export { TimerAttemptSplitSettings, TimerAttemptSplitStatus } from './TimerAttemptSplits';
+export type {
+  TimerAttemptSplitBooleanControlProps,
+  TimerAttemptSplitSettingsProps,
+  TimerAttemptSplitStatusProps,
+} from './TimerAttemptSplits';
 export { TimerInfoToast } from './TimerInfoToast';
 export type { TimerInfoToastProps } from './TimerInfoToast';
 export { TimerScrambleHintText, TimerScrambleStrip } from './TimerScrambleStrip';

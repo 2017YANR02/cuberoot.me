@@ -56,6 +56,7 @@ import {
   type TimerSettingFieldId,
 } from '@cuberoot/shared/timer';
 import {
+  TimerAttemptSplitSettings,
   TimerScrambleClickActionSetting,
   TimerTimingSettingsSections,
   type TimerTimingBooleanControlProps,
@@ -820,24 +821,16 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           activeCategory={activeCategory}
           title={tr({ zh: '目标与分段', en: 'Goals and splits' })}
         >
-          {settingState('settings.training.stage-splits').visible && (
-            <BooleanSettingRow
-              id="settings.training.stage-splits"
-              value={s.multiStage}
-              onChange={(v) => updateSettings({ multiStage: v })}
-            >
-              <span className="hint">{tr({ zh: '按 1=Cross 完成，2=F2L，3=OLL；智能魔方连接时自动检测', en: 'Press 1=Cross, 2=F2L, 3=OLL; auto-detected with a smart cube' })}</span>
-            </BooleanSettingRow>
-          )}
-          {settingState('settings.training.bld-memo-split').visible && (
-            <BooleanSettingRow
-              id="settings.training.bld-memo-split"
-              value={s.bldMemo}
-              onChange={(v) => updateSettings({ bldMemo: v })}
-            >
-              <span className="hint">{tr({ zh: '运行中按 Enter 标记记忆完成', en: 'Press Enter while running to mark memo complete' })}</span>
-            </BooleanSettingRow>
-          )}
+          <TimerAttemptSplitSettings
+            bldVisible={settingState('settings.training.bld-memo-split').visible}
+            localize={tr}
+            onChange={updateSettings}
+            renderBooleanControl={({ label, onChange, value }) => (
+              <SharedBoolToggle label={label} onChange={onChange} value={value} />
+            )}
+            stageVisible={settingState('settings.training.stage-splits').visible}
+            value={s}
+          />
           <SettingRow id="settings.training.target-time">
             <input
               className="settings-row-control-input"

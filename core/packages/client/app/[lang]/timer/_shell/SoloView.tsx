@@ -70,6 +70,8 @@ import {
   timerCanHandleAttemptPress,
   timerCanStartAttempt,
   timerEventSupportsDrill,
+  timerSmartCubeStartsAttemptOnTurn,
+  timerSupportsStageSplits,
   timerSupportsSmartCubeAutoTiming,
   timerCanUseGestureWheel,
   timerGestureActionAt,
@@ -84,6 +86,8 @@ import {
   visibleTimerMoreActions,
   type TimerGestureActionId,
   type TimerNon222StepPuzzle,
+  type TimerAttemptSplitState,
+  TimerAttemptSplitRecorder,
 } from '@cuberoot/shared/timer';
 import {
   createSmartCubeGuidanceController,
@@ -187,9 +191,6 @@ import {
 import { useAutoReady } from '../_lib/bluetooth/auto_ready';
 import { useBluetoothTimer } from '../_lib/bluetooth/timer';
 import { useStackmat } from '../_lib/stackmat';
-import { useMultiStage } from '../_lib/multistage';
-import { useBldMemo } from '../_lib/useBldMemo';
-
 import StatsPanel from '../_components/StatsPanel';
 import CrossSessionStats from '../_components/CrossSessionStats';
 import CaseStatsPanel from '../_components/CaseStatsPanel';
@@ -218,6 +219,7 @@ import {
   SegmentTime,
   TimerDeviceActions,
   TimerInfoToast,
+  TimerAttemptSplitStatus,
   TimerPuzzlePicker,
   TimerPrintController,
   TimerScrambleStrip,
@@ -1139,22 +1141,16 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
    *  other at-start refs so a mid-solve disconnect can't erase who solved it. */
   const deviceAtStartRef = useRef<{ model: string; name: string } | null>(null);
 
-  const isNxNEvent = ['222','333','444','555','666','777','333oh','333fm'].includes(event);
-  const multiStageActive = settings.multiStage && isNxNEvent;
+  const multiStageActive = settings.multiStage && timerSupportsStageSplits(event);
   const bldMemoActive = settings.bldMemo && isBldEvent(event);
-  const multiStageRef = useRef<ReturnType<typeof useMultiStage> | null>(null);
-  const bldMemoRef = useRef<ReturnType<typeof useBldMemo> | null>(null);
+  const [attemptSplitState, setAttemptSplitState] = useState<TimerAttemptSplitState>({ stages: {} });
+  const [attemptSplitRecorder] = useState(() => new TimerAttemptSplitRecorder(setAttemptSplitState));
+  const attemptStartedAtRef = useRef(0);
+  const timerDisplayMsRef = useRef(0);
 
   const recordSolve = useCallback((res: { timeMs: number; inspectionMs: number; autoPenalty: 'ok' | '+2' | 'DNF' }) => {
     const ev = eventAtStartRef.current;
-    const wasNxN = ['222','333','444','555','666','777','333oh','333fm'].includes(ev);
-    const wasBld = isBldEvent(ev);
-    const stages = (settings.multiStage && wasNxN)
-      ? multiStageRef.current?.extractFinal(res.timeMs)
-      : undefined;
-    const bld = (settings.bldMemo && wasBld)
-      ? bldMemoRef.current?.extractFinal()
-      : undefined;
+    const { bld, stages } = attemptSplitRecorder.finish(res.timeMs);
     const solve = makeSolve({
       timeMs: res.timeMs,
       scramble: scrambleAtStartRef.current,
@@ -1219,16 +1215,18 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     setRecapId(shouldAutoRecap(solve, { autoRecap: settings.autoRecap }) ? solve.id : null);
     if (res.autoPenalty === 'DNF') petReact('error');
     nextScramble();
-  }, [nextScramble, settings.multiStage, settings.bldMemo, settings.precision, settings.autoRecap]);
+  }, [attemptSplitRecorder, nextScramble, settings.precision, settings.autoRecap]);
 
-  const timer = useTimer(recordSolve);
+  const timer = useTimer(recordSolve, (startedAtMs) => {
+    attemptStartedAtRef.current = startedAtMs;
+    attemptSplitRecorder.begin({
+      bldMemo: settings.bldMemo && isBldEvent(eventAtStartRef.current),
+      multiStage: settings.multiStage && timerSupportsStageSplits(eventAtStartRef.current),
+    });
+    moveRecorderRef.current.begin(startedAtMs);
+  });
   cancelArmForScrambleChangeRef.current = timer.cancelArm;
-
-  const multiStage = useMultiStage({ phase: timer.phase, displayMs: timer.displayMs, enabled: multiStageActive });
-  useEffect(() => { multiStageRef.current = multiStage; }, [multiStage]);
-
-  const bldMemo = useBldMemo({ phase: timer.phase, displayMs: timer.displayMs, enabled: bldMemoActive });
-  useEffect(() => { bldMemoRef.current = bldMemo; }, [bldMemo]);
+  timerDisplayMsRef.current = timer.displayMs;
 
   // Set when the smart cube started this attempt. That path has already done
   // the bookkeeping below — at the true start instant, with the turn that
@@ -1250,7 +1248,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         : null;
     } else if (!cubeStartedRef.current) {
       const startedAtMs = performance.now();
-      moveRecorderRef.current.begin(startedAtMs);
       gyroRecRef.current.reset();
       gyroStartRef.current = startedAtMs;
     }
@@ -1276,8 +1273,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     timer.onPressUp();
     return true;
   }, [timer.cancelArm, timer.onPressUp]);
-  const consumeFacesRef = useRef<(faces: import('../_lib/cube/state').CubeFaces) => void>(() => {});
-  useEffect(() => { consumeFacesRef.current = multiStage.consumeFromState; }, [multiStage.consumeFromState]);
   const bluetoothSubscribersRef = useRef<Set<(m: string, ts: number) => void>>(new Set());
 
   const [macPrompt, setMacPrompt] = useState<{ deviceName: string; isWrongKey?: boolean } | null>(null);
@@ -1316,18 +1311,18 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
    *
    * Assigned every render rather than memoised because it closes over `timer`,
    * and the BLE handler reads it through the ref — same shape as
-   * `consumeFacesRef` / `externalTimeRecordRef` above.
+   * `externalTimeRecordRef` above.
    */
   const startFromCubeRef = useRef<(ts: number) => void>(() => {});
   startFromCubeRef.current = (ts: number) => {
     if (!getSettings().timingEnabled) return; // 练习模式:换题不计时
     if (!attemptCanStartRef.current) return;
+    if (!timerSmartCubeStartsAttemptOnTurn(eventAtStartRef.current)) return;
     // The phase check lives inside startFromCube, against the timer's own
     // synchronous phase — two turns from one BLE batch must not start twice.
     if (!timer.startFromCube(ts)) return;
     phaseSnapshotRef.current = 'running';
     cubeStartedRef.current = true;
-    moveRecorderRef.current.begin(ts);
     gyroRecRef.current.reset();
     gyroStartRef.current = performance.now();
   };
@@ -1374,8 +1369,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       // waiting for React to re-render would lose the move, and BLE can hand us
       // two turns of the same batch inside one call stack.
       startFromCubeRef.current(ts);
-      const faces = bluetoothCubeRef.current?.getFaces();
-      if (faces) consumeFacesRef.current(faces);
       for (const sub of bluetoothSubscribersRef.current) {
         try { sub(move, ts); } catch (err) { console.error('[bt-broadcast]', err); }
       }
@@ -1448,11 +1441,18 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     const subs = bluetoothSubscribersRef.current;
     const recorder = (m: string, ts: number) => {
       if (phaseSnapshotRef.current !== 'running') return;
-      moveRecorderRef.current.record(m, ts);
+      if (!moveRecorderRef.current.record(m, ts)) return;
+      const elapsedMs = Math.max(0, ts - attemptStartedAtRef.current);
+      attemptSplitRecorder.observeMoves({
+        event: eventAtStartRef.current,
+        moves: moveRecorderRef.current.snapshot(),
+        scramble: scrambleAtStartRef.current,
+        timeMs: elapsedMs,
+      });
     };
     subs.add(recorder);
     return () => { subs.delete(recorder); };
-  }, []);
+  }, [attemptSplitRecorder]);
 
   // Dev-only: publish the fake-smart-cube console API. Gives the whole
   // smart-cube flow (connect → scramble check → auto-stop → live view) a way
@@ -1684,6 +1684,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   armFromScrambleRef.current = () => {
     const s = getSettings();
     if (s.bluetoothAutoReady !== 'scrambled' || !s.timingEnabled) return;
+    if (!timerSmartCubeStartsAttemptOnTurn(event)) return;
     const ph = phaseSnapshotRef.current;
     if (ph !== 'idle' && ph !== 'stopped') return;
     onPressDown(true);
@@ -2346,10 +2347,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           reset();
           return;
         case 'mark-stage':
-          multiStageRef.current?.markStage(command.stage);
+          attemptSplitRecorder.markStage(command.stage, timerDisplayMsRef.current);
           return;
         case 'mark-bld-memo':
-          bldMemoRef.current?.markMemo();
+          attemptSplitRecorder.markMemo(timerDisplayMsRef.current);
           return;
         case 'delete-last':
           if (last) {
@@ -2977,38 +2978,16 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               <span>{liveTps.tps.toFixed(2)} TPS</span>
             </div>
           )}
-          {timer.phase === 'running' && multiStageActive && (
-            <div className="timer-stage-splits">
-              <span className={`stage-chip ${multiStage.liveStages.cross !== undefined ? 'done' : ''}`}>
-                {tr({ zh: '十字', en: 'Cross' })}{multiStage.liveStages.cross !== undefined ? ` ${formatMs(multiStage.liveStages.cross)}` : ''}
-              </span>
-              <span className={`stage-chip ${multiStage.liveStages.f2l !== undefined ? 'done' : ''}`}>
-                F2L{multiStage.liveStages.f2l !== undefined ? ` ${formatMs(multiStage.liveStages.f2l)}` : ''}
-              </span>
-              <span className={`stage-chip ${multiStage.liveStages.oll !== undefined ? 'done' : ''}`}>
-                OLL{multiStage.liveStages.oll !== undefined ? ` ${formatMs(multiStage.liveStages.oll)}` : ''}
-              </span>
-            </div>
-          )}
-          {timer.phase === 'running' && bldMemoActive && (
-            <div className="timer-stage-splits">
-              {bldMemo.memoMs === undefined ? (
-                <button
-                  type="button"
-                  className="stage-chip stage-chip-action"
-                  data-no-timer
-                  onClick={(e) => { e.stopPropagation(); bldMemoRef.current?.markMemo(); }}
-                >{tr({ zh: '记忆中… 按 Enter 或点这里', en: 'Memo… press Enter or tap'
-                })}</button>
-              ) : (
-                <>
-                  <span className="stage-chip done">{tr({ zh: '记忆', en: 'Memo'
-                })} {formatMs(bldMemo.memoMs)}</span>
-                  <span className="stage-chip">{tr({ zh: '执行中…', en: 'Executing…'
-                })}</span>
-                </>
-              )}
-            </div>
+          {timer.phase === 'running' && (multiStageActive || bldMemoActive) && (
+            <TimerAttemptSplitStatus
+              bldMemoActive={bldMemoActive}
+              localize={tr}
+              multiStageActive={multiStageActive}
+              onMarkMemo={() => attemptSplitRecorder.markMemo(timerDisplayMsRef.current)}
+              onMarkStage={(stage) => attemptSplitRecorder.markStage(stage, timerDisplayMsRef.current)}
+              precision={settings.precision}
+              state={attemptSplitState}
+            />
           )}
         </TimingSurface>
 

@@ -56,7 +56,10 @@ function machineConfig(): TimerMachineConfig {
   };
 }
 
-export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
+export function useTimer(
+  onSolve?: (result: SolveResult) => void,
+  onStart?: (startedAtMs: number) => void,
+): TimerHandle {
   const initial = useRef<TimerMachineState>(initialTimerMachineState());
   const machineRef = useRef<TimerMachineState>(initial.current);
   const [phase, setPhase] = useState<TimerPhase>(initial.current.phase);
@@ -71,7 +74,9 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
   const warned12Ref = useRef(false);
   const firedBeepsRef = useRef<Set<number>>(new Set());
   const onSolveRef = useRef(onSolve);
-  useEffect(() => { onSolveRef.current = onSolve; }, [onSolve]);
+  const onStartRef = useRef(onStart);
+  onSolveRef.current = onSolve;
+  onStartRef.current = onStart;
 
   const commitState = useCallback((state: TimerMachineState) => {
     machineRef.current = state;
@@ -164,7 +169,9 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
       } else if (effect === 'hold-cancelled') {
         stopHoldTimer();
       } else if (effect === 'run-started') {
-        beginRunEffects(state.startedAtMs ?? performance.now());
+        const startedAtMs = state.startedAtMs ?? performance.now();
+        onStartRef.current?.(startedAtMs);
+        beginRunEffects(startedAtMs);
       } else if (effect === 'run-stopped') {
         stopTick();
         setInspectionDisplayMs(0);

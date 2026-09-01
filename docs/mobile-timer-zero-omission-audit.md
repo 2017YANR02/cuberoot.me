@@ -25,11 +25,11 @@
 | GAP-005 | 手动来源还包含编辑后重置、顺序循环、已显示打乱历史的上一条/下一条、空打乱可起表与 attempt snapshot | Mobile 已直接消费 shared editor/queue/`ScrambleHistory`，覆盖上一条/下一条、队尾生成、solve 后前进、左右键、空槽和冻结 attempt；仍缺 OPPO/iOS 真机全状态证据 | P0，源码与自动化已接，待设备矩阵 |
 | GAP-006 | Web 有 session 切换/新建/重命名/清空/删除/项目关联、搜索筛选、成绩对比、成绩详情、移动分组 | session CRUD/项目关联、共用成绩行/七项菜单/备注/Undo、行级罚时/复制/删除、详情移组目标、完整筛选/tag 与成绩对比已接五端共享产品层。快捷删除无二次确认并可 5 秒撤销；完整 SolveModal/复盘仍缺。`HistoryPanel` 的批量删除分支当前在网站主路径没有 consumer，不把不可达代码当网站现有功能 | P0，历史主流程增强不等于完整详情/复盘 parity |
 | GAP-007 | Web 有成绩/图表/统计三栏、5 图、完整统计、case/跨分组/按天、纪录对比 | 紧凑 current/best 面板与 rolling picker 已迁 timer-ui 并由 Web/Mobile 真实消费；OPPO 已显示 time/ao5/ao12 共用面板且 360px 无横向溢出。完整 StatsModal/五图、case/跨分组/按天与纪录对比仍缺 | P0，紧凑面板接线完成不等于完整统计完成 |
-| GAP-008 | Web 设置有 8 类、64 个字段（其中 1 个仅开发环境） | 8 类与 64 个稳定 ID、copy/value/visibility/disabled/effect 已迁 shared；“计时”8 字段及“外观”的点击打乱动作已由 Web/Mobile 共用真实 UI/effect，App effect ledger 为 9 项。OPPO 已读到 canonical 8/8 计时 ID、20～340px 内容边界与滚动底部，并实证点击打乱的无操作/下一条/复制三动作；其余 55 字段、iOS/其他三端和全视口仍缺 | P0，9 项接线完成不等于 64 项设置 parity |
+| GAP-008 | Web 设置有 8 类、64 个字段（其中 1 个仅开发环境） | 8 类与 64 个稳定 ID、copy/value/visibility/disabled/effect 已迁 shared；“计时”8 字段、“训练”的 CFOP 分段/BLD memo 及“外观”的点击打乱动作已由 Web/Mobile 共用真实 UI/effect，App effect ledger 为 11 项。OPPO 已读到 canonical 8/8 计时 ID、20～340px 内容边界与滚动底部，并实证点击打乱三动作；新增两项尚待解锁后验收，其余 53 字段、iOS/其他三端和全视口仍缺 | P0，11 项接线完成不等于 64 项设置 parity |
 | GAP-009 | Web “更多”包含打乱足迹、统计、语言、专项、盲拧助手、全屏、手动录入、replay、求解器、批量打乱、打印、清空 | 12 项 action/条件/effect 已共享；App 已真实接通 10 项：统计复用现有共享统计页，盲拧助手/通用求解器/批量打乱复用 Tools canonical 子路由，其余 6 项保留既有 App effect。专项仍绑定 Web 私有 drill target，replay 仍绑定 Web 私有 decoder/重建状态，未用外跳 Web timer 或占位冒充 | P0，剩余 2 项及深层交互矩阵未完成 |
 | GAP-010 | Web 有智能魔方、智能计时器、Stackmat 麦克风，各自完整弹层、状态与错误 | Mobile 只显示真实 BLE 入口；Android GAN v4 主链已真机跑通，iOS UUID 后 manufacturer-data MAC 提取有 adapter/握手单测但无真机；Stackmat/智能计时器未实现且不渲染假入口 | P0，缺失能力保持不可见且仍登记为 gap |
-| GAP-011 | Web 有手动录成绩、FMC/MBLD 特殊输入、轮次模拟、目标、每日目标、分段、BLD memo | 手动成绩/FMC/MBLD 已共享接入并待真机；轮次、目标、每日目标、分段与 BLD memo 仍缺 | P0 |
-| GAP-012 | Web 触摸有八向操作轮盘与撤销，键盘有可重绑快捷键，还有全屏/运行隐藏/UI fade | Mobile 已直接消费 shared 八向轮盘、默认键盘决策、任意键停表、删除撤销 toast 与起表可用性门禁；但自定义改键持久化/UI、分段/BLD memo 键、运行隐藏全 UI 和完整真机矩阵仍缺 | P1，但声称“UI/UX 完全一致”前仍是硬门槛 |
+| GAP-011 | Web 有手动录成绩、FMC/MBLD 特殊输入、轮次模拟、目标、每日目标、分段、BLD memo | 手动成绩/FMC/MBLD 与 CFOP 分段/BLD memo 已共享接入；分段共用 recorder/status/settings，手动键盘和 44px 触摸均可标记，智能三阶自动分段复用 canonical move-stream producer。轮次、目标、每日目标仍缺，新增分段路径待 OPPO 真机 | P0 |
+| GAP-012 | Web 触摸有八向操作轮盘与撤销，键盘有可重绑快捷键，还有全屏/运行隐藏/UI fade | Mobile 已直接消费 shared 八向轮盘、默认键盘决策、任意键停表、分段/BLD memo 键与 44px 触摸标记、删除撤销 toast 与起表门禁；但自定义改键持久化/UI、运行隐藏全 UI 和完整真机矩阵仍缺 | P1，但声称“UI/UX 完全一致”前仍是硬门槛 |
 
 任何一项不等都必须保持整体 `NOT COMPLETE`。
 
