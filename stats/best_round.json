@@ -154,17 +154,6 @@
           "4.76"
         ],
         [
-          "[Start of Summer Beijing 2026](https://www.worldcubeassociation.org/competitions/StartofSummerBeijing2026/results/all#e333_2)",
-          "Second round",
-          "13.09",
-          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-          "3.99",
-          "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
-          "4.42",
-          "[Qixian Cao (曹岂娴)](https://www.worldcubeassociation.org/persons/2023CAOQ01)",
-          "4.68"
-        ],
-        [
           "[Yancheng Spring Open 2026](https://www.worldcubeassociation.org/competitions/YanchengSpringOpen2026/results/all#e333_2)",
           "Second round",
           "13.09",
@@ -174,6 +163,17 @@
           "4.11",
           "[Zhaokun Li (李昭昆)](https://www.worldcubeassociation.org/persons/2024LIZH03)",
           "5.02"
+        ],
+        [
+          "[Start of Summer Beijing 2026](https://www.worldcubeassociation.org/competitions/StartofSummerBeijing2026/results/all#e333_2)",
+          "Second round",
+          "13.09",
+          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+          "3.99",
+          "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
+          "4.42",
+          "[Qixian Cao (曹岂娴)](https://www.worldcubeassociation.org/persons/2023CAOQ01)",
+          "4.68"
         ]
       ]
     },
@@ -900,17 +900,6 @@
           "22.00"
         ],
         [
-          "[Nordic Swedish Championship 2026](https://www.worldcubeassociation.org/competitions/NordicSwedishChampionship2026/results/all#e333fm_f)",
-          "Final",
-          "1:02.00",
-          "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)",
-          "19.67",
-          "[Theodor Nordstrand](https://www.worldcubeassociation.org/persons/2016NORD02)",
-          "21.00",
-          "[Niklas Aasen Eliasson](https://www.worldcubeassociation.org/persons/2021ELIA01)",
-          "21.33"
-        ],
-        [
           "[FMC Europe 2024](https://www.worldcubeassociation.org/competitions/FMCEurope2024/results/all#e333fm_f)",
           "Final",
           "1:02.00",
@@ -920,6 +909,17 @@
           "21.00",
           "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
           "21.00"
+        ],
+        [
+          "[Nordic Swedish Championship 2026](https://www.worldcubeassociation.org/competitions/NordicSwedishChampionship2026/results/all#e333fm_f)",
+          "Final",
+          "1:02.00",
+          "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)",
+          "19.67",
+          "[Theodor Nordstrand](https://www.worldcubeassociation.org/persons/2016NORD02)",
+          "21.00",
+          "[Niklas Aasen Eliasson](https://www.worldcubeassociation.org/persons/2021ELIA01)",
+          "21.33"
         ],
         [
           "[Fun with FM in Kraków 2025](https://www.worldcubeassociation.org/competitions/FunwithFMinKrakow2025/results/all#e333fm_1)",
@@ -1505,9 +1505,9 @@
           "[WCA European Championship 2026](https://www.worldcubeassociation.org/competitions/Euro2026/results/all#eskewb_1)",
           "First round",
           "5.52",
-          "[Ariel Benchetrit](https://www.worldcubeassociation.org/persons/2019BENC04)",
-          "1.83",
           "[Ignacy Samselski](https://www.worldcubeassociation.org/persons/2022SAMS03)",
+          "1.83",
+          "[Ariel Benchetrit](https://www.worldcubeassociation.org/persons/2019BENC04)",
           "1.83",
           "[Tomasz Pietruszka](https://www.worldcubeassociation.org/persons/2021PIET01)",
           "1.86"
@@ -1527,9 +1527,9 @@
           "[Szansa Cubing Open Warsaw 2024](https://www.worldcubeassociation.org/competitions/SzansaCubingOpenWarsaw2024/results/all#eskewb_f)",
           "Final",
           "5.59",
-          "[Vojtěch Grohmann](https://www.worldcubeassociation.org/persons/2021GROH01)",
-          "1.79",
           "[Ignacy Samselski](https://www.worldcubeassociation.org/persons/2022SAMS03)",
+          "1.79",
+          "[Vojtěch Grohmann](https://www.worldcubeassociation.org/persons/2021GROH01)",
           "1.79",
           "[Michał Denkiewicz](https://www.worldcubeassociation.org/persons/2021DENK01)",
           "2.01"
