@@ -516,6 +516,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const [error, setError] = useState<string | null>(null);
   const [activeOri, setActiveOri] = useState(0);
   const [sq1EpNumericNames, setSq1EpNumericNames] = useState(false);
+  const [sq1EpHasParity, setSq1EpHasParity] = useState(false);
   const [caseOri, setCaseOri] = useState<Record<string, number>>({});
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [submissions, setSubmissions] = useState<AlgSubmission[]>([]);
@@ -781,7 +782,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const { setHash } = useHashHighlight({
     block: 'center',
     linger: 1800, // 闪一下语义(同一锚点不重放);实际的闪由下面 onScroll→flashId 渲染
-    deps: [data, collapsedGroups, puzzleParam, set, subgroupParam],
+    deps: [data, collapsedGroups, puzzleParam, set, subgroupParam, sq1EpHasParity],
     resolve: (h) => {
       const c = findCaseByHash(data?.cases ?? [], h, puzzleParam, set);
       return c?.id != null ? document.getElementById(`case-${c.id}`) : null;
@@ -791,6 +792,14 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       if (c?.id == null) return;
       setSelectedId(c.id);
       const parity = isSq1Ep ? classifySq1EpParity(c.name) ?? 'unclassified' : null;
+      if (parity === 'parity' && !sq1EpHasParity) {
+        setSq1EpHasParity(true);
+        return false;
+      }
+      if (parity === 'no-parity' && sq1EpHasParity) {
+        setSq1EpHasParity(false);
+        return false;
+      }
       const g = parity ? `${parity}:${c.subgroup || ''}` : c.subgroup || '';
       if (collapsedGroups.has(g)) {
         setCollapsedGroups(prev => { const next = new Set(prev); next.delete(g); return next; });
@@ -957,11 +966,14 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
 
     const { noParity, parity, unclassified } = partitionSq1EpCases(visibleCases);
     return [
-      ...buildGroups(noParity, 'no-parity', true),
-      ...buildGroups(parity, 'parity', true),
+      ...buildGroups(
+        sq1EpHasParity ? parity : noParity,
+        sq1EpHasParity ? 'parity' : 'no-parity',
+        true,
+      ),
       ...buildGroups(unclassified, 'unclassified', true),
     ];
-  }, [isSq1Ep, visibleCases]);
+  }, [isSq1Ep, sq1EpHasParity, visibleCases]);
 
   /**
    * 公式行尾那个镜像入口(issue #40 T5 的 U1)。三份镜像是纯重写,**不依赖建链**,
@@ -1429,6 +1441,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             onLabel={tr({ zh: '数字命名', en: 'Numeric names' })}
             ariaLabel={tr({ zh: '切换 SQ1 EP 命名方式', en: 'Switch SQ1 EP naming system' })}
           />
+          <BoolToggle
+            value={sq1EpHasParity}
+            onChange={setSq1EpHasParity}
+            label={tr({ zh: '特', en: 'Parity' })}
+          />
           <p className="alg-ep-parity-note">
             {tr({
               zh: '“特”指棱特：上下层棱块排列的奇偶性不同。中层翻转另算。',
@@ -1444,22 +1461,14 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         const showHeader = !subgroupParam && (grouped.length > 1 || subgroup !== '');
         return (
           <Fragment key={key}>
-          {startsParitySection && (
-            <div className={`alg-ep-parity-section${paritySection === 'parity' ? ' is-parity' : ''}`}>
+          {startsParitySection && paritySection === 'unclassified' && (
+            <div className="alg-ep-parity-section">
               <h2>
-                {paritySection === 'no-parity'
-                  ? tr({ zh: '无特', en: 'No parity' })
-                  : paritySection === 'parity'
-                    ? tr({ zh: '有特', en: 'Parity' })
-                    : tr({ zh: '待确认', en: 'Review needed' })}
+                {tr({ zh: '待确认', en: 'Review needed' })}
                 <span>{sectionCaseCount}</span>
               </h2>
               <p>
-                {paritySection === 'no-parity'
-                  ? tr({ zh: '上下层棱块排列的奇偶性相同', en: 'Both layers have the same permutation parity' })
-                  : paritySection === 'parity'
-                    ? tr({ zh: '上下层棱块排列的奇偶性不同', en: 'The layers have different permutation parity' })
-                    : tr({ zh: '名称无法自动判定，暂不误标', en: 'Names that cannot be classified are left unmarked' })}
+                {tr({ zh: '名称无法自动判定，暂不误标', en: 'Names that cannot be classified are left unmarked' })}
               </p>
             </div>
           )}
