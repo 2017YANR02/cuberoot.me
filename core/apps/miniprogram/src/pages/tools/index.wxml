@@ -1,5 +1,5 @@
 <import src="../../templates/web-route-view.wxml" />
 <template
   is="web-route-view"
-  data="{{src: src, viewAttempt: viewAttempt, loadingTitle: loadingTitle, errorTitle: errorTitle, errorMessage: errorMessage, canRetry: canRetry}}"
+  data="{{src: src, viewAttempt: viewAttempt, loadingTitle: loadingTitle, errorTitle: errorTitle, errorMessage: errorMessage, canRetry: canRetry, retryLabel: retryLabel}}"
 />

@@ -14,7 +14,7 @@
     "backgroundTextStyle": "@backgroundTextStyle",
     "navigationBarBackgroundColor": "@navigationBarBackgroundColor",
     "navigationBarTextStyle": "@navigationBarTextStyle",
-    "navigationBarTitleText": "CubeRoot 魔方根"
+    "navigationBarTitleText": "CubeRoot"
   },
   "tabBar": {
     "color": "@tabBarColor",

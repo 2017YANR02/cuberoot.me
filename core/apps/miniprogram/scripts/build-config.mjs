@@ -6,12 +6,17 @@ export async function resolveProjectConfig({
   templatePath,
   projectConfigPath,
   environment = process.env,
+  appIdEnvironmentKey = 'WECHAT_MINI_APP_ID',
+  libVersionEnvironmentKey = 'WECHAT_MINI_LIB_VERSION',
+  placeholderAppId = 'touristappid',
+  templateLabel = 'project.config.template.json',
+  projectConfigLabel = 'project.config.json',
 }) {
   const config = await readJsonObjectFile(templatePath, {
-    label: 'project.config.template.json',
+    label: templateLabel,
   });
   const existingConfig = await readJsonObjectFile(projectConfigPath, {
-    label: 'project.config.json',
+    label: projectConfigLabel,
     missingValue: {},
   });
   const existingAppId = typeof existingConfig.appid === 'string'
@@ -22,13 +27,15 @@ export async function resolveProjectConfig({
     : '';
 
   config.appid =
-    environment.WECHAT_MINI_APP_ID?.trim() ||
-    (existingAppId !== 'touristappid' ? existingAppId : '') ||
-    'touristappid';
-  config.libVersion =
-    environment.WECHAT_MINI_LIB_VERSION?.trim() ||
-    (/^\d+\.\d+\.\d+$/.test(existingLibVersion) ? existingLibVersion : '') ||
-    config.libVersion;
+    environment[appIdEnvironmentKey]?.trim() ||
+    (existingAppId !== placeholderAppId ? existingAppId : '') ||
+    placeholderAppId;
+  if (typeof config.libVersion === 'string' && libVersionEnvironmentKey) {
+    config.libVersion =
+      environment[libVersionEnvironmentKey]?.trim() ||
+      (/^\d+\.\d+\.\d+$/.test(existingLibVersion) ? existingLibVersion : '') ||
+      config.libVersion;
+  }
 
   return config;
 }

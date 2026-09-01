@@ -140,7 +140,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'learn/[orgSlug]/students/[studentId]/messages': { title: { zh: '消息', en: 'Messages' } },
   'learn/[orgSlug]/students/[studentId]/messages/[conversationId]': { title: { zh: '消息详情', en: 'Message Thread' } },
   'privacy': {
-    title: { zh: '移动端与小程序隐私政策', en: 'Mobile and Mini Program Privacy Policy' },
+    title: { zh: '用户协议与隐私政策', en: 'User Agreement and Privacy Policy' },
     description: {
       zh: 'CubeRoot Android、iOS App 与微信小程序的数据处理、账号登录、备份、删除与联系说明。',
       en: 'How the CubeRoot Android and iOS apps and WeChat Mini Program handle data, account sign-in, backups, deletion, and support requests.',

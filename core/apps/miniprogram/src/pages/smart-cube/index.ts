@@ -2,15 +2,37 @@ import {
   smartCubeSession,
   type SmartCubeSessionSnapshot,
 } from '../../lib/smart-cube/session';
+import { miniProgramApi } from '../../lib/platform';
+import { tr } from '../../lib/i18n';
 
 const SIMULATOR_MOVES = ['U', "U'", 'R', "R'", 'F', "F'", 'D', "D'", 'L', "L'", 'B', "B'"];
 const RETURN_UNLOCK_MS = 1200;
 
 interface SmartCubePageData extends SmartCubeSessionSnapshot {
   busy: boolean;
+  copy: typeof SMART_CUBE_COPY;
   simulator: boolean;
   simulatorMoves: string[];
 }
+
+const SMART_CUBE_COPY = {
+  battery: tr({ en: 'Battery', zh: '电量' }),
+  connected: tr({ en: 'Connected to', zh: '已连接' }),
+  connecting: tr({ en: 'Connecting to', zh: '正在连接' }),
+  disconnected: tr({ en: 'Connection lost', zh: '连接已断开' }),
+  disconnect: tr({ en: 'Disconnect', zh: '断开连接' }),
+  eyebrow: tr({ en: 'SMART CUBE', zh: '智能魔方' }),
+  failed: tr({ en: 'Connection failed. Try again.', zh: '连接失败，请重试' }),
+  latestMove: tr({ en: 'Latest move', zh: '最近动作' }),
+  preparing: tr({ en: 'Preparing connection…', zh: '正在准备连接…' }),
+  retry: tr({ en: 'Try again', zh: '重试' }),
+  returnToTimer: tr({ en: 'Return to timer', zh: '返回计时器' }),
+  searching: tr({ en: 'Searching for a smart cube…', zh: '正在搜索智能魔方…' }),
+  simulatorMoves: tr({ en: 'Send simulated moves', zh: '发送仿真动作' }),
+  smartCube: tr({ en: 'smart cube', zh: '智能魔方' }),
+  title: tr({ en: 'Connect Smart Cube', zh: '连接智能魔方' }),
+  wakeCube: tr({ en: 'Turn the cube to wake it up', zh: '请转动魔方将它唤醒' }),
+};
 
 interface SmartCubePageInstance {
   active?: boolean;
@@ -44,7 +66,7 @@ function navigateBackToTimer(page: SmartCubePageInstance, force = false): void {
 
   page.returnUnlockTimer = setTimeout(unlock, RETURN_UNLOCK_MS);
   try {
-    wx.navigateBack({ fail: unlock });
+    miniProgramApi().navigateBack({ fail: unlock });
   } catch {
     unlock();
   }
@@ -71,7 +93,7 @@ async function startConnection(page: SmartCubePageInstance): Promise<void> {
     if (!page.active || page.connectionAttempt !== attempt) return;
     page.setData({
       phase: 'error',
-      error: error instanceof Error ? error.message : '连接失败，请重试',
+      error: error instanceof Error ? error.message : SMART_CUBE_COPY.failed,
     });
   }
 }
@@ -85,6 +107,7 @@ Page<SmartCubePageData, WechatMiniprogram.Page.CustomOption>({
     error: '',
     lastMove: '',
     busy: false,
+    copy: SMART_CUBE_COPY,
     simulator: false,
     simulatorMoves: SIMULATOR_MOVES,
   },
@@ -97,6 +120,11 @@ Page<SmartCubePageData, WechatMiniprogram.Page.CustomOption>({
     page.latestPhase = 'idle';
     page.returningToTimer = false;
     page.token = options.token ?? '';
+    try {
+      miniProgramApi().setNavigationBarTitle({ title: SMART_CUBE_COPY.title });
+    } catch {
+      // The platform title is cosmetic and may be unavailable in test runtimes.
+    }
     page.unsubscribe = smartCubeSession.subscribe((snapshot) => {
       page.latestPhase = snapshot.phase;
       page.setData({
@@ -105,7 +133,7 @@ Page<SmartCubePageData, WechatMiniprogram.Page.CustomOption>({
       });
     });
     try {
-      page.simulator = wx.getDeviceInfo().platform === 'devtools';
+      page.simulator = miniProgramApi().getSystemInfoSync().platform === 'devtools';
     } catch {
       page.simulator = false;
     }

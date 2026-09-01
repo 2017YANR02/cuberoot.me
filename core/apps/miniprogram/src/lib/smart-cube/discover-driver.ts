@@ -1,3 +1,5 @@
+import { miniProgramApi } from '../platform';
+import { tr } from '../i18n';
 import { matchesGanV2Name } from '@cuberoot/shared/smart-cube/gan-v2';
 import { matchesGanV3Name } from '@cuberoot/shared/smart-cube/gan-v3';
 import { matchesGanV4Name } from '@cuberoot/shared/smart-cube/gan-v4';
@@ -6,6 +8,7 @@ import { matchesGoCubeName } from '@cuberoot/shared/smart-cube/gocube';
 import { matchesMoyuName } from '@cuberoot/shared/smart-cube/moyu';
 import {
   beginBleResourceCleanup,
+  bluetoothAdapterErrorMessage,
   claimBleResourceLease,
   ignoreBleFailure,
   invokeBleCleanupForLease,
@@ -47,7 +50,7 @@ export async function discoverSmartCubeDriver(options: {
   scanTimeoutMs?: number;
   signal?: BleAbortSignal;
 } = {}): Promise<DetectableSmartCubeDriver> {
-  const api = options.api ?? (wx as unknown as MiniProgramBleApi);
+  const api = options.api ?? (miniProgramApi() as unknown as MiniProgramBleApi);
   const scanTimeoutMs = options.scanTimeoutMs ?? DEFAULT_SCAN_TIMEOUT_MS;
   if (!Number.isFinite(scanTimeoutMs) || scanTimeoutMs < 1_000 || scanTimeoutMs > 30_000) {
     throw new RangeError('scanTimeoutMs must be between 1000 and 30000.');
@@ -80,7 +83,7 @@ export async function discoverSmartCubeDriver(options: {
       adapterOpen = true;
     } catch (error) {
       if (error instanceof BleOperationAbortedError) throw error;
-      throw new Error('蓝牙不可用，请开启系统蓝牙后重试', { cause: error });
+      throw new Error(bluetoothAdapterErrorMessage(error), { cause: error });
     }
 
     return await new Promise<DetectableSmartCubeDriver>((resolve, reject) => {
@@ -109,9 +112,10 @@ export async function discoverSmartCubeDriver(options: {
       offAbort = options.signal?.onAbort(() => finish(new BleOperationAbortedError())) ?? offAbort;
       if (settled) return;
 
-      timer = setTimeout(() => finish(new Error(
-        '未发现智能魔方，请转动魔方将它唤醒后重试',
-      )), scanTimeoutMs);
+      timer = setTimeout(() => finish(new Error(tr({
+        en: 'No smart cube found. Turn the cube to wake it up and try again.',
+        zh: '未发现智能魔方，请转动魔方将它唤醒后重试',
+      }))), scanTimeoutMs);
 
       const startDiscovery = invokeBleWithLateCleanupForLease(
         lease,
@@ -130,7 +134,10 @@ export async function discoverSmartCubeDriver(options: {
       }).catch((error: unknown) => {
         finish(error instanceof BleOperationAbortedError
           ? error
-          : new Error('无法搜索附近的智能魔方', { cause: error }));
+          : new Error(tr({
+            en: 'Unable to search for nearby smart cubes',
+            zh: '无法搜索附近的智能魔方',
+          }), { cause: error }));
       });
     });
   } finally {

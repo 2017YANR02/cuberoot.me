@@ -59,7 +59,7 @@ function createBleRig() {
       });
     },
     notifyBLECharacteristicValueChange(callbacks) {
-      events.push(`${callbacks.characteristicId}:${callbacks.state ? 'on' : 'off'}`);
+      events.push(`${callbacks.characteristicId}:${callbacks.state ? 'on' : 'off'}:${callbacks.type}`);
       callbacks.success?.({});
     },
     readBLECharacteristicValue(callbacks) { callbacks.success?.({}); },
@@ -96,13 +96,18 @@ describe('MoYu mini program BLE transport', () => {
     expect(moves).toEqual(['R']);
     await expect(connection.requestBattery()).resolves.toBeNull();
     expect(rig.events).toEqual(expect.arrayContaining([
-      `${MOYU_TURN_CHARACTERISTIC_UUID.toUpperCase()}:on`,
-      `${MOYU_READ_CHARACTERISTIC_UUID.toUpperCase()}:on`,
-      `${MOYU_GYRO_CHARACTERISTIC_UUID.toUpperCase()}:on`,
+      `${MOYU_TURN_CHARACTERISTIC_UUID.toUpperCase()}:on:notification`,
+      `${MOYU_READ_CHARACTERISTIC_UUID.toUpperCase()}:on:notification`,
+      `${MOYU_GYRO_CHARACTERISTIC_UUID.toUpperCase()}:on:indication`,
     ]));
 
     await connection.disconnect();
     await connection.disconnect();
+    expect(rig.events).toEqual(expect.arrayContaining([
+      `${MOYU_TURN_CHARACTERISTIC_UUID.toUpperCase()}:off:notification`,
+      `${MOYU_READ_CHARACTERISTIC_UUID.toUpperCase()}:off:notification`,
+      `${MOYU_GYRO_CHARACTERISTIC_UUID.toUpperCase()}:off:indication`,
+    ]));
     expect(rig.events.filter((event) => event === 'connection:close')).toHaveLength(1);
     expect(rig.events.filter((event) => event === 'adapter:close')).toHaveLength(1);
   });

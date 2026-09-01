@@ -59,7 +59,7 @@ describe('mini program web routes', () => {
     expect(resolveWebRoute('privacy')).toEqual({
       title: '隐私说明',
       path: '/zh/privacy',
-      sessionHandoff: true,
+      sessionHandoff: false,
       url: 'https://cuberoot.me/zh/privacy#wechat_redirect',
     });
     expect(listWebTools().some((tool) => tool.key === 'account')).toBe(false);

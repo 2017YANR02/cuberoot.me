@@ -1,0 +1,10 @@
+{
+  "appid": "testAppId",
+  "douyinProjectType": "native",
+  "miniprogramRoot": "./",
+  "projectname": "CubeRoot 抖音小程序",
+  "setting": {
+    "es6": true,
+    "urlCheck": true
+  }
+}

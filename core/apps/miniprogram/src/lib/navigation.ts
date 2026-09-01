@@ -1,5 +1,6 @@
 import { resolveWebRoute } from './web-routes';
 import { createPlatformActionGuard } from './platform-action-guard';
+import { miniProgramApi } from './platform';
 
 interface WebsitePageNavigationOptions {
   failureMessage: string;
@@ -23,7 +24,7 @@ function showNavigationMessage(
     // Persistent feedback is optional; keep the shared navigation path usable.
   }
   try {
-    wx.showToast({ icon: 'none', title });
+    miniProgramApi().showToast({ icon: 'none', title });
   } catch {
     // Feedback is secondary; navigation state must still be released correctly.
   }
@@ -55,7 +56,7 @@ export function openWebsitePageOnce(
   };
 
   try {
-    wx.navigateTo({
+    miniProgramApi().navigateTo({
       url: `/pages/web/index?key=${encodeURIComponent(String(key))}`,
       fail,
       complete: release,

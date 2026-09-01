@@ -4,31 +4,40 @@ import accountConfig from '../src/pages/account/index.json';
 
 interface AccountPageData {
   accountError: string;
+  agreementAccepted: boolean;
   displayName: string;
   isTimelineEntry: boolean;
   loginBusy: boolean;
   loginError: string;
   loginRequired: boolean;
   loginStorageUnavailable: boolean;
+  requiresAgreement: boolean;
   uidText: string;
   wcaId: string;
 }
 
 interface AccountPage {
   data: AccountPageData;
-  loginWithWechat(): Promise<void>;
+  loginWithMiniProgram(): Promise<void>;
+  logout(): void;
   onLoad(): void;
   onShareAppMessage(): WechatMiniprogram.Page.ICustomShareContent;
   onShareTimeline(): WechatMiniprogram.Page.ICustomTimelineContent;
   onShow(): void;
   openAccount(): void;
+  openPolicy(): void;
   retryMiniProgramSession(): void;
   setData(data: Partial<AccountPageData>): void;
+  toggleAgreement(): void;
 }
 
-async function loadPage(wxApi: Record<string, unknown>): Promise<AccountPage> {
+async function loadPage(
+  api: Record<string, unknown>,
+  target: 'wechat' | 'douyin' = 'wechat',
+): Promise<AccountPage> {
   let page: AccountPage | undefined;
-  vi.stubGlobal('wx', wxApi);
+  vi.stubGlobal('__MINI_PROGRAM_TARGET__', target);
+  vi.stubGlobal(target === 'douyin' ? 'tt' : 'wx', api);
   vi.stubGlobal('Page', (options: AccountPage) => {
     page = options;
   });
@@ -93,7 +102,7 @@ describe('mini program account page', () => {
 
     page.onLoad();
     page.onShow();
-    await page.loginWithWechat();
+    await page.loginWithMiniProgram();
     page.openAccount();
 
     expect(page.data).toMatchObject({
@@ -134,8 +143,10 @@ describe('mini program account page', () => {
     });
   });
 
-  it('shows an existing session natively without opening a web view or creating a ticket', async () => {
+  it('clears the native session and opens the existing website logout route', async () => {
     const request = vi.fn();
+    const removeStorageSync = vi.fn();
+    const navigateTo = vi.fn((options: { complete?: () => void }) => options.complete?.());
     const page = await loadPage({
       getLaunchOptionsSync: normalLaunchOptions,
       getStorageSync: () => ({
@@ -147,6 +158,8 @@ describe('mini program account page', () => {
           avatar: '',
         },
       }),
+      removeStorageSync,
+      navigateTo,
       request,
       showShareMenu: vi.fn(),
     });
@@ -160,6 +173,76 @@ describe('mini program account page', () => {
       wcaId: '2017YANR02',
     });
     expect(request).not.toHaveBeenCalled();
+
+    page.logout();
+
+    expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
+    expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({
+      url: '/pages/web/index?key=logout',
+    }));
+    expect(page.data).toMatchObject({
+      displayName: '',
+      loginRequired: true,
+      uidText: '',
+      wcaId: '',
+    });
+  });
+
+  it('requires manual consent before starting Douyin sign-in', async () => {
+    const token = 'd'.repeat(20);
+    const login = vi.fn((options: {
+      force?: boolean;
+      success(result: { code: string; isLogin: boolean }): void;
+    }) => {
+      expect(options.force).toBe(true);
+      options.success({ code: 'douyin-code', isLogin: true });
+    });
+    const request = vi.fn((options: {
+      data?: { code?: string };
+      success(response: unknown): void;
+      url: string;
+    }) => {
+      expect(options.url).toBe('https://api.cuberoot.me/v1/auth/douyin/miniprogram');
+      expect(options.data).toEqual({ code: 'douyin-code' });
+      options.success({
+        statusCode: 200,
+        data: {
+          token,
+          user: { uid: 62, name: '', wcaId: null, avatar: '' },
+          isNew: true,
+        },
+      });
+    });
+    const page = await loadPage({
+      getStorageSync: () => null,
+      login,
+      removeStorageSync: vi.fn(),
+      request,
+      setStorageSync: vi.fn(),
+      showShareMenu: vi.fn(),
+    }, 'douyin');
+
+    page.onLoad();
+    await page.loginWithMiniProgram();
+
+    expect(page.data).toMatchObject({
+      agreementAccepted: false,
+      loginError: '请先阅读用户协议和隐私政策，并手动确认同意后再登录',
+      loginRequired: true,
+      requiresAgreement: true,
+    });
+    expect(login).not.toHaveBeenCalled();
+
+    page.toggleAgreement();
+    await page.loginWithMiniProgram();
+
+    expect(login).toHaveBeenCalledOnce();
+    expect(page.data).toMatchObject({
+      agreementAccepted: true,
+      displayName: 'CubeRoot 用户',
+      loginError: '',
+      loginRequired: false,
+    });
   });
 
   it('logs in with WeChat and keeps the user on the shareable native account page', async () => {
@@ -196,7 +279,7 @@ describe('mini program account page', () => {
     });
 
     page.onLoad();
-    await page.loginWithWechat();
+    await page.loginWithMiniProgram();
 
     expect(request).toHaveBeenCalledOnce();
     expect(page.data).toMatchObject({
@@ -220,7 +303,7 @@ describe('mini program account page', () => {
     });
 
     page.onLoad();
-    await page.loginWithWechat();
+    await page.loginWithMiniProgram();
 
     expect(page.data).toMatchObject({
       loginBusy: false,

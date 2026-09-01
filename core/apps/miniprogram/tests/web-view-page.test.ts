@@ -68,6 +68,7 @@ describe('shared web-view page state', () => {
       loginRequired: false,
       loginStorageUnavailable: false,
       loadingTitle: '正在打开计时',
+      retryLabel: '重新打开',
       routeKey: 'timer',
       src: 'https://cuberoot.me/zh/timer#wechat_redirect',
       viewAttempt: 1,

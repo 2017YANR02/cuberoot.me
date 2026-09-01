@@ -6,6 +6,6 @@
       <text class="page-title">{{errorTitle || loadingTitle}}</text>
       <text class="page-intro" wx:if="{{errorMessage}}">{{errorMessage}}</text>
     </view>
-    <button class="text-button retry-button" hover-class="press-feedback" wx:if="{{canRetry}}" bindtap="retry">重新打开</button>
+    <button class="text-button retry-button" hover-class="press-feedback" wx:if="{{canRetry}}" bindtap="retry">{{retryLabel}}</button>
   </view>
 </template>

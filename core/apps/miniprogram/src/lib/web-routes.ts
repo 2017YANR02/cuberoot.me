@@ -5,8 +5,10 @@ import {
   type SiteDirectoryEntryId,
 } from '@cuberoot/shared/site-directory';
 
+import { localizedWebsitePath, tr } from './i18n';
 import { SITE_ORIGIN } from './runtime-config';
 import { isSafeWebSessionDestination, isWebSessionTicket } from './web-session-contract';
+import { MINI_PROGRAM_WEB_MARKER } from './platform';
 
 type DiscoveryRouteKey = Exclude<SiteDirectoryEntryId, 'algdb' | 'alg' | 'github'> | 'alg';
 export type WebRouteKey = DiscoveryRouteKey | 'home' | 'account' | 'privacy' | 'logout';
@@ -55,11 +57,6 @@ function directoryRouteKey(entry: SiteDirectoryEntry): DiscoveryRouteKey | null 
   return entry.id === 'algdb' ? 'alg' : entry.id as DiscoveryRouteKey;
 }
 
-function localizedWebsitePath(href: string): string {
-  const path = href.length > 1 ? href.replace(/\/$/, '') : href;
-  return `/zh${path}`;
-}
-
 function toolAction(entry: SiteDirectoryEntry): WebToolAction {
   if ('miniProgramAction' in entry && entry.miniProgramAction) {
     return entry.miniProgramAction;
@@ -68,16 +65,16 @@ function toolAction(entry: SiteDirectoryEntry): WebToolAction {
 }
 
 function toolActionLabel(entry: SiteDirectoryEntry, action: WebToolAction): string {
-  if ('miniProgramNote' in entry && entry.miniProgramNote) return entry.miniProgramNote.zh;
-  if (action === 'native') return '小程序原生功能';
-  return '打开网站页面';
+  if ('miniProgramNote' in entry && entry.miniProgramNote) return tr(entry.miniProgramNote);
+  if (action === 'native') return tr({ en: 'Native Mini Program feature', zh: '小程序原生功能' });
+  return tr({ en: 'Open website page', zh: '打开网站页面' });
 }
 
 const DIRECTORY_TOOL_GROUPS: WebToolGroup[] = SITE_DIRECTORY_GROUPS.map((group) => ({
   id: group.id,
-  eyebrow: group.eyebrow.zh,
-  title: group.title.zh,
-  description: group.sub.zh,
+  eyebrow: tr(group.eyebrow),
+  title: tr(group.title),
+  description: tr(group.sub),
   tools: group.entries.map((entry) => {
     const action = toolAction(entry);
     return {
@@ -87,7 +84,7 @@ const DIRECTORY_TOOL_GROUPS: WebToolGroup[] = SITE_DIRECTORY_GROUPS.map((group) 
       href: entry.href,
       id: entry.id,
       key: directoryRouteKey(entry),
-      title: SITE_DIRECTORY_TEXTS[entry.nameKey].zh,
+      title: tr(SITE_DIRECTORY_TEXTS[entry.nameKey]),
       titleEn: SITE_DIRECTORY_TEXTS[entry.nameKey].en,
     };
   }),
@@ -99,8 +96,8 @@ for (const group of SITE_DIRECTORY_GROUPS) {
     const key = directoryRouteKey(entry);
     if (!key) continue;
     discoveryRoutes[key] = {
-      title: SITE_DIRECTORY_TEXTS[entry.nameKey].zh,
-      description: group.sub.zh,
+      title: tr(SITE_DIRECTORY_TEXTS[entry.nameKey]),
+      description: tr(group.sub),
       path: localizedWebsitePath(entry.href),
       publicEntry: true,
       ...(entry.id === 'timer' ? { nativeTabPath: '/pages/timer/index' } : {}),
@@ -112,31 +109,35 @@ for (const group of SITE_DIRECTORY_GROUPS) {
 export const WEB_ROUTES: Record<WebRouteKey, WebRouteDefinition> = {
   ...discoveryRoutes,
   home: {
-    title: '魔方工具',
-    description: 'CubeRoot 网站主页',
-    path: '/zh',
+    title: tr({ en: 'Cube Tools', zh: '魔方工具' }),
+    description: tr({ en: 'CubeRoot website home', zh: 'CubeRoot 网站主页' }),
+    path: localizedWebsitePath('/'),
     publicEntry: true,
     nativeTabPath: '/pages/tools/index',
   },
   account: {
-    title: '账号管理',
-    description: '管理 WCA 账号与登录方式',
-    path: '/zh/account',
+    title: tr({ en: 'Account', zh: '账号管理' }),
+    description: tr({ en: 'Manage your WCA account and sign-in methods', zh: '管理 WCA 账号与登录方式' }),
+    path: localizedWebsitePath('/account'),
     publicEntry: false,
   },
   privacy: {
-    title: '隐私说明',
-    description: '查看数据、登录与删除说明',
-    path: '/zh/privacy',
-    publicEntry: false,
-  },
-  logout: {
-    title: '退出登录',
-    description: '清除小程序与网站登录状态',
-    path: '/auth/miniprogram#action=logout&next=%2Fzh%2Faccount',
+    title: tr({ en: 'Privacy', zh: '隐私说明' }),
+    description: tr({ en: 'View data, sign-in and deletion information', zh: '查看数据、登录与删除说明' }),
+    path: localizedWebsitePath('/privacy'),
     publicEntry: false,
     sessionHandoff: false,
-    loadFailureMessage: '小程序已退出，网站退出暂未完成。请检查网络后重试。',
+  },
+  logout: {
+    title: tr({ en: 'Sign out', zh: '退出登录' }),
+    description: tr({ en: 'Clear Mini Program and website sessions', zh: '清除小程序与网站登录状态' }),
+    path: `/auth/miniprogram#action=logout&next=${encodeURIComponent(localizedWebsitePath('/account'))}`,
+    publicEntry: false,
+    sessionHandoff: false,
+    loadFailureMessage: tr({
+      en: 'Signed out of the Mini Program, but website sign-out is incomplete. Check your connection and try again.',
+      zh: '小程序已退出，网站退出暂未完成。请检查网络后重试。',
+    }),
   },
 };
 
@@ -167,7 +168,7 @@ export function resolveWebTool(id: unknown): WebToolLink | null {
 export function resolveToolsPageShare(): WebRouteShare {
   return {
     imageUrl: WEB_ROUTE_SHARE_IMAGE,
-    title: 'CubeRoot 魔方根：魔方工具',
+    title: tr({ en: 'CubeRoot: Cube Tools', zh: 'CubeRoot 魔方根：魔方工具' }),
     path: '/pages/tools/index',
   };
 }
@@ -175,7 +176,7 @@ export function resolveToolsPageShare(): WebRouteShare {
 export function resolveAccountPageShare(): WebRouteShare {
   return {
     imageUrl: WEB_ROUTE_SHARE_IMAGE,
-    title: 'CubeRoot 魔方根',
+    title: tr({ en: 'CubeRoot', zh: 'CubeRoot 魔方根' }),
     path: '/pages/account/index',
   };
 }
@@ -191,7 +192,10 @@ export function resolveWebRouteShare(key: unknown): WebRouteShare | null {
 
   return {
     imageUrl: WEB_ROUTE_SHARE_IMAGE,
-    title: `CubeRoot 魔方根：${route.title}`,
+    title: tr({
+      en: `CubeRoot: ${route.title}`,
+      zh: `CubeRoot 魔方根：${route.title}`,
+    }),
     path: route.nativeTabPath
       ?? `/pages/web/index?key=${encodeURIComponent(routeKey)}`,
   };
@@ -212,7 +216,7 @@ export function resolveWebRoute(key: unknown): {
     title: route.title,
     path: route.path,
     sessionHandoff: route.sessionHandoff !== false,
-    url: withWechatRedirect(`${SITE_ORIGIN}${route.path}`),
+    url: withMiniProgramRedirect(`${SITE_ORIGIN}${route.path}`),
   };
   if (route.loadFailureMessage) {
     return { ...resolved, loadFailureMessage: route.loadFailureMessage };
@@ -224,19 +228,19 @@ export function createWebSessionHandoffUrl(path: string, ticket: string): string
   if (!isSafeWebSessionDestination(path) || !isWebSessionTicket(ticket)) {
     throw new Error('invalid Mini Program web session handoff');
   }
-  const fragment = `wechat_redirect&ticket=${ticket}&next=${encodeURIComponent(path)}`;
+  const fragment = `${MINI_PROGRAM_WEB_MARKER}&ticket=${ticket}&next=${encodeURIComponent(path)}`;
   return `${SITE_ORIGIN}/auth/miniprogram#${fragment}`;
 }
 
-function withWechatRedirect(url: string): string {
+function withMiniProgramRedirect(url: string): string {
   const fragmentIndex = url.indexOf('#');
-  if (fragmentIndex < 0) return `${url}#wechat_redirect`;
+  if (fragmentIndex < 0) return `${url}#${MINI_PROGRAM_WEB_MARKER}`;
 
   const base = url.slice(0, fragmentIndex);
   const fragment = url.slice(fragmentIndex + 1);
   const hasRedirectMarker = fragment.split('&').some(
-    (part) => part === 'wechat_redirect' || part.startsWith('wechat_redirect='),
+    (part) => part === MINI_PROGRAM_WEB_MARKER || part.startsWith(`${MINI_PROGRAM_WEB_MARKER}=`),
   );
   if (hasRedirectMarker) return url;
-  return `${base}#wechat_redirect${fragment ? `&${fragment}` : ''}`;
+  return `${base}#${MINI_PROGRAM_WEB_MARKER}${fragment ? `&${fragment}` : ''}`;
 }

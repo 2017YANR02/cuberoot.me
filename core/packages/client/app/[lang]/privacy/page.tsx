@@ -8,16 +8,24 @@ export default function PrivacyPage() {
 
   return (
     <main className="privacy-page">
-      <h1>{t('CubeRoot 移动端与小程序隐私政策', 'CubeRoot Mobile and Mini Program Privacy Policy')}</h1>
-      <p className="privacy-updated">{t('生效日期:2026-08-28', 'Effective date: August 28, 2026')}</p>
+      <h1>{t('CubeRoot 用户协议与隐私政策', 'CubeRoot User Agreement and Privacy Policy')}</h1>
+      <p className="privacy-updated">{t('生效日期:2026-09-01', 'Effective date: September 1, 2026')}</p>
       <p>
         {t(
-          '本政策适用于 CubeRoot 官方 Android、iOS App 与微信小程序。App 的核心计时功能可离线且无需登录使用;App 登录和小程序微信登录均由你主动选择,用于识别网站已有的同一个 CubeRoot 账号。',
-          'This policy applies to the official CubeRoot Android and iOS apps and the WeChat Mini Program. Core app timer features work offline without sign-in. App sign-in and Mini Program WeChat sign-in are optional actions you choose to identify the same CubeRoot account used on the website.',
+          '本政策适用于 CubeRoot 官方 Android、iOS App、微信小程序与抖音小程序。App 的核心计时功能可离线且无需登录使用;App 与小程序登录均由你主动选择。',
+          'This policy applies to the official CubeRoot Android and iOS apps, WeChat Mini Program, and Douyin Mini Program. Core app timer features work offline without sign-in. Sign-in in the app or a Mini Program is always optional.',
         )}
       </p>
 
-      <h2>{t('App 处理的数据', 'Data handled by the app')}</h2>
+      <h2 id="user-agreement">{t('用户协议', 'User Agreement')}</h2>
+      <p>
+        {t(
+          '使用 CubeRoot 即表示你同意依法、合理地使用服务，不干扰服务运行、不侵害他人权益，也不利用服务发布违法或有害内容。登录不是使用公开工具和离线 App 计时器的前提；需要账号的功能由你主动登录后使用。功能可能因维护、平台规则或安全需要调整。你可以随时停止使用，并通过网站账号管理入口申请注销账号。',
+          'By using CubeRoot, you agree to use the service lawfully and reasonably, without disrupting it, infringing others’ rights, or publishing unlawful or harmful content. Sign-in is not required for public tools or the offline app timer; you choose to sign in only for account features. Features may change for maintenance, platform rules, or security. You may stop using the service at any time and request account deletion through website account management.',
+        )}
+      </p>
+
+      <h2 id="privacy-policy">{t('隐私政策：App 处理的数据', 'Privacy Policy: Data handled by the app')}</h2>
       <ul>
         <li>{t('计时记录、打乱、罚时、备注和偏好设置只保存在设备本地。', 'Solve times, scrambles, penalties, comments, and preferences are stored only on your device.')}</li>
         <li>{t('App 会读取网络连接状态,用于显示在线或离线状态以及安排比赛打乱刷新。', 'The app reads network connection status to show whether the device is online or offline and to schedule competition-scramble refreshes.')}</li>
@@ -52,8 +60,14 @@ export default function PrivacyPage() {
         </li>
         <li>
           {t(
-            '小程序不请求你的微信昵称、头像或手机号。登录后会在小程序本地保存 CubeRoot 会话凭证、账号显示名与 WCA ID,用于保持登录状态和显示账号信息。',
-            'The Mini Program does not request your WeChat nickname, avatar, or phone number. After sign-in, it stores the CubeRoot session token, account display name, and WCA ID locally to maintain the session and show account information.',
+            '只有在你点击“抖音登录”后,抖音小程序才会将一次性登录凭证发送到 CubeRoot 服务器,由服务器换取抖音 openid。该标识只用于抖音登录;首次使用会创建独立账号,不会按昵称、手机号或其他资料猜测合并已有账号。',
+            'Only after you tap Douyin sign-in does the Douyin Mini Program send a one-time login code to the CubeRoot server, which exchanges it for a Douyin openid. That identifier is used only for Douyin sign-in. First use creates a separate account and never guesses a match from a nickname, phone number, or other profile data.',
+          )}
+        </li>
+        <li>
+          {t(
+            '小程序不请求你的微信或抖音昵称、头像或手机号。登录后会在小程序本地保存 CubeRoot 会话凭证和账号资料,用于保持登录状态和显示账号信息。',
+            'The Mini Programs do not request your WeChat or Douyin nickname, avatar, or phone number. After sign-in, the Mini Program stores the CubeRoot session token and account profile locally to maintain the session and show account information.',
           )}
         </li>
         <li>
@@ -105,8 +119,8 @@ export default function PrivacyPage() {
       <h2>{t('网站与第三方链接', 'Website and third-party links')}</h2>
       <p>
         {t(
-          'App 登录、“完整网站”和账号管理会在系统浏览器中打开 cuberoot.me,小程序会在微信 web-view 中打开同一网站。你主动打开的第三方链接由对应的第三方负责,请同时查看它们的隐私说明。',
-          'App sign-in, Full website, and account management open cuberoot.me in the system browser, while the Mini Program opens the same website in WeChat web-view. Third-party links you actively open are operated by their respective providers; review their privacy information as well.',
+          'App 登录、“完整网站”和账号管理会在系统浏览器中打开 cuberoot.me,微信与抖音小程序会在各自的 web-view 中打开同一网站。你主动打开的第三方链接由对应的第三方负责,请同时查看它们的隐私说明。',
+          'App sign-in, Full website, and account management open cuberoot.me in the system browser, while the WeChat and Douyin Mini Programs open the same website in their respective web-view. Third-party links you actively open are operated by their respective providers; review their privacy information as well.',
         )}
       </p>
 

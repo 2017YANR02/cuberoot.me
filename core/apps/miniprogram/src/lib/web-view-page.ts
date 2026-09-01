@@ -4,7 +4,7 @@ import {
   createWebSessionTicket,
   getStoredSessionSnapshot,
   loginErrorMessage,
-  loginWithWechat as exchangeWechatLogin,
+  loginWithMiniProgram,
 } from './auth';
 import {
   createWebSessionHandoffUrl,
@@ -19,6 +19,13 @@ import {
   scheduleRuntimeTimeout,
   type RuntimeTimer,
 } from './runtime-timers';
+import {
+  isDouyinMiniProgram,
+  miniProgramApi,
+  miniProgramNextTick,
+  miniProgramOffNetworkStatusChange,
+} from './platform';
+import { tr } from './i18n';
 
 export interface WebViewPageData {
   canRetry: boolean;
@@ -29,6 +36,7 @@ export interface WebViewPageData {
   loginRequired: boolean;
   loginStorageUnavailable: boolean;
   loadingTitle: string;
+  retryLabel: string;
   routeKey: string;
   src: string;
   viewAttempt: number;
@@ -41,7 +49,7 @@ export interface WebViewPageContext {
 
 interface WebViewPageMethods {
   handleWebViewError(event: WechatMiniprogram.BaseEvent): void;
-  loginWithWechat(): Promise<void>;
+  loginWithMiniProgram(): Promise<void>;
   retry(): void;
   retryMiniProgramSession(): void;
 }
@@ -129,7 +137,7 @@ function stopNetworkRecovery(context: WebViewPageContext): void {
   // Delete first so a listener the platform fails to remove becomes inert.
   networkListeners.delete(context);
   try {
-    wx.offNetworkStatusChange(listener);
+    miniProgramOffNetworkStatusChange(listener);
   } catch {
     // Lifecycle state is already closed; optional platform cleanup may fail.
   }
@@ -151,7 +159,7 @@ function startNetworkRecovery(context: WebViewPageContext): void {
   };
 
   try {
-    wx.onNetworkStatusChange(listener);
+    miniProgramApi().onNetworkStatusChange(listener);
     networkListeners.set(context, listener);
   } catch {
     // Manual retry remains available when network observation is unsupported.
@@ -166,7 +174,7 @@ function recoverVisibleRouteIfConnected(context: WebViewPageContext): void {
   ) return;
 
   try {
-    wx.getNetworkType({
+    miniProgramApi().getNetworkType({
       success(result) {
         if (
           result.networkType === 'none'
@@ -184,7 +192,7 @@ function recoverVisibleRouteIfConnected(context: WebViewPageContext): void {
 
 function updateNavigationTitle(title: string): void {
   try {
-    wx.setNavigationBarTitle({ title });
+    miniProgramApi().setNavigationBarTitle({ title });
   } catch {
     // The title is cosmetic; a platform API failure must not block web content.
   }
@@ -196,7 +204,9 @@ function updateShareMenu(key: unknown): void {
       showFriendShareMenu();
       return;
     }
-    wx.hideShareMenu({ menus: ['shareAppMessage', 'shareTimeline'] });
+    miniProgramApi().hideShareMenu({
+      menus: isDouyinMiniProgram() ? ['shareAppMessage'] : ['shareAppMessage', 'shareTimeline'],
+    });
   } catch {
     // Sharing is optional; route loading must survive unsupported menu APIs.
   }
@@ -205,8 +215,11 @@ function updateShareMenu(key: unknown): void {
 function showWebSessionHandoffFailure(context: WebViewPageContext): void {
   context.setData({
     canRetry: true,
-    errorMessage: '登录状态暂未同步，请检查网络后重试。为避免账号错位，暂不会以游客身份打开网页。',
-    errorTitle: '账号同步失败',
+    errorMessage: tr({
+      en: 'Your sign-in status could not be synced. Check your connection and try again. The page will not open as a guest to avoid using the wrong account.',
+      zh: '登录状态暂未同步，请检查网络后重试。为避免账号错位，暂不会以游客身份打开网页。',
+    }),
+    errorTitle: tr({ en: 'Account sync failed', zh: '账号同步失败' }),
     src: '',
   });
 }
@@ -221,7 +234,10 @@ function showMiniProgramLoginGate(
     errorTitle: '',
     loginBusy: false,
     loginError: storageUnavailable
-      ? '暂时无法读取设备上的登录状态，请重新读取。'
+      ? tr({
+        en: 'Your saved sign-in status is temporarily unavailable. Try reading it again.',
+        zh: '暂时无法读取设备上的登录状态，请重新读取。',
+      })
       : '',
     loginRequired: true,
     loginStorageUnavailable: storageUnavailable,
@@ -247,7 +263,8 @@ export function createWebViewPageData(): WebViewPageData {
     loginError: '',
     loginRequired: false,
     loginStorageUnavailable: false,
-    loadingTitle: '正在打开',
+    loadingTitle: tr({ en: 'Opening', zh: '正在打开' }),
+    retryLabel: tr({ en: 'Try again', zh: '重新打开' }),
     routeKey: '',
     src: '',
     viewAttempt: 0,
@@ -263,8 +280,11 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
     const attempt = beginRouteAttempt(context);
     context.setData({
       canRetry: false,
-      errorMessage: '该页面地址不在允许列表中。',
-      errorTitle: '无法打开',
+      errorMessage: tr({
+        en: 'This page is not in the allowed route list.',
+        zh: '该页面地址不在允许列表中。',
+      }),
+      errorTitle: tr({ en: 'Unable to open', zh: '无法打开' }),
       routeKey: '',
       src: '',
       viewAttempt: attempt,
@@ -281,7 +301,10 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
     loginError: '',
     loginRequired: false,
     loginStorageUnavailable: false,
-    loadingTitle: `正在打开${route.title}`,
+    loadingTitle: tr({
+      en: `Opening ${route.title}`,
+      zh: `正在打开${route.title}`,
+    }),
     routeKey: String(key),
     src: '',
     viewAttempt: attempt,
@@ -369,8 +392,11 @@ export function markWebRouteFailed(
   context.setData({
     canRetry: Boolean(route),
     errorMessage: route?.loadFailureMessage
-      ?? '请检查网络后重试。网站内容和账号数据不会因此被删除。',
-    errorTitle: '网页加载失败',
+      ?? tr({
+        en: 'Check your connection and try again. Your website content and account data will not be deleted.',
+        zh: '请检查网络后重试。网站内容和账号数据不会因此被删除。',
+      }),
+    errorTitle: tr({ en: 'Page failed to load', zh: '网页加载失败' }),
     src: '',
   });
 }
@@ -396,7 +422,7 @@ async function loginToOpenWebRoute(context: WebViewPageContext): Promise<void> {
   const attempt = beginLoginAttempt(context);
   context.setData({ loginBusy: true, loginError: '' });
   try {
-    await exchangeWechatLogin();
+    await loginWithMiniProgram();
     if (!isCurrentLoginAttempt(context, attempt)) return;
     if (visiblePages.has(context)) {
       await openWebRoute(context, context.data.routeKey);
@@ -440,12 +466,7 @@ export function retryWebRoute(context: WebViewPageContext): void {
   }
   schedule.timer = timer;
 
-  try {
-    wx.nextTick(reopenOnce);
-  } catch {
-    // Retry immediately when the scheduling API is unavailable or broken.
-    reopenOnce();
-  }
+  miniProgramNextTick(reopenOnce);
 }
 
 /**
@@ -500,7 +521,7 @@ export function createWebViewPageOptions(
     onShareAppMessage() {
       return resolveWebRouteShare(this.data.routeKey) ?? {
         imageUrl: WEB_ROUTE_SHARE_IMAGE,
-        title: 'CubeRoot 魔方根',
+        title: tr({ en: 'CubeRoot', zh: 'CubeRoot 魔方根' }),
         path: '/pages/timer/index',
       };
     },
@@ -509,7 +530,7 @@ export function createWebViewPageOptions(
       markWebRouteFailed(this, event.currentTarget.dataset.attempt);
     },
 
-    async loginWithWechat() {
+    async loginWithMiniProgram() {
       await loginToOpenWebRoute(this);
     },
 

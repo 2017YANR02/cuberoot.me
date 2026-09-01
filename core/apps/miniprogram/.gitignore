@@ -1,3 +1,5 @@
 dist/
+dist-douyin/
 project.config.json
+project.douyin.config.json
 project.private.config.json

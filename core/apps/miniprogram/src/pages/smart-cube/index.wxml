@@ -1,35 +1,35 @@
 <view class="page smart-cube-page">
-  <text class="eyebrow">智能魔方</text>
-  <text class="page-title">连接智能魔方</text>
+  <text class="eyebrow">{{copy.eyebrow}}</text>
+  <text class="page-title">{{copy.title}}</text>
 
   <view class="connection-status">
-    <text wx:if="{{phase === 'idle'}}" class="connection-value">正在准备连接…</text>
-    <text wx:elif="{{phase === 'scanning'}}" class="connection-value">正在搜索智能魔方…</text>
-    <text wx:elif="{{phase === 'connecting'}}" class="connection-value">正在连接 {{deviceName || '智能魔方'}}…</text>
-    <text wx:elif="{{phase === 'connected'}}" class="connection-value connection-value--ready">已连接 {{deviceName}}</text>
-    <text wx:elif="{{phase === 'disconnected'}}" class="connection-value">{{deviceName || '连接已断开'}}</text>
-    <text wx:else class="connection-value connection-value--error">{{error || '连接失败，请重试'}}</text>
-    <text wx:if="{{phase === 'scanning'}}" class="connection-note">请转动魔方将它唤醒</text>
+    <text wx:if="{{phase === 'idle'}}" class="connection-value">{{copy.preparing}}</text>
+    <text wx:elif="{{phase === 'scanning'}}" class="connection-value">{{copy.searching}}</text>
+    <text wx:elif="{{phase === 'connecting'}}" class="connection-value">{{copy.connecting}} {{deviceName || copy.smartCube}}…</text>
+    <text wx:elif="{{phase === 'connected'}}" class="connection-value connection-value--ready">{{copy.connected}} {{deviceName}}</text>
+    <text wx:elif="{{phase === 'disconnected'}}" class="connection-value">{{deviceName || copy.disconnected}}</text>
+    <text wx:else class="connection-value connection-value--error">{{error || copy.failed}}</text>
+    <text wx:if="{{phase === 'scanning'}}" class="connection-note">{{copy.wakeCube}}</text>
     <view wx:if="{{phase === 'connected'}}" class="connection-metrics">
-      <text wx:if="{{battery !== null}}" class="connection-detail">电量 {{battery}}%</text>
-      <text wx:if="{{lastMove}}" class="connection-detail">最近动作 {{lastMove}}</text>
+      <text wx:if="{{battery !== null}}" class="connection-detail">{{copy.battery}} {{battery}}%</text>
+      <text wx:if="{{lastMove}}" class="connection-detail">{{copy.latestMove}} {{lastMove}}</text>
     </view>
   </view>
 
   <view wx:if="{{phase === 'error' || phase === 'disconnected'}}" class="retry-action">
-    <button class="primary-button" hover-class="press-feedback" bindtap="retryConnection">重试</button>
+    <button class="primary-button" hover-class="press-feedback" bindtap="retryConnection">{{copy.retry}}</button>
   </view>
 
   <view wx:if="{{phase === 'connected' && brand === 'simulator'}}" class="simulator-panel">
-    <text class="section-title">发送仿真动作</text>
+    <text class="section-title">{{copy.simulatorMoves}}</text>
     <view class="move-grid">
       <button wx:for="{{simulatorMoves}}" wx:key="*this" class="move-button" hover-class="press-feedback" data-move="{{item}}" bindtap="simulateMove">{{item}}</button>
     </view>
   </view>
 
   <view wx:if="{{phase === 'connected'}}" class="connected-actions">
-    <button class="primary-button" hover-class="press-feedback" bindtap="returnToTimer">返回计时器</button>
-    <button class="text-button" hover-class="press-feedback" bindtap="disconnectCube">断开连接</button>
+    <button class="primary-button" hover-class="press-feedback" bindtap="returnToTimer">{{copy.returnToTimer}}</button>
+    <button class="text-button" hover-class="press-feedback" bindtap="disconnectCube">{{copy.disconnect}}</button>
   </view>
 
 </view>

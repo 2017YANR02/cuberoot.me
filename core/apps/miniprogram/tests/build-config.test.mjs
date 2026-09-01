@@ -75,6 +75,20 @@ describe('project config resolution', () => {
     });
   });
 
+  it('resolves the Douyin AppID without adding a second config loader', async () => {
+    const paths = await fixture({
+      template: { appid: 'testAppId' },
+    });
+
+    await expect(resolveProjectConfig({
+      ...paths,
+      appIdEnvironmentKey: 'DOUYIN_MINI_APP_ID',
+      libVersionEnvironmentKey: '',
+      placeholderAppId: 'testAppId',
+      environment: { DOUYIN_MINI_APP_ID: ' tt-env ' },
+    })).resolves.toMatchObject({ appid: 'tt-env' });
+  });
+
   it('keeps template defaults when the local config is absent', async () => {
     const paths = await fixture();
 

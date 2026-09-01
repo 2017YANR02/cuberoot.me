@@ -109,6 +109,33 @@ describe('mini-program smart-cube bridge', () => {
     expect(navigateTo).toHaveBeenCalledOnce();
   });
 
+  it('reuses the same relay through the Douyin WebView bridge', async () => {
+    const navigateTo = vi.fn();
+    vi.stubGlobal('window', {
+      clearTimeout,
+      navigator: { userAgent: 'Mozilla/5.0 toutiaomicroapp' },
+      setTimeout,
+      tt: { miniProgram: { navigateTo } },
+    });
+    vi.stubGlobal('WebSocket', FakeWebSocket);
+
+    const pending = connectMiniProgramCubeBridge({
+      onBattery: vi.fn(),
+      onGyro: vi.fn(),
+      onMove: vi.fn(),
+      onState: vi.fn(),
+      onStatus: vi.fn(),
+    });
+    const socket = FakeWebSocket.instance!;
+    socket.emitOpen();
+    socket.emitMessage({ type: 'ready', role: 'sink', lastMoveSeq: 0 });
+    socket.emitMessage({ type: 'status', phase: 'connected', brand: 'gan-v4' });
+    const connection = await pending;
+    connection.disconnect();
+
+    expect(navigateTo).toHaveBeenCalledOnce();
+  });
+
   it('does not open the relay from an ordinary WeChat browser', async () => {
     const getEnv = vi.fn((callback: (result: { miniprogram: boolean }) => void) => {
       callback({ miniprogram: false });

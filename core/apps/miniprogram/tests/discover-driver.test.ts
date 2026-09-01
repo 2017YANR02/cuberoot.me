@@ -82,4 +82,18 @@ describe('discoverSmartCubeDriver', () => {
       .rejects.toThrow('scanTimeoutMs must be between 1000 and 30000');
     expect(openBluetoothAdapter).not.toHaveBeenCalled();
   });
+
+  it('explains a missing Douyin Bluetooth privacy authorization', async () => {
+    const api = {
+      openBluetoothAdapter(options: { fail?(error: object): void }) {
+        options.fail?.({
+          errMsg: 'openBluetoothAdapter:fail privacy permission is not authorized',
+          errorCode: '186680',
+        });
+      },
+    } as unknown as MiniProgramBleApi;
+
+    await expect(discoverSmartCubeDriver({ api, scanTimeoutMs: 1_000 }))
+      .rejects.toThrow('蓝牙隐私权限尚未授权，请授权后重试');
+  });
 });

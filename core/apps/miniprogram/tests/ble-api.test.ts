@@ -1,11 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  BleApiError,
   BleOperationAbortedError,
   BleOperationTimeoutError,
   BleResourceBusyError,
   beginBleResourceCleanup,
+  bluetoothAdapterErrorMessage,
   claimBleResourceLease,
+  getBleSubscriptionType,
   invokeBle,
   invokeBleCleanupForLease,
   invokeBleForLease,
@@ -16,6 +19,37 @@ import {
   waitForBleNativeOperations,
   type BleAbortSignal,
 } from '../src/lib/smart-cube/ble-api';
+
+describe('BLE platform compatibility', () => {
+  it('selects the native subscription type from characteristic properties', () => {
+    expect(getBleSubscriptionType({ uuid: 'both', properties: { indicate: true, notify: true } }))
+      .toBe('notification');
+    expect(getBleSubscriptionType({ uuid: 'notify', properties: { notify: true } }))
+      .toBe('notification');
+    expect(getBleSubscriptionType({ uuid: 'indicate', properties: { indicate: true } }))
+      .toBe('indication');
+    expect(getBleSubscriptionType({ uuid: 'neither', properties: {} })).toBeUndefined();
+  });
+
+  it('preserves Douyin error codes and explains privacy failures', async () => {
+    let failure: unknown;
+    try {
+      await invokeBle((callbacks) => callbacks.fail?.({
+        errMsg: 'openBluetoothAdapter:fail privacy permission is not authorized',
+        errNo: '10201',
+        errorCode: '186680',
+      }));
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(failure).toBeInstanceOf(BleApiError);
+    expect(failure).toMatchObject({ errNo: '10201', errorCode: '186680' });
+    expect(bluetoothAdapterErrorMessage(failure)).toBe('蓝牙隐私权限尚未授权，请授权后重试');
+    expect(bluetoothAdapterErrorMessage(new BleApiError({ errNo: 10202 })))
+      .toBe('小程序尚未在隐私协议中声明蓝牙用途，请联系开发者');
+  });
+});
 
 function cancellation(): { cancel(): void; signal: BleAbortSignal } {
   let aborted = false;
