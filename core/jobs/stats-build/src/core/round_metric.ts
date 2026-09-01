@@ -22,6 +22,12 @@ const RANKING_HEADER: TableHeader = {
 // --- 预计算排名缓存 ---
 // 结构：className -> [eventName, top10Rows][]
 let precomputedRankings: Map<string, [string, unknown[][]][]> | null = null;
+let precomputedHistories: Map<string, [string, unknown[][]][]> | null = null;
+
+interface ComputedMetric {
+  row: RowDataPacket;
+  metric: number;
+}
 
 // NOTE: 11 个 batchRanking=true 的子类定义
 // JS 无法自动发现子类，硬编码 import 列表
@@ -66,7 +72,7 @@ export abstract class RoundMetric extends GroupedStatistic {
     return true;
   }
 
-  // NOTE: WR 历史查询 SQL
+  // NOTE: 官方 Single/Average 的 WR 历史查询 SQL；衍生指标历史复用批量全轮次数据。
   query(): string {
     return `
       SELECT
@@ -93,31 +99,39 @@ export abstract class RoundMetric extends GroupedStatistic {
     const events = this.targetEvents();
     return Object.entries(events).map(([eventId, eventName]) => {
       const records = rows
-        .filter(r => r['event_id'] === eventId && Number(r[this.valueColumn]) > 0);
+        .filter(r => r['event_id'] === eventId && (this.batchRanking() || Number(r[this.valueColumn]) > 0));
 
-      // NOTE: 对每条记录计算指标值
-      const computed: Array<{ row: RowDataPacket; metric: number }> = [];
-      for (const r of records) {
-        const values = String(r['attempts'] || '').split(',').map(Number);
-        const metric = this.computeMetric(values, r);
-        if (metric !== null) computed.push({ row: r, metric });
-      }
-
-      // NOTE: filterWrHistory 内置日期排序（formatDate YYYY-MM-DD）+ <= minSoFar 过滤
-      const wrRecords = filterWrHistory(
-        computed,
-        c => c.row['start_date'],
-        c => c.metric,
-      );
-
-      const results = wrRecords.map((c, i) => {
-        const metricStr = this.formatMetric(c.metric, eventId);
-        const histRow = this.wrHistoryRow(wrRecords, i, eventId, c2 => c2.metric);
-        return [metricStr, ...histRow];
-      });
-
-      return [eventName, results.reverse()] as [string, unknown[][]];
+      return [eventName, this.historyRowsForEvent(records, eventId)] as [string, unknown[][]];
     });
+  }
+
+  private computeRows(rows: RowDataPacket[]): ComputedMetric[] {
+    const computed: ComputedMetric[] = [];
+    for (const row of rows) {
+      const values = String(row['attempts'] || '').split(',').map(Number);
+      const metric = this.computeMetric(values, row);
+      if (metric !== null) computed.push({ row, metric });
+    }
+    return computed;
+  }
+
+  private historyRowsForEvent(rows: RowDataPacket[], eventId: string): unknown[][] {
+    return this.historyRowsFromComputed(this.computeRows(rows), eventId);
+  }
+
+  private historyRowsFromComputed(computed: ComputedMetric[], eventId: string): unknown[][] {
+    // NOTE: filterWrHistory 内置日期排序（formatDate YYYY-MM-DD）+ <= minSoFar 过滤
+    const wrRecords = filterWrHistory(
+      computed,
+      c => c.row['start_date'],
+      c => c.metric,
+    );
+
+    return wrRecords.map((c, i) => {
+      const metricStr = this.formatMetric(c.metric, eventId);
+      const histRow = this.wrHistoryRow(wrRecords, i, eventId, c2 => c2.metric);
+      return [metricStr, ...histRow];
+    }).reverse();
   }
 
   // NOTE: 排名数据——batch = true 走缓存/批量计算，batch = false 走两步 SQL
@@ -141,6 +155,7 @@ export abstract class RoundMetric extends GroupedStatistic {
   // 每个 event 只查 MySQL 一次，同组所有子类共享查询结果
   static async precomputeAllRankings(): Promise<void> {
     precomputedRankings = new Map();
+    precomputedHistories = new Map();
 
     // NOTE: 动态导入所有 batch 子类，实例化用于 computeMetric
     const instances: Array<{ name: string; inst: RoundMetric; eventIds: Set<string> }> = [];
@@ -155,6 +170,7 @@ export abstract class RoundMetric extends GroupedStatistic {
     // NOTE: 初始化每个子类的结果容器
     for (const { name } of instances) {
       precomputedRankings.set(name, []);
+      precomputedHistories.set(name, []);
     }
 
     // NOTE: 取所有子类目标项目的并集。每个项目仍只查一次，随后仅交给支持该项目的子类。
@@ -172,21 +188,19 @@ export abstract class RoundMetric extends GroupedStatistic {
          FROM results result
          JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
          JOIN competitions c ON c.id = competition_id
-         WHERE average > 0 AND event_id = '${eventId}'`,
+         WHERE (best > 0 OR average > 0) AND event_id = '${eventId}'`,
       );
 
       // NOTE: 遍历每个子类，用各自的 computeMetric 计算排名
       for (const { name, inst, eventIds } of instances) {
         if (!eventIds.has(eventId)) continue;
         const bestByPerson = new Map<string, { metric: number; row: RowDataPacket }>();
-        for (const r of eventRows) {
-          const values = String(r['attempts'] || '').split(',').map(Number);
-          const metric = inst.computeMetric(values, r);
-          if (metric === null) continue;
-          const pid = String(r['person_id']);
+        const computed = inst.computeRows(eventRows);
+        for (const item of computed) {
+          const pid = String(item.row['person_id']);
           const existing = bestByPerson.get(pid);
-          if (!existing || metric < existing.metric) {
-            bestByPerson.set(pid, { metric, row: r });
+          if (!existing || item.metric < existing.metric) {
+            bestByPerson.set(pid, item);
           }
         }
 
@@ -204,6 +218,10 @@ export abstract class RoundMetric extends GroupedStatistic {
           });
 
         precomputedRankings!.get(name)!.push([eventName, top]);
+        precomputedHistories!.get(name)!.push([
+          eventName,
+          inst.historyRowsFromComputed(computed, eventId),
+        ]);
       }
       // NOTE: eventRows 在此 block 结束后可被 GC 回收
     }
@@ -212,15 +230,23 @@ export abstract class RoundMetric extends GroupedStatistic {
   // NOTE: 缓存清理——wr_metric 聚合完成后调用
   static clearPrecomputed(): void {
     precomputedRankings = null;
+    precomputedHistories = null;
   }
 
   // NOTE: 覆写 toJson——输出 panels 而非 sections
   async toJson(): Promise<StatJson> {
-    let rawRows: RowDataPacket[] | null = await this.queryResults();
-    const historyData = this.transform(rawRows);
-    // NOTE: 内存管理——transform 后释放原始查询结果
-    rawRows = null;
-    if (global.gc) global.gc();
+    let historyData: [string, unknown[][]][];
+    if (this.batchRanking()) {
+      if (!precomputedHistories) await RoundMetric.precomputeAllRankings();
+      const cached = precomputedHistories!.get(this.constructor.name);
+      if (!cached) throw new Error(`Missing precomputed history for ${this.constructor.name}`);
+      historyData = cached;
+    } else {
+      let rawRows: RowDataPacket[] | null = await this.queryResults();
+      historyData = this.transform(rawRows);
+      rawRows = null;
+      if (global.gc) global.gc();
+    }
     const rankingData = await this.rankingData();
 
     const historyHeader = Object.entries(this.tableHeader);
@@ -312,7 +338,7 @@ export abstract class RoundMetric extends GroupedStatistic {
          FROM results result
          JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
          JOIN competitions c ON c.id = competition_id
-         WHERE ${vc} > 0 AND event_id = '${eventId}'`,
+         WHERE (best > 0 OR average > 0) AND event_id = '${eventId}'`,
       );
 
       // NOTE: 每人最佳 metric
