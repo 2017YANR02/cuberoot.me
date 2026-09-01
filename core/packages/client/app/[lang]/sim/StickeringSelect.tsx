@@ -19,6 +19,8 @@ import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
 import type { SimPuzzle } from './PlayerControls';
 import { SQ1_STAGE_ITEMS } from '@/lib/sq1-stage-mask';
+import { faceShowingColor, orientationForBottomFace, orientedFaceColors } from '@/lib/cube-orientation';
+import { BADGE_FACE_ORDER, CUBE_COLOR_NAMES, type CubeFace } from '@/lib/cube-colors';
 
 // cubing.js megaminx 注册的 stickering(cubeLikeStickeringList("megaminx")):full + LL/LS 组。
 const MEGAMINX_GROUPS: StickeringGroup[] = [
@@ -162,7 +164,19 @@ export default function StickeringSelect({
         ))}
         {!known && <option value={value}>{value}</option>}
       </select>
-      {showOrientation && (
+      {showOrientation && (value === 'Cross' ? (
+        <select
+          className="sim-player-mode sim-player-stickering"
+          value={faceShowingColor(orientedFaceColors(orientation), 'D')}
+          onChange={(e) => onOrientationChange?.(orientationForBottomFace(e.target.value as CubeFace))}
+          title={t('十字底色', 'Cross base color')}
+          aria-label={t('十字底色', 'Cross base color')}
+        >
+          {BADGE_FACE_ORDER.map((face) => (
+            <option key={face} value={face}>{t(`${CUBE_COLOR_NAMES[face].zh}底`, `${CUBE_COLOR_NAMES[face].en} base`)}</option>
+          ))}
+        </select>
+      ) : (
         <CubeOrientationSelect
           className="sim-player-mode sim-player-stickering"
           value={orientation}
@@ -171,7 +185,7 @@ export default function StickeringSelect({
             'Holding orientation: the whole stage is re-anchored by this cube rotation — it picks both the bottom face and which slot')}
           ariaLabel={t('拿方朝向', 'Holding orientation')}
         />
-      )}
+      ))}
       {isAdmin && order > 0 && (
         <button
           type="button"

@@ -8,6 +8,7 @@ import {
 } from '@/app/[lang]/sim/engine/nxn/stickering';
 import { pickStickering } from '@/components/AlgPlayer/stickering';
 import { FACE } from '@/app/[lang]/sim/engine/define';
+import { faceShowingColor, orientationForBottomFace, orientedFaceColors } from '@/lib/cube-orientation';
 
 /** initial = x + y·N + z·N²(y=N-1 为 U,z=N-1 为 F,x=N-1 为 R) */
 const idx = (N: number, x: number, y: number, z: number) => x + y * N + z * N * N;
@@ -251,6 +252,13 @@ describe('stickeringMaskFn 2x2 / 4x4', () => {
 });
 
 describe('stickeringMaskFn 拿方朝向重定向(整体转前缀)', () => {
+  it('Cross 底色六选一:每个颜色面都映射到唯一有效朝向', () => {
+    const faces = ['U', 'D', 'R', 'L', 'B', 'F'] as const;
+    const orientations = faces.map(orientationForBottomFace);
+    expect(new Set(orientations).size).toBe(6);
+    expect(orientations.map((value) => faceShowingColor(orientedFaceColors(value), 'D'))).toEqual(faces);
+  });
+
   it("Cross + x2(翻个个儿):十字落在 U 面,D 面变忽略", () => {
     const m = stickeringMaskFn(3, 'Cross', 'x2')!;
     expect(m(P3.UF, FACE.U)).toBe(FM_REGULAR);   // U 棱 = 十字棱
