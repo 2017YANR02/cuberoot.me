@@ -346,9 +346,15 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 
 @media (max-width: 480px) {
-    .landing-page .landing-auth,
-    body:has(.page-notice-wrap) .landing-page .landing-auth {
+    body:has(.page-notice-wrap) .landing-page {
+        padding-top: 0.75rem;
+    }
+    .landing-page .landing-auth {
         top: 2.5rem;
+        min-height: 38px;
+    }
+    body:has(.page-notice-wrap) .landing-page .landing-auth {
+        top: 0.25rem;
         min-height: 38px;
     }
     .landing-page .brand-line,
