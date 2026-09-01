@@ -6,6 +6,12 @@ import { authHeaders, handleApi } from './admin-api';
 export type NoticeLevel = 'info' | 'warning' | 'maintenance';
 export type NoticePlacement = 'page_top' | 'home_featured';
 
+export const PAGE_NOTICE_EDITOR_EVENT = 'page-notice:open-editor';
+
+export function openPageNoticeEditor(placement: NoticePlacement): void {
+  window.dispatchEvent(new CustomEvent<NoticePlacement>(PAGE_NOTICE_EDITOR_EVENT, { detail: placement }));
+}
+
 export interface PageNotice {
   id: number;
   path: string;
