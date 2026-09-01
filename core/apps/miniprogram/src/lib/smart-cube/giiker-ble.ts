@@ -1,3 +1,5 @@
+import { miniProgramApi } from '../platform';
+import { tr } from '../i18n';
 import {
   GIIKER_COMMAND_BATTERY,
   GIIKER_DATA_SERVICE_UUID,
@@ -10,8 +12,10 @@ import {
 } from '@cuberoot/shared/smart-cube/giiker';
 import {
   beginBleResourceCleanup,
+  bluetoothAdapterErrorMessage,
   claimBleResourceLease,
   createBleNativeOperationQueue,
+  getBleSubscriptionType,
   ignoreBleFailure,
   invokeBleCleanupForLease,
   invokeBleForLease,
@@ -27,6 +31,7 @@ import {
   type BleConnectionStateChange,
   type BleResourceLease,
   type BleService,
+  type BleSubscriptionType,
   type CharacteristicValueChange,
   type DiscoveredDevice,
   type MiniProgramBleApi,
@@ -99,7 +104,7 @@ async function findGiiker(
     if (settled) return;
     timer = setTimeout(() => finish(new GiikerBleError(
       'device-not-found',
-      '未发现 Giiker 或米家智能魔方',
+      tr({ en: 'No Giiker or Mi Smart Cube found', zh: '未发现 Giiker 或米家智能魔方' }),
     )), timeoutMs);
 
     const stop = (): Promise<unknown> => invokeBleCleanupForLease(
@@ -121,7 +126,7 @@ async function findGiiker(
       ? error
       : new GiikerBleError(
         'adapter-unavailable',
-        error instanceof Error ? error.message : '无法开始搜索智能魔方',
+        error instanceof Error ? error.message : tr({ en: 'Unable to start searching for a smart cube', zh: '无法开始搜索智能魔方' }),
         { cause: error },
       )));
   });
@@ -130,7 +135,7 @@ async function findGiiker(
 export async function connectGiiker(
   options: ConnectGiikerOptions = {},
 ): Promise<GiikerBleConnection> {
-  const api = options.api ?? (wx as unknown as GiikerBleApi);
+  const api = options.api ?? (miniProgramApi() as unknown as GiikerBleApi);
   const scanTimeoutMs = options.scanTimeoutMs ?? 10_000;
   if (!Number.isFinite(scanTimeoutMs) || scanTimeoutMs < 1_000 || scanTimeoutMs > 30_000) {
     throw new RangeError('scanTimeoutMs must be between 1000 and 30000.');
@@ -142,9 +147,11 @@ export async function connectGiiker(
   let connectedDeviceId: string | null = null;
   let dataServiceId: string | null = null;
   let dataCharacteristicId: string | null = null;
+  let dataSubscriptionType: BleSubscriptionType | null = null;
   let batteryServiceId: string | null = null;
   let batteryReadId: string | null = null;
   let batteryWriteId: string | null = null;
+  let batterySubscriptionType: BleSubscriptionType | null = null;
   let dataNotificationsEnabled = false;
   let batteryNotificationsEnabled = false;
   let listener: ((result: CharacteristicValueChange) => void) | null = null;
@@ -157,7 +164,7 @@ export async function connectGiiker(
 
   const writeBatteryRequest = (): Promise<void> => writeQueue.enqueue(() => {
     if (closing || !active || !connectedDeviceId || !batteryServiceId || !batteryWriteId) {
-      throw new GiikerBleError('gatt-unavailable', '该魔方不支持电量读取');
+      throw new GiikerBleError('gatt-unavailable', tr({ en: 'This cube does not support battery readings', zh: '该魔方不支持电量读取' }));
     }
     return invokeBleForLease(lease, (callbacks) => api.writeBLECharacteristicValue({
       ...callbacks,
@@ -189,8 +196,9 @@ export async function connectGiiker(
             enabled: boolean,
             serviceId: string | null,
             characteristicId: string | null,
+            subscriptionType: BleSubscriptionType | null,
           ): Promise<void> => {
-            if (!enabled || !connectedDeviceId || !serviceId || !characteristicId) return;
+            if (!enabled || !connectedDeviceId || !serviceId || !characteristicId || !subscriptionType) return;
             await ignoreBleFailure(() => invokeBleCleanupForLease(
               lease,
               (callbacks) => api.notifyBLECharacteristicValueChange({
@@ -199,11 +207,12 @@ export async function connectGiiker(
                 deviceId: connectedDeviceId as string,
                 serviceId,
                 state: false,
+                type: subscriptionType,
               }),
             ));
           };
-          await disable(dataNotificationsEnabled, dataServiceId, dataCharacteristicId);
-          await disable(batteryNotificationsEnabled, batteryServiceId, batteryReadId);
+          await disable(dataNotificationsEnabled, dataServiceId, dataCharacteristicId, dataSubscriptionType);
+          await disable(batteryNotificationsEnabled, batteryServiceId, batteryReadId, batterySubscriptionType);
           dataNotificationsEnabled = false;
           batteryNotificationsEnabled = false;
           if (connectedDeviceId) {
@@ -252,7 +261,7 @@ export async function connectGiiker(
       adapterOpen = true;
     } catch (error) {
       if (error instanceof BleOperationAbortedError) throw error;
-      throw new GiikerBleError('adapter-unavailable', '蓝牙不可用，请开启系统蓝牙后重试', {
+      throw new GiikerBleError('adapter-unavailable', bluetoothAdapterErrorMessage(error), {
         cause: error,
       });
     }
@@ -279,13 +288,13 @@ export async function connectGiiker(
       );
     } catch (error) {
       if (error instanceof BleOperationAbortedError) throw error;
-      throw new GiikerBleError('connection-failed', '智能魔方连接失败', { cause: error });
+      throw new GiikerBleError('connection-failed', tr({ en: 'Failed to connect to the smart cube', zh: '智能魔方连接失败' }), { cause: error });
     }
     active = true;
     stateListener = (result): void => {
       if (active && !closing && result.deviceId === connectedDeviceId && !result.connected) {
         safeBleCallback(options.onDisconnect
-          ? () => options.onDisconnect?.('智能魔方连接已断开')
+          ? () => options.onDisconnect?.(tr({ en: 'Smart cube disconnected', zh: '智能魔方连接已断开' }))
           : undefined);
         void disconnect();
       }
@@ -299,7 +308,7 @@ export async function connectGiiker(
     );
     const dataService = services.services.find((candidate) =>
       normalizeBleUuid(candidate.uuid) === GIIKER_DATA_SERVICE_UUID);
-    if (!dataService) throw new GiikerBleError('gatt-unavailable', '智能魔方通信服务不可用');
+    if (!dataService) throw new GiikerBleError('gatt-unavailable', tr({ en: 'Smart cube communication service is unavailable', zh: '智能魔方通信服务不可用' }));
     dataServiceId = dataService.uuid;
     const dataCharacteristics = await raceBleAbort(
       invokeBleForLease<{ characteristics: BleCharacteristic[] }>(lease, (callbacks) =>
@@ -312,11 +321,15 @@ export async function connectGiiker(
     );
     const dataCharacteristic = dataCharacteristics.characteristics.find((candidate) =>
       normalizeBleUuid(candidate.uuid) === GIIKER_NOTIFY_CHARACTERISTIC_UUID
-      && Boolean(candidate.properties?.notify || candidate.properties?.indicate));
-    if (!dataCharacteristic) {
-      throw new GiikerBleError('gatt-unavailable', '智能魔方通信特征不可用');
+      && Boolean(getBleSubscriptionType(candidate)));
+    const selectedDataSubscriptionType = dataCharacteristic
+      ? getBleSubscriptionType(dataCharacteristic)
+      : undefined;
+    if (!dataCharacteristic || !selectedDataSubscriptionType) {
+      throw new GiikerBleError('gatt-unavailable', tr({ en: 'Smart cube communication characteristic is unavailable', zh: '智能魔方通信特征不可用' }));
     }
     dataCharacteristicId = dataCharacteristic.uuid;
+    dataSubscriptionType = selectedDataSubscriptionType;
 
     const rwService = services.services.find((candidate) =>
       normalizeBleUuid(candidate.uuid) === GIIKER_RW_SERVICE_UUID);
@@ -332,14 +345,18 @@ export async function connectGiiker(
       );
       const read = rwCharacteristics.characteristics.find((candidate) =>
         normalizeBleUuid(candidate.uuid) === GIIKER_READ_CHARACTERISTIC_UUID
-        && Boolean(candidate.properties?.notify || candidate.properties?.indicate));
+        && Boolean(getBleSubscriptionType(candidate)));
       const write = rwCharacteristics.characteristics.find((candidate) =>
         normalizeBleUuid(candidate.uuid) === GIIKER_WRITE_CHARACTERISTIC_UUID
         && Boolean(candidate.properties?.write || candidate.properties?.writeNoResponse));
-      if (read && write) {
+      const selectedBatterySubscriptionType = read
+        ? getBleSubscriptionType(read)
+        : undefined;
+      if (read && write && selectedBatterySubscriptionType) {
         batteryServiceId = rwService.uuid;
         batteryReadId = read.uuid;
         batteryWriteId = write.uuid;
+        batterySubscriptionType = selectedBatterySubscriptionType;
       }
     }
 
@@ -381,6 +398,7 @@ export async function connectGiiker(
         deviceId: device.deviceId,
         serviceId: dataService.uuid,
         state: true,
+        type: selectedDataSubscriptionType,
       })), options.signal);
     dataNotificationsEnabled = true;
     if (api.readBLECharacteristicValue) {
@@ -400,8 +418,9 @@ export async function connectGiiker(
       deviceName: device.name || device.localName,
       disconnect,
       async requestBattery(): Promise<number | null> {
-        if (!batteryServiceId || !batteryReadId || !batteryWriteId) return lastBattery;
+        if (!batteryServiceId || !batteryReadId || !batteryWriteId || !batterySubscriptionType) return lastBattery;
         if (!batteryNotificationsEnabled) {
+          const subscriptionType = batterySubscriptionType;
           await raceBleAbort(invokeBleForLease(lease, (callbacks) =>
             api.notifyBLECharacteristicValueChange({
               ...callbacks,
@@ -409,6 +428,7 @@ export async function connectGiiker(
               deviceId: connectedDeviceId as string,
               serviceId: batteryServiceId as string,
               state: true,
+              type: subscriptionType,
             })), options.signal);
           batteryNotificationsEnabled = true;
         }

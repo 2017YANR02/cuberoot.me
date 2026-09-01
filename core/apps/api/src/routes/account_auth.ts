@@ -46,6 +46,11 @@ import {
   wechatMiniProgramConfigured,
 } from '../utils/wechat_miniprogram.js';
 import {
+  douyinMiniProgramConfigured,
+  exchangeDouyinMiniProgramCode,
+  DouyinMiniProgramError,
+} from '../utils/douyin_miniprogram.js';
+import {
   consumeMobileSessionTicket,
   consumeWebSessionTicket,
   issueMobileSessionTicket,
@@ -186,6 +191,35 @@ accountAuthRoutes.post('/auth/wechat/miniprogram', async (c) => {
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   const session: WebSession = { token, user: publicUser(user) };
   return c.json({ ...session, isNew });
+});
+
+// ── 抖音小程序登录(tt.login code → code2Session → openid)──
+accountAuthRoutes.post('/auth/douyin/miniprogram', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const rateLimited = authRateLimitResponse(c);
+  if (rateLimited) return rateLimited;
+  if (!douyinMiniProgramConfigured()) {
+    return c.json(webSessionError('DOUYIN_NOT_CONFIGURED', 'douyin miniprogram not configured'), 503);
+  }
+  const body = await c.req.json<{ code?: unknown }>().catch(() => ({ code: undefined }));
+  const code = typeof body.code === 'string' ? body.code.trim() : '';
+  if (!code || code.length > 512) {
+    return c.json(webSessionError('INVALID_REQUEST', 'invalid code'), 400);
+  }
+
+  try {
+    const { openid } = await exchangeDouyinMiniProgramCode(code);
+    const { user, isNew } = await loginWithIdentity('douyin', openid, { name: '' });
+    const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
+    const session: WebSession = { token, user: publicUser(user) };
+    return c.json({ ...session, isNew });
+  } catch (error) {
+    if (error instanceof DouyinMiniProgramError && error.code === 'invalid-code') {
+      return c.json(webSessionError('INVALID_DOUYIN_CODE', 'invalid douyin code'), 401);
+    }
+    console.error('[auth] douyin miniprogram exchange failed:', error instanceof Error ? error.message : error);
+    return c.json(webSessionError('DOUYIN_UNAVAILABLE', 'douyin service unavailable'), 502);
+  }
 });
 
 // ── 小程序原生会话 → web-view 网站会话 ──
@@ -609,7 +643,7 @@ accountAuthRoutes.post('/auth/unlink', async (c) => {
   checkRateLimit(getIp(c));
   const uid = await requireAppUserId(c);
   const { provider, providerUid } = await c.req.json<{ provider?: string; providerUid?: string }>().catch(() => ({ provider: undefined, providerUid: undefined }));
-  const allowed: Provider[] = ['email', 'phone', 'wca', 'apple', 'google', 'wechat', 'alipay', 'qq'];
+  const allowed: Provider[] = ['email', 'phone', 'wca', 'apple', 'google', 'wechat', 'douyin', 'alipay', 'qq'];
   if (!allowed.includes(provider as Provider)) return c.json({ error: 'invalid provider' }, 400);
   const r = await removeIdentity(uid, provider as Provider, providerUid);
   if (r === 'last') return c.json({ error: 'cannot unlink your only login method' }, 409);

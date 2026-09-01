@@ -1,3 +1,5 @@
+import { miniProgramApi } from '../platform';
+import { tr } from '../i18n';
 import {
   GOCUBE_COMMAND_BATTERY,
   GOCUBE_COMMAND_STATE,
@@ -12,8 +14,10 @@ import {
 } from '@cuberoot/shared/smart-cube/gocube';
 import {
   beginBleResourceCleanup,
+  bluetoothAdapterErrorMessage,
   claimBleResourceLease,
   createBleNativeOperationQueue,
+  getBleSubscriptionType,
   ignoreBleFailure,
   invokeBleCleanupForLease,
   invokeBleForLease,
@@ -30,6 +34,7 @@ import {
   type DiscoveredDevice,
   type MiniProgramBleApi,
   type BleResourceLease,
+  type BleSubscriptionType,
 } from './ble-api';
 
 export type GoCubeBleApi = MiniProgramBleApi;
@@ -103,7 +108,7 @@ async function findGoCube(
     offAbort = signal?.onAbort(() => finish(new BleOperationAbortedError())) ?? offAbort;
     if (settled) return;
     timer = setTimeout(() => {
-      finish(new GoCubeBleError('device-not-found', '未发现 GoCube 或 Rubik’s Connected'));
+      finish(new GoCubeBleError('device-not-found', tr({ en: 'No GoCube or Rubik’s Connected found', zh: '未发现 GoCube 或 Rubik’s Connected' })));
     }, timeoutMs);
 
     const stopDiscovery = (): Promise<unknown> => invokeBleCleanupForLease(
@@ -129,7 +134,7 @@ async function findGoCube(
       }
       finish(new GoCubeBleError(
         'adapter-unavailable',
-        error instanceof Error ? error.message : '无法开始搜索智能魔方',
+        error instanceof Error ? error.message : tr({ en: 'Unable to start searching for a smart cube', zh: '无法开始搜索智能魔方' }),
         { cause: error },
       ));
     });
@@ -139,7 +144,7 @@ async function findGoCube(
 export async function connectGoCube(
   options: ConnectGoCubeOptions = {},
 ): Promise<GoCubeBleConnection> {
-  const api = options.api ?? (wx as unknown as GoCubeBleApi);
+  const api = options.api ?? (miniProgramApi() as unknown as GoCubeBleApi);
   const scanTimeoutMs = options.scanTimeoutMs ?? 10_000;
   if (!Number.isFinite(scanTimeoutMs) || scanTimeoutMs < 1_000 || scanTimeoutMs > 30_000) {
     throw new RangeError('scanTimeoutMs must be between 1000 and 30000.');
@@ -151,6 +156,7 @@ export async function connectGoCube(
   let serviceId: string | null = null;
   let writeCharacteristicId: string | null = null;
   let notifyCharacteristicId: string | null = null;
+  let notifySubscriptionType: BleSubscriptionType | null = null;
   let notificationListener: ((result: CharacteristicValueChange) => void) | null = null;
   let connectionStateListener: ((result: BleConnectionStateChange) => void) | null = null;
   let notificationsEnabled = false;
@@ -165,7 +171,7 @@ export async function connectGoCube(
   const writeCommand = (command: number): Promise<void> => {
     return writeQueue.enqueue(() => {
       if (closing || !active || !connectedDeviceId || !serviceId || !writeCharacteristicId) {
-        throw new GoCubeBleError('connection-failed', '智能魔方连接已断开');
+        throw new GoCubeBleError('connection-failed', tr({ en: 'Smart cube disconnected', zh: '智能魔方连接已断开' }));
       }
       const deviceId = connectedDeviceId;
       const currentServiceId = serviceId;
@@ -201,7 +207,8 @@ export async function connectGoCube(
       const finishCleanup = async (): Promise<void> => {
         try {
           await pendingWrites;
-          if (notificationsEnabled && connectedDeviceId && serviceId && notifyCharacteristicId) {
+          const subscriptionType = notifySubscriptionType;
+          if (notificationsEnabled && connectedDeviceId && serviceId && notifyCharacteristicId && subscriptionType) {
             await ignoreBleFailure(
               () => invokeBleCleanupForLease(lease, (callbacks) => api.notifyBLECharacteristicValueChange({
                 ...callbacks,
@@ -209,6 +216,7 @@ export async function connectGoCube(
                 deviceId: connectedDeviceId as string,
                 serviceId: serviceId as string,
                 state: false,
+                type: subscriptionType,
               })),
             );
             notificationsEnabled = false;
@@ -261,7 +269,7 @@ export async function connectGoCube(
       adapterOpen = true;
     } catch (error) {
       if (error instanceof BleOperationAbortedError) throw error;
-      throw new GoCubeBleError('adapter-unavailable', '蓝牙不可用，请开启系统蓝牙后重试', {
+      throw new GoCubeBleError('adapter-unavailable', bluetoothAdapterErrorMessage(error), {
         cause: error,
       });
     }
@@ -291,12 +299,12 @@ export async function connectGoCube(
       );
     } catch (error) {
       if (error instanceof BleOperationAbortedError) throw error;
-      throw new GoCubeBleError('connection-failed', '智能魔方连接失败', { cause: error });
+      throw new GoCubeBleError('connection-failed', tr({ en: 'Failed to connect to the smart cube', zh: '智能魔方连接失败' }), { cause: error });
     }
     active = true;
     connectionStateListener = (result): void => {
       if (result.deviceId === connectedDeviceId && !result.connected) {
-        reportUnexpectedDisconnect('智能魔方连接已断开');
+        reportUnexpectedDisconnect(tr({ en: 'Smart cube disconnected', zh: '智能魔方连接已断开' }));
       }
     };
     api.onBLEConnectionStateChange?.(connectionStateListener);
@@ -309,7 +317,7 @@ export async function connectGoCube(
     const service = services.services.find((candidate) =>
       normalizeBleUuid(candidate.uuid) === GOCUBE_SERVICE_UUID);
     if (!service) {
-      throw new GoCubeBleError('gatt-unavailable', '智能魔方通信服务不可用');
+      throw new GoCubeBleError('gatt-unavailable', tr({ en: 'Smart cube communication service is unavailable', zh: '智能魔方通信服务不可用' }));
     }
     serviceId = service.uuid;
 
@@ -327,12 +335,16 @@ export async function connectGoCube(
       && Boolean(candidate.properties?.write || candidate.properties?.writeNoResponse));
     const notifyCharacteristic = characteristics.characteristics.find((candidate) =>
       normalizeBleUuid(candidate.uuid) === GOCUBE_NOTIFY_CHARACTERISTIC_UUID
-      && Boolean(candidate.properties?.notify || candidate.properties?.indicate));
-    if (!writeCharacteristic || !notifyCharacteristic) {
-      throw new GoCubeBleError('gatt-unavailable', '智能魔方通信特征不可用');
+      && Boolean(getBleSubscriptionType(candidate)));
+    const subscriptionType = notifyCharacteristic
+      ? getBleSubscriptionType(notifyCharacteristic)
+      : undefined;
+    if (!writeCharacteristic || !notifyCharacteristic || !subscriptionType) {
+      throw new GoCubeBleError('gatt-unavailable', tr({ en: 'Smart cube communication characteristic is unavailable', zh: '智能魔方通信特征不可用' }));
     }
     writeCharacteristicId = writeCharacteristic.uuid;
     notifyCharacteristicId = notifyCharacteristic.uuid;
+    notifySubscriptionType = subscriptionType;
     notificationListener = (result): void => {
       if (!active
         || result.deviceId !== connectedDeviceId
@@ -370,6 +382,7 @@ export async function connectGoCube(
       deviceId: device.deviceId,
       serviceId: service.uuid,
       state: true,
+      type: subscriptionType,
     })), options.signal);
     notificationsEnabled = true;
     await writeCommand(GOCUBE_COMMAND_STATE);

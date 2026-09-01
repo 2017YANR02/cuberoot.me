@@ -1,20 +1,25 @@
 import type { WebRouteShare } from './web-routes';
+import { isDouyinMiniProgram, miniProgramApi } from './platform';
 
 export function showFriendShareMenu(): void {
-  if (typeof wx.showShareMenu !== 'function') return;
+  const api = miniProgramApi();
+  if (typeof api.showShareMenu !== 'function') return;
 
   try {
-    wx.showShareMenu({ menus: ['shareAppMessage'] });
+    api.showShareMenu({ menus: ['shareAppMessage'] });
   } catch {
     // Sharing is optional; page loading must survive unsupported platform APIs.
   }
 }
 
 export function showPublicShareMenu(): void {
-  if (typeof wx.showShareMenu !== 'function') return;
+  const api = miniProgramApi();
+  if (typeof api.showShareMenu !== 'function') return;
 
   try {
-    wx.showShareMenu({ menus: ['shareAppMessage', 'shareTimeline'] });
+    api.showShareMenu({
+      menus: isDouyinMiniProgram() ? ['shareAppMessage'] : ['shareAppMessage', 'shareTimeline'],
+    });
   } catch {
     // Sharing is optional; page loading must survive unsupported platform APIs.
   }

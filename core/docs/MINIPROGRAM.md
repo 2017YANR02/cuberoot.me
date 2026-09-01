@@ -1,17 +1,17 @@
-# CubeRoot 微信小程序跟踪
+# CubeRoot 微信 / 抖音小程序跟踪
 
-> 最后更新：2026-08-30。本文是小程序的架构约定、当前状态、上线清单和迭代记录。后续开发先更新这里，不再另建互相冲突的计划。
+> 最后更新：2026-09-01。本文是小程序的架构约定、当前状态、上线清单和迭代记录。后续开发先更新这里，不再另建互相冲突的计划。
 
 ## 1. 产品路线
 
 小程序采用“原生外壳 + 网站能力”的混合架构。
 
 - 网站继续负责计时器、公式库、比赛、百科和课程等成熟功能。
-- 小程序原生层只负责微信登录、一级导航、加载失败恢复、智能魔方 BLE，以及未来的订阅消息等微信专属能力。
-- 网站功能默认通过 `web-view` 复用；只有 `web-view` 做不到、体验明显不合格，或必须调用微信 API 时，才考虑原生实现。
+- 小程序原生层只负责平台登录、一级导航、加载失败恢复、智能魔方 BLE，以及未来的平台专属能力。
+- 网站功能默认通过 `web-view` 复用；只有 `web-view` 做不到、体验明显不合格，或必须调用平台 API 时，才考虑原生实现。
 - 原生实现需要算法或数据逻辑时，先从网站提取到 `@cuberoot/shared`，再由两端共同引用；不复制页面组件和业务规则。
 
-这条路线的目标不是把网站再写一遍，而是让网站保持唯一业务来源，小程序提供微信入口和平台增量能力。
+这条路线的目标不是把网站再写一遍，而是让网站保持唯一业务来源，小程序提供不同平台入口和平台增量能力。
 
 ## 2. 维护边界
 
@@ -22,19 +22,20 @@
 | 网站和 API 域名 | `apps/miniprogram/src/lib/runtime-config.ts` | 只使用已在小程序后台配置的 HTTPS 域名 |
 | `web-view` 加载、换票超时、失败和重试 | `apps/miniprogram/src/lib/web-view-page.ts` | 计时、工具和通用网页共用，不各自补丁 |
 | `web-view` 加载与错误界面 | `apps/miniprogram/src/templates/web-route-view.wxml` + `app.wxss` | 页面只传状态，不复制 WXML 或页面级样式 |
+| 平台 API、登录端点和网页标记 | `apps/miniprogram/src/lib/platform.ts` | 微信与抖音只在适配层分流，页面不得直接复制平台判断 |
 | 登录、会话和错误文案 | `apps/miniprogram/src/lib/auth.ts` | AppSecret 永远只在服务端 |
 | 跨端登录与退出落地 | 网站 `lib/auth-store.ts` + `app/auth/miniprogram/page.tsx` | 小程序只发起受控跳转，不复制网页存储键和清理规则 |
-| 移动端与小程序隐私政策 | `packages/client/app/[lang]/privacy/page.tsx` | App、小程序和网页共用一份真实声明 |
+| 用户协议与隐私政策 | `packages/client/app/[lang]/privacy/page.tsx` | App、小程序和网页共用一份真实声明 |
 | 构建与上传前自动检查 | `apps/miniprogram/scripts/build-state.mjs` + `release-check.mjs` + `release-check-lib.mjs` | 只允许上传当前源码生成且内容未变的完整 `dist`；新增隐私敏感能力时先阻断上传 |
 | 跨端计时数据类型和纯逻辑 | `@cuberoot/shared/timer` | 不复制网站计时器 UI |
-| GAN v2/v3/v4 协议、解密与魔方状态解码 | `@cuberoot/shared/smart-cube/gan-v2` + `gan-v3` + `gan-v4` + `gan-crypto` + `gan-move-sync` + `cubie` | 网站 Web Bluetooth 和小程序微信 BLE 共用同一解析与状态逻辑 |
+| GAN v2/v3/v4 协议、解密与魔方状态解码 | `@cuberoot/shared/smart-cube/gan-v2` + `gan-v3` + `gan-v4` + `gan-crypto` + `gan-move-sync` + `cubie` | 网站 Web Bluetooth 和小程序平台 BLE 共用同一解析与状态逻辑 |
 | GoCube/Rubik's Connected 协议字节解析 | `@cuberoot/shared/smart-cube/gocube` | 两端只维护各自传输适配器，不复制帧解析、转动映射或命令常量 |
-| Giiker/米家协议状态与转动解析 | `@cuberoot/shared/smart-cube/giiker` | 网站与小程序复用同一解析器，传输层分别使用 Web Bluetooth 与微信 BLE |
+| Giiker/米家协议状态与转动解析 | `@cuberoot/shared/smart-cube/giiker` | 网站与小程序复用同一解析器，传输层分别使用 Web Bluetooth 与平台 BLE |
 | MoYu AI MHC 旧协议转动解析 | `@cuberoot/shared/smart-cube/moyu` | 网站与小程序复用同一 UUID、设备名匹配和转动累积解析，传输层各自维护平台生命周期 |
 | 智能魔方短时中继协议 | `@cuberoot/shared/smart-cube/relay` | 原生 BLE 只作为数据源，网站计时器只作为数据接收方；不把会话数据写入数据库 |
 | 小程序智能魔方连接生命周期 | `apps/miniprogram/src/lib/smart-cube/session.ts` | 页面只展示状态和发起操作，不直接管理 socket、BLE 连接或竞态 |
 | 全局视觉变量和通用按钮 | `apps/miniprogram/src/app.wxss` | 页面只写自身布局 |
-| 账号落库 | 服务端 `account_auth.ts` + `wechat_miniprogram.ts` | 网站和小程序都只用 UnionID |
+| 账号落库 | 服务端 `account_auth.ts` + `wechat_miniprogram.ts` / `douyin_miniprogram.ts` | 微信用 UnionID；抖音用 code2session 返回的 OpenID，provider 命名空间隔离 |
 
 新增或调整网站首页入口时，只改共享目录并补测试；网站和小程序会同时消费。新增原生功能前，先在本文件写清楚为什么不能继续复用网站。
 
@@ -44,7 +45,7 @@
 
 ## 3. 当前状态
 
-### 平台配置
+### 微信平台配置
 
 - [x] 企业主体小程序已注册并完成微信认证。
 - [x] 小程序已绑定到网站应用所在的同一微信开放平台账号。
@@ -59,13 +60,24 @@
 - [ ] 在后台按本文的实际数据清单完成“用户隐私保护指引”，不勾选未使用的权限。
 - [x] 用户明确决定保留当前 AppSecret；该剩余风险已接受，不再阻塞发布。源码和上传产物仍禁止包含 AppSecret。
 
+### 抖音平台配置
+
+- [x] 资质审核期间继续复用现有小程序源码开发，不等待审核结果。
+- [x] 同一 `src/` 可构建微信 `dist/` 和抖音 `dist-douyin/`，不复制页面、路由、BLE 协议或网站业务。
+- [x] 已取得抖音小程序 AppID；资质审核期间继续使用测试身份构建，不把正式身份写入仓库。
+- [ ] 资质审核完成后配置 request、socket 和 `web-view` 域名及所需能力。
+- [ ] 在抖音后台声明实际使用的登录、网络和蓝牙能力；BLE 以基础库 3.87.0、抖音 36.1+ 为最低验收基线，并在 iOS、Android 真机验收。
+- [ ] 上传体验版、处理平台扫描结果并完成平台审核；完成前只称“可开发产物”，不称“已上线”。
+
 ### 工程能力
 
 - [x] 微信开发者工具可导入 `apps/miniprogram/`，产物目录为 `dist/`。
+- [x] 抖音构建复用微信源码，经官方转换器输出 `dist-douyin/`；构建会拦截残留微信模板、API、登录端点、网页标记和不兼容应用配置。
 - [x] 计时器通过 `web-view` 复用网站，并已在真机正常打开。
 - [x] 网站首页 53 个静态公开入口全部来自 `@cuberoot/shared/site-directory`；小程序工具 tab 直接用 `web-view` 打开中文首页，完整复用卡片、搜索、动态内容、权限状态和响应式样式。
-- [x] “我的” tab 是可分享的原生账号入口：未登录时提供微信登录，已登录时显示轻量账号摘要；只有用户点“打开账号管理”后才用 `web-view` 复用网站 `/zh/account`。
+- [x] “我的” tab 是可分享的原生账号入口：未登录时提供当前平台登录，抖音首登要求手动同意用户协议与隐私政策；已登录时显示轻量账号摘要和本机退出，账号管理继续通过 `web-view` 复用网站 `/zh/account`。
 - [x] 原生微信登录已接入后端 `/v1/auth/wechat/miniprogram`。
+- [x] 原生抖音登录已接入后端 `/v1/auth/douyin/miniprogram`，登录前要求手动同意用户协议与隐私政策，使用 `tt.login({ force: true })`。
 - [x] 登录只接受 UnionID；缺失时拒绝创建账号，避免同一用户产生两个账号。
 - [x] 微信开发者工具的旧 Chromium 兼容边界固定为 Chrome 91，并有网站回归测试保护。
 - [x] 小程序构建目标固定为 Chrome 91，避免产物使用模拟器不支持的语法。
@@ -151,7 +163,7 @@
 
 ## 4. 账号方案
 
-网站扫码登录和小程序登录都以同一开放平台返回的 UnionID 作为：
+网站微信扫码登录和微信小程序登录都以同一开放平台返回的 UnionID 作为：
 
 ```text
 provider = wechat
@@ -160,9 +172,18 @@ provider_uid = unionid
 
 禁止在 UnionID 缺失时回退到 OpenID。两者命名空间不同，回退会把一个用户拆成两个账号。
 
+抖音登录使用服务端 code2session 返回的 OpenID：
+
+```text
+provider = douyin
+provider_uid = openid
+```
+
+抖音 OpenID 与现有微信、邮箱或 WCA 身份之间没有可验证的自动对应关系，因此首版会创建独立 CubeRoot 账号，不猜测合并。以后只有在用户已登录并明确确认绑定时，才可复用现有账号绑定流程。
+
 原生小程序的 JWT 存在小程序本地存储中，网站登录态由现有 `applySession()` 写入网页 `localStorage`，两者不会自动共享。现在统一走服务端一次性换票：小程序用 Bearer JWT 申请 90 秒单次 ticket，把 ticket 放在 URL fragment 中交给网页；网页原子核销后获得新 JWT 和当前账号资料，再调用网站已有的 `applySession()`。长期 JWT 不进入 URL，服务端只保存 ticket 的 SHA-256。
 
-“我的” tab 只保留可分享的原生登录门和轻量账号摘要，不复制网站账号资料或设置界面。没有小程序会话时调用现有 `wx.login` 交换入口；获得会话后仍停留在原生页，只有用户主动点“打开账号管理”才走一次性换票进入网站账号页。设备存储不可读、登录失败或票据失败时分别留在可重试状态，不以游客身份绕过登录门。
+“我的” tab 只保留可分享的原生登录门、轻量账号摘要和本机退出，不复制网站账号资料或设置界面。没有小程序会话时调用当前平台 `login` 交换入口；抖音登录前由用户手动同意共用的用户协议与隐私政策。获得会话后仍停留在原生页，只有用户主动点“打开账号管理”才走一次性换票进入网站账号页。设备存储不可读、登录失败或票据失败时分别留在可重试状态，不以游客身份绕过登录门。
 
 ## 5. 开发和验收
 
@@ -171,7 +192,11 @@ provider_uid = unionid
 ```powershell
 pnpm --filter @cuberoot/miniprogram dev
 pnpm --filter @cuberoot/miniprogram check
+pnpm --filter @cuberoot/miniprogram check:douyin
 ```
+
+微信开发者工具导入 `core/apps/miniprogram` 并读取 `dist/`；抖音开发者工具直接导入 `core/apps/miniprogram/dist-douyin`。`check:douyin` 只做类型、回归、转换和产物兼容检查，不代替正式 AppID、后台配置、真机或平台审核。
+抖音构建会在 `apps/miniprogram/.tmp/wx-to-tt-log/__wxToTT/report/index.html` 留下官方转换器的最新逐文件报告。报告含本机绝对路径且可重复生成，只保留本机副本，不提交仓库。
 
 上传前先在微信开发者工具确认当时的稳定基础库，再显式传入同一版本执行闸门：
 
@@ -193,7 +218,7 @@ pnpm --filter @cuberoot/miniprogram release:check
 
 `build` 会保留已有正式 AppID 和明确的数字基础库；不会把已选好的本地版本重置回 `trial`。构建成功后会在被忽略的 `.tmp/` 写入源码和产物指纹，不进入上传包。`release:check` 会先运行类型检查和全部小程序回归测试，再拒绝缺页、源码变化后的旧 `dist`、构建后被改动的 `dist`，扫描源码和上传产物中的服务端凭据，并要求每次上传显式确认稳定版本、socket 合法域名、基础信息审核、备案、后台隐私指引、双平台真机和已支持设备的全链路回归。环境变量只是防遗忘闸门，不能代替真实操作。
 
-微信开发者工具导入 `core/apps/miniprogram`，不是 `dist`。`project.config.json` 和 `project.private.config.json` 是本机配置，不提交 AppID 之外的任何凭据。
+构建会保留 `project.config.json` 或 `project.douyin.config.json` 中已解析的本机 AppID；它们和 `project.private.config.json` 都不提交，也不包含密钥。
 
 每轮完成定义：
 
@@ -210,6 +235,8 @@ pnpm --filter @cuberoot/miniprogram release:check
 
 ## 6. 上线阻塞清单
 
+### 微信
+
 按顺序处理：
 
 1. 真机执行一次“网站扫码登录 + 小程序微信登录”，确认两端为同一 `uid`。
@@ -219,6 +246,13 @@ pnpm --filter @cuberoot/miniprogram release:check
 5. 审核通过后发布；发布后再次检查登录、`web-view`、返回路径和错误恢复。
 
 备案和平台审核可以与代码开发并行，但未完成前不能宣布已经上线。
+
+### 抖音
+
+1. 等资质审核完成并取得正式 AppID，配置后端密钥、网络域名、业务域名和所需平台能力。
+2. 按实际使用的登录、网络和蓝牙能力填写隐私说明，不扩大声明范围。
+3. 在抖音开发者工具验收普通流程，并用基础库 3.87.0、抖音 36.1+ 的 iOS、Android 真机验收登录、`web-view`、返回路径、错误恢复和 BLE；官方沙盒不支持 BLE，模拟器结果不能替代真机。
+4. 上传体验版并处理平台扫描结果，再提交审核和发布。
 
 ## 7. 近期迭代队列
 
@@ -1098,6 +1132,14 @@ pnpm --filter @cuberoot/miniprogram release:check
 - 源码和上传产物中的 AppSecret、私钥扫描仍是硬失败；本次变更不代表密钥已经轮换。
 - 这是已接受的剩余风险；后续若发现异常使用迹象，应立即轮换。
 
+### 2026-09-01：抖音复用基线
+
+- 保留 `apps/miniprogram/src` 为唯一源码；微信直接构建，抖音通过官方 `wx-to-tt` 转换到独立且被忽略的 `dist-douyin`，不复制页面、组件、路由、BLE 协议或网站业务。
+- `platform.ts` 只封装平台 API、登录端点和网页标记；账号页、网页会话、导航和智能魔方驱动继续走原实现。网站桥接按容器加载自托管的微信或抖音官方 JS-SDK。
+- 服务端新增抖音 code2session 交换并保持密钥只在服务端；首版按抖音 OpenID 创建独立账号，不臆测与现有账号合并。
+- 自动检查覆盖类型、现有回归、官方转换过程、微信实现残留和抖音 `app.json` 兼容项；正式 AppID、后台域名和能力配置、真机、隐私与平台审核仍是上线门禁。
+- 抖音官方 BLE 专页已覆盖现有驱动所需接口；沙盒不支持 BLE，且参数和错误码标注最低基础库 3.87.0，因此只把代码复用视为完成，设备兼容性仍以抖音 36.1+ 双端真机为准。
+
 ### 首版工程
 
 - 建立原生外壳、计时器 `web-view`、工具入口和“我的”页。
@@ -1112,3 +1154,11 @@ pnpm --filter @cuberoot/miniprogram release:check
 - [网络与服务器域名](https://developers.weixin.qq.com/miniprogram/dev/framework/ability/network.html)
 - [web-view](https://developers.weixin.qq.com/miniprogram/dev/component/web-view.html)
 - [小程序备案指引](https://developers.weixin.qq.com/miniprogram/product/record/guidelines.html)
+- [抖音小程序一键搬家](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/dev-tools/developer-instrument/development-assistance/one-key-move)
+- [抖音小程序登录](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/api/open-interface/log-in/tt-login)
+- [抖音账号登录规范](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/operation/management/specification/account-login-standard)
+- [抖音服务端 code2session](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/basic-abilities/log-in/code-2-session)
+- [抖音蓝牙 API](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/api/device/bluetooth)
+- [抖音 web-view](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/component/open-capacity/web-view)
+- [抖音隐私授权](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/tutorial/security-requirements/privacy-authorize)
+- [抖音发布流程](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/introduction/develop-process/publish)

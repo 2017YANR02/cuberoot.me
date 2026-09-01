@@ -7,6 +7,8 @@ import {
   type SmartCubeRelayHello,
 } from '@cuberoot/shared/smart-cube/relay';
 import { API_ORIGIN } from '../runtime-config';
+import { miniProgramApi } from '../platform';
+import { tr } from '../i18n';
 import { connectGanV4 } from './gan-v4-ble';
 import { connectGiiker } from './giiker-ble';
 import { connectGoCube } from './gocube-ble';
@@ -75,7 +77,9 @@ function relayUrl(): string {
 }
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : '连接失败，请重试';
+  return error instanceof Error
+    ? error.message
+    : tr({ en: 'Connection failed. Try again.', zh: '连接失败，请重试' });
 }
 
 interface BleCancellation {
@@ -149,7 +153,10 @@ export class SmartCubeSession {
 
   async start(token: string): Promise<void> {
     if (!SMART_CUBE_RELAY_TOKEN_PATTERN.test(token)) {
-      throw new Error('连接凭证无效，请返回计时器重试');
+      throw new Error(tr({
+        en: 'The connection credential is invalid. Return to the timer and try again.',
+        zh: '连接凭证无效，请返回计时器重试',
+      }));
     }
     if (this.socket && this.socketOpen && this.token === token) return;
 
@@ -164,14 +171,14 @@ export class SmartCubeSession {
     previousSocket?.close({ code: 1000, reason: 'new relay session' });
     await this.disconnectHardware();
     if (socketGeneration !== this.socketGeneration) {
-      throw new Error('计时器连接已被新的会话替代');
+      throw new Error(tr({ en: 'The timer connection was replaced by a new session', zh: '计时器连接已被新的会话替代' }));
     }
     this.token = token;
     this.setSnapshot({ ...INITIAL_SNAPSHOT });
 
     await new Promise<void>((resolve, reject) => {
       let settled = false;
-      const task = wx.connectSocket({ url: relayUrl() }) as unknown as SocketTaskLike;
+      const task = miniProgramApi().connectSocket({ url: relayUrl() }) as unknown as SocketTaskLike;
       this.socket = task;
       let cancelStart: () => void;
       const clearPendingStart = (): void => {
@@ -182,7 +189,7 @@ export class SmartCubeSession {
         settled = true;
         clearPendingStart();
         task.close({ code: 1008, reason: 'relay handshake timeout' });
-        reject(new Error('计时器中继握手超时，请返回重试'));
+        reject(new Error(tr({ en: 'The timer relay handshake timed out. Return and try again.', zh: '计时器中继握手超时，请返回重试' })));
       }, RELAY_HANDSHAKE_TIMEOUT_MS);
 
       const rejectHandshake = (message: string): void => {
@@ -193,7 +200,7 @@ export class SmartCubeSession {
         task.close({ code: 1011, reason: 'relay handshake failed' });
         reject(new Error(message));
       };
-      cancelStart = (): void => rejectHandshake('计时器连接已被新的会话替代');
+      cancelStart = (): void => rejectHandshake(tr({ en: 'The timer connection was replaced by a new session', zh: '计时器连接已被新的会话替代' }));
       this.cancelPendingStart = cancelStart;
 
       task.onOpen(() => {
@@ -202,7 +209,7 @@ export class SmartCubeSession {
         try {
           task.send({
             data: JSON.stringify(hello),
-            fail: (error) => rejectHandshake(error.errMsg || '无法发送计时器中继握手'),
+            fail: (error) => rejectHandshake(error.errMsg || tr({ en: 'Unable to send the timer relay handshake', zh: '无法发送计时器中继握手' })),
           });
         } catch (error) {
           rejectHandshake(errorMessage(error));
@@ -228,17 +235,17 @@ export class SmartCubeSession {
         if (isSmartCubeRelayPayload(payload)
           && payload.type === 'command'
           && payload.command === 'disconnect') {
-          void this.disconnect('计时器已断开智能魔方');
+          void this.disconnect(tr({ en: 'The timer disconnected the smart cube', zh: '计时器已断开智能魔方' }));
         }
       });
       task.onError((error) => {
         if (socketGeneration !== this.socketGeneration) return;
         if (!settled) {
-          rejectHandshake(error.errMsg || '无法连接计时器中继');
+          rejectHandshake(error.errMsg || tr({ en: 'Unable to connect to the timer relay', zh: '无法连接计时器中继' }));
         }
         this.socketOpen = false;
         ++this.connectionGeneration;
-        this.setSnapshot({ phase: 'error', error: '计时器连接已中断，请返回重试' });
+        this.setSnapshot({ phase: 'error', error: tr({ en: 'The timer connection was interrupted. Return and try again.', zh: '计时器连接已中断，请返回重试' }) });
         void this.disconnectHardware();
       });
       task.onClose(() => {
@@ -248,11 +255,11 @@ export class SmartCubeSession {
           settled = true;
           clearTimeout(handshakeTimer);
           clearPendingStart();
-          reject(new Error('计时器连接已关闭'));
+          reject(new Error(tr({ en: 'The timer connection was closed', zh: '计时器连接已关闭' })));
         }
         ++this.connectionGeneration;
         if (this.snapshot.phase !== 'disconnected') {
-          this.setSnapshot({ phase: 'error', error: '计时器连接已关闭，请返回重试' });
+          this.setSnapshot({ phase: 'error', error: tr({ en: 'The timer connection was closed. Return and try again.', zh: '计时器连接已关闭，请返回重试' }) });
         }
         void this.disconnectHardware();
       });
@@ -260,13 +267,13 @@ export class SmartCubeSession {
   }
 
   async connect(kind: SmartCubeDriverKind): Promise<void> {
-    if (!this.socketOpen) throw new Error('请先从计时器打开连接页');
+    if (!this.socketOpen) throw new Error(tr({ en: 'Open the connection page from the timer first', zh: '请先从计时器打开连接页' }));
     if (this.snapshot.phase === 'scanning' || this.snapshot.phase === 'connecting') return;
     await this.connectSelected(kind);
   }
 
   async connectAutomatically(): Promise<void> {
-    if (!this.socketOpen) throw new Error('请先从计时器打开连接页');
+    if (!this.socketOpen) throw new Error(tr({ en: 'Open the connection page from the timer first', zh: '请先从计时器打开连接页' }));
     if (this.snapshot.phase === 'connected') {
       const brand = this.snapshot.brand;
       await this.publishConnectedStatus({
@@ -316,14 +323,14 @@ export class SmartCubeSession {
 
   private async connectSelected(kind: SmartCubeDriverKind): Promise<void> {
     const deviceName = kind === 'gan-v4'
-      ? 'GAN v2、v3、v4 协议设备'
+      ? tr({ en: 'GAN v2, v3 or v4 device', zh: 'GAN v2、v3、v4 协议设备' })
       : kind === 'gocube'
-        ? 'GoCube、Rubik’s Connected'
+        ? tr({ en: 'GoCube or Rubik’s Connected', zh: 'GoCube、Rubik’s Connected' })
         : kind === 'giiker'
-          ? 'Giiker、米家智能魔方'
+          ? tr({ en: 'Giiker or Mi Smart Cube', zh: 'Giiker、米家智能魔方' })
           : kind === 'moyu'
-            ? 'MoYu AI（MHC 旧协议）'
-            : '开发者工具仿真魔方';
+            ? tr({ en: 'MoYu AI (legacy MHC protocol)', zh: 'MoYu AI（MHC 旧协议）' })
+            : tr({ en: 'DevTools simulated cube', zh: '开发者工具仿真魔方' });
     this.publishStatus({
       type: 'status',
       phase: kind === 'simulator' ? 'connecting' : 'scanning',
@@ -429,7 +436,7 @@ export class SmartCubeSession {
     this.publishMove(this.connectionGeneration, move, Date.now());
   }
 
-  async disconnect(message = '已断开智能魔方'): Promise<void> {
+  async disconnect(message = tr({ en: 'Smart cube disconnected', zh: '已断开智能魔方' })): Promise<void> {
     ++this.connectionGeneration;
     await this.disconnectHardware();
     this.publishStatus({ type: 'status', phase: 'disconnected' });
@@ -520,7 +527,7 @@ export class SmartCubeSession {
 
   private sendConfirmed(payload: SmartCubeRelayEvent): Promise<void> {
     if (!this.socketOpen || !this.socket) {
-      return Promise.reject(new SmartCubeRelaySendError('计时器连接已失效，请返回重试'));
+      return Promise.reject(new SmartCubeRelaySendError(tr({ en: 'The timer connection has expired. Return and try again.', zh: '计时器连接已失效，请返回重试' })));
     }
     const socket = this.socket;
     return new Promise<void>((resolve, reject) => {
@@ -531,11 +538,11 @@ export class SmartCubeSession {
         clearTimeout(timeout);
         this.handleRelaySendFailure(socket, message);
         reject(new SmartCubeRelaySendError(
-          message || '无法向计时器发送智能魔方数据，请返回重试',
+          message || tr({ en: 'Unable to send smart cube data to the timer. Return and try again.', zh: '无法向计时器发送智能魔方数据，请返回重试' }),
         ));
       };
       const timeout = setTimeout(
-        () => finishFailure('向计时器发送连接状态超时，请返回重试'),
+        () => finishFailure(tr({ en: 'Sending connection status to the timer timed out. Return and try again.', zh: '向计时器发送连接状态超时，请返回重试' })),
         RELAY_SEND_TIMEOUT_MS,
       );
       try {
@@ -545,7 +552,7 @@ export class SmartCubeSession {
           success: () => {
             if (settled) return;
             if (socket !== this.socket || !this.socketOpen) {
-              finishFailure('计时器连接已失效，请返回重试');
+              finishFailure(tr({ en: 'The timer connection has expired. Return and try again.', zh: '计时器连接已失效，请返回重试' }));
               return;
             }
             settled = true;
@@ -568,7 +575,7 @@ export class SmartCubeSession {
     socket.close({ code: 1011, reason: 'relay send failed' });
     this.setSnapshot({
       phase: 'error',
-      error: message || '无法向计时器发送智能魔方数据，请返回重试',
+      error: message || tr({ en: 'Unable to send smart cube data to the timer. Return and try again.', zh: '无法向计时器发送智能魔方数据，请返回重试' }),
     });
     void this.disconnectHardware();
   }

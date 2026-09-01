@@ -11,7 +11,10 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
+    "build:douyin": "node scripts/build.mjs --target=douyin",
     "check": "pnpm verify && node scripts/build.mjs",
+    "check:all": "pnpm verify && node scripts/build.mjs && node scripts/build.mjs --target=douyin",
+    "check:douyin": "pnpm verify && node scripts/build.mjs --target=douyin",
     "dev": "node scripts/build.mjs --watch",
     "release:check": "pnpm verify && node scripts/build.mjs && node scripts/release-check.mjs",
     "test": "vitest run",
@@ -23,6 +26,7 @@
     "esbuild": "^0.27.4",
     "miniprogram-api-typings": "^5.2.3",
     "typescript": "^5.9.3",
-    "vitest": "4.1.6"
+    "vitest": "4.1.6",
+    "wx-to-tt": "0.3.0-beta.3"
   }
 }

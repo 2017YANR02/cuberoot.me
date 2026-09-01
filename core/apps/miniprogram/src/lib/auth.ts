@@ -12,6 +12,13 @@ import {
   scheduleRuntimeTimeout,
   type RuntimeTimer,
 } from './runtime-timers';
+import {
+  MINI_PROGRAM_LOGIN_ENDPOINT,
+  MINI_PROGRAM_PROVIDER_NAME,
+  isDouyinMiniProgram,
+  miniProgramApi,
+} from './platform';
+import { tr } from './i18n';
 
 const SESSION_STORAGE_KEY = 'cuberoot:session';
 const MAX_AVATAR_LENGTH = 2048;
@@ -22,7 +29,7 @@ const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001F\u007F]/;
 const REQUEST_TIMEOUT_MS = 12_000;
 const WEB_SESSION_REQUEST_TIMEOUT_MS = 5_000;
 const HARD_TIMEOUT_GRACE_MS = 1_000;
-const WECHAT_LOGIN_TIMEOUT_MS = 10_000;
+const MINI_PROGRAM_LOGIN_TIMEOUT_MS = 10_000;
 const STORAGE_ERROR_STATUS = -1;
 
 export interface SessionUser {
@@ -116,7 +123,7 @@ function readStoredSessionValue(): StoredSessionRead {
   try {
     return {
       available: true,
-      value: wx.getStorageSync(SESSION_STORAGE_KEY) as unknown,
+      value: miniProgramApi().getStorageSync(SESSION_STORAGE_KEY) as unknown,
     };
   } catch {
     return { available: false };
@@ -125,7 +132,7 @@ function readStoredSessionValue(): StoredSessionRead {
 
 function removeStoredSessionValue(): boolean {
   try {
-    wx.removeStorageSync(SESSION_STORAGE_KEY);
+    miniProgramApi().removeStorageSync(SESSION_STORAGE_KEY);
     return true;
   } catch {
     return false;
@@ -134,7 +141,7 @@ function removeStoredSessionValue(): boolean {
 
 function writeStoredSessionValue(session: SessionData): boolean {
   try {
-    wx.setStorageSync(SESSION_STORAGE_KEY, session);
+    miniProgramApi().setStorageSync(SESSION_STORAGE_KEY, session);
     return true;
   } catch {
     return false;
@@ -180,7 +187,7 @@ function requestJson<T>(
     if (settled) return;
 
     try {
-      requestTask = wx.request({
+      requestTask = miniProgramApi().request({
         url: `${API_ORIGIN}${path}`,
         method: options.method ?? 'GET',
         data: options.body,
@@ -215,7 +222,7 @@ function requestJson<T>(
   });
 }
 
-function wechatLoginCode(): Promise<string> {
+function miniProgramLoginCode(): Promise<string> {
   return new Promise((resolve, reject) => {
     let settled = false;
     let hardTimeout: RuntimeTimer | null = null;
@@ -226,33 +233,35 @@ function wechatLoginCode(): Promise<string> {
       action();
     };
     hardTimeout = scheduleRuntimeTimeout(
-      () => settle(() => reject(new ApiError(0, 'wx.login timed out'))),
-      WECHAT_LOGIN_TIMEOUT_MS + HARD_TIMEOUT_GRACE_MS,
+      () => settle(() => reject(new ApiError(0, 'mini program login timed out'))),
+      MINI_PROGRAM_LOGIN_TIMEOUT_MS + HARD_TIMEOUT_GRACE_MS,
     );
     if (hardTimeout === null) {
-      settle(() => reject(new ApiError(0, 'wx.login timeout unavailable')));
+      settle(() => reject(new ApiError(0, 'mini program login timeout unavailable')));
       return;
     }
     if (settled) return;
 
     try {
-      wx.login({
-        timeout: WECHAT_LOGIN_TIMEOUT_MS,
+      miniProgramApi().login({
+        ...(isDouyinMiniProgram()
+          ? { force: true }
+          : { timeout: MINI_PROGRAM_LOGIN_TIMEOUT_MS }),
         success(result) {
           settle(() => {
             const code = result.code?.trim();
             if (code) resolve(code);
-            else reject(new ApiError(0, 'wx.login returned no code'));
+            else reject(new ApiError(0, 'mini program login returned no code'));
           });
         },
         fail(error) {
-          settle(() => reject(new ApiError(0, error.errMsg || 'wx.login failed')));
+          settle(() => reject(new ApiError(0, error.errMsg || 'mini program login failed')));
         },
       });
     } catch (error) {
       settle(() => reject(new ApiError(
         0,
-        error instanceof Error ? error.message : 'wx.login failed',
+        error instanceof Error ? error.message : 'mini program login failed',
       )));
     }
   });
@@ -280,9 +289,9 @@ export function clearStoredSession(): boolean {
   return removeStoredSessionValue();
 }
 
-export async function loginWithWechat(): Promise<LoginResult> {
-  const code = await wechatLoginCode();
-  const response = await requestJson<unknown>('/auth/wechat/miniprogram', {
+export async function loginWithMiniProgram(): Promise<LoginResult> {
+  const code = await miniProgramLoginCode();
+  const response = await requestJson<unknown>(MINI_PROGRAM_LOGIN_ENDPOINT, {
     method: 'POST',
     body: { code },
   });
@@ -332,19 +341,53 @@ export async function createWebSessionTicket(session: SessionData): Promise<WebS
 }
 
 export function loginErrorMessage(error: unknown): string {
-  if (!(error instanceof ApiError)) return '登录失败，请稍后重试';
-  if (error.status === STORAGE_ERROR_STATUS) return '设备存储不可用，请清理空间后重试';
-  if (error.code === 'WECHAT_UNIONID_REQUIRED') return '暂未获得 UnionID，请先完成开放平台绑定';
-  if (error.code === 'WECHAT_NOT_CONFIGURED') return '服务端还未配置小程序密钥';
-  if (error.code === 'RATE_LIMITED') return '微信登录操作过于频繁，请稍后再试';
-  if (error.code === 'ACCOUNT_BLOCKED') return '微信暂时无法为此账号完成登录';
-  if (error.code === 'INVALID_WECHAT_CODE') return '微信登录码已失效，请重试';
-  if (error.status === 409) return '暂未获得 UnionID，请先完成开放平台绑定';
-  if (error.status === 503) return '服务端还未配置小程序密钥';
-  if (error.status === 429) return '微信登录操作过于频繁，请稍后再试';
-  if (error.status === 403) return '微信暂时无法为此账号完成登录';
-  if (error.status === 401) return '微信登录码已失效，请重试';
-  if (error.status === 0 && error.message.includes('timed out')) return '网络连接超时，请重试';
-  if (error.status === 0) return '网络连接失败，请检查网络';
-  return '登录失败，请稍后重试';
+  const providerName = tr({
+    en: isDouyinMiniProgram() ? 'Douyin' : 'WeChat',
+    zh: MINI_PROGRAM_PROVIDER_NAME,
+  });
+  const genericFailure = tr({ en: 'Sign-in failed. Try again later.', zh: '登录失败，请稍后重试' });
+  if (!(error instanceof ApiError)) return genericFailure;
+  if (error.status === STORAGE_ERROR_STATUS) {
+    return tr({ en: 'Device storage is unavailable. Free up some space and try again.', zh: '设备存储不可用，请清理空间后重试' });
+  }
+  if (error.code === 'WECHAT_UNIONID_REQUIRED') {
+    return tr({ en: 'UnionID is unavailable. Complete the Open Platform binding first.', zh: '暂未获得 UnionID，请先完成开放平台绑定' });
+  }
+  if (error.code === 'WECHAT_NOT_CONFIGURED' || error.code === 'DOUYIN_NOT_CONFIGURED') {
+    return tr({ en: 'The Mini Program secret has not been configured on the server.', zh: '服务端还未配置小程序密钥' });
+  }
+  if (error.code === 'RATE_LIMITED') {
+    return tr({ en: `${providerName} sign-in was attempted too frequently. Try again later.`, zh: `${providerName}登录操作过于频繁，请稍后再试` });
+  }
+  if (error.code === 'ACCOUNT_BLOCKED') {
+    return tr({ en: `${providerName} cannot sign in to this account right now.`, zh: `${providerName}暂时无法为此账号完成登录` });
+  }
+  if (error.code === 'INVALID_WECHAT_CODE' || error.code === 'INVALID_DOUYIN_CODE') {
+    return tr({ en: `${providerName} sign-in code has expired. Try again.`, zh: `${providerName}登录码已失效，请重试` });
+  }
+  if (error.code === 'DOUYIN_UNAVAILABLE') {
+    return tr({ en: 'Douyin sign-in is temporarily unavailable. Try again later.', zh: '抖音登录服务暂时不可用，请稍后重试' });
+  }
+  if (error.status === 409) {
+    return tr({ en: 'UnionID is unavailable. Complete the Open Platform binding first.', zh: '暂未获得 UnionID，请先完成开放平台绑定' });
+  }
+  if (error.status === 503) {
+    return tr({ en: 'The Mini Program secret has not been configured on the server.', zh: '服务端还未配置小程序密钥' });
+  }
+  if (error.status === 429) {
+    return tr({ en: `${providerName} sign-in was attempted too frequently. Try again later.`, zh: `${providerName}登录操作过于频繁，请稍后再试` });
+  }
+  if (error.status === 403) {
+    return tr({ en: `${providerName} cannot sign in to this account right now.`, zh: `${providerName}暂时无法为此账号完成登录` });
+  }
+  if (error.status === 401) {
+    return tr({ en: `${providerName} sign-in code has expired. Try again.`, zh: `${providerName}登录码已失效，请重试` });
+  }
+  if (error.status === 0 && error.message.includes('timed out')) {
+    return tr({ en: 'The connection timed out. Try again.', zh: '网络连接超时，请重试' });
+  }
+  if (error.status === 0) {
+    return tr({ en: 'Network connection failed. Check your connection.', zh: '网络连接失败，请检查网络' });
+  }
+  return genericFailure;
 }

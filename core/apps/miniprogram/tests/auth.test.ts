@@ -7,7 +7,7 @@ import {
   getStoredSession,
   getStoredSessionSnapshot,
   loginErrorMessage,
-  loginWithWechat,
+  loginWithMiniProgram,
   validateStoredSession,
 } from '../src/lib/auth';
 
@@ -116,7 +116,7 @@ describe('mini program authentication', () => {
       setStorageSync,
     });
 
-    const session = await loginWithWechat();
+    const session = await loginWithMiniProgram();
     expect(session.user.name).toBe('CubeRoot');
     expect(session.isNew).toBe(true);
     expect(setStorageSync).toHaveBeenCalledWith('cuberoot:session', {
@@ -151,7 +151,7 @@ describe('mini program authentication', () => {
       setStorageSync,
     });
 
-    await expect(loginWithWechat()).resolves.toEqual({
+    await expect(loginWithMiniProgram()).resolves.toEqual({
       token: 't'.repeat(20),
       user: {
         uid: 12,
@@ -194,7 +194,7 @@ describe('mini program authentication', () => {
       setStorageSync,
     });
 
-    await expect(loginWithWechat()).rejects.toMatchObject({
+    await expect(loginWithMiniProgram()).rejects.toMatchObject({
       message: 'invalid session response',
       status: 502,
     });
@@ -291,7 +291,7 @@ describe('mini program authentication', () => {
 
     let caught: unknown;
     try {
-      await loginWithWechat();
+      await loginWithMiniProgram();
     } catch (error) {
       caught = error;
     }
@@ -324,7 +324,7 @@ describe('mini program authentication', () => {
       },
     });
 
-    await expect(loginWithWechat()).rejects.toMatchObject({
+    await expect(loginWithMiniProgram()).rejects.toMatchObject({
       message: 'session storage unavailable',
       status: -1,
     });
@@ -348,7 +348,7 @@ describe('mini program authentication', () => {
       setStorageSync,
     });
 
-    await expect(loginWithWechat()).rejects.toMatchObject({
+    await expect(loginWithMiniProgram()).rejects.toMatchObject({
       message: 'invalid session response',
       status: 502,
     });
@@ -373,7 +373,7 @@ describe('mini program authentication', () => {
       setStorageSync,
     });
 
-    await expect(loginWithWechat()).rejects.toMatchObject({
+    await expect(loginWithMiniProgram()).rejects.toMatchObject({
       message: 'invalid session response',
       status: 502,
     });
@@ -398,7 +398,7 @@ describe('mini program authentication', () => {
       setStorageSync,
     });
 
-    await expect(loginWithWechat()).rejects.toMatchObject({
+    await expect(loginWithMiniProgram()).rejects.toMatchObject({
       message: 'invalid session response',
       status: 502,
     });
@@ -411,8 +411,8 @@ describe('mini program authentication', () => {
       login: vi.fn(),
     });
 
-    const login = expect(loginWithWechat()).rejects.toMatchObject({
-      message: 'wx.login timed out',
+    const login = expect(loginWithMiniProgram()).rejects.toMatchObject({
+      message: 'mini program login timed out',
       status: 0,
     });
     await vi.advanceTimersByTimeAsync(11_000);
@@ -428,8 +428,8 @@ describe('mini program authentication', () => {
     });
 
     try {
-      await expect(loginWithWechat()).rejects.toMatchObject({
-        message: 'wx.login timeout unavailable',
+      await expect(loginWithMiniProgram()).rejects.toMatchObject({
+        message: 'mini program login timeout unavailable',
         status: 0,
       });
       expect(login).not.toHaveBeenCalled();
@@ -447,8 +447,8 @@ describe('mini program authentication', () => {
     });
 
     try {
-      await expect(loginWithWechat()).rejects.toMatchObject({
-        message: 'wx.login timed out',
+      await expect(loginWithMiniProgram()).rejects.toMatchObject({
+        message: 'mini program login timed out',
         status: 0,
       });
       expect(login).not.toHaveBeenCalled();
@@ -503,7 +503,7 @@ describe('mini program authentication', () => {
     });
 
     try {
-      await expect(loginWithWechat()).resolves.toMatchObject({
+      await expect(loginWithMiniProgram()).resolves.toMatchObject({
         token: 't'.repeat(20),
         user: { uid: 12, name: 'CubeRoot' },
       });

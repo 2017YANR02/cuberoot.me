@@ -9,10 +9,10 @@ afterEach(() => {
 });
 
 describe('Mini Program web session handoff', () => {
-  it('parses a fragment-only ticket and keeps a safe internal destination', async () => {
+  it.each(['wechat_redirect', 'douyin_redirect'])('parses a %s ticket and keeps a safe internal destination', async (marker) => {
     const { parseMiniProgramHandoff } = await import('../lib/miniprogram-auth-handoff');
 
-    expect(parseMiniProgramHandoff(`#wechat_redirect&ticket=${TICKET}&next=%2Fzh%2Falg%3Fset%3Doll`)).toEqual({
+    expect(parseMiniProgramHandoff(`#${marker}&ticket=${TICKET}&next=%2Fzh%2Falg%3Fset%3Doll`)).toEqual({
       ticket: TICKET,
       next: '/zh/alg?set=oll',
     });
