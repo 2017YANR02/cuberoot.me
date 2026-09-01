@@ -1057,8 +1057,34 @@ button {
   margin-top: 10px;
 }
 
-.battle-local-tools .timer-device-actions {
-  margin-top: 10px;
+.battle-local-tools .shell-device-actions,
+.battle-net-timer > .shell-device-actions {
+  position: static;
+  flex: 0 0 auto;
+  max-width: calc(100% - 24px);
+  transform: none;
+}
+
+.battle-local-tools .shell-device-actions {
+  margin: 10px 0 0;
+}
+
+.battle-net-timer > .shell-device-actions {
+  margin: 2px 0 10px;
+}
+
+.battle-local-tools .shell-device-connect,
+.battle-net-timer > .shell-device-actions .shell-device-connect {
+  min-width: 0;
+  min-height: 44px;
+  max-width: 100%;
+}
+
+.battle-local-tools .shell-device-connect span,
+.battle-net-timer > .shell-device-actions .shell-device-connect span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .battle-cube-holders button[aria-pressed="true"] {

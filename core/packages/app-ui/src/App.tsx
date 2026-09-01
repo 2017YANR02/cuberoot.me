@@ -1,5 +1,11 @@
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import {
+  createSmartCubeFixupRequester,
+  verifySmartCubeScramble,
+  type SmartCubeFixupPath,
+  type SmartCubeScrambleHint,
+} from '@cuberoot/shared/smart-cube/scramble-hint';
+import {
   decodeMobileEmbedAuthClear,
   decodeMobileEmbedAuthRequest,
   decodeMobileEmbedExternal,
@@ -225,15 +231,16 @@ import { useTimerController } from './hooks/use-timer-controller';
 import {
   LocalBattleMode,
   NetBattleMode,
-  type LocalBattleSmartCubeHandlers,
+  type BattleSmartCubeHandlers,
 } from './BattleModes';
 import {
   mobileShellViewportLayout,
   observeVisibleViewportHeight,
   visibleViewportHeight,
 } from './mobile-viewport';
-import type { InstalledAppHost } from './platform';
+import type { InstalledAppHost, InstalledAppSmartCube } from './platform';
 import { startWebSurfaceHandshake } from './web-surface-handshake';
+import { solveMobileSmartCubeFixup } from './smart-cube/fixup';
 
 const SITE_ORIGIN = 'https://cuberoot.me';
 const MOBILE_EMBED_SURFACES = ['tools', 'account'] as const;
@@ -533,7 +540,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const accountSyncedTokenRef = useRef<string | null>(null);
   const viewRef = useRef(view);
   const timerModeRef = useRef<TimerPlayersValue>(timerMode);
-  const localBattleSmartCubeHandlersRef = useRef<LocalBattleSmartCubeHandlers | null>(null);
+  const battleSmartCubeHandlersRef = useRef<BattleSmartCubeHandlers | null>(null);
   const battleModeActiveRef = useRef(battleModeActive);
   const timingRunningRef = useRef(false);
   const timingEnabledRef = useRef(true);
@@ -555,8 +562,8 @@ export function App({ host }: { host: InstalledAppHost }) {
     : siteUrl(language);
   const accountWebUrl = accountUrl(language);
   const auth = host.useAuth(language);
-  const setLocalBattleSmartCubeHandlers = useCallback((handlers: LocalBattleSmartCubeHandlers | null) => {
-    localBattleSmartCubeHandlersRef.current = handlers;
+  const setBattleSmartCubeHandlers = useCallback((handlers: BattleSmartCubeHandlers | null) => {
+    battleSmartCubeHandlersRef.current = handlers;
   }, []);
   const activeEvent = store?.settings.event ?? '333';
   const timingEnabled = store?.settings.timingEnabled ?? true;
@@ -807,6 +814,19 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   const currentScrambleEntry = scrambleHistory.list[scrambleHistory.idx] ?? null;
   const scramble = currentScrambleEntry?.scramble ?? '';
+  const [smartCubeHint, setSmartCubeHint] = useState<SmartCubeScrambleHint | null>(null);
+  const [smartCubeCorrectionActive, setSmartCubeCorrectionActive] = useState(false);
+  const [smartCubeGuidanceComplete, setSmartCubeGuidanceComplete] = useState(false);
+  const smartCubeFixupRef = useRef<SmartCubeFixupPath | null>(null);
+  const smartCubeFixupWantedRef = useRef(false);
+  const smartCubeFaceletsRef = useRef('');
+  const smartCubeScrambleRef = useRef(scramble);
+  const smartCubeConnectedRef = useRef(false);
+  const smartCubeFixupGenerationRef = useRef(0);
+  const smartCubeContextRef = useRef('');
+  const smartCubeGuidanceCompleteRef = useRef(false);
+  const smartCubePhaseRef = useRef<InstalledAppSmartCube['phase']>('idle');
+  smartCubeScrambleRef.current = scramble;
   const scrambleCaseId = currentScrambleEntry?.caseId ?? null;
   const currentReal = currentScrambleEntry?.currentReal ?? null;
   const scrambleAvailability = currentScrambleEntry?.availability ?? 'loading';
@@ -1757,42 +1777,148 @@ export function App({ host }: { host: InstalledAppHost }) {
   ), [activeEvent, scramble]);
   const smartCubeTargetRef = useRef(smartCubeTarget);
   smartCubeTargetRef.current = smartCubeTarget;
+  const smartCubeContext = `${timerMode}|${smartCubeTarget ?? ''}|${scramble}`;
+  if (smartCubeContextRef.current !== smartCubeContext) {
+    smartCubeContextRef.current = smartCubeContext;
+    smartCubeFixupGenerationRef.current++;
+  }
+  const clearSmartCubeCorrection = useCallback(() => {
+    smartCubeFixupRef.current = null;
+    setSmartCubeCorrectionActive(false);
+  }, []);
+  const smartCubeFixupRequester = useMemo(() => createSmartCubeFixupRequester({
+    facelets: () => smartCubeFaceletsRef.current || null,
+    solve: solveMobileSmartCubeFixup,
+    valid: (target) => smartCubeTargetRef.current === target
+      && timerPhaseRef.current !== 'running'
+      && timerModeRef.current === 1
+      && smartCubeConnectedRef.current
+      && smartCubeFixupWantedRef.current,
+  }), []);
+  const requestSmartCubeFixup = useCallback(async (target: string) => {
+    const generation = smartCubeFixupGenerationRef.current;
+    const result = await smartCubeFixupRequester.request(target);
+    if (!result
+      || !smartCubeFixupWantedRef.current
+      || generation !== smartCubeFixupGenerationRef.current) return;
+    smartCubeFixupRef.current = {
+      fromFacelets: result.fromFacelets,
+      scramble: result.scramble,
+    };
+    setSmartCubeCorrectionActive(true);
+    setSmartCubeHint(result.hint);
+  }, [smartCubeFixupRequester]);
+  const updateSmartCubeVerification = useCallback((facelets: string) => {
+    const target = smartCubeTargetRef.current;
+    const text = smartCubeScrambleRef.current;
+    if (timerModeRef.current !== 1 || !target || !text || timerPhaseRef.current === 'running') return;
+    if (smartCubeGuidanceCompleteRef.current) {
+      setSmartCubeHint(null);
+      clearSmartCubeCorrection();
+      return;
+    }
+    const verification = verifySmartCubeScramble(
+      text,
+      target,
+      facelets,
+      smartCubeFixupRef.current,
+    );
+    smartCubeFixupWantedRef.current = verification.needsFixup;
+    if (verification.match) {
+      smartCubeGuidanceCompleteRef.current = true;
+      setSmartCubeGuidanceComplete(true);
+    }
+    if (!verification.correctionActive) clearSmartCubeCorrection();
+    setSmartCubeCorrectionActive(verification.correctionActive);
+    setSmartCubeHint(verification.hint);
+    if (verification.needsFixup) void requestSmartCubeFixup(target);
+  }, [clearSmartCubeCorrection, requestSmartCubeFixup]);
   const smartCube = host.useSmartCube({
     language,
     onMove: (move, timestamp, facelets) => {
-      if (typeof timerModeRef.current === 'number' && timerModeRef.current >= 2) {
-        localBattleSmartCubeHandlersRef.current?.onMove(move, timestamp, facelets);
+      smartCubeFaceletsRef.current = facelets;
+      if (timerModeRef.current !== 1) {
+        battleSmartCubeHandlersRef.current?.onMove(move, timestamp, facelets);
         return;
       }
-      // Keep the same order as Web: an armed attempt consumes the first solve
-      // turn, then the resulting cube state may arm the next attempt.
-      if (!timingEnabled || !timerSupportsSmartCubeAutoTiming(activeEvent)) return;
-      timer.startFromCube(timestamp);
-      if (facelets === smartCubeTargetRef.current) timer.armFromCube();
+      if (!timerSupportsSmartCubeAutoTiming(activeEvent)) return;
+      // An armed attempt consumes its first solve turn before scramble guidance
+      // sees the deliberately off-target cube state.
+      if (timer.startFromCube(timestamp)) {
+        smartCubeFixupWantedRef.current = false;
+        smartCubeFixupGenerationRef.current++;
+        setSmartCubeHint(null);
+        clearSmartCubeCorrection();
+        return;
+      }
+      if (facelets === smartCubeTargetRef.current) {
+        smartCubeGuidanceCompleteRef.current = true;
+        smartCubeFixupWantedRef.current = false;
+        smartCubeFixupGenerationRef.current++;
+        setSmartCubeGuidanceComplete(true);
+        setSmartCubeHint(null);
+        clearSmartCubeCorrection();
+        if (timingEnabled) timer.armFromCube();
+      }
       console.info('[smart-cube] move', move);
     },
     onSolved: (timestamp) => {
-      if (typeof timerModeRef.current === 'number' && timerModeRef.current >= 2) {
-        localBattleSmartCubeHandlersRef.current?.onSolved(timestamp);
+      if (timerModeRef.current !== 1) {
+        battleSmartCubeHandlersRef.current?.onSolved(timestamp);
         return;
       }
       if (timingEnabled && timerSupportsSmartCubeAutoTiming(activeEvent)) timer.stopFromCube(timestamp);
     },
   });
-  const smartCubeScrambleMatch = smartCube.phase === 'connected'
+  if (smartCubePhaseRef.current !== smartCube.phase) {
+    smartCubePhaseRef.current = smartCube.phase;
+    smartCubeFixupGenerationRef.current++;
+  }
+  smartCubeConnectedRef.current = smartCube.phase === 'connected';
+  smartCubeFaceletsRef.current = smartCube.facelets;
+  const smartCubeScrambleMatch = timerMode === 1
+    && timer.machine.phase !== 'running'
+    && smartCube.phase === 'connected'
     && smartCubeTarget
     && smartCube.facelets
-    ? smartCube.facelets === smartCubeTarget
+    ? smartCubeGuidanceComplete && smartCube.facelets !== smartCubeTarget
+      ? null
+      : smartCube.facelets === smartCubeTarget
     : null;
 
   useEffect(() => {
-    if (timingEnabled
-      && smartCube.phase === 'connected'
-      && smartCube.facelets
-      && smartCube.facelets === smartCubeTarget) {
-      timer.armFromCube();
-    }
-  }, [smartCube.facelets, smartCube.phase, smartCubeTarget, timer.armFromCube, timingEnabled]);
+    smartCubeGuidanceCompleteRef.current = false;
+    smartCubeFixupWantedRef.current = false;
+    setSmartCubeGuidanceComplete(false);
+    setSmartCubeHint(null);
+    clearSmartCubeCorrection();
+  }, [clearSmartCubeCorrection, scramble, smartCubeTarget, timerMode]);
+
+  useEffect(() => {
+    if (timerMode !== 1
+      || smartCube.phase !== 'connected'
+      || !smartCube.facelets
+      || !smartCubeTarget) return;
+    updateSmartCubeVerification(smartCube.facelets);
+  }, [smartCube.facelets, smartCube.phase, smartCubeTarget, timerMode, updateSmartCubeVerification]);
+
+  useEffect(() => {
+    if (smartCube.phase === 'connected') return;
+    smartCubeFaceletsRef.current = '';
+    smartCubeFixupWantedRef.current = false;
+    smartCubeGuidanceCompleteRef.current = false;
+    setSmartCubeGuidanceComplete(false);
+    setSmartCubeHint(null);
+    clearSmartCubeCorrection();
+  }, [clearSmartCubeCorrection, smartCube.phase]);
+
+  useEffect(() => {
+    if (timer.machine.phase !== 'running') return;
+    smartCubeFixupWantedRef.current = false;
+    smartCubeFixupGenerationRef.current++;
+    setSmartCubeHint(null);
+    clearSmartCubeCorrection();
+  }, [clearSmartCubeCorrection, timer.machine.phase]);
 
   const toggleSmartCube = useCallback(() => {
     if (!timerSupportsSmartCubeAutoTiming(activeEvent)) {
@@ -2019,7 +2145,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         setLastPenalty(null);
         applyStoreSnapshot(latest);
       });
-      if (committed && nextEvent !== '333' && smartCube.phase === 'connected') {
+      if (committed && !timerSupportsSmartCubeAutoTiming(nextEvent) && smartCube.phase === 'connected') {
         void smartCube.disconnect();
       }
     }).catch(async () => {
@@ -2825,9 +2951,11 @@ export function App({ host }: { host: InstalledAppHost }) {
                    <TimerScrambleStrip
                      copied={scrambleCopied}
                      copiedLabel={copy.copied}
+                     correctionActive={smartCubeCorrectionActive}
                      fallback={scrambleText}
                      fallbackKind={scrambleAvailability === 'loading' ? 'custom' : 'empty'}
                      match={smartCubeScrambleMatch}
+                     hint={smartCubeHint}
                      onActivate={scrambleClickEffect === 'retry' && currentScrambleEntry
                        ? () => {
                          if (canSwitchScramble()) fillScrambleHistoryEntry(currentScrambleEntry);
@@ -2916,7 +3044,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               timerModeRef.current = mode;
               setTimerMode(mode);
             }}
-            onSmartCubeHandlersChange={setLocalBattleSmartCubeHandlers}
+            onSmartCubeHandlersChange={setBattleSmartCubeHandlers}
             playerCount={timerMode as 2 | 3 | 4}
             precision={resultPrecision}
             runningPrecision={runningPrecision}
@@ -2942,8 +3070,10 @@ export function App({ host }: { host: InstalledAppHost }) {
               timerModeRef.current = mode;
               setTimerMode(mode);
             }}
+            onSmartCubeHandlersChange={setBattleSmartCubeHandlers}
             precision={resultPrecision}
             runningPrecision={runningPrecision}
+            smartCube={smartCube}
             writeClipboardText={host.writeClipboardText}
           />
         )}

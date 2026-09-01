@@ -36,6 +36,8 @@ import {
   summarizeLocalBattleRounds,
   syncGate,
   timerEventIdFromSelector,
+  timerSupportsLocalBattleSmartCube,
+  timerSupportsNetBattleSmartCube,
   transitionLocalBattle,
   type EventId,
   type LocalBattleAction,
@@ -53,6 +55,7 @@ import {
   type SolveResult,
 } from '@cuberoot/shared/timer';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
+import { hintSmartCubeScramble } from '@cuberoot/shared/smart-cube/scramble-hint';
 import {
   SegmentTime,
   Flag,
@@ -167,12 +170,12 @@ function nextLocalBattleRoundId(): string {
 }
 
 export interface LocalBattleModeProps extends BattleModeBaseProps {
-  onSmartCubeHandlersChange?(handlers: LocalBattleSmartCubeHandlers | null): void;
+  onSmartCubeHandlersChange?(handlers: BattleSmartCubeHandlers | null): void;
   playerCount: 2 | 3 | 4;
   smartCube?: InstalledAppSmartCube;
 }
 
-export interface LocalBattleSmartCubeHandlers {
+export interface BattleSmartCubeHandlers {
   onMove(move: string, timestamp: number, facelets: string): void;
   onSolved(timestamp: number): void;
 }
@@ -354,11 +357,12 @@ export function LocalBattleMode({
 
   useEffect(() => {
     if (!onSmartCubeHandlersChange) return undefined;
-    const handlers: LocalBattleSmartCubeHandlers = {
+    const handlers: BattleSmartCubeHandlers = {
       onMove(_move, timestamp, facelets) {
         const holder = cubeHolderRef.current;
         const player = stateRef.current.players[holder];
-        if (!player || player.id >= stateRef.current.playerCount || player.event !== '333') return;
+        if (!player || player.id >= stateRef.current.playerCount
+          || !timerSupportsLocalBattleSmartCube(player.event)) return;
         dispatch({
           type: 'player-timer',
           playerId: holder,
@@ -374,6 +378,8 @@ export function LocalBattleMode({
       },
       onSolved(timestamp) {
         const holder = cubeHolderRef.current;
+        const player = stateRef.current.players[holder];
+        if (!player || !timerSupportsLocalBattleSmartCube(player.event)) return;
         const stopped = dispatch({
           type: 'player-timer',
           playerId: holder,
@@ -387,19 +393,6 @@ export function LocalBattleMode({
     onSmartCubeHandlersChange(handlers);
     return () => onSmartCubeHandlersChange(null);
   }, [dispatch, onSmartCubeHandlersChange]);
-
-  useEffect(() => {
-    if (smartCube?.phase !== 'connected' || !smartCube.facelets) return;
-    const player = stateRef.current.players[cubeHolder];
-    if (!player || player.event !== '333' || player.result || !player.scramble) return;
-    if (smartCube.facelets === smartCubeTargetFacelets(player.scramble)) {
-      dispatch({
-        type: 'player-timer',
-        playerId: cubeHolder,
-        action: { type: 'press-down', nowMs: performance.now() },
-      });
-    }
-  }, [cubeHolder, dispatch, smartCube?.facelets, smartCube?.phase]);
 
   useEffect(() => {
     onActivityChange(active);
@@ -598,6 +591,19 @@ export function LocalBattleMode({
                     copiedLabel={copy.copied}
                     fallback={scrambleFailed ? copy.retry : copy.battleNoScramble}
                     fallbackKind="custom"
+                    hint={player.id === cubeHolder
+                      && player.timer.phase !== 'running'
+                      && smartCube?.phase === 'connected'
+                      && timerSupportsLocalBattleSmartCube(player.event)
+                      ? hintSmartCubeScramble(player.scramble, smartCube.facelets)
+                      : null}
+                    match={player.id === cubeHolder
+                      && player.timer.phase !== 'running'
+                      && smartCube?.phase === 'connected'
+                      && smartCube.facelets
+                      && timerSupportsLocalBattleSmartCube(player.event)
+                      ? smartCube.facelets === smartCubeTargetFacelets(player.scramble)
+                      : null}
                     onActivate={scrambleFailed
                       ? () => dispatch({ type: 'request-next-scramble', event: player.event })
                       : undefined}
@@ -654,14 +660,14 @@ export function LocalBattleMode({
               {visiblePlayers.map((player) => (
                 <button
                   aria-pressed={cubeHolder === player.id}
-                  disabled={active || player.event !== '333' || player.result !== null}
+                  disabled={active || !timerSupportsLocalBattleSmartCube(player.event) || player.result !== null}
                   key={player.id}
                   onClick={() => setCubeHolder(player.id)}
                   type="button"
                 >{copy.battleCubeHolder(player.id + 1)}</button>
               ))}
             </div>
-            {visiblePlayers.some((player) => player.event !== '333') && (
+            {visiblePlayers.some((player) => !timerSupportsLocalBattleSmartCube(player.event)) && (
               <small>{copy.battleSmartCubeOnly333}</small>
             )}
           </details>
@@ -738,6 +744,8 @@ export function LocalBattleMode({
 export interface NetBattleModeProps extends BattleModeBaseProps {
   accountIdentity?: NetIdentity;
   capability?: InstalledAppNetBattle;
+  onSmartCubeHandlersChange?(handlers: BattleSmartCubeHandlers | null): void;
+  smartCube?: InstalledAppSmartCube;
   writeClipboardText(text: string): Promise<void>;
 }
 
@@ -765,8 +773,10 @@ export function NetBattleMode({
   language,
   onActivityChange,
   onModeChange,
+  onSmartCubeHandlersChange,
   precision,
   runningPrecision,
+  smartCube,
   writeClipboardText,
 }: NetBattleModeProps) {
   const [room, setRoom] = useState<NetRoomState | null>(null);
@@ -915,6 +925,83 @@ export function NetBattleMode({
     || timerPhase === 'holding'
     || timerPhase === 'ready'
     || countdownMs !== null;
+  const netSmartCubeSupported = timerSupportsNetBattleSmartCube(event);
+  const netSmartCubeTarget = useMemo(() => (
+    timerSupportsNetBattleSmartCube(event) && scramble
+      ? smartCubeTargetFacelets(scramble)
+      : null
+  ), [event, scramble]);
+  const [netSmartCubeHint, setNetSmartCubeHint] = useState<ReturnType<typeof hintSmartCubeScramble>>(null);
+  const netTimerPhaseRef = useRef(timerPhase);
+  netTimerPhaseRef.current = timerPhase;
+  const netSmartCubeMatch = timerPhase !== 'running'
+    && !myResult
+    && smartCube?.phase === 'connected'
+    && smartCube.facelets
+    && netSmartCubeTarget
+    ? smartCube.facelets === netSmartCubeTarget
+    : null;
+
+  useEffect(() => {
+    if (!onSmartCubeHandlersChange) return undefined;
+    const handlers: BattleSmartCubeHandlers = {
+      onMove(_move, timestamp, facelets) {
+        if (!netSmartCubeSupported
+          || gate.gated
+          || countdownMs !== null
+          || myResult
+          || !inRoundRoster
+          || !canManuallyStart) return;
+        if (timer.startFromCube(timestamp)) {
+          netTimerPhaseRef.current = 'running';
+          setNetSmartCubeHint(null);
+          return;
+        }
+        if (facelets === netSmartCubeTarget) timer.armFromCube();
+      },
+      onSolved(timestamp) {
+        if (!netSmartCubeSupported
+          || netTimerPhaseRef.current !== 'running'
+          || !timer.stopFromCube(timestamp)) return;
+        netTimerPhaseRef.current = 'stopped';
+      },
+    };
+    onSmartCubeHandlersChange(handlers);
+    return () => onSmartCubeHandlersChange(null);
+  }, [
+    canManuallyStart,
+    countdownMs,
+    event,
+    gate.gated,
+    inRoundRoster,
+    myResult,
+    netSmartCubeTarget,
+    netSmartCubeSupported,
+    onSmartCubeHandlersChange,
+    timer.startFromCube,
+    timer.armFromCube,
+    timer.stopFromCube,
+  ]);
+
+  useEffect(() => {
+    if (timerPhase === 'running'
+      || myResult
+      || smartCube?.phase !== 'connected'
+      || !smartCube.facelets
+      || !netSmartCubeTarget
+      || !scramble) {
+      setNetSmartCubeHint(null);
+      return;
+    }
+    setNetSmartCubeHint(hintSmartCubeScramble(scramble, smartCube.facelets));
+  }, [
+    myResult,
+    netSmartCubeTarget,
+    scramble,
+    smartCube?.facelets,
+    smartCube?.phase,
+    timerPhase,
+  ]);
 
   useEffect(() => onActivityChange(active), [active, onActivityChange]);
   useEffect(() => () => onActivityChange(false), [onActivityChange]);
@@ -1521,12 +1608,34 @@ export function NetBattleMode({
                 copiedLabel={copy.copied}
                 fallback={copy.battleNoScramble}
                 fallbackKind="custom"
+                hint={netSmartCubeHint}
+                match={netSmartCubeMatch}
                 scramble={scramble}
                 verificationLabels={scrambleLabels(copy)}
               />
             )}
             surfaceRef={surfaceRef}
           />
+          {smartCube && (
+            <TimerDeviceActions
+              active={smartCube.phase === 'connected'}
+              connectAriaLabel={smartCube.phase === 'connected'
+                ? copy.disconnectBluetooth
+                : copy.connectBluetooth}
+              connectLabel={smartCube.phase === 'connected'
+                ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
+                : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
+                  ? copy.connectingBluetooth
+                  : copy.connect}
+              onConnect={() => {
+                if (smartCube.phase === 'connected') {
+                  void smartCube.disconnect().catch(() => setError(copy.smartCubeError));
+                } else {
+                  void smartCube.connect().catch(() => setError(copy.smartCubeError));
+                }
+              }}
+            />
+          )}
           {currentResult && pendingCount(room) > 0 && (
             <div className="battle-penalties" data-no-timer>
               {(['ok', '+2', 'dnf'] as const).map((penalty) => (

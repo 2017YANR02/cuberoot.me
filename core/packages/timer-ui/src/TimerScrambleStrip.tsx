@@ -1,6 +1,7 @@
 'use client';
 
 import { Check } from 'lucide-react';
+import type { SmartCubeScrambleHint } from '@cuberoot/shared/smart-cube/scramble-hint';
 import {
   Fragment,
   type CSSProperties,
@@ -8,12 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 
-export interface TimerScrambleHint {
-  done: readonly string[];
-  current: string | null;
-  pending: readonly string[];
-  complete: boolean;
-}
+export type TimerScrambleHint = SmartCubeScrambleHint;
 
 export interface TimerScrambleVerificationLabels {
   copiedCorrection: string;

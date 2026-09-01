@@ -15,7 +15,8 @@ import { describe, it, expect } from 'vitest';
 import {
   hintScramble, parseHintableScramble,
 } from '@/app/[lang]/timer/_lib/bluetooth/scramble_hint';
-import { applyScramble, applyMoves, solved } from '@/app/[lang]/timer/_lib/cube/state';
+import { verifySmartCubeScramble } from '@cuberoot/shared/smart-cube/scramble-hint';
+import { applyScramble, applyMoves, solved, toFaceletString } from '@/app/[lang]/timer/_lib/cube/state';
 import { parseScramble } from '@/app/[lang]/timer/_lib/cube/moves';
 import {
   createCstimerSandbox, cstimerFileExists, extractFunction,
@@ -117,6 +118,35 @@ describe('scramble hinting', () => {
       expect(h!.complete).toBe(i === tokens.length);
       if (i < tokens.length) expect(h!.current).toBe(tokens[i]);
     }
+  });
+});
+
+describe('shared scramble verification', () => {
+  const scramble = 'R U';
+  const target = toFaceletString(after(scramble));
+  const offPath = toFaceletString(after('F'));
+
+  it('asks for a fix-up only after leaving the raw scramble path', () => {
+    expect(verifySmartCubeScramble(scramble, target, offPath, null)).toEqual({
+      correctionActive: false,
+      hint: null,
+      match: false,
+      needsFixup: true,
+    });
+  });
+
+  it('keeps a live correction ahead of the raw scramble and drops it at the target', () => {
+    const correction = { fromFacelets: offPath, scramble: "F' R U" };
+    const active = verifySmartCubeScramble(scramble, target, offPath, correction);
+    expect(active.correctionActive).toBe(true);
+    expect(active.hint?.current).toBe("F'");
+    expect(active.needsFixup).toBe(false);
+
+    const complete = verifySmartCubeScramble(scramble, target, target, correction);
+    expect(complete.correctionActive).toBe(false);
+    expect(complete.match).toBe(true);
+    expect(complete.hint?.complete).toBe(true);
+    expect(complete.needsFixup).toBe(false);
   });
 });
 

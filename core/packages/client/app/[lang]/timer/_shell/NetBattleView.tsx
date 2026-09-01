@@ -33,6 +33,7 @@ import { useQueryState } from 'nuqs';
 import { Copy, Check, LogOut, Swords, Trophy, History, X, ShieldCheck, UserMinus, Bluetooth, QrCode } from 'lucide-react';
 
 import { SegmentTime, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
+import { timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
 import VideoStrip, { VideoToggle, useVideoRoom } from '../_battle/VideoStrip';
 import BluetoothModal from '../_components/BluetoothModal';
 import { useBluetoothCube } from '../_lib/bluetooth';
@@ -846,7 +847,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   // 魔方本来就知道自己是什么状态,这是它比按键强的地方,没有理由只在 Solo 用。
   // 只比三阶:追踪器建模的就是三阶,而 FMC / 多盲的打乱串根本没有可比对象。
   const scrambleTarget = useMemo<CubeFaces | null>(() => {
-    if (myEvent !== '333' && myEvent !== '333oh') return null;
+    if (!timerSupportsNetBattleSmartCube(myEvent)) return null;
     const s = myScr ?? '';
     if (!s.trim()) return null;
     try { return applyScramble(3, s); } catch { return null; }
@@ -891,6 +892,11 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     return () => { subs.delete(verify); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.bluetoothAutoReady]);
+  useEffect(() => {
+    if (bluetoothCube.status.connected) return;
+    setScrambleMatch(null);
+    setScrambleHint(null);
+  }, [bluetoothCube.status.connected]);
 
   // ── 按压接线(pointer 在计时面板 + 空格全局)────────────────────
   const pressDown = useCallback(() => {

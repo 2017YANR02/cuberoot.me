@@ -160,7 +160,7 @@ shared 映射快照是 19 个 Timer ID：
 | `scramble.source-progress` | 稀有池 `seen/total`、全练过、非最优标志、打乱足迹人数 | 缺 |
 | `scramble.loading` | WCA、csTimer worker、难度 worker、云端最优各自区分 loading | 仅通用 loading |
 | `scramble.empty-error` | 比赛无项目、日期无题、难度无匹配、难度库待更新、稀有、短暂网络失败各自文案/重试 | 仅通用 error/unsupported |
-| `scramble.smart-hint` | 已拧步骤变暗、当前高亮、打乱完成、不符、拧回原打乱、复制原打乱 | 缺 |
+| `scramble.smart-hint` | 已拧步骤变暗、当前高亮、打乱完成、不符、拧回原打乱、复制原打乱 | Web/五端产品层已共用 `TimerScrambleStrip` 与 shared 提示/匹配/偏离修正 requester；Web/App 的 React lifecycle coordinator 尚待收敛。Android 最新 APK 已安装，OPPO 新版逐步提示、故意偏离、修正完成和 Worker 冷启动延迟仍待解锁后用 GAN 16 UI 实测，其他四端也未验收 |
 | `scramble.trainer-case` | 随机难度直接生成时显示方法/阶段/步数与按需答案；当前 internal EventId 真可达集合是 `333/333oh/333fm` | 缺；不得误当成 LL/OLL/PLL 等 case provider 的逐题答案 |
 | `scramble.trainer-subset` | OLL/PLL 子集选择；LL/OLL/PLL/COLL/CMLL/ZBLL/EG1/EG2 保存 case identity 并进入 case stats | Mobile 丢失/未展示部分 metadata、subset 与 case stats；Web 当前没有这些项目的逐题答案条 |
 | `solution.small` | `222/pyra/skewb/SQ1/Megaminx` 的下方独立提示；前三项为完整还原+逐面/V，SQ1 为异步近最优+WCA 步数，Mega 当前只显示状态/错位贴纸 | 222/pyra/skewb 已接同一 solver/UI，支持 event-only 空打乱、展开/关闭、loading/error/stale、运行淡出；SQ1/Mega 仍缺 |
@@ -258,9 +258,9 @@ Web 当前有 8 类、64 个可达偏好/命令 surface；稳定 ID 与交互策
 | --- | --- | --- |
 | `device.picker` | 统一设备入口区分智能魔方/智能计时器/Stackmat | 图标位置近似，功能集不等 |
 | `device.smart-cube.protocols` | GAN v2/v3/v4、Giiker、GoCube、MoYu/MoYu32、QiYi 等 Web 已有 driver，统一选择 | 只实证 GAN v4 |
-| `device.smart-cube.connect` | 扫描/连接/加密/MAC 输入/超时/拒绝/断连/重连/重置 | Android 主链已实证；iOS picker UUID 后用 exact-name scan 捕获 manufacturer data 并复用 shared GAN MAC 提取，单测通过但尚无 iPhone/GAN 实证；逆境状态与 UI 未对齐 |
+| `device.smart-cube.connect` | 扫描/连接/加密/MAC 输入/超时/拒绝/断连/重连/重置 | Android 主链已实证，断线/协议错误会清除共享 tracker 与可视状态；iOS picker UUID 后用 exact-name scan 捕获 manufacturer data 并复用 shared GAN MAC 提取，单测通过但尚无 iPhone/GAN 实证；拒绝、后台、蓝牙关闭、距离中断与反复重连仍未完成设备矩阵 |
 | `device.smart-cube.status` | 型号、电量、协议、最后动作、魔方时钟/丢步诊断 | Mobile 只显名称/最后动作 |
-| `device.smart-cube.scramble` | 状态定锚、打乱匹配、逐步提示、走偏修正、第一手起表、还原停表 | 3×3 GAN v4 主链有实证，可视状态/修正/逆境未对齐 |
+| `device.smart-cube.scramble` | 状态定锚、打乱匹配、逐步提示、走偏修正、第一手起表、还原停表 | 3×3 GAN v4 自动起停主链已有旧版实证；提示、匹配、走偏修正、同批帧和 pending Worker 现在由 Web/五端共享并有自动回归，但最新 OPPO 可视提示/走偏修正仍待实体魔方复测，不能据此宣布设备完成 |
 | `device.live-cube` | 3D/q2look/net/2D、陀螺仪、朝向、校准、fallback | 缺 |
 | `device.smart-timer` | GAN/QiYi timer 选择、连接、MAC、读数、错误、断开 | 缺 |
 | `device.stackmat` | 麦克风权限、输入设备、监听、信号级别、状态、精度、解码错误、停止 | 未实现；Mobile 不渲染麦克风假入口 |

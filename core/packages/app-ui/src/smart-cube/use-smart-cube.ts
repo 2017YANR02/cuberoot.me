@@ -26,18 +26,22 @@ export function useInstalledSmartCube(
   const [lastMove, setLastMove] = useState('');
   const [facelets, setFacelets] = useState('');
 
-  const disconnect = useCallback(async () => {
-    const connection = connectionRef.current;
-    connectionRef.current = null;
-    await connection?.disconnect();
-    setPhase('idle');
-    setDeviceName('');
+  const resetCubeState = useCallback(() => {
     setLastMove('');
     setFacelets('');
     trackerRef.current.reset();
     moveClockRef.current.reset();
     wasSolvedRef.current = true;
   }, []);
+
+  const disconnect = useCallback(async () => {
+    const connection = connectionRef.current;
+    connectionRef.current = null;
+    await connection?.disconnect();
+    setPhase('idle');
+    setDeviceName('');
+    resetCubeState();
+  }, [resetCubeState]);
 
   const connect = useCallback(async (): Promise<string> => {
     if (phase === 'requesting' || phase === 'connecting') throw new Error('connection already in progress');
@@ -68,10 +72,12 @@ export function useInstalledSmartCube(
         onDisconnect: () => {
           if (connectionRef.current !== connection) return;
           connectionRef.current = null;
-          moveClockRef.current.reset();
+          setDeviceName('');
+          resetCubeState();
           setPhase('idle');
         },
         onMove: (move, deviceTimestamp) => {
+          if (connectionRef.current !== connection) return;
           const timestamp = moveClockRef.current.stamp(deviceTimestamp, performance.now());
           const solved = trackerRef.current.applyMove(move);
           const nextFacelets = trackerRef.current.getFacelets();
@@ -81,8 +87,16 @@ export function useInstalledSmartCube(
           if (solved && !wasSolvedRef.current) onSolvedRef.current?.(timestamp);
           wasSolvedRef.current = solved;
         },
-        onProtocolError: () => setPhase('error'),
+        onProtocolError: () => {
+          if (connectionRef.current !== connection) return;
+          connectionRef.current = null;
+          void connection.disconnect();
+          setDeviceName('');
+          resetCubeState();
+          setPhase('error');
+        },
         onState: (nextFacelets) => {
+          if (connectionRef.current !== connection) return;
           if (!trackerRef.current.adoptFacelets(nextFacelets)) return;
           setFacelets(nextFacelets);
           wasSolvedRef.current = trackerRef.current.isSolved();
@@ -90,6 +104,7 @@ export function useInstalledSmartCube(
       });
       connectionRef.current = connection;
       await connection.connect(device);
+      if (connectionRef.current !== connection) throw new Error('smart cube connection closed');
       setPhase('connected');
       return device.name;
     } catch (error) {
@@ -97,7 +112,7 @@ export function useInstalledSmartCube(
       setPhase('error');
       throw error;
     }
-  }, [disconnect, language, phase]);
+  }, [disconnect, language, phase, resetCubeState]);
 
   useEffect(() => () => {
     void connectionRef.current?.disconnect();
