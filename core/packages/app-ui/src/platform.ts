@@ -61,6 +61,7 @@ export interface InstalledAppHost {
   netBattle?: InstalledAppNetBattle;
   openExternal(url: string): Promise<void>;
   print(title: string): Promise<void>;
+  writeClipboardText(text: string): Promise<void>;
   useAuth(language: SupportedLanguage): InstalledAppAuth;
   useSmartCube(options: InstalledAppSmartCubeOptions): InstalledAppSmartCube;
   useTimerEffects(phase: TimerPhase): void;
