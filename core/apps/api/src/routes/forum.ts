@@ -11,7 +11,7 @@ import path from 'node:path';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
-  requireAuth, authenticateUser, checkRateLimit, ADMIN_WCA_IDS,
+  requireAuth, requireAdminOrApiKey, authenticateUser, checkRateLimit, ADMIN_WCA_IDS,
 } from '../utils/recon_helpers.js';
 import type { WcaUser } from '../utils/recon_helpers.js';
 import { notify, adminRecipients } from '../utils/notify.js';
@@ -71,6 +71,19 @@ function noStore(c: { header: (k: string, v: string) => void }): void {
 
 function isAdmin(user: WcaUser): boolean {
   return ADMIN_WCA_IDS.includes(user.wcaId);
+}
+
+/** API key replies still belong to the real administrator account. */
+async function requirePostAuthor(c: Context): Promise<WcaUser> {
+  if (!c.req.header('X-Admin-Key')) return requireAuth(c);
+  await requireAdminOrApiKey(c);
+  const wcaId = ADMIN_WCA_IDS[0];
+  if (!wcaId) throw new Error('Forum API author is not configured');
+  const rows = await query<{ display_name: string }>(
+    'SELECT display_name FROM app_users WHERE wca_id = ? LIMIT 1', [wcaId],
+  );
+  if (!rows[0]?.display_name) throw new Error('Forum API author is not configured');
+  return { wcaId, realWcaId: wcaId, name: rows[0].display_name };
 }
 
 /** 解析正整数参数,非法回落默认值并夹在 [min, max] */
@@ -739,7 +752,7 @@ forumRoutes.post('/forum/threads', async (c) => {
 forumRoutes.post('/forum/posts', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
-  const authUser = await requireAuth(c);
+  const authUser = await requirePostAuthor(c);
   const body = await c.req.json<{ threadId?: number; content?: string }>();
   const threadId = Number(body.threadId);
   if (!Number.isInteger(threadId) || threadId <= 0) return c.json({ error: 'threadId is required' }, 400);
