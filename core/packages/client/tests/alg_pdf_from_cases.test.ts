@@ -124,6 +124,24 @@ describe('algSheetFromCases', () => {
     expect(cases.map(item => item.name)).toEqual(['Adj / H', 'H / Opp']);
   });
 
+  it('Square-1 EP PDF 先保留无特 / 有特分节，再保留组标题', () => {
+    const cases = [
+      mkCase({ name: 'Solved / H', subgroup: 'Top Solved' }),
+      mkCase({ name: 'Opp & Solved', subgroup: 'Top Opp' }),
+    ];
+    const sheet = algSheetFromCases({
+      ...base,
+      puzzle: 'sq1',
+      set: 'ep',
+      cases,
+      sectionOf: c => c.name.includes('&') ? '有特' : '无特',
+    });
+    expect(sheet.cases.map(item => ({ section: item.section, group: item.group }))).toEqual([
+      { section: '无特', group: 'Top Solved' },
+      { section: '有特', group: 'Top Opp' },
+    ]);
+  });
+
   it('PDF 缩略图跟随网页的识别简化开关', () => {
     const c = mkCase({ name: 'T', algs: [[{ alg: "R U R'" }]] });
     const plain = algSheetFromCases({ ...base, cases: [c] });

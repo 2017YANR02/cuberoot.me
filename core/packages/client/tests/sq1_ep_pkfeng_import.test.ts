@@ -40,6 +40,8 @@ const importMigrationPath = workspaceFixturePath('@cuberoot/server', 'migrations
 const importMigration = readFileSync(importMigrationPath, 'utf8');
 const alignmentMigrationPath = workspaceFixturePath('@cuberoot/server', 'migrations', '0190_sq1_ep_complete_layer_alignment.sql');
 const alignmentMigration = readFileSync(alignmentMigrationPath, 'utf8');
+const physicalMigrationPath = workspaceFixturePath('@cuberoot/server', 'migrations', '0191_sq1_ep_physical_setups.sql');
+const physicalMigration = readFileSync(physicalMigrationPath, 'utf8');
 const solved = applySq1Scramble('');
 
 describe('Pk Feng SQ1 EP complete import', () => {
@@ -91,6 +93,22 @@ describe('Pk Feng SQ1 EP complete import', () => {
       for (const entry of item.algs) {
         const result = await validateStoredAlgCase(entry.setup, entry.alg, sticker, 'sq1', 'ep');
         expect(result, `${item.numericName}: ${entry.alg}`).toEqual({ ok: true, auf: '' });
+      }
+    }
+  });
+
+  it('keeps all 100 EP cases in cube shape and all 118 formulas physically sliceable', () => {
+    for (const item of fixture.cases) {
+      const entries = item.algs.length > 0 ? item.algs : [{ alg: '', setup: item.setup }];
+      for (const entry of entries) {
+        const trace = traceSq1Algorithm(entry.alg, entry.setup);
+        expect(trace, `${item.numericName}: ${entry.alg}`).toMatchObject({ ok: true });
+        if (!trace.ok) continue;
+
+        const initialShapes = sq1StateShapes(trace.steps[0].state);
+        expect(initialShapes.top?.id, `${item.numericName} top shape`).toBe('square');
+        expect(initialShapes.bottom?.id, `${item.numericName} bottom shape`).toBe('square');
+        expect(trace.steps.at(-1)?.state, `${item.numericName} final state`).toEqual(solved);
       }
     }
   });
@@ -164,5 +182,23 @@ describe('Pk Feng SQ1 EP complete import', () => {
     expect(alignmentMigration).toContain('old_count = 0 AND new_count = 1');
     expect(alignmentMigration).toContain('ambiguous formula state');
     expect(alignmentMigration).toContain('ambiguous case setup');
+  });
+
+  it('repairs the seven exact physically invalid formulas without replacing arrays', () => {
+    const oldAlgs = [
+      '1,0/-1,-1/6,0/1,1/0,3/1,0/-1,-1/6,0/1,1/-1,0',
+      '1,0/0,3/-1,-1/1,-2/-3,-3/0,1/0,-2/0,-4/-4,0/-4,0/-2,0/5,0/-3,-3/0,-3',
+      '1,0/-3,3/-1,-1/4,2/-1,0',
+      '1,0/5,-1/-5,1/-1,-1/-3,0/1,1/2,1/0,1',
+      '1,0/-1,-1/6,0/1,1/-1,-1/-3,0/1,1/2,1/0,1',
+      '/3,3/1,0/-2,-2/0,2/-2,-2/1,2/-3,-3/1,0/2,0/0,-2',
+      '1,0/-1,-1/6,0/1,1/-1,0/3,0/-1,-1/6,0/1,1/-1,0',
+    ];
+    for (const oldAlg of oldAlgs) expect(physicalMigration).toContain(`"oldAlg": "${oldAlg}"`);
+    expect(physicalMigration).toContain('ORDER BY ord');
+    expect(physicalMigration).toContain('old_count = 1 AND new_count = 0');
+    expect(physicalMigration).toContain('old_count = 0 AND new_count = 1');
+    expect(physicalMigration).toContain('ambiguous formula state');
+    expect(physicalMigration).toContain('ambiguous case setup');
   });
 });

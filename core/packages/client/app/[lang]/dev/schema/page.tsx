@@ -672,6 +672,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 188, slug: 'sponsor_claims', desc: { zh: '赞助记录增加账号认领、WCA 精确匹配自动通过、管理员审核与可撤销审计链。', en: 'Add account claims for supporter entries, exact-WCA auto-approval, administrator review, and a revocable audit trail.' } },
   { n: 189, slug: 'drive_shares', desc: { zh: '网盘文件增加可撤销的公开下载链接；移入回收站时立即停止分享。', en: 'Add revocable public download links for Drive files and revoke them immediately when moved to Trash.' } },
   { n: 190, slug: 'sq1_ep_complete_layer_alignment', desc: { zh: '补齐 5 条 SQ1 EP 公式末尾缺失的 U/D 层对齐，并在遇到非预期数据状态时整笔回滚。', en: 'Complete the missing final U/D alignment in five SQ1 EP algorithms and roll back the migration on any unexpected data state.' } },
+  { n: 191, slug: 'sq1_ep_physical_setups', desc: { zh: '替换 7 条切片路径不合法的 SQ1 EP 公式及其 setup，保证所有 EP 缩略图均从正方形态绘制。', en: 'Replace seven SQ1 EP algorithms with physically invalid slice paths and their setups, ensuring every EP thumbnail starts from cube shape.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
