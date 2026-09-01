@@ -7,13 +7,15 @@ const accountPage = readFileSync(join(clientRoot, 'app/[lang]/account/page.tsx')
 const countryInput = readFileSync(join(clientRoot, 'components/CountryInput/CountryInput.tsx'), 'utf8');
 
 describe('账号基本资料 UI 契约', () => {
-  it('生日和国籍复用全站规范组件', () => {
+  it('生日和国家复用全站规范组件，省份与城市按层级出现', () => {
     expect(accountPage).toContain('<DateInput');
     expect(accountPage).toContain('<CountryInput');
     expect(accountPage).toContain('updateAccountBasicProfile');
+    expect(accountPage).toContain('id="account-region"');
+    expect(accountPage).toContain('id="account-city"');
   });
 
-  it('WCA 国籍只读，未绑定时才允许编辑', () => {
+  it('WCA 国家只读，未绑定时才允许编辑', () => {
     expect(accountPage).toContain("profile.countrySource === 'wca'");
     expect(accountPage).toMatch(/countryLocked\s*\?\s*\([\s\S]*?<Flag[\s\S]*?\)\s*:\s*\([\s\S]*?<CountryInput/);
   });

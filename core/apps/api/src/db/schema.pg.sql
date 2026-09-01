@@ -353,12 +353,24 @@ CREATE TABLE app_users (
                       CHECK (gender IS NULL OR gender IN ('male', 'female', 'nonbinary', 'other', 'undisclosed')),
   country_iso2        VARCHAR(2)
                       CHECK (country_iso2 IS NULL OR country_iso2 ~ '^[A-Z]{2}$'),
+  region_code         VARCHAR(8),
+  city_name           VARCHAR(160),
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   password_hash       TEXT,
   password_updated_at TIMESTAMPTZ,
   email_notify        BOOLEAN NOT NULL DEFAULT TRUE,
   lang                VARCHAR(8),
+  CONSTRAINT chk_app_users_region_code CHECK (
+    region_code IS NULL OR (country_iso2 IS NOT NULL AND region_code ~ '^[A-Z0-9-]{1,8}$')
+  ),
+  CONSTRAINT chk_app_users_city_name CHECK (
+    city_name IS NULL OR (
+      region_code IS NOT NULL
+      AND city_name = BTRIM(city_name)
+      AND city_name !~ '[[:cntrl:]]'
+    )
+  ),
   CONSTRAINT chk_app_users_avatar_shape CHECK (
     (avatar_source = 'clawd' AND avatar_preset IS NOT NULL AND avatar_url IS NULL)
     OR (avatar_source = 'upload' AND avatar_preset IS NULL AND avatar_url IS NOT NULL)

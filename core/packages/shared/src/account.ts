@@ -95,6 +95,8 @@ export interface AccountBasicProfile {
   birthDate: string | null;
   gender: AccountGender | null;
   countryIso2: string | null;
+  regionCode: string | null;
+  cityName: string | null;
   countrySource: 'self' | 'wca';
 }
 
@@ -126,6 +128,34 @@ export function normalizeCountryIso2(value: string): string {
 
 export function isValidCountryIso2(value: unknown): value is string {
   return typeof value === 'string' && /^[A-Z]{2}$/.test(value);
+}
+
+export function normalizeAccountRegionCode(value: string): string {
+  return value.trim().toUpperCase();
+}
+
+export function isValidAccountRegionCode(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Z0-9-]{1,8}$/.test(value);
+}
+
+export function normalizeAccountCityName(value: string): string {
+  return value.normalize('NFC').trim();
+}
+
+export function isValidAccountCityName(value: unknown): value is string {
+  return typeof value === 'string'
+    && value.length >= 1
+    && value.length <= 160
+    && !/[\u0000-\u001f\u007f]/.test(value);
+}
+
+export function isValidAccountLocation(
+  countryIso2: string | null,
+  regionCode: string | null,
+  cityName: string | null,
+): boolean {
+  return (regionCode === null || (countryIso2 !== null && isValidAccountRegionCode(regionCode)))
+    && (cityName === null || (regionCode !== null && isValidAccountCityName(cityName)));
 }
 
 // 密码:仅长度约束(8..128)。不强制字符组成(NIST 800-63B:长度优先,组成规则反而降安全),

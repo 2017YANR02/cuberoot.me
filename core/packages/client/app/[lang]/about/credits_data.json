@@ -1,5 +1,12 @@
 [
   {
+    "name": "Country State City",
+    "url": "https://github.com/dr5hn/countrystatecity-npm",
+    "zh": "账号国家、省份与城市选项数据（ODbL-1.0）",
+    "en": "Country, state or province, and city option data for account profiles (ODbL-1.0)",
+    "long_en": "The private account location selector uses a compact, self-hosted snapshot generated from Country State City."
+  },
+  {
     "name": "Handsontable/HyperFormula",
     "url": "https://github.com/handsontable/hyperformula",
     "zh": "在线协作表格的公式计算引擎（GPL-3.0）",

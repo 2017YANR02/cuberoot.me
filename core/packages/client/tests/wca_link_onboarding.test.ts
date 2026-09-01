@@ -130,6 +130,8 @@ describe('WCA 实名锁定用户名', () => {
     expect(account).toContain("provider === 'wca' || (!existing.display_name && profile.name)");
     expect(account).toContain("CASE WHEN ? = 'wca' THEN ?");
     expect(account).toContain("country_iso2 = CASE WHEN ? = 'wca' THEN ? ELSE country_iso2 END");
+    expect(account).toContain("region_code = CASE WHEN ? = 'wca' AND country_iso2 IS DISTINCT FROM ? THEN NULL ELSE region_code END");
+    expect(account).toContain("city_name = CASE WHEN ? = 'wca' AND country_iso2 IS DISTINCT FROM ? THEN NULL ELSE city_name END");
   });
 
   it('后端写入以 wca_id IS NULL 为原子闸门', () => {
