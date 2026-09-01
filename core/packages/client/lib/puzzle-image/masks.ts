@@ -17,8 +17,6 @@ export const CORE_MASKS: MaskOption[] = [
   { value: Masking.OELL, label: 'OELL' },
   { value: Masking.COLL, label: 'COLL' },
   { value: Masking.OCELL, label: 'OCELL' },
-  { value: Masking.WV, label: 'WV' },
-  { value: Masking.VH, label: 'VH' },
   { value: Masking.ELS, label: 'ELS' },
   { value: Masking.CLS, label: 'CLS' },
   { value: Masking.CMLL, label: 'CMLL' },
