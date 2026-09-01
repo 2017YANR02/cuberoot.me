@@ -217,7 +217,9 @@ describe('vcStageMask — 下拉清单去重 + 标签', () => {
   });
 
   it('order 3:含 visualcube 独有(fl/dr/xcross),去掉与引擎重名(oll/ll/cross/f2l/2x2x2)', () => {
-    const items = new Set(visualcubeStageGroups(3).flatMap((g) => g.items));
+    const groups = visualcubeStageGroups(3);
+    expect(groups.map((g) => g.group)).toEqual(['VCMasks']);
+    const items = new Set(groups.flatMap((g) => g.items));
     for (const keep of ['fl', 'wv', 'vh', 'dr', 'xcross', 'mehta_belt2', 'roux_co', 'line', 'oell']) {
       expect(items.has(keep), `should keep ${keep}`).toBe(true);
     }

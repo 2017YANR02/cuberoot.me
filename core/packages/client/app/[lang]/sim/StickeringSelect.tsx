@@ -80,7 +80,6 @@ function groupLabel(group: string, t: (zh: string, en: string) => string): strin
     case 'Miscellaneous': return t('其它', 'Miscellaneous');
     // visualcube 搬来的遮罩(退役对照表 §2b)
     case 'VCMasks': return t('遮罩', 'Masks');
-    case 'VCMasksExt': return t('遮罩(进阶)', 'Masks (extended)');
     case 'VCMasksSize': return t('遮罩(阶专属)', 'Masks (this size)');
     // 管理员自己点选存出来的遮罩(DB,见 SimMaskAdmin)
     case PRESET_GROUP: return t('自建', 'Custom masks');
