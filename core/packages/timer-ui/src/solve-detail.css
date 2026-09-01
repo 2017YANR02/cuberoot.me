@@ -1,0 +1,260 @@
+.timer-solve-detail-overlay {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
+    max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--foreground) 70%, transparent);
+}
+
+.timer-solve-detail-modal {
+  width: 100%;
+  max-width: 480px;
+  max-height: min(80dvh, calc(100dvh - 40px));
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 20px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--popover);
+  color: var(--foreground);
+}
+
+.timer-solve-detail-modal h2 {
+  margin: 0 0 12px;
+  color: var(--foreground);
+  font-size: 18px;
+}
+
+.timer-solve-detail-section {
+  min-width: 0;
+  margin-bottom: 14px;
+  color: var(--foreground);
+  font-size: 13px;
+}
+
+.timer-solve-detail-section h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.timer-solve-detail-scramble {
+  margin-top: 4px;
+  padding: 8px 10px;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--shell-divider);
+  border-radius: 4px;
+  background: var(--background);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  white-space: pre-wrap;
+  word-spacing: 0.25em;
+}
+
+.timer-solve-detail-preview {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  margin-bottom: 14px;
+  padding: 8px 0;
+  overflow: hidden;
+}
+
+.timer-solve-detail-penalty {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.timer-solve-detail-penalty select,
+.timer-solve-detail-move select {
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+}
+
+.timer-solve-detail-move,
+.timer-solve-detail-comment {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.timer-solve-detail-move select,
+.timer-solve-detail-comment textarea {
+  width: 100%;
+}
+
+.timer-solve-detail-split-table {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 13px;
+}
+
+.timer-solve-detail-split-row {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(68px, 80px) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  padding: 4px 6px;
+  border-radius: 3px;
+}
+
+.timer-solve-detail-split-row:nth-child(odd) {
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
+}
+
+.timer-solve-detail-split-name { color: var(--muted-foreground); }
+.timer-solve-detail-split-cumulative {
+  color: var(--signal-info, var(--accent));
+  text-align: right;
+}
+
+.timer-solve-detail-split-total {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--shell-divider);
+}
+
+.timer-solve-detail-split-total .timer-solve-detail-split-cumulative {
+  color: var(--signal-warning, var(--accent));
+  font-weight: 700;
+}
+
+.timer-solve-detail-warning {
+  margin: 6px 0 0;
+  color: var(--signal-warning, var(--accent));
+  font-size: 12px;
+}
+
+.timer-solve-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.timer-solve-detail-actions--start { justify-content: flex-start; }
+
+.timer-solve-detail-action,
+.timer-solve-detail-close {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--shell-chip);
+  color: var(--foreground);
+  cursor: pointer;
+  font: inherit;
+}
+
+.timer-solve-detail-action { padding: 7px 14px; }
+.timer-solve-detail-action:hover,
+.timer-solve-detail-close:hover { background: var(--shell-hover); }
+.timer-solve-detail-action:disabled,
+.timer-solve-detail-close:disabled { cursor: not-allowed; opacity: 0.55; }
+.timer-solve-detail-danger {
+  border-color: color-mix(in srgb, var(--destructive) 45%, transparent);
+  color: var(--destructive);
+}
+.timer-solve-detail-danger:hover {
+  background: color-mix(in srgb, var(--destructive) 14%, transparent);
+}
+
+.timer-solve-detail-close {
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  color: var(--muted-foreground);
+}
+
+.timer-solve-detail-overlay--full { padding: 0; }
+.timer-solve-detail-modal--full {
+  display: flex;
+  width: 100%;
+  height: 100dvh;
+  max-width: none;
+  max-height: 100dvh;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.timer-solve-detail-inner {
+  width: 100%;
+  max-width: 1000px;
+  min-width: 0;
+  margin: 0 auto;
+}
+
+.timer-solve-detail-full-head {
+  flex: none;
+  padding: max(10px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 10px
+    max(16px, env(safe-area-inset-left));
+  border-bottom: 1px solid var(--shell-divider);
+}
+
+.timer-solve-detail-full-head .timer-solve-detail-inner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.timer-solve-detail-full-head h2 { margin: 0; }
+.timer-solve-detail-full-head time {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.timer-solve-detail-full-body {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 16px max(16px, env(safe-area-inset-right))
+    max(40px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+
+@media (max-width: 540px) {
+  .timer-solve-detail-overlay {
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  }
+
+  .timer-solve-detail-overlay--full { padding: 0; }
+  .timer-solve-detail-modal {
+    max-width: 100%;
+    max-height: calc(100dvh - 16px);
+    padding: 14px;
+    border-radius: 6px;
+  }
+  .timer-solve-detail-modal--full {
+    height: 100dvh;
+    max-height: 100dvh;
+    padding: 0;
+    border-radius: 0;
+  }
+  .timer-solve-detail-action,
+  .timer-solve-detail-close,
+  .timer-solve-detail-penalty select,
+  .timer-solve-detail-move select { min-height: 44px; }
+  .timer-solve-detail-close { width: 44px; height: 44px; }
+}

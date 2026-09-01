@@ -199,7 +199,7 @@ export class TimerRepository {
   updateSolve(
     event: EventId,
     id: string,
-    changes: Pick<Solve, 'penalty' | 'comment'>,
+    changes: Partial<Pick<Solve, 'penalty' | 'comment'>>,
   ): Promise<TimerStoreData> {
     return this.run(async () => {
       const data = await this.loadUnlocked();

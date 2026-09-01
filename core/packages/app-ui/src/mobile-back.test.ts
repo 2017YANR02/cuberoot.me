@@ -59,7 +59,9 @@ describe('Android Back priority', () => {
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.wcaCompetition}');
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.sessionSwitcher}');
     expect(app).toContain('openOverlay === TIMER_OVERLAY_IDS.historyCompare');
+    expect(app).toContain('openOverlay === TIMER_OVERLAY_IDS.solveDetail');
     expect(app).toContain('<TimerHistoryCompareModal');
+    expect(app).toContain('<TimerSolveDetailModal');
     expect(app).toContain('toggleTimerHistoryCompareSelection(current, solve.id)');
     expect(app).toContain('visibleHistoryCompareSelectedIds,');
     expect(app).toContain('historyCompareSelectionContext === historyCompareContext');
@@ -68,9 +70,7 @@ describe('Android Back priority', () => {
     expect(app).toContain("if (action === 'close-history-compare')");
     expect(app).toContain('previous !== null && previous !== historyCompareContext');
     expect(app).toContain('overlayOpen: openOverlayRef.current !== null');
-    expect(app).toMatch(
-      /if \(action === 'close-overlay'\) \{\s*openOverlayRef\.current = null;\s*setOpenOverlay\(null\);/,
-    );
+    expect(app).toMatch(/if \(action === 'close-overlay'\) \{[\s\S]*?openOverlayRef\.current = null;[\s\S]*?setOpenOverlay\(null\);/);
   });
 
   it('removes a late host listener after React cleanup wins the race', () => {

@@ -21,6 +21,7 @@ import './history-row.css';
 import './history-compare.css';
 import './history-tags.css';
 import './attempt-splits.css';
+import './solve-detail.css';
 import './info-toast.css';
 import './scramble-strip.css';
 import './room-qr-modal.css';
@@ -115,6 +116,8 @@ export type {
   TimerAttemptSplitSettingsProps,
   TimerAttemptSplitStatusProps,
 } from './TimerAttemptSplits';
+export { TimerSolveDetailModal } from './TimerSolveDetailModal';
+export type { TimerSolveDetailModalProps } from './TimerSolveDetailModal';
 export { TimerInfoToast } from './TimerInfoToast';
 export type { TimerInfoToastProps } from './TimerInfoToast';
 export { TimerScrambleHintText, TimerScrambleStrip } from './TimerScrambleStrip';
