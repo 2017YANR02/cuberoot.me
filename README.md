@@ -19,11 +19,11 @@ cuberoot.me/
 ├── core/                  pnpm + Turbo monorepo — active apps, shared packages, and offline jobs
 │   ├── apps/
 │   │   ├── api/           Hono + PostgreSQL 13 — WCA OAuth, reconstructions, algorithm library
-│   │   ├── mobile/        React + Capacitor — Android now, reusable for a future iOS target
+│   │   ├── mobile/        React + Capacitor — native mobile application
 │   │   ├── miniprogram/   WeChat Mini Program — independent native runtime
 │   │   └── fmc-solver/    Rust FMC solver service — independent Cargo workspace and deployment
 │   ├── packages/
-│   │   ├── client/        React 19 + Next.js 16 (App Router) — awaiting its final apps/web move
+│   │   ├── client/        React 19 + Next.js 16 (App Router) — current Web application
 │   │   ├── platform/      Retired read-only archive; its product surfaces now live under client /platform
 │   │   └── ...            Reusable libraries with public package boundaries
 │   └── jobs/
@@ -50,7 +50,8 @@ cuberoot.me/
 
 ## Local development
 
-Requires pnpm 11 and Node 20 or newer.
+Use the Node version in [`.node-version`](./.node-version) and the pnpm version
+declared by [`core/package.json`](./core/package.json).
 
 ```bash
 cd core

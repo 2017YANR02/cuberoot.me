@@ -35,8 +35,7 @@ core/jobs/
 | 本地开发(MySQL / WCA OAuth / dev server / upstream sync) | [../docs/development.md](../docs/development.md) |
 | 统计管线用法 | [../docs/stats-pipeline.md](../docs/stats-pipeline.md) |
 | Recon API contract | [../docs/recon-api.md](../docs/recon-api.md) |
-| 服务器部署运维 | [../CUBEROOT_ME.md](../CUBEROOT_ME.md) |
-| nginx vhost 部署 | [../ops/nginx/README.md](../ops/nginx/README.md) |
+| 部署与运维 | [workflows](../.github/workflows/) / [nginx](../ops/nginx/README.md) / [故障排除](../docs/troubleshooting.md) |
 | AI 行为指引 | [../AGENTS.md](../AGENTS.md) |
 | 文档状态与事实源 | [../docs/README.md](../docs/README.md) |
 | 生成物所有权 | [../docs/generated-artifacts.md](../docs/generated-artifacts.md) |
