@@ -1,8 +1,8 @@
 # CubeRoot Mobile
 
-React + Vite + Capacitor 8 host. Android and iOS use the same React UI and shared business logic. CubeRoot's committed product target also includes HarmonyOS NEXT, Windows and macOS under the [five-platform single-source contract](../../../docs/cross-platform-app-contract.md); those platforms add thin hosts and must not fork this app's business UI.
+React + Vite + Capacitor 8 host for Android and iOS. The five installed clients consume the same React product from `@cuberoot/app-ui`; this package contains only Capacitor and Android/iOS adapters. HarmonyOS NEXT, Windows and macOS follow the [five-platform single-source contract](../../../docs/cross-platform-app-contract.md) and must not fork the shared product UI.
 
-Status: active native app. `src/`, `package.json`, `capacitor.config.ts`, `android/`, `ios/` and this README are its local implementation sources of truth; progress is recorded only in `docs/mobile-app-roadmap.md`, and the website is not this app's source tree.
+Status: active native host. `src/`, `package.json`, `capacitor.config.ts`, `android/`, `ios/` and this README are its platform implementation sources of truth; `core/packages/app-ui` owns the React product layer. Progress is recorded only in `docs/mobile-app-roadmap.md`, and the website is not this app's source tree.
 
 The bundled Timer surface is local-first: timing, statistics, settings and history work from the packaged `dist/` without a network connection. Real competition scrambles use a bounded per-event online/cache hybrid (50 entries, seven-day TTL). For one of the 19 Timer events mapped to a real WCA pool, a cold offline miss is an explicit loading/error state and never silently substitutes a random scramble. For an event with no WCA mapping, the canonical Web behavior keeps “Real” selected but uses that same event's local provider; it must never fall back to 3×3. Tools and Account are explicit online surfaces that display the real website inside the shared three-tab shell; the remote website is not the app's automatic start screen and is never copied into Mobile source.
 
@@ -12,12 +12,12 @@ Android and iOS smart-cube access use a thin `@capacitor-community/bluetooth-le`
 
 ## Maintenance rule
 
-- The highest-level installed-client contract is `docs/cross-platform-app-contract.md`: Android, iOS, HarmonyOS NEXT, Windows, and macOS are one product backed by shared domain/UI code and thin platform hosts. This package remains the Android/iOS Capacitor host; it must not become a source dependency of future Harmony/Desktop apps.
+- The highest-level installed-client contract is `docs/cross-platform-app-contract.md`: Android, iOS, HarmonyOS NEXT, Windows, and macOS are one product backed by shared domain/UI code and thin platform hosts. This package remains the Android/iOS Capacitor host; it must not become a source dependency of the existing Harmony/Desktop apps.
 - The three-surface contract is `docs/mobile-three-tab-contract.md`: all installed clients share Timer, Tools, and Account. Timer follows the dedicated parity tracker; Tools and Account display the real website instead of copying its cards, routes, or account UI into a host.
 - Tools and Account keep separate website browsing contexts inside the shared React shell. Their system-back behavior uses the runtime-neutral `@cuberoot/shared/mobile-embed` message contract plus the website's no-UI `MobileEmbedBridge`; never replace that with Android-only or iOS-only route tables.
 - The complete timer product must track the website `/timer` UI and behavior through `docs/mobile-timer-parity-tracker.md`, with `docs/mobile-timer-zero-omission-audit.md` as its mandatory adversarial inventory. Visual similarity alone is not completion: every visible control needs the same real interaction and state, and Web/Mobile shared React UI belongs in `@cuberoot/timer-ui` instead of being copied into this app.
 - Keep framework-free timer, scramble, validation, statistics and serialization logic in `@cuberoot/shared` so the website and app import the same implementation.
-- Keep mobile-owned code to the compact native workflow, IndexedDB adapter and native bridges.
+- Keep mobile-owned code to the compact Capacitor workflow and native bridges. Shared IndexedDB product persistence lives in `@cuberoot/app-ui`.
 - Fetch changing content through versioned APIs or static data instead of copying it into the app.
 - Do not copy or independently reimplement the website inside this package; Tools and Account display its canonical online routes.
 - Keep Web Bluetooth and Capacitor BLE as thin platform transports over the same shared protocol, state and clock modules.
@@ -28,10 +28,10 @@ Android and iOS smart-cube access use a thin `@capacitor-community/bluetooth-le`
 The five target platforms deliberately use three host boundaries rather than five business implementations:
 
 - `core/apps/mobile`: the existing Capacitor host for Android and iOS.
-- `core/apps/harmony`: the planned ArkTS + ArkWeb host for HarmonyOS NEXT.
-- `core/apps/desktop`: the planned single Tauri host for both Windows and macOS.
+- `core/apps/harmony`: the ArkTS + ArkWeb host for HarmonyOS NEXT; an unsigned HAP builds locally, while device, BLE, signing and distribution evidence remain pending.
+- `core/apps/desktop`: the single Tauri host for both Windows and macOS; macOS local app/DMG evidence does not substitute for Windows, signing, notarization or device BLE.
 
-When the first non-Capacitor host is implemented, extract the shared three-surface React composition from this app into a real multi-consumer `@cuberoot/app-ui` package in the same change. Do not create an empty abstraction in advance, and do not let another app import `core/apps/mobile/src`, this app's CSS, or `dist`. Timer UI continues to migrate into `@cuberoot/timer-ui`; domain rules, schemas, protocols, and state machines with real cross-runtime consumers live in `@cuberoot/shared`. A single-host capability interface stays in its app until the same change introduces a second real consumer.
+The shared three-surface React composition has been extracted into the real multi-consumer `@cuberoot/app-ui` package. Mobile, Desktop and Harmony import that public package; no host may import another app's source, CSS or `dist`. Timer UI continues to migrate into `@cuberoot/timer-ui`; domain rules, schemas, protocols, and state machines with real cross-runtime consumers live in `@cuberoot/shared`. System calls remain in each host adapter.
 
 Harmony and Desktop hosts may implement only system adapters such as BLE transport, secure storage, auth/deep-link handoff, files, sharing, printing, wake lock, windowing, and lifecycle. A PWA remains a useful website entry, but it is not evidence that the committed Windows or macOS client target is complete.
 
@@ -93,11 +93,11 @@ On macOS, run `ios:doctor` first, use `ios:build` for a repeatable unsigned Simu
 
 ## Persistence
 
-`src/data/timer-repository.ts` is the only mobile timer storage boundary. It writes schema-versioned `TimerStoreData` with a nested canonical `TimerDatabase` from `@cuberoot/shared/timer` to IndexedDB and serializes concurrent changes. Website database v1/v2/v3 and App envelope v1/v2 use the same decoder and migration chain. Import is limited to 10 MB, previews record counts, writes an atomic recovery copy, and offers one undo; invalid data never replaces the current valid database.
+`core/packages/app-ui/src/data/timer-repository.ts` is the installed App timer storage boundary. It writes schema-versioned `TimerStoreData` with a nested canonical `TimerDatabase` from `@cuberoot/shared/timer` to IndexedDB and serializes concurrent changes. Website database v1/v2/v3 and App envelope v1/v2 use the same decoder and migration chain. Import is limited to 10 MB, previews record counts, writes an atomic recovery copy, and offers one undo; invalid data never replaces the current valid database.
 
 ## Account authentication
 
-Android and iOS use one authentication client in `src/auth/mobile-auth.ts`; do not add native login forms or a second account model. There are two distinct surfaces that must not be conflated:
+Android and iOS use the shared `InstalledAuthClient` from `@cuberoot/app-ui`; `src/mobile-auth.ts` supplies only the Capacitor Browser and secure-storage runtime. Do not add native login forms or a second account model. There are two distinct surfaces that must not be conflated:
 
 - The bottom Account tab loads the canonical website `/account` or `/zh/account` without `auth=mobile`. It must expose the same provider set and account-management UI as the website, driven by the website's current provider configuration.
 - The Account iframe delegates every interaction in the canonical website `LoginForm` to the system browser: email/phone/password use the first-party handoff, while WCA/Google/WeChat/QQ/Alipay preserve a provider marker and expose the website's full configured provider list. The browser returns a 90-second one-time ticket through the registered App callback. The ticket is bound to an App-generated PKCE S256 challenge and state; the verifier and long-lived JWT never enter the browser URL.

@@ -6,6 +6,8 @@
 
 提交状态：`DRAFT — NOT SUBMISSION READY`。当前文件已按共用三栏 App、真实 provider 集和 iOS 本地构建事实更新，但 Apple 账号、4.8 登录等价方式、最终 archive 隐私报告、真机矩阵和商店素材仍会阻止提交。
 
+适用范围仅为 `core/apps/mobile` 的 Android Google Play 与 iOS App Store 提交。`@cuberoot/app-ui` 虽由五端共用，Windows/macOS Tauri 和 HarmonyOS NEXT 的安装包、签名、公证、分发渠道与商店资料必须按各自平台另行验收；本文件、macOS 本地 DMG 或 Harmony unsigned HAP 都不能证明那些平台已可发布。
+
 这份文件是 `0.1.0` 的版本锁定快照，也是 Google Play 提交表、未来 App Store Connect 提交表和审核备注的单一工作稿。发布下一版本时先复制或整体更新版本事实，不得只改其中一处。每次加入登录、云同步、分析、崩溃上报、广告、付费、BLE 或新的原生权限后，必须先更新本文件和隐私政策，再生成新商店构建。
 
 状态标记：
@@ -238,7 +240,7 @@ CubeRoot 走组织账号路线，不把新个人账号的 12 人/14 天要求自
 
 这是 iOS 本地技术验证后的起点，不代表已经完成 App Store 提交：
 
-- `[已核对]` iOS 与 Android 使用同一个 React + Vite + Capacitor 8 App；`@capacitor/ios` 为 `8.5.0`，Bundle ID 为 `me.cuberoot.app`。
+- `[已核对]` iOS 与 Android 使用同一个 `@cuberoot/app-ui` React 产品层和同一 Capacitor 8 宿主；`@capacitor/ios` 为 `8.5.0`，Bundle ID 为 `me.cuberoot.app`。
 - `[已核对]` Xcode 26.6（build 17F113）已完成 iOS 26.5 Simulator Debug 构建、安装和启动；Automatic Signing 已启用。
 - `[已核对]` iOS App Icon 与深浅启动图由网站 canonical 品牌 SVG 机械生成，并纳入 CI 漂移检查；不是第二套手工素材。
 - `[iOS 待签名]` Apple Developer 账号登录异常，尚未验证会员 Active、付费 Team、iPhone 真机签名、Archive、上传和 TestFlight。

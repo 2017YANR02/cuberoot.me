@@ -1,0 +1,38 @@
+{
+  "name": "@cuberoot/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "cuberoot": {
+    "kind": "app"
+  },
+  "scripts": {
+    "dev": "node ../../scripts/build-cubing-worker.mjs apps/desktop/public/cubing-chunks && vite --host 127.0.0.1 --port 1420",
+    "build": "tsc --noEmit && node ../../scripts/build-cubing-worker.mjs apps/desktop/public/cubing-chunks && vite build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "tauri": "tauri",
+    "tauri:build": "tauri build"
+  },
+  "dependencies": {
+    "@cuberoot/app-ui": "workspace:*",
+    "@cuberoot/shared": "workspace:*",
+    "@cuberoot/timer-ui": "workspace:*",
+    "@mnlphlp/plugin-blec": "0.12.0",
+    "@tauri-apps/api": "2.11.1",
+    "@tauri-apps/plugin-deep-link": "2.4.10",
+    "@tauri-apps/plugin-opener": "2.5.5",
+    "lucide-react": "1.8.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.4",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.0.5",
+    "typescript": "^5",
+    "vite": "8.0.1",
+    "vitest": "^4.1.6"
+  }
+}

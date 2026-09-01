@@ -1,4 +1,4 @@
-# Mobile `/timer` 零遗漏对抗审计
+# 五端 App `/timer` 零遗漏对抗审计
 
 状态：`ACTIVE — GAP FOUND — NOT COMPLETE`
 
@@ -6,27 +6,27 @@
 
 事实源：当前 Web `/timer` 可达页面与 `core/packages/client/app/[lang]/timer/**` 源码
 
-对比目标：`core/apps/mobile` 的 Android/iOS 共用 React App
+对比目标：`core/packages/app-ui` 的五端唯一 React 产品层，以及 `core/apps/mobile`、`core/apps/desktop`、`core/apps/harmony` 三个薄宿主
 
-> 本文是 `docs/mobile-timer-parity-tracker.md` 的对抗审计附录，不是第二套需求。Tracker 记录进度，本文保存一次“专门找遗漏”的全量事实快照和 CI 守卫设计。Web 新增可达功能时，即使本文未及更新，Mobile 也不自动获得豁免。
+> 本文是 `docs/mobile-timer-parity-tracker.md` 的对抗审计附录，不是第二套需求。Tracker 记录进度，本文保存一次“专门找遗漏”的全量事实快照和 CI 守卫设计。表内既有 `Mobile`、OPPO 和 iOS 行是迁移期间形成的 Android/iOS 历史证据，不自动证明 HarmonyOS NEXT、Windows 或 macOS；当前五端产品实现只认 `@cuberoot/app-ui`，每个平台仍须分别补齐构建、安装、设备/实体电脑和交互证据。Web 新增可达功能时，即使本文未及更新，任何 App 也不自动获得豁免。
 
 ## 1. 审计结论
 
-当前 Mobile 还远没有复制完 Web `/timer` 的 UI/UX 与功能。项目选择器已有 43 个入口、手动打乱已开始接入共享队列组件、真题 event map 已迁到 shared，这些只关闭了局部反例，不是整体 parity。
+当前五端 App 还远没有复制完 Web `/timer` 的 UI/UX 与功能。项目选择器已有 43 个入口、手动打乱已开始接入共享队列组件、真题 event map 已迁到 shared，这些只关闭了局部反例，不是整体 parity；某个宿主能构建也不能替代产品面和其他平台验收。
 
 快照中至少存在以下硬性 gap：
 
 | 编号 | 事实源能力 | Mobile 快照 | 结论 |
 | --- | --- | --- | --- |
-| GAP-001 | `1～4 人 + 联机` 是 `/timer` 内的五个完整模式 | Mobile 只诚实显示只读“1人”；`2～4/net` 不再伪装成本地控件或外跳完成 | P0，四个模式宿主仍未实现 |
-| GAP-002 | Web 顶栏有人数、项目、来源、难度、解法、更多、设置的真实交互 | WCA 真题难度与 222/pyra/skewb 解法提示已改成 Web/Mobile 共用真实 UI，原静态“解法”已删除；333/SQ1/Mega/More general solver、随机难度与大量条件控件仍缺 | P0，局部产品面仍缺 |
+| GAP-001 | `1～4 人 + 联机` 是 `/timer` 内的五个完整模式 | 五端 App 已有真实 2/3/4 人与联机页面、本地原子轮次/基础统计及联机房主管理/历史统计，不再只读“1人”或外跳；但 Web 与 App 仍是两套 Battle/Net React 视图，完整设置、视频、多 BLE、高级历史展示、双设备和五平台矩阵未齐 | P0，入口/基础流程落地不等于完整模式 parity |
+| GAP-002 | Web 顶栏有人数、项目、来源、难度、解法、更多、设置的真实交互 | WCA 真题难度与 222/pyra/skewb 解法提示已改成 Web/Mobile 共用真实 UI，原静态“解法”已删除；More 通用求解器已复用 Tools 子页；333/SQ1/Mega 顶栏解法、随机难度与大量条件控件仍缺 | P0，局部产品面仍缺 |
 | GAP-003 | Web 随机来源对 43/43 `EventId` 都有已注册的语义 | shared runtime 42 个 generated；`custom` 的 Real/Random 已按网站接成显式 ready 空槽并可计时，仍待 OPPO 触摸/重启验收 | P0，菜单/生成器数量不等于完整功能 parity |
 | GAP-004 | 真题有比赛/日期、比赛搜索、轮次、组别、难度、步数、2×2 类型、最优口径、来源元数据与空/错误状态 | Mobile 已共享比赛/日期/搜索/国旗/轮组、2×2 配置、完整 WCA 难度/合并/最优、222/pyra/skewb 真题按步数和底层错误/空分型；完整出处元数据、逐类用户文案与全配置/真机异常矩阵仍未关闭 | P0，底层契约通过仍不等于完整真题 UI parity |
 | GAP-005 | 手动来源还包含编辑后重置、顺序循环、已显示打乱历史的上一条/下一条、空打乱可起表与 attempt snapshot | Mobile 已直接消费 shared editor/queue/`ScrambleHistory`，覆盖上一条/下一条、队尾生成、solve 后前进、左右键、空槽和冻结 attempt；仍缺 OPPO/iOS 真机全状态证据 | P0，源码与自动化已接，待设备矩阵 |
 | GAP-006 | Web 有 session 切换/新建/重命名/清空/删除/项目关联、搜索筛选、批量操作、成绩详情、移动分组 | session CRUD/项目关联、共用成绩行/七项菜单/备注编辑/Undo toast、行级罚时/备注/复制/删除、详情移组目标及搜索/日期/时间/罚时/OLL/PLL 筛选已接 Mobile。快捷删除无二次确认并可 5 秒撤销；tag UI、批量/对比/完整 SolveModal/复盘仍缺 | P0，基础共用行已接不等于完整 HistoryPanel parity |
 | GAP-007 | Web 有成绩/图表/统计三栏、5 图、完整统计、case/跨分组/按天、纪录对比 | 紧凑 current/best 面板与 rolling picker 已迁 timer-ui 并由 Web/Mobile 真实消费；OPPO 已显示 time/ao5/ao12 共用面板且 360px 无横向溢出。完整 StatsModal/五图、case/跨分组/按天与纪录对比仍缺 | P0，紧凑面板接线完成不等于完整统计完成 |
-| GAP-008 | Web 设置有 8 类、63 个可达偏好/命令 surface | 8 类与 63 个稳定 ID、copy/value/visibility/disabled/effect 已迁 shared；“计时”8 字段 React UI 已迁 `@cuberoot/timer-ui` 并由 Web/Mobile 共用真实 effect。OPPO 已读到 canonical 8/8 ID、20～340px 内容边界与滚动底部；其余 7 类尚未迁入 Mobile，逐字段效果/iOS/全视口仍缺 | P0，Timing 类接线完成不等于 63 项设置 parity |
-| GAP-009 | Web “更多”包含打乱足迹、统计、语言、专项、盲拧助手、全屏、手动录入、replay、求解器、批量打乱、打印、清空 | 12 项 action/条件/effect 已共享；Mobile 显示并真实接通打乱足迹、语言、全屏、手动录入、打印、清空当前项目 6 项。打印已共用同一 DOM/生命周期并通过双语 PDF 自动化，待 Android/iOS 系统面板实证；完整统计、专项、盲拧助手、replay、通用求解器、批量打乱 6 项仍缺 | P0，局部接通不等于 More parity 完成 |
+| GAP-008 | Web 设置有 8 类、64 个字段（其中 1 个仅开发环境） | 8 类与 64 个稳定 ID、copy/value/visibility/disabled/effect 已迁 shared；“计时”8 字段 React UI 已迁 `@cuberoot/timer-ui` 并由 Web/Mobile 共用真实 effect。OPPO 已读到 canonical 8/8 ID、20～340px 内容边界与滚动底部；其余 7 类尚未迁入 Mobile，逐字段效果/iOS/全视口仍缺 | P0，Timing 类接线完成不等于 64 项设置 parity |
+| GAP-009 | Web “更多”包含打乱足迹、统计、语言、专项、盲拧助手、全屏、手动录入、replay、求解器、批量打乱、打印、清空 | 12 项 action/条件/effect 已共享；App 已真实接通 10 项：统计复用现有共享统计页，盲拧助手/通用求解器/批量打乱复用 Tools canonical 子路由，其余 6 项保留既有 App effect。专项仍绑定 Web 私有 drill target，replay 仍绑定 Web 私有 decoder/重建状态，未用外跳 Web timer 或占位冒充 | P0，剩余 2 项及深层交互矩阵未完成 |
 | GAP-010 | Web 有智能魔方、智能计时器、Stackmat 麦克风，各自完整弹层、状态与错误 | Mobile 只显示真实 BLE 入口；Android GAN v4 主链已真机跑通，iOS UUID 后 manufacturer-data MAC 提取有 adapter/握手单测但无真机；Stackmat/智能计时器未实现且不渲染假入口 | P0，缺失能力保持不可见且仍登记为 gap |
 | GAP-011 | Web 有手动录成绩、FMC/MBLD 特殊输入、轮次模拟、目标、每日目标、分段、BLD memo | 手动成绩/FMC/MBLD 已共享接入并待真机；轮次、目标、每日目标、分段与 BLD memo 仍缺 | P0 |
 | GAP-012 | Web 触摸有八向操作轮盘与撤销，键盘有可重绑快捷键，还有全屏/运行隐藏/UI fade | Mobile 已直接消费 shared 八向轮盘、默认键盘决策、任意键停表、删除撤销 toast 与起表可用性门禁；但自定义改键持久化/UI、分段/BLD memo 键、运行隐藏全 UI 和完整真机矩阵仍缺 | P1，但声称“UI/UX 完全一致”前仍是硬门槛 |
@@ -134,7 +134,7 @@ shared 映射快照是 19 个 Timer ID：
 
 | Parity ID | Web 可达行为/状态 | Mobile 快照 |
 | --- | --- | --- |
-| `mode.players` | `1人/2人/3人/4人/联机`，切换是页内大模式并可返回 | 只读显示 1 人；其余模式未实现且不再外跳冒充完成 |
+| `mode.players` | `1人/2人/3人/4人/联机`，切换是页内大模式并可返回 | 已接真实 1/2/3/4/联机页内模式并可返回；本地/联网基础 round、同步开始与下一轮已跑自动化。与 Web 的设置、历史统计、视频、多智能魔方、房主管理及真实多设备 UI/UX 仍须逐项差分，不能把入口可用记为完整 parity |
 | `event.picker` | 43 项、分组、顺序、图标、中英名、滚动/关闭/焦点 | 已用共享 catalog/picker；全视口与全功能未完成 |
 | `source.picker` | 真题/随机/手动，选中文案、弹层样式、键盘与触摸 | 已接 Web/Mobile 共用 controlled 组件；内部值 adapter（Mobile `real` / Web `wca`）仍需全状态交互/视觉验收 |
 | `source.manual.editor` | 共享 textarea，原文立即持久化，无提交/清空按钮 | 已接共享 editor，需集成证据 |
@@ -218,19 +218,19 @@ shared 映射快照是 19 个 Timer ID：
 | Parity ID | Web 可达行为/状态 | Mobile 快照 |
 | --- | --- | --- |
 | `more.marks` | 打乱足迹页 | 已绑定 App 内 Tools WebView 的本地化 `/timer/marks` 深链；待 OPPO 真机实点/返回栈验收 |
-| `more.stats-mobile` | 手机形态中打开完整统计 | 缺 |
+| `more.stats-mobile` | 手机形态中打开完整统计 | 已打开 App 内现有共享统计页；完整 StatsModal/五图仍由统计 gap 追踪 |
 | `more.language-mobile` | 手机形态中英文切换并同步 URL | More 内已绑定 shared copy 与 Mobile 持久化语言设置；320/340px 实点生效，待真机重启验收 |
 | `more.drill` | 可用项目显示专项练习，选 case/退出 | 缺 |
-| `more.bld-helper` | 333bld/333ni/333mbld 条件显示 Speffz 记忆助手 | 缺 |
+| `more.bld-helper` | 333bld/333ni/333mbld 条件显示 Speffz 记忆助手 | 按 shared visibility 显示并在 Tools surface 打开 canonical `/alg/3bld/helper` |
 | `more.fullscreen` | 全屏切换 | 已绑定 Fullscreen API 并监听真实 `fullscreenchange`；待 OPPO WebView 支持/系统栏实点验收 |
 | `more.manual-entry` | 手动录入成绩，不是手动打乱 | Mobile More 已接 shared modal；340px 中英文/无溢出浏览器审核通过，待 OPPO 软键盘/返回验收 |
 | `manual-entry.normal` | 时间格式、OK/+2/DNF/DNS、打乱、备注、校验 | shared 规则/UI 与 Mobile repository 已接；定向回归绿，待真机 |
 | `manual-entry.fmc` | 解法 parser/是否还原/OBTM 计数、步数 override、打乱/备注 | shared parser/完成态 oracle/UI 已接；定向回归绿，待真机 |
 | `manual-entry.mbld` | 已还原/已尝试/时间、WCA 9f12c 计分与 DNF、输入错误 | shared 规则/UI 已接；边界回归绿，待真机 |
 | `more.replay` | 从剪贴板粘贴 replay URL，校验/导入/错误 | 缺 |
-| `more.solver` | 独立于顶栏 `solution.panel` 的 3×3 通用求解器：输入打乱、warmup/loading、解析/求解错误、解与逆序、复制；Facelet 入口当前禁用 | 缺 |
-| `more.bulk` | 选项目/数量、生成、复制、下载、loading/error | 缺 |
-| `more.print` | 计时器打印布局；中文与英文各可导出 PDF | 已迁入共用 `TimerPrintController/TimerPrintDocument`；Web/Android/iOS 共用同一冻结快照、摘要与完整成绩表，原生层只替换系统 print transport。36 条长备注 fixture 的中文 A4 4 页、英文 A4 5 页已逐页渲染，36/36 标记齐全、嵌入 Unicode 字体、无横向溢出/乱码/缺页。OPPO `PFDM00` 已从 Mobile More 打开 ColorOS 系统打印预览，中文报告可见；取消后返回且打印 portal/body class 清理为零。iOS 由 Xcode 26.6 / iOS 26.5 Simulator SDK 编译成功并安装启动，但 iOS 原生面板、完成回调与双平台真实保存/输出仍待验；不是整个 Timer 完成 |
+| `more.solver` | 独立于顶栏 `solution.panel` 的 3×3 通用求解器：输入打乱、warmup/loading、解析/求解错误、解与逆序、复制；Facelet 入口当前禁用 | 在 Tools surface 打开 canonical `/scramble/solver?event=333`，不复制求解器 |
+| `more.bulk` | 选项目/数量、生成、复制、下载、loading/error | 在 Tools surface 打开 canonical `/scramble/gen?mode=batch`，不复制生成器 |
+| `more.print` | 计时器打印布局；中文与英文各可导出 PDF | 已迁入共用 `TimerPrintController/TimerPrintDocument`；Web/Android/iOS 共用同一冻结快照、摘要与完整成绩表，原生层只替换系统 print transport。当前输出目录中的中文、英文 A4 PDF 均为 7 页，已逐页渲染确认长备注换行、嵌入字体且无裁切、遮挡、横向溢出、乱码或缺页。OPPO `PFDM00` 已从 Mobile More 打开 ColorOS 系统打印预览，中文报告可见；取消后返回且打印 portal/body class 清理为零。iOS 由 Xcode 26.6 / iOS 26.5 Simulator SDK 编译成功并安装启动，但 iOS 原生面板、完成回调与双平台真实保存/输出仍待验；不是整个 Timer 完成 |
 | `more.clear-event` | 无成绩 disabled；确认后只清当前项目 | shared 确认文案/纯 session 操作与 Mobile repository 已接；同 session 只清 active event、保留其他项目及重复清空回归通过，待 OPPO 确认/失败恢复验收 |
 | `toast.undo` | 有撤销动作的消息，5 秒自动收起 | 共享 `TimerInfoToast` 已由 Web/Mobile 共用，统一可选 Undo、默认 5 秒、安全区/底栏避让和窄屏换行；Mobile 最后一次与任意历史行 quick delete 均接真实 restore effect。仍缺 OPPO 实点删除/撤销和 iOS 证据 |
 | `modal.close-contract` | 点遮罩、关闭键、Escape/系统返回，焦点恢复，嵌套弹层不串 | 项目、来源、WCA 比赛建议、session 与 History quick menu 已共用 `open/onOpenChange + stable overlay id/reason` 合同，并保留 Web 非受控行为；Mobile 已用唯一 `openOverlay` 接入五者，Android Back 优先关闭 popup，且 listener 晚注册竞态会立即移除。OPPO History menu 已验证真实 Back 只关菜单；More/手动录入与其余 modal 仍未全部统一，iOS 与完整返回/焦点矩阵未验，故整体未完成 |
@@ -264,11 +264,11 @@ Web 当前有 8 类、63 个可达偏好/命令 surface；稳定 ID 与交互策
 | `device.live-cube` | 3D/q2look/net/2D、陀螺仪、朝向、校准、fallback | 缺 |
 | `device.smart-timer` | GAN/QiYi timer 选择、连接、MAC、读数、错误、断开 | 缺 |
 | `device.stackmat` | 麦克风权限、输入设备、监听、信号级别、状态、精度、解码错误、停止 | 未实现；Mobile 不渲染麦克风假入口 |
-| `device.permission` | 未支持/未开蓝牙/拒绝/不再询问/系统设置返回后重试 | 需 Android/iOS 真机状态矩阵 |
+| `device.permission` | 未支持/未开蓝牙/拒绝/不再询问/系统设置返回后重试 | 需 Android、iOS、HarmonyOS NEXT、Windows 和 macOS 各平台状态矩阵 |
 
 ## 5. 本地多人模式（2～4 人）
 
-Web `BattleView` 是完整产品面，不是“一个外部网址”。Mobile 当前不渲染 2～4 人入口，因此本节 UI/UX 与设备能力全部未完成。2026-08-31 第一批 runtime-neutral 规则已经由 Web 真正改用 `@cuberoot/shared/timer`：2～4 人、active slots、按键映射/冲突交换、同项目分组、共享打乱显隐、罚时与并列胜者；旋转不再重置业务态，pointer cancel 也不再误起表。第二批增加共享 `LocalBattleRound` codec，Web 每次结算原子保存所有玩家的项目/打乱/成绩/胜者，不再按平行数组下标拼轮；损坏恢复、写失败、旧版未配对记录和 CSV 也有显式边界。这仍只是未来 Web/Mobile 共用 reducer 的起点，不是 Mobile 页面完成。
+Web `BattleView` 是完整产品面，不是“一个外部网址”。五端 App 当前已通过 `@cuberoot/app-ui/LocalBattleMode` 渲染真实 2/3/4 人入口，消费 `@cuberoot/shared/timer` 的 `initialLocalBattleState/transitionLocalBattle`，并接入项目选择、同项目共享题、独立计时、同步开始、罚时、胜者和下一轮。Web 也已消费共享规则与原子 `LocalBattleRound`，但仍保留另一套 `BattleView` React 产品面；App 基础页面存在不等于下列 Web 全能力、历史持久化、多 BLE 或五平台 UI/UX 已完成。
 
 - 2 人左右对战，3/4 人田字格，3/4 人上排翻转，手机/横屏布局。
 - 每人独立项目、计时状态、OK/+2/DNF、分数、ao5、按键、打乱图、背景。
@@ -288,26 +288,26 @@ Web `BattleView` 是完整产品面，不是“一个外部网址”。Mobile �
 - 任一玩家活动时必须锁定项目/source 等上下文变更；目前换项目会重置其他玩家当前轮。
 - 多人设置中的观察、语音、分段必须在共用 reducer 中产生真实 effect，或 Web/Mobile 同时移除；当前可见 no-op 不能成为 App 验收范围。
 - `pointerId`、timer handle、RAF、语音、震动、BLE channel 属于平台 adapter，不进入持久化共享 DTO；Mobile “每人一颗”还需要最多四路 native BLE channel pool。
-- 首个用户可见版本必须让 Web 与 Mobile 同时消费同一个 `LocalBattleView`；在此之前 Mobile 人数入口继续诚实禁用，不能外跳网站或显示半成品。
+- 下一步必须让 Web 与五端 App 消费同一个完整 `LocalBattleView`，或用精确 surface equality 证明两者不是会漂移的平行 UI。当前 App 入口可用，但在设置、历史、持久化、多 BLE 与全状态未齐前仍只能标为进行中，不能据此宣称 parity 完成。
 
 共享 reducer 的强制边界（独立 Agent 于 2026-08-31 对照现有 timer 架构复核）：
 
-- `@cuberoot/shared/timer` 新入口应为 `initialLocalBattleState()` + `transitionLocalBattle(state, action, config)`；玩家计时动作统一包装为 `{ type: 'player-timer', playerId, action: TimerMachineAction }`，内部必须复用现有 `transitionTimer()`，不得重新定义 idle/inspection/holding/ready/running/stopped。
+- `@cuberoot/shared/timer` 已提供 `initialLocalBattleState()` + `transitionLocalBattle(state, action, config)`，App 已真实消费；玩家计时动作统一包装为 `{ type: 'player-timer', playerId, action: TimerMachineAction }`，内部必须继续复用现有 `transitionTimer()`，不得重新定义 idle/inspection/holding/ready/running/stopped。
 - reducer 只返回不可变 `state / effects / accepted`；同步开始只负责用同一 `nowMs` 向合格玩家分发既有 `start-now`。过期打乱通过 revision/source identity 拒绝，异步请求本身不进 reducer。
-- `@cuberoot/timer-ui` 只承接共用 React 视图和 hold timeout/RAF/清理 controller；localStorage/IndexedDB、BLE、震动、声音、路由、认证、联网和 scramble provider 全部由 Web/Mobile host adapter 注入。
+- 完整共用 React 视图应收敛到 `@cuberoot/timer-ui`，五端产品编排留在 `@cuberoot/app-ui`；localStorage/IndexedDB、BLE、震动、声音、路由、认证、联网和 scramble provider 全部由 Web/宿主 adapter 注入。当前 App `BattleModes.tsx` 与 Web `BattleView` 并存仍是待关闭的 UI 重复边界。
 - 依赖方向固定为 `apps → timer-ui → shared`。shared 禁 React/Next/nuqs/Zustand/DOM/timer/storage/Capacitor/BLE/API；timer-ui 禁依赖任一 app 源码或平台插件。`RoundResult` 是 WCA 单人赛制，不能冒充本地多人 round。
 - 迁移测试必须显式覆盖 2/3/4 人、各自/同步开始、提前松手/系统取消、最后一人完成才结算、并列/+2/全 DNF/改罚时、活动期上下文锁、过期打乱、智能魔方只影响目标玩家、controller 卸载清理和 repository 重启/失败/损坏恢复；架构守卫要求 Web 与 Mobile 都导入同一个 shared transition。
 
 ## 6. 联机模式
 
-Web `NetBattleView` 同样是完整产品面。Mobile 当前仍不渲染联机入口，因此本节 UI/UX 与设备验收全部未完成。2026-08-31 已先完成不得绕过的共享安全底座：Web/API/Mobile 复用 `@cuberoot/shared/timer` 的房间 DTO、13 项白名单、runtime decoder、结算和注入式 transport；create/join 单次签发私有玩家 capability，服务端只存 SHA-256 摘要，所有心跳/写操作/视频凭证都同时验证 pid + capability，Mobile session 复用现有 SecureStorage。该底座不等于大厅、房间或计时 UI 已进入 App。
+Web `NetBattleView` 同样是完整产品面。五端 App 当前已通过 `@cuberoot/app-ui/NetBattleMode` 提供创建/加入、session 恢复、房间码、项目、WCA 身份、同步准备/倒计时、计时、罚时、玩家状态、房主转让/踢人、邀请二维码、历史统计和下一轮 UI；Mobile、Desktop、Harmony 均注入同一个 shared client/session contract。共享安全底座仍是 Web/API/App 的房间 DTO、13 项白名单、runtime decoder、结算和 capability 鉴权。该本地源码与集成测试不等于版本化 staged rollout 已部署，也不等于 Web/App React UI、视频、真实双设备和五平台验收完成。
 
 发布不得假设同一次 push 能让已经打开的 Web 页面、已安装 Mobile 和 API 原子切换。当前安全契约拒绝无 capability 的旧写请求，直接覆盖原 `/v1/battle/rooms` 会让旧页面在部署瞬间失效；为了兼顾安全与不中断，发布前必须选择并验证以下 staged rollout，且旧公开 `pid` 绝不能获得换取 capability 的兼容入口：
 
 1. 先以版本化路径或默认关闭的服务端 feature gate 部署新增的 capability + 服务端权威打乱契约；旧路径只能承接部署前客户端，不能把公开 `pid` 升级成私有凭据。
-2. Web 与 Mobile 切到新契约；用遥测确认新建房间均含 `player_auth`，并让已打开的旧 Web 收到明确的刷新/重进提示。
+2. Web 与五端 App 切到新契约；用遥测确认新建房间均含 `player_auth`，并让已打开的旧 Web 和旧客户端收到明确的刷新/重进提示。
 3. 等待旧房间 24 小时 TTL 全部过期；期间不得让旧路径创建新房。
-4. 删除旧路径/feature gate 和兼容代码，再把 API、Web、Mobile 的安全矩阵与真实两设备流程重跑一遍。
+4. 删除旧路径/feature gate 和兼容代码，再把 API、Web、五端 App 的安全矩阵与真实两设备流程重跑一遍。
 
 版本化路径或 gate 尚未落地，所以当前代码只能作为本地安全基础，不能推送上线；这也是联机模式的明确发布阻断项。
 
@@ -329,7 +329,7 @@ Web `NetBattleView` 同样是完整产品面。Mobile 当前仍不渲染联机�
 
 | 维度 | 必测值 |
 | --- | --- |
-| 平台 | Web Chromium，Android WebView/OPPO，iOS WKWebView/Simulator 与真机 |
+| 平台 | Web Chromium；Android WebView/OPPO；iOS WKWebView/Simulator 与真机；HarmonyOS NEXT ArkWeb/设备；Windows WebView2/实体电脑；macOS WKWebView/实体电脑 |
 | 视口 | 320/360/390/412/768 px，竖屏/横屏，分屏/小窗口 |
 | 缩放/字号 | 100%/150%/200%，系统大字与最长中英文案 |
 | 语言/主题 | English/简体中文，light/dark/system 动态切换 |
@@ -354,11 +354,11 @@ Web `NetBattleView` 同样是完整产品面。Mobile 当前仍不渲染联机�
 
 ### Guard A：可达产品面 manifest 精确集合相等
 
-在 runtime-neutral package 建立稳定 `TimerParitySurfaceId` manifest，至少包含本文第 4～6 节的每个 ID。Web 与 Mobile 分别注册真实 consumer，CI 用 exact set equality 检查：
+在 runtime-neutral package 建立稳定 `TimerParitySurfaceId` manifest，至少包含本文第 4～6 节的每个 ID。Web 与五端 App 分别注册真实 consumer，CI 用 exact set equality 检查：
 
 ```text
 webSurfaceIds == canonicalSurfaceIds
-mobileSurfaceIds == canonicalSurfaceIds - ownerApprovedPlatformExemptions
+installedAppSurfaceIds == canonicalSurfaceIds - ownerApprovedPlatformExemptions
 ```
 
 单纯注册字符串不算完成。每个 ID 必须有 host interaction test，真点击/输入并断言状态或数据效果；未绑定测试的注册项也要失败。
@@ -387,7 +387,7 @@ mobileSurfaceIds == canonicalSurfaceIds - ownerApprovedPlatformExemptions
 ### Guard E：设置 schema 和迁移等价
 
 - 建立共享设置描述 manifest：key、type、default、normalize、visibility/capability、copy key、category。
-- Web/Mobile 两个渲染 adapter 从同一 manifest 消费；无所有者豁免时，可见字段 exact equality。
+- Web 与 `@cuberoot/app-ui` 两个渲染入口从同一 manifest 消费；无所有者豁免时，可见字段 exact equality。
 - 导入每个历史版本 fixture，迁移后两端语义一致。
 - 禁止再扩大 Web-private `TimerSettings` 和 Mobile-only `TimerStoreSettings` 的业务字段差集。
 
@@ -395,14 +395,14 @@ mobileSurfaceIds == canonicalSurfaceIds - ownerApprovedPlatformExemptions
 
 More、设置、成绩、统计、设备、对战与房间的每个 action 都有稳定 ID、可见条件、disabled 条件、effect contract 和测试。禁止下列假通过：
 
-- Web 已有功能但 Mobile 点击显示 `coming soon`；
+- Web 已有功能但任一 App 点击显示 `coming soon`；
 - 打开系统浏览器代替 App 内 timer 模式；
 - 静态 `<div>`/文字伪装按钮；
 - 菜单项存在但 onClick 无数据效果。
 
 ### Guard G：成绩数据与统计 baseline
 
-用同一数据库 fixture 对 Web/Mobile 断言：session 顺序/关联，每 EventId 隔离，OK/+2/DNF/DNS，FMC/MBLD，comment/tag，move/gyro/stage/bld payload，移动 session，删除，PB、rolling stats、period stats、case stats、round/cutoff/time-limit。数值用精确 baseline，不用放宽的大于/非空断言。
+用同一数据库 fixture 对 Web/`@cuberoot/app-ui` 断言：session 顺序/关联，每 EventId 隔离，OK/+2/DNF/DNS，FMC/MBLD，comment/tag，move/gyro/stage/bld payload，移动 session，删除，PB、rolling stats、period stats、case stats、round/cutoff/time-limit。数值用精确 baseline，不用放宽的大于/非空断言。
 
 ### Guard H：响应式、无遮挡与无溢出
 
@@ -412,38 +412,39 @@ More、设置、成绩、统计、设备、对战与房间的每个 action 都�
 
 静态守卫至少拒绝：
 
-- Mobile deep import client app 源码，或复制 `SoloView/BattleView/NetBattleView`/CSS；
+- `@cuberoot/app-ui` 或任一宿主 deep import client app 源码，或复制 `SoloView/BattleView/NetBattleView`/CSS；当前 App `BattleModes` 与 Web Battle/Net 平行视图必须进入集合差分并继续收敛，不能被 ratchet 漏过；
 - app A 依赖 app B；
 - 重复定义 EventId 目录、WCA map、source union、penalty union、timer phase 状态机、统计规则、GAN 协议；
 - `unknown/default/error -> 333`，或失败时填另一项目/另一来源；
 - 当 Web 已有同名功能时出现 `coming soon`/`open full web timer` 作为 parity 完成路径；
-- Mobile 另造视觉 token、另造文案列表、另造设置默认值。
+- 任一 App/宿主另造视觉 token、文案列表或设置默认值。
 
-当前已落地的第一条 ratchet 是 `apps/mobile/src/mobile-capability-surface-guard.test.ts`：它锁定 Mobile 人数 surface 为只读单人、拒绝 `players` 浏览器 fallback，并禁止在没有原生麦克风 adapter 时渲染 Stackmat/coming-soon 入口。完整 registry 集合差分仍按 Guard A/J 待实现。
+当前已落地的第一条 ratchet 是 `core/packages/app-ui/src/mobile-capability-surface-guard.test.ts`：它锁定已安装客户端 1/2/3/4/net 都进入真实 App 内模式、拒绝 `players` 浏览器 fallback，并禁止在没有原生麦克风 adapter 时渲染 Stackmat/coming-soon 入口。完整 registry 集合差分及 Web/App Battle/Net UI 重复守卫仍按 Guard A/J 待实现。
 
 ### Guard J：自动化审计报告和完成门槛
 
-CI 每次生成：
+CI 每次生成共享产品层报告，并把宿主/平台证据分开列出：
 
 ```text
-canonical IDs / Web implemented / Mobile implemented / exempt / missing / untested
+canonical IDs / Web implemented / installed App implemented / exempt / missing / untested
+Android / iOS / HarmonyOS NEXT / Windows / macOS: build / install / device / interaction / signing / release
 ```
 
 只有同时满足下列条件才能把整体状态改成 `COMPLETE`：
 
 1. `missing = 0` 且 `untested = 0`；
 2. 所有 exemption 都有仓库所有者针对具体项的明确批准；
-3. Web 与 Mobile 自动化互动/数据/视觉证据都通过；
-4. OPPO Android 和 iOS 分别完成真机状态矩阵；
+3. Web 与 `@cuberoot/app-ui` 自动化互动/数据/视觉证据都通过；
+4. Android、iOS、HarmonyOS NEXT、Windows 和 macOS 分别完成对应设备或实体电脑状态矩阵，且源码、本地构建、安装、设备、签名和发布证据不混写；
 5. 实现者之外至少两个独立 agent 对抗审查，一人专门找功能反例，一人专门找遮挡/溢出/可访问性反例。
 
 ## 9. 实施顺序（不改变最终范围）
 
 1. 先建 Guard A/B/C/I，让新 gap 不再静默增长。
 2. 把整个可见 timer shell 和 source/config 组件逐步提取到 `@cuberoot/timer-ui`，平台只注入 URL/存储/网络/BLE/权限 adapter。
-3. 把 Web 已成熟的 scramble/session/settings/stats 纯逻辑迁到 `@cuberoot/shared/timer`，由 Web 先改成真实 consumer，再接 Mobile；不在 Mobile 重写。
+3. 把 Web 已成熟的 scramble/session/settings/stats 纯逻辑迁到 `@cuberoot/shared/timer`，由 Web 与 `@cuberoot/app-ui` 成为真实 consumer；不在任何宿主重写。
 4. 先关闭可证明的 P0 反例：二阶真题全配置、手动队列完整契约、43 项 provider，然后统计/session/设置/设备/多人/联机。
-5. 最后跑 Guard H 的全状态视觉矩阵和双平台真机；这不是可在功能测试通过后省略的“美化”。
+5. 最后跑 Guard H 的全状态视觉矩阵和五平台设备/实体电脑验收；这不是可在功能测试通过后省略的“美化”。
 
 ## 10. 事实源索引
 
@@ -459,7 +460,8 @@ canonical IDs / Web implemented / Mobile implemented / exempt / missing / untest
 - 本地多人：`BattleView.tsx`、`_battle/**`
 - 联机：`NetBattleView.tsx`
 - 共享项目/真题 map/Mobile provider：`core/packages/shared/src/timer/event-catalog.ts`、`scramble-runtime.ts`
-- Mobile 当前宿主：`core/apps/mobile/src/App.tsx`、`data/real-scramble-pool.ts`、`data/timer-repository.ts`
+- 五端共享产品层：`core/packages/app-ui/src/App.tsx`、`data/real-scramble-pool.ts`、`data/timer-repository.ts`
+- 当前宿主：`core/apps/mobile`（Android/iOS）、`core/apps/desktop`（Windows/macOS）与 `core/apps/harmony`（HarmonyOS NEXT）
 
 ## 11. 已发现的 Web 自身边界（不得凭注释猜）
 

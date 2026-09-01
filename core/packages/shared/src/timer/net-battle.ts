@@ -14,6 +14,8 @@ import type { EventId } from './types';
 
 export const NET_BATTLE_TOKEN_HEADER = 'X-Battle-Token';
 export const NET_BATTLE_ROOM_CODE_LENGTH = 4;
+export const NET_BATTLE_SESSION_STORAGE_KEY = 'net_battle_session';
+export const NET_BATTLE_REQUEST_TIMEOUT_MS = 12_000;
 
 export function normalizeNetBattleRoomCode(value: string): string {
   return [...value].filter((character) => character >= '0' && character <= '9')
@@ -110,6 +112,43 @@ export function decodeNetBattleSession(value: unknown): NetBattleSession | null 
     name: value.name,
     playerId: value.playerId,
     playerToken: value.playerToken,
+  };
+}
+
+export interface NetBattleSessionStorage {
+  getItem(key: string): string | null | Promise<string | null>;
+  setItem(key: string, value: string): void | Promise<void>;
+  removeItem(key: string): void | Promise<void>;
+}
+
+export interface NetBattleSessionStore {
+  clear(): Promise<void>;
+  load(): Promise<NetBattleSession | null>;
+  save(session: NetBattleSession): Promise<void>;
+}
+
+/** One secure-session codec/store; installed hosts inject only protected I/O. */
+export function createNetBattleSessionStore(
+  storage: NetBattleSessionStorage,
+): NetBattleSessionStore {
+  return {
+    async load() {
+      const raw = await storage.getItem(NET_BATTLE_SESSION_STORAGE_KEY);
+      if (!raw) return null;
+      try {
+        return decodeNetBattleSession(JSON.parse(raw));
+      } catch {
+        return null;
+      }
+    },
+    async save(session) {
+      const decoded = decodeNetBattleSession(session);
+      if (!decoded) throw new Error('invalid battle session');
+      await storage.setItem(NET_BATTLE_SESSION_STORAGE_KEY, JSON.stringify(decoded));
+    },
+    async clear() {
+      await storage.removeItem(NET_BATTLE_SESSION_STORAGE_KEY);
+    },
   };
 }
 
@@ -218,6 +257,16 @@ async function responseError(response: Response): Promise<Error> {
 export function createNetBattleClient(options: NetBattleClientOptions): NetBattleClient {
   const request = options.fetcher ?? fetch;
 
+  async function requestWithTimeout(input: string, init: RequestInit = {}): Promise<Response> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), NET_BATTLE_REQUEST_TIMEOUT_MS);
+    try {
+      return await request(input, { ...init, signal: controller.signal });
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
   function roomPath(code: string, suffix = ''): string {
     if (!isNetBattleRoomCode(code)) throw new Error('invalid battle room code');
     return `/v1/battle/rooms/${code}${suffix}`;
@@ -228,7 +277,7 @@ export function createNetBattleClient(options: NetBattleClientOptions): NetBattl
   }
 
   async function postPayload(path: string, body: unknown, credentials?: NetBattleCredentials): Promise<unknown> {
-    const response = await request(options.apiUrl(path), {
+    const response = await requestWithTimeout(options.apiUrl(path), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -264,7 +313,7 @@ export function createNetBattleClient(options: NetBattleClientOptions): NetBattl
     },
     async getNetRoom(code, credentials) {
       const path = roomPath(code, credentials ? `?pid=${credentials.playerId}` : '');
-      const response = await request(options.apiUrl(path), credentials ? {
+      const response = await requestWithTimeout(options.apiUrl(path), credentials ? {
         headers: { [NET_BATTLE_TOKEN_HEADER]: credentials.playerToken },
       } : undefined);
       if (!response.ok) throw await responseError(response);
@@ -306,7 +355,7 @@ export function createNetBattleClient(options: NetBattleClientOptions): NetBattl
       return postState(roomPath(code, '/next'), { pid: credentials.playerId, round, force }, credentials);
     },
     async leaveNetRoom(code, credentials) {
-      const response = await request(options.apiUrl(roomPath(code, '/leave')), {
+      const response = await requestWithTimeout(options.apiUrl(roomPath(code, '/leave')), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -324,6 +373,7 @@ export const OFFLINE_MS = 15_000;
 /** Return bilingual copy data; hosts render it through the canonical i18n helper. */
 export function netErrorMessage(error: unknown): { zh: string; en: string } {
   const message = error instanceof Error ? error.message : String(error ?? '');
+  if (message === 'invalid battle room code') return { zh: '房间码必须是 4 位数字', en: 'Room code must be exactly four digits' };
   if (message === 'room not found') return { zh: '房间不存在或已过期', en: 'Room not found or expired' };
   if (message === 'room full') return { zh: '房间人数已满', en: 'Room is full' };
   if (message === 'round in progress') return { zh: '本轮正在进行，请等下一轮再加入', en: 'This round is in progress — join on the next round' };
@@ -343,6 +393,7 @@ export function netErrorMessage(error: unknown): { zh: string; en: string } {
   if (message === 'not admin') return { zh: '你已不是房主了', en: 'You are no longer the host' };
   if (message === 'player not in room') return { zh: 'TA 已经不在房间里了', en: 'That player is no longer in the room' };
   if (message === 'invalid player capability') return { zh: '房间身份已失效，请重新加入', en: 'Your room session expired — rejoin the room' };
+  if (error instanceof DOMException && error.name === 'AbortError') return { zh: '请求超时，请检查网络后重试', en: 'Request timed out — check your connection and retry' };
   if (/HTTP 404/.test(message)) return { zh: '联机服务暂不可用,请稍后重试', en: 'Online service is unavailable — please try again later' };
   if (/HTTP 5\d\d/.test(message)) return { zh: '服务器开小差了,请稍后重试', en: 'Server error — please try again later' };
   if (/failed to fetch|networkerror|load failed/i.test(message)) return { zh: '网络连接失败,请检查网络', en: 'Network error — check your connection' };
@@ -478,6 +529,19 @@ export function isNetRoundParticipant(
   playerId: string | null,
 ): boolean {
   return !!playerId && (state.startAt === null || state.roundRoster.includes(playerId));
+}
+
+/**
+ * Manual input may start only outside a server-scheduled countdown. During a
+ * synchronized round the server timestamp is the sole start authority; a
+ * running timer may still be stopped by its normal timer-machine transition.
+ */
+export function canManuallyStartNetAttempt(state: NetRoomState, playerId: string | null): boolean {
+  if (!playerId
+    || state.startAt !== null
+    || !isNetRoundParticipant(state, playerId)
+    || state.results[String(state.round)]?.[playerId]) return false;
+  return !syncGate(state, playerId).gated;
 }
 
 export function isNetAdmin(state: NetRoomState, playerId: string | null): boolean {

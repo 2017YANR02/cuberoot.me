@@ -9,7 +9,8 @@
       "flag-icons": "react-dom",
       "lucide-react": "react-dom",
       "react": "react-dom",
-      "react-dom": "react-dom"
+      "react-dom": "react-dom",
+      "uqr": "react-dom"
     },
     "runtime": {
       ".": "react-dom",
@@ -18,6 +19,8 @@
       "./country-flag": "react-dom",
       "./country-flag.css": "react-dom",
       "./gesture-wheel.css": "react-dom",
+      "./room-qr-modal": "react-dom",
+      "./room-qr-modal.css": "react-dom",
       "./scramble-strip.css": "react-dom"
     }
   },
@@ -28,6 +31,8 @@
     "./country-flag": "./src/CountryFlag.tsx",
     "./country-flag.css": "./src/country-flag.css",
     "./gesture-wheel.css": "./src/gesture-wheel.css",
+    "./room-qr-modal": "./src/RoomQrModal.tsx",
+    "./room-qr-modal.css": "./src/room-qr-modal.css",
     "./scramble-strip.css": "./src/scramble-strip.css"
   },
   "sideEffects": true,
@@ -38,7 +43,8 @@
     "@cuberoot/event-icon": "workspace:*",
     "@cuberoot/puzzle-solvers": "workspace:*",
     "@cuberoot/shared": "workspace:*",
-    "flag-icons": "^7.5.0"
+    "flag-icons": "^7.5.0",
+    "uqr": "^0.1.3"
   },
   "peerDependencies": {
     "lucide-react": "1.8.0",

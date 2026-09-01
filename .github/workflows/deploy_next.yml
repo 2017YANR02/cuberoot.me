@@ -26,6 +26,7 @@ on:
       - 'core/tsconfig.base.json'
       - 'core/patches/**'
       - 'core/scripts/resolve-workspace-path.mjs'
+      - 'core/scripts/build-cubing-worker.mjs'
       - 'ops/systemd/cuberoot-next.service'
       - '.github/workflows/deploy_next.yml'
 

@@ -228,7 +228,8 @@
 
 .auth-textbtn {
   align-self: center;
-  padding: 4px 8px;
+  min-height: 44px;
+  padding: 8px;
   font: inherit;
   font-size: 13px;
   color: var(--muted-foreground);
@@ -393,4 +394,3 @@
 }
 .auth-link:not(:disabled):hover { color: var(--foreground); border-color: var(--border-strong); }
 .auth-link:disabled { opacity: 0.4; cursor: not-allowed; }
-

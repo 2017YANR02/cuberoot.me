@@ -46,39 +46,9 @@ const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
 
   transpilePackages: ["mp4box", "mediainfo.js", "@cuberoot/timer-ui"],
-  // esbuild ships native binaries + README — Turbopack chokes on .md files.
-  // Mark it external so the route handler can require() it at runtime.
-  serverExternalPackages: ["esbuild"],
-  // cubing.js worker compat: see app/cubing-chunks/[...slug]/route.ts +
-  // patches/cubing@0.63.3.patch. Patched cubing chunks point worker URL at
-  // /cubing-chunks/search-worker-entry.js, where the route handler
-  // esbuild-bundles it into a self-contained ESM. Required because Turbopack does not produce
-  // worker-runtime-independent bundles for nested module workers.
-  //
-  // The route handler reads cubing chunks via fs.readFile at runtime, so
-  // Next's static import tracer never sees them and they get omitted from
-  // both Vercel functions and the systemd standalone bundle. Force-include
-  // here. Match resolves from outputFileTracingRoot (monorepo root when
-  // standalone, project root on Vercel).
-  // Bundle the cubing chunks dir + cubing's siblings (puzzle-geometry / alg referenced
-  // via `../puzzle-geometry/index.js`) + runtime npm deps esbuild has to resolve at
-  // request time. Without these the route handler's esbuild.build() throws
-  // 'Could not resolve "random-uint-below"' and similar.
-  // Patterns are relative to outputFileTracingRoot. With pnpm, real files live under
-  // node_modules/.pnpm/<pkg>@<ver>/node_modules/<pkg>/; include both layouts so
-  // probe path matches whether we're on Vercel or systemd.
-  outputFileTracingIncludes: {
-    "/cubing-chunks/[...slug]": [
-      "../../node_modules/cubing/dist/**",
-      "./node_modules/cubing/dist/**",
-      "../../node_modules/.pnpm/cubing@*/node_modules/cubing/dist/**",
-      "./node_modules/.pnpm/cubing@*/node_modules/cubing/dist/**",
-      "../../node_modules/random-uint-below/**",
-      "./node_modules/random-uint-below/**",
-      "../../node_modules/.pnpm/random-uint-below@*/node_modules/random-uint-below/**",
-      "./node_modules/.pnpm/random-uint-below@*/node_modules/random-uint-below/**",
-    ],
-  },
+  // cubing.js worker compat is generated once by core/scripts/build-cubing-worker.mjs
+  // into each host's public assets. The patched dependency always requests the
+  // stable /cubing-chunks/search-worker-entry.js URL.
 
   // COOP/COEP 只发给真用 SharedArrayBuffer (cubeopt-wasm) 的 /scramble/solver。
   // 历史 nginx 把 analyzer 一起套了 — 但 analyzer 用 classic worker + emscripten
@@ -215,7 +185,7 @@ const nextConfig: NextConfig = {
       },
       // Turbopack/构建产物里的 module worker(kociemba.worker.ts 等)
       { source: "/_next/static/:path*", headers: workerAsset },
-      // cubing.js search worker(经 app/cubing-chunks 路由 handler 提供)
+      // cubing.js search worker(构建前生成到 public/cubing-chunks)
       { source: "/cubing-chunks/:path*", headers: workerAsset },
     ];
   },

@@ -77,7 +77,7 @@
 .timing-surface-sub {
   display: flex;
   width: max-content;
-  max-width: min(92vw, 640px);
+  max-width: min(100%, 92vw, 640px);
   flex-direction: column;
   align-items: center;
   gap: 12px;

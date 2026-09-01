@@ -1,0 +1,4 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="webview_update_required">CubeRoot 需要较新的 Android System WebView 才能安全运行。请更新 Android System WebView 或 Chrome，然后重新打开 App。</string>
+</resources>

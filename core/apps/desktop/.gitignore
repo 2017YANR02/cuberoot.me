@@ -1,0 +1,4 @@
+dist/
+/public/cubing-chunks/
+src-tauri/target/
+src-tauri/gen/

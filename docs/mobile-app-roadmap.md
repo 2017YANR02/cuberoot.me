@@ -2,9 +2,9 @@
 
 > Android、iOS、HarmonyOS NEXT、Windows 和 macOS 已由仓库所有者于 2026-08-31 确认为同一个完整产品目标。五端一次设计，但绝不维护五套业务代码；宿主、共享层、能力接口和总体完成口径以 [cross-platform-app-contract.md](./cross-platform-app-contract.md) 为最高优先级合同，当前状态只在本路线图记录。网站继续作为第六个在线 surface 与内容事实源。
 
-> 顶层产品结构已由仓库所有者于 2026-08-30 明确为“计时 / 工具 / 我的”三栏，且 Android/iOS 共用同一 React 实现；网站首页、子页面和未改写的 `/account` 必须直接复用，不在 App 复制。页面或按钮可见不等于完成；所有当前已配置登录方式、子页交互与会话状态都要真机端到端验收。唯一合同与成本回退规则见 [mobile-three-tab-contract.md](./mobile-three-tab-contract.md)。
+> 顶层产品结构已由仓库所有者于 2026-08-30 明确为“计时 / 工具 / 我的”三栏，且五端共用 `@cuberoot/app-ui` 的同一 React 实现；网站首页、子页面和未改写的 `/account` 必须直接复用，不在 App 复制。页面或按钮可见不等于完成；所有当前已配置登录方式、子页交互与会话状态都要按平台端到端验收。唯一合同与成本回退规则见 [mobile-three-tab-contract.md](./mobile-three-tab-contract.md)。
 >
-> 计时器产品面的 Web/Android/iOS 完整 UI/UX 一致性已由仓库所有者于 2026-08-30 提升为明确合同，逐项状态与验收证据统一记录在 [mobile-timer-parity-tracker.md](./mobile-timer-parity-tracker.md)。本路线图继续负责 App 总体范围与发布门槛，不再用“首版不覆盖网站 100%”解释 `/timer` 内的假控件或交互缺失。
+> 计时器产品面的 Web/五端完整 UI/UX 一致性已由仓库所有者于 2026-08-30 提升为明确合同，逐项状态与验收证据统一记录在 [mobile-timer-parity-tracker.md](./mobile-timer-parity-tracker.md)。本路线图继续负责 App 总体范围与发布门槛，不再用“首版不覆盖网站 100%”解释 `/timer` 内的假控件或交互缺失。
 
 > 状态：执行中
 >
@@ -82,16 +82,24 @@
 
 - [x] 仓库所有者确认 Android、iOS、HarmonyOS NEXT、Windows、macOS 均为正式客户端目标；PWA 不替代 Windows/macOS 客户端完成口径。
 - [x] 建立 [五端 App 单一来源合同](./cross-platform-app-contract.md)，锁定 Capacitor Mobile、Harmony ArkWeb、Tauri Desktop 与共享层的依赖方向。
-- [ ] 完成现有 Web/Mobile 计时器迁移，使 `@cuberoot/timer-ui` 覆盖网站 `/timer` 的完整可达功能，不留宿主私有业务副本。
-- [ ] 第二个非 Capacitor 宿主落地时，从 Mobile 提取有两个真实消费者的 `@cuberoot/app-ui`；不得提前建空包，也不得让新宿主 import Mobile 源码或 `dist`。
-- [ ] 建立 `core/apps/desktop`，由同一个 Tauri 工程构建 Windows 和 macOS。
-- [ ] 建立 `core/apps/harmony`，由 ArkTS/ArkWeb 薄宿主加载本地共享 React App。
-- [ ] 第二个真实宿主需要时，逐项提取 BLE、安全存储、认证、文件、分享、打印、保亮和生命周期 capability contracts，并为真实消费者提供薄 adapter；不预建八套空接口。
+- [ ] 完成现有 Web/五端计时器迁移，使 `@cuberoot/timer-ui` 覆盖网站 `/timer` 的完整可达功能，不留宿主私有业务副本。
+- [x] 已从 Mobile 提取有真实多宿主消费者的 `@cuberoot/app-ui`；Mobile、Desktop 和 Harmony 只通过公开入口消费，无 app→app 源码或 `dist` 依赖。
+- [x] 已建立 `core/apps/desktop`，Windows 和 macOS 共用同一 Tauri 工程。
+- [ ] Desktop 两平台构建、安装、实体机功能、签名与发布验收完成。macOS 本机已有可启动 `.app` 和经 `hdiutil verify` 的未签名 DMG；Windows 只有 CI 定义，尚无实际 run 证据。
+- [ ] `core/apps/harmony` 完成设备安装、ArkWeb/bridge 交互、BLE、签名与发布验收。ArkWeb 本地 bundle、ArkTS bridge 和 unsigned HAP 已本地构建成功，但当前 `hdc` 无设备，不能记为鸿蒙适配完成。
+- [ ] BLE、安全存储、认证、文件、分享、打印、保亮和生命周期 capability contracts 与宿主 adapters 逐项完成。Desktop BLEC 与 Harmony ConnectivityKit adapter 均接入共享 GAN 连接逻辑，但两端都没有实机 BLE 证据。
 - [ ] 建立五端 build/安装/真机或实体电脑/签名/发布矩阵；五端全部通过前总体状态保持 `NOT COMPLETE`。
 
 当前证据：
 
-- 2026-08-31 只有五端目标与边界合同已经确定；HarmonyOS、Windows、macOS 宿主尚未创建，不得把本节的架构决定误报为三个平台已经适配。
+- `@cuberoot/app-ui` 已是五端唯一 React 产品层；`@cuberoot/app-ui` typecheck 与自动化测试已本地通过。
+- Desktop 源码已共用 Tauri 宿主、系统 keyring、深链、外链和 BLEC transport，BLEC 复用 `@cuberoot/app-ui` 中的同一 GAN connection 逻辑。2026-08-31 macOS `CubeRoot.app` 已稳定启动；`CubeRoot_0.1.0_x64.dmg` 为 6,367,389 bytes，`hdiutil verify` 通过，SHA-256 为 `92205b0a06538c6515f7659cd37446a41373ae71b40e150fd403d192749304a8`。该包未签名、未公证，也没有实机 BLE 证据。Windows CI 矩阵只是已定义的待运行检查，不是 Windows 构建/安装证据。
+- Harmony 的本地 Web bundle、ArkWeb/ArkTS bridge、ConnectivityKit BLE bridge、安全存储与 unsigned HAP 已通过官方 Hvigor 构建，日志为 `BUILD SUCCESSFUL`，产物是 `entry-default-unsigned.hap`。当前官方 SDK 的 `hdc list targets` 为 `[Empty]`，所以安装、ArkWeb 运行、系统交互、真实 GAN 16 UI BLE、签名和发布仍未验收，`HARMONY-01` 保持进行中。
+- Harmony 首次 BLE 现由 `UIAbilityContext` 显式请求 `ACCESS_BLUETOOTH`，Asset Store 机密限定为 `DEVICE_UNLOCKED`，系统备份关闭，native 版本由 build guard 对齐 `package.json`；BLE connect 以 generation + GATT identity 拒绝超时连接的迟到回调，避免同设备快速重连被旧请求断开。ArkTS/HAP 目前只能在已安装的官方 CLT 上本地编译；GitHub CI 尚无官方 Harmony SDK runner，不能把 Vite build 当成 native 回归。所有者已完成华为账号登录，但 `build-profile.json5` 的 `signingConfigs` 仍为空，Hvigor 明确跳过签名；开发者团队、证书与 profile 仍须在 DevEco 中完成并验证，因此当前只能产 unsigned HAP。
+- Desktop BLE 扫描已按插件真实异步回调等待并在 8 秒后 `stopScan`；但 `tauri-plugin-blec 0.12.0` 的通知队列容量为 1，快速转动时的上游 `try_send(...).expect(...)` 仍须用 GAN 16 UI 做压力测试，复现后优先升级或最小 patch upstream，不能用 mock test 宣布稳定。
+- Android 对不支持安全 main-frame message listener 的旧 WebView 启动即 fail closed，并锁定 release manifest 的 10 项权限及 legacy 权限 `maxSdkVersion=30`/扫描 `neverForLocation`。Capacitor 内部仍注册 Cookies/Http/SystemBars 辅助 JS interface；通用 plugin dispatcher 已主 frame 隔离，但远端 iframe 的 cookie 边界仍是发布前 P2 审核项，文档不得声称“所有原生接口均仅主 frame”。
+- `@cuberoot/app-ui` 已接真实 2/3/4 人 `LocalBattleMode` 与 `NetBattleMode`，三个宿主均注入同一联机 client/session contract；本地模式已有原子轮次、胜场/次数/最佳、按键冲突交换、共享一颗智能魔方轮换与打乱失败的 12 秒超时/原位重试；联机已有 WCA 身份、邀请二维码、房主转让/踢人、历史打乱及 single/ao5/mean。Web 仍有另一套 Battle/Net React 视图，完整设置/视频/每人独立 BLE/高级历史展示、staged API 部署、真实双设备和五平台交互仍未完成。
+- API CORS 与网站 embed bridge 已在本地源码加入 Tauri origins，但本轮未 push/部署；不能把本地代码写成生产 Desktop Tools/Account/登录已通。
 
 #### 三栏验收进度
 
@@ -99,22 +107,22 @@
 
 | ID | 状态 | 当前证据/缺口 |
 | --- | --- | --- |
-| NAV-01 | 待 iOS | OPPO 三栏点击通过；待 iOS 同一 React 源码验收 |
-| NAV-02 | 进行中 | 两个 iframe 持久挂载，共享返回协议已接线；待部署后双平台回归 |
-| WEB-01 | 待 iOS | OPPO 已加载生产 `/zh`；待 iOS |
+| NAV-01 | 进行中 | 五端源码均消费 `@cuberoot/app-ui`；OPPO 三栏点击通过，其余四端交互验收未齐 |
+| NAV-02 | 进行中 | 两个 iframe 持久挂载，共享返回协议已接线；待部署后五端回归 |
+| WEB-01 | 进行中 | OPPO 已加载生产 `/zh`；其余四端尚无同状态实证 |
 | WEB-02 | 进行中 | OPPO 已实点“模拟”进入 `/zh/sim?puzzle=3&img_dist=6`；全卡片及页内功能矩阵未完成 |
-| WEB-03 | 进行中 | shared 导航协议 + Native back 已实现；下载/分享/文件/全屏和部署后真机待验 |
+| WEB-03 | 进行中 | shared 导航协议与宿主 back/external 已局部实现；下载/分享/文件/全屏和五端实机待验 |
 | WEB-04 | 未开始 | 待建立受限页面清单、Browser 回退和明确提示 |
-| ACC-01 | 待 iOS | OPPO 已实证未改写的 `/zh/account`；待 iOS 同状态确认 |
-| ACC-02 | 进行中 | canonical LoginForm 交互已委托 Browser；待生产部署、双平台各 provider 真实账号与绑定/解绑验收 |
-| ACC-03 | 进行中 | Browser PKCE→secure session→web ticket→iframe 及双向 logout clear 已接线；待生产/双平台 E2E |
-| IOS-01 | 进行中 | Android/iOS 当前只有 `core/apps/mobile/src` 一份业务源码；待 iOS 同步后完整互动验收 |
+| ACC-01 | 进行中 | OPPO 已实证未改写的 `/zh/account`；其余四端尚无同状态确认 |
+| ACC-02 | 进行中 | canonical LoginForm 交互已委托系统浏览器；待生产部署、五端各 provider 真实账号与绑定/解绑验收 |
+| ACC-03 | 进行中 | Browser PKCE→secure session→web ticket→iframe 及双向 logout clear 已接线；待生产/五端 E2E |
+| IOS-01 | 进行中 | Android/iOS 共用 `@cuberoot/app-ui` 和同一 Capacitor 宿主；待 iOS 完整互动验收 |
 | IOS-LOGIN-01 | BLOCKED | 网站唯一 LoginForm/后端尚无已验证的 Apple 4.8 等价登录 |
 | QA-01 | 未开始 | 待断网、弱网、网站 5xx 与 frame 拒绝故障注入 |
-| QA-02 | 进行中 | OPPO 已修复一次菜单重叠和旧 WebView 视口问题；双平台全弹层/键盘/安全区/动态字号仍未关闭 |
-| XPLAT-01 | 未开始 | 第二真实宿主落地时提取 `@cuberoot/app-ui` |
-| DESKTOP-01 | 未开始 | `core/apps/desktop` 尚未创建；PWA 不算完成 |
-| HARMONY-01 | 未开始 | `core/apps/harmony` 尚未创建；Android 兼容包不算完成 |
+| QA-02 | 进行中 | OPPO 已修复一次菜单重叠和旧 WebView 视口问题；五端全弹层/键盘/安全区/动态字号仍未关闭 |
+| XPLAT-01 | 已完成 | `@cuberoot/app-ui` 已有 Mobile、Desktop 和 Harmony 真实消费者，无 app→app import |
+| DESKTOP-01 | 进行中 | 同一 Tauri 工程与 BLEC adapter 已落地；macOS `.app` 已启动、未签名 DMG 已校验，Windows CI 定义未实际跑；签名/公证、Windows 构建安装和两端 BLE 证据未齐 |
+| HARMONY-01 | 进行中 | ArkWeb 本地 bundle、ArkTS/系统 bridge 与 unsigned HAP 已构建；当前无 `hdc` 设备，安装、运行、BLE、签名和发布证据待验 |
 
 ### 阶段 3：PWA 补强和网站兜底
 
@@ -221,7 +229,7 @@
 - [ ] 在 iOS 模拟器实际执行一次无缓存断网冷启动并保存取证。（当前只有在线模拟器画面和自动化测试证据）
 - [x] Xcode 工程当前保持 Automatic Signing，Debug/Release Bundle ID 均为 `me.cuberoot.app`；付费 Team 尚未选择，不能作为签名成功证据。
 - [ ] iOS GAN v4 transport 已能在原生 picker 返回 UUID 后，通过 manufacturer advertisement 提取协议所需 MAC，并有握手单测；仍需 Apple 账号恢复后用 iPhone + GAN 16 UI 验证扫描、连接、解密、转动、自动起停与断线恢复。
-- [x] 同一移动端 Web 构建已重新同步 Android，并在本机用 JDK 21 完成 274-task `assembleDebug`；当前 Debug APK 为 7,537,782 bytes（SHA-256 `09c5fccc9c16208834c234c0e75b66757e3d30a2d8ee9f587be3e4d71f690440`），未发现本轮 iOS/共享 UI 引入的 Android 编译回归。
+- [x] 同一移动端 Web 构建已重新同步 Android，并在本机用 JDK 21 完成 `assembleDebug`、`assembleRelease` 与 `bundleRelease`；当前 Debug APK 为 8,788,754 bytes（SHA-256 `ce47cbee6318eeb2286cf7dda845aabb6acb91108571ccf324858f84b62f39e5`），已重装到 OPPO Reno7 Pro 5G 并显示真实 3×3 打乱，未发现本轮共享 UI 引入的 Android 编译或启动回归。
 - [ ] iOS 权限、后台、系统中断、安全区、动态字体和 VoiceOver 验证通过。
 - [ ] 网站唯一 `LoginForm`/后端提供满足 Apple 4.8 的等价登录（优先 Sign in with Apple），且完成全 provider、会话衔接、TestFlight 和 App Store 审核取证。（当前 P0 `BLOCKED`）
 - [ ] App Store 审核通过，且业务逻辑未复制为 iOS 专属实现。
@@ -394,7 +402,7 @@ CubeRoot 最适合的路线不是把 App 启动运行时整体改成远程网站
 - 当前 Capacitor Android/iOS 已有真实构建和设备证据，迁移只会重做宿主，不会减少业务代码。
 - Windows 和 macOS 需要的是一个共享桌面宿主；Tauri 可以复用同一 Web 前端，同时保留桌面窗口和系统 API 边界。
 - HarmonyOS NEXT 需要 ArkTS/ArkWeb 与鸿蒙系统能力；不假定 Capacitor 或 Tauri 提供未经验证的一方正式支持。
-- 真正的单一来源位于 `@cuberoot/shared`、`@cuberoot/timer-ui` 和第二宿主落地时提取的 `@cuberoot/app-ui`，而不是要求所有平台使用同一个原生打包工具。
+- 真正的单一来源位于 `@cuberoot/shared`、`@cuberoot/timer-ui` 和已有多宿主消费者的 `@cuberoot/app-ui`，而不是要求所有平台使用同一个原生打包工具。
 
 ## 6. 推荐架构
 
@@ -421,22 +429,22 @@ flowchart TD
 
 ### 6.1 建议的代码边界
 
-初始建议，不要求第一天就拆出所有包：
+当前代码边界：
 
 ```text
 core/
   apps/
     mobile/             # 现有 React + Vite + Capacitor，Android/iOS 宿主
-    harmony/            # 计划：ArkTS + ArkWeb HarmonyOS NEXT 薄宿主
-    desktop/            # 计划：一个 Tauri 工程产出 Windows/macOS
+    harmony/            # ArkTS + ArkWeb 宿主；unsigned HAP 已构建，设备待验
+    desktop/            # 一个 Tauri 工程产出 Windows/macOS；macOS 本机构建已验
   packages/
     client/             # 现有 Next 网站
     shared/             # 已有共享类型和轻量纯函数
     timer-ui/           # 迁移中：目标为 Web/五端唯一计时 React UI
-    app-ui/             # 第二宿主落地时提取：五端三栏 React 产品组合
+    app-ui/             # 五端唯一的三栏 React 产品组合
 ```
 
-不要一开始空建很多抽象包。正确顺序是：
+不要再为已有多消费者的共享能力另造包或宿主私有副本。后续提取新共享能力的顺序是：
 
 1. 移动端要复用一个已有模块。
 2. 先确认它不依赖 Next、DOM 或 Web Bluetooth。
@@ -448,10 +456,10 @@ core/
 
 智能魔方代码应拆为两层：
 
-当前真实 Mobile transport 契约只以 `core/apps/mobile/src/bluetooth/transport.ts` 为准；路线图不复制一份会漂移的 TypeScript 接口。
+当前真实已安装客户端 BLE transport 契约以 `@cuberoot/app-ui` 的 `BleTransport` 为准；Capacitor、Tauri BLEC 和 Harmony ConnectivityKit 只各自实现该薄 transport，路线图不复制一份会漂移的 TypeScript 接口。Harmony transport 已通过 ArkTS/HAP 编译，但尚无设备与 GAN 16 UI 实测。
 
 - Web adapter：包装现有 `navigator.bluetooth`，网站继续使用。
-- Native adapter：包装 Android BLE / iOS Core Bluetooth 插件。
+- Native adapter：包装 Android/iOS Capacitor BLE、Windows/macOS Tauri BLEC 与 Harmony ConnectivityKit BLE；每个平台仍分别取得设备证据。
 - Protocol layer：GAN、MoYu、QiYi 等解密、校验、时钟拟合、掉步恢复和状态机。
 - UI layer：设备选择、连接状态、错误提示和权限引导。
 
@@ -817,6 +825,9 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - Android：低端/主流各一台，至少覆盖 Android 12 前后权限差异。
 - Android：一台高刷新率或大屏设备，检查计时触摸和布局。
 - iOS：一台当前主流 iPhone；条件允许再覆盖较小屏幕。
+- HarmonyOS NEXT：一台真实 HarmonyOS NEXT 设备；Android 兼容模式不计。
+- Windows：一台实体 Windows 11 电脑，验证 WebView2、安装/升级、协议唤起、凭据库和 BLE。
+- macOS：一台实体 Mac，验证 WKWebView、app/dmg 安装、URL scheme、Keychain、BLE、签名和公证。
 - 每个 BLE 型号记录魔方型号、硬件版本、固件和加密版本。
 - 测试者设备补充品牌定制系统、电池优化和后台限制。
 
@@ -904,7 +915,13 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 可用 fastlane 或商店官方 API 自动上传构建、截图和 metadata。
 - 自动化不能代替隐私、付费和审核说明的人工复核。
 
-### 15.4 发布频率
+### 15.4 Desktop 与 Harmony CI
+
+- `test.yml` 已定义 Windows/macOS Tauri 矩阵，但在对应 run 实际成功前只能记为 CI 定义，不是双平台构建证据。
+- Desktop CI 的 `tauri build --no-bundle` 只验证原生编译；不替代 installer、签名、公证、安装、升级或实机 BLE。
+- Harmony 已用当前官方工具链生成 unsigned HAP；下一门槛是在模拟器/真机安装并验证 ArkWeb 本地 bundle、bridge 与 BLE。unsigned HAP 仍不等于签名或发布完成。
+
+### 15.5 发布频率
 
 - 网站和 API 可以持续发布。
 - App 不跟随每次网站 commit 发版。
@@ -1050,7 +1067,7 @@ CubeRoot 应以这些证据证明不是简单套壳：
 
 ## 19. 开发环境
 
-现有 Android/iOS 工程已经成立。开发者必须现场读取 Node、pnpm、JDK、Android SDK、Xcode 和设备状态，不得按早期计划重新创建技术壳或重复验证已完成的 BLE spike。
+现有 Mobile、Desktop 和 Harmony 工程已经成立。开发者必须现场读取 Node、pnpm、Rust/Tauri、DevEco/Harmony SDK、JDK、Android SDK、Xcode 和设备状态，不得按早期计划重新创建技术壳或重复验证已完成的 OPPO + GAN 16 UI BLE spike；也不得把 macOS/Harmony 本机构建证据扩大成其他平台、签名或设备证据。
 
 ## 20. 决策检查表
 
@@ -1062,7 +1079,7 @@ CubeRoot 应以这些证据证明不是简单套壳：
 | Android/iOS 宿主 | React + Vite + Capacitor | 出现不可修复的官方平台阻断才重评 |
 | HarmonyOS 宿主 | ArkTS + ArkWeb 薄壳 | 官方能力实测出现硬阻断才重评，禁止先重写 UI |
 | Windows/macOS 宿主 | 同一个 Tauri Desktop | 桌面原生能力实测出现硬阻断才重评，禁止两套工程 |
-| 共享 React 产品层 | 第二宿主落地时提取 `@cuberoot/app-ui` | 不允许 app→app import 或复制源码 |
+| 共享 React 产品层 | 已落地的 `@cuberoot/app-ui` 为五端唯一实现 | 不允许 app→app import 或复制源码 |
 | 网站地位 | 完整内容和 SEO 主站 | 不改变 |
 | App 地位 | 高频、离线、原生能力 | 按真实使用数据扩展 |
 | 业务逻辑 | 共享 TypeScript 核心 | 不复制三套 |
@@ -1109,11 +1126,11 @@ CubeRoot 应以这些证据证明不是简单套壳：
 
 ```text
 现在
-  1. 完成网站/Mobile 计时器零遗漏迁移，关闭共享层中的已知重复和缺口
+  1. 完成网站/五端计时器零遗漏迁移，关闭共享层中的已知重复和缺口
   2. 保持现有 Android/iOS 同一 Capacitor 宿主，完成双平台真机与发布门槛
-  3. 创建首个非 Capacitor 真实宿主时，在同一变更中提取它实际消费的 @cuberoot/app-ui 和 capability contracts
-  4. 用同一 core/apps/desktop 产出 Windows 和 macOS
-  5. 建立 core/apps/harmony，以 ArkWeb 本地 bundle 接入同一 React App
+  3. 继续保持 @cuberoot/app-ui 为五端唯一 React 产品层，只补真实 capability adapters
+  4. 用同一 core/apps/desktop 完成 Windows/macOS 构建、安装、BLE、签名/公证与发布证据
+  5. 在现有 unsigned HAP 基线上完成 core/apps/harmony 的设备安装、ArkWeb/bridge/BLE、签名与发布证据
   6. 五端接入同一账号、同步、多人、智能魔方和三栏完整功能
   7. 建立五端 CI、安装产物、依赖方向和生成物漂移守卫
   8. 完成五端输入/窗口/离线/生命周期/辅助功能/BLE/升级矩阵

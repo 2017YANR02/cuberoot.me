@@ -17,6 +17,7 @@
 .account-back {
   display: inline-flex;
   align-items: center;
+  min-height: 44px;
   gap: 4px;
   color: var(--muted-foreground);
   text-decoration: none;

@@ -4,4 +4,5 @@
     <string name="title_activity_main">CubeRoot</string>
     <string name="package_name">me.cuberoot.app</string>
     <string name="custom_url_scheme">me.cuberoot.app</string>
+    <string name="webview_update_required">CubeRoot needs a current Android System WebView for secure access. Update Android System WebView or Chrome, then reopen the app.</string>
 </resources>
