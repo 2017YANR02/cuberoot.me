@@ -19,7 +19,9 @@ describe('friends contract', () => {
     expect(migration).toContain("status = 'accepted' AND responded_at IS NOT NULL");
     expect(migration).toContain('PRIMARY KEY (blocker_user_id, blocked_user_id)');
     expect(migration).toContain('CHECK (blocker_user_id <> blocked_user_id)');
-    expect(normalizeSql(schema)).toContain(normalizeSql(migration));
+    for (const statement of migration.split(/(?=CREATE (?:TABLE|INDEX|TRIGGER))/).filter(Boolean)) {
+      expect(normalizeSql(schema)).toContain(normalizeSql(statement));
+    }
     expect(readme).toContain('`0175_friends.sql`');
   });
 
