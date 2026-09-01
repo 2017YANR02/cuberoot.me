@@ -40,7 +40,6 @@
     "@cuberoot/puzzle-solvers": "workspace:*",
     "@cuberoot/shared": "workspace:*",
     "@cuberoot/timer-ui": "workspace:*",
-    "@cuberoot/visualcube": "workspace:*",
     "lucide-react": "1.8.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"

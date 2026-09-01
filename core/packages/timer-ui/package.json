@@ -6,6 +6,7 @@
   "cuberoot": {
     "kind": "library",
     "externalRuntime": {
+      "cubing": "react-dom",
       "flag-icons": "react-dom",
       "lucide-react": "react-dom",
       "react": "react-dom",
@@ -41,8 +42,10 @@
   },
   "dependencies": {
     "@cuberoot/event-icon": "workspace:*",
+    "@cuberoot/puzzle-render-core": "workspace:*",
     "@cuberoot/puzzle-solvers": "workspace:*",
     "@cuberoot/shared": "workspace:*",
+    "cubing": "^0.63.3",
     "flag-icons": "^7.5.0",
     "uqr": "^0.1.3"
   },

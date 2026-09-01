@@ -90,6 +90,11 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
   罚时、分段、备注、移组或删除详情。Web 的重型复盘和各宿主预览只能作为 slot 注入，不能反向
   把 Next/原生依赖带进 `timer-ui`。详情选择必须携带 `session + event` context；删除/移组仅在宿主
   持久化成功后关闭。Android Back 关闭详情前必须 blur 活动备注输入框，保证 canonical onBlur 保存发生。
+- 计时器打乱图只从 `@cuberoot/timer-ui/TimerCubePreview` / `TimerScramblePreview` 渲染。NxN、Clock、
+  Pyraminx、Skewb 和 FTO 复用该组件内的 `cubing/twisty`；SQ1/Megaminx 复用
+  `@cuberoot/puzzle-render-core/{sq1-svg,mega-svg}`。Web 旧 `CubePreview`/`CubingPreview`/renderer 路径
+  只能保留 compatibility re-export；`app-ui` 不得恢复私有 `ScrambleCube` 或直接依赖 `visualcube`。
+  宿主响应式尺寸由外层容器控制并给共享预览传 `fill`；不可解析打乱必须隐藏，不能继续显示上一题。
 
 ## 开发电脑与 Windows/macOS 客户端
 

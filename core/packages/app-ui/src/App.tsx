@@ -55,7 +55,6 @@ import {
   resolveTimerHistoryComparePair,
   summarize,
   takeManualScramble,
-  timerEventNxnSize,
   timerEventIdFromSelector,
   timerEventPickerName,
   timerManualSourceIdentity,
@@ -137,6 +136,7 @@ import {
   TimerHistoryCompareStatus,
   TimerHistoryRow,
   TimerSolveDetailModal,
+  TimerCubePreview,
   TimerHistoryTagBadges,
   TimerHistoryTagFilter,
   TimerManualEntryModal,
@@ -178,7 +178,6 @@ import {
   type TimerWcaSourceLabels,
   type TimerWcaDifficultyLabels,
 } from '@cuberoot/timer-ui';
-import { renderFromSimpleQuery } from '@cuberoot/visualcube';
 import {
   Clock3,
   Grid2X2,
@@ -313,29 +312,6 @@ function downloadBackup(text: string): void {
   anchor.download = `cuberoot-timer-${new Date().toISOString().slice(0, 10)}.json`;
   anchor.click();
   window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-}
-
-function ScrambleCube({ alt, event, scramble }: { alt: string; event: EventId; scramble: string }) {
-  const cubeSize = timerEventNxnSize(event);
-  const svg = useMemo(() => {
-    if (cubeSize === null) return null;
-    try {
-      return renderFromSimpleQuery({ setup: scramble, cubeSize, view: 'net' });
-    } catch {
-      // Manual queue entries are intentionally opaque. An unrenderable line
-      // remains a valid timer scramble and is still frozen into the solve.
-      return null;
-    }
-  }, [cubeSize, scramble]);
-  if (!svg) return null;
-  return (
-    <span
-      aria-label={alt}
-      className="mobile-cube-preview"
-      dangerouslySetInnerHTML={{ __html: svg }}
-      role="img"
-    />
-  );
 }
 
 async function shareOrDownloadBackup(text: string): Promise<void> {
@@ -3126,7 +3102,9 @@ export function App({ host }: { host: InstalledAppHost }) {
                       </p>
                     )}
                      {scrambleReady && scramble.length > 0 && (
-                       <ScrambleCube alt={copy.cubeState} event={activeEvent} scramble={scramble} />
+                       <div className="mobile-cube-preview">
+                         <TimerCubePreview ariaLabel={copy.cubeState} event={activeEvent} fill scramble={scramble} />
+                       </div>
                      )}
                    </TimerScrambleStrip>
                  )}
@@ -3535,8 +3513,8 @@ export function App({ host }: { host: InstalledAppHost }) {
                   });
                 }}
                 preview={(
-                  <ScrambleCube
-                    alt={copy.cubeState}
+                  <TimerCubePreview
+                    ariaLabel={copy.cubeState}
                     event={historyDetailSolve.event}
                     scramble={historyDetailSolve.scramble}
                   />

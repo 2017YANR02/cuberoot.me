@@ -222,6 +222,8 @@ describe('mobile displayed-scramble history', () => {
     expect(actions.map((action) => action.id)).toEqual(TIMER_HISTORY_QUICK_ACTION_IDS);
     expect(app).toContain('<TimerHistoryRow');
     expect(app).toContain('<TimerSolveDetailModal');
+    expect(app).toContain('<div className="mobile-cube-preview">');
+    expect(app).toContain('<TimerCubePreview ariaLabel={copy.cubeState} event={activeEvent} fill scramble={scramble} />');
     expect(app).toContain('TIMER_HISTORY_QUICK_ACTION_IDS.map((actionId)');
     expect(app).toContain('onCopyScramble: onCopy');
     expect(app).toContain('onDelete: onQuickDelete');
