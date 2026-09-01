@@ -56,6 +56,7 @@ import {
   type TimerSettingFieldId,
 } from '@cuberoot/shared/timer';
 import {
+  TimerScrambleClickActionSetting,
   TimerTimingSettingsSections,
   type TimerTimingBooleanControlProps,
 } from '@cuberoot/timer-ui';
@@ -1469,20 +1470,11 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
             <span className="hint">{tr({ zh: '可拖动旋转；关闭则展开 2D 平面', en: 'drag to rotate; off = 2D net'
             })}</span>
           </BooleanSettingRow>
-          <SettingRow id="settings.appearance.scramble-click-action">
-            <select
-              className="settings-row-control-select"
-              value={s.scrambleClickAction}
-              onChange={(e) => updateSettings({ scrambleClickAction: e.target.value as 'none' | 'next' | 'copy' })}
-            >
-              <option value="none">{tr({ zh: '无操作', en: 'Nothing'
-            })}</option>
-              <option value="next">{tr({ zh: '换下一个', en: 'Next scramble'
-            })}</option>
-              <option value="copy">{tr({ zh: '复制到剪贴板', en: 'Copy to clipboard'
-            })}</option>
-            </select>
-          </SettingRow>
+          <TimerScrambleClickActionSetting
+            localize={tr}
+            onChange={(scrambleClickAction) => updateSettings({ scrambleClickAction })}
+            value={s.scrambleClickAction}
+          />
           <BooleanSettingRow
             id="settings.appearance.hide-all-while-running"
             value={s.hideAllUiWhileRunning}

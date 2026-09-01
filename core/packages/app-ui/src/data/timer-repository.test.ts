@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   MAX_TIMER_BACKUP_BYTES,
+  TIMER_SCRAMBLE_CLICK_ACTIONS,
   activeTimerSolves,
   createTimerManualEntryDraft,
   timerWcaCompetitionScrambleSlotIdentity,
@@ -62,6 +63,7 @@ describe('mobile timer repository contract', () => {
     const { driver, repo } = repository();
     const data = await repo.load();
     expect(data.database.activeSessionId).toBe('id-0');
+    expect(data.settings.scrambleClickAction).toBe('copy');
     expect(driver.data).toEqual(data);
   });
 
@@ -160,6 +162,7 @@ describe('mobile timer repository contract', () => {
     await expect(repo.load()).resolves.toMatchObject({ schemaVersion: 2, database: { version: 3 } });
     expect(driver.data).toMatchObject({ schemaVersion: 2, database: { version: 3 } });
     expect((driver.data as TimerStoreData).settings.statsRollingColumns).toEqual(['ao5', 'ao12']);
+    expect((driver.data as TimerStoreData).settings.scrambleClickAction).toBe('copy');
   });
 
   it('updates penalty/comment and deletes one solve', async () => {
@@ -200,6 +203,7 @@ describe('mobile timer repository contract', () => {
       genByStepsOn: true,
       genStepsMetric: 'qtm',
       genSteps: [10, 11, 12],
+      scrambleClickAction: 'next',
     });
     await repo.addSolve({ timeMs: 2_220, penalty: 'ok', scramble: "R U R'", event: '222' });
     await repo.addSolve({ timeMs: 3_330, penalty: 'ok', scramble: 'R U', event: '333' });
@@ -212,6 +216,7 @@ describe('mobile timer repository contract', () => {
     expect(data.settings.genByStepsOn).toBe(true);
     expect(data.settings.genStepsMetric).toBe('qtm');
     expect(data.settings.genSteps).toEqual([10, 11, 12]);
+    expect(data.settings.scrambleClickAction).toBe('next');
     expect(activeTimerSolves(data, '222').map((solve) => solve.timeMs)).toEqual([2_220]);
     expect(activeTimerSolves(data, '333').map((solve) => solve.timeMs)).toEqual([3_330]);
 
@@ -301,6 +306,16 @@ describe('mobile timer repository contract', () => {
     const { repo } = repository();
     await expect(repo.updateSettings({ holdMs: -1 })).rejects.toBeInstanceOf(CorruptTimerStoreError);
     await expect(repo.updateSettings({ runningPrecision: 4 as 3 })).rejects.toBeInstanceOf(CorruptTimerStoreError);
+    await expect(repo.updateSettings({ scrambleClickAction: 'invalid' as 'copy' }))
+      .rejects.toBeInstanceOf(CorruptTimerStoreError);
+  });
+
+  it('persists every shared scramble click action', async () => {
+    const { repo } = repository();
+    for (const scrambleClickAction of TIMER_SCRAMBLE_CLICK_ACTIONS) {
+      await repo.updateSettings({ scrambleClickAction });
+      await expect(repo.load()).resolves.toMatchObject({ settings: { scrambleClickAction } });
+    }
   });
 
   it('persists all eight shared timing settings without a Mobile-only schema', async () => {

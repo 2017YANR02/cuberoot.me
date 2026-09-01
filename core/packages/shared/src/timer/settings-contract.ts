@@ -146,6 +146,38 @@ export interface TimerSettingFieldContract {
 const bool = { kind: 'boolean' } as const;
 const action = { kind: 'action' } as const;
 
+export const TIMER_SCRAMBLE_CLICK_ACTIONS = ['none', 'next', 'copy'] as const;
+
+export type TimerScrambleClickAction = (typeof TIMER_SCRAMBLE_CLICK_ACTIONS)[number];
+
+export const DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION: TimerScrambleClickAction = 'copy';
+
+export type TimerScrambleClickEffect = 'none' | 'next' | 'copy' | 'retry';
+
+export const TIMER_SCRAMBLE_CLICK_TITLE_COPY: Record<TimerScrambleClickEffect, TimerSettingCopy> = {
+  none: { en: 'Click disabled', zh: '点击无操作' },
+  next: { en: 'Click to refresh', zh: '点击换一个打乱' },
+  copy: { en: 'Click to copy', zh: '点击复制打乱' },
+  retry: { en: 'Try again', zh: '再试一次' },
+};
+
+export function normalizeTimerScrambleClickAction(value: unknown): TimerScrambleClickAction {
+  return TIMER_SCRAMBLE_CLICK_ACTIONS.find((action) => action === value)
+    ?? DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION;
+}
+
+export function timerScrambleClickEffect(
+  action: TimerScrambleClickAction,
+  hasScramble: boolean,
+  ready: boolean,
+  retryable: boolean,
+): TimerScrambleClickEffect {
+  if (retryable) return 'retry';
+  if (!ready) return 'none';
+  if (action === 'next') return 'next';
+  return action === 'copy' && hasScramble ? 'copy' : 'none';
+}
+
 /** Exact SettingsPanel order within each of the eight categories. */
 export const TIMER_SETTING_FIELD_CONTRACTS = [
   // Timing
@@ -191,7 +223,7 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.appearance.compact-scramble', category: 'appearance', copy: { en: 'Compact scramble', zh: '紧凑打乱' }, storagePath: 'compactScramble', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-compact-scramble' },
   { id: 'settings.appearance.scramble-image', category: 'appearance', copy: { en: 'Scramble image', zh: '打乱图' }, storagePath: 'showCubePreview', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-scramble-image' },
   { id: 'settings.appearance.cube-3d', category: 'appearance', copy: { en: '3D cube', zh: '3D 立方体' }, storagePath: 'prefer3D', value: bool, visibility: 'always', disabledWhen: 'scramble-preview-hidden', effect: 'persist-3d-preview' },
-  { id: 'settings.appearance.scramble-click-action', category: 'appearance', copy: { en: 'Scramble click action', zh: '点击打乱条' }, storagePath: 'scrambleClickAction', value: { kind: 'enum', values: ['none', 'next', 'copy'] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-scramble-click-action' },
+  { id: 'settings.appearance.scramble-click-action', category: 'appearance', copy: { en: 'Scramble click action', zh: '点击打乱条' }, storagePath: 'scrambleClickAction', value: { kind: 'enum', values: TIMER_SCRAMBLE_CLICK_ACTIONS }, visibility: 'always', disabledWhen: 'never', effect: 'persist-scramble-click-action' },
   { id: 'settings.appearance.hide-all-while-running', category: 'appearance', copy: { en: 'Hide all UI while running', zh: '运行中隐藏全部 UI' }, storagePath: 'hideAllUiWhileRunning', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-hide-all-ui' },
   { id: 'settings.appearance.show-ranks', category: 'appearance', copy: { en: 'Show ranks', zh: '显示排名' }, storagePath: 'showRankBadge', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-show-ranks' },
   { id: 'settings.appearance.ranking-region', category: 'appearance', copy: { en: 'Ranking region', zh: '地区排名' }, storagePath: 'rankCountry', value: { kind: 'country' }, visibility: 'rank-enabled-and-signed-out', disabledWhen: 'never', effect: 'persist-ranking-region-or-sign-in' },

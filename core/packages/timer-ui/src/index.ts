@@ -122,6 +122,10 @@ export type {
   TimerTimingBooleanControlProps,
   TimerTimingSettingsSectionsProps,
 } from './TimerTimingSettingsSections';
+export { TimerScrambleClickActionSetting } from './TimerScrambleClickActionSetting';
+export type {
+  TimerScrambleClickActionSettingProps,
+} from './TimerScrambleClickActionSetting';
 export { TimerPuzzlePicker } from './TimerPuzzlePicker';
 export type {
   TimerPuzzlePickerGroup,

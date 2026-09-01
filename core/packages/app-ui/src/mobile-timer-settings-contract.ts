@@ -1,9 +1,9 @@
 import type { TimerSettingFieldId } from '@cuberoot/shared/timer';
 
 /**
- * Current Mobile settings effects, not visual/device parity claims. All eight
+ * Current Mobile settings effects, not visual/device parity claims. These
  * fields persist through the shared schema, drive the runtime, and render
- * through the same TimerTimingSettingsSections component as Web.
+ * through the same shared components as Web.
  */
 export const MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS = [
   'settings.timer.enabled',
@@ -14,6 +14,7 @@ export const MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS = [
   'settings.timer.hide-running-time',
   'settings.timer.running-precision',
   'settings.timer.result-precision',
+  'settings.appearance.scramble-click-action',
 ] as const satisfies readonly TimerSettingFieldId[];
 
 /**
