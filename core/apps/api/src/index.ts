@@ -87,6 +87,7 @@ import { getIp } from './utils/analytics_helpers.js';
 import { warmCnCompZh } from './utils/cn_comp_zh_cache.js';
 import { startPrewarmCron } from './routes/cubing_live.js';
 import { startMonitors } from './monitors/index.js';
+import { startDouyinOrderSync } from './platform/douyin_order_sync.js';
 
 const app = new Hono();
 const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
@@ -340,6 +341,10 @@ startWcaPastResultsMonitor();
 // 关注选手「报名国外比赛」监控(issue #34)。独立门控 FOREIGN_REG_WATCH_ENABLED,
 // 慢周期(默认 3h)扫非 CN upcoming 比赛的 registrations,命中发站内通知+邮件+Bark。
 startWatchedForeignRegMonitor();
+
+// 抖店实体捆绑订单:付款后订单号可直接兑换课程,退款成功后撤回该次课程权益。
+// 未配置 DOUYIN_* 环境变量时保持关闭。
+startDouyinOrderSync();
 
 const PORT = Number(process.env.PORT) || 3001;
 

@@ -12,6 +12,7 @@ import {
 const commerceSource = readFileSync(new URL('../src/routes/platform_commerce.ts', import.meta.url), 'utf8');
 const catalogSource = readFileSync(new URL('../src/routes/platform_catalog.ts', import.meta.url), 'utf8');
 const learningSource = readFileSync(new URL('../src/routes/platform_learning.ts', import.meta.url), 'utf8');
+const physicalBundleSource = readFileSync(new URL('../src/platform/physical_bundle.ts', import.meta.url), 'utf8');
 const qrSource = readFileSync(new URL('../src/routes/platform_qr.ts', import.meta.url), 'utf8');
 const envExampleSource = readFileSync(new URL('../.env.example', import.meta.url), 'utf8');
 const deploySecretSyncSource = readFileSync(new URL('../scripts/sync-platform-private-secrets.sh', import.meta.url), 'utf8');
@@ -169,8 +170,9 @@ describe('Platform route and security contract', () => {
     const inviteRevoke = routeBlock(learningSource, 'platformLearningRoutes', 'post', '/admin/invites/:id/revoke');
     expect(inviteRevoke).toContain('requirePlatformAdmin(c)');
     expect(inviteRevoke).toContain('withIdempotency(c, actor');
-    expect(inviteRevoke).toContain('reversal_of_ledger_id');
-    expect(inviteRevoke).toContain("status = 'revoked'");
+    expect(inviteRevoke).toContain('revokePhysicalBundleInvite(');
+    expect(physicalBundleSource).toContain('reversal_of_ledger_id');
+    expect(physicalBundleSource).toContain("status = 'revoked'");
   });
 
   it('preserves quiz privacy, media entitlement, analytics consent, and certificate image safety', () => {
