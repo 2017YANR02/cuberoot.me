@@ -101,6 +101,27 @@ describe('mobile auth', () => {
     expect(opened.searchParams.get('provider')).toBe('wechat');
   });
 
+  it('reopens an unfinished login without invalidating its callback state', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      response({ token: token(), user: USER }),
+    );
+    const { client, openBrowser, storage } = setup(fetcher);
+
+    await client.start('zh');
+    const first = new URL(openBrowser.mock.calls[0][0]);
+    const pending = storage.values.get('pending_auth');
+    await client.start('zh', 'wechat');
+    const second = new URL(openBrowser.mock.calls[1][0]);
+
+    expect(second.searchParams.get('state')).toBe(first.searchParams.get('state'));
+    expect(second.searchParams.get('code_challenge')).toBe(first.searchParams.get('code_challenge'));
+    expect(second.searchParams.get('provider')).toBe('wechat');
+    expect(storage.values.get('pending_auth')).toBe(pending);
+    await expect(client.finish(
+      `me.cuberoot.app://auth/callback?ticket=${TICKET}&state=${first.searchParams.get('state')}`,
+    )).resolves.toMatchObject({ user: USER });
+  });
+
   it('exchanges a matching callback and stores the canonical session', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
       response({ token: token(), user: USER }),

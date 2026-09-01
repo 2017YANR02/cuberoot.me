@@ -2,7 +2,7 @@
 
 状态：`ACTIVE`
 
-最后更新：2026-08-31
+最后更新：2026-09-01
 
 所有者决定：Android、iOS、HarmonyOS NEXT、Windows 和 macOS 共用“计时 / 工具 / 我的”三个产品 surface；紧凑窗口使用底栏，桌面窗口仍消费同一个 React 导航与三栏状态，不得建立平台专用功能树。三栏的内容、视觉、交互、状态和功能完整一致是验收目标，第一原则是不复制网站页面形成多端维护。五端宿主与单一来源的最高优先级边界见 [cross-platform-app-contract.md](./cross-platform-app-contract.md)。
 
@@ -62,6 +62,8 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（同一 Tauri 工程�
 - 底栏由打包的 `@cuberoot/app-ui` 持有，不进入网站源码。
 - 网站与原生壳只通过 `@cuberoot/shared/mobile-embed` 的导航消息契约协作：网站报告当前栏的历史深度，宿主把系统返回动作送给当前 iframe；不维护客户端页面路由副本。
 - 工具/我的需要网络；离线时计时仍可用，Web surface 显示明确网络状态。
+- 两个 surface 复用同一加载/离线/错误/重试 UI；宿主在线且 iframe 发出可见加载事件即可展示页面，同时有界重试 init（当前最多约 10 秒），同源且来自该 iframe 的导航 ACK 可提前停止。ACK 用于返回栈、外链和账号桥能力，不能在生产 bridge 尚未部署时被错误地当作页面可见性的前置条件。
+- 跨域 iframe 的初始空白、弱网挂起、HTTP 5xx 和 frame 拒绝不能仅靠父页面 `load/error` 可靠区分；不得用假定时器冒充检测成功。共享层先可靠处理宿主 Network 离线，其他故障以生产 bridge ACK 或已授权的通用宿主能力补齐，不为五个平台各造 WebView 回调。
 
 “我的”必须直接使用未改写的当前语言 `/account` 或 `/zh/account`，不附带 `auth=mobile`。登录入口与网站同样由 `/v1/auth/providers` 的当前配置决定；网站显示邮箱、手机、WCA、Google、微信、QQ 或支付宝中的哪些方式，App 就必须显示并最终支持同一组，不建 Mobile provider 白名单。
 
@@ -73,6 +75,7 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（同一 Tauri 工程�
 - Account iframe、系统浏览器和宿主安全存储是不同的会话容器。验收必须覆盖“Account 登录入口 → 系统浏览器 PKCE → 原生安全会话 → 90 秒 web ticket → Account iframe”、双向退出/删除、预存 iframe-only 会话和休眠 App 外部退出等边界。
 - 第三方登录若通过 `X-Frame-Options`、CSP、弹窗或 App 唤起限制 iframe，必须打开同一个 canonical 网站流程的系统浏览器回退；每个 provider 仍需五端真实账号端到端验收。
 - 认证消息必须走 `@cuberoot/shared/mobile-embed`，并复用 `/v1/auth/mobile-session/*` 与 `/v1/auth/web-session/*` 单次票据。长期 JWT 不得进入 URL 或 `postMessage`；不得复制 `LoginForm` 或 import client 私有源码。
+- 新版 Web session 请求和结果必须回显同一个 `requestId`，新版宿主只接受当前 in-flight 的同 ID 结果；网站 decoder 暂时兼容独立发布中的旧 App 无 ID 请求，并向它返回无 ID 结果。签发/交换超时、provider 启动失败和重复点击都必须有界，未完成登录再次打开时复用同一 PKCE pending state，不得让早先回调失效。
 
 ### 3.3 iOS Apple 4.8 发布门槛
 
@@ -94,6 +97,8 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（同一 Tauri 工程�
 ### 3.5 低维护回退
 
 若某个页面或动作在 iframe 中被浏览器安全模型阻止，通过宿主 `openExternal` 在系统浏览器打开同一线上 URL。该回退仍复用网站，但底栏会暂时不可见，所以只能标记为“Web 回退”，不能冒充同 App 内完全一致；生产部署与每个真实 provider 的五端验收仍是完成条件。
+
+网站 bridge 必须拦截跨域链接和 `target=_blank`，通过 `@cuberoot/shared/mobile-embed` 请求宿主 `openExternal`；宿主只接受 `http:`、`https:`、`mailto:`，并同时校验生产 origin 与实际 iframe source。下载仍按 WEB-03/WEB-04 单独验收，不能由普通外链通过代替。
 
 自建 Android WebView + iOS WKWebView 双原生容器、完整 Cookie bridge、下载/权限/导航代理属于高成本方案。除非 iframe/Browser 两条低维护路径都无法满足关键工作流且所有者再次授权，不启动该方案。
 

@@ -102,6 +102,7 @@ async function fetchWithTimeout(
 
 export class InstalledAuthClient {
   private finishing: Promise<WebSession | null> | null = null;
+  private starting: Promise<void> | null = null;
 
   constructor(private readonly runtime: MobileAuthRuntime) {}
 
@@ -176,42 +177,55 @@ export class InstalledAuthClient {
     }
   }
 
-  async start(
+  start(
     language: SupportedLanguage,
     provider: MobileAuthProvider | null = null,
+  ): Promise<void> {
+    if (this.starting) return this.starting;
+    const operation = this.startOnce(language, provider).finally(() => {
+      if (this.starting === operation) this.starting = null;
+    });
+    this.starting = operation;
+    return operation;
+  }
+
+  private async startOnce(
+    language: SupportedLanguage,
+    provider: MobileAuthProvider | null,
   ): Promise<void> {
     const appId = await this.runtime.getAppId();
     const callbackUrl = `${appId}://auth/callback`;
     if (!isMobileAuthCallbackUrl(callbackUrl)) throw new Error('unsupported app identity');
 
-    const codeVerifier = base64Url(this.runtime.randomBytes(32));
-    const state = base64Url(this.runtime.randomBytes(32));
+    let pending = decodePending(await this.runtime.storage.getItem(PENDING_KEY));
+    if (pending && this.runtime.now() - pending.createdAt > PENDING_TTL_MS) pending = null;
+    const created = !pending;
+    pending ??= {
+      codeVerifier: base64Url(this.runtime.randomBytes(32)),
+      createdAt: this.runtime.now(),
+      state: base64Url(this.runtime.randomBytes(32)),
+    };
     const codeChallenge = base64Url(await this.runtime.digestSha256(
-      new TextEncoder().encode(codeVerifier),
+      new TextEncoder().encode(pending.codeVerifier),
     ));
-    if (!isMobileAuthRandomValue(codeVerifier)
-      || !isMobileAuthRandomValue(state)
+    if (!isMobileAuthRandomValue(pending.codeVerifier)
+      || !isMobileAuthRandomValue(pending.state)
       || !isMobileAuthRandomValue(codeChallenge)) {
       throw new Error('mobile auth randomness unavailable');
     }
 
-    const pending: PendingMobileAuth = {
-      codeVerifier,
-      createdAt: this.runtime.now(),
-      state,
-    };
-    await this.runtime.storage.setItem(PENDING_KEY, JSON.stringify(pending));
+    if (created) await this.runtime.storage.setItem(PENDING_KEY, JSON.stringify(pending));
 
     const url = new URL('/auth/mobile', SITE_ORIGIN);
     url.searchParams.set('callback_url', callbackUrl);
     url.searchParams.set('code_challenge', codeChallenge);
     url.searchParams.set('lang', language);
-    url.searchParams.set('state', state);
+    url.searchParams.set('state', pending.state);
     if (provider) url.searchParams.set('provider', provider);
     try {
       await this.runtime.openBrowser(url.toString());
     } catch (error) {
-      await this.runtime.storage.removeItem(PENDING_KEY);
+      if (created) await this.runtime.storage.removeItem(PENDING_KEY);
       throw error;
     }
   }

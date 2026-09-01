@@ -45,4 +45,11 @@ describe('mobile Account login delegation', () => {
     expect(bridgeSource).toContain('parentOrigin = event.origin');
     expect(bridgeSource).not.toMatch(/postMessage\([^)]*,\s*['"]\*['"]\)/);
   });
+
+  it('keeps external navigation in the installed host', () => {
+    expect(bridgeSource).toContain('mobileEmbedExternalMessage(surface, next.href)');
+    expect(bridgeSource).toContain("next.origin !== window.location.origin || anchor.target === '_blank'");
+    expect(bridgeSource).toContain('if (!isMobileEmbedExternalHref(next.href)) return');
+    expect(bridgeSource).toContain('event.preventDefault()');
+  });
 });
