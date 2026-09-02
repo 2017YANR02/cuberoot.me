@@ -283,10 +283,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'color-test/positions': {
-    title: { zh: '侧面颜色顺序测试', en: 'Side Colour Order' },
+    title: { zh: '颜色位置关系测试', en: 'Colour Positions' },
     description: {
-      zh: '选择任意顶面颜色,练习标准三阶魔方其余四个侧面的左右位置关系。',
-      en: 'Choose any top colour and practise the left-right order of the other four side faces on a standard 3×3.',
+      zh: '选择任意顶面颜色,练习标准三阶魔方的侧面左右顺序和六种颜色的对色。',
+      en: 'Choose any top colour and practise side-face order and opposite colours on a standard 3×3.',
     },
   },
   'dev': {
