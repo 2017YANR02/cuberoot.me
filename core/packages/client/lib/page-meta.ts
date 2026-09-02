@@ -80,6 +80,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'account': { title: { zh: '账号', en: 'Account' } },
+  'admin/users': {
+    title: { zh: '用户管理', en: 'User Management' },
+    description: {
+      zh: 'CubeRoot 管理员查看注册统计、登录绑定和用户账号资料的后台。',
+      en: 'CubeRoot administrator dashboard for registration statistics, sign-in methods, and account records.',
+    },
+  },
   'vault': {
     title: { zh: '私密资料库', en: 'Private Vault' },
     description: {

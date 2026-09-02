@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
-import { Bell, BookOpen, Building2, ChevronLeft, HeartHandshake, LockKeyhole, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, Upload, UserRound, Users } from 'lucide-react';
+import { Bell, BookOpen, Building2, ChevronLeft, HeartHandshake, LockKeyhole, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, Upload, UserRound, Users, UserCog } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
@@ -764,12 +764,21 @@ export default function AccountPage() {
       icon: <Bell size={22} className="account-card-icon" />,
       title: tr({ zh: '消息', en: 'Notifications' }),
     },
-    ...(isAdmin ? [{
-      key: 'submissions',
-      href: accountHref('submissions'),
-      icon: <Inbox size={22} className="account-card-icon" />,
-      title: tr({ zh: '公式投稿', en: 'Algorithm submissions' }),
-    }] : []),
+    ...(isAdmin ? [
+      {
+        key: 'users-admin',
+        href: '/admin/users',
+        icon: <UserCog size={22} className="account-card-icon" />,
+        title: tr({ zh: '用户管理', en: 'User management' }),
+        desc: tr({ zh: '注册统计、登录绑定和账号明细', en: 'Registration stats, sign-in methods, and account records' }),
+      },
+      {
+        key: 'submissions',
+        href: accountHref('submissions'),
+        icon: <Inbox size={22} className="account-card-icon" />,
+        title: tr({ zh: '公式投稿', en: 'Algorithm submissions' }),
+      },
+    ] : []),
   ];
 
   return (
