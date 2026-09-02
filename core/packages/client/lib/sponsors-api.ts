@@ -6,6 +6,8 @@ import { API_ORIGIN } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
 const BASE = API_ORIGIN + '/v1/sponsors';
+// claimed 字段加入公开响应后升级读取 URL，避免浏览器继续复用旧版 1h 缓存。
+const LIST_BASE = `${BASE}?v=2`;
 
 export interface Sponsor {
   id: number;
@@ -28,7 +30,7 @@ export interface SponsorInput {
 }
 
 export async function listSponsors(fresh = false): Promise<Sponsor[]> {
-  const url = fresh ? `${BASE}?fresh=${Date.now()}` : BASE;
+  const url = fresh ? `${LIST_BASE}&fresh=${Date.now()}` : LIST_BASE;
   return handleApi<Sponsor[]>(await fetch(url, fresh ? { cache: 'no-store' } : undefined));
 }
 export async function createSponsor(body: SponsorInput): Promise<Sponsor> {
