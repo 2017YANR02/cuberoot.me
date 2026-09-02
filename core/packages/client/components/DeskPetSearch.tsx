@@ -7,7 +7,8 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Maximize2, Coffee, Heart, Home, Sparkles, Shuffle, Boxes, MessageSquarePlus, Music, Share2, Wrench, Plus, Pencil, Laptop, Globe } from 'lucide-react';
+import { Maximize2, Coffee, Heart, Home, Sparkles, Shuffle, Boxes, MessageSquarePlus, Music, Share2, Wrench, Plus, Pencil, Laptop, Globe, UserCog } from 'lucide-react';
+import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import LandingSearch from '@/components/LandingSearch';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -60,7 +61,7 @@ const CSS = `
   display:flex;align-items:center;gap:4px;width:max-content;max-width:calc(100vw - 16px);padding:5px;
   background:var(--popover);border:1px solid var(--border-default);border-radius:9px;
   box-shadow:0 8px 24px color-mix(in srgb,var(--foreground) 14%,transparent);}
-.deskpet-admin-menu>button{width:auto;white-space:nowrap;}
+.deskpet-admin-menu>button,.deskpet-admin-menu>a{width:auto;white-space:nowrap;}
 .deskpet-admin-menu .env-switch{display:inline-flex;align-items:center;gap:2px;padding:2px;
   border:1px solid var(--border-default);border-radius:999px;}
 .deskpet-admin-menu .env-switch-opt{display:inline-flex;align-items:center;justify-content:center;
@@ -338,6 +339,10 @@ export default function DeskPetSearch({
                     {tr({ zh: '首页焦点', en: 'Homepage feature' })}
                   </button>
                 )}
+                <AppLink href="/admin/users" role="menuitem" prefetch={false} onClick={onClose}>
+                  <UserCog size={13} aria-hidden />
+                  {tr({ zh: '用户管理', en: 'User management' })}
+                </AppLink>
                 {liveUrlSuffix && (
                   <div className="env-switch" role="group" aria-label={tr({ zh: '切换环境', en: 'Switch environment' })}>
                     {([

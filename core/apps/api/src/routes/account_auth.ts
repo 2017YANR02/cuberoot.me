@@ -806,6 +806,192 @@ accountAuthRoutes.post('/auth/profile', async (c) => {
 });
 
 // ── 管理员编辑账号资料 ──
+const ADMIN_USER_PROVIDERS = new Set([
+  'all', 'password', 'none',
+  'email', 'phone', 'wca', 'apple', 'google', 'wechat', 'douyin', 'alipay', 'qq',
+]);
+const ADMIN_USER_SORTS = new Set(['created', 'name', 'id']);
+
+interface AdminUserListRow {
+  id: number | string;
+  display_name: string;
+  avatar_url: string | null;
+  wca_id: string | null;
+  birth_date: string | null;
+  gender: string | null;
+  country_iso2: string | null;
+  region_code: string | null;
+  city_name: string | null;
+  created_at: string | Date;
+  updated_at: string | Date;
+  password_updated_at: string | Date | null;
+  has_password: boolean;
+  email_notify: boolean;
+  lang: string | null;
+  identities: Array<{
+    provider: string;
+    providerUid: string;
+    verifiedAt: string | Date | null;
+    createdAt: string | Date;
+  }> | null;
+}
+
+/** 管理员账号总览:统计、近 30 天注册量和分页用户明细。敏感身份仅在管理员 no-store 响应中返回。 */
+accountAuthRoutes.get('/auth/admin/users', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  await requireAdmin(c);
+
+  const rawPage = Number(c.req.query('page') ?? '1');
+  const rawPageSize = Number(c.req.query('pageSize') ?? '25');
+  if (!Number.isSafeInteger(rawPage) || rawPage < 1) return c.json({ error: 'invalid page' }, 400);
+  if (!Number.isSafeInteger(rawPageSize) || rawPageSize < 1 || rawPageSize > 100) {
+    return c.json({ error: 'invalid page size' }, 400);
+  }
+  const q = (c.req.query('q') ?? '').trim();
+  if (q.length > 100) return c.json({ error: 'search query is too long' }, 400);
+  const provider = (c.req.query('provider') ?? 'all').toLowerCase();
+  if (!ADMIN_USER_PROVIDERS.has(provider)) return c.json({ error: 'invalid provider' }, 400);
+  const sort = (c.req.query('sort') ?? 'created').toLowerCase();
+  if (!ADMIN_USER_SORTS.has(sort)) return c.json({ error: 'invalid sort' }, 400);
+  const direction = (c.req.query('direction') ?? 'desc').toLowerCase();
+  if (direction !== 'asc' && direction !== 'desc') return c.json({ error: 'invalid sort direction' }, 400);
+
+  const filters: string[] = [];
+  const params: unknown[] = [];
+  if (q) {
+    const escaped = q.replace(/[\\%_]/g, '\\$&');
+    filters.push(`(
+      u.display_name ILIKE ? ESCAPE '\\'
+      OR COALESCE(u.wca_id, '') ILIKE ? ESCAPE '\\'
+      OR CAST(u.id AS TEXT) = ?
+      OR EXISTS (
+        SELECT 1 FROM auth_identities search_identity
+        WHERE search_identity.user_id = u.id
+          AND search_identity.provider_uid ILIKE ? ESCAPE '\\'
+      )
+    )`);
+    params.push(`%${escaped}%`, `%${escaped}%`, q, `%${escaped}%`);
+  }
+  if (provider === 'password') {
+    filters.push('u.password_hash IS NOT NULL');
+  } else if (provider === 'none') {
+    filters.push('u.password_hash IS NULL AND NOT EXISTS (SELECT 1 FROM auth_identities empty_identity WHERE empty_identity.user_id = u.id)');
+  } else if (provider === 'wca') {
+    filters.push('u.wca_id IS NOT NULL');
+  } else if (provider !== 'all') {
+    filters.push('EXISTS (SELECT 1 FROM auth_identities provider_identity WHERE provider_identity.user_id = u.id AND provider_identity.provider = ?)');
+    params.push(provider);
+  }
+  const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+  const orderColumn = sort === 'name' ? 'LOWER(u.display_name)' : sort === 'id' ? 'u.id' : 'u.created_at';
+  const orderDirection = direction === 'asc' ? 'ASC' : 'DESC';
+  const offset = (rawPage - 1) * rawPageSize;
+
+  const [summaryRows, dailyRows, providerRows, countRows, users] = await Promise.all([
+    query<{
+      total_users: number | string;
+      registered_today: number | string;
+      registered_last_7_days: number | string;
+      wca_users: number | string;
+      password_users: number | string;
+      completed_profiles: number | string;
+      users_without_identity: number | string;
+    }>(`SELECT
+      COUNT(*) AS total_users,
+      COUNT(*) FILTER (WHERE created_at >= date_trunc('day', NOW() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC') AS registered_today,
+      COUNT(*) FILTER (WHERE created_at >= (date_trunc('day', NOW() AT TIME ZONE 'UTC') - INTERVAL '6 days') AT TIME ZONE 'UTC') AS registered_last_7_days,
+      COUNT(*) FILTER (WHERE wca_id IS NOT NULL) AS wca_users,
+      COUNT(*) FILTER (WHERE password_hash IS NOT NULL) AS password_users,
+      COUNT(*) FILTER (WHERE birth_date IS NOT NULL AND gender IS NOT NULL AND country_iso2 IS NOT NULL) AS completed_profiles,
+      COUNT(*) FILTER (WHERE password_hash IS NULL AND NOT EXISTS (
+        SELECT 1 FROM auth_identities no_identity WHERE no_identity.user_id = app_users.id
+      )) AS users_without_identity
+      FROM app_users`),
+    query<{ day: string; count: number | string }>(`WITH days AS (
+      SELECT generate_series(
+        (NOW() AT TIME ZONE 'UTC')::date - 29,
+        (NOW() AT TIME ZONE 'UTC')::date,
+        INTERVAL '1 day'
+      )::date AS day
+    )
+    SELECT days.day, COUNT(app_users.id) AS count
+    FROM days
+    LEFT JOIN app_users
+      ON app_users.created_at >= days.day AT TIME ZONE 'UTC'
+      AND app_users.created_at < (days.day + 1) AT TIME ZONE 'UTC'
+    GROUP BY days.day
+    ORDER BY days.day`),
+    query<{ provider: string; count: number | string }>(
+      'SELECT provider, COUNT(DISTINCT user_id) AS count FROM auth_identities GROUP BY provider ORDER BY provider',
+    ),
+    query<{ count: number | string }>(`SELECT COUNT(*) AS count FROM app_users u ${where}`, params),
+    query<AdminUserListRow>(`SELECT
+      u.id, u.display_name, u.avatar_url, u.wca_id, u.birth_date, u.gender,
+      u.country_iso2, u.region_code, u.city_name, u.created_at, u.updated_at,
+      u.password_updated_at, (u.password_hash IS NOT NULL) AS has_password, u.email_notify, u.lang,
+      COALESCE(
+        json_agg(json_build_object(
+          'provider', identity.provider,
+          'providerUid', identity.provider_uid,
+          'verifiedAt', identity.verified_at,
+          'createdAt', identity.created_at
+        ) ORDER BY identity.created_at) FILTER (WHERE identity.id IS NOT NULL),
+        '[]'::json
+      ) AS identities
+    FROM app_users u
+    LEFT JOIN auth_identities identity ON identity.user_id = u.id
+    ${where}
+    GROUP BY u.id
+    ORDER BY ${orderColumn} ${orderDirection}, u.id ${orderDirection}
+    LIMIT ? OFFSET ?`, [...params, rawPageSize, offset]),
+  ]);
+
+  const summary = summaryRows[0];
+  const providerCounts = new Map(
+    providerRows.map((row) => [row.provider, Number(row.count)]),
+  );
+  providerCounts.set('wca', Number(summary?.wca_users ?? 0));
+  return c.json({
+    summary: {
+      totalUsers: Number(summary?.total_users ?? 0),
+      registeredToday: Number(summary?.registered_today ?? 0),
+      registeredLast7Days: Number(summary?.registered_last_7_days ?? 0),
+      wcaUsers: Number(summary?.wca_users ?? 0),
+      passwordUsers: Number(summary?.password_users ?? 0),
+      completedProfiles: Number(summary?.completed_profiles ?? 0),
+      usersWithoutIdentity: Number(summary?.users_without_identity ?? 0),
+    },
+    daily: dailyRows.map((row) => ({ date: row.day, count: Number(row.count) })),
+    providerCounts: Array.from(providerCounts, ([providerName, count]) => ({
+      provider: providerName,
+      count,
+    })).sort((a, b) => a.provider.localeCompare(b.provider)),
+    users: users.map((row) => ({
+      id: Number(row.id),
+      displayName: row.display_name,
+      avatarUrl: row.avatar_url,
+      wcaId: row.wca_id,
+      birthDate: row.birth_date,
+      gender: row.gender,
+      countryIso2: row.country_iso2,
+      regionCode: row.region_code,
+      cityName: row.city_name,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      passwordUpdatedAt: row.password_updated_at,
+      hasPassword: row.has_password,
+      emailNotify: row.email_notify,
+      lang: row.lang,
+      identities: row.identities ?? [],
+    })),
+    pagination: {
+      page: rawPage,
+      pageSize: rawPageSize,
+      total: Number(countRows[0]?.count ?? 0),
+    },
+  });
+});
+
 accountAuthRoutes.get('/auth/admin/users/:userId', async (c) => {
   c.header('Cache-Control', 'no-store');
   await requireAdmin(c);
