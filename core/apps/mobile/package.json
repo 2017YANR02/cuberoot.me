@@ -36,8 +36,6 @@
     "@capacitor/ios": "8.5.0",
     "@capacitor/network": "8.0.1",
     "@cuberoot/app-ui": "workspace:*",
-    "@cuberoot/event-icon": "workspace:*",
-    "@cuberoot/puzzle-solvers": "workspace:*",
     "@cuberoot/shared": "workspace:*",
     "@cuberoot/timer-ui": "workspace:*",
     "lucide-react": "1.8.0",

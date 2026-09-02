@@ -23,6 +23,10 @@
       ],
       "ignoreDependencies": ["playwright"]
     },
+    "apps/harmony": {
+      "entry": ["hvigorfile.ts", "entry/hvigorfile.ts"],
+      "ignoreDependencies": ["@ohos/hvigor-ohos-plugin"]
+    },
     "apps/mobile": {
       "ignore": [
         "android/app/build/**",
@@ -44,6 +48,9 @@
     },
     "packages/puzzle-solvers": {
       "entry": ["src/*.ts", "tests/**/*.test.ts"]
+    },
+    "packages/shared": {
+      "entry": ["scripts/**/*.{mjs,ts}"]
     },
     "packages/vendor-sr-puzzlegen": {
       "entry": ["src/index.ts"]
