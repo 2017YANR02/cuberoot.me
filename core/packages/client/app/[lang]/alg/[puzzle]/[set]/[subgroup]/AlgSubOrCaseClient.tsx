@@ -21,13 +21,14 @@ import '../../../alg.css';
 
 export default function AlgSubOrCaseClient() {
   const pathname = usePathname();
-  const [route, setRoute] = useState<{ puzzle: string; set: string; slug: string } | null>(null);
+  const [route, setRoute] = useState<{ puzzle: string; set: string; slug: string; edit: boolean } | null>(null);
   useEffect(() => {
-    const m = window.location.pathname.match(/\/alg\/([^/]+)\/([^/]+)\/([^/?#]+)/);
+    const m = window.location.pathname.match(/\/alg\/([^/]+)\/([^/]+)\/([^/?#]+)(?:\/(edit))?\/?$/);
     setRoute(m ? {
       puzzle: decodeURIComponent(m[1]),
       set: decodeURIComponent(m[2]),
       slug: decodeURIComponent(m[3]),
+      edit: m[4] === 'edit',
     } : null);
   }, [pathname]);
   const puzzle = route?.puzzle ?? '';
@@ -67,7 +68,7 @@ export default function AlgSubOrCaseClient() {
   // 否则当 case 解析(slug 唯一表 + 手打名兜底)。
   const caseObj = resolveCaseSlug(data.cases, slug, puzzle, set);
   if (caseObj) {
-    return <AlgCaseView puzzle={puzzle as AlgPuzzle} set={set} caseObj={caseObj} data={data} />;
+    return <AlgCaseView puzzle={puzzle as AlgPuzzle} set={set} caseObj={caseObj} data={data} editMode={route.edit} />;
   }
   return <div className="alg-root"><div className="alg-empty">{tr({ zh: '没找到这个 case', en: 'Case not found.' })}</div></div>;
 }

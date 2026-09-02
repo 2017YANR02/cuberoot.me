@@ -51,7 +51,7 @@ export default function Sq1PblNotationPage() {
     <main className="alg-root alg-notation-page">
       <div className="alg-notation-shell alg-mnemonic-shell">
         <header className="alg-notation-hero">
-          <h1>{t('SQ1 Karnaukh记号', 'Square-1 Karnaukh notation')}</h1>
+          <h1>{t('SQ1 卡脑壳记号', 'Square-1 Karnaukh notation')}</h1>
           <nav className="alg-notation-links" aria-label={t('PBL 页面', 'PBL pages')}>
             <Link href="/alg/sq1/pbl" className="alg-notation-reference" prefetch={false}>
               {t('PBL 公式集', 'PBL algorithms')}
@@ -64,11 +64,11 @@ export default function Sq1PblNotationPage() {
 
         <div className="alg-mnemonic-intro">
           <p>{t(
-            '公式卡片里括号标出的“原表记号”来自 Daniel’s Public PBL Doc。它是为批量记忆设计的 Karnaukh 记号，不是播放器接受的标准 Square-1 公式。',
+            '公式卡片里括号标出的“原表记号”来自 Daniel’s Public PBL Doc。它是为批量记忆设计的卡脑壳记号，不是播放器接受的标准 Square-1 公式。',
             'The “source mnemonic” in parentheses on each algorithm card comes from Daniel’s Public PBL Doc. Karnaukh notation is designed for memorising many algorithms; it is not executable Square-1 notation for the player.',
           )}</p>
           <p>{t(
-            '卡片主行的 (a,b) / … 才是可复制、可播放的公式。Karnaukh 记号始终只作阅读提示，不参与解析、动画或训练。',
+            '卡片主行的 (a,b) / … 才是可复制、可播放的公式。卡脑壳记号始终只作阅读提示，不参与解析、动画或训练。',
             'The main (a,b) / … line is the executable formula to copy or play. Mnemonics remain reading aids and never enter parsing, animation, or training.',
           )}</p>
         </div>
@@ -89,7 +89,7 @@ export default function Sq1PblNotationPage() {
             </div>
             <div>
               <dt><code>\</code></dt>
-              <dd>{t('原表所称的“下层起始切层”；它是 Karnaukh 记号的方向标记，不是网站标准公式输入。', 'The source’s “down starting slice”; it is a mnemonic direction marker, not site-standard algorithm input.')}</dd>
+              <dd>{t('原表所称的“下层起始切层”；它是卡脑壳记号的方向标记，不是网站标准公式输入。', 'The source’s “down starting slice”; it is a mnemonic direction marker, not site-standard algorithm input.')}</dd>
             </div>
             <div>
               <dt><code>//</code></dt>
@@ -156,7 +156,7 @@ export default function Sq1PblNotationPage() {
           )}</p>
           <div className="alg-notation-links">
             <a href={SQ1_PBL_MNEMONIC_SOURCE.tutorial} target="_blank" rel="noreferrer" className="alg-notation-reference">
-              {t('Karnaukh 记号教程', 'Karnaukh notation tutorial')}
+              {t('卡脑壳记号教程', 'Karnaukh notation tutorial')}
             </a>
             <a href={SQ1_PBL_MNEMONIC_SOURCE.spreadsheet} target="_blank" rel="noreferrer" className="alg-notation-reference">
               {t('原始公开表格', 'Original public spreadsheet')}

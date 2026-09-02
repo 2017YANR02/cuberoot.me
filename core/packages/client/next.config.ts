@@ -245,6 +245,9 @@ const nextConfig: NextConfig = {
         // spike as the comp page above). One static sentinel shell.
         // See recon/person/[wcaId]/page.tsx.
         { source: "/:lang(en|zh)/recon/person/:wcaId", destination: "/:lang/recon/person/_" },
+        // Case editor URLs keep the same static sentinel shell as case details. Put the
+        // four-segment form first so `/edit` remains a real, refreshable browser URL.
+        { source: "/:lang(en|zh)/alg/:puzzle/:set/:seg((?!run$|select$|simple$)[^/]+)/edit", destination: "/:lang/alg/_/_/_" },
         // Alg subgroup list AND per-case detail share one segment
         // (/alg/<puzzle>/<set>/<seg>): <seg> is either a subgroup (ur / u / a+) or a
         // single case (ur3 / s+b1 / a+-eo). Both are pure client shells (loadAlg in the

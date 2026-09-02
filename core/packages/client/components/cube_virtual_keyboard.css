@@ -256,6 +256,9 @@
 
 /* NOTE: 每个变体选项 */
 .vkb-popup-item {
+    border: 0;
+    background: transparent;
+    font-family: inherit;
     padding: 8px 14px;
     font-size: 1.1rem;
     font-weight: 500;
