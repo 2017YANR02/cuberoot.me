@@ -112,7 +112,7 @@ export const CONTACT_SOCIAL_PLATFORMS: readonly ContactPlatform[] = [
     href: 'https://www.youtube.com/@cuberootme',
     label: text('YouTube', 'YouTube'),
     account: 'CubeRoot',
-    count: text('13万粉丝', '130K followers'),
+    count: text('13万粉', '130K followers'),
   },
   {
     id: 'tiktok',
@@ -120,7 +120,7 @@ export const CONTACT_SOCIAL_PLATFORMS: readonly ContactPlatform[] = [
     href: 'https://www.tiktok.com/@cuberoot_official',
     label: text('TikTok', 'TikTok'),
     account: 'CubeRoot',
-    count: text('6600粉丝', '6.6K followers'),
+    count: text('6600粉', '6.6K followers'),
   },
   {
     id: 'instagram',
@@ -131,28 +131,28 @@ export const CONTACT_SOCIAL_PLATFORMS: readonly ContactPlatform[] = [
     count: null,
   },
   {
-    id: 'bilibili',
-    language: 'zh',
-    href: 'https://space.bilibili.com/432490072',
-    label: text('哔哩哔哩', 'Bilibili'),
-    account: '魔方根',
-    count: text('10万粉丝', '100K followers'),
-  },
-  {
     id: 'douyin',
     language: 'zh',
     href: 'https://www.douyin.com/user/MS4wLjABAAAAXMbfAj9bF8q2JYp6qG2J5KjY5yCsBpZ0gFv0P9btJUQ',
     label: text('抖音', 'Douyin'),
     account: '魔方根',
-    count: text('11万粉丝', '110K followers'),
+    count: text('11万粉', '110K followers'),
   },
   {
-    id: 'xiaohongshu',
+    id: 'bilibili',
     language: 'zh',
-    href: 'https://www.xiaohongshu.com/user/profile/61075b3d000000002002f6f8',
-    label: text('小红书', 'Xiaohongshu'),
+    href: 'https://space.bilibili.com/432490072',
+    label: text('哔哩哔哩', 'Bilibili'),
     account: '魔方根',
-    count: text('1800粉丝', '1.8K followers'),
+    count: text('10万粉', '100K followers'),
+  },
+  {
+    id: 'wechat-official',
+    language: 'zh',
+    href: null,
+    label: text('公众号/视频号', 'WeChat Official Account / Channels'),
+    account: '魔方根',
+    count: text('5.5万粉', '55K followers'),
   },
   {
     id: 'kuaishou',
@@ -160,30 +160,19 @@ export const CONTACT_SOCIAL_PLATFORMS: readonly ContactPlatform[] = [
     href: 'https://www.kuaishou.com/profile/3xmtr3va626wq2c',
     label: text('快手', 'Kuaishou'),
     account: '魔方根',
-    count: text('2.2万粉丝', '22K followers'),
+    count: text('2.2万粉', '22K followers'),
   },
   {
-    id: 'wechat-official',
+    id: 'xiaohongshu',
     language: 'zh',
-    href: null,
-    label: text('公众号', 'WeChat Official Account'),
+    href: 'https://www.xiaohongshu.com/user/profile/61075b3d000000002002f6f8',
+    label: text('小红书', 'Xiaohongshu'),
     account: '魔方根',
-    count: text('5.5万粉丝', '55K followers'),
+    count: text('1800粉', '1.8K followers'),
   },
 ];
 
 export const CONTACT_GROUP_SECTIONS: readonly ContactGroupSection[] = [
-  {
-    id: 'official-group',
-    title: text('官方群', 'Official group'),
-    description: text('魔方根网站交流群。', 'The official CubeRoot community group.'),
-    blocks: [
-      {
-        title: text('网站交流群', 'Website community'),
-        groups: [text('cuberoot.me群', 'cuberoot.me group')],
-      },
-    ],
-  },
   {
     id: 'cuberoot-groups',
     title: text('魔方根群', 'CubeRoot groups'),
@@ -192,6 +181,7 @@ export const CONTACT_GROUP_SECTIONS: readonly ContactGroupSection[] = [
       {
         title: text('主群与高级群', 'Main and advanced groups'),
         groups: [
+          text('CUBEROOT开发者群', 'CUBEROOT developer group'),
           text('VIP群 (付费)', 'VIP group (paid)'),
           text('换位子群 (高级群)', 'Commutator group (advanced)'),
           text('基本群 (1群)', 'Trivial group (Group 1)'),
@@ -248,15 +238,8 @@ export const CONTACT_GROUP_SECTIONS: readonly ContactGroupSection[] = [
         title: text('城市与地区', 'Cities and areas'),
         groups: [
           text('上海', 'Shanghai'),
-          text('杭州', 'Hangzhou'),
-          text('宁波', 'Ningbo'),
           text('温州', 'Wenzhou'),
           text('云南', 'Yunnan'),
-          text('南京', 'Nanjing'),
-          text('新疆', 'Xinjiang'),
-          text('湖南', 'Hunan'),
-          text('威海', 'Weihai'),
-          text('西安', "Xi'an"),
         ],
       },
       {
@@ -295,6 +278,7 @@ export const CONTACT_GROUP_SECTIONS: readonly ContactGroupSection[] = [
           text('虚拟', 'Virtual cubing'),
           text('镜面', 'Mirror cubes'),
           text('花式', 'Freestyle'),
+          text('萌新（超过30秒）', 'Beginners (over 30 seconds)'),
         ],
       },
     ],
@@ -334,7 +318,6 @@ export const CONTACT_GROUP_SECTIONS: readonly ContactGroupSection[] = [
           text('表情包', 'Stickers and memes'),
           text('二手1', 'Secondhand 1'),
           text('二手2', 'Secondhand 2'),
-          text('萌新（超过30秒）', 'Beginners (over 30 seconds)'),
           text('老魔友（10年以前入魔）', 'Long-time cubers (started over 10 years ago)'),
           text('全国魔方老师总群', 'National cube teachers'),
           text('抖音', 'Douyin'),
