@@ -1,0 +1,118 @@
+.daily-activity-chart {
+  min-width: 0;
+}
+
+.daily-activity-chart__readout {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 7px 18px;
+  min-height: 28px;
+  margin-bottom: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-activity-chart__readout time {
+  color: var(--muted-foreground);
+  font-size: .78rem;
+}
+
+.daily-activity-chart__readout-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-foreground);
+  font-size: .76rem;
+  white-space: nowrap;
+}
+
+.daily-activity-chart__readout-value i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.daily-activity-chart__readout-value strong {
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.daily-activity-chart__readout-value.is-accent { color: var(--accent); }
+.daily-activity-chart__readout-value.is-success { color: var(--signal-success); }
+.daily-activity-chart__readout-value.is-info { color: var(--signal-info); }
+
+.daily-activity-chart__scroll {
+  width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  touch-action: pan-x;
+}
+
+.daily-activity-chart__scroll:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.daily-activity-chart__canvas {
+  display: block;
+  width: max(100%, var(--daily-chart-width));
+  height: 252px;
+  overflow: visible;
+}
+
+.daily-activity-chart__grid line {
+  stroke: var(--border-default);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.daily-activity-chart__grid text,
+.daily-activity-chart__date {
+  fill: var(--faint-foreground);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-activity-chart__grid text { text-anchor: end; }
+.daily-activity-chart__date { text-anchor: middle; }
+
+.daily-activity-chart__bar {
+  transform-box: fill-box;
+  transform-origin: bottom;
+}
+
+.daily-activity-chart__bar.is-accent { fill: var(--accent); }
+.daily-activity-chart__bar.is-success { fill: var(--signal-success); }
+.daily-activity-chart__bar.is-info { fill: var(--signal-info); }
+
+.daily-activity-chart__day { cursor: crosshair; outline: none; }
+.daily-activity-chart__day:focus-visible .daily-activity-chart__bar { stroke: var(--foreground); stroke-width: 1; }
+.daily-activity-chart__guide { stroke: color-mix(in srgb, var(--foreground) 28%, transparent); stroke-width: 1; stroke-dasharray: 3 4; }
+.daily-activity-chart__hit { fill: transparent; }
+
+.daily-activity-chart__totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  padding-top: 9px;
+  border-top: 1px solid var(--border-default);
+  color: var(--muted-foreground);
+  font-size: .75rem;
+}
+
+.daily-activity-chart__totals span { display: inline-flex; gap: 7px; }
+.daily-activity-chart__totals strong { color: var(--foreground); font-variant-numeric: tabular-nums; }
+.daily-activity-chart__empty { margin: 0; color: var(--muted-foreground); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .daily-activity-chart__bar { animation: daily-activity-chart-grow .28s ease-out both; }
+  @keyframes daily-activity-chart-grow { from { transform: scaleY(0); } }
+}
+
+@media (max-width: 479px) {
+  .daily-activity-chart__readout { gap-inline: 12px; }
+  .daily-activity-chart__canvas { height: 224px; }
+}

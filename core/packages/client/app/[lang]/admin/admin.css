@@ -1,0 +1,27 @@
+.admin-hub {
+  width: min(900px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 64px 0 80px;
+  color: var(--foreground);
+}
+
+.admin-hub__heading { margin-bottom: 42px; }
+.admin-hub__eyebrow { margin: 0 0 8px; color: var(--accent); font-size: .75rem; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+.admin-hub h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 540; letter-spacing: -.045em; }
+.admin-hub__heading > p:last-child { max-width: 560px; margin: 12px 0 0; color: var(--muted-foreground); }
+.admin-hub__nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 44px; }
+.admin-hub__link { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 12px; padding: 18px 0; border-bottom: 1px solid var(--border-default); color: var(--foreground); text-decoration: none; }
+.admin-hub__link > svg { margin-top: 2px; color: var(--muted-foreground); }
+.admin-hub__link span { display: grid; gap: 5px; min-width: 0; }
+.admin-hub__link strong { font-size: .94rem; font-weight: 600; }
+.admin-hub__link small { color: var(--muted-foreground); font-size: .76rem; line-height: 1.45; }
+.admin-hub__link:hover strong { color: var(--accent); }
+.admin-hub__link:hover > svg { color: var(--accent); }
+.admin-hub__status { margin: 16px 0; color: var(--muted-foreground); }
+.admin-hub__account-link { color: var(--accent); }
+
+@media (max-width: 640px) {
+  .admin-hub { width: calc(100% - 28px); padding-top: 38px; }
+  .admin-hub__heading { margin-bottom: 26px; }
+  .admin-hub__nav { grid-template-columns: 1fr; }
+}
