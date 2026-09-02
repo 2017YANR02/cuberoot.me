@@ -552,6 +552,17 @@
           "1:17.17"
         ],
         [
+          "[4x4 Off US-40 IL 2026](https://www.worldcubeassociation.org/competitions/4x4OffUS40IL2026/results/all#e666_d)",
+          "First round",
+          "3:37.47",
+          "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+          "1:05.78",
+          "[Henry Lichner](https://www.worldcubeassociation.org/persons/2018LICH05)",
+          "1:10.63",
+          "[Carter Thomas](https://www.worldcubeassociation.org/persons/2018THOM29)",
+          "1:21.06"
+        ],
+        [
           "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e666_d)",
           "First round",
           "3:37.67",
@@ -627,17 +638,6 @@
           "1:09.79",
           "[Asia Konvittayayotin (เอเชีย กรวิทยโยธิน)](https://www.worldcubeassociation.org/persons/2009KONV01)",
           "1:23.92"
-        ],
-        [
-          "[Seoul Winter 2026](https://www.worldcubeassociation.org/competitions/SeoulWinter2026/results/all#e666_f)",
-          "Final",
-          "3:42.19",
-          "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-          "1:08.79",
-          "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
-          "1:09.46",
-          "[DongSoo Park (박동수)](https://www.worldcubeassociation.org/persons/2017PARK05)",
-          "1:23.94"
         ]
       ]
     },
@@ -881,9 +881,9 @@
           "[FMC World 2026](https://www.worldcubeassociation.org/competitions/FMCWorld2026/results/all#e333fm_f)",
           "Final",
           "1:00.00",
-          "[Enrico Tenuti](https://www.worldcubeassociation.org/persons/2017TENU01)",
-          "20.00",
           "[Baiqiang Dong (董百强)](https://www.worldcubeassociation.org/persons/2008DONG06)",
+          "20.00",
+          "[Enrico Tenuti](https://www.worldcubeassociation.org/persons/2017TENU01)",
           "20.00",
           "[Wong Chong Wen (黄崇文)](https://www.worldcubeassociation.org/persons/2014WENW01)",
           "20.00"
@@ -900,17 +900,6 @@
           "22.00"
         ],
         [
-          "[FMC Europe 2024](https://www.worldcubeassociation.org/competitions/FMCEurope2024/results/all#e333fm_f)",
-          "Final",
-          "1:02.00",
-          "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
-          "20.00",
-          "[Jaye Sloan](https://www.worldcubeassociation.org/persons/2022SLOA01)",
-          "21.00",
-          "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
-          "21.00"
-        ],
-        [
           "[Nordic Swedish Championship 2026](https://www.worldcubeassociation.org/competitions/NordicSwedishChampionship2026/results/all#e333fm_f)",
           "Final",
           "1:02.00",
@@ -918,18 +907,29 @@
           "19.67",
           "[Theodor Nordstrand](https://www.worldcubeassociation.org/persons/2016NORD02)",
           "21.00",
-          "[Niklas Aasen Eliasson](https://www.worldcubeassociation.org/persons/2021ELIA01)",
+          "[Jan Bentlage](https://www.worldcubeassociation.org/persons/2010BENT01)",
           "21.33"
+        ],
+        [
+          "[FMC Europe 2024](https://www.worldcubeassociation.org/competitions/FMCEurope2024/results/all#e333fm_f)",
+          "Final",
+          "1:02.00",
+          "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
+          "20.00",
+          "[Louis-Marie Ratto](https://www.worldcubeassociation.org/persons/2019RATT02)",
+          "21.00",
+          "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
+          "21.00"
         ],
         [
           "[Fun with FM in Kraków 2025](https://www.worldcubeassociation.org/competitions/FunwithFMinKrakow2025/results/all#e333fm_1)",
           "First round",
           "1:02.01",
+          "[Enrico Tenuti](https://www.worldcubeassociation.org/persons/2017TENU01)",
+          "20.67",
           "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
           "20.67",
           "[Krzysztof Pietrusiak](https://www.worldcubeassociation.org/persons/2019PIET01)",
-          "20.67",
-          "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
           "20.67"
         ],
         [
@@ -949,7 +949,7 @@
           "1:02.67",
           "[Krzysztof Pietrusiak](https://www.worldcubeassociation.org/persons/2019PIET01)",
           "20.67",
-          "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
+          "[Louis-Marie Ratto](https://www.worldcubeassociation.org/persons/2019RATT02)",
           "21.00",
           "[Moritz Lotz](https://www.worldcubeassociation.org/persons/2017LOTZ01)",
           "21.00"
@@ -1509,7 +1509,7 @@
           "1.83",
           "[Ariel Benchetrit](https://www.worldcubeassociation.org/persons/2019BENC04)",
           "1.83",
-          "[Tomasz Pietruszka](https://www.worldcubeassociation.org/persons/2021PIET01)",
+          "[Frank Lindblom](https://www.worldcubeassociation.org/persons/2023LIND07)",
           "1.86"
         ],
         [
@@ -1527,9 +1527,9 @@
           "[Szansa Cubing Open Warsaw 2024](https://www.worldcubeassociation.org/competitions/SzansaCubingOpenWarsaw2024/results/all#eskewb_f)",
           "Final",
           "5.59",
-          "[Ignacy Samselski](https://www.worldcubeassociation.org/persons/2022SAMS03)",
-          "1.79",
           "[Vojtěch Grohmann](https://www.worldcubeassociation.org/persons/2021GROH01)",
+          "1.79",
+          "[Ignacy Samselski](https://www.worldcubeassociation.org/persons/2022SAMS03)",
           "1.79",
           "[Michał Denkiewicz](https://www.worldcubeassociation.org/persons/2021DENK01)",
           "2.01"
