@@ -1,24 +1,31 @@
 'use client';
 
-// Floating metronome — a draggable panel mounted next to the desk pet (root
-// layout), so it keeps ticking across client-side navigation. Opened from the
-// desk pet toolbar; the engine itself lives in lib/metronome.ts and is shared
-// with the timer page.
+// Draggable site-wide audio center. Music and the metronome survive client-side
+// navigation because this panel is mounted next to the desk pet in root chrome.
 //
 // Tempo reads primarily as TPS (turns per second, one beat = one turn) because
 // that is the unit cubers train against; BPM is shown underneath for anyone who
 // thinks in it.
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Play, Pause, Plus, Minus, X, ChevronDown } from 'lucide-react';
+import {
+  ChevronDown, Disc3, ExternalLink, Minus, Pause, Play, Plus,
+  SkipBack, SkipForward, Volume2, X,
+} from 'lucide-react';
+import Link from '@/components/AppLink';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import {
   useMetronome, setMetronome, subscribeBeat, tapTempo, resetTapTempo,
   bpmToTps, clampBpm, BPM_MIN, BPM_MAX, ACCENT_CHOICES,
 } from '@/lib/metronome';
 import { persistItem } from '@/lib/safe-storage';
+import {
+  loadMusicLibrary, musicAssetUrl, nextMusic, playMusic, previousMusic,
+  seekMusic, setMusicVolume, toggleMusic, useMusicPlayer,
+} from '@/lib/music-player';
 
 const POS_KEY = 'cuberoot.metronome.pos.v1';
-const PANEL_W = 232;
+const PANEL_W = 300;
 
 const CSS = `
 .cr-metro{position:fixed;z-index:100005;width:${PANEL_W}px;
@@ -38,6 +45,7 @@ const CSS = `
   background:color-mix(in srgb, var(--foreground) 22%, transparent);}
 .cr-metro-dot.is-beat{background:var(--accent);}
 .cr-metro-dot.is-accent{background:var(--accent);transform:scale(1.5);}
+.cr-metro-dot.is-playing{background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 13%,transparent);}
 /* Stacked readout: TPS leads, BPM sits under it. Both nowrap — CJK-width
    browsers wrap "120 BPM" onto its own line if it has to share a row. */
 .cr-metro-readout{display:flex;flex-direction:column;gap:1px;flex:1 1 auto;min-width:0;}
@@ -47,6 +55,7 @@ const CSS = `
 .cr-metro-unit{font-size:11px;color:var(--muted-foreground);}
 .cr-metro-bpm{font-size:11px;line-height:1;white-space:nowrap;
   color:var(--faint-foreground,var(--muted-foreground));font-variant-numeric:tabular-nums;}
+.cr-metro-title{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:650;}
 
 .cr-metro button{border:0;background:transparent;color:var(--foreground);cursor:pointer;
   display:flex;align-items:center;justify-content:center;padding:0;
@@ -69,6 +78,23 @@ const CSS = `
   color:var(--muted-foreground);font-variant-numeric:tabular-nums;}
 .cr-metro-accents button.is-on{background:color-mix(in srgb, var(--accent) 14%, transparent);
   color:var(--accent);}
+
+.cr-audio-mode{margin:10px 0 2px;}
+.cr-audio-music{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px;align-items:center;margin-top:9px;}
+.cr-audio-cover{width:64px;aspect-ratio:1;border-radius:10px;object-fit:cover;background:color-mix(in srgb,var(--accent) 14%,var(--card));}
+.cr-audio-cover-empty{display:grid;place-items:center;color:var(--accent);}
+.cr-audio-copy{min-width:0;display:flex;flex-direction:column;gap:2px;}
+.cr-audio-copy strong,.cr-audio-copy span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.cr-audio-copy span{font-size:11px;color:var(--muted-foreground);}
+.cr-audio-progress{grid-column:1/-1;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:7px;color:var(--muted-foreground);font:10px/1 var(--font-mono,ui-monospace,monospace);}
+.cr-audio-progress input,.cr-audio-volume input{min-width:0;width:100%;margin:0;accent-color:var(--accent);}
+.cr-audio-controls{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:10px;}
+.cr-audio-controls button{width:30px;height:30px;}
+.cr-audio-controls .cr-audio-main{width:38px;height:38px;border-radius:50%;color:var(--background);background:var(--foreground);}
+.cr-audio-volume{grid-column:1/-1;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:7px;color:var(--muted-foreground);}
+.cr-audio-open{grid-column:1/-1;width:max-content;display:inline-flex;align-items:center;gap:5px;margin-top:2px;color:var(--accent);font-size:11px;text-decoration:none;}
+.cr-audio-open:hover{text-decoration:underline;}
+.cr-audio-state{grid-column:1/-1;margin:2px 0;color:var(--muted-foreground);font-size:11px;}
 
 @media (max-width:480px){
   .cr-metro{width:min(${PANEL_W}px, calc(100vw - 24px));}
@@ -106,8 +132,10 @@ function clampPos(p: { left: number; top: number }, el: HTMLElement | null): { l
 
 export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'; onClose: () => void }) {
   const s = useMetronome();
+  const music = useMusicPlayer();
   const t = (z: string, e: string) => (lang === 'zh' ? z : e);
 
+  const [mode, setMode] = useState<'music' | 'metronome'>('music');
   const [collapsed, setCollapsed] = useState(false);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const [beat, setBeat] = useState<{ index: number; accent: boolean } | null>(null);
@@ -115,6 +143,8 @@ export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'
   const cardRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ dx: number; dy: number } | null>(null);
   const [dragging, setDragging] = useState(false);
+
+  useEffect(() => { void loadMusicLibrary(); }, []);
 
   // Clamp on restore, not just on resize: a spot saved on a wide desktop lands
   // far off-screen when the same profile opens on a phone.
@@ -126,7 +156,7 @@ export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'
     if (!pos || !cardRef.current) return;
     const c = clampPos(pos, cardRef.current);
     if (c.left !== pos.left || c.top !== pos.top) setPos(c);
-  }, [pos, collapsed]);
+  }, [pos, collapsed, mode, music.status]);
 
   // Keep the card on screen when the viewport shrinks (rotate / resize).
   useEffect(() => {
@@ -192,6 +222,11 @@ export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'
 
   const tps = bpmToTps(s.bpm);
   const dotCls = beat ? (beat.accent ? 'cr-metro-dot is-accent' : 'cr-metro-dot is-beat') : 'cr-metro-dot';
+  const track = music.tracks.find((candidate) => candidate.id === music.currentId) ?? null;
+  const time = (seconds: number) => {
+    const whole = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
+    return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
+  };
 
   return (
     <div
@@ -199,7 +234,7 @@ export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'
       className={`cr-metro${collapsed ? ' is-collapsed' : ''}${dragging ? ' is-dragging' : ''}`}
       style={{ left: pos.left, top: pos.top }}
       role="group"
-      aria-label={t('节拍器', 'Metronome')}
+      aria-label={t('音频中心', 'Audio center')}
     >
       <style>{CSS}</style>
 
@@ -210,23 +245,32 @@ export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       >
-        <span className={dotCls} aria-hidden />
+        <span className={mode === 'music' && music.playing ? 'cr-metro-dot is-playing' : dotCls} aria-hidden />
         <span className="cr-metro-readout">
-          <span className="cr-metro-primary">
-            <span className="cr-metro-tps">{tps.toFixed(2)}</span>
-            <span className="cr-metro-unit">TPS</span>
-          </span>
-          {!collapsed && <span className="cr-metro-bpm">{s.bpm} BPM</span>}
+          {mode === 'music' ? (
+            <>
+              <span className="cr-metro-title">{track?.title ?? t('音乐播放器', 'Music player')}</span>
+              {!collapsed && <span className="cr-metro-bpm">{track?.artist ?? t('选择歌曲开始播放', 'Choose a track to begin')}</span>}
+            </>
+          ) : (
+            <>
+              <span className="cr-metro-primary">
+                <span className="cr-metro-tps">{tps.toFixed(2)}</span>
+                <span className="cr-metro-unit">TPS</span>
+              </span>
+              {!collapsed && <span className="cr-metro-bpm">{s.bpm} BPM</span>}
+            </>
+          )}
         </span>
         <button
           type="button"
           className="cr-metro-icon cr-metro-play"
           onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => setMetronome({ on: !s.on })}
-          title={s.on ? t('停止', 'Stop') : t('开始', 'Start')}
-          aria-label={s.on ? t('停止', 'Stop') : t('开始', 'Start')}
+          onClick={() => mode === 'music' ? toggleMusic() : setMetronome({ on: !s.on })}
+          title={(mode === 'music' ? music.playing : s.on) ? t('暂停', 'Pause') : t('播放', 'Play')}
+          aria-label={(mode === 'music' ? music.playing : s.on) ? t('暂停', 'Pause') : t('播放', 'Play')}
         >
-          {s.on ? <Pause size={14} /> : <Play size={14} style={{ marginLeft: 2 }} />}
+          {(mode === 'music' ? music.playing : s.on) ? <Pause size={14} /> : <Play size={14} style={{ marginLeft: 2 }} />}
         </button>
         <button
           type="button"
@@ -252,6 +296,61 @@ export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'
 
       {!collapsed && (
         <>
+          <div className="cr-audio-mode">
+            <PillToggle
+              value={mode === 'metronome'}
+              onChange={(value) => setMode(value ? 'metronome' : 'music')}
+              offLabel={t('音乐', 'Music')}
+              onLabel={t('节拍器', 'Metronome')}
+              ariaLabel={t('切换音乐与节拍器', 'Switch music and metronome')}
+            />
+          </div>
+
+          {mode === 'music' ? (
+            <div className="cr-audio-music">
+              {track?.cover ? (
+                <img className="cr-audio-cover" src={musicAssetUrl(track.cover)} alt={track.title} />
+              ) : (
+                <span className="cr-audio-cover cr-audio-cover-empty" aria-hidden><Disc3 size={26} /></span>
+              )}
+              <span className="cr-audio-copy">
+                <strong>{track?.title ?? t('曲库待发布', 'Library coming soon')}</strong>
+                <span>{track ? (track.artist || t('未知艺术家', 'Unknown artist')) : t('播放器界面已就绪', 'Player interface is ready')}</span>
+              </span>
+              <div className="cr-audio-progress">
+                <span>{time(music.currentTime)}</span>
+                <input type="range" min={0} max={Math.max(1, music.duration)} step={0.1}
+                  value={Math.min(music.currentTime, Math.max(1, music.duration))}
+                  onChange={(e) => seekMusic(Number(e.target.value))}
+                  aria-label={t('播放进度', 'Playback progress')} disabled={!track} />
+                <span>{time(music.duration)}</span>
+              </div>
+              <div className="cr-audio-controls">
+                <button type="button" onClick={() => { void previousMusic(); }} aria-label={t('上一首', 'Previous track')}>
+                  <SkipBack size={17} fill="currentColor" />
+                </button>
+                <button type="button" className="cr-audio-main" onClick={() => track ? toggleMusic() : void playMusic()}
+                  aria-label={music.playing ? t('暂停', 'Pause') : t('播放', 'Play')} disabled={music.tracks.length === 0}>
+                  {music.playing ? <Pause size={17} fill="currentColor" /> : <Play size={17} fill="currentColor" />}
+                </button>
+                <button type="button" onClick={() => { void nextMusic(); }} aria-label={t('下一首', 'Next track')}>
+                  <SkipForward size={17} fill="currentColor" />
+                </button>
+              </div>
+              <label className="cr-audio-volume">
+                <Volume2 size={14} aria-hidden />
+                <input type="range" min={0} max={1} step={0.01} value={music.volume}
+                  onChange={(e) => setMusicVolume(Number(e.target.value))}
+                  aria-label={t('音量', 'Volume')} />
+                <span>{Math.round(music.volume * 100)}%</span>
+              </label>
+              {music.status === 'error' && <p className="cr-audio-state">{t('曲库尚未发布', 'Library not published yet')}</p>}
+              <Link href="/music" prefetch={false} className="cr-audio-open">
+                {t('打开完整播放器', 'Open full player')} <ExternalLink size={12} aria-hidden />
+              </Link>
+            </div>
+          ) : (
+          <>
           <div className="cr-metro-row">
             <button
               type="button" className="cr-metro-icon" onClick={() => nudge(-1)}
@@ -296,6 +395,8 @@ export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'
               </button>
             ))}
           </div>
+          </>
+          )}
         </>
       )}
     </div>

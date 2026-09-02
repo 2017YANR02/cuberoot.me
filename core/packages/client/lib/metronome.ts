@@ -94,6 +94,15 @@ function subscribe(fn: () => void): () => void {
   return () => { _listeners.delete(fn); };
 }
 
+let _suppressedByMusic = false;
+
+function announceStart(): void {
+  _suppressedByMusic = false;
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+    window.dispatchEvent(new Event('cuberoot:metronome-start'));
+  }
+}
+
 export function getMetronomeState(): MetronomeState {
   return _state;
 }
@@ -112,6 +121,7 @@ export function setMetronome(patch: Partial<MetronomeState>): void {
   };
   if (next.on === prev.on && next.bpm === prev.bpm && next.accent === prev.accent) return;
   _state = next;
+  if (next.on && !prev.on) announceStart();
   persistItem(KEY, JSON.stringify({ bpm: next.bpm, accent: next.accent }));
   if (next.bpm !== prev.bpm) retune();
   syncTransport();
@@ -132,14 +142,25 @@ const _holds = new Set<string>();
 export function setMetronomeHold(id: string, active: boolean): void {
   const had = _holds.has(id);
   if (active === had) return;
-  if (active) _holds.add(id); else _holds.delete(id);
+  if (active) {
+    _holds.add(id);
+    announceStart();
+  } else {
+    _holds.delete(id);
+  }
   syncTransport();
   emit();
 }
 
 /** Whether ticks are actually sounding right now (user switch or any hold). */
 export function isMetronomeSounding(): boolean {
-  return _state.on || _holds.size > 0;
+  return !_suppressedByMusic && (_state.on || _holds.size > 0);
+}
+
+function suppressForMusic(): void {
+  _suppressedByMusic = true;
+  if (_state.on) setMetronome({ on: false });
+  else syncTransport();
 }
 
 // ── Transport ────────────────────────────────────────────────────
@@ -386,6 +407,7 @@ export function resetTapTempo(): void {
 }
 
 if (typeof window !== 'undefined') {
+  window.addEventListener('cuberoot:music-start', suppressForMusic);
   // Re-arm on every way back in: the scheduler was throttled while hidden, the
   // context may have been suspended under it, and a bfcache/freeze round trip
   // tears the transport down entirely.

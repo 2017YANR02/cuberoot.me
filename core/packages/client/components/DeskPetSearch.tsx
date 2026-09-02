@@ -314,7 +314,7 @@ export default function DeskPetSearch({
         </button>
         <button type="button" className={`icon-only${metronomeOpen ? ' is-active' : ''}`}
           onClick={onToggleMetronome}
-          title={t('节拍器,练匀速转动', 'Metronome — train an even turn rate')}>
+          title={t('音乐与节拍器', 'Music and metronome')}>
           <Music size={16} />
         </button>
         {isAdmin() && (
