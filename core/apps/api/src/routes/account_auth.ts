@@ -18,6 +18,7 @@ import {
 } from '@cuberoot/shared/auth/web-session';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
+import { AdminActivityRangeError, resolveAdminActivityRange } from '../utils/admin_activity.js';
 import { checkRateLimit, requireAdmin } from '../utils/recon_helpers.js';
 import { signSession, hasFreshEmailGrant, hasFreshPhonePasswordResetGrant } from '../utils/session.js';
 import { captureAccountDevice } from '../utils/account_device.js';
@@ -854,7 +855,7 @@ interface AdminUserListRow {
   }> | null;
 }
 
-/** 管理员账号总览:统计、近 30 天注册量和分页用户明细。敏感身份仅在管理员 no-store 响应中返回。 */
+/** 管理员账号总览:统计、注册与会员趋势、分页用户明细。敏感身份仅在管理员 no-store 响应中返回。 */
 accountAuthRoutes.get('/auth/admin/users', async (c) => {
   c.header('Cache-Control', 'no-store');
   await requireAdmin(c);
@@ -873,6 +874,13 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
   if (!ADMIN_USER_SORTS.has(sort)) return c.json({ error: 'invalid sort' }, 400);
   const direction = (c.req.query('direction') ?? 'desc').toLowerCase();
   if (direction !== 'asc' && direction !== 'desc') return c.json({ error: 'invalid sort direction' }, 400);
+  let activityRange;
+  try {
+    activityRange = resolveAdminActivityRange(c.req.query('from'), c.req.query('to'));
+  } catch (error) {
+    if (error instanceof AdminActivityRangeError) return c.json({ error: error.message }, 400);
+    throw error;
+  }
 
   const filters: string[] = [];
   const params: unknown[] = [];
@@ -905,7 +913,7 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
   const orderDirection = direction === 'asc' ? 'ASC' : 'DESC';
   const offset = (rawPage - 1) * rawPageSize;
 
-  const [summaryRows, dailyRows, providerRows, countRows, users] = await Promise.all([
+  const [summaryRows, dailyRows, membershipSummaryRows, membershipDailyRows, providerRows, countRows, users] = await Promise.all([
     query<{
       total_users: number | string;
       registered_today: number | string;
@@ -927,8 +935,8 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
       FROM app_users`),
     query<{ day: string; count: number | string }>(`WITH days AS (
       SELECT generate_series(
-        (NOW() AT TIME ZONE 'UTC')::date - 29,
-        (NOW() AT TIME ZONE 'UTC')::date,
+        ?::date,
+        ?::date,
         INTERVAL '1 day'
       )::date AS day
     )
@@ -938,7 +946,70 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
       ON app_users.created_at >= days.day AT TIME ZONE 'UTC'
       AND app_users.created_at < (days.day + 1) AT TIME ZONE 'UTC'
     GROUP BY days.day
-    ORDER BY days.day`),
+    ORDER BY days.day`, [activityRange.from, activityRange.to]),
+    query<{
+      active_personal: number | string;
+      active_enterprise: number | string;
+    }>(`SELECT
+      COUNT(*) FILTER (
+        WHERE (expires_at IS NULL OR expires_at > NOW())
+          AND LEFT(plan_slug, 11) <> 'enterprise_'
+      ) AS active_personal,
+      COUNT(*) FILTER (
+        WHERE (expires_at IS NULL OR expires_at > NOW())
+          AND LEFT(plan_slug, 11) = 'enterprise_'
+      ) AS active_enterprise
+      FROM memberships`),
+    query<{
+      day: string;
+      personal: number | string;
+      enterprise: number | string;
+    }>(`WITH days AS (
+      SELECT generate_series(?::date, ?::date, INTERVAL '1 day')::date AS day
+    ), paid_firsts AS (
+      SELECT
+        wca_id,
+        CASE
+          WHEN LEFT(plan_slug, 11) = 'enterprise_' THEN 'enterprise'
+          ELSE 'personal'
+        END AS membership_kind,
+        MIN(paid_at) AS joined_at
+      FROM membership_orders
+      WHERE status = 'paid' AND paid_at IS NOT NULL
+      GROUP BY wca_id, membership_kind
+    ), legacy_firsts AS (
+      SELECT
+        membership.wca_id,
+        CASE
+          WHEN LEFT(membership.plan_slug, 11) = 'enterprise_' THEN 'enterprise'
+          ELSE 'personal'
+        END AS membership_kind,
+        membership.started_at AS joined_at
+      FROM memberships membership
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM paid_firsts paid
+        WHERE paid.wca_id = membership.wca_id
+          AND paid.membership_kind = CASE
+            WHEN LEFT(membership.plan_slug, 11) = 'enterprise_' THEN 'enterprise'
+            ELSE 'personal'
+          END
+      )
+    ), first_memberships AS (
+      SELECT membership_kind, joined_at FROM paid_firsts
+      UNION ALL
+      SELECT membership_kind, joined_at FROM legacy_firsts
+    )
+    SELECT
+      days.day,
+      COUNT(*) FILTER (WHERE first_memberships.membership_kind = 'personal') AS personal,
+      COUNT(*) FILTER (WHERE first_memberships.membership_kind = 'enterprise') AS enterprise
+    FROM days
+    LEFT JOIN first_memberships
+      ON first_memberships.joined_at >= days.day AT TIME ZONE 'UTC'
+      AND first_memberships.joined_at < (days.day + 1) AT TIME ZONE 'UTC'
+    GROUP BY days.day
+    ORDER BY days.day`, [activityRange.from, activityRange.to]),
     query<{ provider: string; count: number | string }>(
       'SELECT provider, COUNT(DISTINCT user_id) AS count FROM auth_identities GROUP BY provider ORDER BY provider',
     ),
@@ -969,6 +1040,8 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
   ]);
 
   const summary = summaryRows[0];
+  const membershipSummary = membershipSummaryRows[0];
+  const registrations = dailyRows.map((row) => ({ date: row.day, count: Number(row.count) }));
   const providerCounts = new Map(
     providerRows.map((row) => [row.provider, Number(row.count)]),
   );
@@ -983,7 +1056,22 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
       completedProfiles: Number(summary?.completed_profiles ?? 0),
       usersWithoutIdentity: Number(summary?.users_without_identity ?? 0),
     },
-    daily: dailyRows.map((row) => ({ date: row.day, count: Number(row.count) })),
+    membershipSummary: {
+      activePersonal: Number(membershipSummary?.active_personal ?? 0),
+      activeEnterprise: Number(membershipSummary?.active_enterprise ?? 0),
+    },
+    activity: {
+      from: activityRange.from,
+      to: activityRange.to,
+      timeZone: 'UTC',
+      registrations,
+      memberships: membershipDailyRows.map((row) => ({
+        date: row.day,
+        personal: Number(row.personal),
+        enterprise: Number(row.enterprise),
+      })),
+    },
+    daily: registrations,
     providerCounts: Array.from(providerCounts, ([providerName, count]) => ({
       provider: providerName,
       count,

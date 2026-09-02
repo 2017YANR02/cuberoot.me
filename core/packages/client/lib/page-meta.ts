@@ -80,8 +80,15 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'account': { title: { zh: '账号', en: 'Account' } },
+  'admin': {
+    title: { zh: '管理后台', en: 'Administration' },
+    description: {
+      zh: 'CubeRoot 管理员集中查看用户增长、会员、赞助与内容审核工具。',
+      en: 'CubeRoot administration hub for user growth, memberships, sponsorships, and moderation tools.',
+    },
+  },
   'admin/users': {
-    title: { zh: '用户管理', en: 'User Management' },
+    title: { zh: '用户与增长', en: 'Users and Growth' },
     description: {
       zh: 'CubeRoot 管理员查看注册统计、登录绑定和用户账号资料的后台。',
       en: 'CubeRoot administrator dashboard for registration statistics, sign-in methods, and account records.',

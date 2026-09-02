@@ -339,9 +339,9 @@ export default function DeskPetSearch({
                     {tr({ zh: '首页焦点', en: 'Homepage feature' })}
                   </button>
                 )}
-                <AppLink href="/admin/users" role="menuitem" prefetch={false} onClick={onClose}>
+                <AppLink href="/admin" role="menuitem" prefetch={false} onClick={onClose}>
                   <UserCog size={13} aria-hidden />
-                  {tr({ zh: '用户管理', en: 'User management' })}
+                  {tr({ zh: '管理后台', en: 'Administration' })}
                 </AppLink>
                 {liveUrlSuffix && (
                   <div className="env-switch" role="group" aria-label={tr({ zh: '切换环境', en: 'Switch environment' })}>

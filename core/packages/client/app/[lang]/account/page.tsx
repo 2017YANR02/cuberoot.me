@@ -767,10 +767,10 @@ export default function AccountPage() {
     ...(isAdmin ? [
       {
         key: 'users-admin',
-        href: '/admin/users',
+        href: '/admin',
         icon: <UserCog size={22} className="account-card-icon" />,
-        title: tr({ zh: '用户管理', en: 'User management' }),
-        desc: tr({ zh: '注册统计、登录绑定和账号明细', en: 'Registration stats, sign-in methods, and account records' }),
+        title: tr({ zh: '管理后台', en: 'Administration' }),
+        desc: tr({ zh: '用户增长、会员、赞助与审核', en: 'User growth, memberships, sponsorships, and moderation' }),
       },
       {
         key: 'submissions',

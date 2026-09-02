@@ -5,6 +5,8 @@ import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 
 import { ChevronLeft, ChevronRight, Loader2, Monitor, Search, Smartphone, Tablet } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
+import { DailyActivityChart, type DailyActivityPoint } from '@/components/DailyActivityChart';
+import { DateRangeInput } from '@/components/DateRangeInput';
 import { Flag } from '@/components/Flag';
 import SortArrow from '@/components/SortArrow';
 import { useT } from '@/hooks/useT';
@@ -13,6 +15,7 @@ import { ADMIN_WCA_IDS, useAuthStore } from '@/lib/auth-store';
 import { countryName } from '@/lib/country-name';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { fetchAdminUsers, type AdminUserRecord, type AdminUsersResponse } from '@/lib/account-api';
+import { isValidIsoDate } from '@/lib/iso-date';
 import './users.css';
 
 const PROVIDERS = ['all', 'email', 'phone', 'wca', 'google', 'wechat', 'douyin', 'qq', 'alipay', 'apple', 'password', 'none'] as const;
@@ -20,6 +23,35 @@ type ProviderFilter = typeof PROVIDERS[number];
 type SortKey = 'created' | 'name' | 'id';
 type SortDirection = 'asc' | 'desc';
 const PAGE_SIZE = 25;
+const RANGE_PRESETS = [7, 30, 90, 365] as const;
+type AdminUsersError = 'load' | 'both_dates' | 'invalid_date' | 'date_order' | 'future_date' | 'range_too_long';
+
+function rangeFromDays(days: number, to: string): string {
+  const end = Date.parse(`${to}T00:00:00.000Z`);
+  return new Date(end - (days - 1) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+function activityRangeError(from: string, to: string, today: string): AdminUsersError | null {
+  if (!from && !to) return null;
+  if (!from || !to) return 'both_dates';
+  if (!isValidIsoDate(from) || !isValidIsoDate(to)) return 'invalid_date';
+  if (from > to) return 'date_order';
+  if (to > today) return 'future_date';
+  const days = Math.round((Date.parse(`${to}T00:00:00.000Z`) - Date.parse(`${from}T00:00:00.000Z`)) / 86400000) + 1;
+  return days > 366 ? 'range_too_long' : null;
+}
+
+function errorLabel(error: AdminUsersError, t: ReturnType<typeof useT>): string {
+  const labels: Record<AdminUsersError, [string, string]> = {
+    load: ['用户数据加载失败，请稍后重试。', 'Could not load user data. Try again later.'],
+    both_dates: ['请选择完整的开始和结束日期。', 'Choose both a start and end date.'],
+    invalid_date: ['日期格式无效。', 'The date is invalid.'],
+    date_order: ['开始日期不能晚于结束日期。', 'The start date cannot be after the end date.'],
+    future_date: ['日期范围不能包含未来日期。', 'The date range cannot include future dates.'],
+    range_too_long: ['一次最多查看 366 天。', 'You can view at most 366 days at a time.'],
+  };
+  return t(labels[error][0], labels[error][1]);
+}
 
 function providerLabel(provider: string, t: ReturnType<typeof useT>): string {
   const labels: Record<string, [string, string]> = {
@@ -99,8 +131,9 @@ export default function AdminUsersPage() {
   const user = useAuthStore((state) => state.user);
   const [mounted, setMounted] = useState(false);
   const [data, setData] = useState<AdminUsersResponse | null>(null);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<AdminUsersError | null>(null);
   const [loading, setLoading] = useState(false);
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   const [q, setQ] = useQueryState('q', parseAsString.withDefault(''));
   const [provider, setProvider] = useQueryState(
@@ -113,7 +146,10 @@ export default function AdminUsersPage() {
   const [direction, setDirection] = useQueryState(
     'direction', parseAsStringEnum<SortDirection>(['asc', 'desc']).withDefault('desc'),
   );
+  const [from, setFrom] = useQueryState('from', parseAsString.withDefault(''));
+  const [to, setTo] = useQueryState('to', parseAsString.withDefault(''));
   const [queryDraft, setQueryDraft] = useState(q);
+  const rangeProblem = activityRangeError(from, to, today);
 
   const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
   useEffect(() => setMounted(true), []);
@@ -125,10 +161,19 @@ export default function AdminUsersPage() {
       void setPage(1);
       return;
     }
+    if (rangeProblem) {
+      setError(rangeProblem);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
-    setError(false);
-    void fetchAdminUsers({ q, provider, page, pageSize: PAGE_SIZE, sort, direction })
+    setError(null);
+    void fetchAdminUsers({
+      q, provider, page, pageSize: PAGE_SIZE, sort, direction,
+      from: from || undefined,
+      to: to || undefined,
+    })
       .then((result) => {
         if (cancelled) return;
         const lastPage = Math.max(1, Math.ceil(result.pagination.total / PAGE_SIZE));
@@ -138,17 +183,26 @@ export default function AdminUsersPage() {
         }
         setData(result);
       })
-      .catch(() => { if (!cancelled) setError(true); })
+      .catch(() => { if (!cancelled) setError('load'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [direction, isAdmin, mounted, page, provider, q, sort]);
+  }, [direction, from, isAdmin, mounted, page, provider, q, rangeProblem, sort, to]);
 
-  const providerCounts = useMemo(
-    () => new Map(data?.providerCounts.map((item) => [item.provider, item.count]) ?? []),
-    [data?.providerCounts],
-  );
-  const maxDaily = Math.max(1, ...(data?.daily.map((item) => item.count) ?? [1]));
+  const registrationPoints = useMemo<DailyActivityPoint[]>(() => (
+    (data?.activity?.registrations ?? data?.daily ?? []).map((item) => ({ date: item.date, values: { registrations: item.count } }))
+  ), [data?.activity?.registrations, data?.daily]);
+  const membershipPoints = useMemo<DailyActivityPoint[]>(() => (
+    data?.activity?.memberships.map((item) => ({
+      date: item.date,
+      values: { personal: item.personal, enterprise: item.enterprise },
+    })) ?? []
+  ), [data?.activity?.memberships]);
   const totalPages = Math.max(1, Math.ceil((data?.pagination.total ?? 0) / PAGE_SIZE));
+  const legacyFrom = data?.daily.at(0)?.date ?? '';
+  const legacyTo = data?.daily.at(-1)?.date ?? '';
+  const effectiveFrom = data?.activity?.from || legacyFrom || from;
+  const effectiveTo = data?.activity?.to || legacyTo || to;
+  const activePreset = RANGE_PRESETS.find((days) => effectiveTo === today && effectiveFrom === rangeFromDays(days, today));
 
   const submitSearch = (event: FormEvent) => {
     event.preventDefault();
@@ -159,13 +213,17 @@ export default function AdminUsersPage() {
     else void Promise.all([setSort(next), setDirection(next === 'name' ? 'asc' : 'desc')]);
     void setPage(null);
   };
+  const changeRange = (nextFrom: string, nextTo: string) => {
+    void Promise.all([setFrom(nextFrom || null), setTo(nextTo || null)]);
+  };
+  const selectPreset = (days: number) => changeRange(rangeFromDays(days, today), today);
 
   if (!mounted) return <main className="admin-users-page" />;
   if (!isAdmin) {
     return (
       <main className="admin-users-page">
-        <AppLink href="/account" className="admin-users-back" prefetch={false}><ChevronLeft size={16} />{t('账号', 'Account')}</AppLink>
-        <h1>{t('用户管理', 'User management')}</h1>
+        <AppLink href="/admin" className="admin-users-back" prefetch={false}><ChevronLeft size={16} />{t('管理后台', 'Administration')}</AppLink>
+        <h1>{t('用户与增长', 'Users and growth')}</h1>
         <p className="admin-users-status">{t('只有管理员可以查看注册用户资料。', 'Only administrators can view registered user data.')}</p>
       </main>
     );
@@ -173,16 +231,16 @@ export default function AdminUsersPage() {
 
   return (
     <main className="admin-users-page">
-      <AppLink href="/account" className="admin-users-back" prefetch={false}><ChevronLeft size={16} />{t('账号', 'Account')}</AppLink>
+      <AppLink href="/admin" className="admin-users-back" prefetch={false}><ChevronLeft size={16} />{t('管理后台', 'Administration')}</AppLink>
       <header className="admin-users-heading">
         <div>
-          <h1>{t('用户管理', 'User management')}</h1>
-          <p>{t('注册统计按 UTC 自然日计算，账号资料仅管理员可见。', 'Registration statistics use UTC calendar days. Account details are admin-only.')}</p>
+          <h1>{t('用户与增长', 'Users and growth')}</h1>
+          <p>{t('注册与会员新增按 UTC 自然日计算，账号资料仅管理员可见。', 'Registration and membership growth use UTC calendar days. Account details are admin-only.')}</p>
         </div>
         {loading && <Loader2 size={18} className="admin-users-spin" aria-label={t('正在刷新', 'Refreshing')} />}
       </header>
 
-      {error && <p className="admin-users-error" role="alert">{t('用户数据加载失败，请稍后重试。', 'Could not load user data. Try again later.')}</p>}
+      {error && <p className="admin-users-error" role="alert">{errorLabel(error, t)}</p>}
 
       {data && (
         <>
@@ -192,23 +250,82 @@ export default function AdminUsersPage() {
               <div><dt>{t('注册用户', 'Registered users')}</dt><dd>{data.summary.totalUsers}</dd></div>
               <div><dt>{t('今日新增', 'New today')}</dt><dd>{data.summary.registeredToday}</dd></div>
               <div><dt>{t('近 7 日新增', 'New in 7 days')}</dt><dd>{data.summary.registeredLast7Days}</dd></div>
+              <div><dt>{t('个人会员', 'Individual members')}</dt><dd>{data.membershipSummary?.activePersonal ?? '—'}</dd></div>
+              <div><dt>{t('企业会员', 'Enterprise members')}</dt><dd>{data.membershipSummary?.activeEnterprise ?? '—'}</dd></div>
               <div><dt>{t('已绑定 WCA', 'WCA linked')}</dt><dd>{data.summary.wcaUsers}</dd></div>
               <div><dt>{t('已设置密码', 'Password set')}</dt><dd>{data.summary.passwordUsers}</dd></div>
               <div><dt>{t('基本资料完整', 'Profile complete')}</dt><dd>{data.summary.completedProfiles}</dd></div>
             </dl>
           </section>
 
-          <section aria-labelledby="admin-users-daily-title">
-            <h2 id="admin-users-daily-title">{t('最近 30 天注册', 'Registrations in the last 30 days')}</h2>
-            <ol className="admin-users-daily">
-              {data.daily.map((item) => (
-                <li key={item.date}>
-                  <time dateTime={item.date}>{item.date}</time>
-                  <span className="admin-users-daily-bar"><span style={{ width: `${Math.max(item.count ? 4 : 0, item.count / maxDaily * 100)}%` }} /></span>
-                  <strong>{item.count}</strong>
-                </li>
-              ))}
-            </ol>
+          <section className="admin-users-activity" aria-labelledby="admin-users-activity-title">
+            <div className="admin-users-activity-heading">
+              <div>
+                <h2 id="admin-users-activity-title">{t('增长趋势', 'Growth trends')}</h2>
+                <p>{t('选择日期范围后，注册与会员图表会一起更新。', 'Choose a date range to update both registration and membership charts.')}</p>
+              </div>
+              <span>{t('UTC 自然日', 'UTC calendar days')}</span>
+            </div>
+            {!data.activity && (
+              <p className="admin-users-compat-notice" role="status">
+                {t('本地前端当前连接的是旧版统计接口，会员总数和会员趋势会在新接口运行后自动显示。', 'This local frontend is connected to the previous statistics API. Membership totals and trends appear automatically when the new API is running.')}
+              </p>
+            )}
+            <div className="admin-users-range-toolbar">
+              <div className="admin-users-presets" aria-label={t('快捷日期范围', 'Quick date ranges')}>
+                {RANGE_PRESETS.map((days) => (
+                  <button
+                    key={days}
+                    type="button"
+                    className={activePreset === days ? 'is-active' : undefined}
+                    aria-pressed={activePreset === days}
+                    onClick={() => selectPreset(days)}
+                  >
+                    {t(`${days} 天`, `${days} days`)}
+                  </button>
+                ))}
+              </div>
+              <DateRangeInput
+                from={effectiveFrom}
+                to={effectiveTo}
+                onChange={changeRange}
+                max={today}
+                size="compact"
+                clearable={false}
+                ariaLabel={t('增长统计日期范围', 'Growth statistics date range')}
+              />
+            </div>
+
+            <div className="admin-users-chart-block">
+              <div className="admin-users-chart-title">
+                <h3>{t('每日注册', 'Daily registrations')}</h3>
+                <span>{effectiveFrom} ~ {effectiveTo}</span>
+              </div>
+              <DailyActivityChart
+                data={registrationPoints}
+                series={[{ key: 'registrations', label: t('注册', 'Registrations'), tone: 'accent' }]}
+                ariaLabel={t('每日注册柱形图', 'Daily registration bar chart')}
+                emptyLabel={t('所选日期范围没有注册数据。', 'No registration data in this date range.')}
+              />
+            </div>
+
+            {data.activity && (
+              <div className="admin-users-chart-block">
+                <div className="admin-users-chart-title">
+                  <h3>{t('每日新增会员', 'Daily new memberships')}</h3>
+                  <span>{t('首次加入，续费不重复计算', 'First joins only; renewals excluded')}</span>
+                </div>
+                <DailyActivityChart
+                  data={membershipPoints}
+                  series={[
+                    { key: 'personal', label: t('个人会员', 'Individual'), tone: 'success' },
+                    { key: 'enterprise', label: t('企业会员', 'Enterprise'), tone: 'info' },
+                  ]}
+                  ariaLabel={t('每日新增个人和企业会员柱形图', 'Daily new individual and enterprise membership bar chart')}
+                  emptyLabel={t('所选日期范围没有会员数据。', 'No membership data in this date range.')}
+                />
+              </div>
+            )}
           </section>
 
           <section aria-labelledby="admin-users-bindings-title">
@@ -238,12 +355,13 @@ export default function AdminUsersPage() {
                 aria-label={t('按登录方式筛选', 'Filter by sign-in method')}>
                 {PROVIDERS.map((item) => (
                   <option key={item} value={item}>
-                    {providerLabel(item, t)}{item !== 'all' && item !== 'password' && item !== 'none' ? ` (${providerCounts.get(item) ?? 0})` : ''}
+                    {providerLabel(item, t)}
                   </option>
                 ))}
               </select>
             </form>
 
+            <p className="admin-users-table-hint">{t('左右滑动查看完整表格', 'Swipe horizontally to view the full table')}</p>
             <div className="sticky-scroll admin-users-table-scroll">
               <table className="sticky-thead admin-users-table">
                 <thead><tr>
