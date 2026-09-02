@@ -98,8 +98,10 @@ function TimerWcaColorSubsetSelect({
   const accessibleOptionLabel = (mode: TimerColorMode, colors: readonly TimerColorLetter[]) => (
     `${labels.colorMode[mode]} · ${colors.map(labels.colorName).join('/')}`
   );
-  const compactOptionLabel = (mode: TimerColorMode, colors: readonly TimerColorLetter[]) => (
-    `${labels.colorMode[mode]} · ${colors.join('')}`
+  const visibleOptionLabel = (mode: TimerColorMode, colors: readonly TimerColorLetter[]) => (
+    colors.length === 6
+      ? labels.colorMode[mode]
+      : accessibleOptionLabel(mode, colors)
   );
   return (
     <span className="timer-wca-color-select-wrap">
@@ -119,7 +121,7 @@ function TimerWcaColorSubsetSelect({
                 key={`${mode}:${option.id}`}
                 value={option.key}
               >
-                {compactOptionLabel(mode, option.colors)}
+                {visibleOptionLabel(mode, option.colors)}
               </option>
             ))}
           </optgroup>
