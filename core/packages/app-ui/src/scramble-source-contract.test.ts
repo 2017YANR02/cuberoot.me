@@ -212,6 +212,9 @@ describe('mobile scramble-source parity contract', () => {
     expect(app).toContain('...wcaSourceSettingsRef.current');
     expect(app).toContain('repository.updateSettings(next)');
     expect(app).toContain('wcaSourceSignature');
+    expect(app).toContain('ref={setWcaTopControlsSlot}');
+    expect(app).toContain('topControlsSlot={wcaTopControlsSlot}');
+    expect(css).toMatch(/\.mobile-wca-shared-controls \{[^}]*display: contents;/s);
     expect(app).toMatch(/const wcaSourceSignature = `\$\{realScrambleSourceKey\(\{/);
     expect(app).not.toMatch(/const wcaSourceSignature = \[[\s\S]*?\]\.join\('\|'\)/);
   });

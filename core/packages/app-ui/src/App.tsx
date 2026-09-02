@@ -458,6 +458,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [viewportHeight, setViewportHeight] = useState(visibleViewportHeight);
   const [connection, setConnection] = useState<ConnectionState>('checking');
   const [wcaDifficultyCoverage, setWcaDifficultyCoverage] = useState<TimerWcaDifficultyCoverage>('idle');
+  const [wcaTopControlsSlot, setWcaTopControlsSlot] = useState<HTMLSpanElement | null>(null);
   const realPoolsRef = useRef(new Map<string, RealScramble[]>());
   const realCurrentBySourceRef = useRef(new Map<string, RealScramble>());
   const realRequestsRef = useRef(new Map<string, RealPoolRequest>());
@@ -3008,15 +3009,18 @@ export function App({ host }: { host: InstalledAppHost }) {
                 />
                 {activeEvent !== '222'
                   && timerWcaSupportsOptimal(timerWcaScrambleEventId(activeEvent)) && (
-                  <div className="timer-wca-difficulty-top-row mobile-wca-optimal-row">
-                    <span className="timer-wca-difficulty-label">{copy.optimalScramble}</span>
-                    <TimerWcaOptimalToggle
-                      ariaLabel={copy.optimalScramble}
-                      disabled={!sourceControlsEnabled}
-                      onChange={(wcaUseOptimal) => updateWcaSourceSettings({ wcaUseOptimal })}
-                      value={wcaSourceSettings.wcaUseOptimal}
-                      wcaEventId={timerWcaScrambleEventId(activeEvent)}
-                    />
+                  <div className="timer-wca-difficulty-top-row mobile-wca-controls-row">
+                    <span className="timer-wca-difficulty-control settings-row-tight-group">
+                      <span className="timer-wca-difficulty-label settings-row-label">{copy.optimalScramble}</span>
+                      <TimerWcaOptimalToggle
+                        ariaLabel={copy.optimalScramble}
+                        disabled={!sourceControlsEnabled}
+                        onChange={(wcaUseOptimal) => updateWcaSourceSettings({ wcaUseOptimal })}
+                        value={wcaSourceSettings.wcaUseOptimal}
+                        wcaEventId={timerWcaScrambleEventId(activeEvent)}
+                      />
+                    </span>
+                    <span className="mobile-wca-shared-controls" ref={setWcaTopControlsSlot} />
                   </div>
                 )}
                 <TimerWcaDifficultyConfig
@@ -3026,6 +3030,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                   onChange={updateWcaSourceSettings}
                   onCoverageChange={setWcaDifficultyCoverage}
                   settings={wcaSourceSettings}
+                  topControlsSlot={wcaTopControlsSlot}
                   wcaEventId={timerWcaScrambleEventId(activeEvent)}
                 />
               </fieldset>

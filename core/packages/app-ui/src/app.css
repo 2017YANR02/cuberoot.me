@@ -333,21 +333,27 @@ button {
   margin: 0 auto;
 }
 
-/* WCA source, optimal and difficulty are full-width stacked sections.  The
- * shared difficulty root uses display:contents, so leaving this fieldset as a
- * horizontal flex row compresses those sections into overlapping columns on
- * 320/340px screens. */
+/* Keep the source and option bodies stacked, while the shared portal keeps
+ * Optimal / Merge / Difficulty in one compact row when their labels fit. */
 .mobile-wca-source-config {
   flex-direction: column;
   align-items: stretch;
   gap: 6px;
 }
 
-.mobile-wca-source-config > .mobile-wca-optimal-row,
+.mobile-wca-source-config > .mobile-wca-controls-row,
 .mobile-wca-source-config > .timer-wca-difficulty-top-row,
 .mobile-wca-source-config > .timer-wca-difficulty-body {
   width: min(100%, 44rem);
   margin-inline: auto;
+}
+
+.mobile-wca-controls-row {
+  justify-content: center;
+}
+
+.mobile-wca-shared-controls {
+  display: contents;
 }
 
 .mobile-wca-date-range {
