@@ -113,4 +113,36 @@ describe('timer optimal 3x3 pool', () => {
     expect(await awaitOptimal333(source)).toBe('ready');
     expect(peekOptimal333(source)).toBe('optimal');
   });
+
+  it.each([
+    ['empty', 'base-empty'],
+    ['rare', 'base-rare'],
+  ] as const)('preserves a trainer %s result without calling the optimizer', async (reason, status) => {
+    const optimize = vi.fn(async () => 'must-not-run');
+    const source: Optimal333Source = {
+      key: `owner|${reason}`,
+      generateBase: () => ({ kind: 'unavailable', reason }),
+      optimize,
+    };
+
+    expect(await awaitOptimal333(source)).toBe(status);
+    expect(optimize).not.toHaveBeenCalled();
+  });
+
+  it('retries a rare trainer base and then serves its optimized scramble', async () => {
+    let rare = true;
+    const source: Optimal333Source = {
+      key: 'owner|rare-retry',
+      generateBase: () => rare
+        ? { kind: 'unavailable', reason: 'rare' }
+        : 'trainer-base',
+      optimize: async (base) => `optimal-${base}`,
+    };
+
+    expect(await awaitOptimal333(source)).toBe('base-rare');
+    rare = false;
+    retryOptimal333(source);
+    expect(await awaitOptimal333(source)).toBe('ready');
+    expect(peekOptimal333(source)).toBe('optimal-trainer-base');
+  });
 });

@@ -204,6 +204,7 @@ describe('shared controlled WCA source UI', () => {
       'input[aria-label="Search competition"]',
     )!.focus());
     await vi.waitFor(() => expect(host.textContent).toContain('Competition list failed'));
+    expect(host.querySelector('.timer-wca-source-config')?.hasAttribute('data-no-timer')).toBe(true);
 
     await act(async () => {
       [...host.querySelectorAll('button')]

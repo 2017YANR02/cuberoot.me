@@ -153,7 +153,7 @@ describe('adversarial 43 × 3 Mobile scramble-source matrix', () => {
 
   it('keeps the Mobile adapter on exact shared event identities', () => {
     expect(appSource).toMatch(
-      /if \(!timerSupportsRealWcaScrambles\(event\)\) \{\s*generateRandomScramble\(entry, requestId\);\s*return;/,
+      /if \(!timerSupportsRealWcaScrambles\(event\)\) \{\s*generateRandomScramble\(liveEntry, requestId\);\s*return;/,
     );
     expect(appSource).toContain('const request = {');
     expect(appSource).toContain('event,');
@@ -178,7 +178,7 @@ describe('adversarial 43 × 3 Mobile scramble-source matrix', () => {
     const coldRealBranch = appSource.slice(coldRealStart, coldRealEnd);
     expect(coldRealStart).toBeGreaterThan(-1);
     expect(coldRealEnd).toBeGreaterThan(coldRealStart);
-    expect(coldRealBranch).toContain("replaceScrambleHistoryEntry(entry.id, requestedIdentity, { availability: 'error' })");
+    expect(coldRealBranch).toContain("availability: 'error',\n          failure: { kind: 'real-exhausted' },");
     expect(coldRealBranch).not.toContain('generateRandomScramble(');
   });
 });

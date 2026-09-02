@@ -120,6 +120,35 @@ describe('mobile displayed-scramble history', () => {
     expect(Object.isFrozen(ready.list[0])).toBe(true);
   });
 
+  it('clears stale failure details whenever a retry becomes loading or ready', () => {
+    const entry = createMobileScrambleHistoryEntry('333', 'random', 'random|retry');
+    const initial = { list: [entry], idx: 0 };
+    const failed = replaceMobileScrambleHistoryEntry(
+      initial,
+      entry.id,
+      entry.sourceIdentity,
+      {
+        availability: 'error',
+        failure: { kind: 'generation', code: 'generation-failed', retryable: true },
+      },
+    );
+    const loading = replaceMobileScrambleHistoryEntry(
+      failed,
+      entry.id,
+      entry.sourceIdentity,
+      { availability: 'loading' },
+    );
+    const ready = replaceMobileScrambleHistoryEntry(
+      failed,
+      entry.id,
+      entry.sourceIdentity,
+      { availability: 'ready', scramble: 'R U' },
+    );
+
+    expect(loading.list[0]).toMatchObject({ availability: 'loading', failure: null });
+    expect(ready.list[0]).toMatchObject({ availability: 'ready', failure: null });
+  });
+
   it('restarts the exact visible loading slot after fast same-context navigation', () => {
     const first = createMobileScrambleHistoryEntry('333', 'random', 'random|same');
     const second = createMobileScrambleHistoryEntry('333', 'random', 'random|same');
@@ -192,7 +221,11 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('<TimerScrambleStrip');
     expect(app).not.toContain('mobile-scramble-nav-button');
     expect(css).not.toContain('.mobile-scramble {');
-    expect(app).toContain("scrambleClickEffect === 'retry' && currentScrambleEntry");
+    expect(app).toContain('scrambleStatus?.retryable === true && currentScrambleEntry !== undefined');
+    expect(app).toContain('status={scrambleStatus');
+    expect(app).toContain('scrambleStatus.retryable && currentScrambleEntry');
+    expect(app).toContain("availability: 'loading',\n      failure: null,");
+    expect(app).toContain('retryLabel: TIMER_SCRAMBLE_CLICK_TITLE_COPY.retry[language]');
     expect(app).toContain('if (canSwitchScramble()) fillScrambleHistoryEntry(currentScrambleEntry);');
     expect(app).toContain('timerScrambleClickEffect(');
     expect(app).toContain('scramble.length > 0');

@@ -137,12 +137,13 @@ export { TimerScramblePreview } from './TimerScramblePreview';
 export type { TimerScramblePreviewProps } from './TimerScramblePreview';
 export { TimerInfoToast } from './TimerInfoToast';
 export type { TimerInfoToastProps } from './TimerInfoToast';
-export { TimerScrambleHintText, TimerScrambleStrip } from './TimerScrambleStrip';
+export { TimerScrambleHintText, TimerScrambleStatus, TimerScrambleStrip } from './TimerScrambleStrip';
 export type {
   TimerScrambleHint,
   TimerScrambleHintTextProps,
   TimerScrambleNonOptimalLabel,
   TimerScrambleStripProps,
+  TimerScrambleStatusProps,
   TimerScrambleVerificationLabels,
 } from './TimerScrambleStrip';
 export { TimerWcaScrambleSource } from './TimerWcaScrambleSource';

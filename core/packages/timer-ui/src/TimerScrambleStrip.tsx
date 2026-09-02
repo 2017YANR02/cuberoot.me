@@ -2,6 +2,7 @@
 
 import { Check } from 'lucide-react';
 import type { SmartCubeScrambleHint } from '@cuberoot/shared/smart-cube/scramble-hint';
+import type { TimerScrambleStatusKind } from '@cuberoot/shared/timer';
 import {
   Fragment,
   type CSSProperties,
@@ -24,6 +25,16 @@ export interface TimerScrambleNonOptimalLabel {
   title: string;
 }
 
+interface TimerScrambleStatusBaseProps {
+  kind: TimerScrambleStatusKind;
+  message: ReactNode;
+}
+
+export type TimerScrambleStatusProps = TimerScrambleStatusBaseProps & (
+  | Readonly<{ onRetry: () => void; retryLabel: string }>
+  | Readonly<{ onRetry?: never; retryLabel?: never }>
+);
+
 export interface TimerScrambleStripProps {
   children?: ReactNode;
   className?: string;
@@ -40,6 +51,7 @@ export interface TimerScrambleStripProps {
   nonOptimal?: TimerScrambleNonOptimalLabel;
   onActivate?: () => void;
   scramble: string;
+  status?: TimerScrambleStatusProps;
   title?: string;
   verificationLabels: TimerScrambleVerificationLabels;
 }
@@ -99,6 +111,7 @@ export function TimerScrambleStrip({
   nonOptimal,
   onActivate,
   scramble,
+  status,
   title,
   verificationLabels,
 }: TimerScrambleStripProps) {
@@ -108,23 +121,26 @@ export function TimerScrambleStrip({
     : null;
   const style = { '--scramble-scale': fontScale } as CSSProperties;
 
+  const stripActivate = status?.onRetry ? undefined : onActivate;
   const activateFromKeyboard = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget
-      || !onActivate
+      || !stripActivate
       || (event.key !== 'Enter' && event.key !== ' ')) return;
     event.preventDefault();
-    onActivate();
+    stripActivate();
   };
 
   return (
     <div
+      aria-busy={status?.kind === 'loading' ? 'true' : undefined}
       className={`scramble-strip sf-${font}${compact ? ' compact' : ''}${className ? ` ${className}` : ''}`}
       data-scramble-match={match === null ? undefined : match ? 'ok' : 'off'}
-      onClick={onActivate}
+      data-interactive={stripActivate ? 'true' : undefined}
+      onClick={stripActivate}
       onKeyDown={activateFromKeyboard}
-      role={onActivate ? 'button' : undefined}
+      role={stripActivate ? 'button' : undefined}
       style={style}
-      tabIndex={onActivate ? 0 : undefined}
+      tabIndex={stripActivate ? 0 : undefined}
       title={title}
     >
       <span className="scramble-text">
@@ -141,6 +157,8 @@ export function TimerScrambleStrip({
                 </span>
               )}
             </>
+          : status
+            ? <TimerScrambleStatus {...status} />
           : fallbackKind === 'empty'
             ? <span className="scramble-empty">{fallback}</span>
             : fallback}
@@ -171,6 +189,38 @@ export function TimerScrambleStrip({
 
       {children}
     </div>
+  );
+}
+
+/** The single loading/error/empty surface used by Web and installed clients. */
+export function TimerScrambleStatus({
+  kind,
+  message,
+  onRetry,
+  retryLabel,
+}: TimerScrambleStatusProps) {
+  return (
+    <span className={`scramble-status is-${kind}`}>
+      <span
+        aria-live={kind === 'error' || kind === 'unsupported' ? undefined : 'polite'}
+        className="scramble-status-message"
+        role={kind === 'error' || kind === 'unsupported' ? 'alert' : 'status'}
+      >
+        {kind === 'loading' && <span aria-hidden="true" className="scramble-status-spinner" />}
+        <span>{message}</span>
+      </span>
+      {onRetry && retryLabel && (
+        <button
+          className="scramble-status-retry"
+          data-no-timer
+          onClick={(event) => {
+            event.stopPropagation();
+            onRetry();
+          }}
+          type="button"
+        >{retryLabel}</button>
+      )}
+    </span>
   );
 }
 

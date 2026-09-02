@@ -12,21 +12,32 @@ const TARGET = 3;
 export interface Optimal333Source {
   /** Changes whenever the generated-state rules or signed-in owner changes. */
   key: string;
-  generateBase: () => string | Promise<string>;
+  generateBase: () => Optimal333BaseResult | Promise<Optimal333BaseResult>;
   optimize: (scramble: string, signal: AbortSignal) => Promise<string>;
   onOptimized?: (base: string, optimal: string) => void;
 }
 
-export type Optimal333Status = 'idle' | 'working' | 'ready' | 'error';
+export type Optimal333BaseResult = string | Readonly<{
+  kind: 'unavailable';
+  reason: 'empty' | 'rare';
+}>;
+
+export type Optimal333Status =
+  | 'idle'
+  | 'working'
+  | 'ready'
+  | 'error'
+  | 'base-empty'
+  | 'base-rare';
 
 interface Buffer {
   key: string;
   source: Optimal333Source | null;
   queue: string[];
-  error: boolean;
+  error: Extract<Optimal333Status, 'error' | 'base-empty' | 'base-rare'> | null;
 }
 
-const emptyBuffer = (): Buffer => ({ key: '', source: null, queue: [], error: false });
+const emptyBuffer = (): Buffer => ({ key: '', source: null, queue: [], error: null });
 let buf = emptyBuffer();
 let pumping = false;
 let controller: AbortController | null = null;
@@ -58,7 +69,7 @@ function want(source: Optimal333Source): Buffer {
   if (buf.key !== source.key) {
     controller?.abort();
     controller = null;
-    buf = { key: source.key, source, queue: [], error: false };
+    buf = { key: source.key, source, queue: [], error: null };
     notify();
   } else {
     buf.source = source;
@@ -69,7 +80,7 @@ function want(source: Optimal333Source): Buffer {
 function statusFor(key: string): Optimal333Status {
   if (buf.key !== key || !buf.source) return 'idle';
   if (buf.queue.length > 0) return 'ready';
-  if (buf.error) return 'error';
+  if (buf.error) return buf.error;
   return 'working';
 }
 
@@ -84,7 +95,14 @@ async function pump(): Promise<void> {
       const requestController = new AbortController();
       controller = requestController;
       try {
-        const base = (await source.generateBase()).trim();
+        const generated = await source.generateBase();
+        if (typeof generated !== 'string') {
+          if (buf.key !== key || requestController.signal.aborted) continue;
+          buf.error = generated.reason === 'empty' ? 'base-empty' : 'base-rare';
+          notify();
+          break;
+        }
+        const base = generated.trim();
         if (!base) throw new Error('empty base scramble');
         if (buf.key !== key || requestController.signal.aborted) continue;
         const optimal = (await source.optimize(base, requestController.signal)).trim();
@@ -97,7 +115,7 @@ async function pump(): Promise<void> {
         if (buf.key !== key || requestController.signal.aborted) continue;
         // Latch one visible error instead of retrying forever and burning cloud
         // CPU. The timer exposes an explicit retry action for this state.
-        buf.error = true;
+        buf.error = 'error';
         notify();
         break;
       } finally {
@@ -151,7 +169,7 @@ export function awaitOptimal333(source: Optimal333Source): Promise<Optimal333Sta
 
 export function retryOptimal333(source: Optimal333Source): void {
   const b = want(source);
-  b.error = false;
+  b.error = null;
   notify();
   void pump();
 }

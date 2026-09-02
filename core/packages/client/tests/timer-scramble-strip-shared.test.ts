@@ -178,6 +178,40 @@ describe('shared TimerScrambleStrip', () => {
     expect(activate).not.toHaveBeenCalled();
   });
 
+  it('renders one accessible loading/error surface with an explicit retry button', () => {
+    const activate = vi.fn();
+    const retry = vi.fn();
+    const loading = render({
+      onActivate: activate,
+      scramble: '',
+      status: { kind: 'loading', message: 'Loading real scramble' },
+    });
+    const live = loading.querySelector<HTMLElement>('.scramble-status-message')!;
+    expect(live.getAttribute('role')).toBe('status');
+    expect(live.getAttribute('aria-live')).toBe('polite');
+    expect(loading.getAttribute('aria-busy')).toBe('true');
+    expect(live.querySelector('.scramble-status-spinner')).not.toBeNull();
+
+    const failed = render({
+      onActivate: activate,
+      scramble: '',
+      status: {
+        kind: 'error',
+        message: 'Could not load real competition scrambles.',
+        onRetry: retry,
+        retryLabel: 'Try again',
+      },
+    });
+    const alert = failed.querySelector<HTMLElement>('.scramble-status-message')!;
+    const retryButton = failed.querySelector<HTMLButtonElement>('.scramble-status-retry')!;
+    expect(alert.getAttribute('role')).toBe('alert');
+    expect(alert.getAttribute('aria-live')).toBeNull();
+    expect(failed.getAttribute('role')).toBeNull();
+    act(() => retryButton.click());
+    expect(retry).toHaveBeenCalledOnce();
+    expect(activate).not.toHaveBeenCalled();
+  });
+
   it('keeps the legacy hint import as the shared implementation identity', () => {
     expect(LegacyScrambleHintText).toBe(TimerScrambleHintText);
   });
@@ -203,6 +237,7 @@ describe('shared TimerScrambleStrip', () => {
     expect(css).toMatch(/\.scramble-strip \.scramble-moves,[\s\S]*?word-spacing:\s*0\.25em;/);
     expect(css).toMatch(/\.timer-scramble-source-meta[\s\S]*?word-spacing:\s*normal;/);
     expect(css).toMatch(/\.scramble-src[\s\S]*?min-height:\s*44px;/);
+    expect(css).toMatch(/\.scramble-status-retry[\s\S]*?min-width:\s*44px;[\s\S]*?min-height:\s*44px;/);
     expect(css).toMatch(/\.scramble-src \.country-flag,[\s\S]*?width:\s*1\.333333em !important;[\s\S]*?margin-right:\s*0;/);
     expect(css).toMatch(/@media \(max-width: 540px\)[\s\S]*?overflow-x:\s*clip;/);
 

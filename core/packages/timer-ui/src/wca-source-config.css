@@ -222,8 +222,13 @@
 
 .timer-wca-source-retry {
   appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   border: 0;
-  padding: 0;
+  padding: 0 6px;
   background: none;
   color: inherit;
   cursor: pointer;
