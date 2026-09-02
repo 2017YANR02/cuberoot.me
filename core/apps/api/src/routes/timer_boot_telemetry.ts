@@ -3,6 +3,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { query } from '../db/connection.js';
 import { getIp } from '../utils/analytics_helpers.js';
 import { checkRateLimit, requireAdminOrApiKey } from '../utils/recon_helpers.js';
+import { classifyUserAgent, iosVersion, webkitVersion } from '../utils/user_agent.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const OUTCOMES = ['attempt', 'success', 'failure'] as const;
@@ -101,70 +102,11 @@ interface CountRow {
   incomplete: number | string;
 }
 
-function majorVersion(userAgent: string, pattern: RegExp): number | null {
-  const match = userAgent.match(pattern);
-  if (!match?.[1]) return null;
-  const value = Number(match[1]);
-  return Number.isInteger(value) ? value : null;
-}
-
-function webkitVersion(userAgent: string): { major: number; minor: number } | null {
-  const match = userAgent.match(/Version\/(\d+)(?:\.(\d+))?/i);
-  if (!match?.[1]) return null;
-  return { major: Number(match[1]), minor: Number(match[2] ?? 0) };
-}
-
-function iosVersion(userAgent: string): { major: number; minor: number } | null {
-  const match = userAgent.match(/(?:CPU (?:iPhone )?OS|iPhone OS) (\d+)[._](\d+)/i);
-  if (match?.[1]) return { major: Number(match[1]), minor: Number(match[2] ?? 0) };
-  return webkitVersion(userAgent);
-}
-
 export function classifyTimerBootUserAgent(userAgent: string): TimerBootDimensions {
-  const ios = /iPhone|iPad|iPod/i.test(userAgent) || /Macintosh[^)]*Mobile/i.test(userAgent);
-  const android = /Android/i.test(userAgent);
-  const wechat = /MicroMessenger/i.test(userAgent);
-  const androidWebView = android && (/;\s*wv[;) ]/i.test(userAgent) || /Version\/4\.0[^)]*Chrome\//i.test(userAgent));
+  const classified = classifyUserAgent(userAgent);
+  const ios = classified.osFamily === 'ios';
   const detectedIosVersion = ios ? iosVersion(userAgent) : null;
-
-  let osFamily: TimerBootOsFamily = 'other';
-  let osMajor: number | null = null;
-  if (ios) {
-    osFamily = 'ios';
-    osMajor = detectedIosVersion?.major ?? null;
-  } else if (android) {
-    osFamily = 'android';
-    osMajor = majorVersion(userAgent, /Android (\d+)/i);
-  } else if (/Windows NT/i.test(userAgent)) {
-    osFamily = 'windows';
-    osMajor = majorVersion(userAgent, /Windows NT (\d+)/i);
-  } else if (/Mac OS X/i.test(userAgent)) {
-    osFamily = 'macos';
-    osMajor = majorVersion(userAgent, /Mac OS X (\d+)[._]/i);
-  } else if (/Linux/i.test(userAgent)) {
-    osFamily = 'linux';
-  }
-
-  let engineFamily: TimerBootEngineFamily = 'other';
-  let engineMajor: number | null = null;
   const safariVersion = webkitVersion(userAgent);
-  if (ios) {
-    engineFamily = 'webkit';
-    engineMajor = safariVersion?.major ?? null;
-  } else {
-    const chromiumMajor = majorVersion(userAgent, /(?:EdgA?|Chrome|Chromium)\/(\d+)/i);
-    const geckoMajor = majorVersion(userAgent, /Firefox\/(\d+)/i);
-    if (chromiumMajor !== null) {
-      engineFamily = 'chromium';
-      engineMajor = chromiumMajor;
-    } else if (geckoMajor !== null) {
-      engineFamily = 'gecko';
-      engineMajor = geckoMajor;
-    } else if (/AppleWebKit/i.test(userAgent)) {
-      engineFamily = 'webkit';
-      engineMajor = safariVersion?.major ?? null;
-    }
-  }
 
   let supportStatus: TimerBootSupportStatus = 'unknown';
   if (ios && detectedIosVersion) {
@@ -172,11 +114,11 @@ export function classifyTimerBootUserAgent(userAgent: string): TimerBootDimensio
       || (detectedIosVersion.major === MIN_WEBKIT_MAJOR && detectedIosVersion.minor >= MIN_WEBKIT_MINOR)
       ? 'supported'
       : 'below-baseline';
-  } else if (engineFamily === 'chromium' && engineMajor !== null) {
-    supportStatus = engineMajor < MIN_CHROMIUM_MAJOR ? 'below-baseline' : 'supported';
-  } else if (engineFamily === 'gecko' && engineMajor !== null) {
-    supportStatus = engineMajor < MIN_GECKO_MAJOR ? 'below-baseline' : 'supported';
-  } else if (engineFamily === 'webkit' && safariVersion) {
+  } else if (classified.engineFamily === 'chromium' && classified.engineMajor !== null) {
+    supportStatus = classified.engineMajor < MIN_CHROMIUM_MAJOR ? 'below-baseline' : 'supported';
+  } else if (classified.engineFamily === 'gecko' && classified.engineMajor !== null) {
+    supportStatus = classified.engineMajor < MIN_GECKO_MAJOR ? 'below-baseline' : 'supported';
+  } else if (classified.engineFamily === 'webkit' && safariVersion) {
     supportStatus = safariVersion.major > MIN_WEBKIT_MAJOR
       || (safariVersion.major === MIN_WEBKIT_MAJOR && safariVersion.minor >= MIN_WEBKIT_MINOR)
       ? 'supported'
@@ -184,11 +126,11 @@ export function classifyTimerBootUserAgent(userAgent: string): TimerBootDimensio
   }
 
   return {
-    engineFamily,
-    engineMajor,
-    osFamily,
-    osMajor,
-    container: wechat ? 'wechat' : androidWebView ? 'webview' : 'browser',
+    engineFamily: classified.engineFamily,
+    engineMajor: classified.engineMajor,
+    osFamily: classified.osFamily,
+    osMajor: classified.osMajor,
+    container: classified.container,
     supportStatus,
   };
 }

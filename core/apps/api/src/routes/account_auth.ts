@@ -20,6 +20,7 @@ import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { checkRateLimit, requireAdmin } from '../utils/recon_helpers.js';
 import { signSession, hasFreshEmailGrant, hasFreshPhonePasswordResetGrant } from '../utils/session.js';
+import { captureAccountDevice } from '../utils/account_device.js';
 import {
   issueCode, verifyCode, loginWithIdentity, addIdentity, removeIdentity, replaceCredentialIdentity,
   getIdentities, getUserById, findUserByIdentity, publicUser,
@@ -159,6 +160,7 @@ accountAuthRoutes.post('/auth/social/:provider', async (c) => {
   const { user, isNew } = await loginWithIdentity(provider as SocialProvider, g.sub, {
     name: g.name || '', avatar: g.avatar ?? null,
   });
+  await captureAccountDevice(user.id, c.req.header('User-Agent'));
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   return c.json({ token, user: publicUser(user), isNew });
 });
@@ -201,6 +203,7 @@ accountAuthRoutes.post('/auth/wechat/miniprogram', async (c) => {
   }
 
   const { user, isNew } = await loginWithIdentity('wechat', wechatSession.unionid, { name: '' });
+  await captureAccountDevice(user.id, c.req.header('User-Agent'));
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   const session: WebSession = { token, user: publicUser(user) };
   return c.json({ ...session, isNew });
@@ -223,6 +226,7 @@ accountAuthRoutes.post('/auth/douyin/miniprogram', async (c) => {
   try {
     const { openid } = await exchangeDouyinMiniProgramCode(code);
     const { user, isNew } = await loginWithIdentity('douyin', openid, { name: '' });
+    await captureAccountDevice(user.id, c.req.header('User-Agent'));
     const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
     const session: WebSession = { token, user: publicUser(user) };
     return c.json({ ...session, isNew });
@@ -262,6 +266,7 @@ accountAuthRoutes.post('/auth/web-session/exchange', async (c) => {
   if (!user) {
     return c.json(webSessionError('INVALID_WEB_SESSION_TICKET', 'invalid web session ticket'), 401);
   }
+  await captureAccountDevice(user.id, c.req.header('User-Agent'));
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   const session: WebSession = { token, user: publicUser(user) };
   return c.json(session);
@@ -308,6 +313,7 @@ accountAuthRoutes.post('/auth/mobile-session/exchange', async (c) => {
       'invalid mobile session ticket',
     ), 401);
   }
+  await captureAccountDevice(user.id, c.req.header('User-Agent'));
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   const session: WebSession = { token, user: publicUser(user) };
   return c.json(session);
@@ -363,6 +369,7 @@ accountAuthRoutes.post('/auth/email/verify', async (c) => {
   const ok = await verifyCode('email', norm, 'login', code as string);
   if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
   const { user, isNew } = await loginWithIdentity('email', norm, { name: norm.split('@')[0] });
+  await captureAccountDevice(user.id, c.req.header('User-Agent'));
   // amr=email_code:本次会话已证明邮箱所有权 → 15 分钟内可免旧密码重设密码(忘记密码路径)。
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name, amr: 'email_code' });
   return c.json({ token, user: publicUser(user), isNew });
@@ -401,11 +408,13 @@ accountAuthRoutes.post('/auth/phone/verify', async (c) => {
   if (purpose === 'password_reset') {
     const user = await findUserByIdentity('phone', norm);
     if (!user) return c.json({ error: 'phone not linked to an account' }, 404);
+    await captureAccountDevice(user.id, c.req.header('User-Agent'));
     const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name, amr: 'phone_password_reset' });
     return c.json({ token, user: publicUser(user) });
   }
   const name = `尾号${norm.slice(-4)}`;
   const { user, isNew } = await loginWithIdentity('phone', norm, { name });
+  await captureAccountDevice(user.id, c.req.header('User-Agent'));
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   return c.json({ token, user: publicUser(user), isNew });
 });
@@ -421,6 +430,7 @@ accountAuthRoutes.post('/auth/email/password', async (c) => {
   if (!isValidEmail(norm) || typeof password !== 'string' || !password) return c.json({ error: 'invalid input' }, 400);
   const user = await loginWithPassword(norm, password);
   if (!user) return c.json({ error: 'wrong email or password' }, 401);
+  await captureAccountDevice(user.id, c.req.header('User-Agent'));
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   return c.json({ token, user: publicUser(user) });
 });
@@ -636,6 +646,7 @@ accountAuthRoutes.post('/auth/google', async (c) => {
     name: g.name || g.email?.split('@')[0] || '',
     avatar: g.picture ?? null,
   });
+  await captureAccountDevice(user.id, c.req.header('User-Agent'));
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   return c.json({ token, user: publicUser(user), isNew });
 });
@@ -828,6 +839,13 @@ interface AdminUserListRow {
   has_password: boolean;
   email_notify: boolean;
   lang: string | null;
+  device_type: string | null;
+  device_os_family: string | null;
+  device_os_major: number | string | null;
+  device_browser_family: string | null;
+  device_browser_major: number | string | null;
+  device_container: string | null;
+  device_last_seen_at: string | Date | null;
   identities: Array<{
     provider: string;
     providerUid: string;
@@ -929,6 +947,9 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
       u.id, u.display_name, u.avatar_url, u.wca_id, u.birth_date, u.gender,
       u.country_iso2, u.region_code, u.city_name, u.created_at, u.updated_at,
       u.password_updated_at, (u.password_hash IS NOT NULL) AS has_password, u.email_notify, u.lang,
+      device.device_type, device.os_family AS device_os_family, device.os_major AS device_os_major,
+      device.browser_family AS device_browser_family, device.browser_major AS device_browser_major,
+      device.container AS device_container, device.last_seen_at AS device_last_seen_at,
       COALESCE(
         json_agg(json_build_object(
           'provider', identity.provider,
@@ -940,8 +961,9 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
       ) AS identities
     FROM app_users u
     LEFT JOIN auth_identities identity ON identity.user_id = u.id
+    LEFT JOIN account_last_devices device ON device.user_id = u.id
     ${where}
-    GROUP BY u.id
+    GROUP BY u.id, device.user_id
     ORDER BY ${orderColumn} ${orderDirection}, u.id ${orderDirection}
     LIMIT ? OFFSET ?`, [...params, rawPageSize, offset]),
   ]);
@@ -982,6 +1004,15 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
       hasPassword: row.has_password,
       emailNotify: row.email_notify,
       lang: row.lang,
+      lastDevice: row.device_type && row.device_os_family && row.device_browser_family && row.device_container && row.device_last_seen_at ? {
+        deviceType: row.device_type,
+        osFamily: row.device_os_family,
+        osMajor: row.device_os_major === null ? null : Number(row.device_os_major),
+        browserFamily: row.device_browser_family,
+        browserMajor: row.device_browser_major === null ? null : Number(row.device_browser_major),
+        container: row.device_container,
+        lastSeenAt: row.device_last_seen_at,
+      } : null,
       identities: row.identities ?? [],
     })),
     pagination: {

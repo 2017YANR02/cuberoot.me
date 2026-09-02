@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
-import { ChevronLeft, ChevronRight, Loader2, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Monitor, Search, Smartphone, Tablet } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
 import { Flag } from '@/components/Flag';
@@ -60,6 +60,35 @@ function identityValue(identity: AdminUserRecord['identities'][number]): string 
     return identity.providerUid;
   }
   return identity.providerUid.length <= 24 ? identity.providerUid : `${identity.providerUid.slice(0, 10)}…${identity.providerUid.slice(-6)}`;
+}
+
+function deviceTypeLabel(deviceType: NonNullable<AdminUserRecord['lastDevice']>['deviceType'], t: ReturnType<typeof useT>): string {
+  const labels = {
+    phone: ['手机', 'Phone'], tablet: ['平板', 'Tablet'], desktop: ['电脑', 'Computer'], other: ['其他设备', 'Other device'],
+  } as const;
+  return t(labels[deviceType][0], labels[deviceType][1]);
+}
+
+function osLabel(device: NonNullable<AdminUserRecord['lastDevice']>, t: ReturnType<typeof useT>): string {
+  const labels = {
+    android: 'Android', ios: 'iOS', windows: 'Windows', macos: 'macOS', linux: 'Linux', other: t('未知系统', 'Unknown OS'),
+  } as const;
+  const showMajor = device.osMajor !== null && (device.osFamily === 'android' || device.osFamily === 'ios' || device.osFamily === 'macos');
+  return `${labels[device.osFamily]}${showMajor ? ` ${device.osMajor}` : ''}`;
+}
+
+function browserLabel(device: NonNullable<AdminUserRecord['lastDevice']>, t: ReturnType<typeof useT>): string {
+  const labels = {
+    chrome: 'Chrome', edge: 'Edge', firefox: 'Firefox', safari: 'Safari',
+    wechat: t('微信内置浏览器', 'WeChat browser'), webview: 'WebView', other: t('未知浏览器', 'Unknown browser'),
+  } as const;
+  return `${labels[device.browserFamily]}${device.browserMajor !== null ? ` ${device.browserMajor}` : ''}`;
+}
+
+function DeviceIcon({ deviceType }: { deviceType: NonNullable<AdminUserRecord['lastDevice']>['deviceType'] }) {
+  if (deviceType === 'phone') return <Smartphone size={16} aria-hidden />;
+  if (deviceType === 'tablet') return <Tablet size={16} aria-hidden />;
+  return <Monitor size={16} aria-hidden />;
 }
 
 export default function AdminUsersPage() {
@@ -220,6 +249,7 @@ export default function AdminUsersPage() {
                 <thead><tr>
                   <th><button className="admin-users-sort" type="button" onClick={() => changeSort('name')}>{t('用户名', 'Username')}<SortArrow active={sort === 'name'} dir={direction} /></button></th>
                   <th>{t('绑定', 'Linked methods')}</th>
+                  <th>{t('最近使用设备', 'Latest device')}</th>
                   <th>{t('资料', 'Profile')}</th>
                   <th><button className="admin-users-sort" type="button" onClick={() => changeSort('created')}>{t('注册时间', 'Registered')}<SortArrow active={sort === 'created'} dir={direction} /></button></th>
                 </tr></thead>
@@ -238,6 +268,17 @@ export default function AdminUsersPage() {
                         {record.hasPassword && <span>{t('密码', 'Password')}</span>}
                         {!record.hasPassword && record.identities.length === 0 && <span>{t('无', 'None')}</span>}
                       </div></td>
+                      <td>
+                        {record.lastDevice ? (
+                          <div className="admin-users-device">
+                            <DeviceIcon deviceType={record.lastDevice.deviceType} />
+                            <span>
+                              <strong>{deviceTypeLabel(record.lastDevice.deviceType, t)}：{osLabel(record.lastDevice, t)}</strong>
+                              <small>{browserLabel(record.lastDevice, t)} {formatTimestamp(record.lastDevice.lastSeenAt, locale)}</small>
+                            </span>
+                          </div>
+                        ) : <span className="admin-users-device-empty">{t('尚未记录', 'Not recorded yet')}</span>}
+                      </td>
                       <td>
                         <details className="admin-users-details">
                           <summary>{t('查看', 'View')}</summary>
@@ -268,7 +309,7 @@ export default function AdminUsersPage() {
                       <td><time dateTime={record.createdAt}>{formatTimestamp(record.createdAt, locale)}</time></td>
                     </tr>
                   ))}
-                  {data.users.length === 0 && <tr><td colSpan={4} className="admin-users-empty">{t('没有符合条件的用户。', 'No users match these filters.')}</td></tr>}
+                  {data.users.length === 0 && <tr><td colSpan={5} className="admin-users-empty">{t('没有符合条件的用户。', 'No users match these filters.')}</td></tr>}
                 </tbody>
               </table>
             </div>
