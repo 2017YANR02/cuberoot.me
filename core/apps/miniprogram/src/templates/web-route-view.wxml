@@ -1,9 +1,6 @@
 <template name="web-route-view">
   <web-view wx:if="{{src}}" src="{{src}}" data-attempt="{{viewAttempt}}" binderror="handleWebViewError" bindmessage="handleWebViewMessage"></web-view>
   <view wx:elif="{{loginRequired}}" class="page web-login-page">
-    <text class="eyebrow">ACCOUNT</text>
-    <text class="page-title">{{loginTitle}}</text>
-    <text class="page-intro">{{loginIntro}}</text>
     <button
       wx:if="{{!loginStorageUnavailable}}"
       class="primary-button web-login-button"
@@ -12,7 +9,10 @@
       disabled="{{loginBusy}}"
       hover-class="press-feedback"
       bindtap="loginWithMiniProgram"
-    >{{loginBusy ? loginButtonBusyLabel : loginButtonLabel}}</button>
+    >
+      <image class="web-login-logo" src="/assets/cuberoot-logo.png" mode="aspectFit"></image>
+      <text>{{loginBusy ? loginButtonBusyLabel : loginButtonLabel}}</text>
+    </button>
     <button
       wx:else
       class="primary-button web-login-button"

@@ -40,11 +40,9 @@ export interface WebViewPageData {
   loginButtonBusyLabel: string;
   loginButtonLabel: string;
   loginError: string;
-  loginIntro: string;
   loginRequired: boolean;
   loginRetryLabel: string;
   loginStorageUnavailable: boolean;
-  loginTitle: string;
   loadingTitle: string;
   retryLabel: string;
   routeKey: string;
@@ -279,14 +277,9 @@ export function createWebViewPageData(): WebViewPageData {
       ? tr({ en: 'Go to Me to sign in', zh: '前往“我的”登录' })
       : tr({ en: `Sign in with ${providerName}`, zh: `${providerName}登录` }),
     loginError: '',
-    loginIntro: tr({
-      en: 'Sign in to use CubeRoot. Afterward, this page will continue opening automatically.',
-      zh: '登录后即可使用魔方根，完成后会自动继续打开当前页面。',
-    }),
     loginRequired: false,
     loginRetryLabel: tr({ en: 'Read again', zh: '重新读取' }),
     loginStorageUnavailable: false,
-    loginTitle: tr({ en: 'Sign in to continue', zh: '登录后继续' }),
     loadingTitle: tr({ en: 'Opening', zh: '正在打开' }),
     retryLabel: tr({ en: 'Try again', zh: '重新打开' }),
     routeKey: '',
