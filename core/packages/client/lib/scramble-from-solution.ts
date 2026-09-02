@@ -21,40 +21,8 @@
  * cleaned full solution returns to solved up to a whole-cube rotation.
  */
 import { Alg } from 'cubing/alg';
-import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
-import { getCube3 } from '@/lib/cube3';
+import { equivalentClean333Scramble } from '@cuberoot/shared/timer';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
-
-// cubing/search 静态 import 会把 ~185KB 的求解 chunk 拉进引用方的首包(这里只有
-// /sim 的 PlayerControls),而它只在用户真的「从解法反推打乱」时才跑。按需取。
-const loadSolver = () => import('cubing/search')
-  .then((m) => m.experimentalSolve3x3x3IgnoringCenters);
-
-/** Lazily computed once: the 24 whole-cube rotations as Alg strings. */
-let _rotationsPromise: Promise<string[]> | null = null;
-async function rotationAlgs(kpuzzle: KPuzzle): Promise<string[]> {
-  if (_rotationsPromise) return _rotationsPromise;
-  _rotationsPromise = (async () => {
-    const solved = kpuzzle.defaultPattern();
-    const key = (p: KPattern) => JSON.stringify(p.patternData);
-    const seen = new Set<string>([key(solved)]);
-    const out: string[] = ['']; // identity first → prefer "no rotation"
-    let frontier: string[] = [''];
-    for (let depth = 0; depth < 6 && frontier.length; depth++) {
-      const next: string[] = [];
-      for (const seq of frontier) {
-        for (const g of ['x', 'y', 'z']) {
-          const ns = (seq ? seq + ' ' : '') + g;
-          const k = key(solved.applyAlg(new Alg(ns)));
-          if (!seen.has(k)) { seen.add(k); out.push(ns); next.push(ns); }
-        }
-      }
-      frontier = next;
-    }
-    return out;
-  })();
-  return _rotationsPromise;
-}
 
 /**
  * 给「从还原态出发到某个状态的一段 setup(可含转体/宽转/slice)」找一条无转体、
@@ -62,35 +30,7 @@ async function rotationAlgs(kpuzzle: KPuzzle): Promise<string[]> {
  * 状态本身已还原(纯转体也算)或解析失败时返回 `''`。
  */
 export async function equivalentCleanScramble(setupAlg: string): Promise<string> {
-  const kpuzzle = await getCube3();
-  const solved = kpuzzle.defaultPattern();
-
-  let alg: Alg;
-  try {
-    alg = new Alg(setupAlg);
-  } catch {
-    return '';
-  }
-
-  const centersKey = (p: KPattern) => JSON.stringify(p.patternData.CENTERS);
-  const solvedCentersKey = centersKey(solved);
-
-  // setup 里的转体会留下净整体旋转,中心不在家求解器会拒解 —— 找一个 *前置*
-  // 旋转 r(24 选一)把中心归位。前置(而非后置)保持棱角相对状态不变。
-  const rots = await rotationAlgs(kpuzzle);
-  let oriented: KPattern | null = null;
-  for (const r of rots) {
-    // state of (r · alg): apply r first, then the setup.
-    const base = r ? solved.applyAlg(new Alg(r)) : solved;
-    const cand = base.applyAlg(alg);
-    if (centersKey(cand) === solvedCentersKey) { oriented = cand; break; }
-  }
-  if (!oriented || oriented.isIdentical(solved)) return '';
-
-  const experimentalSolve3x3x3IgnoringCenters = await loadSolver();
-  const solution = await experimentalSolve3x3x3IgnoringCenters(oriented);
-  // min2phase prints inverted doubles as `R2'`; `R2` reads cleaner for a scramble.
-  return solution.invert().toString().replace(/2'/g, '2');
+  return equivalentClean333Scramble(setupAlg);
 }
 
 /**

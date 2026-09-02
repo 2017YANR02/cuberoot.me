@@ -73,6 +73,7 @@ Web 的当前规则不是禁用“真题”：来源仍保持 `real`，然后使
 | F12 | 已修复 | API 曾复制 strict mark key validator，且会把缺失/非法 `x` 静默归为 `0`。 | API 与 Web/App 共用 shared marks key decoder；query 只规范化 `0/1` 与整数，非法 body/query 返回 400 且不执行 SQL。 |
 | F13 | 已修复（待真机） | WCA 难度多 bin 查询曾把“部分请求失败 + 其余请求权威空”折成空集并缓存，Web 重试耗尽和 csTimer/专项 Worker 空返回又只显示不可恢复的 `—`。 | Web、shared coverage 与 App 现在任一 bin 失败即保持 transient；17 类状态原因、双语文案与重试策略共用，WCA/Worker 错误可从共享 44px 按钮原位重试。自动化已锁定 partial-bin、七次耗尽、Worker 失败和 ARIA；仍待 OPPO 真实断网/恢复、长文与大字号。 |
 | F14 | 已修复（待真机） | Web 异步生成完成时曾按完成时游标写回，切换历史题后可覆盖错误 slot；optimal 与 trainer 也可能同时争用同一请求。App 的旧错误按钮可重复发起 retry，且过渡期保留旧 failure。 | Web 现在捕获请求启动时的 history entry ID，只回填仍为空的同一 slot；optimal 独占 trainer pool。App retry 先写 loading/failure:null，并以实时 entry 阻止旧闭包双击；loading/ready reducer 都清理 failure。源码与定向回归已通过，仍待真实慢网、切题和连点设备矩阵。 |
+| F15 | 已修复（部分真机） | 随机 333 最优打乱曾只存在于 Web 私有 pool/协议/转换，App 开关没有实际请求链；OLL/PLL 专项又不是可直接提交的纯 HTM。 | pool、SSE 协议与等价纯 HTM 转换已迁入 shared，Web 仅保留 URL/auth adapter，App 共用同一实现并加入 auth pending fail-closed、当前 token 401 清理、stale owner/source 防护及 loading/error/retry。78-case、乱序、取消、401 回归全绿；OPPO 已验证未登录门禁、随机来源和 spinner，但同步种子、随机难度组合及已登录真机云请求仍缺。 |
 
 ## 自动化证据与边界
 
@@ -83,6 +84,8 @@ WCA difficulty 共享层新增证据：`timer_wca_difficulty_shared.test.ts` 与
 2026-09-02 来源进度/打卡收口证据：API 2 files / 12 tests、App 36 files / 263 tests、Client 7 files / 58 tests，六个相关包 typecheck、Mobile production build、Android sync/install 均通过；多轮独立审查最终 P0=0、P1=0。该证据不冒充非零足迹弹层的真机视觉验收，也不关闭逐类 loading/empty/error 与全配置矩阵。
 
 2026-09-02 来源状态收口证据：App 全量 36 files / 265 tests、Client 定向 11 files / 70 tests及来源补充回归通过，shared/timer-ui/app-ui/client/mobile typecheck、Mobile production build、Capacitor Android sync 与 206-task `installDebug` 通过。手动空队列提示与 17 类状态文案均只有 shared 事实源；异步回填绑定启动时 slot，optimal/trainer 不再竞争，App retry loading/double-start/failure normalization 已锁定。最终 APK SHA-256 `45c8bf9f21f47cb0740811e786dd2e8db53cf62d04a582be971f685c9e4e663e` 与 OPPO `PFDM00` 内 `base.apk` 一致，冷启动成功、进程 25304 且检查窗口内无 crash/ANR；同一 UI 变更前的前台 360dp ready 截图中 `0.000`、真题配置、绿色开关、出处、打乱、预览和三栏完整可见。三名独立 agent 最终均 GO、P0/P1=0。最新重建只移动同文案事实源，未重新取视觉截图；完整 Client 全集在并行重型测试资源压力下出现未改模块失败，故只记定向绿；真实断网/恢复、loading/error/retry 点击和全视口/平台矩阵仍未执行，不把 ready 截图冒充异常态验收。
+
+2026-09-02 随机 333 最优收口证据：Web/App 已共用 `@cuberoot/shared/timer` 的 pool、SSE 协议和等价纯 HTM 转换；App 的认证恢复、当前 token 401、旧请求隔离与 Account iframe 清理进入同一产品层。App 37 files / 270 tests、Client 4 files / 39 tests、Mobile CSS 2 tests和五包 typecheck 全绿；production build、Android sync/install 通过。8,789,365-byte APK SHA-256 `6eb801cb43c3414fc27eb8b83bc8fb0907d963d1a5ff7c5ddc7675d761e9e5e8` 与 OPPO 内 `base.apk` 一致。真实 WebView 103 下 `@supports` spinner fallback 为 2px solid，来源菜单含真题/随机/手动，随机题可生成，未登录最优行禁用且 360px 设置页无横向溢出。当前 App 未登录，所以已登录云请求、401、断网恢复只记自动化；同步种子和随机难度组合仍未实现。
 
 纯逻辑/源码 guard 可以证明路由契约，但还不能模拟完整 React 生命周期、IndexedDB 调度和网络乱序。后续应补可注入 repository/fetch 的 App-level 测试，至少覆盖：
 
