@@ -10,10 +10,12 @@ import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
 
 const ORIENTATION_ITEMS = CUBE_ORIENTATIONS.map((option) => {
   const shown = orientedFaceColors(option.value);
+  const triggerLabel = <CubeColorChip className="cube-orientation-chip" colors={`${CUBE_COLOR_LETTER_FOR_FACE[shown.U]}${CUBE_COLOR_LETTER_FOR_FACE[shown.F]}`} />;
   return {
     ...option,
     textValue: option.label,
-    label: <><CubeColorChip colors={`${CUBE_COLOR_LETTER_FOR_FACE[shown.U]}${CUBE_COLOR_LETTER_FOR_FACE[shown.F]}`} /> {' '}{option.label}</>,
+    triggerLabel,
+    label: <>{triggerLabel} {' '}{option.label}</>,
   };
 });
 
@@ -34,15 +36,11 @@ export default function CubeOrientationSelect({
       items={items}
       value={value}
       onChange={onChange}
-      label={current?.label ?? value}
+      label={current?.triggerLabel ?? value}
       ariaLabel={ariaLabel ?? title ?? tr({ en: 'Cube orientation', zh: '魔方朝向' })}
       valueText={current?.textValue ?? value}
       title={title}
       triggerClassName={className}
-      header={tr({
-        en: 'Left color: top; right color: front',
-        zh: '左色块：顶面，右色块：前面',
-      })}
     />
   );
 }
