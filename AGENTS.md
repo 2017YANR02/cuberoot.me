@@ -84,6 +84,7 @@ WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过
 ## 开发命令
 
 pnpm 11,pwsh。CWD 已在 `core/`;`pnpm install` 报 `ERR_PNPM_NO_PKG_MANIFEST` = 在仓库根,`Set-Location core`。
+改 `core/packages/shared/src/**` 后完成前必须在 `core/` 运行 `pnpm --filter @cuberoot/shared build` 刷新 `dist`;“不用检查”只跳过测试/校验,不跳过该构建。
 
 - shell 路径相对 `core/` 写(`packages/...`),禁加 `core/` 前缀(会变 `core/core/`)。含 `[lang]` 等方括号的路径一律单引号,必要时 `git add ':(literal)packages/.../[lang]/x.tsx'`。
 - 临时验证目录 / worktree 禁用 Junction / SymbolicLink 复用正式 `node_modules` 或 `packages`;各自运行 `pnpm install --offline --frozen-lockfile`。

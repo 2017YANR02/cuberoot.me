@@ -81,6 +81,7 @@ export default function RuiminProfilePage() {
           <nav className="ruimin-profile-links" aria-label={tr({ zh: '相关页面', en: 'Related pages' })}>
             <AppLink href="/achievements">{tr({ zh: 'CubeRoot 原创工作', en: 'Original work on CubeRoot' })}<span aria-hidden="true">→</span></AppLink>
             <AppLink href="/teachers">{tr({ zh: '魔方老师名录', en: 'Teacher directory' })}<span aria-hidden="true">→</span></AppLink>
+            <AppLink href="/contact">{tr({ zh: '联系方式', en: 'Contact' })}<span aria-hidden="true">→</span></AppLink>
           </nav>
 
           <section className="ruimin-story" aria-labelledby="ruimin-profile-heading">

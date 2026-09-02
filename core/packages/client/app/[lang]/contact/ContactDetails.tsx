@@ -4,11 +4,13 @@ import type { ReactNode } from 'react';
 import {
   CONTACT_DIRECT_DETAILS,
   CONTACT_SOCIAL_PLATFORMS,
+  CONTACT_WEBSITE,
   CONTACT_WECHAT_QR_PATH,
   type ContactDirectDetailId,
   type ContactPlatformId,
 } from '@cuberoot/shared/contact';
-import { Mail, QrCode, User } from 'lucide-react';
+import { SITE_CREATOR_PROFILE } from '@cuberoot/shared/site-directory';
+import { Mail, PanelsTopLeft, QrCode, User } from 'lucide-react';
 import {
   SiBilibili,
   SiDiscord,
@@ -22,6 +24,7 @@ import {
 } from 'react-icons/si';
 import { useCopy } from '@/hooks/useCopy';
 import { tr, useLang } from '@/i18n/tr';
+import AppLink from '@/components/AppLink';
 
 const ICON_SIZE = 16;
 const PLATFORM_ICONS: Record<ContactPlatformId, ReactNode> = {
@@ -41,6 +44,16 @@ const DIRECT_DETAIL_ICONS: Record<ContactDirectDetailId, ReactNode> = {
   email: <Mail size={ICON_SIZE} strokeWidth={1.8} aria-hidden="true" />,
   discord: <SiDiscord size={ICON_SIZE} color="#5865F2" aria-hidden="true" />,
 };
+const COMING_SOON = { zh: '即将上线', en: 'Coming soon' } as const;
+const APP_PLATFORMS = [
+  { label: { zh: '网站', en: 'Website' }, value: { zh: CONTACT_WEBSITE, en: CONTACT_WEBSITE }, href: '/' },
+  { label: { zh: '微信小程序', en: 'WeChat Mini Program' }, value: { zh: '魔方根', en: 'CubeRoot' }, href: null },
+  { label: { zh: '抖音小程序', en: 'Douyin Mini Program' }, value: COMING_SOON, href: null },
+  { label: { zh: 'iOS App', en: 'iOS app' }, value: COMING_SOON, href: null },
+  { label: { zh: '安卓 App', en: 'Android app' }, value: COMING_SOON, href: null },
+  { label: { zh: '鸿蒙 App', en: 'HarmonyOS app' }, value: COMING_SOON, href: null },
+  { label: { zh: 'Windows 客户端', en: 'Windows client' }, value: COMING_SOON, href: null },
+] as const;
 
 function CopyValueButton({ copyKey, value }: { copyKey: string; value: string }) {
   const { copiedKey, copy } = useCopy(1500);
@@ -69,7 +82,7 @@ export default function ContactDetails() {
 
   return (
     <div className="contact-details-columns">
-      <dl className="contact-details">
+      <dl className="contact-details contact-social-details">
         {platforms.map((platform) => (
           <div key={platform.id} className="contact-details-row contact-details-link-row">
             <dt>
@@ -86,7 +99,9 @@ export default function ContactDetails() {
               )}
             </dt>
             <dd>
-              <span className="contact-platform-account">{platform.account}</span>
+              <span className="contact-platform-account">
+                <CopyValueButton copyKey={`platform-${platform.id}`} value={platform.account} />
+              </span>
               {platform.count && <span className="contact-platform-count">{tr(platform.count)}</span>}
             </dd>
           </div>
@@ -96,6 +111,7 @@ export default function ContactDetails() {
       <dl className="contact-details">
         {CONTACT_DIRECT_DETAILS.map((detail) => {
           const value = detail.value ? tr(detail.value) : '';
+          const authorHref = detail.id === 'author' ? SITE_CREATOR_PROFILE.href : null;
           const label = (
             <>
               <span className="contact-details-icon">{DIRECT_DETAIL_ICONS[detail.id]}</span>
@@ -105,15 +121,19 @@ export default function ContactDetails() {
           return (
             <div
               key={detail.id}
-              className={`contact-details-row${detail.action === 'link' ? ' contact-details-link-row' : ''}`}
+              className={`contact-details-row${detail.action === 'link' || authorHref ? ' contact-details-link-row' : ''}`}
             >
               <dt>
-                {detail.action === 'link' && detail.href ? (
+                {authorHref ? (
+                  <AppLink href={authorHref}>{label}</AppLink>
+                ) : detail.action === 'link' && detail.href ? (
                   <a href={detail.href} target="_blank" rel="noopener noreferrer">{label}</a>
                 ) : label}
               </dt>
               <dd>
-                {detail.action === 'copy' ? (
+                {authorHref ? (
+                  <AppLink href={authorHref}>{value}</AppLink>
+                ) : detail.action === 'copy' ? (
                   <CopyValueButton copyKey={detail.id} value={value} />
                 ) : value}
                 {detail.showQr && (
@@ -142,6 +162,27 @@ export default function ContactDetails() {
             </div>
           );
         })}
+      </dl>
+
+      <dl className="contact-details">
+        <div className="contact-details-row">
+          <dt>
+            <span className="contact-details-icon"><PanelsTopLeft size={ICON_SIZE} strokeWidth={1.8} aria-hidden="true" /></span>
+            <span>{tr({ zh: '应用平台', en: 'App platforms' })}</span>
+          </dt>
+          <dd className="contact-app-platform-list">
+            {APP_PLATFORMS.map((platform) => (
+              <span className="contact-app-platform-row" key={platform.label.en}>
+                <span>{tr(platform.label)}</span>
+                {platform.href ? (
+                  <AppLink href={platform.href} className="contact-site">{tr(platform.value)}</AppLink>
+                ) : (
+                  <span className="contact-app-platform-value">{tr(platform.value)}</span>
+                )}
+              </span>
+            ))}
+          </dd>
+        </div>
       </dl>
     </div>
   );
