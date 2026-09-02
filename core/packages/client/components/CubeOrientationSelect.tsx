@@ -1,25 +1,21 @@
 // 拿方朝向下拉(24 档,csTimer 顺序)—— 全站唯一控件。
-// 选项表在 lib/cube-orientation.ts;这里只负责渲染 + 兜住表外的值(不认识的前缀
-// 补一项占位,免得 select 显示成空白)。
+// 选项表在 lib/cube-orientation.ts;颜色块复用复盘页的 CubeColorChip。
 //
 // 消费方:/timer 设置面板、/sim 播放条、/predict 与 /alg 公式图。
-import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
+import CubeColorChip from '@/components/CubeColorChip/CubeColorChip';
+import { CompactSelect } from '@/components/CompactSelect';
+import { tr } from '@/i18n/tr';
+import { CUBE_COLOR_LETTER_FOR_FACE } from '@/lib/cube-colors';
+import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
 
-const FACE_COLOR_BLOCK: Readonly<Record<string, string>> = {
-  U: '⬜',
-  R: '🟥',
-  F: '🟩',
-  D: '🟨',
-  L: '🟧',
-  B: '🟦',
-};
-
-/** 颜色是快速识别提示；保留 `(UF)`，避免色觉差异造成歧义。 */
-function labelWithFaceColors(label: string): string {
-  const match = /^\(([URFDLB])([URFDLB])\)/.exec(label);
-  if (!match) return label;
-  return `${FACE_COLOR_BLOCK[match[1]]}${FACE_COLOR_BLOCK[match[2]]} ${label}`;
-}
+const ORIENTATION_ITEMS = CUBE_ORIENTATIONS.map((option) => {
+  const shown = orientedFaceColors(option.value);
+  return {
+    ...option,
+    textValue: option.label,
+    label: <><CubeColorChip colors={`${CUBE_COLOR_LETTER_FOR_FACE[shown.U]}${CUBE_COLOR_LETTER_FOR_FACE[shown.F]}`} /> {' '}{option.label}</>,
+  };
+});
 
 export default function CubeOrientationSelect({
   value, onChange, className, title, ariaLabel,
@@ -31,18 +27,22 @@ export default function CubeOrientationSelect({
   title?: string;
   ariaLabel?: string;
 }) {
+  const current = ORIENTATION_ITEMS.find((option) => option.value === value);
+  const items = current ? ORIENTATION_ITEMS : [...ORIENTATION_ITEMS, { value, label: value }];
   return (
-    <select
-      className={className}
+    <CompactSelect
+      items={items}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={onChange}
+      label={current?.label ?? value}
+      ariaLabel={ariaLabel ?? title ?? tr({ en: 'Cube orientation', zh: '魔方朝向' })}
+      valueText={current?.textValue ?? value}
       title={title}
-      aria-label={ariaLabel}
-    >
-      {CUBE_ORIENTATIONS.map((o) => (
-        <option key={o.label} value={o.value}>{labelWithFaceColors(o.label)}</option>
-      ))}
-      {!CUBE_ORIENTATIONS.some((o) => o.value === value) && <option value={value}>{value}</option>}
-    </select>
+      triggerClassName={className}
+      header={tr({
+        en: 'Left color: top; right color: front',
+        zh: '左色块：顶面，右色块：前面',
+      })}
+    />
   );
 }

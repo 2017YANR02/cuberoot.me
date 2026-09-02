@@ -94,6 +94,18 @@
   gap: 2px;
 }
 
+.compact-select-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 7px 12px 6px;
+  background: var(--popover);
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
 .compact-select-option {
   display: block;
   width: 100%;
