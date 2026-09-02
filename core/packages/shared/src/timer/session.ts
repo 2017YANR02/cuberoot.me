@@ -138,6 +138,16 @@ export function createTimerSession(
   }, session.id);
 }
 
+/** Create and activate as one immutable command for every persistence host. */
+export function createAndActivateTimerSession(
+  database: TimerDatabase,
+  input: CreateTimerSessionInput,
+): TimerSessionSelectionResult {
+  const created = createTimerSession(database, input);
+  if (created.failure || !created.sessionId) return created;
+  return activateTimerSession(created.database, created.sessionId);
+}
+
 export function renameTimerSession(
   database: TimerDatabase,
   sessionId: string,
@@ -204,7 +214,7 @@ export function deleteTimerSession(
     return selected(unchanged(database, 'unknown-session'), null);
   }
   if (database.sessions.length <= 1) {
-    return selected(unchanged(database, 'last-session'), database.activeSessionId);
+    return selected(unchanged(database, 'last-session'), null);
   }
 
   const sessions = database.sessions.filter((session) => session.id !== sessionId);
@@ -224,7 +234,7 @@ export function deleteTimerSession(
     changed: true,
     failure: null,
     activeSessionId,
-  }, activeSessionId);
+  }, database.activeSessionId === sessionId ? activeSessionId : null);
 }
 
 export function associateTimerSessionEvent(
@@ -277,6 +287,37 @@ export function activateTimerSessionForEvent(
     failure: null,
     activeSessionId: match.id,
   }, match.id);
+}
+
+/**
+ * Canonical event-selection policy: auto-match an associated session when
+ * enabled; otherwise associate the active session with the selected event.
+ */
+export function selectTimerEventSession(
+  database: TimerDatabase,
+  event: EventId,
+  autoSessionForEvent: boolean,
+): TimerSessionSelectionResult {
+  if (autoSessionForEvent) {
+    const matched = activateTimerSessionForEvent(database, event);
+    if (matched.failure !== 'no-matching-session') return matched;
+  }
+  const associated = associateTimerSessionEvent(database, database.activeSessionId, event);
+  return selected(
+    associated,
+    associated.failure ? null : associated.activeSessionId,
+  );
+}
+
+/** Event to expose after a create/activate/delete selection. */
+export function timerSessionSelectedEvent(
+  database: TimerDatabase,
+  selectedSessionId: string | null,
+  currentEvent: EventId,
+  autoEventForSession: boolean,
+): EventId {
+  if (!autoEventForSession || !selectedSessionId) return currentEvent;
+  return timerSessionEvent(database, selectedSessionId) ?? currentEvent;
 }
 
 function locateSolve(

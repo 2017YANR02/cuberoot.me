@@ -48,7 +48,7 @@ export { CompactSelect } from './CompactSelect';
 export type { CompactSelectItem, CompactSelectProps } from './CompactSelect';
 export { ManualScrambleQueueEditor } from './ManualScrambleQueueEditor';
 export type { ManualScrambleQueueEditorProps } from './ManualScrambleQueueEditor';
-export { TimerSessionSwitcher } from './TimerSessionSwitcher';
+export { TimerSessionSwitcher, timerSessionSwitcherLabels } from './TimerSessionSwitcher';
 export { TIMER_OVERLAY_IDS } from './timer-overlay-control';
 export type {
   TimerOverlayControlProps,

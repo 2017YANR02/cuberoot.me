@@ -108,6 +108,10 @@ export interface TimerBackupSummary {
   solveCount: number;
 }
 
+export function timerDefaultSessionName(language: 'en' | 'zh'): string {
+  return language === 'zh' ? '默认' : 'Default';
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -515,7 +519,7 @@ function wrapByEventAsDatabase(byEvent: TimerSolvesByEvent, environment: TimerDa
     version: TIMER_DATABASE_VERSION,
     sessions: [{
       id: safe.sessionId,
-      name: safe.language === 'zh' ? '默认' : 'Default',
+      name: timerDefaultSessionName(safe.language),
       createdTs: safe.nowMs,
     }],
     activeSessionId: safe.sessionId,

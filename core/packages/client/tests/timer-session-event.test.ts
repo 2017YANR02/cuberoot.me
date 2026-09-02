@@ -45,9 +45,26 @@ describe('timer session event associations', () => {
   it('associates a new session with the current event', async () => {
     seed([{ id: 'a', name: 'A', createdTs: 1 }], 'a', { a: {} });
     const db = await loadDb();
-    const id = db.createSession('2x2', '222');
+    const id = db.createAndActivateSession('2x2', '222');
 
     expect(db.getSessionEvent(id)).toBe('222');
+  });
+
+  it('creates one stable default session on first read, including zero-quota fallback', async () => {
+    let db = await loadDb();
+    const first = db.getSessionSnapshot();
+    const second = db.getSessionSnapshot();
+    expect(second).toEqual(first);
+    expect(JSON.parse(storage.getItem(DB_KEY)!).activeSessionId).toBe(first.activeSessionId);
+
+    storage.clear();
+    vi.resetModules();
+    vi.spyOn(storage, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+    db = await import('@/app/[lang]/timer/_lib/storage/db');
+    const volatileFirst = db.getSessionSnapshot();
+    const volatileSecond = db.getSessionSnapshot();
+    expect(volatileSecond).toEqual(volatileFirst);
+    expect(volatileFirst.sessions.map(session => session.id)).toContain(volatileFirst.activeSessionId);
   });
 
   it('creates and activates atomically for the shared UI host', async () => {
@@ -163,18 +180,17 @@ describe('timer session event associations', () => {
     expect(storage.getItem(DB_KEY)).toBe(before);
   });
 
-  it('preserves the legacy unknown/delete and empty-rename adapter behavior', async () => {
+  it('surfaces invalid mutations without writing or replacing the database', async () => {
     seed([{ id: 'a', name: 'Existing', createdTs: 1 }], 'a', { a: {} });
     const db = await loadDb();
     const write = vi.spyOn(storage, 'setItem');
 
-    db.setActiveSession('missing');
-    db.renameSession('missing', 'Ignored');
-    db.renameSession('a', '   ');
-    db.clearSession('missing');
-
-    expect(db.deleteSession('missing')).toBe('a');
-    expect(db.deleteSession('a')).toBeNull();
+    expect(() => db.setActiveSession('missing')).toThrow(db.TimerSessionMutationError);
+    expect(() => db.renameSession('missing', 'Ignored')).toThrow(db.TimerSessionMutationError);
+    expect(() => db.renameSession('a', '   ')).toThrow(db.TimerSessionMutationError);
+    expect(() => db.clearSession('missing')).toThrow(db.TimerSessionMutationError);
+    expect(() => db.deleteSession('missing')).toThrow(db.TimerSessionMutationError);
+    expect(() => db.deleteSession('a')).toThrow(db.TimerSessionMutationError);
     expect(write).not.toHaveBeenCalled();
     expect(db.listSessions()).toEqual([{ id: 'a', name: 'Existing', createdTs: 1 }]);
   });

@@ -3,6 +3,7 @@
 import { activeTimerSolves, type TimerStoreData } from '@cuberoot/shared/timer';
 import {
   TimerSessionSwitcher,
+  timerSessionSwitcherLabels,
   type TimerSessionSwitcherHost,
 } from '@cuberoot/timer-ui';
 import { act, createElement, useMemo, useRef, useState } from 'react';
@@ -14,7 +15,6 @@ import {
   TimerRepository,
   type TimerStoreDriver,
 } from './data/timer-repository';
-import { timerSessionSwitcherLabels } from './timer-session-labels';
 
 class MemoryDriver implements TimerStoreDriver {
   data: TimerStoreData | undefined;

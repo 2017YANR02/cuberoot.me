@@ -12,7 +12,7 @@ import {
   type TimerSessionSwitcherHost,
   type TimerSessionSwitcherLabels,
 } from '@cuberoot/timer-ui';
-import { act, createElement } from 'react';
+import { act, createElement, useEffect, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -111,6 +111,46 @@ describe('shared TimerSessionSwitcher interaction contract', () => {
     expect(document.activeElement?.getAttribute('data-session-active')).toBe('true');
   });
 
+  it('closes only the top session overlay on the first mobile Escape', async () => {
+    function NestedMobilePanels() {
+      const [parentOpen, setParentOpen] = useState(true);
+      const [sessionOpen, setSessionOpen] = useState(true);
+      useEffect(() => {
+        if (!parentOpen || sessionOpen) return;
+        const closeParent = (event: KeyboardEvent) => {
+          if (event.key === 'Escape') setParentOpen(false);
+        };
+        window.addEventListener('keydown', closeParent);
+        return () => window.removeEventListener('keydown', closeParent);
+      }, [parentOpen, sessionOpen]);
+      return createElement('div', {
+        'data-parent-open': String(parentOpen),
+      }, createElement(TimerSessionSwitcher, {
+        activeSessionId: 'a',
+        event: '333',
+        host,
+        labels,
+        onOpenChange: setSessionOpen,
+        open: sessionOpen,
+        sessions,
+      }));
+    }
+
+    await act(async () => root.render(createElement(NestedMobilePanels)));
+    await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', {
+      bubbles: true,
+      key: 'Escape',
+    })));
+    expect(container.firstElementChild?.getAttribute('data-parent-open')).toBe('true');
+    expect(document.querySelector('.tsession-panel')).toBeNull();
+
+    await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', {
+      bubbles: true,
+      key: 'Escape',
+    })));
+    expect(container.firstElementChild?.getAttribute('data-parent-open')).toBe('false');
+  });
+
   it('waits for async activation, blocks duplicate submits, then closes and restores focus', async () => {
     const pending = deferred();
     host.activate = vi.fn(() => pending.promise);
@@ -125,6 +165,11 @@ describe('shared TimerSessionSwitcher interaction contract', () => {
     });
     expect(host.activate).toHaveBeenCalledTimes(1);
     expect(panel.getAttribute('aria-busy')).toBe('true');
+    expect(document.activeElement).toBe(panel);
+    await act(async () => panel.dispatchEvent(new KeyboardEvent('keydown', {
+      bubbles: true, cancelable: true, key: 'Tab',
+    })));
+    expect(document.activeElement).toBe(panel);
     expect(document.querySelector('.tsession-panel')).not.toBeNull();
 
     await act(async () => pending.resolve());
@@ -133,11 +178,30 @@ describe('shared TimerSessionSwitcher interaction contract', () => {
     expect(document.activeElement).toBe(trigger);
   });
 
+  it('keeps Tab focus inside the dialog', async () => {
+    await render();
+    const { panel } = await openMenu();
+    const first = panel.querySelector<HTMLButtonElement>('[data-session-active="true"]')!;
+    const last = panel.querySelector<HTMLButtonElement>('.tsession-add-btn')!;
+    expect(document.activeElement).toBe(first);
+
+    await act(async () => first.dispatchEvent(new KeyboardEvent('keydown', {
+      bubbles: true, cancelable: true, key: 'Tab', shiftKey: true,
+    })));
+    expect(document.activeElement).toBe(last);
+
+    await act(async () => last.dispatchEvent(new KeyboardEvent('keydown', {
+      bubbles: true, cancelable: true, key: 'Tab',
+    })));
+    expect(document.activeElement).toBe(first);
+  });
+
   it('keeps a failed rename open with its draft and a shared error message', async () => {
     host.rename = vi.fn(() => Promise.reject(new Error('write-failure')));
     await render();
     const { panel } = await openMenu();
-    const rename = panel.querySelector<HTMLButtonElement>('button[aria-label="Rename session"]')!;
+    const rename = panel.querySelector<HTMLButtonElement>('button[aria-label^="Rename session:"]')!;
+    expect(rename.getAttribute('aria-label')).toContain(sessions[0]!.name);
     await act(async () => rename.click());
     const input = panel.querySelector<HTMLInputElement>('input[aria-label="Session name"]')!;
     await act(async () => {
@@ -152,6 +216,26 @@ describe('shared TimerSessionSwitcher interaction contract', () => {
     expect(panel.querySelector('[role="alert"]')?.textContent).toBe(
       'Session change failed. Your existing data was kept.',
     );
+  });
+
+  it('returns focus to the renamed non-active session after success', async () => {
+    await render();
+    const { panel } = await openMenu();
+    await act(async () => panel.querySelector<HTMLButtonElement>(
+      'button[aria-label="Rename session: Pocket"]',
+    )!.click());
+    const input = panel.querySelector<HTMLInputElement>('input[aria-label="Session name"]')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, 'Pocket 2');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => panel.querySelector<HTMLButtonElement>(
+      'button[aria-label="Confirm rename"]',
+    )!.click());
+    await act(async () => { await new Promise((resolve) => requestAnimationFrame(resolve)); });
+
+    expect(host.rename).toHaveBeenCalledWith('b', 'Pocket 2');
+    expect(document.activeElement?.getAttribute('data-session-id')).toBe('b');
   });
 
   it('uses the default create name, ClearButton, trim/empty behavior, and Enter', async () => {
@@ -185,14 +269,14 @@ describe('shared TimerSessionSwitcher interaction contract', () => {
     const confirm = vi.fn(() => false);
     await render({ confirm });
     const { panel } = await openMenu();
-    await act(async () => panel.querySelector<HTMLButtonElement>('button[aria-label="Clear session solves"]')!.click());
+    await act(async () => panel.querySelector<HTMLButtonElement>('button[aria-label^="Clear session solves:"]')!.click());
     expect(confirm).toHaveBeenCalledWith(
       'Clear all solves in "A very long primary session name that must not widen the viewport"? This cannot be undone.',
     );
     expect(host.clear).not.toHaveBeenCalled();
     expect(document.querySelector('.tsession-panel')).not.toBeNull();
 
-    await act(async () => panel.querySelector<HTMLButtonElement>('button[aria-label="Delete session"]')!.click());
+    await act(async () => panel.querySelector<HTMLButtonElement>('button[aria-label^="Delete session:"]')!.click());
     expect(host.delete).not.toHaveBeenCalled();
 
     await act(async () => root.render(createElement(TimerSessionSwitcher, {
@@ -201,7 +285,24 @@ describe('shared TimerSessionSwitcher interaction contract', () => {
     const onlyPanel = document.querySelector<HTMLDivElement>('.tsession-panel');
     // Re-rendering controlled data does not invent a second session; if the
     // existing menu remains open, its destructive control is truly disabled.
-    expect(onlyPanel?.querySelector<HTMLButtonElement>('button[aria-label="Delete session"]')?.disabled).toBe(true);
+    expect(onlyPanel?.querySelector<HTMLButtonElement>('button[aria-label^="Delete session:"]')?.disabled).toBe(true);
+  });
+
+  it('moves focus to the active session after a successful delete', async () => {
+    const confirm = vi.fn(() => true);
+    await render({ confirm });
+    const { panel } = await openMenu();
+    const pocketDelete = panel.querySelector<HTMLButtonElement>(
+      'button[aria-label="Delete session: Pocket"]',
+    )!;
+    await act(async () => pocketDelete.click());
+    expect(host.delete).toHaveBeenCalledWith('b');
+
+    await render({ confirm, sessions: [sessions[0]!] });
+    await act(async () => { await new Promise((resolve) => requestAnimationFrame(resolve)); });
+    expect(document.activeElement).toBe(
+      document.querySelector<HTMLButtonElement>('[data-session-active="true"]'),
+    );
   });
 
   it('closes on Escape/outside pointer and restores focus for Escape', async () => {
