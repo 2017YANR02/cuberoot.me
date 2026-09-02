@@ -129,6 +129,7 @@ const CORE_PATHS = [
   corePath('pnpm-workspace.yaml'),
   corePath('tsconfig.base.json'),
   corePath('patches', '**'),
+  corePath('scripts', 'build-cubing-worker.mjs'),
   corePath('scripts', 'resolve-workspace-path.mjs'),
   repoPath('.github', 'workflows', 'deploy_core.yml'),
 ] as const;
@@ -305,6 +306,7 @@ describe('deployment workflow path contracts', () => {
       [corePath('pnpm-workspace.yaml'), true],
       [corePath('tsconfig.base.json'), true],
       [corePath('patches', 'cubing@0.63.3.patch'), true],
+      [corePath('scripts', 'build-cubing-worker.mjs'), true],
       [corePath('scripts', 'resolve-workspace-path.mjs'), true],
       [repoPath('.github', 'workflows', 'deploy_core.yml'), true],
       [packagePath('client', 'app', '[lang]', 'page.tsx'), false],
