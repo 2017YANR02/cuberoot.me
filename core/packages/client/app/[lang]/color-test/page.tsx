@@ -5,7 +5,7 @@ import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import { tr } from '@/i18n/tr';
-import { CUBE_FILL, CUBE_ON_FILL } from '@/lib/cube-colors';
+import { CUBE_COLOR_LETTER_FOR_FACE, CUBE_COLOR_NAMES, CUBE_FILL, CUBE_ON_FILL } from '@/lib/cube-colors';
 import './color-test.css';
 
 const TESTS = [
@@ -16,6 +16,15 @@ const TESTS = [
     description: {
       zh: '看两个颜色,判断它们在标准三阶魔方上是对色还是邻色。',
       en: 'Look at two colours and decide whether their faces are opposite or adjacent on a standard 3×3.',
+    },
+  },
+  {
+    id: 'positions',
+    href: '/color-test/positions',
+    title: { zh: '侧面颜色顺序', en: 'Side Colour Order' },
+    description: {
+      zh: '保持白色朝上,判断红、绿、橙、蓝四个侧面的左右位置关系。',
+      en: 'Keep white on top and recall the left-right order of the red, green, orange and blue side faces.',
     },
   },
   {
@@ -36,6 +45,17 @@ function TestPreview({ id }: { id: (typeof TESTS)[number]['id'] }) {
         <span style={{ background: CUBE_FILL.R, color: CUBE_ON_FILL.R }}>{tr({ zh: '红', en: 'R' })}</span>
         <b>?</b>
         <span style={{ background: CUBE_FILL.L, color: CUBE_ON_FILL.L }}>{tr({ zh: '橙', en: 'O' })}</span>
+      </div>
+    );
+  }
+  if (id === 'positions') {
+    return (
+      <div className="color-test-position-preview" aria-hidden="true">
+        {(['R', 'F', 'L', 'B'] as const).map((face) => (
+          <span key={face} style={{ background: CUBE_FILL[face], color: CUBE_ON_FILL[face] }}>
+            {tr({ zh: CUBE_COLOR_NAMES[face].zh, en: CUBE_COLOR_LETTER_FOR_FACE[face] })}
+          </span>
+        ))}
       </div>
     );
   }
@@ -65,8 +85,8 @@ export default function ColorTestPage() {
         <p className="color-test-eyebrow">COLOR LAB</p>
         <h1>{tr({ zh: '颜色测试', en: 'Colour Tests' })}</h1>
         <p>{tr({
-          zh: '先练会魔方六色之间的位置关系,再试试大脑能不能忽略文字、只看颜色。',
-          en: 'Learn how the six cube colours relate in space, then see whether your brain can ignore a word and attend only to its colour.',
+          zh: '练会魔方六色的对面、相邻和左右顺序,再试试大脑能不能忽略文字、只看颜色。',
+          en: 'Learn the opposite, adjacent and side-order relationships between cube colours, then see whether your brain can ignore a word and attend only to its colour.',
         })}</p>
       </header>
 
