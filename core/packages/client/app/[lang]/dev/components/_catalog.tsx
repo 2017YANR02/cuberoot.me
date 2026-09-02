@@ -1406,6 +1406,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The scramble display strip shared by the Web, Android, and iOS timers. Notation font tiers, long-text wrapping, empty state, the final-move copied check, smart-cube current-move hints, match/correction feedback, and click/keyboard activation live in one implementation. Hosts only inject scramble generation, clipboard effects, source rows, and translated copy.',
   },
   {
+    name: 'TimerWcaScrambleSource',
+    import: "import { TimerWcaScrambleSource } from '@cuberoot/timer-ui';",
+    category: 'display',
+    zh: 'Web 与五个安装端共用的 WCA 真题出处行；国旗、比赛名、项目图标、轮次/组别/题号/备打、长名称折行和比赛深链只维护这一份。宿主只注入本地化比赛名与导航 adapter。',
+    en: 'The WCA real-scramble provenance row shared by Web and all five installed clients. Flag, competition name, event icon, round/group/number/extra notation, long-name wrapping, and competition deep link live in one implementation. Hosts only inject a localized name and navigation adapter.',
+  },
+  {
     name: 'GestureWheel',
     import: "import { GestureWheel } from '@cuberoot/timer-ui';",
     category: 'more',
