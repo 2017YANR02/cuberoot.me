@@ -1,4 +1,5 @@
 export {
+  decodeMiniProgramSessionMessage,
   decodeWebSessionError,
   decodeWebSession,
   decodeWebSessionTicketEnvelope,
