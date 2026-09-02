@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Check, Copy, Eye, EyeOff, KeyRound, Loader2, Lock, Plus, Save, Search, Trash2, UserPlus, X } from 'lucide-react';
+import { Check, Copy, Download, Eye, EyeOff, KeyRound, Loader2, Lock, Plus, Save, Search, Trash2, UserPlus, X } from 'lucide-react';
 import BackHome from '@/components/BackHome';
 import BoolToggle from '@/components/BoolToggle';
 import { SearchInput } from '@/components/SearchInput';
@@ -14,6 +14,7 @@ import {
   createVaultKeyProfile,
   decryptVaultEntry,
   encryptVaultEntry,
+  recoverVaultPrivateKey,
   unlockVaultPrivateKey,
   type EncryptedPrivateKey,
   type VaultEntry,
@@ -52,6 +53,9 @@ export default function VaultPage() {
   const [dirty, setDirty] = useState(false);
   const [passphrase, setPassphrase] = useState('');
   const [confirmation, setConfirmation] = useState('');
+  const [recoveryCode, setRecoveryCode] = useState('');
+  const [recoveryMode, setRecoveryMode] = useState(false);
+  const [mustSaveRecoveryCode, setMustSaveRecoveryCode] = useState(false);
   const [filter, setFilter] = useState('');
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [shareQuery, setShareQuery] = useState('');
@@ -115,11 +119,14 @@ export default function VaultPage() {
     setBusy(true);
     setError(null);
     try {
-      const keyProfile = await createVaultKeyProfile(passphrase);
+      const created = await createVaultKeyProfile(passphrase);
+      const keyProfile = { publicKey: created.publicKey, encryptedPrivateKey: created.encryptedPrivateKey };
       await handleApi(await fetch(apiUrl('/v1/vault/key'), { method: 'PUT', headers: authHeaders(), body: JSON.stringify(keyProfile) }));
       const next = { ...payload, keyProfile };
       setPayload(next);
       await openVault(await unlockVaultPrivateKey(passphrase, keyProfile.encryptedPrivateKey), next);
+      setRecoveryCode(created.recoveryCode);
+      setMustSaveRecoveryCode(true);
       setConfirmation('');
     } catch {
       setError(tr({ zh: '无法初始化资料库，请稍后重试。', en: 'Could not initialize the vault. Try again later.' }));
@@ -136,6 +143,42 @@ export default function VaultPage() {
     } catch {
       setError(tr({ zh: '口令不正确，或加密资料已损坏。', en: 'The passphrase is wrong or the encrypted data is damaged.' }));
     } finally { setBusy(false); }
+  };
+
+  const recover = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!payload?.keyProfile || recoveryCode.trim().length === 0 || passphrase.length < 12) {
+      setError(tr({ zh: '请填写恢复密钥，并设置至少 12 个字符的新口令。', en: 'Enter the recovery key and set a new passphrase of at least 12 characters.' }));
+      return;
+    }
+    if (passphrase !== confirmation) {
+      setError(tr({ zh: '两次输入的新口令不一致。', en: 'The new passphrases do not match.' }));
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const recovered = await recoverVaultPrivateKey(recoveryCode, passphrase, payload.keyProfile.encryptedPrivateKey);
+      const keyProfile = { ...payload.keyProfile, encryptedPrivateKey: recovered.encryptedPrivateKey };
+      await handleApi(await fetch(apiUrl('/v1/vault/key'), { method: 'PUT', headers: authHeaders(), body: JSON.stringify(keyProfile) }));
+      const next = { ...payload, keyProfile };
+      setPayload(next);
+      setRecoveryMode(false);
+      setRecoveryCode('');
+      setConfirmation('');
+      await openVault(recovered.privateKey, next);
+    } catch {
+      setError(tr({ zh: '恢复密钥不正确，或恢复资料已损坏。', en: 'The recovery key is wrong or the recovery data is damaged.' }));
+    } finally { setBusy(false); }
+  };
+
+  const downloadRecoveryCode = () => {
+    const url = URL.createObjectURL(new Blob([`${recoveryCode}\n`], { type: 'text/plain;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'cuberoot-vault-recovery-key.txt';
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const confirmDiscard = () => !dirty || window.confirm(tr({ zh: '放弃尚未保存的修改？', en: 'Discard unsaved changes?' }));
@@ -253,6 +296,23 @@ export default function VaultPage() {
     </main>
   );
   if (!payload) return <main className="vault-page vault-loading"><Loader2 className="vault-spin" />{error ?? tr({ zh: '正在加载…', en: 'Loading…' })}</main>;
+  if (privateKey && mustSaveRecoveryCode) return (
+    <main className="vault-page vault-gate">
+      <div className="vault-topbar"><BackHome /></div>
+      <KeyRound aria-hidden="true" />
+      <h1>{tr({ zh: '保存恢复密钥', en: 'Save your recovery key' })}</h1>
+      <p>{tr({ zh: '忘记资料库口令时，只能用这枚密钥重设。它只显示这一次，请保存到安全位置。', en: 'This key is the only way to reset a forgotten vault passphrase. It is shown once, so store it somewhere safe.' })}</p>
+      <div className="vault-unlock">
+        <label htmlFor="vault-recovery-display">{tr({ zh: '恢复密钥', en: 'Recovery key' })}</label>
+        <input id="vault-recovery-display" className="vault-unlock-input" value={recoveryCode} readOnly />
+        <div className="vault-actions">
+          <button type="button" className="vault-button" onClick={() => copy(recoveryCode, 'vault-recovery')}>{copiedKey === 'vault-recovery' ? <Check /> : <Copy />}{tr({ zh: '复制', en: 'Copy' })}</button>
+          <button type="button" className="vault-button" onClick={downloadRecoveryCode}><Download />{tr({ zh: '下载', en: 'Download' })}</button>
+          <button type="button" className="vault-button is-primary" onClick={() => { setMustSaveRecoveryCode(false); setRecoveryCode(''); }}>{tr({ zh: '我已保存，进入资料库', en: 'Saved, open the vault' })}</button>
+        </div>
+      </div>
+    </main>
+  );
   if (!privateKey) {
     const isSetup = !payload.keyProfile;
     return (
@@ -260,14 +320,18 @@ export default function VaultPage() {
         <div className="vault-topbar"><BackHome /></div>
         <KeyRound aria-hidden="true" />
         <h1>{tr({ zh: '私密资料库', en: 'Private vault' })}</h1>
-        <p>{isSetup
-          ? tr({ zh: '设置一个独立解锁口令。它不会上传，也无法找回；请务必自行安全备份。', en: 'Set a separate vault passphrase. It is never uploaded and cannot be recovered, so keep a safe backup.' })
-          : tr({ zh: '输入资料库口令，在这台设备上解密。', en: 'Enter your vault passphrase to decrypt on this device.' })}</p>
-        <form className="vault-unlock" onSubmit={isSetup ? setup : unlock}>
-          <label htmlFor="vault-passphrase">{tr({ zh: '资料库口令', en: 'Vault passphrase' })}</label>
-          <input id="vault-passphrase" className="vault-unlock-input" type="password" value={passphrase} minLength={12} autoComplete={isSetup ? 'new-password' : 'current-password'} onChange={(event) => setPassphrase(event.target.value)} />
-          {isSetup && <><label htmlFor="vault-confirm">{tr({ zh: '再次输入', en: 'Confirm passphrase' })}</label><input id="vault-confirm" className="vault-unlock-input" type="password" value={confirmation} minLength={12} autoComplete="new-password" onChange={(event) => setConfirmation(event.target.value)} /></>}
-          <button type="submit" className="vault-button is-primary" disabled={busy}>{busy && <Loader2 className="vault-spin" />}{tr(isSetup ? { zh: '创建并解锁', en: 'Create and unlock' } : { zh: '解锁', en: 'Unlock' })}</button>
+        <p>{recoveryMode
+          ? tr({ zh: '输入创建时保存的恢复密钥，再设置一个新口令。', en: 'Enter the recovery key saved during setup, then set a new passphrase.' })
+          : isSetup
+            ? tr({ zh: '设置一个独立解锁口令。创建后会生成一枚只显示一次的恢复密钥。', en: 'Set a separate vault passphrase. A one-time recovery key will be generated after creation.' })
+            : tr({ zh: '输入资料库口令，在这台设备上解密。', en: 'Enter your vault passphrase to decrypt on this device.' })}</p>
+        <form className="vault-unlock" onSubmit={recoveryMode ? recover : isSetup ? setup : unlock}>
+          {recoveryMode && <><label htmlFor="vault-recovery">{tr({ zh: '恢复密钥', en: 'Recovery key' })}</label><input id="vault-recovery" className="vault-unlock-input" value={recoveryCode} autoComplete="off" onChange={(event) => setRecoveryCode(event.target.value)} /></>}
+          <label htmlFor="vault-passphrase">{recoveryMode ? tr({ zh: '新资料库口令', en: 'New vault passphrase' }) : tr({ zh: '资料库口令', en: 'Vault passphrase' })}</label>
+          <input id="vault-passphrase" className="vault-unlock-input" type="password" value={passphrase} minLength={12} autoComplete={isSetup || recoveryMode ? 'new-password' : 'current-password'} onChange={(event) => setPassphrase(event.target.value)} />
+          {(isSetup || recoveryMode) && <><label htmlFor="vault-confirm">{recoveryMode ? tr({ zh: '再次输入新口令', en: 'Confirm new passphrase' }) : tr({ zh: '再次输入', en: 'Confirm passphrase' })}</label><input id="vault-confirm" className="vault-unlock-input" type="password" value={confirmation} minLength={12} autoComplete="new-password" onChange={(event) => setConfirmation(event.target.value)} /></>}
+          <button type="submit" className="vault-button is-primary" disabled={busy}>{busy && <Loader2 className="vault-spin" />}{tr(recoveryMode ? { zh: '重设口令并解锁', en: 'Reset and unlock' } : isSetup ? { zh: '创建并解锁', en: 'Create and unlock' } : { zh: '解锁', en: 'Unlock' })}</button>
+          {!isSetup && <button type="button" className="vault-button" onClick={() => { setRecoveryMode((current) => !current); setRecoveryCode(''); setPassphrase(''); setConfirmation(''); setError(null); }}>{recoveryMode ? tr({ zh: '返回口令解锁', en: 'Back to passphrase' }) : tr({ zh: '忘记口令', en: 'Forgot passphrase' })}</button>}
         </form>
         {error && <p className="vault-error" role="alert">{error}</p>}
       </main>

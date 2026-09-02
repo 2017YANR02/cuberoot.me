@@ -3,6 +3,7 @@ import {
   createVaultKeyProfile,
   decryptVaultEntry,
   encryptVaultEntry,
+  recoverVaultPrivateKey,
   unlockVaultPrivateKey,
   type VaultEntry,
 } from '@/lib/vault-crypto';
@@ -24,6 +25,13 @@ describe('private vault crypto', () => {
     await expect(decryptVaultEntry(encrypted.ciphertext, encrypted.iv, encrypted.accesses[0].wrappedKey, ownerKey))
       .resolves.toEqual(entry);
     await expect(decryptVaultEntry(encrypted.ciphertext, encrypted.iv, encrypted.accesses[0].wrappedKey, strangerKey))
+      .rejects.toThrow();
+
+    const recovered = await recoverVaultPrivateKey(owner.recoveryCode, 'a replacement passphrase', owner.encryptedPrivateKey);
+    await expect(decryptVaultEntry(encrypted.ciphertext, encrypted.iv, encrypted.accesses[0].wrappedKey, recovered.privateKey))
+      .resolves.toEqual(entry);
+    await expect(unlockVaultPrivateKey('a replacement passphrase', recovered.encryptedPrivateKey)).resolves.toBeDefined();
+    await expect(recoverVaultPrivateKey(stranger.recoveryCode, 'another replacement', owner.encryptedPrivateKey))
       .rejects.toThrow();
   });
 });
