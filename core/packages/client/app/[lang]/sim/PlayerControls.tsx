@@ -46,6 +46,8 @@ import tweener from './engine/tweener';
 import { parseSq1Scramble } from './engine/sq1/sq1State';
 import {
   SQUARE_FAMILY_SPECS,
+  formatSquareFamilyAlg,
+  formatSquareFamilyMoves,
   invertSquareFamilyMoves,
   randomSquareFamilyScramble,
   simplifySquareFamilyAlg,
@@ -53,6 +55,7 @@ import {
   tryParseSquareFamilyMoves,
   type SquareFamilyKind,
   type SquareFamilyMove,
+  type SquareFamilyNotationFormat,
 } from './engine/squareFamily/squareFamilyState';
 import { parseIvyMoves } from './engine/ivy/IvyTwister';
 import type { IvyMove } from './engine/ivy/IvyCube';
@@ -304,8 +307,8 @@ function parseNxnItems(text: string): NxnPlayItem[] {
   return items;
 }
 
-/** Convert SQ1 text while preserving per-line `// comments` and newlines. */
-function convertSq1Text(text: string, convert: (s: string) => string): string {
+/** Convert Square-family text while preserving per-line `// comments` and newlines. */
+function convertSquareText(text: string, convert: (s: string) => string): string {
   return text.split('\n').map(line => {
     const commentIdx = line.indexOf('//');
     const algPart = commentIdx >= 0 ? line.slice(0, commentIdx) : line;
@@ -997,6 +1000,7 @@ export default function PlayerControls({
     ? puzzleKind
     : null;
   const squareFamilySpec = squareFamilyKind ? SQUARE_FAMILY_SPECS[squareFamilyKind] : null;
+  const squarePuzzleKind: 'sq1' | SquareFamilyKind | null = isSq1 ? 'sq1' : squareFamilyKind;
   const isSquarePuzzle = isSq1 || squareFamilySpec !== null;
   const isIvy = puzzleKind === 'ivy';
   // Skewb on the in-house engine — a corner-turn engine puzzle, NOT the cubing.js
@@ -1075,7 +1079,12 @@ export default function PlayerControls({
   const [algDraft, setAlgDraft] = useState(alg);
   const algStm = useMemo(() => (is3x3 ? stm(algDraft) : 0), [algDraft, is3x3]);
   const [setupDraft, setSetupDraft] = useState(setup ?? '');
-  const [sq1Format, setSq1Format] = useState<'compact' | 'wca'>('compact');
+  const [squareFormats, setSquareFormats] = useState<Record<'sq1' | SquareFamilyKind, SquareFamilyNotationFormat>>({
+    sq1: 'compact',
+    sq2: 'compact',
+    sq4: 'compact',
+  });
+  const squareFormat = squareFormats[squarePuzzleKind ?? 'sq1'];
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   // Caret char offset in the solution box while the user is navigating text (click
@@ -1782,8 +1791,8 @@ export default function PlayerControls({
   // model; pyraminx/skewb/megaminx (cubing.js) can't use the cube's mod-4 fold.
   // Corner-turn engine puzzles fold via their descriptor.
   const simplifyForPuzzle = useCallback((s: string): string => {
-    if (isSq1) return simplifySq1Alg(s, sq1Format);
-    if (squareFamilySpec) return simplifySquareFamilyAlg(s, squareFamilySpec);
+    if (isSq1) return simplifySq1Alg(s, squareFormat);
+    if (squareFamilySpec) return simplifySquareFamilyAlg(s, squareFamilySpec, squareFormat);
     if (isIvy) return s; // ivy R R = R' (not R2) — NxN fold doesn't apply
     // 文本可能还没打完 / 有错字 → 原样返回,别抛(按钮点在半截文本上不该炸页)。
     if (corner) {
@@ -1807,7 +1816,7 @@ export default function PlayerControls({
         .join(' ');
     }
     return fold(s);
-  }, [isSq1, squareFamilySpec, isIvy, corner, isTwistyMode, sq1Format, order]);
+  }, [isSq1, squareFamilySpec, isIvy, corner, isTwistyMode, squareFormat, order]);
 
   const invertForPuzzle = useCallback((s: string): string => {
     if (corner) {
@@ -1817,28 +1826,33 @@ export default function PlayerControls({
     }
     if (isSq1) {
       const inv = invertSq1Alg(s);
-      return sq1Format === 'wca' ? canonicalSq1Alg(inv) : compactSq1Alg(inv);
+      return squareFormat === 'wca' ? canonicalSq1Alg(inv) : compactSq1Alg(inv);
     }
     if (squareFamilySpec) {
       const parsed = tryParseSquareFamilyMoves(s, squareFamilySpec);
       if (!parsed) return s;
-      return squareFamilyMovesToString(invertSquareFamilyMoves(parsed, squareFamilySpec));
+      return formatSquareFamilyMoves(
+        invertSquareFamilyMoves(parsed, squareFamilySpec),
+        squareFormat,
+      );
     }
     return invertAlg(stripHandMarks(s)); // 倒序后换握/推法位点失义,直接剥
-  }, [isSq1, squareFamilySpec, corner, sq1Format]);
+  }, [isSq1, squareFamilySpec, corner, squareFormat]);
 
   // 消步 = 实时消步开关(settings.liveReduce);开启时手势 / 键盘追加自动消步。
   // 拨到开还顺手把当前解法消一次步(兼顾原一次性按钮:手敲 / 粘贴后开开关即整理)。
   const setLiveReduce = useCallback((v: boolean) => {
     onSettingsChange({ ...settings, liveReduce: v });
     if (!v) return;
-    const reduced = simplifyForPuzzle(algDraft.trim());
+    const reduced = isSquarePuzzle
+      ? convertSquareText(algDraft.trimEnd(), simplifyForPuzzle)
+      : simplifyForPuzzle(algDraft.trim());
     if (reduced === algDraft.trim()) return;
     setAlgDraft(reduced);
     onAlgChange(reduced);
     const el = algElRef.current;
     if (el) { el.value = reduced; autosize(el); }
-  }, [settings, onSettingsChange, algDraft, simplifyForPuzzle, onAlgChange]);
+  }, [settings, onSettingsChange, algDraft, simplifyForPuzzle, isSquarePuzzle, onAlgChange]);
 
   // Copy the current page URL (puzzle + scramble + solution params) so the exact
   // sim state can be shared. Works for any puzzle — the URL always carries state.
@@ -1865,18 +1879,36 @@ export default function PlayerControls({
     const algEl = algElRef.current;
     if (!algEl) return;
     const current = algEl.value;
+    const currentLine = current.slice(current.lastIndexOf('\n') + 1);
+    const hasTrailingLineBreak = /\n[ \t]*$/.test(current);
+    const appendAfterComment = isSquarePuzzle && !hasTrailingLineBreak && currentLine.includes('//');
+    const appendOnNewLine = appendAfterComment || hasTrailingLineBreak;
+    const appendBase = appendAfterComment
+      ? `${current.trimEnd()}\n`
+      : hasTrailingLineBreak ? current : current.trimEnd();
     // SQ1: glue slices to adjacent turns (`(1,0)/(2,0)`), but NEVER glue two
     // slices — `//` is the comment marker in Square notation, so
     // a dragged double-slice must read as `/ /`.
-    const endsSlash = current.trimEnd().endsWith('/');
-    const glue = isSquarePuzzle && (moveText === '/' || endsSlash) && !(moveText === '/' && endsSlash);
-    const sep = current.trim() ? (glue ? '' : ' ') : '';
-    let next = current.trimEnd() + sep + moveText + ' ';
+    const endsSlash = !appendOnNewLine && appendBase.endsWith('/');
+    const glue = isSquarePuzzle && squareFormat === 'compact'
+      && (moveText === '/' || endsSlash) && !(moveText === '/' && endsSlash);
+    const sep = !appendOnNewLine && appendBase ? (glue ? '' : ' ') : '';
+    let next = appendBase + sep + moveText + ' ';
     // 实时消步:追加后立即 fold/抵消重复转动(R 后做 R' → 框里清空)。魔方本身已被
     // 手势转过去,这里只改文本,故必须 skipAutoReset 不让文本变更触发回放重置。
     if (settings.liveReduce !== false && !isIvy) {
-      const reduced = simplifyForPuzzle(next.trim());
+      const reduced = isSquarePuzzle
+        ? convertSquareText(next.trimEnd(), simplifyForPuzzle)
+        : simplifyForPuzzle(next.trim());
       next = reduced ? reduced + ' ' : '';
+    } else if (isSquarePuzzle) {
+      const convert = isSq1
+        ? squareFormat === 'wca' ? canonicalSq1Alg : compactSq1Alg
+        : squareFamilySpec
+          ? (text: string) => formatSquareFamilyAlg(text, squareFamilySpec, squareFormat)
+          : (text: string) => text;
+      const formatted = convertSquareText(next, convert);
+      next = formatted ? formatted + ' ' : '';
     }
     algEl.value = next;
     algEl.selectionStart = algEl.selectionEnd = next.length;
@@ -1889,7 +1921,7 @@ export default function PlayerControls({
     // current above; the URL can lag, so land it once the turn animation has settled
     // (idle-gated) and coalesce rapid turns into one write.
     commitAlgDebounced(next);
-  }, [commitAlgDebounced, isSquarePuzzle, isIvy, isTwistyMode, world, settings.liveReduce, simplifyForPuzzle]);
+  }, [commitAlgDebounced, isSquarePuzzle, isSq1, squareFamilySpec, isIvy, isTwistyMode, world, settings.liveReduce, simplifyForPuzzle, squareFormat]);
 
   useEffect(() => {
     if (!userMoveRef) return;
@@ -2018,9 +2050,15 @@ export default function PlayerControls({
         // collapses it to the canonical `1023030...` shorthand the textarea
         // shows on /scramble/gen and that parseSq1Tokens also accepts.
         const raw = await tnoodleRandomScramble('sq1');
-        scramble = raw ? formatScrambleForEvent('sq1', raw) : '';
+        scramble = raw
+          ? squareFormat === 'wca' ? canonicalSq1Alg(raw) : formatScrambleForEvent('sq1', raw)
+          : '';
       } else if (squareFamilySpec) {
-        scramble = randomSquareFamilyScramble(squareFamilySpec);
+        scramble = formatSquareFamilyAlg(
+          randomSquareFamilyScramble(squareFamilySpec),
+          squareFamilySpec,
+          squareFormat,
+        );
       } else if (isIvy) {
         scramble = randomIvyScramble();
       } else if (corner) {
@@ -2039,7 +2077,11 @@ export default function PlayerControls({
       scramble = isSq1
         ? ''
         : squareFamilySpec
-          ? randomSquareFamilyScramble(squareFamilySpec)
+          ? formatSquareFamilyAlg(
+            randomSquareFamilyScramble(squareFamilySpec),
+            squareFamilySpec,
+            squareFormat,
+          )
           : isIvy
             ? randomIvyScramble()
             : corner
@@ -2071,7 +2113,7 @@ export default function PlayerControls({
     }
     setSetupDraft(scramble);
     onSetupChange(scramble);
-  }, [world, order, isSq1, squareFamilySpec, isSquarePuzzle, isIvy, corner, isTwistyMode, puzzleKind, settings.animateScramble, onSetupChange, onAlgChange, twistyPlayerRef]);
+  }, [world, order, isSq1, squareFamilySpec, isSquarePuzzle, isIvy, corner, isTwistyMode, puzzleKind, settings.animateScramble, squareFormat, onSetupChange, onAlgChange, twistyPlayerRef]);
 
   // ▶ Play button: animate the CURRENT scramble (the text already in the box) from
   // solved, on demand. Reuses the same animation paths as the auto-animate scramble:
@@ -2414,25 +2456,31 @@ export default function PlayerControls({
             <option value="sarah">Sarah</option>
           </select>
         )}
-        {isSq1 && (
+        {isSquarePuzzle && (
           <select
             className="sim-player-mode"
-            value={sq1Format}
+            value={squareFormat}
             onChange={(e) => {
-              const next = e.target.value as 'compact' | 'wca';
-              const convert = next === 'wca' ? canonicalSq1Alg : compactSq1Alg;
-              const newSetup = setupDraft.trim() ? convertSq1Text(setupDraft, convert) : '';
-              const newAlg = algDraft.trim() ? convertSq1Text(algDraft, convert) : '';
-              setSq1Format(next);
+              const next = e.target.value as SquareFamilyNotationFormat;
+              const convert = isSq1
+                ? next === 'wca' ? canonicalSq1Alg : compactSq1Alg
+                : squareFamilySpec
+                  ? (text: string) => formatSquareFamilyAlg(text, squareFamilySpec, next)
+                  : (text: string) => text;
+              const newSetup = setupDraft.trim() ? convertSquareText(setupDraft, convert) : '';
+              const newAlg = algDraft.trim() ? convertSquareText(algDraft, convert) : '';
+              if (squarePuzzleKind) {
+                setSquareFormats((formats) => ({ ...formats, [squarePuzzleKind]: next }));
+              }
               setSetupDraft(newSetup);
               onSetupChange(newSetup);
               setAlgDraft(newAlg);
               onAlgChange(newAlg);
             }}
-            title={t('SQ1 格式', 'SQ1 format')}
+            title={t('记号格式', 'Notation format')}
           >
             <option value="compact">{t('简化', 'Compact')}</option>
-            <option value="wca">WCA</option>
+            <option value="wca">{isSq1 ? 'WCA' : t('标准', 'Standard')}</option>
           </select>
         )}
       </div>

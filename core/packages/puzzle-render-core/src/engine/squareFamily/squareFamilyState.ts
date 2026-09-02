@@ -38,6 +38,8 @@ export type SquareFamilyMove =
   | { kind: 'slice' }
   | { kind: 'turn'; top: number; bot: number };
 
+export type SquareFamilyNotationFormat = 'compact' | 'wca';
+
 export interface SquareFamilyState {
   /** Piece identity at each top slot, then each bottom slot. */
   pieces: number[];
@@ -118,6 +120,41 @@ export function squareFamilyMovesToString(moves: readonly SquareFamilyMove[]): s
   return moves.map(squareFamilyMoveToString).join(' ');
 }
 
+/**
+ * Format equal-sector Square notation without borrowing SQ1's ambiguous
+ * digit shorthand. Compact mode only removes safe whitespace: tuples keep
+ * their parentheses and comma so Square-4 values such as 10 stay explicit.
+ */
+export function formatSquareFamilyMoves(
+  moves: readonly SquareFamilyMove[],
+  format: SquareFamilyNotationFormat,
+): string {
+  if (format === 'wca') {
+    return moves.map((move) => (
+      move.kind === 'slice' ? '/' : `(${move.top}, ${move.bot})`
+    )).join(' ');
+  }
+
+  let text = '';
+  for (let index = 0; index < moves.length; index++) {
+    const move = moves[index];
+    const previous = moves[index - 1];
+    // Never emit `//`: the parser correctly treats it as a line comment.
+    if (move.kind === 'slice' && previous?.kind === 'slice') text += ' ';
+    text += squareFamilyMoveToString(move);
+  }
+  return text;
+}
+
+export function formatSquareFamilyAlg(
+  text: string,
+  spec: SquareFamilySpec,
+  format: SquareFamilyNotationFormat,
+): string {
+  const parsed = tryParseSquareFamilyMoves(text, spec);
+  return parsed ? formatSquareFamilyMoves(parsed, format) : text;
+}
+
 export function invertSquareFamilyMoves(
   moves: readonly SquareFamilyMove[],
   spec?: SquareFamilySpec,
@@ -178,7 +215,11 @@ export function squareFamilyComplete(state: SquareFamilyState, spec: SquareFamil
   return state.pieces.every((piece, slot) => piece === slot);
 }
 
-export function simplifySquareFamilyAlg(text: string, spec: SquareFamilySpec): string {
+export function simplifySquareFamilyAlg(
+  text: string,
+  spec: SquareFamilySpec,
+  format?: SquareFamilyNotationFormat,
+): string {
   const parsed = tryParseSquareFamilyMoves(text, spec);
   if (!parsed) return text;
   const out: SquareFamilyMove[] = [];
@@ -200,7 +241,7 @@ export function simplifySquareFamilyAlg(text: string, spec: SquareFamilySpec): s
       out.push({ kind: 'turn', top, bot });
     }
   }
-  return squareFamilyMovesToString(out);
+  return format ? formatSquareFamilyMoves(out, format) : squareFamilyMovesToString(out);
 }
 
 export function randomSquareFamilyScramble(
