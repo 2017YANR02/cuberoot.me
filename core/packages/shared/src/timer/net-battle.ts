@@ -250,6 +250,7 @@ export interface NetBattleClient {
 
 async function responseError(response: Response): Promise<Error> {
   const payload = await response.json().catch(() => ({}));
+  if (response.status >= 500) return new Error(`HTTP ${response.status}`);
   return new Error(isRecord(payload) && typeof payload.error === 'string' ? payload.error : `HTTP ${response.status}`);
 }
 
