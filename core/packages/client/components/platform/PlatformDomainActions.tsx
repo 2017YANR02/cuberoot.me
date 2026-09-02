@@ -7,6 +7,7 @@ import { DateInput } from '@/components/DateInput';
 import { useT } from '@/hooks/useT';
 import { apiUrl } from '@/lib/api-base';
 import { useAuthUser } from '@/lib/auth-store';
+import { platformQrLinksProblem, platformQrTargetProblem, type PlatformQrLink, type PlatformQrTargetKind } from '@/lib/platform-qr-landing';
 import { loadPlatformManagedQuizzes, loadPlatformMembershipPlans, loadPlatformMemberships, loadPlatformResource, loadPlatformShippingAddresses, PLATFORM_ACTION_LABELS } from '@/lib/platform-gateway';
 import type {
   PlatformCourseWrite,
@@ -27,6 +28,7 @@ import type {
 } from '@/lib/platform-types';
 import { isPlatformPaymentAttemptResult } from '@/lib/platform-types';
 import { PlatformState } from './PlatformState';
+import { PlatformQrMetadataEditor } from './PlatformQrMetadataEditor';
 
 type FieldKind = 'text' | 'textarea' | 'number' | 'date' | 'datetime-local' | 'tel' | 'url' | 'select' | 'boolean' | 'lines' | 'json';
 
@@ -255,9 +257,12 @@ const ADMIN_FORMS: Readonly<Record<string, DomainFormSpec>> = {
     field('code', '编码（留空自动生成）', 'Code (leave blank to generate)', { pattern: '[a-z0-9][a-z0-9_-]{5,79}', minLength: 6, maxLength: 80 }),
     field('count', '生成数量', 'Quantity to create', { kind: 'number', min: 1, max: 200, step: 1, defaultValue: 1 }),
     field('prefix', '批量编码前缀', 'Batch code prefix', { pattern: '[a-z0-9][a-z0-9_-]{0,47}', maxLength: 48, defaultValue: 'qr' }),
+    field('label', '内部名称', 'Internal label', { required: true, maxLength: 160 }),
+    field('type', '页面行为', 'Page behavior', { kind: 'select', required: true, defaultValue: 'redirect', options: [option('redirect', '直接跳转', 'Redirect'), option('landing', '聚合落地页', 'Landing page')] }),
     field('targetKind', '目标类型', 'Target kind', { kind: 'select', required: true, defaultValue: 'internal_path', options: [option('internal_path', '站内路径', 'Internal path'), option('external_url', '外部网址', 'External URL'), option('content', '文字内容', 'Content')] }),
     field('targetValue', '目标值', 'Target value', { required: true, defaultValue: '/' }),
     field('titleZh', '中文标题', 'Chinese title'), field('titleEn', '英文标题', 'English title'),
+    field('links', '落地页链接 JSON 数组', 'Landing links JSON array', { kind: 'json', rows: 7, required: true, defaultValue: '[]' }),
     field('isPrinted', '已经印刷', 'Already printed', { kind: 'boolean', defaultValue: false }),
   ] },
   'admin-qr-detail': { title: text('维护二维码', 'Maintain QR code'), action: 'admin-save', fields: [
@@ -300,6 +305,34 @@ function payloadValue(spec: FieldSpec, value: string | boolean): unknown {
 }
 
 function validatePayload(routeId: string, payload: Record<string, unknown>, t: ReturnType<typeof useT>): string | null {
+  if (routeId === 'admin-qr') {
+    const rawLinks = payload.links;
+    if (!Array.isArray(rawLinks)) return t('落地页链接必须是 JSON 数组。', 'Landing links must be a JSON array.');
+    const links = rawLinks.map((raw) => {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+      const item = raw as Record<string, unknown>;
+      return {
+        label: typeof item.label === 'string' ? item.label : '',
+        href: typeof item.href === 'string' ? item.href : '',
+        ...(typeof item.note === 'string' ? { note: item.note } : {}),
+      } satisfies PlatformQrLink;
+    });
+    if (links.some((item) => item === null)) return t('每个落地页链接都必须是对象。', 'Every landing link must be an object.');
+    const problem = platformQrLinksProblem(links as PlatformQrLink[]);
+    if (problem) return problem === 'limit'
+      ? t('一个二维码最多有 20 个链接。', 'A QR code can have up to 20 links.')
+      : problem === 'label'
+        ? t('每个链接都需要名称，且不能超过 160 个字符。', 'Every link needs a label of no more than 160 characters.')
+        : problem === 'href'
+          ? t('链接必须是站内绝对路径，或不含账号密码的 http(s) 网址。', 'Links must be site-absolute paths or credential-free HTTP(S) URLs.')
+          : t('链接说明不能超过 240 个字符。', 'Link notes cannot exceed 240 characters.');
+    const targetKind = payload.targetKind as PlatformQrTargetKind;
+    const target = typeof payload.targetValue === 'string' ? payload.targetValue : '';
+    const targetProblem = platformQrTargetProblem(targetKind, target);
+    if (targetProblem === 'required') return t('请填写目标值。', 'Enter a target value.');
+    if (targetProblem === 'internal') return t('站内目标必须是以一个斜线开头的路径。', 'An internal destination must be a path beginning with one slash.');
+    if (targetProblem === 'external') return t('外部目标必须是不含账号密码的 http(s) 网址。', 'An external destination must be a credential-free HTTP(S) URL.');
+  }
   if (routeId === 'admin-coupons' && payload.discountType === 'percent'
     && (!Number.isInteger(Number(payload.discountBps)) || Number(payload.discountBps) < 1 || Number(payload.discountBps) > 10000)) {
     return t('百分比优惠必须是 1 到 10000 的万分制整数。', 'Percentage discounts must be an integer from 1 to 10000 basis points.');
@@ -1326,6 +1359,36 @@ export function PlatformAdminActions(props: CommonProps) {
   if (definition.id === 'admin-payouts') return <PlatformPayoutManager {...props} />;
   const form = ADMIN_FORMS[definition.id];
   if (form) {
+    if (definition.id === 'admin-qr-detail') {
+      if (!entity) return null;
+      return (
+        <div className="platform-domain-stack">
+          <PlatformQrMetadataEditor
+            entity={entity}
+            resourceId={entity.id}
+            busy={busy}
+            runAction={(id, payload) => runAction('admin-save', id, payload)}
+          />
+          <DomainForm definition={definition} busy={busy} runAction={runAction} resourceId={entity.id} spec={{
+            title: text('复制二维码', 'Duplicate QR code'),
+            action: 'qr-duplicate',
+            fields: [field('code', '新编码（留空自动生成）', 'New code (leave blank to generate)', { pattern: '[a-z0-9][a-z0-9_-]{5,79}', minLength: 6, maxLength: 80 })],
+          }} />
+          <section className="platform-domain-actions">
+            <h2>{t('可用状态', 'Availability')}</h2>
+            <ActionButton
+              action="qr-toggle"
+              resourceId={entity.id}
+              payload={{ disabled: entity.data?.status !== 'disabled' }}
+              label={entity.data?.status === 'disabled' ? text('重新启用', 'Enable') : text('停用', 'Disable')}
+              confirm={text('确定更新这个二维码的可用状态吗？', 'Update this QR code availability?')}
+              busy={busy}
+              runAction={runAction}
+            />
+          </section>
+        </div>
+      );
+    }
     const editor = <DomainForm definition={definition} entity={entity} resourceId={params.id ?? params.code} busy={busy} runAction={runAction} spec={form} />;
     if (definition.id === 'admin-course') {
       return <div className="platform-domain-stack">{editor}<PlatformCourseContentManager {...props} /></div>;
@@ -1342,30 +1405,6 @@ export function PlatformAdminActions(props: CommonProps) {
             busy={busy}
             runAction={runAction}
           />
-        </div>
-      );
-    }
-    if (definition.id === 'admin-qr-detail') {
-      return (
-        <div className="platform-domain-stack">
-          {editor}
-          <DomainForm definition={definition} busy={busy} runAction={runAction} resourceId={params.code} spec={{
-            title: text('复制二维码', 'Duplicate QR code'),
-            action: 'qr-duplicate',
-            fields: [field('code', '新编码（留空自动生成）', 'New code (leave blank to generate)', { pattern: '[a-z0-9][a-z0-9_-]{5,79}', minLength: 6, maxLength: 80 })],
-          }} />
-          <section className="platform-domain-actions">
-            <h2>{t('可用状态', 'Availability')}</h2>
-            <ActionButton
-              action="qr-toggle"
-              resourceId={params.code}
-              payload={{ disabled: entity?.data?.status !== 'disabled' }}
-              label={entity?.data?.status === 'disabled' ? text('重新启用', 'Enable') : text('停用', 'Disable')}
-              confirm={text('确定更新这个二维码的可用状态吗？', 'Update this QR code availability?')}
-              busy={busy}
-              runAction={runAction}
-            />
-          </section>
         </div>
       );
     }
