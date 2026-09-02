@@ -1,3 +1,3 @@
 import { createWebViewPageOptions } from '../../lib/web-view-page';
 
-Page(createWebViewPageOptions('home'));
+Page(createWebViewPageOptions('home', { requireMiniProgramSession: true }));

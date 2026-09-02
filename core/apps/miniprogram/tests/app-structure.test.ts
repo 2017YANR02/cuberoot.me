@@ -170,12 +170,13 @@ describe('mini program app structure', () => {
     const genericWebStyles = pageFiles['../src/pages/web/index.wxss'];
     const sharedTemplate = sourceFiles['../src/templates/web-route-view.wxml'];
 
-    expect(timerPage).toContain("createWebViewPageOptions('timer')");
-    expect(toolsPage).toContain("createWebViewPageOptions('home')");
+    expect(timerPage).toContain("createWebViewPageOptions('timer', { requireMiniProgramSession: true })");
+    expect(toolsPage).toContain("createWebViewPageOptions('home', { requireMiniProgramSession: true })");
     expect(accountPage).not.toContain('createWebViewPageOptions');
     expect(accountPage).toContain('showPublicShareMenu');
     expect(accountPage).toContain('onShareTimeline');
-    expect(genericWebPage).toContain('createWebViewPageOptions()');
+    expect(accountPage).toContain('resumeRequiredSessionDestination');
+    expect(genericWebPage).toContain('createWebViewPageOptions(undefined, { requireMiniProgramSession: true })');
     expect(timerPage).not.toMatch(/timer-store|setInterval|setTimeout/);
     expect(timerTemplate).toContain('templates/web-route-view.wxml');
     expect(toolsTemplate).toContain('templates/web-route-view.wxml');
@@ -183,6 +184,8 @@ describe('mini program app structure', () => {
     expect(genericWebTemplate).toContain('templates/web-route-view.wxml');
     expect(sharedTemplate).toContain('<web-view');
     expect(sharedTemplate).toContain('data-attempt="{{viewAttempt}}"');
+    expect(sharedTemplate).toContain('wx:elif="{{loginRequired}}"');
+    expect(sharedTemplate).toContain('bindtap="loginWithMiniProgram"');
     expect(timerTemplate).not.toContain('<web-view');
     expect(toolsTemplate).not.toContain('<web-view');
     expect(accountTemplate).not.toContain('<web-view');
@@ -195,7 +198,7 @@ describe('mini program app structure', () => {
     expect(accountTemplate).toContain('bindtap="loginWithMiniProgram"');
     expect(accountTemplate).toContain('bindtap="toggleAgreement"');
     expect(accountTemplate).toContain('bindtap="openPolicy"');
-    expect(accountTemplate).toContain('bindtap="logout"');
+    expect(accountTemplate).not.toContain('bindtap="logout"');
     expect(accountTemplate).toContain('wx:if="{{isTimelineEntry}}"');
     expect(accountTemplate).toContain('{{copy.entryCopy}}');
     expect(accountPage).toContain("zh: '点击右下角进入魔方根'");
@@ -205,6 +208,8 @@ describe('mini program app structure', () => {
     expect(accountTemplate).toContain('aria-busy="{{loginBusy}}"');
     expect(accountTemplate).toContain('aria-label="{{copy.retrySessionAria}}"');
     expect(accountTemplate).toContain('aria-role="status"');
+    expect(accountTemplate).toContain('{{release.version}}');
+    expect(accountTemplate).toContain('{{release.notesTitle}}');
     expect(timerStyles.trim()).toBe('');
     expect(toolsStyles.trim()).toBe('');
     expect(accountStyles).toContain('var(--cr-muted)');
@@ -232,6 +237,8 @@ describe('mini program app structure', () => {
     const template = pageFiles['../src/pages/smart-cube/index.wxml'];
 
     expect(page).toContain('void startConnection(page);');
+    expect(page).toContain('getStoredSessionSnapshot');
+    expect(page).toContain('openRequiredSessionLogin');
     expect(page).toContain('else await smartCubeSession.connectAutomatically();');
     expect(template).not.toContain('bindtap="connectCube"');
     expect(template).not.toContain('data-driver=');

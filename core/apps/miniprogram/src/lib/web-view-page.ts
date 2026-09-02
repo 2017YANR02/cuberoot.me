@@ -25,6 +25,10 @@ import {
   miniProgramNextTick,
   miniProgramOffNetworkStatusChange,
 } from './platform';
+import {
+  openRequiredSessionLogin,
+  type RequiredSessionDestination,
+} from './required-session';
 import { tr } from './i18n';
 
 export interface WebViewPageData {
@@ -32,9 +36,14 @@ export interface WebViewPageData {
   errorMessage: string;
   errorTitle: string;
   loginBusy: boolean;
+  loginButtonBusyLabel: string;
+  loginButtonLabel: string;
   loginError: string;
+  loginIntro: string;
   loginRequired: boolean;
+  loginRetryLabel: string;
   loginStorageUnavailable: boolean;
+  loginTitle: string;
   loadingTitle: string;
   retryLabel: string;
   routeKey: string;
@@ -255,14 +264,27 @@ function requireMiniProgramSession(
 }
 
 export function createWebViewPageData(): WebViewPageData {
+  const providerName = tr(isDouyinMiniProgram()
+    ? { en: 'Douyin', zh: '抖音' }
+    : { en: 'WeChat', zh: '微信' });
   return {
     canRetry: false,
     errorMessage: '',
     errorTitle: '',
     loginBusy: false,
+    loginButtonBusyLabel: tr({ en: 'Signing in', zh: '正在登录' }),
+    loginButtonLabel: isDouyinMiniProgram()
+      ? tr({ en: 'Go to Me to sign in', zh: '前往“我的”登录' })
+      : tr({ en: `Sign in with ${providerName}`, zh: `${providerName}登录` }),
     loginError: '',
+    loginIntro: tr({
+      en: 'Sign in to use CubeRoot. Afterward, this page will continue opening automatically.',
+      zh: '登录后即可使用魔方根，完成后会自动继续打开当前页面。',
+    }),
     loginRequired: false,
+    loginRetryLabel: tr({ en: 'Read again', zh: '重新读取' }),
     loginStorageUnavailable: false,
+    loginTitle: tr({ en: 'Sign in to continue', zh: '登录后继续' }),
     loadingTitle: tr({ en: 'Opening', zh: '正在打开' }),
     retryLabel: tr({ en: 'Try again', zh: '重新打开' }),
     routeKey: '',
@@ -412,12 +434,20 @@ export function cancelWebRoute(context: WebViewPageContext): void {
   beginRouteAttempt(context);
 }
 
-async function loginToOpenWebRoute(context: WebViewPageContext): Promise<void> {
+async function loginToOpenWebRoute(
+  context: WebViewPageContext,
+  destination: RequiredSessionDestination,
+): Promise<void> {
   if (
     disposedPages.has(context)
     || !context.data.loginRequired
     || activeLoginAttempts.has(context)
   ) return;
+
+  if (isDouyinMiniProgram()) {
+    openRequiredSessionLogin(destination);
+    return;
+  }
 
   const attempt = beginLoginAttempt(context);
   context.setData({ loginBusy: true, loginError: '' });
@@ -439,6 +469,18 @@ async function loginToOpenWebRoute(context: WebViewPageContext): Promise<void> {
       context.setData({ loginBusy: false });
     }
   }
+}
+
+function sessionResumeDestination(
+  fixedRouteKey: WebRouteKey | undefined,
+  routeKey: string,
+): RequiredSessionDestination {
+  if (fixedRouteKey === 'timer') return { tab: true, url: '/pages/timer/index' };
+  if (fixedRouteKey === 'home') return { tab: true, url: '/pages/tools/index' };
+  return {
+    tab: false,
+    url: `/pages/web/index?key=${encodeURIComponent(routeKey)}`,
+  };
 }
 
 export function retryWebRoute(context: WebViewPageContext): void {
@@ -531,7 +573,10 @@ export function createWebViewPageOptions(
     },
 
     async loginWithMiniProgram() {
-      await loginToOpenWebRoute(this);
+      await loginToOpenWebRoute(
+        this,
+        sessionResumeDestination(fixedRouteKey, this.data.routeKey),
+      );
     },
 
     retry() {

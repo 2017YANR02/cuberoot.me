@@ -42,8 +42,7 @@
   flex: none;
 }
 
-.account-consent-toggle,
-.account-logout-button {
+.account-consent-toggle {
   margin-top: 8rpx;
 }
 
@@ -57,6 +56,70 @@
   font-size: 28rpx;
   line-height: 1.5;
   margin-top: 12rpx;
+}
+
+.account-release {
+  margin-top: 64rpx;
+}
+
+.account-release-version {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.account-release-label,
+.account-release-channel {
+  color: var(--cr-muted);
+  font-size: 23rpx;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.account-release-value {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 25rpx;
+  font-weight: 680;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.account-release-channel {
+  color: var(--cr-faint);
+}
+
+.account-release-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 680;
+  line-height: 1.35;
+  margin-top: 30rpx;
+}
+
+.account-release-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  margin-top: 20rpx;
+}
+
+.account-release-note {
+  align-items: flex-start;
+  color: var(--cr-muted);
+  display: flex;
+  font-size: 25rpx;
+  gap: 16rpx;
+  line-height: 1.55;
+}
+
+.account-release-dot {
+  background: var(--cr-accent);
+  border-radius: 50%;
+  flex: none;
+  height: 7rpx;
+  margin-top: 0.62em;
+  width: 7rpx;
 }
 
 .account-contact {

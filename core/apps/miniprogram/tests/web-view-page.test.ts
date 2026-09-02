@@ -64,9 +64,14 @@ describe('shared web-view page state', () => {
       errorMessage: '',
       errorTitle: '',
       loginBusy: false,
+      loginButtonBusyLabel: '正在登录',
+      loginButtonLabel: '微信登录',
       loginError: '',
+      loginIntro: '登录后即可使用魔方根，完成后会自动继续打开当前页面。',
       loginRequired: false,
+      loginRetryLabel: '重新读取',
       loginStorageUnavailable: false,
+      loginTitle: '登录后继续',
       loadingTitle: '正在打开计时',
       retryLabel: '重新打开',
       routeKey: 'timer',
@@ -74,6 +79,27 @@ describe('shared web-view page state', () => {
       viewAttempt: 1,
     });
     expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '计时' });
+  });
+
+  it('shows the shared login gate instead of opening a protected feature as a guest', async () => {
+    const context = createContext();
+    const options = createWebViewPageOptions('timer', {
+      requireMiniProgramSession: true,
+    }) as unknown as {
+      onLoad(this: WebViewPageContext, query: Record<string, string>): void;
+    };
+
+    options.onLoad.call(context, {});
+    await Promise.resolve();
+
+    expect(context.data).toMatchObject({
+      loginButtonLabel: '微信登录',
+      loginRequired: true,
+      loginStorageUnavailable: false,
+      loginTitle: '登录后继续',
+      routeKey: 'timer',
+      src: '',
+    });
   });
 
   it('still opens the route when the cosmetic title API throws', async () => {

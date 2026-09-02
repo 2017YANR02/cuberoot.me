@@ -1,5 +1,33 @@
 <template name="web-route-view">
   <web-view wx:if="{{src}}" src="{{src}}" data-attempt="{{viewAttempt}}" binderror="handleWebViewError"></web-view>
+  <view wx:elif="{{loginRequired}}" class="page web-login-page">
+    <text class="eyebrow">ACCOUNT</text>
+    <text class="page-title">{{loginTitle}}</text>
+    <text class="page-intro">{{loginIntro}}</text>
+    <button
+      wx:if="{{!loginStorageUnavailable}}"
+      class="primary-button web-login-button"
+      aria-busy="{{loginBusy}}"
+      aria-label="{{loginBusy ? loginButtonBusyLabel : loginButtonLabel}}"
+      disabled="{{loginBusy}}"
+      hover-class="press-feedback"
+      bindtap="loginWithMiniProgram"
+    >{{loginBusy ? loginButtonBusyLabel : loginButtonLabel}}</button>
+    <button
+      wx:else
+      class="primary-button web-login-button"
+      aria-label="{{loginRetryLabel}}"
+      hover-class="press-feedback"
+      bindtap="retryMiniProgramSession"
+    >{{loginRetryLabel}}</button>
+    <text
+      wx:if="{{loginError}}"
+      class="status-text status-text--error"
+      aria-role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >{{loginError}}</text>
+  </view>
   <view wx:else class="page web-status">
     <view aria-role="status" aria-live="polite" aria-atomic="true" aria-busy="{{!errorTitle}}">
       <view class="web-status-spinner" wx:if="{{!errorTitle}}" aria-hidden="true"></view>

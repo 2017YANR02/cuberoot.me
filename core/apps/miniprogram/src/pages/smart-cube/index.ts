@@ -4,6 +4,8 @@ import {
 } from '../../lib/smart-cube/session';
 import { miniProgramApi } from '../../lib/platform';
 import { tr } from '../../lib/i18n';
+import { getStoredSessionSnapshot } from '../../lib/auth';
+import { openRequiredSessionLogin } from '../../lib/required-session';
 
 const SIMULATOR_MOVES = ['U', "U'", 'R', "R'", 'F', "F'", 'D', "D'", 'L', "L'", 'B', "B'"];
 const RETURN_UNLOCK_MS = 1200;
@@ -114,6 +116,17 @@ Page<SmartCubePageData, WechatMiniprogram.Page.CustomOption>({
 
   onLoad(options) {
     const page = this as unknown as SmartCubePageInstance;
+    const stored = getStoredSessionSnapshot();
+    if (!stored.session) {
+      const token = typeof options.token === 'string' ? options.token : '';
+      openRequiredSessionLogin({
+        tab: false,
+        url: token
+          ? `/pages/smart-cube/index?token=${encodeURIComponent(token)}`
+          : '/pages/smart-cube/index',
+      });
+      return;
+    }
     page.active = true;
     page.autoReturnAttempted = false;
     page.connectionAttempt = 0;
