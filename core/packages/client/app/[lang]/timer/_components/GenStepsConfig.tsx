@@ -11,6 +11,7 @@ import { useMemo, type ReactNode } from 'react';
 import { tr } from '@/i18n/tr';
 
 interface Props {
+  disabled?: boolean;
   isZh: boolean;
   event: string;
   source: 'random' | 'wca';
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export default function GenStepsConfig({
+  disabled,
   isZh,
   event,
   source,
@@ -42,6 +44,7 @@ export default function GenStepsConfig({
 
   return (
     <TimerByStepsConfig
+      disabled={disabled}
       event={event}
       extraTopRow={extraToprow}
       labels={labels}

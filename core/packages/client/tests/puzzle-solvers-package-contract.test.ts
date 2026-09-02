@@ -44,6 +44,25 @@ const PUBLIC_SUBPATHS = [
   'kociemba/prune',
   'kociemba/randomstate',
   'kociemba/search',
+  'cross-trainer',
+  'cross-trainer/batch',
+  'cross-trainer/block',
+  'cross-trainer/corpus-data',
+  'cross-trainer/corpus',
+  'cross-trainer/dist',
+  'cross-trainer/eo',
+  'cross-trainer/eoline',
+  'cross-trainer/fill',
+  'cross-trainer/model',
+  'cross-trainer/multi',
+  'cross-trainer/pair',
+  'cross-trainer/reach',
+  'cross-trainer/rotate',
+  'cross-trainer/sample',
+  'cross-trainer/symmetry',
+  'cross-trainer/tracked',
+  'cross-trainer/xcross',
+  'cross-trainer/xpair',
   'pyra',
   'sia123',
   'sia222',
@@ -54,6 +73,7 @@ const PUBLIC_SUBPATHS = [
 ] as const;
 
 const SOURCE_BASENAME: Partial<Record<typeof PUBLIC_SUBPATHS[number], string>> = {
+  'cross-trainer': 'cross-trainer/index',
   stm: 'stm-solver',
 };
 

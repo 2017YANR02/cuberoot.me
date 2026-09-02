@@ -28,6 +28,9 @@ import './scramble-strip.css';
 import './room-qr-modal.css';
 import './timer-print-document.css';
 import './drill-picker.css';
+import './color-subset-picker.css';
+import './random-difficulty-config.css';
+import './random-difficulty-case.css';
 
 export { default as TimingSurface } from './TimingSurface';
 export type { TimingSurfaceProps } from './TimingSurface';
@@ -234,6 +237,35 @@ export type {
 } from './TimerWcaDifficultyConfig';
 export { TimerDrillPicker } from './TimerDrillPicker';
 export type { TimerDrillPickerProps } from './TimerDrillPicker';
+export {
+  COLOR_HEX,
+  COLOR_LETTERS,
+  COLOR_NAME,
+  DUAL_PAIRS,
+  fillColorsForSubset,
+  GRADIENT_ORDER,
+  subsetKeyFromLetters,
+  subsetOptionsFor,
+  SubsetColorPicker,
+  SubsetSwatch,
+  useSubsetSelection,
+  useUrlSubsetSelection,
+} from './TimerColorSubsetPicker';
+export type {
+  ColorLetter,
+  ColorMode,
+  SubsetOption,
+  SubsetSelection,
+  TimerUiLanguage,
+} from './TimerColorSubsetPicker';
+export { usePanelClamp } from './usePanelClamp';
+export { TimerRandomDifficultyConfig } from './TimerRandomDifficultyConfig';
+export type { TimerRandomDifficultyConfigProps } from './TimerRandomDifficultyConfig';
+export { TimerRandomDifficultyCaseBar } from './TimerRandomDifficultyCaseBar';
+export type {
+  TimerRandomDifficultyCaseBarProps,
+  TimerRandomDifficultySolution,
+} from './TimerRandomDifficultyCaseBar';
 export type { TimerDrillTarget, TimerDrillType } from '@cuberoot/shared/timer';
 export {
   CHINESE_TAIPEI_FLAG_PATH,

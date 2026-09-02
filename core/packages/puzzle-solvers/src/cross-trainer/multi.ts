@@ -25,10 +25,10 @@
 
 import {
   CORNER_STEP, EDGE_STEP, FACE_CORNERS, FACE_EDGES, f2lSlots, skipRow, type FaceIdx,
-} from './model.js';
-import { CROSS_STATES, crossNext, decodeCross, encodeCross } from './dist.js';
-import type { Pin } from './fill.js';
-import type { Frame, XCoord } from './xcross.js';
+} from '@cuberoot/puzzle-solvers/cross-trainer/model';
+import { CROSS_STATES, crossNext, decodeCross, encodeCross } from '@cuberoot/puzzle-solvers/cross-trainer/dist';
+import type { Pin } from '@cuberoot/puzzle-solvers/cross-trainer/fill';
+import type { Frame, XCoord } from '@cuberoot/puzzle-solvers/cross-trainer/xcross';
 
 /** What fill.ts wants: the pinned edges and the pinned corners of a sub-step coordinate. */
 export interface Pins { edgePins: Pin[]; cornerPins: Pin[] }

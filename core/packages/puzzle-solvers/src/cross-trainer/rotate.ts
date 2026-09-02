@@ -22,8 +22,8 @@
  * moves the piece's reference AND the slot's.
  */
 
-import { CORNER_FACELET, EDGE_FACELET, type CubieCube } from '../kociemba/cube.js';
-import { D, FACE_CORNERS, FACE_LETTERS, f2lSlots, type FaceIdx } from './model.js';
+import { CORNER_FACELET, EDGE_FACELET, type CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
+import { D, FACE_CORNERS, FACE_LETTERS, f2lSlots, type FaceIdx } from '@cuberoot/puzzle-solvers/cross-trainer/model';
 
 /** Canonical face order of each edge's stickers (primary first) — U/R/F/D/L/B = 0..5. */
 const EDGE_CANON: number[][] = EDGE_FACELET.map(([a, b]) => [(a / 9) | 0, (b / 9) | 0]);

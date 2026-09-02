@@ -95,6 +95,7 @@ import {
   type TimerScrambleSourceSnapshot,
   type TimerNon222StepPuzzle,
   type TimerAttemptSplitState,
+  type TimerRandomDifficultyResult,
   TimerAttemptSplitRecorder,
 } from '@cuberoot/shared/timer';
 import {
@@ -109,10 +110,18 @@ import {
   takeWebNon222ByStepsScramble,
 } from '../_lib/scramble/non222-steps-pool';
 import { trainerSpecOf, trainerSig } from '../_lib/scramble/trainer-source';
-import { aliasTrainerMeta, peekTrainer, awaitTrainer, prefetchTrainer, releaseTrainer, retryTrainer } from '../_lib/scramble/trainer_pool';
+import {
+  awaitTrainer,
+  peekTrainerResult,
+  prefetchTrainer,
+  releaseTrainer,
+  retryTrainer,
+  solveTrainerCase,
+  type TrainerMeta,
+} from '../_lib/scramble/trainer_pool';
 import {
   awaitOptimal333,
-  peekOptimal333,
+  peekOptimal333Result,
   prefetchOptimal333,
   releaseOptimal333,
   retryOptimal333,
@@ -298,6 +307,8 @@ interface TimerScrambleHistoryEntry {
   caseId: string | null;
   /** Explicit non-WCA provenance prevents text collisions from becoming public marks. */
   scrambleSource: TimerScrambleSourceSnapshot | null;
+  /** Generated state follows this exact history occurrence, never scramble text. */
+  trainerMeta: TrainerMeta | null;
 }
 
 let nextTimerScrambleHistoryEntryId = 1;
@@ -307,8 +318,9 @@ function timerScrambleHistoryEntry(
   wca: WcaDispensedScramble | null = null,
   caseId: string | null = null,
   scrambleSource: TimerScrambleSourceSnapshot | null = null,
+  trainerMeta: TrainerMeta | null = null,
 ): TimerScrambleHistoryEntry {
-  return { id: nextTimerScrambleHistoryEntryId++, scramble, wca, caseId, scrambleSource };
+  return { id: nextTimerScrambleHistoryEntryId++, scramble, wca, caseId, scrambleSource, trainerMeta };
 }
 
 function useMediaQuery(query: string): boolean {
@@ -627,7 +639,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   );
   const randomOptimalOwner = authUser ? computeOwnerKey(authUser.uid, authUser.wcaId) : '';
   const randomOptimalKey = randomOptimalRequested
-    ? `${randomOptimalOwner}|${trainerSigVal}|${drillTarget ? `${drillTarget.type}:${drillTarget.id}` : ''}`
+    ? `${randomOptimalOwner}|${drillTarget && drillAllowed
+      ? `drill:${drillTarget.type}:${drillTarget.id}`
+      : trainerSigVal ? `difficulty:${trainerSigVal}` : 'normal'}`
     : '';
   const randomOptimalSource: Optimal333Source | null = randomOptimalRequested
     ? {
@@ -642,18 +656,19 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             prefetchTrainer(spec);
             const status = await awaitTrainer(spec);
             if (status === 'ready') {
-              const generated = peekTrainer(spec);
-              if (generated) return generated;
+              const generated = peekTrainerResult(spec);
+              if (generated) {
+                return { kind: 'ready', scramble: generated.scramble, context: generated } as const;
+              }
             }
-            if (status === 'empty' || status === 'rare') {
+            if (status === 'empty' || status === 'rare' || status === 'error') {
               return { kind: 'unavailable' as const, reason: status };
             }
-            throw new Error('trainer state unavailable');
+            throw new Error('trainer state became idle');
           }
           return randomState333();
         },
         optimize: async (base, signal) => (await cloudOptimalScramble(base, undefined, signal)).scramble,
-        onOptimized: aliasTrainerMeta,
       }
     : null;
   const randomOptimalSourceRef = useRef(randomOptimalSource);
@@ -697,7 +712,19 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // the effect below while the pool keeps the next three states warm.
     if (randomOptimalRequested) {
       const source = randomOptimalSourceRef.current;
-      return timerScrambleHistoryEntry(source ? peekOptimal333(source) : '');
+      const result = source ? peekOptimal333Result(source) : null;
+      const trainerResult = result?.context as TimerRandomDifficultyResult | undefined;
+      return timerScrambleHistoryEntry(
+        result?.scramble ?? '',
+        null,
+        null,
+        null,
+        trainerResult ? {
+          depth: trainerResult.depth,
+          spec: trainerResult.spec,
+          state: trainerResult.state,
+        } : null,
+      );
     }
     if (drillTarget && drillAllowed) {
       const ds = generateTimerDrillScramble(drillTarget);
@@ -724,7 +751,16 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (special) return timerScrambleHistoryEntry(takeCube222SpecialScramble(special));
     // 「按难度生成」(3×3 族):状态在 worker 里按阶段最优步数采样,再由 min2phase 转成打乱 ——
     // 同样是异步的,队列干了就先出 '',由下面的 effect 补上(期间转圈)。
-    if (trainerSpecRef.current) return timerScrambleHistoryEntry(peekTrainer(trainerSpecRef.current));
+    if (trainerSpecRef.current) {
+      const result = peekTrainerResult(trainerSpecRef.current);
+      return timerScrambleHistoryEntry(
+        result?.scramble ?? '',
+        null,
+        null,
+        null,
+        result ? { depth: result.depth, spec: result.spec, state: result.state } : null,
+      );
+    }
     // 「按步数生成」(2×2 / 金字塔 / 斜转 / 枫叶 / 齿轮):从完整状态空间均匀采样、
     // 按所选度量最优步数生成(非案例库)。必须先于 non-WCA worker 分支,否则后两项会绕过难度。
     // 度量+区间进 pool key,改设置即换 buffer;拒绝采样 + IDA* 在后台 idle 生成,不阻塞计时。
@@ -777,12 +813,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     expectedId: number,
     value: string,
     wca: WcaDispensedScramble | null = null,
+    trainerMeta: TrainerMeta | null = null,
   ) => {
     const current = scrambleHistRef.current;
     const entry = current.list[current.idx];
     if (entry?.id !== expectedId || entry.scramble !== '') return false;
     const list = [...current.list];
-    list[current.idx] = { ...entry, scramble: value, wca };
+    list[current.idx] = { ...entry, scramble: value, trainerMeta, wca };
     applyScrambleHist({ list, idx: current.idx });
     return true;
   }, [applyScrambleHist]);
@@ -796,7 +833,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [randomOptimalFailed, setRandomOptimalFailed] = useState(false);
   const [randomOptimalRetry, setRandomOptimalRetry] = useState(0);
   const [trainerLoading, setTrainerLoading] = useState(false);
-  const [trainerMiss, setTrainerMiss] = useState<'empty' | 'rare' | null>(null);
+  const [trainerMiss, setTrainerMiss] = useState<'empty' | 'rare' | 'error' | null>(null);
   const [trainerRetry, setTrainerRetry] = useState(0);
 
   // Own the pool lifecycle separately from the current slot: changing history
@@ -834,19 +871,31 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         setRandomOptimalFailed(true);
         return;
       }
-      if (status === 'base-empty' || status === 'base-rare') {
+      if (status === 'base-empty' || status === 'base-rare' || status === 'base-error') {
         setRandomOptimalLoading(false);
-        setTrainerMiss(status === 'base-empty' ? 'empty' : 'rare');
+        setTrainerMiss(status === 'base-empty'
+          ? 'empty'
+          : status === 'base-rare' ? 'rare' : 'error');
         return;
       }
       if (status !== 'ready') return;
-      const optimal = peekOptimal333(source);
+      const optimal = peekOptimal333Result(source);
       if (!optimal) {
         setRandomOptimalLoading(false);
         setRandomOptimalFailed(true);
         return;
       }
-      if (fillCurrentEmptyScrambleEntry(entryId, optimal)) setRandomOptimalLoading(false);
+      const trainerResult = optimal.context as TimerRandomDifficultyResult | undefined;
+      if (fillCurrentEmptyScrambleEntry(
+        entryId,
+        optimal.scramble,
+        null,
+        trainerResult ? {
+          depth: trainerResult.depth,
+          spec: trainerResult.spec,
+          state: trainerResult.state,
+        } : null,
+      )) setRandomOptimalLoading(false);
     });
     return () => { cancelled = true; };
   }, [
@@ -1041,11 +1090,18 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     void awaitTrainer(spec).then((status) => {
       if (cancelled || !isCurrentEmptyScrambleEntry(entryId)) return;
       setTrainerLoading(false);
-      if (status === 'empty' || status === 'rare') { setTrainerMiss(status); return; }
+      if (status === 'empty' || status === 'rare' || status === 'error') {
+        setTrainerMiss(status);
+        return;
+      }
       if (status !== 'ready') return;
-      const real = peekTrainer(spec);
-      if (!real) return;
-      fillCurrentEmptyScrambleEntry(entryId, real);
+      const result = peekTrainerResult(spec);
+      if (!result) return;
+      fillCurrentEmptyScrambleEntry(entryId, result.scramble, null, {
+        depth: result.depth,
+        spec: result.spec,
+        state: result.state,
+      });
     });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2694,6 +2750,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // NOT gated on prefers-reduced-motion — the user asked for things to be
   // hidden, not animated; the reduced-motion block below drops the transition.
   const hideAllUi = timer.phase === 'running' && settings.hideAllUiWhileRunning;
+  const sourceControlsEnabled = timer.phase !== 'running';
 
   // ── Side-panel body ─────────────────────────────────────────────
   const renderPanelBody = () => {
@@ -2806,7 +2863,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       setRandomOptimalRetry((value) => value + 1);
       return;
     }
-    if (trainerMiss === 'rare') {
+    if (trainerMiss === 'rare' || trainerMiss === 'error') {
       const spec = trainerSpecRef.current;
       if (!spec) return;
       retryTrainer(spec);
@@ -2837,7 +2894,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               ? 'error-generated'
               : wcaSourceFailed
                 ? 'error-real'
-                : trainerMiss === 'empty'
+                : trainerMiss === 'error'
+                  ? 'error-generated'
+                  : trainerMiss === 'empty'
                   ? 'empty-trainer'
                   : trainerMiss === 'rare'
                     ? 'rare-trainer'
@@ -2886,6 +2945,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <>
           {playersControl}
           <TimerPuzzlePicker
+            disabled={!sourceControlsEnabled}
             selectedEvent={event}
             groups={eventPickerGroups}
             onSelect={(id) => {
@@ -2897,6 +2957,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           />
           {/* 收起态用短名称,菜单保留完整名称。放在项目选择器右侧,和「人数」下拉同一组。 */}
           <TimerScrambleSourceSelect
+            disabled={!sourceControlsEnabled}
             className="shell-scramble-source-select"
             triggerClassName="shell-players-select"
             popupClassName="shell-scramble-source-popup"
@@ -2947,7 +3008,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       {/* ── Main column ─────────────────────────────────────── */}
       <div className="shell-main">
         {/* 打乱来源配置条 —— 常驻计时读数上方(全项目)。计时中随 surface-chrome 淡出。 */}
-        <ScrambleSourceBar event={event} isZh={isZh} diffSlot={diffSlot} />
+        <ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} />
         <TimingSurface
           phase={timer.phase}
           colorClass={`${colorClass} tf-${settings.timerFont}`.trim()}
@@ -3006,7 +3067,23 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               }}
             >
               {/* 「按难度生成」的打乱 + 答案(只在该来源下有 meta 时出现)。 */}
-              {!randomOptimalLoading && !scrambleLoading && !trainerLoading && !byStepsLoading && <TrainerCaseBar scramble={scramble} isZh={isZh} />}
+              {!randomOptimalLoading
+                && !scrambleLoading
+                && !trainerLoading
+                && !byStepsLoading
+                && currentScrambleEntry.trainerMeta && (
+                  <TrainerCaseBar
+                    depth={currentScrambleEntry.trainerMeta.depth}
+                    language={timerLanguage}
+                    occurrenceKey={currentScrambleEntry.id}
+                    solve={(signal) => solveTrainerCase(
+                      currentScrambleEntry.trainerMeta!,
+                      isZh,
+                      signal,
+                    )}
+                    spec={currentScrambleEntry.trainerMeta.spec}
+                  />
+                )}
               {wcaSrcDisplay && wcaSource && (
                 <TimerWcaScrambleSource
                   competitionName={wcaSrcDisplay.name}

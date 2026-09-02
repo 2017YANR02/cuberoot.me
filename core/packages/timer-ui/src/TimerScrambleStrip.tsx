@@ -122,7 +122,7 @@ export function TimerScrambleStrip({
   const style = { '--scramble-scale': fontScale } as CSSProperties;
 
   const stripActivate = status?.onRetry ? undefined : onActivate;
-  const activateFromKeyboard = (event: KeyboardEvent<HTMLDivElement>) => {
+  const activateFromKeyboard = (event: KeyboardEvent<HTMLSpanElement>) => {
     if (event.target !== event.currentTarget
       || !stripActivate
       || (event.key !== 'Enter' && event.key !== ' ')) return;
@@ -136,14 +136,16 @@ export function TimerScrambleStrip({
       className={`scramble-strip sf-${font}${compact ? ' compact' : ''}${className ? ` ${className}` : ''}`}
       data-scramble-match={match === null ? undefined : match ? 'ok' : 'off'}
       data-interactive={stripActivate ? 'true' : undefined}
-      onClick={stripActivate}
-      onKeyDown={activateFromKeyboard}
-      role={stripActivate ? 'button' : undefined}
       style={style}
-      tabIndex={stripActivate ? 0 : undefined}
       title={title}
     >
-      <span className="scramble-text">
+      <span
+        className="scramble-text"
+        onClick={stripActivate}
+        onKeyDown={activateFromKeyboard}
+        role={stripActivate ? 'button' : undefined}
+        tabIndex={stripActivate ? 0 : undefined}
+      >
         {scramble
           ? <>
               <span className="scramble-moves">

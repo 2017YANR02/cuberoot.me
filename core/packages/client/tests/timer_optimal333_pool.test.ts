@@ -4,6 +4,7 @@ import {
   awaitOptimal333,
   canUseRandomOptimal333,
   peekOptimal333,
+  peekOptimal333Result,
   prefetchOptimal333,
   retryOptimal333,
   shouldUseRandomOptimal333,
@@ -41,6 +42,18 @@ describe('timer optimal 3x3 pool', () => {
     expect(peekOptimal333(source)).toBe('optimal-base-1');
     expect(peekOptimal333(source)).toBe('optimal-base-2');
     expect(peekOptimal333(source)).toBe('optimal-base-3');
+  });
+
+  it('keeps structured base context attached to the optimized scramble', async () => {
+    const context = Object.freeze({ depth: 5, state: 'case-a' });
+    const source: Optimal333Source = {
+      key: 'owner|context',
+      generateBase: () => ({ kind: 'ready', scramble: 'R U', context }),
+      optimize: async () => "U' R'",
+    };
+
+    expect(await awaitOptimal333(source)).toBe('ready');
+    expect(peekOptimal333Result(source)).toEqual({ scramble: "U' R'", context });
   });
 
   it('never runs more than one cloud solve at a time', async () => {
@@ -158,6 +171,7 @@ describe('timer optimal 3x3 pool', () => {
   it.each([
     ['empty', 'base-empty'],
     ['rare', 'base-rare'],
+    ['error', 'base-error'],
   ] as const)('preserves a trainer %s result without calling the optimizer', async (reason, status) => {
     const optimize = vi.fn(async () => 'must-not-run');
     const source: Optimal333Source = {

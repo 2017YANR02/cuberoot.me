@@ -357,6 +357,18 @@ button {
   display: contents;
 }
 
+.mobile-random-difficulty-config {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.mobile-random-difficulty-config > .timer-random-difficulty-body,
+.mobile-random-difficulty-config > .timer-random-difficulty-hint {
+  width: min(100%, 44rem);
+  margin-inline: auto;
+}
+
 .mobile-wca-date-range {
   flex: 1 1 310px;
 }

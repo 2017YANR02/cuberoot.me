@@ -17,6 +17,8 @@ export const TIMER_RANDOM_DIFFICULTY_EVENTS = [
   '333', '333oh', '333bld', '333fm',
 ] as const;
 
+export const TIMER_RANDOM_DIFFICULTY_BEST_SLOT = -1;
+
 export interface TimerRandomDifficultySettings {
   genDiffOn: boolean;
   genDiffVariant: string;
@@ -32,7 +34,7 @@ export const DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS: TimerRandomDifficultySett
   genDiffVariant: 'std',
   genDiffStage: 'cross',
   genDiffColors: 'BGORWY',
-  genDiffSlot: -1,
+  genDiffSlot: TIMER_RANDOM_DIFFICULTY_BEST_SLOT,
   genDiffSteps: [],
 };
 
@@ -64,7 +66,7 @@ export function normalizeTimerRandomDifficultySettings(
     genDiffColors: normalizeTimerColorSubsetKey(value?.genDiffColors),
     genDiffSlot: Number.isSafeInteger(value?.genDiffSlot) && value!.genDiffSlot! >= -1
       ? value!.genDiffSlot!
-      : -1,
+      : TIMER_RANDOM_DIFFICULTY_BEST_SLOT,
     genDiffSteps: steps,
   };
 }

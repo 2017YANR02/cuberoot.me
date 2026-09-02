@@ -28,10 +28,10 @@
 
 import {
   EDGE_STEP, FACE_EDGES, MOVE_FACE, skipRow, slotRank, slotUnrank, type FaceIdx,
-} from './model.js';
-import { crossDist, crossNext } from './dist.js';
-import { fillState, type Pin } from './fill.js';
-import type { CubieCube } from '../kociemba/cube.js';
+} from '@cuberoot/puzzle-solvers/cross-trainer/model';
+import { crossDist, crossNext } from '@cuberoot/puzzle-solvers/cross-trainer/dist';
+import { fillState, type Pin } from '@cuberoot/puzzle-solvers/cross-trainer/fill';
+import type { CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
 
 /** Ordered slots of the four cross edges. */
 export const EO_POS_STATES = 11880;

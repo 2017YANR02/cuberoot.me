@@ -21,6 +21,7 @@ import {
   type MobileScrambleHistoryEntry,
 } from './mobile-scramble-history';
 import type { RealScramble } from './data/real-scramble-pool';
+import type { TrainerSpec } from '@cuberoot/puzzle-solvers/cross-trainer';
 
 const app = readFileSync(new URL('./App.tsx', import.meta.url), 'utf8');
 const css = readFileSync(new URL('./app.css', import.meta.url), 'utf8');
@@ -118,6 +119,38 @@ describe('mobile displayed-scramble history', () => {
       availability: 'ready', caseId: 'case-2', event: '222', scramble: 'R2 F2',
     });
     expect(Object.isFrozen(ready.list[0])).toBe(true);
+  });
+
+  it('owns and freezes random-difficulty metadata for each history occurrence', () => {
+    const entry = createMobileScrambleHistoryEntry('333', 'random', 'random|difficulty');
+    const spec: TrainerSpec = {
+      variant: 'std', stage: 'cross', colors: 'W', slot: 0, lo: 4, hi: 6,
+    };
+    const state = {
+      cp: [0, 1, 2, 3, 4, 5, 6, 7],
+      co: [0, 0, 0, 0, 0, 0, 0, 0],
+      ep: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      eo: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const ready = replaceMobileScrambleHistoryEntry(
+      { list: [entry], idx: 0 },
+      entry.id,
+      entry.sourceIdentity,
+      { availability: 'ready', scramble: 'R U', trainerMeta: { depth: 5, spec, state } },
+    );
+    spec.stage = 'xcross';
+    state.cp[0] = 7;
+
+    const stored = ready.list[0]!.trainerMeta!;
+    expect(stored.spec.stage).toBe('cross');
+    expect(stored.state.cp[0]).toBe(0);
+    expect(Object.isFrozen(stored)).toBe(true);
+    expect(Object.isFrozen(stored.spec)).toBe(true);
+    expect(Object.isFrozen(stored.state)).toBe(true);
+    expect(Object.isFrozen(stored.state.cp)).toBe(true);
+
+    const next = createMobileScrambleHistoryEntry('333', 'random', 'random|difficulty');
+    expect(histBack(histPush(ready, next))?.list[0]?.trainerMeta).toBe(stored);
   });
 
   it('clears stale failure details whenever a retry becomes loading or ready', () => {

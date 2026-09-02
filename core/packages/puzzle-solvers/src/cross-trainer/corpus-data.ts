@@ -18,7 +18,7 @@
  * the least significant trit). Ranks are the ordinary factorial-number-system ones.
  */
 
-import type { Pin } from './fill.js';
+import type { Pin } from '@cuberoot/puzzle-solvers/cross-trainer/fill';
 
 /** 438 states x 4 ints. */
 const CN_XCROSS_10: readonly number[] = [

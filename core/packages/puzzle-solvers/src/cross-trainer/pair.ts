@@ -44,10 +44,10 @@
 import {
   CORNER_STEP, EDGE_STEP, FACE_CORNERS, FACE_EDGES, MOVE_FACE, MOVE_NAMES,
   f2lSlots, skipRow, type F2lSlot, type FaceIdx,
-} from './model.js';
-import { CROSS_STATES, crossNext, decodeCross, encodeCross } from './dist.js';
-import { randomXCoord, type XCoord } from './xcross.js';
-import type { Pin } from './fill.js';
+} from '@cuberoot/puzzle-solvers/cross-trainer/model';
+import { CROSS_STATES, crossNext, decodeCross, encodeCross } from '@cuberoot/puzzle-solvers/cross-trainer/dist';
+import { randomXCoord, type XCoord } from '@cuberoot/puzzle-solvers/cross-trainer/xcross';
+import type { Pin } from '@cuberoot/puzzle-solvers/cross-trainer/fill';
 
 export const PAIR_STATES = 72990720;
 /** Published maxima, re-verified by the exhaustive BFS above: Free Pair 9, Pseudo Free Pair 8. */

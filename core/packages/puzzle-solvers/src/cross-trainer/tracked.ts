@@ -21,10 +21,10 @@
  * datasets on /scramble/stats need.
  */
 
-import type { CubieCube } from '../kociemba/cube.js';
-import { CORNER_STEP, EDGE_STEP, slotRank, slotUnrank } from './model.js';
-import { crossNext } from './dist.js';
-import type { Pin } from './fill.js';
+import type { CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
+import { CORNER_STEP, EDGE_STEP, slotRank, slotUnrank } from '@cuberoot/puzzle-solvers/cross-trainer/model';
+import { crossNext } from '@cuberoot/puzzle-solvers/cross-trainer/dist';
+import type { Pin } from '@cuberoot/puzzle-solvers/cross-trainer/fill';
 
 /** The pieces a sub-step has to bring home. Order fixes the coordinate; any order works. */
 export interface TrackedSpec {
