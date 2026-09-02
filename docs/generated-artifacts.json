@@ -97,12 +97,12 @@
       "kind": "local-heavy-artifact",
       "source": {
         "locator": "operator-provided read-only music source",
-        "paths": ["tools/music/prepare-music.ps1", "docs/music-player-tracker.md"]
+        "paths": ["scripts/music/prepare-music.ps1", "docs/music-player-tracker.md"]
       },
       "license": { "spdx": "NOASSERTION", "evidence": "source-media rights are managed outside Git; no media is checked into this repository" },
-      "owner": "tools/music/prepare-music.ps1",
+      "owner": "scripts/music/prepare-music.ps1",
       "workingDirectory": ".",
-      "command": "pwsh -NoProfile -File tools/music/prepare-music.ps1 -Pilot; omit -Pilot only for one reviewed batch",
+      "command": "pwsh -NoProfile -File scripts/music/prepare-music.ps1 -Pilot; omit -Pilot only for one reviewed batch",
       "runtimeOutputs": ["music-staging/inventory/source-manifest.jsonl", "music-staging/library/**"],
       "verification": ["ffprobe every output for one audio stream, zero video streams, duration tolerance, and no partial files; validate manifest version and asset references"],
       "driftPolicy": "The source is read-only and the generated inventory and media stay outside Git. Run one bounded batch at a time, preserve the disk reserve, and publish only after content-hash deduplication and manual classification are complete."

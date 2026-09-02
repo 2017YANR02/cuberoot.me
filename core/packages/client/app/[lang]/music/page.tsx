@@ -23,6 +23,21 @@ function formatTime(seconds: number): string {
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
 }
 
+function categoryLabel(value: string): string {
+  const labels: Record<string, { zh: string; en: string }> = {
+    'film-tv-soundtrack': { zh: '影视原声', en: 'Film & TV scores' },
+    'sound-effects': { zh: '音效', en: 'Sound effects' },
+    jazz: { zh: '爵士', en: 'Jazz' },
+    'piano-classical': { zh: '钢琴与古典', en: 'Piano & classical' },
+    electronic: { zh: '电子', en: 'Electronic' },
+    'pop-rock': { zh: '流行与摇滚', en: 'Pop & rock' },
+    'bgm-assets': { zh: 'BGM 与素材', en: 'BGM & production' },
+    'ambient-instrumental': { zh: '轻音乐与纯音乐', en: 'Ambient & instrumental' },
+    unclassified: { zh: '未分类', en: 'Unclassified' },
+  };
+  return labels[value] ? tr(labels[value]) : value;
+}
+
 function Cover({ track, small = false }: { track: MusicTrack | null; small?: boolean }) {
   if (track?.cover) {
     return <img className={small ? 'music-cover is-small' : 'music-cover'} src={musicAssetUrl(track.cover)} alt={track.title} />;
@@ -148,7 +163,7 @@ export default function MusicPage() {
                 aria-label={tr({ zh: '音乐分类', en: 'Music category' })}
               >
                 <option value="">{tr({ zh: '全部分类', en: 'All categories' })}</option>
-                {genres.map((value) => <option key={value} value={value}>{value}</option>)}
+                {genres.map((value) => <option key={value} value={value}>{categoryLabel(value)}</option>)}
               </select>
             )}
           </div>
@@ -156,6 +171,9 @@ export default function MusicPage() {
             {player.status === 'loading' && <p className="music-state">{tr({ zh: '正在载入曲库…', en: 'Loading library…' })}</p>}
             {player.status === 'error' && (
               <p className="music-state">{tr({ zh: '曲库尚未发布。播放器界面已就绪。', en: 'The library is not published yet. The player is ready.' })}</p>
+            )}
+            {player.status === 'ready' && player.error && (
+              <p className="music-state">{tr({ zh: '这首歌无法播放，请尝试其他歌曲。', en: 'This track could not be played. Try another track.' })}</p>
             )}
             {player.status === 'ready' && visibleTracks.length === 0 && (
               <p className="music-state">{tr({ zh: '没有匹配的歌曲', en: 'No matching tracks' })}</p>
