@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CUBE_OPPOSITE_FACE } from '@/lib/cube-colors';
+import { CUBE_OPPOSITE_FACE, type CubeFace } from '@/lib/cube-colors';
 import {
   ALL_COLOR_PAIRS,
   CUBE_COLOR_FACES,
@@ -10,6 +10,8 @@ import {
   ALL_POSITION_QUESTIONS,
   WHITE_TOP_SIDE_ORDER,
   buildPositionRound,
+  positionQuestionsForTop,
+  sideOrderForTop,
 } from '@/app/[lang]/color-test/_lib/positions';
 import { SEARCH_CARDS, SECTIONS } from '@/lib/landing-sections';
 
@@ -39,7 +41,7 @@ describe('cube colour relationships', () => {
   });
 });
 
-describe('white-top side positions', () => {
+describe('side positions for every top colour', () => {
   it('covers every side colour in both directions', () => {
     expect(WHITE_TOP_SIDE_ORDER).toEqual(['R', 'F', 'L', 'B']);
     expect(ALL_POSITION_QUESTIONS).toHaveLength(8);
@@ -48,8 +50,25 @@ describe('white-top side positions', () => {
     expect(new Set(ALL_POSITION_QUESTIONS.map(({ reference, direction }) => `${reference}-${direction}`)).size).toBe(8);
   });
 
+  it('builds the four valid side colours for all six top colours', () => {
+    const expected: Record<CubeFace, CubeFace[]> = {
+      U: ['R', 'F', 'L', 'B'],
+      D: ['L', 'F', 'R', 'B'],
+      F: ['R', 'D', 'L', 'U'],
+      B: ['R', 'U', 'L', 'D'],
+      R: ['D', 'F', 'U', 'B'],
+      L: ['U', 'F', 'D', 'B'],
+    };
+    for (const top of CUBE_COLOR_FACES) {
+      expect(sideOrderForTop(top)).toEqual(expected[top]);
+      expect(sideOrderForTop(top)).not.toContain(top);
+      expect(sideOrderForTop(top)).not.toContain(CUBE_OPPOSITE_FACE[top]);
+      expect(positionQuestionsForTop(top)).toHaveLength(8);
+    }
+  });
+
   it('builds a shuffled copy without losing questions', () => {
-    const round = buildPositionRound(() => 0);
+    const round = buildPositionRound('U', () => 0);
     expect(round).not.toBe(ALL_POSITION_QUESTIONS);
     expect(new Set(round.map(({ reference, direction }) => `${reference}-${direction}`)).size).toBe(8);
   });

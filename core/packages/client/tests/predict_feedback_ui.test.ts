@@ -7,6 +7,7 @@ const CLIENT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PAGE = readFileSync(join(CLIENT, 'app', '[lang]', 'predict', 'page.tsx'), 'utf8');
 const BOARD = readFileSync(join(CLIENT, 'app', '[lang]', 'predict', '_components', 'PredictBoard.tsx'), 'utf8');
 const NOTATION_TRAINER = readFileSync(join(CLIENT, 'app', '[lang]', 'notation', '_components', 'NotationTrainer.tsx'), 'utf8');
+const COLOR_POSITIONS = readFileSync(join(CLIENT, 'app', '[lang]', 'color-test', 'positions', 'page.tsx'), 'utf8');
 const FEEDBACK_OVERLAY = readFileSync(join(CLIENT, 'components', 'TrainingFeedbackOverlay.tsx'), 'utf8');
 const FEEDBACK_STYLES = readFileSync(join(CLIENT, 'components', 'TrainingFeedbackOverlay.module.css'), 'utf8');
 
@@ -25,6 +26,11 @@ describe('/predict answer feedback and playback controls', () => {
     expect(NOTATION_TRAINER).toContain("showFeedback('correct')");
     expect(NOTATION_TRAINER).toContain("showFeedback('wrong')");
     expect(NOTATION_TRAINER).toContain('setFeedbackPulse(null), 1200');
+  });
+
+  it('reuses the shared correct and wrong overlay in the colour-position test', () => {
+    expect(COLOR_POSITIONS).toContain('<TrainingFeedbackOverlay');
+    expect(COLOR_POSITIONS).toContain("selected === question.answer ? 'correct' : 'wrong'");
   });
 
   it('keeps the shared playback bar mounted from the initial question', () => {
