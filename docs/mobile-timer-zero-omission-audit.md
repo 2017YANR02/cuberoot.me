@@ -150,7 +150,7 @@ shared 映射快照是 19 个 Timer ID：
 | `source.random.difficulty` | 当前可达项目的方法/阶段/颜色/槽位/步数直接生成、loading/empty/rare/retry | 缺 |
 | `source.random.steps` | 222/pyra/skewb/ivy/gear 按精确度量与步数生成 | 五项目均由 shared 设置/identity 驱动；222 与非二阶各走既有 canonical Worker host，待 OPPO 全项目切换/取消/stale 矩阵 |
 | `source.random.222-type` | 真题 10 类之外再有 3-gen，每类独立 worker 队列 | 已接 runtime-neutral generator + shared RPC/pool；本地浏览器与 OPPO 已验证 EG1/CLL/No Bar/3-gen 样例，仍待 11 类全量真机矩阵 |
-| `source.random.optimal333` | 登录可用、种子禁用、loading/failure/retry | 缺 |
+| `source.random.optimal333` | 登录可用、种子禁用、loading/failure/retry | 普通随机 333 与 78 个 OLL/PLL 专项已共用 shared pool、SSE 协议和等价纯 HTM 转换；App 已接登录门禁、认证恢复 fail-closed、loading/failure/retry、当前 token 401 登出和 stale 请求隔离。OPPO WebView 103 已实证来源菜单、随机题、未登录禁用提示、spinner 与 360/360 无溢出。同步种子尚未迁入 App，随机难度与最优组合及已登录云请求真机链仍缺，因此不得标完整 |
 | `source.config.persistence` | 来源、细项、队列与切项目后的精确恢复规则 | 完整 WCA difficulty/optimal/merge 与 by-steps 字段进入 shared store decode/normalize/migration；Web 11 项 + Mobile repository 17 项通过，仍待进程重启真机组合矩阵 |
 | `scramble.status` | generated/optimal/real/steps 的 loading/error，trainer rare/empty，WCA type/steps/difficulty/competition/date empty，unsupported 与 retry | 17 类原因、双语文案、retryable policy、spinner、alert/live region 和 44px 重试按钮已由 Web/五端 App 共用；Web 的 WCA 七次耗尽与 csTimer/专项 Worker 失败可原位重试，App 保留精确 failure。待真实断网/恢复、320/340、横屏、大字、TalkBack 和其余平台矩阵 |
 | `scramble.prev-next` | 已显示打乱历史的上一条/下一条，与生成队列分离 | 已消费 shared `ScrambleHistory` 并覆盖键盘/触摸/队尾生成/solve 后前进，待 OPPO/iOS 真机矩阵 |
@@ -159,7 +159,7 @@ shared 映射快照是 19 个 Timer ID：
 | `scramble.preview` | 2D/3D/NxN/异形专用 renderer，显示开关、拖动、朝向 | Web/五端共用 `TimerCubePreview`/`TimerScramblePreview`；显示开关、2D/3D 默认/归一化/持久化与设置 UI 也已共享，单人和联网均从独立 `TimingSurface.cornerSlot` 渲染，避免拖动误触打乱动作。cubing.js 与 SQ1/Megaminx renderer 均为单源，不可解析手动题 fail closed；SQ1/Megaminx 保持 canonical 2D。OPPO 已装入对应源码构建，但手机仍被通知层遮挡；拖动/朝向、无遮挡及全设备视觉矩阵仍待关闭 |
 | `scramble.source-meta` | 国旗、本地化比赛名、项目、轮/组/题号/加赛、深链 | Web/Mobile 已收敛为共享 `TimerWcaScrambleSource`；OPPO 360px 实证完整显示、无溢出，深链进入 Tools 对应比赛页，返回不换题/不误复制。iOS/Harmony/Windows/macOS 设备矩阵仍待验 |
 | `scramble.source-progress` | 稀有池 `seen/total`、全练过、非最优标志、打乱足迹人数 | Web/五端产品层共用 occurrence-aware tracker、strict slot/mark codec、marks HTTP client 与 `TimerWcaScrambleProgress`；同文本不同官方 slot 分别计数。公开名单/人数、canonical 姓名/国旗/成绩/日期/真实 WCA 深链与 durable-save 后自动打卡均单源；关闭设置只用认证 update-only PATCH，登出/换号/pending retry fail closed。Portal 弹层按实测三栏和 visualViewport 钳制，三种纵向边界回归均不遮挡。OPPO 已安装最终共享构建并验证当前零足迹常见池不画假按钮；仍待非零/稀有池真机和其他四平台矩阵 |
-| `scramble.loading` | WCA、csTimer worker、难度 worker、云端最优各自区分 loading | 仅通用 loading |
+| `scramble.loading` | WCA、csTimer worker、难度 worker、云端最优各自区分 loading | WCA/csTimer 与云端最优已走共享的精确 loading/status；OPPO WebView 103 spinner fallback 已实证可见。随机难度 worker 尚未接入 App，因此本项仍未完整 |
 | `scramble.empty-error` | 比赛无项目、日期无题、难度无匹配、难度库待更新、稀有、短暂网络失败各自文案/重试 | 仅通用 error/unsupported |
 | `scramble.smart-hint` | 已拧步骤变暗、当前高亮、打乱完成、不符、拧回原打乱、复制原打乱 | Web/五端产品层已共用 `TimerScrambleStrip`、shared 提示/匹配/偏离修正 requester 与同一 Solo lifecycle controller；Web/App 只保留 facelets、Worker 和预备回调适配。Android 最新 APK 已安装，OPPO 新版逐步提示、故意偏离、修正完成和 Worker 冷启动延迟仍待解锁后用 GAN 16 UI 实测，其他四端也未验收 |
 | `scramble.trainer-case` | 随机难度直接生成时显示方法/阶段/步数与按需答案；当前 internal EventId 真可达集合是 `333/333oh/333fm` | 缺；不得误当成 LL/OLL/PLL 等 case provider 的逐题答案 |

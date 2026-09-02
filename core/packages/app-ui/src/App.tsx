@@ -36,8 +36,11 @@ import {
   TIMER_SCRAMBLE_CLICK_TITLE_COPY,
   TIMER_SETTING_CATEGORY_CONTRACTS,
   WCA_SCRAMBLE_222_TYPES,
+  CloudOptimalScrambleHttpError,
   activeTimerSolves,
   advanceTimerSourceRevision,
+  awaitOptimal333,
+  canUseRandomOptimal333,
   createTimerSourceRevision,
   createTimerHistoryFilters,
   computeTimerHistoryTags,
@@ -55,13 +58,19 @@ import {
   normalizeTimerByStepsSettings,
   normalizeTimerWcaSourceSettings,
   parseManualScrambleQueue,
+  peekOptimal333,
+  prefetchOptimal333,
   projectRollingStats,
   postTimerWcaScrambleMark,
   pruneTimerHistoryCompareSelection,
+  releaseOptimal333,
+  requestCloudOptimalScramble,
   resolveTimerWcaSourceCore,
   resolveKeymap,
   resolveTimerHistoryComparePair,
   rollingStatColumnsForEvent,
+  retryOptimal333,
+  shouldUseRandomOptimal333,
   summarize,
   takeManualScramble,
   timerEventIdFromSelector,
@@ -141,6 +150,7 @@ import {
   type TimerManualEntryValue,
   type TimerColorLetter,
   type TimerNon222StepPuzzle,
+  type Optimal333Source,
   type TimerWcaDifficultyCoverage,
   type TimerWcaCompetition,
   type TimerWcaSourceSettings,
@@ -597,8 +607,10 @@ export function App({ host }: { host: InstalledAppHost }) {
     : siteUrl(language);
   const accountWebUrl = accountUrl(language);
   const auth = host.useAuth(language);
+  const activeAuthSession = wcaAutoMarkLiveSession(auth.session, auth.busy);
   const authSessionRef = useRef(auth.session);
-  authSessionRef.current = wcaAutoMarkLiveSession(auth.session, auth.busy);
+  authSessionRef.current = activeAuthSession;
+  const logoutEverywhereRef = useRef(auth.logout);
   const setBattleSmartCubeHandlers = useCallback((handlers: BattleSmartCubeHandlers | null) => {
     battleSmartCubeHandlersRef.current = handlers;
   }, []);
@@ -639,8 +651,87 @@ export function App({ host }: { host: InstalledAppHost }) {
   );
   const wcaSourceSettings: TimerWcaSourceSettings = store?.settings
     ?? DEFAULT_TIMER_WCA_SOURCE_SETTINGS;
+  const randomOptimalOwner = activeAuthSession
+    ? ownerKey(activeAuthSession.user.uid, activeAuthSession.user.wcaId)
+    : '';
+  const randomOptimalAvailable = canUseRandomOptimal333(
+    activeEvent,
+    scrambleSource,
+    Boolean(activeAuthSession),
+    null,
+  );
+  const randomOptimalRequested = timerMode === 1 && shouldUseRandomOptimal333(
+    wcaSourceSettings.wcaUseOptimal,
+    activeEvent,
+    scrambleSource,
+    Boolean(activeAuthSession),
+    null,
+  );
+  const randomOptimalAuthPending = timerMode === 1
+    && wcaSourceSettings.wcaUseOptimal
+    && activeEvent === '333'
+    && scrambleSource === 'random'
+    && (auth.loading || auth.busy);
+  const randomOptimalKey = randomOptimalRequested
+    ? `${randomOptimalOwner}|${effectiveDrillTarget
+      ? `drill:${effectiveDrillTarget.type}:${effectiveDrillTarget.id}`
+      : 'normal'}`
+    : '';
+  const randomOptimalSource = useMemo<Optimal333Source | null>(() => {
+    if (!randomOptimalRequested || !randomOptimalKey) return null;
+    const target = effectiveDrillTarget;
+    return {
+      key: randomOptimalKey,
+      generateBase: async (signal) => {
+        if (target) {
+          const generated = generateTimerDrillScramble(target);
+          if (generated) return generated.scramble;
+          throw new Error('could not generate optimal drill base state');
+        }
+        const generated = await generateTimerScramble({ event: activeEvent });
+        if (signal.aborted) throw new Error('optimal 3x3 generation aborted');
+        if (!generated.ok || generated.kind === 'manual') {
+          throw new Error('could not generate optimal 3x3 base state');
+        }
+        return generated.scramble;
+      },
+      optimize: async (base, signal) => {
+        const token = authSessionRef.current?.token;
+        if (!token) throw new Error('optimal 3x3 requires authentication');
+        try {
+          return (await requestCloudOptimalScramble(base, {
+            url: mobileApiUrl('/v1/scramble/optimal-solve'),
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            signal,
+          })).scramble;
+        } catch (error) {
+          if (error instanceof CloudOptimalScrambleHttpError
+            && error.status === 401
+            && !signal.aborted
+            && authSessionRef.current?.token === token) {
+            void logoutEverywhereRef.current();
+          }
+          throw error;
+        }
+      },
+    };
+  }, [activeEvent, effectiveDrillTarget, randomOptimalKey, randomOptimalRequested]);
+  const randomOptimalSourceRef = useRef(randomOptimalSource);
+  randomOptimalSourceRef.current = randomOptimalSource;
+  useEffect(() => {
+    if (!randomOptimalSource) {
+      releaseOptimal333();
+      return;
+    }
+    prefetchOptimal333(randomOptimalSource);
+    return () => releaseOptimal333();
+  }, [randomOptimalKey, randomOptimalSource]);
   const optimalAvailable = scrambleSource === 'wca'
-    && timerWcaSupportsOptimal(timerWcaScrambleEventId(activeEvent));
+    ? timerWcaSupportsOptimal(timerWcaScrambleEventId(activeEvent))
+    : randomOptimalAvailable;
   const activeRealSourceSpec: RealScrambleSourceSpec = {
     event: activeEvent,
     scramble222Mode,
@@ -902,25 +993,31 @@ export function App({ host }: { host: InstalledAppHost }) {
   }), []);
 
   const scrambleIdentityFor = useCallback((source: ScrambleSource, event: EventId): string => {
-    const withDrill = (identity: string) => {
+    const withGenerationOptions = (identity: string) => {
       const target = source !== 'manual' && timerEventSupportsDrill(event)
         ? drillTargetRef.current
         : null;
-      return target ? `${identity}|drill:${target.type}:${target.id}` : identity;
+      const drillIdentity = target ? `${identity}|drill:${target.type}:${target.id}` : identity;
+      if (source === 'random' && event === '333' && randomOptimalAuthPending) {
+        return `${drillIdentity}|optimal:auth-pending`;
+      }
+      return source === 'random' && event === '333' && randomOptimalRequested
+        ? `${drillIdentity}|optimal:${randomOptimalKey}`
+        : drillIdentity;
     };
-    if (source === 'wca') return withDrill(`wca|${realScrambleSourceKey(realSpecFor(event))}`);
+    if (source === 'wca') return withGenerationOptions(`wca|${realScrambleSourceKey(realSpecFor(event))}`);
     if (source === 'manual') {
       return timerManualSourceIdentity(event, manualSourceRevisionRef.current);
     }
     if (event === '222') {
-      return withDrill(`random|222|${scramble222ModeRef.current}|${scramble222TypeRef.current}|${
+      return withGenerationOptions(`random|222|${scramble222ModeRef.current}|${scramble222TypeRef.current}|${
         scramble222TypeRef.current === 'full'
           ? timerByStepsIdentity('222', 'random', byStepsSettingsRef.current, scramble222ModeRef.current)
           : ''
       }`);
     }
-    return withDrill(`random|${event}|${timerByStepsIdentity(event, 'random', byStepsSettingsRef.current)}`);
-  }, [realSpecFor]);
+    return withGenerationOptions(`random|${event}|${timerByStepsIdentity(event, 'random', byStepsSettingsRef.current)}`);
+  }, [randomOptimalAuthPending, randomOptimalKey, randomOptimalRequested, realSpecFor]);
 
   const writeScrambleHistory = useCallback((next: ScrambleHistory<MobileScrambleHistoryEntry>) => {
     scrambleHistoryRef.current = next;
@@ -1226,6 +1323,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     ));
     if (!liveEntry || (entry.availability !== 'loading' && liveEntry.availability === 'loading')) return;
     const { event, source, sourceIdentity } = liveEntry;
+    const retryingOptimal = liveEntry.failure?.kind === 'optimal';
     if (sourceIdentity !== scrambleIdentityFor(source, event)) return;
     randomScrambleGateRef.current.cancel();
     const requestId = ++scrambleRequestRef.current;
@@ -1246,6 +1344,50 @@ export function App({ host }: { host: InstalledAppHost }) {
         currentReal: null,
         failure: null,
         scramble: taken.scramble,
+      });
+      return;
+    }
+    if (source === 'random' && event === '333' && randomOptimalAuthPending) return;
+    const optimalSource = source === 'random' && event === '333'
+      ? randomOptimalSourceRef.current
+      : null;
+    if (optimalSource) {
+      const target = drillTargetRef.current;
+      if (retryingOptimal) retryOptimal333(optimalSource);
+      void awaitOptimal333(optimalSource).then((status) => {
+        if (requestId !== scrambleRequestRef.current
+          || activeEventRef.current !== event
+          || scrambleSourceRef.current !== source
+          || scrambleIdentityFor(source, event) !== sourceIdentity) return;
+        if (status !== 'ready') {
+          if (status === 'idle') return;
+          replaceScrambleHistoryEntry(liveEntry.id, sourceIdentity, {
+            availability: 'error',
+            failure: { kind: 'optimal' },
+          });
+          return;
+        }
+        const optimal = peekOptimal333(optimalSource);
+        if (!optimal) {
+          replaceScrambleHistoryEntry(liveEntry.id, sourceIdentity, {
+            availability: 'error',
+            failure: { kind: 'optimal' },
+          });
+          return;
+        }
+        replaceScrambleHistoryEntry(liveEntry.id, sourceIdentity, {
+          availability: 'ready',
+          caseId: target && event === target.type ? target.id : null,
+          currentReal: null,
+          failure: null,
+          scramble: optimal,
+          sourceSnapshot: {
+            kind: 'random',
+            identity: target
+              ? `random|333|optimal|drill:${target.type}:${target.id}`
+              : 'random|333|optimal',
+          },
+        });
       });
       return;
     }
@@ -1358,6 +1500,8 @@ export function App({ host }: { host: InstalledAppHost }) {
     realSpecFor,
     refillRealPool,
     replaceScrambleHistoryEntry,
+    randomOptimalAuthPending,
+    scrambleIdentityFor,
   ]);
 
   const nextScramble = useCallback((
@@ -1755,6 +1899,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     );
     await auth.logout();
   }, [auth.logout, clearAccountSyncTimeout]);
+  logoutEverywhereRef.current = logoutEverywhere;
 
   const selectPrimaryView = useCallback((next: PrimaryView) => {
     if (timingRunningRef.current
@@ -2343,7 +2488,9 @@ export function App({ host }: { host: InstalledAppHost }) {
     : null;
   const scrambleStatus = (() => {
     if (scrambleAvailability === 'loading') {
-      return timerScrambleStatus(mappedRealSource ? 'loading-real' : 'loading-generated');
+      return timerScrambleStatus(randomOptimalRequested || randomOptimalAuthPending
+        ? 'loading-optimal'
+        : mappedRealSource ? 'loading-real' : 'loading-generated');
     }
     if (scrambleAvailability === 'unsupported') return timerScrambleStatus('unsupported');
     if (scrambleAvailability === 'empty') {
@@ -2357,7 +2504,9 @@ export function App({ host }: { host: InstalledAppHost }) {
     }
     if (scrambleAvailability !== 'error') return null;
     const descriptor = timerScrambleStatus(
-      mappedRealSource
+      currentScrambleEntry?.failure?.kind === 'optimal'
+        ? 'error-optimal'
+        : mappedRealSource
         ? 'error-real'
         : appByStepsFilter
           ? 'error-steps'
@@ -4014,6 +4163,13 @@ export function App({ host }: { host: InstalledAppHost }) {
                   <TimerBooleanSettingRow
                     disabled={!optimalAvailable}
                     field={timerSettingFieldContract('settings.scramble.optimal')}
+                    hint={scrambleSource === 'random'
+                      && activeEvent === '333'
+                      && !activeAuthSession
+                      && !auth.loading
+                      && !auth.busy
+                      ? copy.optimalSignInHint
+                      : undefined}
                     label={copy.optimalScramble}
                     onChange={(wcaUseOptimal) => updateWcaSourceSettings({ wcaUseOptimal })}
                     renderBooleanControl={({ disabled, label, onChange, value }) => (

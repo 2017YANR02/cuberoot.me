@@ -291,10 +291,16 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   width: 22px;
   height: 22px;
   flex: 0 0 22px;
-  border: 2px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  border: 2px solid var(--border-default);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: scramble-status-spin 0.8s linear infinite;
+}
+@supports (color: color-mix(in srgb, black 50%, white)) {
+  .scramble-status-spinner {
+    border-color: color-mix(in srgb, var(--foreground) 18%, transparent);
+    border-top-color: var(--accent);
+  }
 }
 .scramble-status-retry {
   min-width: 44px;

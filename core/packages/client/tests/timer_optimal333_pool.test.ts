@@ -92,6 +92,47 @@ describe('timer optimal 3x3 pool', () => {
     expect(peekOptimal333(fresh)).toBe('new-optimal');
   });
 
+  it('does not let an uncooperative stale base block a new source', async () => {
+    const stale: Optimal333Source = {
+      key: 'owner|stuck-base',
+      generateBase: () => new Promise(() => undefined),
+      optimize: async () => 'never',
+    };
+    const fresh: Optimal333Source = {
+      key: 'owner|fresh-after-stuck-base',
+      generateBase: () => 'fresh-base',
+      optimize: async () => 'fresh-optimal',
+    };
+
+    prefetchOptimal333(stale);
+    prefetchOptimal333(fresh);
+    expect(await awaitOptimal333(fresh)).toBe('ready');
+    expect(peekOptimal333(fresh)).toBe('fresh-optimal');
+  });
+
+  it('does not let an uncooperative stale optimizer block a new source', async () => {
+    let staleStarted = false;
+    const stale: Optimal333Source = {
+      key: 'owner|stuck-optimize',
+      generateBase: () => 'stale-base',
+      optimize: () => {
+        staleStarted = true;
+        return new Promise(() => undefined);
+      },
+    };
+    const fresh: Optimal333Source = {
+      key: 'owner|fresh-after-stuck-optimize',
+      generateBase: () => 'fresh-base',
+      optimize: async () => 'fresh-optimal',
+    };
+
+    prefetchOptimal333(stale);
+    await vi.waitFor(() => expect(staleStarted).toBe(true));
+    prefetchOptimal333(fresh);
+    expect(await awaitOptimal333(fresh)).toBe('ready');
+    expect(peekOptimal333(fresh)).toBe('fresh-optimal');
+  });
+
   it('latches failures until the explicit retry action', async () => {
     let fail = true;
     const optimize = vi.fn(async () => {

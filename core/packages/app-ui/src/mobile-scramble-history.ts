@@ -18,6 +18,7 @@ export type MobileScrambleAvailability =
 
 export type MobileScrambleFailure =
   | Readonly<{ kind: 'generation'; code: TimerScrambleErrorCode; retryable: boolean }>
+  | Readonly<{ kind: 'optimal' }>
   | Readonly<{ kind: 'real-empty' }>
   | Readonly<{ kind: 'real-exhausted' }>;
 
