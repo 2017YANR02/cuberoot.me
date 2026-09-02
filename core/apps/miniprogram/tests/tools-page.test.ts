@@ -66,7 +66,7 @@ describe('mini program tools page', () => {
 
     expect(page.onShareAppMessage()).toEqual({
       imageUrl: '/assets/share-cover.png',
-      title: 'CubeRoot 魔方根：魔方工具',
+      title: '魔方根CubeRoot：魔方工具',
       path: '/pages/tools/index',
     });
   });

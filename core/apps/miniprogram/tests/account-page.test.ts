@@ -139,7 +139,7 @@ describe('mini program account page', () => {
     expect(showShareMenu).not.toHaveBeenCalled();
     expect(page.onShareTimeline()).toEqual({
       imageUrl: '/assets/share-cover.png',
-      title: 'CubeRoot 魔方根',
+      title: '魔方根CubeRoot',
     });
   });
 
@@ -383,7 +383,7 @@ describe('mini program account page', () => {
     expect(page.onShareAppMessage()).toEqual({
       imageUrl: '/assets/share-cover.png',
       path: '/pages/account/index',
-      title: 'CubeRoot 魔方根',
+      title: '魔方根CubeRoot',
     });
   });
 

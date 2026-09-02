@@ -168,10 +168,12 @@
 }
 
 .contact-value-button {
+  flex: none;
   line-height: 1.5;
   max-width: 100%;
   overflow-wrap: anywhere;
   text-align: left;
+  white-space: nowrap;
   width: auto;
 }
 

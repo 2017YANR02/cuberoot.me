@@ -113,7 +113,7 @@ describe('shared web-view page state', () => {
     expect(options).not.toHaveProperty('onShareTimeline');
     expect(options.onShareAppMessage.call(context)).toEqual({
       imageUrl: '/assets/share-cover.png',
-      title: 'CubeRoot 魔方根：公式',
+      title: '魔方根CubeRoot：公式',
       path: '/pages/web/index?key=alg',
     });
   });
@@ -134,7 +134,7 @@ describe('shared web-view page state', () => {
     expect(showShareMenu).not.toHaveBeenCalled();
     expect(options.onShareAppMessage.call(context)).toEqual({
       imageUrl: '/assets/share-cover.png',
-      title: 'CubeRoot 魔方根',
+      title: '魔方根CubeRoot',
       path: '/pages/timer/index',
     });
   });

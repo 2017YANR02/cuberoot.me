@@ -168,7 +168,7 @@ export function resolveWebTool(id: unknown): WebToolLink | null {
 export function resolveToolsPageShare(): WebRouteShare {
   return {
     imageUrl: WEB_ROUTE_SHARE_IMAGE,
-    title: tr({ en: 'CubeRoot: Cube Tools', zh: 'CubeRoot 魔方根：魔方工具' }),
+    title: tr({ en: 'CubeRoot: Cube Tools', zh: '魔方根CubeRoot：魔方工具' }),
     path: '/pages/tools/index',
   };
 }
@@ -176,7 +176,7 @@ export function resolveToolsPageShare(): WebRouteShare {
 export function resolveAccountPageShare(): WebRouteShare {
   return {
     imageUrl: WEB_ROUTE_SHARE_IMAGE,
-    title: tr({ en: 'CubeRoot', zh: 'CubeRoot 魔方根' }),
+    title: tr({ en: 'CubeRoot', zh: '魔方根CubeRoot' }),
     path: '/pages/account/index',
   };
 }
@@ -194,7 +194,7 @@ export function resolveWebRouteShare(key: unknown): WebRouteShare | null {
     imageUrl: WEB_ROUTE_SHARE_IMAGE,
     title: tr({
       en: `CubeRoot: ${route.title}`,
-      zh: `CubeRoot 魔方根：${route.title}`,
+      zh: `魔方根CubeRoot：${route.title}`,
     }),
     path: route.nativeTabPath
       ?? `/pages/web/index?key=${encodeURIComponent(routeKey)}`,

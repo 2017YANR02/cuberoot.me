@@ -521,7 +521,7 @@ export function createWebViewPageOptions(
     onShareAppMessage() {
       return resolveWebRouteShare(this.data.routeKey) ?? {
         imageUrl: WEB_ROUTE_SHARE_IMAGE,
-        title: tr({ en: 'CubeRoot', zh: 'CubeRoot 魔方根' }),
+        title: tr({ en: 'CubeRoot', zh: '魔方根CubeRoot' }),
         path: '/pages/timer/index',
       };
     },
