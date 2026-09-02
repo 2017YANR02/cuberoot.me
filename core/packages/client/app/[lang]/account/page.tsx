@@ -56,6 +56,7 @@ import { localizeCity } from '@/lib/city-localize';
 import { prepareImageUpload, uploadImageBlob } from '@/lib/image-upload';
 import { toLocalIsoDate } from '@/lib/iso-date';
 import { ADMIN_WCA_IDS, applySession, useAuthStore, safeNext, takeWcaLinkPrompt } from '@/lib/auth-store';
+import { notifyMiniProgramLogout } from '@/lib/miniprogram-bridge';
 import { tr, useLang } from '@/i18n/tr';
 import './account.css';
 
@@ -647,6 +648,13 @@ export default function AccountPage() {
     return `/account${search ? `?${search}` : ''}`;
   };
 
+  const handleLogout = useCallback(() => {
+    logout();
+    void setView(null);
+    setMode('login');
+    void notifyMiniProgramLogout();
+  }, [logout, setView]);
+
   useDocumentTitle(
     mode !== 'me' ? '登录' : view === 'delete' ? '注销账号' : view === 'submissions' ? '公式投稿' : view === 'user' ? '编辑用户' : '我的',
     mode !== 'me' ? 'Sign in' : view === 'delete' ? 'Delete account' : view === 'submissions' ? 'Algorithm submissions' : view === 'user' ? 'Edit user' : 'My account',
@@ -851,7 +859,7 @@ export default function AccountPage() {
               <h2 className="account-creds-title">{t('登录方式', 'Sign-in methods')}</h2>
               <AccountPanel />
               {/* 清掉 ?view= —— 否则重新登录后会莫名其妙落在登录方式视图 */}
-              <button type="button" className="account-logout" onClick={() => { logout(); void setView(null); setMode('login'); }}>
+              <button type="button" className="account-logout" onClick={handleLogout}>
                 <LogOut size={14} />
                 <span>{t('退出', 'Log out')}</span>
               </button>

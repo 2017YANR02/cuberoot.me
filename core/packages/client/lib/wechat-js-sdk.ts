@@ -6,11 +6,17 @@ const LOAD_TIMEOUT_MS = 10_000;
 
 export interface WeChatMiniProgramApi {
   getEnv?(callback: (result: { miniprogram?: boolean }) => void): void;
+  navigateBack?(options?: {
+    delta?: number;
+    fail?(error: { errMsg?: string }): void;
+    success?(): void;
+  }): void;
   navigateTo(options: {
     url: string;
     fail?(error: { errMsg?: string }): void;
     success?(): void;
   }): void;
+  postMessage?(options: { data: unknown }): void;
 }
 
 export interface WeChatJsSdk {

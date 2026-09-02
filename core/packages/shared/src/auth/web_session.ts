@@ -86,6 +86,13 @@ export const MOBILE_AUTH_PROVIDERS = [
 
 export type MobileAuthProvider = typeof MOBILE_AUTH_PROVIDERS[number];
 
+export const MINI_PROGRAM_LOGOUT_MESSAGE = {
+  type: 'cuberoot:session',
+  action: 'logout',
+} as const;
+
+export type MiniProgramSessionMessage = typeof MINI_PROGRAM_LOGOUT_MESSAGE;
+
 export interface MobileAuthRequest {
   codeChallenge: string;
   state: string;
@@ -102,6 +109,16 @@ export interface MobileAuthCallback {
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object'
     ? value as Record<string, unknown>
+    : null;
+}
+
+export function decodeMiniProgramSessionMessage(
+  value: unknown,
+): MiniProgramSessionMessage | null {
+  const message = asRecord(value);
+  return message?.type === MINI_PROGRAM_LOGOUT_MESSAGE.type
+    && message.action === MINI_PROGRAM_LOGOUT_MESSAGE.action
+    ? MINI_PROGRAM_LOGOUT_MESSAGE
     : null;
 }
 

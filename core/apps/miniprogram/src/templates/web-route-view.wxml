@@ -1,5 +1,5 @@
 <template name="web-route-view">
-  <web-view wx:if="{{src}}" src="{{src}}" data-attempt="{{viewAttempt}}" binderror="handleWebViewError"></web-view>
+  <web-view wx:if="{{src}}" src="{{src}}" data-attempt="{{viewAttempt}}" binderror="handleWebViewError" bindmessage="handleWebViewMessage"></web-view>
   <view wx:elif="{{loginRequired}}" class="page web-login-page">
     <text class="eyebrow">ACCOUNT</text>
     <text class="page-title">{{loginTitle}}</text>

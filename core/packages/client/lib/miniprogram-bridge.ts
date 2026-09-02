@@ -3,14 +3,21 @@
 import {
   loadWeChatJsSdk,
 } from '@/lib/wechat-js-sdk';
+import { MINI_PROGRAM_LOGOUT_MESSAGE } from '@cuberoot/shared/auth/web-session';
 
 export interface MiniProgramNavigationApi {
   getEnv?(callback: (result: { miniprogram?: boolean }) => void): void;
+  navigateBack?(options?: {
+    delta?: number;
+    fail?(error: { errMsg?: string }): void;
+    success?(): void;
+  }): void;
   navigateTo(options: {
     url: string;
     fail?(error: { errMsg?: string }): void;
     success?(): void;
   }): void;
+  postMessage?(options: { data: unknown }): void;
 }
 
 interface MiniProgramWebViewSdk {
@@ -127,4 +134,21 @@ export async function confirmMiniProgramEnvironment(
       finish(false);
     }
   });
+}
+
+/** Keep the website and native Mini Program auth stores in sync after logout. */
+export async function notifyMiniProgramLogout(): Promise<boolean> {
+  if (!mayUseMiniProgramBridge()) return false;
+
+  const miniProgram = await loadMiniProgramNavigationApi();
+  if (!miniProgram || typeof miniProgram.postMessage !== 'function') return false;
+  if (!isMiniProgramWebView() && !await confirmMiniProgramEnvironment(miniProgram)) return false;
+
+  try {
+    miniProgram.postMessage({ data: MINI_PROGRAM_LOGOUT_MESSAGE });
+    miniProgram.navigateBack?.({ delta: 1 });
+    return true;
+  } catch {
+    return false;
+  }
 }

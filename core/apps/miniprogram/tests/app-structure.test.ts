@@ -184,6 +184,7 @@ describe('mini program app structure', () => {
     expect(genericWebTemplate).toContain('templates/web-route-view.wxml');
     expect(sharedTemplate).toContain('<web-view');
     expect(sharedTemplate).toContain('data-attempt="{{viewAttempt}}"');
+    expect(sharedTemplate).toContain('bindmessage="handleWebViewMessage"');
     expect(sharedTemplate).toContain('wx:elif="{{loginRequired}}"');
     expect(sharedTemplate).toContain('bindtap="loginWithMiniProgram"');
     expect(timerTemplate).not.toContain('<web-view');

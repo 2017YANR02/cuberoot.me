@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  decodeMiniProgramSessionMessage,
   decodeWebSessionError,
   decodeWebSession,
   decodeWebSessionTicketEnvelope,
@@ -10,6 +11,18 @@ import {
 } from '../src/lib/web-session-contract';
 
 describe('mini program web session contract', () => {
+  it('accepts only the canonical native session logout message', () => {
+    expect(decodeMiniProgramSessionMessage({
+      type: 'cuberoot:session',
+      action: 'logout',
+    })).toEqual({ type: 'cuberoot:session', action: 'logout' });
+    expect(decodeMiniProgramSessionMessage({
+      type: 'cuberoot:session',
+      action: 'login',
+    })).toBeNull();
+    expect(decodeMiniProgramSessionMessage(null)).toBeNull();
+  });
+
   it('accepts only the server base64url ticket shape', () => {
     expect(isWebSessionTicket('A'.repeat(43))).toBe(true);
     expect(isWebSessionTicket('aZ0_-'.repeat(9).slice(0, 43))).toBe(true);
