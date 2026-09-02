@@ -12,6 +12,7 @@ on:
       - 'core/packages/server/**'
       - 'core/apps/api/**'
       - 'core/packages/puzzle-render-core/**'
+      - 'core/packages/puzzle-solvers/**'
       - 'core/packages/shared/**'
       - 'core/packages/vendor-sr-puzzlegen/**'
       - 'core/packages/visualcube/**'
@@ -72,6 +73,7 @@ jobs:
       - name: Build shared deps
         working-directory: core
         run: |
+          pnpm --filter @cuberoot/puzzle-solvers build
           pnpm --filter @cuberoot/shared build
           pnpm --filter @cuberoot/visualcube build
           pnpm --filter @cuberoot/vendor-sr-puzzlegen build
