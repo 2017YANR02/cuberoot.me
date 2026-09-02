@@ -84,11 +84,32 @@
 }
 
 .color-test-pair-preview,
+.color-test-position-preview,
 .color-test-stroop-preview {
   height: 8rem;
   margin-bottom: 1rem;
   border-radius: 0.75rem;
   background: var(--muted);
+}
+
+.color-test-position-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0 0.6rem;
+}
+
+.color-test-position-preview span {
+  display: grid;
+  width: min(3rem, 20%);
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 0.45rem;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--foreground) 18%, transparent);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 800;
 }
 
 .color-test-pair-preview {
@@ -158,6 +179,7 @@
   .color-test-grid { gap: 0.65rem; }
   .color-test-card { padding: 0.7rem; }
   .color-test-pair-preview,
+  .color-test-position-preview,
   .color-test-stroop-preview { height: 6.3rem; }
   .color-test-card-description { font-size: 0.76rem; }
 }

@@ -166,8 +166,9 @@ export const SEARCH_CARDS: LandingSearchCard[] = [
         sectionTitleZh: sec.eyebrow.zh,
       })),
   ),
-  // 颜色测试的两个子项收在入口页里，这里保留直达搜索。
+  // 颜色测试的三个子项收在入口页里，这里保留直达搜索。
   { id: 'color-relations', href: '/color-test/relations', internal: true, nameEn: 'Opposite or Adjacent?', nameZh: '对色与邻色', sectionTitleEn: 'Colour Tests', sectionTitleZh: '颜色测试' },
+  { id: 'color-positions', href: '/color-test/positions', internal: true, nameEn: 'Side Colour Order', nameZh: '侧面颜色顺序', sectionTitleEn: 'Colour Tests', sectionTitleZh: '颜色测试' },
   { id: 'stroop', href: '/stroop', internal: true, nameEn: 'Stroop', nameZh: 'Stroop', sectionTitleEn: 'Colour Tests', sectionTitleZh: '颜色测试' },
   // /dev 子页不在落地页网格上，单列于此让全站搜索仍能找到。
   { id: 'dev-llm', href: '/dev/llm', internal: true, nameEn: 'Large Language Models', nameZh: '大模型', sectionTitleEn: 'Dev', sectionTitleZh: '开发' },
