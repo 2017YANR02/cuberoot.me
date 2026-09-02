@@ -5,6 +5,7 @@ import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 
 import { ChevronLeft, ChevronRight, Loader2, Search } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
+import { Flag } from '@/components/Flag';
 import SortArrow from '@/components/SortArrow';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
@@ -243,7 +244,14 @@ export default function AdminUsersPage() {
                             <div><dt>{t('原始用户名', 'Stored username')}</dt><dd>{record.displayName || '—'}</dd></div>
                             <div><dt>{t('出生日期', 'Date of birth')}</dt><dd>{record.birthDate || '—'}</dd></div>
                             <div><dt>{t('性别', 'Gender')}</dt><dd>{genderLabel(record.gender, t)}</dd></div>
-                            <div><dt>{t('国家或地区', 'Country or region')}</dt><dd>{record.countryIso2 ? countryName(record.countryIso2, isZh) : '—'}</dd></div>
+                            <div>
+                              <dt>{t('国家或地区', 'Country or region')}</dt>
+                              <dd>
+                                {record.countryIso2 ? (
+                                  <><Flag iso2={record.countryIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />{' '}{countryName(record.countryIso2, isZh)}</>
+                                ) : '—'}
+                              </dd>
+                            </div>
                             <div><dt>{t('地区和城市', 'Region and city')}</dt><dd>{[record.regionCode, record.cityName].filter(Boolean).join(' / ') || '—'}</dd></div>
                             <div><dt>{t('界面语言', 'Interface language')}</dt><dd>{record.lang || '—'}</dd></div>
                             <div><dt>{t('邮件通知', 'Email notifications')}</dt><dd>{record.emailNotify ? t('开启', 'On') : t('关闭', 'Off')}</dd></div>
