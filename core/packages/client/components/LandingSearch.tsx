@@ -584,7 +584,7 @@ export default function LandingSearch({
               <div className="landing-search-grid">
                 {lookupMatches.map(it => (
                   <Link
-                    key={`${it.path}|${it.extraQuery ?? ''}`}
+                    key={`${it.path}|${it.extraQuery ?? ''}|${it.en}`}
                     href={hrefWithQuery(it.path, it.extraQuery)}
                     prefetch={false}
                     className="landing-search-item"
