@@ -64,7 +64,7 @@ WCA 自学来源增量 `0185_wca_self_taught.sql` 允许老师关系的老师 ID
 
 账户基本资料增量 `0186_account_basic_profile.sql` 为 `app_users` 增加出生日期、性别和国籍；已绑定 WCA 的账户优先从现有 WCA 快照回填国籍，没有快照的账户在下次 WCA 登录或绑定时刷新。
 
-账号最近设备增量 `0195_account_last_devices.sql` 只保存设备类型、系统、浏览器和最后出现时间等粗粒度维度，不保存原始 User-Agent、IP 或设备指纹。
+账号最近设备增量 `0199_account_last_devices.sql` 只保存设备类型、系统、浏览器和最后出现时间等粗粒度维度，不保存原始 User-Agent、IP 或设备指纹。
 
 赞助认领增量 `0188_sponsor_claims.sql` 为公开赞助记录增加可解除的账号归属，并保存私密资料快照、付款线索、审核结论与撤销历史；WCA ID 精确匹配可自动通过，其他申请进入管理员审核。
 
