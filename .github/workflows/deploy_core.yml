@@ -22,6 +22,7 @@ on:
       - 'core/pnpm-workspace.yaml'
       - 'core/tsconfig.base.json'
       - 'core/patches/**'
+      - 'core/scripts/build-cubing-worker.mjs'
       - 'core/scripts/resolve-workspace-path.mjs'
       - '.github/workflows/deploy_core.yml'
 
@@ -173,11 +174,13 @@ jobs:
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
             "test ! -e '${STAGING_RELEASE}' && mkdir -p '${STAGING_RELEASE}/dist/cubeopt'"
 
-          # server.bundle.js + sourcemap
+          # server bundle + cubing.js Node worker; the battle-room authority
+          # generates scrambles in this sibling worker at runtime.
           rsync -ltz --chmod=F644 \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             "$API_DIR/dist/server.bundle.js" \
             "$API_DIR/dist/server.bundle.js.map" \
+            "$API_DIR/dist/search-worker-entry.js" \
             "root@${{ secrets.DEPLOY_HOST }}:${STAGING_RELEASE}/dist/"
 
           # CubeOpt 子进程和生产管理器冒烟入口与主 bundle 同版本部署；大表由
@@ -297,6 +300,7 @@ jobs:
 
           cd "$root"
           test -f "$staging/dist/server.bundle.js"
+          test -f "$staging/dist/search-worker-entry.js"
           test -f "$staging/dist/cubeopt/prepare.mjs"
           test -f "$staging/dist/cubeopt/provision.mjs"
           test -f "$staging/dist/cubeopt/verify.mjs"

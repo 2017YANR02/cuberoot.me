@@ -115,6 +115,9 @@ describe('battle-room player capabilities', () => {
     expect(migration193).toContain('video_generation UUID NOT NULL DEFAULT gen_random_uuid()');
     expect(schema).toContain('revision     BIGINT NOT NULL DEFAULT 1');
     expect(schema).toContain('video_generation UUID NOT NULL DEFAULT gen_random_uuid()');
+    expect(route).not.toContain('jsonb_object_length');
+    expect(route).toContain('jsonb_object_keys(player_auth)');
+    expect(route).toContain('jsonb_object_keys(players)');
     expect(route).toContain("COALESCE(players -> ? ->> 'event', event) = ?");
     expect(updates.length).toBeGreaterThanOrEqual(10);
     expect(updates.every((statement) => statement.includes('revision = revision + 1'))).toBe(true);

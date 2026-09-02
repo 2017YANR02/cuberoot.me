@@ -184,6 +184,20 @@ describe('shared online battle migration', () => {
     await expect(client.joinNetRoom('0427', { name: 'Cuber' })).rejects.toThrow('room full');
   });
 
+  it('does not expose server internals from a failed room request', async () => {
+    const client = createNetBattleClient({
+      apiUrl: (path) => path,
+      fetcher: vi.fn(async () => new Response(JSON.stringify({
+        error: 'function jsonb_object_length(jsonb) does not exist',
+      }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      })),
+    });
+
+    await expect(client.getNetRoom('0427')).rejects.toThrow('HTTP 500');
+  });
+
   it('rejects malformed or non-canonical room payloads at the transport boundary', () => {
     expect(() => decodeNetRoomState({ ...ROOM, event: 'banana' })).toThrow('invalid battle room response');
     expect(() => decodeNetRoomState({ ...ROOM, players: { p: { name: 'P' } } })).toThrow('invalid battle room response');

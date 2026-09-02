@@ -193,7 +193,9 @@ async function getRoomRow(code: string): Promise<RoomRow | null> {
   // preserve the impersonation vulnerability this column closes.
   const rows = await query<RoomRow>(
     `SELECT ${ROOM_COLS} FROM battle_rooms
-     WHERE code = ? AND jsonb_object_length(player_auth) = jsonb_object_length(players)`,
+     WHERE code = ?
+       AND (SELECT count(*) FROM jsonb_object_keys(player_auth))
+         = (SELECT count(*) FROM jsonb_object_keys(players))`,
     [code],
   );
   return rows[0] ?? null;
@@ -321,8 +323,9 @@ battleRoomsRoutes.post('/battle/rooms/:code/join', async (c) => {
            player_auth = player_auth || jsonb_build_object(?::text, ?::jsonb),
            revision = revision + 1, updated_at = ?
        WHERE code = ?
-         AND jsonb_object_length(players) < ?
-         AND jsonb_object_length(player_auth) = jsonb_object_length(players)
+         AND (SELECT count(*) FROM jsonb_object_keys(players)) < ?
+         AND (SELECT count(*) FROM jsonb_object_keys(player_auth))
+           = (SELECT count(*) FROM jsonb_object_keys(players))
          AND NOT jsonb_exists(players, ?)
          AND start_at IS NULL
          AND NOT EXISTS (
@@ -402,7 +405,9 @@ battleRoomsRoutes.post('/battle/rooms/:code/status', async (c) => {
     // can never be paired with a stale start_at written by this request.
     const locked = await transactionQuery<RoomRow>(
       `SELECT ${ROOM_COLS} FROM battle_rooms
-       WHERE code = ? AND jsonb_object_length(player_auth) = jsonb_object_length(players)
+       WHERE code = ?
+         AND (SELECT count(*) FROM jsonb_object_keys(player_auth))
+           = (SELECT count(*) FROM jsonb_object_keys(players))
        FOR UPDATE`,
       [code],
     );
@@ -772,7 +777,9 @@ battleRoomsRoutes.post('/battle/rooms/:code/next', async (c) => {
     // Otherwise a concurrent join/kick/leave can be silently overwritten or resurrected.
     const locked = await transactionQuery<RoomRow>(
       `SELECT ${ROOM_COLS} FROM battle_rooms
-       WHERE code = ? AND jsonb_object_length(player_auth) = jsonb_object_length(players)
+       WHERE code = ?
+         AND (SELECT count(*) FROM jsonb_object_keys(player_auth))
+           = (SELECT count(*) FROM jsonb_object_keys(players))
        FOR UPDATE`,
       [code],
     );
@@ -895,7 +902,7 @@ battleRoomsRoutes.post('/battle/rooms/:code/settings', async (c) => {
        AND (
          NOT ? OR sync_start OR (
            start_at IS NULL
-           AND jsonb_object_length(COALESCE(results -> round::text, '{}'::jsonb)) = 0
+           AND (SELECT count(*) FROM jsonb_object_keys(COALESCE(results -> round::text, '{}'::jsonb))) = 0
            AND NOT EXISTS (
              SELECT 1 FROM jsonb_each(players) AS e(key, value)
              WHERE e.value ->> 'ph' IN ('inspecting', 'solving')
@@ -962,7 +969,9 @@ battleRoomsRoutes.post('/battle/rooms/:code/kick', async (c) => {
   >(async (transactionQuery) => {
     const locked = await transactionQuery<RoomRow>(
       `SELECT ${ROOM_COLS} FROM battle_rooms
-       WHERE code = ? AND jsonb_object_length(player_auth) = jsonb_object_length(players)
+       WHERE code = ?
+         AND (SELECT count(*) FROM jsonb_object_keys(player_auth))
+           = (SELECT count(*) FROM jsonb_object_keys(players))
        FOR UPDATE`,
       [code],
     );
@@ -1010,7 +1019,9 @@ battleRoomsRoutes.post('/battle/rooms/:code/leave', async (c) => {
   >(async (transactionQuery) => {
     const locked = await transactionQuery<RoomRow>(
       `SELECT ${ROOM_COLS} FROM battle_rooms
-       WHERE code = ? AND jsonb_object_length(player_auth) = jsonb_object_length(players)
+       WHERE code = ?
+         AND (SELECT count(*) FROM jsonb_object_keys(player_auth))
+           = (SELECT count(*) FROM jsonb_object_keys(players))
        FOR UPDATE`,
       [code],
     );
