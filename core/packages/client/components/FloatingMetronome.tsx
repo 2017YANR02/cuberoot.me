@@ -20,7 +20,7 @@ import {
 } from '@/lib/metronome';
 import { persistItem } from '@/lib/safe-storage';
 import {
-  loadMusicLibrary, musicAssetUrl, nextMusic, playMusic, previousMusic,
+  loadMusicLibrary, musicAssetUrl, nextMusic, pauseMusic, playMusic, previousMusic,
   seekMusic, setMusicVolume, toggleMusic, useMusicPlayer,
 } from '@/lib/music-player';
 
@@ -145,6 +145,12 @@ export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'
   const [dragging, setDragging] = useState(false);
 
   useEffect(() => { void loadMusicLibrary(); }, []);
+
+  useEffect(() => {
+    const showMusic = () => setMode('music');
+    window.addEventListener('cuberoot:music-start', showMusic);
+    return () => window.removeEventListener('cuberoot:music-start', showMusic);
+  }, []);
 
   // Clamp on restore, not just on resize: a spot saved on a wide desktop lands
   // far off-screen when the same profile opens on a phone.
@@ -286,7 +292,7 @@ export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'
           type="button"
           className="cr-metro-icon"
           onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => { setMetronome({ on: false }); onClose(); }}
+          onClick={() => { pauseMusic(); setMetronome({ on: false }); onClose(); }}
           title={t('关闭', 'Close')}
           aria-label={t('关闭', 'Close')}
         >
@@ -345,6 +351,7 @@ export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'
                 <span>{Math.round(music.volume * 100)}%</span>
               </label>
               {music.status === 'error' && <p className="cr-audio-state">{t('曲库尚未发布', 'Library not published yet')}</p>}
+              {music.status === 'ready' && music.error && <p className="cr-audio-state">{t('这首歌无法播放', 'This track could not be played')}</p>}
               <Link href="/music" prefetch={false} className="cr-audio-open">
                 {t('打开完整播放器', 'Open full player')} <ExternalLink size={12} aria-hidden />
               </Link>

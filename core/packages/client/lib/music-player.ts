@@ -58,6 +58,7 @@ let loadPromise: Promise<void> | null = null;
 let preferencesLoaded = false;
 const listeners = new Set<() => void>();
 const lyricCache = new Map<string, Promise<LyricLine[]>>();
+const failedTrackIds = new Set<string>();
 
 function emit(patch: Partial<MusicPlayerState>): void {
   state = { ...state, ...patch };
@@ -116,22 +117,50 @@ function updateMediaSession(track: MusicTrack): void {
   });
 }
 
+export function nextPlayableTrackId(
+  tracks: readonly Pick<MusicTrack, 'id'>[],
+  currentId: string | null,
+  failedIds: ReadonlySet<string>,
+  allowWrap: boolean,
+): string | null {
+  const currentIndex = tracks.findIndex((track) => track.id === currentId);
+  for (let offset = 1; offset <= tracks.length; offset += 1) {
+    let index = currentIndex + offset;
+    if (index >= tracks.length) {
+      if (!allowWrap) return null;
+      index %= tracks.length;
+    }
+    if (!failedIds.has(tracks[index].id)) return tracks[index].id;
+  }
+  return null;
+}
+
 function ensureAudio(): HTMLAudioElement {
   if (audioEl) return audioEl;
   loadPreferences();
   audioEl = new Audio();
   audioEl.preload = 'metadata';
   audioEl.volume = state.volume;
-  audioEl.addEventListener('play', () => emit({ playing: true, error: null }));
+  audioEl.addEventListener('playing', () => {
+    window.dispatchEvent(new Event('cuberoot:music-start'));
+    emit({ playing: true, error: null });
+  });
   audioEl.addEventListener('pause', () => emit({ playing: false }));
   audioEl.addEventListener('timeupdate', () => emit({ currentTime: audioEl?.currentTime ?? 0 }));
   audioEl.addEventListener('durationchange', () => emit({
     duration: Number.isFinite(audioEl?.duration) ? audioEl!.duration : 0,
   }));
-  audioEl.addEventListener('error', () => emit({
-    playing: false,
-    error: 'Unable to play this track.',
-  }));
+  audioEl.addEventListener('error', () => {
+    if (state.currentId) failedTrackIds.add(state.currentId);
+    emit({ playing: false, error: 'Unable to play this track.' });
+    const nextId = nextPlayableTrackId(
+      state.tracks,
+      state.currentId,
+      failedTrackIds,
+      state.repeat !== 'off',
+    );
+    if (nextId) void playMusic(nextId);
+  });
   audioEl.addEventListener('ended', () => {
     if (state.repeat === 'one') {
       audioEl!.currentTime = 0;
@@ -228,13 +257,15 @@ export async function playMusic(id: string | null = state.currentId): Promise<vo
   if (state.status !== 'ready') await loadMusicLibrary();
   const targetId = id ?? state.tracks[0]?.id;
   if (!targetId) return;
+  failedTrackIds.delete(targetId);
   const selected = selectTrack(targetId);
   if (!selected) return;
-  window.dispatchEvent(new Event('cuberoot:music-start'));
   try {
     await selected.audio.play();
   } catch (error) {
-    emit({ playing: false, error: error instanceof Error ? error.message : 'Unable to play this track.' });
+    if (state.currentId === targetId) {
+      emit({ playing: false, error: error instanceof Error ? error.message : 'Unable to play this track.' });
+    }
   }
 }
 

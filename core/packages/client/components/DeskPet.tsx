@@ -390,6 +390,12 @@ export default function DeskPet() {
     return () => { i18n.off('languageChanged', close); };
   }, []);
 
+  useEffect(() => {
+    const showAudioControls = () => setMetronomeOpen(true);
+    window.addEventListener('cuberoot:music-start', showAudioControls);
+    return () => window.removeEventListener('cuberoot:music-start', showAudioControls);
+  }, []);
+
   // Beat pulse: while the metronome is sounding the pet bounces on every tick,
   // so it doubles as the visual beat (usable muted, or when the panel is
   // scrolled out of view). Animates the standalone `scale` property, not

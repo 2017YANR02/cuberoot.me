@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeMusicManifest, parseLrc } from '@/lib/music-player';
+import { nextPlayableTrackId, normalizeMusicManifest, parseLrc } from '@/lib/music-player';
 
 describe('music player data', () => {
   it('keeps valid unique tracks and rejects local paths', () => {
@@ -22,5 +22,12 @@ describe('music player data', () => {
       { time: 1.7, text: 'Hello' },
       { time: 3.5, text: 'Hello' },
     ]);
+  });
+
+  it('skips failed tracks without wrapping a finished queue', () => {
+    const tracks = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+    expect(nextPlayableTrackId(tracks, 'a', new Set(['a', 'b']), false)).toBe('c');
+    expect(nextPlayableTrackId(tracks, 'c', new Set(['c']), false)).toBeNull();
+    expect(nextPlayableTrackId(tracks, 'c', new Set(['a', 'c']), true)).toBe('b');
   });
 });
