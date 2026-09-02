@@ -122,7 +122,7 @@ const CORE_PATHS = [
   repoPath('.node-version'),
   packagePath('server', '**'),
   appPath('api', '**'),
-  ...workspaceDependencyInputs('server'),
+  ...([...workspaceDependencyInputs('server'), packagePath('puzzle-solvers', '**')].sort()),
   corePath('cube555-daemon', 'Daemon.java'),
   corePath('package.json'),
   corePath('pnpm-lock.yaml'),
@@ -297,8 +297,8 @@ describe('deployment workflow path contracts', () => {
       [packagePath('visualcube', 'src', 'index.ts'), true],
       [packagePath('vendor-sr-puzzlegen', 'src', 'index.ts'), true],
       [packagePath('puzzle-render-core', 'src', 'index.ts'), true],
-      [packagePath('puzzle-solvers', 'src', 'clock.ts'), false],
-      [packagePath('puzzle-solvers', 'src', 'sq2.ts'), false],
+      [packagePath('puzzle-solvers', 'src', 'clock.ts'), true],
+      [packagePath('puzzle-solvers', 'src', 'sq2.ts'), true],
       [corePath('cube555-daemon', 'Daemon.java'), true],
       [corePath('package.json'), true],
       [corePath('pnpm-lock.yaml'), true],
@@ -453,7 +453,7 @@ describe('deployment workflow path contracts', () => {
     expect(clientDepBuilds).toContain(renderBuild);
     expect(clientDepBuilds).toContain(solverBuild);
     expect(coreBuilds).toContain(renderBuild);
-    expect(coreBuilds).not.toContain(solverBuild);
+    expect(coreBuilds).toContain(solverBuild);
   });
 
   it('uses the clean client dependency build and non-failing summary channel for pnpm bumps', () => {
