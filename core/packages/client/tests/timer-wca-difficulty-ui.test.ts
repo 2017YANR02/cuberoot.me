@@ -32,7 +32,14 @@ const catalog = {
 
 const labels: TimerWcaDifficultyLabels = {
   colorMode: { cn: 'CN', dual: 'Dual', quad: 'Quad', single: 'Single' },
-  colorName: (color) => color,
+  colorName: (color) => ({
+    B: 'Blue',
+    G: 'Green',
+    O: 'Orange',
+    R: 'Red',
+    W: 'White',
+    Y: 'Yellow',
+  })[color],
   colorSubsetAriaLabel: 'Color subset',
   difficulty: 'Difficulty',
   difficultyAriaLabel: 'Difficulty switch',
@@ -116,7 +123,8 @@ describe('shared WCA difficulty UI', () => {
     expect([...method.options].map((option) => option.value)).toContain('length');
     expect(host.querySelector('select[aria-label="Stage"]')).not.toBeNull();
     const colors = host.querySelector<HTMLSelectElement>('select[aria-label="Color subset"]')!;
-    expect(colors.selectedOptions[0]?.textContent).toBe('CN · BGORWY');
+    expect(colors.selectedOptions[0]?.textContent).toBe('CN');
+    expect(colors.textContent).not.toContain('BGORWY');
     const stage = host.querySelector<HTMLSelectElement>('select[aria-label="Stage"]')!;
     const merge = host.querySelector<HTMLButtonElement>(
       '[role="switch"][aria-label="Merge switch"]',
@@ -136,6 +144,8 @@ describe('shared WCA difficulty UI', () => {
       wcaDiffMerged: false,
       wcaDiffStage: 'xcross',
     }));
+    expect(colors.selectedOptions[0]?.textContent).toBe('Dual · White/Yellow');
+    expect(colors.selectedOptions[0]?.textContent).not.toContain('WY');
 
     await act(async () => {
       method.value = 'length';
