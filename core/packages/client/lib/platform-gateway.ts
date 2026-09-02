@@ -112,7 +112,7 @@ function readPath(resource: PlatformResource, options: PlatformLoadOptions): str
     case 'admin-qr': {
       if (options.routeId === 'admin-qr-stats') return `/v1/platform/admin/qr/stats${query}`;
       if (options.routeId === 'admin-qr-prompts') return `/v1/platform/admin/qr/prompts?includeArchived=true${query ? `&${query.slice(1)}` : ''}`;
-      if (options.routeId === 'admin-qr-cards') return `/v1/platform/admin/qr/cards?includeArchived=true${query ? `&${query.slice(1)}` : ''}`;
+      if (options.routeId === 'admin-qr-cards') return '/v1/platform/admin/qr?page=1&pageSize=100';
       return `/v1/platform/admin/qr${id ? `/${id}` : ''}${query}`;
     }
   }
