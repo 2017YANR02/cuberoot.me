@@ -55,6 +55,11 @@ interface PrivateEnvelopeInput {
   salt: string;
   iv: string;
   ciphertext: string;
+  recovery: {
+    version: number;
+    iv: string;
+    ciphertext: string;
+  };
 }
 
 interface VaultPublicKeyInput {
@@ -89,9 +94,12 @@ function isBase64Url(value: unknown, maxLength: number): value is string {
 function validPrivateEnvelope(value: unknown): value is PrivateEnvelopeInput {
   if (!value || typeof value !== 'object') return false;
   const envelope = value as Record<string, unknown>;
+  const recovery = envelope.recovery as Record<string, unknown> | null;
   return envelope.version === 1 && envelope.iterations === 600_000
     && isBase64(envelope.salt, 64) && isBase64(envelope.iv, 32)
-    && isBase64(envelope.ciphertext, 16_384);
+    && isBase64(envelope.ciphertext, 16_384)
+    && recovery?.version === 1 && isBase64(recovery.iv, 32)
+    && isBase64(recovery.ciphertext, 16_384);
 }
 
 function parseAccesses(value: unknown, ownerUserId: number): AccessInput[] | null {
@@ -207,9 +215,12 @@ privateVaultRoutes.put('/vault/key', vaultBodyLimit, async (c) => {
   const rows = await sql`
     INSERT INTO vault_user_keys (user_id, public_key, encrypted_private_key)
     VALUES (${userId}, ${sql.json({ ...input.publicKey })}, ${sql.json({ ...input.encryptedPrivateKey })})
-    ON CONFLICT DO NOTHING
+    ON CONFLICT (user_id) DO UPDATE
+      SET encrypted_private_key = EXCLUDED.encrypted_private_key
+      WHERE vault_user_keys.public_key = EXCLUDED.public_key
+        AND vault_user_keys.encrypted_private_key->'recovery' = EXCLUDED.encrypted_private_key->'recovery'
     RETURNING user_id`;
-  if (!rows.length) return c.json({ error: 'vault key already exists' }, 409);
+  if (!rows.length) return c.json({ error: 'vault key profile mismatch' }, 409);
   return c.json({ ok: true });
 });
 
