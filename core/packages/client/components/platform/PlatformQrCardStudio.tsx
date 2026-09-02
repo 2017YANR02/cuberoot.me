@@ -416,11 +416,11 @@ function ElementInspector({
         <>
           <label className={styles.fieldWide}>
             <span>{t('文字', 'Text')}</span>
-            <textarea value={custom.text} maxLength={200} rows={3} onChange={(event) => update((current) => ({ ...current, customTexts: current.customTexts.map((item) => item.id === custom.id ? { ...item, text: event.target.value } : item) }))} />
+            <textarea className={`${styles.fieldControl} ${styles.fieldTextarea}`} value={custom.text} maxLength={200} rows={3} onChange={(event) => update((current) => ({ ...current, customTexts: current.customTexts.map((item) => item.id === custom.id ? { ...item, text: event.target.value } : item) }))} />
           </label>
           <label>
             <span>{t('卡片面', 'Card side')}</span>
-            <select value={custom.side} onChange={(event) => update((current) => ({ ...current, customTexts: current.customTexts.map((item) => item.id === custom.id ? { ...item, side: event.target.value === 'front' ? 'front' : 'back' } : item) }))}>
+            <select className={styles.fieldControl} value={custom.side} onChange={(event) => update((current) => ({ ...current, customTexts: current.customTexts.map((item) => item.id === custom.id ? { ...item, side: event.target.value === 'front' ? 'front' : 'back' } : item) }))}>
               <option value="front">{t('正面', 'Front')}</option>
               <option value="back">{t('背面', 'Back')}</option>
             </select>
@@ -430,17 +430,17 @@ function ElementInspector({
       <div className={styles.controlGrid}>
         <label>
           <span>{t('水平位置 mm', 'Horizontal position mm')}</span>
-          <input type="number" min={-40} max={40} step={0.5} value={position.x} onChange={(event) => setNumber('x', event.target.value)} />
+          <input className={styles.fieldControl} type="number" min={-40} max={40} step={0.5} value={position.x} onChange={(event) => setNumber('x', event.target.value)} />
         </label>
         <label>
           <span>{t('垂直位置 mm', 'Vertical position mm')}</span>
-          <input type="number" min={-40} max={40} step={0.5} value={position.y} onChange={(event) => setNumber('y', event.target.value)} />
+          <input className={styles.fieldControl} type="number" min={-40} max={40} step={0.5} value={position.y} onChange={(event) => setNumber('y', event.target.value)} />
         </label>
         {hasScale ? (
           <label className={styles.fieldWide}>
             <span>{isText ? t('字号倍率', 'Text scale') : t('缩放倍率', 'Scale')}</span>
             <span className={styles.rangeRow}>
-              <input type="range" min={selected === 'front' || selected === 'back' ? 0.5 : 0.3} max={3} step={0.05} value={getScale(card, selected)} onChange={(event) => update((current) => withScale(current, selected, Number(event.target.value)))} />
+              <input className={styles.fieldRange} type="range" min={selected === 'front' || selected === 'back' ? 0.5 : 0.3} max={3} step={0.05} value={getScale(card, selected)} onChange={(event) => update((current) => withScale(current, selected, Number(event.target.value)))} />
               <output>{getScale(card, selected).toFixed(2)}×</output>
             </span>
           </label>
@@ -448,7 +448,7 @@ function ElementInspector({
         {(selected === 'front' || selected === 'back') ? (
           <label>
             <span>{t('图片填充', 'Image fit')}</span>
-            <select value={card.layout[selected]?.fit ?? 'contain'} onChange={(event) => update((current) => ({ ...current, layout: { ...current.layout, [selected]: { ...current.layout[selected], x: current.layout[selected]?.x ?? 0, y: current.layout[selected]?.y ?? 0, fit: event.target.value === 'cover' ? 'cover' : undefined } } }))}>
+            <select className={styles.fieldControl} value={card.layout[selected]?.fit ?? 'contain'} onChange={(event) => update((current) => ({ ...current, layout: { ...current.layout, [selected]: { ...current.layout[selected], x: current.layout[selected]?.x ?? 0, y: current.layout[selected]?.y ?? 0, fit: event.target.value === 'cover' ? 'cover' : undefined } } }))}>
               <option value="contain">{t('完整显示', 'Contain')}</option>
               <option value="cover">{t('铺满裁切', 'Cover')}</option>
             </select>
@@ -458,21 +458,22 @@ function ElementInspector({
           <>
             <label>
               <span>{t('字体', 'Font')}</span>
-              <select value={style?.font ?? 'sans'} onChange={(event) => update((current) => patchStyle(current, selected, { font: event.target.value as QrCardFont }))}>
+              <select className={styles.fieldControl} value={style?.font ?? 'sans'} onChange={(event) => update((current) => patchStyle(current, selected, { font: event.target.value as QrCardFont }))}>
                 {QR_CARD_FONTS.map((font) => <option key={font} value={font}>{fontName(t, font)}</option>)}
               </select>
             </label>
             <label>
               <span>{t('文字颜色', 'Text color')}</span>
-              <input type="color" value={style?.color ?? (ELEMENT_SIDE[selected as QrCardElement] === 'front' || custom?.side === 'front' ? '#ffffff' : '#13203a')} onChange={(event) => update((current) => patchStyle(current, selected, { color: event.target.value }))} />
+              <input className={styles.fieldColor} type="color" value={style?.color ?? (ELEMENT_SIDE[selected as QrCardElement] === 'front' || custom?.side === 'front' ? '#ffffff' : '#13203a')} onChange={(event) => update((current) => patchStyle(current, selected, { color: event.target.value }))} />
             </label>
             <label>
               <span>{t('描边颜色', 'Stroke color')}</span>
-              <input type="color" value={style?.stroke ?? '#ffffff'} onChange={(event) => update((current) => patchStyle(current, selected, { stroke: event.target.value, strokeW: style?.strokeW && style.strokeW > 0 ? style.strokeW : 0.1 }))} />
+              <input className={styles.fieldColor} type="color" value={style?.stroke ?? '#ffffff'} onChange={(event) => update((current) => patchStyle(current, selected, { stroke: event.target.value, strokeW: style?.strokeW && style.strokeW > 0 ? style.strokeW : 0.1 }))} />
             </label>
             <label>
               <span>{t('描边强度', 'Stroke width')}</span>
               <input
+                className={styles.fieldControl}
                 type="number"
                 min={0}
                 max={1}
@@ -572,6 +573,7 @@ function PromptComposer({
                 <div className={styles.promptChoices}>
                   {options.map((block) => (
                     <button
+                      className={styles.promptChoice}
                       key={block.id}
                       type="button"
                       aria-pressed={selected[dimension.key] === block.id}
@@ -587,7 +589,7 @@ function PromptComposer({
             <summary>{t('整套现成模板', 'Complete presets')}</summary>
             <div className={styles.promptChoices}>
               {library.presets.map((preset) => (
-                <button key={preset.id} type="button" title={preset.body} onClick={() => usePreset(preset.body)}>{t(preset.nameZh, preset.nameEn)}</button>
+                <button className={styles.promptChoice} key={preset.id} type="button" title={preset.body} onClick={() => usePreset(preset.body)}>{t(preset.nameZh, preset.nameEn)}</button>
               ))}
             </div>
           </details>
@@ -596,6 +598,7 @@ function PromptComposer({
           <label>
             <span>{t('可编辑提示词', 'Editable prompt')}</span>
             <textarea
+              className={styles.promptTextarea}
               value={value}
               maxLength={4000}
               rows={12}
@@ -1114,31 +1117,31 @@ export function PlatformQrCardStudio({
               <div className={styles.contentFields}>
                 <label>
                   <span>{t('正面文案', 'Front copy')}</span>
-                  <textarea rows={3} maxLength={500} value={activeCard.quote} placeholder={resolveQrCardContent(DEFAULT_QR_CARD, activeEntity?.title ?? '', activeIndex).quote} onFocus={() => setSelectedElement('quote')} onChange={(event) => updateDraft((card) => ({ ...card, quote: event.target.value }))} />
+                  <textarea className={`${styles.fieldControl} ${styles.fieldTextarea}`} rows={3} maxLength={500} value={activeCard.quote} placeholder={resolveQrCardContent(DEFAULT_QR_CARD, activeEntity?.title ?? '', activeIndex).quote} onFocus={() => setSelectedElement('quote')} onChange={(event) => updateDraft((card) => ({ ...card, quote: event.target.value }))} />
                 </label>
                 <label>
                   <span>{t('品牌名', 'Brand')}</span>
-                  <input maxLength={160} value={activeCard.brand} placeholder={t('魔方开放社群', 'CubeRoot Cubing Community')} onFocus={() => setSelectedElement('brand')} onChange={(event) => updateDraft((card) => ({ ...card, brand: event.target.value }))} />
+                  <input className={styles.fieldControl} maxLength={160} value={activeCard.brand} placeholder={t('魔方开放社群', 'CubeRoot Cubing Community')} onFocus={() => setSelectedElement('brand')} onChange={(event) => updateDraft((card) => ({ ...card, brand: event.target.value }))} />
                 </label>
                 <label>
                   <span>{t('短标题', 'Short title')}</span>
-                  <input maxLength={160} value={activeCard.term} placeholder={activeEntity?.title} onFocus={() => setSelectedElement('term')} onChange={(event) => updateDraft((card) => ({ ...card, term: event.target.value }))} />
+                  <input className={styles.fieldControl} maxLength={160} value={activeCard.term} placeholder={activeEntity?.title} onFocus={() => setSelectedElement('term')} onChange={(event) => updateDraft((card) => ({ ...card, term: event.target.value }))} />
                 </label>
                 <label className={styles.fieldWide}>
                   <span>{t('背面介绍', 'Back introduction')}</span>
-                  <textarea rows={4} maxLength={1000} value={activeCard.intro} onFocus={() => setSelectedElement('backText')} onChange={(event) => updateDraft((card) => ({ ...card, intro: event.target.value }))} />
+                  <textarea className={`${styles.fieldControl} ${styles.fieldTextarea}`} rows={4} maxLength={1000} value={activeCard.intro} onFocus={() => setSelectedElement('backText')} onChange={(event) => updateDraft((card) => ({ ...card, intro: event.target.value }))} />
                 </label>
                 <label>
                   <span>{t('公式名称', 'Algorithm name')}</span>
-                  <input maxLength={160} value={activeCard.alg?.name ?? ''} placeholder="PLL T" onFocus={() => setSelectedElement('alg')} onChange={(event) => updateDraft((card) => patchAlgorithm(card, 'name', event.target.value))} />
+                  <input className={styles.fieldControl} maxLength={160} value={activeCard.alg?.name ?? ''} placeholder="PLL T" onFocus={() => setSelectedElement('alg')} onChange={(event) => updateDraft((card) => patchAlgorithm(card, 'name', event.target.value))} />
                 </label>
                 <label>
                   <span>{t('公式链接', 'Algorithm link')}</span>
-                  <input type="url" maxLength={2000} value={activeCard.alg?.url ?? ''} placeholder="https://…" onFocus={() => setSelectedElement('alg')} onChange={(event) => updateDraft((card) => patchAlgorithm(card, 'url', event.target.value))} />
+                  <input className={styles.fieldControl} type="url" maxLength={2000} value={activeCard.alg?.url ?? ''} placeholder="https://…" onFocus={() => setSelectedElement('alg')} onChange={(event) => updateDraft((card) => patchAlgorithm(card, 'url', event.target.value))} />
                 </label>
                 <label className={styles.fieldWide}>
                   <span>{t('公式', 'Algorithm moves')}</span>
-                  <textarea rows={2} maxLength={500} value={activeCard.alg?.moves ?? ''} placeholder="R U R' U' R' F R2 U' R' U' R U R' F'" onFocus={() => setSelectedElement('alg')} onChange={(event) => updateDraft((card) => patchAlgorithm(card, 'moves', event.target.value))} spellCheck={false} autoCapitalize="off" />
+                  <textarea className={`${styles.fieldControl} ${styles.fieldTextarea}`} rows={2} maxLength={500} value={activeCard.alg?.moves ?? ''} placeholder="R U R' U' R' F R2 U' R' U' R U R' F'" onFocus={() => setSelectedElement('alg')} onChange={(event) => updateDraft((card) => patchAlgorithm(card, 'moves', event.target.value))} spellCheck={false} autoCapitalize="off" />
                 </label>
               </div>
 
@@ -1149,7 +1152,7 @@ export function PlatformQrCardStudio({
                 </div>
                 <div className={styles.artGalleryItems}>
                   {QR_CARD_FRONT_ARTS.map((art) => (
-                    <button key={art.src} type="button" aria-pressed={activeCard.frontArt === art.src} onClick={() => { updateDraft((card) => ({ ...card, frontArt: art.src })); setSelectedElement('front'); }}>
+                    <button className={styles.artChoice} key={art.src} type="button" aria-pressed={activeCard.frontArt === art.src} onClick={() => { updateDraft((card) => ({ ...card, frontArt: art.src })); setSelectedElement('front'); }}>
                       <img src={art.src} alt="" draggable={false} /><span>{t(art.nameZh, art.nameEn)}</span>
                     </button>
                   ))}
@@ -1186,12 +1189,12 @@ export function PlatformQrCardStudio({
                 </div>
                 <div className={styles.elementPicker}>
                   {QR_CARD_ELEMENTS.map((key) => (
-                    <button key={key} type="button" aria-pressed={selectedElement === key} onClick={() => setSelectedElement(key)}>{elementName(t, key)}</button>
+                    <button className={styles.elementChoice} key={key} type="button" aria-pressed={selectedElement === key} onClick={() => setSelectedElement(key)}>{elementName(t, key)}</button>
                   ))}
                   {activeCard.customTexts.map((item) => (
                     <span key={item.id} className={styles.customChip} data-active={selectedElement === `ct:${item.id}` ? 'true' : undefined}>
-                      <button type="button" aria-pressed={selectedElement === `ct:${item.id}`} onClick={() => setSelectedElement(`ct:${item.id}`)}>{item.text || t('空文字', 'Empty text')}</button>
-                      <button type="button" onClick={() => deleteCustomText(item.id)} aria-label={t(`删除 ${item.text}`, `Delete ${item.text}`)}><Trash2 aria-hidden /></button>
+                      <button type="button" className={`${styles.customAction} ${styles.customTextButton}`} aria-pressed={selectedElement === `ct:${item.id}`} onClick={() => setSelectedElement(`ct:${item.id}`)}>{item.text || t('空文字', 'Empty text')}</button>
+                      <button type="button" className={`${styles.customAction} ${styles.customRemoveButton}`} onClick={() => deleteCustomText(item.id)} aria-label={t(`删除 ${item.text}`, `Delete ${item.text}`)}><Trash2 aria-hidden /></button>
                     </span>
                   ))}
                 </div>

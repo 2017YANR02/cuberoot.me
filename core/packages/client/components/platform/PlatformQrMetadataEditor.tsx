@@ -198,14 +198,14 @@ export function PlatformQrMetadataEditor({ entity, resourceId, busy, runAction }
             {values.links.map((item, index) => (
               <li key={index}>
                 <div className={styles.linkFields}>
-                  <label><span>{t('名称', 'Label')}</span><input value={item.label} maxLength={160} onChange={(event) => updateLink(index, 'label', event.target.value)} /></label>
-                  <label><span>{t('链接', 'URL')}</span><input value={item.href} maxLength={4000} inputMode="url" onChange={(event) => updateLink(index, 'href', event.target.value)} /></label>
-                  <label className={styles.noteField}><span>{t('说明（可选）', 'Note (optional)')}</span><input value={item.note ?? ''} maxLength={240} onChange={(event) => updateLink(index, 'note', event.target.value)} /></label>
+                  <label><span>{t('名称', 'Label')}</span><input className={styles.linkField} value={item.label} maxLength={160} onChange={(event) => updateLink(index, 'label', event.target.value)} /></label>
+                  <label><span>{t('链接', 'URL')}</span><input className={styles.linkField} value={item.href} maxLength={4000} inputMode="url" onChange={(event) => updateLink(index, 'href', event.target.value)} /></label>
+                  <label className={styles.noteField}><span>{t('说明（可选）', 'Note (optional)')}</span><input className={styles.linkField} value={item.note ?? ''} maxLength={240} onChange={(event) => updateLink(index, 'note', event.target.value)} /></label>
                 </div>
                 <div className={styles.linkActions}>
-                  <button type="button" disabled={index === 0} aria-label={t('上移链接', 'Move link up')} onClick={() => setValues((current) => ({ ...current, links: move(current.links, index, -1) }))}><ArrowUp aria-hidden /></button>
-                  <button type="button" disabled={index === values.links.length - 1} aria-label={t('下移链接', 'Move link down')} onClick={() => setValues((current) => ({ ...current, links: move(current.links, index, 1) }))}><ArrowDown aria-hidden /></button>
-                  <button type="button" aria-label={t('删除链接', 'Delete link')} onClick={() => setValues((current) => ({ ...current, links: current.links.filter((_, itemIndex) => itemIndex !== index) }))}><Trash2 aria-hidden /></button>
+                  <button className={styles.linkAction} type="button" disabled={index === 0} aria-label={t('上移链接', 'Move link up')} onClick={() => setValues((current) => ({ ...current, links: move(current.links, index, -1) }))}><ArrowUp aria-hidden /></button>
+                  <button className={styles.linkAction} type="button" disabled={index === values.links.length - 1} aria-label={t('下移链接', 'Move link down')} onClick={() => setValues((current) => ({ ...current, links: move(current.links, index, 1) }))}><ArrowDown aria-hidden /></button>
+                  <button className={styles.linkAction} type="button" aria-label={t('删除链接', 'Delete link')} onClick={() => setValues((current) => ({ ...current, links: current.links.filter((_, itemIndex) => itemIndex !== index) }))}><Trash2 aria-hidden /></button>
                 </div>
               </li>
             ))}
