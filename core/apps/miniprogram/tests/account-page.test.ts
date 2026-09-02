@@ -29,6 +29,13 @@ interface AccountPageData {
   loginError: string;
   loginRequired: boolean;
   loginStorageUnavailable: boolean;
+  release: {
+    channel: string;
+    notes: string[];
+    notesTitle: string;
+    version: string;
+    versionLabel: string;
+  };
   requiresAgreement: boolean;
   uidText: string;
   wcaId: string;
@@ -38,7 +45,6 @@ interface AccountPage {
   copyContactValue(event: { currentTarget: { dataset: { value?: unknown } } }): void;
   data: AccountPageData;
   loginWithMiniProgram(): Promise<void>;
-  logout(): void;
   onLoad(): void;
   onShareAppMessage(): WechatMiniprogram.Page.ICustomShareContent;
   onShareTimeline(): WechatMiniprogram.Page.ICustomTimelineContent;
@@ -84,6 +90,9 @@ describe('mini program account page', () => {
     const setNavigationBarTitle = vi.fn();
     const showShareMenu = vi.fn();
     const page = await loadPage({
+      getAccountInfoSync: () => ({
+        miniProgram: { envVersion: 'release', version: '1.2.1' },
+      }),
       getLaunchOptionsSync: normalLaunchOptions,
       getStorageSync: () => null,
       setNavigationBarTitle,
@@ -97,6 +106,17 @@ describe('mini program account page', () => {
       isTimelineEntry: false,
       loginRequired: true,
       loginStorageUnavailable: false,
+      release: {
+        channel: '正式版',
+        notes: [
+          '打开任一功能页前都会先检查登录状态',
+          '新增运行版本与更新日志',
+          '优化账号与联系信息展示',
+        ],
+        notesTitle: '更新日志',
+        version: '1.2.1',
+        versionLabel: '版本',
+      },
     });
     expect(showShareMenu).toHaveBeenCalledWith({
       menus: ['shareAppMessage', 'shareTimeline'],
@@ -161,51 +181,6 @@ describe('mini program account page', () => {
     expect(getStorageSync).toHaveBeenCalledOnce();
     expect(showShareMenu).toHaveBeenCalledWith({
       menus: ['shareAppMessage', 'shareTimeline'],
-    });
-  });
-
-  it('clears the native session and opens the existing website logout route', async () => {
-    const request = vi.fn();
-    const removeStorageSync = vi.fn();
-    const navigateTo = vi.fn((options: { complete?: () => void }) => options.complete?.());
-    const page = await loadPage({
-      getLaunchOptionsSync: normalLaunchOptions,
-      getStorageSync: () => ({
-        token: 't'.repeat(20),
-        user: {
-          uid: 42,
-          name: 'Ruimin Yan (颜瑞民)',
-          wcaId: '2017YANR02',
-          avatar: '',
-        },
-      }),
-      removeStorageSync,
-      navigateTo,
-      request,
-      showShareMenu: vi.fn(),
-    });
-
-    page.onLoad();
-
-    expect(page.data).toMatchObject({
-      displayName: 'Ruimin Yan (颜瑞民)',
-      loginRequired: false,
-      uidText: '42',
-      wcaId: '2017YANR02',
-    });
-    expect(request).not.toHaveBeenCalled();
-
-    page.logout();
-
-    expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
-    expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({
-      url: '/pages/web/index?key=logout',
-    }));
-    expect(page.data).toMatchObject({
-      displayName: '',
-      loginRequired: true,
-      uidText: '',
-      wcaId: '',
     });
   });
 
@@ -421,7 +396,6 @@ describe('mini program account page', () => {
     expect(page.data.contact.details.every((detail) => detail.icon.startsWith('/assets/contact/')))
       .toBe(true);
     expect(groupCount).toBe(CONTACT_GROUP_COUNT);
-    expect(groupCount).toBe(85);
 
     page.copyContactValue({ currentTarget: { dataset: { value: 'mofanggen' } } });
     expect(setClipboardData).toHaveBeenCalledWith(expect.objectContaining({ data: 'mofanggen' }));

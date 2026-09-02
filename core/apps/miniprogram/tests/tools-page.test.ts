@@ -29,7 +29,7 @@ describe('mini program tools page', () => {
     vi.unstubAllGlobals();
   });
 
-  it('loads the canonical Chinese website homepage through the shared web view', async () => {
+  it('keeps the canonical tools route behind the shared login gate', async () => {
     const setNavigationBarTitle = vi.fn();
     const showShareMenu = vi.fn();
     const page = await loadPage({
@@ -43,9 +43,10 @@ describe('mini program tools page', () => {
 
     expect(page.data).toMatchObject({
       errorTitle: '',
+      loginRequired: true,
       loadingTitle: '正在打开魔方工具',
       routeKey: 'home',
-      src: 'https://cuberoot.me/zh#wechat_redirect',
+      src: '',
     });
     expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '魔方工具' });
     expect(showShareMenu).toHaveBeenCalledWith({

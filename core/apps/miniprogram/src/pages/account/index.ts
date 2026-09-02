@@ -9,7 +9,6 @@ import {
   type ContactPlatformId,
 } from '@cuberoot/shared/contact';
 import {
-  clearStoredSession,
   getStoredSessionSnapshot,
   isSessionStorageError,
   loginErrorMessage,
@@ -21,6 +20,11 @@ import { showPublicShareMenu, toTimelineShare } from '../../lib/share';
 import { resolveAccountPageShare } from '../../lib/web-routes';
 import { getMiniProgramLocale, tr } from '../../lib/i18n';
 import { isDouyinMiniProgram, miniProgramApi } from '../../lib/platform';
+import {
+  getMiniProgramReleaseView,
+  type MiniProgramReleaseView,
+} from '../../lib/release-info';
+import { resumeRequiredSessionDestination } from '../../lib/required-session';
 
 const TIMELINE_SCENE = 1154;
 const providerName = tr(isDouyinMiniProgram()
@@ -81,15 +85,6 @@ const ACCOUNT_COPY = {
       en: 'We do not read your WeChat nickname or phone number. Sign-in stops if UnionID is unavailable, preventing duplicate accounts.',
       zh: '不会读取微信昵称或手机号。无法获得 UnionID 时会停止登录，避免创建重复账号。',
     }),
-  logoutFailure: tr({
-    en: 'Unable to clear the local sign-in state. Try again.',
-    zh: '暂时无法清除本机登录状态，请重试',
-  }),
-  logoutLabel: tr({ en: 'Sign out on this device', zh: '退出本机账号' }),
-  logoutWebsiteFailure: tr({
-    en: 'Signed out locally, but website sign-out could not be opened. Try again.',
-    zh: '本机已退出，但网站退出页暂时无法打开，请重试',
-  }),
   pageTitle: tr({ en: 'Me', zh: '我的' }),
   policyFailure: tr({
     en: 'The User Agreement and Privacy Policy are temporarily unavailable. Try again later.',
@@ -200,6 +195,7 @@ interface AccountPageData {
   loginButtonLabel: string;
   loginIntro: string;
   loginNote: string;
+  release: MiniProgramReleaseView;
   requiresAgreement: boolean;
   uidText: string;
   wcaId: string;
@@ -284,6 +280,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     loginButtonLabel: ACCOUNT_COPY.loginButtonLabel,
     loginIntro: ACCOUNT_COPY.loginIntro,
     loginNote: ACCOUNT_COPY.loginNote,
+    release: getMiniProgramReleaseView(contactLocale),
     requiresAgreement: isDouyinMiniProgram(),
     uidText: '',
     wcaId: '',
@@ -303,6 +300,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     if (this.data.isTimelineEntry) return;
     showPublicShareMenu();
     refreshStoredSession(this as unknown as AccountPageInstance);
+    this.setData({ release: getMiniProgramReleaseView(contactLocale) });
   },
 
   onUnload() {
@@ -332,6 +330,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
         loginError: '',
         loginStorageUnavailable: false,
       });
+      resumeRequiredSessionDestination();
     } catch (error) {
       this.setData({
         loginBusy: false,
@@ -360,23 +359,6 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     openWebsitePageOnce(this, 'privacy', {
       failureMessage: ACCOUNT_COPY.policyFailure,
       onFailure: (message) => this.setData({ loginError: message }),
-    });
-  },
-
-  logout() {
-    if (!clearStoredSession()) {
-      this.setData({ accountError: ACCOUNT_COPY.logoutFailure });
-      return;
-    }
-    this.setData({
-      ...sessionView(null),
-      accountError: '',
-      loginError: '',
-      loginStorageUnavailable: false,
-    });
-    openWebsitePageOnce(this, 'logout', {
-      failureMessage: ACCOUNT_COPY.logoutWebsiteFailure,
-      onFailure: (message) => this.setData({ accountError: message }),
     });
   },
 
