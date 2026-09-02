@@ -21,10 +21,10 @@ const TESTS = [
   {
     id: 'positions',
     href: '/color-test/positions',
-    title: { zh: '侧面颜色顺序', en: 'Side Colour Order' },
+    title: { zh: '颜色位置关系', en: 'Colour Positions' },
     description: {
-      zh: '选择顶面颜色,判断其余四个侧面的左右位置关系。',
-      en: 'Choose the top colour and recall the left-right order of the other four side faces.',
+      zh: '选择顶面颜色,判断侧面的左右顺序和六种颜色的对色。',
+      en: 'Choose the top colour, then recall side-face order and opposite colours.',
     },
   },
   {
