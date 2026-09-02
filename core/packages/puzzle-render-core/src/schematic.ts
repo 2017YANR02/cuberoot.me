@@ -225,6 +225,7 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     fill: string,
     body: string,
     insetMode?: 'short-axis',
+    insetBasis?: number,
   ): void => {
     const worldPts: THREE.Vector3[] = [];
     for (let i = 0; i < poly.length; i += 3) {
@@ -268,19 +269,26 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
       pts.push((v4.x * inv * 0.5 + 0.5) * W, (0.5 - v4.y * inv * 0.5) * H);
       zSum += p.z;
     }
-    // SQ1 中层矩形有一宽一窄。普通「向心等比」会让宽块的横向退让也按宽度
-    // 放大,于是同一层两块的缝宽不同。这里仅对显式标记的四边形在世界平面内
-    // 分解成两条半轴,两个方向都按短边长度退让,再投影回 SVG。近平面裁剪会改变
-    // 顶点数,这种极端取景直接退回通用路径;退化边同样在入口兜底。
+    // SQ1 中层矩形有一宽一窄,SQ2/SQ4 侧贴纸则同时不等宽、不等高。普通「向心
+    // 等比」会让缝宽跟着每张贴纸的尺寸变化。这里仅对显式标记的四边形在世界
+    // 平面内分解成两条半轴:SQ1 两向都按自身短边退让;提供 insetBasis 的拼图两向
+    // 都按统一世界长度退让。近平面裁剪会改变顶点数,这种极端取景直接退回通用
+    // 路径;退化边同样在入口兜底。
     let stickerPts: number[] | undefined;
-    if (inset > 0 && insetMode === 'short-axis' && worldPts.length === 4 && !clipped) {
+    const fixedInsetBasis = typeof insetBasis === 'number'
+      && Number.isFinite(insetBasis)
+      && insetBasis > 0
+      ? insetBasis
+      : undefined;
+    if (inset > 0 && (insetMode === 'short-axis' || fixedInsetBasis !== undefined)
+      && worldPts.length === 4 && !clipped) {
       const center = worldPts[0].clone().add(worldPts[2]).multiplyScalar(0.5);
       const axisA = new THREE.Vector3().subVectors(worldPts[1], worldPts[0]).multiplyScalar(0.5);
       const axisB = new THREE.Vector3().subVectors(worldPts[3], worldPts[0]).multiplyScalar(0.5);
       const lenA = axisA.length() * 2;
       const lenB = axisB.length() * 2;
       if (lenA > 1e-9 && lenB > 1e-9) {
-        const basis = Math.min(lenA, lenB);
+        const basis = fixedInsetBasis ?? Math.min(lenA, lenB);
         const scaleA = Math.max(0.1, 1 - inset * basis / lenA);
         const scaleB = Math.max(0.1, 1 - inset * basis / lenB);
         const signs: [number, number][] = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
@@ -346,7 +354,10 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     const mtx = (obj.userData.schematicInParent === true && mesh.parent)
       ? mesh.parent.matrixWorld : mesh.matrixWorld;
     const insetMode = obj.userData.schematicInsetMode === 'short-axis' ? 'short-axis' : undefined;
-    addPoly(poly, mtx, fill, body, insetMode);
+    const insetBasis = typeof obj.userData.schematicInsetBasis === 'number'
+      ? obj.userData.schematicInsetBasis
+      : undefined;
+    addPoly(poly, mtx, fill, body, insetMode, insetBasis);
   });
 
   // 远 → 近(凸体下可见面互不重叠,排序只是对轻微非凸的保护;衬底 + 贴纸按面

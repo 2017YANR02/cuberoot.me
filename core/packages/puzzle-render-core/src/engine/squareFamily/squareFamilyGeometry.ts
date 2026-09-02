@@ -1,5 +1,6 @@
 /** Three.js geometry for the equal-sector Square-2 / Square-4 family. */
 import * as THREE from 'three';
+import { STICKER_GAP_DEFAULT } from '../define';
 import { extrudeOntoFace, makeSticker, offsetInward, type V2 } from '../stickerGeom';
 import { SQ1_COLORS } from '../sq1/sq1Colors';
 import type { SquareFamilySpec } from './squareFamilyState';
@@ -21,6 +22,8 @@ const STICKER_LIFT = 0.6;
 const STICKER_DEPTH = 2;
 const TOP_INSET = 5;
 const SIDE_INSET = 4;
+/** 伴图默认 inset 下,每张侧贴纸也从每条边退让 SIDE_INSET 世界单位。 */
+const SIDE_SCHEMATIC_INSET_BASIS = SIDE_INSET * 2 / STICKER_GAP_DEFAULT;
 
 export interface UniformPieceBuild {
   pivot: THREE.Object3D;
@@ -210,6 +213,7 @@ function addVerticalSticker(
     new THREE.Vector3(b[0], y1, b[1]),
     new THREE.Vector3(a[0], y1, a[1]),
   ], side.normal);
+  sticker.userData.schematicInsetBasis = SIDE_SCHEMATIC_INSET_BASIS;
   pivot.add(sticker);
 }
 
