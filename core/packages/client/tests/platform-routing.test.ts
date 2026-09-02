@@ -308,7 +308,7 @@ describe('Platform gateway contracts', () => {
     const membershipSource = readFileSync(join(REPO, 'core', 'packages', 'client', 'components', 'platform', 'PlatformDomainActions.tsx'), 'utf8');
     expect(routeViewSource).toContain("definition.id !== 'membership'");
     expect(routeViewSource).toContain("definition.id !== 'me-membership'");
-    expect(routeViewSource).toContain("definition.id === 'membership' || definition.id === 'me-membership' ? null");
+    expect(routeViewSource).toContain("definition.id === 'membership' || definition.id === 'me-membership' || definition.id === 'qr' ? null");
     expect(membershipSource).toContain('routeEntities.map(membershipPlanFromEntity)');
     expect(membershipSource).toContain('routeEntities.map(membershipFromEntity)');
     expect(membershipSource).toContain('membership.validFrom.slice(0, 10)');
