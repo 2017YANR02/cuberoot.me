@@ -467,6 +467,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'membership': { title: { zh: '会员', en: 'Membership' } },
   'memo': { title: { zh: '盲拧记忆训练', en: 'Memory Training' } },
   'memo/colpi': { title: { zh: 'COLPI 编码', en: 'COLPI Lettering' } },
+  'music': {
+    title: { zh: '音乐播放器', en: 'Music Player' },
+    description: {
+      zh: 'CubeRoot 音乐播放器，支持曲库搜索、播放队列、封面与同步歌词。',
+      en: 'CubeRoot music player with library search, playback queue, cover art, and synced lyrics.',
+    },
+  },
   'mosaic': {
     title: { zh: '马赛克', en: 'Mosaic' },
     description: {

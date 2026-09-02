@@ -30,6 +30,16 @@ describe('homepage card order', () => {
     }));
   });
 
+  it('links the homepage to the music player', () => {
+    const otherCards = SECTIONS.find(({ id }) => id === 'other')?.cards;
+
+    expect(otherCards).toContainEqual(expect.objectContaining({
+      id: 'music',
+      href: '/music',
+      internal: true,
+    }));
+  });
+
   it('links the homepage directly to the creator profile', () => {
     const otherCards = SECTIONS.find(({ id }) => id === 'other')?.cards;
 

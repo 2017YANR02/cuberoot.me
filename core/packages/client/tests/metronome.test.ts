@@ -269,6 +269,15 @@ describe('metronome holds', () => {
     m.setMetronomeHold('timer', false);
     expect(m.getMetronomeState().on).toBe(false);
   });
+
+  it('yields an active hold to music until the metronome starts again', () => {
+    m.setMetronomeHold('timer', true);
+    fire('cuberoot:music-start');
+    expect(m.isMetronomeSounding()).toBe(false);
+    m.setMetronomeHold('timer', false);
+    m.setMetronomeHold('timer', true);
+    expect(m.isMetronomeSounding()).toBe(true);
+  });
 });
 
 describe('tap tempo', () => {
