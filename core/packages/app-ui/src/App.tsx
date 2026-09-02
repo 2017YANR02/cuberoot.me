@@ -18,7 +18,6 @@ import {
 } from '@cuberoot/shared/mobile-embed';
 import { toLocalIsoDate } from '@cuberoot/shared/iso-date';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
-import { EventIcon } from '@cuberoot/event-icon/event';
 import {
   MAX_TIMER_BACKUP_BYTES,
   DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
@@ -90,6 +89,7 @@ import {
   timerSettingFieldContract,
   variantLabel,
   TIMER_COLOR_NAMES,
+  TIMER_WCA_SCRAMBLE_SOURCE_COPY,
   TIMER_WCA_MIN_DATE,
   timerSupportsRealWcaScrambles,
   timerSmartCubeStartsAttemptOnTurn,
@@ -124,6 +124,7 @@ import {
   type TimerColorLetter,
   type TimerNon222StepPuzzle,
   type TimerWcaDifficultyCoverage,
+  type TimerWcaCompetition,
   type TimerWcaSourceSettings,
 } from '@cuberoot/shared/timer';
 import {
@@ -158,6 +159,7 @@ import {
   TimerScrambleClickActionSetting,
   TimerScramblePreviewSettings,
   TimerScrambleStrip,
+  TimerWcaScrambleSource,
   TimerByStepsConfig,
   TimerScrambleSourceSelect,
   TimerSessionSwitcher,
@@ -895,18 +897,18 @@ export function App({ host }: { host: InstalledAppHost }) {
   });
   const scrambleCaseId = currentScrambleEntry?.caseId ?? null;
   const currentReal = currentScrambleEntry?.currentReal ?? null;
-  const [currentRealCountry, setCurrentRealCountry] = useState('');
+  const [currentRealCompetition, setCurrentRealCompetition] = useState<TimerWcaCompetition | null>(null);
   const scrambleAvailability = currentScrambleEntry?.availability ?? 'loading';
 
   useEffect(() => {
     const competitionId = currentReal?.competitionId;
     let active = true;
-    setCurrentRealCountry('');
+    setCurrentRealCompetition(null);
     if (!competitionId) return () => { active = false; };
     void wcaSourceAdapter.loadCompetitions().then((competitions) => {
       if (active) {
-        setCurrentRealCountry(
-          competitions.find((competition) => competition.id === competitionId)?.country ?? '',
+        setCurrentRealCompetition(
+          competitions.find((competition) => competition.id === competitionId) ?? null,
         );
       }
     }).catch(() => undefined);
@@ -3147,6 +3149,10 @@ export function App({ host }: { host: InstalledAppHost }) {
                      fallbackKind={scrambleAvailability === 'loading' ? 'custom' : 'empty'}
                      match={smartCubeScrambleMatch}
                      hint={smartCubeGuidance.hint}
+                     nonOptimal={currentReal?.nonOptimal ? {
+                       label: TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalLabel[language],
+                       title: TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalTitle[language],
+                     } : undefined}
                      onActivate={scrambleClickEffect === 'retry' && currentScrambleEntry
                        ? () => {
                          if (canSwitchScramble()) fillScrambleHistoryEntry(currentScrambleEntry);
@@ -3165,20 +3171,29 @@ export function App({ host }: { host: InstalledAppHost }) {
                      }}
                    >
                      {currentReal && scrambleSource === 'wca' && (
-                       <p className="mobile-scramble-source timer-scramble-source-meta">
-                        {currentRealCountry && <Flag iso2={currentRealCountry} />}
-                        <strong>{currentReal.competitionName}</strong>
-                        <EventIcon
-                          ariaLabel={timerEventPickerName(activeEvent, language)}
-                          event={currentReal.eventId}
-                        />
-                        <span>{timerWcaScrambleSourceLine(
-                          currentReal.roundTypeId,
-                          currentReal.groupId,
-                          currentReal.scrambleNumber,
-                          currentReal.isExtra,
-                        )}</span>
-                      </p>
+                       <TimerWcaScrambleSource
+                         competitionName={currentRealCompetition?.selectedDisplayName
+                           ?? displayMobileWcaCompetitionName(
+                             currentReal.competitionId,
+                             currentReal.competitionName,
+                             language,
+                           )}
+                         country={currentRealCompetition?.country}
+                         eventLabel={timerEventPickerName(activeEvent, language)}
+                         eventId={currentReal.eventId}
+                         groupId={currentReal.groupId}
+                         href={siteRouteUrl(
+                           language,
+                           `/scramble/gen?comp=${encodeURIComponent(currentReal.competitionId)}`,
+                         )}
+                         isExtra={currentReal.isExtra}
+                         onNavigate={() => openToolsRoute(
+                           `/scramble/gen?comp=${encodeURIComponent(currentReal.competitionId)}`,
+                         )}
+                         roundTypeId={currentReal.roundTypeId}
+                         scrambleNumber={currentReal.scrambleNumber}
+                         title={TIMER_WCA_SCRAMBLE_SOURCE_COPY.viewCompetition[language]}
+                       />
                     )}
                    </TimerScrambleStrip>
                  )}

@@ -12,6 +12,21 @@ import { LENGTH_VARIANT } from './scramble-variants';
 
 export const TIMER_WCA_MIN_DATE = '1982-06-05';
 
+export const TIMER_WCA_SCRAMBLE_SOURCE_COPY = {
+  viewCompetition: {
+    en: 'View this competition',
+    zh: '查看该比赛打乱',
+  },
+  nonOptimalLabel: {
+    en: 'non-optimal',
+    zh: '非最优',
+  },
+  nonOptimalTitle: {
+    en: 'No optimal-equivalent scramble for this difficulty — showing the original WCA scramble',
+    zh: '该难度档暂无最优等态打乱,显示原始 WCA 打乱',
+  },
+} as const;
+
 export type TimerWcaSourceMode = 'date' | 'comp';
 
 /**

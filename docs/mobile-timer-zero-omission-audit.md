@@ -21,7 +21,7 @@
 | GAP-001 | `1～4 人 + 联机` 是 `/timer` 内的五个完整模式 | 五端 App 已有真实 2/3/4 人与联机页面、本地原子轮次/基础统计及联机房主管理/历史统计，不再只读“1人”或外跳；但 Web 与 App 仍是两套 Battle/Net React 视图，完整设置、视频、多 BLE、高级历史展示、双设备和五平台矩阵未齐 | P0，入口/基础流程落地不等于完整模式 parity |
 | GAP-002 | Web 顶栏有人数、项目、来源、难度、解法、更多、设置的真实交互 | WCA 真题难度与 222/pyra/skewb 解法提示已改成 Web/Mobile 共用真实 UI，原静态“解法”已删除；More 通用求解器已复用 Tools 子页；333/SQ1/Mega 顶栏解法、随机难度与大量条件控件仍缺 | P0，局部产品面仍缺 |
 | GAP-003 | Web 随机来源对 43/43 `EventId` 都有已注册的语义 | shared runtime 42 个 generated；`custom` 的 Real/Random 已按网站接成显式 ready 空槽并可计时，仍待 OPPO 触摸/重启验收 | P0，菜单/生成器数量不等于完整功能 parity |
-| GAP-004 | 真题有比赛/日期、比赛搜索、轮次、组别、难度、步数、2×2 类型、最优口径、来源元数据与空/错误状态 | Mobile 已共享比赛/日期/搜索/国旗/轮组、2×2 配置、完整 WCA 难度/合并/最优、222/pyra/skewb 真题按步数和底层错误/空分型；完整出处元数据、逐类用户文案与全配置/真机异常矩阵仍未关闭 | P0，底层契约通过仍不等于完整真题 UI parity |
+| GAP-004 | 真题有比赛/日期、比赛搜索、轮次、组别、难度、步数、2×2 类型、最优口径、来源元数据与空/错误状态 | Mobile 已共享比赛/日期/搜索/国旗/轮组、2×2 配置、完整 WCA 难度/合并/最优、222/pyra/skewb 真题按步数、完整出处元数据和底层错误/空分型；来源进度/打卡、逐类用户文案与全配置/真机异常矩阵仍未关闭 | P0，底层契约通过仍不等于完整真题 UI parity |
 | GAP-005 | 手动来源还包含编辑后重置、顺序循环、已显示打乱历史的上一条/下一条、空打乱可起表与 attempt snapshot | Mobile 已直接消费 shared editor/queue/`ScrambleHistory`，覆盖上一条/下一条、队尾生成、solve 后前进、左右键、空槽和冻结 attempt；仍缺 OPPO/iOS 真机全状态证据 | P0，源码与自动化已接，待设备矩阵 |
 | GAP-006 | Web 有 session 切换/新建/重命名/清空/删除/项目关联、搜索筛选、成绩对比、成绩详情、移动分组 | session CRUD/项目关联、共用成绩行/七项菜单/备注/Undo、行级罚时/复制/删除、完整筛选/tag、成绩对比与基础成绩详情已接五端共享产品层。详情的原始/生效成绩、日期、罚时、打乱、CFOP/BLD/MBLD 分段、备注、移组、删除和关闭只保留一份 `timer-ui` DOM；Web 仅注入重型复盘。Web/五端的打乱图也已统一为同一 `TimerCubePreview`，覆盖网站当前的 NxN、Clock、Pyraminx、Skewb、SQ1、Megaminx、FTO 和 relay/custom 分派；完整复盘仍缺。`HistoryPanel` 的批量删除分支当前在网站主路径没有 consumer，不把不可达代码当网站现有功能 | P0，基础详情/预览单源不等于完整复盘 parity |
 | GAP-007 | Web 有成绩/图表/统计三栏、5 图、完整统计、case/跨分组/按天、纪录对比 | 紧凑 current/best 面板与 rolling picker 已迁 timer-ui 并由 Web/Mobile 真实消费；OPPO 已显示 time/ao5/ao12 共用面板且 360px 无横向溢出。完整 StatsModal/五图、case/跨分组/按天与纪录对比仍缺 | P0，紧凑面板接线完成不等于完整统计完成 |
@@ -156,8 +156,8 @@ shared 映射快照是 19 个 Timer ID：
 | `scramble.click-action` | 无操作/下一条/复制，复制勾和智能魔方修正路径特例 | 枚举/default/normalizer/persistence 与选择控件已由 Web/五端共用；产品层统一调用宿主剪贴板 capability，Android/iOS 薄宿主使用 Capacitor Clipboard，打乱、历史、联网房间码和二维码邀请链接复用同一 transport。OPPO `PFDM00` 已实证无操作不响应且不可聚焦、下一条更换真题、复制保持原题并提示成功，360px 无横向溢出。仍待 iOS/Harmony/Windows/macOS 三动作、智能魔方修正路径与完整视觉矩阵 |
 | `scramble.format` | SQ1 等项目显示 adapter，存储仍保留 canonical 原文 | 未证明 |
 | `scramble.preview` | 2D/3D/NxN/异形专用 renderer，显示开关、拖动、朝向 | Web/五端共用 `TimerCubePreview`/`TimerScramblePreview`；显示开关、2D/3D 默认/归一化/持久化与设置 UI 也已共享，单人和联网均从独立 `TimingSurface.cornerSlot` 渲染，避免拖动误触打乱动作。cubing.js 与 SQ1/Megaminx renderer 均为单源，不可解析手动题 fail closed；SQ1/Megaminx 保持 canonical 2D。OPPO 已装入对应源码构建，但手机仍被通知层遮挡；拖动/朝向、无遮挡及全设备视觉矩阵仍待关闭 |
-| `scramble.source-meta` | 国旗、本地化比赛名、项目、轮/组/题号/加赛、深链 | Mobile 已用 canonical `Flag` 显示比赛国家，并有比赛名 + 项目 + round/group/#；本地化比赛名、加赛、深链和来源进度仍缺 |
-| `scramble.source-progress` | 稀有池 `seen/total`、全练过、非最优标志、打乱足迹人数 | 缺 |
+| `scramble.source-meta` | 国旗、本地化比赛名、项目、轮/组/题号/加赛、深链 | Web/Mobile 已收敛为共享 `TimerWcaScrambleSource`；OPPO 360px 实证完整显示、无溢出，深链进入 Tools 对应比赛页，返回不换题/不误复制。iOS/Harmony/Windows/macOS 设备矩阵仍待验 |
+| `scramble.source-progress` | 稀有池 `seen/total`、全练过、非最优标志、打乱足迹人数 | 非最优标志已由 App 传入共享打乱条；罕见池进度/全练过与打乱足迹人数仍缺 |
 | `scramble.loading` | WCA、csTimer worker、难度 worker、云端最优各自区分 loading | 仅通用 loading |
 | `scramble.empty-error` | 比赛无项目、日期无题、难度无匹配、难度库待更新、稀有、短暂网络失败各自文案/重试 | 仅通用 error/unsupported |
 | `scramble.smart-hint` | 已拧步骤变暗、当前高亮、打乱完成、不符、拧回原打乱、复制原打乱 | Web/五端产品层已共用 `TimerScrambleStrip`、shared 提示/匹配/偏离修正 requester 与同一 Solo lifecycle controller；Web/App 只保留 facelets、Worker 和预备回调适配。Android 最新 APK 已安装，OPPO 新版逐步提示、故意偏离、修正完成和 Worker 冷启动延迟仍待解锁后用 GAN 16 UI 实测，其他四端也未验收 |

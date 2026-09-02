@@ -24,7 +24,6 @@ import {
   AlertTriangle, Target,
   X, CheckCircle2, Repeat,
 } from 'lucide-react';
-import { EventIcon } from '@/components/EventIcon/EventIcon';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { petReact } from '@/lib/deskpet';
 import {
@@ -64,6 +63,8 @@ import {
   timerWcaDifficultyIdentity,
   timerWcaOptimalRequested,
   timerWcaSourceIdentity,
+  timerEventPickerName,
+  TIMER_WCA_SCRAMBLE_SOURCE_COPY,
   TIMER_MORE_ACTION_COPY,
   TIMER_SCRAMBLE_CLICK_TITLE_COPY,
   timerClearCurrentEventConfirmation,
@@ -223,6 +224,7 @@ import {
   TimerPuzzlePicker,
   TimerPrintController,
   TimerScrambleStrip,
+  TimerWcaScrambleSource,
   TimerScrambleSourceSelect,
   TimerStatRail,
   TimerTopbar,
@@ -2846,8 +2848,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               hint={scrambleGuidance.hint}
               match={scrambleGuidance.match}
               nonOptimal={wcaNonOptimal ? {
-                label: tr({ zh: '非最优', en: 'non-optimal' }),
-                title: tr({ zh: '该难度档暂无最优等态打乱,显示原始 WCA 打乱', en: 'No optimal-equivalent scramble for this difficulty — showing the original WCA scramble' }),
+                label: tr(TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalLabel),
+                title: tr(TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalTitle),
               } : undefined}
               onActivate={scrambleClickEffect === 'retry'
                 ? retryDisplayedScramble
@@ -2872,20 +2874,19 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             >
               {/* 「按难度生成」的打乱 + 答案(只在该来源下有 meta 时出现)。 */}
               {!randomOptimalLoading && !scrambleLoading && !trainerLoading && !byStepsLoading && <TrainerCaseBar scramble={scramble} isZh={isZh} />}
-              {wcaSrcDisplay && (
-                <div className="scramble-src-row">
-                <a
-                  className="scramble-src timer-scramble-source-meta"
-                  data-no-timer
+              {wcaSrcDisplay && wcaSource && (
+                <TimerWcaScrambleSource
+                  competitionName={wcaSrcDisplay.name}
+                  country={wcaSrcDisplay.iso2}
+                  eventLabel={timerEventPickerName(event, isZh ? 'zh' : 'en')}
+                  eventId={wcaSrcDisplay.event}
+                  groupId={wcaSource.g}
                   href={`${isZh ? '/zh' : ''}/scramble/gen?comp=${encodeURIComponent(wcaSrcDisplay.ci)}`}
-                  onClick={(e) => e.stopPropagation()}
-                  title={tr({ zh: '查看该比赛打乱', en: 'View this competition' })}
+                  isExtra={wcaSource.x === 1}
+                  roundTypeId={wcaSource.r}
+                  scrambleNumber={wcaSource.n}
+                  title={tr(TIMER_WCA_SCRAMBLE_SOURCE_COPY.viewCompetition)}
                 >
-                  {wcaSrcDisplay.iso2 && <Flag iso2={wcaSrcDisplay.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                  <span className="scramble-src-name">{wcaSrcDisplay.name}</span>
-                  <EventIcon event={wcaSrcDisplay.event} className="scramble-src-evt" />
-                  <span className="scramble-src-meta">{wcaSrcDisplay.meta}</span>
-                </a>
                 {wcaSource && curMarks && curMarks.count > 0 && (
                 <span className="scramble-marks" data-no-timer ref={marksBoxRef} onClick={(e) => e.stopPropagation()}>
                   <button
@@ -2940,7 +2941,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                       : tr({ zh: `已练 ${poolRun.seen}/${poolRun.total}`, en: `${poolRun.seen}/${poolRun.total} practiced` })}
                   </span>
                 )}
-                </div>
+                </TimerWcaScrambleSource>
               )}
             </TimerScrambleStrip>
           }
