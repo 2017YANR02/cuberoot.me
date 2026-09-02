@@ -2,12 +2,19 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { Alg } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
 import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
+import {
+  OLL_CASES,
+  PLL_CASES,
+  firstBadHtmToken,
+  generateTimerDrillScramble,
+} from '@cuberoot/shared/timer';
 import { deriveScrambleFromSolution, equivalentCleanScramble } from '@/lib/scramble-from-solution';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
 
 let kpuzzle: KPuzzle;
 let solved: KPattern;
 let rotationKeys: Set<string>;
+let yRotationKeys: Set<string>;
 
 const key = (p: KPattern) => JSON.stringify(p.patternData);
 
@@ -16,6 +23,9 @@ beforeAll(async () => {
   solved = kpuzzle.defaultPattern();
   // All 24 whole-cube rotation patterns — "solved" means solved up to one of these.
   rotationKeys = new Set([key(solved)]);
+  yRotationKeys = new Set(['', 'y', 'y2', "y'"].map((rotation) => (
+    key(rotation ? solved.applyAlg(new Alg(rotation)) : solved)
+  )));
   let frontier = [''];
   for (let d = 0; d < 6 && frontier.length; d++) {
     const next: string[] = [];
@@ -103,4 +113,18 @@ describe('equivalentCleanScramble', () => {
     expect(await equivalentCleanScramble('y2')).toBe('');
     expect(await equivalentCleanScramble('not an alg %%')).toBe('');
   });
+
+  it('normalizes every OLL and PLL drill to equivalent plain HTM', async () => {
+    for (const [type, cases] of [['oll', OLL_CASES], ['pll', PLL_CASES]] as const) {
+      for (const item of cases) {
+        const generated = generateTimerDrillScramble({ type, id: item.id }, () => 0);
+        expect(generated, `${type} ${item.id}`).not.toBeNull();
+        const setup = generated!.scramble;
+        const clean = await equivalentCleanScramble(setup);
+        expect(firstBadHtmToken(clean), `${type} ${item.id}: ${clean}`).toBeNull();
+        const delta = solved.applyAlg(new Alg(clean)).applyAlg(new Alg(setup).invert());
+        expect(yRotationKeys.has(key(delta)), `${type} ${item.id}`).toBe(true);
+      }
+    }
+  }, 120_000);
 });

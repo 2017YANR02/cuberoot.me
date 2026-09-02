@@ -729,6 +729,26 @@ button {
   outline-offset: -2px;
 }
 
+@media (max-width: 540px) {
+  .settings-view .settings-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding-block: 7px;
+  }
+
+  .settings-view .settings-row-control {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .settings-view .settings-row-control > .hint:last-child:not(:first-child) {
+    max-width: 100%;
+    text-align: start;
+  }
+}
+
 .settings-view .settings-row-boolean .timer-222-mode-toggle--switch {
   width: 44px;
   height: 44px;
