@@ -126,6 +126,7 @@ export const PLATFORM_ACCOUNT_DELETE_TABLES = [
   'platform_qr_revisions',
   'platform_qr_scans',
   'platform_qr_templates',
+  'platform_qr_card_designs',
   'platform_qr_card_jobs',
   'platform_privacy_consents',
   'platform_analytics_events',

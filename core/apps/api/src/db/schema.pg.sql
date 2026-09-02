@@ -2880,6 +2880,25 @@ CREATE TRIGGER platform_prepare_account_delete
   BEFORE DELETE ON app_users
   FOR EACH ROW EXECUTE FUNCTION trg_platform_prepare_account_delete();
 
+-- QR card designs are immutable audit history. Keep each version, but sever
+-- its live account identity with the same stable tombstone used by Platform.
+CREATE OR REPLACE FUNCTION trg_platform_qr_card_designs_account_delete() RETURNS TRIGGER AS $$
+DECLARE
+  owner_key TEXT := COALESCE(NULLIF(OLD.wca_id, ''), 'u' || OLD.id::TEXT);
+  tombstone TEXT := 'deleted:' || OLD.id::TEXT;
+BEGIN
+  UPDATE platform_qr_card_designs
+  SET created_by_user_id = NULL,
+      created_by_actor_key = tombstone
+  WHERE created_by_user_id = OLD.id OR created_by_actor_key = owner_key;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER platform_qr_card_designs_prepare_account_delete
+  BEFORE DELETE ON app_users
+  FOR EACH ROW EXECUTE FUNCTION trg_platform_qr_card_designs_account_delete();
+
 -- ── app_users / auth (内部账号与多身份登录) ──
 -- app_users 的最终定义位于 Platform 区块之前，供两者共同引用。
 CREATE TABLE auth_identities (

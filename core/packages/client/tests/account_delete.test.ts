@@ -123,8 +123,8 @@ describe('清单 ↔ schema', () => {
   });
 
   it('Platform 每张直接引用 app_users 的表都进入数据库注销守卫', () => {
-    expect(PLATFORM_ACCOUNT_DELETE_TABLES).toHaveLength(48);
-    expect(new Set(PLATFORM_ACCOUNT_DELETE_TABLES).size).toBe(48);
+    expect(PLATFORM_ACCOUNT_DELETE_TABLES).toHaveLength(49);
+    expect(new Set(PLATFORM_ACCOUNT_DELETE_TABLES).size).toBe(49);
     for (const table of PLATFORM_ACCOUNT_DELETE_TABLES) {
       expect(SCHEMA.has(table), `表 ${table} 不在 schema 里`).toBe(true);
     }
@@ -160,6 +160,7 @@ describe('清单 ↔ schema', () => {
     expect(PURGE_TABLES).toContainEqual(['platform_idempotency_requests', 'actor_key']);
     const implementation = readFileSync(join(SERVER, 'src/utils/account_delete.ts'), 'utf8');
     const migration = readFileSync(join(SERVER, 'migrations/0168_platform_account_deletion.sql'), 'utf8');
+    const qrCardMigration = readFileSync(join(SERVER, 'migrations/0204_qr_card_account_deletion.sql'), 'utf8');
     const fixture = readFileSync(join(SERVER, 'tests/fixtures/platform_account_deletion_pg.sql'), 'utf8');
     expect(implementation).not.toContain("set_config('cuberoot.account_delete_tombstone'");
     expect(implementation).toContain('Platform 由 0168');
@@ -169,6 +170,9 @@ describe('清单 ↔ schema', () => {
     expect(migration).toContain('payout_profile_encrypted = NULL');
     expect(migration).toContain('payout_profile_snapshot_encrypted = NULL');
     expect(migration).toContain('UPDATE platform_privacy_consents');
+    expect(qrCardMigration).toContain('UPDATE platform_qr_card_designs');
+    expect(qrCardMigration).toContain('created_by_actor_key = tombstone');
+    expect(qrCardMigration).toContain('CREATE TRIGGER platform_qr_card_designs_prepare_account_delete');
     expect(fixture).toContain('direct append-only update unexpectedly succeeded');
     expect(fixture).toContain('DELETE FROM app_users WHERE id = 101');
   });

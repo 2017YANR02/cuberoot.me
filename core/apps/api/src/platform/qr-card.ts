@@ -1,8 +1,8 @@
 import QRCode from 'qrcode';
 import * as opentype from 'opentype.js';
 import { renderFromSimpleQuery } from '@cuberoot/visualcube';
-import frontCityArt from './card-assets/front-city.webp?inline';
-import frontInkArt from './card-assets/front-ink.webp?inline';
+import frontCityArt from '../../public/card-assets/front-city.webp?inline';
+import frontInkArt from '../../public/card-assets/front-ink.webp?inline';
 import monoTtf from './card-assets/jetbrains-mono-500.ttf?inline';
 import monoWoff2 from './card-assets/jetbrains-mono-latin-500-normal.woff2?inline';
 import { badRequest } from './errors.js';
