@@ -318,7 +318,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
         padding: 0.65rem 0.75rem;
     }
     .landing-page .landing-featured-news-body {
-        font-size: 0.8rem;
+        font-size: 0.9375rem;
     }
     .landing-page .landing-featured-news-arrow {
         align-self: center;
@@ -337,11 +337,43 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
         padding: 1rem 0.25rem;
     }
     .landing-page .landing-card-name {
-        font-size: clamp(0.82rem, 3.5vw, 1rem);
+        font-size: clamp(0.9375rem, 4vw, 1rem);
         text-align: center;
     }
     .landing-page .hero-grids .landing-card-name {
         white-space: nowrap;
+    }
+
+    /* 首页信息区在手机端至少保持可读字号，极次要标注除外。 */
+    .landing-page .rs-title,
+    .landing-page .tr-title {
+        font-size: 1rem;
+    }
+    .landing-page .rs-src-comp,
+    .landing-page .rs-row-name,
+    .landing-page .recon-card-evt,
+    .landing-page .recon-card-solver {
+        font-size: 0.9375rem;
+    }
+    .landing-page .rs-date-range,
+    .landing-page .rs-scard-scramble,
+    .landing-page .rs-src-meta,
+    .landing-page .rs-row-sub,
+    .landing-page .tr-all,
+    .landing-page .recon-card-sub,
+    .landing-page .recon-card-scramble,
+    .landing-page .ongoing-comps-tab,
+    .landing-page .ongoing-comps-date,
+    .landing-page .ongoing-comps-chip,
+    .landing-page .pill-toggle {
+        font-size: 0.875rem;
+    }
+    .landing-page .rs-prob,
+    .landing-page .rs-scard-rtag,
+    .landing-page .rs-scard-rprob,
+    .landing-page .rs-rare-more,
+    .landing-page .ongoing-comps-scope {
+        font-size: 0.8125rem;
     }
 }
 
@@ -363,6 +395,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
         align-self: flex-start;
         min-height: 0;
         margin-bottom: 0.75rem;
+        font-size: 1rem;
     }
 }
 
