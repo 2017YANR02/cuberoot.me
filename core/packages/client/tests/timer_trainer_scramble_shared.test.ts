@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 import ollMap from '@cuberoot/shared/data/oll.json';
@@ -23,7 +23,6 @@ import {
   generateTimerTrainerScramble,
   timerTrainerCases,
   timerTracksTrainerCase,
-  type TimerTrainerEventId,
 } from '@cuberoot/shared/timer';
 import { scrambleLl } from '@/app/[lang]/timer/_lib/scramble/cfop_step';
 import {
@@ -204,10 +203,8 @@ describe('shared Timer trainer providers', () => {
     expect(solo).toContain('timerTracksTrainerCase(event)');
     expect(solo).not.toContain('const TRAINER_KINDS');
 
-    const names: readonly Exclude<TimerTrainerEventId, 'll'>[] = TRAINER_WITH_CASE_LIST;
-    for (const name of names) {
-      const adapter = readFileSync(new URL(`algs/${name}.ts`, base), 'utf8');
-      expect(adapter).toMatch(/^export \{ [A-Z0-9]+_ALGS \} from '@cuberoot\/shared\/timer';\s*$/);
+    for (const name of TRAINER_WITH_CASE_LIST) {
+      expect(existsSync(new URL(`algs/${name}.ts`, base))).toBe(false);
     }
   });
 });
