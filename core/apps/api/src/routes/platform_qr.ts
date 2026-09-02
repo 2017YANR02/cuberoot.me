@@ -4,6 +4,7 @@ import { requirePlatformAdmin, type PlatformActor } from '../platform/auth.js';
 import { platformDb, platformQuery, sendMutation, withIdempotency, type PlatformDb } from '../platform/db.js';
 import { badRequest, conflict, notFound, PlatformApiError } from '../platform/errors.js';
 import { platformRouter, privateNoStore, publicCache } from '../platform/http.js';
+import { parseQrCardDesign, parseQrCardRenderOptions, renderQrCardSvg, type QrCardDesign } from '../platform/qr-card.js';
 import { approvedQrTarget, booleanField, enumField, integerField, isObject, objectField, pagination, readJsonObject, resourceId, stringField } from '../platform/validation.js';
 import { getIp } from '../utils/analytics_helpers.js';
 
@@ -13,6 +14,22 @@ export const platformQrRoutes = platformRouter();
 interface QrRow extends Record<string, unknown> {
   id: string; code: string; status: string; currentRevision: number;
   targetKind: 'internal_path' | 'external_url' | 'content'; targetValue: string; title: string;
+}
+
+interface QrCardRow extends Record<string, unknown> {
+  card: QrCardDesign;
+  updatedAt: string;
+}
+
+async function findLatestQrCard(db: PlatformDb, qrId: string): Promise<QrCardRow | undefined> {
+  const rows = await platformQuery<QrCardRow>(db, `
+    SELECT card, created_at AS "updatedAt"
+    FROM platform_qr_card_designs
+    WHERE qr_code_id = $1::uuid
+    ORDER BY version DESC
+    LIMIT 1
+  `, [qrId]);
+  return rows[0];
 }
 
 async function findQr(identifier: string, activeOnly = false): Promise<QrRow> {
@@ -69,7 +86,7 @@ platformQrRoutes.get('/qr/:code/redirect', async (c) => {
 platformQrRoutes.get('/qr/:code/svg', async (c) => {
   const qr = await findQr(resourceId(c.req.param('code'), 'code'), true);
   const svg = await QRCode.toString(`${SITE_ORIGIN}/platform/qr/${encodeURIComponent(qr.code)}`, {
-    type: 'svg', margin: 2, errorCorrectionLevel: 'M', width: 512,
+    type: 'svg', margin: 4, errorCorrectionLevel: 'H', width: 512,
   });
   c.header('Content-Type', 'image/svg+xml; charset=utf-8'); publicCache(c);
   return c.body(svg);
@@ -77,10 +94,21 @@ platformQrRoutes.get('/qr/:code/svg', async (c) => {
 
 platformQrRoutes.get('/qr/:code/card', async (c) => {
   const qr = await findQr(resourceId(c.req.param('code'), 'code'), true);
-  const dataUrl = await QRCode.toDataURL(`${SITE_ORIGIN}/platform/qr/${encodeURIComponent(qr.code)}`, { margin: 1, width: 520 });
-  const title = String(qr.title).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[char]!));
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="720" height="900"><rect width="100%" height="100%" fill="white"/><image href="${dataUrl}" x="100" y="80" width="520" height="520"/><text x="360" y="680" text-anchor="middle" font-family="sans-serif" font-size="32" fill="black">${title}</text><text x="360" y="740" text-anchor="middle" font-family="monospace" font-size="20" fill="black">${qr.code}</text></svg>`;
-  c.header('Content-Type', 'image/svg+xml; charset=utf-8'); publicCache(c);
+  const stored = await findLatestQrCard(platformDb(), qr.id);
+  const options = parseQrCardRenderOptions(new URL(c.req.url).searchParams);
+  const card = parseQrCardDesign(stored?.card ?? {});
+  const svg = renderQrCardSvg({
+    code: qr.code,
+    title: qr.title,
+    targetKind: qr.targetKind,
+    targetValue: qr.targetValue,
+    card,
+  }, `${SITE_ORIGIN}/platform/qr/${encodeURIComponent(qr.code)}`, options);
+  const filename = `qr-card-${qr.code}${options.cropMarks ? '' : '-nocrop'}.svg`;
+  c.header('Content-Type', 'image/svg+xml; charset=utf-8');
+  c.header('X-Content-Type-Options', 'nosniff');
+  c.header('Content-Disposition', `${options.download ? 'attachment' : 'inline'}; filename="${filename}"`);
+  publicCache(c);
   return c.body(svg);
 });
 
@@ -251,6 +279,48 @@ platformQrRoutes.get('/admin/qr/card-jobs/:id', async (c) => {
   privateNoStore(c); return c.json(rows[0]);
 });
 
+platformQrRoutes.get('/admin/qr/:id/card', async (c) => {
+  await requirePlatformAdmin(c);
+  const qr = await findQr(resourceId(c.req.param('id')));
+  const stored = await findLatestQrCard(platformDb(), qr.id);
+  privateNoStore(c);
+  return c.json({ id: qr.id, code: qr.code, card: parseQrCardDesign(stored?.card ?? {}) });
+});
+
+platformQrRoutes.patch('/admin/qr/:id/card', async (c) => {
+  const actor = await requirePlatformAdmin(c);
+  const id = resourceId(c.req.param('id'));
+  const body = await readJsonObject(c);
+  const unknown = Object.keys(body).find((key) => key !== 'card');
+  if (unknown) badRequest(`${unknown} is not supported`);
+  if (!Object.prototype.hasOwnProperty.call(body, 'card')) badRequest('card is required');
+  const card = parseQrCardDesign(objectField(body, 'card', { required: true }));
+  const result = await withIdempotency(c, actor, `admin.qr.card.update:${id}`, body, async (db) => {
+    const qrRows = await platformQuery<{ code: string }>(db,
+      `SELECT code FROM platform_qr_codes WHERE id = $1::uuid FOR UPDATE`, [id]);
+    if (!qrRows[0]) notFound('QR code');
+    const versions = await platformQuery<{ version: number }>(db, `
+      SELECT COALESCE(MAX(version), 0)::integer AS version
+      FROM platform_qr_card_designs
+      WHERE qr_code_id = $1::uuid
+    `, [id]);
+    const rows = await platformQuery<{ updatedAt: string }>(db, `
+      INSERT INTO platform_qr_card_designs (
+        qr_code_id, version, card, created_by_user_id, created_by_actor_key
+      ) VALUES ($1::uuid, $2, $3::jsonb, $4, $5)
+      RETURNING created_at AS "updatedAt"
+    `, [id, (versions[0]?.version ?? 0) + 1, JSON.stringify(card), actor.userId, actor.ownerKey]);
+    await platformQuery(db, `UPDATE platform_qr_codes SET updated_at = NOW() WHERE id = $1::uuid`, [id]);
+    return {
+      status: 200,
+      body: { id, code: qrRows[0].code, card, updatedAt: rows[0]!.updatedAt },
+      resourceType: 'qr_card_design',
+      resourceId: id,
+    };
+  });
+  return sendMutation(c, result);
+});
+
 platformQrRoutes.post('/admin/qr/card-jobs', async (c) => {
   const actor = await requirePlatformAdmin(c); const body = await readJsonObject(c);
   const templateId = resourceId(stringField(body, 'templateId', { required: true, max: 128 })!, 'templateId');
@@ -357,8 +427,12 @@ platformQrRoutes.post('/admin/qr/:id/duplicate', async (c) => {
   const result = await withIdempotency(c, actor, `admin.qr.duplicate:${id}`, body, async (db) => {
     const source = await platformQuery<{
       target_kind: 'internal_path' | 'external_url' | 'content'; target_value: string; title_zh: string; title_en: string;
-    }>(db, `SELECT r.target_kind, r.target_value, r.title_zh, r.title_en FROM platform_qr_codes q
+      card: QrCardDesign | null;
+    }>(db, `SELECT r.target_kind, r.target_value, r.title_zh, r.title_en, design.card FROM platform_qr_codes q
       JOIN platform_qr_revisions r ON r.qr_code_id = q.id AND r.revision = q.current_revision
+      LEFT JOIN LATERAL (
+        SELECT card FROM platform_qr_card_designs WHERE qr_code_id = q.id ORDER BY version DESC LIMIT 1
+      ) design ON TRUE
       WHERE q.id = $1::uuid`, [id]);
     if (!source[0]) notFound('QR code');
     const code = (requestedCode ?? `qr_${randomBytes(12).toString('hex')}`).toLowerCase();
@@ -369,6 +443,13 @@ platformQrRoutes.post('/admin/qr/:id/duplicate', async (c) => {
       targetKind: source[0].target_kind, targetValue: source[0].target_value,
       titleZh: source[0].title_zh, titleEn: source[0].title_en,
     }, actor);
+    if (source[0].card) {
+      const card = parseQrCardDesign(source[0].card);
+      await platformQuery(db, `INSERT INTO platform_qr_card_designs
+        (qr_code_id, version, card, created_by_user_id, created_by_actor_key)
+        VALUES ($1::uuid, 1, $2::jsonb, $3, $4)`,
+      [newId, JSON.stringify(card), actor.userId, actor.ownerKey]);
+    }
     return { status: 201, body: rows[0]!, resourceType: 'qr_code', resourceId: newId };
   }); return sendMutation(c, result);
 });
