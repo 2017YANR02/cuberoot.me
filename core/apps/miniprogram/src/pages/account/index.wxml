@@ -130,7 +130,7 @@
             <view class="contact-details-row">
               <button
                 wx:if="{{detail.action === 'link'}}"
-                class="contact-label-button"
+                class="contact-label-button {{detail.id === 'author' ? 'contact-detail-section-start' : ''}}"
                 data-value="{{detail.actionValue}}"
                 aria-label="{{detail.label}}"
                 hover-class="press-feedback"
@@ -139,11 +139,11 @@
                 <image class="contact-details-icon" src="{{detail.icon}}" mode="aspectFit" />
                 <text>{{detail.label}}</text>
               </button>
-              <view wx:else class="contact-row-label">
+              <view wx:else class="contact-row-label {{detail.id === 'author' ? 'contact-detail-section-start' : ''}}">
                 <image class="contact-details-icon" src="{{detail.icon}}" mode="aspectFit" />
                 <text>{{detail.label}}</text>
               </view>
-              <view class="contact-row-value contact-detail-value">
+              <view class="contact-row-value contact-detail-value {{detail.id === 'author' ? 'contact-detail-section-start' : ''}}">
                 <button
                   wx:if="{{detail.action === 'copy'}}"
                   class="contact-value-button"

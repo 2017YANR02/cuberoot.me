@@ -164,7 +164,12 @@
 }
 
 .contact-detail-value {
+  justify-self: start;
   word-break: break-all;
+}
+
+.contact-detail-section-start {
+  margin-top: 39rpx;
 }
 
 .contact-value-button {
