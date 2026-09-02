@@ -8,9 +8,9 @@ import { Settings } from 'lucide-react';
 import { useT } from '@/hooks/useT';
 import { useIsAdmin } from '@/lib/auth-store';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
-import { stickeringGroupsFor, type StickeringGroup } from './engine/nxn/stickering';
+import type { StickeringGroup } from './engine/nxn/stickering';
 import { CUSTOM_STICKERING, countSids, type PickGrain, type CustomTreatment } from './engine/nxn/customStickering';
-import { visualcubeStageGroups, VC_MASK_LABEL } from './engine/nxn/vcStageMask';
+import { stickeringSelectGroupsFor, VC_MASK_LABEL } from './engine/nxn/vcStageMask';
 import { applyMaskConfig, maskLabelOverride, maskRowsForOrder, PRESET_GROUP } from './engine/nxn/maskConfig';
 import { PRESET_PREFIX } from '@/lib/sim-masks-api';
 import { useSimMasks } from './useSimMasks';
@@ -78,6 +78,7 @@ function groupLabel(group: string, t: (zh: string, en: string) => string): strin
     case 'Reduction': return t('降阶', 'Reduction');
     case 'General': return t('通用', 'General');
     case 'Miscellaneous': return t('其它', 'Miscellaneous');
+    case 'LBL': return t('层先法', 'LBL');
     // visualcube 搬来的遮罩(退役对照表 §2b)
     case 'VCMasks': return t('遮罩', 'Masks');
     case 'VCMasksSize': return t('遮罩(阶专属)', 'Masks (this size)');
@@ -125,7 +126,7 @@ export default function StickeringSelect({
   // 代码里的默认清单(单一源);管理员的覆盖层再叠上去。
   const baseGroups = useMemo<StickeringGroup[]>(() => {
     // NxN:引擎自带阶段(方法学 CFOP/ZZ/Roux/…)+ visualcube 整套 MASK 清单(去重)。
-    if (typeof puzzleKind === 'number') return [...stickeringGroupsFor(puzzleKind), ...visualcubeStageGroups(puzzleKind)];
+    if (typeof puzzleKind === 'number') return stickeringSelectGroupsFor(puzzleKind);
     if (puzzleKind === 'sq1') return SQ1_GROUPS;
     if (puzzleKind === 'megaminx') return MEGAMINX_GROUPS;
     if (puzzleKind === 'fto') return FTO_GROUPS;

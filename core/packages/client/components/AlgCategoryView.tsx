@@ -19,6 +19,7 @@ import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Penci
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import type { UniqueIdentifier } from '@dnd-kit/core';
 import {
   loadAlg, getAlgSetMeta, ALG_PUZZLES,
   type AlgCase, type AlgEntry, type AlgFile, type AlgPuzzle, type AlgSubmission, type AlgTag,
@@ -92,6 +93,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 import { firstAlgorithmAverageStm } from '@/lib/alg-metrics';
 import BoolToggle from '@/components/BoolToggle';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { hasOhAlgsForHand, OH_HANDS, ohAlgsForCase, supportsOhHands, type OhHand } from '@/lib/alg_oh_hand';
 import {
   OPTIMAL_METRICS,
@@ -288,7 +290,7 @@ function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAn
 }
 
 /** dnd-kit sortable wrapper:admin 模式下渲染拖动 handle,普通模式下退化成裸 div */
-function SortableCaseCard({ id, draggable, children }: { id: number; draggable: boolean; children: React.ReactNode }) {
+export function SortableCaseCard({ id, draggable, children }: { id: UniqueIdentifier; draggable: boolean; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !draggable });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -305,7 +307,7 @@ function SortableCaseCard({ id, draggable, children }: { id: number; draggable: 
           className="alg-case-drag-handle"
           {...attributes}
           {...listeners}
-          title="drag to reorder"
+          title={tr({ zh: '拖动调整卡片顺序', en: 'Drag to reorder cards' })}
         >
           <GripVertical size={14} />
         </button>
@@ -1241,7 +1243,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             )}
           </div>
         )}
-        {puzzleParam === 'sq1' && (
+        {puzzleParam === 'sq1' && !isSq1Ep && (
           <BoolToggle
             value={sq1BlackTop}
             onChange={setSq1BlackTop}
@@ -1266,8 +1268,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         )}
         {!collection && !subgroupParam && puzzleParam === 'sq1' && set === 'pbl' && (
           <>
-            <Link href="/alg/sq1/pbl-notation" className="alg-recog-cta" prefetch={false}>
-              {tr({ zh: '助记说明', en: 'Mnemonic guide' })}
+            <Link href="/alg/sq1/karnaukh-notation" className="alg-recog-cta" prefetch={false}>
+              {tr({ zh: 'Karnaukh 记号', en: 'Karnaukh notation' })}
             </Link>
             <Link href="/alg/sq1/pbl-finder" className="alg-recog-cta" prefetch={false}>
               {tr({ zh: '高级查找', en: 'Advanced finder' })}
@@ -1434,24 +1436,36 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
 
       {data && !showSubgroupPicker && !showSubSubgroupPicker && isSq1Ep && (
         <div className="alg-ep-options">
-          <PillToggle
-            value={sq1EpNumericNames}
-            onChange={setSq1EpNumericNames}
-            offLabel={tr({ zh: '英文命名', en: 'English names' })}
-            onLabel={tr({ zh: '数字命名', en: 'Numeric names' })}
-            ariaLabel={tr({ zh: '切换 SQ1 EP 命名方式', en: 'Switch SQ1 EP naming system' })}
-          />
-          <BoolToggle
-            value={sq1EpHasParity}
-            onChange={setSq1EpHasParity}
-            label={tr({ zh: '特', en: 'Parity' })}
-          />
-          <p className="alg-ep-parity-note">
-            {tr({
-              zh: '“特”指棱特：上下层棱块排列的奇偶性不同。中层翻转另算。',
-              en: 'Parity means the layers have different edge-permutation parity. An equator flip is separate.',
-            })}
-          </p>
+          <div className="alg-ep-toggle-row">
+            <PillToggle
+              value={sq1EpNumericNames}
+              onChange={setSq1EpNumericNames}
+              offLabel={tr({ zh: '英文命名', en: 'English names' })}
+              onLabel={tr({ zh: '数字命名', en: 'Numeric names' })}
+              ariaLabel={tr({ zh: '切换 SQ1 EP 命名方式', en: 'Switch SQ1 EP naming system' })}
+            />
+            <span className="alg-ep-parity-control">
+              <BoolToggle
+                value={sq1EpHasParity}
+                onChange={setSq1EpHasParity}
+                label={tr({ zh: '特', en: 'Parity' })}
+              />
+              <InfoTooltip
+                icon={HelpCircle}
+                iconSize={16}
+                content={tr({
+                  zh: '棱特：上下层棱块排列的奇偶性不同。',
+                  en: 'Edge parity: the layers have different edge-permutation parity.',
+                })}
+              />
+            </span>
+            <BoolToggle
+              value={sq1BlackTop}
+              onChange={setSq1BlackTop}
+              label={tr({ zh: '黑顶', en: 'Black top' })}
+              className="alg-sq1-black-top-toggle"
+            />
+          </div>
         </div>
       )}
 

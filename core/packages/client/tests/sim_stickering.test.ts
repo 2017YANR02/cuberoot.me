@@ -322,8 +322,12 @@ describe('stickeringGroupsFor', () => {
   it('阶数清单:1 阶隐藏,2/3/4+ 各有分组', () => {
     expect(stickeringGroupsFor(1)).toEqual([]);
     expect(stickeringGroupsFor(2).flatMap((g) => g.items)).toContain('PBL');
-    expect(stickeringGroupsFor(3).slice(0, 3).map((g) => g.group)).toEqual(['Stickering', 'CFOP', 'Last Layer']);
-    const g3 = stickeringGroupsFor(3).flatMap((g) => g.items);
+    const groups3 = stickeringGroupsFor(3);
+    expect(groups3.slice(0, 5).map((g) => g.group)).toEqual(['Stickering', 'LBL', 'CFOP', 'ZB', 'Last Layer']);
+    expect(groups3.find((g) => g.group === 'LBL')?.items).toEqual(['Daisy']);
+    expect(groups3.find((g) => g.group === 'CFOP')?.items).toEqual(['Cross', 'F2L', 'OLL', 'PLL']);
+    expect(groups3.find((g) => g.group === 'ZB')?.items).toEqual(['ZBLS', 'ZBLL']);
+    const g3 = groups3.flatMap((g) => g.items);
     // twizzle 3x3 全清单(去掉 Void Cube / invisible / picture)
     for (const name of ['full', 'OLL', 'PLL', 'ZBLL', 'WVLS', 'Cross', 'EOcross', 'CMLL', 'L6EO', '2x2x3', 'EODF', 'G1', 'centers-only']) {
       expect(g3).toContain(name);

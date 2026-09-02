@@ -26,6 +26,9 @@ interface AlgSetRow {
   scraped_at: string | Date | null;
   updated_at: string | Date;
 }
+interface AlgCatalogPositionRow {
+  item_key: string;
+}
 interface AlgCaseRow {
   id: number | string;
   puzzle: string;
@@ -153,6 +156,51 @@ algSetsRoutes.get('/alg/sets', async (c) => {
     updatedAt: r.updated_at,
     count: Number(r.count),
   })));
+});
+
+// GET /v1/alg/sets/:puzzle/order — 公式库首页卡片顺序，包含 Cross / LSLL 等虚拟入口。
+algSetsRoutes.get('/alg/sets/:puzzle/order', async (c) => {
+  c.header('Cache-Control', 'public, max-age=3600');
+  const rows = await query<AlgCatalogPositionRow>(
+    `SELECT item_key FROM alg_catalog_positions
+      WHERE puzzle = ? ORDER BY position, item_key`,
+    [c.req.param('puzzle')],
+  );
+  return c.json({ slugs: rows.map(row => row.item_key) });
+});
+
+// PUT /v1/alg/sets/:puzzle/order — admin 重排公式库首页卡片。
+algSetsRoutes.put('/alg/sets/:puzzle/order', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  await requireAdminOrApiKey(c);
+
+  const puzzle = c.req.param('puzzle');
+  const body = await c.req.json<{ slugs?: unknown }>();
+  if (!Array.isArray(body.slugs) || body.slugs.length === 0 || body.slugs.length > 200) {
+    return c.json({ error: 'slugs must contain 1 to 200 items' }, 400);
+  }
+  const slugs: string[] = [];
+  for (const value of body.slugs) {
+    if (typeof value !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(value)) {
+      return c.json({ error: 'slugs must be lowercase catalog keys up to 64 characters' }, 400);
+    }
+    slugs.push(value);
+  }
+  if (new Set(slugs).size !== slugs.length) return c.json({ error: 'slugs must be unique' }, 400);
+
+  const valuesSql = slugs.map(() => '(?::varchar, ?::varchar, ?::int)').join(', ');
+  const params: unknown[] = [];
+  slugs.forEach((slug, position) => { params.push(puzzle, slug, position); });
+  await query(
+    `INSERT INTO alg_catalog_positions (puzzle, item_key, position)
+     VALUES ${valuesSql}
+     ON CONFLICT (puzzle, item_key) DO UPDATE
+       SET position = EXCLUDED.position, updated_at = NOW()`,
+    params,
+  );
+
+  return c.json({ ok: true });
 });
 
 // GET /v1/alg/sets/:puzzle/:set — 完整 AlgFile JSON(跟旧 JSON 文件 1:1)

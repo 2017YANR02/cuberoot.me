@@ -40,6 +40,7 @@ const PERK_LABEL: Record<string, { zh: string; en: string }> = {
   early: { zh: '新功能抢先体验', en: 'Early access to new features' },
   thanks: { zh: '致谢名单署名', en: 'Listed in the acknowledgments' },
   platform_follow: { zh: '获得魔方根在各平台的关注', en: 'Get followed by CubeRoot across platforms' },
+  vip_group: { zh: '进入魔方根 VIP 群', en: 'Join the CubeRoot VIP group' },
   lifetime: { zh: '一次付费,永久有效', en: 'Pay once, valid forever' },
   teacher_student_profile_ranking: {
     zh: '老师主页展示学生，学生主页展示老师，排名页展示老师',
@@ -178,6 +179,7 @@ export default function MembershipPage() {
   const showAutoRenew = autoRenewPlans.length > 0;
   const universalPerks = intersectPerks(sortedPlans);
   if (!universalPerks.includes('platform_follow')) universalPerks.push('platform_follow');
+  if (!universalPerks.includes('vip_group')) universalPerks.push('vip_group');
   const universalPerkSet = new Set(universalPerks);
   const enterpriseSharedPerks = intersectPerks(enterprisePlans)
     .filter((perk) => !universalPerkSet.has(perk));

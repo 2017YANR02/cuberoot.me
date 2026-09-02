@@ -118,3 +118,14 @@ export function visualcubeStageGroups(order: number): StickeringGroup[] {
   if (extraItems.length) out.push({ group: 'VCMasksSize', items: extraItems });
   return out;
 }
+
+/** 合并原生阶段与 VisualCube 遮罩；3 阶 FL 归入层先法而不重复列在遮罩中。 */
+export function stickeringSelectGroupsFor(order: number): StickeringGroup[] {
+  const engineGroups = stickeringGroupsFor(order);
+  const vcGroups = visualcubeStageGroups(order);
+  if (order !== 3) return [...engineGroups, ...vcGroups];
+  return [
+    ...engineGroups.map((group) => group.group === 'LBL' ? { ...group, items: [...group.items, 'fl'] } : group),
+    ...vcGroups.map((group) => ({ ...group, items: group.items.filter((item) => item !== 'fl') })),
+  ];
+}

@@ -23,7 +23,7 @@ function MnemonicTable({ group }: { group: Sq1PblMnemonicGroup }) {
         <table className="alg-mnemonic-table">
           <thead>
             <tr>
-              <th scope="col">{t('助记', 'Mnemonic')}</th>
+              <th scope="col">{t('记号', 'Notation')}</th>
               <th scope="col">{t('原表定义（英文原文）', 'Source definition')}</th>
             </tr>
           </thead>
@@ -51,7 +51,7 @@ export default function Sq1PblNotationPage() {
     <main className="alg-root alg-notation-page">
       <div className="alg-notation-shell alg-mnemonic-shell">
         <header className="alg-notation-hero">
-          <h1>{t('SQ1 PBL 助记说明', 'Square-1 PBL mnemonic guide')}</h1>
+          <h1>{t('SQ1 Karnaukh记号', 'Square-1 Karnaukh notation')}</h1>
           <nav className="alg-notation-links" aria-label={t('PBL 页面', 'PBL pages')}>
             <Link href="/alg/sq1/pbl" className="alg-notation-reference" prefetch={false}>
               {t('PBL 公式集', 'PBL algorithms')}
@@ -64,11 +64,11 @@ export default function Sq1PblNotationPage() {
 
         <div className="alg-mnemonic-intro">
           <p>{t(
-            '公式卡片里括号标出的“原表助记”来自 Daniel’s Public PBL Doc。它是为批量记忆设计的 Karnaukh 记号，不是播放器接受的标准 Square-1 公式。',
+            '公式卡片里括号标出的“原表记号”来自 Daniel’s Public PBL Doc。它是为批量记忆设计的 Karnaukh 记号，不是播放器接受的标准 Square-1 公式。',
             'The “source mnemonic” in parentheses on each algorithm card comes from Daniel’s Public PBL Doc. Karnaukh notation is designed for memorising many algorithms; it is not executable Square-1 notation for the player.',
           )}</p>
           <p>{t(
-            '卡片主行的 (a,b) / … 才是可复制、可播放的公式。助记始终只作阅读提示，不参与解析、动画或训练。',
+            '卡片主行的 (a,b) / … 才是可复制、可播放的公式。Karnaukh 记号始终只作阅读提示，不参与解析、动画或训练。',
             'The main (a,b) / … line is the executable formula to copy or play. Mnemonics remain reading aids and never enter parsing, animation, or training.',
           )}</p>
         </div>
@@ -89,7 +89,7 @@ export default function Sq1PblNotationPage() {
             </div>
             <div>
               <dt><code>\</code></dt>
-              <dd>{t('原表所称的“下层起始切层”；它是助记方向标记，不是网站标准公式输入。', 'The source’s “down starting slice”; it is a mnemonic direction marker, not site-standard algorithm input.')}</dd>
+              <dd>{t('原表所称的“下层起始切层”；它是 Karnaukh 记号的方向标记，不是网站标准公式输入。', 'The source’s “down starting slice”; it is a mnemonic direction marker, not site-standard algorithm input.')}</dd>
             </div>
             <div>
               <dt><code>//</code></dt>
@@ -101,7 +101,7 @@ export default function Sq1PblNotationPage() {
             </div>
             <div>
               <dt>{t('空格与换行', 'Spaces and line breaks')}</dt>
-              <dd>{t('空格分隔助记片段；同一格换行通常是另一套助记。原表没有定义括号、方括号、冒号和自然语言的通用语法，本站不解析这些写法。', 'Spaces separate mnemonic chunks; a new line in one cell usually starts an alternative. The source does not define general syntax for parentheses, brackets, colons, or prose, so this site does not parse them.')}</dd>
+              <dd>{t('空格分隔记号片段；同一格换行通常是另一套写法。原表没有定义括号、方括号、冒号和自然语言的通用语法，本站不解析这些写法。', 'Spaces separate mnemonic chunks; a new line in one cell usually starts an alternative. The source does not define general syntax for parentheses, brackets, colons, or prose, so this site does not parse them.')}</dd>
             </div>
           </dl>
         </section>
@@ -131,7 +131,7 @@ export default function Sq1PblNotationPage() {
         <section className="alg-mnemonic-section" aria-labelledby="mnemonic-undefined">
           <h2 id="mnemonic-undefined">{t('原表未完整说明', 'Not fully defined by the source')}</h2>
           <p>{t(
-            '下面 31 个形式确实出现在推荐助记中，但 Help 页及其复制页都没有给出数值展开式。本站原样保留，不根据名称猜解。M′、m′ 如何从 M、m 的两个候选值中选择，原表也没有说明。',
+            '下面 31 个形式确实出现在推荐记号中，但 Help 页及其复制页都没有给出数值展开式。本站原样保留，不根据名称猜解。M′、m′ 如何从 M、m 的两个候选值中选择，原表也没有说明。',
             'These 31 forms do occur in recommendations, but neither Help sheet provides a numeric expansion. This site preserves them verbatim and does not guess from their names. The source also does not explain how M′ and m′ select between the two values listed for M and m.',
           )}</p>
           <div className="alg-mnemonic-undefined-list">

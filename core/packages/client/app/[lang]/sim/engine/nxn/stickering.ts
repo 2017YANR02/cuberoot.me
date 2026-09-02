@@ -284,8 +284,8 @@ export function stickeringMaskFn(order: number, name: string, orientation?: stri
 
 export interface StickeringGroup { group: string; items: string[] }
 
-const LL_GROUP = ["OLL", "PLL", "LL", "EOLL", "COLL", "OCLL", "CPLL", "CLL", "EPLL", "ELL", "ZBLL"];
-const LS_GROUP = ["LS", "LSOLL", "LSOCLL", "ELS", "CLS", "ZBLS", "VLS", "WVLS"];
+const LL_GROUP = ["LL", "EOLL", "COLL", "OCLL", "CPLL", "CLL", "EPLL", "ELL"];
+const LS_GROUP = ["LS", "LSOLL", "LSOCLL", "ELS", "CLS", "VLS", "WVLS"];
 
 /** 每个阶数的下拉清单(分组与 twizzle 相同;group 名是英文 key,UI 层再本地化)。
  *  空数组 = 该拼图不支持(隐藏下拉)。 */
@@ -301,7 +301,9 @@ export function stickeringGroupsFor(order: number): StickeringGroup[] {
   if (order === 3) {
     return [
       { group: "Stickering", items: ["full", "custom"] },
-      { group: "CFOP", items: ["F2L", "Daisy", "Cross"] },
+      { group: "LBL", items: ["Daisy"] },
+      { group: "CFOP", items: ["Cross", "F2L", "OLL", "PLL"] },
+      { group: "ZB", items: ["ZBLS", "ZBLL"] },
       { group: "Last Layer", items: LL_GROUP },
       { group: "Last Slot", items: LS_GROUP },
       { group: "ZZ", items: ["EO", "EOline", "EOcross"] },

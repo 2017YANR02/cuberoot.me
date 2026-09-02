@@ -15,6 +15,7 @@ export function CaseThumb({
   puzzle, set, sticker, alg, setup, size = 88, mask: maskOverride, local, loading,
   alt,
   sq1BlackTop = true,
+  sq1SideBySide = false,
   simplifyRecognition = false,
   viewAngle = 'default',
   orientation = DEFAULT_ALG_CUBE_ORIENTATION,
@@ -38,6 +39,8 @@ export function CaseThumb({
   alt?: string;
   /** Square-1 flat thumbnails default to the common black-top colour scheme. */
   sq1BlackTop?: boolean;
+  /** Put both Square-1 layers left-to-right instead of top-to-bottom. */
+  sq1SideBySide?: boolean;
   /** Show only the strongest recognition features on supported 3x3 plan views. */
   simplifyRecognition?: boolean;
   /** Rotate an applicable last-layer case by U / U2 / U' while keeping its solution coherent. */
@@ -48,8 +51,8 @@ export function CaseThumb({
   sq1Layer?: 'both' | 'top';
 }) {
   const plan = useMemo(() => caseThumbPlan({
-    puzzle, set, sticker, alg, setup, mask: maskOverride, sq1BlackTop, simplifyRecognition, viewAngle, orientation,
-  }), [puzzle, set, sticker, alg, setup, maskOverride, sq1BlackTop, simplifyRecognition, viewAngle, orientation]);
+    puzzle, set, sticker, alg, setup, mask: maskOverride, sq1BlackTop, sq1SideBySide, simplifyRecognition, viewAngle, orientation,
+  }), [puzzle, set, sticker, alg, setup, maskOverride, sq1BlackTop, sq1SideBySide, simplifyRecognition, viewAngle, orientation]);
 
   // Square-1 flat SVGs stack two layers vertically. Render at 2x then crop the
   // upper half so a requested single layer keeps the same visual size as a full thumb.
@@ -57,6 +60,9 @@ export function CaseThumb({
     && plan.layout === 'stacked-layers'
     && sq1Layer === 'top';
   const renderSize = cropTopLayer ? size * 2 : size;
+  const renderHeight = plan.renderer === 'inline-svg' && plan.layout === 'side-by-side-layers'
+    ? renderSize / 2
+    : renderSize;
   const accessibleAlt = alt ?? ('alt' in plan ? plan.alt : `${puzzle} case`);
   let art: ReactNode;
   if (plan.renderer === 'inline-svg') {
@@ -65,7 +71,7 @@ export function CaseThumb({
         className="puzzle-art"
         role="img"
         aria-label={accessibleAlt}
-        style={{ width: renderSize, height: renderSize, display: 'inline-block', lineHeight: 0 }}
+        style={{ width: renderSize, height: renderHeight, display: 'inline-block', lineHeight: 0 }}
         dangerouslySetInnerHTML={{ __html: plan.svg }}
       />
     );

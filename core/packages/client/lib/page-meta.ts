@@ -582,10 +582,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Find Square-1 PBL algorithms by top and bottom layer permutation.',
     },
   },
-  'alg/sq1/pbl-notation': {
-    title: { zh: 'SQ1 PBL 助记说明', en: 'Square-1 PBL Mnemonic Guide' },
+  'alg/sq1/karnaukh-notation': {
+    title: { zh: 'SQ1 Karnaukh记号', en: 'Square-1 Karnaukh Notation' },
     description: {
-      zh: '查阅 Daniel’s Public PBL Doc 使用的 Karnaukh 助记记号、紧凑数对与完整组合展开式。',
+      zh: '查阅 Daniel’s Public PBL Doc 使用的 Karnaukh 记号、紧凑数对与完整组合展开式。',
       en: 'Reference the Karnaukh mnemonics, packed number pairs, and full combination expansions used in Daniel’s Public PBL Doc.',
     },
   },

@@ -354,8 +354,8 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
           />
         )}
         {puzzle === 'sq1' && set === 'pbl' && (
-          <Link href="/alg/sq1/pbl-notation" className="alg-recog-cta" prefetch={false}>
-            {tr({ zh: '助记说明', en: 'Mnemonic guide' })}
+          <Link href="/alg/sq1/karnaukh-notation" className="alg-recog-cta" prefetch={false}>
+            {tr({ zh: 'Karnaukh 记号', en: 'Karnaukh notation' })}
           </Link>
         )}
         {puzzle === 'fto' && (

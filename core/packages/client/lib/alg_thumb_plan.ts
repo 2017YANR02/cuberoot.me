@@ -132,7 +132,7 @@ export function cubeThumbParams(
 type AlgDriver = { alg: string; case?: never } | { case: string; alg?: never };
 
 export type CaseThumbPlan =
-  | { renderer: 'inline-svg'; svg: string; alt: string; layout?: 'stacked-layers' }
+  | { renderer: 'inline-svg'; svg: string; alt: string; layout?: 'stacked-layers' | 'side-by-side-layers' }
   | { renderer: 'asset'; src: string; alt: string; width: number; height: number }
   | { renderer: 'engine'; puzzle: 'pyraminx'; driver: AlgDriver }
   | { renderer: 'sr'; kind: 'megaminx-top'; driver: AlgDriver }
@@ -151,6 +151,7 @@ export interface CaseThumbPlanInput {
   setup?: string;
   mask?: string;
   sq1BlackTop?: boolean;
+  sq1SideBySide?: boolean;
   /** 3x3 plan-view teaching projection: hide noise without changing the case orientation. */
   simplifyRecognition?: boolean;
   /** User-selected final U-layer angle for applicable last-layer views. */
@@ -172,6 +173,7 @@ export function caseThumbPlan({
   setup,
   mask,
   sq1BlackTop = true,
+  sq1SideBySide = false,
   simplifyRecognition = false,
   viewAngle = 'default',
   orientation = DEFAULT_ALG_CUBE_ORIENTATION,
@@ -194,6 +196,7 @@ export function caseThumbPlan({
     const renderOptions = {
       ...(hidden ? { mask: { ids: hidden, color: 'transparent' } } : {}),
       compactFaces: !isCubeshape,
+      sideBySide: sq1SideBySide,
     };
     const showMiddle = !['cs', 'csp', 'parity'].includes(normalizedSet) && !hidden;
     const colors = normalizedSet === 'cs'
@@ -208,14 +211,14 @@ export function caseThumbPlan({
         renderer: 'inline-svg',
         svg: renderSq1ScrambleSvg(forward, colors, renderOptions, showMiddle),
         alt: 'Square-1 case',
-        layout: 'stacked-layers',
+        layout: sq1SideBySide ? 'side-by-side-layers' : 'stacked-layers',
       };
     } catch {
       return {
         renderer: 'inline-svg',
         svg: renderSq1ScrambleSvg('', colors, renderOptions, showMiddle),
         alt: 'Square-1 case',
-        layout: 'stacked-layers',
+        layout: sq1SideBySide ? 'side-by-side-layers' : 'stacked-layers',
       };
     }
   }

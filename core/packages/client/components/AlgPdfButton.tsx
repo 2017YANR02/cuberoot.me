@@ -101,8 +101,8 @@ export default function AlgPdfButton({ build, className, label = 'PDF', title }:
   // 标签写「纸」而不是光「浅色 / 深色」:菜单挨着页面本身的视图切换器弹出来,
   // 不点明是纸色的话会被当成又一个页面开关。
   const papers: { value: AlgPdfTheme; label: string }[] = [
-    { value: 'light', label: tr({ zh: '浅色纸', en: 'Light paper' }) },
-    { value: 'dark', label: tr({ zh: '深色纸', en: 'Dark paper' }) },
+    { value: 'light', label: tr({ zh: '浅色纸', en: 'Light' }) },
+    { value: 'dark', label: tr({ zh: '深色纸', en: 'Dark' }) },
   ];
 
   return (
