@@ -542,6 +542,48 @@ describe('shared web-view page state', () => {
     );
   });
 
+  it('clears the native session after the hosted account page logs out', () => {
+    const removeStorageSync = vi.fn();
+    vi.stubGlobal('wx', { removeStorageSync });
+    const context = createContext();
+    const options = createWebViewPageOptions() as unknown as {
+      handleWebViewMessage(
+        this: WebViewPageContext,
+        event: { detail: { data: unknown[] } },
+      ): void;
+    };
+
+    options.handleWebViewMessage.call(context, {
+      detail: {
+        data: [
+          { type: 'unrelated', action: 'logout' },
+          { type: 'cuberoot:session', action: 'logout' },
+        ],
+      },
+    });
+
+    expect(removeStorageSync).toHaveBeenCalledOnce();
+    expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
+  });
+
+  it('ignores unrelated web-view messages', () => {
+    const removeStorageSync = vi.fn();
+    vi.stubGlobal('wx', { removeStorageSync });
+    const context = createContext();
+    const options = createWebViewPageOptions() as unknown as {
+      handleWebViewMessage(
+        this: WebViewPageContext,
+        event: { detail: { data: unknown[] } },
+      ): void;
+    };
+
+    options.handleWebViewMessage.call(context, {
+      detail: { data: [{ type: 'cuberoot:session', action: 'login' }] },
+    });
+
+    expect(removeStorageSync).not.toHaveBeenCalled();
+  });
+
   it('explains the split logout state when the website route fails to load', async () => {
     const context = createContext();
 

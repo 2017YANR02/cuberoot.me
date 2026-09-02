@@ -29,6 +29,7 @@ import {
   openRequiredSessionLogin,
   type RequiredSessionDestination,
 } from './required-session';
+import { decodeMiniProgramSessionMessage } from './web-session-contract';
 import { tr } from './i18n';
 
 export interface WebViewPageData {
@@ -58,6 +59,7 @@ export interface WebViewPageContext {
 
 interface WebViewPageMethods {
   handleWebViewError(event: WechatMiniprogram.BaseEvent): void;
+  handleWebViewMessage(event: WechatMiniprogram.CustomEvent<{ data?: unknown[] }>): void;
   loginWithMiniProgram(): Promise<void>;
   retry(): void;
   retryMiniProgramSession(): void;
@@ -570,6 +572,13 @@ export function createWebViewPageOptions(
 
     handleWebViewError(event) {
       markWebRouteFailed(this, event.currentTarget.dataset.attempt);
+    },
+
+    handleWebViewMessage(event) {
+      const messages = Array.isArray(event.detail?.data) ? event.detail.data : [];
+      if (messages.some((message) => decodeMiniProgramSessionMessage(message))) {
+        clearStoredSession();
+      }
     },
 
     async loginWithMiniProgram() {
