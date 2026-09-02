@@ -160,6 +160,7 @@ const TABLES: Table[] = [
 
   // ── accounts & auth ────────────────────────────────────
   { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172, 186, 194], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
+  { name: 'account_last_devices', domain: 'account', origin: '0195', purpose: { zh: '每个账号最近使用设备的粗粒度类型、系统、浏览器和时间；不保存原始 User-Agent、IP 或设备指纹', en: 'Coarse latest-device type, OS, browser, and time per account; raw User-Agent, IP, and device fingerprints are not stored' } },
   { name: 'user_friendships', domain: 'account', origin: '0175', purpose: { zh: '好友申请与已接受的双向好友关系；每对账号只保留一条规范记录', en: 'Pending requests and accepted two-way friendships, with one canonical row per account pair' } },
   { name: 'user_blocks', domain: 'account', origin: '0175', purpose: { zh: '单向黑名单；拉黑时同步切断好友关系与待处理申请', en: 'Directed blocks; blocking also removes friendships and pending requests' } },
   { name: 'user_wca_friend_contacts', domain: 'account', origin: '0178', purpose: { zh: '账号私有的 WCA 好友条目；对方未注册时只保存在本人列表，不代表双向好友或已发送申请', en: 'Account-private WCA friend entries; an unregistered person is only saved to the owner\'s list and does not imply a mutual friendship or delivered request' } },
@@ -686,6 +687,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 196, slug: 'battle_room_revision', desc: { zh: '联机对战房间增加单调 revision，Web 与全部 App 宿主统一拒绝延迟到达的旧轮询快照。', en: 'Add a monotonic battle-room revision so Web and every App host consistently reject delayed stale polling snapshots.' } },
   { n: 197, slug: 'battle_room_video_generation', desc: { zh: '为自托管 LiveKit 增加房间媒体 generation；踢人或离开时轮换，使旧 token 只能回到隔离的旧媒体房。', en: 'Add a media-room generation for self-hosted LiveKit; rotate it on kick or leave so old tokens can only rejoin an isolated media room.' } },
   { n: 198, slug: 'battle_room_round_roster', desc: { zh: '同步起表时冻结本轮参赛者名单，避免离线回归或中途加入者未经准备自动起表、卡住结算。', en: 'Freeze synchronized-round participants so reconnecting or mid-round players neither auto-start unprepared nor block settlement.' } },
+  { n: 195, slug: 'account_last_devices', desc: { zh: '记录账号最近使用设备的粗粒度类型、系统、浏览器和时间，不保存原始 User-Agent 或设备指纹。', en: 'Record coarse latest-device type, OS, browser, and time without retaining raw User-Agent or a device fingerprint.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

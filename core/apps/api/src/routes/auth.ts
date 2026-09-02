@@ -6,6 +6,7 @@ import type {
 import { webSessionError } from '@cuberoot/shared/auth/web-session';
 import { query } from '../db/connection.js';
 import { signSession, verifySession } from '../utils/session.js';
+import { captureAccountDevice } from '../utils/account_device.js';
 import {
   loginWithIdentity,
   findUserByWcaId,
@@ -106,6 +107,7 @@ authRoutes.get('/auth/callback', async (c) => {
     wcaId,
     countryIso2: verifiedCountryIso2,
   });
+  await captureAccountDevice(account.id, c.req.header('User-Agent'));
   const jwtToken = signSession({ uid: account.id, wcaId: account.wca_id, name: account.display_name });
 
   // 重定向回前端，带上 JWT
@@ -129,6 +131,7 @@ authRoutes.get('/auth/me', async (c) => {
         ? await findUserByWcaId(payload.wcaId)
         : null;
     if (!account) return c.json(webSessionError('INVALID_SESSION', 'Invalid token'), 401);
+    await captureAccountDevice(account.id, c.req.header('User-Agent'));
     const response: WebSessionUserEnvelope = { user: publicUser(account) };
     return c.json(response);
   } catch {
@@ -198,6 +201,7 @@ authRoutes.post('/auth/exchange', async (c) => {
       wcaId: user.wca_id,
       countryIso2: verifiedCountryIso2,
     });
+    await captureAccountDevice(account.id, c.req.header('User-Agent'));
     const jwtToken = signSession({ uid: account.id, wcaId: account.wca_id, name: account.display_name });
 
     const session: WebSession = { token: jwtToken, user: publicUser(account) };
@@ -228,6 +232,7 @@ authRoutes.post('/auth/refresh', async (c) => {
     // 按账号最新态续签(可能刚绑了新的 wca / 改了名)。查不到账号 → 强制重登。
     const u = await getUserById(uid);
     if (!u) return c.json(webSessionError('UNAUTHENTICATED', 'unauthorized'), 401);
+    await captureAccountDevice(u.id, c.req.header('User-Agent'));
     const fresh = signSession({ uid: u.id, wcaId: u.wca_id, name: u.display_name || (payload.name ?? '') });
     const session: WebSession = { token: fresh, user: publicUser(u) };
     return c.json(session);

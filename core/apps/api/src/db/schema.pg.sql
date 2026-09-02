@@ -404,6 +404,23 @@ CREATE UNIQUE INDEX uq_app_users_wca ON app_users(wca_id) WHERE wca_id IS NOT NU
 CREATE TRIGGER app_users_updated_at BEFORE UPDATE ON app_users
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
+-- Privacy-safe latest device summary for administrator account support.
+-- Raw User-Agent, IP address, and persistent device identifiers are not retained.
+CREATE TABLE account_last_devices (
+  user_id         BIGINT PRIMARY KEY REFERENCES app_users(id) ON DELETE CASCADE,
+  device_type     VARCHAR(16) NOT NULL
+                  CHECK (device_type IN ('phone', 'tablet', 'desktop', 'other')),
+  os_family       VARCHAR(16) NOT NULL
+                  CHECK (os_family IN ('android', 'ios', 'windows', 'macos', 'linux', 'other')),
+  os_major        SMALLINT,
+  browser_family  VARCHAR(16) NOT NULL
+                  CHECK (browser_family IN ('chrome', 'edge', 'firefox', 'safari', 'wechat', 'webview', 'other')),
+  browser_major   SMALLINT,
+  container       VARCHAR(16) NOT NULL
+                  CHECK (container IN ('wechat', 'webview', 'browser')),
+  last_seen_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- ── Internal Drive: approved users, private folders/files, resumable uploads ──
 CREATE TABLE drive_members (
   user_id            BIGINT PRIMARY KEY REFERENCES app_users(id) ON DELETE CASCADE,

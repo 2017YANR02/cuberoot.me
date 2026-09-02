@@ -96,6 +96,15 @@ export interface AdminUserRecord {
   hasPassword: boolean;
   emailNotify: boolean;
   lang: string | null;
+  lastDevice: {
+    deviceType: 'phone' | 'tablet' | 'desktop' | 'other';
+    osFamily: 'android' | 'ios' | 'windows' | 'macos' | 'linux' | 'other';
+    osMajor: number | null;
+    browserFamily: 'chrome' | 'edge' | 'firefox' | 'safari' | 'wechat' | 'webview' | 'other';
+    browserMajor: number | null;
+    container: 'wechat' | 'webview' | 'browser';
+    lastSeenAt: string;
+  } | null;
   identities: AdminUserIdentity[];
 }
 export interface AdminUsersResponse {
