@@ -435,6 +435,14 @@ button {
   color: var(--foreground);
 }
 
+.app-shell.is-solving .surface-chrome {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.surface-chrome { transition: opacity 120ms ease; }
+
 .history-view,
 .settings-view,
 .recovery-screen {
@@ -1612,6 +1620,7 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .surface-chrome,
   .toast {
     transition: none;
   }

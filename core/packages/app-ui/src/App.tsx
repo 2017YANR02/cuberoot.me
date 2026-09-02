@@ -3476,7 +3476,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   return (
     <main
-      className={`app-shell app-shell--${view}${shellViewport.classNameSuffix}${fullscreen ? ' app-shell--timer-fullscreen' : ''}`}
+      className={`app-shell app-shell--${view}${shellViewport.classNameSuffix}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
       style={shellViewport.style}
     >
       <TimerPrintController
@@ -3811,6 +3811,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                   >
                     {currentScrambleEntry?.trainerMeta && (
                       <TimerRandomDifficultyCaseBar
+                        disabled={!sourceControlsEnabled}
                         depth={currentScrambleEntry.trainerMeta.depth}
                         language={language}
                         occurrenceKey={currentScrambleEntry.id}
