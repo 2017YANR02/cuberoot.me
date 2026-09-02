@@ -4,7 +4,7 @@
  * v3 adds a SESSION layer on top of the v2 per-event model (cstimer / dctimer
  * style named sessions). loadAll()/saveAll() still operate on the ACTIVE
  * session so existing SoloView calls keep working; new listSessions() /
- * setActiveSession() / createSession() / … manage the session set.
+ * setActiveSession() / createAndActivateSession() / … manage the session set.
  *
  * Migration chain (loses no data):
  *   v1 (sessions[] → flat byEvent) → v2 (byEvent) → v3 (single "default"
@@ -28,11 +28,16 @@ import {
   activateTimerSessionForEvent as activateSharedTimerSessionForEvent,
   associateTimerSessionEvent,
   clearTimerSession as clearSharedTimerSession,
-  createTimerSession as createSharedTimerSession,
+  createAndActivateTimerSession,
   deleteTimerSession as deleteSharedTimerSession,
   moveTimerSolveToSession,
   renameTimerSession as renameSharedTimerSession,
+  selectTimerEventSession,
+  timerDefaultSessionName,
   timerSessionEvent,
+  timerSessionSelectedEvent,
+  timerSessionSnapshot,
+  type TimerSessionMutationFailure,
   type TimerSessionMutationResult,
   type TimerSessionSelectionResult,
 } from '@cuberoot/shared/timer';
@@ -54,19 +59,23 @@ function genSessionId(): string {
   return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
-function defaultSessionName(): string {
+function defaultSessionLanguage(): 'en' | 'zh' {
   // Best-effort i18n at migration time (settings/i18n may not be loaded yet).
   try {
-    if (typeof navigator !== 'undefined' && /^zh/i.test(navigator.language || '')) return '默认';
+    if (typeof navigator !== 'undefined' && /^zh/i.test(navigator.language || '')) return 'zh';
   } catch { /* ignore */ }
-  return 'Default';
+  return 'en';
+}
+
+function defaultSessionName(): string {
+  return timerDefaultSessionName(defaultSessionLanguage());
 }
 
 function databaseEnvironment() {
   return {
     nowMs: Date.now(),
     sessionId: genSessionId(),
-    language: defaultSessionName() === '默认' ? 'zh' as const : 'en' as const,
+    language: defaultSessionLanguage(),
   };
 }
 
@@ -75,12 +84,19 @@ function emptyDb(): DbShapeV3 {
   return createTimerDatabase(environment.nowMs, environment.sessionId, environment.language);
 }
 
+let volatileDatabase: DbShapeV3 | null = null;
+
+function rememberDatabase(database: DbShapeV3): DbShapeV3 {
+  volatileDatabase = database;
+  return database;
+}
+
 function loadRaw(): DbShapeV3 {
   try {
     const s = localStorage.getItem(KEY);
     if (s) {
       const parsed = parseTimerDatabaseJson(s, databaseEnvironment());
-      if (parsed) return parsed;
+      if (parsed) return rememberDatabase(parsed);
     }
     // Migrate forward: v2 first, then v1.
     const v2 = localStorage.getItem(LEGACY_V2_KEY);
@@ -88,7 +104,7 @@ function loadRaw(): DbShapeV3 {
       const migrated = parseTimerDatabaseJson(v2, databaseEnvironment());
       if (migrated) {
         saveRaw(migrated);
-        return migrated;
+        return rememberDatabase(migrated);
       }
     }
     const v1 = localStorage.getItem(LEGACY_V1_KEY);
@@ -96,18 +112,24 @@ function loadRaw(): DbShapeV3 {
       const migrated = parseTimerDatabaseJson(v1, databaseEnvironment());
       if (migrated) {
         saveRaw(migrated);
-        return migrated;
+        return rememberDatabase(migrated);
       }
     }
-    return emptyDb();
+    if (volatileDatabase) return volatileDatabase;
+    const created = emptyDb();
+    if (!saveRaw(created)) volatileDatabase = created;
+    return created;
   } catch {
-    return emptyDb();
+    if (volatileDatabase) return volatileDatabase;
+    return rememberDatabase(emptyDb());
   }
 }
 
 function saveRaw(db: DbShapeV3): boolean {
   // 活库写入:配额满时 persistItem 会先驱逐可再生缓存再重试,尽量保住真实数据。
-  return persistItem(KEY, JSON.stringify(db));
+  const saved = persistItem(KEY, JSON.stringify(db));
+  if (saved) volatileDatabase = db;
+  return saved;
 }
 
 export class TimerSessionWriteError extends Error {
@@ -117,7 +139,15 @@ export class TimerSessionWriteError extends Error {
   }
 }
 
+export class TimerSessionMutationError extends Error {
+  constructor(readonly failure: TimerSessionMutationFailure) {
+    super(`Timer session operation failed: ${failure}`);
+    this.name = 'TimerSessionMutationError';
+  }
+}
+
 function persistSessionMutation<T extends TimerSessionMutationResult>(result: T): T {
+  if (result.failure) throw new TimerSessionMutationError(result.failure);
   if (result.changed && !saveRaw(result.database)) throw new TimerSessionWriteError();
   return result;
 }
@@ -176,6 +206,10 @@ export function listSessions(): SessionMeta[] {
   return loadRaw().sessions.slice();
 }
 
+export function getSessionSnapshot() {
+  return timerSessionSnapshot(loadRaw());
+}
+
 /** Read one session's byEvent map (empty object if the id is unknown). */
 export function loadSessionData(id: string): Record<string, Solve[]> {
   return (loadRaw().dataBySession[id] ?? {}) as Record<string, Solve[]>;
@@ -214,10 +248,30 @@ export function setSessionEvent(id: string, event: EventId): void {
  */
 export function activateSessionForEvent(event: EventId): string | null {
   const db = loadRaw();
-  const result = persistSessionMutation<TimerSessionSelectionResult>(
-    activateSharedTimerSessionForEvent(db, event),
-  );
+  const mutation = activateSharedTimerSessionForEvent(db, event);
+  if (mutation.failure === 'no-matching-session') return null;
+  const result = persistSessionMutation<TimerSessionSelectionResult>(mutation);
   return result.sessionId;
+}
+
+export function selectSessionForEvent(
+  event: EventId,
+  autoSessionForEvent: boolean,
+): TimerSessionSelectionResult {
+  return persistSessionMutation(selectTimerEventSession(loadRaw(), event, autoSessionForEvent));
+}
+
+export function getSelectedSessionEvent(
+  sessionId: string | null,
+  currentEvent: EventId,
+  autoEventForSession: boolean,
+): EventId {
+  return timerSessionSelectedEvent(
+    loadRaw(),
+    sessionId,
+    currentEvent,
+    autoEventForSession,
+  );
 }
 
 export function setActiveSession(id: string): void {
@@ -225,36 +279,11 @@ export function setActiveSession(id: string): void {
   persistSessionMutation(activateTimerSession(db, id));
 }
 
-/** Create a new (empty) session and return its id. Does NOT switch to it. */
-export function createSession(name: string, event?: EventId): string {
-  const db = loadRaw();
-  let id = genSessionId();
-  let result = createSharedTimerSession(db, {
-    id,
-    name,
-    fallbackName: defaultSessionName(),
-    createdTs: Date.now(),
-    ...(event ? { event } : {}),
-  });
-  while (result.failure === 'duplicate-session-id') {
-    id = genSessionId();
-    result = createSharedTimerSession(db, {
-      id,
-      name,
-      fallbackName: defaultSessionName(),
-      createdTs: Date.now(),
-      ...(event ? { event } : {}),
-    });
-  }
-  persistSessionMutation(result);
-  return id;
-}
-
 /** Create and activate with one durable write for the shared switcher host. */
 export function createAndActivateSession(name: string, event: EventId): string {
   const db = loadRaw();
   let id = genSessionId();
-  let created = createSharedTimerSession(db, {
+  let created = createAndActivateTimerSession(db, {
     id,
     name,
     fallbackName: defaultSessionName(),
@@ -263,7 +292,7 @@ export function createAndActivateSession(name: string, event: EventId): string {
   });
   while (created.failure === 'duplicate-session-id') {
     id = genSessionId();
-    created = createSharedTimerSession(db, {
+    created = createAndActivateTimerSession(db, {
       id,
       name,
       fallbackName: defaultSessionName(),
@@ -271,8 +300,7 @@ export function createAndActivateSession(name: string, event: EventId): string {
       event,
     });
   }
-  const activated = activateTimerSession(created.database, id);
-  persistSessionMutation(activated);
+  persistSessionMutation(created);
   return id;
 }
 
@@ -345,17 +373,10 @@ export function clearSession(id: string): void {
 /**
  * Delete a session and its solves. Refuses to delete the last session.
  * If the active session is deleted, falls back to the first remaining one.
- * Returns the (possibly new) active session id, or null if refused.
+ * Returns the new active session id only when deleting the active session.
  */
 export function deleteSession(id: string): string | null {
-  const db = loadRaw();
-  const result = deleteSharedTimerSession(db, id);
-  if (result.failure === 'last-session') return null;
-  // Preserve the legacy adapter contract: deleting an unknown id is a no-op
-  // that reports the current active id.
-  if (result.failure === 'unknown-session') return db.activeSessionId;
-  persistSessionMutation(result);
-  return result.activeSessionId;
+  return persistSessionMutation(deleteSharedTimerSession(loadRaw(), id)).sessionId;
 }
 
 /**
