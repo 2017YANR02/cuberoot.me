@@ -228,6 +228,7 @@ export default function AdminUsersPage() {
                     <tr key={record.id}>
                       <td>
                         <AppLink href={`/account?view=user&user=${record.id}`} prefetch={false} className="admin-users-name">
+                          {record.countryIso2 && <Flag iso2={record.countryIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                           {record.wcaId ? displayCuberName(record.displayName, isZh) : record.displayName || t('未命名', 'Unnamed')}
                         </AppLink>
                         <span className="admin-users-id">UID {record.id}{record.wcaId ? ` / ${record.wcaId}` : ''}</span>
