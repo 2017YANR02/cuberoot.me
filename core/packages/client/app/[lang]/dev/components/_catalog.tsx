@@ -1015,6 +1015,14 @@ export const CATALOG: ComponentEntry[] = [
     usage: '<DateRangeInput from={from} to={to} onChange={(nextFrom, nextTo) => setRange([nextFrom, nextTo])} />',
   },
   {
+    name: 'DailyActivityChart',
+    import: "import { DailyActivityChart } from '@/components/DailyActivityChart';",
+    category: 'display',
+    zh: '后台时序活动柱形图。支持多数据序列、键盘逐日移动、鼠标与触摸选日、窄屏横向滚动和区间合计。',
+    en: 'Administrative time-series bar chart with multiple series, keyboard day navigation, pointer and touch selection, mobile horizontal scrolling, and range totals.',
+    usage: '<DailyActivityChart data={points} series={series} ariaLabel="Daily registrations" emptyLabel="No data" />',
+  },
+  {
     name: 'ListSelect',
     import: "import { ListSelect } from '@/components/ListSelect';",
     category: 'input',

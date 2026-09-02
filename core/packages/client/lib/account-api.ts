@@ -117,6 +117,17 @@ export interface AdminUsersResponse {
     completedProfiles: number;
     usersWithoutIdentity: number;
   };
+  membershipSummary?: {
+    activePersonal: number;
+    activeEnterprise: number;
+  };
+  activity?: {
+    from: string;
+    to: string;
+    timeZone: 'UTC';
+    registrations: Array<{ date: string; count: number }>;
+    memberships: Array<{ date: string; personal: number; enterprise: number }>;
+  };
   daily: Array<{ date: string; count: number }>;
   providerCounts: Array<{ provider: string; count: number }>;
   users: AdminUserRecord[];
@@ -129,6 +140,8 @@ export async function fetchAdminUsers(params: {
   pageSize?: number;
   sort?: string;
   direction?: 'asc' | 'desc';
+  from?: string;
+  to?: string;
 }): Promise<AdminUsersResponse> {
   const search = new URLSearchParams();
   if (params.q) search.set('q', params.q);
@@ -137,6 +150,8 @@ export async function fetchAdminUsers(params: {
   if (params.pageSize) search.set('pageSize', String(params.pageSize));
   if (params.sort) search.set('sort', params.sort);
   if (params.direction) search.set('direction', params.direction);
+  if (params.from) search.set('from', params.from);
+  if (params.to) search.set('to', params.to);
   const response = await fetch(apiUrl(`/v1/auth/admin/users?${search}`), {
     headers: authHeaders(false),
     cache: 'no-store',

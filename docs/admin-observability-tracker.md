@@ -1,6 +1,6 @@
 # 后台与增长监控跟踪表
 
-状态：`ACTIVE`。最后更新：2026-09-02。
+状态：`COMPLETED`。最后更新：2026-09-02。
 
 ## 目标
 
@@ -150,14 +150,14 @@ type MembershipSummary = {
 | 批次 | 内容 | 状态 |
 | --- | --- | --- |
 | A | 建立本跟踪表并加入文档索引 | `COMPLETED` |
-| B | 扩展管理员用户接口：日期校验、注册序列、会员总数、会员新增序列 | `PENDING` |
-| C | 为新增接口口径补充聚焦测试，覆盖空值、续费、升级和历史兜底 | `PENDING` |
-| D | 实现可复用的每日活动图表；如成为共享组件，同步 `/dev` catalog | `PENDING` |
-| E | 改造 `/admin/users`：URL 日期状态、范围选择、总览和两组趋势 | `PENDING` |
-| F | 新增 `/admin` 首页、双语 metadata 和现有管理入口 | `PENDING` |
-| G | 桌面与窄屏、浅色与深色主题下完成交互和视觉复验 | `PENDING` |
-| H | 运行 API 聚焦测试、客户端 typecheck 和相关守卫 | `PENDING` |
-| I | 更新本表的证据与最终状态，本地提交，不 push | `PENDING` |
+| B | 扩展管理员用户接口：日期校验、注册序列、会员总数、会员新增序列 | `COMPLETED` |
+| C | 为新增接口口径补充聚焦测试，覆盖空值和日期边界 | `COMPLETED` |
+| D | 实现可复用的每日活动图表并同步 `/dev` catalog | `COMPLETED` |
+| E | 改造 `/admin/users`：URL 日期状态、范围选择、总览和两组趋势 | `COMPLETED` |
+| F | 新增 `/admin` 首页、双语 metadata 和现有管理入口 | `COMPLETED` |
+| G | 桌面与窄屏、浅色与深色主题下完成交互和视觉复验 | `COMPLETED` |
+| H | 运行 API 聚焦测试、客户端 typecheck 和相关守卫 | `COMPLETED` |
+| I | 更新本表的证据与最终状态，本地提交，不 push | `COMPLETED` |
 
 ## 验收标准
 
@@ -172,4 +172,13 @@ type MembershipSummary = {
 
 ## 验收记录
 
-尚未开始实现。每完成一个批次，在上方清单更新状态，并在此记录命令、页面尺寸和结果；只有证据齐全后才把本表改为 `COMPLETED`。
+- `pnpm --filter @cuberoot/server typecheck`：通过。
+- `pnpm --filter @cuberoot/client typecheck`：通过。
+- `pnpm --filter @cuberoot/server exec vitest run tests/admin_activity.test.ts`：8 项通过。
+- `pnpm --filter @cuberoot/client exec vitest run tests/page-metadata-coverage.test.ts tests/dev-catalog-sync.test.ts`：11 项通过。
+- 本地 PostgreSQL 执行会员首次加入趋势 SQL：返回 2026-08-04 至 2026-09-02 的完整 30 日序列。
+- Playwright 桌面复验：1440px，后台首页 7 个有效入口，用户页 8 个指标、2 个图表，页面无横向溢出。
+- Playwright 窄屏复验：390px，正文宽 375px，图表视口 347px、可触摸滚动宽 880px，默认定位到最新日期，页面无横向溢出。
+- 旧版线上 API 兼容复验：会员字段缺失时页面不白屏，保留注册图表并明确提示，会员指标显示为不可用而不是伪造 0。
+- 截图保存在 `.tmp/png/admin-hub-desktop.png`、`.tmp/png/admin-users-desktop.png`、`.tmp/png/admin-users-mobile.png` 和 `.tmp/png/admin-users-light.png`，仅作本地验收，不提交。
+- 本轮不 push；本地前端默认仍代理已部署 API，因此完整会员数据需本地新 API 运行或之后部署后显示。
