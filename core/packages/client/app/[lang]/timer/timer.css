@@ -1041,7 +1041,6 @@
 /* --- Mobile (touch + narrow) --- */
 @media (max-width: 540px) {
   .scramble-strip { padding: 10px 12px; font-size: 14px; }
-  .scramble-strip.compact { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .timer-display { font-size: clamp(48px, 18vw, 120px) !important; }
 
   /* Modals fill the screen on small phones. */

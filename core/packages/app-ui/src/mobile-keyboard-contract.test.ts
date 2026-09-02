@@ -78,9 +78,13 @@ describe('Mobile shared keyboard integration', () => {
 
   it('shares one DOM target classifier and removes the controller keyboard copy', () => {
     const input = document.createElement('input');
-    const noTimer = document.createElement('button');
+    const button = document.createElement('button');
+    const link = document.createElement('a');
+    const noTimer = document.createElement('div');
     noTimer.dataset.noTimer = '';
     expect(timerKeyboardTargetContext(input)).toMatchObject({ textEntry: true });
+    expect(timerKeyboardTargetContext(button)).toMatchObject({ noTimerRegion: true });
+    expect(timerKeyboardTargetContext(link)).toMatchObject({ noTimerRegion: true });
     expect(timerKeyboardTargetContext(noTimer)).toMatchObject({ noTimerRegion: true });
 
     expect(app).toContain('timerKeyDownDecision({');

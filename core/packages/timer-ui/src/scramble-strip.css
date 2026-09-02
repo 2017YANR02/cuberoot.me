@@ -28,7 +28,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   border: 0;
   background: transparent;
   color: var(--foreground);
-  cursor: pointer;
+  cursor: default;
   font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
   --scramble-fs: calc(var(--timer-scramble-fs, clamp(26px, 4.4vw, 36px)) * var(--scramble-scale, 1));
   font-size: var(--scramble-fs);
@@ -37,6 +37,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.scramble-strip[data-interactive='true'] { cursor: pointer; }
 
 .scramble-strip.sf-mono,
 .timing-surface-scramble .scramble-strip.sf-mono,
@@ -260,6 +261,61 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .scramble-marks-all:hover { color: var(--foreground); }
 
 .scramble-strip .scramble-empty { color: var(--faint-foreground); font-style: italic; }
+.scramble-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--faint-foreground);
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--timer-scramble-status-fs, 14px);
+  font-style: italic;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-spacing: normal;
+}
+.scramble-status-message {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+.scramble-status.is-error,
+.scramble-status.is-unsupported { color: var(--signal-warning); }
+.scramble-status-spinner {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border: 2px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: scramble-status-spin 0.8s linear infinite;
+}
+.scramble-status-retry {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  color: var(--accent);
+  background: none;
+  font: inherit;
+  font-style: normal;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.scramble-status-retry:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+@keyframes scramble-status-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .scramble-status-spinner { animation: none; }
+}
 .scramble-strip .scramble-empty-retry {
   color: var(--accent);
   text-decoration: underline;

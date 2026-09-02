@@ -90,6 +90,49 @@ describe('WCA competition pool persistence', () => {
     expect(fetchWcaScramblesMock).toHaveBeenCalledOnce();
   });
 
+  it('does not cache a partial difficulty-bin failure as an empty competition', async () => {
+    let failSecondBin = true;
+    let dataCalls = 0;
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      if (url.pathname.endsWith('/by-difficulty') && url.searchParams.get('pageSize') === '200') {
+        dataCalls += 1;
+        if (failSecondBin && url.searchParams.get('bin') === '5') {
+          return new Response('unavailable', { status: 503 });
+        }
+        if (url.searchParams.get('bin') === '4') {
+          return new Response(JSON.stringify({
+            page: 1,
+            pageSize: 200,
+            scrambles: [{
+              scramble: 'R U', ci: difficultySpec.comp, cn: difficultySpec.compName,
+              e: '333', r: '1', g: 'A', n: 1, x: 0,
+            }],
+            total: 1,
+          }), { status: 200 });
+        }
+        return new Response(JSON.stringify({
+          page: 1, pageSize: 200, scrambles: [], total: 0,
+        }), { status: 200 });
+      }
+      return new Response('{}', { status: 404 });
+    }));
+    const difficultySpec: WcaSourceSpec = {
+      ...baseSpec,
+      diff: {
+        colors: 'BGORWY', merged: false, stage: 'cross', steps: [4, 5], variant: 'std',
+      },
+    };
+    const { isWcaSourceEmpty, nextWca } = await freshPool();
+
+    expect(await nextWca(difficultySpec)).toBeNull();
+    expect(isWcaSourceEmpty(difficultySpec)).toBe(false);
+    failSecondBin = false;
+    expect(await nextWca(difficultySpec)).toBe('R U');
+    expect(isWcaSourceEmpty(difficultySpec)).toBe(false);
+    expect(dataCalls).toBe(4);
+  });
+
   it('resumes the uncached tail of a 60-row competition before cycling after reload', async () => {
     fetchWcaScramblesMock.mockResolvedValue(competitionRows(60));
     const firstModule = await freshPool();

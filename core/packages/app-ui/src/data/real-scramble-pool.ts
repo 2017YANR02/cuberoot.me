@@ -585,7 +585,7 @@ export async function fetchRealScrambles(
           variant: difficulty.variant,
         }, signal)
       )));
-      if (results.every((result) => result === null)) {
+      if (results.some((result) => result === null)) {
         throw new RealScrambleFetchError(
           'transient-error',
           'competition difficulty request failed',

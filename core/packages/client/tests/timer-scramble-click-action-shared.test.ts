@@ -64,9 +64,10 @@ describe('shared scramble click action setting', () => {
 
   it('keeps Web runtime on the shared enablement rule and prioritizes retry', () => {
     const solo = readFileSync('app/[lang]/timer/_shell/SoloView.tsx', 'utf8');
+    expect(timerScrambleClickEffect('next', false, false, true)).toBe('retry');
     expect(solo).toContain('timerScrambleClickEffect(');
-    expect(solo).toMatch(/timerScrambleClickEffect\([\s\S]*?attemptCanStart,[\s\S]*?retryableScramble/);
-    expect(solo).toContain("onActivate={scrambleClickEffect === 'retry'");
+    expect(solo).toMatch(/timerScrambleClickEffect\([\s\S]*?attemptCanStart,[\s\S]*?scrambleStatus\?\.retryable === true/);
+    expect(solo).not.toContain("onActivate={scrambleClickEffect === 'retry'");
     expect(solo).not.toContain('className="scramble-empty-retry"');
   });
 

@@ -62,7 +62,7 @@ Web 的当前规则不是禁用“真题”：来源仍保持 `real`，然后使
 | F1 | 已修复 | 完整 `TimerStoreData` 的异步回调原先没有统一 revision gate。 | `LatestSnapshotGate` 已接入 App 的 add/update/delete/import/settings 全 mutation；只有最新 revision 可应用完整快照，最新失败 reload canonical store。纯逻辑乱序 fixture 与 App source guard 已通过。 |
 | F2 | 已修复 | 真题缓存原先接受远未来 `fetchedAt`。 | 现在拒绝非有限、负数及超过当前时间 5 分钟容差的时间戳；边界 fixture 已锁定。 |
 | F3 | 已修复（待真机） | 2/129 个来源格子是 `custom` 的 manual-only 边界。 | shared capability/空槽 predicate、Mobile ready/`—`/可起表/attempt snapshot 已锁定；仍待 OPPO 触摸与重启实证，且不能用 333 fallback。 |
-| F4 | 高（进行中） | mapped `real` 的完整来源配置尚未全部关闭。 | 日期/比赛/搜索/国旗/轮次/组别、2×2 类型/口径、完整 WCA difficulty/merge/optimal、222/pyra/skewb 按步数、完整来源元数据、有限池进度与公开打卡已迁到 shared/timer-ui；逐类用户错误文案及全组合 identity/真机矩阵仍未完成。 |
+| F4 | 高（进行中） | mapped `real` 的完整来源配置尚未全部关闭。 | 日期/比赛/搜索/国旗/轮次/组别、2×2 类型/口径、完整 WCA difficulty/merge/optimal、222/pyra/skewb 按步数、完整来源元数据、有限池进度/公开打卡及逐类 loading/empty/error/retry 文案与 UI 已迁到 shared/timer-ui；全组合 identity、断网恢复和真机矩阵仍未完成。 |
 | F5 | 已修复 | mapped `real` 的暂态失败策略曾与 Web 不一致。 | Web/Mobile 现在共用 `startTimerRealScrambleRetry`：立即尝试一次、6 次退避、共 7 次；confirmed empty 不重试，取消会终止当前 fetch/timeout，任何分支都不得随机回退。 |
 | F6 | 已修复 | 来源回调原先只依赖 disabled 控件阻止计时中修改。 | 共享控件仍有真实 disabled，Mobile `onChange` 现在另有 phase guard 与提示。 |
 | F7 | 已修复 | Web `wca_pool.ts` 两处注释曾错误声称 caller 会 fallback 到 generated scramble。 | 注释已改为 transient 保持空槽/重试、confirmed empty 显式报告，明确禁止 substitution。 |
@@ -71,6 +71,8 @@ Web 的当前规则不是禁用“真题”：来源仍保持 `real`，然后使
 | F10 | 已修复 | selected-comp 网络失败 `null` 曾被折成权威空数组并永久写入 `knownEmpty`。 | `null` 现保持 transient、清 inflight 后允许下一次重试；只有权威 `[]` 才缓存 empty，两种分支均有回归。 |
 | F11 | 已修复 | durable save 期间登出/换号及 pending retry 曾可能使用旧 token 或让新账号认领旧成绩。 | 首次 owner 随 pending 持久到 retry；完成时只读 live session，auth busy/登出/owner mismatch fail closed，同 owner刷新 token 可用。 |
 | F12 | 已修复 | API 曾复制 strict mark key validator，且会把缺失/非法 `x` 静默归为 `0`。 | API 与 Web/App 共用 shared marks key decoder；query 只规范化 `0/1` 与整数，非法 body/query 返回 400 且不执行 SQL。 |
+| F13 | 已修复（待真机） | WCA 难度多 bin 查询曾把“部分请求失败 + 其余请求权威空”折成空集并缓存，Web 重试耗尽和 csTimer/专项 Worker 空返回又只显示不可恢复的 `—`。 | Web、shared coverage 与 App 现在任一 bin 失败即保持 transient；17 类状态原因、双语文案与重试策略共用，WCA/Worker 错误可从共享 44px 按钮原位重试。自动化已锁定 partial-bin、七次耗尽、Worker 失败和 ARIA；仍待 OPPO 真实断网/恢复、长文与大字号。 |
+| F14 | 已修复（待真机） | Web 异步生成完成时曾按完成时游标写回，切换历史题后可覆盖错误 slot；optimal 与 trainer 也可能同时争用同一请求。App 的旧错误按钮可重复发起 retry，且过渡期保留旧 failure。 | Web 现在捕获请求启动时的 history entry ID，只回填仍为空的同一 slot；optimal 独占 trainer pool。App retry 先写 loading/failure:null，并以实时 entry 阻止旧闭包双击；loading/ready reducer 都清理 failure。源码与定向回归已通过，仍待真实慢网、切题和连点设备矩阵。 |
 
 ## 自动化证据与边界
 
@@ -79,6 +81,8 @@ Web 的当前规则不是禁用“真题”：来源仍保持 `real`，然后使
 WCA difficulty 共享层新增证据：`timer_wca_difficulty_shared.test.ts` 与 source shared tests 共 19 项，锁定 normalize/query/identity、catalog cache+inflight、`steps_layout.json` 404 静态回退、coverage error/retry/authoritative empty；`timer-wca-difficulty-ui.test.ts` 3 项锁定受控方法/阶段/颜色/范围/合并、unindexed 提示、键盘 range debounce 与 unmount flush；Mobile 的 real/source 六文件共 68 项锁定 merged event provenance、未建索引旁路、最优缺失与权威空分型。它们仍不能代替 OPPO 的 320/340、IME、长比赛名和所有配置组合实测。
 
 2026-09-02 来源进度/打卡收口证据：API 2 files / 12 tests、App 36 files / 263 tests、Client 7 files / 58 tests，六个相关包 typecheck、Mobile production build、Android sync/install 均通过；多轮独立审查最终 P0=0、P1=0。该证据不冒充非零足迹弹层的真机视觉验收，也不关闭逐类 loading/empty/error 与全配置矩阵。
+
+2026-09-02 来源状态收口证据：App 全量 36 files / 265 tests、Client 定向 11 files / 70 tests及来源补充回归通过，shared/timer-ui/app-ui/client/mobile typecheck、Mobile production build、Capacitor Android sync 与 206-task `installDebug` 通过。手动空队列提示与 17 类状态文案均只有 shared 事实源；异步回填绑定启动时 slot，optimal/trainer 不再竞争，App retry loading/double-start/failure normalization 已锁定。最终 APK SHA-256 `45c8bf9f21f47cb0740811e786dd2e8db53cf62d04a582be971f685c9e4e663e` 与 OPPO `PFDM00` 内 `base.apk` 一致，冷启动成功、进程 25304 且检查窗口内无 crash/ANR；同一 UI 变更前的前台 360dp ready 截图中 `0.000`、真题配置、绿色开关、出处、打乱、预览和三栏完整可见。三名独立 agent 最终均 GO、P0/P1=0。最新重建只移动同文案事实源，未重新取视觉截图；完整 Client 全集在并行重型测试资源压力下出现未改模块失败，故只记定向绿；真实断网/恢复、loading/error/retry 点击和全视口/平台矩阵仍未执行，不把 ready 截图冒充异常态验收。
 
 纯逻辑/源码 guard 可以证明路由契约，但还不能模拟完整 React 生命周期、IndexedDB 调度和网络乱序。后续应补可注入 repository/fetch 的 App-level 测试，至少覆盖：
 

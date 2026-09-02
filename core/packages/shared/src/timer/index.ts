@@ -28,6 +28,7 @@ export * from './scramble';
 export * from './scramble-222';
 export * from './scramble-history';
 export * from './scramble-runtime';
+export * from './scramble-status';
 export * from './scramble-variants';
 export * from './session';
 export * from './settings-contract';

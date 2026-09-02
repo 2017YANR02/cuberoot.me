@@ -1,6 +1,7 @@
 import type {
   EventId,
   ScrambleHistory,
+  TimerScrambleErrorCode,
   TimerScrambleSourceKind,
   TimerScrambleSourceSnapshot,
 } from '@cuberoot/shared/timer';
@@ -14,6 +15,11 @@ export type MobileScrambleAvailability =
   | 'unsupported'
   | 'empty'
   | 'error';
+
+export type MobileScrambleFailure =
+  | Readonly<{ kind: 'generation'; code: TimerScrambleErrorCode; retryable: boolean }>
+  | Readonly<{ kind: 'real-empty' }>
+  | Readonly<{ kind: 'real-exhausted' }>;
 
 /**
  * One immutable displayed slot. `sourceIdentity` is the generation context
@@ -31,11 +37,12 @@ export interface MobileScrambleHistoryEntry {
   /** Full official occurrence provenance; identical move text is not enough. */
   readonly currentReal: RealScramble | null;
   readonly availability: MobileScrambleAvailability;
+  readonly failure: MobileScrambleFailure | null;
 }
 
 export type MobileScrambleHistoryEntryPatch = Partial<Pick<
   MobileScrambleHistoryEntry,
-  'availability' | 'caseId' | 'currentReal' | 'scramble' | 'sourceSnapshot'
+  'availability' | 'caseId' | 'currentReal' | 'failure' | 'scramble' | 'sourceSnapshot'
 >>;
 
 export interface MobileScrambleAttemptSnapshot {
@@ -70,6 +77,7 @@ export function createMobileScrambleHistoryEntry(
     scramble: '',
     caseId: null,
     currentReal: null,
+    failure: null,
     availability: 'loading',
   });
 }
@@ -94,10 +102,18 @@ export function replaceMobileScrambleHistoryEntry(
     : patch.currentReal === null
       ? null
       : Object.freeze({ ...patch.currentReal });
+  const availability = patch.availability ?? list[index]!.availability;
+  const failure = availability === 'loading' || availability === 'ready'
+    ? null
+    : patch.failure === undefined
+      ? list[index]!.failure
+      : patch.failure;
   list[index] = Object.freeze({
     ...list[index]!,
     ...patch,
+    availability,
     currentReal,
+    failure,
     sourceSnapshot,
   });
   return { list, idx: history.idx };

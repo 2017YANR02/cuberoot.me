@@ -503,7 +503,7 @@ export function TimerWcaSourceConfig({
   };
 
   return (
-    <div className="timer-wca-source-config">
+    <div className="timer-wca-source-config" data-no-timer>
       <div className="timer-wca-source-toprow">
         <select
           aria-label={labels.sourceMode}

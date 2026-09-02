@@ -40,7 +40,7 @@ export function timerKeyboardTargetContext(
       || tagName === 'TEXTAREA'
       || element?.isContentEditable === true,
     select: tagName === 'SELECT',
-    noTimerRegion: element?.closest('[data-no-timer]') !== null,
+    noTimerRegion: element?.closest('button, a, [data-no-timer]') !== null,
   };
 }
 

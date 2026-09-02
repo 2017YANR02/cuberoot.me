@@ -167,4 +167,41 @@ describe('mobile WCA difficulty pool integration', () => {
     mode = 'empty';
     await expect(fetchRealScrambles(spec)).rejects.toMatchObject({ kind: 'confirmed-empty' });
   });
+
+  it('does not turn one failed difficulty bin plus one empty bin into authoritative empty', async () => {
+    vi.resetModules();
+    let partialFailure = true;
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      if (!url.pathname.endsWith('/by-difficulty')) return new Response('{}', { status: 404 });
+      if (partialFailure && url.searchParams.get('bin') === '5') {
+        return new Response('unavailable', { status: 503 });
+      }
+      if (url.searchParams.get('bin') === '4') {
+        return new Response(JSON.stringify(byDifficultyPayload([{
+          scramble: 'R U', ci: 'Partial2026', cn: 'Partial Open 2026',
+          e: '333', r: '1', g: 'A', n: 1, x: 0,
+        }])), { status: 200 });
+      }
+      return new Response(JSON.stringify(byDifficultyPayload([])), { status: 200 });
+    }));
+    const { fetchRealScrambles } = await import('./real-scramble-pool');
+    const spec = {
+      event: '333' as const,
+      wcaScrambleMode: 'comp' as const,
+      wcaComp: 'Partial2026',
+      wcaCompName: 'Partial Open 2026',
+      wcaDifficultyOn: true,
+      wcaDiffVariant: 'std',
+      wcaDiffStage: 'cross',
+      wcaDiffSteps: [4, 5],
+      wcaUseOptimal: false,
+    };
+
+    await expect(fetchRealScrambles(spec)).rejects.toMatchObject({ kind: 'transient-error' });
+    partialFailure = false;
+    await expect(fetchRealScrambles(spec)).resolves.toMatchObject([
+      { competitionId: 'Partial2026', scramble: 'R U' },
+    ]);
+  });
 });
