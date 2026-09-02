@@ -283,6 +283,15 @@ export default function LandingPage() {
             </div>
           </section>
         ))}
+        <section className="cards-section" aria-labelledby="enterprise-members-title">
+          <div className="section-header">
+            <div className="section-eyebrow">{tr({ zh: '企业会员', en: 'Enterprise' })}</div>
+            <h2 id="enterprise-members-title" className="section-title-serif">
+              {tr({ zh: '企业入驻名单', en: 'Enterprise members' })}
+            </h2>
+            <div className="section-sub">{tr({ zh: '暂无企业入驻', en: 'No enterprise members yet' })}</div>
+          </div>
+        </section>
       </div>
 
       <div className="footer">
