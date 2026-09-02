@@ -31,6 +31,7 @@ import { PlatformState } from './PlatformState';
 import { PlatformDomainActions } from './PlatformDomainActions';
 import { PlatformDomainContent } from './PlatformDomainContent';
 import { PlatformPrivacySettings } from './PlatformPrivacySettings';
+import { PlatformQrCardStudio } from './PlatformQrCardStudio';
 
 function titleFor(t: ReturnType<typeof useT>, definition: PlatformRouteDefinition): string {
   return t(definition.title.zh, definition.title.en);
@@ -479,6 +480,7 @@ export function PlatformRouteView({
     && definition.id !== 'account-privacy'
     && (definition.kind !== 'form' || definition.id === 'teacher-apply');
   const permissionDenied = error instanceof PlatformPermissionError;
+  const isQrCardStudio = definition.id === 'admin-qr-cards';
 
   useEffect(() => { setMounted(true); }, []);
   const allowed = definition.access === 'public'
@@ -555,6 +557,7 @@ export function PlatformRouteView({
           {(definition.kind === 'collection' || definition.kind === 'dashboard')
             && definition.id !== 'membership'
             && definition.id !== 'me-membership'
+            && !isQrCardStudio
             && !permissionDenied ? (
             <div className="platform-toolbar">
               <SearchInput
@@ -590,6 +593,12 @@ export function PlatformRouteView({
             <PlatformState kind="error" message={error.message} onRetry={() => setRetry((value) => value + 1)} />
           ) : !result ? (
             <PlatformState kind="loading" />
+          ) : isQrCardStudio ? (
+            <PlatformQrCardStudio
+              entities={sortedItems}
+              query={query}
+              onQueryChange={(value) => { void setQuery(value || null); }}
+            />
           ) : sortedItems.length === 0 && definition.id !== 'membership' && definition.id !== 'me-membership' ? (
             <PlatformState
               kind="empty"
