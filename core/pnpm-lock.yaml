@@ -285,12 +285,6 @@ importers:
       '@cuberoot/app-ui':
         specifier: workspace:*
         version: link:../../packages/app-ui
-      '@cuberoot/event-icon':
-        specifier: workspace:*
-        version: link:../../packages/event-icon
-      '@cuberoot/puzzle-solvers':
-        specifier: workspace:*
-        version: link:../../packages/puzzle-solvers
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../../packages/shared
