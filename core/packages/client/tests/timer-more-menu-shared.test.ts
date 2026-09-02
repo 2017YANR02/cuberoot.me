@@ -56,7 +56,7 @@ describe('canonical timer More action registry', () => {
       { id: 'more.marks', effect: 'navigate-scramble-marks', visibility: 'always', disabledWhen: 'never', danger: false },
       { id: 'more.stats-mobile', effect: 'open-full-stats', visibility: 'compact-viewport', disabledWhen: 'never', danger: false },
       { id: 'more.language-mobile', effect: 'toggle-language', visibility: 'compact-viewport', disabledWhen: 'never', danger: false },
-      { id: 'more.drill', effect: 'open-drill-picker', visibility: 'drill-event-without-active-drill', disabledWhen: 'never', danger: false },
+      { id: 'more.drill', effect: 'open-drill-picker', visibility: 'drill-event', disabledWhen: 'never', danger: false },
       { id: 'more.bld-helper', effect: 'open-speffz-helper', visibility: 'speffz-event', disabledWhen: 'never', danger: false },
       { id: 'more.fullscreen', effect: 'toggle-fullscreen', visibility: 'always', disabledWhen: 'never', danger: false },
       { id: 'more.manual-entry', effect: 'open-manual-result-entry', visibility: 'always', disabledWhen: 'never', danger: false },
@@ -92,8 +92,10 @@ describe('canonical timer More action registry', () => {
       expect(states.find((action) => action.id === 'more.drill')?.visible).toBe(drillEvents.has(event));
       expect(states.find((action) => action.id === 'more.bld-helper')?.visible).toBe(speffzEvents.has(event));
     }
-    expect(timerMoreActionStates({ ...baseContext, drillActive: true })
-      .find((action) => action.id === 'more.drill')?.visible).toBe(false);
+    const activeDrill = timerMoreActionStates({ ...baseContext, drillActive: true })
+      .find((action) => action.id === 'more.drill');
+    expect(activeDrill?.visible).toBe(true);
+    expect(activeDrill?.active).toBe(true);
   });
 
   it('only disables clear for an empty/invalid current-event solve count and tracks fullscreen', () => {
@@ -268,5 +270,18 @@ describe('shared TimerMoreMenu interaction and viewport contract', () => {
     expect(select).toHaveBeenCalledTimes(1);
     expect(document.querySelector('.more-menu-panel')).toBeNull();
     expect(document.activeElement).toBe(trigger);
+  });
+
+  it('exposes active actions visually and semantically', async () => {
+    await render([{
+      ...timerMoreActionStates({ ...baseContext, drillActive: true })
+        .find((action) => action.id === 'more.drill')!,
+      label: 'Drill mode',
+      onSelect: vi.fn(),
+    }]);
+    const { panel } = await openMenu();
+    const drill = panel.querySelector<HTMLButtonElement>('[role="menuitem"]')!;
+    expect(drill.classList.contains('active')).toBe(true);
+    expect(drill.getAttribute('aria-current')).toBe('true');
   });
 });

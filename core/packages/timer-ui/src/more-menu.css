@@ -55,6 +55,21 @@
   background: var(--shell-hover);
 }
 
+.more-menu-item.active {
+  background: var(--success-soft, var(--shell-hover));
+  color: var(--signal-success);
+}
+
+.more-menu-item.active .more-menu-icon {
+  color: var(--signal-success);
+}
+
+@supports (background: color-mix(in srgb, white 50%, black)) {
+  .more-menu-item.active {
+    background: color-mix(in srgb, var(--signal-success) 14%, transparent);
+  }
+}
+
 .more-menu-item:focus-visible,
 .more-menu-btn:focus-visible {
   outline: 2px solid var(--ring);

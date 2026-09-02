@@ -53,9 +53,9 @@
   min-width: 0;
   height: 28px;
   padding: 0 14px 0 32px;
-  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  border: 1px solid var(--border-default);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  background: var(--shell-hover);
   color: var(--muted-foreground);
   font: inherit;
   font-size: 13px;
@@ -68,8 +68,8 @@
 .timer-222-mode-toggle.is-on {
   justify-content: flex-start;
   padding: 0 32px 0 14px;
-  border-color: color-mix(in srgb, var(--toggle-on, var(--signal-success)) 72%, black);
-  background: color-mix(in srgb, var(--toggle-on, var(--signal-success)) 72%, black);
+  background: var(--toggle-on, var(--signal-success));
+  border-color: var(--toggle-on, var(--signal-success));
   color: var(--destructive-foreground, var(--accent-foreground));
 }
 
@@ -78,8 +78,29 @@
 }
 
 .timer-222-mode-toggle.is-on:hover {
-  border-color: color-mix(in srgb, var(--toggle-on, var(--signal-success)) 64%, black);
-  background: color-mix(in srgb, var(--toggle-on, var(--signal-success)) 64%, black);
+  border-color: var(--toggle-on, var(--signal-success));
+  background: var(--toggle-on, var(--signal-success));
+}
+
+@supports (background: color-mix(in srgb, white 50%, black)) {
+  .timer-222-mode-toggle {
+    border-color: color-mix(in srgb, var(--foreground) 12%, transparent);
+    background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  }
+
+  .timer-222-mode-toggle.is-on {
+    border-color: color-mix(in srgb, var(--toggle-on, var(--signal-success)) 72%, black);
+    background: color-mix(in srgb, var(--toggle-on, var(--signal-success)) 72%, black);
+  }
+
+  .timer-222-mode-toggle:hover {
+    border-color: color-mix(in srgb, var(--foreground) 24%, transparent);
+  }
+
+  .timer-222-mode-toggle.is-on:hover {
+    border-color: color-mix(in srgb, var(--toggle-on, var(--signal-success)) 64%, black);
+    background: color-mix(in srgb, var(--toggle-on, var(--signal-success)) 64%, black);
+  }
 }
 
 .timer-222-mode-toggle:focus-visible {

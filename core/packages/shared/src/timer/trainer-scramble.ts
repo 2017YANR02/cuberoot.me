@@ -5,6 +5,7 @@ import {
   TIMER_ZBLL_CASE_DATA,
 } from './trainer-case-data.generated';
 import { CMLL_ALGS, COLL_ALGS, EG1_ALGS, EG2_ALGS } from './trainer-alg-data';
+import { TIMER_MORE_ACTION_COPY } from './more-actions';
 
 export { CMLL_ALGS, COLL_ALGS, EG1_ALGS, EG2_ALGS } from './trainer-alg-data';
 
@@ -20,6 +21,47 @@ export const TIMER_TRAINER_EVENT_IDS = [
 ] as const;
 
 export type TimerTrainerEventId = (typeof TIMER_TRAINER_EVENT_IDS)[number];
+
+export type TimerDrillType = 'oll' | 'pll';
+
+export interface TimerDrillTarget {
+  readonly type: TimerDrillType;
+  readonly id: string;
+}
+
+export interface TimerDrillScramble {
+  readonly scramble: string;
+  readonly targetCase: string;
+}
+
+type TimerDrillPickerText = Readonly<Record<'en' | 'zh', string>>;
+
+export interface TimerDrillPickerCopy {
+  readonly title: TimerDrillPickerText;
+  readonly typeLabel: TimerDrillPickerText;
+  readonly searchLabel: TimerDrillPickerText;
+  readonly clearSearch: TimerDrillPickerText;
+  readonly searchPlaceholder: Readonly<Record<TimerDrillType, TimerDrillPickerText>>;
+  readonly noMatches: TimerDrillPickerText;
+  readonly exit: TimerDrillPickerText;
+  readonly close: TimerDrillPickerText;
+}
+
+export const TIMER_DRILL_PICKER_COPY: TimerDrillPickerCopy = Object.freeze({
+  title: TIMER_MORE_ACTION_COPY['more.drill'],
+  typeLabel: Object.freeze({ en: 'Drill type: OLL or PLL', zh: '专项类型：OLL 或 PLL' }),
+  searchLabel: Object.freeze({ en: 'Search cases', zh: '搜索 case' }),
+  clearSearch: Object.freeze({ en: 'Clear search', zh: '清除搜索' }),
+  searchPlaceholder: Object.freeze({
+    oll: Object.freeze({ en: 'Search (e.g. 21)', zh: '搜索 (例如 21)' }),
+    pll: Object.freeze({ en: 'Search (e.g. T)', zh: '搜索 (例如 T)' }),
+  }),
+  noMatches: Object.freeze({ en: 'No matches', zh: '无匹配结果' }),
+  exit: Object.freeze({ en: 'Exit drill', zh: '退出专项' }),
+  close: Object.freeze({ en: 'Close', zh: '关闭' }),
+});
+
+export const TIMER_DRILL_AUFS = ['', 'U', 'U2', "U'"] as const;
 
 /** Trainer events whose case identity is persisted on a solve by the Web Timer. */
 export const TIMER_TRAINER_CASE_TRACKED_EVENT_IDS = [
@@ -148,6 +190,24 @@ function pickCase(
 ): TimerTrainerCase {
   const available = subsetCases(cases, caseIds);
   return available[randomIndex(available.length, random)];
+}
+
+/** Generate the selected OLL/PLL drill exactly; stale targets fail closed. */
+export function generateTimerDrillScramble(
+  target: TimerDrillTarget,
+  random: () => number = Math.random,
+): TimerDrillScramble | null {
+  if (!target || (target.type !== 'oll' && target.type !== 'pll')) return null;
+  const cases = target.type === 'oll' ? OLL_CASES : PLL_CASES;
+  const item = cases.find((candidate) => candidate.id === target.id);
+  if (!item) return null;
+  const inverse = invertAlg(item.solutionAlg);
+  if (!inverse) return null;
+  const auf = TIMER_DRILL_AUFS[randomIndex(TIMER_DRILL_AUFS.length, random)];
+  return {
+    scramble: auf ? `${auf} ${inverse}` : inverse,
+    targetCase: item.id,
+  };
 }
 
 /**
