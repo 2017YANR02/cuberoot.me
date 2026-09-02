@@ -158,7 +158,7 @@ describe('shared non-2x2 Timer by-steps Worker host', () => {
     expect(source).toContain('nextWebNon222ByStepsScramble(requestEvent, requestSettings, controller.signal)');
     expect(source).toContain('controller.abort()');
     expect(source).toContain('genByStepsSig(event, getSettings(), mode222) !== requestSignature');
-    expect(source).toContain("cur.list[cur.idx]?.scramble !== ''");
+    expect(source).toContain("entry?.id !== expectedId || entry.scramble !== ''");
     expect(source).toContain('setByStepsRetry((value) => value + 1)');
   });
 });

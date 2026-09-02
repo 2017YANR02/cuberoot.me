@@ -165,13 +165,13 @@ describe('mobile scramble-source parity contract', () => {
 
   it('matches the canonical Web fallback only for events without a real-pool mapping', () => {
     expect(app).toMatch(
-      /if \(!timerSupportsRealWcaScrambles\(event\)\) \{\s*generateRandomScramble\(entry, requestId\);\s*return;/,
+      /if \(!timerSupportsRealWcaScrambles\(event\)\) \{\s*generateRandomScramble\(liveEntry, requestId\);\s*return;/,
     );
     expect(app).toContain("scrambleSourceRef.current === 'wca'");
     expect(app).toContain(
       'realScrambleSourceKey(realSpecFor(activeEventRef.current)) === sourceKey',
     );
-    expect(app).toContain("replaceScrambleHistoryEntry(entry.id, requestedIdentity, { availability: 'error' })");
+    expect(app).toContain("availability: 'error',\n          failure: { kind: 'real-exhausted' },");
     expect(app).not.toContain('<option disabled=');
   });
 

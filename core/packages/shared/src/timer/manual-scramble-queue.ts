@@ -14,6 +14,11 @@ export function parseManualScrambleQueue(input: string): string[] {
     .filter(Boolean);
 }
 
+export const TIMER_MANUAL_SCRAMBLE_EMPTY_COPY = Object.freeze({
+  en: 'Paste scrambles above — one per line',
+  zh: '在上方「打乱来源」粘贴打乱,每行一条',
+});
+
 export interface ManualScrambleQueueTake {
   scramble: string;
   /** Cursor to pass into the next call. Zero for an empty queue. */

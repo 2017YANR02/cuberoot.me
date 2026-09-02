@@ -450,7 +450,7 @@ async function compRowsAll(spec: WcaSourceSpec, w: string, useOptimal: boolean):
 
 /** comp + 难度(3x3 族):by-difficulty 端点按 (方法,阶段,底色) 逐 bin 拉本场真题 → 过滤 round/group → 竞赛序。
  *  端点按精确官方名(names)+ event + bin 查;再用 ci===comp 收敛到本场(防撞名),用 o 支持最优模式。
- *  全部请求失败(网络)→ 抛出让 fill 不缓存、不判空,稍后重取;只要有一个成功即视作权威(可为空)。 */
+ *  任一请求失败(网络/契约)→ 抛出让 fill 不缓存、不判空,稍后整组重取。 */
 async function compRowsByDifficulty(spec: WcaSourceSpec, w: string, useOptimal: boolean): Promise<CompRow[]> {
   const d = spec.diff!;
   const bins = [...new Set(d.steps)].sort((a, b) => a - b);
@@ -460,7 +460,7 @@ async function compRowsByDifficulty(spec: WcaSourceSpec, w: string, useOptimal: 
     variant: d.variant, stage: d.stage, colors: d.colors, bin, event: d.merged ? undefined : w,
     names: spec.compName ? [spec.compName] : undefined, pageSize: 200,
   })));
-  if (results.every((r) => r == null)) throw new Error('by-difficulty unavailable');
+  if (results.some((r) => r == null)) throw new Error('by-difficulty unavailable');
   const seen = new Set<string>();
   const out: CompRow[] = [];
   for (const res of results) {

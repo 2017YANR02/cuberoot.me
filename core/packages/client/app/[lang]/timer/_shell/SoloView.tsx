@@ -66,6 +66,7 @@ import {
   timerEventPickerName,
   TIMER_WCA_SCRAMBLE_SOURCE_COPY,
   TIMER_MORE_ACTION_COPY,
+  TIMER_MANUAL_SCRAMBLE_EMPTY_COPY,
   TIMER_SCRAMBLE_CLICK_TITLE_COPY,
   timerClearCurrentEventConfirmation,
   timerCanHandleAttemptPress,
@@ -82,7 +83,9 @@ import {
   timerPrintScrambleSource,
   timerScrambleAllowsEmptySlot,
   timerScrambleClickEffect,
+  timerScrambleStatus,
   timerTracksTrainerCase,
+  timerWcaScrambleEmptyReason,
   timerWcaScrambleMarkWriteMode,
   usesStepsIndex,
   visibleTimerMoreActions,
@@ -248,7 +251,6 @@ import { onIdle } from '@/lib/on-idle';
 import RankBadge from './RankBadge';
 import SessionSwitcher from './SessionSwitcher';
 import { useRankCountry } from '@/app/[lang]/timer/_shared/use-rank-country';
-import { Spinner } from '@/components/Spinner/Spinner';
 
 import '../timer.css';
 import '../_components/charts/charts.css';
@@ -635,6 +637,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               const generated = peekTrainer(spec);
               if (generated) return generated;
             }
+            if (status === 'empty' || status === 'rare') {
+              return { kind: 'unavailable' as const, reason: status };
+            }
             throw new Error('trainer state unavailable');
           }
           return randomState333();
@@ -748,7 +753,26 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, []);
   const currentScrambleEntry = scrambleHist.list[scrambleHist.idx]
     ?? timerScrambleHistoryEntry('');
+  const currentScrambleEntryId = currentScrambleEntry.id;
   const scramble = currentScrambleEntry.scramble;
+  const isCurrentEmptyScrambleEntry = useCallback((expectedId: number) => {
+    const current = scrambleHistRef.current;
+    const entry = current.list[current.idx];
+    return entry?.id === expectedId && entry.scramble === '';
+  }, []);
+  const fillCurrentEmptyScrambleEntry = useCallback((
+    expectedId: number,
+    value: string,
+    wca: WcaDispensedScramble | null = null,
+  ) => {
+    const current = scrambleHistRef.current;
+    const entry = current.list[current.idx];
+    if (entry?.id !== expectedId || entry.scramble !== '') return false;
+    const list = [...current.list];
+    list[current.idx] = { ...entry, scramble: value, wca };
+    applyScrambleHist({ list, idx: current.idx });
+    return true;
+  }, [applyScrambleHist]);
   // 「预打乱朝向」只进打乱图,不改打乱正文(同 csTimer:正文保持官方口径,图按你手持的朝向画)。
   const previewScramble = applyOrientationPrefix(
     scramble,
@@ -758,6 +782,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [randomOptimalLoading, setRandomOptimalLoading] = useState(false);
   const [randomOptimalFailed, setRandomOptimalFailed] = useState(false);
   const [randomOptimalRetry, setRandomOptimalRetry] = useState(0);
+  const [trainerLoading, setTrainerLoading] = useState(false);
+  const [trainerMiss, setTrainerMiss] = useState<'empty' | 'rare' | null>(null);
+  const [trainerRetry, setTrainerRetry] = useState(0);
 
   // Own the pool lifecycle separately from the current slot: changing history
   // must not abort the background fill, but leaving this exact generation
@@ -782,31 +809,42 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       setRandomOptimalFailed(false);
       return;
     }
+    const entryId = currentScrambleEntryId;
     let cancelled = false;
     setRandomOptimalLoading(true);
     setRandomOptimalFailed(false);
+    setTrainerMiss(null);
     void awaitOptimal333(source).then((status) => {
-      if (cancelled) return;
+      if (cancelled || !isCurrentEmptyScrambleEntry(entryId)) return;
       if (status === 'error') {
         setRandomOptimalLoading(false);
         setRandomOptimalFailed(true);
         return;
       }
-      if (status !== 'ready') return;
-      const cur = scrambleHistRef.current;
-      if (cur.list[cur.idx]?.scramble !== '') {
+      if (status === 'base-empty' || status === 'base-rare') {
         setRandomOptimalLoading(false);
+        setTrainerMiss(status === 'base-empty' ? 'empty' : 'rare');
         return;
       }
+      if (status !== 'ready') return;
       const optimal = peekOptimal333(source);
-      if (!optimal) return;
-      const list = [...cur.list];
-      list[cur.idx] = timerScrambleHistoryEntry(optimal);
-      setRandomOptimalLoading(false);
-      applyScrambleHist({ list, idx: cur.idx });
+      if (!optimal) {
+        setRandomOptimalLoading(false);
+        setRandomOptimalFailed(true);
+        return;
+      }
+      if (fillCurrentEmptyScrambleEntry(entryId, optimal)) setRandomOptimalLoading(false);
     });
     return () => { cancelled = true; };
-  }, [scramble, randomOptimalRequested, randomOptimalKey, randomOptimalRetry, applyScrambleHist]);
+  }, [
+    currentScrambleEntryId,
+    fillCurrentEmptyScrambleEntry,
+    isCurrentEmptyScrambleEntry,
+    randomOptimalKey,
+    randomOptimalRequested,
+    randomOptimalRetry,
+    scramble,
+  ]);
 
   // WCA mode: an empty slot means the pool was momentarily dry — fetch a real
   // scramble and fill it in, showing a loading state until it lands. We never
@@ -816,14 +854,19 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // with no matches / comp lacking the event), show a notice instead.
   const [scrambleLoading, setScrambleLoading] = useState(false);
   const [wcaSourceEmpty, setWcaSourceEmpty] = useState(false);
+  const [wcaSourceFailed, setWcaSourceFailed] = useState(false);
+  const [wcaRetry, setWcaRetry] = useState(0);
   useEffect(() => {
     if (scramble !== '' || settings.scrambleSource !== 'wca' || !hasWcaSource(wcaSpecRef.current)) {
       setScrambleLoading(false);
       setWcaSourceEmpty(false);
+      setWcaSourceFailed(false);
       return;
     }
+    const entryId = currentScrambleEntryId;
     setScrambleLoading(true);
     setWcaSourceEmpty(false);
+    setWcaSourceFailed(false);
     // Fetch a real scramble; retry transient failures (cold start / slow query /
     // network) with backoff while staying in the loading state — only a *confirmed*
     // empty source (404) shows the notice, and we never substitute a generated one.
@@ -836,23 +879,28 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         : TIMER_REAL_SCRAMBLE_TRANSIENT_ERROR;
     });
     void retryRun.result.then((outcome) => {
-      if (outcome.kind === 'cancelled') return;
-      const cur = scrambleHistRef.current;
-      if (cur.list[cur.idx]?.scramble !== '') { setScrambleLoading(false); return; }
+      if (outcome.kind === 'cancelled' || !isCurrentEmptyScrambleEntry(entryId)) return;
       setScrambleLoading(false);
       if (outcome.kind === 'ready') {
-        const list = [...cur.list];
-        list[cur.idx] = timerScrambleHistoryEntry(outcome.value.scramble, outcome.value);
-        applyScrambleHist({ list, idx: cur.idx });
+        fillCurrentEmptyScrambleEntry(entryId, outcome.value.scramble, outcome.value);
       } else if (outcome.kind === 'confirmed-empty') {
         // 确认无真题(端点 404)→ 显式提示,不伪造生成打乱。
         setWcaSourceEmpty(true);
+      } else if (outcome.kind === 'exhausted') {
+        setWcaSourceFailed(true);
       }
-      // exhausted = 多次仍失败:收起转圈(显示 — ),换打乱 / 改设置可再试。
     });
     return () => retryRun.cancel();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scramble, settings.scrambleSource, wcaSourceSig, applyScrambleHist]);
+  }, [
+    currentScrambleEntryId,
+    fillCurrentEmptyScrambleEntry,
+    isCurrentEmptyScrambleEntry,
+    scramble,
+    settings.scrambleSource,
+    wcaRetry,
+    wcaSourceSig,
+  ]);
 
   // Exact non-2x2 move-count generation is Worker-only. The history slot owns
   // only the current semantic identity; an A→B→A switch cancels the stale A
@@ -870,29 +918,36 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     const requestSignature = genStepsSig;
     const requestSettings = getSettings();
     if (genByStepsSig(event, requestSettings, mode222) !== requestSignature) return;
+    const entryId = currentScrambleEntryId;
     const controller = new AbortController();
     let cancelled = false;
     setByStepsLoading(true);
     setByStepsFailed(false);
     void nextWebNon222ByStepsScramble(requestEvent, requestSettings, controller.signal).then((generated) => {
-      if (cancelled) return;
+      if (cancelled || !isCurrentEmptyScrambleEntry(entryId)) return;
       setByStepsLoading(false);
       if (!generated) {
         setByStepsFailed(true);
         return;
       }
       if (genByStepsSig(event, getSettings(), mode222) !== requestSignature) return;
-      const cur = scrambleHistRef.current;
-      if (cur.list[cur.idx]?.scramble !== '') return;
-      const list = [...cur.list];
-      list[cur.idx] = timerScrambleHistoryEntry(generated);
-      applyScrambleHist({ list, idx: cur.idx });
+      fillCurrentEmptyScrambleEntry(entryId, generated);
     });
     return () => {
       cancelled = true;
       controller.abort();
     };
-  }, [event, mode222, non222ByStepsEvent, genStepsSig, scramble, byStepsRetry, applyScrambleHist]);
+  }, [
+    byStepsRetry,
+    currentScrambleEntryId,
+    event,
+    fillCurrentEmptyScrambleEntry,
+    genStepsSig,
+    isCurrentEmptyScrambleEntry,
+    mode222,
+    non222ByStepsEvent,
+    scramble,
+  ]);
 
   // 后台 worker 打乱(共享二阶专项 provider / csTimer 的 FTO、二阶五魔等):
   // 与 WCA 真题一样是异步的 ——
@@ -902,77 +957,101 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 手动输入模式例外:那里的 '' 表示「队列是空的,去粘贴打乱」(strip 有对应提示),
   // 不是「还在生成」—— 塞一条生成打乱进去会把提示吞掉。
   const [cstimerLoading, setCstimerLoading] = useState(false);
+  const [cstimerFailed, setCstimerFailed] = useState(false);
+  const [cstimerRetry, setCstimerRetry] = useState(0);
   useEffect(() => {
     // 枫叶/齿轮启用精确难度后由完整图生成，不再启动 csTimer Worker 补位；尤其 0 步的
     // 恒等打乱也不能被当成「Worker 尚未返回」。
     const special = special222TypeRef.current;
     if ((!special && !isNonWcaEvent(event)) || settings.scrambleSource === 'manual' || genStepsSig) {
       setCstimerLoading(false);
+      setCstimerFailed(false);
       return;
     }
     if (special) prefetchCube222SpecialScramble(special);
     else prefetchNonWca(event);
-    if (scramble !== '') { setCstimerLoading(false); return; }
+    if (scramble !== '') { setCstimerLoading(false); setCstimerFailed(false); return; }
+    const entryId = currentScrambleEntryId;
     let cancelled = false;
     const waiter = new AbortController();
     setCstimerLoading(true);
+    setCstimerFailed(false);
     const pending = special
       ? nextCube222SpecialScramble(special, waiter.signal)
       : nextNonWcaScramble(event, waiter.signal);
     void pending.then((real) => {
-      if (cancelled) return;
+      if (cancelled || !isCurrentEmptyScrambleEntry(entryId)) return;
       setCstimerLoading(false);
-      const cur = scrambleHistRef.current;
-      if (!real || cur.list[cur.idx]?.scramble !== '') return;
-      const list = [...cur.list];
-      list[cur.idx] = timerScrambleHistoryEntry(real);
-      applyScrambleHist({ list, idx: cur.idx });
+      if (!real) { setCstimerFailed(true); return; }
+      fillCurrentEmptyScrambleEntry(entryId, real);
+    }).catch(() => {
+      if (!cancelled && isCurrentEmptyScrambleEntry(entryId)) {
+        setCstimerLoading(false);
+        setCstimerFailed(true);
+      }
     });
     return () => {
       cancelled = true;
       waiter.abort();
     };
-  }, [event, scramble, settings.scrambleSource, special222Sig, genStepsSig, type222, applyScrambleHist]);
+  }, [
+    cstimerRetry,
+    currentScrambleEntryId,
+    event,
+    fillCurrentEmptyScrambleEntry,
+    genStepsSig,
+    isCurrentEmptyScrambleEntry,
+    scramble,
+    settings.scrambleSource,
+    special222Sig,
+    type222,
+  ]);
 
   // 「按难度生成」:状态采样在 worker(冷启建表 0.3~10s),打乱文本由 min2phase 现算 —— 首条要等,
   // 之后队列已预热。'' = 还在生成(转圈)。**取不到分两种**:worker 证明了这个窗口没有任何状态
   // (empty)才说「生成不出来」;只是没在预算内找到(rare)说的是「太稀有」并且可以再试 ——
   // 冷启建表被算成「不存在」正是之前那条假提示的来源。绝不塞一条别的难度的打乱冒充。
-  const [trainerLoading, setTrainerLoading] = useState(false);
-  const [trainerMiss, setTrainerMiss] = useState<'empty' | 'rare' | null>(null);
-  // 「再试一次」靠它重跑下面那个 effect —— 重试不改 spec,不进依赖就不会重新 await。
-  const [trainerRetry, setTrainerRetry] = useState(0);
+  // 「再试一次」靠 trainerRetry 重跑下面那个 effect —— 重试不改 spec,不进依赖就不会重新 await。
   useEffect(() => {
     const spec = trainerSpecRef.current;
     // 难度关了 / 不适用:放掉缓冲,否则上一个 spec 的 awaitTrainer 永远不会落地。
     if (!spec) { releaseTrainer(); setTrainerLoading(false); setTrainerMiss(null); return; }
+    // 最优打乱的 generateBase 已独占同一个 trainer pool；不能再让第二个
+    // consumer 抢走未优化的题并写进当前槽。
+    if (randomOptimalRequested) { setTrainerLoading(false); setTrainerMiss(null); return; }
     prefetchTrainer(spec);
     if (scramble !== '') { setTrainerLoading(false); setTrainerMiss(null); return; }
+    const entryId = currentScrambleEntryId;
     let cancelled = false;
     setTrainerLoading(true);
     setTrainerMiss(null);
     void awaitTrainer(spec).then((status) => {
-      if (cancelled) return;
+      if (cancelled || !isCurrentEmptyScrambleEntry(entryId)) return;
       setTrainerLoading(false);
       if (status === 'empty' || status === 'rare') { setTrainerMiss(status); return; }
       if (status !== 'ready') return;
-      const cur = scrambleHistRef.current;
-      if (cur.list[cur.idx]?.scramble !== '') return;
       const real = peekTrainer(spec);
       if (!real) return;
-      const list = [...cur.list];
-      list[cur.idx] = timerScrambleHistoryEntry(real);
-      applyScrambleHist({ list, idx: cur.idx });
+      fillCurrentEmptyScrambleEntry(entryId, real);
     });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scramble, trainerSigVal, trainerRetry, applyScrambleHist]);
+  }, [
+    currentScrambleEntryId,
+    fillCurrentEmptyScrambleEntry,
+    isCurrentEmptyScrambleEntry,
+    randomOptimalRequested,
+    scramble,
+    trainerRetry,
+    trainerSigVal,
+  ]);
 
   const attemptCanStart = timerCanStartAttempt({
     availability: randomOptimalLoading || scrambleLoading || cstimerLoading
       || trainerLoading || byStepsLoading
       ? 'loading'
-      : randomOptimalFailed || byStepsFailed || trainerMiss !== null || wcaSourceEmpty
+      : randomOptimalFailed || byStepsFailed || cstimerFailed || trainerMiss !== null
+        || wcaSourceEmpty || wcaSourceFailed
         ? 'unavailable'
         : 'ready',
     emptyScrambleAllowed: timerScrambleAllowsEmptySlot(event, settings.scrambleSource),
@@ -2672,9 +2751,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       )
     : null;
 
-  const retryableScramble = byStepsFailed
-    || randomOptimalFailed
-    || trainerMiss === 'rare';
   const retryDisplayedScramble = () => {
     if (byStepsFailed) {
       setByStepsRetry((value) => value + 1);
@@ -2691,14 +2767,52 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       const spec = trainerSpecRef.current;
       if (!spec) return;
       retryTrainer(spec);
-      setTrainerRetry((value) => value + 1);
+      if (randomOptimalRequested) {
+        const source = randomOptimalSourceRef.current;
+        if (!source) return;
+        retryOptimal333(source);
+        setRandomOptimalRetry((value) => value + 1);
+      } else {
+        setTrainerRetry((value) => value + 1);
+      }
+      return;
     }
+    if (cstimerFailed) { setCstimerRetry((value) => value + 1); return; }
+    if (wcaSourceFailed) setWcaRetry((value) => value + 1);
   };
+  const scrambleStatusReason = randomOptimalLoading
+    ? 'loading-optimal'
+    : scrambleLoading
+      ? 'loading-real'
+      : cstimerLoading || trainerLoading || byStepsLoading
+        ? 'loading-generated'
+        : byStepsFailed
+          ? 'error-steps'
+          : randomOptimalFailed
+            ? 'error-optimal'
+            : cstimerFailed
+              ? 'error-generated'
+              : wcaSourceFailed
+                ? 'error-real'
+                : trainerMiss === 'empty'
+                  ? 'empty-trainer'
+                  : trainerMiss === 'rare'
+                    ? 'rare-trainer'
+                    : wcaSourceEmpty
+                      ? timerWcaScrambleEmptyReason({
+                          competitionUnindexed: isWcaCompUnindexed(wcaSpec),
+                          hasByStepsFilter: Boolean(wcaStep),
+                          hasDifficultyFilter: Boolean(wcaSpec.diff),
+                          hasTypeFilter: Boolean(wca222Type),
+                          mode: wcaSpec.mode,
+                        })
+                      : null;
+  const scrambleStatus = scrambleStatusReason ? timerScrambleStatus(scrambleStatusReason) : null;
   const scrambleClickEffect = timerScrambleClickEffect(
     settings.scrambleClickAction,
     displayScramble.length > 0,
     attemptCanStart,
-    retryableScramble,
+    scrambleStatus?.retryable === true,
   );
 
   return (
@@ -2807,52 +2921,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               copied={scrambleCopied}
               copiedLabel={tr({ zh: '已复制', en: 'Copied' })}
               correctionActive={scrambleGuidance.correctionActive}
-              fallback={randomOptimalLoading || scrambleLoading || cstimerLoading || trainerLoading || byStepsLoading
-                ? <Spinner size={22} label={randomOptimalLoading
-                    ? tr({ zh: '生成最优打乱', en: 'Generating optimal scramble' })
-                    : cstimerLoading || trainerLoading || byStepsLoading
-                      ? tr({ zh: '生成打乱', en: 'Generating scramble' })
-                      : tr({ zh: '加载真实打乱', en: 'Loading real scramble' })} />
-                : byStepsFailed
-                  ? <>{tr({
-                      zh: '按步数打乱生成失败。',
-                      en: 'Could not generate a move-count scramble.',
-                    })} {tr(TIMER_SCRAMBLE_CLICK_TITLE_COPY.retry)}</>
-                  : randomOptimalFailed
-                    ? <>{tr({
-                        zh: '最优打乱生成失败。',
-                        en: 'Could not generate an optimal scramble.',
-                      })} {tr(TIMER_SCRAMBLE_CLICK_TITLE_COPY.retry)}</>
-                    : trainerMiss
-                      ? trainerMiss === 'empty'
-                        ? tr({
-                            zh: '没有任何打乱是这个难度,把步数范围放宽一点',
-                            en: 'No scramble has this difficulty — widen the step range',
-                          })
-                        : <>{tr({
-                            zh: '这个难度太稀有,一时找不出来。',
-                            en: 'This difficulty is too rare to find quickly.',
-                          })} {tr(TIMER_SCRAMBLE_CLICK_TITLE_COPY.retry)}</>
-                      : wcaSourceEmpty
-                        ? wca222Type
-                          ? tr({ zh: '该范围没有匹配此类型的 WCA 真题,换个类型或范围试试', en: 'No WCA scramble of this type matches the range — try another type or range' })
-                          : wcaStep
-                            ? tr({ zh: '该步数范围没有匹配的 WCA 真题,换个步数试试', en: 'No WCA scramble matches this move-count range — try another range' })
-                            : wcaSpec.diff
-                              ? wcaSpec.mode === 'comp'
-                                ? isWcaCompUnindexed(wcaSpec)
-                                  ? tr({ zh: '难度库待更新', en: 'Difficulty index not updated yet' })
-                                  : tr({ zh: '该比赛没有匹配此难度的真题,换个步数或配色试试', en: 'This competition has no scramble at this difficulty — try other step counts or colors' })
-                                : tr({ zh: '该难度组合没有匹配的 WCA 真题,换个步数或配色试试', en: 'No WCA scramble matches this difficulty — try other step counts or colors' })
-                              : wcaSpec.mode === 'comp'
-                                ? tr({ zh: '该比赛没有此项目的打乱', en: 'This competition has no scrambles for this event' })
-                                : tr({ zh: '该时间段内没有 WCA 真题', en: 'No WCA scrambles in this date range' })
-                        : settings.scrambleSource === 'manual' && manualQueue.length === 0
-                          ? tr({ zh: '在上方「打乱来源」粘贴打乱,每行一条', en: 'Paste scrambles above — one per line' })
-                          : '—'}
-              fallbackKind={randomOptimalLoading || scrambleLoading || cstimerLoading || trainerLoading || byStepsLoading
-                ? 'custom'
-                : 'empty'}
+              fallback={settings.scrambleSource === 'manual' && manualQueue.length === 0
+                ? tr(TIMER_MANUAL_SCRAMBLE_EMPTY_COPY)
+                : '—'}
+              fallbackKind="empty"
               font={settings.scrambleFont}
               fontScale={settings.scrambleFontScale}
               hint={scrambleGuidance.hint}
@@ -2861,15 +2933,23 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                 label: tr(TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalLabel),
                 title: tr(TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalTitle),
               } : undefined}
-              onActivate={scrambleClickEffect === 'retry'
-                ? retryDisplayedScramble
-                : scrambleClickEffect === 'copy'
+              onActivate={scrambleClickEffect === 'copy'
                   ? copyScrambleFlash
                   : scrambleClickEffect === 'next' ? nextScramble : undefined}
-              scramble={randomOptimalLoading || scrambleLoading || cstimerLoading || trainerLoading
-                || byStepsLoading || byStepsFailed || randomOptimalFailed || !!trainerMiss || wcaSourceEmpty
-                ? ''
-                : displayScramble}
+              scramble={scrambleStatus ? '' : displayScramble}
+              status={scrambleStatus
+                ? scrambleStatus.retryable
+                  ? {
+                      kind: scrambleStatus.kind,
+                      message: tr(scrambleStatus.message),
+                      onRetry: retryDisplayedScramble,
+                      retryLabel: tr(TIMER_SCRAMBLE_CLICK_TITLE_COPY.retry),
+                    }
+                  : {
+                      kind: scrambleStatus.kind,
+                      message: tr(scrambleStatus.message),
+                    }
+                : undefined}
               title={tr(TIMER_SCRAMBLE_CLICK_TITLE_COPY[scrambleClickEffect])}
               verificationLabels={{
                 copiedCorrection: tr({ zh: '已复制原打乱', en: 'Copied the scramble' }),

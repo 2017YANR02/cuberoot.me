@@ -168,7 +168,7 @@ export function createTimerWcaDifficultyDataAdapter(
       stage: COVERAGE_STAGE,
       variant: COVERAGE_VARIANT,
     })));
-    if (results.every((result) => result === null)) return null;
+    if (results.some((result) => result === null)) return null;
     return results.some((result) => (result?.total ?? 0) > 0);
   }
 

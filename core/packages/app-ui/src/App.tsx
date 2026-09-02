@@ -32,6 +32,7 @@ import {
   TIMER_HISTORY_PENALTIES,
   TIMER_HISTORY_QUICK_ACTION_COPY,
   TIMER_HISTORY_QUICK_ACTION_IDS,
+  TIMER_MANUAL_SCRAMBLE_EMPTY_COPY,
   TIMER_SCRAMBLE_CLICK_TITLE_COPY,
   TIMER_SETTING_CATEGORY_CONTRACTS,
   WCA_SCRAMBLE_222_TYPES,
@@ -56,6 +57,7 @@ import {
   projectRollingStats,
   postTimerWcaScrambleMark,
   pruneTimerHistoryCompareSelection,
+  resolveTimerWcaSourceCore,
   resolveKeymap,
   resolveTimerHistoryComparePair,
   rollingStatColumnsForEvent,
@@ -82,9 +84,11 @@ import {
   stageLabel,
   stageSegmentsFor,
   timerByStepsIdentity,
+  timerByStepsFilter,
   timerScrambleCapability,
   timerScrambleAllowsEmptySlot,
   timerScrambleClickEffect,
+  timerScrambleStatus,
   timerWcaRoundShortLabel,
   timerWcaCompetitionScrambleSlotIdentity,
   timerWcaScrambleMarkKeyFromSlot,
@@ -92,6 +96,8 @@ import {
   timerWcaScrambleProgressLabels,
   timerWcaScrambleEventId,
   timerWcaScrambleSourceLine,
+  timerWcaScrambleEmptyReason,
+  timerWcaDifficultyFilter,
   timerWcaSupportsOptimal,
   updateTimerWcaScrambleMarkIfExists,
   timerSettingFieldContract,
@@ -137,6 +143,7 @@ import {
   type TimerWcaSourceSettings,
   type TimerWcaScrambleMarkKey,
   type TimerWcaScrambleMarksResponse,
+  type TimerRealScrambleRetryOutcome,
 } from '@cuberoot/shared/timer';
 import {
   ClearButton,
@@ -307,11 +314,9 @@ type AppView = 'timer' | 'tools' | 'account' | 'history' | 'settings';
 type PrimaryView = Extract<AppView, 'timer' | 'tools' | 'account'>;
 type ConnectionState = 'checking' | 'offline' | 'online';
 type WebSurfaceStatus = 'loading' | 'ready' | 'error';
-type RealPoolFillOutcome = 'ready' | 'confirmed-empty' | 'exhausted' | 'cancelled';
-
 interface RealPoolRequest {
   cancel(): void;
-  promise: Promise<RealPoolFillOutcome>;
+  promise: Promise<TimerRealScrambleRetryOutcome<RealScramble[]>>;
 }
 
 
@@ -918,7 +923,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     sourceIdentity: string,
     patch: Partial<Pick<
       MobileScrambleHistoryEntry,
-      'availability' | 'caseId' | 'currentReal' | 'scramble' | 'sourceSnapshot'
+      'availability' | 'caseId' | 'currentReal' | 'failure' | 'scramble' | 'sourceSnapshot'
     >>,
   ): boolean => {
     const current = scrambleHistoryRef.current;
@@ -1031,7 +1036,9 @@ export function App({ host }: { host: InstalledAppHost }) {
     return created;
   }, []);
 
-  const refillRealPool = useCallback((input: RealScrambleSourceSpec): Promise<RealPoolFillOutcome> => {
+  const refillRealPool = useCallback((
+    input: RealScrambleSourceSpec,
+  ): Promise<TimerRealScrambleRetryOutcome<RealScramble[]>> => {
     const spec = normalizeRealScrambleSourceSpec(input);
     const sourceKey = realScrambleSourceKey(spec);
     const inFlight = realRequestsRef.current.get(sourceKey);
@@ -1046,9 +1053,9 @@ export function App({ host }: { host: InstalledAppHost }) {
           }
         : undefined,
     });
-    let request!: Promise<RealPoolFillOutcome>;
-    request = run.result.then((outcome): RealPoolFillOutcome => {
-      if (outcome.kind !== 'ready') return outcome.kind;
+    let request!: Promise<TimerRealScrambleRetryOutcome<RealScramble[]>>;
+    request = run.result.then((outcome) => {
+      if (outcome.kind !== 'ready') return outcome;
       const incoming = outcome.value;
       const pool = realPoolFor(spec);
       const current = realCurrentBySourceRef.current.get(sourceKey);
@@ -1065,7 +1072,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         localStorage,
         Date.now(),
       );
-      return 'ready';
+      return outcome;
     }).finally(() => {
       if (realRequestsRef.current.get(sourceKey)?.promise === request) {
         realRequestsRef.current.delete(sourceKey);
@@ -1157,6 +1164,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       if (!result.ok) {
         replaceScrambleHistoryEntry(entry.id, requestedIdentity, {
           availability: result.code === 'unsupported-event' ? 'unsupported' : 'error',
+          failure: { kind: 'generation', code: result.code, retryable: result.retryable },
         });
         return;
       }
@@ -1167,6 +1175,7 @@ export function App({ host }: { host: InstalledAppHost }) {
           availability: 'ready',
           caseId: null,
           currentReal: null,
+          failure: null,
           scramble: '',
         });
         return;
@@ -1175,6 +1184,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         availability: 'ready',
         caseId: timerTracksTrainerCase(event) ? result.metadata?.caseId ?? null : null,
         currentReal: null,
+        failure: null,
         scramble: result.scramble,
       });
     }).catch(() => {
@@ -1183,7 +1193,10 @@ export function App({ host }: { host: InstalledAppHost }) {
         && activeEventRef.current === event
         && scrambleSourceRef.current === expectedSource
         && scrambleIdentityFor(expectedSource, event) === requestedIdentity) {
-        replaceScrambleHistoryEntry(entry.id, requestedIdentity, { availability: 'error' });
+        replaceScrambleHistoryEntry(entry.id, requestedIdentity, {
+          availability: 'error',
+          failure: { kind: 'generation', code: 'generation-failed', retryable: true },
+        });
       }
     }).finally(() => {
       randomScrambleGateRef.current.finish(controller);
@@ -1191,9 +1204,17 @@ export function App({ host }: { host: InstalledAppHost }) {
   }, [replaceScrambleHistoryEntry, scrambleIdentityFor]);
 
   const fillScrambleHistoryEntry = useCallback((entry: MobileScrambleHistoryEntry) => {
+    const liveEntry = scrambleHistoryRef.current.list.find((candidate) => (
+      candidate.id === entry.id && candidate.sourceIdentity === entry.sourceIdentity
+    ));
+    if (!liveEntry || (entry.availability !== 'loading' && liveEntry.availability === 'loading')) return;
     randomScrambleGateRef.current.cancel();
     const requestId = ++scrambleRequestRef.current;
-    const { event, source, sourceIdentity } = entry;
+    const { event, source, sourceIdentity } = liveEntry;
+    replaceScrambleHistoryEntry(liveEntry.id, sourceIdentity, {
+      availability: 'loading',
+      failure: null,
+    });
 
     if (source === 'manual') {
       const taken = takeManualScramble(
@@ -1201,16 +1222,17 @@ export function App({ host }: { host: InstalledAppHost }) {
         manualCursorRef.current,
       );
       manualCursorRef.current = taken.nextCursor;
-      replaceScrambleHistoryEntry(entry.id, sourceIdentity, {
+      replaceScrambleHistoryEntry(liveEntry.id, sourceIdentity, {
         availability: 'ready',
         caseId: null,
         currentReal: null,
+        failure: null,
         scramble: taken.scramble,
       });
       return;
     }
     if (source === 'random') {
-      generateRandomScramble(entry, requestId);
+      generateRandomScramble(liveEntry, requestId);
       return;
     }
 
@@ -1218,13 +1240,13 @@ export function App({ host }: { host: InstalledAppHost }) {
     // Real source selected but use that same project's local provider. This is
     // not a network-error fallback, and it must never turn into a 333 scramble.
     if (!timerSupportsRealWcaScrambles(event)) {
-      generateRandomScramble(entry, requestId);
+      generateRandomScramble(liveEntry, requestId);
       return;
     }
 
     const realSpec = normalizeRealScrambleSourceSpec(realSpecFor(event));
     const sourceKey = realScrambleSourceKey(realSpec);
-    const requestedIdentity = entry.sourceIdentity;
+    const requestedIdentity = sourceIdentity;
     const pool = realPoolFor(realSpec);
     const activate = (next: RealScramble) => {
       realCurrentBySourceRef.current.set(sourceKey, next);
@@ -1233,10 +1255,11 @@ export function App({ host }: { host: InstalledAppHost }) {
         && realProgressTrackerRef.current.noteServed(sourceKey, next)) {
         refreshRealProgress((revision) => revision + 1);
       }
-      replaceScrambleHistoryEntry(entry.id, requestedIdentity, {
+      replaceScrambleHistoryEntry(liveEntry.id, requestedIdentity, {
         availability: 'ready',
         caseId: null,
         currentReal: next,
+        failure: null,
         scramble: next.scramble,
         sourceSnapshot: {
           kind: 'wca',
@@ -1257,18 +1280,27 @@ export function App({ host }: { host: InstalledAppHost }) {
         || activeEventRef.current !== event
         || scrambleSourceRef.current !== 'wca'
         || realScrambleSourceKey(realSpecFor(activeEventRef.current)) !== sourceKey) return;
-      if (outcome === 'cancelled') return;
-      if (outcome === 'confirmed-empty') {
-        replaceScrambleHistoryEntry(entry.id, requestedIdentity, { availability: 'empty' });
+      if (outcome.kind === 'cancelled') return;
+      if (outcome.kind === 'confirmed-empty') {
+        replaceScrambleHistoryEntry(liveEntry.id, requestedIdentity, {
+          availability: 'empty',
+          failure: { kind: 'real-empty' },
+        });
         return;
       }
-      if (outcome === 'exhausted') {
-        replaceScrambleHistoryEntry(entry.id, requestedIdentity, { availability: 'error' });
+      if (outcome.kind === 'exhausted') {
+        replaceScrambleHistoryEntry(liveEntry.id, requestedIdentity, {
+          availability: 'error',
+          failure: { kind: 'real-exhausted' },
+        });
         return;
       }
       const loaded = realPoolFor(realSpec).shift();
       if (!loaded) {
-        replaceScrambleHistoryEntry(entry.id, requestedIdentity, { availability: 'error' });
+        replaceScrambleHistoryEntry(liveEntry.id, requestedIdentity, {
+          availability: 'error',
+          failure: { kind: 'real-exhausted' },
+        });
         return;
       }
       activate(loaded);
@@ -1277,7 +1309,10 @@ export function App({ host }: { host: InstalledAppHost }) {
         && activeEventRef.current === event
         && scrambleSourceRef.current === 'wca'
         && realScrambleSourceKey(realSpecFor(activeEventRef.current)) === sourceKey) {
-        replaceScrambleHistoryEntry(entry.id, requestedIdentity, { availability: 'error' });
+        replaceScrambleHistoryEntry(liveEntry.id, requestedIdentity, {
+          availability: 'error',
+          failure: { kind: 'real-exhausted' },
+        });
       }
     });
   }, [
@@ -1286,7 +1321,6 @@ export function App({ host }: { host: InstalledAppHost }) {
     realSpecFor,
     refillRealPool,
     replaceScrambleHistoryEntry,
-    scrambleIdentityFor,
   ]);
 
   const nextScramble = useCallback((
@@ -2256,23 +2290,50 @@ export function App({ host }: { host: InstalledAppHost }) {
   const sourceControlsEnabled = timer.machine.phase !== 'running'
     && !timerContextMutationBusy;
   const scrambleReady = attemptCanStart;
-  const scrambleText = scrambleAvailability === 'loading'
-    ? scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent)
-      ? copy.loadingReal
-      : copy.generatingScramble
-    : scrambleAvailability === 'unsupported'
-      ? copy.scrambleUnsupported
-      : scrambleAvailability === 'empty'
-        ? copy.realScrambleEmpty
-      : scrambleAvailability === 'error'
-        ? scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent)
-          ? copy.realScrambleFailed
-          : copy.actionFailed
-        : scrambleSource === 'manual' && scramble.length === 0
-          ? copy.manualPasteHint
-          : activeEvent === 'custom' && scramble.length === 0
-            ? '—'
-            : scramble;
+  const mappedRealSource = scrambleSource === 'wca'
+    && timerSupportsRealWcaScrambles(activeEvent);
+  const resolvedWcaSource = resolveTimerWcaSourceCore(wcaSourceSettings);
+  const appByStepsFilter = (activeEvent !== '222' || scramble222Type === 'full')
+    ? timerByStepsFilter(activeEvent, mappedRealSource ? 'wca' : 'random', byStepsSettings)
+    : null;
+  const appWcaDifficultyFilter = mappedRealSource
+    ? timerWcaDifficultyFilter(timerWcaScrambleEventId(activeEvent), wcaSourceSettings, {
+        competitionUnindexed: wcaDifficultyCoverage === 'unindexed',
+        suppress: activeEvent === '222' && scramble222Type !== 'full',
+      })
+    : null;
+  const scrambleStatus = (() => {
+    if (scrambleAvailability === 'loading') {
+      return timerScrambleStatus(mappedRealSource ? 'loading-real' : 'loading-generated');
+    }
+    if (scrambleAvailability === 'unsupported') return timerScrambleStatus('unsupported');
+    if (scrambleAvailability === 'empty') {
+      return timerScrambleStatus(timerWcaScrambleEmptyReason({
+        competitionUnindexed: wcaDifficultyCoverage === 'unindexed',
+        hasByStepsFilter: appByStepsFilter !== null,
+        hasDifficultyFilter: appWcaDifficultyFilter !== null,
+        hasTypeFilter: activeEvent === '222' && scramble222Type !== 'full',
+        mode: resolvedWcaSource.mode,
+      }));
+    }
+    if (scrambleAvailability !== 'error') return null;
+    const descriptor = timerScrambleStatus(
+      mappedRealSource
+        ? 'error-real'
+        : appByStepsFilter
+          ? 'error-steps'
+          : 'error-generated',
+    );
+    const retryable = currentScrambleEntry?.failure?.kind === 'generation'
+      ? currentScrambleEntry.failure.retryable
+      : descriptor.retryable;
+    return { ...descriptor, retryable };
+  })();
+  const scrambleText = scrambleSource === 'manual' && scramble.length === 0
+    ? TIMER_MANUAL_SCRAMBLE_EMPTY_COPY[language]
+    : activeEvent === 'custom' && scramble.length === 0
+      ? '—'
+      : scramble;
 
   const invalidateCurrentScramble = useCallback(() => {
     randomScrambleGateRef.current.cancel();
@@ -3022,7 +3083,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     store!.settings.scrambleClickAction,
     scramble.length > 0,
     scrambleReady,
-    scrambleAvailability === 'error' && currentScrambleEntry !== undefined,
+    scrambleStatus?.retryable === true && currentScrambleEntry !== undefined,
   );
   const shellViewport = mobileShellViewportLayout(viewportHeight);
 
@@ -3306,96 +3367,107 @@ export function App({ host }: { host: InstalledAppHost }) {
                 interactive={scrambleReady}
                 onContextMenu={(event) => event.preventDefault()}
                 phase={timer.machine.phase}
-                 scrambleSlot={(
-                   <TimerScrambleStrip
-                     copied={scrambleCopied}
-                     copiedLabel={copy.copied}
-                     correctionActive={smartCubeGuidance.correctionActive}
-                     fallback={scrambleText}
-                     fallbackKind={scrambleAvailability === 'loading' ? 'custom' : 'empty'}
-                     match={smartCubeScrambleMatch}
-                     hint={smartCubeGuidance.hint}
-                     nonOptimal={currentReal?.nonOptimal ? {
-                       label: TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalLabel[language],
-                       title: TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalTitle[language],
-                     } : undefined}
-                     onActivate={scrambleClickEffect === 'retry' && currentScrambleEntry
-                       ? () => {
-                         if (canSwitchScramble()) fillScrambleHistoryEntry(currentScrambleEntry);
-                       }
-                       : scrambleClickEffect === 'next'
-                         ? nextDisplayedScramble
-                         : scrambleClickEffect === 'copy' ? copyCurrentScramble : undefined}
-                     scramble={scrambleReady && scramble.length > 0 ? scrambleText : ''}
-                     title={TIMER_SCRAMBLE_CLICK_TITLE_COPY[scrambleClickEffect][language]}
-                     verificationLabels={{
-                       copiedCorrection: copy.scrambleCorrectionCopied,
-                       correction: copy.scrambleCorrection,
-                       correctionTitle: copy.scrambleCorrectionTitle,
-                       mismatch: copy.scrambleMismatch,
-                       ready: copy.scrambleReady,
-                     }}
-                   >
-                     {currentReal && scrambleSource === 'wca' && (
-                       <TimerWcaScrambleSource
-                         competitionName={currentRealCompetition?.selectedDisplayName
-                           ?? displayMobileWcaCompetitionName(
-                             currentReal.competitionId,
-                             currentReal.competitionName,
-                             language,
-                           )}
-                         country={currentRealCompetition?.country}
-                         eventLabel={timerEventPickerName(activeEvent, language)}
-                         eventId={currentReal.eventId}
-                         groupId={currentReal.groupId}
-                         href={siteRouteUrl(
-                           language,
-                           `/scramble/gen?comp=${encodeURIComponent(currentReal.competitionId)}`,
-                         )}
-                         isExtra={currentReal.isExtra}
-                         onNavigate={() => openToolsRoute(
-                           `/scramble/gen?comp=${encodeURIComponent(currentReal.competitionId)}`,
-                         )}
-                         roundTypeId={currentReal.roundTypeId}
-                         scrambleNumber={currentReal.scrambleNumber}
-                         title={TIMER_WCA_SCRAMBLE_SOURCE_COPY.viewCompetition[language]}
-                       >
-                         <TimerWcaScrambleProgress
-                           key={currentWcaMarkIdentity ?? 'wca-source-progress'}
-                           allMarksHref={siteRouteUrl(language, '/timer/marks')}
-                           labels={wcaProgressLabels}
-                           language={language}
-                           markCount={currentWcaMarks?.count}
-                           marked={currentWcaMarked}
-                           marks={currentWcaMarks?.marks.map((mark) => ({
-                             country: mark.country || undefined,
-                             dateLabel: new Date(mark.createdAt * 1_000).toISOString().slice(0, 10),
-                             name: mark.name,
-                             personHref: isWcaIdFormat(mark.wcaId)
-                               ? siteRouteUrl(
-                                 language,
-                                 `/wca/persons/${encodeURIComponent(mark.wcaId)}`,
-                               )
-                               : undefined,
-                             timeLabel: mark.timeCs == null ? undefined : formatMs(mark.timeCs * 10),
-                             wcaId: mark.wcaId,
-                           }))}
-                           onNavigateAllMarks={() => openToolsRoute('/timer/marks')}
-                           onNavigatePerson={(mark) => {
-                             if (isWcaIdFormat(mark.wcaId)) openToolsRoute(
-                               `/wca/persons/${encodeURIComponent(mark.wcaId)}`,
-                             );
-                           }}
-                           onOpenChange={handleTimerOverlayOpenChange}
-                           open={openOverlay === TIMER_OVERLAY_IDS.wcaScrambleMarks
-                             && wcaMarksOverlayIdentityRef.current === currentWcaMarkIdentity}
-                           progress={currentRealProgress ?? undefined}
-                           viewportBottomInset={primaryNavBottomInset}
-                         />
-                       </TimerWcaScrambleSource>
+                scrambleSlot={(
+                  <TimerScrambleStrip
+                    copied={scrambleCopied}
+                    copiedLabel={copy.copied}
+                    correctionActive={smartCubeGuidance.correctionActive}
+                    fallback={scrambleText}
+                    fallbackKind="empty"
+                    match={smartCubeScrambleMatch}
+                    hint={smartCubeGuidance.hint}
+                    nonOptimal={currentReal?.nonOptimal ? {
+                      label: TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalLabel[language],
+                      title: TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalTitle[language],
+                    } : undefined}
+                    onActivate={scrambleClickEffect === 'next'
+                      ? nextDisplayedScramble
+                      : scrambleClickEffect === 'copy' ? copyCurrentScramble : undefined}
+                    scramble={scrambleReady && scramble.length > 0 ? scrambleText : ''}
+                    status={scrambleStatus
+                      ? scrambleStatus.retryable && currentScrambleEntry
+                        ? {
+                            kind: scrambleStatus.kind,
+                            message: scrambleStatus.message[language],
+                            onRetry: () => {
+                              if (canSwitchScramble()) fillScrambleHistoryEntry(currentScrambleEntry);
+                            },
+                            retryLabel: TIMER_SCRAMBLE_CLICK_TITLE_COPY.retry[language],
+                          }
+                        : {
+                            kind: scrambleStatus.kind,
+                            message: scrambleStatus.message[language],
+                          }
+                      : undefined}
+                    title={TIMER_SCRAMBLE_CLICK_TITLE_COPY[scrambleClickEffect][language]}
+                    verificationLabels={{
+                      copiedCorrection: copy.scrambleCorrectionCopied,
+                      correction: copy.scrambleCorrection,
+                      correctionTitle: copy.scrambleCorrectionTitle,
+                      mismatch: copy.scrambleMismatch,
+                      ready: copy.scrambleReady,
+                    }}
+                  >
+                    {currentReal && scrambleSource === 'wca' && (
+                      <TimerWcaScrambleSource
+                        competitionName={currentRealCompetition?.selectedDisplayName
+                          ?? displayMobileWcaCompetitionName(
+                            currentReal.competitionId,
+                            currentReal.competitionName,
+                            language,
+                          )}
+                        country={currentRealCompetition?.country}
+                        eventLabel={timerEventPickerName(activeEvent, language)}
+                        eventId={currentReal.eventId}
+                        groupId={currentReal.groupId}
+                        href={siteRouteUrl(
+                          language,
+                          `/scramble/gen?comp=${encodeURIComponent(currentReal.competitionId)}`,
+                        )}
+                        isExtra={currentReal.isExtra}
+                        onNavigate={() => openToolsRoute(
+                          `/scramble/gen?comp=${encodeURIComponent(currentReal.competitionId)}`,
+                        )}
+                        roundTypeId={currentReal.roundTypeId}
+                        scrambleNumber={currentReal.scrambleNumber}
+                        title={TIMER_WCA_SCRAMBLE_SOURCE_COPY.viewCompetition[language]}
+                      >
+                        <TimerWcaScrambleProgress
+                          key={currentWcaMarkIdentity ?? 'wca-source-progress'}
+                          allMarksHref={siteRouteUrl(language, '/timer/marks')}
+                          labels={wcaProgressLabels}
+                          language={language}
+                          markCount={currentWcaMarks?.count}
+                          marked={currentWcaMarked}
+                          marks={currentWcaMarks?.marks.map((mark) => ({
+                            country: mark.country || undefined,
+                            dateLabel: new Date(mark.createdAt * 1_000).toISOString().slice(0, 10),
+                            name: mark.name,
+                            personHref: isWcaIdFormat(mark.wcaId)
+                              ? siteRouteUrl(
+                                language,
+                                `/wca/persons/${encodeURIComponent(mark.wcaId)}`,
+                              )
+                              : undefined,
+                            timeLabel: mark.timeCs == null ? undefined : formatMs(mark.timeCs * 10),
+                            wcaId: mark.wcaId,
+                          }))}
+                          onNavigateAllMarks={() => openToolsRoute('/timer/marks')}
+                          onNavigatePerson={(mark) => {
+                            if (isWcaIdFormat(mark.wcaId)) openToolsRoute(
+                              `/wca/persons/${encodeURIComponent(mark.wcaId)}`,
+                            );
+                          }}
+                          onOpenChange={handleTimerOverlayOpenChange}
+                          open={openOverlay === TIMER_OVERLAY_IDS.wcaScrambleMarks
+                            && wcaMarksOverlayIdentityRef.current === currentWcaMarkIdentity}
+                          progress={currentRealProgress ?? undefined}
+                          viewportBottomInset={primaryNavBottomInset}
+                        />
+                      </TimerWcaScrambleSource>
                     )}
-                   </TimerScrambleStrip>
-                 )}
+                  </TimerScrambleStrip>
+                )}
                 surfaceRef={surfaceRef}
               >
                 <span aria-live="polite" className="sr-only">{timerInstruction}</span>

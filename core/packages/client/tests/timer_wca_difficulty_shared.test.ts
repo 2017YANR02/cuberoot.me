@@ -128,13 +128,18 @@ describe('shared timer WCA difficulty contract', () => {
   it('deduplicates coverage in-flight, caches authoritative empty, and retries all-error probes', async () => {
     let difficultyCalls = 0;
     let failDifficulty = false;
+    let failDifficultyBin: string | null = null;
     const fetcher = vi.fn(async (url: string) => {
       if (url.includes('/distribution.json')) return jsonResponse({
         sets: { wca: { variants: { std: { data: { cross: { BGORWY: { min: 4, max: 5 } } } } } } },
       });
       if (url.includes('/by-difficulty?')) {
         difficultyCalls += 1;
-        if (failDifficulty) return jsonResponse({}, 503);
+        const query = new URL(url).searchParams;
+        if (failDifficulty || query.get('bin') === failDifficultyBin) return jsonResponse({}, 503);
+        if (query.get('names') === 'Partial Open 2026' && query.get('bin') === '4') {
+          return jsonResponse({ total: 1, page: 1, pageSize: 1, scrambles: [] });
+        }
         return jsonResponse({ total: 0, page: 1, pageSize: 1, scrambles: [] });
       }
       return jsonResponse({}, 404);
@@ -161,6 +166,16 @@ describe('shared timer WCA difficulty contract', () => {
     await expect(adapter.probeCompetitionCoverage('Retry2026', 'Retry Open 2026', '333'))
       .resolves.toBe(false);
     expect(difficultyCalls).toBe(6);
+
+    failDifficultyBin = '5';
+    await expect(adapter.probeCompetitionCoverage('Partial2026', 'Partial Open 2026', '333'))
+      .resolves.toBeNull();
+    expect(adapter.getCompetitionCoverage('Partial2026', '333')).toBeNull();
+    failDifficultyBin = null;
+    await expect(adapter.probeCompetitionCoverage('Partial2026', 'Partial Open 2026', '333'))
+      .resolves.toBe(true);
+    expect(adapter.getCompetitionCoverage('Partial2026', '333')).toBe(true);
+    expect(difficultyCalls).toBe(10);
   });
 
   it('keeps malformed responses distinct from authoritative empty results', () => {
