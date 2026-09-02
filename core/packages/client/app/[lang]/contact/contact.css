@@ -49,7 +49,7 @@
 }
 
 .contact-profile-copy {
-  max-width: 18rem;
+  width: min(100%, 860px);
 }
 
 .contact-profile-copy h2 {
@@ -86,19 +86,25 @@
   margin-top: 0.45rem;
 }
 
+.contact-details-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(260px, 1fr);
+  gap: 2.5rem;
+  margin-top: 1.35rem;
+}
+
 .contact-details {
   display: grid;
-  gap: 0.55rem;
-  margin: 1.35rem 0 0;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.55rem 0.75rem;
+  align-items: center;
+  margin: 0;
   font-size: 0.84rem;
   text-align: left;
 }
 
 .contact-details-row {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  align-items: center;
-  gap: 0.75rem;
+  display: contents;
 }
 
 .contact-details-row dt,
@@ -150,35 +156,71 @@
   text-decoration: underline;
 }
 
-.contact-copy-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px 5px;
-  border: 1px solid var(--border-default);
-  border-radius: 5px;
+.contact-copy-value {
+  padding: 0;
+  border: 0;
   background: transparent;
-  color: var(--muted-foreground);
+  color: inherit;
+  font: inherit;
+  text-align: left;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
 
-.contact-copy-button:hover {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
+.contact-copy-value:hover {
   color: var(--accent);
+  text-decoration: underline;
 }
 
-.contact-copy-button:active {
-  transform: translateY(1px);
+.contact-copy-value:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
 }
 
-.contact-details-link-row {
-  grid-template-columns: 1fr;
+.contact-qr-trigger {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.contact-qr-trigger:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.contact-qr-popover {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.contact-qr-popover:popover-open {
+  position: fixed;
+  inset: 0;
+  width: fit-content;
+  height: fit-content;
+  margin: auto;
+}
+
+.contact-qr-popover::backdrop {
+  background: color-mix(in srgb, var(--background) 72%, transparent);
 }
 
 .contact-details-link-row a {
   width: fit-content;
+}
+
+.contact-platform-account,
+.contact-platform-count {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.contact-platform-count {
+  color: var(--faint-foreground);
+  font-size: 0.76rem;
+  font-weight: 500;
 }
 
 .contact-qr {
@@ -325,7 +367,12 @@
   }
 
   .contact-profile-copy {
-    max-width: 20rem;
+    width: 100%;
+  }
+
+  .contact-details-columns {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
   }
 
   .contact-qr {

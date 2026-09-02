@@ -123,12 +123,17 @@ const validInput = {
 };
 
 describe('mini program release check', () => {
-  it('builds the public share cover from its canonical source image', async () => {
-    expect(BUILD_ASSETS).toHaveLength(1);
+  it('builds public images from their canonical Mini Program assets', async () => {
+    expect(BUILD_ASSETS).toHaveLength(15);
     expect(BUILD_ASSETS[0].output).toBe('assets/share-cover.png');
     expect(BUILD_ASSETS[0].source.replaceAll('\\', '/')).toMatch(
       /\/apps\/miniprogram\/assets\/share-cover\.png$/,
     );
+    expect(BUILD_ASSETS.map(({ output }) => output)).toEqual(expect.arrayContaining([
+      'assets/contact/youtube.png',
+      'assets/contact/wechat.png',
+      'assets/contact/ruimin-wechat-qr.jpg',
+    ]));
     const packageRoot = resolve(import.meta.dirname, '..');
     const coreRoot = resolve(packageRoot, '..', '..');
     const sharedRoot = resolve(coreRoot, resolveWorkspacePath('@cuberoot/shared'));

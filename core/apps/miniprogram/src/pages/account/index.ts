@@ -1,4 +1,14 @@
 import {
+  CONTACT_DIRECT_DETAILS,
+  CONTACT_GROUP_SECTIONS,
+  CONTACT_JOIN_INSTRUCTION,
+  CONTACT_SOCIAL_PLATFORMS,
+  CONTACT_WEBSITE,
+  CONTACT_WECHAT_ID,
+  type ContactDirectDetailId,
+  type ContactPlatformId,
+} from '@cuberoot/shared/contact';
+import {
   clearStoredSession,
   getStoredSessionSnapshot,
   isSessionStorageError,
@@ -9,7 +19,7 @@ import {
 import { cancelWebsiteNavigation, openWebsitePageOnce } from '../../lib/navigation';
 import { showPublicShareMenu, toTimelineShare } from '../../lib/share';
 import { resolveAccountPageShare } from '../../lib/web-routes';
-import { tr } from '../../lib/i18n';
+import { getMiniProgramLocale, tr } from '../../lib/i18n';
 import { isDouyinMiniProgram, miniProgramApi } from '../../lib/platform';
 
 const TIMELINE_SCENE = 1154;
@@ -31,6 +41,15 @@ const ACCOUNT_COPY = {
     en: 'Account management is temporarily unavailable. Try again later.',
     zh: '账号管理暂时无法打开，请稍后重试',
   }),
+  contactCopyFailure: tr({
+    en: 'Unable to copy this contact detail. Try again.',
+    zh: '暂时无法复制这项联系信息，请重试',
+  }),
+  contactPageFailure: tr({
+    en: 'The contact page is temporarily unavailable. Try again later.',
+    zh: '联系页面暂时无法打开，请稍后重试',
+  }),
+  copiedLabel: tr({ en: 'Copied', zh: '已复制' }),
   defaultUser: tr({ en: 'CubeRoot user', zh: 'CubeRoot 用户' }),
   entryCopy: tr({
     en: 'Tap the bottom-right button to open CubeRoot',
@@ -82,9 +101,6 @@ const ACCOUNT_COPY = {
     zh: '重新读取设备登录状态',
   }),
   retrySessionLabel: tr({ en: 'Try again', zh: '重新读取' }),
-  shareNote: isDouyinMiniProgram()
-    ? tr({ en: 'Tap "..." in the top-right to share CubeRoot', zh: '点击右上角“...”分享 CubeRoot' })
-    : tr({ en: 'Tap "..." in the top-right to share to Moments', zh: '点击右上角“...”分享到朋友圈' }),
   signingInLabel: tr({ en: 'Signing in', zh: '正在登录' }),
   storageUnavailable: tr({
     en: 'Unable to read the sign-in state on this device. Try again.',
@@ -93,10 +109,86 @@ const ACCOUNT_COPY = {
   userAgreementLabel: tr({ en: 'User Agreement', zh: '《用户协议》' }),
 };
 const accountShare = resolveAccountPageShare();
+const contactLocale = getMiniProgramLocale();
+const joinInstruction = tr(CONTACT_JOIN_INSTRUCTION, contactLocale);
+const [joinInstructionBefore, joinInstructionAfter = ''] = joinInstruction.split(CONTACT_WECHAT_ID);
+const CONTACT_PLATFORM_ICON_PATHS: Record<ContactPlatformId, string> = {
+  youtube: '/assets/contact/youtube.png',
+  tiktok: '/assets/contact/tiktok.png',
+  instagram: '/assets/contact/instagram.png',
+  bilibili: '/assets/contact/bilibili.png',
+  douyin: '/assets/contact/douyin.png',
+  xiaohongshu: '/assets/contact/xiaohongshu.png',
+  kuaishou: '/assets/contact/kuaishou.png',
+  'wechat-official': '/assets/contact/wechat.png',
+};
+const CONTACT_DETAIL_ICON_PATHS: Record<ContactDirectDetailId, string> = {
+  author: '/assets/contact/author.png',
+  wechat: '/assets/contact/wechat.png',
+  qq: '/assets/contact/qq.png',
+  email: '/assets/contact/email.png',
+  discord: '/assets/contact/discord.png',
+};
+const CONTACT_VIEW = {
+  eyebrow: tr({ en: 'CONTACT & COMMUNITY', zh: '联系与社群' }, contactLocale),
+  joinInstructionAfter,
+  joinInstructionBefore,
+  joinInstructionValue: CONTACT_WECHAT_ID,
+  joinTitle: tr({ en: 'How to join', zh: '进群方法' }, contactLocale),
+  qrAria: tr({ en: 'View WeChat QR code', zh: '查看微信二维码' }, contactLocale),
+  qrPath: '/assets/contact/ruimin-wechat-qr.jpg',
+  title: tr({ en: 'Contact', zh: '联系方式' }, contactLocale),
+  websiteLabel: tr({ en: 'Website', zh: '网站' }, contactLocale),
+  website: CONTACT_WEBSITE,
+  platforms: [...CONTACT_SOCIAL_PLATFORMS]
+    .sort((a, b) => Number(b.language === contactLocale) - Number(a.language === contactLocale))
+    .map((platform) => ({
+      account: platform.account,
+      count: platform.count ? tr(platform.count, contactLocale) : '',
+      href: platform.href ?? '',
+      icon: CONTACT_PLATFORM_ICON_PATHS[platform.id],
+      id: platform.id,
+      label: tr(platform.label, contactLocale),
+    })),
+  details: CONTACT_DIRECT_DETAILS.map((detail) => {
+    const value = detail.value ? tr(detail.value, contactLocale) : '';
+    return {
+      action: detail.action,
+      actionValue: detail.action === 'link' ? detail.href ?? '' : value,
+      icon: CONTACT_DETAIL_ICON_PATHS[detail.id],
+      id: detail.id,
+      label: tr(detail.label, contactLocale),
+      showQr: detail.showQr,
+      value,
+    };
+  }),
+  sections: CONTACT_GROUP_SECTIONS.map((section, sectionIndex) => ({
+    blocks: section.blocks.map((block) => ({
+      groups: block.groups.map((group) => ({
+        name: tr(group, contactLocale),
+        secondaryName: contactLocale === 'en' ? group.zh : '',
+      })),
+      title: tr(block.title, contactLocale),
+    })),
+    description: tr(section.description, contactLocale),
+    id: section.id,
+    index: String(sectionIndex + 1).padStart(2, '0'),
+    title: tr(section.title, contactLocale),
+  })),
+};
+
+interface ContactCopyEvent {
+  currentTarget: {
+    dataset: {
+      value?: unknown;
+    };
+  };
+}
 
 interface AccountPageData {
   accountError: string;
   agreementAccepted: boolean;
+  contact: typeof CONTACT_VIEW;
   copy: typeof ACCOUNT_COPY;
   displayName: string;
   isTimelineEntry: boolean;
@@ -109,7 +201,6 @@ interface AccountPageData {
   loginIntro: string;
   loginNote: string;
   requiresAgreement: boolean;
-  shareNote: string;
   uidText: string;
   wcaId: string;
 }
@@ -181,6 +272,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   data: {
     accountError: '',
     agreementAccepted: false,
+    contact: CONTACT_VIEW,
     copy: ACCOUNT_COPY,
     displayName: '',
     isTimelineEntry: false,
@@ -193,7 +285,6 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     loginIntro: ACCOUNT_COPY.loginIntro,
     loginNote: ACCOUNT_COPY.loginNote,
     requiresAgreement: isDouyinMiniProgram(),
-    shareNote: ACCOUNT_COPY.shareNote,
     uidText: '',
     wcaId: '',
   },
@@ -296,5 +387,52 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
       failureMessage: ACCOUNT_COPY.accountFailure,
       onFailure: (message) => this.setData({ accountError: message }),
     });
+  },
+
+  openContactWebsite() {
+    if (this.data.isTimelineEntry || this.data.loginRequired) return;
+    this.setData({ accountError: '' });
+    openWebsitePageOnce(this, 'contact', {
+      failureMessage: ACCOUNT_COPY.contactPageFailure,
+      onFailure: (message) => this.setData({ accountError: message }),
+    });
+  },
+
+  previewWechatQr() {
+    if (this.data.isTimelineEntry || this.data.loginRequired) return;
+    const path = CONTACT_VIEW.qrPath;
+    try {
+      const api = miniProgramApi();
+      if (typeof api.previewImage === 'function') {
+        api.previewImage({ current: path, urls: [path] });
+      }
+    } catch {
+      // QR preview is optional; copying the WeChat ID remains available.
+    }
+  },
+
+  copyContactValue(event: ContactCopyEvent) {
+    const value = event.currentTarget.dataset.value;
+    if (typeof value !== 'string' || value.length === 0) return;
+
+    const copyFailed = () => {
+      this.setData({ accountError: ACCOUNT_COPY.contactCopyFailure });
+    };
+
+    this.setData({ accountError: '' });
+    try {
+      const api = miniProgramApi();
+      api.setClipboardData({
+        data: value,
+        fail: copyFailed,
+        success: () => {
+          if (typeof api.showToast === 'function') {
+            api.showToast({ icon: 'none', title: ACCOUNT_COPY.copiedLabel });
+          }
+        },
+      });
+    } catch {
+      copyFailed();
+    }
   },
 });
