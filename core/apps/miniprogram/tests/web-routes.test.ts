@@ -44,7 +44,7 @@ describe('mini program web routes', () => {
     });
     expect(resolveWebRouteShare('home')).toEqual({
       imageUrl: WEB_ROUTE_SHARE_IMAGE,
-      title: 'CubeRoot 魔方根：魔方工具',
+      title: '魔方根CubeRoot：魔方工具',
       path: '/pages/tools/index',
     });
   });
@@ -155,22 +155,22 @@ describe('mini program web routes', () => {
   it('derives share targets from public entries without exposing account routes', () => {
     expect(resolveAccountPageShare()).toEqual({
       imageUrl: WEB_ROUTE_SHARE_IMAGE,
-      title: 'CubeRoot 魔方根',
+      title: '魔方根CubeRoot',
       path: '/pages/account/index',
     });
     expect(resolveToolsPageShare()).toEqual({
       imageUrl: WEB_ROUTE_SHARE_IMAGE,
-      title: 'CubeRoot 魔方根：魔方工具',
+      title: '魔方根CubeRoot：魔方工具',
       path: '/pages/tools/index',
     });
     expect(resolveWebRouteShare('timer')).toEqual({
       imageUrl: WEB_ROUTE_SHARE_IMAGE,
-      title: 'CubeRoot 魔方根：计时',
+      title: '魔方根CubeRoot：计时',
       path: '/pages/timer/index',
     });
     expect(resolveWebRouteShare('alg')).toEqual({
       imageUrl: WEB_ROUTE_SHARE_IMAGE,
-      title: 'CubeRoot 魔方根：公式',
+      title: '魔方根CubeRoot：公式',
       path: '/pages/web/index?key=alg',
     });
     const routeBackedTools = listWebTools().filter((tool) => tool.key !== null);
