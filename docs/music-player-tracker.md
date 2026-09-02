@@ -24,7 +24,7 @@
 - 根布局中的 `DeskPet` 已让悬浮节拍器跨页面存活，并处理显式语言状态、用户手势启动音频和桌宠节拍反馈。
 - Timer 依赖现有节拍器 hold 契约；音乐功能不能改变其节奏、精度或训练行为。
 - `core/packages/client/public` 会进入 Next standalone 发布包；当前静态域及同步 workflow 只明确覆盖 `tools/` 和 `stats/`，尚无音乐媒体发布路径。
-- 仓库已实现专业播放器状态模型、`MusicManifest v1` 与本机可恢复媒体准备脚本；静态媒体发布、浏览器格式矩阵和人工分类覆盖仍未完成。
+- 仓库已实现专业播放器状态模型、`MusicManifest v1`、本机可恢复媒体准备脚本和原子发布脚本；静态媒体尚未实际发布，浏览器格式矩阵与 8 首模糊曲目仍待人工复核。
 - 2026-09-02 只读检查时，`E:` 可用约 27.3 GiB，`Z:` 可用约 34.4 GiB。此数值会变化，每个批次必须重新检查，不能把本快照当作配额。
 - GitHub 对标已完成；当前只参考 Feishin、YesPlayMusic 和 Apple Music Like Lyrics 的产品分层，没有复制第三方源码或安装播放器依赖。
 - 已只读盘点 `E:\Music`：521 个条目中 488 个媒体文件；321 个音频可直接复制，128 个视频可无重编码抽取音轨，39 个旧格式需转 AAC-LC 192 kbps，另有 26 个封面/歌词 sidecar 和 7 个跳过文档。
@@ -123,7 +123,7 @@ type MusicTrackV1 = {
 
 ### 分类规则
 
-当前分类优先级为：嵌入 genre → 明确批准的顶层目录 → title/artist/album/relativePath 明确关键词 → `unclassified`。`TTPod` 不作为分类依据，未知曲目不猜成流行。稳定 slug 为 `piano-classical`、`jazz`、`film-tv-soundtrack`、`electronic`、`pop-rock`、`bgm-assets`、`sound-effects`、`ambient-instrumental` 和 `unclassified`；UI 需要单独提供双语标签。人工覆盖事实源尚待实现。
+当前分类优先级为：嵌入 genre → 明确批准的顶层目录 → 经人工核对的精确 artist/metadata 规则 → `unclassified`。`TTPod` 不作为分类依据，未知曲目不猜成流行。稳定 slug 为 `piano-classical`、`jazz`、`film-tv-soundtrack`、`electronic`、`pop-rock`、`bgm-assets`、`sound-effects`、`ambient-instrumental` 和 `unclassified`；UI 单独提供双语标签。独立人工覆盖事实源尚待实现。
 
 - 统一大小写、空白、全半角标点和多艺术家分隔，不擅自翻译专有名词。
 - 同源内容哈希只产一个逻辑曲目；不同源哈希即使同标题也保留全部版本，不能只按标题删除。
@@ -241,7 +241,7 @@ type MusicTrackV1 = {
 | B | 完成 GitHub 上游调查，记录固定基线、许可证、采用与排除范围 | `COMPLETED` |
 | C | 只读盘点 `E:\Music`，确定去重、分类覆盖、格式矩阵和精确空间预算 | `COMPLETED` |
 | D | 冻结曲库 schema、转码规范、封面/歌词规则和 `Z:` 批次工具 | `IN PROGRESS` |
-| E | 建立静态 `/music/` 媒体发布、原子 manifest、Range/CORS/cache 契约 | `PENDING` |
+| E | 建立静态 `/music/` 媒体发布、原子 manifest、Range/CORS/cache 契约 | `IN PROGRESS` |
 | F | 实现唯一音乐 transport、Media Session 及与节拍器的互斥协调 | `COMPLETED` |
 | G | 实现 `/music` 页面、双语 metadata、首页卡片和搜索收录 | `COMPLETED` |
 | H | 把 DeskPet 节拍器面板扩展为音乐/节拍器悬浮音频中心 | `COMPLETED` |
@@ -269,7 +269,9 @@ type MusicTrackV1 = {
 - 2026-09-02：完成 8 个开源候选调查与 `E:\Music` 只读盘点；实现 `/music`、首页卡片、唯一浏览器 transport、同步 LRC、Media Session 及音乐/节拍器悬浮音频中心。媒体脚本以 9 个跨格式样本试跑成功并验证幂等，输出约 54.53 MiB；共享构建、客户端 typecheck、29 个聚焦测试及 1440px/390px Chromium 视觉验收通过。该阶段内容哈希去重、人工分类、全量转码和静态发布尚未完成，后续进展见下列记录。
 - 2026-09-02：`scripts/music/prepare-music.ps1` 以 6 个普通批次处理 486 个唯一源，批次曲目数为 63、57、93、138、104、31，最大预计输出 1023.0 MiB；动作合计 copy 321、remux-audio 126、transcode-aac 39。所有批次保持并发 4、ffmpeg 每进程 2 线程、20 GiB 保留门槛与 15% 预估余量，失败 0。
 - 2026-09-02：独立重算 486 个引用音频的输出 SHA-256 并逐首 ffprobe，486/486 通过，均为一个音频流、零视频流、正时长，最大清单时长差 0.512 秒；输出为 MP3 211、M4A/AAC 177、FLAC 71、WAV 27，共 5.009 GiB，486 个输出哈希全部不同。
-- 2026-09-02：分类结果为钢琴与古典 133、爵士 50、影视原声 36、电子 25、流行与摇滚 56、BGM 与素材 39、音效 3、轻音乐与纯音乐 10、未分类 134；来源为 embedded-genre 64、explicit-top-directory 121、metadata-keywords 167、none 134。136 首缺艺术家时输出空字符串，未知艺术家字面值为 0。
+- 2026-09-02：初次分类为钢琴与古典 133、爵士 50、影视原声 36、电子 25、流行与摇滚 56、BGM 与素材 39、音效 3、轻音乐与纯音乐 10、未分类 134；来源为 embedded-genre 64、explicit-top-directory 121、metadata-keywords 167、none 134。136 首缺艺术家时输出空字符串，未知艺术家字面值为 0。
 - 2026-09-02：封面引用 61 首/8 个资产，其中 3 个同目录唯一 album cover 覆盖 55 首；歌词引用 16 首/15 个 LRC，其中 1 份精确绑定两种编码。8 张未精确匹配图片保留在人工队列，活动 `.part` 为 0。旧 Pilot 的 9 个未引用音频仍保留在 staging，但不进入 manifest，也不得发布。
 - 2026-09-02：488 个媒体源中有 2 组字节完全相同的重复内容，共 4 个源文件、2 个冗余副本；486 个唯一内容保守识别出 12 组同目录同规范化标题候选（24 首），其中 10 组/20 首为不同扩展名编码，另 2 组/4 首为相同扩展名。未做声学指纹，不删除任何版本。
-- 2026-09-02：再次读取 `E:\Music` 全部 521 个文件，路径、大小、mtime 与 521/521 SHA-256 均和原盘点一致，共 14.077 GiB；源盘未发生变化。零转码 replay 后 4 个稳定清单/索引文件与 520 个 library 文件的集合和哈希变化均为 0。最终 `Z:` 可用 29.354 GiB，未上传、未发布、未清理、未提交。
+- 2026-09-02：再次读取 `E:\Music` 全部 521 个文件，路径、大小、mtime 与 521/521 SHA-256 均和原盘点一致，共 14.077 GiB；源盘未发生变化。零转码 replay 后 4 个稳定清单/索引文件与 520 个 library 文件的集合和哈希变化均为 0。最终 `Z:` 可用 29.354 GiB，未上传、未发布、未清理。
+- 2026-09-02：逐首复核初次未分类曲目后，以保守的 artist/title/path 规则归类 126 首；最终为钢琴与古典 154、爵士 50、影视原声 56、电子 46、流行与摇滚 111、BGM 与素材 43、音效 3、轻音乐与纯音乐 15、未分类 8。来源为 embedded-genre 64、explicit-top-directory 121、metadata-keywords 293、none 8；剩余项继续进入人工队列，不按猜测归类。
+- 2026-09-02：分类 replay 处理 486 首，重新转码 0、失败 0、人工复核 8；发布脚本只验证模式通过 486 首及 509 个唯一资产，共 5.01 GiB，manifest SHA-256 为 `960cd43f578e40b22d21018d1b0b93098818d45e191878f43e0bfba131775e07`，未连接远端或上传。

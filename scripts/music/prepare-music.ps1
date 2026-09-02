@@ -199,20 +199,33 @@ function Get-ConservativeCategory($Record) {
         (Get-NonEmptyString $Record 'album'),
         $relativePath
     ) -join ' ')
-    if ($keywordText -match 'soundtrack|original\s+score|film\s+score|movie\s+score|影视原声|电影原声|原声带|配乐|hans\s+zimmer|汉斯.?季默') {
+    $artistKey = Normalize-ExactMatchText "$(Get-ConservativeArtist $Record)"
+    if ($keywordText -match 'soundtrack|original\s+score|film\s+score|movie\s+score|影视原声|电影原声|原声带|配乐|hans\s+zimmer|汉斯.?季默|饥饿游戏.*插曲|just blue.*动物世界|fate stay night|always with me.*宫崎骏|my heart will go on.*titanic|世界杯主题曲|cctv.*动物世界片尾曲|霍比特人3.*插曲|henry jackman|金手指.*007|中国合伙人.*主题曲|he''s a pirate|for your eyes only|the crave.*ennio morricone|la valse.*am[eé]lie|星球大战|风之甬道|久石让|超级马里奥|哪吒之魔童闹海.*电影角色曲') {
         return [pscustomobject]@{ Id = 'film-tv-soundtrack'; Source = 'metadata-keywords' }
     }
-    if ($keywordText -match 'classical|piano|symphony|concerto|sonata|nocturne|etude|prelude|chopin|mozart|beethoven|bach|debussy|liszt|rachmaninoff|vivaldi|tchaikovsky|古典|钢琴|交响|协奏曲|奏鸣曲|夜曲|练习曲|前奏曲|肖邦|莫扎特|贝多芬|巴赫|德彪西|李斯特|拉赫玛尼诺夫|维瓦尔第|柴可夫斯基|郎朗|理查德.?克莱德曼|richard\s+clayderman') {
+    if ($keywordText -match 'classical|piano|symphony|concerto|sonata|nocturne|etude|prelude|chopin|mozart|beethoven|bach|debussy|liszt|rachmaninoff|vivaldi|tchaikovsky|古典|钢琴|交响|协奏曲|奏鸣曲|夜曲|练习曲|前奏曲|肖邦|莫扎特|贝多芬|巴赫|德彪西|李斯特|拉赫玛尼诺夫|维瓦尔第|柴可夫斯基|郎朗|理查德.?克莱德曼|richard\s+clayderman|李闰珉|tarrega|recuerdos de la alhambra|四小天鹅舞曲|马斯涅|maksim|schubert|josef hofmann|约翰施特劳斯|悲怆|robert schumann|李云迪|管风琴|王羽佳|stravinsky|simple gifts.*choirboys|wiener johann strauss|行星组曲|勃拉姆斯|hungarian dances|曼托瓦尼') {
         return [pscustomobject]@{ Id = 'piano-classical'; Source = 'metadata-keywords' }
     }
-    if ($keywordText -match 'electronic|electronica|\bedm\b|deep\s+house|house\s+music|trance|dubstep|synthwave|techno|remix|电音|电子') {
+    if ($keywordText -match 'electronic|electronica|\bedm\b|deep\s+house|house\s+music|trance|dubstep|synthwave|techno|remix|电音|电子|shogun taira|advent - last mistake|bionic souls|david guetta|embody - lost & found|gabry ponte|hotel saint george|jim yosef|john de sohn|kamro|karkaz|klaas|lizot|tom swoon|groove coverage|loreen|\baqua\b|vinai|william black.*fairlane|cascada|universe in my head') {
         return [pscustomobject]@{ Id = 'electronic'; Source = 'metadata-keywords' }
     }
-    if ($keywordText -match 'ambient|instrumental|new\s+age|relax(?:ing|ation)?|轻音乐|纯音乐|舒缓') {
+    if ($keywordText -match 'ambient|instrumental|new\s+age|relax(?:ing|ation)?|轻音乐|纯音乐|舒缓|calm music.*sappheiros|secret garden|茉莉花.*萨克斯|flower dance.*dj.?okawari') {
         return [pscustomobject]@{ Id = 'ambient-instrumental'; Source = 'metadata-keywords' }
     }
-    if ($keywordText -match '周杰伦|jay\s+chou|linkin\s+park|michael\s+jackson|迈克尔.?杰克逊|green\s+day|richard\s+marx|张韶涵|leona\s+lewis|\bm2m\b|汪峰|the\s+beatles|backstreet\s+boys|westlife|bon\s+jovi|\busher\b') {
+    if ($artistKey -in @(
+        'talor swift', 'talyor swift', 'taylor swift', 'blue', 'carpenters', 'emilia', 'timbaland', 'coldplay',
+        'maria arredondo', 'tamas wells', 'sarah connor', '水木年华', 'jason mraz', 'birdy', 'helene', 'rihanna',
+        'sting', 'amy diamond', 'jason donovan', '费翔', 'atomic kitten', '林肯公园', 'trademark', 't.i',
+        'whitney houston', 'bastille', 'the workday release', 'gareth gates', 'michael learns to rock', 'g.e.m.邓紫棋',
+        'simple plan', 'robbie williams', 'muse', 'a-ha', 'leo sayer', 'eagles', 'simon & garfunkel',
+        'michael bolton', 'avril lavigne', 'bryan adams', 'shayne ward', 'fools garden', 'shirley bassey', '许嵩',
+        '黄晓明&邓超&佟大为', 'eric clapton', "blackmore's night", '屠洪刚', 'the cranberries', 'beyond',
+        'jesse mccartney', 'britney spears', 'mariah carey', 'deutschland sucht den superstar'
+    ) -or $keywordText -match '周杰伦|jay\s+chou|linkin\s+park|michael\s+jackson|迈克尔.?杰克逊|green\s+day|richard\s+marx|张韶涵|leona\s+lewis|\bm2m\b|汪峰|the\s+beatles|backstreet\s+boys|westlife|bon\s+jovi|\busher\b|charlotte lawrence|ed sheeran|bruno mars|ycccc|苟一一') {
         return [pscustomobject]@{ Id = 'pop-rock'; Source = 'metadata-keywords' }
+    }
+    if ($keywordText -match 'carlos estella|epic happy inspiring orchestral|sergepavkinmusic|two steps from hell|thomas bergersen') {
+        return [pscustomobject]@{ Id = 'bgm-assets'; Source = 'metadata-keywords' }
     }
     return [pscustomobject]@{ Id = 'unclassified'; Source = 'none' }
 }
