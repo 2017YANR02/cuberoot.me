@@ -1,5 +1,5 @@
 // 「注册后引导绑定 WCA」的守卫。链路横跨三个包,任一环断掉都是**静默**退化:
-//   server   loginWithIdentity 判定这次是不是新建账号 → 4 个登录端点把 isNew 透传出来
+//   server   loginWithIdentity 判定这次是不是新建账号 → 6 条登录/注册路径把 isNew 透传出来
 //   client   只在 isNew && 还没绑 WCA 时插一步引导,否则照常回跳 ?next=
 //   三方那条 微信/QQ/支付宝 授权整页跳走,回来时人已不在表单里 → 回调页打标记,/account 接上
 //
@@ -46,15 +46,15 @@ describe('server:谁是新注册,只有服务端知道', () => {
     expect((body.match(/isNew: true/g) ?? []).length).toBe(1);
   });
 
-  it('五条「登录/注册」合流的路都把 isNew 发出来', () => {
-    // 邮箱码 / 手机码 / Google / 国内三方 / 微信小程序 —— 少一条,那条路上的新人就不会被引导。
-    // 另外三条会话响应来自纯密码登录、小程序票据换 web 会话和 mobile ticket 核销:
+  it('六条「登录/注册」合流的路都把 isNew 发出来', () => {
+    // 邮箱码 / 手机码 / Google / 国内三方 / 微信小程序 / 抖音小程序 —— 少一条,那条路上的新人就不会被引导。
+    // 另外四条会话响应来自纯密码登录、手机号已存在分支、小程序票据换 web 会话和 mobile ticket 核销:
     // 账号天然已存在,不带 isNew。
     const directSessions = route.match(/c\.json\(\{\s*token,\s*user: publicUser\(user\)[^)]*\}\)/g) ?? [];
     const typedSessions = route.match(/const session: WebSession = \{\s*token,\s*user: publicUser\(user\)\s*\};\s*return c\.json\([^;]+\);/g) ?? [];
     const sessions = [...directSessions, ...typedSessions];
-    expect(sessions.length).toBe(8);
-    expect(sessions.filter((s) => s.includes('isNew')).length).toBe(5);
+    expect(sessions.length).toBe(10);
+    expect(sessions.filter((s) => s.includes('isNew')).length).toBe(6);
 
     const pwAt = route.indexOf("'/auth/email/password'");
     expect(pwAt).toBeGreaterThan(-1);
