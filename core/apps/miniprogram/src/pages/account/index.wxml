@@ -61,7 +61,6 @@
   <text class="eyebrow">ACCOUNT</text>
   <text class="page-title">{{displayName}}</text>
   <text wx:if="{{uidText}}" class="account-user-meta">CubeRoot ID {{uidText}}</text>
-  <text wx:if="{{wcaId}}" class="account-user-meta">{{wcaId}}</text>
   <button
     class="primary-button account-primary-button"
     aria-label="{{copy.accountButtonAria}}"
@@ -82,5 +81,138 @@
     aria-live="polite"
     aria-atomic="true"
   >{{accountError}}</text>
-  <text class="account-note">{{shareNote}}</text>
+  <view class="account-contact">
+    <view class="account-contact-header">
+      <text class="eyebrow">{{contact.eyebrow}}</text>
+      <text class="account-contact-title">{{contact.title}}</text>
+    </view>
+
+    <view class="contact-profile">
+      <button
+        class="contact-site-button"
+        aria-label="{{contact.websiteLabel}} {{contact.website}}"
+        hover-class="press-feedback"
+        bindtap="openContactWebsite"
+      >
+        <text class="contact-site-label">{{contact.websiteLabel}}</text>
+        <text class="contact-site-value">{{contact.website}}</text>
+      </button>
+
+      <view class="contact-details-columns">
+        <view class="contact-details">
+          <block wx:for="{{contact.platforms}}" wx:key="id" wx:for-item="platform">
+            <view class="contact-details-row">
+              <button
+                wx:if="{{platform.href}}"
+                class="contact-label-button"
+                data-value="{{platform.href}}"
+                aria-label="{{platform.label}} {{platform.account}}"
+                hover-class="press-feedback"
+                bindtap="copyContactValue"
+              >
+                <image class="contact-details-icon" src="{{platform.icon}}" mode="aspectFit" />
+                <text>{{platform.label}}</text>
+              </button>
+              <view wx:else class="contact-row-label">
+                <image class="contact-details-icon" src="{{platform.icon}}" mode="aspectFit" />
+                <text>{{platform.label}}</text>
+              </view>
+              <view class="contact-row-value contact-platform-value">
+                <text>{{platform.account}}</text>
+                <text wx:if="{{platform.count}}" class="contact-row-meta">{{platform.count}}</text>
+              </view>
+            </view>
+          </block>
+        </view>
+
+        <view class="contact-details">
+          <block wx:for="{{contact.details}}" wx:key="id" wx:for-item="detail">
+            <view class="contact-details-row">
+              <button
+                wx:if="{{detail.action === 'link'}}"
+                class="contact-label-button"
+                data-value="{{detail.actionValue}}"
+                aria-label="{{detail.label}}"
+                hover-class="press-feedback"
+                bindtap="copyContactValue"
+              >
+                <image class="contact-details-icon" src="{{detail.icon}}" mode="aspectFit" />
+                <text>{{detail.label}}</text>
+              </button>
+              <view wx:else class="contact-row-label">
+                <image class="contact-details-icon" src="{{detail.icon}}" mode="aspectFit" />
+                <text>{{detail.label}}</text>
+              </view>
+              <view class="contact-row-value contact-detail-value">
+                <button
+                  wx:if="{{detail.action === 'copy'}}"
+                  class="contact-value-button"
+                  data-value="{{detail.actionValue}}"
+                  aria-label="{{detail.label}} {{detail.value}}"
+                  hover-class="press-feedback"
+                  bindtap="copyContactValue"
+                >{{detail.value}}</button>
+                <text wx:else>{{detail.value}}</text>
+                <button
+                  wx:if="{{detail.showQr}}"
+                  class="contact-qr-button"
+                  aria-label="{{contact.qrAria}}"
+                  hover-class="press-feedback"
+                  bindtap="previewWechatQr"
+                ><image class="contact-details-icon" src="/assets/contact/qr.png" mode="aspectFit" /></button>
+              </view>
+            </view>
+          </block>
+        </view>
+      </view>
+    </view>
+
+    <view class="contact-join">
+      <text class="contact-join-title">{{contact.joinTitle}}</text>
+      <view class="contact-join-copy">
+        <text>{{contact.joinInstructionBefore}}</text>
+        <text class="contact-join-value">{{contact.joinInstructionValue}}</text>
+        <text>{{contact.joinInstructionAfter}}</text>
+      </view>
+    </view>
+
+    <view class="contact-directory">
+      <view
+        wx:for="{{contact.sections}}"
+        wx:key="id"
+        wx:for-item="section"
+        class="contact-directory-section"
+      >
+        <view class="contact-directory-heading">
+          <text class="contact-directory-index">{{section.index}}</text>
+          <view class="contact-directory-heading-copy">
+            <text class="contact-directory-section-title">{{section.title}}</text>
+            <text class="contact-directory-description">{{section.description}}</text>
+          </view>
+        </view>
+        <view
+          wx:for="{{section.blocks}}"
+          wx:key="title"
+          wx:for-item="block"
+          class="contact-directory-block"
+        >
+          <text class="contact-directory-block-title">{{block.title}}</text>
+          <view class="contact-group-list">
+            <view
+              wx:for="{{block.groups}}"
+              wx:key="name"
+              wx:for-item="group"
+              class="contact-group-item"
+            >
+              <view class="contact-group-dot" />
+              <view class="contact-group-copy">
+                <text class="contact-group-name">{{group.name}}</text>
+                <text wx:if="{{group.secondaryName}}" class="contact-group-secondary">{{group.secondaryName}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
 </view>

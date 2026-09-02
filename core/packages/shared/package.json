@@ -51,6 +51,7 @@
       "./drive": "runtime-neutral",
       "./platform": "runtime-neutral",
       "./site-directory": "runtime-neutral",
+      "./contact": "runtime-neutral",
       "./cube-unfolded-svg": "runtime-neutral",
       "./nnn-sim": "runtime-neutral",
       "./tz": "runtime-neutral",
@@ -200,6 +201,10 @@
     "./drive": "./src/drive.ts",
     "./platform": "./src/platform.ts",
     "./site-directory": "./src/site_directory.ts",
+    "./contact": {
+      "node": "./dist/contact.js",
+      "default": "./src/contact.ts"
+    },
     "./cube-unfolded-svg": {
       "node": "./dist/cube_unfolded_svg.js",
       "default": "./src/cube_unfolded_svg.ts"

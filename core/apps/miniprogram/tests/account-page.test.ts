@@ -1,10 +1,28 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { CONTACT_GROUP_COUNT } from '@cuberoot/shared/contact';
 
 import accountConfig from '../src/pages/account/index.json';
 
 interface AccountPageData {
   accountError: string;
   agreementAccepted: boolean;
+  contact: {
+    details: Array<{
+      action: 'none' | 'copy' | 'link';
+      actionValue: string;
+      icon: string;
+      id: string;
+      label: string;
+      showQr: boolean;
+      value: string;
+    }>;
+    platforms: Array<{ href: string; icon: string; id: string }>;
+    qrPath: string;
+    sections: Array<{
+      blocks: Array<{ groups: Array<{ name: string; secondaryName: string }> }>;
+      id: string;
+    }>;
+  };
   displayName: string;
   isTimelineEntry: boolean;
   loginBusy: boolean;
@@ -17,6 +35,7 @@ interface AccountPageData {
 }
 
 interface AccountPage {
+  copyContactValue(event: { currentTarget: { dataset: { value?: unknown } } }): void;
   data: AccountPageData;
   loginWithMiniProgram(): Promise<void>;
   logout(): void;
@@ -25,7 +44,9 @@ interface AccountPage {
   onShareTimeline(): WechatMiniprogram.Page.ICustomTimelineContent;
   onShow(): void;
   openAccount(): void;
+  openContactWebsite(): void;
   openPolicy(): void;
+  previewWechatQr(): void;
   retryMiniProgramSession(): void;
   setData(data: Partial<AccountPageData>): void;
   toggleAgreement(): void;
@@ -363,6 +384,58 @@ describe('mini program account page', () => {
       imageUrl: '/assets/share-cover.png',
       path: '/pages/account/index',
       title: 'CubeRoot 魔方根',
+    });
+  });
+
+  it('uses the shared contact directory and copies native contact actions', async () => {
+    const navigateTo = vi.fn((options: { complete?(): void }) => options.complete?.());
+    const setClipboardData = vi.fn((options: { success?(): void }) => options.success?.());
+    const showToast = vi.fn();
+    const previewImage = vi.fn();
+    const page = await loadPage({
+      getLaunchOptionsSync: normalLaunchOptions,
+      getStorageSync: () => ({
+        token: 't'.repeat(20),
+        user: { uid: 66, name: 'Ruimin Yan (颜瑞民)', wcaId: null, avatar: '' },
+      }),
+      navigateTo,
+      previewImage,
+      setClipboardData,
+      showShareMenu: vi.fn(),
+      showToast,
+    });
+
+    page.onLoad();
+
+    const groupCount = page.data.contact.sections.reduce(
+      (total, section) => total + section.blocks.reduce(
+        (sectionTotal, block) => sectionTotal + block.groups.length,
+        0,
+      ),
+      0,
+    );
+    expect(page.data.contact.platforms).toHaveLength(8);
+    expect(page.data.contact.details).toHaveLength(5);
+    expect(page.data.contact.platforms.every((platform) => platform.icon.startsWith('/assets/contact/')))
+      .toBe(true);
+    expect(page.data.contact.details.every((detail) => detail.icon.startsWith('/assets/contact/')))
+      .toBe(true);
+    expect(groupCount).toBe(CONTACT_GROUP_COUNT);
+    expect(groupCount).toBe(85);
+
+    page.copyContactValue({ currentTarget: { dataset: { value: 'mofanggen' } } });
+    expect(setClipboardData).toHaveBeenCalledWith(expect.objectContaining({ data: 'mofanggen' }));
+    expect(showToast).toHaveBeenCalledWith({ icon: 'none', title: '已复制' });
+
+    page.openContactWebsite();
+    expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({
+      url: '/pages/web/index?key=contact',
+    }));
+
+    page.previewWechatQr();
+    expect(previewImage).toHaveBeenCalledWith({
+      current: '/assets/contact/ruimin-wechat-qr.jpg',
+      urls: ['/assets/contact/ruimin-wechat-qr.jpg'],
     });
   });
 });
