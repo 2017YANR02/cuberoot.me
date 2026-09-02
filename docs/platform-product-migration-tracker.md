@@ -1,23 +1,41 @@
 # Platform 主站完整迁移跟踪
 
-最后更新：2026-08-25
+最后更新：2026-09-02
 
-状态：`P0-P8 技术迁移与发布验收已完成；P9 的陈旧 AlgPlayer 守卫已修复，Test 与 Deploy Next/Core 全绿，线上角色态复验待补；RET-04 非仓库资产处置已完成，仓库删除由所有者自行执行`
+状态：`二维码卡片迁移已重新打开；原 P6/P7/P8 的 QR 完成声明撤回，旧站临时恢复为验收对照，正式产品入口仍是主站 /platform；其余历史验收结论不因本次复核自动失效`
 
 ## 0. 当前结论
 
-旧 Platform 的功能必须完整进入 CubeRoot 主站，但不恢复独立 Platform 前端、独立部署、SQLite 运行时或第二套账号系统。
+旧 Platform 的功能必须完整进入 CubeRoot 主站。产品架构不恢复独立 Platform 前端、独立部署、SQLite 运行时或第二套账号系统；`platform.cuberoot.me` 的临时恢复只用于逐项验收对照，不改变此边界。
 
 - 主入口：`/platform`；中文入口：`/zh/platform`。
 - 全部 Platform 用户路径位于 `/platform/*`，使用主站 shell、账号、权限、主题与双语体系。
 - 首页新增 `Platform` 卡片，作为这些能力的唯一聚合入口。
 - `/platform` 首页已改为角色与任务驱动入口：公共导航收敛为发现、课程、社区、讲师、机构，登录后按真实课程、进度、讲师、机构与管理员权限显示一个对应工作台入口；旧编号目录、完整路由表和后台 CRUD 清单已移除。P9 提交 `d715a79d6a` 已进入 `main`；陈旧 source-string 守卫已由 `ebf0240cb0` 修复，Test 与两个部署 workflow 已全绿，真实登录角色态仍待线上复验。
-- `platform.cuberoot.me` 继续返回 HTTP 410，不跳转、不展示旧页面。
+- `platform.cuberoot.me` 已临时恢复旧页面用于验收对照，nginx 反代 `127.0.0.1:3004`；它不是正式产品入口，也不能接替主站 `/platform/*`。
 - 主站已有能力必须共享组件、API 与数据源；`/platform/*` 可以提供同壳深链，但不得复制 teacher、forum、alg、timer、notifications、org、learn。
 - 已有主站完整页面通过 Next 内部 rewrite 直接服务 `/platform/*` 别名：浏览器保留 Platform URL，但执行的是同一份页面、组件与数据链，不允许用跳转卡片代替功能。
 - 旧 seed/demo 不导入生产库；旧 timer 历史明确不迁移。没有历史数据只意味着空状态开始，不意味着取消功能。
 - 新写入只进入主站 PostgreSQL 与主站媒体存储，禁止恢复 SQLite 或双写。
 - 旧源码、旧 GitHub 仓库和主仓内 Platform 历史归档的删除只由仓库所有者执行；AI 不得删除或改写这些仓库资产。
+
+### 0.1 二维码迁移重新打开（2026-09-02）
+
+用户以旧站“二维码卡片”页面复核后确认：主站 `/platform/admin/qr/cards` 只有通用模板 JSON 表单，没有旧站的选码、真实卡面预览、A4 打印和印刷 SVG 下载工作流。因此，先前“QR 批量、复制、启停、软删除、模板恢复/排序、卡面、统计已完整迁移”的结论属于覆盖不足导致的误判，现正式撤回。路由存在、API 返回、manifest 标记 `implemented/reviewed` 或静态字符串测试通过，都不能恢复该完成声明。
+
+本轮 QR 只有在下表的能力和证据同时具备后才能重新标记完成：
+
+| 能力 | 必须保留的产品契约 | 最低验收证据 | 当前状态 |
+| --- | --- | --- | --- |
+| 二维码管理 | 列表、筛选、单个/批量创建、详情、复制、启停、软删除和修订历史 | 真实 `/platform/admin/qr` 与详情路由；API 状态机、非法输入和管理员权限测试 | `待重新验收` |
+| 完整内容编辑 | `label`、`type`、`target`、`title`、`intro`、`links`、`term`、`quote`、`brand`、`frontArt`、`backArt`、`frontArtPrompt`、`alg`、`layout`、`textStyles`、`customTexts` 可读写并回显 | PostgreSQL/DTO/API/client 使用同一字段契约；保存后重新读取逐字段比对 | `待实现与验收` |
+| 卡片工作区 | `/platform/admin/qr/cards` 支持 `?codes=a,b` 选码、可操作空状态、真实正反面卡片预览；不得退化为模板 JSON CRUD | 路由级静态契约测试；有数据与无数据各一份浏览器证据 | `待实现与验收` |
+| 浏览器打印 | 可从卡片工作区直接打印；A4、`8mm` 页边距、打印色彩保留、隐藏非打印控件，实物尺寸为折叠前 `40×40mm`（正面 `20×40mm` + 背面 `20×40mm`） | 自动测试固定 print CSS 和尺寸常量；打印预览人工复验 | `待实现与验收` |
+| SVG 印刷母版 | 自包含 SVG，mm 物理单位，正反面、折线、默认 `3mm` 出血与裁切线；下载响应为 `image/svg+xml` 并用 attachment 文件名，不以页面内“查看”代替下载 | 响应头与 SVG 结构测试；实际下载文件可离线打开并检查尺寸/裁切 | `待实现与验收` |
+| 公共二维码 | `/platform/qr/:code` 的落地/跳转、禁用、scheme allowlist、扫描去重和统计不回归 | API 集成测试覆盖 active/disabled/content/internal/external 与 UV 去重 | `基础能力已有，待与新字段回归` |
+| 权限与体验 | 管理入口和写入均要求管理员；中英文、空/非空、错误/加载、键盘和 390/430px 触控布局完整 | 服务端 401/403、双语断言、桌面/移动浏览器矩阵，无横向溢出 | `待补证据` |
+
+验收不得循环自证：capability manifest 只能做盘点，不能同时作为功能实现和通过依据。自动化测试必须读取真实路由、真实请求字段、打印 CSS、SVG 生成及下载响应；浏览器验收必须使用真实空状态和至少一条可打印记录。剩余项是完成上述主站实现、跑聚焦单测/typecheck、补桌面与移动端浏览器证据、检查实际 SVG 下载文件，然后再由独立 reviewer 逐项关闭。
 
 本次迁移按两套来源的并集守恒：
 
@@ -268,22 +286,23 @@ Platform 不进入已经 11,486 行的 `teaching_saas.ts`。后端按业务切�
 
 退出条件：owner/讲师/财务/管理员边界通过越权矩阵；结算可从订单 ledger 重算。
 
-### P6 社区、运营、QR 与机构深链 — `已完成`
+### P6 社区、运营、QR 与机构深链 — `QR 重新打开，其余项沿用历史验收`
 
 - [x] forum 圈子/帖子/新建/详情共享体验。
 - [x] admin 全领域 CRUD、moderation、analytics、logs、orders、reconcile。
-- [x] QR 批量、复制、启停、软删除、模板恢复/排序、卡面、统计。
+- [ ] QR 批量、复制、启停、软删除、修订、卡片工作区、打印、SVG 下载和统计按 0.1 节重新验收；原完成勾选已撤回。
 - [x] `/platform/org/*` 12 条归档路径共享现有组织教学组件。
 - [x] 通知 outbox、邀请、最小化 analytics、数据保留/删除策略。
 
 退出条件：管理写操作、导出、打印、权限与审计逐项对齐旧能力；QR 安全与 UV 测试通过。
 
-### P7 守恒、交互技术基线与安全终验 — `已完成`
+### P7 守恒、交互技术基线与安全终验 — `QR 补充终验待完成`
 
 - [x] capability manifest 守恒测试：95 / 13 / 34 / 4，未归属 0。
 - [x] client/server/shared typecheck 与定向单测。
 - [x] auth、owner、instructor、finance、org、admin、跨租户权限矩阵的合同与状态机测试。
-- [x] payment、refund、entitlement、inventory、event capacity、QR、certificate 的幂等与边界测试。
+- [x] payment、refund、entitlement、inventory、event capacity、certificate 的幂等与边界测试。
+- [ ] QR 的字段守恒、打印、SVG 下载、权限、双语、空/非空和移动端证据按 0.1 节补齐。
 - [x] Chrome 精确矩阵：1280px 中文 Platform 首页；390px 中文首页与账户会员权限态；430px 中文主站入口与课程深链。三档均无横向溢出，console 无 JS error；英文视觉未单独实测，双语 metadata 由自动测试覆盖。
 - [x] independent product/data/code agent review；首轮终审结论在补充审计后被重新打开，canonical link-only、账号注销完整性与 CI 缺口均已修复并完成本地回归，最终三路复审均为 PASS，Blocker/Major/Minor 均为 0。
 
@@ -291,11 +310,12 @@ Platform 不进入已经 11,486 行的 `teaching_saas.ts`。后端按业务切�
 
 退出条件：三路 reviewer 结论均为 PASS，或每条 finding 都有修复与复验记录。
 
-### P8 发布、观察与旧仓决策 — `已完成（仓库删除由所有者执行）`
+### P8 发布、观察与旧仓决策 — `历史发布已完成；QR 修复发布待重新验收`
 
 - [x] Platform 发布提交只包含本任务文件；用户明确要求后已 push，最终代码提交为 `73bea4e8e4`，上游比赛数据配套收尾为 `ab54b397ac`。
 - [x] 最终提交的 Test `32600584942`、Deploy Next `32600584945`、Deploy Core `32600584944` 均为 `completed/success`。
-- [x] 线上 `/platform` 及 timer、algorithms、teachers、courses、org、admin/community 代表路径均为 200；公开页 canonical/alternate、私有页 `noindex, nofollow`、公开 API 200、未登录私有 API 401 均符合契约；`platform.cuberoot.me` 的 HTTP 与 HTTPS 均直接返回 410。
+- [x] 2026-08-22 线上 `/platform` 及 timer、algorithms、teachers、courses、org、admin/community 代表路径均为 200；公开页 canonical/alternate、私有页 `noindex, nofollow`、公开 API 200、未登录私有 API 401 均符合当时契约；当时 `platform.cuberoot.me` 的 HTTP 与 HTTPS 均直接返回 410。
+- [ ] QR 补全提交尚未完成发布与线上验收；`platform.cuberoot.me` 现为临时对照站，不能继续沿用旧域 410 作为当前 release 断言。
 - [x] 生产 courses 与 membership plans 均为空，符合不导入 seed/demo 的决策；因此未伪造可交易标的或制造生产订单，支付/退款/幂等/权限状态机由最终 Test workflow 的真实 PostgreSQL 与服务端回归放行。
 - [x] PostgreSQL 账号注销实库夹具已进入 Test workflow，固定 57 个直接外键、48 张表、12 张不可变证据表、旧 outbox 去标识与伪造上下文拒绝行为；本地与发布 CI 的 PostgreSQL 13 fresh snapshot、0167→0168 升级路径均已通过。
 - [x] 全量上线后已于 2026-08-22 启动至少 30 天观察窗口。
@@ -303,7 +323,7 @@ Platform 不进入已经 11,486 行的 `teaching_saas.ts`。后端按业务切�
 - [x] 两份临时明文 SQLite 及其 WAL/SHM 共 6 个文件在来源/恢复 SHA-256 与既有加密归档验证证明复核后移入 Windows 回收站；加密权威归档、manifest 和无敏感值 sidecar 继续保留。
 - [x] `D:\cube\cube-platform`、远端旧 Platform 仓库、主仓内 `core/packages/platform` 及其中媒体均未删除或改写，交由仓库所有者自行处置；RET-03 已停止旧 runtime、workflow 和 service，没有需要 AI 单独轮换或撤销的身份 bridge 凭据或运行配置对象。
 
-发布与 RET-04 退出条件已满足。回收站内的 6 个明文数据库相关文件在回收站清空前可恢复；仓库删除不在 AI 执行范围内，加密权威数据归档不随源码删除。
+2026-08-22 的发布与 RET-04 退出条件曾满足。QR 重新打开后，不追溯否定其他领域的历史发布证据，但 QR 自身必须重新走实现、测试、浏览器与发布验收。回收站内的 6 个明文数据库相关文件在回收站清空前可恢复；仓库删除不在 AI 执行范围内，加密权威数据归档不随源码删除。
 
 ### P9 产品入口与角色体验重做 — `代码与发布已验收；线上角色态待验收`
 
@@ -339,11 +359,11 @@ P9 退出条件：
 | Learning | entitlement、progress 上下界、note CRUD、quiz 重答规则、review eligibility、certificate uniqueness |
 | Commerce | 幂等下单、价格快照、优惠并发、库存/名额、回调验签/乱序/重复、退款/拒付、对账 |
 | Instructor | application state machine、ownership、buyer visibility、earnings/payout 重算 |
-| QR | scheme allowlist、disable、revision、duplicate、scan dedupe、SVG/card、soft delete/restore |
+| QR | 完整内容字段写入/回读、scheme allowlist、disable、revision、duplicate、scan dedupe、选码、空/非空、A4 print、40×40mm 折叠尺寸、自包含 SVG、attachment 下载、soft delete/restore、admin 401/403、en/zh、390/430px |
 | Shared domains | teacher/forum/alg/timer/notifications/org 无第二数据源，原 canonical route 不回归 |
 | UI | en/zh、游客/学员/讲师/机构/管理员、1280/1024/430/390、首屏主要任务、权限可见性、keyboard/touch/middle-click、deep link、refresh、empty/error/loading |
 | SEO | page metadata coverage、public sitemap、canonical、private/admin/search noindex |
-| Release | CI/deploy green、live API/route smoke、old subdomain 410 |
+| Release | CI/deploy green、live API/route smoke；临时旧站只作对照，正式产品仍由 `/platform` 提供 |
 
 ## 9. 审核记录
 
@@ -365,8 +385,9 @@ P9 退出条件：
 | 2026-08-23 | 用户截图与产品体验复审 | FAIL：技术迁移完成，但首页仍是路由目录，不是角色化产品入口 | 新开 P9；删除重复导航和后台清单，按游客、学员、讲师、机构、管理员重做首屏任务与工作台入口 |
 | 2026-08-23 | P9 三路独立复审 | PASS：产品信息架构、无障碍/响应式、代码复用均为 Blocker/Major 0 | 修复深链无权限时仍显示写操作、切换账号短暂残留旧角色入口、移动端账户入口触控高度及加载状态播报；定向测试与游客截图矩阵复验通过 |
 | 2026-08-23 | P9 守卫修复后的 workflow | PASS：Test `32668704812`、Deploy Next `32668704815`、Deploy Core `32668704776` 全绿 | `ebf0240cb0` 修复 `alg-player-placement.test.ts` 的陈旧 source-string 断言；主站、`/zh/platform` 与 API `/v1/health` 线上 smoke 通过；真实登录角色态仍单独待验收 |
+| 2026-09-02 | 用户以旧二维码卡片页复核 | FAIL：主站卡片页只剩通用模板 JSON，缺少旧站完整编辑、选码预览、打印与印刷 SVG 下载 | 撤回 QR 完成声明，临时恢复旧站供逐项对照，按 0.1 节重新实现和验收；其他领域不凭此 finding 自动重开 |
 
-浏览器证据明细：P8 的 1280/430/390 矩阵只证明 `/zh/platform`、首页卡片、会员权限态和课程深链在技术上可达、无横向溢出且没有应用 JS error；它没有证明信息架构和角色任务体验合格。补充修复后，本地 SSR 对 `/zh/platform`、`timer`、`algorithms`、`org`、`admin/community`、`teachers` 六条代表性深链均返回 200；最终线上复验确认 timer/algorithms 的 HTTP canonical 指向主站实现，teachers 的 HTML canonical 指向 `/teachers`，私有/管理入口 noindex，生产空目录与不导入 seed/demo 决策一致，旧域名 HTTP/HTTPS 均为 410。2026-08-23 的 P9 本地复验中，目标视口 1280×900、1024×760、430×900、390×844 的页面 `scrollWidth` 均等于 `clientWidth`，顶部五项导航的 `scrollWidth` 也均等于 `clientWidth`；390px 英文导航同样无溢出。旧编号目录和底部完整路由表计数均为 0。P9 已推送且后续 Test 与两个部署 workflow 全绿；仍不提前宣称角色体验完成，因为真实登录角色截图尚缺。
+浏览器证据明细：P8 的 1280/430/390 矩阵只证明 `/zh/platform`、首页卡片、会员权限态和课程深链在技术上可达、无横向溢出且没有应用 JS error；它没有证明信息架构、角色任务体验或二维码卡片工作流合格。补充修复后，本地 SSR 对 `/zh/platform`、`timer`、`algorithms`、`org`、`admin/community`、`teachers` 六条代表性深链均返回 200；当时的线上复验确认 timer/algorithms 的 HTTP canonical 指向主站实现，teachers 的 HTML canonical 指向 `/teachers`，私有/管理入口 noindex，生产空目录与不导入 seed/demo 决策一致，旧域名 HTTP/HTTPS 当时均为 410。2026-08-23 的 P9 本地复验中，目标视口 1280×900、1024×760、430×900、390×844 的页面 `scrollWidth` 均等于 `clientWidth`，顶部五项导航的 `scrollWidth` 也均等于 `clientWidth`；390px 英文导航同样无溢出。旧编号目录和底部完整路由表计数均为 0。P9 已推送且后续 Test 与两个部署 workflow 全绿；仍不提前宣称角色体验完成，因为真实登录角色截图尚缺。2026-09-02 起旧域名改作临时验收对照，当前契约以 nginx `:3004` 反代和正式产品 `/platform` 入口为准；QR 浏览器与下载证据仍待新增。
 
 后续每个阶段结束必须增加：提交、验证命令、浏览器证据、reviewer、finding、修复和复验结果。不得用口头“看起来完整”替代账本。
 
