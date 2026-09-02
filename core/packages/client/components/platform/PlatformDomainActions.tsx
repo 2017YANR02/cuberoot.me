@@ -273,12 +273,6 @@ const ADMIN_FORMS: Readonly<Record<string, DomainFormSpec>> = {
     field('sortOrder', '排序', 'Sort order', { kind: 'number', min: -1000000, max: 1000000, step: 1, defaultValue: 0 }),
     field('template', '提示词模板 JSON', 'Prompt template JSON', { kind: 'json', rows: 8, required: true }),
   ] },
-  'admin-qr-cards': { title: text('二维码卡片资料', 'QR card content'), action: 'admin-save', fields: [
-    field('templateKey', '模板键', 'Template key', { required: true, pattern: '[a-z0-9][a-z0-9_.-]{0,119}', maxLength: 120 }),
-    field('nameZh', '中文名称', 'Chinese name'), field('nameEn', '英文名称', 'English name'),
-    field('sortOrder', '排序', 'Sort order', { kind: 'number', min: -1000000, max: 1000000, step: 1, defaultValue: 0 }),
-    field('template', '卡片模板 JSON', 'Card template JSON', { kind: 'json', rows: 10, required: true }),
-  ] },
 };
 
 for (const [editId, newId] of [
@@ -688,8 +682,8 @@ function editableEntity(entity: PlatformEntity): PlatformEntity {
 function PlatformAdminCollectionManager({ definition, entities = [], busy, runAction }: CommonProps) {
   const t = useT();
   const base = ADMIN_FORMS[definition.id];
-  if (!base || !['admin-paths', 'admin-coupons', 'admin-invites', 'admin-qr-prompts', 'admin-qr-cards'].includes(definition.id)) return null;
-  const qrTemplates = definition.id === 'admin-qr-prompts' || definition.id === 'admin-qr-cards';
+  if (!base || !['admin-paths', 'admin-coupons', 'admin-invites', 'admin-qr-prompts'].includes(definition.id)) return null;
+  const qrTemplates = definition.id === 'admin-qr-prompts';
   return (
     <div className="platform-domain-stack">
       <DomainForm definition={definition} busy={busy} runAction={runAction} spec={base} />
@@ -1326,7 +1320,7 @@ export function PlatformAdminActions(props: CommonProps) {
   const t = useT();
   if (definition.id === 'admin-order') return <PlatformAdminOrderActions {...props} />;
   if (definition.id === 'admin-invites') return <PlatformRedemptionCodeManager {...props} />;
-  if (['admin-paths', 'admin-coupons', 'admin-qr-prompts', 'admin-qr-cards'].includes(definition.id)) {
+  if (['admin-paths', 'admin-coupons', 'admin-qr-prompts'].includes(definition.id)) {
     return <PlatformAdminCollectionManager {...props} />;
   }
   if (definition.id === 'admin-payouts') return <PlatformPayoutManager {...props} />;
@@ -1372,21 +1366,6 @@ export function PlatformAdminActions(props: CommonProps) {
               runAction={runAction}
             />
           </section>
-        </div>
-      );
-    }
-    if (definition.id === 'admin-qr-cards') {
-      return (
-        <div className="platform-domain-stack">
-          {editor}
-          <DomainForm definition={definition} busy={busy} runAction={runAction} spec={{
-            title: text('生成可打印卡片', 'Generate printable card'),
-            action: 'qr-card-job',
-            fields: [
-              field('templateId', '卡片模板 ID', 'Card template ID', { required: true }),
-              field('request', '生成参数 JSON', 'Generation request JSON', { kind: 'json', rows: 7, required: true }),
-            ],
-          }} />
         </div>
       );
     }
