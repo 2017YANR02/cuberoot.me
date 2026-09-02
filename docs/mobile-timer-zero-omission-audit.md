@@ -143,7 +143,7 @@ shared 映射快照是 19 个 Timer ID：
 | `source.wca.mode` | 比赛/日期二分 | 已接 Web/Mobile 共用 config 与 shared normalize；待全状态真机矩阵 |
 | `source.wca.comp` | 比赛搜索、选择、国旗、清空，日期范围 | 已接共用搜索/日期控件、严格比赛索引、共享中英比赛名/城市与 canonical 国旗；待离线/长名/键盘/全量比赛真机矩阵 |
 | `source.wca.round-group` | 轮次与组别筛选 | 已接共用 config 与 source identity；待完整请求/缓存组合和真机验收 |
-| `source.wca.difficulty` | 方法/阶段/底色子集/步数/合并口径/覆盖提示 | 已接共用 `TimerWcaDifficultyConfig` 与 shared catalog/query/cache/inflight；内部底色键不得作为可见文案，OPPO 中文竖屏当前值/展开列表已验无编码泄漏和横向溢出；19 项 shared contract、3 项 UI interaction 通过，待英文、横屏、大字、TalkBack、长文及全组合真机矩阵 |
+| `source.wca.difficulty` | 方法/阶段/底色子集/步数/合并口径/覆盖提示 | 已接共用 `TimerWcaDifficultyConfig` 与 shared catalog/query/cache/inflight；内部底色键不得作为可见文案，OPPO 中文竖屏当前值/展开列表已验无编码泄漏和横向溢出；App 通过既有 `topControlsSlot` 将“最优打乱/合并/难度”保持在同一行，OPPO 360px 与 CDP 320px 均验同高、无相交、无横向溢出；19 项 shared contract、3 项 UI interaction 通过，待英文、横屏、大字、TalkBack、长文及全组合真机矩阵 |
 | `source.wca.steps` | 222/pyra/skewb 真题按步数，各项目度量和 WCA 可达范围 | 三项目均接 shared normalize/identity + canonical Worker predicate；Mobile pool/source 定向回归通过，待全范围真机抽题 |
 | `source.wca.222-type` | 完整状态、EG、CLL、EG1、EG2、TCLL+、TCLL-、TCLL、LS、无连色 | 10 类共用 catalog 已接；precomputed/live 筛选与 full source key 有 fixture，待完整比赛/日期范围和真机全类型矩阵 |
 | `source.wca.222-mode` | WCA 恰 11 步 / 最优等态口径 | 共用 mode 控件、请求、cache/inflight identity 已接；待完整真题配置组合验收 |
