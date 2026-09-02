@@ -11,12 +11,10 @@
 // 直接预览经典亮 / 暗三色块,跟配色块同列对齐;勾跟随当前实际明暗。
 
 import { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Sun, Moon, Check } from 'lucide-react';
 import { persistItem } from '@/lib/safe-storage';
 import {
   THEME_KEY,
-  CONTRAST_LEVELS,
   applyTheme,
   applyPalette,
   applyContrast,
@@ -24,7 +22,6 @@ import {
   endAppearancePreview,
   previewTheme,
   previewPalette,
-  previewContrast,
   restorePersistedAppearance,
   readContrast,
   readPalette,
@@ -33,6 +30,9 @@ import {
 } from '@/lib/theme';
 import { PALETTES, type PaletteId } from '@/lib/palettes';
 import AppLink from '@/components/AppLink';
+import BoolToggle from '@/components/BoolToggle';
+import { useT } from '@/hooks/useT';
+import { tr } from '@/i18n/tr';
 
 // 经典配色亮 / 暗的 [背景, 强调, 文字] —— 跟 globals.css 的 :root / [data-theme=dark] 对应。
 const CLASSIC_LIGHT: [string, string, string] = ['#fafafa', '#c15f3c', '#171717'];
@@ -49,22 +49,17 @@ function Swatch({ colors }: { colors: [string, string, string] }) {
 }
 
 export default function AppearanceToggle({ className }: { className?: string }) {
-  const { i18n } = useTranslation();
-  const lang = i18n.language || 'en';
-  const isZh = lang.startsWith('zh');
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = useT();
   const L = {
     title: t('外观', 'Appearance'),
     scheme: t('明暗', 'Light / Dark'),
     palette: t('配色', 'Color'),
     light: t('浅色', 'Light'),
     dark: t('深色', 'Dark'),
-    soften: t('柔和度', 'Softness'),
+    lowContrast: t('低对比度', 'Low contrast'),
     softenHint: t('降低对比,长时间看更省眼', 'Lower contrast — easier on the eyes'),
     more: t('比较全部', 'Compare all'),
   };
-  const nameOf = (p: (typeof PALETTES)[number] | (typeof CONTRAST_LEVELS)[number]) =>
-    isZh ? p.zh : p.en;
 
   const [mounted, setMounted] = useState(false);
   const [palette, setPalette] = useState<PaletteId | null>(null);
@@ -94,11 +89,6 @@ export default function AppearanceToggle({ className }: { className?: string }) 
   const showPalettePreview = (id: PaletteId) => {
     previewingRef.current = true;
     previewPalette(id);
-  };
-
-  const showContrastPreview = (level: ContrastLevel) => {
-    previewingRef.current = true;
-    previewContrast(level);
   };
 
   useEffect(() => {
@@ -155,7 +145,7 @@ export default function AppearanceToggle({ className }: { className?: string }) 
     applyPalette(id, true);
   };
 
-  // 选柔和度:正交于明暗 / 配色,菜单不关,让用户原地连点三档看效果。
+  // 低对比度正交于明暗 / 配色,切换时菜单不关。
   const pickContrast = (level: ContrastLevel) => {
     previewingRef.current = false;
     setContrast(level);
@@ -256,30 +246,17 @@ export default function AppearanceToggle({ className }: { className?: string }) 
               >
                 <span className="lang-menu-check">{on && <Check size={13} />}</span>
                 <Swatch colors={p.swatch} />
-                <span>{nameOf(p)}</span>
+                <span>{tr(p)}</span>
               </button>
             );
           })}
 
-          <div className="appearance-sec-label appearance-sec-div">{L.soften}</div>
-          <div className="appearance-chips" role="group" aria-label={L.soften}>
-            {CONTRAST_LEVELS.map((c) => {
-              const on = c.id === contrast;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={on}
-                  className={`appearance-chip${on ? ' is-active' : ''}`}
-                  onPointerEnter={() => showContrastPreview(c.id)}
-                  onFocus={() => showContrastPreview(c.id)}
-                  onClick={() => pickContrast(c.id)}
-                >
-                  {nameOf(c)}
-                </button>
-              );
-            })}
+          <div className="appearance-sec-label appearance-sec-div">
+            <BoolToggle
+              value={contrast === 'soft'}
+              onChange={(enabled) => pickContrast(enabled ? 'soft' : 'normal')}
+              label={L.lowContrast}
+            />
           </div>
           <div className="appearance-hint">{L.softenHint}</div>
 

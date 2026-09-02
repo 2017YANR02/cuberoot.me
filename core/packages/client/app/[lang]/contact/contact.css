@@ -65,12 +65,6 @@
   line-height: 1.65;
 }
 
-.contact-site-label {
-  margin-right: 0.45rem;
-  color: var(--muted-foreground);
-  font-size: 0.8rem;
-}
-
 .contact-site {
   color: var(--accent);
   font-size: 0.9rem;
@@ -88,8 +82,8 @@
 
 .contact-details-columns {
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(260px, 1fr);
-  gap: 2.5rem;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr) minmax(0, 0.75fr);
+  gap: 2rem;
   margin-top: 1.35rem;
 }
 
@@ -129,6 +123,46 @@
   margin: 0;
   color: var(--foreground);
   overflow-wrap: anywhere;
+}
+
+.contact-social-details {
+  grid-template-columns: max-content max-content max-content;
+}
+
+.contact-social-details .contact-details-row > dt {
+  grid-column: 1;
+}
+
+.contact-social-details .contact-details-row > dd {
+  display: contents;
+}
+
+.contact-social-details .contact-platform-account {
+  grid-column: 2;
+}
+
+.contact-social-details .contact-platform-count {
+  grid-column: 3;
+}
+
+.contact-details-row .contact-app-platform-list {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  gap: 0.35rem 0.8rem;
+  align-items: baseline;
+}
+
+.contact-app-platform-row {
+  display: contents;
+}
+
+.contact-app-platform-row > span:first-child,
+.contact-app-platform-value {
+  white-space: nowrap;
+}
+
+.contact-app-platform-value {
+  color: var(--muted-foreground);
 }
 
 .contact-details-icon {

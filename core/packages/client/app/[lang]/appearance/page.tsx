@@ -16,6 +16,7 @@ import {
 } from '@/lib/theme';
 import { PALETTES } from '@/lib/palettes';
 import { tr } from '@/i18n/tr';
+import '@/components/PillToggle/PillToggle.css';
 import './appearance.css';
 
 interface Card {
@@ -120,7 +121,7 @@ export default function AppearancePage() {
                 <span className="ac-preview contrast-scope">
                   <span className="ac-pv-top">
                     <span className="ac-pv-dot" />
-                    <span className="ac-pv-title">魔方 Cube</span>
+                    <span className="ac-pv-title">小根根</span>
                     <span className="ac-pv-faint">Ao5 12.34</span>
                   </span>
                   <span className="ac-pv-sub">Solve. Train. Analyze.</span>
@@ -132,6 +133,9 @@ export default function AppearancePage() {
                   })}</span>
                     <span className="ac-pv-btn-primary" aria-hidden="true"><Play size={12} /></span>
                     <span className="ac-pv-btn-secondary" aria-hidden="true"><RotateCcw size={12} /></span>
+                    <span className="pill-toggle pill-toggle--switch is-on" aria-hidden="true">
+                      <span className="pill-toggle-dot" />
+                    </span>
                   </span>
                   <span className="ac-pv-chips">
                     <span className="ac-pv-chip">OLL</span>

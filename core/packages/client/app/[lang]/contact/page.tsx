@@ -3,7 +3,6 @@
 import {
   CONTACT_GROUP_SECTIONS,
   CONTACT_JOIN_INSTRUCTION,
-  CONTACT_WEBSITE,
   CONTACT_WECHAT_ID,
   type ContactText,
 } from '@cuberoot/shared/contact';
@@ -44,8 +43,6 @@ export default function ContactPage() {
 
       <section className="contact-profile">
         <div className="contact-profile-copy">
-          <span className="contact-site-label">{tr({ zh: '网站', en: 'Website' })}</span>
-          <AppLink href="/" className="contact-site">{CONTACT_WEBSITE}</AppLink>
           {admin && (
             <div className="contact-membership-link">
               <AppLink href="/membership" className="contact-site">
