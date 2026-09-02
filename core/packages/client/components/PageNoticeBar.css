@@ -229,5 +229,5 @@ textarea.page-notice-input { resize: vertical; min-height: 46px; }
 }
 
 @media (max-width: 480px) {
-  .page-notice { font-size: 0.85rem; padding: 0.5rem 0.75rem; }
+  .page-notice { font-size: 0.9375rem; padding: 0.5rem 0.75rem; }
 }
