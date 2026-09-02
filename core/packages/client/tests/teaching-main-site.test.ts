@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -27,14 +27,13 @@ describe('main-site teaching architecture', () => {
     expect(SITE_DIRECTORY_TEXTS.learningCenter).toEqual({ en: 'Learning Center', zh: '学习中心' });
   });
 
-  it('keeps the retired Platform host disconnected from its legacy app', () => {
+  it('keeps the restored legacy host isolated as a temporary comparison site', () => {
     const nginx = readFileSync(join(REPO, 'ops', 'nginx', 'platform.cuberoot.me.conf'), 'utf8');
-    expect(nginx).toContain('return 410;');
-    expect(nginx).not.toContain('proxy_pass');
-    expect(nginx).not.toContain('127.0.0.1:3004');
-    expect(existsSync(join(REPO, '.github', 'workflows', 'deploy_platform.yml'))).toBe(false);
-    expect(existsSync(join(REPO, '.github', 'workflows', 'test_platform.yml'))).toBe(false);
-    expect(existsSync(join(REPO, 'ops', 'systemd', 'platform-next.service'))).toBe(false);
+    const learnEntries = SITE_DIRECTORY_GROUPS.find((group) => group.id === 'learn')?.entries ?? [];
+    expect(nginx).toContain('旧 Cube Platform 验收对照站');
+    expect(nginx).toMatch(/proxy_pass\s+http:\/\/127\.0\.0\.1:3004;/);
+    expect(nginx).not.toContain('return 410;');
+    expect(learnEntries.find((entry) => entry.id === 'platform')).toMatchObject({ href: '/platform', internal: true });
   });
 
   it('links teaching users to canonical main-site tools', () => {
