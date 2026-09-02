@@ -38,6 +38,7 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
 - 网站专属 Next 路由、SEO、服务端组件留在 client；共享安装端导航与 IndexedDB 产品仓储留在 `app-ui`，系统桥留在各宿主。
 - 五端只分别实现权限、BLE transport、安全存储、通知、深链、分享、文件、打印、窗口和生命周期等 platform adapters；协议解析、账号契约、数据规则、对战状态和 React 功能必须共享。新 capability contract 只在第二个真实消费者落地时逐项提取，不为计划中宿主预建空接口。
 - `dist/` 和 Capacitor 同步进去的 Web 产物是生成物，不是源码；改 React/shared 后重新 build + sync。
+- Android/iOS 共用的 Mobile Vite 产物必须保留 `core/apps/mobile/vite.config.ts` 的 `target/cssTarget: chrome103`，直到最低 Android WebView 基线经真机证据正式上调。OPPO `PFDM00` 的 WebView 103 不支持 `color-mix()`、`dvh`，且 Vite 默认压缩会把传统 `max-width/max-height` 媒体查询改成该内核无法解析的 range syntax；共享 CSS 必须给这些能力提供可工作的旧语法/直接色值 fallback，再用 `@supports` 渐进增强。不能只看源码或桌面 Chrome，build 后要检查产物仍含传统媒体查询，并在真机 WebView 验证 computed style、滚动与边界。
 - 不把远程网站设为 App 的启动运行代码，也不把整站 WebView 当正式产品。
 
 当前永久标识从配置读取并保持一致；除非用户明确决定迁移，否则不要更改 `me.cuberoot.app` 和 `CubeRoot`。

@@ -27,6 +27,7 @@ import './info-toast.css';
 import './scramble-strip.css';
 import './room-qr-modal.css';
 import './timer-print-document.css';
+import './drill-picker.css';
 
 export { default as TimingSurface } from './TimingSurface';
 export type { TimingSurfaceProps } from './TimingSurface';
@@ -231,6 +232,9 @@ export type {
   TimerWcaDifficultyConfigProps,
   TimerWcaDifficultyLabels,
 } from './TimerWcaDifficultyConfig';
+export { TimerDrillPicker } from './TimerDrillPicker';
+export type { TimerDrillPickerProps } from './TimerDrillPicker';
+export type { TimerDrillTarget, TimerDrillType } from '@cuberoot/shared/timer';
 export {
   CHINESE_TAIPEI_FLAG_PATH,
   Flag,

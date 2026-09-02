@@ -26,7 +26,7 @@
 | GAP-006 | Web 有 session 切换/新建/重命名/清空/删除/项目关联、搜索筛选、成绩对比、成绩详情、移动分组 | session CRUD/项目关联、共用成绩行/七项菜单/备注/Undo、行级罚时/复制/删除、完整筛选/tag、成绩对比与基础成绩详情已接五端共享产品层。详情的原始/生效成绩、日期、罚时、打乱、CFOP/BLD/MBLD 分段、备注、移组、删除和关闭只保留一份 `timer-ui` DOM；Web 仅注入重型复盘。Web/五端的打乱图也已统一为同一 `TimerCubePreview`，覆盖网站当前的 NxN、Clock、Pyraminx、Skewb、SQ1、Megaminx、FTO 和 relay/custom 分派；完整复盘仍缺。`HistoryPanel` 的批量删除分支当前在网站主路径没有 consumer，不把不可达代码当网站现有功能 | P0，基础详情/预览单源不等于完整复盘 parity |
 | GAP-007 | Web 有成绩/图表/统计三栏、5 图、完整统计、case/跨分组/按天、纪录对比 | 紧凑 current/best 面板与 rolling picker 已迁 timer-ui 并由 Web/Mobile 真实消费；OPPO 已显示 time/ao5/ao12 共用面板且 360px 无横向溢出。完整 StatsModal/五图、case/跨分组/按天与纪录对比仍缺 | P0，紧凑面板接线完成不等于完整统计完成 |
 | GAP-008 | Web 设置有 8 类、64 个字段（其中 1 个仅开发环境） | 8 类与 64 个稳定 ID、copy/value/visibility/disabled/effect 已迁 shared；“计时”8 字段、“训练”的 CFOP 分段/BLD memo、“打乱”的最优开关及“外观”的打乱图、2D/3D、点击打乱动作已由 Web/Mobile 共用真实 UI/effect，App effect ledger 为 14 项。OPPO 已读到 canonical 8/8 计时 ID、20～340px 内容边界与滚动底部，并实证点击打乱三动作及最优开关 44px、真题可用/手动禁用/切回恢复；其余 50 字段、iOS/其他三端和全视口仍缺 | P0，14 项接线完成不等于 64 项设置 parity |
-| GAP-009 | Web “更多”包含打乱足迹、统计、语言、专项、盲拧助手、全屏、手动录入、replay、求解器、批量打乱、打印、清空 | 12 项 action/条件/effect 已共享；App 已真实接通 10 项：统计复用现有共享统计页，盲拧助手/通用求解器/批量打乱复用 Tools canonical 子路由，其余 6 项保留既有 App effect。专项仍绑定 Web 私有 drill target，replay 仍绑定 Web 私有 decoder/重建状态，未用外跳 Web timer 或占位冒充 | P0，剩余 2 项及深层交互矩阵未完成 |
+| GAP-009 | Web “更多”包含打乱足迹、统计、语言、专项、盲拧助手、全屏、手动录入、replay、求解器、批量打乱、打印、清空 | 12 项 action/条件/effect 已共享；App 已真实接通 11 项：专项的 78 个 OLL/PLL case、严格生成、搜索/分组、切换/退出和弹层均由 Web/五端消费同一 shared/timer-ui 实现；统计复用共享页，盲拧助手/通用求解器/批量打乱复用 Tools canonical 子路由。仅 replay 仍绑定 Web 私有 decoder/重建状态；没有外跳 Web timer 或占位冒充 | P0，剩余 replay 及深层交互矩阵未完成 |
 | GAP-010 | Web 有智能魔方、智能计时器、Stackmat 麦克风，各自完整弹层、状态与错误 | Mobile 只显示真实 BLE 入口；Android GAN v4 主链已真机跑通，iOS UUID 后 manufacturer-data MAC 提取有 adapter/握手单测但无真机；Stackmat/智能计时器未实现且不渲染假入口 | P0，缺失能力保持不可见且仍登记为 gap |
 | GAP-011 | Web 有手动录成绩、FMC/MBLD 特殊输入、轮次模拟、目标、每日目标、分段、BLD memo | 手动成绩/FMC/MBLD 与 CFOP 分段/BLD memo 已共享接入；分段共用 recorder/status/settings，手动键盘和 44px 触摸均可标记，智能三阶自动分段复用 canonical move-stream producer。轮次、目标、每日目标仍缺，新增分段路径待 OPPO 真机 | P0 |
 | GAP-012 | Web 触摸有八向操作轮盘与撤销，键盘有可重绑快捷键，还有全屏/运行隐藏/UI fade | Mobile 已直接消费 shared 八向轮盘、默认键盘决策、任意键停表、分段/BLD memo 键与 44px 触摸标记、删除撤销 toast 与起表门禁；但自定义改键持久化/UI、运行隐藏全 UI 和完整真机矩阵仍缺 | P1，但声称“UI/UX 完全一致”前仍是硬门槛 |
@@ -139,7 +139,7 @@ shared 映射快照是 19 个 Timer ID：
 | `source.picker` | 真题/随机/手动，选中文案、弹层样式、键盘与触摸 | 已接 Web/Mobile 共用 controlled 组件；内部值 adapter（Mobile `real` / Web `wca`）仍需全状态交互/视觉验收 |
 | `source.manual.editor` | 共享 textarea，原文立即持久化，无提交/清空按钮 | 已接共享 editor，需集成证据 |
 | `source.manual.queue` | trim 非空行，opaque，顺序循环，修改重置，跨项目共享 | 已接 shared parse/take，需证明全部边界 |
-| `source.manual.empty` | 显示精确空队列提示，仍允许空打乱起表/保存 | 提示文案、shared predicate 与 Mobile attempt snapshot fixture 均已单源接入；待真机 |
+| `source.manual.empty` | 显示精确空队列提示，仍允许空打乱起表/保存 | 提示文案、shared predicate 与 Mobile attempt snapshot fixture 均已单源接入；OPPO App WebView 已实证清空后提示、可交互 Surface 与 360/360 无溢出，仍待手指起表/取消、重启与其余平台 |
 | `source.wca.mode` | 比赛/日期二分 | 已接 Web/Mobile 共用 config 与 shared normalize；待全状态真机矩阵 |
 | `source.wca.comp` | 比赛搜索、选择、国旗、清空，日期范围 | 已接共用搜索/日期控件、严格比赛索引、共享中英比赛名/城市与 canonical 国旗；待离线/长名/键盘/全量比赛真机矩阵 |
 | `source.wca.round-group` | 轮次与组别筛选 | 已接共用 config 与 source identity；待完整请求/缓存组合和真机验收 |
@@ -222,7 +222,7 @@ shared 映射快照是 19 个 Timer ID：
 | `more.marks` | 打乱足迹页 | 已绑定 App 内 Tools WebView 的本地化 `/timer/marks` 深链；待 OPPO 真机实点/返回栈验收 |
 | `more.stats-mobile` | 手机形态中打开完整统计 | 已打开 App 内现有共享统计页；完整 StatsModal/五图仍由统计 gap 追踪 |
 | `more.language-mobile` | 手机形态中英文切换并同步 URL | More 内已绑定 shared copy 与 Mobile 持久化语言设置；320/340px 实点生效，待真机重启验收 |
-| `more.drill` | 可用项目显示专项练习，选 case/退出 | 缺 |
+| `more.drill` | 可用项目显示专项练习，选 case/退出 | 已接 shared `TimerDrillPicker` + 严格 shared generator；活动态保持入口并显示绿色/`aria-current`，切换不支持项目会关闭并清理；Web 320px 与 App 320px 浏览器链路通过。最终 APK 已在 OPPO WebView 103 实证选中 OLL 21 后生成对应专项题、重开显示当前 case/退出按钮、活动入口保持绿色和 `aria-current`、系统 Back 只关闭弹层并恢复 body 滚动；360×749 无横向溢出，CDP 568×320 下传统 `max-height` 生效，整个弹层可滚到完整“关闭”按钮 |
 | `more.bld-helper` | 333bld/333ni/333mbld 条件显示 Speffz 记忆助手 | 按 shared visibility 显示并在 Tools surface 打开 canonical `/alg/3bld/helper` |
 | `more.fullscreen` | 全屏切换 | 已绑定 Fullscreen API 并监听真实 `fullscreenchange`；待 OPPO WebView 支持/系统栏实点验收 |
 | `more.manual-entry` | 手动录入成绩，不是手动打乱 | Mobile More 已接 shared modal；340px 中英文/无溢出浏览器审核通过，待 OPPO 软键盘/返回验收 |

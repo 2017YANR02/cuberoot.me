@@ -79,6 +79,7 @@ import {
   timerGestureActionAt,
   timerGestureActionStates,
   formatTimerTimingDisplay,
+  generateTimerDrillScramble,
   timerShouldStopFromExternalPointer,
   timerPrintScrambleSource,
   timerScrambleAllowsEmptySlot,
@@ -90,6 +91,8 @@ import {
   usesStepsIndex,
   visibleTimerMoreActions,
   type TimerGestureActionId,
+  type TimerDrillTarget,
+  type TimerScrambleSourceSnapshot,
   type TimerNon222StepPuzzle,
   type TimerAttemptSplitState,
   TimerAttemptSplitRecorder,
@@ -211,7 +214,6 @@ import SettingsPanel from '../_components/SettingsPanel';
 import GoalProgress from '../_components/GoalProgress';
 import RoundPanel from '../_components/RoundPanel';
 import { roundAttempts } from '@cuberoot/shared/timer';
-import { generateDrillScramble, type DrillType } from '../_lib/scramble/drill';
 import SolverHints from '../_components/SolverHints';
 import SolverHintPanel, { HINTS_PARAM } from '../_components/SolverHintPanel';
 import ScrambleSourceBar from '../_components/ScrambleSourceBar';
@@ -292,6 +294,10 @@ interface TimerScrambleHistoryEntry {
   scramble: string;
   /** Stable occurrence provenance; separate official slots may share text. */
   wca: WcaDispensedScramble | null;
+  /** Exact case captured with this displayed slot; never inferred from a later draw. */
+  caseId: string | null;
+  /** Explicit non-WCA provenance prevents text collisions from becoming public marks. */
+  scrambleSource: TimerScrambleSourceSnapshot | null;
 }
 
 let nextTimerScrambleHistoryEntryId = 1;
@@ -299,8 +305,10 @@ let nextTimerScrambleHistoryEntryId = 1;
 function timerScrambleHistoryEntry(
   scramble: string,
   wca: WcaDispensedScramble | null = null,
+  caseId: string | null = null,
+  scrambleSource: TimerScrambleSourceSnapshot | null = null,
 ): TimerScrambleHistoryEntry {
-  return { id: nextTimerScrambleHistoryEntryId++, scramble, wca };
+  return { id: nextTimerScrambleHistoryEntryId++, scramble, wca, caseId, scrambleSource };
 }
 
 function useMediaQuery(query: string): boolean {
@@ -481,7 +489,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, []);
 
   // ── Drill mode ──────────────────────────────────────────────────
-  const [drillTarget, setDrillTarget] = useState<{ type: DrillType; id: string } | null>(null);
+  const [drillTarget, setDrillTarget] = useState<TimerDrillTarget | null>(null);
   const [drillModalOpen, setDrillModalOpen] = useState(false);
   const drillAllowed = timerEventSupportsDrill(event);
   useEffect(() => {
@@ -626,7 +634,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         key: randomOptimalKey,
         generateBase: async () => {
           if (drillTarget && drillAllowed) {
-            const drill = generateDrillScramble(drillTarget.type, drillTarget.id);
+            const drill = generateTimerDrillScramble(drillTarget);
             if (drill) return drill.scramble;
           }
           const spec = trainerSpecRef.current;
@@ -692,8 +700,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       return timerScrambleHistoryEntry(source ? peekOptimal333(source) : '');
     }
     if (drillTarget && drillAllowed) {
-      const ds = generateDrillScramble(drillTarget.type, drillTarget.id);
-      if (ds) return timerScrambleHistoryEntry(ds.scramble);
+      const ds = generateTimerDrillScramble(drillTarget);
+      if (ds) return timerScrambleHistoryEntry(
+        ds.scramble,
+        null,
+        event === drillTarget.type ? ds.targetCase : null,
+        { kind: 'random', identity: `drill|${event}|${drillTarget.type}:${drillTarget.id}` },
+      );
     }
     // WCA real-scramble mode: take from the pool synchronously when available;
     // '' is a loading placeholder filled async by the effect below.
@@ -1079,14 +1092,20 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (settings.scrambleSource !== 'wca') return;
     void loadFlagData().then((v) => setFlagVer((cur) => (v !== cur ? v : cur)));
   }, [settings.scrambleSource]);
-  const wcaSource = settings.scrambleSource === 'wca' && !scrambleLoading
+  const wcaSource = settings.scrambleSource === 'wca'
+    && currentScrambleEntry.scrambleSource === null
+    && !scrambleLoading
     ? wcaMetaFor(currentScrambleEntry.wca ?? scramble)
     : null;
   // 稀有筛选(如 8 步双色十字,全库仅 2 条)下真题总数是确切已知的(见 wca_pool 的封闭集)——
   // 从第一条起就显示「已练 n/N」,让用户一眼知道池子有多小;练满 N 条后转成「已全部练过」,
   // 明确告知之后是重复出题,免得以为出题坏了。常见档总数未知 → 返回 null,整块不渲染。
   // 随 scramble 变化重算即可(每出一条都会重渲染),不需要额外的订阅/状态。
-  const poolRun = settings.scrambleSource === 'wca' && !scrambleLoading ? wcaPoolProgress(wcaSpec) : null;
+  const poolRun = settings.scrambleSource === 'wca'
+    && currentScrambleEntry.scrambleSource === null
+    && !scrambleLoading
+    ? wcaPoolProgress(wcaSpec)
+    : null;
   // 开了「最优打乱」但这条是回退的原打乱(该难度档无最优等态)→ 在打乱右侧标「非最优」。
   const wcaNonOptimal = wcaOptimalOn && !!wcaSource?.nonOptimal;
   const wcaSrcDisplay = useMemo(() => {
@@ -1138,8 +1157,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (sig === prev) return;
     lastSolveSigRef.current[event] = sig;
     if (prev === undefined || !s || !authUser) return;
-    const meta = s.scrambleSource?.kind === 'wca'
-      ? wcaMetaForSlot(s.scrambleSource.identity)
+    const meta = s.scrambleSource
+      ? s.scrambleSource.kind === 'wca'
+        ? wcaMetaForSlot(s.scrambleSource.identity)
+        : null
       : wcaMetaFor(s.scramble);
     if (!meta) return;
     const key = markKey(meta);
@@ -1224,6 +1245,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   useEffect(() => { byEventRef.current = byEvent; }, [byEvent]);
   const scrambleAtStartRef = useRef<string>(scramble);
   const wcaAtStartRef = useRef<WcaDispensedScramble | null>(currentScrambleEntry.wca);
+  const scrambleSourceAtStartRef = useRef<TimerScrambleSourceSnapshot | null>(
+    currentScrambleEntry.scrambleSource,
+  );
   const eventAtStartRef = useRef<EventId>(event);
   const caseIdAtStartRef = useRef<string | null>(null);
   const moveRecorderRef = useRef(new TimerSmartCubeMoveRecorder());
@@ -1249,6 +1273,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     });
     if (wcaAtStartRef.current?.slot) {
       solve.scrambleSource = { kind: 'wca', identity: wcaAtStartRef.current.slot };
+    } else if (scrambleSourceAtStartRef.current) {
+      solve.scrambleSource = scrambleSourceAtStartRef.current;
     }
     if (stages) solve.stages = stages;
     if (bld) solve.bld = bld;
@@ -1308,6 +1334,16 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, [attemptSplitRecorder, nextScramble, settings.precision, settings.autoRecap]);
 
   const timer = useTimer(recordSolve, (startedAtMs) => {
+    const history = scrambleHistRef.current;
+    const entry = history.list[history.idx];
+    if (entry) {
+      scrambleAtStartRef.current = entry.scramble;
+      wcaAtStartRef.current = entry.wca;
+      scrambleSourceAtStartRef.current = entry.scrambleSource;
+      caseIdAtStartRef.current = entry.caseId
+        ?? (timerTracksTrainerCase(event) ? getLastPickedCase(event as TrainerKind) : null);
+    }
+    eventAtStartRef.current = event;
     attemptStartedAtRef.current = startedAtMs;
     attemptSplitRecorder.begin({
       bldMemo: settings.bldMemo && isBldEvent(eventAtStartRef.current),
@@ -1328,10 +1364,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       cubeStartedRef.current = false;
       scrambleAtStartRef.current = scramble;
       wcaAtStartRef.current = currentScrambleEntry.wca;
+      scrambleSourceAtStartRef.current = currentScrambleEntry.scrambleSource;
       eventAtStartRef.current = event;
-      caseIdAtStartRef.current = timerTracksTrainerCase(event)
-        ? getLastPickedCase(event as TrainerKind)
-        : null;
+      caseIdAtStartRef.current = currentScrambleEntry.caseId
+        ?? (timerTracksTrainerCase(event) ? getLastPickedCase(event as TrainerKind) : null);
       const bt = bluetoothCubeRef.current?.status;
       deviceAtStartRef.current = bt?.connected
         ? { model: bt.brand, name: bt.deviceName }
@@ -1341,7 +1377,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       gyroRecRef.current.reset();
       gyroStartRef.current = startedAtMs;
     }
-  }, [timer.phase, scramble, event, currentScrambleEntry.wca]);
+  }, [
+    timer.phase,
+    scramble,
+    event,
+    currentScrambleEntry.caseId,
+    currentScrambleEntry.scrambleSource,
+    currentScrambleEntry.wca,
+  ]);
 
   // ── Bluetooth smart cube ────────────────────────────────────────
   const phaseSnapshotRef = useRef(timer.phase);
@@ -3296,10 +3339,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
       {drillModalOpen && (
         <DrillModal
-          isZh={isZh}
           activeCase={drillTarget}
           initialType={event === 'pll' ? 'pll' : 'oll'}
-          onPick={(type, id) => { setDrillTarget({ type, id }); }}
+          language={timerLanguage}
+          onPick={setDrillTarget}
           onExit={() => setDrillTarget(null)}
           onClose={() => setDrillModalOpen(false)}
         />

@@ -40,7 +40,7 @@ export type TimerMoreActionEffect =
 export type TimerMoreActionVisibility =
   | 'always'
   | 'compact-viewport'
-  | 'drill-event-without-active-drill'
+  | 'drill-event'
   | 'speffz-event';
 
 export type TimerMoreActionDisabledWhen = 'never' | 'no-current-event-solves';
@@ -102,7 +102,7 @@ export const TIMER_MORE_ACTION_CONTRACTS: readonly TimerMoreActionContract[] = [
   { id: 'more.marks', effect: 'navigate-scramble-marks', visibility: 'always', disabledWhen: 'never', danger: false },
   { id: 'more.stats-mobile', effect: 'open-full-stats', visibility: 'compact-viewport', disabledWhen: 'never', danger: false },
   { id: 'more.language-mobile', effect: 'toggle-language', visibility: 'compact-viewport', disabledWhen: 'never', danger: false },
-  { id: 'more.drill', effect: 'open-drill-picker', visibility: 'drill-event-without-active-drill', disabledWhen: 'never', danger: false },
+  { id: 'more.drill', effect: 'open-drill-picker', visibility: 'drill-event', disabledWhen: 'never', danger: false },
   { id: 'more.bld-helper', effect: 'open-speffz-helper', visibility: 'speffz-event', disabledWhen: 'never', danger: false },
   { id: 'more.fullscreen', effect: 'toggle-fullscreen', visibility: 'always', disabledWhen: 'never', danger: false },
   { id: 'more.manual-entry', effect: 'open-manual-result-entry', visibility: 'always', disabledWhen: 'never', danger: false },
@@ -144,8 +144,8 @@ function actionVisible(
       return true;
     case 'compact-viewport':
       return context.compactViewport;
-    case 'drill-event-without-active-drill':
-      return timerEventSupportsDrill(context.event) && !context.drillActive;
+    case 'drill-event':
+      return timerEventSupportsDrill(context.event);
     case 'speffz-event':
       return timerEventSupportsSpeffzHelper(context.event);
   }
@@ -157,7 +157,11 @@ export function timerMoreActionStates(
 ): readonly TimerMoreActionState[] {
   return TIMER_MORE_ACTION_CONTRACTS.map((contract) => ({
     ...contract,
-    active: contract.id === 'more.fullscreen' && context.fullscreen,
+    active: contract.id === 'more.fullscreen'
+      ? context.fullscreen
+      : contract.id === 'more.drill'
+        ? context.drillActive && timerEventSupportsDrill(context.event)
+        : false,
     disabled: contract.disabledWhen === 'no-current-event-solves'
       && !(Number.isFinite(context.solveCount) && context.solveCount > 0),
     visible: actionVisible(contract.visibility, context),
