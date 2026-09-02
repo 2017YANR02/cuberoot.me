@@ -36,6 +36,9 @@ const TIMER = join(ROOT, 'app', '[lang]', 'timer');
 const REPORT = join(TIMER, '_components', 'ReconstructReport.tsx');
 const STEP_LIST = join(TIMER, '_components', 'StepMoveList.tsx');
 const SOLVE_MODAL = join(TIMER, '_components', 'SolveModal.tsx');
+const TIMER_UI = join(ROOT, '..', 'timer-ui', 'src');
+const DETAIL_MODAL = join(TIMER_UI, 'TimerSolveDetailModal.tsx');
+const RECONSTRUCT_METRICS = join(TIMER_UI, 'TimerReconstructMetrics.tsx');
 
 const read = (p: string) => readFileSync(p, 'utf8');
 /** 只留代码。断言「不许再出现某个写法」时用 —— 注释里讲得清来历,那不算回归。 */
@@ -55,7 +58,7 @@ describe('报告顺序:回放和谱子在前,数据在后', () => {
     const block = src.slice(from, src.indexOf('\n  return (', from));
     expect(block).toMatch(/<QualityRow\b/);
     expect(block).toMatch(/<StepAnalysis\b/);
-    expect(block).toMatch(/className="reconstruct-stats"/);
+    expect(block).toMatch(/<TimerReconstructMetrics\b/);
   });
 
   it('渲染时排在回放后面', () => {
@@ -91,8 +94,7 @@ describe('同一个数不写两遍', () => {
   });
 
   it('HTM 那张卡不再和摘要里的「步数 / TPS」重复', () => {
-    const from = report.indexOf('className="reconstruct-stats"');
-    const stats = report.slice(from, report.indexOf('</div>\n    </>', from));
+    const stats = read(RECONSTRUCT_METRICS);
     expect(stats).not.toMatch(/>HTM</);
     // QTM 留着:四分之一圈是另一个口径,摘要里没有。
     expect(stats).toMatch(/>QTM</);
@@ -220,39 +222,41 @@ describe('打乱不许一个字都不剩', () => {
 
 describe('智能魔方那把不摆打乱图', () => {
   const src = read(SOLVE_MODAL);
-  // 有动作流的那个分支 = 整屏详情页;下面 overlayStyle 起是手动计时那个小弹窗。
-  const start = src.indexOf('if (hasMoves) {');
-  const end = src.indexOf('const overlayStyle');
-  const fullPage = src.slice(start, end);
+  const detail = read(DETAIL_MODAL);
+  // Web 只决定是否注入复盘；共享详情组件据此选择整屏或普通弹窗。
+  const start = detail.indexOf('{full ? (');
+  const end = detail.indexOf(') : (', start);
+  const fullPage = detail.slice(start, end);
 
   it('测试切到的确实是整屏那个分支', () => {
     expect(start).toBeGreaterThan(0);
     expect(end).toBeGreaterThan(start);
-    expect(fullPage).toMatch(/<ReconstructReport\b/);
+    expect(src).toMatch(/report=\{hasMoves \? \([\s\S]{0,120}<ReconstructReport\b/);
+    expect(fullPage).toMatch(/\{report\}/);
   });
 
   it('整屏详情页不再摆打乱图', () => {
-    expect(fullPage).not.toMatch(/\{cubeRow\}/);
+    expect(fullPage).not.toMatch(/\{preview/);
   });
 
   it('整屏详情页不再第二次摆打乱 —— 谱子里已经有了', () => {
-    expect(fullPage).not.toMatch(/\{scrambleSection\}/);
+    expect(fullPage).not.toMatch(/solve\.scramble/);
   });
 
   it('罚时是一个下拉,不是四个并排的按钮', () => {
     // 四选一、彼此互斥、任何时候只有一个是当前值。并排按钮把「现在是哪个」和
     // 「能改成哪些」画成同样的分量,而看一条成绩九成是在读它。
-    expect(src).toMatch(/<select[\s\S]{0,200}className="solve-penalty-select"/);
+    expect(detail).toMatch(/const penalty = \([\s\S]{0,300}<select/);
     for (const v of ['ok', '+2', 'DNF', 'DNS']) {
-      expect(src, `罚时下拉少了 ${v}`).toContain(`value="${v}"`);
+      expect(detail, `罚时下拉少了 ${v}`).toContain(`value="${v}"`);
     }
-    expect(src).not.toMatch(/onClick=\{\(\) => onChangePenalty\(/);
+    expect(detail).not.toMatch(/onClick=\{\(\) => onChangePenalty\(/);
   });
 
   it('手动 / 键盘计时那个弹窗照旧两样都有', () => {
     // 它们没有谱子可以承载打乱,拿掉就真的没了。
-    const manual = src.slice(end);
-    expect(manual).toMatch(/\{scrambleSection\}/);
-    expect(manual).toMatch(/\{cubeRow\}/);
+    const manual = detail.slice(end);
+    expect(manual).toMatch(/solve\.scramble/);
+    expect(manual).toMatch(/\{preview/);
   });
 });
