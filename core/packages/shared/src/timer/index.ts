@@ -46,3 +46,4 @@ export * from './worker-rpc';
 export * from './wca-source-config';
 export * from './wca-difficulty';
 export * from './wca-difficulty-data';
+export * from './wca-practice';

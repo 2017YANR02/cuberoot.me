@@ -1,4 +1,5 @@
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
+import { isWcaIdFormat, ownerKey } from '@cuberoot/shared/account';
 import {
   createSmartCubeGuidanceController,
   type SmartCubeGuidanceState,
@@ -39,7 +40,9 @@ import {
   createTimerSourceRevision,
   createTimerHistoryFilters,
   computeTimerHistoryTags,
+  fetchTimerWcaScrambleMarks,
   filterTimerHistorySolves,
+  formatMs,
   groupSolvesByLocalDay,
   formatTimerTimingDisplay,
   generateTimerScramble,
@@ -51,6 +54,7 @@ import {
   normalizeTimerWcaSourceSettings,
   parseManualScrambleQueue,
   projectRollingStats,
+  postTimerWcaScrambleMark,
   pruneTimerHistoryCompareSelection,
   resolveKeymap,
   resolveTimerHistoryComparePair,
@@ -83,9 +87,13 @@ import {
   timerScrambleClickEffect,
   timerWcaRoundShortLabel,
   timerWcaCompetitionScrambleSlotIdentity,
+  timerWcaScrambleMarkKeyFromSlot,
+  timerWcaScrambleMarkKeyIdentity,
+  timerWcaScrambleProgressLabels,
   timerWcaScrambleEventId,
   timerWcaScrambleSourceLine,
   timerWcaSupportsOptimal,
+  updateTimerWcaScrambleMarkIfExists,
   timerSettingFieldContract,
   variantLabel,
   TIMER_COLOR_NAMES,
@@ -97,6 +105,7 @@ import {
   timerSupportsSmartCubeAutoTiming,
   TimerAttemptSplitRecorder,
   TimerSmartCubeMoveRecorder,
+  TimerWcaFinitePoolProgressTracker,
   timerTracksTrainerCase,
   toggleTimerHistoryPenalty,
   toggleTimerHistoryTag,
@@ -126,6 +135,8 @@ import {
   type TimerWcaDifficultyCoverage,
   type TimerWcaCompetition,
   type TimerWcaSourceSettings,
+  type TimerWcaScrambleMarkKey,
+  type TimerWcaScrambleMarksResponse,
 } from '@cuberoot/shared/timer';
 import {
   ClearButton,
@@ -160,6 +171,7 @@ import {
   TimerScramblePreviewSettings,
   TimerScrambleStrip,
   TimerWcaScrambleSource,
+  TimerWcaScrambleProgress,
   TimerByStepsConfig,
   TimerScrambleSourceSelect,
   TimerSessionSwitcher,
@@ -226,6 +238,7 @@ import {
 } from './data/timer-repository';
 import {
   mergeRealScramblePool,
+  isAllTimeRealScrambleDateSource,
   normalizeRealScrambleSourceSpec,
   readRealScrambleCache,
   realScrambleSourceKey,
@@ -234,6 +247,11 @@ import {
   type RealScrambleSourceSpec,
 } from './data/real-scramble-pool';
 import { startRealScrambleFetchRetry } from './data/real-scramble-retry';
+import {
+  autoMarkSavedWcaSolve,
+  wcaAutoMarkLiveSession,
+  wcaAutoMarkOwnerKey,
+} from './data/wca-auto-mark';
 import {
   LatestSnapshotGate,
   type SnapshotRevision,
@@ -261,6 +279,7 @@ import {
   loadMobileWcaCompetitionScrambles,
   loadMobileWcaCompetitions,
   mobileTimerWcaDifficultyAdapter,
+  mobileApiUrl,
 } from './data/wca-source-adapter';
 import { useTimerController } from './hooks/use-timer-controller';
 import {
@@ -357,6 +376,7 @@ function MobileHistoryItem({
   tagIds,
   rollingColumns,
   rollingProjection,
+  viewportBottomInset,
 }: {
   compareMode: boolean;
   copy: (typeof COPY)[SupportedLanguage];
@@ -374,6 +394,7 @@ function MobileHistoryItem({
   tagIds: readonly TimerHistoryTagId[];
   rollingColumns: readonly RollingStatKey[];
   rollingProjection: RollingStatProjection;
+  viewportBottomInset: number;
 }) {
   const accessibleTimestamp = useMemo(() => new Intl.DateTimeFormat(
     language === 'zh' ? 'zh-CN' : 'en',
@@ -398,8 +419,8 @@ function MobileHistoryItem({
     onOpenChange: onQuickMenuOpenChange,
     open: quickMenuOpen,
     variant: 'sheet',
-    viewportBottomInset: 64,
-  }), [onCopy, onOpenDetail, onQuickDelete, onQuickMenuOpenChange, onUpdate, quickMenuLabels, quickMenuOpen]);
+    viewportBottomInset,
+  }), [onCopy, onOpenDetail, onQuickDelete, onQuickMenuOpenChange, onUpdate, quickMenuLabels, quickMenuOpen, viewportBottomInset]);
 
   return (
     <article className="mobile-history-item">
@@ -459,6 +480,8 @@ export function App({ host }: { host: InstalledAppHost }) {
     tools: null,
   });
   const [viewportHeight, setViewportHeight] = useState(visibleViewportHeight);
+  const [primaryNavBottomInset, setPrimaryNavBottomInset] = useState(0);
+  const primaryNavRef = useRef<HTMLElement>(null);
   const [connection, setConnection] = useState<ConnectionState>('checking');
   const [wcaDifficultyCoverage, setWcaDifficultyCoverage] = useState<TimerWcaDifficultyCoverage>('idle');
   const [wcaTopControlsSlot, setWcaTopControlsSlot] = useState<HTMLSpanElement | null>(null);
@@ -467,6 +490,11 @@ export function App({ host }: { host: InstalledAppHost }) {
   const realCurrentBySourceRef = useRef(new Map<string, RealScramble>());
   const realRequestsRef = useRef(new Map<string, RealPoolRequest>());
   const hydratedRealSourcesRef = useRef(new Set<string>());
+  const realProgressTrackerRef = useRef(new TimerWcaFinitePoolProgressTracker());
+  const [, refreshRealProgress] = useState(0);
+  const wcaMarksCacheRef = useRef(new Map<string, TimerWcaScrambleMarksResponse>());
+  const wcaMarksRequestsRef = useRef(new Map<string, Promise<TimerWcaScrambleMarksResponse>>());
+  const [, refreshWcaMarks] = useState(0);
   const [scrambleSource, setScrambleSource] = useState<ScrambleSource>('wca');
   const [scrambleHistory, setScrambleHistory] = useState<ScrambleHistory<MobileScrambleHistoryEntry>>({
     list: [],
@@ -477,6 +505,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const randomScrambleGateRef = useRef(new MobileVisibleScrambleRequestGate());
   const [toast, setToast] = useState('');
   const [pendingSolves, setPendingSolves] = useState<Array<{
+    ownerAtSaveStart: string;
     sessionId: string;
     solve: Omit<Solve, 'id' | 'ts'>;
   }>>([]);
@@ -544,6 +573,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const cancelTimerArmRef = useRef<() => boolean>(() => false);
   const timerContextMutationBusyRef = useRef(false);
   const openOverlayRef = useRef<TimerOverlayId | null>(openOverlay);
+  const wcaMarksOverlayIdentityRef = useRef<string | null>(null);
   const moreOpenRef = useRef(moreOpen);
   const manualEntryOpenRef = useRef(manualEntryOpen);
   const printControllerRef = useRef<TimerPrintControllerHandle>(null);
@@ -558,6 +588,8 @@ export function App({ host }: { host: InstalledAppHost }) {
     : siteUrl(language);
   const accountWebUrl = accountUrl(language);
   const auth = host.useAuth(language);
+  const authSessionRef = useRef(auth.session);
+  authSessionRef.current = wcaAutoMarkLiveSession(auth.session, auth.busy);
   const setBattleSmartCubeHandlers = useCallback((handlers: BattleSmartCubeHandlers | null) => {
     battleSmartCubeHandlersRef.current = handlers;
   }, []);
@@ -593,13 +625,17 @@ export function App({ host }: { host: InstalledAppHost }) {
     ?? DEFAULT_TIMER_WCA_SOURCE_SETTINGS;
   const optimalAvailable = scrambleSource === 'wca'
     && timerWcaSupportsOptimal(timerWcaScrambleEventId(activeEvent));
-  const wcaSourceSignature = `${realScrambleSourceKey({
+  const activeRealSourceSpec: RealScrambleSourceSpec = {
     event: activeEvent,
     scramble222Mode,
     scramble222Type,
     ...byStepsSettings,
     ...wcaSourceSettings,
-  })}|unindexed:${wcaDifficultyCoverage === 'unindexed' ? 1 : 0}`;
+  };
+  const activeRealSourceKey = realScrambleSourceKey(activeRealSourceSpec);
+  const wcaSourceSignature = `${activeRealSourceKey}|unindexed:${
+    wcaDifficultyCoverage === 'unindexed' ? 1 : 0
+  }`;
   const storeLoaded = store !== null;
   const solves = store ? activeTimerSolves(store, activeEvent) : [];
   const historyContext = `${store?.database.activeSessionId ?? ''}|${activeEvent}`;
@@ -734,6 +770,10 @@ export function App({ host }: { host: InstalledAppHost }) {
     stageLabel: (key) => stageLabel(key, language === 'zh'),
     unindexedCompetition: copy.unindexedCompetition,
   }), [copy, language]);
+  const wcaProgressLabels = useMemo(
+    () => timerWcaScrambleProgressLabels(language),
+    [language],
+  );
   const manualEntryLabels = useMemo(() => timerManualEntryCopy(language), [language]);
   const dateRangeLabels = useMemo(() => dateRangeInputLabels(language), [language]);
   const sessionLabels = useMemo(() => timerSessionSwitcherLabels(language), [language]);
@@ -899,6 +939,68 @@ export function App({ host }: { host: InstalledAppHost }) {
   const currentReal = currentScrambleEntry?.currentReal ?? null;
   const [currentRealCompetition, setCurrentRealCompetition] = useState<TimerWcaCompetition | null>(null);
   const scrambleAvailability = currentScrambleEntry?.availability ?? 'loading';
+  const currentWcaMarkKey = useMemo<TimerWcaScrambleMarkKey | null>(() => (
+    currentReal && scrambleSource === 'wca'
+      ? timerWcaScrambleMarkKeyFromSlot(currentReal)
+      : null
+  ), [currentReal, scrambleSource]);
+  const currentWcaMarkIdentity = useMemo(() => currentWcaMarkKey
+    ? timerWcaScrambleMarkKeyIdentity(currentWcaMarkKey)
+    : null, [currentWcaMarkKey]);
+  const currentWcaMarks = currentWcaMarkIdentity
+    ? wcaMarksCacheRef.current.get(currentWcaMarkIdentity)
+    : undefined;
+  const currentWcaOwnerKey = auth.session
+    ? ownerKey(auth.session.user.uid, auth.session.user.wcaId)
+    : '';
+  const currentWcaMarked = Boolean(currentWcaOwnerKey && currentWcaMarks?.marks.some(
+    (mark) => mark.wcaId === currentWcaOwnerKey,
+  ));
+  const currentRealProgress = currentReal
+    && scrambleSource === 'wca'
+    && currentScrambleEntry?.sourceIdentity === `wca|${activeRealSourceKey}`
+    && isAllTimeRealScrambleDateSource(activeRealSourceSpec)
+    ? realProgressTrackerRef.current.get(activeRealSourceKey)
+    : null;
+
+  const loadWcaMarks = useCallback(async (
+    key: TimerWcaScrambleMarkKey,
+    refresh = false,
+  ): Promise<TimerWcaScrambleMarksResponse> => {
+    const identity = timerWcaScrambleMarkKeyIdentity(key);
+    if (!refresh) {
+      const cached = wcaMarksCacheRef.current.get(identity);
+      if (cached) return cached;
+    }
+    const pending = wcaMarksRequestsRef.current.get(identity);
+    if (pending) {
+      const result = await pending;
+      if (!refresh) return result;
+    }
+    const request = fetchTimerWcaScrambleMarks(key, {
+      apiBase: mobileApiUrl(''),
+      fetcher: (input, init) => fetch(input, init),
+    });
+    wcaMarksRequestsRef.current.set(identity, request);
+    try {
+      const result = await request;
+      wcaMarksCacheRef.current.set(identity, result);
+      refreshWcaMarks((revision) => revision + 1);
+      return result;
+    } finally {
+      if (wcaMarksRequestsRef.current.get(identity) === request) {
+        wcaMarksRequestsRef.current.delete(identity);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!currentWcaMarkKey || !currentWcaMarkIdentity) return;
+    const timerId = window.setTimeout(() => {
+      void loadWcaMarks(currentWcaMarkKey).catch(() => undefined);
+    }, 400);
+    return () => window.clearTimeout(timerId);
+  }, [currentWcaMarkIdentity, currentWcaMarkKey, loadWcaMarks]);
 
   useEffect(() => {
     const competitionId = currentReal?.competitionId;
@@ -934,7 +1036,16 @@ export function App({ host }: { host: InstalledAppHost }) {
     const sourceKey = realScrambleSourceKey(spec);
     const inFlight = realRequestsRef.current.get(sourceKey);
     if (inFlight) return inFlight.promise;
-    const run = startRealScrambleFetchRetry(spec);
+    const run = startRealScrambleFetchRetry(spec, {
+      onClosedSet: isAllTimeRealScrambleDateSource(spec)
+        ? (scrambles) => {
+            if (!realProgressTrackerRef.current.registerClosedSet(sourceKey, scrambles)) return;
+            const current = realCurrentBySourceRef.current.get(sourceKey);
+            if (current) realProgressTrackerRef.current.noteServed(sourceKey, current);
+            refreshRealProgress((revision) => revision + 1);
+          }
+        : undefined,
+    });
     let request!: Promise<RealPoolFillOutcome>;
     request = run.result.then((outcome): RealPoolFillOutcome => {
       if (outcome.kind !== 'ready') return outcome.kind;
@@ -1117,6 +1228,11 @@ export function App({ host }: { host: InstalledAppHost }) {
     const pool = realPoolFor(realSpec);
     const activate = (next: RealScramble) => {
       realCurrentBySourceRef.current.set(sourceKey, next);
+      if (isAllTimeRealScrambleDateSource(realSpec)
+        && realProgressTrackerRef.current.get(sourceKey)
+        && realProgressTrackerRef.current.noteServed(sourceKey, next)) {
+        refreshRealProgress((revision) => revision + 1);
+      }
       replaceScrambleHistoryEntry(entry.id, requestedIdentity, {
         availability: 'ready',
         caseId: null,
@@ -1333,6 +1449,9 @@ export function App({ host }: { host: InstalledAppHost }) {
   }, [historyContext]);
 
   useEffect(() => {
+    const wcaMarksIdentityChanged = wcaMarksOverlayIdentityRef.current
+      !== currentWcaMarkIdentity;
+    wcaMarksOverlayIdentityRef.current = currentWcaMarkIdentity;
     if (openOverlay === null) return;
     const available = openOverlay === TIMER_OVERLAY_IDS.sessionSwitcher
       || openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu
@@ -1343,15 +1462,29 @@ export function App({ host }: { host: InstalledAppHost }) {
         && (openOverlay !== TIMER_OVERLAY_IDS.solveDetail || historyDetailSolve !== null)
       )
       : view === 'timer' && (
-        openOverlay !== TIMER_OVERLAY_IDS.wcaCompetition
-        || (scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent))
+        (openOverlay !== TIMER_OVERLAY_IDS.wcaCompetition
+          || (scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent)))
+        && (openOverlay !== TIMER_OVERLAY_IDS.wcaScrambleMarks || (
+          currentWcaMarkIdentity !== null
+          && (currentWcaMarks?.count ?? 0) > 0
+          && !wcaMarksIdentityChanged
+        ))
       );
     if (!available) {
       if (openOverlay === TIMER_OVERLAY_IDS.solveDetail) setHistoryDetail(null);
       openOverlayRef.current = null;
       setOpenOverlay(null);
     }
-  }, [activeEvent, historyCompareReady, historyDetailSolve, openOverlay, scrambleSource, view]);
+  }, [
+    activeEvent,
+    currentWcaMarkIdentity,
+    currentWcaMarks?.count,
+    historyCompareReady,
+    historyDetailSolve,
+    openOverlay,
+    scrambleSource,
+    view,
+  ]);
 
   const clearWebSurfaceHandshake = useCallback((surface: MobileEmbedSurface) => {
     webHandshakeRetryRef.current[surface]?.();
@@ -1540,6 +1673,9 @@ export function App({ host }: { host: InstalledAppHost }) {
     clearAccountSyncTimeout();
     accountSyncInFlightRef.current = null;
     accountSyncedTokenRef.current = null;
+    // Cancel any durable-save completion immediately; the auth hook clears its
+    // rendered session only after the native logout request finishes.
+    authSessionRef.current = null;
     webFrameRefs.current.account?.contentWindow?.postMessage(
       mobileEmbedAuthClearMessage(),
       SITE_ORIGIN,
@@ -1569,9 +1705,34 @@ export function App({ host }: { host: InstalledAppHost }) {
     selectPrimaryView('tools');
   }, [selectPrimaryView]);
 
+  const markSavedWcaSolve = useCallback((
+    solve: Omit<Solve, 'id' | 'ts'>,
+    ownerAtSaveStart: string,
+  ) => {
+    const enabled = storeRef.current?.settings.autoMarkWcaScramble ?? true;
+    void autoMarkSavedWcaSolve(solve, ownerAtSaveStart, authSessionRef.current, enabled, {
+      loadMarks: loadWcaMarks,
+      postMark: (key, mark, token) => postTimerWcaScrambleMark(key, mark, {
+        apiBase: mobileApiUrl(''),
+        fetcher: (input, init) => fetch(input, init),
+        token,
+      }),
+      updateMark: (key, mark, token) => updateTimerWcaScrambleMarkIfExists(key, mark, {
+        apiBase: mobileApiUrl(''),
+        fetcher: (input, init) => fetch(input, init),
+        token,
+      }),
+    }).catch(() => undefined);
+  }, [loadWcaMarks]);
+
   useEffect(() => {
     return observeVisibleViewportHeight(setViewportHeight);
   }, []);
+
+  useLayoutEffect(() => {
+    const height = primaryNavRef.current?.getBoundingClientRect().height ?? 0;
+    setPrimaryNavBottomInset(height);
+  }, [fullscreen, storeLoaded, viewportHeight]);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -1856,12 +2017,14 @@ export function App({ host }: { host: InstalledAppHost }) {
     };
     const stageSegments = stageSegmentsFor(solve);
     if (stageSegments) solve.stageSegments = stageSegments;
+    const ownerAtSaveStart = wcaAutoMarkOwnerKey(authSessionRef.current);
     void repository.addSolve(solve, sessionId).then((data) => {
       storeSnapshotGateRef.current.commitIfLatest(revision, data, applyStoreSnapshot);
+      markSavedWcaSolve(solve, ownerAtSaveStart);
     }).catch(() => {
       setPendingSolves((current) => current.some((pending) => pending.solve === solve)
         ? current
-        : [...current, { sessionId, solve }]);
+        : [...current, { ownerAtSaveStart, sessionId, solve }]);
       void recoverLatestStoreSnapshot(revision).catch(() => undefined);
     });
   }, [
@@ -1870,6 +2033,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     applyStoreSnapshot,
     attemptSplitRecorder,
     currentScrambleEntry,
+    markSavedWcaSolve,
     recoverLatestStoreSnapshot,
   ]);
 
@@ -1882,6 +2046,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     void repository.addSolve(pending.solve, pending.sessionId).then((data) => {
       setPendingSolves((current) => current.filter((candidate) => candidate !== pending));
       storeSnapshotGateRef.current.commitIfLatest(revision, data, applyStoreSnapshot);
+      markSavedWcaSolve(pending.solve, pending.ownerAtSaveStart);
     }).catch((error: unknown) => {
       void recoverLatestStoreSnapshot(revision).catch(() => undefined);
       announce(error instanceof TimerSessionRepositoryError && error.failure === 'unknown-session'
@@ -1891,7 +2056,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       retryingPendingSolveRef.current = false;
       setRetryingPendingSolve(false);
     });
-  }, [announce, applyStoreSnapshot, copy.saveRetryFailed, copy.saveSessionMissing, pendingSolves, recoverLatestStoreSnapshot]);
+  }, [announce, applyStoreSnapshot, copy.saveRetryFailed, copy.saveSessionMissing, markSavedWcaSolve, pendingSolves, recoverLatestStoreSnapshot]);
 
   const timer = useTimerController({
     canStart: attemptCanStart,
@@ -1933,6 +2098,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   useEffect(() => {
     const onDocumentPointerDown = (event: PointerEvent) => {
+      if (shouldIgnoreTimerTarget(event.target)) return;
       const target = event.target as Node | null;
       const insideTimingSurface = Boolean(
         surfaceRef.current && target && surfaceRef.current.contains(target),
@@ -2926,7 +3092,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                     triggerClassName="timer-toolbar-icon"
                     triggerDisabled={timer.machine.phase === 'running' || timerContextMutationBusy}
                     triggerLabel={copy.more}
-                    viewportBottomInset={96}
+                    viewportBottomInset={primaryNavBottomInset}
                   />
                   <button
                     aria-label={copy.settings}
@@ -3193,7 +3359,40 @@ export function App({ host }: { host: InstalledAppHost }) {
                          roundTypeId={currentReal.roundTypeId}
                          scrambleNumber={currentReal.scrambleNumber}
                          title={TIMER_WCA_SCRAMBLE_SOURCE_COPY.viewCompetition[language]}
-                       />
+                       >
+                         <TimerWcaScrambleProgress
+                           key={currentWcaMarkIdentity ?? 'wca-source-progress'}
+                           allMarksHref={siteRouteUrl(language, '/timer/marks')}
+                           labels={wcaProgressLabels}
+                           language={language}
+                           markCount={currentWcaMarks?.count}
+                           marked={currentWcaMarked}
+                           marks={currentWcaMarks?.marks.map((mark) => ({
+                             country: mark.country || undefined,
+                             dateLabel: new Date(mark.createdAt * 1_000).toISOString().slice(0, 10),
+                             name: mark.name,
+                             personHref: isWcaIdFormat(mark.wcaId)
+                               ? siteRouteUrl(
+                                 language,
+                                 `/wca/persons/${encodeURIComponent(mark.wcaId)}`,
+                               )
+                               : undefined,
+                             timeLabel: mark.timeCs == null ? undefined : formatMs(mark.timeCs * 10),
+                             wcaId: mark.wcaId,
+                           }))}
+                           onNavigateAllMarks={() => openToolsRoute('/timer/marks')}
+                           onNavigatePerson={(mark) => {
+                             if (isWcaIdFormat(mark.wcaId)) openToolsRoute(
+                               `/wca/persons/${encodeURIComponent(mark.wcaId)}`,
+                             );
+                           }}
+                           onOpenChange={handleTimerOverlayOpenChange}
+                           open={openOverlay === TIMER_OVERLAY_IDS.wcaScrambleMarks
+                             && wcaMarksOverlayIdentityRef.current === currentWcaMarkIdentity}
+                           progress={currentRealProgress ?? undefined}
+                           viewportBottomInset={primaryNavBottomInset}
+                         />
+                       </TimerWcaScrambleSource>
                     )}
                    </TimerScrambleStrip>
                  )}
@@ -3383,7 +3582,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               onOperationError={() => announce(copy.actionFailed)}
               open={openOverlay === TIMER_OVERLAY_IDS.sessionSwitcher}
               sessions={store!.database.sessions}
-              viewportBottomInset={96}
+              viewportBottomInset={primaryNavBottomInset}
             />
             <TimerStatsPanel
               className="mobile-stats-panel"
@@ -3405,7 +3604,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               onRollingColumnsChange={(statsRollingColumns) => updateSettings({ statsRollingColumns })}
               rollingColumns={store!.settings.statsRollingColumns}
               solves={solves}
-              viewportBottomInset={96}
+              viewportBottomInset={primaryNavBottomInset}
             />
             <div className="mobile-history-filters">
               <div className="mobile-history-search-row">
@@ -3542,7 +3741,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                         labels={rollingPickerLabels}
                         onColumnsChange={(statsRollingColumns) => updateSettings({ statsRollingColumns })}
                         triggerColumns={visibleHistoryRollingColumns}
-                        viewportBottomInset={96}
+                        viewportBottomInset={primaryNavBottomInset}
                       />
                     ) : undefined}
                     resultLabel={activeEvent === '333mbld' ? copy.result : copy.historyTime}
@@ -3574,6 +3773,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                         selected={visibleHistoryCompareSelectedIds.includes(solve.id)}
                         solve={solve}
                         tagIds={historyTagsById.get(solve.id) ?? []}
+                        viewportBottomInset={primaryNavBottomInset}
                         key={solve.id}
                       />
                     ))}
@@ -3676,26 +3876,47 @@ export function App({ host }: { host: InstalledAppHost }) {
               value={store!.settings}
             />
 
-            {activeEvent !== '222' && (
+            {(activeEvent !== '222' || scrambleSource === 'wca') && (
               <section className="settings-section">
                 <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
                   category.id === 'scramble'
                 ))?.label[language]}</h2>
-                <TimerBooleanSettingRow
-                  disabled={!optimalAvailable}
-                  field={timerSettingFieldContract('settings.scramble.optimal')}
-                  label={copy.optimalScramble}
-                  onChange={(wcaUseOptimal) => updateWcaSourceSettings({ wcaUseOptimal })}
-                  renderBooleanControl={({ disabled, label, onChange, value }) => (
-                    <TimerPillToggle
-                      ariaLabel={label}
-                      disabled={disabled}
-                      onChange={onChange}
-                      value={value}
-                    />
-                  )}
-                  value={optimalAvailable && wcaSourceSettings.wcaUseOptimal}
-                />
+                {activeEvent !== '222' && (
+                  <TimerBooleanSettingRow
+                    disabled={!optimalAvailable}
+                    field={timerSettingFieldContract('settings.scramble.optimal')}
+                    label={copy.optimalScramble}
+                    onChange={(wcaUseOptimal) => updateWcaSourceSettings({ wcaUseOptimal })}
+                    renderBooleanControl={({ disabled, label, onChange, value }) => (
+                      <TimerPillToggle
+                        ariaLabel={label}
+                        disabled={disabled}
+                        onChange={onChange}
+                        value={value}
+                      />
+                    )}
+                    value={optimalAvailable && wcaSourceSettings.wcaUseOptimal}
+                  />
+                )}
+                {scrambleSource === 'wca' && (
+                  <TimerBooleanSettingRow
+                    field={timerSettingFieldContract('settings.scramble.auto-mark-wca')}
+                    hint={copy.autoMarkWcaHint}
+                    label={timerSettingFieldContract(
+                      'settings.scramble.auto-mark-wca'
+                    ).copy[language]}
+                    onChange={(autoMarkWcaScramble) => updateSettings({ autoMarkWcaScramble })}
+                    renderBooleanControl={({ disabled, label, onChange, value }) => (
+                      <TimerPillToggle
+                        ariaLabel={label}
+                        disabled={disabled}
+                        onChange={onChange}
+                        value={value}
+                      />
+                    )}
+                    value={store!.settings.autoMarkWcaScramble}
+                  />
+                )}
               </section>
             )}
 
@@ -3829,7 +4050,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         )}
       </div>
 
-      <nav className="primary-nav" aria-label={copy.title}>
+      <nav className="primary-nav" aria-label={copy.title} ref={primaryNavRef}>
         <button
           aria-current={view === 'timer' || view === 'history' || view === 'settings' ? 'page' : undefined}
           data-no-timer
@@ -3883,7 +4104,7 @@ export function App({ host }: { host: InstalledAppHost }) {
           onDismiss={() => undefined}
           onUndo={retryPendingSolve}
           undoLabel={copy.retry}
-          viewportBottomInset={64}
+          viewportBottomInset={primaryNavBottomInset}
         />
       ) : undoToast && (
         <TimerInfoToast
@@ -3891,7 +4112,7 @@ export function App({ host }: { host: InstalledAppHost }) {
           onDismiss={() => setUndoToast(null)}
           onUndo={undoToast.undo}
           undoLabel={copy.undo}
-          viewportBottomInset={64}
+          viewportBottomInset={primaryNavBottomInset}
         />
       )}
 

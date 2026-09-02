@@ -25,6 +25,7 @@ describe('Mobile timer settings parity ledger', () => {
       'settings.training.stage-splits',
       'settings.training.bld-memo-split',
       'settings.scramble.optimal',
+      'settings.scramble.auto-mark-wca',
       ...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
       'settings.appearance.scramble-click-action',
     ]);
@@ -66,6 +67,9 @@ describe('Mobile timer settings parity ledger', () => {
     expect(app).toContain('runningPrecision,');
     expect(app).toContain('precision: resultPrecision');
     expect(app).toContain('timerScrambleClickEffect(');
+    expect(app).toContain("field={timerSettingFieldContract('settings.scramble.auto-mark-wca')}");
+    expect(app).toContain('onChange={(autoMarkWcaScramble) => updateSettings({ autoMarkWcaScramble })}');
+    expect(app).toContain('value={store!.settings.autoMarkWcaScramble}');
     expect(app).toContain('nextDisplayedScramble');
     expect(app).toContain('copyCurrentScramble');
     expect(app).toContain('new TimerAttemptSplitRecorder');

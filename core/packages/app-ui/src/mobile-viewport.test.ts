@@ -107,6 +107,11 @@ describe('mobile visible viewport layout', () => {
     expect(css).toMatch(/\.mobile-timer-stage > \.timing-surface \{[^}]*min-height: min-content;/s);
     expect(css).toMatch(/\.app-shell--compact-viewport \.mobile-timer-stage \{[^}]*min-height: 350px;/s);
     expect(css).toMatch(/\.app-shell--compact-viewport \.mobile-timer-stage > \.timing-surface \{[^}]*padding: 8px 0;/s);
+    expect(app).toContain('const primaryNavRef = useRef<HTMLElement>(null)');
+    expect(app).toContain('primaryNavRef.current?.getBoundingClientRect().height ?? 0');
+    expect(app).toContain('<nav className="primary-nav" aria-label={copy.title} ref={primaryNavRef}>');
+    expect(app.match(/viewportBottomInset=\{primaryNavBottomInset\}/g)).toHaveLength(8);
+    expect(app).not.toMatch(/viewportBottomInset=\{(?:64|96)\}/);
   });
 
   it('keeps multiplayer device actions in normal flow without overflowing narrow screens', () => {

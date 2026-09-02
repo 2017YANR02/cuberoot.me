@@ -352,6 +352,40 @@ export interface TimerWcaCompetitionScrambleSlot
   eventId: string;
 }
 
+const TIMER_WCA_COMPETITION_ID_RE = /^[A-Za-z0-9_-]{1,32}$/;
+const TIMER_WCA_EVENT_ID_RE = /^[0-9a-z]{2,6}$/;
+const TIMER_WCA_ROUND_TYPE_ID_RE = /^[a-z0-9]$/;
+const TIMER_WCA_GROUP_ID_RE = /^[A-Za-z0-9]{0,3}$/;
+
+/** Strict boundary decoder for an official WCA scramble slot. */
+export function decodeTimerWcaCompetitionScrambleSlot(
+  value: unknown,
+): TimerWcaCompetitionScrambleSlot | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const row = value as Record<string, unknown>;
+  if (typeof row.competitionId !== 'string'
+    || !TIMER_WCA_COMPETITION_ID_RE.test(row.competitionId)
+    || typeof row.eventId !== 'string'
+    || !TIMER_WCA_EVENT_ID_RE.test(row.eventId)
+    || typeof row.roundTypeId !== 'string'
+    || !TIMER_WCA_ROUND_TYPE_ID_RE.test(row.roundTypeId)
+    || typeof row.groupId !== 'string'
+    || !TIMER_WCA_GROUP_ID_RE.test(row.groupId)
+    || typeof row.isExtra !== 'boolean'
+    || typeof row.scrambleNumber !== 'number'
+    || !Number.isSafeInteger(row.scrambleNumber)
+    || row.scrambleNumber < 1
+    || row.scrambleNumber > 999) return null;
+  return {
+    competitionId: row.competitionId,
+    eventId: row.eventId,
+    roundTypeId: row.roundTypeId,
+    groupId: row.groupId,
+    isExtra: row.isExtra,
+    scrambleNumber: row.scrambleNumber,
+  };
+}
+
 /**
  * Stable identity of one official competition scramble slot.
  *
@@ -363,14 +397,39 @@ export interface TimerWcaCompetitionScrambleSlot
 export function timerWcaCompetitionScrambleSlotIdentity(
   row: TimerWcaCompetitionScrambleSlot,
 ): string {
+  const slot = decodeTimerWcaCompetitionScrambleSlot(row);
+  if (!slot) throw new TypeError('Invalid WCA competition scramble slot');
   return JSON.stringify([
-    row.competitionId,
-    row.eventId,
-    row.roundTypeId,
-    row.groupId,
-    row.isExtra ? 1 : 0,
-    row.scrambleNumber,
+    slot.competitionId,
+    slot.eventId,
+    slot.roundTypeId,
+    slot.groupId,
+    slot.isExtra ? 1 : 0,
+    slot.scrambleNumber,
   ]);
+}
+
+/** Decode a persisted official-slot identity without trusting its JSON shape. */
+export function decodeTimerWcaCompetitionScrambleSlotIdentity(
+  identity: unknown,
+): TimerWcaCompetitionScrambleSlot | null {
+  if (typeof identity !== 'string' || identity.length > 1024) return null;
+  try {
+    const tuple = JSON.parse(identity) as unknown;
+    if (!Array.isArray(tuple) || tuple.length !== 6 || (tuple[4] !== 0 && tuple[4] !== 1)) {
+      return null;
+    }
+    return decodeTimerWcaCompetitionScrambleSlot({
+      competitionId: tuple[0],
+      eventId: tuple[1],
+      roundTypeId: tuple[2],
+      groupId: tuple[3],
+      isExtra: tuple[4] === 1,
+      scrambleNumber: tuple[5],
+    });
+  } catch {
+    return null;
+  }
 }
 
 /** Canonical Web/Mobile ordering for all rows from one selected competition. */

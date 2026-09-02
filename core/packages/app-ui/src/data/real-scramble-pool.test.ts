@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   fetchRealScrambles,
+  isAllTimeRealScrambleDateSource,
   mergeRealScramblePool,
   realScrambleSourceKey,
   readRealScrambleCache,
@@ -60,6 +61,18 @@ function memoryStorage() {
 }
 
 describe('real scramble pool', () => {
+  it('identifies only the all-time date source as eligible for finite progress', () => {
+    expect(isAllTimeRealScrambleDateSource({
+      event: '333', wcaScrambleMode: 'date', wcaUseOptimal: false,
+    })).toBe(true);
+    expect(isAllTimeRealScrambleDateSource({
+      event: '333', wcaDateFrom: '2026-01-01', wcaScrambleMode: 'date', wcaUseOptimal: false,
+    })).toBe(false);
+    expect(isAllTimeRealScrambleDateSource({
+      event: '333', wcaComp: 'Example2026', wcaScrambleMode: 'comp', wcaUseOptimal: false,
+    })).toBe(false);
+  });
+
   it('requests and parses the exact selected event without a 333 fallback', async () => {
     const fetcher = vi.fn(async () => new Response(JSON.stringify({
       scrambles: [
@@ -382,6 +395,7 @@ describe('real scramble pool', () => {
   });
 
   it('keeps repeated text in separate random/date slots and deduplicates one repeated slot', async () => {
+    const onClosedSet = vi.fn();
     const fetcher = vi.fn(async () => new Response(JSON.stringify({
       scrambles: [
         { scramble: 'R U', ci: 'Repeated2026', cn: 'Repeated 2026', e: '333', r: '1', g: 'A', n: 1, x: 0 },
@@ -392,12 +406,34 @@ describe('real scramble pool', () => {
 
     const result = await fetchRealScrambles({
       event: '333', wcaUseOptimal: false, wcaScrambleMode: 'date',
-    }, fetcher);
+    }, fetcher, undefined, undefined, onClosedSet);
     expect(result).toHaveLength(2);
     expect(result.map((row) => [row.scrambleNumber, row.scramble])).toEqual([
       [1, 'R U'],
       [2, 'R U'],
     ]);
+    expect(onClosedSet).toHaveBeenCalledOnce();
+    expect(onClosedSet.mock.calls[0][0].map((row: RealScramble) => row.scrambleNumber))
+      .toEqual([1, 2]);
+  });
+
+  it('does not close a bounded date source even when its response is short', async () => {
+    const onClosedSet = vi.fn();
+    const fetcher = vi.fn(async () => new Response(JSON.stringify({
+      scrambles: [{
+        scramble: 'R U', ci: 'Bounded2026', cn: 'Bounded 2026',
+        e: '333', r: '1', g: 'A', n: 1, x: 0,
+      }],
+    }), { status: 200 })) as unknown as typeof fetch;
+
+    await fetchRealScrambles({
+      event: '333',
+      wcaDateFrom: '2026-01-01',
+      wcaDateTo: '2026-01-31',
+      wcaScrambleMode: 'date',
+      wcaUseOptimal: false,
+    }, fetcher, undefined, undefined, onClosedSet);
+    expect(onClosedSet).not.toHaveBeenCalled();
   });
 
   it('preserves distinct official slots even when a competition repeats scramble text', async () => {
@@ -513,9 +549,41 @@ describe('real scramble pool', () => {
         sample333,
         { ...sample333, eventId: '222', scramble: 'wrong event' },
         { ...sample333, scramble: '' },
+        { ...sample333, competitionId: '!', scramble: 'strict-invalid slot' },
       ],
     }));
     expect(readRealScrambleCache('333', storage, 1001)).toEqual([sample333]);
+  });
+
+  it('filters a strict-invalid live slot without poisoning a valid row', async () => {
+    const fetcher = vi.fn(async () => new Response(JSON.stringify({
+      scrambles: [
+        {
+          scramble: "R U R'",
+          ci: 'Example2016',
+          cn: 'Example Open 2016',
+          e: '333',
+          r: '1',
+          g: 'A',
+          n: 1,
+          x: 0,
+        },
+        {
+          scramble: 'strict-invalid slot',
+          ci: '!',
+          cn: 'Invalid Competition',
+          e: '333',
+          r: '1',
+          g: 'A',
+          n: 2,
+          x: 0,
+        },
+      ],
+    }), { status: 200 })) as unknown as typeof fetch;
+
+    await expect(fetchRealScrambles({
+      event: '333', wcaScrambleMode: 'date', wcaUseOptimal: false,
+    }, fetcher)).resolves.toEqual([sample333]);
   });
 
   it('reads the original 333 cache without exposing it to aliases', () => {

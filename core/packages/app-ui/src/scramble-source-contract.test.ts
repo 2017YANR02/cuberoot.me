@@ -7,6 +7,8 @@ import {
 } from '@cuberoot/shared/timer';
 
 const app = readFileSync(new URL('./App.tsx', import.meta.url), 'utf8');
+const autoMark = readFileSync(new URL('./data/wca-auto-mark.ts', import.meta.url), 'utf8');
+const appCopy = readFileSync(new URL('./copy.ts', import.meta.url), 'utf8');
 const css = readFileSync(new URL('./app.css', import.meta.url), 'utf8');
 const scrambleHistory = readFileSync(
   new URL('./mobile-scramble-history.ts', import.meta.url),
@@ -82,7 +84,7 @@ describe('mobile scramble-source parity contract', () => {
   });
 
   it('isolates real pools by complete source spec and never falls back to 333', () => {
-    expect(app).toContain('startRealScrambleFetchRetry(spec)');
+    expect(app).toContain('startRealScrambleFetchRetry(spec, {');
     expect(app).toContain('readRealScrambleCache(spec)');
     expect(app).toContain('writeRealScrambleCache(realSpec, [next, ...realPoolFor(realSpec)])');
     expect(app).toContain('realScrambleSourceKey(spec)');
@@ -228,8 +230,54 @@ describe('mobile scramble-source parity contract', () => {
     expect(app).toContain("field={timerSettingFieldContract('settings.scramble.optimal')}");
     expect(app).toContain("const optimalAvailable = scrambleSource === 'wca'");
     expect(css).toMatch(/\.mobile-wca-shared-controls \{[^}]*display: contents;/s);
-    expect(app).toMatch(/const wcaSourceSignature = `\$\{realScrambleSourceKey\(\{/);
+    expect(app).toContain('const activeRealSourceKey = realScrambleSourceKey(activeRealSourceSpec);');
+    expect(app).toMatch(/const wcaSourceSignature = `\$\{activeRealSourceKey\}/);
     expect(app).not.toMatch(/const wcaSourceSignature = \[[\s\S]*?\]\.join\('\|'\)/);
+  });
+
+  it('reuses shared occurrence progress and marks only after a persisted solve succeeds', () => {
+    expect(app).toContain('new TimerWcaFinitePoolProgressTracker()');
+    expect(app).toContain('isAllTimeRealScrambleDateSource(spec)');
+    expect(app).toContain('registerClosedSet(sourceKey, scrambles)');
+    expect(app).toContain('noteServed(sourceKey, next)');
+    expect(app).toContain('<TimerWcaScrambleProgress');
+    expect(app).toContain("key={currentWcaMarkIdentity ?? 'wca-source-progress'}");
+    expect(app).toContain('timerWcaScrambleProgressLabels(language)');
+    for (const duplicateKey of [
+      'allMarks',
+      'allPracticed',
+      'allPracticedTitle',
+      'scrambleMarks',
+      'scrambleMarksTitle',
+      'scramblesPracticed',
+      'scramblesPracticedTitle',
+    ]) expect(appCopy).not.toMatch(new RegExp(`\\b${duplicateKey}:`));
+    expect(app).toContain('personHref: isWcaIdFormat(mark.wcaId)');
+    expect(app).toContain('if (isWcaIdFormat(mark.wcaId)) openToolsRoute(');
+    expect(app).toContain('wcaMarksOverlayIdentityRef.current === currentWcaMarkIdentity');
+    expect(app).toMatch(
+      /progress=\{currentRealProgress \?\? undefined\}\s+viewportBottomInset=\{primaryNavBottomInset\}/,
+    );
+    expect(app).toContain('fetchTimerWcaScrambleMarks(key, {');
+    expect(app).toContain('postTimerWcaScrambleMark(key, mark, {');
+    expect(app).toContain('autoMarkSavedWcaSolve(solve, ownerAtSaveStart, authSessionRef.current, enabled, {');
+    expect(app).toContain('authSessionRef.current = wcaAutoMarkLiveSession(auth.session, auth.busy);');
+    expect(app).toMatch(/const logoutEverywhere[\s\S]*?authSessionRef\.current = null;[\s\S]*?await auth\.logout\(\);/);
+    expect(app.match(/const ownerAtSaveStart = wcaAutoMarkOwnerKey\(authSessionRef\.current\);/g)).toHaveLength(1);
+    expect(app).toContain(': [...current, { ownerAtSaveStart, sessionId, solve }]);');
+    expect(autoMark).toContain('decodeTimerWcaCompetitionScrambleSlotIdentity(');
+    expect(autoMark).toContain('timerWcaScrambleMarkWriteMode({');
+    expect(autoMark).toContain("writeMode === 'upsert'");
+    expect(autoMark).toContain('wcaAutoMarkOwnerKey(liveSession) !== ownerAtSaveStart');
+    expect(autoMark).toContain('dependencies.updateMark(key, mark, liveSession.token)');
+    expect(autoMark).not.toContain('readMarks');
+    expect(app).toContain('markSavedWcaSolve(solve, ownerAtSaveStart);');
+    expect(app).toContain('markSavedWcaSolve(pending.solve, pending.ownerAtSaveStart);');
+    expect(app).toContain("field={timerSettingFieldContract('settings.scramble.auto-mark-wca')}");
+    expect(app).toContain('value={store!.settings.autoMarkWcaScramble}');
+    expect(app).toContain("apiBase: mobileApiUrl(''),");
+    expect(app).toContain('token,');
+    expect(app).not.toMatch(/localStorage[^\n]*token|sessionStorage[^\n]*token/i);
   });
 
   it('invalidates the slot and cancels every pre-run arm on a source identity change', () => {

@@ -157,7 +157,7 @@ shared 映射快照是 19 个 Timer ID：
 | `scramble.format` | SQ1 等项目显示 adapter，存储仍保留 canonical 原文 | 未证明 |
 | `scramble.preview` | 2D/3D/NxN/异形专用 renderer，显示开关、拖动、朝向 | Web/五端共用 `TimerCubePreview`/`TimerScramblePreview`；显示开关、2D/3D 默认/归一化/持久化与设置 UI 也已共享，单人和联网均从独立 `TimingSurface.cornerSlot` 渲染，避免拖动误触打乱动作。cubing.js 与 SQ1/Megaminx renderer 均为单源，不可解析手动题 fail closed；SQ1/Megaminx 保持 canonical 2D。OPPO 已装入对应源码构建，但手机仍被通知层遮挡；拖动/朝向、无遮挡及全设备视觉矩阵仍待关闭 |
 | `scramble.source-meta` | 国旗、本地化比赛名、项目、轮/组/题号/加赛、深链 | Web/Mobile 已收敛为共享 `TimerWcaScrambleSource`；OPPO 360px 实证完整显示、无溢出，深链进入 Tools 对应比赛页，返回不换题/不误复制。iOS/Harmony/Windows/macOS 设备矩阵仍待验 |
-| `scramble.source-progress` | 稀有池 `seen/total`、全练过、非最优标志、打乱足迹人数 | 非最优标志已由 App 传入共享打乱条；罕见池进度/全练过与打乱足迹人数仍缺 |
+| `scramble.source-progress` | 稀有池 `seen/total`、全练过、非最优标志、打乱足迹人数 | Web/五端产品层共用 occurrence-aware tracker、strict slot/mark codec、marks HTTP client 与 `TimerWcaScrambleProgress`；同文本不同官方 slot 分别计数。公开名单/人数、canonical 姓名/国旗/成绩/日期/真实 WCA 深链与 durable-save 后自动打卡均单源；关闭设置只用认证 update-only PATCH，登出/换号/pending retry fail closed。Portal 弹层按实测三栏和 visualViewport 钳制，三种纵向边界回归均不遮挡。OPPO 已安装最终共享构建并验证当前零足迹常见池不画假按钮；仍待非零/稀有池真机和其他四平台矩阵 |
 | `scramble.loading` | WCA、csTimer worker、难度 worker、云端最优各自区分 loading | 仅通用 loading |
 | `scramble.empty-error` | 比赛无项目、日期无题、难度无匹配、难度库待更新、稀有、短暂网络失败各自文案/重试 | 仅通用 error/unsupported |
 | `scramble.smart-hint` | 已拧步骤变暗、当前高亮、打乱完成、不符、拧回原打乱、复制原打乱 | Web/五端产品层已共用 `TimerScrambleStrip`、shared 提示/匹配/偏离修正 requester 与同一 Solo lifecycle controller；Web/App 只保留 facelets、Worker 和预备回调适配。Android 最新 APK 已安装，OPPO 新版逐步提示、故意偏离、修正完成和 Worker 冷启动延迟仍待解锁后用 GAN 16 UI 实测，其他四端也未验收 |

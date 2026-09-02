@@ -11,9 +11,9 @@
  *
  * generateScramble() is synchronous, so each source keeps an in-memory queue
  * keyed by its spec; the SoloView shows a brief loading state when a queue is
- * momentarily empty. Each scramble carries its source metadata (ci/cn/e/r/g/n/x,
- * same shape as the landing RecentScrambles meta), keyed by the normalized
- * scramble string and looked up via wcaMetaFor().
+ * momentarily empty. Each dispensed occurrence carries its source metadata and
+ * official slot identity (ci/e/r/g/x/n); text-only wcaMetaFor() remains a
+ * backwards-compatible lookup for consumers that do not retain the row.
  */
 import { apiUrl } from '@/lib/api-base';
 import { fetchWcaScrambles } from '@/lib/wca-results-api';
@@ -22,6 +22,8 @@ import { fetchPuzzleExamples, type PuzzleExampleSample, type PuzzleExamplesJson 
 import { cube222StateTypeMatchesScramble, type Cube222StateType } from '@cuberoot/puzzle-solvers/cube222';
 import {
   compareTimerWcaCompetitionScrambleOrder,
+  decodeTimerWcaCompetitionScrambleSlot,
+  TimerWcaFinitePoolProgressTracker,
   timerWcaCompetitionScrambleSlotIdentity,
   normalizeTimerWcaSourceSettings,
   timerWcaOptimalRequested,
@@ -112,7 +114,9 @@ export interface WcaDispensedScramble {
 interface RandomItem extends WcaScrambleMeta { scramble: string; o?: string } // o = 最优打乱(server 带,见 wca_scramble_optimal)
 type CompRow = { slot: string; scramble: string; meta: WcaScrambleMeta };
 
-const pools: Record<string, string[]> = {};
+// Date queues also retain official occurrence identity. Scramble text is not a
+// key: two distinct official slots are allowed to contain the same moves.
+const pools: Record<string, CompRow[]> = {};
 const inflight: Record<string, Promise<void> | undefined> = {};
 const metaByScramble = new Map<string, WcaScrambleMeta>();
 const metaBySlot = new Map<string, WcaScrambleMeta>();
@@ -156,7 +160,7 @@ function loadExamples(): Promise<PuzzleExamplesJson | null> {
 }
 
 const precomputedSeeded = new Set<string>();       // 已建过预计算桶的 key(每 key 只 seed 一次)
-const precomputedFor = new Map<string, string[]>(); // key -> 区间内预计算真题打乱串(refill 洗牌灌回池)
+const precomputedFor = new Map<string, CompRow[]>(); // key -> 区间内预计算官方题(refill 洗牌灌回池)
 
 // 封闭集:该 key 的匹配全集(已确认穷尽)。稀有难度档(如 0 步十字 / 8 步双色十字)全库仅 2-4 条,
 // 而 /random 每次都要全分区扫才捞得到它们(生产实测 1.4-2.6s)—— 队列一见底就联网、又只补回同样
@@ -164,29 +168,23 @@ const precomputedFor = new Map<string, string[]>(); // key -> 区间内预计算
 // LIMIT(飞镖正向 rnd>=dart + 环绕 rnd<dart;稀有侧表 ORDER BY random()),所以「要 FETCH_COUNT
 // 条却回得更少」严格等价于「匹配全集就这么多」。据此把全集存下,之后本地洗牌循环,永不再联网。
 // 有 from/to 时不成立(那条路是 comp-sampling,只抽 30 场,回得少 ≠ 穷尽),故仅全时段登记。
-const closedFor = new Map<string, string[]>();
+const closedFor = new Map<string, CompRow[]>();
+const finitePoolProgress = new TimerWcaFinitePoolProgressTracker();
 
-// 已端出过的真题(按 key),用于封闭集的「已练 n/N」提示。上限就是封闭集可能的最大条数,
-// 非封闭 key(常见档全库上万条,永不展示进度)加到上限即停,不再增长。
-const servedFor = new Map<string, Set<string>>();
-function noteServed(key: string, s: string): void {
-  let set = servedFor.get(key);
-  if (!set) { set = new Set(); servedFor.set(key, set); }
-  if (set.size < SERVER_MAX_COUNT) set.add(s);
+function noteServed(key: string, slot: string | null): void {
+  // Common pools are unbounded, so never retain their entire served history.
+  if (slot && closedFor.has(key)) finitePoolProgress.noteServed(key, slot);
 }
 
 /** 封闭集(真题总数已知且有限,见 closedFor)的遍历进度 { total, seen };非封闭 / 未知 → null。
  *  UI 据此在稀有档提示「共几条、已练几条、练完后开始重复」——不必等用户自己发现打乱在转圈复现。
- *  seen 取交集而非 servedFor.size:池子换 key 前后 served 可能混入不属于当前全集的条目。 */
+ *  Shared tracker intersects official slot identities; equal scramble text in
+ *  different official slots therefore advances twice. */
 export function wcaPoolProgress(spec: WcaSourceSpec): { total: number; seen: number } | null {
   const key = specKey(spec);
   if (!key) return null;
-  const closed = closedFor.get(key);
-  if (!closed || closed.length === 0) return null;
-  const set = servedFor.get(key);
-  let seen = 0;
-  for (const s of closed) if (set?.has(s)) seen++;
-  return { total: closed.length, seen };
+  const progress = finitePoolProgress.get(key);
+  return progress ? { total: progress.total, seen: progress.seen } : null;
 }
 
 // localStorage persistence — so reopening the timer (or returning to a source /
@@ -203,7 +201,7 @@ let hydrated = false;
 type PersistedCompRow = [scramble: string, meta: WcaScrambleMeta];
 interface PersistedWcaPools {
   t: number;
-  pools?: Record<string, string[]>;
+  pools?: Record<string, PersistedCompRow[]>;
   meta?: [string, WcaScrambleMeta][];
   comp?: Record<string, PersistedCompRow[]>;
 }
@@ -219,31 +217,45 @@ function compSlot(meta: WcaScrambleMeta): string {
   });
 }
 
-function makeCompRow(scramble: string, meta: WcaScrambleMeta): CompRow {
-  return { slot: compSlot(meta), scramble, meta };
-}
-
-function isWcaScrambleMeta(value: unknown): value is WcaScrambleMeta {
-  if (!value || typeof value !== 'object') return false;
+function decodeCompRow(scramble: unknown, value: unknown): CompRow | null {
+  if (typeof scramble !== 'string' || !value || typeof value !== 'object') return null;
   const meta = value as Partial<WcaScrambleMeta>;
-  return typeof meta.ci === 'string'
-    && typeof meta.cn === 'string'
-    && typeof meta.e === 'string'
-    && typeof meta.r === 'string'
-    && typeof meta.g === 'string'
-    && Number.isFinite(meta.n)
-    && (meta.x === 0 || meta.x === 1);
+  if (typeof meta.cn !== 'string'
+    || (meta.nonOptimal !== undefined && typeof meta.nonOptimal !== 'boolean')) return null;
+  const slot = decodeTimerWcaCompetitionScrambleSlot({
+    competitionId: meta.ci,
+    eventId: meta.e,
+    roundTypeId: meta.r,
+    groupId: meta.g,
+    isExtra: meta.x === 1,
+    scrambleNumber: meta.n,
+  });
+  if (!slot || (meta.x !== 0 && meta.x !== 1)) return null;
+  const normalizedMeta: WcaScrambleMeta = {
+    ci: slot.competitionId,
+    cn: meta.cn,
+    e: slot.eventId,
+    r: slot.roundTypeId,
+    g: slot.groupId,
+    n: slot.scrambleNumber,
+    x: slot.isExtra ? 1 : 0,
+    ...(meta.nonOptimal !== undefined ? { nonOptimal: meta.nonOptimal } : {}),
+  };
+  return {
+    slot: timerWcaCompetitionScrambleSlotIdentity(slot),
+    scramble,
+    meta: normalizedMeta,
+  };
 }
 
 function restoreCompRow(value: unknown): CompRow | null {
-  if (!Array.isArray(value) || value.length !== 2
-    || typeof value[0] !== 'string' || !isWcaScrambleMeta(value[1])) return null;
-  return makeCompRow(value[0], value[1]);
+  if (!Array.isArray(value) || value.length !== 2) return null;
+  return decodeCompRow(value[0], value[1]);
 }
 
-// v1 stored every queue as string[]. Competition keys from that legacy shape
-// lack official-slot identity, so they must be cold-refetched instead of
-// reintroducing the duplicate-text and >50-row continuity bugs.
+// Legacy v1 payloads stored queues as string[]. Those entries lack official-slot
+// identity, so restoreCompRow rejects them and forces one cold refetch instead
+// of reintroducing duplicate-text provenance bugs.
 function isCompetitionPoolKey(key: string): boolean {
   return key.startsWith('["c",');
 }
@@ -263,13 +275,16 @@ function hydrate(): void {
     if (!raw) return;
     const data = JSON.parse(raw) as PersistedWcaPools;
     if (!data || typeof data.t !== 'number' || Date.now() - data.t > STORE_TTL) return;
-    for (const [k, q] of Object.entries(data.pools ?? {})) {
-      if (!isCompetitionPoolKey(k) && Array.isArray(q) && q.length) pools[k] ??= q.slice();
+    for (const [k, values] of Object.entries(data.pools ?? {})) {
+      if (isCompetitionPoolKey(k) || !Array.isArray(values) || values.length === 0) continue;
+      const restored = values.slice(0, STORE_PER_KEY)
+        .map(restoreCompRow)
+        .filter((row): row is CompRow => row !== null);
+      if (restored.length > 0) pools[k] ??= restored;
     }
     for (const [s, m] of data.meta ?? []) {
-      if (typeof s === 'string' && isWcaScrambleMeta(m) && !metaByScramble.has(s)) {
-        rememberMeta(s, m);
-      }
+      const row = decodeCompRow(s, m);
+      if (row && !metaByScramble.has(row.scramble)) rememberMeta(row.scramble, row.meta);
     }
     for (const [k, values] of Object.entries(data.comp ?? {})) {
       if (!Array.isArray(values) || values.length === 0) continue;
@@ -296,22 +311,19 @@ function persist(): void {
       const compKeys = Object.keys(compQueues).filter((k) => compQueues[k]?.length);
       const keys = [...dateKeys, ...compKeys].slice(-STORE_KEYS_CAP);
       const selected = new Set(keys);
-      const out: Record<string, string[]> = {};
+      const out: Record<string, PersistedCompRow[]> = {};
       const comp: Record<string, PersistedCompRow[]> = {};
-      const meta: [string, WcaScrambleMeta][] = [];
-      const seen = new Set<string>();
       for (const k of dateKeys) {
         if (!selected.has(k)) continue;
-        const q = pools[k]!.slice(0, STORE_PER_KEY);
-        out[k] = q;
-        for (const s of q) { if (!seen.has(s)) { const m = metaByScramble.get(s); if (m) { meta.push([s, m]); seen.add(s); } } }
+        out[k] = pools[k]!.slice(0, STORE_PER_KEY)
+          .map((row): PersistedCompRow => [row.scramble, row.meta]);
       }
       for (const k of compKeys) {
         if (!selected.has(k)) continue;
         comp[k] = compQueues[k]!.slice(0, STORE_PER_KEY)
           .map((row): PersistedCompRow => [row.scramble, row.meta]);
       }
-      ls.setItem(STORE_KEY, JSON.stringify({ t: Date.now(), pools: out, meta, comp }));
+      ls.setItem(STORE_KEY, JSON.stringify({ t: Date.now(), pools: out, comp }));
     } catch { /* quota / unavailable — ignore */ }
   }, 600);
 }
@@ -411,7 +423,8 @@ function compOrder(a: WcaScrambleMeta, b: WcaScrambleMeta): number {
 /** comp 全量(默认):拉整场打乱 → 过滤 event/round/group(+ 可选最优)→ 竞赛序。 */
 async function compRowsAll(spec: WcaSourceSpec, w: string, useOptimal: boolean): Promise<CompRow[]> {
   const all = await fetchWcaScrambles(spec.comp);
-  const rows = (all ?? [])
+  if (all === null) throw new Error('competition scrambles unavailable');
+  const rows = all
     .filter((r) => r.event_id === w
       && (!spec.round || r.round_type_id === spec.round)
       && (!spec.group || r.group_id === spec.group)
@@ -429,9 +442,9 @@ async function compRowsAll(spec: WcaSourceSpec, w: string, useOptimal: boolean):
         n: r.scramble_num,
         x: (r.is_extra ? 1 : 0) as 0 | 1,
       };
-      return makeCompRow(scramble, meta);
+      return decodeCompRow(scramble, meta);
     });
-  return (await localFilterRows(spec, rows))
+  return (await localFilterRows(spec, rows.filter((row): row is CompRow => row !== null)))
     .sort((A, B) => compOrder(A.meta, B.meta));
 }
 
@@ -466,14 +479,14 @@ async function compRowsByDifficulty(spec: WcaSourceSpec, w: string, useOptimal: 
         n: row.n,
         x: row.x,
       };
-      const dk = compSlot(meta);
-      if (seen.has(dk)) continue;
-      seen.add(dk);
       // e 取真实来源项目(合并时可能不是当前练习的项目),来源角标才不会张冠李戴。
-      out.push(makeCompRow(
+      const decoded = decodeCompRow(
         normalize(useOptimal && row.o ? row.o : row.scramble),
         meta,
-      ));
+      );
+      if (!decoded || seen.has(decoded.slot)) continue;
+      seen.add(decoded.slot);
+      out.push(decoded);
     }
   }
   return (await localFilterRows(spec, out)).sort((A, B) => compOrder(A.meta, B.meta));
@@ -552,18 +565,27 @@ async function seedPrecomputed(spec: WcaSourceSpec, key: string): Promise<number
     candidates.push({ scramble: normalize(raw), sample: smp });
   }
   const filtered = await localFilterRows(spec, candidates);
-  const list: string[] = [];
+  const list: CompRow[] = [];
+  const seenSlots = new Set<string>();
   for (const candidate of filtered) {
-    list.push(candidate.scramble);
     const m = entry.idMeta[candidate.sample[0]];
-    if (m) rememberMeta(candidate.scramble, { ci: m[0], cn: entry.comps[m[0]]?.[0] ?? m[0], e: m[1], r: m[3], g: m[4], n: m[2], x: m[5] as 0 | 1 });
+    if (!m) continue;
+    const meta: WcaScrambleMeta = {
+      ci: m[0], cn: entry.comps[m[0]]?.[0] ?? m[0], e: m[1], r: m[3], g: m[4], n: m[2], x: m[5] as 0 | 1,
+    };
+    const row = decodeCompRow(candidate.scramble, meta);
+    if (!row) continue;
+    if (seenSlots.has(row.slot)) continue;
+    seenSlots.add(row.slot);
+    list.push(row);
+    rememberMeta(row.scramble, row.meta);
   }
   precomputedFor.set(key, list);
   return list.length;
 }
 
 /** Fisher–Yates 洗牌拷贝(每次 refill 换序端出,避免固定顺序)。 */
-function shuffledCopy(src: string[]): string[] {
+function shuffledCopy<T>(src: readonly T[]): T[] {
   const a = src.slice();
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
@@ -571,12 +593,12 @@ function shuffledCopy(src: string[]): string[] {
 
 /** 有限真题集(预计算桶 / 封闭集)洗牌灌回队列,循环用不会耗尽。优先端还没在队列里的,
  *  桶太小(如仅 2 条)全在队列时只能整桶循环,再防「洗牌头 == 队尾」的背靠背重复。 */
-function refillFrom(q: string[], src: string[]): void {
-  const inQ = new Set(q);
-  let arr = shuffledCopy(src).filter((s) => !inQ.has(s));
+function refillFrom(q: CompRow[], src: CompRow[]): void {
+  const inQ = new Set(q.map((row) => row.slot));
+  let arr = shuffledCopy(src).filter((row) => !inQ.has(row.slot));
   if (arr.length === 0) arr = shuffledCopy(src);
-  if (q.length > 0 && arr.length > 1 && arr[0] === q[q.length - 1]) arr.push(arr.shift()!);
-  for (const s of arr) q.push(s);
+  if (q.length > 0 && arr.length > 1 && arr[0]!.slot === q[q.length - 1]!.slot) arr.push(arr.shift()!);
+  q.push(...arr);
 }
 
 /** date mode: top up from the server's random sampler (optionally date-bounded). */
@@ -640,20 +662,27 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
       });
     }
     const accepted = await localFilterRows(spec, candidates);
-    const added = accepted.length;
-    const got: string[] = [];
+    const got: CompRow[] = [];
     for (const candidate of accepted) {
-      q.push(candidate.scramble);
-      got.push(candidate.scramble);
       const item = candidate.item;
-      rememberMeta(candidate.scramble, {
+      const meta: WcaScrambleMeta = {
         ci: item.ci, cn: item.cn, e: item.e, r: item.r, g: item.g, n: item.n, x: item.x,
         ...(useOptimal && !candidate.usedOptimal ? { nonOptimal: true } : {}),
-      });
+      };
+      const row = decodeCompRow(candidate.scramble, meta);
+      if (!row) continue;
+      q.push(row);
+      got.push(row);
+      rememberMeta(row.scramble, row.meta);
     }
+    const added = got.length;
     // 要 FETCH_COUNT 条却回得更少 = 服务端已扫完全集 → 这批就是匹配全集,登记后不再联网。
     // 常见档恒回满 FETCH_COUNT,永远不会进这里;只有稀有档(全库个位数)才封闭。
-    if (canClose && items.length < FETCH_COUNT && got.length > 0) closedFor.set(key, [...new Set(got)]);
+    if (canClose && items.length < FETCH_COUNT && got.length > 0) {
+      const closed = [...new Map(got.map((row) => [row.slot, row])).values()];
+      closedFor.set(key, closed);
+      finitePoolProgress.registerClosedSet(key, closed.map((row) => row.slot));
+    }
     totalAdded += added;
     if (added > 0) break; // 已找到匹配,不再多抓(短路,常态一批即够)
   }
@@ -730,11 +759,11 @@ function shiftQueued(spec: WcaSourceSpec, key: string): WcaDispensedScramble | n
     rememberMeta(row.scramble, meta);
     return { scramble: row.scramble, slot: row.slot, meta };
   }
-  const scramble = pools[key]?.shift();
-  if (!scramble) return null;
-  const sourceMeta = metaByScramble.get(scramble);
-  const meta = sourceMeta ? { ...sourceMeta } : null;
-  return { scramble, slot: meta ? compSlot(meta) : null, meta };
+  const row = pools[key]?.shift();
+  if (!row) return null;
+  const meta = { ...row.meta };
+  rememberMeta(row.scramble, meta);
+  return { scramble: row.scramble, slot: row.slot, meta };
 }
 
 /** Warm the pool ahead of time (on spec change / when WCA mode turns on). */
@@ -752,7 +781,7 @@ export function peekWcaRow(spec: WcaSourceSpec): WcaDispensedScramble | null {
   const key = specKey(spec);
   if (!key) return null;
   const row = shiftQueued(spec, key);
-  if (row) { noteServed(key, row.scramble); persist(); } // 反映已消费,避免重开时端出同一条
+  if (row) { noteServed(key, row.slot); persist(); } // 反映已消费,避免重开时端出同一条
   if (queuedCount(spec, key) < REFILL_AT) void fill(spec);
   return row;
 }
@@ -769,7 +798,7 @@ export async function nextWcaRow(spec: WcaSourceSpec): Promise<WcaDispensedScram
   if (!key) return null;
   if (queuedCount(spec, key) === 0) await fill(spec);
   const row = shiftQueued(spec, key);
-  if (row) { noteServed(key, row.scramble); persist(); }
+  if (row) { noteServed(key, row.slot); persist(); }
   return row;
 }
 

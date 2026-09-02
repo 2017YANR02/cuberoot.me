@@ -17,8 +17,8 @@ const baseSpec: WcaSourceSpec = {
 };
 
 /** 服务端一条真题的响应形状(只用到 pool 读的字段)。 */
-function item(n: number) {
-  return { scramble: `R U${' '.repeat(0)} F${n}`, ci: 'C1', cn: 'Comp One', e: '333', r: '1', g: 'A', n, x: 0 as const };
+function item(n: number, scramble = `R U F${n}`) {
+  return { scramble, ci: 'C1', cn: 'Comp One', e: '333', r: '1', g: 'A', n, x: 0 as const };
 }
 
 /** 每个用例都要全新模块实例 —— pools / closedFor 是模块级状态。 */
@@ -30,7 +30,7 @@ async function freshPool() {
 function mockFetch(rows: number) {
   const fn = vi.fn(async () => ({
     ok: true, status: 200,
-    json: async () => ({ event: '333', scrambles: Array.from({ length: rows }, (_, i) => item(i)) }),
+    json: async () => ({ event: '333', scrambles: Array.from({ length: rows }, (_, i) => item(i + 1)) }),
   }));
   vi.stubGlobal('fetch', fn);
   return fn;
@@ -103,6 +103,25 @@ describe('wca_pool 封闭集(稀有难度档)', () => {
 
     // 之后是重复出题,seen 不会超过 total(UI 的「已练 n/N」不能显示 3/2)。
     for (let i = 0; i < 15; i++) { peekWca(rareSpec); await Promise.resolve(); }
+    expect(wcaPoolProgress(rareSpec)).toEqual({ total: 2, seen: 2 });
+  });
+
+  it('相同打乱文本的不同官方题号按两个 occurrence 计数', async () => {
+    const repeated = 'R U R\' U\'';
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ scrambles: [item(1, repeated), item(2, repeated)] }),
+    })));
+    const { nextWcaRow, wcaPoolProgress } = await freshPool();
+
+    const first = await nextWcaRow(rareSpec);
+    expect(first?.scramble).toBe(repeated);
+    expect(wcaPoolProgress(rareSpec)).toEqual({ total: 2, seen: 1 });
+
+    const second = await nextWcaRow(rareSpec);
+    expect(second?.scramble).toBe(repeated);
+    expect(second?.slot).not.toBe(first?.slot);
     expect(wcaPoolProgress(rareSpec)).toEqual({ total: 2, seen: 2 });
   });
 

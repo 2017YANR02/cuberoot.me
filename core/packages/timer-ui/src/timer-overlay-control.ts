@@ -8,6 +8,7 @@ export const TIMER_OVERLAY_IDS = {
   scrambleSource: 'timer.scramble-source',
   sessionSwitcher: 'timer.session-switcher',
   wcaCompetition: 'timer.wca-competition',
+  wcaScrambleMarks: 'timer.wca-scramble-marks',
 } as const;
 
 export type TimerOverlayId = typeof TIMER_OVERLAY_IDS[keyof typeof TIMER_OVERLAY_IDS];

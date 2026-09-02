@@ -3,6 +3,7 @@ import {
   DEFAULT_SCRAMBLE_222_TYPE,
   WCA_SCRAMBLE_222_TYPES,
   compareTimerWcaCompetitionScrambleOrder,
+  decodeTimerWcaCompetitionScrambleSlot,
   isCube222StateType,
   isTimerWcaScrambleEventId,
   isTimer222StepMetric,
@@ -76,6 +77,11 @@ interface NormalizedRealScrambleSourceSpec extends TimerWcaSourceSettings, Timer
 }
 
 export type RealScrambleSourceInput = EventId | RealScrambleSourceSpec;
+
+export function isAllTimeRealScrambleDateSource(input: RealScrambleSourceInput): boolean {
+  const source = resolveTimerWcaSourceCore(normalizeRealScrambleSourceSpec(input));
+  return source.mode === 'date' && !source.from && !source.to;
+}
 
 /** Canonical identity for pools, in-flight requests, current rows and storage. */
 export function normalizeRealScrambleSourceSpec(
@@ -260,28 +266,35 @@ function parseItem(
 ): RealScramble | null {
   const hasOptimal = typeof value.o === 'string' && value.o.trim().length > 0;
   const rawScramble = useOptimal && hasOptimal ? value.o : value.scramble;
-  if (
-    typeof rawScramble !== 'string'
-    || typeof value.ci !== 'string'
-    || !value.ci.trim()
-    || value.e !== requestedEvent
-    || typeof value.r !== 'string'
-    || typeof value.g !== 'string'
-    || typeof value.n !== 'number'
-    || !Number.isInteger(value.n)
-    || value.n < 1
-  ) return null;
+  if (typeof rawScramble !== 'string') return null;
+  const isExtra = value.x === 1 || value.x === true
+    ? true
+    : value.x === 0 || value.x === false
+      ? false
+      : null;
+  if (isExtra === null) return null;
+  const slot = decodeTimerWcaCompetitionScrambleSlot({
+    competitionId: value.ci,
+    eventId: value.e,
+    groupId: value.g,
+    isExtra,
+    roundTypeId: value.r,
+    scrambleNumber: value.n,
+  });
+  if (!slot || slot.eventId !== requestedEvent) return null;
   const scramble = normalizeScramble(rawScramble);
   if (!scramble || scramble.length > MAX_SCRAMBLE_CHARS) return null;
   return {
-    competitionId: value.ci.trim(),
-    competitionName: typeof value.cn === 'string' && value.cn.trim() ? value.cn.trim() : value.ci.trim(),
+    competitionId: slot.competitionId,
+    competitionName: typeof value.cn === 'string' && value.cn.trim()
+      ? value.cn.trim()
+      : slot.competitionId,
     eventId: requestedEvent,
-    groupId: value.g,
-    roundTypeId: value.r,
+    groupId: slot.groupId,
+    roundTypeId: slot.roundTypeId,
     scramble,
-    scrambleNumber: value.n,
-    isExtra: value.x === 1 || value.x === true,
+    scrambleNumber: slot.scrambleNumber,
+    isExtra: slot.isExtra,
     ...(useOptimal && !hasOptimal ? { nonOptimal: true } : {}),
   };
 }
@@ -516,6 +529,7 @@ export async function fetchRealScrambles(
   fetcher: typeof fetch = fetch,
   signal?: AbortSignal,
   examplesFetcher?: typeof fetch,
+  onClosedSet?: (scrambles: readonly RealScramble[]) => void,
 ): Promise<RealScramble[]> {
   const spec = normalizeRealScrambleSourceSpec(input);
   const wcaEventId = timerWcaScrambleEventId(spec.event);
@@ -712,9 +726,16 @@ export async function fetchRealScrambles(
     }
     const matches = await applyLocalSourceFilters(spec, parsed, typeFilter, requestSignal);
     if (matches.length > 0) {
+      const live = uniqueRealScrambleOccurrences(matches);
+      if (!source.from && !source.to
+        && !typeFilter
+        && !localStepFilter
+        && payload.scrambles.length < CACHE_LIMIT) {
+        onClosedSet?.(live);
+      }
       // Live rows lead so a full static seed cannot starve freshly sampled
       // competition data from the bounded pool.
-      return uniqueRealScrambleOccurrences([...matches, ...seeded])
+      return uniqueRealScrambleOccurrences([...live, ...seeded])
         .slice(0, CACHE_LIMIT);
     }
   }
