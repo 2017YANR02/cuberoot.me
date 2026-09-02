@@ -1,6 +1,6 @@
 # CubeRoot 文档索引
 
-状态：`ACTIVE`。最后更新：2026-09-01。
+状态：`ACTIVE`。最后更新：2026-09-02。
 
 本页是文档状态和权威入口的索引，不替代代码、schema、workflow 或各专题跟踪表。
 
@@ -21,6 +21,7 @@
 | 领域 | 权威入口 | 状态 | 用途 |
 | --- | --- | --- | --- |
 | 架构现代化 | [architecture-modernization-tracker.md](./architecture-modernization-tracker.md) | `ACTIVE` | 决策、批次、验收和审核记录 |
+| 后台与增长监控 | [admin-observability-tracker.md](./admin-observability-tracker.md) | `ACTIVE` | `/admin` 首页、用户注册与会员增长的口径、实施和验收 |
 | 架构现状锐评 | [architecture-audit-2026-08.md](./architecture-audit-2026-08.md) | `HISTORICAL` | 2026-08 审计快照；当前状态以 tracker 为准 |
 | Platform 产品迁移 | [platform-product-migration-tracker.md](./platform-product-migration-tracker.md) | `ACTIVE` | 发布、角色态复验和旧资产观察 |
 | Platform 数据处置 | [platform-data-disposition-ledger.md](./platform-data-disposition-ledger.md) | `ACTIVE` | 旧数据逐项保管、迁移和处置 |
