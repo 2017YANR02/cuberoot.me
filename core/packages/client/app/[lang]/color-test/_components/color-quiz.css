@@ -280,7 +280,27 @@
   margin: 0 auto;
 }
 
-.position-prompt .color-quiz-swatch { max-width: 9rem; }
+.position-prompt-target {
+  position: relative;
+  flex: 0 1 9rem;
+}
+
+.position-prompt-target .color-quiz-swatch { max-width: none; }
+
+.position-top-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.position-top-control > span {
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
 
 .position-prompt-mark {
   min-width: 4rem;
