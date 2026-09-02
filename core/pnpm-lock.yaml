@@ -92,6 +92,9 @@ importers:
       mammoth:
         specifier: ^1.12.0
         version: 1.12.0
+      opentype.js:
+        specifier: ^2.0.0
+        version: 2.0.0
       postgres:
         specifier: ^3.4.9
         version: 3.4.9
@@ -114,6 +117,9 @@ importers:
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.15
+      '@types/opentype.js':
+        specifier: ^1.3.10
+        version: 1.3.10
       '@types/qrcode':
         specifier: ^1.5.6
         version: 1.5.6
@@ -2833,6 +2839,9 @@ packages:
   '@types/node@25.5.0':
     resolution: {integrity: sha512-jp2P3tQMSxWugkCUKLRPVUpGaL5MVFwF8RDuSRztfwgN1wmqJeMSbKlnEtQqU8UrhTmzEmZdu2I6v2dpp7XIxw==}
 
+  '@types/opentype.js@1.3.10':
+    resolution: {integrity: sha512-F67EFyk6j02okHz5JCgata3ZRAcZi9GLnzmkHw/rzJq3OCc8/ZVdoKrxMTYjcQP6IYHGBz2cav1cpzkOkPiPCQ==}
+
   '@types/pako@2.0.4':
     resolution: {integrity: sha512-VWDCbrLeVXJM9fihYodcLiIv0ku+AlOa/TQ1SvYOaBuyrSKgEcro95LJyIsJ4vSo6BXIxOKxiJAat04CmST9Fw==}
 
@@ -4678,6 +4687,10 @@ packages:
 
   opencc-js@1.0.5:
     resolution: {integrity: sha512-LD+1SoNnZdlRwtYTjnQdFrSVCAaYpuDqL5CkmOaHOkKoKh7mFxUicLTRVNLU5C+Jmi1vXQ3QL4jWdgSaa4sKjg==}
+
+  opentype.js@2.0.0:
+    resolution: {integrity: sha512-kCyjv6xdDY1W/jLWZ/L3QhhTlKUqDZMQ5+Jdlw12b3dXkKNpYBqqlMMj0YDQPShWFTMwgZI1hG14kN3XUDSg/A==}
+    hasBin: true
 
   option@0.2.4:
     resolution: {integrity: sha512-pkEqbDyl8ou5cpq+VsnQbe/WlEy5qS7xPzMS1U55OCG9KPvwFD46zDbxQIj3egJSFc3D+XhYOPUzz49zQAVy7A==}
@@ -7500,6 +7513,8 @@ snapshots:
     dependencies:
       undici-types: 7.18.2
 
+  '@types/opentype.js@1.3.10': {}
+
   '@types/pako@2.0.4': {}
 
   '@types/qrcode@1.5.6':
@@ -9607,6 +9622,8 @@ snapshots:
       is-wsl: 2.2.0
 
   opencc-js@1.0.5: {}
+
+  opentype.js@2.0.0: {}
 
   option@0.2.4: {}
 

@@ -164,14 +164,17 @@ describe('main-site Platform PostgreSQL schema', () => {
     const schemaTables = [...schema.matchAll(/^CREATE TABLE (platform_[a-z0-9_]+) \(/gm)]
       .map((match) => match[1]);
     expect(migrationTables).toEqual(PLATFORM_TABLES);
-    expect(schemaTables).toEqual(PLATFORM_TABLES);
+    expect(schemaTables.filter((table) => table !== 'platform_qr_card_designs')).toEqual(PLATFORM_TABLES);
     expect(new Set(migrationTables).size).toBe(62);
-    expect(new Set(schemaTables).size).toBe(62);
+    expect(new Set(schemaTables).size).toBe(63);
+    expect(schemaTables).toContain('platform_qr_card_designs');
     expect(schema.indexOf('CREATE TABLE app_users')).toBeLessThan(schema.indexOf('CREATE TABLE platform_instructors'));
     expect(schema.indexOf('CREATE TABLE teacher_directory_entries')).toBeLessThan(schema.indexOf('CREATE TABLE platform_instructors'));
     for (const table of PLATFORM_TABLES) {
       expect(devSchema).toContain(`'${table}'`);
     }
+    expect(devSchema).toContain("{ name: 'platform_qr_card_designs'");
+    expect(devSchema).toContain("{ n: 202, slug: 'qr_card_designs'");
   });
 
   it('uses canonical accounts while preserving API-key and deleted-account decision attribution', async () => {

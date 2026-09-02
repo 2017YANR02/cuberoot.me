@@ -325,6 +325,9 @@ const TABLES: Table[] = [
     'platform_reconciliation_records', 'platform_audit_events', 'platform_outbox_events',
     'platform_idempotency_requests',
   ] },
+  { name: 'platform_qr_card_designs', domain: 'platform', origin: '0202', naturalKey: true, purpose: { zh: '按二维码只追加保存可打印卡片设计版本，保留每次管理员修改的快照', en: 'Append-only printable card-design versions per QR code, retaining every administrator update' }, cols: [
+    { name: 'qr_code_id, version (composite PK)' }, { name: 'card JSONB' }, { name: 'created_by_user_id, created_by_actor_key, created_at' },
+  ] },
 
   // ── user artifacts ──────────────────────────────────────
   { name: 'timer_backups', domain: 'studio', origin: '0020', purpose: { zh: '计时器成绩云备份(单快照覆盖)', en: 'Cloud backup of timer sessions (single overwrite snapshot)' }, cols: [
@@ -688,6 +691,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 197, slug: 'battle_room_video_generation', desc: { zh: '为自托管 LiveKit 增加房间媒体 generation；踢人或离开时轮换，使旧 token 只能回到隔离的旧媒体房。', en: 'Add a media-room generation for self-hosted LiveKit; rotate it on kick or leave so old tokens can only rejoin an isolated media room.' } },
   { n: 198, slug: 'battle_room_round_roster', desc: { zh: '同步起表时冻结本轮参赛者名单，避免离线回归或中途加入者未经准备自动起表、卡住结算。', en: 'Freeze synchronized-round participants so reconnecting or mid-round players neither auto-start unprepared nor block settlement.' } },
   { n: 199, slug: 'account_last_devices', desc: { zh: '记录账号最近使用设备的粗粒度类型、系统、浏览器和时间，不保存原始 User-Agent 或设备指纹。', en: 'Record coarse latest-device type, OS, browser, and time without retaining raw User-Agent or a device fingerprint.' } },
+  { n: 202, slug: 'qr_card_designs', desc: { zh: '按二维码追加保存可打印卡片设计版本，保留每次管理员修改的快照。', en: 'Append versioned printable card-design snapshots for each QR code and retain every administrator update.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
