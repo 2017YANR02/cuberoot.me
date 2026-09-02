@@ -5,7 +5,7 @@ import {
   associateTimerSessionEvent,
   clearTimerSession,
   clearTimerSessionEvent,
-  createTimerSession,
+  createAndActivateTimerSession,
   createTimerStoreData,
   decodeTimerStoreData,
   deleteTimerSession,
@@ -13,9 +13,11 @@ import {
   parseTimerStoreJson,
   renameTimerSession,
   restoreTimerHistorySolve,
+  selectTimerEventSession,
   serializeTimerStoreData,
   summarizeTimerDatabase,
-  timerSessionEvent,
+  timerDefaultSessionName,
+  timerSessionSelectedEvent,
   type EventId,
   type Solve,
   type TimerSessionMutationFailure,
@@ -130,16 +132,19 @@ export class TimerRepository {
     selectedSessionId: string | null = null,
   ): Promise<TimerStoreData> {
     if (mutation.failure) throw new TimerSessionRepositoryError(mutation.failure);
-    const associatedEvent = selectedSessionId && data.settings.autoEventForSession
-      ? timerSessionEvent(mutation.database, selectedSessionId)
-      : null;
-    const settingsChanged = associatedEvent !== null && associatedEvent !== data.settings.event;
+    const effectiveEvent = timerSessionSelectedEvent(
+      mutation.database,
+      selectedSessionId,
+      data.settings.event,
+      data.settings.autoEventForSession,
+    );
+    const settingsChanged = effectiveEvent !== data.settings.event;
     if (!mutation.changed && !settingsChanged) return data;
     return this.writeSessionData({
       ...data,
       database: mutation.database,
       settings: settingsChanged
-        ? { ...data.settings, event: associatedEvent }
+        ? { ...data.settings, event: effectiveEvent }
         : data.settings,
     });
   }
@@ -275,29 +280,28 @@ export class TimerRepository {
     return this.run(async () => {
       const data = await this.loadUnlocked();
       let sessionId = this.environment.createId();
-      let created = createTimerSession(data.database, {
+      let created = createAndActivateTimerSession(data.database, {
         id: sessionId,
         name,
         createdTs: this.environment.now(),
-        fallbackName: this.environment.language() === 'zh' ? '默认' : 'Default',
+        fallbackName: timerDefaultSessionName(this.environment.language()),
         event,
       });
       while (created.failure === 'duplicate-session-id') {
         sessionId = this.environment.createId();
-        created = createTimerSession(data.database, {
+        created = createAndActivateTimerSession(data.database, {
           id: sessionId,
           name,
           createdTs: this.environment.now(),
-          fallbackName: this.environment.language() === 'zh' ? '默认' : 'Default',
+          fallbackName: timerDefaultSessionName(this.environment.language()),
           event,
         });
       }
       if (created.failure) throw new TimerSessionRepositoryError(created.failure);
-      const activated = activateTimerSession(created.database, sessionId);
       return this.persistSessionMutation(
         data,
-        activated,
-        activated.sessionId,
+        created,
+        created.sessionId,
       );
     });
   }
@@ -365,28 +369,16 @@ export class TimerRepository {
   selectEvent(event: EventId): Promise<TimerStoreData> {
     return this.run(async () => {
       const data = await this.loadUnlocked();
-      const matched = data.settings.autoSessionForEvent
-        ? activateTimerSessionForEvent(data.database, event)
-        : null;
-      if (matched && matched.failure !== 'no-matching-session') {
-        if (matched.failure) throw new TimerSessionRepositoryError(matched.failure);
-        if (data.settings.event === event && !matched.changed) return data;
-        return this.writeSessionData({
-          ...data,
-          database: matched.database,
-          settings: { ...data.settings, event },
-        });
-      }
-      const association = associateTimerSessionEvent(
+      const selected = selectTimerEventSession(
         data.database,
-        data.database.activeSessionId,
         event,
+        data.settings.autoSessionForEvent,
       );
-      if (association.failure) throw new TimerSessionRepositoryError(association.failure);
-      if (data.settings.event === event && !association.changed) return data;
+      if (selected.failure) throw new TimerSessionRepositoryError(selected.failure);
+      if (data.settings.event === event && !selected.changed) return data;
       return this.writeSessionData({
         ...data,
-        database: association.database,
+        database: selected.database,
         settings: { ...data.settings, event },
       });
     });

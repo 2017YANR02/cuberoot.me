@@ -160,6 +160,7 @@ import {
   TimerByStepsConfig,
   TimerScrambleSourceSelect,
   TimerSessionSwitcher,
+  timerSessionSwitcherLabels,
   TimerStatRail,
   TimerStatsPanel,
   TimerRollingStatsPicker,
@@ -240,7 +241,6 @@ import { nextMobileCstimerNonWcaScramble } from './data/cstimer-nonwca-pool';
 import { nextMobileNon222ByStepsScramble } from './data/non222-steps-pool';
 import { mobileBackAction } from './mobile-back';
 import { MobileVisibleScrambleRequestGate } from './data/visible-scramble-request-gate';
-import { timerSessionSwitcherLabels } from './timer-session-labels';
 import { MobileSmallPuzzleHints } from './MobileSmallPuzzleHints';
 import {
   createMobileScrambleHistoryEntry,

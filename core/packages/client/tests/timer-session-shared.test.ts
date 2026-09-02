@@ -5,11 +5,14 @@ import {
   activateTimerSessionForEvent,
   associateTimerSessionEvent,
   clearTimerSession,
+  createAndActivateTimerSession,
   createTimerSession,
   deleteTimerSession,
   moveTimerSolveToSession,
   renameTimerSession,
+  selectTimerEventSession,
   timerSessionEvent,
+  timerSessionSelectedEvent,
   type TimerDatabase,
 } from '@cuberoot/shared/timer';
 
@@ -73,6 +76,15 @@ describe('shared timer session operations', () => {
     });
     expect(duplicate).toMatchObject({ changed: false, failure: 'duplicate-session-id' });
     expect(duplicate.database).toBe(input);
+
+    const activated = createAndActivateTimerSession(input, {
+      id: 'd', name: 'D', fallbackName: 'Fallback', createdTs: 4, event: '222',
+    });
+    expect(activated).toMatchObject({
+      changed: true, failure: null, activeSessionId: 'd', sessionId: 'd',
+    });
+    expect(activated.database.sessions.at(-1)?.event).toBe('222');
+    expect(input.activeSessionId).toBe('a');
   });
 
   it('trims rename, rejects empty/unknown names, and clears only the target data', () => {
@@ -117,6 +129,11 @@ describe('shared timer session operations', () => {
     expect(deleted.database.dataBySession).not.toHaveProperty('a');
     expect(input.activeSessionId).toBe('a');
 
+    const inactive = deleteTimerSession(input, 'c');
+    expect(inactive).toMatchObject({
+      changed: true, failure: null, activeSessionId: 'a', sessionId: null,
+    });
+
     const only: TimerDatabase = {
       version: 3,
       sessions: [{ id: 'only', name: 'Only', createdTs: 1 }],
@@ -125,7 +142,7 @@ describe('shared timer session operations', () => {
     };
     const refused = deleteTimerSession(only, 'only');
     expect(refused).toMatchObject({
-      changed: false, failure: 'last-session', activeSessionId: 'only', sessionId: 'only',
+      changed: false, failure: 'last-session', activeSessionId: 'only', sessionId: null,
     });
     expect(refused.database).toBe(only);
   });
@@ -166,6 +183,24 @@ describe('shared timer session operations', () => {
     expect(activateTimerSessionForEvent(mixed, '222')).toMatchObject({
       changed: false, failure: 'no-matching-session', sessionId: null,
     });
+  });
+
+  it('coordinates event-to-session and session-to-event policy once', () => {
+    const input = frozenDatabase();
+    const matched = selectTimerEventSession(input, '222', true);
+    expect(matched).toMatchObject({ activeSessionId: 'b', sessionId: 'b', failure: null });
+
+    const associated = selectTimerEventSession(input, 'fto', true);
+    expect(associated).toMatchObject({ activeSessionId: 'a', sessionId: 'a', failure: null });
+    expect(associated.database.sessions.find(session => session.id === 'a')?.event).toBe('fto');
+
+    const manual = selectTimerEventSession(input, '222', false);
+    expect(manual).toMatchObject({ activeSessionId: 'a', sessionId: 'a', failure: null });
+    expect(manual.database.sessions.find(session => session.id === 'a')?.event).toBe('222');
+
+    expect(timerSessionSelectedEvent(input, 'b', '333', true)).toBe('222');
+    expect(timerSessionSelectedEvent(input, 'b', '333', false)).toBe('333');
+    expect(timerSessionSelectedEvent(input, null, '333', true)).toBe('333');
   });
 
   it('moves a solve immutably, sorts the target, and associates an unbound target', () => {

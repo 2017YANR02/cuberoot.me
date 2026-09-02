@@ -161,7 +161,7 @@ import {
 import {
   loadAll, saveAll, makeSolve,
   listSessions, getActiveSessionId, moveSolveToSession,
-  activateSessionForEvent, getSessionEvent, setSessionEvent,
+  getSelectedSessionEvent, selectSessionForEvent,
 } from '../_lib/storage/db';
 import { formatTargetTime, useSettings, getSettings, updateSettings } from '../_lib/settings';
 import { warmupSound } from '../_lib/sound';
@@ -375,8 +375,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // ── Side panel (desktop rail / 非桌面整屏) ──────────────────────
   const [panelTab, setPanelTab] = useState<PanelTab | null>(null);
+  const [sessionSwitcherOpen, setSessionSwitcherOpen] = useState(false);
   const closeResultsPanel = useCallback(() => setPanelTab(null), []);
   const [chartKind, setChartKind] = useState<ChartKind>('histogram');
+  useEffect(() => {
+    if (panelTab !== 'times') setSessionSwitcherOpen(false);
+  }, [panelTab]);
 
   // ── State: per-event solve lists ────────────────────────────────
   const [byEvent, setByEvent] = useState<Record<string, Solve[]>>(() => {
@@ -426,23 +430,19 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const selectEvent = useCallback((nextEvent: EventId) => {
     if (nextEvent === event) return;
     const previousSessionId = getActiveSessionId();
-    const matchedSessionId = settings.autoSessionForEvent
-      ? activateSessionForEvent(nextEvent)
-      : null;
-
-    if (matchedSessionId && matchedSessionId !== previousSessionId) {
-      reloadActiveSession();
-    } else if (!matchedSessionId) {
-      setSessionEvent(previousSessionId, nextEvent);
-    }
+    const selected = selectSessionForEvent(nextEvent, settings.autoSessionForEvent);
+    if (selected.activeSessionId !== previousSessionId) reloadActiveSession();
     void setEvent(nextEvent);
   }, [event, reloadActiveSession, setEvent, settings.autoSessionForEvent]);
 
   const handleSessionsChanged = useCallback((activeSessionId?: string) => {
     reloadActiveSession();
-    if (!activeSessionId || !settings.autoEventForSession) return;
-    const associatedEvent = getSessionEvent(activeSessionId);
-    if (associatedEvent && associatedEvent !== event) void setEvent(associatedEvent);
+    const selectedEvent = getSelectedSessionEvent(
+      activeSessionId ?? null,
+      event,
+      settings.autoEventForSession,
+    );
+    if (selectedEvent !== event) void setEvent(selectedEvent);
   }, [event, reloadActiveSession, setEvent, settings.autoEventForSession]);
 
   const solves = useMemo(() => byEvent[event] ?? [], [byEvent, event]);
@@ -2285,15 +2285,15 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     trainerSubsetOpen !== null || statsModalOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
     drillModalOpen || bldHelperOpen || panelFullscreen ||
-    modalSolve !== null || reconstructSolve !== null;
+    sessionSwitcherOpen || modalSolve !== null || reconstructSolve !== null;
   // 整屏之后没有「点空白处关掉」了(遮罩全被盖住,已删),所以 Escape 得亲自接住 ——
   // 主键盘处理器见 anyModalOpenRef 那道闸,面板开着时它整个不响应,不会误触 reset()。
   useEffect(() => {
-    if (!panelFullscreen) return;
+    if (!panelFullscreen || sessionSwitcherOpen) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setPanelTab(null); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [panelFullscreen]);
+  }, [panelFullscreen, sessionSwitcherOpen]);
 
   const anyModalOpen = otherModalOpen || hintsSheetOpen;
   const anyModalOpenRef = useRef(anyModalOpen);
@@ -2569,6 +2569,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <SessionSwitcher
             isZh={isZh}
             event={event}
+            open={sessionSwitcherOpen}
+            onOpenChange={setSessionSwitcherOpen}
             onSessionsChanged={handleSessionsChanged}
           />
           {/* 这一档就是这些把本身:会话切换器 + 那张单子。算出来的数都在「统计」那档。 */}

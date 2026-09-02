@@ -653,6 +653,19 @@ describe('mobile timer repository contract', () => {
     expect(data.settings.event).toBe('fto');
   });
 
+  it('does not change the selected event when deleting an inactive session', async () => {
+    const { repo } = repository();
+    let data = await repo.load();
+    const firstId = data.database.activeSessionId;
+    data = await repo.createSession('Pocket', '222');
+    const pocketId = data.database.activeSessionId;
+    await repo.updateSettings({ autoEventForSession: true, event: '333' });
+
+    data = await repo.deleteSession(firstId);
+    expect(data.database.activeSessionId).toBe(pocketId);
+    expect(data.settings.event).toBe('333');
+  });
+
   it('moves a solve through the same shared operation and rejects stale ids', async () => {
     const { repo } = repository();
     let data = await repo.addSolve({

@@ -1,6 +1,12 @@
 'use client';
 
-import type { EventId, TimerSessionMeta } from '@cuberoot/shared/timer';
+import {
+  TIMER_SESSION_UI_COPY,
+  timerSessionClearConfirmation,
+  timerSessionDeleteConfirmation,
+  type EventId,
+  type TimerSessionMeta,
+} from '@cuberoot/shared/timer';
 import { Check, ChevronDown, Eraser, Pencil, Plus, Trash2 } from 'lucide-react';
 import {
   useCallback,
@@ -15,6 +21,7 @@ import {
 import { createPortal } from 'react-dom';
 
 import { ClearButton } from './ClearButton';
+import { modalFocusableElements } from './modal-focus';
 import { usePopoverDismiss } from './usePopoverDismiss';
 import {
   TIMER_OVERLAY_IDS,
@@ -57,6 +64,35 @@ export interface TimerSessionSwitcherLabels {
   operationFailed: string;
   clearConfirmation(name: string): string;
   deleteConfirmation(name: string): string;
+}
+
+export function timerSessionSwitcherLabels(
+  language: 'en' | 'zh',
+): TimerSessionSwitcherLabels {
+  const text = (copy: { en: string; zh: string }) => copy[language];
+  return {
+    session: text(TIMER_SESSION_UI_COPY.session),
+    sessions: text(TIMER_SESSION_UI_COPY.sessions),
+    switchSession: text(TIMER_SESSION_UI_COPY.switchSession),
+    newSession: text(TIMER_SESSION_UI_COPY.newSession),
+    newSessionDefault: text(TIMER_SESSION_UI_COPY.newSessionDefault),
+    sessionName: text(TIMER_SESSION_UI_COPY.sessionName),
+    newSessionName: text(TIMER_SESSION_UI_COPY.newSessionName),
+    clear: text(TIMER_SESSION_UI_COPY.clear),
+    confirm: text(TIMER_SESSION_UI_COPY.confirm),
+    confirmRename: text(TIMER_SESSION_UI_COPY.confirmRename),
+    rename: text(TIMER_SESSION_UI_COPY.rename),
+    renameSession: text(TIMER_SESSION_UI_COPY.renameSession),
+    clearSolves: text(TIMER_SESSION_UI_COPY.clearSolves),
+    clearSessionSolves: text(TIMER_SESSION_UI_COPY.clearSessionSolves),
+    keepOneSession: text(TIMER_SESSION_UI_COPY.keepOneSession),
+    deleteSession: text(TIMER_SESSION_UI_COPY.deleteSession),
+    create: text(TIMER_SESSION_UI_COPY.create),
+    createSession: text(TIMER_SESSION_UI_COPY.createSession),
+    operationFailed: text(TIMER_SESSION_UI_COPY.operationFailed),
+    clearConfirmation: (name) => text(timerSessionClearConfirmation(name)),
+    deleteConfirmation: (name) => text(timerSessionDeleteConfirmation(name)),
+  };
 }
 
 export interface TimerSessionSwitcherProps extends TimerOverlayControlProps {
@@ -120,6 +156,7 @@ export function TimerSessionSwitcher({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const successFocusRef = useRef<string | 'active' | null>(null);
   const previousOpenRef = useRef(open);
   const popupId = useId();
   const active = sessions.find((session) => session.id === activeSessionId);
@@ -160,20 +197,30 @@ export function TimerSessionSwitcher({
     }
   }, [controlledOpen, open]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) return;
+    if (busy) {
+      panelRef.current?.focus();
+      return;
+    }
     const frame = requestAnimationFrame(() => {
       if (creating || renamingId) {
         inputRef.current?.focus();
         inputRef.current?.select();
         return;
       }
-      panelRef.current
-        ?.querySelector<HTMLButtonElement>('[data-session-active="true"]')
-        ?.focus();
+      const successFocus = successFocusRef.current;
+      successFocusRef.current = null;
+      const target = successFocus && successFocus !== 'active'
+        ? Array.from(
+            panelRef.current?.querySelectorAll<HTMLButtonElement>('[data-session-id]') ?? [],
+          ).find((button) => button.dataset.sessionId === successFocus)
+        : panelRef.current
+            ?.querySelector<HTMLButtonElement>('[data-session-active="true"]');
+      target?.focus();
     });
     return () => cancelAnimationFrame(frame);
-  }, [creating, open, renamingId]);
+  }, [busy, creating, open, renamingId]);
 
   useLayoutEffect(() => {
     if (!open) {
@@ -293,11 +340,9 @@ export function TimerSessionSwitcher({
     }
     const sessionId = renamingId;
     void run('rename', () => host.rename(sessionId, name), () => {
+      successFocusRef.current = sessionId;
       setRenamingId(null);
       setDraft('');
-      requestAnimationFrame(() => Array.from(
-        panelRef.current?.querySelectorAll<HTMLButtonElement>('[data-session-id]') ?? [],
-      ).find((button) => button.dataset.sessionId === sessionId)?.focus());
     });
   };
 
@@ -313,7 +358,26 @@ export function TimerSessionSwitcher({
     void run('delete', async () => {
       if (!await confirm(labels.deleteConfirmation(session.name))) return false;
       await host.delete(session.id);
-    });
+    }, () => { successFocusRef.current = 'active'; });
+  };
+
+  const handlePanelKeyDown = (keyboardEvent: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (keyboardEvent.key !== 'Tab' || !panelRef.current) return;
+    const focusable = modalFocusableElements(panelRef.current);
+    if (focusable.length === 0) {
+      keyboardEvent.preventDefault();
+      panelRef.current.focus();
+      return;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (keyboardEvent.shiftKey && document.activeElement === first) {
+      keyboardEvent.preventDefault();
+      last.focus();
+    } else if (!keyboardEvent.shiftKey && document.activeElement === last) {
+      keyboardEvent.preventDefault();
+      first.focus();
+    }
   };
 
   const inputKeyDown = (kind: 'create' | 'rename') => (keyboardEvent: ReactKeyboardEvent) => {
@@ -338,11 +402,15 @@ export function TimerSessionSwitcher({
     <div
       aria-busy={busy !== null}
       aria-label={labels.sessions}
+      aria-modal="true"
       className="tsession-panel"
+      data-no-timer
       id={popupId}
+      onKeyDown={handlePanelKeyDown}
       ref={panelRef}
       role="dialog"
       style={panelStyle}
+      tabIndex={-1}
     >
       <div className="tsession-list">
         {sessions.map((session) => {
@@ -397,7 +465,7 @@ export function TimerSessionSwitcher({
                   </button>
                   <div className="tsession-actions">
                     <button
-                      aria-label={labels.renameSession}
+                      aria-label={`${labels.renameSession}: ${session.name}`}
                       className="tsession-icon-btn"
                       disabled={busy !== null}
                       onClick={() => startRename(session)}
@@ -405,7 +473,7 @@ export function TimerSessionSwitcher({
                       type="button"
                     ><Pencil aria-hidden="true" size={13} /></button>
                     <button
-                      aria-label={labels.clearSessionSolves}
+                      aria-label={`${labels.clearSessionSolves}: ${session.name}`}
                       className="tsession-icon-btn"
                       disabled={busy !== null}
                       onClick={() => handleClear(session)}
@@ -413,7 +481,7 @@ export function TimerSessionSwitcher({
                       type="button"
                     ><Eraser aria-hidden="true" size={13} /></button>
                     <button
-                      aria-label={labels.deleteSession}
+                      aria-label={`${labels.deleteSession}: ${session.name}`}
                       className="tsession-icon-btn tsession-icon-btn--danger"
                       disabled={busy !== null || sessions.length <= 1}
                       onClick={() => handleDelete(session)}

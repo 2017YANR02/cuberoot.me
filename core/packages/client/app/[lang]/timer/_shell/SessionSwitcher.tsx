@@ -1,28 +1,20 @@
 'use client';
 
-/** Web persistence adapter for the shared Web/Android/iOS session control. */
+/** Web persistence adapter for the shared five-client session control. */
 
-import {
-  TIMER_SESSION_UI_COPY,
-  timerSessionClearConfirmation,
-  timerSessionDeleteConfirmation,
-  type EventId,
-  type TimerSessionMeta,
-} from '@cuberoot/shared/timer';
+import type { EventId } from '@cuberoot/shared/timer';
 import {
   TimerSessionSwitcher as SharedTimerSessionSwitcher,
+  timerSessionSwitcherLabels,
   type TimerSessionSwitcherHost,
-  type TimerSessionSwitcherLabels,
 } from '@cuberoot/timer-ui';
 import { useCallback, useMemo, useState } from 'react';
 
-import { tr } from '@/i18n/tr';
 import {
   clearSession,
   createAndActivateSession,
   deleteSession,
-  getActiveSessionId,
-  listSessions,
+  getSessionSnapshot,
   renameSession,
   setActiveSession,
 } from '../_lib/storage/db';
@@ -30,44 +22,25 @@ import {
 interface Props {
   isZh: boolean;
   event: EventId;
+  open: boolean;
+  onOpenChange(open: boolean): void;
   /** Called after an active-data mutation; id is present only when active changed. */
   onSessionsChanged: (activeSessionId?: string) => void;
 }
 
-function readSessionState(): { sessions: TimerSessionMeta[]; activeSessionId: string } {
-  return { sessions: listSessions(), activeSessionId: getActiveSessionId() };
-}
-
-function sharedLabels(): TimerSessionSwitcherLabels {
-  return {
-    session: tr(TIMER_SESSION_UI_COPY.session),
-    sessions: tr(TIMER_SESSION_UI_COPY.sessions),
-    switchSession: tr(TIMER_SESSION_UI_COPY.switchSession),
-    newSession: tr(TIMER_SESSION_UI_COPY.newSession),
-    newSessionDefault: tr(TIMER_SESSION_UI_COPY.newSessionDefault),
-    sessionName: tr(TIMER_SESSION_UI_COPY.sessionName),
-    newSessionName: tr(TIMER_SESSION_UI_COPY.newSessionName),
-    clear: tr(TIMER_SESSION_UI_COPY.clear),
-    confirm: tr(TIMER_SESSION_UI_COPY.confirm),
-    confirmRename: tr(TIMER_SESSION_UI_COPY.confirmRename),
-    rename: tr(TIMER_SESSION_UI_COPY.rename),
-    renameSession: tr(TIMER_SESSION_UI_COPY.renameSession),
-    clearSolves: tr(TIMER_SESSION_UI_COPY.clearSolves),
-    clearSessionSolves: tr(TIMER_SESSION_UI_COPY.clearSessionSolves),
-    keepOneSession: tr(TIMER_SESSION_UI_COPY.keepOneSession),
-    deleteSession: tr(TIMER_SESSION_UI_COPY.deleteSession),
-    create: tr(TIMER_SESSION_UI_COPY.create),
-    createSession: tr(TIMER_SESSION_UI_COPY.createSession),
-    operationFailed: tr(TIMER_SESSION_UI_COPY.operationFailed),
-    clearConfirmation: (name) => tr(timerSessionClearConfirmation(name)),
-    deleteConfirmation: (name) => tr(timerSessionDeleteConfirmation(name)),
-  };
-}
-
-export default function SessionSwitcher({ event, isZh, onSessionsChanged }: Props) {
-  const [state, setState] = useState(readSessionState);
-  const labels = useMemo(sharedLabels, [isZh]);
-  const refresh = useCallback(() => setState(readSessionState()), []);
+export default function SessionSwitcher({
+  event,
+  isZh,
+  onOpenChange,
+  onSessionsChanged,
+  open,
+}: Props) {
+  const [state, setState] = useState(getSessionSnapshot);
+  const labels = useMemo(
+    () => timerSessionSwitcherLabels((['en', 'zh'] as const)[Number(isZh)]),
+    [isZh],
+  );
+  const refresh = useCallback(() => setState(getSessionSnapshot()), []);
 
   const host = useMemo<TimerSessionSwitcherHost>(() => ({
     activate: async (sessionId) => {
@@ -104,6 +77,8 @@ export default function SessionSwitcher({ event, isZh, onSessionsChanged }: Prop
       event={event}
       host={host}
       labels={labels}
+      onOpenChange={(nextOpen) => onOpenChange(nextOpen)}
+      open={open}
       sessions={state.sessions}
     />
   );

@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 
 const app = readFileSync(new URL('./App.tsx', import.meta.url), 'utf8');
 const repository = readFileSync(new URL('./data/timer-repository.ts', import.meta.url), 'utf8');
-const labels = readFileSync(new URL('./timer-session-labels.ts', import.meta.url), 'utf8');
 
 describe('Mobile timer session single-source contract', () => {
   it('mounts the real shared switcher in History with a snapshot-gated host', () => {
@@ -22,11 +21,12 @@ describe('Mobile timer session single-source contract', () => {
   it('associates event selection atomically and keeps labels on shared bilingual copy', () => {
     expect(app).toContain('repository.selectEvent(nextEvent)');
     expect(app).not.toContain('repository.updateSettings({ event: nextEvent })');
-    expect(repository).toContain('associateTimerSessionEvent(');
-    expect(repository).toContain('activateTimerSessionForEvent(');
+    expect(repository).toContain('selectTimerEventSession(');
+    expect(repository).toContain('timerSessionSelectedEvent(');
+    expect(repository).not.toContain('data.settings.autoSessionForEvent\n        ?');
     expect(repository).toContain('moveTimerSolveToSession(');
     expect(repository).not.toMatch(/function\s+sessionEventIn/);
-    expect(labels).toContain('TIMER_SESSION_UI_COPY');
-    expect(labels).not.toMatch(/['"](?:New session|新分组|Delete session|删除分组)['"]/);
+    expect(app).toContain('timerSessionSwitcherLabels(language)');
+    expect(app).not.toMatch(/['"](?:New session|新分组|Delete session|删除分组)['"]/);
   });
 });

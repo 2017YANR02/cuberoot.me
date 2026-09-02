@@ -81,6 +81,7 @@
 - 2026-09-01 智能魔方逐步提示、匹配、偏离修正 requester、Solo 生命周期 controller 与模式 capability 已收敛到 shared；Kociemba cubie 逆运算只保留在 puzzle-solvers，Web 与五端产品层共用 `TimerScrambleStrip`，各宿主只保留 facelets/Worker/BLE 适配。最新 debug APK 已覆盖安装到 OPPO，但安装时手机锁屏，因此新版提示、故意偏离、修正完成和首个 Worker 冷启动延迟仍须解锁后用 GAN 16 UI 实测，不能沿用旧版自动计时证据冒充。
 - 2026-09-01 成绩历史的 8 类自动标签、PB/ao/MBLD 计算、OR 筛选、徽标和响应式折叠已由 Web 与五端共用 shared/timer-ui 实现。随后智能魔方动作收集、相对时钟、cube state、CFOP 检测/识别、HTM、朝向归一化和 `stageSegmentsFor` 也收敛到 runtime-neutral shared；Web Solo、Web 本地/联机与五端 App 共用同一 recorder/producer，App 新成绩会把 `moves/device/stageSegments` 一起写入，可自产跳O/跳P。写入先由仓储稳定 ID 幂等重试，持续失败则保留带原 session 的待保存成绩并给出常驻重试入口；切换或删除原 session 不会把成绩误写进当前 session。最终 8,788,904-byte Debug APK SHA-256 为 `65ea300af612de852f515fec72d29b16fb416e1a3ffd51ab867a92b28b1bb31a`，已覆盖安装并从 OPPO 回读一致；手机锁屏，所以 GAN 16 UI 实拧、标签点击和 TalkBack 仍未记为通过。
 - 2026-09-01 历史 rolling 列继续收敛：值与 strict PB 投影由 shared 一次计算，Web 与五端共用列头、picker、日期分组、逐行值/PB 和窄屏第二行布局；FMC/MBLD 与筛选后不重算语义由同一实现保证，旧 App 每行重复日期和 Web 私有 rolling 循环均已移除。Client 60 项、App 全集 232 项回归、四包 typecheck、Mobile/Next/Harmony production build、Android/iOS sync、Android APK、Xcode iOS Simulator、Harmony unsigned HAP 与 macOS Tauri bundle 均通过，三名独立 agent 最终 GO。最终 8,789,280-byte APK SHA-256 为 `a062067af322d8d71a2386896c44d8093c89c94a8603b00baf347d72e7a9d123`，已覆盖安装到 OPPO 且与设备内 `base.apk` 一致，进程 24998 无 crash/ANR；系统 Chrome 的 320/360、normal/compare、长成绩、多标签、200% 字号和 AX 审计通过。手机仍锁屏，因此真实触摸、TalkBack 与横竖屏实测仍是验收边界。
+- 2026-09-01 分组能力继续单源化：shared 统一 create+activate、项目↔分组联动、删除 selection 与默认名称，timer-ui 统一文案、44px 触点、portal/Tab trap、busy/rename/delete 焦点；Web 首次空库会持久化一个稳定 snapshot，并和五端共用同一受控弹层，旧 App 文案文件已删除。Client 9 files / 74 tests、App 全集 34 files / 233 tests、四包 typecheck、Mobile/Next/Harmony production build、Android/iOS sync、Android 304-task APK、Xcode iOS Simulator、Harmony 33-task unsigned HAP 与 macOS Tauri bundle 均通过。最终 APK 为 8,789,280 bytes / `c07470eddb3507ba956fb9e3ae7be235473880ea38a9859c9d71939190dc0cfd`，已覆盖安装到 OPPO 并从设备回读一致，进程 27880 且无 crash/ANR；真机已验证弹层、IME 不遮挡、第一次 Back 只收键盘/第二次关弹层、新建、重命名及焦点、删除取消/确认/活动回退、清空取消，临时分组删除后原“默认”7 条成绩完整。TalkBack、横屏/大字及其他平台实体设备仍待验。Harmony HAP 为 9,530,319 bytes / `4cda90930301bdc351e04e009ecfbe0aa1607599d01dfd98decf4b1303f55a78`；macOS x64 DMG 为 6,448,538 bytes / `f2b38037ad6e555f8487c5849cf6f682a5b5954885535be949c45e3b608d4bd8` 且 `hdiutil verify` 有效。
 
 ### 阶段 2A：五端一次到位架构
 
@@ -140,7 +141,7 @@
 
 ### 阶段 4：Android 基础 MVP
 
-- [ ] 固定“计时 / 工具 / 我的”三栏按 [mobile-three-tab-contract.md](./mobile-three-tab-contract.md) 全部验收；基础三栏已落地，子页、会话、返回、异常和双平台真机矩阵未完成。
+- [ ] 固定“计时 / 工具 / 我的”三栏按 [mobile-three-tab-contract.md](./mobile-three-tab-contract.md) 全部验收；基础三栏和分组主路径已落地，子页、全局返回/异常、TalkBack 与双平台真机矩阵未完成。
 - [x] 触摸计时、检查时间、`+2`、DNF、删除和备注闭环。
 - [ ] WCA 打乱、项目、session、PB、平均和基础趋势闭环。
   - [x] 三阶 WCA 风格打乱、记录数、最佳、ao5 和 ao12 已完成。
