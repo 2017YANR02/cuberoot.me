@@ -7,6 +7,7 @@ import {
 
 const mocks = vi.hoisted(() => ({
   checkRateLimit: vi.fn(),
+  captureAccountDevice: vi.fn(),
   consumeMobileSessionTicket: vi.fn(),
   consumeWebSessionTicket: vi.fn(),
   douyinMiniProgramConfigured: vi.fn(),
@@ -27,6 +28,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../src/db/connection.js', () => ({ query: vi.fn() }));
 vi.mock('../src/utils/analytics_helpers.js', () => ({ getIp: () => '127.0.0.1' }));
+vi.mock('../src/utils/account_device.js', () => ({ captureAccountDevice: mocks.captureAccountDevice }));
 vi.mock('../src/utils/recon_helpers.js', () => ({ checkRateLimit: mocks.checkRateLimit }));
 vi.mock('../src/utils/session.js', () => ({
   hasFreshEmailGrant: vi.fn(),

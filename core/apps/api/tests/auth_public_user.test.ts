@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   findUserByWcaId: vi.fn(),
   getUserById: vi.fn(),
   publicUser: vi.fn(),
+  captureAccountDevice: vi.fn(),
 }));
 
 vi.mock('../src/db/connection.js', () => ({ query: mocks.query }));
@@ -20,6 +21,7 @@ vi.mock('../src/utils/session.js', () => ({
   verifySession: mocks.verifySession,
   signSession: mocks.signSession,
 }));
+vi.mock('../src/utils/account_device.js', () => ({ captureAccountDevice: mocks.captureAccountDevice }));
 vi.mock('../src/utils/account.js', () => ({
   loginWithIdentity: mocks.loginWithIdentity,
   findUserByWcaId: mocks.findUserByWcaId,
@@ -63,7 +65,7 @@ describe('auth public user ID', () => {
     mocks.verifySession.mockReturnValue({ wcaId: '2017YANR02', name: '颜瑞民' });
 
     const response = await authRoutes.request('/auth/me', {
-      headers: { Authorization: 'Bearer legacy-token' },
+      headers: { Authorization: 'Bearer legacy-token', 'User-Agent': 'test-browser' },
     });
 
     expect(response.status).toBe(200);
@@ -71,6 +73,7 @@ describe('auth public user ID', () => {
     expect(body).toEqual({ user: publicAccount });
     expect(decodeWebSessionUserEnvelope(body)).toEqual(body);
     expect(mocks.findUserByWcaId).toHaveBeenCalledWith('2017YANR02');
+    expect(mocks.captureAccountDevice).toHaveBeenCalledWith(66, 'test-browser');
   });
 
   it('returns the canonical user together with a refreshed legacy token', async () => {
