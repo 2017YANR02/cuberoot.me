@@ -74,6 +74,66 @@ export async function fetchAdminUser(userId: number): Promise<SessionUser> {
   });
   return (await handleApi<{ user: SessionUser }>(response)).user;
 }
+export interface AdminUserIdentity {
+  provider: string;
+  providerUid: string;
+  verifiedAt: string | null;
+  createdAt: string;
+}
+export interface AdminUserRecord {
+  id: number;
+  displayName: string;
+  avatarUrl: string | null;
+  wcaId: string | null;
+  birthDate: string | null;
+  gender: string | null;
+  countryIso2: string | null;
+  regionCode: string | null;
+  cityName: string | null;
+  createdAt: string;
+  updatedAt: string;
+  passwordUpdatedAt: string | null;
+  hasPassword: boolean;
+  emailNotify: boolean;
+  lang: string | null;
+  identities: AdminUserIdentity[];
+}
+export interface AdminUsersResponse {
+  summary: {
+    totalUsers: number;
+    registeredToday: number;
+    registeredLast7Days: number;
+    wcaUsers: number;
+    passwordUsers: number;
+    completedProfiles: number;
+    usersWithoutIdentity: number;
+  };
+  daily: Array<{ date: string; count: number }>;
+  providerCounts: Array<{ provider: string; count: number }>;
+  users: AdminUserRecord[];
+  pagination: { page: number; pageSize: number; total: number };
+}
+export async function fetchAdminUsers(params: {
+  q?: string;
+  provider?: string;
+  page?: number;
+  pageSize?: number;
+  sort?: string;
+  direction?: 'asc' | 'desc';
+}): Promise<AdminUsersResponse> {
+  const search = new URLSearchParams();
+  if (params.q) search.set('q', params.q);
+  if (params.provider && params.provider !== 'all') search.set('provider', params.provider);
+  if (params.page && params.page !== 1) search.set('page', String(params.page));
+  if (params.pageSize) search.set('pageSize', String(params.pageSize));
+  if (params.sort) search.set('sort', params.sort);
+  if (params.direction) search.set('direction', params.direction);
+  const response = await fetch(apiUrl(`/v1/auth/admin/users?${search}`), {
+    headers: authHeaders(false),
+    cache: 'no-store',
+  });
+  return handleApi<AdminUsersResponse>(response);
+}
 export async function updateAdminDisplayName(userId: number, name: string): Promise<SessionUser> {
   const response = await fetch(apiUrl(`/v1/auth/admin/users/${userId}/profile`), {
     method: 'POST',
