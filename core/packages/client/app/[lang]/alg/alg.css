@@ -408,7 +408,6 @@ html[data-theme=dark] .alg-root {
 }
 
 .alg-ep-options,
-.alg-ep-parity-note,
 .alg-ep-parity-section {
   max-width: 1200px;
   margin-right: auto;
@@ -423,17 +422,16 @@ html[data-theme=dark] .alg-root {
   gap: 8px;
   margin-top: 14px;
 }
-.alg-ep-options .alg-ep-parity-note {
-  max-width: none;
-  margin: 0;
-  padding: 0;
+.alg-ep-toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
 }
-.alg-ep-parity-note {
-  margin-top: 14px;
-  margin-bottom: 0;
-  color: var(--muted-foreground);
-  font-size: 13px;
-  line-height: 1.55;
+.alg-ep-parity-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 .alg-ep-parity-section {
   margin-top: 24px;

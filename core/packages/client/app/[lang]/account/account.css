@@ -137,7 +137,8 @@
 .account-profile-editor { margin-bottom: 28px; }
 .account-avatar-editor {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-columns: 48px max-content minmax(0, 1fr);
+  align-items: center;
   gap: 10px 12px;
   margin-bottom: 18px;
 }
@@ -153,14 +154,16 @@
   transform: scale(1.85);
   transform-origin: center 82%;
 }
-.account-avatar-controls { align-self: center; min-width: 0; }
+.account-avatar-controls { display: flex; align-items: center; gap: 8px; align-self: center; min-width: 0; }
 .account-avatar-label { display: block; color: var(--foreground); font-size: 0.88rem; }
-.account-avatar-actions { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+.account-avatar-actions { display: flex; align-items: center; gap: 8px; }
 .account-avatar-actions .auth-link { display: inline-flex; align-items: center; gap: 4px; }
 .account-avatar-file { display: none; }
-.account-avatar-picker { grid-column: 1 / -1; }
+.account-avatar-picker { min-width: 0; }
+.account-avatar-picker[open] { grid-column: 1 / -1; }
 .account-avatar-picker summary {
   width: fit-content;
+  white-space: nowrap;
   color: var(--muted-foreground);
   font-size: 0.8rem;
   cursor: pointer;

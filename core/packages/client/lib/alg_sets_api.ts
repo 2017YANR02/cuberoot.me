@@ -9,6 +9,20 @@ import { authHeaders, handleApi as handle } from './admin-api';
 
 const API_BASE = API_ORIGIN + '/v1/alg/sets';
 
+export interface AlgSetSummary {
+  puzzle: string;
+  setSlug: string;
+  source: string | null;
+  scrapedAt: string | null;
+  updatedAt: string;
+  count: number;
+}
+
+export async function listAlgSets(fresh = false): Promise<AlgSetSummary[]> {
+  const r = await fetch(API_BASE, fresh ? { cache: 'no-cache' } : undefined);
+  return handle<AlgSetSummary[]>(r);
+}
+
 export interface AlgCaseInput {
   caseName: string;
   subgroup: string;
@@ -66,6 +80,22 @@ export async function reorderCases(puzzle: string, set: string, ids: number[]): 
   const r = await fetch(
     `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}/reorder`,
     { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ ids }) },
+  );
+  return handle<{ ok: boolean }>(r);
+}
+
+export async function getAlgCatalogOrder(puzzle: string, fresh = false): Promise<string[]> {
+  const r = await fetch(
+    `${API_BASE}/${encodeURIComponent(puzzle)}/order`,
+    fresh ? { cache: 'no-cache' } : undefined,
+  );
+  return (await handle<{ slugs: string[] }>(r)).slugs;
+}
+
+export async function reorderAlgCatalog(puzzle: string, slugs: string[]): Promise<{ ok: boolean }> {
+  const r = await fetch(
+    `${API_BASE}/${encodeURIComponent(puzzle)}/order`,
+    { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ slugs }) },
   );
   return handle<{ ok: boolean }>(r);
 }

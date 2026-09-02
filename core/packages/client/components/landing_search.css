@@ -335,6 +335,25 @@
   padding: 0.5rem 0.7rem;
 }
 
+.landing-search-item--alg {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.landing-search-item--alg .landing-search-item-name {
+  min-width: 0;
+}
+
+.landing-search-alg-thumb {
+  display: flex;
+  flex: 0 0 36px;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  line-height: 0;
+}
+
 .landing-search-item--rich .country-flag {
   flex-shrink: 0;
   width: 1.4em !important;

@@ -84,11 +84,11 @@ describe('SQ1 PBL mnemonic guide', () => {
 
     const category = readFileSync(new URL('../components/AlgCategoryView.tsx', import.meta.url), 'utf8');
     const detail = readFileSync(new URL('../app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx', import.meta.url), 'utf8');
-    const page = readFileSync(new URL('../app/[lang]/alg/sq1/pbl-notation/page.tsx', import.meta.url), 'utf8');
+    const page = readFileSync(new URL('../app/[lang]/alg/sq1/karnaukh-notation/page.tsx', import.meta.url), 'utf8');
     const css = readFileSync(new URL('../app/[lang]/alg/alg.css', import.meta.url), 'utf8');
 
-    expect(category).toContain('href="/alg/sq1/pbl-notation"');
-    expect(detail).toContain('href="/alg/sq1/pbl-notation"');
+    expect(category).toContain('href="/alg/sq1/karnaukh-notation"');
+    expect(detail).toContain('href="/alg/sq1/karnaukh-notation"');
     expect(page).not.toMatch(/AlgPlayer|parseSq1|applySq1/);
     expect(css).toMatch(/\.alg-alg-note\s*\{[^}]*white-space:\s*pre-line/s);
   });

@@ -135,9 +135,14 @@ function AvatarEditor() {
       <div className="account-avatar-controls">
         <span className="account-avatar-label">{t('头像', 'Avatar')}</span>
         <div className="account-avatar-actions">
-          <button type="button" className="auth-link" disabled={saving} onClick={() => fileRef.current?.click()}>
+          <button
+            type="button"
+            className="auth-link"
+            aria-label={t('上传图片', 'Upload image')}
+            disabled={saving}
+            onClick={() => fileRef.current?.click()}
+          >
             <Upload size={13} aria-hidden="true" />
-            {t('上传图片', 'Upload image')}
           </button>
           <input
             ref={fileRef}
@@ -428,9 +433,6 @@ function BasicProfileEditor() {
   const genderOptions: Array<{ value: AccountGender; label: string }> = [
     { value: 'male', label: t('男', 'Male') },
     { value: 'female', label: t('女', 'Female') },
-    { value: 'nonbinary', label: t('非二元', 'Non-binary') },
-    { value: 'other', label: t('其他', 'Other') },
-    { value: 'undisclosed', label: t('不愿透露', 'Prefer not to say') },
   ];
   const selectedRegion = regions.find((region) => region.code === draft.regionCode);
 
@@ -461,7 +463,7 @@ function BasicProfileEditor() {
           disabled={saving}
           onChange={(event) => updateDraft({ gender: (event.target.value || null) as AccountGender | null })}
         >
-          <option value="">{t('未填写', 'Not set')}</option>
+          <option value="" hidden>{t('未填写', 'Not set')}</option>
           {genderOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
       </div>

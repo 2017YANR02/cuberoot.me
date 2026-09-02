@@ -812,7 +812,7 @@ export function WcaLinkPrompt({ returnTo, onSkip }: { returnTo?: string | null; 
   const loginWithWca = useAuthStore((s) => s.loginWithWca);
   return (
     <>
-      <h2 className="auth-title">{t('你有 WCA ID 吗?', 'Do you have a WCA ID?')}</h2>
+      <h2 className="auth-title">{t('您是否参加过 WCA 比赛？', 'Have you competed in a WCA competition?')}</h2>
       <div className="auth-flow">
         <p className="auth-lead">
           {t('WCA ID 是参加过 WCA 官方比赛后拿到的编号,形如 ', 'A WCA ID is the number you get after competing in an official WCA competition, like ')}
@@ -829,10 +829,6 @@ export function WcaLinkPrompt({ returnTo, onSkip }: { returnTo?: string | null; 
         <button type="button" className="auth-textbtn" onClick={onSkip}>
           {t('我还没有 WCA ID', "I don't have one yet")}
         </button>
-        <p className="auth-hint auth-fineprint">
-          {t('授权在 WCA 官网完成,我们看不到你的密码;以后随时可以在账号设置里绑定。',
-            'Authorization happens on the WCA website — we never see your password. You can link it any time from account settings.')}
-        </p>
       </div>
     </>
   );

@@ -25,7 +25,7 @@
 - 967 个 case 的名称、公式和数据库 position 均唯一，公式全部通过站内 Square-1 parser、逆序 setup 与 `validateAlgCase` 契约。
 - 公式库运行时唯一数据源是 PostgreSQL `alg_sets/alg_cases`；`data/sq1-pbl/cases.json` 只是可审查的维护输入与 fixture。
 - 每个 case 的可执行 `AlgEntry.alg` 来自规范化 `solution`；原表的 `recommendation.algorithm` 是宏/助记文本，只进入 note，绝不交给播放器。
-- 助记说明独立放在 `/{lang}/alg/sq1/pbl-notation`：103 个 Help 页定义逐项保真，31 个出现但未定义的形式明确列出且不猜解；公式集首页与 case 详情都提供真链接。
+- Karnaukh 记号说明独立放在 `/{lang}/alg/sq1/karnaukh-notation`：103 个 Help 页定义逐项保真，31 个出现但未定义的形式明确列出且不猜解；公式集首页与 case 详情都提供真链接。
 - `M/Db` 的 `Raw Algs` 公式为空，已从 `Standard Algs Data!T208` 恢复为：
   `(1, 0) / (-3, 0) / (3, 0) / (-1, 2) / (0, 3) / (-3, -3) / (4, -2) / (-1, 0)`。
 - 原表刻意排除在推荐切片器外的 `Ga/Gd`、`Ga/Jb`、`Gb/Gc`、`Gb/Jb` 仍完整导入，并保留 `used:false` 来源属性。
@@ -86,7 +86,7 @@
 - [x] `--public-write`、sheet/media/formula-media 网页导出路径退役；维护命令只更新公式源、Finder 默认值和基线。
 - [x] client/server typecheck、10 个定向测试文件共 95 项测试、Skill 校验和最终 `git diff --check`。
 - [x] 桌面与 390px 临时视口（页面可用宽 312px）浏览器验证：PBL 卡片、44 分组、`M/Db` 图示/动画、Finder 入口均可用，公式库、22-case 分组页、case 页和 Finder 均无整页横向溢出。
-- [x] 桌面与 390px 窄屏验证助记说明页、公式集入口、case 详情入口和 103 项表格；回归测试锁定来源定义与未定义边界。
+- [x] 桌面与 390px 窄屏验证 Karnaukh 记号页、公式集入口、case 详情入口和 103 项表格；回归测试锁定来源定义与未定义边界。
 
 ## 交付规则
 
