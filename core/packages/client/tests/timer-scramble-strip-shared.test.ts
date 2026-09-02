@@ -4,6 +4,7 @@ import LegacyScrambleHintText from '@/app/[lang]/timer/_components/ScrambleHintT
 import {
   TimerScrambleHintText,
   TimerScrambleStrip,
+  TimerWcaScrambleSource,
   shouldIgnoreTimerTarget,
   type TimerScrambleStripProps,
 } from '@cuberoot/timer-ui';
@@ -109,6 +110,50 @@ describe('shared TimerScrambleStrip', () => {
     ]);
   });
 
+  it('keeps WCA provenance, extra numbering and navigation in one non-bubbling row', () => {
+    const activate = vi.fn();
+    const navigate = vi.fn();
+    const longName = 'A Very Long Competition Name That Must Stay Readable 2026';
+    const strip = render({
+      children: createElement(TimerWcaScrambleSource, {
+        children: createElement('span', { className: 'scramble-pool-run' }, '1/2 practiced'),
+        competitionName: longName,
+        country: 'CN',
+        eventLabel: '2×2 Cube',
+        eventId: '222',
+        groupId: 'A',
+        href: '/scramble/gen?comp=LongCompetition2026',
+        isExtra: true,
+        onNavigate: navigate,
+        roundTypeId: 'f',
+        scrambleNumber: 1,
+        title: 'View this competition',
+      }),
+      onActivate: activate,
+    });
+    const source = strip.querySelector<HTMLAnchorElement>('.scramble-src')!;
+
+    const row = source.closest<HTMLElement>('.scramble-src-row')!;
+    expect(row.dataset.noTimer).toBe('true');
+    expect(source.dataset.noTimer).toBe('true');
+    expect(source.getAttribute('href')).toBe('/scramble/gen?comp=LongCompetition2026');
+    expect(source.querySelector('.scramble-src-name')?.textContent).toBe(longName);
+    expect(source.querySelector('.scramble-src-meta')?.textContent).toBe('Fi,A,E1');
+    expect(source.querySelector('.country-flag')).not.toBeNull();
+    expect(source.querySelector('.scramble-src-evt')).not.toBeNull();
+    expect(source.getAttribute('aria-label')).toBe(
+      'View this competition: A Very Long Competition Name That Must Stay Readable 2026, 2×2 Cube, Fi,A,E1',
+    );
+
+    act(() => source.click());
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(activate).not.toHaveBeenCalled();
+
+    act(() => row.click());
+    act(() => row.querySelector<HTMLElement>('.scramble-pool-run')!.click());
+    expect(activate).not.toHaveBeenCalled();
+  });
+
   it('owns the empty-state wrapper and does not let a nested retry key activate the strip', () => {
     const activate = vi.fn();
     const retry = vi.fn();
@@ -157,6 +202,8 @@ describe('shared TimerScrambleStrip', () => {
     expect(rootRule).not.toContain('word-spacing');
     expect(css).toMatch(/\.scramble-strip \.scramble-moves,[\s\S]*?word-spacing:\s*0\.25em;/);
     expect(css).toMatch(/\.timer-scramble-source-meta[\s\S]*?word-spacing:\s*normal;/);
+    expect(css).toMatch(/\.scramble-src[\s\S]*?min-height:\s*44px;/);
+    expect(css).toMatch(/\.scramble-src \.country-flag,[\s\S]*?width:\s*1\.333333em !important;[\s\S]*?margin-right:\s*0;/);
     expect(css).toMatch(/@media \(max-width: 540px\)[\s\S]*?overflow-x:\s*clip;/);
 
     const strip = render({ scramble: 'R'.repeat(500) });

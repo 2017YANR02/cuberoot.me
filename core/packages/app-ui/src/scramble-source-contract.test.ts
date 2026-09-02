@@ -208,8 +208,11 @@ describe('mobile scramble-source parity contract', () => {
     expect(app).not.toContain('type="date"');
     expect(css).not.toMatch(/\.mobile-wca-date-range\s+input/);
     expect(app).toContain('loadMobileWcaCompetitions(language)');
-    expect(app).toContain('currentRealCountry && <Flag iso2={currentRealCountry} />');
-    expect(app).toContain('mobile-scramble-source timer-scramble-source-meta');
+    expect(app).toContain('<TimerWcaScrambleSource');
+    expect(app).toContain('currentRealCompetition?.selectedDisplayName');
+    expect(app).toContain('onNavigate={() => openToolsRoute(');
+    expect(app).toContain('nonOptimal={currentReal?.nonOptimal');
+    expect(css).not.toMatch(/\.mobile-scramble-source\s*\{/);
     expect(app).toContain('competition.id === competitionId');
     expect(app).toContain('loadMobileWcaCompetitionScrambles(competitionId, fetch, signal)');
     expect(app).toContain('...wcaSourceSettingsRef.current');

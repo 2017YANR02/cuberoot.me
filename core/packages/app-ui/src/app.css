@@ -364,33 +364,6 @@ button {
   overflow: hidden;
 }
 
-.mobile-scramble-source {
-  display: flex;
-  max-width: 86vw;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  margin: 0;
-  color: var(--muted-foreground);
-  font-size: 0.68rem;
-  line-height: 1.4;
-  text-align: center;
-}
-
-.mobile-scramble-source strong {
-  overflow: hidden;
-  max-width: 55vw;
-  color: var(--foreground);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mobile-scramble-source > svg {
-  width: 14px;
-  height: 14px;
-  flex: 0 0 auto;
-}
-
 .mobile-cube-preview {
   display: inline-flex;
   width: 152px;

@@ -140,34 +140,6 @@
   font-size: 12px;
 }
 
-/* WCA 真实打乱来源行(国旗 + 比赛名 + 项目 + 轮次 + 打卡 chip),复刻首页 RecentScrambles 的来源行。
-   父 .scramble-strip 是 flex-wrap 行容器(见 @cuberoot/timer-ui/scramble-strip.css),所以本行必须 flex-basis:100% 独占整行,
-   才能永远换到打乱公式下一行;否则短打乱(2×2/金字塔)会和公式挤在同一行。内部再用 flex 居中排布
-   来源徽标 + 打卡 chip。字体与字距由共享 timer-scramble-source-meta 统一。 */
-.scramble-src-row {
-  flex-basis: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-.scramble-src {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  font-size: var(--timer-scramble-src-fs);
-  line-height: 1.3;
-  text-decoration: none;
-  color: var(--muted-foreground);
-}
-.scramble-src-name { font-weight: 600; color: var(--foreground); }
-.scramble-src-evt { width: 1.05em; height: 1.05em; flex-shrink: 0; }
-.scramble-src-meta { color: var(--muted-foreground); }
-
 /* 「按难度生成」的打乱行:这条打乱是哪个阶段、几步,外加按需展开的一条最优解。
    同 .scramble-src-row 独占整行(父容器 flex-wrap),不加外框,层级只靠 gap 与字重。
    答案本身是公式,走等宽字体;其余走界面字体并复位 word-spacing(父级是等宽打乱区)。 */

@@ -145,6 +145,8 @@ export type {
   TimerScrambleStripProps,
   TimerScrambleVerificationLabels,
 } from './TimerScrambleStrip';
+export { TimerWcaScrambleSource } from './TimerWcaScrambleSource';
+export type { TimerWcaScrambleSourceProps } from './TimerWcaScrambleSource';
 export { TimerPrintDocument } from './TimerPrintDocument';
 export type { TimerPrintDocumentProps } from './TimerPrintDocument';
 export { RoomQrModal } from './RoomQrModal';

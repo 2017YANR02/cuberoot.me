@@ -62,7 +62,7 @@ Web 的当前规则不是禁用“真题”：来源仍保持 `real`，然后使
 | F1 | 已修复 | 完整 `TimerStoreData` 的异步回调原先没有统一 revision gate。 | `LatestSnapshotGate` 已接入 App 的 add/update/delete/import/settings 全 mutation；只有最新 revision 可应用完整快照，最新失败 reload canonical store。纯逻辑乱序 fixture 与 App source guard 已通过。 |
 | F2 | 已修复 | 真题缓存原先接受远未来 `fetchedAt`。 | 现在拒绝非有限、负数及超过当前时间 5 分钟容差的时间戳；边界 fixture 已锁定。 |
 | F3 | 已修复（待真机） | 2/129 个来源格子是 `custom` 的 manual-only 边界。 | shared capability/空槽 predicate、Mobile ready/`—`/可起表/attempt snapshot 已锁定；仍待 OPPO 触摸与重启实证，且不能用 333 fallback。 |
-| F4 | 高（进行中） | mapped `real` 的完整来源配置尚未全部关闭。 | 日期/比赛/搜索/国旗/轮次/组别、2×2 类型/口径、完整 WCA difficulty/merge/optimal 与 222/pyra/skewb 按步数已迁到 shared/timer-ui；完整来源元数据、逐类用户错误文案及全组合 identity/真机矩阵仍未完成。 |
+| F4 | 高（进行中） | mapped `real` 的完整来源配置尚未全部关闭。 | 日期/比赛/搜索/国旗/轮次/组别、2×2 类型/口径、完整 WCA difficulty/merge/optimal、222/pyra/skewb 按步数与完整来源元数据已迁到 shared/timer-ui；来源进度/打卡、逐类用户错误文案及全组合 identity/真机矩阵仍未完成。 |
 | F5 | 已修复 | mapped `real` 的暂态失败策略曾与 Web 不一致。 | Web/Mobile 现在共用 `startTimerRealScrambleRetry`：立即尝试一次、6 次退避、共 7 次；confirmed empty 不重试，取消会终止当前 fetch/timeout，任何分支都不得随机回退。 |
 | F6 | 已修复 | 来源回调原先只依赖 disabled 控件阻止计时中修改。 | 共享控件仍有真实 disabled，Mobile `onChange` 现在另有 phase guard 与提示。 |
 | F7 | 已修复 | Web `wca_pool.ts` 两处注释曾错误声称 caller 会 fallback 到 generated scramble。 | 注释已改为 transient 保持空槽/重试、confirmed empty 显式报告，明确禁止 substitution。 |
