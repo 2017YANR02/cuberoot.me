@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
+import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState, useQueryStates } from 'nuqs';
 import { ChevronLeft, ChevronRight, Loader2, Monitor, Search, Smartphone, Tablet } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
@@ -146,8 +146,10 @@ export default function AdminUsersPage() {
   const [direction, setDirection] = useQueryState(
     'direction', parseAsStringEnum<SortDirection>(['asc', 'desc']).withDefault('desc'),
   );
-  const [from, setFrom] = useQueryState('from', parseAsString.withDefault(''));
-  const [to, setTo] = useQueryState('to', parseAsString.withDefault(''));
+  const [{ from, to }, setRange] = useQueryStates({
+    from: parseAsString.withDefault(''),
+    to: parseAsString.withDefault(''),
+  });
   const [queryDraft, setQueryDraft] = useState(q);
   const rangeProblem = activityRangeError(from, to, today);
 
@@ -200,8 +202,8 @@ export default function AdminUsersPage() {
   const totalPages = Math.max(1, Math.ceil((data?.pagination.total ?? 0) / PAGE_SIZE));
   const legacyFrom = data?.daily.at(0)?.date ?? '';
   const legacyTo = data?.daily.at(-1)?.date ?? '';
-  const effectiveFrom = data?.activity?.from || legacyFrom || from;
-  const effectiveTo = data?.activity?.to || legacyTo || to;
+  const effectiveFrom = from || data?.activity?.from || legacyFrom;
+  const effectiveTo = to || data?.activity?.to || legacyTo;
   const activePreset = RANGE_PRESETS.find((days) => effectiveTo === today && effectiveFrom === rangeFromDays(days, today));
 
   const submitSearch = (event: FormEvent) => {
@@ -214,7 +216,7 @@ export default function AdminUsersPage() {
     void setPage(null);
   };
   const changeRange = (nextFrom: string, nextTo: string) => {
-    void Promise.all([setFrom(nextFrom || null), setTo(nextTo || null)]);
+    void setRange({ from: nextFrom || null, to: nextTo || null });
   };
   const selectPreset = (days: number) => changeRange(rangeFromDays(days, today), today);
 
