@@ -41,6 +41,24 @@
       "./kociemba/prune": "runtime-neutral",
       "./kociemba/randomstate": "runtime-neutral",
       "./kociemba/search": "runtime-neutral",
+      "./cross-trainer": "runtime-neutral",
+      "./cross-trainer/block": "runtime-neutral",
+      "./cross-trainer/corpus-data": "runtime-neutral",
+      "./cross-trainer/corpus": "runtime-neutral",
+      "./cross-trainer/dist": "runtime-neutral",
+      "./cross-trainer/eo": "runtime-neutral",
+      "./cross-trainer/eoline": "runtime-neutral",
+      "./cross-trainer/fill": "runtime-neutral",
+      "./cross-trainer/model": "runtime-neutral",
+      "./cross-trainer/multi": "runtime-neutral",
+      "./cross-trainer/pair": "runtime-neutral",
+      "./cross-trainer/reach": "runtime-neutral",
+      "./cross-trainer/rotate": "runtime-neutral",
+      "./cross-trainer/sample": "runtime-neutral",
+      "./cross-trainer/symmetry": "runtime-neutral",
+      "./cross-trainer/tracked": "runtime-neutral",
+      "./cross-trainer/xcross": "runtime-neutral",
+      "./cross-trainer/xpair": "runtime-neutral",
       "./pyra": "runtime-neutral",
       "./sia123": "runtime-neutral",
       "./sia222": "runtime-neutral",
@@ -211,6 +229,96 @@
       "types": "./src/kociemba/search.ts",
       "node": "./dist/kociemba/search.js",
       "default": "./src/kociemba/search.ts"
+    },
+    "./cross-trainer": {
+      "types": "./src/cross-trainer/index.ts",
+      "node": "./dist/cross-trainer/index.js",
+      "default": "./src/cross-trainer/index.ts"
+    },
+    "./cross-trainer/block": {
+      "types": "./src/cross-trainer/block.ts",
+      "node": "./dist/cross-trainer/block.js",
+      "default": "./src/cross-trainer/block.ts"
+    },
+    "./cross-trainer/corpus-data": {
+      "types": "./src/cross-trainer/corpus-data.ts",
+      "node": "./dist/cross-trainer/corpus-data.js",
+      "default": "./src/cross-trainer/corpus-data.ts"
+    },
+    "./cross-trainer/corpus": {
+      "types": "./src/cross-trainer/corpus.ts",
+      "node": "./dist/cross-trainer/corpus.js",
+      "default": "./src/cross-trainer/corpus.ts"
+    },
+    "./cross-trainer/dist": {
+      "types": "./src/cross-trainer/dist.ts",
+      "node": "./dist/cross-trainer/dist.js",
+      "default": "./src/cross-trainer/dist.ts"
+    },
+    "./cross-trainer/eo": {
+      "types": "./src/cross-trainer/eo.ts",
+      "node": "./dist/cross-trainer/eo.js",
+      "default": "./src/cross-trainer/eo.ts"
+    },
+    "./cross-trainer/eoline": {
+      "types": "./src/cross-trainer/eoline.ts",
+      "node": "./dist/cross-trainer/eoline.js",
+      "default": "./src/cross-trainer/eoline.ts"
+    },
+    "./cross-trainer/fill": {
+      "types": "./src/cross-trainer/fill.ts",
+      "node": "./dist/cross-trainer/fill.js",
+      "default": "./src/cross-trainer/fill.ts"
+    },
+    "./cross-trainer/model": {
+      "types": "./src/cross-trainer/model.ts",
+      "node": "./dist/cross-trainer/model.js",
+      "default": "./src/cross-trainer/model.ts"
+    },
+    "./cross-trainer/multi": {
+      "types": "./src/cross-trainer/multi.ts",
+      "node": "./dist/cross-trainer/multi.js",
+      "default": "./src/cross-trainer/multi.ts"
+    },
+    "./cross-trainer/pair": {
+      "types": "./src/cross-trainer/pair.ts",
+      "node": "./dist/cross-trainer/pair.js",
+      "default": "./src/cross-trainer/pair.ts"
+    },
+    "./cross-trainer/reach": {
+      "types": "./src/cross-trainer/reach.ts",
+      "node": "./dist/cross-trainer/reach.js",
+      "default": "./src/cross-trainer/reach.ts"
+    },
+    "./cross-trainer/rotate": {
+      "types": "./src/cross-trainer/rotate.ts",
+      "node": "./dist/cross-trainer/rotate.js",
+      "default": "./src/cross-trainer/rotate.ts"
+    },
+    "./cross-trainer/sample": {
+      "types": "./src/cross-trainer/sample.ts",
+      "node": "./dist/cross-trainer/sample.js",
+      "default": "./src/cross-trainer/sample.ts"
+    },
+    "./cross-trainer/symmetry": {
+      "types": "./src/cross-trainer/symmetry.ts",
+      "node": "./dist/cross-trainer/symmetry.js",
+      "default": "./src/cross-trainer/symmetry.ts"
+    },
+    "./cross-trainer/tracked": {
+      "types": "./src/cross-trainer/tracked.ts",
+      "node": "./dist/cross-trainer/tracked.js",
+      "default": "./src/cross-trainer/tracked.ts"
+    },
+    "./cross-trainer/xcross": {
+      "types": "./src/cross-trainer/xcross.ts",
+      "node": "./dist/cross-trainer/xcross.js",
+      "default": "./src/cross-trainer/xcross.ts"
+    },
+    "./cross-trainer/xpair": {
+      "types": "./src/cross-trainer/xpair.ts",
+      "node": "./dist/cross-trainer/xpair.js",
+      "default": "./src/cross-trainer/xpair.ts"
     },
     "./pyra": {
       "types": "./src/pyra.ts",
