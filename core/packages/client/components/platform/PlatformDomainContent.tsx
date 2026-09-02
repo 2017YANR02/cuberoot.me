@@ -5,6 +5,7 @@ import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { loadPlatformLessonMedia, type PlatformLessonMedia } from '@/lib/platform-gateway';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
+import { PlatformQrLanding } from './PlatformQrLanding';
 
 function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -124,10 +125,11 @@ function OrderItems({ items }: { items: unknown[] }) {
   );
 }
 
-export function PlatformDomainContent({ definition, entity, params }: {
+export function PlatformDomainContent({ definition, entity, params, previewRedirect }: {
   definition: PlatformRouteDefinition;
   entity?: PlatformEntity;
   params: Record<string, string>;
+  previewRedirect?: boolean;
 }) {
   const t = useT();
   if (!entity?.data) return null;
@@ -208,8 +210,7 @@ export function PlatformDomainContent({ definition, entity, params }: {
   }
 
   if (definition.id === 'qr') {
-    const target = string(data.targetValue) ?? string(data.target);
-    return target ? <section className="platform-domain-content"><h2>{t('二维码目标', 'QR destination')}</h2><p>{target}</p></section> : null;
+    return <PlatformQrLanding entity={entity} previewRedirect={previewRedirect} />;
   }
 
   void params;

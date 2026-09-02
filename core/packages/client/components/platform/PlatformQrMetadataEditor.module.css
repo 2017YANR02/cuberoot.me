@@ -1,0 +1,142 @@
+.linksEditor {
+  display: grid;
+  max-width: 920px;
+  gap: 14px;
+  margin-top: 26px;
+}
+
+.linksHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+
+.linksHeading > div {
+  display: grid;
+  gap: 5px;
+}
+
+.linksHeading h3,
+.linksHeading p,
+.empty {
+  margin: 0;
+}
+
+.linksHeading h3 {
+  font-size: 0.96rem;
+}
+
+.linksHeading p,
+.empty {
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.linkList {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border-default);
+  list-style: none;
+}
+
+.linkList li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding-block: 13px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.linkFields {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.55fr) minmax(180px, 1fr) minmax(140px, 0.8fr);
+  gap: 10px;
+}
+
+.linkFields label {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+}
+
+.linkFields input {
+  min-width: 0;
+  width: 100%;
+  padding: 9px 10px;
+}
+
+.linkActions {
+  display: flex;
+  gap: 3px;
+}
+
+.linkActions button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  color: var(--muted-foreground);
+  background: transparent;
+  cursor: pointer;
+}
+
+.linkActions button:hover:not(:disabled) {
+  color: var(--foreground);
+  background: var(--accent-soft);
+}
+
+.linkActions button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.linkActions svg,
+.footer svg {
+  width: 16px;
+  height: 16px;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin-top: 18px;
+}
+
+.footer a {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  font-weight: 680;
+  text-decoration: none;
+}
+
+.footer a:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 720px) {
+  .linkList li,
+  .linkFields {
+    grid-template-columns: 1fr;
+  }
+
+  .linkActions {
+    justify-content: flex-start;
+  }
+}
