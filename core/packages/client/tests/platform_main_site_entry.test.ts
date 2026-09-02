@@ -68,7 +68,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(home).not.toMatch(/\bPLATFORM_ROUTES\b|\bexecutePlatformAction\b|<PlatformDomainActions\b/);
     expect(routeView).toContain('const permissionDenied = error instanceof PlatformPermissionError;');
     expect(routeView).toMatch(/!permissionDenied \? <PlatformDomainContent/);
-    expect(routeView).toMatch(/permissionDenied \|\| \(\['membership', 'me-membership'\]/);
+    expect(routeView).toMatch(/permissionDenied \|\| definition\.id === 'qr' \|\| \(\['membership', 'me-membership'\]/);
   });
 
   it('uses AppLink and disables prefetch for high-cardinality search results', () => {
