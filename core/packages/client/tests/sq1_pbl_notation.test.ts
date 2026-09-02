@@ -7,6 +7,7 @@ import {
   SQ1_PBL_MNEMONIC_VARIANT_NOTE,
   SQ1_PBL_UNDEFINED_MNEMONICS,
 } from '@/lib/sq1-pbl-mnemonics';
+import { generatedSq1KarnaukhNotation, sq1KarnaukhNotation } from '@/lib/sq1-pbl-notation';
 
 type SourceCase = {
   recommendation: { algorithm: string } | null;
@@ -75,6 +76,21 @@ describe('SQ1 PBL mnemonic guide', () => {
     expect(lines).toHaveLength(1393);
   });
 
+  it('separates Karnaukh notation from the legacy source label', () => {
+    expect(sq1KarnaukhNotation('3,0/', {
+        en: 'Source mnemonic: 0-1 D\' e\n01',
+        zh: '原表助记：0-1 D\' e\n01',
+    })).toEqual({ en: '0-1 D\' e\n01', zh: '0-1 D\' e\n01' });
+    expect(sq1KarnaukhNotation('')).toBeNull();
+  });
+
+  it('generates readable Karnaukh notation for every numeric SQ1 set', () => {
+    expect(generatedSq1KarnaukhNotation('(3,0)/(0,-3)/(2,-1)/(-4,2)/(5,2)/(-5,-2)'))
+      .toBe("U D' u t' K K'");
+    expect(generatedSq1KarnaukhNotation('(6,-5)/(0,1)')).toBe('6-5 01');
+    expect(generatedSq1KarnaukhNotation('/(3,0)/')).toBe('/ U /');
+  });
+
   it('points to the original Help ranges and keeps UI navigation discoverable', () => {
     expect(SQ1_PBL_MNEMONIC_SOURCE).toMatchObject({
       definitionRange: 'Help!B18:N43',
@@ -91,5 +107,6 @@ describe('SQ1 PBL mnemonic guide', () => {
     expect(detail).toContain('href="/alg/sq1/karnaukh-notation"');
     expect(page).not.toMatch(/AlgPlayer|parseSq1|applySq1/);
     expect(css).toMatch(/\.alg-alg-note\s*\{[^}]*white-space:\s*pre-line/s);
+    expect(css).toMatch(/\.alg-alg-text\.is-karnaukh\s*\{[^}]*white-space:\s*pre-line/s);
   });
 });

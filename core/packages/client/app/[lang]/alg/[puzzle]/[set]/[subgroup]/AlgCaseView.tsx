@@ -16,6 +16,7 @@
  * {@link AdminCaseEditor}、「校验」只扫这张、公式行可拖(顺序 = 主推解法)。
  */
 import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from '@/components/AppLink';
 import { ArrowLeft, ExternalLink, Copy, Check, Shuffle, Pencil, FlipHorizontal2, HelpCircle } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
@@ -58,14 +59,25 @@ import { useCopy } from '@/hooks/useCopy';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
+import Sq1NotationSelect from '@/components/Sq1NotationSelect';
+import {
+  SQ1_NOTATION_MODES,
+  sq1NotationText,
+  type Sq1NotationMode,
+} from '@/lib/sq1-pbl-notation';
 import { SCRAMBLE_KINDS, type ScrambleKind } from '@/lib/trainer-scramble';
 import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
 import { parseAsBoolean, parseAsStringEnum, useQueryState } from 'nuqs';
 
 /** 打乱行(和列表卡片同款,sq1 之类会重排格式)。 */
-function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
+function SetupLine({ puzzle, setup, sq1NotationMode = 'compact' }: {
+  puzzle: string;
+  setup: string;
+  sq1NotationMode?: Sq1NotationMode;
+}) {
   const { copied, copy } = useCopy();
-  const text = formatScrambleForEvent(puzzle, setup);
+  const sq1Text = puzzle === 'sq1' ? sq1NotationText(setup, sq1NotationMode) : null;
+  const text = sq1Text ? tr(sq1Text) : formatScrambleForEvent(puzzle, setup);
   return (
     <div className="alg-case-standard">
       <Shuffle size={13} className="alg-case-icon" aria-label={tr({ zh: '打乱', en: 'Setup' })} />
@@ -78,13 +90,16 @@ function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
 }
 
 /** 可播放的公式行:切换同一朝向旁边的共享播放器。 */
-function PlayableAlgRow({ entry, puzzle, mirror, ori = 0, viewAngle, selected, onSelect }: {
+function PlayableAlgRow({ entry, puzzle, mirror, ori = 0, viewAngle, sq1NotationMode = 'compact', sourceKarnaukh, selected, onSelect }: {
   entry: AlgEntry; puzzle: AlgPuzzle;
   /** 有值 = 这个 set 吃镜像系统,行尾出 ⧉;`partner` 是伙伴 case 名(没建链时为 null) */
   mirror?: { partner: string | null; self: string };
   /** 这条公式在第几个视角(0=FR),镜像面板要拿它算落点 */
   ori?: number;
   viewAngle: CaseViewAngle;
+  sq1NotationMode?: Sq1NotationMode;
+  /** PBL 的 note 是原表卡脑壳记号；其他套系的 note 仍是普通说明。 */
+  sourceKarnaukh?: boolean;
   selected: boolean;
   onSelect: () => void;
 }) {
@@ -92,6 +107,11 @@ function PlayableAlgRow({ entry, puzzle, mirror, ori = 0, viewAngle, selected, o
   const { copied, copy } = useCopy();
   const angledAlg = caseViewAlg(entry.alg, viewAngle);
   const shown = formatScrambleForEvent(puzzle, displayAlg(angledAlg));
+  const sq1Notation = puzzle === 'sq1'
+    ? sq1NotationText(displayAlg(angledAlg), sq1NotationMode, sourceKarnaukh ? entry.note : undefined)
+    : null;
+  const shownText = sq1Notation ? tr(sq1Notation) : shown;
+  const isKarnaukh = puzzle === 'sq1' && sq1NotationMode === 'karnaukh';
   const len = entry.stm == null ? null : stm(displayAlg(angledAlg));
   return (
     <>
@@ -103,11 +123,11 @@ function PlayableAlgRow({ entry, puzzle, mirror, ori = 0, viewAngle, selected, o
         onClick={onSelect}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); } }}
       >
-        <span className="alg-alg-text">
-          {shown}
-          {entry.note && <span className="alg-alg-note">({tr(entry.note)})</span>}
+        <span className={`alg-alg-text${isKarnaukh ? ' is-karnaukh' : ''}`}>
+          {shownText}
+          {!sourceKarnaukh && entry.note && <span className="alg-alg-note">({tr(entry.note)})</span>}
         </span>
-        {len != null && <span className="alg-alg-len" title="STM">{len}</span>}
+        {!isKarnaukh && len != null && <span className="alg-alg-len" title="STM">{len}</span>}
         {mirror && (
           <button
             type="button"
@@ -119,7 +139,7 @@ function PlayableAlgRow({ entry, puzzle, mirror, ori = 0, viewAngle, selected, o
             <FlipHorizontal2 size={14} />
           </button>
         )}
-        <button type="button" className="alg-alg-copy-btn" onClick={(e) => { e.stopPropagation(); copy(shown); }} title="copy">
+        <button type="button" className="alg-alg-copy-btn" onClick={(e) => { e.stopPropagation(); copy(shownText); }} title="copy">
           {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
         </button>
       </div>
@@ -130,7 +150,8 @@ function PlayableAlgRow({ entry, puzzle, mirror, ori = 0, viewAngle, selected, o
   );
 }
 
-export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { puzzle: AlgPuzzle; set: string; caseObj: AlgCase; data: AlgFile }) {
+export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, editMode = false }: { puzzle: AlgPuzzle; set: string; caseObj: AlgCase; data: AlgFile; editMode?: boolean }) {
+  const router = useRouter();
   /**
    * 显示的这张 case 自己拿一份 —— admin 改完 / 拖完就地更新,不回写上层的 `data`:
    * 上层是按 **slug** 解析出这张 case 的,改了名字再回写会当场解析失败(整页变「没找到」)。
@@ -149,6 +170,11 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
     'black',
     parseAsBoolean.withDefault(true),
   );
+  const isSq1Pbl = puzzle === 'sq1' && set === 'pbl';
+  const [sq1NotationMode, setSq1NotationMode] = useQueryState(
+    'sq1-notation',
+    parseAsStringEnum<Sq1NotationMode>([...SQ1_NOTATION_MODES]).withDefault('compact'),
+  );
   const [scrambleKind, setScrambleKind] = useQueryState(
     'scramble',
     parseAsStringEnum<ScrambleKind>(SCRAMBLE_KINDS.map(kind => kind.id)).withDefault('inv'),
@@ -164,6 +190,15 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
   );
   const isAdmin = useIsAdmin();
   const [editorState, setEditorState] = useState<AdminEditorState | null>(null);
+  useEffect(() => {
+    if (!editMode) {
+      setEditorState(null);
+      return;
+    }
+    if (isAdmin && caseProp.id != null) {
+      setEditorState(current => current ?? { mode: 'edit', existing: caseProp });
+    }
+  }, [editMode, isAdmin, caseProp]);
   const m = caseObj.meta;
   const primary = primaryCaseName(puzzle, set, caseObj);
   // 副名:meta case 的原始站名(`ZBLL U 1`)、非 meta 的原始名 —— 和主名不同才显示,免重复。
@@ -182,6 +217,14 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
     const path = hashAt < 0 ? href : href.slice(0, hashAt);
     const hash = hashAt < 0 ? '' : href.slice(hashAt);
     return `${path}${path.includes('?') ? '&' : '?'}black=false${hash}`;
+  };
+
+  const keepSq1Notation = (href: string) => {
+    if (puzzle !== 'sq1' || sq1NotationMode === 'compact') return href;
+    const hashAt = href.indexOf('#');
+    const path = hashAt < 0 ? href : href.slice(0, hashAt);
+    const hash = hashAt < 0 ? '' : href.slice(hashAt);
+    return `${path}${path.includes('?') ? '&' : '?'}sq1-notation=${sq1NotationMode}${hash}`;
   };
 
   /** 在关联 case 之间切换时保留用户刚选的打乱类型;默认值不写进 URL。 */
@@ -211,7 +254,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
 
   // 「返回」→ case 所在的子组列表页(带 #name 高亮那张卡)。是有明确目标的导航,不是 history.back。
   const rawBackHref = algCaseHref(puzzle, set, caseObj);
-  const backHref = keepOrientation(keepViewAngle(keepSq1Top(rawBackHref)));
+  const backHref = keepOrientation(keepViewAngle(keepSq1Notation(keepSq1Top(rawBackHref))));
 
   /** meta.no → case,给镜像/逆做详情页之间的链接(表编号,不是 DB id)。 */
   const byNo = useMemo(() => {
@@ -222,9 +265,17 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
 
   /** 全集唯一 slug 表(生成关联链接 / 社区区都要);和列表页、落地解析同一份算法。 */
   const slugMap = useMemo(() => buildCaseSlugMap(data.cases, set), [data, set]);
-  const hrefFor = (c: AlgCase) => {
-    const href = algCaseDetailHref(puzzle, set, (c.id != null && slugMap.byId.get(c.id)) || '');
-    return keepOrientation(keepViewAngle(keepScrambleKind(keepSq1Top(href))));
+  const hrefFor = (c: AlgCase, edit = false) => {
+    const detailHref = algCaseDetailHref(puzzle, set, (c.id != null && slugMap.byId.get(c.id)) || '');
+    const href = edit ? `${detailHref}/edit` : detailHref;
+    return keepOrientation(keepViewAngle(keepScrambleKind(keepSq1Notation(keepSq1Top(href)))));
+  };
+
+  const closeEditor = () => {
+    setEditorState(null);
+    if (!editMode) return;
+    const detailPath = window.location.pathname.replace(/\/edit\/?$/, '');
+    router.replace(`${detailPath}${window.location.search}${window.location.hash}`, { scroll: false });
   };
 
   // 社区公式:只这张 case 的。
@@ -336,14 +387,14 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             <ExternalLink size={14} />
           </Link>
           {isAdmin && caseObj.id != null && (
-            <button
-              type="button"
+            <Link
+              href={hrefFor(caseObj, true)}
+              prefetch={false}
               className="alg-admin-edit-btn"
-              onClick={() => setEditorState({ mode: 'edit', existing: caseObj })}
               title={tr({ zh: '编辑 case (admin)', en: 'Edit case (admin)' })}
             >
               <Pencil size={12} />
-            </button>
+            </Link>
           )}
         </h1>
         {puzzle === 'sq1' && (
@@ -353,9 +404,15 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             label={tr({ zh: '黑顶', en: 'Black top' })}
           />
         )}
+        {puzzle === 'sq1' && (
+          <Sq1NotationSelect
+            value={sq1NotationMode}
+            onChange={value => void setSq1NotationMode(value)}
+          />
+        )}
         {puzzle === 'sq1' && set === 'pbl' && (
           <Link href="/alg/sq1/karnaukh-notation" className="alg-recog-cta" prefetch={false}>
-            {tr({ zh: 'Karnaukh 记号', en: 'Karnaukh notation' })}
+            {tr({ zh: '卡脑壳记号', en: 'Karnaukh notation' })}
           </Link>
         )}
         {puzzle === 'fto' && (
@@ -459,7 +516,13 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                 </Link>
               </div>
             )}
-            {caseObj.setup && <SetupLine puzzle={puzzle} setup={caseViewSetup(caseObj.setup, effectiveViewAngle)} />}
+            {caseObj.setup && (
+              <SetupLine
+                puzzle={puzzle}
+                setup={caseViewSetup(caseObj.setup, effectiveViewAngle)}
+                sq1NotationMode={sq1NotationMode}
+              />
+            )}
           </div>
           <div className="alg-case-detail-lean-algs is-paired-player">
             {caseObj.algs.map((oriAlgs, oi) => {
@@ -475,6 +538,8 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                     entry={entry} puzzle={puzzle} ori={oi}
                     mirror={mirror ? { partner: mirror.partner, self: mirror.self } : undefined}
                     viewAngle={effectiveViewAngle}
+                    sq1NotationMode={sq1NotationMode}
+                    sourceKarnaukh={isSq1Pbl}
                     selected={i === selectedAlgIdx}
                     onSelect={() => {
                       setSelectedAlgByOri(current => ({ ...current, [oi]: i }));
@@ -521,7 +586,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
           puzzle={puzzle}
           setSlug={set}
           state={editorState}
-          onClose={() => setEditorState(null)}
+          onClose={closeEditor}
           onSaved={(action) => {
             // 'add' 在详情页开不出来(只有编辑入口),真来了也只当没这张的事。
             if (action.type === 'update') setCaseObj(action.updated);

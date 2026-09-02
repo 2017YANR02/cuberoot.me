@@ -64,3 +64,13 @@ describe('Square-1 EP stored-alg validation', () => {
     expect(result.reason).toMatch(/无法切片|cannot be sliced/);
   });
 });
+
+describe('Square-1 stored-alg physical validation', () => {
+  it('rejects an unsliceable formula outside EP', async () => {
+    const setup = '/(3,0)/(1,2)/(2,0)/(2,-4)/(0,-2)';
+    const unsliceable = '0,2 / -2,4 / -2,0 / -1,-2 / -3,0 /';
+    const result = await validateStoredAlgCase(setup, unsliceable, RAW_STICKER, 'sq1', 'csp');
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/无法切片|cannot be sliced/);
+  });
+});

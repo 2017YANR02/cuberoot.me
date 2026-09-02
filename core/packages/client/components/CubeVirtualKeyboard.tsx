@@ -14,13 +14,14 @@
  * - 修饰键自动禁用(光标前无字母时 ' 和 w 灰显)
  * - space 左侧 `·` 小键(仅 !enableMarks,即 textarea 场景):短按插 `·`,长按出 ↑↓
  * - 公式联想(前缀匹配 8 条触发器公式)
- * - enableMarks: 在 space 左侧露出"记号"入口,弹出 6 项(下划/波浪/删除/↑/↓/·);
- *   下划/波浪/删除把 caret 前最后一个 token 包成 inline 标签,toggle;
- *   ↑/↓/· 直接插字符。前 3 项仅在 contenteditable target 上生效。
+ * - enableMarks: 在 space 左侧露出"记号"入口,弹出 7 项(下划/斜体/波浪/删除/↑/↓/·);
+ *   四种样式把 caret 前最后一个 token 包成 inline 标签,toggle;
+ *   ↑/↓/· 直接插字符。样式项仅在 contenteditable target 上生效。
  */
 import { useState, useRef, useCallback, useEffect, type RefObject, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cleanAlgText } from '@/lib/alg-autospace';
+import { tr } from '@/i18n/tr';
 import './cube_virtual_keyboard.css';
 
 type EditorTarget = HTMLTextAreaElement | HTMLDivElement;
@@ -163,40 +164,82 @@ function deleteBack(el: EditorTarget, n = 1) {
   for (let i = 0; i < n; i++) document.execCommand('delete', false);
 }
 
-/** 找 caret 前最后一个 token 的边界,返回 {token, len} 或 null;边界靠 tokenizeAlg 判 */
-function findPrevTokenInfo(el: EditorTarget): { token: string; offsetFromCaret: number } | null {
-  const before = getTextBeforeCaret(el);
-  // NOTE: 取最后一个 token + 它和 caret 之间的空白长度
-  const m = /([UDFBRLMESxyz]w?['2]?)(\s*)$/.exec(before);
-  if (!m) return null;
-  return { token: m[1], offsetFromCaret: m[2].length };
+interface PrevTokenInfo {
+  token: string;
+  offsetFromCaret: number;
+  startOffset: number;
+  endOffset: number;
+  caretOffset: number;
 }
 
-/** 把 caret 前最后一个 token 包成 inline 标签;若已被同标签包则去掉(toggle) */
-function wrapPrevToken(el: EditorTarget, kind: 'u' | 's' | 'em' | 'wavy'): boolean {
+/** 找 caret 前最后一个 token 的文本偏移;边界靠 tokenizeAlg 判。 */
+function findPrevTokenInfo(el: EditorTarget): PrevTokenInfo | null {
+  const before = getTextBeforeCaret(el);
+  // `R2'` 有两个后缀字符；`·/↑/↓` 又可能紧跟在转动后、光标前。
+  // 这些都属于同一步的手法标注，找目标转动时需要整体跨过去。
+  const m = /([UDFBRLMESxyzudfbrlmes]w?(?:2'?|')?)([·↑↓\s]*)$/.exec(before);
+  if (!m) return null;
+  const caretOffset = before.length;
+  const offsetFromCaret = m[2].length;
+  const endOffset = caretOffset - offsetFromCaret;
+  return {
+    token: m[1],
+    offsetFromCaret,
+    startOffset: endOffset - m[1].length,
+    endOffset,
+    caretOffset,
+  };
+}
+
+/** 把 root 的纯文本偏移映射回 DOM 点。边界处 start 向后、end 向前取点，避免选进相邻标签。 */
+function textPointAtOffset(
+  root: HTMLElement,
+  offset: number,
+  bias: 'forward' | 'backward',
+): { node: Text; offset: number } | null {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes: Text[] = [];
+  let current: Node | null;
+  while ((current = walker.nextNode())) nodes.push(current as Text);
+  if (nodes.length === 0) return null;
+
+  let consumed = 0;
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    const end = consumed + node.data.length;
+    if (offset < end || (offset === end && (bias === 'backward' || i === nodes.length - 1))) {
+      return { node, offset: Math.max(0, offset - consumed) };
+    }
+    consumed = end;
+  }
+  return null;
+}
+
+function placeCaretAtTextOffset(root: HTMLElement, offset: number) {
+  const sel = window.getSelection();
+  const point = textPointAtOffset(root, offset, 'backward');
+  if (!sel || !point) return;
+  const range = document.createRange();
+  range.setStart(point.node, point.offset);
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+/** 把 caret 前最后一个 token 包成 inline 标签;若已被同标签包则去掉(toggle)。 */
+export function wrapPrevToken(el: EditorTarget, kind: 'u' | 's' | 'em' | 'wavy'): boolean {
   if (!isCE(el)) return false;
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0) return false;
   const info = findPrevTokenInfo(el);
   if (!info) return false;
 
-  // NOTE: 把 caret 倒退 info.offsetFromCaret 个字符,再选中 info.token.length 个字符
-  const r = sel.getRangeAt(0).cloneRange();
-  r.collapse(true);
-  // NOTE: setStart/setEnd 不能跨字符 offset 移动整个 DOM,只能在 text node 上。
-  // 简化做法:用 selection.modify 来移动 caret 然后 extend selection。
-  // 退到 token 末尾(若有空白)
-  for (let i = 0; i < info.offsetFromCaret; i++) {
-    sel.modify('move', 'backward', 'character');
-  }
-  // extend 选中整个 token
-  for (let i = 0; i < info.token.length; i++) {
-    sel.modify('extend', 'backward', 'character');
-  }
-  // NOTE: 现在 selection 是 token 文本(方向反了:anchor 在右,focus 在左);extractContents 不依赖方向
-  const range = sel.getRangeAt(0);
-  // 把方向规整(便于 ancestor 检查):若 anchor 在 focus 之后,翻转
-  // 实际我们用 range.startContainer / endContainer 即可
+  const start = textPointAtOffset(el, info.startOffset, 'forward');
+  const end = textPointAtOffset(el, info.endOffset, 'backward');
+  if (!start || !end) return false;
+  const range = document.createRange();
+  range.setStart(start.node, start.offset);
+  range.setEnd(end.node, end.offset);
 
   // ── toggle:若 token 已在同种标签内,移除标签 ──
   // NOTE: 项目约定 — 下划=<u>, 波浪=<u class="wavy">, 删除=<s>, 斜体=<em>
@@ -204,11 +247,25 @@ function wrapPrevToken(el: EditorTarget, kind: 'u' | 's' | 'em' | 'wavy'): boole
     k === 's' ? 's' : k === 'em' ? 'em' : 'u';
   const cls = kind === 'wavy' ? 'wavy' : '';
   const startNode = range.startContainer;
+
+  // 普通下划线与波浪下划线是同一类标签的两种形态。直接切换 class，
+  // 避免生成 <u><u class="wavy">…</u></u> 后被外层实线盖住。
+  if (kind === 'u' || kind === 'wavy') {
+    const underline = findAncestorTag(startNode, el, 'u');
+    if (underline) {
+      const isWavy = underline.classList.contains('wavy');
+      if ((kind === 'wavy') === isWavy) unwrapNode(underline);
+      else underline.classList.toggle('wavy', kind === 'wavy');
+      placeCaretAtTextOffset(el, info.caretOffset);
+      return true;
+    }
+  }
+
   const ancestorMatching = findAncestorMatching(startNode, el, kind);
   if (ancestorMatching) {
     // NOTE: 已包过——unwrap 该祖先节点(只 unwrap,不打散其他 token)
     unwrapNode(ancestorMatching);
-    placeCaretAfterText(el, info.token);
+    placeCaretAtTextOffset(el, info.caretOffset);
     return true;
   }
 
@@ -221,20 +278,25 @@ function wrapPrevToken(el: EditorTarget, kind: 'u' | 's' | 'em' | 'wavy'): boole
   // NOTE: caret 紧贴 inline 元素右边时 Chrome/Safari 会继承样式,继续输入仍然带样式。
   // 解决:确保 wrapper 之后存在一个空格 text node,caret 落在空格之后(text node 内部,非边界)。
   // 公式语法本身就要求 token 间空格,这步不会污染输出。
-  const next = wrapper.nextSibling;
-  let anchor: Text;
-  if (next && next.nodeType === 3 && (next as Text).data.startsWith(' ')) {
-    anchor = next as Text;
-  } else {
-    anchor = document.createTextNode(' ');
-    wrapper.parentNode?.insertBefore(anchor, next);
+  if (info.offsetFromCaret === 0) {
+    const next = wrapper.nextSibling;
+    if (!(next && next.nodeType === 3 && (next as Text).data.startsWith(' '))) {
+      wrapper.parentNode?.insertBefore(document.createTextNode(' '), next);
+    }
   }
-  const after = document.createRange();
-  after.setStart(anchor, 1);
-  after.collapse(true);
-  sel.removeAllRanges();
-  sel.addRange(after);
+  placeCaretAtTextOffset(el, info.caretOffset + (info.offsetFromCaret === 0 ? 1 : 0));
   return true;
+}
+
+function findAncestorTag(node: Node, root: HTMLElement, tagName: string): HTMLElement | null {
+  let current: Node | null = node;
+  while (current && current !== root) {
+    if (current.nodeType === 1 && (current as HTMLElement).tagName.toLowerCase() === tagName) {
+      return current as HTMLElement;
+    }
+    current = current.parentNode;
+  }
+  return null;
 }
 
 /** 在 root 内沿祖先链找匹配 kind 的元素 */
@@ -262,27 +324,16 @@ function unwrapNode(node: HTMLElement) {
   parent.removeChild(node);
 }
 
-/** 把 caret 放到 root 内某段文字之后(用于 unwrap 后恢复光标);简化:放到 root 末尾 */
-function placeCaretAfterText(root: HTMLElement, _text: string) {
-  const sel = window.getSelection();
-  if (!sel) return;
-  const range = document.createRange();
-  range.selectNodeContents(root);
-  range.collapse(false);
-  sel.removeAllRanges();
-  sel.addRange(range);
-}
-
 type ShiftState = 'off' | 'single' | 'capslock';
 
-const MARK_ITEMS: Array<{ key: string; label: ReactNode; tip: string }> = [
-  // NOTE: 入口短按 = 下划,所以 popup 里不再列 mark-u
-  { key: 'mark-em',    label: <em>U</em>,                tip: 'italic' },
-  { key: 'mark-wavy',  label: <u className="wavy">U</u>, tip: 'wavy' },
-  { key: 'mark-s',     label: <s>U</s>,                  tip: 'strike' },
-  { key: 'mark-up',    label: '↑',   tip: 'up arrow' },
-  { key: 'mark-down',  label: '↓',   tip: 'down arrow' },
-  { key: 'mark-mid',   label: '·',   tip: 'middle dot' },
+const MARK_ITEMS: Array<{ key: string; label: ReactNode; tip: { zh: string; en: string } }> = [
+  { key: 'mark-u',     label: <u>U</u>,                  tip: { zh: '下划线', en: 'Underline' } },
+  { key: 'mark-em',    label: <em>U</em>,                tip: { zh: '斜体', en: 'Italic' } },
+  { key: 'mark-wavy',  label: <u className="wavy">U</u>, tip: { zh: '波浪线', en: 'Wavy underline' } },
+  { key: 'mark-s',     label: <s>U</s>,                  tip: { zh: '删除线', en: 'Strikethrough' } },
+  { key: 'mark-up',    label: '↑',   tip: { zh: '上箭头', en: 'Up arrow' } },
+  { key: 'mark-down',  label: '↓',   tip: { zh: '下箭头', en: 'Down arrow' } },
+  { key: 'mark-mid',   label: '·',   tip: { zh: '间隔号', en: 'Middle dot' } },
 ];
 
 export default function CubeVirtualKeyboard({ target, onInput, enableMarks = false, toggleButton }: Props) {
@@ -472,7 +523,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
   const highlightPopupItem = useCallback((clientX: number, clientY: number) => {
     const popup = popupRef.current;
     if (!popup) return;
-    const items = popup.querySelectorAll<HTMLSpanElement>('.vkb-popup-item');
+    const items = popup.querySelectorAll<HTMLElement>('.vkb-popup-item');
     let found: string | null = null;
     items.forEach(item => {
       const r = item.getBoundingClientRect();
@@ -505,8 +556,12 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
     focusTarget(el);
     if (mk === 'mark-u' || mk === 'mark-s' || mk === 'mark-em' || mk === 'mark-wavy') {
       const kind = mk === 'mark-u' ? 'u' : mk === 'mark-s' ? 's' : mk === 'mark-em' ? 'em' : 'wavy';
-      wrapPrevToken(el, kind);
-      onInput?.();
+      if (wrapPrevToken(el, kind)) {
+        // 直接改 contenteditable DOM 不会自动产生 input 事件；主动通知 AlgInput，
+        // 让预览、校验状态和最终保存的 algHtml 同步更新。
+        el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'format' }));
+        onInput?.();
+      }
       return;
     }
     if (mk === 'mark-up')   { vkbInsert('↑ '); return; }
@@ -579,7 +634,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
       const popup = marksPopupRef.current;
       let mk: string | null = null;
       if (popup) {
-        const items = popup.querySelectorAll<HTMLSpanElement>('.vkb-popup-item');
+        const items = popup.querySelectorAll<HTMLElement>('.vkb-popup-item');
         items.forEach(item => {
           const r = item.getBoundingClientRect();
           if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
@@ -655,14 +710,10 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
       return;
     }
 
-    // NOTE: 短按 marks-trigger = 下划线
+    // NOTE: 记号不再把短按写死成下划线；点击后明确列出所有可选记号。
     if (key === 'marks-trigger') {
-      const el = target.current;
-      if (el) {
-        focusTarget(el);
-        wrapPrevToken(el, 'u');
-        onInput?.();
-      }
+      if (marksPopupVisible) hideMarksPopup();
+      else showMarksPopup(btn);
       return;
     }
 
@@ -835,6 +886,19 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
     };
   }, [activeVariant, activeMark, hidePopup, hideMarksPopup, vkbInsert, handleMarkItem, stopBackspaceRepeat]);
 
+  useEffect(() => {
+    if (!marksPopupVisible) return;
+    const handler = (e: PointerEvent) => {
+      const node = e.target as Node | null;
+      if (!node || marksPopupRef.current?.contains(node)) return;
+      if (node instanceof Element && node.closest('.vkb-marks-trigger')) return;
+      hideMarksPopup();
+      setActiveMark(null);
+    };
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
+  }, [marksPopupVisible, hideMarksPopup]);
+
   // NOTE: 全局 pointermove——支持手指从按键滑到 popup 区域
   useEffect(() => {
     const handler = (e: PointerEvent) => {
@@ -913,8 +977,8 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
             <button type="button" data-key="switch" className="vkb-fn vkb-key-btn">🌐</button>
             {enableMarks && (
               <button type="button" data-key="marks-trigger" className="vkb-fn vkb-marks-trigger vkb-key-btn"
-                title="tap = underline · hold = more">
-                <u>U</u>
+                title={tr({ zh: '选择记号', en: 'Choose a mark' })}>
+                ✎
               </button>
             )}
             <button type="button" data-key="tab" className="vkb-fn vkb-tab vkb-key-btn">Tab</button>
@@ -1027,14 +1091,22 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
           style={{ left: marksPopupPos.left, top: marksPopupPos.top }}
         >
           {MARK_ITEMS.map(it => (
-            <span
+            <button
+              type="button"
               key={it.key}
               className={`vkb-popup-item ${activeMark === it.key ? 'active' : ''}`}
-              title={it.tip}
+              title={tr(it.tip)}
+              aria-label={tr(it.tip)}
               data-mk={it.key}
+              onPointerDown={e => e.preventDefault()}
+              onClick={() => {
+                handleMarkItem(it.key);
+                hideMarksPopup();
+                setActiveMark(null);
+              }}
             >
               {it.label}
-            </span>
+            </button>
           ))}
         </div>
       )}

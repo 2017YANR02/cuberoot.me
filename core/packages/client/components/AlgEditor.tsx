@@ -49,6 +49,8 @@ export interface AlgEditorHandle {
 
 interface Props {
   initialValue: AlgEntry[][];
+  /** 只格式化输入框的初始显示；未编辑的行保存时仍原样返回，避免无意改写数据库。 */
+  formatInitialAlg?: (alg: string) => string;
   /** 开局就标红的行(页面那轮全库校验已经知道谁挂了,不必等用户按一次保存才告诉他)。 */
   initialInvalid?: AlgInvalidMark[];
   oriNames?: string[] | null;
@@ -88,7 +90,7 @@ interface PendingRemoval {
   cascade: MirrorCascadeEntry[];
 }
 
-const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, initialInvalid, oriNames, mirror, mirrorPending, mirrorError, onCurrentAlgChange, onCursorMoveCount }, ref) => {
+const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInitialAlg, initialInvalid, oriNames, mirror, mirrorPending, mirrorError, onCurrentAlgChange, onCursorMoveCount }, ref) => {
   useTranslation(); // subscribe to language changes; text via tr()
   const [layout, setLayout] = useState<Row[][]>(() => {
     const src = initialValue.length === 0
@@ -139,11 +141,14 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, initialInv
           // 这个编辑器只管 alg / algHtml 两个字段。AlgEntry 上其余的东西(altId、ytId、
           // 以及 1LLL 带来的 tags / source / stm / sqtm)它**不认识,但必须原样带回去** ——
           // 重建成 `{ alg }` 就等于编一次 case 把它们全抹掉,而且是静默的。
-          const { uid: _uid, alg: _alg, algHtml: _algHtml, ...rest } = row;
+          const { uid: _uid, ...original } = row;
           const h = handles.current.get(row.uid);
-          if (!h) return { ...rest, alg: '' };
+          if (!h) return { ...original, alg: '' };
           const text = h.getText();
-          if (!text) return { ...rest, alg: '' };
+          if (!text) return { ...original, alg: '' };
+          const initialText = formatInitialAlg?.(row.alg) ?? row.alg;
+          if (text === initialText) return original;
+          const { alg: _alg, algHtml: _algHtml, ...rest } = original;
           const html = h.getHtml();
           const hasTag = /<(u|s|em|strong|sub|sup)\b/i.test(html);
           return hasTag ? { ...rest, alg: text, algHtml: html } : { ...rest, alg: text };
@@ -157,7 +162,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, initialInv
       }
       setInvalid(m);
     },
-  }), [layout]);
+  }), [formatInitialAlg, layout]);
 
   const addAlg = (oi: number) => {
     const newRow: Row = { alg: '', uid: newUid() };
@@ -236,6 +241,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, initialInv
           {ori.map(row => {
             const isFocused = focusedUid === row.uid;
             const bad = invalid.get(row.uid);
+            const initialText = formatInitialAlg?.(row.alg || '') ?? (row.alg || '');
             return (
               <Fragment key={row.uid}>
               <div className={`alg-editor-row${bad ? ' is-invalid' : ''}`}>
@@ -253,8 +259,8 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, initialInv
                   markable
                   multiline={false}
                   autoSpace
-                  initialText={row.alg || ''}
-                  initialHtml={row.algHtml}
+                  initialText={initialText}
+                  initialHtml={initialText === row.alg ? row.algHtml : undefined}
                   placeholder={tr({ zh: "如 R U R' U'", en: "e.g. R U R' U'" })}
                   className="alg-editor-input"
                   spellCheck={false}
@@ -303,8 +309,13 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, initialInv
                     <span>{bad}</span>
                   </div>
                 )}
-                {isFocused && (
-                  <CubeKeyboardSection target={keyboardTargetRef} enableMarks />
+                {(isFocused || (!focusedUid && oi === 0 && row === ori[0])) && (
+                  <CubeKeyboardSection
+                    target={keyboardTargetRef}
+                    enableMarks
+                    mobileVisible={isFocused}
+                    onActivate={() => handles.current.get(row.uid)?.focus()}
+                  />
                 )}
               </Fragment>
             );

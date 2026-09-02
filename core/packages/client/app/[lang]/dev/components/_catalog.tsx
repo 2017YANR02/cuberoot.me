@@ -43,6 +43,8 @@ import NumberCommitInput from '@/components/NumberCommitInput';
 import NxNOrderInput from '@/components/NxNOrderInput';
 import AlgNotationStyleSelect from '@/components/AlgNotationStyleSelect';
 import type { AlgNotationStyle } from '@/lib/alg-notation-display';
+import Sq1NotationSelect from '@/components/Sq1NotationSelect';
+import type { Sq1NotationMode } from '@/lib/sq1-pbl-notation';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
@@ -330,6 +332,11 @@ function NxNOrderDemo() {
 function AlgNotationStyleDemo() {
   const [style, setStyle] = useState<AlgNotationStyle>('standard');
   return <AlgNotationStyleSelect value={style} onChange={setStyle} />;
+}
+
+function Sq1NotationSelectDemo() {
+  const [mode, setMode] = useState<Sq1NotationMode>('compact');
+  return <Sq1NotationSelect value={mode} onChange={setMode} />;
 }
 
 function StackedBarDemo() {
@@ -1071,6 +1078,15 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared English, compact and foolproof notation selector for algorithm and notation pages.',
     usage: '<AlgNotationStyleSelect value={style} onChange={setStyle} />',
     Demo: AlgNotationStyleDemo,
+  },
+  {
+    name: 'Sq1NotationSelect',
+    import: "import Sq1NotationSelect from '@/components/Sq1NotationSelect';",
+    category: 'input',
+    zh: 'SQ1 公式页共用的数字简写、卡脑壳、数字完整记号下拉菜单。',
+    en: 'Shared compact numeric, Karnaukh and full numeric notation menu for SQ1 algorithm pages.',
+    usage: '<Sq1NotationSelect value={mode} onChange={setMode} />',
+    Demo: Sq1NotationSelectDemo,
   },
   {
     name: 'SearchInput',
