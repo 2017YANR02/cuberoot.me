@@ -76,8 +76,8 @@
 .textButton,
 .iconButton,
 .addButton,
-.elementPicker button,
-.customChip button {
+.elementChoice,
+.customAction {
   appearance: none;
   border: 0;
   background: transparent;
@@ -362,13 +362,7 @@
   font-size: 0.78rem;
 }
 
-.contentFields input,
-.contentFields textarea,
-.controlGrid input:not([type='range']):not([type='color']),
-.controlGrid select,
-.inspector input,
-.inspector textarea,
-.inspector select {
+.fieldControl {
   width: 100%;
   min-height: 42px;
   box-sizing: border-box;
@@ -381,28 +375,17 @@
   font-size: 0.88rem;
 }
 
-.contentFields input,
-.controlGrid input:not([type='range']):not([type='color']),
-.controlGrid select,
-.inspector input,
-.inspector select {
+.fieldControl:not(.fieldTextarea) {
   padding: 0 11px;
 }
 
-.contentFields textarea,
-.inspector textarea {
+.fieldTextarea {
   min-height: 76px;
   padding: 9px 11px;
   resize: vertical;
 }
 
-.contentFields input:focus,
-.contentFields textarea:focus,
-.controlGrid input:focus,
-.controlGrid select:focus,
-.inspector input:focus,
-.inspector textarea:focus,
-.inspector select:focus {
+.fieldControl:focus {
   border-color: var(--ring);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 14%, transparent);
 }
@@ -439,7 +422,7 @@
   gap: 10px;
 }
 
-.artGalleryItems button {
+.artChoice {
   appearance: none;
   display: grid;
   grid-template-columns: 38px minmax(0, 1fr);
@@ -457,7 +440,7 @@
   cursor: pointer;
 }
 
-.artGalleryItems button[aria-pressed='true'] {
+.artChoice[aria-pressed='true'] {
   border-color: var(--accent);
   background: var(--accent-soft);
 }
@@ -515,7 +498,7 @@
   gap: 7px;
 }
 
-.elementPicker > button,
+.elementChoice,
 .customChip {
   min-height: 36px;
   border: 1px solid var(--border-default);
@@ -524,11 +507,11 @@
   font-size: 0.77rem;
 }
 
-.elementPicker > button {
+.elementChoice {
   padding: 0 12px;
 }
 
-.elementPicker > button[aria-pressed='true'],
+.elementChoice[aria-pressed='true'],
 .customChip[data-active='true'] {
   border-color: var(--accent);
   background: var(--accent-soft);
@@ -541,7 +524,7 @@
   overflow: hidden;
 }
 
-.customChip button:first-child {
+.customTextButton {
   max-width: 150px;
   overflow: hidden;
   padding: 0 6px 0 12px;
@@ -549,7 +532,7 @@
   white-space: nowrap;
 }
 
-.customChip button:last-child {
+.customRemoveButton {
   display: grid;
   width: 32px;
   height: 34px;
@@ -574,7 +557,7 @@
   gap: 10px;
 }
 
-.rangeRow input {
+.fieldRange {
   min-height: 32px;
   accent-color: var(--accent);
 }
@@ -585,7 +568,7 @@
   text-align: right;
 }
 
-.controlGrid input[type='color'] {
+.fieldColor {
   width: 100%;
   height: 42px;
   padding: 4px;
@@ -660,7 +643,7 @@
   gap: 6px;
 }
 
-.promptChoices button {
+.promptChoice {
   appearance: none;
   min-height: 32px;
   padding: 0 10px;
@@ -673,9 +656,9 @@
   cursor: pointer;
 }
 
-.promptChoices button:hover,
-.promptChoices button:focus-visible,
-.promptChoices button[aria-pressed='true'] {
+.promptChoice:hover,
+.promptChoice:focus-visible,
+.promptChoice[aria-pressed='true'] {
   border-color: var(--accent);
   background: var(--accent-soft);
   color: color-mix(in srgb, var(--accent) 82%, var(--foreground));
@@ -693,7 +676,7 @@
   cursor: pointer;
 }
 
-.promptEditor textarea {
+.promptTextarea {
   width: 100%;
   min-height: 250px;
   box-sizing: border-box;
@@ -709,7 +692,7 @@
   resize: vertical;
 }
 
-.promptEditor textarea:focus {
+.promptTextarea:focus {
   border-color: var(--ring);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 14%, transparent);
 }
