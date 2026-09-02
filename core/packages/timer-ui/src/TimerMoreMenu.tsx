@@ -41,6 +41,7 @@ export interface TimerMoreMenuItem extends TimerMoreActionState {
 }
 
 export interface TimerMoreMenuLinkRenderProps {
+  'aria-current'?: 'true';
   children: ReactNode;
   className: string;
   href: string;
@@ -252,12 +253,14 @@ export function TimerMoreMenu({
             <span className="more-menu-label">{item.label}</span>
           </>
         );
-        const classNames = `more-menu-item${item.danger ? ' danger' : ''}`;
+        const ariaCurrent = item.active ? 'true' as const : undefined;
+        const classNames = `more-menu-item${item.active ? ' active' : ''}${item.danger ? ' danger' : ''}`;
         if (item.href && !item.disabled) {
           const onClick = (_event: ReactMouseEvent<HTMLAnchorElement>) => closeAfterSelection();
           if (renderLink) {
             return <span className="more-menu-link-slot" key={item.id}>{renderLink({
               children: content,
+              'aria-current': ariaCurrent,
               className: classNames,
               href: item.href,
               onClick,
@@ -265,7 +268,7 @@ export function TimerMoreMenu({
             })}</span>;
           }
           return (
-            <a className={classNames} href={item.href} key={item.id} onClick={onClick} role="menuitem">
+            <a aria-current={ariaCurrent} className={classNames} href={item.href} key={item.id} onClick={onClick} role="menuitem">
               {content}
             </a>
           );
@@ -273,6 +276,7 @@ export function TimerMoreMenu({
         const disabled = item.disabled || !item.onSelect;
         return (
           <button
+            aria-current={ariaCurrent}
             className={classNames}
             disabled={disabled}
             key={item.id}

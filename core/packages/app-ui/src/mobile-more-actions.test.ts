@@ -22,6 +22,7 @@ function handlers(): MobileTimerMoreActionHandlers {
     'more.marks': vi.fn(),
     'more.stats-mobile': vi.fn(),
     'more.language-mobile': vi.fn(),
+    'more.drill': vi.fn(),
     'more.bld-helper': vi.fn(),
     'more.fullscreen': vi.fn(),
     'more.manual-entry': vi.fn(),
@@ -38,6 +39,7 @@ describe('Mobile timer More effect adapter', () => {
       'more.marks',
       'more.stats-mobile',
       'more.language-mobile',
+      'more.drill',
       'more.bld-helper',
       'more.fullscreen',
       'more.manual-entry',
@@ -50,6 +52,7 @@ describe('Mobile timer More effect adapter', () => {
       'more.marks',
       'more.stats-mobile',
       'more.language-mobile',
+      'more.drill',
       'more.fullscreen',
       'more.manual-entry',
       'more.solver',
@@ -65,10 +68,7 @@ describe('Mobile timer More effect adapter', () => {
         id as (typeof MOBILE_TIMER_MORE_IMPLEMENTED_ACTION_IDS)[number],
       ),
     );
-    expect(missing).toEqual([
-      'more.drill',
-      'more.replay',
-    ]);
+    expect(missing).toEqual(['more.replay']);
   });
 
   it('binds and runs every displayed callback, with shared bilingual labels', () => {
@@ -79,6 +79,7 @@ describe('Mobile timer More effect adapter', () => {
       'Scramble marks',
       'Stats',
       'Language: 中文',
+      'Drill mode',
       'Fullscreen',
       'Manual entry',
       'Solver',
@@ -90,6 +91,7 @@ describe('Mobile timer More effect adapter', () => {
       '打乱足迹',
       '统计',
       '语言：EN',
+      '专项练习',
       '全屏',
       '手动录入',
       '通用求解器',
@@ -114,6 +116,18 @@ describe('Mobile timer More effect adapter', () => {
     );
     expect(items.find((item) => item.id === 'more.fullscreen')?.active).toBe(true);
     expect(items.find((item) => item.id === 'more.clear-event')?.disabled).toBe(true);
+  });
+
+  it('keeps an active drill reachable so it can be changed or exited', () => {
+    const items = mobileTimerMoreMenuItems(
+      { ...context, drillActive: true },
+      'en',
+      handlers(),
+    );
+    expect(items.find((item) => item.id === 'more.drill')).toMatchObject({
+      active: true,
+      visible: true,
+    });
   });
 
   it('exposes the BLD helper only for shared Speffz-capable events', () => {

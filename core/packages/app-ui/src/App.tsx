@@ -46,6 +46,7 @@ import {
   formatMs,
   groupSolvesByLocalDay,
   formatTimerTimingDisplay,
+  generateTimerDrillScramble,
   generateTimerScramble,
   histBack,
   histForward,
@@ -65,6 +66,7 @@ import {
   takeManualScramble,
   timerEventIdFromSelector,
   timerEventPickerName,
+  timerEventSupportsDrill,
   timerManualSourceIdentity,
   timerPrintScrambleSource,
   timerManualEntryCopy,
@@ -129,6 +131,7 @@ import {
   type RollingStatKey,
   type RollingStatProjection,
   type TimerGestureActionId,
+  type TimerDrillTarget,
   type TimerPhase,
   type TimerStoreData,
   type TimerStoreSettings,
@@ -167,6 +170,7 @@ import {
   TimerCubePreview,
   TimerHistoryTagBadges,
   TimerHistoryTagFilter,
+  TimerDrillPicker,
   TimerManualEntryModal,
   TimerMoreMenu,
   TimerPillToggle,
@@ -599,6 +603,13 @@ export function App({ host }: { host: InstalledAppHost }) {
     battleSmartCubeHandlersRef.current = handlers;
   }, []);
   const activeEvent = store?.settings.event ?? '333';
+  const [drillTarget, setDrillTarget] = useState<TimerDrillTarget | null>(null);
+  const effectiveDrillTarget = timerEventSupportsDrill(activeEvent) ? drillTarget : null;
+  const drillTargetRef = useRef<TimerDrillTarget | null>(effectiveDrillTarget);
+  drillTargetRef.current = effectiveDrillTarget;
+  useEffect(() => {
+    if (!timerEventSupportsDrill(activeEvent) && drillTarget) setDrillTarget(null);
+  }, [activeEvent, drillTarget]);
   const multiStageActive = (store?.settings.multiStage ?? false)
     && timerSupportsStageSplits(activeEvent);
   const bldMemoActive = (store?.settings.bldMemo ?? true) && isBldEvent(activeEvent);
@@ -891,18 +902,24 @@ export function App({ host }: { host: InstalledAppHost }) {
   }), []);
 
   const scrambleIdentityFor = useCallback((source: ScrambleSource, event: EventId): string => {
-    if (source === 'wca') return `wca|${realScrambleSourceKey(realSpecFor(event))}`;
+    const withDrill = (identity: string) => {
+      const target = source !== 'manual' && timerEventSupportsDrill(event)
+        ? drillTargetRef.current
+        : null;
+      return target ? `${identity}|drill:${target.type}:${target.id}` : identity;
+    };
+    if (source === 'wca') return withDrill(`wca|${realScrambleSourceKey(realSpecFor(event))}`);
     if (source === 'manual') {
       return timerManualSourceIdentity(event, manualSourceRevisionRef.current);
     }
     if (event === '222') {
-      return `random|222|${scramble222ModeRef.current}|${scramble222TypeRef.current}|${
+      return withDrill(`random|222|${scramble222ModeRef.current}|${scramble222TypeRef.current}|${
         scramble222TypeRef.current === 'full'
           ? timerByStepsIdentity('222', 'random', byStepsSettingsRef.current, scramble222ModeRef.current)
           : ''
-      }`;
+      }`);
     }
-    return `random|${event}|${timerByStepsIdentity(event, 'random', byStepsSettingsRef.current)}`;
+    return withDrill(`random|${event}|${timerByStepsIdentity(event, 'random', byStepsSettingsRef.current)}`);
   }, [realSpecFor]);
 
   const writeScrambleHistory = useCallback((next: ScrambleHistory<MobileScrambleHistoryEntry>) => {
@@ -1208,9 +1225,10 @@ export function App({ host }: { host: InstalledAppHost }) {
       candidate.id === entry.id && candidate.sourceIdentity === entry.sourceIdentity
     ));
     if (!liveEntry || (entry.availability !== 'loading' && liveEntry.availability === 'loading')) return;
+    const { event, source, sourceIdentity } = liveEntry;
+    if (sourceIdentity !== scrambleIdentityFor(source, event)) return;
     randomScrambleGateRef.current.cancel();
     const requestId = ++scrambleRequestRef.current;
-    const { event, source, sourceIdentity } = liveEntry;
     replaceScrambleHistoryEntry(liveEntry.id, sourceIdentity, {
       availability: 'loading',
       failure: null,
@@ -1228,6 +1246,25 @@ export function App({ host }: { host: InstalledAppHost }) {
         currentReal: null,
         failure: null,
         scramble: taken.scramble,
+      });
+      return;
+    }
+    const target = timerEventSupportsDrill(event) ? drillTargetRef.current : null;
+    if (target) {
+      const generated = generateTimerDrillScramble(target);
+      replaceScrambleHistoryEntry(liveEntry.id, sourceIdentity, generated ? {
+        availability: 'ready',
+        caseId: event === target.type ? generated.targetCase : null,
+        currentReal: null,
+        failure: null,
+        scramble: generated.scramble,
+        sourceSnapshot: {
+          kind: 'random',
+          identity: `drill|${event}|${target.type}:${target.id}`,
+        },
+      } : {
+        availability: 'error',
+        failure: { kind: 'generation', code: 'generation-failed', retryable: false },
       });
       return;
     }
@@ -1496,7 +1533,9 @@ export function App({ host }: { host: InstalledAppHost }) {
         && (openOverlay !== TIMER_OVERLAY_IDS.solveDetail || historyDetailSolve !== null)
       )
       : view === 'timer' && (
-        (openOverlay !== TIMER_OVERLAY_IDS.wcaCompetition
+        (openOverlay !== TIMER_OVERLAY_IDS.drillPicker
+          || timerEventSupportsDrill(activeEvent))
+        && (openOverlay !== TIMER_OVERLAY_IDS.wcaCompetition
           || (scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent)))
         && (openOverlay !== TIMER_OVERLAY_IDS.wcaScrambleMarks || (
           currentWcaMarkIdentity !== null
@@ -2872,7 +2911,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   const moreItems = useMemo(() => mobileTimerMoreMenuItems({
     compactViewport: true,
-    drillActive: false,
+    drillActive: effectiveDrillTarget !== null,
     event: activeEvent,
     fullscreen,
     solveCount: solves.length,
@@ -2880,6 +2919,10 @@ export function App({ host }: { host: InstalledAppHost }) {
     'more.marks': () => openToolsRoute('/timer/marks'),
     'more.stats-mobile': () => setView('history'),
     'more.language-mobile': toggleMoreLanguage,
+    'more.drill': () => {
+      openOverlayRef.current = TIMER_OVERLAY_IDS.drillPicker;
+      setOpenOverlay(TIMER_OVERLAY_IDS.drillPicker);
+    },
     'more.bld-helper': () => openToolsRoute('/alg/3bld/helper'),
     'more.fullscreen': toggleTimerFullscreen,
     'more.manual-entry': openManualEntry,
@@ -2890,6 +2933,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   }), [
     activeEvent,
     clearCurrentEvent,
+    effectiveDrillTarget,
     fullscreen,
     language,
     openManualEntry,
@@ -3497,6 +3541,19 @@ export function App({ host }: { host: InstalledAppHost }) {
                 onClick={() => setView('history')}
                 title={copy.openTimes}
               />
+              {openOverlay === TIMER_OVERLAY_IDS.drillPicker && (
+                <TimerDrillPicker
+                  activeCase={effectiveDrillTarget}
+                  initialType={activeEvent === 'pll' ? 'pll' : 'oll'}
+                  language={language}
+                  onClose={() => {
+                    openOverlayRef.current = null;
+                    setOpenOverlay(null);
+                  }}
+                  onExit={() => setDrillTarget(null)}
+                  onPick={(target) => setDrillTarget(target)}
+                />
+              )}
               <MobileSmallPuzzleHints
                 event={activeEvent}
                 language={language}

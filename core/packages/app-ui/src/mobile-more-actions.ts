@@ -17,6 +17,7 @@ export const MOBILE_TIMER_MORE_IMPLEMENTED_ACTION_IDS = [
   'more.marks',
   'more.stats-mobile',
   'more.language-mobile',
+  'more.drill',
   'more.bld-helper',
   'more.fullscreen',
   'more.manual-entry',

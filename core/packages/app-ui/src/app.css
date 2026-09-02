@@ -11,18 +11,20 @@
   --subtle: #eeebe7;
   --accent: #bd5d3d;
   --accent-foreground: #ffffff;
-  --accent-soft: color-mix(in srgb, var(--accent) 13%, transparent);
+  --accent-soft: rgb(189 93 61 / 13%);
   --destructive-foreground: #ffffff;
   --toggle-on: #34c759;
-  --border-default: color-mix(in srgb, var(--foreground) 13%, transparent);
-  --border-strong: color-mix(in srgb, var(--foreground) 24%, transparent);
+  --border-default: rgb(25 24 23 / 13%);
+  --border-strong: rgb(25 24 23 / 24%);
   --input: var(--border-default);
   --ring: var(--accent);
-  --modal-overlay: #000000;
-  --shell-divider: color-mix(in srgb, var(--foreground) 8%, transparent);
-  --shell-chip: color-mix(in srgb, var(--foreground) 5%, transparent);
-  --shell-hover: color-mix(in srgb, var(--foreground) 6%, transparent);
+  --modal-overlay: rgb(0 0 0 / 70%);
+  --shell-foreground-rgb: 25 24 23;
+  --shell-divider: rgb(var(--shell-foreground-rgb) / 8%);
+  --shell-chip: rgb(var(--shell-foreground-rgb) / 5%);
+  --shell-hover: rgb(var(--shell-foreground-rgb) / 6%);
   --success: #39724f;
+  --success-soft: rgb(57 114 79 / 14%);
   --danger: #a13f36;
   --destructive: var(--danger);
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
@@ -50,10 +52,12 @@
   --accent: #df7958;
   --accent-foreground: #181716;
   --toggle-on: #30d158;
-  --accent-soft: color-mix(in srgb, var(--accent) 17%, transparent);
-  --border-default: color-mix(in srgb, var(--foreground) 14%, transparent);
-  --border-strong: color-mix(in srgb, var(--foreground) 24%, transparent);
+  --accent-soft: rgb(223 121 88 / 17%);
+  --border-default: rgb(240 238 235 / 14%);
+  --border-strong: rgb(240 238 235 / 24%);
+  --shell-foreground-rgb: 240 238 235;
   --success: #77ad89;
+  --success-soft: rgb(119 173 137 / 14%);
   --danger: #e07a70;
 }
 
@@ -69,10 +73,12 @@
     --accent: #df7958;
     --accent-foreground: #181716;
     --toggle-on: #30d158;
-    --accent-soft: color-mix(in srgb, var(--accent) 17%, transparent);
-    --border-default: color-mix(in srgb, var(--foreground) 14%, transparent);
-    --border-strong: color-mix(in srgb, var(--foreground) 24%, transparent);
+    --accent-soft: rgb(223 121 88 / 17%);
+    --border-default: rgb(240 238 235 / 14%);
+    --border-strong: rgb(240 238 235 / 24%);
+    --shell-foreground-rgb: 240 238 235;
     --success: #77ad89;
+    --success-soft: rgb(119 173 137 / 14%);
     --danger: #e07a70;
   }
 }

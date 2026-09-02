@@ -1339,6 +1339,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The puzzle picker shared by the Web, Android, and iOS timers. Its trigger, 43-item menu, focus restoration, Escape/outside close, viewport clamp, and narrow-layout fallback for older Android WebViews live in one implementation. The catalog comes from @cuberoot/shared/timer. It remains uncontrolled by default and accepts open/onOpenChange for Android Back; hosts otherwise only wire selectedEvent/onSelect.',
   },
   {
+    name: 'TimerDrillPicker',
+    import: "import { TimerDrillPicker } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五端 App 共用的 OLL/PLL 专项选择器；78 个 case、搜索、分组、选中态、退出、焦点圈定、背景滚动锁定、短屏滚动与安全区只维护这一份。宿主只保存 target，并用 @cuberoot/shared/timer 的严格生成器出题。',
+    en: 'The OLL/PLL drill picker shared by Web and all five installed clients. Its 78 cases, search, grouping, active state, exit action, focus trap, body-scroll lock, short-viewport scrolling, and safe areas live in one implementation. Hosts only keep the target and generate with the strict @cuberoot/shared/timer generator.',
+  },
+  {
     name: 'TimerScrambleSourceSelect',
     import: "import { TimerScrambleSourceSelect } from '@cuberoot/timer-ui';",
     category: 'more',

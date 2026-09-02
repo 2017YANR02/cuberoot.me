@@ -1,0 +1,258 @@
+.timer-drill-picker__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  background: var(--modal-overlay, var(--foreground));
+  overscroll-behavior: contain;
+}
+
+.timer-drill-picker__dialog {
+  display: flex;
+  width: min(100%, 720px);
+  max-height: 100%;
+  min-width: 0;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 20px;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--popover);
+  color: var(--foreground);
+  box-shadow: 0 12px 40px var(--shell-divider);
+}
+
+.timer-drill-picker__title {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.timer-drill-picker__count {
+  margin-left: 6px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.timer-drill-picker__toolbar,
+.timer-drill-picker__actions {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.timer-drill-picker__toolbar {
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.timer-drill-picker__toolbar .timer-222-mode-toggle {
+  min-height: 44px;
+}
+
+.timer-drill-picker__actions {
+  justify-content: flex-end;
+  padding-top: 12px;
+}
+
+.timer-drill-picker__button,
+.timer-drill-picker__case {
+  appearance: none;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--shell-chip);
+  color: var(--foreground);
+  font: inherit;
+  cursor: pointer;
+}
+
+.timer-drill-picker__button {
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.timer-drill-picker__button:hover,
+.timer-drill-picker__case:hover {
+  border-color: var(--border-strong);
+  background: var(--shell-hover);
+}
+
+.timer-drill-picker__button--exit {
+  margin-left: auto;
+  color: var(--accent);
+}
+
+.timer-drill-picker__button:focus-visible,
+.timer-drill-picker__case:focus-visible,
+.timer-drill-picker__search:focus-visible,
+.timer-drill-picker__search-wrap .clear-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.timer-drill-picker__search-wrap {
+  position: relative;
+  min-width: 0;
+  margin-bottom: 10px;
+}
+
+.timer-drill-picker__search {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 8px 48px 8px 10px;
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 16px;
+}
+
+.timer-drill-picker__search::placeholder {
+  color: var(--faint-foreground);
+}
+
+.timer-drill-picker__search-wrap .clear-btn {
+  right: 0;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+.timer-drill-picker__body {
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.timer-drill-picker__empty {
+  padding: 12px 4px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.timer-drill-picker__group {
+  min-width: 0;
+  margin-bottom: 14px;
+}
+
+.timer-drill-picker__group:last-child {
+  margin-bottom: 0;
+}
+
+.timer-drill-picker__group-title {
+  margin: 0 0 6px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.timer-drill-picker__grid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 6px;
+}
+
+.timer-drill-picker__case {
+  min-width: 0;
+  padding: 8px;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono, ui-monospace, "SFMono-Regular", Consolas, monospace);
+  font-size: 13px;
+}
+
+.timer-drill-picker__case[aria-pressed='true'] {
+  border-color: var(--signal-success);
+  background: var(--success-soft, var(--shell-hover));
+  color: var(--signal-success);
+}
+
+@supports (background: color-mix(in srgb, white 50%, black)) {
+  .timer-drill-picker__backdrop {
+    background: color-mix(in srgb, var(--foreground) 70%, transparent);
+  }
+
+  .timer-drill-picker__dialog {
+    box-shadow: 0 12px 40px color-mix(in srgb, var(--foreground) 28%, transparent);
+  }
+
+  .timer-drill-picker__button,
+  .timer-drill-picker__case {
+    background: color-mix(in srgb, var(--foreground) 4%, var(--popover));
+  }
+
+  .timer-drill-picker__button:hover,
+  .timer-drill-picker__case:hover {
+    background: color-mix(in srgb, var(--foreground) 10%, var(--popover));
+  }
+
+  .timer-drill-picker__case[aria-pressed='true'] {
+    border-color: color-mix(in srgb, var(--signal-success) 45%, transparent);
+    background: color-mix(in srgb, var(--signal-success) 14%, transparent);
+  }
+}
+
+@media (max-width: 480px) {
+  .timer-drill-picker__backdrop {
+    align-items: stretch;
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  }
+
+  .timer-drill-picker__dialog {
+    align-self: center;
+    padding: 14px;
+  }
+
+  .timer-drill-picker__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .timer-drill-picker__button--exit {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .timer-drill-picker__actions {
+    flex-direction: column;
+  }
+
+  .timer-drill-picker__actions .timer-drill-picker__button {
+    width: 100%;
+  }
+}
+
+@media (max-height: 420px) {
+  .timer-drill-picker__backdrop {
+    align-items: flex-start;
+    overflow-y: auto;
+  }
+
+  .timer-drill-picker__dialog {
+    align-self: flex-start;
+    max-height: none;
+    overflow-y: auto;
+  }
+
+  .timer-drill-picker__body {
+    flex: 0 0 min(160px, 42vh);
+  }
+}
