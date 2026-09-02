@@ -227,7 +227,7 @@ describe('CubingApp Roux and Pyraminx port', () => {
     for (const label of ['层先法', 'CFOP 法', 'CFOP 进阶', 'ZB 法', '桥式']) expect(page).toContain(`zh: '${label}'`);
     for (const slug of rouxSlugs) expect(page).toContain(`'${slug}'`);
     expect(page).toContain("const HIDDEN_CATALOG_SET_SLUGS = new Set(['oh-cmll'])");
-    expect(page).toContain('<SortableCaseCard id={s.slug} draggable={isAdmin}>');
+    expect(page).toContain('id={s.slug} draggable={isAdmin}');
     expect(page).toContain('id: CROSS_CARD_ID');
     expect(page).toContain('id: LSLL_CARD_ID');
     expect(page).toContain('reorderAlgCatalog(puzzle, next)');

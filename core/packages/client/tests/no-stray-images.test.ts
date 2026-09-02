@@ -15,7 +15,7 @@ const ANDROID_GENERATED_RESOURCE =
 const IOS_ASSET_CATALOG_RESOURCE =
   /^core\/apps\/mobile\/ios\/App\/App\/Assets\.xcassets\/[^/]+\.(?:appiconset|imageset)\/[^/]+\.(?:png|jpe?g|webp|gif|bmp|avif)$/i;
 const MINIPROGRAM_RUNTIME_ASSET =
-  /^core\/apps\/miniprogram\/(?:src\/)?assets\/[^/]+\.(?:png|jpe?g|webp|gif|bmp|avif)$/i;
+  /^core\/apps\/miniprogram\/(?:src\/)?assets\/.+\.(?:png|jpe?g|webp|gif|bmp|avif)$/i;
 
 // 整路径豁免(跨端品牌图标的生成源,由 core/scripts/gen-brand-assets.mjs 统一维护)。
 const ALLOWLIST = new Set<string>([

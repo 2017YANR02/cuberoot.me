@@ -265,8 +265,8 @@ export default function VaultPage() {
           : tr({ zh: '输入资料库口令，在这台设备上解密。', en: 'Enter your vault passphrase to decrypt on this device.' })}</p>
         <form className="vault-unlock" onSubmit={isSetup ? setup : unlock}>
           <label htmlFor="vault-passphrase">{tr({ zh: '资料库口令', en: 'Vault passphrase' })}</label>
-          <input id="vault-passphrase" type="password" value={passphrase} minLength={12} autoComplete={isSetup ? 'new-password' : 'current-password'} onChange={(event) => setPassphrase(event.target.value)} />
-          {isSetup && <><label htmlFor="vault-confirm">{tr({ zh: '再次输入', en: 'Confirm passphrase' })}</label><input id="vault-confirm" type="password" value={confirmation} minLength={12} autoComplete="new-password" onChange={(event) => setConfirmation(event.target.value)} /></>}
+          <input id="vault-passphrase" className="vault-unlock-input" type="password" value={passphrase} minLength={12} autoComplete={isSetup ? 'new-password' : 'current-password'} onChange={(event) => setPassphrase(event.target.value)} />
+          {isSetup && <><label htmlFor="vault-confirm">{tr({ zh: '再次输入', en: 'Confirm passphrase' })}</label><input id="vault-confirm" className="vault-unlock-input" type="password" value={confirmation} minLength={12} autoComplete="new-password" onChange={(event) => setConfirmation(event.target.value)} /></>}
           <button type="submit" className="vault-button is-primary" disabled={busy}>{busy && <Loader2 className="vault-spin" />}{tr(isSetup ? { zh: '创建并解锁', en: 'Create and unlock' } : { zh: '解锁', en: 'Unlock' })}</button>
         </form>
         {error && <p className="vault-error" role="alert">{error}</p>}
@@ -324,7 +324,7 @@ export default function VaultPage() {
           <section className="vault-sharing">
             <h2>{tr({ zh: '指定可查看账号', en: 'Designated viewers' })}</h2>
             <p>{tr({ zh: '与好友关系无关。撤销后旧版本不再提供，但无法抹除对方已经看过或复制的明文。', en: 'This is independent of friendship. Revocation removes future access, but cannot erase plaintext already viewed or copied.' })}</p>
-            <div className="vault-share-list">{draft.shares.map((share) => <span className="vault-share" key={share.userId}>{share.name}<small>#{share.userId}</small>{editable && <button type="button" aria-label={tr({ zh: `移除 ${share.name}`, en: `Remove ${share.name}` })} onClick={() => updateDraft((item) => { item.shares = item.shares.filter((candidate) => candidate.userId !== share.userId); })}><X /></button>}</span>)}{!draft.shares.length && <span className="vault-muted">{tr({ zh: '仅自己', en: 'Only you' })}</span>}</div>
+            <div className="vault-share-list">{draft.shares.map((share) => <span className="vault-share" key={share.userId}>{share.name}<small>#{share.userId}</small>{editable && <button type="button" className="vault-share-remove" aria-label={tr({ zh: `移除 ${share.name}`, en: `Remove ${share.name}` })} onClick={() => updateDraft((item) => { item.shares = item.shares.filter((candidate) => candidate.userId !== share.userId); })}><X /></button>}</span>)}{!draft.shares.length && <span className="vault-muted">{tr({ zh: '仅自己', en: 'Only you' })}</span>}</div>
             {editable && <form className="vault-user-search" onSubmit={searchUsers}><SearchInput value={shareQuery} onChange={setShareQuery} placeholder={tr({ zh: '用户名、CubeRoot ID 或 WCA ID', en: 'Username, CubeRoot ID, or WCA ID' })} className="vault-share-search" inputClassName="vault-input" /><button type="submit" className="vault-button" disabled={busy || shareQuery.trim().length < 2}><Search />{tr({ zh: '搜索', en: 'Search' })}</button></form>}
             {editable && shareResults.length > 0 && <div className="vault-user-results">{shareResults.map((result) => {
               const added = draft.shares.some((share) => share.userId === result.userId);
