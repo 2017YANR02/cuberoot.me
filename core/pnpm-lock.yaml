@@ -449,9 +449,6 @@ importers:
 
   packages/app-ui:
     dependencies:
-      '@cuberoot/event-icon':
-        specifier: workspace:*
-        version: link:../event-icon
       '@cuberoot/puzzle-solvers':
         specifier: workspace:*
         version: link:../puzzle-solvers
