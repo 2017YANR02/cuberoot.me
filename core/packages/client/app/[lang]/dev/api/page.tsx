@@ -565,11 +565,13 @@ const ENDPOINTS: Ep[] = [
   { d: 'platform', m: 'POST', p: '/v1/platform/admin/qr/card-jobs', g: 'admin', c: 'no-store', zh: '创建卡面生成任务', en: 'Create a QR card job' },
   { d: 'platform', m: 'PATCH', p: '/v1/platform/admin/qr/card-jobs/:id', g: 'admin', c: 'no-store', zh: '更新卡面任务状态', en: 'Update a QR card job' },
   { d: 'platform', m: 'GET', p: '/v1/platform/admin/qr/:id', g: 'admin', c: 'no-store', zh: '二维码详情与版本', en: 'QR detail and revisions' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/admin/qr/:id/card', g: 'admin', c: 'no-store', zh: '二维码卡片设计', en: 'QR card design' },
   { d: 'platform', m: 'POST', p: '/v1/platform/admin/qr', g: 'admin', c: 'no-store', zh: '创建安全二维码目标', en: 'Create a safe QR target' },
   { d: 'platform', m: 'POST', p: '/v1/platform/admin/qr/:id/duplicate', g: 'admin', c: 'no-store', zh: '复制二维码', en: 'Duplicate a QR code' },
   { d: 'platform', m: 'PATCH', p: '/v1/platform/admin/qr/:id/disabled', g: 'admin', c: 'no-store', zh: '启用或停用二维码', en: 'Enable or disable a QR code' },
   { d: 'platform', m: 'DELETE', p: '/v1/platform/admin/qr/:id', g: 'admin', c: 'no-store', zh: '软删除二维码', en: 'Soft-delete a QR code' },
   { d: 'platform', m: 'PATCH', p: '/v1/platform/admin/qr/:id', g: 'admin', c: 'no-store', zh: '编辑二维码并新增版本', en: 'Update a QR code as a new revision' },
+  { d: 'platform', m: 'PATCH', p: '/v1/platform/admin/qr/:id/card', g: 'admin', c: 'no-store', zh: '保存二维码卡片设计版本', en: 'Save a QR card design version' },
 
   // ---- membership ----
   { d: 'membership', m: 'GET', p: '/v1/membership/plans', g: 'public', zh: '会员套餐', en: 'Membership plans' },
