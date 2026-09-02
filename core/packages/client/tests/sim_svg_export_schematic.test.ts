@@ -12,6 +12,7 @@ import './_raf_stub'; // 必须最先:nxn/cube 的 import 链在模块加载期�
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import Cube from '@/app/[lang]/sim/engine/nxn/cube';
+import { STICKER_GAP_DEFAULT } from '@/app/[lang]/sim/engine/define';
 import SquareFamilyCube from '@/app/[lang]/sim/engine/squareFamily/SquareFamilyCube';
 import {
   SQUARE_FAMILY_COLORS,
@@ -597,6 +598,43 @@ describe.each([
     expect(svg.toLowerCase()).toContain(hexOfInt(SQUARE_FAMILY_COLORS.U));
     expect(svg.toLowerCase()).toContain(hexOfInt(SQUARE_FAMILY_COLORS.F));
     expect(svg.toLowerCase()).toContain(hexOfInt(SQUARE_FAMILY_COLORS.R));
+  });
+
+  it('solved 正视:不等宽、不等高侧贴纸使用同一绝对内缩,中层横缝不加粗', () => {
+    const scene = buildSquareFamilyScene();
+    const insetBases: number[] = [];
+    scene.traverse((object) => {
+      if (typeof object.userData.schematicInsetBasis === 'number') {
+        insetBases.push(object.userData.schematicInsetBasis);
+      }
+    });
+    expect(insetBases.length).toBeGreaterThan(0);
+    expect([...new Set(insetBases)]).toEqual([64]);
+    // 默认伴图缝宽下,每条边的退让必须与主 3D 侧贴纸的 SIDE_INSET=4 一致。
+    expect(STICKER_GAP_DEFAULT * insetBases[0] / 2).toBe(4);
+
+    const world = worldFor(scene, new THREE.Vector3(0, 0, 1), SQUARE_FAMILY_HALF_SIDE * 4);
+    const bounds = (d: string) => {
+      const pts = ptsOf(d);
+      expect(pts).toHaveLength(4);
+      const xs = pts.map(([x]) => x), ys = pts.map(([, y]) => y);
+      const x0 = Math.min(...xs), x1 = Math.max(...xs);
+      const y0 = Math.min(...ys), y1 = Math.max(...ys);
+      return { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 };
+    };
+    const order = (a: ReturnType<typeof bounds>, b: ReturnType<typeof bounds>) =>
+      a.cy - b.cy || a.cx - b.cx;
+    const bare = faceletDs(exportSimSvgSchematic({ world, inset: 0 })).map(bounds).sort(order);
+    const shrunk = faceletDs(exportSimSvgSchematic({ world, inset: STICKER_GAP_DEFAULT })).map(bounds).sort(order);
+    expect(shrunk).toHaveLength(bare.length);
+    expect(bare.length).toBeGreaterThan(4);
+    const retreats = bare.flatMap((rect, i) => {
+      expect(Math.abs(shrunk[i].cx - rect.cx)).toBeLessThan(0.02);
+      expect(Math.abs(shrunk[i].cy - rect.cy)).toBeLessThan(0.02);
+      return [(rect.w - shrunk[i].w) / 2, (rect.h - shrunk[i].h) / 2];
+    });
+    expect(Math.min(...retreats)).toBeGreaterThan(0);
+    expect(Math.max(...retreats) - Math.min(...retreats)).toBeLessThan(0.05);
   });
 });
 
