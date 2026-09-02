@@ -32,7 +32,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import './wca-teacher-cell.css';
 
 const LOOKUP_CHUNK_SIZE = 100;
-const MAX_BATCH_STUDENTS = 100;
+const MAX_BATCH_STUDENTS = 1000;
 const MAX_NAMED_STUDENT_NAME_LENGTH = 160;
 
 interface BatchStudentMatch {
@@ -315,6 +315,7 @@ export function WcaStudentAdder({
   const [batchMatches, setBatchMatches] = useState<BatchStudentMatch[] | null>(null);
   const [batchMatching, setBatchMatching] = useState(false);
   const [batchSaving, setBatchSaving] = useState(false);
+  const [batchProcessedCount, setBatchProcessedCount] = useState(0);
   const [batchRemoveConfirmed, setBatchRemoveConfirmed] = useState(false);
   const [batchError, setBatchError] = useState('');
   const [batchUndo, setBatchUndo] = useState<BatchUndoSnapshot | null>(null);
@@ -423,6 +424,7 @@ export function WcaStudentAdder({
     setBatchEventIds(new Set());
     setBatchMatches(null);
     setBatchRemoveConfirmed(false);
+    setBatchProcessedCount(0);
     setBatchError('');
   };
   const toggleBatchEvent = (eventId: string) => {
@@ -460,6 +462,12 @@ export function WcaStudentAdder({
       setBatchMatching(false);
     }
   };
+  const skipBatchMatching = () => {
+    if (batchStudentNames.length === 0 || batchStudentNames.length > MAX_BATCH_STUDENTS || batchNameTooLong) return;
+    setBatchMatches(batchStudentNames.map((inputName) => ({ inputName, candidates: [], selected: null })));
+    setBatchRemoveConfirmed(false);
+    setBatchError('');
+  };
   const saveBatch = async () => {
     if (batchSaving
       || !batchMatches
@@ -483,6 +491,7 @@ export function WcaStudentAdder({
     }
 
     setBatchSaving(true);
+    setBatchProcessedCount(0);
     setBatchError('');
     const existingByName = new Map(existingNamedStudents.map((student) => [
       normalizeRosterName(student.studentName),
@@ -551,6 +560,7 @@ export function WcaStudentAdder({
       } catch {
         failedNames.push(studentName);
       }
+      setBatchProcessedCount((count) => count + 1);
     }
 
     if (savedCount > 0) onSaved();
@@ -881,7 +891,7 @@ export function WcaStudentAdder({
                 className="wca-student-batch-input"
                 value={batchNamesText}
                 rows={4}
-                maxLength={20_000}
+                maxLength={MAX_BATCH_STUDENTS * (MAX_NAMED_STUDENT_NAME_LENGTH + 1)}
                 placeholder={tr({ zh: '一行一个姓名', en: 'One name per line' })}
                 onChange={(event) => {
                   setBatchNamesText(event.target.value);
@@ -1019,11 +1029,30 @@ export function WcaStudentAdder({
                 {batchMatching
                   ? tr({ zh: '匹配中…', en: 'Matching…' })
                   : batchSaving
-                    ? tr({ zh: '保存中…', en: 'Saving…' })
+                    ? batchMatches
+                      ? tr({
+                        zh: `正在保存 ${batchProcessedCount}/${batchMatches.length}`,
+                        en: `Saving ${batchProcessedCount}/${batchMatches.length}`,
+                      })
+                      : tr({ zh: '保存中…', en: 'Saving…' })
                     : batchMatches
                       ? tr({ zh: '确认保存', en: 'Confirm and save' })
                       : tr({ zh: '匹配 WCA 选手', en: 'Match WCA people' })}
               </button>
+              {!batchMatches && (
+                <button
+                  type="button"
+                  className="wca-teacher-dialog-action"
+                  disabled={batchStudentNames.length === 0
+                    || batchStudentNames.length > MAX_BATCH_STUDENTS
+                    || batchNameTooLong
+                    || batchMatching
+                    || batchSaving}
+                  onClick={skipBatchMatching}
+                >
+                  {tr({ zh: '不匹配 WCA', en: 'Skip WCA matching' })}
+                </button>
+              )}
               <button type="button" className="wca-teacher-dialog-action wca-teacher-dialog-cancel" disabled={batchSaving} onClick={closeBatch}>
                 {tr({ zh: '取消', en: 'Cancel' })}
               </button>
