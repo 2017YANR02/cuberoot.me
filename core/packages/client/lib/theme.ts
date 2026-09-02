@@ -4,7 +4,6 @@
 // Differences from Vite original:
 //   - Bootstrap is inlined into <head> as a beforeInteractive script (lib/theme-bootstrap-script.ts)
 //     so no FOUC between SSR document arrival and React hydration.
-//   - Favicon swap kept but operates on whatever <link id="app-favicon"> exists.
 
 import { useEffect, useState } from 'react';
 import { PALETTE_KEY, isPaletteId, paletteScheme, type PaletteId } from './palettes';
@@ -196,7 +195,6 @@ export function applyTheme(theme: Theme, animate = false, clearPalette = false) 
       try { localStorage.removeItem(PALETTE_KEY); } catch { /* ignore */ }
     }
     applyThemeRoot(theme, clearPalette);
-    applyFavicon();
   };
   runTransition(commit, animate);
 }
@@ -210,7 +208,6 @@ export function applyPalette(id: string | null, animate = false) {
   }
   const commit = () => {
     applyPaletteRoot(id);
-    applyFavicon();
   };
   runTransition(commit, animate);
   window.dispatchEvent(new Event('theme-change'));
@@ -245,7 +242,6 @@ export function restorePersistedAppearance() {
   if (palette) applyPaletteRoot(palette);
   else applyThemeRoot(readTheme(), true);
   applyContrastRoot(readContrast());
-  applyFavicon();
 }
 
 export function readContrast(): ContrastLevel {
@@ -266,17 +262,8 @@ export function readPalette(): string | null {
   }
 }
 
-function applyFavicon() {
-  const link = document.getElementById('app-favicon') as HTMLLinkElement | null;
-  if (!link) return;
-  const eff = readEffective();
-  const href = eff === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png';
-  if (link.href.endsWith(href)) return;
-  link.href = href;
-}
-
 export function readEffective(): EffectiveTheme {
-  // 配色主题优先:它自带明/暗,决定 favicon / theme-color。
+  // 配色主题优先:它自带明/暗,决定 theme-color。
   const palScheme = paletteScheme(readPalette());
   if (palScheme) return palScheme;
   const saved = readTheme();

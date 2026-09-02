@@ -39,10 +39,6 @@ export const THEME_BOOTSTRAP = `(() => {
     }
     // 柔和度(降对比护眼)— 正交于明暗/配色,首屏即设,避免高对比闪一下。
     if (localStorage.getItem('contrast') === 'soft') de.setAttribute('data-contrast', 'soft');
-    var link = document.getElementById('app-favicon');
-    if (link) {
-      link.href = eff === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png';
-    }
     // iOS Safari tints its top/bottom chrome from <meta name=theme-color>;
     // without it dark mode leaks white at the screen edges. Set a pre-paint
     // guess here (ThemeColorSync refines it to the exact page bg after render).

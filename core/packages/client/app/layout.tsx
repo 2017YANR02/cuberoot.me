@@ -65,7 +65,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link id="app-favicon" rel="icon" href="/icons/CubeRoot.png" />
+        <link rel="icon" href="/icons/CubeRoot.png" />
+        <link rel="icon" href="/icons/CubeRoot-dark.png" media="(prefers-color-scheme: dark)" />
         {/* iOS「添加到主屏幕」的图标。Safari 只认 apple-touch-icon —— 缺这条它就
             截一张页面缩略图当图标(这正是主屏图标不是 logo 的原因),rel="icon" 不顶用。
             必须是不透明 PNG:iOS 会把 alpha 合成到黑底上。生成脚本见 core/scripts/gen-brand-assets.mjs。
