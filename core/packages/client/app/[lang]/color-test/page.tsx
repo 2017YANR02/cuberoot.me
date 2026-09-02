@@ -23,8 +23,8 @@ const TESTS = [
     href: '/color-test/positions',
     title: { zh: '侧面颜色顺序', en: 'Side Colour Order' },
     description: {
-      zh: '保持白色朝上,判断红、绿、橙、蓝四个侧面的左右位置关系。',
-      en: 'Keep white on top and recall the left-right order of the red, green, orange and blue side faces.',
+      zh: '选择顶面颜色,判断其余四个侧面的左右位置关系。',
+      en: 'Choose the top colour and recall the left-right order of the other four side faces.',
     },
   },
   {

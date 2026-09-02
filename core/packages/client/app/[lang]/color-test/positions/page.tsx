@@ -3,14 +3,17 @@
 import { useState, type CSSProperties } from 'react';
 import { ArrowRight, RotateCcw } from 'lucide-react';
 import BackHome from '@/components/BackHome';
+import { CompactSelect } from '@/components/CompactSelect';
 import HeaderToggles from '@/components/HeaderToggles';
+import TrainingFeedbackOverlay from '@/components/TrainingFeedbackOverlay';
 import { tr } from '@/i18n/tr';
-import { CUBE_COLOR_NAMES, CUBE_FILL } from '@/lib/cube-colors';
+import { CUBE_COLOR_NAMES, CUBE_FILL, type CubeFace } from '@/lib/cube-colors';
 import ColorSwatch from '../_components/ColorSwatch';
+import { CUBE_COLOR_FACES } from '../_lib/relations';
 import {
   ALL_POSITION_QUESTIONS,
-  WHITE_TOP_SIDE_ORDER,
   buildPositionRound,
+  sideOrderForTop,
   type PositionQuestion,
   type SideFace,
 } from '../_lib/positions';
@@ -20,7 +23,7 @@ function colorName(face: SideFace): string {
   return tr(CUBE_COLOR_NAMES[face]);
 }
 
-function Result({ score, onRestart }: { score: number; onRestart: () => void }) {
+function Result({ score, topFace, onRestart }: { score: number; topFace: CubeFace; onRestart: () => void }) {
   const summary = score === ALL_POSITION_QUESTIONS.length
     ? { zh: '全部答对,侧面颜色顺序已经很稳了。', en: 'Perfect. You have the side-colour order down.' }
     : score >= 6
@@ -37,15 +40,18 @@ function Result({ score, onRestart }: { score: number; onRestart: () => void }) 
       <p>{tr(summary)}</p>
 
       <div className="color-quiz-memory">
-        <h2>{tr({ zh: '白色朝上时的侧面顺序', en: 'Side order with white on top' })}</h2>
+        <h2>{tr({
+          zh: `${CUBE_COLOR_NAMES[topFace].zh}色朝上时的侧面顺序`,
+          en: `Side order with ${CUBE_COLOR_NAMES[topFace].en} on top`,
+        })}</h2>
         <div className="position-order">
-          {WHITE_TOP_SIDE_ORDER.map((face) => (
+          {sideOrderForTop(topFace).map((face) => (
             <span className="color-quiz-memory-pair" key={face}>
               <ColorSwatch face={face} compact />
               <i>→</i>
             </span>
           ))}
-          <ColorSwatch face={WHITE_TOP_SIDE_ORDER[0]} compact />
+          <ColorSwatch face={sideOrderForTop(topFace)[0]} compact />
         </div>
       </div>
 
@@ -58,17 +64,23 @@ function Result({ score, onRestart }: { score: number; onRestart: () => void }) 
 }
 
 export default function ColorPositionsPage() {
-  const [round, setRound] = useState<PositionQuestion[]>(() => buildPositionRound(() => 0.42));
+  const [topFace, setTopFace] = useState<CubeFace>('U');
+  const [round, setRound] = useState<PositionQuestion[]>(() => buildPositionRound('U', () => 0.42));
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<SideFace | null>(null);
   const [score, setScore] = useState(0);
   const question = round[index];
 
-  const restart = () => {
-    setRound(buildPositionRound());
+  const restart = (nextTop = topFace) => {
+    setRound(buildPositionRound(nextTop));
     setIndex(0);
     setSelected(null);
     setScore(0);
+  };
+
+  const changeTopFace = (face: CubeFace) => {
+    setTopFace(face);
+    restart(face);
   };
 
   const answer = (face: SideFace) => {
@@ -94,9 +106,24 @@ export default function ColorPositionsPage() {
         <p className="color-quiz-eyebrow">{tr({ zh: '颜色测试 02', en: 'COLOUR TEST 02' })}</p>
         <h1>{tr({ zh: '侧面颜色顺序', en: 'Side colour order' })}</h1>
         <p>{tr({
-          zh: '保持白色朝上,判断红、绿、橙、蓝四个侧面的左右顺序。一轮会问完 8 种关系。',
-          en: 'Keep white on top and recall the left-right order of the four side faces: red, green, orange and blue. One round covers all 8 relations.',
+          zh: '选择顶面颜色,判断其余四个侧面的左右顺序。一轮会问完 8 种关系。',
+          en: 'Choose the top colour and recall the left-right order of the other four side faces. One round covers all 8 relations.',
         })}</p>
+        <div className="position-top-control">
+          <span>{tr({ zh: '顶面颜色', en: 'Top colour' })}</span>
+          <CompactSelect
+            items={CUBE_COLOR_FACES.map((face) => ({
+              value: face,
+              label: <ColorSwatch face={face} compact />,
+              textValue: colorName(face),
+            }))}
+            value={topFace}
+            onChange={changeTopFace}
+            label={<ColorSwatch face={topFace} compact />}
+            valueText={colorName(topFace)}
+            ariaLabel={tr({ zh: '顶面颜色', en: 'Top colour' })}
+          />
+        </div>
       </header>
 
       {question ? (
@@ -110,17 +137,24 @@ export default function ColorPositionsPage() {
           </div>
 
           <h2 id="position-question">{tr({
-            zh: `白色朝上时,${CUBE_COLOR_NAMES[question.reference].zh}色的${question.direction === 'right' ? '右边' : '左边'}是什么颜色?`,
-            en: `With white on top, which colour is to the ${question.direction} of ${CUBE_COLOR_NAMES[question.reference].en}?`,
+            zh: `${CUBE_COLOR_NAMES[topFace].zh}色朝上时,${CUBE_COLOR_NAMES[question.reference].zh}色的${question.direction === 'right' ? '右边' : '左边'}是什么颜色?`,
+            en: `With ${CUBE_COLOR_NAMES[topFace].en} on top, which colour is to the ${question.direction} of ${CUBE_COLOR_NAMES[question.reference].en}?`,
           })}</h2>
           <div className="position-prompt" aria-hidden="true">
             {question.direction === 'left' && <span className="position-prompt-mark">? ←</span>}
-            <ColorSwatch face={question.reference} />
+            <div className="position-prompt-target">
+              <ColorSwatch face={question.reference} />
+              <TrainingFeedbackOverlay
+                kind={selected ? (selected === question.answer ? 'correct' : 'wrong') : null}
+                correctLabel={tr({ zh: '答对了', en: 'Correct' })}
+                wrongLabel={tr({ zh: '答错了', en: 'Wrong' })}
+              />
+            </div>
             {question.direction === 'right' && <span className="position-prompt-mark">→ ?</span>}
           </div>
 
           <div className="color-quiz-choices position-choices">
-            {WHITE_TOP_SIDE_ORDER.filter((face) => face !== question.reference).map((face) => {
+            {sideOrderForTop(topFace).filter((face) => face !== question.reference).map((face) => {
               const isCorrect = selected !== null && face === question.answer;
               const isWrong = selected === face && face !== question.answer;
               return (
@@ -147,8 +181,8 @@ export default function ColorPositionsPage() {
             <div className={`color-quiz-feedback ${selected === question.answer ? 'is-correct' : 'is-wrong'}`} aria-live="polite">
               <strong>{tr(selected === question.answer ? { zh: '答对了', en: 'Correct' } : { zh: '再记一下', en: 'Not quite' })}</strong>
               <span>{tr({
-                zh: `白色朝上时,${CUBE_COLOR_NAMES[question.reference].zh}色的${question.direction === 'right' ? '右边' : '左边'}是${CUBE_COLOR_NAMES[question.answer].zh}色。`,
-                en: `With white on top, ${CUBE_COLOR_NAMES[question.answer].en} is to the ${question.direction} of ${CUBE_COLOR_NAMES[question.reference].en}.`,
+                zh: `${CUBE_COLOR_NAMES[topFace].zh}色朝上时,${CUBE_COLOR_NAMES[question.reference].zh}色的${question.direction === 'right' ? '右边' : '左边'}是${CUBE_COLOR_NAMES[question.answer].zh}色。`,
+                en: `With ${CUBE_COLOR_NAMES[topFace].en} on top, ${CUBE_COLOR_NAMES[question.answer].en} is to the ${question.direction} of ${CUBE_COLOR_NAMES[question.reference].en}.`,
               })}</span>
               <button type="button" className="color-quiz-next" onClick={next} autoFocus>
                 {index === round.length - 1
@@ -160,7 +194,7 @@ export default function ColorPositionsPage() {
           )}
         </section>
       ) : (
-        <Result score={score} onRestart={restart} />
+        <Result score={score} topFace={topFace} onRestart={() => restart()} />
       )}
     </main>
   );

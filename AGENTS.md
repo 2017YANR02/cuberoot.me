@@ -132,6 +132,7 @@ pnpm --filter @cuberoot/client lint
 - 锚定下拉面板(absolute + top:100%)必挂 `hooks/usePanelClamp` 钳视口,CSS 注明 `anchored-panel: clamped`;确证安全注明 `anchored-panel: safe (<理由>)`。守卫:hook + CI ratchet;实测 `audit:overflow` popup pass。
 - 吸顶表头走 `components/sticky-table.css`(`.sticky-scroll` + `.sticky-thead`),禁手写 sticky thead;契约见文件头注。
 - 新可复用组件/hook 登记 `/dev` catalog(`_catalog.tsx`)。CI 守卫:`dev-catalog-sync` + `dev-tokens-drift`。
+- 答题/训练的对错提示统一复用 `components/TrainingFeedbackOverlay` 的绿色 ✅ / 红色 ❌,禁页面自画。
 - 浏览器基线跟随当前 Next 官方支持范围，禁为旧 WebView/开发者工具下调 `browserslist`；旧内核走全站启动失败提示，顶层 `ssr:false` 加载态用 `ClientLoadStatus`。CI:`browser-support-policy.test.ts` + `timer-bootstrap.test.ts`。
 - 项目下拉统一用 `components/PuzzlePicker`;`/wca` 页内展开式项目行用 `WcaEventSelector`;禁页面内自写项目菜单。hook + CI 守卫:`component-reuse-guard`。
 - `/alg` case 详情统一走 `AlgCaseView`:静态主图用 `CaseThumb`,动画用 `AlgPlayer`;多朝向不得省略主图或另造结构,桌面一行一朝向且动画左公式右。
