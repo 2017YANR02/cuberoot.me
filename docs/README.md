@@ -21,6 +21,7 @@
 | 领域 | 权威入口 | 状态 | 用途 |
 | --- | --- | --- | --- |
 | 架构现代化 | [architecture-modernization-tracker.md](./architecture-modernization-tracker.md) | `ACTIVE` | 决策、批次、验收和审核记录 |
+| 音乐播放器 | [music-player-tracker.md](./music-player-tracker.md) | `ACTIVE` | `/music`、DeskPet 悬浮音频中心、曲库转码与静态媒体发布 |
 | 后台与增长监控 | [admin-observability-tracker.md](./admin-observability-tracker.md) | `ACTIVE` | `/admin` 首页、用户注册与会员增长的口径、实施和验收 |
 | 架构现状锐评 | [architecture-audit-2026-08.md](./architecture-audit-2026-08.md) | `HISTORICAL` | 2026-08 审计快照；当前状态以 tracker 为准 |
 | Platform 产品迁移 | [platform-product-migration-tracker.md](./platform-product-migration-tracker.md) | `ACTIVE` | 发布、角色态复验和旧资产观察 |

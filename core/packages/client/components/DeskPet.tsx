@@ -19,7 +19,7 @@ import { useNotificationsUnread, refreshNotificationsUnread } from '@/lib/notifi
 import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
 import { persistItem } from '@/lib/safe-storage';
-import { subscribeBeat, setMetronome, getMetronomeState } from '@/lib/metronome';
+import { subscribeBeat, getMetronomeState } from '@/lib/metronome';
 // SSR-safe layout effect (DeskPet is rendered in the root layout).
 const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
@@ -1130,10 +1130,10 @@ export default function DeskPet() {
           onToggleMetronome={() => {
             const next = !metronomeOpen;
             setMetronomeOpen(next);
-            // Opening from the toolbar means "start ticking" — and this runs
-            // inside the tap, which is what unlocks audio on iOS.
-            setMetronome({ on: next });
-            if (next) setSearchOpen(false);
+            if (next) {
+              setSearchOpen(false);
+              setTouchActionsVisible(false);
+            }
           }}
         />
       )}

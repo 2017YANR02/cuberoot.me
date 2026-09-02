@@ -48,6 +48,7 @@ export const SITE_DIRECTORY_TEXTS = {
   analyze: { en: 'Analyzer', zh: '打乱分析' },
   gen: { en: 'Scrambles', zh: '生成打乱' },
   memo: { en: 'Memo', zh: '记忆' },
+  music: { en: 'Music', zh: '音乐' },
   dev: { en: 'Dev', zh: '开发' },
   timezone: { en: 'Time Zones', zh: '时区' },
   calendar: { en: 'Calendar', zh: '日历' },
@@ -225,6 +226,7 @@ export const SITE_DIRECTORY_GROUPS = [
       zh: '论坛、联系方式、公开反馈、代码笔记、博客、站点导航、非官方纪录与 CubeRoot 的创作者。',
     },
     entries: [
+      { id: 'music', href: '/music', internal: true, tier: 'medium', nameKey: 'music' },
       { id: 'forum', href: '/forum', internal: true, tier: 'medium', nameKey: 'forum' },
       { id: 'drive', href: '/drive', internal: true, tier: 'medium', nameKey: 'drive' },
       { id: 'feedback', href: '/feedback', internal: true, tier: 'medium', nameKey: 'feedback' },
