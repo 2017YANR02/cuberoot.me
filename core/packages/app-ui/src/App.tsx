@@ -87,6 +87,7 @@ import {
   timerWcaScrambleEventId,
   timerWcaScrambleSourceLine,
   timerWcaSupportsOptimal,
+  timerSettingFieldContract,
   variantLabel,
   TIMER_COLOR_NAMES,
   TIMER_WCA_MIN_DATE,
@@ -164,11 +165,11 @@ import {
   TimerStatRail,
   TimerStatsPanel,
   TimerRollingStatsPicker,
+  TimerBooleanSettingRow,
   TimerTimingSettingsSections,
   TimerTopbar,
   TimerWcaSourceConfig,
   TimerWcaDifficultyConfig,
-  TimerWcaOptimalToggle,
   TIMER_OVERLAY_IDS,
   TimingSurface,
   shouldIgnoreTimerTarget,
@@ -459,6 +460,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [connection, setConnection] = useState<ConnectionState>('checking');
   const [wcaDifficultyCoverage, setWcaDifficultyCoverage] = useState<TimerWcaDifficultyCoverage>('idle');
   const [wcaTopControlsSlot, setWcaTopControlsSlot] = useState<HTMLSpanElement | null>(null);
+  const [wcaDifficultyToggleSlot, setWcaDifficultyToggleSlot] = useState<HTMLSpanElement | null>(null);
   const realPoolsRef = useRef(new Map<string, RealScramble[]>());
   const realCurrentBySourceRef = useRef(new Map<string, RealScramble>());
   const realRequestsRef = useRef(new Map<string, RealPoolRequest>());
@@ -587,6 +589,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   );
   const wcaSourceSettings: TimerWcaSourceSettings = store?.settings
     ?? DEFAULT_TIMER_WCA_SOURCE_SETTINGS;
+  const optimalAvailable = scrambleSource === 'wca'
+    && timerWcaSupportsOptimal(timerWcaScrambleEventId(activeEvent));
   const wcaSourceSignature = `${realScrambleSourceKey({
     event: activeEvent,
     scramble222Mode,
@@ -891,7 +895,23 @@ export function App({ host }: { host: InstalledAppHost }) {
   });
   const scrambleCaseId = currentScrambleEntry?.caseId ?? null;
   const currentReal = currentScrambleEntry?.currentReal ?? null;
+  const [currentRealCountry, setCurrentRealCountry] = useState('');
   const scrambleAvailability = currentScrambleEntry?.availability ?? 'loading';
+
+  useEffect(() => {
+    const competitionId = currentReal?.competitionId;
+    let active = true;
+    setCurrentRealCountry('');
+    if (!competitionId) return () => { active = false; };
+    void wcaSourceAdapter.loadCompetitions().then((competitions) => {
+      if (active) {
+        setCurrentRealCountry(
+          competitions.find((competition) => competition.id === competitionId)?.country ?? '',
+        );
+      }
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, [currentReal?.competitionId, wcaSourceAdapter]);
 
   const realPoolFor = useCallback((input: RealScrambleSourceSpec): RealScramble[] => {
     const spec = normalizeRealScrambleSourceSpec(input);
@@ -2968,6 +2988,11 @@ export function App({ host }: { host: InstalledAppHost }) {
                     triggerClassName="shell-players-select"
                     value={scrambleSource}
                   />
+                  <span
+                    className="mobile-wca-shared-controls"
+                    data-no-timer
+                    ref={setWcaDifficultyToggleSlot}
+                  />
                 </>
               )}
             />
@@ -3005,24 +3030,11 @@ export function App({ host }: { host: InstalledAppHost }) {
                   )}
                   roundLabel={timerWcaRoundShortLabel}
                   settings={wcaSourceSettings}
+                  trailingControls={(
+                    <span className="mobile-wca-shared-controls" ref={setWcaTopControlsSlot} />
+                  )}
                   wcaEventId={timerWcaScrambleEventId(activeEvent)}
                 />
-                {activeEvent !== '222'
-                  && timerWcaSupportsOptimal(timerWcaScrambleEventId(activeEvent)) && (
-                  <div className="timer-wca-difficulty-top-row mobile-wca-controls-row">
-                    <span className="timer-wca-difficulty-control settings-row-tight-group">
-                      <span className="timer-wca-difficulty-label settings-row-label">{copy.optimalScramble}</span>
-                      <TimerWcaOptimalToggle
-                        ariaLabel={copy.optimalScramble}
-                        disabled={!sourceControlsEnabled}
-                        onChange={(wcaUseOptimal) => updateWcaSourceSettings({ wcaUseOptimal })}
-                        value={wcaSourceSettings.wcaUseOptimal}
-                        wcaEventId={timerWcaScrambleEventId(activeEvent)}
-                      />
-                    </span>
-                    <span className="mobile-wca-shared-controls" ref={setWcaTopControlsSlot} />
-                  </div>
-                )}
                 <TimerWcaDifficultyConfig
                   adapter={mobileTimerWcaDifficultyAdapter}
                   disabled={!sourceControlsEnabled}
@@ -3031,6 +3043,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                   onCoverageChange={setWcaDifficultyCoverage}
                   settings={wcaSourceSettings}
                   topControlsSlot={wcaTopControlsSlot}
+                  toggleSlot={wcaDifficultyToggleSlot}
                   wcaEventId={timerWcaScrambleEventId(activeEvent)}
                 />
               </fieldset>
@@ -3152,7 +3165,8 @@ export function App({ host }: { host: InstalledAppHost }) {
                      }}
                    >
                      {currentReal && scrambleSource === 'wca' && (
-                       <p className="mobile-scramble-source">
+                       <p className="mobile-scramble-source timer-scramble-source-meta">
+                        {currentRealCountry && <Flag iso2={currentRealCountry} />}
                         <strong>{currentReal.competitionName}</strong>
                         <EventIcon
                           ariaLabel={timerEventPickerName(activeEvent, language)}
@@ -3646,6 +3660,29 @@ export function App({ host }: { host: InstalledAppHost }) {
               )}
               value={store!.settings}
             />
+
+            {activeEvent !== '222' && (
+              <section className="settings-section">
+                <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
+                  category.id === 'scramble'
+                ))?.label[language]}</h2>
+                <TimerBooleanSettingRow
+                  disabled={!optimalAvailable}
+                  field={timerSettingFieldContract('settings.scramble.optimal')}
+                  label={copy.optimalScramble}
+                  onChange={(wcaUseOptimal) => updateWcaSourceSettings({ wcaUseOptimal })}
+                  renderBooleanControl={({ disabled, label, onChange, value }) => (
+                    <TimerPillToggle
+                      ariaLabel={label}
+                      disabled={disabled}
+                      onChange={onChange}
+                      value={value}
+                    />
+                  )}
+                  value={optimalAvailable && wcaSourceSettings.wcaUseOptimal}
+                />
+              </section>
+            )}
 
             {(timerSupportsStageSplits(activeEvent) || isBldEvent(activeEvent)) && (
               <section className="settings-section">

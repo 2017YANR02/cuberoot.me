@@ -149,9 +149,14 @@ describe('shared TimerScrambleStrip', () => {
   it('locks narrow-screen wrapping for long, unbroken scramble content', () => {
     const cssUrl = import.meta.resolve('@cuberoot/timer-ui/scramble-strip.css');
     const css = readFileSync(new URL(cssUrl), 'utf8');
+    const rootRule = css.match(/\.scramble-strip,[\s\S]*?\{([^}]+)\}/)?.[1] ?? '';
+    expect(rootRule).not.toBe('');
     expect(css).toMatch(/\.scramble-strip[\s\S]*?min-width:\s*0;[\s\S]*?max-width:\s*100%;/);
     expect(css).toMatch(/\.scramble-strip[\s\S]*?overflow-wrap:\s*anywhere;/);
     expect(css).toMatch(/\.scramble-strip \.scramble-text[\s\S]*?min-width:\s*0;[\s\S]*?max-width:\s*100%;/);
+    expect(rootRule).not.toContain('word-spacing');
+    expect(css).toMatch(/\.scramble-strip \.scramble-moves,[\s\S]*?word-spacing:\s*0\.25em;/);
+    expect(css).toMatch(/\.timer-scramble-source-meta[\s\S]*?word-spacing:\s*normal;/);
     expect(css).toMatch(/@media \(max-width: 540px\)[\s\S]*?overflow-x:\s*clip;/);
 
     const strip = render({ scramble: 'R'.repeat(500) });

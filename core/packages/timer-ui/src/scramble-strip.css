@@ -35,7 +35,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   line-height: 1.5;
   text-align: center;
   white-space: pre-wrap;
-  word-spacing: 0.25em;
   overflow-wrap: anywhere;
 }
 
@@ -66,7 +65,12 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .timing-surface-scramble .scramble-strip .scramble-moves {
   min-width: 0;
   max-width: 100%;
+  word-spacing: 0.25em;
   word-break: break-word;
+}
+.timer-scramble-source-meta {
+  font-family: var(--font-sans, sans-serif);
+  word-spacing: normal;
 }
 .scramble-strip .scramble-empty { color: var(--faint-foreground); font-style: italic; }
 .scramble-strip .scramble-empty-retry {

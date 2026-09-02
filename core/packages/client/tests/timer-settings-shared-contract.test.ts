@@ -323,6 +323,8 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     expect(panel).toContain('<TimerTimingSettingsSections');
     expect(panel).toContain('<TimerScrambleClickActionSetting');
     expect(panel).toContain('<TimerScramblePreviewSettings');
+    expect(panel).toContain('<TimerBooleanSettingRow');
+    expect(panel).toContain("field={timerSettingFieldContract('settings.scramble.optimal')}");
     expect(panel).toContain('renderBooleanControl={renderTimingBooleanControl}');
     expect(panel).toContain("settingState('settings.training.stage-splits').visible");
     expect(panel).toContain("settingState('settings.sound.volume').disabled");

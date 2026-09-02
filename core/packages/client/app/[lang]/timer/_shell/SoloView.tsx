@@ -2875,7 +2875,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               {wcaSrcDisplay && (
                 <div className="scramble-src-row">
                 <a
-                  className="scramble-src"
+                  className="scramble-src timer-scramble-source-meta"
                   data-no-timer
                   href={`${isZh ? '/zh' : ''}/scramble/gen?comp=${encodeURIComponent(wcaSrcDisplay.ci)}`}
                   onClick={(e) => e.stopPropagation()}

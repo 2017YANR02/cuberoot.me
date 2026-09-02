@@ -333,23 +333,18 @@ button {
   margin: 0 auto;
 }
 
-/* Keep the source and option bodies stacked, while the shared portal keeps
- * Optimal / Merge / Difficulty in one compact row when their labels fit. */
+/* Keep the source and option bodies stacked. Shared portals match Web:
+ * Merge stays in the source row and Difficulty stays in the timer topbar. */
 .mobile-wca-source-config {
   flex-direction: column;
   align-items: stretch;
   gap: 6px;
 }
 
-.mobile-wca-source-config > .mobile-wca-controls-row,
 .mobile-wca-source-config > .timer-wca-difficulty-top-row,
 .mobile-wca-source-config > .timer-wca-difficulty-body {
   width: min(100%, 44rem);
   margin-inline: auto;
-}
-
-.mobile-wca-controls-row {
-  justify-content: center;
 }
 
 .mobile-wca-shared-controls {
