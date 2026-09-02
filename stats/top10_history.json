@@ -24595,6 +24595,9 @@
     "NanningOpen2026": {
       "name": "Nanning Open 2026"
     },
+    "BramptonSummer2026": {
+      "name": "Brampton Summer 2026"
+    },
     "CzechOpen2006": {
       "name": "Czech Open 2006"
     },
@@ -29730,6 +29733,9 @@
     },
     "XianOpen2026": {
       "name": "Xi'an Open 2026"
+    },
+    "ParadisePlaceOpen2026": {
+      "name": "Paradise Place Open 2026"
     },
     "IndonesianOpen2009": {
       "name": "Indonesian Open 2009"
@@ -36520,6 +36526,9 @@
     "MysticCubikon2026": {
       "name": "Mystic Cubikon 2026"
     },
+    "DFWCubingSummer2026": {
+      "name": "DFW Cubing Summer 2026"
+    },
     "ShanghaiDonghua2012": {
       "name": "Shanghai Donghua 2012"
     },
@@ -38866,6 +38875,9 @@
     "Cube4funinBelchatow2023": {
       "name": "Cube4fun in Bełchatów 2023"
     },
+    "PickeringSideEvents2023": {
+      "name": "Pickering Side Events 2023"
+    },
     "NTUSpeedcubing2023": {
       "name": "NTU Speedcubing 2023"
     },
@@ -38937,6 +38949,9 @@
     },
     "BaliSpeedcubingOpen2025": {
       "name": "Bali Speedcubing Open 2025"
+    },
+    "PickeringFavouritesFall2025": {
+      "name": "Pickering Favourites Fall 2025"
     },
     "ArkansolveFall2025": {
       "name": "Arkansolve Fall 2025"
@@ -39346,6 +39361,9 @@
     "CubestuffLeonardo2026": {
       "name": "Cubestuff Sandton Leonardo 2026"
     },
+    "4x4OffUS40IL2026": {
+      "name": "4x4 Off US-40 IL 2026"
+    },
     "QuezonMegaminxOpen2009": {
       "name": "Quezon Megaminx Open 2009"
     },
@@ -39438,9 +39456,6 @@
     },
     "SOSNewmarket2023": {
       "name": "SOS Newmarket 2023"
-    },
-    "PickeringSideEvents2023": {
-      "name": "Pickering Side Events 2023"
     },
     "SandnesSummerFun2023": {
       "name": "Sandnes Summer Fun 2023"
@@ -40698,9 +40713,6 @@
     },
     "OttawaBigCubes2025": {
       "name": "Ottawa Big Cubes 2025"
-    },
-    "PickeringFavouritesFall2025": {
-      "name": "Pickering Favourites Fall 2025"
     },
     "MalaysiaCubeChampionship2025": {
       "name": "Malaysia Cube Championship 2025"
