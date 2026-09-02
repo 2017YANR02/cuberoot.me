@@ -104,6 +104,7 @@ describe('mobile visible viewport layout', () => {
     ]);
     expect(css).toMatch(/\.view-container \{[^}]*overflow-x: hidden;[^}]*overflow-y: auto;/s);
     expect(css).toMatch(/\.mobile-timer-stage \{[^}]*min-height: 520px;/s);
+    expect(css).toMatch(/\.mobile-timer-stage > \.timing-surface \{[^}]*min-height: min-content;/s);
     expect(css).toMatch(/\.app-shell--compact-viewport \.mobile-timer-stage \{[^}]*min-height: 350px;/s);
     expect(css).toMatch(/\.app-shell--compact-viewport \.mobile-timer-stage > \.timing-surface \{[^}]*padding: 8px 0;/s);
   });
