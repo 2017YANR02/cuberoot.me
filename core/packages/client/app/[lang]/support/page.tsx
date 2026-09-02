@@ -320,11 +320,23 @@ export default function SupportPage() {
         })}
         </p>
         <div className="support-cta-row">
-          <button className="support-cta" onClick={() => setDonateOpen(true)}>
-            <Heart size={15} className="support-cta-heart" />
-            {tr({ zh: '支持本站', en: 'Support this site'
-          })}
-          </button>
+          {user ? (
+            <button className="support-cta" onClick={() => setDonateOpen(true)}>
+              <Heart size={15} className="support-cta-heart" />
+              {tr({ zh: '支持本站', en: 'Support this site'
+            })}
+            </button>
+          ) : (
+            <AppLink
+              href="/account?view=signin&next=%2Fsupport"
+              prefetch={false}
+              className="support-cta"
+            >
+              <Heart size={15} className="support-cta-heart" />
+              {tr({ zh: '登录后支持', en: 'Sign in to support'
+            })}
+            </AppLink>
+          )}
           {admin ? (
             <AppLink href="/membership" className="support-member-link">
               <Crown size={14} />
@@ -440,7 +452,7 @@ export default function SupportPage() {
           onClose={() => setDetailContributor(null)}
         />
       )}
-      {donateOpen && <DonateModal lang={isZh ? 'zh' : 'en'} onClose={() => setDonateOpen(false)} />}
+      {user && donateOpen && <DonateModal lang={isZh ? 'zh' : 'en'} onClose={() => setDonateOpen(false)} />}
       {editorTarget && (
         <SupportEditor
           target={editorTarget}

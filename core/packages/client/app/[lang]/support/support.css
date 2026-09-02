@@ -29,6 +29,7 @@
 .support-cta {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
   padding: 9px 20px;
   border: none;
@@ -37,6 +38,7 @@
   color: var(--accent-foreground);
   font-size: 0.9rem;
   font-weight: 550;
+  text-decoration: none;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
 }
