@@ -106,6 +106,12 @@
   white-space: nowrap;
 }
 
+.ccc-chip.cube-orientation-chip {
+  flex-direction: column;
+  width: 13px;
+  height: 16px;
+}
+
 .compact-select-option {
   display: block;
   width: 100%;
