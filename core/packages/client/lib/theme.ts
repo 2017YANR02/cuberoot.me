@@ -277,6 +277,7 @@ export function useEffectiveTheme(): EffectiveTheme {
   );
   useEffect(() => {
     const refresh = () => setT(readEffective());
+    refresh();
     const mq = matchMedia('(prefers-color-scheme: dark)');
     mq.addEventListener('change', refresh);
     window.addEventListener('storage', refresh);
