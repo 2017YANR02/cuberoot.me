@@ -22,6 +22,18 @@ export const BUILD_ASSETS = [
     source: resolve(
       import.meta.dirname,
       '..',
+      '..',
+      '..',
+      'assets',
+      'brand',
+      'icon-192.png',
+    ),
+    output: 'assets/cuberoot-logo.png',
+  },
+  {
+    source: resolve(
+      import.meta.dirname,
+      '..',
       'assets',
       'share-cover.png',
     ),

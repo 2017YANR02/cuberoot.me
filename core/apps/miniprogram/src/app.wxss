@@ -133,6 +133,14 @@ button::after {
   width: 100%;
 }
 
+.web-login-logo {
+  border-radius: 12rpx;
+  flex: none;
+  height: 48rpx;
+  margin-right: 16rpx;
+  width: 48rpx;
+}
+
 .web-status-spinner {
   animation: web-status-spin 0.9s linear infinite;
   border: 5rpx solid var(--cr-line);

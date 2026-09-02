@@ -187,6 +187,10 @@ describe('mini program app structure', () => {
     expect(sharedTemplate).toContain('bindmessage="handleWebViewMessage"');
     expect(sharedTemplate).toContain('wx:elif="{{loginRequired}}"');
     expect(sharedTemplate).toContain('bindtap="loginWithMiniProgram"');
+    expect(sharedTemplate).toContain('src="/assets/cuberoot-logo.png"');
+    expect(sharedTemplate).not.toContain('{{loginTitle}}');
+    expect(sharedTemplate).not.toContain('{{loginIntro}}');
+    expect(sharedTemplate).not.toContain('>ACCOUNT<');
     expect(timerTemplate).not.toContain('<web-view');
     expect(toolsTemplate).not.toContain('<web-view');
     expect(accountTemplate).not.toContain('<web-view');
