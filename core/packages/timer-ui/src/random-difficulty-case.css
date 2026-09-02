@@ -1,0 +1,57 @@
+.trainer-case {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: var(--muted-foreground);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: var(--timer-scramble-src-fs, 12px);
+  line-height: 1.3;
+  word-spacing: normal;
+}
+
+.trainer-case-what {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.trainer-case-depth {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.trainer-case-reveal {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+}
+
+.trainer-case-reveal:disabled {
+  color: var(--muted-foreground);
+  cursor: default;
+}
+
+.trainer-case-reveal:focus-visible {
+  outline: 2px solid var(--ring, var(--accent));
+  outline-offset: 2px;
+}
+
+.trainer-case-sol {
+  color: var(--foreground);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  overflow-wrap: anywhere;
+}
+
+.trainer-case-frame {
+  margin-right: 6px;
+  color: var(--muted-foreground);
+}
+
+.trainer-case-error { color: var(--signal-error, var(--destructive)); }

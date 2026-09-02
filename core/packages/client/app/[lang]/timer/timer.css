@@ -140,41 +140,6 @@
   font-size: 12px;
 }
 
-/* 「按难度生成」的打乱行:这条打乱是哪个阶段、几步,外加按需展开的一条最优解。
-   同 .scramble-src-row 独占整行(父容器 flex-wrap),不加外框,层级只靠 gap 与字重。
-   答案本身是公式,走等宽字体;其余走界面字体并复位 word-spacing(父级是等宽打乱区)。 */
-.trainer-case {
-  flex-basis: 100%;
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-  font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: var(--timer-scramble-src-fs);
-  line-height: 1.3;
-  word-spacing: normal;
-  color: var(--muted-foreground);
-}
-.trainer-case-what { display: inline-flex; align-items: baseline; gap: 6px; }
-.trainer-case-depth { font-weight: 600; color: var(--foreground); }
-.trainer-case-reveal {
-  font: inherit;
-  color: var(--accent);
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-}
-.trainer-case-reveal:disabled { color: var(--muted-foreground); cursor: default; }
-.trainer-case-sol {
-  font-family: var(--font-mono), ui-monospace, monospace;
-  color: var(--foreground);
-  overflow-wrap: anywhere;
-}
-.trainer-case-frame { color: var(--muted-foreground); margin-right: 6px; }
-
 /* 字号是本文件唯一还生效的 .timer-display 声明 —— 字体 / 颜色 / 发光 / 过渡,以及全部状态色
    (holding / ready / inspection 各档)都由 shell.css 的 .timing-surface .timer-display 接管
    (那边有 --timer-idle / -holding / -warn8 等专用 token,特异性更高)。 */

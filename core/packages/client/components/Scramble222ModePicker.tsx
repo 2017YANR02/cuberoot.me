@@ -22,6 +22,7 @@ import {
 
 interface Props {
   active222: boolean;
+  disabled?: boolean;
   /** 计时器等「项目已由上方图标表明」的场景传 false,省掉「2x2 口径」文字(见 ScrambleSourceBar)。 */
   showLabel?: boolean;
   /** 仅计时器随机来源启用:显示 csTimer 的二阶专项打乱类型。 */
@@ -34,6 +35,7 @@ interface Props {
 
 export default function Scramble222ModePicker({
   active222,
+  disabled,
   showLabel = true,
   showSpecialTypes = false,
   showModeWithSpecialType = false,
@@ -56,6 +58,7 @@ export default function Scramble222ModePicker({
   return (
     <TimerScramble222Config
       active222={active222}
+      disabled={disabled}
       labels={labels}
       mode={mode}
       onModeChange={setMode}

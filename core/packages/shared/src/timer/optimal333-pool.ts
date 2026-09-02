@@ -7,13 +7,17 @@ export interface Optimal333Source {
   key: string;
   generateBase: (signal: AbortSignal) => Optimal333BaseResult | Promise<Optimal333BaseResult>;
   optimize: (scramble: string, signal: AbortSignal) => Promise<string>;
-  onOptimized?: (base: string, optimal: string) => void;
 }
 
-export type Optimal333BaseResult = string | Readonly<{
-  kind: 'unavailable';
-  reason: 'empty' | 'rare';
-}>;
+export type Optimal333BaseResult =
+  | string
+  | Readonly<{ kind: 'ready'; scramble: string; context?: unknown }>
+  | Readonly<{ kind: 'unavailable'; reason: 'empty' | 'rare' | 'error' }>;
+
+export interface Optimal333Result {
+  scramble: string;
+  context?: unknown;
+}
 
 export type Optimal333Status =
   | 'idle'
@@ -21,13 +25,14 @@ export type Optimal333Status =
   | 'ready'
   | 'error'
   | 'base-empty'
-  | 'base-rare';
+  | 'base-rare'
+  | 'base-error';
 
 interface Buffer {
   key: string;
   source: Optimal333Source | null;
-  queue: string[];
-  error: Extract<Optimal333Status, 'error' | 'base-empty' | 'base-rare'> | null;
+  queue: Optimal333Result[];
+  error: Extract<Optimal333Status, 'error' | 'base-empty' | 'base-rare' | 'base-error'> | null;
 }
 
 const emptyBuffer = (): Buffer => ({ key: '', source: null, queue: [], error: null });
@@ -109,13 +114,15 @@ async function pump(): Promise<void> {
           requestController.signal,
           () => source.generateBase(requestController.signal),
         );
-        if (typeof generated !== 'string') {
+        if (typeof generated !== 'string' && generated.kind === 'unavailable') {
           if (buffer.key !== key || requestController.signal.aborted) continue;
-          buffer.error = generated.reason === 'empty' ? 'base-empty' : 'base-rare';
+          buffer.error = generated.reason === 'empty'
+            ? 'base-empty'
+            : generated.reason === 'rare' ? 'base-rare' : 'base-error';
           notify();
           break;
         }
-        const base = generated.trim();
+        const base = (typeof generated === 'string' ? generated : generated.scramble).trim();
         if (!base) throw new Error('empty base scramble');
         if (buffer.key !== key || requestController.signal.aborted) continue;
         const optimal = (await raceAbort(
@@ -124,8 +131,10 @@ async function pump(): Promise<void> {
         )).trim();
         if (!optimal) throw new Error('empty optimal scramble');
         if (buffer.key !== key || requestController.signal.aborted) continue;
-        source.onOptimized?.(base, optimal);
-        buffer.queue.push(optimal);
+        buffer.queue.push({
+          scramble: optimal,
+          context: typeof generated === 'string' ? undefined : generated.context,
+        });
         notify();
       } catch {
         if (buffer.key !== key || requestController.signal.aborted) continue;
@@ -149,10 +158,14 @@ export function prefetchOptimal333(source: Optimal333Source): void {
 }
 
 export function peekOptimal333(source: Optimal333Source): string {
+  return peekOptimal333Result(source)?.scramble ?? '';
+}
+
+export function peekOptimal333Result(source: Optimal333Source): Optimal333Result | null {
   const active = want(source);
-  const scramble = active.queue.shift() ?? '';
+  const result = active.queue.shift() ?? null;
   void pump();
-  return scramble;
+  return result;
 }
 
 export function awaitOptimal333(source: Optimal333Source): Promise<Optimal333Status> {

@@ -1,0 +1,134 @@
+.timer-random-difficulty-config { display: contents; }
+
+.timer-random-difficulty-top-row,
+.timer-random-difficulty-options,
+.timer-random-difficulty-toggle,
+.timer-random-difficulty-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.timer-random-difficulty-label,
+.timer-random-difficulty-hint {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.timer-random-difficulty-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.timer-random-difficulty-select {
+  align-self: flex-start;
+  width: fit-content;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--input, var(--border-default));
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+}
+
+.timer-random-difficulty-range {
+  flex: 1 1 150px;
+  width: min(100%, 440px);
+  min-width: 150px;
+  padding: 0 8px 14px;
+}
+
+.timer-random-difficulty-hint {
+  position: relative;
+  justify-content: center;
+  width: 100%;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.timer-random-difficulty-help {
+  position: relative;
+  display: inline-flex;
+}
+
+.timer-random-difficulty-help-trigger {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.timer-random-difficulty-help-trigger:hover,
+.timer-random-difficulty-help-trigger[aria-expanded="true"] {
+  color: var(--foreground);
+  opacity: 1;
+}
+
+.timer-random-difficulty-help-trigger:focus-visible {
+  outline: 2px solid var(--ring, var(--accent));
+  outline-offset: 2px;
+}
+
+.timer-random-difficulty-help-panel {
+  /* anchored-panel: clamped */
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 100;
+  width: max-content;
+  min-width: min(260px, calc(100vw - 32px));
+  max-width: min(360px, calc(100vw - 32px));
+  max-height: calc(100vh - 16px);
+  max-height: calc(100dvh - 16px);
+  padding: 10px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--popover, var(--card));
+  color: var(--foreground);
+  box-shadow: 0 4px 12px var(--border-default);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--foreground) 15%, transparent);
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+  .timer-random-difficulty-select { font-size: 16px; }
+}
+
+@media (max-width: 480px), (max-height: 420px) {
+  .timer-random-difficulty-help-panel {
+    position: fixed;
+    top: auto;
+    right: 16px;
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    left: 16px;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    max-height: calc(100vh - 96px);
+    max-height: calc(100dvh - 96px);
+  }
+}
+
+@media (max-width: 340px) {
+  .timer-random-difficulty-options > * { max-width: 100%; }
+  .timer-random-difficulty-range { min-width: 0; }
+}

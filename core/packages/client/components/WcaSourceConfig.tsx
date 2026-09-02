@@ -32,6 +32,7 @@ import './wca-source.css';
 export type WcaSourceSettings = TimerWcaSourceSettings;
 
 interface Props {
+  disabled?: boolean;
   event: EventId;
   isZh: boolean;
   settings: WcaSourceSettings;
@@ -40,6 +41,7 @@ interface Props {
 }
 
 export default function WcaSourceConfig({
+  disabled,
   event,
   isZh,
   settings,
@@ -82,6 +84,7 @@ export default function WcaSourceConfig({
     <div className="wca-src-config">
       <TimerWcaSourceConfig
         adapter={sourceAdapter}
+        disabled={disabled}
         competitionDisplayName={(competitionId, canonicalName) => (
           localizeCompName(competitionId, canonicalName, isZh)
         )}
@@ -137,6 +140,7 @@ export default function WcaSourceConfig({
       />
       <TimerWcaDifficultyConfig
         adapter={webTimerWcaDifficultyAdapter}
+        disabled={disabled}
         labels={{
           colorMode: {
             cn: tr({ zh: '六色', en: 'CN' }),

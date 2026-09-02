@@ -24,11 +24,11 @@
  * tests/cross_trainer_corpus.test.ts locks every count with toBe.
  */
 
-import type { CubieCube } from '../kociemba/cube.js';
-import { crossLayers, decodeCross } from './dist.js';
-import { FACE_EDGES, type FaceIdx } from './model.js';
-import { fillState, type Pin } from './fill.js';
-import { xcrossCn10 } from './corpus-data.js';
+import type { CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
+import { crossLayers, decodeCross } from '@cuberoot/puzzle-solvers/cross-trainer/dist';
+import { FACE_EDGES, type FaceIdx } from '@cuberoot/puzzle-solvers/cross-trainer/model';
+import { fillState, type Pin } from '@cuberoot/puzzle-solvers/cross-trainer/fill';
+import { xcrossCn10 } from '@cuberoot/puzzle-solvers/cross-trainer/corpus-data';
 
 /**
  * One member of a class: the pieces the metric reads, pinned. Whatever it leaves free is filled

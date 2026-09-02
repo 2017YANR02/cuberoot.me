@@ -14,10 +14,10 @@
  *            (~1 µs), so even the rarest bin (min = 0 or 7, p ≈ 3e-5) settles in ~30 ms.
  */
 
-import type { CubieCube } from '../kociemba/cube.js';
-import { FACE_EDGES, type FaceIdx } from './model.js';
-import { crossDist, crossLayers, decodeCross, encodeCross } from './dist.js';
-import { fillState, type Pin } from './fill.js';
+import type { CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
+import { FACE_EDGES, type FaceIdx } from '@cuberoot/puzzle-solvers/cross-trainer/model';
+import { crossDist, crossLayers, decodeCross, encodeCross } from '@cuberoot/puzzle-solvers/cross-trainer/dist';
+import { fillState, type Pin } from '@cuberoot/puzzle-solvers/cross-trainer/fill';
 
 export interface CrossSpec {
   /** Allowed cross faces. One face = fixed-colour trainer; more = best-of-subset. */

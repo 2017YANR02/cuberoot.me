@@ -14,11 +14,11 @@
  * apply the solution we return and assert the cube really is in the goal set.
  */
 
-import { CORNER_STEP, EDGE_STEP, FACE_EDGES, f2lSlots, skipRow, type FaceIdx } from './model.js';
-import { crossNext, encodeCross } from './dist.js';
-import { frameData } from './xcross.js';
-import { pairFrameData, pairGoals } from './pair.js';
-import { randomXXCoord, xxcrossPins, type Pins, type XXCoord, type XXFrame } from './multi.js';
+import { CORNER_STEP, EDGE_STEP, FACE_EDGES, f2lSlots, skipRow, type FaceIdx } from '@cuberoot/puzzle-solvers/cross-trainer/model';
+import { crossNext, encodeCross } from '@cuberoot/puzzle-solvers/cross-trainer/dist';
+import { frameData } from '@cuberoot/puzzle-solvers/cross-trainer/xcross';
+import { pairFrameData, pairGoals } from '@cuberoot/puzzle-solvers/cross-trainer/pair';
+import { randomXXCoord, xxcrossPins, type Pins, type XXCoord, type XXFrame } from '@cuberoot/puzzle-solvers/cross-trainer/multi';
 
 /** or18's cap for the deepest XCross-pair case; used only as a search bound. */
 export const XPAIR_MAX_DEPTH = 11;

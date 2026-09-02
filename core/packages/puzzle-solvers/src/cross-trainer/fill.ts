@@ -14,7 +14,7 @@
  * uniform fill = uniform over all cube states with that optimal length.
  */
 
-import type { CubieCube } from '../kociemba/cube.js';
+import type { CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
 
 /** One pinned piece: `piece` (its identity) sits at `slot` with orientation `ori`. */
 export interface Pin { piece: number; slot: number; ori: number }

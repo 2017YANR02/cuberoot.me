@@ -26,6 +26,7 @@ export * from './print-document';
 export * from './puzzle-examples';
 export * from './real-scramble-retry';
 export * from './random-difficulty';
+export * from './random-difficulty-pool';
 export * from './round';
 export * from './rolling-stats';
 export * from './scramble';

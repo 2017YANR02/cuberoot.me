@@ -18,13 +18,13 @@
  * its frames collapse onto the axis alone: three of them, however many colours are picked.
  */
 
-import type { CubieCube } from '../kociemba/cube.js';
-import { EDGE_STEP, FACE_EDGES, slotRank, slotUnrank, type FaceIdx } from './model.js';
+import type { CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
+import { EDGE_STEP, FACE_EDGES, slotRank, slotUnrank, type FaceIdx } from '@cuberoot/puzzle-solvers/cross-trainer/model';
 import {
   EO_WORD_STATES, defaultEoAxis, eoAxisData, eoPins, eoWord, type EoAxis,
-} from './eo.js';
-import { CANON_FACE, inverseRotation, rotForFaceAxis, rotateState } from './rotate.js';
-import { fillState, type Pin } from './fill.js';
+} from '@cuberoot/puzzle-solvers/cross-trainer/eo';
+import { CANON_FACE, inverseRotation, rotForFaceAxis, rotateState } from '@cuberoot/puzzle-solvers/cross-trainer/rotate';
+import { fillState, type Pin } from '@cuberoot/puzzle-solvers/cross-trainer/fill';
 
 /** Ordered slots of the two line edges. */
 export const LINE_POS_STATES = 12 * 11;              // 132

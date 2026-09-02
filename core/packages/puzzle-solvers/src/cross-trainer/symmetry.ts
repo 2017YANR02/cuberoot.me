@@ -15,11 +15,11 @@
  * 这里的结论 —— 那 24 那一条只在**带镜像**时才是一条;单看 24 个转体它是一对手性,会数出 6 类。
  */
 
-import { solvedCubie, type CubieCube } from '../kociemba/cube.js';
-import type { CorpusMember } from './corpus.js';
-import type { Pin } from './fill.js';
-import type { FaceIdx } from './model.js';
-import { MIRROR_FACE, N_ROTATIONS, ROTATIONS, mirrorState, pieceAction, rotateState } from './rotate.js';
+import { solvedCubie, type CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
+import type { CorpusMember } from '@cuberoot/puzzle-solvers/cross-trainer/corpus';
+import type { Pin } from '@cuberoot/puzzle-solvers/cross-trainer/fill';
+import type { FaceIdx } from '@cuberoot/puzzle-solvers/cross-trainer/model';
+import { MIRROR_FACE, N_ROTATIONS, ROTATIONS, mirrorState, pieceAction, rotateState } from '@cuberoot/puzzle-solvers/cross-trainer/rotate';
 
 /** 一个棱块状态的身份:每个槽装着哪块棱、翻没翻。 */
 export const edgeKey = (c: CubieCube): string => `${c.ep.join(',')}|${c.eo.join('')}`;

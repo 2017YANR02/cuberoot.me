@@ -14,41 +14,41 @@
  * affordable — 1 table build instead of 24.
  */
 
-import type { CubieCube } from '../kociemba/cube.js';
+import type { CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
 import {
   COLOR_FACE, CORNER_STEP, EDGE_STEP, FACE_COLOR, FACE_EDGES, MOVE_NAMES, N_MOVES,
   f2lSlots, slotRank, type FaceIdx,
-} from './model.js';
+} from '@cuberoot/puzzle-solvers/cross-trainer/model';
 import {
   EOCROSS_MAX_DEPTH, eoCrossDistCapped, eoFrameData, sampleEoCrossState,
   type EoAxis, type EoCoord, type EoFrame, type EoFrameData,
-} from './eo.js';
-import { crossDist, decodeCross, encodeCross } from './dist.js';
-import { sampleCrossLayer } from './sample.js';
-import { fillState, type Pin } from './fill.js';
+} from '@cuberoot/puzzle-solvers/cross-trainer/eo';
+import { crossDist, decodeCross, encodeCross } from '@cuberoot/puzzle-solvers/cross-trainer/dist';
+import { sampleCrossLayer } from '@cuberoot/puzzle-solvers/cross-trainer/sample';
+import { fillState, type Pin } from '@cuberoot/puzzle-solvers/cross-trainer/fill';
 import {
   frameData, sampleXCoord, xcrossDistCapped, XCROSS_MAX_DEPTH,
   type XCoord,
-} from './xcross.js';
+} from '@cuberoot/puzzle-solvers/cross-trainer/xcross';
 import {
   PAIR_MAX_DEPTH, PSEUDO_PAIR_MAX_DEPTH, pairDistCapped, pairFrameData, pairPins, samplePairCoord,
   type PairFrame,
-} from './pair.js';
+} from '@cuberoot/puzzle-solvers/cross-trainer/pair';
 import {
   PSEUDO_CROSS_MAX_DEPTH, PSEUDO_XCROSS_MAX_DEPTH, XXCROSS_MAX_DEPTH,
   pseudoCrossDist, pseudoCrossPins, pseudoXFrameData, pseudoXcrossDistCapped, pseudoXcrossPins,
   samplePseudoCross, samplePseudoXCoord, sampleXXCoord, xxFrameData, xxcrossDistCapped, xxcrossPins,
   type XXCoord, type XXFrame, type XXFrameData,
-} from './multi.js';
+} from '@cuberoot/puzzle-solvers/cross-trainer/multi';
 import {
   XPAIR_MAX_DEPTH, sampleXPairCoord, xpairDistCapped, xpairFrameData, xpairPins,
-} from './xpair.js';
-import { BLOCK222_MAX_DEPTH, block222DistCapped, blockCoordOf, sampleBlockState } from './block.js';
+} from '@cuberoot/puzzle-solvers/cross-trainer/xpair';
+import { BLOCK222_MAX_DEPTH, block222DistCapped, blockCoordOf, sampleBlockState } from '@cuberoot/puzzle-solvers/cross-trainer/block';
 import {
   EOLINE_MAX_DEPTH, EO_MAX_DEPTH, eoDistCapped, eoLineDist, sampleEoLineState, sampleEoState,
-} from './eoline.js';
-import { CANON_FACE, CANON_SLOT, ROTATIONS, ROT_FOR_FRAME, inverseRotation, rotForFaceAxis, rotateState } from './rotate.js';
-import { drawCorpus } from './corpus.js';
+} from '@cuberoot/puzzle-solvers/cross-trainer/eoline';
+import { CANON_FACE, CANON_SLOT, ROTATIONS, ROT_FOR_FRAME, inverseRotation, rotForFaceAxis, rotateState } from '@cuberoot/puzzle-solvers/cross-trainer/rotate';
+import { drawCorpus } from '@cuberoot/puzzle-solvers/cross-trainer/corpus';
 
 // ── vocabulary ───────────────────────────────────────────────────────────────────────────────
 
