@@ -1413,6 +1413,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The WCA real-scramble provenance row shared by Web and all five installed clients. Flag, competition name, event icon, round/group/number/extra notation, long-name wrapping, and competition deep link live in one implementation. Hosts only inject a localized name and navigation adapter.',
   },
   {
+    name: 'TimerWcaScrambleProgress',
+    import: "import { TimerWcaScrambleProgress } from '@cuberoot/timer-ui';",
+    category: 'display',
+    zh: 'Web 与五个安装端共用的 WCA 稀有题池进度和公开打卡名单；双语文案公式、练习进度、全练过状态、选手姓名/国旗、足迹深链、44px 触控、受控弹层关闭/焦点和视口钳制只维护这一份。宿主只注入数据、导航 adapter，并可接管 overlay open。',
+    en: 'The WCA rare-pool progress and public mark list shared by Web and all five installed clients. Bilingual copy formulas, progress and completion states, cuber names and flags, marks deep links, 44px targets, controlled overlay dismissal/focus, and viewport clamping live in one implementation. Hosts only inject data and navigation adapters, and may control overlay open state.',
+  },
+  {
     name: 'GestureWheel',
     import: "import { GestureWheel } from '@cuberoot/timer-ui';",
     category: 'more',

@@ -38,6 +38,21 @@ describe('mobile real-scramble retry adapter', () => {
     vi.useRealTimers();
   });
 
+  it('passes a proven all-time closed set through the retry boundary', async () => {
+    const onClosedSet = vi.fn();
+    const run = startRealScrambleFetchRetry('333', {
+      fetcher: vi.fn(async () => real333Response()) as unknown as typeof fetch,
+      onClosedSet,
+    });
+
+    await expect(run.result).resolves.toMatchObject({ kind: 'ready' });
+    expect(onClosedSet).toHaveBeenCalledOnce();
+    expect(onClosedSet.mock.calls[0][0]).toMatchObject([{
+      competitionId: 'Example2026',
+      scrambleNumber: 1,
+    }]);
+  });
+
   it('passes the exact 2x2 optimal/type source spec through every fetch batch', async () => {
     const { schedule, tasks } = controlledScheduler();
     const noBar = "R' U' F U F R' U2 F U2";

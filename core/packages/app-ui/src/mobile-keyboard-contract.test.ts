@@ -8,9 +8,10 @@ import {
   resolveKeymap,
   timerKeyDownDecision,
   timerKeyUpDecision,
+  timerShouldStopFromExternalPointer,
   type TimerKeyDownContext,
 } from '@cuberoot/shared/timer';
-import { timerKeyboardTargetContext } from '@cuberoot/timer-ui';
+import { shouldIgnoreTimerTarget, timerKeyboardTargetContext } from '@cuberoot/timer-ui';
 
 const app = readFileSync(join(process.cwd(), 'src', 'App.tsx'), 'utf8');
 const controller = readFileSync(join(
@@ -101,5 +102,19 @@ describe('Mobile shared keyboard integration', () => {
     ]) expect(app).toContain(`case '${id}'`);
     expect(controller).not.toContain("addEventListener('keydown'");
     expect(controller).not.toContain('eventTargetsControl');
+  });
+
+  it('ignores data-no-timer targets rendered outside the timing surface', () => {
+    const portal = document.createElement('div');
+    portal.dataset.noTimer = '';
+    const child = document.createElement('span');
+    portal.append(child);
+    document.body.append(portal);
+
+    expect(timerShouldStopFromExternalPointer('running', false)).toBe(true);
+    expect(shouldIgnoreTimerTarget(child)).toBe(true);
+    expect(app).toContain('if (shouldIgnoreTimerTarget(event.target)) return;');
+
+    portal.remove();
   });
 });

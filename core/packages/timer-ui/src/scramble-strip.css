@@ -119,6 +119,146 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 }
 .scramble-src-evt { width: 1.05em; height: 1.05em; flex-shrink: 0; }
 .scramble-src-meta { color: var(--muted-foreground); }
+
+/* Rare WCA pool progress and public marks live beside the provenance link. */
+.scramble-pool-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: 12px;
+  line-height: 1.3;
+  word-spacing: normal;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+}
+.scramble-pool-run svg { flex-shrink: 0; }
+.scramble-pool-run.done { color: var(--signal-warning); }
+
+.scramble-marks {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  word-spacing: normal;
+}
+.scramble-marks-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  color: var(--muted-foreground);
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.3;
+  cursor: pointer;
+}
+.scramble-marks-chip:hover { color: var(--foreground); }
+.scramble-marks-chip.marked { color: var(--signal-success); }
+.scramble-marks-chip:focus-visible,
+.scramble-marks-name:focus-visible,
+.scramble-marks-all:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* anchored-panel: clamped (body portal + visualViewport bounds in component) */
+.scramble-marks-pop {
+  position: fixed;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow: hidden;
+  visibility: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  color: var(--foreground);
+  background: var(--popover);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 45%, transparent);
+  font-size: 12.5px;
+  line-height: 1.4;
+  text-align: left;
+  cursor: default;
+}
+.scramble-marks-list {
+  min-height: 0;
+  max-height: min(220px, calc(100dvh - 84px));
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 8px 12px 4px;
+  overflow-y: auto;
+  list-style: none;
+}
+.scramble-marks-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0;
+}
+.scramble-marks-flag {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.scramble-marks-flag .country-flag,
+.scramble-marks-flag .country-flag-ct {
+  width: 1.333333em !important;
+  margin-right: 0;
+}
+.scramble-marks-name {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  color: var(--foreground);
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.scramble-marks-name--static { cursor: default; }
+.scramble-marks-time {
+  color: var(--signal-success);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.scramble-marks-date {
+  color: var(--faint-foreground);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.scramble-marks-all {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  width: 100%;
+  padding: 0 12px;
+  border: 0;
+  color: var(--muted-foreground);
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.scramble-marks-all:hover { color: var(--foreground); }
+
 .scramble-strip .scramble-empty { color: var(--faint-foreground); font-style: italic; }
 .scramble-strip .scramble-empty-retry {
   color: var(--accent);
@@ -182,5 +322,12 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   .timing-surface-scramble .scramble-strip {
     padding-inline: 8px;
     overflow-x: clip;
+  }
+  .scramble-marks-list li {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .scramble-marks-date {
+    grid-column: 2 / -1;
+    justify-self: end;
   }
 }

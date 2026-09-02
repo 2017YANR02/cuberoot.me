@@ -22,7 +22,7 @@ import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 
 import {
   Settings as SettingsIcon,
   AlertTriangle, Target,
-  X, CheckCircle2, Repeat,
+  X,
 } from 'lucide-react';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { petReact } from '@/lib/deskpet';
@@ -83,6 +83,7 @@ import {
   timerScrambleAllowsEmptySlot,
   timerScrambleClickEffect,
   timerTracksTrainerCase,
+  timerWcaScrambleMarkWriteMode,
   usesStepsIndex,
   visibleTimerMoreActions,
   type TimerGestureActionId,
@@ -114,15 +115,20 @@ import {
 } from '../_lib/scramble/optimal333_pool';
 import TrainerCaseBar from '../_components/TrainerCaseBar';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
-import { Flag } from '@/components/Flag';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { useAuthStore } from '@/lib/auth-store';
 import { cloudOptimalScramble } from '@/lib/cloud-optimal-scramble';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
-import { displayCuberName } from '@/lib/cuber-name-display';
-import { fetchMarks, addMark, markKey, type ScrambleMark } from '../_lib/marks';
+import {
+  addMark,
+  fetchMarks,
+  markKey,
+  markPersonHref,
+  updateMarkIfExists,
+  type ScrambleMark,
+} from '../_lib/marks';
 import { getLastPickedCase, type TrainerKind } from '../_lib/scramble/training';
 import { warmup333, randomState333, randomState333Sync } from '../_lib/scramble/kociemba/random_state';
 import { useTimer, type TimerPhase } from '../_shared/useTimer';
@@ -224,6 +230,7 @@ import {
   TimerPuzzlePicker,
   TimerPrintController,
   TimerScrambleStrip,
+  TimerWcaScrambleProgress,
   TimerWcaScrambleSource,
   TimerScrambleSourceSelect,
   TimerStatRail,
@@ -353,6 +360,8 @@ function submitTimerTrainingEvidence(
 export default function SoloView({ playersControl, presenceControl, onPresenceChange }: SoloViewProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  const timerLanguage = (['en', 'zh'] as const)[Number(isZh)];
+  const languagePrefix = ['', '/zh'][Number(isZh)];
   const printControllerRef = useRef<TimerPrintControllerHandle>(null);
   const settings = useSettings();
   const authUser = useAuthStore((st) => st.user);
@@ -999,7 +1008,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 明确告知之后是重复出题,免得以为出题坏了。常见档总数未知 → 返回 null,整块不渲染。
   // 随 scramble 变化重算即可(每出一条都会重渲染),不需要额外的订阅/状态。
   const poolRun = settings.scrambleSource === 'wca' && !scrambleLoading ? wcaPoolProgress(wcaSpec) : null;
-  const poolRunDone = !!poolRun && poolRun.seen >= poolRun.total;
   // 开了「最优打乱」但这条是回退的原打乱(该难度档无最优等态)→ 在打乱右侧标「非最优」。
   const wcaNonOptimal = wcaOptimalOn && !!wcaSource?.nonOptimal;
   const wcaSrcDisplay = useMemo(() => {
@@ -1018,9 +1026,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // ── 打卡:当前真实打乱的公开标记(谁做过这条打乱,纯展示)──────────
   // 标记由「做完自动打卡」负责(下方 effect);这里只读 + 弹层看名单。
   // 列表按 markKey 缓存(同会话内重看同一条不重拉)。
-  const [marksOpen, setMarksOpen] = useState(false);
   const [marksCache, setMarksCache] = useState<Record<string, { count: number; marks: ScrambleMark[] }>>({});
-  const marksBoxRef = useRef<HTMLSpanElement | null>(null);
   const curMarkKey = wcaSource ? markKey(wcaSource) : null;
   const curMarks = curMarkKey ? marksCache[curMarkKey] : undefined;
   // 所有权键(与服务端一致):非 WCA 账号的标记也能正确认出「已标记」,避免重复标记。
@@ -1028,7 +1034,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const myMark = !!(myKey && curMarks?.marks.some((m) => m.wcaId === myKey));
 
   useEffect(() => {
-    setMarksOpen(false);
     if (!wcaSource || !curMarkKey) return;
     if (marksCache[curMarkKey]) return;
     const key = curMarkKey, src = wcaSource;
@@ -1042,17 +1047,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [curMarkKey]);
 
-  // 点弹层外部关闭。
-  useEffect(() => {
-    if (!marksOpen) return;
-    const onDown = (ev: PointerEvent) => {
-      if (marksBoxRef.current && !marksBoxRef.current.contains(ev.target as Node)) setMarksOpen(false);
-    };
-    document.addEventListener('pointerdown', onDown);
-    return () => document.removeEventListener('pointerdown', onDown);
-  }, [marksOpen]);
-
-
   // 做完一把真实打乱(非 DNF、已登录)后自动打卡 + 同步成绩。
   //   开关开(默认):无论标没标记都 upsert —— 省去每把手动点「标记已做」。
   //   开关关:只把成绩回填到「已经标记过」的打乱,不自动新建公开记录。
@@ -1065,20 +1059,35 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (sig === prev) return;
     lastSolveSigRef.current[event] = sig;
     if (prev === undefined || !s || !authUser) return;
-    if (s.penalty === 'DNF' || s.penalty === 'DNS') return;
     const meta = s.scrambleSource?.kind === 'wca'
       ? wcaMetaForSlot(s.scrambleSource.identity)
       : wcaMetaFor(s.scramble);
     if (!meta) return;
     const key = markKey(meta);
-    const alreadyMine = marksCache[key]?.marks.some((m) => m.wcaId === myKey);
-    if (!settings.autoMarkWcaScramble && !alreadyMine) return; // 关:不自动新建公开记录
-    const timeCs = Math.round((s.timeMs + (s.penalty === '+2' ? 2000 : 0)) / 10);
-    addMark(meta, timeCs, authUser.country || '')
-      .then(() => fetchMarks(meta))
-      .then((d) => setMarksCache((cur) => ({ ...cur, [key]: d })))
-      .catch(() => { /* 网络失败静默,下次成绩变更再试 */ });
-  }, [solves, event, authUser, marksCache, settings.autoMarkWcaScramble]);
+    const ownerAtCompletion = myKey;
+    void (async () => {
+      const writeMode = timerWcaScrambleMarkWriteMode({
+        penalty: s.penalty,
+        signedIn: true,
+        enabled: settings.autoMarkWcaScramble,
+      });
+      if (!writeMode) return;
+
+      // The write helpers read the current JWT, so verify that it still belongs
+      // to the solve's captured owner before either upsert or update-only.
+      const currentUser = useAuthStore.getState().user;
+      if (!currentUser || computeOwnerKey(currentUser.uid, currentUser.wcaId) !== ownerAtCompletion) {
+        return;
+      }
+      const timeCs = Math.round((s.timeMs + (s.penalty === '+2' ? 2000 : 0)) / 10);
+      const updated = writeMode === 'upsert'
+        ? (await addMark(meta, timeCs, authUser.country || ''), true)
+        : await updateMarkIfExists(meta, timeCs, authUser.country || '');
+      if (!updated) return;
+      const refreshed = await fetchMarks(meta);
+      setMarksCache((cur) => ({ ...cur, [key]: refreshed }));
+    })().catch(() => { /* 网络失败静默,下次成绩变更再试 */ });
+  }, [solves, event, authUser, settings.autoMarkWcaScramble]);
 
   // Click-to-copy flash (cstimer-style). Reads the live scramble via ref so the
   // helper stays stable; shows a brief "已复制" badge.
@@ -2424,6 +2433,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   useEffect(() => {
     const onDocDown = (e: PointerEvent) => {
       const t = e.target as Node | null;
+      if (shouldIgnoreTimerTarget(t)) return;
       const insideSurface = !!(surfaceRef.current && t && surfaceRef.current.contains(t));
       if (timerShouldStopFromExternalPointer(phaseSnapshotRef.current, insideSurface)) {
         onPressDown();
@@ -2878,69 +2888,31 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                 <TimerWcaScrambleSource
                   competitionName={wcaSrcDisplay.name}
                   country={wcaSrcDisplay.iso2}
-                  eventLabel={timerEventPickerName(event, isZh ? 'zh' : 'en')}
+                  eventLabel={timerEventPickerName(event, timerLanguage)}
                   eventId={wcaSrcDisplay.event}
                   groupId={wcaSource.g}
-                  href={`${isZh ? '/zh' : ''}/scramble/gen?comp=${encodeURIComponent(wcaSrcDisplay.ci)}`}
+                  href={`${languagePrefix}/scramble/gen?comp=${encodeURIComponent(wcaSrcDisplay.ci)}`}
                   isExtra={wcaSource.x === 1}
                   roundTypeId={wcaSource.r}
                   scrambleNumber={wcaSource.n}
                   title={tr(TIMER_WCA_SCRAMBLE_SOURCE_COPY.viewCompetition)}
                 >
-                {wcaSource && curMarks && curMarks.count > 0 && (
-                <span className="scramble-marks" data-no-timer ref={marksBoxRef} onClick={(e) => e.stopPropagation()}>
-                  <button
-                    type="button"
-                    className={`scramble-marks-chip${myMark ? ' marked' : ''}`}
-                    onClick={() => setMarksOpen((o) => !o)}
-                    title={tr({ zh: '谁做过这条打乱', en: 'Who did this scramble'
-                    })}
-                  >
-                    <CheckCircle2 size={12} />
-                    {tr({ zh: `${curMarks.count} 人做过`, en: `${curMarks.count} did it` })}
-                  </button>
-                  {marksOpen && (
-                    <div className="scramble-marks-pop">
-                      <ul className="scramble-marks-list">
-                        {curMarks.marks.map((m) => (
-                          <li key={m.wcaId}>
-                            {m.country && <Flag iso2={m.country} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                            <a href={`${isZh ? '/zh' : ''}/wca/persons/${encodeURIComponent(m.wcaId)}`} className="scramble-marks-name">
-                              {displayCuberName(m.name, isZh) || m.wcaId}
-                            </a>
-                            {m.timeCs != null && <span className="scramble-marks-time">{formatMs(m.timeCs * 10)}</span>}
-                            <span className="scramble-marks-date">{new Date(m.createdAt * 1000).toISOString().slice(0, 10)}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <a href={`${isZh ? '/zh' : ''}/timer/marks`} className="scramble-marks-all">
-                        {tr({ zh: '全站足迹', en: 'All marks'
-                        })}
-                      </a>
-                    </div>
-                  )}
-                </span>
-                )}
-                {poolRun && (
-                  <span
-                    className={`scramble-pool-run${poolRunDone ? ' done' : ''}`}
-                    data-no-timer
-                    title={poolRunDone
-                      ? tr({
-                          zh: `符合当前筛选的 WCA 真题只有 ${poolRun.total} 条,已全部练过,之后是重复出题`,
-                          en: `Only ${poolRun.total} WCA scrambles match the current filters — all practiced, so they now repeat`,
-                        })
-                      : tr({
-                          zh: `符合当前筛选的 WCA 真题只有 ${poolRun.total} 条,练完后会重复出题`,
-                          en: `Only ${poolRun.total} WCA scrambles match the current filters — they repeat once all are practiced`,
-                        })}
-                  >
-                    {poolRunDone && <Repeat size={12} />}
-                    {poolRunDone
-                      ? tr({ zh: `${poolRun.total} 条已全部练过`, en: `All ${poolRun.total} practiced` })
-                      : tr({ zh: `已练 ${poolRun.seen}/${poolRun.total}`, en: `${poolRun.seen}/${poolRun.total} practiced` })}
-                  </span>
-                )}
+                <TimerWcaScrambleProgress
+                  key={curMarkKey ?? 'wca-source-progress'}
+                  allMarksHref={`${languagePrefix}/timer/marks`}
+                  language={timerLanguage}
+                  markCount={curMarks?.count}
+                  marked={myMark}
+                  marks={curMarks?.marks.map((mark) => ({
+                    country: mark.country,
+                    dateLabel: new Date(mark.createdAt * 1000).toISOString().slice(0, 10),
+                    name: mark.name,
+                    personHref: markPersonHref(languagePrefix, mark.wcaId),
+                    timeLabel: mark.timeCs == null ? undefined : formatMs(mark.timeCs * 10),
+                    wcaId: mark.wcaId,
+                  }))}
+                  progress={poolRun ?? undefined}
+                />
                 </TimerWcaScrambleSource>
               )}
             </TimerScrambleStrip>

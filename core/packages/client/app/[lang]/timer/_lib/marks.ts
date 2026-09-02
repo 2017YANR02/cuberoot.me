@@ -6,19 +6,22 @@
  */
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
+import { isWcaIdFormat } from '@cuberoot/shared/account';
+import {
+  fetchTimerWcaScrambleMarks,
+  postTimerWcaScrambleMark,
+  timerWcaScrambleMarkKeyIdentity,
+  updateTimerWcaScrambleMarkIfExists,
+  type TimerWcaScrambleMark,
+  type TimerWcaScrambleMarkKey,
+  type TimerWcaScrambleMarksHttp,
+} from '@cuberoot/shared/timer';
 import type { WcaScrambleMeta } from './scramble/wca_pool';
 
 const ENDPOINT = '/v1/scramble-marks';
 
-export type ScrambleKey = Pick<WcaScrambleMeta, 'ci' | 'e' | 'r' | 'g' | 'n' | 'x'>;
-
-export interface ScrambleMark {
-  wcaId: string;
-  name: string;
-  country: string;
-  timeCs: number | null;
-  createdAt: number; // epoch 秒
-}
+export type ScrambleKey = TimerWcaScrambleMarkKey;
+export type ScrambleMark = TimerWcaScrambleMark;
 
 export interface RecentMark extends ScrambleMark, WcaScrambleMeta {
   id: number;
@@ -28,7 +31,23 @@ export interface RecentMark extends ScrambleMark, WcaScrambleMeta {
 
 /** 稳定字符串键(SoloView 缓存当前打乱的标记列表用)。 */
 export function markKey(k: ScrambleKey): string {
-  return `${k.ci}|${k.e}|${k.r}|${k.g}|${k.x}|${k.n}`;
+  return timerWcaScrambleMarkKeyIdentity(k);
+}
+
+/** Only real WCA identities have a `/wca/persons/*` destination. */
+export function markPersonHref(languagePrefix: string, wcaId: string): string | undefined {
+  return isWcaIdFormat(wcaId)
+    ? `${languagePrefix}/wca/persons/${encodeURIComponent(wcaId)}`
+    : undefined;
+}
+
+function marksHttp(write = false): TimerWcaScrambleMarksHttp {
+  const authorization = write ? authHeaders(false).Authorization : undefined;
+  return {
+    apiBase: apiUrl(''),
+    fetcher: (input, init) => fetch(input, init),
+    token: authorization?.slice('Bearer '.length),
+  };
 }
 
 function keyQs(k: ScrambleKey): string {
@@ -39,18 +58,21 @@ function keyQs(k: ScrambleKey): string {
 
 /** 某条打乱的公开标记列表(新→旧,服务端截 100)。 */
 export async function fetchMarks(k: ScrambleKey): Promise<{ count: number; marks: ScrambleMark[] }> {
-  const res = await fetch(apiUrl(`${ENDPOINT}?${keyQs(k)}`));
-  return handleApi<{ count: number; marks: ScrambleMark[] }>(res);
+  return fetchTimerWcaScrambleMarks(k, marksHttp());
 }
 
 /** 标记(upsert;timeCs = 本次在该打乱上的成绩,country 纯装饰旗帜)。 */
 export async function addMark(k: ScrambleKey, timeCs: number | null, country: string): Promise<void> {
-  const res = await fetch(apiUrl(ENDPOINT), {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({ ...k, timeCs, country }),
-  });
-  await handleApi<{ ok: boolean }>(res);
+  await postTimerWcaScrambleMark(k, { timeCs, country }, marksHttp(true));
+}
+
+/** Update the signed-in user's existing mark without creating a public record. */
+export async function updateMarkIfExists(
+  k: ScrambleKey,
+  timeCs: number | null,
+  country: string,
+): Promise<boolean> {
+  return updateTimerWcaScrambleMarkIfExists(k, { timeCs, country }, marksHttp(true));
 }
 
 /** 取消自己的标记(按自然键,timer 弹层用)。 */

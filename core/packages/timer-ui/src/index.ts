@@ -147,6 +147,12 @@ export type {
 } from './TimerScrambleStrip';
 export { TimerWcaScrambleSource } from './TimerWcaScrambleSource';
 export type { TimerWcaScrambleSourceProps } from './TimerWcaScrambleSource';
+export { TimerWcaScrambleProgress } from './TimerWcaScrambleProgress';
+export type {
+  TimerWcaScrambleMark,
+  TimerWcaScrambleProgressLabels,
+  TimerWcaScrambleProgressProps,
+} from './TimerWcaScrambleProgress';
 export { TimerPrintDocument } from './TimerPrintDocument';
 export type { TimerPrintDocumentProps } from './TimerPrintDocument';
 export { RoomQrModal } from './RoomQrModal';

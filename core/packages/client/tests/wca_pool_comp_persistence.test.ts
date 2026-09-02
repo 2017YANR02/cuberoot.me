@@ -68,6 +68,28 @@ afterEach(() => {
 });
 
 describe('WCA competition pool persistence', () => {
+  it('keeps a failed competition fetch transient and retries the next request', async () => {
+    fetchWcaScramblesMock
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(competitionRows(1));
+    const { isWcaSourceEmpty, nextWca } = await freshPool();
+
+    expect(await nextWca(baseSpec)).toBeNull();
+    expect(isWcaSourceEmpty(baseSpec)).toBe(false);
+    expect(await nextWca(baseSpec)).toBe('S01');
+    expect(fetchWcaScramblesMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps an authoritative empty competition closed without refetching', async () => {
+    fetchWcaScramblesMock.mockResolvedValue([]);
+    const { isWcaSourceEmpty, nextWca } = await freshPool();
+
+    expect(await nextWca(baseSpec)).toBeNull();
+    expect(isWcaSourceEmpty(baseSpec)).toBe(true);
+    expect(await nextWca(baseSpec)).toBeNull();
+    expect(fetchWcaScramblesMock).toHaveBeenCalledOnce();
+  });
+
   it('resumes the uncached tail of a 60-row competition before cycling after reload', async () => {
     fetchWcaScramblesMock.mockResolvedValue(competitionRows(60));
     const firstModule = await freshPool();
@@ -118,6 +140,24 @@ describe('WCA competition pool persistence', () => {
     expect(wcaMetaFor(second!)).toMatchObject({ n: 2 });
     expect(wcaMetaForSlot(first!.slot!)).toMatchObject({ n: 1 });
     expect(wcaMetaForSlot(second!.slot!)).toMatchObject({ n: 2 });
+  });
+
+  it('skips one malformed persisted slot without abandoning later valid rows', async () => {
+    fetchWcaScramblesMock.mockResolvedValue(competitionRows(60));
+    const firstModule = await freshPool();
+    expect(await firstModule.nextWca(baseSpec)).toBe('S01');
+    await vi.advanceTimersByTimeAsync(600);
+
+    const persisted = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      comp: Record<string, Array<[string, Record<string, unknown>]>>;
+    };
+    const rows = Object.values(persisted.comp)[0]!;
+    rows[0]![1].e = 'event-id-is-too-long';
+    storage.setItem(STORE_KEY, JSON.stringify(persisted));
+
+    const reloadedModule = await freshPool();
+    expect(await reloadedModule.nextWca(baseSpec)).toBe('S03');
+    expect(fetchWcaScramblesMock).toHaveBeenCalledTimes(1);
   });
 
   it('keeps occurrence rows in the SoloView history consumer', () => {
