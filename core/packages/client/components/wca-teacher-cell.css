@@ -76,12 +76,9 @@
   gap: 8px;
 }
 
-.wca-student-batch-add-action {
-  font-size: 0.76rem;
-}
-
+.wca-student-batch-add-action,
 .wca-student-batch-undo-action {
-  font-size: 0.76rem;
+  font-size: inherit;
 }
 
 .wca-teacher-error,
