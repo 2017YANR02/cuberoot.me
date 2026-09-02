@@ -299,6 +299,7 @@ jobs:
       - name: Build mobile workspace dependencies
         working-directory: core
         run: |
+          pnpm --filter @cuberoot/puzzle-solvers build
           pnpm --filter @cuberoot/shared build
           pnpm --filter @cuberoot/visualcube build
 
