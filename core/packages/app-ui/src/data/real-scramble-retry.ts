@@ -19,6 +19,7 @@ import {
 export interface RealScrambleFetchRetryOptions extends TimerRealScrambleRetryOptions {
   readonly fetcher?: typeof fetch;
   readonly examplesFetcher?: typeof fetch;
+  readonly onClosedSet?: (scrambles: readonly RealScramble[]) => void;
   readonly requestTimeoutMs?: number;
 }
 
@@ -51,6 +52,7 @@ export function startRealScrambleFetchRetry(
         options.fetcher,
         controller.signal,
         options.examplesFetcher ?? (options.fetcher ? undefined : fetch),
+        options.onClosedSet,
       ));
     } catch (error) {
       return error instanceof RealScrambleFetchError && error.kind === 'confirmed-empty'

@@ -38,6 +38,7 @@ import {
   parseRollingStatKey,
   type RollingStatKey,
 } from './rolling-stats';
+import { DEFAULT_TIMER_AUTO_MARK_WCA_SCRAMBLE } from './wca-practice';
 
 export const TIMER_DATABASE_VERSION = 3;
 export const TIMER_STORE_SCHEMA_VERSION = 2;
@@ -75,6 +76,8 @@ export interface TimerStoreSettings extends
   manualScrambles: string;
   /** The two compact current/best statistic columns shared with the website. */
   statsRollingColumns: RollingStatKey[];
+  /** Auto-upsert a public mark after a successful real-WCA solve. */
+  autoMarkWcaScramble: boolean;
   scrambleClickAction: TimerScrambleClickAction;
   language: 'en' | 'zh';
   theme: 'system' | 'light' | 'dark';
@@ -324,6 +327,7 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     'bldMemo',
     'showCubePreview',
     'prefer3D',
+    'autoMarkWcaScramble',
   ] as const) {
     if (value[key] !== undefined && typeof value[key] !== 'boolean') return null;
   }
@@ -441,6 +445,9 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     statsRollingColumns: value.statsRollingColumns === undefined
       ? [...DEFAULT_ROLLING_STAT_COLUMNS]
       : normalizeRollingStatColumns(value.statsRollingColumns),
+    autoMarkWcaScramble: typeof value.autoMarkWcaScramble === 'boolean'
+      ? value.autoMarkWcaScramble
+      : DEFAULT_TIMER_AUTO_MARK_WCA_SCRAMBLE,
     multiStage: typeof value.multiStage === 'boolean'
       ? value.multiStage
       : DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS.multiStage,
@@ -603,6 +610,7 @@ export function createTimerStoreData(
       ...DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
       manualScrambles: '',
       statsRollingColumns: [...DEFAULT_ROLLING_STAT_COLUMNS],
+      autoMarkWcaScramble: DEFAULT_TIMER_AUTO_MARK_WCA_SCRAMBLE,
       scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
       ...DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
       ...DEFAULT_TIMER_WCA_SOURCE_SETTINGS,

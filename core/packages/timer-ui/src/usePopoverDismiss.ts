@@ -17,21 +17,28 @@ export function usePopoverDismiss(
 
   useEffect(() => {
     if (!open) return;
-    const inside = (target: Node | null): boolean => (
-      !!target && (!!panel.current?.contains(target) || !!trigger?.current?.contains(target))
-    );
+    const inside = (event: PointerEvent): boolean => {
+      const target = event.target as Node | null;
+      const path = typeof event.composedPath === 'function' ? event.composedPath() : [];
+      const contains = (element: HTMLElement | null | undefined) => !!element
+        && (path.includes(element) || (!!target && element.contains(target)));
+      return contains(panel.current) || contains(trigger?.current);
+    };
     const onDown = (event: PointerEvent) => {
-      if (!inside(event.target as Node)) latest.current('outside');
+      if (!inside(event)) latest.current('outside');
     };
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       latest.current('escape');
       trigger?.current?.focus();
     };
-    document.addEventListener('pointerdown', onDown);
+    // Capture observes the stable composed path before another document handler
+    // can unmount a body-portal panel. The path check still distinguishes a real
+    // outside press from a press inside that portal.
+    document.addEventListener('pointerdown', onDown, true);
     document.addEventListener('keydown', onKey);
     return () => {
-      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('pointerdown', onDown, true);
       document.removeEventListener('keydown', onKey);
     };
   }, [open, panel, trigger]);

@@ -51,13 +51,14 @@ describe('Android Back priority', () => {
   it('controls every shared timer popover through one stable overlay id', () => {
     expect(app).toContain('useState<TimerOverlayId | null>(null)');
     expect(app).toContain('const openOverlayRef = useRef<TimerOverlayId | null>(openOverlay)');
-    expect(app.match(/onOpenChange=\{handleTimerOverlayOpenChange\}/g)).toHaveLength(4);
+    expect(app.match(/onOpenChange=\{handleTimerOverlayOpenChange\}/g)).toHaveLength(5);
     expect(app).toContain('onQuickMenuOpenChange={handleTimerOverlayOpenChange}');
     expect(app).toContain('quickMenuOpen={openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu}');
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.puzzlePicker}');
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.scrambleSource}');
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.wcaCompetition}');
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.sessionSwitcher}');
+    expect(app).toMatch(/open=\{openOverlay === TIMER_OVERLAY_IDS\.wcaScrambleMarks\s+&& wcaMarksOverlayIdentityRef\.current === currentWcaMarkIdentity\}/);
     expect(app).toContain('openOverlay === TIMER_OVERLAY_IDS.historyCompare');
     expect(app).toContain('openOverlay === TIMER_OVERLAY_IDS.solveDetail');
     expect(app).toContain('<TimerHistoryCompareModal');
@@ -70,6 +71,8 @@ describe('Android Back priority', () => {
     expect(app).toContain("if (action === 'close-history-compare')");
     expect(app).toContain('previous !== null && previous !== historyCompareContext');
     expect(app).toContain('overlayOpen: openOverlayRef.current !== null');
+    expect(app).toContain('openOverlay !== TIMER_OVERLAY_IDS.wcaScrambleMarks');
+    expect(app).toContain('!wcaMarksIdentityChanged');
     expect(app).toMatch(/if \(action === 'close-overlay'\) \{[\s\S]*?openOverlayRef\.current = null;[\s\S]*?setOpenOverlay\(null\);/);
   });
 

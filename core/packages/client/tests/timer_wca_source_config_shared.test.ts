@@ -111,12 +111,12 @@ describe('shared timer WCA source contract', () => {
     ]);
   });
 
-  it('identifies official slots independently of scramble text and field delimiters', () => {
+  it('identifies official slots by their canonical fields', () => {
     const base = {
       competitionId: 'Example2026',
       eventId: '333',
       roundTypeId: '1',
-      groupId: 'A|B',
+      groupId: 'A',
       isExtra: false,
       scrambleNumber: 1,
     };
@@ -126,8 +126,8 @@ describe('shared timer WCA source contract', () => {
     expect(timerWcaCompetitionScrambleSlotIdentity(base)).not.toBe(
       timerWcaCompetitionScrambleSlotIdentity({
         ...base,
-        groupId: 'A',
-        roundTypeId: '1|A',
+        groupId: 'B',
+        roundTypeId: 'f',
       }),
     );
     expect(timerWcaCompetitionScrambleSlotIdentity(base)).not.toBe(

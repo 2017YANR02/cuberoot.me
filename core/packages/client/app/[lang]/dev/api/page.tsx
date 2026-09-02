@@ -186,6 +186,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'scramble', m: 'GET', p: '/v1/scramble-marks', g: 'public', zh: '某打乱的公开标记', en: 'Public marks for a scramble' },
   { d: 'scramble', m: 'GET', p: '/v1/scramble-marks/recent', g: 'public', zh: '最近标记 feed', en: 'Recent marks feed' },
   { d: 'scramble', m: 'POST', p: '/v1/scramble-marks', g: 'login', zh: '发布打乱标记', en: 'Post a scramble mark' },
+  { d: 'scramble', m: 'PATCH', p: '/v1/scramble-marks', g: 'login', zh: '只更新自己的已有标记', en: 'Update an existing own mark only' },
   { d: 'scramble', m: 'DELETE', p: '/v1/scramble-marks', g: 'login', zh: '删除自己的标记', en: 'Delete own mark' },
   { d: 'scramble', m: 'DELETE', p: '/v1/scramble-marks/:id', g: 'login', zh: '按 id 删标记', en: 'Delete mark by id' },
 

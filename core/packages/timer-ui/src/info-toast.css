@@ -1,7 +1,7 @@
 .timer-info-toast {
   position: fixed;
   left: 50%;
-  bottom: calc(20px + env(safe-area-inset-bottom) + var(--timer-info-toast-bottom-inset, 0px));
+  bottom: calc(20px + max(env(safe-area-inset-bottom), var(--timer-info-toast-bottom-inset, 0px)));
   z-index: 70;
   display: inline-flex;
   width: max-content;

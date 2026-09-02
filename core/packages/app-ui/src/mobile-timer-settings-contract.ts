@@ -18,6 +18,7 @@ export const MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS = [
   'settings.training.stage-splits',
   'settings.training.bld-memo-split',
   'settings.scramble.optimal',
+  'settings.scramble.auto-mark-wca',
   ...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
   'settings.appearance.scramble-click-action',
 ] as const satisfies readonly TimerSettingFieldId[];

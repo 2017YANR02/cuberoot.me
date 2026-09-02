@@ -1,4 +1,8 @@
 import { Hono } from 'hono';
+import {
+  decodeTimerWcaScrambleMarkKey,
+  type TimerWcaScrambleMarkKey,
+} from '@cuberoot/shared/timer';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAuth, checkRateLimit, ADMIN_WCA_IDS } from '../utils/recon_helpers.js';
@@ -10,6 +14,7 @@ import { requireAuth, checkRateLimit, ADMIN_WCA_IDS } from '../utils/recon_helpe
  *   GET    /scramble-marks/recent?event=&wcaId=&q=&before=&limit=   最近标记 feed(公开)
  *   DELETE /scramble-marks/:id                   按 id 删一条(本人 / 管理员)
  *   POST   /scramble-marks                       标记(登录,upsert,可带成绩)
+ *   PATCH  /scramble-marks                       只更新自己的已有标记(登录,绝不新建)
  *   DELETE /scramble-marks?ci=&e=&r=&g=&x=&n=    取消自己的标记(登录)
  *
  * 打乱用六元自然键 (ci,e,r,g,x,n) 标识 —— 与 timer 的 WcaScrambleMeta 短键对齐。
@@ -23,30 +28,20 @@ export const scrambleMarksRoutes = new Hono();
 const MAX_MARKS_PER_USER = 20000;
 const MAX_TIME_CS = 36_000_000; // 100h
 
-interface ScrambleKey {
-  ci: string; e: string; r: string; g: string; x: 0 | 1; n: number;
-}
+type ScrambleKey = TimerWcaScrambleMarkKey;
 
-/** 六元自然键 shape 校验(与 wca_scrambles 列宽一致),非法返 null。 */
-function parseKey(src: Record<string, unknown>): ScrambleKey | null {
-  const ci = String(src.ci ?? '');
-  const e = String(src.e ?? '');
-  const r = String(src.r ?? '');
-  const g = String(src.g ?? '');
-  const x = Number(src.x) === 1 ? 1 : 0;
-  const n = Number(src.n);
-  if (!/^[A-Za-z0-9_-]{1,32}$/.test(ci)) return null;
-  if (!/^[0-9a-z]{2,6}$/.test(e)) return null;
-  if (!/^[a-z0-9]$/.test(r)) return null;
-  if (!/^[A-Za-z0-9]{0,3}$/.test(g)) return null;
-  if (!Number.isInteger(n) || n < 1 || n > 999) return null;
-  return { ci, e, r, g, x, n };
+/** JSON writes already carry typed values; shared owns the six-field contract. */
+function keyFromBody(src: Record<string, unknown>): ScrambleKey | null {
+  return decodeTimerWcaScrambleMarkKey(src);
 }
 
 function keyFromQuery(c: { req: { query: (k: string) => string | undefined } }): ScrambleKey | null {
-  return parseKey({
+  const rawX = c.req.query('x');
+  return decodeTimerWcaScrambleMarkKey({
     ci: c.req.query('ci'), e: c.req.query('e'), r: c.req.query('r'),
-    g: c.req.query('g'), x: c.req.query('x'), n: c.req.query('n'),
+    g: c.req.query('g'),
+    x: rawX === '0' ? 0 : rawX === '1' ? 1 : undefined,
+    n: Number(c.req.query('n')),
   });
 }
 
@@ -161,7 +156,7 @@ scrambleMarksRoutes.post('/scramble-marks', async (c) => {
   } catch {
     return c.json({ error: 'invalid json' }, 400);
   }
-  const key = parseKey(body);
+  const key = keyFromBody(body);
   if (!key) return c.json({ error: 'invalid scramble key' }, 400);
   const timeCsRaw = Number(body.timeCs);
   const timeCs = Number.isInteger(timeCsRaw) && timeCsRaw > 0 && timeCsRaw <= MAX_TIME_CS ? timeCsRaw : null;
@@ -185,12 +180,48 @@ scrambleMarksRoutes.post('/scramble-marks', async (c) => {
      ON CONFLICT (wca_id, competition_id, event_id, round_type_id, group_id, is_extra, scramble_num)
      DO UPDATE SET
        name = EXCLUDED.name,
-       country = EXCLUDED.country,
+       country = COALESCE(NULLIF(EXCLUDED.country, ''), scramble_marks.country),
        time_cs = COALESCE(EXCLUDED.time_cs, scramble_marks.time_cs),
        created_at = EXCLUDED.created_at`,
     [authUser.wcaId, name, country, ...keyParams(key), timeCs, now],
   );
   return c.json({ ok: true, createdAt: now });
+});
+
+// PATCH /scramble-marks — 只更新本人已有标记。用于关闭自动打卡时同步已有成绩；
+// 所有权由认证身份 + SQL WHERE 判定，不依赖公开列表(该列表最多只返回 100 条)。
+scrambleMarksRoutes.patch('/scramble-marks', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const authUser = await requireAuth(c);
+  let body: Record<string, unknown>;
+  try {
+    body = await c.req.json<Record<string, unknown>>();
+  } catch {
+    return c.json({ error: 'invalid json' }, 400);
+  }
+  const key = keyFromBody(body);
+  if (!key) return c.json({ error: 'invalid scramble key' }, 400);
+  const timeCsRaw = Number(body.timeCs);
+  const timeCs = Number.isInteger(timeCsRaw) && timeCsRaw > 0 && timeCsRaw <= MAX_TIME_CS
+    ? timeCsRaw
+    : null;
+  const countryRaw = String(body.country ?? '');
+  const country = /^[A-Za-z]{2}$/.test(countryRaw) ? countryRaw.toUpperCase() : '';
+  const name = (authUser.name ?? '').slice(0, 200);
+  const now = Math.floor(Date.now() / 1000);
+  const rows = await query<{ created_at: number }>(
+    `UPDATE scramble_marks
+        SET name = ?,
+            country = COALESCE(NULLIF(?, ''), country),
+            time_cs = COALESCE(?, time_cs),
+            created_at = ?
+      WHERE wca_id = ? AND ${KEY_WHERE}
+      RETURNING created_at`,
+    [name, country, timeCs, now, authUser.wcaId, ...keyParams(key)],
+  );
+  if (rows.length === 0) return c.json({ ok: true, updated: false, createdAt: null });
+  return c.json({ ok: true, updated: true, createdAt: Number(rows[0].created_at) });
 });
 
 // DELETE /scramble-marks?ci=&e=&r=&g=&x=&n= — 取消自己的标记(timer 弹层「取消标记」)。
