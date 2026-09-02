@@ -141,3 +141,12 @@ describe('/wca/results — 老师分享视图', () => {
     expect(teacherApiSrc).toContain('selfTaught ? { selfTaught: true }');
   });
 });
+
+describe('/wca/results — 批量学生名单', () => {
+  it('支持 1000 人、跳过 WCA 匹配，并在保存时显示进度', () => {
+    expect(teacherCellSrc).toContain('const MAX_BATCH_STUDENTS = 1000;');
+    expect(teacherCellSrc).toContain('const skipBatchMatching = () =>');
+    expect(teacherCellSrc).toContain("zh: '不匹配 WCA'");
+    expect(teacherCellSrc).toContain('zh: `正在保存 ${batchProcessedCount}/${batchMatches.length}`');
+  });
+});
