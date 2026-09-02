@@ -1856,9 +1856,44 @@ CREATE TABLE platform_invite_redemptions (
   CHECK ((entitlement_id IS NOT NULL)::integer + (membership_id IS NOT NULL)::integer = 1)
 );
 
+CREATE OR REPLACE FUNCTION platform_qr_links_valid(value JSONB) RETURNS BOOLEAN
+LANGUAGE SQL IMMUTABLE STRICT AS $$
+  SELECT CASE WHEN JSONB_TYPEOF(value) <> 'array' THEN FALSE ELSE
+    JSONB_ARRAY_LENGTH(value) <= 20
+      AND OCTET_LENGTH(value::TEXT) <= 100000
+      AND NOT EXISTS (
+        SELECT 1
+        FROM JSONB_ARRAY_ELEMENTS(value) AS link
+        WHERE CASE WHEN JSONB_TYPEOF(link) <> 'object' THEN TRUE ELSE
+          (link - ARRAY['label', 'href', 'note']) <> '{}'::JSONB
+            OR JSONB_TYPEOF(link->'label') IS DISTINCT FROM 'string'
+            OR CHAR_LENGTH(link->>'label') NOT BETWEEN 1 AND 160
+            OR link->>'label' <> BTRIM(link->>'label')
+            OR link->>'label' ~ '[[:cntrl:]]'
+            OR JSONB_TYPEOF(link->'href') IS DISTINCT FROM 'string'
+            OR CHAR_LENGTH(link->>'href') NOT BETWEEN 1 AND 4000
+            OR NOT (
+              (link->>'href' ~ '^/[A-Za-z0-9/_?&=.#%+~-]*$' AND LEFT(link->>'href', 2) <> '//')
+              OR link->>'href' ~ '^https?://[^/?#@[:space:]]+([/?#][^[:space:]]*)?$'
+            )
+            OR (
+              link ? 'note'
+              AND (
+                JSONB_TYPEOF(link->'note') IS DISTINCT FROM 'string'
+                OR CHAR_LENGTH(link->>'note') > 240
+                OR link->>'note' <> BTRIM(link->>'note')
+                OR link->>'note' ~ '[[:cntrl:]]'
+              )
+            )
+        END
+      )
+  END
+$$;
+
 CREATE TABLE platform_qr_codes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code VARCHAR(80) NOT NULL UNIQUE CHECK (code = LOWER(BTRIM(code)) AND code ~ '^[a-z0-9][a-z0-9_-]{5,79}$'),
+  label VARCHAR(160) NOT NULL DEFAULT '' CHECK (label = BTRIM(label) AND CHAR_LENGTH(label) <= 160 AND label !~ '[[:cntrl:]]'),
   status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'disabled', 'archived')),
   current_revision INTEGER NOT NULL CHECK (current_revision > 0),
   is_printed BOOLEAN NOT NULL DEFAULT FALSE,
@@ -1882,6 +1917,8 @@ CREATE TABLE platform_qr_revisions (
   target_value TEXT NOT NULL CHECK (target_value = BTRIM(target_value) AND CHAR_LENGTH(target_value) BETWEEN 1 AND 4000 AND target_value !~ '[[:cntrl:]]'),
   title_zh VARCHAR(240) NOT NULL DEFAULT '',
   title_en VARCHAR(240) NOT NULL DEFAULT '',
+  qr_type VARCHAR(20) NOT NULL DEFAULT 'redirect' CHECK (qr_type IN ('redirect', 'landing')),
+  links JSONB NOT NULL DEFAULT '[]'::JSONB CHECK (platform_qr_links_valid(links)),
   approved_by_user_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
   approved_by_actor_key VARCHAR(160)
     CHECK (approved_by_actor_key = BTRIM(approved_by_actor_key) AND approved_by_actor_key <> ''),
