@@ -1,12 +1,12 @@
-import type { CubeFace } from '@/lib/cube-colors';
+import { CUBE_OPPOSITE_FACE, type CubeFace } from '@/lib/cube-colors';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
 
-export type SideDirection = 'left' | 'right';
+export type PositionRelation = 'left' | 'right' | 'opposite';
 export type SideFace = CubeFace;
 
 export interface PositionQuestion {
   reference: SideFace;
-  direction: SideDirection;
+  direction: PositionRelation;
   answer: SideFace;
 }
 
@@ -23,7 +23,7 @@ export const WHITE_TOP_SIDE_ORDER: readonly SideFace[] = sideOrderForTop('U');
 
 export function positionQuestionsForTop(top: CubeFace): PositionQuestion[] {
   const sideOrder = sideOrderForTop(top);
-  return sideOrder.flatMap((reference, index) => [
+  const sideQuestions = sideOrder.flatMap((reference, index) => [
     {
       reference,
       direction: 'right' as const,
@@ -35,6 +35,12 @@ export function positionQuestionsForTop(top: CubeFace): PositionQuestion[] {
       answer: sideOrder[(index - 1 + sideOrder.length) % sideOrder.length],
     },
   ]);
+  const oppositeQuestions = Object.entries(CUBE_OPPOSITE_FACE).map(([reference, answer]) => ({
+    reference: reference as CubeFace,
+    direction: 'opposite' as const,
+    answer,
+  }));
+  return [...sideQuestions, ...oppositeQuestions];
 }
 
 export const ALL_POSITION_QUESTIONS: readonly PositionQuestion[] = positionQuestionsForTop('U');

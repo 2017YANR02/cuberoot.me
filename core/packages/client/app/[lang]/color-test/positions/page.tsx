@@ -25,10 +25,10 @@ function colorName(face: SideFace): string {
 
 function Result({ score, topFace, onRestart }: { score: number; topFace: CubeFace; onRestart: () => void }) {
   const summary = score === ALL_POSITION_QUESTIONS.length
-    ? { zh: '全部答对,侧面颜色顺序已经很稳了。', en: 'Perfect. You have the side-colour order down.' }
-    : score >= 6
-      ? { zh: '已经很稳,再来一轮就能补齐容易混淆的方向。', en: 'Nearly there. One more round should settle the directions that still blur together.' }
-      : { zh: '先记住红、绿、橙、蓝的循环顺序,再分清左边和右边。', en: 'Start with the red, green, orange, blue cycle, then separate left from right.' };
+    ? { zh: '全部答对,颜色位置关系已经很稳了。', en: 'Perfect. You have the colour positions down.' }
+    : score >= 11
+      ? { zh: '已经很稳,再来一轮补齐容易混淆的位置。', en: 'Nearly there. One more round should settle the positions that still blur together.' }
+      : { zh: '先记住三组对色和四个侧面的循环顺序。', en: 'Start with the three opposite pairs and the four-colour side cycle.' };
 
   return (
     <section className="color-quiz-result" aria-live="polite">
@@ -104,10 +104,10 @@ export default function ColorPositionsPage() {
 
       <header className="color-quiz-header">
         <p className="color-quiz-eyebrow">{tr({ zh: '颜色测试 02', en: 'COLOUR TEST 02' })}</p>
-        <h1>{tr({ zh: '侧面颜色顺序', en: 'Side colour order' })}</h1>
+        <h1>{tr({ zh: '颜色位置关系', en: 'Colour positions' })}</h1>
         <p>{tr({
-          zh: '选择顶面颜色,判断其余四个侧面的左右顺序。一轮会问完 8 种关系。',
-          en: 'Choose the top colour and recall the left-right order of the other four side faces. One round covers all 8 relations.',
+          zh: '选择顶面颜色,判断侧面的左右顺序和六种颜色的对色。一轮共 14 题。',
+          en: 'Choose the top colour, then recall the side-face order and the opposite of every colour. Each round has 14 questions.',
         })}</p>
         <div className="position-top-control">
           <span>{tr({ zh: '顶面颜色', en: 'Top colour' })}</span>
@@ -136,10 +136,15 @@ export default function ColorPositionsPage() {
             <i style={{ width: `${((index + (selected ? 1 : 0)) / round.length) * 100}%` }} />
           </div>
 
-          <h2 id="position-question">{tr({
-            zh: `${CUBE_COLOR_NAMES[topFace].zh}色朝上时,${CUBE_COLOR_NAMES[question.reference].zh}色的${question.direction === 'right' ? '右边' : '左边'}是什么颜色?`,
-            en: `With ${CUBE_COLOR_NAMES[topFace].en} on top, which colour is to the ${question.direction} of ${CUBE_COLOR_NAMES[question.reference].en}?`,
-          })}</h2>
+          <h2 id="position-question">{question.direction === 'opposite'
+            ? tr({
+                zh: `${CUBE_COLOR_NAMES[question.reference].zh}色的对面是什么颜色?`,
+                en: `Which colour is opposite ${CUBE_COLOR_NAMES[question.reference].en}?`,
+              })
+            : tr({
+                zh: `${CUBE_COLOR_NAMES[topFace].zh}色朝上时,${CUBE_COLOR_NAMES[question.reference].zh}色的${question.direction === 'right' ? '右边' : '左边'}是什么颜色?`,
+                en: `With ${CUBE_COLOR_NAMES[topFace].en} on top, which colour is to the ${question.direction} of ${CUBE_COLOR_NAMES[question.reference].en}?`,
+              })}</h2>
           <div className="position-prompt" aria-hidden="true">
             {question.direction === 'left' && <span className="position-prompt-mark">? ←</span>}
             <div className="position-prompt-target">
@@ -151,10 +156,12 @@ export default function ColorPositionsPage() {
               />
             </div>
             {question.direction === 'right' && <span className="position-prompt-mark">→ ?</span>}
+            {question.direction === 'opposite' && <span className="position-prompt-mark">↔ ?</span>}
           </div>
 
           <div className="color-quiz-choices position-choices">
-            {sideOrderForTop(topFace).filter((face) => face !== question.reference).map((face) => {
+            {(question.direction === 'opposite' ? CUBE_COLOR_FACES : sideOrderForTop(topFace))
+              .filter((face) => face !== question.reference).map((face) => {
               const isCorrect = selected !== null && face === question.answer;
               const isWrong = selected === face && face !== question.answer;
               return (
@@ -180,10 +187,15 @@ export default function ColorPositionsPage() {
           {selected && (
             <div className={`color-quiz-feedback ${selected === question.answer ? 'is-correct' : 'is-wrong'}`} aria-live="polite">
               <strong>{tr(selected === question.answer ? { zh: '答对了', en: 'Correct' } : { zh: '再记一下', en: 'Not quite' })}</strong>
-              <span>{tr({
-                zh: `${CUBE_COLOR_NAMES[topFace].zh}色朝上时,${CUBE_COLOR_NAMES[question.reference].zh}色的${question.direction === 'right' ? '右边' : '左边'}是${CUBE_COLOR_NAMES[question.answer].zh}色。`,
-                en: `With ${CUBE_COLOR_NAMES[topFace].en} on top, ${CUBE_COLOR_NAMES[question.answer].en} is to the ${question.direction} of ${CUBE_COLOR_NAMES[question.reference].en}.`,
-              })}</span>
+              <span>{question.direction === 'opposite'
+                ? tr({
+                    zh: `${CUBE_COLOR_NAMES[question.reference].zh}色的对面是${CUBE_COLOR_NAMES[question.answer].zh}色。`,
+                    en: `${CUBE_COLOR_NAMES[question.answer].en} is opposite ${CUBE_COLOR_NAMES[question.reference].en}.`,
+                  })
+                : tr({
+                    zh: `${CUBE_COLOR_NAMES[topFace].zh}色朝上时,${CUBE_COLOR_NAMES[question.reference].zh}色的${question.direction === 'right' ? '右边' : '左边'}是${CUBE_COLOR_NAMES[question.answer].zh}色。`,
+                    en: `With ${CUBE_COLOR_NAMES[topFace].en} on top, ${CUBE_COLOR_NAMES[question.answer].en} is to the ${question.direction} of ${CUBE_COLOR_NAMES[question.reference].en}.`,
+                  })}</span>
               <button type="button" className="color-quiz-next" onClick={next} autoFocus>
                 {index === round.length - 1
                   ? tr({ zh: '查看成绩', en: 'See results' })
