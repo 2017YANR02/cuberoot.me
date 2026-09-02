@@ -170,7 +170,7 @@ shared 映射快照是 19 个 Timer ID：
 
 | Parity ID | Web 可达行为/状态 | Mobile 快照 |
 | --- | --- | --- |
-| `timer.phase` | idle/holding/ready/inspecting/running/stopped，各自颜色、数字和指令 | 基础状态机已 shared，视觉和边界未全验 |
+| `timer.phase` | idle/holding/ready/inspecting/running/stopped，各自颜色、数字和指令 | 基础状态机已 shared；计时数字的完整字形必须位于计时 Surface 可见边界内，禁止被来源配置、父级裁切或后续内容遮挡；视觉和全状态边界未全验 |
 | `timer.practice` | 关闭计时时按压只换打乱，无读数/无成绩 | 缺 |
 | `timer.inspection` | 0/WCA；8s/12s 警告；+2/DNF；观察期非 x/y/z 操作警告 | Mobile 基础 0/15，其余缺 |
 | `timer.precision` | 运行 0/1/2/3 位，结果 2/3 位，运行隐藏 | Mobile 缺设置 |
