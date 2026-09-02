@@ -221,6 +221,12 @@ describe('mobile scramble-source parity contract', () => {
     expect(app).toContain('releaseOptimal333();');
   });
 
+  it('hides and disables random-difficulty answers while timing', () => {
+    expect(app).toContain("timer.machine.phase === 'running' ? ' is-solving' : ''");
+    expect(app).toMatch(/<TimerRandomDifficultyCaseBar\s+disabled=\{!sourceControlsEnabled\}/);
+    expect(css).toMatch(/\.app-shell\.is-solving \.surface-chrome\s*\{[\s\S]*?pointer-events:\s*none;/);
+  });
+
   it('uses the shared controlled WCA config and persists every source-key field', () => {
     expect(app).toContain('<TimerWcaSourceConfig');
     expect(app).toContain('<DateRangeInput');

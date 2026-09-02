@@ -151,6 +151,22 @@ describe('shared random-difficulty timer UI', () => {
     expect(currentSolve).toHaveBeenCalledTimes(1);
   });
 
+  it('does not reveal an answer while the timer is running', async () => {
+    const solve = vi.fn(async () => ({ frame: 'white', notation: "R U R'" }));
+    await act(async () => root.render(createElement(TimerRandomDifficultyCaseBar, {
+      depth: 5,
+      disabled: true,
+      language: 'en',
+      occurrenceKey: 1,
+      solve,
+      spec: { variant: 'std', stage: 'cross', colors: 'W', slot: 0, lo: 4, hi: 6 },
+    })));
+    const answer = host.querySelector<HTMLButtonElement>('.trainer-case-reveal')!;
+    expect(answer.disabled).toBe(true);
+    await act(async () => answer.click());
+    expect(solve).not.toHaveBeenCalled();
+  });
+
   it('drops a late answer when the language changes', async () => {
     let resolveOld!: (value: { frame: string; notation: string }) => void;
     let oldSignal!: AbortSignal;

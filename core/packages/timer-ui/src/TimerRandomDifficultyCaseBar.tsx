@@ -12,6 +12,7 @@ export interface TimerRandomDifficultySolution {
 }
 
 export interface TimerRandomDifficultyCaseBarProps {
+  disabled?: boolean;
   depth: number;
   language: TimerUiLanguage;
   occurrenceKey: number | string;
@@ -30,6 +31,7 @@ const COPY = {
 
 /** The exact difficulty case/answer row shared by every timer host. */
 export function TimerRandomDifficultyCaseBar({
+  disabled = false,
   depth,
   language,
   occurrenceKey,
@@ -60,7 +62,16 @@ export function TimerRandomDifficultyCaseBar({
     };
   }, [caseKey]);
 
+  useEffect(() => {
+    if (!disabled) return;
+    requestRef.current += 1;
+    controllerRef.current?.abort();
+    controllerRef.current = null;
+    setBusy(false);
+  }, [disabled]);
+
   const reveal = async () => {
+    if (disabled) return;
     if (solution) {
       setShown((value) => !value);
       return;
@@ -109,7 +120,7 @@ export function TimerRandomDifficultyCaseBar({
       </span>
       <button
         className="trainer-case-reveal"
-        disabled={busy}
+        disabled={disabled || busy}
         onClick={(event) => { event.stopPropagation(); void reveal(); }}
         type="button"
       >
