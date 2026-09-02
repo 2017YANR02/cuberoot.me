@@ -930,8 +930,8 @@ interface Props {
   onKeymapChange: (km: Record<string, KeyMove>) => void;
   onResetKeymap: () => void;
   userMoveRef?: RefObject<((action: TwistAction | string) => void) | null>;
-  /** TwistyPlayer instance for pyraminx/skewb/megaminx — used by animateScramble
-   *  to drive jumpToStart + play after the alg is set. */
+  /** TwistyPlayer instance for pyraminx/skewb/megaminx — used by the explicit
+   *  scramble play button to drive jumpToStart + play after the alg is set. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   twistyPlayerRef?: RefObject<any>;
   /** Skewb-only: Sarah vs WCA notation. Owner SimPage persists in localStorage. */
@@ -1996,9 +1996,9 @@ export default function PlayerControls({
   const handleScramble = useCallback(async () => {
     const reqId = ++scrambleReqIdRef.current;
     // Twisty puzzles (pyraminx/skewb/megaminx) — no cuber world. Route to
-    // tnoodleRandomScramble (cubing.js + pool). animateScramble=false writes
-    // setup (instant baseline); true clears setup, sets alg, and drives the
-    // TwistyPlayer to jumpToStart + play.
+    // tnoodleRandomScramble (cubing.js + pool), then write setup so the player
+    // lands on the final scrambled state immediately. Animation is reserved for
+    // the adjacent play button.
     if (isTwistyMode) {
       let twistyScramble = '';
       try {
@@ -2011,35 +2011,29 @@ export default function PlayerControls({
         console.warn('[sim] twisty scramble failed:', err);
       }
       if (reqId !== scrambleReqIdRef.current) return;
-      if (settings.animateScramble && twistyScramble) {
-        if (setupElRef.current) {
-          setupElRef.current.value = '';
-          autosize(setupElRef.current);
-        }
-        setSetupDraft('');
-        onSetupChange('');
-        if (algElRef.current) {
-          algElRef.current.value = twistyScramble;
-          autosize(algElRef.current);
-        }
-        skipAutoResetRef.current = true;
-        setAlgDraft(twistyScramble);
-        onAlgChange(twistyScramble);
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            const p = twistyPlayerRef?.current as unknown as { jumpToStart?: (opts?: unknown) => void; play?: () => void } | null;
-            try { p?.jumpToStart?.({ flash: false }); } catch { /* */ }
-            try { p?.play?.(); } catch { /* */ }
-          });
-        });
-        return;
-      }
+      // Stop any previous scramble playback and seek to the setup side of the
+      // timeline. Keep the solution alg intact: at timestamp 0 it is not applied,
+      // so the user sees exactly the new scrambled state and can still play their
+      // existing solution afterwards. Apply once now and once after React has
+      // synchronized the props into TwistySection.
+      const settleOnSetup = () => {
+        const p = twistyPlayerRef?.current as unknown as {
+          experimentalSetupAlg?: string;
+          jumpToStart?: (opts?: unknown) => void;
+          pause?: () => void;
+        } | null;
+        try { p?.pause?.(); } catch { /* */ }
+        try { if (p) p.experimentalSetupAlg = twistyScramble; } catch { /* */ }
+        try { p?.jumpToStart?.({ flash: false }); } catch { /* */ }
+      };
+      settleOnSetup();
       if (setupElRef.current) {
         setupElRef.current.value = twistyScramble;
         autosize(setupElRef.current);
       }
       setSetupDraft(twistyScramble);
       onSetupChange(twistyScramble);
+      requestAnimationFrame(() => { requestAnimationFrame(settleOnSetup); });
       return;
     }
     if (!world) return;
@@ -2091,32 +2085,25 @@ export default function PlayerControls({
     if (reqId !== scrambleReqIdRef.current) return;
     if (!scramble) return;
     world.controller.clearFrozen(); // release any debug held-partial turn first
-    // SQ1 / Ivy / corner-turn puzzles always animate — instant apply would be
-    // visually indistinguishable from no rotation. The animation is the whole point.
-    const animate = isSquarePuzzle || isIvy || !!corner || settings.animateScramble;
-    if (animate) {
-      animatingScrambleRef.current = true;
-      world.cube.twister.setup('');
-      world.cube.twister.push(scramble);
-    } else {
-      animatingScrambleRef.current = true;
-      const tw = world.cube.twister as unknown as {
-        setupAsync?: (e: string) => Promise<void>;
-        setup: (e: string) => void;
-      };
-      if (tw.setupAsync) await tw.setupAsync(scramble);
-      else tw.setup(scramble);
-    }
+    // Random scramble always lands on its final state immediately. The adjacent
+    // play button owns its explicit animation path.
+    animatingScrambleRef.current = true;
+    const tw = world.cube.twister as unknown as {
+      setupAsync?: (e: string) => Promise<void>;
+      setup: (e: string) => void;
+    };
+    if (tw.setupAsync) await tw.setupAsync(scramble);
+    else tw.setup(scramble);
     if (setupElRef.current) {
       setupElRef.current.value = scramble;
       autosize(setupElRef.current);
     }
     setSetupDraft(scramble);
     onSetupChange(scramble);
-  }, [world, order, isSq1, squareFamilySpec, isSquarePuzzle, isIvy, corner, isTwistyMode, puzzleKind, settings.animateScramble, squareFormat, onSetupChange, onAlgChange, twistyPlayerRef]);
+  }, [world, order, isSq1, squareFamilySpec, isIvy, corner, isTwistyMode, puzzleKind, squareFormat, onSetupChange, twistyPlayerRef]);
 
   // ▶ Play button: animate the CURRENT scramble (the text already in the box) from
-  // solved, on demand. Reuses the same animation paths as the auto-animate scramble:
+  // solved, on demand. This is the explicit animation entry point for a normal random scramble:
   // cuber world → twister.setup('') + push; twisty (cubing.js) → move scramble to the
   // alg track and jumpToStart + play.
   const handlePlayScramble = useCallback(async () => {
