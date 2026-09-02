@@ -59,6 +59,7 @@ import {
   TimerAttemptSplitSettings,
   TimerScrambleClickActionSetting,
   TimerScramblePreviewSettings,
+  TimerBooleanSettingRow,
   TimerTimingSettingsSections,
   type TimerBooleanControlProps,
 } from '@cuberoot/timer-ui';
@@ -879,19 +880,19 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           {/* 2x2 的「最优」已挪到打乱条上的口径 picker(Scramble222ModePicker,随机状态与真题统一)。
               其余项目保留同一行：当前来源不支持时置灰，切项目后布局不会跳。 */}
           {settingState('settings.scramble.optimal').visible && (
-            <BooleanSettingRow
-              id="settings.scramble.optimal"
+            <TimerBooleanSettingRow
+              field={timerSettingFieldContract('settings.scramble.optimal')}
+              label={settingLabel('settings.scramble.optimal')}
               value={optimalAvailable ? s.wcaUseOptimal : false}
               onChange={(v) => updateSettings({ wcaUseOptimal: v })}
               disabled={settingState('settings.scramble.optimal').disabled}
-            >
-              {s.scrambleSource === 'random' && event === '333' && !optimalUser && (
-                <span className="hint">{tr({ zh: '登录后可用', en: 'Sign in to use' })}</span>
-              )}
-              {s.scrambleSource === 'random' && event === '333' && !!optimalUser && !!s.syncSeed && (
-                <span className="hint">{tr({ zh: '同步种子开启时不可用', en: 'Unavailable with a sync seed' })}</span>
-              )}
-            </BooleanSettingRow>
+              hint={s.scrambleSource === 'random' && event === '333' && !optimalUser
+                ? tr({ zh: '登录后可用', en: 'Sign in to use' })
+                : s.scrambleSource === 'random' && event === '333' && !!optimalUser && !!s.syncSeed
+                  ? tr({ zh: '同步种子开启时不可用', en: 'Unavailable with a sync seed' })
+                  : undefined}
+              renderBooleanControl={renderTimingBooleanControl}
+            />
           )}
           {settingState('settings.scramble.auto-mark-wca').visible && (
             <BooleanSettingRow

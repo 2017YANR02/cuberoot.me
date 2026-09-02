@@ -17,6 +17,7 @@ export const MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS = [
   'settings.timer.result-precision',
   'settings.training.stage-splits',
   'settings.training.bld-memo-split',
+  'settings.scramble.optimal',
   ...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
   'settings.appearance.scramble-click-action',
 ] as const satisfies readonly TimerSettingFieldId[];

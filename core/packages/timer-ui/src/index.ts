@@ -158,6 +158,7 @@ export { browserPrintTransport } from './browser-print';
 export { browserClipboardTransport } from './browser-clipboard';
 export {
   TIMER_TIMING_SETTING_FIELD_IDS,
+  TimerBooleanSettingRow,
   TimerTimingSettingsSections,
 } from './TimerTimingSettingsSections';
 export type {
@@ -216,7 +217,7 @@ export type {
   TimerWcaSourceDataAdapter,
   TimerWcaSourceLabels,
 } from './TimerWcaSourceConfig';
-export { TimerWcaDifficultyConfig, TimerWcaOptimalToggle } from './TimerWcaDifficultyConfig';
+export { TimerWcaDifficultyConfig } from './TimerWcaDifficultyConfig';
 export type {
   TimerWcaDifficultyConfigProps,
   TimerWcaDifficultyLabels,

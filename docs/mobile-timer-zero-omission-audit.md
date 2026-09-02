@@ -25,7 +25,7 @@
 | GAP-005 | 手动来源还包含编辑后重置、顺序循环、已显示打乱历史的上一条/下一条、空打乱可起表与 attempt snapshot | Mobile 已直接消费 shared editor/queue/`ScrambleHistory`，覆盖上一条/下一条、队尾生成、solve 后前进、左右键、空槽和冻结 attempt；仍缺 OPPO/iOS 真机全状态证据 | P0，源码与自动化已接，待设备矩阵 |
 | GAP-006 | Web 有 session 切换/新建/重命名/清空/删除/项目关联、搜索筛选、成绩对比、成绩详情、移动分组 | session CRUD/项目关联、共用成绩行/七项菜单/备注/Undo、行级罚时/复制/删除、完整筛选/tag、成绩对比与基础成绩详情已接五端共享产品层。详情的原始/生效成绩、日期、罚时、打乱、CFOP/BLD/MBLD 分段、备注、移组、删除和关闭只保留一份 `timer-ui` DOM；Web 仅注入重型复盘。Web/五端的打乱图也已统一为同一 `TimerCubePreview`，覆盖网站当前的 NxN、Clock、Pyraminx、Skewb、SQ1、Megaminx、FTO 和 relay/custom 分派；完整复盘仍缺。`HistoryPanel` 的批量删除分支当前在网站主路径没有 consumer，不把不可达代码当网站现有功能 | P0，基础详情/预览单源不等于完整复盘 parity |
 | GAP-007 | Web 有成绩/图表/统计三栏、5 图、完整统计、case/跨分组/按天、纪录对比 | 紧凑 current/best 面板与 rolling picker 已迁 timer-ui 并由 Web/Mobile 真实消费；OPPO 已显示 time/ao5/ao12 共用面板且 360px 无横向溢出。完整 StatsModal/五图、case/跨分组/按天与纪录对比仍缺 | P0，紧凑面板接线完成不等于完整统计完成 |
-| GAP-008 | Web 设置有 8 类、64 个字段（其中 1 个仅开发环境） | 8 类与 64 个稳定 ID、copy/value/visibility/disabled/effect 已迁 shared；“计时”8 字段、“训练”的 CFOP 分段/BLD memo 及“外观”的打乱图、2D/3D、点击打乱动作已由 Web/Mobile 共用真实 UI/effect，App effect ledger 为 13 项。OPPO 已读到 canonical 8/8 计时 ID、20～340px 内容边界与滚动底部，并实证点击打乱三动作；新增两项尚待解锁后验收，其余 51 字段、iOS/其他三端和全视口仍缺 | P0，13 项接线完成不等于 64 项设置 parity |
+| GAP-008 | Web 设置有 8 类、64 个字段（其中 1 个仅开发环境） | 8 类与 64 个稳定 ID、copy/value/visibility/disabled/effect 已迁 shared；“计时”8 字段、“训练”的 CFOP 分段/BLD memo、“打乱”的最优开关及“外观”的打乱图、2D/3D、点击打乱动作已由 Web/Mobile 共用真实 UI/effect，App effect ledger 为 14 项。OPPO 已读到 canonical 8/8 计时 ID、20～340px 内容边界与滚动底部，并实证点击打乱三动作及最优开关 44px、真题可用/手动禁用/切回恢复；其余 50 字段、iOS/其他三端和全视口仍缺 | P0，14 项接线完成不等于 64 项设置 parity |
 | GAP-009 | Web “更多”包含打乱足迹、统计、语言、专项、盲拧助手、全屏、手动录入、replay、求解器、批量打乱、打印、清空 | 12 项 action/条件/effect 已共享；App 已真实接通 10 项：统计复用现有共享统计页，盲拧助手/通用求解器/批量打乱复用 Tools canonical 子路由，其余 6 项保留既有 App effect。专项仍绑定 Web 私有 drill target，replay 仍绑定 Web 私有 decoder/重建状态，未用外跳 Web timer 或占位冒充 | P0，剩余 2 项及深层交互矩阵未完成 |
 | GAP-010 | Web 有智能魔方、智能计时器、Stackmat 麦克风，各自完整弹层、状态与错误 | Mobile 只显示真实 BLE 入口；Android GAN v4 主链已真机跑通，iOS UUID 后 manufacturer-data MAC 提取有 adapter/握手单测但无真机；Stackmat/智能计时器未实现且不渲染假入口 | P0，缺失能力保持不可见且仍登记为 gap |
 | GAP-011 | Web 有手动录成绩、FMC/MBLD 特殊输入、轮次模拟、目标、每日目标、分段、BLD memo | 手动成绩/FMC/MBLD 与 CFOP 分段/BLD memo 已共享接入；分段共用 recorder/status/settings，手动键盘和 44px 触摸均可标记，智能三阶自动分段复用 canonical move-stream producer。轮次、目标、每日目标仍缺，新增分段路径待 OPPO 真机 | P0 |
@@ -143,7 +143,7 @@ shared 映射快照是 19 个 Timer ID：
 | `source.wca.mode` | 比赛/日期二分 | 已接 Web/Mobile 共用 config 与 shared normalize；待全状态真机矩阵 |
 | `source.wca.comp` | 比赛搜索、选择、国旗、清空，日期范围 | 已接共用搜索/日期控件、严格比赛索引、共享中英比赛名/城市与 canonical 国旗；待离线/长名/键盘/全量比赛真机矩阵 |
 | `source.wca.round-group` | 轮次与组别筛选 | 已接共用 config 与 source identity；待完整请求/缓存组合和真机验收 |
-| `source.wca.difficulty` | 方法/阶段/底色子集/步数/合并口径/覆盖提示 | 已接共用 `TimerWcaDifficultyConfig` 与 shared catalog/query/cache/inflight；内部底色键不得作为可见文案，OPPO 中文竖屏当前值/展开列表已验无编码泄漏和横向溢出；App 通过既有 `topControlsSlot` 将“最优打乱/合并/难度”保持在同一行，OPPO 360px 与 CDP 320px 均验同高、无相交、无横向溢出；19 项 shared contract、3 项 UI interaction 通过，待英文、横屏、大字、TalkBack、长文及全组合真机矩阵 |
+| `source.wca.difficulty` | 方法/阶段/底色子集/步数/合并口径/覆盖提示 | 已接共用 `TimerWcaDifficultyConfig` 与 shared catalog/query/cache/inflight；内部底色键不得作为可见文案。按当前网站窄屏结构，“难度”通过 `toggleSlot` 位于顶栏，“合并”通过 `topControlsSlot` 位于真题来源行，“最优打乱”使用共用 `TimerBooleanSettingRow` 位于设置页且仅支持的真题来源可操作；旧 App 三项强制同行证据已作废。待英文、横屏、大字、TalkBack、长文及全组合真机矩阵 |
 | `source.wca.steps` | 222/pyra/skewb 真题按步数，各项目度量和 WCA 可达范围 | 三项目均接 shared normalize/identity + canonical Worker predicate；Mobile pool/source 定向回归通过，待全范围真机抽题 |
 | `source.wca.222-type` | 完整状态、EG、CLL、EG1、EG2、TCLL+、TCLL-、TCLL、LS、无连色 | 10 类共用 catalog 已接；precomputed/live 筛选与 full source key 有 fixture，待完整比赛/日期范围和真机全类型矩阵 |
 | `source.wca.222-mode` | WCA 恰 11 步 / 最优等态口径 | 共用 mode 控件、请求、cache/inflight identity 已接；待完整真题配置组合验收 |
@@ -156,7 +156,7 @@ shared 映射快照是 19 个 Timer ID：
 | `scramble.click-action` | 无操作/下一条/复制，复制勾和智能魔方修正路径特例 | 枚举/default/normalizer/persistence 与选择控件已由 Web/五端共用；产品层统一调用宿主剪贴板 capability，Android/iOS 薄宿主使用 Capacitor Clipboard，打乱、历史、联网房间码和二维码邀请链接复用同一 transport。OPPO `PFDM00` 已实证无操作不响应且不可聚焦、下一条更换真题、复制保持原题并提示成功，360px 无横向溢出。仍待 iOS/Harmony/Windows/macOS 三动作、智能魔方修正路径与完整视觉矩阵 |
 | `scramble.format` | SQ1 等项目显示 adapter，存储仍保留 canonical 原文 | 未证明 |
 | `scramble.preview` | 2D/3D/NxN/异形专用 renderer，显示开关、拖动、朝向 | Web/五端共用 `TimerCubePreview`/`TimerScramblePreview`；显示开关、2D/3D 默认/归一化/持久化与设置 UI 也已共享，单人和联网均从独立 `TimingSurface.cornerSlot` 渲染，避免拖动误触打乱动作。cubing.js 与 SQ1/Megaminx renderer 均为单源，不可解析手动题 fail closed；SQ1/Megaminx 保持 canonical 2D。OPPO 已装入对应源码构建，但手机仍被通知层遮挡；拖动/朝向、无遮挡及全设备视觉矩阵仍待关闭 |
-| `scramble.source-meta` | 国旗、本地化比赛名、项目、轮/组/题号/加赛、深链 | Mobile 仅比赛名 + 项目 + round/group/# |
+| `scramble.source-meta` | 国旗、本地化比赛名、项目、轮/组/题号/加赛、深链 | Mobile 已用 canonical `Flag` 显示比赛国家，并有比赛名 + 项目 + round/group/#；本地化比赛名、加赛、深链和来源进度仍缺 |
 | `scramble.source-progress` | 稀有池 `seen/total`、全练过、非最优标志、打乱足迹人数 | 缺 |
 | `scramble.loading` | WCA、csTimer worker、难度 worker、云端最优各自区分 loading | 仅通用 loading |
 | `scramble.empty-error` | 比赛无项目、日期无题、难度无匹配、难度库待更新、稀有、短暂网络失败各自文案/重试 | 仅通用 error/unsupported |
@@ -407,7 +407,7 @@ More、设置、成绩、统计、设备、对战与房间的每个 action 都�
 
 ### Guard H：响应式、无遮挡与无溢出
 
-用第 7 节的 fixture matrix 生成两端同视口截图，并执行 overflow、bounding-box visibility、z-index occlusion、safe-area、keyboard resize、focus/ARIA 断言。截图差分不允许用大面积 mask 掉计时器主体，重新生成 baseline 必须在 PR 中展示原图/新图/diff。
+用第 7 节的 fixture matrix 成对运行当前 Web 与当前 App；除视口外还必须固定 DPR、缩放/系统字号、语言、主题、项目、人数、来源、持久化设置、数据 fixture、计时阶段、弹层和键盘状态，并同时记录截图、关键 DOM 边界、computed style 与真实点击结果。执行 overflow、bounding-box visibility、z-index occlusion、safe-area、keyboard resize、focus/ARIA 断言。App 单端“不溢出/同一行/有颜色”只能算回归证据，不能作为 Web parity 证据；截图差分不允许用大面积 mask 掉计时器主体，重新生成 baseline 必须在 PR 中展示原图/新图/diff。
 
 ### Guard I：禁止重复造轮和假 fallback
 

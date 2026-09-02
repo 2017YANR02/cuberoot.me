@@ -7,7 +7,6 @@ import {
   timerInclusiveRange,
   timerWcaDifficultyUiModel,
   timerWcaSupportsDifficulty,
-  timerWcaSupportsOptimal,
   type TimerColorLetter,
   type TimerColorMode,
   type TimerWcaDifficultyCatalog,
@@ -128,31 +127,6 @@ function TimerWcaColorSubsetSelect({
         ))}
       </select>
     </span>
-  );
-}
-
-/** Capability-aware optimal switch shared by Web settings and native hosts. */
-export function TimerWcaOptimalToggle({
-  ariaLabel,
-  disabled = false,
-  onChange,
-  value,
-  wcaEventId,
-}: {
-  ariaLabel: string;
-  disabled?: boolean;
-  onChange(value: boolean): void;
-  value: boolean;
-  wcaEventId: string | null | undefined;
-}) {
-  const supported = timerWcaSupportsOptimal(wcaEventId);
-  return (
-    <TimerPillToggle
-      ariaLabel={ariaLabel}
-      disabled={disabled || !supported}
-      onChange={onChange}
-      value={supported && value}
-    />
   );
 }
 
