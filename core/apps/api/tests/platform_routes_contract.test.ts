@@ -146,7 +146,8 @@ describe('Platform route and security contract', () => {
       '/admin/invites/:id/order-reference', '/admin/invites/:id/revoke',
     ]) expect(learning.has(path), path).toBe(true);
     for (const path of [
-      '/qr/:code', '/admin/qr', '/admin/qr/:id/duplicate', '/admin/qr/:id/disabled',
+      '/qr/:code', '/qr/:code/card', '/admin/qr', '/admin/qr/:id/card',
+      '/admin/qr/:id/duplicate', '/admin/qr/:id/disabled',
       '/admin/qr/:id', '/admin/qr/:collection{prompts|cards}/:id/restore',
       '/admin/qr/card-jobs', '/admin/qr/card-jobs/:id',
     ]) expect(qr.has(path), path).toBe(true);
@@ -311,5 +312,30 @@ describe('Platform route and security contract', () => {
       .toContain("status = 'active', archived_at = NULL");
     expect(routeBlock(qrSource, 'platformQrRoutes', 'patch', '/admin/qr/card-jobs/:id'))
       .toContain("mime_type LIKE 'image/%'");
+  });
+
+  it('persists strict versioned QR card designs and serves deterministic physical SVG downloads', () => {
+    const publicCard = routeBlock(qrSource, 'platformQrRoutes', 'get', '/qr/:code/card');
+    expect(publicCard).toContain("findQr(resourceId(c.req.param('code'), 'code'), true)");
+    expect(publicCard).toContain('parseQrCardRenderOptions(');
+    expect(publicCard).toContain('renderQrCardSvg(');
+    expect(publicCard).toContain("c.header('Content-Disposition'");
+    expect(publicCard).toContain("options.download ? 'attachment' : 'inline'");
+
+    const readCard = routeBlock(qrSource, 'platformQrRoutes', 'get', '/admin/qr/:id/card');
+    expect(readCard).toContain('requirePlatformAdmin(c)');
+    expect(readCard).toContain('findLatestQrCard(');
+    expect(readCard).toContain('{ id: qr.id, code: qr.code, card:');
+    expect(readCard).toContain('privateNoStore(c)');
+
+    const updateCard = routeBlock(qrSource, 'platformQrRoutes', 'patch', '/admin/qr/:id/card');
+    expect(updateCard).toContain('requirePlatformAdmin(c)');
+    expect(updateCard).toContain('parseQrCardDesign(');
+    expect(updateCard).toContain('FOR UPDATE');
+    expect(updateCard).toContain('MAX(version)');
+    expect(updateCard).toContain('INSERT INTO platform_qr_card_designs');
+    expect(updateCard).toContain('withIdempotency(c, actor');
+    const qrSvg = routeBlock(qrSource, 'platformQrRoutes', 'get', '/qr/:code/svg');
+    expect(qrSvg).toContain("margin: 4, errorCorrectionLevel: 'H'");
   });
 });
