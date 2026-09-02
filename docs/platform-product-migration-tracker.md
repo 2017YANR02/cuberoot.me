@@ -2,7 +2,7 @@
 
 最后更新：2026-09-02
 
-状态：`二维码卡片主站实现与独立自动化验收已完成；发布、管理员有数据浏览器流程、打印预览与实际下载复验仍在 P7/P8 开放；旧站只作临时对照，正式产品入口仍是主站 /platform`
+状态：`二维码卡片完整实现已发布，自动化、CI、部署和公开线上边界均已验收；仅管理员真实非空数据的保存回读、打印预览、实际下载与 430px 触控人工复验仍在 P7 开放；旧站只作临时对照，正式产品入口仍是主站 /platform`
 
 ## 0. 当前结论
 
@@ -27,15 +27,15 @@
 
 | 能力 | 必须保留的产品契约 | 最低验收证据 | 当前状态 |
 | --- | --- | --- | --- |
-| 二维码管理 | 列表、筛选、单个/批量创建、详情、复制、启停、软删除和修订历史 | 真实 `/platform/admin/qr` 与详情路由；API 状态机、非法输入和管理员权限测试 | `已实现；路由/状态机/401 自动验收通过，发布后管理员实测待补` |
-| 完整内容编辑 | `label`、`type`、`target`、`title`、`intro`、`links`、`term`、`quote`、`brand`、`frontArt`、`backArt`、`frontArtPrompt`、`alg`、`layout`、`textStyles`、`customTexts` 可读写并回显 | PostgreSQL/DTO/API/client 使用同一字段契约；保存后重新读取逐字段比对 | `已实现；字段解析、修订、复制和客户端编辑契约通过，真实库回读待发布复验` |
-| 卡片工作区 | `/platform/admin/qr/cards` 支持 `?codes=a,b` 选码、可操作空状态、真实正反面卡片预览；不得退化为模板 JSON CRUD | 路由级静态契约测试；有数据与无数据各一份浏览器证据 | `已实现；专用路由、选码、空状态与交互自动验收通过，有数据浏览器复验待补` |
-| 浏览器打印 | 可从卡片工作区直接打印；A4、`8mm` 页边距、打印色彩保留、隐藏非打印控件，实物尺寸为折叠前 `40×40mm`（正面 `20×40mm` + 背面 `20×40mm`） | 自动测试固定 print CSS 和尺寸常量；打印预览人工复验 | `已实现；CSS/尺寸自动验收通过，打印预览待发布后人工复验` |
-| SVG 印刷母版 | 自包含 SVG，mm 物理单位，正反面、折线、默认 `3mm` 出血与裁切线；下载响应为 `image/svg+xml` 并用 attachment 文件名，不以页面内“查看”代替下载 | 响应头与 SVG 结构测试；实际下载文件可离线打开并检查尺寸/裁切 | `已实现；46mm/40mm、H 级、内嵌素材、响应头与下载 URL 自动验收通过，实际下载待复验` |
-| 公共二维码 | `/platform/qr/:code` 的落地/跳转、禁用、scheme allowlist、扫描去重和统计不回归 | API 集成测试覆盖 active/disabled/content/internal/external 与 UV 去重 | `已实现；公开 shape、跳转/停用、安全 URL、扫描和 label 私密契约自动验收通过` |
-| 权限与体验 | 管理入口和写入均要求管理员；中英文、空/非空、错误/加载、键盘和 390/430px 触控布局完整 | 服务端 401/403、双语断言、桌面/移动浏览器矩阵，无横向溢出 | `已实现；401、双语源码契约与 390px 游客权限态通过，管理员非空/430px 待登录复验` |
+| 二维码管理 | 列表、筛选、单个/批量创建、详情、复制、启停、软删除和修订历史 | 真实 `/platform/admin/qr` 与详情路由；API 状态机、非法输入和管理员权限测试 | `已发布；路由/状态机/401 自动与线上鉴权验收通过，管理员实测待补` |
+| 完整内容编辑 | `label`、`type`、`target`、`title`、`intro`、`links`、`term`、`quote`、`brand`、`frontArt`、`backArt`、`frontArtPrompt`、`alg`、`layout`、`textStyles`、`customTexts` 可读写并回显 | PostgreSQL/DTO/API/client 使用同一字段契约；保存后重新读取逐字段比对 | `已发布；字段解析、修订、复制和客户端编辑契约通过，真实非空库回读待人工复验` |
+| 卡片工作区 | `/platform/admin/qr/cards` 支持 `?codes=a,b` 选码、可操作空状态、真实正反面卡片预览；不得退化为模板 JSON CRUD | 路由级静态契约测试；有数据与无数据各一份浏览器证据 | `已发布；专用路由、选码、空状态与交互自动验收通过，生产路由 200，有数据浏览器复验待补` |
+| 浏览器打印 | 可从卡片工作区直接打印；A4、`8mm` 页边距、打印色彩保留、隐藏非打印控件，实物尺寸为折叠前 `40×40mm`（正面 `20×40mm` + 背面 `20×40mm`） | 自动测试固定 print CSS 和尺寸常量；打印预览人工复验 | `已发布；CSS/尺寸自动验收通过，打印预览待管理员人工复验` |
+| SVG 印刷母版 | 自包含 SVG，mm 物理单位，正反面、折线、默认 `3mm` 出血与裁切线；下载响应为 `image/svg+xml` 并用 attachment 文件名，不以页面内“查看”代替下载 | 响应头与 SVG 结构测试；实际下载文件可离线打开并检查尺寸/裁切 | `已发布；46mm/40mm、H 级、内嵌素材、响应头与下载 URL 自动验收通过，实际下载待管理员复验` |
+| 公共二维码 | `/platform/qr/:code` 的落地/跳转、禁用、scheme allowlist、扫描去重和统计不回归 | API 集成测试覆盖 active/disabled/content/internal/external 与 UV 去重 | `已发布；公开 shape、跳转/停用、安全 URL、扫描和 label 私密契约自动验收通过，未知短码线上 404` |
+| 权限与体验 | 管理入口和写入均要求管理员；中英文、空/非空、错误/加载、键盘和 390/430px 触控布局完整 | 服务端 401/403、双语断言、桌面/移动浏览器矩阵，无横向溢出 | `已发布；线上未登录管理 API 401、双语源码契约与 390px 游客权限态通过，管理员非空/430px 待登录复验` |
 
-验收不得循环自证：capability manifest 只能做盘点，不能同时作为功能实现和通过依据。独立测试已直接读取真实路由、请求字段、打印 CSS、SVG 生成器与下载响应，并覆盖公开 `label` 私密性和管理员 UUID/短码寻址。实现提交为 API `2b9f5b8843f1011f9e1ae1c74a856c9fb629a826`、客户端 `de56fa62c6` 与 `169e154a4f`、API 元数据 `91877a054ad2dda65555da49e5579ca0131ff999`。剩余项不是待实现功能，而是发布后使用真实管理员和至少一条可打印记录完成有数据编辑、打印预览、实际 SVG 下载及桌面/430px 浏览器复验。
+验收不得循环自证：capability manifest 只能做盘点，不能同时作为功能实现和通过依据。独立测试已直接读取真实路由、请求字段、打印 CSS、SVG 生成器与下载响应，并覆盖公开 `label` 私密性和管理员 UUID/短码寻址。主线实现提交为 API `3bd8532019`、客户端 `23100cbeaf` 与 `4fa595525e`、API 元数据 `f7eddd8f2f`、独立验收 `ba03e1c476`；最终守卫修复为 `c66eafcae8`、`d19d9ef6f1`、`ffb7d31e31` 与 `68da78e830`。剩余项不是待实现功能，而是使用真实管理员和至少一条可打印记录完成有数据编辑、打印预览、实际 SVG 下载及桌面/430px 浏览器复验。
 
 本次迁移按两套来源的并集守恒：
 
@@ -296,7 +296,7 @@ Platform 不进入已经 11,486 行的 `teaching_saas.ts`。后端按业务切�
 
 退出条件：管理写操作、导出、打印、权限与审计逐项对齐旧能力；QR 安全与 UV 测试通过。
 
-### P7 守恒、交互技术基线与安全终验 — `QR 补充终验待完成`
+### P7 守恒、交互技术基线与安全终验 — `自动终验已完成；管理员人工证据待补`
 
 - [x] capability manifest 守恒测试：95 / 13 / 34 / 4，未归属 0。
 - [x] client/server/shared typecheck 与定向单测。
@@ -311,13 +311,13 @@ Platform 不进入已经 11,486 行的 `teaching_saas.ts`。后端按业务切�
 
 退出条件：三路 reviewer 结论均为 PASS，或每条 finding 都有修复与复验记录。
 
-### P8 发布、观察与旧仓决策 — `历史发布已完成；QR 修复发布待重新验收`
+### P8 发布、观察与旧仓决策 — `QR 修复已发布并通过自动线上验收`
 
 - [x] Platform 发布提交只包含本任务文件；用户明确要求后已 push，最终代码提交为 `73bea4e8e4`，上游比赛数据配套收尾为 `ab54b397ac`。
 - [x] 最终提交的 Test `32600584942`、Deploy Next `32600584945`、Deploy Core `32600584944` 均为 `completed/success`。
 - [x] 2026-08-22 线上 `/platform` 及 timer、algorithms、teachers、courses、org、admin/community 代表路径均为 200；公开页 canonical/alternate、私有页 `noindex, nofollow`、公开 API 200、未登录私有 API 401 均符合当时契约；当时 `platform.cuberoot.me` 的 HTTP 与 HTTPS 均直接返回 410。
 - [x] 2026-09-02 旧对照站恢复提交 `84d8f9b` 已部署，workflow `33658662790` 全绿；`https://platform.cuberoot.me/` 与 `/admin/qr/cards` 均为 200，仅作为迁移验收对照。
-- [ ] QR 补全提交尚未完成发布与线上验收；`platform.cuberoot.me` 现为临时对照站，不能继续沿用旧域 410 作为当前 release 断言。
+- [x] QR 补全与 CI 守卫修复已发布至主线 `68da78e830`；Test `33670519741`、Deploy Core `33670519748`、Deploy Next `33670519943` 全部 `completed/success`，Vercel 生产部署 `cuberoot-knwn2yfwc-cube-root.vercel.app` 为 Ready。主站 Platform、卡片工作区、静态卡面、API health、未登录管理 API 401、未知公开短码 404，以及 Next 与旧对照站代表路径均已线上实测。
 - [x] 生产 courses 与 membership plans 均为空，符合不导入 seed/demo 的决策；因此未伪造可交易标的或制造生产订单，支付/退款/幂等/权限状态机由最终 Test workflow 的真实 PostgreSQL 与服务端回归放行。
 - [x] PostgreSQL 账号注销实库夹具已进入 Test workflow，固定 57 个直接外键、48 张表、12 张不可变证据表、旧 outbox 去标识与伪造上下文拒绝行为；本地与发布 CI 的 PostgreSQL 13 fresh snapshot、0167→0168 升级路径均已通过。
 - [x] 全量上线后已于 2026-08-22 启动至少 30 天观察窗口。
@@ -390,8 +390,10 @@ P9 退出条件：
 | 2026-09-02 | 用户以旧二维码卡片页复核 | FAIL：主站卡片页只剩通用模板 JSON，缺少旧站完整编辑、选码预览、打印与印刷 SVG 下载 | 撤回 QR 完成声明，临时恢复旧站供逐项对照，按 0.1 节重新实现和验收；其他领域不凭此 finding 自动重开 |
 | 2026-09-02 | 旧对照站恢复验收 | PASS：旧仓提交 `84d8f9b` 的 workflow `33658662790` 全绿，线上根页与 `/admin/qr/cards` 均为 200 | 只证明临时对照站可访问；正式主站 QR 的功能等价、权限、双语、移动端、打印与下载证据仍按 0.1 节独立验收 |
 | 2026-09-02 | 主站 QR 独立代码与自动化复审 | PASS：代码 blocker 0；客户端 3 files/38 tests、API 4 files/38 tests、两端 typecheck 与 API bundle 均通过 | 核对旧站完整字段/卡面/提示词/交互、公开落地页、label 私密性、UUID/短码管理、40/46mm 与打印下载契约；发布后管理员非空浏览器、打印预览与实际文件下载仍明确开放 |
+| 2026-09-02 | QR 发布前 CI 守卫复审与修复 | PASS：客户端裸后代选择器、API 自有资源边界、账号注销引用完整性和两条陈旧 Platform 渲染断言均已修复 | 最终定向 5 files/65 tests 通过；客户端快测 591 files/6,864 tests（另 7 files/29 tests skipped）、Cross trainer 1 file/12 tests 通过；API 资源改由 API 自有目录打包，账号注销保留卡片设计历史并匿名化创建者 |
+| 2026-09-02 | QR 最终发布验收 | PASS：主线 `68da78e830` 的 Test `33670519741`、Deploy Core `33670519748`、Deploy Next `33670519943` 全绿，Vercel 生产部署 Ready | 主站 `/zh/platform`、`/zh/platform/admin/qr/cards`、卡面静态资源、Next 镜像路径和 API health 均为 200；未登录管理 API 为 401、未知合规短码为 404；旧对照站根页与卡片页仍为 200 |
 
-浏览器证据明细：P8 的 1280/430/390 矩阵只证明 `/zh/platform`、首页卡片、会员权限态和课程深链在技术上可达、无横向溢出且没有应用 JS error；它没有证明信息架构、角色任务体验或二维码卡片工作流合格。补充修复后，本地 SSR 对 `/zh/platform`、`timer`、`algorithms`、`org`、`admin/community`、`teachers` 六条代表性深链均返回 200；当时的线上复验确认 timer/algorithms 的 HTTP canonical 指向主站实现，teachers 的 HTML canonical 指向 `/teachers`，私有/管理入口 noindex，生产空目录与不导入 seed/demo 决策一致，旧域名 HTTP/HTTPS 当时均为 410。2026-08-23 的 P9 本地复验中，目标视口 1280×900、1024×760、430×900、390×844 的页面 `scrollWidth` 均等于 `clientWidth`，顶部五项导航的 `scrollWidth` 也均等于 `clientWidth`；390px 英文导航同样无溢出。旧编号目录和底部完整路由表计数均为 0。P9 已推送且后续 Test 与两个部署 workflow 全绿；仍不提前宣称角色体验完成，因为真实登录角色截图尚缺。2026-09-02 起旧域名改作临时验收对照，当前契约以 nginx `:3004` 反代和正式产品 `/platform` 入口为准；旧仓恢复提交 `84d8f9b` 的部署 workflow `33658662790` 全绿，`https://platform.cuberoot.me/` 与 `/admin/qr/cards` 均已实测 200。该证据只证明对照站可用。主站本地 `/zh/platform/admin/qr/cards` 在未登录桌面与 390×844 均显示专用“二维码卡片”页和明确管理员登录提示；390px 的 document `scrollWidth` 375、`clientWidth` 390，无横向溢出。当前浏览器会话没有管理员身份，因此不把该证据冒充有数据编辑、打印预览或实际下载证明，这三项留给发布后登录复验。
+浏览器证据明细：P8 的 1280/430/390 矩阵只证明 `/zh/platform`、首页卡片、会员权限态和课程深链在技术上可达、无横向溢出且没有应用 JS error；它没有证明信息架构、角色任务体验或二维码卡片工作流合格。补充修复后，本地 SSR 对 `/zh/platform`、`timer`、`algorithms`、`org`、`admin/community`、`teachers` 六条代表性深链均返回 200；当时的线上复验确认 timer/algorithms 的 HTTP canonical 指向主站实现，teachers 的 HTML canonical 指向 `/teachers`，私有/管理入口 noindex，生产空目录与不导入 seed/demo 决策一致，旧域名 HTTP/HTTPS 当时均为 410。2026-08-23 的 P9 本地复验中，目标视口 1280×900、1024×760、430×900、390×844 的页面 `scrollWidth` 均等于 `clientWidth`，顶部五项导航的 `scrollWidth` 也均等于 `clientWidth`；390px 英文导航同样无溢出。旧编号目录和底部完整路由表计数均为 0。P9 已推送且后续 Test 与两个部署 workflow 全绿；仍不提前宣称角色体验完成，因为真实登录角色截图尚缺。2026-09-02 起旧域名改作临时验收对照，当前契约以 nginx `:3004` 反代和正式产品 `/platform` 入口为准；旧仓恢复提交 `84d8f9b` 的部署 workflow `33658662790` 全绿，`https://platform.cuberoot.me/` 与 `/admin/qr/cards` 均已实测 200。该证据只证明对照站可用。主站本地 `/zh/platform/admin/qr/cards` 在未登录桌面与 390×844 均显示专用“二维码卡片”页和明确管理员登录提示；390px 的 document `scrollWidth` 375、`clientWidth` 390，无横向溢出。最终生产复验确认主站 `/zh/platform`、`/zh/platform/admin/qr/cards` 与静态卡面均为 200，Next 同路径为 200，API health 为 200、未登录管理 QR API 为 401、未知合规短码为 404；Vercel 生产部署 Ready。当前浏览器会话没有管理员身份，因此不把这些证据冒充有数据编辑、打印预览或实际下载证明，这些人工项继续留在 P7。
 
 后续每个阶段结束必须增加：提交、验证命令、浏览器证据、reviewer、finding、修复和复验结果。不得用口头“看起来完整”替代账本。
 
