@@ -305,7 +305,7 @@ const TABLES: Table[] = [
   ] },
 
   // ── main-site Platform ─────────────────────────────────
-  { name: 'platform_*', domain: 'platform', origin: '0167', purpose: { zh: '主站 Platform 的 62 表 PostgreSQL 底座：统一账号下的目录、学习、交易、内容、讲师、QR、隐私、审计、outbox 与幂等；不恢复旧 SQLite 双写，也不迁移少量 demo / 计时器历史数据', en: 'The 62-table PostgreSQL foundation for main-site Platform catalog, learning, commerce, content, instructors, QR, privacy, audit, outbox, and idempotency under canonical accounts; no legacy SQLite dual-write or small demo/timer-history migration' }, family: [
+  { name: 'platform_*', domain: 'platform', origin: '0167', evolved: [203], purpose: { zh: '主站 Platform 的 62 表 PostgreSQL 底座：统一账号下的目录、学习、交易、内容、讲师、QR、隐私、审计、outbox 与幂等；不恢复旧 SQLite 双写，也不迁移少量 demo / 计时器历史数据', en: 'The 62-table PostgreSQL foundation for main-site Platform catalog, learning, commerce, content, instructors, QR, privacy, audit, outbox, and idempotency under canonical accounts; no legacy SQLite dual-write or small demo/timer-history migration' }, family: [
     'platform_instructors', 'platform_instructor_applications', 'platform_media_assets', 'platform_courses',
     'platform_course_owners', 'platform_course_revisions', 'platform_lessons', 'platform_lesson_revisions',
     'platform_learning_paths', 'platform_learning_path_items', 'platform_quizzes', 'platform_quiz_revisions',
@@ -692,6 +692,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 198, slug: 'battle_room_round_roster', desc: { zh: '同步起表时冻结本轮参赛者名单，避免离线回归或中途加入者未经准备自动起表、卡住结算。', en: 'Freeze synchronized-round participants so reconnecting or mid-round players neither auto-start unprepared nor block settlement.' } },
   { n: 199, slug: 'account_last_devices', desc: { zh: '记录账号最近使用设备的粗粒度类型、系统、浏览器和时间，不保存原始 User-Agent 或设备指纹。', en: 'Record coarse latest-device type, OS, browser, and time without retaining raw User-Agent or a device fingerprint.' } },
   { n: 202, slug: 'qr_card_designs', desc: { zh: '按二维码追加保存可打印卡片设计版本，保留每次管理员修改的快照。', en: 'Append versioned printable card-design snapshots for each QR code and retain every administrator update.' } },
+  { n: 203, slug: 'qr_landing_content', desc: { zh: '二维码补回内部备注、独立的跳转/落地页类型与严格链接列表；简介和术语继续读取最新卡片设计。', en: 'Restore internal QR labels, independent redirect/landing types, and strict link lists while projecting intro and term from the latest card design.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

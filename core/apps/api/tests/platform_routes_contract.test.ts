@@ -331,7 +331,7 @@ describe('Platform route and security contract', () => {
     const updateCard = routeBlock(qrSource, 'platformQrRoutes', 'patch', '/admin/qr/:id/card');
     expect(updateCard).toContain('requirePlatformAdmin(c)');
     expect(updateCard).toContain('parseQrCardDesign(');
-    expect(updateCard).toContain('FOR UPDATE');
+    expect(updateCard).toContain('resolveQrRef(db, id, true)');
     expect(updateCard).toContain('MAX(version)');
     expect(updateCard).toContain('INSERT INTO platform_qr_card_designs');
     expect(updateCard).toContain('withIdempotency(c, actor');
