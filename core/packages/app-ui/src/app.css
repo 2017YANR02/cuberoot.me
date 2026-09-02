@@ -403,7 +403,9 @@ button {
 }
 
 .mobile-timer-stage > .timing-surface {
-  min-height: 0;
+  /* Never let flex sizing clip the readout when source controls leave less
+     room than the digits + scramble + preview intrinsically need. */
+  min-height: min-content;
   flex: 1 0 280px;
   margin: 0;
   padding: 12px 0;
