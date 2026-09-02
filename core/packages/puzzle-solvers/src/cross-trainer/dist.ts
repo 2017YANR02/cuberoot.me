@@ -13,7 +13,7 @@
  * tests/cross_trainer_dist.test.ts — {1,15,158,1394,9809,46381,97254,34966,102}, max 8.
  */
 
-import { EDGE_STEP, FACE_EDGES, slotRank, slotUnrank, type FaceIdx } from './model.js';
+import { EDGE_STEP, FACE_EDGES, slotRank, slotUnrank, type FaceIdx } from '@cuberoot/puzzle-solvers/cross-trainer/model';
 
 export const CROSS_STATES = 190080;
 export const CROSS_MAX_DEPTH = 8;

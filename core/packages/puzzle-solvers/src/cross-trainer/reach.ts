@@ -14,7 +14,7 @@
  * 共轭,可达性一致。
  */
 
-import { corpusDepths } from './corpus.js';
+import { corpusDepths } from '@cuberoot/puzzle-solvers/cross-trainer/corpus';
 
 /** 槽档:定槽(or18 口径)或四槽/槽对取最优(站内口径)。 */
 export type SlotMode = 'fixed' | 'best';

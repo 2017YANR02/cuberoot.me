@@ -42,6 +42,7 @@
       "./kociemba/randomstate": "runtime-neutral",
       "./kociemba/search": "runtime-neutral",
       "./cross-trainer": "runtime-neutral",
+      "./cross-trainer/batch": "runtime-neutral",
       "./cross-trainer/block": "runtime-neutral",
       "./cross-trainer/corpus-data": "runtime-neutral",
       "./cross-trainer/corpus": "runtime-neutral",
@@ -234,6 +235,11 @@
       "types": "./src/cross-trainer/index.ts",
       "node": "./dist/cross-trainer/index.js",
       "default": "./src/cross-trainer/index.ts"
+    },
+    "./cross-trainer/batch": {
+      "types": "./src/cross-trainer/batch.ts",
+      "node": "./dist/cross-trainer/batch.js",
+      "default": "./src/cross-trainer/batch.ts"
     },
     "./cross-trainer/block": {
       "types": "./src/cross-trainer/block.ts",

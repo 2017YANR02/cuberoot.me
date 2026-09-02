@@ -16,7 +16,7 @@
  * get wrong: a piece belongs to face f iff move f moves it.
  */
 
-import { ALL_MOVES, MOVE_NAMES, type CubieCube } from '../kociemba/cube.js';
+import { ALL_MOVES, MOVE_NAMES, type CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
 
 export const N_MOVES = 18;
 export { MOVE_NAMES };

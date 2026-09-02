@@ -19,12 +19,12 @@
  * lowest-index tie-break.
  */
 
-import type { CubieCube } from '../kociemba/cube.js';
+import type { CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
 import {
   CORNER_STEP, EDGE_STEP, FACE_CORNERS, FACE_EDGES, f2lSlots, slotRank, slotUnrank, type FaceIdx,
-} from './model.js';
-import { CANON_FACE, CANON_SLOT } from './rotate.js';
-import { fillState, type Pin } from './fill.js';
+} from '@cuberoot/puzzle-solvers/cross-trainer/model';
+import { CANON_FACE, CANON_SLOT } from '@cuberoot/puzzle-solvers/cross-trainer/rotate';
+import { fillState, type Pin } from '@cuberoot/puzzle-solvers/cross-trainer/fill';
 
 /** Corner placements: slot·3 + twist. */
 const CORNER_STATES = 24;

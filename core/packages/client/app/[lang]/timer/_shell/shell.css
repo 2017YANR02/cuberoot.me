@@ -602,6 +602,8 @@
   max-width: min(96vw, 680px);
   margin: 0 auto;
   padding: 8px 12px;
+  border: 0;
+  min-inline-size: 0;
   /* 口径 toggle / 来源细项(比赛)/ 按步数 同一行排开,窄屏自然换行(用户要求「三行变一行」)。
      手动输入的全宽 textarea 靠自身 width:100% 独占一行。 */
   display: flex;
@@ -625,15 +627,18 @@
 .scramble-src-bar .wca-src-steps-range,
 .scramble-src-bar .wca-src-diff,
 .scramble-src-bar .wca-src-comp-rounds,
-.scramble-src-bar .wca-src-hint {
+.scramble-src-bar .wca-src-hint,
+.scramble-src-bar .timer-random-difficulty-body,
+.scramble-src-bar .timer-random-difficulty-hint {
   flex: 1 1 100%;
   box-sizing: border-box;
 }
 /* 上面那条按后代匹配,会连难度子区里的滑块一起钉成整行(→ 配色/方法/阶段 与滑块被迫分两行)。
    难度子区内的滑块只占同行剩余宽度,与选择器并成一行。 */
 .scramble-src-bar .wca-src-diff .wca-src-steps-range { flex: 1 1 150px; }
+.scramble-src-bar .timer-random-difficulty-range { flex: 1 1 150px; }
 /* 步数滑块置灰段的原因(GenDiffConfig):一行短句 + 点开看详情的 ⓘ,居中跟在滑块下面。 */
-.scramble-src-bar .gen-diff-cap {
+.scramble-src-bar .timer-random-difficulty-hint {
   display: flex;
   align-items: center;
   justify-content: center;

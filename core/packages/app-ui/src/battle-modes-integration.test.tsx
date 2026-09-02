@@ -179,7 +179,7 @@ describe('installed app multiplayer modes', () => {
     await act(async () => root.render(<LocalBattleMode {...baseProps} playerCount={2} />));
     await act(async () => Promise.resolve());
 
-    const retry = host.querySelector<HTMLElement>('.scramble-strip[role="button"]')!;
+    const retry = host.querySelector<HTMLElement>('.scramble-text[role="button"]')!;
     expect(retry.textContent).toContain('Try again');
     await act(async () => retry.click());
     await act(async () => Promise.resolve());

@@ -15,8 +15,8 @@
  * Both routes are exactly uniform over the states with that optimal length.
  */
 
-import { CORNER_STEP, EDGE_STEP, FACE_EDGES, f2lSlots, skipRow, type FaceIdx } from './model.js';
-import { crossNext, encodeCross, decodeCross, CROSS_STATES } from './dist.js';
+import { CORNER_STEP, EDGE_STEP, FACE_EDGES, f2lSlots, skipRow, type FaceIdx } from '@cuberoot/puzzle-solvers/cross-trainer/model';
+import { crossNext, encodeCross, decodeCross, CROSS_STATES } from '@cuberoot/puzzle-solvers/cross-trainer/dist';
 
 export const XCROSS_STATES = 72990720;
 export const XCROSS_MAX_DEPTH = 10;

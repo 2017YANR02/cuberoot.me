@@ -46,6 +46,10 @@ const non222StepsWorker = readFileSync(
   new URL('./data/non222-steps.worker.ts', import.meta.url),
   'utf8',
 );
+const mobile333WorkerHost = readFileSync(
+  new URL('./smart-cube/fixup.ts', import.meta.url),
+  'utf8',
+);
 
 describe('mobile scramble-source parity contract', () => {
   it('uses the shared opaque manual queue and wraps in source order', () => {
@@ -199,6 +203,22 @@ describe('mobile scramble-source parity contract', () => {
     );
     expect(scrambleHistory).toContain('caseId: entry.caseId,');
     expect(app).toContain('...(attempt.caseId ? { caseId: attempt.caseId } : {}),');
+  });
+
+  it('isolates random-difficulty generation, answers, and smart-cube fixup transports', () => {
+    expect(mobile333WorkerHost).toContain("createMobile333Rpc('mobile smart-cube worker')");
+    expect(mobile333WorkerHost).toContain("createMobile333Rpc('mobile trainer generation worker')");
+    expect(mobile333WorkerHost).toContain("createMobile333Rpc('mobile trainer solution worker')");
+    expect(mobile333WorkerHost).not.toMatch(/const trainerRpc\s*=/);
+  });
+
+  it('releases random-difficulty and optimal work outside the timer view', () => {
+    expect(app).toContain("if (view !== 'timer' || !randomOptimalSource)");
+    expect(app).toContain("if (view !== 'timer') {\n      releaseMobileRandomDifficulty();");
+    expect(app).toContain("if (previousView === 'timer' || view !== 'timer') return;");
+    expect(app).toContain("if (entry?.availability === 'loading') fillScrambleHistoryEntry(entry);");
+    expect(app).toContain('else releaseMobileRandomDifficulty()');
+    expect(app).toContain('releaseOptimal333();');
   });
 
   it('uses the shared controlled WCA config and persists every source-key field', () => {

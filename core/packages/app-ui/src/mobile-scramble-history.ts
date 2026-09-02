@@ -5,10 +5,21 @@ import type {
   TimerScrambleSourceKind,
   TimerScrambleSourceSnapshot,
 } from '@cuberoot/shared/timer';
+import type { TrainerSpec } from '@cuberoot/puzzle-solvers/cross-trainer';
 
 import type { RealScramble } from './data/real-scramble-pool';
 
 export type MobileScrambleSource = TimerScrambleSourceKind;
+export interface MobileRandomDifficultyMeta {
+  readonly spec: Readonly<TrainerSpec>;
+  readonly depth: number;
+  readonly state: Readonly<{
+    cp: readonly number[];
+    co: readonly number[];
+    ep: readonly number[];
+    eo: readonly number[];
+  }>;
+}
 export type MobileScrambleAvailability =
   | 'ready'
   | 'loading'
@@ -19,6 +30,7 @@ export type MobileScrambleAvailability =
 export type MobileScrambleFailure =
   | Readonly<{ kind: 'generation'; code: TimerScrambleErrorCode; retryable: boolean }>
   | Readonly<{ kind: 'optimal' }>
+  | Readonly<{ kind: 'trainer'; reason: 'empty' | 'rare' | 'error' }>
   | Readonly<{ kind: 'real-empty' }>
   | Readonly<{ kind: 'real-exhausted' }>;
 
@@ -37,13 +49,14 @@ export interface MobileScrambleHistoryEntry {
   readonly caseId: string | null;
   /** Full official occurrence provenance; identical move text is not enough. */
   readonly currentReal: RealScramble | null;
+  readonly trainerMeta: MobileRandomDifficultyMeta | null;
   readonly availability: MobileScrambleAvailability;
   readonly failure: MobileScrambleFailure | null;
 }
 
 export type MobileScrambleHistoryEntryPatch = Partial<Pick<
   MobileScrambleHistoryEntry,
-  'availability' | 'caseId' | 'currentReal' | 'failure' | 'scramble' | 'sourceSnapshot'
+  'availability' | 'caseId' | 'currentReal' | 'failure' | 'scramble' | 'sourceSnapshot' | 'trainerMeta'
 >>;
 
 export interface MobileScrambleAttemptSnapshot {
@@ -78,6 +91,7 @@ export function createMobileScrambleHistoryEntry(
     scramble: '',
     caseId: null,
     currentReal: null,
+    trainerMeta: null,
     failure: null,
     availability: 'loading',
   });
@@ -103,6 +117,20 @@ export function replaceMobileScrambleHistoryEntry(
     : patch.currentReal === null
       ? null
       : Object.freeze({ ...patch.currentReal });
+  const trainerMeta = patch.trainerMeta === undefined
+    ? list[index]!.trainerMeta
+    : patch.trainerMeta === null
+      ? null
+      : Object.freeze({
+          ...patch.trainerMeta,
+          spec: Object.freeze({ ...patch.trainerMeta.spec }),
+          state: Object.freeze({
+            cp: Object.freeze([...patch.trainerMeta.state.cp]),
+            co: Object.freeze([...patch.trainerMeta.state.co]),
+            ep: Object.freeze([...patch.trainerMeta.state.ep]),
+            eo: Object.freeze([...patch.trainerMeta.state.eo]),
+          }),
+        });
   const availability = patch.availability ?? list[index]!.availability;
   const failure = availability === 'loading' || availability === 'ready'
     ? null
@@ -114,6 +142,7 @@ export function replaceMobileScrambleHistoryEntry(
     ...patch,
     availability,
     currentReal,
+    trainerMeta,
     failure,
     sourceSnapshot,
   });

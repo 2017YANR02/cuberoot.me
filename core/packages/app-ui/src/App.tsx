@@ -23,6 +23,7 @@ import {
   MAX_TIMER_BACKUP_BYTES,
   DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
   DEFAULT_TIMER_BY_STEPS_SETTINGS,
+  DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
   SCRAMBLE_222_TYPE_CATALOG,
   SCRAMBLE_222_TYPES,
   SCRAMBLE_222_UI_LABELS,
@@ -56,9 +57,10 @@ import {
   histPush,
   isBldEvent,
   normalizeTimerByStepsSettings,
+  normalizeTimerRandomDifficultySettings,
   normalizeTimerWcaSourceSettings,
   parseManualScrambleQueue,
-  peekOptimal333,
+  peekOptimal333Result,
   prefetchOptimal333,
   projectRollingStats,
   postTimerWcaScrambleMark,
@@ -96,6 +98,9 @@ import {
   stageSegmentsFor,
   timerByStepsIdentity,
   timerByStepsFilter,
+  canTrainerDifficulty,
+  trainerSig,
+  trainerSpecOf,
   timerScrambleCapability,
   timerScrambleAllowsEmptySlot,
   timerScrambleClickEffect,
@@ -146,6 +151,8 @@ import {
   type TimerStoreSettings,
   type TimerAttemptSplitState,
   type TimerByStepsSettings,
+  type TimerRandomDifficultyResult,
+  type TimerRandomDifficultySettings,
   type TimerHostSharedScrambleProviderId,
   type TimerManualEntryValue,
   type TimerColorLetter,
@@ -205,6 +212,8 @@ import {
   TimerTopbar,
   TimerWcaSourceConfig,
   TimerWcaDifficultyConfig,
+  TimerRandomDifficultyConfig,
+  TimerRandomDifficultyCaseBar,
   TIMER_OVERLAY_IDS,
   TimingSurface,
   shouldIgnoreTimerTarget,
@@ -281,6 +290,13 @@ import { nextMobileCube222SpecialScramble } from './data/cube222-special-pool';
 import { nextMobileCube222ByStepsScramble } from './data/cube222-steps-pool';
 import { nextMobileCstimerNonWcaScramble } from './data/cstimer-nonwca-pool';
 import { nextMobileNon222ByStepsScramble } from './data/non222-steps-pool';
+import {
+  awaitMobileRandomDifficulty,
+  peekMobileRandomDifficulty,
+  prefetchMobileRandomDifficulty,
+  releaseMobileRandomDifficulty,
+  retryMobileRandomDifficulty,
+} from './data/random-difficulty-pool';
 import { mobileBackAction } from './mobile-back';
 import { MobileVisibleScrambleRequestGate } from './data/visible-scramble-request-gate';
 import { MobileSmallPuzzleHints } from './MobileSmallPuzzleHints';
@@ -315,7 +331,10 @@ import {
 } from './mobile-viewport';
 import type { InstalledAppHost } from './platform';
 import { startWebSurfaceHandshake } from './web-surface-handshake';
-import { solveMobileSmartCubeFixup } from './smart-cube/fixup';
+import {
+  solveMobileRandomDifficultyCase,
+  solveMobileSmartCubeFixup,
+} from './smart-cube/fixup';
 
 const SITE_ORIGIN = 'https://cuberoot.me';
 const MOBILE_EMBED_SURFACES = ['tools', 'account'] as const;
@@ -583,6 +602,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const historyCompareContextRef = useRef<string | null>(null);
   const historyCompareModeRef = useRef(historyCompareMode);
   const viewRef = useRef(view);
+  const previousTimerWorkViewRef = useRef(view);
   const timerModeRef = useRef<TimerPlayersValue>(timerMode);
   const battleSmartCubeHandlersRef = useRef<BattleSmartCubeHandlers | null>(null);
   const battleModeActiveRef = useRef(battleModeActive);
@@ -638,6 +658,17 @@ export function App({ host }: { host: InstalledAppHost }) {
     genStepsMetric: store?.settings.genStepsMetric ?? DEFAULT_TIMER_BY_STEPS_SETTINGS.genStepsMetric,
     genSteps: store?.settings.genSteps ?? [...DEFAULT_TIMER_BY_STEPS_SETTINGS.genSteps],
   };
+  const randomDifficultySettings = normalizeTimerRandomDifficultySettings(
+    store?.settings ?? DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
+  );
+  const randomDifficultySpec = timerMode === 1 && scrambleSource === 'random'
+    ? trainerSpecOf(activeEvent, randomDifficultySettings)
+    : null;
+  const randomDifficultySignature = randomDifficultySpec
+    ? trainerSig(activeEvent, randomDifficultySettings)
+    : '';
+  const randomDifficultySpecRef = useRef(randomDifficultySpec);
+  randomDifficultySpecRef.current = randomDifficultySpec;
   // Unmapped retained-Real events (Ivy/Gear) use their local random provider.
   // Keep their by-steps identity in React dependencies too: the WCA source key
   // is intentionally just `unmapped|event`, so it cannot trigger regeneration.
@@ -675,7 +706,9 @@ export function App({ host }: { host: InstalledAppHost }) {
   const randomOptimalKey = randomOptimalRequested
     ? `${randomOptimalOwner}|${effectiveDrillTarget
       ? `drill:${effectiveDrillTarget.type}:${effectiveDrillTarget.id}`
-      : 'normal'}`
+      : randomDifficultySignature
+        ? `difficulty:${randomDifficultySignature}`
+        : 'normal'}`
     : '';
   const randomOptimalSource = useMemo<Optimal333Source | null>(() => {
     if (!randomOptimalRequested || !randomOptimalKey) return null;
@@ -687,6 +720,22 @@ export function App({ host }: { host: InstalledAppHost }) {
           const generated = generateTimerDrillScramble(target);
           if (generated) return generated.scramble;
           throw new Error('could not generate optimal drill base state');
+        }
+        const difficulty = randomDifficultySpecRef.current;
+        if (difficulty) {
+          prefetchMobileRandomDifficulty(difficulty);
+          const status = await awaitMobileRandomDifficulty(difficulty);
+          if (signal.aborted) throw new Error('optimal 3x3 generation aborted');
+          if (status === 'ready') {
+            const generated = peekMobileRandomDifficulty(difficulty);
+            if (generated) {
+              return { kind: 'ready', scramble: generated.scramble, context: generated } as const;
+            }
+          }
+          if (status === 'empty' || status === 'rare' || status === 'error') {
+            return { kind: 'unavailable', reason: status } as const;
+          }
+          throw new Error('random difficulty base state became idle');
         }
         const generated = await generateTimerScramble({ event: activeEvent });
         if (signal.aborted) throw new Error('optimal 3x3 generation aborted');
@@ -718,17 +767,32 @@ export function App({ host }: { host: InstalledAppHost }) {
         }
       },
     };
-  }, [activeEvent, effectiveDrillTarget, randomOptimalKey, randomOptimalRequested]);
+  }, [
+    activeEvent,
+    effectiveDrillTarget,
+    randomDifficultySignature,
+    randomOptimalKey,
+    randomOptimalRequested,
+  ]);
   const randomOptimalSourceRef = useRef(randomOptimalSource);
   randomOptimalSourceRef.current = randomOptimalSource;
   useEffect(() => {
-    if (!randomOptimalSource) {
+    if (view !== 'timer' || !randomOptimalSource) {
       releaseOptimal333();
       return;
     }
     prefetchOptimal333(randomOptimalSource);
     return () => releaseOptimal333();
-  }, [randomOptimalKey, randomOptimalSource]);
+  }, [randomOptimalKey, randomOptimalSource, view]);
+  useEffect(() => {
+    if (view !== 'timer') {
+      releaseMobileRandomDifficulty();
+      return;
+    }
+    const spec = randomDifficultySpecRef.current;
+    if (spec) prefetchMobileRandomDifficulty(spec);
+    else releaseMobileRandomDifficulty();
+  }, [randomDifficultySignature, view]);
   const optimalAvailable = scrambleSource === 'wca'
     ? timerWcaSupportsOptimal(timerWcaScrambleEventId(activeEvent))
     : randomOptimalAvailable;
@@ -924,6 +988,9 @@ export function App({ host }: { host: InstalledAppHost }) {
   const scramble222ModeRef = useRef<Scramble222Mode>(scramble222Mode);
   const scramble222TypeRef = useRef<Scramble222Type>(scramble222Type);
   const byStepsSettingsRef = useRef<TimerByStepsSettings>(byStepsSettings);
+  const randomDifficultySettingsRef = useRef<TimerRandomDifficultySettings>(
+    randomDifficultySettings,
+  );
   const scrambleSourceRef = useRef(scrambleSource);
   const manualScramblesRef = useRef(manualScrambles);
   const [manualSourceInitialRevision] = useState(() => createTimerSourceRevision(
@@ -941,6 +1008,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   scramble222ModeRef.current = scramble222Mode;
   scramble222TypeRef.current = scramble222Type;
   byStepsSettingsRef.current = byStepsSettings;
+  randomDifficultySettingsRef.current = randomDifficultySettings;
   scrambleSourceRef.current = scrambleSource;
   manualScramblesRef.current = manualScrambles;
   wcaSourceSettingsRef.current = wcaSourceSettings;
@@ -974,6 +1042,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       genStepsMetric: data.settings.genStepsMetric,
       genSteps: data.settings.genSteps,
     };
+    randomDifficultySettingsRef.current = normalizeTimerRandomDifficultySettings(data.settings);
     manualSourceRevisionRef.current = advanceTimerSourceRevision(
       manualSourceRevisionRef.current,
       data.settings.manualScrambles,
@@ -997,7 +1066,14 @@ export function App({ host }: { host: InstalledAppHost }) {
       const target = source !== 'manual' && timerEventSupportsDrill(event)
         ? drillTargetRef.current
         : null;
-      const drillIdentity = target ? `${identity}|drill:${target.type}:${target.id}` : identity;
+      const difficultyIdentity = timerModeRef.current === 1 && source === 'random' && !target
+        ? trainerSig(event, randomDifficultySettingsRef.current)
+        : '';
+      const drillIdentity = target
+        ? `${identity}|drill:${target.type}:${target.id}`
+        : difficultyIdentity
+          ? `${identity}|difficulty:${difficultyIdentity}`
+          : identity;
       if (source === 'random' && event === '333' && randomOptimalAuthPending) {
         return `${drillIdentity}|optimal:auth-pending`;
       }
@@ -1016,7 +1092,13 @@ export function App({ host }: { host: InstalledAppHost }) {
           : ''
       }`);
     }
-    return withGenerationOptions(`random|${event}|${timerByStepsIdentity(event, 'random', byStepsSettingsRef.current)}`);
+    const hasHigherPriorityGenerator = timerEventSupportsDrill(event) && drillTargetRef.current
+      ? true
+      : timerModeRef.current === 1
+        && trainerSig(event, randomDifficultySettingsRef.current).length > 0;
+    return withGenerationOptions(`random|${event}|${hasHigherPriorityGenerator
+      ? ''
+      : timerByStepsIdentity(event, 'random', byStepsSettingsRef.current)}`);
   }, [randomOptimalAuthPending, randomOptimalKey, randomOptimalRequested, realSpecFor]);
 
   const writeScrambleHistory = useCallback((next: ScrambleHistory<MobileScrambleHistoryEntry>) => {
@@ -1037,7 +1119,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     sourceIdentity: string,
     patch: Partial<Pick<
       MobileScrambleHistoryEntry,
-      'availability' | 'caseId' | 'currentReal' | 'failure' | 'scramble' | 'sourceSnapshot'
+      'availability' | 'caseId' | 'currentReal' | 'failure' | 'scramble' | 'sourceSnapshot' | 'trainerMeta'
     >>,
   ): boolean => {
     const current = scrambleHistoryRef.current;
@@ -1324,6 +1406,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     if (!liveEntry || (entry.availability !== 'loading' && liveEntry.availability === 'loading')) return;
     const { event, source, sourceIdentity } = liveEntry;
     const retryingOptimal = liveEntry.failure?.kind === 'optimal';
+    const retryingTrainer = liveEntry.failure?.kind === 'trainer';
     if (sourceIdentity !== scrambleIdentityFor(source, event)) return;
     randomScrambleGateRef.current.cancel();
     const requestId = ++scrambleRequestRef.current;
@@ -1353,12 +1436,27 @@ export function App({ host }: { host: InstalledAppHost }) {
       : null;
     if (optimalSource) {
       const target = drillTargetRef.current;
+      const difficulty = randomDifficultySpecRef.current;
+      if (retryingTrainer && difficulty) {
+        retryMobileRandomDifficulty(difficulty);
+        retryOptimal333(optimalSource);
+      }
       if (retryingOptimal) retryOptimal333(optimalSource);
       void awaitOptimal333(optimalSource).then((status) => {
         if (requestId !== scrambleRequestRef.current
           || activeEventRef.current !== event
           || scrambleSourceRef.current !== source
           || scrambleIdentityFor(source, event) !== sourceIdentity) return;
+        if (status === 'base-empty' || status === 'base-rare' || status === 'base-error') {
+          const reason = status === 'base-empty'
+            ? 'empty'
+            : status === 'base-rare' ? 'rare' : 'error';
+          replaceScrambleHistoryEntry(liveEntry.id, sourceIdentity, {
+            availability: reason === 'error' ? 'error' : 'empty',
+            failure: { kind: 'trainer', reason },
+          });
+          return;
+        }
         if (status !== 'ready') {
           if (status === 'idle') return;
           replaceScrambleHistoryEntry(liveEntry.id, sourceIdentity, {
@@ -1367,7 +1465,7 @@ export function App({ host }: { host: InstalledAppHost }) {
           });
           return;
         }
-        const optimal = peekOptimal333(optimalSource);
+        const optimal = peekOptimal333Result(optimalSource);
         if (!optimal) {
           replaceScrambleHistoryEntry(liveEntry.id, sourceIdentity, {
             availability: 'error',
@@ -1375,17 +1473,28 @@ export function App({ host }: { host: InstalledAppHost }) {
           });
           return;
         }
+        const trainerResult = optimal.context as TimerRandomDifficultyResult | undefined;
         replaceScrambleHistoryEntry(liveEntry.id, sourceIdentity, {
           availability: 'ready',
           caseId: target && event === target.type ? target.id : null,
           currentReal: null,
           failure: null,
-          scramble: optimal,
+          scramble: optimal.scramble,
+          trainerMeta: trainerResult ? {
+            spec: trainerResult.spec,
+            depth: trainerResult.depth,
+            state: trainerResult.state,
+          } : null,
           sourceSnapshot: {
             kind: 'random',
             identity: target
               ? `random|333|optimal|drill:${target.type}:${target.id}`
-              : 'random|333|optimal',
+              : trainerResult
+                ? `random|333|optimal|difficulty:${trainerSig(
+                    event,
+                    randomDifficultySettingsRef.current,
+                  )}`
+                : 'random|333|optimal',
           },
         });
       });
@@ -1411,6 +1520,52 @@ export function App({ host }: { host: InstalledAppHost }) {
       return;
     }
     if (source === 'random') {
+      const difficulty = timerModeRef.current === 1
+        ? trainerSpecOf(event, randomDifficultySettingsRef.current)
+        : null;
+      if (difficulty) {
+        if (retryingTrainer) retryMobileRandomDifficulty(difficulty);
+        prefetchMobileRandomDifficulty(difficulty);
+        void awaitMobileRandomDifficulty(difficulty).then((status) => {
+          if (requestId !== scrambleRequestRef.current
+            || activeEventRef.current !== event
+            || scrambleSourceRef.current !== source
+            || scrambleIdentityFor(source, event) !== sourceIdentity) return;
+          if (status !== 'ready') {
+            if (status === 'idle' || status === 'working') return;
+            replaceScrambleHistoryEntry(liveEntry.id, sourceIdentity, {
+              availability: status === 'error' ? 'error' : 'empty',
+              failure: {
+                kind: 'trainer',
+                reason: status === 'error' ? 'error' : status,
+              },
+            });
+            return;
+          }
+          const generated = peekMobileRandomDifficulty(difficulty);
+          if (!generated) return;
+          replaceScrambleHistoryEntry(liveEntry.id, sourceIdentity, {
+            availability: 'ready',
+            caseId: null,
+            currentReal: null,
+            failure: null,
+            scramble: generated.scramble,
+            trainerMeta: {
+              spec: generated.spec,
+              depth: generated.depth,
+              state: generated.state,
+            },
+            sourceSnapshot: {
+              kind: 'random',
+              identity: `random|${event}|difficulty:${trainerSig(
+                event,
+                randomDifficultySettingsRef.current,
+              )}`,
+            },
+          });
+        });
+        return;
+      }
       generateRandomScramble(liveEntry, requestId);
       return;
     }
@@ -1550,6 +1705,14 @@ export function App({ host }: { host: InstalledAppHost }) {
     storeLoaded,
     wcaSourceSignature,
   ]);
+
+  useEffect(() => {
+    const previousView = previousTimerWorkViewRef.current;
+    previousTimerWorkViewRef.current = view;
+    if (previousView === 'timer' || view !== 'timer') return;
+    const entry = scrambleHistoryRef.current.list[scrambleHistoryRef.current.idx];
+    if (entry?.availability === 'loading') fillScrambleHistoryEntry(entry);
+  }, [fillScrambleHistoryEntry, view]);
 
   useEffect(() => () => {
     randomScrambleGateRef.current.cancel();
@@ -2494,6 +2657,11 @@ export function App({ host }: { host: InstalledAppHost }) {
     }
     if (scrambleAvailability === 'unsupported') return timerScrambleStatus('unsupported');
     if (scrambleAvailability === 'empty') {
+      if (currentScrambleEntry?.failure?.kind === 'trainer') {
+        return timerScrambleStatus(currentScrambleEntry.failure.reason === 'rare'
+          ? 'rare-trainer'
+          : 'empty-trainer');
+      }
       return timerScrambleStatus(timerWcaScrambleEmptyReason({
         competitionUnindexed: wcaDifficultyCoverage === 'unindexed',
         hasByStepsFilter: appByStepsFilter !== null,
@@ -2506,6 +2674,8 @@ export function App({ host }: { host: InstalledAppHost }) {
     const descriptor = timerScrambleStatus(
       currentScrambleEntry?.failure?.kind === 'optimal'
         ? 'error-optimal'
+        : currentScrambleEntry?.failure?.kind === 'trainer'
+          ? 'error-generated'
         : mappedRealSource
         ? 'error-real'
         : appByStepsFilter
@@ -2633,6 +2803,30 @@ export function App({ host }: { host: InstalledAppHost }) {
       && previous.genStepsMetric === next.genStepsMetric
       && previous.genSteps.join('.') === next.genSteps.join('.')) return;
     byStepsSettingsRef.current = next;
+    invalidateCurrentScramble();
+    setStore((current) => current ? {
+      ...current,
+      settings: { ...current.settings, ...next },
+    } : current);
+    updateSettings(next);
+  }, [announce, copy.finishAttemptFirst, invalidateCurrentScramble, sourceControlsEnabled, updateSettings]);
+
+  const updateRandomDifficultySettings = useCallback((
+    patch: Partial<TimerRandomDifficultySettings>,
+  ) => {
+    if (!sourceControlsEnabled) {
+      announce(copy.finishAttemptFirst);
+      return;
+    }
+    const previous = randomDifficultySettingsRef.current;
+    const next = normalizeTimerRandomDifficultySettings({ ...previous, ...patch });
+    if (previous.genDiffOn === next.genDiffOn
+      && previous.genDiffVariant === next.genDiffVariant
+      && previous.genDiffStage === next.genDiffStage
+      && previous.genDiffColors === next.genDiffColors
+      && previous.genDiffSlot === next.genDiffSlot
+      && previous.genDiffSteps.join('.') === next.genDiffSteps.join('.')) return;
+    randomDifficultySettingsRef.current = next;
     invalidateCurrentScramble();
     setStore((current) => current ? {
       ...current,
@@ -3470,6 +3664,20 @@ export function App({ host }: { host: InstalledAppHost }) {
                 />
               </fieldset>
             )}
+            {scrambleSource === 'random' && canTrainerDifficulty(activeEvent) && (
+              <fieldset
+                className="mobile-scramble-source-config mobile-random-difficulty-config"
+                disabled={!sourceControlsEnabled}
+              >
+                <TimerRandomDifficultyConfig
+                  disabled={!sourceControlsEnabled}
+                  language={language}
+                  onChange={updateRandomDifficultySettings}
+                  settings={randomDifficultySettings}
+                  toggleSlot={wcaDifficultyToggleSlot}
+                />
+              </fieldset>
+            )}
             {activeEvent === '222' && scrambleSource !== 'manual' && scramble222Type !== 'full' && (
               <fieldset
                 className="mobile-scramble-source-config mobile-scramble-222-config"
@@ -3601,6 +3809,25 @@ export function App({ host }: { host: InstalledAppHost }) {
                       ready: copy.scrambleReady,
                     }}
                   >
+                    {currentScrambleEntry?.trainerMeta && (
+                      <TimerRandomDifficultyCaseBar
+                        depth={currentScrambleEntry.trainerMeta.depth}
+                        language={language}
+                        occurrenceKey={currentScrambleEntry.id}
+                        solve={(signal) => solveMobileRandomDifficultyCase(
+                          currentScrambleEntry.trainerMeta!.spec,
+                          {
+                            cp: [...currentScrambleEntry.trainerMeta!.state.cp],
+                            co: [...currentScrambleEntry.trainerMeta!.state.co],
+                            ep: [...currentScrambleEntry.trainerMeta!.state.ep],
+                            eo: [...currentScrambleEntry.trainerMeta!.state.eo],
+                          },
+                          language === 'zh',
+                          signal,
+                        )}
+                        spec={currentScrambleEntry.trainerMeta.spec}
+                      />
+                    )}
                     {currentReal && scrambleSource === 'wca' && (
                       <TimerWcaScrambleSource
                         competitionName={currentRealCompetition?.selectedDisplayName

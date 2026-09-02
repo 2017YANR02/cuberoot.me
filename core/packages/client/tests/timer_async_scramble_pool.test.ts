@@ -182,4 +182,66 @@ describe('timer worker RPC', () => {
     await expect(third).rejects.toThrow('solver failed');
     rpc.dispose();
   });
+
+  it('owns request timeouts instead of duplicating host timers', async () => {
+    vi.useFakeTimers();
+    try {
+      const worker = new FakeWorker();
+      const rpc = createTimerWorkerRpc<string, string>({
+        createWorker: () => worker,
+        makeRequest: (id, type) => ({ id, type }),
+        label: 'timed worker',
+      });
+      const request = rpc.request('eg1', undefined, 25);
+      const rejection = expect(request).rejects.toThrow('timed worker request aborted');
+      await vi.advanceTimersByTimeAsync(25);
+      await rejection;
+      expect(worker.terminated).toBe(1);
+      rpc.dispose();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('rejects every pending request when one abort terminates their shared worker', async () => {
+    const worker = new FakeWorker();
+    const rpc = createTimerWorkerRpc<string, string>({
+      createWorker: () => worker,
+      makeRequest: (id, type) => ({ id, type }),
+      label: 'shared worker',
+    });
+    const controller = new AbortController();
+    const first = rpc.request('generation', controller.signal);
+    const second = rpc.request('solution');
+    const firstRejection = expect(first).rejects.toThrow('shared worker request aborted');
+    const secondRejection = expect(second).rejects.toThrow('shared worker request aborted');
+    controller.abort();
+    await Promise.all([firstRejection, secondRejection]);
+    expect(worker.terminated).toBe(1);
+    rpc.dispose();
+  });
+
+  it('does not create a worker for an aborted request and rejects malformed replies immediately', async () => {
+    const workers: FakeWorker[] = [];
+    const rpc = createTimerWorkerRpc<string, string>({
+      createWorker: () => {
+        const worker = new FakeWorker();
+        workers.push(worker);
+        return worker;
+      },
+      makeRequest: (id, type) => ({ id, type }),
+      label: 'validated worker',
+    });
+    const controller = new AbortController();
+    controller.abort();
+    await expect(rpc.request('cancelled', controller.signal)).rejects.toThrow(
+      'validated worker request aborted',
+    );
+    expect(workers).toHaveLength(0);
+
+    const request = rpc.request('bad reply');
+    workers[0].respond({ id: 1, value: 'missing ok' });
+    await expect(request).rejects.toThrow('validated worker returned an invalid response');
+    rpc.dispose();
+  });
 });

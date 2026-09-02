@@ -53,7 +53,8 @@ describe('shared TimerScrambleStrip', () => {
   it('keeps Web classes, font tiers, final-move copy feedback, match chip and suffix slot', () => {
     const activate = vi.fn();
     const strip = render({
-      children: createElement('div', { className: 'scramble-src-row' }, 'source'),
+      children: createElement('div', { className: 'scramble-src-row' },
+        createElement('button', { type: 'button' }, 'Answer')),
       compact: true,
       copied: true,
       font: 'sans',
@@ -66,17 +67,23 @@ describe('shared TimerScrambleStrip', () => {
     expect(strip.className).toBe('scramble-strip sf-sans compact');
     expect(strip.getAttribute('data-scramble-match')).toBe('ok');
     expect(strip.style.getPropertyValue('--scramble-scale')).toBe('1.25');
-    expect(strip.querySelector('.scramble-text')?.textContent).toContain("R U R' U' F2");
+    const text = strip.querySelector<HTMLElement>('.scramble-text')!;
+    expect(text.textContent).toContain("R U R' U' F2");
     expect(strip.querySelector('.scramble-copied-tail')?.textContent).toBe('F2');
     expect(strip.querySelector('.scramble-copied-check')?.getAttribute('aria-label')).toBe('Copied');
     expect(strip.querySelector('.scramble-nonopt')?.textContent).toBe('non-optimal');
     expect(strip.querySelector('.scramble-verify[data-ok="true"]')?.textContent).toBe('Scrambled');
     expect(strip.lastElementChild?.className).toBe('scramble-src-row');
+    expect(strip.getAttribute('role')).toBeNull();
+    expect(text.getAttribute('role')).toBe('button');
+    expect(text.textContent).not.toContain('Answer');
     expect(shouldIgnoreTimerTarget(strip.querySelector('.scramble-moves'))).toBe(true);
 
-    act(() => strip.click());
-    act(() => strip.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' })));
-    act(() => strip.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: ' ' })));
+    act(() => text.click());
+    act(() => text.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' })));
+    act(() => text.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: ' ' })));
+    expect(activate).toHaveBeenCalledTimes(3);
+    act(() => strip.querySelector<HTMLButtonElement>('button')!.click());
     expect(activate).toHaveBeenCalledTimes(3);
   });
 

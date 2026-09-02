@@ -3,6 +3,7 @@ export {
   awaitOptimal333,
   canUseRandomOptimal333,
   peekOptimal333,
+  peekOptimal333Result,
   prefetchOptimal333,
   releaseOptimal333,
   retryOptimal333,

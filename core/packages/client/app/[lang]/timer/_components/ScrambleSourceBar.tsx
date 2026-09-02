@@ -26,13 +26,14 @@ import { SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, type Scramble222Type } from
 import { ManualScrambleQueueEditor } from '@cuberoot/timer-ui';
 
 interface Props {
+  disabled?: boolean;
   event: EventId;
   isZh: boolean;
   /** 顶栏里「难度」开关的落点(SoloView 提供)。给了就把开关 portal 上去,不给就留在本条里。 */
   diffSlot?: HTMLElement | null;
 }
 
-export default function ScrambleSourceBar({ event, isZh, diffSlot }: Props) {
+export default function ScrambleSourceBar({ disabled = false, event, isZh, diffSlot }: Props) {
   const s = useSettings();
   const hasSteps = !!stepPuzzleOf(event);
   const src = s.scrambleSource;
@@ -50,9 +51,9 @@ export default function ScrambleSourceBar({ event, isZh, diffSlot }: Props) {
   // 各来源的细项配置。random 且无「按步数」时无细项 → 整条为空,靠 CSS :empty 收起。
 
   return (
-    <div className="scramble-src-bar surface-chrome" data-no-timer>
+    <fieldset className="scramble-src-bar surface-chrome" data-no-timer disabled={disabled}>
       {src === 'wca' && (
-        <WcaSourceConfig isZh={isZh} event={event} settings={s} updateSettings={updateSettings} toggleSlot={diffSlot} />
+        <WcaSourceConfig disabled={disabled} isZh={isZh} event={event} settings={s} updateSettings={updateSettings} toggleSlot={diffSlot} />
       )}
 
       {src === 'manual' && (
@@ -65,7 +66,7 @@ export default function ScrambleSourceBar({ event, isZh, diffSlot }: Props) {
 
       {/* 随机状态来源的难度 = 直接生成该难度的状态(3×3 族;真题那边的难度筛在 WcaSourceConfig 里)。 */}
       {src === 'random' && canTrainerDifficulty(event) && (
-        <GenDiffConfig isZh={isZh} settings={s} updateSettings={updateSettings} toggleSlot={diffSlot} />
+        <GenDiffConfig disabled={disabled} isZh={isZh} settings={s} updateSettings={updateSettings} toggleSlot={diffSlot} />
       )}
 
       {/* 二阶专项打乱有自己的精确目标条件,不再叠加「按步数」状态筛选。 */}
@@ -74,6 +75,7 @@ export default function ScrambleSourceBar({ event, isZh, diffSlot }: Props) {
           <div className="settings-row wca-src-toprow">
             <Scramble222ModePicker
               active222
+              disabled={disabled}
               showLabel={false}
               showModeWithSpecialType={src === 'wca'}
               showSpecialTypes
@@ -85,6 +87,7 @@ export default function ScrambleSourceBar({ event, isZh, diffSlot }: Props) {
 
       {hasSteps && src !== 'manual' && !uses222SpecialType && (
         <GenStepsConfig
+          disabled={disabled}
           isZh={isZh}
           event={event}
           source={src === 'wca' ? 'wca' : 'random'}
@@ -95,6 +98,7 @@ export default function ScrambleSourceBar({ event, isZh, diffSlot }: Props) {
           extraToprow={event === '222'
             ? <Scramble222ModePicker
                 active222
+                disabled={disabled}
                 showLabel={false}
                 showSpecialTypes={show222SpecialTypes}
                 typeOptions={type222Options ?? undefined}
@@ -102,6 +106,6 @@ export default function ScrambleSourceBar({ event, isZh, diffSlot }: Props) {
             : undefined}
         />
       )}
-    </div>
+    </fieldset>
   );
 }
