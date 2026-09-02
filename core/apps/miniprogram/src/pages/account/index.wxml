@@ -69,11 +69,6 @@
   >
     {{copy.accountButtonLabel}}
   </button>
-  <button
-    class="text-button account-logout-button"
-    hover-class="press-feedback"
-    bindtap="logout"
-  >{{copy.logoutLabel}}</button>
   <text
     wx:if="{{accountError}}"
     class="status-text status-text--error"
@@ -81,6 +76,24 @@
     aria-live="polite"
     aria-atomic="true"
   >{{accountError}}</text>
+  <view class="account-release">
+    <view class="account-release-version">
+      <text class="account-release-label">{{release.versionLabel}}</text>
+      <text class="account-release-value">{{release.version}}</text>
+      <text wx:if="{{release.channel}}" class="account-release-channel">{{release.channel}}</text>
+    </view>
+    <text class="account-release-title">{{release.notesTitle}}</text>
+    <view class="account-release-notes">
+      <view
+        wx:for="{{release.notes}}"
+        wx:key="*this"
+        class="account-release-note"
+      >
+        <view class="account-release-dot" />
+        <text>{{item}}</text>
+      </view>
+    </view>
+  </view>
   <view class="account-contact">
     <view class="account-contact-header">
       <text class="eyebrow">{{contact.eyebrow}}</text>

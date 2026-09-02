@@ -124,6 +124,15 @@ button::after {
   padding-top: 96rpx;
 }
 
+.web-login-page {
+  padding-top: 112rpx;
+}
+
+.web-login-button {
+  margin-top: 56rpx;
+  width: 100%;
+}
+
 .web-status-spinner {
   animation: web-status-spin 0.9s linear infinite;
   border: 5rpx solid var(--cr-line);

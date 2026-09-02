@@ -33,6 +33,10 @@ async function loadPage(
   navigateBack: ReturnType<typeof vi.fn>,
   initialSnapshot: Snapshot = idleSnapshot,
   connectAutomatically?: ReturnType<typeof vi.fn<() => Promise<void>>>,
+  storedSession: unknown = {
+    token: 't'.repeat(20),
+    user: { uid: 42, name: 'CubeRoot user', wcaId: null, avatar: '' },
+  },
 ) {
   let page: SmartCubePage | undefined;
   let listener: ((snapshot: Snapshot) => void) | undefined;
@@ -53,9 +57,13 @@ async function loadPage(
   };
 
   vi.doMock('../src/lib/smart-cube/session', () => ({ smartCubeSession: session }));
+  const switchTab = vi.fn();
   vi.stubGlobal('wx', {
     getDeviceInfo: () => ({ platform: 'ios' }),
+    getStorageSync: () => storedSession,
     navigateBack,
+    removeStorageSync: vi.fn(),
+    switchTab,
   });
   vi.stubGlobal('Page', (options: SmartCubePage) => {
     page = options;
@@ -74,6 +82,7 @@ async function loadPage(
     },
     page,
     session,
+    switchTab,
   };
 }
 
@@ -108,6 +117,23 @@ describe('native smart-cube page', () => {
     expect(navigateBack).toHaveBeenCalledWith({ fail: expect.any(Function) });
     page.onUnload();
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('opens the existing account login before starting Bluetooth when signed out', async () => {
+    const navigateBack = vi.fn();
+    const { page, session, switchTab } = await loadPage(
+      navigateBack,
+      idleSnapshot,
+      undefined,
+      null,
+    );
+
+    page.onLoad({ token: 'relay token' });
+
+    expect(switchTab).toHaveBeenCalledWith({ url: '/pages/account/index' });
+    expect(session.subscribe).not.toHaveBeenCalled();
+    expect(session.start).not.toHaveBeenCalled();
+    expect(session.connectAutomatically).not.toHaveBeenCalled();
   });
 
   it('keeps the success page when it was not opened by the website relay', async () => {
