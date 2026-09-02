@@ -181,6 +181,7 @@ export interface PlatformActionResult {
   message?: string;
   entity?: PlatformEntity;
   id?: string;
+  code?: string;
   status?: string;
   orderId?: string;
   itemId?: string;

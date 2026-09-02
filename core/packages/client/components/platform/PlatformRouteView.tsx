@@ -471,6 +471,7 @@ export function PlatformRouteView({
   const [query, setQuery] = useQueryState('q', parseAsString.withDefault(''));
   const [sort, setSort] = useQueryState('sort', parseAsStringEnum(['title', 'updated'] as const).withDefault('updated'));
   const [owned, setOwned] = useQueryState('owned', parseAsStringEnum(['0', '1'] as const).withDefault('0'));
+  const [stay] = useQueryState('stay', parseAsStringEnum(['0', '1'] as const).withDefault('0'));
   const [result, setResult] = useState<PlatformResourceResult | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [retry, setRetry] = useState(0);
@@ -518,6 +519,14 @@ export function PlatformRouteView({
     try {
       const response = await executePlatformAction(definition, { action, resourceId: id, payload });
       setActionMessage(response.message ?? t('操作已完成。', 'Action completed.'));
+      if (definition.id === 'admin-qr-detail' && action === 'admin-save' && params.code
+        && response.code && response.code !== params.code) {
+        const url = new URL(window.location.href);
+        url.pathname = `${url.pathname.slice(0, url.pathname.lastIndexOf('/') + 1)}${encodeURIComponent(response.code)}`;
+        url.search = '';
+        window.location.replace(url);
+        return response;
+      }
       setRetry((value) => value + 1);
       return response;
     } catch (reason) {
@@ -606,7 +615,7 @@ export function PlatformRouteView({
                 ? t('这个旧讲师标识没有对应的主站讲师资料。旧 Platform 的演示讲师未导入，请返回主站讲师名录查找真实资料。', 'This legacy teacher identifier has no matching main-site profile. Demo teachers from the legacy Platform were not imported; use the main-site directory to find current profiles.')
                 : undefined}
             />
-          ) : definition.id === 'membership' || definition.id === 'me-membership' ? null : (
+          ) : definition.id === 'membership' || definition.id === 'me-membership' || definition.id === 'qr' ? null : (
             <PlatformEntityList
               definition={definition}
               items={sortedItems}
@@ -622,9 +631,9 @@ export function PlatformRouteView({
             </AppLink>
           ) : null}
 
-          {!permissionDenied ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} /> : null}
+          {!permissionDenied ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} previewRedirect={stay === '1'} /> : null}
 
-          {permissionDenied || (['membership', 'me-membership'].includes(definition.id) && !result) ? null : (
+          {permissionDenied || definition.id === 'qr' || (['membership', 'me-membership'].includes(definition.id) && !result) ? null : (
             <PlatformDomainActions
               definition={definition}
               params={params}
