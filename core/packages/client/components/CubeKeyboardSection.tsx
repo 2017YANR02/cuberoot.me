@@ -13,11 +13,13 @@ interface Props {
   target: RefObject<HTMLTextAreaElement | HTMLDivElement | null>;
   onInput?: () => void;
   enableMarks?: boolean;
+  /** 收起状态点击入口前先激活对应输入框。 */
+  onActivate?: () => void;
   /** 移动端是否显示——省略时沿用旧行为(移动端恒显示);传入后按此值决定(如跟随目标框的聚焦态)。 */
   mobileVisible?: boolean;
 }
 
-export default function CubeKeyboardSection({ target, onInput, enableMarks, mobileVisible = true }: Props) {
+export default function CubeKeyboardSection({ target, onInput, enableMarks, onActivate, mobileVisible = true }: Props) {
   const isMobile = useIsMobile();
   const [showKeyboard, setShowKeyboard] = useState(false);
 
@@ -31,7 +33,10 @@ export default function CubeKeyboardSection({ target, onInput, enableMarks, mobi
     <button
       type="button"
       className={`vkb-toggle${showKeyboard ? ' active' : ''}${showKeyboard ? ' vkb-toggle--inline' : ''}`}
-      onClick={() => setShowKeyboard(s => !s)}
+      onClick={() => {
+        if (!showKeyboard) onActivate?.();
+        setShowKeyboard(s => !s);
+      }}
       aria-label={showKeyboard ? labelOn : labelOff}
       title={showKeyboard ? labelOn : labelOff}
     >

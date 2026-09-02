@@ -12,6 +12,7 @@ import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { X, Save, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
 import { loadAlg, MIRROR_ALG_SYNC_SETS, requires3x3AlgCaseSetup, type AlgCase, type AlgEntry, type AlgPuzzle, type AlgSticker } from '@cuberoot/shared';
 import { mirrorCascadeOnDelete, VIEWS } from '@cuberoot/shared/alg-mirror';
+import { canonicalSq1Alg, formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { createCase, updateCase, deleteCase, type AlgCaseInput } from '@/lib/alg_sets_api';
 import { validateAlgCase, validateStoredAlgCase, setupForCase } from '@/lib/alg_validation';
 import { displayAlg, shortOriName } from '@/lib/alg_display';
@@ -25,6 +26,7 @@ import { syncPlayerToMoveCount } from '@/lib/recon-alg-utils';
 import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
 import { DEFAULT_ALG_CUBE_ORIENTATION } from '@/lib/alg_thumb_plan';
 import { tr } from '@/i18n/tr';
+import { SQ1_NOTATION_MODES, type Sq1NotationMode } from '@/lib/sq1-pbl-notation';
 
 export type AdminEditorState =
   | { mode: 'edit'; existing: AlgCase }
@@ -80,10 +82,21 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
     parseAsStringEnum<string>(CUBE_ORIENTATIONS.map(option => option.value))
       .withDefault(DEFAULT_ALG_CUBE_ORIENTATION),
   );
+  const [sq1NotationMode] = useQueryState(
+    'sq1-notation',
+    parseAsStringEnum<Sq1NotationMode>([...SQ1_NOTATION_MODES]).withDefault('compact'),
+  );
+  const formatSq1EditorAlg = useCallback(
+    (alg: string) => puzzle === 'sq1' && sq1NotationMode === 'full'
+      ? canonicalSq1Alg(alg)
+      : formatScrambleForEvent(puzzle, alg),
+    [puzzle, sq1NotationMode],
+  );
+  const initialSetupText = formatSq1EditorAlg(initial.setup);
 
   const [caseName, setCaseName] = useState(initial.name);
   const [subgroup, setSubgroup] = useState(initial.subgroup);
-  const [setup, setSetup] = useState(initial.setup);
+  const [setup, setSetup] = useState(initialSetupText);
   const algEditorRef = useRef<AlgEditorHandle>(null);
   const setupElRef = useRef<HTMLTextAreaElement | HTMLDivElement | null>(null);
   const [setupFocused, setSetupFocused] = useState(false);
@@ -245,7 +258,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
     const body: AlgCaseInput = {
       caseName: caseName.trim(),
       subgroup: subgroup.trim(),
-      setup: setup.trim(),
+      setup: (setup === initialSetupText ? initial.setup : setup).trim(),
       standard: standard.trim() || null,
       sticker,
       algs,
@@ -425,11 +438,11 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
               placeholder={tr({ zh: '例如 Geng / U / Adj Swap', en: 'e.g. Geng / U / Adj Swap' })} />
           </label>
           <label className="alg-admin-setup-label">
-            <span>{tr({ zh: '打乱 (Setup)', en: 'Setup' })}</span>
+              <span>{tr({ zh: '打乱', en: 'Setup' })}</span>
             <AlgInput
               className="alg-admin-setup-textarea"
               elementRef={setupElRef}
-              initialText={initial.setup}
+              initialText={initialSetupText}
               autoSpace
               multiline={false}
               placeholder={tr({ zh: '把魔方变成此 case 的公式', en: 'scramble that produces this case' })}
@@ -453,6 +466,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
             <AlgEditor
               ref={algEditorRef}
               initialValue={initial.algs}
+              formatInitialAlg={puzzle === 'sq1' ? formatSq1EditorAlg : undefined}
               initialInvalid={initialInvalid}
               oriNames={initial.oriNames}
               mirror={mirrorCtx}
