@@ -10,11 +10,13 @@
  *
  * Loads each set's case count lazily so the page renders before all imports finish.
  */
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { ALG_CATALOG, ALG_CATALOG_SECTIONS, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import AlgPuzzleSelect from '../_components/AlgPuzzleSelect';
 import BackHome from '@/components/BackHome';
@@ -33,6 +35,9 @@ import '../alg.css';
 import { tr } from '@/i18n/tr';
 import { parseAsBoolean, useQueryState } from 'nuqs';
 import Sq1ToolNav from '@/components/Sq1ToolNav';
+import { SortableCaseCard } from '@/components/AlgCategoryView';
+import { getAlgCatalogOrder, reorderAlgCatalog } from '@/lib/alg_sets_api';
+import { useIsAdmin } from '@/lib/auth-store';
 
 /** Old single-segment 3x3 set slugs we used to live at /alg/<slug>. Redirect to /alg/3x3/<slug>. */
 const LEGACY_3X3_SLUGS = new Set(['f2l', 'adv-f2l', 'oll', 'pll']);
@@ -41,6 +46,12 @@ const LEGACY_3X3_SLUGS = new Set(['f2l', 'adv-f2l', 'oll', 'pll']);
 const ROUX_SET_SLUGS = new Set([
   '2-look-cmll', 'cmll', 'sbls', 'eo4a', 'lse-eolr',
 ]);
+
+const LAYER_BY_LAYER_SET_SLUGS = new Set(['2-look-oll', '2-look-pll']);
+const CFOP_SET_SLUGS = new Set(['f2l', 'oll', 'pll']);
+const ZB_SET_SLUGS = new Set(['zbls', 'zbll']);
+const CROSS_CARD_ID = 'cross';
+const LSLL_CARD_ID = 'lsll';
 
 /** Source-only sets are composed into their canonical card instead of appearing twice. */
 const HIDDEN_CATALOG_SET_SLUGS = new Set(['oh-cmll']);
@@ -179,8 +190,11 @@ export default function AlgPuzzleClient() {
   // 窄屏这排卡片是四列(alg.css 的 480 断点),96px 的图会撑破格子 —— 图跟着降档。
   const narrow = useIsMobile(480);
   const thumbSize = narrow ? 60 : 96;
+  const isAdmin = useIsAdmin();
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [firstCases, setFirstCases] = useState<Record<string, AlgCase | null>>({});
+  const [setOrder, setSetOrder] = useState<string[]>([]);
   const [sq1BlackTop, setSq1BlackTop] = useQueryState(
     'black',
     parseAsBoolean.withDefault(true),
@@ -202,19 +216,40 @@ export default function AlgPuzzleClient() {
 
   const valid = isPuzzle(puzzle);
   const sets = useMemo(() => (valid ? ALG_CATALOG[puzzle] : []), [puzzle, valid]);
+  const fallbackOrder = useMemo(() => {
+    const order = sets.map(set => set.slug);
+    if (puzzle !== '3x3') return order;
+    const f2lIndex = order.indexOf('f2l');
+    order.splice(f2lIndex < 0 ? 0 : f2lIndex, 0, CROSS_CARD_ID);
+    const zbllIndex = order.indexOf('zbll');
+    order.splice(zbllIndex < 0 ? order.length : zbllIndex + 1, 0, LSLL_CARD_ID);
+    return order;
+  }, [puzzle, sets]);
+  const effectiveOrder = setOrder.length > 0 ? setOrder : fallbackOrder;
+  const orderedSets = useMemo(() => {
+    const rank = new Map(effectiveOrder.map((slug, index) => [slug, index]));
+    return [...sets].sort((a, b) => (rank.get(a.slug) ?? sets.length) - (rank.get(b.slug) ?? sets.length));
+  }, [effectiveOrder, sets]);
   const visibleSets = useMemo(
-    () => sets.filter(set => !HIDDEN_CATALOG_SET_SLUGS.has(set.slug)),
-    [sets],
+    () => orderedSets.filter(set => !HIDDEN_CATALOG_SET_SLUGS.has(set.slug)),
+    [orderedSets],
   );
   const catalogSections = valid ? (ALG_CATALOG_SECTIONS[puzzle] ?? []) : [];
   const lsSets = puzzle === '2x2' ? visibleSets.filter(s => /^ls[1-9]$/.test(s.slug)) : [];
+  const layerByLayerSets = puzzle === '3x3' ? visibleSets.filter(s => LAYER_BY_LAYER_SET_SLUGS.has(s.slug)) : [];
+  const cfopSets = puzzle === '3x3' ? visibleSets.filter(s => CFOP_SET_SLUGS.has(s.slug)) : [];
+  const zbSets = puzzle === '3x3' ? visibleSets.filter(s => ZB_SET_SLUGS.has(s.slug)) : [];
   const rouxSets = puzzle === '3x3' ? visibleSets.filter(s => ROUX_SET_SLUGS.has(s.slug)) : [];
+  const cfopAdvancedSets = puzzle === '3x3' ? visibleSets.filter(s => (
+    !LAYER_BY_LAYER_SET_SLUGS.has(s.slug) && !CFOP_SET_SLUGS.has(s.slug)
+    && !ZB_SET_SLUGS.has(s.slug) && !ROUX_SET_SLUGS.has(s.slug)
+  )) : [];
   const regularSets = catalogSections.length > 0
     ? []
     : puzzle === '2x2'
     ? visibleSets.filter(s => !/^ls[1-9]$/.test(s.slug))
     : puzzle === '3x3'
-      ? visibleSets.filter(s => !ROUX_SET_SLUGS.has(s.slug))
+      ? []
       : visibleSets;
   const legacyRedirect = !valid && LEGACY_3X3_SLUGS.has(puzzle) ? `/alg/3x3/${puzzle}` : null;
 
@@ -225,13 +260,28 @@ export default function AlgPuzzleClient() {
   useEffect(() => {
     if (!valid) return;
     let cancelled = false;
+    setSetOrder(fallbackOrder);
+    getAlgCatalogOrder(puzzle, isAdmin).then(savedOrder => {
+      if (cancelled) return;
+      const known = new Set(fallbackOrder);
+      const saved = savedOrder.filter(slug => known.has(slug));
+      const savedSet = new Set(saved);
+      setSetOrder([...saved, ...fallbackOrder.filter(slug => !savedSet.has(slug))]);
+    }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [fallbackOrder, isAdmin, puzzle, valid]);
+
+  useEffect(() => {
+    if (!valid) return;
+    let cancelled = false;
     // 换魔方阶要先清空:slug 在不同阶之间会重名(2x2 与 megaminx 都有 eo/co/cp/ep),
     // 留着上一阶的条目会让新页面读到别人的封面和数量。
     setCounts({});
     setFirstCases({});
     // 一套一落地,不等最慢的那一套 —— 一张卡片的封面不该被另一套的请求挡着。
-    for (const s of visibleSets) {
-      loadAlg(puzzle, s.slug)
+    for (const s of sets) {
+      if (HIDDEN_CATALOG_SET_SLUGS.has(s.slug)) continue;
+      loadAlg(puzzle, s.slug, { fresh: isAdmin })
         .then(d => ({ count: d.cases.length, first: d.cases[0] ?? null as AlgCase | null }))
         .catch(() => ({ count: -1, first: null as AlgCase | null }))
         .then(({ count, first }) => {
@@ -241,7 +291,7 @@ export default function AlgPuzzleClient() {
         });
     }
     return () => { cancelled = true; };
-  }, [puzzle, valid, visibleSets]);
+  }, [isAdmin, puzzle, sets, valid]);
 
   if (legacyRedirect) {
     return <div className="alg-root"><div className="alg-empty">{tr({ zh: '跳转中…', en: 'Redirecting…'
@@ -257,13 +307,28 @@ export default function AlgPuzzleClient() {
     );
   }
 
+  const handleSetDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!isAdmin || !over || active.id === over.id) return;
+    const current = effectiveOrder;
+    const oldIndex = current.indexOf(String(active.id));
+    const newIndex = current.indexOf(String(over.id));
+    if (oldIndex < 0 || newIndex < 0) return;
+    const next = arrayMove(current, oldIndex, newIndex);
+    setSetOrder(next);
+    reorderAlgCatalog(puzzle, next).catch(error => {
+      console.error('set reorder failed', error);
+      alert(tr({ zh: `排序失败：${error.message}`, en: `Reorder failed: ${error.message}` }));
+      setSetOrder(current);
+    });
+  };
+
   const renderSetCard = (s: (typeof sets)[number]) => {
     const first = firstCases[s.slug];
     const firstAlg = first?.algs.flat()[0]?.alg ?? first?.standard ?? '';
     const title = s.short ?? tr(s);
     return (
-      /* LSLL 不在 catalog 里(不是一套公式而是整层枚举),但归属上紧跟 ZBLL,所以就地插在它后面 */
-      <Fragment key={s.slug}>
+      <SortableCaseCard key={s.slug} id={s.slug} draggable={isAdmin}>
         <AlgCard
           href={picking ? undefined : `/alg/${puzzle}/${s.slug}${puzzle === 'sq1' && !sq1BlackTop ? '?black=false' : ''}`}
           onClick={picking ? () => togglePick(s.slug) : undefined}
@@ -272,21 +337,43 @@ export default function AlgPuzzleClient() {
             /* 每阶最多二十来张、全在首屏附近,本地渲染实测 19 张 26ms —— 图与数量同帧出现,
                不再各自等一次跨域请求。渲染器本来就静态 import 进了 bundle,不额外增体积。
                长 case 网格不能照抄这条,那边走 loading="lazy",见 AlgCategoryView。 */
-            <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={thumbSize} local sq1BlackTop={sq1BlackTop} />
+            <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={thumbSize} local sq1BlackTop={sq1BlackTop} sq1SideBySide={puzzle === 'sq1'} />
           )}
           title={title}
         />
-        {s.slug === 'zbll' && puzzle === '3x3' && !picking && (
-          <AlgCard
-            href="/alg/lsll"
-            prefetch={false}
-            thumb={<FaceletsCube fd={categoryCardFacelets('ap')} size={thumbSize} alt="LSLL" />}
-            title="LSLL"
-          />
-        )}
-      </Fragment>
+      </SortableCaseCard>
     );
   };
+
+  const renderSetGrid = (
+    groupSets: (typeof sets)[number][],
+    extraCards: { id: string; card: ReactNode }[] = [],
+    className = 'alg-bento',
+  ) => {
+    const rank = new Map(effectiveOrder.map((slug, index) => [slug, index]));
+    const items = [
+      ...groupSets.map(set => ({ id: set.slug, card: renderSetCard(set) })),
+      ...extraCards.map(item => ({
+        id: item.id,
+        card: <SortableCaseCard key={item.id} id={item.id} draggable={isAdmin}>{item.card}</SortableCaseCard>,
+      })),
+    ].sort((a, b) => (rank.get(a.id) ?? effectiveOrder.length) - (rank.get(b.id) ?? effectiveOrder.length));
+    return (
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSetDragEnd}>
+        <SortableContext items={items.map(item => item.id)} strategy={rectSortingStrategy}>
+          <div className={className}>{items.map(item => item.card)}</div>
+        </SortableContext>
+      </DndContext>
+    );
+  };
+
+  const threeByThreeMethodSections = [
+    { id: 'layer-by-layer', zh: '层先法', en: 'Layer-by-layer', sets: layerByLayerSets },
+    { id: 'cfop', zh: 'CFOP 法', en: 'CFOP', sets: cfopSets },
+    { id: 'cfop-advanced', zh: 'CFOP 进阶', en: 'Advanced CFOP', sets: cfopAdvancedSets },
+    { id: 'zb', zh: 'ZB 法', en: 'ZB', sets: zbSets },
+    { id: 'roux', zh: '桥式', en: 'Roux', sets: rouxSets },
+  ];
 
   return (
     <div className="alg-root">
@@ -341,26 +428,7 @@ export default function AlgPuzzleClient() {
       )}
 
       {regularSets.length > 0 && (
-        <div className="alg-bento">
-          {puzzle === '3x3' && !picking && (
-            <AlgCard
-              href="/alg/3x3/cross"
-              prefetch={false}
-              thumb={(
-                <VisualCube
-                  setup=""
-                  view="iso"
-                  mask="cross"
-                  size={thumbSize}
-                  alt={tr({ zh: '十字训练', en: 'Cross training' })}
-                  local
-                />
-              )}
-              title={tr({ zh: '十字', en: 'Cross' })}
-            />
-          )}
-          {regularSets.map(renderSetCard)}
-        </div>
+        renderSetGrid(regularSets)
       )}
 
       {catalogSections.map(section => (
@@ -368,22 +436,50 @@ export default function AlgPuzzleClient() {
           <div className="alg-set-section-heading">
             <h2 id={`alg-${section.id}-title`}>{tr(section)}</h2>
           </div>
-          <div className="alg-bento">
-            {section.slugs.map(slug => sets.find(set => set.slug === slug)).filter((set): set is (typeof sets)[number] => Boolean(set)).map(renderSetCard)}
-          </div>
+          {renderSetGrid(visibleSets.filter(set => section.slugs.some(slug => slug === set.slug)))}
         </section>
       ))}
 
-      {puzzle === '3x3' && (
-        <section className="alg-set-section" aria-labelledby="alg-roux-index-title">
+      {puzzle === '3x3' && threeByThreeMethodSections.map(section => (
+        <section key={section.id} className="alg-set-section" aria-labelledby={`alg-${section.id}-index-title`}>
           <div className="alg-set-section-heading">
-            <h2 id="alg-roux-index-title">{tr({ zh: '桥式', en: 'Roux' })}</h2>
+            <h2 id={`alg-${section.id}-index-title`}>{tr({ zh: section.zh, en: section.en })}</h2>
           </div>
-          <div className="alg-bento">
-            {rouxSets.map(renderSetCard)}
-          </div>
+          {renderSetGrid(section.sets, [
+            ...(section.id === 'cfop' && !picking ? [{
+              id: CROSS_CARD_ID,
+              card: (
+                <AlgCard
+                  href="/alg/3x3/cross"
+                  prefetch={false}
+                  thumb={(
+                    <VisualCube
+                      setup=""
+                      view="iso"
+                      mask="cross"
+                      size={thumbSize}
+                      alt={tr({ zh: '十字训练', en: 'Cross training' })}
+                      local
+                    />
+                  )}
+                  title={tr({ zh: '十字', en: 'Cross' })}
+                />
+              ),
+            }] : []),
+            ...(section.id === 'zb' && !picking ? [{
+              id: LSLL_CARD_ID,
+              card: (
+                <AlgCard
+                  href="/alg/lsll"
+                  prefetch={false}
+                  thumb={<FaceletsCube fd={categoryCardFacelets('ap')} size={thumbSize} alt="LSLL" />}
+                  title="LSLL"
+                />
+              ),
+            }] : []),
+          ])}
         </section>
-      )}
+      ))}
 
       {puzzle === '2x2' && (
         <section className="alg-set-section" aria-labelledby="alg-ls-index-title">
@@ -391,9 +487,7 @@ export default function AlgPuzzleClient() {
             <h2 id="alg-ls-index-title">{tr({ zh: 'LS 方法', en: 'LS method' })}</h2>
           </div>
           <LsSubsetGuide samples={firstCases} size={narrow ? 88 : 112} />
-          <div className="alg-bento alg-ls-bento">
-            {lsSets.map(renderSetCard)}
-          </div>
+          {renderSetGrid(lsSets, [], 'alg-bento alg-ls-bento')}
         </section>
       )}
 

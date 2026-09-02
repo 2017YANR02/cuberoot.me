@@ -261,9 +261,11 @@ const ENDPOINTS: Ep[] = [
 
   // ---- alg ----
   { d: 'alg', m: 'GET', p: '/v1/alg/sets', g: 'public', c: 'cdn', zh: '全部公式集', en: 'All alg sets' },
+  { d: 'alg', m: 'GET', p: '/v1/alg/sets/:puzzle/order', g: 'public', c: 'cdn', zh: '公式库首页卡片顺序', en: 'Alg catalog card order' },
   { d: 'alg', m: 'GET', p: '/v1/alg/sets/:puzzle/:set', g: 'public', c: 'cdn', zh: '一套公式的全部 case', en: 'All cases of a set' },
   { d: 'alg', m: 'POST', p: '/v1/alg/sets/:puzzle/:set/cases', g: 'admin', zh: '新增 case', en: 'Add case' },
   { d: 'alg', m: 'PUT', p: '/v1/alg/sets/:puzzle/:set/cases/:id', g: 'admin', zh: '编辑 case', en: 'Edit case' },
+  { d: 'alg', m: 'PUT', p: '/v1/alg/sets/:puzzle/order', g: 'admin', zh: '重排公式库首页卡片', en: 'Reorder alg catalog cards' },
   { d: 'alg', m: 'PUT', p: '/v1/alg/sets/:puzzle/:set/reorder', g: 'admin', zh: '重排 case', en: 'Reorder cases' },
   { d: 'alg', m: 'DELETE', p: '/v1/alg/sets/:puzzle/:set/cases/:id', g: 'admin', zh: '删除 case', en: 'Delete case' },
   { d: 'alg', m: 'GET', p: '/v1/alg/lsll/case/:key', g: 'public', c: 'cdn', zh: 'LSLL case 的整方 HTM 最优解;未回填返 pending', en: 'Whole-cube HTM-optimal solution for an LSLL case; pending until backfilled' },

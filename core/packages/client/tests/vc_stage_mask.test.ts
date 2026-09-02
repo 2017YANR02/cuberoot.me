@@ -11,7 +11,7 @@ import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
 import { FM_REGULAR, FM_IGNORED, stickeringMaskFn } from '@/app/[lang]/sim/engine/nxn/stickering';
 import {
   netIndexOf, visualcubeStageMaskFn, resolveStageMaskFn, visualcubeMaskForStickering,
-  visualcubeStageGroups, VC_MASK_LABEL,
+  stickeringSelectGroupsFor, visualcubeStageGroups, VC_MASK_LABEL,
 } from '@/app/[lang]/sim/engine/nxn/vcStageMask';
 
 // 引擎 FACE:L0 R1 D2 U3 B4 F5
@@ -226,6 +226,12 @@ describe('vcStageMask — 下拉清单去重 + 标签', () => {
     for (const drop of ['wv', 'vh', 'oll', 'll', 'cll', 'coll', 'ell', 'ocll', 'cross', 'f2l', '2x2x2', '2x2x3', 'cmll', '']) {
       expect(items.has(drop), `should drop ${drop}`).toBe(false);
     }
+  });
+
+  it('最终下拉把 Daisy、FL 合并到层先法', () => {
+    const groups = stickeringSelectGroupsFor(3);
+    expect(groups.find((g) => g.group === 'LBL')?.items).toEqual(['Daisy', 'fl']);
+    expect(groups.find((g) => g.group === 'VCMasks')?.items).not.toContain('fl');
   });
 
   it('order 4:含 4 阶专属(yau/hoya/l2c)+ 通用 core(fl),不含 3 阶专属位串(dr)', () => {

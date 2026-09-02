@@ -129,6 +129,9 @@ const TABLES: Table[] = [
   { name: 'alg_sets', domain: 'alg', origin: 'snapshot', purpose: { zh: '公式集(主键 puzzle + set_slug)', en: 'Alg sets, keyed (puzzle, set_slug)' }, cols: [
     { name: 'puzzle, set_slug (PK)' }, { name: 'source, scraped_at, updated_at' },
   ] },
+  { name: 'alg_catalog_positions', domain: 'alg', origin: '0193', naturalKey: true, purpose: { zh: '公式库首页卡片顺序，包含十字和 LSLL 等虚拟入口', en: 'Alg catalog card order, including virtual entries such as Cross and LSLL' }, cols: [
+    { name: 'puzzle, item_key (PK)' }, { name: 'position, updated_at' },
+  ] },
   { name: 'alg_cases', domain: 'alg', origin: 'snapshot', evolved: [69, 92, 153], purpose: { zh: '单条公式 case,position 定序(不加名字 UNIQUE,会重名)', en: 'Individual alg cases; ordered by position (no name UNIQUE)' }, cols: [
     { name: 'id (PK)' }, { name: 'puzzle, set_slug' }, { name: 'position', note: { zh: '从 JSON 数组下标导入定序', en: 'order from the source array' } }, { name: 'name, number' },
     { name: 'mirror_case_id', note: { zh: '镜像伙伴,互指;自镜像指自己', en: 'mirror partner; self-mirror points at itself' } },
@@ -677,6 +680,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 190, slug: 'sq1_ep_complete_layer_alignment', desc: { zh: '补齐 5 条 SQ1 EP 公式末尾缺失的 U/D 层对齐，并在遇到非预期数据状态时整笔回滚。', en: 'Complete the missing final U/D alignment in five SQ1 EP algorithms and roll back the migration on any unexpected data state.' } },
   { n: 191, slug: 'sq1_ep_physical_setups', desc: { zh: '替换 7 条切片路径不合法的 SQ1 EP 公式及其 setup，保证所有 EP 缩略图均从正方形态绘制。', en: 'Replace seven SQ1 EP algorithms with physically invalid slice paths and their setups, ensuring every EP thumbnail starts from cube shape.' } },
   { n: 192, slug: 'private_vault', desc: { zh: '新增端到端加密的私密资料库；管理员可把密文只授权给指定的已注册账号只读查看。', en: 'Add an end-to-end encrypted private vault whose administrator can grant read-only ciphertext access to designated registered accounts.' } },
+  { n: 193, slug: 'alg_catalog_positions', desc: { zh: '新增公式库首页卡片顺序，包含十字和 LSLL 等虚拟入口。', en: 'Add alg catalog card ordering, including virtual entries such as Cross and LSLL.' } },
   { n: 194, slug: 'account_location', desc: { zh: '账号基本资料增加省份和城市，并约束国家、省份、城市的层级关系。', en: 'Add state or province and city to private account profiles with country-region-city hierarchy constraints.' } },
 ];
 

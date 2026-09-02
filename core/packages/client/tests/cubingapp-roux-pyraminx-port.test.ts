@@ -216,15 +216,30 @@ describe('CubingApp Roux and Pyraminx port', () => {
     expect(failures).toEqual([]);
   });
 
-  it('puts every Roux set in the dedicated 3x3 section and reuses shared thumbnails', () => {
+  it('groups the 3x3 catalog by method and reuses shared Roux thumbnails', () => {
     const rouxSlugs = ['2-look-cmll', 'cmll', 'sbls', 'eo4a', 'lse-eolr'];
     const catalogSlugs = ALG_CATALOG['3x3'].map(item => item.slug);
-    for (const slug of rouxSlugs) expect(catalogSlugs).toContain(slug);
+    for (const slug of ['2-look-oll', '2-look-pll', 'zbls', 'zbll', ...rouxSlugs]) {
+      expect(catalogSlugs).toContain(slug);
+    }
 
     const page = readFileSync(join(clientRoot, 'app', '[lang]', 'alg', '[puzzle]', 'AlgPuzzleClient.tsx'), 'utf8');
-    expect(page).toContain("tr({ zh: '桥式', en: 'Roux' })");
+    for (const label of ['层先法', 'CFOP 法', 'CFOP 进阶', 'ZB 法', '桥式']) expect(page).toContain(`zh: '${label}'`);
     for (const slug of rouxSlugs) expect(page).toContain(`'${slug}'`);
     expect(page).toContain("const HIDDEN_CATALOG_SET_SLUGS = new Set(['oh-cmll'])");
+    expect(page).toContain('<SortableCaseCard id={s.slug} draggable={isAdmin}>');
+    expect(page).toContain('id: CROSS_CARD_ID');
+    expect(page).toContain('id: LSLL_CARD_ID');
+    expect(page).toContain('reorderAlgCatalog(puzzle, next)');
+
+    const route = readFileSync(workspaceFixturePath('@cuberoot/server', 'src', 'routes', 'alg_sets.ts'), 'utf8');
+    const positionMigration = readFileSync(
+      workspaceFixturePath('@cuberoot/server', 'migrations', '0193_alg_catalog_positions.sql'),
+      'utf8',
+    );
+    expect(route).toContain("get('/alg/sets/:puzzle/order'");
+    expect(route).toContain("put('/alg/sets/:puzzle/order'");
+    expect(positionMigration).toContain('CREATE TABLE alg_catalog_positions');
 
     const raw = { kind: 'raw' as const, tag: '', attrs: {} };
     for (const slug of ['2-look-cmll', 'oh-cmll']) {

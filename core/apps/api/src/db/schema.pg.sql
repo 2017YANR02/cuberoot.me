@@ -2847,6 +2847,17 @@ CREATE TABLE alg_sets (
 CREATE TRIGGER alg_sets_updated_at BEFORE UPDATE ON alg_sets
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
+-- 公式库首页卡片顺序；item_key 也可指向 Cross / LSLL 等没有 alg_sets 行的虚拟入口。
+CREATE TABLE alg_catalog_positions (
+  puzzle      VARCHAR(20) NOT NULL,
+  item_key    VARCHAR(64) NOT NULL,
+  position    INTEGER NOT NULL CHECK (position >= 0),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (puzzle, item_key)
+);
+CREATE TRIGGER alg_catalog_positions_updated_at BEFORE UPDATE ON alg_catalog_positions
+  FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
+
 -- ── 13. alg_cases (单个 case,代替 JSON cases[] 数组里的每一条) ──
 -- 不加 (puzzle, set_slug, name) UNIQUE: ZBLS Geng 86 cases 跟标准 case 重名。
 -- 顺序由 position 列保证(从 JSON 数组下标导入)。

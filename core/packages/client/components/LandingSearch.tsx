@@ -36,11 +36,13 @@ import {
   METRIC_LABEL_OVERRIDE,
   INITIAL_RENDER_CAP,
   type SiteSearchCard,
+  type AlgSetHit,
 } from '@/lib/site-search';
 import { detectPasteIntent, type PasteIntent } from '@/lib/smart-paste';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import './landing_search.css';
 import { tr } from '@/i18n/tr';
+import { ALG_PUZZLES, loadAlg, type AlgCase } from '@cuberoot/shared/alg';
 
 // EventIcon inlines all WCA event SVGs (~68KB gzip);only used in recon hits.
 const EventIcon = dynamic(
@@ -51,6 +53,41 @@ const EventIcon = dynamic(
     loading: () => <span className="landing-search-event-icon" aria-hidden="true" />,
   },
 );
+
+const CaseThumb = dynamic(
+  () => import('@/components/CaseThumb').then(m => ({ default: m.CaseThumb })),
+  { ssr: false },
+);
+
+function AlgSetResultThumb({ hit }: { hit: AlgSetHit }) {
+  const [firstCase, setFirstCase] = useState<AlgCase | null>(null);
+  const puzzle = ALG_PUZZLES.find(candidate => candidate === hit.puzzle);
+
+  useEffect(() => {
+    if (!puzzle) return;
+    let cancelled = false;
+    void loadAlg(puzzle, hit.setSlug)
+      .then(data => { if (!cancelled) setFirstCase(data.cases[0] ?? null); })
+      .catch(() => { if (!cancelled) setFirstCase(null); });
+    return () => { cancelled = true; };
+  }, [puzzle, hit.setSlug]);
+
+  if (!puzzle || !firstCase) return null;
+
+  const alg = firstCase.algs.flat()[0]?.alg ?? firstCase.standard ?? '';
+  return (
+    <CaseThumb
+      puzzle={puzzle}
+      set={hit.setSlug}
+      sticker={firstCase.sticker}
+      alg={alg}
+      setup={firstCase.setup}
+      size={36}
+      local
+      sq1SideBySide={puzzle === 'sq1'}
+    />
+  );
+}
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
@@ -477,11 +514,14 @@ export default function LandingSearch({
                     key={`${a.puzzle}/${a.setSlug}`}
                     href={a.path}
                     prefetch={false}
-                    className="landing-search-item"
+                    className="landing-search-item landing-search-item--alg"
                     onClick={closeAfter}
                   >
+                    <EventIcon event={a.puzzle} className="landing-search-event-icon" />
+                    <div className="landing-search-alg-thumb">
+                      <AlgSetResultThumb hit={a} />
+                    </div>
                     <span className="landing-search-item-name">{tr({ zh: a.nameZh, en: a.nameEn })}</span>
-                    <span className="landing-search-item-meta">{a.puzzle}</span>
                   </Link>
                 ))}
               </div>

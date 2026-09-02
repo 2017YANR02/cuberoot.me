@@ -301,12 +301,17 @@ describe('网页与 PDF 共用 case 缩略图渲染计划', () => {
     const base = { ...input('sq1', 'cp'), alg: '(1,0) / (-1,0)' };
     const black = caseThumbPlan({ ...base, sq1BlackTop: true });
     const yellow = caseThumbPlan({ ...base, sq1BlackTop: false });
+    const sideBySide = caseThumbPlan({ ...base, sq1SideBySide: true });
     expect(black.renderer).toBe('inline-svg');
     expect(yellow.renderer).toBe('inline-svg');
-    if (black.renderer !== 'inline-svg' || yellow.renderer !== 'inline-svg') {
+    expect(sideBySide.renderer).toBe('inline-svg');
+    if (black.renderer !== 'inline-svg' || yellow.renderer !== 'inline-svg' || sideBySide.renderer !== 'inline-svg') {
       throw new Error('expected inline Square-1 SVG');
     }
     expect(black.svg).not.toBe(yellow.svg);
+    expect(sideBySide.layout).toBe('side-by-side-layers');
+    const [, , width, height] = sideBySide.svg.match(/viewBox="([^"]+)"/)![1].split(' ').map(Number);
+    expect(width).toBeGreaterThan(height);
     await expect(algCaseSvg({ ...base, sq1BlackTop: true })).resolves.toBe(black.svg);
     await expect(algCaseSvg({ ...base, sq1BlackTop: false })).resolves.toBe(yellow.svg);
   });

@@ -3,7 +3,7 @@
  * drawing code. Notation + state application live in
  * `@cuberoot/shared/sq1-notation` (single source); this file only draws.
  *
- * Drawing logic verbatim from tnoodle: 2 stacked hex faces, 8 pieces each
+ * Drawing logic ported from tnoodle: 2 hex faces, 8 pieces each
  * (4 corners + 4 wedges per face), corners drawn as 60° pie-slice + 2 side
  * stickers, wedges as 30° pie-slice + 1 side sticker. Equator strip rendered
  * between the two faces; mid-rect color depends on sliceSolved (front color
@@ -15,6 +15,8 @@ import type { MaskRenderOptions } from '@/lib/puzzle-image/mask-core';
 export interface Sq1RenderOptions extends MaskRenderOptions {
   /** Solved-cubeshape stages can safely use the tighter square-face spacing. */
   compactFaces?: boolean;
+  /** Put the top and bottom layers left-to-right instead of top-to-bottom. */
+  sideBySide?: boolean;
 }
 
 export const SQ1_FACE_KEYS = ['L', 'B', 'R', 'F', 'U', 'D'] as const;
@@ -166,22 +168,34 @@ export function renderSq1Svg(
     ? 2 * cornerWidth + edgeWidth
     : cornerWidth + edgeWidth;
   const rightFill = sliceSolved ? scheme[3] /* F */ : scheme[1] /* B */;
+  const sideBySide = opts?.sideBySide ?? false;
 
   const parts: string[] = [];
   // Equator: right rect first, left rect on top (clobbers part), then both outlines.
   if (showMiddle) {
-    parts.push(`<rect x="${leftX}" y="${midY}" width="${rightW}" height="${equatorH}" fill="${rightFill}" />`);
-    parts.push(`<rect x="${leftX}" y="${midY}" width="${cornerWidth}" height="${equatorH}" fill="${scheme[3]}" />`);
-    parts.push(`<rect x="${leftX}" y="${midY}" width="${rightW}" height="${equatorH}" fill="none" stroke="#000" stroke-width="${STROKE_WIDTH}" />`);
-    parts.push(`<rect x="${leftX}" y="${midY}" width="${cornerWidth}" height="${equatorH}" fill="none" stroke="#000" stroke-width="${STROKE_WIDTH}" />`);
+    if (sideBySide) {
+      const midX = H / 2 - equatorH / 2;
+      parts.push(`<rect x="${midX}" y="${leftX}" width="${equatorH}" height="${rightW}" fill="${rightFill}" />`);
+      parts.push(`<rect x="${midX}" y="${leftX}" width="${equatorH}" height="${cornerWidth}" fill="${scheme[3]}" />`);
+      parts.push(`<rect x="${midX}" y="${leftX}" width="${equatorH}" height="${rightW}" fill="none" stroke="#000" stroke-width="${STROKE_WIDTH}" />`);
+      parts.push(`<rect x="${midX}" y="${leftX}" width="${equatorH}" height="${cornerWidth}" fill="none" stroke="#000" stroke-width="${STROKE_WIDTH}" />`);
+    } else {
+      parts.push(`<rect x="${leftX}" y="${midY}" width="${rightW}" height="${equatorH}" fill="${rightFill}" />`);
+      parts.push(`<rect x="${leftX}" y="${midY}" width="${cornerWidth}" height="${equatorH}" fill="${scheme[3]}" />`);
+      parts.push(`<rect x="${leftX}" y="${midY}" width="${rightW}" height="${equatorH}" fill="none" stroke="#000" stroke-width="${STROKE_WIDTH}" />`);
+      parts.push(`<rect x="${leftX}" y="${midY}" width="${cornerWidth}" height="${equatorH}" fill="none" stroke="#000" stroke-width="${STROKE_WIDTH}" />`);
+    }
   }
 
   // Top face — initial rotation 90+15° puts piece 0 at the bottom-left going CW.
-  drawFace(parts, pieces.slice(0, 12), W / 2, H / 4 + faceInset, 90 + 15, scheme, opts);
+  drawFace(parts, pieces.slice(0, 12), sideBySide ? H / 4 + faceInset : W / 2, sideBySide ? W / 2 : H / 4 + faceInset, 90 + 15, scheme, opts);
   // Bottom face — mirrored angle.
-  drawFace(parts, pieces.slice(12, 24), W / 2, 3 * H / 4 - faceInset, -(90 + 15), scheme, opts);
+  drawFace(parts, pieces.slice(12, 24), sideBySide ? 3 * H / 4 - faceInset : W / 2, sideBySide ? W / 2 : 3 * H / 4 - faceInset, -(90 + 15), scheme, opts);
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${faceInset} ${W} ${H - 2 * faceInset}" preserveAspectRatio="xMidYMid meet" stroke-linecap="round" style="width:100%;height:100%">${parts.join('')}</svg>`;
+  const viewBox = sideBySide
+    ? `${faceInset} 0 ${H - 2 * faceInset} ${W}`
+    : `0 ${faceInset} ${W} ${H - 2 * faceInset}`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" preserveAspectRatio="xMidYMid meet" stroke-linecap="round" style="width:100%;height:100%">${parts.join('')}</svg>`;
 }
 
 /** Convenience: scramble string + colors → final SVG. */
