@@ -1,23 +1,22 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useState } from 'react';
 import { ArrowRight, RotateCcw } from 'lucide-react';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import { tr } from '@/i18n/tr';
 import {
   CUBE_COLOR_NAMES,
-  CUBE_FILL,
-  CUBE_ON_FILL,
   type CubeFace,
 } from '@/lib/cube-colors';
+import ColorSwatch from '../_components/ColorSwatch';
 import {
   ALL_COLOR_PAIRS,
   buildColorRound,
   type ColorPair,
   type ColorRelation,
 } from '../_lib/relations';
-import './relations.css';
+import '../_components/color-quiz.css';
 
 const RELATION_LABELS: Record<ColorRelation, { zh: string; en: string }> = {
   opposite: { zh: '对色', en: 'Opposite' },
@@ -30,18 +29,6 @@ const OPPOSITE_PAIRS: readonly [CubeFace, CubeFace][] = [
   ['U', 'D'],
 ];
 
-function Swatch({ face, compact = false }: { face: CubeFace; compact?: boolean }) {
-  const style = {
-    '--color-fill': CUBE_FILL[face],
-    '--color-on-fill': CUBE_ON_FILL[face],
-  } as CSSProperties;
-  return (
-    <span className={`relation-swatch${compact ? ' is-compact' : ''}`} style={style}>
-      {tr(CUBE_COLOR_NAMES[face])}
-    </span>
-  );
-}
-
 function Result({ score, onRestart }: { score: number; onRestart: () => void }) {
   const summary = score === ALL_COLOR_PAIRS.length
     ? { zh: '全部答对,六色关系已经很稳了。', en: 'Perfect. You have all six colour relationships down.' }
@@ -50,28 +37,28 @@ function Result({ score, onRestart }: { score: number; onRestart: () => void }) 
       : { zh: '记住三组对色,其他不同颜色的组合就都是邻色。', en: 'Remember the three opposite pairs; every other pair of different colours is adjacent.' };
 
   return (
-    <section className="relation-result" aria-live="polite">
-      <p className="relation-result-kicker">{tr({ zh: '本轮成绩', en: 'ROUND COMPLETE' })}</p>
-      <div className="relation-result-score">
+    <section className="color-quiz-result" aria-live="polite">
+      <p className="color-quiz-result-kicker">{tr({ zh: '本轮成绩', en: 'ROUND COMPLETE' })}</p>
+      <div className="color-quiz-result-score">
         <strong>{score}</strong>
         <span>/ {ALL_COLOR_PAIRS.length}</span>
       </div>
       <p>{tr(summary)}</p>
 
-      <div className="relation-memory">
+      <div className="color-quiz-memory">
         <h2>{tr({ zh: '只需记住这三组对色', en: 'Only three opposite pairs to remember' })}</h2>
         <div>
           {OPPOSITE_PAIRS.map(([first, second]) => (
-            <span className="relation-memory-pair" key={first}>
-              <Swatch face={first} compact />
+            <span className="color-quiz-memory-pair" key={first}>
+              <ColorSwatch face={first} compact />
               <i>↔</i>
-              <Swatch face={second} compact />
+              <ColorSwatch face={second} compact />
             </span>
           ))}
         </div>
       </div>
 
-      <button type="button" className="relation-primary-button" onClick={onRestart}>
+      <button type="button" className="color-quiz-primary-button" onClick={onRestart}>
         <RotateCcw size={16} aria-hidden="true" />
         {tr({ zh: '再来一轮', en: 'Try another round' })}
       </button>
@@ -107,14 +94,14 @@ export default function ColorRelationsPage() {
   };
 
   return (
-    <main className="relation-page">
-      <div className="relation-topbar">
+    <main className="color-quiz-page">
+      <div className="color-quiz-topbar">
         <BackHome />
         <HeaderToggles />
       </div>
 
-      <header className="relation-header">
-        <p className="relation-eyebrow">{tr({ zh: '颜色测试 01', en: 'COLOUR TEST 01' })}</p>
+      <header className="color-quiz-header">
+        <p className="color-quiz-eyebrow">{tr({ zh: '颜色测试 01', en: 'COLOUR TEST 01' })}</p>
         <h1>{tr({ zh: '对色还是邻色?', en: 'Opposite or adjacent?' })}</h1>
         <p>{tr({
           zh: '每题有两种颜色。判断它们在标准三阶魔方上是面对面,还是相邻。一轮会遍历全部 15 种组合。',
@@ -123,26 +110,26 @@ export default function ColorRelationsPage() {
       </header>
 
       {!finished && pair ? (
-        <section className="relation-quiz" aria-labelledby="relation-question">
-          <div className="relation-progress-row">
+        <section className="color-quiz-body" aria-labelledby="relation-question">
+          <div className="color-quiz-progress-row">
             <span>{tr({ zh: `第 ${index + 1} / ${round.length} 题`, en: `Question ${index + 1} / ${round.length}` })}</span>
             <span>{tr({ zh: `答对 ${score}`, en: `${score} correct` })}</span>
           </div>
-          <div className="relation-progress" aria-hidden="true">
+          <div className="color-quiz-progress" aria-hidden="true">
             <i style={{ width: `${((index + (selected ? 1 : 0)) / round.length) * 100}%` }} />
           </div>
 
           <h2 id="relation-question">{tr({ zh: '这两种颜色是什么关系?', en: 'How are these colours related?' })}</h2>
-          <div className="relation-pair" aria-label={tr({
+          <div className="color-quiz-pair" aria-label={tr({
             zh: `${CUBE_COLOR_NAMES[pair.first].zh}色和${CUBE_COLOR_NAMES[pair.second].zh}色`,
             en: `${CUBE_COLOR_NAMES[pair.first].en} and ${CUBE_COLOR_NAMES[pair.second].en}`,
           })}>
-            <Swatch face={pair.first} />
-            <span className="relation-pair-mark" aria-hidden="true">?</span>
-            <Swatch face={pair.second} />
+            <ColorSwatch face={pair.first} />
+            <span className="color-quiz-pair-mark" aria-hidden="true">?</span>
+            <ColorSwatch face={pair.second} />
           </div>
 
-          <div className="relation-choices">
+          <div className="color-quiz-choices">
             {(['opposite', 'adjacent'] as const).map((relation) => {
               const isCorrect = selected !== null && relation === pair.relation;
               const isWrong = selected === relation && relation !== pair.relation;
@@ -150,7 +137,7 @@ export default function ColorRelationsPage() {
                 <button
                   key={relation}
                   type="button"
-                  className={`relation-choice${isCorrect ? ' is-correct' : ''}${isWrong ? ' is-wrong' : ''}`}
+                  className={`color-quiz-choice${isCorrect ? ' is-correct' : ''}${isWrong ? ' is-wrong' : ''}`}
                   aria-pressed={selected === relation}
                   disabled={selected !== null}
                   onClick={() => answer(relation)}
@@ -165,7 +152,7 @@ export default function ColorRelationsPage() {
           </div>
 
           {selected && (
-            <div className={`relation-feedback ${selected === pair.relation ? 'is-correct' : 'is-wrong'}`} aria-live="polite">
+            <div className={`color-quiz-feedback ${selected === pair.relation ? 'is-correct' : 'is-wrong'}`} aria-live="polite">
               <strong>{tr(selected === pair.relation
                 ? { zh: '答对了', en: 'Correct' }
                 : { zh: '这题是' + RELATION_LABELS[pair.relation].zh, en: `This pair is ${RELATION_LABELS[pair.relation].en.toLowerCase()}` })}</strong>
@@ -178,7 +165,7 @@ export default function ColorRelationsPage() {
                     zh: `${CUBE_COLOR_NAMES[pair.first].zh}色和${CUBE_COLOR_NAMES[pair.second].zh}色不是三组对色之一,所以它们相邻。`,
                     en: `${CUBE_COLOR_NAMES[pair.first].en} and ${CUBE_COLOR_NAMES[pair.second].en} are not an opposite pair, so their faces are adjacent.`,
                   })}</span>
-              <button type="button" className="relation-next" onClick={next} autoFocus>
+              <button type="button" className="color-quiz-next" onClick={next} autoFocus>
                 {index === round.length - 1
                   ? tr({ zh: '查看成绩', en: 'See results' })
                   : tr({ zh: '下一题', en: 'Next pair' })}

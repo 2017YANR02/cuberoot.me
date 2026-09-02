@@ -271,8 +271,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'color-test': {
     title: { zh: '颜色测试', en: 'Colour Tests' },
     description: {
-      zh: '魔方颜色训练:练习分辨标准三阶魔方的对色与邻色,或通过 Stroop 色词干扰测试专注力。',
-      en: 'Cube colour training for recognising opposite and adjacent faces, plus a Stroop colour-word interference test.',
+      zh: '魔方颜色训练:练习分辨标准三阶魔方的对色、邻色和侧面顺序,或通过 Stroop 色词干扰测试专注力。',
+      en: 'Cube colour training for recognising opposite, adjacent and side-face order relationships, plus a Stroop colour-word interference test.',
     },
   },
   'color-test/relations': {
@@ -280,6 +280,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     description: {
       zh: '看两个标准三阶魔方颜色,判断它们是对色还是邻色,完整练习 15 种不重复组合。',
       en: 'Classify two standard 3×3 cube colours as opposite or adjacent across all 15 unique pairs.',
+    },
+  },
+  'color-test/positions': {
+    title: { zh: '侧面颜色顺序测试', en: 'Side Colour Order' },
+    description: {
+      zh: '保持白色朝上,练习标准三阶魔方红、绿、橙、蓝四个侧面的左右位置关系。',
+      en: 'Keep white on top and practise the left-right order of the red, green, orange and blue side faces on a standard 3×3.',
     },
   },
   'dev': {
