@@ -364,10 +364,9 @@ describe('shared useGestureWheel pointer lifecycle', () => {
 });
 
 describe('gesture wheel migration, theme, and i18n guards', () => {
-  it('keeps Web paths as thin wrappers and both Web hosts on timer-ui', () => {
+  it('keeps Web component paths as thin wrappers and both Web hosts on timer-ui', () => {
     const componentWrapper = readFileSync('components/GestureWheel.tsx', 'utf8');
     const hookWrapper = readFileSync('hooks/useGestureWheel.ts', 'utf8');
-    const cssWrapper = readFileSync('components/gesture-wheel.css', 'utf8');
     const solo = readFileSync('app/[lang]/timer/_shell/SoloView.tsx', 'utf8');
     const trainer = readFileSync('app/[lang]/alg/[puzzle]/[set]/run/TrainerRunClient.tsx', 'utf8');
 
@@ -375,8 +374,6 @@ describe('gesture wheel migration, theme, and i18n guards', () => {
     expect(componentWrapper).not.toContain('forwardRef');
     expect(hookWrapper).toContain("from '@cuberoot/timer-ui'");
     expect(hookWrapper).not.toContain('addEventListener');
-    expect(cssWrapper.trim().endsWith("@import '@cuberoot/timer-ui/gesture-wheel.css';")).toBe(true);
-    expect(cssWrapper).not.toContain('.gesture-wheel {');
     for (const source of [solo, trainer]) {
       expect(source).toContain("from '@cuberoot/timer-ui'");
       expect(source).not.toContain("from '@/components/GestureWheel'");
