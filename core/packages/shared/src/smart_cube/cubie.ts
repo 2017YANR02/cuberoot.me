@@ -24,31 +24,8 @@
  */
 
 /** Kociemba/csTimer sticker tables in URFDLB face order. */
-export const CORNER_FACELET: ReadonlyArray<readonly [number, number, number]> = [
-  [8, 9, 20],
-  [6, 18, 38],
-  [0, 36, 47],
-  [2, 45, 11],
-  [29, 26, 15],
-  [27, 44, 24],
-  [33, 53, 42],
-  [35, 17, 51],
-];
-
-export const EDGE_FACELET: ReadonlyArray<readonly [number, number]> = [
-  [5, 10],
-  [7, 19],
-  [3, 37],
-  [1, 46],
-  [32, 16],
-  [28, 25],
-  [30, 43],
-  [34, 52],
-  [23, 12],
-  [21, 41],
-  [50, 39],
-  [48, 14],
-];
+export { CORNER_FACELET, EDGE_FACELET } from '@cuberoot/puzzle-solvers/kociemba/cube';
+import { CORNER_FACELET, EDGE_FACELET } from '@cuberoot/puzzle-solvers/kociemba/cube';
 
 /**
  * Which facelets belong to which piece, and in what orientation order.

@@ -22,6 +22,11 @@ import {
   type TimerWcaSourceSettings,
 } from './wca-source-config';
 import {
+  DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
+  normalizeTimerRandomDifficultySettings,
+  type TimerRandomDifficultySettings,
+} from './random-difficulty';
+import {
   DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
   DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
   DEFAULT_TIMER_TIMING_SETTINGS,
@@ -59,6 +64,7 @@ export interface TimerSessionMeta {
 
 export interface TimerStoreSettings extends
   TimerWcaSourceSettings,
+  TimerRandomDifficultySettings,
   TimerByStepsSettings,
   TimerAttemptSplitOptions,
   TimerTimingSettings,
@@ -363,6 +369,18 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
   if (value.genSteps !== undefined
     && (!Array.isArray(value.genSteps)
       || !value.genSteps.every((step) => Number.isSafeInteger(step) && step >= 0 && step <= 100))) return null;
+  if (value.genDiffOn !== undefined && typeof value.genDiffOn !== 'boolean') return null;
+  for (const key of ['genDiffVariant', 'genDiffStage', 'genDiffColors'] as const) {
+    if (value[key] !== undefined
+      && (typeof value[key] !== 'string' || value[key].length > 64)) return null;
+  }
+  if (value.genDiffSlot !== undefined
+    && (!Number.isSafeInteger(value.genDiffSlot) || (value.genDiffSlot as number) < -1)) return null;
+  if (value.genDiffSteps !== undefined
+    && (!Array.isArray(value.genDiffSteps)
+      || !value.genDiffSteps.every((step) => (
+        Number.isSafeInteger(step) && step >= 0 && step <= 500
+      )))) return null;
   if (value.wcaScrambleMode !== undefined
     && value.wcaScrambleMode !== 'comp'
     && value.wcaScrambleMode !== 'date') return null;
@@ -428,6 +446,14 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     showCubePreview: value.showCubePreview,
     prefer3D: value.prefer3D,
   });
+  const randomDifficulty = normalizeTimerRandomDifficultySettings({
+    genDiffOn: value.genDiffOn as boolean | undefined,
+    genDiffVariant: value.genDiffVariant as string | undefined,
+    genDiffStage: value.genDiffStage as string | undefined,
+    genDiffColors: value.genDiffColors as string | undefined,
+    genDiffSlot: value.genDiffSlot as number | undefined,
+    genDiffSteps: value.genDiffSteps as number[] | undefined,
+  });
   return {
     event: value.event,
     // Early Mobile builds offered a wider timing range than Web. Normalize at
@@ -456,6 +482,7 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
       : DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS.bldMemo,
     scrambleClickAction: normalizeTimerScrambleClickAction(value.scrambleClickAction),
     ...scramblePreview,
+    ...randomDifficulty,
     ...wcaSource,
     language: value.language,
     theme: value.theme,
@@ -607,6 +634,7 @@ export function createTimerStoreData(
       scramble222Mode: DEFAULT_SCRAMBLE_222_MODE,
       scramble222Type: DEFAULT_SCRAMBLE_222_TYPE,
       ...DEFAULT_TIMER_BY_STEPS_SETTINGS,
+      ...DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
       ...DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
       manualScrambles: '',
       statsRollingColumns: [...DEFAULT_ROLLING_STAT_COLUMNS],

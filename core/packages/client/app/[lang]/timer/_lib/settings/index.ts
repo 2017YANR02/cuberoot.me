@@ -9,6 +9,7 @@
 import {
   DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
   DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
+  DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
   DEFAULT_ROUND_CONFIG,
   DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
   DEFAULT_TIMER_TIMING_SETTINGS,
@@ -21,6 +22,7 @@ import {
   type TimerScramblePreviewSettings,
   type TimerTimingSettings,
   type TimerAttemptSplitOptions,
+  type TimerRandomDifficultySettings,
 } from '@cuberoot/shared/timer';
 import { useSyncExternalStore } from 'react';
 import { persistItem } from '@/lib/safe-storage';
@@ -39,7 +41,8 @@ export type TimerFontId = 'lcd' | 'mono' | 'liberation' | 'sans';
 export interface TimerSettings extends
   TimerTimingSettings,
   TimerAttemptSplitOptions,
-  TimerScramblePreviewSettings {
+  TimerScramblePreviewSettings,
+  TimerRandomDifficultySettings {
   /** Play start/stop/8s/12s sounds via Web Audio. */
   soundsEnabled: boolean;
   /** 0..1 master volume. */
@@ -124,17 +127,6 @@ export interface TimerSettings extends
    *  难度 tab 的合并口径一致 —— 那里的直方图是全族计数,分项目查会「图上有、这里查无」(稀有档
    *  尤其明显:BG 十字 8 步全库仅 1 条,还落在 333bf 决赛)。关掉 = 只用当前项目的真题。 */
   wcaDiffMerged: boolean;
-
-  /** 随机状态来源的「难度」(3×3 族):不是过滤,而是**直接按所选阶段的最优步数生成状态** ——
-   *  真题源筛不到的稀有档(六色十字 0 步、10 步 XCross)这里也出得来。方法/阶段/底色子集/步数区间
-   *  与真题难度筛同口径(lib/scramble-variants),多一个 F2L 槽位维度(or18 训练器的口径:定色 + 定槽)。
-   *  genDiffSlot = 槽位序号,-1 = 四槽取最优。引擎见 lib/cross-trainer。 */
-  genDiffOn: boolean;
-  genDiffVariant: string;
-  genDiffStage: string;
-  genDiffColors: string;
-  genDiffSlot: number;
-  genDiffSteps: number[];
 
   /** "按步数" scramble filter for 2×2 (face/layer/cube-HTM/QTM) and pyraminx (V / cube-HTM). Works under
    *  both sources: random = uniform full-space sampling + reject; WCA = filter real scrambles by the metric.
@@ -336,12 +328,7 @@ export const DEFAULTS: TimerSettings = {
   genByStepsOn: false,
   genStepsMetric: 'face',
   genSteps: [],
-  genDiffOn: false,
-  genDiffVariant: 'std',
-  genDiffStage: 'cross',
-  genDiffColors: 'BGORWY',
-  genDiffSlot: -1,
-  genDiffSteps: [],
+  ...DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
   autoMarkWcaScramble: true,
   scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
   scrambleClickMigrated: false,
