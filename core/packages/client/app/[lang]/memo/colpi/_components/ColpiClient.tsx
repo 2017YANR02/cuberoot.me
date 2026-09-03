@@ -22,7 +22,7 @@ import WcaAuth from '@/components/WcaAuth';
 import { Flag } from '@/components/Flag';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { persistItem } from '@/lib/safe-storage';
-import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import {
   fetchWords, fetchRecent, submitWord, patchWord, deleteWord, setVote, clearVote,
@@ -104,7 +104,7 @@ export default function ColpiClient() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const user = useAuthStore(s => s.user);
-  const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = hasAdminAccess(user);
   // 所有权键(与服务端一致):非 WCA 账号也能认出自己提交的词。admin 判定仍用真实 wcaId。
   const myKey = user ? computeOwnerKey(user.uid, user.wcaId) : '';
   const router = useRouter();

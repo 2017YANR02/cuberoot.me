@@ -50,6 +50,13 @@ export interface Membership {
   source: string;
   contact?: string;
   contactKind?: string;
+  profileIntro?: string;
+  profileImageIds?: number[];
+}
+
+export interface PublicMemberProfile {
+  intro: string;
+  imageIds: number[];
 }
 
 // 到期提醒阈值:到期前 N 天起视为「即将到期」。
@@ -129,6 +136,27 @@ export async function listPlans(): Promise<{ plans: MembershipPlan[]; payEnabled
 
 export async function getMyMembership(): Promise<{ membership: Membership | null; isMember?: boolean }> {
   return handleApi(await fetch(`${BASE}/me`, { headers: authHeaders(false) }));
+}
+
+export async function getPublicMemberProfile(wcaId: string): Promise<PublicMemberProfile | null> {
+  const result = await handleApi<{ profile: Partial<PublicMemberProfile> | null }>(
+    await fetch(`${BASE}/profile/${encodeURIComponent(wcaId)}`),
+  );
+  return result.profile ? {
+    intro: typeof result.profile.intro === 'string' ? result.profile.intro : '',
+    imageIds: Array.isArray(result.profile.imageIds) ? result.profile.imageIds : [],
+  } : null;
+}
+
+export async function setMyProfileIntro(intro: string, imageIds: number[]): Promise<{
+  profileIntro: string | null;
+  profileImageIds: number[];
+}> {
+  return handleApi(await fetch(`${BASE}/me/profile`, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify({ intro, imageIds }),
+  }));
 }
 
 export async function setMyContact(body: { contact: string | null; contactKind: string | null; note?: string | null }): Promise<{ membership: Membership }> {

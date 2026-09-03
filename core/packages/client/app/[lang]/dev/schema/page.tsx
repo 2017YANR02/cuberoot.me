@@ -159,7 +159,7 @@ const TABLES: Table[] = [
   { name: 'wca_users', domain: 'comp', origin: 'snapshot', purpose: { zh: 'WCA OAuth 登录用户(身份 / 头像 / admin)', en: 'WCA OAuth users (identity, avatar, admin flag)' } },
 
   // ── accounts & auth ────────────────────────────────────
-  { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172, 186, 194], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
+  { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172, 186, 194, 200, 201], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
   { name: 'account_last_devices', domain: 'account', origin: '0199', purpose: { zh: '每个账号最近使用设备的粗粒度类型、系统、浏览器和时间；不保存原始 User-Agent、IP 或设备指纹', en: 'Coarse latest-device type, OS, browser, and time per account; raw User-Agent, IP, and device fingerprints are not stored' } },
   { name: 'user_friendships', domain: 'account', origin: '0175', purpose: { zh: '好友申请与已接受的双向好友关系；每对账号只保留一条规范记录', en: 'Pending requests and accepted two-way friendships, with one canonical row per account pair' } },
   { name: 'user_blocks', domain: 'account', origin: '0175', purpose: { zh: '单向黑名单；拉黑时同步切断好友关系与待处理申请', en: 'Directed blocks; blocking also removes friendships and pending requests' } },
@@ -691,6 +691,8 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 197, slug: 'battle_room_video_generation', desc: { zh: '为自托管 LiveKit 增加房间媒体 generation；踢人或离开时轮换，使旧 token 只能回到隔离的旧媒体房。', en: 'Add a media-room generation for self-hosted LiveKit; rotate it on kick or leave so old tokens can only rejoin an isolated media room.' } },
   { n: 198, slug: 'battle_room_round_roster', desc: { zh: '同步起表时冻结本轮参赛者名单，避免离线回归或中途加入者未经准备自动起表、卡住结算。', en: 'Freeze synchronized-round participants so reconnecting or mid-round players neither auto-start unprepared nor block settlement.' } },
   { n: 199, slug: 'account_last_devices', desc: { zh: '记录账号最近使用设备的粗粒度类型、系统、浏览器和时间，不保存原始 User-Agent 或设备指纹。', en: 'Record coarse latest-device type, OS, browser, and time without retaining raw User-Agent or a device fingerprint.' } },
+  { n: 200, slug: 'app_user_admin_role', desc: { zh: 'app_users 增加可撤销的管理员角色；站主账号保留不可移除的权限兜底。', en: 'Add a revocable administrator role to app_users while keeping the site owner as an immutable access fallback.' } },
+  { n: 201, slug: 'public_member_profiles', desc: { zh: '账号增加公开个人介绍和图片；仅有效会员可编辑并在 WCA 人物页展示。', en: 'Add public profile text and images to accounts, editable and visible on WCA person pages only while membership is active.' } },
   { n: 202, slug: 'qr_card_designs', desc: { zh: '按二维码追加保存可打印卡片设计版本，保留每次管理员修改的快照。', en: 'Append versioned printable card-design snapshots for each QR code and retain every administrator update.' } },
   { n: 203, slug: 'qr_landing_content', desc: { zh: '二维码补回内部备注、独立的跳转/落地页类型与严格链接列表；简介和术语继续读取最新卡片设计。', en: 'Restore internal QR labels, independent redirect/landing types, and strict link lists while projecting intro and term from the latest card design.' } },
   { n: 204, slug: 'qr_card_account_deletion', desc: { zh: '保留二维码卡片版本历史，账号注销时将创建者身份替换为墓碑键。', en: 'Keep QR card design history while replacing its creator identity with a tombstone when an account is deleted.' } },

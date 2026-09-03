@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Check, Copy, Database, Hammer, UploadCloud, Archive, ChevronDown, Terminal, Sparkles, Plus, Pencil, Trash2, X } from 'lucide-react';
-import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
 import { createCommand, updateCommand, deleteCommand, listCommands, type OpsCommandInput } from '@/lib/ops-api';
 import './ops.css';
 import { tr } from '@/i18n/tr';
@@ -176,7 +176,7 @@ export default function OpsPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const user = useAuthStore((s) => s.user);
-  const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = hasAdminAccess(user);
   const [filter, setFilter] = useState<CategoryId | 'all'>('all');
   const [commands, setCommands] = useState<OpCommand[] | null>(null);
   const [err, setErr] = useState<string | null>(null);

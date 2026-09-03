@@ -14,7 +14,7 @@ import {
   rowToJson, jsonToRow, validateRow,
   requireAuth, requireAdmin, optionalAuth, checkRateLimit,
   visibilityDiscoverFilter, visibilityOwnerFilter,
-  buildInsert, buildUpdate, buildDuplicateQuery, DUP_REASONS, ADMIN_WCA_IDS,
+  buildInsert, buildUpdate, buildDuplicateQuery, DUP_REASONS,
 } from '../utils/recon_helpers.js';
 import {
   checkReconRowCompletion,
@@ -130,7 +130,7 @@ async function privateReconForbidden(c: Context, reconId: string | number): Prom
   );
   if (rows[0]?.visibility !== 'private') return false;
   const me = await optionalAuth(c);
-  return !(me && (me.wcaId === rows[0].added_by_id || ADMIN_WCA_IDS.includes(me.wcaId)));
+  return !(me && (me.wcaId === rows[0].added_by_id || me.isAdmin));
 }
 
 // ==================== GET /v1/recon/list ====================
@@ -518,7 +518,7 @@ reconRoutes.put('/recon/comments/:id', async (c) => {
   if (target.length === 0) {
     return c.json({ error: 'Comment not found' }, 404);
   }
-  if (!ADMIN_WCA_IDS.includes(authUser.wcaId) && target[0].author_id !== authUser.wcaId) {
+  if (!authUser.isAdmin && target[0].author_id !== authUser.wcaId) {
     return c.json({ error: 'Cannot edit others comment' }, 403);
   }
 
@@ -538,7 +538,7 @@ reconRoutes.delete('/recon/comments/:id', async (c) => {
   if (target.length === 0) {
     return c.json({ error: 'Comment not found' }, 404);
   }
-  if (!ADMIN_WCA_IDS.includes(authUser.wcaId) && target[0].author_id !== authUser.wcaId) {
+  if (!authUser.isAdmin && target[0].author_id !== authUser.wcaId) {
     return c.json({ error: 'Cannot delete others comment' }, 403);
   }
 
@@ -552,7 +552,7 @@ reconRoutes.put('/recon/comments/:id/pin', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
-  if (!ADMIN_WCA_IDS.includes(authUser.wcaId)) {
+  if (!authUser.isAdmin) {
     return c.json({ error: 'Admin only' }, 403);
   }
   const id = c.req.param('id');
@@ -1149,7 +1149,7 @@ reconRoutes.get('/recon/:id', async (c) => {
   if (raw.visibility === 'private') {
     c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
     const me = await optionalAuth(c);
-    const isOwner = !!me && (me.wcaId === raw.added_by_id || ADMIN_WCA_IDS.includes(me.wcaId));
+    const isOwner = !!me && (me.wcaId === raw.added_by_id || me.isAdmin);
     if (!isOwner) {
       return c.json({ error: 'This reconstruction is private', private: true }, 403);
     }
@@ -1239,7 +1239,7 @@ reconRoutes.put('/recon/:id', async (c) => {
   if (existing.length === 0) {
     return c.json({ error: 'Not found' }, 404);
   }
-  if (!ADMIN_WCA_IDS.includes(authUser.wcaId)) {
+  if (!authUser.isAdmin) {
     if ((existing[0].added_by_id ?? '') !== authUser.wcaId) {
       return c.json({ error: 'Cannot edit others recon' }, 403);
     }
@@ -1306,7 +1306,7 @@ reconRoutes.delete('/recon/:id', async (c) => {
   if (existing.length === 0) {
     return c.json({ error: 'Not found' }, 404);
   }
-  if (!ADMIN_WCA_IDS.includes(authUser.wcaId)) {
+  if (!authUser.isAdmin) {
     if ((existing[0].added_by_id ?? '') !== authUser.wcaId) {
       return c.json({ error: 'Cannot delete others recon' }, 403);
     }
@@ -1411,7 +1411,7 @@ reconRoutes.put('/recon/:id/alternatives/:idx', async (c) => {
   if (!Number.isInteger(idx) || idx < 0 || idx >= alts.length) {
     return c.json({ error: 'Invalid alternative index' }, 400);
   }
-  if (!ADMIN_WCA_IDS.includes(authUser.wcaId) && alts[idx].addedById !== authUser.wcaId) {
+  if (!authUser.isAdmin && alts[idx].addedById !== authUser.wcaId) {
     return c.json({ error: 'Cannot edit others alternative' }, 403);
   }
 
@@ -1433,7 +1433,7 @@ reconRoutes.delete('/recon/:id/alternatives/:idx', async (c) => {
   if (!Number.isInteger(idx) || idx < 0 || idx >= alts.length) {
     return c.json({ error: 'Invalid alternative index' }, 400);
   }
-  if (!ADMIN_WCA_IDS.includes(authUser.wcaId) && alts[idx].addedById !== authUser.wcaId) {
+  if (!authUser.isAdmin && alts[idx].addedById !== authUser.wcaId) {
     return c.json({ error: 'Cannot delete others alternative' }, 403);
   }
 

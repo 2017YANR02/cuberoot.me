@@ -11,6 +11,7 @@ import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { isClawdAvatarPreset } from '@cuberoot/shared/account-avatar';
 import type { AccountBasicProfile } from '@cuberoot/shared/account';
+import { isAdminWcaId } from '@cuberoot/shared/admin';
 import {
   isMobileAuthCodeChallenge,
   webSessionError,
@@ -829,6 +830,7 @@ interface AdminUserListRow {
   display_name: string;
   avatar_url: string | null;
   wca_id: string | null;
+  is_admin: boolean;
   birth_date: string | null;
   gender: string | null;
   country_iso2: string | null;
@@ -1015,8 +1017,9 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
     ),
     query<{ count: number | string }>(`SELECT COUNT(*) AS count FROM app_users u ${where}`, params),
     query<AdminUserListRow>(`SELECT
-      u.id, u.display_name, u.avatar_url, u.wca_id, u.birth_date, u.gender,
-      u.country_iso2, u.region_code, u.city_name, u.created_at, u.updated_at,
+      u.id, u.display_name, u.avatar_url, u.wca_id, u.is_admin, u.birth_date, u.gender,
+      COALESCE(u.country_iso2, wca_country.iso2) AS country_iso2,
+      u.region_code, u.city_name, u.created_at, u.updated_at,
       u.password_updated_at, (u.password_hash IS NOT NULL) AS has_password, u.email_notify, u.lang,
       device.device_type, device.os_family AS device_os_family, device.os_major AS device_os_major,
       device.browser_family AS device_browser_family, device.browser_major AS device_browser_major,
@@ -1031,10 +1034,12 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
         '[]'::json
       ) AS identities
     FROM app_users u
+    LEFT JOIN wca_persons wca_person ON wca_person.wca_id = u.wca_id
+    LEFT JOIN wca_countries wca_country ON wca_country.id = wca_person.country_id
     LEFT JOIN auth_identities identity ON identity.user_id = u.id
     LEFT JOIN account_last_devices device ON device.user_id = u.id
     ${where}
-    GROUP BY u.id, device.user_id
+    GROUP BY u.id, device.user_id, wca_country.iso2
     ORDER BY ${orderColumn} ${orderDirection}, u.id ${orderDirection}
     LIMIT ? OFFSET ?`, [...params, rawPageSize, offset]),
   ]);
@@ -1081,6 +1086,8 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
       displayName: row.display_name,
       avatarUrl: row.avatar_url,
       wcaId: row.wca_id,
+      isAdmin: row.is_admin || isAdminWcaId(row.wca_id),
+      isRootAdmin: isAdminWcaId(row.wca_id),
       birthDate: row.birth_date,
       gender: row.gender,
       countryIso2: row.country_iso2,
@@ -1108,6 +1115,43 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
       pageSize: rawPageSize,
       total: Number(countRows[0]?.count ?? 0),
     },
+  });
+});
+
+/** 设置或取消注册用户的管理员角色。站主账号是不可移除的权限兜底。 */
+accountAuthRoutes.patch('/auth/admin/users/:userId/admin', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  await requireAdmin(c);
+
+  const userId = Number(c.req.param('userId'));
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    return c.json({ error: 'invalid user id' }, 400);
+  }
+  const body = await c.req.json<{ isAdmin?: unknown }>().catch((): { isAdmin?: unknown } => ({}));
+  if (typeof body.isAdmin !== 'boolean') {
+    return c.json({ error: 'isAdmin must be a boolean' }, 400);
+  }
+
+  const targets = await query<{ wca_id: string | null; is_admin: boolean }>(
+    'SELECT wca_id, is_admin FROM app_users WHERE id = ?',
+    [userId],
+  );
+  const target = targets[0];
+  if (!target) return c.json({ error: 'account not found' }, 404);
+
+  const isRootAdmin = isAdminWcaId(target.wca_id);
+  if (isRootAdmin && !body.isAdmin) {
+    return c.json({ error: 'root administrator cannot be removed' }, 409);
+  }
+  if (!isRootAdmin && target.is_admin !== body.isAdmin) {
+    await query('UPDATE app_users SET is_admin = ? WHERE id = ?', [body.isAdmin, userId]);
+  }
+
+  return c.json({
+    ok: true,
+    isAdmin: isRootAdmin || body.isAdmin,
+    isRootAdmin,
   });
 });
 

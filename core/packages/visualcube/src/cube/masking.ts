@@ -136,12 +136,12 @@ const stringMasksBySize: { [cubeSize: number]: { [masking: string]: string } } =
 
 const maskingFunctions: MaskingFunctions = {
   [Masking.FL]: {
-    [Face.U]: (row, col, cubeSize) => false,
+    [Face.U]: (row, col, cubeSize) => row > 0 && row < cubeSize - 1 && col > 0 && col < cubeSize - 1,
     [Face.D]: (row, col, cubeSize) => true,
-    [Face.R]: (row, col, cubeSize) => row == cubeSize - 1,
-    [Face.L]: (row, col, cubeSize) => row == cubeSize - 1,
-    [Face.F]: (row, col, cubeSize) => row == cubeSize - 1,
-    [Face.B]: (row, col, cubeSize) => row == cubeSize - 1,
+    [Face.R]: (row, col, cubeSize) => row == cubeSize - 1 || (row > 0 && row < cubeSize - 1 && col > 0 && col < cubeSize - 1),
+    [Face.L]: (row, col, cubeSize) => row == cubeSize - 1 || (row > 0 && row < cubeSize - 1 && col > 0 && col < cubeSize - 1),
+    [Face.F]: (row, col, cubeSize) => row == cubeSize - 1 || (row > 0 && row < cubeSize - 1 && col > 0 && col < cubeSize - 1),
+    [Face.B]: (row, col, cubeSize) => row == cubeSize - 1 || (row > 0 && row < cubeSize - 1 && col > 0 && col < cubeSize - 1),
   },
   [Masking.F2L]: {
     [Face.U]: (row, col, cubeSize) => false,

@@ -5,6 +5,7 @@ import { squareFamilySlotPolygon } from '@/app/[lang]/sim/engine/squareFamily/sq
 import {
   SQUARE_FAMILY_SPECS,
   applySquareFamilyMove,
+  formatSquareFamilyAlg,
   invertSquareFamilyMoves,
   normalizeSquareUnits,
   parseSquareFamilyMoves,
@@ -91,9 +92,26 @@ describe.each(KINDS)('%s equal-sector state', (kind) => {
     expect(parseSquareFamilyMoves(squareFamilyMovesToString(parsed), spec)).toEqual(parsed);
   });
 
-  it('requires explicit tuples and rejects the whole malformed input', () => {
+  it('rejects the whole malformed input and keeps Square-4 tuples explicit', () => {
     const half = spec.slotsPerLayer / 2;
-    expect(tryParseSquareFamilyMoves(`${half}`, spec)).toBeNull();
+    if (kind === 'sq2') {
+      expect(tryParseSquareFamilyMoves('43/6/-3-2/', spec)).toEqual([
+        { kind: 'turn', top: 4, bot: 3 },
+        { kind: 'slice' },
+        { kind: 'turn', top: 6, bot: 0 },
+        { kind: 'slice' },
+        { kind: 'turn', top: -3, bot: -2 },
+        { kind: 'slice' },
+      ]);
+      expect(formatSquareFamilyAlg('(4,3)/(6,0)/(-3,-2)/', spec, 'compact'))
+        .toBe('43/6/-3-2/');
+      expect(formatSquareFamilyAlg('43/6/-3-2/', spec, 'wca'))
+        .toBe('(4, 3) / (6, 0) / (-3, -2) /');
+    } else {
+      expect(tryParseSquareFamilyMoves(`${half}`, spec)).toBeNull();
+      expect(formatSquareFamilyAlg('(10,3)/(0,-9)/', spec, 'compact'))
+        .toBe('(10,3)/(0,-9)/');
+    }
     expect(tryParseSquareFamilyMoves(`(${half})`, spec)).toBeNull();
     expect(tryParseSquareFamilyMoves('(1,0) typo /', spec)).toBeNull();
     expect(parseSquareFamilyMoves('(1,0) typo /', spec)).toEqual([]);

@@ -204,7 +204,7 @@ documentRoutes.post('/documents/import', async (c) => {
   if (caller.wcaId === '__api_key__') {
     const ownerKey = typeof form.ownerKey === 'string' ? form.ownerKey.trim() : '';
     if (!ADMIN_WCA_IDS.includes(ownerKey)) return c.json({ error: 'Valid admin ownerKey is required' }, 400);
-    owner = { wcaId: ownerKey, name: ownerKey };
+    owner = { wcaId: ownerKey, name: ownerKey, isAdmin: true };
   }
 
   const converted = await mammoth.convertToHtml({ buffer: Buffer.from(await file.arrayBuffer()) });

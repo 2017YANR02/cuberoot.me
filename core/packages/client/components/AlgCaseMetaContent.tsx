@@ -28,6 +28,7 @@ import {
 } from '@/lib/trainer-scramble';
 import { ALG_TAG_LABEL } from '@/lib/alg_tags';
 import { primaryCaseName } from '@/lib/alg_case_display';
+import { sanitizeAlgHtml } from '@/lib/alg_html';
 import {
   caseViewAlg,
   caseViewSetup,
@@ -50,10 +51,11 @@ const METRIC_LABEL: Record<string, string> = {
 
 /** 一行「标签 + 可复制的公式」(`len` 给了就在右边挂步数徽章)。 */
 function AlgLine({
-  label, alg, len, playable = false, selected = false, onPlay, preferred = false, onPreferredToggle,
+  label, alg, algHtml, len, playable = false, selected = false, onPlay, preferred = false, onPreferredToggle,
 }: {
   label: string;
   alg: string;
+  algHtml?: string;
   len?: number;
   playable?: boolean;
   selected?: boolean;
@@ -78,7 +80,11 @@ function AlgLine({
       title={playable ? tr({ zh: '播放动画', en: 'Play animation' }) : undefined}
     >
       {label && <span className="alg-meta-algline-label">{label}</span>}
-      <code className="alg-meta-algline-code">{alg}</code>
+      <code className="alg-meta-algline-code">
+        {algHtml
+          ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
+          : alg}
+      </code>
       {len != null && <span className="alg-meta-algline-len" title="STM">{len}</span>}
       {onPreferredToggle && (
         <button
@@ -470,6 +476,7 @@ export default function AlgCaseMetaContent({
                     key={rowKey}
                     label={label}
                     alg={a.text}
+                    algHtml={viewAngle === 'default' && puzzle !== 'sq1' ? a.entry.algHtml : undefined}
                     len={a.len}
                     preferred={isPreferred}
                     onPreferredToggle={togglePreferred}
@@ -482,6 +489,7 @@ export default function AlgCaseMetaContent({
                   <AlgLine
                     label={label}
                     alg={a.text}
+                    algHtml={viewAngle === 'default' && puzzle !== 'sq1' ? a.entry.algHtml : undefined}
                     len={a.len}
                     preferred={isPreferred}
                     onPreferredToggle={togglePreferred}

@@ -35,6 +35,7 @@ describe('account public user fixture', () => {
       avatar: '',
       avatarSource: 'auto',
       avatarPreset: null,
+      isAdmin: false,
     });
     expect(decodeWebSessionUser(user)).toEqual(user);
   });

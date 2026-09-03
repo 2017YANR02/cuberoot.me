@@ -12,7 +12,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import i18n from '@/i18n/i18n-client';
-import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
 import { useAlgSubmissionUnread, refreshAlgSubmissionUnread } from '@/lib/alg-submission-unread';
 import { useNotificationsUnread, refreshNotificationsUnread } from '@/lib/notifications-unread';
@@ -326,7 +326,7 @@ export default function DeskPet() {
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
   const fbUnread = useFeedbackUnread();
-  const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = hasAdminAccess(user);
   const algUnread = useAlgSubmissionUnread();
   const ntfUnread = useNotificationsUnread();
   const [submPanelOpen, setSubmPanelOpen] = useState(false);

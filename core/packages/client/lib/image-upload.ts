@@ -12,6 +12,10 @@ export interface PreparedImageUpload {
   previewUrl: string;
 }
 
+export function uploadedImageUrl(id: number): string {
+  return apiUrl(`/v1/article/img/${id}`);
+}
+
 export async function prepareImageUpload(file: File, maxDimension = 1920): Promise<PreparedImageUpload> {
   if (!/^image\/(png|jpeg|webp)$/.test(file.type)) throw new Error('unsupported_image_type');
   const bitmap = await createImageBitmap(file);

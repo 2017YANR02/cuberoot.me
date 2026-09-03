@@ -92,16 +92,19 @@ export function faceShowingColor(shown: Record<CubeFace, CubeFace>, color: CubeF
   return color;
 }
 
-/** 把标准 D 面转到指定底色所在面；Cross 等只关心底面、不关心前面。 */
+/** 让固定的 D 几何面显示指定底色；Cross 等只关心底色、不关心前面。 */
 export function orientationForBottomFace(face: CubeFace): string {
-  return CUBE_ORIENTATIONS.find(({ value }) => faceShowingColor(orientedFaceColors(value), 'D') === face)?.value ?? '';
+  return CUBE_ORIENTATIONS.find(({ value }) => orientedFaceColors(value).D === face)?.value ?? '';
 }
 
 /** 朝向对应的六面实色。给 3D 渲染器做实例级覆写，不改 `/sim` 的全局用户配色。 */
-export function orientedCubeFaceColors(prefix: string): Record<CubeFace, string> {
+export function orientedCubeFaceColors(
+  prefix: string,
+  faceColors: Record<CubeFace, string> = CUBE_FILL,
+): Record<CubeFace, string> {
   const shown = orientedFaceColors(prefix);
   return Object.fromEntries(
-    (Object.keys(shown) as CubeFace[]).map(face => [face, CUBE_FILL[shown[face]]]),
+    (Object.keys(shown) as CubeFace[]).map(face => [face, faceColors[shown[face]]]),
   ) as Record<CubeFace, string>;
 }
 

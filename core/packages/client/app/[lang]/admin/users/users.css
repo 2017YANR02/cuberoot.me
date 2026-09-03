@@ -24,10 +24,6 @@
 .admin-users-activity-heading p { margin: 7px 0 0; color: var(--muted-foreground); font-size: .8rem; }
 .admin-users-activity-heading > span { color: var(--faint-foreground); font-size: .72rem; white-space: nowrap; }
 .admin-users-range-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 18px; margin-top: 18px; }
-.admin-users-presets { display: flex; align-items: center; gap: 4px; }
-.admin-users-presets button { min-height: 32px; padding: 5px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--muted-foreground); font: inherit; font-size: .76rem; cursor: pointer; white-space: nowrap; }
-.admin-users-presets button:hover { color: var(--foreground); background: var(--muted); }
-.admin-users-presets button.is-active { color: var(--accent); background: var(--accent-soft); font-weight: 600; }
 .admin-users-chart-block { margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--border-default); }
 .admin-users-chart-title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 15px; }
 .admin-users-chart-title h3 { margin: 0; font-size: .9rem; }
@@ -72,6 +68,9 @@
 .admin-users-details dt { color: var(--muted-foreground); }
 .admin-users-details dd { margin: 0; overflow-wrap: anywhere; }
 .admin-users-table time { white-space: nowrap; }
+.admin-users-role { display: grid; gap: 6px; min-width: max-content; }
+.admin-users-role > span { font-weight: 500; white-space: nowrap; }
+.admin-users-role-button { width: fit-content; min-height: 30px; padding: 5px 8px; white-space: nowrap; }
 .admin-users-empty { padding: 28px 10px; color: var(--muted-foreground); text-align: center; }
 .admin-users-pagination { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
 .admin-users-page-button { display: inline-flex; align-items: center; gap: 3px; }
@@ -92,7 +91,6 @@
   .admin-users-activity-heading { align-items: flex-start; }
   .admin-users-activity-heading > span { display: none; }
   .admin-users-range-toolbar { align-items: flex-start; }
-  .admin-users-presets { width: 100%; overflow-x: auto; padding-bottom: 2px; }
   .admin-users-chart-block { margin-top: 24px; padding-top: 18px; }
   .admin-users-search { width: 100%; }
   .admin-users-table-hint { display: block; }

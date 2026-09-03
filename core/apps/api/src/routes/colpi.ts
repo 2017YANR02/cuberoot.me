@@ -13,7 +13,7 @@ import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
-  ADMIN_WCA_IDS, requireAuth, authenticateUser, checkRateLimit,
+  requireAuth, authenticateUser, checkRateLimit,
 } from '../utils/recon_helpers.js';
 
 export const colpiRoutes = new Hono();
@@ -227,7 +227,7 @@ colpiRoutes.patch('/colpi/words/:id', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   const user = await requireAuth(c);
-  const isAdmin = ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = user.isAdmin;
 
   const id = Number(c.req.param('id'));
   if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
@@ -309,7 +309,7 @@ colpiRoutes.delete('/colpi/words/:id', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   const user = await requireAuth(c);
-  const isAdmin = ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = user.isAdmin;
 
   const id = Number(c.req.param('id'));
   if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);

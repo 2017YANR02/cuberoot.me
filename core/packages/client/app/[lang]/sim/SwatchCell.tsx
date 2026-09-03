@@ -1,16 +1,20 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pipette } from 'lucide-react';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
 
 /** 模拟器共用色块下拉:trigger 显当前色,面板列出色块选项。 */
 export function SwatchPopup({
-  trigger, title, children,
+  trigger, title, children, className,
 }: {
   trigger: ReactNode;
   title: string;
   children: (close: () => void) => ReactNode;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  usePanelClamp(open, panelRef);
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: PointerEvent) => {
@@ -20,7 +24,7 @@ export function SwatchPopup({
     return () => document.removeEventListener('pointerdown', onDoc);
   }, [open]);
   return (
-    <div className="sim-color-select" ref={ref}>
+    <div className={`sim-color-select${className ? ` ${className}` : ''}`} ref={ref}>
       <button
         type="button"
         className="sim-color-select-trigger"
@@ -31,7 +35,7 @@ export function SwatchPopup({
       >
         {trigger}
       </button>
-      {open && <div className="sim-color-select-panel">{children(() => setOpen(false))}</div>}
+      {open && <div ref={panelRef} className="sim-color-select-panel">{children(() => setOpen(false))}</div>}
     </div>
   );
 }

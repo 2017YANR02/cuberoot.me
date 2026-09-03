@@ -60,6 +60,8 @@ export interface WebSessionUser {
   avatar: string;
   avatarSource: AvatarSource;
   avatarPreset: ClawdAvatarPresetId | null;
+  /** Effective site administrator access. Older stored sessions default to false. */
+  isAdmin: boolean;
 }
 
 export interface WebSession {
@@ -234,6 +236,7 @@ export function decodeWebSessionUser(value: unknown): WebSessionUser | null {
   if (typeof user.avatar !== 'string' || user.avatar.length > MAX_AVATAR_LENGTH) return null;
   const avatarSource = user.avatarSource === undefined ? 'auto' : user.avatarSource;
   const avatarPreset = user.avatarPreset === undefined ? null : user.avatarPreset;
+  if (user.isAdmin !== undefined && typeof user.isAdmin !== 'boolean') return null;
   if (!isAvatarSource(avatarSource)) return null;
   if (avatarSource === 'clawd') {
     if (!isClawdAvatarPreset(avatarPreset)) return null;
@@ -256,6 +259,7 @@ export function decodeWebSessionUser(value: unknown): WebSessionUser | null {
     avatar: user.avatar,
     avatarSource,
     avatarPreset,
+    isAdmin: user.isAdmin === true,
   };
 }
 

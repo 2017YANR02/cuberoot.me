@@ -11,6 +11,7 @@ import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import type { AvatarSource, ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
 import {
   decodeWebSession,
+  decodeWebSessionUserEnvelope,
   type WebSessionUser,
 } from '@cuberoot/shared/auth/web-session';
 import { apiUrl } from './api-base';
@@ -30,6 +31,8 @@ export interface WcaUser {
   country: string;
   /** 内部账号 id(邮箱/手机账号必有;老的纯 WCA 会话可能没有,续签后补上)。 */
   uid?: number;
+  /** 服务端账号角色；站主 WCA ID 仍由共享兜底名单保证。 */
+  isAdmin: boolean;
 }
 
 interface AuthState {
@@ -69,6 +72,7 @@ function readUser(): WcaUser | null {
       avatar: resolveAccountAvatar(user.avatar, avatarPreset, avatarSource).src,
       avatarSource,
       avatarPreset,
+      isAdmin: user.isAdmin === true,
     };
   } catch {
     return null;
@@ -182,6 +186,7 @@ export function applySession(
     avatarPreset: user.avatarPreset,
     country: '',
     uid: user.uid,
+    isAdmin: user.isAdmin,
   };
   const serializedUser = JSON.stringify(wu);
 
@@ -302,7 +307,7 @@ export function getOwnerKey(): string {
 }
 
 export function isAdmin(): boolean {
-  return isAdminWcaId(useAuthStore.getState().user?.wcaId);
+  return hasAdminAccess(useAuthStore.getState().user);
 }
 
 // ── Hydration-safe 读取 ──
@@ -317,8 +322,33 @@ export function useAuthUser(): WcaUser | null {
   return hydrated ? user : null;
 }
 
+export function hasAdminAccess(user: Pick<WcaUser, 'wcaId' | 'isAdmin'> | null | undefined): boolean {
+  return !!user && (user.isAdmin || isAdminWcaId(user.wcaId));
+}
+
 export function useIsAdmin(): boolean {
-  return isAdminWcaId(useAuthUser()?.wcaId);
+  return hasAdminAccess(useAuthUser());
+}
+
+/**
+ * 用现有 JWT 拉取账号最新态。管理员升降级不改 JWT，因此刷新页面即可同步角色，
+ * 不要求用户退出再登录；失败时保留当前会话。
+ */
+export async function refreshSessionUser(): Promise<void> {
+  if (typeof window === 'undefined') return;
+  const token = localStorage.getItem(JWT_KEY);
+  if (!token) return;
+  try {
+    const response = await fetch(apiUrl('/v1/auth/me'), {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    });
+    if (!response.ok) return;
+    const envelope = decodeWebSessionUserEnvelope(await response.json());
+    if (envelope) applySession(token, envelope.user);
+  } catch {
+    // 网络或后端暂不可用：保留已有登录态，下次页面加载再同步。
+  }
 }
 
 /** Hydration-safe 版 getOwnerKey(SSG 页按登录态分叉渲染必用,理由同 useAuthUser)。 */

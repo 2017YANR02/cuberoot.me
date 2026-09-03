@@ -25,7 +25,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { apiUrl } from '@/lib/api-base';
 import { statsUrl } from '@/lib/stats-base';
 import { isAo5Bracketed, trimEmptyAttempts } from '@/lib/wca-ao5-brackets';
-import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
 import { fetchPb, prefetchPbs, type PbByEvent } from '@/lib/wca-pb';
 import { fetchCompInfo, fetchCubingZh, type CompInfo, type CubingZhMeta } from '@/lib/comp-wcif';
 import { loadNoScrambleIds } from '@/lib/comp-no-scrambles';
@@ -775,7 +775,7 @@ export default function CompDetailPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const user = useAuthStore(s => s.user);
-  const isAdmin = user !== null && ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = hasAdminAccess(user);
   const loggedIn = user !== null;          // 任何登录用户都能在成绩弹窗里展开「提议修改」。
   const meWcaId = user?.wcaId ?? null;      // 本人页面:罚时即时生效(其余仍待审核)。
   const login = useAuthStore(s => s.login);

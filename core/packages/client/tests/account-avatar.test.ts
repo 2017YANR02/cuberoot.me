@@ -37,6 +37,7 @@ describe('account avatar contract', () => {
       ...legacy,
       avatarSource: 'auto',
       avatarPreset: null,
+      isAdmin: false,
     });
     expect(decodeWebSessionUser({
       ...legacy,
@@ -53,5 +54,6 @@ describe('account avatar contract', () => {
       avatarSource: 'upload',
       avatarPreset: 'typing',
     })).toBeNull();
+    expect(decodeWebSessionUser({ ...legacy, isAdmin: 'yes' })).toBeNull();
   });
 });

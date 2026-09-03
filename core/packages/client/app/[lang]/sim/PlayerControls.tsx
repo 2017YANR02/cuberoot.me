@@ -47,7 +47,6 @@ import { parseSq1Scramble } from './engine/sq1/sq1State';
 import {
   SQUARE_FAMILY_SPECS,
   formatSquareFamilyAlg,
-  formatSquareFamilyMoves,
   invertSquareFamilyMoves,
   randomSquareFamilyScramble,
   simplifySquareFamilyAlg,
@@ -1076,15 +1075,24 @@ export default function PlayerControls({
   const authUser = useAuthStore((s) => s.user);
   const authLogin = useAuthStore((s) => s.login);
 
-  const [algDraft, setAlgDraft] = useState(alg);
-  const algStm = useMemo(() => (is3x3 ? stm(algDraft) : 0), [algDraft, is3x3]);
-  const [setupDraft, setSetupDraft] = useState(setup ?? '');
   const [squareFormats, setSquareFormats] = useState<Record<'sq1' | SquareFamilyKind, SquareFamilyNotationFormat>>({
     sq1: 'compact',
     sq2: 'compact',
     sq4: 'compact',
   });
   const squareFormat = squareFormats[squarePuzzleKind ?? 'sq1'];
+  const formatIncomingSquareText = useCallback((text: string): string => {
+    if (!text.trim() || !isSquarePuzzle) return text;
+    const convert = isSq1
+      ? squareFormat === 'wca' ? canonicalSq1Alg : compactSq1Alg
+      : squareFamilySpec
+        ? (value: string) => formatSquareFamilyAlg(value, squareFamilySpec, squareFormat)
+        : (value: string) => value;
+    return convertSquareText(text, convert);
+  }, [isSquarePuzzle, isSq1, squareFamilySpec, squareFormat]);
+  const [algDraft, setAlgDraft] = useState(() => formatIncomingSquareText(alg));
+  const algStm = useMemo(() => (is3x3 ? stm(algDraft) : 0), [algDraft, is3x3]);
+  const [setupDraft, setSetupDraft] = useState(() => formatIncomingSquareText(setup ?? ''));
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   // Caret char offset in the solution box while the user is navigating text (click
@@ -1205,13 +1213,13 @@ export default function PlayerControls({
 
   useEffect(() => {
     if (alg === pushedAlgRef.current || alg === replacedAlgRef.current) return;
-    setAlgDraft(alg);
-  }, [alg]);
+    setAlgDraft(formatIncomingSquareText(alg));
+  }, [alg, formatIncomingSquareText]);
   useEffect(() => {
     const s = setup ?? '';
     if (s === pushedSetupRef.current || s === replacedSetupRef.current) return;
-    setSetupDraft(s);
-  }, [setup]);
+    setSetupDraft(formatIncomingSquareText(s));
+  }, [setup, formatIncomingSquareText]);
 
   // Keep both textareas sized to their content. The onInput handlers only fire
   // on typing, so a value arriving via defaultValue (shared URL on first mount),
@@ -1831,8 +1839,9 @@ export default function PlayerControls({
     if (squareFamilySpec) {
       const parsed = tryParseSquareFamilyMoves(s, squareFamilySpec);
       if (!parsed) return s;
-      return formatSquareFamilyMoves(
-        invertSquareFamilyMoves(parsed, squareFamilySpec),
+      return formatSquareFamilyAlg(
+        squareFamilyMovesToString(invertSquareFamilyMoves(parsed, squareFamilySpec)),
+        squareFamilySpec,
         squareFormat,
       );
     }

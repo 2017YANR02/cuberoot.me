@@ -7,7 +7,6 @@ import type { Context } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
-  ADMIN_WCA_IDS,
   checkRateLimit,
   requireAdminOrApiKey,
   requireAuth,
@@ -429,7 +428,7 @@ async function requireDirectoryEditor(c: Context): Promise<{ user: WcaUser; admi
     return { user: await requireAdminOrApiKey(c), admin: true };
   }
   const user = await requireAuth(c);
-  return { user, admin: ADMIN_WCA_IDS.includes(user.wcaId) };
+  return { user, admin: user.isAdmin };
 }
 
 teacherDirectoryRoutes.get('/teachers', async (c) => {

@@ -23,7 +23,6 @@ import {
   requireAuth,
   requireAdmin,
   authenticateUser,
-  ADMIN_WCA_IDS,
   checkRateLimit,
 } from '../utils/recon_helpers.js';
 
@@ -84,8 +83,8 @@ async function getOptionalUser(c: { req: { header: (name: string) => string | un
   return authenticateUser(c.req.header('Authorization'));
 }
 
-function isOwner(ownerWcaId: string, wcaId: string): boolean {
-  return ADMIN_WCA_IDS.includes(wcaId) || ownerWcaId === wcaId;
+function isOwner(ownerWcaId: string, user: { wcaId: string; isAdmin: boolean }): boolean {
+  return user.isAdmin || ownerWcaId === user.wcaId;
 }
 
 function validateSlug(s: unknown): string {
@@ -171,7 +170,7 @@ articleRoutes.get('/article/me', async (c) => {
   return c.json({
     wcaId: user.wcaId,
     name: user.name,
-    isAdmin: ADMIN_WCA_IDS.includes(user.wcaId),
+    isAdmin: user.isAdmin,
   });
 });
 
@@ -277,7 +276,7 @@ articleRoutes.post('/article/img', imgBodyLimit, async (c) => {
   if (buf.length > IMG_MAX_BYTES) throw new Error('Validation: image too large (max 8MB)');
 
   // 每用户配图上限 (admin 不限)。
-  if (!ADMIN_WCA_IDS.includes(user.wcaId)) {
+  if (!user.isAdmin) {
     const cnt = await query<{ n: number | string }>(
       'SELECT COUNT(*) AS n FROM article_image WHERE owner_wca_id = ?',
       [user.wcaId],
@@ -317,7 +316,7 @@ articleRoutes.get('/article/:slug', async (c) => {
   const published = row.published_at != null;
 
   const user = await getOptionalUser(c);
-  const canEdit = user != null && isOwner(row.owner_wca_id, user.wcaId);
+  const canEdit = user != null && isOwner(row.owner_wca_id, user);
 
   if (!published && !canEdit) {
     // 草稿对非 owner/admin 不存在。
@@ -350,7 +349,7 @@ articleRoutes.post('/article', async (c) => {
   const lang = typeof body.lang === 'string' && body.lang.trim() ? body.lang.trim().slice(0, 8) : 'zh';
 
   // 每用户文章数上限 (admin 不限)。
-  if (!ADMIN_WCA_IDS.includes(user.wcaId)) {
+  if (!user.isAdmin) {
     const cnt = await query<{ n: number | string }>(
       'SELECT COUNT(*) AS n FROM article WHERE owner_wca_id = ? AND deleted_at IS NULL',
       [user.wcaId],
@@ -404,7 +403,7 @@ articleRoutes.patch('/article/:slug', async (c) => {
   if (found.length === 0) return c.json({ error: 'Not found' }, 404);
   const row = found[0];
 
-  if (!isOwner(row.owner_wca_id, user.wcaId)) {
+  if (!isOwner(row.owner_wca_id, user)) {
     throw new Error("Cannot edit others' articles");
   }
 
@@ -486,7 +485,7 @@ articleRoutes.delete('/article/:slug', async (c) => {
   );
   if (found.length === 0) return c.json({ error: 'Not found' }, 404);
 
-  if (!isOwner(found[0].owner_wca_id, user.wcaId)) {
+  if (!isOwner(found[0].owner_wca_id, user)) {
     throw new Error("Cannot delete others' articles");
   }
 
