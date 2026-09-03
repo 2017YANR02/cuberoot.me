@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { parseAsString, useQueryState } from 'nuqs';
 import HeaderToggles from '@/components/HeaderToggles';
+import AppLink from '@/components/AppLink';
 import SearchInput from '@/components/SearchInput';
 import { tr, useLang } from '@/i18n/tr';
 import {
@@ -135,6 +136,9 @@ export default function MusicPage() {
           <span className="music-kicker">{tr({ zh: 'CUBEROOT 音频', en: 'CUBEROOT AUDIO' })}</span>
           <h1>{tr({ zh: '音乐', en: 'Music' })}</h1>
           <p>{tr({ zh: '听歌、看同步歌词，也能随时切回节拍训练。', en: 'Listen, follow synced lyrics, or switch back to tempo training.' })}</p>
+          <AppLink href="/about" className="music-credits-link">
+            {tr({ zh: '开源项目与致谢', en: 'Open-source references and credits' })}<span aria-hidden="true">→</span>
+          </AppLink>
         </div>
         <HeaderToggles />
       </header>
