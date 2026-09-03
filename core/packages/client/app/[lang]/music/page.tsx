@@ -88,6 +88,7 @@ function SyncedLyrics({ track, time }: { track: MusicTrack | null; time: number 
         <button
           key={`${line.time}-${index}`}
           type="button"
+          className="music-lyric-line"
           aria-current={index === activeIndex ? 'true' : undefined}
           onClick={() => seekMusic(line.time)}
         >
@@ -158,6 +159,7 @@ export default function MusicPage() {
             />
             {genres.length > 0 && (
               <select
+                className="music-genre-select"
                 value={genre}
                 onChange={(event) => { void setGenre(event.target.value || null); }}
                 aria-label={tr({ zh: '音乐分类', en: 'Music category' })}
@@ -212,6 +214,7 @@ export default function MusicPage() {
 
           <div className="music-progress">
             <input
+              className="music-progress-input"
               type="range" min={0} max={Math.max(1, player.duration)} step={0.1}
               value={Math.min(player.currentTime, Math.max(1, player.duration))}
               onChange={(event) => seekMusic(Number(event.target.value))}
@@ -222,21 +225,21 @@ export default function MusicPage() {
           </div>
 
           <div className="music-transport">
-            <button type="button" className={player.shuffle ? 'is-active' : ''} onClick={toggleMusicShuffle}
+            <button type="button" className={player.shuffle ? 'music-transport-button is-active' : 'music-transport-button'} onClick={toggleMusicShuffle}
               aria-pressed={player.shuffle} aria-label={tr({ zh: '随机播放', en: 'Shuffle' })}>
               <Shuffle size={18} />
             </button>
-            <button type="button" onClick={() => { void previousMusic(); }} aria-label={tr({ zh: '上一首', en: 'Previous track' })}>
+            <button type="button" className="music-transport-button" onClick={() => { void previousMusic(); }} aria-label={tr({ zh: '上一首', en: 'Previous track' })}>
               <SkipBack size={22} fill="currentColor" />
             </button>
-            <button type="button" className="music-main-play" onClick={toggleMusic} disabled={!current}
+            <button type="button" className="music-transport-button music-main-play" onClick={toggleMusic} disabled={!current}
               aria-label={player.playing ? tr({ zh: '暂停', en: 'Pause' }) : tr({ zh: '播放', en: 'Play' })}>
               {player.playing ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
             </button>
-            <button type="button" onClick={() => { void nextMusic(); }} aria-label={tr({ zh: '下一首', en: 'Next track' })}>
+            <button type="button" className="music-transport-button" onClick={() => { void nextMusic(); }} aria-label={tr({ zh: '下一首', en: 'Next track' })}>
               <SkipForward size={22} fill="currentColor" />
             </button>
-            <button type="button" className={player.repeat === 'off' ? '' : 'is-active'} onClick={cycleMusicRepeat}
+            <button type="button" className={player.repeat === 'off' ? 'music-transport-button' : 'music-transport-button is-active'} onClick={cycleMusicRepeat}
               aria-label={repeatLabel} title={repeatLabel}>
               <RepeatIcon size={18} />
             </button>
@@ -245,7 +248,7 @@ export default function MusicPage() {
           <label className="music-volume">
             <Volume2 size={17} aria-hidden="true" />
             <span className="sr-only">{tr({ zh: '音量', en: 'Volume' })}</span>
-            <input type="range" min={0} max={1} step={0.01} value={player.volume}
+            <input className="music-volume-input" type="range" min={0} max={1} step={0.01} value={player.volume}
               onChange={(event) => setMusicVolume(Number(event.target.value))} />
           </label>
         </section>

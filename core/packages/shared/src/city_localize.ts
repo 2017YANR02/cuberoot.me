@@ -59,8 +59,10 @@ const CITY_ZH: Record<string, string> = {
   // 生成字典缺口:该城市此前没办过比赛,GeoNames 那一层没收录。生成器的输入
   // (.tmp/geonames)只在本机有,所以补在这个覆盖层。
   'Alella': '阿莱利亚',
+  'Filadelfia': '菲拉德尔菲亚',
   'Frenaros': '弗雷纳罗斯',
   'Manzini': '曼齐尼',
+  'Valdivia': '瓦尔迪维亚',
 };
 
 const GREATER_CN = new Set(['CN', 'HK', 'MO', 'TW']);

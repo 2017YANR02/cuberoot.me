@@ -50,7 +50,7 @@ describe('recon video upload contract', () => {
     const block = route.slice(start, route.indexOf("membershipRoutes.put('/membership/me/contact'", start));
 
     expect(start).toBeGreaterThan(-1);
-    expect(block).toContain('isAdminWcaId(user.wcaId) || !!membership?.active');
+    expect(block).toContain('user.isAdmin || !!membership?.active');
     expect(teachers).toContain("import { hasActiveMembership } from '../utils/membership.js'");
     expect(teachers).toContain('await hasActiveMembership(actorWcaId)');
   });

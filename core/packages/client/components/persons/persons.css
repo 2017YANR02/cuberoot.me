@@ -345,7 +345,7 @@ html[data-theme=dark] .wp-page {
     object-fit: contain;
     border-radius: 8px;
 }
-.wp-member-dialog button {
+.wp-member-dialog-close {
     margin-top: 20px; padding: 8px 16px; border: 0; border-radius: 8px;
     background: var(--primary); color: var(--primary-foreground); font: inherit; cursor: pointer;
 }

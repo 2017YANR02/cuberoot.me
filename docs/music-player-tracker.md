@@ -24,7 +24,7 @@
 - 根布局中的 `DeskPet` 已让悬浮节拍器跨页面存活，并处理显式语言状态、用户手势启动音频和桌宠节拍反馈。
 - Timer 依赖现有节拍器 hold 契约；音乐功能不能改变其节奏、精度或训练行为。
 - `core/packages/client/public` 会进入 Next standalone 发布包；当前静态域及同步 workflow 只明确覆盖 `tools/` 和 `stats/`，尚无音乐媒体发布路径。
-- 仓库已实现专业播放器状态模型、`MusicManifest v1`、本机可恢复媒体准备脚本和原子发布脚本；静态媒体尚未实际发布，浏览器格式矩阵与 8 首模糊曲目仍待人工复核。
+- 仓库已实现专业播放器状态模型、`MusicManifest v1`、本机可恢复媒体准备脚本和原子发布脚本；486 首曲目及其 509 个引用资产已发布并完成全集远端审计与 HTTP 契约验证，浏览器格式矩阵与 8 首模糊曲目仍待人工复核。
 - 2026-09-02 只读检查时，`E:` 可用约 27.3 GiB，`Z:` 可用约 34.4 GiB。此数值会变化，每个批次必须重新检查，不能把本快照当作配额。
 - GitHub 对标已完成；当前只参考 Feishin、YesPlayMusic 和 Apple Music Like Lyrics 的产品分层，没有复制第三方源码或安装播放器依赖。
 - 已只读盘点 `E:\Music`：521 个条目中 488 个媒体文件；321 个音频可直接复制，128 个视频可无重编码抽取音轨，39 个旧格式需转 AAC-LC 192 kbps，另有 26 个封面/歌词 sidecar 和 7 个跳过文档。
@@ -241,11 +241,11 @@ type MusicTrackV1 = {
 | B | 完成 GitHub 上游调查，记录固定基线、许可证、采用与排除范围 | `COMPLETED` |
 | C | 只读盘点 `E:\Music`，确定去重、分类覆盖、格式矩阵和精确空间预算 | `COMPLETED` |
 | D | 冻结曲库 schema、转码规范、封面/歌词规则和 `Z:` 批次工具 | `IN PROGRESS` |
-| E | 建立静态 `/music/` 媒体发布、原子 manifest、Range/CORS/cache 契约 | `IN PROGRESS` |
+| E | 建立静态 `/music/` 媒体发布、原子 manifest、Range/CORS/cache 契约 | `COMPLETED` |
 | F | 实现唯一音乐 transport、Media Session 及与节拍器的互斥协调 | `COMPLETED` |
 | G | 实现 `/music` 页面、双语 metadata、首页卡片和搜索收录 | `COMPLETED` |
 | H | 把 DeskPet 节拍器面板扩展为音乐/节拍器悬浮音频中心 | `COMPLETED` |
-| I | 完成曲库转码、分类、封面和歌词清单，分批发布并回读验证 | `IN PROGRESS` |
+| I | 完成曲库转码、分类、封面和歌词清单，分批发布并回读验证 | `COMPLETED` |
 | J | 完成数据、播放器、网络、桌面、窄屏、主题、i18n 和无障碍验收 | `PENDING` |
 | K | 登记 Credits、生成物、最终证据和发布/回滚说明 | `PENDING` |
 
@@ -276,3 +276,4 @@ type MusicTrackV1 = {
 - 2026-09-02：逐首复核初次未分类曲目后，以保守的 artist/title/path 规则归类 126 首；最终为钢琴与古典 154、爵士 50、影视原声 56、电子 46、流行与摇滚 111、BGM 与素材 43、音效 3、轻音乐与纯音乐 15、未分类 8。来源为 embedded-genre 64、explicit-top-directory 121、metadata-keywords 293、none 8；剩余项继续进入人工队列，不按猜测归类。
 - 2026-09-02：分类 replay 处理 486 首，重新转码 0、失败 0、人工复核 8；发布脚本只验证模式通过 486 首及 509 个唯一资产，共 5.01 GiB，manifest SHA-256 为 `960cd43f578e40b22d21018d1b0b93098818d45e191878f43e0bfba131775e07`，未连接远端或上传。
 - 2026-09-02：远端容量门槛通过后，先以安全逐文件模式上传部分资产；按用户要求取消上传后哈希复核，改为 4 路批量上传全部 509 个清单引用资产（486 个音频、8 个封面、15 个歌词），最后原子切换 486 首 manifest。未上传 Pilot 的 9 个未引用音频；本次按要求未做线上回读验证，因此 E、I 阶段继续保持 `IN PROGRESS`。
+- 2026-09-02：发布器对 509 个远端资产完成全集大小与 SHA-256 审计，再原子切换 manifest；线上 manifest 字节与候选 SHA-256 一致，CORS 与缓存头通过，音频 HEAD 返回 `Accept-Ranges: bytes`，范围 GET 返回 206、正确 `Content-Range`、两字节正文和一年 immutable 缓存。首次候选因验证器误要求 206 响应重复携带 `Accept-Ranges` 而自动回滚；修正为 HEAD 验证后最终切换成功，E、I 阶段完成。
