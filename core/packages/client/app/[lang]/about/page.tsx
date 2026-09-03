@@ -32,7 +32,7 @@ export default function AboutPage() {
         })}</h2>
         <ul className="about-credits">
           {CREDITS.map((c) => (
-            <li key={c.url}>
+            <li key={`${c.url}#${c.name}`}>
               <a href={c.url} target="_blank" rel="noopener noreferrer">{c.name}</a>
               <span className="about-credits-desc"> — {tr(c)}</span>
             </li>
