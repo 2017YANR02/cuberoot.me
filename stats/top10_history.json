@@ -4144,6 +4144,11 @@
       "country": "USA",
       "iso2": "US"
     },
+    "2023KATA05": {
+      "name": "Trishan Reddy Katamreddy",
+      "country": "USA",
+      "iso2": "US"
+    },
     "2005GUST01": {
       "name": "Kenneth Gustavsson",
       "country": "Sweden",
@@ -24598,6 +24603,9 @@
     "BramptonSummer2026": {
       "name": "Brampton Summer 2026"
     },
+    "LutzelbourgOpen2026": {
+      "name": "Lutzelbourg Open 2026"
+    },
     "CzechOpen2006": {
       "name": "Czech Open 2006"
     },
@@ -27568,6 +27576,9 @@
     "KualaLumpurCC2026": {
       "name": "Kuala Lumpur CC 2026"
     },
+    "BayAreaSpeedcubin692026": {
+      "name": "Bay Area Speedcubin' 69 2026"
+    },
     "DanishCubeDay2008": {
       "name": "Danish Cube Day 2008"
     },
@@ -30216,6 +30227,9 @@
     },
     "WeihaiOpen2026": {
       "name": "Weihai Open 2026"
+    },
+    "UlanqabSmallCubes2026": {
+      "name": "Ulanqab Small Cubes 2026"
     },
     "ShaastraOpen2008": {
       "name": "Shaastra Open 2008"
@@ -33097,6 +33111,9 @@
     "ChemungCubing2023": {
       "name": "Chemung Cubing 2023"
     },
+    "HyderabadCubeOpen2023": {
+      "name": "Hyderabad Cube Open 2023"
+    },
     "GeorgiaSummerOpen2023": {
       "name": "Georgia Summer Open 2023"
     },
@@ -33156,6 +33173,9 @@
     },
     "BratislavaAutumn2023": {
       "name": "Bratislava Autumn 2023"
+    },
+    "DFWWinterVariation2024": {
+      "name": "DFW Winter Variation 2024"
     },
     "StevenageJanuary2024": {
       "name": "Stevenage January 2024"
@@ -33238,6 +33258,9 @@
     "SilesianMinxFest2024": {
       "name": "Silesian Minx Fest 2024"
     },
+    "TelanganaCubeChampionship2024": {
+      "name": "Telangana Cube Championship 2024"
+    },
     "CubinginWollondilly2024": {
       "name": "Cubing in Wollondilly 2024"
     },
@@ -33276,6 +33299,9 @@
     },
     "MaxSpeedMilford2024": {
       "name": "Max Speed Milford 2024"
+    },
+    "CubeaToninArlington2024": {
+      "name": "Cube a Ton in Arlington 2024"
     },
     "SacCubingXIX2025": {
       "name": "SacCubing XIX 2025"
@@ -33366,6 +33392,9 @@
     },
     "CiuLaManchaOpen2026": {
       "name": "Ciu La Mancha Open 2026"
+    },
+    "TwistnTurnHydOpen2026": {
+      "name": "Twist 'n Turn Hyd Open 2026"
     },
     "IndianaWinterOpen2008": {
       "name": "Indiana Winter Open 2008"
@@ -34323,9 +34352,6 @@
     },
     "ComeBacktoLandvetter2024": {
       "name": "Come Back to Landvetter 2024"
-    },
-    "DFWWinterVariation2024": {
-      "name": "DFW Winter Variation 2024"
     },
     "DutchWinterNorth2024": {
       "name": "Dutch Winter North 2024"
@@ -35958,6 +35984,9 @@
     },
     "RubiksGermanNationals2026": {
       "name": "Rubik's German Nationals 2026"
+    },
+    "KewbzUKChampionship2026": {
+      "name": "Kewbz UK Championship 2026"
     },
     "NorwegianOpen2008": {
       "name": "Norwegian Open 2008"
@@ -38194,9 +38223,6 @@
     "PeruNationals2023": {
       "name": "Peru Nationals 2023"
     },
-    "HyderabadCubeOpen2023": {
-      "name": "Hyderabad Cube Open 2023"
-    },
     "CubeInnCDMX2023": {
       "name": "Cube Inn CDMX 2023"
     },
@@ -38691,9 +38717,6 @@
     },
     "BUAPIngenierosOpen2024": {
       "name": "BUAP: Ingenieros Open 2024"
-    },
-    "CubeaToninArlington2024": {
-      "name": "Cube a Ton in Arlington 2024"
     },
     "DontPopPreble2024": {
       "name": "Don't Pop Preble 2024"
@@ -40191,9 +40214,6 @@
     },
     "NewTaipeiBigCubeDay2024": {
       "name": "New Taipei Big Cube Day 2024"
-    },
-    "TelanganaCubeChampionship2024": {
-      "name": "Telangana Cube Championship 2024"
     },
     "BangkokBigTimeinFarm2024": {
       "name": "Bangkok Big Time in Farm 2024"
