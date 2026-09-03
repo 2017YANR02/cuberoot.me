@@ -100,6 +100,7 @@ const publicAccount = {
   avatar: '',
   avatarSource: 'auto' as const,
   avatarPreset: null,
+  isAdmin: false,
 };
 const token = 's'.repeat(20);
 const ticket = 'A'.repeat(43);

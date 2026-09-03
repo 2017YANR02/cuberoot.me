@@ -1,6 +1,7 @@
 // 顶部 hero:头像 + (国旗 + 姓名 + 性别图标) + 名字下方小字 WCA ID + 信息条(比赛次数 / 复原次数 / 尝试次数).
 // 头像居中,国旗在名字左侧,WCA ID 左缘与名字左缘对齐.
 
+import { useEffect, useRef, useState } from 'react';
 import { Mars, Venus } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
@@ -8,8 +9,11 @@ import { CompactSelect } from '@/components/CompactSelect';
 import { Flag } from '@/components/Flag';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { useT } from '@/hooks/useT';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { countryName } from '@/lib/country-name';
 import { creatorProfileHrefForWcaId } from '@/lib/creator-profile';
+import { uploadedImageUrl } from '@/lib/image-upload';
+import { getPublicMemberProfile, type PublicMemberProfile } from '@/lib/membership-api';
 import type { WcaPersonProfile, WcaResultRow, WcaFormerIdentity } from '@/lib/wca-person-api';
 
 interface Props {
@@ -26,6 +30,53 @@ interface Props {
     disabled: boolean;
     onChange: (value: boolean) => void;
   } | null;
+}
+
+function AvatarPreview({ src, alt, closeLabel, onClose }: {
+  src: string;
+  alt: string;
+  closeLabel: string;
+  onClose: () => void;
+}) {
+  useModalDismiss(onClose);
+  return (
+    <button type="button" className="wp-avatar-preview" onClick={onClose} aria-label={closeLabel} autoFocus>
+      <img src={src} alt={alt} />
+    </button>
+  );
+}
+
+function MemberIntroDialog({ name, profile, closeLabel, onClose }: {
+  name: string;
+  profile: PublicMemberProfile;
+  closeLabel: string;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (ref.current && !ref.current.open) ref.current.showModal();
+  }, []);
+  return (
+    <dialog
+      ref={ref}
+      className="wp-member-dialog"
+      aria-labelledby="wp-member-dialog-title"
+      onCancel={onClose}
+      onClose={onClose}
+      onClick={(event) => { if (event.target === event.currentTarget) ref.current?.close(); }}
+    >
+      <h2 id="wp-member-dialog-title">{name}</h2>
+      {profile.intro && <p>{profile.intro}</p>}
+      {profile.imageIds.length > 0 && (
+        <div className="wp-member-gallery">
+          {profile.imageIds.map((id, index) => (
+            <img src={uploadedImageUrl(id)} alt={`${name} ${index + 1}`} key={id} />
+          ))}
+        </div>
+      )}
+      <button type="button" onClick={() => ref.current?.close()} autoFocus>{closeLabel}</button>
+    </dialog>
+  );
 }
 
 export default function PersonHero({
@@ -45,7 +96,21 @@ export default function PersonHero({
   const wcaUrl = `https://www.worldcubeassociation.org/persons/${p.wca_id}`;
   const creatorProfileHref = creatorProfileHrefForWcaId(p.wca_id);
   const avatarUrl = p.avatar?.thumb_url || p.avatar?.url;
+  const fullAvatarUrl = p.avatar?.url || avatarUrl;
   const t = useT();
+  const [avatarOpen, setAvatarOpen] = useState(false);
+  const [memberProfile, setMemberProfile] = useState<PublicMemberProfile | null>(null);
+  const [memberIntroOpen, setMemberIntroOpen] = useState(false);
+  useEffect(() => {
+    setMemberProfile(null);
+    setMemberIntroOpen(false);
+    if (creatorProfileHref) return;
+    let cancelled = false;
+    getPublicMemberProfile(p.wca_id)
+      .then((profile) => { if (!cancelled) setMemberProfile(profile); })
+      .catch(() => { /* 会员简介缺失不影响 WCA 人物页 */ });
+    return () => { cancelled = true; };
+  }, [creatorProfileHref, p.wca_id]);
   const resultViewItems = [
     { value: 'pr', label: 'PR' },
     { value: 'historical', label: t('历史最佳排名', 'Historical Best') },
@@ -95,11 +160,20 @@ export default function PersonHero({
   return (
     <section className="wp-hero-card">
       <div className="wp-hero-avatar-wrap">
-        <div className="wp-hero-avatar">
-          {avatarUrl
-            ? <img src={avatarUrl} alt={displayName} />
-            : <div className="wp-hero-avatar-fb">{(displayName[0] ?? '?').toUpperCase()}</div>}
-        </div>
+        {avatarUrl ? (
+          <button
+            type="button"
+            className="wp-hero-avatar wp-hero-avatar-button"
+            onClick={() => setAvatarOpen(true)}
+            aria-label={t('查看大图', 'View full-size image')}
+          >
+            <img src={avatarUrl} alt={displayName} />
+          </button>
+        ) : (
+          <div className="wp-hero-avatar">
+            <div className="wp-hero-avatar-fb">{(displayName[0] ?? '?').toUpperCase()}</div>
+          </div>
+        )}
         <div className="wp-hero-name-row">
           <span className="wp-hero-name-flag" title={p.country_iso2 ? countryName(p.country_iso2, isZh) : undefined}>
             <Flag iso2={p.country_iso2} className="wp-flag" />
@@ -125,51 +199,41 @@ export default function PersonHero({
           </span>
           <div className="wp-hero-id">
             <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-id-link" title="WCA">{p.wca_id}</a>
-            {creatorProfileHref && (
+            {(creatorProfileHref || memberProfile) && (
               <>
                 <span aria-hidden="true">|</span>
-                <AppLink href={creatorProfileHref} prefetch={false} className="wp-hero-id-link">
-                  {t('个人介绍', 'Personal profile')}
-                </AppLink>
+                {creatorProfileHref ? (
+                  <AppLink href={creatorProfileHref} prefetch={false} className="wp-hero-id-link">
+                    {t('个人介绍', 'Personal profile')}
+                  </AppLink>
+                ) : (
+                  <button type="button" className="wp-hero-id-link wp-hero-id-button" onClick={() => setMemberIntroOpen(true)}>
+                    {t('个人介绍', 'Personal profile')}
+                  </button>
+                )}
               </>
             )}
           </div>
         </div>
       </div>
 
-      {collections.length > 0 && (
-        <div className="wp-hero-collections">
-          {collections.map((collection) => (
-            <div className={`wp-hero-collection wp-hero-collection-${collection.key}`} key={collection.key}>
-              <dl>
-                {collection.items.map((item) => (
-                  <div className={`wp-hero-collection-item wp-hero-collection-item-${item.key}`} key={item.key}>
-                    <dt>{item.label}</dt>
-                    <dd>{item.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          ))}
-        </div>
+      {avatarOpen && fullAvatarUrl && (
+        <AvatarPreview
+          src={fullAvatarUrl}
+          alt={displayName}
+          closeLabel={t('关闭大图', 'Close full-size image')}
+          onClose={() => setAvatarOpen(false)}
+        />
       )}
 
-      <div className="wp-hero-table">
-        <div className="wp-hero-cell">
-          <div className="wp-hero-cell-label">{t('比赛', 'Competitions')}</div>
-          <div className="wp-hero-cell-value">
-            <span className="wp-pill">{profile.competition_count}</span>
-          </div>
-        </div>
-        <div className="wp-hero-cell">
-          <div className="wp-hero-cell-label">{t('复原 / 尝试', 'Solves / Attempts')}</div>
-          <div className="wp-hero-cell-value">
-            <span className="wp-pill">{solves}</span>
-            <span className="wp-pill-sep">/</span>
-            <span className="wp-pill">{attempts}</span>
-          </div>
-        </div>
-      </div>
+      {memberIntroOpen && memberProfile && (
+        <MemberIntroDialog
+          name={displayName}
+          profile={memberProfile}
+          closeLabel={t('关闭', 'Close')}
+          onClose={() => setMemberIntroOpen(false)}
+        />
+      )}
 
       <div className="wp-hero-rank-controls">
         <CompactSelect
@@ -196,6 +260,44 @@ export default function PersonHero({
           />
         )}
       </div>
+
+      {resultView !== 'pb' && (
+        <>
+          {collections.length > 0 && (
+            <div className="wp-hero-collections">
+              {collections.map((collection) => (
+                <div className={`wp-hero-collection wp-hero-collection-${collection.key}`} key={collection.key}>
+                  <dl>
+                    {collection.items.map((item) => (
+                      <div className={`wp-hero-collection-item wp-hero-collection-item-${item.key}`} key={item.key}>
+                        <dt>{item.label}</dt>
+                        <dd>{item.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="wp-hero-table">
+            <div className="wp-hero-cell">
+              <div className="wp-hero-cell-label">{t('比赛', 'Competitions')}</div>
+              <div className="wp-hero-cell-value">
+                <span className="wp-pill">{profile.competition_count}</span>
+              </div>
+            </div>
+            <div className="wp-hero-cell">
+              <div className="wp-hero-cell-label">{t('复原 / 尝试', 'Solves / Attempts')}</div>
+              <div className="wp-hero-cell-value">
+                <span className="wp-pill">{solves}</span>
+                <span className="wp-pill-sep">/</span>
+                <span className="wp-pill">{attempts}</span>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </section>
   );
 }

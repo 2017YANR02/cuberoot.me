@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { ensureFreshToken } from '@/lib/auth-store';
+import { ensureFreshToken, refreshSessionUser } from '@/lib/auth-store';
 
 /**
  * 无 UI:启动时静默续签临近过期的 cuberoot_jwt(滑动过期)。
@@ -9,7 +9,7 @@ import { ensureFreshToken } from '@/lib/auth-store';
  */
 export default function AuthTokenRefresher() {
   useEffect(() => {
-    void ensureFreshToken();
+    void ensureFreshToken().then(refreshSessionUser);
   }, []);
   return null;
 }

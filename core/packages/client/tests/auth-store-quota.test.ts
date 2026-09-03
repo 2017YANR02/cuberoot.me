@@ -89,6 +89,7 @@ describe('applySession', () => {
       avatar: 'mini.png',
       avatarSource: 'auto' as const,
       avatarPreset: null,
+      isAdmin: false,
     };
 
     expect(applySession('mini-token', user)).toBe(true);
@@ -101,6 +102,7 @@ describe('applySession', () => {
       avatarSource: 'auto',
       avatarPreset: null,
       country: '',
+      isAdmin: false,
     });
     expect(useAuthStore.getState().user?.name).toBe('Mini User');
   });
@@ -124,6 +126,7 @@ describe('applySession', () => {
       avatar: '',
       avatarSource: 'auto' as const,
       avatarPreset: null,
+      isAdmin: false,
     };
     expect(applySession('n'.repeat(220), nextUser)).toBe(false);
     expect(localStorage.getItem('cuberoot_jwt')).toBe('old-token');
@@ -133,6 +136,7 @@ describe('applySession', () => {
       avatar: '/deskpet/clawd-idle-look.svg',
       avatarSource: 'auto',
       avatarPreset: null,
+      isAdmin: false,
     });
   });
 });

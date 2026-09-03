@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { makeMasking, Masking } from '@cuberoot/visualcube';
 import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
-import { FM_REGULAR, FM_IGNORED, stickeringMaskFn } from '@/app/[lang]/sim/engine/nxn/stickering';
+import { FM_REGULAR, FM_DIM, FM_IGNORED, stickeringMaskFn } from '@/app/[lang]/sim/engine/nxn/stickering';
 import {
   netIndexOf, visualcubeStageMaskFn, resolveStageMaskFn, visualcubeMaskForStickering,
   stickeringSelectGroupsFor, visualcubeStageGroups, VC_MASK_LABEL,
@@ -54,12 +54,19 @@ describe('vcStageMask bridge — 每面双射', () => {
 });
 
 describe('vcStageMask — 几何 oracle 钉朝向', () => {
-  it('FL = 底(D)层:D 全 + 侧面 y=0 行,U 全无', () => {
+  it('FL = 底(D)层 + F/B/L/R 中心 + U 中心', () => {
     for (const N of [3, 4]) {
       const fn = visualcubeStageMaskFn(N, Masking.FL)!;
       for (const { initial, face } of allSlots(N)) {
-        const y = ((initial / N) | 0) % N;
-        const want = (face === F.D || (face !== F.U && y === 0)) ? FM_REGULAR : FM_IGNORED;
+        const x = initial % N, y = ((initial / N) | 0) % N, z = (initial / (N * N)) | 0;
+        const sideCenter = face === F.F || face === F.B
+          ? x > 0 && x < N - 1 && y > 0 && y < N - 1
+          : face === F.L || face === F.R
+            ? z > 0 && z < N - 1 && y > 0 && y < N - 1
+            : false;
+        const topCenter = face === F.U && x > 0 && x < N - 1 && z > 0 && z < N - 1;
+        const want = topCenter ? FM_REGULAR : sideCenter ? FM_DIM
+          : (face === F.D || (face !== F.U && y === 0)) ? FM_REGULAR : FM_IGNORED;
         expect(fn(initial, face), `FL N${N} initial=${initial} face=${face}`).toBe(want);
       }
     }
@@ -178,8 +185,14 @@ describe('vcStageMask — 拿方朝向重定向', () => {
     const N = 3, max = N - 1;
     const fn = visualcubeStageMaskFn(N, Masking.FL, 'z2')!;
     for (const { initial, face } of allSlots(N)) {
-      const y = ((initial / N) | 0) % N;
-      const want = (face === F.U || (face !== F.D && y === max)) ? FM_REGULAR : FM_IGNORED;
+      const x = initial % N, y = ((initial / N) | 0) % N, z = (initial / (N * N)) | 0;
+      const center = face === F.F || face === F.B
+        ? x === 1 && y === 1
+        : face === F.L || face === F.R
+          ? z === 1 && y === 1
+          : false;
+      const want = center ? FM_DIM
+        : (face === F.U || (face !== F.D && y === max)) ? FM_REGULAR : FM_IGNORED;
       expect(fn(initial, face)).toBe(want);
     }
   });

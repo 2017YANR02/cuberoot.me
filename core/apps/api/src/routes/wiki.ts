@@ -16,7 +16,6 @@ import {
   requireAuth,
   requireAdmin,
   authenticateUser,
-  ADMIN_WCA_IDS,
   checkRateLimit,
 } from '../utils/recon_helpers.js';
 import { publicUserIdsForOwnerKeys } from '../utils/account.js';
@@ -223,7 +222,7 @@ wikiRoutes.patch('/wiki/terms/:id', async (c) => {
   if (found.length === 0) return c.json({ error: 'Not found' }, 404);
   const term = found[0];
 
-  const isAdmin = ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = user.isAdmin;
   const isOwner = term.owner_wca_id != null && term.owner_wca_id === user.wcaId;
   if (!isAdmin && !isOwner) {
     return c.json({ error: term.source === 'seed' ? 'Cannot edit seed terms' : 'Cannot edit others\' terms' }, 403);
@@ -304,7 +303,7 @@ wikiRoutes.patch('/wiki/additions/:id', async (c) => {
   );
   if (found.length === 0) return c.json({ error: 'Not found' }, 404);
 
-  const isAdmin = ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = user.isAdmin;
   const isOwner = found[0].owner_wca_id === user.wcaId;
   if (!isAdmin && !isOwner) return c.json({ error: 'Cannot edit others\' additions' }, 403);
 
@@ -335,7 +334,7 @@ wikiRoutes.delete('/wiki/additions/:id', async (c) => {
   );
   if (found.length === 0) return c.json({ error: 'Not found' }, 404);
 
-  const isAdmin = ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = user.isAdmin;
   const isOwner = found[0].owner_wca_id === user.wcaId;
   if (!isAdmin && !isOwner) return c.json({ error: 'Cannot delete others\' additions' }, 403);
 
@@ -355,6 +354,6 @@ wikiRoutes.get('/wiki/me', async (c) => {
   return c.json({
     wcaId: user.wcaId,
     name: user.name,
-    isAdmin: ADMIN_WCA_IDS.includes(user.wcaId),
+    isAdmin: user.isAdmin,
   });
 });

@@ -23,8 +23,8 @@ const TESTS = [
     href: '/color-test/positions',
     title: { zh: '颜色位置关系', en: 'Colour Positions' },
     description: {
-      zh: '选择顶面颜色,判断侧面的左右顺序和六种颜色的对色。',
-      en: 'Choose the top colour, then recall side-face order and opposite colours.',
+      zh: '选择顶面颜色,判断四个侧面的左右顺序和对色。',
+      en: 'Choose the top colour, then recall each side face\'s left, right and opposite colours.',
     },
   },
   {

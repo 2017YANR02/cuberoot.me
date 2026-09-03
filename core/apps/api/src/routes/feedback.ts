@@ -23,7 +23,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { query } from '../db/connection.js';
-import { requireAuth, requireAdmin, optionalAuth, ADMIN_WCA_IDS, checkRateLimit } from '../utils/recon_helpers.js';
+import { requireAuth, requireAdmin, optionalAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { sendBark } from '../monitors/bark.js';
 import { sniffVideo, VIDEO_EXT } from '../utils/video_upload.js';
 import { publicUserIdsForOwnerKeys } from '../utils/account.js';
@@ -43,10 +43,6 @@ const MAX_VIDEOS_PER_FEEDBACK = 2;
 
 // 视频落盘目录;prod 须设成持久路径(随重部署存活),local 退到 cwd 下。
 const MEDIA_DIR = process.env.FEEDBACK_MEDIA_DIR || path.join(process.cwd(), '.feedback-media');
-
-function isAdmin(wcaId: string): boolean {
-  return ADMIN_WCA_IDS.includes(wcaId);
-}
 
 /** 从图片头读宽高(仅 PNG IHDR;其余返 null)。无外部依赖。 */
 function pngDimensions(buf: Buffer): { width: number | null; height: number | null } {
@@ -84,9 +80,9 @@ async function loadOwner(id: number): Promise<string> {
   return rows[0].wca_id;
 }
 
-async function assertCanAttach(id: number, wcaId: string): Promise<void> {
+async function assertCanAttach(id: number, wcaId: string, admin: boolean): Promise<void> {
   const owner = await loadOwner(id);
-  if (owner !== wcaId && !isAdmin(wcaId)) throw new Error('Cannot attach to others feedback');
+  if (owner !== wcaId && !admin) throw new Error('Cannot attach to others feedback');
 }
 
 /** 取一条反馈的归属 + 当前状态;不存在返 null。 */
@@ -193,7 +189,7 @@ feedbackRoutes.post('/feedback', async (c) => {
     return s ? s.slice(0, max) : null;
   };
 
-  if (!isAdmin(user.wcaId)) {
+  if (!user.isAdmin) {
     const cnt = await query<{ n: number | string }>(
       'SELECT COUNT(*) AS n FROM feedback WHERE wca_id = ?', [user.wcaId]);
     if (Number(cnt[0].n) >= MAX_FEEDBACK_PER_USER) {
@@ -236,7 +232,7 @@ feedbackRoutes.post('/feedback/:id/image', imgBodyLimit, async (c) => {
   const user = await requireAuth(c);
   const id = Number(c.req.param('id'));
   if (!Number.isFinite(id)) throw new Error('Validation: invalid id');
-  await assertCanAttach(id, user.wcaId);
+  await assertCanAttach(id, user.wcaId, user.isAdmin);
 
   let body: { dataB64?: unknown; mime?: unknown };
   try {
@@ -277,7 +273,7 @@ feedbackRoutes.post('/feedback/:id/video', videoBodyLimit, async (c) => {
   const user = await requireAuth(c);
   const id = Number(c.req.param('id'));
   if (!Number.isFinite(id)) throw new Error('Validation: invalid id');
-  await assertCanAttach(id, user.wcaId);
+  await assertCanAttach(id, user.wcaId, user.isAdmin);
 
   const cnt = await query<{ n: number | string }>(
     `SELECT COUNT(*) AS n FROM feedback_media WHERE feedback_id = ? AND kind = 'video'`, [id]);
@@ -447,7 +443,7 @@ feedbackRoutes.get('/feedback/:id/thread', async (c) => {
   if (!Number.isFinite(id)) throw new Error('Validation: invalid id');
   const fb = await loadFeedback(id);
   if (!fb) throw new Error('Validation: feedback not found');
-  const admin = user != null && isAdmin(user.wcaId);
+  const admin = user?.isAdmin === true;
   const owner = user != null && fb.wcaId === user.wcaId;
 
   const rows = await query<PublicFeedbackRow>(
@@ -494,7 +490,7 @@ feedbackRoutes.post('/feedback/:id/reply', async (c) => {
   if (!Number.isFinite(id)) throw new Error('Validation: invalid id');
   const fb = await loadFeedback(id);
   if (!fb) throw new Error('Validation: feedback not found');
-  const admin = isAdmin(user.wcaId);
+  const admin = user.isAdmin;
   const owner = fb.wcaId === user.wcaId;
 
   let body: { body?: unknown };
@@ -549,7 +545,7 @@ feedbackRoutes.delete('/feedback/:id/message/:mid', async (c) => {
     'SELECT wca_id FROM feedback_messages WHERE id = ? AND feedback_id = ?', [mid, id]);
   const msg = rows[0];
   if (!msg) throw new Error('Validation: message not found');
-  if (msg.wca_id !== user.wcaId && !isAdmin(user.wcaId)) throw new Error('Cannot delete others reply');
+  if (msg.wca_id !== user.wcaId && !user.isAdmin) throw new Error('Cannot delete others reply');
 
   await query('DELETE FROM feedback_messages WHERE id = ?', [mid]);
 

@@ -78,6 +78,20 @@ describe('algorithm player placement', () => {
     expect(styles).toMatch(/\.alg-meta-case-player-layout\s*\{\s*flex:\s*1;\s*\}/);
   });
 
+  it('preserves saved move marks on both lean and metadata-rich case details', () => {
+    const detail = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx');
+    const meta = read('components/AlgCaseMetaContent.tsx');
+    const styles = read('app/[lang]/alg/alg.css');
+
+    expect(detail).toContain("import { sanitizeAlgHtml } from '@/lib/alg_html'");
+    expect(detail).toMatch(/entry\.algHtml && viewAngle === 'default' && puzzle !== 'sq1'[\s\S]*?sanitizeAlgHtml\(entry\.algHtml\)/);
+    expect(meta).toContain("import { sanitizeAlgHtml } from '@/lib/alg_html'");
+    expect(meta).toMatch(/algHtml=\{viewAngle === 'default' && puzzle !== 'sq1' \? a\.entry\.algHtml : undefined\}/);
+    expect(meta).toContain('sanitizeAlgHtml(algHtml)');
+    expect(styles).toContain('.alg-meta-algline-code u.wavy');
+    expect(styles).toContain('.alg-meta-algline-code s');
+  });
+
   it('keeps the existing case header controls above either body layout', () => {
     const detail = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx');
     const header = detail.slice(detail.indexOf('<div className="alg-case-detail-head">'), detail.indexOf('{m ? ('));
@@ -91,7 +105,7 @@ describe('algorithm player placement', () => {
     const route = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgSubOrCaseClient.tsx');
 
     expect(route).toContain("import AlgCaseView from './AlgCaseView'");
-    expect(route).toContain('return <AlgCaseView puzzle={puzzle as AlgPuzzle} set={set} caseObj={caseObj} data={data} />;');
+    expect(route).toContain('return <AlgCaseView puzzle={puzzle as AlgPuzzle} set={set} caseObj={caseObj} data={data} editMode={route.edit} />;');
   });
 
   it('binds the shared sim pointer bridge so dragging the cube changes only the view', () => {

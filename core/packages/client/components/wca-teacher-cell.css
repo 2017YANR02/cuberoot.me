@@ -66,8 +66,9 @@
 }
 
 .wca-student-add-action {
-  font-size: 1.25rem;
-  line-height: 1;
+    font-size: 1.25rem;
+    line-height: 1;
+    transform: translateY(-1px);
 }
 
 .wca-student-add-actions {

@@ -33,6 +33,7 @@ export default function CubeOrientationSelect({
   const items = current ? ORIENTATION_ITEMS : [...ORIENTATION_ITEMS, { value, label: value }];
   return (
     <CompactSelect
+      className="cube-orientation-select"
       items={items}
       value={value}
       onChange={onChange}

@@ -52,7 +52,7 @@ import { useCopy } from '@/hooks/useCopy';
 import { stm } from '@cuberoot/shared/alg-notation';
 import { listSubmissions } from '@/lib/alg_api';
 import { reorderCases, reorderCaseAlgs } from '@/lib/alg_sets_api';
-import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
 import { scanCases } from '@/lib/alg_validation_scan';
 import { caseAnchor, findCaseByHash, algCaseDetailHref, buildCaseSlugMap, caseSlugBase } from '@/lib/alg_case_link';
 import { replaceHash } from '@/lib/url_hash';
@@ -545,7 +545,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [submissions, setSubmissions] = useState<AlgSubmission[]>([]);
   const user = useAuthStore(s => s.user);
-  const isAdmin = user !== null && ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = hasAdminAccess(user);
   const [editorState, setEditorState] = useState<AdminEditorState | null>(null);
   const [validationOpen, setValidationOpen] = useState(false);
   const [validationRefreshKey, setValidationRefreshKey] = useState(0);

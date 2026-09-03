@@ -85,6 +85,8 @@ export interface AdminUserRecord {
   displayName: string;
   avatarUrl: string | null;
   wcaId: string | null;
+  isAdmin: boolean;
+  isRootAdmin: boolean;
   birthDate: string | null;
   gender: string | null;
   countryIso2: string | null;
@@ -165,6 +167,17 @@ export async function updateAdminDisplayName(userId: number, name: string): Prom
     body: JSON.stringify({ name }),
   });
   return (await handleApi<{ ok: true; user: SessionUser }>(response)).user;
+}
+export async function updateAdminRole(
+  userId: number,
+  isAdmin: boolean,
+): Promise<{ isAdmin: boolean; isRootAdmin: boolean }> {
+  const response = await fetch(apiUrl(`/v1/auth/admin/users/${userId}/admin`), {
+    method: 'PATCH',
+    headers: authHeaders(true),
+    body: JSON.stringify({ isAdmin }),
+  });
+  return handleApi<{ ok: true; isAdmin: boolean; isRootAdmin: boolean }>(response);
 }
 export type AvatarChoice =
   | { kind: 'clawd'; preset: ClawdAvatarPresetId }

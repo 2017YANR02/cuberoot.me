@@ -35,10 +35,10 @@ export function positionQuestionsForTop(top: CubeFace): PositionQuestion[] {
       answer: sideOrder[(index - 1 + sideOrder.length) % sideOrder.length],
     },
   ]);
-  const oppositeQuestions = Object.entries(CUBE_OPPOSITE_FACE).map(([reference, answer]) => ({
-    reference: reference as CubeFace,
+  const oppositeQuestions = sideOrder.map((reference) => ({
+    reference,
     direction: 'opposite' as const,
-    answer,
+    answer: CUBE_OPPOSITE_FACE[reference],
   }));
   return [...sideQuestions, ...oppositeQuestions];
 }

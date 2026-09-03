@@ -131,7 +131,7 @@ function uploadJson(row: UploadRow): DriveUpload {
 async function identity(c: Context): Promise<DriveIdentity> {
   const userId = await requireAppUserId(c);
   const user = await requireAuth(c);
-  const isAdmin = isAdminWcaId(user.wcaId);
+  const isAdmin = user.isAdmin;
   if (isAdmin) return { userId, isAdmin, allowed: true };
   const member = await sql<{ enabled: boolean }[]>`
     SELECT enabled FROM drive_members WHERE user_id = ${userId}`;

@@ -154,6 +154,7 @@ export function WcaPersonPicker({
   const handleClear = () => {
     onChange(null);
     setQuery('');
+    onQueryChange?.('');
     setApiResults([]);
     setOpen(false);
   };

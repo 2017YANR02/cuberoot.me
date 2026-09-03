@@ -53,6 +53,7 @@ import {
   type CaseViewAngle,
 } from '@/lib/alg_display';
 import { listSubmissions } from '@/lib/alg_api';
+import { sanitizeAlgHtml } from '@/lib/alg_html';
 import { reorderCaseAlgs } from '@/lib/alg_sets_api';
 import { useIsAdmin } from '@/lib/auth-store';
 import { useCopy } from '@/hooks/useCopy';
@@ -124,7 +125,11 @@ function PlayableAlgRow({ entry, puzzle, mirror, ori = 0, viewAngle, sq1Notation
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); } }}
       >
         <span className={`alg-alg-text${isKarnaukh ? ' is-karnaukh' : ''}`}>
-          {shownText}
+          {sq1Notation
+            ? shownText
+            : entry.algHtml && viewAngle === 'default' && puzzle !== 'sq1'
+            ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(entry.algHtml) }} />
+            : shown}
           {!sourceKarnaukh && entry.note && <span className="alg-alg-note">({tr(entry.note)})</span>}
         </span>
         {!isKarnaukh && len != null && <span className="alg-alg-len" title="STM">{len}</span>}

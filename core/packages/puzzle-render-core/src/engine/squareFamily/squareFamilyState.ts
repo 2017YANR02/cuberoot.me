@@ -72,24 +72,18 @@ export function isFiniteSquareMove(move: SquareFamilyMove): boolean {
 
 const SQUARE_FAMILY_TOKEN_SOURCE = String.raw`\s*(?:\(\s*([+-]?\d+)\s*,\s*([+-]?\d+)\s*\)|(\/))`;
 
-/**
- * Strictly parse explicit `(u,d)` and `/` moves. Returning null instead of a
- * partial prefix keeps malformed input from moving the puzzle to a surprising
- * state (notably, bare `10` must never mean `(1,0)` on Square-4).
- */
-export function tryParseSquareFamilyMoves(
+function tryParseExplicitSquareFamilyMoves(
   text: string,
   spec: SquareFamilySpec,
 ): SquareFamilyMove[] | null {
-  const cleaned = text.replace(/\/\/[^\n]*/g, ' ');
   const tokenRe = new RegExp(SQUARE_FAMILY_TOKEN_SOURCE, 'y');
   const moves: SquareFamilyMove[] = [];
   let index = 0;
 
-  while (index < cleaned.length) {
+  while (index < text.length) {
     tokenRe.lastIndex = index;
-    const match = tokenRe.exec(cleaned);
-    if (!match) return cleaned.slice(index).trim() ? null : moves;
+    const match = tokenRe.exec(text);
+    if (!match) return text.slice(index).trim() ? null : moves;
     index = tokenRe.lastIndex;
 
     if (match[3]) {
@@ -108,6 +102,42 @@ export function tryParseSquareFamilyMoves(
   return moves;
 }
 
+/** SQ2 has the same single-digit turn range as SQ1, so `43/-3-2/6/` is unambiguous. */
+function tryParseCompactSq2Moves(text: string, spec: SquareFamilySpec): SquareFamilyMove[] | null {
+  const tokens = text.match(/\/|[^\s/]+/g) ?? [];
+  const moves: SquareFamilyMove[] = [];
+  for (const token of tokens) {
+    if (token === '/') {
+      moves.push({ kind: 'slice' });
+      continue;
+    }
+    const pair = /^(-?[0-6])(-?[0-6])$/.exec(token);
+    const single = /^(-?[0-6])$/.exec(token);
+    if (!pair && !single) return null;
+    moves.push({
+      kind: 'turn',
+      top: normalizeSquareUnits(Number(pair?.[1] ?? single![1]), spec),
+      bot: normalizeSquareUnits(Number(pair?.[2] ?? 0), spec),
+    });
+  }
+  return moves;
+}
+
+/**
+ * Parse explicit `(u,d)` and `/` moves for both puzzles, plus the unambiguous
+ * single-digit shorthand for SQ2. Square-4 remains explicit because `10` is a
+ * legal amount there. Returning null rejects the whole malformed input.
+ */
+export function tryParseSquareFamilyMoves(
+  text: string,
+  spec: SquareFamilySpec,
+): SquareFamilyMove[] | null {
+  const cleaned = text.replace(/\/\/[^\n]*/g, ' ');
+  const explicit = tryParseExplicitSquareFamilyMoves(cleaned, spec);
+  if (explicit) return explicit;
+  return spec.kind === 'sq2' ? tryParseCompactSq2Moves(cleaned, spec) : null;
+}
+
 export function parseSquareFamilyMoves(text: string, spec: SquareFamilySpec): SquareFamilyMove[] {
   return tryParseSquareFamilyMoves(text, spec) ?? [];
 }
@@ -121,9 +151,9 @@ export function squareFamilyMovesToString(moves: readonly SquareFamilyMove[]): s
 }
 
 /**
- * Format equal-sector Square notation without borrowing SQ1's ambiguous
- * digit shorthand. Compact mode only removes safe whitespace: tuples keep
- * their parentheses and comma so Square-4 values such as 10 stay explicit.
+ * Format equal-sector Square notation. This lower-level formatter keeps tuples
+ * explicit; formatSquareFamilyAlg applies SQ2's unambiguous digit shorthand.
+ * Square-4 remains explicit because values such as 10 need separators.
  */
 export function formatSquareFamilyMoves(
   moves: readonly SquareFamilyMove[],
@@ -152,7 +182,20 @@ export function formatSquareFamilyAlg(
   format: SquareFamilyNotationFormat,
 ): string {
   const parsed = tryParseSquareFamilyMoves(text, spec);
-  return parsed ? formatSquareFamilyMoves(parsed, format) : text;
+  if (!parsed) return text;
+  if (format !== 'compact' || spec.kind !== 'sq2') return formatSquareFamilyMoves(parsed, format);
+
+  let compact = '';
+  for (const move of parsed) {
+    if (move.kind === 'slice') {
+      // Keep adjacent slices apart: `//` starts a line comment in Square notation.
+      compact += compact.endsWith('/') ? ' /' : '/';
+      continue;
+    }
+    if (compact && !compact.endsWith('/') && !compact.endsWith(' ')) compact += ' ';
+    compact += move.bot === 0 ? `${move.top}` : `${move.top}${move.bot}`;
+  }
+  return compact;
 }
 
 export function invertSquareFamilyMoves(
@@ -241,7 +284,8 @@ export function simplifySquareFamilyAlg(
       out.push({ kind: 'turn', top, bot });
     }
   }
-  return format ? formatSquareFamilyMoves(out, format) : squareFamilyMovesToString(out);
+  const explicit = squareFamilyMovesToString(out);
+  return format ? formatSquareFamilyAlg(explicit, spec, format) : explicit;
 }
 
 export function randomSquareFamilyScramble(

@@ -17,6 +17,7 @@ import dynamic from 'next/dynamic';
 import { useQueryStates, parseAsString, parseAsStringEnum } from 'nuqs';
 import HomeLink from '@/components/HomeLink';
 import { persistItem } from '@/lib/safe-storage';
+import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import { NXN_ORDER_DEFAULT, NXN_ORDER_MAX, NXN_ORDER_MIN } from '@/lib/nxn-order';
 // THREE is type-only at module scope — runtime instance is dynamically imported
 // inside the world-init effect so the ~1.2MB three bundle doesn't ship with
@@ -257,6 +258,8 @@ interface SimCubeMin {
   dirty: boolean;
 }
 
+const DAISY_SETUP = 'F2 R2 B2 L2';
+
 export default function SimPage() {
   const t = useT();
   // 管理员自建遮罩(DB)。首屏为空 → 按代码清单渲染;拉到后 stickering effect 重跑。
@@ -291,9 +294,8 @@ export default function SimPage() {
       // 值 = cubing.js 阶段名(OLL/Cross/CMLL…),NxN 走引擎遮罩,megaminx/fto 走
       // cubing.js 原生。不支持的拼图忽略(下拉也隐藏)。
       stickering: parseAsString.withDefault('full'),
-      // 阶段遮罩的拿方朝向(整体转前缀,lib/cube-orientation 的 24 档):遮罩整套随之
-      // 重定向 —— 换底面颜色、换阶段落在哪个槽,都是转体。默认 ''(UF,恒等)省略;
-      // 仅 NxN 引擎遮罩消费,megaminx/fto 无此参数。
+      // 阶段配色朝向(整体转前缀,lib/cube-orientation 的 24 档):遮罩位置不变,
+      // 只重贴六面颜色。默认 ''(UF,恒等)省略;仅 NxN 引擎遮罩消费。
       stickeringRot: parseAsString.withDefault(''),
       // 自定义阶段(stickering=custom)选中的贴纸清单,mask-core 的 `U:0,2;F:3-5`
       // DSL,写在还原帧 → 可分享。选取粒度/编辑开关是临时的作图状态,不进 URL。
@@ -581,10 +583,15 @@ export default function SimPage() {
     const stageMask = imgPuzzle.puzzleType === 'cube'
       ? visualcubeMaskForStickering(imgPuzzle.cubeSize, query.stickering)
       : '';
+    const stageColors = query.stickeringRot && query.stickering !== 'full'
+      && query.stickering !== CUSTOM_STICKERING
+      ? orientedCubeFaceColors(query.stickeringRot, fc)
+      : fc;
     return {
       algType: 'alg', algorithm: applied,
-      stageMask, maskAlg: stageMask ? query.stickeringRot : '',
-      faceU: fc.U, faceR: fc.R, faceF: fc.F, faceD: fc.D, faceL: fc.L, faceB: fc.B,
+      stageMask, maskAlg: '',
+      faceU: stageColors.U, faceR: stageColors.R, faceF: stageColors.F,
+      faceD: stageColors.D, faceL: stageColors.L, faceB: stageColors.B,
     };
   }, [settings.faceColors, setupParam, algParam, puzzleParam, skewbNotation,
       imgPuzzle, query.stickering, query.stickeringRot]);
@@ -1384,9 +1391,9 @@ export default function SimPage() {
       // 管理员自建遮罩(?stickering=preset:…):清单存在 DB,画法同自定义阶段
       : isPresetMask(query.stickering)
         ? presetMaskFn(cube.order, query.stickering, simMaskRows)
-        : (stickeringMaskFn(cube.order, query.stickering, query.stickeringRot)
-          ?? resolveStageMaskFn(cube.order, query.stickering, query.stickeringRot));
-  }, [puzzleParam, query.stickering, query.stickeringRot, query.stickeringMask,
+        : (stickeringMaskFn(cube.order, query.stickering)
+          ?? resolveStageMaskFn(cube.order, query.stickering));
+  }, [puzzleParam, query.stickering, query.stickeringMask,
     query.stickeringPick, query.stickeringRest, simMaskRows]);
 
   useEffect(() => {
@@ -1400,7 +1407,12 @@ export default function SimPage() {
     const cube = asNxN(world);
     if (!cube) return;
     cube.instancedRenderer.setStickering(stickeringMaskFor(cube));
-  }, [twisty, worldTick, stickeringMaskFor]);
+    cube.instancedRenderer.setFaceColorOverride(
+      query.stickeringRot && query.stickering !== 'full' && query.stickering !== CUSTOM_STICKERING
+        ? orientedCubeFaceColors(query.stickeringRot, settings.faceColors)
+        : null,
+    );
+  }, [twisty, worldTick, stickeringMaskFor, query.stickering, query.stickeringRot, settings.faceColors]);
 
   // 自定义阶段编辑态:点击 = 选贴纸,且拖拽一律转视角(paintMode)——不然点歪一点
   // 就当成拖层把魔方拧了。关掉编辑后立刻还原成正常的点击转层。
@@ -1590,6 +1602,22 @@ export default function SimPage() {
   const onSetupChange = useCallback((setup: string) => {
     setQuery({ setup: setup || null });
   }, [setQuery]);
+
+  const onStickeringChange = useCallback((stickering: string) => {
+    let setup: string | null | undefined;
+    if (stickering === 'Daisy' && !setupParam.trim() && !algParam.trim()) setup = DAISY_SETUP;
+    else if (query.stickering === 'Daisy' && setupParam === DAISY_SETUP && !algParam.trim()) setup = null;
+    setQuery({
+      stickering: stickering === 'full' ? null : stickering,
+      ...(setup !== undefined ? { setup } : {}),
+    });
+  }, [algParam, query.stickering, setQuery, setupParam]);
+
+  useEffect(() => {
+    if (query.stickering === 'Daisy' && !setupParam.trim() && !algParam.trim()) {
+      setQuery({ setup: DAISY_SETUP });
+    }
+  }, [algParam, query.stickering, setQuery, setupParam]);
 
   const onAlgPick = useCallback((setup: string, alg: string) => {
     const world = worldRef.current;
@@ -2224,7 +2252,7 @@ export default function SimPage() {
               </button>
             ) : null}
             stickering={query.stickering}
-            onStickeringChange={(v) => setQuery({ stickering: v === 'full' ? null : v })}
+            onStickeringChange={onStickeringChange}
             stickeringRot={query.stickeringRot}
             onStickeringRotChange={(v) => setQuery({ stickeringRot: v === '' ? null : v })}
             stickeringMask={query.stickeringMask}

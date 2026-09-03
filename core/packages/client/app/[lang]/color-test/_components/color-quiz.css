@@ -77,6 +77,12 @@
   text-align: center;
 }
 
+.position-question-color {
+  display: inline-block;
+  margin-inline: 0.35rem;
+  vertical-align: -0.3rem;
+}
+
 .color-quiz-pair {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
@@ -289,6 +295,7 @@
 
 .position-top-control {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;

@@ -285,8 +285,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'color-test/positions': {
     title: { zh: '颜色位置关系测试', en: 'Colour Positions' },
     description: {
-      zh: '选择任意顶面颜色,练习标准三阶魔方的侧面左右顺序和六种颜色的对色。',
-      en: 'Choose any top colour and practise side-face order and opposite colours on a standard 3×3.',
+      zh: '选择任意顶面颜色,练习标准三阶魔方四个侧面的左右顺序和对色。',
+      en: 'Choose any top colour and practise each side face\'s left, right and opposite colours on a standard 3×3.',
     },
   },
   'dev': {

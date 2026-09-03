@@ -20,7 +20,7 @@ import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
-import { requireAdminOrApiKey, requireAuth, checkRateLimit, ADMIN_WCA_IDS } from '../utils/recon_helpers.js';
+import { requireAdminOrApiKey, requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { isPenaltyOnlyFields } from '@cuberoot/shared/result-penalty';
 
 export const wcaResultWatchRoutes = new Hono();
@@ -265,7 +265,7 @@ async function authenticateActor(c: Context): Promise<{ wcaId: string; isAdmin: 
   const expected = process.env.ADMIN_API_KEY;
   if (key && expected && key === expected) return { wcaId: '__api_key__', isAdmin: true };
   const user = await requireAuth(c); // 未登录 / 被封 → throw(onError 映 401/403)
-  return { wcaId: user.wcaId, isAdmin: ADMIN_WCA_IDS.includes(user.wcaId) };
+  return { wcaId: user.wcaId, isAdmin: user.isAdmin };
 }
 
 // 本人对自己成绩的纯罚时改动 = 即时生效快速通道(纯展示、低风险,见 [[project_result_change_manual_edit]])。

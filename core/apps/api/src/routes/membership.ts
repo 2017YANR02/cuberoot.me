@@ -8,7 +8,9 @@
  * 异步 notify 验签后入账;都未配置时 admin 仍可手动开通。渠道可用性由 /plans 的 channels 暴露。
  *
  *   GET    /v1/membership/plans                 — 公开:在售套餐 + payEnabled + channels
+ *   GET    /v1/membership/profile/:wcaId        — 公开:有效会员的个人介绍
  *   GET    /v1/membership/me                    — 登录:本人会员状态
+ *   PUT    /v1/membership/me/profile            — 登录:设置公开个人介绍
  *   PUT    /v1/membership/me/contact            — 登录:设置续费/找回联系方式
  *   POST   /v1/membership/orders                — 登录:对某套餐下单,返回支付链接/二维码
  *   GET    /v1/membership/orders/:no            — 登录(本人):查单(供前端轮询)
@@ -31,7 +33,6 @@ import QRCode from 'qrcode';
 import { query } from '../db/connection.js';
 import { requireAuth, requireAdmin, checkRateLimit } from '../utils/recon_helpers.js';
 import { signXunhupay, verifyXunhupaySign, type SignParams } from '@cuberoot/shared/payment';
-import { isAdminWcaId } from '@cuberoot/shared/admin';
 import * as alipay from '../payment/alipay.js';
 import * as wechat from '../payment/wechat.js';
 import * as airwallex from '../payment/airwallex.js';
@@ -110,7 +111,10 @@ function secretForAppid(appid: string | undefined): string {
 }
 
 const PLAN_SLUG_RE = /^[a-z0-9_]{1,40}$/;
+const WCA_ID_RE = /^[0-9]{4}[A-Z]{4}[0-9]{2}$/;
 const CONTACT_KINDS = new Set(['email', 'wechat', 'qq', 'phone', 'other']);
+const PROFILE_INTRO_MAX_LENGTH = 1000;
+const PROFILE_IMAGE_MAX_COUNT = 8;
 
 // 我方单号:M + base36 时间 + 8 位随机,定长 ≤ 30,纯 ascii。
 function genOutTradeNo(): string {
@@ -156,6 +160,13 @@ interface MembershipRow {
   contact: string | null;
   contact_kind: string | null;
   note: string | null;
+  public_intro?: string | null;
+  public_intro_image_ids?: unknown;
+}
+
+function profileImageIds(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((id): id is number => Number.isSafeInteger(id) && id > 0).slice(0, PROFILE_IMAGE_MAX_COUNT);
 }
 
 function planToJson(p: PlanRow) {
@@ -190,6 +201,8 @@ function membershipToJson(m: MembershipRow) {
     source: m.source,
     contact: m.contact ?? undefined,
     contactKind: m.contact_kind ?? undefined,
+    profileIntro: m.public_intro ?? undefined,
+    profileImageIds: profileImageIds(m.public_intro_image_ids),
   };
 }
 
@@ -260,15 +273,91 @@ membershipRoutes.get('/membership/plans', async (c) => {
   return c.json({ plans: rows.map(planToJson), payEnabled: paymentConfigured(), channels: channelAvailability() });
 });
 
+// ─────────────────────────── 公开:会员个人介绍 ───────────────────────────
+membershipRoutes.get('/membership/profile/:wcaId', async (c) => {
+  const wcaId = c.req.param('wcaId').trim().toUpperCase();
+  if (!WCA_ID_RE.test(wcaId)) return c.json({ error: 'invalid WCA ID' }, 400);
+
+  const rows = await query<{ public_intro: string | null; public_intro_image_ids: unknown }>(
+    `SELECT u.public_intro, u.public_intro_image_ids
+       FROM app_users u
+       JOIN memberships m ON UPPER(m.wca_id) = UPPER(u.wca_id)
+      WHERE UPPER(u.wca_id) = ?
+        AND (m.expires_at IS NULL OR m.expires_at > NOW())
+        AND (
+          NULLIF(BTRIM(u.public_intro), '') IS NOT NULL
+          OR JSONB_ARRAY_LENGTH(u.public_intro_image_ids) > 0
+        )
+      LIMIT 1`,
+    [wcaId],
+  );
+  c.header('Cache-Control', 'no-store');
+  return c.json({ profile: rows[0] ? {
+    intro: rows[0].public_intro ?? '',
+    imageIds: profileImageIds(rows[0].public_intro_image_ids),
+  } : null });
+});
+
 // ─────────────────────────── 登录:本人状态 ───────────────────────────
 membershipRoutes.get('/membership/me', async (c) => {
   c.header('Cache-Control', 'no-store');
   const user = await requireAuth(c);
-  const rows = await query<MembershipRow>('SELECT * FROM memberships WHERE wca_id = ?', [user.wcaId]);
+  const rows = await query<MembershipRow>(
+    `SELECT m.*, u.public_intro, u.public_intro_image_ids
+       FROM memberships m
+       LEFT JOIN app_users u ON UPPER(u.wca_id) = UPPER(m.wca_id)
+      WHERE m.wca_id = ?`,
+    [user.wcaId],
+  );
   const membership = rows[0] ? membershipToJson(rows[0]) : null;
   return c.json({
     membership,
-    isMember: isAdminWcaId(user.wcaId) || !!membership?.active,
+    isMember: user.isAdmin || !!membership?.active,
+  });
+});
+
+// 设置公开个人介绍；内容保留在账号资料中，过期期间公开端自动隐藏。
+membershipRoutes.put('/membership/me/profile', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const user = await requireAuth(c);
+  const body = await c.req.json<{ intro?: string | null; imageIds?: unknown }>();
+  if (body.intro != null && typeof body.intro !== 'string') return c.json({ error: 'invalid profile intro' }, 400);
+  const intro = body.intro?.trim() ?? '';
+  if (intro.length > PROFILE_INTRO_MAX_LENGTH) return c.json({ error: 'profile intro too long' }, 400);
+
+  if (!Array.isArray(body.imageIds)
+    || body.imageIds.length > PROFILE_IMAGE_MAX_COUNT
+    || body.imageIds.some((id) => !Number.isSafeInteger(id) || Number(id) <= 0)
+    || new Set(body.imageIds).size !== body.imageIds.length) {
+    return c.json({ error: 'invalid profile images' }, 400);
+  }
+  const imageIds = body.imageIds as number[];
+  if (imageIds.length > 0) {
+    const placeholders = imageIds.map(() => '?').join(', ');
+    const images = await query<{ id: number | string }>(
+      `SELECT id FROM article_image WHERE owner_wca_id = ? AND id IN (${placeholders})`,
+      [user.wcaId, ...imageIds],
+    );
+    if (images.length !== imageIds.length) return c.json({ error: 'profile image not owned' }, 400);
+  }
+
+  const rows = await query<{ public_intro: string | null; public_intro_image_ids: unknown }>(
+    `UPDATE app_users u
+        SET public_intro = ?, public_intro_image_ids = ?::jsonb
+      WHERE UPPER(u.wca_id) = ?
+        AND EXISTS (
+          SELECT 1 FROM memberships m
+           WHERE UPPER(m.wca_id) = ?
+             AND (m.expires_at IS NULL OR m.expires_at > NOW())
+        )
+      RETURNING public_intro, public_intro_image_ids`,
+    [intro || null, imageIds, user.wcaId.toUpperCase(), user.wcaId.toUpperCase()],
+  );
+  if (!rows.length) return c.json({ error: 'active membership required' }, 403);
+  return c.json({
+    profileIntro: rows[0].public_intro,
+    profileImageIds: profileImageIds(rows[0].public_intro_image_ids),
   });
 });
 
@@ -288,7 +377,11 @@ membershipRoutes.put('/membership/me/contact', async (c) => {
   const note = b.note != null && b.note !== '' ? String(b.note).slice(0, 500) : null;
 
   const rows = await query<MembershipRow>(
-    `UPDATE memberships SET contact = ?, contact_kind = ?, note = ? WHERE wca_id = ? RETURNING *`,
+    `UPDATE memberships m
+        SET contact = ?, contact_kind = ?, note = ?
+       FROM app_users u
+      WHERE m.wca_id = ? AND UPPER(u.wca_id) = UPPER(m.wca_id)
+      RETURNING m.*, u.public_intro, u.public_intro_image_ids`,
     [contact, kind, note, user.wcaId],
   );
   if (!rows.length) return c.json({ error: 'no membership' }, 404);

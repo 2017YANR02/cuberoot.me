@@ -17,7 +17,7 @@
  * 两片之间的竖线是**缝隙透出背景色**,不是画的线 —— 深浅主题都不用改。
  */
 
-import { CUBE_FACE_FOR_COLOR_LETTER, CUBE_FILL } from '@/lib/cube-colors';
+import { CUBE_FACE_FOR_COLOR_LETTER, CUBE_FILL, type CubeFace } from '@/lib/cube-colors';
 import { COLOR_NAME, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { tr } from '@/i18n/tr';
 
@@ -130,9 +130,10 @@ export interface CubeColorChipProps {
   /** 悬浮 / 无障碍标题。不给就用颜色名(「绿 红」)。 */
   title?: string;
   className?: string;
+  faceColors?: Readonly<Record<CubeFace, string>>;
 }
 
-export default function CubeColorChip({ colors, title, className }: CubeColorChipProps) {
+export default function CubeColorChip({ colors, title, className, faceColors = CUBE_FILL }: CubeColorChipProps) {
   const letters = (typeof colors === 'string' ? [...colors] : colors) as ColorLetter[];
   // 认不出的字母整块不画:一个颜色错了的色块比没有色块更糟,它会被当成真的。
   if (!isCubeColorLetters(letters.join(''))) return null;
@@ -140,7 +141,7 @@ export default function CubeColorChip({ colors, title, className }: CubeColorChi
   return (
     <span className={`ccc-chip${className ? ` ${className}` : ''}`} title={label} aria-label={label} role="img">
       {letters.map((c, i) => (
-        <span key={`${c}-${i}`} style={{ background: CUBE_FILL[CUBE_FACE_FOR_COLOR_LETTER[c]] }} />
+        <span key={`${c}-${i}`} style={{ background: faceColors[CUBE_FACE_FOR_COLOR_LETTER[c]] }} />
       ))}
     </span>
   );

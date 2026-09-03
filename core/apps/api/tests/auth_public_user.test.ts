@@ -46,6 +46,7 @@ const publicAccount = {
   avatar: '',
   avatarSource: 'auto' as const,
   avatarPreset: null,
+  isAdmin: false,
 };
 
 describe('auth public user ID', () => {
