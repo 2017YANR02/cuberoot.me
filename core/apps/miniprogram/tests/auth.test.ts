@@ -128,6 +128,7 @@ describe('mini program authentication', () => {
         avatar: '',
         avatarSource: 'auto',
         avatarPreset: null,
+        isAdmin: false,
       },
     });
   });
@@ -160,6 +161,7 @@ describe('mini program authentication', () => {
         avatar: '',
         avatarSource: 'auto',
         avatarPreset: null,
+        isAdmin: false,
       },
       isNew: true,
     });
@@ -172,6 +174,7 @@ describe('mini program authentication', () => {
         avatar: '',
         avatarSource: 'auto',
         avatarPreset: null,
+        isAdmin: false,
       },
     });
   });
@@ -635,6 +638,7 @@ describe('mini program authentication', () => {
         avatar: '',
         avatarSource: 'auto',
         avatarPreset: null,
+        isAdmin: false,
       },
     });
     expect(setStorageSync).toHaveBeenCalledWith('cuberoot:session', {
@@ -646,6 +650,7 @@ describe('mini program authentication', () => {
         avatar: '',
         avatarSource: 'auto',
         avatarPreset: null,
+        isAdmin: false,
       },
     });
   });

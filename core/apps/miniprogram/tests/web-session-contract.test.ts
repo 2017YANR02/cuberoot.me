@@ -40,6 +40,7 @@ describe('mini program web session contract', () => {
       ...user,
       avatarSource: 'auto',
       avatarPreset: null,
+      isAdmin: false,
     };
     expect(decodeWebSessionUserEnvelope({ user })).toEqual({ user: normalizedUser });
     expect(decodeWebSession({ token: 't'.repeat(20), user, isNew: true })).toEqual({
