@@ -7,6 +7,27 @@
     "long_en": "The private account location selector uses a compact, self-hosted snapshot generated from Country State City."
   },
   {
+    "name": "Feishin",
+    "url": "https://github.com/jeffvli/feishin",
+    "zh": "音乐播放器的信息层级、播放控制与同步歌词体验参考；CubeRoot 未复制其 GPL-3.0 源码或服务端适配",
+    "en": "UX reference for the music player's information hierarchy, playback controls, and synced lyrics; CubeRoot copies no GPL-3.0 source code or server adapters",
+    "long_en": "Feishin is the primary product and UX reference for CubeRoot's music player. The implementation uses CubeRoot's own React UI and browser-native audio transport without copying Feishin's GPL-3.0 source code or server integrations."
+  },
+  {
+    "name": "YesPlayMusic",
+    "url": "https://github.com/qier222/YesPlayMusic",
+    "zh": "音乐播放器的视觉与产品分层参考；CubeRoot 未复制其 MIT 源码或第三方音乐服务实现",
+    "en": "Visual and product-structure reference for the music player; CubeRoot copies no MIT source code or third-party music-service implementation",
+    "long_en": "YesPlayMusic informed the visual and product-layering research for CubeRoot's music player. CubeRoot does not copy its source code or integrate its third-party music-service behavior."
+  },
+  {
+    "name": "Apple Music Like Lyrics",
+    "url": "https://github.com/amll-dev/applemusic-like-lyrics",
+    "zh": "逐词歌词交互的调研参考；当前播放器未引入或复制其 AGPL-3.0 组件",
+    "en": "Research reference for word-synced lyric interactions; the current player neither imports nor copies its AGPL-3.0 components",
+    "long_en": "Apple Music Like Lyrics was evaluated as a reference for advanced word-synced lyric presentation. CubeRoot's current lightweight LRC implementation does not import or copy its AGPL-3.0 components."
+  },
+  {
     "name": "Handsontable/HyperFormula",
     "url": "https://github.com/handsontable/hyperformula",
     "zh": "在线协作表格的公式计算引擎（GPL-3.0）",
