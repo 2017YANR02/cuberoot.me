@@ -467,8 +467,8 @@ if (-not $Publish) {
 }
 if (-not $PSCmdlet.ShouldProcess($RemoteHost, "publish music manifest $($library.ManifestSha256)")) { return }
 
-$script:SshPath = (Get-Command ssh -CommandType Application -ErrorAction Stop).Source
-$script:ScpPath = (Get-Command scp -CommandType Application -ErrorAction Stop).Source
+$script:SshPath = (Get-Command ssh -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+$script:ScpPath = (Get-Command scp -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
 $script:SshOptions = @(
     '-o', 'BatchMode=yes',
     '-o', "ConnectTimeout=$ConnectTimeoutSeconds",
