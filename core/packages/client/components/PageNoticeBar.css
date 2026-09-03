@@ -137,6 +137,10 @@ textarea.page-notice-input { resize: vertical; min-height: 46px; }
 .page-notice-input:focus { outline: none; border-color: var(--ring); }
 
 .page-notice-editor-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.page-notice-datetime-field { flex: 1 1 240px; min-width: 0; }
+.page-notice-datetime { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+.page-notice-date-input { width: 100%; }
+.page-notice-time-input { width: 7.5em; min-width: 0; }
 
 .page-notice-presets { display: flex; flex-wrap: wrap; gap: 6px; }
 .page-notice-preset {

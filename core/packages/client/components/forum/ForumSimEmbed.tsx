@@ -5,7 +5,7 @@ import { ExternalLink } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { CUBE_COLOR_NAMES } from '@/lib/cube-colors';
-import { faceShowingColor, orientedFaceColors } from '@/lib/cube-orientation';
+import { orientedFaceColors } from '@/lib/cube-orientation';
 import { parseForumSimLink } from '@/lib/forum-sim-link';
 
 const AlgPlayer = dynamic(() => import('@/components/AlgPlayer/AlgPlayer'), { ssr: false });
@@ -14,7 +14,7 @@ export default function ForumSimEmbed({ href }: { href: string }) {
   const sim = parseForumSimLink(href);
   if (!sim) return null;
 
-  const bottomFace = faceShowingColor(orientedFaceColors(sim.orientation), 'D');
+  const bottomFace = orientedFaceColors(sim.orientation).D;
   const stage = sim.stickering === 'Cross'
     ? tr({ zh: `Cross ${CUBE_COLOR_NAMES[bottomFace].zh}底`, en: `Cross ${CUBE_COLOR_NAMES[bottomFace].en} base` })
     : sim.stickering;

@@ -10,6 +10,7 @@ import { X, Pencil, Trash2 } from 'lucide-react';
 import { useIsAdmin } from '@/lib/auth-store';
 import { tr, T, useLang } from '@/i18n/tr';
 import BoolToggle from './BoolToggle';
+import { DateInput } from './DateInput';
 import { persistItem } from '@/lib/safe-storage';
 import {
   type PageNotice, type NoticeLevel, type NoticePlacement, type PageNoticeInput,
@@ -100,6 +101,23 @@ function dateTimeInputValue(value: string | null | undefined): string {
   if (!Number.isFinite(date.getTime())) return '';
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
   return local.toISOString().slice(0, 16);
+}
+
+function datePart(value: string): string {
+  return value.slice(0, 10);
+}
+
+function timePart(value: string): string {
+  return value.slice(11, 16);
+}
+
+function withDate(value: string, date: string): string {
+  return date ? `${date}T${timePart(value) || '00:00'}` : '';
+}
+
+function withTime(value: string, time: string): string {
+  const date = datePart(value);
+  return date && time ? `${date}T${time}` : '';
 }
 
 function formForNotice(n: PageNotice): FormState {
@@ -338,16 +356,30 @@ export default function PageNoticeBar() {
           </label>
 
           <div className="page-notice-editor-row">
-            <label className="page-notice-field">
+            <div className="page-notice-field page-notice-datetime-field">
               <span><T en="Starts (optional)" zh="开始时间(可选)" /></span>
-              <input type="datetime-local" className="page-notice-input" value={form.startsAt}
-                onChange={(e) => setForm({ ...form, startsAt: e.target.value })} />
-            </label>
-            <label className="page-notice-field">
+              <div className="page-notice-datetime">
+                <DateInput value={datePart(form.startsAt)} size="compact" className="page-notice-date-input"
+                  aria-label={tr({ en: 'Start date', zh: '开始日期' })}
+                  onChange={(date) => setForm({ ...form, startsAt: withDate(form.startsAt, date) })} />
+                <input type="time" className="page-notice-input page-notice-time-input"
+                  aria-label={tr({ en: 'Start time', zh: '开始时刻' })}
+                  value={timePart(form.startsAt)} disabled={!datePart(form.startsAt)}
+                  onChange={(e) => setForm({ ...form, startsAt: withTime(form.startsAt, e.target.value) })} />
+              </div>
+            </div>
+            <div className="page-notice-field page-notice-datetime-field">
               <span><T en="Ends (optional)" zh="结束时间(可选)" /></span>
-              <input type="datetime-local" className="page-notice-input" value={form.endsAt}
-                onChange={(e) => setForm({ ...form, endsAt: e.target.value })} />
-            </label>
+              <div className="page-notice-datetime">
+                <DateInput value={datePart(form.endsAt)} size="compact" className="page-notice-date-input"
+                  aria-label={tr({ en: 'End date', zh: '结束日期' })}
+                  onChange={(date) => setForm({ ...form, endsAt: withDate(form.endsAt, date) })} />
+                <input type="time" className="page-notice-input page-notice-time-input"
+                  aria-label={tr({ en: 'End time', zh: '结束时刻' })}
+                  value={timePart(form.endsAt)} disabled={!datePart(form.endsAt)}
+                  onChange={(e) => setForm({ ...form, endsAt: withTime(form.endsAt, e.target.value) })} />
+              </div>
+            </div>
           </div>
 
           <div className="page-notice-editor-row">

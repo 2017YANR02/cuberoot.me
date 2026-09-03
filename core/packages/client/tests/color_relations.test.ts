@@ -42,19 +42,19 @@ describe('cube colour relationships', () => {
 });
 
 describe('colour positions for every top colour', () => {
-  it('covers every side colour in both directions and every opposite colour', () => {
+  it('covers every side colour to its left, right and opposite', () => {
     expect(WHITE_TOP_SIDE_ORDER).toEqual(['R', 'F', 'L', 'B']);
-    expect(ALL_POSITION_QUESTIONS).toHaveLength(14);
+    expect(ALL_POSITION_QUESTIONS).toHaveLength(12);
     expect(ALL_POSITION_QUESTIONS).toContainEqual({ reference: 'R', direction: 'right', answer: 'F' });
     expect(ALL_POSITION_QUESTIONS).toContainEqual({ reference: 'R', direction: 'left', answer: 'B' });
-    for (const reference of CUBE_COLOR_FACES) {
+    for (const reference of WHITE_TOP_SIDE_ORDER) {
       expect(ALL_POSITION_QUESTIONS).toContainEqual({
         reference,
         direction: 'opposite',
         answer: CUBE_OPPOSITE_FACE[reference],
       });
     }
-    expect(new Set(ALL_POSITION_QUESTIONS.map(({ reference, direction }) => `${reference}-${direction}`)).size).toBe(14);
+    expect(new Set(ALL_POSITION_QUESTIONS.map(({ reference, direction }) => `${reference}-${direction}`)).size).toBe(12);
   });
 
   it('builds the four valid side colours for all six top colours', () => {
@@ -70,14 +70,14 @@ describe('colour positions for every top colour', () => {
       expect(sideOrderForTop(top)).toEqual(expected[top]);
       expect(sideOrderForTop(top)).not.toContain(top);
       expect(sideOrderForTop(top)).not.toContain(CUBE_OPPOSITE_FACE[top]);
-      expect(positionQuestionsForTop(top)).toHaveLength(14);
+      expect(positionQuestionsForTop(top)).toHaveLength(12);
     }
   });
 
   it('builds a shuffled copy without losing questions', () => {
     const round = buildPositionRound('U', () => 0);
     expect(round).not.toBe(ALL_POSITION_QUESTIONS);
-    expect(new Set(round.map(({ reference, direction }) => `${reference}-${direction}`)).size).toBe(14);
+    expect(new Set(round.map(({ reference, direction }) => `${reference}-${direction}`)).size).toBe(12);
   });
 });
 

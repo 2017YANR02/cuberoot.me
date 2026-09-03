@@ -21,7 +21,7 @@ import { renderCubeSVG } from '@cuberoot/visualcube';
 import BoolToggle from '@/components/BoolToggle';
 import { useT } from '@/hooks/useT';
 import { FACE_COLORS } from '@/lib/recon-utils';
-import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
 import {
   listPatternExamples, createPatternExample, updatePatternExample,
   deletePatternExample, reorderPatternExamples, type PatternExample,
@@ -114,7 +114,7 @@ export default function PatternSearchPage() {
 
   // 示例预设(DB,管理员自维护)。null = 还没拉到 / 拉失败 → 整排不渲染
   const user = useAuthStore((s) => s.user);
-  const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = hasAdminAccess(user);
   const [examples, setExamples] = useState<PatternExample[] | null>(null);
   const [adminMode, setAdminMode] = useState(false);
   const [form, setForm] = useState<null | { id: number | null; nameZh: string; nameEn: string; useCurrent: boolean }>(null);

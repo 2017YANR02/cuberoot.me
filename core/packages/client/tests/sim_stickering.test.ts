@@ -8,7 +8,7 @@ import {
 } from '@/app/[lang]/sim/engine/nxn/stickering';
 import { pickStickering } from '@/components/AlgPlayer/stickering';
 import { FACE } from '@/app/[lang]/sim/engine/define';
-import { faceShowingColor, orientationForBottomFace, orientedFaceColors } from '@/lib/cube-orientation';
+import { orientationForBottomFace, orientedFaceColors } from '@/lib/cube-orientation';
 
 /** initial = x + y·N + z·N²(y=N-1 为 U,z=N-1 为 F,x=N-1 为 R) */
 const idx = (N: number, x: number, y: number, z: number) => x + y * N + z * N * N;
@@ -73,16 +73,33 @@ describe('stickeringMaskFn 3x3', () => {
     expect(m(P3.FL, FACE.F)).toBe(FM_DIM);
   });
 
-  it('Cross:D 棱 + D 中心原色,其余中心暗,其它全忽略', () => {
+  it('Cross:D 棱 + U/D 中心原色,侧面中心暗,其它块忽略', () => {
     const m = stickeringMaskFn(3, 'Cross')!;
     expect(m(P3.DF, FACE.D)).toBe(FM_REGULAR);
     expect(m(P3.DF, FACE.F)).toBe(FM_REGULAR);   // 十字棱整块原色(侧色也要对齐)
     expect(m(P3.Dc, FACE.D)).toBe(FM_REGULAR);
     expect(m(P3.Fc, FACE.F)).toBe(FM_DIM);
-    expect(m(P3.Uc, FACE.U)).toBe(FM_DIM);
+    expect(m(P3.Uc, FACE.U)).toBe(FM_REGULAR);
     expect(m(P3.DFR, FACE.D)).toBe(FM_IGNORED);  // 底角忽略
     expect(m(P3.UF, FACE.U)).toBe(FM_IGNORED);
     expect(m(P3.FR, FACE.F)).toBe(FM_IGNORED);
+  });
+
+  it('F2L:顶面中心原色,其它顶层块忽略', () => {
+    const m = stickeringMaskFn(3, 'F2L')!;
+    expect(m(P3.Uc, FACE.U)).toBe(FM_REGULAR);
+    expect(m(P3.UF, FACE.U)).toBe(FM_IGNORED);
+    expect(m(P3.FL, FACE.F)).toBe(FM_REGULAR);
+  });
+
+  it('Daisy:U 中心原色,D 色棱只显示 D 色贴纸,其它全部忽略', () => {
+    const m = stickeringMaskFn(3, 'Daisy')!;
+    expect(m(P3.Uc, FACE.U)).toBe(FM_REGULAR);
+    expect(m(P3.Dc, FACE.D)).toBe(FM_IGNORED);
+    expect(m(P3.Fc, FACE.F)).toBe(FM_IGNORED);
+    expect(m(P3.DF, FACE.D)).toBe(FM_REGULAR);
+    expect(m(P3.DF, FACE.F)).toBe(FM_IGNORED);
+    expect(m(P3.UF, FACE.U)).toBe(FM_IGNORED);
   });
 
   it('AF2L:顶层与标准 FR 角棱整块忽略,其它 F2L 块保持原色', () => {
@@ -252,7 +269,7 @@ describe('stickeringMaskFn 2x2 / 4x4', () => {
     expect(m(dEdge, FACE.D)).toBe(FM_REGULAR);
     expect(m(dCenter, FACE.D)).toBe(FM_REGULAR);
     expect(m(idx(4, 0, 0, 0), FACE.D)).toBe(FM_IGNORED); // 底角
-    expect(m(idx(4, 1, 3, 2), FACE.U)).toBe(FM_DIM);     // U 中心暗
+    expect(m(idx(4, 1, 3, 2), FACE.U)).toBe(FM_IGNORED); // U 中心忽略
   });
 });
 
@@ -261,7 +278,7 @@ describe('stickeringMaskFn 拿方朝向重定向(整体转前缀)', () => {
     const faces = ['U', 'D', 'R', 'L', 'B', 'F'] as const;
     const orientations = faces.map(orientationForBottomFace);
     expect(new Set(orientations).size).toBe(6);
-    expect(orientations.map((value) => faceShowingColor(orientedFaceColors(value), 'D'))).toEqual(faces);
+    expect(orientations.map((value) => orientedFaceColors(value).D)).toEqual(faces);
   });
 
   it("Cross + x2(翻个个儿):十字落在 U 面,D 面变忽略", () => {
@@ -269,7 +286,7 @@ describe('stickeringMaskFn 拿方朝向重定向(整体转前缀)', () => {
     expect(m(P3.UF, FACE.U)).toBe(FM_REGULAR);   // U 棱 = 十字棱
     expect(m(P3.UF, FACE.F)).toBe(FM_REGULAR);
     expect(m(P3.Uc, FACE.U)).toBe(FM_REGULAR);
-    expect(m(P3.Dc, FACE.D)).toBe(FM_DIM);       // 原十字面退化成普通中心
+    expect(m(P3.Dc, FACE.D)).toBe(FM_IGNORED);   // 原十字对面中心忽略
     expect(m(P3.DF, FACE.D)).toBe(FM_IGNORED);
     expect(m(P3.UFR, FACE.U)).toBe(FM_IGNORED);  // 顶角不属于十字
   });

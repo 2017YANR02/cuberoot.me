@@ -5,6 +5,10 @@
   width: fit-content;
 }
 
+.compact-select.cube-orientation-select {
+  align-self: center;
+}
+
 .compact-select-trigger {
   display: inline-flex;
   align-items: center;

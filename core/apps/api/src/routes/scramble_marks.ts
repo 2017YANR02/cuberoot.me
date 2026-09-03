@@ -5,7 +5,7 @@ import {
 } from '@cuberoot/shared/timer';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
-import { requireAuth, checkRateLimit, ADMIN_WCA_IDS } from '../utils/recon_helpers.js';
+import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 
 /**
  * /v1/scramble-marks — 公开「打卡」:登录用户给做过的 WCA 真实比赛打乱做标记。
@@ -251,7 +251,7 @@ scrambleMarksRoutes.delete('/scramble-marks/:id', async (c) => {
     [id],
   );
   if (rows.length === 0) return c.json({ ok: true }); // 幂等:已不存在也算成功
-  const isAdmin = ADMIN_WCA_IDS.includes(authUser.wcaId);
+  const isAdmin = authUser.isAdmin;
   if (rows[0].wca_id !== authUser.wcaId && !isAdmin) {
     return c.json({ error: 'Cannot delete others’ marks' }, 403);
   }

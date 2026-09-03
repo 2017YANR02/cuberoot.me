@@ -107,6 +107,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'GET', p: '/v1/auth/admin/users', g: 'admin', c: 'no-store', zh: '用户注册统计、绑定方式与分页明细', en: 'User registration stats, linked methods, and paginated records' },
   { d: 'auth', m: 'GET', p: '/v1/auth/admin/users/:userId', g: 'admin', c: 'no-store', zh: '读取指定 CubeRoot 用户资料', en: 'Read a CubeRoot user profile' },
   { d: 'auth', m: 'POST', p: '/v1/auth/admin/users/:userId/profile', g: 'admin', c: 'no-store', zh: '修改未关联 WCA 的用户名称', en: 'Update the name of a user not linked to WCA' },
+  { d: 'auth', m: 'PATCH', p: '/v1/auth/admin/users/:userId/admin', g: 'admin', c: 'no-store', zh: '设置或取消注册用户的管理员角色', en: 'Grant or revoke a registered user administrator role' },
   { d: 'auth', m: 'POST', p: '/v1/auth/password/set', g: 'login', zh: '设置 / 修改密码(改密先验旧密)', en: 'Set / change password (change verifies the old one)' },
   { d: 'auth', m: 'GET', p: '/v1/auth/identities', g: 'login', zh: '当前账号已绑定的身份列表 + 是否已设密码', en: 'Linked identities of current account + whether a password is set' },
 
@@ -575,7 +576,9 @@ const ENDPOINTS: Ep[] = [
 
   // ---- membership ----
   { d: 'membership', m: 'GET', p: '/v1/membership/plans', g: 'public', zh: '会员套餐', en: 'Membership plans' },
+  { d: 'membership', m: 'GET', p: '/v1/membership/profile/:wcaId', g: 'public', zh: '有效会员的公开个人资料和图片', en: 'Public profile and images for an active member' },
   { d: 'membership', m: 'GET', p: '/v1/membership/me', g: 'login', zh: '我的会员状态', en: 'My membership' },
+  { d: 'membership', m: 'PUT', p: '/v1/membership/me/profile', g: 'login', c: 'no-store', zh: '修改公开个人资料和图片', en: 'Update public personal profile and images' },
   { d: 'membership', m: 'PUT', p: '/v1/membership/me/contact', g: 'login', zh: '改联系方式', en: 'Update contact' },
   { d: 'membership', m: 'POST', p: '/v1/membership/orders', g: 'login', zh: '创建订单', en: 'Create order' },
   { d: 'membership', m: 'GET', p: '/v1/membership/orders/:no', g: 'login', zh: '查订单状态', en: 'Order status' },

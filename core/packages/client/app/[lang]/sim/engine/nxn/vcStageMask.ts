@@ -16,7 +16,7 @@
 // Phase 1 headless 抽包时随 visualcube 消费方一并处理。
 import { makeMasking, type FaceValues, type Masking } from '@cuberoot/visualcube';
 import {
-  FM_REGULAR, FM_IGNORED, orientationXform, stickeringGroupsFor,
+  FM_REGULAR, FM_DIM, FM_IGNORED, orientationXform, stickeringGroupsFor,
   type StickeringMaskFn, type StickeringGroup,
 } from './stickering';
 // 纯坐标(netIndexOf + 面映射)独立成 netIndex.ts(零依赖),这里 re-export 保 API;
@@ -47,7 +47,13 @@ export function visualcubeStageMaskFn(order: number, name: string, orientation?:
     const [x, y, z] = xf.map(initial % N, ((initial / N) | 0) % N, (initial / N2) | 0, max);
     const mf = xf.facePerm[face] ?? face;           // 遮罩坐标系下的面
     const idx = netIndexOf(x, y, z, mf, max, N);
-    return fv[ENGINE_TO_VC_FACE[mf]]?.[idx] ? FM_REGULAR : FM_IGNORED;
+    const vcFace = ENGINE_TO_VC_FACE[mf];
+    if (!fv[vcFace]?.[idx]) return FM_IGNORED;
+    const row = (idx / N) | 0, col = idx % N;
+    if (name === 'fl' && vcFace !== 0 && vcFace !== 3 && row > 0 && row < max && col > 0 && col < max) {
+      return FM_DIM;
+    }
+    return FM_REGULAR;
   };
 }
 

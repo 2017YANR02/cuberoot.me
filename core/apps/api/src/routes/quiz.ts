@@ -17,7 +17,7 @@ import {
 } from '@cuberoot/shared/quiz';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
-import { requireAuth, checkRateLimit, ADMIN_WCA_IDS } from '../utils/recon_helpers.js';
+import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import type { WcaUser } from '../utils/recon_helpers.js';
 import { notify, adminRecipients } from '../utils/notify.js';
 import { publicUserIdsForOwnerKeys } from '../utils/account.js';
@@ -28,7 +28,7 @@ export const quizRoutes = new Hono();
 const DAILY_CAP = 30;
 
 function isAdmin(user: WcaUser): boolean {
-  return ADMIN_WCA_IDS.includes(user.wcaId);
+  return user.isAdmin;
 }
 
 /** 用户内容,永远即取即新。 */

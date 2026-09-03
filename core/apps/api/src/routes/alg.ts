@@ -10,7 +10,7 @@ import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
-  requireAuth, requireAdmin, checkRateLimit, ADMIN_WCA_IDS,
+  requireAuth, requireAdmin, checkRateLimit,
 } from '../utils/recon_helpers.js';
 import { is3x3TopLayerSet } from '@cuberoot/shared';
 import { canonicalize3x3WideMoves, startsWithYRotation } from '@cuberoot/shared/alg-notation';
@@ -154,7 +154,7 @@ algRoutes.put('/alg/submissions/:id', async (c) => {
 
   const rows = await query<AlgSubmissionRow>('SELECT * FROM alg_submissions WHERE id = ?', [id]);
   if (rows.length === 0) return c.json({ error: 'Not found' }, 404);
-  const isAdmin = ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = user.isAdmin;
   if (!isAdmin && rows[0].author_id !== user.wcaId) {
     return c.json({ error: 'Cannot edit others alg' }, 403);
   }
@@ -190,7 +190,7 @@ algRoutes.delete('/alg/submissions/:id', async (c) => {
 
   const rows = await query<AlgSubmissionRow>('SELECT author_id FROM alg_submissions WHERE id = ?', [id]);
   if (rows.length === 0) return c.json({ error: 'Not found' }, 404);
-  if (!ADMIN_WCA_IDS.includes(user.wcaId) && rows[0].author_id !== user.wcaId) {
+  if (!user.isAdmin && rows[0].author_id !== user.wcaId) {
     return c.json({ error: 'Cannot delete others alg' }, 403);
   }
 

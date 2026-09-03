@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Search, Pencil, MessageSquarePlus, Plus, Trash2, Link2 } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
-import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import {
   fetchWikiTerms, createTerm, updateTerm, deleteTerm,
@@ -145,7 +145,7 @@ export default function WikiPage() {
   const singleLang: 'zh' | 'en' = isZh ? 'zh' : 'en';
   const user = useAuthStore(s => s.user);
   const isLoggedIn = !!user;
-  const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = hasAdminAccess(user);
   // 所有权键(与服务端一致):非 WCA 账号也能判定自己的词条。admin 判定仍用真实 wcaId。
   const myKey = user ? computeOwnerKey(user.uid, user.wcaId) : '';
 

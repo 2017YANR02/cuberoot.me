@@ -260,9 +260,10 @@ export function useUrlSubsetSelection(
 // allOption:可选的「综合」档(合并全部底色档)。仅首页概率视图传入 —— stats / StageSolver / 类型视图
 // 都是「选一个档」的语境,不传就完全不出现这一项(菜单/触发按钮均无变化)。active 时触发钮显示「综合」
 // 文字、菜单里该整行高亮,其余色块不高亮(调用方把 sel.subsetKey 置空即可)。
-export function SubsetColorPicker({ sel, isZh, className, allOption }: {
+export function SubsetColorPicker({ sel, isZh, className, allOption, ariaLabel }: {
   sel: SubsetSelection; isZh: boolean; className?: string;
   allOption?: { active: boolean; onSelect: () => void };
+  ariaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -298,6 +299,7 @@ export function SubsetColorPicker({ sel, isZh, className, allOption }: {
   const aggName = tr({ zh: '综合', en: 'All' });
   const aggTitle = tr({ zh: '综合:合并全部底色档取最稀有', en: 'All neutralities combined — rarest across every subset' });
   const aggActive = !!allOption?.active;
+  const pickerLabel = ariaLabel ?? tr({ zh: '底色', en: 'Bottom color' });
 
   return (
     <div ref={rootRef} className={`subset-picker${className ? ` ${className}` : ''}`}>
@@ -309,8 +311,8 @@ export function SubsetColorPicker({ sel, isZh, className, allOption }: {
         aria-haspopup="true"
         aria-expanded={open}
         aria-label={aggActive
-          ? `${tr({ zh: '底色', en: 'Bottom color' })}: ${aggName}`
-          : `${tr({ zh: '底色', en: 'Bottom color' })}: ${modeName} ${curTitle}`}
+          ? `${pickerLabel}: ${aggName}`
+          : `${pickerLabel}: ${modeName} ${curTitle}`}
         title={aggActive ? aggTitle : curTitle}
       >
         {aggActive
@@ -319,7 +321,7 @@ export function SubsetColorPicker({ sel, isZh, className, allOption }: {
       </button>
 
       {open && (
-        <div ref={panelRef} className="subset-picker-panel" role="group" aria-label={tr({ zh: '底色', en: 'Bottom color' })}>
+        <div ref={panelRef} className="subset-picker-panel" role="group" aria-label={pickerLabel}>
           {/* 「综合」整行(仅概率视图传 allOption):横跨两列,合并全部底色档。 */}
           {allOption && (
             <button

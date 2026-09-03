@@ -1073,6 +1073,7 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
   onSaved: () => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [studentName, setStudentName] = useState(student.studentName);
   const [selectedStudent, setSelectedStudent] = useState<WcaPersonLite | null>(null);
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(() => new Set(student.eventIds));
   const [competedEventIds, setCompetedEventIds] = useState<Set<string>>(() => new Set());
@@ -1082,9 +1083,10 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
   const [error, setError] = useState('');
   const canManage = directory.isAdmin || directory.userWcaId === teacherWcaId;
   const selectedTeacherSelf = selectedStudent?.id === teacherWcaId;
+  const normalizedStudentName = studentName.replace(/\s+/g, ' ').trim();
   const canSave = selectedEventIds.size > 0
     && !selectedTeacherSelf
-    && (!!selectedStudent || !!countryIso2);
+    && (!!selectedStudent || (!!normalizedStudentName && !!countryIso2));
   const notCompetedEventIds = useMemo(() => new Set(
     ALL_EVENT_IDS.filter((eventId) => !competedEventIds.has(eventId)),
   ), [competedEventIds]);
@@ -1115,6 +1117,7 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
   if (!canManage) return null;
 
   const open = () => {
+    setStudentName(student.studentName);
     setSelectedStudent(null);
     setSelectedEventIds(new Set(student.eventIds));
     setCountryIso2(student.countryIso2?.toLowerCase() ?? '');
@@ -1140,7 +1143,7 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
         }
         await removeWcaNamedStudent(teacherWcaId, student.id);
       } else {
-        await updateWcaNamedStudent(teacherWcaId, student.id, student.studentName, countryIso2, [...selectedEventIds]);
+        await updateWcaNamedStudent(teacherWcaId, student.id, normalizedStudentName, countryIso2, [...selectedEventIds]);
       }
       setEditing(false);
       onSaved();
@@ -1191,6 +1194,8 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
                       : '');
                   }}
                   defaultQuery={student.studentName}
+                  onQueryChange={setStudentName}
+                  allowFreeText
                   autoOpen
                   isZh={isZh}
                   placeholder={tr({ zh: '姓名或 WCA ID', en: 'Name or WCA ID' })}

@@ -10,6 +10,7 @@ import crypto from 'node:crypto';
 import type { AccountBasicProfile, AccountGender } from '@cuberoot/shared/account';
 import type { AvatarSource, ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
 import type { WebSessionUser } from '@cuberoot/shared/auth/web-session';
+import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { query, sql } from '../db/connection.js';
 import { JWT_SECRET } from './session.js';
 
@@ -34,6 +35,7 @@ export interface AppUser {
   avatar_source: AvatarSource;
   avatar_preset: ClawdAvatarPresetId | null;
   wca_id: string | null;
+  is_admin: boolean;
 }
 
 type AppUserRow = Omit<AppUser, 'id'> & { id: unknown };
@@ -59,6 +61,7 @@ function appUserFromRow(row: AppUserRow): AppUser {
     avatar_source: row.avatar_source,
     avatar_preset: row.avatar_preset,
     wca_id: row.wca_id,
+    is_admin: row.is_admin,
   };
 }
 
@@ -227,7 +230,7 @@ export async function clearPassword(userId: number): Promise<void> {
  */
 export async function loginWithPassword(email: string, pw: string): Promise<AppUser | null> {
   const rows = await query<AppUserRow & { password_hash: string | null }>(
-    `SELECT u.id, u.display_name, u.avatar_url, u.avatar_source, u.avatar_preset, u.wca_id, u.password_hash
+    `SELECT u.id, u.display_name, u.avatar_url, u.avatar_source, u.avatar_preset, u.wca_id, u.is_admin, u.password_hash
      FROM auth_identities i JOIN app_users u ON u.id = i.user_id
      WHERE i.provider = 'email' AND i.provider_uid = ?`,
     [email],
@@ -241,7 +244,7 @@ export async function loginWithPassword(email: string, pw: string): Promise<AppU
 // ── 账号 / 身份 ──
 export async function getUserById(id: number): Promise<AppUser | null> {
   const rows = await query<AppUserRow>(
-    'SELECT id, display_name, avatar_url, avatar_source, avatar_preset, wca_id FROM app_users WHERE id = ?',
+    'SELECT id, display_name, avatar_url, avatar_source, avatar_preset, wca_id, is_admin FROM app_users WHERE id = ?',
     [id],
   );
   return firstAppUser(rows);
@@ -314,7 +317,7 @@ export async function updateAccountBasicProfile(
 export async function updateDisplayName(id: number, displayName: string): Promise<AppUser | null> {
   const rows = await query<AppUserRow>(
     `UPDATE app_users SET display_name = ? WHERE id = ? AND wca_id IS NULL
-     RETURNING id, display_name, avatar_url, avatar_source, avatar_preset, wca_id`,
+     RETURNING id, display_name, avatar_url, avatar_source, avatar_preset, wca_id, is_admin`,
     [displayName, id],
   );
   return firstAppUser(rows);
@@ -328,7 +331,7 @@ export async function updateClawdAvatar(
     `UPDATE app_users
      SET avatar_source = 'clawd', avatar_preset = ?, avatar_url = NULL
      WHERE id = ?
-     RETURNING id, display_name, avatar_url, avatar_source, avatar_preset, wca_id`,
+     RETURNING id, display_name, avatar_url, avatar_source, avatar_preset, wca_id, is_admin`,
     [preset, id],
   );
   return firstAppUser(rows);
@@ -349,7 +352,7 @@ export async function updateUploadedAvatar(
          WHERE image.id = ? AND image.owner_wca_id = ?
        )
      RETURNING app.id, app.display_name, app.avatar_url,
-               app.avatar_source, app.avatar_preset, app.wca_id`,
+               app.avatar_source, app.avatar_preset, app.wca_id, app.is_admin`,
     [avatarUrl, id, imageId, ownershipKey],
   );
   return firstAppUser(rows);
@@ -365,7 +368,7 @@ export async function resetAvatarToWca(id: number): Promise<AppUser | null> {
          )
      WHERE app.id = ? AND app.wca_id IS NOT NULL
      RETURNING app.id, app.display_name, app.avatar_url,
-               app.avatar_source, app.avatar_preset, app.wca_id`,
+               app.avatar_source, app.avatar_preset, app.wca_id, app.is_admin`,
     [id],
   );
   return firstAppUser(rows);
@@ -373,7 +376,7 @@ export async function resetAvatarToWca(id: number): Promise<AppUser | null> {
 
 export async function findUserByWcaId(wcaId: string): Promise<AppUser | null> {
   const rows = await query<AppUserRow>(
-    'SELECT id, display_name, avatar_url, avatar_source, avatar_preset, wca_id FROM app_users WHERE wca_id = ?',
+    'SELECT id, display_name, avatar_url, avatar_source, avatar_preset, wca_id, is_admin FROM app_users WHERE wca_id = ?',
     [wcaId],
   );
   return firstAppUser(rows);
@@ -381,7 +384,7 @@ export async function findUserByWcaId(wcaId: string): Promise<AppUser | null> {
 
 export async function findUserByIdentity(provider: Provider, providerUid: string): Promise<AppUser | null> {
   const rows = await query<AppUserRow>(
-    `SELECT u.id, u.display_name, u.avatar_url, u.avatar_source, u.avatar_preset, u.wca_id
+    `SELECT u.id, u.display_name, u.avatar_url, u.avatar_source, u.avatar_preset, u.wca_id, u.is_admin
      FROM auth_identities i JOIN app_users u ON u.id = i.user_id
      WHERE i.provider = ? AND i.provider_uid = ?`,
     [provider, providerUid],
@@ -438,7 +441,7 @@ export async function loginWithIdentity(
           ${profile.wcaId ?? null},
           ${provider === 'wca' ? profile.countryIso2 ?? null : null}
         )
-        RETURNING id, display_name, avatar_url, avatar_source, avatar_preset, wca_id`;
+        RETURNING id, display_name, avatar_url, avatar_source, avatar_preset, wca_id, is_admin`;
       const row = rows[0] as unknown as AppUserRow | undefined;
       if (!row) throw new Error('account creation returned no user');
       const u = appUserFromRow(row);
@@ -656,7 +659,22 @@ export function publicUser(user: AppUser): WebSessionUser {
     avatar: user.avatar_url ?? '',
     avatarSource: user.avatar_source,
     avatarPreset: user.avatar_preset,
+    isAdmin: user.is_admin || isAdminWcaId(user.wca_id),
   };
+}
+
+/** 动态管理员权限。站主 WCA ID 永远保留权限，其余账号读取可撤销的数据库角色。 */
+export async function isAccountAdmin(
+  userId: number | undefined,
+  wcaId: string | null | undefined,
+): Promise<boolean> {
+  if (isAdminWcaId(wcaId)) return true;
+  if (!Number.isSafeInteger(userId) || (userId ?? 0) <= 0) return false;
+  const rows = await query<{ is_admin: boolean }>(
+    'SELECT is_admin FROM app_users WHERE id = ?',
+    [userId],
+  );
+  return rows[0]?.is_admin === true;
 }
 
 /**

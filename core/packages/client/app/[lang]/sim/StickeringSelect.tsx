@@ -17,11 +17,12 @@ import { useSimMasks } from './useSimMasks';
 import SimMaskAdmin from './SimMaskAdmin';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
+import CubeColorChip from '@/components/CubeColorChip/CubeColorChip';
 import type { SimPuzzle } from './PlayerControls';
-import SwatchCell, { SwatchPopup } from './SwatchCell';
+import { SwatchPopup } from './SwatchCell';
 import { SQ1_STAGE_ITEMS } from '@/lib/sq1-stage-mask';
-import { faceShowingColor, orientationForBottomFace, orientedFaceColors } from '@/lib/cube-orientation';
-import { BADGE_FACE_ORDER, CUBE_COLOR_NAMES, CUBE_FILL, type CubeFace } from '@/lib/cube-colors';
+import { orientationForBottomFace, orientedFaceColors } from '@/lib/cube-orientation';
+import { BADGE_FACE_ORDER, CUBE_COLOR_LETTER_FOR_FACE, CUBE_COLOR_NAMES, CUBE_FILL, type CubeFace } from '@/lib/cube-colors';
 
 // cubing.js megaminx 注册的 stickering(cubeLikeStickeringList("megaminx")):full + LL/LS 组。
 const MEGAMINX_GROUPS: StickeringGroup[] = [
@@ -62,6 +63,8 @@ function itemLabel(name: string, t: (zh: string, en: string) => string): string 
   if (name === 'full') return t('完整', 'full');
   if (name.startsWith(PRESET_PREFIX)) return name.slice(PRESET_PREFIX.length);  // 自建遮罩没填标签时的兜底
   if (name === CUSTOM_STICKERING) return t('自定义', 'custom');
+  if (name === 'Daisy') return t('小花', 'Daisy');
+  if (name === 'Cross') return t('十字', 'Cross');
   if (name === 'centers-only') return t('仅中心', 'centers only');
   if (name === 'opposite-centers') return t('对面中心', 'opposite centers');
   if (name.startsWith('experimental-fto-')) return name.slice('experimental-fto-'.length).toUpperCase();
@@ -98,9 +101,8 @@ export default function StickeringSelect({
   puzzleKind: SimPuzzle;
   value: string;
   onChange: (v: string) => void;
-  /** 拿方朝向(整体转前缀,lib/cube-orientation 的 24 档):阶段遮罩随它重定向 ——
-   *  既选底面颜色,也选阶段落在哪个槽。仅 NxN 引擎遮罩支持;megaminx / fto 走
-   *  cubing.js 原生 stickering,无重定向参数,不显示。 */
+  /** 配色朝向(整体转前缀,lib/cube-orientation 的 24 档):阶段位置固定,只重贴六面颜色。
+   *  仅 NxN 引擎遮罩支持;megaminx / fto 走 cubing.js 原生 stickering,不显示。 */
   orientation?: string;
   onOrientationChange?: (v: string) => void;
   faceColors?: Record<CubeFace, string>;
@@ -148,7 +150,7 @@ export default function StickeringSelect({
   const isCustom = value === CUSTOM_STICKERING;
   // 自定义阶段的清单是绝对的(用户点的就是这几枚),没有「整套转到某朝向」可言。
   const showOrientation = typeof puzzleKind === 'number' && value !== 'full' && !isCustom && !!onOrientationChange;
-  const crossBaseFace = faceShowingColor(orientedFaceColors(orientation), 'D');
+  const baseFace = orientedFaceColors(orientation).D;
   const picked = isCustom ? countSids(mask) : 0;
   return (
     <>
@@ -168,29 +170,37 @@ export default function StickeringSelect({
         ))}
         {!known && <option value={value}>{value}</option>}
       </select>
-      {showOrientation && (value === 'Cross' ? (
+      {showOrientation && (value === 'Cross' || value === 'Daisy' || value === 'F2L' || value === 'fl' ? (
         <SwatchPopup
-          title={t('十字底色', 'Cross base color')}
-          trigger={<span className="sim-swatch-box" style={{ background: faceColors[crossBaseFace] }} />}
+          className="sim-stage-color-select"
+          title={t('底色', 'Base color')}
+          trigger={<CubeColorChip colors={CUBE_COLOR_LETTER_FOR_FACE[baseFace]} faceColors={faceColors} />}
         >
-          {(close) => BADGE_FACE_ORDER.map((face) => (
-            <SwatchCell
-              key={face}
-              color={faceColors[face]}
-              title={t(`${CUBE_COLOR_NAMES[face].zh}底`, `${CUBE_COLOR_NAMES[face].en} base`)}
-              active={crossBaseFace === face}
-              onClick={() => { onOrientationChange?.(orientationForBottomFace(face)); close(); }}
-            />
-          ))}
+          {(close) => BADGE_FACE_ORDER.map((face) => {
+            const title = t(`${CUBE_COLOR_NAMES[face].zh}底`, `${CUBE_COLOR_NAMES[face].en} base`);
+            return (
+              <button
+                key={face}
+                type="button"
+                className={`sim-swatch${baseFace === face ? ' active' : ''}`}
+                title={title}
+                aria-label={title}
+                aria-pressed={baseFace === face}
+                onClick={() => { onOrientationChange?.(orientationForBottomFace(face)); close(); }}
+              >
+                <CubeColorChip colors={CUBE_COLOR_LETTER_FOR_FACE[face]} faceColors={faceColors} />
+              </button>
+            );
+          })}
         </SwatchPopup>
       ) : (
         <CubeOrientationSelect
           className="sim-player-mode sim-player-stickering"
           value={orientation}
           onChange={(v) => onOrientationChange?.(v)}
-          title={t('拿方朝向:整套阶段随这个整体转重定向 —— 换底色和换槽位都在这里选',
-            'Holding orientation: the whole stage is re-anchored by this cube rotation — it picks both the bottom face and which slot')}
-          ariaLabel={t('拿方朝向', 'Holding orientation')}
+          title={t('配色朝向:阶段位置不变,只更换六面配色',
+            'Color orientation: keep the stage in place and only change the face colors')}
+          ariaLabel={t('配色朝向', 'Color orientation')}
         />
       ))}
       {isAdmin && order > 0 && (

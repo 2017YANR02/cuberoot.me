@@ -12,7 +12,7 @@
  */
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
-import { ADMIN_WCA_IDS, requireAuth } from '../utils/recon_helpers.js';
+import { requireAuth } from '../utils/recon_helpers.js';
 import { hasActiveMembership } from '../utils/membership.js';
 import {
   mayReplaceTeacher,
@@ -160,7 +160,7 @@ wcaTeacherRoutes.get('/wca/teachers/:teacherId/named-students', async (c) => {
 wcaTeacherRoutes.post('/wca/teachers/:teacherId/named-students', async (c) => {
   c.header('Cache-Control', 'no-store');
   const user = await requireAuth(c);
-  const isAdmin = ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = user.isAdmin;
   const actorWcaId = realActorWcaId(user);
   if (!actorWcaId) return c.json({ error: 'WCA account required' }, 403);
   const teacherWcaId = normalizeWcaId(c.req.param('teacherId'));
@@ -211,7 +211,7 @@ wcaTeacherRoutes.post('/wca/teachers/:teacherId/named-students', async (c) => {
 wcaTeacherRoutes.put('/wca/teachers/:teacherId/named-students/:namedStudentId', async (c) => {
   c.header('Cache-Control', 'no-store');
   const user = await requireAuth(c);
-  const isAdmin = ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = user.isAdmin;
   const actorWcaId = realActorWcaId(user);
   if (!actorWcaId) return c.json({ error: 'WCA account required' }, 403);
   const teacherWcaId = normalizeWcaId(c.req.param('teacherId'));
@@ -272,7 +272,7 @@ wcaTeacherRoutes.put('/wca/teachers/:teacherId/named-students/:namedStudentId', 
 wcaTeacherRoutes.delete('/wca/teachers/:teacherId/named-students/:namedStudentId', async (c) => {
   c.header('Cache-Control', 'no-store');
   const user = await requireAuth(c);
-  const isAdmin = ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = user.isAdmin;
   const actorWcaId = realActorWcaId(user);
   if (!actorWcaId) return c.json({ error: 'WCA account required' }, 403);
   const teacherWcaId = normalizeWcaId(c.req.param('teacherId'));
@@ -293,7 +293,7 @@ wcaTeacherRoutes.delete('/wca/teachers/:teacherId/named-students/:namedStudentId
 wcaTeacherRoutes.put('/wca/teachers/:studentId/:eventId', async (c) => {
   c.header('Cache-Control', 'no-store');
   const user = await requireAuth(c);
-  const isAdmin = ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = user.isAdmin;
   const actorWcaId = realActorWcaId(user);
   if (!actorWcaId) return c.json({ error: 'WCA account required' }, 403);
 
@@ -377,7 +377,7 @@ wcaTeacherRoutes.put('/wca/teachers/:studentId/:eventId', async (c) => {
 wcaTeacherRoutes.delete('/wca/teachers/:studentId/:eventId', async (c) => {
   c.header('Cache-Control', 'no-store');
   const user = await requireAuth(c);
-  const isAdmin = ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = user.isAdmin;
   const actorWcaId = realActorWcaId(user);
   if (!actorWcaId) return c.json({ error: 'WCA account required' }, 403);
 

@@ -172,6 +172,10 @@
   padding: 2px 4px;
   margin-left: 6px;
 }
+.sim-player-row button.sim-player-mode {
+  min-width: 0;
+  height: auto;
+}
 /* 阶段色块下拉在播放条最左,margin-left 交给行 gap */
 .sim-player-stickering {
   margin-left: 0;
@@ -965,12 +969,16 @@
 .sim-color-select-trigger .sim-swatch-box {
   border-color: var(--border-strong);
 }
+.sim-color-select-trigger .ccc-chip {
+  --chip-edge: var(--border-strong);
+}
 .sim-color-select-trigger:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
   border-radius: 4px;
 }
 .sim-color-select-panel {
+  /* anchored-panel: clamped (usePanelClamp in SwatchPopup) */
   position: absolute;
   z-index: 30;
   top: calc(100% + 4px);
@@ -985,6 +993,15 @@
   border-radius: 8px;
   background: var(--popover);
   box-shadow: 0 6px 20px color-mix(in srgb, var(--foreground) 14%, transparent);
+}
+.sim-stage-color-select .sim-color-select-panel {
+  top: auto;
+  bottom: calc(100% + 4px);
+  flex-direction: column;
+  flex-wrap: nowrap;
+}
+.sim-stage-color-select {
+  align-self: center;
 }
 .sim-swatch-list {
   display: flex;
@@ -1079,6 +1096,10 @@
 .sim-swatch.active .sim-swatch-box {
   outline: 2px solid var(--accent-foreground);
   outline-offset: 1px;
+}
+.sim-swatch:hover .ccc-chip,
+.sim-swatch.active .ccc-chip {
+  --chip-edge: var(--accent-foreground);
 }
 .sim-swatch-input {
   position: absolute;

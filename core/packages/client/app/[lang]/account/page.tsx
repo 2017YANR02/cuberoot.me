@@ -55,7 +55,7 @@ import { countryName } from '@/lib/country-name';
 import { localizeCity } from '@/lib/city-localize';
 import { prepareImageUpload, uploadImageBlob } from '@/lib/image-upload';
 import { toLocalIsoDate } from '@/lib/iso-date';
-import { ADMIN_WCA_IDS, applySession, useAuthStore, safeNext, takeWcaLinkPrompt } from '@/lib/auth-store';
+import { applySession, hasAdminAccess, useAuthStore, safeNext, takeWcaLinkPrompt } from '@/lib/auth-store';
 import { notifyMiniProgramLogout } from '@/lib/miniprogram-bridge';
 import { tr, useLang } from '@/i18n/tr';
 import './account.css';
@@ -706,7 +706,7 @@ export default function AccountPage() {
   // 我的公开页入口 —— 只有绑了 WCA 的账号才有;学习进度是本地公式标记,人人都有。
   // 没绑的人在原位看到「绑定 WCA 账号」:注册那步跳过了、或后来才拿到 WCA ID,都从这里回来。
   const wcaId = user?.wcaId;
-  const isAdmin = !!wcaId && ADMIN_WCA_IDS.includes(wcaId);
+  const isAdmin = hasAdminAccess(user);
   const cards = [
     ...(wcaId ? [
       {

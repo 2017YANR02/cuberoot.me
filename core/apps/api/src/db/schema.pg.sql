@@ -371,6 +371,7 @@ CREATE TABLE app_users (
                       CHECK (avatar_source IN ('auto', 'clawd', 'upload')),
   avatar_preset       VARCHAR(32),
   wca_id              VARCHAR(20),
+  is_admin            BOOLEAN NOT NULL DEFAULT FALSE,
   birth_date          DATE CHECK (birth_date IS NULL OR birth_date >= DATE '1900-01-01'),
   gender              VARCHAR(16)
                       CHECK (gender IS NULL OR gender IN ('male', 'female', 'nonbinary', 'other', 'undisclosed')),
@@ -378,6 +379,9 @@ CREATE TABLE app_users (
                       CHECK (country_iso2 IS NULL OR country_iso2 ~ '^[A-Z]{2}$'),
   region_code         VARCHAR(8),
   city_name           VARCHAR(160),
+  public_intro        TEXT CHECK (public_intro IS NULL OR CHAR_LENGTH(public_intro) <= 1000),
+  public_intro_image_ids JSONB NOT NULL DEFAULT '[]'::jsonb
+                      CHECK (JSONB_TYPEOF(public_intro_image_ids) = 'array' AND JSONB_ARRAY_LENGTH(public_intro_image_ids) <= 8),
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   password_hash       TEXT,
@@ -401,6 +405,7 @@ CREATE TABLE app_users (
   )
 );
 CREATE UNIQUE INDEX uq_app_users_wca ON app_users(wca_id) WHERE wca_id IS NOT NULL;
+CREATE INDEX idx_app_users_admin ON app_users(id) WHERE is_admin = TRUE;
 CREATE TRIGGER app_users_updated_at BEFORE UPDATE ON app_users
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 

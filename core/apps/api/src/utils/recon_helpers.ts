@@ -5,10 +5,10 @@
  */
 import type { Context } from 'hono';
 import jwt from 'jsonwebtoken';
-import { ADMIN_WCA_IDS, BANNED_WCA_IDS } from '@cuberoot/shared/admin';
+import { ADMIN_WCA_IDS, BANNED_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 export { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
 import { JWT_SECRET } from './session.js';
-import { ownerKey } from './account.js';
+import { isAccountAdmin, ownerKey } from './account.js';
 
 // 装饰性标注字符:`·`(间隔)、`↑↓`(regrip 方向记号)、分数 `⅓⅔`、ASCII `.`、各类零宽字符。
 // 这些不是真转动,记号区校验前先剥掉(与客户端 lib/recon-alg-utils.ts 的 COSMETIC_ANNOTATION_CHARS
@@ -340,6 +340,8 @@ export interface WcaUser {
   uid?: number;
   /** 真实 WCA id(仅绑定了 WCA 时非空;/person 链接、WCA 数据 join 用它,合成键不可用)。 */
   realWcaId?: string;
+  /** 本次请求从账号表实时解析的有效管理员权限。 */
+  isAdmin: boolean;
 }
 
 // NOTE: 内存缓存——token → user（永不过期，与 PHP 行为一致）
@@ -358,11 +360,13 @@ export async function authenticateUser(authHeader: string | undefined): Promise<
   try {
     const payload = jwt.verify(token, JWT_SECRET) as { uid?: number; wcaId?: string; name?: string };
     if (payload.uid != null || payload.wcaId) {
+      const isAdmin = await isAccountAdmin(payload.uid, payload.wcaId);
       return {
         wcaId: ownerKey(payload.uid, payload.wcaId),
         name: payload.name ?? '',
         uid: payload.uid,
         realWcaId: payload.wcaId,
+        isAdmin,
       };
     }
   } catch {
@@ -384,7 +388,12 @@ export async function authenticateUser(authHeader: string | undefined): Promise<
     const me = data.me;
     if (!me?.wca_id) return null;
 
-    const user: WcaUser = { wcaId: me.wca_id, name: me.name ?? '' };
+    const user: WcaUser = {
+      wcaId: me.wca_id,
+      name: me.name ?? '',
+      realWcaId: me.wca_id,
+      isAdmin: isAdminWcaId(me.wca_id),
+    };
     tokenCache.set(token, user);
     return user;
   } catch {
@@ -429,7 +438,7 @@ export function visibilityDiscoverFilter(
   me: WcaUser | null,
   visCol = 'visibility',
 ): { clause: string; params: string[] } {
-  if (me && ADMIN_WCA_IDS.includes(me.wcaId)) return { clause: '1=1', params: [] };
+  if (me?.isAdmin) return { clause: '1=1', params: [] };
   return { clause: `${visCol} = 'public'`, params: [] };
 }
 
@@ -444,7 +453,7 @@ export function visibilityOwnerFilter(
   visCol = 'visibility',
   ownerCol = 'added_by_id',
 ): { clause: string; params: string[] } {
-  if (me && ADMIN_WCA_IDS.includes(me.wcaId)) return { clause: '1=1', params: [] };
+  if (me?.isAdmin) return { clause: '1=1', params: [] };
   if (me) return { clause: `(${visCol} = 'public' OR ${ownerCol} = ?)`, params: [me.wcaId] };
   return { clause: `${visCol} = 'public'`, params: [] };
 }
@@ -454,7 +463,7 @@ export function visibilityOwnerFilter(
  */
 export async function requireAdmin(c: Context): Promise<WcaUser> {
   const user = await requireAuth(c);
-  if (!ADMIN_WCA_IDS.includes(user.wcaId)) {
+  if (!user.isAdmin) {
     throw new Error('Admin access required');
   }
   return user;
@@ -469,7 +478,7 @@ export async function requireAdminOrApiKey(c: Context): Promise<WcaUser> {
   const key = c.req.header('X-Admin-Key');
   const expected = process.env.ADMIN_API_KEY;
   if (key && expected && key === expected) {
-    return { wcaId: '__api_key__', name: 'API Key' };
+    return { wcaId: '__api_key__', name: 'API Key', isAdmin: true };
   }
   return requireAdmin(c);
 }

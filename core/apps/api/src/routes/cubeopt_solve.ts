@@ -23,7 +23,7 @@
 import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { streamSSE } from 'hono/streaming';
-import { requireAuth, ADMIN_WCA_IDS } from '../utils/recon_helpers.js';
+import { requireAuth } from '../utils/recon_helpers.js';
 import {
   solveOptimal,
   isEnabled,
@@ -74,7 +74,7 @@ cubeoptSolveRoutes.post('/scramble/optimal-solve', async (c) => {
   const user = await requireAuth(c); // login gate — throws → 401
   // Admins have no throttle; everyone else gets the per-IP window above. Doing
   // auth first also means anonymous/invalid probes never burn a real user's quota.
-  if (!ADMIN_WCA_IDS.includes(user.wcaId)) checkSolveRateLimit(getIp(c));
+  if (!user.isAdmin) checkSolveRateLimit(getIp(c));
 
   let body: { scrambles?: unknown };
   try {

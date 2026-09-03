@@ -70,7 +70,7 @@ function noStore(c: { header: (k: string, v: string) => void }): void {
 }
 
 function isAdmin(user: WcaUser): boolean {
-  return ADMIN_WCA_IDS.includes(user.wcaId);
+  return user.isAdmin;
 }
 
 /** API key replies still belong to the real administrator account. */
@@ -83,7 +83,7 @@ async function requirePostAuthor(c: Context): Promise<WcaUser> {
     'SELECT display_name FROM app_users WHERE wca_id = ? LIMIT 1', [wcaId],
   );
   if (!rows[0]?.display_name) throw new Error('Forum API author is not configured');
-  return { wcaId, realWcaId: wcaId, name: rows[0].display_name };
+  return { wcaId, realWcaId: wcaId, name: rows[0].display_name, isAdmin: true };
 }
 
 /** 解析正整数参数,非法回落默认值并夹在 [min, max] */
@@ -325,17 +325,17 @@ async function authorProfilesFor(authorNames: Map<string, string>): Promise<Reco
 
   const wcaKeys = authorIds.filter((a) => !/^u\d+$/.test(a));
   const uidKeys = authorIds.filter((a) => /^u\d+$/.test(a));
-  const profile = new Map<string, { id: string; avatar_url: string | null; avatar_preset: string | null; created_at: Date; display_name: string }>();
+  const profile = new Map<string, { id: string; avatar_url: string | null; avatar_preset: string | null; created_at: Date; display_name: string; is_admin: boolean }>();
   if (wcaKeys.length > 0) {
-    const rows = await query<{ id: string; wca_id: string; avatar_url: string | null; avatar_preset: string | null; created_at: Date; display_name: string }>(
-      `SELECT id, wca_id, avatar_url, avatar_preset, created_at, display_name FROM app_users WHERE wca_id IN (${wcaKeys.map(() => '?').join(',')})`,
+    const rows = await query<{ id: string; wca_id: string; avatar_url: string | null; avatar_preset: string | null; created_at: Date; display_name: string; is_admin: boolean }>(
+      `SELECT id, wca_id, avatar_url, avatar_preset, created_at, display_name, is_admin FROM app_users WHERE wca_id IN (${wcaKeys.map(() => '?').join(',')})`,
       wcaKeys,
     );
     for (const r of rows) profile.set(r.wca_id, r);
   }
   if (uidKeys.length > 0) {
-    const rows = await query<{ id: string; avatar_url: string | null; avatar_preset: string | null; created_at: Date; display_name: string }>(
-      `SELECT id, avatar_url, avatar_preset, created_at, display_name FROM app_users WHERE id IN (${uidKeys.map(() => '?').join(',')})`,
+    const rows = await query<{ id: string; avatar_url: string | null; avatar_preset: string | null; created_at: Date; display_name: string; is_admin: boolean }>(
+      `SELECT id, avatar_url, avatar_preset, created_at, display_name, is_admin FROM app_users WHERE id IN (${uidKeys.map(() => '?').join(',')})`,
       uidKeys.map((a) => Number(a.slice(1))),
     );
     for (const r of rows) profile.set(`u${r.id}`, r);
@@ -351,7 +351,7 @@ async function authorProfilesFor(authorNames: Map<string, string>): Promise<Reco
       postCount: postCounts.get(authorId) ?? 0,
       wcaId: /^u\d+$/.test(authorId) ? null : authorId,
       userId: p ? Number(p.id) : null,
-      isAdmin: ADMIN_WCA_IDS.includes(authorId),
+      isAdmin: p?.is_admin === true || ADMIN_WCA_IDS.includes(authorId),
     };
   }
   return authors;

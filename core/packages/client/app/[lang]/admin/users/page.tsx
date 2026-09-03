@@ -5,16 +5,17 @@ import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState, useQue
 import { ChevronLeft, ChevronRight, Loader2, Monitor, Search, Smartphone, Tablet } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
+import { CompactSelect } from '@/components/CompactSelect';
 import { DailyActivityChart, type DailyActivityPoint } from '@/components/DailyActivityChart';
 import { DateRangeInput } from '@/components/DateRangeInput';
 import { Flag } from '@/components/Flag';
 import SortArrow from '@/components/SortArrow';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
-import { ADMIN_WCA_IDS, useAuthStore } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
 import { countryName } from '@/lib/country-name';
 import { displayCuberName } from '@/lib/cuber-name-display';
-import { fetchAdminUsers, type AdminUserRecord, type AdminUsersResponse } from '@/lib/account-api';
+import { fetchAdminUsers, updateAdminRole, type AdminUserRecord, type AdminUsersResponse } from '@/lib/account-api';
 import { isValidIsoDate } from '@/lib/iso-date';
 import './users.css';
 
@@ -132,6 +133,8 @@ export default function AdminUsersPage() {
   const [mounted, setMounted] = useState(false);
   const [data, setData] = useState<AdminUsersResponse | null>(null);
   const [error, setError] = useState<AdminUsersError | null>(null);
+  const [roleError, setRoleError] = useState<string | null>(null);
+  const [roleUpdatingId, setRoleUpdatingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -153,7 +156,7 @@ export default function AdminUsersPage() {
   const [queryDraft, setQueryDraft] = useState(q);
   const rangeProblem = activityRangeError(from, to, today);
 
-  const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
+  const isAdmin = hasAdminAccess(user);
   useEffect(() => setMounted(true), []);
   useEffect(() => setQueryDraft(q), [q]);
 
@@ -219,6 +222,31 @@ export default function AdminUsersPage() {
     void setRange({ from: nextFrom || null, to: nextTo || null });
   };
   const selectPreset = (days: number) => changeRange(rangeFromDays(days, today), today);
+  const changeAdminRole = async (record: AdminUserRecord, nextIsAdmin: boolean) => {
+    const name = record.displayName || `UID ${record.id}`;
+    const confirmed = window.confirm(nextIsAdmin
+      ? t(`确认将“${name}”设为管理员吗？管理员可以查看用户资料并使用所有后台工具。`, `Make “${name}” an administrator? Administrators can view user data and use all administration tools.`)
+      : t(`确认取消“${name}”的管理员权限吗？更改会立即生效。`, `Remove administrator access from “${name}”? The change takes effect immediately.`));
+    if (!confirmed) return;
+
+    setRoleUpdatingId(record.id);
+    setRoleError(null);
+    try {
+      const updated = await updateAdminRole(record.id, nextIsAdmin);
+      setData((current) => current ? {
+        ...current,
+        users: current.users.map((item) => item.id === record.id ? {
+          ...item,
+          isAdmin: updated.isAdmin,
+          isRootAdmin: updated.isRootAdmin,
+        } : item),
+      } : current);
+    } catch {
+      setRoleError(t('管理员权限更新失败，请稍后重试。', 'Could not update administrator access. Try again later.'));
+    } finally {
+      setRoleUpdatingId(null);
+    }
+  };
 
   if (!mounted) return <main className="admin-users-page" />;
   if (!isAdmin) {
@@ -236,13 +264,14 @@ export default function AdminUsersPage() {
       <AppLink href="/admin" className="admin-users-back" prefetch={false}><ChevronLeft size={16} />{t('管理后台', 'Administration')}</AppLink>
       <header className="admin-users-heading">
         <div>
-          <h1>{t('用户与增长', 'Users and growth')}</h1>
-          <p>{t('注册与会员新增按 UTC 自然日计算，账号资料仅管理员可见。', 'Registration and membership growth use UTC calendar days. Account details are admin-only.')}</p>
+          <h1>{t('用户、增长与权限', 'Users, growth, and access')}</h1>
+          <p>{t('查看注册与会员增长、账号资料，并管理后台访问权限。', 'Review registration and membership growth, account data, and administration access.')}</p>
         </div>
         {loading && <Loader2 size={18} className="admin-users-spin" aria-label={t('正在刷新', 'Refreshing')} />}
       </header>
 
       {error && <p className="admin-users-error" role="alert">{errorLabel(error, t)}</p>}
+      {roleError && <p className="admin-users-error" role="alert">{roleError}</p>}
 
       {data && (
         <>
@@ -274,19 +303,14 @@ export default function AdminUsersPage() {
               </p>
             )}
             <div className="admin-users-range-toolbar">
-              <div className="admin-users-presets" aria-label={t('快捷日期范围', 'Quick date ranges')}>
-                {RANGE_PRESETS.map((days) => (
-                  <button
-                    key={days}
-                    type="button"
-                    className={activePreset === days ? 'is-active' : undefined}
-                    aria-pressed={activePreset === days}
-                    onClick={() => selectPreset(days)}
-                  >
-                    {t(`${days} 天`, `${days} days`)}
-                  </button>
-                ))}
-              </div>
+              <CompactSelect<number>
+                items={RANGE_PRESETS.map((days) => ({ value: days, label: t(`${days} 天`, `${days} days`) }))}
+                value={activePreset}
+                onChange={selectPreset}
+                label={activePreset ? t(`${activePreset} 天`, `${activePreset} days`) : t('自定义', 'Custom')}
+                valueText={activePreset ? t(`${activePreset} 天`, `${activePreset} days`) : t('自定义', 'Custom')}
+                ariaLabel={t('快捷日期范围', 'Quick date ranges')}
+              />
               <DateRangeInput
                 from={effectiveFrom}
                 to={effectiveTo}
@@ -305,6 +329,8 @@ export default function AdminUsersPage() {
               </div>
               <DailyActivityChart
                 data={registrationPoints}
+                from={effectiveFrom}
+                to={effectiveTo}
                 series={[{ key: 'registrations', label: t('注册', 'Registrations'), tone: 'accent' }]}
                 ariaLabel={t('每日注册柱形图', 'Daily registration bar chart')}
                 emptyLabel={t('所选日期范围没有注册数据。', 'No registration data in this date range.')}
@@ -319,6 +345,8 @@ export default function AdminUsersPage() {
                 </div>
                 <DailyActivityChart
                   data={membershipPoints}
+                  from={effectiveFrom}
+                  to={effectiveTo}
                   series={[
                     { key: 'personal', label: t('个人会员', 'Individual'), tone: 'success' },
                     { key: 'enterprise', label: t('企业会员', 'Enterprise'), tone: 'info' },
@@ -371,6 +399,7 @@ export default function AdminUsersPage() {
                   <th>{t('绑定', 'Linked methods')}</th>
                   <th>{t('最近使用设备', 'Latest device')}</th>
                   <th>{t('资料', 'Profile')}</th>
+                  <th>{t('权限', 'Access')}</th>
                   <th><button className="admin-users-sort" type="button" onClick={() => changeSort('created')}>{t('注册时间', 'Registered')}<SortArrow active={sort === 'created'} dir={direction} /></button></th>
                 </tr></thead>
                 <tbody>
@@ -426,10 +455,27 @@ export default function AdminUsersPage() {
                           </dl>
                         </details>
                       </td>
+                      <td>
+                        <div className="admin-users-role">
+                          <span>{record.isRootAdmin ? t('站主管理员', 'Site owner') : record.isAdmin ? t('管理员', 'Administrator') : t('普通用户', 'User')}</span>
+                          {!record.isRootAdmin && (
+                            <button
+                              className="admin-users-page-button admin-users-role-button"
+                              type="button"
+                              disabled={roleUpdatingId !== null}
+                              onClick={() => void changeAdminRole(record, !record.isAdmin)}
+                            >
+                              {roleUpdatingId === record.id
+                                ? t('处理中…', 'Updating…')
+                                : record.isAdmin ? t('取消管理员', 'Remove admin') : t('设为管理员', 'Make admin')}
+                            </button>
+                          )}
+                        </div>
+                      </td>
                       <td><time dateTime={record.createdAt}>{formatTimestamp(record.createdAt, locale)}</time></td>
                     </tr>
                   ))}
-                  {data.users.length === 0 && <tr><td colSpan={5} className="admin-users-empty">{t('没有符合条件的用户。', 'No users match these filters.')}</td></tr>}
+                  {data.users.length === 0 && <tr><td colSpan={6} className="admin-users-empty">{t('没有符合条件的用户。', 'No users match these filters.')}</td></tr>}
                 </tbody>
               </table>
             </div>

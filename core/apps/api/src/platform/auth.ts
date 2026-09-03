@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import { ADMIN_WCA_IDS, requireAuth, requireAdminOrApiKey } from '../utils/recon_helpers.js';
+import { requireAuth, requireAdminOrApiKey } from '../utils/recon_helpers.js';
 import { findUserByWcaId } from '../utils/account.js';
 import { PlatformApiError } from './errors.js';
 
@@ -37,7 +37,7 @@ export async function requirePlatformActor(c: Context): Promise<PlatformActor> {
     ownerKey: user.wcaId,
     wcaId: realWcaId ?? null,
     displayName: user.name,
-    isAdmin: ADMIN_WCA_IDS.includes(user.wcaId),
+    isAdmin: user.isAdmin,
     viaApiKey: false,
   };
 }

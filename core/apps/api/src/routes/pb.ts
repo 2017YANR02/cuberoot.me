@@ -7,7 +7,7 @@ import {
 } from '@cuberoot/shared/pb';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query, sql } from '../db/connection.js';
-import { ADMIN_WCA_IDS, checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
+import { checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
 
 export const pbRoutes = new Hono();
 
@@ -58,7 +58,7 @@ function parsePositiveInt(raw: string | undefined): number | null {
   return Number.isSafeInteger(value) && value > 0 ? value : null;
 }
 
-function managedOwnerKey(actorWcaId: string, requestedWcaId: string | undefined): {
+function managedOwnerKey(actorWcaId: string, actorIsAdmin: boolean, requestedWcaId: string | undefined): {
   ownerKey: string;
   isAdminTarget: boolean;
 } | null {
@@ -66,7 +66,7 @@ function managedOwnerKey(actorWcaId: string, requestedWcaId: string | undefined)
   const ownerKey = requestedWcaId?.trim().toUpperCase() || actorKey;
   if (!isWcaIdFormat(ownerKey)) return null;
   const isAdminTarget = ownerKey !== actorKey;
-  if (isAdminTarget && !ADMIN_WCA_IDS.includes(actorKey)) return null;
+  if (isAdminTarget && !actorIsAdmin) return null;
   return { ownerKey, isAdminTarget };
 }
 
@@ -222,7 +222,7 @@ pbRoutes.get('/pb/manage/:wcaId', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
-  const access = managedOwnerKey(authUser.wcaId, c.req.param('wcaId'));
+  const access = managedOwnerKey(authUser.wcaId, authUser.isAdmin, c.req.param('wcaId'));
   if (!access) return c.json({ error: 'forbidden' }, 403);
   const account = await personProfileForOwner(access.ownerKey) ?? {
     user_id: 0,
@@ -279,7 +279,7 @@ pbRoutes.put('/pb/profile', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
-  const access = managedOwnerKey(authUser.wcaId, c.req.query('owner'));
+  const access = managedOwnerKey(authUser.wcaId, authUser.isAdmin, c.req.query('owner'));
   if (!access) return c.json({ error: 'forbidden' }, 403);
   let body: { isPublic?: unknown };
   try {
@@ -303,7 +303,7 @@ pbRoutes.post('/pb/records', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
-  const access = managedOwnerKey(authUser.wcaId, c.req.query('owner'));
+  const access = managedOwnerKey(authUser.wcaId, authUser.isAdmin, c.req.query('owner'));
   if (!access) return c.json({ error: 'forbidden' }, 403);
   let raw: Record<string, unknown>;
   try {
@@ -363,7 +363,7 @@ pbRoutes.put('/pb/records/:id', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
-  const access = managedOwnerKey(authUser.wcaId, c.req.query('owner'));
+  const access = managedOwnerKey(authUser.wcaId, authUser.isAdmin, c.req.query('owner'));
   if (!access) return c.json({ error: 'forbidden' }, 403);
   const id = parsePositiveInt(c.req.param('id'));
   if (!id) return c.json({ error: 'invalid id' }, 400);
@@ -424,7 +424,7 @@ pbRoutes.delete('/pb/records/:id', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
-  const access = managedOwnerKey(authUser.wcaId, c.req.query('owner'));
+  const access = managedOwnerKey(authUser.wcaId, authUser.isAdmin, c.req.query('owner'));
   if (!access) return c.json({ error: 'forbidden' }, 403);
   const id = parsePositiveInt(c.req.param('id'));
   if (!id) return c.json({ error: 'invalid id' }, 400);

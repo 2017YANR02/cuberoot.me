@@ -6,7 +6,7 @@
  * 刷新点:桌宠定时/可见性轮询;打开下拉列表标记已读后置 0。
  */
 import { useSyncExternalStore } from 'react';
-import { useAuthStore, ADMIN_WCA_IDS } from './auth-store';
+import { hasAdminAccess, useAuthStore } from './auth-store';
 import { fetchAdminUnreadSubmissions } from './alg_api';
 
 let count = 0;
@@ -26,7 +26,7 @@ export function setAlgSubmissionUnread(n: number): void {
 /** 拉一次最新未读数(非 admin 归零)。best-effort,失败保留旧值。 */
 export async function refreshAlgSubmissionUnread(): Promise<number> {
   const u = useAuthStore.getState().user;
-  if (!u || !ADMIN_WCA_IDS.includes(u.wcaId)) { set(0); return 0; }
+  if (!hasAdminAccess(u)) { set(0); return 0; }
   try {
     const n = await fetchAdminUnreadSubmissions();
     set(n);
