@@ -456,7 +456,7 @@
 }
 .mem-profile-image { position: relative; aspect-ratio: 4 / 3; min-width: 0; }
 .mem-profile-image img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
-.mem-profile-image button {
+.mem-profile-image-remove {
   position: absolute;
   top: 6px;
   right: 6px;

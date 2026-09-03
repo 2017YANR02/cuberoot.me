@@ -17,6 +17,7 @@ const USER = {
   avatar: '',
   avatarSource: 'auto' as const,
   avatarPreset: null,
+  isAdmin: false,
 };
 
 function token(expiresAt = NOW + 90 * 24 * 60 * 60 * 1000): string {

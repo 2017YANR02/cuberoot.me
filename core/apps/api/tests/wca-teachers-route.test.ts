@@ -161,7 +161,7 @@ describe('POST /v1/wca/teachers/:teacherId/named-students', () => {
   });
 
   it('lets an administrator add a named student for any teacher', async () => {
-    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2017YANR02' });
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2017YANR02', isAdmin: true });
     mocks.query
       .mockResolvedValueOnce([{ wca_id: '2020TENG01', country_exists: true }])
       .mockResolvedValueOnce([{
@@ -200,7 +200,7 @@ describe('POST /v1/wca/teachers/:teacherId/named-students', () => {
   });
 
   it('returns a conflict when the named student is already on the roster', async () => {
-    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2017YANR02' });
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2017YANR02', isAdmin: true });
     mocks.query
       .mockResolvedValueOnce([{ wca_id: '2020TENG01', country_exists: true }])
       .mockResolvedValueOnce([]);
@@ -216,7 +216,7 @@ describe('POST /v1/wca/teachers/:teacherId/named-students', () => {
   });
 
   it('rejects a country code that is not in the WCA country list', async () => {
-    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2017YANR02' });
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2017YANR02', isAdmin: true });
     mocks.query.mockResolvedValueOnce([{ wca_id: '2020TENG01', country_exists: false }]);
 
     const response = await app.request('/v1/wca/teachers/2020teng01/named-students', {
@@ -231,7 +231,7 @@ describe('POST /v1/wca/teachers/:teacherId/named-students', () => {
   });
 
   it('prevents a member from adding students to another teacher roster', async () => {
-    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2020TENG01' });
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2020TENG01', isAdmin: false });
 
     const response = await app.request('/v1/wca/teachers/2017yanr02/named-students', {
       method: 'POST',
@@ -254,7 +254,7 @@ describe('PUT /v1/wca/teachers/:teacherId/named-students/:namedStudentId', () =>
   });
 
   it('updates a named student nationality together with taught events', async () => {
-    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2017YANR02' });
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2017YANR02', isAdmin: true });
     mocks.query
       .mockResolvedValueOnce([{ id: '550e8400-e29b-41d4-a716-446655440000', country_exists: true }])
       .mockResolvedValueOnce([]);
@@ -292,7 +292,7 @@ describe('PUT /v1/wca/teachers/:studentId/:eventId', () => {
   });
 
   it('allows an active member student to choose and replace their own teacher', async () => {
-    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2026GANR02' });
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2026GANR02', isAdmin: false });
     mocks.hasActiveMembership.mockResolvedValueOnce(true);
     mocks.query
       .mockResolvedValueOnce([
@@ -337,7 +337,7 @@ describe('PUT /v1/wca/teachers/:studentId/:eventId', () => {
   });
 
   it('allows an active member student to mark an event as self-taught', async () => {
-    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2026GANR02' });
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2026GANR02', isAdmin: false });
     mocks.hasActiveMembership.mockResolvedValueOnce(true);
     mocks.query
       .mockResolvedValueOnce([
@@ -375,7 +375,7 @@ describe('PUT /v1/wca/teachers/:studentId/:eventId', () => {
   });
 
   it('does not let a teacher mark another student as self-taught', async () => {
-    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2020TENG01' });
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2020TENG01', isAdmin: false });
 
     const response = await app.request('/v1/wca/teachers/2026ganr02/333', {
       method: 'PUT',
@@ -390,7 +390,7 @@ describe('PUT /v1/wca/teachers/:studentId/:eventId', () => {
   });
 
   it('does not let a teacher replace an explicit self-taught relation', async () => {
-    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2020TENG01' });
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2020TENG01', isAdmin: false });
     mocks.hasActiveMembership.mockResolvedValueOnce(true);
     mocks.query
       .mockResolvedValueOnce([
@@ -411,7 +411,7 @@ describe('PUT /v1/wca/teachers/:studentId/:eventId', () => {
   });
 
   it('rejects a non-member student before changing their own teacher', async () => {
-    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2026GANR02' });
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2026GANR02', isAdmin: false });
     mocks.hasActiveMembership.mockResolvedValueOnce(false);
 
     const response = await app.request('/v1/wca/teachers/2026ganr02/333', {
@@ -434,7 +434,7 @@ describe('DELETE /v1/wca/teachers/:studentId/:eventId', () => {
   });
 
   it('allows an active member student to remove their own teacher relation', async () => {
-    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2026GANR02' });
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2026GANR02', isAdmin: false });
     mocks.hasActiveMembership.mockResolvedValueOnce(true);
     mocks.query
       .mockResolvedValueOnce([{ teacher_wca_id: '2017YANR02' }])
@@ -453,7 +453,7 @@ describe('DELETE /v1/wca/teachers/:studentId/:eventId', () => {
   });
 
   it('keeps removal of a student-owned relation behind membership', async () => {
-    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2026GANR02' });
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2026GANR02', isAdmin: false });
     mocks.hasActiveMembership.mockResolvedValueOnce(false);
     mocks.query.mockResolvedValueOnce([{ teacher_wca_id: '2017YANR02' }]);
 

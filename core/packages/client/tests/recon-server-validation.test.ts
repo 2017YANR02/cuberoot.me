@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import { workspaceFixturePath } from './workspace-fixture-path';
 
-type ReconUser = { wcaId: string; name?: string };
+type ReconUser = { wcaId: string; name?: string; isAdmin: boolean };
 type VisibilityFilter = { clause: string; params: string[] };
 type ReconHelpersModule = {
   jsonToRow: (json: Record<string, unknown>) => Record<string, unknown>;
@@ -121,8 +121,8 @@ describe('generic reconstruction scramble persistence mapping', () => {
 // 锁住 SQL 子句 + 参数,防回归把非公开泄露进公共发现流。
 describe('visibility read filters (admin bypass / owner / anon)', () => {
   const adminId = ADMIN_WCA_IDS[0];
-  const admin = adminId ? { wcaId: adminId, name: 'Admin' } : null;
-  const user = { wcaId: '2015ZZZZ01', name: 'User' };
+  const admin = adminId ? { wcaId: adminId, name: 'Admin', isAdmin: true } : null;
+  const user = { wcaId: '2015ZZZZ01', name: 'User', isAdmin: false };
 
   it('discover: anon → public only', () => {
     expect(visibilityDiscoverFilter(null)).toEqual({ clause: "visibility = 'public'", params: [] });

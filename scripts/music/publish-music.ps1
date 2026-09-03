@@ -402,6 +402,20 @@ function Test-PublicContract($Library) {
 
         $firstAudio = @($Library.Assets | Where-Object Kind -eq 'tracks' | Select-Object -First 1)[0]
         $audioUri = [uri]::new($origin, $firstAudio.PublicPath)
+        $headRequest = [Net.Http.HttpRequestMessage]::new([Net.Http.HttpMethod]::Head, $audioUri)
+        $headResponse = $client.Send($headRequest)
+        try {
+            if ([int] $headResponse.StatusCode -ne 200) {
+                throw "Asset HEAD status was $([int] $headResponse.StatusCode), expected 200."
+            }
+            if ((Get-ResponseHeader $headResponse 'Accept-Ranges') -notmatch '(^|,\s*)bytes(,|$)') {
+                throw 'Asset HEAD response does not advertise byte ranges.'
+            }
+        } finally {
+            $headResponse.Dispose()
+            $headRequest.Dispose()
+        }
+
         $rangeRequest = [Net.Http.HttpRequestMessage]::new([Net.Http.HttpMethod]::Get, $audioUri)
         $rangeRequest.Headers.TryAddWithoutValidation('Origin', 'https://cuberoot.me') | Out-Null
         $rangeRequest.Headers.Range = [Net.Http.Headers.RangeHeaderValue]::new(0, 1)
@@ -414,9 +428,6 @@ function Test-PublicContract($Library) {
             if ($rangeBytes.Length -ne 2) { throw 'Range response did not contain exactly two bytes.' }
             if ((Get-ResponseHeader $rangeResponse 'Content-Range') -notmatch '^bytes 0-1/\d+$') {
                 throw 'Range response has an invalid Content-Range header.'
-            }
-            if ((Get-ResponseHeader $rangeResponse 'Accept-Ranges') -notmatch '(^|,\s*)bytes(,|$)') {
-                throw 'Range response does not advertise byte ranges.'
             }
             if ((Get-ResponseHeader $rangeResponse 'Access-Control-Allow-Origin') -ne '*') {
                 throw 'Asset CORS header is missing or incorrect.'

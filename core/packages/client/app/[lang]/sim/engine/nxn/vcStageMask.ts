@@ -19,6 +19,7 @@ import {
   FM_REGULAR, FM_DIM, FM_IGNORED, orientationXform, stickeringGroupsFor,
   type StickeringMaskFn, type StickeringGroup,
 } from './stickering';
+import { FACE } from '../define';
 // 纯坐标(netIndexOf + 面映射)独立成 netIndex.ts(零依赖),这里 re-export 保 API;
 // 引擎渲染层(instanced.ts)引纯模块,不经本文件(本文件叠 makeMasking 会拖 visualcube)。
 import { netIndexOf, ENGINE_TO_VC_FACE } from './netIndex';
@@ -44,10 +45,18 @@ export function visualcubeStageMaskFn(order: number, name: string, orientation?:
   const N2 = order * order;
   const xf = orientationXform(orientation);
   return (initial, face) => {
-    const [x, y, z] = xf.map(initial % N, ((initial / N) | 0) % N, (initial / N2) | 0, max);
+    const physicalX = initial % N;
+    const physicalY = ((initial / N) | 0) % N;
+    const physicalZ = (initial / N2) | 0;
+    const [x, y, z] = xf.map(physicalX, physicalY, physicalZ, max);
     const mf = xf.facePerm[face] ?? face;           // 遮罩坐标系下的面
     const idx = netIndexOf(x, y, z, mf, max, N);
     const vcFace = ENGINE_TO_VC_FACE[mf];
+    // FL 的 U 中心块是固定视角下的配色参照，不应随阶段转体落到别的物理面。
+    if (name === 'fl' && vcFace === 0 && face !== FACE.U) {
+      const row = (idx / N) | 0, col = idx % N;
+      if (row > 0 && row < max && col > 0 && col < max) return FM_IGNORED;
+    }
     if (!fv[vcFace]?.[idx]) return FM_IGNORED;
     const row = (idx / N) | 0, col = idx % N;
     if (name === 'fl' && vcFace !== 0 && vcFace !== 3 && row > 0 && row < max && col > 0 && col < max) {
