@@ -44,7 +44,7 @@ describe('Mini Program web session handoff', () => {
     const session = { token: 't'.repeat(20), user: { uid: 7, wcaId: null, name: 'CubeRoot', avatar: '' } };
     const normalizedSession = {
       ...session,
-      user: { ...session.user, avatarSource: 'auto', avatarPreset: null },
+      user: { ...session.user, avatarSource: 'auto', avatarPreset: null, isAdmin: false },
     };
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => session });
     vi.stubGlobal('fetch', fetchMock);
@@ -60,7 +60,7 @@ describe('Mini Program web session handoff', () => {
     const session = { token: 't'.repeat(20), user: { uid: 7, wcaId: '2026TEST01', name: 'CubeRoot', avatar: '' } };
     const normalizedSession = {
       ...session,
-      user: { ...session.user, avatarSource: 'auto', avatarPreset: null },
+      user: { ...session.user, avatarSource: 'auto', avatarPreset: null, isAdmin: false },
     };
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ ok: false, json: async () => ({}) })
@@ -94,7 +94,7 @@ describe('Mini Program web session handoff', () => {
     const session = { token: 't'.repeat(20), user: { uid: 7, wcaId: null, name: 'CubeRoot', avatar: '' } };
     const normalizedSession = {
       ...session,
-      user: { ...session.user, avatarSource: 'auto', avatarPreset: null },
+      user: { ...session.user, avatarSource: 'auto', avatarPreset: null, isAdmin: false },
     };
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ ok: true, json: async () => session })

@@ -13,6 +13,7 @@ const provisionalUser = {
 const defaultAvatarSelection = {
   avatarSource: 'auto',
   avatarPreset: null,
+  isAdmin: false,
 } as const;
 
 function installProvisionalSession() {

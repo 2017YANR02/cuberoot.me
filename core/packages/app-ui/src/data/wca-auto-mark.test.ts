@@ -32,6 +32,7 @@ const session = {
     avatar: '',
     avatarPreset: null,
     avatarSource: 'auto' as const,
+    isAdmin: false,
     name: 'Test Cuber',
     uid: 7,
     wcaId: '2017TEST01',

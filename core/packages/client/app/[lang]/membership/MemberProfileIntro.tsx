@@ -108,6 +108,7 @@ export default function MemberProfileIntro({ membership, onSaved }: {
               <img src={uploadedImageUrl(id)} alt="" />
               <button
                 type="button"
+                className="mem-profile-image-remove"
                 onClick={() => { setImageIds((current) => current.filter((imageId) => imageId !== id)); setSaved(false); }}
                 disabled={uploading}
                 aria-label={tr({ zh: '移除图片', en: 'Remove image' })}

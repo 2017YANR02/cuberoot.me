@@ -24,6 +24,8 @@ export interface CompactSelectProps<T extends string | number> {
   value?: T;
   onChange: (value: T) => void;
   ariaLabel: string;
+  valueText?: string;
+  title?: string;
   className?: string;
   triggerClassName?: string;
   popupClassName?: string;
@@ -55,6 +57,8 @@ export function CompactSelect<T extends string | number>({
   value,
   onChange,
   ariaLabel,
+  valueText,
+  title,
   className,
   triggerClassName,
   popupClassName,
@@ -152,8 +156,10 @@ export function CompactSelect<T extends string | number>({
         className={['compact-select-trigger', triggerClassName].filter(Boolean).join(' ')}
         onClick={() => setOpen(current => !current)}
         aria-label={ariaLabel}
+        aria-description={valueText}
         aria-expanded={open}
         aria-haspopup="listbox"
+        title={title}
       >
         <span className="compact-select-current">{label}</span>
         <ChevronDown

@@ -74,7 +74,7 @@ function MemberIntroDialog({ name, profile, closeLabel, onClose }: {
           ))}
         </div>
       )}
-      <button type="button" onClick={() => ref.current?.close()} autoFocus>{closeLabel}</button>
+      <button type="button" className="wp-member-dialog-close" onClick={() => ref.current?.close()} autoFocus>{closeLabel}</button>
     </dialog>
   );
 }

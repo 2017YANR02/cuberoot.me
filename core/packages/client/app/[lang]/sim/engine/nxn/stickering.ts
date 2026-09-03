@@ -127,7 +127,7 @@ function rulesFor(order: number, name: string): Rule[] | null {
     case "AF2L": return [[LL, "Ignored"], [slotFR, "Ignored"]];
     case "F2L": return [[LL, "Ignored"], [and(U, CENTERS), "Regular"]];
     case "Daisy": return [[all, "Ignored"], [and(U, CENTERS), "Regular"], [and(D, EDGES), "IgnoreNonPrimary"]];
-    case "Cross": return [[all, "Ignored"], [and(CENTERS, not(orUD)), "Dim"], [and(or(U, D), CENTERS), "Regular"], [and(D, EDGES), "Regular"]];
+    case "Cross": return [[all, "Ignored"], [and(CENTERS, not(orUD)), "Dim"], [and(D, CENTERS), "Regular"], [and(D, EDGES), "Regular"]];
     // —— ZZ ——
     case "EO": return [[CORNERS, "Ignored"], [EDGES, "OWP"]];
     case "EOline": return [[CORNERS, "Ignored"], [EDGES, "OWP"], [and(D, M), "Regular"]];
@@ -272,7 +272,16 @@ export function stickeringMaskFn(order: number, name: string, orientation?: stri
   const N2 = order * order;
   const xf = orientationXform(orientation);
   return (initial, face) => {
-    const [x, y, z] = xf.map(initial % order, ((initial / order) | 0) % order, (initial / N2) | 0, max);
+    const physicalX = initial % order;
+    const physicalY = ((initial / order) | 0) % order;
+    const physicalZ = (initial / N2) | 0;
+    // Cross 的 U 中心只是固定视角下的配色参照，不属于会随拿方朝向转走的十字。
+    // 偶数阶没有固定中心，因此只保留奇数阶物理 U 面正中的那一枚。
+    if (name === "Cross" && order % 2 === 1 && face === FACE.U
+      && physicalY === max && physicalX === max / 2 && physicalZ === max / 2) {
+      return FM_REGULAR;
+    }
+    const [x, y, z] = xf.map(physicalX, physicalY, physicalZ, max);
     const p: Piece = { x, y, z };
     let ps: PieceStickering = "Regular";
     for (let i = rules.length - 1; i >= 0; i--) {
