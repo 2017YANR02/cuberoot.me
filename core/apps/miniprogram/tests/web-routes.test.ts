@@ -114,12 +114,12 @@ describe('mini program web routes', () => {
     }
   });
 
-  it('derives all 53 homepage destinations from the shared ordered catalog', () => {
-    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 4, 6, 9, 16, 10, 3]);
-    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 4, 6, 9, 16, 10, 3]);
-    expect(listWebTools()).toHaveLength(53);
-    expect(new Set(listWebTools().map((tool) => tool.id))).toHaveProperty('size', 53);
-    expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(52);
+  it('derives all 54 homepage destinations from the shared ordered catalog', () => {
+    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 4, 6, 9, 16, 11, 3]);
+    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 4, 6, 9, 16, 11, 3]);
+    expect(listWebTools()).toHaveLength(54);
+    expect(new Set(listWebTools().map((tool) => tool.id))).toHaveProperty('size', 54);
+    expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(53);
     expect(resolveWebTool('algdb')).toMatchObject({ id: 'algdb', key: 'alg', action: 'web' });
     expect(resolveWebTool('timer')).toMatchObject({ id: 'timer', key: 'timer', action: 'native' });
     expect(resolveWebTool('alg')).toMatchObject({ id: 'alg', key: null, action: 'disabled' });
@@ -132,7 +132,7 @@ describe('mini program web routes', () => {
       expect(trackingSource, tool.id).toContain(`| \`${tool.id}\` |`);
     }
     expect(trackingSource).toContain(
-      '共 53 项：网站首页直接渲染它们，工具 tab 通过一个固定白名单路由复用整个首页',
+      '共 54 项：网站首页直接渲染它们，工具 tab 通过一个固定白名单路由复用整个首页',
     );
   });
 
@@ -174,7 +174,7 @@ describe('mini program web routes', () => {
       path: '/pages/web/index?key=alg',
     });
     const routeBackedTools = listWebTools().filter((tool) => tool.key !== null);
-    expect(routeBackedTools).toHaveLength(51);
+    expect(routeBackedTools).toHaveLength(52);
     expect(routeBackedTools.every((tool) => resolveWebRouteShare(tool.key) !== null)).toBe(true);
     expect(resolveWebRouteShare('account')).toBeNull();
     expect(resolveWebRouteShare('privacy')).toBeNull();
