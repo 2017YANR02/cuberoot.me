@@ -56,7 +56,7 @@ import { localizeCity } from '@/lib/city-localize';
 import { prepareImageUpload, uploadImageBlob } from '@/lib/image-upload';
 import { toLocalIsoDate } from '@/lib/iso-date';
 import { applySession, hasAdminAccess, useAuthStore, safeNext, takeWcaLinkPrompt } from '@/lib/auth-store';
-import { notifyMiniProgramLogout } from '@/lib/miniprogram-bridge';
+import { isMiniProgramCommerceRestricted, notifyMiniProgramLogout } from '@/lib/miniprogram-bridge';
 import { tr, useLang } from '@/i18n/tr';
 import './account.css';
 
@@ -707,6 +707,7 @@ export default function AccountPage() {
   // 没绑的人在原位看到「绑定 WCA 账号」:注册那步跳过了、或后来才拿到 WCA ID,都从这里回来。
   const wcaId = user?.wcaId;
   const isAdmin = hasAdminAccess(user);
+  const commerceRestricted = isMiniProgramCommerceRestricted();
   const cards = [
     ...(wcaId ? [
       {
@@ -748,12 +749,14 @@ export default function AccountPage() {
       icon: <Building2 size={22} className="account-card-icon" />,
       title: tr({ zh: '教学管理', en: 'Teaching' }),
     },
-    {
-      key: 'membership',
-      href: '/membership',
-      icon: <HeartHandshake size={22} className="account-card-icon" />,
-      title: tr({ zh: '会员', en: 'Membership' }),
-    },
+    ...(commerceRestricted ? [] : [
+      {
+        key: 'membership',
+        href: '/membership',
+        icon: <HeartHandshake size={22} className="account-card-icon" />,
+        title: tr({ zh: '会员', en: 'Membership' }),
+      },
+    ]),
     {
       key: 'friends',
       href: '/friends',
