@@ -11,6 +11,7 @@ import { Check, RefreshCw, AlertTriangle, CalendarClock } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { tr, useLang } from '@/i18n/tr';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
+import { isMiniProgramCommerceRestricted } from '@/lib/miniprogram-bridge';
 import { fmtPrice, fmtDate } from '@/lib/membership-format';
 import AppLink from '@/components/AppLink';
 import CubeRootLogo from '@/components/CubeRootLogo';
@@ -85,6 +86,7 @@ export default function MembershipPage() {
   useEffect(() => setMounted(true), []);
   const admin = mounted && isAdmin();
   const loggedIn = mounted && !!user;
+  const commerceRestricted = mounted && isMiniProgramCommerceRestricted();
 
   const [plans, setPlans] = useState<MembershipPlan[] | null>(null);
   const [payEnabled, setPayEnabled] = useState(false);
@@ -108,6 +110,7 @@ export default function MembershipPage() {
   }, []);
 
   useEffect(() => {
+    if (isMiniProgramCommerceRestricted()) return;
     let cancel = false;
     listPlans()
       .then((r) => { if (!cancel) { setPlans(r.plans); setPayEnabled(r.payEnabled); setChannels(r.channels); } })
@@ -115,11 +118,13 @@ export default function MembershipPage() {
     return () => { cancel = true; };
   }, []);
 
-  useEffect(() => { if (mounted) refreshMembership(); }, [mounted, user?.wcaId, refreshMembership]);
+  useEffect(() => {
+    if (mounted && !commerceRestricted) refreshMembership();
+  }, [mounted, commerceRestricted, user?.wcaId, refreshMembership]);
 
   // 支付返回(return_url 带 ?paid=<单号>):轮询查单几次,确认入账后刷新状态。
   useEffect(() => {
-    if (!paid || !mounted) return;
+    if (!paid || !mounted || commerceRestricted) return;
     let tries = 0;
     let timer: number | undefined;
     const poll = () => {
@@ -140,7 +145,7 @@ export default function MembershipPage() {
     poll();
     return () => { if (timer) window.clearTimeout(timer); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paid, mounted]);
+  }, [paid, mounted, commerceRestricted]);
 
   const isLifetime = membership?.lifetime && membership.active;
   const activeMember = membership?.active;
@@ -166,11 +171,11 @@ export default function MembershipPage() {
 
   // 全局到期提醒 banner 深链 ?renew=1 → 自动打开续费弹窗(永久会员忽略)。
   useEffect(() => {
-    if (!renew || !mounted || !plans || !membership || membership.lifetime) return;
+    if (commerceRestricted || !renew || !mounted || !plans || !membership || membership.lifetime) return;
     renewMembership();
     setRenew(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [renew, mounted, plans, membership]);
+  }, [commerceRestricted, renew, mounted, plans, membership]);
 
   const sortedPlans = useMemo(() => plans ?? [], [plans]);
   const autoRenewPlans = sortedPlans.filter((plan) => isAutoRenewPlanSlug(plan.slug));
@@ -189,6 +194,25 @@ export default function MembershipPage() {
   const handlePlanUpdated = useCallback((updatedPlan: MembershipPlan) => {
     setPlans((current) => current ? reconcileVisiblePlan(current, updatedPlan) : current);
   }, []);
+
+  if (commerceRestricted) {
+    return (
+      <div className="mem-page">
+        <header className="mem-head">
+          <h1 className="mem-title">
+            <CubeRootLogo className="mem-title-logo" height={22} variant="mark" />
+            {tr({ zh: '会员服务', en: 'Membership' })}
+          </h1>
+        </header>
+        <p className="mem-empty">
+          {tr({
+            zh: '小程序内暂不提供会员购买服务。',
+            en: 'Membership purchases are not available in the Mini Program.',
+          })}
+        </p>
+      </div>
+    );
+  }
 
   function renderPerks(perks: string[]) {
     if (perks.length === 0) return null;
