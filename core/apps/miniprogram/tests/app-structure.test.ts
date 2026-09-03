@@ -170,13 +170,16 @@ describe('mini program app structure', () => {
     const genericWebStyles = pageFiles['../src/pages/web/index.wxss'];
     const sharedTemplate = sourceFiles['../src/templates/web-route-view.wxml'];
 
-    expect(timerPage).toContain("createWebViewPageOptions('timer', { requireMiniProgramSession: true })");
-    expect(toolsPage).toContain("createWebViewPageOptions('home', { requireMiniProgramSession: true })");
+    expect(timerPage).toContain("createWebViewPageOptions('timer')");
+    expect(toolsPage).toContain("createWebViewPageOptions('home')");
+    expect(timerPage).not.toContain('requireMiniProgramSession');
+    expect(toolsPage).not.toContain('requireMiniProgramSession');
     expect(accountPage).not.toContain('createWebViewPageOptions');
     expect(accountPage).toContain('showPublicShareMenu');
     expect(accountPage).toContain('onShareTimeline');
     expect(accountPage).toContain('resumeRequiredSessionDestination');
-    expect(genericWebPage).toContain('createWebViewPageOptions(undefined, { requireMiniProgramSession: true })');
+    expect(genericWebPage).toContain('createWebViewPageOptions()');
+    expect(genericWebPage).not.toContain('requireMiniProgramSession');
     expect(timerPage).not.toMatch(/timer-store|setInterval|setTimeout/);
     expect(timerTemplate).toContain('templates/web-route-view.wxml');
     expect(toolsTemplate).toContain('templates/web-route-view.wxml');

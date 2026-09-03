@@ -46,4 +46,26 @@ describe('Mini Program web-view bridge', () => {
     await expect(notifyMiniProgramLogout()).resolves.toBe(false);
     expect(postMessage).not.toHaveBeenCalled();
   });
+
+  it.each([
+    'MicroMessenger miniProgram',
+    'MicroMessenger',
+    'toutiaomicroapp',
+  ])('blocks external commerce in embedded candidate: %s', async (userAgent) => {
+    vi.stubGlobal('window', {
+      navigator: { userAgent },
+    });
+    const { isMiniProgramCommerceRestricted } = await import('@/lib/miniprogram-bridge');
+
+    expect(isMiniProgramCommerceRestricted()).toBe(true);
+  });
+
+  it('keeps external commerce available in an ordinary browser', async () => {
+    vi.stubGlobal('window', {
+      navigator: { userAgent: 'Mozilla/5.0' },
+    });
+    const { isMiniProgramCommerceRestricted } = await import('@/lib/miniprogram-bridge');
+
+    expect(isMiniProgramCommerceRestricted()).toBe(false);
+  });
 });

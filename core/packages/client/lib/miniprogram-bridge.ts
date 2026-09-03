@@ -67,6 +67,15 @@ export function mayUseMiniProgramBridge(): boolean {
     || supportsMiniProgramNavigation(window.jWeixin);
 }
 
+/**
+ * Payment UI must fail closed in every possible Mini Program container. Some
+ * iOS WeChat web-views omit the explicit Mini Program marker, so candidates
+ * are restricted too instead of briefly exposing an external checkout.
+ */
+export function isMiniProgramCommerceRestricted(): boolean {
+  return mayUseMiniProgramBridge();
+}
+
 export function getInstalledMiniProgramNavigationApi(): MiniProgramNavigationApi | null {
   if (typeof window === 'undefined') return null;
   return [window.tt, window.wx, window.jWeixin]
