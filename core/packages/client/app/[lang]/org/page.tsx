@@ -52,7 +52,7 @@ export default function OrganizationsPage() {
       setOrganizations((current) => [...current.filter((item) => item.id !== organization.id), organization]);
       form.reset();
       operationKey.reset();
-      setMessage(t('机构已创建。', 'Organization created.'));
+      setMessage(t('企业信息已创建。', 'Enterprise profile created.'));
     } catch (reason) {
       setError(teachingErrorMessage(reason, t));
     } finally {
@@ -64,8 +64,8 @@ export default function OrganizationsPage() {
   if (!user || !getSessionToken()) {
     return (
       <main className="org-page org-centered">
-        <h1>{t('教学管理', 'Teaching')}</h1>
-        <p className="org-lead">{t('老师、机构和学员统一使用主站账号与训练工具。', 'Teachers, organizations, and students share the main site account and training tools.')}</p>
+        <h1>{t('企业信息', 'Enterprise')}</h1>
+        <p className="org-lead">{t('登录后即可创建企业信息，并继续管理机构、学员和教学工作。', 'Sign in to create an enterprise profile and manage its organization, students, and teaching.')}</p>
         <AppLink className="org-primary-link" href={`/account${nextQuery(window.location.pathname)}`} prefetch={false}>{t('登录', 'Sign in')}</AppLink>
       </main>
     );
@@ -73,13 +73,13 @@ export default function OrganizationsPage() {
 
   return (
     <main className="org-page">
-      <h1>{t('教学管理', 'Teaching')}</h1>
-      <p className="org-lead">{t('在主站管理机构、学员与教学工作，不再切换到单独的平台。', 'Manage organizations, students, and teaching work on the main site without switching to a separate platform.')}</p>
+      <h1>{t('企业信息', 'Enterprise')}</h1>
+      <p className="org-lead">{t('创建并管理你的企业信息；创建者会自动成为企业所有者。', 'Create and manage your enterprise profile; its creator automatically becomes the owner.')}</p>
 
       <section className="org-section">
-        <h2>{t('我的机构', 'My organizations')}</h2>
+        <h2>{t('我的企业', 'My enterprises')}</h2>
         {loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : error ? <MutationMessage message={error} error /> : organizations.length === 0 ? (
-          <p className="org-empty">{t('你还没有加入机构，可以在下面创建第一个机构。', 'You have not joined an organization yet. Create your first one below.')}</p>
+          <p className="org-empty">{t('你还没有企业信息，可以在下面创建。', 'You do not have an enterprise profile yet. Create one below.')}</p>
         ) : (
           <div className="org-list">
             {organizations.map((organization) => (
@@ -93,13 +93,13 @@ export default function OrganizationsPage() {
       </section>
 
       <section className="org-section">
-        <h2>{t('创建机构', 'Create organization')}</h2>
+        <h2>{t('创建企业信息', 'Create enterprise profile')}</h2>
         <form className="org-form" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
           <fieldset disabled={submitting}>
-            <label>{t('机构名称', 'Organization name')}<input className="org-form-control" name="name" required maxLength={160} autoComplete="organization" /></label>
+            <label>{t('企业名称', 'Enterprise name')}<input className="org-form-control" name="name" required maxLength={160} autoComplete="organization" /></label>
             <label>{t('网址标识', 'URL slug')}<input className="org-form-control" name="slug" required maxLength={64} pattern="[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?" placeholder="cuberoot-academy" autoCapitalize="none" /></label>
             <label className="org-field-wide">{t('时区', 'Time zone')}<input className="org-form-control" name="timezone" required maxLength={64} defaultValue="Asia/Shanghai" autoCapitalize="none" /></label>
-            <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('创建中…', 'Creating…') : t('创建机构', 'Create organization')}</button></div>
+            <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('创建中…', 'Creating…') : t('创建企业信息', 'Create enterprise profile')}</button></div>
           </fieldset>
           <MutationMessage message={error || message} error={!!error} />
         </form>

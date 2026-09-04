@@ -771,10 +771,10 @@ export default function AccountPage() {
       title: tr({ zh: '学习中心', en: 'Learning Center' }),
     },
     {
-      key: 'teaching',
+      key: 'enterprise',
       href: '/org',
       icon: <Building2 size={22} className="account-card-icon" />,
-      title: tr({ zh: '教学管理', en: 'Teaching' }),
+      title: tr({ zh: '企业信息', en: 'Enterprise' }),
     },
     ...(commerceRestricted ? [] : [
       {
