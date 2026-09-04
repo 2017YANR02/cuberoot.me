@@ -1,7 +1,7 @@
 'use client';
 
 import { type ReactNode } from 'react';
-import { Play, Pause, SkipBack, SkipForward, Undo2, Redo2 } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight } from 'lucide-react';
 import PlaybackScrubber from './PlaybackScrubber';
 import './PlaybackBar.css';
 
@@ -76,9 +76,9 @@ export default function PlaybackBar({
       <div className="playback-bar-controls">
         {leading}
         <button type="button" className="playback-bar-btn" onClick={onSkipStart} disabled={atStart} title={L.skipStart} aria-label={L.skipStart}><SkipBack size={14} /></button>
-        <button type="button" className="playback-bar-btn" onClick={onStepBack} disabled={atStart} title={L.stepBack} aria-label={L.stepBack}><Undo2 size={14} /></button>
+        <button type="button" className="playback-bar-btn" onClick={onStepBack} disabled={atStart} title={L.stepBack} aria-label={L.stepBack}><ChevronLeft size={14} /></button>
         <button type="button" className="playback-bar-btn" onClick={onTogglePlay} disabled={empty} title={playing ? L.pause : L.play} aria-label={playing ? L.pause : L.play}>{playing ? <Pause size={14} /> : <Play size={14} />}</button>
-        <button type="button" className="playback-bar-btn" onClick={onStepForward} disabled={atEnd} title={L.stepForward} aria-label={L.stepForward}><Redo2 size={14} /></button>
+        <button type="button" className="playback-bar-btn" onClick={onStepForward} disabled={atEnd} title={L.stepForward} aria-label={L.stepForward}><ChevronRight size={14} /></button>
         <button type="button" className="playback-bar-btn" onClick={onSkipEnd} disabled={atEnd} title={L.skipEnd} aria-label={L.skipEnd}><SkipForward size={14} /></button>
         {trailing}
       </div>
