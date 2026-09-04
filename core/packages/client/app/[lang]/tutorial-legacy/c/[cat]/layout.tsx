@@ -3,7 +3,7 @@ import { metadataFromEntry } from '@/lib/page-meta';
 import { fetchTutorialCatalog } from '@/lib/tutorial-seo';
 import { categoryLabel } from '../../_data/categories';
 
-// Every /tutorial/c/<cat> page inherited the same "Cubing Tutorials" title, so
+// Every /tutorial-legacy/c/<cat> page inherited the same "Cubing Tutorials" title, so
 // the 31 category listings were indistinguishable from each other and from the
 // hub. The label comes from _data/categories — the same table the index cards
 // render — so the tab and the card can never disagree; the post count comes

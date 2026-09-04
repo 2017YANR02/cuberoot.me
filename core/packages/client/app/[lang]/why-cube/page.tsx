@@ -773,7 +773,7 @@ export default function WhyCubePage() {
           title={t('准备好了，就动手试试', 'Ready? Give it a try')}
         >
           <div className="wc-cta-grid">
-            <Link href="/tutorial/cfop-tutorial" className="wc-cta"><GraduationCap size={22} /><span>{t('入门教程', 'Beginner tutorial')}</span><ArrowRight size={16} className="wc-cta-arrow" /></Link>
+            <Link href="/tutorial-legacy/cfop-tutorial" className="wc-cta"><GraduationCap size={22} /><span>{t('入门教程', 'Beginner tutorial')}</span><ArrowRight size={16} className="wc-cta-arrow" /></Link>
             <Link href="/alg" className="wc-cta"><BookMarked size={22} /><span>{t('公式库', 'Algorithms')}</span><ArrowRight size={16} className="wc-cta-arrow" /></Link>
             <Link href="/sim" className="wc-cta"><Box size={22} /><span>{t('模拟魔方', 'Cube simulator')}</span><ArrowRight size={16} className="wc-cta-arrow" /></Link>
             <Link href="/timer" className="wc-cta"><TimerIcon size={22} /><span>{t('计时器', 'Timer')}</span><ArrowRight size={16} className="wc-cta-arrow" /></Link>

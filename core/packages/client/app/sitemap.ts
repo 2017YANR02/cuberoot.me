@@ -40,7 +40,7 @@ const EXCLUDE = new Set(['ffmpeg-poc', 'jsonEditor', 'courses', 'search']);
 // so listing them would spend crawl budget to deliver empty pages — robots.txt
 // disallows them for the same reason.
 //
-// /tutorial/<slug> and its category listings ARE indexed, but from
+// /tutorial-legacy/<slug> and its category listings ARE indexed, but from
 // app/tutorial-sitemap.xml/route.ts: enumerating them needs a catalog fetch
 // this file must not make.
 //

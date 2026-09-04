@@ -88,7 +88,7 @@ export async function GET(): Promise<Response> {
       const langs = langsOf(e);
       // A post with neither language flag has nothing to render; skip it.
       if (langs.length === 0) return '';
-      return urlEntry(`tutorial/${encodeURIComponent(e.slug)}`, langs, lastmodOf(e));
+      return urlEntry(`tutorial-legacy/${encodeURIComponent(e.slug)}`, langs, lastmodOf(e));
     })
     .join('');
 
@@ -104,7 +104,7 @@ export async function GET(): Promise<Response> {
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([cat, mtime]) =>
       urlEntry(
-        `tutorial/c/${encodeURIComponent(cat)}`,
+        `tutorial-legacy/c/${encodeURIComponent(cat)}`,
         ['en', 'zh'],
         lastmodOf({ mtime } as CatalogEntry),
       ),

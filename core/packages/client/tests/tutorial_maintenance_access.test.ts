@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import TutorialAccessGate from '@/app/[lang]/tutorial/_components/TutorialAccessGate';
+import TutorialAccessGate from '@/app/[lang]/tutorial-legacy/_components/TutorialAccessGate';
 import {
   SEARCH_CARDS,
   SECTIONS,
@@ -10,28 +10,42 @@ import {
 } from '@/lib/landing-sections';
 
 const layoutSource = readFileSync(
-  new URL('../app/[lang]/tutorial/layout.tsx', import.meta.url),
+  new URL('../app/[lang]/tutorial-legacy/layout.tsx', import.meta.url),
   'utf8',
 );
 const gateSource = readFileSync(
-  new URL('../app/[lang]/tutorial/_components/TutorialAccessGate.tsx', import.meta.url),
+  new URL('../app/[lang]/tutorial-legacy/_components/TutorialAccessGate.tsx', import.meta.url),
+  'utf8',
+);
+const newPageSource = readFileSync(
+  new URL('../app/[lang]/tutorial/page.tsx', import.meta.url),
+  'utf8',
+);
+const legacyPageSource = readFileSync(
+  new URL('../app/[lang]/tutorial-legacy/page.tsx', import.meta.url),
   'utf8',
 );
 
-describe('tutorial maintenance access', () => {
-  it('locks the homepage card and removes the visitor search entry', () => {
+describe('legacy tutorial maintenance access', () => {
+  it('publishes the new tutorial homepage card', () => {
     const tutorialCard = SECTIONS
       .find(({ id }) => id === 'learn')
       ?.cards.find(({ href }) => href === '/tutorial');
     const tutorialSearchCard = SEARCH_CARDS.find(({ href }) => href === '/tutorial');
 
-    expect(tutorialCard?.lockedForNonAdmin).toBe(true);
-    expect(tutorialSearchCard?.lockedForNonAdmin).toBe(true);
-    expect(isLandingSearchCardVisible(tutorialSearchCard!, false)).toBe(false);
+    expect(tutorialCard?.lockedForNonAdmin).toBeUndefined();
+    expect(tutorialSearchCard?.lockedForNonAdmin).toBeUndefined();
+    expect(isLandingSearchCardVisible(tutorialSearchCard!, false)).toBe(true);
     expect(isLandingSearchCardVisible(tutorialSearchCard!, true)).toBe(true);
   });
 
-  it('wraps the whole tutorial route family in the administrator gate', () => {
+  it('keeps the new tutorial page empty and moves the catalog to legacy', () => {
+    expect(newPageSource).toContain('<BackHome />');
+    expect(newPageSource).not.toContain('useTutorialCatalog');
+    expect(legacyPageSource).toContain('/tutorial-legacy/c/');
+  });
+
+  it('wraps the legacy tutorial route family in the administrator gate', () => {
     expect(layoutSource).toContain('<TutorialAccessGate>{children}</TutorialAccessGate>');
     expect(layoutSource).toContain('robots: { index: false, follow: false }');
     expect(gateSource).toContain('if (!mounted)');

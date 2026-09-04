@@ -2,7 +2,7 @@
  * TutorialContent — 从 build pipeline 生成的 article HTML 渲染 React
  * - DOMPurify 清洗（build pipeline 是可信来源，但加一层保险）
  * - html-react-parser 解析，在 <span class="tutorial-chip"> 位置注入 AlgChip
- * - <a href="/tutorial/..."> 被替换成 Next Link（SPA 导航）
+ * - 旧教程内链被改到 legacy 路由并替换成 Next Link
  */
 import parse, {
   domToReact,
@@ -70,13 +70,15 @@ export function TutorialContent({ html }: TutorialContentProps) {
         return undefined;
       }
 
-      // 内站链接 /tutorial/... → Next Link
+      // 旧正文里的 /tutorial/... → legacy 路由
       if (el.name === 'a') {
         const href = el.attribs.href ?? '';
         if (href.startsWith('/tutorial/')) {
           const className = el.attribs.class;
+          const legacyHref = href.replace('/tutorial/', '/tutorial-legacy/');
           return (
-            <Link href={href} className={className}>
+            // allow-nested-link: html-react-parser replaces the source anchor node.
+            <Link href={legacyHref} className={className}>
               {domToReact(el.children, options)}
             </Link>
           );

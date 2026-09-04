@@ -28,7 +28,7 @@ const SEE_ALSO_KEYWORDS: { pattern: RegExp; slug: string }[] = [
  * - 表格包 .table-wrap 给 overflow-x
  * - 外链 target + rel
  * - img loading=lazy + decoding=async
- * - see-also 关键词 → 自动链到 /tutorial/<slug>
+ * - see-also 关键词 → 自动链到 /tutorial-legacy/<slug>
  */
 export function transformHtml(html: string, currentSlug: string): string {
   const $ = cheerio.load(html, null, false);
@@ -87,7 +87,7 @@ export function transformHtml(html: string, currentSlug: string): string {
       innerHtml = innerHtml.replace(
         p,
         match =>
-          `<a href="/tutorial/${slug}" class="see-also-link" data-see-also="true">${match}</a>`,
+          `<a href="/tutorial-legacy/${slug}" class="see-also-link" data-see-also="true">${match}</a>`,
       );
       added = true;
     }

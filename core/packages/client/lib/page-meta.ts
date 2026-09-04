@@ -701,6 +701,9 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   },
   'tutorial': {
     title: { zh: '魔方教程', en: 'Cubing Tutorials' },
+  },
+  'tutorial-legacy': {
+    title: { zh: '旧版魔方教程', en: 'Legacy Cubing Tutorials' },
     description: {
       zh: '魔方教程:从入门还原到 CFOP、Roux 进阶,分类整理,配图与动画。',
       en: 'Cubing tutorials — from a first solve through CFOP and Roux, organised by topic, with diagrams and animations.',

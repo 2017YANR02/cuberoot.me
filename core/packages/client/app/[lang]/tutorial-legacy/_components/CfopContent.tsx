@@ -96,12 +96,14 @@ export function CfopContent({ html }: { html: string }) {
         return undefined;
       }
 
-      // 内站链接 /tutorial/... → Next Link
+      // 旧正文里的 /tutorial/... → legacy 路由
       if (el.name === 'a') {
         const href = el.attribs.href ?? '';
         if (href.startsWith('/tutorial/')) {
+          const legacyHref = href.replace('/tutorial/', '/tutorial-legacy/');
           return (
-            <Link href={href} className={el.attribs.class}>
+            // allow-nested-link: html-react-parser replaces the source anchor node.
+            <Link href={legacyHref} className={el.attribs.class}>
               {domToReact(el.children, options)}
             </Link>
           );
