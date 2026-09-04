@@ -133,6 +133,34 @@ describe('mini program authentication', () => {
     });
   });
 
+  it('sends explicit consent before creating a new WeChat account', async () => {
+    vi.stubGlobal('wx', {
+      login(options: { success(result: { code: string }): void }) {
+        options.success({ code: 'login-code' });
+      },
+      request(options: {
+        data: { code: string; create?: boolean };
+        success(result: { statusCode: number; data: unknown }): void;
+      }) {
+        expect(options.data).toEqual({ code: 'login-code', create: true });
+        options.success({
+          statusCode: 200,
+          data: {
+            token: 't'.repeat(20),
+            user: { uid: 12, name: '', wcaId: null, avatar: '' },
+            isNew: true,
+          },
+        });
+      },
+      setStorageSync: vi.fn(),
+    });
+
+    await expect(loginWithMiniProgram({ createAccount: true })).resolves.toMatchObject({
+      isNew: true,
+      user: { uid: 12 },
+    });
+  });
+
   it('accepts and persists the real first-time WeChat user response with an empty name', async () => {
     const setStorageSync = vi.fn();
     vi.stubGlobal('wx', {
@@ -266,6 +294,11 @@ describe('mini program authentication', () => {
   });
 
   it('maps actionable login failures to user-facing messages', () => {
+    expect(loginErrorMessage(new ApiError(
+      409,
+      'link required',
+      'WECHAT_ACCOUNT_LINK_REQUIRED',
+    ))).toContain('已有 CubeRoot 账号请先绑定');
     expect(loginErrorMessage(new ApiError(409, 'unionid'))).toContain('开放平台');
     expect(loginErrorMessage(new ApiError(503, 'secret'))).toContain('服务端');
     expect(loginErrorMessage(new ApiError(429, 'rate limited'))).toContain('过于频繁');

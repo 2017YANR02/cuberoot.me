@@ -176,10 +176,14 @@ accountAuthRoutes.post('/auth/wechat/miniprogram', async (c) => {
   if (!wechatMiniProgramConfigured()) {
     return c.json(webSessionError('WECHAT_NOT_CONFIGURED', 'wechat miniprogram not configured'), 503);
   }
-  const body = await c.req.json<{ code?: unknown }>().catch(() => ({ code: undefined }));
+  const body = await c.req.json<{ code?: unknown; create?: unknown }>()
+    .catch(() => ({ code: undefined, create: undefined }));
   const code = typeof body.code === 'string' ? body.code.trim() : '';
   if (!code || code.length > 512) {
     return c.json(webSessionError('INVALID_REQUEST', 'invalid code'), 400);
+  }
+  if (body.create !== undefined && typeof body.create !== 'boolean') {
+    return c.json(webSessionError('INVALID_REQUEST', 'invalid login request'), 400);
   }
 
   let wechatSession;
@@ -203,8 +207,17 @@ accountAuthRoutes.post('/auth/wechat/miniprogram', async (c) => {
   if (!wechatSession.unionid) {
     return c.json(webSessionError('WECHAT_UNIONID_REQUIRED', 'wechat unionid required'), 409);
   }
+  const linkedUser = await findUserByIdentity('wechat', wechatSession.unionid);
+  if (!linkedUser && body.create !== true) {
+    return c.json(webSessionError(
+      'WECHAT_ACCOUNT_LINK_REQUIRED',
+      'link an existing account or explicitly create a new account',
+    ), 409);
+  }
 
-  const { user, isNew } = await loginWithIdentity('wechat', wechatSession.unionid, { name: '' });
+  const { user, isNew } = linkedUser
+    ? { user: linkedUser, isNew: false }
+    : await loginWithIdentity('wechat', wechatSession.unionid, { name: '' });
   await captureAccountDevice(user.id, c.req.header('User-Agent'));
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   const session: WebSession = { token, user: publicUser(user) };

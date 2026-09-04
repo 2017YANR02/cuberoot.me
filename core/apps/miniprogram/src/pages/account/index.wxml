@@ -28,7 +28,7 @@
     >{{agreementAccepted ? '✓' : '○'}} {{copy.agreementLabel}}</button>
   </view>
   <button
-    wx:if="{{!loginStorageUnavailable}}"
+    wx:if="{{!loginStorageUnavailable && !accountLinkRequired}}"
     class="primary-button account-primary-button"
     aria-busy="{{loginBusy}}"
     aria-label="{{loginBusy ? loginButtonBusyLabel : loginButtonLabel}}"
@@ -38,8 +38,22 @@
   >
     {{loginBusy ? copy.signingInLabel : loginButtonLabel}}
   </button>
+  <view wx:elif="{{accountLinkRequired}}" class="account-link-actions">
+    <button
+      class="primary-button account-primary-button"
+      aria-label="{{copy.linkExistingAccountLabel}}"
+      hover-class="press-feedback"
+      bindtap="linkExistingAccount"
+    >{{copy.linkExistingAccountLabel}}</button>
+    <button
+      class="text-button account-create-button"
+      aria-label="{{copy.createAccountLabel}}"
+      hover-class="press-feedback"
+      bindtap="createAccount"
+    >{{copy.createAccountLabel}}</button>
+  </view>
   <button
-    wx:else
+    wx:elif="{{loginStorageUnavailable}}"
     class="primary-button account-primary-button"
     aria-label="{{copy.retrySessionAria}}"
     hover-class="press-feedback"

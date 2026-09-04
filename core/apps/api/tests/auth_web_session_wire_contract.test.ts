@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   douyinMiniProgramConfigured: vi.fn(),
   exchangeDouyinMiniProgramCode: vi.fn(),
   exchangeWechatMiniProgramCode: vi.fn(),
+  findUserByIdentity: vi.fn(),
   getAccountBasicProfile: vi.fn(),
   getUserById: vi.fn(),
   issueMobileSessionTicket: vi.fn(),
@@ -37,7 +38,7 @@ vi.mock('../src/utils/session.js', () => ({
 }));
 vi.mock('../src/utils/account.js', () => ({
   getUserById: mocks.getUserById,
-  findUserByIdentity: vi.fn(),
+  findUserByIdentity: mocks.findUserByIdentity,
   getAccountBasicProfile: mocks.getAccountBasicProfile,
   loginWithIdentity: mocks.loginWithIdentity,
   publicUser: mocks.publicUser,
@@ -130,7 +131,7 @@ describe('auth route wire contracts', () => {
     const response = await accountAuthRoutes.request('/auth/wechat/miniprogram', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: 'wx-code' }),
+      body: JSON.stringify({ code: 'wx-code', create: true }),
     });
 
     expect(response.status).toBe(200);
@@ -138,6 +139,51 @@ describe('auth route wire contracts', () => {
     expect(body).toEqual({ token, user: publicAccount, isNew: true });
     expect(decodeWebSession(body)).toEqual({ token, user: publicAccount });
     expect(mocks.loginWithIdentity).toHaveBeenCalledWith('wechat', 'unionid-1', { name: '' });
+  });
+
+  it('does not create an account for an unlinked WeChat identity without explicit consent', async () => {
+    mocks.wechatMiniProgramConfigured.mockReturnValue(true);
+    mocks.exchangeWechatMiniProgramCode.mockResolvedValue({
+      openid: 'openid-1',
+      unionid: 'unionid-1',
+      sessionKey: 'session-key',
+    });
+    mocks.findUserByIdentity.mockResolvedValue(null);
+
+    const response = await accountAuthRoutes.request('/auth/wechat/miniprogram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: 'wx-code' }),
+    });
+
+    expect(response.status).toBe(409);
+    expect(decodeWebSessionError(await response.json())).toEqual({
+      code: 'WECHAT_ACCOUNT_LINK_REQUIRED',
+      message: 'link an existing account or explicitly create a new account',
+      error: 'link an existing account or explicitly create a new account',
+    });
+    expect(mocks.loginWithIdentity).not.toHaveBeenCalled();
+  });
+
+  it('signs in an already-linked WeChat identity without a create flag', async () => {
+    mocks.wechatMiniProgramConfigured.mockReturnValue(true);
+    mocks.exchangeWechatMiniProgramCode.mockResolvedValue({
+      openid: 'openid-1',
+      unionid: 'unionid-1',
+      sessionKey: 'session-key',
+    });
+    mocks.findUserByIdentity.mockResolvedValue(account);
+    mocks.loginWithIdentity.mockResolvedValue({ user: account, isNew: false });
+
+    const response = await accountAuthRoutes.request('/auth/wechat/miniprogram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: 'wx-code' }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ token, user: publicAccount, isNew: false });
+    expect(mocks.loginWithIdentity).not.toHaveBeenCalled();
   });
 
   it('uses only Douyin openid in the existing identity and session flow', async () => {
