@@ -30,4 +30,17 @@ describe('membership plan visibility contract', () => {
     expect(route).toContain("body.showInMemberList != null && typeof body.showInMemberList !== 'boolean'");
     expect(route).toContain('show_in_member_list = COALESCE(?::boolean, u.show_in_member_list)');
   });
+
+  it('lets administrators edit and publicly display a member profile without a paid membership row', async () => {
+    const route = await readFile(new URL('../src/routes/membership.ts', import.meta.url), 'utf8');
+    const listStart = route.indexOf("membershipRoutes.get('/membership/members'");
+    const profileStart = route.indexOf("membershipRoutes.get('/membership/profile");
+    const meStart = route.indexOf("membershipRoutes.get('/membership/me'");
+    const updateStart = route.indexOf("membershipRoutes.put('/membership/me/profile'");
+
+    expect(route.slice(listStart, profileStart)).toContain('OR u.is_admin = TRUE');
+    expect(route.slice(profileStart, meStart)).toContain('profile.active_member || profile.is_admin || isAdminWcaId(wcaId)');
+    expect(route.slice(meStart, updateStart)).toContain('if (!profile && user.isAdmin)');
+    expect(route.slice(updateStart)).toContain('!user.isAdmin && !(await hasActiveMembership(user.wcaId))');
+  });
 });

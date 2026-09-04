@@ -5,19 +5,19 @@ import { Check, ImagePlus, Trash2 } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
 import { prepareImageUpload, uploadedImageUrl, uploadImageBlob } from '@/lib/image-upload';
-import { setMyProfileIntro, type Membership } from '@/lib/membership-api';
+import { setMyProfileIntro, type EditableMemberProfile } from '@/lib/membership-api';
 import './member-profile-editor.css';
 
 const MAX_LENGTH = 1000;
 const MAX_IMAGES = 8;
 
-export default function MemberProfileEditor({ membership, onSaved }: {
-  membership: Membership;
+export default function MemberProfileEditor({ profile, onSaved }: {
+  profile: EditableMemberProfile;
   onSaved: (intro: string | undefined, imageIds: number[]) => void;
 }) {
-  const initial = membership.profileIntro ?? '';
-  const initialImageIds = membership.profileImageIds ?? [];
-  const initialVisibility = membership.showInMemberList !== false;
+  const initial = profile.profileIntro ?? '';
+  const initialImageIds = profile.profileImageIds ?? [];
+  const initialVisibility = profile.showInMemberList !== false;
   const [intro, setIntro] = useState(initial);
   const [imageIds, setImageIds] = useState(initialImageIds);
   const [showInMemberList, setShowInMemberList] = useState(initialVisibility);
