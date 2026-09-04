@@ -184,6 +184,11 @@ const TABLES: Table[] = [
   { name: 'drive_shares', domain: 'storage', origin: '0189', purpose: { zh: '文件级不可枚举下载链接；删除记录即撤销，文件进入回收站时同步停止分享', en: 'Unlisted file-download capabilities; deleting the row revokes access, including when a file enters Trash' }, cols: [
     { name: 'id UUID (PK), node_id (UNIQUE/FK)' }, { name: 'created_at' },
   ] },
+  { name: 'music_tracks', domain: 'storage', origin: '0205', purpose: { zh: '会员上传音乐的文件元数据、LRC 歌词与管理员审核状态；音频和封面实体保存在 MUSIC_STORAGE_DIR', en: 'Metadata, LRC lyrics, and administrator review state for member-uploaded music; audio and cover files live under MUSIC_STORAGE_DIR' }, cols: [
+    { name: 'id UUID (PK), owner_user_id (FK)' }, { name: 'title, artist, album, genre, lyrics_lrc' },
+    { name: 'audio_storage_key, audio_mime, audio_size_bytes, audio_filename' }, { name: 'cover_storage_key, cover_mime' },
+    { name: 'status', note: { zh: 'pending / published / rejected', en: 'pending / published / rejected' } }, { name: 'review_note, published_at, created_at, updated_at' },
+  ] },
 
   // ── teaching SaaS ──────────────────────────────────────
   { name: 'organizations', domain: 'teaching', origin: '0142', purpose: { zh: '机构租户根节点，保存唯一 slug、状态、时区与版本', en: 'Tenant root with a unique slug, lifecycle status, timezone, and version' }, cols: [
@@ -696,6 +701,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 202, slug: 'qr_card_designs', desc: { zh: '按二维码追加保存可打印卡片设计版本，保留每次管理员修改的快照。', en: 'Append versioned printable card-design snapshots for each QR code and retain every administrator update.' } },
   { n: 203, slug: 'qr_landing_content', desc: { zh: '二维码补回内部备注、独立的跳转/落地页类型与严格链接列表；简介和术语继续读取最新卡片设计。', en: 'Restore internal QR labels, independent redirect/landing types, and strict link lists while projecting intro and term from the latest card design.' } },
   { n: 204, slug: 'qr_card_account_deletion', desc: { zh: '保留二维码卡片版本历史，账号注销时将创建者身份替换为墓碑键。', en: 'Keep QR card design history while replacing its creator identity with a tombstone when an account is deleted.' } },
+  { n: 205, slug: 'music_tracks', desc: { zh: '新增会员音乐上传、LRC 歌词、封面和管理员发布审核表，文件实体保存在独立音乐目录。', en: 'Add member music uploads, LRC lyrics, covers, and administrator publishing review with files stored in a dedicated music directory.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

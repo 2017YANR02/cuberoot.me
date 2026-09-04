@@ -41,6 +41,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'teaching-saas', zh: '教学机构', en: 'Teaching organizations' },
   { key: 'platform', zh: 'Platform 课程与交易', en: 'Platform learning & commerce' },
   { key: 'membership', zh: '会员', en: 'Membership' },
+  { key: 'music', zh: '音乐', en: 'Music' },
   { key: 'feedback', zh: '反馈', en: 'Feedback' },
   { key: 'notification', zh: '通知', en: 'Notifications' },
   { key: 'friend', zh: '好友', en: 'Friends' },
@@ -66,7 +67,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   then add the file stem to this list.
 //   account_auth alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps article auth battle_rooms calendar cn_comp_names colpi
 //   comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends health historical_ranks pb private_vault
-//   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
+//   membership music nav_sites nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
 // ─ covers-routes-end ─
@@ -590,6 +591,22 @@ const ENDPOINTS: Ep[] = [
   { d: 'membership', m: 'GET', p: '/v1/membership/admin/list', g: 'admin', zh: '会员列表', en: 'Member list' },
   { d: 'membership', m: 'DELETE', p: '/v1/membership/admin/member/:wcaId', g: 'admin', zh: '删除会员', en: 'Remove member' },
   { d: 'membership', m: 'PUT', p: '/v1/membership/admin/plans/:slug', g: 'admin', zh: '改套餐', en: 'Edit plan' },
+
+  // ---- music ----
+  { d: 'music', m: 'GET', p: '/v1/music/tracks', g: 'public', c: 'short', zh: '已发布的会员音乐列表', en: 'Published member-uploaded music' },
+  { d: 'music', m: 'GET', p: '/v1/music/me/tracks', g: 'login', c: 'no-store', zh: '会员查看自己的投稿和审核状态', en: 'Member submissions and review states' },
+  { d: 'music', m: 'POST', p: '/v1/music/tracks', g: 'login', c: 'no-store', zh: '会员以 query 元数据和原始音频流投稿 MP3 / M4A / FLAC / WAV，单文件最大 100 MiB，每账号总计 1 GiB', en: 'Submit query metadata plus a raw MP3, M4A, FLAC, or WAV stream up to 100 MiB each and 1 GiB per account' },
+  { d: 'music', m: 'PATCH', p: '/v1/music/tracks/:id', g: 'login', c: 'no-store', zh: '投稿者修改本人待审核音乐元数据与 LRC 歌词', en: 'Edit metadata and LRC lyrics on an owned pending submission' },
+  { d: 'music', m: 'PUT', p: '/v1/music/tracks/:id/cover', g: 'login', c: 'no-store', zh: '为本人待审核音乐上传 JPEG / PNG / WebP 封面', en: 'Upload a JPEG, PNG, or WebP cover for an owned pending submission' },
+  { d: 'music', m: 'GET', p: '/v1/music/tracks/:id/cover', g: 'public', c: 'no-store', zh: '读取已发布封面；投稿者和管理员也可预览待审核封面', en: 'Read a published cover; owners and admins may also preview pending covers' },
+  { d: 'music', m: 'HEAD', p: '/v1/music/tracks/:id/cover', g: 'public', c: 'no-store', zh: '读取音乐封面响应头', en: 'Read music-cover response headers' },
+  { d: 'music', m: 'GET', p: '/v1/music/tracks/:id/audio', g: 'public', c: 'short', zh: '公开 Range 播放已发布音频', en: 'Public Range streaming for published audio' },
+  { d: 'music', m: 'HEAD', p: '/v1/music/tracks/:id/audio', g: 'public', c: 'short', zh: '读取已发布音频响应头', en: 'Read published-audio response headers' },
+  { d: 'music', m: 'GET', p: '/v1/music/tracks/:id/download', g: 'login', c: 'short', zh: '会员以 attachment 下载已发布音频', en: 'Download published audio as an attachment (members only)' },
+  { d: 'music', m: 'HEAD', p: '/v1/music/tracks/:id/download', g: 'login', c: 'short', zh: '会员读取下载响应头', en: 'Read download response headers (members only)' },
+  { d: 'music', m: 'GET', p: '/v1/music/admin/tracks', g: 'admin', c: 'no-store', zh: '管理员查看全部音乐投稿', en: 'List every music submission for review' },
+  { d: 'music', m: 'PATCH', p: '/v1/music/admin/tracks/:id', g: 'admin', c: 'no-store', zh: '管理员修改元数据、歌词、审核备注和发布状态', en: 'Edit metadata, lyrics, review note, and publishing state' },
+  { d: 'music', m: 'DELETE', p: '/v1/music/admin/tracks/:id', g: 'admin', c: 'no-store', zh: '管理员删除音乐记录和磁盘文件', en: 'Delete a music record and its stored files' },
 
   // ---- feedback ----
   { d: 'feedback', m: 'POST', p: '/v1/feedback', g: 'login', zh: '提交反馈', en: 'Submit feedback' },
