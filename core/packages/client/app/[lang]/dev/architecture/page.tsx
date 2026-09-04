@@ -92,6 +92,38 @@ export default function ArchitecturePage() {
           </ol>
         </section>
 
+        <section className="arch-sec">
+          <div className="arch-sec-head">
+            <span className="arch-sec-num">04</span>
+            <h2 className="arch-sec-title"><L zh="开发环境：一份服务，多端热更新" en="Development: one server, live updates across devices" /></h2>
+          </div>
+          <p className="arch-sec-lede">
+            <L
+              zh={<>开发时只运行一份 Next 开发服务。本机直接访问 <code>127.0.0.1:3000</code>；手机和外网设备通过 <code>dev.cuberoot.me</code> 进入 TLS 反向代理，再由 frp 隧道连接到同一份本机服务。HMR 使用 WSS，这条仅供开发的链路不参与生产拓扑，也不缓存响应。</>}
+              en={<>Development runs a single Next development server. The local machine opens <code>127.0.0.1:3000</code> directly; phones and off-network devices enter through the TLS reverse proxy at <code>dev.cuberoot.me</code>, then an frp tunnel reaches the same local server. HMR uses WSS, and this development-only path is outside the production topology with caching disabled.</>}
+            />
+          </p>
+          <table className="arch-tbl">
+            <thead><tr>
+              <th><L zh="场景" en="Scenario" /></th>
+              <th><L zh="入口" en="Entry" /></th>
+              <th><L zh="链路" en="Path" /></th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td><L zh="本机开发" en="Local development" /></td>
+                <td><code>127.0.0.1:3000</code></td>
+                <td><L zh="直接连接 Next 开发服务" en="Direct connection to the Next development server" /></td>
+              </tr>
+              <tr>
+                <td><L zh="手机或外网" en="Phone or off-network" /></td>
+                <td><code>dev.cuberoot.me</code></td>
+                <td><L zh="TLS 反向代理 → frp 隧道 → 本机 :3000，HMR over WSS" en="TLS reverse proxy → frp tunnel → local :3000, HMR over WSS" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
         <footer className="arch-foot">
           <div className="arch-foot-line">
             <L zh="继续了解" en="Keep exploring" />

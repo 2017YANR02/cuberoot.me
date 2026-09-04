@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -37,5 +37,16 @@ describe('architecture map', () => {
 
   it('does not publish technology versions', () => {
     expect(JSON.stringify(ARCHITECTURE_NODES)).not.toMatch(/(?:React|Next(?:\.js)?|Node|PostgreSQL|Capacitor|Tauri|Hono)\s+v?\d/i);
+  });
+
+  it('keeps the active frp development path documented', () => {
+    const page = readFileSync(join(REPO_ROOT, 'core/packages/client/app/[lang]/dev/architecture/page.tsx'), 'utf8');
+    const nextConfig = readFileSync(join(REPO_ROOT, 'core/packages/client/next.config.ts'), 'utf8');
+    const nginx = readFileSync(join(REPO_ROOT, 'ops/nginx/www.cuberoot.me.conf'), 'utf8');
+
+    expect(nextConfig).toContain('dev.cuberoot.me');
+    expect(nginx).toContain('proxy_pass http://127.0.0.1:7100');
+    expect(page).toContain('frp');
+    expect(page).toContain('127.0.0.1:3000');
   });
 });
