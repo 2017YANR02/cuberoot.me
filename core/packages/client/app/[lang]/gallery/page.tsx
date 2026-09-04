@@ -24,7 +24,7 @@ export default function GalleryPage() {
   const lang = useLang();
   const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
-  const { membership, loading: membershipLoading, refresh } = useMembership();
+  const { profile, isMember, loading: membershipLoading, refresh } = useMembership();
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -68,9 +68,9 @@ export default function GalleryPage() {
         })}</p>
       </header>
 
-      {membership?.active ? (
+      {isMember && profile ? (
         <MemberProfileEditor
-          membership={membership}
+          profile={profile}
           onSaved={() => { refresh(); void loadPhotos(); }}
         />
       ) : !membershipLoading && (

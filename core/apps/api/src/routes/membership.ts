@@ -33,7 +33,9 @@ import { createHash, randomUUID } from 'node:crypto';
 import QRCode from 'qrcode';
 import { query } from '../db/connection.js';
 import { requireAuth, requireAdmin, checkRateLimit } from '../utils/recon_helpers.js';
+import { hasActiveMembership } from '../utils/membership.js';
 import { signXunhupay, verifyXunhupaySign, type SignParams } from '@cuberoot/shared/payment';
+import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 import * as alipay from '../payment/alipay.js';
 import * as wechat from '../payment/wechat.js';
 import * as airwallex from '../payment/airwallex.js';
@@ -279,13 +281,25 @@ membershipRoutes.get('/membership/plans', async (c) => {
 // ─────────────────────────── 公开:首页会员名单 ───────────────────────────
 membershipRoutes.get('/membership/members', async (c) => {
   c.header('Cache-Control', 'no-store');
+  const rootAdminIds = ADMIN_WCA_IDS.map((id) => id.toUpperCase());
+  const rootAdminClause = rootAdminIds.length
+    ? `OR UPPER(u.wca_id) IN (${rootAdminIds.map(() => '?').join(', ')})`
+    : '';
   const rows = await query<Pick<MembershipRow, 'wca_id' | 'name' | 'avatar_url' | 'plan_slug'>>(
-    `SELECT m.wca_id, m.name, m.avatar_url, m.plan_slug
+    `SELECT COALESCE(m.wca_id, u.wca_id) AS wca_id,
+            COALESCE(m.name, NULLIF(BTRIM(u.display_name), ''), u.wca_id) AS name,
+            COALESCE(m.avatar_url, u.avatar_url) AS avatar_url,
+            COALESCE(m.plan_slug, 'admin') AS plan_slug
        FROM memberships m
-       LEFT JOIN app_users u ON UPPER(u.wca_id) = UPPER(m.wca_id)
+       FULL JOIN app_users u ON UPPER(u.wca_id) = UPPER(m.wca_id)
       WHERE COALESCE(u.show_in_member_list, TRUE) = TRUE
-        AND (m.expires_at IS NULL OR m.expires_at > NOW())
-      ORDER BY m.started_at DESC`,
+        AND (
+          (m.wca_id IS NOT NULL AND (m.expires_at IS NULL OR m.expires_at > NOW()))
+          OR u.is_admin = TRUE
+          ${rootAdminClause}
+        )
+       ORDER BY COALESCE(m.started_at, u.created_at) DESC`,
+    rootAdminIds,
   );
   return c.json({ members: rows.map((member) => ({
     wcaId: member.wca_id,
@@ -300,23 +314,33 @@ membershipRoutes.get('/membership/profile/:wcaId', async (c) => {
   const wcaId = c.req.param('wcaId').trim().toUpperCase();
   if (!WCA_ID_RE.test(wcaId)) return c.json({ error: 'invalid WCA ID' }, 400);
 
-  const rows = await query<{ public_intro: string | null; public_intro_image_ids: unknown }>(
-    `SELECT u.public_intro, u.public_intro_image_ids
+  const rows = await query<{
+    public_intro: string | null;
+    public_intro_image_ids: unknown;
+    is_admin: boolean;
+    active_member: boolean;
+  }>(
+    `SELECT u.public_intro, u.public_intro_image_ids, u.is_admin,
+            EXISTS (
+              SELECT 1 FROM memberships m
+               WHERE UPPER(m.wca_id) = UPPER(u.wca_id)
+                 AND (m.expires_at IS NULL OR m.expires_at > NOW())
+            ) AS active_member
        FROM app_users u
-       JOIN memberships m ON UPPER(m.wca_id) = UPPER(u.wca_id)
-      WHERE UPPER(u.wca_id) = ?
-        AND (m.expires_at IS NULL OR m.expires_at > NOW())
-        AND (
-          NULLIF(BTRIM(u.public_intro), '') IS NOT NULL
-          OR JSONB_ARRAY_LENGTH(u.public_intro_image_ids) > 0
+       WHERE UPPER(u.wca_id) = ?
+         AND (
+           NULLIF(BTRIM(u.public_intro), '') IS NOT NULL
+           OR JSONB_ARRAY_LENGTH(u.public_intro_image_ids) > 0
         )
       LIMIT 1`,
     [wcaId],
   );
   c.header('Cache-Control', 'no-store');
-  return c.json({ profile: rows[0] ? {
-    intro: rows[0].public_intro ?? '',
-    imageIds: profileImageIds(rows[0].public_intro_image_ids),
+  const profile = rows[0];
+  const visible = profile && (profile.active_member || profile.is_admin || isAdminWcaId(wcaId));
+  return c.json({ profile: visible ? {
+    intro: profile.public_intro ?? '',
+    imageIds: profileImageIds(profile.public_intro_image_ids),
   } : null });
 });
 
@@ -332,9 +356,31 @@ membershipRoutes.get('/membership/me', async (c) => {
     [user.wcaId],
   );
   const membership = rows[0] ? membershipToJson(rows[0]) : null;
+  let profile = membership ? {
+    profileIntro: membership.profileIntro ?? null,
+    profileImageIds: membership.profileImageIds,
+    showInMemberList: membership.showInMemberList,
+  } : null;
+  if (!profile && user.isAdmin) {
+    const profiles = await query<{
+      public_intro: string | null;
+      public_intro_image_ids: unknown;
+      show_in_member_list: boolean;
+    }>(
+      `SELECT public_intro, public_intro_image_ids, show_in_member_list
+         FROM app_users WHERE UPPER(wca_id) = ? LIMIT 1`,
+      [user.wcaId.toUpperCase()],
+    );
+    if (profiles[0]) profile = {
+      profileIntro: profiles[0].public_intro,
+      profileImageIds: profileImageIds(profiles[0].public_intro_image_ids),
+      showInMemberList: profiles[0].show_in_member_list,
+    };
+  }
   return c.json({
     membership,
     isMember: user.isAdmin || !!membership?.active,
+    profile,
   });
 });
 
@@ -343,6 +389,9 @@ membershipRoutes.put('/membership/me/profile', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   const user = await requireAuth(c);
+  if (!user.isAdmin && !(await hasActiveMembership(user.wcaId))) {
+    return c.json({ error: 'active membership required' }, 403);
+  }
   const body = await c.req.json<{ intro?: string | null; imageIds?: unknown; showInMemberList?: unknown }>();
   if (body.intro != null && typeof body.intro !== 'string') return c.json({ error: 'invalid profile intro' }, 400);
   if (body.showInMemberList != null && typeof body.showInMemberList !== 'boolean') return c.json({ error: 'invalid member list visibility' }, 400);
@@ -367,16 +416,11 @@ membershipRoutes.put('/membership/me/profile', async (c) => {
 
   const rows = await query<{ public_intro: string | null; public_intro_image_ids: unknown; show_in_member_list: boolean }>(
     `UPDATE app_users u
-        SET public_intro = ?, public_intro_image_ids = ?::jsonb,
+       SET public_intro = ?, public_intro_image_ids = ?::jsonb,
             show_in_member_list = COALESCE(?::boolean, u.show_in_member_list)
-      WHERE UPPER(u.wca_id) = ?
-        AND EXISTS (
-          SELECT 1 FROM memberships m
-           WHERE UPPER(m.wca_id) = ?
-             AND (m.expires_at IS NULL OR m.expires_at > NOW())
-        )
+       WHERE UPPER(u.wca_id) = ?
       RETURNING public_intro, public_intro_image_ids, show_in_member_list`,
-    [intro || null, imageIds, body.showInMemberList ?? null, user.wcaId.toUpperCase(), user.wcaId.toUpperCase()],
+    [intro || null, imageIds, body.showInMemberList ?? null, user.wcaId.toUpperCase()],
   );
   if (!rows.length) return c.json({ error: 'active membership required' }, 403);
   return c.json({

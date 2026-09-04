@@ -420,7 +420,7 @@ export default function MembershipPage() {
       {activeMember && membership && (
         <>
           <MemberProfileEditor
-            membership={membership}
+            profile={membership}
             onSaved={(profileIntro, profileImageIds) => setMembership({ ...membership, profileIntro, profileImageIds })}
           />
           <MemberContact membership={membership} onSaved={setMembership} isZh={isZh} />
