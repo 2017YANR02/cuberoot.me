@@ -9,6 +9,7 @@ import {
   type ContactPlatformId,
 } from '@cuberoot/shared/contact';
 import {
+  ApiError,
   getStoredSessionSnapshot,
   isSessionStorageError,
   loginErrorMessage,
@@ -45,6 +46,10 @@ const ACCOUNT_COPY = {
     en: 'Account management is temporarily unavailable. Try again later.',
     zh: '账号管理暂时无法打开，请稍后重试',
   }),
+  accountLinkFailure: tr({
+    en: 'The account linking page is temporarily unavailable. Try again later.',
+    zh: '账号绑定页面暂时无法打开，请稍后重试',
+  }),
   contactCopyFailure: tr({
     en: 'Unable to copy this contact detail. Try again.',
     zh: '暂时无法复制这项联系信息，请重试',
@@ -54,6 +59,7 @@ const ACCOUNT_COPY = {
     zh: '联系页面暂时无法打开，请稍后重试',
   }),
   copiedLabel: tr({ en: 'Copied', zh: '已复制' }),
+  createAccountLabel: tr({ en: 'I do not have an account. Create one', zh: '我没有账号，创建新账号' }),
   defaultUser: tr({ en: 'CubeRoot user', zh: 'CubeRoot 用户' }),
   entryCopy: tr({
     en: 'Tap the bottom-right button to open CubeRoot',
@@ -67,6 +73,7 @@ const ACCOUNT_COPY = {
     en: `Sign in with ${providerName}`,
     zh: `${providerName}登录`,
   }),
+  linkExistingAccountLabel: tr({ en: 'Link existing account', zh: '绑定已有账号' }),
   loginIntro: isDouyinMiniProgram()
     ? tr({
       en: 'Sign in to use your CubeRoot account. Your first Douyin sign-in creates a separate account; accounts are not merged by nickname or phone number.',
@@ -182,6 +189,8 @@ interface ContactCopyEvent {
 
 interface AccountPageData {
   accountError: string;
+  accountLinkPending: boolean;
+  accountLinkRequired: boolean;
   agreementAccepted: boolean;
   contact: typeof CONTACT_VIEW;
   copy: typeof ACCOUNT_COPY;
@@ -259,14 +268,48 @@ function refreshStoredSession(page: AccountPageInstance): void {
   }
   page.setData({
     ...sessionView(snapshot.session),
+    ...(snapshot.session ? { accountLinkRequired: false } : {}),
     loginError: '',
     loginStorageUnavailable: false,
   });
 }
 
+async function completeMiniProgramLogin(
+  page: AccountPageInstance,
+  createAccount = false,
+): Promise<void> {
+  if (page.data.isTimelineEntry || page.data.loginBusy) return;
+  if (page.data.requiresAgreement && !page.data.agreementAccepted) {
+    page.setData({ loginError: ACCOUNT_COPY.agreementRequired });
+    return;
+  }
+  page.setData({ accountLinkRequired: false, loginBusy: true, loginError: '' });
+  try {
+    const session = await loginWithMiniProgram({ createAccount });
+    page.setData({
+      ...sessionView(session),
+      accountLinkRequired: false,
+      loginBusy: false,
+      loginError: '',
+      loginStorageUnavailable: false,
+    });
+    resumeRequiredSessionDestination();
+  } catch (error) {
+    page.setData({
+      accountLinkRequired: error instanceof ApiError
+        && error.code === 'WECHAT_ACCOUNT_LINK_REQUIRED',
+      loginBusy: false,
+      loginError: loginErrorMessage(error),
+      loginStorageUnavailable: isSessionStorageError(error),
+    });
+  }
+}
+
 Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   data: {
     accountError: '',
+    accountLinkPending: false,
+    accountLinkRequired: false,
     agreementAccepted: false,
     contact: CONTACT_VIEW,
     copy: ACCOUNT_COPY,
@@ -298,9 +341,16 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
 
   onShow() {
     if (this.data.isTimelineEntry) return;
+    const shouldRetryAccountLink = this.data.accountLinkPending;
     showPublicShareMenu();
     refreshStoredSession(this as unknown as AccountPageInstance);
-    this.setData({ release: getMiniProgramReleaseView(contactLocale) });
+    this.setData({
+      accountLinkPending: false,
+      release: getMiniProgramReleaseView(contactLocale),
+    });
+    if (shouldRetryAccountLink) {
+      void completeMiniProgramLogin(this as unknown as AccountPageInstance);
+    }
   },
 
   onUnload() {
@@ -316,28 +366,23 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   },
 
   async loginWithMiniProgram() {
+    await completeMiniProgramLogin(this as unknown as AccountPageInstance);
+  },
+
+  async createAccount() {
+    await completeMiniProgramLogin(this as unknown as AccountPageInstance, true);
+  },
+
+  linkExistingAccount() {
     if (this.data.isTimelineEntry || this.data.loginBusy) return;
-    if (this.data.requiresAgreement && !this.data.agreementAccepted) {
-      this.setData({ loginError: ACCOUNT_COPY.agreementRequired });
-      return;
-    }
-    this.setData({ loginBusy: true, loginError: '' });
-    try {
-      const session = await loginWithMiniProgram();
-      this.setData({
-        ...sessionView(session),
-        loginBusy: false,
-        loginError: '',
-        loginStorageUnavailable: false,
-      });
-      resumeRequiredSessionDestination();
-    } catch (error) {
-      this.setData({
-        loginBusy: false,
-        loginError: loginErrorMessage(error),
-        loginStorageUnavailable: isSessionStorageError(error),
-      });
-    }
+    this.setData({ accountLinkPending: true, loginError: '' });
+    openWebsitePageOnce(this, 'account-link', {
+      failureMessage: ACCOUNT_COPY.accountLinkFailure,
+      onFailure: (message) => this.setData({
+        accountLinkPending: false,
+        loginError: message,
+      }),
+    });
   },
 
   retryMiniProgramSession() {

@@ -56,6 +56,12 @@ describe('mini program web routes', () => {
       sessionHandoff: true,
       url: 'https://cuberoot.me/zh/account#wechat_redirect',
     });
+    expect(resolveWebRoute('account-link')).toEqual({
+      title: '绑定已有账号',
+      path: '/zh/account',
+      sessionHandoff: false,
+      url: 'https://cuberoot.me/zh/account#wechat_redirect',
+    });
     expect(resolveWebRoute('privacy')).toEqual({
       title: '隐私说明',
       path: '/zh/privacy',
@@ -63,6 +69,7 @@ describe('mini program web routes', () => {
       url: 'https://cuberoot.me/zh/privacy#wechat_redirect',
     });
     expect(listWebTools().some((tool) => tool.key === 'account')).toBe(false);
+    expect(listWebTools().some((tool) => tool.key === 'account-link')).toBe(false);
     expect(listWebTools().some((tool) => tool.key === 'privacy')).toBe(false);
     expect(listWebTools().some((tool) => tool.key === 'logout')).toBe(false);
   });

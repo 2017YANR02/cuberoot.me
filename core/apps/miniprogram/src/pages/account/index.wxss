@@ -28,6 +28,15 @@
   width: 100%;
 }
 
+.account-link-actions {
+  display: flex;
+  flex-direction: column;
+}
+
+.account-create-button {
+  margin-top: 24rpx;
+}
+
 .account-policy {
   margin-top: 24rpx;
 }

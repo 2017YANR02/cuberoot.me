@@ -289,11 +289,13 @@ export function clearStoredSession(): boolean {
   return removeStoredSessionValue();
 }
 
-export async function loginWithMiniProgram(): Promise<LoginResult> {
+export async function loginWithMiniProgram(
+  options: { createAccount?: boolean } = {},
+): Promise<LoginResult> {
   const code = await miniProgramLoginCode();
   const response = await requestJson<unknown>(MINI_PROGRAM_LOGIN_ENDPOINT, {
     method: 'POST',
-    body: { code },
+    body: options.createAccount ? { code, create: true } : { code },
   });
   const session = decodeWebSession(response);
   if (!session) {
@@ -352,6 +354,12 @@ export function loginErrorMessage(error: unknown): string {
   }
   if (error.code === 'WECHAT_UNIONID_REQUIRED') {
     return tr({ en: 'UnionID is unavailable. Complete the Open Platform binding first.', zh: '暂未获得 UnionID，请先完成开放平台绑定' });
+  }
+  if (error.code === 'WECHAT_ACCOUNT_LINK_REQUIRED') {
+    return tr({
+      en: 'This WeChat account is not linked yet. Link your existing CubeRoot account, or create a new account only if you do not have one.',
+      zh: '此微信尚未绑定。已有 CubeRoot 账号请先绑定；确定没有账号时再创建新账号。',
+    });
   }
   if (error.code === 'WECHAT_NOT_CONFIGURED' || error.code === 'DOUYIN_NOT_CONFIGURED') {
     return tr({ en: 'The Mini Program secret has not been configured on the server.', zh: '服务端还未配置小程序密钥' });
