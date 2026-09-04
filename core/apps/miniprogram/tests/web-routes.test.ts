@@ -76,10 +76,10 @@ describe('mini program web routes', () => {
 
   it('resolves only allowlisted website destinations', () => {
     expect(resolveWebRoute('alg')).toEqual({
-      title: '公式',
-      path: '/zh/alg',
+      title: '教程',
+      path: '/zh/tutorial',
       sessionHandoff: true,
-      url: 'https://cuberoot.me/zh/alg#wechat_redirect',
+      url: 'https://cuberoot.me/zh/tutorial#wechat_redirect',
     });
     expect(resolveWebRoute('https://example.com')).toBeNull();
     expect(resolveWebRoute('__proto__')).toBeNull();
@@ -130,7 +130,7 @@ describe('mini program web routes', () => {
     expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(54);
     expect(resolveWebTool('algdb')).toMatchObject({ id: 'algdb', key: 'alg', action: 'web' });
     expect(resolveWebTool('timer')).toMatchObject({ id: 'timer', key: 'timer', action: 'native' });
-    expect(resolveWebTool('alg')).toMatchObject({ id: 'alg', key: null, action: 'disabled' });
+    expect(resolveWebTool('alg')).toMatchObject({ id: 'alg', key: 'alg', action: 'web' });
     expect(resolveWebTool('github')).toMatchObject({ id: 'github', key: null, action: 'copy' });
     expect(resolveWebTool('__proto__')).toBeNull();
   });
@@ -178,11 +178,11 @@ describe('mini program web routes', () => {
     });
     expect(resolveWebRouteShare('alg')).toEqual({
       imageUrl: WEB_ROUTE_SHARE_IMAGE,
-      title: '魔方根CubeRoot：公式',
+      title: '魔方根CubeRoot：教程',
       path: '/pages/web/index?key=alg',
     });
     const routeBackedTools = listWebTools().filter((tool) => tool.key !== null);
-    expect(routeBackedTools).toHaveLength(52);
+    expect(routeBackedTools).toHaveLength(54);
     expect(routeBackedTools.every((tool) => resolveWebRouteShare(tool.key) !== null)).toBe(true);
     expect(resolveWebRouteShare('account')).toBeNull();
     expect(resolveWebRouteShare('privacy')).toBeNull();
