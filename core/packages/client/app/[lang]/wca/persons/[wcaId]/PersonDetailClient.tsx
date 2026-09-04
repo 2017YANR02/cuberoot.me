@@ -160,6 +160,7 @@ export default function PersonDetailClient() {
         <PersonHero
           profile={profile}
           results={results}
+          comps={comps}
           former={former}
           isZh={isZh}
           resultView={resultView}

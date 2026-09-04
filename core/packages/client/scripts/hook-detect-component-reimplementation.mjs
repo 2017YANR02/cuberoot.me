@@ -12,9 +12,10 @@ import { fileURLToPath } from 'node:url';
 export const EXEMPTION = 'allow-component-reimplementation';
 
 const CLIENT_TSX = /(?:^|\/)core\/packages\/client\/(?:app|components)\/.*\.tsx$/i;
-const SKIP_PATH = /(?:^|\/)(?:tests?|node_modules|\.next)(?:\/|$)|\/components\/(?:ClearButton|PuzzlePicker\/PuzzlePicker)\.tsx$/i;
+const SKIP_PATH = /(?:^|\/)(?:tests?|node_modules|\.next)(?:\/|$)|\/components\/(?:ClearButton|PasswordInput|PuzzlePicker\/PuzzlePicker)\.tsx$/i;
 const BUTTON_BLOCK = /<button\b[\s\S]{0,1600}?<\/button\s*>/gi;
 const SELECT_BLOCK = /<select\b[\s\S]{0,1800}?<\/select\s*>/gi;
+const PASSWORD_INPUT = /<input\b[^>]*\btype\s*=\s*(?:["']password["']|\{[^}]*["']password["'][^}]*\})[^>]*>/gi;
 const PICKER_DECL = /(?:function\s+|const\s+)([A-Za-z_$][\w$]*)/gi;
 const PICKER_OPEN_STATE = /const\s*\[\s*[A-Za-z_$][\w$]*(?:event|puzzle)[\w$]*(?:open|menu)[\w$]*\s*,[\s\S]{0,120}?useState\s*\(/gi;
 const CROSS = /<X\b|[×✕]/;
@@ -38,6 +39,13 @@ export const COMPONENT_REUSE_RULES = [
       '<ClearButton variant="standalone" ariaLabel={tr({ zh: \'关闭\', en: \'Close\' })} onClick={onClose} />',
     reason:
       '检测到手写的关闭/清除叉号按钮。统一复用 ClearButton，保留全站一致的尺寸、主题、hover 与无障碍语义。',
+  },
+  {
+    id: 'password-input',
+    component: 'PasswordInput',
+    importStatement: "import { PasswordInput } from '@/components/PasswordInput';",
+    replacement: '<PasswordInput value={password} onChange={setPassword} autoComplete="current-password" />',
+    reason: '检测到页面内手写密码输入框。全站密码输入统一复用 PasswordInput，确保显示或隐藏按钮与无障碍语义不会遗漏。',
   },
   {
     id: 'puzzle-picker',
@@ -138,8 +146,18 @@ export function scanAlgCaseDetailLayout(filePath, source) {
 
 export function scanComponentReimplementations(source) {
   const violations = [];
-  BUTTON_BLOCK.lastIndex = 0;
+  PASSWORD_INPUT.lastIndex = 0;
   let match;
+  while ((match = PASSWORD_INPUT.exec(source))) {
+    if (exemptionNear(source, match.index, match[0])) continue;
+    violations.push({
+      ruleId: 'password-input',
+      index: match.index,
+      snippet: match[0].replace(/\s+/g, ' ').slice(0, 180),
+    });
+  }
+
+  BUTTON_BLOCK.lastIndex = 0;
   while ((match = BUTTON_BLOCK.exec(source))) {
     const block = match[0];
     if (!CROSS.test(block) || !CLOSE_OR_CLEAR.test(block)) continue;

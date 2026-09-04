@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computePrRank } from '@/components/persons/logic/progress';
+import { computePrRank, countPersonalRecords } from '@/components/persons/logic/progress';
 import { wcaResultRowKey, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
 
 // 单次 PR 名次必须把「平均里非最佳的把」也算进历史 solve 池:一把更早更快的非最佳把,
@@ -44,6 +44,10 @@ describe('computePrRank — 单次名次计入此前所有 solve(含非最佳把
   it('平均维度独立按平均池排名', () => {
     expect(ranks.get(wcaResultRowKey(A))!.averageRank).toBe(1); // 46.02 先到
     expect(ranks.get(wcaResultRowKey(B))!.averageRank).toBe(2); // 52.76 次之
+  });
+
+  it('PR 总数只计单次和平均的 PR1，不重复计逐把名次', () => {
+    expect(countPersonalRecords(ranks.values())).toBe(2);
   });
 
   it('并列平均同名次,但分别占据后续名次位', () => {

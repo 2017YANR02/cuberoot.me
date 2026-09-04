@@ -198,6 +198,15 @@ export const CATALOG: UtilEntry[] = [
     en: 'Space-bar / touch-hold timer state machine, shared by Solo and Battle.',
   },
   {
+    name: 'useSpaceShortcut',
+    sig: 'useSpaceShortcut(action: () => void, enabled?: boolean): void',
+    imp: "import { useSpaceShortcut } from '@/hooks/useSpaceShortcut';",
+    usage: 'useSpaceShortcut(next, answered);',
+    category: 'hook',
+    zh: '答题页的普通空格快捷键。输入框、按钮、链接等交互元素获得焦点时不拦截,也忽略长按重复和组合键。',
+    en: 'Plain-Space shortcut for quiz pages. Leaves focused inputs, buttons, links, repeats, and modified key presses alone.',
+  },
+  {
     name: 'useGestureWheel',
     sig: 'useGestureWheel(opts: UseGestureWheelOptions): { wheelRef }',
     imp: "import { useGestureWheel } from '@cuberoot/timer-ui';",

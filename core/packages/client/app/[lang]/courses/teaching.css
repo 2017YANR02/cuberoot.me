@@ -740,9 +740,11 @@
   gap: 10px;
 }
 
+.teaching-access-password { width: min(240px, 100%); }
+
 .teaching-access-input {
   min-width: 0;
-  width: min(240px, 100%);
+  width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--input);
   border-radius: 8px;

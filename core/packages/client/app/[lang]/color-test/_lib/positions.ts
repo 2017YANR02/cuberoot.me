@@ -12,7 +12,7 @@ export interface PositionQuestion {
 
 const SIDE_GEOMETRY_ORDER: readonly CubeFace[] = ['R', 'F', 'L', 'B'];
 
-/** 指定颜色朝上时的侧面循环；下一项就是当前颜色的右边。 */
+/** 指定颜色朝上时的侧面循环；下一项就是当前颜色的左边。 */
 export function sideOrderForTop(top: CubeFace): SideFace[] {
   const orientation = CUBE_ORIENTATIONS.find(({ value }) => orientedFaceColors(value).U === top);
   const shown = orientedFaceColors(orientation?.value ?? '');
@@ -27,12 +27,12 @@ export function positionQuestionsForTop(top: CubeFace): PositionQuestion[] {
     {
       reference,
       direction: 'right' as const,
-      answer: sideOrder[(index + 1) % sideOrder.length],
+      answer: sideOrder[(index - 1 + sideOrder.length) % sideOrder.length],
     },
     {
       reference,
       direction: 'left' as const,
-      answer: sideOrder[(index - 1 + sideOrder.length) % sideOrder.length],
+      answer: sideOrder[(index + 1) % sideOrder.length],
     },
   ]);
   const oppositeQuestions = sideOrder.map((reference) => ({

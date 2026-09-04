@@ -19,7 +19,7 @@ import { formatDateRangeIso } from '@/lib/wca-date';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { compLinkProps } from '@/lib/comp-link';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
-import { computePrRank } from '../../logic/progress';
+import { computePrRank, countPersonalRecords } from '../../logic/progress';
 import { computeAoxr, aoxrKey } from '../../logic/aoxr';
 import { AoxrValue, aoxrHint } from './AoxrValue';
 import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '@/lib/wca-round-meta';
@@ -232,20 +232,27 @@ function EventRoundsList({
       average: effectiveFieldValue(chain, 'average', baseAvg),
     };
   }), [results, changeMap]);
+  // PR / 名次染色只算官方成绩:直播(非官方)行不参与
+  const prRank = useMemo(() => computePrRank(effResultsForRank.filter((r) => !r.live), comps), [effResultsForRank, comps]);
   const resultStats = useMemo(() => {
     if (isMbldEvent(eventId)) return null;
     const eventResults = effResultsForRank.filter((result) => result.event_id === eventId);
-    const singleValues = eventResults
-      .flatMap((result) => result.attempts ?? [])
+    const attemptValues = eventResults.flatMap((result) => result.attempts ?? []);
+    const singleValues = attemptValues
       .filter((value) => value > 0 && Number.isFinite(value));
     const averageValues = eventResults
       .map((result) => result.average)
       .filter((value) => value > 0 && Number.isFinite(value));
     return {
+      counts: {
+        prs: countPersonalRecords(eventResults.map((result) => prRank.get(wcaResultRowKey(result)))),
+        solves: singleValues.length,
+        attempts: attemptValues.filter((value) => Number.isFinite(value) && value !== 0 && value !== -2).length,
+      },
       single: { count: singleValues.length, stats: summarizeNumericValues(singleValues) },
       average: { count: averageValues.length, stats: summarizeNumericValues(averageValues) },
     };
-  }, [effResultsForRank, eventId]);
+  }, [effResultsForRank, eventId, prRank]);
   const mbld = isMbldEvent(eventId);
   const metricRounds = useMemo(() => effResultsForRank
     .filter(result => result.event_id === eventId)
@@ -285,8 +292,6 @@ function EventRoundsList({
     };
   }, [mbld, metricRounds, singleMetricMode, averageMetricMode]);
   const metricValues = metricData.values;
-  // PR / 名次染色只算官方成绩:直播(非官方)行不参与
-  const prRank = useMemo(() => computePrRank(effResultsForRank.filter((r) => !r.live), comps), [effResultsForRank, comps]);
   // 直播行另算一份「官方 + 直播」的时间序名次,使直播行的单次/平均/逐把 PR 与官方行同一口径
   // 口径且彼此自洽(最好那把 == 单次列)。只取直播行用,不读官方行 → 不污染官方 PR 标记。
   const prRankLive = useMemo(() =>
@@ -410,22 +415,23 @@ function EventRoundsList({
     <>
       {resultStats && (resultStats.single.count > 0 || resultStats.average.count > 0) && (
         <div
-          aria-label={tr({ zh: '成绩波动统计', en: 'Result variation statistics' })}
+          aria-label={tr({ zh: '成绩计数与波动统计', en: 'Result counts and variation statistics' })}
           className="wp-attempt-stats"
         >
+          <span><span>PR</span><strong>{resultStats.counts.prs}</strong></span>
+          <span><span>{tr({ zh: '复原', en: 'Solves' })}</span><strong>{resultStats.counts.solves}</strong></span>
+          <span><span>{tr({ zh: '尝试', en: 'Attempts' })}</span><strong>{resultStats.counts.attempts}</strong></span>
           {resultStats.single.count > 0 && (
-            <span>
-              {tr({ zh: '单次', en: 'single' })} σ {resultStats.single.stats
-                ? formatResultStdDev(resultStats.single.stats.sd, eventId, 'single')
-                : '—'} {tr({ zh: '总数', en: 'count' })} {resultStats.single.count}
-            </span>
+            <>
+              <span><span>{tr({ zh: '单次 σ', en: 'Single σ' })}</span><strong>{resultStats.single.stats ? formatResultStdDev(resultStats.single.stats.sd, eventId, 'single') : '—'}</strong></span>
+              <span><span>{tr({ zh: '单次总数', en: 'Single count' })}</span><strong>{resultStats.single.count}</strong></span>
+            </>
           )}
           {resultStats.average.count > 0 && (
-            <span>
-              {tr({ zh: '平均', en: 'average' })} σ {resultStats.average.stats
-                ? formatResultStdDev(resultStats.average.stats.sd, eventId, 'average')
-                : '—'} {tr({ zh: '总数', en: 'count' })} {resultStats.average.count}
-            </span>
+            <>
+              <span><span>{tr({ zh: '平均 σ', en: 'Average σ' })}</span><strong>{resultStats.average.stats ? formatResultStdDev(resultStats.average.stats.sd, eventId, 'average') : '—'}</strong></span>
+              <span><span>{tr({ zh: '平均总数', en: 'Average count' })}</span><strong>{resultStats.average.count}</strong></span>
+            </>
           )}
         </div>
       )}

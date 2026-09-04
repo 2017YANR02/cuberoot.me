@@ -7,11 +7,12 @@
 // 两者共用同一套表单原语(CodeFlow / 密码表单 / 错误文案),故同处一文件。
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Loader2, Eye, EyeOff, Mail, Smartphone, KeyRound } from 'lucide-react';
+import { Loader2, Mail, Smartphone, KeyRound } from 'lucide-react';
 import { SiWechat, SiQq, SiAlipay } from 'react-icons/si';
 import { primaryHandle } from '@cuberoot/shared/account';
 import type { MobileAuthProvider } from '@cuberoot/shared/auth/web-session';
 import AppLink from '@/components/AppLink';
+import { PasswordInput } from '@/components/PasswordInput';
 import { useAuthStore, applySession } from '@/lib/auth-store';
 import { useLang } from '@/i18n/tr';
 import {
@@ -275,38 +276,6 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
   );
 }
 
-/** 密码输入框 + 明文/密文切换眼睛。autoComplete 由调用方指定(登录 current / 设密 new)。 */
-function PasswordInput({ value, onChange, placeholder, autoComplete, autoFocus, onEnter }: {
-  value: string; onChange: (v: string) => void; placeholder?: string;
-  autoComplete: 'current-password' | 'new-password'; autoFocus?: boolean; onEnter?: () => void;
-}) {
-  const lang = useLang();
-  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
-  const [show, setShow] = useState(false);
-  return (
-    <div className="auth-pwfield">
-      <input
-        className="auth-input"
-        type={show ? 'text' : 'password'}
-        value={value}
-        autoFocus={autoFocus}
-        autoComplete={autoComplete}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => { if (e.key === 'Enter' && onEnter) onEnter(); }}
-      />
-      <button
-        type="button"
-        className="auth-pweye"
-        onClick={() => setShow((s) => !s)}
-        aria-label={show ? t('隐藏密码', 'Hide password') : t('显示密码', 'Show password')}
-      >
-        {show ? <EyeOff size={ICON} /> : <Eye size={ICON} />}
-      </button>
-    </div>
-  );
-}
-
 /**
  * 邮箱验证码登录(受控 email,发码 → 输码 → 校验)。默认方式,passwordless(Vercel/Notion 风)。
  * reset=true 时是「忘记密码」进来的:同一套验证码,只是验完不关窗,交由上层引导设新密码。
@@ -440,6 +409,7 @@ function EmailPasswordFlow({ email, setEmail, onDone, toCode, onForgot }: {
       />
       <label className="auth-label">{t('密码', 'Password')}</label>
       <PasswordInput
+        className="auth-input"
         value={pw}
         onChange={setPw}
         autoComplete="current-password"
@@ -595,11 +565,12 @@ function SetPasswordForm({ needCurrent, label, onDone }: {
       {needCurrent && (
         <>
           <label className="auth-label">{t('当前密码', 'Current password')}</label>
-          <PasswordInput value={current} onChange={setCurrent} autoComplete="current-password" autoFocus />
+          <PasswordInput className="auth-input" value={current} onChange={setCurrent} autoComplete="current-password" autoFocus />
         </>
       )}
       <label className="auth-label">{label}</label>
       <PasswordInput
+        className="auth-input"
         value={next}
         onChange={setNext}
         autoComplete="new-password"
@@ -608,6 +579,7 @@ function SetPasswordForm({ needCurrent, label, onDone }: {
       />
       <label className="auth-label">{t('确认密码', 'Confirm password')}</label>
       <PasswordInput
+        className="auth-input"
         value={confirm}
         onChange={setConfirm}
         autoComplete="new-password"
@@ -656,6 +628,7 @@ function RemovePasswordForm({ needCurrent, onDone, onCancel }: {
         <>
           <label className="auth-label">{t('当前密码', 'Current password')}</label>
           <PasswordInput
+            className="auth-input"
             value={current} onChange={setCurrent} autoComplete="current-password" autoFocus
             onEnter={() => { if (!busy && current) void submit(); }}
           />
@@ -1275,6 +1248,7 @@ export function DeleteAccountPanel({ backHref }: { backHref: string }) {
               <>
                 <label className="auth-label">{t('当前密码', 'Current password')}</label>
                 <PasswordInput
+                  className="auth-input"
                   value={pw}
                   onChange={setPw}
                   autoComplete="current-password"

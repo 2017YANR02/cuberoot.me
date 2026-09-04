@@ -56,11 +56,26 @@ interface Puz {
   note?: { zh: string; en: string };
 }
 
-// Architectural metadata (path / solvable / sim id). |G| itself is never hard-coded —
-// it is read live from PRECOMPUTED_PG_FACTS[key] below.
+const C333_WITH_SLICES = PRECOMPUTED_PG_FACTS['3x3x3'];
+const C333_FIXED_ORDER = BigInt(C333_WITH_SLICES.order) / 24n;
+const C333_FIXED_REASSEMBLY = BigInt(C333_WITH_SLICES.reassembly) / 720n;
+export const C333_FIXED: SerializedPgFacts = {
+  ...C333_WITH_SLICES,
+  order: C333_FIXED_ORDER.toString(),
+  turningOrder: C333_FIXED_ORDER.toString(),
+  reassembly: C333_FIXED_REASSEMBLY.toString(),
+  index: (C333_FIXED_REASSEMBLY / C333_FIXED_ORDER).toString(),
+  orbits: C333_WITH_SLICES.orbits.filter((o) => o.name !== 'CENTERS'),
+  moveNames: C333_WITH_SLICES.moveNames.filter((name) => name.length === 1),
+};
+
+// Architectural metadata (path / solvable / sim id). |G| itself is never hard-coded:
+// it is read from the baked facts table, with the fixed-centre subgroup derived above.
 const PUZZLES: Puz[] = [
   { key: '2x2x2', sim: '2', zh: '二阶', en: '2×2×2', path: 'pg', solvable: true },
-  { key: '3x3x3', sim: '3', zh: '三阶', en: '3×3×3', path: 'pg', solvable: false },
+  { key: '3x3x3-fixed', sim: '3', zh: '固定中心三阶群', en: 'Fixed-centre 3×3×3 group', path: 'pg', solvable: false,
+    note: { zh: '只计六面转动', en: 'face turns only' } },
+  { key: '3x3x3', sim: '3', zh: '三阶群（含中层转动）', en: '3×3×3 group (slice turns)', path: 'pg', solvable: false },
   { key: '3x3x3', sim: 'mirror', zh: '镜面魔方', en: 'Mirror Cube', path: 'pg', solvable: false,
     note: { zh: '机械上就是三阶,复用其群', en: 'mechanically a 3×3×3 — reuses its group' } },
   { key: '2x2x2', sim: 'mirror2', zh: '二阶镜面', en: 'Mirror 2×2', path: 'pg', solvable: true,
@@ -88,7 +103,6 @@ export default function KernelPage() {
 
   const rex = PRECOMPUTED_PG_FACTS['rex'];
   const ivy = PRECOMPUTED_PG_FACTS['ivy'];
-  const c333 = PRECOMPUTED_PG_FACTS['3x3x3'];
   const mega = PRECOMPUTED_PG_FACTS['megaminx'];
 
   return (
@@ -228,8 +242,8 @@ export default function KernelPage() {
               </thead>
               <tbody>
                 {PUZZLES.map((p) => {
-                  const f = PRECOMPUTED_PG_FACTS[p.key];
-                  const rowKey = p.sim; // /sim ids are unique across the list
+                  const f = p.key === '3x3x3-fixed' ? C333_FIXED : PRECOMPUTED_PG_FACTS[p.key];
+                  const rowKey = `${p.key}:${p.sim}`;
                   const open = openKey === rowKey;
                   return (
                     <Fragment key={rowKey}>
@@ -291,8 +305,8 @@ export default function KernelPage() {
         </section>
 
         <footer className="kn-foot">
-          {t('三阶群 ', '3×3×3: ')}<span className="kn-mono">{grouped(c333.order)}</span>{t(' · 枫叶 ', ' · Ivy ')}<span className="kn-mono">{grouped(ivy.order)}</span>
-          {t(' · 全部由 Schreier-Sims 离线烘焙,运行时直接读表', ' · all baked offline via Schreier-Sims, read from a table at runtime')}
+          {t('三阶群（含中层转动） ', '3×3×3 group (slice turns): ')}<span className="kn-mono">{grouped(C333_WITH_SLICES.order)}</span>{t('，枫叶 ', ', Ivy ')}<span className="kn-mono">{grouped(ivy.order)}</span>
+          {t('。全部由 Schreier-Sims 离线烘焙,运行时直接读表', '. All baked offline via Schreier-Sims and read from a table at runtime')}
         </footer>
       </main>
     </div>

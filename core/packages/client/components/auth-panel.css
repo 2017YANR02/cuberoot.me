@@ -62,25 +62,6 @@
 .auth-sso-error { text-align: center; margin-top: 4px; }
 
 
-/* 密码输入 + 眼睛切换 */
-.auth-pwfield { position: relative; display: flex; align-items: center; }
-.auth-pwfield .auth-input { padding-right: 42px; }
-.auth-pweye {
-  position: absolute;
-  right: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  color: var(--muted-foreground);
-  appearance: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-.auth-pweye:hover { color: var(--foreground); }
 .auth-pwform { margin-top: 6px; }
 
 /* 手机号输入的 +86 前缀。短信通道只发中国大陆号,与其让人填完国外号再收一句「格式不正确」,

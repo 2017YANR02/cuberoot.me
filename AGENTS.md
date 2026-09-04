@@ -126,6 +126,7 @@ pnpm --filter @cuberoot/client lint
 - `BackHome` 必须放进与正文同宽的 header/topbar/wrap，禁直接挂在 full-bleed page root 下。
 - 按钮式交互必须真 `<button>`(剥 UA 样式)或 `AppLink`,禁 `<div/span onClick>`(iOS Safari tap 不可靠);例外 div 加 `role="button"`+`tabIndex`+`onKeyDown`;豁免注释 `allow-static-onclick`。守卫:hook + CI ratchet。
 - 选择/搜索输入框非空时显示清除按钮,统一 `components/ClearButton`。
+- 所有密码输入统一复用 `components/PasswordInput`,必须带可切换明文的眼睛按钮,禁页面手写 `type="password"`。
 - 切换器默认下拉;chip 仅当选项 ≤4 且需左右对比。
 - 布尔开关用 `BoolToggle`,二选一用 `PillToggle`(主项置绿);禁裸 checkbox,特例注释 `allow-checkbox: <理由>`。守卫:hook + CI ratchet。
 - 表头排序一律 `components/SortArrow`(文字右侧,仅当前列显示)。CI 守卫。

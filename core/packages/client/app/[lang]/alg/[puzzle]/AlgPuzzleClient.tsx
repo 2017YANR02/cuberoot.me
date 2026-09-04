@@ -35,7 +35,7 @@ import '../alg.css';
 import { tr } from '@/i18n/tr';
 import { parseAsBoolean, useQueryState } from 'nuqs';
 import Sq1ToolNav from '@/components/Sq1ToolNav';
-import { SortableCaseCard } from '@/components/AlgCategoryView';
+import SortableCard from '@/components/SortableCard';
 import { getAlgCatalogOrder, reorderAlgCatalog } from '@/lib/alg_sets_api';
 import { useIsAdmin } from '@/lib/auth-store';
 
@@ -328,7 +328,7 @@ export default function AlgPuzzleClient() {
     const firstAlg = first?.algs.flat()[0]?.alg ?? first?.standard ?? '';
     const title = s.short ?? tr(s);
     return (
-      <SortableCaseCard key={s.slug} id={s.slug} draggable={isAdmin}>
+      <SortableCard key={s.slug} id={s.slug} draggable={isAdmin}>
         <AlgCard
           href={picking ? undefined : `/alg/${puzzle}/${s.slug}${puzzle === 'sq1' && !sq1BlackTop ? '?black=false' : ''}`}
           onClick={picking ? () => togglePick(s.slug) : undefined}
@@ -341,7 +341,7 @@ export default function AlgPuzzleClient() {
           )}
           title={title}
         />
-      </SortableCaseCard>
+      </SortableCard>
     );
   };
 
@@ -355,7 +355,7 @@ export default function AlgPuzzleClient() {
       ...groupSets.map(set => ({ id: set.slug, card: renderSetCard(set) })),
       ...extraCards.map(item => ({
         id: item.id,
-        card: <SortableCaseCard key={item.id} id={item.id} draggable={isAdmin}>{item.card}</SortableCaseCard>,
+        card: <SortableCard key={item.id} id={item.id} draggable={isAdmin}>{item.card}</SortableCard>,
       })),
     ].sort((a, b) => (rank.get(a.id) ?? effectiveOrder.length) - (rank.get(b.id) ?? effectiveOrder.length));
     return (

@@ -308,9 +308,7 @@
 .landing-search-item-name {
   font-weight: 500;
   line-height: 1.25;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .landing-search-item-meta {

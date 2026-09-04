@@ -25,7 +25,8 @@ describe('browser title branding', () => {
 
   it('keeps the hydrated title page-only too', () => {
     const hook = readFileSync(join(ROOT, 'hooks', 'useDocumentTitle.ts'), 'utf8');
-    expect(hook).toContain('document.title = page || BRAND;');
+    expect(hook).toContain('if (document.title !== title) document.title = title;');
+    expect(hook).toContain('new MutationObserver(applyTitle)');
     expect(hook).not.toMatch(/document\.title\s*=\s*page\s*\?[^;]*BRAND/);
   });
 

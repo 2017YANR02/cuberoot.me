@@ -36,6 +36,7 @@ import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/
 import { tr } from '@/i18n/tr';
 import { eventDisplayName } from '@/lib/wca-events';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
+import { useSpaceShortcut } from '@/hooks/useSpaceShortcut';
 import {
   createTrainingEvidenceEventId,
   parseTrainingAssignmentDestination,
@@ -44,6 +45,8 @@ import {
 } from '@/lib/training-evidence';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import TrainingFeedbackOverlay from '@/components/TrainingFeedbackOverlay';
+import TrainingNavButton from '@/components/TrainingNavButton';
+import TrainingSettings, { useTrainingAutoAdvance } from '@/components/TrainingSettings';
 import {
   PREDICT_FILL, PREDICT_ON_FILL, PREDICT_COLOR_NAMES, IDENTITY_COLORS,
   type PredictColor,
@@ -153,6 +156,15 @@ const ORIGIN_URL = 'https://app--cube-lookahead-24bc12e4.base44.app/';
 /** 复盘时两步之间的间隔;留一点余量,别在上一步的转动还没落地就催下一步。 */
 const PLAY_STEP_MS = 340;
 
+interface PredictSnapshot {
+  challenge: PredictBoardChallenge;
+  found: boolean[];
+  revealed: boolean;
+  elapsed: number;
+  trainingEventId: string | null;
+  submittedTrainingEvent: string | null;
+}
+
 const clock = (seconds: number): string => {
   const m = Math.floor(seconds / 60).toString().padStart(2, '0');
   const s = Math.floor(seconds % 60).toString().padStart(2, '0');
@@ -189,6 +201,10 @@ function PredictPageInner() {
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [viewResetSeq, setViewResetSeq] = useState(0);
+  const [past, setPast] = useState<PredictSnapshot[]>([]);
+  const [future, setFuture] = useState<PredictSnapshot[]>([]);
+  const [reviewingHistory, setReviewingHistory] = useState(false);
+  const autoAdvance = useTrainingAutoAdvance();
   const startedAt = useRef(0);
   const trainingDestinationRef = useRef<ReturnType<typeof parseTrainingAssignmentDestination>>(null);
   const trainingEventIdRef = useRef<string | null>(null);
@@ -240,6 +256,15 @@ function PredictPageInner() {
    * 出题的 effect 随后就会补上,这里先当作「还没出题」。
    */
   const ch = challenge && challenge.startColors.length === total ? challenge : null;
+  const snapshotRef = useRef<PredictSnapshot | null>(null);
+  snapshotRef.current = ch ? {
+    challenge: ch,
+    found,
+    revealed,
+    elapsed,
+    trainingEventId: trainingEventIdRef.current,
+    submittedTrainingEvent: submittedTrainingEventRef.current,
+  } : null;
 
   const solved = ch != null && found.length > 0 && found.length === ch.targets.length && found.every(Boolean);
   /** 这题结束了(答完 or 认输)—— 结束就自动复盘一遍。 */
@@ -263,7 +288,23 @@ function PredictPageInner() {
    * 出一题。`algText` 给「自己输入」那档用:回车时直接把输入框里的原文递进来,
    * 不经过 state 一轮,免得刚敲完的那个字还没落到 ref 上。
    */
-  const deal = useCallback((algText?: string) => {
+  const restoreSnapshot = useCallback((snapshot: PredictSnapshot) => {
+    autoAdvance.cancel();
+    setChallenge(snapshot.challenge);
+    setFound(snapshot.found);
+    setFeedback(null);
+    setRevealed(snapshot.revealed);
+    setElapsed(snapshot.elapsed);
+    setStep(0);
+    setPlaying(false);
+    setViewResetSeq((seq) => seq + 1);
+    setReviewingHistory(snapshot.revealed || snapshot.found.every(Boolean));
+    startedAt.current = Date.now() - snapshot.elapsed * 1000;
+    trainingEventIdRef.current = snapshot.trainingEventId;
+    submittedTrainingEventRef.current = snapshot.submittedTrainingEvent;
+  }, [autoAdvance.cancel]);
+
+  const deal = useCallback((algText?: string, rememberCurrent = true) => {
     let customMoves: readonly string[] = [];
     if (source === 'custom') {
       const text = algText ?? algRef.current;
@@ -280,6 +321,12 @@ function PredictPageInner() {
     } else {
       setAlgError(null);
     }
+    autoAdvance.cancel();
+    const currentSnapshot = snapshotRef.current;
+    if (rememberCurrent && currentSnapshot) {
+      setPast((items) => [...items, currentSnapshot]);
+      setFuture([]);
+    }
     const next: PredictBoardChallenge = is333
       ? generateChallenge({
         mode, kind: track as PieceKind, source, moveCount, crossEdges, orientation, customMoves,
@@ -288,16 +335,40 @@ function PredictPageInner() {
         puzzle, track, source: source === 'custom' ? 'custom' : 'random', moveCount, customMoves,
       });
     setChallenge(next);
+    setFound(next.targets.map(() => false));
     setFeedback(null);
     setRevealed(false);
     setStep(0);
     setPlaying(false);
     setElapsed(0);
+    setReviewingHistory(false);
     setViewResetSeq((seq) => seq + 1);
     startedAt.current = Date.now();
     trainingEventIdRef.current = createTrainingEvidenceEventId('predict');
     submittedTrainingEventRef.current = null;
-  }, [puzzle, is333, mode, track, source, moveCount, crossEdges, orientation]);
+  }, [autoAdvance.cancel, puzzle, is333, mode, track, source, moveCount, crossEdges, orientation]);
+
+  const previousQuestion = useCallback(() => {
+    const previous = past.at(-1);
+    if (!previous) return;
+    const currentSnapshot = snapshotRef.current;
+    if (currentSnapshot) setFuture((items) => [currentSnapshot, ...items]);
+    setPast((items) => items.slice(0, -1));
+    restoreSnapshot(previous);
+  }, [past, restoreSnapshot]);
+
+  const nextQuestion = useCallback(() => {
+    autoAdvance.cancel();
+    const next = future[0];
+    if (!next) {
+      deal();
+      return;
+    }
+    const currentSnapshot = snapshotRef.current;
+    if (currentSnapshot) setPast((items) => [...items, currentSnapshot]);
+    setFuture((items) => items.slice(1));
+    restoreSnapshot(next);
+  }, [autoAdvance.cancel, deal, future, restoreSnapshot]);
 
   const submitPredictionTrainingEvidence = useCallback((success: boolean) => {
     const sourceEventId = trainingEventIdRef.current;
@@ -335,8 +406,12 @@ function PredictPageInner() {
     trainingDestinationRef.current = destination;
     return startTrainingEvidenceOutbox(destination);
   }, []);
-  useEffect(() => { deal(); }, [deal]);
-  useEffect(() => { setFound(challenge ? challenge.targets.map(() => false) : []); }, [challenge]);
+  useEffect(() => {
+    setPast([]);
+    setFuture([]);
+    deal(undefined, false);
+  }, [deal]);
+  useSpaceShortcut(nextQuestion);
 
   // 计时到答完(或认输看答案)为止;只按秒刷新,免得每帧重渲染整页。
   useEffect(() => {
@@ -373,8 +448,11 @@ function PredictPageInner() {
     setFeedback({ kind: 'correct' });
     const nextFound = found.map((v, i) => (i === hit ? true : v));
     setFound(nextFound);
-    if (nextFound.every(Boolean)) submitPredictionTrainingEvidence(true);
-  }, [ch, revealed, found, submitPredictionTrainingEvidence]);
+    if (nextFound.every(Boolean)) {
+      submitPredictionTrainingEvidence(true);
+      if (!reviewingHistory) autoAdvance.schedule(nextQuestion);
+    }
+  }, [autoAdvance, ch, found, nextQuestion, revealed, reviewingHistory, submitPredictionTrainingEvidence]);
 
   /**
    * 每一格的引擎色标签 = **起点盘面的真实颜色**(按朝向翻译)。
@@ -568,6 +646,7 @@ function PredictPageInner() {
           onChange={(v) => void setTransparent(v)}
           label={tr({ zh: '透明', en: 'Transparent' })}
         />
+        <TrainingSettings value={autoAdvance.enabled} onChange={autoAdvance.setEnabled} />
       </div>
 
       <div className="predict-boardcol">
@@ -699,6 +778,11 @@ function PredictPageInner() {
       </div>
 
       <div className="predict-actions">
+        {past.length > 0 && (
+          <TrainingNavButton direction="previous" onClick={previousQuestion}>
+            {tr({ zh: '上一题', en: 'Previous question' })}
+          </TrainingNavButton>
+        )}
         <button
           type="button"
           className="predict-reveal"
@@ -709,9 +793,9 @@ function PredictPageInner() {
         >
           <Eye size={15} aria-hidden="true" />
         </button>
-        <button type="button" className="predict-deal" onClick={() => deal()}>
+        <TrainingNavButton direction="next" onClick={nextQuestion}>
           {tr({ zh: '下一题', en: 'Next challenge' })}
-        </button>
+        </TrainingNavButton>
       </div>
 
       <p className="predict-origin">

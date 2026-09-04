@@ -1,7 +1,7 @@
 {
   "id": "longest_streak_of_personal_records",
   "title": "Longest streak of competitions with a personal record done",
-  "titleZh": "最长连续个人纪录参赛记录",
+  "titleZh": "连续取得个人纪录的最多参赛场数",
   "header": [
     {
       "key": "competitions",

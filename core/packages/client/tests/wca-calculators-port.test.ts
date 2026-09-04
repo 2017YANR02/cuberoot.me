@@ -141,6 +141,23 @@ describe('wca_kinch stats deploy contract', () => {
   });
 });
 
+describe('personal-record streak leaderboard contract', () => {
+  const builder = readFileSync(workspaceFixturePath('@cuberoot/stats-build', 'src', 'bin', 'wca_stats_extra_build.ts'), 'utf8');
+  const serverRoute = readFileSync(workspaceFixturePath('@cuberoot/server', 'src', 'routes', 'wca_stats_extra.ts'), 'utf8');
+  const migration = readFileSync(workspaceFixturePath('@cuberoot/server', 'migrations', '0211_wca_pr_streaks.sql'), 'utf8');
+  const page = readFileSync(join(CLIENT_ROOT, 'components', 'wca-stats', 'PersonalRecordStreakPage.tsx'), 'utf8');
+
+  it('builds, loads, serves, and filters the full leaderboard', () => {
+    expect(builder).toContain("createWriteStream(resolve(outDir, 'wca_pr_streaks.copy.tsv'))");
+    expect(builder).toMatch(/\\copy wca_pr_streaks[^;]+FROM 'wca_pr_streaks\.copy\.tsv'/s);
+    expect(serverRoute).toContain("get('/wca/pr-streaks'");
+    expect(serverRoute).toContain("s.country_id = ?");
+    expect(migration.match(/CREATE INDEX IF NOT EXISTS pr_streak_/g)).toHaveLength(3);
+    expect(page).toContain('<RegionCountrySelect');
+    expect(page).toContain('<Paginator');
+  });
+});
+
 describe('calculator UI integrations', () => {
   const resultsPage = readFileSync(join(CLIENT_ROOT, 'app', '[lang]', 'wca', 'results', 'page.tsx'), 'utf8');
   const kinchPage = readFileSync(join(CLIENT_ROOT, 'app', '[lang]', 'wca', 'kinch', 'page.tsx'), 'utf8');
