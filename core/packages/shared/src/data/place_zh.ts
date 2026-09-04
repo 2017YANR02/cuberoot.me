@@ -19,6 +19,7 @@ export const PLACE_CITY_ZH: Record<string, string> = {
   "CH:versoix": "韦尔苏瓦",
   "PH:cityofsanjosedelmonte": "圣何塞德尔蒙特市",
   "FR:meaux": "莫城",
+  "FR:hagondange": "阿贡当日",
   "FR:saintsaturnin": "圣萨蒂尔南",
   "BG:vratsa": "弗拉察",
   "SK:zilina": "日利纳",
