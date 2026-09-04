@@ -15,8 +15,14 @@ describe('account administrator role contract', () => {
     expect(migration).not.toMatch(/^(?:BEGIN|COMMIT)\s*;/im);
     expect(migration).toContain('ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE');
     expect(schema).toMatch(/\bis_admin\s+BOOLEAN NOT NULL DEFAULT FALSE/);
+    expect(route).toContain('canManageAdmins: isAdminWcaId(actor.wcaId)');
     expect(route).toContain("accountAuthRoutes.patch('/auth/admin/users/:userId/admin'");
-    expect(route).toContain('await requireAdmin(c)');
+    const roleRouteStart = route.indexOf("accountAuthRoutes.patch('/auth/admin/users/:userId/admin'");
+    const roleRouteEnd = route.indexOf("accountAuthRoutes.get('/auth/admin/users/:userId'", roleRouteStart);
+    const roleRoute = route.slice(roleRouteStart, roleRouteEnd);
+    expect(roleRoute).toContain('const actor = await requireAdmin(c)');
+    expect(roleRoute).toContain('if (!isAdminWcaId(actor.wcaId))');
+    expect(roleRoute).toContain("super administrator access required' }, 403");
     expect(route).toContain('isRootAdmin');
     expect(readme).toContain('`0200_app_user_admin_role.sql`');
   });

@@ -873,7 +873,7 @@ interface AdminUserListRow {
 /** 管理员账号总览:统计、注册与会员趋势、分页用户明细。敏感身份仅在管理员 no-store 响应中返回。 */
 accountAuthRoutes.get('/auth/admin/users', async (c) => {
   c.header('Cache-Control', 'no-store');
-  await requireAdmin(c);
+  const actor = await requireAdmin(c);
 
   const rawPage = Number(c.req.query('page') ?? '1');
   const rawPageSize = Number(c.req.query('pageSize') ?? '25');
@@ -1065,6 +1065,7 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
   );
   providerCounts.set('wca', Number(summary?.wca_users ?? 0));
   return c.json({
+    canManageAdmins: isAdminWcaId(actor.wcaId),
     summary: {
       totalUsers: Number(summary?.total_users ?? 0),
       registeredToday: Number(summary?.registered_today ?? 0),
@@ -1131,11 +1132,14 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
   });
 });
 
-/** 设置或取消注册用户的管理员角色。站主账号是不可移除的权限兜底。 */
+/** 仅超级管理员可以设置或取消注册用户的管理员角色。超级管理员账号不可移除。 */
 accountAuthRoutes.patch('/auth/admin/users/:userId/admin', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  await requireAdmin(c);
+  const actor = await requireAdmin(c);
+  if (!isAdminWcaId(actor.wcaId)) {
+    return c.json({ error: 'super administrator access required' }, 403);
+  }
 
   const userId = Number(c.req.param('userId'));
   if (!Number.isSafeInteger(userId) || userId <= 0) {
