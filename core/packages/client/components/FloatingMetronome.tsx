@@ -28,13 +28,13 @@ const POS_KEY = 'cuberoot.metronome.pos.v1';
 const PANEL_W = 300;
 
 const CSS = `
-.cr-metro{position:fixed;z-index:100005;width:${PANEL_W}px;
+.cr-metro{position:fixed;z-index:100005;box-sizing:border-box;width:${PANEL_W}px;
   font:13px/1.35 ui-sans-serif,system-ui,sans-serif;color:var(--foreground);
   background:var(--popover,var(--card));border:1px solid var(--border-default);
   border-radius:14px;padding:10px 12px 11px;
   box-shadow:0 8px 28px color-mix(in srgb, var(--foreground) 18%, transparent);
   touch-action:none;user-select:none;-webkit-user-select:none;}
-.cr-metro.is-collapsed{width:auto;padding:6px 8px 6px 10px;border-radius:999px;}
+.cr-metro.is-collapsed{width:auto;max-width:min(${PANEL_W}px,calc(100vw - 24px));padding:6px 8px 6px 10px;border-radius:999px;}
 
 /* Drag surface: the whole card except the controls (which stop propagation). */
 .cr-metro-grab{cursor:grab;}
@@ -57,10 +57,10 @@ const CSS = `
   color:var(--faint-foreground,var(--muted-foreground));font-variant-numeric:tabular-nums;}
 .cr-metro-title{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:650;}
 
-.cr-metro button{border:0;background:transparent;color:var(--foreground);cursor:pointer;
+.cr-metro button:not(.pill-toggle){border:0;background:transparent;color:var(--foreground);cursor:pointer;
   display:flex;align-items:center;justify-content:center;padding:0;
   font:inherit;border-radius:8px;transition:background .15s,color .15s;}
-.cr-metro button:hover{background:color-mix(in srgb, var(--foreground) 9%, transparent);}
+.cr-metro button:not(.pill-toggle):hover{background:color-mix(in srgb, var(--foreground) 9%, transparent);}
 .cr-metro-icon{width:26px;height:26px;flex:0 0 auto;}
 .cr-metro-play{width:30px;height:30px;border-radius:50%;
   background:color-mix(in srgb, var(--accent) 14%, transparent);color:var(--accent);}
