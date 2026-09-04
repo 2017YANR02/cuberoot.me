@@ -25,7 +25,7 @@ import {
 import PayModal from './PayModal';
 import AdminPanel from './AdminPanel';
 import MemberContact from './MemberContact';
-import MemberProfileIntro from './MemberProfileIntro';
+import MemberProfileEditor from '@/components/MemberProfileEditor';
 import AutoRenewModal from './AutoRenewModal';
 import './membership.css';
 
@@ -419,7 +419,7 @@ export default function MembershipPage() {
       {/* 会员联系方式(续费提醒 / 账号找回) */}
       {activeMember && membership && (
         <>
-          <MemberProfileIntro
+          <MemberProfileEditor
             membership={membership}
             onSaved={(profileIntro, profileImageIds) => setMembership({ ...membership, profileIntro, profileImageIds })}
           />

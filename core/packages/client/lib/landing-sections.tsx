@@ -7,7 +7,7 @@ import {
   Brain, Box, Sigma, Scale, Sprout, Brush, MessageCircle, MessagesSquare, Shapes, Blocks, Eye, Palette,
   CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap, School, Building2,
   FileText, Table2, Award, Radio, PanelsTopLeft, UserRound, UsersRound, HardDrive, ListOrdered,
-  Music2,
+  Images, Music2,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -89,6 +89,7 @@ const CARD_VISUALS: Partial<Record<SiteDirectoryEntry['id'], CardVisual>> = {
   notation: { Icon: FileText },
   'math-hub': { Icon: Sigma },
   'why-cube': { Icon: Sprout },
+  gallery: { Icon: Images },
   forum: { Icon: MessagesSquare },
   music: { Icon: Music2 },
   drive: { Icon: HardDrive },

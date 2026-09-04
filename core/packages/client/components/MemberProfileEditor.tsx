@@ -6,11 +6,12 @@ import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
 import { prepareImageUpload, uploadedImageUrl, uploadImageBlob } from '@/lib/image-upload';
 import { setMyProfileIntro, type Membership } from '@/lib/membership-api';
+import './member-profile-editor.css';
 
 const MAX_LENGTH = 1000;
 const MAX_IMAGES = 8;
 
-export default function MemberProfileIntro({ membership, onSaved }: {
+export default function MemberProfileEditor({ membership, onSaved }: {
   membership: Membership;
   onSaved: (intro: string | undefined, imageIds: number[]) => void;
 }) {
@@ -73,22 +74,22 @@ export default function MemberProfileIntro({ membership, onSaved }: {
   }
 
   return (
-    <section className="mem-profile">
-      <h3 className="mem-contact-title">{tr({ zh: '个人介绍', en: 'Personal profile' })}</h3>
-      <p className="mem-contact-hint">
+    <section className="member-profile-editor">
+      <h3 className="member-profile-title">{tr({ zh: '个人介绍', en: 'Personal profile' })}</h3>
+      <p className="member-profile-hint">
         {tr({
-          zh: '选填文字和图片。保存后会显示在你的 WCA 人物页，会员到期后自动隐藏。',
-          en: 'Add optional text and images. Once saved, they appear on your WCA person page and are hidden automatically if your membership expires.',
+          zh: '选填文字和图片。图片可进入图库，资料也会显示在你的 WCA 人物页；会员到期后自动隐藏。',
+          en: 'Add optional text and images. Photos can appear in the gallery, and the profile also appears on your WCA person page. It is hidden automatically if your membership expires.',
         })}
       </p>
       <BoolToggle
-        className="mem-profile-visibility"
+        className="member-profile-visibility"
         value={showInMemberList}
         onChange={(value) => { setShowInMemberList(value); setSaved(false); }}
-        label={tr({ zh: '在首页会员名单中展示我', en: 'Show me in the homepage member list' })}
+        label={tr({ zh: '在首页会员名单和图库中展示我', en: 'Show me in the homepage member list and gallery' })}
       />
       <textarea
-        className="mem-profile-input"
+        className="member-profile-input"
         value={intro}
         onChange={(event) => { setIntro(event.target.value); setSaved(false); }}
         placeholder={tr({ zh: '介绍一下自己', en: 'Introduce yourself' })}
@@ -97,7 +98,7 @@ export default function MemberProfileIntro({ membership, onSaved }: {
       />
       <input
         ref={fileRef}
-        className="mem-profile-file"
+        className="member-profile-file"
         type="file"
         accept="image/png,image/jpeg,image/webp"
         multiple
@@ -105,7 +106,7 @@ export default function MemberProfileIntro({ membership, onSaved }: {
       />
       <button
         type="button"
-        className="mem-profile-upload"
+        className="member-profile-upload"
         onClick={() => fileRef.current?.click()}
         disabled={uploading || imageIds.length >= MAX_IMAGES}
       >
@@ -114,13 +115,13 @@ export default function MemberProfileIntro({ membership, onSaved }: {
         <span>{imageIds.length}/{MAX_IMAGES}</span>
       </button>
       {imageIds.length > 0 && (
-        <div className="mem-profile-images">
+        <div className="member-profile-images">
           {imageIds.map((id) => (
-            <div className="mem-profile-image" key={id}>
+            <div className="member-profile-image" key={id}>
               <img src={uploadedImageUrl(id)} alt="" />
               <button
                 type="button"
-                className="mem-profile-image-remove"
+                className="member-profile-image-remove"
                 onClick={() => { setImageIds((current) => current.filter((imageId) => imageId !== id)); setSaved(false); }}
                 disabled={uploading}
                 aria-label={tr({ zh: '移除图片', en: 'Remove image' })}
@@ -131,11 +132,11 @@ export default function MemberProfileIntro({ membership, onSaved }: {
           ))}
         </div>
       )}
-      <div className="mem-profile-actions">
-        <span className="mem-profile-count">{intro.length}/{MAX_LENGTH}</span>
+      <div className="member-profile-actions">
+        <span className="member-profile-count">{intro.length}/{MAX_LENGTH}</span>
         <button
           type="button"
-          className="mem-contact-save"
+          className="member-profile-save"
           onClick={() => void save()}
           aria-label={tr({ zh: '保存个人资料', en: 'Save personal profile' })}
           disabled={saving || uploading || (
@@ -147,7 +148,7 @@ export default function MemberProfileIntro({ membership, onSaved }: {
           {saved ? <Check size={14} aria-hidden="true" /> : saving ? '…' : tr({ zh: '保存', en: 'Save' })}
         </button>
       </div>
-      {error && <div className="mem-pay-err" role="alert">{error}</div>}
+      {error && <div className="member-profile-error" role="alert">{error}</div>}
     </section>
   );
 }
