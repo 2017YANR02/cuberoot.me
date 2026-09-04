@@ -224,7 +224,7 @@ export const EVENTS: EventInfo[] = [
   { id: 'fto',      nameEn: 'FTO',             nameZh: '转面八面体', group: 'nonwca', icon: 'unofficial-fto' },
   { id: 'kilominx', nameEn: 'Kilominx',        nameZh: '二阶五魔',   group: 'nonwca', icon: 'unofficial-kilominx' },
   { id: 'gear',     nameEn: 'Gear Cube',       nameZh: '齿轮魔方',   group: 'nonwca', icon: 'unofficial-gear' },
-  { id: 'ivy',      nameEn: 'Ivy Cube',        nameZh: '枫叶魔方',   group: 'nonwca', icon: 'unofficial-ivy' },
+  { id: 'ivy',      nameEn: 'Ivy Cube',        nameZh: '枫叶',       group: 'nonwca', icon: 'unofficial-ivy' },
   { id: 'redi',     nameEn: 'Redi Cube',       nameZh: '热帝魔方',   group: 'nonwca', icon: 'unofficial-redi' },
   { id: 'mpyram',   nameEn: 'Master Pyraminx', nameZh: '四阶金字塔', group: 'nonwca', icon: 'unofficial-mpyram' },
 
