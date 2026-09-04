@@ -303,8 +303,6 @@
   backdrop-filter: blur(9px);
 }
 
-.music-manager-dialog { width: min(940px, calc(100vw - 32px)); }
-
 .music-dialog-heading {
   display: flex;
   align-items: flex-start;
@@ -366,6 +364,7 @@
   grid-template-columns: minmax(180px, 230px) minmax(0, 1fr);
   gap: clamp(20px, 4vw, 40px);
 }
+.music-manage-page { max-width: 1080px; }
 .music-manager-list {
   min-width: 0;
   max-height: min(60vh, 540px);
@@ -425,8 +424,7 @@
 }
 
 @media (max-width: 480px) {
-  .music-dialog,
-  .music-manager-dialog {
+  .music-dialog {
     width: 100vw;
     height: 100dvh;
     max-height: none;
