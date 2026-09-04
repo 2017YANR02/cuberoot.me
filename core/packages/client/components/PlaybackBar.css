@@ -49,7 +49,7 @@
   min-width: 38px;
   height: 38px;
   padding: 0 10px;
-  border: 1px solid var(--border-default);
+  border: 0;
   border-radius: 6px;
   background: transparent;
   color: var(--foreground);
