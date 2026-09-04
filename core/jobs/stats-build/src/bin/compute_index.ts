@@ -115,7 +115,7 @@ const TITLE_ZH_OVERRIDES: Record<string, string> = {
   competitions_per_year_by_person: '选手每年参赛数',
   longest_competitions_path: '最长连续参赛路径',
   longest_streak_of_competitions_in_own_country: '在本国最长连续参赛',
-  longest_streak_of_personal_records: '连续打破个人纪录的最长赛程',
+  longest_streak_of_personal_records: '连续取得个人纪录的最多参赛场数',
   longest_streak_of_podiums: '最长连续登台',
   longest_time_to_sub_10: '达到三阶 sub-10 用时最长',
   most_attended_competitions_in_single_week: '单周参赛最多',

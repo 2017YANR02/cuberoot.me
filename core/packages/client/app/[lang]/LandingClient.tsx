@@ -5,7 +5,10 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'r
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { ArrowRight, Heart, Lock, LogIn, User, type LucideIcon } from 'lucide-react';
+import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
+import SortableCard from '@/components/SortableCard';
 import HeaderToggles from '@/components/HeaderToggles';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
@@ -18,7 +21,9 @@ import {
   SECTIONS,
   TEXTS,
   WCA_CARDS,
+  applyLandingCardOrder,
   isLandingSearchCardVisible,
+  type CardConfig,
 } from '@/lib/landing-sections';
 
 // Below-the-fold widgets — dynamic to defer client hydrate / chunk fetch.
@@ -51,6 +56,7 @@ import { fetchPageNotices, type PageNotice } from '@/lib/page-notices-api';
 import { colorFor, iconFor } from '@/lib/page-notice-visuals';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { listPublicMembers, type PublicMember } from '@/lib/membership-api';
+import { getHomeCardOrders, reorderHomeCards } from '@/lib/home-card-order-api';
 
 const ABOUT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'about')!;
 const SUPPORT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'support')!;
@@ -130,6 +136,17 @@ export default function LandingPage() {
   // 是 hydration-safe(SSG 首帧按未登录渲染,挂载后才切到已登录),避免 SSG/CSR 错配。
   const user = useAuthUser();
   const isAdmin = isAdminWcaId(user?.wcaId);
+  const [cardOrders, setCardOrders] = useState<Record<string, string[]>>({});
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  useEffect(() => {
+    let active = true;
+    getHomeCardOrders(isAdmin)
+      .then((orders) => { if (active) setCardOrders(orders); })
+      .catch(() => { /* 自定义顺序不可阻断首页 */ });
+    return () => { active = false; };
+  }, [isAdmin]);
+
   const searchCards = useMemo(
     () => SEARCH_CARDS.filter((card) => isLandingSearchCardVisible(card, isAdmin)),
     [isAdmin],
@@ -141,6 +158,78 @@ export default function LandingPage() {
       ? <img src={user.avatar} alt="" className="landing-auth-avatar" />
       : <User size={16} aria-hidden />
   );
+
+  const renderCard = (card: CardConfig) => {
+    const isLocked = Boolean(card.lockedForNonAdmin && !isAdmin);
+    const content = (
+      <LandingCardContent
+        label={t(card.nameKey)}
+        Icon={card.Icon}
+        iconImg={card.iconImg}
+        locked={isLocked}
+      />
+    );
+    const isDisabled = Boolean(card.comingSoon || isLocked);
+    const className = `landing-card tier-${card.tier}${isDisabled ? ' is-disabled' : ''}`;
+    let cardElement;
+    if (isDisabled) {
+      cardElement = (
+        <div className={className} id={`card-${card.id}`}
+          title={isLocked
+            ? tr({ zh: '教程维护中', en: 'Tutorials under maintenance' })
+            : t('comingSoon')}
+          aria-disabled="true" role="link">
+          {content}
+          {card.comingSoon && <span className="coming-soon-badge">{t('comingSoon')}</span>}
+        </div>
+      );
+    } else if (card.internal) {
+      cardElement = (
+        <Link href={card.href} className={className} id={`card-${card.id}`} prefetch={false}>
+          {content}
+        </Link>
+      );
+    } else {
+      cardElement = (
+        <a href={card.href} className={className} id={`card-${card.id}`}
+          target="_blank" rel="noopener noreferrer">
+          {content}
+        </a>
+      );
+    }
+    return (
+      <SortableCard key={card.id} id={card.id} draggable={isAdmin}>
+        {cardElement}
+      </SortableCard>
+    );
+  };
+
+  const renderCardGrid = (groupId: string, cards: CardConfig[], className: string) => {
+    const orderedCards = applyLandingCardOrder(cards, cardOrders[groupId] ?? []);
+    const visibleCards = orderedCards.filter((card) => isAdmin || !card.adminOnly);
+    const handleDragEnd = (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!isAdmin || !over || active.id === over.id) return;
+      const current = orderedCards.map((card) => card.id);
+      const oldIndex = current.indexOf(String(active.id));
+      const newIndex = current.indexOf(String(over.id));
+      if (oldIndex < 0 || newIndex < 0) return;
+      const next = arrayMove(current, oldIndex, newIndex);
+      setCardOrders((orders) => ({ ...orders, [groupId]: next }));
+      reorderHomeCards(groupId, next).catch((error) => {
+        console.error('homepage card reorder failed', error);
+        alert(tr({ zh: `排序失败：${error.message}`, en: `Reorder failed: ${error.message}` }));
+        setCardOrders((orders) => ({ ...orders, [groupId]: current }));
+      });
+    };
+    return (
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={visibleCards.map((card) => card.id)} strategy={rectSortingStrategy}>
+          <div className={className}>{visibleCards.map(renderCard)}</div>
+        </SortableContext>
+      </DndContext>
+    );
+  };
 
   return (
     <div className="landing-page">
@@ -208,24 +297,10 @@ export default function LandingPage() {
           两个子网格 display:contents,9 张卡直接排成 3 行 3 个(见 landing.css)。 */}
       <div className="hero-grids">
         {/* 主入口 — 标语正下方,五张最常用直达卡(计时器 / 公式 / 模拟 / 复盘 / 打乱) */}
-        <div className="primary-hero-grid">
-          {PRIMARY_CARDS.map((c) => (
-            <Link key={c.id} href={c.href} className="landing-card" id={`card-${c.id}`} prefetch={false}>
-              {/* allow-nested-link: LandingCardContent only renders an icon and label. */}
-              <LandingCardContent label={t(c.nameKey)} Icon={c.Icon} iconImg={c.iconImg} />
-            </Link>
-          ))}
-        </div>
+        {renderCardGrid('main', PRIMARY_CARDS, 'primary-hero-grid')}
 
         {/* WCA 入口 — 紧接主入口,原单张「WCA 统计」hero 拆成四张直达卡:比赛 / 纪录 / 排名 / 统计 */}
-        <div className="wca-hero-grid">
-          {WCA_CARDS.map((card) => (
-            <Link key={card.id} href={card.href} className="landing-card" prefetch={false}>
-              {/* allow-nested-link: LandingCardContent only renders an icon and label. */}
-              <LandingCardContent label={t(card.nameKey)} Icon={card.Icon} iconImg={card.iconImg} />
-            </Link>
-          ))}
-        </div>
+        {renderCardGrid('wca', WCA_CARDS, 'wca-hero-grid')}
       </div>
 
       <LazyVisible minHeight={HOME_WIDGET_HEIGHT.recentScrambles} rootMargin="120px 0px" unwrapWhenVisible>
@@ -251,47 +326,7 @@ export default function LandingPage() {
               <h2 className="section-title-serif">{tr(sec.title)}</h2>
               <div className="section-sub">{tr(sec.sub)}</div>
             </div>
-            <div className="cards-container">
-              {sec.cards.map((card) => {
-                if (card.adminOnly && !isAdmin) return null;
-                const isLocked = Boolean(card.lockedForNonAdmin && !isAdmin);
-                const content = (
-                  <LandingCardContent
-                    label={t(card.nameKey)}
-                    Icon={card.Icon}
-                    iconImg={card.iconImg}
-                    locked={isLocked}
-                  />
-                );
-                const isDisabled = Boolean(card.comingSoon || isLocked);
-                const className = `landing-card tier-${card.tier}${isDisabled ? ' is-disabled' : ''}`;
-                if (isDisabled) {
-                  return (
-                    <div key={card.id} className={className} id={`card-${card.id}`}
-                      title={isLocked
-                        ? tr({ zh: '教程维护中', en: 'Tutorials under maintenance' })
-                        : t('comingSoon')}
-                      aria-disabled="true" role="link">
-                      {content}
-                      {card.comingSoon && <span className="coming-soon-badge">{t('comingSoon')}</span>}
-                    </div>
-                  );
-                }
-                if (card.internal) {
-                  return (
-                    <Link key={card.id} href={card.href} className={className} id={`card-${card.id}`} prefetch={false}>
-                      {content}
-                    </Link>
-                  );
-                }
-                return (
-                  <a key={card.id} href={card.href} className={className} id={`card-${card.id}`}
-                    target="_blank" rel="noopener noreferrer">
-                    {content}
-                  </a>
-                );
-              })}
-            </div>
+            {renderCardGrid(sec.id, sec.cards, 'cards-container')}
           </section>
         ))}
         {([

@@ -1,7 +1,7 @@
 // 顶部 hero:头像 + (国旗 + 姓名 + 性别图标) + 名字下方小字 WCA ID + 信息条(比赛次数 / 复原次数 / 尝试次数).
 // 头像居中,国旗在名字左侧,WCA ID 左缘与名字左缘对齐.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Mars, Venus } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
@@ -14,11 +14,13 @@ import { countryName } from '@/lib/country-name';
 import { creatorProfileHrefForWcaId } from '@/lib/creator-profile';
 import { uploadedImageUrl } from '@/lib/image-upload';
 import { getPublicMemberProfile, type PublicMemberProfile } from '@/lib/membership-api';
-import type { WcaPersonProfile, WcaResultRow, WcaFormerIdentity } from '@/lib/wca-person-api';
+import type { WcaCompetition, WcaPersonProfile, WcaResultRow, WcaFormerIdentity } from '@/lib/wca-person-api';
+import { computePrRank, countPersonalRecords } from '../logic/progress';
 
 interface Props {
   profile: WcaPersonProfile;
   results: WcaResultRow[] | null;
+  comps: WcaCompetition[] | null;
   former?: WcaFormerIdentity[];
   isZh: boolean;
   resultView: 'pr' | 'historical' | 'pb';
@@ -82,6 +84,7 @@ function MemberIntroDialog({ name, profile, closeLabel, onClose }: {
 export default function PersonHero({
   profile,
   results,
+  comps,
   former,
   isZh,
   resultView,
@@ -149,6 +152,10 @@ export default function PersonHero({
       }
     }
   }
+  const prCount = useMemo(
+    () => results && comps ? countPersonalRecords(computePrRank(results.filter((r) => !r.live), comps).values()) : 0,
+    [results, comps],
+  );
 
   // 性别用 lucide 图标放在名字旁(男 Mars / 女 Venus),其他/未知不显示.
   const GenderIcon = p.gender === 'm' ? Mars : p.gender === 'f' ? Venus : null;
@@ -242,6 +249,7 @@ export default function PersonHero({
           items={resultViewItems}
           onChange={onResultViewChange}
           ariaLabel={t('成绩视图', 'Results view')}
+          popupClassName="wp-result-view-popup"
         />
         {resultView !== 'pb' && (
           <PillToggle
@@ -288,12 +296,16 @@ export default function PersonHero({
               </div>
             </div>
             <div className="wp-hero-cell">
-              <div className="wp-hero-cell-label">{t('复原 / 尝试', 'Solves / Attempts')}</div>
-              <div className="wp-hero-cell-value">
-                <span className="wp-pill">{solves}</span>
-                <span className="wp-pill-sep">/</span>
-                <span className="wp-pill">{attempts}</span>
-              </div>
+              <div className="wp-hero-cell-label">PR</div>
+              <div className="wp-hero-cell-value"><span className="wp-pill">{prCount}</span></div>
+            </div>
+            <div className="wp-hero-cell">
+              <div className="wp-hero-cell-label">{t('复原', 'Solves')}</div>
+              <div className="wp-hero-cell-value"><span className="wp-pill">{solves}</span></div>
+            </div>
+            <div className="wp-hero-cell">
+              <div className="wp-hero-cell-label">{t('尝试', 'Attempts')}</div>
+              <div className="wp-hero-cell-value"><span className="wp-pill">{attempts}</span></div>
             </div>
           </div>
         </>

@@ -119,6 +119,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/grand-slam', g: 'public', c: 'cdn', zh: '大满贯榜', en: 'Grand-slam leaderboard' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/all-results', g: 'public', c: 'cdn', zh: '全成绩查询(姓名口径 / 项目筛选)', en: 'All-results query (name form / event filter)' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/kinch', g: 'public', c: 'cdn', zh: 'Kinch 综合分榜单与选手逐项分', en: 'Kinch leaderboard and per-event person scores' },
+  { d: 'wca-stats', m: 'GET', p: '/v1/wca/pr-streaks', g: 'public', c: 'cdn', zh: '连续取得个人纪录的最多参赛场数榜单', en: 'Longest personal-record competition streak leaderboard' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/persons-directory', g: 'public', c: 'cdn', zh: '选手名录', en: 'Persons directory' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/person-aka', g: 'public', zh: '曾用名 / 曾属国', en: 'Former names / nationalities' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/person-page', g: 'public', zh: '选手页首屏全量:资料 + 全部成绩 + 参赛比赛(自家库,不经官网)', en: 'Whole person page: profile + every result + competitions, from our mirror' },
@@ -652,12 +653,12 @@ const ENDPOINTS: Ep[] = [
   { d: 'friend', m: 'DELETE', p: '/v1/friends/blocks/:userId', g: 'login', c: 'no-store', zh: '解除拉黑', en: 'Unblock a user' },
 
   // ---- vault ----
-  { d: 'vault', m: 'GET', p: '/v1/vault', g: 'login', c: 'no-store', zh: '读取本人密钥包及获授权的加密内容；服务端不持有明文', en: 'Read the user key envelope and authorized ciphertext; the server never holds plaintext' },
-  { d: 'vault', m: 'PUT', p: '/v1/vault/key', g: 'login', c: 'no-store', zh: '登记公钥和双重加密私钥；恢复时仅允许保留原公钥与恢复密钥包并重设口令', en: 'Register a public key and dual-encrypted private key; recovery may only preserve the original public key and recovery envelope while resetting the passphrase' },
-  { d: 'vault', m: 'GET', p: '/v1/vault/users', g: 'admin', c: 'no-store', zh: '搜索管理员可指定的已注册账号及其资料库公钥', en: 'Search registered accounts an admin may designate and return their vault public keys' },
-  { d: 'vault', m: 'POST', p: '/v1/vault/items', g: 'admin', c: 'no-store', zh: '创建密文，并给管理员与指定账号保存各自的加密内容密钥', en: 'Create ciphertext with separately wrapped content keys for the admin and designated accounts' },
-  { d: 'vault', m: 'PUT', p: '/v1/vault/items/:id', g: 'admin', c: 'no-store', zh: '以版本校验更新密文、轮换内容密钥并替换指定账号', en: 'Update ciphertext with version checking, rotate the content key, and replace designated accounts' },
-  { d: 'vault', m: 'DELETE', p: '/v1/vault/items/:id', g: 'admin', c: 'no-store', zh: '删除管理员拥有的加密内容及全部授权', en: 'Delete admin-owned ciphertext and all access grants' },
+  { d: 'vault', m: 'GET', p: '/v1/vault', g: 'login', c: 'no-store', zh: '读取本人密钥包、管理权限及本人或好友授权的密文；服务端不持有明文', en: 'Read the user key envelope, management entitlement, and ciphertext owned by or shared from friends; the server never holds plaintext' },
+  { d: 'vault', m: 'PUT', p: '/v1/vault/key', g: 'login', c: 'no-store', zh: '登记接收分享所需的公钥和双重加密私钥；恢复时仅重设口令密钥包', en: 'Register the public key and dual-encrypted private key needed to receive shares; recovery only resets the passphrase envelope' },
+  { d: 'vault', m: 'GET', p: '/v1/vault/users', g: 'login', c: 'no-store', zh: '会员或管理员搜索已接受好友并返回其资料库公钥', en: 'Members or administrators search accepted friends and return their vault public keys' },
+  { d: 'vault', m: 'POST', p: '/v1/vault/items', g: 'login', c: 'no-store', zh: '会员或管理员创建自有密文，并为本人和指定好友分别封装内容密钥', en: 'Members or administrators create owned ciphertext with content keys separately wrapped for the owner and selected friends' },
+  { d: 'vault', m: 'PUT', p: '/v1/vault/items/:id', g: 'login', c: 'no-store', zh: '会员或管理员以版本校验更新本人密文、轮换内容密钥并替换好友授权', en: 'Members or administrators update owned ciphertext with version checking, rotate the content key, and replace friend access' },
+  { d: 'vault', m: 'DELETE', p: '/v1/vault/items/:id', g: 'login', c: 'no-store', zh: '会员或管理员删除本人拥有的密文及全部授权', en: 'Members or administrators delete owned ciphertext and all access grants' },
 
   // ---- drive ----
   { d: 'drive', m: 'GET', p: '/v1/drive', g: 'login', c: 'no-store', zh: '读取当前文件夹、回收站、面包屑、未完成上传与共享 20 GB 配额', en: 'Read the current folder, Trash, breadcrumbs, incomplete uploads, and the shared 20 GB quota' },
@@ -784,6 +785,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'PUT', p: '/v1/colpi/words/:id/vote', g: 'login', zh: '给词条投票', en: 'Vote a word' },
   { d: 'content', m: 'DELETE', p: '/v1/colpi/words/:id/vote', g: 'login', zh: '撤销投票', en: 'Remove vote' },
   { d: 'content', m: 'GET', p: '/v1/nav/sites', g: 'public', c: 'cdn', zh: '导航站点', en: 'Nav sites' },
+  { d: 'content', m: 'GET', p: '/v1/nav/home-order', g: 'public', c: 'cdn', zh: '首页卡片顺序', en: 'Homepage card order' },
+  { d: 'content', m: 'PUT', p: '/v1/nav/home-order', g: 'admin', zh: '重排首页卡片', en: 'Reorder homepage cards' },
   { d: 'content', m: 'POST', p: '/v1/nav/sites', g: 'admin', zh: '加站点', en: 'Add site' },
   { d: 'content', m: 'PUT', p: '/v1/nav/sites/reorder', g: 'admin', zh: '重排站点', en: 'Reorder sites' },
   { d: 'content', m: 'PUT', p: '/v1/nav/sites/:id', g: 'admin', zh: '改站点', en: 'Edit site' },

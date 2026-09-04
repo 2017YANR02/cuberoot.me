@@ -279,21 +279,9 @@
   margin: 0.9rem 0;
 }
 
-.predict-deal {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.45rem 0.9rem;
-  border: none;
-  border-radius: 8px;
-  background: var(--primary);
-  color: var(--primary-foreground);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.predict-deal:hover {
-  background: color-mix(in srgb, var(--primary) 88%, black);
+.predict-reveal:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 .predict-reveal {

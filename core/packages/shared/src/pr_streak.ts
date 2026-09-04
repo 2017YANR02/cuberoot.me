@@ -11,6 +11,23 @@ export interface PersonalRecordStreakResult {
   longest: string[];
 }
 
+export function calculateCompetitionStreak(
+  orderedCompetitionIds: readonly string[],
+  attainedCompetitionIds: ReadonlySet<string>,
+): PersonalRecordStreakResult {
+  let current: string[] = [];
+  let longest: string[] = [];
+  for (const competitionId of orderedCompetitionIds) {
+    if (attainedCompetitionIds.has(competitionId)) {
+      current = [...current, competitionId];
+      if (current.length > longest.length) longest = [...current];
+    } else {
+      current = [];
+    }
+  }
+  return { current, longest };
+}
+
 /**
  * Consecutive competitions containing at least one new or tied PB.
  * A competition is counted once even when several events/rounds improve. Zero,
@@ -35,8 +52,7 @@ export function calculatePersonalRecordStreak(
     return dateOrder || a[1].order - b[1].order;
   });
   const best = new Map<string, { single: number; average: number }>();
-  let current: string[] = [];
-  let longest: string[] = [];
+  const attainedCompetitionIds = new Set<string>();
 
   for (const [competitionId, competition] of ordered) {
     let attained = false;
@@ -53,13 +69,8 @@ export function calculatePersonalRecordStreak(
       best.set(row.eventId, previous);
     }
 
-    if (attained) {
-      current = [...current, competitionId];
-      if (current.length > longest.length) longest = [...current];
-    } else {
-      current = [];
-    }
+    if (attained) attainedCompetitionIds.add(competitionId);
   }
 
-  return { current, longest };
+  return calculateCompetitionStreak(ordered.map(([competitionId]) => competitionId), attainedCompetitionIds);
 }

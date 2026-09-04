@@ -61,6 +61,15 @@ function pair(a: number, b: number): [number, number] {
   return a < b ? [a, b] : [b, a];
 }
 
+async function revokeVaultAccess(tx: Tx, userId: number, targetUserId: number): Promise<void> {
+  await tx`
+    DELETE FROM vault_item_access access
+     USING vault_items item
+     WHERE access.item_id = item.id
+       AND ((item.owner_user_id = ${userId} AND access.recipient_user_id = ${targetUserId})
+         OR (item.owner_user_id = ${targetUserId} AND access.recipient_user_id = ${userId}))`;
+}
+
 function parseWcaContact(value: unknown): WcaContactInput | null {
   if (!value || typeof value !== 'object') return null;
   const input = value as Record<string, unknown>;
@@ -411,11 +420,16 @@ friendRoutes.delete('/friends/:userId', async (c) => {
   const targetUserId = parseUserId(c.req.param('userId'));
   if (!targetUserId || targetUserId === userId) return c.json({ error: 'invalid userId' }, 400);
   const [low, high] = pair(userId, targetUserId);
-  const rows = await sql`
-    DELETE FROM user_friendships
-     WHERE user_low_id = ${low} AND user_high_id = ${high} AND status = 'accepted'
-     RETURNING user_low_id`;
-  if (!rows.length) return c.json({ error: 'friend not found' }, 404);
+  const removed = await sql.begin(async (tx) => {
+    const rows = await tx`
+      DELETE FROM user_friendships
+       WHERE user_low_id = ${low} AND user_high_id = ${high} AND status = 'accepted'
+       RETURNING user_low_id`;
+    if (!rows.length) return false;
+    await revokeVaultAccess(tx, userId, targetUserId);
+    return true;
+  });
+  if (!removed) return c.json({ error: 'friend not found' }, 404);
   return c.json({ ok: true, relationship: 'none' });
 });
 
@@ -438,6 +452,7 @@ friendRoutes.post('/friends/blocks', async (c) => {
     await tx`
       DELETE FROM user_friendships
        WHERE user_low_id = ${low} AND user_high_id = ${high}`;
+    await revokeVaultAccess(tx, userId, targetUserId);
     if (users.target.wca_id) {
       await tx`
         DELETE FROM user_wca_friend_contacts

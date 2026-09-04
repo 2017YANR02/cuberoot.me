@@ -1,0 +1,39 @@
+.training-nav-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 0;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.training-nav-button.is-next {
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.training-nav-button.is-previous {
+  padding: 0.5rem 0.2rem;
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+.training-nav-button.is-previous:hover {
+  color: var(--foreground);
+}
+
+.training-nav-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.training-nav-button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}

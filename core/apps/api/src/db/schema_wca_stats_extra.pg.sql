@@ -208,6 +208,19 @@ CREATE INDEX IF NOT EXISTS kinch_world_score ON wca_kinch (world_score_x100 DESC
 CREATE INDEX IF NOT EXISTS kinch_continent_score ON wca_kinch (continent_id, continent_score_x100 DESC, wca_id);
 CREATE INDEX IF NOT EXISTS kinch_country_score ON wca_kinch (country_id, country_score_x100 DESC, wca_id);
 
+-- ── wca_pr_streaks: 全体选手最长连续取得个人纪录的参赛场数(每周全量重灌) ──
+CREATE TABLE IF NOT EXISTS wca_pr_streaks (
+  wca_id         VARCHAR(20) PRIMARY KEY,
+  country_id     VARCHAR(50) NOT NULL,
+  continent_id   VARCHAR(50) NOT NULL,
+  streak         INTEGER NOT NULL,
+  start_comp_id  VARCHAR(50),
+  end_comp_id    VARCHAR(50)
+);
+CREATE INDEX IF NOT EXISTS pr_streak_world ON wca_pr_streaks (streak DESC, wca_id);
+CREATE INDEX IF NOT EXISTS pr_streak_continent ON wca_pr_streaks (continent_id, streak DESC, wca_id);
+CREATE INDEX IF NOT EXISTS pr_streak_country ON wca_pr_streaks (country_id, streak DESC, wca_id);
+
 -- ── wca_championship_podiums: 选手页「锦标赛领奖台」(~30k 行) ──
 -- 一行 = 某选手在某锦标赛某项目决赛、按该锦标赛资格内重排后名次 ≤3 的领奖台成绩。
 -- level: 'world' | 大洲 id('_North America') | 国家 iso2('US') | 多国类型('greater_china')。

@@ -1025,3 +1025,22 @@ input[type='range'].reconstruct-playback-slider::-moz-range-track {
     color-mix(in srgb, var(--foreground) 15%, transparent) 100%
   );
 }
+/* Shared dnd-kit card handle used by the algorithm catalog and homepage. */
+.sortable-card-drag-handle {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 5;
+  background: color-mix(in srgb, var(--background) 60%, transparent);
+  border: 1px solid var(--border-default);
+  color: var(--muted-foreground);
+  border-radius: 4px;
+  padding: 3px;
+  cursor: grab;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+}
+.sortable-card-drag-handle:hover { color: var(--accent); border-color: var(--accent); }
+.sortable-card-drag-handle:active { cursor: grabbing; }

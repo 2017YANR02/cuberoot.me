@@ -15,8 +15,15 @@ export function useDocumentTitle(zh: string, en: string, enabled = true): void {
   useEffect(() => {
     if (!enabled) return;
     const page = (isZh ? zh : en).trim();
-    document.title = page || BRAND;
+    const title = page || BRAND;
+    const applyTitle = () => {
+      if (document.title !== title) document.title = title;
+    };
+    applyTitle();
+    const observer = new MutationObserver(applyTitle);
+    observer.observe(document.head, { childList: true, subtree: true, characterData: true });
     return () => {
+      observer.disconnect();
       document.title = BRAND;
     };
   }, [zh, en, isZh, i18n.language, enabled]);

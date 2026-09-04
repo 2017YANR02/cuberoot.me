@@ -6,6 +6,8 @@ import BoolToggle from '@/components/BoolToggle';
 import { ClearButton } from '@/components/ClearButton';
 import CuberReconPlayer from '@/components/CuberReconPlayer';
 import { Spinner } from '@/components/Spinner/Spinner';
+import TrainingNavButton from '@/components/TrainingNavButton';
+import TrainingSettings, { useTrainingAutoAdvance } from '@/components/TrainingSettings';
 import { SubsetColorPicker, COLOR_NAME, useSubsetSelection, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { tr } from '@/i18n/tr';
 import { applyOrientationPrefix } from '@/lib/cube-orientation';
@@ -49,6 +51,15 @@ interface StatLine {
 
 type StatsStore = Record<string, StatLine>;
 type SmartPhase = 'disconnected' | 'needs-solved' | 'scrambling' | 'solving' | 'result';
+
+interface StageTrainingSnapshot {
+  question: StageQuestion;
+  revealed: boolean;
+  result: TrainingResult | null;
+  smartPhase: SmartPhase;
+  smartMoveCount: number;
+  smartMoves: string[];
+}
 
 const STATS_KEY = 'cuberoot-timer.stage-training.stats.v1';
 const EMPTY_STATS: StatLine = { total: 0, correct: 0, wrong: 0 };
@@ -130,6 +141,10 @@ export default function CrossTrainingClient() {
   const [smartMoveCount, setSmartMoveCount] = useState(0);
   const [smartMoves, setSmartMoves] = useState<string[]>([]);
   const [connectError, setConnectError] = useState('');
+  const [past, setPast] = useState<StageTrainingSnapshot[]>([]);
+  const [future, setFuture] = useState<StageTrainingSnapshot[]>([]);
+  const [reviewingHistory, setReviewingHistory] = useState(false);
+  const autoAdvance = useTrainingAutoAdvance();
   const requestRef = useRef(0);
   const cubeRef = useRef(cube);
   cubeRef.current = cube;
@@ -172,6 +187,16 @@ export default function CrossTrainingClient() {
     setSmartPhase(next);
   }, []);
 
+  const snapshotRef = useRef<StageTrainingSnapshot | null>(null);
+  snapshotRef.current = question ? {
+    question,
+    revealed,
+    result,
+    smartPhase,
+    smartMoveCount,
+    smartMoves,
+  } : null;
+
   const recordResult = useCallback((correct: boolean) => {
     setStats((previous) => {
       const current = previous[statKey] ?? EMPTY_STATS;
@@ -188,8 +213,31 @@ export default function CrossTrainingClient() {
     });
   }, [statKey]);
 
-  const newQuestion = useCallback(() => {
+  const restoreSnapshot = useCallback((snapshot: StageTrainingSnapshot) => {
+    autoAdvance.cancel();
+    requestRef.current++;
+    cubeRef.current.clearHijack();
+    setQuestion(snapshot.question);
+    setLoading(false);
+    setError('');
+    setRevealed(snapshot.revealed);
+    setResult(snapshot.result);
+    setSmartMoveCount(snapshot.smartMoveCount);
+    setSmartMoves(snapshot.smartMoves);
+    setPhase(snapshot.smartPhase);
+    setReviewingHistory(snapshot.revealed || snapshot.result !== null);
+    answeredRef.current = snapshot.result !== null;
+    movesRef.current = [];
+  }, [autoAdvance.cancel, setPhase]);
+
+  const newQuestion = useCallback((rememberCurrent = true) => {
     const request = ++requestRef.current;
+    autoAdvance.cancel();
+    const currentSnapshot = snapshotRef.current;
+    if (rememberCurrent && currentSnapshot) {
+      setPast((items) => [...items, currentSnapshot]);
+      setFuture([]);
+    }
     cubeRef.current.clearHijack();
     setQuestion(null);
     setLoading(true);
@@ -198,6 +246,7 @@ export default function CrossTrainingClient() {
     setResult(null);
     setSmartMoveCount(0);
     setSmartMoves([]);
+    setReviewingHistory(false);
     answeredRef.current = false;
     movesRef.current = [];
     void generateStageQuestion(config, activeStyle)
@@ -214,10 +263,34 @@ export default function CrossTrainingClient() {
         }));
         setLoading(false);
       });
-  }, [activeStyle, config]);
+  }, [activeStyle, autoAdvance.cancel, config]);
+
+  const previousQuestion = useCallback(() => {
+    const previous = past.at(-1);
+    if (!previous) return;
+    const currentSnapshot = snapshotRef.current;
+    if (currentSnapshot) setFuture((items) => [currentSnapshot, ...items]);
+    setPast((items) => items.slice(0, -1));
+    restoreSnapshot(previous);
+  }, [past, restoreSnapshot]);
+
+  const nextQuestion = useCallback(() => {
+    autoAdvance.cancel();
+    const next = future[0];
+    if (!next) {
+      newQuestion();
+      return;
+    }
+    const currentSnapshot = snapshotRef.current;
+    if (currentSnapshot) setPast((items) => [...items, currentSnapshot]);
+    setFuture((items) => items.slice(1));
+    restoreSnapshot(next);
+  }, [autoAdvance.cancel, future, newQuestion, restoreSnapshot]);
 
   useEffect(() => {
-    newQuestion();
+    setPast([]);
+    setFuture([]);
+    newQuestion(false);
     return () => { requestRef.current++; };
   }, [newQuestion]);
 
@@ -229,6 +302,10 @@ export default function CrossTrainingClient() {
 
   // Arm the chosen smart-cube flow whenever a fresh question or connection arrives.
   useEffect(() => {
+    if (reviewingHistory) {
+      cubeRef.current.clearHijack();
+      return;
+    }
     movesRef.current = [];
     answeredRef.current = false;
     setSmartMoveCount(0);
@@ -250,11 +327,11 @@ export default function CrossTrainingClient() {
     cubeRef.current.clearHijack();
     const physical = cubeRef.current.getFaces();
     setPhase(physical && isSolvedFaces(physical) ? 'scrambling' : 'needs-solved');
-  }, [cube.status.connected, mode, question, smartMode, target, setPhase]);
+  }, [cube.status.connected, mode, question, reviewingHistory, smartMode, target, setPhase]);
 
   useEffect(() => {
     moveHandlerRef.current = (move, timestamp) => {
-      if (mode !== 'smart' || !question || !target || answeredRef.current) return;
+      if (reviewingHistory || mode !== 'smart' || !question || !target || answeredRef.current) return;
       const faces = cubeRef.current.getFaces();
       if (!faces) return;
 
@@ -286,9 +363,10 @@ export default function CrossTrainingClient() {
       setResult({ correct, moves: moveCount });
       recordResult(correct);
       setPhase('result');
+      if (correct) autoAdvance.schedule(nextQuestion);
     };
     return () => { moveHandlerRef.current = () => {}; };
-  }, [config, mode, question, recordResult, setPhase, smartMode, target]);
+  }, [autoAdvance, config, mode, nextQuestion, question, recordResult, reviewingHistory, setPhase, smartMode, target]);
 
   const answerGuess = (answer: number) => {
     if (!question || result) return;
@@ -296,6 +374,7 @@ export default function CrossTrainingClient() {
     setResult({ correct });
     setRevealed(true);
     recordResult(correct);
+    if (correct) autoAdvance.schedule(nextQuestion);
   };
 
   const resetStats = () => {
@@ -416,6 +495,7 @@ export default function CrossTrainingClient() {
             onChange={setTransparent}
             label={tr({ zh: '透明', en: 'Transparent' })}
           />
+          <TrainingSettings value={autoAdvance.enabled} onChange={autoAdvance.setEnabled} />
         </div>
 
         <p className="stage-training-note">{preparationNote}</p>
@@ -443,7 +523,7 @@ export default function CrossTrainingClient() {
         {!loading && error && (
           <div className="stage-training-error" role="alert">
             <span>{error}</span>
-            <button type="button" className="stage-training-button" onClick={newQuestion}>{tr({ zh: '重试', en: 'Retry' })}</button>
+            <button type="button" className="stage-training-button" onClick={() => newQuestion()}>{tr({ zh: '重试', en: 'Retry' })}</button>
           </div>
         )}
 
@@ -560,9 +640,16 @@ export default function CrossTrainingClient() {
                   </div>
                 )}
 
-                {(mode === 'plan' ? revealed : !!result) && (
+                {(past.length > 0 || future.length > 0 || (mode === 'plan' ? revealed : !!result)) && (
                   <div className="stage-training-actions">
-                    <button type="button" className="stage-training-primary" onClick={newQuestion}>{tr({ zh: '下一题', en: 'Next question' })}</button>
+                    {past.length > 0 && (
+                      <TrainingNavButton direction="previous" onClick={previousQuestion}>
+                        {tr({ zh: '上一题', en: 'Previous question' })}
+                      </TrainingNavButton>
+                    )}
+                    {(future.length > 0 || (mode === 'plan' ? revealed : !!result)) && (
+                      <TrainingNavButton direction="next" onClick={nextQuestion}>{tr({ zh: '下一题', en: 'Next question' })}</TrainingNavButton>
+                    )}
                   </div>
                 )}
               </div>

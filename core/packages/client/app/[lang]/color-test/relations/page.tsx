@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowRight, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
+import TrainingNavButton from '@/components/TrainingNavButton';
 import { tr } from '@/i18n/tr';
 import {
   CUBE_COLOR_NAMES,
@@ -165,12 +166,11 @@ export default function ColorRelationsPage() {
                     zh: `${CUBE_COLOR_NAMES[pair.first].zh}色和${CUBE_COLOR_NAMES[pair.second].zh}色不是三组对色之一,所以它们相邻。`,
                     en: `${CUBE_COLOR_NAMES[pair.first].en} and ${CUBE_COLOR_NAMES[pair.second].en} are not an opposite pair, so their faces are adjacent.`,
                   })}</span>
-              <button type="button" className="color-quiz-next" onClick={next} autoFocus>
+              <TrainingNavButton direction="next" onClick={next} autoFocus>
                 {index === round.length - 1
                   ? tr({ zh: '查看成绩', en: 'See results' })
                   : tr({ zh: '下一题', en: 'Next pair' })}
-                <ArrowRight size={16} aria-hidden="true" />
-              </button>
+              </TrainingNavButton>
             </div>
           )}
         </section>

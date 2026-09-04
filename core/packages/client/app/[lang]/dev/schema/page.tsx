@@ -60,6 +60,7 @@ const TABLES: Table[] = [
   // ── WCA derived ─────────────────────────────────────────
   { name: 'wca_person_ranks', domain: 'derived', origin: 'snapshot', evolved: [13, 38, 39, 40], purpose: { zh: '每选手每项的世界 / 国家 / 洲际排名,名次和的基础', en: 'Per-person world/country/continent ranks; basis for sum-of-ranks' } },
   { name: 'wca_kinch', domain: 'derived', origin: '0111', purpose: { zh: '每位活跃选手按世界 / 大洲 / 国家纪录计算的 Kinch 综合分', en: 'Per-active-person Kinch scores against world, continental and national records' } },
+  { name: 'wca_pr_streaks', domain: 'derived', origin: '0211', purpose: { zh: '全体选手连续取得个人纪录的最多参赛场数，支持世界 / 大洲 / 国家排名', en: 'Longest competition streak with a personal record for every cuber, ranked worldwide, by continent, or by country' } },
   { name: 'historical_best_ranks', domain: 'derived', origin: '0018', purpose: { zh: '选手生涯最佳名次(按比赛结束口径)', en: 'Career-best rank per (person, event), settled by comp end' } },
   { name: 'historical_ranks_snapshot', domain: 'derived', origin: 'snapshot', purpose: { zh: '历史排名时间序列快照', en: 'Time-series historical rank snapshots' } },
   { name: 'historical_ranks_monthly_snapshot', domain: 'derived', origin: 'snapshot', evolved: [19], purpose: { zh: '月级历史排名快照', en: 'Monthly historical rank snapshots' } },
@@ -165,8 +166,8 @@ const TABLES: Table[] = [
   { name: 'user_blocks', domain: 'account', origin: '0175', purpose: { zh: '单向黑名单；拉黑时同步切断好友关系与待处理申请', en: 'Directed blocks; blocking also removes friendships and pending requests' } },
   { name: 'user_wca_friend_contacts', domain: 'account', origin: '0178', purpose: { zh: '账号私有的 WCA 好友条目；对方未注册时只保存在本人列表，不代表双向好友或已发送申请', en: 'Account-private WCA friend entries; an unregistered person is only saved to the owner\'s list and does not imply a mutual friendship or delivered request' } },
   { name: 'vault_user_keys', domain: 'storage', origin: '0192', purpose: { zh: '资料库公钥与由用户口令加密的私钥；服务端无法解密私钥', en: 'Vault public keys and passphrase-encrypted private keys that the server cannot decrypt' } },
-  { name: 'vault_items', domain: 'storage', origin: '0192', purpose: { zh: '管理员拥有的端到端加密文本、字段和备注密文及乐观并发版本', en: 'Administrator-owned end-to-end encrypted text, fields, notes, and optimistic-concurrency versions' } },
-  { name: 'vault_item_access', domain: 'storage', origin: '0192', purpose: { zh: '每条内容对管理员及指定注册账号分别封装的内容密钥', en: 'Per-item content keys separately wrapped for the administrator and designated registered accounts' } },
+  { name: 'vault_items', domain: 'storage', origin: '0192', purpose: { zh: '会员或管理员拥有的端到端加密文本、字段和备注密文及乐观并发版本', en: 'Member- or administrator-owned end-to-end encrypted text, fields, notes, and optimistic-concurrency versions' } },
+  { name: 'vault_item_access', domain: 'storage', origin: '0192', purpose: { zh: '每条内容对所有者及指定好友分别封装的内容密钥；解除好友时撤销', en: 'Per-item content keys separately wrapped for the owner and selected friends, revoked when friendship ends' } },
   { name: 'auth_identities', domain: 'account', origin: '0064', evolved: [78, 103], purpose: { zh: '账号与外部身份的唯一映射；微信小程序与网站扫码登录共用 UnionID', en: 'Unique account-to-provider identity mappings; Mini Program and website QR sign-in share the Weixin UnionID' } },
   { name: 'auth_codes', domain: 'account', origin: '0064', purpose: { zh: '邮箱与手机登录、绑定使用的短时验证码及核销状态', en: 'Short-lived email and phone verification codes with consumption state' } },
   { name: 'auth_web_session_tickets', domain: 'account', origin: '0139', evolved: [179, 209], purpose: { zh: '小程序、浏览器与原生 App 跨运行时换取会话的短时单次票据；只存密钥 SHA-256，移动端另绑 PKCE challenge', en: 'Short-lived single-use cross-runtime session tickets for Mini Program, browser, and native App handoffs; hashes only, with mobile tickets additionally bound to a PKCE challenge' } },
@@ -458,6 +459,9 @@ const TABLES: Table[] = [
     { name: 'actor_key, actor_name' }, { name: 'title, excerpt, link' }, { name: 'created_at, read_at' },
   ] },
   { name: 'nav_sites', domain: 'community', origin: '0001', evolved: [2, 170], purpose: { zh: '/site 网址导航(group_id 避 SQL 关键字)', en: 'The /site link directory' } },
+  { name: 'home_card_positions', domain: 'community', origin: '0213', purpose: { zh: '管理员定义的首页各分组卡片顺序', en: 'Admin-defined homepage card order within each directory group' }, cols: [
+    { name: 'group_id + item_id (PK)' }, { name: 'position' }, { name: 'updated_at' },
+  ] },
   { name: 'teacher_directory_entries', domain: 'community', origin: '0126', purpose: { zh: '/teachers 魔方老师与培训机构目录;登录用户维护自己的资料,管理员维护全部资料', en: 'The /teachers cube teacher and training-school directory; signed-in users maintain their own profiles and admins maintain all profiles' }, cols: [
     { name: 'kind', note: { zh: 'teacher / organization', en: 'teacher / organization' } },
     { name: 'name_zh / name_en, location_zh / location_en, description_zh / description_en' },
@@ -698,7 +702,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 189, slug: 'drive_shares', desc: { zh: '网盘文件增加可撤销的公开下载链接；移入回收站时立即停止分享。', en: 'Add revocable public download links for Drive files and revoke them immediately when moved to Trash.' } },
   { n: 190, slug: 'sq1_ep_complete_layer_alignment', desc: { zh: '补齐 5 条 SQ1 EP 公式末尾缺失的 U/D 层对齐，并在遇到非预期数据状态时整笔回滚。', en: 'Complete the missing final U/D alignment in five SQ1 EP algorithms and roll back the migration on any unexpected data state.' } },
   { n: 191, slug: 'sq1_ep_physical_setups', desc: { zh: '替换 7 条切片路径不合法的 SQ1 EP 公式及其 setup，保证所有 EP 缩略图均从正方形态绘制。', en: 'Replace seven SQ1 EP algorithms with physically invalid slice paths and their setups, ensuring every EP thumbnail starts from cube shape.' } },
-  { n: 192, slug: 'private_vault', desc: { zh: '新增端到端加密的私密资料库；管理员可把密文只授权给指定的已注册账号只读查看。', en: 'Add an end-to-end encrypted private vault whose administrator can grant read-only ciphertext access to designated registered accounts.' } },
+  { n: 192, slug: 'private_vault', desc: { zh: '新增端到端加密的私密资料库；会员和管理员可把单条密文只读分享给指定好友。', en: 'Add an end-to-end encrypted private vault whose members and administrators can share individual ciphertext items read-only with selected friends.' } },
   { n: 193, slug: 'alg_catalog_positions', desc: { zh: '新增公式库首页卡片顺序，包含十字和 LSLL 等虚拟入口。', en: 'Add alg catalog card ordering, including virtual entries such as Cross and LSLL.' } },
   { n: 194, slug: 'account_location', desc: { zh: '账号基本资料增加省份和城市，并约束国家、省份、城市的层级关系。', en: 'Add state or province and city to private account profiles with country-region-city hierarchy constraints.' } },
   { n: 195, slug: 'battle_room_player_auth', desc: { zh: '联机对战为每位玩家增加只存摘要的私有 capability，所有心跳、写操作和视频凭证都同时验证 pid 与 capability。', en: 'Give every online-battle player a private hash-only capability and require pid plus capability for heartbeats, mutations, and video credentials.' } },
@@ -717,7 +721,9 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 208, slug: 'app_boot_diagnostics', desc: { zh: '保存脱敏的页面启动错误，管理员可按用户看到的诊断编号查询，并自动清理 90 天前数据。', en: 'Store redacted page-startup errors searchable by the user-visible diagnostic code and prune data older than 90 days.' } },
   { n: 209, slug: 'wechat_browser_login', desc: { zh: '扩展单次会话票据，支持 iPhone 浏览器发起、微信小程序确认后原子换取网站登录态。', en: 'Extend single-use session tickets so an iPhone browser can start sign-in and atomically exchange it after Mini Program approval.' } },
   { n: 210, slug: 'membership_listing_visibility', desc: { zh: '会员默认展示在首页会员名单中，并可在个人资料中主动关闭。', en: 'Show active members on the homepage by default with a profile opt-out.' } },
+  { n: 211, slug: 'wca_pr_streaks', desc: { zh: '新增全体选手连续取得个人纪录的最多参赛场数表，供世界 / 大洲 / 国家分页排名。', en: 'Add longest personal-record competition streaks for every cuber, supporting paginated worldwide, continental, and national rankings.' } },
   { n: 212, slug: 'membership_vip_id', desc: { zh: '为每位会员分配唯一且稳定的 VIP 编号，撤销权益时保留编号。', en: 'Assign every member a unique stable VIP ID and retain it when entitlement is revoked.' } },
+  { n: 213, slug: 'home_card_positions', desc: { zh: '保存管理员设置的首页各分组卡片顺序。', en: 'Store admin-defined homepage card order within each directory group.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

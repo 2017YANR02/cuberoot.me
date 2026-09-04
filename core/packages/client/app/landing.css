@@ -272,6 +272,9 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     overflow: hidden;
     box-sizing: border-box;
 }
+.landing-page .sortable-card > .landing-card {
+    height: 100%;
+}
 .landing-page .landing-card:hover {
     border-color: var(--accent);
     transform: translateY(-1px);

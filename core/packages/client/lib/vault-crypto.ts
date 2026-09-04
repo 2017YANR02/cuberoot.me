@@ -4,6 +4,8 @@ const RECOVERY_KEY_AAD = new TextEncoder().encode('CubeRoot vault recovery key v
 const ENTRY_AAD = new TextEncoder().encode('CubeRoot vault entry v1');
 const RECOVERY_CODE_PREFIX = 'CRV1-';
 
+export const isValidVaultPassphrase = (value: string): boolean => /^[0-9]{6}$/.test(value);
+
 export interface VaultField {
   id: string;
   label: string;

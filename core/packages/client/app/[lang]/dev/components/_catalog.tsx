@@ -24,6 +24,8 @@ import {
 import { tr } from '@/i18n/tr';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
+import TrainingNavButton from '@/components/TrainingNavButton';
+import TrainingSettings from '@/components/TrainingSettings';
 import AlgViewModeToggle, { type AlgViewMode } from '@/components/AlgViewModeToggle';
 import { SortArrow } from '@/components/SortArrow';
 import { ClearButton } from '@/components/ClearButton';
@@ -203,6 +205,20 @@ function BoolToggleDemo() {
     <div className="cg-row">
       <BoolToggle value={on} onChange={setOn} label={tr({ zh: '废止项', en: 'Cancelled' })} />
       <BoolToggle value={off} onChange={setOff} label={tr({ zh: '未登领奖台', en: 'No podium' })} />
+    </div>
+  );
+}
+
+function TrainingSettingsDemo() {
+  const [autoAdvance, setAutoAdvance] = useState(false);
+  return <TrainingSettings value={autoAdvance} onChange={setAutoAdvance} />;
+}
+
+function TrainingNavButtonDemo() {
+  return (
+    <div className="cg-row">
+      <TrainingNavButton direction="previous">{tr({ zh: '上一题', en: 'Previous question' })}</TrainingNavButton>
+      <TrainingNavButton direction="next">{tr({ zh: '下一题', en: 'Next question' })}</TrainingNavButton>
     </div>
   );
 }
@@ -976,6 +992,24 @@ export const CATALOG: ComponentEntry[] = [
     Demo: BoolToggleDemo,
   },
   {
+    name: 'TrainingSettings',
+    import: "import TrainingSettings, { useTrainingAutoAdvance } from '@/components/TrainingSettings';",
+    category: 'toggle',
+    zh: '答题训练页共用的齿轮设置：保存“答对后自动进入下一题”偏好，默认关闭。',
+    en: 'Shared training settings gear that persists the auto-next-after-correct preference, off by default.',
+    usage: 'const autoAdvance = useTrainingAutoAdvance();\n<TrainingSettings value={autoAdvance.enabled} onChange={autoAdvance.setEnabled} />',
+    Demo: TrainingSettingsDemo,
+  },
+  {
+    name: 'TrainingNavButton',
+    import: "import TrainingNavButton from '@/components/TrainingNavButton';",
+    category: 'button',
+    zh: '答题训练页共用的上一题 / 下一题按钮，下一题使用白色圆角样式。',
+    en: 'Shared previous / next buttons for training pages, with the pill-shaped primary next action.',
+    usage: '<TrainingNavButton direction="next">下一题</TrainingNavButton>',
+    Demo: TrainingNavButtonDemo,
+  },
+  {
     name: 'AlgViewModeToggle',
     import: "import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';",
     category: 'toggle',
@@ -1004,6 +1038,15 @@ export const CATALOG: ComponentEntry[] = [
     usage: "{value && <ClearButton onClick={() => setValue('')} variant=\"inline\" />}",
     Demo: ClearButtonDemo,
     note: { zh: '别再写一份局部 .xxx-clear CSS,全站统一走这个。', en: 'Don’t write another local .xxx-clear CSS — everything routes through this.' },
+  },
+  {
+    name: 'PasswordInput',
+    import: "import { PasswordInput } from '@/components/PasswordInput';",
+    category: 'input',
+    zh: '全站密码输入框，内置显示或隐藏密码的眼睛按钮。',
+    en: 'Canonical password input with a built-in show or hide password button.',
+    usage: '<PasswordInput value={password} onChange={setPassword} autoComplete="current-password" />',
+    note: { zh: '所有密码输入必须复用它，禁止页面内手写 type="password"。', en: 'Use this for every password field; do not add page-local type="password" inputs.' },
   },
   {
     name: 'DateInput',
@@ -1981,6 +2024,14 @@ export const CATALOG: ComponentEntry[] = [
   },
 
   // ── 更多:数据驱动 / 需上下文 ───────────────────────────────────────────
+  {
+    name: 'SortableCard',
+    import: "import SortableCard from '@/components/SortableCard';",
+    category: 'more',
+    zh: `dnd-kit 卡片排序包装，管理员模式显示统一拖动手柄，普通模式保留原卡片。`,
+    en: `Shared dnd-kit card wrapper with the standard admin drag handle and a passive non-admin mode.`,
+    note: { zh: `需放在 DndContext 与 SortableContext 中。`, en: `Must be nested inside DndContext and SortableContext.` },
+  },
   {
     name: 'AlgCategoryView',
     import: "import AlgCategoryView from '@/components/AlgCategoryView';",

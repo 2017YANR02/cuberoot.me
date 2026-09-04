@@ -1,4 +1,4 @@
-// NOTE: 最长连续个人纪录比赛记录
+// NOTE: 连续取得个人纪录的最多参赛场数
 import { Statistic } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 import { calculatePersonalRecordStreak } from '@cuberoot/shared/pr-streak';
@@ -7,7 +7,7 @@ export class LongestStreakOfPersonalRecords extends Statistic {
   constructor() {
     super();
     this.title = 'Longest streak of competitions with a personal record done';
-    this.titleZh = '最长连续个人纪录参赛记录';
+    this.titleZh = '连续取得个人纪录的最多参赛场数';
     this.tableHeader = {
       'Competitions': 'right',
       'Person': 'left',
