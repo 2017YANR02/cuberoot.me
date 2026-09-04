@@ -75,6 +75,7 @@ import { platformQrRoutes } from './routes/platform_qr.js';
 import { smsReceiptRoutes } from './routes/sms_receipt.js';
 import { documentRoutes } from './routes/documents.js';
 import { driveRoutes } from './routes/drive.js';
+import { musicRoutes } from './routes/music.js';
 import { collaborativeDocuments } from './documents/realtime.js';
 import { smartCubeRelay } from './smart_cube/relay.js';
 import { calcLiveRelay } from './calc/live_relay.js';
@@ -106,7 +107,7 @@ app.onError((err, c) => {
   // NOTE: 根据错误消息推断 HTTP 状态码
   let status: 400 | 401 | 403 | 429 | 500 = 500;
   if (msg.includes('Authentication required') || msg.includes('token')) status = 401;
-  else if (msg.includes('Admin access required') || msg.includes('Drive access required') || msg.includes('Cannot edit') || msg.includes('Cannot delete') || msg.includes('suspended')) status = 403;
+  else if (msg.includes('Admin access required') || msg.includes('Drive access required') || msg.includes('Music membership required') || msg.includes('Cannot edit') || msg.includes('Cannot delete') || msg.includes('suspended')) status = 403;
   else if (msg.includes('Rate limit')) status = 429;
   else if (msg.includes('Validation') || msg.includes('No valid')) status = 400;
   console.error(`[${status}] ${msg} ${c.req.method} ${c.req.path}`);
@@ -119,6 +120,7 @@ app.onError((err, c) => {
 app.route('/v1', authRoutes);
 app.route('/v1', accountAuthRoutes);
 app.route('/v1', driveRoutes);
+app.route('/v1', musicRoutes);
 app.route('/v1', progressRoutes);
 app.route('/v1', healthRoutes);
 app.route('/v1', reconRoutes);
