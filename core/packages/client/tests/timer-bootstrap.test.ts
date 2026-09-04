@@ -301,13 +301,25 @@ describe('app bootstrap early guard', () => {
     }));
     vi.advanceTimersByTime(0);
 
-    const failure = JSON.parse(String(sendBeacon.mock.calls[1]?.[1])) as Record<string, unknown>;
+    const diagnostic = JSON.parse(String(sendBeacon.mock.calls[1]?.[1])) as Record<string, unknown>;
+    expect(sendBeacon.mock.calls[1]?.[0]).toMatch(/\/v1\/app\/boot-diagnostics$/);
+    expect(diagnostic).toMatchObject({
+      version: 1,
+      code: window.__timerBootDiagnostic?.code,
+      kind: 'chunk',
+      path: '/timer',
+    });
+    expect(diagnostic.eventId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(diagnostic).not.toHaveProperty('userAgent');
+
+    const failure = JSON.parse(String(sendBeacon.mock.calls[2]?.[1])) as Record<string, unknown>;
+    expect(sendBeacon.mock.calls[2]?.[0]).toMatch(/\/v1\/timer\/boot-events$/);
     expect(failure).toMatchObject({
       bootId: attempt.bootId,
       outcome: 'failure',
       failureKind: 'chunk',
     });
-    expect(sendBeacon).toHaveBeenCalledTimes(2);
+    expect(sendBeacon).toHaveBeenCalledTimes(3);
   });
 
   it('shows the outdated WeChat guidance before React hydrates', () => {
@@ -372,6 +384,14 @@ describe('app bootstrap early guard', () => {
     expect(alert?.textContent).toContain(APP_BOOT_COPY.outdatedWechatMessage.zh);
     expect(alert?.querySelector('code')?.textContent).toMatch(/^APP-CHUNK-/);
     expect(window.__appBootDiagnostic?.kind).toBe('chunk');
+    const diagnosticCall = sendBeacon.mock.calls.find(([url]) => String(url).endsWith('/v1/app/boot-diagnostics'));
+    const diagnostic = JSON.parse(String(diagnosticCall?.[1])) as Record<string, unknown>;
+    expect(diagnostic).toMatchObject({
+      code: alert?.querySelector('code')?.textContent,
+      kind: 'chunk',
+      path: '/zh/paint',
+    });
+    expect(JSON.stringify(diagnostic)).not.toContain('?');
   });
 
   it('stops quietly after a normal non-timer page load', () => {

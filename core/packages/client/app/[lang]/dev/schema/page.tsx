@@ -346,6 +346,11 @@ const TABLES: Table[] = [
     { name: 'engine_family / major, os_family / major, container, support_status', note: { zh: '仅粗粒度分桶，不保存完整 UA、IP、错误正文或账号', en: 'Coarse buckets only; no raw UA, IP, error text, or account' } },
     { name: 'attempted_at, updated_at' },
   ] },
+  { name: 'app_boot_diagnostics', domain: 'studio', origin: '0208', purpose: { zh: '按诊断编号保存脱敏的页面启动错误，供管理员排障，保留 90 天', en: 'Redacted page-startup errors searchable by diagnostic code for 90 days' }, cols: [
+    { name: 'event_id UUID (PK), diagnostic_code, kind, path' },
+    { name: 'error_name, error_message, evidence JSONB', note: { zh: '移除查询参数、令牌与原始 URL', en: 'Query strings, tokens, and raw URLs are removed' } },
+    { name: 'device / browser / os coarse buckets, received_at', note: { zh: '不保存完整 UA、IP 或账号', en: 'No raw UA, IP, or account identity' } },
+  ] },
   { name: 'timer_sessions', domain: 'studio', origin: 'snapshot', purpose: { zh: '计时器分组 / 分段', en: 'Timer sessions / groups' } },
   { name: 'train_results', domain: 'studio', origin: 'snapshot', purpose: { zh: '公式计时训练成绩', en: 'Trainer (timed-alg) results' } },
   { name: 'collaborative_documents', domain: 'studio', origin: '0122', evolved: [123], purpose: { zh: '通用协作文档与在线表格：标题、类型、所有者及可合并的 Yjs 状态', en: 'Collaborative docs and spreadsheets: title, kind, owner, and mergeable Yjs state' }, cols: [
@@ -707,6 +712,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 205, slug: 'music_tracks', desc: { zh: '新增会员音乐上传、LRC 歌词、封面和管理员发布审核表，文件实体保存在独立音乐目录。', en: 'Add member music uploads, LRC lyrics, covers, and administrator publishing review with files stored in a dedicated music directory.' } },
   { n: 206, slug: 'account_full_name', desc: { zh: '账号增加私密姓名；公开用户名仍独立设置。', en: 'Add a private account name while keeping the public username separate.' } },
   { n: 207, slug: 'music_static_overrides', desc: { zh: '保存静态曲库的管理员信息覆盖与可恢复下架状态。', en: 'Store administrator metadata overrides and reversible removals for the static music library.' } },
+  { n: 208, slug: 'app_boot_diagnostics', desc: { zh: '保存脱敏的页面启动错误，管理员可按用户看到的诊断编号查询，并自动清理 90 天前数据。', en: 'Store redacted page-startup errors searchable by the user-visible diagnostic code and prune data older than 90 days.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

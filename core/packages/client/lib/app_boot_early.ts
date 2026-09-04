@@ -10,6 +10,7 @@ export const MIN_SUPPORTED_CHROMIUM_MAJOR = 111;
 export const MIN_SUPPORTED_SAFARI_MAJOR = 16;
 export const MIN_SUPPORTED_SAFARI_MINOR = 4;
 export const TIMER_BOOT_TELEMETRY_PATH = '/v1/timer/boot-events';
+export const APP_BOOT_DIAGNOSTIC_PATH = '/v1/app/boot-diagnostics';
 const APP_BOOT_GRACE_MS = 5_000;
 
 const MINIMUM_VERSION_COPY = {
@@ -41,6 +42,57 @@ export interface TimerBootTelemetryReporter {
   bootId: string;
   outcome: TimerBootTelemetryOutcome;
   report: (outcome: TimerBootTelemetryOutcome, failureKind?: TimerBootTelemetryFailureKind) => void;
+}
+
+export interface BootDiagnosticReport {
+  code: string;
+  kind: TimerBootTelemetryFailureKind;
+  path: string;
+  online: boolean | null;
+  errorName: string;
+  errorMessage: string;
+  evidence: ReadonlyArray<{
+    source: 'error' | 'unhandledrejection' | 'import' | 'runtime';
+    name: string;
+    message: string;
+    url?: string;
+  }>;
+}
+
+function diagnosticEventId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+    const random = Math.floor(Math.random() * 16);
+    return (char === 'x' ? random : (random & 0x3) | 0x8).toString(16);
+  });
+}
+
+export function reportAppBootDiagnostic(report: BootDiagnosticReport): void {
+  if (typeof navigator === 'undefined') return;
+  const url = `${BROWSER_API_ORIGIN}${APP_BOOT_DIAGNOSTIC_PATH}`;
+  const payload = JSON.stringify({
+    version: 1,
+    eventId: diagnosticEventId(),
+    code: report.code,
+    kind: report.kind,
+    path: report.path,
+    online: report.online,
+    errorName: report.errorName,
+    errorMessage: report.errorMessage,
+    evidence: report.evidence,
+  });
+  try {
+    if (navigator.sendBeacon?.(url, payload)) return;
+  } catch {
+    // Fall through to keepalive fetch.
+  }
+  if (typeof fetch !== 'function') return;
+  void fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+    body: payload,
+    keepalive: true,
+  }).catch(() => {});
 }
 
 declare global {
@@ -159,6 +211,7 @@ export function isNonCriticalBootResourceUrl(url: string | undefined): boolean {
 
 const EARLY_COPY_JSON = JSON.stringify({ app: APP_BOOT_COPY, timer: TIMER_BOOT_COPY });
 const TIMER_BOOT_TELEMETRY_URL_JSON = JSON.stringify(`${BROWSER_API_ORIGIN}${TIMER_BOOT_TELEMETRY_PATH}`);
+const APP_BOOT_DIAGNOSTIC_URL_JSON = JSON.stringify(`${BROWSER_API_ORIGIN}${APP_BOOT_DIAGNOSTIC_PATH}`);
 
 /**
  * Runs from the server HTML before React hydration. Keep this ES5-shaped: its
@@ -225,6 +278,28 @@ export const APP_BOOT_EARLY_SCRIPT = `(function () {
     try { window.__timerBootTelemetry = reporter; } catch (_) {}
     reporter.report('attempt');
     return reporter;
+  }
+  function reportBootDiagnostic(report) {
+    var payload = JSON.stringify({
+      version: 1,
+      eventId: createBootId(),
+      code: report.code,
+      kind: report.kind,
+      path: report.path,
+      online: report.online,
+      errorName: report.errorName,
+      errorMessage: report.errorMessage,
+      evidence: report.evidence
+    });
+    try {
+      if (navigator.sendBeacon && navigator.sendBeacon(${APP_BOOT_DIAGNOSTIC_URL_JSON}, payload)) return;
+    } catch (_) {}
+    try {
+      var request = new XMLHttpRequest();
+      request.open('POST', ${APP_BOOT_DIAGNOSTIC_URL_JSON}, true);
+      request.setRequestHeader('Content-Type', 'text/plain;charset=UTF-8');
+      request.send(payload);
+    } catch (_) {}
   }
   try { window.__startTimerBootTelemetry = startTimerBootTelemetry; } catch (_) {}
   if (isTimer) startTimerBootTelemetry();
@@ -412,6 +487,7 @@ export const APP_BOOT_EARLY_SCRIPT = `(function () {
       try { window.__timerBootDiagnostic = report; } catch (_) {}
     }
     try { window.sessionStorage.setItem(isTimer ? '${STORAGE_KEY}' : '${APP_STORAGE_KEY}', JSON.stringify(report)); } catch (_) {}
+    reportBootDiagnostic(report);
     if (window.console && console.error) console.error(isTimer ? '[timer-bootstrap]' : '[app-bootstrap]', report);
     if (isTimer && window.__timerBootTelemetry) window.__timerBootTelemetry.report('failure', kind);
 
