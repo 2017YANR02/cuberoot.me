@@ -91,7 +91,7 @@ export default function GalleryPage() {
         ) : failed ? (
           <div className="gallery-state" role="alert">
             <p>{tr({ zh: '图库暂时无法加载。', en: 'The gallery could not be loaded.' })}</p>
-            <button type="button" onClick={() => void loadPhotos()}>{tr({ zh: '重试', en: 'Try again' })}</button>
+            <button className="gallery-retry" type="button" onClick={() => void loadPhotos()}>{tr({ zh: '重试', en: 'Try again' })}</button>
           </div>
         ) : photos.length === 0 ? (
           <p className="gallery-state">{tr({ zh: '还没有会员公开照片。', en: 'No members have shared public photos yet.' })}</p>

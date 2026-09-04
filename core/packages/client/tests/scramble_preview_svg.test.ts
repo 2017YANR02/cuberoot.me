@@ -15,6 +15,16 @@ describe('shared scramble preview SVG renderer', () => {
     });
   });
 
+  it('solves the tutorial four-center case in two three-center cycles', () => {
+    const setup = "D' B' D B L' R' L R";
+    expect(ivyApplyStandard(setup).centers.filter((center, index) => center !== index)).toHaveLength(4);
+    expect(ivyApplyStandard(`${setup} R' L' R L`).centers.filter((center, index) => center !== index)).toHaveLength(3);
+    expect(ivyApplyStandard(`${setup} R' L' R L B' D' B D`)).toEqual({
+      centers: [0, 1, 2, 3, 4, 5],
+      corners: [0, 0, 0, 0],
+    });
+  });
+
   it('renders Ivy through the same registry used by web thumbnails and PDFs', () => {
     expect(eventHasScramblePreview('ivy')).toBe(true);
     const svg = renderScramblePreviewSvg({ event: 'ivy', scramble: "R L'" });
