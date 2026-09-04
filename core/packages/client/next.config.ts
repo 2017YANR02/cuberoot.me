@@ -296,7 +296,7 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       // Back-compat for the earlier Next route shape /tutorial/p/<slug>.
-      { source: "/tutorial/p/:slug", destination: "/tutorial/:slug", permanent: true },
+      { source: "/tutorial/p/:slug", destination: "/tutorial-legacy/:slug", permanent: true },
       { source: "/analyze", destination: "/scramble/analyzer", permanent: true },
       { source: "/average", destination: "/calc?tab=average", permanent: true },
       { source: "/scramble-stats", destination: "/scramble/stats", permanent: true },

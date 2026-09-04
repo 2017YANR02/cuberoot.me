@@ -59,7 +59,7 @@ export default function TutorialPostClient() {
     <div className="tutorial-root">
       <div className="tutorial-post-header">
         <div className="tutorial-breadcrumb">
-          <Link href="/tutorial" className="tutorial-breadcrumb-back">
+          <Link href="/tutorial-legacy" className="tutorial-breadcrumb-back">
             {tr({ zh: '公式教程', en: 'Algorithms' })}
           </Link>
           <span className="tutorial-breadcrumb-sep">/</span>

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * SpeffzSchemeView — /tutorial/speffz-letter-scheme 的「精美版」:
+ * SpeffzSchemeView — /tutorial-legacy/speffz-letter-scheme 的「精美版」:
  * 手绘 SVG 复刻原 docx 的彩色 Speffz 展开图 + 完整编码规则文字(2 阶到 NxN)。
  * 字母计算在 _lib/speffz.ts(已逐格核对原 docx 全部展开表)。
  */
