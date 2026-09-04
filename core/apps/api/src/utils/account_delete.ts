@@ -195,6 +195,7 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   teaching_conversation_messages: '家校沟通消息不可变保留,作者账号随删除置空且保留身份快照',
   memberships: '会员权益状态:留着,同一个人重新绑 WCA 回来还认',
   membership_orders: '交易凭证,财务对账要;只有归属键,没有姓名邮箱',
+  music_tracks: '曲库内容独立保留,上传账号随删除置空',
   contributors: '站方手录的致谢名单,单独处理(只把 wca_id 置 NULL,名字留着)',
   sponsors: '赞助名录保留,认领账号注销时解除关联',
   sponsor_claims: '申请随认领账号级联删除,审核与解除账号删除只置空',
