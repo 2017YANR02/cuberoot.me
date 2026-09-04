@@ -7,11 +7,90 @@ import AlgPuzzlePicker, {
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import Link from '@/components/AppLink';
 import { T, tr } from '@/i18n/tr';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Check, Play } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
+import { useState } from 'react';
 import '../alg/alg.css';
 import './tutorial.css';
+
+const FOUR_CENTER_SETUP = "D' B' D B L' R' L R";
+const FOUR_CENTER_MOVES = ["R'", "L'", 'R', 'L', "B'", "D'", 'B', 'D'] as const;
+
+function FourCenterGuide() {
+  const [step, setStep] = useState<number | null>(null);
+  const alg = step === null ? FOUR_CENTER_MOVES.join(' ') : FOUR_CENTER_MOVES[step];
+  const setup = step === null
+    ? FOUR_CENTER_SETUP
+    : [FOUR_CENTER_SETUP, ...FOUR_CENTER_MOVES.slice(0, step)].join(' ');
+
+  return (
+    <section className="tutorial-four-center">
+      <h2><T zh="四心法" en="Four-center method" /></h2>
+      <div className="tutorial-four-center-progress" aria-hidden="true">
+        <strong>4</strong><ArrowRight /><strong>3</strong><ArrowRight /><Check />
+      </div>
+
+      <div className="tutorial-four-center-player">
+        <AlgPlayer
+          puzzle="ivy"
+          set=""
+          setup={setup}
+          alg={alg}
+          autoPlay
+          loop
+          controlMode="replay"
+          moveDurationMs={700}
+          fillPane
+        />
+      </div>
+
+      <div className="tutorial-four-center-actions">
+        <button
+          type="button"
+          className={`tutorial-four-center-play${step === null ? ' is-active' : ''}`}
+          aria-pressed={step === null}
+          aria-label={tr({ zh: '连续播放全部八步', en: 'Play all eight moves' })}
+          title={tr({ zh: '连续播放全部八步', en: 'Play all eight moves' })}
+          onClick={() => setStep(null)}
+        >
+          <Play size={17} fill="currentColor" aria-hidden="true" />
+          <span>1–8</span>
+        </button>
+
+        <div className="tutorial-four-center-sequence">
+          {[FOUR_CENTER_MOVES.slice(0, 4), FOUR_CENTER_MOVES.slice(4)].map((cycle, cycleIndex) => (
+            <div className="tutorial-four-center-cycle" key={cycleIndex}>
+              {cycle.map((move, index) => {
+                const moveIndex = cycleIndex * 4 + index;
+                return (
+                  <button
+                    type="button"
+                    className={`tutorial-four-center-step${step === moveIndex ? ' is-active' : ''}`}
+                    aria-pressed={step === moveIndex}
+                    aria-label={tr({
+                      zh: `第 ${moveIndex + 1} 步：${move}`,
+                      en: `Step ${moveIndex + 1}: ${move}`,
+                    })}
+                    title={tr({
+                      zh: `第 ${moveIndex + 1} 步：${move}`,
+                      en: `Step ${moveIndex + 1}: ${move}`,
+                    })}
+                    onClick={() => setStep(moveIndex)}
+                    key={`${move}-${moveIndex}`}
+                  >
+                    <span>{moveIndex + 1}</span>
+                    <code>{move}</code>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function IvyTutorial() {
   return (
@@ -99,21 +178,7 @@ function IvyTutorial() {
         </div>
       </section>
 
-      <section>
-        <h2><T zh="“四心法”是什么？" en="What is the four-center case?" /></h2>
-        <p>
-          <T
-            zh="公开教程里更常见的叫法是“四心换”：最后四个侧面中心都不在正确位置。它不是一套独立解法，而是收尾时的一种情形。先做一次上面的三心循环，把它转成只剩三个中心错位，再重新拿方，用顺换或逆换完成。"
-            en="Public tutorials more often call this a four-center swap: all four side centers are misplaced. It is a last-step case, not a separate method. Perform one three-center cycle to reduce it to three misplaced centers, then reorient and finish with the forward or inverse cycle."
-          />
-        </p>
-        <p className="tutorial-note">
-          <T
-            zh="常见识别法：第二面快完成时，看最后一个单角上的两种非顶色，再看相邻的两个中心色。四种颜色互不相同通常就是四心换；出现三种颜色通常是三心换。"
-            en="A common recognition check: near the end of the second face, compare the two non-top colors on the remaining single corner with the two adjacent centers. Four distinct colors usually indicate the four-center case; three colors usually indicate a three-center cycle."
-          />
-        </p>
-      </section>
+      <FourCenterGuide />
 
       <section>
         <h2><T zh="进阶：邻心法" en="Advanced: neighboring-center method" /></h2>
