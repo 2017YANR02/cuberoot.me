@@ -109,10 +109,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'org': {
-    title: { zh: '教学管理', en: 'Teaching' },
+    title: { zh: '企业信息', en: 'Enterprise' },
     description: {
-      zh: '在 CubeRoot 主站统一管理机构、学员、校区、班级和训练任务。',
-      en: 'Manage organizations, students, campuses, classes, and training assignments on CubeRoot.',
+      zh: '登录 CubeRoot 创建企业信息，并管理机构、学员、校区、班级和训练任务。',
+      en: 'Sign in to create an enterprise profile and manage its organization, students, campuses, classes, and training assignments.',
     },
   },
   'org/[orgSlug]': { title: { zh: '机构概览', en: 'Organization Overview' } },
