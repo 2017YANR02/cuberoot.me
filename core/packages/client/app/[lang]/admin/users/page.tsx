@@ -225,7 +225,7 @@ export default function AdminUsersPage() {
   const changeAdminRole = async (record: AdminUserRecord, nextIsAdmin: boolean) => {
     const name = record.displayName || `UID ${record.id}`;
     const confirmed = window.confirm(nextIsAdmin
-      ? t(`确认将“${name}”设为管理员吗？管理员可以查看用户资料并使用所有后台工具。`, `Make “${name}” an administrator? Administrators can view user data and use all administration tools.`)
+      ? t(`确认将“${name}”设为管理员吗？管理员可以查看用户资料并使用后台工具，但不能管理其他管理员。`, `Make “${name}” an administrator? Administrators can view user data and use administration tools, but cannot manage other administrators.`)
       : t(`确认取消“${name}”的管理员权限吗？更改会立即生效。`, `Remove administrator access from “${name}”? The change takes effect immediately.`));
     if (!confirmed) return;
 
@@ -457,8 +457,8 @@ export default function AdminUsersPage() {
                       </td>
                       <td>
                         <div className="admin-users-role">
-                          <span>{record.isRootAdmin ? t('站主管理员', 'Site owner') : record.isAdmin ? t('管理员', 'Administrator') : t('普通用户', 'User')}</span>
-                          {!record.isRootAdmin && (
+                          <span>{record.isRootAdmin ? t('超级管理员', 'Super administrator') : record.isAdmin ? t('管理员', 'Administrator') : t('普通用户', 'User')}</span>
+                          {data.canManageAdmins && !record.isRootAdmin && (
                             <button
                               className="admin-users-page-button admin-users-role-button"
                               type="button"
