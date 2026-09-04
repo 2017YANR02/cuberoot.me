@@ -4,7 +4,8 @@
     "cube555-daemon/**",
     "**/pkg/*_bg.wasm.d.ts",
     "scripts/resolve-workspace-path.d.mts",
-    "{packages/miniprogram,apps/miniprogram}/scripts/release-check-lib.d.mts"
+    "{packages/miniprogram,apps/miniprogram}/scripts/release-check-lib.d.mts",
+    "packages/client/app/[lang]/timer/_lib/scramble/invert.ts"
   ],
   "ignoreBinaries": ["netstat", "wasm-pack", "pwsh", "xcrun"],
   "ignoreDependencies": ["tsx"],
