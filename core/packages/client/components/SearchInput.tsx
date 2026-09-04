@@ -22,6 +22,8 @@ interface SearchInputProps {
   clearable?: boolean;
   type?: 'text' | 'search';
   autoFocus?: boolean;
+  onFocus?: () => void;
+  maxLength?: number;
   name?: string;
   // 代码 / 记号类输入(打乱、alg)常要关掉拼写检查 / 自动补全 / 首字母大写。
   spellCheck?: boolean;
@@ -32,7 +34,7 @@ interface SearchInputProps {
 export function SearchInput({
   value, onChange, placeholder, ariaLabel, className, inputClassName,
   clearable = true, type = 'text', autoFocus, name,
-  spellCheck, autoComplete, autoCapitalize,
+  onFocus, maxLength, spellCheck, autoComplete, autoCapitalize,
 }: SearchInputProps) {
   // 本地显示态:合成途中外部 value 的回灌不覆盖它(否则打断 IME)。
   const [text, setText] = useState(value);
@@ -49,6 +51,8 @@ export function SearchInput({
         name={name}
         value={text}
         autoFocus={autoFocus}
+        onFocus={onFocus}
+        maxLength={maxLength}
         onChange={(e) => commit(e.target.value)}
         onCompositionStart={() => { composing.current = true; }}
         onCompositionEnd={(e) => { composing.current = false; commit(e.currentTarget.value); }}

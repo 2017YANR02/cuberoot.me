@@ -5,6 +5,8 @@
   max-width: 320px;
 }
 
+.cuber-search-input-wrap { width: 100%; }
+
 @media (max-width: 768px) {
   .cuber-search { min-width: 100%; max-width: none; }
 }

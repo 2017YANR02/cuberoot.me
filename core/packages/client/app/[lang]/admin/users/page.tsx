@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState, useQueryStates } from 'nuqs';
 import { ChevronLeft, ChevronRight, Loader2, Monitor, Search, Smartphone, Tablet } from 'lucide-react';
 import AppLink from '@/components/AppLink';
-import { ClearButton } from '@/components/ClearButton';
 import { CompactSelect } from '@/components/CompactSelect';
 import { DailyActivityChart, type DailyActivityPoint } from '@/components/DailyActivityChart';
 import { DateRangeInput } from '@/components/DateRangeInput';
 import { Flag } from '@/components/Flag';
+import { SearchInput } from '@/components/SearchInput';
 import SortArrow from '@/components/SortArrow';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
@@ -375,10 +375,12 @@ export default function AdminUsersPage() {
             <form className="admin-users-filters" onSubmit={submitSearch}>
               <div className="admin-users-search">
                 <Search size={15} aria-hidden />
-                <input className="admin-users-search-input" value={queryDraft} onChange={(event) => setQueryDraft(event.target.value)} maxLength={100}
+                <SearchInput value={queryDraft} onChange={(value) => {
+                  setQueryDraft(value);
+                  if (!value) void Promise.all([setQ(null), setPage(null)]);
+                }} inputClassName="admin-users-search-input" className="admin-users-search-control" maxLength={100}
                   placeholder={t('搜索用户名、ID、邮箱、手机或 WCA ID', 'Search name, ID, email, phone, or WCA ID')}
-                  aria-label={t('搜索用户', 'Search users')} />
-                {queryDraft && <ClearButton onClick={() => { setQueryDraft(''); void Promise.all([setQ(null), setPage(null)]); }} preserveFocus />}
+                  ariaLabel={t('搜索用户', 'Search users')} />
               </div>
               <button type="submit" className="admin-users-submit">{t('搜索', 'Search')}</button>
               <select className="admin-users-filter-select" value={provider} onChange={(event) => { void setProvider(event.target.value as ProviderFilter); void setPage(null); }}
