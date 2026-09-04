@@ -8,6 +8,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { searchPersons, getPerson, WCA_ID_REGEX, type WcaPersonLite } from '@/lib/wca-api';
 import { loadPersonsIndex, searchLocalPersons, isPersonsIndexReady } from '@cuberoot/shared';
 import { ClearButton } from './ClearButton';
+import { SearchInput } from './SearchInput';
 import './wca-person-picker.css';
 import { tr } from '@/i18n/tr';
 
@@ -67,7 +68,6 @@ export function WcaPersonPicker({
   const [loading, setLoading] = useState(false);
   const [indexReady, setIndexReady] = useState(() => isPersonsIndexReady());
   const wrapRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   // 后台预拉本地选手索引(全站共享, 拉过一次后即时命中)
   useEffect(() => {
@@ -150,7 +150,6 @@ export function WcaPersonPicker({
     setQuery('');
     setApiResults([]);
     setOpen(false);
-    inputRef.current?.blur();
   };
 
   const handleClear = () => {
@@ -183,25 +182,23 @@ export function WcaPersonPicker({
   const showDropdown = open && (loading || staticMatches.length > 0 || apiFiltered.length > 0 || query.trim().length > 0 || hasAdditionalResults);
   return (
     <div ref={wrapRef} className={`cuber-search ${className ?? ''}`.trim()}>
-      <input
-        ref={inputRef}
-        type="text"
-        className={`search-control cuber-search-input${query && showClearButton ? ' search-control--with-clear' : ''}`}
+      <SearchInput
         value={query}
-        onChange={e => { setQuery(e.target.value); setOpen(true); onQueryChange?.(e.target.value); }}
+        onChange={next => {
+          setQuery(next);
+          setOpen(Boolean(next));
+          if (!next) setApiResults([]);
+          onQueryChange?.(next);
+        }}
         onFocus={() => setOpen(true)}
         placeholder={placeholder}
+        className="cuber-search-input-wrap"
+        inputClassName="cuber-search-input"
+        clearable={showClearButton}
         autoFocus={autoOpen}
         autoComplete="off"
         spellCheck={false}
       />
-      {query && showClearButton && (
-        <ClearButton
-          onClick={() => { setQuery(''); setApiResults([]); onQueryChange?.(''); inputRef.current?.focus(); }}
-          isZh={isZh}
-          preserveFocus
-        />
-      )}
       {showDropdown && (
         <div className="cuber-search-popup">
           {additionalResults}

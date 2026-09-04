@@ -38,6 +38,7 @@
 .admin-users-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
 .admin-users-search { position: relative; display: flex; align-items: center; width: min(420px, 100%); }
 .admin-users-search > svg { position: absolute; left: 10px; color: var(--faint-foreground); pointer-events: none; }
+.admin-users-search-control { width: 100%; }
 .admin-users-search-input { width: 100%; min-height: 36px; padding: 7px 36px 7px 32px; border: 1px solid var(--input); border-radius: 8px; background: var(--background); color: var(--foreground); font: inherit; font-size: .82rem; }
 .admin-users-search-input:focus { outline: 2px solid var(--ring); outline-offset: 1px; }
 .admin-users-search .clear-btn { position: absolute; right: 7px; }
