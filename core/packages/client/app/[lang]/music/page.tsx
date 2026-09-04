@@ -66,7 +66,7 @@ function cleanDraft(draft: MusicMetadataDraft): MusicMetadataDraft {
 
 function MusicUploadDialog({ onClose, onUploaded }: {
   onClose: () => void;
-  onUploaded: (track: MusicApiTrack) => void;
+  onUploaded: (track: MusicApiTrack, coverFailed?: boolean) => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -86,7 +86,14 @@ function MusicUploadDialog({ onClose, onUploaded }: {
     setError(null);
     try {
       let track = await createMusicTrack(audioFile, cleanDraft(draft));
-      if (coverFile) track = await putMusicTrackCover(track.id, coverFile);
+      if (coverFile) {
+        try {
+          track = await putMusicTrackCover(track.id, coverFile);
+        } catch {
+          onUploaded(track, true);
+          return;
+        }
+      }
       onUploaded(track);
       ref.current?.close();
     } catch (cause) {
@@ -388,7 +395,7 @@ export default function MusicPage() {
   const [managerTrackId, setManagerTrackId] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [actionMessage, setActionMessage] = useState<'uploaded' | 'downloaded' | 'deleted' | 'error' | null>(null);
+  const [actionMessage, setActionMessage] = useState<'uploaded' | 'uploadedWithoutCover' | 'downloaded' | 'deleted' | 'error' | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const current = player.tracks.find((track) => track.id === player.currentId) ?? null;
 
@@ -437,7 +444,7 @@ export default function MusicPage() {
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
       setActionMessage('downloaded');
     } catch (cause) {
       setActionError(cause instanceof Error ? cause.message : tr({ zh: '下载失败', en: 'Download failed' }));
@@ -533,6 +540,7 @@ export default function MusicPage() {
           {actionMessage && (
             <p className={actionMessage === 'error' ? 'music-form-error music-action-message' : 'music-form-success music-action-message'} role="status">
               {actionMessage === 'uploaded' && tr({ zh: '已提交审核，可在“我的上传”查看进度。', en: 'Submitted for review. Follow its progress in My uploads.' })}
+              {actionMessage === 'uploadedWithoutCover' && tr({ zh: '音乐已提交审核，但封面上传失败，可在“我的上传”中补传。', en: 'The track was submitted, but its cover failed to upload. Add it from My uploads.' })}
               {actionMessage === 'downloaded' && tr({ zh: '下载已开始', en: 'Download started' })}
               {actionMessage === 'deleted' && tr({ zh: '音乐已删除', en: 'Track deleted' })}
               {actionMessage === 'error' && (actionError ?? tr({ zh: '操作失败，请稍后重试。', en: 'The action failed. Try again later.' }))}
@@ -662,8 +670,8 @@ export default function MusicPage() {
       {dialog === 'upload' && (
         <MusicUploadDialog
           onClose={() => setDialog(null)}
-          onUploaded={() => {
-            setActionMessage('uploaded');
+          onUploaded={(_track, coverFailed) => {
+            setActionMessage(coverFailed ? 'uploadedWithoutCover' : 'uploaded');
             setDialog(null);
           }}
         />

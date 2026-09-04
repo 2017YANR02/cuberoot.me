@@ -1,6 +1,6 @@
 # 音乐播放器跟踪表
 
-状态：`ACTIVE`。最后更新：2026-09-02。
+状态：`ACTIVE`。最后更新：2026-09-03。
 
 ## 目标
 
@@ -14,7 +14,7 @@
 - 首页音乐卡片登记到 `core/packages/shared/src/site_directory.ts`，视觉映射登记到 `core/packages/client/lib/landing-sections.tsx`；搜索卡片由现有目录自动派生，不另建一份清单。
 - 全站入口复用根布局中的 `DeskPet` 和现有 Music 图标，直接把 `FloatingMetronome` 扩展为音乐/节拍器双模式音频中心，保留拖动、收起、位置记忆和窄屏钳位。
 - 节拍器继续使用 `core/packages/client/lib/metronome.ts`，不把歌曲队列、播放进度或歌词状态塞进节拍器引擎。音乐使用独立的 `HTMLAudioElement` transport；页面与悬浮播放器共享同一实例和状态。
-- 第一阶段是公开只读曲库：静态媒体清单、音频、封面和歌词，不新增 Hono 路由、PostgreSQL 表或登录要求。账号云同步、后台上传、权限曲目和服务端统计不在第一阶段。
+- 第一阶段的公开只读曲库保持不变。第二阶段新增独立数据库曲库：会员上传和下载、管理员审核与 CRUD；已发布数据库曲目与静态曲库合并展示。
 - 生产音频不得进入 Git、`core/packages/client/public`、`tools/` 或 `stats/`。大媒体通过独立静态媒体目录发布，由客户端用现有 `staticUrl()` 生成 URL。
 - `E:\Music` 永远只读。转码只从该源读取，输出到 `Z:` 的专用 staging；禁止在 `E:` 写 sidecar、改名、移动、删除或原地更新 metadata。
 - 不整仓移植第三方播放器。只复用经确认的视觉、交互或小型独立模块，保留 CubeRoot 的 Next 路由、主题、i18n、状态和部署边界。
@@ -51,6 +51,16 @@
 - 无损与有损双份常驻、多个码率自适应流、HLS/DASH 和视频播放。
 - 自动生成不存在的歌词、曲名、艺术家或专辑信息。
 
+## 第二阶段：会员上传与管理员管理
+
+- 会员可上传 MP3、M4A、FLAC、WAV，填写曲名、艺术家、专辑、分类和 LRC 歌词，并补充 JPEG、PNG 或 WebP 封面。
+- 新上传默认 `pending`；会员可查看自己的记录并修改待审核内容。管理员可创建、读取、编辑、换封面、发布、退回和删除数据库曲目。
+- 单个音频上限 100 MiB，每个上传者的音频总量上限 1 GiB；封面上限 5 MiB。服务端按文件头识别格式，不能只信扩展名或浏览器 MIME。
+- 已发布曲目公开流式播放并支持 Range；站内下载入口和 attachment 响应要求有效会员或管理员身份。公开播放 URL 本身不是 DRM，不能阻止用户通过开发者工具保存已公开音频。
+- 数据库曲目的文件存入独立 `MUSIC_STORAGE_DIR`，不进入 Git、Next `public`、Drive 或旧静态曲库。生产持久目录、备份和容量告警必须在部署时单独配置。
+- 现有 486 首静态曲目继续由静态 manifest 管理，不导入数据库；管理员 CRUD 仅作用于新数据库曲目。若需要统一管理旧曲库，后续做一次显式导入，不在请求时维护双写。
+- 当前采用一次性原始流上传和轻量文件头校验，不含断点续传、服务端转码、音视频轨探测、病毒扫描或 DRM。出现大文件重试成本或伪装媒体问题时再引入分片上传与隔离转码/扫描队列。
+
 ## 页面与全站播放架构
 
 ### `/music` 页面
@@ -63,7 +73,10 @@
 | `core/packages/client/app/[lang]/music/layout.tsx` | `pageMetadata('music')` |
 | `core/packages/client/app/[lang]/music/music.css` | 仅音乐页布局和响应式样式 |
 | `core/packages/client/lib/music-player.ts` | 唯一浏览器 transport、队列和播放状态 |
+| `core/packages/client/lib/music-api.ts` | 会员与管理员音乐 API 客户端 |
 | `core/packages/client/components/FloatingMetronome.tsx` | 音乐/节拍器共享的根级悬浮音频中心 |
+| `core/apps/api/src/routes/music.ts` | 公开播放、会员上传/下载和管理员 CRUD |
+| `core/apps/api/migrations/0205_music_tracks.sql` | 数据库音乐曲目表和审核状态 |
 
 组件只有在页面和根级浮层之间存在真实复用时才放进全局 `components/` 或 `lib/`。页面专属组件留在路由目录，禁止为了可能的后续需求提前拆包。
 
@@ -248,6 +261,8 @@ type MusicTrackV1 = {
 | I | 完成曲库转码、分类、封面和歌词清单，分批发布并回读验证 | `COMPLETED` |
 | J | 完成数据、播放器、网络、桌面、窄屏、主题、i18n 和无障碍验收 | `PENDING` |
 | K | 登记 Credits、生成物、最终证据和发布/回滚说明 | `PENDING` |
+| L | 会员上传/下载、管理员 CRUD/审核、数据库曲库合并 | `COMPLETED` |
+| M | 配置生产持久存储与备份，执行迁移并完成线上权限/播放验收 | `PENDING` |
 
 ## 发布门槛
 
@@ -277,3 +292,4 @@ type MusicTrackV1 = {
 - 2026-09-02：分类 replay 处理 486 首，重新转码 0、失败 0、人工复核 8；发布脚本只验证模式通过 486 首及 509 个唯一资产，共 5.01 GiB，manifest SHA-256 为 `960cd43f578e40b22d21018d1b0b93098818d45e191878f43e0bfba131775e07`，未连接远端或上传。
 - 2026-09-02：远端容量门槛通过后，先以安全逐文件模式上传部分资产；按用户要求取消上传后哈希复核，改为 4 路批量上传全部 509 个清单引用资产（486 个音频、8 个封面、15 个歌词），最后原子切换 486 首 manifest。未上传 Pilot 的 9 个未引用音频；本次按要求未做线上回读验证，因此 E、I 阶段继续保持 `IN PROGRESS`。
 - 2026-09-02：发布器对 509 个远端资产完成全集大小与 SHA-256 审计，再原子切换 manifest；线上 manifest 字节与候选 SHA-256 一致，CORS 与缓存头通过，音频 HEAD 返回 `Accept-Ranges: bytes`，范围 GET 返回 206、正确 `Content-Range`、两字节正文和一年 immutable 缓存。首次候选因验证器误要求 206 响应重复携带 `Accept-Ranges` 而自动回滚；修正为 HEAD 验证后最终切换成功，E、I 阶段完成。
+- 2026-09-03：完成数据库音乐第二阶段：会员上传/下载与待审核内容管理，管理员 CRUD、审核发布、封面和 LRC 管理，公开数据库曲目与静态曲库合并；后端 typecheck、上传聚焦测试 3/3、API/schema 漂移测试 6/6，前端 typecheck 与播放器聚焦测试 3/3 通过。代码仅本地提交，未 push、未执行生产迁移，也未配置生产 `MUSIC_STORAGE_DIR` 和备份，因此 M 继续保持 `PENDING`。
