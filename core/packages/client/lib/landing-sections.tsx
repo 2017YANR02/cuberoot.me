@@ -110,7 +110,7 @@ function toCardConfig(entry: SiteDirectoryEntry): CardConfig {
     tier: entry.tier,
     nameKey: entry.nameKey,
     ...CARD_VISUALS[entry.id],
-    ...('lockedForNonAdmin' in entry
+    ...('lockedForNonAdmin' in entry && typeof entry.lockedForNonAdmin === 'boolean'
       ? { lockedForNonAdmin: entry.lockedForNonAdmin }
       : {}),
   };
