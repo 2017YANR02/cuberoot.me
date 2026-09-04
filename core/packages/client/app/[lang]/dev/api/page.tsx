@@ -594,6 +594,7 @@ const ENDPOINTS: Ep[] = [
 
   // ---- music ----
   { d: 'music', m: 'GET', p: '/v1/music/tracks', g: 'public', c: 'short', zh: '已发布的会员音乐列表', en: 'Published member-uploaded music' },
+  { d: 'music', m: 'GET', p: '/v1/music/static-overrides', g: 'public', c: 'no-store', zh: '静态曲库的元数据覆盖与下架状态', en: 'Metadata overrides and removal states for the static library' },
   { d: 'music', m: 'GET', p: '/v1/music/me/tracks', g: 'login', c: 'no-store', zh: '会员查看自己的投稿和审核状态', en: 'Member submissions and review states' },
   { d: 'music', m: 'POST', p: '/v1/music/tracks', g: 'login', c: 'no-store', zh: '会员以 query 元数据和原始音频流投稿 MP3 / M4A / FLAC / WAV，单文件最大 100 MiB，每账号总计 1 GiB', en: 'Submit query metadata plus a raw MP3, M4A, FLAC, or WAV stream up to 100 MiB each and 1 GiB per account' },
   { d: 'music', m: 'PATCH', p: '/v1/music/tracks/:id', g: 'login', c: 'no-store', zh: '投稿者修改本人待审核音乐元数据与 LRC 歌词', en: 'Edit metadata and LRC lyrics on an owned pending submission' },
@@ -607,6 +608,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'music', m: 'GET', p: '/v1/music/admin/tracks', g: 'admin', c: 'no-store', zh: '管理员查看全部音乐投稿', en: 'List every music submission for review' },
   { d: 'music', m: 'PATCH', p: '/v1/music/admin/tracks/:id', g: 'admin', c: 'no-store', zh: '管理员修改元数据、歌词、审核备注和发布状态', en: 'Edit metadata, lyrics, review note, and publishing state' },
   { d: 'music', m: 'DELETE', p: '/v1/music/admin/tracks/:id', g: 'admin', c: 'no-store', zh: '管理员删除音乐记录和磁盘文件', en: 'Delete a music record and its stored files' },
+  { d: 'music', m: 'PATCH', p: '/v1/music/admin/static-tracks/:id', g: 'admin', c: 'no-store', zh: '管理员修改静态曲库元数据或恢复上架', en: 'Edit static-library metadata or restore a removed track' },
+  { d: 'music', m: 'DELETE', p: '/v1/music/admin/static-tracks/:id', g: 'admin', c: 'no-store', zh: '管理员从公开曲库下架静态曲目并保留源文件', en: 'Remove a static track from the public library while retaining its source file' },
 
   // ---- feedback ----
   { d: 'feedback', m: 'POST', p: '/v1/feedback', g: 'login', zh: '提交反馈', en: 'Submit feedback' },
