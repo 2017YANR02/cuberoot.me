@@ -96,6 +96,7 @@ jobs:
           sparse-checkout: |
             /.node-version
             /core/
+            /solver/Cargo.toml
             /docs/generated-artifacts.json
             /docs/platform-capability-manifest.json
             /docs/platform-unification-plan.md
