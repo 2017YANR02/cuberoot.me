@@ -435,7 +435,7 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/app/[lang]/alg/_components/AlgPuzzleSelect.tsx",
+      "file": "packages/client/components/AlgPuzzlePicker.tsx",
       "importKind": "runtime",
       "mechanism": "static-import",
       "sourceKind": "runtime",
