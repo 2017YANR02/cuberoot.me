@@ -49,6 +49,7 @@ export const SITE_DIRECTORY_TEXTS = {
   gen: { en: 'Scrambles', zh: '生成打乱' },
   memo: { en: 'Memo', zh: '记忆' },
   music: { en: 'Music', zh: '音乐' },
+  gallery: { en: 'Gallery', zh: '图库' },
   dev: { en: 'Dev', zh: '开发' },
   timezone: { en: 'Time Zones', zh: '时区' },
   calendar: { en: 'Calendar', zh: '日历' },
@@ -219,10 +220,11 @@ export const SITE_DIRECTORY_GROUPS = [
     eyebrow: { en: 'OTHER', zh: '其他' },
     title: { en: 'Read, build, explore.', zh: '阅读、开发、探索。' },
     sub: {
-      en: 'Forum, contact details, public feedback, code notes, blog, link directory, unofficial world records and the person behind CubeRoot.',
-      zh: '论坛、联系方式、公开反馈、代码笔记、博客、站点导航、非官方纪录与 CubeRoot 的创作者。',
+      en: 'Member photos, forum, contact details, public feedback, code notes, blog, link directory, unofficial world records and the person behind CubeRoot.',
+      zh: '会员图库、论坛、联系方式、公开反馈、代码笔记、博客、站点导航、非官方纪录与 CubeRoot 的创作者。',
     },
     entries: [
+      { id: 'gallery', href: '/gallery', internal: true, tier: 'medium', nameKey: 'gallery' },
       { id: 'music', href: '/music', internal: true, tier: 'medium', nameKey: 'music' },
       { id: 'forum', href: '/forum', internal: true, tier: 'medium', nameKey: 'forum' },
       { id: 'drive', href: '/drive', internal: true, tier: 'medium', nameKey: 'drive' },
