@@ -1,6 +1,9 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
+import {
+  listPublicMusicTracks, musicApiAssetUrl, type MusicApiTrack, type MusicTrackStatus,
+} from '@/lib/music-api';
 import { persistItem } from '@/lib/safe-storage';
 import { staticUrl } from '@/lib/stats-base';
 
@@ -18,6 +21,10 @@ export interface MusicTrack {
   genre?: string;
   mood?: string;
   duration?: number;
+  databaseId?: string;
+  databaseStatus?: MusicTrackStatus;
+  downloadFilename?: string;
+  lyricsText?: string;
 }
 
 export interface MusicManifest {
@@ -216,19 +223,60 @@ export function normalizeMusicManifest(value: unknown): MusicManifest {
   return { version: 1, tracks };
 }
 
-export async function loadMusicLibrary(): Promise<void> {
-  if (state.status === 'ready') return;
+function apiTrackToPlayerTrack(track: MusicApiTrack): MusicTrack {
+  return {
+    id: `db:${track.id}`,
+    title: track.title.trim(),
+    artist: track.artist.trim(),
+    src: track.audioUrl ? musicApiAssetUrl(track.audioUrl) : '',
+    databaseId: track.id,
+    databaseStatus: track.status,
+    downloadFilename: track.audioFilename,
+    ...(track.album?.trim() ? { album: track.album.trim() } : {}),
+    ...(track.genre?.trim() ? { genre: track.genre.trim() } : {}),
+    ...(track.coverUrl ? { cover: musicApiAssetUrl(track.coverUrl) } : {}),
+    ...(track.lyricsLrc?.trim() ? { lyricsText: track.lyricsLrc } : {}),
+  };
+}
+
+async function fetchStaticManifest(): Promise<MusicManifest> {
+  const response = await fetch(staticUrl(MANIFEST_URL));
+  if (!response.ok) throw new Error(`Music manifest HTTP ${response.status}`);
+  return normalizeMusicManifest(await response.json());
+}
+
+export async function loadMusicLibrary(force = false): Promise<void> {
+  if (state.status === 'ready' && !force) return;
   if (loadPromise) return loadPromise;
   loadPreferences();
   emit({ status: 'loading', error: null });
-  loadPromise = fetch(staticUrl(MANIFEST_URL))
-    .then(async (response) => {
-      if (!response.ok) throw new Error(`Music manifest HTTP ${response.status}`);
-      const manifest = normalizeMusicManifest(await response.json());
-      const currentId = manifest.tracks.some((track) => track.id === state.currentId)
+  loadPromise = Promise.allSettled([fetchStaticManifest(), listPublicMusicTracks()])
+    .then((results) => {
+      const [staticResult, apiResult] = results;
+      if (staticResult.status === 'rejected' && apiResult.status === 'rejected') {
+        throw staticResult.reason;
+      }
+      const staticTracks = staticResult.status === 'fulfilled' ? staticResult.value.tracks : [];
+      const databaseTracks = apiResult.status === 'fulfilled'
+        ? apiResult.value.map(apiTrackToPlayerTrack).filter((track) => track.title && track.src)
+        : [];
+      const seen = new Set(staticTracks.map((track) => track.id));
+      const tracks = [...staticTracks, ...databaseTracks.filter((track) => !seen.has(track.id))];
+      const currentId = tracks.some((track) => track.id === state.currentId)
         ? state.currentId
-        : (manifest.tracks[0]?.id ?? null);
-      emit({ status: 'ready', tracks: manifest.tracks, currentId });
+        : (tracks[0]?.id ?? null);
+      const currentChanged = currentId !== state.currentId;
+      if (currentChanged && audioEl) {
+        audioEl.pause();
+        audioEl.removeAttribute('src');
+        audioEl.load();
+      }
+      emit({
+        status: 'ready',
+        tracks,
+        currentId,
+        ...(currentChanged ? { playing: false, currentTime: 0, duration: 0 } : {}),
+      });
       savePreferences();
     })
     .catch((error: unknown) => {
@@ -348,6 +396,7 @@ export function parseLrc(source: string): LyricLine[] {
 }
 
 export function loadTrackLyrics(track: MusicTrack): Promise<LyricLine[]> {
+  if (track.lyricsText) return Promise.resolve(parseLrc(track.lyricsText));
   if (!track.lyrics) return Promise.resolve([]);
   const cached = lyricCache.get(track.lyrics);
   if (cached) return cached;
