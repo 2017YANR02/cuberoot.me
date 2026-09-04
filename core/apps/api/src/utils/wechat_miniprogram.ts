@@ -1,5 +1,8 @@
 const WECHAT_MINI_APP_ID = process.env.WECHAT_MINI_APP_ID?.trim() ?? '';
 const WECHAT_MINI_APP_SECRET = process.env.WECHAT_MINI_APP_SECRET?.trim() ?? '';
+let accessToken = '';
+let accessTokenExpiresAt = 0;
+let accessTokenRequest: Promise<string> | null = null;
 
 export type WechatMiniProgramErrorCode =
   | 'invalid-code'
@@ -21,6 +24,12 @@ export class WechatMiniProgramError extends Error {
 export interface WechatMiniProgramSession {
   openid: string;
   unionid: string | null;
+}
+
+interface WechatAccessTokenResponse {
+  access_token?: unknown;
+  errcode?: unknown;
+  expires_in?: unknown;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -85,4 +94,66 @@ export async function exchangeWechatMiniProgramCode(code: string): Promise<Wecha
     throw new WechatMiniProgramError('invalid-response', 'wechat returned invalid JSON');
   }
   return parseWechatMiniProgramSession(value);
+}
+
+async function fetchWechatMiniProgramAccessToken(): Promise<string> {
+  if (accessToken && Date.now() < accessTokenExpiresAt) return accessToken;
+  if (accessTokenRequest) return accessTokenRequest;
+
+  accessTokenRequest = (async () => {
+    const params = new URLSearchParams({
+      appid: WECHAT_MINI_APP_ID,
+      secret: WECHAT_MINI_APP_SECRET,
+      grant_type: 'client_credential',
+    });
+    const response = await fetch(`https://api.weixin.qq.com/cgi-bin/token?${params}`, {
+      signal: AbortSignal.timeout(12_000),
+    });
+    if (!response.ok) throw new Error(`wechat access token HTTP ${response.status}`);
+    const value = await response.json() as WechatAccessTokenResponse;
+    if (typeof value.access_token !== 'string' || !value.access_token
+      || typeof value.expires_in !== 'number' || value.expires_in <= 60) {
+      throw new Error(`wechat access token failed: ${String(value.errcode ?? 'invalid response')}`);
+    }
+    accessToken = value.access_token;
+    accessTokenExpiresAt = Date.now() + (value.expires_in - 60) * 1000;
+    return accessToken;
+  })().finally(() => { accessTokenRequest = null; });
+  return accessTokenRequest;
+}
+
+/** Generate an HTTPS URL Link that opens the released Mini Program account page. */
+export async function generateWechatMiniProgramUrlLink(
+  query: string,
+  expireTime: number,
+): Promise<string> {
+  try {
+    const token = await fetchWechatMiniProgramAccessToken();
+    const response = await fetch(
+      `https://api.weixin.qq.com/wxa/generate_urllink?access_token=${encodeURIComponent(token)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          path: 'pages/account/index',
+          query,
+          env_version: 'release',
+          expire_type: 0,
+          expire_time: expireTime,
+        }),
+        signal: AbortSignal.timeout(12_000),
+      },
+    );
+    if (!response.ok) throw new Error(`wechat URL Link HTTP ${response.status}`);
+    const value = await response.json() as Record<string, unknown>;
+    if (typeof value.url_link !== 'string' || !value.url_link.startsWith('https://')) {
+      throw new Error(`wechat URL Link failed: ${String(value.errcode ?? 'invalid response')}`);
+    }
+    return value.url_link;
+  } catch (error) {
+    throw new WechatMiniProgramError(
+      'upstream-unavailable',
+      error instanceof Error ? error.message : 'wechat URL Link request failed',
+    );
+  }
 }
