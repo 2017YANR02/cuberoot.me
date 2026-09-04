@@ -37,7 +37,7 @@ export function PasswordInput({
       {/* allow-component-reimplementation: canonical PasswordInput implementation */}
       <input
         {...inputProps}
-        className={className}
+        className={`password-input__field ${className ?? ''}`.trim()}
         type={show ? 'text' : 'password'}
         value={value}
         onChange={(event) => onChange(event.target.value)}
