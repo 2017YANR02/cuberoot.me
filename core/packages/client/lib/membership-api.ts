@@ -67,6 +67,12 @@ export interface PublicMemberProfile {
   imageIds: number[];
 }
 
+export interface EditableMemberProfile {
+  profileIntro?: string | null;
+  profileImageIds?: number[];
+  showInMemberList?: boolean;
+}
+
 // 到期提醒阈值:到期前 N 天起视为「即将到期」。
 export const EXPIRE_SOON_DAYS = 7;
 
@@ -147,7 +153,11 @@ export async function listPublicMembers(): Promise<PublicMember[]> {
   return result.members;
 }
 
-export async function getMyMembership(): Promise<{ membership: Membership | null; isMember?: boolean }> {
+export async function getMyMembership(): Promise<{
+  membership: Membership | null;
+  isMember?: boolean;
+  profile?: EditableMemberProfile | null;
+}> {
   return handleApi(await fetch(`${BASE}/me`, { headers: authHeaders(false) }));
 }
 
