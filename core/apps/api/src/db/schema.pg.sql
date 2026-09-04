@@ -3015,22 +3015,27 @@ CREATE TABLE auth_codes (
 );
 CREATE INDEX idx_auth_codes_lookup ON auth_codes(channel, target, created_at DESC);
 
--- 小程序与原生 App 跨运行时换取会话的短时单次票据。只保存票据 SHA-256；
--- App 方向额外绑定 PKCE challenge，verifier 不进入浏览器 URL 或数据库。
+-- 小程序、浏览器与原生 App 跨运行时换取会话的短时单次票据。只保存密钥 SHA-256；
+-- App 方向额外绑定 PKCE challenge；微信浏览器方向在小程序确认前允许 user_id 为空。
 CREATE TABLE auth_web_session_tickets (
   ticket_hash CHAR(64) PRIMARY KEY,
-  user_id     BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+  user_id     BIGINT REFERENCES app_users(id) ON DELETE CASCADE,
   purpose     VARCHAR(16) NOT NULL DEFAULT 'web',
   code_challenge CHAR(43),
   expires_at  TIMESTAMPTZ NOT NULL,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT chk_auth_web_session_ticket_purpose CHECK (
-    (purpose = 'web' AND code_challenge IS NULL)
+    (purpose = 'web' AND user_id IS NOT NULL AND code_challenge IS NULL)
     OR
-    (purpose = 'mobile' AND code_challenge ~ '^[A-Za-z0-9_-]{43}$')
+    (purpose = 'mobile' AND user_id IS NOT NULL AND code_challenge ~ '^[A-Za-z0-9_-]{43}$')
+    OR
+    (purpose = 'wechat_browser' AND code_challenge ~ '^[A-Za-z0-9_-]{43}$')
   )
 );
 CREATE INDEX idx_auth_web_session_tickets_expires ON auth_web_session_tickets(expires_at);
+CREATE UNIQUE INDEX idx_auth_web_session_tickets_wechat_approval
+  ON auth_web_session_tickets(code_challenge)
+  WHERE purpose = 'wechat_browser';
 
 -- ── 12. alg_sets (公式集元数据,代替 alg_*.json 的 file-level 字段) ──
 -- 41 行 (puzzle, set_slug),从 core/packages/shared/data/alg_*.json 的 41 个文件导入。

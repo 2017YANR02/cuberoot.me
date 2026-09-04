@@ -46,6 +46,7 @@ import {
 } from '../utils/social_login.js';
 import {
   exchangeWechatMiniProgramCode,
+  generateWechatMiniProgramUrlLink,
   WechatMiniProgramError,
   wechatMiniProgramConfigured,
 } from '../utils/wechat_miniprogram.js';
@@ -56,9 +57,13 @@ import {
 } from '../utils/douyin_miniprogram.js';
 import {
   consumeMobileSessionTicket,
+  consumeWechatBrowserSession,
   consumeWebSessionTicket,
+  approveWechatBrowserSession,
   issueMobileSessionTicket,
+  issueWechatBrowserSession,
   issueWebSessionTicket,
+  rejectWechatBrowserSession,
 } from '../utils/web_session_ticket.js';
 import { requireAppUserId } from '../utils/app_user_auth.js';
 import { apiOrigin } from '../utils/api_origin.js';
@@ -90,10 +95,13 @@ function parsePhoneCodePurpose(value: unknown): 'login' | 'password_reset' | nul
   return value === 'password_reset' ? value : null;
 }
 
-/** Keep the six auth contract endpoints on a stable error wire shape. */
-function authRateLimitResponse(c: Context): Response | null {
+/** Keep auth contract endpoints on a stable error wire shape. */
+function authRateLimitResponse(
+  c: Context,
+  options?: { bucket?: string; max?: number },
+): Response | null {
   try {
-    checkRateLimit(getIp(c));
+    checkRateLimit(getIp(c), options);
     return null;
   } catch (error) {
     if (!(error instanceof Error) || error.message !== 'Rate limit exceeded') throw error;
@@ -221,6 +229,68 @@ accountAuthRoutes.post('/auth/wechat/miniprogram', async (c) => {
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   const session: WebSession = { token, user: publicUser(user) };
   return c.json({ ...session, isNew });
+});
+
+// ── iPhone Safari → 微信小程序确认 → 原 Safari 会话 ──
+// 浏览器 ticket 与小程序 approval 是两把独立的 256-bit 单次密钥，数据库只存摘要。
+accountAuthRoutes.post('/auth/wechat/browser-session/start', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const rateLimited = authRateLimitResponse(c, { bucket: 'wechat-browser-start', max: 15 });
+  if (rateLimited) return rateLimited;
+  if (!wechatMiniProgramConfigured()) {
+    return c.json({ error: 'wechat miniprogram not configured' }, 503);
+  }
+
+  const pending = await issueWechatBrowserSession();
+  try {
+    const urlLink = await generateWechatMiniProgramUrlLink(
+      new URLSearchParams({ browserLogin: pending.approval }).toString(),
+      Math.floor(Date.now() / 1000) + pending.expiresIn,
+    );
+    return c.json({ ticket: pending.ticket, urlLink, expiresIn: pending.expiresIn });
+  } catch (error) {
+    console.error('[auth] wechat URL Link generation failed:', error instanceof Error ? error.message : error);
+    return c.json({ error: 'wechat service unavailable' }, 502);
+  }
+});
+
+accountAuthRoutes.post('/auth/wechat/browser-session/approve', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const rateLimited = authRateLimitResponse(c, { bucket: 'wechat-browser-approve', max: 30 });
+  if (rateLimited) return rateLimited;
+  const applicant = await ticketApplicant(c);
+  if ('response' in applicant) return applicant.response;
+  const body = await c.req.json<{ approval?: unknown; approved?: unknown }>()
+    .catch(() => ({ approval: undefined, approved: undefined }));
+  const approval = typeof body.approval === 'string' ? body.approval.trim() : '';
+  if (body.approved === false) {
+    if (!await rejectWechatBrowserSession(approval)) {
+      return c.json({ error: 'invalid or expired approval' }, 401);
+    }
+    return c.json({ ok: true });
+  }
+  if (!await approveWechatBrowserSession(approval, applicant.uid)) {
+    return c.json({ error: 'invalid or expired approval' }, 401);
+  }
+  return c.json({ ok: true });
+});
+
+accountAuthRoutes.post('/auth/wechat/browser-session/exchange', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const rateLimited = authRateLimitResponse(c, { bucket: 'wechat-browser-exchange', max: 120 });
+  if (rateLimited) return rateLimited;
+  const body = await c.req.json<{ ticket?: unknown }>().catch(() => ({ ticket: undefined }));
+  const ticket = typeof body.ticket === 'string' ? body.ticket.trim() : '';
+  const result = await consumeWechatBrowserSession(ticket);
+  if (result === 'pending') return c.json({ status: 'pending' }, 202);
+  if (!result) return c.json({ error: 'invalid or expired ticket' }, 401);
+
+  const user = await getUserById(result);
+  if (!user) return c.json({ error: 'invalid or expired ticket' }, 401);
+  await captureAccountDevice(user.id, c.req.header('User-Agent'));
+  const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
+  const session: WebSession = { token, user: publicUser(user) };
+  return c.json(session);
 });
 
 // ── 抖音小程序登录(tt.login code → code2Session → openid)──

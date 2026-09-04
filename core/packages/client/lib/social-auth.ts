@@ -44,10 +44,21 @@ export function takeSocialReturnUrl(
  *  改提示「已打开支付宝,授权完返回本页」。 */
 export interface StartSocialResult { navigated: boolean }
 
+/** iPhone/iPad desktop-site mode reports a macOS UA, so use touch + CSS screen size. */
+export function prefersWechatMiniProgramLogin(): boolean {
+  if (typeof navigator === 'undefined' || typeof screen === 'undefined') return false;
+  return navigator.maxTouchPoints > 0 && Math.min(screen.width, screen.height) <= 1024;
+}
+
 /** 发起三方登录/绑定。intent='login' 未登录时登录;'link' 已登录时把该身份加到当前账号。
  *  先拿 URL(失败即抛,给调用方在弹层里显错),成功再跳转。 */
 export async function startSocialLogin(provider: SocialProvider, intent: 'login' | 'link'): Promise<StartSocialResult> {
   if (typeof window === 'undefined') return { navigated: false };
+  if (provider === 'wechat' && intent === 'login' && prefersWechatMiniProgramLogin()) {
+    rememberSocialReturnUrl(window.location.href);
+    window.location.href = '/auth/wechat/mobile';
+    return { navigated: true };
+  }
   const url = await fetchSocialAuthorizeUrl(provider, intent);
   rememberSocialReturnUrl(window.location.href);
   const target = alipayMobileWakeUrl(provider, url);

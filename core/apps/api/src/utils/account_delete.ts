@@ -144,7 +144,7 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   app_users: '账号本体,最后整行删',
   auth_identities: '身份行,随 app_users 级联删',
   account_last_devices: '账号最近设备摘要是私有支持数据,随 app_users 级联删',
-  auth_web_session_tickets: '网页登录短时单次票据随 app_users 级联删',
+  auth_web_session_tickets: '未确认的微信浏览器票据无账号归属，已确认的跨运行时票据随 app_users 级联删',
   user_friendships: '好友关系的三个账号外键都随 app_users 级联删',
   user_blocks: '黑名单关系的双向账号外键都随 app_users 级联删',
   user_wca_friend_contacts: '未注册 WCA 好友条目只属于账号本人,随 app_users 级联删',
