@@ -136,7 +136,7 @@ describe('shared web-view page state', () => {
     expect(options).not.toHaveProperty('onShareTimeline');
     expect(options.onShareAppMessage.call(context)).toEqual({
       imageUrl: '/assets/share-cover.png',
-      title: '魔方根CubeRoot：公式',
+      title: '魔方根CubeRoot：教程',
       path: '/pages/web/index?key=alg',
     });
   });
@@ -172,7 +172,7 @@ describe('shared web-view page state', () => {
     expect(context.data.canRetry).toBe(true);
 
     retryWebRoute(context);
-    expect(context.data.src).toBe('https://cuberoot.me/zh/alg#wechat_redirect');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/tutorial#wechat_redirect');
     expect(context.data.errorTitle).toBe('');
   });
 
