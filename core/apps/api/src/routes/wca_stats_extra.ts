@@ -1,5 +1,5 @@
 /**
- * WCA stats extra — 6 + 2 个 cubing.pro 风格统计 tab / 选手页查询路由.
+ * WCA stats extra — cubing.pro 风格统计 tab / 选手页查询路由.
  *
  * 数据源: wca_grand_slam / wca_results_flat
  *         wca_cohort_ranks / wca_success_rate / wca_all_events_done / wca_person_ranks
@@ -17,6 +17,7 @@
  *   GET /v1/wca/sum-of-ranks/player-best?wcaId=           (指定选手最优项目组合 + 支柱/毒药/自由项剖析)
  *   GET /v1/wca/sum-of-ranks/person-subset?wcaId=&events= (自选组合计算器:该子集下选手的名次和+世界第几)
  *   GET /v1/wca/kinch?country=&wcaId=&page=&size=           (Kinch 榜单 / 指定选手逐项分)
+ *   GET /v1/wca/pr-streaks?country=&page=&size=              (连续取得个人纪录的最多参赛场数)
  *   GET /v1/wca/person-best-ranks?wcaId=
  *   GET /v1/wca/person-rank-history?wcaId=&eventId=
  *
@@ -297,6 +298,67 @@ wcaStatsExtraRoutes.get('/wca/kinch', async (c) => {
       score: item.scoreX100 / 100,
       value: item.value || null,
       type: item.type,
+    })),
+  });
+});
+
+// ── 1b. /v1/wca/pr-streaks ──
+wcaStatsExtraRoutes.get('/wca/pr-streaks', async (c) => {
+  const country = c.req.query('country') ?? '';
+  const requestedPage = Math.max(1, intParam(c.req.query('page'), 1));
+  const size = Math.min(MAX_SIZE, Math.max(1, intParam(c.req.query('size'), DEFAULT_SIZE)));
+  const resolved = await resolveCountry(country);
+  if (!resolved.ok) return c.json({ error: resolved.err }, 400);
+
+  const scope = resolved.continentId ? 'continent' : resolved.id ? 'country' : 'world';
+  const scopeWhere = scope === 'continent'
+    ? 's.continent_id = ?'
+    : scope === 'country'
+      ? 's.country_id = ?'
+      : '';
+  const scopeId = resolved.continentId ?? resolved.id;
+  const scopeParams: unknown[] = scopeWhere ? [scopeId] : [];
+  const [totalRow] = await query<{ n: string }>(
+    `SELECT COUNT(*) AS n FROM wca_pr_streaks s${scopeWhere ? ` WHERE ${scopeWhere}` : ''}`,
+    scopeParams,
+  );
+  const total = Number(totalRow?.n ?? 0);
+  const page = Math.min(requestedPage, Math.max(1, Math.ceil(total / size)));
+  const offset = (page - 1) * size;
+  const rows = await query<{
+    wca_id: string; name: string; country_id: string; iso2: string | null; streak: number; rank: string;
+    start_comp_id: string | null; start_comp_name: string | null;
+    end_comp_id: string | null; end_comp_name: string | null;
+  }>(
+    `SELECT s.wca_id, p.name, s.country_id, co.iso2, s.streak,
+            s.start_comp_id, start_comp.name AS start_comp_name,
+            s.end_comp_id, end_comp.name AS end_comp_name,
+            RANK() OVER (ORDER BY s.streak DESC) AS rank
+       FROM wca_pr_streaks s
+       JOIN wca_persons p ON p.wca_id = s.wca_id
+       LEFT JOIN wca_countries co ON co.id = s.country_id
+       LEFT JOIN wca_competitions start_comp ON start_comp.id = s.start_comp_id
+       LEFT JOIN wca_competitions end_comp ON end_comp.id = s.end_comp_id
+       ${scopeWhere ? `WHERE ${scopeWhere}` : ''}
+      ORDER BY s.streak DESC, s.wca_id
+      LIMIT ? OFFSET ?`,
+    [...scopeParams, size, offset],
+  );
+
+  c.header('Cache-Control', CACHE_HEADER);
+  return c.json({
+    scope, country: scopeId, page, size, total,
+    rows: rows.map(row => ({
+      rank: Number(row.rank),
+      wcaId: row.wca_id,
+      name: row.name,
+      countryId: row.country_id,
+      iso2: row.iso2,
+      streak: row.streak,
+      startCompId: row.start_comp_id,
+      startCompName: row.start_comp_name,
+      endCompId: row.end_comp_id,
+      endCompName: row.end_comp_name,
     })),
   });
 });

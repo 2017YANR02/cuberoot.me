@@ -5,15 +5,24 @@
  *   - PUT    /v1/nav/sites/:id          — admin 编辑
  *   - DELETE /v1/nav/sites/:id          — admin 删
  *   - PUT    /v1/nav/sites/reorder      — admin 重排,body { groupId, ids: number[] }
+ *   - GET    /v1/nav/home-order         — 首页各分组卡片顺序
+ *   - PUT    /v1/nav/home-order         — admin 重排首页单个分组
  *
- * Schema 见 migrations/0001_nav_sites.sql 与 0170_nav_sites_github.sql。
+ * Schema 见 migrations/0001_nav_sites.sql、0170_nav_sites_github.sql 与 0213_home_card_positions.sql。
  */
 import { Hono } from 'hono';
+import { SITE_DIRECTORY_GROUPS } from '@cuberoot/shared/site-directory';
 import { getIp } from '../utils/analytics_helpers.js';
-import { query } from '../db/connection.js';
+import { query, withTransaction } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 
 export const navSitesRoutes = new Hono();
+
+const HOME_CARD_GROUPS: ReadonlyMap<string, readonly string[]> = new Map(
+  SITE_DIRECTORY_GROUPS
+    .filter((group) => group.placement !== 'footer')
+    .map((group) => [group.id, group.entries.map((entry) => entry.id)]),
+);
 
 interface NavSiteRow {
   id: number | string;
@@ -137,6 +146,53 @@ navSitesRoutes.get('/nav/sites', async (c) => {
     'SELECT * FROM nav_sites ORDER BY group_id, position'
   );
   return c.json(rows.map(rowToJson));
+});
+
+// GET /v1/nav/home-order — 首页各分组卡片顺序。
+navSitesRoutes.get('/nav/home-order', async (c) => {
+  c.header('Cache-Control', 'public, max-age=60');
+  const rows = await query<{ group_id: string; item_id: string }>(
+    `SELECT group_id, item_id FROM home_card_positions
+      ORDER BY group_id, position, item_id`,
+  );
+  const orders: Record<string, string[]> = {};
+  for (const row of rows) (orders[row.group_id] ??= []).push(row.item_id);
+  return c.json({ orders });
+});
+
+// PUT /v1/nav/home-order — body { groupId, ids: string[] }，必须是该分组的完整卡片集。
+navSitesRoutes.put('/nav/home-order', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  await requireAdminOrApiKey(c);
+
+  const body = await c.req.json<{ groupId?: unknown; ids?: unknown }>();
+  const { groupId } = body;
+  if (typeof groupId !== 'string') return c.json({ error: 'groupId required' }, 400);
+  const expected = HOME_CARD_GROUPS.get(groupId);
+  if (!expected) return c.json({ error: 'unknown homepage group' }, 400);
+  if (!Array.isArray(body.ids) || !body.ids.every((id): id is string => typeof id === 'string')) {
+    return c.json({ error: 'ids must be string[]' }, 400);
+  }
+  const ids = body.ids;
+  if (new Set(ids).size !== ids.length) return c.json({ error: 'ids must be unique' }, 400);
+  const expectedIds = new Set(expected);
+  if (ids.length !== expected.length || ids.some((id) => !expectedIds.has(id))) {
+    return c.json({ error: `ids must contain all ${expected.length} cards in group ${groupId}` }, 400);
+  }
+
+  await withTransaction(async (transactionQuery) => {
+    await transactionQuery('DELETE FROM home_card_positions WHERE group_id = ?', [groupId]);
+    const valuesSql = ids.map(() => '(?::varchar, ?::varchar, ?::int)').join(', ');
+    const params: unknown[] = [];
+    ids.forEach((id, position) => params.push(groupId, id, position));
+    await transactionQuery(
+      `INSERT INTO home_card_positions (group_id, item_id, position) VALUES ${valuesSql}`,
+      params,
+    );
+  });
+
+  return c.json({ ok: true });
 });
 
 // POST /v1/nav/sites — 新增 (append 到该 group 末尾)

@@ -4,7 +4,8 @@ import type postgres from 'postgres';
 import { sql } from '../db/connection.js';
 import { getIp } from '../utils/analytics_helpers.js';
 import { requireAppUserId } from '../utils/app_user_auth.js';
-import { checkRateLimit, requireAdmin } from '../utils/recon_helpers.js';
+import { hasActiveMembership } from '../utils/membership.js';
+import { checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
 
 export const privateVaultRoutes = new Hono();
 
@@ -135,24 +136,44 @@ function parseItemBody(value: unknown, ownerUserId: number): {
   return { ciphertext: body.ciphertext, iv: body.iv, accesses, expectedVersion };
 }
 
-async function requireVaultOwner(c: Parameters<typeof requireAdmin>[0]): Promise<number> {
-  await requireAdmin(c);
-  return requireAppUserId(c);
+async function vaultIdentity(c: Parameters<typeof requireAuth>[0]): Promise<{ userId: number; canManage: boolean }> {
+  const user = await requireAuth(c);
+  return {
+    userId: await requireAppUserId(c),
+    canManage: user.isAdmin || await hasActiveMembership(user.wcaId),
+  };
 }
 
-async function recipientsExist(tx: Tx, accesses: AccessInput[]): Promise<boolean> {
+async function requireVaultManager(c: Parameters<typeof requireAuth>[0]): Promise<number> {
+  const identity = await vaultIdentity(c);
+  if (!identity.canManage) throw new Error('Vault membership required');
+  return identity.userId;
+}
+
+async function recipientsEligible(tx: Tx, ownerUserId: number, accesses: AccessInput[]): Promise<boolean> {
   const ids = accesses.map((access) => access.userId);
   const rows = await tx<{ user_id: number | string }[]>`
     SELECT keys.user_id
      FROM vault_user_keys keys
-     WHERE keys.user_id = ANY(${ids}::bigint[])`;
-  return rows.length === ids.length;
+     WHERE keys.user_id = ANY(${ids}::bigint[])
+     FOR SHARE`;
+  if (rows.length !== ids.length) return false;
+  const recipientIds = ids.filter((id) => id !== ownerUserId);
+  if (!recipientIds.length) return true;
+  const friendships = await tx`
+    SELECT friendship.user_low_id
+      FROM user_friendships friendship
+     WHERE friendship.status = 'accepted'
+       AND ((friendship.user_low_id = ${ownerUserId} AND friendship.user_high_id = ANY(${recipientIds}::bigint[]))
+         OR (friendship.user_high_id = ${ownerUserId} AND friendship.user_low_id = ANY(${recipientIds}::bigint[])))
+     FOR SHARE`;
+  return friendships.length === recipientIds.length;
 }
 
 privateVaultRoutes.get('/vault', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c), { bucket: 'private-vault-read', max: 120 });
-  const userId = await requireAppUserId(c);
+  const { userId, canManage } = await vaultIdentity(c);
   const [keyRows, itemRows, shareRows] = await Promise.all([
     sql<KeyRow[]>`
       SELECT user_id, public_key, encrypted_private_key
@@ -165,6 +186,13 @@ privateVaultRoutes.get('/vault', async (c) => {
         JOIN vault_items item ON item.id = access.item_id
         JOIN app_users owner ON owner.id = item.owner_user_id
        WHERE access.recipient_user_id = ${userId}
+         AND (item.owner_user_id = ${userId}
+           OR EXISTS (
+             SELECT 1 FROM user_friendships friendship
+              WHERE friendship.status = 'accepted'
+                AND friendship.user_low_id = LEAST(item.owner_user_id, ${userId}::bigint)
+                AND friendship.user_high_id = GREATEST(item.owner_user_id, ${userId}::bigint)
+           ))
        ORDER BY item.updated_at DESC, item.id`,
     sql<ShareRow[]>`
       SELECT access.item_id, recipient.id AS user_id, recipient.display_name, keys.public_key
@@ -174,6 +202,12 @@ privateVaultRoutes.get('/vault', async (c) => {
         JOIN vault_user_keys keys ON keys.user_id = recipient.id
        WHERE item.owner_user_id = ${userId}
          AND access.recipient_user_id <> ${userId}
+         AND EXISTS (
+           SELECT 1 FROM user_friendships friendship
+            WHERE friendship.status = 'accepted'
+              AND friendship.user_low_id = LEAST(item.owner_user_id, access.recipient_user_id)
+              AND friendship.user_high_id = GREATEST(item.owner_user_id, access.recipient_user_id)
+         )
        ORDER BY lower(recipient.display_name), recipient.id`,
   ]);
   const shares = new Map<string, { userId: number; name: string; publicKey: JsonWebKey }[]>();
@@ -184,6 +218,7 @@ privateVaultRoutes.get('/vault', async (c) => {
   }
   return c.json({
     userId,
+    canManage,
     keyProfile: keyRows[0] ? {
       publicKey: keyRows[0].public_key,
       encryptedPrivateKey: keyRows[0].encrypted_private_key,
@@ -227,7 +262,7 @@ privateVaultRoutes.put('/vault/key', vaultBodyLimit, async (c) => {
 privateVaultRoutes.get('/vault/users', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c), { bucket: 'private-vault-user-search', max: 60 });
-  const ownerUserId = await requireVaultOwner(c);
+  const ownerUserId = await requireVaultManager(c);
   const q = (c.req.query('q') ?? '').trim().slice(0, 80);
   if (q.length < 2 && !/^\d+$/.test(q)) return c.json({ users: [] });
   const numericId = /^\d+$/.test(q) && Number.isSafeInteger(Number(q)) ? Number(q) : null;
@@ -240,6 +275,10 @@ privateVaultRoutes.get('/vault/users', async (c) => {
   }[]>`
     SELECT users.id, users.display_name, users.wca_id, keys.public_key
      FROM app_users users
+      JOIN user_friendships friendship
+        ON friendship.user_low_id = LEAST(${ownerUserId}::bigint, users.id)
+       AND friendship.user_high_id = GREATEST(${ownerUserId}::bigint, users.id)
+       AND friendship.status = 'accepted'
       LEFT JOIN vault_user_keys keys ON keys.user_id = users.id
      WHERE users.id <> ${ownerUserId}
        AND (
@@ -264,11 +303,11 @@ privateVaultRoutes.get('/vault/users', async (c) => {
 privateVaultRoutes.post('/vault/items', vaultBodyLimit, async (c) => {
   noStore(c);
   checkRateLimit(getIp(c), { bucket: 'private-vault-write', max: 30 });
-  const ownerUserId = await requireVaultOwner(c);
+  const ownerUserId = await requireVaultManager(c);
   const input = parseItemBody(await c.req.json<unknown>().catch(() => null), ownerUserId);
   if (!input || input.expectedVersion != null) return c.json({ error: 'invalid encrypted item' }, 400);
   const result = await sql.begin(async (tx) => {
-    if (!await recipientsExist(tx, input.accesses)) return null;
+    if (!await recipientsEligible(tx, ownerUserId, input.accesses)) return null;
     const rows = await tx<{ id: string; version: number | string; updated_at: string }[]>`
       INSERT INTO vault_items (owner_user_id, ciphertext, iv, byte_size)
       VALUES (${ownerUserId}, ${input.ciphertext}, ${input.iv}, ${Buffer.byteLength(input.ciphertext, 'utf8')})
@@ -287,7 +326,7 @@ privateVaultRoutes.post('/vault/items', vaultBodyLimit, async (c) => {
 privateVaultRoutes.put('/vault/items/:id', vaultBodyLimit, async (c) => {
   noStore(c);
   checkRateLimit(getIp(c), { bucket: 'private-vault-write', max: 30 });
-  const ownerUserId = await requireVaultOwner(c);
+  const ownerUserId = await requireVaultManager(c);
   const id = c.req.param('id');
   if (!UUID_RE.test(id)) return c.json({ error: 'invalid item id' }, 400);
   const input = parseItemBody(await c.req.json<unknown>().catch(() => null), ownerUserId);
@@ -299,7 +338,7 @@ privateVaultRoutes.put('/vault/items/:id', vaultBodyLimit, async (c) => {
        FOR UPDATE`;
     if (!current.length) return { state: 'missing' as const };
     if (Number(current[0].version) !== input.expectedVersion) return { state: 'conflict' as const };
-    if (!await recipientsExist(tx, input.accesses)) return { state: 'recipient' as const };
+    if (!await recipientsEligible(tx, ownerUserId, input.accesses)) return { state: 'recipient' as const };
     const rows = await tx<{ version: number | string; updated_at: string }[]>`
       UPDATE vault_items
          SET ciphertext = ${input.ciphertext}, iv = ${input.iv},
@@ -323,7 +362,7 @@ privateVaultRoutes.put('/vault/items/:id', vaultBodyLimit, async (c) => {
 privateVaultRoutes.delete('/vault/items/:id', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c), { bucket: 'private-vault-write', max: 30 });
-  const ownerUserId = await requireVaultOwner(c);
+  const ownerUserId = await requireVaultManager(c);
   const id = c.req.param('id');
   if (!UUID_RE.test(id)) return c.json({ error: 'invalid item id' }, 400);
   const rows = await sql`

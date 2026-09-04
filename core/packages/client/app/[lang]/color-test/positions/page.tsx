@@ -1,20 +1,21 @@
 'use client';
 
 import { useCallback, useEffect, useState, type CSSProperties } from 'react';
-import { ArrowRight, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import BackHome from '@/components/BackHome';
 import BoolToggle from '@/components/BoolToggle';
 import HeaderToggles from '@/components/HeaderToggles';
 import {
   SubsetColorPicker,
-  SubsetSwatch,
   useSubsetSelection,
   type ColorLetter,
 } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import TrainingFeedbackOverlay from '@/components/TrainingFeedbackOverlay';
-import { T, tr, useLang } from '@/i18n/tr';
+import TrainingNavButton from '@/components/TrainingNavButton';
+import TrainingSettings, { useTrainingAutoAdvance } from '@/components/TrainingSettings';
+import { useSpaceShortcut } from '@/hooks/useSpaceShortcut';
+import { tr, useLang } from '@/i18n/tr';
 import {
-  CUBE_COLOR_LETTER_FOR_FACE,
   CUBE_COLOR_NAMES,
   CUBE_FACE_FOR_COLOR_LETTER,
   CUBE_FILL,
@@ -38,10 +39,11 @@ function randomTopFace(colors: readonly ColorLetter[]): CubeFace {
   return CUBE_FACE_FOR_COLOR_LETTER[colors[Math.floor(Math.random() * colors.length)] ?? 'W'];
 }
 
-function Result({ score, topFace, showColorNames, onRestart }: {
+function Result({ score, topFace, showColorNames, onPrevious, onRestart }: {
   score: number;
   topFace: CubeFace;
   showColorNames: boolean;
+  onPrevious: () => void;
   onRestart: () => void;
 }) {
   const summary = score === ALL_POSITION_QUESTIONS.length
@@ -75,32 +77,41 @@ function Result({ score, topFace, showColorNames, onRestart }: {
         </div>
       </div>
 
-      <button type="button" className="color-quiz-primary-button" onClick={onRestart}>
-        <RotateCcw size={16} aria-hidden="true" />
-        {tr({ zh: '再来一轮', en: 'Try another round' })}
-      </button>
+      <div className="color-quiz-result-actions">
+        <TrainingNavButton direction="previous" onClick={onPrevious}>
+          {tr({ zh: '上一题', en: 'Previous question' })}
+        </TrainingNavButton>
+        <button type="button" className="color-quiz-primary-button" onClick={onRestart}>
+          <RotateCcw size={16} aria-hidden="true" />
+          {tr({ zh: '再来一轮', en: 'Try another round' })}
+        </button>
+      </div>
     </section>
   );
 }
 
 export default function ColorPositionsPage() {
   const isZh = useLang() === 'zh';
-  const topSelection = useSubsetSelection('single', 'W');
-  const [topFace, setTopFace] = useState<CubeFace>('U');
-  const [round, setRound] = useState<PositionQuestion[]>(() => buildPositionRound('U', () => 0.42));
+  const topSelection = useSubsetSelection('single', 'Y');
+  const [topFace, setTopFace] = useState<CubeFace>('D');
+  const [round, setRound] = useState<PositionQuestion[]>(() => buildPositionRound('D', () => 0.42));
   const [index, setIndex] = useState(0);
-  const [selected, setSelected] = useState<SideFace | null>(null);
-  const [score, setScore] = useState(0);
+  const [answers, setAnswers] = useState<Array<SideFace | null>>([]);
   const [showColorNames, setShowColorNames] = useState(true);
+  const autoAdvance = useTrainingAutoAdvance();
   const question = round[index];
+  const selected = answers[index] ?? null;
+  const score = answers.reduce((total, answer, answerIndex) => (
+    total + (answer === round[answerIndex]?.answer ? 1 : 0)
+  ), 0);
 
   const startRound = useCallback((nextTop: CubeFace) => {
     setTopFace(nextTop);
     setRound(buildPositionRound(nextTop));
     setIndex(0);
-    setSelected(null);
-    setScore(0);
-  }, []);
+    setAnswers([]);
+    autoAdvance.cancel();
+  }, [autoAdvance.cancel]);
 
   const restart = () => startRound(randomTopFace(topSelection.selectedColors));
 
@@ -110,15 +121,26 @@ export default function ColorPositionsPage() {
 
   const answer = (face: SideFace) => {
     if (!question || selected) return;
-    setSelected(face);
-    if (face === question.answer) setScore((value) => value + 1);
+    setAnswers((current) => {
+      const next = [...current];
+      next[index] = face;
+      return next;
+    });
+    if (face === question.answer) autoAdvance.schedule(() => setIndex((value) => value + 1));
   };
 
-  const next = () => {
+  const next = useCallback(() => {
     if (!selected) return;
+    autoAdvance.cancel();
     setIndex((value) => value + 1);
-    setSelected(null);
-  };
+  }, [autoAdvance.cancel, selected]);
+
+  const previous = useCallback(() => {
+    autoAdvance.cancel();
+    setIndex((value) => Math.max(0, value - 1));
+  }, [autoAdvance.cancel]);
+
+  useSpaceShortcut(next, selected !== null);
 
   return (
     <main className="color-quiz-page">
@@ -142,6 +164,7 @@ export default function ColorPositionsPage() {
             onChange={setShowColorNames}
             label={tr({ zh: '颜色文字', en: 'Colour names' })}
           />
+          <TrainingSettings value={autoAdvance.enabled} onChange={autoAdvance.setEnabled} />
         </div>
       </header>
 
@@ -161,22 +184,10 @@ export default function ColorPositionsPage() {
                 zh: `${CUBE_COLOR_NAMES[question.reference].zh}色的对面是什么颜色?`,
                 en: `Which colour is opposite ${CUBE_COLOR_NAMES[question.reference].en}?`,
               })
-              : <T
-                  zh={<>
-                    {CUBE_COLOR_NAMES[topFace].zh}色
-                    <span className="subset-swatch is-static position-question-color" aria-hidden="true">
-                      <SubsetSwatch colors={[CUBE_COLOR_LETTER_FOR_FACE[topFace]]} />
-                    </span>
-                    朝上时,{CUBE_COLOR_NAMES[question.reference].zh}色的{question.direction === 'right' ? '右边' : '左边'}是什么颜色?
-                  </>}
-                  en={<>
-                    With {CUBE_COLOR_NAMES[topFace].en}
-                    <span className="subset-swatch is-static position-question-color" aria-hidden="true">
-                      <SubsetSwatch colors={[CUBE_COLOR_LETTER_FOR_FACE[topFace]]} />
-                    </span>
-                    on top, which colour is to the {question.direction} of {CUBE_COLOR_NAMES[question.reference].en}?
-                  </>}
-                />}
+              : tr({
+                  zh: `${CUBE_COLOR_NAMES[question.reference].zh}色的${question.direction === 'right' ? '右边' : '左边'}是什么颜色?`,
+                  en: `Which colour is to the ${question.direction} of ${CUBE_COLOR_NAMES[question.reference].en}?`,
+                })}
           </h2>
           <div className="position-prompt" aria-hidden="true">
             {question.direction === 'left' && <span className="position-prompt-mark">? ←</span>}
@@ -229,17 +240,36 @@ export default function ColorPositionsPage() {
                     zh: `${CUBE_COLOR_NAMES[topFace].zh}色朝上时,${CUBE_COLOR_NAMES[question.reference].zh}色的${question.direction === 'right' ? '右边' : '左边'}是${CUBE_COLOR_NAMES[question.answer].zh}色。`,
                     en: `With ${CUBE_COLOR_NAMES[topFace].en} on top, ${CUBE_COLOR_NAMES[question.answer].en} is to the ${question.direction} of ${CUBE_COLOR_NAMES[question.reference].en}.`,
                   })}</span>
-              <button type="button" className="color-quiz-next" onClick={next} autoFocus>
-                {index === round.length - 1
-                  ? tr({ zh: '查看成绩', en: 'See results' })
-                  : tr({ zh: '下一题', en: 'Next question' })}
-                <ArrowRight size={16} aria-hidden="true" />
-              </button>
+              <span className="color-quiz-feedback-actions">
+                {index > 0 && (
+                  <TrainingNavButton direction="previous" onClick={previous}>
+                    {tr({ zh: '上一题', en: 'Previous' })}
+                  </TrainingNavButton>
+                )}
+                <TrainingNavButton direction="next" onClick={next} autoFocus>
+                  {index === round.length - 1
+                    ? tr({ zh: '查看成绩', en: 'See results' })
+                    : tr({ zh: '下一题', en: 'Next question' })}
+                </TrainingNavButton>
+              </span>
+            </div>
+          )}
+          {!selected && index > 0 && (
+            <div className="color-quiz-question-nav">
+              <TrainingNavButton direction="previous" onClick={previous}>
+                {tr({ zh: '上一题', en: 'Previous question' })}
+              </TrainingNavButton>
             </div>
           )}
         </section>
       ) : (
-        <Result score={score} topFace={topFace} showColorNames={showColorNames} onRestart={restart} />
+        <Result
+          score={score}
+          topFace={topFace}
+          showColorNames={showColorNames}
+          onPrevious={previous}
+          onRestart={restart}
+        />
       )}
     </main>
   );

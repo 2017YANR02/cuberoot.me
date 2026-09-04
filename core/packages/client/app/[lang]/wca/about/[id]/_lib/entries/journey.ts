@@ -292,7 +292,7 @@ ORDER BY competition.start_date`,
 // ──── longest_streak_of_personal_records ────────────────────────────────────
 const longest_streak_of_personal_records: AboutEntry = {
   id: 'longest_streak_of_personal_records',
-  titleZh: '最长连续个人纪录参赛记录',
+  titleZh: '连续取得个人纪录的最多参赛场数',
   titleEn: 'Longest streak of comps with a PR',
   badgeZh: '选手',
   badgeEn: 'Person',

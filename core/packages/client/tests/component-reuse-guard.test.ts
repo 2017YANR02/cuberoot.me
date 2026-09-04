@@ -54,6 +54,13 @@ function walk(dir: string): string[] {
 }
 
 describe('component reuse rule registry', () => {
+  it('requires the shared PasswordInput for every password field', () => {
+    expect(scanComponentReimplementations('<input type="password" value={password} />')
+      .map((hit) => hit.ruleId)).toContain('password-input');
+    expect(scanComponentReimplementations('<PasswordInput value={password} onChange={setPassword} />'))
+      .toEqual([]);
+  });
+
   it('recognizes a hand-written close cross and points to ClearButton', () => {
     const source = `
       <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
@@ -298,6 +305,10 @@ describe('component reuse rule registry', () => {
       counts.get('puzzle-picker') ?? 0,
       `Page-local project selectors must be consolidated into PuzzlePicker.\n${offenders.join('\n')}`,
     ).toBe(0);
+    expect(
+      counts.get('password-input') ?? 0,
+      `Password fields must use PasswordInput.\n${offenders.join('\n')}`,
+    ).toBe(0);
     const unexpectedBackHomeRoots = backHomeRootFiles
       .filter((file) => !BACK_HOME_ROOT_ALLOWLIST.has(file));
     expect(
@@ -322,6 +333,8 @@ describe('component reuse rule registry', () => {
     expect(catalog).toContain("import { ClearButton } from '@/components/ClearButton';");
     expect(catalog).toContain("name: 'PuzzlePicker'");
     expect(catalog).toContain("import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';");
+    expect(catalog).toContain("name: 'PasswordInput'");
+    expect(catalog).toContain("import { PasswordInput } from '@/components/PasswordInput';");
     expect(catalog).toContain("name: 'BackHome'");
     expect(catalog).toContain('必须放进与正文同宽的 header/topbar/wrap');
   });

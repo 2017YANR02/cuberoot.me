@@ -1,19 +1,21 @@
 'use client';
 
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Check, Copy, Download, Eye, EyeOff, KeyRound, Loader2, Lock, Plus, Save, Search, Trash2, UserPlus, X } from 'lucide-react';
+import { Check, Copy, Download, KeyRound, Loader2, Lock, Plus, Save, Search, Trash2, UserPlus, X } from 'lucide-react';
 import BackHome from '@/components/BackHome';
 import BoolToggle from '@/components/BoolToggle';
+import { PasswordInput } from '@/components/PasswordInput';
 import { SearchInput } from '@/components/SearchInput';
 import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
-import { useAuthStore, useAuthUser, useIsAdmin } from '@/lib/auth-store';
+import { useAuthStore, useAuthUser } from '@/lib/auth-store';
 import {
   createVaultKeyProfile,
   decryptVaultEntry,
   encryptVaultEntry,
+  isValidVaultPassphrase,
   recoverVaultPrivateKey,
   unlockVaultPrivateKey,
   type EncryptedPrivateKey,
@@ -28,6 +30,7 @@ interface VaultItemPayload {
 }
 interface VaultPayload {
   userId: number;
+  canManage: boolean;
   keyProfile: { publicKey: JsonWebKey; encryptedPrivateKey: EncryptedPrivateKey } | null;
   items: VaultItemPayload[];
 }
@@ -42,7 +45,6 @@ const emptyEntry = (): VaultEntry => ({ id: crypto.randomUUID(), title: '', fiel
 
 export default function VaultPage() {
   const user = useAuthUser();
-  const isAdmin = useIsAdmin();
   const login = useAuthStore((state) => state.login);
   const { copiedKey, copy } = useCopy();
   const [mounted, setMounted] = useState(false);
@@ -53,13 +55,11 @@ export default function VaultPage() {
   const [dirty, setDirty] = useState(false);
   const [passphrase, setPassphrase] = useState('');
   const [confirmation, setConfirmation] = useState('');
-  const [showPassphrase, setShowPassphrase] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showPassphrases, setShowPassphrases] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState('');
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [mustSaveRecoveryCode, setMustSaveRecoveryCode] = useState(false);
   const [filter, setFilter] = useState('');
-  const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [shareQuery, setShareQuery] = useState('');
   const [shareResults, setShareResults] = useState<UserResult[]>([]);
   const [failedCount, setFailedCount] = useState(0);
@@ -110,8 +110,8 @@ export default function VaultPage() {
 
   const setup = async (event: FormEvent) => {
     event.preventDefault();
-    if (!payload || passphrase.length < 12) {
-      setError(tr({ zh: '解锁口令至少需要 12 个字符。', en: 'Use at least 12 characters for the vault passphrase.' }));
+    if (!payload || !isValidVaultPassphrase(passphrase)) {
+      setError(tr({ zh: '资料库口令必须是 6 位数字。', en: 'The vault passphrase must be exactly 6 digits.' }));
       return;
     }
     if (passphrase !== confirmation) {
@@ -138,6 +138,10 @@ export default function VaultPage() {
   const unlock = async (event: FormEvent) => {
     event.preventDefault();
     if (!payload?.keyProfile) return;
+    if (!isValidVaultPassphrase(passphrase)) {
+      setError(tr({ zh: '资料库口令必须是 6 位数字。', en: 'The vault passphrase must be exactly 6 digits.' }));
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -149,8 +153,8 @@ export default function VaultPage() {
 
   const recover = async (event: FormEvent) => {
     event.preventDefault();
-    if (!payload?.keyProfile || recoveryCode.trim().length === 0 || passphrase.length < 12) {
-      setError(tr({ zh: '请填写恢复密钥，并设置至少 12 个字符的新口令。', en: 'Enter the recovery key and set a new passphrase of at least 12 characters.' }));
+    if (!payload?.keyProfile || recoveryCode.trim().length === 0 || !isValidVaultPassphrase(passphrase)) {
+      setError(tr({ zh: '请填写恢复密钥，并设置一个 6 位数字的新口令。', en: 'Enter the recovery key and set a new 6-digit passphrase.' }));
       return;
     }
     if (passphrase !== confirmation) {
@@ -183,6 +187,21 @@ export default function VaultPage() {
     URL.revokeObjectURL(url);
   };
 
+  const downloadPlaintextBackup = () => {
+    if (!window.confirm(tr({ zh: '导出的文件不会加密。仍要继续吗？', en: 'The exported file will not be encrypted. Continue?' }))) return;
+    const backup = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      items: items.map(({ ownerUserId, ownerName, updatedAt, entry }) => ({ ownerUserId, ownerName, updatedAt, entry })),
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `cuberoot-vault-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const confirmDiscard = () => !dirty || window.confirm(tr({ zh: '放弃尚未保存的修改？', en: 'Discard unsaved changes?' }));
   const discardUnsavedNew = () => {
     if (draft && !draft.serverId) setItems((current) => current.filter((item) => item.localId !== draft.localId));
@@ -192,11 +211,10 @@ export default function VaultPage() {
     discardUnsavedNew();
     setDraft(cloneItem(item));
     setDirty(false);
-    setRevealed(new Set());
     setShareResults([]);
   };
   const addItem = () => {
-    if (!payload || !isAdmin || !confirmDiscard()) return;
+    if (!payload?.canManage || !confirmDiscard()) return;
     discardUnsavedNew();
     const item: OpenItem = {
       localId: `new:${crypto.randomUUID()}`, serverId: null, ownerUserId: payload.userId,
@@ -205,7 +223,6 @@ export default function VaultPage() {
     setItems((current) => [item, ...current]);
     setDraft(item);
     setDirty(true);
-    setRevealed(new Set());
   };
   const updateDraft = (update: (item: OpenItem) => void) => {
     setDraft((current) => {
@@ -218,7 +235,7 @@ export default function VaultPage() {
   };
 
   const save = async () => {
-    if (!draft || !payload?.keyProfile || !privateKey || draft.ownerUserId !== payload.userId || !isAdmin) return;
+    if (!draft || !payload?.keyProfile || !privateKey || draft.ownerUserId !== payload.userId || !payload.canManage) return;
     if (!draft.entry.title.trim()) {
       setError(tr({ zh: '请填写标题。', en: 'Enter a title.' }));
       return;
@@ -256,7 +273,7 @@ export default function VaultPage() {
   };
 
   const remove = async () => {
-    if (!draft || !payload || draft.ownerUserId !== payload.userId || !isAdmin
+    if (!draft || !payload?.canManage || draft.ownerUserId !== payload.userId
       || !window.confirm(tr({ zh: '永久删除这条加密内容？', en: 'Permanently delete this encrypted item?' }))) return;
     setBusy(true);
     setError(null);
@@ -283,7 +300,7 @@ export default function VaultPage() {
       ));
       setShareResults(data.users);
     } catch {
-      setError(tr({ zh: '用户搜索失败，请稍后重试。', en: 'Could not search users. Try again later.' }));
+      setError(tr({ zh: '好友搜索失败，请稍后重试。', en: 'Could not search friends. Try again later.' }));
     } finally { setBusy(false); }
   };
 
@@ -325,34 +342,35 @@ export default function VaultPage() {
         <p>{recoveryMode
           ? tr({ zh: '输入创建时保存的恢复密钥，再设置一个新口令。', en: 'Enter the recovery key saved during setup, then set a new passphrase.' })
           : isSetup
-            ? tr({ zh: '设置一个独立解锁口令。创建后会生成一枚只显示一次的恢复密钥。', en: 'Set a separate vault passphrase. A one-time recovery key will be generated after creation.' })
+            ? tr(payload.canManage
+              ? { zh: '设置一个独立解锁口令。创建后会生成一枚只显示一次的恢复密钥。', en: 'Set a separate vault passphrase. A one-time recovery key will be generated after creation.' }
+              : { zh: '设置解锁口令以接收好友分享。只有会员和管理员可以新建或管理自己的内容。', en: 'Set a passphrase to receive shares from friends. Only members and administrators can create or manage their own items.' })
             : tr({ zh: '输入资料库口令，在这台设备上解密。', en: 'Enter your vault passphrase to decrypt on this device.' })}</p>
         <form className="vault-unlock" onSubmit={recoveryMode ? recover : isSetup ? setup : unlock}>
           {recoveryMode && <><label htmlFor="vault-recovery">{tr({ zh: '恢复密钥', en: 'Recovery key' })}</label><input id="vault-recovery" className="vault-unlock-input" value={recoveryCode} autoComplete="off" onChange={(event) => setRecoveryCode(event.target.value)} /></>}
           <label htmlFor="vault-passphrase">{recoveryMode ? tr({ zh: '新资料库口令', en: 'New vault passphrase' }) : tr({ zh: '资料库口令', en: 'Vault passphrase' })}</label>
-          <div className="vault-password-field">
-            <input id="vault-passphrase" className="vault-unlock-input" type={showPassphrase ? 'text' : 'password'} value={passphrase} minLength={12} autoComplete={isSetup || recoveryMode ? 'new-password' : 'current-password'} onChange={(event) => setPassphrase(event.target.value)} />
-            <button type="button" className="vault-icon-button vault-password-eye" aria-pressed={showPassphrase} aria-label={tr(showPassphrase ? { zh: '隐藏资料库口令', en: 'Hide vault passphrase' } : { zh: '显示资料库口令', en: 'Show vault passphrase' })} onClick={() => setShowPassphrase((shown) => !shown)}>{showPassphrase ? <EyeOff /> : <Eye />}</button>
-          </div>
-          {(isSetup || recoveryMode) && <><label htmlFor="vault-confirm">{recoveryMode ? tr({ zh: '再次输入新口令', en: 'Confirm new passphrase' }) : tr({ zh: '再次输入', en: 'Confirm passphrase' })}</label><div className="vault-password-field"><input id="vault-confirm" className="vault-unlock-input" type={showConfirmation ? 'text' : 'password'} value={confirmation} minLength={12} autoComplete="new-password" onChange={(event) => setConfirmation(event.target.value)} /><button type="button" className="vault-icon-button vault-password-eye" aria-pressed={showConfirmation} aria-label={tr(showConfirmation ? { zh: '隐藏确认口令', en: 'Hide confirmation passphrase' } : { zh: '显示确认口令', en: 'Show confirmation passphrase' })} onClick={() => setShowConfirmation((shown) => !shown)}>{showConfirmation ? <EyeOff /> : <Eye />}</button></div></>}
-          <button type="submit" className="vault-button is-primary" disabled={busy}>{busy && <Loader2 className="vault-spin" />}{tr(recoveryMode ? { zh: '重设口令并解锁', en: 'Reset and unlock' } : isSetup ? { zh: '创建并解锁', en: 'Create and unlock' } : { zh: '解锁', en: 'Unlock' })}</button>
-          {!isSetup && <button type="button" className="vault-button" onClick={() => { setRecoveryMode((current) => !current); setRecoveryCode(''); setPassphrase(''); setConfirmation(''); setShowPassphrase(false); setShowConfirmation(false); setError(null); }}>{recoveryMode ? tr({ zh: '返回口令解锁', en: 'Back to passphrase' }) : tr({ zh: '忘记口令', en: 'Forgot passphrase' })}</button>}
+          <PasswordInput wrapperClassName="vault-password-field" id="vault-passphrase" className="vault-unlock-input" value={passphrase} inputMode="numeric" pattern="[0-9]{6}" minLength={6} maxLength={6} autoComplete={isSetup || recoveryMode ? 'new-password' : 'current-password'} onChange={setPassphrase} show={showPassphrases} onShowChange={setShowPassphrases} />
+          {(isSetup || recoveryMode) && <><label htmlFor="vault-confirm">{recoveryMode ? tr({ zh: '再次输入新口令', en: 'Confirm new passphrase' }) : tr({ zh: '再次输入', en: 'Confirm passphrase' })}</label><PasswordInput wrapperClassName="vault-password-field" id="vault-confirm" className="vault-unlock-input" value={confirmation} inputMode="numeric" pattern="[0-9]{6}" minLength={6} maxLength={6} autoComplete="new-password" onChange={setConfirmation} show={showPassphrases} onShowChange={setShowPassphrases} /></>}
+          <button type="submit" className="vault-button is-primary" disabled={busy}>{busy && <Loader2 className="vault-spin" />}{tr(recoveryMode ? { zh: '重设口令并解锁', en: 'Reset and unlock' } : isSetup ? payload.canManage ? { zh: '创建并解锁', en: 'Create and unlock' } : { zh: '启用接收并解锁', en: 'Enable receiving and unlock' } : { zh: '解锁', en: 'Unlock' })}</button>
+          {!isSetup && <button type="button" className="vault-button" onClick={() => { setRecoveryMode((current) => !current); setRecoveryCode(''); setPassphrase(''); setConfirmation(''); setShowPassphrases(false); setError(null); }}>{recoveryMode ? tr({ zh: '返回口令解锁', en: 'Back to passphrase' }) : tr({ zh: '忘记口令', en: 'Forgot passphrase' })}</button>}
         </form>
         {error && <p className="vault-error" role="alert">{error}</p>}
       </main>
     );
   }
 
-  const editable = Boolean(draft && isAdmin && draft.ownerUserId === payload.userId);
+  const editable = Boolean(draft && payload.canManage && draft.ownerUserId === payload.userId);
   return (
     <main className="vault-page">
       <div className="vault-topbar"><BackHome /><button type="button" className="vault-button" onClick={() => {
         if (confirmDiscard()) window.location.reload();
       }}><Lock />{tr({ zh: '锁定', en: 'Lock' })}</button></div>
       <header className="vault-header">
-        <div><h1>{tr({ zh: '私密资料库', en: 'Private vault' })}</h1><p>{tr({ zh: '内容只在浏览器中解密；共享对象必须是已注册且已启用资料库的账号。', en: 'Content is decrypted only in your browser. Recipients must be registered accounts with an initialized vault.' })}</p></div>
-        {isAdmin && <button type="button" className="vault-button is-primary" onClick={addItem}><Plus />{tr({ zh: '新建', en: 'New item' })}</button>}
+        <div><h1>{tr({ zh: '私密资料库', en: 'Private vault' })}</h1><p>{tr({ zh: '内容只在浏览器中解密；只有好友可以接收分享。', en: 'Content is decrypted only in your browser. Only friends can receive shares.' })}</p></div>
+        {items.length > 0 && <button type="button" className="vault-button" onClick={downloadPlaintextBackup}><Download />{tr({ zh: '导出明文备份', en: 'Export plaintext backup' })}</button>}
+        {payload.canManage && <button type="button" className="vault-button is-primary" onClick={addItem}><Plus />{tr({ zh: '新建', en: 'New item' })}</button>}
       </header>
+      {!payload.canManage && <p className="vault-muted">{tr({ zh: '你可以查看和导出现有内容；成为会员后才能新建、编辑、删除或分享。', en: 'You can view and export existing items. Membership is required to create, edit, delete, or share.' })}</p>}
       {failedCount > 0 && <p className="vault-error" role="alert">{tr({ zh: `${failedCount} 条内容无法解密。`, en: `${failedCount} item(s) could not be decrypted.` })}</p>}
       {error && <p className="vault-error" role="alert">{error}</p>}
 
@@ -374,12 +392,13 @@ export default function VaultPage() {
           </div>
 
           <div className="vault-fields">{draft.entry.fields.map((field, index) => {
-            const shown = !field.secret || revealed.has(field.id);
+            const changeValue = (value: string) => updateDraft((item) => { item.entry.fields[index].value = value; });
             return <div className="vault-field" key={field.id}>
               <input className="vault-label-input" value={field.label} readOnly={!editable} maxLength={100} placeholder={tr({ zh: '字段名', en: 'Field name' })} onChange={(event) => updateDraft((item) => { item.entry.fields[index].label = event.target.value; })} />
               <div className="vault-value-line">
-                <input className="vault-value-input" type={shown ? 'text' : 'password'} value={field.value} readOnly={!editable} maxLength={100_000} placeholder={tr({ zh: '内容', en: 'Value' })} onChange={(event) => updateDraft((item) => { item.entry.fields[index].value = event.target.value; })} />
-                {field.secret && <button type="button" className="vault-icon-button" aria-label={shown ? tr({ zh: '隐藏', en: 'Hide' }) : tr({ zh: '显示', en: 'Reveal' })} onClick={() => setRevealed((current) => { const next = new Set(current); if (shown) next.delete(field.id); else next.add(field.id); return next; })}>{shown ? <EyeOff /> : <Eye />}</button>}
+                {field.secret
+                  ? <PasswordInput wrapperClassName="vault-secret-value" className="vault-value-input" value={field.value} readOnly={!editable} maxLength={100_000} placeholder={tr({ zh: '内容', en: 'Value' })} onChange={changeValue} />
+                  : <input className="vault-value-input" value={field.value} readOnly={!editable} maxLength={100_000} placeholder={tr({ zh: '内容', en: 'Value' })} onChange={(event) => changeValue(event.target.value)} />}
                 <button type="button" className="vault-icon-button" aria-label={tr({ zh: '复制', en: 'Copy' })} onClick={() => copy(field.value, field.id)}>{copiedKey === field.id ? <Check /> : <Copy />}</button>
                 {editable && <button type="button" className="vault-icon-button is-danger" aria-label={tr({ zh: '删除字段', en: 'Delete field' })} onClick={() => updateDraft((item) => { item.entry.fields.splice(index, 1); })}><X /></button>}
               </div>
@@ -391,13 +410,13 @@ export default function VaultPage() {
           <textarea id="vault-notes" className="vault-notes" value={draft.entry.notes} readOnly={!editable} maxLength={500_000} rows={10} onChange={(event) => updateDraft((item) => { item.entry.notes = event.target.value; })} />
 
           <section className="vault-sharing">
-            <h2>{tr({ zh: '指定可查看账号', en: 'Designated viewers' })}</h2>
-            <p>{tr({ zh: '与好友关系无关。撤销后旧版本不再提供，但无法抹除对方已经看过或复制的明文。', en: 'This is independent of friendship. Revocation removes future access, but cannot erase plaintext already viewed or copied.' })}</p>
+            <h2>{tr({ zh: '分享给好友', en: 'Share with friends' })}</h2>
+            <p>{tr({ zh: '移除并保存，或解除好友后，对方下次打开资料库时将无法再访问；但无法抹除已经看过、复制或截图的内容。', en: 'After removing and saving, or ending the friendship, they cannot reopen the item from the vault. Content already viewed, copied, or captured cannot be erased.' })}</p>
             <div className="vault-share-list">{draft.shares.map((share) => <span className="vault-share" key={share.userId}>{share.name}<small>#{share.userId}</small>{editable && <button type="button" className="vault-share-remove" aria-label={tr({ zh: `移除 ${share.name}`, en: `Remove ${share.name}` })} onClick={() => updateDraft((item) => { item.shares = item.shares.filter((candidate) => candidate.userId !== share.userId); })}><X /></button>}</span>)}{!draft.shares.length && <span className="vault-muted">{tr({ zh: '仅自己', en: 'Only you' })}</span>}</div>
-            {editable && <form className="vault-user-search" onSubmit={searchUsers}><SearchInput value={shareQuery} onChange={setShareQuery} placeholder={tr({ zh: '用户名、CubeRoot ID 或 WCA ID', en: 'Username, CubeRoot ID, or WCA ID' })} className="vault-share-search" inputClassName="vault-input" /><button type="submit" className="vault-button" disabled={busy || shareQuery.trim().length < 2}><Search />{tr({ zh: '搜索', en: 'Search' })}</button></form>}
+            {editable && <form className="vault-user-search" onSubmit={searchUsers}><SearchInput value={shareQuery} onChange={setShareQuery} placeholder={tr({ zh: '搜索好友', en: 'Search friends' })} className="vault-share-search" inputClassName="vault-input" /><button type="submit" className="vault-button" disabled={busy || shareQuery.trim().length < 2}><Search />{tr({ zh: '搜索', en: 'Search' })}</button></form>}
             {editable && shareResults.length > 0 && <div className="vault-user-results">{shareResults.map((result) => {
               const added = draft.shares.some((share) => share.userId === result.userId);
-              return <div key={result.userId}><span><strong>{result.name}</strong><small>#{result.userId}{result.wcaId ? `  ${result.wcaId}` : ''}</small></span><button type="button" className="vault-button" disabled={!result.publicKey || added} onClick={() => { if (result.publicKey) updateDraft((item) => { item.shares.push({ userId: result.userId, name: result.name, publicKey: result.publicKey as JsonWebKey }); }); }}><UserPlus />{added ? tr({ zh: '已添加', en: 'Added' }) : result.publicKey ? tr({ zh: '添加', en: 'Add' }) : tr({ zh: '对方尚未启用', en: 'Not initialized' })}</button></div>;
+              return <div key={result.userId}><span><strong>{result.name}</strong><small>#{result.userId}{result.wcaId ? `  ${result.wcaId}` : ''}</small></span><button type="button" className="vault-button" disabled={!result.publicKey || added} onClick={() => { if (result.publicKey) updateDraft((item) => { item.shares.push({ userId: result.userId, name: result.name, publicKey: result.publicKey as JsonWebKey }); }); }}><UserPlus />{added ? tr({ zh: '已添加', en: 'Added' }) : result.publicKey ? tr({ zh: '添加', en: 'Add' }) : tr({ zh: '对方尚未启用接收', en: 'Receiving not enabled' })}</button></div>;
             })}</div>}
           </section>
         </>}</section>

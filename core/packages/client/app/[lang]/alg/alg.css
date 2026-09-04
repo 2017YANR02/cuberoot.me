@@ -1000,26 +1000,6 @@ html[data-theme=dark] .alg-root {
   white-space: nowrap;
 }
 
-/* === DnD case-card 拖动 handle (admin) === */
-.alg-case-drag-handle {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  z-index: 5;
-  background: color-mix(in srgb, var(--background) 60%, transparent);
-  border: 1px solid var(--border-default);
-  color: var(--muted-foreground);
-  border-radius: 4px;
-  padding: 3px;
-  cursor: grab;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  touch-action: none;
-}
-.alg-case-drag-handle:hover { color: var(--accent); border-color: var(--accent); }
-.alg-case-drag-handle:active { cursor: grabbing; }
-
 /* 公式行的拖动 handle(admin)—— 第一条公式是主推解法,顺序得能改。
    压在行的左内侧、平时半隐:详情页的行本身还会「点了播动画」,handle 不能把它顶变形,
    也不该在四条公式旁边杵四个大灰块。悬停 / 拖动时才显形。 */

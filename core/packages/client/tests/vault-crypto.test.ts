@@ -3,12 +3,20 @@ import {
   createVaultKeyProfile,
   decryptVaultEntry,
   encryptVaultEntry,
+  isValidVaultPassphrase,
   recoverVaultPrivateKey,
   unlockVaultPrivateKey,
   type VaultEntry,
 } from '@/lib/vault-crypto';
 
 describe('private vault crypto', () => {
+  it('accepts only an exact six-digit vault passphrase', () => {
+    expect(isValidVaultPassphrase('123456')).toBe(true);
+    expect(isValidVaultPassphrase('12345')).toBe(false);
+    expect(isValidVaultPassphrase('1234567')).toBe(false);
+    expect(isValidVaultPassphrase('12345a')).toBe(false);
+  });
+
   it('round-trips Unicode content for only the intended key', async () => {
     const owner = await createVaultKeyProfile('correct horse battery staple');
     const stranger = await createVaultKeyProfile('a different long passphrase');

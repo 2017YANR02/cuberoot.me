@@ -45,8 +45,8 @@ describe('colour positions for every top colour', () => {
   it('covers every side colour to its left, right and opposite', () => {
     expect(WHITE_TOP_SIDE_ORDER).toEqual(['R', 'F', 'L', 'B']);
     expect(ALL_POSITION_QUESTIONS).toHaveLength(12);
-    expect(ALL_POSITION_QUESTIONS).toContainEqual({ reference: 'R', direction: 'right', answer: 'F' });
-    expect(ALL_POSITION_QUESTIONS).toContainEqual({ reference: 'R', direction: 'left', answer: 'B' });
+    expect(ALL_POSITION_QUESTIONS).toContainEqual({ reference: 'R', direction: 'right', answer: 'B' });
+    expect(ALL_POSITION_QUESTIONS).toContainEqual({ reference: 'R', direction: 'left', answer: 'F' });
     for (const reference of WHITE_TOP_SIDE_ORDER) {
       expect(ALL_POSITION_QUESTIONS).toContainEqual({
         reference,
@@ -72,6 +72,7 @@ describe('colour positions for every top colour', () => {
       expect(sideOrderForTop(top)).not.toContain(CUBE_OPPOSITE_FACE[top]);
       expect(positionQuestionsForTop(top)).toHaveLength(12);
     }
+    expect(positionQuestionsForTop('D')).toContainEqual({ reference: 'R', direction: 'left', answer: 'B' });
   });
 
   it('builds a shuffled copy without losing questions', () => {

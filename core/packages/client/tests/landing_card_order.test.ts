@@ -1,8 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { PRIMARY_CARDS, SECTIONS } from '@/lib/landing-sections';
+import { PRIMARY_CARDS, SECTIONS, applyLandingCardOrder } from '@/lib/landing-sections';
 import { CREATOR_PROFILE } from '@/lib/creator-profile';
 
 describe('homepage card order', () => {
+  it('applies saved known ids once and appends new cards in source order', () => {
+    const cards = SECTIONS.find(({ id }) => id === 'tool')!.cards;
+    const ordered = applyLandingCardOrder(cards, ['timezone', 'missing', 'timezone', 'contests']);
+
+    expect(ordered.map(({ id }) => id)).toEqual([
+      'timezone',
+      'contests',
+      ...cards.map(({ id }) => id).filter((id) => id !== 'timezone' && id !== 'contests'),
+    ]);
+  });
+
   it('places competition simulation immediately to the right of competition system', () => {
     const toolCards = SECTIONS.find(({ id }) => id === 'tool')?.cards;
 

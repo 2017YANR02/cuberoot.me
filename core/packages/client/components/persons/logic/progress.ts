@@ -74,6 +74,16 @@ export interface RankFlag {
   attemptRanks: (number | null)[];
 }
 
+/** 单次 / 平均列中显示为 PR 的总数；逐把名次不重复计数。 */
+export function countPersonalRecords(ranks: Iterable<RankFlag | undefined>): number {
+  let count = 0;
+  for (const rank of ranks) {
+    if (rank?.singleRank === 1) count++;
+    if (rank?.averageRank === 1) count++;
+  }
+  return count;
+}
+
 // 时间序轮次顺序: 用于同一比赛内 round 排序 (老轮次在前). 与展示用的 ROUND_ORDER 相反.
 // h=0 round (extras / heat-like), 1/d=first round, 2/g=quarter, 3=semi, b/c/f=finals.
 const CHRONO_ROUND_ORDER: Record<string, number> = {

@@ -15,11 +15,9 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryState, useQueryStates, parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, AlertTriangle, FlipHorizontal2, HelpCircle, Pin } from 'lucide-react';
+import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, AlertTriangle, FlipHorizontal2, HelpCircle, Pin } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
-import { SortableContext, useSortable, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import type { UniqueIdentifier } from '@dnd-kit/core';
+import { SortableContext, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import {
   loadAlg, getAlgSetMeta, ALG_PUZZLES,
   type AlgCase, type AlgEntry, type AlgFile, type AlgPuzzle, type AlgSubmission, type AlgTag,
@@ -43,6 +41,7 @@ import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEd
 import type { AlgInvalidMark } from '@/components/AlgEditor';
 import ValidationReportModal from '@/components/ValidationReportModal';
 import SortableAlgRow from '@/components/SortableAlgRow';
+import SortableCard from '@/components/SortableCard';
 import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';
 import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -306,34 +305,6 @@ function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAn
         <AlgMirrorPanel alg={angledAlg} puzzle={puzzle} mirrorName={mirror.partner} selfName={mirror.self} ori={ori} />
       )}
     </>
-  );
-}
-
-/** dnd-kit sortable wrapper:admin 模式下渲染拖动 handle,普通模式下退化成裸 div */
-export function SortableCaseCard({ id, draggable, children }: { id: UniqueIdentifier; draggable: boolean; children: React.ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !draggable });
-  const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    position: 'relative',
-    height: '100%',
-  };
-  return (
-    <div ref={setNodeRef} style={style}>
-      {draggable && (
-        <button
-          type="button"
-          className="alg-case-drag-handle"
-          {...attributes}
-          {...listeners}
-          title={tr({ zh: '拖动调整卡片顺序', en: 'Drag to reorder cards' })}
-        >
-          <GripVertical size={14} />
-        </button>
-      )}
-      {children}
-    </div>
   );
 }
 
@@ -1573,7 +1544,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                     ? (sq1EpNumericCaseName(c.name) ?? defaultCardName)
                     : defaultCardName;
                   return (
-                    <SortableCaseCard key={c.id ?? c.name} id={c.id ?? 0} draggable={isAdmin && c.id != null}>
+                    <SortableCard key={c.id ?? c.name} id={c.id ?? 0} draggable={isAdmin && c.id != null}>
                     <article
                       className={`alg-case${flashId === c.id ? ' is-flash' : ''}${selectedId === c.id ? ' is-selected' : ''}${isAdmin && c.id != null && invalidIds.has(c.id) ? ' is-invalid' : ''}`}
                       id={c.id != null ? `case-${c.id}` : undefined}
@@ -1771,7 +1742,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                       />
                       </>)}
                     </article>
-                    </SortableCaseCard>
+                    </SortableCard>
                   );
                 })}
               </div>

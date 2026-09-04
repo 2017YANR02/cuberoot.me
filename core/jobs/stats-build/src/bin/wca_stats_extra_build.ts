@@ -19,6 +19,7 @@ import {
   averageKinchScoreX100,
   calculateKinchEvent,
 } from '@cuberoot/shared/kinch';
+import { calculateCompetitionStreak } from '@cuberoot/shared/pr-streak';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -474,6 +475,7 @@ async function main() {
   // E1/E2(选手比赛次数 / 赛事选手人数)不另存 Set,直接从 personCompSA 的 key 去重派生(省 ~1GB).
   const personCompSA = new Map<string, [number, number]>();  // pid\x1fcomp → [s,a] (E1/E2/E3/E4/E5 全派生)
   const personYearSA = new Map<string, [number, number]>();  // pid\x1fyear → [s,a] (E6)
+  const prCompsByPerson = new Map<string, Set<string>>();     // 至少取得一项新 PB / 并列 PB 的比赛
   // 循环内逐 event 写出的 stream(misser per-event;best podiums per-event).
   const misserStream = createWriteStream(resolve(outDir, 'wca_fs_misser.copy.tsv'));
   const bestPodiumsStream = createWriteStream(resolve(outDir, 'wca_fs_best_podiums.copy.tsv'));
@@ -499,8 +501,9 @@ async function main() {
               FROM result_attempts ra WHERE ra.result_id = r.id) AS attempts_csv
       FROM results r
       JOIN competitions c ON c.id = r.competition_id
+      JOIN round_types rt_order ON rt_order.id = r.round_type_id
       WHERE r.event_id = ? AND c.start_date IS NOT NULL
-      ORDER BY c.start_date ASC, r.id ASC
+      ORDER BY c.start_date ASC, c.id ASC, rt_order.rank ASC, r.id ASC
     `, [eventId]);
     console.log(`  ${rows.length.toLocaleString()} results loaded (${Date.now() - tev}ms)`);
 
@@ -553,6 +556,12 @@ async function main() {
       if (!a) {
         a = { best: 0, avg: 0, country: r.countryId, bestCompId: '', avgCompId: '' };
         acc.set(r.pid, a);
+      }
+      if ((r.best > 0 && (a.best === 0 || r.best <= a.best))
+        || (r.average > 0 && (a.avg === 0 || r.average <= a.avg))) {
+        let prComps = prCompsByPerson.get(r.pid);
+        if (!prComps) { prComps = new Set(); prCompsByPerson.set(r.pid, prComps); }
+        prComps.add(r.compId);
       }
       if (r.best > 0 && (a.best === 0 || r.best < a.best)) { a.best = r.best; a.bestCompId = r.compId; }
       if (r.average > 0 && (a.avg === 0 || r.average < a.avg)) { a.avg = r.average; a.avgCompId = r.compId; }
@@ -1278,6 +1287,7 @@ async function main() {
   const personSA = new Map<string, [number, number]>();       // E5: pid → [s,a]
   const personCompCount = new Map<string, number>();          // E1: pid → distinct comp 数
   const compPersonCount = new Map<string, number>();          // E2: comp → distinct person 数
+  const compsByPerson = new Map<string, string[]>();          // PR 连续场次:pid → 全部比赛
   for (const [key, [s, a]] of personCompSA) {
     const sep = key.indexOf('\x1f'); const pid = key.slice(0, sep), compId = key.slice(sep + 1);
     pcsStream.write(`${pgEsc(pid)}\t${pgEsc(personCountry.get(pid) ?? '')}\t${pgEsc(compId)}\t${s}\t${a}\n`); pcsCount++;
@@ -1285,6 +1295,8 @@ async function main() {
     { let t = personSA.get(pid); if (!t) { t = [0, 0]; personSA.set(pid, t); } t[0] += s; t[1] += a; }
     personCompCount.set(pid, (personCompCount.get(pid) ?? 0) + 1);
     compPersonCount.set(compId, (compPersonCount.get(compId) ?? 0) + 1);
+    const personComps = compsByPerson.get(pid);
+    if (personComps) personComps.push(compId); else compsByPerson.set(pid, [compId]);
   }
   await endStream(pcsStream);
   // E1 选手比赛次数
@@ -1316,6 +1328,20 @@ async function main() {
     pysStream.write(`${pgEsc(pid)}\t${pgEsc(personCountry.get(pid) ?? '')}\t${year}\t${s}\t${a}\n`); pysCount++;
   }
   await endStream(pysStream);
+
+  const prStreakStream = createWriteStream(resolve(outDir, 'wca_pr_streaks.copy.tsv'));
+  let prStreakCount = 0;
+  for (const [pid, personComps] of compsByPerson) {
+    personComps.sort((a, b) => {
+      const dateOrder = (compInfo.get(a)?.startDate ?? '').localeCompare(compInfo.get(b)?.startDate ?? '');
+      return dateOrder || a.localeCompare(b);
+    });
+    const { longest } = calculateCompetitionStreak(personComps, prCompsByPerson.get(pid) ?? new Set<string>());
+    const country = personCountry.get(pid) ?? '';
+    prStreakStream.write(`${pgEsc(pid)}\t${pgEsc(country)}\t${pgEsc(continentOf.get(country) ?? '')}\t${longest.length}\t${pgEsc(longest[0])}\t${pgEsc(longest.at(-1))}\n`);
+    prStreakCount++;
+  }
+  await endStream(prStreakStream);
   console.log(`  fs: medals=${medalsCount} placements=${placeCount} recPerson=${recPersonCount} recComp=${recCompCount} ` +
     `personComps=${pcCount} compPersons=${cpCount} personCompSolves=${pcsCount} compSolves=${csolvCount} personSolves=${psolvCount} personYearSolves=${pysCount} ` +
     `misser=${misserCount} bestPodiums=${bestPodiumsCount}`);
@@ -1366,6 +1392,10 @@ CREATE TABLE IF NOT EXISTS wca_kinch (wca_id VARCHAR(20) PRIMARY KEY, country_id
 CREATE INDEX IF NOT EXISTS kinch_world_score ON wca_kinch (world_score_x100 DESC, wca_id);
 CREATE INDEX IF NOT EXISTS kinch_continent_score ON wca_kinch (continent_id, continent_score_x100 DESC, wca_id);
 CREATE INDEX IF NOT EXISTS kinch_country_score ON wca_kinch (country_id, country_score_x100 DESC, wca_id);
+CREATE TABLE IF NOT EXISTS wca_pr_streaks (wca_id VARCHAR(20) PRIMARY KEY, country_id VARCHAR(50) NOT NULL, continent_id VARCHAR(50) NOT NULL, streak INTEGER NOT NULL, start_comp_id VARCHAR(50), end_comp_id VARCHAR(50));
+CREATE INDEX IF NOT EXISTS pr_streak_world ON wca_pr_streaks (streak DESC, wca_id);
+CREATE INDEX IF NOT EXISTS pr_streak_continent ON wca_pr_streaks (continent_id, streak DESC, wca_id);
+CREATE INDEX IF NOT EXISTS pr_streak_country ON wca_pr_streaks (country_id, streak DESC, wca_id);
 -- wca_competitions 补 city / iso2(表由 schema_wca_stats_extra 建,这里只加列,幂等).
 ALTER TABLE wca_competitions ADD COLUMN IF NOT EXISTS city VARCHAR(120) NOT NULL DEFAULT '';
 ALTER TABLE wca_competitions ADD COLUMN IF NOT EXISTS country_iso2 VARCHAR(2) NOT NULL DEFAULT '';`;
@@ -1380,6 +1410,7 @@ TRUNCATE wca_success_rate;
 TRUNCATE wca_all_events_done;
 TRUNCATE wca_person_ranks;
 TRUNCATE wca_kinch;
+TRUNCATE wca_pr_streaks;
 TRUNCATE wca_fs_country_ranks;
 TRUNCATE wca_fs_country_ranks_meta;
 TRUNCATE wca_fs_medals;
@@ -1411,6 +1442,8 @@ TRUNCATE wca_championship_podiums;
 \\! rm -f wca_person_ranks.copy.tsv
 \\copy wca_kinch (wca_id, country_id, continent_id, world_score_x100, continent_score_x100, country_score_x100) FROM 'wca_kinch.copy.tsv';
 \\! rm -f wca_kinch.copy.tsv
+\\copy wca_pr_streaks (wca_id, country_id, continent_id, streak, start_comp_id, end_comp_id) FROM 'wca_pr_streaks.copy.tsv';
+\\! rm -f wca_pr_streaks.copy.tsv
 \\copy wca_fs_country_ranks (is_avg, country_id, sum, events_present, per_event_rank) FROM 'wca_fs_country_ranks.copy.tsv';
 \\! rm -f wca_fs_country_ranks.copy.tsv
 \\copy wca_fs_country_ranks_meta (is_avg, penalties, all_penalties) FROM 'wca_fs_country_ranks_meta.copy.tsv';
@@ -1492,6 +1525,7 @@ ANALYZE wca_success_rate;
 ANALYZE wca_all_events_done;
 ANALYZE wca_person_ranks;
 ANALYZE wca_kinch;
+ANALYZE wca_pr_streaks;
 ANALYZE wca_comp_updated_at;
 ANALYZE wca_fs_country_ranks;
 ANALYZE wca_fs_country_ranks_meta;
@@ -1647,6 +1681,7 @@ ${vacuumAnalyze}
   console.log(`  all_events_done   : ${aedCount.toLocaleString()} rows, ${sizeMb('wca_all_events_done.copy.tsv')} MB`);
   console.log(`  person_ranks      : ${prCount.toLocaleString()} rows, ${sizeMb('wca_person_ranks.copy.tsv')} MB`);
   console.log(`  kinch             : ${kinchCount.toLocaleString()} rows, ${sizeMb('wca_kinch.copy.tsv')} MB`);
+  console.log(`  pr_streaks        : ${prStreakCount.toLocaleString()} rows, ${sizeMb('wca_pr_streaks.copy.tsv')} MB`);
   console.log(`  comp_updated_at   : ${compMaxCount.toLocaleString()} rows, ${sizeMb('wca_comp_updated_at.copy.tsv')} MB`);
 }
 

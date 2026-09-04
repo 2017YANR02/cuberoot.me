@@ -5,6 +5,7 @@ import { Clock3, Mic2, Target, Video } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
+import { PasswordInput } from '@/components/PasswordInput';
 import { T, tr } from '@/i18n/tr';
 import { nextQuery, useIsAdmin } from '@/lib/auth-store';
 import {
@@ -328,15 +329,15 @@ function TeachingAccessNotice({ onUnlock }: { onUnlock: () => void }) {
       <form className="teaching-access-form" onSubmit={submitPassword}>
         <label htmlFor="teaching-password"><T zh="预览密码" en="Preview password" /></label>
         <div className="teaching-access-row">
-          <input
+          <PasswordInput
+            wrapperClassName="teaching-access-password"
             className="teaching-access-input"
             id="teaching-password"
-            type="password"
             inputMode="numeric"
             autoComplete="current-password"
             value={password}
-            onChange={(event) => {
-              setPassword(event.target.value);
+            onChange={(value) => {
+              setPassword(value);
               setError(false);
             }}
             aria-invalid={error}

@@ -60,7 +60,7 @@ const DISPLAY_ZH: Record<string, string> = {
   'minx': '五魔', 'pyram': '金字塔', 'clock': '魔表', 'skewb': '斜转', 'sq1': 'SQ1',
   'magic': '八板', 'mmagic': '十二板', '333mbo': '旧多盲',
   // 非 WCA(cubing.js twizzleEvents)
-  'fto': 'FTO', 'master_tetraminx': '四阶金字塔', 'kilominx': '二阶五魔', 'redi_cube': 'Redi', 'baby_fto': '二阶 FTO',
+  'fto': 'FTO', 'master_tetraminx': '四阶金字塔', 'kilominx': '二阶五魔', 'ivy': '枫叶', 'redi_cube': 'Redi', 'baby_fto': '二阶 FTO',
   // 非 WCA cubing.com 自定义项目
   'funny': '趣味',
 };
