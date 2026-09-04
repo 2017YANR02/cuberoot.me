@@ -359,7 +359,14 @@ textarea.music-editor-control { resize: vertical; line-height: 1.55; }
   grid-template-columns: minmax(180px, 230px) minmax(0, 1fr);
   gap: clamp(20px, 4vw, 40px);
 }
-.music-manage-page { max-width: 1080px; }
+.music-manage-page {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding-top: clamp(20px, 3vw, 36px);
+}
+.music-manage-page .music-header { margin-bottom: clamp(18px, 3vw, 28px); }
+.music-manage-page .music-header h1 { font-size: clamp(32px, 4vw, 48px); }
 .music-manager-list {
   min-width: 0;
   max-height: min(60vh, 540px);

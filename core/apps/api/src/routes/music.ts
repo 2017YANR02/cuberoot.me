@@ -26,9 +26,11 @@ export const musicRoutes = new Hono();
 const MUSIC_STORAGE_DIR = process.env.MUSIC_STORAGE_DIR || path.join(process.cwd(), '.music');
 const MUSIC_TEMP_DIR = path.join(MUSIC_STORAGE_DIR, '.tmp');
 const STORAGE_KEY_RE = /^(audio|covers)\/[0-9a-f-]{36}\.(mp3|m4a|flac|wav|jpg|png|webp)$/;
+const STATIC_TRACK_ID_RE = /^[0-9a-f]{64}$/;
 const TRACK_SELECT = `id, owner_user_id, title, artist, album, genre, lyrics_lrc,
   audio_storage_key, audio_mime, audio_size_bytes, audio_filename,
   cover_storage_key, cover_mime, status, review_note, created_at, updated_at, published_at`;
+const STATIC_OVERRIDE_SELECT = 'track_id, title, artist, album, genre, hidden, updated_at';
 
 type TrackStatus = 'pending' | 'published' | 'rejected';
 
@@ -51,6 +53,16 @@ interface MusicTrackRow {
   created_at: Date | string;
   updated_at: Date | string;
   published_at: Date | string | null;
+}
+
+interface StaticTrackOverrideRow {
+  track_id: string;
+  title: string | null;
+  artist: string | null;
+  album: string | null;
+  genre: string | null;
+  hidden: boolean;
+  updated_at: Date | string;
 }
 
 function noStore(c: Context): void {
@@ -93,6 +105,25 @@ function nullableText(value: unknown, name: string, max: number): string | null 
   const clean = value.trim();
   if (Buffer.byteLength(clean, 'utf8') > max) throw new Error(`Validation failed: ${name} is too long`);
   return clean || null;
+}
+
+function staticOverrideJson(row: StaticTrackOverrideRow): Record<string, unknown> {
+  return {
+    id: row.track_id,
+    ...(row.title !== null ? {
+      title: row.title,
+      artist: row.artist ?? '',
+      album: row.album,
+      genre: row.genre,
+    } : {}),
+    hidden: row.hidden,
+    updatedAt: row.updated_at,
+  };
+}
+
+function staticTrackId(value: string | undefined): string {
+  if (!value || !STATIC_TRACK_ID_RE.test(value)) throw new Error('Validation failed: invalid static track id');
+  return value;
 }
 
 function uploadFilename(value: string | undefined, title: string, extension: string): string {
@@ -183,6 +214,12 @@ musicRoutes.get('/music/tracks', async (c) => {
     `SELECT ${TRACK_SELECT} FROM music_tracks WHERE status = 'published' ORDER BY published_at DESC, created_at DESC`,
   );
   return c.json({ tracks: rows.map((row) => trackJson(row)) });
+});
+
+musicRoutes.get('/music/static-overrides', async (c) => {
+  noStore(c);
+  const rows = await query<StaticTrackOverrideRow>(`SELECT ${STATIC_OVERRIDE_SELECT} FROM music_static_overrides`);
+  return c.json({ tracks: rows.map(staticOverrideJson) });
 });
 
 musicRoutes.get('/music/me/tracks', async (c) => {
@@ -330,6 +367,41 @@ musicRoutes.get('/music/admin/tracks', async (c) => {
   await requireAdmin(c);
   const rows = await query<MusicTrackRow>(`SELECT ${TRACK_SELECT} FROM music_tracks ORDER BY created_at DESC`);
   return c.json({ tracks: rows.map((row) => trackJson(row, true)) });
+});
+
+musicRoutes.patch('/music/admin/static-tracks/:id', async (c) => {
+  noStore(c);
+  await requireAdmin(c);
+  const id = staticTrackId(c.req.param('id'));
+  const body = await c.req.json<Record<string, unknown>>();
+  const hidden = body.hidden;
+  if (typeof hidden !== 'boolean') {
+    return c.json({ error: 'Validation failed: hidden must be a boolean' }, 400);
+  }
+  const rows = await query<StaticTrackOverrideRow>(
+    `INSERT INTO music_static_overrides (track_id, title, artist, album, genre, hidden)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT (track_id) DO UPDATE SET
+       title = EXCLUDED.title, artist = EXCLUDED.artist, album = EXCLUDED.album,
+       genre = EXCLUDED.genre, hidden = EXCLUDED.hidden
+     RETURNING ${STATIC_OVERRIDE_SELECT}`,
+    [id, requiredText(body.title, 'title', 300), nullableText(body.artist, 'artist', 300) ?? '',
+      nullableText(body.album, 'album', 300), nullableText(body.genre, 'genre', 100), hidden],
+  );
+  return c.json({ track: staticOverrideJson(rows[0]) });
+});
+
+musicRoutes.delete('/music/admin/static-tracks/:id', async (c) => {
+  noStore(c);
+  await requireAdmin(c);
+  const id = staticTrackId(c.req.param('id'));
+  const rows = await query<StaticTrackOverrideRow>(
+    `INSERT INTO music_static_overrides (track_id, hidden) VALUES (?, TRUE)
+     ON CONFLICT (track_id) DO UPDATE SET hidden = TRUE
+     RETURNING ${STATIC_OVERRIDE_SELECT}`,
+    [id],
+  );
+  return c.json({ track: staticOverrideJson(rows[0]) });
 });
 
 musicRoutes.patch('/music/admin/tracks/:id', async (c) => {

@@ -2,7 +2,8 @@
 
 import { useSyncExternalStore } from 'react';
 import {
-  listPublicMusicTracks, musicApiAssetUrl, type MusicApiTrack, type MusicTrackStatus,
+  listMusicStaticOverrides, listPublicMusicTracks, musicApiAssetUrl,
+  type MusicApiTrack, type MusicStaticOverride, type MusicTrackStatus,
 } from '@/lib/music-api';
 import { persistItem } from '@/lib/safe-storage';
 import { staticUrl } from '@/lib/stats-base';
@@ -239,10 +240,30 @@ function apiTrackToPlayerTrack(track: MusicApiTrack): MusicTrack {
   };
 }
 
-async function fetchStaticManifest(): Promise<MusicManifest> {
+export async function loadStaticMusicManifest(): Promise<MusicManifest> {
   const response = await fetch(staticUrl(MANIFEST_URL));
   if (!response.ok) throw new Error(`Music manifest HTTP ${response.status}`);
   return normalizeMusicManifest(await response.json());
+}
+
+export function applyStaticMusicOverrides(
+  tracks: readonly MusicTrack[],
+  overrides: readonly MusicStaticOverride[],
+  includeHidden = false,
+): MusicTrack[] {
+  const byId = new Map(overrides.map((item) => [item.id, item]));
+  return tracks.flatMap((track) => {
+    const override = byId.get(track.id);
+    if (override?.hidden && !includeHidden) return [];
+    if (!override) return [track];
+    return [{
+      ...track,
+      ...(override.title !== undefined ? { title: override.title } : {}),
+      ...(override.artist !== undefined ? { artist: override.artist } : {}),
+      ...(override.album !== undefined ? { album: override.album || undefined } : {}),
+      ...(override.genre !== undefined ? { genre: override.genre || undefined } : {}),
+    }];
+  });
 }
 
 export async function loadMusicLibrary(force = false): Promise<void> {
@@ -250,13 +271,18 @@ export async function loadMusicLibrary(force = false): Promise<void> {
   if (loadPromise) return loadPromise;
   loadPreferences();
   emit({ status: 'loading', error: null });
-  loadPromise = Promise.allSettled([fetchStaticManifest(), listPublicMusicTracks()])
+  loadPromise = Promise.allSettled([loadStaticMusicManifest(), listMusicStaticOverrides(), listPublicMusicTracks()])
     .then((results) => {
-      const [staticResult, apiResult] = results;
+      const [staticResult, overrideResult, apiResult] = results;
       if (staticResult.status === 'rejected' && apiResult.status === 'rejected') {
         throw staticResult.reason;
       }
-      const staticTracks = staticResult.status === 'fulfilled' ? staticResult.value.tracks : [];
+      const staticTracks = staticResult.status === 'fulfilled'
+        ? applyStaticMusicOverrides(
+          staticResult.value.tracks,
+          overrideResult.status === 'fulfilled' ? overrideResult.value : [],
+        )
+        : [];
       const databaseTracks = apiResult.status === 'fulfilled'
         ? apiResult.value.map(apiTrackToPlayerTrack).filter((track) => track.title && track.src)
         : [];

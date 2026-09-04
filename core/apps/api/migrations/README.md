@@ -74,6 +74,8 @@ WCA 自学来源增量 `0185_wca_self_taught.sql` 允许老师关系的老师 ID
 
 账号姓名增量 `0206_account_full_name.sql` 为账号增加私密姓名；用户名仍是独立的公开展示名。
 
+静态曲库覆盖增量 `0207_music_static_overrides.sql` 保存管理员对 manifest 曲目的改名、分类和可恢复下架状态；原音频文件不删除。
+
 赞助认领增量 `0188_sponsor_claims.sql` 为公开赞助记录增加可解除的账号归属，并保存私密资料快照、付款线索、审核结论与撤销历史；WCA ID 精确匹配可自动通过，其他申请进入管理员审核。
 
 ## 已应用 migration 不能改

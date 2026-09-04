@@ -1,7 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { nextPlayableTrackId, normalizeMusicManifest, parseLrc } from '@/lib/music-player';
+import { applyStaticMusicOverrides, nextPlayableTrackId, normalizeMusicManifest, parseLrc } from '@/lib/music-player';
 
 describe('music player data', () => {
+  it('applies catalog edits and hides removed static tracks', () => {
+    const tracks = [
+      { id: 'a', title: 'Old', artist: '', src: '/a.mp3' },
+      { id: 'b', title: 'Keep', artist: '', src: '/b.mp3' },
+    ];
+    expect(applyStaticMusicOverrides(tracks, [
+      { id: 'a', title: 'New', hidden: false, updatedAt: '2026-09-03' },
+      { id: 'b', hidden: true, updatedAt: '2026-09-03' },
+    ])).toEqual([{ id: 'a', title: 'New', artist: '', src: '/a.mp3' }]);
+  });
+
   it('keeps valid unique tracks and rejects local paths', () => {
     expect(normalizeMusicManifest({
       version: 1,

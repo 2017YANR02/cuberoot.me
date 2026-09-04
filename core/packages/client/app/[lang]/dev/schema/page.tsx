@@ -189,6 +189,9 @@ const TABLES: Table[] = [
     { name: 'audio_storage_key, audio_mime, audio_size_bytes, audio_filename' }, { name: 'cover_storage_key, cover_mime' },
     { name: 'status', note: { zh: 'pending / published / rejected', en: 'pending / published / rejected' } }, { name: 'review_note, published_at, created_at, updated_at' },
   ] },
+  { name: 'music_static_overrides', domain: 'storage', origin: '0207', purpose: { zh: '管理员对静态 manifest 曲目的信息覆盖与可恢复下架状态；原音频文件保持不变', en: 'Administrator metadata overrides and reversible removals for static-manifest tracks; source audio remains unchanged' }, cols: [
+    { name: 'track_id CHAR(64) (PK)' }, { name: 'title, artist, album, genre' }, { name: 'hidden, updated_at' },
+  ] },
 
   // ── teaching SaaS ──────────────────────────────────────
   { name: 'organizations', domain: 'teaching', origin: '0142', purpose: { zh: '机构租户根节点，保存唯一 slug、状态、时区与版本', en: 'Tenant root with a unique slug, lifecycle status, timezone, and version' }, cols: [
@@ -703,6 +706,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 204, slug: 'qr_card_account_deletion', desc: { zh: '保留二维码卡片版本历史，账号注销时将创建者身份替换为墓碑键。', en: 'Keep QR card design history while replacing its creator identity with a tombstone when an account is deleted.' } },
   { n: 205, slug: 'music_tracks', desc: { zh: '新增会员音乐上传、LRC 歌词、封面和管理员发布审核表，文件实体保存在独立音乐目录。', en: 'Add member music uploads, LRC lyrics, covers, and administrator publishing review with files stored in a dedicated music directory.' } },
   { n: 206, slug: 'account_full_name', desc: { zh: '账号增加私密姓名；公开用户名仍独立设置。', en: 'Add a private account name while keeping the public username separate.' } },
+  { n: 207, slug: 'music_static_overrides', desc: { zh: '保存静态曲库的管理员信息覆盖与可恢复下架状态。', en: 'Store administrator metadata overrides and reversible removals for the static music library.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
