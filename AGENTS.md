@@ -108,6 +108,7 @@ pnpm --filter @cuberoot/client lint
 
 ## 测试
 
+- 提交/push 后禁手动补跑额外测试;只观察 CI,失败时仅跑对应的最小检查。
 - `pnpm --filter @cuberoot/client test` 全集;单文件 `pnpm --filter @cuberoot/client exec vitest run <path>`(**禁** `test -- <path>`,pnpm 透传会被 vitest 吞、跑全集)。
 - `tests/analyzer_worker.test.ts` ~225s(占全集 99%),只改别处就单跑其它文件。
 - 测试统一 `packages/client/tests/*.test.ts`(不与源码并排),源文件 `@/` alias import。
