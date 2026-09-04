@@ -225,6 +225,29 @@ export async function fetchSocialAuthorizeUrl(provider: SocialProvider, intent: 
   return data.url;
 }
 
+export interface WechatBrowserLoginStart {
+  expiresIn: number;
+  ticket: string;
+  urlLink: string;
+}
+
+export const startWechatBrowserLogin = () => post<WechatBrowserLoginStart>(
+  '/v1/auth/wechat/browser-session/start',
+  {},
+);
+
+export async function exchangeWechatBrowserLogin(ticket: string): Promise<SessionResp | null> {
+  const res = await fetch(apiUrl('/v1/auth/wechat/browser-session/exchange'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ticket }),
+  });
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (res.status === 202 && data.status === 'pending') return null;
+  if (!res.ok) throw new Error((data.error as string) || `HTTP ${res.status}`);
+  return data as unknown as SessionResp;
+}
+
 export interface AuthProviders {
   email: boolean; phone: boolean; wca: boolean;
   googleClientId: string | null; googleRelayUrl: string | null;

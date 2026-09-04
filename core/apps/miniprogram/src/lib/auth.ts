@@ -4,6 +4,7 @@ import {
   decodeWebSession,
   decodeWebSessionTicketEnvelope,
   decodeWebSessionUserEnvelope,
+  isWebSessionTicket,
   type WebSessionTicketEnvelope,
   type WebSessionErrorCode,
 } from '@cuberoot/shared/auth/web-session';
@@ -340,6 +341,21 @@ export async function createWebSessionTicket(session: SessionData): Promise<WebS
     throw new ApiError(502, 'invalid web session ticket response');
   }
   return ticket;
+}
+
+export async function approveWechatBrowserLogin(
+  session: SessionData,
+  approval: string,
+  approved: boolean,
+): Promise<void> {
+  if (isDouyinMiniProgram() || !isWebSessionTicket(approval)) {
+    throw new ApiError(400, 'invalid browser login approval');
+  }
+  await requestJson('/auth/wechat/browser-session/approve', {
+    method: 'POST',
+    body: { approval, approved },
+    token: session.token,
+  });
 }
 
 export function loginErrorMessage(error: unknown): string {

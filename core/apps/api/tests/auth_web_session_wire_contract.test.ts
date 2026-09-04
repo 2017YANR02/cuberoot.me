@@ -6,20 +6,25 @@ import {
 } from '@cuberoot/shared/auth/web-session';
 
 const mocks = vi.hoisted(() => ({
+  approveWechatBrowserSession: vi.fn(),
   checkRateLimit: vi.fn(),
   captureAccountDevice: vi.fn(),
   consumeMobileSessionTicket: vi.fn(),
+  consumeWechatBrowserSession: vi.fn(),
   consumeWebSessionTicket: vi.fn(),
   douyinMiniProgramConfigured: vi.fn(),
   exchangeDouyinMiniProgramCode: vi.fn(),
   exchangeWechatMiniProgramCode: vi.fn(),
+  generateWechatMiniProgramUrlLink: vi.fn(),
   findUserByIdentity: vi.fn(),
   getAccountBasicProfile: vi.fn(),
   getUserById: vi.fn(),
   issueMobileSessionTicket: vi.fn(),
+  issueWechatBrowserSession: vi.fn(),
   issueWebSessionTicket: vi.fn(),
   loginWithIdentity: vi.fn(),
   publicUser: vi.fn(),
+  rejectWechatBrowserSession: vi.fn(),
   requireAppUserId: vi.fn(),
   signSession: vi.fn(),
   updateClawdAvatar: vi.fn(),
@@ -63,6 +68,7 @@ vi.mock('../src/utils/account.js', () => ({
 }));
 vi.mock('../src/utils/wechat_miniprogram.js', () => ({
   exchangeWechatMiniProgramCode: mocks.exchangeWechatMiniProgramCode,
+  generateWechatMiniProgramUrlLink: mocks.generateWechatMiniProgramUrlLink,
   WechatMiniProgramError: class WechatMiniProgramError extends Error {
     constructor(public readonly code: string, message: string) {
       super(message);
@@ -82,10 +88,14 @@ vi.mock('../src/utils/douyin_miniprogram.js', () => ({
   },
 }));
 vi.mock('../src/utils/web_session_ticket.js', () => ({
+  approveWechatBrowserSession: mocks.approveWechatBrowserSession,
   consumeMobileSessionTicket: mocks.consumeMobileSessionTicket,
+  consumeWechatBrowserSession: mocks.consumeWechatBrowserSession,
   consumeWebSessionTicket: mocks.consumeWebSessionTicket,
   issueMobileSessionTicket: mocks.issueMobileSessionTicket,
+  issueWechatBrowserSession: mocks.issueWechatBrowserSession,
   issueWebSessionTicket: mocks.issueWebSessionTicket,
+  rejectWechatBrowserSession: mocks.rejectWechatBrowserSession,
 }));
 vi.mock('../src/utils/app_user_auth.js', () => ({ requireAppUserId: mocks.requireAppUserId }));
 
@@ -110,6 +120,7 @@ const publicAccount = {
 };
 const token = 's'.repeat(20);
 const ticket = 'A'.repeat(43);
+const approval = 'B'.repeat(43);
 const codeChallenge = 'C'.repeat(43);
 const codeVerifier = 'V'.repeat(43);
 
@@ -144,6 +155,41 @@ describe('auth route wire contracts', () => {
     expect(body).toEqual({ token, user: publicAccount, isNew: true });
     expect(decodeWebSession(body)).toEqual({ token, user: publicAccount });
     expect(mocks.loginWithIdentity).toHaveBeenCalledWith('wechat', 'unionid-1', { name: '' });
+  });
+
+  it('starts, approves, and exchanges an iPhone browser login', async () => {
+    mocks.wechatMiniProgramConfigured.mockReturnValue(true);
+    mocks.issueWechatBrowserSession.mockResolvedValue({ ticket, approval, expiresIn: 300 });
+    mocks.generateWechatMiniProgramUrlLink.mockResolvedValue('https://wxaurl.cn/example');
+
+    const start = await accountAuthRoutes.request('/auth/wechat/browser-session/start', { method: 'POST' });
+    expect(start.status).toBe(200);
+    expect(await start.json()).toEqual({ ticket, urlLink: 'https://wxaurl.cn/example', expiresIn: 300 });
+    expect(mocks.generateWechatMiniProgramUrlLink).toHaveBeenCalledWith(
+      `browserLogin=${approval}`,
+      expect.any(Number),
+    );
+
+    mocks.requireAppUserId.mockResolvedValue(42);
+    mocks.approveWechatBrowserSession.mockResolvedValue(true);
+    const approve = await accountAuthRoutes.request('/auth/wechat/browser-session/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ approval, approved: true }),
+    });
+    expect(approve.status).toBe(200);
+    expect(mocks.approveWechatBrowserSession).toHaveBeenCalledWith(approval, 42);
+
+    mocks.consumeWechatBrowserSession.mockResolvedValue(42);
+    mocks.getUserById.mockResolvedValue(account);
+    const exchange = await accountAuthRoutes.request('/auth/wechat/browser-session/exchange', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticket }),
+    });
+    expect(exchange.status).toBe(200);
+    expect(await exchange.json()).toEqual({ token, user: publicAccount });
+    expect(mocks.consumeWechatBrowserSession).toHaveBeenCalledWith(ticket);
   });
 
   it('does not create an account for an unlinked WeChat identity without explicit consent', async () => {

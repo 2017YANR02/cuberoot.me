@@ -10,6 +10,7 @@ import {
 } from '@cuberoot/shared/contact';
 import {
   ApiError,
+  approveWechatBrowserLogin,
   getStoredSessionSnapshot,
   isSessionStorageError,
   loginErrorMessage,
@@ -109,6 +110,19 @@ const ACCOUNT_COPY = {
     zh: '暂时无法读取设备上的登录状态，请重新读取。',
   }),
   userAgreementLabel: tr({ en: 'User Agreement', zh: '《用户协议》' }),
+  browserLoginFailure: tr({
+    en: 'Website sign-in could not be confirmed. Return to Safari and try again.',
+    zh: '未能确认网页登录，请返回 Safari 重试',
+  }),
+  browserLoginConfirmContent: tr({
+    en: 'Safari is requesting access to this CubeRoot account.',
+    zh: 'Safari 正在请求登录此魔方根账号',
+  }),
+  browserLoginConfirmTitle: tr({ en: 'Confirm website sign-in', zh: '确认网页登录' }),
+  browserLoginSuccess: tr({
+    en: 'Signed in. Returning to Safari',
+    zh: '登录成功，正在返回 Safari',
+  }),
 };
 const accountShare = resolveAccountPageShare();
 const contactLocale = getMiniProgramLocale();
@@ -208,11 +222,47 @@ interface AccountPageData {
   requiresAgreement: boolean;
   uidText: string;
   wcaId: string;
+  browserLoginPending: boolean;
 }
 
 interface AccountPageInstance {
+  browserLoginApproval?: string;
   data: AccountPageData;
   setData(data: Partial<AccountPageData>): void;
+}
+
+const BROWSER_LOGIN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+
+async function approvePendingBrowserLogin(
+  page: AccountPageInstance,
+  session: SessionData,
+): Promise<boolean> {
+  const approval = page.browserLoginApproval;
+  if (!approval) return false;
+  const api = miniProgramApi();
+  const approved = await new Promise<boolean>((resolve, reject) => {
+    api.showModal({
+      title: ACCOUNT_COPY.browserLoginConfirmTitle,
+      content: ACCOUNT_COPY.browserLoginConfirmContent,
+      confirmText: tr({ en: 'Sign in', zh: '确认登录' }),
+      success: (result) => resolve(result.confirm),
+      fail: reject,
+    });
+  });
+  await approveWechatBrowserLogin(session, approval, approved);
+  page.browserLoginApproval = undefined;
+  if (approved && typeof api.showToast === 'function') {
+    api.showToast({ icon: 'none', title: ACCOUNT_COPY.browserLoginSuccess });
+  }
+  api.exitMiniProgram({
+    fail: () => page.setData({
+      ...sessionView(session),
+      accountError: approved ? ACCOUNT_COPY.browserLoginSuccess : '',
+      browserLoginPending: false,
+      loginBusy: false,
+    }),
+  });
+  return true;
 }
 
 function isTimelineSinglePage(): boolean {
@@ -286,6 +336,7 @@ async function completeMiniProgramLogin(
   page.setData({ accountLinkRequired: false, loginBusy: true, loginError: '' });
   try {
     const session = await loginWithMiniProgram({ createAccount });
+    if (await approvePendingBrowserLogin(page, session)) return;
     page.setData({
       ...sessionView(session),
       accountLinkRequired: false,
@@ -301,6 +352,7 @@ async function completeMiniProgramLogin(
       loginBusy: false,
       loginError: loginErrorMessage(error),
       loginStorageUnavailable: isSessionStorageError(error),
+      browserLoginPending: false,
     });
   }
 }
@@ -327,20 +379,43 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     requiresAgreement: isDouyinMiniProgram(),
     uidText: '',
     wcaId: '',
+    browserLoginPending: false,
   },
 
-  onLoad() {
+  onLoad(options: Record<string, unknown> = {}) {
     if (isTimelineSinglePage()) {
       this.setData({ isTimelineEntry: true });
       return;
     }
     setNormalNavigationTitle();
     showPublicShareMenu();
+    const browserLogin = typeof options.browserLogin === 'string'
+      && BROWSER_LOGIN_PATTERN.test(options.browserLogin)
+      && !isDouyinMiniProgram()
+      ? options.browserLogin
+      : '';
+    if (browserLogin) {
+      this.browserLoginApproval = browserLogin;
+      this.setData({ browserLoginPending: true, loginBusy: true, loginError: '' });
+      const snapshot = getStoredSessionSnapshot();
+      if (snapshot.status === 'available' && snapshot.session) {
+        void approvePendingBrowserLogin(this as unknown as AccountPageInstance, snapshot.session)
+          .catch(() => this.setData({
+            browserLoginPending: false,
+            loginBusy: false,
+            loginError: ACCOUNT_COPY.browserLoginFailure,
+          }));
+      } else {
+        this.setData({ loginBusy: false });
+        void completeMiniProgramLogin(this as unknown as AccountPageInstance, true);
+      }
+      return;
+    }
     refreshStoredSession(this as unknown as AccountPageInstance);
   },
 
   onShow() {
-    if (this.data.isTimelineEntry) return;
+    if (this.data.isTimelineEntry || this.data.browserLoginPending) return;
     const shouldRetryAccountLink = this.data.accountLinkPending;
     showPublicShareMenu();
     refreshStoredSession(this as unknown as AccountPageInstance);

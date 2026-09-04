@@ -6,10 +6,15 @@ const { queryMock } = vi.hoisted(() => ({ queryMock: vi.fn() }));
 vi.mock('../src/db/connection.js', () => ({ query: queryMock }));
 
 import {
+  approveWechatBrowserSession,
   consumeMobileSessionTicket,
+  consumeWechatBrowserSession,
   consumeWebSessionTicket,
   issueMobileSessionTicket,
+  issueWechatBrowserSession,
   issueWebSessionTicket,
+  rejectWechatBrowserSession,
+  WECHAT_BROWSER_SESSION_TTL_SECONDS,
   WEB_SESSION_TICKET_TTL_SECONDS,
 } from '../src/utils/web_session_ticket.js';
 
@@ -51,6 +56,40 @@ describe('web session tickets', () => {
     expect(params[2]).toBe('mobile');
     expect(params[3]).toBe(challenge);
     expect(params).not.toContain(verifier);
+  });
+
+  it('keeps browser and Mini Program secrets separate through approval and one-time exchange', async () => {
+    queryMock.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    const pending = await issueWechatBrowserSession();
+
+    expect(pending.ticket).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(pending.approval).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(pending.approval).not.toBe(pending.ticket);
+    expect(pending.expiresIn).toBe(WECHAT_BROWSER_SESSION_TTL_SECONDS);
+    const [, issuedParams] = queryMock.mock.calls[1];
+    expect(issuedParams).toEqual([
+      createHash('sha256').update(pending.ticket).digest('hex'),
+      createHash('sha256').update(pending.approval).digest('base64url'),
+      expect.any(Date),
+    ]);
+
+    queryMock.mockResolvedValueOnce([{ user_id: 42 }]);
+    await expect(approveWechatBrowserSession(pending.approval, 42)).resolves.toBe(true);
+    expect(queryMock.mock.calls[2][1]).toEqual([
+      42,
+      createHash('sha256').update(pending.approval).digest('base64url'),
+      42,
+    ]);
+
+    queryMock.mockResolvedValueOnce([{ user_id: 42 }]);
+    await expect(consumeWechatBrowserSession(pending.ticket)).resolves.toBe(42);
+    expect(queryMock.mock.calls[3][0]).toContain("purpose = 'wechat_browser'");
+
+    queryMock.mockResolvedValueOnce([{ ticket_hash: 'hash' }]);
+    await expect(rejectWechatBrowserSession(pending.approval)).resolves.toBe(true);
+    expect(queryMock.mock.calls[4][1]).toEqual([
+      createHash('sha256').update(pending.approval).digest('base64url'),
+    ]);
   });
 
   it('rejects malformed mobile challenges before touching the database', async () => {

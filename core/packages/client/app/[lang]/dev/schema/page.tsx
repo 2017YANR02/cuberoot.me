@@ -169,7 +169,7 @@ const TABLES: Table[] = [
   { name: 'vault_item_access', domain: 'storage', origin: '0192', purpose: { zh: '每条内容对管理员及指定注册账号分别封装的内容密钥', en: 'Per-item content keys separately wrapped for the administrator and designated registered accounts' } },
   { name: 'auth_identities', domain: 'account', origin: '0064', evolved: [78, 103], purpose: { zh: '账号与外部身份的唯一映射；微信小程序与网站扫码登录共用 UnionID', en: 'Unique account-to-provider identity mappings; Mini Program and website QR sign-in share the Weixin UnionID' } },
   { name: 'auth_codes', domain: 'account', origin: '0064', purpose: { zh: '邮箱与手机登录、绑定使用的短时验证码及核销状态', en: 'Short-lived email and phone verification codes with consumption state' } },
-  { name: 'auth_web_session_tickets', domain: 'account', origin: '0139', evolved: [179], purpose: { zh: '小程序与原生 App 跨运行时换取会话的 90 秒单次票据；只存票据 SHA-256，移动端另绑 PKCE challenge', en: '90-second single-use cross-runtime session tickets; ticket hashes only, with mobile tickets additionally bound to a PKCE challenge' } },
+  { name: 'auth_web_session_tickets', domain: 'account', origin: '0139', evolved: [179, 209], purpose: { zh: '小程序、浏览器与原生 App 跨运行时换取会话的短时单次票据；只存密钥 SHA-256，移动端另绑 PKCE challenge', en: 'Short-lived single-use cross-runtime session tickets for Mini Program, browser, and native App handoffs; hashes only, with mobile tickets additionally bound to a PKCE challenge' } },
 
   // ── file storage ───────────────────────────────────────
   { name: 'drive_members', domain: 'storage', origin: '0184', purpose: { zh: '管理员维护的小规模网盘访问白名单；管理员账号无需重复登记', en: 'Admin-managed access list for the small private Drive; admin accounts need no duplicate row' }, cols: [
@@ -713,6 +713,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 206, slug: 'account_full_name', desc: { zh: '账号增加私密姓名；公开用户名仍独立设置。', en: 'Add a private account name while keeping the public username separate.' } },
   { n: 207, slug: 'music_static_overrides', desc: { zh: '保存静态曲库的管理员信息覆盖与可恢复下架状态。', en: 'Store administrator metadata overrides and reversible removals for the static music library.' } },
   { n: 208, slug: 'app_boot_diagnostics', desc: { zh: '保存脱敏的页面启动错误，管理员可按用户看到的诊断编号查询，并自动清理 90 天前数据。', en: 'Store redacted page-startup errors searchable by the user-visible diagnostic code and prune data older than 90 days.' } },
+  { n: 209, slug: 'wechat_browser_login', desc: { zh: '扩展单次会话票据，支持 iPhone 浏览器发起、微信小程序确认后原子换取网站登录态。', en: 'Extend single-use session tickets so an iPhone browser can start sign-in and atomically exchange it after Mini Program approval.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

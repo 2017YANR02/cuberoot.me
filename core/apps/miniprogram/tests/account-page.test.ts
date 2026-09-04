@@ -31,6 +31,7 @@ interface AccountPageData {
   loginError: string;
   loginRequired: boolean;
   loginStorageUnavailable: boolean;
+  browserLoginPending: boolean;
   release: {
     channel: string;
     notes: string[];
@@ -49,7 +50,7 @@ interface AccountPage {
   data: AccountPageData;
   linkExistingAccount(): void;
   loginWithMiniProgram(): Promise<void>;
-  onLoad(): void;
+  onLoad(options?: Record<string, unknown>): void;
   onShareAppMessage(): WechatMiniprogram.Page.ICustomShareContent;
   onShareTimeline(): WechatMiniprogram.Page.ICustomTimelineContent;
   onShow(): void;
@@ -290,6 +291,57 @@ describe('mini program account page', () => {
       uidText: '52',
       wcaId: '',
     });
+  });
+
+  it('approves an iPhone browser login and exits back to Safari', async () => {
+    const approval = 'A'.repeat(43);
+    const token = 'n'.repeat(20);
+    const exitMiniProgram = vi.fn();
+    const request = vi.fn((options: {
+      data?: Record<string, unknown>;
+      header?: Record<string, string>;
+      success(response: unknown): void;
+      url: string;
+    }) => {
+      if (options.url.endsWith('/auth/wechat/miniprogram')) {
+        expect(options.data).toEqual({ code: 'login-code', create: true });
+        options.success({
+          statusCode: 200,
+          data: {
+            token,
+            user: { uid: 52, name: 'CubeRoot 用户', wcaId: null, avatar: '' },
+            isNew: false,
+          },
+        });
+        return;
+      }
+      expect(options.url).toBe('https://api.cuberoot.me/v1/auth/wechat/browser-session/approve');
+      expect(options.data).toEqual({ approval, approved: true });
+      expect(options.header?.Authorization).toBe(`Bearer ${token}`);
+      options.success({ statusCode: 200, data: { ok: true } });
+    });
+    const page = await loadPage({
+      exitMiniProgram,
+      getLaunchOptionsSync: normalLaunchOptions,
+      getStorageSync: () => null,
+      login(options: { success(result: { code: string }): void }) {
+        options.success({ code: 'login-code' });
+      },
+      removeStorageSync: vi.fn(),
+      request,
+      setStorageSync: vi.fn(),
+      showModal(options: { success(result: { confirm: boolean }): void }) {
+        options.success({ confirm: true });
+      },
+      showShareMenu: vi.fn(),
+      showToast: vi.fn(),
+    });
+
+    page.onLoad({ browserLogin: approval });
+
+    await vi.waitFor(() => expect(exitMiniProgram).toHaveBeenCalledOnce());
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(page.data.browserLoginPending).toBe(true);
   });
 
   it('requires an unknown WeChat identity to link or explicitly create an account', async () => {
