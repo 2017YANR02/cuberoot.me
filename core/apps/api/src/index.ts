@@ -34,6 +34,7 @@ import { wcaRecentRecordsRoutes, startRecentRecordsPoller } from './routes/wca_r
 import { wcaTeacherRoutes } from './routes/wca_teachers.js';
 import { timerBackupsRoutes } from './routes/timer_backups.js';
 import { timerBootTelemetryRoutes } from './routes/timer_boot_telemetry.js';
+import { appBootDiagnosticRoutes } from './routes/app_boot_diagnostics.js';
 import { timerPresenceRoutes } from './routes/timer_presence.js';
 import { calendarRoutes, startCalendarReminderSweep } from './routes/calendar.js';
 import { wcaScheduleRoutes } from './routes/wca_schedule.js';
@@ -151,6 +152,7 @@ app.route('/v1', wcaRecentRecordsRoutes);
 app.route('/v1', wcaTeacherRoutes);
 app.route('/v1', timerBackupsRoutes);
 app.route('/v1', timerBootTelemetryRoutes);
+app.route('/v1', appBootDiagnosticRoutes);
 app.route('/v1', timerPresenceRoutes);
 app.route('/v1', calendarRoutes);
 app.route('/v1', wcaScheduleRoutes);

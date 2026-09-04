@@ -14,6 +14,7 @@ import {
   EARLY_STORAGE_KEY,
   MAX_DETAIL_LENGTH,
   MAX_EVIDENCE,
+  reportAppBootDiagnostic,
   STORAGE_KEY,
   TIMER_BOOT_COPY,
   bootFailureMessageKey,
@@ -215,6 +216,7 @@ export function buildTimerBootDiagnostic(
 function persistDiagnostic(diagnostic: TimerBootDiagnostic): void {
   if (typeof window === 'undefined') return;
   window.__timerBootTelemetry?.report('failure', diagnostic.kind);
+  reportAppBootDiagnostic(diagnostic);
   try {
     window.__timerBootDiagnostic = diagnostic;
   } catch {
