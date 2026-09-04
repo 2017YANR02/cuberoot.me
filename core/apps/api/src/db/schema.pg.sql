@@ -273,6 +273,36 @@ CREATE TABLE timer_boot_events (
 );
 CREATE INDEX idx_timer_boot_events_attempted_at ON timer_boot_events(attempted_at);
 
+-- ── 10c2. app_boot_diagnostics (migration 0208_app_boot_diagnostics.sql) ──
+-- Searchable startup failures. Error details are bounded and redacted at the
+-- API boundary; raw UA, IP, account identity, URL query, and URL fragment are absent.
+CREATE TABLE app_boot_diagnostics (
+  event_id         UUID PRIMARY KEY,
+  diagnostic_code  VARCHAR(40) NOT NULL CHECK (
+    diagnostic_code ~ '^(APP|TMR)-(NET|CHUNK|SCRIPT|PROMISE|TIMEOUT|RUNTIME|UNKNOWN)-[0-9A-Z]{7}$'
+  ),
+  kind              VARCHAR(16) NOT NULL CHECK (kind IN (
+    'network', 'chunk', 'script', 'promise', 'timeout', 'runtime', 'unknown'
+  )),
+  path              VARCHAR(512) NOT NULL CHECK (
+    LEFT(path, 1) = '/' AND POSITION('?' IN path) = 0 AND POSITION('#' IN path) = 0
+  ),
+  online            BOOLEAN,
+  error_name        VARCHAR(100) NOT NULL,
+  error_message     VARCHAR(500) NOT NULL,
+  evidence          JSONB NOT NULL DEFAULT '[]'::jsonb CHECK (jsonb_typeof(evidence) = 'array'),
+  device_type       VARCHAR(16) NOT NULL CHECK (device_type IN ('phone', 'tablet', 'desktop', 'other')),
+  browser_family    VARCHAR(16) NOT NULL CHECK (browser_family IN ('chrome', 'edge', 'firefox', 'safari', 'wechat', 'webview', 'other')),
+  browser_major     SMALLINT CHECK (browser_major BETWEEN 1 AND 999),
+  os_family         VARCHAR(16) NOT NULL CHECK (os_family IN ('android', 'ios', 'windows', 'macos', 'linux', 'other')),
+  os_major          SMALLINT CHECK (os_major BETWEEN 1 AND 999),
+  received_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_app_boot_diagnostics_code_time
+  ON app_boot_diagnostics(diagnostic_code, received_at DESC);
+CREATE INDEX idx_app_boot_diagnostics_received_at
+  ON app_boot_diagnostics(received_at);
+
 -- ── 10d. wca_scrambles (migration 0035_wca_scrambles.sql) ──
 -- 全量 WCA 比赛打乱镜像(源 WCA dump scrambles 表,~305 万行)。扁平行 = 前端 WcaScrambleRow[]。
 -- 首灌走 mysql -B 导出 → scp → \copy;CI 日更增量。数据不入 migration。
