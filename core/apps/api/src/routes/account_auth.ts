@@ -10,7 +10,6 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { isClawdAvatarPreset } from '@cuberoot/shared/account-avatar';
-import type { AccountBasicProfile } from '@cuberoot/shared/account';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import {
   isMobileAuthCodeChallenge,
@@ -727,7 +726,7 @@ accountAuthRoutes.post('/auth/profile', async (c) => {
     const basic = body.basic !== null && typeof body.basic === 'object'
       ? body.basic as Record<string, unknown>
       : null;
-    const allowedKeys = new Set(['birthDate', 'gender', 'countryIso2', 'regionCode', 'cityName']);
+    const allowedKeys = new Set(['fullName', 'birthDate', 'gender', 'countryIso2', 'regionCode', 'cityName']);
     if (!basic
       || Object.keys(basic).some((key) => !allowedKeys.has(key))
       || !Object.hasOwn(basic, 'birthDate')
@@ -736,6 +735,17 @@ accountAuthRoutes.post('/auth/profile', async (c) => {
       || !Object.hasOwn(basic, 'regionCode')
       || !Object.hasOwn(basic, 'cityName')) {
       return c.json({ error: 'invalid basic profile' }, 400);
+    }
+
+    const fullName = !Object.hasOwn(basic, 'fullName')
+      ? undefined
+      : basic.fullName === null
+        ? null
+        : typeof basic.fullName === 'string'
+          ? normalizeDisplayName(basic.fullName) || null
+          : basic.fullName;
+    if (fullName !== undefined && fullName !== null && !isValidDisplayName(fullName)) {
+      return c.json({ error: 'invalid full name' }, 400);
     }
 
     const todayIso = new Date().toISOString().slice(0, 10);
@@ -776,12 +786,13 @@ accountAuthRoutes.post('/auth/profile', async (c) => {
     }
 
     const profile = await updateAccountBasicProfile(uid, {
+      fullName,
       birthDate,
       gender,
       countryIso2: normalizedCountry,
       regionCode,
       cityName,
-    } as Pick<AccountBasicProfile, 'birthDate' | 'gender' | 'countryIso2' | 'regionCode' | 'cityName'>);
+    });
     if (!profile) return c.json({ error: 'account not found' }, 404);
     return c.json({ ok: true, profile });
   }

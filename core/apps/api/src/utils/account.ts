@@ -251,6 +251,7 @@ export async function getUserById(id: number): Promise<AppUser | null> {
 }
 
 type AccountBasicProfileRow = {
+  fullName: string | null;
   birthDate: string | null;
   gender: AccountGender | null;
   countryIso2: string | null;
@@ -261,6 +262,7 @@ type AccountBasicProfileRow = {
 
 function basicProfileFromRow(row: AccountBasicProfileRow): AccountBasicProfile {
   return {
+    fullName: row.fullName,
     birthDate: row.birthDate,
     gender: row.gender,
     countryIso2: row.countryIso2,
@@ -272,7 +274,7 @@ function basicProfileFromRow(row: AccountBasicProfileRow): AccountBasicProfile {
 
 export async function getAccountBasicProfile(id: number): Promise<AccountBasicProfile | null> {
   const rows = await query<AccountBasicProfileRow>(
-    `SELECT birth_date::text AS "birthDate", gender,
+    `SELECT full_name AS "fullName", birth_date::text AS "birthDate", gender,
             country_iso2 AS "countryIso2", region_code AS "regionCode",
             city_name AS "cityName", wca_id AS "wcaId"
      FROM app_users WHERE id = ?`,
@@ -287,20 +289,23 @@ export async function getAccountBasicProfile(id: number): Promise<AccountBasicPr
  */
 export async function updateAccountBasicProfile(
   id: number,
-  profile: Pick<AccountBasicProfile, 'birthDate' | 'gender' | 'countryIso2' | 'regionCode' | 'cityName'>,
+  profile: Pick<AccountBasicProfile, 'birthDate' | 'gender' | 'countryIso2' | 'regionCode' | 'cityName'>
+    & Partial<Pick<AccountBasicProfile, 'fullName'>>,
 ): Promise<AccountBasicProfile | null> {
   const rows = await query<AccountBasicProfileRow>(
     `UPDATE app_users SET
+       full_name = CASE WHEN ? THEN ? ELSE full_name END,
        birth_date = ?,
        gender = ?,
        country_iso2 = CASE WHEN wca_id IS NULL THEN ? ELSE country_iso2 END,
        region_code = CASE WHEN wca_id IS NULL OR country_iso2 IS NOT DISTINCT FROM ? THEN ? ELSE NULL END,
        city_name = CASE WHEN wca_id IS NULL OR country_iso2 IS NOT DISTINCT FROM ? THEN ? ELSE NULL END
      WHERE id = ?
-     RETURNING birth_date::text AS "birthDate", gender,
+     RETURNING full_name AS "fullName", birth_date::text AS "birthDate", gender,
                country_iso2 AS "countryIso2", region_code AS "regionCode",
                city_name AS "cityName", wca_id AS "wcaId"`,
     [
+      profile.fullName !== undefined, profile.fullName ?? null,
       profile.birthDate, profile.gender, profile.countryIso2,
       profile.countryIso2, profile.regionCode,
       profile.countryIso2, profile.cityName,

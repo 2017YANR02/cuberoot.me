@@ -44,6 +44,11 @@ vi.mock('../src/utils/account.js', () => ({
   publicUser: mocks.publicUser,
   updateClawdAvatar: mocks.updateClawdAvatar,
   updateAccountBasicProfile: mocks.updateAccountBasicProfile,
+  normalizeDisplayName: (value: string) => value.normalize('NFC').trim(),
+  isValidDisplayName: (value: unknown) => typeof value === 'string'
+    && Array.from(value).length >= 1
+    && Array.from(value).length <= 50
+    && !/[\u0000-\u001F\u007F-\u009F\u2028\u2029\u202A-\u202E\u2066-\u2069\uD800-\uDFFF]/u.test(value),
   isAccountGender: (value: unknown) => ['male', 'female', 'nonbinary', 'other', 'undisclosed'].includes(String(value)),
   isValidBirthDate: (value: unknown, today: string) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && value >= '1900-01-01' && value <= today,
   normalizeCountryIso2: (value: string) => value.trim().toUpperCase(),
@@ -354,6 +359,7 @@ describe('auth route wire contracts', () => {
 
   it('returns the authenticated account basic profile without adding it to the session', async () => {
     const profile = {
+      fullName: '张三',
       birthDate: '2000-02-29',
       gender: 'nonbinary',
       countryIso2: 'CN',
@@ -373,6 +379,7 @@ describe('auth route wire contracts', () => {
 
   it('normalizes and saves a complete basic profile action', async () => {
     const profile = {
+      fullName: '张三',
       birthDate: '2000-02-29',
       gender: 'female',
       countryIso2: 'CN',
@@ -388,6 +395,7 @@ describe('auth route wire contracts', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         basic: {
+          fullName: '  张三  ',
           birthDate: '2000-02-29', gender: 'female', countryIso2: ' cn ',
           regionCode: ' gd ', cityName: '  Shenzhen  ',
         },
@@ -397,12 +405,28 @@ describe('auth route wire contracts', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ ok: true, profile });
     expect(mocks.updateAccountBasicProfile).toHaveBeenCalledWith(42, {
+      fullName: '张三',
       birthDate: '2000-02-29',
       gender: 'female',
       countryIso2: 'CN',
       regionCode: 'GD',
       cityName: 'Shenzhen',
     });
+  });
+
+  it('rejects an invalid private full name before storage', async () => {
+    mocks.requireAppUserId.mockResolvedValue(42);
+
+    const response = await accountAuthRoutes.request('/auth/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        basic: { fullName: '\u202Eabc', birthDate: null, gender: null, countryIso2: null, regionCode: null, cityName: null },
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(mocks.updateAccountBasicProfile).not.toHaveBeenCalled();
   });
 
   it('rejects an impossible or future birth date before storage', async () => {

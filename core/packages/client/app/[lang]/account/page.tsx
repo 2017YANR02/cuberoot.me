@@ -333,7 +333,7 @@ function DisplayNameEditor() {
   );
 }
 
-type EditableBasicProfile = Pick<AccountBasicProfile, 'birthDate' | 'gender' | 'countryIso2' | 'regionCode' | 'cityName'>;
+type EditableBasicProfile = Pick<AccountBasicProfile, 'fullName' | 'birthDate' | 'gender' | 'countryIso2' | 'regionCode' | 'cityName'>;
 type AccountRegion = { code: string; name: string; cities: string[] };
 
 function BasicProfileEditor() {
@@ -356,6 +356,7 @@ function BasicProfileEditor() {
         if (cancelled) return;
         setProfile(next);
         setDraft({
+          fullName: next.fullName,
           birthDate: next.birthDate,
           gender: next.gender,
           countryIso2: next.countryIso2,
@@ -397,7 +398,8 @@ function BasicProfileEditor() {
   }
 
   const countryLocked = profile.countrySource === 'wca';
-  const dirty = draft.birthDate !== profile.birthDate
+  const dirty = draft.fullName !== profile.fullName
+    || draft.birthDate !== profile.birthDate
     || draft.gender !== profile.gender
     || (!countryLocked && draft.countryIso2 !== profile.countryIso2)
     || draft.regionCode !== profile.regionCode
@@ -408,11 +410,17 @@ function BasicProfileEditor() {
     setError(null);
   };
   const save = async () => {
+    const fullName = normalizeDisplayName(draft.fullName ?? '') || null;
+    if (fullName !== null && !isValidDisplayName(fullName)) {
+      setError(t(`请输入不超过 ${DISPLAY_NAME_MAX_LENGTH} 个字符的姓名，不能包含换行或控制字符。`, `Enter a name of up to ${DISPLAY_NAME_MAX_LENGTH} characters without line breaks or control characters.`));
+      return;
+    }
     setSaving(true);
     setSaved(false);
     setError(null);
     try {
       const result = await updateAccountBasicProfile({
+        fullName,
         birthDate: draft.birthDate,
         gender: draft.gender,
         countryIso2: countryLocked ? profile.countryIso2 : draft.countryIso2,
@@ -421,6 +429,7 @@ function BasicProfileEditor() {
       });
       setProfile(result.profile);
       setDraft({
+        fullName: result.profile.fullName,
         birthDate: result.profile.birthDate,
         gender: result.profile.gender,
         countryIso2: result.profile.countryIso2,
@@ -446,6 +455,24 @@ function BasicProfileEditor() {
       <p className="auth-hint account-basic-profile-privacy">
         {t('以下资料默认不公开，仅用于账户归属与后续认领核验。', 'These details are private by default and are used for account ownership and future claim verification.')}
       </p>
+      <div className="account-basic-profile-field">
+        <label className="auth-label" htmlFor="account-full-name">{t('姓名', 'Name')}</label>
+        <div className="account-name-field">
+          <input
+            id="account-full-name"
+            className="auth-input"
+            value={draft.fullName ?? ''}
+            disabled={saving}
+            autoComplete="name"
+            aria-describedby="account-full-name-hint"
+            onChange={(event) => updateDraft({ fullName: event.target.value || null })}
+          />
+          {draft.fullName && !saving && <ClearButton onClick={() => updateDraft({ fullName: null })} preserveFocus />}
+        </div>
+        <p id="account-full-name-hint" className="auth-hint">
+          {t(`最多 ${DISPLAY_NAME_MAX_LENGTH} 个字符，不会替代公开显示的用户名。`, `Up to ${DISPLAY_NAME_MAX_LENGTH} characters. This does not replace your public username.`)}
+        </p>
+      </div>
       <div className="account-basic-profile-field">
         <label className="auth-label" htmlFor="account-birth-date">{t('出生日期', 'Birth date')}</label>
         <DateInput
