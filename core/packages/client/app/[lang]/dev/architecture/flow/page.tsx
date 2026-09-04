@@ -12,7 +12,7 @@ import '../architecture.css';
 
 export default function ArchFlowPage() {
   const { i18n } = useTranslation();
-  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
+  const lang: Lang = (['en', 'zh'] as const)[Number(i18n.language.startsWith('zh'))];
 
   return (
     <LangCtx.Provider value={lang}>
@@ -21,20 +21,20 @@ export default function ArchFlowPage() {
 
         <header className="arch-subhero">
           <div className="arch-subhero-num">
-            <L zh="架构 · 请求流程" en="Architecture · Request Flow" />
+            <L zh="架构 / 请求流程" en="Architecture / Request Flow" />
           </div>
           <h1 className="arch-subhero-title">
             <L zh="从点击到 DOM 更新" en="From click to DOM" />
           </h1>
           <p className="arch-subhero-lede">
             <L
-              zh={<>一次请求在 nginx、Next.js、Hono、PostgreSQL 之间经历了什么 — 时序、缓存命中路径、以及用户加载整页的完整旅程。</>}
-              en={<>What a request goes through between nginx, Next.js, Hono, and PostgreSQL — timings, cache-hit paths, and the full page-load journey from the user's perspective.</>}
+              zh={<>一次请求在交付入口、Web 前端、Hono 和 PostgreSQL 之间经历了什么，以及缓存命中后会在哪一层提前返回。</>}
+              en={<>What a request goes through across delivery, the web frontend, Hono, and PostgreSQL, including where a cache hit can return early.</>}
             />
           </p>
         </header>
 
-        {/* Section: Page load flow (NEW) */}
+        {/* Section: Page load flow */}
         <section className="arch-sec">
           <div className="arch-sec-head">
             <span className="arch-sec-num">→</span>
@@ -42,8 +42,8 @@ export default function ArchFlowPage() {
           </div>
           <p className="arch-sec-lede">
             <L
-              zh={<>从浏览器输入 URL 到页面可交互, DNS 分线路后走两条不同路径。方案 A 是并排对比, 方案 B 是带时序的泳道图。</>}
-              en={<>From URL input to interactive page — after the DNS split, two distinct paths. Option A shows the fork side-by-side; Option B lays events on a timing swimlane.</>}
+              zh={<>从浏览器输入 URL 到页面可交互，交付路径可以不同，但最终都会进入同一套页面和数据契约。</>}
+              en={<>From URL input to an interactive page, delivery paths can differ while converging on the same page and data contracts.</>}
             />
           </p>
           <PageLoadFlow />
@@ -57,44 +57,35 @@ export default function ArchFlowPage() {
           </div>
           <p className="arch-sec-lede">
             <L
-              zh={<>典型的读请求 (比如打开 /recon/abc), 端到端在 50ms 以内。nginx <code>proxy_cache</code> 命中时降到 10ms 以下。这里把每一跳的时间标出来。</>}
-              en={<>A typical read (say, opening /recon/abc) runs end-to-end in under 50ms. With an nginx <code>proxy_cache</code> hit it drops below 10ms. Each hop's latency is plotted below.</>}
+              zh={<>典型读请求从事件处理开始，经过统一 API 入口、缓存、Hono 和数据库，再把 JSON 更新到页面。缓存命中时会提前返回。</>}
+              en={<>A typical read starts in an event handler, crosses the shared API entry, cache, Hono, and the database, then updates the page from JSON. A cache hit returns earlier.</>}
             />
           </p>
           <div className="arch-diagram">
             <RequestLifecycleSVG />
           </div>
           <pre className="arch-code">{`Browser
-  │  GET cuberoot.me/recon/abc
-  ▼
-nginx :443    →  proxy_pass :3002  (一条线路:systemd Next standalone)
-  │            ↘  Vercel edge      (另一条线路:同份 Next 代码)
-  ▼
-Next App Router  →  SSR shell stream → 客户端 hydrate
-  │
-  ▼
-client  →  fetch(apiUrl('/v1/recon/abc'))
-                          │
-                          ▼
-                nginx :443 (api.cuberoot.me)
-                  │  proxy_cache /v1/wca/* (24h)
-                  ▼
-                Hono :3001    →  pg pool  →  PostgreSQL :5432
-                  │
-                  ▼
-                JSON  →  React state  →  DOM`}</pre>
+  → delivery entry
+  → Next App Router
+  → server-rendered HTML
+  → React hydration
+  → apiUrl('/v1/...')
+  → HTTP cache
+  → Hono route
+  → PostgreSQL
+  → JSON → state → DOM`}</pre>
         </section>
 
         {/* 05 WCA stats pipeline */}
         <section className="arch-sec">
           <div className="arch-sec-head">
             <span className="arch-sec-num">05</span>
-            <h2 className="arch-sec-title"><L zh="WCA 统计:一条独立的周更管道" en="WCA stats: a separate weekly pipeline" /></h2>
+            <h2 className="arch-sec-title"><L zh="WCA 统计:独立数据管道" en="WCA stats: a separate data pipeline" /></h2>
           </div>
           <p className="arch-sec-lede">
             <L
-              zh={<>统计数据跟主站完全解耦。GitHub Actions 每周从 WCA 公开 dump 拉数据, 在 runner 上跑 80+ 个 SQL-driven 统计, 产出 JSON + TSV, scp 到云服务器, <code>\copy</code> 进 PG, Hono 读出来, nginx 再缓存 24 小时。</>}
-              en={<>Stats data is fully decoupled from the main site. GitHub Actions pulls the WCA public dump weekly, runs 80+ SQL-driven statistics on the runner, produces JSON + TSVs, scp's them to the VM, <code>\copy</code>s them into PG, Hono reads them out, and nginx caches 24h on top.</>}
+              zh={<>统计任务在在线请求之外处理 WCA 公开数据，生成 JSON 和 TSV，再发布到 PostgreSQL 与静态数据入口。Web 和 API 只读取产物。</>}
+              en={<>Statistics jobs process the public WCA data outside request handling, generate JSON and TSV artifacts, and publish them to PostgreSQL and the static data origin. The web and API only consume those outputs.</>}
             />
           </p>
           <div className="arch-diagram">
@@ -110,8 +101,8 @@ client  →  fetch(apiUrl('/v1/recon/abc'))
           </div>
           <p className="arch-sec-lede">
             <L
-              zh={<>第 03 节给了"理想读请求"的时间轴, 但实际不是所有 URL 都走全程。点下面 4 个 tab, 看每种请求各点亮哪些层 — 有的连 Next 都不启动, 有的在 nginx 那层就 hit cache 返回, 有的整条管道穿透。</>}
-              en={<>Section 03 sketches the "ideal read" timeline, but real URLs don't all walk the full path. Click the four tabs below to see which stages each pattern lights up — some never boot Next, some hit cache at nginx, some pierce all the way through.</>}
+              zh={<>不同 URL 不一定走完整路径。选择下面的请求类型，可以看到它会经过哪些层，以及在哪一层提前返回。</>}
+              en={<>Different URLs do not always follow the full path. Choose a request type below to see which layers it crosses and where it can return early.</>}
             />
           </p>
           <div className="arch-diagram tracer-frame">
@@ -122,9 +113,9 @@ client  →  fetch(apiUrl('/v1/recon/abc'))
         <footer className="arch-foot">
           <div className="arch-foot-line">
             <Link href="/dev/architecture"><L zh="概览" en="Overview" /></Link>
-            <span className="arch-meta-sep">·</span>
+            <span className="arch-meta-sep">/</span>
             <Link href="/dev/architecture/decisions"><L zh="技术决策" en="Decisions" /></Link>
-            <span className="arch-meta-sep">·</span>
+            <span className="arch-meta-sep">/</span>
             <Link href="/dev/architecture/history"><L zh="历程" en="History" /></Link>
           </div>
         </footer>

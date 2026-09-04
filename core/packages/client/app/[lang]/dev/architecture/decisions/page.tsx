@@ -5,14 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L } from '../../_lib/Lang';
 import type { Lang } from '../../_lib/Lang';
 import ArchNav from '../_components/ArchNav';
-import { MobilePipelineSVG } from '../_components/ArchSvgs';
 import { DECISIONS, DETAILS } from '../_lib/arch-data';
 import '../architecture.css';
 import { tr } from '@/i18n/tr';
 
 export default function ArchDecisionsPage() {
   const { i18n } = useTranslation();
-  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
+  const lang: Lang = (['en', 'zh'] as const)[Number(i18n.language.startsWith('zh'))];
 
   return (
     <LangCtx.Provider value={lang}>
@@ -21,7 +20,7 @@ export default function ArchDecisionsPage() {
 
         <header className="arch-subhero">
           <div className="arch-subhero-num">
-            <L zh="架构 · 技术决策" en="Architecture · Decisions" />
+            <L zh="架构 / 技术决策" en="Architecture / Decisions" />
           </div>
           <h1 className="arch-subhero-title">
             <L zh="为什么是这些选型" en="Why these picks" />
@@ -82,74 +81,60 @@ export default function ArchDecisionsPage() {
           </div>
         </section>
 
-        {/* 10 Mobile */}
+        {/* 10 Installed clients */}
         <section className="arch-sec">
           <div className="arch-sec-head">
             <span className="arch-sec-num">10</span>
-            <h2 className="arch-sec-title"><L zh="移动端:一份 SPA, 两个 webview 套壳" en="Mobile: one SPA, two webview shells" /></h2>
+            <h2 className="arch-sec-title"><L zh="已安装客户端:一份产品层，三个薄宿主" en="Installed clients: one product layer, three thin hosts" /></h2>
           </div>
           <p className="arch-sec-lede">
             <L
-              zh={<>2026-05 接 <strong>Capacitor 8</strong>, 把同一份 <code>dist/</code> 套进 iOS WKWebView 和 Android WebView, 装到自己手机, 不上架 App Store / Play Store。CI 双 runner 并行: ubuntu 编 APK (gradle ~3.5min), macOS 编 IPA (xcodebuild ~3min), push 到 main 改了 client/shared/visualcube 即自动触发。iOS 用 Sideloadly + 免费 Apple ID 走 7 天签 (不付 $99/yr), Android 直装无期限。</>}
-              en={<>2026-05 wrapped the SPA with <strong>Capacitor 8</strong> — same <code>dist/</code> hosted inside iOS WKWebView + Android WebView, side-loaded to personal devices, not published to either store. CI runs two runners in parallel: ubuntu builds APK via gradle (~3.5min), macOS builds IPA via xcodebuild (~3min), auto-triggered on push to main when client/shared/visualcube change. iOS uses Sideloadly + free Apple ID for 7-day signing (no $99/yr), Android installs directly with no expiry.</>}
-            />
-          </p>
-          <div className="arch-diagram">
-            <MobilePipelineSVG />
-          </div>
-          <p className="arch-sec-lede" style={{ marginTop: 28 }}>
-            <L
-              zh={<>但 app 不是把网站重新跑一遍那么轻松 — webview origin 不是 <code>cuberoot.me</code> 而是 <code>capacitor://localhost</code> (iOS) / <code>https://localhost</code> (Android), CORS / 路由 / 静态资源 / OAuth 每一项都要兜底。下表是 web 和 app 在运行时的实际差异:</>}
-              en={<>But the app isn't just "the site, again, inside a webview" — its origin is <code>capacitor://localhost</code> (iOS) / <code>https://localhost</code> (Android), not <code>cuberoot.me</code>. CORS, routing, static assets, and OAuth each need their own fallback. Here's how web and app actually differ at runtime:</>}
+              zh={<>Android、iOS、HarmonyOS NEXT、Windows 和 macOS 共用 <code>core/packages/app-ui</code> 产品层。各宿主只负责启动、打包和系统能力适配，不复制业务界面。</>}
+              en={<>Android, iOS, HarmonyOS NEXT, Windows, and macOS share the <code>core/packages/app-ui</code> product layer. Each host only handles startup, packaging, and system capability adapters instead of copying product UI.</>}
             />
           </p>
           <div className="arch-table-wrap">
             <table className="arch-table">
               <thead>
                 <tr>
-                  <th><L zh="维度" en="Aspect" /></th>
-                  <th><L zh="Web" en="Web" /></th>
-                  <th><L zh="App" en="App" /></th>
+                  <th><L zh="层" en="Layer" /></th>
+                  <th><L zh="平台" en="Platforms" /></th>
+                  <th><L zh="职责" en="Responsibility" /></th>
+                  <th><L zh="源码" en="Source" /></th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td><L zh="origin" en="origin" /></td>
-                  <td><code>https://cuberoot.me</code></td>
-                  <td><code>capacitor://localhost</code> / <code>https://localhost</code></td>
+                  <td><L zh="共享产品层" en="Shared product layer" /></td>
+                  <td><L zh="全部已安装客户端" en="All installed clients" /></td>
+                  <td><L zh="React 界面、业务流程、运行时中性能力调用" en="React UI, product flows, and runtime-neutral capability calls" /></td>
+                  <td><code>core/packages/app-ui</code></td>
                 </tr>
                 <tr>
-                  <td><L zh="API 调用" en="API calls" /></td>
-                  <td><L zh="fetch api.cuberoot.me, CORS 白名单 3 项" en="fetch api.cuberoot.me, 3-entry CORS allowlist" /></td>
-                  <td><L zh="加 capacitor + localhost 两 origin · CapacitorHttp 绕过 webview CORS" en="add capacitor + localhost origins · CapacitorHttp bypasses webview CORS" /></td>
+                  <td><L zh="移动宿主" en="Mobile host" /></td>
+                  <td>Android / iOS</td>
+                  <td><L zh="移动系统桥接、构建和签名" en="Mobile system bridges, builds, and signing" /></td>
+                  <td><code>core/apps/mobile</code></td>
                 </tr>
                 <tr>
-                  <td><L zh="/stats/* /tools/*" en="/stats/* /tools/*" /></td>
-                  <td><L zh="nginx 静态服务" en="served by nginx" /></td>
-                  <td><L zh="不打进 APK (17MB 太重), fetch wrapper 改写到 cuberoot.me 拉" en="not bundled (17MB too heavy); fetch wrapper rewrites to cuberoot.me" /></td>
+                  <td><L zh="桌面宿主" en="Desktop host" /></td>
+                  <td>Windows / macOS</td>
+                  <td><L zh="桌面窗口、安装包和系统桥接" en="Desktop windows, installers, and system bridges" /></td>
+                  <td><code>core/apps/desktop</code></td>
                 </tr>
                 <tr>
-                  <td><L zh="back 按钮" en="back button" /></td>
-                  <td><L zh="浏览器 ◁ 走 history.back" en="browser ◁ uses history.back" /></td>
-                  <td><L zh="@capacitor/app 拦 backButton → React Router navigate(-1) (webView.canGoBack 不认 pushState)" en="@capacitor/app intercepts backButton → React Router navigate(-1) (webView.canGoBack ignores pushState)" /></td>
-                </tr>
-                <tr>
-                  <td><L zh="WCA OAuth" en="WCA OAuth" /></td>
-                  <td><L zh="redirect_uri = https://cuberoot.me/auth/callback" en="redirect_uri = https://cuberoot.me/auth/callback" /></td>
-                  <td><L zh="custom scheme deep link me.cuberoot.app://auth-callback · @capacitor/browser 开 + appUrlOpen 回收 token" en="custom-scheme deep link me.cuberoot.app://auth-callback · @capacitor/browser opens + appUrlOpen catches token" /></td>
-                </tr>
-                <tr>
-                  <td><L zh="更新方式" en="update path" /></td>
-                  <td><L zh="nginx 部署即生效" en="nginx deploy = instant" /></td>
-                  <td><L zh="push → CI build → 手动重装 (artifact 留 14d)" en="push → CI build → manual reinstall (artifact retained 14d)" /></td>
+                  <td><L zh="鸿蒙宿主" en="Harmony host" /></td>
+                  <td>HarmonyOS NEXT</td>
+                  <td><L zh="ArkTS、ArkWeb 和系统能力桥接" en="ArkTS, ArkWeb, and system capability bridges" /></td>
+                  <td><code>core/apps/harmony</code></td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p className="arch-sec-lede" style={{ marginTop: 24 }}>
             <L
-              zh={<>装机步骤 + 已知 webview 限制 (cstimer iframe / SAB / WebCodecs) 见 <a href="https://github.com/RuiminYan/cuberoot.me/blob/main/core/packages/client/MOBILE.md" target="_blank" rel="noreferrer"><code>core/packages/client/MOBILE.md</code></a>。</>}
-              en={<>Install steps + known webview limitations (cstimer iframe / SAB / WebCodecs) live in <a href="https://github.com/RuiminYan/cuberoot.me/blob/main/core/packages/client/MOBILE.md" target="_blank" rel="noreferrer"><code>core/packages/client/MOBILE.md</code></a>.</>}
+              zh={<>平台能力、构建状态和发布证据见 <a href="https://github.com/RuiminYan/cuberoot.me/blob/main/core/docs/mobile-app-roadmap.md" target="_blank" rel="noreferrer"><code>core/docs/mobile-app-roadmap.md</code></a>。</>}
+              en={<>Platform capabilities, build status, and release evidence live in <a href="https://github.com/RuiminYan/cuberoot.me/blob/main/core/docs/mobile-app-roadmap.md" target="_blank" rel="noreferrer"><code>core/docs/mobile-app-roadmap.md</code></a>.</>}
             />
           </p>
         </section>
@@ -157,9 +142,9 @@ export default function ArchDecisionsPage() {
         <footer className="arch-foot">
           <div className="arch-foot-line">
             <Link href="/dev/architecture"><L zh="概览" en="Overview" /></Link>
-            <span className="arch-meta-sep">·</span>
+            <span className="arch-meta-sep">/</span>
             <Link href="/dev/architecture/flow"><L zh="请求流程" en="Flow" /></Link>
-            <span className="arch-meta-sep">·</span>
+            <span className="arch-meta-sep">/</span>
             <Link href="/dev/architecture/history"><L zh="历程" en="History" /></Link>
           </div>
         </footer>

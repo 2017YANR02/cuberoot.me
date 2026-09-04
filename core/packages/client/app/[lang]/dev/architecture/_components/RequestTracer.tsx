@@ -50,7 +50,7 @@ export default function RequestTracer() {
         })}
       </ol>
       <div className="tracer-meta">
-        <span className="tracer-eta">{p.eta}</span>
+        <span className="tracer-eta">{p.result}</span>
       </div>
       <p className="tracer-detail">{txt.detail}</p>
     </div>
