@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import { findUserByWcaId } from './account.js';
+import { findUserByWcaId, getUserById } from './account.js';
 import { requireAuth } from './recon_helpers.js';
 
 function canonicalUserId(value: unknown): number | null {
@@ -15,7 +15,10 @@ function canonicalUserId(value: unknown): number | null {
 export async function requireAppUserId(c: Context): Promise<number> {
   const user = await requireAuth(c);
   const sessionUserId = canonicalUserId(user.uid);
-  if (sessionUserId != null) return sessionUserId;
+  if (sessionUserId != null) {
+    const row = await getUserById(sessionUserId);
+    if (row) return row.id;
+  }
   if (user.realWcaId) {
     const row = await findUserByWcaId(user.realWcaId);
     const wcaUserId = canonicalUserId(row?.id);
