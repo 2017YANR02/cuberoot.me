@@ -73,6 +73,118 @@
   color: var(--muted-foreground);
 }
 
+.tutorial-four-center {
+  display: grid;
+  justify-items: center;
+}
+
+.tutorial-four-center h2 {
+  justify-self: start;
+}
+
+.tutorial-four-center-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  color: var(--muted-foreground);
+}
+
+.tutorial-four-center-progress strong {
+  color: var(--foreground);
+  font-size: 1.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tutorial-four-center-progress svg:last-child {
+  color: var(--accent);
+}
+
+.tutorial-four-center-player {
+  width: 100%;
+  max-width: 380px;
+  min-width: 0;
+  aspect-ratio: 1;
+  margin-top: 12px;
+}
+
+.tutorial-four-center-actions {
+  display: flex;
+  align-items: stretch;
+  gap: 18px;
+  width: 100%;
+  max-width: 700px;
+  min-width: 0;
+  margin-top: 18px;
+}
+
+.tutorial-four-center-play,
+.tutorial-four-center-step {
+  appearance: none;
+  border: 0;
+  border-bottom: 2px solid var(--border-default);
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.tutorial-four-center-play {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.tutorial-four-center-sequence {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  min-width: 0;
+  flex: 1;
+}
+
+.tutorial-four-center-cycle {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.tutorial-four-center-step {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  min-width: 0;
+  padding: 7px 4px 6px;
+}
+
+.tutorial-four-center-step span {
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tutorial-four-center-step code {
+  color: inherit;
+  font-size: 1rem;
+}
+
+.tutorial-four-center-play:hover,
+.tutorial-four-center-step:hover,
+.tutorial-four-center-play.is-active,
+.tutorial-four-center-step.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tutorial-four-center-play:focus-visible,
+.tutorial-four-center-step:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
 .tutorial-sources {
   display: flex;
   flex-wrap: wrap;
@@ -100,5 +212,26 @@
   .tutorial-alg-copy {
     align-items: center;
     text-align: center;
+  }
+
+  .tutorial-four-center-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .tutorial-four-center-play {
+    flex-direction: row;
+    align-self: center;
+    padding-inline: 18px;
+  }
+
+  .tutorial-four-center-sequence {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 380px) {
+  .tutorial-four-center-sequence {
+    grid-template-columns: 1fr;
   }
 }
