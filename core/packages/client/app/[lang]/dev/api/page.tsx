@@ -103,7 +103,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'POST', p: '/v1/auth/google', g: 'public', zh: '用墙外中继签发的 Google 断言登录/注册', en: 'Sign in/up via relay-signed Google assertion' },
   { d: 'auth', m: 'POST', p: '/v1/auth/link/google', g: 'login', zh: '用墙外中继签发的 Google 断言绑定当前账号', en: 'Link Google identity via relay-signed assertion' },
   { d: 'auth', m: 'POST', p: '/v1/auth/unlink', g: 'login', zh: '解绑一个登录方式(拒绝最后一个)', en: 'Unlink a login method (not the last)' },
-  { d: 'auth', m: 'GET', p: '/v1/auth/profile', g: 'login', c: 'no-store', zh: '读取当前账号的私密生日、性别和国籍资料', en: 'Read the current account’s private birth date, gender, and nationality profile' },
+  { d: 'auth', m: 'GET', p: '/v1/auth/profile', g: 'login', c: 'no-store', zh: '读取当前账号的私密姓名、生日、性别和国籍资料', en: 'Read the current account’s private name, birth date, gender, and nationality profile' },
   { d: 'auth', m: 'POST', p: '/v1/auth/profile', g: 'login', c: 'no-store', zh: '修改当前账号用户名、头像或私密基本资料；用户名和头像改动换发 JWT', en: 'Update the current account username, avatar, or private basic profile; username and avatar changes reissue the JWT' },
   { d: 'auth', m: 'GET', p: '/v1/auth/admin/users', g: 'admin', c: 'no-store', zh: '用户注册统计、绑定方式与分页明细', en: 'User registration stats, linked methods, and paginated records' },
   { d: 'auth', m: 'GET', p: '/v1/auth/admin/users/:userId', g: 'admin', c: 'no-store', zh: '读取指定 CubeRoot 用户资料', en: 'Read a CubeRoot user profile' },

@@ -372,6 +372,7 @@ CREATE TABLE app_users (
   avatar_preset       VARCHAR(32),
   wca_id              VARCHAR(20),
   is_admin            BOOLEAN NOT NULL DEFAULT FALSE,
+  full_name           VARCHAR(50),
   birth_date          DATE CHECK (birth_date IS NULL OR birth_date >= DATE '1900-01-01'),
   gender              VARCHAR(16)
                       CHECK (gender IS NULL OR gender IN ('male', 'female', 'nonbinary', 'other', 'undisclosed')),
@@ -396,6 +397,13 @@ CREATE TABLE app_users (
       region_code IS NOT NULL
       AND city_name = BTRIM(city_name)
       AND city_name !~ '[[:cntrl:]]'
+    )
+  ),
+  CONSTRAINT chk_app_users_full_name CHECK (
+    full_name IS NULL OR (
+      full_name = BTRIM(full_name)
+      AND CHAR_LENGTH(full_name) BETWEEN 1 AND 50
+      AND full_name !~ '[[:cntrl:]]'
     )
   ),
   CONSTRAINT chk_app_users_avatar_shape CHECK (

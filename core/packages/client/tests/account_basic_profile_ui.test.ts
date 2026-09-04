@@ -8,6 +8,8 @@ const countryInput = readFileSync(join(clientRoot, 'components/CountryInput/Coun
 
 describe('账号基本资料 UI 契约', () => {
   it('生日和国家复用全站规范组件，省份与城市按层级出现', () => {
+    expect(accountPage).toContain('id="account-full-name"');
+    expect(accountPage).toContain('autoComplete="name"');
     expect(accountPage).toContain('<DateInput');
     expect(accountPage).toContain('<CountryInput');
     expect(accountPage).toContain('updateAccountBasicProfile');

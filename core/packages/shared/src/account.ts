@@ -92,6 +92,7 @@ export const ACCOUNT_GENDERS = ['male', 'female', 'nonbinary', 'other', 'undiscl
 export type AccountGender = (typeof ACCOUNT_GENDERS)[number];
 
 export interface AccountBasicProfile {
+  fullName: string | null;
   birthDate: string | null;
   gender: AccountGender | null;
   countryIso2: string | null;
