@@ -182,11 +182,6 @@ export default function ColorPositionsPage() {
             {question.direction === 'left' && <span className="position-prompt-mark">? ←</span>}
             <div className="position-prompt-target">
               <ColorSwatch face={question.reference} showLabel={showColorNames} />
-              <TrainingFeedbackOverlay
-                kind={selected ? (selected === question.answer ? 'correct' : 'wrong') : null}
-                correctLabel={tr({ zh: '答对了', en: 'Correct' })}
-                wrongLabel={tr({ zh: '答错了', en: 'Wrong' })}
-              />
             </div>
             {question.direction === 'right' && <span className="position-prompt-mark">→ ?</span>}
             {question.direction === 'opposite' && <span className="position-prompt-mark">↔ ?</span>}
@@ -212,6 +207,11 @@ export default function ColorPositionsPage() {
                     aria-hidden="true"
                   />
                   {showColorNames && <strong>{colorName(face)}</strong>}
+                  <TrainingFeedbackOverlay
+                    kind={isCorrect ? 'correct' : isWrong ? 'wrong' : null}
+                    correctLabel={tr({ zh: '答对了', en: 'Correct' })}
+                    wrongLabel={tr({ zh: '答错了', en: 'Wrong' })}
+                  />
                 </button>
               );
             })}
