@@ -110,6 +110,7 @@ export interface AdminUserRecord {
   identities: AdminUserIdentity[];
 }
 export interface AdminUsersResponse {
+  canManageAdmins: boolean;
   summary: {
     totalUsers: number;
     registeredToday: number;
