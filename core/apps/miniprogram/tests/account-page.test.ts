@@ -5,6 +5,8 @@ import accountConfig from '../src/pages/account/index.json';
 
 interface AccountPageData {
   accountError: string;
+  accountLinkPending: boolean;
+  accountLinkRequired: boolean;
   agreementAccepted: boolean;
   contact: {
     details: Array<{
@@ -43,7 +45,9 @@ interface AccountPageData {
 
 interface AccountPage {
   copyContactValue(event: { currentTarget: { dataset: { value?: unknown } } }): void;
+  createAccount(): Promise<void>;
   data: AccountPageData;
+  linkExistingAccount(): void;
   loginWithMiniProgram(): Promise<void>;
   onLoad(): void;
   onShareAppMessage(): WechatMiniprogram.Page.ICustomShareContent;
@@ -285,6 +289,75 @@ describe('mini program account page', () => {
       loginRequired: false,
       uidText: '52',
       wcaId: '',
+    });
+  });
+
+  it('requires an unknown WeChat identity to link or explicitly create an account', async () => {
+    const token = 'n'.repeat(20);
+    let requestCount = 0;
+    let storedSession: unknown = null;
+    const navigateTo = vi.fn((options: { complete?(): void }) => options.complete?.());
+    const request = vi.fn((options: {
+      data?: { code?: string };
+      success(response: unknown): void;
+    }) => {
+      requestCount += 1;
+      if (requestCount === 1) {
+        options.success({
+          statusCode: 409,
+          data: {
+            code: 'WECHAT_ACCOUNT_LINK_REQUIRED',
+            message: 'link required',
+            error: 'link required',
+          },
+        });
+        return;
+      }
+      options.success({
+        statusCode: 200,
+        data: {
+          token,
+          user: { uid: 66, name: 'Existing user', wcaId: null, avatar: '' },
+          isNew: false,
+        },
+      });
+    });
+    const page = await loadPage({
+      getLaunchOptionsSync: normalLaunchOptions,
+      getStorageSync: () => storedSession,
+      login(options: { success(result: { code: string }): void }) {
+        options.success({ code: `login-code-${requestCount + 1}` });
+      },
+      navigateTo,
+      removeStorageSync: vi.fn(),
+      request,
+      setStorageSync(_key: string, value: unknown) {
+        storedSession = value;
+      },
+      showShareMenu: vi.fn(),
+    });
+
+    page.onLoad();
+    await page.loginWithMiniProgram();
+
+    expect(page.data).toMatchObject({
+      accountLinkRequired: true,
+      loginRequired: true,
+    });
+
+    page.linkExistingAccount();
+    expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({
+      url: '/pages/web/index?key=account-link',
+    }));
+
+    page.onShow();
+    await vi.waitFor(() => {
+      expect(page.data).toMatchObject({
+        accountLinkRequired: false,
+        displayName: 'Existing user',
+        loginRequired: false,
+        uidText: '66',
+      });
     });
   });
 

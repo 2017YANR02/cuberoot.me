@@ -11,7 +11,7 @@ import { isSafeWebSessionDestination, isWebSessionTicket } from './web-session-c
 import { MINI_PROGRAM_WEB_MARKER } from './platform';
 
 type DiscoveryRouteKey = Exclude<SiteDirectoryEntryId, 'algdb' | 'alg' | 'github'> | 'alg';
-export type WebRouteKey = DiscoveryRouteKey | 'home' | 'account' | 'privacy' | 'logout';
+export type WebRouteKey = DiscoveryRouteKey | 'home' | 'account' | 'account-link' | 'privacy' | 'logout';
 
 interface WebRouteDefinition {
   title: string;
@@ -120,6 +120,16 @@ export const WEB_ROUTES: Record<WebRouteKey, WebRouteDefinition> = {
     description: tr({ en: 'Manage your WCA account and sign-in methods', zh: '管理 WCA 账号与登录方式' }),
     path: localizedWebsitePath('/account'),
     publicEntry: false,
+  },
+  'account-link': {
+    title: tr({ en: 'Link existing account', zh: '绑定已有账号' }),
+    description: tr({
+      en: 'Sign in to your existing account, then link WeChat under sign-in methods',
+      zh: '先登录已有账号，再在登录方式中绑定微信',
+    }),
+    path: localizedWebsitePath('/account'),
+    publicEntry: false,
+    sessionHandoff: false,
   },
   privacy: {
     title: tr({ en: 'Privacy', zh: '隐私说明' }),
