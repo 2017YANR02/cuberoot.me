@@ -141,6 +141,7 @@ export const PLATFORM_ACCOUNT_DELETE_TABLES = [
  * 新表要么进清单,要么进这里,不能两边都不在(那就是漏了)。
  */
 export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
+  wca_pr_streaks: 'WCA 官方成绩派生的公开统计，不属于站内账号私有数据',
   app_users: '账号本体,最后整行删',
   auth_identities: '身份行,随 app_users 级联删',
   account_last_devices: '账号最近设备摘要是私有支持数据,随 app_users 级联删',
