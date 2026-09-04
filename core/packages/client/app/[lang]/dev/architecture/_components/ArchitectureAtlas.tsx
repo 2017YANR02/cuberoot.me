@@ -1,7 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from '@/components/AppLink';
 import type { Lang } from '../../_lib/Lang';
+import { BORROWED_MODULES } from '../_lib/arch-data';
 import {
   ARCHITECTURE_EDGES,
   ARCHITECTURE_LANES,
@@ -11,8 +13,8 @@ import {
 export default function ArchitectureAtlas({ lang }: { lang: Lang }) {
   const [selectedId, setSelectedId] = useState('web');
   const ui = {
-    zh: { request: '在线请求', capability: '共享能力', artifact: '生成物', source: '源码位置', terms: '这里用到的术语' },
-    en: { request: 'Request', capability: 'Capability', artifact: 'Artifact', source: 'Source', terms: 'Terms used here' },
+    zh: { request: '在线请求', capability: '共享能力', artifact: '生成物', source: '源码位置', facts: '结构明细', modules: '借来的模块', terms: '这里用到的术语' },
+    en: { request: 'Request', capability: 'Capability', artifact: 'Artifact', source: 'Source', facts: 'Structure details', modules: 'Borrowed modules', terms: 'Terms used here' },
   }[lang];
   const selected = ARCHITECTURE_NODES.find((node) => node.id === selectedId) ?? ARCHITECTURE_NODES[0];
   const connectedIds = useMemo(() => {
@@ -94,6 +96,31 @@ export default function ArchitectureAtlas({ lang }: { lang: Lang }) {
           <div className="architecture-atlas__source">
             <h3>{ui.source}</h3>
             {selected.sourcePaths.map((path) => <code key={path}>{path}</code>)}
+          </div>
+        )}
+
+        {selected.facts && (
+          <div className="architecture-atlas__facts">
+            <h3>{ui.facts}</h3>
+            {selected.facts.map((fact) => (
+              <section key={fact.label}>
+                <code>{fact.label}</code>
+                <p>{fact[lang]}</p>
+              </section>
+            ))}
+          </div>
+        )}
+
+        {selected.id === 'governance' && (
+          <div className="architecture-atlas__modules">
+            <h3>{ui.modules}</h3>
+            {BORROWED_MODULES.map((module) => (
+              <section key={module.route}>
+                <Link href={module.route} prefetch={false}>{module.route}</Link>
+                <span>{module.origin}</span>
+                <a href={`https://github.com/${module.upstream}`} target="_blank" rel="noreferrer">{module.upstream}</a>
+              </section>
+            ))}
           </div>
         )}
 

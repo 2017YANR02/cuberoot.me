@@ -49,6 +49,8 @@ import { tr } from '@/i18n/tr';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { fetchPageNotices, type PageNotice } from '@/lib/page-notices-api';
 import { colorFor, iconFor } from '@/lib/page-notice-visuals';
+import { displayCuberName } from '@/lib/cuber-name-display';
+import { listPublicMembers, type PublicMember } from '@/lib/membership-api';
 
 const ABOUT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'about')!;
 const SUPPORT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'support')!;
@@ -101,6 +103,7 @@ export default function LandingPage() {
 
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const [featuredNotice, setFeaturedNotice] = useState<PageNotice | null>(null);
+  const [publicMembers, setPublicMembers] = useState<PublicMember[] | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -110,6 +113,14 @@ export default function LandingPage() {
         setFeaturedNotice(rows.find((row) => row.placement === 'home_featured' && row.path === '/') ?? null);
       })
       .catch(() => { /* 焦点新闻不可阻断首页 */ });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    listPublicMembers()
+      .then((members) => { if (active) setPublicMembers(members); })
+      .catch(() => { /* 会员名单不可阻断首页 */ });
     return () => { active = false; };
   }, []);
 
@@ -283,24 +294,33 @@ export default function LandingPage() {
             </div>
           </section>
         ))}
-        <section className="cards-section" aria-labelledby="enterprise-members-title">
-          <div className="section-header">
-            <div className="section-eyebrow">{tr({ zh: '企业', en: 'Enterprise' })}</div>
-            <h2 id="enterprise-members-title" className="section-title-serif">
-              {tr({ zh: '企业会员', en: 'Enterprise members' })}
-            </h2>
-            <div className="section-sub">{tr({ zh: '暂无企业会员', en: 'No enterprise members yet' })}</div>
-          </div>
-        </section>
-        <section className="cards-section" aria-labelledby="individual-members-title">
-          <div className="section-header">
-            <div className="section-eyebrow">{tr({ zh: '个人', en: 'Individual' })}</div>
-            <h2 id="individual-members-title" className="section-title-serif">
-              {tr({ zh: '个人会员', en: 'Individual members' })}
-            </h2>
-            <div className="section-sub">{tr({ zh: '暂无个人会员', en: 'No individual members yet' })}</div>
-          </div>
-        </section>
+        {([
+          { id: 'enterprise', enterprise: true, eyebrow: tr({ zh: '企业', en: 'Enterprise' }), title: tr({ zh: '企业会员', en: 'Enterprise members' }), empty: tr({ zh: '暂无企业会员', en: 'No enterprise members yet' }) },
+          { id: 'individual', enterprise: false, eyebrow: tr({ zh: '个人', en: 'Individual' }), title: tr({ zh: '个人会员', en: 'Individual members' }), empty: tr({ zh: '暂无个人会员', en: 'No individual members yet' }) },
+        ] as const).map((section) => {
+          const members = publicMembers?.filter((member) => member.planSlug.startsWith('enterprise_') === section.enterprise) ?? [];
+          return (
+            <section key={section.id} className="cards-section" aria-labelledby={`${section.id}-members-title`}>
+              <div className="section-header">
+                <div className="section-eyebrow">{section.eyebrow}</div>
+                <h2 id={`${section.id}-members-title`} className="section-title-serif">{section.title}</h2>
+                {publicMembers && members.length === 0 && <div className="section-sub">{section.empty}</div>}
+              </div>
+              {members.length > 0 && (
+                <div className="landing-members">
+                  {members.map((member) => (
+                    <Link key={member.wcaId} href={`/wca/persons/${member.wcaId}`} className="landing-member" prefetch={false}>
+                      {member.avatarUrl
+                        ? <img src={member.avatarUrl} alt="" className="landing-member-avatar" />
+                        : <User size={24} aria-hidden="true" />}
+                      <span>{displayCuberName(member.name, lang === 'zh')}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
       </div>
 
       <div className="footer">

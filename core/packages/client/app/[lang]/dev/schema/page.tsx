@@ -159,7 +159,7 @@ const TABLES: Table[] = [
   { name: 'wca_users', domain: 'comp', origin: 'snapshot', purpose: { zh: 'WCA OAuth 登录用户(身份 / 头像 / admin)', en: 'WCA OAuth users (identity, avatar, admin flag)' } },
 
   // ── accounts & auth ────────────────────────────────────
-  { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172, 186, 194, 200, 201, 206], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
+  { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172, 186, 194, 200, 201, 206, 210], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
   { name: 'account_last_devices', domain: 'account', origin: '0199', purpose: { zh: '每个账号最近使用设备的粗粒度类型、系统、浏览器和时间；不保存原始 User-Agent、IP 或设备指纹', en: 'Coarse latest-device type, OS, browser, and time per account; raw User-Agent, IP, and device fingerprints are not stored' } },
   { name: 'user_friendships', domain: 'account', origin: '0175', purpose: { zh: '好友申请与已接受的双向好友关系；每对账号只保留一条规范记录', en: 'Pending requests and accepted two-way friendships, with one canonical row per account pair' } },
   { name: 'user_blocks', domain: 'account', origin: '0175', purpose: { zh: '单向黑名单；拉黑时同步切断好友关系与待处理申请', en: 'Directed blocks; blocking also removes friendships and pending requests' } },
@@ -714,6 +714,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 207, slug: 'music_static_overrides', desc: { zh: '保存静态曲库的管理员信息覆盖与可恢复下架状态。', en: 'Store administrator metadata overrides and reversible removals for the static music library.' } },
   { n: 208, slug: 'app_boot_diagnostics', desc: { zh: '保存脱敏的页面启动错误，管理员可按用户看到的诊断编号查询，并自动清理 90 天前数据。', en: 'Store redacted page-startup errors searchable by the user-visible diagnostic code and prune data older than 90 days.' } },
   { n: 209, slug: 'wechat_browser_login', desc: { zh: '扩展单次会话票据，支持 iPhone 浏览器发起、微信小程序确认后原子换取网站登录态。', en: 'Extend single-use session tickets so an iPhone browser can start sign-in and atomically exchange it after Mini Program approval.' } },
+  { n: 210, slug: 'membership_listing_visibility', desc: { zh: '会员默认展示在首页会员名单中，并可在个人资料中主动关闭。', en: 'Show active members on the homepage by default with a profile opt-out.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

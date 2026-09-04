@@ -1332,6 +1332,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'General website puzzle dropdown shared by Recent Scrambles, Predict, Sim, Solver, and Scramble Stats. Pass wcaEvents for the data-driven WCA + csTimer family catalog, or groups for a page-specific available set. linkFor preserves middle-click navigation; onSelect updates in-page state. Timer surfaces must use the cross-platform TimerPuzzlePicker. Do not hand-roll page-local puzzle menus.',
   },
   {
+    name: 'AlgPuzzlePicker',
+    import: "import AlgPuzzlePicker from '@/components/AlgPuzzlePicker';",
+    category: 'more',
+    zh: '公式库与教程共用的项目目录下拉,底层复用 PuzzlePicker,选项保持真链接。',
+    en: 'Shared algorithm and tutorial puzzle catalog built on PuzzlePicker, with real links for every option.',
+  },
+  {
     name: 'TimerPuzzlePicker',
     import: "import { TimerPuzzlePicker } from '@cuberoot/timer-ui';",
     category: 'more',

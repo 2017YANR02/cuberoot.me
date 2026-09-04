@@ -1,4 +1,5 @@
 import type { AlgPuzzle } from '@cuberoot/shared';
+import { invertMoveString } from '@cuberoot/shared/alg-notation';
 import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 import { invertFtoEifAlgorithm } from '@/lib/fto-eif-image';
 import { invertSq1Alg, parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
@@ -9,7 +10,7 @@ import {
 } from '@/lib/clock-notation';
 
 /** Puzzles the shared player can render, including /sim-only teaching previews. */
-export type AlgPlayerPuzzle = AlgPuzzle | 'clock';
+export type AlgPlayerPuzzle = AlgPuzzle | 'clock' | 'ivy';
 
 /** 公式动画和记号教学共用 1 STM/s 的默认节奏。 */
 export const DEFAULT_ALG_MOVE_DURATION_MS = 1000;
@@ -18,7 +19,7 @@ const SIM_FRAMES_PER_SECOND = 60;
 
 /** `/sim` 播放器的一步一项。SQ1 的 `(t, b)` 内含空格，不能按空白切。 */
 export function resolveSimPreviewMoves(puzzle: AlgPlayerPuzzle, alg: string): string[] {
-  if (puzzle === 'clock') return alg.trim().split(/\s+/).filter(Boolean);
+  if (puzzle === 'clock' || puzzle === 'ivy') return alg.trim().split(/\s+/).filter(Boolean);
   const normalized = normalizeAlgForTwisty(puzzle, alg);
   if (puzzle === 'sq1') {
     return parseSq1Tokens(normalized).map(token =>
@@ -33,7 +34,7 @@ export function resolveSimMoveDurationScale(puzzle: AlgPlayerPuzzle, move: strin
   if (!token || /\s/.test(token)) return 1;
 
   let magnitude = 1;
-  if (puzzle === 'pyraminx' || (puzzle === 'skewb' && !/^[xyz]/i.test(token))) {
+  if (puzzle === 'pyraminx' || puzzle === 'ivy' || (puzzle === 'skewb' && !/^[xyz]/i.test(token))) {
     magnitude = 4 / 3;
   } else {
     const amount = Number(token.match(/(\d+)'?$/)?.[1]);
@@ -104,6 +105,10 @@ export function resolvePlayerSetup(
   if (puzzle === 'clock') {
     if (setup?.trim()) return setup.trim();
     return clockStepsToString(invertClockSteps(parseClockSteps(alg)));
+  }
+  if (puzzle === 'ivy') {
+    if (setup?.trim()) return setup.trim();
+    return resolveSimPreviewMoves(puzzle, alg).reverse().map(invertMoveString).join(' ');
   }
   if (setup?.trim()) return normalizeAlgForTwisty(puzzle, setup);
   if (puzzle === 'fto') return invertFtoEifAlgorithm(alg);

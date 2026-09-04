@@ -413,6 +413,7 @@ CREATE TABLE app_users (
   public_intro        TEXT CHECK (public_intro IS NULL OR CHAR_LENGTH(public_intro) <= 1000),
   public_intro_image_ids JSONB NOT NULL DEFAULT '[]'::jsonb
                       CHECK (JSONB_TYPEOF(public_intro_image_ids) = 'array' AND JSONB_ARRAY_LENGTH(public_intro_image_ids) <= 8),
+  show_in_member_list BOOLEAN NOT NULL DEFAULT TRUE,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   password_hash       TEXT,
