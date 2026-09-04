@@ -115,6 +115,7 @@ function MusicUploadDialog({ onClose, onUploaded }: {
           <Upload aria-hidden="true" />
           <span>{audioFile?.name ?? tr({ zh: '选择音频文件', en: 'Choose an audio file' })}</span>
           <input
+            className="music-file-input"
             type="file"
             accept=".flac,.mp3,.m4a,.wav,audio/flac,audio/mpeg,audio/mp4,audio/wav,audio/x-wav"
             required
@@ -126,16 +127,16 @@ function MusicUploadDialog({ onClose, onUploaded }: {
           />
         </label>
         <div className="music-editor-grid">
-          <label><span>{tr({ zh: '歌曲名', en: 'Title' })}</span><input value={draft.title} required onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label>
-          <label><span>{tr({ zh: '艺术家（可选）', en: 'Artist (optional)' })}</span><input value={draft.artist} onChange={(event) => setDraft({ ...draft, artist: event.target.value })} /></label>
-          <label><span>{tr({ zh: '专辑', en: 'Album' })}</span><input value={draft.album ?? ''} onChange={(event) => setDraft({ ...draft, album: event.target.value })} /></label>
-          <label><span>{tr({ zh: '分类', en: 'Category' })}</span><input value={draft.genre ?? ''} onChange={(event) => setDraft({ ...draft, genre: event.target.value })} /></label>
+          <label><span>{tr({ zh: '歌曲名', en: 'Title' })}</span><input className="music-editor-control" value={draft.title} required onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label>
+          <label><span>{tr({ zh: '艺术家（可选）', en: 'Artist (optional)' })}</span><input className="music-editor-control" value={draft.artist} onChange={(event) => setDraft({ ...draft, artist: event.target.value })} /></label>
+          <label><span>{tr({ zh: '专辑', en: 'Album' })}</span><input className="music-editor-control" value={draft.album ?? ''} onChange={(event) => setDraft({ ...draft, album: event.target.value })} /></label>
+          <label><span>{tr({ zh: '分类', en: 'Category' })}</span><input className="music-editor-control" value={draft.genre ?? ''} onChange={(event) => setDraft({ ...draft, genre: event.target.value })} /></label>
         </div>
-        <label><span>{tr({ zh: 'LRC 歌词', en: 'LRC lyrics' })}</span><textarea rows={6} value={draft.lyricsLrc ?? ''} onChange={(event) => setDraft({ ...draft, lyricsLrc: event.target.value })} /></label>
+        <label><span>{tr({ zh: 'LRC 歌词', en: 'LRC lyrics' })}</span><textarea className="music-editor-control" rows={6} value={draft.lyricsLrc ?? ''} onChange={(event) => setDraft({ ...draft, lyricsLrc: event.target.value })} /></label>
         <label className="music-file-picker is-secondary">
           <ImagePlus aria-hidden="true" />
           <span>{coverFile?.name ?? tr({ zh: '添加封面（可选）', en: 'Add cover art (optional)' })}</span>
-          <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setCoverFile(event.target.files?.[0] ?? null)} />
+          <input className="music-file-input" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setCoverFile(event.target.files?.[0] ?? null)} />
         </label>
         {error && <p className="music-form-error" role="alert">{error}</p>}
         <div className="music-dialog-actions">

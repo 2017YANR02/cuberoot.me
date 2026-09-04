@@ -30,7 +30,7 @@ describe('/predict answer feedback and playback controls', () => {
 
   it('reuses the shared correct and wrong overlay in the colour-position test', () => {
     expect(COLOR_POSITIONS).toContain('<TrainingFeedbackOverlay');
-    expect(COLOR_POSITIONS).toContain("selected === question.answer ? 'correct' : 'wrong'");
+    expect(COLOR_POSITIONS).toContain("kind={isCorrect ? 'correct' : isWrong ? 'wrong' : null}");
   });
 
   it('keeps the shared playback bar mounted from the initial question', () => {

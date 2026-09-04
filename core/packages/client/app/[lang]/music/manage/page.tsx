@@ -167,30 +167,30 @@ export default function MusicManagePage() {
           {selected && (
             <form className="music-editor" onSubmit={save}>
               <div className="music-editor-grid">
-                <label><span>{tr({ zh: '歌曲名', en: 'Title' })}</span><input value={draft.title} required readOnly={!canEdit} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label>
-                <label><span>{tr({ zh: '艺术家（可选）', en: 'Artist (optional)' })}</span><input value={draft.artist} readOnly={!canEdit} onChange={(event) => setDraft({ ...draft, artist: event.target.value })} /></label>
-                <label><span>{tr({ zh: '专辑', en: 'Album' })}</span><input value={draft.album ?? ''} readOnly={!canEdit} onChange={(event) => setDraft({ ...draft, album: event.target.value })} /></label>
-                <label><span>{tr({ zh: '分类', en: 'Category' })}</span><input value={draft.genre ?? ''} readOnly={!canEdit} onChange={(event) => setDraft({ ...draft, genre: event.target.value })} /></label>
+                <label><span>{tr({ zh: '歌曲名', en: 'Title' })}</span><input className="music-editor-control" value={draft.title} required readOnly={!canEdit} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label>
+                <label><span>{tr({ zh: '艺术家（可选）', en: 'Artist (optional)' })}</span><input className="music-editor-control" value={draft.artist} readOnly={!canEdit} onChange={(event) => setDraft({ ...draft, artist: event.target.value })} /></label>
+                <label><span>{tr({ zh: '专辑', en: 'Album' })}</span><input className="music-editor-control" value={draft.album ?? ''} readOnly={!canEdit} onChange={(event) => setDraft({ ...draft, album: event.target.value })} /></label>
+                <label><span>{tr({ zh: '分类', en: 'Category' })}</span><input className="music-editor-control" value={draft.genre ?? ''} readOnly={!canEdit} onChange={(event) => setDraft({ ...draft, genre: event.target.value })} /></label>
               </div>
-              <label><span>{tr({ zh: 'LRC 歌词', en: 'LRC lyrics' })}</span><textarea rows={5} value={draft.lyricsLrc ?? ''} readOnly={!canEdit} onChange={(event) => setDraft({ ...draft, lyricsLrc: event.target.value })} /></label>
+              <label><span>{tr({ zh: 'LRC 歌词', en: 'LRC lyrics' })}</span><textarea className="music-editor-control" rows={5} value={draft.lyricsLrc ?? ''} readOnly={!canEdit} onChange={(event) => setDraft({ ...draft, lyricsLrc: event.target.value })} /></label>
               {isAdmin ? (
                 <div className="music-editor-grid">
                   <label>
                     <span>{tr({ zh: '审核状态', en: 'Review status' })}</span>
-                    <select value={status} onChange={(event) => setStatus(event.target.value as MusicTrackStatus)}>
+                    <select className="music-editor-control" value={status} onChange={(event) => setStatus(event.target.value as MusicTrackStatus)}>
                       <option value="pending">{tr({ zh: '待审核', en: 'Pending review' })}</option>
                       <option value="published">{tr({ zh: '发布', en: 'Publish' })}</option>
                       <option value="rejected">{tr({ zh: '退回修改', en: 'Needs changes' })}</option>
                     </select>
                   </label>
-                  <label><span>{tr({ zh: '审核说明', en: 'Review note' })}</span><input value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} /></label>
+                  <label><span>{tr({ zh: '审核说明', en: 'Review note' })}</span><input className="music-editor-control" value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} /></label>
                 </div>
               ) : selected.reviewNote ? <p className="music-review-note"><strong>{tr({ zh: '审核说明：', en: 'Review note: ' })}</strong>{selected.reviewNote}</p> : null}
               {canEdit && (
                 <label className="music-file-picker is-secondary">
                   <ImagePlus aria-hidden="true" />
                   <span>{coverFile?.name ?? tr({ zh: '更换封面（可选）', en: 'Replace cover art (optional)' })}</span>
-                  <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setCoverFile(event.target.files?.[0] ?? null)} />
+                  <input className="music-file-input" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setCoverFile(event.target.files?.[0] ?? null)} />
                 </label>
               )}
               {!canEdit && <p className="music-state">{tr({ zh: '已审核的内容不能自行修改。', en: 'Reviewed uploads cannot be edited.' })}</p>}
