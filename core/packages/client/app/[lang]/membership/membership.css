@@ -419,59 +419,6 @@
 }
 .mem-contact-save:disabled { opacity: 0.5; cursor: default; }
 
-.mem-profile { margin-top: 32px; }
-.mem-profile-visibility { margin-bottom: 12px; }
-.mem-profile-input {
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  resize: vertical;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid var(--input);
-  background: var(--background);
-  color: var(--foreground);
-  font: inherit;
-  line-height: 1.6;
-}
-.mem-profile-file { display: none; }
-.mem-profile-upload {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 10px;
-  padding: 8px 12px;
-  border: 0;
-  border-radius: 8px;
-  background: var(--secondary);
-  color: var(--secondary-foreground);
-  font: inherit;
-  cursor: pointer;
-}
-.mem-profile-upload:disabled { opacity: 0.5; cursor: default; }
-.mem-profile-images {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 10px;
-  margin-top: 12px;
-}
-.mem-profile-image { position: relative; aspect-ratio: 4 / 3; min-width: 0; }
-.mem-profile-image img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
-.mem-profile-image-remove {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  display: inline-flex;
-  padding: 6px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--background);
-  color: var(--foreground);
-  cursor: pointer;
-}
-.mem-profile-actions { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-.mem-profile-count { color: var(--faint-foreground); font-size: 12px; }
-
 /* ── admin ── */
 .mem-admin {
   margin-top: 40px;

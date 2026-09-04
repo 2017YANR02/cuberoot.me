@@ -465,6 +465,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'membership': { title: { zh: '会员', en: 'Membership' } },
+  'gallery': {
+    title: { zh: '图库', en: 'Gallery' },
+    description: {
+      zh: 'CubeRoot 会员分享的魔方、比赛与生活照片。',
+      en: 'Photos of cubes, competitions, and everyday life shared by CubeRoot members.',
+    },
+  },
   'memo': { title: { zh: '盲拧记忆训练', en: 'Memory Training' } },
   'memo/colpi': { title: { zh: 'COLPI 编码', en: 'COLPI Lettering' } },
   'music': {

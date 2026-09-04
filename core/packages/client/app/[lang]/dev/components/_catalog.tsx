@@ -817,6 +817,14 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'MemberProfileEditor',
+    import: "import MemberProfileEditor from '@/components/MemberProfileEditor';",
+    category: 'more',
+    zh: '会员公开资料编辑器，复用站内图片压缩与上传链路，最多保存 8 张图片。',
+    en: 'Public member-profile editor using the shared image compression and upload flow, with up to 8 saved images.',
+    note: { zh: '需要有效会员数据与保存回调，无法独立演示。', en: 'Requires an active membership object and a save callback, so it has no standalone demo.' },
+  },
+  {
     name: 'UserIdLabel',
     import: "import { UserIdLabel } from '@/components/UserIdLabel';",
     category: 'badge',

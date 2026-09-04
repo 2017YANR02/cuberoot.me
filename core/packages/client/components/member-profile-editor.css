@@ -1,0 +1,67 @@
+.member-profile-editor { margin-top: 32px; }
+.member-profile-title { margin: 0 0 4px; color: var(--foreground); font-size: 15px; font-weight: 600; }
+.member-profile-hint { margin: 0 0 12px; color: var(--muted-foreground); font-size: 13px; line-height: 1.6; }
+.member-profile-visibility { margin-bottom: 12px; }
+.member-profile-input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px;
+  resize: vertical;
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  line-height: 1.6;
+}
+.member-profile-file { display: none; }
+.member-profile-upload,
+.member-profile-save,
+.member-profile-image-remove {
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.member-profile-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+}
+.member-profile-upload:disabled,
+.member-profile-save:disabled,
+.member-profile-image-remove:disabled { opacity: 0.5; cursor: default; }
+.member-profile-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.member-profile-image { position: relative; min-width: 0; aspect-ratio: 4 / 3; }
+.member-profile-image img { width: 100%; height: 100%; border-radius: 8px; object-fit: cover; }
+.member-profile-image-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: inline-flex;
+  padding: 6px;
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--foreground);
+}
+.member-profile-actions { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.member-profile-count { color: var(--faint-foreground); font-size: 12px; }
+.member-profile-save {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 14px;
+  font-weight: 600;
+}
+.member-profile-error { margin-top: 12px; color: var(--destructive); font-size: 13px; }
