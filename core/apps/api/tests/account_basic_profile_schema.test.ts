@@ -20,4 +20,19 @@ describe('account basic profile schema contract', () => {
     expect(migration).toContain("to_regclass('public.wca_person_results_snapshot')");
     expect(readme).toContain('`0186_account_basic_profile.sql`');
   });
+
+  it('keeps migration 0206 represented in the schema snapshot and migration guide', async () => {
+    const [migration, schema, readme] = await Promise.all([
+      read('../migrations/0206_account_full_name.sql'),
+      read('../src/db/schema.pg.sql'),
+      read('../migrations/README.md'),
+    ]);
+
+    expect(migration).not.toMatch(/^(?:BEGIN|COMMIT)\s*;/im);
+    expect(migration).toContain('ADD COLUMN full_name');
+    expect(migration).toContain('CHAR_LENGTH(full_name) BETWEEN 1 AND 50');
+    expect(schema).toMatch(/\bfull_name\s+VARCHAR\(50\)/);
+    expect(schema).toContain('CHAR_LENGTH(full_name) BETWEEN 1 AND 50');
+    expect(readme).toContain('`0206_account_full_name.sql`');
+  });
 });

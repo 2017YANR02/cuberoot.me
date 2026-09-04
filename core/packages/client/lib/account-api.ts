@@ -65,7 +65,7 @@ export async function fetchAccountBasicProfile(): Promise<AccountBasicProfile> {
   return data.profile;
 }
 export const updateAccountBasicProfile = (
-  basic: Pick<AccountBasicProfile, 'birthDate' | 'gender' | 'countryIso2' | 'regionCode' | 'cityName'>,
+  basic: Pick<AccountBasicProfile, 'fullName' | 'birthDate' | 'gender' | 'countryIso2' | 'regionCode' | 'cityName'>,
 ) => post<{ ok: true; profile: AccountBasicProfile }>('/v1/auth/profile', { basic }, true);
 export async function fetchAdminUser(userId: number): Promise<SessionUser> {
   const response = await fetch(apiUrl(`/v1/auth/admin/users/${userId}`), {
