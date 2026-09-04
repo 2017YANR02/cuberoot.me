@@ -153,6 +153,7 @@ interface OrderRow {
 }
 interface MembershipRow {
   wca_id: string;
+  vip_number: string | number | null;
   name: string;
   avatar_url: string | null;
   plan_slug: string;
@@ -166,6 +167,10 @@ interface MembershipRow {
   public_intro?: string | null;
   public_intro_image_ids?: unknown;
   show_in_member_list?: boolean;
+}
+
+function formatVipId(value: string | number): string {
+  return `VIP${String(value).padStart(6, '0')}`;
 }
 
 function profileImageIds(value: unknown): number[] {
@@ -195,6 +200,7 @@ function isActive(expiresAt: Date | null): boolean {
 function membershipToJson(m: MembershipRow) {
   return {
     wcaId: m.wca_id,
+    vipId: m.vip_number == null ? undefined : formatVipId(m.vip_number),
     name: m.name,
     avatarUrl: m.avatar_url ?? undefined,
     planSlug: m.plan_slug,
@@ -285,8 +291,9 @@ membershipRoutes.get('/membership/members', async (c) => {
   const rootAdminClause = rootAdminIds.length
     ? `OR UPPER(u.wca_id) IN (${rootAdminIds.map(() => '?').join(', ')})`
     : '';
-  const rows = await query<Pick<MembershipRow, 'wca_id' | 'name' | 'avatar_url' | 'plan_slug'>>(
+  const rows = await query<Pick<MembershipRow, 'wca_id' | 'vip_number' | 'name' | 'avatar_url' | 'plan_slug'>>(
     `SELECT COALESCE(m.wca_id, u.wca_id) AS wca_id,
+            m.vip_number,
             COALESCE(m.name, NULLIF(BTRIM(u.display_name), ''), u.wca_id) AS name,
             COALESCE(m.avatar_url, u.avatar_url) AS avatar_url,
             COALESCE(m.plan_slug, 'admin') AS plan_slug
@@ -303,6 +310,7 @@ membershipRoutes.get('/membership/members', async (c) => {
   );
   return c.json({ members: rows.map((member) => ({
     wcaId: member.wca_id,
+    vipId: member.vip_number == null ? undefined : formatVipId(member.vip_number),
     name: member.name,
     avatarUrl: member.avatar_url ?? undefined,
     planSlug: member.plan_slug,
@@ -870,13 +878,13 @@ membershipRoutes.get('/membership/admin/list', async (c) => {
   });
 });
 
-// 撤销会员。
+// 撤销只结束权益，保留记录和 VIP ID，再次开通时继续沿用。
 membershipRoutes.delete('/membership/admin/member/:wcaId', async (c) => {
   c.header('Cache-Control', 'no-store');
   await requireAdmin(c);
   const wcaId = String(c.req.param('wcaId')).trim().toUpperCase();
-  const del = await query<{ wca_id: string }>('DELETE FROM memberships WHERE wca_id = ? RETURNING wca_id', [wcaId]);
-  if (!del.length) return c.json({ error: 'not found' }, 404);
+  const revoked = await query<{ wca_id: string }>('UPDATE memberships SET expires_at = NOW() WHERE wca_id = ? RETURNING wca_id', [wcaId]);
+  if (!revoked.length) return c.json({ error: 'not found' }, 404);
   return c.json({ ok: true });
 });
 

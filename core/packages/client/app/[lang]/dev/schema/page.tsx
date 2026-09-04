@@ -410,7 +410,9 @@ const TABLES: Table[] = [
     { name: 'slug (PK)', note: { zh: 'monthly | yearly | lifetime', en: 'monthly | yearly | lifetime' } }, { name: 'period, currency' }, { name: 'perks JSONB' },
   ] },
   { name: 'membership_orders', domain: 'commerce', origin: '0046', purpose: { zh: '会员订单(我方单号 + provider / channel)', en: 'Membership orders (out_trade_no + provider/channel)' } },
-  { name: 'memberships', domain: 'commerce', origin: '0046', purpose: { zh: '会员有效期', en: 'Active membership validity' } },
+  { name: 'memberships', domain: 'commerce', origin: '0046', evolved: [212], purpose: { zh: '会员编号与有效期', en: 'Stable member IDs and active membership validity' }, cols: [
+    { name: 'wca_id (PK)' }, { name: 'vip_number (UNIQUE)', note: { zh: '对外格式为 VIP + 至少 6 位数字', en: 'Public format is VIP plus at least six digits' } }, { name: 'plan_slug, started_at, expires_at' },
+  ] },
   { name: 'wca_teachers', domain: 'commerce', origin: '0114', evolved: [185], naturalKey: true, purpose: { zh: '选手按项目登记老师或自学：有效会员自报，管理员可代填', en: 'Per-event teacher or self-taught learning sources with member self-reporting and admin override' }, cols: [
     { name: 'student_wca_id + event_id (PK)' }, { name: 'teacher_wca_id, teacher_name', note: { zh: '两者同时为空表示自学', en: 'Both null means self-taught' } }, { name: 'created_by, updated_by' },
   ] },
@@ -715,6 +717,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 208, slug: 'app_boot_diagnostics', desc: { zh: '保存脱敏的页面启动错误，管理员可按用户看到的诊断编号查询，并自动清理 90 天前数据。', en: 'Store redacted page-startup errors searchable by the user-visible diagnostic code and prune data older than 90 days.' } },
   { n: 209, slug: 'wechat_browser_login', desc: { zh: '扩展单次会话票据，支持 iPhone 浏览器发起、微信小程序确认后原子换取网站登录态。', en: 'Extend single-use session tickets so an iPhone browser can start sign-in and atomically exchange it after Mini Program approval.' } },
   { n: 210, slug: 'membership_listing_visibility', desc: { zh: '会员默认展示在首页会员名单中，并可在个人资料中主动关闭。', en: 'Show active members on the homepage by default with a profile opt-out.' } },
+  { n: 212, slug: 'membership_vip_id', desc: { zh: '为每位会员分配唯一且稳定的 VIP 编号，撤销权益时保留编号。', en: 'Assign every member a unique stable VIP ID and retain it when entitlement is revoked.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
