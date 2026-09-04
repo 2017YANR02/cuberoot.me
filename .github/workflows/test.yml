@@ -132,11 +132,10 @@ jobs:
       - name: Verify upstream sync PowerShell contract
         run: pwsh -NoProfile -File ./scripts/upstream/tests/upstream-sync-contract.ps1
 
-      - uses: pnpm/setup@v2
+      - uses: pnpm/action-setup@v6
         with:
           # 版本单一源:core/package.json 的 packageManager。别在这里写 version —— 两处会打架。
-          working-directory: core
-          install: false
+          package_json_file: core/package.json
 
       - uses: actions/setup-node@v6
         with:
@@ -267,10 +266,9 @@ jobs:
             core
           filter: blob:none
 
-      - uses: pnpm/setup@v2
+      - uses: pnpm/action-setup@v6
         with:
-          working-directory: core
-          install: false
+          package_json_file: core/package.json
 
       - uses: actions/setup-node@v6
         with:
@@ -421,10 +419,9 @@ jobs:
             core
           filter: blob:none
 
-      - uses: pnpm/setup@v2
+      - uses: pnpm/action-setup@v6
         with:
-          working-directory: core
-          install: false
+          package_json_file: core/package.json
 
       - uses: actions/setup-node@v6
         with:
@@ -458,10 +455,9 @@ jobs:
             core
           filter: blob:none
 
-      - uses: pnpm/setup@v2
+      - uses: pnpm/action-setup@v6
         with:
-          working-directory: core
-          install: false
+          package_json_file: core/package.json
 
       - uses: actions/setup-node@v6
         with:
