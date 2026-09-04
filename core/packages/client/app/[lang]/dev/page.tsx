@@ -18,18 +18,18 @@ const CARDS: Card[] = [
   {
     href: '/dev/architecture',
     glyph: '⛯',
-    accent: '#76B900',
+    accent: 'var(--signal-success)',
     zh: {
-      title: '架构',
-      sub: 'Architecture',
-      tagline: 'CubeRoot 这个站点是怎么搭起来的:React SPA + Hono API + PostgreSQL,加一条独立的 WCA 统计管道',
-      meta: '5 包 · 14 模块 · 80+ 统计页',
+      title: '架构地图',
+      sub: 'Architecture Atlas',
+      tagline: '沿着可交互拓扑看清 Web、客户端、服务、数据和共享能力之间的关系',
+      meta: '交互拓扑 / 源码边界 / 术语讲解',
     },
     en: {
-      title: 'Architecture',
-      sub: 'How it’s built',
-      tagline: 'How CubeRoot is put together: React SPA + Hono API + PostgreSQL, plus a standalone WCA stats pipeline',
-      meta: '5 packages · 14 modules · 80+ stat pages',
+      title: 'Architecture Atlas',
+      sub: 'How the system fits together',
+      tagline: 'Trace the relationships between the web, installed clients, services, data, and shared capabilities',
+      meta: 'Interactive topology / source boundaries / terms',
     },
   },
   {

@@ -1,62 +1,5 @@
 import type { ReactNode } from 'react';
 
-export interface Layer {
-  num: string;
-  zh: { name: string; one: string; tech: ReactNode };
-  en: { name: string; one: string; tech: ReactNode };
-}
-export const LAYERS: Layer[] = [
-  {
-    num: '01',
-    zh: { name: '边缘',     one: 'TLS 终止 + 静态文件 + 反向代理',      tech: <>nginx · CloudFlare DNS · Let's Encrypt</> },
-    en: { name: 'Edge',     one: 'TLS termination + static + reverse proxy', tech: <>nginx · CloudFlare DNS · Let's Encrypt</> },
-  },
-  {
-    num: '02',
-    zh: { name: '前端',     one: 'Next.js App Router, 24+ 工具页, /[lang] 路径前缀切语言', tech: <>React 19 · Next.js 16 (Turbopack) · TypeScript · cubing.js · nuqs (URL 状态) · Tailwind 4 (base 层)</> },
-    en: { name: 'Frontend', one: 'Next.js App Router, 24+ tool pages, /[lang] path-prefix locale',     tech: <>React 19 · Next.js 16 (Turbopack) · TypeScript · cubing.js · nuqs (URL state) · Tailwind 4 (base layer)</> },
-  },
-  {
-    num: '03',
-    zh: { name: 'API',      one: '小而轻的 Hono, 跑在 pm2 上',           tech: <>Hono · Node 22 · pm2</> },
-    en: { name: 'API',      one: 'Small, light Hono, run under pm2',     tech: <>Hono · Node 22 · pm2</> },
-  },
-  {
-    num: '04',
-    zh: { name: '存储',     one: 'recon · alg 公式库 · 训练数据 · WCA stats 衍生', tech: <>PostgreSQL 13 · pg_dump nightly</> },
-    en: { name: 'Storage',  one: 'recon · alg library · training data · WCA stats derivatives', tech: <>PostgreSQL 13 · pg_dump nightly</> },
-  },
-];
-
-export interface Pkg {
-  name: string;
-  size: string;
-  zh: { role: string; bullet: string[] };
-  en: { role: string; bullet: string[] };
-}
-export const PACKAGES: Pkg[] = [
-  {
-    name: 'client', size: '~140k LOC',
-    zh: { role: 'Next.js 16 App Router — 整个前端',     bullet: ['app/[lang]/* 一个工具一目录, /[lang] 路径前缀切语言', 'components/ 跨页复用', 'lib/ 工具函数 (apiUrl / flag / format_result)', 'Zustand 11 个 store (auth / settings / sessions / 等)'] },
-    en: { role: 'Next.js 16 App Router — the whole frontend', bullet: ['app/[lang]/* — one folder per tool, /[lang] path-prefix locale', 'components/ — shared widgets', 'lib/ — helpers (apiUrl / flag / format_result)', '11 Zustand stores (auth / settings / sessions / etc.)'] },
-  },
-  {
-    name: 'server', size: '~8k LOC',
-    zh: { role: 'Hono API + PG 访问',       bullet: ['WCA OAuth + 会话', 'recon / alg / 训练数据 CRUD', '跨域 allowlist 白名单'] },
-    en: { role: 'Hono API + PG access',     bullet: ['WCA OAuth + sessions', 'recon / alg / training-data CRUD', 'CORS allowlist'] },
-  },
-  {
-    name: 'shared', size: '~1k LOC',
-    zh: { role: '前后端共享类型',           bullet: ['纯 TypeScript 类型, 零运行时', '不能引 client utils', '改一处, 前后端同步收紧'] },
-    en: { role: 'Shared types',             bullet: ['Pure TS types, zero runtime', 'Must not import client utils', 'One source for both ends'] },
-  },
-  {
-    name: 'stats-build', size: '~5k LOC',
-    zh: { role: 'WCA 统计独立管道',         bullet: ['80+ SQL-driven 统计', '周更 CI, ~2 小时跑完', '基于 jonatanklosko/wca_statistics 重写'] },
-    en: { role: 'WCA stats standalone pipeline', bullet: ['80+ SQL-driven stats', 'Weekly CI, ~2h end to end', 'TS rewrite of jonatanklosko/wca_statistics'] },
-  },
-];
-
 export interface Mod {
   route: string;
   zh: string;
@@ -64,14 +7,7 @@ export interface Mod {
   origin: 'own' | 'port' | 'fork';
   upstream?: string; // owner/repo slug — port / fork only
 }
-export const MODULES: Mod[] = [
-  { route: '/recon',           zh: '复盘',        en: 'Recon',        origin: 'own' },
-  { route: '/alg',             zh: '公式库',      en: 'Algorithms',   origin: 'own' },
-  { route: '/frame-count',     zh: '逐帧',        en: 'Frame Count',  origin: 'own' },
-  { route: '/wca/calendar',    zh: '比赛日历',    en: 'Calendar',     origin: 'own' },
-  { route: '/scramble-stats',  zh: '打乱难度',    en: 'Scramble',     origin: 'own' },
-  { route: '/wca',             zh: 'WCA 统计',    en: 'WCA Stats',    origin: 'own' },
-  { route: '/recognize/pll',   zh: 'PLL 识别',    en: 'Recognize',    origin: 'own' },
+export const BORROWED_MODULES: Mod[] = [
   { route: '/calc',            zh: 'HTH 计算',    en: 'HTH Calc',     origin: 'port', upstream: 'carykh/hthgrapher' },
   { route: '/timer?players=2', zh: '1v1',         en: 'Battle',       origin: 'port', upstream: 'MatteoColombo/cube_challenge_timer' },
   { route: '/mosaic',          zh: '马赛克',      en: 'Mosaic',       origin: 'port', upstream: 'Roman-/mosaic' },
@@ -89,27 +25,27 @@ export interface Decision {
   en: string;
 }
 export const DECISIONS: Decision[] = [
-  { topic: 'UI library',  pick: 'React 19',         alt: 'Vue / Svelte / Solid',  zh: '生态最广;cubing.js / sr-puzzlegen 等魔方库的示例都是 React;团队熟。',                en: 'Widest ecosystem; cubing.js / sr-puzzlegen samples are React; team familiarity.'
-},
-  { topic: 'Framework',   pick: 'Next.js 16 (App Router)', alt: 'Remix / TanStack Start / 纯 Vite SPA', zh: 'App Router + RSC + 服务端 streaming 一体, Turbopack dev/build; 双部署 (systemd standalone + Vercel) 同一份代码。Phase 4 (2026-05) 从 React Router SPA 整体切过来。', en: 'App Router + RSC + server streaming in one; Turbopack dev/build; one codebase deploys to both systemd standalone and Vercel. Cut over from React Router SPA in Phase 4 (2026-05).'
-},
-  { topic: 'Bundler',     pick: 'Turbopack',        alt: 'Webpack / Vite',        zh: 'Next.js 16 自带, dev incremental compile + prod build 都走它;首次冷编 30-90s, 之后增量 sub-second。',                          en: 'Bundled with Next.js 16, drives both dev incremental compile and prod build; first cold compile 30-90s, then sub-second incremental.'
-},
-  { topic: 'Styling',     pick: '手写语义化 CSS + Tailwind 4 base', alt: '纯 Tailwind / CSS-in-JS', zh: '主样式每页一份手写 CSS (compare.css / stack_landing.css 这类, 用 .compare-card 这种页面前缀语义名)。Tailwind 4 通过 @tailwindcss/postcss 装着, app/globals.css 一行 @import "tailwindcss" 拉进 preflight + utility 命名空间作 base 层兜底, 不写 className="flex p-4"。主题 token 走 shadcn 命名 + CSS 变量。', en: 'Per-page hand-written semantic CSS is the primary style layer (compare.css / stack_landing.css etc., page-prefixed names like .compare-card). Tailwind 4 is wired via @tailwindcss/postcss + a single @import "tailwindcss" in app/globals.css — it supplies preflight + a utility namespace as the base layer, but className="flex p-4" is not the idiom. Theme tokens use shadcn naming + CSS custom properties.'
-},
-  { topic: 'API server',  pick: 'Hono',             alt: 'Express / Fastify',     zh: 'TypeScript 一等公民;路由声明式;5 MB 依赖比 express 干净一个量级。',                en: 'TS-first; declarative routing; ~5MB deps vs Express noisy stack.'
-},
-  { topic: 'Database',    pick: 'PostgreSQL 13',    alt: 'MariaDB / MongoDB',     zh: '2026-05 从 MariaDB 整体迁过来。jsonb / window function / partial index 比 MariaDB 强一档。', en: 'Migrated from MariaDB 2026-05. jsonb, window functions, partial indexes — a tier above MariaDB.'
-},
-  { topic: 'Monorepo',    pick: 'pnpm + Turbo',     alt: 'npm / yarn workspaces', zh: '4 个核心 workspace (client / server / shared / stats-build), 一份 pnpm-lock。硬链接 node_modules 省盘;Turbo 缓存只跑改动到的 package。底层 registry 仍是 npm (registry.npmjs.org), pnpm 只是更快的客户端。', en: 'Four core workspaces (client / server / shared / stats-build), one pnpm-lock. Hard-linked node_modules saves disk; Turbo runs only changed packages. The underlying registry is still npm (registry.npmjs.org) — pnpm is just a faster client.'
-},
-  { topic: 'State mgmt',  pick: 'Zustand',          alt: 'Redux Toolkit / Jotai / Context', zh: '11 个 store (6 全局 + 5 页面级)。无 Provider, create() 返回 hook, 选 selector 拿切片。auth 走 storage 事件跨标签同步, settings/sessions 用 persist 中间件落 localStorage。打包后约 1 KB。', en: '11 stores (6 global + 5 page-local). No Provider — create() returns a hook, components select slices. auth syncs across tabs via the storage event; settings/sessions persist to localStorage via middleware. ~1 KB bundle cost.'
+  { topic: 'UI library',  pick: 'React',         alt: 'Vue / Svelte / Solid',  zh: '生态成熟，魔方相关组件容易接入，Web 与已安装客户端也能共享产品层。', en: 'A mature ecosystem, straightforward integration with cubing components, and a product layer shared by the web and installed clients.'
+  },
+  { topic: 'Framework',   pick: 'Next.js App Router', alt: 'Remix / TanStack Start / 纯 SPA', zh: '路由、静态生成、服务端渲染和流式响应在同一套约定里，且同一份 Web 代码可以走两条发布线路。', en: 'Routing, static generation, server rendering, and streaming share one convention, while the same web code can ship through two release paths.'
+  },
+  { topic: 'Bundler',     pick: 'Turbopack',        alt: 'Webpack / Vite',        zh: '跟随 Web 框架的默认构建链，开发和生产不维护两套打包配置。', en: 'Uses the web framework’s default build chain, avoiding separate development and production bundler configurations.'
+  },
+  { topic: 'Styling',     pick: '语义化 CSS + 主题 token', alt: '纯工具类 / CSS-in-JS', zh: '页面用可读的语义类名，颜色统一取主题变量，衍生色用 color-mix。', en: 'Pages use readable semantic class names, colors come from shared theme variables, and derived colors use color-mix.'
+  },
+  { topic: 'API server',  pick: 'Hono',             alt: 'Express / Fastify',     zh: 'TypeScript 友好，路由与中间件简洁，适合当前 API 的规模和部署方式。', en: 'TypeScript-friendly routes and middleware fit the current API size and deployment model.'
+  },
+  { topic: 'Database',    pick: 'PostgreSQL',    alt: 'MariaDB / MongoDB',     zh: '关系、事务、JSON 数据、窗口函数和部分索引能在同一个事实源里完成。', en: 'Relations, transactions, JSON data, window functions, and partial indexes live in one source of truth.'
+  },
+  { topic: 'Monorepo',    pick: 'pnpm + Turbo',     alt: '多个独立仓库', zh: '应用、共享包和离线任务在同一仓库协作，同时保持各自的构建与运行边界。', en: 'Applications, shared packages, and offline jobs collaborate in one repository while retaining distinct build and runtime boundaries.'
+  },
+  { topic: 'State mgmt',  pick: 'Zustand',          alt: 'Redux Toolkit / Jotai / Context', zh: '客户端内存和持久化状态使用小型 store，组件通过 selector 只订阅需要的切片。', en: 'Small stores hold in-memory and persisted client state; components subscribe only to the slices they need.'
 },
   { topic: 'URL state',   pick: 'nuqs',             alt: '手写 history.pushState / router.replace / useState', zh: '页内"在哪个视图 / tab / 筛选 / 搜索"统一进 URL search params, 一处声明 useQueryState / useQueryStates。视图 / tab / 模式 / 浮层 push 进历史(后退能返回), 筛选 / 排序 / 搜索 replace(不堆历史)。替掉全站各写各的 history.pushState/replaceState + 手写 popstate;一个 PreToolUse hook 写入即拦 + 一条 vitest 守卫 CI 兜底, 仅 maplibre / zustand 数据序列化等少数处豁免。', en: 'In-page "which view / tab / filter / search" lives in URL search params, declared once via useQueryState / useQueryStates. Views / tabs / modes / overlays push to history (back returns); filters / sort / search replace (no pile-up). Replaced the site-wide grab-bag of raw history.pushState/replaceState + hand-rolled popstate; a PreToolUse hook blocks at write time and a vitest guard backstops CI, with a few exemptions (maplibre, zustand data serialization).'
 },
-  { topic: 'Hosting',     pick: '自有 VM nginx + Vercel (DNS 分线路)', alt: '单 Vercel / 单 nginx', zh: 'DNS 按线路分流, 同一份 Next.js 代码两边跑。一条线路 → 自有 VM nginx → systemd Next standalone (反代 :3002, deploy_next.yml CI 自动 scp + 原子 swap);另一条线路 → Vercel Hobby edge (push GitHub 自动部署)。后端 Hono+PG 始终在同一台 VM, Vercel 端通过 api.cuberoot.me 调。', en: 'Split-horizon DNS, same Next.js codebase on both. One line → self-hosted VM nginx → systemd Next standalone (reverse-proxy :3002, deploy_next.yml CI auto scp + atomic swap); the other line → Vercel Hobby edge (push-to-GitHub auto-deploy). Backend Hono+PG stays on the same VM; Vercel side hits it via api.cuberoot.me.'
-},
-  { topic: 'Theme tokens', pick: 'shadcn 命名 + hex + color-mix', alt: 'oklch / Material 3 / Radix Colors', zh: '8 页双主题切换。命名跟 OSS 标准 shadcn (AI 写代码命中率高);色值 hex (调研 30+ 大厂含 Anthropic console 自己,0 家把 oklch 当主品牌 token);衍生用 color-mix(in srgb) 跟 Anthropic CDS 实战用法 (644 处) 对齐。', en: 'Dark/light across 8 pages. Naming follows shadcn (OSS standard, friendly to AI code-gen); hex values (surveyed 30+ big-co incl. Anthropic console — zero use oklch as primary brand tokens); derivations via color-mix(in srgb) aligning with Anthropic CDS (644 production uses).'
+  { topic: 'Hosting',     pick: '双线路 Web + 独立 API', alt: '单一 Web 线路', zh: '同一份 Web 代码走两条发布线路，API 和静态资源保持稳定入口；详细容量与恢复边界放在基础设施页维护。', en: 'The same web code ships through two routes, while API and static assets keep stable entry points; capacity and recovery details live on the infrastructure page.'
+  },
+  { topic: 'Theme tokens', pick: 'CSS variables + color-mix', alt: '页面硬编码颜色', zh: '亮色、暗色和系统主题共用语义 token，页面只引用含义，不复制色值。', en: 'Light, dark, and system themes share semantic tokens; pages reference meaning instead of copying color values.'
 },
 ];
 
@@ -120,14 +56,14 @@ export interface Detail {
 }
 export const DETAILS: Detail[] = [
   {
-    title: 'SharedArrayBuffer · COOP/COEP',
-    zh: <><strong>/scramble/solver</strong> 和 <strong>/scramble/analyzer</strong> 跑 cubeopt-wasm, 需要 <code>SharedArrayBuffer</code>。仅这两条 route 由 nginx 注入 <code>COOP=same-origin</code> + <code>COEP=require-corp</code> 进 cross-origin isolated。其它 24 张卡完全干净, 登录回调不受影响。</>,
-    en: <><strong>/scramble/solver</strong> and <strong>/scramble/analyzer</strong> run cubeopt-wasm and require <code>SharedArrayBuffer</code>. Only those two routes get nginx-injected <code>COOP=same-origin</code> + <code>COEP=require-corp</code> for cross-origin isolation. Every other page stays clean — login callbacks unaffected.</>
+    title: 'SharedArrayBuffer / COOP / COEP',
+    zh: <><strong>/scramble/solver</strong> 运行求解器时需要 <code>SharedArrayBuffer</code>。隔离响应头只在这条路由启用，避免影响登录回调和其它页面。</>,
+    en: <><strong>/scramble/solver</strong> needs <code>SharedArrayBuffer</code> for its solver. Isolation headers are limited to that route so sign-in callbacks and other pages stay unaffected.</>
 },
   {
     title: 'apiUrl() 是唯一的 fetch 入口',
-    zh: <>客户端不能硬编码 origin。<code>lib/api-base.ts</code> 的 <code>apiUrl()</code> 用 <code>process.env.NODE_ENV</code> 切换:dev 走 <code>next.config.ts</code> 里的 <code>rewrites()</code> 反代 <code>api.cuberoot.me</code>, prod 直打 <code>api.cuberoot.me</code>。<code>hostname</code> 检测会被隧道域名 / LAN IP 骗到, 绝对禁用。</>,
-    en: <>Client never hardcodes origin. <code>lib/api-base.ts</code> uses <code>process.env.NODE_ENV</code>: dev → <code>next.config.ts</code> <code>rewrites()</code> proxy to <code>api.cuberoot.me</code>, prod → direct <code>api.cuberoot.me</code>. <code>hostname</code> checks get fooled by tunnel domains / LAN IP — banned.</>
+    zh: <>客户端不能硬编码 origin。<code>lib/api-base.ts</code> 的 <code>apiUrl()</code> 根据构建环境和可选公开配置选择入口；浏览器开发环境走站内重写，服务端和生产环境使用绝对地址。</>,
+    en: <>Clients never hardcode an origin. <code>lib/api-base.ts</code> selects the entry from the build environment and optional public configuration; browser development uses the in-site rewrite, while server and production calls use an absolute URL.</>
 },
   {
     title: 'cubing.js + sr-puzzlegen + visualcube 三件套',
@@ -135,24 +71,24 @@ export const DETAILS: Detail[] = [
     en: <><strong>cubing.js</strong> for animation (TwistyPlayer) and 3x3/4x4 solvers. <strong>sr-puzzlegen</strong> for sq1 / megaminx / pyraminx / skewb SVGs. <strong>visualcube</strong> for NxN state images (F2L / OLL / PLL / ZBLL). Three libs, three lanes — <strong>hand-written cube SVG is banned</strong>.</>
 },
   {
-    title: 'i18n — 两种 pattern 并存',
-    zh: <>大段文案走 <code>t()</code> + <code>en.json</code> / <code>zh.json</code>;组件内零散文案走 <code>isZh ? 'X' : 'Y'</code> 三元。<code>LangToggle</code> 每页右上角, 默认跟系统语言。WCA 比赛中文名独立走 <code>comp_names_zh.json</code>。</>,
-    en: <>Long blocks → <code>t()</code> + <code>en.json</code>/<code>zh.json</code>; inline strings → <code>isZh ? 'X' : 'Y'</code> ternary. <code>LangToggle</code> sits top-right on every page. Chinese comp names live in a separate <code>comp_names_zh.json</code>.</>
+    title: 'i18n / English and Simplified Chinese',
+    zh: <>长文和复用文案走 <code>t()</code> 与语言 JSON；组件内短文案走 <code>tr()</code>、<code>T</code> 或 <code>useT()</code>。页面不手写语言判断三元。WCA 比赛中文名由独立数据源维护。</>,
+    en: <>Long-form and reused copy uses <code>t()</code> with locale JSON; short component copy uses <code>tr()</code>, <code>T</code>, or <code>useT()</code>. Pages do not hand-roll language ternaries. Chinese WCA competition names have their own data source.</>
 },
   {
     title: 'Theme — dark / light / system 三态',
-    zh: <>shadcn 风 token (<code>--background --foreground --muted-foreground --accent --signal-*</code>) 在 <code>:root</code>, light 默认 + <code>@media (prefers-color-scheme: dark)</code> + <code>html[data-theme]</code> 双轨反盖。衍生色一律 <code>color-mix(in srgb, var(--base) X%, transparent)</code>, 改 base 一处自动跟。<code>ThemeToggle</code> 每页右上角循环 system → light → dark, 存 <code>localStorage.theme</code>, 启动 <code>bootstrapTheme()</code> 挂 <code>html[data-theme]</code>。8 页支持切换 (3 双主题 + 4 dark-locked + 1 light-locked), 其它老页跑 legacy <code>--bg-primary --text-primary</code> 不动。</>,
-    en: <>shadcn-style tokens (<code>--background --foreground --muted-foreground --accent --signal-*</code>) live in <code>:root</code>, light defaults + <code>@media (prefers-color-scheme: dark)</code> + <code>html[data-theme]</code> dual override. Derivations always go through <code>color-mix(in srgb, var(--base) X%, transparent)</code> so changing one base ripples to all. <code>ThemeToggle</code> sits top-right and cycles system → light → dark, persists to <code>localStorage.theme</code>, applied via <code>bootstrapTheme()</code> at startup. 8 pages support switching (3 dual-theme + 4 dark-locked + 1 light-locked); legacy pages still use the old <code>--bg-primary --text-primary</code> tokens untouched.</>
+    zh: <>语义 token (<code>--background --foreground --muted-foreground --accent --signal-*</code>) 集中定义主题。衍生色用 <code>color-mix()</code>，系统、亮色和暗色通过同一套变量切换。</>,
+    en: <>Semantic tokens (<code>--background --foreground --muted-foreground --accent --signal-*</code>) define the theme centrally. Derived colors use <code>color-mix()</code>, and system, light, and dark modes switch the same variable set.</>
 },
   {
     title: 'WCA 统计的脆弱三角',
-    zh: <>新增一个 stat 表要同步改三处:<code>stats-build/src/bin/*.ts</code> (写 TSV)、<code>.github/workflows/stats.yml</code> (scp 清单)、<code>ops/sql/load.sql</code> (<code>\copy</code> 引用)。漏一处, 服务器表静默为空, nginx 还缓存 24 小时。dry-run grep 三段对照是唯一保险。</>,
-    en: <>Adding a stat table needs three coordinated edits: <code>stats-build/src/bin/*.ts</code> (writes TSV), <code>.github/workflows/stats.yml</code> (scp manifest), <code>ops/sql/load.sql</code> (<code>\copy</code> reference). Miss one and the server table silently empties — nginx still caches 24h. The only safety net: a 30-second grep dry-run across all three.</>
+    zh: <>统计生成物需要 <code>core/jobs/stats-build</code> 的输出、<code>.github/workflows/stats.yml</code> 的传输清单和 <code>ops/sql/load.sql</code> 的装载清单保持一致。发布前的管道检查会对照这三段契约，防止产物生成后没有传输或装载。</>,
+    en: <>Statistics artifacts require the output from <code>core/jobs/stats-build</code>, the transfer manifest in <code>.github/workflows/stats.yml</code>, and the load manifest in <code>ops/sql/load.sql</code> to stay aligned. A pre-release pipeline check compares all three contracts so generated artifacts are not skipped during transfer or loading.</>
 },
   {
     title: 'fork / port / own 三种治理',
-    zh: <><strong>fork</strong> (csTimer / Solver / Alg Trainers) = upstream 静态资源原样托管, 只改外层包装。<strong>port</strong> (Calc / Battle / Mosaic) = 把别人的 React / HTML 重写一遍。<strong>own</strong> (其它 11 个) = 自己设计 + 实现。改 fork / port 前必须确认 upstream。</>,
-    en: <><strong>fork</strong> (csTimer / Solver / Alg Trainers) = upstream assets hosted as-is, only the outer shell is ours. <strong>port</strong> (Calc / Battle / Mosaic) = someone else's React / HTML, rewritten in this repo. <strong>own</strong> (the other 11) = designed and built here. Touching a fork or port? Check upstream first.</>
+    zh: <><strong>fork</strong> 表示上游静态资源原样托管，只维护外层包装；<strong>port</strong> 表示在仓库内重写；<strong>own</strong> 表示自研。改 fork 或 port 前必须先确认上游边界。</>,
+    en: <><strong>fork</strong> means upstream static assets are hosted as-is with only a local wrapper; <strong>port</strong> means rewritten in-repo; <strong>own</strong> means built here. Check the upstream boundary before changing a fork or port.</>
 },
   {
     title: '状态管理 — Zustand(内存)+ nuqs(URL)',
@@ -161,8 +97,8 @@ export const DETAILS: Detail[] = [
 },
   {
     title: 'npm registry — 我们用 pnpm 但拉的是 npm',
-    zh: <><code>pnpm install</code> 跑的是从 <code>registry.npmjs.org</code> 下 tarball 这件事。yarn / pnpm / bun 都是同一 registry 的不同客户端, 都共享 <code>package.json</code> + <code>semver</code> + lockfile 这套 npm 定义的协议。选 pnpm 是因为硬链接 store 省盘 + Turbo cache 友好 + monorepo workspaces 体验好;但 4M+ 包 + 周下载几千亿次的护城河, 始终在 npm 那一头。</>,
-    en: <><code>pnpm install</code> still fetches tarballs from <code>registry.npmjs.org</code>. yarn / pnpm / bun are different clients of the same registry, all sharing the <code>package.json</code> + <code>semver</code> + lockfile protocol that npm defined. We pick pnpm for hard-linked store (disk savings), Turbo-cache friendliness, and good workspaces — but the moat (4M+ packages, hundreds of billions of weekly downloads) is at npm's end.</>
+    zh: <><code>pnpm</code> 是包管理客户端，依赖仍遵循 npm 的 <code>package.json</code>、语义化版本和 lockfile 协议。选择它是为了共享依赖存储和更顺手的 monorepo 工作流。</>,
+    en: <><code>pnpm</code> is the package-manager client; dependencies still follow npm’s <code>package.json</code>, semantic-versioning, and lockfile protocols. It is used for its shared dependency store and monorepo workflow.</>
 },
 ];
 
@@ -171,15 +107,15 @@ export type StageId = 'browser' | 'edge' | 'spa' | 'fetch' | 'api' | 'hono' | 'p
 export interface Stage { id: StageId; zh: string; en: string; sub: string;
  }
 export const TRACER_STAGES: Stage[] = [
-  { id: 'browser', zh: '浏览器',           en: 'Browser',           sub: 'fetch / nav'
+  { id: 'browser', zh: '浏览器',           en: 'Browser',           sub: 'navigation + fetch'
 },
-  { id: 'edge',    zh: 'cuberoot.me nginx', en: 'cuberoot.me nginx', sub: 'static + try_files' },
-  { id: 'spa',     zh: 'Next 启动',         en: 'Next boot',         sub: 'App Router + RSC'
+  { id: 'edge',    zh: '交付入口',          en: 'Delivery entry',    sub: 'static + forward' },
+  { id: 'spa',     zh: 'Web 前端',          en: 'Web frontend',      sub: 'App Router + RSC'
 },
-  { id: 'fetch',   zh: 'apiUrl() fetch',    en: 'apiUrl() fetch',    sub: 'utils/api_base.ts' },
-  { id: 'api',     zh: 'api.cuberoot.me nginx', en: 'api.cuberoot.me nginx', sub: 'proxy_cache 24h' },
-  { id: 'hono',    zh: 'Hono server',       en: 'Hono server',       sub: 'pm2 · :3001' },
-  { id: 'pg',      zh: 'PostgreSQL',        en: 'PostgreSQL',        sub: ':5432' },
+  { id: 'fetch',   zh: 'apiUrl()',          en: 'apiUrl()',          sub: 'shared API entry' },
+  { id: 'api',     zh: 'HTTP 缓存',          en: 'HTTP cache',        sub: 'hit + miss' },
+  { id: 'hono',    zh: 'Hono API',          en: 'Hono API',          sub: 'route + auth' },
+  { id: 'pg',      zh: 'PostgreSQL',        en: 'PostgreSQL',        sub: 'query + transaction' },
 ];
 
 export interface Pattern {
@@ -189,7 +125,7 @@ export interface Pattern {
   route: string;
   lit: StageId[];
   cacheHit: boolean;
-  eta: string;
+  result: string;
 }
 export const TRACER_PATTERNS: Pattern[] = [
   {
@@ -197,36 +133,36 @@ export const TRACER_PATTERNS: Pattern[] = [
     route: '/',
     lit: ['browser', 'edge', 'spa'],
     cacheHit: false,
-    eta: '~200ms 首次  ·  完全不打 API',
-    zh: { label: '打开首页', detail: 'LandingPage 是构建期静态预渲染 (SSG) 的 HTML, 由 CDN / nginx 直出, 不进 Next 函数; 客户端 hydrate 后再 client 端取动态数据 (近期比赛 / 纪录)。' },
-    en: { label: 'Open home', detail: 'LandingPage is build-time static (SSG) HTML served straight from CDN / nginx — no Next function runs; the client hydrates and then fetches dynamic data (upcoming comps / records) client-side.' }
+    result: 'STATIC PAGE',
+    zh: { label: '打开首页', detail: '首页可以直接使用预生成页面，浏览器再接管交互。只有需要动态数据的组件才会另外请求 API。' },
+    en: { label: 'Open home', detail: 'The home page can use a pre-generated page directly, then the browser takes over interaction. Only components that need dynamic data make a separate API request.' }
 },
   {
     id: 'recon-fresh',
     route: '/recon/abc',
     lit: ['browser', 'edge', 'spa', 'fetch', 'api', 'hono', 'pg'],
     cacheHit: false,
-    eta: '~40ms (API 部分)',
-    zh: { label: '首次打开复盘', detail: 'Next 服端渲染 shell 返回后, 客户端 hydrate 调 apiUrl("/v1/recon/abc")。/v1/recon/* 不在 24h cache 白名单, 整条管道穿透:Hono 查 PG, 反序列化, 返回 JSON。' },
-    en: { label: 'First-time recon view', detail: 'After Next streams the SSR shell back, the client hydrates and fetches apiUrl("/v1/recon/abc"). /v1/recon/* is not in the 24h proxy_cache allowlist, so the request flows through to Hono → PG, deserializes, returns JSON.' }
+    result: 'FULL DATA PATH',
+    zh: { label: '首次打开复盘', detail: 'Web 页面返回后，浏览器通过 apiUrl() 请求复盘数据。未命中缓存时，请求继续经过 Hono 路由和 PostgreSQL，再把 JSON 返回页面。' },
+    en: { label: 'First-time recon view', detail: 'After the web page returns, the browser requests reconstruction data through apiUrl(). On a cache miss, the request continues through the Hono route and PostgreSQL, then returns JSON to the page.' }
 },
   {
     id: 'wca-cached',
     route: '/wca/results?show=persons',
     lit: ['browser', 'edge', 'spa', 'fetch', 'api'],
     cacheHit: true,
-    eta: '< 10ms (cache hit)',
-    zh: { label: '回访 WCA 统计', detail: '24h 内重复访问 stat 数据。nginx proxy_cache 在 :api 这一层 hit, 直接吐 JSON, 不打 Hono、不打 PG。每天首次访问才真正穿透。' },
-    en: { label: 'Revisit WCA stat', detail: 'Repeat visit within 24h. nginx proxy_cache hits at the :api stage, returns JSON directly — Hono and PG untouched. Only the first request each day pierces the cache.' }
+    result: 'CACHE RETURN',
+    zh: { label: '回访 WCA 统计', detail: '可缓存的统计数据命中 HTTP 缓存时会直接返回 JSON，不再进入 Hono 和 PostgreSQL；未命中时才继续走完整数据路径。' },
+    en: { label: 'Revisit WCA stat', detail: 'When cacheable statistics data hits the HTTP cache, JSON returns directly without reaching Hono or PostgreSQL. A miss continues through the full data path.' }
 },
   {
     id: 'iframe-fork',
     route: '/tools/cstimer/index.html',
     lit: ['browser', 'edge'],
     cacheHit: false,
-    eta: '< 10ms (静态)',
-    zh: { label: '打开 fork 内部页', detail: 'fork 项目的内部页面 (iframe src)。nginx 直接服 /tools/cstimer/ 静态 HTML, 不打 Next, 不打 API。从 Next 路由 /cstimer 进来时再加一层 Next page + iframe 套娃。' },
-    en: { label: 'Fork inner page', detail: 'Inside-iframe page of a forked project. nginx serves /tools/cstimer/ static HTML directly — no Next, no API. From the Next route /cstimer, you wrap an extra Next page + iframe around this.' }
+    result: 'STATIC ASSET',
+    zh: { label: '打开 fork 内部页', detail: 'fork 的内部页面是静态资源，由交付入口直接返回，不进入 Web 前端或 API。站内入口只负责提供外层页面和 iframe。' },
+    en: { label: 'Fork inner page', detail: 'The fork’s inner page is a static asset returned directly by the delivery entry, without entering the web frontend or API. The site route only provides the wrapper page and iframe.' }
 },
 ];
 
