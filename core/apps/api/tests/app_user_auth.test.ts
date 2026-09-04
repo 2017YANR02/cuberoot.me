@@ -1,12 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { requireAuthMock, findUserByWcaIdMock } = vi.hoisted(() => ({
+const { requireAuthMock, findUserByWcaIdMock, getUserByIdMock } = vi.hoisted(() => ({
   requireAuthMock: vi.fn(),
   findUserByWcaIdMock: vi.fn(),
+  getUserByIdMock: vi.fn(),
 }));
 
 vi.mock('../src/utils/recon_helpers.js', () => ({ requireAuth: requireAuthMock }));
-vi.mock('../src/utils/account.js', () => ({ findUserByWcaId: findUserByWcaIdMock }));
+vi.mock('../src/utils/account.js', () => ({
+  findUserByWcaId: findUserByWcaIdMock,
+  getUserById: getUserByIdMock,
+}));
 
 import { requireAppUserId } from '../src/utils/app_user_auth.js';
 
@@ -14,6 +18,8 @@ describe('canonical app user authentication', () => {
   beforeEach(() => {
     requireAuthMock.mockReset();
     findUserByWcaIdMock.mockReset();
+    getUserByIdMock.mockReset();
+    getUserByIdMock.mockImplementation(async (id: number) => ({ id }));
   });
 
   it('uses the internal uid embedded in current sessions', async () => {
@@ -44,6 +50,22 @@ describe('canonical app user authentication', () => {
 
     await expect(requireAppUserId({} as never)).resolves.toBe(73);
     expect(findUserByWcaIdMock).toHaveBeenCalledWith('2020TEST01');
+  });
+
+  it('falls back to the surviving WCA account when a merged session uid was deleted', async () => {
+    requireAuthMock.mockResolvedValue({ uid: 749, realWcaId: '2020TEST01' });
+    getUserByIdMock.mockResolvedValue(null);
+    findUserByWcaIdMock.mockResolvedValue({ id: 748 });
+
+    await expect(requireAppUserId({} as never)).resolves.toBe(748);
+    expect(findUserByWcaIdMock).toHaveBeenCalledWith('2020TEST01');
+  });
+
+  it('rejects a merged session whose deleted uid has no surviving identity in the token', async () => {
+    requireAuthMock.mockResolvedValue({ uid: 749 });
+    getUserByIdMock.mockResolvedValue(null);
+
+    await expect(requireAppUserId({} as never)).rejects.toThrow('Authentication required');
   });
 
   it('rejects sessions that cannot resolve to a canonical account', async () => {
