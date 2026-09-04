@@ -8,6 +8,7 @@
  * 异步 notify 验签后入账;都未配置时 admin 仍可手动开通。渠道可用性由 /plans 的 channels 暴露。
  *
  *   GET    /v1/membership/plans                 — 公开:在售套餐 + payEnabled + channels
+ *   GET    /v1/membership/members               — 公开:选择在首页展示的有效会员
  *   GET    /v1/membership/profile/:wcaId        — 公开:有效会员的个人介绍
  *   GET    /v1/membership/me                    — 登录:本人会员状态
  *   PUT    /v1/membership/me/profile            — 登录:设置公开个人介绍
@@ -162,6 +163,7 @@ interface MembershipRow {
   note: string | null;
   public_intro?: string | null;
   public_intro_image_ids?: unknown;
+  show_in_member_list?: boolean;
 }
 
 function profileImageIds(value: unknown): number[] {
@@ -203,6 +205,7 @@ function membershipToJson(m: MembershipRow) {
     contactKind: m.contact_kind ?? undefined,
     profileIntro: m.public_intro ?? undefined,
     profileImageIds: profileImageIds(m.public_intro_image_ids),
+    showInMemberList: m.show_in_member_list !== false,
   };
 }
 
@@ -273,6 +276,25 @@ membershipRoutes.get('/membership/plans', async (c) => {
   return c.json({ plans: rows.map(planToJson), payEnabled: paymentConfigured(), channels: channelAvailability() });
 });
 
+// ─────────────────────────── 公开:首页会员名单 ───────────────────────────
+membershipRoutes.get('/membership/members', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const rows = await query<Pick<MembershipRow, 'wca_id' | 'name' | 'avatar_url' | 'plan_slug'>>(
+    `SELECT m.wca_id, m.name, m.avatar_url, m.plan_slug
+       FROM memberships m
+       LEFT JOIN app_users u ON UPPER(u.wca_id) = UPPER(m.wca_id)
+      WHERE COALESCE(u.show_in_member_list, TRUE) = TRUE
+        AND (m.expires_at IS NULL OR m.expires_at > NOW())
+      ORDER BY m.started_at DESC`,
+  );
+  return c.json({ members: rows.map((member) => ({
+    wcaId: member.wca_id,
+    name: member.name,
+    avatarUrl: member.avatar_url ?? undefined,
+    planSlug: member.plan_slug,
+  })) });
+});
+
 // ─────────────────────────── 公开:会员个人介绍 ───────────────────────────
 membershipRoutes.get('/membership/profile/:wcaId', async (c) => {
   const wcaId = c.req.param('wcaId').trim().toUpperCase();
@@ -303,7 +325,7 @@ membershipRoutes.get('/membership/me', async (c) => {
   c.header('Cache-Control', 'no-store');
   const user = await requireAuth(c);
   const rows = await query<MembershipRow>(
-    `SELECT m.*, u.public_intro, u.public_intro_image_ids
+    `SELECT m.*, u.public_intro, u.public_intro_image_ids, u.show_in_member_list
        FROM memberships m
        LEFT JOIN app_users u ON UPPER(u.wca_id) = UPPER(m.wca_id)
       WHERE m.wca_id = ?`,
@@ -321,8 +343,9 @@ membershipRoutes.put('/membership/me/profile', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   const user = await requireAuth(c);
-  const body = await c.req.json<{ intro?: string | null; imageIds?: unknown }>();
+  const body = await c.req.json<{ intro?: string | null; imageIds?: unknown; showInMemberList?: unknown }>();
   if (body.intro != null && typeof body.intro !== 'string') return c.json({ error: 'invalid profile intro' }, 400);
+  if (body.showInMemberList != null && typeof body.showInMemberList !== 'boolean') return c.json({ error: 'invalid member list visibility' }, 400);
   const intro = body.intro?.trim() ?? '';
   if (intro.length > PROFILE_INTRO_MAX_LENGTH) return c.json({ error: 'profile intro too long' }, 400);
 
@@ -342,22 +365,24 @@ membershipRoutes.put('/membership/me/profile', async (c) => {
     if (images.length !== imageIds.length) return c.json({ error: 'profile image not owned' }, 400);
   }
 
-  const rows = await query<{ public_intro: string | null; public_intro_image_ids: unknown }>(
+  const rows = await query<{ public_intro: string | null; public_intro_image_ids: unknown; show_in_member_list: boolean }>(
     `UPDATE app_users u
-        SET public_intro = ?, public_intro_image_ids = ?::jsonb
+        SET public_intro = ?, public_intro_image_ids = ?::jsonb,
+            show_in_member_list = COALESCE(?::boolean, u.show_in_member_list)
       WHERE UPPER(u.wca_id) = ?
         AND EXISTS (
           SELECT 1 FROM memberships m
            WHERE UPPER(m.wca_id) = ?
              AND (m.expires_at IS NULL OR m.expires_at > NOW())
         )
-      RETURNING public_intro, public_intro_image_ids`,
-    [intro || null, imageIds, user.wcaId.toUpperCase(), user.wcaId.toUpperCase()],
+      RETURNING public_intro, public_intro_image_ids, show_in_member_list`,
+    [intro || null, imageIds, body.showInMemberList ?? null, user.wcaId.toUpperCase(), user.wcaId.toUpperCase()],
   );
   if (!rows.length) return c.json({ error: 'active membership required' }, 403);
   return c.json({
     profileIntro: rows[0].public_intro,
     profileImageIds: profileImageIds(rows[0].public_intro_image_ids),
+    showInMemberList: rows[0].show_in_member_list,
   });
 });
 
@@ -381,7 +406,7 @@ membershipRoutes.put('/membership/me/contact', async (c) => {
         SET contact = ?, contact_kind = ?, note = ?
        FROM app_users u
       WHERE m.wca_id = ? AND UPPER(u.wca_id) = UPPER(m.wca_id)
-      RETURNING m.*, u.public_intro, u.public_intro_image_ids`,
+      RETURNING m.*, u.public_intro, u.public_intro_image_ids, u.show_in_member_list`,
     [contact, kind, note, user.wcaId],
   );
   if (!rows.length) return c.json({ error: 'no membership' }, 404);

@@ -17,4 +17,17 @@ describe('membership plan visibility contract', () => {
     expect(adminBlock).toContain('plans: plans.map(planToJson)');
     expect(adminBlock).not.toContain('WHERE active = TRUE');
   });
+
+  it('lists active opted-in members and defaults existing accounts to visible', async () => {
+    const route = await readFile(new URL('../src/routes/membership.ts', import.meta.url), 'utf8');
+    const migration = await readFile(new URL('../migrations/0210_membership_listing_visibility.sql', import.meta.url), 'utf8');
+    const listStart = route.indexOf("membershipRoutes.get('/membership/members'");
+    const listBlock = route.slice(listStart, route.indexOf("membershipRoutes.get('/membership/profile", listStart));
+
+    expect(migration).toContain('show_in_member_list BOOLEAN NOT NULL DEFAULT TRUE');
+    expect(listBlock).toContain('COALESCE(u.show_in_member_list, TRUE) = TRUE');
+    expect(listBlock).toContain('(m.expires_at IS NULL OR m.expires_at > NOW())');
+    expect(route).toContain("body.showInMemberList != null && typeof body.showInMemberList !== 'boolean'");
+    expect(route).toContain('show_in_member_list = COALESCE(?::boolean, u.show_in_member_list)');
+  });
 });

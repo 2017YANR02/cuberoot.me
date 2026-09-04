@@ -18,7 +18,7 @@ import { X } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { ALG_CATALOG, ALG_CATALOG_SECTIONS, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
-import AlgPuzzleSelect from '../_components/AlgPuzzleSelect';
+import AlgPuzzlePicker from '@/components/AlgPuzzlePicker';
 import BackHome from '@/components/BackHome';
 import { CaseThumb } from '@/components/CaseThumb';
 import { VisualCube } from '@/components/VisualCube';
@@ -383,7 +383,11 @@ export default function AlgPuzzleClient() {
         </div>
         <h1 className="alg-cat-title">{tr({ zh: '公式库', en: 'Algorithm DB' })}</h1>
         {/* 项目切换:原落地页那一排卡片压成一个下拉,每项仍是真链接 */}
-        <AlgPuzzleSelect current={puzzle} isZh={isZh} />
+        <AlgPuzzlePicker
+          current={puzzle}
+          isZh={isZh}
+          linkFor={(id) => ({ href: `/alg/${id}` })}
+        />
         {/* 合练:多套混成一场练(PLL + ZBLL 一起过)。开着时卡片改成勾选。 */}
         <BoolToggle
           value={picking}

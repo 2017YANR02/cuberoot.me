@@ -1,0 +1,2 @@
+ALTER TABLE app_users
+  ADD COLUMN show_in_member_list BOOLEAN NOT NULL DEFAULT TRUE;

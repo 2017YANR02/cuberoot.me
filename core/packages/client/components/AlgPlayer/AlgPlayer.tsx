@@ -34,7 +34,7 @@ export type AlgPlayerControlMode = 'full' | 'replay' | 'none';
 export type AlgPlayerInteractionMode = 'view' | 'turn';
 
 /** Map our AlgPuzzle slug to cubing.js's TwistyPlayer puzzle id. */
-export const TWISTY_PUZZLE: Record<AlgPlayerPuzzle, string> = {
+export const TWISTY_PUZZLE: Partial<Record<AlgPlayerPuzzle, string>> = {
   '2x2': '2x2x2',
   '3x3': '3x3x3',
   '4x4': '4x4x4',
@@ -93,7 +93,7 @@ interface Props {
 
 /** `/sim` 公式播放器当前支持的全部拼图。 */
 const SIM_SUPPORTED = new Set<AlgPlayerPuzzle>([
-  '2x2', '3x3', '4x4', '5x5', 'sq1', 'megaminx', 'pyraminx', 'skewb', 'clock',
+  '2x2', '3x3', '4x4', '5x5', 'sq1', 'megaminx', 'pyraminx', 'skewb', 'clock', 'ivy',
 ]);
 
 /** EIF macros expand to several physical turns, so the FTO engine uses a shorter beat. */
@@ -164,8 +164,10 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
     let player: any = null;
     let ro: ResizeObserver | null = null;
     let replayTimer: ReturnType<typeof setInterval> | null = null;
-    const normalized = puzzle === 'clock' ? alg : normalizeAlgForTwisty(puzzle, alg);
-    const stickering = puzzle === 'clock' ? undefined : pickStickering(puzzle, set);
+    const normalized = puzzle === 'clock' || puzzle === 'ivy' ? alg : normalizeAlgForTwisty(puzzle, alg);
+    const stickering = puzzle === 'clock' || puzzle === 'ivy' ? undefined : pickStickering(puzzle, set);
+    const twistyPuzzle = TWISTY_PUZZLE[puzzle];
+    if (!twistyPuzzle) return;
     const setupForTwisty = resolvePlayerSetup(puzzle, alg, setup, startSolved);
     const tempoScale = resolveTwistyTempoScale(moveDurationMs, normalized);
     const replayDelayMs = tempoScale !== undefined && moveDurationMs ? moveDurationMs + 900 : 1800;
@@ -178,7 +180,7 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const opts: any = {
-          puzzle: TWISTY_PUZZLE[puzzle],
+          puzzle: twistyPuzzle,
           experimentalSetupAlg: setupForTwisty,
           alg: normalized,
           controlPanel: controlMode === 'full' ? 'bottom-row' : 'none',

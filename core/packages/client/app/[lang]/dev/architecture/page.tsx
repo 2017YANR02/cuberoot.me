@@ -1,13 +1,11 @@
 'use client';
 
 import Link from '@/components/AppLink';
-import { tr } from '@/i18n/tr';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L } from '../_lib/Lang';
 import type { Lang } from '../_lib/Lang';
 import ArchitectureAtlas from './_components/ArchitectureAtlas';
 import ArchNav from './_components/ArchNav';
-import { BORROWED_MODULES } from './_lib/arch-data';
 import './architecture.css';
 
 export default function ArchitecturePage() {
@@ -47,42 +45,6 @@ export default function ArchitecturePage() {
         <section className="arch-sec">
           <div className="arch-sec-head">
             <span className="arch-sec-num">02</span>
-            <h2 className="arch-sec-title"><L zh="借来的代码如何管理" en="How borrowed code is governed" /></h2>
-          </div>
-          <p className="arch-sec-lede">
-            <L
-              zh="port 是把上游能力改写进本站产品，fork 是保留上游实现并在固定边界托管。自研页面不在这里重复列举。"
-              en="A port rewrites an upstream capability into the product; a fork keeps the upstream implementation behind a fixed boundary. First-party pages are not repeated here."
-            />
-          </p>
-          <div className="arch-mod-legend">
-            <span className="arch-tag arch-tag-port">port</span>
-            <span className="arch-tag arch-tag-fork">fork</span>
-          </div>
-          <table className="arch-tbl">
-            <thead><tr>
-              <th><L zh="模块" en="Module" /></th>
-              <th><L zh="类型" en="Type" /></th>
-              <th><L zh="上游" en="Upstream" /></th>
-            </tr></thead>
-            <tbody>
-              {BORROWED_MODULES.map((module) => (
-                <tr key={module.route}>
-                  <td>
-                    <Link href={module.route} className="arch-mod-link" prefetch={false}>{module.route}</Link>
-                    <span className="arch-mod-cn">{tr(module)}</span>
-                  </td>
-                  <td><span className={`arch-tag arch-tag-${module.origin}`}>{module.origin}</span></td>
-                  <td><a href={`https://github.com/${module.upstream}`} target="_blank" rel="noreferrer" className="arch-up-link">{module.upstream}</a></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-
-        <section className="arch-sec">
-          <div className="arch-sec-head">
-            <span className="arch-sec-num">03</span>
             <h2 className="arch-sec-title"><L zh="怎么防止地图失效" en="How the map stays current" /></h2>
           </div>
           <ol className="architecture-guardrails">
@@ -92,41 +54,9 @@ export default function ArchitecturePage() {
           </ol>
         </section>
 
-        <section className="arch-sec">
-          <div className="arch-sec-head">
-            <span className="arch-sec-num">04</span>
-            <h2 className="arch-sec-title"><L zh="开发环境：一份服务，多端热更新" en="Development: one server, live updates across devices" /></h2>
-          </div>
-          <p className="arch-sec-lede">
-            <L
-              zh={<>开发时只运行一份 Next 开发服务。本机直接访问 <code>127.0.0.1:3000</code>；手机和外网设备通过 <code>dev.cuberoot.me</code> 进入 TLS 反向代理，再由 frp 隧道连接到同一份本机服务。HMR 使用 WSS，这条仅供开发的链路不参与生产拓扑，也不缓存响应。</>}
-              en={<>Development runs a single Next development server. The local machine opens <code>127.0.0.1:3000</code> directly; phones and off-network devices enter through the TLS reverse proxy at <code>dev.cuberoot.me</code>, then an frp tunnel reaches the same local server. HMR uses WSS, and this development-only path is outside the production topology with caching disabled.</>}
-            />
-          </p>
-          <table className="arch-tbl">
-            <thead><tr>
-              <th><L zh="场景" en="Scenario" /></th>
-              <th><L zh="入口" en="Entry" /></th>
-              <th><L zh="链路" en="Path" /></th>
-            </tr></thead>
-            <tbody>
-              <tr>
-                <td><L zh="本机开发" en="Local development" /></td>
-                <td><code>127.0.0.1:3000</code></td>
-                <td><L zh="直接连接 Next 开发服务" en="Direct connection to the Next development server" /></td>
-              </tr>
-              <tr>
-                <td><L zh="手机或外网" en="Phone or off-network" /></td>
-                <td><code>dev.cuberoot.me</code></td>
-                <td><L zh="TLS 反向代理 → frp 隧道 → 本机 :3000，HMR over WSS" en="TLS reverse proxy → frp tunnel → local :3000, HMR over WSS" /></td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-
         <footer className="arch-foot">
           <div className="arch-foot-line">
-            <L zh="继续了解" en="Keep exploring" />
+            <a href="https://github.com/RuiminYan/cuberoot.me" target="_blank" rel="noreferrer"><L zh="源码" en="Source" /></a>
             <span className="arch-meta-sep">/</span>
             <Link href="/dev/architecture/flow"><L zh="请求流程" en="Request flow" /></Link>
             <span className="arch-meta-sep">/</span>
@@ -134,6 +64,7 @@ export default function ArchitecturePage() {
             <span className="arch-meta-sep">/</span>
             <Link href="/dev/infrastructure"><L zh="基础设施" en="Infrastructure" /></Link>
           </div>
+          <p className="arch-foot-note"><L zh="这页是 CubeRoot 的系统说明书：稳定结构由地图维护，易变运行数据留在各自事实源。" en="This is CubeRoot's system handbook: the map owns stable structure, while volatile operational data stays in its source of truth." /></p>
         </footer>
       </div>
     </LangCtx.Provider>

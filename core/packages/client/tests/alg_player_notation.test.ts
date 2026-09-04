@@ -92,6 +92,7 @@ describe('resolvePlayerSetup', () => {
     expect(resolvePlayerSetup('3x3', 'R U', undefined, false)).toBe("(R U)'");
     expect(resolvePlayerSetup('fto', "U Rw S'", undefined, false)).toBe("S Rw' U'");
     expect(resolvePlayerSetup('sq1', '(1,0)/(3,-3)', undefined, false)).toBe('(-3,3)/(-1,0)');
+    expect(resolvePlayerSetup('ivy', "R' L' R L", undefined, false)).toBe("L' R' L R");
   });
 
   it('SQ1 的成对转层和切层按真实 token 切步,不按括号内空格误拆', () => {
@@ -99,6 +100,7 @@ describe('resolvePlayerSetup', () => {
       '(1, 0)', '/', '(3, -3)', '/',
     ]);
     expect(resolveSimPreviewMoves('3x3', "R U R'")).toEqual(['R', 'U', "R'"]);
+    expect(resolveSimPreviewMoves('ivy', "R' L' R L")).toEqual(["R'", "L'", 'R', 'L']);
   });
 });
 

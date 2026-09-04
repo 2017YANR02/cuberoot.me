@@ -420,6 +420,7 @@
 .mem-contact-save:disabled { opacity: 0.5; cursor: default; }
 
 .mem-profile { margin-top: 32px; }
+.mem-profile-visibility { margin-bottom: 12px; }
 .mem-profile-input {
   display: block;
   width: 100%;

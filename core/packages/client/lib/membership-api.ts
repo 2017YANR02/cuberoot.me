@@ -52,6 +52,14 @@ export interface Membership {
   contactKind?: string;
   profileIntro?: string;
   profileImageIds?: number[];
+  showInMemberList?: boolean;
+}
+
+export interface PublicMember {
+  wcaId: string;
+  name: string;
+  avatarUrl?: string;
+  planSlug: string;
 }
 
 export interface PublicMemberProfile {
@@ -134,6 +142,11 @@ export async function listPlans(): Promise<{ plans: MembershipPlan[]; payEnabled
   return handleApi(await fetch(`${BASE}/plans`));
 }
 
+export async function listPublicMembers(): Promise<PublicMember[]> {
+  const result = await handleApi<{ members: PublicMember[] }>(await fetch(`${BASE}/members`));
+  return result.members;
+}
+
 export async function getMyMembership(): Promise<{ membership: Membership | null; isMember?: boolean }> {
   return handleApi(await fetch(`${BASE}/me`, { headers: authHeaders(false) }));
 }
@@ -148,14 +161,15 @@ export async function getPublicMemberProfile(wcaId: string): Promise<PublicMembe
   } : null;
 }
 
-export async function setMyProfileIntro(intro: string, imageIds: number[]): Promise<{
+export async function setMyProfileIntro(intro: string, imageIds: number[], showInMemberList: boolean): Promise<{
   profileIntro: string | null;
   profileImageIds: number[];
+  showInMemberList: boolean;
 }> {
   return handleApi(await fetch(`${BASE}/me/profile`, {
     method: 'PUT',
     headers: authHeaders(),
-    body: JSON.stringify({ intro, imageIds }),
+    body: JSON.stringify({ intro, imageIds, showInMemberList }),
   }));
 }
 
