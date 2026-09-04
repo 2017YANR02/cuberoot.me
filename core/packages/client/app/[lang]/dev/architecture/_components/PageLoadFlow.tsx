@@ -1,219 +1,85 @@
 'use client';
 
 import { useState } from 'react';
-import { useLang } from '../../_lib/Lang';
 import { tr } from '@/i18n/tr';
 
 type Variant = 'fork' | 'swimlane';
+type Tone = 'accent' | 'hot' | 'green' | 'dim';
 
-// ── Fork-merge (Option B) ────────────────────────
-
-interface ForkStep {
-  id: string;
-  zh: string;
-  en: string;
-  tag?: string;
-  color?: 'accent' | 'hot' | 'green';
-}
-
-const SHARED_TOP: ForkStep[] = [
-  { id: 'dns',  zh: 'DNS 解析',    en: 'DNS Lookup',  tag: '0 ms',   color: 'accent' },
+const EDGE_STEPS = [
+  { zh: '边缘入口', en: 'Edge entry', tone: 'accent' },
+  { zh: '缓存或服务端渲染', en: 'Cache or server rendering', tone: 'hot' },
 ];
-const VERCEL_STEPS: ForkStep[] = [
-  { id: 've-edge', zh: 'Vercel Edge PoP',  en: 'Vercel Edge PoP',  tag: '~5 ms',   color: 'accent' },
-  { id: 've-cache',zh: 'Edge 缓存检查',     en: 'Edge Cache Check', tag: '~8 ms'
-},
-  { id: 've-fn',   zh: 'Serverless 函数',   en: 'Serverless Fn',    tag: '~30 ms'
-},
-  { id: 've-ssr',  zh: 'Next SSR stream',   en: 'Next SSR stream',  tag: '~80 ms', color: 'hot' },
+const HOSTED_STEPS = [
+  { zh: '反向代理入口', en: 'Reverse proxy entry', tone: 'accent' },
+  { zh: '静态文件或服务端渲染', en: 'Static files or server rendering', tone: 'hot' },
 ];
-const VM_STEPS: ForkStep[] = [
-  { id: 'vm-nginx',  zh: 'nginx :443',         en: 'nginx :443',          tag: '~3 ms',  color: 'accent' },
-  { id: 'vm-files',  zh: 'try_files 静态',      en: 'try_files static',    tag: '~5 ms'
-},
-  { id: 'vm-proxy',  zh: 'proxy_pass :3002',    en: 'proxy_pass :3002',    tag: '~8 ms'  },
-  { id: 'vm-ssr',    zh: 'Next standalone SSR', en: 'Next standalone SSR', tag: '~20 ms', color: 'hot' },
-];
-const SHARED_BOT: ForkStep[] = [
-  { id: 'html',    zh: 'HTML + JS chunks',    en: 'HTML + JS chunks',   tag: '~150 ms', color: 'accent' },
-  { id: 'hydrate', zh: 'React Hydrate',       en: 'React Hydrate',      tag: '~200 ms', color: 'hot' },
-  { id: 'api',     zh: 'apiUrl() → API',      en: 'apiUrl() → API',     tag: '~250 ms', color: 'green' },
-  { id: 'dom',     zh: 'DOM 可交互',           en: 'DOM Interactive',    tag: '~300 ms', color: 'green'
-},
+const SHARED_STEPS = [
+  { zh: 'HTML 与脚本到达浏览器', en: 'HTML and scripts reach the browser', tone: 'accent' },
+  { zh: 'React 接管交互', en: 'React attaches interaction', tone: 'hot' },
+  { zh: '需要时通过 apiUrl() 请求数据', en: 'apiUrl() requests data when needed', tone: 'green' },
+  { zh: '状态更新并刷新 DOM', en: 'State updates refresh the DOM', tone: 'green' },
 ];
 
-function ForkStep({ step }: { step: ForkStep }) {
-  const label = tr(step);
-  return (
-    <div className={`plf-step${step.color ? ` plf-step-${step.color}` : ''}`}>
-      <span className="plf-step-label">{label}</span>
-      {step.tag && <span className="plf-step-tag">{step.tag}</span>}
-    </div>
-  );
+function Step({ step }: { step: { zh: string; en: string; tone: string } }) {
+  return <div className={`plf-step plf-step-${step.tone}`}><span className="plf-step-label">{tr(step)}</span></div>;
 }
 
 function ForkDiagram() {
-  const lang = useLang();
   return (
     <div className="plf-fork">
-      {/* Shared top */}
-      <div className="plf-fork-top">
-        {SHARED_TOP.map(s => <ForkStep key={s.id} step={s} />)}
-      </div>
-      {/* DNS split label */}
-      <div className="plf-fork-split-label">
-        <span className="plf-split-badge">{tr({ zh: 'DNS 分线路', en: 'DNS Split'
-        })}</span>
-      </div>
-      {/* Two tracks */}
+      <div className="plf-fork-top"><Step step={{ zh: 'DNS 选择可用入口', en: 'DNS selects an available entry', tone: 'accent' }} /></div>
+      <div className="plf-fork-split-label"><span className="plf-split-badge">{tr({ zh: '两条交付路径', en: 'Two delivery paths' })}</span></div>
       <div className="plf-fork-tracks">
-        <div className="plf-track plf-track-vercel">
-          <div className="plf-track-head plf-track-head-vercel">
-            <span className="plf-track-icon">▲</span>
-            <span>{lang === 'zh' ? 'Vercel Edge' : 'Vercel Edge'}</span>
-          </div>
-          {VERCEL_STEPS.map(s => <ForkStep key={s.id} step={s} />)}
+        <div className="plf-track">
+          <div className="plf-track-head plf-track-head-vercel"><span>{tr({ zh: '边缘托管', en: 'Edge hosting' })}</span></div>
+          {EDGE_STEPS.map((step) => <Step key={step.en} step={step} />)}
         </div>
-        <div className="plf-fork-connector" aria-hidden>
-          <div className="plf-fork-line" />
-          <div className="plf-fork-merge" />
-        </div>
-        <div className="plf-track plf-track-vm">
-          <div className="plf-track-head plf-track-head-vm">
-            <span className="plf-track-icon">⬡</span>
-            <span>{tr({ zh: '自有 VM', en: 'Self-hosted VM' })}</span>
-          </div>
-          {VM_STEPS.map(s => <ForkStep key={s.id} step={s} />)}
+        <div className="plf-fork-connector" aria-hidden="true"><div className="plf-fork-line" /><div className="plf-fork-merge" /></div>
+        <div className="plf-track">
+          <div className="plf-track-head plf-track-head-vm"><span>{tr({ zh: '自有托管', en: 'Self hosting' })}</span></div>
+          {HOSTED_STEPS.map((step) => <Step key={step.en} step={step} />)}
         </div>
       </div>
-      {/* Shared bottom */}
-      <div className="plf-fork-bot">
-        {SHARED_BOT.map(s => <ForkStep key={s.id} step={s} />)}
-      </div>
+      <div className="plf-fork-bot">{SHARED_STEPS.map((step) => <Step key={step.en} step={step} />)}</div>
     </div>
   );
-}
-
-// ── Swimlane (Option A) ────────────────────────
-
-interface SwimlaneRow {
-  label: { zh: string; en: string
- };
-  cells: Array<{ col: number; span?: number; zh: string; en: string; tone?: 'accent' | 'hot' | 'green' | 'dim'
- }>;
 }
 
 const SWIMLANE_COLS = [
-  { zh: '时序', en: 'Time'
-},
-  { zh: '浏览器', en: 'Browser'
-},
-  { zh: 'Vercel/nginx', en: 'Vercel/nginx' },
-  { zh: 'Next.js', en: 'Next.js' },
-  { zh: 'API + PG', en: 'API + PG' },
+  { zh: '阶段', en: 'Stage' },
+  { zh: '浏览器', en: 'Browser' },
+  { zh: '交付入口', en: 'Delivery' },
+  { zh: 'Web 前端', en: 'Web frontend' },
+  { zh: 'API 与数据', en: 'API and data' },
 ];
 
-const SWIMLANE_ROWS: SwimlaneRow[] = [
-  {
-    label: { zh: '0ms', en: '0ms' },
-    cells: [
-      { col: 1, zh: '输入 URL / 点击链接', en: 'Enter URL / click link', tone: 'accent'
-    },
-      { col: 2, zh: 'DNS 解析 → IP', en: 'DNS Lookup → IP', tone: 'dim' },
-    ],
-  },
-  {
-    label: { zh: '5ms', en: '5ms' },
-    cells: [
-      { col: 1, zh: 'TCP 握手 · TLS 1.3', en: 'TCP handshake · TLS 1.3', tone: 'dim' },
-      { col: 2, zh: '连接建立', en: 'Connection established', tone: 'dim'
-    },
-    ],
-  },
-  {
-    label: { zh: '10ms', en: '10ms' },
-    cells: [
-      { col: 1, zh: 'GET /[lang]/page', en: 'GET /[lang]/page', tone: 'accent' },
-      { col: 2, zh: 'Vercel: edge fn invoke\nnginx: proxy_pass :3002', en: 'Vercel: edge fn invoke\nnginx: proxy_pass :3002', tone: 'accent' },
-    ],
-  },
-  {
-    label: { zh: '20–80ms', en: '20–80ms' },
-    cells: [
-      { col: 3, zh: 'App Router SSR\nstream HTML', en: 'App Router SSR\nstream HTML', tone: 'hot' },
-    ],
-  },
-  {
-    label: { zh: '80ms+', en: '80ms+' },
-    cells: [
-      { col: 1, zh: '首字节到达\n开始渲染', en: 'TTFB\nStart render', tone: 'green'
-    },
-    ],
-  },
-  {
-    label: { zh: '100–200ms', en: '100–200ms' },
-    cells: [
-      { col: 1, zh: 'JS chunks 并发拉取', en: 'JS chunks fetched', tone: 'dim'
-    },
-      { col: 2, zh: 'CDN / nginx serve\nimmutable cache', en: 'CDN / nginx serve\nimmutable cache', tone: 'dim' },
-    ],
-  },
-  {
-    label: { zh: '200ms', en: '200ms' },
-    cells: [
-      { col: 1, zh: 'React Hydrate\n可交互', en: 'React Hydrate\nInteractive', tone: 'green'
-    },
-      { col: 3, zh: 'Client component\nmount', en: 'Client component\nmount', tone: 'hot' },
-    ],
-  },
-  {
-    label: { zh: '250ms', en: '250ms' },
-    cells: [
-      { col: 1, zh: 'apiUrl() fetch()', en: 'apiUrl() fetch()', tone: 'accent' },
-      { col: 2, zh: 'nginx proxy_cache\nhit / miss', en: 'nginx proxy_cache\nhit / miss', tone: 'accent' },
-      { col: 4, zh: 'Hono route\nPG query', en: 'Hono route\nPG query', tone: 'green' },
-    ],
-  },
-  {
-    label: { zh: '300ms', en: '300ms' },
-    cells: [
-      { col: 1, zh: 'JSON → setState\nDOM 更新', en: 'JSON → setState\nDOM update', tone: 'green' },
-    ],
-  },
+const SWIMLANE_ROWS: Array<{
+  label: { zh: string; en: string };
+  cells: Array<{ col: number; zh: string; en: string; tone: Tone }>;
+}> = [
+  { label: { zh: '入口', en: 'Entry' }, cells: [{ col: 1, zh: '输入 URL 或点击链接', en: 'Enter a URL or follow a link', tone: 'accent' }, { col: 2, zh: 'DNS 与连接', en: 'DNS and connection', tone: 'dim' }] },
+  { label: { zh: '页面', en: 'Page' }, cells: [{ col: 2, zh: '静态响应或转发请求', en: 'Serve static content or forward', tone: 'accent' }, { col: 3, zh: '路由、渲染、输出 HTML', en: 'Route, render, output HTML', tone: 'hot' }] },
+  { label: { zh: '交互', en: 'Interaction' }, cells: [{ col: 1, zh: '加载脚本并接管页面', en: 'Load scripts and attach interaction', tone: 'green' }, { col: 3, zh: '客户端组件开始工作', en: 'Client components start', tone: 'hot' }] },
+  { label: { zh: '数据', en: 'Data' }, cells: [{ col: 1, zh: '通过 apiUrl() 请求', en: 'Request through apiUrl()', tone: 'accent' }, { col: 2, zh: '缓存命中或转发', en: 'Cache hit or forward', tone: 'accent' }, { col: 4, zh: 'Hono 路由与数据库查询', en: 'Hono route and database query', tone: 'green' }] },
+  { label: { zh: '更新', en: 'Update' }, cells: [{ col: 1, zh: 'JSON 进入状态并更新 DOM', en: 'JSON enters state and updates the DOM', tone: 'green' }] },
 ];
-
-function SwimlaneCell({ tone, zh, en }: { tone?: string; zh: string; en: string
- }) {
-  const lang = useLang();
-  return (
-    <div className={`plf-cell${tone ? ` plf-cell-${tone}` : ''}`}>
-      {(lang === 'zh' ? zh : en).split('\n').map((line, i) => (
-        <span key={i}>{line}</span>
-      ))}
-    </div>
-  );
-}
 
 function SwimlaneDiagram() {
   return (
     <div className="plf-swimlane-wrap">
       <div className="plf-swimlane">
-        {/* Header */}
         <div className="plf-sw-header">
-          {SWIMLANE_COLS.map((col, i) => (
-            <div key={i} className={`plf-sw-col-head${i === 0 ? ' plf-sw-time' : ''}`}>
-              {tr(col)}
-            </div>
-          ))}
+          {SWIMLANE_COLS.map((column, index) => <div key={column.en} className={`plf-sw-col-head${index === 0 ? ' plf-sw-time' : ''}`}>{tr(column)}</div>)}
         </div>
-        {/* Rows */}
-        {SWIMLANE_ROWS.map((row, ri) => (
-          <div key={ri} className="plf-sw-row">
+        {SWIMLANE_ROWS.map((row) => (
+          <div key={row.label.en} className="plf-sw-row">
             <div className="plf-sw-time-cell">{tr(row.label)}</div>
-            {[1, 2, 3, 4].map(col => {
-              const cell = row.cells.find(c => c.col === col);
-              if (!cell) return <div key={col} className="plf-sw-empty" />;
-              return <SwimlaneCell key={col} tone={cell.tone} zh={cell.zh} en={cell.en} />;
+            {[1, 2, 3, 4].map((column) => {
+              const cell = row.cells.find((candidate) => candidate.col === column);
+              return cell
+                ? <div key={column} className={`plf-cell plf-cell-${cell.tone}`}>{tr(cell)}</div>
+                : <div key={column} className="plf-sw-empty" />;
             })}
           </div>
         ))}
@@ -222,42 +88,21 @@ function SwimlaneDiagram() {
   );
 }
 
-// ── Public component ────────────────────────────
-
 export default function PageLoadFlow() {
   const [variant, setVariant] = useState<Variant>('fork');
 
   return (
     <div className="plf-root">
       <div className="plf-tabs" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={variant === 'fork'}
-          className={`plf-tab${variant === 'fork' ? ' active' : ''}`}
-          onClick={() => setVariant('fork')}
-        >
-          {tr({ zh: '方案 A  ·  双轨对比', en: 'Option A  ·  Fork-Merge'
-        })}
+        <button type="button" role="tab" aria-selected={variant === 'fork'} className={`plf-tab${variant === 'fork' ? ' active' : ''}`} onClick={() => setVariant('fork')}>
+          {tr({ zh: '双轨对比', en: 'Path comparison' })}
         </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={variant === 'swimlane'}
-          className={`plf-tab${variant === 'swimlane' ? ' active' : ''}`}
-          onClick={() => setVariant('swimlane')}
-        >
-          {tr({ zh: '方案 B  ·  时序泳道', en: 'Option B  ·  Swimlane'
-        })}
+        <button type="button" role="tab" aria-selected={variant === 'swimlane'} className={`plf-tab${variant === 'swimlane' ? ' active' : ''}`} onClick={() => setVariant('swimlane')}>
+          {tr({ zh: '分层泳道', en: 'Layer swimlane' })}
         </button>
       </div>
-      <div className="plf-body">
-        {variant === 'fork' ? <ForkDiagram /> : <SwimlaneDiagram />}
-      </div>
-      <p className="plf-caption">
-        {tr({ zh: '完整首次加载约 200–300ms · 重复访问 JS chunks 从 CDN/nginx 即时返回 · API 缓存命中 < 10ms', en: 'Full first load ~200–300ms · Repeat visits serve JS chunks from CDN/nginx instantly · API cache hits < 10ms'
-        })}
-      </p>
+      <div className="plf-body">{variant === 'fork' ? <ForkDiagram /> : <SwimlaneDiagram />}</div>
+      <p className="plf-caption">{tr({ zh: '实际耗时取决于网络、缓存、页面与数据量，因此这里展示顺序而不是伪精确数字。', en: 'Actual timing depends on the network, cache, page, and data size, so this view shows order instead of false precision.' })}</p>
     </div>
   );
 }
