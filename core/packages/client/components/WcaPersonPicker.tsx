@@ -2,7 +2,7 @@
 // Person search input — ported from packages/client-vite/src/components/CuberSearchInput.tsx.
 // 3-tier query: static index (top cubers) → WCA /persons?q= → WCA ID regex direct lookup.
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Flag } from './Flag';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { searchPersons, getPerson, WCA_ID_REGEX, type WcaPersonLite } from '@/lib/wca-api';
@@ -34,6 +34,8 @@ interface Props {
   showClearButton?: boolean;
   /** Hide WCA people already represented by another result source in a combined search. */
   excludeIds?: readonly string[];
+  /** Optional result section supplied by a second search source. */
+  additionalResults?: ReactNode;
 }
 
 const DEBOUNCE_MS = 300;
@@ -57,7 +59,7 @@ function localScore(p: WcaPersonLite, ql: string): number {
 export function WcaPersonPicker({
   value, onChange, staticCubers = [], matchCount, placeholder, isZh, className,
   onQueryChange, allowFreeText = false, defaultQuery, autoOpen = false, showClearButton = true,
-  excludeIds = [],
+  excludeIds = [], additionalResults,
 }: Props) {
   const [query, setQuery] = useState(defaultQuery ?? '');
   const [open, setOpen] = useState(autoOpen);
@@ -177,7 +179,8 @@ export function WcaPersonPicker({
     );
   }
 
-  const showDropdown = open && (loading || staticMatches.length > 0 || apiFiltered.length > 0 || query.trim().length > 0);
+  const hasAdditionalResults = additionalResults != null;
+  const showDropdown = open && (loading || staticMatches.length > 0 || apiFiltered.length > 0 || query.trim().length > 0 || hasAdditionalResults);
   return (
     <div ref={wrapRef} className={`cuber-search ${className ?? ''}`.trim()}>
       <input
@@ -201,6 +204,7 @@ export function WcaPersonPicker({
       )}
       {showDropdown && (
         <div className="cuber-search-popup">
+          {additionalResults}
           {staticMatches.length > 0 && (
             <div className="cuber-search-section">
               <div className="cuber-search-section-label">★ {tr({ zh: '顶尖选手', en: 'Top cubers'
@@ -221,7 +225,7 @@ export function WcaPersonPicker({
             <div className="cuber-search-status">{tr({ zh: '搜索中…', en: 'Searching…'
             })}</div>
           )}
-          {!loading && staticMatches.length === 0 && apiFiltered.length === 0 && query.trim().length > 0 && (
+          {!loading && !hasAdditionalResults && staticMatches.length === 0 && apiFiltered.length === 0 && query.trim().length > 0 && (
             <div className="cuber-search-status">{allowFreeText
               ? tr({ zh: '未匹配 WCA 选手,将按输入姓名保存', en: 'No WCA match; the typed name will be saved' })
               : tr({ zh: '未找到选手', en: 'No matches' })}</div>
