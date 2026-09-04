@@ -53,6 +53,8 @@ export default function VaultPage() {
   const [dirty, setDirty] = useState(false);
   const [passphrase, setPassphrase] = useState('');
   const [confirmation, setConfirmation] = useState('');
+  const [showPassphrase, setShowPassphrase] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState('');
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [mustSaveRecoveryCode, setMustSaveRecoveryCode] = useState(false);
@@ -328,10 +330,13 @@ export default function VaultPage() {
         <form className="vault-unlock" onSubmit={recoveryMode ? recover : isSetup ? setup : unlock}>
           {recoveryMode && <><label htmlFor="vault-recovery">{tr({ zh: '恢复密钥', en: 'Recovery key' })}</label><input id="vault-recovery" className="vault-unlock-input" value={recoveryCode} autoComplete="off" onChange={(event) => setRecoveryCode(event.target.value)} /></>}
           <label htmlFor="vault-passphrase">{recoveryMode ? tr({ zh: '新资料库口令', en: 'New vault passphrase' }) : tr({ zh: '资料库口令', en: 'Vault passphrase' })}</label>
-          <input id="vault-passphrase" className="vault-unlock-input" type="password" value={passphrase} minLength={12} autoComplete={isSetup || recoveryMode ? 'new-password' : 'current-password'} onChange={(event) => setPassphrase(event.target.value)} />
-          {(isSetup || recoveryMode) && <><label htmlFor="vault-confirm">{recoveryMode ? tr({ zh: '再次输入新口令', en: 'Confirm new passphrase' }) : tr({ zh: '再次输入', en: 'Confirm passphrase' })}</label><input id="vault-confirm" className="vault-unlock-input" type="password" value={confirmation} minLength={12} autoComplete="new-password" onChange={(event) => setConfirmation(event.target.value)} /></>}
+          <div className="vault-password-field">
+            <input id="vault-passphrase" className="vault-unlock-input" type={showPassphrase ? 'text' : 'password'} value={passphrase} minLength={12} autoComplete={isSetup || recoveryMode ? 'new-password' : 'current-password'} onChange={(event) => setPassphrase(event.target.value)} />
+            <button type="button" className="vault-icon-button vault-password-eye" aria-pressed={showPassphrase} aria-label={tr(showPassphrase ? { zh: '隐藏资料库口令', en: 'Hide vault passphrase' } : { zh: '显示资料库口令', en: 'Show vault passphrase' })} onClick={() => setShowPassphrase((shown) => !shown)}>{showPassphrase ? <EyeOff /> : <Eye />}</button>
+          </div>
+          {(isSetup || recoveryMode) && <><label htmlFor="vault-confirm">{recoveryMode ? tr({ zh: '再次输入新口令', en: 'Confirm new passphrase' }) : tr({ zh: '再次输入', en: 'Confirm passphrase' })}</label><div className="vault-password-field"><input id="vault-confirm" className="vault-unlock-input" type={showConfirmation ? 'text' : 'password'} value={confirmation} minLength={12} autoComplete="new-password" onChange={(event) => setConfirmation(event.target.value)} /><button type="button" className="vault-icon-button vault-password-eye" aria-pressed={showConfirmation} aria-label={tr(showConfirmation ? { zh: '隐藏确认口令', en: 'Hide confirmation passphrase' } : { zh: '显示确认口令', en: 'Show confirmation passphrase' })} onClick={() => setShowConfirmation((shown) => !shown)}>{showConfirmation ? <EyeOff /> : <Eye />}</button></div></>}
           <button type="submit" className="vault-button is-primary" disabled={busy}>{busy && <Loader2 className="vault-spin" />}{tr(recoveryMode ? { zh: '重设口令并解锁', en: 'Reset and unlock' } : isSetup ? { zh: '创建并解锁', en: 'Create and unlock' } : { zh: '解锁', en: 'Unlock' })}</button>
-          {!isSetup && <button type="button" className="vault-button" onClick={() => { setRecoveryMode((current) => !current); setRecoveryCode(''); setPassphrase(''); setConfirmation(''); setError(null); }}>{recoveryMode ? tr({ zh: '返回口令解锁', en: 'Back to passphrase' }) : tr({ zh: '忘记口令', en: 'Forgot passphrase' })}</button>}
+          {!isSetup && <button type="button" className="vault-button" onClick={() => { setRecoveryMode((current) => !current); setRecoveryCode(''); setPassphrase(''); setConfirmation(''); setShowPassphrase(false); setShowConfirmation(false); setError(null); }}>{recoveryMode ? tr({ zh: '返回口令解锁', en: 'Back to passphrase' }) : tr({ zh: '忘记口令', en: 'Forgot passphrase' })}</button>}
         </form>
         {error && <p className="vault-error" role="alert">{error}</p>}
       </main>
