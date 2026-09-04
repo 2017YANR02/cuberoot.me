@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: {
   const { lang, slug } = await params;
   if (slug === SPEFFZ_SLUG) return metadataFromEntry(SPEFFZ, lang);
   const e = await fetchTutorialEntry(slug);
-  // Unknown slug, or the catalog is unreachable: inherit /tutorial's own title
+  // Unknown slug, or the catalog is unreachable: inherit /tutorial-legacy's own title
   // rather than invent one for a page that may not exist.
   if (!e) return {};
   const l = tutorialLang(lang);
@@ -55,7 +55,7 @@ export async function generateMetadata({ params }: {
     lang,
   );
   // Only 60 of the posts are bilingual. The client falls back to whichever
-  // language exists, so /zh/tutorial/<en-only-slug> renders the English article
+  // language exists, so /zh/tutorial-legacy/<en-only-slug> renders the English article
   // — a real page, but a duplicate of the bare URL in the wrong language.
   // Indexing both would split the signal and put an English page in Chinese
   // results, so the language that does not exist is noindex (still followed, so
@@ -82,10 +82,10 @@ export default async function Layout({ children, params }: {
         data={articleJsonLd({
           headline: title,
           description: describe(e, title)[l],
-          url: `${SITE_URL}${prefix}/tutorial/${encodeURIComponent(slug)}`,
+          url: `${SITE_URL}${prefix}/tutorial-legacy/${encodeURIComponent(slug)}`,
           lang,
           partOfName: hub,
-          partOfUrl: `${SITE_URL}${prefix}/tutorial`,
+          partOfUrl: `${SITE_URL}${prefix}/tutorial-legacy`,
         })}
       />
       {children}

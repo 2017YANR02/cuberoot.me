@@ -80,7 +80,7 @@ Association. WCA competition data is derived from the WCA's public export.
 
 - [Why learn the cube](${BASE}/why-cube): a long-form piece for parents and
   newcomers on what solving actually trains.
-- [Tutorials](${BASE}/tutorial): step-by-step guides, organised by category.
+- [Legacy tutorials](${BASE}/tutorial-legacy): step-by-step guides, organised by category.
 - [Glossary and wiki](${BASE}/wiki): speedcubing terminology, bilingual, with the
   Chinese terms as actually used by the community rather than literal
   translations.

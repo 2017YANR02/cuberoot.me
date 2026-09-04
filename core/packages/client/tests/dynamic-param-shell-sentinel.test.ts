@@ -47,8 +47,8 @@ const ALLOWED_ON_DEMAND: Record<string, string> = {
   '[lang]/wca/[statId]/page.tsx': 'bounded: ~80 fixed stat pages',
   // (b) bounded id spaces — small finite sets, top out at a few hundred invocations:
   '[lang]/math/group/[slug]/page.tsx': 'bounded: ~62 group-theory sections',
-  '[lang]/tutorial/[slug]/page.tsx': 'bounded: fixed tutorial set',
-  '[lang]/tutorial/c/[cat]/page.tsx': 'bounded: fixed tutorial categories',
+  '[lang]/tutorial-legacy/[slug]/page.tsx': 'bounded: fixed tutorial set',
+  '[lang]/tutorial-legacy/c/[cat]/page.tsx': 'bounded: fixed tutorial categories',
   '[lang]/wca/prediction/333/[sectionId]/page.tsx': 'bounded: fixed prediction sections',
   // Grandfathered: unbounded-shaped (recon id) client shells, but only reachable as deep
   // sub-pages of an existing recon and the recon corpus is small today, so not a spike

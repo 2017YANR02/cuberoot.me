@@ -2,12 +2,12 @@
 //
 // `cat` matches the `category` field in catalog.json verbatim. Kept as a
 // data-only module (no lucide icons, no hooks) so the server metadata for
-// /tutorial/c/<cat> can read the same labels the index page renders — otherwise
+// /tutorial-legacy/c/<cat> can read the same labels the index page renders — otherwise
 // the card would say "Chinese Resources" while the tab said "CHS". Icons stay
 // in the index page, keyed by the same `cat`.
 //
 // A category present in catalog.json but missing here gets NO card on the index
-// (the index only renders configured categories that have posts). Its /tutorial/c/
+// (the index only renders configured categories that have posts). Its /tutorial-legacy/c/
 // URL still resolves, and its metadata falls back to the raw catalog name.
 
 export type Tier = 'hero' | 'hero-side' | 'medium' | 'standard' | 'utility';
