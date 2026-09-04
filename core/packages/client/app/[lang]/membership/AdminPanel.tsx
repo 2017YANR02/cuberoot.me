@@ -94,7 +94,7 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated }: Props) {
   async function revoke(wcaId: string) {
     if (!window.confirm(tr({ zh: '撤销 {n} 的会员?', en: 'Revoke membership of {n}?'
     }).replace('{n}', wcaId))) return;
-    try { await adminRevoke(wcaId); setMembers((m) => m.filter((x) => x.wcaId !== wcaId)); }
+    try { await adminRevoke(wcaId); loadList(); }
     catch (e) { window.alert(e instanceof Error ? e.message : String(e)); }
   }
 
@@ -190,15 +190,17 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated }: Props) {
           {members.map((m) => (
             <div key={m.wcaId} className="mem-admin-member">
               <span className="mem-admin-mname">{displayCuberName(m.name, isZh)}</span>
-              <span className="mem-admin-mwca">{m.wcaId}</span>
+              <span className="mem-admin-mwca">{[m.vipId, m.wcaId].filter(Boolean).join(' / ')}</span>
               <span className="mem-admin-mexp">
                 {m.lifetime ? tr({ zh: '永久', en: 'Lifetime' }) : `→ ${fmtDate(m.expiresAt)}`}
                 {!m.active && ` (${tr({ zh: '已过期', en: 'expired'
                 })})`}
               </span>
-              <button className="mem-admin-revoke" onClick={() => void revoke(m.wcaId)} aria-label="revoke">
-                <Trash2 size={13} />
-              </button>
+              {m.active && (
+                <button className="mem-admin-revoke" onClick={() => void revoke(m.wcaId)} aria-label="revoke">
+                  <Trash2 size={13} />
+                </button>
+              )}
             </div>
           ))}
           {members.length === 0 && <div className="mem-admin-empty">{tr({ zh: '暂无会员', en: 'No members yet'

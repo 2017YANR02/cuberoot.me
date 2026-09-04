@@ -40,6 +40,7 @@ export function reconcileVisiblePlan(plans: MembershipPlan[], updated: Membershi
 
 export interface Membership {
   wcaId: string;
+  vipId?: string;
   name: string;
   avatarUrl?: string;
   planSlug: string;
@@ -57,6 +58,7 @@ export interface Membership {
 
 export interface PublicMember {
   wcaId: string;
+  vipId?: string;
   name: string;
   avatarUrl?: string;
   planSlug: string;
