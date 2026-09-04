@@ -3,6 +3,7 @@
 import { useRef, useState, type ChangeEvent } from 'react';
 import { Check, ImagePlus, Trash2 } from 'lucide-react';
 import { tr } from '@/i18n/tr';
+import BoolToggle from '@/components/BoolToggle';
 import { prepareImageUpload, uploadedImageUrl, uploadImageBlob } from '@/lib/image-upload';
 import { setMyProfileIntro, type Membership } from '@/lib/membership-api';
 
@@ -15,8 +16,11 @@ export default function MemberProfileIntro({ membership, onSaved }: {
 }) {
   const initial = membership.profileIntro ?? '';
   const initialImageIds = membership.profileImageIds ?? [];
+  const initialVisibility = membership.showInMemberList !== false;
   const [intro, setIntro] = useState(initial);
   const [imageIds, setImageIds] = useState(initialImageIds);
+  const [showInMemberList, setShowInMemberList] = useState(initialVisibility);
+  const [savedValues, setSavedValues] = useState({ intro: initial, imageIds: initialImageIds, showInMemberList: initialVisibility });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -53,10 +57,12 @@ export default function MemberProfileIntro({ membership, onSaved }: {
     setSaved(false);
     setError(null);
     try {
-      const result = await setMyProfileIntro(intro, imageIds);
+      const result = await setMyProfileIntro(intro, imageIds, showInMemberList);
       const next = result.profileIntro ?? undefined;
       setIntro(next ?? '');
       setImageIds(result.profileImageIds);
+      setShowInMemberList(result.showInMemberList);
+      setSavedValues({ intro: next ?? '', imageIds: result.profileImageIds, showInMemberList: result.showInMemberList });
       onSaved(next, result.profileImageIds);
       setSaved(true);
     } catch (cause) {
@@ -75,6 +81,12 @@ export default function MemberProfileIntro({ membership, onSaved }: {
           en: 'Add optional text and images. Once saved, they appear on your WCA person page and are hidden automatically if your membership expires.',
         })}
       </p>
+      <BoolToggle
+        className="mem-profile-visibility"
+        value={showInMemberList}
+        onChange={(value) => { setShowInMemberList(value); setSaved(false); }}
+        label={tr({ zh: '在首页会员名单中展示我', en: 'Show me in the homepage member list' })}
+      />
       <textarea
         className="mem-profile-input"
         value={intro}
@@ -127,8 +139,9 @@ export default function MemberProfileIntro({ membership, onSaved }: {
           onClick={() => void save()}
           aria-label={tr({ zh: '保存个人资料', en: 'Save personal profile' })}
           disabled={saving || uploading || (
-            intro.trim() === initial.trim()
-            && imageIds.join(',') === initialImageIds.join(',')
+            intro.trim() === savedValues.intro.trim()
+            && imageIds.join(',') === savedValues.imageIds.join(',')
+            && showInMemberList === savedValues.showInMemberList
           )}
         >
           {saved ? <Check size={14} aria-hidden="true" /> : saving ? '…' : tr({ zh: '保存', en: 'Save' })}

@@ -580,9 +580,10 @@ const ENDPOINTS: Ep[] = [
 
   // ---- membership ----
   { d: 'membership', m: 'GET', p: '/v1/membership/plans', g: 'public', zh: '会员套餐', en: 'Membership plans' },
+  { d: 'membership', m: 'GET', p: '/v1/membership/members', g: 'public', c: 'no-store', zh: '首页公开会员名单', en: 'Public homepage member list' },
   { d: 'membership', m: 'GET', p: '/v1/membership/profile/:wcaId', g: 'public', zh: '有效会员的公开个人资料和图片', en: 'Public profile and images for an active member' },
   { d: 'membership', m: 'GET', p: '/v1/membership/me', g: 'login', zh: '我的会员状态', en: 'My membership' },
-  { d: 'membership', m: 'PUT', p: '/v1/membership/me/profile', g: 'login', c: 'no-store', zh: '修改公开个人资料和图片', en: 'Update public personal profile and images' },
+  { d: 'membership', m: 'PUT', p: '/v1/membership/me/profile', g: 'login', c: 'no-store', zh: '修改公开个人资料、图片和首页展示开关', en: 'Update public profile, images, and homepage visibility' },
   { d: 'membership', m: 'PUT', p: '/v1/membership/me/contact', g: 'login', zh: '改联系方式', en: 'Update contact' },
   { d: 'membership', m: 'POST', p: '/v1/membership/orders', g: 'login', zh: '创建订单', en: 'Create order' },
   { d: 'membership', m: 'GET', p: '/v1/membership/orders/:no', g: 'login', zh: '查订单状态', en: 'Order status' },

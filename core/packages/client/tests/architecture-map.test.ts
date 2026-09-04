@@ -36,17 +36,29 @@ describe('architecture map', () => {
   });
 
   it('does not publish technology versions', () => {
-    expect(JSON.stringify(ARCHITECTURE_NODES)).not.toMatch(/(?:React|Next(?:\.js)?|Node|PostgreSQL|Capacitor|Tauri|Hono)\s+v?\d/i);
+    const currentPages = [
+      'core/packages/client/app/[lang]/dev/architecture/page.tsx',
+      'core/packages/client/app/[lang]/dev/architecture/flow/page.tsx',
+      'core/packages/client/app/[lang]/dev/architecture/decisions/page.tsx',
+    ].map((path) => readFileSync(join(REPO_ROOT, path), 'utf8')).join('\n');
+
+    expect(`${JSON.stringify(ARCHITECTURE_NODES)}\n${currentPages}`).not.toMatch(/(?:React|Next(?:\.js)?|Node|PostgreSQL|Capacitor|Tauri|Hono)\s+v?\d/i);
   });
 
   it('keeps the active frp development path documented', () => {
-    const page = readFileSync(join(REPO_ROOT, 'core/packages/client/app/[lang]/dev/architecture/page.tsx'), 'utf8');
     const nextConfig = readFileSync(join(REPO_ROOT, 'core/packages/client/next.config.ts'), 'utf8');
     const nginx = readFileSync(join(REPO_ROOT, 'ops/nginx/www.cuberoot.me.conf'), 'utf8');
+    const map = JSON.stringify(ARCHITECTURE_NODES);
 
     expect(nextConfig).toContain('dev.cuberoot.me');
     expect(nginx).toContain('proxy_pass http://127.0.0.1:7100');
-    expect(page).toContain('frp');
-    expect(page).toContain('127.0.0.1:3000');
+    expect(map).toContain('frp');
+    expect(map).toContain('127.0.0.1:3000');
+  });
+
+  it('keeps the former overview inside the atlas', () => {
+    expect(ARCHITECTURE_NODES.map((node) => node.id)).toEqual(expect.arrayContaining([
+      'delivery', 'development', 'web', 'api', 'database', 'static', 'jobs', 'governance',
+    ]));
   });
 });

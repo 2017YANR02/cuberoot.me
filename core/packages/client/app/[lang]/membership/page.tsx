@@ -43,6 +43,11 @@ const PERK_LABEL: Record<string, { zh: string; en: string }> = {
   thanks: { zh: '致谢名单署名', en: 'Listed in the acknowledgments' },
   platform_follow: { zh: '获得魔方根在各平台的关注', en: 'Get followed by CubeRoot across platforms' },
   vip_group: { zh: '进入魔方根 VIP 群', en: 'Join the CubeRoot VIP group' },
+  group_qr_sharing: { zh: '允许在魔方根群分享二维码', en: 'Share QR codes in CubeRoot groups' },
+  personal_video_review_2_monthly: {
+    zh: '每月可发送 2 把视频给我进行复盘（仅限三阶、二阶、SQ1、金字塔和斜转）',
+    en: 'Send me up to 2 solve videos per month for review (3×3, 2×2, SQ1, Pyraminx, and Skewb only)',
+  },
   lifetime: { zh: '一次付费,永久有效', en: 'Pay once, valid forever' },
   teacher_student_profile_ranking: {
     zh: '老师主页展示学生，学生主页展示老师，排名页展示老师',
@@ -186,6 +191,8 @@ export default function MembershipPage() {
   const universalPerks = intersectPerks(sortedPlans);
   if (!universalPerks.includes('platform_follow')) universalPerks.push('platform_follow');
   if (!universalPerks.includes('vip_group')) universalPerks.push('vip_group');
+  if (!universalPerks.includes('group_qr_sharing')) universalPerks.push('group_qr_sharing');
+  if (!universalPerks.includes('personal_video_review_2_monthly')) universalPerks.push('personal_video_review_2_monthly');
   const universalPerkSet = new Set(universalPerks);
   const enterpriseSharedPerks = intersectPerks(enterprisePlans)
     .filter((perk) => !universalPerkSet.has(perk));

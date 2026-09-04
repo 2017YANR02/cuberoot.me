@@ -57,6 +57,7 @@ const SIM_PUZZLE: Partial<Record<AlgPlayerPuzzle, PuzzleKind>> = {
   pyraminx: 'pyraminx',
   skewb: 'skewb',
   clock: 'clock',
+  ivy: 'ivy',
 };
 
 type PreviewTwister = {
@@ -219,7 +220,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     });
 
     const order = typeof puzzleKind === 'number' ? puzzleKind : undefined;
-    const name = puzzle === 'clock' ? undefined : pickStickering(puzzle, set, 'sim');
+    const name = puzzle === 'clock' || puzzle === 'ivy' ? undefined : pickStickering(puzzle, set, 'sim');
     if (order) {
       (cube as Cube).instancedRenderer.setFaceColorOverride(orientedCubeFaceColors(orientationRef.current));
     }
