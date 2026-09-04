@@ -36,6 +36,16 @@ export interface MusicAdminDraft extends MusicMetadataDraft {
   reviewNote?: string;
 }
 
+export interface MusicStaticOverride {
+  id: string;
+  title?: string;
+  artist?: string;
+  album?: string | null;
+  genre?: string | null;
+  hidden: boolean;
+  updatedAt: string;
+}
+
 const BASE = '/v1/music';
 
 function list(path: string, authenticated = false): Promise<{ tracks: MusicApiTrack[] }> {
@@ -47,6 +57,11 @@ function list(path: string, authenticated = false): Promise<{ tracks: MusicApiTr
 
 export async function listPublicMusicTracks(): Promise<MusicApiTrack[]> {
   return (await list(`${BASE}/tracks`)).tracks;
+}
+
+export async function listMusicStaticOverrides(): Promise<MusicStaticOverride[]> {
+  const response = await fetch(apiUrl(`${BASE}/static-overrides`), { cache: 'no-store' });
+  return (await handleApi<{ tracks: MusicStaticOverride[] }>(response)).tracks;
 }
 
 export async function listMyMusicTracks(): Promise<MusicApiTrack[]> {
@@ -116,6 +131,26 @@ export async function deleteAdminMusicTrack(id: string): Promise<void> {
     method: 'DELETE',
     headers: authHeaders(false),
   }));
+}
+
+export async function updateAdminMusicStaticTrack(
+  id: string,
+  draft: MusicMetadataDraft & { hidden: boolean },
+): Promise<MusicStaticOverride> {
+  const response = await fetch(apiUrl(`${BASE}/admin/static-tracks/${encodeURIComponent(id)}`), {
+    method: 'PATCH',
+    headers: authHeaders(),
+    body: JSON.stringify(draft),
+  });
+  return (await handleApi<{ track: MusicStaticOverride }>(response)).track;
+}
+
+export async function deleteAdminMusicStaticTrack(id: string): Promise<MusicStaticOverride> {
+  const response = await fetch(apiUrl(`${BASE}/admin/static-tracks/${encodeURIComponent(id)}`), {
+    method: 'DELETE',
+    headers: authHeaders(false),
+  });
+  return (await handleApi<{ track: MusicStaticOverride }>(response)).track;
 }
 
 export async function fetchMusicTrackDownload(id: string): Promise<Blob> {

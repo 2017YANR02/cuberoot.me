@@ -449,6 +449,19 @@ CREATE INDEX idx_music_tracks_review ON music_tracks(status, created_at DESC);
 CREATE TRIGGER music_tracks_updated_at BEFORE UPDATE ON music_tracks
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
+-- Administrator metadata overrides and reversible removals for static-manifest tracks.
+CREATE TABLE music_static_overrides (
+  track_id   CHAR(64) PRIMARY KEY CHECK (track_id ~ '^[0-9a-f]{64}$'),
+  title      VARCHAR(300) CHECK (title IS NULL OR (title = BTRIM(title) AND title <> '')),
+  artist     VARCHAR(300),
+  album      VARCHAR(300),
+  genre      VARCHAR(100),
+  hidden     BOOLEAN NOT NULL DEFAULT FALSE,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TRIGGER music_static_overrides_updated_at BEFORE UPDATE ON music_static_overrides
+  FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
+
 -- Privacy-safe latest device summary for administrator account support.
 -- Raw User-Agent, IP address, and persistent device identifiers are not retained.
 CREATE TABLE account_last_devices (
