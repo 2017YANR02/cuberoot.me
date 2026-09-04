@@ -474,6 +474,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'CubeRoot music player with library search, playback queue, cover art, and synced lyrics.',
     },
   },
+  'music/manage': {
+    title: { zh: '音乐审核与管理', en: 'Music Review & Management' },
+    description: {
+      zh: '管理音乐上传、元数据、封面、歌词与发布状态。',
+      en: 'Manage music uploads, metadata, cover art, lyrics, and publication status.',
+    },
+  },
   'mosaic': {
     title: { zh: '马赛克', en: 'Mosaic' },
     description: {
