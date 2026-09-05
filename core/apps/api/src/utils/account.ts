@@ -25,8 +25,8 @@ export {
 } from '@cuberoot/shared/account';
 
 export type Provider = 'email' | 'phone' | 'wca' | 'apple' | 'google' | 'wechat' | 'douyin' | 'alipay' | 'qq';
-export type Channel = 'email' | 'phone';
-export type CodePurpose = 'login' | 'link' | 'password_reset';
+export type Channel = 'email' | 'phone' | 'merge';
+export type CodePurpose = 'login' | 'link' | 'password_reset' | 'account_merge';
 
 export interface AppUser {
   id: number;
@@ -244,7 +244,11 @@ export async function loginWithPassword(email: string, pw: string): Promise<AppU
 // ── 账号 / 身份 ──
 export async function getUserById(id: number): Promise<AppUser | null> {
   const rows = await query<AppUserRow>(
-    'SELECT id, display_name, avatar_url, avatar_source, avatar_preset, wca_id, is_admin FROM app_users WHERE id = ?',
+    `SELECT canonical.id, canonical.display_name, canonical.avatar_url, canonical.avatar_source,
+            canonical.avatar_preset, canonical.wca_id, canonical.is_admin
+     FROM app_users requested
+     JOIN app_users canonical ON canonical.id = COALESCE(requested.merged_into_user_id, requested.id)
+     WHERE requested.id = ?`,
     [id],
   );
   return firstAppUser(rows);
@@ -700,14 +704,14 @@ export async function publicUserIdsForOwnerKeys(
 
   if (wcaKeys.length > 0) {
     const rows = await query<{ id: number | string; wca_id: string }>(
-      `SELECT id, wca_id FROM app_users WHERE wca_id IN (${wcaKeys.map(() => '?').join(',')})`,
+      `SELECT id, wca_id FROM app_users WHERE merged_into_user_id IS NULL AND wca_id IN (${wcaKeys.map(() => '?').join(',')})`,
       wcaKeys,
     );
     for (const row of rows) result.set(row.wca_id, appUserId(row.id));
   }
   if (uidKeys.length > 0) {
     const rows = await query<{ id: number | string }>(
-      `SELECT id FROM app_users WHERE id IN (${uidKeys.map(() => '?').join(',')})`,
+      `SELECT id FROM app_users WHERE merged_into_user_id IS NULL AND id IN (${uidKeys.map(() => '?').join(',')})`,
       uidKeys,
     );
     for (const row of rows) result.set(`u${row.id}`, appUserId(row.id));

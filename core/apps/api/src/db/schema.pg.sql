@@ -420,6 +420,10 @@ CREATE TABLE app_users (
   password_updated_at TIMESTAMPTZ,
   email_notify        BOOLEAN NOT NULL DEFAULT TRUE,
   lang                VARCHAR(8),
+  merged_into_user_id BIGINT REFERENCES app_users(id),
+  CONSTRAINT chk_app_users_not_merged_into_self CHECK (
+    merged_into_user_id IS NULL OR merged_into_user_id <> id
+  ),
   CONSTRAINT chk_app_users_region_code CHECK (
     region_code IS NULL OR (country_iso2 IS NOT NULL AND region_code ~ '^[A-Z0-9-]{1,8}$')
   ),
@@ -445,6 +449,7 @@ CREATE TABLE app_users (
 );
 CREATE UNIQUE INDEX uq_app_users_wca ON app_users(wca_id) WHERE wca_id IS NOT NULL;
 CREATE INDEX idx_app_users_admin ON app_users(id) WHERE is_admin = TRUE;
+CREATE INDEX idx_app_users_merged_into ON app_users(merged_into_user_id) WHERE merged_into_user_id IS NOT NULL;
 CREATE TRIGGER app_users_updated_at BEFORE UPDATE ON app_users
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 

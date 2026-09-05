@@ -7,11 +7,12 @@
 // 两者共用同一套表单原语(CodeFlow / 密码表单 / 错误文案),故同处一文件。
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Loader2, Mail, Smartphone, KeyRound } from 'lucide-react';
+import { Loader2, Mail, Smartphone, KeyRound, Merge } from 'lucide-react';
 import { SiWechat, SiQq, SiAlipay } from 'react-icons/si';
 import { primaryHandle } from '@cuberoot/shared/account';
 import type { MobileAuthProvider } from '@cuberoot/shared/auth/web-session';
 import AppLink from '@/components/AppLink';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { PasswordInput } from '@/components/PasswordInput';
 import { useAuthStore, applySession } from '@/lib/auth-store';
 import { useLang } from '@/i18n/tr';
@@ -21,7 +22,7 @@ import {
   loginPassword, setPassword as apiSetPassword, removePassword,
   linkEmailSend, linkEmailVerify, linkPhoneSend, linkPhoneVerify,
   unlinkIdentity, fetchIdentities, fetchAuthProviders, loginGoogle, linkGoogle, replaceEmailVerify, replacePhoneVerify,
-  deleteAccount,
+  deleteAccount, issueAccountMergeCode, mergeAccount,
   type Identity, type AuthProviders, type SocialProvider,
 } from '@/lib/account-api';
 import { requestGoogleAssertion } from '@/lib/google-auth';
@@ -144,6 +145,12 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
   if (m.includes('account already has an email')) return t('一个账号只能绑定一个邮箱,请先解绑现有邮箱', 'An account can have only one email — unlink the current one first');
   if (m.includes('account already has a phone')) return t('一个账号只能绑定一个手机号,请先解绑现有手机号', 'An account can have only one phone number — unlink the current one first');
   if (m.includes('already linked')) return t('该方式已绑定到另一个账号', 'Already linked to another account');
+  if (m.includes('credential_conflict')) return t('两个账号存在重复登录凭据,请先在其中一个账号解绑同类方式或移除密码', 'The accounts have duplicate sign-in credentials. Unlink the duplicate type or remove one password first');
+  if (m.includes('wca_conflict')) return t('两个账号绑定了不同的 WCA ID,不能自动合并', 'The accounts have different WCA IDs and cannot be merged automatically');
+  if (m.includes('linked_data')) return t('待合并账号含有需要人工确认归属的数据,请联系管理员', 'The account contains data that needs an administrator to review');
+  if (m.includes('data_conflict')) return t('两个账号存在无法自动合并的重复数据,原账号均未改动', 'The accounts contain conflicting data; neither account was changed');
+  if (m.includes('already_merged')) return t('其中一个账号已经合并过', 'One of these accounts has already been merged');
+  if (m.includes('invalid merge code')) return t('合并码格式不正确', 'Invalid merge code');
   if (m.includes('invalid email')) return t('邮箱格式不正确', 'Invalid email address');
   // 只支持中国大陆号(sms.ts 走的是国内通道)。旧文案「手机号格式不正确」对一个合法的
   // 美国号码是句假话,人家会以为自己填错了。说清楚不支持,并指路还能用的方式。
@@ -858,6 +865,10 @@ export function AccountPanel() {
   const googleOn = !!(avail.googleClientId && avail.googleRelayUrl);
   const [linkingGoogle, setLinkingGoogle] = useState(false);
   const [linkingSocial, setLinkingSocial] = useState<SocialProvider | null>(null);
+  const [mergeMode, setMergeMode] = useState<'keep' | 'move' | null>(null);
+  const [mergeCode, setMergeCode] = useState('');
+  const [generatedMergeCode, setGeneratedMergeCode] = useState('');
+  const [mergeBusy, setMergeBusy] = useState(false);
 
   const reload = useCallback(async () => {
     const acct = await fetchIdentities();
@@ -929,6 +940,34 @@ export function AccountPanel() {
     } catch (e) {
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
       setLinkingSocial(null);
+    }
+  };
+
+  const generateMergeCode = async () => {
+    setError(null);
+    setMergeBusy(true);
+    try {
+      setGeneratedMergeCode((await issueAccountMergeCode()).code);
+    } catch (e) {
+      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
+    } finally {
+      setMergeBusy(false);
+    }
+  };
+
+  const submitMerge = async () => {
+    setError(null);
+    setMergeBusy(true);
+    try {
+      const result = await mergeAccount(mergeCode.trim());
+      applySession(result.token, result.user);
+      setMergeMode(null);
+      setMergeCode('');
+      await reload();
+    } catch (e) {
+      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
+    } finally {
+      setMergeBusy(false);
     }
   };
 
@@ -1130,6 +1169,50 @@ export function AccountPanel() {
           onDone={() => { setPwAction(null); void reload(); }}
           onCancel={() => setPwAction(null)}
         />
+      )}
+
+      <div className="auth-linklist">
+        <div className="auth-idrow">
+          <span className="auth-idicon"><Merge size={ICON} /></span>
+          <span className="auth-idprov">{t('合并账号', 'Merge accounts')}</span>
+          <div className="auth-idactions">
+            <button type="button" className="auth-link" onClick={() => setMergeMode((mode) => mode ? null : 'keep')}>
+              {mergeMode ? t('收起', 'Close') : t('打开', 'Open')}
+            </button>
+          </div>
+        </div>
+      </div>
+      {mergeMode && (
+        <div className="auth-flow">
+          <p className="auth-hint">
+            {t('合并后不能撤销。登录方式和个人数据会进入保留账号；遇到重复或归属不明确的数据会停止,不会改动任何账号。',
+              'Merging cannot be undone. Sign-in methods and personal data move to the kept account; conflicts stop the merge without changing either account.')}
+          </p>
+          <PillToggle
+            value={mergeMode === 'keep'}
+            onChange={(keep) => setMergeMode(keep ? 'keep' : 'move')}
+            onLabel={t('保留当前账号', 'Keep this account')}
+            offLabel={t('合并当前账号', 'Merge this account')}
+            ariaLabel={t('选择合并方向', 'Choose merge direction')}
+          />
+          {mergeMode === 'keep' ? (
+            <>
+              <p className="auth-hint">{t('生成合并码,再登录另一个账号输入。合并后保留当前账号。', 'Generate a code, then sign in to the other account and enter it. This account will be kept.')}</p>
+              {generatedMergeCode && <input className="auth-input" readOnly value={generatedMergeCode} aria-label={t('合并码', 'Merge code')} />}
+              <button type="button" className="auth-primary" disabled={mergeBusy} onClick={() => void generateMergeCode()}>
+                {mergeBusy ? <Loader2 size={ICON} className="auth-spin" /> : t('生成合并码', 'Generate merge code')}
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="auth-hint">{t('输入保留账号生成的合并码。确认后当前账号会并入对方。', 'Enter the code generated by the account you want to keep. This account will be merged into it.')}</p>
+              <input className="auth-input" value={mergeCode} onChange={(event) => setMergeCode(event.target.value)} placeholder="330-123456" autoComplete="off" aria-label={t('合并码', 'Merge code')} />
+              <button type="button" className="auth-primary" disabled={mergeBusy || !mergeCode.trim()} onClick={() => void submitMerge()}>
+                {mergeBusy ? <Loader2 size={ICON} className="auth-spin" /> : t('确认合并当前账号', 'Merge this account')}
+              </button>
+            </>
+          )}
+        </div>
       )}
     </>
   );
