@@ -31,15 +31,6 @@ const catalog = {
 };
 
 const labels: TimerWcaDifficultyLabels = {
-  colorMode: { cn: 'CN', dual: 'Dual', quad: 'Quad', single: 'Single' },
-  colorName: (color) => ({
-    B: 'Blue',
-    G: 'Green',
-    O: 'Orange',
-    R: 'Red',
-    W: 'White',
-    Y: 'Yellow',
-  })[color],
   colorSubsetAriaLabel: 'Color subset',
   difficulty: 'Difficulty',
   difficultyAriaLabel: 'Difficulty switch',
@@ -77,6 +68,7 @@ function Harness({ sourceAdapter }: { sourceAdapter: TimerWcaDifficultyDataAdapt
   return createElement('div', null,
     createElement(TimerWcaDifficultyConfig, {
       adapter: sourceAdapter,
+      language: 'en',
       labels,
       onChange: (patch: Partial<TimerWcaDifficultySettings>) => (
         setSettings((current) => ({ ...current, ...patch }))
@@ -122,17 +114,22 @@ describe('shared WCA difficulty UI', () => {
     const method = host.querySelector<HTMLSelectElement>('select[aria-label="Method"]')!;
     expect([...method.options].map((option) => option.value)).toContain('length');
     expect(host.querySelector('select[aria-label="Stage"]')).not.toBeNull();
-    const colors = host.querySelector<HTMLSelectElement>('select[aria-label="Color subset"]')!;
-    expect(colors.selectedOptions[0]?.textContent).toBe('CN');
-    expect(colors.textContent).not.toContain('BGORWY');
+    const colors = host.querySelector<HTMLButtonElement>('button.subset-picker-mode')!;
+    expect(colors.getAttribute('aria-label')).toBe('Color subset: CN Color-neutral, all six');
+    expect(host.querySelector('select[aria-label="Color subset"]')).toBeNull();
     const stage = host.querySelector<HTMLSelectElement>('select[aria-label="Stage"]')!;
     const merge = host.querySelector<HTMLButtonElement>(
       '[role="switch"][aria-label="Merge switch"]',
     )!;
 
     await act(async () => {
-      colors.value = 'WY';
-      colors.dispatchEvent(new Event('change', { bubbles: true }));
+      colors.click();
+    });
+    const whiteYellow = host.querySelector<HTMLButtonElement>(
+      '.subset-picker-panel button[aria-label="White+Yellow"]',
+    )!;
+    await act(async () => {
+      whiteYellow.click();
       stage.value = 'xcross';
       stage.dispatchEvent(new Event('change', { bubbles: true }));
       merge.click();
@@ -144,8 +141,7 @@ describe('shared WCA difficulty UI', () => {
       wcaDiffMerged: false,
       wcaDiffStage: 'xcross',
     }));
-    expect(colors.selectedOptions[0]?.textContent).toBe('Dual · White/Yellow');
-    expect(colors.selectedOptions[0]?.textContent).not.toContain('WY');
+    expect(colors.getAttribute('aria-label')).toBe('Color subset: Dual White+Yellow');
 
     await act(async () => {
       method.value = 'length';
@@ -155,7 +151,7 @@ describe('shared WCA difficulty UI', () => {
       JSON.parse(host.querySelector('output')!.textContent!).wcaDiffVariant,
     ).toBe('length'));
     expect(host.querySelector('select[aria-label="Stage"]')).toBeNull();
-    expect(host.querySelector('select[aria-label="Color subset"]')).toBeNull();
+    expect(host.querySelector('button.subset-picker-mode')).toBeNull();
 
     const min = host.querySelector<HTMLInputElement>(
       'input[aria-label="Scramble length range — min"]',
@@ -179,6 +175,7 @@ describe('shared WCA difficulty UI', () => {
     const onChange = vi.fn();
     await act(async () => root.render(createElement(TimerWcaDifficultyConfig, {
       adapter: sourceAdapter,
+      language: 'en',
       labels,
       onChange,
       settings: {
@@ -209,6 +206,7 @@ describe('shared WCA difficulty UI', () => {
     const onChange = vi.fn();
     await act(async () => root.render(createElement(TimerWcaDifficultyConfig, {
       adapter: adapter(),
+      language: 'en',
       labels,
       onChange,
       settings: {
