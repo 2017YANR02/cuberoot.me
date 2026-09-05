@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Check, Copy, Database, Hammer, UploadCloud, Archive, ChevronDown, Terminal, Sparkles, Plus, Pencil, Trash2, X } from 'lucide-react';
-import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
+import { useIsAdmin } from '@/lib/auth-store';
 import { createCommand, updateCommand, deleteCommand, listCommands, type OpsCommandInput } from '@/lib/ops-api';
 import './ops.css';
 import { tr } from '@/i18n/tr';
@@ -109,74 +109,83 @@ function OpCard({ op, lang, isAdmin, onEdit, onDelete }: { op: OpCommand; lang: 
   const CatIcon = cat.Icon;
   const title = lang === 'zh' ? op.title_zh : op.title_en;
   const desc = lang === 'zh' ? op.desc_zh : op.desc_en;
+  const isPrompt = op.category === 'prompt';
+  const Container = isPrompt ? 'details' : 'article';
   return (
-    <article className="ops-card" data-cat={op.category}>
-      <div className="ops-card-rail" aria-hidden="true" />
-      <header className="ops-card-head">
-        <div className="ops-card-cat">
-          <CatIcon size={14} strokeWidth={2} />
-          <span>{cat[lang]}</span>
-        </div>
-        <div className="ops-card-head-right">
-          {op.cwd && (
-            <div className="ops-card-cwd" title="CWD">
-              <Terminal size={12} strokeWidth={2} />
-              <span>{op.cwd}</span>
-            </div>
-          )}
-          {isAdmin && (
-            <>
-              <button type="button" className="ops-admin-btn" onClick={onEdit} title={tr({ zh: '编辑', en: 'Edit'
-            })}>
-                <Pencil size={13} />
-              </button>
-              <button type="button" className="ops-admin-btn ops-admin-btn-danger" onClick={onDelete} title={tr({ zh: '删除', en: 'Delete'
-            })}>
-                <Trash2 size={13} />
-              </button>
-            </>
-          )}
-        </div>
-      </header>
-      <h2 className="ops-card-title">{title}</h2>
-      <div className="ops-card-chips">
-        {op.chips.map((c, i) => (
-          <span key={i} className="ops-chip">{c[lang]}</span>
-        ))}
-      </div>
-      <p className="ops-card-desc">{desc}</p>
-      <CodeBlock cmd={op.cmd} idx={`${op.id}-main`} mode={op.category === 'prompt' ? 'prompt' : 'shell'} />
-      {op.variants && op.variants.length > 0 && (
-        <div className="ops-card-variants">
-          <button
-            type="button"
-            className="ops-variants-toggle"
-            onClick={() => setVariantsOpen((o) => !o)}
-            aria-expanded={variantsOpen}
-          >
-            <ChevronDown size={14} className={variantsOpen ? 'ops-chev-open' : ''} />
-            <span>
-              {lang === 'zh' ? `变体 (${op.variants.length})` : `Variants (${op.variants.length})`}
-            </span>
-          </button>
-          {variantsOpen && (
-            <div className="ops-variants-body">
-              {op.variants.map((v, i) => (
-                <VariantBlock key={i} v={v} lang={lang} idx={`${op.id}-v${i}`} mode={op.category === 'prompt' ? 'prompt' : 'shell'} />
-              ))}
-            </div>
-          )}
-        </div>
+    <Container className="ops-card" data-cat={op.category}>
+      {isPrompt && (
+        <summary className="ops-prompt-summary">
+          <ChevronDown size={18} aria-hidden="true" />
+          <h2 className="ops-card-title">{title}</h2>
+        </summary>
       )}
-    </article>
+      <div className={isPrompt ? 'ops-prompt-content' : undefined}>
+        <div className="ops-card-rail" aria-hidden="true" />
+        <header className="ops-card-head">
+          <div className="ops-card-cat">
+            <CatIcon size={14} strokeWidth={2} />
+            <span>{cat[lang]}</span>
+          </div>
+          <div className="ops-card-head-right">
+            {op.cwd && (
+              <div className="ops-card-cwd" title="CWD">
+                <Terminal size={12} strokeWidth={2} />
+                <span>{op.cwd}</span>
+              </div>
+            )}
+            {isAdmin && (
+              <>
+                <button type="button" className="ops-admin-btn" onClick={onEdit} title={tr({ zh: '编辑', en: 'Edit'
+              })}>
+                  <Pencil size={13} />
+                </button>
+                <button type="button" className="ops-admin-btn ops-admin-btn-danger" onClick={onDelete} title={tr({ zh: '删除', en: 'Delete'
+              })}>
+                  <Trash2 size={13} />
+                </button>
+              </>
+            )}
+          </div>
+        </header>
+        {!isPrompt && <h2 className="ops-card-title">{title}</h2>}
+        <div className="ops-card-chips">
+          {op.chips.map((c, i) => (
+            <span key={i} className="ops-chip">{c[lang]}</span>
+          ))}
+        </div>
+        <p className="ops-card-desc">{desc}</p>
+        <CodeBlock cmd={op.cmd} idx={`${op.id}-main`} mode={op.category === 'prompt' ? 'prompt' : 'shell'} />
+        {op.variants && op.variants.length > 0 && (
+          <div className="ops-card-variants">
+            <button
+              type="button"
+              className="ops-variants-toggle"
+              onClick={() => setVariantsOpen((o) => !o)}
+              aria-expanded={variantsOpen}
+            >
+              <ChevronDown size={14} className={variantsOpen ? 'ops-chev-open' : ''} />
+              <span>
+                {lang === 'zh' ? `变体 (${op.variants.length})` : `Variants (${op.variants.length})`}
+              </span>
+            </button>
+            {variantsOpen && (
+              <div className="ops-variants-body">
+                {op.variants.map((v, i) => (
+                  <VariantBlock key={i} v={v} lang={lang} idx={`${op.id}-v${i}`} mode={op.category === 'prompt' ? 'prompt' : 'shell'} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Container>
   );
 }
 
 export default function OpsPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  const user = useAuthStore((s) => s.user);
-  const isAdmin = hasAdminAccess(user);
+  const isAdmin = useIsAdmin();
   const [filter, setFilter] = useState<CategoryId | 'all'>('all');
   const [commands, setCommands] = useState<OpCommand[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
