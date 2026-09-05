@@ -38,8 +38,10 @@ async function freshSettings() {
 it('排名范围兼容旧总开关，并在重新加载后保留全部关闭', async () => {
   installStorage({ [KEY]: JSON.stringify({ showRankBadge: false }) });
   const settings = await freshSettings();
-  expect(settings.getSettings().showRankBadge).toBe(false);
-  expect(settings.getSettings().rankScopes).toEqual(['PR', 'NR', 'CR', 'WR']);
+  expect(settings.getSettings()).not.toHaveProperty('showRankBadge');
+  expect(settings.getSettings().rankScopes).toEqual([]);
+  settings.updateSettings({ rankScopes: ['PR'] });
+  expect((await freshSettings()).getSettings().rankScopes).toEqual(['PR']);
   settings.updateSettings({ rankScopes: [] });
   expect((await freshSettings()).getSettings().rankScopes).toEqual([]);
   vi.unstubAllGlobals();

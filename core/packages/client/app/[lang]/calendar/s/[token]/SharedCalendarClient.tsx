@@ -46,6 +46,7 @@ export default function SharedCalendarClient() {
   const [data, setData] = useState<PublicCalendar | null>(null);
   const [error, setError] = useState('');
   const [view, setView] = useState<ViewKey>('dayGridMonth');
+  // allow-hydration-volatile-state: every range-dependent calendar subtree is gated by mounted.
   const [range, setRange] = useState<GridRange>(() => ({
     start: Date.now() - 30 * DAY, end: Date.now() + 30 * DAY, anchor: Date.now(),
   }));

@@ -145,8 +145,8 @@ async function randomThreeByThreeScramble(): Promise<string> {
 // URL state (nuqs, replace semantics — filters/scramble shouldn't pile history).
 // `scramble` keeps the original `_`-for-space encoding; `colors` keeps the compact
 // per-color char string. Parsers carry no `.withDefault` so an absent param reads
-// back as null — the useState initializers below preserve the original
-// URL > localStorage > hardcoded-default priority. `worker` is read-only.
+// back as null. The first render uses URL/default values so SSR is reproducible;
+// an effect restores localStorage afterwards. `worker` is read-only.
 const STAGE_VALUES: Stage[] = ['cross', 'xcross', 'xxcross', 'xxxcross'];
 const VARIANT_VALUES: Variant[] = ['std', 'eo', 'pair', 'pseudo', 'pseudo_pair'];
 const URL_KEYS = {
@@ -215,24 +215,16 @@ function AnalyzePageInner() {
   const [howfar, setHowfar] = useState<Howfar>(() => {
     const urlV = initUrlRef.current.howfar;
     if (urlV === 1 || urlV === 2 || urlV === 3 || urlV === 4) return urlV;
-    if (typeof localStorage === 'undefined') return 4;
-    const v = Number(localStorage.getItem('analyze.howfar'));
-    return v === 1 || v === 2 || v === 3 || v === 4 ? v : 4;
+    return 4;
   });
   const [stage, setStage] = useState<Stage>(() => {
     const urlV = initUrlRef.current.stage;
     if (urlV) return urlV;
-    if (typeof localStorage === 'undefined') return 'cross';
-    const v = localStorage.getItem('analyze.stage');
-    if (v && (STAGE_VALUES as string[]).includes(v)) return v as Stage;
     return 'cross';
   });
   const [variant, setVariant] = useState<Variant>(() => {
     const urlV = initUrlRef.current.variant;
     if (urlV) return urlV;
-    if (typeof localStorage === 'undefined') return 'std';
-    const v = localStorage.getItem('analyze.variant');
-    if (v && (VARIANT_VALUES as string[]).includes(v)) return v as Variant;
     return 'std';
   });
   const [colors, setColors] = useState<Record<CrossColor, boolean>>(() => {
@@ -241,23 +233,41 @@ function AnalyzePageInner() {
       const set = new Set(Array.from(urlColors.toLowerCase()).map((ch) => CHAR_COLOR[ch]).filter(Boolean) as CrossColor[]);
       return Object.fromEntries(CROSS_COLORS.map((c) => [c, set.has(c)])) as Record<CrossColor, boolean>;
     }
-    if (typeof localStorage !== 'undefined') {
+    return Object.fromEntries(CROSS_COLORS.map((c) => [c, true])) as Record<CrossColor, boolean>;
+  });
+  const [preferencesReady, setPreferencesReady] = useState(false);
+
+  useEffect(() => {
+    const initial = initUrlRef.current;
+    if (initial.howfar == null) {
+      const value = Number(localStorage.getItem('analyze.howfar'));
+      if (value === 1 || value === 2 || value === 3 || value === 4) setHowfar(value);
+    }
+    if (!initial.stage) {
+      const value = localStorage.getItem('analyze.stage');
+      if (value && (STAGE_VALUES as string[]).includes(value)) setStage(value as Stage);
+    }
+    if (!initial.variant) {
+      const value = localStorage.getItem('analyze.variant');
+      if (value && (VARIANT_VALUES as string[]).includes(value)) setVariant(value as Variant);
+    }
+    if (initial.colors === null) {
       try {
         const saved = JSON.parse(localStorage.getItem('analyze.colors') || 'null');
         if (saved && typeof saved === 'object') {
-          const out = Object.fromEntries(CROSS_COLORS.map((c) => [c, true])) as Record<CrossColor, boolean>;
-          for (const c of CROSS_COLORS) if (typeof saved[c] === 'boolean') out[c] = saved[c];
-          return out;
+          const next = Object.fromEntries(CROSS_COLORS.map((c) => [c, true])) as Record<CrossColor, boolean>;
+          for (const c of CROSS_COLORS) if (typeof saved[c] === 'boolean') next[c] = saved[c];
+          setColors(next);
         }
       } catch { /* corrupt entry */ }
     }
-    return Object.fromEntries(CROSS_COLORS.map((c) => [c, true])) as Record<CrossColor, boolean>;
-  });
+    setPreferencesReady(true);
+  }, []);
 
-  useEffect(() => { persistItem('analyze.howfar', String(howfar)); }, [howfar]);
-  useEffect(() => { persistItem('analyze.stage', stage); }, [stage]);
-  useEffect(() => { persistItem('analyze.variant', variant); }, [variant]);
-  useEffect(() => { persistItem('analyze.colors', JSON.stringify(colors)); }, [colors]);
+  useEffect(() => { if (preferencesReady) persistItem('analyze.howfar', String(howfar)); }, [howfar, preferencesReady]);
+  useEffect(() => { if (preferencesReady) persistItem('analyze.stage', stage); }, [stage, preferencesReady]);
+  useEffect(() => { if (preferencesReady) persistItem('analyze.variant', variant); }, [variant, preferencesReady]);
+  useEffect(() => { if (preferencesReady) persistItem('analyze.colors', JSON.stringify(colors)); }, [colors, preferencesReady]);
 
   // Sync URL params (replace, not push). nuqs omits keys set to null.
   useEffect(() => {
@@ -282,8 +292,9 @@ function AnalyzePageInner() {
 
   // 打乱来源综合配置(复用计时器 WcaSourceConfig UI + wca_pool 引擎;analyzer 自持一份,
   // 独立于计时器设置,存 localStorage)。抽题走 nextWca(spec),来源元数据走 wcaMetaFor()。
-  const [wcaSrc, setWcaSrc] = useState<WcaSourceSettings>(() => loadWcaSrc());
-  useEffect(() => { persistItem(WCA_SRC_KEY, JSON.stringify(wcaSrc)); }, [wcaSrc]);
+  const [wcaSrc, setWcaSrc] = useState<WcaSourceSettings>(() => ({ ...DEFAULT_WCA_SRC }));
+  useEffect(() => { setWcaSrc(loadWcaSrc()); }, []);
+  useEffect(() => { if (preferencesReady) persistItem(WCA_SRC_KEY, JSON.stringify(wcaSrc)); }, [preferencesReady, wcaSrc]);
   const patchWcaSrc = useCallback((patch: Partial<WcaSourceSettings>) => setWcaSrc((p) => ({ ...p, ...patch })), []);
   const [wcaMeta, setWcaMeta] = useState<WcaScrambleMeta | null>(null);
   const [wcaLoading, setWcaLoading] = useState(false);

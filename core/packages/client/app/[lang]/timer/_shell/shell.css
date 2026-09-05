@@ -156,7 +156,6 @@
   font-weight: 600;
   line-height: 1.4;
   white-space: nowrap;
-  cursor: pointer;
 }
 /* WR12/AsR9/NR9 segments: center-align text + any inline RecordBadge, even gaps
    around the "/" separators. 字体继承 .rank-pill 的 Inter(已非 mono). */
@@ -169,13 +168,6 @@
 .rank-chip-inner { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 3px; }
 .rank-chip-sep { color: var(--faint-foreground); font-weight: 400; }
 .rank-chip-inner .record-badge { font-size: 1em; padding: 0 4px; }
-.rank-detail {
-  color: var(--muted-foreground);
-  font-size: 0.72em;
-  line-height: 1.4;
-  max-width: 24em;
-  text-align: center;
-}
 /* PB celebration toast — floating overlay. MUST be position:fixed so it stays
    out of the .timer-shell grid (desktop), otherwise it auto-places as an
    unnamed grid item and stretches the topbar row, shifting the digits down. */

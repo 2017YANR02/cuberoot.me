@@ -327,12 +327,21 @@ wcaStatsExtraRoutes.get('/wca/pr-streaks', async (c) => {
   const offset = (page - 1) * size;
   const rows = await query<{
     wca_id: string; name: string; country_id: string; iso2: string | null; streak: number; rank: string;
+    is_ongoing: boolean;
     start_comp_id: string | null; start_comp_name: string | null;
     end_comp_id: string | null; end_comp_name: string | null;
   }>(
     `SELECT s.wca_id, p.name, s.country_id, co.iso2, s.streak,
             s.start_comp_id, start_comp.name AS start_comp_name,
             s.end_comp_id, end_comp.name AS end_comp_name,
+            COALESCE(s.end_comp_id = (
+              SELECT pcs.comp_id
+                FROM wca_fs_person_comp_solves pcs
+                JOIN wca_competitions latest_comp ON latest_comp.id = pcs.comp_id
+               WHERE pcs.wca_id = s.wca_id
+               ORDER BY latest_comp.start_date DESC, latest_comp.id DESC
+               LIMIT 1
+            ), FALSE) AS is_ongoing,
             RANK() OVER (ORDER BY s.streak DESC) AS rank
        FROM wca_pr_streaks s
        JOIN wca_persons p ON p.wca_id = s.wca_id
@@ -359,6 +368,7 @@ wcaStatsExtraRoutes.get('/wca/pr-streaks', async (c) => {
       startCompName: row.start_comp_name,
       endCompId: row.end_comp_id,
       endCompName: row.end_comp_name,
+      isOngoing: row.is_ongoing,
     })),
   });
 });

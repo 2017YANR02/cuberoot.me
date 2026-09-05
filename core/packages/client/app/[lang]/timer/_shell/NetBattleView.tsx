@@ -171,7 +171,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   // ── 大厅表单 ────────────────────────────────────────────────
   // 访客自由昵称(未选 WCA 选手时用)。同步读 localStorage 而不是挂 effect 补:扫码进来
   // 的自动加入在首个 effect pass 就要拿到昵称,effect 补的值那时还没写进 identity。
-  // NetBattleView 只在 TimerShell 的 mounted 门控后渲染(服务端永远是 SoloView),
+  // allow-hydration-volatile-state: NetBattleView 只在 TimerShell 的 mounted 门控后渲染(服务端永远是 SoloView),
   // 这里读 localStorage 不会造成 hydration 错配;window 判空只是防守。
   const [name, setName] = useState(() => {
     if (typeof window === 'undefined') return '';

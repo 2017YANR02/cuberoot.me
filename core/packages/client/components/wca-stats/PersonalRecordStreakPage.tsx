@@ -28,6 +28,7 @@ interface Row {
   startCompName: string | null;
   endCompId: string | null;
   endCompName: string | null;
+  isOngoing: boolean;
 }
 
 interface Data {
@@ -53,7 +54,7 @@ function PersonalRecordStreakPageInner() {
 
   useEffect(() => {
     const controller = new AbortController();
-    const params = new URLSearchParams({ page: String(page), size: String(size) });
+    const params = new URLSearchParams({ v: '2', page: String(page), size: String(size) });
     if (country) params.set('country', country);
     setLoading(true);
     setError(false);
@@ -106,7 +107,9 @@ function PersonalRecordStreakPageInner() {
                   <th>{tr({ zh: '选手', en: 'Person' })}</th>
                   <th>{tr({ zh: '起始比赛', en: 'Started at' })}</th>
                   <th>{tr({ zh: '结束比赛', en: 'Ended at' })}</th>
-                  <th>{tr({ zh: '国家', en: 'Country' })}</th>
+                  <th title={tr({ zh: '结束比赛是该选手目前最后一场比赛', en: "The streak ends at the person's latest competition" })}>
+                    {tr({ zh: '进行中', en: 'Ongoing' })}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -114,13 +117,13 @@ function PersonalRecordStreakPageInner() {
                   <tr key={row.wcaId}>
                     <td className="wse-rank-col">{row.rank}</td>
                     <td className="wse-value-col">{row.streak}</td>
-                    <td><PersonLink wcaId={row.wcaId} name={row.name} isZh={isZh} /></td>
-                    <td>{row.startCompId ? <AppLink {...compLinkProps(row.startCompId)}><CompCell compId={row.startCompId} compName={row.startCompName} isZh={isZh} date={null} /></AppLink> : '—'}</td>
-                    <td>{row.endCompId ? <AppLink {...compLinkProps(row.endCompId)}><CompCell compId={row.endCompId} compName={row.endCompName} isZh={isZh} date={null} /></AppLink> : '—'}</td>
                     <td>
                       {row.iso2 && <Flag iso2={row.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-                      {row.countryId}
+                      <PersonLink wcaId={row.wcaId} name={row.name} isZh={isZh} />
                     </td>
+                    <td>{row.startCompId ? <AppLink {...compLinkProps(row.startCompId)}><CompCell compId={row.startCompId} compName={row.startCompName} isZh={isZh} date={null} /></AppLink> : '—'}</td>
+                    <td>{row.endCompId ? <AppLink {...compLinkProps(row.endCompId)}><CompCell compId={row.endCompId} compName={row.endCompName} isZh={isZh} date={null} /></AppLink> : '—'}</td>
+                    <td>{row.isOngoing ? tr({ zh: '是', en: 'Yes' }) : '—'}</td>
                   </tr>
                 ))}
               </tbody>

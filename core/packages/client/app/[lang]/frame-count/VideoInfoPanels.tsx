@@ -242,6 +242,7 @@ export function DecodeErrorCard({
   const codecInfo = parseCodec(codec);
 
   // 默认 CPU 解码 (稳妥). 用户勾选时切 GPU 硬解 -- RTX 40/50 系才稳, 30 及以下常失败.
+  // allow-hydration-volatile-state: this card exists only after a client-selected File fails decoding.
   const [gpuDecode, setGpuDecode] = useState(() => {
     try { return localStorage.getItem(GPU_DECODE_STORAGE_KEY) === '1'; } catch { return false; }
   });

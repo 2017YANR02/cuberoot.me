@@ -71,7 +71,6 @@ const EXPECTED_FIELDS_BY_CATEGORY = {
     'settings.appearance.cube-3d',
     'settings.appearance.scramble-click-action',
     'settings.appearance.hide-all-while-running',
-    'settings.appearance.show-ranks',
     'settings.appearance.rank-scopes',
     'settings.appearance.ranking-region',
   ],
@@ -132,13 +131,13 @@ const BASE_CONTEXT: TimerSettingFieldContext = {
 };
 
 describe('canonical timer settings surface manifest', () => {
-  it('locks all eight categories, all 65 reachable fields/commands, and their order', () => {
+  it('locks all eight categories, all 64 reachable fields/commands, and their order', () => {
     expect(TIMER_SETTING_CATEGORY_IDS).toEqual([
       'timer', 'smart-cube', 'scramble', 'training', 'appearance', 'sound', 'data', 'advanced',
     ]);
     expect(TIMER_SETTING_CATEGORY_CONTRACTS.map((category) => category.id))
       .toEqual(TIMER_SETTING_CATEGORY_IDS);
-    expect(new Set(TIMER_SETTING_FIELD_IDS).size).toBe(65);
+    expect(new Set(TIMER_SETTING_FIELD_IDS).size).toBe(64);
     expect(TIMER_SETTING_FIELD_IDS).toEqual(Object.values(EXPECTED_FIELDS_BY_CATEGORY).flat());
     for (const category of TIMER_SETTING_CATEGORY_IDS) {
       expect(TIMER_SETTING_FIELD_CONTRACTS

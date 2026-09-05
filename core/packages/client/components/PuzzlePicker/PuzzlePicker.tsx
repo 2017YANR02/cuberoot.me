@@ -20,7 +20,7 @@
  * catalog 时传 groups;组件仍统一负责触发器、图标 + 名称、弹层、关闭/焦点与窄屏布局。
  */
 
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useParams } from 'next/navigation';
 import { ChevronDown, Boxes } from 'lucide-react';
 import AppLink from '../AppLink';
@@ -71,6 +71,8 @@ interface Props {
   showTriggerIcon?: boolean;
   /** 是否显示每项的图标/文字徽标;纯文本 catalog 可关闭。 */
   showItemIcons?: boolean;
+  /** 菜单分组后的附加控件。 */
+  popupFooter?: ReactNode;
   /** 计时表面用:让整个弹层都跳过空格/指针计时手势。 */
   dataNoTimer?: boolean;
 }
@@ -80,7 +82,7 @@ const nameOf = (e: CstimerEvent, isZh: boolean): string => [e.en, e.zh][Number(i
 
 export default function PuzzlePicker({
   isZh = false, selectedEvent, selectedEvents, wcaEvents, availableEvents, onSelect, onToggle, linkFor,
-  groups: suppliedGroups, placeholderLabel, showTriggerIcon = true, showItemIcons = true, dataNoTimer,
+  groups: suppliedGroups, placeholderLabel, showTriggerIcon = true, showItemIcons = true, popupFooter, dataNoTimer,
 }: Props) {
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
@@ -231,6 +233,7 @@ export default function PuzzlePicker({
               </div>
             </div>
           ))}
+          {popupFooter && <div className="pp-footer">{popupFooter}</div>}
         </div>
       )}
     </div>
