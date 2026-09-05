@@ -1,8 +1,8 @@
 'use client';
-// 纪录 tab:历史世界 / 洲际 / 国家纪录,合并为单表 —— 列头只出现一次且 sticky 悬浮顶部,
-// 三档标题(世界/洲际/国家)作为表内分组行。
-// 某条成绩进某档 = 它的 regional_single_record 或 regional_average_record 落在该档的标记集合。
-//   单次列仅当该成绩的单次标记属于本档才显示;平均列同理。按项目分组,组内按比赛日期倒序。
+// 纪录 tab:历史世界 / 洲际 / 国家 / 个人纪录,合并为单表 —— 列头只出现一次且 sticky 悬浮顶部,
+// 四档标题(世界/洲际/国家/个人)作为表内分组行。
+// 区域档由 regional markers 判定；个人档复用与顶部 PR 计数相同的 computePrRank。
+// 单次、平均分别命中才显示；按项目分组，组内按比赛日期倒序。
 
 import { useMemo } from 'react';
 import Link from '@/components/AppLink';
@@ -18,6 +18,7 @@ import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
 import { ROUND_ORDER, roundLabel, roundClass } from '@/lib/wca-round-meta';
 import { useT } from '@/hooks/useT';
 import { wcaResultRowKey, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
+import { computePrRank, type RankFlag } from '../logic/progress';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -49,17 +50,27 @@ export default function RecordsTab({ results, comps, isZh }: Props) {
   );
   // 只看官方成绩(直播行不声称区域纪录)。
   const official = useMemo(() => (results ?? []).filter((r) => !r.live), [results]);
+  const prRanks = useMemo(() => comps ? computePrRank(official, comps) : new Map<string, RankFlag>(), [official, comps]);
 
   const tiers = [
     { key: 'wr', title: t('历史世界纪录', 'History of World Records'), types: WORLD_TYPES },
     { key: 'cr', title: t('历史洲际纪录', 'History of Continental Records'), types: CONTINENT_TYPES },
     { key: 'nr', title: t('历史国家纪录', 'History of National Records'), types: NATIONAL_TYPES },
+    { key: 'pr', title: t('历史个人纪录', 'History of Personal Records'), types: null },
   ];
 
   if (!results || !comps) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
 
   const sections = tiers
-    .map((tier) => ({ tier, rows: rowsForTier(official, tier.types) }))
+    .map((tier) => ({
+      tier,
+      rows: tier.types
+        ? rowsForTier(official, tier.types)
+        : official.filter((r) => {
+            const rank = prRanks.get(wcaResultRowKey(r));
+            return rank?.singleRank === 1 || rank?.averageRank === 1;
+          }),
+    }))
     .filter((s) => s.rows.length > 0);
 
   if (sections.length === 0) {
@@ -86,6 +97,7 @@ export default function RecordsTab({ results, comps, isZh }: Props) {
               title={tier.title}
               types={tier.types}
               rows={rows}
+              prRanks={prRanks}
               compById={compById}
               isZh={isZh}
             />
@@ -96,17 +108,18 @@ export default function RecordsTab({ results, comps, isZh }: Props) {
   );
 }
 
-// 某一档(世界/洲际/国家):一行分组标题 + 该档成绩行。项目(WCA 顺序)→ 比赛日期倒序 → 决赛在上。
+// 某一档：一行分组标题 + 该档成绩行。项目(WCA 顺序)→ 比赛日期倒序 → 决赛在上。
 function TierRows({
-  title, types, rows, compById, isZh,
+  title, types, rows, prRanks, compById, isZh,
 }: {
   title: string;
-  types: string[];
+  types: string[] | null;
   rows: WcaResultRow[];
+  prRanks: Map<string, RankFlag>;
   compById: Map<string, WcaCompetition>;
   isZh: boolean;
 }) {
-  const typeSet = new Set(types);
+  const typeSet = new Set(types ?? []);
 
   const sorted = rows.slice().sort((a, b) => {
     const ea = ALL_EVENT_IDS.indexOf(a.event_id);
@@ -128,8 +141,11 @@ function TierRows({
         const cmp = compById.get(r.competition_id);
         const showEvent = r.event_id !== lastEvent;
         lastEvent = r.event_id;
-        const singleHit = !!r.regional_single_record && typeSet.has(r.regional_single_record);
-        const averageHit = !!r.regional_average_record && typeSet.has(r.regional_average_record);
+        const rank = prRanks.get(wcaResultRowKey(r));
+        const singleHit = types ? !!r.regional_single_record && typeSet.has(r.regional_single_record) : rank?.singleRank === 1;
+        const averageHit = types ? !!r.regional_average_record && typeSet.has(r.regional_average_record) : rank?.averageRank === 1;
+        const singleRecord = types ? r.regional_single_record : 'PR';
+        const averageRecord = types ? r.regional_average_record : 'PR';
         return (
           <tr key={wcaResultRowKey(r)} className={showEvent && i !== 0 ? 'wp-rec-event-first' : ''}>
             <th scope="row" className="wp-cell-event">
@@ -143,7 +159,7 @@ function TierRows({
               {singleHit && (
                 <span className="record-num-cell">
                   {formatWcaResult(r.best, r.event_id, 'single')}
-                  <RecordBadge record={r.regional_single_record} variant="inline" />
+                  <RecordBadge record={singleRecord} variant="inline" />
                 </span>
               )}
             </td>
@@ -151,7 +167,7 @@ function TierRows({
               {averageHit && r.average > 0 && (
                 <span className="record-num-cell">
                   {formatWcaResult(r.average, r.event_id, 'average')}
-                  <RecordBadge record={r.regional_average_record} variant="inline" />
+                  <RecordBadge record={averageRecord} variant="inline" />
                 </span>
               )}
             </td>
