@@ -72,6 +72,7 @@ const EXPECTED_FIELDS_BY_CATEGORY = {
     'settings.appearance.scramble-click-action',
     'settings.appearance.hide-all-while-running',
     'settings.appearance.show-ranks',
+    'settings.appearance.rank-scopes',
     'settings.appearance.ranking-region',
   ],
   sound: [
@@ -131,13 +132,13 @@ const BASE_CONTEXT: TimerSettingFieldContext = {
 };
 
 describe('canonical timer settings surface manifest', () => {
-  it('locks all eight categories, all 64 reachable fields/commands, and their order', () => {
+  it('locks all eight categories, all 65 reachable fields/commands, and their order', () => {
     expect(TIMER_SETTING_CATEGORY_IDS).toEqual([
       'timer', 'smart-cube', 'scramble', 'training', 'appearance', 'sound', 'data', 'advanced',
     ]);
     expect(TIMER_SETTING_CATEGORY_CONTRACTS.map((category) => category.id))
       .toEqual(TIMER_SETTING_CATEGORY_IDS);
-    expect(new Set(TIMER_SETTING_FIELD_IDS).size).toBe(64);
+    expect(new Set(TIMER_SETTING_FIELD_IDS).size).toBe(65);
     expect(TIMER_SETTING_FIELD_IDS).toEqual(Object.values(EXPECTED_FIELDS_BY_CATEGORY).flat());
     for (const category of TIMER_SETTING_CATEGORY_IDS) {
       expect(TIMER_SETTING_FIELD_CONTRACTS
@@ -235,6 +236,12 @@ describe('canonical timer settings surface manifest', () => {
   });
 
   it('exhaustively resolves event/source visibility and contextual disabled states', () => {
+    const regionVisible = (context: Partial<TimerSettingFieldContext>) => timerSettingFieldStates({ ...BASE_CONTEXT, ...context })
+      .find((field) => field.id === 'settings.appearance.ranking-region')?.visible;
+    expect(regionVisible({ signedIn: true })).toBe(true);
+    expect(regionVisible({ signedIn: true, rankAccountCountry: ' CN ' })).toBe(false);
+    expect(regionVisible({ signedIn: true, rankAccountCountry: 'invalid' })).toBe(true);
+    expect(regionVisible({ rankEnabled: false })).toBe(false);
     expect(timerSettingFieldStates({ ...BASE_CONTEXT, development: false })
       .find((field) => field.id === 'settings.smart-cube.fake-cube')?.visible).toBe(false);
     const stageEvents = new Set(['222', '333', '444', '555', '666', '777', '333oh', '333fm']);

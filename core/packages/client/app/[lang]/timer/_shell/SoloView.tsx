@@ -3118,8 +3118,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             </TimerScrambleStrip>
           }
           cornerSlot={centerCubeSlot}
-          digitsCorner={settings.showRankBadge !== false && rankBadgePhase && solves.length > 0 ? (
-            <RankBadge eventId={event} centis={rankCentis} type="single" country={rankCountry} isZh={isZh} />
+          digitsCorner={settings.showRankBadge !== false && settings.rankScopes.length > 0 && rankBadgePhase && solves.length > 0 ? (
+            <RankBadge eventId={event} centis={rankCentis} type="single" country={rankCountry} isZh={isZh} scopes={settings.rankScopes} solves={solves} />
           ) : undefined}
         >
           {/* sub-content under the digits */}
