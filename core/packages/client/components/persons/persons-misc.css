@@ -80,6 +80,8 @@
 .wp-records-table thead th:nth-child(3),
 .wp-records-table thead th.wp-th-attempts { text-align: center; }
 .wp-records-table .wp-cell-result { text-align: right; }
+.wp-records-table .wp-th-attempts,
+.wp-records-table .wp-cell-attempts { padding-inline: 8px; }
 /* 仅图标的项目列垂直居中,跟同行单次/平均数值齐平(比赛单元两行会撑高行,top 会让图标偏上) */
 .wp-records-table .wp-cell-event { vertical-align: middle; }
 
