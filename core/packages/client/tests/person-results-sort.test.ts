@@ -9,6 +9,11 @@ const source = readFileSync(join(
 ), 'utf8');
 
 describe('person result column sorting', () => {
+  it('keeps metric sort controls visible before sorting', () => {
+    expect(source).toContain("{t('排序', 'Sort')}{sortArrow('single')}");
+    expect(source).toContain("{t('排序', 'Sort')}{sortArrow('average')}");
+  });
+
   it.each(['pos', 'single', 'average', 'aoxr'])(
     'wires the %s header to its displayed value',
     (key) => {
