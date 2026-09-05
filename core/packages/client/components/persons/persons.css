@@ -262,7 +262,7 @@ html[data-theme=dark] .wp-page {
     text-align: center;
 }
 .wp-hero-collection dl {
-    display: grid; grid-template-columns: repeat(3, max-content);
+    display: flex;
     gap: 0 18px;
     margin: 0;
 }
@@ -1405,8 +1405,8 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
     }
     .wp-upcoming-row > * { padding: 0; }
     .wp-hero-collections { flex-basis: 100%; gap: 24px; }
-    .wp-hero-collection { flex: 1 1 0; }
-    .wp-hero-collection dl { justify-content: center; }
+    .wp-hero-collection { flex: 1 1 0; min-width: 0; }
+    .wp-hero-collection dl { justify-content: center; flex-wrap: wrap; row-gap: 10px; }
     .wp-hero-table { margin-left: 0; gap: 24px; }
     .wp-pr-card, .wp-tab-body { padding: 12px; }
     .wp-pb-form-grid { grid-template-columns: 1fr; }
@@ -1431,7 +1431,7 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
 
 @media (max-width: 420px) {
     .wp-hero-collections { align-items: start; gap: 14px; }
-    .wp-hero-collection dl { gap: 0 10px; }
+    .wp-hero-collection dl { column-gap: 10px; }
 }
 
 /* ── 直播·非官方成绩(成绩 tab 内联;官方收录后自动消失)──────────────────── */
