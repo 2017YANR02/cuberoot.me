@@ -1086,12 +1086,12 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
    一场比赛该项目的全部轮次合并成一格。左侧一条淡分隔线把「逐轮成绩」与「整场聚合」分开。
    合并格必须垂直居中,且要压过上面 .wp-row-changed / .wp-row-has-recon-stats 的整行 top 对齐
    (那两条是行级规则,合并格跨多行时贴顶会与任何一行都不齐)→ 同特异性靠后覆盖,不用 !important。 */
-.wp-bycomp-table thead th.wp-th-aoxr { text-align: center; border-left: 1px solid var(--wp-border); }
+.wp-bycomp-table thead th.wp-th-aoxr { text-align: center; border-left: 1px solid var(--wp-border); padding-right: 6px; }
 .wp-bycomp-table tbody tr td.wp-cell-aoxr {
     text-align: center;
     vertical-align: middle;
     border-left: 1px solid var(--wp-border);
-    padding-left: 14px; padding-right: 14px;
+    padding-left: 14px; padding-right: 6px;
     white-space: nowrap;
 }
 .wp-aoxr { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.3; }
@@ -1110,7 +1110,8 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
    网格结构 + 子行样式走共享 components/wca-results/attempts-grid.css(与 /recon 同场比赛表同一份)。 */
 /* 「详细成绩」表头压在下方 attempts 网格正上方:同列模板 + 同字号 + 同列下限(10ch)→ 表头序号与下方成绩同列对齐。
    下限提到 10ch:容下「值 + PR 角标」(如 (4.61 PR119)≈9ch),使表头与各行该列都贴 10ch 下限 → 列宽一致不漂移。 */
-.wp-bycomp-table thead th.wp-th-attempts { text-align: left; }
+.wp-bycomp-table thead th.wp-th-attempts { text-align: left; padding-left: 4px; }
+.wp-bycomp-table tbody td.wp-cell-attempts { padding-left: 4px; }
 .wp-th-attempts .wp-att-head {
     display: inline-grid;
     /* 列数由 --att-cols 驱动(ByEventView 传 maxAttempts):3 把项目只出 1-3,默认 5 */
