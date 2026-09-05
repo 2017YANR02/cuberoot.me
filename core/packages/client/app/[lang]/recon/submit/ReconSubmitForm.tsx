@@ -1580,7 +1580,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   // ── Person/reconer pill helpers ──
   const solverLite: WcaPersonLite | null = form.personId
-    ? { id: form.personId, name: form.person ?? form.personId, country_iso2: form.personCountry ?? '' }
+    ? { id: form.personId, name: form.person ?? form.personId, country_iso2: form.personCountry || personFlagIso2(form.personId) }
     : null;
 
   // Strava 模型:身份(选手/项目/WCA/比赛)与值(轮次/成绩/单次/纪录)在所有模式
