@@ -44,9 +44,9 @@ export default function PersonTabs({ profile, results, comps, liveResults, liveC
     parseAsStringEnum(['event', 'comp']).withDefault('event').withOptions({ history: 'replace', scroll: false }),
   );
 
-  // 内容为空的 tab 置灰提示。纪录从 results 的区域纪录标记直接判定(无需进 tab,可前置置灰)。
+  // 内容为空的 tab 置灰提示。首条有效官方成绩就是 PR,无需重复跑完整排名计算。
   const recordsEmpty = useMemo(
-    () => !!results && !results.some((r) => !r.live && (r.regional_single_record || r.regional_average_record)),
+    () => !!results && !results.some((r) => !r.live && (r.best > 0 || r.average > 0)),
     [results],
   );
 
