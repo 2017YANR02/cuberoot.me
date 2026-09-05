@@ -893,24 +893,30 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     }
     return out;
   }, [sheets, activeView, is333Family]);
-  const [showCross, setShowCrossState] = useState<boolean>(readShowCross);
+  const [showCross, setShowCrossState] = useState(false);
   const setShowCross = (v: boolean) => {
     setShowCrossState(v);
     persistItem(SHOW_CROSS_KEY, v ? '1' : '0');
   };
   const [includeExtras, setIncludeExtras] = useState(true);
   // 分析范围:false=本轮(默认) / true=全部轮次。
-  const [analysisAll, setAnalysisAllState] = useState<boolean>(readScopeAll);
+  const [analysisAll, setAnalysisAllState] = useState(false);
   const setAnalysisAll = (v: boolean) => {
     setAnalysisAllState(v);
     persistItem(SCOPE_ALL_KEY, v ? '1' : '0');
   };
   // 最优等态打乱开关:开后把展示的打乱换成预计算的同态最短打乱(server optimal_scramble)。
-  const [showOptimal, setShowOptimalState] = useState<boolean>(readShowOptimal);
+  const [showOptimal, setShowOptimalState] = useState(true);
   const setShowOptimal = (v: boolean) => {
     setShowOptimalState(v);
     persistItem(SHOW_OPTIMAL_KEY, v ? '1' : '0');
   };
+  // 本组件在批量模式下也会隐藏挂载；首帧固定默认值，挂载后再恢复偏好。
+  useEffect(() => {
+    setShowCrossState(readShowCross());
+    setAnalysisAllState(readScopeAll());
+    setShowOptimalState(readShowOptimal());
+  }, []);
   // 十字分析里点某步 → 把命中打乱集合提上来,过滤下方打乱表(只渲染含命中打乱的 sheet)。
   const [crossFilter, setCrossFilter] = useState<CrossFilter | null>(null);
   // 指标 + 底色子集(原在 CompCrossAnalysis,提上来跟 toggles 同一行)。

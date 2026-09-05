@@ -364,7 +364,21 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
           selectedEvents={events}
           onToggle={toggleEvent}
           isZh={isZh}
-          showTriggerIcon={false}
+          popupFooter={(
+            <HighOrderNxNInput isZh={isZh} onAdd={addHighNxN}>
+              {customNxN.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => toggleEvent(id)}
+                  className="gen-count-chip is-active"
+                  title={t('点击移除', 'Click to remove')}
+                >
+                  {eventDisplayName(id, isZh)}
+                </button>
+              ))}
+            </HighOrderNxNInput>
+          )}
         />
         {subMode === 'batch' && (
           <div className="gen-count-row">
@@ -406,21 +420,8 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
         )}
         <div className="gen-config-toolbar-scroll">
 
-      {/* 配置条:高阶 NxN + 5x5 打乱模式(选了 5x5 才显) */}
+      {/* 配置条:各项目打乱模式(选中对应项目才显示) */}
       <div className="gen-tn-config-row">
-        <HighOrderNxNInput isZh={isZh} onAdd={addHighNxN}>
-          {customNxN.map((id) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => toggleEvent(id)}
-              className="gen-count-chip is-active"
-              title={t('点击移除', 'Click to remove')}
-            >
-              {eventDisplayName(id, isZh)}
-            </button>
-          ))}
-        </HighOrderNxNInput>
         <Scramble555ModePicker active555={events.has('555')} isZh={isZh} />
         <Scramble333ModePicker active333={events.has('333')} isZh={isZh} />
         <Scramble222ModePicker active222={events.has('222')} />

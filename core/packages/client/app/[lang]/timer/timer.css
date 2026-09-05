@@ -749,6 +749,25 @@
   white-space: nowrap;
 }
 .settings-modal .settings-row-control .hint-btn svg { vertical-align: -2px; }
+.rank-scope-options {
+  display: inline-flex;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.settings-modal .settings-row-control .rank-scope-option {
+  justify-content: center;
+  border: 0;
+  border-radius: 0;
+  outline-offset: -2px;
+}
+.settings-modal .settings-row-control .rank-scope-option + .rank-scope-option {
+  border-left: 1px solid var(--border-default);
+}
+.settings-modal .settings-row-control .rank-scope-option[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
 .settings-backup-list {
   margin: 8px 0 0 calc(190px + 22px);
   border-top: 1px solid var(--border-default);

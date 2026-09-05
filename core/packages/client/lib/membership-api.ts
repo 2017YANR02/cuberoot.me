@@ -5,6 +5,7 @@
  */
 import { API_ORIGIN } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
+import { WCA_ID_REGEX } from '@cuberoot/shared/wca-person';
 
 const BASE = API_ORIGIN + '/v1/membership';
 
@@ -152,7 +153,8 @@ export async function listPlans(): Promise<{ plans: MembershipPlan[]; payEnabled
 
 export async function listPublicMembers(): Promise<PublicMember[]> {
   const result = await handleApi<{ members: PublicMember[] }>(await fetch(`${BASE}/members`));
-  return result.members;
+  // 管理员可能没有 WCA ID;公开名单和图库均只链接有效的 WCA 个人页。
+  return result.members.filter((member) => typeof member.wcaId === 'string' && WCA_ID_REGEX.test(member.wcaId));
 }
 
 export async function getMyMembership(): Promise<{

@@ -44,6 +44,7 @@ import { exportCstimerJson } from '../_lib/storage/export_cstimer';
 import { exportSolvesCsv } from '../_lib/storage/export_csv';
 import { uploadBackup, restoreFromCloud, fetchBackupMeta, formatSyncTime, type CloudBackupMeta } from '../_lib/storage/cloud';
 import { useAuthStore } from '@/lib/auth-store';
+import { useRankCountry } from '../_shared/use-rank-country';
 import { reanalyzeAll } from '../_lib/storage/reanalyze';
 import { EVENTS, eventInfo, type EventId } from '../_lib/types';
 import {
@@ -315,6 +316,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
 
   // ── Cloud backup state ──
   const user = useAuthStore((st) => st.user);
+  const { accountCountry: rankAccountCountry } = useRankCountry();
   const login = useAuthStore((st) => st.login);
   const [cloudMsg, setCloudMsg] = useState<string | null>(null);
   const cloudMsgTimerRef = useRef<number | null>(null);
@@ -644,8 +646,8 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
     signedIn: !!user,
     optimalAvailable,
     roundEnabled: s.round.on,
-    rankEnabled: s.showRankBadge !== false && s.rankScopes.some((scope) => scope === 'NR' || scope === 'CR'),
-    rankAccountCountry: user?.country,
+    rankEnabled: s.rankScopes.some((scope) => scope === 'NR' || scope === 'CR'),
+    rankAccountCountry,
     showCubePreview: s.showCubePreview,
     soundsEnabled: s.soundsEnabled,
     voiceAvailable: isVoiceAvailable(),
@@ -1476,27 +1478,22 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
             value={s.hideAllUiWhileRunning}
             onChange={(v) => updateSettings({ hideAllUiWhileRunning: v })}
           />
-          <BooleanSettingRow
-            id="settings.appearance.show-ranks"
-            value={s.showRankBadge !== false}
-            onChange={(v) => updateSettings({ showRankBadge: v })}
-          />
           <SettingRow id="settings.appearance.rank-scopes">
-            {TIMER_RANK_SCOPES.map((scope) => (
-              <SharedBoolToggle
-                key={scope}
-                label={scope}
-                value={s.rankScopes.includes(scope)}
-                disabled={s.showRankBadge === false}
-                onChange={(enabled) => updateSettings({
-                  rankScopes: enabled ? [...s.rankScopes, scope] : s.rankScopes.filter((value) => value !== scope),
-                })}
-              />
-            ))}
-            <span className="hint">{tr({
-              zh: 'PR 当前分组个人排名；NR 全国；CR 大洲；WR 世界。可多选或全部关闭，NR/CR 需要国家信息。',
-              en: 'PR: current session; NR: national; CR: continental; WR: world. Select any or none. NR/CR require a country.',
-            })}</span>
+            <span className="rank-scope-options">
+              {TIMER_RANK_SCOPES.map((scope) => (
+                <button
+                  key={scope}
+                  type="button"
+                  className="hint-btn rank-scope-option"
+                  aria-pressed={s.rankScopes.includes(scope)}
+                  onClick={() => updateSettings({
+                    rankScopes: s.rankScopes.includes(scope) ? s.rankScopes.filter((value) => value !== scope) : [...s.rankScopes, scope],
+                  })}
+                >
+                  {scope}
+                </button>
+              ))}
+            </span>
           </SettingRow>
           {/* 有有效账号国家时沿用账号信息；否则允许手选。 */}
           {settingState('settings.appearance.ranking-region').visible && (

@@ -152,9 +152,12 @@ describe('personal-record streak leaderboard contract', () => {
     expect(builder).toMatch(/\\copy wca_pr_streaks[^;]+FROM 'wca_pr_streaks\.copy\.tsv'/s);
     expect(serverRoute).toContain("get('/wca/pr-streaks'");
     expect(serverRoute).toContain("s.country_id = ?");
+    expect(serverRoute).toContain('ORDER BY latest_comp.start_date DESC, latest_comp.id DESC');
+    expect(serverRoute).toContain('isOngoing: row.is_ongoing');
     expect(migration.match(/CREATE INDEX IF NOT EXISTS pr_streak_/g)).toHaveLength(3);
     expect(page).toContain('<RegionCountrySelect');
     expect(page).toContain('<Paginator');
+    expect(page).toContain("zh: '进行中', en: 'Ongoing'");
   });
 });
 

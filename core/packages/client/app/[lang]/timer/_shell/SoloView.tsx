@@ -387,7 +387,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const printControllerRef = useRef<TimerPrintControllerHandle>(null);
   const settings = useSettings();
   const authUser = useAuthStore((st) => st.user);
-  const rankCountry = useRankCountry();
+  const { country: rankCountry } = useRankCountry();
 
   const isMobile = useMediaQuery('(max-width: 480px)');
   const isDesktop = useMediaQuery('(min-width: 1024px)');
@@ -3118,8 +3118,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             </TimerScrambleStrip>
           }
           cornerSlot={centerCubeSlot}
-          digitsCorner={settings.showRankBadge !== false && settings.rankScopes.length > 0 && rankBadgePhase && solves.length > 0 ? (
-            <RankBadge eventId={event} centis={rankCentis} type="single" country={rankCountry} isZh={isZh} scopes={settings.rankScopes} solves={solves} />
+          digitsCorner={settings.rankScopes.length > 0 && rankBadgePhase && solves.length > 0 ? (
+            <RankBadge eventId={event} centis={rankCentis} type="single" country={rankCountry} isZh={isZh} scopes={settings.rankScopes} wcaId={authUser?.wcaId} />
           ) : undefined}
         >
           {/* sub-content under the digits */}

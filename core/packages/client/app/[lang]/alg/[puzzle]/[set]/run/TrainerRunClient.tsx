@@ -391,6 +391,7 @@ export default function TrainerRunClient() {
   const deleteSolve = useTrainerStore(s => s.deleteSolve);
   const clearSolves = useTrainerStore(s => s.clearSolves);
 
+  // allow-hydration-volatile-state: now is invisible in the SSR idle timer and starts changing only while running.
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     if (timerState !== TimerState.RUNNING) return;
