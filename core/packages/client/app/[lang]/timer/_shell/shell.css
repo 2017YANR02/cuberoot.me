@@ -160,7 +160,13 @@
 }
 /* WR12/AsR9/NR9 segments: center-align text + any inline RecordBadge, even gaps
    around the "/" separators. 字体继承 .rank-pill 的 Inter(已非 mono). */
-.rank-chip-inner { display: inline-flex; align-items: center; gap: 3px; }
+.timer-display-corner:has(.rank-badge-row) {
+  right: 0;
+  max-width: min(100%, calc(100vw - 32px));
+  transform: translateY(-100%);
+}
+.rank-badge-row, .rank-pills, .rank-pill { max-width: 100%; }
+.rank-chip-inner { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 3px; }
 .rank-chip-sep { color: var(--faint-foreground); font-weight: 400; }
 .rank-chip-inner .record-badge { font-size: 1em; padding: 0 4px; }
 .rank-detail {

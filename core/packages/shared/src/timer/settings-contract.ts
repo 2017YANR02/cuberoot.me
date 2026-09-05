@@ -110,7 +110,7 @@ export type TimerSettingVisibility =
   | 'stage-split-event'
   | 'bld-event'
   | 'color-neutral-event'
-  | 'rank-enabled-and-signed-out'
+  | 'rank-enabled-without-account-country'
   | 'signed-out'
   | 'signed-in'
   | 'round-enabled'
@@ -145,6 +145,15 @@ export interface TimerSettingFieldContract {
 
 const bool = { kind: 'boolean' } as const;
 const action = { kind: 'action' } as const;
+
+export const TIMER_RANK_SCOPES = ['PR', 'NR', 'CR', 'WR'] as const;
+export type TimerRankScope = typeof TIMER_RANK_SCOPES[number];
+
+export function normalizeTimerRankScopes(value: unknown): TimerRankScope[] {
+  return Array.isArray(value)
+    ? TIMER_RANK_SCOPES.filter((scope) => value.includes(scope))
+    : [...TIMER_RANK_SCOPES];
+}
 
 export const TIMER_SCRAMBLE_CLICK_ACTIONS = ['none', 'next', 'copy'] as const;
 
@@ -260,7 +269,8 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.appearance.scramble-click-action', category: 'appearance', copy: { en: 'Scramble click action', zh: '点击打乱条' }, storagePath: 'scrambleClickAction', value: { kind: 'enum', values: TIMER_SCRAMBLE_CLICK_ACTIONS }, visibility: 'always', disabledWhen: 'never', effect: 'persist-scramble-click-action' },
   { id: 'settings.appearance.hide-all-while-running', category: 'appearance', copy: { en: 'Hide all UI while running', zh: '运行中隐藏全部 UI' }, storagePath: 'hideAllUiWhileRunning', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-hide-all-ui' },
   { id: 'settings.appearance.show-ranks', category: 'appearance', copy: { en: 'Show ranks', zh: '显示排名' }, storagePath: 'showRankBadge', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-show-ranks' },
-  { id: 'settings.appearance.ranking-region', category: 'appearance', copy: { en: 'Ranking region', zh: '地区排名' }, storagePath: 'rankCountry', value: { kind: 'country' }, visibility: 'rank-enabled-and-signed-out', disabledWhen: 'never', effect: 'persist-ranking-region-or-sign-in' },
+  { id: 'settings.appearance.rank-scopes', category: 'appearance', copy: { en: 'Ranks to show', zh: '排名范围' }, storagePath: 'rankScopes', value: { kind: 'string-list', values: TIMER_RANK_SCOPES }, visibility: 'always', disabledWhen: 'never', effect: 'persist-rank-scopes' },
+  { id: 'settings.appearance.ranking-region', category: 'appearance', copy: { en: 'Ranking region', zh: '地区排名' }, storagePath: 'rankCountry', value: { kind: 'country' }, visibility: 'rank-enabled-without-account-country', disabledWhen: 'never', effect: 'persist-ranking-region-or-sign-in' },
 
   // Sound and rhythm
   { id: 'settings.sound.enabled', category: 'sound', copy: { en: 'Sounds', zh: '提示音' }, storagePath: 'soundsEnabled', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-sounds-and-warm-audio' },
@@ -318,6 +328,7 @@ export interface TimerSettingFieldContext {
   optimalAvailable: boolean;
   roundEnabled: boolean;
   rankEnabled: boolean;
+  rankAccountCountry?: string;
   showCubePreview: boolean;
   soundsEnabled: boolean;
   voiceAvailable: boolean;
@@ -361,7 +372,7 @@ function settingVisible(
     case 'stage-split-event': return timerSupportsStageSplits(context.event);
     case 'bld-event': return isBldEvent(context.event);
     case 'color-neutral-event': return COLOR_NEUTRAL_EVENTS.has(context.event);
-    case 'rank-enabled-and-signed-out': return context.rankEnabled && !context.signedIn;
+    case 'rank-enabled-without-account-country': return context.rankEnabled && !/^[a-z]{2}$/i.test(context.rankAccountCountry?.trim() ?? '');
     case 'signed-out': return !context.signedIn;
     case 'signed-in': return context.signedIn;
     case 'round-enabled': return context.roundEnabled;
