@@ -1,24 +1,13 @@
 'use client';
 
 /**
- * RankBadge — "WR / CR / NR" 排名徽章.
- *
- * 给定一个有效成绩(厘秒),问服务器「这成绩放进 WCA 历史能排第几」(按选手个人最佳
- * 去重的排名),渲染成一排 accent-soft 药丸:WR(世界)始终显示,传了用户国家时再加
- * CR(大洲)/ NR(国家).点任意药丸展开一行说明.
- *
- * 契约(Solo / Battle 共用):
- *   <RankBadge eventId={EventId} centis={有效成绩厘秒 | null} type='single'|'average'
- *              country?='US' isZh? className? />
- *   - centis 为 null / DNF -> 不渲染.
- *   - eventId 无 WCA 对应(relay/training/custom)-> 不渲染.
- *   - fetch 失败 / 离线 -> 不渲染.绝不抛错、绝不挡渲染.
- *   - country 缺省 / 服务端未部署 NR/CR -> 只显 WR.
- *
- * Token-only:背景 var(--accent-soft);顶尖名次用 var(--signal-success) + Trophy,
- * 其它用 var(--accent) + 地域图标.
+ * 停表排名：PR 比较当前分组单次，NR/CR/WR 比较 WCA 历史个人最佳。
+ * 只显示用户选择且有数据的范围；离线时 PR 仍可用，缺国家时不查 NR/CR。
+ * 输入为时间厘秒，FMC/多盲不能按计时时长排名。
  */
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { effectiveMs, TIMER_RANK_SCOPES, type Solve, type TimerRankScope } from '@cuberoot/shared/timer';
+import { tr } from '@/i18n/tr';
 import { fetchRankFor, type RankResult, type RegionRank } from '@/lib/rank-client';
 import { toWcaEventForRank, eventDisplayName } from '@/app/[lang]/timer/_shared/event-bridge';
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
@@ -35,9 +24,11 @@ export interface RankBadgeProps {
   country?: string;
   isZh?: boolean;
   className?: string;
+  scopes?: readonly TimerRankScope[];
+  solves?: readonly Solve[];
 }
 
-type Scope = 'WR' | 'CR' | 'NR';
+const NO_SOLVES: readonly Solve[] = [];
 
 export default function RankBadge({
   eventId,
@@ -46,16 +37,27 @@ export default function RankBadge({
   country,
   isZh = false,
   className,
+  scopes = TIMER_RANK_SCOPES,
+  solves = NO_SOLVES,
 }: RankBadgeProps) {
   const wcaEvent = toWcaEventForRank(eventId as EventId);
-  const valid = wcaEvent != null && centis != null && Number.isFinite(centis) && centis > 0;
+  const valid = eventId !== '333fm' && eventId !== '333mbld'
+    && centis != null && Number.isFinite(centis) && centis > 0;
+  const queryCountry = scopes.includes('NR') || scopes.includes('CR') ? country : undefined;
+  const queryWca = valid && wcaEvent != null && (scopes.includes('WR') || !!queryCountry);
+  const personal = useMemo(() => {
+    if (!valid || type !== 'single' || !scopes.includes('PR')) return null;
+    const times = solves.filter((solve) => solve.event === eventId).map(effectiveMs)
+      .filter((ms) => Number.isFinite(ms) && ms > 0);
+    return times.length ? { rank: 1 + times.filter((ms) => Math.round(ms / 10) < centis!).length, total: times.length } : null;
+  }, [valid, type, scopes, solves, eventId, centis]);
 
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'none'>('idle');
   const [result, setResult] = useState<RankResult | null>(null);
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
-    if (!valid) {
+    if (!queryWca) {
       setState('none');
       setResult(null);
       return;
@@ -63,7 +65,7 @@ export default function RankBadge({
     let alive = true;
     setState('loading');
     setExpanded(false);
-    fetchRankFor(eventId, centis as number, type, country || undefined)
+    fetchRankFor(eventId, centis as number, type, queryCountry || undefined)
       .then((r) => {
         if (!alive) return;
         if (r) {
@@ -82,21 +84,18 @@ export default function RankBadge({
     return () => {
       alive = false;
     };
-  }, [valid, eventId, centis, type, country]);
+  }, [queryWca, eventId, centis, type, queryCountry]);
 
-  if (!valid || state === 'none') return null;
+  if (!valid || scopes.length === 0) return null;
 
-  // loading / 未就绪:不显占位药丸(用户不想看到「WR …」加载态),
-  // 排名徽标查到后(state==='done')直接出现。
-  if (state === 'loading' || !result) return null;
-
-  const eventName = eventDisplayName(wcaEvent, isZh);
-  const typeWord = (isZh
-      ? type === 'average' ? '平均' : '单次'
-      : type === 'average' ? 'average' : 'single');
-
-  const SCOPE_ZH: Record<Scope, string> = { WR: '世界', CR: '大洲', NR: '全国' };
-  const SCOPE_EN: Record<Scope, string> = { WR: 'World', CR: 'Continent', NR: 'National' };
+  const eventName = wcaEvent ? eventDisplayName(wcaEvent, isZh) : eventId;
+  const typeWord = type === 'average' ? tr({ zh: '平均', en: 'average' }) : tr({ zh: '单次', en: 'single' });
+  const scopeNames = {
+    PR: tr({ zh: '当前分组个人', en: 'Personal, current session' }),
+    NR: tr({ zh: '全国', en: 'National' }),
+    CR: tr({ zh: '大洲', en: 'Continent' }),
+    WR: tr({ zh: '世界', en: 'World' }),
+  };
 
   // CR 按登录用户的国家映射到大洲记录缩写(AsR / ER / NAR / OcR / SAR / AfR);
   // 无国家或映射缺失时退回通用 'CR'.
@@ -106,31 +105,24 @@ export default function RankBadge({
   })();
 
   // label 同时作为「名次前缀」和「纪录代码」:WR / AsR / NR(RecordBadge 认这些).
-  const pills: { scope: Scope; label: string; data: RegionRank }[] = [];
-  if (result.world) pills.push({ scope: 'WR', label: 'WR', data: result.world });
-  if (result.continental) pills.push({ scope: 'CR', label: crLabel, data: result.continental });
-  if (result.national) pills.push({ scope: 'NR', label: 'NR', data: result.national });
-  // Defensive: a malformed / partial rank payload (missing world) must not crash
-  // the timer — just render nothing rather than read .rank off undefined.
+  const pills: { scope: TimerRankScope; label: string; data: RegionRank }[] = [];
+  if (queryWca && state === 'done' && result) {
+    if (scopes.includes('WR') && result.world) pills.push({ scope: 'WR', label: 'WR', data: result.world });
+    if (scopes.includes('CR') && result.continental) pills.push({ scope: 'CR', label: crLabel, data: result.continental });
+    if (scopes.includes('NR') && result.national) pills.push({ scope: 'NR', label: 'NR', data: result.national });
+  }
+  if (personal) pills.push({ scope: 'PR', label: 'PR', data: personal });
   if (pills.length === 0) return null;
 
-  // 药丸已按 WR > CR > NR 排好.一旦某档是纪录(名次=1),更低档必然也是纪录
-  // (世界第一 ⊂ 大洲第一 ⊂ 全国第一),低档徽章纯属冗余 —— 截到第一个纪录档为止,
-  // 丢掉它下面的.非纪录名次(>1)全部保留.
-  const shownPills: typeof pills = [];
-  for (const p of pills) {
-    shownPills.push(p);
-    if (p.data.rank === 1) break;
-  }
-
   // 展开说明:把各档名次摊开 + 免责声明(对比历史比赛成绩,非实时官方排名).
-  const parts = shownPills.map(({ scope, data }) => {
+  const parts = pills.map(({ scope, data }) => {
     const n = data.rank.toLocaleString('en-US');
-    return isZh ? `${SCOPE_ZH[scope]} #${n}` : `${SCOPE_EN[scope]} #${n}`;
+    return `${scopeNames[scope]} #${n}`;
   });
-  const detail = (isZh
-      ? `${parts.join(' / ')}（WCA ${eventName}${typeWord},对比历史比赛成绩,非实时官方排名）`
-      : `${parts.join(' / ')} (WCA ${eventName} ${typeWord}, vs historical competition results — not a live official rank)`);
+  const detail = parts.join(' / ') + (pills.some((pill) => pill.scope !== 'PR') ? tr({
+    zh: `（WCA ${eventName}${typeWord}，对比历史比赛成绩，非实时官方排名）`,
+    en: ` (WCA ${eventName} ${typeWord}, vs historical competition results, not a live official rank)`,
+  }) : '');
 
   return (
     <span className={`rank-badge-row${className ? ` ${className}` : ''}`}>
@@ -144,13 +136,13 @@ export default function RankBadge({
         >
           {/* 单 chip:WR12/AsR9/NR9;名次为 1 即该档纪录,改用 RecordBadge(WR/AsR/NR) */}
           <span className="rank-chip-inner">
-            {shownPills.map(({ scope, label, data }, i) => (
-              <Fragment key={scope}>
+            {pills.map(({ scope, label, data }, i) => (
+              <span key={scope}>
                 {i > 0 && <span className="rank-chip-sep">/</span>}
                 {data.rank === 1
                   ? <RecordBadge record={label} variant="standalone" />
                   : `${label}${data.rank.toLocaleString('en-US')}`}
-              </Fragment>
+              </span>
             ))}
           </span>
         </button>

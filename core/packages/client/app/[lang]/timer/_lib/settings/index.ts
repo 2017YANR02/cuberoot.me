@@ -17,6 +17,8 @@ import {
   normalizeTimerScrambleClickAction,
   normalizeTimerScramblePreviewSettings,
   normalizeTimerTimingSettings,
+  normalizeTimerRankScopes,
+  type TimerRankScope,
   type RoundConfig,
   type TimerScrambleClickAction,
   type TimerScramblePreviewSettings,
@@ -276,6 +278,7 @@ export interface TimerSettings extends
    * 连占位高度也不保留。旧存档无此键 -> 视为 true。
    */
   showRankBadge?: boolean;
+  rankScopes: TimerRankScope[];
 
   /**
    * 排名徽章的「用户国家」(ISO2,如 'US' / 'CN')。空 = 不限定,徽章只显 WR(世界);
@@ -348,6 +351,7 @@ export const DEFAULTS: TimerSettings = {
   targetMsByEvent: {},
   dailySolveGoal: null,
   showRankBadge: true,
+  rankScopes: normalizeTimerRankScopes(undefined),
   rankCountry: '',
   autoRecap: true,
 };
@@ -434,6 +438,7 @@ function load(): TimerSettings {
       ...normalizedTiming,
       ...normalizedSplits,
       ...normalizedScramblePreview,
+      rankScopes: normalizeTimerRankScopes(parsed.rankScopes),
     } as TimerSettings & {
       statsAoWindows?: unknown;
       inspection?: unknown;
@@ -541,6 +546,7 @@ export function updateSettings(patch: Partial<TimerSettings>): void {
     ...normalizeTimerAttemptSplitSettings(candidate),
     ...normalizeTimerScramblePreviewSettings(candidate),
     scrambleClickAction: normalizeTimerScrambleClickAction(candidate.scrambleClickAction),
+    rankScopes: normalizeTimerRankScopes(candidate.rankScopes),
   };
   save(_cache);
   for (const fn of _listeners) fn();
