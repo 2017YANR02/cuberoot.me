@@ -1,53 +1,13 @@
 ---
 name: document-title
-description: "Use when adding or changing a 浏览器标题、页面标题、tab title, document title, or useDocumentTitle behavior. Use the canonical hook, keep subpage titles unbranded, and never assign document.title directly."
+description: "Use when adding or changing 浏览器标题、页面标题、tab title, document title, or useDocumentTitle behavior. Static route titles use server metadata; only runtime state invisible to the server uses the shared hook."
 ---
 
-# 浏览器 tab 标题(document.title)
+# 浏览器标题
 
-唯一入口:`core/packages/client/hooks/useDocumentTitle.ts`。**所有新页一律走这个 hook,严禁手写 `document.title = ...`**。
-
-## 用法
-
-```tsx
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-
-export default function MyPage() {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('页面中文名', 'Page English Name');
-  // ...
-}
-```
-
-输出 `页面中文名` / `Page English Name`。只有首页显示 `CubeRoot`;unmount 自动 reset 回 `CubeRoot`。
-
-## 动态标题(数据驱动)
-
-数据加载完用 data,没加载用 fallback。参考 `app/[lang]/wca/comp/[slug]/CompDetailPage.tsx`:
-
-```tsx
-const [data, setData] = useState<CompData | null>(null);
-const title = data ? localizeCompName(slug, data.name, isZh) : slug;
-useDocumentTitle(title, title);  // 已本地化字符串就两个参数传同一个
-```
-
-## 路径
-
-统一走 `@/` 别名:`import { useDocumentTitle } from '@/hooks/useDocumentTitle';`(client 任意深度都一样,不用数 `../`)。
-
-## 禁
-
-- ❌ `document.title = '...'` — bypass hook,会忘 cleanup、忘双语。
-- ❌ `react-helmet` / `react-helmet-async` — 纯 SPA 不需要,这个 hook 已够。
-- ❌ 自己拼 `CubeRoot` 前后缀 — favicon 已承担品牌识别,窄 tab 只留页面名。
-- ❌ 写带 emoji 的 title — tab 字体下错位,且 fatigue。
-- ❌ 给 LandingPage(`/`)加 hook — 首页已有服务端 `<title>CubeRoot</title>`。
-
-## 历史遗留(技术债,不主动碰)
-
-`pages/code/*` 系列 ~17 个页 + ArchitecturePage / StackToolPage / AlgorithmsLandingPage / CompareScramblePage / CompareAo5Page / OpsPage / CodeIndexPage / StackLandingPage / Latex / Katex / Powershell / PersonDetailPage 等共 37 个文件仍用 ad-hoc `useEffect(() => { document.title = ...; })`。能跑,不动它们。下次顺手改到这些文件再迁。
-
-## 已接 hook 的页(参考)
-
-`GenPage` / `GenAboutPage` / `ScrambleHubPage` / `ReconListPage` / `CalendarPage` / `WcaStatsPage`(动态) / `CompDetailPage`(动态) / 加 LandingPage 上 16 张卡对应的页 + 后续 35 个二级页 — 总计 ~55 个。**新增页前先 grep `useDocumentTitle` 找最近一例抄结构**。
+- 静态路由遵循仓库 AGENTS「页面标题 / SEO metadata」:维护 `core/packages/client/lib/page-meta.ts` 与路由 server `layout.tsx`,动态参数按该节的可枚举/哨兵规则处理。
+- 同一标题只保留一个事实源;已有 layout metadata 时删除重复的 `useDocumentTitle`,不得为读路径引入 `headers()` 或把静态页转为动态渲染。
+- 仅服务端看不见的运行时状态使用 `core/packages/client/hooks/useDocumentTitle.ts`;此时路由 metadata 保留通用标题。
+- Hook 导入用 `import { useDocumentTitle } from '@/hooks/useDocumentTitle'`,调用 `useDocumentTitle('中文标题', 'English title')`;已本地化字符串传入两个参数。
+- 禁直接赋值 `document.title`、另加标题库或自行拼品牌前后缀;静态品牌格式由 metadata helper 统一处理。
+- 修改前核实目标路由现有 layout、metadata 和 hook;不依据旧页面清单批量迁移无关文件。

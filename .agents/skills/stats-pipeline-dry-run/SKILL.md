@@ -49,7 +49,7 @@ WCA Stats Extra 管道同模式,把上面三处替换:
    - 写 TSV 流(`createWriteStream` + `.write(...)`)
    - load.sql heredoc 里加 `TRUNCATE` + `\\copy ... FROM 'xxx.copy.tsv'`
 2. **`.github/workflows/stats.yml`**: 对应 pipeline 的 `scp -i ~/.ssh/hr_id ...` 清单加文件名
-3. **server schema**(可选): 是否要加新 PG 表 / 索引?改 `core/apps/api/src/db/schema_*.pg.sql`,先在云服务器 ALTER 再 push(参考 `server-deploy` skill)
+3. **server schema**(可选): 是否要加新 PG 表 / 索引?写 migration 并同步 `core/apps/api/src/db/schema_*.pg.sql`,本地 PG 验证后按发布授权由 Actions 应用;数据加载前核实迁移已成功(参考 `server-deploy` skill)
 
 ## 服务器侧 apply 脚本
 
@@ -90,13 +90,15 @@ ssh root@cuberoot 'sudo -u postgres psql -d cuberoot_db \
 
 灌完应当两张表都有数据。如果新增表是 0 → 99% 是 scp 清单漏了。
 
-## 改完后让用户跑
+## 数据构建与交付
 
-新加 `.copy.tsv` 后 commit + push,提示用户**手动触发**:
+默认由用户手动触发数据构建;用户明确授权 AI 执行本次构建时,由 AI 触发并跟踪结果;未授权则先准备好范围、命令和预计耗时再请求批准;push 授权不自动包含构建授权。
+
+按仓库部署规则发布后,核实所需迁移已应用,再触发:
 ```
 gh workflow run stats.yml
 ```
-等 1h 53min。push 触发不跑 build job(只跑 syntax-check,见 stats.yml `if: github.event_name == 'push'`)。
+历史全量耗时约 1h 53min,以当前运行结果为准;push 仅触发 syntax-check,不会执行 build;构建与加载未成功前不得宣称数据已更新。
 
 ## 也参考
 

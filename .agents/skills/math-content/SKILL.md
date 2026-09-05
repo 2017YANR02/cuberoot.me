@@ -51,5 +51,5 @@ description: "Use when adding 数学内容 under /math: a new section in a long-
 ## 写完检查(必做,green typecheck ≠ 做好)
 
 - `pnpm --filter @cuberoot/client typecheck`(tsgo,EXIT 0)。注意 ESLint **不扫 .tsx**、tsconfig **没开 noUnusedLocals** —— 想抓死代码得 `pnpm exec tsgo --noEmit --noUnusedLocals --noUnusedParameters`。
-- **playwright 实开**每个新 slug(zh + en):0 console error、有 `.gt-sec-title`、有 SVG、≥2 控件;量 SVG `getBoundingClientRect` 高度别超 ~440px(超了八成是漏 maxWidth);390px 无横向溢出;EN 模式无中文残留。dev 已在 `http://127.0.0.1:3000/`(**别** `pnpm dev`)。
+- **playwright 实开**每个新 slug(zh + en):0 console error、有 `.gt-sec-title`、有 SVG、≥2 控件;量 SVG `getBoundingClientRect` 高度别超 ~440px(超了八成是漏 maxWidth);390px 无横向溢出;EN 模式无中文残留。dev 探测/启动与浏览器可见性遵循 AGENTS。
 - 关键数值人工核对一遍。

@@ -7,7 +7,7 @@ description: "Use when adding or replicating a long-form 软件、语言、算�
 
 **全部在 client**(`core/packages/client/app/[lang]/dev/`,Next 16 App Router,文件即路由)。退役的 Vite `packages/client-vite/src/pages/code/` **不要碰**。
 
-`/dev/*` 下长篇介绍页结构同构(语言 / stack 工具 / 算法都一样):hero 飘字 + heroStats + intro 段 + history 时间线 + concepts 卡 + why 卡 + adopters + outlook + 在 cuberoot.me 怎么用 + links。页面都是 `'use client'` + `useTranslation()` 取 lang + `useDocumentTitle`。
+`/dev/*` 下长篇介绍页结构同构(语言 / stack 工具 / 算法都一样):hero 飘字 + heroStats + intro 段 + history 时间线 + concepts 卡 + why 卡 + adopters + outlook + 在 cuberoot.me 怎么用 + links。页面保留 `'use client'`,双语遵循 `i18n` Skill,标题遵循根 AGENTS 的 server metadata 流程。
 
 > 注意:本 skill 是给**长篇介绍页**的。功能性页面(监控面板 / 数据看板 / 运维 runbook,如已存在的 `/dev/ops` `/dev/traffic`)不套这套介绍页模板,自己写组件。
 
@@ -38,7 +38,7 @@ slug = 文件名 = kebab-case。schema 在 `stack/_lib/stack_tool_types.tsx` TS 
 
 三步:
 
-1. **新** `app/[lang]/dev/language/<slug>/page.tsx` — `'use client'`,复刻兄弟页(`language/ts/page.tsx` / `rust/page.tsx`)结构:`import { LangCtx, L, type Lang } from '../_intro/Lang'` + `useDocumentTitle` + 文件内 `HISTORY` / `CARDS` 数组。算法换 `algorithms/<slug>/page.tsx`,Lang lib 在各自上级。
+1. **新** `app/[lang]/dev/language/<slug>/page.tsx` — `'use client'`,复刻兄弟页(`language/ts/page.tsx` / `rust/page.tsx`)结构:`import { LangCtx, L, type Lang } from '../_intro/Lang'` + 文件内 `HISTORY` / `CARDS` 数组;按根 AGENTS 配套 server metadata。算法换 `algorithms/<slug>/page.tsx`,Lang lib 在各自上级。
 2. **CSS co-locate**:同目录建 `<slug>_intro.css`(从兄弟页 copy 一份 intro 样式,按需改 accent)。**Next 每页各自一份**,不是共用 —— 别 import 别页的 css。算法用 `algorithm_intro.css`。
 3. **landing 注册**(没有路由表,靠 landing 数组出卡):语言加进 `language/page.tsx` 的 `TOPICS`(slug/href/zh/en/accent/logo + `available: true`);算法加进 `algorithms/page.tsx`。
 
@@ -76,4 +76,4 @@ slug = 文件名 = kebab-case。schema 在 `stack/_lib/stack_tool_types.tsx` TS 
 ## 写完检查
 
 - `pnpm --filter @cuberoot/client typecheck`(tsgo;Pattern A 字段缺失会红;Pattern B/C 多写少写都过编译,自己看 landing 卡有没有出 + stack 详情页有没有 404)。
-- dev 已在 `http://127.0.0.1:3000/`(**别** `pnpm dev`),验证用 playwright 直接开;不主动开浏览器,让用户自己看(全局规则)。
+- dev 探测/启动与浏览器可见性遵循 AGENTS;任务相关 UI 验证可直接使用无头 Playwright。

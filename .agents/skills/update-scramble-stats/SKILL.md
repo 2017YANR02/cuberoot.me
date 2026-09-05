@@ -5,6 +5,8 @@ description: "用户说更新打乱统计、更新十字/阶段难度、更新 p
 
 # 更新打乱统计
 
+发布遵循仓库 AGENTS 部署授权;下列裸命令会 commit/push、上传静态产物并灌库,仅在这些发布动作均获授权时执行;仅本地或未获发布授权时统一加 `-NoPublish`(跳过 commit/push/scp/灌库),不得用脚本默认行为扩大权限。
+
 **一条龙:一个命令 `update_cross_stats.ps1`,`-Jobs` 选作业,跑完共享一次发布**(commit+push + scp 换 static,覆盖三类产物)。三类作业都只能本地(stages 需 solver 34GB 表 / 333opt 需 cubeopt 表):
 
 > **发布全增量(2026-06-25)**:所有作业都只传变化的文件。非 stages 小作业(`333opt`/`puzzles`)走 `git status` diff scp(`.tmp`+远端原子 `mv`),秒级;**stages 走 `publish_scramble_incremental.ps1`**——维护本地 sha1 内容清单(`incremental/publish_manifest.sha1`),每次只 diff 出内容真变的文件打小包 scp + 删远端孤儿,把过去每次 ~590MB 整包 tar(~35min)降到典型增量的 changed 小包(几十个 comp_steps + 变动 JSON,分钟级)。首次无清单(或 `-Baseline`)自动全量 tar 建基线。复用现有免密 `ssh cuberoot`,不引入 rsync。
@@ -63,7 +65,7 @@ pwsh core/jobs/scramble-stats-build/update_cross_stats.ps1
 
 下 results export → 增量挑新打乱 → std_analyzer 全 5 阶段 → 追加 std.csv → 默认再跟 std 锁步补全 6 变体 eo/pseudo/pseudo_pair/pair/f2leo/pseudo_f2leo(按 id 缺补,分块可续)→ 重算 distribution/wca_cross/comp_steps → git push + scp static。
 
-- **交互向导**:真人终端裸跑(无参数)自动进向导,全程**方向键菜单**(↑↓ / Space 多选 / 数字字母快捷 / Enter / Esc)—— 取数前问「TSV 来源(下载官方最新 / 用本地缓存不联网)」,取数后列各变体待补 + 估时,多选「跑哪些变体」+ 单选「每变体几块 / 是否发布」,总览确认再跑;`-Interactive` 强制开,`-UseCached` 单独走不联网取数。AI/带任意 flag/非交互终端不弹,走旧一键。
+- **交互向导**:真人终端裸跑(无参数)自动进向导,全程**方向键菜单**(↑↓ / Space 多选 / 数字字母快捷 / Enter / Esc)—— 取数前问「TSV 来源(下载官方最新 / 用本地缓存不联网)」,取数后列各变体待补 + 估时,多选「跑哪些变体」+ 单选「每变体几块 / 是否发布」,总览确认再跑;`-Interactive` 强制开,`-UseCached` 单独走不联网取数。AI/带任意 flag/非交互终端不弹;AI 必须按顶部授权规则显式决定是否加 `-NoPublish`。
 - **长操作都有进度**:下载(每 5%)、解压大 TSV(每 128MB)、扫描(每 2M 行)、solver([PROG] 每 1%)、build(每 20 万行 `\r`)、scp(每 3s 远端字节)。
 - 先 `-DryRun` 看新增规模(只读);落后多就大补、solver 跑几小时。
 - **pair / f2leo / pseudo_f2leo 已入默认**(2026-06-09);增量只补 delta。瓶颈始终是 eo ~0.9/s。想快跑显式 `-Variants eo,pseudo,pseudo_pair` 跳过三重型项。

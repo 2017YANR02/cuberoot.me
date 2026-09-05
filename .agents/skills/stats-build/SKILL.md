@@ -30,7 +30,7 @@ ls jobs/stats-build/database.yml          # 凭据文件在不在
 netstat -an | Select-String ':3306'           # MySQL 在听吗
 Get-Service | Where-Object Name -match mysql  # 服务状态
 ```
-全 OK 还连不上才向用户求助。**绝不能因一次"找不到"就下结论"用户没装 DB"**。
+配置、端口与服务正常仍连不上时,继续核实实际连接错误;只有缺失信息或执行环境选择需要用户决定时才询问;不得因一次“找不到”就下结论没装 DB。
 
 ## 注册表
 
@@ -86,7 +86,7 @@ Get-Service | Where-Object Name -match mysql  # 服务状态
 
 `src/bin/validate_queries.ts` 对所有 stat 跑 `EXPLAIN`，几秒内捕获 SQL 语法错（MySQL 8 保留字如裸 `rank` / `event`、列名拼错、表名拼错）。CI 已自动在 `compute_all` 前跑一次。
 
-**改任一 stat 的 `query()` 后必须本地跑一遍**，复制以下命令执行（CWD 是 `core/`，路径前缀不要再加 `core/`）：
+**改任一 stat 的 `query()` 后必须运行 SQL 校验,优先本地;本地不可用仅走下述获授权的远程兜底**，复制以下命令执行（CWD 是 `core/`，路径前缀不要再加 `core/`）：
 
 ```bash
 pnpm --filter @cuberoot/stats-build run validate-queries
@@ -100,14 +100,14 @@ pnpm --filter @cuberoot/stats-build run validate-queries
 
 1. `ls jobs/stats-build/database.yml` —— 看文件在不在（注意:CWD 是 `core/`）
 2. `netstat -an | Select-String ':3306'` —— 看 MySQL 是否在听（**pwsh,不是 bash 的 grep**）
-3. 都有却连不上 —— 才向用户求助
+3. 都有却连不上 —— 核实实际连接错误,仅在缺失信息或环境选择需要用户决定时询问;不得输出凭据或擅自重置服务/密码
 
 ### 真没 DB 的兜底
 
-只在用户明确说没装 MySQL 时退到这条：push 后建议
+工具证据确认本地 DB 不可用,或用户明确指定远程环境时,准备以下最小远程方案;push 与数据构建分别遵循仓库及 `stats-pipeline-dry-run` 的授权要求,未授权先交付可审阅方案;不得将未执行的 SQL 校验标为通过:
 ```
 gh workflow run stats.yml -f stats_filter=<changed_stat>
 ```
 跑 1 个 stat（~10min）而不是全量（~47min）。Stat 名见 `src/bin/compute.ts` 的 `REGISTRY` keys。
 
-**切忌只跑 typecheck 就 push 改动 SQL 的 stat** —— typecheck 看不见字符串里的 SQL。
+**typecheck 不能替代 SQL 校验**;仅本地不可用且明确获准远程校验时可先 push 触发该方案,必须跟踪 SQL 校验和构建结果,失败则修复,未通过不得宣称完成。
