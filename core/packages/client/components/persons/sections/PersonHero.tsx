@@ -1,4 +1,4 @@
-// 顶部 hero:头像 + (国旗 + 姓名 + 性别图标) + 名字下方小字 WCA ID + 信息条(比赛次数 / 复原次数 / 尝试次数).
+// 顶部 hero:头像 + (国旗 + 姓名 + 性别图标) + 名字下方小字 WCA ID + 奖牌 / 纪录 / 统计信息。
 // 头像居中,国旗在名字左侧,WCA ID 左缘与名字左缘对齐.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -120,23 +120,24 @@ export default function PersonHero({
     { value: 'pb', label: 'PB' },
   ] as const;
   const resultViewLabel = resultViewItems.find((item) => item.value === resultView)?.label ?? 'PR';
+  const prCount = useMemo(
+    () => results && comps ? countPersonalRecords(computePrRank(results.filter((r) => !r.live), comps).values()) : 0,
+    [results, comps],
+  );
 
   const collections = [
     {
       key: 'medals',
       items: [
-        { key: 'gold', label: t('金牌', 'Gold'), value: profile.medals.gold },
-        { key: 'silver', label: t('银牌', 'Silver'), value: profile.medals.silver },
-        { key: 'bronze', label: t('铜牌', 'Bronze'), value: profile.medals.bronze },
-      ],
-    },
-    {
-      key: 'records',
-      items: [
+        { key: 'competitions', label: t('比赛', 'Competitions'), value: profile.competition_count },
         { key: 'world', label: 'WR', value: profile.records.world },
         { key: 'continental', label: 'CR', value: profile.records.continental },
         { key: 'national', label: 'NR', value: profile.records.national },
-      ],
+        { key: 'pr', label: 'PR', value: prCount },
+        { key: 'gold', label: t('金牌', 'Gold'), value: profile.medals.gold },
+        { key: 'silver', label: t('银牌', 'Silver'), value: profile.medals.silver },
+        { key: 'bronze', label: t('铜牌', 'Bronze'), value: profile.medals.bronze },
+      ].filter((item) => item.value > 0),
     },
   ].filter((collection) => collection.items.some((item) => item.value > 0));
 
@@ -152,11 +153,6 @@ export default function PersonHero({
       }
     }
   }
-  const prCount = useMemo(
-    () => results && comps ? countPersonalRecords(computePrRank(results.filter((r) => !r.live), comps).values()) : 0,
-    [results, comps],
-  );
-
   // 性别用 lucide 图标放在名字旁(男 Mars / 女 Venus),其他/未知不显示.
   const GenderIcon = p.gender === 'm' ? Mars : p.gender === 'f' ? Venus : null;
   const genderLabel =
@@ -288,26 +284,22 @@ export default function PersonHero({
             </div>
           )}
 
-          <div className="wp-hero-table">
-            <div className="wp-hero-cell">
-              <div className="wp-hero-cell-label">{t('比赛', 'Competitions')}</div>
-              <div className="wp-hero-cell-value">
-                <span className="wp-pill">{profile.competition_count}</span>
-              </div>
+          {(solves > 0 || attempts > 0) && (
+            <div className="wp-hero-table">
+              {solves > 0 && (
+                <div className="wp-hero-cell">
+                  <div className="wp-hero-cell-label">{t('复原', 'Solves')}</div>
+                  <div className="wp-hero-cell-value"><span className="wp-pill">{solves}</span></div>
+                </div>
+              )}
+              {attempts > 0 && (
+                <div className="wp-hero-cell">
+                  <div className="wp-hero-cell-label">{t('尝试', 'Attempts')}</div>
+                  <div className="wp-hero-cell-value"><span className="wp-pill">{attempts}</span></div>
+                </div>
+              )}
             </div>
-            <div className="wp-hero-cell">
-              <div className="wp-hero-cell-label">PR</div>
-              <div className="wp-hero-cell-value"><span className="wp-pill">{prCount}</span></div>
-            </div>
-            <div className="wp-hero-cell">
-              <div className="wp-hero-cell-label">{t('复原', 'Solves')}</div>
-              <div className="wp-hero-cell-value"><span className="wp-pill">{solves}</span></div>
-            </div>
-            <div className="wp-hero-cell">
-              <div className="wp-hero-cell-label">{t('尝试', 'Attempts')}</div>
-              <div className="wp-hero-cell-value"><span className="wp-pill">{attempts}</span></div>
-            </div>
-          </div>
+          )}
         </>
       )}
     </section>
