@@ -318,6 +318,12 @@ function EventRoundsList({
     });
   }, [rows, compById]);
 
+  // AoXR(跨轮平均)按 (比赛 × 项目) 聚合,与单次/平均同用「订正后」的有效值。
+  const aoxrMap = useMemo(
+    () => computeAoxr(effResultsForRank, comps),
+    [effResultsForRank, comps],
+  );
+
   // 排序后的展示顺序:key=null 用默认分组序;否则拉平按所选键升/降排,无效(≤0)恒垫底,
   // 平手 / 双无效保持 baseSorted 的时间序(Array.sort 在 V8 稳定).
   const displayRows = useMemo(() => {
@@ -327,6 +333,7 @@ function EventRoundsList({
       if (key === 'pos') return r.pos;            // 名次:数字越小越好,与单次/平均同向(≤0 垫底)
       if (key === 'single') return mbld ? r.best : (metricValues.single.get(wcaResultRowKey(r)) ?? 0);
       if (key === 'average') return mbld ? effectiveAverage(r, eventId) : (metricValues.average.get(wcaResultRowKey(r)) ?? 0);
+      if (key === 'aoxr') return aoxrMap.get(aoxrKey(r.competition_id, eventId))?.value ?? 0;
       return r.attempts?.[Number(key.slice(3))] ?? 0;
     };
     return baseSorted.slice().sort((a, b) => {
@@ -337,7 +344,7 @@ function EventRoundsList({
       if (ib) return -1;
       return dir === 'asc' ? va - vb : vb - va;
     });
-  }, [baseSorted, sort, eventId, mbld, metricValues]);
+  }, [baseSorted, sort, eventId, mbld, metricValues, aoxrMap]);
 
   // 渐进渲染:先挂前 N 行,其余趁 idle 补齐(顶级选手单项目可 500+ 行,一次性挂 = 单个长任务卡顿)。
   // 切项目 / 改排序 → displayRows 重排 → 重置重新渐进。
@@ -357,11 +364,6 @@ function EventRoundsList({
     deps: [displayRows, count],
   });
 
-  // AoXR(跨轮平均)按 (比赛 × 项目) 聚合,与单次/平均同用「订正后」的有效值。
-  const aoxrMap = useMemo(
-    () => computeAoxr(effResultsForRank, comps),
-    [effResultsForRank, comps],
-  );
   // AoXR 列跨「同一场比赛」的全部轮次合并成一格:组首行记组大小(= rowSpan),其余行记 0 不出格。
   // 两个约束:① 排序视图(sort.key 非空)行已被拉平打散,同场行不再相邻 → 每行各自出格;
   // ② 渐进渲染只挂前 count 行,合并格不能跨到尚未挂出的行 → 组大小按已挂出的部分截断。
@@ -511,7 +513,10 @@ function EventRoundsList({
             </th>
             <th className="wp-th-aoxr">
               <span className="wp-th-info">
-                AoXR
+                <button type="button" className={`wp-sort-th ${sort.key === 'aoxr' ? 'is-active' : ''}`}
+                  onClick={() => toggleSort('aoxr')} title={t('按 AOXR 排序', 'Sort by AOXR')}>
+                  AoXR{sortArrow('aoxr')}
+                </button>
                 <InfoTooltip content={aoxrHint()} />
               </span>
             </th>
