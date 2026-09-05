@@ -18,7 +18,7 @@ WCA 官方规则会改版(近年不按 1.1 走:有 2025-07-17 合并版、2026-0
 - **检测**:`pnpm -F @cuberoot/client reg:check` —— 拉线上比基线,报告版本/哪些章改了(带 diff)+ 映射到具体 `page.tsx`;exit 0 同步 / 3 漂移 / 2 无基线 / 1 出错。
 - **自动报警 + 自动同步全文**:CI `.github/workflows/regulation_drift.yml` 每月 1 号跑检测,漂移时**分两条**:① 逐字层(快照 + `reg-clauses/*.json` + `_full.json`)机器生成无版权改写,workflow 自动 `reg:check --write` + `build-reg-clauses` 重建,经 `peter-evans/create-pull-request` 开/更新 `regulation-sync` PR(合并即上线最新全文镜像;**需仓库设置勾 Settings→Actions→General→"Allow GitHub Actions to create and approve pull requests"**,否则 PR 创建 403);② 图文转述层(`/regulation/<slug>` 有版权改写)仍开/更新 `regulation-drift` issue 等人重写。**用户收到这个 issue(或主动说「更新规则」)= 本 skill 的入口;那个 sync PR 一般直接 merge 即可。**
 
-**收到漂移 issue / 「更新规则」时的流程**:① 先 `reg:check`(或读 issue)拿到改动清单 → ② 对每个改动章 WebFetch 官方对应 article 重新转述、重写该 `<slug>/page.tsx`(可视化照旧)→ ③ 跑下面的繁体生成 + typecheck + 浏览器验 → ④ **重新基线 + 刷新完整条款**:`pnpm -F @cuberoot/client reg:check --write` 再 `pnpm -F @cuberoot/client reg:clauses`,把更新后的 `reg-source.snapshot.md` / `reg-source.hashes.json` / `_data/reg-clauses/*.json` 一起 commit(否则下次还报同样的漂移)。新增/删除整章见末节。
+**收到漂移 issue / 「更新规则」时的流程**:① 先 `reg:check`(或读 issue)拿到改动清单 → ② 对每个改动章 WebFetch 官方对应 article 重新转述、重写该 `<slug>/page.tsx`(可视化照旧)→ ③ 按下文做双语检查、适用 typecheck 与浏览器验证 → ④ **重新基线 + 刷新完整条款**:`pnpm -F @cuberoot/client reg:check --write` 再 `pnpm -F @cuberoot/client reg:clauses`,把更新后的 `reg-source.snapshot.md` / `reg-source.hashes.json` / `_data/reg-clauses/*.json` 一起 commit(否则下次还报同样的漂移)。新增/删除整章见末节。
 
 ## 完整条款数据层(每章可折叠全文 + 全文镜像页)
 
@@ -59,13 +59,10 @@ WCA 官方规则会改版(近年不按 1.1 走:有 2025-07-17 合并版、2026-0
 章节页骨架:
 ```tsx
 'use client';
-import { useTranslation } from 'react-i18next';
 import RegArticleLayout from '../_components/RegArticleLayout';
 import { RegSection, Callout, RegList } from '../_components/primitives';
-import { useT } from '../../../../hooks/useT';   // ← 必须 RELATIVE,见下「繁体铁律」
+import { useT } from '@/hooks/useT';
 export default function XPage() {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   const t = useT();
   return (
     <RegArticleLayout slug="<slug>">
@@ -85,29 +82,13 @@ export default function XPage() {
 - **图示**:行内 SVG(VS 对决图、晋级 bracket、比赛场地图、记分公式…),`viewBox` + `max-width:100%` 防溢出。
 - 卡片网格 `reg-cards`、表格 `reg-table`、罚则双栏 `reg-pen-grid`、实例图文 `reg-examples`/`reg-ex`(5b5f 那 11 张实例图在 `/public/images/regulation/`)。
 
-## 繁体铁律(zh-Hant,本仓 OpenCC 生成,禁手敲 —— PreToolUse hook 会拦 Edit/Write 里任何繁体字)
+## 国际化
 
-繁体**只能**经 fs-写入的生成器进树。本页用三条受支持的通道,**别用 `<T>` 组件**(没有生成器能填它的 zhHant,zh-Hant 会回退简体):
-
-1. **纯文本** → `const t = useT(); t('简体','English')`。**useT 必须 RELATIVE import**(`../../../../hooks/useT`,从 `<slug>/page.tsx` 数;`_components/` 同样 4 层)。**禁 `@/hooks/useT`** —— 代号生成器 `gen-localt` 解析不了 `@/` 别名,会静默跳过、繁体填不上(踩过的坑)。
-2. **带标签的富 JSX**(含 `<b>`/`<K>`/`<Link>`/`<br/>`)→ 三路三目,**只写简体**两支,繁支留简体占位:
-   ```tsx
-   {i18n.language === 'zh-Hant' ? (简JSX) : (isZh ? (简JSX) : (enJSX))}
-   ```
-   组件里要有 `const { i18n } = useTranslation(); const isZh = i18n.language.startsWith('zh');`。`zh:gen-ternary` 会把第一支重写成 OpenCC 繁体。**注意**:用在 `prop={...}` 位置时别再多包一层 `{}`(`lede={i18n.language===... ? (..) : (..)}`,不是 `lede={ {..} }`)。
-3. **注册表数据对象**(articles.ts 的 title/tagline)→ `{ zh, en, zhHant: '<简体副本>' }`,经 `tr()` 渲染。seed 的 zhHant 写**简体副本**(hook 放行),`zh:inject` 会刷成繁体。徽标走 `reg-text.tsx` 的模板字面量 `t(\`第 ${num} 章\`, ...)`(gen-localt 填)。
-
-**改完依次跑(在 `core/`,缺一不可)**:
-```
-pnpm -F @cuberoot/client zh:gen-localt   # 填 t() 第三参
-pnpm -F @cuberoot/client zh:gen-ternary  # 填三目繁支
-pnpm -F @cuberoot/client zh:inject       # 填 tr()/数据对象 zhHant
-pnpm -F @cuberoot/client zh:check        # 守卫:必须全绿(CI 跑这个)
-```
+遵循 `i18n` Skill,仅 en + zh-Hans;文案用 `tr`/`T`/`useT` 或 locale JSON,禁止内联语言三元;不恢复繁体字段、生成器或已删除的 `zh:*` 检查命令。
 
 ## 新增一个全新章节(注册表里还没有)
 
-1. `_data/articles.ts` 的 `REG_ARTICLES` 加一条:`{ slug, num, group:'core'|'event', title:{zh,en,zhHant:'<简>'}, tagline:{zh,en,zhHant:'<简>'}, Icon }`(Icon 从 lucide-react 选;`zhHant` seed 写简体副本)。顺序即阅读顺序(驱动上/下章)。
+1. `_data/articles.ts` 的 `REG_ARTICLES` 加一条:`{ slug, num, group:'core'|'event', title:{zh,en}, tagline:{zh,en}, Icon }`(Icon 从 lucide-react 选)。顺序即阅读顺序(驱动上/下章)。
 2. 建 `<slug>/page.tsx`(套骨架),并接完整条款层:`import clauses from '../_data/reg-clauses/<num>.json'` + 末尾 `<FullClauses data={clauses} />`(JSON 已由 `reg:clauses` 全量生成,含该章)。无需 generateStaticParams —— `[lang]` 层已处理,每章是静态子路由自动 SSG。
 3. hub 总览页与上/下章导航**自动**带上这一章(都读注册表)。
 
@@ -121,7 +102,7 @@ pnpm -F @cuberoot/client zh:check        # 守卫:必须全绿(CI 跑这个)
 
 ## 写完检查
 
-- `pnpm -F @cuberoot/client typecheck`(tsgo)+ 上面的 `zh:check` 必须全绿。
+- 按根 AGENTS 的适用范围运行 `pnpm -F @cuberoot/client typecheck`;核对 en/zh 内容及现行 i18n 守卫,不运行已删除的脚本。
 - 内容随官方改版而改的话,收尾 `pnpm -F @cuberoot/client reg:check --write` + `pnpm -F @cuberoot/client reg:clauses` 重新基线 + 刷完整条款,连快照/条款 JSON 一起 commit。
-- dev 常驻 `http://127.0.0.1:3000/`(**别** `pnpm dev`)。用 Playwright 开 `/zh/regulation/<slug>`、`/en/...`、`/zh-Hant/...` 各验一遍:零 console error、繁体确实是繁体、窄屏无横向溢出、动画/SVG 正常。
+- dev 启动与浏览器可见性遵循 AGENTS;用 Playwright 验 `/zh/regulation/<slug>` 与 `/regulation/<slug>`:零 console error、双语正确、窄屏无横向溢出、动画/SVG 正常。
 - 多 AI 并行时每章一个文件域,别和别的 agent 同改一个文件([[feedback_no_agent_collision]])。

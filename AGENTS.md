@@ -64,6 +64,7 @@ WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过
 
 > **push = 上线(默认只 commit 不 push)**:push 即触发 Vercel + 服务器自动重建。仅以下情形 push 且先告知用户:①用户明说;②DB 迁移需线上生效;③改 nginx/systemd/服务器 env/后端 API;④bug 仅生产复现;⑤线上紧急修。
 
+- 发布授权以本节为准,Skill 中 push/上传/workflow 命令不自行授予权限;用户本次“仅本地/不 push”优先;专项规则明确要求当次授权或用户手动执行时保留该更严格边界。
 - 主域 DNS 分线路:一路自有服务器 nginx→127.0.0.1:3002(systemd `cuberoot-next`;vhost `ops/nginx/`,改 nginx 走 `deploy_nginx.yml`);一路 Vercel(push 自动 build)。
 - `static.cuberoot.me`:服 `{tools,stats}/`,CORS:*。`next.cuberoot.me`:staging 别名,同 :3002。
 - Next standalone:`deploy_next.yml`(push client/shared/visualcube 触发)CI build→scp→原子换+健康检查+失败回滚;unit `ops/systemd/cuberoot-next.service`。
@@ -98,7 +99,7 @@ pnpm --filter @cuberoot/client lint
 ```
 
 - 禁 `tsc --noEmit` 走根 tsconfig(references-only 壳,typo 静默过)。
-- dev server 常驻 `http://127.0.0.1:3000/`(绑 127.0.0.1),别再 `pnpm dev`(端口占用即挂);验证用 playwright 直接开。Windows 关窗可能留孤儿 node,改 globals/layout/config 看 chunk hash 是否变。
+- 使用 dev 前先探测 `http://127.0.0.1:3000/`:已有服务则复用,未运行且资源允许时可在 `core/` 启动本任务 client dev(绑 127.0.0.1);不得擅自停止/重启他人服务;浏览器验证遵循全局可见窗口边界。Windows 关窗可能留孤儿 node,改 globals/layout/config 看 chunk hash 是否变。
 - **dev 在跑时禁本地 `next build`**(共用 `.next/` 撕裂 manifest → 全站 500;PreToolUse hook 硬拦;坏了删 `.next` 重启)。验证走 `typecheck`。
 - 本地 dev 调 `/v1/*` 走 rewrites 反代线上 api,不需要跑后端。
 - 磁盘不够先 `df -h` 告诉我,别静默换方案。
@@ -108,7 +109,7 @@ pnpm --filter @cuberoot/client lint
 
 ## 测试
 
-- 提交/push 后禁手动补跑额外测试;只观察 CI,失败时仅跑对应的最小检查。
+- 提交前完成适用验证;push 后不重复已通过的检查,只观察对应提交的 CI;新增改动、失败或遗漏的必要验收仅跑对应最小检查;本地 commit 不视为触发 CI;用户本次“不用检查”限制仍优先。
 - `pnpm --filter @cuberoot/client test` 全集;单文件 `pnpm --filter @cuberoot/client exec vitest run <path>`(**禁** `test -- <path>`,pnpm 透传会被 vitest 吞、跑全集)。
 - `tests/analyzer_worker.test.ts` ~225s(占全集 99%),只改别处就单跑其它文件。
 - 测试统一 `packages/client/tests/*.test.ts`(不与源码并排),源文件 `@/` alias import。
@@ -119,7 +120,7 @@ pnpm --filter @cuberoot/client lint
 ## 代码风格
 
 - 新增或复刻任何功能前先全仓搜索现有组件、数据源、工具、交互契约与资源，存在同职责实现时直接复用或先提取单一事实源，禁止复制后改名、各端维护副本或擅自增加源实现没有的内容，跨运行时只保留必要的平台适配层。
-- 优先编辑已有文件;改完跑 typecheck。
+- 优先编辑已有文件;typecheck 按全局适用范围执行,纯 CSS/文本/注释跳过。
 - 改动先定位根因,禁止在症状点打补丁;根因定位后落地用最小实现,不臆造抽象层/翻译层。
 - SSR 首次 render / useState 初始化禁读随机数、当前时间或浏览器存储;固定首屏后再用 effect 更新,外部存储走 useSyncExternalStore 的 server snapshot。
 - 浏览器端源码禁用正则后行断言,改用捕获边界或显式前字符判断;Hook + CI 守卫。
@@ -142,7 +143,7 @@ pnpm --filter @cuberoot/client lint
 - 全局固定按钮对齐内容右沿:`right: max(16px, calc((100vw - <content-max-width>) / 2))`。
 - chip/tab/下拉项不显示数量计数。
 - WCA 时间锚点:时间序列默认视图从 2003-08-22 起步(第 0 帧 = 1982 快照),统计聚合必含 1982 场。
-- 调试不主动 `git log`/`git status`;删文件/配置先确认。
+- 可为任务边界读取 `git status`/diff,仅需历史证据时读 `git log`;删除文件或配置前须取得用户批准,同一对象和动作已有明确授权不重复询问,执行仍遵循全局回收站规则。
 - 报根因/"修好了"/done 前必须实证(日志/EXPLAIN/run 输出/playwright);未证实标「假设」;性能/502/OOM 先 profile 禁猜。
 - UI 验证先搜并用 Playwright MCP(可能延迟加载);fixtures 全集别采样。
 - 新路由先 grep 防撞名;路由改名/合并不为旧路径加 redirect。

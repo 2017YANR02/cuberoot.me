@@ -34,7 +34,7 @@ description: "Use when user wants to fill in /dev/architecture 第 11 节的日�
 6. 审 TIMELINE: 凡新 LandingPage 卡片 / 新顶层路由 / 新重要 sub-route / 框架换栈 / 整片基础设施变更 → 都加一条。新加前先 `grep -nE "id:|href:" LandingPage.tsx` + `grep -nE "path=" App.tsx` 防漏
 7. 已有 entry 太单薄 (placeholder 揭出隐藏改动) → **改写**而非追加
 8. **直接写入两个文件, 不发预览等用户点头**
-9. 不主动 commit / push, 等用户
+9. 本 Skill 保留本地交付例外:完成编辑与适用验证后交付,不主动 commit/push;用户另有明确授权时执行,不因等待提交授权暂停本地工作
 
 ## TIMELINE schema
 
@@ -49,7 +49,7 @@ interface TLEntry {
 
 tag: `migration` 换栈/迁数据 · `dx` 开发流程 · `feature` 新页/新模块 · `infra` 部署/CI/SSL
 
-新条目插数组**最前**, 改完跑 `pnpm --filter @cuberoot/client typecheck`
+新条目插数组**最前**;纯文案/数据条目更新不跑 typecheck,涉及 TS/TSX 逻辑时按根 AGENTS 执行。
 
 ## Calibration
 
