@@ -37,6 +37,7 @@ import {
   type Provider,
 } from '../utils/account.js';
 import { AccountOwnsOrganizationError, deleteAccount } from '../utils/account_delete.js';
+import { AccountMergeError, mergeAccounts, parseAccountMergeCode } from '../utils/account_merge.js';
 import { emailConfigured, sendEmailCode } from '../utils/email.js';
 import { smsConfigured, sendSmsCode } from '../utils/sms.js';
 import { googleConfigured, googleClientId, googleRelayUrl, verifyGoogleAssertion } from '../utils/google.js';
@@ -978,7 +979,7 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
     throw error;
   }
 
-  const filters: string[] = [];
+  const filters: string[] = ['u.merged_into_user_id IS NULL'];
   const params: unknown[] = [];
   if (q) {
     const escaped = q.replace(/[\\%_]/g, '\\$&');
@@ -1028,7 +1029,8 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
       COUNT(*) FILTER (WHERE password_hash IS NULL AND NOT EXISTS (
         SELECT 1 FROM auth_identities no_identity WHERE no_identity.user_id = app_users.id
       )) AS users_without_identity
-      FROM app_users`),
+      FROM app_users
+      WHERE merged_into_user_id IS NULL`),
     query<{ day: string; count: number | string }>(`WITH days AS (
       SELECT generate_series(
         ?::date,
@@ -1041,6 +1043,7 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
     LEFT JOIN app_users
       ON app_users.created_at >= days.day AT TIME ZONE 'UTC'
       AND app_users.created_at < (days.day + 1) AT TIME ZONE 'UTC'
+      AND app_users.merged_into_user_id IS NULL
     GROUP BY days.day
     ORDER BY days.day`, [activityRange.from, activityRange.to]),
     query<{
@@ -1327,6 +1330,41 @@ accountAuthRoutes.post('/auth/account/delete', async (c) => {
     throw error;
   }
   return c.json({ ok: true });
+});
+
+// 保留账号生成一次性合并码；待合并账号必须在自己的登录态里提交该码。
+accountAuthRoutes.post('/auth/account/merge/code', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const uid = await requireAppUserId(c);
+  const result = await issueCode('merge', String(uid), 'account_merge');
+  if ('error' in result) return c.json({ error: 'too frequent' }, 429);
+  return c.json({ code: `${uid}-${result.code}`, expiresInSeconds: 600 });
+});
+
+accountAuthRoutes.post('/auth/account/merge', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const sourceUserId = await requireAppUserId(c);
+  const body = await c.req.json<{ code?: unknown }>().catch(() => ({ code: undefined }));
+  const parsed = parseAccountMergeCode(body.code);
+  if (!parsed || parsed.targetUserId === sourceUserId) return c.json({ error: 'invalid merge code' }, 400);
+  const verified = await verifyCode('merge', String(parsed.targetUserId), 'account_merge', parsed.code);
+  if (!verified) return c.json({ error: 'wrong or expired merge code' }, 400);
+
+  try {
+    await mergeAccounts(sourceUserId, parsed.targetUserId);
+  } catch (error) {
+    if (error instanceof AccountMergeError) return c.json({ error: error.code }, error.code === 'not_found' ? 404 : 409);
+    throw error;
+  }
+  const user = await getUserById(parsed.targetUserId);
+  if (!user) return c.json({ error: 'account not found' }, 404);
+  return c.json({
+    ok: true,
+    token: signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name }),
+    user: publicUser(user),
+  });
 });
 
 // ── 我的身份列表(附是否已设密码,供账号面板显示「设置 / 修改密码」)──

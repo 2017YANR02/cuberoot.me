@@ -160,7 +160,7 @@ const TABLES: Table[] = [
   { name: 'wca_users', domain: 'comp', origin: 'snapshot', purpose: { zh: 'WCA OAuth 登录用户(身份 / 头像 / admin)', en: 'WCA OAuth users (identity, avatar, admin flag)' } },
 
   // ── accounts & auth ────────────────────────────────────
-  { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172, 186, 194, 200, 201, 206, 210], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
+  { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172, 186, 194, 200, 201, 206, 210, 214], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
   { name: 'account_last_devices', domain: 'account', origin: '0199', purpose: { zh: '每个账号最近使用设备的粗粒度类型、系统、浏览器和时间；不保存原始 User-Agent、IP 或设备指纹', en: 'Coarse latest-device type, OS, browser, and time per account; raw User-Agent, IP, and device fingerprints are not stored' } },
   { name: 'user_friendships', domain: 'account', origin: '0175', purpose: { zh: '好友申请与已接受的双向好友关系；每对账号只保留一条规范记录', en: 'Pending requests and accepted two-way friendships, with one canonical row per account pair' } },
   { name: 'user_blocks', domain: 'account', origin: '0175', purpose: { zh: '单向黑名单；拉黑时同步切断好友关系与待处理申请', en: 'Directed blocks; blocking also removes friendships and pending requests' } },
@@ -724,6 +724,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 211, slug: 'wca_pr_streaks', desc: { zh: '新增全体选手连续取得个人纪录的最多参赛场数表，供世界 / 大洲 / 国家分页排名。', en: 'Add longest personal-record competition streaks for every cuber, supporting paginated worldwide, continental, and national rankings.' } },
   { n: 212, slug: 'membership_vip_id', desc: { zh: '为每位会员分配唯一且稳定的 VIP 编号，撤销权益时保留编号。', en: 'Assign every member a unique stable VIP ID and retain it when entitlement is revoked.' } },
   { n: 213, slug: 'home_card_positions', desc: { zh: '保存管理员设置的首页各分组卡片顺序。', en: 'Store admin-defined homepage card order within each directory group.' } },
+  { n: 214, slug: 'account_merge', desc: { zh: '账号增加合并重定向墓碑,使旧登录态自动归到保留账号。', en: 'Add account-merge redirect tombstones so old sessions resolve to the retained account.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

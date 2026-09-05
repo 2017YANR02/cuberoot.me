@@ -8,7 +8,7 @@ import jwt from 'jsonwebtoken';
 import { ADMIN_WCA_IDS, BANNED_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 export { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
 import { JWT_SECRET } from './session.js';
-import { isAccountAdmin, ownerKey } from './account.js';
+import { findUserByWcaId, getUserById, ownerKey } from './account.js';
 
 // 装饰性标注字符:`·`(间隔)、`↑↓`(regrip 方向记号)、分数 `⅓⅔`、ASCII `.`、各类零宽字符。
 // 这些不是真转动,记号区校验前先剥掉(与客户端 lib/recon-alg-utils.ts 的 COSMETIC_ANNOTATION_CHARS
@@ -360,13 +360,18 @@ export async function authenticateUser(authHeader: string | undefined): Promise<
   try {
     const payload = jwt.verify(token, JWT_SECRET) as { uid?: number; wcaId?: string; name?: string };
     if (payload.uid != null || payload.wcaId) {
-      const isAdmin = await isAccountAdmin(payload.uid, payload.wcaId);
+      const account = payload.uid != null
+        ? await getUserById(payload.uid)
+        : payload.wcaId
+          ? await findUserByWcaId(payload.wcaId)
+          : null;
+      if (payload.uid != null && !account) return null;
       return {
-        wcaId: ownerKey(payload.uid, payload.wcaId),
-        name: payload.name ?? '',
-        uid: payload.uid,
-        realWcaId: payload.wcaId,
-        isAdmin,
+        wcaId: ownerKey(account?.id ?? payload.uid, account?.wca_id ?? payload.wcaId),
+        name: account?.display_name ?? payload.name ?? '',
+        uid: account?.id ?? payload.uid,
+        realWcaId: account?.wca_id ?? payload.wcaId,
+        isAdmin: account?.is_admin === true || isAdminWcaId(account?.wca_id ?? payload.wcaId),
       };
     }
   } catch {
