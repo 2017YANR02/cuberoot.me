@@ -107,6 +107,7 @@ export default function CalendarClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只取首帧值:之后靠 gotoDate 跳,重算会把视图弹回今天
   }, [mounted]);
 
+  // allow-hydration-volatile-state: every range-dependent calendar subtree is gated by mounted.
   const [range, setRange] = useState<GridRange>(() => ({
     start: Date.now() - 7 * DAY, end: Date.now() + 7 * DAY, anchor: Date.now(),
   }));

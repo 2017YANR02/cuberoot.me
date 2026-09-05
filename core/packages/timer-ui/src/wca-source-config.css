@@ -31,7 +31,6 @@
   align-items: center;
   flex: 1 1 140px;
   min-width: 100px;
-  min-height: 44px;
 }
 
 .timer-wca-competition.is-picked {
@@ -43,13 +42,19 @@
 .timer-wca-competition-input {
   width: 100%;
   min-width: 0;
-  min-height: 44px;
-  padding: 7px 44px 7px 8px;
+  padding: 4px 44px 4px 8px;
   border: 1px solid var(--input);
   border-radius: 4px;
   background: var(--background);
   color: var(--foreground);
   font: inherit;
+}
+
+.timer-wca-source-select,
+.timer-wca-competition-input {
+  box-sizing: border-box;
+  height: calc(1.2em + 10px);
+  line-height: 1.2;
 }
 
 /* The clear affordance is rendered only for a non-empty query. Do not reserve

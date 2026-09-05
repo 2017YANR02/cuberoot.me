@@ -6,7 +6,7 @@
  * 切换会清掉 333 / 333oh / 333bf / 333mbf / 333fm / 333ft / 333mbo 这些
  * 共用 cubing.js 路径的事件 pool。
  */
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { persistItem } from './safe-storage';
 
 export type Scramble333Mode = 'wca' | 'm2p';
@@ -39,7 +39,6 @@ export function on333ModeChange(handler: () => void): () => void {
 }
 
 export function use333Mode(): [Scramble333Mode, (m: Scramble333Mode) => void] {
-  const [mode, setLocal] = useState<Scramble333Mode>(() => get333Mode());
-  useEffect(() => on333ModeChange(() => setLocal(get333Mode())), []);
+  const mode = useSyncExternalStore(on333ModeChange, get333Mode, () => DEFAULT);
   return [mode, set333Mode];
 }

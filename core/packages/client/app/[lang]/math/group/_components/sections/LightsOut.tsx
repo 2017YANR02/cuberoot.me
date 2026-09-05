@@ -334,8 +334,8 @@ function LineLightsSlider() {
 // and lets the user step through GF(2) row reduction one pivot at a time.
 function GaussianEliminationStepper() {
   const lang = useLang();
-  // Random solvable target (3×3 is full-rank, so any b works)
-  const [b, setB] = useState<number[]>(() => Array.from({ length: 9 }, () => Math.random() < 0.5 ? 1 : 0));
+  // Fixed first render keeps SSR and hydration identical; "new target" stays random.
+  const [b, setB] = useState<number[]>(() => [1, 0, 1, 0, 1, 1, 0, 1, 0]);
   // The matrix is fixed once chosen; recompute on b change for reproducibility
   const A0 = useMemo(() => lightsMatrix(3, 3), []);
 
@@ -448,8 +448,8 @@ function LightChasingAnimator() {
   const A = useMemo(() => lightsMatrix(5, 5), []);
   const [pattern, setPattern] = useState<number[]>(() => {
     const next = new Array(25).fill(0);
-    for (let k = 0; k < 12; k++) {
-      const i = Math.floor(Math.random() * 25);
+    // A fixed reachable pattern keeps SSR and hydration identical.
+    for (const i of [0, 2, 4, 6, 8, 11, 13, 17, 19, 20, 22, 24]) {
       for (let j = 0; j < 25; j++) if (A[i][j] === 1) next[j] ^= 1;
     }
     return next;

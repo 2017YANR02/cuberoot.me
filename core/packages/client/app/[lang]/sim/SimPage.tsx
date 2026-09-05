@@ -1,4 +1,5 @@
 'use client';
+// allow-hydration-volatile-state: the route wrapper imports this entire module with ssr:false.
 
 /**
  * /sim — 虚拟魔方 Playground / Player / Algs / Director (Next.js port).

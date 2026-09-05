@@ -110,6 +110,7 @@
   letter-spacing: -0.02em;
 }
 .pp-item-label { line-height: 1.2; white-space: nowrap; }
+.pp-footer { padding: 8px 10px 6px; }
 
 @media (max-width: 480px) {
   .pp-popup { max-width: calc(100vw - 32px); }

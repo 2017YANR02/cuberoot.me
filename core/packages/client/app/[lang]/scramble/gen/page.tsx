@@ -99,17 +99,23 @@ function GenPageInner() {
   // Shared 打乱图 visibility. Persisted to localStorage so the choice survives
   // page reloads and mode switches. Off ⇒ neither web sheet nor PDF includes
   // the per-attempt preview thumbnail.
-  const [showPreview, setShowPreviewState] = useState<boolean>(readShowPreview);
+  const [showPreview, setShowPreviewState] = useState(true);
   const setShowPreview = (v: boolean) => {
     setShowPreviewState(v);
     persistItem(SHOW_PREVIEW_KEY, v ? '1' : '0');
   };
 
-  const [sq1Compact, setSq1CompactState] = useState<boolean>(readSq1Compact);
+  const [sq1Compact, setSq1CompactState] = useState(true);
   const setSq1Compact = (v: boolean) => {
     setSq1CompactState(v);
     persistItem(SQ1_COMPACT_KEY, v ? '1' : '0');
   };
+
+  // SSR 与客户端首帧都用默认值；挂载后再恢复本地偏好，避免 hydration 漂移。
+  useEffect(() => {
+    setShowPreviewState(readShowPreview());
+    setSq1CompactState(readSq1Compact());
+  }, []);
 
   // mode 走 nuqs(replace);raw 字符串读出后做 legacy alias 归一(parseAsStringEnum
   // 会在归一前就把旧别名丢成默认值,故用 parseAsString 自己归一)。default 'comp' 自动

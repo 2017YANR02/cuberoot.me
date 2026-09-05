@@ -273,11 +273,7 @@ export interface TimerSettings extends
    */
   dailySolveGoal?: number | null;
 
-  /**
-   * 是否显示排名徽章(停表后成绩旁的 WR / CR / NR 名次药丸)。默认开;关掉则完全隐去,
-   * 连占位高度也不保留。旧存档无此键 -> 视为 true。
-   */
-  showRankBadge?: boolean;
+  /** 显示的排名范围；空数组表示全部关闭。 */
   rankScopes: TimerRankScope[];
 
   /**
@@ -350,7 +346,6 @@ export const DEFAULTS: TimerSettings = {
   round: DEFAULT_ROUND_CONFIG,
   targetMsByEvent: {},
   dailySolveGoal: null,
-  showRankBadge: true,
   rankScopes: normalizeTimerRankScopes(undefined),
   rankCountry: '',
   autoRecap: true,
@@ -420,7 +415,8 @@ function load(): TimerSettings {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { ...DEFAULTS };
-    const parsed = JSON.parse(raw) as Partial<TimerSettings> & {
+    const { showRankBadge, ...parsed } = JSON.parse(raw) as Partial<TimerSettings> & {
+      showRankBadge?: unknown;
       statsAoWindows?: unknown;
       /** Legacy Web key; shared Web/Mobile timing settings now use inspectionSec. */
       inspection?: unknown;
@@ -438,7 +434,7 @@ function load(): TimerSettings {
       ...normalizedTiming,
       ...normalizedSplits,
       ...normalizedScramblePreview,
-      rankScopes: normalizeTimerRankScopes(parsed.rankScopes),
+      rankScopes: showRankBadge === false ? [] : normalizeTimerRankScopes(parsed.rankScopes),
     } as TimerSettings & {
       statsAoWindows?: unknown;
       inspection?: unknown;
@@ -447,7 +443,7 @@ function load(): TimerSettings {
 
     // Shared timing normalization is also the migration boundary for malformed
     // legacy values. Missing fields still use defaults without forcing a write.
-    let dirty = 'inspection' in parsed;
+    let dirty = showRankBadge !== undefined || 'inspection' in parsed;
     for (const key of Object.keys(normalizedTiming) as Array<keyof TimerTimingSettings>) {
       if (key in parsed && parsed[key] !== normalizedTiming[key]) dirty = true;
     }

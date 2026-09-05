@@ -87,6 +87,15 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     en: { title: 'Links nested inside links', desc: 'No nesting among <a>, Link, AppLink, and PersonLink. Browsers receive invalid <a> inside <a>; React reports it only at runtime while typecheck stays green. The hook reconstructs the proposed file in memory before blocking, and CI scans all TSX with the same AST detector.' },
   },
   {
+    id: 'ssr-volatile-state',
+    scope: 'project',
+    hook: 'hook-detect-ssr-volatile-state.mjs',
+    test: 'ssr-volatile-state-guard.test.ts',
+    baseline: '0（2→0）',
+    zh: { title: 'SSR 首屏状态不可复现', desc: 'useState 首次渲染禁调用 Math.random、Date.now 或浏览器存储读取，否则服务端与客户端生成不同 HTML 并触发 hydration error。使用固定初值，hydration 后再更新；外部存储走带服务端快照的 useSyncExternalStore。确定不参与 SSR 的子树可写 allow-hydration-volatile-state 并说明理由。Codex 写入即拦，CI 全量扫描。' },
+    en: { title: 'Non-reproducible SSR initial state', desc: 'A useState initializer may not call Math.random, Date.now, or browser storage because server and client would emit different HTML and trigger a hydration error. Use a fixed initial value and update after hydration, or use useSyncExternalStore with a server snapshot for external storage. Subtrees proven not to participate in SSR may use allow-hydration-volatile-state with a reason. Codex blocks writes and CI scans all TSX.' },
+  },
+  {
     id: 'static-onclick',
     scope: 'user',
     hook: 'block-static-onclick-button.ps1',
