@@ -55,27 +55,6 @@
   font-size: 13px;
 }
 
-.timer-wca-color-select-wrap {
-  display: inline-flex;
-  align-items: center;
-  min-width: 0;
-  max-width: 100%;
-}
-
-.timer-wca-color-swatch {
-  z-index: 1;
-  flex: 0 0 auto;
-  width: 22px;
-  height: 22px;
-  margin-right: -27px;
-  margin-left: 5px;
-  border: 1px solid color-mix(in srgb, var(--foreground) 24%, transparent);
-  border-radius: 4px;
-  pointer-events: none;
-}
-
-.timer-wca-color-select { padding-left: 32px; }
-
 .timer-wca-difficulty-range {
   width: min(100%, 440px);
   min-width: 0;
@@ -96,6 +75,4 @@
 
 @media (max-width: 340px) {
   .timer-wca-difficulty-options > * { max-width: 100%; }
-  .timer-wca-color-select-wrap { width: 100%; }
-  .timer-wca-color-select { width: 100%; }
 }

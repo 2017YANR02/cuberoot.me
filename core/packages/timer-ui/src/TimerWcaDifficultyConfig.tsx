@@ -1,14 +1,10 @@
 import {
-  TIMER_COLOR_HEX,
-  TIMER_COLOR_MODE_ORDER,
   normalizeTimerWcaDifficultySettings,
   reconcileTimerWcaDifficultySettings,
-  timerAllColorSubsetOptions,
+  timerColorSubsetOption,
   timerInclusiveRange,
   timerWcaDifficultyUiModel,
   timerWcaSupportsDifficulty,
-  type TimerColorLetter,
-  type TimerColorMode,
   type TimerWcaDifficultyCatalog,
   type TimerWcaDifficultyCoverage,
   type TimerWcaDifficultyDataAdapter,
@@ -23,11 +19,10 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { TimerPillToggle } from './TimerPillToggle';
+import { SubsetColorPicker, type TimerUiLanguage } from './TimerColorSubsetPicker';
 import { TimerRangeSlider } from './TimerRangeSlider';
 
 export interface TimerWcaDifficultyLabels {
-  colorMode: Readonly<Record<TimerColorMode, string>>;
-  colorName(color: TimerColorLetter): string;
   colorSubsetAriaLabel: string;
   difficulty: string;
   difficultyAriaLabel: string;
@@ -46,6 +41,7 @@ export interface TimerWcaDifficultyLabels {
 export interface TimerWcaDifficultyConfigProps {
   adapter: TimerWcaDifficultyDataAdapter;
   disabled?: boolean;
+  language: TimerUiLanguage;
   labels: TimerWcaDifficultyLabels;
   /** Reports the exact coverage state used by pool identity/filtering. */
   onCoverageChange?(coverage: TimerWcaDifficultyCoverage): void;
@@ -68,72 +64,11 @@ const EMPTY_CATALOG: TimerWcaDifficultyCatalog = {
   layout: null,
 };
 
-function ColorSwatch({ colors }: { colors: readonly TimerColorLetter[] }) {
-  const stops = colors.map((color, index) => (
-    `${TIMER_COLOR_HEX[color]} ${(index * 100) / colors.length}% ${((index + 1) * 100) / colors.length}%`
-  )).join(',');
-  return (
-    <span
-      aria-hidden="true"
-      className="timer-wca-color-swatch"
-      style={{ background: `linear-gradient(90deg,${stops})` }}
-    />
-  );
-}
-
-function TimerWcaColorSubsetSelect({
-  disabled,
-  labels,
-  onChange,
-  value,
-}: {
-  disabled: boolean;
-  labels: TimerWcaDifficultyLabels;
-  onChange(value: string): void;
-  value: string;
-}) {
-  const options = timerAllColorSubsetOptions();
-  const active = options.find((option) => option.key === value) ?? options[0]!;
-  const accessibleOptionLabel = (mode: TimerColorMode, colors: readonly TimerColorLetter[]) => (
-    `${labels.colorMode[mode]} · ${colors.map(labels.colorName).join('/')}`
-  );
-  const visibleOptionLabel = (mode: TimerColorMode, colors: readonly TimerColorLetter[]) => (
-    colors.length === 6
-      ? labels.colorMode[mode]
-      : accessibleOptionLabel(mode, colors)
-  );
-  return (
-    <span className="timer-wca-color-select-wrap">
-      <ColorSwatch colors={active.colors} />
-      <select
-        aria-label={labels.colorSubsetAriaLabel}
-        className="timer-wca-difficulty-select timer-wca-color-select"
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
-        value={active.key}
-      >
-        {TIMER_COLOR_MODE_ORDER.map((mode) => (
-          <optgroup key={mode} label={labels.colorMode[mode]}>
-            {options.filter((option) => option.mode === mode).map((option) => (
-              <option
-                aria-label={accessibleOptionLabel(mode, option.colors)}
-                key={`${mode}:${option.id}`}
-                value={option.key}
-              >
-                {visibleOptionLabel(mode, option.colors)}
-              </option>
-            ))}
-          </optgroup>
-        ))}
-      </select>
-    </span>
-  );
-}
-
 /** Complete WCA difficulty UI/normalization shared verbatim by every timer host. */
 export function TimerWcaDifficultyConfig({
   adapter,
   disabled = false,
+  language,
   labels,
   onChange,
   onCoverageChange,
@@ -233,6 +168,8 @@ export function TimerWcaDifficultyConfig({
 
   if (!model.canDifficulty) return null;
 
+  const colorOption = timerColorSubsetOption(normalized.wcaDiffColors);
+
   const commitRange = (range: [number, number]) => {
     setDragRange(range);
     const state = rangeRef.current;
@@ -295,11 +232,16 @@ export function TimerWcaDifficultyConfig({
         <div className="timer-wca-difficulty-body">
           <div className="timer-wca-difficulty-options">
             {model.showColors && (
-              <TimerWcaColorSubsetSelect
+              <SubsetColorPicker
+                ariaLabel={labels.colorSubsetAriaLabel}
                 disabled={disabled}
-                labels={labels}
-                onChange={(wcaDiffColors) => onChange({ wcaDiffColors })}
-                value={normalized.wcaDiffColors}
+                language={language}
+                sel={{
+                  colorMode: colorOption.mode,
+                  selectByKey: (wcaDiffColors) => onChange({ wcaDiffColors }),
+                  selectedColors: [...colorOption.colors],
+                  subsetKey: colorOption.key,
+                }}
               />
             )}
             <select
