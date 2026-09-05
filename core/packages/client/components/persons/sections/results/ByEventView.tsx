@@ -478,7 +478,7 @@ function EventRoundsList({
                     title={t(`按${selectedSingleMetric.label}排序`, `Sort by ${selectedSingleMetric.label}`)}
                     aria-label={t(`按${selectedSingleMetric.label}排序`, `Sort by ${selectedSingleMetric.label}`)}
                   >
-                    {t('排序', 'Sort')}{sortArrow('single')}
+                    {sort.key !== 'single' && t('排序', 'Sort')}{sortArrow('single')}
                   </button>
                 </span>
               )}
@@ -506,7 +506,7 @@ function EventRoundsList({
                     title={t(`按${selectedAverageMetric.label}排序`, `Sort by ${selectedAverageMetric.label}`)}
                     aria-label={t(`按${selectedAverageMetric.label}排序`, `Sort by ${selectedAverageMetric.label}`)}
                   >
-                    {t('排序', 'Sort')}{sortArrow('average')}
+                    {sort.key !== 'average' && t('排序', 'Sort')}{sortArrow('average')}
                   </button>
                 </span>
               )}

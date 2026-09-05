@@ -10,8 +10,8 @@ const source = readFileSync(join(
 
 describe('person result column sorting', () => {
   it('keeps metric sort controls visible before sorting', () => {
-    expect(source).toContain("{t('排序', 'Sort')}{sortArrow('single')}");
-    expect(source).toContain("{t('排序', 'Sort')}{sortArrow('average')}");
+    expect(source).toContain("{sort.key !== 'single' && t('排序', 'Sort')}{sortArrow('single')}");
+    expect(source).toContain("{sort.key !== 'average' && t('排序', 'Sort')}{sortArrow('average')}");
   });
 
   it.each(['pos', 'single', 'average', 'aoxr'])(
