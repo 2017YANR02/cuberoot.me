@@ -38,7 +38,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 直接在主树编辑(要读 Ivy/SQ1/dino 当范本);worktree 只配「盲测提示词」场景。
 - 5 个共享文件是多 AI 热点:`engine/world.ts` / `PlayerControls.tsx` / `SimPage.tsx` / `SettingDrawer.tsx` / `lib/sim-recon-link.ts`。
 - 3x3 手部 rig(`engine/hands/`)每帧轮询 `groups[axis][layer].angle`:改层角语义 / 整体转 / drop 时序会牵动手势,动完必跑穿模 oracle + 换握 oracle(方法与四机制见 memory `project_sim_hands_rig`);指法规格(哪指做哪步 / 连拨 / `p` 推法记号)权威在 `engine/hands/FINGERING.md`;其它拼图无手(`supports.hands = kind===3`)。
-- 先 `git status`、只 `git add` 自己新文件、默认不 push;别人魔方未 commit(如 ivy)就等它落地再在干净基线上做。
+- 先读 `git status`/diff,只暂存本任务新增和修改的内容,保留他人暂存与未暂存改动;无关 WIP 不阻塞,重叠时仅暂停无法安全分离的部分;默认不 push。
 - 三方合并这 5 文件后必 `typecheck` + 读关键分支/依赖数组核对(无冲突标记 ≠ 语义对)。
 
 ## 动手前(几何先查证)

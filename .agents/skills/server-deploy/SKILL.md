@@ -15,16 +15,12 @@ description: "Use when 改 Hono server routes (`core/apps/api/**`) 或 PG schema
 
 **`.password.md`**(gitignored,不在 repo 里)保存本地操作所需凭据；服务器运行时从 `/root/core-api/.env` 读取 `DB_PASS`。生产 DB 是 PG 13，库名 `cuberoot_db`，用户 `recon_user`。**不是** MariaDB —— 2026-05-06 已迁完,MariaDB 服务 + 数据已完整卸载(blog 已切静态,见 memory `reference_post_baota.md`)。
 
-云服务器上跑 SQL 示例(密码用 `PGPASSWORD` env,避免 quoting 嵌套):
+线上只读核对示例(密码用 `PGPASSWORD` env,避免 quoting 嵌套):
 ```bash
-ssh root@cuberoot 'set -a; . /root/core-api/.env; set +a; : "${DB_PASS:?database credentials unavailable}"; PGPASSWORD="$DB_PASS" psql -U recon_user -h 127.0.0.1 -d cuberoot_db -c "ALTER TABLE comments ADD COLUMN pinned SMALLINT NOT NULL DEFAULT 0;"'
+ssh root@cuberoot 'set -a; . /root/core-api/.env; set +a; : "${DB_PASS:?database credentials unavailable}"; PGPASSWORD="$DB_PASS" psql -U recon_user -h 127.0.0.1 -d cuberoot_db -c "SELECT column_name, data_type FROM information_schema.columns LIMIT 10;"'
 ```
 
-**SSH quoting trap**: 多层引号嵌套(ssh + bash + psql)容易破坏 SQL 的单引号或内部空格。**SQL 多行 / 含字面引号时**,改成 `scp` 一个 SQL 文件上去再 `psql -f`:
-```bash
-scp /tmp/migration.sql root@cuberoot:/tmp/
-ssh root@cuberoot 'set -a; . /root/core-api/.env; set +a; : "${DB_PASS:?database credentials unavailable}"; PGPASSWORD="$DB_PASS" psql -U recon_user -h 127.0.0.1 -d cuberoot_db -f /tmp/migration.sql && rm /tmp/migration.sql'
-```
+**SSH quoting trap**:多层引号可能破坏 SQL;生产 schema 写入只交给 migration runner,不要为绕过 quoting 改走手工远端 ALTER。
 
 ## Schema 变更:走 migration 文件,不要手动 ALTER
 
@@ -33,7 +29,7 @@ ssh root@cuberoot 'set -a; . /root/core-api/.env; set +a; : "${DB_PASS:?database
 1. 写 `core/apps/api/migrations/NNNN_short_desc.sql`(纯 ALTER/CREATE,不要包 BEGIN/COMMIT — runner 自己包)
 2. 同步改 `src/db/schema.pg.sql`(人读快照 — 必须自觉同步,不然两份脱节)
 3. 改业务代码(server 路由 / 类型)
-4. `git push`
+4. 本地 PG 验证 migration;按仓库 AGENTS 部署授权发布,由 Actions 自动应用 migration
 
 `deploy_core.yml` 在 pm2 restart **之前** ssh 跑 `apply_migrations.sh`,扫 `migrations/*.sql` 跑没跑过的;每个 migration 一个事务 + `ON_ERROR_STOP=1`,失败 abort + 后续不跑。详细规则见 `core/apps/api/migrations/README.md`。
 
@@ -61,7 +57,7 @@ ssh root@cuberoot 'set -a; . /root/core-api/.env; set +a; : "${DB_PASS:?database
 - `tinyint(1)` 在 PG 是 `SMALLINT`,代码传 0/1 不是 boolean(`jsonToRow` 已处理 `official`)
 - DATE 列驱动配了 `types.date` override 直接返字符串 `'YYYY-MM-DD'`(不是 ISO 时刻),前端用 `slice(0,10)` 兼容
 
-`schema.pg.sql` 是 source of truth,改任何 schema 同步改这个文件 + 跑 ALTER 上线。
+改 schema 时同时写 migration 与 `schema.pg.sql` 快照;获准发布后由 Actions 应用,不手工生产 ALTER。
 
 ## 部署走 GitHub Actions 不在服务器 git pull
 
@@ -95,9 +91,9 @@ ssh root@cuberoot 'set -a; . /root/core-api/.env; set +a; : "${DB_PASS:?database
 
 ## 验证
 
-1. 改 schema 时先 ALTER + `\d <table>` 确认列加上了
-2. push 后 Actions tab 看 `Deploy Core` 跑通
-3. 线上 `https://api.cuberoot.me/v1/health` → `{"status":"ok","db":"connected"}` 即活
+1. 提交前在本地 PG 验证 migration 与 schema
+2. 获准 push 后跟踪对应提交的 `Deploy Core`,确认 migration 与部署成功
+3. 线上只读 `\d <table>` 核对 schema,再检查 `https://api.cuberoot.me/v1/health` 返回 `{"status":"ok","db":"connected"}`
 
 ## ⚠️ Server 新引入 workspace 包:必须 esbuild bundle
 
