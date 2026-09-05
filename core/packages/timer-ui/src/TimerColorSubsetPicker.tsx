@@ -139,6 +139,11 @@ export interface SubsetSelection {
   selectByKey: (key: string) => void;  // 按任意 subsetKey 直接定位(推导 mode + 子选,供自动选最稀有用)
 }
 
+type SubsetColorPickerSelection = Pick<
+  SubsetSelection,
+  'colorMode' | 'selectByKey' | 'selectedColors' | 'subsetKey'
+>;
+
 // 把一个 subsetKey(如 'Y' / 'WY' / 'BGOR' / 'BGORWY')反推成初始 mode + 子选状态,
 // 供深链 / URL 还原(?colors=WY 等)。无 key 时退回传入的 initialMode + 各档默认。
 function deriveSubsetInit(
@@ -271,7 +276,7 @@ export function useUrlSubsetSelection(
 // 都是「选一个档」的语境,不传就完全不出现这一项(菜单/触发按钮均无变化)。active 时触发钮显示「综合」
 // 文字、菜单里该整行高亮,其余色块不高亮(调用方把 sel.subsetKey 置空即可)。
 export function SubsetColorPicker({ sel, language, className, allOption, ariaLabel, disabled = false }: {
-  sel: SubsetSelection; language: TimerUiLanguage; className?: string;
+  sel: SubsetColorPickerSelection; language: TimerUiLanguage; className?: string;
   allOption?: { active: boolean; onSelect: () => void };
   ariaLabel?: string;
   disabled?: boolean;

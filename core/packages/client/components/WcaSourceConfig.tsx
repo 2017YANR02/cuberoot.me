@@ -13,13 +13,11 @@ import type { EventId } from '@/app/[lang]/timer/_lib/types';
 import { tr } from '@/i18n/tr';
 import { toLocalIsoDate } from '@/lib/iso-date';
 import {
-  TIMER_COLOR_NAMES,
   TIMER_WCA_MIN_DATE,
   stageLabel,
   timerWcaRoundShortLabel,
   timerWcaScrambleEventId,
   variantLabel,
-  type TimerColorLetter,
   type TimerWcaSourceSettings,
 } from '@cuberoot/shared/timer';
 import {
@@ -141,14 +139,8 @@ export default function WcaSourceConfig({
       <TimerWcaDifficultyConfig
         adapter={webTimerWcaDifficultyAdapter}
         disabled={disabled}
+        language={isZh ? 'zh' : 'en'}
         labels={{
-          colorMode: {
-            cn: tr({ zh: '六色', en: 'CN' }),
-            dual: tr({ zh: '双色', en: 'Dual' }),
-            quad: tr({ zh: '四色', en: 'Quad' }),
-            single: tr({ zh: '单色', en: 'Single' }),
-          },
-          colorName: (color: TimerColorLetter) => tr(TIMER_COLOR_NAMES[color]),
           colorSubsetAriaLabel: tr({ zh: '底色子集', en: 'Color subset' }),
           difficulty: tr({ zh: '难度', en: 'Difficulty' }),
           difficultyAriaLabel: tr({ zh: '难度过滤', en: 'Difficulty filter' }),

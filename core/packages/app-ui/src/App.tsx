@@ -118,7 +118,6 @@ import {
   updateTimerWcaScrambleMarkIfExists,
   timerSettingFieldContract,
   variantLabel,
-  TIMER_COLOR_NAMES,
   TIMER_WCA_SCRAMBLE_SOURCE_COPY,
   TIMER_WCA_MIN_DATE,
   timerSupportsRealWcaScrambles,
@@ -155,7 +154,6 @@ import {
   type TimerRandomDifficultySettings,
   type TimerHostSharedScrambleProviderId,
   type TimerManualEntryValue,
-  type TimerColorLetter,
   type TimerNon222StepPuzzle,
   type Optimal333Source,
   type TimerWcaDifficultyCoverage,
@@ -920,13 +918,6 @@ export function App({ host }: { host: InstalledAppHost }) {
     sourceMode: copy.realScrambleRange,
   }), [copy]);
   const wcaDifficultyLabels = useMemo<TimerWcaDifficultyLabels>(() => ({
-    colorMode: {
-      cn: copy.colorModeCn,
-      dual: copy.colorModeDual,
-      quad: copy.colorModeQuad,
-      single: copy.colorModeSingle,
-    },
-    colorName: (color: TimerColorLetter) => TIMER_COLOR_NAMES[color][language],
     colorSubsetAriaLabel: copy.colorSubset,
     difficulty: copy.difficulty,
     difficultyAriaLabel: copy.difficultyFilter,
@@ -3654,6 +3645,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                 <TimerWcaDifficultyConfig
                   adapter={mobileTimerWcaDifficultyAdapter}
                   disabled={!sourceControlsEnabled}
+                  language={language}
                   labels={wcaDifficultyLabels}
                   onChange={updateWcaSourceSettings}
                   onCoverageChange={setWcaDifficultyCoverage}
