@@ -121,13 +121,13 @@ describe('mini program web routes', () => {
     }
   });
 
-  it('derives all 55 homepage destinations from the shared ordered catalog', () => {
-    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 4, 6, 9, 16, 12, 3]);
-    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 4, 6, 9, 16, 12, 3]);
-    expect(listWebTools()).toHaveLength(55);
+  it('derives all 56 homepage destinations from the shared ordered catalog', () => {
+    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 4, 6, 10, 16, 12, 3]);
+    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 4, 6, 10, 16, 12, 3]);
+    expect(listWebTools()).toHaveLength(56);
     expect(listWebTools()).toContainEqual(expect.objectContaining({ id: 'gallery', href: '/gallery' }));
-    expect(new Set(listWebTools().map((tool) => tool.id))).toHaveProperty('size', 55);
-    expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(54);
+    expect(new Set(listWebTools().map((tool) => tool.id))).toHaveProperty('size', 56);
+    expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(55);
     expect(resolveWebTool('algdb')).toMatchObject({ id: 'algdb', key: 'alg', action: 'web' });
     expect(resolveWebTool('timer')).toMatchObject({ id: 'timer', key: 'timer', action: 'native' });
     expect(resolveWebTool('alg')).toMatchObject({ id: 'alg', key: 'alg', action: 'web' });
@@ -140,7 +140,7 @@ describe('mini program web routes', () => {
       expect(trackingSource, tool.id).toContain(`| \`${tool.id}\` |`);
     }
     expect(trackingSource).toContain(
-      '共 55 项：网站首页直接渲染它们，工具 tab 通过一个固定白名单路由复用整个首页',
+      '共 56 项：网站首页直接渲染它们，工具 tab 通过一个固定白名单路由复用整个首页',
     );
   });
 
@@ -182,7 +182,7 @@ describe('mini program web routes', () => {
       path: '/pages/web/index?key=alg',
     });
     const routeBackedTools = listWebTools().filter((tool) => tool.key !== null);
-    expect(routeBackedTools).toHaveLength(54);
+    expect(routeBackedTools).toHaveLength(55);
     expect(routeBackedTools.every((tool) => resolveWebRouteShare(tool.key) !== null)).toBe(true);
     expect(resolveWebRouteShare('account')).toBeNull();
     expect(resolveWebRouteShare('privacy')).toBeNull();
