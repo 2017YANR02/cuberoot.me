@@ -48,7 +48,7 @@
   ],
   "rows": [
     [
-      "8.60",
+      "8.61",
       9,
       "6x6x6 Cube",
       "Single",
@@ -57,7 +57,7 @@
       "Still active"
     ],
     [
-      "8.39",
+      "8.40",
       9,
       "7x7x7 Cube",
       "Average",
@@ -102,7 +102,7 @@
       "[OCSEF 2017](https://www.worldcubeassociation.org/competitions/OCSEFOpen2017)"
     ],
     [
-      "7.15",
+      "7.16",
       7,
       "4x4x4 Blindfolded",
       "Average",
@@ -372,7 +372,7 @@
       "[US Nationals 2006](https://www.worldcubeassociation.org/competitions/US2006)"
     ],
     [
-      "2.89",
+      "2.90",
       5,
       "5x5x5 Blindfolded",
       "Single",
@@ -653,20 +653,20 @@
     [
       "1.94",
       3,
-      "3x3x3 Blindfolded",
-      "Average",
-      "[Leyan Lo](https://www.worldcubeassociation.org/persons/2004LOLE01)",
-      "[Chattahoochee 2006](https://www.worldcubeassociation.org/competitions/Chattahoochee2006)",
-      "[Kearny Kardinal 2008](https://www.worldcubeassociation.org/competitions/KearnyKardinal2008)"
-    ],
-    [
-      "1.94",
-      3,
       "5x5x5 Cube",
       "Single",
       "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
       "[DuPage Fall 2024](https://www.worldcubeassociation.org/competitions/DuPageFall2024)",
       "Still active"
+    ],
+    [
+      "1.94",
+      3,
+      "3x3x3 Blindfolded",
+      "Average",
+      "[Leyan Lo](https://www.worldcubeassociation.org/persons/2004LOLE01)",
+      "[Chattahoochee 2006](https://www.worldcubeassociation.org/competitions/Chattahoochee2006)",
+      "[Kearny Kardinal 2008](https://www.worldcubeassociation.org/competitions/KearnyKardinal2008)"
     ],
     [
       "1.93",
@@ -805,21 +805,21 @@
     ],
     [
       "1.65",
-      5,
-      "Pyraminx",
-      "Average",
-      "[Grzegorz Łuczyna](https://www.worldcubeassociation.org/persons/2005LUCZ01)",
-      "[Polish Open 2006](https://www.worldcubeassociation.org/competitions/PolishOpen2006)",
-      "[Pabianice Open 2008](https://www.worldcubeassociation.org/competitions/PabianiceOpen2008)"
-    ],
-    [
-      "1.65",
       2,
       "Square-1",
       "Average",
       "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
       "[Gem City Ohio Showdown 2025](https://www.worldcubeassociation.org/competitions/GemCityOhioShowdown2025)",
       "Still active"
+    ],
+    [
+      "1.65",
+      5,
+      "Pyraminx",
+      "Average",
+      "[Grzegorz Łuczyna](https://www.worldcubeassociation.org/persons/2005LUCZ01)",
+      "[Polish Open 2006](https://www.worldcubeassociation.org/competitions/PolishOpen2006)",
+      "[Pabianice Open 2008](https://www.worldcubeassociation.org/competitions/PabianiceOpen2008)"
     ],
     [
       "1.62",
@@ -1146,7 +1146,7 @@
       "[FMC Europe 2024](https://www.worldcubeassociation.org/competitions/FMCEurope2024)"
     ],
     [
-      "1.17",
+      "1.18",
       2,
       "5x5x5 Cube",
       "Average",
@@ -1453,21 +1453,21 @@
     ],
     [
       "0.73",
-      3,
-      "Pyraminx",
-      "Average",
-      "[Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54)",
-      "[Hangzhou Spring 2024](https://www.worldcubeassociation.org/competitions/HangzhouSpring2024)",
-      "[Maitland Spring 2024](https://www.worldcubeassociation.org/competitions/MaitlandSpring2024)"
-    ],
-    [
-      "0.73",
       2,
       "2x2x2 Cube",
       "Average",
       "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
       "[Kids America Christmas OH 2025](https://www.worldcubeassociation.org/competitions/KidsAmericaChristmasOH2025)",
       "Still active"
+    ],
+    [
+      "0.73",
+      3,
+      "Pyraminx",
+      "Average",
+      "[Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54)",
+      "[Hangzhou Spring 2024](https://www.worldcubeassociation.org/competitions/HangzhouSpring2024)",
+      "[Maitland Spring 2024](https://www.worldcubeassociation.org/competitions/MaitlandSpring2024)"
     ],
     [
       "0.71",
@@ -1967,6 +1967,15 @@
     [
       "0.29",
       2,
+      "7x7x7 Cube",
+      "Single",
+      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+      "[Western Championship 2026](https://www.worldcubeassociation.org/competitions/WesternChampionship2026)",
+      "Still active"
+    ],
+    [
+      "0.29",
+      2,
       "5x5x5 Cube",
       "Single",
       "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
@@ -1981,15 +1990,6 @@
       "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
       "[Swedish Cube Day 2007](https://www.worldcubeassociation.org/competitions/SwedishCubeDay2007)",
       "[Osaka Open 2008](https://www.worldcubeassociation.org/competitions/OsakaOpen2008)"
-    ],
-    [
-      "0.29",
-      2,
-      "7x7x7 Cube",
-      "Single",
-      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-      "[Western Championship 2026](https://www.worldcubeassociation.org/competitions/WesternChampionship2026)",
-      "Still active"
     ],
     [
       "0.19",
