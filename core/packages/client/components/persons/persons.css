@@ -1155,8 +1155,6 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
     padding: 1px 5px; cursor: pointer; line-height: 1.4;
     color: var(--wp-text-sub); transition: color 0.12s;
 }
-.wp-th-attempts .wp-att-sort-i:first-child,
-.wp-cell-attempts .wp-att:first-child { justify-self: start; }
 .wp-att-sort-i:hover { color: var(--wp-text); }
 .wp-att-sort-i.is-active { color: var(--wp-accent); font-weight: 600; }
 /* 表头带 InfoTooltip 的布局 wrapper:横向 flex + 间距,实际触发 / 弹层走组件 */
