@@ -7,11 +7,14 @@ import './recon-completion-badge.css';
 
 export function ReconCompletionBadge({
   status,
+  recordType,
   className,
 }: {
   status?: ReconSolve['completionStatus'];
+  recordType?: ReconSolve['recordType'];
   className?: string;
 }) {
+  if (recordType === 'timing') return <span>{tr({ zh: '仅录耗时', en: 'Timing only' })}</span>;
   if (status !== 'unsolved') return null;
   const label = tr({ zh: '未还原', en: 'Unsolved' });
   return (

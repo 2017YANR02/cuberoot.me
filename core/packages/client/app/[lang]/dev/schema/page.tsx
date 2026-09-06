@@ -725,6 +725,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 212, slug: 'membership_vip_id', desc: { zh: '为每位会员分配唯一且稳定的 VIP 编号，撤销权益时保留编号。', en: 'Assign every member a unique stable VIP ID and retain it when entitlement is revoked.' } },
   { n: 213, slug: 'home_card_positions', desc: { zh: '保存管理员设置的首页各分组卡片顺序。', en: 'Store admin-defined homepage card order within each directory group.' } },
   { n: 214, slug: 'account_merge', desc: { zh: '账号增加合并重定向墓碑,使旧登录态自动归到保留账号。', en: 'Add account-merge redirect tombstones so old sessions resolve to the retained account.' } },
+  { n: 215, slug: 'recon_timing', desc: { zh: '支持仅录起表和拍表动作耗时，之后在同一记录补充复盘。', en: 'Save pickup and putdown durations and add a reconstruction to the same record later.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

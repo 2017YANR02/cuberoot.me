@@ -697,7 +697,7 @@ export default function ReconListPage() {
                 <RecordBadge record={solve.regionalSingleRecord} variant="inline" iso2={solve.personCountry} />
               )}
             </span>
-            <ReconCompletionBadge status={solve.completionStatus} />
+            <ReconCompletionBadge recordType={solve.recordType} status={solve.completionStatus} />
           </span>
         );
       case 'person': {

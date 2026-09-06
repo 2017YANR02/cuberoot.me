@@ -51,9 +51,9 @@ describe('reconstruction entry points', () => {
     expect(submitForm).not.toContain('setReconerCountry');
   });
 
-  it('rejects an empty normalized solution before notation checks or saving in the shared add/edit form', () => {
+  it('requires a solution only in full reconstruction mode before saving', () => {
     const submit = submitForm.slice(submitForm.indexOf('const handleSubmit ='));
-    expect(submit).toMatch(/const solution = normalizeReconSolution\(form.solution \|\| ''\);\s+if \(!solution.trim\(\)\) \{\s+setSubmitError\(\{ field: 'solution', message: tr\(\{ zh: '请填写解法。', en: 'Enter a solution\.' \}\) \}\);\s+return;\s+\}\s+const notationError/);
-    expect(submit.indexOf('if (!solution.trim())')).toBeLessThan(submit.indexOf('setSaving(true)'));
+    expect(submit).toMatch(/const solution = normalizeReconSolution\(form.solution \|\| ''\);\s+if \(!timingOnly && !solution.trim\(\)\) \{\s+setSubmitError\(\{ field: 'solution', message: tr\(\{ zh: '请填写解法。', en: 'Enter a solution\.' \}\) \}\);\s+return;\s+\}\s+const timingError/);
+    expect(submit.indexOf('if (!timingOnly && !solution.trim())')).toBeLessThan(submit.indexOf('setSaving(true)'));
   });
 });
