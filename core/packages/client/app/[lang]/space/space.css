@@ -10,21 +10,21 @@
 .space-heading { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
 .space-heading h1 { font-size: 18px; font-weight: 500; letter-spacing: -0.03em; line-height: 1.2; margin: 0; }
 .space-destinations { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 0 24px 10px; }
-.space-destinations > button { appearance: none; border: 0; padding: 5px 0; background: transparent; color: var(--muted-foreground); font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap; }
-.space-destinations > button:hover { color: var(--accent); }
+.space-destination { appearance: none; border: 0; padding: 5px 0; background: transparent; color: var(--muted-foreground); font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.space-destination:hover { color: var(--accent); }
 .space-turns { flex-basis: 100%; }
-.space-turns > button[aria-pressed="true"] { color: var(--accent); background: var(--accent-soft); }
+.space-turns > .space-control[aria-pressed="true"] { color: var(--accent); background: var(--accent-soft); }
 .space-turns > span { font-size: 12px; color: var(--muted-foreground); }
 .space-header-actions { display: flex; align-items: center; gap: 24px; font-size: 12px; }
 .space-header-actions > a { color: var(--muted-foreground); text-decoration: none; }
 .space-workspace { position: relative; --space-canvas-height: max(480px, calc(100dvh - 236px)); display: flex; flex-direction: column; flex: 1; isolation: isolate; }
 .space-canvas { position: relative; height: var(--space-canvas-height); flex: none; overflow: hidden; }
 .space-canvas canvas { display: block; width: 100%; height: 100%; touch-action: none; outline-offset: -3px; }
-.space-row > button, .space-unavailable > button { appearance: none; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; padding: 6px 8px; border: 0; border-radius: 5px; background: transparent; color: inherit; font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; }
-.space-row > button:hover, .space-unavailable > button:hover { background: var(--accent-soft); }
-.space-row > button:disabled { opacity: 0.35; cursor: default; }
-.cube-space button:focus-visible, .space-canvas canvas:focus-visible { outline: 2px solid var(--ring); }
-.space-modes > button[aria-pressed="true"] { color: var(--accent); background: var(--accent-soft); }
+.space-control { appearance: none; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; padding: 6px 8px; border: 0; border-radius: 5px; background: transparent; color: inherit; font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.space-control:hover { background: var(--accent-soft); }
+.space-control:disabled { opacity: 0.35; cursor: default; }
+.space-control:focus-visible, .space-destination:focus-visible, .space-canvas canvas:focus-visible { outline: 2px solid var(--ring); }
+.space-modes > .space-control[aria-pressed="true"] { color: var(--accent); background: var(--accent-soft); }
 .space-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .space-top-tools { position: absolute; top: 12px; left: 32px; right: 32px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; pointer-events: none; }
 .space-top-tools > * { pointer-events: auto; background: var(--space-surface); backdrop-filter: blur(12px); border-radius: 6px; }
@@ -54,5 +54,5 @@
   .space-placement { top: calc(var(--space-canvas-height) - 100px); bottom: auto; font-size: 12px; }
   .space-footer { margin: 0 16px 16px; }
   .space-message { margin: 0 16px 16px; }
-  .space-row > button, .space-unavailable > button { min-height: 40px; }
+  .space-control { min-height: 40px; }
 }
