@@ -108,6 +108,15 @@ describe('reconstructor identity without a WCA ID', () => {
   });
 });
 
+describe('solver identity without a WCA ID', () => {
+  it('keeps a typed name through API storage mapping and validation', () => {
+    const row = jsonToRow({ person: 'Weichen Cang', personId: '' });
+    expect(row).toEqual({ person: 'Weichen Cang', person_id: null });
+    expect(validateRow(row)).toEqual([]);
+    expect(rowToJson(row).person).toBe('Weichen Cang');
+  });
+});
+
 describe('generic reconstruction scramble persistence mapping', () => {
   it('keeps the same scramble key across client JSON and the SQL row', () => {
     expect(jsonToRow({ scramble: "R U R'" })).toEqual({ scramble: "R U R'" });
