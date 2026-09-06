@@ -156,20 +156,20 @@ export default function SpacePage() {
         <div className="space-header-actions"><AppLink href="/sim">{tr({ zh: '模拟器', en: 'Simulator' })}</AppLink><HeaderToggles /></div>
       </header>
       <nav className="space-destinations" aria-label={tr({ zh: '前往房间', en: 'Go to a room' })}>
-        {(room === 'company' ? ['interior', 'study', 'courtyard'] as const : Object.keys(DESTINATIONS) as Destination[]).map(destination => <button key={destination} onClick={() => { cancel(); scene.current?.view(destination); }}>{tr(room === 'company' ? ({ interior: { zh: '办公室 406', en: 'Office 406' }, study: { zh: '公共休息区', en: 'Shared lounge' }, courtyard: { zh: '电话亭', en: 'Phone booths' } }[destination as 'interior' | 'study' | 'courtyard']) : DESTINATIONS[destination])}</button>)}
+        {(room === 'company' ? ['interior', 'study', 'courtyard'] as const : Object.keys(DESTINATIONS) as Destination[]).map(destination => <button className="space-destination" key={destination} onClick={() => { cancel(); scene.current?.view(destination); }}>{tr(room === 'company' ? ({ interior: { zh: '办公室 406', en: 'Office 406' }, study: { zh: '公共休息区', en: 'Shared lounge' }, courtyard: { zh: '电话亭', en: 'Phone booths' } }[destination as 'interior' | 'study' | 'courtyard']) : DESTINATIONS[destination])}</button>)}
       </nav>
       <div className="space-workspace">
         <div ref={host} className="space-canvas" role="region" aria-label={tr({ zh: '三维魔方空间', en: '3D cube space' })} />
         <div className="space-top-tools">
           <div className="space-row">
             <PuzzlePicker selectedEvent={kind} onSelect={id => { if (isPuzzleKind(id)) setKind(id); }} groups={[{ id: 'space', label: tr({ zh: '选择魔方', en: 'Choose a puzzle' }), items: Object.entries(PUZZLES).map(([id, p]) => ({ id, label: tr(p), iconClass: p.icon })) }]} />
-            <button className="space-add" disabled={!ready || unavailable || objects.length >= MAX_OBJECTS} onClick={() => { pending.current = kind; setPlacing(true); setSelected(null); setMessage(null); }}><Plus size={16} />{tr({ zh: '放入空间', en: 'Place a cube' })}</button>
+            <button className="space-control space-add" disabled={!ready || unavailable || objects.length >= MAX_OBJECTS} onClick={() => { pending.current = kind; setPlacing(true); setSelected(null); setMessage(null); }}><Plus size={16} />{tr({ zh: '放入空间', en: 'Place a cube' })}</button>
           </div>
           <div className="space-row">
-            <button aria-label={tr({ zh: '撤销', en: 'Undo' })} title="Ctrl+Z" disabled={!history.past.length} onClick={() => travel('undo')}><Undo2 size={18} /></button>
-            <button aria-label={tr({ zh: '重做', en: 'Redo' })} title="Ctrl+Shift+Z" disabled={!history.future.length} onClick={() => travel('redo')}><Redo2 size={18} /></button>
-            <button aria-label={tr({ zh: '导入布局', en: 'Import layout' })} onClick={() => file.current?.click()}><ArrowUpFromLine size={18} /></button>
-            <button aria-label={tr({ zh: '导出布局', en: 'Export layout' })} onClick={exportLayout}><ArrowDownToLine size={18} /></button>
+            <button className="space-control" aria-label={tr({ zh: '撤销', en: 'Undo' })} title="Ctrl+Z" disabled={!history.past.length} onClick={() => travel('undo')}><Undo2 size={18} /></button>
+            <button className="space-control" aria-label={tr({ zh: '重做', en: 'Redo' })} title="Ctrl+Shift+Z" disabled={!history.future.length} onClick={() => travel('redo')}><Redo2 size={18} /></button>
+            <button className="space-control" aria-label={tr({ zh: '导入布局', en: 'Import layout' })} onClick={() => file.current?.click()}><ArrowUpFromLine size={18} /></button>
+            <button className="space-control" aria-label={tr({ zh: '导出布局', en: 'Export layout' })} onClick={exportLayout}><ArrowDownToLine size={18} /></button>
             <input ref={file} type="file" accept=".json,application/json" hidden onChange={e => void importLayout(e.target.files?.[0])} />
           </div>
         </div>
@@ -177,32 +177,32 @@ export default function SpacePage() {
           <CompactSelect label={name || tr({ zh: '选择物件', en: 'Select object' })} ariaLabel={tr({ zh: '空间中的魔方', en: 'Cubes in the space' })} value={active?.id ?? ''} valueText={name || tr({ zh: '选择物件', en: 'Select object' })} items={objects.map((o, i) => ({ value: o.id, label: `${tr(PUZZLES[o.kind])} ${i + 1}` }))} onChange={id => { cancel(); setSelected(id); }} />
           {active ? <>
             <div className="space-modes space-row">
-              <button aria-pressed={mode === 'translate'} onClick={() => setMode('translate')}><Move size={16} />{tr({ zh: '移动', en: 'Move' })}</button>
-              <button aria-pressed={mode === 'rotate'} onClick={() => setMode('rotate')}><RotateCw size={16} />{tr({ zh: '摆放旋转', en: 'Rotate object' })}</button>
-              <button aria-pressed={mode === 'twist'} onClick={() => { setMode('twist'); scene.current?.focus(); }}><RotateCcw size={16} />{tr({ zh: '拧魔方', en: 'Twist puzzle' })}</button>
+              <button className="space-control" aria-pressed={mode === 'translate'} onClick={() => setMode('translate')}><Move size={16} />{tr({ zh: '移动', en: 'Move' })}</button>
+              <button className="space-control" aria-pressed={mode === 'rotate'} onClick={() => setMode('rotate')}><RotateCw size={16} />{tr({ zh: '摆放旋转', en: 'Rotate object' })}</button>
+              <button className="space-control" aria-pressed={mode === 'twist'} onClick={() => { setMode('twist'); scene.current?.focus(); }}><RotateCcw size={16} />{tr({ zh: '拧魔方', en: 'Twist puzzle' })}</button>
             </div>
             {mode === 'twist' ? <div className="space-turns space-row">
-              {active.kind !== 'sq1' && <button aria-pressed={inverse} onClick={() => setInverse(v => !v)}>{tr({ zh: '逆时针', en: 'Inverse' })}</button>}
-              {turnButtons(active.kind).map(move => <button key={move} onClick={() => setTurnBlocked(!scene.current?.twist(move + (inverse && active.kind !== 'sq1' ? "'" : '')))}>{move}{inverse && active.kind !== 'sq1' ? "'" : ''}</button>)}
-              <button onClick={() => { change({ ...active, moves: [] }); setTurnBlocked(false); }}>{tr({ zh: '还原魔方', en: 'Reset puzzle' })}</button>
+              {active.kind !== 'sq1' && <button className="space-control" aria-pressed={inverse} onClick={() => setInverse(v => !v)}>{tr({ zh: '逆时针', en: 'Inverse' })}</button>}
+              {turnButtons(active.kind).map(move => <button className="space-control" key={move} onClick={() => setTurnBlocked(!scene.current?.twist(move + (inverse && active.kind !== 'sq1' ? "'" : '')))}>{move}{inverse && active.kind !== 'sq1' ? "'" : ''}</button>)}
+              <button className="space-control" onClick={() => { change({ ...active, moves: [] }); setTurnBlocked(false); }}>{tr({ zh: '还原魔方', en: 'Reset puzzle' })}</button>
               {turnBlocked && <span role="status">{tr({ zh: '请等当前转动结束；Square-1 切缝对齐后才能斜切。', en: 'Wait for the turn to finish. Square-1 slices require aligned cuts.' })}</span>}
             </div> : null}
             <CompactSelect label={`${Math.round(active.scale * 100)}%`} ariaLabel={tr({ zh: '魔方大小', en: 'Cube size' })} value={active.scale} valueText={`${Math.round(active.scale * 100)}%`} items={[0.04, 0.06, 0.1, 0.2, 0.4, 0.6, 0.85, 1, 1.15, 1.5, 2, 2.5].map(value => ({ value, label: `${Math.round(value * 100)}%` }))} onChange={scale => change({ ...active, scale })} />
             <div className="space-row">
-              <button aria-label={tr({ zh: '向左旋转 15°', en: 'Rotate left 15°' })} onClick={() => change({ ...active, rotation: [active.rotation[0], (active.rotation[1] - Math.PI / 12) % (Math.PI * 2), active.rotation[2]] })}><RotateCcw size={17} /></button>
-              <button aria-label={tr({ zh: '向右旋转 15°', en: 'Rotate right 15°' })} onClick={() => change({ ...active, rotation: [active.rotation[0], (active.rotation[1] + Math.PI / 12) % (Math.PI * 2), active.rotation[2]] })}><RotateCw size={17} /></button>
-              <button aria-label={tr({ zh: '聚焦魔方', en: 'Focus cube' })} onClick={() => scene.current?.focus()}><Crosshair size={17} /></button>
+              <button className="space-control" aria-label={tr({ zh: '向左旋转 15°', en: 'Rotate left 15°' })} onClick={() => change({ ...active, rotation: [active.rotation[0], (active.rotation[1] - Math.PI / 12) % (Math.PI * 2), active.rotation[2]] })}><RotateCcw size={17} /></button>
+              <button className="space-control" aria-label={tr({ zh: '向右旋转 15°', en: 'Rotate right 15°' })} onClick={() => change({ ...active, rotation: [active.rotation[0], (active.rotation[1] + Math.PI / 12) % (Math.PI * 2), active.rotation[2]] })}><RotateCw size={17} /></button>
+              <button className="space-control" aria-label={tr({ zh: '聚焦魔方', en: 'Focus cube' })} onClick={() => scene.current?.focus()}><Crosshair size={17} /></button>
             </div>
-            <div className="space-row"><button onClick={duplicate} disabled={objects.length >= MAX_OBJECTS}><Copy size={16} />{tr({ zh: '复制', en: 'Duplicate' })}</button><button onClick={remove}><Trash2 size={16} />{tr({ zh: '删除', en: 'Delete' })}</button></div>
+            <div className="space-row"><button className="space-control" onClick={duplicate} disabled={objects.length >= MAX_OBJECTS}><Copy size={16} />{tr({ zh: '复制', en: 'Duplicate' })}</button><button className="space-control" onClick={remove}><Trash2 size={16} />{tr({ zh: '删除', en: 'Delete' })}</button></div>
           </> : null}
           <BoolToggle value={snap} onChange={setSnap} label={tr({ zh: '网格吸附', en: 'Snap to grid' })} />
         </aside>
         <div className="space-view-tools space-row">
           <CompactSelect label={tr({ zh: '视角', en: 'View' })} ariaLabel={tr({ zh: '切换视角', en: 'Change view' })} items={views} onChange={view => scene.current?.view(view)} />
-          <button aria-label={tr({ zh: '回到全景', en: 'Reset view' })} onClick={() => scene.current?.view('home')}><Maximize size={17} /></button>
+          <button className="space-control" aria-label={tr({ zh: '回到全景', en: 'Reset view' })} onClick={() => scene.current?.view('home')}><Maximize size={17} /></button>
         </div>
         {placing && <div className="space-placement" role="status"><span>{tr({ zh: '点击地面或展台，放下魔方', en: 'Click the floor or a plinth to place your cube' })}</span><ClearButton variant="standalone" onClick={cancel} ariaLabel={tr({ zh: '取消摆放', en: 'Cancel placement' })} /></div>}
-        {unavailable && <div className="space-unavailable" role="alert"><p>{tr({ zh: '3D 画面暂时不可用，请开启浏览器硬件加速后刷新。已有布局仍可导出。', en: 'The 3D view is unavailable. Enable browser hardware acceleration and reload. You can still export your layout.' })}</p><button onClick={exportLayout}><ArrowDownToLine size={16} />{tr({ zh: '导出布局', en: 'Export layout' })}</button></div>}
+        {unavailable && <div className="space-unavailable" role="alert"><p>{tr({ zh: '3D 画面暂时不可用，请开启浏览器硬件加速后刷新。已有布局仍可导出。', en: 'The 3D view is unavailable. Enable browser hardware acceleration and reload. You can still export your layout.' })}</p><button className="space-control" onClick={exportLayout}><ArrowDownToLine size={16} />{tr({ zh: '导出布局', en: 'Export layout' })}</button></div>}
       </div>
       <footer className="space-footer">
         <span id="space-instructions">{mode === 'twist' ? tr({ zh: '拖动魔方表面转层，也可点击转动按钮；拖动空白处环绕，双指或滚轮缩放。', en: 'Drag a puzzle face or use the move buttons to turn a layer. Drag empty space to orbit; pinch or scroll to zoom.' }) : tr({ zh: '选中后拖动魔方；拖动空白处环绕，双指或滚轮缩放。方向键也可移动。', en: 'Select, then drag a cube. Drag empty space to orbit; pinch or scroll to zoom. Arrow keys move the selected cube.' })}</span>
