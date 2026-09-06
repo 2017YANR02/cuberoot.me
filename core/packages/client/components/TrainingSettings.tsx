@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Settings } from 'lucide-react';
 import BoolToggle from '@/components/BoolToggle';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
@@ -61,10 +61,11 @@ export function useTrainingAutoAdvance() {
   return useMemo(() => ({ enabled, setEnabled, schedule, cancel }), [cancel, enabled, schedule, setEnabled]);
 }
 
-export default function TrainingSettings({ value, onChange, className }: {
+export default function TrainingSettings({ value, onChange, className, children }: {
   value: boolean;
   onChange: (next: boolean) => void;
   className?: string;
+  children?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -91,6 +92,7 @@ export default function TrainingSettings({ value, onChange, className }: {
             onChange={onChange}
             label={tr({ zh: '答对后自动进入下一题', en: 'Auto-next after a correct answer' })}
           />
+          {children}
         </span>
       )}
     </span>

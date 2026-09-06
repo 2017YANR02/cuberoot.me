@@ -14,6 +14,8 @@ import { puzzleCaps, type IsolateKind } from './simCaps';
 import { timing } from './engine/tweenTiming';
 import { SIM_DEFAULT_TPS, simSpeedToTicks, simTpsToSpeed } from '@/lib/sim_timing';
 import Cubelet from './engine/nxn/cubelet';
+import { MIRROR_DEFAULT_COLOR, mirrorFaces } from '@/components/puzzle-models/mirror/mirrorGeometry';
+export { MIRROR_DEFAULT_COLOR } from '@/components/puzzle-models/mirror/mirrorGeometry';
 import { STICKER_GAP_DEFAULT } from './engine/define';
 import { applyDebugStructureColors, applyEngineBodyOverlay } from './engine/debugColors';
 import { applyCoreOpacity } from './engine/coreOpacity';
@@ -180,12 +182,6 @@ export const DEFAULT_FACE_COLORS: { U: string; D: string; L: string; R: string; 
   F: CUBE_FILL.F,
   B: CUBE_FILL.B,
 };
-
-/** Mirror Cube default single colour (classic gold — you solve by shape, not colour). */
-export const MIRROR_DEFAULT_COLOR = '#E3B23C';
-function mirrorFaces(c: string): { U: string; D: string; L: string; R: string; F: string; B: string } {
-  return { U: c, D: c, L: c, R: c, F: c, B: c };
-}
 
 export const DEFAULT_SETTINGS: SimSettings = {
   sensitivity: 50,

@@ -46,14 +46,6 @@
   letter-spacing: -0.04em;
 }
 
-.color-test-header > p:last-child {
-  max-width: 38rem;
-  margin: 0.8rem 0 0;
-  color: var(--muted-foreground);
-  font-size: 0.95rem;
-  line-height: 1.65;
-}
-
 .color-test-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

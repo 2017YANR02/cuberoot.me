@@ -84,10 +84,6 @@ export default function ColorTestPage() {
         </div>
         <p className="color-test-eyebrow">COLOR LAB</p>
         <h1>{tr({ zh: '颜色测试', en: 'Colour Tests' })}</h1>
-        <p>{tr({
-          zh: '练会魔方六色的对面、相邻和左右顺序,再试试大脑能不能忽略文字、只看颜色。',
-          en: 'Learn the opposite, adjacent and side-order relationships between cube colours, then see whether your brain can ignore a word and attend only to its colour.',
-        })}</p>
       </header>
 
       <section className="color-test-grid" aria-label={tr({ zh: '选择颜色测试', en: 'Choose a colour test' })}>

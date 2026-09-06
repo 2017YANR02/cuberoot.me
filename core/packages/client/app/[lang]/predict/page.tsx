@@ -25,7 +25,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useQueryState, parseAsStringEnum, parseAsInteger, parseAsString, parseAsBoolean } from 'nuqs';
-import { Check, Eye, ArrowRight, ExternalLink } from 'lucide-react';
+import { Check, ExternalLink } from 'lucide-react';
 import AlgInput from '@/components/AlgInput';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -159,7 +159,6 @@ const PLAY_STEP_MS = 340;
 interface PredictSnapshot {
   challenge: PredictBoardChallenge;
   found: boolean[];
-  revealed: boolean;
   elapsed: number;
   trainingEventId: string | null;
   submittedTrainingEvent: string | null;
@@ -196,7 +195,6 @@ function PredictPageInner() {
   const [algError, setAlgError] = useState<MoveInputError | null>(null);
   const [found, setFound] = useState<boolean[]>([]);
   const [feedback, setFeedback] = useState<{ kind: 'correct' | 'wrong' } | null>(null);
-  const [revealed, setRevealed] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -260,15 +258,12 @@ function PredictPageInner() {
   snapshotRef.current = ch ? {
     challenge: ch,
     found,
-    revealed,
     elapsed,
     trainingEventId: trainingEventIdRef.current,
     submittedTrainingEvent: submittedTrainingEventRef.current,
   } : null;
 
   const solved = ch != null && found.length > 0 && found.length === ch.targets.length && found.every(Boolean);
-  /** 这题结束了(答完 or 认输)—— 结束就自动复盘一遍。 */
-  const over = ch != null && (solved || revealed);
   const totalSteps = ch?.moves.length ?? 0;
 
   /**
@@ -276,8 +271,7 @@ function PredictPageInner() {
    * `step` 是已做步数,`step - 1` 是「当前这一步」。题板自己判断这是「往前一步」
    * (放动画)还是「跳过去」(瞬时重放),这里只管改数。
    *
-   * 答题中也能跳:答案本来就有「显示答案」一键可看,把复盘锁死只是让想核对某一步的人
-   * 没处下手。跳过去不算认输,计时照走。
+   * 答题中也能跳:播放条本身就是查看落点的入口,跳过去不算答题,计时照走。
    */
   const seek = useCallback((n: number) => {
     setPlaying(false);
@@ -293,12 +287,11 @@ function PredictPageInner() {
     setChallenge(snapshot.challenge);
     setFound(snapshot.found);
     setFeedback(null);
-    setRevealed(snapshot.revealed);
     setElapsed(snapshot.elapsed);
     setStep(0);
     setPlaying(false);
     setViewResetSeq((seq) => seq + 1);
-    setReviewingHistory(snapshot.revealed || snapshot.found.every(Boolean));
+    setReviewingHistory(snapshot.found.every(Boolean));
     startedAt.current = Date.now() - snapshot.elapsed * 1000;
     trainingEventIdRef.current = snapshot.trainingEventId;
     submittedTrainingEventRef.current = snapshot.submittedTrainingEvent;
@@ -337,7 +330,6 @@ function PredictPageInner() {
     setChallenge(next);
     setFound(next.targets.map(() => false));
     setFeedback(null);
-    setRevealed(false);
     setStep(0);
     setPlaying(false);
     setElapsed(0);
@@ -393,14 +385,6 @@ function PredictPageInner() {
     });
   }, [puzzleId, mode, track, source, moveCount]);
 
-  /** 认输:切到「答案盘面」(目标块整块画在落点上)。透明模式能直接读背贴纸,关闭透明
-   *  后提示贴片会把那三面的贴纸浮在方块外侧,所以这里不再替玩家转视角。 */
-  const reveal = useCallback(() => {
-    if (!ch) return;
-    submitPredictionTrainingEvidence(false);
-    setRevealed(true);
-  }, [ch, submitPredictionTrainingEvidence]);
-
   useEffect(() => {
     const destination = parseTrainingAssignmentDestination(window.location.search);
     trainingDestinationRef.current = destination;
@@ -413,12 +397,12 @@ function PredictPageInner() {
   }, [deal]);
   useSpaceShortcut(nextQuestion);
 
-  // 计时到答完(或认输看答案)为止;只按秒刷新,免得每帧重渲染整页。
+  // 计时到答完为止;只按秒刷新,免得每帧重渲染整页。
   useEffect(() => {
-    if (!ch || solved || revealed) return;
+    if (!ch || solved) return;
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - startedAt.current) / 1000)), 250);
     return () => clearInterval(id);
-  }, [ch, solved, revealed]);
+  }, [ch, solved]);
 
   useEffect(() => {
     if (!feedback) return;
@@ -428,7 +412,7 @@ function PredictPageInner() {
 
   // 这题一结束就自动复盘一遍 —— 看着目标块被转过去,比看一张静态答案图有用得多。
   // 从头播:答题中可能已经手点到某一步了,不回零就会从半截接着往下播。
-  useEffect(() => { if (over) { setStep(0); setPlaying(true); } }, [over]);
+  useEffect(() => { if (solved) { setStep(0); setPlaying(true); } }, [solved]);
 
   // 一步一格往前推;题板收到「比上一步多 1」就放一步动画,推到头就停。
   useEffect(() => {
@@ -441,7 +425,7 @@ function PredictPageInner() {
   // 题板通过 ref 拿最新的这个闭包,所以直接读 state 就行 —— 别把 setFeedback 塞进
   // setFound 的 updater 里,那是 reducer 里做副作用,StrictMode 双调用会把它吞掉。
   const onSticker = useCallback((facelet: number) => {
-    if (!ch || revealed || found.length === 0 || found.every(Boolean)) return;
+    if (!ch || found.length === 0 || found.every(Boolean)) return;
     const hit = ch.targets.findIndex((t, i) => !found[i] && t.answerFacelet === facelet);
     if (hit < 0) { setFeedback({ kind: 'wrong' }); return; }
     // 每次都放一个新对象:连续点对多枚时也要从这一次点击重新计满 1.2 秒。
@@ -452,7 +436,7 @@ function PredictPageInner() {
       submitPredictionTrainingEvidence(true);
       if (!reviewingHistory) autoAdvance.schedule(nextQuestion);
     }
-  }, [autoAdvance, ch, found, nextQuestion, revealed, reviewingHistory, submitPredictionTrainingEvidence]);
+  }, [autoAdvance, ch, found, nextQuestion, reviewingHistory, submitPredictionTrainingEvidence]);
 
   /**
    * 每一格的引擎色标签 = **起点盘面的真实颜色**(按朝向翻译)。
@@ -474,9 +458,9 @@ function PredictPageInner() {
   const bright = useMemo(() => {
     if (!ch) return EMPTY_FACELETS;
     const out = ch.targets.map((t) => t.startFacelet);
-    if (!over) ch.targets.forEach((t, i) => { if (found[i]) out.push(t.answerFacelet); });
+    if (!solved) ch.targets.forEach((t, i) => { if (found[i]) out.push(t.answerFacelet); });
     return out;
-  }, [ch, found, over]);
+  }, [ch, found, solved]);
 
   /**
    * 压暗的格 = 目标块剩下的贴纸 + 方位锚(奇数阶的六个中心)。
@@ -640,13 +624,21 @@ function PredictPageInner() {
           </label>
         )}
 
-        <BoolToggle
-          className="predict-transparent"
-          value={transparent}
-          onChange={(v) => void setTransparent(v)}
-          label={tr({ zh: '透明', en: 'Transparent' })}
-        />
-        <TrainingSettings value={autoAdvance.enabled} onChange={autoAdvance.setEnabled} />
+        <TrainingSettings value={autoAdvance.enabled} onChange={autoAdvance.setEnabled}>
+          <BoolToggle
+            value={transparent}
+            onChange={(v) => void setTransparent(v)}
+            label={tr({ zh: '透明', en: 'Transparent' })}
+          />
+          <p className="predict-origin">
+            {tr({ zh: '复刻自 Dan Boharon 的 Cube Lookahead Challenge:', en: 'Ported from Dan Boharon’s Cube Lookahead Challenge:' })}
+            <br />
+            <a href={ORIGIN_URL} target="_blank" rel="noreferrer">
+              {ORIGIN_URL.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+              <ExternalLink size={12} aria-hidden="true" />
+            </a>
+          </p>
+        </TrainingSettings>
       </div>
 
       <div className="predict-boardcol">
@@ -756,25 +748,6 @@ function PredictPageInner() {
             {tr({ zh: `全对!用时 ${clock(elapsed)}`, en: `Solved in ${clock(elapsed)}` })}
           </p>
         )}
-        {revealed && ch && (
-          <div className="predict-answer">
-            <span className="predict-answer-tag">{tr({ zh: '答案', en: 'Answer' })}</span>
-            {ch.targets.map((t) => {
-              const color = faceColorOf(t.colorFace);
-              const face = puzzle.faces[Math.floor(t.answerFacelet / puzzle.perFace)];
-              return (
-                <span key={`${t.kind}-${t.startFacelet}`} className="predict-answer-item">
-                  <b className="predict-color" style={{ background: PREDICT_FILL[color], color: PREDICT_ON_FILL[color] }}>
-                    {colorChipLabel(color)}
-                  </b>
-                  <ArrowRight size={13} aria-hidden="true" />
-                  {face} {tr(puzzle.faceName[face])}
-                  {tr({ zh: '面', en: ' face' })}
-                </span>
-              );
-            })}
-          </div>
-        )}
       </div>
 
       <div className="predict-actions">
@@ -783,29 +756,11 @@ function PredictPageInner() {
             {tr({ zh: '上一题', en: 'Previous question' })}
           </TrainingNavButton>
         )}
-        <button
-          type="button"
-          className="predict-reveal"
-          onClick={reveal}
-          disabled={!ch || solved || revealed}
-          aria-label={tr({ zh: '显示答案', en: 'Show answer' })}
-          title={tr({ zh: '显示答案', en: 'Show answer' })}
-        >
-          <Eye size={15} aria-hidden="true" />
-        </button>
         <TrainingNavButton direction="next" onClick={nextQuestion}>
           {tr({ zh: '下一题', en: 'Next challenge' })}
         </TrainingNavButton>
       </div>
 
-      <p className="predict-origin">
-        {tr({ zh: '复刻自 Dan Boharon 的 Cube Lookahead Challenge:', en: 'Ported from Dan Boharon’s Cube Lookahead Challenge:' })}
-        {' '}
-        <a href={ORIGIN_URL} target="_blank" rel="noreferrer">
-          {ORIGIN_URL.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-          <ExternalLink size={12} aria-hidden="true" />
-        </a>
-      </p>
     </div>
   );
 }

@@ -1,0 +1,1446 @@
+/**
+ * InstancedRenderer — PG3D-style 静/动双 InstancedMesh,event-driven。
+ *
+ * 设计:
+ *  - 4 个 InstancedMesh: staticFrame + movingFrame + staticSticker + movingSticker
+ *    static 容量 = N visible cubelets / N visible stickers。每个 cubelet 拥有稳定的 instance idx。
+ *    moving 容量同 static — slice 旋转时同 idx 在 static/moving 之间切换可见性。
+ *  - 不每帧重写 cubelet 矩阵。 只在 3 个时机更新:
+ *      constructor: 写入所有 cubelet 的初始矩阵到 static
+ *      beginSlice: 把 slice 内 cubelet 的矩阵从 static 复制到 moving,隐藏 static slot
+ *      setSliceAngle: 把整 movingFrame/movingSticker 围绕 slice 轴旋转 angle (一次 quaternion)
+ *      endSlice: cubelet 的逻辑矩阵已被 group.rotate() 改成新位置,把新矩阵写回 static slot,隐藏 moving
+ *      rebuildAll: cube.reset() 后,重写所有 static 矩阵
+ *  - applyStick: setColorAt 写到 static (slice 期间也 OK,因为颜色跟着 cubelet,在 slice 期间 cubelet 在 moving)
+ *    需要给 moving 也同步,否则 slice 期间换色看不见。
+ */
+import * as THREE from "three";
+import Cubelet from "./cubelet";
+import Cube from "./cube";
+import CubeGroup from "./group";
+import { FACE, COLORS, STICKER_GAP_DEFAULT } from "@cuberoot/puzzle-render-core/engine/define";
+import { rawMaterial, rawMaterialBasic, buildRawAttributes, attachRawAttributes, setRawCoreBorder, setRawStickerScale, type RawAttrs } from "./rawCore";
+import { mirrorTables } from "../mirror/mirrorGeometry";
+import {
+  FM_DIM, FM_DIM_WHITE, FM_FIXED_COLOR, FM_OUTLINE, FM_REGULAR, type StickeringMaskFn,
+} from "./stickering";
+import { injectStickerOutline, setStickerOutlineScale, type OutlineUniform } from "./stickerOutline";
+import { engineHomeSid } from "./netIndex";
+import { setPanelFanGap } from "./panelFan";
+import {
+  buildPictureAtlas,
+  buildPictureSlotAttributes,
+  countPictureFaces,
+  emptyPictureFaces,
+  injectPictureCube,
+  pictureStickerShowsFaceColor,
+  pictureFacesKey,
+  type PictureFaces,
+  type PictureSlotAttributes,
+  type PictureUniformController,
+} from './pictureCube';
+
+type CubeFaceLabel = "U" | "D" | "L" | "R" | "F" | "B";
+
+const HALF = Cubelet.SIZE / 2;
+/** FM_FIXED_COLOR 的预解析副本 —— 色值单一源在 stickering.ts,这里只是把它变成
+ *  THREE.Color,免 resolveStickerColor 每次重解析字符串。 */
+const FM_FIXED_3D = new Map<number, THREE.Color>(
+  Object.entries(FM_FIXED_COLOR).map(([code, hex]) => [Number(code), new THREE.Color(hex)]),
+);
+const HIDE_MAT = new THREE.Matrix4().makeScale(0, 0, 0);
+const ONE_SCALE = new THREE.Vector3(1, 1, 1);
+// 内填充 box: 比 cubelet frame 小 1 单位防 z-fight (frame outer face 在 ±SIZE/2)。
+// 任何方向上 frame 的"洞"(slice 旋转 / 邻居被搬走暴露的内表面) 露出来后,
+// 看到的就是这个 dark box 而不是穿透到背景或别的 sticker。
+const INNER_BOX = new THREE.BoxGeometry(Cubelet.SIZE - 1, Cubelet.SIZE - 1, Cubelet.SIZE - 1);
+/** 性能开关 — DEV bench 可改 (window.__PERF_FLAGS),生产代码只读。
+ * - `superOrderThreshold`: N≥此值 = 超高阶,启 inner box skip 等(stage 0)。
+ *   bench A/B: 关闭 = 设成 order+1。
+ * - `singleSliceQuaternion`: 单 slice 动画时整 moving mesh 共享 quaternion,
+ *   省 N² 次 mat4 mul/帧(stage 1)。多并发 slice 自动 fallback per-instance。
+ */
+export const __PERF_FLAGS: {
+  superOrderThreshold: number;
+  singleSliceQuaternion: boolean;
+} = {
+  superOrderThreshold: 50,
+  singleSliceQuaternion: true,
+};
+
+function makeStickerLocalMatrix(face: number, zScale: number, distanceMul = 1): THREE.Matrix4 {
+  const d = HALF * distanceMul;
+  const pos = new THREE.Vector3();
+  const rot = new THREE.Euler();
+  switch (face) {
+    case FACE.L: rot.y = -Math.PI / 2; pos.x = -d; break;
+    case FACE.R: rot.y = +Math.PI / 2; pos.x = +d; break;
+    case FACE.D: rot.x = +Math.PI / 2; pos.y = -d; break;
+    case FACE.U: rot.x = -Math.PI / 2; pos.y = +d; break;
+    case FACE.B: rot.x = +Math.PI;     pos.z = -d; break;
+    case FACE.F: /* identity */        pos.z = +d; break;
+  }
+  const m = new THREE.Matrix4();
+  m.compose(pos, new THREE.Quaternion().setFromEuler(rot), new THREE.Vector3(1, 1, zScale));
+  return m;
+}
+
+interface StickerSlot {
+  cubeletInitial: number;
+  face: number;
+  localMat: THREE.Matrix4;
+  visible: boolean;
+}
+
+export default class InstancedRenderer extends THREE.Group {
+  cube: Cube;
+
+  /** 反查: instance idx → cubelet.initial (用于 endSlice 拿 cubelet) */
+  instanceToInitial!: Uint32Array;
+
+  staticFrame!: THREE.InstancedMesh;
+  movingFrame!: THREE.InstancedMesh;
+  staticSticker!: THREE.InstancedMesh;
+  movingSticker!: THREE.InstancedMesh;
+  /** Per-cubelet 内填充:每个 cubelet 内部塞一个实心 box,跟 Frame 共享 matrix。
+   * 任何 slice 旋转后,Frame 缝隙永远能看到自己或邻居的 inner box(灰),
+   * 不会穿透到背景或别的 sticker。N≥SUPER_ORDER 时整套跳过(`hasInner=false`)。 */
+  staticInner!: THREE.InstancedMesh;
+  movingInner!: THREE.InstancedMesh;
+  /** false 时 staticInner/movingInner 仍存在(便于 dispose)但不写矩阵、不渲染。 */
+  private hasInner: boolean;
+
+  private stickerMaterial: THREE.MeshLambertMaterial | THREE.MeshBasicMaterial;
+  private movingStickerMaterial: THREE.MeshLambertMaterial | THREE.MeshBasicMaterial;
+
+  /** X 光(内核不透明度 < 100)下的「背面贴纸」道次 —— 详见 setXray 的注释。挂在
+   *  static/movingSticker 底下当子节点(共用 matrixWorld + instanceMatrix + instanceColor),
+   *  所以贴纸怎么动它就怎么动,不用在每个写矩阵的地方再同步一遍。 */
+  private backSticker!: THREE.InstancedMesh;
+  private movingBackSticker!: THREE.InstancedMesh;
+  private backStickerMaterial: THREE.MeshBasicMaterial;
+  private _xray = false;
+
+  /** hint stickers (alg.cubing.net "hint facelets"): 每个 sticker 沿 face normal
+   * 推到 cube 外侧 (order+1) 倍位置, BasicMaterial 半透明全亮。提示背面颜色。
+   * 抄自 huazhechen/cuber `cubelet.ts` 的 `mirror` 字段, 但走 instanced 渲染。 */
+  staticHint!: THREE.InstancedMesh;
+  movingHint!: THREE.InstancedMesh;
+  private hintMaterial: THREE.MeshBasicMaterial;
+  private movingHintMaterial: THREE.MeshBasicMaterial;
+  private hintLocalMats: THREE.Matrix4[] = [];
+  /** 构造时为 true (延后 populate 省 ~440ms @ N=250); 首次 set hint(true) 触发 populateHint() 后置 false */
+  private hintNeedsPopulate = false;
+  private hintDistance: number;
+  /** hint 颜色预混用的 bg 色 (matches CSS --background)。setHintBackdrop() 注入,主题切换 reapply。 */
+  private hintBgColor: THREE.Color = new THREE.Color(0xffffff);
+  /** hint face 色权重: hint_rgb = HINT_FACE_MIX * face + (1-HINT_FACE_MIX) * bg。等效原 opacity=0.35。 */
+  private static readonly HINT_FACE_MIX = 0.35;
+
+  stickerSlots: StickerSlot[] = [];
+  /** 紧凑表: cubelet._instIdx * 6 + face → slot idx (-1 = 无 sticker)。
+   * 替代两个 Map (slotLookup + cubeletSlots),N=250 省 ~70 MB:
+   * 之前 375k Map 项 + 372k 小 Array,现在 = visCount*6*4B = ~9 MB。 */
+  private cubeletFaceSlot!: Int32Array;
+  /** 按阶段展示色块(stickering,issue #27):per-slot facelet 遮罩码(FM_*),
+   * null = full(全原色)。定义在 SOLVED 帧 (initial, face) 上 → 颜色随块走,
+   * 打乱 / slice 动画中标注的始终是同一批实体块。只改 instance color,不动矩阵,
+   * 与 strip(remove)/ 镜面 / rebuildAll 正交。 */
+  private stickeringCodes: Uint8Array | null = null;
+  /** 嵌入式预览可独立重贴色；null 时仍走 /sim 的全局用户配色。 */
+  private faceColorOverride: Partial<Record<CubeFaceLabel, string>> | null = null;
+  /** FM_DIM 下纯白压到哪。白色减半 = 灰,会跟 FM_IGNORED 那档灰撞,所以 /sim 压到
+   *  `#dddddd`(cubing.js PG3D 同款)。代价是它跟满色白几乎分不出 —— 板子上同时有满色白
+   *  贴纸时(/predict)调成更暗的一档,让「压暗的白」一眼是暗的。 */
+  dimWhite = FM_DIM_WHITE;
+  /** 描边(FM_OUTLINE)的 per-instance 开关,static / moving 共享一份(同槽序)。 */
+  private outlineFlags!: THREE.InstancedBufferAttribute;
+  private outlineColor!: OutlineUniform;
+  /** 图案魔方:每个贴纸槽绑定 HOME 图片切片。static / moving 共用属性,所以转层时
+   *  图片碎片跟真实块走。纹理只是一张 3×2 atlas,不增加 mesh / draw call。 */
+  private pictureAttrs!: PictureSlotAttributes;
+  private pictureUniforms!: PictureUniformController;
+  private pictureFaces: PictureFaces = emptyPictureFaces();
+  private pictureBaseColors = false;
+  private pictureFallbackColor = new THREE.Color(COLORS.Core);
+  private pictureKey = '';
+  private pictureAtlas: THREE.Texture | null = null;
+  private pictureLoadToken = 0;
+  /** 贴纸几何的自用克隆:`aOutline` 是 per-instance 属性,而 Cubelet._STICKER / _ARROW
+   *  是全站共享的静态几何,直接挂上去会串到同页别的 renderer(/sim 与嵌入板同时活着)。 */
+  private stickerGeos = new Map<THREE.BufferGeometry, THREE.BufferGeometry>();
+  /** 提示贴片的缩放克隆(黑边非出厂值时才建;出厂值直接用共享静态几何,零克隆)。
+   *  与 stickerGeos 分开是因为 hint 材质没注入描边 → 不该挂 `aOutline`。 */
+  private hintGeos = new Map<THREE.BufferGeometry, THREE.BufferGeometry>();
+  /** 黑边滑块折算出的贴纸几何缩放(1 = 出厂缝宽 STICKER_GAP_DEFAULT)。 */
+  private _stickerScale = 1;
+
+  // toggles
+  private _thickness = true;
+  private _arrow = false;
+  private _hint = false;
+  private _hollow = false;
+  /** 原核 (raw/stickerless body) 状态 + 资源。全阶生效(低/中阶 Phong+inner,超高阶 unlit Basic 壳)。 */
+  private _rawCore = false;
+  private _rawAttrs: RawAttrs | null = null;
+  private _rawFrameGeo: THREE.BufferGeometry | null = null;
+  private _rawInnerGeo: THREE.BufferGeometry | null = null;
+
+  // active slices (支持并发,例如 x/y/z 整 cube 旋转 = N 个 group 同时跑)。
+  // 同轴异步并发 (user 拖了 A 还在 tween,又 drag 平行 B) 也要正确 — 每个 slice
+  // 独立 angle,所以存它进 moving 之前的 instance matrix (origCubeletMat / origStickerMat /
+  // origHintMat),setSliceAngle 时 per-instance 算 `rot(slice.axis, slice.angle) × origMat`。
+  private activeSlices: Map<CubeGroup, {
+    instances: number[];
+    slots: number[];
+    origCubeletMats: THREE.Matrix4[];
+    origStickerMats: THREE.Matrix4[];
+    origHintMats: THREE.Matrix4[];
+  }> = new Map();
+  /** Single-slice quaternion 模式: 活跃 slice 只剩 1 个时,整 moving mesh
+   * 共享一个 quaternion,免 N² 次 mat4 mul/帧。第 2 个 slice 进来前 bake 进
+   * per-instance,然后 fallback 到多 slice 路径。 */
+  private singleSliceGroup: CubeGroup | null = null;
+
+  // 临时
+  private tmpMat = new THREE.Matrix4();
+  private tmpRotMat = new THREE.Matrix4();
+  private tmpColor = new THREE.Color();
+  private tmpQuat = new THREE.Quaternion();
+  /** 独立临时矩阵,给 getCubeletRenderMatrix 读 moving 实例用(不与 tmpMat 抢)。 */
+  private _logoInstMat = new THREE.Matrix4();
+
+  // Mirror Cube: per-instance non-uniform cuboid center (×3) + scale (×3), indexed by
+  // instance idx. null = standard NxN (uniform — the static/sticker matrices come
+  // straight from cubelet.matrix, byte-identical to before). When set, every static
+  // matrix is recomposed as compose(R·center0, R, scale0); the slice-turn animation
+  // (R_slice × origMatrix) is automatically a valid render matrix of the new state.
+  private _mirrorCenters: Float32Array | null = null;
+  private _mirrorScales: Float32Array | null = null;
+  // Mirror cube: the 3 turn axes pass through the CENTER cubie (the core), which is
+  // offset from the bounding-box origin because the layers are non-uniform. A face
+  // turn must rotate about that core axis, not the origin — else the face center
+  // (a fixed 1x1 piece) would translate. Null for uniform NxN (rotate about origin).
+  private _mirrorPivot: THREE.Vector3 | null = null;
+  private tmpMirrorMat = new THREE.Matrix4();
+  private tmpMirrorV1 = new THREE.Vector3();
+  private tmpMirrorV2 = new THREE.Vector3();
+
+  constructor(cube: Cube) {
+    super();
+    const T0 = performance.now();
+    this.cube = cube;
+    this.matrixAutoUpdate = false;
+    this.hasInner = cube.order < __PERF_FLAGS.superOrderThreshold;
+
+    const cubelets = [...cube.initials.values()];
+    const visCount = cubelets.length;
+    // initialToInstance Map 已淘汰 — instance idx 直接存到 cubelet._instIdx,beginSlice 走属性读
+    // instanceToInitial 用 Uint32Array 跳 Array.push (372k 次)
+    this.instanceToInitial = new Uint32Array(visCount);
+    for (let i = 0; i < visCount; i++) {
+      const c = cubelets[i];
+      c._instIdx = i;
+      this.instanceToInitial[i] = c.initial;
+    }
+    const T1 = performance.now();
+
+    // Frame meshes + per-cubelet inner box meshes(共享 matrix)
+    this.staticFrame = this.makeFrameMesh(visCount, false);
+    this.movingFrame = this.makeFrameMesh(visCount, true);
+    this.movingFrame.count = 0;
+    // !hasInner 时仍 new mesh 占位 (dispose / 各 setMatrixAt 调用都得 mesh 存在),
+    // 但 count=1 让 InstancedBufferAttribute 只分配 16 floats 而不是 16 * visCount。
+    // N=250 省 ~48 MB (2 个 mesh × 64B × 372k)。
+    const innerBufCount = this.hasInner ? visCount : 1;
+    this.staticInner = this.makeInnerMesh(innerBufCount, false);
+    this.movingInner = this.makeInnerMesh(innerBufCount, true);
+    this.movingInner.count = 0;
+    if (!this.hasInner) {
+      this.staticInner.visible = false;
+      this.movingInner.visible = false;
+      this.staticInner.count = 0;
+    }
+
+    // 构造时 cubelet.matrix = 单位旋转 + cubelet.position translation。直接写 instance buffer
+    // 跳过 setMatrixAt (matrix.toArray 间接)。movingFrame 的 HIDE_MAT 也跳:moving count=0,
+    // 当前不渲染;有 slice 时 beginSlice 会写正确矩阵。
+    {
+      const arr = this.staticFrame.instanceMatrix.array;
+      for (let i = 0; i < visCount; i++) {
+        const off = i * 16;
+        const p = cubelets[i].position;
+        arr[off + 0] = 1; arr[off + 5] = 1; arr[off + 10] = 1; arr[off + 15] = 1;
+        arr[off + 12] = p.x; arr[off + 13] = p.y; arr[off + 14] = p.z;
+      }
+    }
+    if (this.hasInner) {
+      const arr = this.staticInner.instanceMatrix.array;
+      for (let i = 0; i < visCount; i++) {
+        const off = i * 16;
+        const p = cubelets[i].position;
+        arr[off + 0] = 1; arr[off + 5] = 1; arr[off + 10] = 1; arr[off + 15] = 1;
+        arr[off + 12] = p.x; arr[off + 13] = p.y; arr[off + 14] = p.z;
+      }
+    }
+    this.staticFrame.instanceMatrix.needsUpdate = true;
+    this.movingFrame.instanceMatrix.needsUpdate = true;
+    if (this.hasInner) {
+      this.staticInner.instanceMatrix.needsUpdate = true;
+      this.movingInner.instanceMatrix.needsUpdate = true;
+    }
+
+    const T2 = performance.now();
+
+    // Sticker slots — 共享 6 个 face localMat,而不是每 slot 各 alloc 一个 (376k → 6,省 ~150ms)
+    const zScale = this._thickness ? HALF : 1;
+    const faceLocalMats: THREE.Matrix4[] = [];
+    for (let f = 0; f < 6; f++) faceLocalMats.push(makeStickerLocalMatrix(f, zScale));
+    this.cubeletFaceSlot = new Int32Array(visCount * 6).fill(-1);
+    for (const cubelet of cubelets) {
+      const base = cubelet._instIdx * 6;
+      for (let f = 0; f < 6; f++) {
+        const col = cubelet.colors[f];
+        if (col == null || col === "") continue;
+        const slotIdx = this.stickerSlots.length;
+        this.cubeletFaceSlot[base + f] = slotIdx;
+        this.stickerSlots.push({
+          cubeletInitial: cubelet.initial,
+          face: f,
+          localMat: faceLocalMats[f],
+          visible: true,
+        });
+      }
+    }
+
+    const T3 = performance.now();
+
+    // Sticker meshes — N≥50 用 unlit Basic 省 fragment shader 光照
+    const isSuperOrderForSticker = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
+    this.stickerMaterial = isSuperOrderForSticker ? new THREE.MeshBasicMaterial() : new THREE.MeshLambertMaterial();
+    this.movingStickerMaterial = isSuperOrderForSticker ? new THREE.MeshBasicMaterial() : new THREE.MeshLambertMaterial();
+    this.outlineColor = injectStickerOutline([this.stickerMaterial, this.movingStickerMaterial]);
+    this.pictureUniforms = injectPictureCube([this.stickerMaterial, this.movingStickerMaterial], this.cube.order);
+    this.outlineFlags = new THREE.InstancedBufferAttribute(new Float32Array(this.stickerSlots.length), 1);
+    this.pictureAttrs = buildPictureSlotAttributes(this.stickerSlots, this.cube.order);
+    this.staticSticker = this.makeStickerMesh(this.stickerSlots.length, false);
+    this.movingSticker = this.makeStickerMesh(this.stickerSlots.length, true);
+    this.movingSticker.count = 0;
+
+    // 示意小面(sim_svg_export_schematic):理想晶格四边形 = 贴纸局部系 z=0 平面
+    // 上的整格正方形(±HALF,不 inset)。instanceMatrix = T(cubelet)·localMat 把
+    // z=0 落在 cubelet 表面、局部 +z 转向 face 外法向 → 相邻贴纸严格共边,localMat
+    // 的 zScale(立体贴片压扁)只作用于 z 轴,z=0 轮廓免疫。绕向 CCW 朝 +z(朝外)。
+    // 镜面几何(非均匀分层)不满足晶格假设 → enableMirror 时摘除。
+    const schematicQuad = [-HALF, -HALF, 0, HALF, -HALF, 0, HALF, HALF, 0, -HALF, HALF, 0];
+    this.staticSticker.userData.schematicInstancedPoly = schematicQuad;
+    this.movingSticker.userData.schematicInstancedPoly = schematicQuad;
+    // 每贴纸槽位的 HOME canonical sid(`${面字母}${netIndex}`)—— 示意导出器据此把
+    // 自由 facelet 遮罩(`U:0,2` DSL)灰化对应实例。槽位 i 恒绑 stickerSlots[i] 的
+    // (cubeletInitial, face);实例跟物理块走 → 键 HOME = 灰随块走(piece-following,
+    // 同 pyra/skewb/mega)。static/moving 同槽序 → 共用一份。仅在退役目标阶(N≤7,遮罩
+    // 派生表覆盖范围)算,高阶跳过省内存(无遮罩消费)。
+    if (this.cube.order <= 7) {
+      const keys = new Array<string>(this.stickerSlots.length);
+      for (let i = 0; i < this.stickerSlots.length; i++) {
+        const s = this.stickerSlots[i];
+        keys[i] = engineHomeSid(s.cubeletInitial, s.face, this.cube.order);
+      }
+      this.staticSticker.userData.schematicInstanceKeys = keys;
+      this.movingSticker.userData.schematicInstanceKeys = keys;
+    }
+
+    // 构造时 cubelet.matrix = 纯 translation (rot=identity, scale=1),T × localMat 简化为
+    // localMat.elements 直接 copy + 12/13/14 加 cubelet.position。跳过 multiplyMatrices (64 mul) +
+    // setMatrixAt (tmpMat.toArray)。movingSticker.setMatrixAt(HIDE_MAT) 也跳:moving count=0 当前不
+    // 渲染,Float32Array 默认 0 矩阵也是 degenerate (count 起来后 beginSlice 会写正确值)。
+    const staticInstArr = this.staticSticker.instanceMatrix.array;
+    // 预算 6 面的 RGB triple — 跳过 376k × COLORS 字符串查表 + Color.set 解析
+    const faceRGB = new Float32Array(6 * 3);
+    for (let f = 0; f < 6; f++) {
+      this.tmpColor.set(COLORS[FACE[f as 0|1|2|3|4|5]] ?? COLORS.Gray);
+      faceRGB[f * 3 + 0] = this.tmpColor.r;
+      faceRGB[f * 3 + 1] = this.tmpColor.g;
+      faceRGB[f * 3 + 2] = this.tmpColor.b;
+    }
+    // 触发 instanceColor 分配 (setColorAt 第一次调用时会自动分配 InstancedBufferAttribute)
+    this.staticSticker.setColorAt(0, this.tmpColor);
+    this.movingSticker.setColorAt(0, this.tmpColor);
+    const staticColorArr = this.staticSticker.instanceColor!.array;
+    const movingColorArr = this.movingSticker.instanceColor!.array;
+    for (let i = 0; i < this.stickerSlots.length; i++) {
+      const slot = this.stickerSlots[i];
+      const cubelet = cube.initials.get(slot.cubeletInitial)!;
+      const lm = slot.localMat.elements;
+      const cp = cubelet.position;
+      const off = i * 16;
+      staticInstArr[off+0] = lm[0]; staticInstArr[off+1] = lm[1]; staticInstArr[off+2] = lm[2]; staticInstArr[off+3] = lm[3];
+      staticInstArr[off+4] = lm[4]; staticInstArr[off+5] = lm[5]; staticInstArr[off+6] = lm[6]; staticInstArr[off+7] = lm[7];
+      staticInstArr[off+8] = lm[8]; staticInstArr[off+9] = lm[9]; staticInstArr[off+10] = lm[10]; staticInstArr[off+11] = lm[11];
+      staticInstArr[off+12] = lm[12] + cp.x;
+      staticInstArr[off+13] = lm[13] + cp.y;
+      staticInstArr[off+14] = lm[14] + cp.z;
+      staticInstArr[off+15] = lm[15];
+      // sticker 的 face label 必为 FACE_LABELS[face] (slot 创建条件就是 colors[face] 非空,
+      // 而构造期 colors[face] 等于 FACE_LABELS[face]),直接查 faceRGB 跳过 COLORS map
+      const cOff = i * 3;
+      const fOff = slot.face * 3;
+      staticColorArr[cOff + 0] = faceRGB[fOff + 0];
+      staticColorArr[cOff + 1] = faceRGB[fOff + 1];
+      staticColorArr[cOff + 2] = faceRGB[fOff + 2];
+      movingColorArr[cOff + 0] = faceRGB[fOff + 0];
+      movingColorArr[cOff + 1] = faceRGB[fOff + 1];
+      movingColorArr[cOff + 2] = faceRGB[fOff + 2];
+    }
+    this.staticSticker.instanceMatrix.needsUpdate = true;
+    this.movingSticker.instanceMatrix.needsUpdate = true;
+    if (this.staticSticker.instanceColor) this.staticSticker.instanceColor.needsUpdate = true;
+    if (this.movingSticker.instanceColor) this.movingSticker.instanceColor.needsUpdate = true;
+
+    // Hint stickers — 单面 plane (ShapeGeometry) + BackSide:
+    // 只在 face normal 背向 camera 时可见,自动只显"看不到的 3 个面"。
+    // 不透明 + 颜色预混 0.35 face + 0.65 bg: 等效原 opacity=0.35 视觉但 canvas alpha=1,
+    // 防 checkered bg 透过 hint 区域。bg 色由 setHintBackdrop() 注入,主题切换需 re-call。
+    this.hintDistance = cube.order + 1;
+    this.hintMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
+    this.movingHintMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
+    this.staticHint = new THREE.InstancedMesh(Cubelet._HINT, this.hintMaterial, this.stickerSlots.length);
+    this.movingHint = new THREE.InstancedMesh(Cubelet._HINT, this.movingHintMaterial, this.stickerSlots.length);
+    this.staticHint.frustumCulled = false;
+    this.movingHint.frustumCulled = false;
+    this.staticHint.matrixAutoUpdate = false;
+    this.movingHint.matrixAutoUpdate = true;
+    this.staticHint.matrix.identity();
+    this.staticHint.visible = false;
+    this.movingHint.visible = false;
+    this.movingHint.count = 0;
+
+    // hintLocalMats 仍 eager 建 (beginSlice/endSlice 依赖),共享 6 个 face 矩阵省 alloc
+    const faceHintMatsInit: THREE.Matrix4[] = [];
+    for (let f = 0; f < 6; f++) faceHintMatsInit.push(makeStickerLocalMatrix(f, zScale, this.hintDistance));
+    for (let i = 0; i < this.stickerSlots.length; i++) {
+      this.hintLocalMats.push(faceHintMatsInit[this.stickerSlots[i].face]);
+    }
+    // Hint 默认 off; 延后 setMatrixAt + setColorAt 上传到首次 set hint(true)
+    // (hint 输出走 staticHint.visible=false,在 visible 之前 GPU 不读其 instance buffer,延后无副作用)
+    this.hintNeedsPopulate = true;
+
+    // 背面贴纸道次(默认关,X 光才亮)。unlit Basic:这些面背对着灯,Lambert 会把它们
+    // 打成一片黑;示意伴图那边也是平涂,一致。
+    this.backStickerMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide, transparent: true, depthWrite: false });
+    this.backSticker = this.makeBackStickerMesh(this.staticSticker);
+    this.movingBackSticker = this.makeBackStickerMesh(this.movingSticker);
+
+    this.add(this.staticFrame);
+    this.add(this.movingFrame);
+    this.add(this.staticInner);
+    this.add(this.movingInner);
+    this.add(this.staticSticker);
+    this.add(this.movingSticker);
+    this.add(this.staticHint);
+    this.add(this.movingHint);
+    const T4 = performance.now();
+    if (cube.order >= 50) {
+      console.log(`[InstancedRenderer ctor N=${cube.order}] init=${(T1 - T0).toFixed(0)}ms frame+inner=${(T2 - T1).toFixed(0)}ms stickerSlots=${(T3 - T2).toFixed(0)}ms stickerMesh+hint=${(T4 - T3).toFixed(0)}ms total=${(T4 - T0).toFixed(0)}ms slots=${this.stickerSlots.length}`);
+    }
+  }
+
+  private makeFrameMesh(count: number, moving: boolean): THREE.InstancedMesh {
+    const isSuperOrder = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
+    const mat = isSuperOrder ? Cubelet.CORE_BASIC : Cubelet.CORE;
+    const geo = isSuperOrder ? Cubelet._FRAME_LOW : Cubelet._FRAME;
+    const m = new THREE.InstancedMesh(geo, mat, count);
+    m.frustumCulled = false;
+    m.userData.simRole = 'body'; // structure-coloring debug overlay (debugColors.ts)
+    // moving mesh 由我们 setSliceAngle() 设 quaternion → matrixAutoUpdate 让 three 复合 matrix
+    // static mesh 永远 identity
+    m.matrixAutoUpdate = moving;
+    if (!moving) m.matrix.identity();
+    return m;
+  }
+
+  private makeInnerMesh(count: number, moving: boolean): THREE.InstancedMesh {
+    const isSuperOrder = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
+    const mat = isSuperOrder ? Cubelet.CORE_BASIC : Cubelet.CORE;
+    const m = new THREE.InstancedMesh(INNER_BOX, mat, count);
+    m.frustumCulled = false;
+    m.userData.simRole = 'core'; // structure-coloring debug overlay (debugColors.ts)
+    m.matrixAutoUpdate = moving;
+    if (!moving) m.matrix.identity();
+    return m;
+  }
+
+  /** 共享静态几何 → 本 renderer 的克隆(挂着 `aOutline`),每种基础几何只克隆一次。
+   *  黑边非出厂值时克隆再按 k 缩 XY —— 只缩面内尺寸,z 不动(贴片厚度 / _STICKER_LOW 的
+   *  0.05 pop-out 是防 z-fight 的,与缝宽无关)。 */
+  private stickerGeometry(base: THREE.BufferGeometry): THREE.BufferGeometry {
+    let geo = this.stickerGeos.get(base);
+    if (!geo) {
+      geo = base.clone();
+      if (this._stickerScale !== 1) geo.scale(this._stickerScale, this._stickerScale, 1);
+      geo.setAttribute('aOutline', this.outlineFlags);
+      geo.setAttribute('aPictureCenter', this.pictureAttrs.centers);
+      geo.setAttribute('aPictureDirection', this.pictureAttrs.directions);
+      geo.setAttribute('aPictureOn', this.pictureAttrs.enabled);
+      this.stickerGeos.set(base, geo);
+    }
+    return geo;
+  }
+
+  /** 提示贴片几何:出厂缝宽直接用共享静态几何,改过黑边才克隆缩放(hint 是单面
+   *  ShapeGeometry,没有 `aOutline`)。 */
+  private hintGeometry(base: THREE.BufferGeometry): THREE.BufferGeometry {
+    if (this._stickerScale === 1) return base;
+    let geo = this.hintGeos.get(base);
+    if (!geo) {
+      geo = base.clone();
+      geo.scale(this._stickerScale, this._stickerScale, 1);
+      this.hintGeos.set(base, geo);
+    }
+    return geo;
+  }
+
+  /** 背面贴纸网格:几何用单面平面(HintSticker,与贴纸同形同大)+ BackSide,所以只画
+   *  「法向背离相机」那 3 个面的贴纸 —— 正面那 3 个面被背面剔除挡掉。这 3 张在屏幕上互不
+   *  重叠,一次 draw call 里的混合天然就是对的,不需要逐实例深度排序(InstancedMesh 也排不了)。
+   *
+   *  挂成源网格的子节点 + 单位局部矩阵 ⇒ matrixWorld 直接继承(转层时 movingSticker 的
+   *  四元数照样跟);instanceMatrix / instanceColor 直接复用同一份 attribute 对象,所以
+   *  rebuildAll / beginSlice / setStickering 写的每一笔它都吃得到,不用逐处同步。 */
+  private makeBackStickerMesh(src: THREE.InstancedMesh): THREE.InstancedMesh {
+    const m = new THREE.InstancedMesh(this.hintGeometry(Cubelet._HINT), this.backStickerMaterial, src.count);
+    m.instanceMatrix = src.instanceMatrix;
+    if (src.instanceColor) m.instanceColor = src.instanceColor;
+    m.frustumCulled = false;
+    m.matrixAutoUpdate = false;
+    m.matrix.identity();
+    m.visible = false;
+    // count 是唯一同步不了的量(beginSlice / endSlice 到处在改 src.count),画之前抄一次。
+    // onBeforeRender 早于 three 取 object.count 的时刻,这一帧就生效。
+    m.onBeforeRender = () => { m.count = src.count; };
+    src.add(m);
+    return m;
+  }
+
+  /** 黑边 = 相邻两枚贴纸之间深色带宽占小面的比例(与示意伴图导出器 `inset` 同一量纲,
+   *  见 define.STICKER_GAP_DEFAULT)。贴纸几何整体缩 k = (1−gap)/(1−出厂 gap),露出更多
+   *  frame 即更宽的缝;描边 / 原核缝的 SDF 同倍缩,免得两套缝宽 desync。
+   *  几何每种只有一份(与阶数无关),所以拖滑块的代价是几个 clone,不随 N 涨。 */
+  set stickerGap(gap: number) {
+    const k = (1 - gap) / (1 - STICKER_GAP_DEFAULT);
+    if (!Number.isFinite(k) || k <= 0 || Math.abs(k - this._stickerScale) < 1e-6) return;
+    this._stickerScale = k;
+    setStickerOutlineScale(k);
+    this.pictureUniforms.updateScale(k);
+    setRawStickerScale(k);
+    setPanelFanGap(gap);
+    for (const g of this.stickerGeos.values()) g.dispose();
+    for (const g of this.hintGeos.values()) g.dispose();
+    this.stickerGeos.clear();
+    this.hintGeos.clear();
+    const isSuperOrder = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
+    const base = this._arrow ? Cubelet._ARROW : (isSuperOrder ? Cubelet._STICKER_LOW : Cubelet._STICKER);
+    const geo = this.stickerGeometry(base);
+    this.staticSticker.geometry = geo;
+    this.movingSticker.geometry = geo;
+    const hintGeo = this.hintGeometry(this._arrow ? Cubelet._HINT_ARROW : Cubelet._HINT);
+    this.staticHint.geometry = hintGeo;
+    this.movingHint.geometry = hintGeo;
+    this.backSticker.geometry = hintGeo;
+    this.movingBackSticker.geometry = hintGeo;
+    this.cube.dirty = true;
+  }
+  get stickerGap(): number { return 1 - this._stickerScale * (1 - STICKER_GAP_DEFAULT); }
+
+  /** 贴纸不透明度(0~1)。**深度照写**:半透的东西一旦停写深度,同一个 InstancedMesh 里
+   *  几十上百枚贴纸就按提交顺序(而非远近)互相叠,前后贴纸、贴片挤出体的正反面全糊在一起
+   *  —— issue #56 那一片三角形就是这么来的。写深度 = 每个像素只留最近那一层,干净。
+   *  「透过块身看到背面贴纸」由 setXray 的独立道次负责,不靠关深度硬凑。 */
+  set stickerOpacity(op: number) {
+    for (const m of [this.stickerMaterial, this.movingStickerMaterial, this.backStickerMaterial]) {
+      if (m.opacity === op) continue;
+      m.opacity = op;
+      // 背面道次恒半透(它就是靠混合叠在块身下面的),只有正面那两份跟着 op 切
+      m.transparent = op < 1 || m === this.backStickerMaterial;
+      m.needsUpdate = true;
+    }
+    this.cube.dirty = true;
+  }
+
+  /** X 光合成(内核不透明度 < 100 时开)。
+   *
+   *  three 的透明排序只到「对象」这一级,不排三角形也不排 instance,而我们整只魔方
+   *  统共就 4 组 InstancedMesh —— 靠它自动排等于没排。所以这里手动钉死示意伴图那套
+   *  far → near 的画家顺序,并让块身照常写深度把层数卡在一层:
+   *
+   *    ① 背面贴纸(backSticker,BackSide 平面,不写深度)
+   *    ② 块身 frame / inner(半透但**写深度** → 每像素只留最外那层,不然 N 层块身
+   *       叠下来 0.7^N 直接黑成一坨,贴纸全被埋掉)
+   *    ③ 正面贴纸(写深度,比块身外表面近,深度测试自然过)
+   *    ④ 提示贴片(本来就在魔方外面)
+   *
+   *  关掉时 renderOrder 全部归零 —— 不透明道次让 three 自己按前后排(early-z),
+   *  高阶那边靠这个省 fragment。 */
+  set xray(on: boolean) {
+    if (on === this._xray) return;
+    this._xray = on;
+    this.backSticker.visible = on;
+    this.movingBackSticker.visible = on;
+    const order = (o: number) => (on ? o : 0);
+    this.backSticker.renderOrder = order(1);
+    this.movingBackSticker.renderOrder = order(1);
+    this.staticFrame.renderOrder = order(2);
+    this.movingFrame.renderOrder = order(2);
+    this.staticInner.renderOrder = order(2);
+    this.movingInner.renderOrder = order(2);
+    this.staticSticker.renderOrder = order(3);
+    this.movingSticker.renderOrder = order(3);
+    this.staticHint.renderOrder = order(4);
+    this.movingHint.renderOrder = order(4);
+    this.cube.dirty = true;
+  }
+  get xray(): boolean { return this._xray; }
+
+  private makeStickerMesh(count: number, moving: boolean): THREE.InstancedMesh {
+    // 排除法测试: 仅 sticker geometry 改 PlaneGeometry,其它(material/frame)不动
+    const isSuperOrder = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
+    const baseGeo = this.stickerGeometry(isSuperOrder ? Cubelet._STICKER_LOW : Cubelet._STICKER);
+    const m = new THREE.InstancedMesh(
+      moving ? this.staticSticker?.geometry ?? baseGeo : baseGeo,
+      moving ? this.movingStickerMaterial : this.stickerMaterial,
+      count,
+    );
+    m.frustumCulled = false;
+    m.matrixAutoUpdate = moving;
+    if (!moving) m.matrix.identity();
+    return m;
+  }
+
+  /** group.hold 时调。把 slice 内 cubelet 切换到 moving,static slot 隐藏。
+   * 同时存原始 instance matrix,setSliceAngle 用它 per-instance 旋转。 */
+  beginSlice(group: CubeGroup): void {
+    if (this.activeSlices.has(group)) {
+      // re-entrant — clean up first
+      this.endSlice(group);
+    }
+    // Single→multi 过渡: 必须先把旧 single slice 的 quaternion bake 进 per-instance,
+    // 否则下面写新 slice 的 origMats 会跟 q_old 复合渲染错位。
+    if (this.singleSliceGroup && this.singleSliceGroup !== group) {
+      this.bakeSingleSliceQuaternion();
+    }
+    const instances: number[] = [];
+    const slotsList: number[] = [];
+    const origCubeletMats: THREE.Matrix4[] = [];
+    const origStickerMats: THREE.Matrix4[] = [];
+    const origHintMats: THREE.Matrix4[] = [];
+
+    for (const positionIdx of group.indices) {
+      const cubelet = this.cube.cubelets.get(positionIdx);
+      if (!cubelet) continue;
+      const instIdx = cubelet._instIdx;
+      if (instIdx < 0) continue;
+      instances.push(instIdx);
+      this.staticFrame.getMatrixAt(instIdx, this.tmpMat);
+      origCubeletMats.push(this.tmpMat.clone());
+      this.movingFrame.setMatrixAt(instIdx, this.tmpMat);
+      this.staticFrame.setMatrixAt(instIdx, HIDE_MAT);
+      if (this.hasInner) {
+        this.movingInner.setMatrixAt(instIdx, this.tmpMat);
+        this.staticInner.setMatrixAt(instIdx, HIDE_MAT);
+      }
+
+      const base = instIdx * 6;
+      for (let f = 0; f < 6; f++) {
+        const slotIdx = this.cubeletFaceSlot[base + f];
+        if (slotIdx < 0) continue;
+        if (!this.stickerSlots[slotIdx].visible) continue;
+        slotsList.push(slotIdx);
+        this.staticSticker.getMatrixAt(slotIdx, this.tmpMat);
+        origStickerMats.push(this.tmpMat.clone());
+        this.movingSticker.setMatrixAt(slotIdx, this.tmpMat);
+        this.staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
+        this.staticHint.getMatrixAt(slotIdx, this.tmpMat);
+        origHintMats.push(this.tmpMat.clone());
+        this.movingHint.setMatrixAt(slotIdx, this.tmpMat);
+        this.staticHint.setMatrixAt(slotIdx, HIDE_MAT);
+      }
+    }
+    this.activeSlices.set(group, { instances, slots: slotsList, origCubeletMats, origStickerMats, origHintMats });
+    if (this.activeSlices.size === 1) {
+      // 第一个 slice 激活:打开 moving 渲染、重置 quaternion
+      this.movingFrame.quaternion.identity();
+      this.movingSticker.quaternion.identity();
+      this.movingHint.quaternion.identity();
+      this.resetMovingPivot();
+      this.movingFrame.count = this.instanceToInitial.length;
+      this.movingSticker.count = this.stickerSlots.length;
+      this.movingHint.count = this.stickerSlots.length;
+      if (this.hasInner) {
+        this.movingInner.quaternion.identity();
+        this.movingInner.count = this.instanceToInitial.length;
+      }
+    }
+    this.staticFrame.instanceMatrix.needsUpdate = true;
+    this.movingFrame.instanceMatrix.needsUpdate = true;
+    this.staticSticker.instanceMatrix.needsUpdate = true;
+    this.movingSticker.instanceMatrix.needsUpdate = true;
+    this.staticHint.instanceMatrix.needsUpdate = true;
+    this.movingHint.instanceMatrix.needsUpdate = true;
+    if (this.hasInner) {
+      this.staticInner.instanceMatrix.needsUpdate = true;
+      this.movingInner.instanceMatrix.needsUpdate = true;
+    }
+    // Stage 1: 标记 single slice (恰好 1 个 active),setSliceAngle 走快路径
+    if (__PERF_FLAGS.singleSliceQuaternion && this.activeSlices.size === 1) {
+      this.singleSliceGroup = group;
+    }
+    this.cube.dirty = true;
+  }
+
+  /** Single → multi 过渡 / endSlice 收尾时调:把 singleSliceGroup 的当前 quaternion
+   * bake 进 per-instance matrices, 然后重置 moving.quaternion = identity。
+   * 之后两个 slice 都走 per-instance 路径。 */
+  private bakeSingleSliceQuaternion(): void {
+    const group = this.singleSliceGroup;
+    if (!group) return;
+    const state = this.activeSlices.get(group);
+    if (!state) { this.singleSliceGroup = null; return; }
+    // Bake the FULL moving-mesh transform (T(position)·R) so the mirror pivot offset
+    // carried in movingFrame.position is preserved; for uniform NxN position=0 → pure R.
+    this.tmpRotMat.compose(this.movingFrame.position, this.movingFrame.quaternion, ONE_SCALE);
+    if (this.hasInner) {
+      for (let i = 0; i < state.instances.length; i++) {
+        this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origCubeletMats[i]);
+        this.movingFrame.setMatrixAt(state.instances[i], this.tmpMat);
+        this.movingInner.setMatrixAt(state.instances[i], this.tmpMat);
+      }
+      this.movingInner.instanceMatrix.needsUpdate = true;
+      this.movingInner.quaternion.identity();
+    } else {
+      for (let i = 0; i < state.instances.length; i++) {
+        this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origCubeletMats[i]);
+        this.movingFrame.setMatrixAt(state.instances[i], this.tmpMat);
+      }
+    }
+    for (let i = 0; i < state.slots.length; i++) {
+      this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origStickerMats[i]);
+      this.movingSticker.setMatrixAt(state.slots[i], this.tmpMat);
+      this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origHintMats[i]);
+      this.movingHint.setMatrixAt(state.slots[i], this.tmpMat);
+    }
+    this.movingFrame.instanceMatrix.needsUpdate = true;
+    this.movingSticker.instanceMatrix.needsUpdate = true;
+    this.movingHint.instanceMatrix.needsUpdate = true;
+    this.movingFrame.quaternion.identity();
+    this.movingSticker.quaternion.identity();
+    this.movingHint.quaternion.identity();
+    this.resetMovingPivot(); // offset is baked into per-instance matrices now
+    this.singleSliceGroup = null;
+  }
+
+  /** Mirror cube: set each moving mesh's position so that T(position)·R(quaternion)
+   *  equals the rotation about the core axis, T(C)·R·T(-C) = T(C - R·C)·R. No-op for
+   *  uniform NxN (pivot null → mesh stays at origin). */
+  private applyMovingPivot(q: THREE.Quaternion): void {
+    if (!this._mirrorPivot) return;
+    this.tmpMirrorV1.copy(this._mirrorPivot).applyQuaternion(q);          // R·C
+    this.tmpMirrorV2.copy(this._mirrorPivot).sub(this.tmpMirrorV1);       // C - R·C
+    this.movingFrame.position.copy(this.tmpMirrorV2);
+    this.movingSticker.position.copy(this.tmpMirrorV2);
+    this.movingHint.position.copy(this.tmpMirrorV2);
+    if (this.hasInner) this.movingInner.position.copy(this.tmpMirrorV2);
+  }
+
+  /** Multi-slice path: fold the same core-axis pivot offset into this.tmpRotMat's
+   *  translation column (the matrix is then multiplied per-instance). No-op for NxN. */
+  private applyPivotToRotMat(q: THREE.Quaternion): void {
+    if (!this._mirrorPivot) return;
+    this.tmpMirrorV1.copy(this._mirrorPivot).applyQuaternion(q);          // R·C
+    this.tmpMirrorV2.copy(this._mirrorPivot).sub(this.tmpMirrorV1);       // C - R·C
+    this.tmpRotMat.setPosition(this.tmpMirrorV2);
+  }
+
+  /** Reset moving meshes back to the origin (mirror only); paired with quaternion reset. */
+  private resetMovingPivot(): void {
+    if (!this._mirrorPivot) return;
+    this.movingFrame.position.set(0, 0, 0);
+    this.movingSticker.position.set(0, 0, 0);
+    this.movingHint.position.set(0, 0, 0);
+    if (this.hasInner) this.movingInner.position.set(0, 0, 0);
+  }
+
+  /** group.angle setter 调。
+   * - 单 slice 模式 (stage 1): 整 moving mesh quaternion = rot,免 N² mat4 mul。
+   * - 多 slice 模式: per-instance 写 instance matrix。 */
+  setSliceAngle(group: CubeGroup, angle: number): void {
+    const state = this.activeSlices.get(group);
+    if (!state) return;
+    const axisVec = CubeGroup.AXIS_VECTOR[group.axis];
+    if (!axisVec) return;
+    this.tmpQuat.setFromAxisAngle(axisVec, angle);
+
+    if (this.singleSliceGroup === group) {
+      // Stage 1 快路径: moving mesh.matrix 由 quaternion 自动复合,
+      // 每个 instance 渲染 = rotation(q) × origMat × vertex。
+      this.movingFrame.quaternion.copy(this.tmpQuat);
+      this.movingSticker.quaternion.copy(this.tmpQuat);
+      this.movingHint.quaternion.copy(this.tmpQuat);
+      if (this.hasInner) this.movingInner.quaternion.copy(this.tmpQuat);
+      this.applyMovingPivot(this.tmpQuat); // mirror: turn about the core axis, not origin
+      this.cube.dirty = true;
+      return;
+    }
+
+    this.tmpRotMat.makeRotationFromQuaternion(this.tmpQuat);
+    this.applyPivotToRotMat(this.tmpQuat); // mirror: shift translation so rotation is about the core axis
+    if (this.hasInner) {
+      for (let i = 0; i < state.instances.length; i++) {
+        this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origCubeletMats[i]);
+        this.movingFrame.setMatrixAt(state.instances[i], this.tmpMat);
+        this.movingInner.setMatrixAt(state.instances[i], this.tmpMat);
+      }
+      this.movingInner.instanceMatrix.needsUpdate = true;
+    } else {
+      for (let i = 0; i < state.instances.length; i++) {
+        this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origCubeletMats[i]);
+        this.movingFrame.setMatrixAt(state.instances[i], this.tmpMat);
+      }
+    }
+    for (let i = 0; i < state.slots.length; i++) {
+      this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origStickerMats[i]);
+      this.movingSticker.setMatrixAt(state.slots[i], this.tmpMat);
+      this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origHintMats[i]);
+      this.movingHint.setMatrixAt(state.slots[i], this.tmpMat);
+    }
+    this.movingFrame.instanceMatrix.needsUpdate = true;
+    this.movingSticker.instanceMatrix.needsUpdate = true;
+    this.movingHint.instanceMatrix.needsUpdate = true;
+    this.cube.dirty = true;
+  }
+
+  /** group.drop 时调。cubelet.matrix 已被 group.rotate() 改成新位置,写回 static。 */
+  endSlice(group: CubeGroup): void {
+    const state = this.activeSlices.get(group);
+    if (!state) return;
+    for (const instIdx of state.instances) {
+      const cubeletInitial = this.instanceToInitial[instIdx];
+      const cubelet = this.cube.initials.get(cubeletInitial);
+      if (!cubelet) continue;
+      const cmat = this._mirrorCenters ? this.mirrorMat(cubelet._instIdx, cubelet, this.tmpMirrorMat) : cubelet.matrix;
+      this.staticFrame.setMatrixAt(instIdx, cmat);
+      this.movingFrame.setMatrixAt(instIdx, HIDE_MAT);
+      if (this.hasInner) {
+        this.staticInner.setMatrixAt(instIdx, cmat);
+        this.movingInner.setMatrixAt(instIdx, HIDE_MAT);
+      }
+
+      const base = instIdx * 6;
+      for (let f = 0; f < 6; f++) {
+        const slotIdx = this.cubeletFaceSlot[base + f];
+        if (slotIdx < 0) continue;
+        const slot = this.stickerSlots[slotIdx];
+        if (!slot.visible) {
+          this.staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
+          this.movingSticker.setMatrixAt(slotIdx, HIDE_MAT);
+          this.staticHint.setMatrixAt(slotIdx, HIDE_MAT);
+          this.movingHint.setMatrixAt(slotIdx, HIDE_MAT);
+          continue;
+        }
+        this.tmpMat.multiplyMatrices(cmat, slot.localMat);
+        this.staticSticker.setMatrixAt(slotIdx, this.tmpMat);
+        this.movingSticker.setMatrixAt(slotIdx, HIDE_MAT);
+        this.tmpMat.multiplyMatrices(cmat, this.hintLocalMats[slotIdx]);
+        this.staticHint.setMatrixAt(slotIdx, this.tmpMat);
+        this.movingHint.setMatrixAt(slotIdx, HIDE_MAT);
+      }
+    }
+    this.activeSlices.delete(group);
+    if (this.singleSliceGroup === group) {
+      this.singleSliceGroup = null;
+    }
+    if (this.activeSlices.size === 0) {
+      this.movingFrame.quaternion.identity();
+      this.movingSticker.quaternion.identity();
+      this.movingHint.quaternion.identity();
+      this.resetMovingPivot();
+      this.movingFrame.count = 0;
+      this.movingSticker.count = 0;
+      this.movingHint.count = 0;
+      if (this.hasInner) {
+        this.movingInner.quaternion.identity();
+        this.movingInner.count = 0;
+      }
+    }
+    this.staticFrame.instanceMatrix.needsUpdate = true;
+    this.movingFrame.instanceMatrix.needsUpdate = true;
+    this.staticSticker.instanceMatrix.needsUpdate = true;
+    this.movingSticker.instanceMatrix.needsUpdate = true;
+    this.staticHint.instanceMatrix.needsUpdate = true;
+    this.movingHint.instanceMatrix.needsUpdate = true;
+    if (this.hasInner) {
+      this.staticInner.instanceMatrix.needsUpdate = true;
+      this.movingInner.instanceMatrix.needsUpdate = true;
+    }
+    this.cube.dirty = true;
+  }
+
+  /** 取「原始槽位 = initialIdx 的那块实体 cubie」当前的渲染矩阵(cube 本地坐标系):
+   *  转层动画进行中(该块在 moving 切片里)返回带瞬时旋转的矩阵,否则返回 static 矩阵。
+   *  给 U 面中心 logo 贴片用,使其牢牢贴在它所在的中心块上随转动。返回 `out`(块未渲染则 null)。 */
+  getCubeletRenderMatrix(initialIdx: number, out: THREE.Matrix4): THREE.Matrix4 | null {
+    const cubelet = this.cube.initials.get(initialIdx);
+    if (!cubelet || cubelet._instIdx < 0) return null;
+    const instIdx = cubelet._instIdx;
+    this.staticFrame.getMatrixAt(instIdx, out);
+    // static 槽被隐藏(HIDE_MAT = scale 0 → 第一列长度为 0)⇒ 该块正在某个 moving 切片里。
+    // movingFrame.matrix 携带单切片快路径的 quaternion(+镜面 pivot 平移);多切片模式下旋转
+    // 已 bake 进 per-instance、mesh.matrix 为单位阵 —— 故 movingFrame.matrix · 实例矩阵 两种
+    // 模式都给出正确渲染矩阵。(纯 90° 旋转的合法 static 矩阵第一列必为单位轴,长度 1,不会误判。)
+    const e = out.elements;
+    if (e[0] * e[0] + e[1] * e[1] + e[2] * e[2] === 0) {
+      this.movingFrame.updateMatrix();
+      this.movingFrame.getMatrixAt(instIdx, this._logoInstMat);
+      out.multiplyMatrices(this.movingFrame.matrix, this._logoInstMat);
+    }
+    return out;
+  }
+
+  /** cube.reset() 后调:全部 cubelet 在初始位置,重建所有 static 矩阵。 */
+  rebuildAll(): void {
+    this.activeSlices.clear();
+    this.singleSliceGroup = null;
+    this.movingFrame.count = 0;
+    this.movingSticker.count = 0;
+    this.movingHint.count = 0;
+    this.tmpQuat.identity();
+    this.movingFrame.quaternion.copy(this.tmpQuat);
+    this.movingSticker.quaternion.copy(this.tmpQuat);
+    this.movingHint.quaternion.copy(this.tmpQuat);
+    this.resetMovingPivot();
+    if (this.hasInner) {
+      this.movingInner.count = 0;
+      this.movingInner.quaternion.copy(this.tmpQuat);
+    }
+
+    for (let i = 0; i < this.instanceToInitial.length; i++) {
+      const cubeletInitial = this.instanceToInitial[i];
+      const cubelet = this.cube.initials.get(cubeletInitial);
+      if (!cubelet) continue;
+      const cmat = this._mirrorCenters ? this.mirrorMat(i, cubelet, this.tmpMirrorMat) : cubelet.matrix;
+      this.staticFrame.setMatrixAt(i, cmat);
+      this.movingFrame.setMatrixAt(i, HIDE_MAT);
+      if (this.hasInner) {
+        this.staticInner.setMatrixAt(i, cmat);
+        this.movingInner.setMatrixAt(i, HIDE_MAT);
+      }
+    }
+    for (let i = 0; i < this.stickerSlots.length; i++) {
+      const slot = this.stickerSlots[i];
+      const cubelet = this.cube.initials.get(slot.cubeletInitial);
+      if (!cubelet || !slot.visible) {
+        this.staticSticker.setMatrixAt(i, HIDE_MAT);
+        this.movingSticker.setMatrixAt(i, HIDE_MAT);
+        this.staticHint.setMatrixAt(i, HIDE_MAT);
+        this.movingHint.setMatrixAt(i, HIDE_MAT);
+        continue;
+      }
+      const smat = this._mirrorCenters ? this.mirrorMat(cubelet._instIdx, cubelet, this.tmpMirrorMat) : cubelet.matrix;
+      this.tmpMat.multiplyMatrices(smat, slot.localMat);
+      this.staticSticker.setMatrixAt(i, this.tmpMat);
+      this.movingSticker.setMatrixAt(i, HIDE_MAT);
+      this.tmpMat.multiplyMatrices(smat, this.hintLocalMats[i]);
+      this.staticHint.setMatrixAt(i, this.tmpMat);
+      this.movingHint.setMatrixAt(i, HIDE_MAT);
+    }
+    this.staticFrame.instanceMatrix.needsUpdate = true;
+    this.movingFrame.instanceMatrix.needsUpdate = true;
+    this.staticSticker.instanceMatrix.needsUpdate = true;
+    this.movingSticker.instanceMatrix.needsUpdate = true;
+    this.staticHint.instanceMatrix.needsUpdate = true;
+    this.movingHint.instanceMatrix.needsUpdate = true;
+    if (this.hasInner) {
+      this.staticInner.instanceMatrix.needsUpdate = true;
+      this.movingInner.instanceMatrix.needsUpdate = true;
+    }
+    this.cube.dirty = true;
+  }
+
+  applyStick(cubeletInitial: number, face: number, label: string | undefined): void {
+    const cubelet = this.cube.initials.get(cubeletInitial);
+    if (!cubelet || cubelet._instIdx < 0) return;
+    const slot = this.cubeletFaceSlot[cubelet._instIdx * 6 + face];
+    if (slot < 0) return;
+    const slotData = this.stickerSlots[slot];
+    if (label === "remove") {
+      slotData.visible = false;
+      this.staticSticker.setMatrixAt(slot, HIDE_MAT);
+      this.movingSticker.setMatrixAt(slot, HIDE_MAT);
+      this.staticHint.setMatrixAt(slot, HIDE_MAT);
+      this.movingHint.setMatrixAt(slot, HIDE_MAT);
+      this.staticSticker.instanceMatrix.needsUpdate = true;
+      this.movingSticker.instanceMatrix.needsUpdate = true;
+      this.staticHint.instanceMatrix.needsUpdate = true;
+      this.movingHint.instanceMatrix.needsUpdate = true;
+      this.cube.dirty = true;
+      return;
+    }
+    if (!slotData.visible) {
+      // re-show
+      slotData.visible = true;
+      const smat = this._mirrorCenters ? this.mirrorMat(cubelet._instIdx, cubelet, this.tmpMirrorMat) : cubelet.matrix;
+      this.tmpMat.multiplyMatrices(smat, slotData.localMat);
+      this.staticSticker.setMatrixAt(slot, this.tmpMat);
+      this.tmpMat.multiplyMatrices(smat, this.hintLocalMats[slot]);
+      this.staticHint.setMatrixAt(slot, this.tmpMat);
+      this.staticSticker.instanceMatrix.needsUpdate = true;
+      this.staticHint.instanceMatrix.needsUpdate = true;
+    }
+    const effective = label && label.length > 0 ? label : (cubelet.colors[face] ?? "Gray");
+    this.resolveStickerColor(slot, effective);
+    this.staticSticker.setColorAt(slot, this.tmpColor);
+    this.movingSticker.setColorAt(slot, this.tmpColor);
+    // hint 走预混 (不透明,避免 checker 透过); sticker 用原色
+    this.computeHintColor(slot, effective);
+    this.staticHint.setColorAt(slot, this.tmpColor);
+    this.movingHint.setColorAt(slot, this.tmpColor);
+    if (this.staticSticker.instanceColor) this.staticSticker.instanceColor.needsUpdate = true;
+    if (this.movingSticker.instanceColor) this.movingSticker.instanceColor.needsUpdate = true;
+    if (this.staticHint.instanceColor) this.staticHint.instanceColor.needsUpdate = true;
+    if (this.movingHint.instanceColor) this.movingHint.instanceColor.needsUpdate = true;
+    this.cube.dirty = true;
+  }
+
+  set thickness(value: boolean) {
+    if (value === this._thickness) return;
+    this._thickness = value;
+    const zScale = value ? HALF : 1;
+    // 6 个 face local matrix 共享给所有同 face slot,而不是 376k × alloc
+    const faceLocalMats: THREE.Matrix4[] = [];
+    const faceHintMats: THREE.Matrix4[] = [];
+    for (let f = 0; f < 6; f++) {
+      faceLocalMats.push(makeStickerLocalMatrix(f, zScale));
+      faceHintMats.push(makeStickerLocalMatrix(f, zScale, this.hintDistance));
+    }
+    for (let i = 0; i < this.stickerSlots.length; i++) {
+      const slot = this.stickerSlots[i];
+      slot.localMat = faceLocalMats[slot.face];
+      this.hintLocalMats[i] = faceHintMats[slot.face];
+    }
+    // Rebuild sticker + hint matrices
+    for (let i = 0; i < this.stickerSlots.length; i++) {
+      const slot = this.stickerSlots[i];
+      const cubelet = this.cube.initials.get(slot.cubeletInitial);
+      if (!cubelet || !slot.visible) {
+        this.staticSticker.setMatrixAt(i, HIDE_MAT);
+        this.staticHint.setMatrixAt(i, HIDE_MAT);
+        continue;
+      }
+      const smat = this._mirrorCenters ? this.mirrorMat(cubelet._instIdx, cubelet, this.tmpMirrorMat) : cubelet.matrix;
+      this.tmpMat.multiplyMatrices(smat, slot.localMat);
+      this.staticSticker.setMatrixAt(i, this.tmpMat);
+      this.tmpMat.multiplyMatrices(smat, this.hintLocalMats[i]);
+      this.staticHint.setMatrixAt(i, this.tmpMat);
+    }
+    this.staticSticker.instanceMatrix.needsUpdate = true;
+    this.staticHint.instanceMatrix.needsUpdate = true;
+    this.cube.dirty = true;
+  }
+  get thickness(): boolean { return this._thickness; }
+
+  set hollow(value: boolean) {
+    this._hollow = value;
+    // 原核激活时块身材质由 setRawCore 接管(applySettings 在 hollow 之后调 setRawCore,
+    // 会覆盖回 raw 材质);这里照常写,raw-off 时即恢复正确的 CORE/TRANS。
+    const mat = value ? Cubelet.TRANS : Cubelet.CORE;
+    this.staticFrame.material = mat;
+    this.movingFrame.material = mat;
+    if (this.hasInner) {
+      this.staticInner.material = mat;
+      this.movingInner.material = mat;
+    }
+    this.cube.dirty = true;
+  }
+
+  /** 原核 (raw / stickerless body):on=true 时给 frame(+inner,若有)换克隆几何(带 per-instance
+   *  面色属性)+ raw 材质(最近可见面取色,棱对角双色/角三色);off 恢复默认几何 + CORE(_BASIC)/TRANS。
+   *  低/中阶用带光照的 Phong raw + 圆角 _FRAME + inner;超高阶(N≥superOrderThreshold)用 unlit Basic
+   *  raw + _FRAME_LOW(无 inner) —— 块身染成各面色后,贴片缝隙的深色网格消失成纯色面。
+   *  faceColors 改变时 setFaceColors 会回调重建属性值。 */
+  setRawCore(on: boolean, faceColors: { U: string; D: string; L: string; R: string; F: string; B: string }, coreColor: string, border: boolean): void {
+    const isSuper = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
+    if (on) {
+      // 懒建克隆几何 + 属性(超高阶克隆 _FRAME_LOW box,其余克隆圆角 _FRAME)
+      if (!this._rawFrameGeo) this._rawFrameGeo = (isSuper ? Cubelet._FRAME_LOW : Cubelet._FRAME).clone();
+      this._rawAttrs = buildRawAttributes(
+        this.instanceToInitial.length, this.cubeletFaceSlot, faceColors, this._rawAttrs ?? undefined,
+      );
+      attachRawAttributes(this._rawFrameGeo, this._rawAttrs);
+      const mat = isSuper ? rawMaterialBasic() : rawMaterial();
+      // 内核色:Phong raw 着色器把内壁/中心块 fragment 落到 diffuse(=材质 color);设它即内核色生效。
+      mat.color.set(coreColor);
+      // border=1:贴片圆角外缘走独立内核色缝(镜面普通 = 金块 + 暗缝);
+      // border=0:缝跟随本体面色,连续实色无黑线(普通原核 / 镜面原核 = 内核色跟随镜面配色)。
+      setRawCoreBorder(border);
+      this.staticFrame.geometry = this._rawFrameGeo;
+      this.movingFrame.geometry = this._rawFrameGeo;
+      this.staticFrame.material = mat;
+      this.movingFrame.material = mat;
+      if (this.hasInner) {
+        if (!this._rawInnerGeo) this._rawInnerGeo = INNER_BOX.clone();
+        attachRawAttributes(this._rawInnerGeo, this._rawAttrs);
+        this.staticInner.geometry = this._rawInnerGeo;
+        this.movingInner.geometry = this._rawInnerGeo;
+        this.staticInner.material = mat;
+        this.movingInner.material = mat;
+      }
+    } else if (this._rawCore) {
+      // 恢复默认几何 + 材质(尊重当前 hollow;超高阶 unlit Basic,其余 Phong)
+      const frameGeo = isSuper ? Cubelet._FRAME_LOW : Cubelet._FRAME;
+      const mat = this._hollow ? Cubelet.TRANS : (isSuper ? Cubelet.CORE_BASIC : Cubelet.CORE);
+      this.staticFrame.geometry = frameGeo;
+      this.movingFrame.geometry = frameGeo;
+      this.staticFrame.material = mat;
+      this.movingFrame.material = mat;
+      if (this.hasInner) {
+        this.staticInner.geometry = INNER_BOX;
+        this.movingInner.geometry = INNER_BOX;
+        this.staticInner.material = mat;
+        this.movingInner.material = mat;
+      }
+    }
+    // 占位板(盒子)+ 扇形横截面材质都走白基色 + vertexColors + 双面(实际色全由几何顶点色定)。
+    // 运行时强制纠正:dev HMR 可能保留旧实例(Core 基色/单面/丢 polygonOffset),否则顶点色被乘暗或方块块顶又冒出。
+    for (const pm of [Cubelet._PANEL_MAT, Cubelet._PANEL_FAN_MAT]) {
+      if (!pm.vertexColors || pm.side !== THREE.DoubleSide) { pm.vertexColors = true; pm.side = THREE.DoubleSide; pm.needsUpdate = true; }
+      pm.color.setRGB(1, 1, 1);
+    }
+    const fm = Cubelet._PANEL_FAN_MAT;  // 扇形须保留负 polygonOffset 才能盖过方形块顶
+    if (!fm.polygonOffset) { fm.polygonOffset = true; fm.polygonOffsetFactor = -1; fm.polygonOffsetUnits = -1; fm.needsUpdate = true; }
+    this._rawCore = on;
+    this.cube.dirty = true;
+  }
+
+  /** group.hold 读它:原核(任意阶)转层挂扇形彩色横截面(panelFan)替换深色占位板,
+   *  非原核才用 Cubelet._PANEL 深色盒。 */
+  get rawCore(): boolean { return this._rawCore; }
+
+  set arrow(value: boolean) {
+    if (value === this._arrow) return;
+    this._arrow = value;
+    // 走 stickerGeometry():箭头几何也得是挂着 aOutline 的自用克隆,否则一开箭头描边就没了。
+    const geo = this.stickerGeometry(value ? Cubelet._ARROW : Cubelet._STICKER);
+    this.staticSticker.geometry = geo;
+    this.movingSticker.geometry = geo;
+    const hintGeo = this.hintGeometry(value ? Cubelet._HINT_ARROW : Cubelet._HINT);
+    this.staticHint.geometry = hintGeo;
+    this.movingHint.geometry = hintGeo;
+    this.backSticker.geometry = hintGeo;
+    this.movingBackSticker.geometry = hintGeo;
+    this.cube.dirty = true;
+  }
+  get arrow(): boolean { return this._arrow; }
+
+  set hint(value: boolean) {
+    if (value === this._hint) return;
+    this._hint = value;
+    if (value && this.hintNeedsPopulate) {
+      this.populateHint();
+      this.hintNeedsPopulate = false;
+    }
+    this.staticHint.visible = value;
+    this.movingHint.visible = value;
+    this.cube.dirty = true;
+  }
+  get hint(): boolean { return this._hint; }
+
+  /** slot 的实际贴片显示色写入 this.tmpColor:base = COLORS[label],再按阶段遮罩码变换。
+   * dim = 原色 ×0.5(纯白特判 #dddddd)与 cubing.js PG3D 一致,自动跟随自定义面色;
+   * ignored 灰 / oriented 青 / oriented2 黄用 cubing.js 的固定常量。 */
+  private resolveStickerColor(slotIdx: number, faceLabel: string | undefined): void {
+    const code = this.stickeringCodes ? this.stickeringCodes[slotIdx] : 0;
+    // 预解析过(见 FM_FIXED_3D):这里每帧跑 376k 次,不能再走字符串解析。
+    const fixed = FM_FIXED_3D.get(code);
+    if (fixed) { this.tmpColor.copy(fixed); return; }
+    const overridden = faceLabel
+      ? this.faceColorOverride?.[faceLabel as CubeFaceLabel]
+      : undefined;
+    this.tmpColor.set(overridden ?? COLORS[faceLabel ?? "Gray"] ?? COLORS.Gray);
+    if (code === FM_DIM) {
+      if (this.tmpColor.getHex() === 0xffffff) {
+        this.tmpColor.set(this.dimWhite);
+      } else {
+        // ×0.5 要在 sRGB 分量上做(twizzle 的暗度):ColorManagement 下 set(hex)
+        // 已转线性,直接 multiplyScalar 是线性域减半,视觉只暗 ~27% 看不出来。
+        this.tmpColor.convertLinearToSRGB();
+        this.tmpColor.multiplyScalar(0.5);
+        this.tmpColor.convertSRGBToLinear();
+      }
+    }
+  }
+
+  /** 算 face 色与 bg 预混的 hint 实际显示色,写入 this.tmpColor。
+   * 不透明 + 预混等效原 opacity=0.35 的视觉,但 canvas alpha=1,避免 checker bg 透过 hint。
+   * 底色走 resolveStickerColor → hint 跟随阶段遮罩(cubing.js hint facelets 同款)。 */
+  private computeHintColor(slotIdx: number, faceLabel: string | undefined): void {
+    this.resolveStickerColor(slotIdx, faceLabel);
+    this.tmpColor.lerp(this.hintBgColor, 1 - InstancedRenderer.HINT_FACE_MIX);
+  }
+
+  /** 按当前 COLORS + 阶段遮罩重刷所有 sticker / hint instance 颜色。 */
+  private refreshStickerColors(): void {
+    const updateHint = !this.hintNeedsPopulate;
+    for (let i = 0; i < this.stickerSlots.length; i++) {
+      const slot = this.stickerSlots[i];
+      const cubelet = this.cube.initials.get(slot.cubeletInitial);
+      if (!cubelet) continue;
+      const label = cubelet.colors[slot.face];
+      this.resolveStickerColor(i, label);
+      const code = this.stickeringCodes?.[i] ?? FM_REGULAR;
+      const pictureSource = this.pictureFaces[this.pictureAttrs.faces[i]];
+      if (!pictureStickerShowsFaceColor(this.pictureBaseColors, pictureSource, code)) {
+        this.tmpColor.copy(this.pictureFallbackColor);
+      }
+      this.staticSticker.setColorAt(i, this.tmpColor);
+      this.movingSticker.setColorAt(i, this.tmpColor);
+      if (updateHint) {
+        this.computeHintColor(i, label);
+        this.staticHint.setColorAt(i, this.tmpColor);
+        this.movingHint.setColorAt(i, this.tmpColor);
+      }
+    }
+    if (this.staticSticker.instanceColor) this.staticSticker.instanceColor.needsUpdate = true;
+    if (this.movingSticker.instanceColor) this.movingSticker.instanceColor.needsUpdate = true;
+    if (updateHint) {
+      if (this.staticHint.instanceColor) this.staticHint.instanceColor.needsUpdate = true;
+      if (this.movingHint.instanceColor) this.movingHint.instanceColor.needsUpdate = true;
+    }
+    this.cube.dirty = true;
+  }
+
+  /** 应用 / 清除阶段遮罩(mask 来自 engine/nxn/stickering.ts;null = full 恢复原色)。 */
+  setStickering(maskFn: StickeringMaskFn | null): void {
+    if (!maskFn) {
+      if (!this.stickeringCodes) return; // full → full,免整轮重刷
+      this.stickeringCodes = null;
+    } else {
+      const codes = new Uint8Array(this.stickerSlots.length);
+      for (let i = 0; i < this.stickerSlots.length; i++) {
+        const slot = this.stickerSlots[i];
+        codes[i] = maskFn(slot.cubeletInitial, slot.face);
+      }
+      this.stickeringCodes = codes;
+    }
+    // 描边不是颜色,走 shader 的 per-instance 开关(见 stickerOutline.ts)。
+    const flags = this.outlineFlags.array as Float32Array;
+    for (let i = 0; i < flags.length; i++) {
+      flags[i] = this.stickeringCodes?.[i] === FM_OUTLINE ? 1 : 0;
+    }
+    this.outlineFlags.needsUpdate = true;
+    this.refreshPictureFlags();
+    this.refreshStickerColors();
+  }
+
+  private refreshPictureFlags(): void {
+    const flags = this.pictureAttrs.enabled.array as Float32Array;
+    for (let i = 0; i < flags.length; i++) {
+      const code = this.stickeringCodes?.[i] ?? 0;
+      // 固定遮罩色 / dim 应保持它们的教学语义;full 与 outline 才显示原图。
+      flags[i] = this.pictureFaces[this.pictureAttrs.faces[i]] && (code === 0 || code === FM_OUTLINE) ? 1 : 0;
+    }
+    this.pictureAttrs.enabled.needsUpdate = true;
+    this.cube.dirty = true;
+  }
+
+  /** Apply six HOME-face pictures. Async decode is race-safe: rapid replace / clear
+   * cannot let an older atlas overwrite the latest selection. */
+  setPictureFaces(faces: PictureFaces | null, onReady?: () => void): void {
+    const next = faces ? { ...faces } : emptyPictureFaces();
+    const key = pictureFacesKey(next);
+    if (key === this.pictureKey) return;
+    this.pictureKey = key;
+    this.pictureFaces = next;
+    this.refreshStickerColors();
+    const token = ++this.pictureLoadToken;
+    // Hide the previous picture while its replacement is decoding; never show a
+    // half-old, half-new cube.
+    (this.pictureAttrs.enabled.array as Float32Array).fill(0);
+    this.pictureAttrs.enabled.needsUpdate = true;
+    this.cube.dirty = true;
+    if (countPictureFaces(next) === 0) {
+      this.pictureAtlas?.dispose();
+      this.pictureAtlas = null;
+      onReady?.();
+      return;
+    }
+    void buildPictureAtlas(next).then((atlas) => {
+      if (token !== this.pictureLoadToken) {
+        atlas.dispose();
+        return;
+      }
+      this.pictureAtlas?.dispose();
+      this.pictureAtlas = atlas;
+      this.pictureUniforms.atlas.value = atlas;
+      this.refreshPictureFlags();
+      onReady?.();
+    }).catch((error) => {
+      if (token === this.pictureLoadToken) console.warn('[sim] picture cube atlas failed', error);
+    });
+  }
+
+  /** Keep or neutralize the original face-colour bevel under picture stickers. */
+  setPictureBaseColors(show: boolean, fallbackColor: string): void {
+    const nextColor = new THREE.Color(fallbackColor);
+    if (this.pictureBaseColors === show && this.pictureFallbackColor.equals(nextColor)) return;
+    this.pictureBaseColors = show;
+    this.pictureFallbackColor.copy(nextColor);
+    this.refreshStickerColors();
+  }
+
+  /** 描边色(FM_OUTLINE 那一档)。默认 define.COLORS.High。 */
+  setOutlineColor(hex: string): void {
+    this.outlineColor.value.set(hex);
+    this.cube.dirty = true;
+  }
+
+  /** 只覆盖当前 renderer 的六面色；公式预览换拿方时不能污染同页或 `/sim`。 */
+  setFaceColorOverride(map: Partial<Record<CubeFaceLabel, string>> | null): void {
+    this.faceColorOverride = map ? { ...map } : null;
+    this.refreshStickerColors();
+  }
+
+  /** 用户改了 6 面色:写 COLORS map + 重刷所有 sticker / hint instance color。
+   * sticker 用原色,hint 走 computeHintColor 跟当前 bg 预混。
+   * cubelet.colors[face] 是 logical label ("L"/"R"/"U"/"D"/"F"/"B"),COLORS 改了下次 applyStick 也自动走新色。 */
+  setFaceColors(map: Partial<Record<CubeFaceLabel, string>>): void {
+    for (const k of ["U", "D", "L", "R", "F", "B"] as const) {
+      const v = map[k];
+      if (v) COLORS[k] = v;
+    }
+    this.refreshStickerColors();
+    // 原核激活时块身颜色与贴片同源,面色变了同步重建 raw per-instance 属性。
+    // (扇形横截面 panelFan 的颜色在每次 group.hold 时按当前态重刷,自动跟上新面色,无需在此处理。)
+    if (this._rawCore && this._rawAttrs) {
+      buildRawAttributes(this.instanceToInitial.length, this.cubeletFaceSlot, {
+        U: COLORS.U, D: COLORS.D, L: COLORS.L, R: COLORS.R, F: COLORS.F, B: COLORS.B,
+      }, this._rawAttrs);
+    }
+  }
+
+  /** 主题/背景色变了时调:刷新 hint 预混颜色 + bg 色字段。
+   * `bgHex` 应来自 CSS var(--background) 解析后的 hex/rgb 字符串。 */
+  setHintBackdrop(bgHex: string): void {
+    this.hintBgColor.set(bgHex);
+    // 重写所有 hint 实例颜色 (face mix bg)
+    if (!this.hintNeedsPopulate) {
+      for (let i = 0; i < this.stickerSlots.length; i++) {
+        const slot = this.stickerSlots[i];
+        const cubelet = this.cube.initials.get(slot.cubeletInitial);
+        if (!cubelet) continue;
+        this.computeHintColor(i, cubelet.colors[slot.face]);
+        this.staticHint.setColorAt(i, this.tmpColor);
+        this.movingHint.setColorAt(i, this.tmpColor);
+      }
+      if (this.staticHint.instanceColor) this.staticHint.instanceColor.needsUpdate = true;
+      if (this.movingHint.instanceColor) this.movingHint.instanceColor.needsUpdate = true;
+      this.cube.dirty = true;
+    }
+  }
+
+  /** 构造时延后的 hint matrix/color GPU 上传。N=250 ~250ms,只在首次开 hint 才付。 */
+  private populateHint(): void {
+    const cube = this.cube;
+    for (let i = 0; i < this.stickerSlots.length; i++) {
+      const slot = this.stickerSlots[i];
+      const cubelet = cube.initials.get(slot.cubeletInitial)!;
+      this.tmpMat.multiplyMatrices(this._mirrorCenters ? this.mirrorMat(cubelet._instIdx, cubelet, this.tmpMirrorMat) : cubelet.matrix, this.hintLocalMats[i]);
+      this.staticHint.setMatrixAt(i, this.tmpMat);
+      this.movingHint.setMatrixAt(i, HIDE_MAT);
+      this.computeHintColor(i, cubelet.colors[slot.face]);
+      this.staticHint.setColorAt(i, this.tmpColor);
+      this.movingHint.setColorAt(i, this.tmpColor);
+    }
+    this.staticHint.instanceMatrix.needsUpdate = true;
+    this.movingHint.instanceMatrix.needsUpdate = true;
+    if (this.staticHint.instanceColor) this.staticHint.instanceColor.needsUpdate = true;
+    if (this.movingHint.instanceColor) this.movingHint.instanceColor.needsUpdate = true;
+  }
+
+  /** Mirror-cube render matrix for a cubie: the home shape rotated about the CORE axis,
+   *  compose(C + R·(center0 - C), R, scale0), with R = cubelet.quaternion (logical
+   *  accumulated rotation), center0/scale0 from the cubie's original slot, and C the
+   *  core-cubie center (_mirrorPivot). Rotating the home center about C (not the origin)
+   *  makes a baked turn match the core-pivoted slice animation exactly — no pop on
+   *  release, the face center stays put, the layer goes bumpy. Only called in mirror mode
+   *  (callers guard on _mirrorCenters; _mirrorPivot is set alongside it). */
+  private mirrorMat(instIdx: number, cubelet: Cubelet, out: THREE.Matrix4): THREE.Matrix4 {
+    const o = instIdx * 3;
+    const p = this._mirrorPivot!;
+    this.tmpMirrorV1.set(
+      this._mirrorCenters![o] - p.x,
+      this._mirrorCenters![o + 1] - p.y,
+      this._mirrorCenters![o + 2] - p.z,
+    );
+    this.tmpMirrorV1.applyQuaternion(cubelet.quaternion); // R·(center0 - C)
+    this.tmpMirrorV1.add(p);                              // + C
+    this.tmpMirrorV2.set(this._mirrorScales![o], this._mirrorScales![o + 1], this._mirrorScales![o + 2]);
+    out.compose(this.tmpMirrorV1, cubelet.quaternion, this.tmpMirrorV2);
+    return out;
+  }
+
+  /** Switch this renderer to mirror-cube geometry: build per-instance center/scale from
+   *  the layer-thickness tables, then rebuild every matrix. Called once right after
+   *  construction by a mirror Cube (order 3 or 2). */
+  enableMirror(): void {
+    // 镜面块形非均匀,±HALF 理想晶格四边形不成立 → 摘掉示意标记,伴图回退实模 BSP
+    delete this.staticSticker.userData.schematicInstancedPoly;
+    delete this.movingSticker.userData.schematicInstancedPoly;
+    const tables = mirrorTables(this.cube.order);
+    const n = this.instanceToInitial.length;
+    const centers = new Float32Array(n * 3);
+    const scales = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const init = this.instanceToInitial[i];
+      const c = tables.center(init);
+      const s = tables.scale(init);
+      centers[i * 3] = c[0]; centers[i * 3 + 1] = c[1]; centers[i * 3 + 2] = c[2];
+      scales[i * 3] = s[0]; scales[i * 3 + 1] = s[1]; scales[i * 3 + 2] = s[2];
+    }
+    this._mirrorCenters = centers;
+    this._mirrorScales = scales;
+    // The core = the point all 3 turn axes pass through (odd order: the dead-center
+    // cubie's centre; even order: the one triple cut-plane intersection). The layers
+    // being non-uniform puts it off the bounding-box origin, so face turns must pivot
+    // here (see _mirrorPivot).
+    const pc = tables.pivot();
+    this._mirrorPivot = new THREE.Vector3(pc[0], pc[1], pc[2]);
+    this.rebuildAll();
+  }
+
+  dispose(): void {
+    this.staticFrame.dispose();
+    this.movingFrame.dispose();
+    this.staticInner.dispose();
+    this.movingInner.dispose();
+    this.staticSticker.dispose();
+    this.movingSticker.dispose();
+    this.staticHint.dispose();
+    this.movingHint.dispose();
+    this.stickerMaterial.dispose();
+    this.movingStickerMaterial.dispose();
+    // 背面道次只收材质:它的 instanceMatrix / instanceColor 是贴纸网格那一份,
+    // 对它调 dispose() 会顺手把共用的 buffer 也释放掉。
+    this.backStickerMaterial.dispose();
+    this.hintMaterial.dispose();
+    this.movingHintMaterial.dispose();
+    this._rawFrameGeo?.dispose();
+    this._rawInnerGeo?.dispose();
+    this.pictureLoadToken++;
+    this.pictureUniforms.atlas.value.dispose();
+    // 贴纸几何是自用克隆(挂 aOutline),共享的那份不能碰,这份必须自己收。
+    // hint 克隆只在改过黑边时才有,同理。
+    for (const geo of this.stickerGeos.values()) geo.dispose();
+    this.stickerGeos.clear();
+    for (const geo of this.hintGeos.values()) geo.dispose();
+    this.hintGeos.clear();
+  }
+}
