@@ -1073,3 +1073,6 @@
   color: var(--faint-foreground);
   font-size: 0.82rem;
 }
+
+.submit-layout-timing { justify-content: center; }
+.submit-layout-timing .submit-form-pane { flex: 0 1 760px; }

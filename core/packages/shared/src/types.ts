@@ -55,6 +55,10 @@ export type ReconVisibility = 'public' | 'unlisted' | 'private';
 
 export interface ReconSolve {
   id: number;
+  recordType?: 'reconstruction' | 'timing';
+  /** User-entered pickup and putdown durations in seconds. */
+  pickupTime?: number | null;
+  putdownTime?: number | null;
   /** 比赛性质(见 ReconOfficial);旧布尔 official=1 迁移为 'wca',=0 为 'practice' */
   official: ReconOfficial;
   /** 可见性(见 ReconVisibility);默认 public。缺省(旧数据)视为 public。见 migrations/0085 */

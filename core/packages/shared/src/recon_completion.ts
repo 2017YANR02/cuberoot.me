@@ -9,6 +9,22 @@ import { MOVE_RE } from './alg_notation';
 import { isFtoEifSolved, parseFtoEifAlgorithm } from './fto_notation';
 import { canonicalSq1Alg } from './sq1_notation';
 
+export function validateReconTiming(input: {
+  recordType?: unknown; pickupTime?: unknown; putdownTime?: unknown; solution?: unknown;
+}): { zh: string; en: string } | null {
+  if (input.recordType !== undefined && input.recordType !== 'timing' && input.recordType !== 'reconstruction') {
+    return { zh: '请选择录入内容。', en: 'Choose a valid record type.' };
+  }
+  if (input.recordType !== 'timing' && input.pickupTime == null && input.putdownTime == null) return null;
+  if ([input.pickupTime, input.putdownTime].some(value => typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 359999.999 || Math.abs(value * 1000 - Math.round(value * 1000)) > 0.000001)) {
+    return { zh: '请填写起表和拍表耗时，单位为秒，范围为 0–359999.999，最多三位小数。', en: 'Enter both pickup and putdown durations in seconds, from 0 to 359999.999, with up to three decimals.' };
+  }
+  if (input.recordType === 'timing' && typeof input.solution === 'string' && input.solution.trim()) {
+    return { zh: '已有解法，请使用完整复盘模式保存。', en: 'A solution is present. Save in full reconstruction mode.' };
+  }
+  return null;
+}
+
 export const RECON_COSMETIC_ANNOTATION_CHARS = '.·↑↓⅓⅔​‌‍﻿';
 
 const COSMETIC_ANNOTATION_STRIP_RE = new RegExp(`[${RECON_COSMETIC_ANNOTATION_CHARS}]`, 'g');

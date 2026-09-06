@@ -147,7 +147,7 @@ const LIST_COLUMNS = [
   'reconer', 'reconer_id',
   'value', 'raw_time', 'average', 'ao_type',
   'regional_single_record', 'regional_average_record', 'regional_aoxr_record',
-  'stm', 'tps', 'visibility', 'completion_status',
+  'stm', 'tps', 'visibility', 'completion_status', 'record_type', 'pickup_time', 'putdown_time',
   // 列表只带一份有效打乱：最优优先，其次 WCA 真实，最后回退普通打乱。
   // 仍以 optimal_scramble 别名返回，兼容旧客户端，同时避免多带两列大文本。
   "COALESCE(NULLIF(optimal_scramble, ''), NULLIF(wca_scramble, ''), scramble) AS optimal_scramble", 'oll', 'pll', 'note',
@@ -619,6 +619,10 @@ reconRoutes.post('/recon/save-edit', async (c) => {
   const now = Math.floor(Date.now() / 1000);
   const normalizedFields = { ...(fields ?? {}) };
   normalizeReconSolutionRow(normalizedFields);
+  const current = await query<Record<string, unknown>>('SELECT * FROM recons WHERE id = ?', [solveId]);
+  if (!current.length) return c.json({ error: 'Not found' }, 404);
+  const validationErrors = validateRow(jsonToRow(normalizedFields), current[0]);
+  if (validationErrors.length) return c.json({ error: 'Validation failed', fields: validationErrors }, 400);
   const enriched = { ...normalizedFields, _editedAt: now };
 
   // 字段级合并:PG jsonb || 是浅合并,右覆盖左(等价 MariaDB JSON_MERGE_PATCH 的扁平场景)
@@ -1251,7 +1255,7 @@ reconRoutes.put('/recon/:id', async (c) => {
   if (Object.keys(row).length === 0) {
     return c.json({ error: 'No valid fields to update' }, 400);
   }
-  const errs = validateRow(row);
+  const errs = validateRow(row, existing[0]);
   if (errs.length > 0) {
     return c.json({ error: 'Validation failed', fields: errs }, 400);
   }

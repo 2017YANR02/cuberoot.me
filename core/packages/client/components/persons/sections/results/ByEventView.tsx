@@ -26,7 +26,7 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
-import { rowHasReconStats, computeReconRoundAvg, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
+import { computeReconTimingMean, rowHasReconStats, computeReconRoundAvg, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 import { AvgDec } from '@/components/wca-results/AvgDec';
 import { trimEmptyAttempts } from '@/lib/wca-ao5-brackets';
 import { fetchPersonRankHistory, wcaResultRowKey, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
@@ -396,6 +396,7 @@ function EventRoundsList({
 
   if (displayRows.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No results yet')}</div>;
 
+  const timingStats = computeReconTimingMean(reconLookup, eventId);
   const grouped = !sort.key;
   // 分组视图:同一比赛只在首行展示比赛名 + 日期;排序视图:逐行都展示(已打散).
   let lastCompId = '';
@@ -435,6 +436,9 @@ function EventRoundsList({
               <span><span>{tr({ zh: '平均总数', en: 'Average count' })}</span><strong>{resultStats.average.count}</strong></span>
             </>
           )}
+          <span title={tr({ zh: '起表到第一步的算术平均耗时', en: 'Arithmetic mean from timer start to first move' })}><span>{tr({ zh: '平均起表', en: 'Mean pickup' })}</span><strong>{timingStats.pickup == null ? '—' : `${timingStats.pickup.toFixed(3)}s`}</strong></span>
+          <span title={tr({ zh: '最后一步到拍表的算术平均耗时', en: 'Arithmetic mean from last move to timer stop' })}><span>{tr({ zh: '平均拍表', en: 'Mean putdown' })}</span><strong>{timingStats.putdown == null ? '—' : `${timingStats.putdown.toFixed(3)}s`}</strong></span>
+          <span><span>{tr({ zh: '耗时样本', en: 'Timing samples' })}</span><strong>{reconLookup == null ? '—' : timingStats.count}</strong></span>
         </div>
       )}
       {/* sticky 列头吸顶:复用全站共用工具(sticky-scroll + sticky-thead,见 components/sticky-table.css)。 */}
