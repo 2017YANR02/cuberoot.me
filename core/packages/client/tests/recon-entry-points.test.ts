@@ -50,4 +50,10 @@ describe('reconstruction entry points', () => {
     expect(submitForm).toMatch(/const reconerCountry = \(pickedReconer\?\.id === form.reconerId \? pickedReconer\?\.country_iso2 : ''\)[\s\S]*?\|\|.*authUser.country[\s\S]*?\|\| personFlagIso2/);
     expect(submitForm).not.toContain('setReconerCountry');
   });
+
+  it('rejects an empty normalized solution before notation checks or saving in the shared add/edit form', () => {
+    const submit = submitForm.slice(submitForm.indexOf('const handleSubmit ='));
+    expect(submit).toMatch(/const solution = normalizeReconSolution\(form.solution \|\| ''\);\s+if \(!solution.trim\(\)\) \{\s+setSubmitError\(\{ field: 'solution', message: tr\(\{ zh: '请填写解法。', en: 'Enter a solution\.' \}\) \}\);\s+return;\s+\}\s+const notationError/);
+    expect(submit.indexOf('if (!solution.trim())')).toBeLessThan(submit.indexOf('setSaving(true)'));
+  });
 });
