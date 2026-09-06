@@ -24,8 +24,7 @@
       "board  controls"
       "board  moves"
       "board  prompt"
-      "board  actions"
-      "board  origin";
+      "board  actions";
     align-items: start;
     column-gap: 1.75rem;
   }
@@ -37,8 +36,6 @@
   .predict-prompt { grid-area: prompt; }
   .predict-actions { grid-area: actions; }
   .predict-moves { grid-area: moves; }
-  .predict-origin { grid-area: origin; }
-
   /* 左列自己就有一整列的宽度,别再被 46rem 正文宽的那条 62vh 卡住。宽度收在整列上,
      题板 / 复盘条撑满它 —— 计时器是钉在 .predict-stage 右上角的,列比题板宽它就飘出去了。 */
   .predict-boardcol { width: min(100%, 76vh); margin-inline: auto; }
@@ -243,71 +240,12 @@
   font-weight: 700;
 }
 
-/* ---- 显示答案 ---- */
-
-.predict-answer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.75rem;
-  margin-top: 0.55rem;
-}
-
-.predict-answer-tag {
-  color: var(--signal-warning);
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
-.predict-answer-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.predict-answer-item svg {
-  color: var(--muted-foreground);
-}
-
 .predict-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.6rem;
   margin: 0.9rem 0;
-}
-
-.predict-reveal:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-.predict-reveal {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--muted-foreground);
-  font: inherit;
-  cursor: pointer;
-  transition: border-color 0.12s ease, color 0.12s ease;
-}
-
-.predict-reveal:hover:not(:disabled) {
-  border-color: var(--signal-warning);
-  color: var(--signal-warning);
-}
-
-.predict-reveal:disabled {
-  color: var(--faint-foreground);
-  cursor: default;
 }
 
 /* ---- 公式 ---- */
@@ -374,11 +312,10 @@
 /* ---- 原站 ---- */
 
 .predict-origin {
-  margin-top: 2rem;
-  padding-top: 0.9rem;
-  border-top: 1px solid var(--border-default);
+  margin: 0;
   color: var(--faint-foreground);
   font-size: 0.8rem;
+  line-height: 1.5;
 }
 
 .predict-origin a {

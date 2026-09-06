@@ -1,5 +1,12 @@
 [
   {
+    "name": "Poly Haven",
+    "url": "https://polyhaven.com/license",
+    "zh": "魔方空间使用本地托管的 CC0 环境光、材质、家具与植物模型",
+    "en": "Self-hosted CC0 lighting, materials, furniture and plant models for Cube Space",
+    "long_en": "Cube Space uses Poly Haven's belfast_sunset_puresky, marble_01, wood_floor, fabric_pattern_07, rough_linen, dirty_carpet, herringbone_parquet, sofa_03, modern_arm_chair_01, potted_plant_01, potted_plant_02, island_tree_02 and throw_pillows_01 assets, distributed under CC0. Runtime assets are hosted locally with the application."
+  },
+  {
     "name": "Country State City",
     "url": "https://github.com/dr5hn/countrystatecity-npm",
     "zh": "账号国家、省份与城市选项数据（ODbL-1.0）",
@@ -135,9 +142,9 @@
   {
     "name": "huazhechen/cuber",
     "url": "https://github.com/huazhechen/cuber",
-    "zh": "/sim 的 three.js 魔方引擎(原 Vue + Vuetify,已 port 为 React)",
-    "en": "/sim three.js cube engine (originally Vue + Vuetify, ported to React)",
-    "long_en": "virtual cube engine (Three.js cube/cubelet/group/twister/controller core) ported to React for `/sim`; original UI was Vue + Vuetify"
+    "zh": "/sim 与 /space 共用的 three.js 魔方引擎(原 Vue + Vuetify,已 port 为 React)",
+    "en": "Shared three.js cube engine for /sim and /space (originally Vue + Vuetify, ported to React)",
+    "long_en": "virtual cube engine (Three.js cube/cubelet/group/twister/controller core) ported to React for `/sim`; its cube models are also reused in `/space`; original UI was Vue + Vuetify"
   },
   {
     "name": "cubing/cubing.js",

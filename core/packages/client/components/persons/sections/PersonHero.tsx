@@ -8,6 +8,7 @@ import BoolToggle from '@/components/BoolToggle';
 import { CompactSelect } from '@/components/CompactSelect';
 import { Flag } from '@/components/Flag';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import { RecordBadge } from '@/components/RecordBadge';
 import { useT } from '@/hooks/useT';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { countryName } from '@/lib/country-name';
@@ -130,10 +131,10 @@ export default function PersonHero({
       key: 'medals',
       items: [
         { key: 'competitions', label: t('比赛', 'Competitions'), value: profile.competition_count },
-        { key: 'world', label: 'WR', value: profile.records.world },
-        { key: 'continental', label: 'CR', value: profile.records.continental },
-        { key: 'national', label: 'NR', value: profile.records.national },
-        { key: 'pr', label: 'PR', value: prCount },
+        { key: 'world', label: <RecordBadge record="WR" />, value: profile.records.world },
+        { key: 'continental', label: <RecordBadge record="CR" iso2={p.country_iso2} />, value: profile.records.continental },
+        { key: 'national', label: <RecordBadge record="NR" />, value: profile.records.national },
+        { key: 'pr', label: <RecordBadge record="PR" />, value: prCount },
         { key: 'gold', label: t('金牌', 'Gold'), value: profile.medals.gold },
         { key: 'silver', label: t('银牌', 'Silver'), value: profile.medals.silver },
         { key: 'bronze', label: t('铜牌', 'Bronze'), value: profile.medals.bronze },
