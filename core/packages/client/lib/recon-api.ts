@@ -17,6 +17,7 @@ function originForUrl(): string {
 
 async function apiGet<T>(path: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(`${API_BASE}${path}`, originForUrl());
+  url.searchParams.set('v', '2');
   for (const [k, v] of Object.entries(params)) {
     if (v) url.searchParams.set(k, v);
   }

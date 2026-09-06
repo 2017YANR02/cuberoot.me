@@ -29,6 +29,7 @@ export function normalizeReconSolutionRow(row: Record<string, unknown>): void {
 export async function checkReconRowCompletion(
   row: Record<string, unknown>,
 ): Promise<ReconCompletionResult> {
+  if (row.record_type === 'timing') return { status: 'unchecked' };
   return checkReconCompletion({
     event: String(row.event ?? ''),
     scramble: String(row.optimal_scramble || row.wca_scramble || row.scramble || ''),

@@ -118,7 +118,7 @@ export function ReconCard({ solve, isZh, href, horizontal = false, showScrambleF
                 : solve.event}
             </span>
           )}
-          <ReconCompletionBadge status={solve.completionStatus} />
+          <ReconCompletionBadge recordType={solve.recordType} status={solve.completionStatus} />
           <span className="recon-card-solver">
             {cubers.map((c, i) => (
               <span key={i}>

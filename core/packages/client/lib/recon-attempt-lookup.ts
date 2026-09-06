@@ -10,6 +10,9 @@ export interface ReconAttemptInfo {
   id: number;
   stm?: number;
   tps?: number;
+  recordType?: ReconSolve['recordType'];
+  pickupTime?: number | null;
+  putdownTime?: number | null;
 }
 
 export function buildReconAttemptMap(recons: ReconSolve[]): Map<string, ReconAttemptInfo> {
@@ -17,9 +20,31 @@ export function buildReconAttemptMap(recons: ReconSolve[]): Map<string, ReconAtt
   for (const r of recons) {
     if (!r.compWcaId || !r.event || !r.round || r.solveNum == null) continue;
     const wcaEid = toWcaEventId(r.event);
-    m.set(`${r.compWcaId}|${wcaEid}|${r.round}|${r.solveNum}`, { id: r.id, stm: r.stm, tps: r.tps });
+    const key = `${r.compWcaId}|${wcaEid}|${r.round}|${r.solveNum}`;
+    const previous = m.get(key);
+    const measured = r.pickupTime != null && r.putdownTime != null;
+    const previousMeasured = previous?.pickupTime != null && previous?.putdownTime != null;
+    if (previous && (previousMeasured && !measured || previousMeasured === measured && previous.id >= r.id)) continue;
+    m.set(key, { id: r.id, stm: r.stm, tps: r.tps, recordType: r.recordType, pickupTime: r.pickupTime, putdownTime: r.putdownTime });
   }
   return m;
+}
+
+/** Each official attempt contributes once; missing durations never become zero. */
+export function computeReconTimingMean(map: Map<string, ReconAttemptInfo> | null, eventId: string) {
+  let pickup = 0;
+  let putdown = 0;
+  let count = 0;
+  for (const [key, info] of map ?? []) {
+    if (key.split('|')[1] !== eventId) continue;
+    if (typeof info.pickupTime !== 'number' || typeof info.putdownTime !== 'number'
+      || !Number.isFinite(info.pickupTime) || !Number.isFinite(info.putdownTime)
+      || info.pickupTime < 0 || info.putdownTime < 0) continue;
+    pickup += info.pickupTime;
+    putdown += info.putdownTime;
+    count++;
+  }
+  return { count, pickup: count ? pickup / count : null, putdown: count ? putdown / count : null };
 }
 
 export function findReconForAttempt(

@@ -394,10 +394,12 @@ function AttemptPopoverBody({
               style={reconHeaderStyle}
               onClick={onClose}
             >
-              <span>{tr({ zh: '查看完整复盘', en: 'Full reconstruction' })}</span>
+              <span>{reconSolve?.recordType === 'timing' ? tr({ zh: '查看起拍表耗时', en: 'View pickup and putdown' }) : tr({ zh: '查看完整复盘', en: 'Full reconstruction' })}</span>
               <ChevronRight size={15} style={{ flexShrink: 0, opacity: 0.55 }} />
             </Link>
-            {reconScramble ? (
+            {reconSolve?.recordType === 'timing' ? (
+              <div>{tr({ zh: '起表 / 拍表', en: 'Pickup / putdown' })}: {reconSolve.pickupTime?.toFixed(3)}s / {reconSolve.putdownTime?.toFixed(3)}s</div>
+            ) : reconScramble ? (
               <>
                 <div style={playerWrapStyle}>
                   <ReconPlayerCanvas
@@ -431,6 +433,13 @@ function AttemptPopoverBody({
           >
             <span>{tr({ zh: '去复盘', en: 'Reconstruct' })}</span>
             <ChevronRight size={15} style={{ flexShrink: 0, opacity: 0.55 }} />
+          </Link>
+        )}
+
+        {!hasRecon && (
+          <Link href={`${reconLinkHref}&recordType=timing`} prefetch={false} className="wp-att-menu-action" style={actionStyle} onClick={onClose}>
+            <span>{tr({ zh: '录入起拍表耗时', en: 'Enter pickup and putdown' })}</span>
+            <ChevronRight size={15} />
           </Link>
         )}
 
