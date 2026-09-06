@@ -1,0 +1,251 @@
+{
+  "asset": {
+    "generator": "Khronos glTF Blender I/O v1.6.16",
+    "version": "2.0"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0,
+        1
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "throw_pillows_01_pillow02",
+      "rotation": [
+        0.7003336548805237,
+        -0.09763631224632263,
+        0.09763632714748383,
+        0.7003335356712341
+      ],
+      "translation": [
+        0.2327585220336914,
+        0,
+        -0.024794653058052063
+      ]
+    },
+    {
+      "mesh": 1,
+      "name": "throw_pillows_01_pillow01",
+      "rotation": [
+        0.6637973189353943,
+        -0.2436661571264267,
+        0.24366618692874908,
+        0.6637971997261047
+      ],
+      "translation": [
+        -0.2664976716041565,
+        0,
+        0.11120378226041794
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "throw_pillows_01",
+      "normalTexture": {
+        "index": 0
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1
+        },
+        "metallicFactor": 0,
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Plane.005",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0
+        }
+      ]
+    },
+    {
+      "name": "Plane.006",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 4,
+            "NORMAL": 5,
+            "TEXCOORD_0": 6
+          },
+          "indices": 7,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    }
+  ],
+  "images": [
+    {
+      "mimeType": "image/jpeg",
+      "name": "throw_pillows_01_nor_gl",
+      "uri": "textures/throw_pillows_01_nor_gl_1k.jpg"
+    },
+    {
+      "mimeType": "image/jpeg",
+      "name": "throw_pillows_01_diff",
+      "uri": "textures/throw_pillows_01_diff_1k.jpg"
+    },
+    {
+      "mimeType": "image/jpeg",
+      "name": "throw_pillows_01_rough",
+      "uri": "textures/throw_pillows_01_rough_1k.jpg"
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 1653,
+      "max": [
+        0.2599124312400818,
+        0.16153106093406677,
+        0.0013513441663235426
+      ],
+      "min": [
+        -0.25888463854789734,
+        -0.12497694790363312,
+        -0.44124239683151245
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 1653,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 1653,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 9372,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 1717,
+      "max": [
+        0.3245271146297455,
+        0.08450961112976074,
+        0.0021050451323390007
+      ],
+      "min": [
+        -0.2405896931886673,
+        -0.2589276134967804,
+        -0.4480541944503784
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5126,
+      "count": 1717,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 1717,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 7,
+      "componentType": 5123,
+      "count": 9714,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 19836,
+      "byteOffset": 0
+    },
+    {
+      "buffer": 0,
+      "byteLength": 19836,
+      "byteOffset": 19836
+    },
+    {
+      "buffer": 0,
+      "byteLength": 13224,
+      "byteOffset": 39672
+    },
+    {
+      "buffer": 0,
+      "byteLength": 18744,
+      "byteOffset": 52896
+    },
+    {
+      "buffer": 0,
+      "byteLength": 20604,
+      "byteOffset": 71640
+    },
+    {
+      "buffer": 0,
+      "byteLength": 20604,
+      "byteOffset": 92244
+    },
+    {
+      "buffer": 0,
+      "byteLength": 13736,
+      "byteOffset": 112848
+    },
+    {
+      "buffer": 0,
+      "byteLength": 19428,
+      "byteOffset": 126584
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 146012,
+      "uri": "throw_pillows_01.bin"
+    }
+  ]
+}

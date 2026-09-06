@@ -1516,6 +1516,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'cstimer-style press-and-drag radial dial (8 directions, ref-driven). Pairs with the useGestureWheel hook; shared by /timer and the /alg trainer timing surfaces. Labels are customizable; an empty string hides a slot.',
   },
   {
+    name: 'Cube (Three.js model)',
+    import: "import Cube from '@/components/puzzle-models/nxn/cube';",
+    category: 'more',
+    zh: '/sim 与 /space 共用的 NxN 和镜面魔方模型。每个物件单独实例化，独立配色用 setFaceColorOverride，移除时调用 dispose。',
+    en: 'NxN and mirror cube model shared by /sim and /space. Create one instance per object, use setFaceColorOverride for independent colors, and dispose when removed.',
+  },
+  {
     name: 'VisualCube',
     import: "import { VisualCube } from '@/components/VisualCube';",
     category: 'display',

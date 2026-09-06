@@ -220,6 +220,8 @@
   padding: 6px 12px;
 }
 .shell-undersurface:empty { display: none; }
+/* Reserve the bottom device controls (40px height + 10px inset + gap). */
+.shell-undersurface:has(+ .shell-device-actions) { margin-bottom: 60px; }
 .trainer-subset-btn {
   padding: 4px 12px;
   border: 1px solid var(--border-default);

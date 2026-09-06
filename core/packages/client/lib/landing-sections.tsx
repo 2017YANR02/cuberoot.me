@@ -63,6 +63,7 @@ const CARD_VISUALS: Partial<Record<SiteDirectoryEntry['id'], CardVisual>> = {
   timer: { Icon: TimerIcon },
   algdb: { Icon: Blocks },
   sim: { Icon: Box },
+  space: { Icon: Shapes },
   recon: { Icon: ScanSearch },
   scramble: { Icon: Shuffle },
   competitions: { Icon: Radio },
