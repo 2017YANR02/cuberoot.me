@@ -1448,6 +1448,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     // 记号区(解法 / 打乱,`//` 注释之外)只能用英文字母和符号。中文等文字会被播放器
     // 当成转动 → 复盘无法播放。命中则拦下并指明具体行,让用户改完(把文字移到 `//` 后)重试。
     const solution = normalizeReconSolution(form.solution || '');
+    if (!solution.trim()) {
+      setSubmitError({ field: 'solution', message: tr({ zh: '请填写解法。', en: 'Enter a solution.' }) });
+      return;
+    }
     const notationError = validateNotationFields(solution);
     if (notationError) {
       setSubmitError(notationError);
