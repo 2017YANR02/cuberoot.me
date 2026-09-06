@@ -59,7 +59,7 @@
 .wca-src-config {
   margin: 4px 0 10px;
 }
-.wca-src-dates { flex: 0 1 310px; gap: 6px; }
+.date-range-input.wca-src-dates { flex: 0 1 310px; width: min(310px, 100%); gap: 6px; }
 .wca-src-hint {
   margin: 2px 0 0;
   font-size: 12px;
