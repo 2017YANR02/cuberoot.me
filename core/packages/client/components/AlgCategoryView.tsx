@@ -60,7 +60,7 @@ import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { buildOllNameByGroup, displayAlgCaseName, primaryCaseName, displayZbllToken } from '@/lib/alg_case_display';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { sortByCp } from '@/lib/alg_cp_order';
-import { sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
+import { compareAlgGroupLabel, sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
 import { CUBE_ORIENTATIONS, visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
 import { ALG_TAG_LABEL, ALG_TAGS, OH_TAG_LABEL } from '@/lib/alg_tags';
 import {
@@ -349,8 +349,14 @@ function SubgroupIndex({
         else e.subs.set(parts[1], { sample: c, count: 1 });
       }
     }
+    // CLL / COLL 情况卡按显示编号排列，不沿用角块换位优先级。
+    if (inlineCases) {
+      for (const e of map.values()) {
+        e.cases.sort((a, b) => compareAlgGroupLabel(primaryCaseName(puzzle, set, a), primaryCaseName(puzzle, set, b)));
+      }
+    }
     return Array.from(map.entries());
-  }, [cases]);
+  }, [cases, inlineCases, puzzle, set]);
 
   // 就地展开只在「两级 + 顶层组不多」时用;组太多(1LLL)就地展开会太长,退回卡片网格。
   const inlineExpand = (inlineCases || tops.some(([, e]) => e.subs.size > 0)) && tops.length <= 10;
