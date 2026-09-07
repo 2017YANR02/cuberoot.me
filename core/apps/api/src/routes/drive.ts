@@ -29,7 +29,7 @@ import {
   safeRemoveDriveFile,
 } from '../utils/drive_storage.js';
 import { checkRateLimit, requireAdmin, requireAuth } from '../utils/recon_helpers.js';
-import { JWT_SECRET } from '../utils/session.js';
+import { JWT_SECRET, isRolePreviewActive } from '../utils/session.js';
 
 export const driveRoutes = new Hono();
 
@@ -40,6 +40,7 @@ const QUOTA_LOCK_ID = 2026082901;
 interface DriveIdentity {
   userId: number;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   allowed: boolean;
 }
 
@@ -74,6 +75,7 @@ interface UploadRow {
 }
 
 interface TicketPayload extends JwtPayload {
+  previewId?: string;
   driveFile?: string;
   driveUser?: number;
   inline?: boolean;
@@ -137,10 +139,11 @@ async function identity(c: Context): Promise<DriveIdentity> {
   const userId = await requireAppUserId(c);
   const user = await requireAuth(c);
   const isAdmin = user.isAdmin;
-  if (isAdmin) return { userId, isAdmin, allowed: true };
+  const isSuperAdmin = isAdminWcaId(user.realWcaId);
+  if (isAdmin) return { userId, isAdmin, isSuperAdmin, allowed: true };
   const member = await sql<{ enabled: boolean }[]>`
     SELECT enabled FROM drive_members WHERE user_id = ${userId}`;
-  return { userId, isAdmin, allowed: member[0]?.enabled === true };
+  return { userId, isAdmin, isSuperAdmin, allowed: member[0]?.enabled === true };
 }
 
 async function requireDrive(c: Context): Promise<DriveIdentity> {
@@ -232,7 +235,9 @@ async function readableFile(nodeId: string, userId: number): Promise<StoredFileR
     FROM drive_nodes n JOIN app_users owner ON owner.id = n.owner_user_id
     LEFT JOIN drive_members member ON member.user_id = owner.id
     WHERE n.id = ${nodeId} AND n.kind = 'file' AND n.status = 'ready' AND n.trashed_at IS NULL
-      AND (n.owner_user_id = ${userId} OR n.id IN (${memberNodes()}))
+      AND (n.owner_user_id = ${userId} OR n.id IN (${memberNodes()})
+        OR EXISTS (SELECT 1 FROM app_users viewer WHERE viewer.id = ${userId}
+          AND viewer.wca_id = ANY(${[...ADMIN_WCA_IDS]}::text[])))
     LIMIT 1`;
   return rows[0] ?? null;
 }
@@ -252,20 +257,20 @@ async function uploadById(uploadId: string, userId: number): Promise<UploadRow |
   return rows[0] ?? null;
 }
 
-async function breadcrumbs(userId: number, parentId: string | null, members = false): Promise<Array<{ id: string; name: string }>> {
+async function breadcrumbs(userId: number, parentId: string | null, members = false, all = false): Promise<Array<{ id: string; name: string }>> {
   if (!parentId) return [];
   const rows = await sql<{ id: string; name: string; depth: number }[]>`
     WITH RECURSIVE chain AS (
       SELECT id, parent_id, name, 0 AS depth
         FROM drive_nodes
-       WHERE id = ${parentId} AND (${members} OR owner_user_id = ${userId})
+       WHERE id = ${parentId} AND (${all} OR ${members} OR owner_user_id = ${userId})
          AND (NOT ${members} OR id IN (${memberNodes()}))
          AND kind = 'folder' AND trashed_at IS NULL
       UNION ALL
       SELECT parent.id, parent.parent_id, parent.name, chain.depth + 1
         FROM drive_nodes parent
         JOIN chain ON chain.parent_id = parent.id
-       WHERE (${members} OR parent.owner_user_id = ${userId}) AND parent.trashed_at IS NULL
+       WHERE (${all} OR ${members} OR parent.owner_user_id = ${userId}) AND parent.trashed_at IS NULL
          AND (NOT ${members} OR parent.id IN (${memberNodes()}))
     )
     SELECT id, name, depth FROM chain ORDER BY depth DESC`;
@@ -275,6 +280,8 @@ async function breadcrumbs(userId: number, parentId: string | null, members = fa
 driveRoutes.get('/drive', async (c) => {
   noStore(c);
   const current = await identity(c);
+  const all = c.req.query('all') === '1';
+  if (all && !current.isSuperAdmin) return c.json({ error: 'Super administrator access required' }, 403);
   if (!current.allowed) {
     const denied: DriveSnapshot = {
       allowed: false,
@@ -290,19 +297,29 @@ driveRoutes.get('/drive', async (c) => {
   await cleanupExpiredUploads();
   const trash = c.req.query('trash') === '1';
   const members = c.req.query('members') === '1';
+  if (all && (trash || members)) return c.json({ error: 'all files cannot be combined with other views' }, 400);
   if (trash && members) return c.json({ error: 'shared folders have no member trash view' }, 400);
   const parentParam = c.req.query('parent');
   const parentId = parentParam ? uuid(parentParam) : null;
   if (parentParam && !parentId) return c.json({ error: 'valid parent is required' }, 400);
-  if (!trash && members && parentId) {
+  if (all && parentId) {
+    const folder = await sql`SELECT id FROM drive_nodes WHERE id = ${parentId} AND kind = 'folder' AND status = 'ready' AND trashed_at IS NULL`;
+    if (!folder.length) return c.json({ error: 'folder not found' }, 404);
+  } else if (!trash && members && parentId) {
     const folder = await sql`SELECT id FROM drive_nodes WHERE id = ${parentId} AND kind = 'folder' AND id IN (${memberNodes()})`;
     if (!folder.length) return c.json({ error: 'folder not found' }, 404);
-  } else if (!trash && !members && !(await validFolder(current.userId, parentId))) {
+  } else if (!all && !trash && !members && !(await validFolder(current.userId, parentId))) {
     return c.json({ error: 'folder not found' }, 404);
   }
 
   const [nodes, uploads, currentQuota, currentBreadcrumbs] = await Promise.all([
-    members
+    all
+      ? sql<NodeRow[]>`
+          SELECT n.*, owner.display_name AS owner_name FROM drive_nodes n
+          JOIN app_users owner ON owner.id = n.owner_user_id
+          WHERE n.parent_id IS NOT DISTINCT FROM ${parentId} AND n.trashed_at IS NULL AND n.status = 'ready'
+          ORDER BY CASE WHEN n.kind = 'folder' THEN 0 ELSE 1 END, LOWER(n.name), n.id`
+      : members
       ? sql<NodeRow[]>`
           SELECT n.*, owner.display_name AS owner_name
           FROM drive_nodes n JOIN app_users owner ON owner.id = n.owner_user_id
@@ -334,12 +351,13 @@ driveRoutes.get('/drive', async (c) => {
        WHERE u.owner_user_id = ${current.userId} AND u.expires_at > NOW()
        ORDER BY u.updated_at DESC`,
     quota(),
-    trash ? Promise.resolve([]) : breadcrumbs(current.userId, parentId, members),
+    trash ? Promise.resolve([]) : breadcrumbs(current.userId, parentId, members, all),
   ]);
 
   const snapshot: DriveSnapshot = {
     allowed: true,
     isAdmin: current.isAdmin,
+    isSuperAdmin: current.isSuperAdmin,
     nodes: nodes.map(nodeJson),
     uploads: uploads.map(uploadJson),
     breadcrumbs: currentBreadcrumbs,
@@ -807,8 +825,10 @@ driveRoutes.post('/drive/files/:id/access', async (c) => {
   const file = await readableFile(nodeId, current.userId);
   if (!file) return c.json({ error: 'file not found' }, 404);
   const inline = requestedInline && isDrivePreviewableMime(file.mime_type);
+  const session = jwt.decode(c.req.header('Authorization')?.replace(/^Bearer /, '') ?? '');
+  const previewId = session && typeof session !== 'string' && typeof session.previewId === 'string' ? session.previewId : undefined;
   const token = jwt.sign(
-    { driveFile: file.id, driveUser: current.userId, inline },
+    { driveFile: file.id, driveUser: current.userId, inline, previewId },
     JWT_SECRET,
     { audience: 'drive-content', issuer: 'cuberoot', expiresIn: '2h' },
   );
@@ -876,8 +896,9 @@ async function streamDriveFile(
   file: StoredFileRow,
   inline: boolean,
   cacheControl = 'private, no-store',
+  superAdmin = false,
 ): Promise<Response> {
-  if (!file.storage_key || (!file.drive_enabled && !file.owner_is_admin && !isAdminWcaId(file.owner_wca_id ?? ''))) {
+  if (!file.storage_key || (!superAdmin && !file.drive_enabled && !file.owner_is_admin && !isAdminWcaId(file.owner_wca_id ?? ''))) {
     return c.json({ error: 'file not found' }, 404);
   }
   const filePath = driveStoredPath(file.storage_key);
@@ -932,14 +953,17 @@ async function driveContent(c: Context): Promise<Response> {
     return c.json({ error: 'file access token invalid' }, 401);
   }
   // Recheck the ticket holder and folder access on every GET/HEAD, including Range resumes.
+  if (payload.previewId && !await isRolePreviewActive(payload.previewId, ticketUserId)) {
+    return c.json({ error: 'test session ended' }, 401);
+  }
   const viewers = await sql`
-    SELECT 1 FROM app_users viewer LEFT JOIN drive_members member ON member.user_id = viewer.id
+    SELECT viewer.wca_id FROM app_users viewer LEFT JOIN drive_members member ON member.user_id = viewer.id
     WHERE viewer.id = ${ticketUserId}
       AND (viewer.is_admin OR viewer.wca_id = ANY(${[...ADMIN_WCA_IDS]}::text[]) OR member.enabled)`;
   if (!viewers.length) return c.json({ error: 'file not found' }, 404);
   const file = await readableFile(nodeId, ticketUserId);
   if (!file) return c.json({ error: 'file not found' }, 404);
-  return streamDriveFile(c, file, payload.inline === true && isDrivePreviewableMime(file.mime_type));
+  return streamDriveFile(c, file, payload.inline === true && isDrivePreviewableMime(file.mime_type), 'private, no-store', isAdminWcaId(viewers[0].wca_id));
 }
 
 async function driveSharedContent(c: Context): Promise<Response> {

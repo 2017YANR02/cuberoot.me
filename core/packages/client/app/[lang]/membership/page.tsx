@@ -10,7 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, RefreshCw, AlertTriangle, CalendarClock } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { tr, useLang } from '@/i18n/tr';
-import { useAuthStore, isAdmin } from '@/lib/auth-store';
+import { useAuthStore, isAdmin, getSessionToken, getWcaToken } from '@/lib/auth-store';
 import { isMiniProgramCommerceRestricted } from '@/lib/miniprogram-bridge';
 import { fmtPrice, fmtDate } from '@/lib/membership-format';
 import AppLink from '@/components/AppLink';
@@ -107,7 +107,7 @@ export default function MembershipPage() {
 
   const refreshMembership = useCallback(() => {
     if (typeof window === 'undefined') return;
-    if (!localStorage.getItem('cuberoot_jwt') && !localStorage.getItem('wca_access_token')) {
+    if (!getSessionToken() && !getWcaToken()) {
       setMembership(null);
       return;
     }

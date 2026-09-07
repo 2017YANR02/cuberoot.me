@@ -58,9 +58,57 @@ const TOKEN_KEY = 'wca_access_token';
 const JWT_KEY = 'cuberoot_jwt';
 const STATE_KEY = 'wca_oauth_state';
 const RETURN_URL_KEY = 'wca_return_url';
+const PREVIEW_KEY = 'cuberoot_role_preview';
+export type TestRole = 'admin' | 'member' | 'user' | 'guest';
+interface RolePreview { id: string; role: TestRole; token: string; user: WcaUser | null }
+
+export function getRolePreview(): RolePreview | null {
+  if (typeof window === 'undefined') return null;
+  try { return JSON.parse(sessionStorage.getItem(PREVIEW_KEY) || 'null') as RolePreview | null; }
+  catch { return null; }
+}
+
+export function canTestRoles(): boolean {
+  if (typeof window === 'undefined') return false;
+  try { return isAdminWcaId(JSON.parse(localStorage.getItem(SESSION_KEY) || 'null')?.wcaId); }
+  catch { return false; }
+}
+
+export async function startRolePreview(role: TestRole): Promise<void> {
+  if (getRolePreview()) throw new Error('Exit the current test session first.');
+  const response = await fetch(apiUrl('/v1/auth/role-preview'), {
+    method: 'POST', headers: { Authorization: `Bearer ${getSessionToken()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role }),
+  });
+  if (!response.ok) throw new Error('Could not start role test.');
+  const result = await response.json();
+  const user = result.user ? decodeWebSessionUserEnvelope({ user: result.user })?.user : null;
+  if (typeof result.id !== 'string' || result.role !== role || typeof result.token !== 'string'
+    || (role !== 'guest' && !user)) throw new Error('Invalid role test response.');
+  const preview: RolePreview = {
+    id: result.id, role, token: result.token,
+    user: user ? { ...user, wcaId: user.wcaId ?? '', country: '' } : null,
+  };
+  sessionStorage.setItem(PREVIEW_KEY, JSON.stringify(preview));
+  // Reload clears queries, open files and owner-scoped state from the previous identity.
+  window.location.reload();
+}
+
+export async function endRolePreview(): Promise<void> {
+  const preview = getRolePreview();
+  if (!preview) return;
+  const response = await fetch(apiUrl(`/v1/auth/role-preview/${encodeURIComponent(preview.id)}`), {
+    method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem(JWT_KEY) || ''}` },
+  });
+  if (!response.ok) throw new Error('Could not end role test. Please retry.');
+  sessionStorage.removeItem(PREVIEW_KEY);
+  window.location.reload();
+}
 
 function readUser(): WcaUser | null {
   if (typeof window === 'undefined') return null;
+  const preview = getRolePreview();
+  if (preview) return preview.user;
   try {
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
@@ -147,6 +195,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
 
   logout: () => {
     if (typeof window === 'undefined') return;
+    if (getRolePreview()) { void endRolePreview(); return; }
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem('cuberoot_jwt');
@@ -167,6 +216,9 @@ export function applySession(
   user: WebSessionUser,
 ): boolean {
   if (typeof window === 'undefined') return false;
+
+  // Test credentials and callback results must never overwrite the real login.
+  if (getRolePreview()) return false;
 
   let previousToken: string | null;
   let previousUser: string | null;
@@ -275,6 +327,8 @@ export function takeWcaLinkPrompt(): boolean {
 /** 当前会话的 cuberoot_jwt(账号 API 的 Bearer)。 */
 export function getSessionToken(): string {
   if (typeof window === 'undefined') return '';
+  const preview = getRolePreview();
+  if (preview) return preview.token;
   return localStorage.getItem('cuberoot_jwt') || '';
 }
 
@@ -288,6 +342,7 @@ if (typeof window !== 'undefined') {
 
 export function getWcaToken(): string {
   if (typeof window === 'undefined') return '';
+  if (getRolePreview()) return '';
   return localStorage.getItem(TOKEN_KEY) || '';
 }
 
@@ -336,6 +391,7 @@ export function useIsAdmin(): boolean {
  */
 export async function refreshSessionUser(): Promise<void> {
   if (typeof window === 'undefined') return;
+  if (getRolePreview()) return;
   const token = localStorage.getItem(JWT_KEY);
   if (!token) return;
   try {
@@ -378,6 +434,7 @@ function jwtExpMs(token: string): number | null {
 /** 启动时调用:旧会话缺 uid 或 cuberoot_jwt 临近过期时静默续签。best-effort,失败不影响现有登录态。 */
 export async function ensureFreshToken(): Promise<void> {
   if (typeof window === 'undefined') return;
+  if (getRolePreview()) return;
   const token = localStorage.getItem(JWT_KEY);
   if (!token) return;
   const expMs = jwtExpMs(token);

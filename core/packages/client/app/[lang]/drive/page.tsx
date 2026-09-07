@@ -78,7 +78,7 @@ import {
 } from '@/lib/drive-api';
 import './drive.css';
 
-type DriveView = 'files' | 'members' | 'trash';
+type DriveView = 'files' | 'members' | 'all' | 'trash';
 type UploadState = 'queued' | 'uploading' | 'paused' | 'done' | 'error';
 type DownloadState = 'downloading' | 'pausing' | 'paused' | 'done' | 'error';
 
@@ -207,7 +207,7 @@ function DrivePageContent() {
   const [folderId] = useQueryState('folder', parseAsString);
   const [view] = useQueryState(
     'view',
-    parseAsStringEnum<DriveView>(['files', 'members', 'trash']).withDefault('files').withOptions({ history: 'push' }),
+    parseAsStringEnum<DriveView>(['files', 'members', 'all', 'trash']).withDefault('files').withOptions({ history: 'push' }),
   );
   const [previewId, setPreviewId] = useQueryState(
     'preview',
@@ -265,7 +265,7 @@ function DrivePageContent() {
     setLoading(true);
     setError(null);
     try {
-      setSnapshot(await fetchDrive(view === 'trash' ? null : folderId, view === 'trash', view === 'members'));
+      setSnapshot(await fetchDrive(view === 'trash' ? null : folderId, view === 'trash', view === 'members', view === 'all'));
     } catch {
       setSnapshot(null);
       setError(t('网盘加载失败，请稍后重试。', 'Could not load Drive. Try again later.'));
@@ -814,6 +814,7 @@ function DrivePageContent() {
       <nav className="drive-view-tabs" aria-label={t('网盘视图', 'Drive views')}>
         <AppLink href="/drive" className={view === 'files' ? 'is-active' : ''} prefetch={false}>{t('文件', 'Files')}</AppLink>
         <AppLink href="/drive?view=members" className={view === 'members' ? 'is-active' : ''} prefetch={false}><Users aria-hidden="true" />{t('共享文件夹', 'Shared folders')}</AppLink>
+        {snapshot?.isSuperAdmin && <AppLink href="/drive?view=all" className={view === 'all' ? 'is-active' : ''} prefetch={false}>{t('全部文件', 'All files')}</AppLink>}
         <AppLink href="/drive?view=trash" className={view === 'trash' ? 'is-active' : ''} prefetch={false}><Trash2 aria-hidden="true" />{t('回收站', 'Trash')}</AppLink>
       </nav>
 
@@ -929,18 +930,18 @@ function DrivePageContent() {
 
       {view !== 'trash' && (
         <nav className="drive-breadcrumbs" aria-label={t('当前文件夹路径', 'Current folder path')}>
-          <AppLink href={view === 'members' ? '/drive?view=members' : '/drive'} prefetch={false}>{view === 'members' ? t('共享文件夹', 'Shared folders') : t('我的文件', 'My files')}</AppLink>
-          {breadcrumbs.map((crumb) => <span key={crumb.id}><span aria-hidden="true">/</span><AppLink href={`/drive?folder=${encodeURIComponent(crumb.id)}${view === 'members' ? '&view=members' : ''}`} prefetch={false}>{crumb.name}</AppLink></span>)}
+          <AppLink href={`/drive?view=${view}`} prefetch={false}>{view === 'all' ? t('全部文件', 'All files') : view === 'members' ? t('共享文件夹', 'Shared folders') : t('我的文件', 'My files')}</AppLink>
+          {breadcrumbs.map((crumb) => <span key={crumb.id}><span aria-hidden="true">/</span><AppLink href={`/drive?folder=${encodeURIComponent(crumb.id)}&view=${view}`} prefetch={false}>{crumb.name}</AppLink></span>)}
         </nav>
       )}
 
       <section className="drive-files" aria-label={view === 'trash' ? t('回收站项目', 'Trash items') : t('文件和文件夹', 'Files and folders')}>
         <div className="drive-file-head"><span>{t('名称', 'Name')}</span><span>{t('大小', 'Size')}</span><span>{t('更新时间', 'Updated')}</span><span>{t('操作', 'Actions')}</span></div>
         {loading && <div className="drive-loading"><Loader2 className="drive-spin" />{t('正在加载…', 'Loading…')}</div>}
-        {!loading && snapshot?.nodes.length === 0 && <div className="drive-empty">{view === 'trash' ? t('回收站是空的。', 'Trash is empty.') : view === 'members' ? t('这里还没有共享内容。', 'No shared items here yet.') : t('这里还没有文件。可拖入文件或点击上传。', 'No files here yet. Drop files here or use Upload.')}</div>}
+        {!loading && snapshot?.nodes.length === 0 && <div className="drive-empty">{view === 'trash' ? t('回收站是空的。', 'Trash is empty.') : view === 'members' ? t('这里还没有共享内容。', 'No shared items here yet.') : view === 'all' ? t('这里还没有文件。', 'No files here yet.') : t('这里还没有文件。可拖入文件或点击上传。', 'No files here yet. Drop files here or use Upload.')}</div>}
         {!loading && snapshot?.nodes.map((node) => (
           <div className="drive-file-row" key={node.id}>
-            <div className="drive-file-name"><FileKindIcon node={node} />{node.kind === 'folder' && view !== 'trash' ? <AppLink href={`/drive?folder=${encodeURIComponent(node.id)}${view === 'members' ? '&view=members' : ''}`} prefetch={false}>{node.name}</AppLink> : <strong>{node.name}</strong>}{view === 'members' && node.ownerName && <small>{node.ownerName}</small>}</div>
+            <div className="drive-file-name"><FileKindIcon node={node} />{node.kind === 'folder' && view !== 'trash' ? <AppLink href={`/drive?folder=${encodeURIComponent(node.id)}&view=${view}`} prefetch={false}>{node.name}</AppLink> : <strong>{node.name}</strong>}{(view === 'members' || view === 'all') && node.ownerName && <small>{node.ownerName}</small>}</div>
             <span className="drive-file-size">{node.kind === 'file' ? formatBytes(node.sizeBytes) : '—'}</span>
             <time dateTime={node.updatedAt}>{new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(node.updatedAt))}</time>
             <div className="drive-file-actions">

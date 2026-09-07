@@ -47,11 +47,12 @@ async function write<T>(path: string, method: 'POST' | 'PATCH' | 'DELETE', body?
   return handleApi<T>(response);
 }
 
-export async function fetchDrive(parentId: string | null, trash = false, members = false): Promise<DriveSnapshot> {
+export async function fetchDrive(parentId: string | null, trash = false, members = false, all = false): Promise<DriveSnapshot> {
   const params = new URLSearchParams();
   if (parentId) params.set('parent', parentId);
   if (trash) params.set('trash', '1');
   if (members) params.set('members', '1');
+  if (all) params.set('all', '1');
   const query = params.size ? `?${params}` : '';
   const response = await fetch(apiUrl(`/v1/drive${query}`), {
     headers: authHeaders(false),
