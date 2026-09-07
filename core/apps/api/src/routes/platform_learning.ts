@@ -597,7 +597,7 @@ platformLearningRoutes.post('/admin/invites', async (c) => {
         code_hash, label, status, max_redemptions, expires_at, benefit_snapshot, created_by_user_id
       ) VALUES (decode($1, 'hex'), $2, $3, $4, $5::timestamptz, $6::jsonb, $7)
       RETURNING id::text
-    `, [physicalBundleCredentialHash(code), label, status, maxRedemptions ?? null, expiresAt ?? null, JSON.stringify(benefit), actor.userId]);
+    `, [physicalBundleCredentialHash(code), label, status, maxRedemptions ?? null, expiresAt ?? null, benefit, actor.userId]);
     return { status: 201, body: { id: rows[0].id, code, label, status, maxRedemptions: maxRedemptions ?? null, expiresAt: expiresAt ?? null, benefitSnapshot: benefit }, resourceType: 'platform_invite_code', resourceId: rows[0].id };
   });
   return sendMutation(c, result);
@@ -629,7 +629,7 @@ platformLearningRoutes.post('/admin/invites/batch', async (c) => {
              $4::timestamptz, $5::jsonb, $6
       FROM unnest($1::text[]) AS generated(code_hash)
       RETURNING id::text, encode(code_hash, 'hex') AS code_hash
-    `, [hashes, label, batchReference, expiresAt ?? null, JSON.stringify({ courseId }), actor.userId]);
+    `, [hashes, label, batchReference, expiresAt ?? null, { courseId }, actor.userId]);
     const generated = rows.map((row) => ({ id: row.id, code: codeByHash.get(row.code_hash)! }));
     return {
       status: 201,
@@ -706,7 +706,7 @@ platformLearningRoutes.patch('/admin/invites/:id', async (c) => {
                 expires_at AS "expiresAt", benefit_snapshot AS "benefitSnapshot"
     `, [id, label != null, label ?? null, status != null, status ?? null,
       maxRedemptions != null, maxRedemptions ?? null, expiresAt !== undefined, expiresAt ?? null,
-      benefit != null, benefit ? JSON.stringify(benefit) : null]);
+      benefit != null, benefit ?? null]);
     if (!rows[0]) notFound('Invitation');
     return { status: 200, body: rows[0], resourceType: 'platform_invite_code', resourceId: id };
   });
@@ -1043,7 +1043,7 @@ platformLearningRoutes.post('/me/privacy/consents', async (c) => {
       INSERT INTO platform_audit_events (
         actor_user_id, actor_key, action, resource_type, resource_id, outcome, metadata
       ) VALUES ($1, $2, 'learning.privacy.consent', 'platform_privacy_consent', $3, 'allowed', $4::jsonb)
-    `, [actor.userId, actor.ownerKey, rows[0]!.id, JSON.stringify({ purpose, status, policyVersion })]);
+    `, [actor.userId, actor.ownerKey, rows[0]!.id, { purpose, status, policyVersion }]);
     return {
       status: 201,
       body: rows[0]!,
@@ -1084,7 +1084,7 @@ platformLearningRoutes.post('/analytics', async (c) => {
         consent_id, user_id, event_name, surface, dimensions, expires_at
       ) VALUES ($1::uuid, $2, $3, $4, $5::jsonb, NOW() + INTERVAL '30 days')
       RETURNING id::text, occurred_at AS "occurredAt", expires_at AS "expiresAt"
-    `, [consents[0].id, actor.userId, eventName, surface, JSON.stringify(dimensions)]);
+    `, [consents[0].id, actor.userId, eventName, surface, dimensions]);
     return {
       status: 202,
       body: rows[0]!,
@@ -1146,7 +1146,7 @@ platformLearningRoutes.post('/admin/retention-jobs', async (c) => {
       INSERT INTO platform_audit_events (
         actor_user_id, actor_key, action, resource_type, resource_id, outcome, metadata
       ) VALUES ($1, $2, 'learning.retention.run', 'platform_retention_job', $3, 'allowed', $4::jsonb)
-    `, [actor.userId, actor.ownerKey, jobId, JSON.stringify({ dataClass, rowsAffected: removed.length })]);
+    `, [actor.userId, actor.ownerKey, jobId, { dataClass, rowsAffected: removed.length }]);
     return {
       status: 200,
       body: { id: jobId, dataClass, cutoffAt, status: 'succeeded', rowsAffected: removed.length },

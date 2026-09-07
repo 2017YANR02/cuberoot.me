@@ -118,7 +118,7 @@ export async function withIdempotency(
     `, [
       request.id,
       result.status,
-      JSON.stringify(result.body),
+      result.body,
       result.resourceType ?? null,
       result.resourceId ?? null,
     ]);
@@ -149,7 +149,7 @@ export async function enqueuePlatformEvent(
       event_type, aggregate_type, aggregate_id, dedupe_key, payload
     ) VALUES ($1, $2, $3, $4, $5::jsonb)
     ON CONFLICT (dedupe_key) DO NOTHING
-  `, [eventType, aggregateType, aggregateId, dedupeKey, JSON.stringify(payload)]);
+  `, [eventType, aggregateType, aggregateId, dedupeKey, payload]);
 }
 
 export async function requireInstructor(db: PlatformDb, actor: PlatformActor): Promise<string> {
