@@ -34,7 +34,6 @@ export function GrandSlamBadges({ rows, wcaId, isZh }: { rows: Achievement[]; wc
                 <EventIcon event={row.eventId} />
                 <span className="wp-achievement-wr">WR</span>
               </span>
-              <span className="wp-achievement-name">{name}</span>
               <span className="wp-achievement-label">{label}</span>
             </AppLink>
           );

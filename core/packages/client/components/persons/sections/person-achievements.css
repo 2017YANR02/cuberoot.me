@@ -17,7 +17,6 @@
     background: radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--signal-warning) 55%, var(--background)), color-mix(in srgb, var(--signal-warning) 18%, var(--background)));
 }
 .wp-achievement-wr { font-size: 9px; font-weight: 800; letter-spacing: 2px; line-height: 1; margin-left: 2px; }
-.wp-achievement-name { font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
 .wp-achievement-label { font-size: 0.65rem; color: var(--muted-foreground); white-space: nowrap; }
 .wp-achievement:hover .wp-achievement-medal { border-color: var(--signal-warning); }
 .wp-achievement:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
