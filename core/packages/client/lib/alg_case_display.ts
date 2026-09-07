@@ -162,10 +162,10 @@ export function zbllCommentLabel(name: string): string | null {
  * AS 另一页叫 S-。DB 里的 name / subgroup 不动 —— 和 ZBLL 一样,`+` 进 URL 会被当空格。
  */
 export function displayCollName(name: string): string {
-  const m = /^(?:CLL\s+)?(AS|Sune|S|L|U|T|Pi|H)\s+(\d+)$/.exec(name.trim());
+  const m = /^(?:CLL\s+)?(AS|Anti Sune|Sune|S|L|U|T|Pi|H)(?:\s+(\d+))?$/.exec(name.trim());
   if (!m) return name;
-  const group = m[1] === 'Sune' ? 'S' : m[1];
-  return `${ZBLL_GROUP_RENAME[group] ?? group}${m[2]}`;
+  const group = m[1] === 'Sune' ? 'S' : m[1] === 'Anti Sune' ? 'AS' : m[1];
+  return `${ZBLL_GROUP_RENAME[group] ?? group}${m[2] ?? ''}`;
 }
 
 /** 二阶 LS 案例名展示:`"LS-2 Hammer 1"` → `"LS2 Hammer 1"`。DB / URL 仍保留来源表的原名。 */
