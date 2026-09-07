@@ -1089,7 +1089,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       // 组标题印展示名:库里的 `AS/ASD` 在页面上叫 `S-D`,打印表不该露出 DB 里那一串
       groupLabel: (sub) => (isSq1Ep && sq1EpNumericNames ? sq1EpNumericGroupName(sub) : null)
         ?? ollByGroup.get(sub)
-        ?? (set === 'zbll' ? displayZbllToken(sub.split('/').pop() ?? sub) : sub),
+        ?? (set === 'zbll' ? displayZbllToken(sub.split('/').pop() ?? sub)
+          : set === 'cll' || set === 'coll' ? displayAlgCaseName(puzzleParam, set, sub) : sub),
       sectionOf: isSq1Ep
         ? (c => classifySq1EpParity(c.name) === 'no-parity'
           ? tr({ zh: '无特', en: 'No parity' })
@@ -1508,7 +1509,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   ? (sq1EpNumericNames
                     ? `${sq1EpNumericLayerName(subgroup) ?? subgroup}.*`
                     : tr({ zh: `上层 ${subgroup}`, en: `Top ${subgroup}` }))
-                  : (ollByGroup.get(subgroup) ?? subgroup ?? tr({ zh: '其他', en: 'Other' }))}
+                  : (ollByGroup.get(subgroup)
+                    ?? (set === 'cll' || set === 'coll' ? displayAlgCaseName(puzzleParam, set, subgroup) : subgroup)
+                    ?? tr({ zh: '其他', en: 'Other' }))}
                 <span className="alg-subgroup-count">{cases.length}</span>
               </h2>
             )}
