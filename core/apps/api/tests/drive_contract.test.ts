@@ -7,12 +7,38 @@ import {
   normalizeDriveName,
 } from '@cuberoot/shared/drive';
 import { describe, expect, it } from 'vitest';
+import { Hono } from 'hono';
+import { apiCors } from '../src/api_cors.js';
 import { parseByteRange } from '../src/utils/byte_range.js';
 
 const read = (relative: string) => readFile(new URL(relative, import.meta.url), 'utf8');
 const normalizeSql = (sql: string) => sql.replace(/\s+/g, ' ').trim();
 
 describe('Drive contract', () => {
+  it('allows browser upload preflights only from trusted origins', async () => {
+    const app = new Hono().use('*', apiCors);
+    const headers = ['authorization', 'content-type', 'upload-offset', 'upload-checksum'];
+    for (const origin of ['https://cuberoot.me', 'https://next.cuberoot.me', 'https://evil.example']) {
+      const response = await app.request('/v1/drive/uploads/00000000-0000-4000-8000-000000000000', {
+        method: 'OPTIONS',
+        headers: {
+          Origin: origin,
+          'Access-Control-Request-Method': 'PATCH',
+          'Access-Control-Request-Headers': headers.join(','),
+        },
+      });
+      if (origin === 'https://evil.example') {
+        expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull();
+        continue;
+      }
+      expect(response.status).toBe(204);
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe(origin);
+      expect(response.headers.get('Access-Control-Allow-Methods')?.split(',')).toContain('PATCH');
+      const allowed = response.headers.get('Access-Control-Allow-Headers')?.toLowerCase().split(',').map((value) => value.trim());
+      for (const header of headers) expect(allowed).toContain(header);
+    }
+  });
+
   it('keeps its migration and schema snapshot aligned', async () => {
     const [migration, shareMigration, schema] = await Promise.all([
       read('../migrations/0184_drive.sql'),
