@@ -163,7 +163,7 @@ function normalizeResource(value: unknown): PlatformResourceResult {
   const envelope = asRecord(value);
   if (!envelope) return { items: [] };
   const direct = entity(
-    envelope.item ?? envelope.data ?? envelope.result ?? envelope.course ?? envelope.path
+    envelope.item ?? envelope.data ?? envelope.result ?? envelope.lesson ?? envelope.course ?? envelope.path
       ?? envelope.event ?? envelope.article ?? envelope.product ?? envelope.order
       ?? envelope.certificate ?? envelope.qr ?? envelope.thread,
     0,
