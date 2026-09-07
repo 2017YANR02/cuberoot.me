@@ -12,6 +12,7 @@ import {
   parseWorkspacePackagePatterns,
   resolvePackageExport,
   runtimeNeutralSourceViolations,
+  uncontractedFindings,
   validateManifestSchema,
   validateManualContracts,
   validatePackageMetadata,
@@ -44,14 +45,14 @@ function rules(file: string, content: string): string[] {
 describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
     expect(MANIFEST.legacyFindings).toHaveLength(222);
-    expect(compareFindings(CURRENT, MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
-    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length);
+    expect(compareFindings(uncontractedFindings(CURRENT, MANIFEST.manualContracts), MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
+    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 1);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(170);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
   it('keeps every semantic edge contract tied to live repository evidence', () => {
-    expect(MANIFEST.manualContracts).toHaveLength(13);
+    expect(MANIFEST.manualContracts).toHaveLength(14);
     expect(validateManifestSchema(MANIFEST)).toEqual([]);
     expect(validateManualContracts(MANIFEST.manualContracts)).toEqual([]);
     expect(new Set(MANIFEST.manualContracts.map((item: { phase: string }) => item.phase))).toEqual(new Set([
@@ -92,6 +93,19 @@ describe('architecture boundary guard', () => {
     const absoluteServerPath = ['D:', 'cube', 'cuberoot.me', 'core', 'apps', 'api', 'src', 'index.ts'].join('/');
     expect(rules(CLIENT_PROBE, `readFileSync('${absoluteServerPath}');`))
       .toContain('cross-package-path');
+  });
+
+  it('limits the approved encoder contract to one adapter in its exact file', () => {
+    const encoder = ['core', 'apps', 'api/src/tools/drive_video.ts'].join('/');
+    const call = "import { spawn } from 'node:child_process'; spawn(path.join(BIN, executable), args);";
+    expect(rules(encoder, call)).toEqual([]);
+    expect(rules(encoder, call + ' spawn(path.join(BIN, executable), args);')).toContain('subprocess-call');
+    expect(rules(SERVER_PROBE, call)).toContain('subprocess-call');
+    expect(rules(encoder, "import { spawn } from 'node:child_process'; spawn('other-command');")).toContain('subprocess-call');
+    expect(rules(encoder, call + " import '@cuberoot/shared';")).toContain('shared-root-import');
+    const contracts = structuredClone(MANIFEST.manualContracts);
+    contracts.find((contract: { id: string }) => contract.id === 'server-drive-ffmpeg-subprocess').phase = 'runtime-file';
+    expect(validateManualContracts(contracts)).toContain('server-drive-ffmpeg-subprocess: subprocessCalls requires a subprocess-native contract');
   });
 
   it('allows explicit public subpaths and ignores comments or display text', () => {

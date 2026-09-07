@@ -19,6 +19,21 @@
   },
   "manualContracts": [
     {
+      "id": "server-drive-ffmpeg-subprocess",
+      "from": "apps/api Drive compression worker",
+      "to": "API-owned checksum-pinned FFmpeg and ffprobe executables",
+      "phase": "subprocess-native",
+      "mechanism": "One shell-free spawn adapter; only ffmpeg/ffprobe from DRIVE_FFMPEG_BIN_DIR; one job, two CPU cores, separate systemd service",
+      "owner": "server",
+      "rationale": "User approved this specific native transcode contract on 2026-09-06. Preserve originals and frame timing; publish only smaller, quality-validated derivatives.",
+      "replacement": "Keep this bounded worker and native artifact separate from the HTTP process; do not expand it to arbitrary commands.",
+      "subprocessCalls": [{"file":"apps/api/src/tools/drive_video.ts","mechanism":"spawn","target":"<dynamic>","count":1}],
+      "evidence": [
+        {"file":"core/apps/api/src/tools/drive_video.ts","contains":"executable: 'ffmpeg' | 'ffprobe'"},
+        {"file":"ops/systemd/cuberoot-drive-compression.service","contains":"CPUQuota=200%"}
+      ]
+    },
+    {
       "id": "server-cubeopt-artifact-store",
       "from": "apps/api CubeOpt manager and child",
       "to": "API-owned immutable artifact store",

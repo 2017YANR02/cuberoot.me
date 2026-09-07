@@ -57,6 +57,7 @@ describe('Drive contract', () => {
     expect(foldersMigration).toContain('ADD COLUMN member_shared BOOLEAN NOT NULL DEFAULT FALSE');
     expect(schema).toContain("CONSTRAINT drive_member_shared_folder CHECK (NOT member_shared OR kind = 'folder')");
     expect(normalizeSql(schema)).toContain(normalizeSql(shareMigration));
+    expect(normalizeSql(schema)).toContain(normalizeSql(await read('../migrations/0218_drive_compressions.sql')));
   });
 
   it('locks the 20 GB shared quota and resumable-upload boundaries', () => {

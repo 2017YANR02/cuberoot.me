@@ -32,6 +32,7 @@ import {
   Play,
   RotateCcw,
   Share2,
+  Shrink,
   Trash2,
   Upload,
   UserMinus,
@@ -42,6 +43,8 @@ import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import {
   DRIVE_CHUNK_BYTES,
   isDrivePreviewableMime,
+  type DriveCompression,
+  type DriveCompressionResolution,
   type DriveNode,
   type DriveSnapshot,
 } from '@cuberoot/shared/drive';
@@ -60,6 +63,7 @@ import { searchFriendUsers, type FriendSearchUser } from '@/lib/friends-api';
 import {
   addDriveMember,
   cancelDriveUpload,
+  compressDriveVideo,
   createDriveAccess,
   createDriveFolder,
   createDriveShare,
@@ -187,6 +191,73 @@ function formatBytes(bytes: number): string {
   return `${value >= 10 || index === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[index]}`;
 }
 
+function compressionStatus(job: DriveCompression, t: ReturnType<typeof useT>): string {
+  switch (job.status) {
+    case 'queued': return t('等待云端处理', 'Waiting for cloud processing');
+    case 'encoding': return `${t('正在压缩', 'Compressing')} ${job.progress}%`;
+    case 'validating': return t('正在检查画质和帧率', 'Checking quality and frame timing');
+    case 'ready': return t('压缩副本已保存', 'Compressed copy saved');
+    case 'failed': return t('压缩未完成，原片已保留', 'Compression failed; original retained');
+  }
+}
+
+function DriveCompressionDialog({ node, onQueued, onClose }: {
+  node: DriveNode; onQueued: () => Promise<void>; onClose: () => void;
+}) {
+  const t = useT();
+  const [resolution, setResolution] = useState<DriveCompressionResolution>('original');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const job = node.compressions?.find((item) => item.resolution === resolution);
+  const pending = job && !['ready', 'failed'].includes(job.status);
+  useModalDismiss(onClose, busy);
+
+  const start = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await compressDriveVideo(node.id, resolution);
+      await onQueued();
+    } catch {
+      setError(t('无法开始压缩，请检查剩余容量并稍后重试。', 'Could not start compression. Check available storage and try again.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="drive-preview-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onClose(); }}>
+      <div className="drive-preview drive-share-dialog" role="dialog" aria-modal="true" aria-label={t('压缩视频', 'Compress video')}>
+        <div className="drive-preview-head">
+          <strong>{node.name}</strong>
+          <ClearButton variant="standalone" ariaLabel={t('关闭压缩设置', 'Close compression settings')} onClick={onClose} />
+        </div>
+        <div className="drive-share-body">
+          <div className="drive-share-mode">
+            <span>{t('分辨率', 'Resolution')}</span>
+            <PillToggle value={resolution === 'original'} onChange={(original) => setResolution(original ? 'original' : '1080p')}
+              onLabel={t('保持原分辨率', 'Keep original resolution')} offLabel={t('压缩到 1080P', 'Limit to 1080p')}
+              ariaLabel={t('保持原分辨率，关闭则压缩到 1080P', 'Keep original resolution; turn off to limit to 1080p')} disabled={busy} />
+          </div>
+          <p>{resolution === 'original'
+            ? t('保留原分辨率和原帧率，压缩完成后另存一份视频。', 'Keep the original resolution and frame timing, and save a separate compressed video.')
+            : t('按比例缩至最高 1080P，保留原帧率；较小的视频不会放大。压缩后另存一份，原片保留。', 'Scale proportionally to at most 1080p and keep the original frame timing. Smaller videos are not enlarged. The original is retained alongside the new copy.')}</p>
+          <small>{t('在云端处理，关闭页面也会继续。画质检查通过且文件变小后才保存副本。部分设备无法播放 AV1，可继续使用原片。', 'Processing continues in the cloud after you close the page. A copy is saved only after quality checks pass and its size decreases. Devices without AV1 playback can use the original.')}</small>
+          {job && <p role="status">{compressionStatus(job, t)}</p>}
+          {job?.status === 'failed' && <small>{t('该视频可能不适合继续压缩，或转码暂时失败。可以重试。', 'This video may not benefit from further compression, or processing failed temporarily. You can retry.')}</small>}
+          {error && <p className="drive-error" role="alert">{error}</p>}
+          <div className="drive-share-mode">
+            <button type="button" className="drive-control" disabled={busy || !!pending || (job?.status === 'ready' && !!job.outputNodeId)} onClick={() => void start()}>
+              {busy || pending ? <Loader2 className="drive-spin" aria-hidden="true" /> : <Shrink size={16} aria-hidden="true" />}
+              {job?.status === 'failed' ? t('重试压缩', 'Retry compression') : t('开始云端压缩', 'Start cloud compression')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FileKindIcon({ node }: { node: DriveNode }) {
   if (node.kind === 'folder') return <Folder aria-hidden="true" />;
   const mime = node.mimeType ?? '';
@@ -232,6 +303,8 @@ function DrivePageContent() {
   const [shareNode, setShareNode] = useState<DriveNode | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareBusy, setShareBusy] = useState(false);
+  const [compressionNodeId, setCompressionNodeId] = useState<string | null>(null);
+  const compressionNode = snapshot?.nodes.find((node) => node.id === compressionNodeId);
   const inputRef = useRef<HTMLInputElement>(null);
   const tasksRef = useRef(tasks);
   const downloadTasksRef = useRef(downloadTasks);
@@ -277,6 +350,17 @@ function DrivePageContent() {
   useEffect(() => {
     if (mounted && user) void load();
   }, [load, mounted, user]);
+
+  useEffect(() => {
+    if (!user || !snapshot?.nodes.some((node) => node.compressions?.some((job) => !['ready', 'failed'].includes(job.status)))) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      fetchDrive(view === 'trash' ? null : folderId, view === 'trash', view === 'members', view === 'all')
+        .then((next) => { if (!cancelled) setSnapshot(next); })
+        .catch(() => { if (!cancelled) setError(t('压缩进度暂时无法刷新，请重新加载页面。', 'Could not refresh compression progress. Reload the page.')); });
+    }, 5000);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [folderId, snapshot, t, user, view]);
 
   const loadMembers = useCallback(async () => {
     try {
@@ -699,13 +783,15 @@ function DrivePageContent() {
   };
 
   useEffect(() => {
-    setPreview(null);
-    if (!previewId || !snapshot) return;
+    if (!previewId || !snapshot) { setPreview(null); return; }
     const node = snapshot.nodes.find((item) => item.id === previewId && item.kind === 'file');
     if (!node) {
+      setPreview(null);
       void setPreviewId(null);
       return;
     }
+    if (preview?.node.id === node.id) return;
+    setPreview(null);
     let cancelled = false;
     createDriveAccess(node.id, true)
       .then((access) => {
@@ -718,7 +804,7 @@ function DrivePageContent() {
         }
       });
     return () => { cancelled = true; };
-  }, [previewId, setPreviewId, snapshot, t]);
+  }, [previewId, preview?.node.id, setPreviewId, snapshot, t]);
 
   const addMember = async (candidate: FriendSearchUser) => {
     setMemberBusy(candidate.userId);
@@ -945,6 +1031,7 @@ function DrivePageContent() {
             <span className="drive-file-size">{node.kind === 'file' ? formatBytes(node.sizeBytes) : '—'}</span>
             <time dateTime={node.updatedAt}>{new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(node.updatedAt))}</time>
             <div className="drive-file-actions">
+              {node.canCompress && <button type="button" className="drive-icon-action" onClick={() => setCompressionNodeId(node.id)} title={t('云端压缩，可选 1080P', 'Cloud compression, with optional 1080p')} aria-label={t(`压缩视频 ${node.name}`, `Compress video ${node.name}`)}>{node.compressions?.some((job) => !['ready', 'failed'].includes(job.status)) ? <Loader2 className="drive-spin" aria-hidden="true" /> : <Shrink aria-hidden="true" />}</button>}
               {view !== 'trash' && node.kind === 'file' && isDrivePreviewableMime(node.mimeType) && <button type="button" className="drive-icon-action" onClick={() => void setPreviewId(node.id)} aria-label={t(`预览 ${node.name}`, `Preview ${node.name}`)}><Eye aria-hidden="true" /></button>}
               {view === 'files' && node.kind === 'file' && <button type="button" className="drive-icon-action" onClick={() => void openShare(node)} aria-label={node.shared ? t(`管理 ${node.name} 的公开链接`, `Manage the public link for ${node.name}`) : t(`分享 ${node.name}`, `Share ${node.name}`)}>{node.shared ? <Link2 aria-hidden="true" /> : <Share2 aria-hidden="true" />}</button>}
               {view !== 'trash' && node.kind === 'file' && <button type="button" className="drive-icon-action" onClick={() => void downloadNode(node)} aria-label={t(`下载 ${node.name}`, `Download ${node.name}`)}><Download aria-hidden="true" /></button>}
@@ -975,6 +1062,8 @@ function DrivePageContent() {
           </div>
         </div>
       )}
+
+      {compressionNode && <DriveCompressionDialog key={compressionNode.id} node={compressionNode} onQueued={load} onClose={() => setCompressionNodeId(null)} />}
 
       {shareNode && (
         <DriveShareDialog

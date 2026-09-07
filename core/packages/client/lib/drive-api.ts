@@ -1,4 +1,4 @@
-import type { DriveNode, DriveSnapshot, DriveUpload } from '@cuberoot/shared/drive';
+import type { DriveCompression, DriveCompressionResolution, DriveNode, DriveSnapshot, DriveUpload } from '@cuberoot/shared/drive';
 import { apiUrl, directApiUrl, publicApiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
@@ -156,8 +156,16 @@ export const deleteDriveNode = (nodeId: string) => (
   write<{ ok: boolean }>(`/v1/drive/nodes/${encodeURIComponent(nodeId)}`, 'DELETE')
 );
 
-export const createDriveAccess = (nodeId: string, inline: boolean) => (
-  write<DriveAccess>(`/v1/drive/files/${encodeURIComponent(nodeId)}/access`, 'POST', { inline })
+export async function createDriveAccess(nodeId: string, inline: boolean): Promise<DriveAccess> {
+  const access = await write<DriveAccess>(`/v1/drive/files/${encodeURIComponent(nodeId)}/access`, 'POST', { inline });
+  // The API sees the reverse proxy's HTTP connection, not the browser-facing origin.
+  // Use the configured streaming origin for downloads, resumes, and previews alike.
+  const url = new URL(access.url, directApiUrl('/'));
+  return { ...access, url: directApiUrl(url.pathname + url.search) };
+}
+
+export const compressDriveVideo = (nodeId: string, resolution: DriveCompressionResolution) => (
+  write<{ compression: DriveCompression }>(`/v1/drive/files/${encodeURIComponent(nodeId)}/compress`, 'POST', { resolution })
 );
 
 export async function createDriveShare(nodeId: string): Promise<DriveShare> {
