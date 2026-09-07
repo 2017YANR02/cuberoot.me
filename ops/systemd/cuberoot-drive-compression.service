@@ -15,8 +15,8 @@ TimeoutStopSec=20
 Nice=15
 CPUQuota=200%
 MemoryMax=4G
-TasksMax=64
-OOMPolicy=kill
+# SVT's helper threads share this limit with Node; CPU use stays capped above.
+TasksMax=128
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
