@@ -71,6 +71,20 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(routeView).toMatch(/permissionDenied \|\| definition\.id === 'qr' \|\| \(\['membership', 'me-membership'\]/);
   });
 
+  it('keeps glass progressive and limits the instructor portrait to his course', () => {
+    const shell = read('components/platform/PlatformShell.tsx');
+    const view = read('components/platform/PlatformRouteView.tsx');
+    const styles = read('components/platform/platform.css');
+
+    expect(shell).toContain('className="platform-nav platform-glass"');
+    expect(view).toContain("const ruiminCourse = course?.data?.slug === 'yan-ruimin-3x3-beginner';");
+    expect(view).toContain('{ruiminCourse ? <div className="platform-course-portrait">');
+    expect(view).toContain('<a className="platform-portrait-link platform-glass" href="#platform-course-outline">');
+    expect(styles).toContain('@supports not (backdrop-filter: blur(1px))');
+    expect(styles).toContain('@media (prefers-reduced-transparency: reduce)');
+    expect(styles).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*animation: none !important/);
+  });
+
   it('uses AppLink and disables prefetch for high-cardinality search results', () => {
     const search = read('components/LandingSearch.tsx');
 

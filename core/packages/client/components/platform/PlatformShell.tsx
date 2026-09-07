@@ -57,7 +57,7 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
         </AppLink>
       </header>
 
-      <nav className="platform-nav" aria-label={t('Platform 功能区', 'Platform sections')}>
+      <nav className="platform-nav platform-glass" aria-label={t('Platform 功能区', 'Platform sections')}>
         {PLATFORM_PUBLIC_NAV.map((item) => {
           const Icon = AREA_ICONS[item.id];
           const active = item.id === activeId;
