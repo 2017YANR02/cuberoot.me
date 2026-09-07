@@ -36,34 +36,38 @@ function readableJson(value: unknown): string | null {
   return values.length ? values.join('\n\n') : null;
 }
 
-function DomainList({ title, items, href }: {
+function DomainList({ title, items, href, collapsible = false }: {
   title: string;
   items: unknown[];
   href?: (item: Record<string, unknown>) => string | null;
+  collapsible?: boolean;
 }) {
   const t = useT();
   if (!items.length) return <p className="platform-domain-note">{t('当前没有可展示的内容。', 'There is no content to display yet.')}</p>;
   const english = t('zh', 'en') === 'en';
-  return (
-    <section className="platform-domain-content">
-      <h2>{title}</h2>
-      <div className="platform-detail-list">
-        {items.map((raw, index) => {
-          const item = record(raw) ?? {};
-          const id = string(item.id) ?? string(item.slug) ?? String(index + 1);
-          const label = localized(item, 'title', english) ?? string(item.name) ?? string(item.label) ?? string(item.code) ?? id;
-          const detail = localized(item, 'summary', english) ?? string(item.status) ?? string(item.sku);
-          const target = href?.(item) ?? null;
-          return (
-            <div key={id}>
-              <strong>{target ? <AppLink href={target} prefetch={false}>{label}</AppLink> : label}</strong>
-              {detail ? <span>{detail}</span> : null}
-            </div>
-          );
-        })}
-      </div>
-    </section>
+  const list = (
+    <div className="platform-detail-list">
+      {items.map((raw, index) => {
+        const item = record(raw) ?? {};
+        const id = string(item.id) ?? string(item.slug) ?? String(index + 1);
+        const label = localized(item, 'title', english) ?? string(item.name) ?? string(item.label) ?? string(item.code) ?? id;
+        const detail = localized(item, 'summary', english) ?? string(item.status) ?? string(item.sku);
+        const target = href?.(item) ?? null;
+        return (
+          <div key={id}>
+            <strong>{target ? <AppLink href={target} prefetch={false}>{label}</AppLink> : label}</strong>
+            {detail ? <span>{detail}</span> : null}
+          </div>
+        );
+      })}
+    </div>
   );
+  return collapsible ? (
+    <details className="platform-lesson-folder">
+      <summary>{title}</summary>
+      {list}
+    </details>
+  ) : <section className="platform-domain-content"><h2>{title}</h2>{list}</section>;
 }
 
 function LessonMedia({ lessonId }: { lessonId: string }) {
@@ -162,16 +166,34 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
   if (definition.id === 'course-detail') {
     const lessons = Array.isArray(data.lessons) ? data.lessons : [];
     const instructors = Array.isArray(data.instructors) ? data.instructors : [];
+    // Group explicitly numbered sections only; unrelated course outlines stay unchanged.
+    const sections = ['先导课', '试听课', '正式课'];
+    const grouped = sections.map(() => [] as unknown[]);
+    const canGroup = lessons.length > 0 && lessons.every((lesson) => {
+      const title = string(record(lesson)?.titleZh) ?? '';
+      const section = sections.findIndex(prefix => title.startsWith(prefix));
+      if (section < 0) return false;
+      grouped[section].push(lesson);
+      return true;
+    });
+    const lessonHref = (item: Record<string, unknown>) => {
+      const lessonId = string(item.id) ?? string(item.slug);
+      return lessonId ? `/platform/courses/${encodeURIComponent(entity.id)}/learn/${encodeURIComponent(lessonId)}` : null;
+    };
     return (
       <div className="platform-domain-stack">
-        <DomainList
+        {canGroup ? <section className="platform-domain-content">
+          <h2>{t('课程课时', 'Course lessons')}</h2>
+          {grouped.map((items, index) => items.length > 0 ? <DomainList
+            key={sections[index]}
+            title={[t('先导课', 'Introduction'), t('试听课', 'Trial lessons'), t('正式课', 'Core lessons')][index]}
+            items={items} href={lessonHref} collapsible
+          /> : null)}
+        </section> : <DomainList
           title={t('课程课时', 'Course lessons')}
           items={lessons}
-          href={(item) => {
-            const lessonId = string(item.id) ?? string(item.slug);
-            return lessonId ? `/platform/courses/${encodeURIComponent(entity.id)}/learn/${encodeURIComponent(lessonId)}` : null;
-          }}
-        />
+          href={lessonHref}
+        />}
         <DomainList title={t('授课讲师', 'Instructors')} items={instructors} href={(item) => {
           const teacherId = string(item.teacherEntryId) ?? string(item.id);
           return teacherId ? `/platform/teachers/${encodeURIComponent(teacherId)}` : null;
