@@ -225,7 +225,7 @@ export default function ReconListPage() {
     { value: 'reconstruction', label: tr({ zh: '复盘', en: 'Reconstructions' }) },
     { value: 'timing', label: tr({ zh: '仅起拍表', en: 'Timing only' }) },
     { value: 'all', label: tr({ zh: '全部', en: 'All' }) },
-  ];
+  ] as const;
   const {
     loading, error, filters,
     sortKey, sortDir,
