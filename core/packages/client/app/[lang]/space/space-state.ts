@@ -16,6 +16,8 @@ export const ROOMS = {
   company: { zh: '我的公司', en: 'My company' },
 } as const;
 export type RoomStyle = keyof typeof ROOMS;
+export const ENVIRONMENTS = { original: { zh: '原有环境', en: 'Original setting' }, island: { zh: '孤岛大海', en: 'Ocean island' } } as const;
+export type Environment = keyof typeof ENVIRONMENTS;
 export const WEATHER = {
   sunny: { zh: '晴天', en: 'Sunny' },
   cloudy: { zh: '多云', en: 'Cloudy' },
@@ -87,7 +89,7 @@ export type SpaceObject = {
   level?: Level;
   moves?: string[];
 };
-export type Layout = { version: 1; room?: RoomStyle; weather?: Weather; weatherMotion?: boolean; objects: SpaceObject[] };
+export type Layout = { version: 1; room?: RoomStyle; environment?: Environment; weather?: Weather; weatherMotion?: boolean; objects: SpaceObject[] };
 export type History = { past: Layout[]; current: Layout; future: Layout[] };
 
 // Layouts contain data only. Models, GPU resources and selection never enter history.
@@ -167,6 +169,7 @@ export function parseLayout(text: string): Layout {
   if (!data || typeof data !== 'object' || !('version' in data) || data.version !== 1 ||
     !('objects' in data) || !Array.isArray(data.objects) || data.objects.length > MAX_OBJECTS) throw new Error('layout');
   if ('room' in data && (typeof data.room !== 'string' || !Object.hasOwn(ROOMS, data.room))) throw new Error('room');
+  if ('environment' in data && (typeof data.environment !== 'string' || !Object.hasOwn(ENVIRONMENTS, data.environment))) throw new Error('environment');
   if ('weather' in data && (typeof data.weather !== 'string' || !Object.hasOwn(WEATHER, data.weather))) throw new Error('weather');
   if ('weatherMotion' in data && typeof data.weatherMotion !== 'boolean') throw new Error('weatherMotion');
   const ids = new Set<string>();
@@ -190,7 +193,7 @@ export function parseLayout(text: string): Layout {
     ids.add(v.id);
     return { id: v.id, kind: v.kind, position: [...v.position] as [number, number], rotation: [...v.rotation] as Vec3, scale: v.scale, ...('level' in v ? { level: v.level as Level } : {}), ...('moves' in v ? { moves: [...v.moves as string[]] } : {}) };
   });
-  return { version: 1, ...('room' in data ? { room: data.room as RoomStyle } : {}), ...('weather' in data ? { weather: data.weather as Weather } : {}), ...('weatherMotion' in data ? { weatherMotion: data.weatherMotion as boolean } : {}), objects };
+  return { version: 1, ...('environment' in data ? { environment: data.environment as Environment } : {}), ...('room' in data ? { room: data.room as RoomStyle } : {}), ...('weather' in data ? { weather: data.weather as Weather } : {}), ...('weatherMotion' in data ? { weatherMotion: data.weatherMotion as boolean } : {}), objects };
 }
 
 export function commitLayout(history: History, next: Layout): History {

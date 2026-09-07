@@ -27,7 +27,8 @@ vec3 equirectToDir(vec2 uv) {
  * irradiance cancel).
  */
 vec3 skyIrradiance(sampler2D env, float maxLod) {
-  float lod = max(maxLod - 1.0, 0.0);
+  // Keep at least four latitude rows: a 2x1 mip mixes sky with the dark lower hemisphere.
+  float lod = max(maxLod - 3.0, 0.0);
   vec3 sum = textureLod(env, vec2(0.5, 0.02), lod).rgb;
   float w = 1.0;
   for (int i = 0; i < 4; i++) {

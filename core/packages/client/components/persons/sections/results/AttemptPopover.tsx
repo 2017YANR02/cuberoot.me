@@ -129,15 +129,12 @@ const editLabelStyle: CSSProperties = {
   color: 'var(--muted-foreground)', fontSize: '0.74rem',
 };
 const formStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 7, padding: '2px 3px 2px' };
-const rowStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 3 };
-const rowLabelStyle: CSSProperties = { fontSize: '0.7rem', color: 'var(--muted-foreground)' };
+const rowStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: 6 };
+const rowLabelStyle: CSSProperties = { fontSize: '0.7rem', color: 'var(--muted-foreground)', whiteSpace: 'nowrap' };
 const inputStyle: CSSProperties = {
-  width: '100%', padding: '5px 7px', fontSize: '0.86rem', fontVariantNumeric: 'tabular-nums',
+  width: '100%', minWidth: 0, padding: '5px 7px', fontSize: '0.86rem', fontVariantNumeric: 'tabular-nums',
   background: 'var(--background)', color: 'var(--foreground)',
   border: '1px solid var(--border-strong)', borderRadius: 6,
-};
-const curStyle: CSSProperties = {
-  fontSize: '0.72rem', color: 'var(--faint-foreground)', textAlign: 'center', fontVariantNumeric: 'tabular-nums',
 };
 const actionsStyle: CSSProperties = { display: 'flex', gap: 6, marginTop: 1 };
 const saveStyle: CSSProperties = {
@@ -236,7 +233,7 @@ export function AttemptPopover({
 // 仅在对应那把成绩被点开时挂载;卸载即清空全部编辑/复盘 state(无需手动 reset)。
 function AttemptPopoverBody({
   anchorRef, onClose,
-  value, eventId, penalty, penaltyNote, format, reconHref, hasRecon, reconId,
+  value, eventId, penalty, penaltyNote, reconHref, hasRecon, reconId,
   canEdit, isAdmin, isOwner, onEdit, onSetOriginal, onSetPenalty, onEditRecord, video,
 }: Omit<AttemptPopoverProps, 'cls' | 'oldValues' | 'rankBadge' | 'reconClassName' | 'plainClassName' | 'showOldBelow'> & {
   anchorRef: RefObject<HTMLButtonElement | null>;
@@ -436,13 +433,6 @@ function AttemptPopoverBody({
           </Link>
         )}
 
-        {!hasRecon && (
-          <Link href={`${reconLinkHref}&recordType=timing`} prefetch={false} className="wp-att-menu-action" style={actionStyle} onClick={onClose}>
-            <span>{tr({ zh: '录入起拍表耗时', en: 'Enter pickup and putdown' })}</span>
-            <ChevronRight size={15} />
-          </Link>
-        )}
-
         {/* ② 判罚原因(只读) */}
         {pn > 0 && (
           <div style={reasonStyle}>
@@ -456,7 +446,7 @@ function AttemptPopoverBody({
         {/* ③ 比赛视频(复盘自带 + 已批准 + 提议;登录用户可粘链接,非管理员待审核) */}
         {showVideoSection && (
           <div style={videoSectionStyle}>
-            <span style={reasonLabelStyle}>{tr({ zh: '比赛视频', en: 'Competition video' })}</span>
+            {!canAddVideo && <span style={reasonLabelStyle}>{tr({ zh: '视频', en: 'Video' })}</span>}
             {(confirmedVideos.length > 0 || pendingOnlyVideos.length > 0) && (
               <div style={videoThumbsStyle}>
                 {confirmedVideos.map((u, k) => <VideoCoverThumb key={`c${k}`} url={u} />)}
@@ -468,8 +458,9 @@ function AttemptPopoverBody({
             {canAddVideo && (
               <>
                 <div style={videoAddRowStyle}>
+                  <span style={{ ...reasonLabelStyle, whiteSpace: 'nowrap', alignSelf: 'center' }}>{tr({ zh: '视频', en: 'Video' })}</span>
                   <input
-                    style={inputStyle}
+                    style={{ ...inputStyle, minWidth: 0 }}
                     placeholder={tr({ zh: '粘贴视频链接(B 站 / 抖音 / YouTube)', en: 'Paste video link' })}
                     value={vidInput}
                     onChange={(e) => setVidInput(e.target.value)}
@@ -492,35 +483,33 @@ function AttemptPopoverBody({
         {/* ④ 编辑(登录用户)— 直接展开,不藏在折叠后 */}
         {canEdit && (
           <>
-            <span style={editLabelStyle}>{isAdmin
-              ? tr({ zh: '编辑这一把(原始 / 改判 / 罚时)', en: 'Edit this solve' })
-              : tr({ zh: '提议修改(需审核;自己的 +2 即时)', en: 'Propose an edit' })}</span>
+            {!isAdmin && <span style={editLabelStyle}>{tr({ zh: '提议修改(需审核;自己的 +2 即时)', en: 'Propose an edit' })}</span>}
             <div style={formStyle}>
-              <label style={rowStyle}>
-                <span style={rowLabelStyle}>{tr({ zh: '操作', en: 'Action' })}</span>
-                <select style={inputStyle} value={mode} onChange={(e) => setMode(e.target.value as 'orig' | 'next' | 'penalty')}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <label style={{ ...rowStyle, flexShrink: 0 }}>
+                <span style={{ ...rowLabelStyle, whiteSpace: 'nowrap' }}>{tr({ zh: '操作', en: 'Action' })}</span>
+                <select style={{ ...inputStyle, width: 'auto', minWidth: 0, maxWidth: '100%' }} value={mode} onChange={(e) => setMode(e.target.value as 'orig' | 'next' | 'penalty')}>
                   {allowPenalty && <option value="penalty">{tr({ zh: '罚时(每档 +2)', en: 'Penalty (+2 each)' })}</option>}
                   <option value="orig">{tr({ zh: '更正前(原始)', en: 'Original (before)' })}</option>
                   <option value="next">{tr({ zh: '更正后(改判)', en: 'Corrected (after)' })}</option>
                 </select>
               </label>
-              <span style={curStyle}>{tr({ zh: '当前', en: 'now' })} <SolveValue value={value} penalty={penalty} format={format} /></span>
               {mode === 'orig' && (
-                <label style={rowStyle}>
-                  <span style={rowLabelStyle}>{tr({ zh: '原始值(更正前)', en: 'Original value' })}</span>
+                <label style={{ ...rowStyle, flex: 1, minWidth: 0 }}>
+                  <span style={rowLabelStyle}>{tr({ zh: '原始值', en: 'Original value' })}</span>
                   <input style={inputStyle} value={orig} onChange={(e) => setOrig(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') onClose(); }} />
                 </label>
               )}
               {mode === 'next' && (
-                <label style={rowStyle}>
+                <label style={{ ...rowStyle, flex: 1, minWidth: 0 }}>
                   <span style={rowLabelStyle}>{tr({ zh: '改判为(更正后)', en: 'Corrected to' })}</span>
                   <input style={inputStyle} value={next} onChange={(e) => setNext(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') onClose(); }} />
                 </label>
               )}
               {mode === 'penalty' && allowPenalty && (
-                <label style={rowStyle}>
+                <label style={{ ...rowStyle, flex: 1, minWidth: 0 }}>
                   <span style={rowLabelStyle}>{tr({ zh: '罚时(每档 +2)', en: 'Penalty (+2 each)' })}</span>
                   <select style={inputStyle} value={pen} onChange={(e) => setPen(e.target.value)}>
                     {Array.from({ length: maxPenaltyCount }, (_, i) => i + 1).map((n) => (
@@ -529,6 +518,7 @@ function AttemptPopoverBody({
                   </select>
                 </label>
               )}
+              </div>
               <label style={rowStyle}>
                 <span style={rowLabelStyle}>{tr({ zh: '原因', en: 'Reason' })}</span>
                 <input style={inputStyle} value={note} onChange={(e) => setNote(e.target.value)}

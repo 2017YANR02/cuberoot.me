@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { createUniforms, updateFrameUniforms } from './core/SharedUniforms.js';
-import { bakeProceduralTextures, disposeProceduralTextures } from './gfx/ProceduralTextures.js';
+import { bakeProceduralTextures, bakeOceanTextures, disposeProceduralTextures } from './gfx/ProceduralTextures.js';
 import { Atmosphere } from './sky/Atmosphere.js';
 import { Clouds } from './sky/Clouds.js';
 import { SkyRenderer } from './sky/SkyRenderer.js';
@@ -9,11 +9,18 @@ import { Rain } from './weather/Precipitation.js';
 import { Lightning } from './weather/Lightning.js';
 import { Waterspout } from './weather/Waterspout.js';
 
-// Bounds: one renderer/scene, bounded GPU allocations, no network assets, no ocean.
+import { OceanFFT } from './ocean/OceanFFT.js';
+import { OceanMesh } from './ocean/OceanMesh.js';
+import { ISLAND } from '../space-island';
+
+// Bounds: one renderer/scene, bounded GPU allocations, no network assets, one lazy ocean shared across room styles.
 // Frozen weather never advances time or flashes; mirrors use their own view rays.
 export class WeatherSystem {
   constructor(renderer, narrow, roofShader, roofUniforms, invalidate, onError) {
     this.renderer = renderer;
+    this.narrow = narrow;
+    this.island = false;
+    this.oceanDirty = false;
     this.U = createUniforms();
     this.root = new THREE.Group();
     this.root.name = 'abyssal-weather';
@@ -51,23 +58,30 @@ export class WeatherSystem {
         envSize: narrow ? 256 : 512, cloudSteps: 256, cloudLightSteps: narrow ? 3 : 5,
       }, this.U);
       this.sky.setCloudTextures(this.clouds.screenRT.texture, this.clouds.envTexture);
-      this.status = 'ready'; this.dirty = true; invalidate();
+      this.status = 'ready'; this.ensureOcean(); this.dirty = true; invalidate();
     }).catch(error => {
       if (this.abort.signal.aborted) return;
       this.status = 'error'; console.error('ABYSSAL weather initialization failed', error); onError();
     });
   }
 
-  set({ cloud, rain, wind, fog, storm, tornado, night, sand, urban }) {
+  set({ cloud, rain, wind, fog, storm, tornado, night, sand, urban, island = false }) {
+    this.island = island;
+    this.ensureOcean();
+    this.oceanDirty = island;
     this.weather.set({
-      windSpeed: wind, windAngle: 0.6, gustiness: storm ? 0.7 : 0.25,
+      windSpeed: island ? Math.max(3.2, wind * 1.25) : wind, windAngle: 0.6, gustiness: storm ? 0.7 : 0.25,
+      swellHs: island ? .55 + wind * .14 : 1.4, swellPeriod: 8 + wind * .16,
+      choppiness: .9 + Math.min(wind, 22) * .012,
+      waterScatter: new THREE.Vector3(.022 + cloud * .028, .09 + cloud * .055, .12 + cloud * .035),
+      waterAbsorb: new THREE.Vector3(.004, .025, .038),
       rain, turbidity: sand ? 7 : 1 + cloud * 2.5, mieG: 0.78,
       sunElevation: night ? -0.06 : 0.55, sunAzimuth: 2.26,
       sunIntensity: night ? 0.5 : 4.5, starIntensity: night ? 1 : 0,
       cloudCoverage: cloud, cloudDensity: cloud > 0.8 ? 0.85 : 0.55,
       cloudBottom: cloud > 0.8 ? 600 : 1200, cloudTop: cloud > 0.8 ? 3200 : 4000,
       cloudAnvil: storm ? 0.65 : 0, storm: storm ? 1 : cloud * 0.35,
-      fog, lightningRate: storm ? 0.12 : 0, seaLevel: urban ? -120 : -0.6,
+      fog, lightningRate: storm ? 0.12 : 0, seaLevel: island ? ISLAND.sea : urban ? -120 : -0.6,
     }, true);
     this.storm = storm; this.tornado = tornado;
     this.lightning.clear(); this.spout.clear(); this.flash.intensity = 0;
@@ -83,6 +97,10 @@ export class WeatherSystem {
     this.motion = motion;
     updateFrameUniforms(U, camera, camera.projectionMatrix, dt, time, this.frame++);
     this.weather.update(dt);
+    if (this.island && this.ocean && (dt > 0 || this.oceanDirty)) {
+      this.ocean.update(dt); this.oceanDirty = false;
+    }
+    this.oceanMesh?.update(camera.position, U.uSeaLevel.value);
     if (motion && this.storm && time >= this.nextStrike) {
       const angle = -Math.PI * (0.25 + Math.random() * 0.6);
       this.lightning.strike(Math.cos(angle) * 3000, Math.sin(angle) * 3000, this.weather.state.cloudBottom);
@@ -113,8 +131,22 @@ export class WeatherSystem {
     }
   }
 
+  ensureOcean() {
+    if (this.island && this.status === 'ready' && !this.ocean) {
+      this.oceanTextures = bakeOceanTextures(this.renderer, this.narrow);
+      this.U.uFoamTex.value = this.oceanTextures.foam.texture;
+      this.U.uRippleTex.value = this.oceanTextures.ripple.texture;
+      this.ocean = new OceanFFT(this.renderer, { size: this.narrow ? 64 : 128 });
+      this.oceanMesh = new OceanMesh(this.ocean, this.atmosphere, { oceanGridX: this.narrow ? 128 : 256, oceanGridY: this.narrow ? 96 : 180 }, this.clouds?.shared, this.U);
+      this.root.add(this.oceanMesh.mesh); this.oceanDirty = true;
+    }
+    if (this.oceanMesh) this.oceanMesh.mesh.visible = this.island;
+  }
+
   dispose() {
     this.abort.abort();
+    this.oceanMesh?.dispose(); this.ocean?.dispose();
+    this.oceanTextures?.foam.dispose(); this.oceanTextures?.ripple.dispose();
     this.clouds?.dispose();
     if (this.textures) disposeProceduralTextures(this.textures);
     this.rain.dispose(); this.lightning.dispose(); this.spout.dispose();

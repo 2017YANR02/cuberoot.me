@@ -2402,7 +2402,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   ? t('recon.submitting')
                   : isEditing
                     ? t('recon.saveChanges')
-                    : timingOnly ? tr({ zh: '保存耗时', en: 'Save durations' }) : t('recon.submitRecon')}
+                    : timingOnly ? tr({ zh: '保存', en: 'Save' }) : t('recon.submitRecon')}
               </button>
               <Link href={isEditing ? `${langPrefix}/recon/${editId}` : `${langPrefix}/recon`} className="submit-btn submit-btn-cancel">
                 {t('recon.cancel')}

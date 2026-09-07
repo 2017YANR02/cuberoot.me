@@ -64,21 +64,21 @@ export class SpaceWeather {
 
   get environment() { return this.engine.environment?.texture; }
 
-  set(kind: Weather, style: RoomStyle, room: THREE.Group) {
+  set(kind: Weather, style: RoomStyle, room: THREE.Group, island = false) {
     this.clearEffects();
     this.kind = kind; this.style = style; this.elapsed = 0; this.lastTime = 0;
     const [cloud, particle, density, wind] = presets[kind];
     this.uniforms.uTime.value = 0;
     this.uniforms.uKind.value = particle; this.uniforms.uDensity.value = density; this.uniforms.uWind.value = wind;
     this.uniforms.uCompany.value = Number(style === 'company');
-    this.uniforms.uUrban.value = Number(style === 'penthouse' || style === 'cyberpunk');
+    this.uniforms.uUrban.value = Number(!island && (style === 'penthouse' || style === 'cyberpunk'));
     this.uniforms.uSnow.value = kind === 'snow' || kind === 'blizzard' ? 0.88 : kind === 'sleet' ? 0.3 : 0;
     this.uniforms.uWet.value = particle === 1 || particle === 3 || kind === 'sleet' || kind === 'rainbow' ? 1 : 0;
     this.uniforms.uTint.value.setHex(particle === 4 ? kind === 'sandstorm' ? 0xb9a17c : 0x9f997b : 0xdce8f0);
     this.storm = ['lightning', 'thunderstorm', 'typhoon'].includes(kind);
-    this.animated = wind > 0 || particle > 0 || this.storm || kind === 'mudslide';
+    this.animated = island || wind > 0 || particle > 0 || this.storm || kind === 'mudslide';
     this.engine.set({ cloud, rain: particle === 1 ? density : kind === 'sleet' ? density * .5 : 0,
-      wind, fog: presets[kind][4], storm: this.storm, tornado: kind === 'tornado',
+      island, wind, fog: presets[kind][4], storm: this.storm, tornado: kind === 'tornado',
       night: style === 'cyberpunk', sand: kind === 'sandstorm', urban: this.uniforms.uUrban.value > 0 });
     if (kind === 'sleet') this.precipitation(2, density * .5);
     else if (particle > 1) this.precipitation(particle, density);

@@ -14,8 +14,10 @@ import { surfaceHit, visibleBounds } from '@/app/[lang]/space/space-scene';
 import { weatherRoof } from '@/app/[lang]/space/space-weather';
 import { createUniforms } from '@/app/[lang]/space/abyssal/core/SharedUniforms.js';
 import { Lightning } from '@/app/[lang]/space/abyssal/weather/Lightning.js';
+import { Weather as AbyssalWeather } from '@/app/[lang]/space/abyssal/weather/Weather.js';
+import { ISLAND, islandHeight } from '@/app/[lang]/space/space-island';
 import { WEATHER, VILLA_ROOMS, type Weather } from '@/app/[lang]/space/space-state';
-import { commitLayout, INITIAL_LAYOUT, MAX_OBJECTS, movePosition, parseLayout, ROOMS, travelHistory, validSpaceMove, walkFloor, walkStep, type Vec3, type History, type PuzzleKind, type RoomStyle } from '@/app/[lang]/space/space-state';
+import { commitLayout, ENVIRONMENTS, type Environment, INITIAL_LAYOUT, MAX_OBJECTS, movePosition, parseLayout, ROOMS, travelHistory, validSpaceMove, walkFloor, walkStep, type Vec3, type History, type PuzzleKind, type RoomStyle } from '@/app/[lang]/space/space-state';
 
 describe('space walking and tabletop placement', () => {
   it('blocks walls, slides along them and prevents tunneling or invalid movement', () => {
@@ -54,6 +56,69 @@ describe('space walking and tabletop placement', () => {
 });
 
 describe('cube space saved layouts', () => {
+  it('preserves cubes and environment across every style/weather combination, including undo and legacy imports', () => {
+    expect(parseLayout(JSON.stringify(INITIAL_LAYOUT)).environment).toBeUndefined();
+    let history: History = { past: [], current: INITIAL_LAYOUT, future: [] };
+    for (const environment of Object.keys(ENVIRONMENTS) as Environment[])
+      for (const room of Object.keys(ROOMS) as RoomStyle[])
+        for (const weather of Object.keys(WEATHER) as Weather[]) {
+          const before = history.current, next = { ...before, environment, room, weather };
+          history = commitLayout(history, next);
+          expect(parseLayout(JSON.stringify(next))).toEqual(next);
+          expect(next.objects).toEqual(INITIAL_LAYOUT.objects);
+          expect(travelHistory(history, 'undo').current).toEqual(before);
+          expect(travelHistory(travelHistory(history, 'undo'), 'redo').current).toEqual(next);
+        }
+    for (const environment of ['unknown', '__proto__', 'constructor', null, 0, {}, []])
+      expect(() => parseLayout(JSON.stringify({ ...INITIAL_LAYOUT, environment }))).toThrow('environment');
+  });
+
+  it('keeps the complete villa and office footprint dry with a continuous submerged coast', () => {
+    for (let x = -33; x <= 33; x += 3) for (let z = -18; z <= 25; z += 3)
+      expect(islandHeight(x, z)).toBe(-.65);
+    for (const room of Object.values(VILLA_ROOMS)) expect(islandHeight(room.x, room.z)).toBe(-.65);
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 24) {
+      const at = (r: number) => islandHeight(ISLAND.x + Math.cos(a) * ISLAND.rx * r, ISLAND.z + Math.sin(a) * ISLAND.rz * r);
+      expect(at(0)).toBe(-.65);
+      expect(at(1.7)).toBe(-26.5);
+      let previous = at(0), crosses = 0;
+      for (let i = 1; i <= 170; i++) {
+        const h = at(i / 100);
+        expect(Number.isFinite(h)).toBe(true);
+        expect(h <= previous).toBe(true);
+        expect(previous - h < 1).toBe(true);
+        if (previous > ISLAND.sea && h <= ISLAND.sea) crosses++;
+        previous = h;
+      }
+      expect(crosses).toBe(1);
+    }
+  });
+
+  it('feeds wind, swell, sea level and persistent foam into the upstream ocean without shared state', () => {
+    const uniforms = createUniforms(), other = createUniforms();
+    const app = { time: 0, atmosphere: { sunDir: new THREE.Vector3() }, sky: {}, ocean: { params: {} as Record<string, number> } };
+    const weather = new AbyssalWeather(app, uniforms);
+    weather.set({ windSpeed: 5, gustiness: 0, swellHs: .55, swellPeriod: 8, choppiness: .9, seaLevel: ISLAND.sea }, true);
+    weather.update(0);
+    expect(app.ocean.params.windSpeed).toBe(5);
+    expect(app.ocean.params.swellHs).toBe(.55);
+    expect(app.ocean.params.swellPeriod).toBe(8);
+    expect(uniforms.uWhitecapCoverage.value).toBeCloseTo(3.84e-6 * 5 ** 3.41);
+    expect(uniforms.uSeaLevel.value).toBe(ISLAND.sea);
+    expect(other.uSeaLevel.value).toBe(0);
+    weather.set({ windSpeed: 30, swellHs: 3.6, swellPeriod: 11.52, choppiness: 1.164 }, true);
+    weather.update(0);
+    expect(app.ocean.params.windSpeed).toBe(30);
+    expect(app.ocean.params.swellHs).toBe(3.6);
+    expect(app.ocean.params.choppiness).toBe(1.164);
+    expect(uniforms.uWhitecapCoverage.value).toBe(.16);
+    expect(app.ocean.params.foamDecay).toBe(.5);
+    expect(app.ocean.params.bubbleDecay).toBe(.11);
+    const before = { ...app.ocean.params };
+    weather.update(0);
+    expect(app.ocean.params).toEqual(before);
+  });
+
   it('isolates weather scenes and clears active and scheduled lightning on weather changes', () => {
     const uniforms = createUniforms(), other = createUniforms();
     const lightning = new Lightning(uniforms);

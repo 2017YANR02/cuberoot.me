@@ -8,6 +8,65 @@ import { NOISE_GLSL } from './NoiseGLSL.js';
  * Nothing is loaded from disk or the network.
  */
 
+const FOAM_FRAG = /* glsl */ `
+${NOISE_GLSL}
+in vec2 vUv;
+layout(location = 0) out vec4 oCol;
+void main(){
+  vec2 p = vUv;
+  // clustered bubble rafts
+  float w1 = 1.0 - worley2Tiled(p, 6.0);
+  float w2 = 1.0 - worley2Tiled(p, 14.0);
+  float w3 = 1.0 - worley2Tiled(p, 32.0);
+  float w4 = 1.0 - worley2Tiled(p, 72.0);
+
+  float clusters = clamp(w1 * 0.55 + w2 * 0.3 + w3 * 0.18, 0.0, 1.0);
+  clusters = pow(clusters, 1.35);
+
+  float bubbles = clamp(w3 * 0.5 + w4 * 0.7, 0.0, 1.0);
+  bubbles = smoothstep(0.32, 0.92, bubbles);
+
+  float fbm = fbm2Tiled(p, 8.0, 6);
+  float streak = fbm2Tiled(vec2(p.x * 0.35, p.y * 3.0), 8.0, 5);
+
+  // dissolve mask drives foam erosion over time
+  float dissolve = clamp(fbm * 0.6 + w2 * 0.4, 0.0, 1.0);
+
+  oCol = vec4(clusters, bubbles, clamp(fbm * 1.15, 0.0, 1.0), dissolve * 0.75 + streak * 0.25);
+}
+`;
+
+/**
+ * Capillary relief that rides on the spectrum. Rounded wavelets, not cells:
+ * the previous field was mostly a Worley ridge network amplified forty times,
+ * which reads as etched metal the moment anisotropic filtering stops blurring
+ * it into a haze. Gradients are normalised by the sample step so the slope is a
+ * property of the field rather than of the bake resolution.
+ */
+const RIPPLE_FRAG = /* glsl */ `
+${NOISE_GLSL}
+uniform float uRes;
+uniform float uSlope;
+in vec2 vUv;
+layout(location = 0) out vec4 oCol;
+float h(vec2 p){
+  float a = fbm2Tiled(p, 11.0, 5);
+  float b = fbm2Tiled(p + vec2(3.71, 1.29), 26.0, 4);
+  // A trace of cellular structure for the dimpled look of a wind-ruffled
+  // surface, rounded off hard so it contributes shape and not creases.
+  float c = smoothstep(0.10, 0.95, 1.0 - worley2Tiled(p, 30.0));
+  return a * 0.56 + b * 0.30 + c * 0.14;
+}
+void main(){
+  vec2 p = vUv;
+  float e = 1.5 / uRes;
+  float gx = (h(p + vec2(e, 0.0)) - h(p - vec2(e, 0.0))) / (2.0 * e);
+  float gy = (h(p + vec2(0.0, e)) - h(p - vec2(0.0, e))) / (2.0 * e);
+  vec3 n = normalize(vec3(-gx * uSlope, 1.0, -gy * uSlope));
+  oCol = vec4(n * 0.5 + 0.5, h(p));
+}
+`;
+
 // Perlin-Worley cloud base shape, baked to a horizontal atlas then uploaded as 3D.
 const CLOUD_SHAPE_FRAG = /* glsl */ `
 ${NOISE_GLSL}
@@ -126,8 +185,12 @@ void main(){
 }
 `;
 
-function bake(renderer, frag, w, h, uniforms = {}, type = THREE.UnsignedByteType) {
-  const rt = makeRT(w, h, { type, wrap: THREE.RepeatWrapping, name: 'bake' });
+function bake(renderer, frag, w, h, uniforms = {}, mipmaps = false) {
+  // Mips must be enabled before rendering: changing the flag after a one-shot
+  // bake leaves lower levels empty, so filtered foam/ripple samples turn black.
+  const rt = makeRT(w, h, { type: THREE.UnsignedByteType, wrap: THREE.RepeatWrapping, name: 'bake', mipmaps,
+    minFilter: mipmaps ? THREE.LinearMipmapLinearFilter : THREE.LinearFilter,
+    anisotropy: mipmaps ? Math.min(8, renderer.capabilities.getMaxAnisotropy()) : 1 });
   const pass = new FullScreenPass(frag, uniforms, { name: 'bake' });
   pass.render(renderer, rt);
   pass.dispose();
@@ -196,11 +259,7 @@ export async function bakeProceduralTextures(renderer, onProgress = () => {}, si
   onProgress('baking synoptic weather map');
   await yieldFrame();
   signal?.throwIfAborted();
-  const weatherRT = bake(renderer, WEATHER_FRAG, 1024, 1024);
-  weatherRT.texture.wrapS = weatherRT.texture.wrapT = THREE.RepeatWrapping;
-  weatherRT.texture.minFilter = THREE.LinearMipmapLinearFilter;
-  weatherRT.texture.generateMipmaps = true;
-  weatherRT.texture.needsUpdate = true;
+  const weatherRT = bake(renderer, WEATHER_FRAG, 1024, 1024, {}, true);
   out.weather = weatherRT.texture;
   out._weatherRT = weatherRT;
 
@@ -231,4 +290,12 @@ export async function bakeProceduralTextures(renderer, onProgress = () => {}, si
 export function disposeProceduralTextures(textures) {
   textures._curlRT?.dispose(); textures._weatherRT?.dispose();
   textures.cloudShape?.dispose(); textures.cloudDetail?.dispose();
+}
+
+// Lazy: ordinary room environments allocate no ocean textures.
+export function bakeOceanTextures(renderer, narrow) {
+  const size = narrow ? 512 : 1024;
+  const foam = bake(renderer, FOAM_FRAG, size, size, {}, true);
+  const ripple = bake(renderer, RIPPLE_FRAG, size, size, { uRes: { value: size }, uSlope: { value: .030 } }, true);
+  return { foam, ripple };
 }

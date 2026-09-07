@@ -26,7 +26,7 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
-import { computeReconTimingMean, rowHasReconStats, computeReconRoundAvg, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
+import { computeReconTimingMean, findReconForAttempt, rowHasReconStats, computeReconRoundAvg, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 import { AvgDec } from '@/components/wca-results/AvgDec';
 import { trimEmptyAttempts } from '@/lib/wca-ao5-brackets';
 import { fetchPersonRankHistory, wcaResultRowKey, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
@@ -580,6 +580,10 @@ function EventRoundsList({
             const effAttempts = effectiveAttempts(chain, r.attempts);
             // 「#」开 + 该轮有复盘(带 stm/tps)→ 详细成绩下补 STM/TPS 两行,轮次列同步出两行标签。
             const hasReconStats = showAttemptRanks && rowHasReconStats(reconLookup, r.competition_id, eventId, r.round_type_id, effAttempts.length);
+            const hasTimingStats = showAttemptRanks && effAttempts.some((_, i) => {
+              const info = findReconForAttempt(reconLookup, r.competition_id, eventId, r.round_type_id, i + 1);
+              return info?.pickupTime != null && info?.putdownTime != null;
+            });
             const speedUnit = eventId === 'sq1' ? 'SPS' : 'TPS';
             // 平均 STM / 平均 TPS(Ao5 去尾均值),5 把全有复盘才给值,展示在平均列下方两行。
             const roundAvg = hasReconStats ? computeReconRoundAvg(reconLookup, r.competition_id, eventId, r.round_type_id) : null;
@@ -587,7 +591,7 @@ function EventRoundsList({
               <tr
                 key={rowKey}
                 id={`r-${r.competition_id}-${eventId}-${r.round_type_id}`}
-                className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''} ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''} ${hasReconStats ? 'wp-row-has-recon-stats' : ''}`}
+                className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''} ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''} ${hasReconStats || hasTimingStats ? 'wp-row-has-recon-stats' : ''}`}
                 onClick={(e) => handleRowClick(e, r.competition_id, r.round_type_id)}
               >
                 <td className="wp-cell-comp">
@@ -628,6 +632,11 @@ function EventRoundsList({
                         <span className="wp-round-sublabel">{speedUnit}</span>
                       </>
                     )}
+                    {hasTimingStats && <>
+                      <span className="wp-round-sublabel">{tr({ zh: '起表', en: 'Pickup' })}</span>
+                      <span className="wp-round-sublabel">{tr({ zh: '拍表', en: 'Putdown' })}</span>
+                      <span className="wp-round-sublabel">{tr({ zh: '起拍表', en: 'Pickup + putdown' })}</span>
+                    </>}
                   </span>
                 </td>
                 <td className={`wp-cell-pos ${effPos === 1 ? 'wp-pos-first' : ''} ${oldPos.length > 0 ? 'wp-cell-changed' : ''}`}>
@@ -739,6 +748,7 @@ function EventRoundsList({
                     attemptRanks={showAttemptRanks ? (rank?.attemptRanks ?? null) : null}
                     singleRecord={showAttemptRanks ? singleRecord : null}
                     showReconStats={hasReconStats}
+                    showTimingStats={hasTimingStats}
                     cols={maxAttempts}
                     onEdit={(index, newValue, note) =>
                       recordAttemptEdit({

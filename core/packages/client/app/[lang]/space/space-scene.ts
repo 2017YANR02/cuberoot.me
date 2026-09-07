@@ -25,7 +25,7 @@ import { validSpaceMove } from './space-state';
 import { SpaceWeather } from './space-weather';
 
 type Entry = { root: THREE.Group; model: Cube | Sq1Cube | PyraCube | MegaminxCube | SkewbCube; proxy: THREE.Mesh; data: SpaceObject; appliedMoves: string; turning?: boolean; materials: Map<THREE.Material, THREE.MeshPhysicalMaterial>; originals: Map<THREE.Mesh, THREE.Material | THREE.Material[]> };
-export type View = Destination | 'home' | 'front' | 'side' | 'top';
+export type View = Destination | 'island' | 'shore' | 'home' | 'front' | 'side' | 'top';
 export type Mode = 'translate' | 'rotate' | 'twist';
 
 export function surfaceHit(ray: THREE.Raycaster, surfaces: THREE.Mesh[]) {
@@ -54,7 +54,7 @@ export function visibleBounds(model: THREE.Object3D, relativeTo?: THREE.Object3D
 
 export class SpaceScene {
   private scene = new THREE.Scene();
-  private camera = new THREE.PerspectiveCamera(42, 1, 0.05, 20000);
+  private camera = new THREE.PerspectiveCamera(42, 1, 0.05, 100000);
   private disposed = false;
   private sky: THREE.DataTexture | null = null;
   private renderer: THREE.WebGLRenderer;
@@ -467,10 +467,13 @@ export class SpaceScene {
     // An external edit/undo cancels any unfinished gesture before reconciling models.
     if (!this.turnDrag || mode !== this.mode || selected !== this.selected || layout.objects.find(o => o.id === selected)?.moves?.join(' ') !== this.turnDrag.entry.appliedMoves) this.cancel();
     const style = layout.room ?? 'minimal';
-    if (this.room?.style !== style) {
+    const environment = layout.environment ?? 'original';
+    this.orbit.maxTargetRadius = environment === 'island' ? 500 : 70;
+    const environmentChanged = this.room?.environment !== environment;
+    if (this.room?.style !== style || environmentChanged) {
       this.weather.forgetRoom();
       this.room?.dispose();
-      this.room = new SpaceRoom(style, [this.transform.getHelper(), this.outline, this.grid, this.drop], this.render);
+      this.room = new SpaceRoom(style, [this.transform.getHelper(), this.outline, this.grid, this.drop], this.render, environment);
       this.scene.add(this.room.root);
       this.room.resize(this.host.clientWidth);
       const p = this.room.palette;
@@ -497,13 +500,13 @@ export class SpaceScene {
       this.pedestalMaterial.roughness = 0.22;
       // The room owns terrain and paving; the legacy plane would cover them.
       this.surfaces.forEach((surface, i) => { surface.visible = style !== 'company' && i > 0; });
-      this.view(style === 'company' ? 'interior' : this.currentView);
+      this.view(environmentChanged ? environment === 'island' ? 'island' : 'exterior' : style === 'company' ? 'interior' : this.currentView);
     }
     this.weatherMotion = layout.weatherMotion ?? true;
-    const weather = layout.weather ?? 'sunny', weatherKey = `${style}:${weather}`;
+    const weather = layout.weather ?? 'sunny', weatherKey = `${style}:${environment}:${weather}`;
     if (weatherKey !== this.weatherKey) {
       this.weatherKey = weatherKey;
-      this.weather.set(weather, style, this.room!.root);
+      this.weather.set(weather, style, this.room!.root, environment === 'island');
       this.scene.background = null;
       const light = this.weather.lighting(), cyber = style === 'cyberpunk', company = style === 'company';
       this.scene.environment = company ? this.environment.texture : this.weather.environment ?? this.environment.texture;
@@ -582,6 +585,8 @@ export class SpaceScene {
       target.set(0, -3, 4);
       position.set(mobile ? 95 : 55, mobile ? 55 : 27, mobile ? 115 : 64);
     }
+    if (view === 'island') { position.set(mobile ? 162 : 155, mobile ? 90 : 64, mobile ? 168 : 162); target.set(-6, -2, 3); }
+    if (view === 'shore') { position.set(32, -1.8, 63); target.set(8, -4.8, 135); }
     const cameras: Partial<Record<View, [Vec3, Vec3]>> = this.room?.style === 'company' ? {
       interior: [[-21.5, 1.7, 4.9], [-23.3, 1.15, 0.8]], study: [[-8.2, 1.65, 3.8], [-13.3, 1.25, -2.4]], courtyard: [[-14.3, 1.7, 12], [-16.5, 1.15, 8.6]],
     } : {
