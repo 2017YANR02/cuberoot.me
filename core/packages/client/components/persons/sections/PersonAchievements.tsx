@@ -19,7 +19,6 @@ export function GrandSlamBadges({ rows, wcaId, isZh }: { rows: Achievement[]; wc
   if (!achievements.length) return null;
   return (
     <section className="wp-achievements" aria-label={t('成就', 'Achievements')}>
-      <h2>{t('成就', 'Achievements')}</h2>
       <div className="wp-achievements-list">
         {achievements.map(row => {
           const name = eventDisplayName(row.eventId, isZh);

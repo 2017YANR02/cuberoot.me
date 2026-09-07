@@ -132,7 +132,6 @@ export default function PersonHero({
     {
       key: 'medals',
       items: [
-        { key: 'competitions', label: t('比赛', 'Competitions'), value: profile.competition_count },
         { key: 'world', label: <RecordBadge record="WR" />, value: profile.records.world },
         { key: 'continental', label: <RecordBadge record="CR" iso2={p.country_iso2} />, value: profile.records.continental },
         { key: 'national', label: <RecordBadge record="NR" />, value: profile.records.national },
@@ -140,6 +139,7 @@ export default function PersonHero({
         { key: 'gold', label: '🥇', value: profile.medals.gold },
         { key: 'silver', label: '🥈', value: profile.medals.silver },
         { key: 'bronze', label: '🥉', value: profile.medals.bronze },
+        { key: 'competitions', label: t('比赛', 'Competitions'), value: profile.competition_count },
       ].filter((item) => item.value > 0),
     },
   ].filter((collection) => collection.items.some((item) => item.value > 0));

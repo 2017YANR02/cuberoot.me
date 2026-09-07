@@ -1,5 +1,4 @@
 .wp-achievements { max-width: 100%; }
-.wp-achievements h2 { margin: 0 0 8px; font-size: 0.8rem; font-weight: 600; }
 .wp-achievements-list { display: flex; flex-wrap: wrap; gap: 16px; }
 .wp-achievement {
     display: flex; flex-direction: column; align-items: center; gap: 3px;
