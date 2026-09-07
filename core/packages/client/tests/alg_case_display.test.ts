@@ -2,9 +2,29 @@ import { describe, it, expect } from 'vitest';
 import {
   displayOllName, displayPllName, ollCommentName, pllCommentName,
   displayAlgCaseName, OLL_NAME_BY_NUMBER, isEpll, pllCommentLabel,
-  buildOllNameByGroup,
+  buildOllNameByGroup, primaryCaseName,
 } from '@/lib/alg_case_display';
 import type { AlgCase } from '@cuberoot/shared';
+
+describe('primaryCaseName compact card labels', () => {
+  it.each([
+    ['2x2', 'eg1', 'EG1 S 1', 'S1'],
+    ['2x2', 'eg2', 'EG2 Pi 6', 'Pi6'],
+    ['2x2', 'leg1', 'LEG1 AS 2', 'AS2'],
+    ['3x3', 'zbll', 'ZBLL U 13', 'U13'],
+    ['3x3', 'coll', 'AS 1', 'S-1'],
+    ['3x3', 'oll', 'OLL 27', 'S+ (27)'],
+    ['3x3', 'f2l', 'F2L 1', '1'],
+    ['2x2', 'eg1', 'EG10 S 1', 'EG10 S 1'],
+    ['2x2', 'eg1', 'EG1', 'EG1'],
+    ['2x2', 'eg1', '', ''],
+  ])('%s/%s: %s → %s', (puzzle, set, name, expected) => {
+    expect(primaryCaseName(puzzle, set, { name, algs: [], subgroup: '', setup: '', sticker: { kind: 'f2l', fl: '' } })).toBe(expected);
+  });
+  it('retains the metadata name priority', () => {
+    expect(primaryCaseName('3x3', 'pll', { name: 'Aa', algs: [], subgroup: '', setup: '', sticker: { kind: 'f2l', fl: '' }, meta: { no: 1, ollcp: 'PLL-A+' } })).toBe('A+');
+  });
+});
 
 const groupedCase = (subgroup: string, oll?: string): AlgCase => ({
   name: `case ${subgroup}`,
