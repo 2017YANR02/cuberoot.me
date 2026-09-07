@@ -11,7 +11,7 @@ vi.mock('@/components/AppLink', () => ({ default: ({ href, children }: { href: s
 vi.mock('@/components/platform/PlatformQrLanding', () => ({ PlatformQrLanding: () => null }));
 import { PlatformDomainContent } from '@/components/platform/PlatformDomainContent';
 
-it('groups numbered lessons into three native folders without losing links or changing other courses', async () => {
+it('groups numbered lessons into three cover cards without losing links or changing other courses', async () => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   const lessons = ['先导课', '试听课', '正式课'].flatMap((prefix, group) =>
     Array.from({ length: [2, 2, 19][group] }, (_, index) => ({
@@ -24,7 +24,9 @@ it('groups numbered lessons into three native folders without losing links or ch
   })));
   try {
     await render(lessons);
-    expect([...host.querySelectorAll('summary')].map(node => node.textContent)).toEqual(['先导课', '试听课', '正式课']);
+    expect(host.querySelector('.platform-lesson-grid')).not.toBeNull();
+    expect(host.querySelectorAll('.platform-lesson-cover')).toHaveLength(3);
+    expect([...host.querySelectorAll('.platform-lesson-card-title')].map(node => node.textContent)).toEqual(['先导课', '试听课', '正式课']);
     expect([...host.querySelectorAll('details')].map(node => node.querySelectorAll('a').length)).toEqual([2, 2, 19]);
     expect([...host.querySelectorAll('a')].map(node => node.getAttribute('href'))).toEqual(
       lessons.map(lesson => `/platform/courses/course/learn/${lesson.id}`));
@@ -34,7 +36,7 @@ it('groups numbered lessons into three native folders without losing links or ch
     expect(folder.open).toBe(true);
     locale.english = true;
     await render(lessons);
-    expect([...host.querySelectorAll('summary')].map(node => node.textContent)).toEqual(['Introduction', 'Trial lessons', 'Core lessons']);
+    expect([...host.querySelectorAll('.platform-lesson-card-title')].map(node => node.textContent)).toEqual(['Introduction', 'Trial lessons', 'Core lessons']);
     expect(host.querySelector('a')?.textContent).toBe('Lesson 0-0');
     await render([...lessons, { id: 'extra', titleZh: '附加内容' }]);
     expect(host.querySelector('details')).toBeNull();
