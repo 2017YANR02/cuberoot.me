@@ -5,6 +5,17 @@ export const DRIVE_NAME_MAX_LENGTH = 255;
 
 export type DriveNodeKind = 'file' | 'folder';
 
+export type DriveCompressionResolution = 'original' | '1080p';
+
+export interface DriveCompression {
+  id: string;
+  resolution: DriveCompressionResolution;
+  status: 'queued' | 'encoding' | 'validating' | 'ready' | 'failed';
+  progress: number;
+  outputNodeId: string | null;
+  error: string | null;
+}
+
 export interface DriveNode {
   id: string;
   parentId: string | null;
@@ -13,6 +24,9 @@ export interface DriveNode {
   shared: boolean;
   memberShared?: boolean;
   ownerName?: string;
+  canCompress?: boolean;
+  compressionSourceId?: string;
+  compressions?: DriveCompression[];
   mimeType: string | null;
   sizeBytes: number;
   createdAt: string;

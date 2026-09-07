@@ -8,6 +8,7 @@ import {
   DRIVE_UPLOAD_TTL_MS,
   isDrivePreviewableMime,
   normalizeDriveName,
+  type DriveCompression,
   type DriveNode,
   type DriveQuota,
   type DriveSnapshot,
@@ -46,6 +47,7 @@ interface DriveIdentity {
 
 interface NodeRow {
   id: string;
+  owner_user_id?: number | string;
   parent_id: string | null;
   name: string;
   kind: 'file' | 'folder';
@@ -58,6 +60,23 @@ interface NodeRow {
   status: 'uploading' | 'ready';
   created_at: Date | string;
   updated_at: Date | string;
+}
+
+interface CompressionRow {
+  id: string;
+  source_node_id: string;
+  resolution: DriveCompression['resolution'];
+  status: DriveCompression['status'];
+  progress: number;
+  output_node_id: string | null;
+  error: string | null;
+}
+
+function compressionJson(row: CompressionRow): DriveCompression {
+  return {
+    id: row.id, resolution: row.resolution, status: row.status, progress: row.progress,
+    outputNodeId: row.output_node_id, error: row.error,
+  };
 }
 
 interface UploadRow {
@@ -152,11 +171,12 @@ async function requireDrive(c: Context): Promise<DriveIdentity> {
   return current;
 }
 
-async function quota(): Promise<DriveQuota> {
-  const rows = await sql<{ used_bytes: number | string; reserved_bytes: number | string }[]>`
+async function quota(db: postgres.Sql | postgres.TransactionSql = sql): Promise<DriveQuota> {
+  const rows = await db<{ used_bytes: number | string; reserved_bytes: number | string }[]>`
     SELECT
       COALESCE((SELECT SUM(size_bytes) FROM drive_nodes WHERE kind = 'file' AND status = 'ready'), 0) AS used_bytes,
-      COALESCE((SELECT SUM(expected_bytes) FROM drive_uploads WHERE expires_at > NOW()), 0) AS reserved_bytes`;
+      COALESCE((SELECT SUM(expected_bytes) FROM drive_uploads WHERE expires_at > NOW()), 0)
+      + COALESCE((SELECT SUM(reserved_bytes) FROM drive_compressions WHERE status IN ('queued', 'encoding', 'validating')), 0) AS reserved_bytes`;
   return {
     limitBytes: DRIVE_TOTAL_BYTES,
     usedBytes: Number(rows[0]?.used_bytes ?? 0),
@@ -329,14 +349,14 @@ driveRoutes.get('/drive', async (c) => {
           ORDER BY CASE WHEN n.kind = 'folder' THEN 0 ELSE 1 END, LOWER(n.name), n.id`
       : trash
       ? sql<NodeRow[]>`
-          SELECT n.id, n.parent_id, n.name, n.kind, n.mime_type, n.size_bytes, n.storage_key,
+          SELECT n.id, n.owner_user_id, n.parent_id, n.name, n.kind, n.mime_type, n.size_bytes, n.storage_key,
                  n.status, n.created_at, n.updated_at, n.member_shared, share.id IS NOT NULL AS shared
             FROM drive_nodes n
             LEFT JOIN drive_shares share ON share.node_id = n.id
            WHERE n.owner_user_id = ${current.userId} AND n.trashed_at IS NOT NULL AND n.trash_root_id = n.id
            ORDER BY n.trashed_at DESC, n.id`
       : sql<NodeRow[]>`
-          SELECT n.id, n.parent_id, n.name, n.kind, n.mime_type, n.size_bytes, n.storage_key,
+          SELECT n.id, n.owner_user_id, n.parent_id, n.name, n.kind, n.mime_type, n.size_bytes, n.storage_key,
                  n.status, n.created_at, n.updated_at, n.member_shared, share.id IS NOT NULL AS shared
             FROM drive_nodes n
             LEFT JOIN drive_shares share ON share.node_id = n.id
@@ -354,16 +374,70 @@ driveRoutes.get('/drive', async (c) => {
     trash ? Promise.resolve([]) : breadcrumbs(current.userId, parentId, members, all),
   ]);
 
+  const ids = nodes.map((node) => node.id);
+  const jobs = ids.length ? await sql<CompressionRow[]>`
+    SELECT id, source_node_id, resolution, status, progress, output_node_id, error
+    FROM drive_compressions WHERE source_node_id = ANY(${ids}::uuid[]) OR output_node_id = ANY(${ids}::uuid[])` : [];
   const snapshot: DriveSnapshot = {
     allowed: true,
     isAdmin: current.isAdmin,
     isSuperAdmin: current.isSuperAdmin,
-    nodes: nodes.map(nodeJson),
+    nodes: nodes.map((node) => {
+      const source = jobs.find((job) => job.output_node_id === node.id);
+      return {
+        ...nodeJson(node),
+        canCompress: process.env.DRIVE_COMPRESSION_ENABLED === '1' && !trash && !source
+          && node.kind === 'file' && !!node.mime_type?.startsWith('video/')
+          && (Number(node.owner_user_id) === current.userId || current.isSuperAdmin),
+        compressionSourceId: source?.source_node_id,
+        compressions: jobs.filter((job) => job.source_node_id === node.id).map(compressionJson),
+      };
+    }),
     uploads: uploads.map(uploadJson),
     breadcrumbs: currentBreadcrumbs,
     quota: currentQuota,
   };
   return c.json(snapshot);
+});
+
+driveRoutes.post('/drive/files/:id/compress', async (c) => {
+  noStore(c);
+  const current = await requireDrive(c);
+  checkRateLimit(getIp(c), { bucket: 'drive-compress', max: 20 });
+  if (process.env.DRIVE_COMPRESSION_ENABLED !== '1') return c.json({ error: 'compression unavailable' }, 503);
+  const nodeId = uuid(c.req.param('id'));
+  const body: unknown = await c.req.json().catch(() => null);
+  if (!nodeId || !body || typeof body !== 'object' || !('resolution' in body)
+      || (body.resolution !== 'original' && body.resolution !== '1080p')) {
+    return c.json({ error: 'valid video id and resolution are required' }, 400);
+  }
+  const resolution = body.resolution;
+  const result = await sql.begin(async (tx) => {
+    await tx`SELECT pg_advisory_xact_lock(${QUOTA_LOCK_ID})`;
+    const [source] = await tx<NodeRow[]>`
+      SELECT * FROM drive_nodes WHERE id = ${nodeId} AND kind = 'file' AND status = 'ready'
+        AND trashed_at IS NULL AND (owner_user_id = ${current.userId} OR ${current.isSuperAdmin}) FOR UPDATE`;
+    if (!source) return 'missing' as const;
+    if (!source.mime_type?.startsWith('video/') || !source.storage_key || Number(source.size_bytes) <= 0) return 'unsupported' as const;
+    if ((await tx`SELECT 1 FROM drive_compressions WHERE output_node_id = ${nodeId}`).length) return 'derived' as const;
+    const [existing] = await tx<CompressionRow[]>`
+      SELECT * FROM drive_compressions WHERE source_node_id = ${nodeId} AND resolution = ${resolution}`;
+    if (existing && existing.status !== 'failed' && (existing.status !== 'ready' || existing.output_node_id)) return existing;
+    const usage = await quota(tx);
+    if (usage.usedBytes + usage.reservedBytes + Number(source.size_bytes) > DRIVE_TOTAL_BYTES) return 'quota' as const;
+    const [job] = await tx<CompressionRow[]>`
+      INSERT INTO drive_compressions (source_node_id, requested_by, resolution, reserved_bytes)
+      VALUES (${nodeId}, ${current.userId}, ${resolution}, ${source.size_bytes})
+      ON CONFLICT (source_node_id, resolution) DO UPDATE SET
+        requested_by = EXCLUDED.requested_by, status = 'queued', progress = 0,
+        error = NULL, report = NULL, updated_at = NOW()
+      RETURNING *`;
+    return job;
+  });
+  if (result === 'missing') return c.json({ error: 'video not found' }, 404);
+  if (result === 'unsupported' || result === 'derived') return c.json({ error: 'select an original video' }, 400);
+  if (result === 'quota') return c.json({ error: 'Drive storage quota exceeded' }, 413);
+  return c.json({ compression: compressionJson(result) }, 202);
 });
 
 driveRoutes.post('/drive/folders', async (c) => {
@@ -433,11 +507,8 @@ driveRoutes.post('/drive/uploads', async (c) => {
            LIMIT 1`;
         if (!folders.length) return 'folder-missing' as const;
       }
-      const usage = await tx<{ used_bytes: number | string; reserved_bytes: number | string }[]>`
-        SELECT
-          COALESCE((SELECT SUM(size_bytes) FROM drive_nodes WHERE kind = 'file' AND status = 'ready'), 0) AS used_bytes,
-          COALESCE((SELECT SUM(expected_bytes) FROM drive_uploads WHERE expires_at > NOW()), 0) AS reserved_bytes`;
-      const occupied = Number(usage[0].used_bytes) + Number(usage[0].reserved_bytes);
+      const usage = await quota(tx);
+      const occupied = usage.usedBytes + usage.reservedBytes;
       if (occupied + expectedBytes > DRIVE_TOTAL_BYTES) return null;
       const nodes = await tx<NodeRow[]>`
         INSERT INTO drive_nodes (owner_user_id, parent_id, kind, name, mime_type, status)

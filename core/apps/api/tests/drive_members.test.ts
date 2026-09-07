@@ -35,7 +35,7 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('Drive member folders (Postgr
       CREATE TABLE app_users (id BIGINT PRIMARY KEY, display_name TEXT, wca_id TEXT, is_admin BOOLEAN DEFAULT FALSE);
       CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END $$;
     `);
-    for (const migration of ['0184_drive', '0189_drive_shares', '0216_drive_member_folders']) {
+    for (const migration of ['0184_drive', '0189_drive_shares', '0216_drive_member_folders', '0218_drive_compressions']) {
       await sql.unsafe(await readFile(new URL(`../migrations/${migration}.sql`, import.meta.url), 'utf8'));
     }
     await sql`INSERT INTO app_users (id, display_name, is_admin) VALUES (1, 'Owner', true), (2, 'Admin viewer', true), (3, 'Member', false), (4, 'Outsider', false)`;
@@ -139,5 +139,60 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('Drive member folders (Postgr
     expect((await request(1, `/drive/nodes/${shared}/restore`, 'POST')).status).toBe(200);
     expect(await ids('/drive?members=1')).toEqual([]);
     expect((await access()).status).toBe(404);
+  });
+
+  it('queues resolution choices idempotently, enforces ownership, and reserves output quota', async () => {
+    vi.stubEnv('DRIVE_COMPRESSION_ENABLED', '1');
+    try {
+      const file = randomUUID();
+      const output = randomUUID();
+      await sql`INSERT INTO drive_nodes (id, owner_user_id, kind, name, size_bytes, storage_key, mime_type)
+        VALUES (${file}, 1, 'file', 'compression.mp4', 4096, ${`${file.slice(0, 2)}/${file}`}, 'video/mp4')`;
+      const request = (user: number, resolution: unknown, id = file) => app.request(`/drive/files/${id}/compress`, {
+        method: 'POST', headers: { 'X-Test-User': String(user), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resolution }),
+      });
+      expect((await request(4, 'original')).status).toBe(403);
+      expect((await request(3, 'original')).status).toBe(404);
+      expect((await request(2, 'original')).status).toBe(404);
+      for (const body of ['null', '[]', '{']) {
+        expect((await app.request(`/drive/files/${file}/compress`, {
+          method: 'POST', headers: { 'X-Test-User': '1', 'Content-Type': 'application/json' }, body,
+        })).status).toBe(400);
+      }
+      expect((await request(1, '720p')).status).toBe(400);
+      expect((await request(1, null)).status).toBe(400);
+      const repeated = await Promise.all([request(1, 'original'), request(1, 'original')]);
+      expect(repeated.map((response) => response.status)).toEqual([202, 202]);
+      const jobs = await Promise.all(repeated.map((response) => response.json()));
+      expect(jobs[0].compression.id).toBe(jobs[1].compression.id);
+      expect(jobs[0].compression.resolution).toBe('original');
+      const lower = await request(5, '1080p');
+      expect(lower.status).toBe(202);
+      expect((await lower.json()).compression.resolution).toBe('1080p');
+      expect(Number((await sql`SELECT SUM(reserved_bytes) AS total FROM drive_compressions WHERE source_node_id = ${file}`)[0].total)).toBe(8192);
+      const listing = await (await app.request('/drive', { headers: { 'X-Test-User': '1' } })).json();
+      expect(listing.nodes.find((node: { id: string }) => node.id === file).canCompress).toBe(true);
+      expect(listing.nodes.find((node: { id: string }) => node.id === file).compressions).toHaveLength(2);
+      await sql`UPDATE drive_compressions SET status = 'failed', error = 'quality' WHERE source_node_id = ${file} AND resolution = 'original'`;
+      expect((await (await request(1, 'original')).json()).compression.id).toBe(jobs[0].compression.id);
+      await sql`INSERT INTO drive_nodes (id, owner_user_id, kind, name, size_bytes, storage_key, mime_type)
+        VALUES (${output}, 1, 'file', 'compressed.mp4', 1024, ${`${output.slice(0, 2)}/${output}`}, 'video/mp4')`;
+      await sql`UPDATE drive_compressions SET status = 'ready', output_node_id = ${output} WHERE source_node_id = ${file} AND resolution = 'original'`;
+      expect((await request(1, 'original', output)).status).toBe(400);
+      // Source bytes are never rewritten by enqueue or retry.
+      expect(Number((await sql`SELECT size_bytes FROM drive_nodes WHERE id = ${file}`)[0].size_bytes)).toBe(4096);
+      await sql`UPDATE drive_nodes SET trashed_at = NOW(), trash_root_id = id WHERE id = ${file}`;
+      expect((await request(1, '1080p')).status).toBe(404);
+      await sql`UPDATE drive_nodes SET trashed_at = NULL, trash_root_id = NULL WHERE id = ${file}`;
+      await sql`UPDATE drive_compressions SET status = 'failed' WHERE source_node_id = ${file} AND resolution = '1080p'`;
+      await sql`UPDATE drive_nodes SET size_bytes = 21474836480 WHERE id = ${output}`;
+      expect((await request(1, '1080p')).status).toBe(413);
+      await sql`DELETE FROM drive_nodes WHERE id IN (${file}, ${output})`;
+      vi.stubEnv('DRIVE_COMPRESSION_ENABLED', '0');
+      expect((await request(1, 'original')).status).toBe(503);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });

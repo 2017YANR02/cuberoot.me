@@ -24,6 +24,7 @@ on:
       - 'core/patches/**'
       - 'core/scripts/build-cubing-worker.mjs'
       - 'core/scripts/resolve-workspace-path.mjs'
+      - 'ops/systemd/cuberoot-drive-compression.service'
       - '.github/workflows/deploy_core.yml'
 
 permissions:
@@ -45,6 +46,7 @@ jobs:
             .node-version
             core
             ops/nginx
+            ops/systemd
           filter: blob:none
 
       - uses: pnpm/action-setup@v4
@@ -181,7 +183,13 @@ jobs:
             "$API_DIR/dist/server.bundle.js" \
             "$API_DIR/dist/server.bundle.js.map" \
             "$API_DIR/dist/search-worker-entry.js" \
+            "$API_DIR/dist/drive-video.mjs" \
             "root@${{ secrets.DEPLOY_HOST }}:${STAGING_RELEASE}/dist/"
+
+          rsync -ltz --chmod=F644 \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            ops/systemd/cuberoot-drive-compression.service \
+            "root@${{ secrets.DEPLOY_HOST }}:${STAGING_RELEASE}/"
 
           # CubeOpt 子进程和生产管理器冒烟入口与主 bundle 同版本部署；大表由
           # 独立、可校验的 API artifact store 管理，不进入常规 rsync。
@@ -203,6 +211,10 @@ jobs:
           set -euo pipefail
           staging="$1"
           cd /root/core-api
+          if node --env-file=.env -e 'process.exit(process.env.DRIVE_COMPRESSION_ENABLED === "1" ? 0 : 1)'; then
+            node --env-file=.env "$staging/dist/drive-video.mjs" --check
+            systemd-analyze verify "$staging/cuberoot-drive-compression.service"
+          fi
           if node --env-file=.env -e 'process.exit(process.env.CUBEOPT_SOLVE_ENABLED === "1" ? 0 : 1)'; then
             node --env-file=.env "$staging/dist/cubeopt/provision.mjs" \
               --env-file /root/core-api/.env \
@@ -288,6 +300,10 @@ jobs:
               rollback_link=".dist.rollback.${release_id}.$$"
               ln -s "$previous_dist" "$rollback_link"
               mv -Tf "$rollback_link" dist
+              systemctl stop cuberoot-drive-compression.service 2>/dev/null || true
+              if [ -f dist/drive-video.mjs ] && [ "$drive_compression_enabled" = 1 ]; then
+                systemctl restart cuberoot-drive-compression.service || true
+              fi
               if reload_core_with_cubeopt_warm; then
                 pm2 save || true
               else
@@ -299,7 +315,9 @@ jobs:
           trap rollback ERR
 
           cd "$root"
+          drive_compression_enabled="$(node --env-file=.env -p 'process.env.DRIVE_COMPRESSION_ENABLED === "1" ? "1" : "0"')"
           test -f "$staging/dist/server.bundle.js"
+          test -f "$staging/dist/drive-video.mjs"
           test -f "$staging/dist/search-worker-entry.js"
           test -f "$staging/dist/cubeopt/prepare.mjs"
           test -f "$staging/dist/cubeopt/provision.mjs"
@@ -348,6 +366,7 @@ jobs:
           # Keep the API copy cold until the standalone production smoke exits;
           # otherwise an 8 GB warm-on-boot table and the smoke's second copy can
           # overlap and exhaust a 16 GB host.
+          systemctl stop cuberoot-drive-compression.service 2>/dev/null || true
           reload_core_without_cubeopt_warm
 
           healthy=0
@@ -379,6 +398,15 @@ jobs:
             test "$cubeopt_ready" = 1 || { echo "ERROR: resident CubeOpt daemon did not become ready"; false; }
           fi
 
+          # Resolve the same Node used by this deployment; systemd does not load nvm profiles.
+          sed "s|/usr/bin/env node|$(command -v node)|" "$final/cuberoot-drive-compression.service" > /etc/systemd/system/cuberoot-drive-compression.service
+          chmod 644 /etc/systemd/system/cuberoot-drive-compression.service
+          systemctl daemon-reload
+          if [ "$drive_compression_enabled" = 1 ]; then
+            systemctl enable --now cuberoot-drive-compression.service
+            sleep 3
+            systemctl is-active --quiet cuberoot-drive-compression.service
+          fi
           pm2 save
           trap - ERR
           echo "activated release $release_id"

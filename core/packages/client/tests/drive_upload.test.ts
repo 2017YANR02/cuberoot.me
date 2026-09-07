@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  createDriveAccess,
   createDriveShare,
   downloadDriveFile,
   fetchDrive,
@@ -115,6 +116,15 @@ describe('Drive chunk upload', () => {
 });
 
 describe('Drive streaming download', () => {
+  it.each([false, true])('uses the configured API origin for a proxy-generated access URL (inline=%s)', async (inline) => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+      url: 'http://api.cuberoot.me/v1/drive/content/file-id?token=signed%2Bticket', inline,
+    }), { headers: { 'Content-Type': 'application/json' } })));
+    await expect(createDriveAccess('file-id', inline)).resolves.toEqual({
+      url: 'https://api.cuberoot.me/v1/drive/content/file-id?token=signed%2Bticket', inline,
+    });
+  });
+
   it('writes response chunks directly to the destination and reports downloaded bytes', async () => {
     const chunks = [new Uint8Array([1, 2]), new Uint8Array([3, 4, 5])];
     vi.stubGlobal('fetch', vi.fn(async () => new Response(new ReadableStream({

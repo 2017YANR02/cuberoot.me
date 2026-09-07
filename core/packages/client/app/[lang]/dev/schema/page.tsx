@@ -197,6 +197,8 @@ const TABLES: Table[] = [
     { name: 'track_id CHAR(64) (PK)' }, { name: 'title, artist, album, genre' }, { name: 'hidden, updated_at' },
   ] },
 
+  { name: 'drive_compressions', domain: 'storage', origin: '0218', purpose: { zh: '保留原片的云端视频压缩任务，可保留分辨率或缩至 1080P；预留配额并记录画质检查结果', en: 'Cloud video compression jobs retaining originals, with source resolution or a 1080p limit, reserved quota, and quality reports' } },
+
   // ── teaching SaaS ──────────────────────────────────────
   { name: 'organizations', domain: 'teaching', origin: '0142', purpose: { zh: '机构租户根节点，保存唯一 slug、状态、时区与版本', en: 'Tenant root with a unique slug, lifecycle status, timezone, and version' }, cols: [
     { name: 'id UUID (PK), slug (UNIQUE), name' }, { name: 'timezone, status, settings, version' }, { name: 'created_by_user_id, created_at, updated_at' },
@@ -731,6 +733,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 215, slug: 'recon_timing', desc: { zh: '支持仅录起表和拍表动作耗时，之后在同一记录补充复盘。', en: 'Save pickup and putdown durations and add a reconstruction to the same record later.' } },
   { n: 216, slug: 'drive_member_folders', desc: { zh: '增加可撤销的网盘成员只读共享文件夹；现有文件保持私有。', en: 'Add revocable read-only folder sharing with Drive members; existing files remain private.' } },
   { n: 217, slug: 'role_preview', desc: { zh: '增加独立测试身份、短效可撤销角色测试会话与写入审计。', en: 'Add separate test identities, revocable short-lived role sessions and mutation audit.' } },
+  { n: 218, slug: 'drive_compressions', desc: { zh: '增加保留原片与帧率的视频压缩队列，支持原分辨率和 1080P 两种输出。', en: 'Add a video compression queue preserving originals and frame timing, with original-resolution and 1080p outputs.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

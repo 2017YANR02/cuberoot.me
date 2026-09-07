@@ -131,6 +131,7 @@ const CORE_PATHS = [
   corePath('patches', '**'),
   corePath('scripts', 'build-cubing-worker.mjs'),
   corePath('scripts', 'resolve-workspace-path.mjs'),
+  repoPath('ops', 'systemd', 'cuberoot-drive-compression.service'),
   repoPath('.github', 'workflows', 'deploy_core.yml'),
 ] as const;
 
@@ -166,6 +167,7 @@ const TEST_PATHS = [
   repoPath('.sync', '**'),
   repoPath('scripts', 'upstream', '**'),
   repoPath('ops', 'nginx', '**'),
+  repoPath('ops', 'systemd', 'cuberoot-drive-compression.service'),
   repoPath('.github', 'workflows', 'backup_recon.yml'),
   repoPath('.github', 'workflows', 'best2x2_drift.yml'),
   repoPath('.github', 'workflows', 'deploy_core.yml'),

@@ -1,5 +1,23 @@
 [
   {
+    "name": "FFmpeg",
+    "url": "https://ffmpeg.org/",
+    "zh": "网盘云端视频转码与媒体校验，使用独立部署的 FFmpeg 和 ffprobe",
+    "en": "Cloud video transcoding and media verification for Drive, using separately deployed FFmpeg and ffprobe"
+  },
+  {
+    "name": "SVT-AV1",
+    "url": "https://gitlab.com/AOMediaCodec/SVT-AV1",
+    "zh": "网盘压缩副本使用的开源 AV1 编码器",
+    "en": "Open-source AV1 encoder used for compressed Drive copies"
+  },
+  {
+    "name": "Netflix VMAF",
+    "url": "https://github.com/Netflix/vmaf",
+    "zh": "网盘视频压缩后的感知画质检查",
+    "en": "Perceptual quality checks for compressed Drive videos"
+  },
+  {
     "name": "Three.js",
     "url": "https://github.com/mrdoob/three.js",
     "zh": "魔方空间的 3D 渲染、物理材质、视角控制、镜面反射和后期处理",
