@@ -223,7 +223,7 @@ export default function PersonHero({
         </div>
       </div>
 
-      <PersonAchievements wcaId={p.wca_id} isZh={isZh} />
+      <PersonAchievements wcaId={p.wca_id} isZh={isZh} records={profile.personal_records} />
 
       {avatarOpen && fullAvatarUrl && (
         <AvatarPreview

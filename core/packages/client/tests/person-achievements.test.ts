@@ -23,3 +23,31 @@ it('awards only the requested person’s listed events, distinguishes all-gold a
   expect(render('2017YANR02')).toBe('');
   expect(renderToStaticMarkup(createElement(GrandSlamBadges, { rows: [], wcaId: '2018KHAN28', isZh: false }))).toBe('');
 });
+
+it('groups world titles and current records, excluding other podiums, retired events and invalid results', () => {
+  const record = (rank: number | null, best = 100) => ({ world_rank: rank, best, continent_rank: null, country_rank: null, event_id: '222' });
+  const html = renderToStaticMarkup(createElement(GrandSlamBadges, {
+    rows: [], wcaId: '2018KHAN28', isZh: false,
+    podiums: [
+      { level: 'world', place: 1, eventId: '222' },
+      { level: 'world', place: 1, eventId: '222' },
+      { level: 'world', place: 1, eventId: 'skewb' },
+      { level: 'world', place: 2, eventId: '333' },
+      { level: 'US', place: 1, eventId: '444' },
+    ],
+    records: {
+      '222': { single: record(1), average: record(1) },
+      '333': { single: record(2) },
+      '444': { single: record(null) },
+      '555': { single: record(1, -1) },
+      '333ft': { single: record(1) },
+    },
+  }));
+  expect((html.match(/<details /g) ?? []).length).toBe(2);
+  expect(html).toContain('World champion: 2×2, Skewb');
+  expect(html).toContain('Current world record holder: 2×2 Single, 2×2 Average');
+  expect(html).not.toContain('3×3');
+  expect(html).not.toContain('4×4');
+  expect(html).not.toContain('5×5');
+  expect(html).not.toContain('Feet');
+});

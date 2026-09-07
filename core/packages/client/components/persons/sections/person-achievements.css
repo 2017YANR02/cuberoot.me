@@ -1,5 +1,9 @@
 .wp-achievements { max-width: 100%; }
 .wp-achievements-list { display: flex; flex-wrap: wrap; gap: 16px; }
+.wp-achievement-details { max-width: 220px; }
+.wp-achievement-details summary { cursor: pointer; list-style: none; }
+.wp-achievement-details summary::-webkit-details-marker { display: none; }
+.wp-achievement-detail-text { margin-top: 8px; font-size: 0.75rem; overflow-wrap: anywhere; }
 .wp-achievement {
     display: flex; flex-direction: column; align-items: center; gap: 3px;
     color: var(--foreground); text-decoration: none; border-radius: 8px;
