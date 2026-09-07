@@ -310,12 +310,13 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     });
   }, []);
 
-  const timingOnly = form.recordType === 'timing';
+  const timingOnly = !(form.solution || '').trim() && (form.pickupTime != null || form.putdownTime != null);
 
   const setField = useCallback(<K extends keyof ReconSolve>(key: K, value: ReconSolve[K]) => {
     setForm(prev => ({ ...prev, [key]: value }));
     setSubmitError(error => error?.field === key
-      || (error?.field === 'submit' && (key === 'pickupTime' || key === 'putdownTime' || key === 'recordType'))
+      || (error?.field === 'solution' && (key === 'pickupTime' || key === 'putdownTime'))
+      || (error?.field === 'submit' && (key === 'pickupTime' || key === 'putdownTime' || key === 'solution'))
       || (error?.field === 'scramble' && (key === 'wcaScramble' || key === 'optimalScramble')) ? null : error);
     pruneReused(key as string);
   }, [pruneReused]);
@@ -515,7 +516,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   // ── URL-driven event (handoff from /sim, mount only, create mode) ──
   useEffect(() => {
     if (isEditing || fromId) return;
-    if (searchParams?.get('recordType') === 'timing') setForm(prev => ({ ...prev, recordType: 'timing' }));
     const ev = searchParams?.get('event');
     if (ev && EVENTS.includes(ev)) {
       setForm(prev => prev.event === ev ? prev : { ...prev, event: ev });
@@ -1457,7 +1457,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       setSubmitError({ field: 'solution', message: tr({ zh: '请填写解法。', en: 'Enter a solution.' }) });
       return;
     }
-    const timingError = validateReconTiming(form);
+    const timingError = validateReconTiming({ ...form, recordType: timingOnly ? 'timing' : 'reconstruction' });
     if (timingError) {
       setSubmitError({ field: 'submit', message: tr(timingError) });
       return;
@@ -1511,6 +1511,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       const data: Partial<ReconSolve> = {
         ...form,
         person,
+        recordType: timingOnly ? 'timing' : 'reconstruction',
         solution,
         date: normalizeIsoDate(form.date),
         reconDate: normalizeIsoDate(form.reconDate),
@@ -1588,7 +1589,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             <h1>{tr({ zh: '提交复盘', en: 'Submit Reconstruction'
             })}</h1>
           </div>
-          {!timingOnly && simHref && (
+          {simHref && (
             <Link
               href={simHref}
               className="submit-open-sim"
@@ -1632,9 +1633,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       <div className="submit-header">
         <div className="submit-header-top">
           <div className="detail-header">
-            <h1>{timingOnly ? tr({ zh: '录入起拍表耗时', en: 'Enter pickup and putdown' }) : isEditing ? t('recon.editRecon') : t('recon.addRecon')}</h1>
+            <h1>{isEditing ? t('recon.editRecon') : t('recon.addRecon')}</h1>
           </div>
-          {!timingOnly && simHref && (
+          {simHref && (
             <Link
               href={simHref}
               className="submit-open-sim"
@@ -1648,8 +1649,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         </div>
       </div>
 
-      <div className={`submit-layout${timingOnly ? ' submit-layout-timing' : ''}`}>
-        {!timingOnly && !isMobile && (
+      <div className="submit-layout">
+        {!isMobile && (
           <div className="submit-player-pane">
             {renderReconPlayer()}
           </div>
@@ -1707,24 +1708,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 onClose={() => setGroupCompareOpen(false)}
               />
             )}
-            <label className="submit-field">
-              <span className="submit-label">{tr({ zh: '录入内容', en: 'Entry type' })}</span>
-              <select className="submit-field-select" value={form.recordType || 'reconstruction'}
-                onChange={e => setField('recordType', e.target.value as ReconSolve['recordType'])}>
-                <option value="reconstruction">{tr({ zh: '完整复盘', en: 'Full reconstruction' })}</option>
-                <option value="timing" disabled={!!(form.solution || form.recon)?.trim()}>{tr({ zh: '仅录起拍表耗时', en: 'Pickup and putdown only' })}</option>
-              </select>
-            </label>
-            <div className="submit-row">
-              {(['pickupTime', 'putdownTime'] as const).map(field => (
-                <label className="submit-field" key={field}>
-                  <span className="submit-label">{field === 'pickupTime' ? tr({ zh: '起表耗时（秒）', en: 'Pickup (seconds)' }) : tr({ zh: '拍表耗时（秒）', en: 'Putdown (seconds)' })}{timingOnly ? ' *' : ''}</span>
-                  <input className="submit-field-input" type="number" inputMode="decimal" min="0" max="359999.999" step="0.001"
-                    value={form[field] ?? ''} onChange={e => setField(field, e.target.value === '' ? null : Number(e.target.value))} />
-                  <span className="submit-hint">{field === 'pickupTime' ? tr({ zh: '起表到第一步', en: 'Timer start to first move' }) : tr({ zh: '最后一步到拍表', en: 'Last move to timer stop' })}</span>
-                </label>
-              ))}
-            </div>
             {/* Hero row: solver / event / time */}
               <div className="submit-hero">
                 <div className={`submit-field ${form.personId ? 'submit-field-shrink' : ''}${reusedCls('person')}`}>
@@ -1913,7 +1896,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     {solveNumOptions.map(n => <option key={n} value={n} />)}
                   </datalist>
                 </label>
-                {!timingOnly && <label className={`submit-field${reusedCls('groupId')}`}>
+                <label className={`submit-field${reusedCls('groupId')}`}>
                   <span className="submit-label">{t('recon.group')}</span>
                   {(() => {
                     // 已公示 → 用真实分组(多分组强制选);未公示 / 非 WCA → 兜底 A~Z。
@@ -1949,15 +1932,12 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     );
                   })()}
                 </label>
-                }
                 <label className={`submit-field${reusedCls('date')}`}>
                   <span className="submit-label">{t('recon.date')}</span>
                   <DateInput value={form.date || ''} onChange={(value) => setField('date', value)} />
                 </label>
               </div>
 
-              <details open={!timingOnly}>
-                <summary>{tr({ zh: '成绩信息', en: 'Result details' })}</summary>
               <div className="submit-row">
                 <label className="submit-field">
                   <span className="submit-label">{tr(isFmc ? { zh: '原始成绩', en: 'Original moves' } : { zh: '原始成绩(千分位)', en: 'Original time (0.001s)' })}</span>
@@ -2067,8 +2047,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </label>
               </div>
 
-              </details>
-            {!timingOnly && <>
             {/* 三类打乱共享一个输入区;下拉只切换视图,不清空其他类型已有的值。 */}
             <div className="submit-field submit-block">
               <span className="submit-label submit-label-row">
@@ -2151,7 +2129,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               {renderSubmitError('scramble')}
             </div>
 
-            </>}
             {/* 同选手 + 同打乱:不硬拒,要求二选一说明原因(值入 dupReason)。占位打乱 '?' 已豁免不会触发。 */}
             {dupId != null && (
               <div className="submit-block submit-dup-reason">
@@ -2181,7 +2158,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               </div>
             )}
 
-            {!timingOnly && <>
             {/* Mobile: inline player between scramble and solution */}
             {isMobile && form.event && (
               <div className="submit-inline-player">
@@ -2193,7 +2169,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             <div className="submit-field submit-block">
               <span className="submit-label submit-label-row">
                 <span>
-                  {t('recon.solution')} *
+                  {t('recon.solution')}
                   {stats && stats.stm > 0 && (
                     <span className="submit-label-stats">
                       {' ('}{stats.stm} STM
@@ -2233,7 +2209,19 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   onBlurField={() => setActiveVkbField(f => f === 'solution' ? null : f)}
                 />
               )}
+              <span className="submit-hint">{tr({ zh: '仅记录起拍表耗时时，解法可留空。', en: 'Leave the solution blank to record only pickup and putdown durations.' })}</span>
               {renderSubmitError('solution')}
+            </div>
+
+            <div className="submit-row">
+              {(['pickupTime', 'putdownTime'] as const).map(field => (
+                <label className="submit-field" key={field}>
+                  <span className="submit-label">{field === 'pickupTime' ? tr({ zh: '起表耗时（秒）', en: 'Pickup (seconds)' }) : tr({ zh: '拍表耗时（秒）', en: 'Putdown (seconds)' })}</span>
+                  <input className="submit-field-input" type="number" inputMode="decimal" min="0" max="359999.999" step="0.001"
+                    value={form[field] ?? ''} onChange={e => setField(field, e.target.value === '' ? null : Number(e.target.value))} />
+                  <span className="submit-hint">{field === 'pickupTime' ? tr({ zh: '起表到第一步', en: 'Timer start to first move' }) : tr({ zh: '最后一步到拍表', en: 'Last move to timer stop' })}</span>
+                </label>
+              ))}
             </div>
 
             {(needsUnsolvedReason || !!form.unsolvedReason) && (
@@ -2257,9 +2245,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               </label>
             )}
 
-            </>}
-            <details open={!timingOnly}>
-              <summary>{tr({ zh: '视频与补充信息（选填）', en: 'Video and additional details (optional)' })}</summary>
             <div className="submit-row">
                 <div className={`submit-field submit-field-wide${reusedCls('videoUrl')}`}>
                   <label className="submit-label" htmlFor="recon-video-urls">
@@ -2394,7 +2379,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </label>
               </div>
 
-            </details>
             {/* 可见性:下拉选择,只展示当前选项的说明。 */}
             <label className="submit-field submit-block submit-visibility">
               <span className="submit-label">{tr({ zh: '可见性', en: 'Visibility' })}</span>

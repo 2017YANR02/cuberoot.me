@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDownToLine, ArrowUpFromLine, Copy, Crosshair, Maximize, Move, Plus, Redo2, RotateCcw, RotateCw, Trash2, Undo2 } from 'lucide-react';
+import { ArrowDown, ArrowDownToLine, ArrowLeft, ArrowRight, ArrowUp, ArrowUpFromLine, CloudSun, Copy, Crosshair, Footprints, Maximize, Move, Plus, Redo2, RotateCcw, RotateCw, Trash2, Undo2 } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import BoolToggle from '@/components/BoolToggle';
@@ -11,7 +11,7 @@ import { ClearButton } from '@/components/ClearButton';
 import { persistItem } from '@/lib/safe-storage';
 import { tr } from '@/i18n/tr';
 import { SpaceScene, type Mode, type View } from './space-scene';
-import { commitLayout, DESTINATIONS, INITIAL_LAYOUT, isPuzzleKind, MAX_OBJECTS, movePosition, parseLayout, PUZZLES, ROOMS, SPACE_KEY, travelHistory, type Destination, type History, type PuzzleKind, type RoomStyle, type SpaceObject } from './space-state';
+import { commitLayout, DESTINATIONS, INITIAL_LAYOUT, isPuzzleKind, MAX_OBJECTS, movePosition, parseLayout, PUZZLES, ROOMS, SPACE_KEY, travelHistory, WEATHER, type Weather, type Destination, type History, type PuzzleKind, type RoomStyle, type SpaceObject } from './space-state';
 import './space.css';
 import { turnButtons } from './space-turn';
 
@@ -29,17 +29,20 @@ export default function SpacePage() {
   const [inverse, setInverse] = useState(false);
   const [turnBlocked, setTurnBlocked] = useState(false);
   const [ready, setReady] = useState(false);
+  const [walking, setWalking] = useState(false);
   const [storage, setStorage] = useState<'saved' | 'blocked' | 'failed'>('saved');
-  const [message, setMessage] = useState<'import' | 'limit' | null>(null);
+  const [message, setMessage] = useState<'import' | 'limit' | 'weather' | null>(null);
   const [unavailable, setUnavailable] = useState(false);
   const objects = history.current.objects;
   const room = history.current.room ?? 'minimal';
+  const weather = history.current.weather ?? 'sunny';
   const active = objects.find(o => o.id === selected);
 
   function change(object: SpaceObject) {
     setHistory(h => commitLayout(h, { ...h.current, objects: h.current.objects.map(o => o.id === object.id ? object : o) }));
   }
   function cancel() {
+    scene.current?.setWalking(false);
     scene.current?.cancel();
     pending.current = null;
     setPlacing(false);
@@ -93,7 +96,7 @@ export default function SpacePage() {
     setStorage(persistItem(SPACE_KEY, JSON.stringify(history.current)) ? 'saved' : 'failed');
   }, [history.current, ready, storage]);
   useEffect(() => {
-    if (!host.current) return;
+    if (!ready || !host.current) return;
     let world: SpaceScene;
     try {
       world = new SpaceScene(host.current, {
@@ -109,14 +112,16 @@ export default function SpacePage() {
           setPlacing(false);
         },
         unavailable: () => setUnavailable(true),
+        walking: setWalking,
+        weatherError: () => setMessage('weather'),
       });
       scene.current = world;
     } catch { setUnavailable(true); return; }
     return () => { scene.current = null; world.dispose(); };
-  }, []);
+  }, [ready]);
   useEffect(() => {
     scene.current?.sync(history.current, active?.id ?? null, mode, snap, placing);
-  }, [history.current, active?.id, mode, snap, placing]);
+  }, [history.current, active?.id, mode, snap, placing, ready]);
   useEffect(() => {
     function key(event: KeyboardEvent) {
       const element = event.target as HTMLElement;
@@ -129,7 +134,7 @@ export default function SpacePage() {
       } else if (element === host.current?.querySelector('canvas')) {
         if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); remove(); }
         if (event.key.toLowerCase() === 'f') scene.current?.focus();
-        if (active && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+        if (active && !scene.current?.walking && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
           event.preventDefault();
           const step = event.shiftKey ? 1 : 0.5;
           change({ ...active, position: movePosition([active.position[0] + (event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0), active.position[1] + (event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0)], snap) });
@@ -152,7 +157,10 @@ export default function SpacePage() {
   return (
     <main className="cube-space">
       <header className="space-header">
-        <div className="space-heading"><h1>{tr({ zh: '魔方空间', en: 'Cube space' })}</h1><CompactSelect label={tr(ROOMS[room])} ariaLabel={tr({ zh: '选择房间风格', en: 'Choose room style' })} value={room} valueText={tr(ROOMS[room])} items={(Object.keys(ROOMS) as RoomStyle[]).map(value => ({ value, label: tr(ROOMS[value]) }))} onChange={room => { cancel(); setHistory(h => commitLayout(h, { ...h.current, room })); }} /></div>
+        <div className="space-heading"><h1>{tr({ zh: '魔方空间', en: 'Cube space' })}</h1><CompactSelect label={tr(ROOMS[room])} ariaLabel={tr({ zh: '选择房间风格', en: 'Choose room style' })} value={room} valueText={tr(ROOMS[room])} items={(Object.keys(ROOMS) as RoomStyle[]).map(value => ({ value, label: tr(ROOMS[value]) }))} onChange={room => { cancel(); setHistory(h => commitLayout(h, { ...h.current, room })); }} />
+          <CompactSelect label={<span className="space-weather-label"><CloudSun size={16} />{tr(WEATHER[weather])}</span>} ariaLabel={tr({ zh: '切换天气', en: 'Change weather' })} value={weather} valueText={tr(WEATHER[weather])} items={(Object.keys(WEATHER) as Weather[]).map(value => ({ value, label: tr(WEATHER[value]) }))} onChange={weather => { cancel(); setHistory(h => commitLayout(h, { ...h.current, weather })); }} />
+          {weather !== 'sunny' && <BoolToggle value={history.current.weatherMotion ?? true} onChange={weatherMotion => setHistory(h => commitLayout(h, { ...h.current, weatherMotion }))} label={tr({ zh: '动态天气', en: 'Animate weather' })} />}
+        </div>
         <div className="space-header-actions"><AppLink href="/sim">{tr({ zh: '模拟器', en: 'Simulator' })}</AppLink><HeaderToggles /></div>
       </header>
       <nav className="space-destinations" aria-label={tr({ zh: '前往房间', en: 'Go to a room' })}>
@@ -163,7 +171,7 @@ export default function SpacePage() {
         <div className="space-top-tools">
           <div className="space-row">
             <PuzzlePicker selectedEvent={kind} onSelect={id => { if (isPuzzleKind(id)) setKind(id); }} groups={[{ id: 'space', label: tr({ zh: '选择魔方', en: 'Choose a puzzle' }), items: Object.entries(PUZZLES).map(([id, p]) => ({ id, label: tr(p), iconClass: p.icon })) }]} />
-            <button className="space-control space-add" disabled={!ready || unavailable || objects.length >= MAX_OBJECTS} onClick={() => { pending.current = kind; setPlacing(true); setSelected(null); setMessage(null); }}><Plus size={16} />{tr({ zh: '放入空间', en: 'Place a cube' })}</button>
+            <button className="space-control space-add" disabled={!ready || unavailable || objects.length >= MAX_OBJECTS} onClick={() => { cancel(); pending.current = kind; setPlacing(true); setSelected(null); setMessage(null); }}><Plus size={16} />{tr({ zh: '放入空间', en: 'Place a cube' })}</button>
           </div>
           <div className="space-row">
             <button className="space-control" aria-label={tr({ zh: '撤销', en: 'Undo' })} title="Ctrl+Z" disabled={!history.past.length} onClick={() => travel('undo')}><Undo2 size={18} /></button>
@@ -198,17 +206,21 @@ export default function SpacePage() {
           <BoolToggle value={snap} onChange={setSnap} label={tr({ zh: '网格吸附', en: 'Snap to grid' })} />
         </aside>
         <div className="space-view-tools space-row">
+          <button className="space-control" aria-pressed={walking} disabled={!ready || unavailable} onClick={() => { if (!walking) { cancel(); setSelected(null); } scene.current?.setWalking(!walking); }}><Footprints size={17} />{tr({ zh: '漫游', en: 'Walk' })}</button>
           <CompactSelect label={tr({ zh: '视角', en: 'View' })} ariaLabel={tr({ zh: '切换视角', en: 'Change view' })} items={views} onChange={view => scene.current?.view(view)} />
           <button className="space-control" aria-label={tr({ zh: '回到全景', en: 'Reset view' })} onClick={() => scene.current?.view('home')}><Maximize size={17} /></button>
         </div>
-        {placing && <div className="space-placement" role="status"><span>{tr({ zh: '点击地面或展台，放下魔方', en: 'Click the floor or a plinth to place your cube' })}</span><ClearButton variant="standalone" onClick={cancel} ariaLabel={tr({ zh: '取消摆放', en: 'Cancel placement' })} /></div>}
+        {walking && <div className="space-walk-pad" aria-label={tr({ zh: '漫游方向', en: 'Walking directions' })}>
+          {([{ id: 'forward', icon: ArrowUp, label: { zh: '向前走', en: 'Walk forward' } }, { id: 'left', icon: ArrowLeft, label: { zh: '向左走', en: 'Walk left' } }, { id: 'back', icon: ArrowDown, label: { zh: '向后走', en: 'Walk backward' } }, { id: 'right', icon: ArrowRight, label: { zh: '向右走', en: 'Walk right' } }]).map(({ id, icon: Icon, label }) => <button className="space-control" key={id} aria-label={tr(label)} onPointerDown={e => { e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); scene.current?.walkInput(id, true); }} onPointerUp={() => scene.current?.walkInput(id, false)} onPointerCancel={() => scene.current?.walkInput(id, false)} onLostPointerCapture={() => scene.current?.walkInput(id, false)} onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); scene.current?.walkInput(id, true); } }} onKeyUp={() => scene.current?.walkInput(id, false)} onBlur={() => scene.current?.walkInput(id, false)}><Icon size={18} /></button>)}
+        </div>}
+        {placing && <div className="space-placement" role="status"><span>{tr({ zh: '点击地面、展台或桌面；桌上自动使用手持大小', en: 'Click a floor, plinth or tabletop. Tables use a handheld cube size.' })}</span><ClearButton variant="standalone" onClick={cancel} ariaLabel={tr({ zh: '取消摆放', en: 'Cancel placement' })} /></div>}
         {unavailable && <div className="space-unavailable" role="alert"><p>{tr({ zh: '3D 画面暂时不可用，请开启浏览器硬件加速后刷新。已有布局仍可导出。', en: 'The 3D view is unavailable. Enable browser hardware acceleration and reload. You can still export your layout.' })}</p><button className="space-control" onClick={exportLayout}><ArrowDownToLine size={16} />{tr({ zh: '导出布局', en: 'Export layout' })}</button></div>}
       </div>
       <footer className="space-footer">
-        <span id="space-instructions">{mode === 'twist' ? tr({ zh: '拖动魔方表面转层，也可点击转动按钮；拖动空白处环绕，双指或滚轮缩放。', en: 'Drag a puzzle face or use the move buttons to turn a layer. Drag empty space to orbit; pinch or scroll to zoom.' }) : tr({ zh: '选中后拖动魔方；拖动空白处环绕，双指或滚轮缩放。方向键也可移动。', en: 'Select, then drag a cube. Drag empty space to orbit; pinch or scroll to zoom. Arrow keys move the selected cube.' })}</span>
+        <span id="space-instructions">{walking ? tr({ zh: 'WASD、方向键或按住箭头行走；拖动画面环顾，Esc 退出漫游。', en: 'Walk with WASD, arrow keys or hold the arrows. Drag to look around; Esc exits walking.' }) : mode === 'twist' ? tr({ zh: '拖动魔方表面转层，也可点击转动按钮；拖动空白处环绕，双指或滚轮缩放。', en: 'Drag a puzzle face or use the move buttons to turn a layer. Drag empty space to orbit; pinch or scroll to zoom.' }) : tr({ zh: '选中后拖动魔方；拖动空白处环绕，双指或滚轮缩放。方向键也可移动。', en: 'Select, then drag a cube. Drag empty space to orbit; pinch or scroll to zoom. Arrow keys move the selected cube.' })}</span>
         <span role="status">{storage === 'saved' ? tr({ zh: '布局已保存在此浏览器', en: 'Layout saved in this browser' }) : storage === 'blocked' ? tr({ zh: '原有存档未覆盖；请导出当前布局保存', en: 'Existing save preserved; export to save this layout' }) : tr({ zh: '自动保存失败，请导出布局', en: 'Autosave failed; export your layout' })}</span>
       </footer>
-      {message && <p className="space-message" role="alert">{message === 'import' ? tr({ zh: '无法导入：请使用有效的魔方空间 JSON，最多 64 个物件。当前布局未更改。', en: 'Import failed. Use a valid Cube space JSON with up to 64 objects. Your layout has not changed.' }) : tr({ zh: '空间最多容纳 64 个魔方。', en: 'The space holds up to 64 cubes.' })}<ClearButton variant="standalone" onClick={() => setMessage(null)} ariaLabel={tr({ zh: '关闭提示', en: 'Dismiss message' })} /></p>}
+      {message && <p className="space-message" role="alert">{message === 'weather' ? tr({ zh: '天气加载失败，请刷新重试。已保存的空间布局仍然保留。', en: 'Weather failed to load. Refresh to retry. Your saved layout is preserved.' }) : message === 'import' ? tr({ zh: '无法导入：请使用有效的魔方空间 JSON，最多 64 个物件。当前布局未更改。', en: 'Import failed. Use a valid Cube space JSON with up to 64 objects. Your layout has not changed.' }) : tr({ zh: '空间最多容纳 64 个魔方。', en: 'The space holds up to 64 cubes.' })}<ClearButton variant="standalone" onClick={() => setMessage(null)} ariaLabel={tr({ zh: '关闭提示', en: 'Dismiss message' })} /></p>}
     </main>
   );
 }

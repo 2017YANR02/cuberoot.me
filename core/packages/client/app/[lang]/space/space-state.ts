@@ -16,6 +16,28 @@ export const ROOMS = {
   company: { zh: '我的公司', en: 'My company' },
 } as const;
 export type RoomStyle = keyof typeof ROOMS;
+export const WEATHER = {
+  sunny: { zh: '晴天', en: 'Sunny' },
+  cloudy: { zh: '多云', en: 'Cloudy' },
+  overcast: { zh: '阴天', en: 'Overcast' },
+  windy: { zh: '大风', en: 'Windy' },
+  drizzle: { zh: '毛毛雨', en: 'Drizzle' },
+  rain: { zh: '下雨', en: 'Rain' },
+  downpour: { zh: '暴雨', en: 'Downpour' },
+  lightning: { zh: '闪电', en: 'Lightning' },
+  thunderstorm: { zh: '雷暴', en: 'Thunderstorm' },
+  fog: { zh: '浓雾', en: 'Fog' },
+  snow: { zh: '下雪', en: 'Snow' },
+  blizzard: { zh: '暴风雪', en: 'Blizzard' },
+  sleet: { zh: '雨夹雪', en: 'Sleet' },
+  hail: { zh: '冰雹', en: 'Hail' },
+  sandstorm: { zh: '沙尘暴', en: 'Sandstorm' },
+  typhoon: { zh: '台风', en: 'Typhoon' },
+  tornado: { zh: '龙卷风', en: 'Tornado' },
+  mudslide: { zh: '泥石流', en: 'Mudslide' },
+  rainbow: { zh: '雨后彩虹', en: 'Rainbow' },
+} as const;
+export type Weather = keyof typeof WEATHER;
 export const DESTINATIONS = {
   exterior: { zh: '建筑外观', en: 'Exterior' },
   interior: { zh: '客厅', en: 'Living room' },
@@ -23,6 +45,9 @@ export const DESTINATIONS = {
   bedroom: { zh: '卧室', en: 'Bedroom' },
   bathroom: { zh: '卫生间', en: 'Bathroom' },
   courtyard: { zh: '庭院', en: 'Courtyard' },
+  garage: { zh: '车库', en: 'Garage' },
+  cinema: { zh: '影音室', en: 'Cinema' },
+  gym: { zh: '健身房', en: 'Gym' },
 } as const;
 export type Destination = keyof typeof DESTINATIONS;
 export type Level = 0 | 1;
@@ -35,6 +60,10 @@ export const VILLA_ROOMS = {
   bathroom: { x: -23, z: -10, width: 12, depth: 12, level: 1, ceiling: 9.4 },
   gallery: { x: -9.5, z: -12.5, width: 39, depth: 7, level: 0, ceiling: 4.75 },
   bridge: { x: -9.5, z: -12.5, width: 15, depth: 7, level: 1, ceiling: 9.4 },
+  passage: { x: 11, z: 4, width: 2, depth: 40, level: 0, ceiling: 4.2 },
+  garage: { x: 21, z: -10, width: 18, depth: 12, level: 0, ceiling: 4.2 },
+  cinema: { x: 21, z: 3, width: 18, depth: 14, level: 0, ceiling: 4.2 },
+  gym: { x: 21, z: 17, width: 18, depth: 14, level: 0, ceiling: 4.2 },
 } as const;
 export const PUZZLES = {
   '222': { zh: '二阶魔方', en: '2×2 Cube', icon: 'event-222' },
@@ -58,7 +87,7 @@ export type SpaceObject = {
   level?: Level;
   moves?: string[];
 };
-export type Layout = { version: 1; room?: RoomStyle; objects: SpaceObject[] };
+export type Layout = { version: 1; room?: RoomStyle; weather?: Weather; weatherMotion?: boolean; objects: SpaceObject[] };
 export type History = { past: Layout[]; current: Layout; future: Layout[] };
 
 // Layouts contain data only. Models, GPU resources and selection never enter history.
@@ -85,6 +114,40 @@ export function floorHeight(x: number, z: number, level: Level) {
     ? level * UPPER_FLOOR : -0.32;
 }
 
+export type WalkObstacle = { minX: number; maxX: number; minY: number; maxY: number; minZ: number; maxZ: number };
+
+export function walkFloor(x: number, z: number, previous: number, style: RoomStyle): number | null {
+  if (![x, z, previous].every(Number.isFinite)) return null;
+  if (style === 'company') return x > -25.7 && x < 0.4 && z > -5.4 && z < 12.6 ? 0 : null;
+  // The physical stair treads rise 20 cm. A step cannot jump to the floor above.
+  if (z > -13.6 && z < -11.1 && x > -2.25 && x < 9.5) {
+    const stair = Math.min(5, Math.max(0, 0.27 + Math.floor((9.25 - x) / 0.44) * 0.2));
+    if (Math.abs(stair - previous) <= 0.32) return stair;
+  }
+  const levels = Object.values(VILLA_ROOMS).filter(r => Math.abs(x - r.x) < r.width / 2 && Math.abs(z - r.z) < r.depth / 2).map(r => r.level * 5);
+  const terrace = x > -30.2 && x < 12.2 && z > -17.7 && z < 12.7;
+  const forecourt = style !== 'penthouse' && style !== 'cyberpunk' && x > -29 && x < 11 && z >= 12.7 && z < 25;
+  const pool = x > -16.7 && x < -10.3 && z > -9.2 && z < 9.2 && Math.abs(z - 5) > 0.4;
+  if ((terrace && !pool) || forecourt) levels.push(0);
+  return levels.filter(y => Math.abs(y - previous) <= 0.32).sort((a, b) => b - a)[0] ?? null;
+}
+
+export function walkStep(position: Vec3, dx: number, dz: number, style: RoomStyle, obstacles: readonly WalkObstacle[]): Vec3 {
+  if (![...position, dx, dz].every(Number.isFinite)) return position;
+  const next: Vec3 = [...position];
+  const steps = Math.ceil(Math.hypot(dx, dz) / 0.1);
+  if (steps > 100) return position;
+  const move = (x: number, z: number) => {
+    const floor = walkFloor(x, z, next[1], style);
+    if (floor === null) return;
+    // A 22 cm radius keeps the eye clear of walls; axis sliding follows doorways.
+    if (obstacles.some(o => o.maxY > floor + 0.3 && o.minY < floor + 1.8 && Math.hypot(x - Math.max(o.minX, Math.min(o.maxX, x)), z - Math.max(o.minZ, Math.min(o.maxZ, z))) < 0.22)) return;
+    next[0] = x; next[1] = floor; next[2] = z;
+  };
+  for (let i = 0; i < steps; i++) { move(next[0] + dx / steps, next[2]); move(next[0], next[2] + dz / steps); }
+  return next;
+}
+
 export function isPuzzleKind(value: unknown): value is PuzzleKind {
   return typeof value === 'string' && Object.hasOwn(PUZZLES, value);
 }
@@ -104,6 +167,8 @@ export function parseLayout(text: string): Layout {
   if (!data || typeof data !== 'object' || !('version' in data) || data.version !== 1 ||
     !('objects' in data) || !Array.isArray(data.objects) || data.objects.length > MAX_OBJECTS) throw new Error('layout');
   if ('room' in data && (typeof data.room !== 'string' || !Object.hasOwn(ROOMS, data.room))) throw new Error('room');
+  if ('weather' in data && (typeof data.weather !== 'string' || !Object.hasOwn(WEATHER, data.weather))) throw new Error('weather');
+  if ('weatherMotion' in data && typeof data.weatherMotion !== 'boolean') throw new Error('weatherMotion');
   const ids = new Set<string>();
   const vector = (v: unknown, n: number, max: number): v is number[] =>
     Array.isArray(v) && v.length === n && v.every(x => typeof x === 'number' && Number.isFinite(x) && Math.abs(x) <= max);
@@ -125,7 +190,7 @@ export function parseLayout(text: string): Layout {
     ids.add(v.id);
     return { id: v.id, kind: v.kind, position: [...v.position] as [number, number], rotation: [...v.rotation] as Vec3, scale: v.scale, ...('level' in v ? { level: v.level as Level } : {}), ...('moves' in v ? { moves: [...v.moves as string[]] } : {}) };
   });
-  return { version: 1, ...('room' in data ? { room: data.room as RoomStyle } : {}), objects };
+  return { version: 1, ...('room' in data ? { room: data.room as RoomStyle } : {}), ...('weather' in data ? { weather: data.weather as Weather } : {}), ...('weatherMotion' in data ? { weatherMotion: data.weatherMotion as boolean } : {}), objects };
 }
 
 export function commitLayout(history: History, next: Layout): History {
