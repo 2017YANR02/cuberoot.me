@@ -162,9 +162,10 @@ export function zbllCommentLabel(name: string): string | null {
  * AS 另一页叫 S-。DB 里的 name / subgroup 不动 —— 和 ZBLL 一样,`+` 进 URL 会被当空格。
  */
 export function displayCollName(name: string): string {
-  const m = /^(AS|S|L|U|T|Pi|H)\s+(\d+)$/.exec(name.trim());
+  const m = /^(?:CLL\s+)?(AS|Sune|S|L|U|T|Pi|H)\s+(\d+)$/.exec(name.trim());
   if (!m) return name;
-  return `${ZBLL_GROUP_RENAME[m[1]] ?? m[1]}${m[2]}`;
+  const group = m[1] === 'Sune' ? 'S' : m[1];
+  return `${ZBLL_GROUP_RENAME[group] ?? group}${m[2]}`;
 }
 
 /** 二阶 LS 案例名展示:`"LS-2 Hammer 1"` → `"LS2 Hammer 1"`。DB / URL 仍保留来源表的原名。 */
@@ -179,6 +180,7 @@ export function displaySq1CsName(name: string): string {
 
 /** /alg 列表用:按 (puzzle, set) 决定是否套 OLL/PLL/ZBLL/COLL/LS 展示变换。 */
 export function displayAlgCaseName(puzzle: string, set: string, name: string): string {
+  if (puzzle === '2x2' && set === 'cll') return displayCollName(name);
   if (puzzle === '2x2' && /^ls[1-9]$/.test(set)) return display2x2LsName(name);
   if (puzzle === 'sq1' && (set === 'cs' || set === 'csp' || set === 'obl')) return displaySq1CsName(name);
   if (puzzle === '3x3' && set === 'oll') return displayOllName(name);

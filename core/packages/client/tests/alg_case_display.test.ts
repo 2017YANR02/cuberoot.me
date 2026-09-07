@@ -117,6 +117,21 @@ describe('displayAlgCaseName 按 set 路由', () => {
   it('其它 set 原样', () => expect(displayAlgCaseName('3x3', 'f2l', 'F2L 1')).toBe('F2L 1'));
 
   // COLL 的组名跟 ZBLL 同一套(Sune=S+ / Anti-Sune=S-),编号紧跟不留空格。
+  it('2x2 cll 与 COLL 共用名称规则，保留来源编号', () => {
+    for (const [source, coll, count] of [
+      ['AS', 'AS', 6], ['Sune', 'S', 6], ['L', 'L', 6], ['U', 'U', 6],
+      ['T', 'T', 6], ['Pi', 'Pi', 6], ['H', 'H', 4],
+    ] as const) {
+      for (let n = 1; n <= count; n++) {
+        expect(displayAlgCaseName('2x2', 'cll', `CLL ${source} ${n}`))
+          .toBe(displayAlgCaseName('3x3', 'coll', `${coll} ${n}`));
+      }
+    }
+    expect(displayAlgCaseName('2x2', 'cll', 'CLL Sune 6')).toBe('S+6');
+    expect(displayAlgCaseName('2x2', 'cll', 'Unknown 1')).toBe('Unknown 1');
+    expect(displayAlgCaseName('2x2', 'eg1', 'EG1 S 1')).toBe('EG1 S 1');
+  });
+
   it('3x3 coll:AS/S 换成 S-/S+,空格去掉', () => {
     expect(displayAlgCaseName('3x3', 'coll', 'AS 1')).toBe('S-1');
     expect(displayAlgCaseName('3x3', 'coll', 'S 6')).toBe('S+6');
