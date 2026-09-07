@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { loadPlatformLessonMedia, type PlatformLessonMedia } from '@/lib/platform-gateway';
@@ -70,19 +70,42 @@ function LessonMedia({ lessonId }: { lessonId: string }) {
   const t = useT();
   const [media, setMedia] = useState<PlatformLessonMedia | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
+  const resume = useRef({ time: 0, playing: false });
+  const refreshing = useRef(false);
   useEffect(() => {
     const controller = new AbortController();
+    setMedia(null);
+    setError(null);
     void loadPlatformLessonMedia(lessonId, controller.signal)
-      .then(setMedia)
+      .then((value) => {
+        if (!controller.signal.aborted) { refreshing.current = false; setMedia(value); }
+      })
       .catch((reason: unknown) => {
         if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : String(reason));
       });
     return () => controller.abort();
-  }, [lessonId]);
-  if (error) return <p className="platform-domain-note">{t('课时媒体暂时无法加载：', 'Lesson media could not be loaded: ')}{error}</p>;
+  }, [lessonId, reload]);
+  const onError = (event: SyntheticEvent<HTMLMediaElement>) => {
+    resume.current = { time: event.currentTarget.currentTime, playing: !event.currentTarget.paused };
+    // Renew authorization only after expiry; unsupported codecs must not cause a retry loop.
+    if (media && Date.parse(media.expiresAt) <= Date.now() && !refreshing.current) {
+      refreshing.current = true;
+      setReload(value => value + 1);
+    } else setError(t('播放失败，请重新加载后再试。', 'Playback failed. Reload and try again.'));
+  };
+  const onLoadedMetadata = (event: SyntheticEvent<HTMLMediaElement>) => {
+    const element = event.currentTarget;
+    if (resume.current.time > 0) element.currentTime = resume.current.time;
+    if (resume.current.playing) void element.play().catch(() => { /* Native play control remains available. */ });
+  };
+  if (error) return <div className="platform-domain-note">
+    <p>{t('课时媒体暂时无法加载：', 'Lesson media could not be loaded: ')}{error}</p>
+    <button type="button" className="platform-action-link" onClick={() => setReload(value => value + 1)}>{t('重新加载播放器', 'Reload player')}</button>
+  </div>;
   if (!media) return <p className="platform-domain-note">{t('正在取得课时媒体访问权限。', 'Requesting lesson media access.')}</p>;
-  if (media.mimeType.startsWith('video/')) return <video className="platform-lesson-media" controls preload="metadata" src={media.accessUrl} />;
-  if (media.mimeType.startsWith('audio/')) return <audio className="platform-lesson-media" controls preload="metadata" src={media.accessUrl} />;
+  if (media.mimeType.startsWith('video/')) return <video className="platform-lesson-media" controls playsInline preload="metadata" src={media.accessUrl} onError={onError} onLoadedMetadata={onLoadedMetadata} />;
+  if (media.mimeType.startsWith('audio/')) return <audio className="platform-lesson-media" controls preload="metadata" src={media.accessUrl} onError={onError} onLoadedMetadata={onLoadedMetadata} />;
   return <a className="platform-action-link" href={media.accessUrl} target="_blank" rel="noreferrer">{t('打开课时媒体', 'Open lesson media')}</a>;
 }
 
@@ -164,7 +187,7 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
       <section className="platform-domain-content platform-prose">
         <h2>{t('课时内容', 'Lesson content')}</h2>
         {body ? body.split('\n\n').map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 24)}`}>{paragraph}</p>) : null}
-        {mediaId ? <LessonMedia lessonId={entity.id} /> : null}
+        {mediaId ? <LessonMedia key={entity.id} lessonId={entity.id} /> : null}
       </section>
     ) : null;
   }
