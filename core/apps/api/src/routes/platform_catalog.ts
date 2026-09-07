@@ -267,7 +267,7 @@ platformCatalogRoutes.get('/platform/courses/:courseId/lessons/:lessonId', async
   if (row.access_scope !== 'public') {
     const actor = await requirePlatformActor(c);
     const { requireCourseEntitlement } = await import('../platform/db.js');
-    await requireCourseEntitlement(db, actor, row.course_id);
+    await requireCourseEntitlement(db, actor, row.course_id, String(row.id));
     privateNoStore(c);
   } else {
     publicCache(c);

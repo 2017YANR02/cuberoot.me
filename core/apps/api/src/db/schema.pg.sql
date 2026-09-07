@@ -1650,6 +1650,7 @@ CREATE TRIGGER platform_course_entitlements_set_updated_at BEFORE UPDATE ON plat
 CREATE TABLE platform_entitlement_ledger (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   entitlement_id UUID NOT NULL REFERENCES platform_course_entitlements(id) ON DELETE RESTRICT,
+  lesson_ids UUID[] CHECK (lesson_ids IS NULL OR (cardinality(lesson_ids) BETWEEN 1 AND 1000 AND array_ndims(lesson_ids) = 1 AND array_position(lesson_ids, NULL) IS NULL)),
   entry_type VARCHAR(20) NOT NULL CHECK (entry_type IN ('purchase', 'grant', 'refund', 'expiration', 'revocation', 'reversal')),
   delta_access SMALLINT NOT NULL CHECK (delta_access IN (-1, 1)),
   valid_from TIMESTAMPTZ NOT NULL,

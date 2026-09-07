@@ -183,21 +183,36 @@ export async function requireCourseEntitlement(
   db: PlatformDb,
   actor: PlatformActor,
   courseId: string,
+  lessonId?: string,
 ): Promise<void> {
   if (actor.isAdmin) return;
   if (actor.userId == null) forbidden('A user-backed account is required');
   const rows = await platformQuery<{ allowed: boolean }>(db, `
     SELECT EXISTS (
-      SELECT 1 FROM platform_course_entitlements
+      SELECT 1 FROM platform_course_entitlements entitlement
       WHERE user_id = $1 AND course_id = $2::uuid AND status = 'active'
         AND valid_from <= NOW() AND (valid_until IS NULL OR valid_until > NOW())
+        AND (
+          NOT EXISTS (SELECT 1 FROM platform_entitlement_ledger WHERE entitlement_id = entitlement.id)
+          OR EXISTS (
+            SELECT 1 FROM platform_entitlement_ledger grant_entry
+            WHERE grant_entry.entitlement_id = entitlement.id AND grant_entry.delta_access = 1
+              AND grant_entry.valid_from <= NOW()
+              AND (grant_entry.valid_until IS NULL OR grant_entry.valid_until > NOW())
+              AND (grant_entry.lesson_ids IS NULL OR $3::uuid = ANY(grant_entry.lesson_ids))
+              AND NOT EXISTS (
+                SELECT 1 FROM platform_entitlement_ledger reversal
+                WHERE reversal.reversal_of_ledger_id = grant_entry.id
+              )
+          )
+        )
     ) OR EXISTS (
       SELECT 1
       FROM platform_course_owners co
       JOIN platform_instructors i ON i.id = co.instructor_id
       WHERE i.user_id = $1 AND i.status = 'active' AND co.course_id = $2::uuid AND co.status = 'active'
     ) AS allowed
-  `, [actor.userId, courseId]);
+  `, [actor.userId, courseId, lessonId ?? null]);
   if (!rows[0]?.allowed) forbidden('An active course entitlement is required');
 }
 
