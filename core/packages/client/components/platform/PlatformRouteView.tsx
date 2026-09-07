@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { ArrowRight, ExternalLink, Search } from 'lucide-react';
+import { ArrowRight, ExternalLink, Play, Search } from 'lucide-react';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
 import { AccountPanel, LoginForm } from '@/components/AuthPanel';
@@ -186,12 +186,13 @@ function PlatformLanding() {
       </header>
 
       <section className="platform-teacher-feature" aria-labelledby="platform-feature-title">
-        <Image className="platform-feature-photo" src="/images/ruimin/gallery/photo-03.webp" width={3200} height={2400} sizes="(max-width: 760px) 100vw, 65vw" priority alt={t('颜瑞民在魔方比赛现场展示复原结果', 'Yan Ruimin demonstrating a solve at a cubing competition')} />
-        <div className="platform-feature-copy">
+        <Image className="platform-feature-photo" src="/images/ruimin/gallery/photo-03.webp" width={3200} height={2400} sizes="(max-width: 1160px) 100vw, 1120px" priority alt={t('颜瑞民在魔方比赛现场展示复原结果', 'Yan Ruimin demonstrating a solve at a cubing competition')} />
+        <span className="platform-feature-caption platform-glass">{t('热爱，在这里发生。', 'This is where it begins.')}</span>
+        <div className="platform-feature-copy platform-glass">
           <span className="platform-kicker">{t('跟着老师，一起练', 'Meet your instructor')}</span>
           <h2 id="platform-feature-title">{t('颜瑞民课程', 'Yan Ruimin Courses')}</h2>
           <p>{t('认识魔方，也认识每一步的道理。先导课、试听课与正式课，循序渐进地学。', 'Understand the cube, and the reason behind every move. Explore the introduction, trial lessons, and full course at your own pace.')}</p>
-          <AppLink className="platform-home-secondary" href="/platform/courses/yan-ruimin-3x3-beginner" prefetch={false}>{t('了解课程', 'Explore the course')}<ArrowRight aria-hidden /></AppLink>
+          <AppLink className="platform-home-secondary" href="/platform/courses/yan-ruimin-3x3-beginner" prefetch={false}><span className="platform-play-orb" aria-hidden><Play /></span>{t('了解课程', 'Explore the course')}<ArrowRight aria-hidden /></AppLink>
         </div>
       </section>
 
@@ -553,16 +554,27 @@ export function PlatformRouteView({
   if (definition.id === 'home') return <PlatformLanding />;
   const courseDetail = definition.id === 'course-detail';
   const course = courseDetail && !error ? sortedItems[0] : undefined;
+  const ruiminCourse = course?.data?.slug === 'yan-ruimin-3x3-beginner';
 
   return (
     <div className={`platform-route${courseDetail ? ' platform-course-detail' : ''}`}>
-      <header className="platform-route-header">
-        <span className="platform-route-area">{courseDetail || definition.id === 'courses' ? t('CubeRoot 课程', 'CubeRoot Courses') : definition.area}</span>
-        <h1>{course?.title ?? titleFor(t, definition)}</h1>
-        <p>{course?.summary ?? t(definition.description.zh, definition.description.en)}</p>
-        {course ? <div className="platform-home-actions">
-          <a className="platform-button platform-button-primary" href="#platform-course-outline">{t('查看课时', 'Explore lessons')}<ArrowRight aria-hidden /></a>
-          <AppLink className="platform-home-secondary" href="/platform/account/invites" prefetch={false}>{t('兑换课程', 'Redeem a code')}<ArrowRight aria-hidden /></AppLink>
+      <header className={`platform-route-header${ruiminCourse ? ' platform-course-hero' : ''}`}>
+        <div className="platform-route-heading">
+          <span className="platform-route-area">{courseDetail || definition.id === 'courses' ? t('CubeRoot 课程', 'CubeRoot Courses') : definition.area}</span>
+          <h1>{course?.title ?? titleFor(t, definition)}</h1>
+          <p>{course?.summary ?? t(definition.description.zh, definition.description.en)}</p>
+          {course ? <div className="platform-home-actions">
+            <a className="platform-button platform-button-primary" href="#platform-course-outline">{t('查看课时', 'Explore lessons')}<ArrowRight aria-hidden /></a>
+            <AppLink className="platform-home-secondary" href="/platform/account/invites" prefetch={false}>{t('兑换课程', 'Redeem a code')}<ArrowRight aria-hidden /></AppLink>
+          </div> : null}
+        </div>
+        {ruiminCourse ? <div className="platform-course-portrait">
+          <Image src="/images/ruimin/gallery/photo-03.webp" width={3200} height={2400} sizes="(max-width: 760px) 100vw, 560px" priority alt={t('讲师颜瑞民在魔方比赛现场', 'Instructor Yan Ruimin at a cubing competition')} />
+          <a className="platform-portrait-link platform-glass" href="#platform-course-outline">
+            <span className="platform-play-orb" aria-hidden><Play /></span>
+            <span><strong>{t('从先导课开始', 'Start with the introduction')}</strong><small>{t('认识课程，认识你的老师', 'Meet the course. Meet your instructor.')}</small></span>
+            <ArrowRight aria-hidden />
+          </a>
         </div> : null}
       </header>
 

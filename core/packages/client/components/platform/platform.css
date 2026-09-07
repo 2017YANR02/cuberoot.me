@@ -1,8 +1,27 @@
 .platform-shell {
   --platform-measure: 1120px;
+  --platform-glass-edge: color-mix(in srgb, var(--foreground) 14%, transparent);
+  --platform-glass-light: color-mix(in srgb, var(--accent-foreground) 65%, transparent);
   min-height: 100vh;
   color: var(--foreground);
-  background: var(--background);
+  background:
+    radial-gradient(ellipse 70% 480px at 10% 0, color-mix(in srgb, var(--signal-info) 9%, transparent), transparent),
+    radial-gradient(ellipse 65% 640px at 100% 12%, color-mix(in srgb, var(--accent) 9%, transparent), transparent),
+    var(--background);
+}
+
+/* A translucent material with a bright bevel, soft depth and a clear text layer.
+   Native backdrop filters avoid the SVG displacement compositing bug on iOS. */
+.platform-glass {
+  border: 1px solid var(--platform-glass-edge);
+  background: color-mix(in srgb, var(--background) 78%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 var(--platform-glass-light),
+    inset 1px 0 0 color-mix(in srgb, var(--accent-foreground) 16%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--foreground) 8%, transparent),
+    0 10px 40px -12px color-mix(in srgb, var(--foreground) 18%, transparent);
 }
 
 .platform-masthead,
@@ -69,8 +88,14 @@
 
 .platform-nav {
   display: flex;
-  gap: 2px;
-  border-block: 1px solid var(--border-default);
+  position: sticky;
+  top: 12px;
+  z-index: 20;
+  width: fit-content;
+  max-width: calc(100% - 28px);
+  gap: 4px;
+  padding: 6px;
+  border-radius: 999px;
 }
 
 .platform-nav-link {
@@ -80,12 +105,14 @@
   align-items: center;
   gap: 7px;
   min-height: 48px;
-  padding-inline: 13px;
+  padding-inline: 22px;
+  border-radius: 999px;
   color: var(--muted-foreground);
   font-size: 0.86rem;
   font-weight: 650;
   text-decoration: none;
   white-space: nowrap;
+  transition: background 220ms ease, box-shadow 220ms ease, color 220ms ease;
 }
 
 .platform-nav-link svg {
@@ -95,12 +122,13 @@
 
 .platform-nav-link::after {
   position: absolute;
-  right: 12px;
-  bottom: 0;
-  left: 12px;
-  height: 2px;
-  background: transparent;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--platform-glass-light), transparent 45%, color-mix(in srgb, var(--accent-foreground) 20%, transparent));
+  opacity: 0;
+  pointer-events: none;
   content: '';
+  transition: opacity 220ms ease;
 }
 
 .platform-nav-link:hover,
@@ -108,8 +136,17 @@
   color: var(--foreground);
 }
 
+.platform-nav-link:hover {
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+
+.platform-nav-link.is-active {
+  background: color-mix(in srgb, var(--card) 85%, transparent);
+  box-shadow: inset 0 0 0 1px var(--platform-glass-edge), 0 3px 10px color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
 .platform-nav-link.is-active::after {
-  background: var(--primary);
+  opacity: 0.36;
 }
 
 .platform-main {
@@ -118,12 +155,13 @@
 
 .platform-landing {
   display: grid;
-  gap: 56px;
+  gap: 88px;
 }
 
 .platform-home-hero {
   text-align: center;
-  padding-block: 36px 14px;
+  padding-block: 34px 0;
+  animation: platform-arrive 800ms both;
 }
 
 .platform-home-hero h1 {
@@ -133,7 +171,13 @@
   margin: 20px auto 24px;
 }
 
-.platform-home-hero h1 span { color: var(--muted-foreground); }
+.platform-home-hero h1 span {
+  color: var(--accent);
+  background: linear-gradient(115deg, var(--accent) 15%, color-mix(in srgb, var(--accent) 45%, var(--foreground)) 58%, var(--signal-info));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 .platform-home-hero > p {
   max-width: 530px;
   margin-inline: auto;
@@ -145,20 +189,42 @@
 .platform-home-hero .platform-home-actions { justify-content: center; }
 
 .platform-teacher-feature {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-  align-items: center;
-  gap: clamp(28px, 5vw, 72px);
+  align-items: end;
+  min-height: 600px;
+  border-radius: 36px;
+  isolation: isolate;
+  animation: platform-arrive 1s both;
 }
 
 .platform-feature-photo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
   display: block;
   width: 100%;
-  height: auto;
-  aspect-ratio: 4 / 3;
+  height: 100%;
   object-fit: cover;
-  object-position: 70% center;
-  border-radius: 18px;
+  object-position: center 40%;
+  border-radius: inherit;
+}
+
+.platform-feature-caption {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 550;
+}
+
+.platform-feature-copy {
+  width: min(480px, calc(100% - 48px));
+  margin: 24px;
+  padding: 32px;
+  border-radius: 28px;
 }
 
 .platform-feature-copy h2 {
@@ -171,13 +237,35 @@
 }
 
 .platform-feature-copy p {
-  color: var(--muted-foreground);
+  color: color-mix(in srgb, var(--foreground) 80%, var(--background));
   line-height: 1.8;
   margin: 0 0 16px;
   text-wrap: pretty;
 }
 
 .platform-home-secondary svg { width: 16px; height: 16px; margin-left: 8px; }
+.platform-play-orb {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-right: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+.platform-play-orb svg { width: 16px; height: 16px; margin: 0 0 0 2px; fill: currentColor; }
+
+.platform-home-actions .platform-button,
+.platform-home-secondary svg,
+.platform-play-orb {
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+.platform-home-actions .platform-button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px color-mix(in srgb, var(--foreground) 18%, transparent); }
+.platform-home-secondary:hover > svg { transform: translateX(4px); }
+.platform-home-secondary:hover .platform-play-orb { transform: scale(1.06); }
 .platform-shell a:focus-visible, .platform-lesson-folder summary:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 5px;
@@ -1052,9 +1140,46 @@
 }
 
 .platform-course-detail .platform-route-header {
-  padding-block: 32px 48px;
+  padding-block: 32px 64px;
   margin-bottom: 0;
+  animation: platform-arrive 800ms both;
 }
+
+.platform-course-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 48px;
+  align-items: center;
+}
+.platform-course-portrait {
+  position: relative;
+  min-width: 0;
+  border-radius: 32px;
+}
+.platform-course-portrait > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+  object-position: 66% center;
+  border-radius: inherit;
+}
+.platform-portrait-link {
+  position: absolute;
+  inset: auto 20px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 24px;
+  color: var(--foreground);
+  text-decoration: none;
+}
+.platform-portrait-link strong { display: block; font-size: 0.95rem; font-weight: 600; }
+.platform-portrait-link small { display: block; margin-top: 6px; font-size: 0.75rem; }
+.platform-portrait-link > svg { width: 18px; flex: 0 0 auto; }
+.platform-portrait-link:hover .platform-play-orb { transform: scale(1.06); }
 
 .platform-course-detail .platform-route-header h1 {
   max-width: 100%;
@@ -1067,7 +1192,7 @@
 .platform-course-outline {
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   gap: 64px;
-  scroll-margin-top: 24px;
+  scroll-margin-top: 100px;
 }
 
 .platform-course-outline > .platform-domain-content { border-color: var(--border-default); }
@@ -1077,7 +1202,13 @@
   font-size: 0.85rem;
   margin-bottom: 24px;
 }
-.platform-course-outline .platform-lesson-folder { border-bottom: 1px solid var(--border-default); }
+.platform-course-outline .platform-lesson-folder {
+  border-bottom: 1px solid var(--border-default);
+  transition: background 200ms ease;
+}
+.platform-course-outline .platform-lesson-folder:hover {
+  background: color-mix(in srgb, var(--card) 65%, transparent);
+}
 .platform-course-outline .platform-lesson-folder > summary {
   display: flex;
   align-items: center;
@@ -1091,6 +1222,13 @@
 .platform-course-outline summary::-webkit-details-marker { display: none; }
 .platform-course-outline summary::after {
   content: '+';
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
   font-size: 1.5rem;
   font-weight: 400;
   color: var(--muted-foreground);
@@ -1105,9 +1243,10 @@
 .platform-course-list .platform-entity h2 { font-size: clamp(1.4rem, 3vw, 2rem); letter-spacing: -0.03em; }
 
 @media (max-width: 760px) {
-  .platform-teacher-feature, .platform-course-outline { grid-template-columns: minmax(0, 1fr); gap: 28px; }
-  .platform-feature-photo { aspect-ratio: 4 / 3; }
-  .platform-feature-copy { max-width: 520px; }
+  .platform-course-hero, .platform-course-outline { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .platform-teacher-feature { min-height: 650px; }
+  .platform-feature-photo { object-position: 65% center; }
+  .platform-course-portrait > img { aspect-ratio: 4 / 3; }
   .platform-home-hero { padding-block: 24px 0; }
   .platform-course-detail .platform-route-header { padding-block: 16px 24px; }
   .platform-landing {
@@ -1165,11 +1304,11 @@
   }
 
   .platform-nav {
-    width: 100%;
+    width: calc(100% - 28px);
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(max-content, 1fr));
     gap: 0;
-    padding-inline: 14px;
+    padding: 5px;
   }
 
   .platform-nav-link {
@@ -1184,11 +1323,6 @@
     display: none;
   }
 
-  .platform-nav-link::after {
-    right: 6px;
-    left: 6px;
-  }
-
   .platform-main {
     padding-block: 32px 72px;
   }
@@ -1201,6 +1335,13 @@
   .platform-home-hero {
     padding-block: 10px 6px;
   }
+
+  .platform-teacher-feature { min-height: 610px; border-radius: 28px; }
+  .platform-feature-copy { width: calc(100% - 24px); margin: 12px; padding: 24px; border-radius: 22px; }
+  .platform-feature-caption { top: 16px; left: 16px; }
+  .platform-portrait-link { inset: auto 12px 12px; padding: 14px; border-radius: 20px; }
+  .platform-portrait-link small { line-height: 1.5; }
+  .platform-portrait-link .platform-play-orb { margin-right: 4px; }
 
   .platform-home-resume {
     grid-template-columns: minmax(0, 1fr);
@@ -1255,6 +1396,30 @@
   }
 }
 
+@keyframes platform-arrive {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .platform-teacher-feature {
+      animation: platform-arrive linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 30%;
+    }
+  }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .platform-glass { background: var(--background); }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .platform-glass { background: var(--background); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .platform-shell *, .platform-shell *::after { animation: none !important; transition: none !important; }
   .platform-spin { animation: none; }
 }
