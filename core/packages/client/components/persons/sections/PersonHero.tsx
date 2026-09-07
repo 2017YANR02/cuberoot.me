@@ -17,6 +17,7 @@ import { uploadedImageUrl } from '@/lib/image-upload';
 import { getPublicMemberProfile, type PublicMemberProfile } from '@/lib/membership-api';
 import type { WcaCompetition, WcaPersonProfile, WcaResultRow, WcaFormerIdentity } from '@/lib/wca-person-api';
 import { computePrRank, countPersonalRecords } from '../logic/progress';
+import PersonAchievements from './PersonAchievements';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -220,6 +221,8 @@ export default function PersonHero({
           </div>
         </div>
       </div>
+
+      <PersonAchievements wcaId={p.wca_id} isZh={isZh} />
 
       {avatarOpen && fullAvatarUrl && (
         <AvatarPreview

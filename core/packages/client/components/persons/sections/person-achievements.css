@@ -1,0 +1,24 @@
+.wp-achievements { max-width: 100%; }
+.wp-achievements h2 { margin: 0 0 8px; font-size: 0.8rem; font-weight: 600; }
+.wp-achievements-list { display: flex; flex-wrap: wrap; gap: 16px; }
+.wp-achievement {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    color: var(--foreground); text-decoration: none; border-radius: 8px;
+}
+.wp-achievement-medal {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    width: 72px; height: 72px; border-radius: 50%;
+    color: var(--signal-warning);
+    border: 2px solid color-mix(in srgb, var(--signal-warning) 65%, var(--foreground));
+    background: radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--signal-warning) 26%, var(--background)), var(--background) 75%);
+    box-shadow: inset 0 0 0 3px var(--background), inset 0 0 0 4px color-mix(in srgb, var(--signal-warning) 35%, transparent);
+}
+.wp-achievement-medal .cubing-icon { font-size: 26px; }
+.wp-achievement-medal.is-gold {
+    background: radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--signal-warning) 55%, var(--background)), color-mix(in srgb, var(--signal-warning) 18%, var(--background)));
+}
+.wp-achievement-wr { font-size: 9px; font-weight: 800; letter-spacing: 2px; line-height: 1; margin-left: 2px; }
+.wp-achievement-name { font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+.wp-achievement-label { font-size: 0.65rem; color: var(--muted-foreground); white-space: nowrap; }
+.wp-achievement:hover .wp-achievement-medal { border-color: var(--signal-warning); }
+.wp-achievement:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
