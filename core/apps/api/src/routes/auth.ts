@@ -1,11 +1,15 @@
-import { Hono } from 'hono';
+import { Hono, type MiddlewareHandler } from 'hono';
+import jwt from 'jsonwebtoken';
+import { randomUUID } from 'node:crypto';
+import { isAdminWcaId } from '@cuberoot/shared/admin';
 import type {
   WebSession,
   WebSessionUserEnvelope,
 } from '@cuberoot/shared/auth/web-session';
 import { webSessionError } from '@cuberoot/shared/auth/web-session';
-import { query } from '../db/connection.js';
-import { signSession, verifySession } from '../utils/session.js';
+import { query, sql } from '../db/connection.js';
+import { JWT_SECRET, signSession, verifySession, isRolePreviewActive } from '../utils/session.js';
+import { requireAuth } from '../utils/recon_helpers.js';
 import { captureAccountDevice } from '../utils/account_device.js';
 import {
   loginWithIdentity,
@@ -28,6 +32,78 @@ const WCA_REDIRECT_URI = process.env.WCA_REDIRECT_URI || 'http://localhost:3000/
  * GET  /v1/auth/me       — 验证 JWT，返回用户信息
  */
 export const authRoutes = new Hono();
+
+/** Validate the short-lived test session before any route can consume its identity. */
+export const rolePreviewGuard: MiddlewareHandler = async (c, next) => {
+  const token = c.req.header('Authorization')?.replace(/^Bearer /, '');
+  if (!token) return next();
+  const decoded = jwt.decode(token);
+  if (!decoded || typeof decoded === 'string' || !('previewId' in decoded)) return next();
+  let payload;
+  try {
+    payload = jwt.verify(token, JWT_SECRET, { audience: 'role-preview', issuer: 'cuberoot' }) as { previewId: string; uid: number };
+  } catch { return c.json({ error: 'Test session expired or invalid; exit test mode.' }, 401); }
+  if (!await isRolePreviewActive(payload.previewId, payload.uid)) return c.json({ error: 'Test session ended; exit test mode.' }, 401);
+  c.header('Cache-Control', 'no-store');
+  // No credential minting, identity linking, account editing or API-key bypass while testing.
+  if (c.req.header('X-Admin-Key') || (c.req.path.startsWith('/v1/auth/')
+    && !['/v1/auth/me', '/v1/auth/profile', '/v1/auth/providers', '/v1/auth/identities'].includes(c.req.path))) {
+    return c.json({ error: 'Exit test mode before changing authentication or accounts.' }, 403);
+  }
+  if (c.req.path.startsWith('/v1/auth/') && c.req.method !== 'GET') {
+    return c.json({ error: 'Exit test mode before changing authentication or accounts.' }, 403);
+  }
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(c.req.method)) {
+    // Record attempts before side effects; no request bodies, secrets or query parameters.
+    await sql`INSERT INTO role_preview_events (session_id, method, path)
+      VALUES (${payload.previewId}, ${c.req.method}, ${c.req.path})`;
+  }
+  await next();
+  c.header('Cache-Control', 'no-store');
+};
+
+authRoutes.post('/auth/role-preview', async (c) => {
+  const actor = await requireAuth(c);
+  if (!actor.uid || !isAdminWcaId(actor.realWcaId)) return c.json({ error: 'Super administrator required' }, 403);
+  const body = await c.req.json().catch(() => null);
+  const role = body?.role;
+  if (!['admin', 'member', 'user', 'guest'].includes(role)) return c.json({ error: 'Invalid test role' }, 400);
+  const id = randomUUID();
+  const uid = await sql.begin(async (tx) => {
+    await tx`SELECT id FROM app_users WHERE id = ${actor.uid!} FOR UPDATE`;
+    let userId: number | null = null;
+    if (role !== 'guest') {
+      const [profile] = await tx`SELECT user_id FROM role_preview_profiles WHERE actor_user_id = ${actor.uid!} AND role = ${role}`;
+      if (profile) userId = Number(profile.user_id);
+      else {
+        const [user] = await tx`INSERT INTO app_users (display_name, is_admin, show_in_member_list)
+          VALUES (${'Role test: ' + role}, ${role === 'admin'}, FALSE) RETURNING id`;
+        userId = Number(user.id);
+        await tx`INSERT INTO role_preview_profiles (actor_user_id, role, user_id) VALUES (${actor.uid!}, ${role}, ${userId})`;
+      }
+      await tx`UPDATE app_users SET is_admin = ${role === 'admin'} WHERE id = ${userId}`;
+      if (role === 'member') await tx`INSERT INTO drive_members (user_id) VALUES (${userId})
+        ON CONFLICT (user_id) DO UPDATE SET enabled = TRUE`;
+      else await tx`UPDATE drive_members SET enabled = FALSE WHERE user_id = ${userId}`;
+    }
+    await tx`INSERT INTO role_preview_sessions (id, actor_user_id, user_id, role, expires_at)
+      VALUES (${id}, ${actor.uid!}, ${userId}, ${role}, NOW() + INTERVAL '30 minutes')`;
+    return userId;
+  });
+  const user = uid === null ? null : await getUserById(uid);
+  const token = uid === null ? '' : jwt.sign({ uid, previewId: id }, JWT_SECRET,
+    { audience: 'role-preview', issuer: 'cuberoot', expiresIn: '30m' });
+  c.header('Cache-Control', 'no-store');
+  return c.json({ id, role, token, user: user ? publicUser(user) : null });
+});
+
+authRoutes.delete('/auth/role-preview/:id', async (c) => {
+  const actor = await requireAuth(c);
+  if (!actor.uid || !isAdminWcaId(actor.realWcaId)) return c.json({ error: 'Super administrator required' }, 403);
+  await sql`UPDATE role_preview_sessions SET ended_at = COALESCE(ended_at, NOW())
+    WHERE id::text = ${c.req.param('id')} AND actor_user_id = ${actor.uid}`;
+  return c.json({ ok: true });
+});
 
 // 跳转到 WCA OAuth
 authRoutes.get('/auth/login', (c) => {

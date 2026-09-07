@@ -13,9 +13,9 @@ vi.mock('../src/utils/app_user_auth.js', () => ({
 }));
 vi.mock('../src/utils/recon_helpers.js', () => ({
   requireAuth: async (c: Context) => {
-    const [user] = await sql`SELECT is_admin FROM app_users WHERE id = ${Number(c.req.header('X-Test-User'))}`;
+    const [user] = await sql`SELECT is_admin, wca_id FROM app_users WHERE id = ${Number(c.req.header('X-Test-User'))}`;
     if (!user) throw new Error('unauthorized');
-    return { isAdmin: user.is_admin };
+    return { isAdmin: user.is_admin || user.wca_id === '2017YANR02', realWcaId: user.wca_id };
   },
   requireAdmin: vi.fn(),
   checkRateLimit: () => true,
@@ -40,6 +40,7 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('Drive member folders (Postgr
     }
     await sql`INSERT INTO app_users (id, display_name, is_admin) VALUES (1, 'Owner', true), (2, 'Admin viewer', true), (3, 'Member', false), (4, 'Outsider', false)`;
     await sql`INSERT INTO drive_members (user_id) VALUES (3)`;
+    await sql`INSERT INTO app_users (id, display_name, wca_id) VALUES (5, 'Superadmin', '2017YANR02')`;
     app = (await import('../src/routes/drive.js')).driveRoutes;
     app.onError((error, c) => c.json({ error: error.message }, 403));
   });
@@ -76,6 +77,13 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('Drive member folders (Postgr
       return (await response.json()).nodes.map((node: { id: string }) => node.id);
     };
     expect(await ids('/drive', 2)).toEqual([]);
+    expect((await request(2, '/drive?all=1')).status).toBe(403);
+    expect((await request(3, '/drive?all=1')).status).toBe(403);
+    expect(await ids('/drive?all=1', 5)).toEqual([privateRoot, file]);
+    expect(await ids(`/drive?all=1&parent=${privateRoot}`, 5)).toEqual([shared]);
+    expect((await request(5, '/drive?all=1&members=1')).status).toBe(400);
+    expect((await request(5, `/drive/files/${file}/access`, 'POST')).status).toBe(200);
+    expect((await request(5, `/drive/nodes/${file}`, 'PATCH', { name: 'not mine' })).status).toBe(404);
     expect((await access()).status).toBe(404);
     expect((await request(2, `/drive?parent=${shared}`)).status).toBe(404);
     expect((await patch(file, { memberShared: true })).status).toBe(400);

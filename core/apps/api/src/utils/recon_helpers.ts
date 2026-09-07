@@ -8,7 +8,7 @@ import jwt from 'jsonwebtoken';
 import { validateReconTiming } from '@cuberoot/shared/recon-completion';
 import { ADMIN_WCA_IDS, BANNED_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 export { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
-import { JWT_SECRET } from './session.js';
+import { JWT_SECRET, isRolePreviewActive } from './session.js';
 import { findUserByWcaId, getUserById, ownerKey } from './account.js';
 
 // 装饰性标注字符:`·`(间隔)、`↑↓`(regrip 方向记号)、分数 `⅓⅔`、ASCII `.`、各类零宽字符。
@@ -368,7 +368,8 @@ export async function authenticateUser(authHeader: string | undefined): Promise<
   // NOTE: 优先尝试 JWT 验证（自签令牌，365 天有效期，无需网络调用）
   // 载荷三种:{ wcaId }(老 token)/ { uid }(纯邮箱手机账号)/ { uid, wcaId }(绑了 WCA)。
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as { uid?: number; wcaId?: string; name?: string };
+    const payload = jwt.verify(token, JWT_SECRET) as { uid?: number; wcaId?: string; name?: string; previewId?: string };
+    if (payload.previewId && !await isRolePreviewActive(payload.previewId, payload.uid!)) return null;
     if (payload.uid != null || payload.wcaId) {
       const account = payload.uid != null
         ? await getUserById(payload.uid)

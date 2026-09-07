@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { apiCors } from './api_cors.js';
-import { authRoutes } from './routes/auth.js';
+import { authRoutes, rolePreviewGuard } from './routes/auth.js';
 import { accountAuthRoutes } from './routes/account_auth.js';
 import { progressRoutes } from './routes/progress.js';
 import { healthRoutes } from './routes/health.js';
@@ -100,6 +100,7 @@ const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 // Phase 4 (2026-05-27): 主域全员切 Next; vite.cuberoot.me 已下线。
 // *.vercel.app 用 function 形式兜底,Vercel preview 每 PR 一个新 URL 全开。
 app.use('*', apiCors);
+app.use('/v1/*', rolePreviewGuard);
 
 // NOTE: 全局错误处理——把未捕获的 throw new Error(...) 转成 JSON 格式
 // requireAuth / requireAdmin / checkRateLimit 都用 throw，没有全局处理器会变成空 500
