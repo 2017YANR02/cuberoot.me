@@ -61,7 +61,10 @@
 .sheet-grid-row { position: absolute; left: 0; height: 25px; }
 .sheet-row-head { position: sticky; left: 0; z-index: 12; display: grid; place-items: center; width: 46px; height: 25px; border-right: 1px solid var(--border-default); border-bottom: 1px solid var(--border-default); background: var(--muted); color: var(--muted-foreground); font-size: .72rem; user-select: none; }
 .sheet-cell { position: absolute; top: 0; display: flex; align-items: center; height: 25px; overflow: hidden; padding: 3px 5px; border-right: 1px solid var(--border-default); border-bottom: 1px solid var(--border-default); background: var(--background); color: var(--foreground); font-size: .79rem; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; user-select: none; }
-.sheet-cell-value, .sheet-cell-link { display: block; max-width: 100%; overflow: hidden; color: inherit; text-overflow: ellipsis; }
+.sheet-cell-value, .sheet-cell-link { display: block; max-width: 100%; overflow: hidden; color: inherit; text-overflow: clip; }
+.sheet-cell.is-overflowing { overflow: visible; }
+.sheet-cell.is-overflowing > .sheet-cell-value, .sheet-cell.is-overflowing > .sheet-cell-link { position: relative; z-index: 1; flex-shrink: 0; width: max-content; max-height: 100%; }
+.sheet-cell.is-overflowing > .sheet-cell-value { pointer-events: none; }
 .sheet-cell-link { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
 .sheet-cell.is-wrapped { white-space: normal; }
 .sheet-cell.is-wrapped .sheet-cell-value, .sheet-cell.is-wrapped .sheet-cell-link { white-space: normal; overflow-wrap: anywhere; text-overflow: clip; }

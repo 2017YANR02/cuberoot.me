@@ -1248,7 +1248,7 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
 }
 .wp-upcoming-row > * {
     align-self: center;
-    padding: 10px 0;
+    padding: 4px 0;
 }
 .wp-upcoming-date {
     color: var(--wp-text-sub);
@@ -1405,7 +1405,7 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
         grid-column: 1;
         grid-template-columns: minmax(0, 1fr);
         gap: 4px;
-        padding: 10px 0;
+        padding: 4px 0;
     }
     .wp-upcoming-row > * { padding: 0; }
     .wp-hero-collections { flex-basis: 100%; gap: 24px; }

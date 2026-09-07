@@ -436,9 +436,10 @@ function EventRoundsList({
               <span><span>{tr({ zh: '平均总数', en: 'Average count' })}</span><strong>{resultStats.average.count}</strong></span>
             </>
           )}
-          <span title={tr({ zh: '起表到第一步的算术平均耗时', en: 'Arithmetic mean from timer start to first move' })}><span>{tr({ zh: '平均起表', en: 'Mean pickup' })}</span><strong>{timingStats.pickup == null ? '—' : `${timingStats.pickup.toFixed(3)}s`}</strong></span>
-          <span title={tr({ zh: '最后一步到拍表的算术平均耗时', en: 'Arithmetic mean from last move to timer stop' })}><span>{tr({ zh: '平均拍表', en: 'Mean putdown' })}</span><strong>{timingStats.putdown == null ? '—' : `${timingStats.putdown.toFixed(3)}s`}</strong></span>
-          <span><span>{tr({ zh: '耗时样本', en: 'Timing samples' })}</span><strong>{reconLookup == null ? '—' : timingStats.count}</strong></span>
+          <span title={tr({ zh: '起表到第一步的算术平均耗时', en: 'Arithmetic mean from timer start to first move' })}><span>{tr({ zh: '起表', en: 'Pickup' })}</span><strong>{timingStats.pickup == null ? '—' : `${timingStats.pickup.toFixed(3)}s`}</strong></span>
+          <span title={tr({ zh: '最后一步到拍表的算术平均耗时', en: 'Arithmetic mean from last move to timer stop' })}><span>{tr({ zh: '拍表', en: 'Putdown' })}</span><strong>{timingStats.putdown == null ? '—' : `${timingStats.putdown.toFixed(3)}s`}</strong></span>
+          <span title={tr({ zh: '起表与拍表的平均耗时之和', en: 'Sum of mean pickup and putdown durations' })}><span>{tr({ zh: '起拍表', en: 'Pickup + putdown' })}</span><strong>{timingStats.pickup == null || timingStats.putdown == null ? '—' : `${(timingStats.pickup + timingStats.putdown).toFixed(3)}s`}</strong></span>
+          <span><span>{tr({ zh: '起拍表样本', en: 'Pickup/putdown samples' })}</span><strong>{reconLookup == null ? '—' : timingStats.count}</strong></span>
         </div>
       )}
       {/* sticky 列头吸顶:复用全站共用工具(sticky-scroll + sticky-thead,见 components/sticky-table.css)。 */}
@@ -515,15 +516,6 @@ function EventRoundsList({
                 </span>
               )}
             </th>
-            <th className="wp-th-aoxr">
-              <span className="wp-th-info">
-                <button type="button" className={`wp-sort-th ${sort.key === 'aoxr' ? 'is-active' : ''}`}
-                  onClick={() => toggleSort('aoxr')} title={t('按 AOXR 排序', 'Sort by AOXR')}>
-                  AoXR{sortArrow('aoxr')}
-                </button>
-                <InfoTooltip content={aoxrHint()} />
-              </span>
-            </th>
             <th className="wp-th-attempts">
               <span className="wp-att-head" style={{ '--att-cols': maxAttempts } as React.CSSProperties}>
                 {maxAttempts > 0 && (
@@ -538,6 +530,15 @@ function EventRoundsList({
                     ))}
                   </span>
                 )}
+              </span>
+            </th>
+            <th className="wp-th-aoxr">
+              <span className="wp-th-info">
+                <button type="button" className={`wp-sort-th ${sort.key === 'aoxr' ? 'is-active' : ''}`}
+                  onClick={() => toggleSort('aoxr')} title={t('按 AOXR 排序', 'Sort by AOXR')}>
+                  AoXR{sortArrow('aoxr')}
+                </button>
+                <InfoTooltip content={aoxrHint()} />
               </span>
             </th>
           </tr>
@@ -691,11 +692,6 @@ function EventRoundsList({
                     />
                   )}
                 </td>
-                {aoxrSpans[ri] > 0 && (
-                  <td className="wp-cell-aoxr" rowSpan={aoxrSpans[ri]}>
-                    <AoxrValue cell={aoxrMap.get(aoxrKey(r.competition_id, eventId))} eventId={eventId} />
-                  </td>
-                )}
                 <td className={`wp-cell-attempts ${isMbldEvent(eventId) ? 'wp-cell-attempts--mbld' : ''} ${showAttemptRanks ? '' : 'wp-cell-attempts--center'}`}>
                   <AttemptsList
                     attempts={effAttempts}
@@ -767,6 +763,11 @@ function EventRoundsList({
                     }
                   />
                 </td>
+                {aoxrSpans[ri] > 0 && (
+                  <td className="wp-cell-aoxr" rowSpan={aoxrSpans[ri]}>
+                    <AoxrValue cell={aoxrMap.get(aoxrKey(r.competition_id, eventId))} eventId={eventId} />
+                  </td>
+                )}
               </tr>
             );
           })}

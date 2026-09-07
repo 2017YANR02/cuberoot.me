@@ -4,7 +4,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { VILLA_ROOMS, type RoomStyle } from './space-state';
+import { VILLA_ROOMS, type RoomStyle, type WalkObstacle } from './space-state';
 
 const PALETTES = {
   minimal: { sky: 0x9aadb9, ground: 0x7e8986, stone: 0xbcbdb8, frame: 0xc9d0d2, wall: 0xe7e5de, wood: 0x847768, fabric: 0xd6d5cd, mirror: 0x727977, glow: 0xffedce, secondary: 0xe1eeff },
@@ -21,16 +21,26 @@ const EXTRA = {
 
 
 type V = [number, number, number];
+const opaqueShadow: THREE.Mesh['onBeforeShadow'] = (_renderer, _object, _camera, _shadowCamera, _geometry, material) => {
+  const depth = material as THREE.MeshDepthMaterial;
+  // Opaque shadows need no color maps. Three's shared depth uniforms can retain a disposed room's map.
+  if (!depth.alphaTest && !depth.alphaHash) { depth.map = null; depth.alphaMap = null; }
+};
 export class SpaceRoom {
   readonly root = new THREE.Group();
   readonly palette;
   readonly floor: Reflector;
   readonly surfaces: THREE.Mesh[] = [];
+  readonly obstacles: WalkObstacle[] = [];
+  private solids: THREE.Object3D[] = [];
+  private lights: THREE.RectAreaLight[] = [];
+  private lightSlots = Array.from({ length: 4 }, () => new THREE.RectAreaLight());
   private roof = new THREE.Group();
   private back = new THREE.Group();
   private mirrors: Reflector[] = [];
   private textures = new Map<string, THREE.Texture>();
   private models = new Map<string, Promise<THREE.Group | null>>();
+  private carsLoaded = false;
   private disposed = false;
   private glass = new THREE.MeshPhysicalMaterial({ color: 0xd7e6e5, roughness: 0.07, metalness: 0.15, transparent: true, opacity: 0.1, depthWrite: false, side: THREE.DoubleSide });
   private stone: THREE.MeshStandardMaterial;
@@ -60,8 +70,20 @@ export class SpaceRoom {
       this.company();
     } else this.villa();
     this.landscape();
+    this.root.updateWorldMatrix(true, true);
+    for (const solid of this.solids) {
+      const b = new THREE.Box3().setFromObject(solid);
+      this.obstacles.push({ minX: b.min.x, maxX: b.max.x, minY: b.min.y, maxY: b.max.y, minZ: b.min.z, maxZ: b.max.z });
+    }
+    for (const light of this.lights) {
+      light.getWorldPosition(light.position); light.getWorldQuaternion(light.quaternion); light.removeFromParent();
+    }
+    this.root.add(...this.lightSlots);
+    for (const child of this.root.children) if (child instanceof THREE.Group && child !== this.roof) this.batch(child);
+    for (const child of this.roof.children) if (child instanceof THREE.Group) this.batch(child);
     this.batch(this.root);
     this.batch(this.roof);
+    this.root.traverse(o => { if (o instanceof THREE.Mesh) o.onBeforeShadow = opaqueShadow; });
   }
 
   private material(color: number, kind: 'wood' | 'marble' | 'fabric' | 'carpet' | 'parquet', roughness: number) {
@@ -97,6 +119,7 @@ export class SpaceRoom {
   private box(w: number, h: number, d: number, x: number, y: number, z: number, mat: THREE.Material, parent = this.root, round = 0.025) {
     const mesh = new THREE.Mesh(new RoundedBoxGeometry(w, h, d, round > 0.06 ? 3 : 1, Math.min(round, w / 3, h / 3, d / 3)), mat);
     mesh.position.set(x, y, z); mesh.castShadow = mat !== this.glass; mesh.receiveShadow = true;
+    if (h >= 0.6 && parent !== this.roof) this.solids.push(mesh);
     parent.add(mesh); return mesh;
   }
   private cylinder(rt: number, rb: number, h: number, x: number, y: number, z: number, mat: THREE.Material, parent = this.root) {
@@ -115,15 +138,20 @@ export class SpaceRoom {
   private area(position: V, target: V, w: number, h: number, intensity = 4, color: number = this.palette.glow) {
     const light = new THREE.RectAreaLight(color, intensity * (this.style === 'company' ? 0.12 : 0.2), w, h);
     light.position.set(...position); light.lookAt(...target); this.root.add(light);
+    this.lights.push(light);
   }
   private model(name: string, x: number, y: number, z: number, height: number, rotation = 0, planted = false) {
     const holder = new THREE.Group(); holder.position.set(x, y, z); holder.rotation.y = rotation;
     holder.name = name; this.root.add(holder);
-    if (!this.models.has(name)) this.models.set(name, new GLTFLoader().loadAsync(`/assets/space/v2/${name}/model.gltf`).then(({ scene }) => {
+    if (!this.models.has(name)) this.models.set(name, new GLTFLoader().loadAsync(name === 'car-concept' ? '/assets/space/v3/car-concept.glb' : `/assets/space/v2/${name}/model.gltf`).then(({ scene }) => {
       if (this.disposed) { this.disposeModel(scene); return null; }
       scene.traverse(o => {
         if (!(o instanceof THREE.Mesh)) return;
         o.castShadow = o.receiveShadow = true;
+        if (name === 'car-concept') for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m instanceof THREE.MeshPhysicalMaterial && m.transmission > 0) {
+          // The surrounding room already supplies reflections; avoid a second full-scene transmission pass.
+          m.transmission = 0; m.transparent = true; m.opacity = 0.35; m.depthWrite = false;
+        }
         if (name === 'throw_pillows_01' && this.style !== 'vintage') {
           for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m instanceof THREE.MeshStandardMaterial) {
             m.map?.dispose(); m.map = null; m.color.setHex(this.palette.fabric); m.roughness = 1;
@@ -139,6 +167,7 @@ export class SpaceRoom {
       if (!Number.isFinite(size.y) || size.y <= 0) return;
       const scale = height / size.y, center = bounds.getCenter(new THREE.Vector3());
       object.scale.multiplyScalar(scale); object.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
+      object.traverse(o => { if (o instanceof THREE.Mesh) o.onBeforeShadow = opaqueShadow; });
       holder.add(object); this.invalidate();
     });
     return holder;
@@ -181,9 +210,12 @@ export class SpaceRoom {
     this.box(width, 0.17, 1.16, x, y + 0.21, z, mat, this.root, 0.08);
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) this.box(0.045, 0.14, 0.045, x + sx * (width / 2 - 0.18), y + 0.07, z + sz * 0.43, this.metal);
     const n = Math.max(1, Math.round(width / 1.05));
+    const seam = mat.clone(); seam.color.multiplyScalar(0.7); seam.onBeforeCompile = mat.onBeforeCompile; seam.customProgramCacheKey = mat.customProgramCacheKey;
     for (let i = 0; i < n; i++) {
       const sx = x - width / 2 + (i + 0.5) * width / n;
       this.box(width / n - 0.022, 0.24, 0.95, sx, y + 0.42, z + 0.08, mat, this.root, 0.11);
+      const half = width / n / 2 - 0.075;
+      this.line([[sx - half, y + 0.48, z - 0.33], [sx, y + 0.52, z - 0.37], [sx + half, y + 0.48, z - 0.33], [sx + half, y + 0.48, z + 0.48], [sx, y + 0.52, z + 0.51], [sx - half, y + 0.48, z + 0.48], [sx - half, y + 0.48, z - 0.33]], 0.004, seam);
       const back = this.box(width / n - 0.025, 0.6, 0.25, sx, y + 0.69, z - 0.43, mat, this.root, 0.115); back.rotation.x = -0.13;
       if (i === 0 || i === n - 1) {
         this.model('throw_pillows_01', sx, y + 0.52, z - 0.13, 0.44, i ? -0.25 : 0.35);
@@ -232,20 +264,28 @@ export class SpaceRoom {
     const shadow = new THREE.Mesh(new THREE.PlaneGeometry(20, 18), new THREE.ShadowMaterial({ opacity: 0.3, depthWrite: false })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.026; shadow.receiveShadow = true; this.root.add(shadow);
     // Continuous rear gallery joins the living room to the study and upper suites.
     this.box(39, 9.5, 0.3, -9.5, 4.75, -16.1, wall);
-    this.box(0.3, 7.8, 18, 10.15, 3.9, 0, wall);
-    for (let z = -8.85; z < 9; z += 1.8) for (let y = 0.8; y < 7.8; y += 1.6) this.box(0.035, 1.575, 1.775, 10.318, y, z + 0.75, stone);
+    // A real opening connects the main hall with the leisure wing.
+    this.box(0.3, 7.8, 13.5, 10.15, 3.9, -2.25, wall);
+    this.box(0.3, 7.8, 2.5, 10.15, 3.9, 7.75, wall);
+    this.box(0.3, 5, 2, 10.15, 5.3, 5.5, wall);
+    for (const z of [4.45, 6.55]) this.box(0.35, 2.85, 0.06, 10.15, 1.425, z, metal);
     this.box(12, 4.7, 0.25, -23, 2.35, -6.1, wood);
     this.box(8.8, 4.4, 0.22, -24.6, 7.2, -4.1, wood);
     this.box(0.25, 4.5, 22, -29.15, 7.25, -5, wall);
     for (const [x, y, z, w, h] of [[0, 3.9, 9, 20, 7.8], [-23, 2.4, 10, 12, 4.8], [-23, 7.2, 10, 12, 4.4]]) {
-      this.box(w, h, 0.03, x, y, z, this.glass);
-      for (let i = 0; i <= w; i += 3) this.box(0.045, h, 0.075, x - w / 2 + i, y, z, metal);
+      if (x === 0) {
+        for (const dx of [-5.6, 5.6]) this.box(8.8, h, 0.03, dx, y, z, this.glass);
+        this.box(2.4, h - 2.8, 0.03, 0, y + 1.4, z, this.glass);
+      } else this.box(w, h, 0.03, x, y, z, this.glass);
+      for (let i = 0; i <= w; i += 3) if (x !== 0 || Math.abs(x - w / 2 + i) > 1.2) this.box(0.045, h, 0.075, x - w / 2 + i, y, z, metal);
       for (const edge of [-1, 1]) this.box(w, 0.07, 0.1, x, y + edge * h / 2, z, metal);
     }
     for (const x of [-29, -17, -10, 10]) this.box(0.26, x < -10 ? 9.4 : 7.8, 0.26, x, x < -10 ? 4.7 : 3.9, 9, stone);
     this.box(0.035, 4.5, 16, -29, 2.4, 2, this.glass);
-    this.box(0.035, 4.4, 22, -17, 7.2, -5, this.glass);
-    for (let z = -15; z <= 9; z += 3) this.box(0.055, 4.4, 0.06, -17, 7.2, z, metal);
+    this.box(0.035, 4.4, 2.3, -17, 7.2, -14.85, this.glass);
+    this.box(0.035, 4.4, 21.3, -17, 7.2, -0.65, this.glass);
+    this.box(0.035, 1.6, 2.4, -17, 8.6, -12.5, this.glass);
+    for (let z = -15; z <= 9; z += 3) if (Math.abs(z + 12.5) > 1.25) this.box(0.055, 4.4, 0.06, -17, 7.2, z, metal);
     for (let i = 0; i < 25; i++) this.box(0.5, 0.14, 2.9, 9 - i * 0.44, 0.2 + i * 0.2, -12.35, wood);
     for (const z of [-13.85, -10.85]) {
       this.line([[9.2, 1.2, z], [-1.6, 6.1, z]], 0.035, metal);
@@ -262,7 +302,7 @@ export class SpaceRoom {
     this.model('modern_arm_chair_01', -7.5, 0, -2.5, 0.95, 1.2);
     this.box(7.2, 0.025, 5, -4.8, 0.045, -4.5, fabric, this.root, 0.1);
     for (const [x, z, r, y] of [[-4.8, -4.2, 1, 0.51], [-3.3, -3.7, 0.65, 0.38]]) {
-      this.cylinder(r, r, 0.09, x, y, z, stone); this.cylinder(r * 0.6, r * 0.6, y, x, y / 2, z, metal);
+      this.surfaces.push(this.cylinder(r, r, 0.09, x, y, z, stone)); this.cylinder(r * 0.6, r * 0.6, y, x, y / 2, z, metal);
     }
     this.box(0.7, 0.06, 0.5, -4.8, 0.59, -4.2, wood);
     this.cylinder(0.15, 0.21, 0.42, -5.3, 0.75, -4.3, this.ceramic);
@@ -302,6 +342,9 @@ export class SpaceRoom {
     this.box(0.76, 0.44, 0.045, -23.3, 1.14, -0.3, this.dark);
     this.box(0.04, 0.2, 0.04, -23.3, 0.88, -0.3, metal);
     this.box(0.42, 0.018, 0.15, -23.3, 0.825, 0.26, this.dark);
+    for (let row = 0; row < 4; row++) for (let col = 0; col < 12; col++) this.box(0.026, 0.004, 0.024, -23.48 + col * 0.032, 0.837, 0.21 + row * 0.032, this.metal, this.root, 0.001);
+    this.cylinder(0.06, 0.045, 0.11, -22.95, 0.87, 0.37, this.ceramic);
+    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.008, 8, 20), this.ceramic); handle.position.set(-22.887, 0.88, 0.37); this.root.add(handle);
     this.books(-24.6, 0.82, -0.3, 4);
     this.cylinder(0.12, 0.12, 0.025, -22.5, 0.82, -0.32, metal);
     this.line([[-22.5, 0.84, -0.32], [-22.5, 1.45, -0.32], [-22.83, 1.52, -0.22]], 0.014, metal);
@@ -329,6 +372,80 @@ export class SpaceRoom {
     this.box(2.2, 0.3, 2.2, -13.5, 0.08, -3.5, stone); this.plant(-13.5, 0.22, -3.5, 1.4);
     for (let i = 0; i < 5; i++) this.platform(1.1, 1.6, -15.8 + i * 1.15, 0.07, 5, stone);
     this.details();
+    this.leisureWing();
+  }
+
+  private leisureWing() {
+    const { wood, metal, led, stone, dark, fabric } = this;
+    const graphite = this.material(0x373c3d, 'fabric', 1);
+    this.box(20.4, 0.5, 40.5, 20.1, -0.26, 4, stone);
+    this.box(20.3, 4.2, 0.25, 20, 2.1, -16.1, stone);
+    this.box(0.25, 4.2, 40, 30.1, 2.1, 4, stone);
+    for (const z of [-4, 10]) this.box(18, 4.2, 0.22, 21, 2.1, z, wood);
+    // Doors are open, 1.8 m wide, with a solid lintel above eye level.
+    for (const [z, depth] of [[-10, 12], [3, 14], [17, 14]]) {
+      const side = (depth - 1.8) / 2;
+      for (const sign of [-1, 1]) this.box(0.22, 4.2, side, 12, 2.1, z + sign * (0.9 + side / 2), wood);
+      this.box(0.22, 1.4, 1.8, 12, 3.5, z, wood);
+      for (const sign of [-1, 1]) this.box(0.3, 2.85, 0.06, 12, 1.425, z + sign * 0.94, metal);
+    }
+    this.box(18, 4.2, 0.025, 21, 2.1, 24, this.glass);
+    for (let x = 12; x <= 30; x += 3) this.box(0.055, 4.2, 0.08, x, 2.1, 24, metal);
+    // Garage: stone storage, charging bays, drainage and two low grand tourers.
+    this.platform(17.5, 11.5, 21, 0.035, -10, dark);
+    for (const x of [16.3, 25.5]) {
+      for (const dx of [-2, 2]) this.box(0.045, 0.008, 7, x + dx, 0.045, -10, led);
+      this.box(0.5, 0.75, 0.12, x, 1.15, -15.85, metal, this.root, 0.1);
+      this.line([[x + 0.15, 1.15, -15.75], [x + 0.32, 0.55, -15.5], [x - 0.15, 0.45, -15.5], [x - 0.12, 0.9, -15.7]], 0.019, dark);
+      this.obstacles.push({ minX: x - 1.1, maxX: x + 1.1, minY: 0, maxY: 1.5, minZ: -12.6, maxZ: -7.4 });
+    }
+    for (let x = 14; x < 29; x += 1.2) { this.box(1.17, 2.2, 0.65, x, 1.1, -15.7, wood); this.box(0.025, 0.45, 0.03, x + 0.43, 1.12, -15.34, metal); }
+    // Screening room: two seating rows, acoustic folds and a softly lit screen.
+    this.platform(17.6, 13.6, 21, 0.04, 3, graphite);
+    this.box(0.14, 2.9, 8.8, 29.9, 2.1, 3, dark);
+    const screen = new THREE.MeshBasicMaterial({ color: 0xa9bbbf });
+    this.box(0.045, 2.5, 8.2, 29.8, 2.1, 3, screen);
+    for (const z of [-3.84, 9.84]) for (let x = 12.6; x < 29.5; x += 0.32) this.box(0.14, 3.9, 0.12, x, 2, z, graphite);
+    for (const x of [17, 21.5]) {
+      for (const z of [-0.1, 3, 6.1]) {
+        const start = this.root.children.length;
+        this.sofa(x, 0, z, 1.7, graphite);
+        this.table(x + 1.2, 0.52, z, 0.5, 0.65, wood);
+        this.cylinder(0.09, 0.08, 0.19, x + 1.2, 0.68, z, metal);
+        const seating = new THREE.Group(); seating.position.set(x, 0, z); this.root.add(seating); seating.updateMatrixWorld();
+        for (const item of this.root.children.slice(start, -1)) seating.attach(item);
+        seating.rotation.y = Math.PI / 2;
+      }
+    }
+    for (const z of [-3.7, 9.7]) this.box(17, 0.02, 0.025, 21, 0.12, z, led);
+    this.box(0.8, 0.3, 0.6, 15, 3.7, 3, dark, this.roof);
+    this.area([29.6, 2.3, 3], [20, 1, 3], 2.4, 8, 2.4, 0xb5d9eb);
+    // Gym: running decks, cable tower, free weights and a continuous wall mirror.
+    this.platform(17.6, 13.6, 21, 0.025, 17, wood);
+    this.mirror(15.5, 2.9, [21, 1.9, 10.16]);
+    for (const x of [17, 21, 25]) {
+      this.box(1.05, 0.13, 2.3, x, 0.16, 20.8, dark, this.root, 0.1);
+      this.box(0.72, 0.015, 1.7, x, 0.24, 21, graphite);
+      for (const sx of [-0.5, 0.5]) this.line([[x + sx, 0.2, 20], [x + sx, 1.35, 19.75], [x + sx, 1.35, 20.4]], 0.035, metal);
+      this.box(0.8, 0.22, 0.3, x, 1.35, 19.75, dark, this.root, 0.06).rotation.x = -0.3;
+    }
+    this.table(22, 0.48, 14.4, 0.65, 1.8, graphite);
+    for (const x of [14, 15.8]) this.box(0.1, 2.4, 0.1, x, 1.2, 12.1, metal);
+    this.box(2, 0.1, 0.8, 14.9, 2.4, 12.1, metal);
+    for (const x of [14.05, 15.75]) {
+      this.line([[x, 0.25, 12.1], [x, 2.25, 12.1], [x, 1.6, 12.7]], 0.008, dark);
+      for (let y = 0.2; y < 0.85; y += 0.065) this.box(0.35, 0.05, 0.28, x, y, 12.1, dark);
+    }
+    this.table(26, 0.65, 12, 4, 0.7, metal);
+    for (let i = 0; i < 7; i++) {
+      const x = 24.5 + i * 0.5, r = 0.11 + i * 0.014;
+      const grip = this.cylinder(0.025, 0.025, 0.43, x, 0.83, 12, metal); grip.rotation.x = Math.PI / 2;
+      for (const z of [11.8, 12.2]) { const weight = this.cylinder(r, r, 0.12, x, 0.83, z, dark); weight.rotation.x = Math.PI / 2; }
+    }
+    this.box(0.8, 0.015, 2, 16, 0.045, 17, fabric, this.root, 0.05);
+    this.sphere(27, 0.62, 17, [0.6, 0.6, 0.6], graphite);
+    for (const x of [13.3, 28.5]) this.plant(x, 0, 22.6, 0.6);
+    this.area([21, 3.5, 23.6], [21, 0.8, 16], 15, 3, 7, 0xd5e4e9);
   }
 
   private bedroom() {
@@ -359,7 +476,8 @@ export class SpaceRoom {
       this.model('throw_pillows_01', x, 6.08, -1.7, 0.55, x < -24 ? 0.15 : -0.12);
     }
     for (const x of [-27.6, -21]) {
-      this.box(1.1, 0.65, 1.05, x, 5.43, -2.7, this.wood, this.root, 0.08);
+      const nightstand = this.box(1.1, 0.65, 1.05, x, 5.43, -2.7, this.wood, this.root, 0.08); this.surfaces.push(nightstand);
+      this.box(0.9, 0.012, 0.025, x, 5.42, -2.163, this.metal);
       this.cylinder(0.12, 0.16, 0.35, x, 5.95, -2.7, this.metal);
       this.cylinder(0.25, 0.37, 0.4, x, 6.3, -2.7, linen);
     }
@@ -394,7 +512,7 @@ export class SpaceRoom {
     this.box(0.45, 0.08, 2.8, -28.61, 6.59, -8.1, this.wood);
     for (let i = 0; i < 4; i++) this.cylinder(0.055, 0.07, 0.2 + i % 2 * 0.08, -28.48, 6.74, -9 + i * 0.3, i % 2 ? this.ceramic : this.metal);
     this.box(5.8, 0.55, 1.2, -23.1, y + 0.75, -14.8, this.wood, this.root, 0.05);
-    this.box(6, 0.11, 1.3, -23.1, y + 1.08, -14.8, this.stone);
+    this.surfaces.push(this.box(6, 0.11, 1.3, -23.1, y + 1.08, -14.8, this.stone));
     for (let x = -25.8; x < -20.4; x += 0.95) this.box(0.015, 0.43, 0.025, x, 5.75, -14.187, this.dark);
     this.box(5.7, 0.02, 0.03, -23.1, 5.44, -14.2, this.led);
     for (const x of [-24.55, -21.75]) {
@@ -445,6 +563,14 @@ export class SpaceRoom {
         const arch = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: 0.5, bevelEnabled: false, curveSegments: 40 }), this.wall); arch.position.set(x, 0, 8.8); arch.castShadow = true; this.root.add(arch);
       }
       for (let x = -29; x < 10; x += 0.4) this.box(0.2, 0.16, 7.5, x, 9.65, -12.5, this.wood, this.roof, 0.06);
+      for (const x of [-7.5, -2.5, 2.5, 7.5]) {
+        const trim = new THREE.Mesh(new THREE.TorusGeometry(2.16, 0.045, 8, 64, Math.PI), this.stone); trim.position.set(x, 4.8, 9.34); this.root.add(trim);
+        for (const side of [-1, 1]) {
+          this.box(0.09, 4.8, 0.12, x + side * 2.16, 2.4, 9.3, this.stone);
+          this.box(0.38, 0.16, 0.68, x + side * 2.3, 4.77, 9.05, this.stone);
+          this.box(0.4, 0.18, 0.7, x + side * 2.3, 0.1, 9.05, this.stone);
+        }
+      }
       for (const x of [-8.5, 8.5]) { this.cylinder(0.48, 0.33, 1.2, x, 0.6, 12, this.stone); this.plant(x, 0.4, 12, 0.8); }
     }
     if (this.style === 'vintage') {
@@ -453,6 +579,10 @@ export class SpaceRoom {
       this.cylinder(0.22, 0.38, 0.4, -1.55, 1.7, -6.55, new THREE.MeshStandardMaterial({ color: 0xefe1c7, roughness: 0.95, emissive: 0xc68b43, emissiveIntensity: 0.4 }));
       for (let x = -9; x < 9; x += 3) for (const y of [0.3, 2.8, 5.8, 7.5]) this.box(2.75, 0.055, 0.055, x + 1.4, y, -8.92, this.metal);
       for (let x = -9; x < 9; x += 3) this.box(0.055, 7.3, 0.06, x, 3.9, -8.91, this.metal);
+      for (const z of [-5.8, 9.7]) for (let x = -28; x < -18; x += 2.2) {
+        for (const side of [-1, 1]) this.box(0.04, 2.4, 0.07, x + side * 0.9, 1.65, z, this.metal);
+        for (const y of [0.45, 2.85]) this.box(1.8, 0.04, 0.07, x, y, z, this.metal);
+      }
       for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8; this.line([[-3, 6.6, -3.4], [-3 + Math.cos(a) * 2, 5.8, -3.4 + Math.sin(a) * 2]], 0.035, this.metal); this.sphere(-3 + Math.cos(a) * 2, 5.8, -3.4 + Math.sin(a) * 2, [0.12, 0.25, 0.12], this.led); }
       for (let i = 0; i < 23; i++) this.sphere(-7.8 + i * 0.28, 0.95, -7.01, [0.04, 0.04, 0.02], this.metal);
     }
@@ -627,20 +757,31 @@ export class SpaceRoom {
     const duct = this.cylinder(0.18, 0.18, 10.2, -5, 3.48, -4.2, aluminium, this.roof); duct.rotation.z = Math.PI / 2;
     this.box(7, 0.025, 3.5, -5.1, 0.018, -1.8, this.dark);
     this.box(6.92, 0.008, 3.42, -5.1, 0.034, -1.8, jute);
-    const oval = new THREE.Shape(); oval.absellipse(0, 0, 1.95, 0.64, 0, Math.PI * 2, false, 0);
+    const oval = new THREE.Shape(); oval.moveTo(-1.31, -0.64); oval.lineTo(1.31, -0.64); oval.absarc(1.31, 0, 0.64, -Math.PI / 2, Math.PI / 2, false); oval.lineTo(-1.31, 0.64); oval.absarc(-1.31, 0, 0.64, Math.PI / 2, Math.PI * 1.5, false);
     const communal = new THREE.Mesh(new THREE.ExtrudeGeometry(oval, { depth: 0.055, bevelEnabled: true, bevelThickness: 0.009, bevelSize: 0.009, bevelSegments: 2, steps: 1, curveSegments: 64 }), this.wood);
     communal.rotation.x = -Math.PI / 2; communal.position.set(-5.2, 0.74, -1.8); communal.castShadow = communal.receiveShadow = true; this.root.add(communal); this.surfaces.push(communal);
     for (const x of [-6.5, -3.9]) { this.box(0.08, 0.73, 0.62, x, 0.365, -1.8, this.dark).rotation.z = x < -5 ? -0.15 : 0.15; this.box(0.14, 0.01, 0.075, x, 0.805, -1.8, this.metal); }
-    for (let i = 0; i < 3; i++) { chair(-6.3 + i * 1.1, -0.7, i % 2 ? lime : upholstery, 0, false); chair(-6.3 + i * 1.1, -2.9, upholstery, Math.PI, false); }
+    for (let i = 0; i < 3; i++) chair(-6.3 + i * 1.1, -2.9, i % 2 ? lime : upholstery, Math.PI, false);
+    this.box(2.9, 0.14, 0.46, -5.2, 0.47, -0.75, upholstery, this.root, 0.06);
+    for (const x of [-6.35, -4.05]) this.box(0.035, 0.41, 0.32, x, 0.205, -0.75, this.dark);
+    this.cylinder(0.085, 0.11, 0.17, -3.7, 0.89, -1.8, orange);
+    this.line([[-3.79, 0.96, -1.8], [-3.7, 1.11, -1.8], [-3.61, 0.96, -1.8]], 0.009, this.dark);
     this.sofa(-7.4, 0, 2.5, 3.8, upholstery); this.sofa(-4.9, 0, 2.5, 1.3, orange);
-    this.cylinder(0.65, 0.65, 0.055, -6.5, 0.46, 3.9, this.dark); this.cylinder(0.15, 0.3, 0.42, -6.5, 0.21, 3.9, this.dark);
+    this.surfaces.push(this.cylinder(0.65, 0.65, 0.055, -6.5, 0.46, 3.9, this.dark)); this.cylinder(0.15, 0.3, 0.42, -6.5, 0.21, 3.9, this.dark);
     this.cylinder(0.42, 0.42, 0.4, -4.8, 0.2, 4.3, lime);
     this.cylinder(0.38, 0.38, 0.37, -8, 0.19, 4.5, orange);
     const shellMaterial = white.clone(); shellMaterial.side = THREE.DoubleSide;
     const liningMaterial = orange.clone(); liningMaterial.onBeforeCompile = orange.onBeforeCompile; liningMaterial.customProgramCacheKey = orange.customProgramCacheKey; liningMaterial.side = THREE.DoubleSide;
     for (const [scale, mat] of [[1, shellMaterial], [0.97, liningMaterial]] as const) {
-      const shell = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32, Math.PI, Math.PI, 0.24, 2.15), mat);
-      shell.position.set(-1.8, 0.99, 1); shell.scale.set(0.57 * scale, 0.72 * scale, 0.48 * scale); shell.castShadow = shell.receiveShadow = true; this.root.add(shell);
+      const geometry = new THREE.PlaneGeometry(Math.PI * 1.35, 1, 48, 36), vertices = geometry.attributes.position;
+      for (let i = 0; i < vertices.count; i++) {
+        const a = vertices.getX(i), t = vertices.getY(i) + 0.5;
+        const width = 0.33 + 0.23 * Math.pow(Math.abs(t - 0.42) * 1.75, 0.7) + 0.1 * Math.sin(t * Math.PI);
+        vertices.setXYZ(i, Math.sin(a) * width, t * 1.26 - 0.3 * t ** 3 * (Math.abs(a) / (Math.PI * 0.675)) ** 2, -Math.cos(a) * (0.35 + t * 0.07) - t * 0.12);
+      }
+      geometry.computeVertexNormals();
+      const shell = new THREE.Mesh(geometry, mat);
+      shell.position.set(-1.8, 0.43, 1); shell.scale.set(scale, scale, scale); shell.castShadow = shell.receiveShadow = true; this.root.add(shell);
     }
     this.box(0.78, 0.18, 0.68, -1.8, 0.55, 1.08, orange, this.root, 0.14);
     const backCushion = this.box(0.72, 0.64, 0.2, -1.8, 1.03, 0.66, orange, this.root, 0.18); backCushion.rotation.x = -0.14;
@@ -653,8 +794,8 @@ export class SpaceRoom {
     for (const x of [-3, -1.2]) { this.box(1.3, 1.6, 0.25, x, 0.8, 5, carpet, this.root, 0.13); this.box(1.05, 0.3, 0.8, x, 0.5, 4.5, lime, this.root, 0.12); for (const dx of [-0.6, 0.6]) this.box(0.15, 1.5, 0.9, x + dx, 0.8, 4.6, carpet, this.root, 0.1); }
     this.plant(-9, 0, 4.6, 0.65); this.plant(-0.4, 0, -4.8, 0.65);
     // Keep the photographed lounge beside the office and away from the cube exhibition.
-    const lounge = new THREE.Group(); lounge.add(...this.root.children.slice(loungeStart)); lounge.position.x = -7; this.root.add(lounge); this.batch(lounge);
-    const loungeRoof = new THREE.Group(); loungeRoof.add(...this.roof.children.slice(loungeRoofStart)); loungeRoof.position.x = -7; this.roof.add(loungeRoof); this.batch(loungeRoof);
+    const lounge = new THREE.Group(); lounge.add(...this.root.children.slice(loungeStart)); lounge.position.x = -7; this.root.add(lounge);
+    const loungeRoof = new THREE.Group(); loungeRoof.add(...this.roof.children.slice(loungeRoofStart)); loungeRoof.position.x = -7; this.roof.add(loungeRoof);
     // Three phone pods: white rounded frames, grey felt, desk and one stool each.
     this.box(8, 3.7, 0.1, -17, 1.85, 7.8, this.wood);
     this.box(7, 0.12, 3.2, -17, 3.35, 10, white, this.roof, 0.12);
@@ -671,11 +812,17 @@ export class SpaceRoom {
         this.box(0.025, 0.025, 1.1, x + dx, 2.25, z, this.led);
       }
       this.box(1.04, 0.025, 0.045, x, 2.25, z + 0.55, this.led);
-      this.box(0.38, 0.05, 1, x - 0.32, 1.05, z, white);
+      this.surfaces.push(this.box(0.38, 0.05, 1, x - 0.32, 1.05, z, white, this.root, 0.025));
+      for (const dz of [-0.32, 0.32]) this.cylinder(0.028, 0.028, 0.008, x - 0.38, 1.079, z + dz, this.dark);
+      for (let j = 0; j < 9; j++) this.box(0.025, 0.06, 0.012, x - 0.2 + j * 0.05, 2.36, z + 0.758, this.dark);
       this.cylinder(0.2, 0.2, 0.075, x, 0.7, z, upholstery); this.cylinder(0.028, 0.028, 0.59, x, 0.37, z, this.metal); this.cylinder(0.24, 0.24, 0.035, x, 0.09, z, this.metal);
       this.box(0.045, 0.25, 0.34, x + 0.18, 0.89, z, upholstery, this.root, 0.045);
+      const footrest = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.013, 8, 32), aluminium); footrest.rotation.x = Math.PI / 2; footrest.position.set(x, 0.33, z); this.root.add(footrest);
       const podDoor = new THREE.Group(); podDoor.position.set(x - 0.52, 0, z + 0.72); podDoor.rotation.y = i === 2 ? -1 : 0; this.root.add(podDoor);
-      this.box(1.04, 2.1, 0.02, 0.52, 1.2, 0, this.glass, podDoor); this.box(0.025, 0.25, 0.035, 0.9, 1.15, 0.05, this.metal, podDoor);
+      this.box(1.04, 2.1, 0.02, 0.52, 1.2, 0, this.glass, podDoor);
+      this.box(0.15, 0.025, 0.035, 0.85, 1.15, 0.06, aluminium, podDoor);
+      for (const y of [0.4, 1.95]) this.box(0.065, 0.09, 0.04, 0.04, y, 0.02, aluminium, podDoor);
+      this.box(0.22, 0.055, 0.055, 0.23, 2.19, 0.025, aluminium, podDoor);
       this.area([x, 2.2, z], [x, 0, z], 0.9, 0.9, i === 2 ? 6 : 1, 0xf1f0e7);
     }
   }
@@ -705,8 +852,8 @@ export class SpaceRoom {
         material.customProgramCacheKey = () => 'space-city-facade-' + variant + this.style;
         return material;
       });
-      this.box(41, 119, 29, -9, -60, -2.5, facades[0], this.root, 0);
-      for (let y = -118; y < 0; y += 3.2) this.box(41.3, 0.16, 29.3, -9, y, -2.5, this.metal, this.root, 0);
+      this.box(60.5, 119, 42.5, 0, -60, 3, facades[0], this.root, 0);
+      for (let y = -118; y < 0; y += 3.2) this.box(60.8, 0.16, 42.8, 0, y, 3, this.metal, this.root, 0);
       for (let x = -28; x < 11; x += 1.8) this.box(0.07, 118, 0.07, x, -60, 12.1, this.metal);
       for (let gx = -5; gx <= 5; gx++) for (let gz = -5; gz <= 5; gz++) {
         if (Math.abs(gx) <= 1 && Math.abs(gz) <= 1) continue;
@@ -736,7 +883,7 @@ export class SpaceRoom {
         this.model('potted_plant_01', x, 0.12, 11.6, 1.9, x, true);
       }
     } else {
-      for (const [x, z, size] of [[-39, -20, 2.7], [-28, -30, 3.2], [-12, -28, 2.5], [6, -27, 3], [25, -19, 2.6], [32, 3, 2.8], [-41, 14, 3], [-31, 31, 2.4]]) this.tree(x, -0.6, z, size);
+      for (const [x, z, size] of [[-39, -20, 2.7], [-28, -30, 3.2], [-12, -28, 2.5], [6, -27, 3], [25, -26, 2.6], [39, 3, 2.8], [-41, 14, 3], [-31, 31, 2.4]]) this.tree(x, -0.6, z, size);
       const ground = new THREE.MeshStandardMaterial({ color: 0x526048, roughness: 1, vertexColors: true });
       const terrain = new THREE.PlaneGeometry(800, 800, 96, 96); terrain.rotateX(-Math.PI / 2);
       const vertices = terrain.getAttribute('position');
@@ -751,7 +898,7 @@ export class SpaceRoom {
       const hills = new THREE.Mesh(terrain, ground); hills.receiveShadow = true; this.root.add(hills);
       for (let row = 0; row < 5; row++) for (let col = 0; col < 8; col++) this.box(4.95, 0.15, 2.45, -26.5 + col * 5, -0.42, 14.5 + row * 2.5, this.stone, this.root, 0);
       for (let i = 0; i < 3; i++) this.platform(8, 0.75, 0, -0.04 - i * 0.12, 13.4 + i * 0.8, this.stone);
-      for (const x of [-31.8, 15.6]) {
+      for (const x of [-31.8, 32.2]) {
         this.box(2.2, 0.5, 36, x, -0.34, 5, this.stone);
         this.box(1.9, 0.02, 35.7, x, -0.08, 5, this.dark);
         for (let z = -11; z < 23; z += 2.5) this.model('potted_plant_01', x + Math.sin(z) * 0.3, -0.7, z, 2.1 + (z + 11) % 3 * 0.15, z, true);
@@ -766,7 +913,7 @@ export class SpaceRoom {
       const grass = new THREE.InstancedMesh(grassShape, new THREE.MeshStandardMaterial({ color: 0x5e6950, roughness: 1, side: THREE.DoubleSide }), 700);
       const tuft = new THREE.Object3D();
       for (let i = 0; i < 700; i++) {
-        tuft.position.set(i % 2 ? -33.8 - i % 17 * 0.14 : 17.6 + i % 17 * 0.14, -0.62, -13 + (i * 31 % 380) * 0.1);
+        tuft.position.set(i % 2 ? -33.8 - i % 17 * 0.14 : 34.2 + i % 17 * 0.14, -0.62, -13 + (i * 31 % 380) * 0.1);
         tuft.rotation.set(0, i * 2.4, 0); tuft.scale.setScalar(0.65 + i % 11 * 0.075); tuft.updateMatrix(); grass.setMatrixAt(i, tuft.matrix);
       }
       grass.castShadow = grass.receiveShadow = true; this.root.add(grass);
@@ -825,6 +972,16 @@ export class SpaceRoom {
   }
 
   update(camera: THREE.Camera, cutaway: boolean) {
+    // Load the detailed cars only when their wing is approached.
+    const nearGarage = camera.position.distanceToSquared(new THREE.Vector3(21, 1, -10)) < 24 * 24;
+    if (this.style !== 'company' && !this.carsLoaded && nearGarage) {
+      this.carsLoaded = true;
+      for (const x of [16.3, 25.5]) this.model('car-concept', x, 0.04, -10, 1.35, 0);
+    }
+    for (const child of this.root.children) if (child.name === 'car-concept') child.visible = nearGarage || cutaway;
+    // A fixed light count avoids recompiling every material when changing styles.
+    const nearby = [...this.lights].sort((a, b) => b.intensity * b.width * b.height / (4 + b.position.distanceToSquared(camera.position)) - a.intensity * a.width * a.height / (4 + a.position.distanceToSquared(camera.position))).slice(0, this.lightSlots.length);
+    this.lightSlots.forEach((slot, i) => { const source = nearby[i]; if (source) { slot.copy(source); slot.intensity = source.intensity; } else slot.intensity = 0; });
     this.roof.visible = !cutaway;
     this.back.visible = true;
     for (const mirror of this.mirrors) {
