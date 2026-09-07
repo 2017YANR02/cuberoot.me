@@ -90,6 +90,7 @@ export class Weather {
   }
 
   update(dt) {
+    const U = this.U;
     const s = this.state, t = this.target;
     for (const k of Object.keys(s)) {
       if (k === 'waterScatter' || k === 'waterAbsorb') {
@@ -110,7 +111,43 @@ export class Weather {
     const gust = 1.0 + s.gustiness * (Math.sin(gustPhase) * 0.5 + Math.sin(gustPhase * 2.37 + 1.1) * 0.3 + Math.sin(gustPhase * 5.1) * 0.2);
     const wsGust = ws * gust;
 
-    this.U.uWindSpeed.value = wsGust;
+    if (this.app.ocean) {
+      const p = this.app.ocean.params;
+      p.windSpeed = wsGust;
+      p.windDir = s.windAngle;
+      p.swellHs = s.swellHs;
+      p.swellDir = s.swellAngle;
+      p.swellPeriod = s.swellPeriod;
+      p.spread = s.spread;
+      p.amplitude = s.amplitude;
+      p.choppiness = s.choppiness;
+      // Monahan & O'Muircheartaigh W = 3.84e-6 U^3.41, capped: the fit is derived
+      // from observations below ~20 m/s and extrapolates to absurd coverage in a
+      // storm, where the measured ceiling is nearer 15%.
+      const whitecap = THREE.MathUtils.clamp(3.84e-6 * Math.pow(Math.max(wsGust, 0.1), 3.41), 0, 0.16);
+      const wt = THREE.MathUtils.clamp(ws / 30, 0, 1);
+      // The Jacobian of a well-behaved surface sits near 1; only the crests that
+      // fold drop toward (and below) zero. The threshold rises with wind because
+      // steeper seas break earlier, but it must stay far under 1 or the whole
+      // surface whitens instead of just the breakers.
+      p.foamBias = lerp(0.01, 0.16, wt);
+      // Limiting steepness. A Stokes wave breaks near H/L = 1/7, i.e. a face slope
+      // around 0.44; the wind mostly changes how much of the spectrum reaches that
+      // limit, so this only tightens a little as the sea builds.
+      p.steepBias = lerp(0.85, 0.52, wt);
+      // Entrainment rate in coverage/second while a texel is actively folding.
+      // Equilibrium coverage is rate*dutyCycle/decay, and at gale force roughly
+      // 7% of the surface is folding at any instant, which lands near the ~13%
+      // whitecap coverage a storm sea actually shows.
+      p.foamMul = lerp(0.30, 0.54, wt) * s.foamStrength;
+      // Whitecap decay: the bright active phase lasts a couple of seconds, the
+      // bubble raft it leaves behind lingers for tens of seconds.
+      p.foamDecay = lerp(0.9, 0.5, wt);
+      p.bubbleDecay = lerp(0.35, 0.11, wt);
+
+      U.uWhitecapCoverage.value = whitecap;
+    }
+    U.uWindSpeed.value = wsGust;
     this.U.uWindDir.value.set(Math.cos(s.windAngle), Math.sin(s.windAngle));
     this.U.uGustiness.value = s.gustiness;
     this.U.uRain.value = s.rain;
@@ -134,6 +171,11 @@ export class Weather {
 
     this.app.sky.starIntensity = s.starIntensity;
 
+    if (this.app.oceanMesh) {
+      const om = this.app.oceanMesh.uniforms;
+      om.uWaterScatter.value.copy(s.waterScatter); om.uWaterAbsorb.value.copy(s.waterAbsorb);
+      om.uFoamStrength.value = s.foamStrength;
+    }
     const cu = this.app.clouds?.shared;
     if (cu) {
       cu.uCoverage.value = s.cloudCoverage;

@@ -47,8 +47,12 @@ async function write<T>(path: string, method: 'POST' | 'PATCH' | 'DELETE', body?
   return handleApi<T>(response);
 }
 
-export async function fetchDrive(parentId: string | null, trash = false): Promise<DriveSnapshot> {
-  const query = trash ? '?trash=1' : parentId ? `?parent=${encodeURIComponent(parentId)}` : '';
+export async function fetchDrive(parentId: string | null, trash = false, members = false): Promise<DriveSnapshot> {
+  const params = new URLSearchParams();
+  if (parentId) params.set('parent', parentId);
+  if (trash) params.set('trash', '1');
+  if (members) params.set('members', '1');
+  const query = params.size ? `?${params}` : '';
   const response = await fetch(apiUrl(`/v1/drive${query}`), {
     headers: authHeaders(false),
     cache: 'no-store',
@@ -135,7 +139,7 @@ export const cancelDriveUpload = (uploadId: string) => (
   write<{ ok: boolean }>(`/v1/drive/uploads/${encodeURIComponent(uploadId)}`, 'DELETE')
 );
 
-export const updateDriveNode = (nodeId: string, changes: { name?: string; parentId?: string | null }) => (
+export const updateDriveNode = (nodeId: string, changes: { name?: string; parentId?: string | null; memberShared?: boolean }) => (
   write<{ node: DriveNode }>(`/v1/drive/nodes/${encodeURIComponent(nodeId)}`, 'PATCH', changes)
 );
 

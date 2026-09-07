@@ -2,8 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createDriveShare,
   downloadDriveFile,
+  fetchDrive,
   revokeDriveShare,
   uploadDriveChunk,
+  updateDriveNode,
 } from '@/lib/drive-api';
 
 class FakeEventTarget {
@@ -201,6 +203,22 @@ describe('Drive sharing', () => {
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.cuberoot.me/v1/drive/files/file%2Fid/share',
       expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('requests shared folders explicitly and uses the existing node update for sharing and moves', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ nodes: [], node: { id: 'folder' } }), {
+      status: 200, headers: { 'Content-Type': 'application/json' },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    await fetchDrive('folder', false, true);
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'https://api.cuberoot.me/v1/drive?parent=folder&members=1', expect.any(Object),
+    );
+    await updateDriveNode('folder', { memberShared: true, parentId: null });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'https://api.cuberoot.me/v1/drive/nodes/folder',
+      expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ memberShared: true, parentId: null }) }),
     );
   });
 

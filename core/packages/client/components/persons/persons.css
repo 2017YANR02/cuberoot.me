@@ -291,12 +291,6 @@ html[data-theme=dark] .wp-page {
     line-height: 1.2;
 }
 .wp-hero-collection dd { font-weight: 600; }
-.wp-hero-collection-item-gold dd { color: var(--wp-gold); }
-.wp-hero-collection-item-silver dd { color: var(--wp-silver); }
-.wp-hero-collection-item-bronze dd { color: var(--wp-bronze); }
-.wp-hero-collection-item-world dd { color: var(--wp-pink); }
-.wp-hero-collection-item-continental dd { color: var(--wp-green); }
-.wp-hero-collection-item-national dd { color: var(--wp-blue); }
 .wp-hero-table {
     display: flex; align-items: center; flex-wrap: wrap; gap: 32px;
 }

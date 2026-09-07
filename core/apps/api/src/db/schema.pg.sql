@@ -564,6 +564,7 @@ CREATE TABLE drive_nodes (
   owner_user_id  BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
   parent_id      UUID REFERENCES drive_nodes(id) ON DELETE CASCADE,
   kind           VARCHAR(8) NOT NULL CHECK (kind IN ('file', 'folder')),
+  member_shared  BOOLEAN NOT NULL DEFAULT FALSE CONSTRAINT drive_member_shared_folder CHECK (NOT member_shared OR kind = 'folder'),
   name           VARCHAR(255) NOT NULL,
   mime_type      VARCHAR(255),
   size_bytes     BIGINT NOT NULL DEFAULT 0 CHECK (size_bytes >= 0),
