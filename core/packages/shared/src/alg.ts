@@ -315,7 +315,7 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
   '2x2': [
     { slug: 'ortega-oll', scd: 'OrtegaOLL', en: 'Ortega OLL', zh: 'Ortega OLL' },
     { slug: 'ortega-pbl', scd: 'OrtegaPBL', en: 'Ortega PBL', zh: 'Ortega PBL' },
-    { slug: 'cll',        scd: 'CLL',       en: 'CLL',        zh: 'CLL' },
+    { slug: 'cll',        scd: 'CLL',       en: 'CLL',        zh: 'CLL', umbrella: true },
     { slug: 'eg1',        scd: 'EG1',       en: 'EG1',        zh: 'EG1' },
     { slug: 'eg2',        scd: 'EG2',       en: 'EG2',        zh: 'EG2' },
     { slug: 'leg1',       scd: '',          en: 'LEG1',       zh: 'LEG1' },
@@ -361,7 +361,7 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
     /* ZBLS / ZBLL(以及页面上紧跟其后的 LSLL)是 CFOP 之后最常练的大套,顶到 PLL 后面免得埋在长尾里 */
     { slug: 'zbls',      scd: 'ZBLS',        en: 'ZBLS',                 zh: 'ZBLS',  umbrella: true },
     { slug: 'zbll',      scd: 'ZBLL',        en: 'ZBLL',                 zh: 'ZBLL',  umbrella: true },
-    { slug: 'coll',      scd: 'COLL',        en: 'COLL',                 zh: 'COLL' },
+    { slug: 'coll',      scd: 'COLL',        en: 'COLL',                 zh: 'COLL', umbrella: true },
     { slug: 'wv',        scd: 'WV',          en: 'WV',                   zh: 'WV' },
     {
       slug: '2-look-cmll', scd: '', en: '2 Look CMLL', zh: '2 步 CMLL',
