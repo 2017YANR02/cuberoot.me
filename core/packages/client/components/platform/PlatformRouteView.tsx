@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { ArrowRight, ExternalLink, Search } from 'lucide-react';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
@@ -173,16 +174,26 @@ function PlatformLanding() {
   return (
     <div className="platform-landing">
       <header className="platform-home-hero">
-        <span className="platform-kicker">{t('CubeRoot 学习与服务', 'Learning and services on CubeRoot')}</span>
-        <h1>{t('学会一件事，然后在同一个地方继续进步。', 'Learn something, then keep moving in the same place.')}</h1>
-        <p>{t('课程、讲师、社区、练习工具和教学协作都在主站共用同一个账号。Platform 负责把下一步放在你面前，而不是再造一套站点。', 'Courses, teachers, community, practice tools, and teaching work share one main-site account. Platform puts the next step in front of you instead of becoming another site.')}</p>
+        <span className="platform-kicker">{t('CubeRoot 学习空间', 'CubeRoot Learning')}</span>
+        <h1>{t('每一次转动，', 'Every turn.')}<br /><span>{t('都有新收获。', 'A new discovery.')}</span></h1>
+        <p>{t('从第一次复原，到下一次突破。跟随讲师的镜头，把热爱练成自己的本领。', 'From your first solve to your next breakthrough. Learn alongside your instructor, one move at a time.')}</p>
         <div className="platform-home-actions">
           <AppLink className="platform-button platform-button-primary" href={signedIn ? continueHref : '/platform/courses'} prefetch={false}>
             {primaryLabel}<ArrowRight aria-hidden />
           </AppLink>
-          <AppLink className="platform-home-secondary" href="/platform/teachers" prefetch={false}>{t('寻找讲师', 'Find a teacher')}</AppLink>
+          <AppLink className="platform-home-secondary" href="/platform/account/invites" prefetch={false}>{t('已有兑换码？解锁课程', 'Have a code? Unlock your course')}<ArrowRight aria-hidden /></AppLink>
         </div>
       </header>
+
+      <section className="platform-teacher-feature" aria-labelledby="platform-feature-title">
+        <Image className="platform-feature-photo" src="/images/ruimin/gallery/photo-03.webp" width={3200} height={2400} sizes="(max-width: 760px) 100vw, 65vw" priority alt={t('颜瑞民在魔方比赛现场展示复原结果', 'Yan Ruimin demonstrating a solve at a cubing competition')} />
+        <div className="platform-feature-copy">
+          <span className="platform-kicker">{t('跟着老师，一起练', 'Meet your instructor')}</span>
+          <h2 id="platform-feature-title">{t('颜瑞民课程', 'Yan Ruimin Courses')}</h2>
+          <p>{t('认识魔方，也认识每一步的道理。先导课、试听课与正式课，循序渐进地学。', 'Understand the cube, and the reason behind every move. Explore the introduction, trial lessons, and full course at your own pace.')}</p>
+          <AppLink className="platform-home-secondary" href="/platform/courses/yan-ruimin-3x3-beginner" prefetch={false}>{t('了解课程', 'Explore the course')}<ArrowRight aria-hidden /></AppLink>
+        </div>
+      </section>
 
       {signedIn ? (
         <section className="platform-home-learning" aria-labelledby="platform-home-learning-title">
@@ -401,8 +412,9 @@ function PlatformEntityList({
     ...(definition.id === 'admin-qr' ? ['qr-toggle' as const] : []),
     ...(['admin-paths', 'admin-events', 'admin-news', 'admin-products', 'admin-teachers'].includes(definition.id) ? ['admin-delete' as const] : []),
   ];
+  const learnerCourses = ['courses', 'account-courses'].includes(definition.id);
   return (
-    <div className="platform-entity-list">
+    <div className={`platform-entity-list${learnerCourses ? ' platform-course-list' : ''}`}>
       {items.map((item) => {
         const href = item.href?.startsWith('/') ? item.href : localDetailHref(definition, item);
         return (
@@ -412,16 +424,17 @@ function PlatformEntityList({
                 {item.eyebrow ? <span>{item.eyebrow}</span> : null}
                 <h2>{href ? <AppLink href={href} prefetch={false}>{item.title}</AppLink> : item.title}</h2>
               </div>
-              {item.status ? <span className="platform-status">{item.status}</span> : null}
+              {!learnerCourses && item.status ? <span className="platform-status">{item.status}</span> : null}
             </div>
             {item.summary ? <p>{item.summary}</p> : null}
-            {item.fields?.length ? (
+            {!learnerCourses && item.fields?.length ? (
               <dl>
                 {item.fields.map((field) => (
                   <div key={field.label}><dt>{field.label}</dt><dd>{field.value}</dd></div>
                 ))}
               </dl>
             ) : null}
+            {learnerCourses && href ? <AppLink className="platform-home-secondary" href={href} prefetch={false}>{t('查看课程', 'View course')}<ArrowRight aria-hidden /></AppLink> : null}
             {quickActions.length ? (
               <div className="platform-row-actions">
                 {quickActions.map((action) => (
@@ -538,13 +551,19 @@ export function PlatformRouteView({
   };
 
   if (definition.id === 'home') return <PlatformLanding />;
+  const courseDetail = definition.id === 'course-detail';
+  const course = courseDetail && !error ? sortedItems[0] : undefined;
 
   return (
-    <div className="platform-route">
+    <div className={`platform-route${courseDetail ? ' platform-course-detail' : ''}`}>
       <header className="platform-route-header">
-        <span className="platform-route-area">{definition.area}</span>
-        <h1>{titleFor(t, definition)}</h1>
-        <p>{t(definition.description.zh, definition.description.en)}</p>
+        <span className="platform-route-area">{courseDetail || definition.id === 'courses' ? t('CubeRoot 课程', 'CubeRoot Courses') : definition.area}</span>
+        <h1>{course?.title ?? titleFor(t, definition)}</h1>
+        <p>{course?.summary ?? t(definition.description.zh, definition.description.en)}</p>
+        {course ? <div className="platform-home-actions">
+          <a className="platform-button platform-button-primary" href="#platform-course-outline">{t('查看课时', 'Explore lessons')}<ArrowRight aria-hidden /></a>
+          <AppLink className="platform-home-secondary" href="/platform/account/invites" prefetch={false}>{t('兑换课程', 'Redeem a code')}<ArrowRight aria-hidden /></AppLink>
+        </div> : null}
       </header>
 
       {definition.id === 'about' ? (
@@ -615,7 +634,7 @@ export function PlatformRouteView({
                 ? t('这个旧讲师标识没有对应的主站讲师资料。旧 Platform 的演示讲师未导入，请返回主站讲师名录查找真实资料。', 'This legacy teacher identifier has no matching main-site profile. Demo teachers from the legacy Platform were not imported; use the main-site directory to find current profiles.')
                 : undefined}
             />
-          ) : definition.id === 'membership' || definition.id === 'me-membership' || definition.id === 'qr' ? null : (
+          ) : courseDetail || definition.id === 'membership' || definition.id === 'me-membership' || definition.id === 'qr' ? null : (
             <PlatformEntityList
               definition={definition}
               items={sortedItems}

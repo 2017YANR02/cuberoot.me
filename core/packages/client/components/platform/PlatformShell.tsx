@@ -45,9 +45,9 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
       <header className="platform-masthead">
         <AppLink href="/platform" className="platform-wordmark" aria-label={t('Platform 首页', 'Platform home')}>
           <span className="platform-wordmark-mark" aria-hidden>CR</span>
-          <span>Platform</span>
+          <span>{t('学习空间', 'Learning')}</span>
         </AppLink>
-        <p>{t('主站中的学习与服务中枢', 'Learning and services, inside the main site')}</p>
+        <p>CubeRoot</p>
         <AppLink
           href={user ? '/platform/account/courses' : '/account'}
           className="platform-account-link"

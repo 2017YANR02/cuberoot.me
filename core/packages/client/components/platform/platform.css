@@ -2,9 +2,7 @@
   --platform-measure: 1120px;
   min-height: 100vh;
   color: var(--foreground);
-  background:
-    linear-gradient(120deg, color-mix(in srgb, var(--accent-soft) 38%, transparent), transparent 42%),
-    var(--background);
+  background: var(--background);
 }
 
 .platform-masthead,
@@ -18,7 +16,7 @@
   display: flex;
   align-items: center;
   gap: 18px;
-  padding-block: 28px 16px;
+  padding-block: 16px;
 }
 
 .platform-wordmark {
@@ -37,7 +35,7 @@
   width: 34px;
   height: 34px;
   place-items: center;
-  border-radius: 10px 4px 10px 4px;
+  border-radius: 10px;
   color: var(--primary-foreground);
   background: var(--primary);
   font-size: 0.67rem;
@@ -124,11 +122,67 @@
 }
 
 .platform-home-hero {
-  max-width: 900px;
-  padding-block: 20px 18px;
+  text-align: center;
+  padding-block: 36px 14px;
 }
 
-.platform-home-hero h1,
+.platform-home-hero h1 {
+  font-weight: 650;
+  font-size: clamp(2.7rem, 6.5vw, 5.3rem);
+  line-height: 1.12;
+  margin: 20px auto 24px;
+}
+
+.platform-home-hero h1 span { color: var(--muted-foreground); }
+.platform-home-hero > p {
+  max-width: 530px;
+  margin-inline: auto;
+  color: var(--muted-foreground);
+  font-size: 1.05rem;
+  line-height: 1.75;
+  text-wrap: balance;
+}
+.platform-home-hero .platform-home-actions { justify-content: center; }
+
+.platform-teacher-feature {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(28px, 5vw, 72px);
+}
+
+.platform-feature-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  object-position: 70% center;
+  border-radius: 18px;
+}
+
+.platform-feature-copy h2 {
+  font-size: clamp(1.8rem, 3vw, 2.7rem);
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+  margin: 16px 0;
+  text-wrap: balance;
+}
+
+.platform-feature-copy p {
+  color: var(--muted-foreground);
+  line-height: 1.8;
+  margin: 0 0 16px;
+  text-wrap: pretty;
+}
+
+.platform-home-secondary svg { width: 16px; height: 16px; margin-left: 8px; }
+.platform-shell a:focus-visible, .platform-lesson-folder summary:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 5px;
+}
+
 .platform-route-header h1 {
   max-width: 820px;
   margin: 12px 0 14px;
@@ -138,7 +192,6 @@
   text-wrap: balance;
 }
 
-.platform-home-hero > p,
 .platform-route-header p {
   max-width: 760px;
   margin: 0;
@@ -169,14 +222,15 @@
 
 .platform-home-actions .platform-button {
   min-height: 46px;
-  padding-inline: 16px;
+  padding-inline: 22px;
+  border-radius: 999px;
 }
 
 .platform-home-secondary {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  color: var(--muted-foreground);
+  color: var(--foreground);
   font-size: 0.86rem;
   font-weight: 680;
   text-decoration: none;
@@ -997,7 +1051,65 @@
   outline-offset: 2px;
 }
 
+.platform-course-detail .platform-route-header {
+  padding-block: 32px 48px;
+  margin-bottom: 0;
+}
+
+.platform-course-detail .platform-route-header h1 {
+  max-width: 100%;
+  font-size: clamp(2.4rem, 5.5vw, 4.5rem);
+  font-weight: 650;
+  line-height: 1.16;
+  margin-block: 20px;
+}
+
+.platform-course-outline {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 64px;
+  scroll-margin-top: 24px;
+}
+
+.platform-course-outline > .platform-domain-content { border-color: var(--border-default); }
+.platform-course-outline .platform-domain-content h2 {
+  color: var(--muted-foreground);
+  font-weight: 500;
+  font-size: 0.85rem;
+  margin-bottom: 24px;
+}
+.platform-course-outline .platform-lesson-folder { border-bottom: 1px solid var(--border-default); }
+.platform-course-outline .platform-lesson-folder > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-block: 24px;
+  font-size: 1.4rem;
+  letter-spacing: -0.03em;
+  list-style: none;
+}
+.platform-course-outline summary::-webkit-details-marker { display: none; }
+.platform-course-outline summary::after {
+  content: '+';
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+.platform-course-outline details[open] > summary::after { content: '−'; }
+.platform-course-outline .platform-detail-list { border-top: 0; }
+.platform-course-outline .platform-detail-list strong { font-size: 1rem; font-weight: 500; }
+.platform-course-outline .platform-detail-list a { display: inline-flex; align-items: center; min-height: 44px; }
+.platform-course-outline .platform-lesson-folder .platform-detail-list > div { padding-block: 4px; }
+.platform-course-outline .platform-lesson-folder .platform-detail-list > div:last-child { border-bottom: 0; }
+.platform-course-list .platform-entity { padding-block: 32px; }
+.platform-course-list .platform-entity h2 { font-size: clamp(1.4rem, 3vw, 2rem); letter-spacing: -0.03em; }
+
 @media (max-width: 760px) {
+  .platform-teacher-feature, .platform-course-outline { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .platform-feature-photo { aspect-ratio: 4 / 3; }
+  .platform-feature-copy { max-width: 520px; }
+  .platform-home-hero { padding-block: 24px 0; }
+  .platform-course-detail .platform-route-header { padding-block: 16px 24px; }
   .platform-landing {
     gap: 42px;
   }
