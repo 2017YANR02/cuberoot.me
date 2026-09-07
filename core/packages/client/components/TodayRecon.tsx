@@ -27,7 +27,7 @@ export default function TodayRecon({ lang }: Props) {
     const kick = () => {
       if (!on) return;
       getTodayRecons()
-        .then((list) => { if (on) setRecons(list); })
+        .then((list) => { if (on) setRecons(list.filter(s => s.recordType !== 'timing')); })
         .catch(() => { if (on) setRecons([]); });
     };
     type RIC = (cb: () => void, opts?: { timeout?: number }) => number;

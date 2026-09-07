@@ -70,12 +70,19 @@ interface Props {
 }
 
 type SubSub = 'all' | 'trend' | 'distviz';
+type ReconFilter = 'all' | 'recon' | 'timing';
 
 export default function ByEventView({ profile, results, comps, reconLookup, eventId, isZh, showAttemptRanks = true, onToggleAttemptRanks }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   // 3 选一:成绩(轮次表)/ 趋势(成绩+排名两图)/ 分布。
   // 默认落「成绩」—— 打开项目即见结果表,且 #r- 深链锚点所在的表默认已挂载。
   const [view, setView] = useState<SubSub>('all');
+  const [reconFilter, setReconFilter] = useState<ReconFilter>('all');
+  const reconFilterItems = [
+    { value: 'all' as const, label: tr({ zh: '全部', en: 'All' }) },
+    { value: 'recon' as const, label: tr({ zh: '有复盘', en: 'With reconstruction' }) },
+    { value: 'timing' as const, label: tr({ zh: '有起拍表', en: 'With pickup/putdown' }) },
+  ];
   const [hist, setHist] = useState<PersonRankHistoryResponse | null>(null);
   const [histLoading, setHistLoading] = useState(false);
 
@@ -110,6 +117,14 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
         {view === 'all' && (
           <span className="wp-section-h-tools">
             {onToggleAttemptRanks && <AttemptRanksToggle active={showAttemptRanks} onToggle={onToggleAttemptRanks} />}
+            <CompactSelect<ReconFilter>
+              label={reconFilterItems.find((item) => item.value === reconFilter)!.label}
+              items={reconFilterItems}
+              value={reconFilter}
+              onChange={setReconFilter}
+              ariaLabel={tr({ zh: '按复盘数据筛选轮次', en: 'Filter rounds by reconstruction data' })}
+              variant="plain"
+            />
           </span>
         )}
         <button
@@ -164,6 +179,7 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
           reconLookup={reconLookup}
           isZh={isZh}
           showAttemptRanks={showAttemptRanks}
+          reconFilter={reconFilter}
         />
       )}
     </div>
@@ -175,12 +191,13 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
 // 轮次显示元数据已抽到 utils/wca_round_meta.ts 共用 (ByCompList / 复盘页同场比赛表也用)
 
 function EventRoundsList({
-  wcaId, personName, personCountry, rows, compById, results, comps, eventId, reconLookup, isZh, showAttemptRanks = true,
+  wcaId, personName, personCountry, rows, compById, results, comps, eventId, reconLookup, isZh, showAttemptRanks = true, reconFilter,
 }: {
   wcaId: string;
   personName?: string | null;
   personCountry?: string;
   rows: WcaResultRow[];
+  reconFilter: ReconFilter;
   compById: Map<string, WcaCompetition>;
   results: WcaResultRow[];
   comps: WcaCompetition[];
@@ -327,7 +344,15 @@ function EventRoundsList({
   // 排序后的展示顺序:key=null 用默认分组序;否则拉平按所选键升/降排,无效(≤0)恒垫底,
   // 平手 / 双无效保持 baseSorted 的时间序(Array.sort 在 V8 稳定).
   const displayRows = useMemo(() => {
-    if (!sort.key) return baseSorted;
+    const filtered = reconFilter === 'all' ? baseSorted : baseSorted.filter((r) =>
+      (r.attempts ?? []).some((_, i) => {
+        const info = findReconForAttempt(reconLookup, r.competition_id, eventId, r.round_type_id, i + 1);
+        return reconFilter === 'timing'
+          ? info?.pickupTime != null && info?.putdownTime != null
+          : info != null && info.recordType !== 'timing';
+      })
+    );
+    if (!sort.key) return filtered;
     const key = sort.key, dir = sort.dir;
     const valOf = (r: WcaResultRow): number => {
       if (key === 'pos') return r.pos;            // 名次:数字越小越好,与单次/平均同向(≤0 垫底)
@@ -336,7 +361,7 @@ function EventRoundsList({
       if (key === 'aoxr') return aoxrMap.get(aoxrKey(r.competition_id, eventId))?.value ?? 0;
       return r.attempts?.[Number(key.slice(3))] ?? 0;
     };
-    return baseSorted.slice().sort((a, b) => {
+    return filtered.slice().sort((a, b) => {
       const va = valOf(a), vb = valOf(b);
       const ia = !(va > 0), ib = !(vb > 0);   // DNF/DNS/空位 = 无效
       if (ia && ib) return 0;
@@ -344,7 +369,7 @@ function EventRoundsList({
       if (ib) return -1;
       return dir === 'asc' ? va - vb : vb - va;
     });
-  }, [baseSorted, sort, eventId, mbld, metricValues, aoxrMap]);
+  }, [baseSorted, sort, eventId, mbld, metricValues, aoxrMap, reconFilter, reconLookup]);
 
   // 渐进渲染:先挂前 N 行,其余趁 idle 补齐(顶级选手单项目可 500+ 行,一次性挂 = 单个长任务卡顿)。
   // 切项目 / 改排序 → displayRows 重排 → 重置重新渐进。
@@ -394,7 +419,11 @@ function EventRoundsList({
     selectRow(compId, roundType);
   };
 
-  if (displayRows.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No results yet')}</div>;
+  if (displayRows.length === 0) return <div className="wp-empty">{reconFilter === 'all'
+    ? tr({ zh: '暂无成绩', en: 'No results yet' })
+    : reconLookup == null
+      ? tr({ zh: '正在加载复盘数据…', en: 'Loading reconstruction data…' })
+      : tr({ zh: '没有符合条件的轮次', en: 'No matching rounds' })}</div>;
 
   const timingStats = computeReconTimingMean(reconLookup, eventId);
   const grouped = !sort.key;
