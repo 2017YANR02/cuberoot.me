@@ -141,7 +141,8 @@ float jonswap(float omega, vec4 sb){
 }
 float directional(float theta, float omega, vec4 sa, vec4 sb){
   float s = spreadPower(omega, sb.y) + 16.0 * tanh(min(omega / max(sb.y,1e-4), 20.0)) * sa.w * sa.w;
-  float d = mix(2.0 / PI * cos(theta) * cos(theta), cos2s(theta - sa.y, s), sa.z);
+  float c = cos(theta - sa.y);
+  float d = mix(1.0 / PI * c * c, cos2s(theta - sa.y, s), sa.z);
   return d;
 }
 float shortWaveFade(float k, float fade){ return exp(-fade*fade*k*k); }
@@ -166,7 +167,10 @@ void main(){
     float kAngle = atan(k.y, k.x);
     float S = spectrumAt(kLen, kAngle, uS0a, uS0b) + spectrumAt(kLen, kAngle, uS1a, uS1b);
     vec4 g = texture(uNoise, (xy + 0.5) / N);
-    h0 = g.xy * sqrt(2.0 * max(S, 0.0) * dk * dk);
+    // JONSWAP is one-sided: split its variance across the two travelling
+    // branches and the two unit-variance Gaussian components. The old 2*S
+    // injected eight times the intended energy before the conjugate sum.
+    h0 = g.xy * sqrt(0.25 * max(S, 0.0) * dk * dk);
   }
   oH0 = vec4(h0, 0.0, 0.0);
 }
@@ -311,7 +315,7 @@ void main(){
   // surface slope, which the FFT gives us directly, and it fires on the whole
   // spilling-breaker population that folding misses.
   vec4 prev = texture(uPrevTurb, vUv);
-  float fold = smoothstep(uFoamBias, uFoamBias - 0.30, jacobian);
+  float fold = 1.0 - smoothstep(uFoamBias - 0.30, uFoamBias, jacobian);
 
   vec2 grad = vec2(DyDx, DyDz);
   float slope = length(grad);
@@ -322,8 +326,8 @@ void main(){
   // paints broad blobs. Air is only entrained at the top, so require the water
   // to be high in its own band as well. uCrestK turns the cascade's elevation
   // into the same units as its slope, making the gate scale-free.
-  float above = smoothstep(0.10, 0.75, Dy * uCrestK);
-  float steep = smoothstep(uSteepBias, uSteepBias + 0.30, slope) * lee * above;
+  float above = smoothstep(0.035, 0.265, Dy * uCrestK);
+  float steep = smoothstep(uSteepBias, uSteepBias + 0.106, slope) * lee * above;
 
   fold = max(fold, steep);
 
@@ -480,7 +484,9 @@ class Cascade {
     ap.set('uBuf1', src.textures[1]);
     ap.set('uLambda', lambda);
     ap.set('uFoamBias', foam.bias);
-    ap.set('uSteepBias', foam.steepBias / Math.max(foamScale, 0.35));
+    // Calibrate the upstream visual breaker gate to the normalized spectrum.
+    // ponytail: per-band foam proxy; overturning waves require a fluid solver.
+    ap.set('uSteepBias', foam.steepBias * Math.SQRT1_2 * 0.5 / Math.max(foamScale, 0.35));
     ap.uniforms.uWindDir.value.copy(foam.windDir);
     ap.set('uFoamMul', foam.mul * foamScale);
     ap.set('uFoamDecay', foam.decay / Math.max(foamScale, 0.15));
@@ -524,9 +530,8 @@ export class OceanFFT {
     // Hand a band to the next cascade down while its shortest wave still has
     // ~6 texels across it, otherwise bilinear filtering of the displacement map
     // facets the crests.
-    const b1 = 2.0 * Math.PI / this.lengthScales[1] * 4.0;
-    const b2 = 2.0 * Math.PI / this.lengthScales[2] * 4.0;
-    const bounds = [[1e-4, b1], [b1, b2], [b2, 9999.0]];
+    const cutoffs = this.lengthScales.map(L => 2.0 * Math.PI * this.N / (L * 6.0));
+    const bounds = [[1e-4, cutoffs[0]], [cutoffs[0], cutoffs[1]], [cutoffs[1], cutoffs[2]]];
 
     this.cascades = this.lengthScales.map((L, i) =>
       new Cascade(renderer, this.N, L, bounds[i][0], bounds[i][1], this.noise, this.butterfly));

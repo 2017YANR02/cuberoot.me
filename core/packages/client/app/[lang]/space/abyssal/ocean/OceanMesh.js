@@ -43,6 +43,20 @@ function buildProjectedGrid(nx, ny) {
   return g;
 }
 
+// One inward-moving breaker field for geometry, normals and residual foam.
+const SHORE_GLSL = /* glsl */ `
+float shorePhase(vec2 p, float depth) {
+  return depth * 1.75 + uTime * 1.25 + sin(p.x * .11 + p.y * .08) * 1.1
+       + sin(p.x * .23 - p.y * .17) * .45;
+}
+float shoreHeight(vec2 p) {
+  float depth = uSeaLevel - islandHeight(p);
+  float phase = shorePhase(p, depth);
+  float envelope = smoothstep(0., 1., depth) * (1. - smoothstep(1.5, 8., depth));
+  return (sin(phase) * .82 - cos(phase * 2.) * .18) * envelope * min(.65, .16 + uWindSpeed * .02);
+}
+`;
+
 const VERT = /* glsl */ `
 precision highp float;
 precision highp int;
@@ -72,6 +86,7 @@ uniform int uEventBisect;
 
 ${OCEAN_SAMPLE_GLSL}
 ${ISLAND_GLSL}
+${SHORE_GLSL}
 
 out vec3 vWorldPos;
 out vec2 vFlatPos;
@@ -334,9 +349,7 @@ void main(){
   float coastDepth = max(0., uSeaLevel - islandHeight(world));
   float shoal = smoothstep(0., 10., coastDepth);
   vec3 disp = oceanDisplacementLod(q, lods, foamHint) * uDisplaceScale * shoal;
-  // Authored shoaling supplements the upstream deep-water spectrum.
-  float surf = sin(coastDepth * 2.2 - uTime * 1.5 + sin(world.x*.12+world.y*.09)*.5);
-  disp.y += surf * smoothstep(0., .8, coastDepth) * (1.-smoothstep(1.2,6.,coastDepth)) * min(.55, .14+uWindSpeed*.025);
+  disp.y += shoreHeight(world);
 
   float crest, calm;
   vec3 mods = oceanModifiers(world, uTime, crest, calm);
@@ -419,6 +432,7 @@ ${AERIAL_GLSL}
 ${NOISE_GLSL}
 ${OCEAN_SAMPLE_GLSL}
 ${ISLAND_GLSL}
+${SHORE_GLSL}
 ${SHADING_GLSL}
 
 in vec3 vWorldPos;
@@ -499,6 +513,12 @@ void main(){
   vec4 dsum = (d0 + d1 + d2) * smoothstep(0.,10.,coastDepth);
 
   vec2 slope = vec2(dsum.x / max(1.0 + dsum.z, 0.05), dsum.y / max(1.0 + dsum.w, 0.05));
+  if (coastDepth < 10.) {
+    // Differentiate the same shoaling relief used by the projected grid.
+    vec2 dx = vec2(.2, 0.), dz = vec2(0., .2);
+    slope += vec2(shoreHeight(vFlatPos + dx) - shoreHeight(vFlatPos - dx),
+                  shoreHeight(vFlatPos + dz) - shoreHeight(vFlatPos - dz)) / .4;
+  }
   slope *= (1.0 - vCalm * 0.85);
   vec3 N = normalize(vec3(-slope.x, 1.0, -slope.y));
 
@@ -618,12 +638,17 @@ void main(){
   float onset = mix(0.62, 0.18, clamp(uWhitecapCoverage / 0.16, 0.0, 1.0));
   float carved = foamMask * (0.10 + foamNoise * 1.55);
   float foam = smoothstep(onset, onset + 0.30, carved);
-  float coastPhase = sin(vWorldPos.x*.15+vWorldPos.z*.11)*3.1 + cos(vWorldPos.z*.23)*1.8;
-  float breaker = sin(coastDepth*2.2-uTime*1.5+coastPhase);
-  float shoreFoam = smoothstep(.25,.88,breaker) * smoothstep(-.15,.3,coastDepth) * (1.-smoothstep(1.1,4.0,coastDepth));
-  float surfPatch = smoothstep(.24,.65,foamNoise) * (.45+.55*sin(vWorldPos.x*.21+vWorldPos.z*.17)*sin(vWorldPos.x*.21+vWorldPos.z*.17));
-  foam = max(foam, shoreFoam * surfPatch * .62);
-  foam *= mix(0.35, 1.0, foamDetail);
+  float surfPhase = shorePhase(vFlatPos, uSeaLevel - islandHeight(vFlatPos));
+  float breaker = smoothstep(.50, .96, sin(surfPhase));
+  float foamAge = mod(surfPhase - 1.5707963 + 6.2831853, 6.2831853) / 1.25;
+  float wash = exp(-foamAge * 1.2);
+  float shoreBand = smoothstep(-.1, .45, coastDepth) * (1. - smoothstep(2., 5.5, coastDepth));
+  vec4 surfTex = textureGrad(uFoamTex, vFlatPos * .055 + vec2(t * .003, -t * .002), ddx * .055, ddy * .055);
+  float surfPatch = smoothstep(.46, .72, surfTex.a + fx1.r * .08);
+  float shoreFoam = shoreBand * max(breaker * .92, wash * .64) * surfPatch;
+  foam = max(foam, shoreFoam);
+  // Opaque bubble clusters with porous edges, instead of a uniformly grey film.
+  foam *= smoothstep(.12, .72, foamDetail + foam * .45);
   float foamThin = smoothstep(onset * 0.55, onset + 0.30, carved);
 
   // foam perturbs the normal too
@@ -705,8 +730,10 @@ void main(){
   // Whatever little climbs back out of the deep water below.
   vec3 deep = uWaterAbsorb * skyAmb * 0.8;
   vec3 refracted = scatter + deep;
-  vec3 lagoon = mix(vec3(.22,.31,.20),vec3(.035,.24,.21),smoothstep(0.,8.,coastDepth)) * (beam + skyAmb*.94);
-  refracted = mix(lagoon, refracted, smoothstep(1.,18.,coastDepth));
+  // Sand shows through shallow water; red is absorbed first with depth.
+  vec3 bottomTransmission = exp(-max(coastDepth, 0.) * vec3(.42, .17, .11) * 1.6);
+  vec3 sand = vec3(.36, .29, .18) * (beam + skyAmb * .94);
+  refracted = mix(refracted, sand, bottomTransmission);
 
   // ------------------------------------------------------------- combine
   vec3 color = mix(refracted, env, F) + spec;
@@ -734,7 +761,7 @@ void main(){
 
   // ---------------------------------------------------------------- foam mat
   if (foam > 0.002 || foamThin > 0.002) {
-    float foamAO = mix(0.62, 1.0, foamFine);
+    float foamAO = mix(0.82, 1.0, foamFine);
     vec3 foamAlbedo = vec3(0.93, 0.96, 0.985) * foamAO;
     float wrapNoL = clamp((dot(N, L) + 0.45) / 1.45, 0.0, 1.0);
     vec3 foamLit = foamAlbedo * (sun * wrapNoL * 0.30 + skyAmb * 0.95);
@@ -817,7 +844,9 @@ export class OceanMesh {
       uGridPlane: { value: 0.0 },
       uEventSteps: { value: 16 },
       uEventBisect: { value: 8 },
-      uCurrentStrength: { value: 26.0 },
+      // Curl-noise domain warping folds the coastal wave field and no longer
+      // agrees with its FFT derivatives. Let the spectrum carry the motion.
+      uCurrentStrength: { value: 0.0 },
       uDisplaceScale: { value: 1.0 },
       uCascadeGain: { value: new THREE.Vector3(1, 1, .65) },
       uWaterScatter: { value: new THREE.Vector3(0.018, 0.075, 0.088) },

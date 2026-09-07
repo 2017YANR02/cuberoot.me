@@ -25,6 +25,7 @@ import AppLink from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import { Flag } from '@/components/Flag';
 import { ClearButton } from '@/components/ClearButton';
+import { CompactSelect } from '@/components/CompactSelect';
 import { DateInput } from '@/components/DateInput';
 import { CompPicker } from '@/components/CompPicker';
 import { CountryInput } from '@/components/CountryInput/CountryInput';
@@ -828,17 +829,19 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     return (arr && arr.length > 0) ? arr : null;
   }, [compRounds, form.event]);
 
+  const [roundStyle, setRoundStyle] = useState<'stage' | 'number' | null>(null);
+  const selectedRoundStyle = roundStyle ?? (form.round ? (ROUNDS_FALLBACK.includes(form.round) ? 'stage' : 'number') : null);
   const roundOptions = useMemo(() => {
     if (!eventRoundFormats) return ROUNDS_FALLBACK;
     return roundsForCount(eventRoundFormats.length);
   }, [eventRoundFormats]);
 
   useEffect(() => {
-    if (!form.round) return;
+    if (!form.round || form.official === 'non_wca') return;
     if (!roundOptions.includes(form.round)) {
       setField('round', roundOptions[roundOptions.length - 1]);
     }
-  }, [roundOptions, form.round, setField]);
+  }, [roundOptions, form.round, form.official, setField]);
 
   const solveNumOptions = useMemo(() => {
     let max = form.event ? attemptsPerRound(form.event) : 5;
@@ -1868,33 +1871,101 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               <div className="submit-row">
                 <label className={`submit-field${reusedCls('round')}`}>
                   <span className="submit-label">{t('recon.round')}</span>
-                  <select className="submit-field-select" value={form.round || ''} onChange={e => setField('round', e.target.value)}>
-                      <option value="">{tr({ zh: '请选择', en: 'Select…'
-                    })}</option>
+                  {form.official === 'non_wca' ? (
+                    <CompactSelect
+                      variant="plain"
+                      triggerClassName="submit-field-select"
+                      label={form.round ? (selectedRoundStyle === 'number' ? t('recon.roundOption.numbered', { n: form.round }) : localizeRound(form.round, t)) : tr({ zh: '请选择', en: 'Select…' })}
+                      ariaLabel={t('recon.round')}
+                      value={form.round || ''}
+                      items={[]}
+                      onChange={value => setField('round', value)}
+                      footer={close => (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {!selectedRoundStyle ? (
+                            <>
+                              <button type="button" className="compact-select-option" onClick={() => setRoundStyle('stage')}>
+                                {tr({ zh: '初赛 / 复赛 / 半决赛 / 决赛', en: 'Named stages' })}
+                              </button>
+                              <button type="button" className="compact-select-option" onClick={() => setRoundStyle('number')}>
+                                {tr({ zh: '数字轮次', en: 'Numbered rounds' })}
+                              </button>
+                            </>
+                          ) : (
+                            <button type="button" className="compact-select-option" onClick={() => { setRoundStyle(null); setField('round', ''); }}>
+                              {tr({ zh: '切换轮次形式', en: 'Change round format' })}
+                            </button>
+                          )}
+                          {selectedRoundStyle === 'stage' && ROUNDS_FALLBACK.map(r => (
+                            <button type="button" key={r} className={`compact-select-option${form.round === r ? ' active' : ''}`}
+                              onClick={() => { setField('round', r); close(); }}>
+                              {localizeRound(r, t)}
+                            </button>
+                          ))}
+                          {selectedRoundStyle === 'number' && <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <input
+                            className="submit-field-input"
+                            style={{ minWidth: 0 }}
+                            size={12}
+                            type="text"
+                            inputMode="numeric"
+                            aria-label={tr({ zh: '其他轮次', en: 'Other round' })}
+                            placeholder={tr({ zh: '输入轮次数字', en: 'Enter round number' })}
+                            value={form.round === 'f' ? '' : form.round || ''}
+                            onChange={e => {
+                              const value = e.target.value.trim();
+                              if (value === '' || (/^\d+$/.test(value) && Number.isSafeInteger(Number(value)) && Number(value) > 0)) {
+                                setField('round', value === '' ? '' : String(Number(value)));
+                              }
+                            }}
+                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); close(); } }}
+                          />
+                          {form.round && form.round !== 'f' && <ClearButton variant="standalone" onClick={() => setField('round', '')} />}
+                          </div>}
+                        </div>
+                      )}
+                    />
+                  ) : (
+                    <select className="submit-field-select" value={form.round || ''} onChange={e => setField('round', e.target.value)}>
+                      <option value="">{tr({ zh: '请选择', en: 'Select…' })}</option>
                       {roundOptions.map(r => <option key={r} value={r}>{localizeRound(r, t)}</option>)}
-                  </select>
+                    </select>
+                  )}
                 </label>
                 <label className="submit-field">
                   <span className="submit-label">#</span>
-                  {/* 下拉给常用第几把,也允许手填任意正整数 */}
-                  <input
-                    className="submit-field-input"
-                    type="text"
-                    inputMode="numeric"
-                    list="recon-solvenum-options"
-                    placeholder={tr({ zh: '选择或输入', en: 'Pick or type' })}
+                  {form.official === 'non_wca' ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <input
+                        className="submit-field-input"
+                        style={{ minWidth: 0 }}
+                        type="text"
+                        inputMode="numeric"
+                        aria-label={tr({ zh: '第几把', en: 'Solve number' })}
+                        placeholder={tr({ zh: '输入数字', en: 'Enter a number' })}
+                        value={form.solveNum ?? ''}
+                        onChange={e => {
+                          const value = e.target.value.trim();
+                          if (value === '' || (/^\d+$/.test(value) && Number.isSafeInteger(Number(value)) && Number(value) > 0)) {
+                            setField('solveNum', value === '' ? undefined : Number(value));
+                          }
+                        }}
+                      />
+                      {form.solveNum != null && <ClearButton variant="standalone" onClick={() => setField('solveNum', undefined)} />}
+                    </div>
+                  ) : (
+                    <select
+                    className="submit-field-select"
                     value={form.solveNum ?? ''}
-                    onChange={e => {
-                      const raw = e.target.value.trim();
-                      if (raw === '') { setField('solveNum', undefined); return; }
-                      if (!/^\d+$/.test(raw)) return;   // 只收数字
-                      const n = Number(raw);
-                      if (n >= 1) setField('solveNum', n); // 必须正整数
-                    }}
-                  />
-                  <datalist id="recon-solvenum-options">
-                    {solveNumOptions.map(n => <option key={n} value={n} />)}
-                  </datalist>
+                    onChange={e => setField('solveNum', e.target.value === '' ? undefined : Number(e.target.value))}
+                  >
+                    <option value="">{tr({ zh: '请选择', en: 'Select…' })}</option>
+                    {form.solveNum != null && !solveNumOptions.includes(form.solveNum) && (
+                      <option value={form.solveNum}>{form.solveNum}</option>
+                    )}
+                    {solveNumOptions.map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                  )}
                 </label>
                 <label className={`submit-field${reusedCls('groupId')}`}>
                   <span className="submit-label">{t('recon.group')}</span>

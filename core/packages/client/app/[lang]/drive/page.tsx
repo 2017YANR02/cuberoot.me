@@ -886,7 +886,6 @@ function DrivePageContent() {
       <header className="drive-header">
         <div>
           <div className="drive-title-line"><HardDrive aria-hidden="true" /><h1>{t('网盘', 'Drive')}</h1></div>
-          <p>{t('20GB 共用容量，文件默认私有；可将文件夹共享给网盘成员，支持断点传输和公开下载链接。', '20 GB shared capacity. Files are private by default; share folders with Drive members, resume transfers, or create public download links.')}</p>
         </div>
         {quota && (
           <div className="drive-quota" aria-label={t('存储空间用量', 'Storage usage')}>

@@ -19,6 +19,8 @@ import {
 } from '@/lib/wca-person-api';
 import { loadFlagData } from '@/lib/country-flags';
 import { listRecons } from '@/lib/recon-api';
+import { formatReconSingle } from '@/lib/recon-utils';
+import AppLink from '@/components/AppLink';
 import { buildReconAttemptMap, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import PersonHero from '@/components/persons/sections/PersonHero';
@@ -58,6 +60,8 @@ export default function PersonDetailClient() {
   const [liveResults, setLiveResults] = useState<WcaResultRow[] | null>(null);
   const [liveComps, setLiveComps] = useState<WcaCompetition[] | null>(null);
   const [reconLookup, setReconLookup] = useState<Map<string, ReconAttemptInfo> | null>(null);
+  const [nonWcaTimings, setNonWcaTimings] = useState<Awaited<ReturnType<typeof listRecons>> | null>(null);
+  const [reconError, setReconError] = useState(false);
   const [former, setFormer] = useState<WcaFormerIdentity[]>([]);
   const [error, setError] = useState<string | null>(null);
   // 「废止项」口径开关:Σ 名次和行(PR 表底部)与「最优项目组合」共用一份状态
@@ -70,7 +74,7 @@ export default function PersonDetailClient() {
   // PR / 历史最佳排名 / PB 是整张表的视图切换:进 URL 以支持返回 / 前进和直链;无参数默认 PR。
   const [resultView, setResultView] = useQueryState(
     'records',
-    parseAsStringEnum<'pr' | 'historical' | 'pb'>(['pr', 'historical', 'pb'])
+    parseAsStringEnum<'pr' | 'historical' | 'pb' | 'non_wca'>(['pr', 'historical', 'pb', 'non_wca'])
       .withDefault('pr')
       .withOptions({ history: 'push' }),
   );
@@ -81,6 +85,7 @@ export default function PersonDetailClient() {
     if (!wcaId) return; // wait until the id is resolved from the URL
     setProfile(null); setResults(null); setComps(null); setError(null);
     setLiveResults(null); setLiveComps(null); setFormer([]);
+    setReconLookup(null); setNonWcaTimings(null); setReconError(false);
     let cancelled = false;
     // persons: false —— person_countries.json 是全站最大的一张表(gzip 1.3MB / 解开 5.3MB /
     // 29 万 key,实测跨洋 3.1s + 手机上几百 ms 主线程),而它只喂 personFlagIso2,本页整棵
@@ -103,8 +108,13 @@ export default function PersonDetailClient() {
       .then((j) => { if (!cancelled) { setLiveResults(j.results); setLiveComps(j.comps); } })
       .catch(() => { /* 直播补充缺失不影响官方成绩 */ });
     listRecons(wcaId)
-      .then((all) => { if (!cancelled) setReconLookup(buildReconAttemptMap(all)); })
-      .catch(() => { /* keep degraded UI */ });
+      .then((all) => {
+        if (cancelled) return;
+        setReconLookup(buildReconAttemptMap(all));
+        setNonWcaTimings(all.filter(r => r.official === 'non_wca'
+          && (r.pickupTime != null || r.putdownTime != null)));
+      })
+      .catch(() => { if (!cancelled) setReconError(true); });
     fetchWcaPersonFormer(wcaId)
       .then((f) => { if (!cancelled) setFormer(f); })
       .catch(() => { /* 曾用名缺失不影响主信息 */ });
@@ -169,7 +179,42 @@ export default function PersonDetailClient() {
           onInclCancelledChange={setInclCancelled}
           pbVisibilityControl={pbVisibilityControl}
         />
-        {resultView === 'pb' ? (
+        {resultView === 'non_wca' ? (
+          <>
+            <AppLink href={`/recon/submit?${new URLSearchParams({
+              official: 'non_wca', personId: profile.person.wca_id,
+              person: profile.person.name, personCountry: profile.person.country_iso2,
+            })}`} prefetch={false}>{t('添加', 'Add')}</AppLink>
+            {reconError ? (
+              <p>{t('加载失败', 'Failed to load')} <button type="button" className="wp-error-retry" onClick={() => setReloadKey(k => k + 1)}>{t('重试', 'Retry')}</button></p>
+            ) : nonWcaTimings === null ? (
+              <p>{t('加载中…', 'Loading…')}</p>
+            ) : nonWcaTimings.length === 0 ? (
+              <p>{t('暂无起拍表记录', 'No pickup or putdown records yet')}</p>
+            ) : (
+              <div className="wp-table-scroll">
+                <table className="wp-pr-table" style={{ width: 'auto' }}>
+                  <thead><tr>
+                    <th scope="col">{t('序号', '#')}</th>
+                    <th scope="col">{t('成绩', 'Result')}</th>
+                    <th scope="col">{t('起表', 'Pickup')}</th>
+                    <th scope="col">{t('拍表', 'Putdown')}</th>
+                    <th scope="col">{t('起拍表', 'Pickup + putdown')}</th>
+                  </tr></thead>
+                  <tbody>{nonWcaTimings.map((solve, index) => (
+                    <tr key={solve.id}>
+                      <td>{index + 1}</td>
+                      <td><AppLink href={`/recon/${solve.id}`} prefetch={false}>{formatReconSingle(solve.event, solve.value, solve.rawTime) || '—'}</AppLink></td>
+                      <td>{solve.pickupTime != null ? `${solve.pickupTime.toFixed(3)}s` : '—'}</td>
+                      <td>{solve.putdownTime != null ? `${solve.putdownTime.toFixed(3)}s` : '—'}</td>
+                      <td>{solve.pickupTime != null && solve.putdownTime != null ? `${(solve.pickupTime + solve.putdownTime).toFixed(3)}s` : '—'}</td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+              </div>
+            )}
+          </>
+        ) : resultView === 'pb' ? (
           <PersonPbTable
             key={profile.person.wca_id}
             wcaId={profile.person.wca_id}
