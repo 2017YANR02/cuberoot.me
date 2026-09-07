@@ -103,8 +103,8 @@ describe('CubePB WCA person integration', () => {
     expect(pbRoute).toContain("pbRoutes.put('/pb/records/:id'");
   });
 
-  it('defaults to PR and switches among PR, historical ranks, and PB', () => {
-    expect(personDetail).toContain("parseAsStringEnum<'pr' | 'historical' | 'pb'>(['pr', 'historical', 'pb'])");
+  it('defaults to PR and switches among PR, historical ranks, PB, and non-WCA timings', () => {
+    expect(personDetail).toContain("parseAsStringEnum<'pr' | 'historical' | 'pb' | 'non_wca'>(['pr', 'historical', 'pb', 'non_wca'])");
     expect(personDetail).toContain(".withDefault('pr')");
     expect(personDetail).toContain("withOptions({ history: 'push' })");
     expect(personDetail).toContain("resultView === 'pb'");
@@ -113,7 +113,7 @@ describe('CubePB WCA person integration', () => {
     expect(personHero).toContain('<BoolToggle');
     expect(personHero).toContain("resultView === 'pb' && pbVisibilityControl");
     expect(personHero).toContain("{ value: 'historical'");
-    expect(personHero).toContain("resultView !== 'pb'");
+    expect(personHero).toContain("resultView === 'pr' || resultView === 'historical'");
     expect(personPbTable).not.toContain('公开设置已保存。');
     expect(personPbTable).not.toContain('Visibility saved.');
   });
