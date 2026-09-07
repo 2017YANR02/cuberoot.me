@@ -244,6 +244,19 @@ describe('Platform route conservation', () => {
 });
 
 describe('Platform gateway contracts', () => {
+  it('preserves the lesson response envelope and its playable media binding', async () => {
+    const lesson = { id: 'lesson-1', titleZh: '第一课', mediaId: 'media-1', bodyZh: { text: '课时正文' }, questions: [] };
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL) => response({ lesson }));
+    vi.stubGlobal('fetch', fetchMock);
+    const result = await loadPlatformResource('course-lesson', {
+      routeId: 'course-lesson', params: { id: 'course-1', lessonId: 'lesson-1' },
+    });
+    expect(requestPath(fetchMock.mock.calls[0][0])).toBe('/v1/platform/courses/course-1/lessons/lesson-1');
+    expect(result.total).toBe(1);
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]).toMatchObject({ id: 'lesson-1', title: '第一课', data: lesson });
+  });
+
   it('provides a real GET for every native resource route', async () => {
     const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => response({ items: [] }));
     vi.stubGlobal('fetch', fetchMock);
