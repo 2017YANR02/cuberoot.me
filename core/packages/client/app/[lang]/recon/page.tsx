@@ -40,6 +40,7 @@ import './recon.css';
 import { tr } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
 import BoolToggle from '@/components/BoolToggle';
+import { CompactSelect } from '@/components/CompactSelect';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
 
 // ── 视图模式 ──
@@ -216,6 +217,15 @@ export default function ReconListPage() {
     'unsolved',
     parseAsBoolean.withDefault(false),
   );
+  const [recordKind, setRecordKind] = useQueryState(
+    'content',
+    parseAsStringEnum(['reconstruction', 'timing', 'all']).withDefault('reconstruction'),
+  );
+  const recordKindItems = [
+    { value: 'reconstruction', label: tr({ zh: '复盘', en: 'Reconstructions' }) },
+    { value: 'timing', label: tr({ zh: '仅起拍表', en: 'Timing only' }) },
+    { value: 'all', label: tr({ zh: '全部', en: 'All' }) },
+  ];
   const {
     loading, error, filters,
     sortKey, sortDir,
@@ -249,10 +259,12 @@ export default function ReconListPage() {
     void loadFlagData().then(v => { if (v !== flagVer) setFlagVer(v); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const filtered = useMemo(() => getFilteredSolves(), [
+  const filtered = useMemo(() => getFilteredSolves().filter(s =>
+    recordKind === 'all' || (recordKind === 'timing' ? s.recordType === 'timing' : s.recordType !== 'timing')
+  ), [
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useReconStore.getState().allSolves,
-    filters, sortKey, sortDir,
+    filters, sortKey, sortDir, recordKind,
   ]);
 
   // NOTE: 同一轮里 avg / aoxr 在每把都重复——按 (person, comp, event, round) 分组，
@@ -874,6 +886,13 @@ export default function ReconListPage() {
             <LayoutGrid size={16} />
           </button>
         </div>
+        <CompactSelect
+          value={recordKind}
+          label={recordKindItems.find(item => item.value === recordKind)?.label}
+          items={recordKindItems}
+          onChange={value => { void setRecordKind(value); }}
+          ariaLabel={tr({ zh: '录入内容', en: 'Record content' })}
+        />
         <BoolToggle
           value={unsolvedOnly}
           onChange={(value) => {

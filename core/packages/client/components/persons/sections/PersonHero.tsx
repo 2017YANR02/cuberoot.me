@@ -25,8 +25,8 @@ interface Props {
   comps: WcaCompetition[] | null;
   former?: WcaFormerIdentity[];
   isZh: boolean;
-  resultView: 'pr' | 'historical' | 'pb';
-  onResultViewChange: (view: 'pr' | 'historical' | 'pb') => void;
+  resultView: 'pr' | 'historical' | 'pb' | 'non_wca';
+  onResultViewChange: (view: 'pr' | 'historical' | 'pb' | 'non_wca') => void;
   inclCancelled: boolean;
   onInclCancelledChange: (value: boolean) => void;
   pbVisibilityControl: {
@@ -120,6 +120,7 @@ export default function PersonHero({
     { value: 'pr', label: 'PR' },
     { value: 'historical', label: t('历史最佳排名', 'Historical Best') },
     { value: 'pb', label: 'PB' },
+    { value: 'non_wca', label: t('非WCA比赛', 'Non-WCA competitions') },
   ] as const;
   const resultViewLabel = resultViewItems.find((item) => item.value === resultView)?.label ?? 'PR';
   const prCount = useMemo(
@@ -251,7 +252,7 @@ export default function PersonHero({
           ariaLabel={t('成绩视图', 'Results view')}
           popupClassName="wp-result-view-popup"
         />
-        {resultView !== 'pb' && (
+        {(resultView === 'pr' || resultView === 'historical') && (
           <PillToggle
             value={inclCancelled}
             onChange={onInclCancelledChange}
@@ -269,7 +270,7 @@ export default function PersonHero({
         )}
       </div>
 
-      {resultView !== 'pb' && (
+      {(resultView === 'pr' || resultView === 'historical') && (
         <>
           {collections.length > 0 && (
             <div className="wp-hero-collections">

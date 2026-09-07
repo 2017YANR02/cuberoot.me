@@ -1189,6 +1189,7 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                 // 行标(STM / TPS)放到「轮次」列 Fi 下方,与这两行数值同线。
                 const roundRecons = r.attempts.map((_, i) => findReconStatsForCell(r.round_type_id, i + 1));
                 const hasRecon = roundRecons.some(Boolean);
+                const hasTiming = roundRecons.some(r => r?.pickupTime != null || r?.putdownTime != null);
                 return (
                   <tr key={rowKey} className={r.live ? 'same-comp-event-row-live' : ''}>
                     <td>
@@ -1212,6 +1213,11 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                             <span className="same-comp-round-sublabel">{speedUnit}</span>
                           </>
                         )}
+                        {hasTiming && <>
+                          <span className="same-comp-round-sublabel">{tr({ zh: '起表', en: 'Pickup' })}</span>
+                          <span className="same-comp-round-sublabel">{tr({ zh: '拍表', en: 'Putdown' })}</span>
+                          <span className="same-comp-round-sublabel">{tr({ zh: '起拍表', en: 'Pickup + putdown' })}</span>
+                        </>}
                       </div>
                     </td>
                     <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>
@@ -1425,6 +1431,11 @@ function SameSessionTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows: 
                         </div>
                         <span className="same-comp-round-sublabel">STM</span>
                         <span className="same-comp-round-sublabel">{speedUnit}</span>
+                        {r.slots.some(s => s?.pickupTime != null || s?.putdownTime != null) && <>
+                          <span className="same-comp-round-sublabel">{tr({ zh: '起表', en: 'Pickup' })}</span>
+                          <span className="same-comp-round-sublabel">{tr({ zh: '拍表', en: 'Putdown' })}</span>
+                          <span className="same-comp-round-sublabel">{tr({ zh: '起拍表', en: 'Pickup + putdown' })}</span>
+                        </>}
                       </div>
                     </td>
                     <td className="wp-cell-result">
@@ -1542,6 +1553,7 @@ interface AttemptCell {
 /** 逐把成绩网格:时间行 +(任一把有复盘时)STM / TPS 两行,同一套列网格逐列对齐。 */
 function AttemptGrid({ cells, recons }: { cells: AttemptCell[]; recons: (ReconSolve | undefined)[] }) {
   const hasRecon = recons.some(Boolean);
+  const hasTiming = recons.some(r => r?.pickupTime != null || r?.putdownTime != null);
   return (
     <div className="same-comp-att-grid">
       {cells.map((c, i) => {
@@ -1566,6 +1578,14 @@ function AttemptGrid({ cells, recons }: { cells: AttemptCell[]; recons: (ReconSo
           ))}
         </>
       )}
+      {hasTiming && ['pickupTime', 'putdownTime', 'total'].flatMap(kind => cells.map((_, i) => {
+        const rec = recons[i];
+        const value = kind === 'pickupTime' ? rec?.pickupTime
+          : kind === 'putdownTime' ? rec?.putdownTime
+          : rec?.pickupTime != null && rec.putdownTime != null ? rec.pickupTime + rec.putdownTime : null;
+        return <span key={`${kind}-${i}`} className="wp-att wp-att-sub">{value != null ? value.toFixed(3) : ''}</span>;
+      }))}
+
     </div>
   );
 }

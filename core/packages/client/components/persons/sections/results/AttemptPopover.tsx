@@ -391,7 +391,7 @@ function AttemptPopoverBody({
               style={reconHeaderStyle}
               onClick={onClose}
             >
-              <span>{reconSolve?.recordType === 'timing' ? tr({ zh: '查看起拍表耗时', en: 'View pickup and putdown' }) : tr({ zh: '查看完整复盘', en: 'Full reconstruction' })}</span>
+              <span>{reconSolve?.recordType === 'timing' ? tr({ zh: '查看起拍表耗时', en: 'View pickup and putdown' }) : tr({ zh: '查看复盘详情', en: 'View reconstruction details' })}</span>
               <ChevronRight size={15} style={{ flexShrink: 0, opacity: 0.55 }} />
             </Link>
             {reconSolve?.recordType === 'timing' ? (
