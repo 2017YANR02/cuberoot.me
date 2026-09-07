@@ -194,11 +194,14 @@ export function displayAlgCaseName(puzzle: string, set: string, name: string): s
  * case 的主名。有 `meta.ollcp`(1LLL 表导入的 case)就用它 —— 站长定的字母制命名优先,
  * 站上原来那个数字制名字降为副名(docs/1lll-migration.md §7 B8)。
  *
- * `PLL-A+` 里的 set 前缀是冗余的,剥掉 —— 不然 pll 页每张卡都顶着一个 `PLL-`。
+ * 去掉当前 set 的冗余前缀,组名与编号紧排,例如 `EG1 S 1` → `S1`。
  */
 export function primaryCaseName(puzzle: string, set: string, c: AlgCase): string {
-  const ollcp = c.meta?.ollcp;
-  if (!ollcp) return displayAlgCaseName(puzzle, set, c.name);
-  const prefix = `${set.toUpperCase()}-`;
-  return ollcp.startsWith(prefix) ? ollcp.slice(prefix.length) : ollcp;
+  let name = (c.meta?.ollcp || displayAlgCaseName(puzzle, set, c.name)).trim();
+  const prefix = set.toUpperCase();
+  if (name.toUpperCase().startsWith(prefix) && /^[\s-]/.test(name.slice(prefix.length))) {
+    const shortName = name.slice(prefix.length).replace(/^[\s-]+/, '');
+    if (shortName) name = shortName;
+  }
+  return name.replace(/^([A-Za-z][A-Za-z0-9+-]*)\s+(\d+)$/, '$1$2');
 }
