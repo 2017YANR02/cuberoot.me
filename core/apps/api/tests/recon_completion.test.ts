@@ -7,6 +7,7 @@ import {
   normalizeReconScrambleSpacing,
 } from '@cuberoot/shared/recon-completion';
 import {
+  checkReconRowCompletion,
   hasUnsolvedReason,
   normalizeReconScrambleRow,
 } from '../src/utils/recon_completion';
@@ -160,4 +161,19 @@ describe('unsolved reason validation', () => {
     expect(row.optimal_scramble).toBe("F2 L U'");
     expect(row.scramble).toBe("B2 D F'");
   });
+});
+
+it('timing entries do not claim an unsolved reconstruction', async () => {
+  await expect(checkReconRowCompletion({ record_type: 'timing', scramble: 'R', solution: '' })).resolves.toEqual({ status: 'unchecked' });
+});
+
+it('validates partial timing edits against database numeric strings', async () => {
+  const { validateRow, rowToJson, jsonToRow } = await import('../src/utils/recon_helpers');
+  const existing = { record_type: 'timing', pickup_time: '0.234', putdown_time: '0.123', solution: '' };
+  expect(validateRow({ pickup_time: 0.345 }, existing)).toEqual([]);
+  expect(validateRow({ pickup_time: null }, existing).length).toBe(1);
+  expect(validateRow({ solution: 'R' }, existing).length).toBe(1);
+  expect(validateRow({ record_type: 'reconstruction', solution: 'R' }, existing)).toEqual([]);
+  expect(rowToJson(existing).pickupTime).toBe(0.234);
+  expect(jsonToRow({ pickupTime: 0, putdownTime: 0.1 }).pickup_time).toBe(0);
 });

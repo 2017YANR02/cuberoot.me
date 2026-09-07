@@ -237,6 +237,13 @@ jobs:
 
       - name: Test server
         working-directory: core
+        env:
+          DRIVE_TEST_PG: '1'
+          DB_HOST: 127.0.0.1
+          DB_PORT: '5432'
+          DB_USER: postgres
+          DB_PASS: postgres
+          DB_NAME: cuberoot_test
         run: pnpm --filter @cuberoot/server test
 
       - name: Verify Mini Program

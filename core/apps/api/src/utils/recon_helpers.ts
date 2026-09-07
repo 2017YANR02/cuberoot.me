@@ -5,9 +5,10 @@
  */
 import type { Context } from 'hono';
 import jwt from 'jsonwebtoken';
+import { validateReconTiming } from '@cuberoot/shared/recon-completion';
 import { ADMIN_WCA_IDS, BANNED_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 export { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
-import { JWT_SECRET } from './session.js';
+import { JWT_SECRET, isRolePreviewActive } from './session.js';
 import { findUserByWcaId, getUserById, ownerKey } from './account.js';
 
 // 装饰性标注字符:`·`(间隔)、`↑↓`(regrip 方向记号)、分数 `⅓⅔`、ASCII `.`、各类零宽字符。
@@ -49,6 +50,9 @@ const FIELD_MAP_JSON_TO_SQL: Record<string, string> = {
   personCountry: 'person_country',
   coPersons: 'co_persons',
   videoUrl: 'video_url',
+  recordType: 'record_type',
+  pickupTime: 'pickup_time',
+  putdownTime: 'putdown_time',
   dupReason: 'dup_reason',
   unsolvedReason: 'unsolved_reason',
   completionStatus: 'completion_status',
@@ -62,6 +66,7 @@ for (const [json, sql] of Object.entries(FIELD_MAP_JSON_TO_SQL)) {
 
 // NOTE: 允许 INSERT/UPDATE 的列白名单（防止前端注入非数据库字段）
 const ALLOWED_COLUMNS = new Set([
+  'record_type', 'pickup_time', 'putdown_time',
   'official', 'event', 'method', 'date', 'comp', 'country', 'city', 'round',
   'solve_num', 'person', 'person_id', 'raw_time', 'exec_time', 'memo_time',
   'average', 'value', 'regional_single_record', 'regional_average_record',
@@ -103,7 +108,7 @@ const INT_FIELDS = new Set([
   'id', 'stm', 'solveNum', 'freePair', 'yRot', 'regrip', 'lockup',
   'crossType', 'crossStm', 'f2l', 'll', 'sMove', 'createdAt',
 ]);
-const FLOAT_FIELDS = new Set(['rawTime', 'execTime', 'memoTime', 'average', 'tps']);
+const FLOAT_FIELDS = new Set(['rawTime', 'execTime', 'memoTime', 'average', 'tps', 'pickupTime', 'putdownTime']);
 
 /**
  * SQL 行 → 前端 JSON 对象
@@ -174,8 +179,13 @@ export function jsonToRow(json: Record<string, unknown>): Record<string, unknown
  * NOTE: 按数据库 Schema 校验，防非法输入
  * @returns 错误消息数组（空=通过）
  */
-export function validateRow(row: Record<string, unknown>): string[] {
+export function validateRow(row: Record<string, unknown>, existing: Record<string, unknown> = {}): string[] {
   const errors: string[] = [];
+  const timingRow = { ...jsonToRow(rowToJson(existing)), ...row };
+  const timingError = validateReconTiming({
+    recordType: timingRow.record_type, pickupTime: timingRow.pickup_time, putdownTime: timingRow.putdown_time, solution: timingRow.solution || timingRow.recon,
+  });
+  if (timingError) errors.push(timingError.en);
 
   // DECIMAL(8,3)
   for (const col of ['raw_time', 'average', 'exec_time', 'memo_time']) {
@@ -358,7 +368,8 @@ export async function authenticateUser(authHeader: string | undefined): Promise<
   // NOTE: 优先尝试 JWT 验证（自签令牌，365 天有效期，无需网络调用）
   // 载荷三种:{ wcaId }(老 token)/ { uid }(纯邮箱手机账号)/ { uid, wcaId }(绑了 WCA)。
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as { uid?: number; wcaId?: string; name?: string };
+    const payload = jwt.verify(token, JWT_SECRET) as { uid?: number; wcaId?: string; name?: string; previewId?: string };
+    if (payload.previewId && !await isRolePreviewActive(payload.previewId, payload.uid!)) return null;
     if (payload.uid != null || payload.wcaId) {
       const account = payload.uid != null
         ? await getUserById(payload.uid)

@@ -3,6 +3,7 @@
 // 进步(PB)染色 + regional record 标签.
 
 import { useMemo, useState } from 'react';
+import { tr } from '@/i18n/tr';
 import Link from '@/components/AppLink';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { formatDateRangeIso } from '@/lib/wca-date';
@@ -19,7 +20,7 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
-import { rowHasReconStats, computeReconRoundAvg, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
+import { findReconForAttempt, rowHasReconStats, computeReconRoundAvg, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 import { AvgDec } from '@/components/wca-results/AvgDec';
 import { isMbldEvent, effectiveMbldAverage } from '@/lib/mbf-average';
 import { useMbldAvgRecords, mbldAvgRecordKey } from '@/lib/mbld-avg-records';
@@ -240,6 +241,10 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                     const effAttempts = effectiveAttempts(chain, r.attempts);
                     // 「#」开 + 该轮有复盘(带 stm/tps)→ 详细成绩下补 STM/TPS 两行,轮次列同步出两行标签。
                     const hasReconStats = showAttemptRanks && rowHasReconStats(reconLookup, comp.id, r.event_id, r.round_type_id, effAttempts.length);
+                    const hasTimingStats = showAttemptRanks && effAttempts.some((_, i) => {
+                      const info = findReconForAttempt(reconLookup, comp.id, r.event_id, r.round_type_id, i + 1);
+                      return info?.pickupTime != null && info?.putdownTime != null;
+                    });
                     const speedUnit = r.event_id === 'sq1' ? 'SPS' : 'TPS';
                     // 平均 STM / 平均 TPS(Ao5 去尾均值),5 把全有复盘才给值,展示在平均列下方两行。
                     const roundAvg = hasReconStats ? computeReconRoundAvg(reconLookup, comp.id, r.event_id, r.round_type_id) : null;
@@ -247,7 +252,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                       <tr
                         key={rowKey}
                         id={`r-${comp.id}-${r.event_id}-${r.round_type_id}`}
-                        className={`wp-row-anchorable ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''} ${hasReconStats ? 'wp-row-has-recon-stats' : ''}`}
+                        className={`wp-row-anchorable ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''} ${hasReconStats || hasTimingStats ? 'wp-row-has-recon-stats' : ''}`}
                         onClick={(e) => handleRowClick(e, comp.id, r.event_id, r.round_type_id)}
                       >
                         <td className="wp-cell-event">
@@ -279,6 +284,11 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                                 <span className="wp-round-sublabel">{speedUnit}</span>
                               </>
                             )}
+                    {hasTimingStats && <>
+                      <span className="wp-round-sublabel">{tr({ zh: '起表', en: 'Pickup' })}</span>
+                      <span className="wp-round-sublabel">{tr({ zh: '拍表', en: 'Putdown' })}</span>
+                      <span className="wp-round-sublabel">{tr({ zh: '起拍表', en: 'Pickup + putdown' })}</span>
+                    </>}
                           </span>
                         </td>
                         <td className={`wp-cell-pos ${effPos === 1 ? 'wp-pos-first' : ''} ${oldPos.length > 0 ? 'wp-cell-changed' : ''}`}>
@@ -384,6 +394,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                             attemptRanks={showAttemptRanks ? (rank?.attemptRanks ?? null) : null}
                             singleRecord={showAttemptRanks ? singleRecord : null}
                             showReconStats={hasReconStats}
+                    showTimingStats={hasTimingStats}
                             onEdit={(index, newValue, note) =>
                               recordAttemptEdit({
                                 target: { wcaId, competitionId: comp.id, eventId: r.event_id, roundTypeId: r.round_type_id, resultId: r.id ?? null },

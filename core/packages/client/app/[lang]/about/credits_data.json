@@ -1,5 +1,26 @@
 [
   {
+    "name": "Three.js",
+    "url": "https://github.com/mrdoob/three.js",
+    "zh": "魔方空间的 3D 渲染、物理材质、视角控制、镜面反射和后期处理",
+    "en": "3D rendering, physical materials, camera controls, reflections and postprocessing in Cube Space",
+    "long_en": "Three.js is licensed under the MIT license. Cube Space reuses its renderer, controls, reflection and postprocessing modules."
+  },
+  {
+    "name": "ABYSSAL / natural-disasters",
+    "url": "https://github.com/Token-Gremlin/natural-disasters",
+    "zh": "魔方空间的大气散射、体积云、雨幕、分叉闪电和体积龙卷风，MIT，已适配住宅遮雨与镜面",
+    "en": "Atmospheric scattering, volumetric clouds, rain, branching lightning and volumetric tornadoes in Cube Space, adapted for roofs and mirrors under MIT",
+    "long_en": "Copyright (c) 2026 Davi (Token-Gremlin), MIT. Weather sources are pinned to d2bae38301ff43bc1d43bfdfd9477a552ca5420b. Adaptations include per-scene uniforms, resource disposal, a corrected 3D noise atlas, cloud sampling and spatial resolve, roof shelter, and integration with Three.js architectural lighting and planar reflections. Ocean simulation and demo postprocessing are omitted. Snow, hail, dust, mudslide, rainbow and surface wetness remain local effects."
+  },
+  {
+    "name": "Car Concept: Eric Chadwick / DGG",
+    "url": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept",
+    "zh": "魔方空间车库模型及贴图，Eric Chadwick / Darmstadt Graphics Group，2024，CC BY 4.0",
+    "en": "Garage model and textures by Eric Chadwick / Darmstadt Graphics Group, 2024, CC BY 4.0",
+    "long_en": "Car Concept from Khronos glTF Sample Assets. Model and textures copyright 2024 Darmstadt Graphics Group GmbH, by Eric Chadwick, licensed under https://creativecommons.org/licenses/by/4.0/. Khronos and 3D Commerce logos remain subject to the Khronos trademark notice in the source repository. Hosted locally; scaled and glass rendering adapted for the space."
+  },
+  {
     "name": "Poly Haven",
     "url": "https://polyhaven.com/license",
     "zh": "魔方空间使用本地托管的 CC0 环境光、材质、家具与植物模型",

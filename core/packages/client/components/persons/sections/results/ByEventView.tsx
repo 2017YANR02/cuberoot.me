@@ -26,7 +26,7 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
-import { rowHasReconStats, computeReconRoundAvg, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
+import { computeReconTimingMean, findReconForAttempt, rowHasReconStats, computeReconRoundAvg, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 import { AvgDec } from '@/components/wca-results/AvgDec';
 import { trimEmptyAttempts } from '@/lib/wca-ao5-brackets';
 import { fetchPersonRankHistory, wcaResultRowKey, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
@@ -396,6 +396,7 @@ function EventRoundsList({
 
   if (displayRows.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No results yet')}</div>;
 
+  const timingStats = computeReconTimingMean(reconLookup, eventId);
   const grouped = !sort.key;
   // 分组视图:同一比赛只在首行展示比赛名 + 日期;排序视图:逐行都展示(已打散).
   let lastCompId = '';
@@ -435,6 +436,10 @@ function EventRoundsList({
               <span><span>{tr({ zh: '平均总数', en: 'Average count' })}</span><strong>{resultStats.average.count}</strong></span>
             </>
           )}
+          <span title={tr({ zh: '起表到第一步的算术平均耗时', en: 'Arithmetic mean from timer start to first move' })}><span>{tr({ zh: '起表', en: 'Pickup' })}</span><strong>{timingStats.pickup == null ? '—' : `${timingStats.pickup.toFixed(3)}s`}</strong></span>
+          <span title={tr({ zh: '最后一步到拍表的算术平均耗时', en: 'Arithmetic mean from last move to timer stop' })}><span>{tr({ zh: '拍表', en: 'Putdown' })}</span><strong>{timingStats.putdown == null ? '—' : `${timingStats.putdown.toFixed(3)}s`}</strong></span>
+          <span title={tr({ zh: '起表与拍表的平均耗时之和', en: 'Sum of mean pickup and putdown durations' })}><span>{tr({ zh: '起拍表', en: 'Pickup + putdown' })}</span><strong>{timingStats.pickup == null || timingStats.putdown == null ? '—' : `${(timingStats.pickup + timingStats.putdown).toFixed(3)}s`}</strong></span>
+          <span><span>{tr({ zh: '起拍表样本', en: 'Pickup/putdown samples' })}</span><strong>{reconLookup == null ? '—' : timingStats.count}</strong></span>
         </div>
       )}
       {/* sticky 列头吸顶:复用全站共用工具(sticky-scroll + sticky-thead,见 components/sticky-table.css)。 */}
@@ -511,15 +516,6 @@ function EventRoundsList({
                 </span>
               )}
             </th>
-            <th className="wp-th-aoxr">
-              <span className="wp-th-info">
-                <button type="button" className={`wp-sort-th ${sort.key === 'aoxr' ? 'is-active' : ''}`}
-                  onClick={() => toggleSort('aoxr')} title={t('按 AOXR 排序', 'Sort by AOXR')}>
-                  AoXR{sortArrow('aoxr')}
-                </button>
-                <InfoTooltip content={aoxrHint()} />
-              </span>
-            </th>
             <th className="wp-th-attempts">
               <span className="wp-att-head" style={{ '--att-cols': maxAttempts } as React.CSSProperties}>
                 {maxAttempts > 0 && (
@@ -534,6 +530,15 @@ function EventRoundsList({
                     ))}
                   </span>
                 )}
+              </span>
+            </th>
+            <th className="wp-th-aoxr">
+              <span className="wp-th-info">
+                <button type="button" className={`wp-sort-th ${sort.key === 'aoxr' ? 'is-active' : ''}`}
+                  onClick={() => toggleSort('aoxr')} title={t('按 AOXR 排序', 'Sort by AOXR')}>
+                  AoXR{sortArrow('aoxr')}
+                </button>
+                <InfoTooltip content={aoxrHint()} />
               </span>
             </th>
           </tr>
@@ -575,6 +580,10 @@ function EventRoundsList({
             const effAttempts = effectiveAttempts(chain, r.attempts);
             // 「#」开 + 该轮有复盘(带 stm/tps)→ 详细成绩下补 STM/TPS 两行,轮次列同步出两行标签。
             const hasReconStats = showAttemptRanks && rowHasReconStats(reconLookup, r.competition_id, eventId, r.round_type_id, effAttempts.length);
+            const hasTimingStats = showAttemptRanks && effAttempts.some((_, i) => {
+              const info = findReconForAttempt(reconLookup, r.competition_id, eventId, r.round_type_id, i + 1);
+              return info?.pickupTime != null && info?.putdownTime != null;
+            });
             const speedUnit = eventId === 'sq1' ? 'SPS' : 'TPS';
             // 平均 STM / 平均 TPS(Ao5 去尾均值),5 把全有复盘才给值,展示在平均列下方两行。
             const roundAvg = hasReconStats ? computeReconRoundAvg(reconLookup, r.competition_id, eventId, r.round_type_id) : null;
@@ -582,7 +591,7 @@ function EventRoundsList({
               <tr
                 key={rowKey}
                 id={`r-${r.competition_id}-${eventId}-${r.round_type_id}`}
-                className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''} ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''} ${hasReconStats ? 'wp-row-has-recon-stats' : ''}`}
+                className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''} ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''} ${hasReconStats || hasTimingStats ? 'wp-row-has-recon-stats' : ''}`}
                 onClick={(e) => handleRowClick(e, r.competition_id, r.round_type_id)}
               >
                 <td className="wp-cell-comp">
@@ -623,6 +632,11 @@ function EventRoundsList({
                         <span className="wp-round-sublabel">{speedUnit}</span>
                       </>
                     )}
+                    {hasTimingStats && <>
+                      <span className="wp-round-sublabel">{tr({ zh: '起表', en: 'Pickup' })}</span>
+                      <span className="wp-round-sublabel">{tr({ zh: '拍表', en: 'Putdown' })}</span>
+                      <span className="wp-round-sublabel">{tr({ zh: '起拍表', en: 'Pickup + putdown' })}</span>
+                    </>}
                   </span>
                 </td>
                 <td className={`wp-cell-pos ${effPos === 1 ? 'wp-pos-first' : ''} ${oldPos.length > 0 ? 'wp-cell-changed' : ''}`}>
@@ -687,11 +701,6 @@ function EventRoundsList({
                     />
                   )}
                 </td>
-                {aoxrSpans[ri] > 0 && (
-                  <td className="wp-cell-aoxr" rowSpan={aoxrSpans[ri]}>
-                    <AoxrValue cell={aoxrMap.get(aoxrKey(r.competition_id, eventId))} eventId={eventId} />
-                  </td>
-                )}
                 <td className={`wp-cell-attempts ${isMbldEvent(eventId) ? 'wp-cell-attempts--mbld' : ''} ${showAttemptRanks ? '' : 'wp-cell-attempts--center'}`}>
                   <AttemptsList
                     attempts={effAttempts}
@@ -739,6 +748,7 @@ function EventRoundsList({
                     attemptRanks={showAttemptRanks ? (rank?.attemptRanks ?? null) : null}
                     singleRecord={showAttemptRanks ? singleRecord : null}
                     showReconStats={hasReconStats}
+                    showTimingStats={hasTimingStats}
                     cols={maxAttempts}
                     onEdit={(index, newValue, note) =>
                       recordAttemptEdit({
@@ -763,6 +773,11 @@ function EventRoundsList({
                     }
                   />
                 </td>
+                {aoxrSpans[ri] > 0 && (
+                  <td className="wp-cell-aoxr" rowSpan={aoxrSpans[ri]}>
+                    <AoxrValue cell={aoxrMap.get(aoxrKey(r.competition_id, eventId))} eventId={eventId} />
+                  </td>
+                )}
               </tr>
             );
           })}

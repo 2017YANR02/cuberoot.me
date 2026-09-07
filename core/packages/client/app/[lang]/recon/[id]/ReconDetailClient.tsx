@@ -277,7 +277,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
             </span>
           )}
           {solve.city && <span className="detail-meta-item">{displayCity(solve.city, isZh)}</span>}
-          <ReconCompletionBadge status={solve.completionStatus} />
+          <ReconCompletionBadge recordType={solve.recordType} status={solve.completionStatus} />
           {/* 可见性徽标——仅非公开(不公开列出 / 私享)时显示,提示当前分享状态 */}
           {solve.visibility === 'unlisted' && (
             <span className="detail-meta-item recon-vis-badge" title={tr({ zh: '不在列表中显示,仅凭链接可访问', en: 'Not listed; accessible only via the link' })}>
@@ -386,7 +386,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
 
   return (
     <div className="detail-layout">
-      <div className="detail-player-pane">
+      {solve.recordType !== 'timing' && <div className="detail-player-pane">
         {/* 有解法 → 播放复盘;无解法(只录了 WCA 成绩 + 打乱)→ alg 为空,
             player 停在 setup(打乱)后的 3D 状态,至少能看到这个打乱。 */}
         <ReconPlayerCanvas
@@ -399,12 +399,13 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
         />
       </div>
 
+      }
       <div className="detail-content-pane">
         {solutionText && (
           <ExternalLinks event={solve.event} scramble={playerScramble} alg={solutionText} solveId={solve.id} caption={caption} copyText={fullCopyText} />
         )}
 
-        {(scramble || solutionText) && (
+        {solve.recordType !== 'timing' && (scramble || solutionText) && (
           <div className="detail-section detail-scramble-solution">
             {captionHeader && (
               <div className="detail-caption-header">{captionHeader}</div>
@@ -625,6 +626,10 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
   ];
 
   const validItems = items.filter(([, v]) => v != null && v !== '' && v !== 0);
+  validItems.push(
+    [tr({ zh: '起表耗时', en: 'Pickup' }), <span title={tr({ zh: '起表到第一步', en: 'Timer start to first move' })}>{solve.pickupTime == null ? '—' : `${solve.pickupTime.toFixed(3)}s`}</span>],
+    [tr({ zh: '拍表耗时', en: 'Putdown' }), <span title={tr({ zh: '最后一步到拍表', en: 'Last move to timer stop' })}>{solve.putdownTime == null ? '—' : `${solve.putdownTime.toFixed(3)}s`}</span>],
+  );
   if (validItems.length === 0) return null;
 
   return (
@@ -1672,9 +1677,11 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime, event }: {
 
   return (
     <div className="detail-section">
-      <div className="detail-section-label">
-        {t('recon.alternativeCount', { count: alts.length })}
-      </div>
+      {alts.length > 0 && (
+        <div className="detail-section-label">
+          {t('recon.alternativeCount', { count: alts.length })}
+        </div>
+      )}
 
       {myKey ? (
         <div className="alt-add-bar">
@@ -1927,9 +1934,11 @@ function CommentsView({
 
   return (
     <div className="detail-section">
-      <div className="detail-section-label">
-        {t('recon.commentCount', { count: comments.length })}
-      </div>
+      {comments.length > 0 && (
+        <div className="detail-section-label">
+          {t('recon.commentCount', { count: comments.length })}
+        </div>
+      )}
       <DiscussionComposer
         value={newComment}
         onChange={setNewComment}

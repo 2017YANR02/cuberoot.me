@@ -17,6 +17,7 @@ import { uploadedImageUrl } from '@/lib/image-upload';
 import { getPublicMemberProfile, type PublicMemberProfile } from '@/lib/membership-api';
 import type { WcaCompetition, WcaPersonProfile, WcaResultRow, WcaFormerIdentity } from '@/lib/wca-person-api';
 import { computePrRank, countPersonalRecords } from '../logic/progress';
+import PersonAchievements from './PersonAchievements';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -135,9 +136,9 @@ export default function PersonHero({
         { key: 'continental', label: <RecordBadge record="CR" iso2={p.country_iso2} />, value: profile.records.continental },
         { key: 'national', label: <RecordBadge record="NR" />, value: profile.records.national },
         { key: 'pr', label: <RecordBadge record="PR" />, value: prCount },
-        { key: 'gold', label: t('金牌', 'Gold'), value: profile.medals.gold },
-        { key: 'silver', label: t('银牌', 'Silver'), value: profile.medals.silver },
-        { key: 'bronze', label: t('铜牌', 'Bronze'), value: profile.medals.bronze },
+        { key: 'gold', label: '🥇', value: profile.medals.gold },
+        { key: 'silver', label: '🥈', value: profile.medals.silver },
+        { key: 'bronze', label: '🥉', value: profile.medals.bronze },
       ].filter((item) => item.value > 0),
     },
   ].filter((collection) => collection.items.some((item) => item.value > 0));
@@ -220,6 +221,8 @@ export default function PersonHero({
           </div>
         </div>
       </div>
+
+      <PersonAchievements wcaId={p.wca_id} isZh={isZh} />
 
       {avatarOpen && fullAvatarUrl && (
         <AvatarPreview

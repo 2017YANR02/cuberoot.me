@@ -42,6 +42,9 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'role_preview_profiles', domain: 'account', origin: '0217', purpose: { zh: '超级管理员专用的独立角色测试身份', en: 'Separate role-test identities for superadministrators' } },
+  { name: 'role_preview_sessions', domain: 'account', origin: '0217', purpose: { zh: '可撤销的短效角色测试会话与实际操作者', en: 'Revocable short-lived test sessions and their real actors' } },
+  { name: 'role_preview_events', domain: 'account', origin: '0217', purpose: { zh: '角色测试写入请求审计，不记录正文或凭据', en: 'Role-test mutation audit without bodies or credentials' } },
   // ── WCA mirror ──────────────────────────────────────────
   { name: 'wca_results_flat', domain: 'mirror', origin: '0042', evolved: [7, 42], purpose: { zh: '扁平化的全量成绩(每把一行),站内绝大多数 WCA 查询的主表', en: 'Flattened all-time results (one row per solve) — the main WCA query table' } },
   { name: 'wca_person_results', domain: 'mirror', origin: '0098', purpose: { zh: '选手页专用的全量成绩(一条成绩一行,含整轮 DNF 与轮次名次)', en: 'Person-page results (one row per result, DNF rounds and round position included)' }, cols: [
@@ -176,8 +179,8 @@ const TABLES: Table[] = [
   { name: 'drive_members', domain: 'storage', origin: '0184', purpose: { zh: '管理员维护的小规模网盘访问白名单；管理员账号无需重复登记', en: 'Admin-managed access list for the small private Drive; admin accounts need no duplicate row' }, cols: [
     { name: 'user_id (PK/FK), enabled' }, { name: 'created_by_user_id, created_at, updated_at' },
   ] },
-  { name: 'drive_nodes', domain: 'storage', origin: '0184', evolved: [189], purpose: { zh: '每个账号私有的文件夹树与文件元数据；回收站仍计入共享 20 GB 配额', en: 'Per-account private folder trees and file metadata; Trash still counts toward the shared 20 GB quota' }, cols: [
-    { name: 'id UUID (PK), owner_user_id, parent_id' }, { name: 'name, kind, mime_type, size_bytes' }, { name: 'storage_key, status, trashed_at, trash_root_id' },
+  { name: 'drive_nodes', domain: 'storage', origin: '0184', evolved: [189, 216], purpose: { zh: '默认私有的文件夹树；可给网盘成员共享只读目录，回收站仍计入共享 20 GB 配额', en: 'Private-by-default folder trees with opt-in read-only member sharing; Trash still counts toward the shared 20 GB quota' }, cols: [
+    { name: 'id UUID (PK), owner_user_id, parent_id' }, { name: 'name, kind, member_shared, mime_type, size_bytes' }, { name: 'storage_key, status, trashed_at, trash_root_id' },
   ] },
   { name: 'drive_uploads', domain: 'storage', origin: '0184', purpose: { zh: '7 天有效的顺序分块上传会话；保存已收偏移并为完整文件预留共享配额', en: 'Seven-day sequential chunk-upload sessions with persisted offsets and full-file shared-quota reservations' }, cols: [
     { name: 'id UUID (PK), node_id (UNIQUE/FK), owner_user_id' }, { name: 'expected_bytes, received_bytes, chunk_bytes' }, { name: 'client_last_modified, expires_at, created_at, updated_at' },
@@ -725,6 +728,9 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 212, slug: 'membership_vip_id', desc: { zh: '为每位会员分配唯一且稳定的 VIP 编号，撤销权益时保留编号。', en: 'Assign every member a unique stable VIP ID and retain it when entitlement is revoked.' } },
   { n: 213, slug: 'home_card_positions', desc: { zh: '保存管理员设置的首页各分组卡片顺序。', en: 'Store admin-defined homepage card order within each directory group.' } },
   { n: 214, slug: 'account_merge', desc: { zh: '账号增加合并重定向墓碑,使旧登录态自动归到保留账号。', en: 'Add account-merge redirect tombstones so old sessions resolve to the retained account.' } },
+  { n: 215, slug: 'recon_timing', desc: { zh: '支持仅录起表和拍表动作耗时，之后在同一记录补充复盘。', en: 'Save pickup and putdown durations and add a reconstruction to the same record later.' } },
+  { n: 216, slug: 'drive_member_folders', desc: { zh: '增加可撤销的网盘成员只读共享文件夹；现有文件保持私有。', en: 'Add revocable read-only folder sharing with Drive members; existing files remain private.' } },
+  { n: 217, slug: 'role_preview', desc: { zh: '增加独立测试身份、短效可撤销角色测试会话与写入审计。', en: 'Add separate test identities, revocable short-lived role sessions and mutation audit.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

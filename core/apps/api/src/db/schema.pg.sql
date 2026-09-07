@@ -71,6 +71,18 @@ CREATE TABLE recons (
   group_id        VARCHAR(10),
   recon_date      DATE,
   video_url       TEXT,
+  record_type     VARCHAR(20) NOT NULL DEFAULT 'reconstruction'
+                    CHECK (record_type IN ('reconstruction', 'timing')),
+  pickup_time     NUMERIC(9,3),
+  putdown_time       NUMERIC(9,3),
+  CONSTRAINT recons_action_times CHECK (
+    (pickup_time IS NULL AND putdown_time IS NULL AND record_type = 'reconstruction')
+    OR (pickup_time IS NOT NULL AND putdown_time IS NOT NULL
+      AND pickup_time >= 0 AND putdown_time >= 0 AND pickup_time <= 359999.999 AND putdown_time <= 359999.999)
+  ),
+  CONSTRAINT recons_timing_no_solution CHECK (
+    record_type <> 'timing' OR COALESCE(BTRIM(solution), '') = ''
+  ),
   alternatives    TEXT,
   -- 同选手+同打乱重复提交时,用户必须二选一说明原因:'repeat_scramble'(重复打乱)/ 'different_comp'(不同比赛)。见 migrations/0063。
   dup_reason      VARCHAR(20),
@@ -537,6 +549,29 @@ CREATE TABLE account_last_devices (
 );
 
 -- ── Internal Drive: approved users, private folders/files, resumable uploads ──
+CREATE TABLE role_preview_profiles (
+  actor_user_id BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('admin', 'member', 'user')),
+  user_id BIGINT NOT NULL UNIQUE REFERENCES app_users(id) ON DELETE CASCADE,
+  PRIMARY KEY (actor_user_id, role)
+);
+CREATE TABLE role_preview_sessions (
+  id UUID PRIMARY KEY,
+  actor_user_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
+  user_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
+  role TEXT NOT NULL CHECK (role IN ('admin', 'member', 'user', 'guest')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL,
+  ended_at TIMESTAMPTZ
+);
+CREATE TABLE role_preview_events (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  session_id UUID NOT NULL REFERENCES role_preview_sessions(id),
+  method TEXT NOT NULL,
+  path TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE drive_members (
   user_id            BIGINT PRIMARY KEY REFERENCES app_users(id) ON DELETE CASCADE,
   enabled            BOOLEAN NOT NULL DEFAULT TRUE,
@@ -552,6 +587,7 @@ CREATE TABLE drive_nodes (
   owner_user_id  BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
   parent_id      UUID REFERENCES drive_nodes(id) ON DELETE CASCADE,
   kind           VARCHAR(8) NOT NULL CHECK (kind IN ('file', 'folder')),
+  member_shared  BOOLEAN NOT NULL DEFAULT FALSE CONSTRAINT drive_member_shared_folder CHECK (NOT member_shared OR kind = 'folder'),
   name           VARCHAR(255) NOT NULL,
   mime_type      VARCHAR(255),
   size_bytes     BIGINT NOT NULL DEFAULT 0 CHECK (size_bytes >= 0),

@@ -69,6 +69,7 @@ import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import {
   checkReconCompletion,
+  validateReconTiming,
   getReconScramble,
   normalizeReconScrambleSpacing,
   normalizeReconSolution,
@@ -173,6 +174,15 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const { isMember } = useMembership();
 
   const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState<{ field: string; message: string } | null>(null);
+  useEffect(() => {
+    if (submitError) document.getElementById('recon-submit-error')?.scrollIntoView({ block: 'center' });
+  }, [submitError]);
+  const renderSubmitError = (field: string) => submitError?.field === field && (
+    <span id="recon-submit-error" className="submit-hint submit-hint-warn" role="alert" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+      {submitError.message}
+    </span>
+  );
   const [videoUploading, setVideoUploading] = useState(false);
   const [videoUploadError, setVideoUploadError] = useState('');
   const videoUploadInputRef = useRef<HTMLInputElement>(null);
@@ -300,8 +310,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     });
   }, []);
 
+  const timingOnly = !(form.solution || '').trim() && (form.pickupTime != null || form.putdownTime != null);
+
   const setField = useCallback(<K extends keyof ReconSolve>(key: K, value: ReconSolve[K]) => {
     setForm(prev => ({ ...prev, [key]: value }));
+    setSubmitError(error => error?.field === key
+      || (error?.field === 'solution' && (key === 'pickupTime' || key === 'putdownTime'))
+      || (error?.field === 'submit' && (key === 'pickupTime' || key === 'putdownTime' || key === 'solution'))
+      || (error?.field === 'scramble' && (key === 'wcaScramble' || key === 'optimalScramble')) ? null : error);
     pruneReused(key as string);
   }, [pruneReused]);
 
@@ -1286,6 +1302,13 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   const clearSolver = useCallback(() => handleSolverPick(null), [handleSolverPick]);
 
+  const handleSolverQueryChange = useCallback((query: string) => {
+    solverUserTouched.current = true;
+    setSubmitError(error => error?.field === 'person' ? null : error);
+    setForm(prev => ({ ...prev, person: query, personId: '', personCountry: '' }));
+    pruneReused('person');
+  }, [pruneReused]);
+
   // Default a new reconstruction to the signed-in WCA person. Never override an
   // edit, copied/deep-linked person, or a picker the user has already touched.
   useEffect(() => {
@@ -1320,29 +1343,20 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   }, [pruneReused]);
 
   // ── Reconer ──
-  const [reconerCountry, setReconerCountry] = useState<string>('');
-
-  useEffect(() => {
-    if (!form.reconerId) {
-      setReconerCountry(authUser?.country ?? '');
-      return;
-    }
-    if (authUser && form.reconerId === authUser.wcaId) {
-      setReconerCountry(authUser.country);
-      return;
-    }
-    setReconerCountry(personFlagIso2(form.reconerId));
-  }, [form.reconerId, authUser, flagVer]);
+  const [pickedReconer, setPickedReconer] = useState<WcaPersonLite | null>(null);
+  // The picked country is authoritative; an empty profile/cache must not erase it.
+  const reconerCountry = (pickedReconer?.id === form.reconerId ? pickedReconer?.country_iso2 : '')
+    || (form.reconerId && form.reconerId === authUser?.wcaId ? authUser.country : '')
+    || personFlagIso2(form.reconerId || '');
 
   const handleReconerPick = useCallback((p: WcaPersonLite | null) => {
+    setPickedReconer(p);
     if (!p) {
       setField('reconer', '');
       setField('reconerId', '');
-      setReconerCountry('');
     } else {
       setField('reconer', p.name);
       setField('reconerId', p.id);
-      setReconerCountry(p.country_iso2 ?? '');
     }
   }, [setField]);
 
@@ -1352,7 +1366,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     // A reconstructor can be outside the WCA database. In that case the typed name is
     // the identity itself and reconerId must stay empty instead of dropping the field.
     setForm(prev => ({ ...prev, reconer: query, reconerId: '' }));
-    setReconerCountry('');
+    setPickedReconer(null);
     pruneReused(['reconer', 'reconerId']);
   }, [pruneReused]);
 
@@ -1397,17 +1411,20 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   // ── Submit ──
   // 校验解法 / 打乱里的非法字符(注释 `//` 之外只允许 ASCII)。合法返回 null,
-  // 否则返回带原因 + 逐行定位的多行提示文本(给 alert 用)。
-  const validateNotationFields = (solution = form.solution || ''): string | null => {
-    const fields: { value: string; label: { zh: string; en: string } }[] = [
-      { value: solution, label: { zh: '解法', en: 'Solution' } },
-      { value: form.wcaScramble || '', label: { zh: 'WCA 真实打乱', en: 'WCA real scramble' } },
-      { value: form.optimalScramble || '', label: { zh: '最优打乱', en: 'Optimal scramble' } },
-      { value: form.scramble || '', label: { zh: '打乱', en: 'Scramble' } },
+  // 否则返回带原因 + 逐行定位的多行提示文本。
+  const validateNotationFields = (solution = form.solution || '') => {
+    const fields = [
+      { field: 'solution', value: solution, label: { zh: '解法', en: 'Solution' } },
+      { field: 'scramble', value: form.wcaScramble || '', label: { zh: 'WCA 真实打乱', en: 'WCA real scramble' } },
+      { field: 'scramble', value: form.optimalScramble || '', label: { zh: '最优打乱', en: 'Optimal scramble' } },
+      { field: 'scramble', value: form.scramble || '', label: { zh: '打乱', en: 'Scramble' } },
     ];
     const problems: string[] = [];
+    let field = '';
     for (const f of fields) {
       for (const v of findIllegalNotationChars(f.value)) {
+        field ||= f.field;
+        if (f.field !== field) continue;
         problems.push(tr({
           zh: `${f.label.zh} 第 ${v.line} 行有非法字符「${v.chars}」:${v.snippet}`,
           en: `${f.label.en} line ${v.line} has illegal character(s) "${v.chars}": ${v.snippet}`,
@@ -1419,28 +1436,43 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       zh: '解法和打乱里只能用英文字母和符号(WCA 记号)。中文等任何文字说明请写在「//」之后当注释,否则播放器会把它当成转动、导致复盘无法播放。请修改下列位置后重试:',
       en: 'Only English letters and symbols (WCA notation) are allowed in the solution and scramble. Put Chinese or any other text after "//" as a comment, otherwise the player treats it as a move and the reconstruction cannot play. Please fix the following and retry:',
     });
-    return `${head}\n\n${problems.join('\n')}`;
+    return { field, message: `${head}\n\n${problems.join('\n')}` };
   };
 
   const handleSubmit = async () => {
-    if (!form.event || !form.person) {
-      alert(t('recon.fillRequired'));
+    setSubmitError(null);
+    const person = form.person?.trim() ?? '';
+    if (!person) {
+      setSubmitError({ field: 'person', message: tr({ zh: '请填写选手姓名，或从搜索结果中选择选手。', en: 'Enter the solver’s name or select a solver from the search results.' }) });
+      return;
+    }
+    if (!form.event) {
+      setSubmitError({ field: 'event', message: tr({ zh: '请选择项目。', en: 'Select an event.' }) });
       return;
     }
     // 记号区(解法 / 打乱,`//` 注释之外)只能用英文字母和符号。中文等文字会被播放器
     // 当成转动 → 复盘无法播放。命中则拦下并指明具体行,让用户改完(把文字移到 `//` 后)重试。
     const solution = normalizeReconSolution(form.solution || '');
-    const notationError = validateNotationFields(solution);
+    if (!timingOnly && !solution.trim()) {
+      setSubmitError({ field: 'solution', message: tr({ zh: '请填写解法。', en: 'Enter a solution.' }) });
+      return;
+    }
+    const timingError = validateReconTiming({ ...form, recordType: timingOnly ? 'timing' : 'reconstruction' });
+    if (timingError) {
+      setSubmitError({ field: 'submit', message: tr(timingError) });
+      return;
+    }
+    const notationError = timingOnly ? null : validateNotationFields(solution);
     if (notationError) {
-      alert(notationError);
+      setSubmitError(notationError);
       return;
     }
     // 同选手 + 同打乱:允许提交,但必须二选一说明原因(打乱下方选择器);未选 → 拦下(后端 409 兜底)。
     if (dupId != null && !form.dupReason) {
-      alert(tr({
+      setSubmitError({ field: 'dupReason', message: tr({
         zh: `检测到相同选手 + 相同打乱的复盘 (#${dupId})。请在「打乱」下方二选一说明原因后再提交。`,
         en: `Same player + scramble as reconstruction #${dupId}. Pick a reason below the scramble fields before submitting.`,
-      }));
+      }) });
       return;
     }
     setSaving(true);
@@ -1451,16 +1483,21 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       if (solution !== (form.solution || '') || wcaScramble !== (form.wcaScramble || '') || optimalScramble !== (form.optimalScramble || '') || scramble !== (form.scramble || '')) {
         setForm(previous => ({ ...previous, solution, wcaScramble, optimalScramble, scramble }));
       }
-      const completion = await checkReconCompletion({
+      const completion = timingOnly ? { status: 'unchecked' as const } : await checkReconCompletion({
         event: form.event || '',
         scramble: getReconScramble({ optimalScramble, wcaScramble, scramble }),
         solution,
       });
       if (completion.status === 'invalid') {
-        alert(tr({
+        const scrambleCheck = await checkReconCompletion({
+          event: form.event || '',
+          scramble: getReconScramble({ optimalScramble, wcaScramble, scramble }),
+          solution: '',
+        });
+        setSubmitError({ field: scrambleCheck.status === 'invalid' ? 'scramble' : 'solution', message: tr({
           zh: '打乱或解法里有无法识别的魔方记号,请修正后再提交。',
           en: 'The scramble or solution contains puzzle notation that cannot be parsed. Fix it before submitting.',
-        }));
+        }) });
         return;
       }
       const unsolvedReason = form.unsolvedReason?.trim() ?? '';
@@ -1473,6 +1510,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
       const data: Partial<ReconSolve> = {
         ...form,
+        person,
+        recordType: timingOnly ? 'timing' : 'reconstruction',
         solution,
         date: normalizeIsoDate(form.date),
         reconDate: normalizeIsoDate(form.reconDate),
@@ -1519,7 +1558,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         router.push(`${langPrefix}/recon/${created.id}`);
       }
     } catch (err) {
-      alert(`Error: ${(err as Error).message}`);
+      setSubmitError({ field: 'submit', message: tr({ zh: `提交失败：${(err as Error).message}`, en: `Submission failed: ${(err as Error).message}` }) });
     } finally {
       setSaving(false);
     }
@@ -1683,9 +1722,13 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     <WcaPersonPicker
                       value={null}
                       onChange={handleSolverPick}
+                      onQueryChange={handleSolverQueryChange}
+                      defaultQuery={form.person || ''}
+                      allowFreeText
                       isZh={isZh}
                     />
                   )}
+                  {renderSubmitError('person')}
                 </div>
                 {solverLite && (
                   <div className={`submit-field submit-field-shrink${reusedCls('coPersons')}`}>
@@ -1722,6 +1765,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 <label className={`submit-field submit-field-fit${reusedCls('event')}`}>
                   <span className="submit-label">{t('recon.event')} *</span>
                   <EventSelect events={EVENTS} value={form.event ?? ''} onChange={(v) => setField('event', v)} />
+                  {renderSubmitError('event')}
                 </label>
                 {isBldEvent(form.event ?? '') && (
                   <>
@@ -2082,6 +2126,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   : scrambleField === 'optimal' && optimalAutoSource
                     ? <span className="submit-hint">{optimalAutoSource}</span>
                     : null}
+              {renderSubmitError('scramble')}
             </div>
 
             {/* 同选手 + 同打乱:不硬拒,要求二选一说明原因(值入 dupReason)。占位打乱 '?' 已豁免不会触发。 */}
@@ -2109,6 +2154,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     </button>
                   ))}
                 </div>
+                {renderSubmitError('dupReason')}
               </div>
             )}
 
@@ -2123,7 +2169,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             <div className="submit-field submit-block">
               <span className="submit-label submit-label-row">
                 <span>
-                  {t('recon.solution')} *
+                  {t('recon.solution')}
                   {stats && stats.stm > 0 && (
                     <span className="submit-label-stats">
                       {' ('}{stats.stm} STM
@@ -2163,6 +2209,19 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   onBlurField={() => setActiveVkbField(f => f === 'solution' ? null : f)}
                 />
               )}
+              <span className="submit-hint">{tr({ zh: '仅记录起拍表耗时时，解法可留空。', en: 'Leave the solution blank to record only pickup and putdown durations.' })}</span>
+              {renderSubmitError('solution')}
+            </div>
+
+            <div className="submit-row">
+              {(['pickupTime', 'putdownTime'] as const).map(field => (
+                <label className="submit-field" key={field}>
+                  <span className="submit-label">{field === 'pickupTime' ? tr({ zh: '起表耗时（秒）', en: 'Pickup (seconds)' }) : tr({ zh: '拍表耗时（秒）', en: 'Putdown (seconds)' })}</span>
+                  <input className="submit-field-input" type="number" inputMode="decimal" min="0" max="359999.999" step="0.001"
+                    value={form[field] ?? ''} onChange={e => setField(field, e.target.value === '' ? null : Number(e.target.value))} />
+                  <span className="submit-hint">{field === 'pickupTime' ? tr({ zh: '起表到第一步', en: 'Timer start to first move' }) : tr({ zh: '最后一步到拍表', en: 'Last move to timer stop' })}</span>
+                </label>
+              ))}
             </div>
 
             {(needsUnsolvedReason || !!form.unsolvedReason) && (
@@ -2336,13 +2395,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             </label>
 
             {/* Submit buttons */}
+            {renderSubmitError('submit')}
             <div className="submit-actions">
               <button className="submit-btn submit-btn-primary" onClick={handleSubmit} disabled={saving || videoUploading}>
                 {saving
                   ? t('recon.submitting')
                   : isEditing
                     ? t('recon.saveChanges')
-                    : t('recon.submitRecon')}
+                    : timingOnly ? tr({ zh: '保存', en: 'Save' }) : t('recon.submitRecon')}
               </button>
               <Link href={isEditing ? `${langPrefix}/recon/${editId}` : `${langPrefix}/recon`} className="submit-btn submit-btn-cancel">
                 {t('recon.cancel')}
