@@ -8,11 +8,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { getMyMembership, type EditableMemberProfile, type Membership } from '@/lib/membership-api';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore, getSessionToken, getWcaToken } from '@/lib/auth-store';
 
 function hasToken(): boolean {
   if (typeof window === 'undefined') return false;
-  return !!(localStorage.getItem('cuberoot_jwt') || localStorage.getItem('wca_access_token'));
+  return !!(getSessionToken() || getWcaToken());
 }
 
 export function useMembership() {

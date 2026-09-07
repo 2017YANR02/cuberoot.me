@@ -32,9 +32,46 @@ const g = globalThis as unknown as { window?: unknown; localStorage?: FakeLS };
 g.window = { addEventListener() {} };
 g.localStorage = makeLocalStorage(1_000_000);
 
-const { applySession, ensureFreshToken, persistAuthItem, useAuthStore } = await import('@/lib/auth-store');
+const { applySession, ensureFreshToken, persistAuthItem, useAuthStore, getSessionToken, getWcaToken, startRolePreview, endRolePreview } = await import('@/lib/auth-store');
 
 function setLS(ls: FakeLS) { g.localStorage = ls; }
+
+describe('role preview identity isolation', () => {
+  it('keeps the real login intact, suppresses WCA fallback and restores it on exit', async () => {
+    const ls = makeLocalStorage(10000);
+    setLS(ls);
+    const session = makeLocalStorage(10000);
+    const reload = vi.fn();
+    vi.stubGlobal('sessionStorage', session);
+    vi.stubGlobal('window', { addEventListener() {}, location: { reload } });
+    const user = { uid: 1, wcaId: '2017YANR02', name: 'Root', avatar: '', avatarSource: 'auto' as const, avatarPreset: null, isAdmin: true };
+    applySession('real-token', user);
+    ls.setItem('wca_access_token', 'real-wca-token');
+    const savedUser = ls.getItem('wca_user');
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: 'test-session', role: 'guest', token: '', user: null }) });
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      await startRolePreview('guest');
+      useAuthStore.getState().refresh();
+      expect(useAuthStore.getState().user).toBeNull();
+      expect(getSessionToken()).toBe('');
+      expect(getWcaToken()).toBe('');
+      expect(applySession('unexpected-login', user)).toBe(false);
+      await ensureFreshToken();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(ls.getItem('cuberoot_jwt')).toBe('real-token');
+      expect(ls.getItem('wca_user')).toBe(savedUser);
+      await endRolePreview();
+      expect(fetchMock.mock.calls[1][1].headers.Authorization).toBe('Bearer real-token');
+      expect(getSessionToken()).toBe('real-token');
+      expect(getWcaToken()).toBe('real-wca-token');
+      expect(reload).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.unstubAllGlobals();
+      useAuthStore.getState().refresh();
+    }
+  });
+});
 
 describe('persistAuthItem quota resilience', () => {
   beforeEach(() => {

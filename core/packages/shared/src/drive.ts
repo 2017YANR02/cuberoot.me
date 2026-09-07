@@ -39,6 +39,7 @@ export interface DriveQuota {
 }
 
 export interface DriveSnapshot {
+  isSuperAdmin?: boolean;
   allowed: boolean;
   isAdmin: boolean;
   nodes: DriveNode[];

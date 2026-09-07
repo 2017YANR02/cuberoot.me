@@ -78,6 +78,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'POST', p: '/v1/auth/exchange', g: 'public', zh: '用授权码换取 JWT', en: 'Exchange auth code for JWT' },
   { d: 'auth', m: 'POST', p: '/v1/auth/refresh', g: 'login', zh: '刷新 JWT', en: 'Refresh JWT' },
   { d: 'auth', m: 'GET', p: '/v1/auth/me', g: 'login', zh: '当前登录用户信息', en: 'Current signed-in user' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/role-preview', g: 'admin', zh: '超级管理员创建 30 分钟独立角色测试会话', en: 'Superadmin starts a separate 30-minute role-test session' },
+  { d: 'auth', m: 'DELETE', p: '/v1/auth/role-preview/:id', g: 'admin', zh: '超级管理员撤销自己的角色测试会话', en: 'Superadmin revokes their role-test session' },
   { d: 'auth', m: 'POST', p: '/v1/auth/wechat/miniprogram', g: 'public', zh: '用小程序登录码换取 UnionID 并签发 JWT', en: 'Exchange a Mini Program login code for UnionID and issue a JWT' },
   { d: 'auth', m: 'POST', p: '/v1/auth/wechat/browser-session/start', g: 'public', c: 'no-store', zh: '创建 iPhone 浏览器登录请求并生成微信小程序 URL Link', en: 'Create an iPhone browser sign-in request and generate a WeChat Mini Program URL Link' },
   { d: 'auth', m: 'POST', p: '/v1/auth/wechat/browser-session/approve', g: 'login', c: 'no-store', zh: '由已登录小程序确认浏览器登录请求', en: 'Approve a browser sign-in request from an authenticated Mini Program' },

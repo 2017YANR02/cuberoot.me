@@ -11,6 +11,8 @@ import {
   exchangeWcaSession,
   persistAuthItem,
   useAuthStore,
+  getRolePreview,
+  getSessionToken,
 } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
 import { AuthCallbackStatus } from '../_components/AuthCallbackStatus';
@@ -47,6 +49,11 @@ export default function AuthCallbackPage() {
     sessionStorage.removeItem('wca_oauth_state');
     sessionStorage.removeItem('wca_oauth_intent');
     sessionStorage.removeItem('wca_return_url');
+
+    if (getRolePreview()) {
+      setErrorMsg(tr({ zh: '请先退出角色测试，再登录或绑定账号。', en: 'Exit role testing before signing in or linking accounts.' }));
+      return;
+    }
 
     if (error) {
       setErrorMsg(tr({ zh: `授权被拒绝: ${error}`, en: `Authorization denied: ${error}` }));
@@ -122,7 +129,7 @@ export default function AuthCallbackPage() {
 
   async function handleWcaLink(accessToken: string, returnUrl: string | null) {
     try {
-      const jwt = localStorage.getItem('cuberoot_jwt');
+      const jwt = getSessionToken();
       if (jwt) {
         const r = await fetch(apiUrl('/v1/auth/link/wca'), {
           method: 'POST',

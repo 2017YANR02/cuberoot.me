@@ -12,6 +12,19 @@
  *   4. uid 是纯加法字段,老 token 无 uid → 读取方必须容忍 undefined。
  */
 import jwt from 'jsonwebtoken';
+import { sql } from '../db/connection.js';
+import { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
+
+export async function isRolePreviewActive(id: string, uid: number): Promise<boolean> {
+  if (typeof id !== 'string' || !Number.isSafeInteger(uid) || uid <= 0) return false;
+  const [session] = await sql`
+    SELECT s.id FROM role_preview_sessions s JOIN app_users actor ON actor.id = s.actor_user_id
+    JOIN role_preview_profiles p ON p.actor_user_id = s.actor_user_id AND p.role = s.role AND p.user_id = s.user_id
+    WHERE s.id::text = ${id} AND s.user_id = ${uid}
+      AND s.ended_at IS NULL AND s.expires_at > NOW()
+      AND actor.wca_id = ANY(${[...ADMIN_WCA_IDS]}::text[])`;
+  return !!session;
+}
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 
