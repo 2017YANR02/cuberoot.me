@@ -1,5 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { EventEmitter } from 'node:events';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { PassThrough } from 'node:stream';
+import { fileURLToPath } from 'node:url';
 import postgres from 'postgres';
 import type { Hono, Context } from 'hono';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -8,6 +12,7 @@ let sql: ReturnType<typeof postgres>;
 let app: Hono;
 const schema = `drive_test_${randomUUID().replaceAll('-', '')}`;
 vi.mock('../src/db/connection.js', () => ({ get sql() { return sql; } }));
+vi.mock('node:child_process', async (original) => ({ ...await original<typeof import('node:child_process')>(), spawn: vi.fn() }));
 vi.mock('../src/utils/app_user_auth.js', () => ({
   requireAppUserId: async (c: Context) => Number(c.req.header('X-Test-User')),
 }));
@@ -141,6 +146,81 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('Drive member folders (Postgr
     expect((await access()).status).toBe(404);
   });
 
+  it.each(['encoding', 'validating'])('stops native work during %s cancellation before cleanup and retains the original', async (phase) => {
+    const root = fileURLToPath(new URL(`../../../../.tmp/drive-cancel-${randomUUID()}/`, import.meta.url));
+    const file = randomUUID(), id = randomUUID(), key = `${file.slice(0, 2)}/${file}`;
+    const input = path.join(root, 'files', key), work = path.join(root, 'transcodes', id);
+    await mkdir(path.dirname(input), { recursive: true });
+    await mkdir(work, { recursive: true });
+    await writeFile(input, 'original untouched');
+    await writeFile(path.join(work, 'output.mp4'), 'temporary output');
+    await sql`INSERT INTO drive_nodes (id, owner_user_id, kind, name, size_bytes, storage_key, mime_type)
+      VALUES (${file}, 1, 'file', ${`${phase}.mp4`}, 4096, ${key}, 'video/mp4')`;
+    await sql`INSERT INTO drive_compressions (id, source_node_id, requested_by, resolution, reserved_bytes, status)
+      VALUES (${id}, ${file}, 1, 'original', 4096, 'encoding')`;
+    vi.stubEnv('DRIVE_STORAGE_DIR', root);
+    vi.stubEnv('DRIVE_FFMPEG_BIN_DIR', root);
+    vi.resetModules();
+    // No native executable is launched: exercise real worker control flow against real PG.
+    const { spawn } = await import('node:child_process');
+    let blocked = false, aborted = false, closed = false, settled = false;
+    let closeNative: (() => void) | undefined;
+    vi.mocked(spawn).mockImplementation(((_command: string, args: string[], options: { signal: AbortSignal; killSignal: string }) => {
+      const proc = Object.assign(new EventEmitter(), { stdout: new PassThrough(), stderr: new PassThrough(), kill: vi.fn() });
+      const hold = phase === 'encoding' ? args.includes('-c:v') : args.includes('-show_frames');
+      if (hold) {
+        blocked = true;
+        closeNative = () => { closed = true; proc.emit('close', null); };
+        options.signal.addEventListener('abort', () => {
+          aborted = true;
+          expect(options.killSignal).toBe('SIGKILL');
+          proc.emit('error', Object.assign(new Error('aborted'), { name: 'AbortError' }));
+        }, { once: true });
+      } else queueMicrotask(() => {
+        if (args.includes('-show_streams')) {
+          const output = args.at(-1)!.endsWith('output.mp4');
+          proc.stdout.emit('data', Buffer.from(JSON.stringify({ streams: [{
+            codec_type: 'video', codec_name: output ? 'av1' : 'hevc', width: 1920, height: 1080,
+            pix_fmt: 'yuv420p', time_base: '1/15360', duration: '1', avg_frame_rate: '30/1',
+          }], format: { duration: '1', size: output ? '1024' : '4096' } })));
+        }
+        proc.emit('close', 0);
+      });
+      return proc;
+    }) as typeof spawn);
+    let running: Promise<void> | undefined;
+    try {
+      const { processJob } = await import('../src/tools/drive_video.js');
+      running = processJob({ id, source_node_id: file, resolution: 'original', storage_key: key, size_bytes: '4096' })
+        .then(() => { settled = true; expect(closed).toBe(true); });
+      await vi.waitFor(() => expect(blocked).toBe(true));
+      expect((await sql`SELECT status FROM drive_compressions WHERE id = ${id}`)[0].status).toBe(phase);
+      const response = await app.request(`/drive/compressions/${id}/cancel`, { method: 'POST', headers: { 'X-Test-User': '1' } });
+      expect(response.status).toBe(200);
+      await vi.waitFor(() => expect(aborted).toBe(true), { timeout: 3000, interval: 10 });
+      expect(settled).toBe(false);
+      expect(await readFile(path.join(work, 'output.mp4'), 'utf8')).toBe('temporary output');
+      // A quick explicit retry must survive cleanup from the cancelled execution.
+      if (phase === 'validating') await sql`UPDATE drive_compressions SET status = 'queued', error = NULL WHERE id = ${id}`;
+      closeNative!();
+      await running;
+      expect(await readFile(input, 'utf8')).toBe('original untouched');
+      await expect(readFile(path.join(work, 'output.mp4'))).rejects.toMatchObject({ code: 'ENOENT' });
+      expect((await sql`SELECT status, error, output_node_id FROM drive_compressions WHERE id = ${id}`)[0]).toEqual({
+        status: phase === 'validating' ? 'queued' : 'failed',
+        error: phase === 'validating' ? null : 'compression-cancelled', output_node_id: null,
+      });
+    } finally {
+      await sql`UPDATE drive_compressions SET status = 'failed' WHERE id = ${id}`;
+      if (!closed) closeNative?.();
+      await running;
+      vi.unstubAllEnvs();
+      vi.mocked(spawn).mockReset();
+      await rm(root, { recursive: true, force: true });
+      await sql`DELETE FROM drive_nodes WHERE id = ${file}`;
+    }
+  });
+
   it('queues resolution choices idempotently, enforces ownership, and reserves output quota', async () => {
     vi.stubEnv('DRIVE_COMPRESSION_ENABLED', '1');
     try {
@@ -167,6 +247,29 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('Drive member folders (Postgr
       const jobs = await Promise.all(repeated.map((response) => response.json()));
       expect(jobs[0].compression.id).toBe(jobs[1].compression.id);
       expect(jobs[0].compression.resolution).toBe('original');
+      const jobId = jobs[0].compression.id;
+      const cancel = (user: number, id = jobId) => app.request(`/drive/compressions/${id}/cancel`, {
+        method: 'POST', headers: { 'X-Test-User': String(user) },
+      });
+      expect((await cancel(1, 'invalid')).status).toBe(400);
+      expect((await cancel(1, randomUUID())).status).toBe(404);
+      expect((await cancel(4)).status).toBe(403);
+      for (const user of [2, 3]) expect((await cancel(user)).status).toBe(404);
+      for (const status of ['queued', 'encoding', 'validating']) {
+        await sql`UPDATE drive_compressions SET status = ${status}, progress = 50 WHERE id = ${jobId}`;
+        // Cancellation stays available when new compression has been disabled.
+        vi.stubEnv('DRIVE_COMPRESSION_ENABLED', '0');
+        const cancelled = await cancel(status === 'validating' ? 5 : 1);
+        expect(cancelled.status).toBe(200);
+        expect(cancelled.headers.get('cache-control')).toBe('no-store');
+        expect((await cancelled.json()).compression).toMatchObject({ id: jobId, status: 'failed', error: 'compression-cancelled', progress: 0 });
+        expect((await (await cancel(1)).json()).compression.error).toBe('compression-cancelled');
+        const snapshot = await (await app.request('/drive', { headers: { 'X-Test-User': '1' } })).json();
+        expect(snapshot.quota.reservedBytes).toBe(0);
+        vi.stubEnv('DRIVE_COMPRESSION_ENABLED', '1');
+        const retry = (await (await request(1, 'original')).json()).compression;
+        expect(retry).toMatchObject({ id: jobId, status: 'queued', error: null, progress: 0 });
+      }
       const lower = await request(5, '1080p');
       expect(lower.status).toBe(202);
       expect((await lower.json()).compression.resolution).toBe('1080p');
@@ -179,6 +282,7 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('Drive member folders (Postgr
       await sql`INSERT INTO drive_nodes (id, owner_user_id, kind, name, size_bytes, storage_key, mime_type)
         VALUES (${output}, 1, 'file', 'compressed.mp4', 1024, ${`${output.slice(0, 2)}/${output}`}, 'video/mp4')`;
       await sql`UPDATE drive_compressions SET status = 'ready', output_node_id = ${output} WHERE source_node_id = ${file} AND resolution = 'original'`;
+      expect((await (await cancel(1)).json()).compression).toMatchObject({ status: 'ready', outputNodeId: output });
       expect((await request(1, 'original', output)).status).toBe(400);
       // Source bytes are never rewritten by enqueue or retry.
       expect(Number((await sql`SELECT size_bytes FROM drive_nodes WHERE id = ${file}`)[0].size_bytes)).toBe(4096);
