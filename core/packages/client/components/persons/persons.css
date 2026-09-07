@@ -1229,6 +1229,9 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
 .wp-upcoming-card { padding: 0 20px; }
 .wp-upcoming-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
 .wp-upcoming-title { margin: 0; font-size: 1rem; font-weight: 600; }
+.wp-upcoming-card .reg-cards { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+.wp-upcoming-card .rc-card { max-width: 100%; }
+.wp-upcoming-card .rc-main { gap: 4px; padding: 8px 12px; }
 .wp-cell-events .wp-event-strip { gap: 6px; }
 .wp-cell-num { text-align: right; font-variant-numeric: tabular-nums; }
 /* 数值列表头随数据右对齐(默认 thead th 左对齐特异度更高,这里显式压过 → 表头与数字齐)。
