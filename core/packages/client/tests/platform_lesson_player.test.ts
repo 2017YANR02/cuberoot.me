@@ -47,6 +47,25 @@ it('groups numbered lessons into three native folders without losing links or ch
   } finally { locale.english = false; await act(async () => root.unmount()); }
 });
 
+it('shows instructor display names and only links an actual teacher directory entry', async () => {
+  (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(PlatformDomainContent, {
+      definition: { id: 'course-detail' } as PlatformRouteDefinition,
+      entity: { id: 'course', title: 'Course', data: { instructors: [
+        { id: 'internal-instructor-id', displayName: '颜瑞民', teacherEntryId: 'public-teacher' },
+        { id: 'another-internal-id', displayName: '另一位讲师' },
+      ] } } as PlatformEntity, params: {},
+    })));
+    expect(host.textContent).toContain('颜瑞民');
+    expect(host.textContent).not.toContain('internal-id');
+    expect(host.textContent).not.toContain('internal-instructor-id');
+    expect(host.querySelectorAll('a')).toHaveLength(1);
+    expect(host.querySelector('a')?.getAttribute('href')).toBe('/platform/teachers/public-teacher');
+  } finally { await act(async () => root.unmount()); }
+});
+
 it('renews expired playback access, keeps position, and does not loop on codec errors', async () => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   const media = { mediaId: 'media', mimeType: 'video/mp4', sizeBytes: 100, accessUrl: '/signed-old', expiresAt: '2000-01-01T00:00:00Z' };

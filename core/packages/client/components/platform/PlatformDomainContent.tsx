@@ -50,7 +50,7 @@ function DomainList({ title, items, href, collapsible = false }: {
       {items.map((raw, index) => {
         const item = record(raw) ?? {};
         const id = string(item.id) ?? string(item.slug) ?? String(index + 1);
-        const label = localized(item, 'title', english) ?? string(item.name) ?? string(item.label) ?? string(item.code) ?? id;
+        const label = localized(item, 'title', english) ?? string(item.displayName) ?? string(item.name) ?? string(item.label) ?? string(item.code) ?? id;
         const detail = localized(item, 'summary', english) ?? string(item.status) ?? string(item.sku);
         const target = href?.(item) ?? null;
         return (
@@ -181,7 +181,7 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
       return lessonId ? `/platform/courses/${encodeURIComponent(entity.id)}/learn/${encodeURIComponent(lessonId)}` : null;
     };
     return (
-      <div className="platform-domain-stack">
+      <div className="platform-domain-stack platform-course-outline" id="platform-course-outline">
         {canGroup ? <section className="platform-domain-content">
           <h2>{t('课程课时', 'Course lessons')}</h2>
           {grouped.map((items, index) => items.length > 0 ? <DomainList
@@ -195,7 +195,7 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
           href={lessonHref}
         />}
         <DomainList title={t('授课讲师', 'Instructors')} items={instructors} href={(item) => {
-          const teacherId = string(item.teacherEntryId) ?? string(item.id);
+          const teacherId = string(item.teacherEntryId);
           return teacherId ? `/platform/teachers/${encodeURIComponent(teacherId)}` : null;
         }} />
       </div>
