@@ -1,0 +1,29 @@
+[Unit]
+Description=CubeRoot Drive video compression
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+WorkingDirectory=/root/core-api
+ExecStart=/usr/bin/env node --env-file=/root/core-api/.env /root/core-api/dist/drive-video.mjs
+Environment=NODE_ENV=production
+Environment=OMP_NUM_THREADS=2
+Restart=on-failure
+RestartSec=10
+KillMode=control-group
+TimeoutStopSec=20
+Nice=15
+CPUQuota=200%
+MemoryMax=4G
+TasksMax=64
+OOMPolicy=kill
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/root/core-api/.drive-storage
+IPAddressDeny=any
+IPAddressAllow=localhost
+
+[Install]
+WantedBy=multi-user.target

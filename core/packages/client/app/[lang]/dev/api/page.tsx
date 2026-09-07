@@ -665,6 +665,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'vault', m: 'DELETE', p: '/v1/vault/items/:id', g: 'login', c: 'no-store', zh: '会员或管理员删除本人拥有的密文及全部授权', en: 'Members or administrators delete owned ciphertext and all access grants' },
 
   // ---- drive ----
+  { d: 'drive', m: 'POST', p: '/v1/drive/files/:id/compress', g: 'login', c: 'no-store', zh: '所有者或超级管理员创建视频压缩任务；resolution 为 original 或 1080p，状态随目录返回', en: 'Owners or superadministrators enqueue video compression with original or 1080p resolution; folder listings include job status' },
   { d: 'drive', m: 'GET', p: '/v1/drive', g: 'login', c: 'no-store', zh: '读取私人目录、成员共享目录（members=1）、回收站、上传与共用配额', en: 'Read private folders, member-shared folders (members=1), Trash, uploads, and shared quota' },
   { d: 'drive', m: 'POST', p: '/v1/drive/folders', g: 'login', c: 'no-store', zh: '新建私人文件夹', en: 'Create a private folder' },
   { d: 'drive', m: 'POST', p: '/v1/drive/uploads', g: 'login', c: 'no-store', zh: '创建上传会话；同一文件指纹在 7 天内自动续传', en: 'Create an upload session; the same file fingerprint resumes automatically for seven days' },

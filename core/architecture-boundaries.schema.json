@@ -44,6 +44,19 @@
           "owner": { "type": "string" },
           "rationale": { "type": "string" },
           "replacement": { "type": "string" },
+          "subprocessCalls": {
+            "type": "array", "minItems": 1,
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["file", "mechanism", "target", "count"],
+              "properties": {
+                "file": { "type": "string" },
+                "mechanism": { "enum": ["spawn", "execFile"] },
+                "target": { "type": "string" },
+                "count": { "type": "integer", "minimum": 1 }
+              }
+            }
+          },
           "evidence": {
             "type": "array",
             "minItems": 1,

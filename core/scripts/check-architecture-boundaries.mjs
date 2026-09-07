@@ -1260,6 +1260,9 @@ export function validateManualContracts(contracts) {
   for (const contract of contracts) {
     if (ids.has(contract.id)) errors.push(`duplicate manual contract id: ${contract.id}`);
     ids.add(contract.id);
+    if (contract.subprocessCalls && contract.phase !== 'subprocess-native') {
+      errors.push(`${contract.id}: subprocessCalls requires a subprocess-native contract`);
+    }
     for (const field of ['id', 'from', 'to', 'phase', 'mechanism', 'owner', 'rationale', 'replacement']) {
       if (!contract[field]) errors.push(`${contract.id ?? '<missing-id>'}: missing ${field}`);
     }
@@ -1281,6 +1284,21 @@ export function validateManualContracts(contracts) {
   return errors;
 }
 
+export function uncontractedFindings(findings, contracts) {
+  const remaining = new Map(contracts.filter((contract) => contract.phase === 'subprocess-native')
+    .flatMap((contract) => (contract.subprocessCalls ?? []).map(({ count, ...call }) => [
+      findingIdentity({ ...call, rule: 'subprocess-call', sourceKind: 'subprocess' }), count,
+    ])));
+  return findings.filter((finding) => {
+    const key = findingIdentity(finding);
+    const budget = remaining.get(key) ?? 0;
+    const count = occurrenceCount(finding);
+    if (budget < count) return true;
+    remaining.set(key, budget - count);
+    return false;
+  });
+}
+
 export function violationsFromHookPayload(payload, packages = activePackages()) {
   const input = payload?.tool_input;
   if (!input || typeof input !== 'object') return [];
@@ -1296,7 +1314,7 @@ export function violationsFromHookPayload(payload, packages = activePackages()) 
     if (!owner) continue;
     violations.push(...scanSourceText(packages, owner, absoluteFile, source));
   }
-  return violations;
+  return uncontractedFindings(violations, readJson(MANIFEST_PATH).manualContracts ?? []);
 }
 
 function printFindings(title, findings) {
@@ -1353,7 +1371,7 @@ function run() {
     process.stdout.write(`${JSON.stringify(current, null, 2)}\n`);
     return;
   }
-  const comparison = compareFindings(current, manifest.legacyFindings ?? []);
+  const comparison = compareFindings(uncontractedFindings(current, manifest.manualContracts ?? []), manifest.legacyFindings ?? []);
   const contractErrors = validateManualContracts(manifest.manualContracts ?? []);
   printFindings('Unregistered architecture edges', comparison.additions);
   if (comparison.stale.length) {

@@ -154,6 +154,7 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   drive_members: '网盘访问权限随 app_users 级联删',
   drive_nodes: '私有网盘元数据随 app_users 级联删,磁盘实体文件由注销流程清理',
   drive_uploads: '未完成上传随 app_users 级联删,临时文件由注销流程清理',
+  drive_compressions: '压缩任务随原片级联删,请求者账号删除时置空',
   vault_user_keys: '资料库密钥随 app_users 级联删',
   vault_items: '资料库内容随所有者账号级联删',
   vault_item_access: '资料库授权随内容或接收者账号级联删',

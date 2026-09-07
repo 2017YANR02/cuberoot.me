@@ -15,6 +15,7 @@ on:
       - '.sync/**'
       - 'scripts/upstream/**'
       - 'ops/nginx/**'
+      - 'ops/systemd/cuberoot-drive-compression.service'
       - '.github/workflows/backup_recon.yml'
       - '.github/workflows/best2x2_drift.yml'
       - '.github/workflows/deploy_core.yml'
@@ -38,6 +39,7 @@ on:
       - '.sync/**'
       - 'scripts/upstream/**'
       - 'ops/nginx/**'
+      - 'ops/systemd/cuberoot-drive-compression.service'
       - '.github/workflows/backup_recon.yml'
       - '.github/workflows/best2x2_drift.yml'
       - '.github/workflows/deploy_core.yml'
@@ -105,6 +107,7 @@ jobs:
             /scripts/upstream/
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
+            /ops/systemd/cuberoot-drive-compression.service
             /tools/cstimer-scramble/
             /tools/solver/rust-cross/cross-solver-worker.js
             /tools/blddb/data/cornerManmade.json

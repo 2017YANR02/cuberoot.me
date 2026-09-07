@@ -30,7 +30,7 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('role preview (PostgreSQL)', 
       wca_id TEXT, is_admin BOOLEAN DEFAULT FALSE, show_in_member_list BOOLEAN DEFAULT TRUE,
       avatar_url TEXT, avatar_source TEXT DEFAULT 'auto', avatar_preset TEXT, merged_into_user_id BIGINT
     ); CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END $$;`);
-    for (const migration of ['0184_drive', '0189_drive_shares', '0216_drive_member_folders', '0217_role_preview']) {
+    for (const migration of ['0184_drive', '0189_drive_shares', '0216_drive_member_folders', '0217_role_preview', '0218_drive_compressions']) {
       await sql.unsafe(await readFile(new URL(`../migrations/${migration}.sql`, import.meta.url), 'utf8'));
     }
     await sql`INSERT INTO app_users (display_name, wca_id, is_admin)
