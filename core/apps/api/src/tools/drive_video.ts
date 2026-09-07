@@ -12,19 +12,24 @@ const BIN = process.env.DRIVE_FFMPEG_BIN_DIR ?? '';
 const QUEUE_LOCK = 2026090601;
 const QUOTA_LOCK = 2026082901;
 let child: ChildProcess | undefined;
+let jobSignal: AbortSignal | undefined;
 let stopping = false;
 
 // One adapter, no shell, no user-provided executable or remote media URL.
 async function native(executable: 'ffmpeg' | 'ffprobe', args: string[], onProgress?: (text: string) => void): Promise<string> {
   if (!path.isAbsolute(BIN) || !['ffmpeg', 'ffprobe'].includes(executable)) throw new Error('native-tool-unavailable');
   if (stopping) throw new Error('worker-stopping');
+  const signal = jobSignal;
+  signal?.throwIfAborted();
   return new Promise((resolve, reject) => {
     const proc = spawn(path.join(BIN, executable), args, {
       shell: false, stdio: ['ignore', 'pipe', 'pipe'],
-      env: { PATH: process.env.PATH, LANG: 'C.UTF-8', OMP_NUM_THREADS: '2' },
+      env: { PATH: process.env.PATH, LANG: 'C.UTF-8', OMP_NUM_THREADS: '4' },
+      signal, killSignal: 'SIGKILL',
     });
     child = proc;
     let stdout = '', stderr = '', overflow = false;
+    let failure: Error | undefined;
     // ponytail: one job has a four-hour ceiling; use a dedicated encoder fleet if throughput requires it.
     const timer = setTimeout(() => proc.kill('SIGKILL'), 4 * 60 * 60 * 1000);
     proc.stdout.on('data', (chunk: Buffer) => {
@@ -34,10 +39,13 @@ async function native(executable: 'ffmpeg' | 'ffprobe', args: string[], onProgre
       if (stdout.length > 128 * 1024 * 1024) { overflow = true; proc.kill('SIGKILL'); }
     });
     proc.stderr.on('data', (chunk: Buffer) => { stderr = (stderr + chunk.toString()).slice(-8192); });
-    proc.once('error', (error) => { clearTimeout(timer); child = undefined; reject(error); });
+    // Abort emits error before close; wait for exit before cleaning files or starting another job.
+    proc.once('error', (error) => { failure = error; });
     proc.once('close', (code) => {
       clearTimeout(timer); child = undefined;
-      if (code !== 0 || overflow) {
+      if (signal?.aborted) reject(signal.reason);
+      else if (failure) reject(failure);
+      else if (code !== 0 || overflow) {
         console.error(`[drive-video] ${executable} failed: ${stderr}`);
         reject(new Error('native-processing-failed'));
       } else resolve(stdout);
@@ -54,7 +62,7 @@ interface Stream {
   tags?: { rotate?: string };
 }
 interface Probe { streams: Stream[]; format: { duration: string; size: string } }
-const inputOptions = ['-threads', '2', '-protocol_whitelist', 'file,pipe', '-format_whitelist', 'mov,matroska,webm'];
+const inputOptions = ['-threads', '4', '-protocol_whitelist', 'file,pipe', '-format_whitelist', 'mov,matroska,webm'];
 
 async function probe(file: string): Promise<Probe> {
   return JSON.parse(await native('ffprobe', ['-v', 'error', ...inputOptions, '-show_streams', '-show_format', '-of', 'json', file]));
@@ -139,9 +147,9 @@ export async function validateVideo(input: string, output: string, mode: DriveCo
   // The 1080p reference is resized identically; this measures encoding loss, not retained 4K detail.
   const scale = width !== v.width || height !== v.height ? `scale=${width}:${height}:flags=lanczos,setsar=1,` : '';
   const log = path.join(path.dirname(output), 'vmaf.json');
-  await native('ffmpeg', ['-hide_banner', '-nostdin', '-v', 'error', '-filter_complex_threads', '2',
+  await native('ffmpeg', ['-hide_banner', '-nostdin', '-v', 'error', '-filter_complex_threads', '4',
     ...inputOptions, '-noautorotate', '-i', output, ...inputOptions, '-noautorotate', '-i', input,
-    '-filter_complex', `[0:v]setpts=PTS-STARTPTS[d];[1:v]${scale}setpts=PTS-STARTPTS[r];[d][r]libvmaf=model=version=${model}:n_threads=2:n_subsample=5:log_fmt=json:log_path=${log}`,
+    '-filter_complex', `[0:v]setpts=PTS-STARTPTS[d];[1:v]${scale}setpts=PTS-STARTPTS[r];[d][r]libvmaf=model=version=${model}:n_threads=4:n_subsample=5:log_fmt=json:log_path=${log}`,
     '-an', '-f', 'null', '-']);
   const metrics = JSON.parse(await fs.readFile(log, 'utf8')) as { frames: Array<{ metrics: { vmaf: number } }> };
   const quality = checkQuality(metrics.frames.map((frame) => frame.metrics.vmaf));
@@ -153,20 +161,37 @@ export async function validateVideo(input: string, output: string, mode: DriveCo
 
 interface Job { id: string; source_node_id: string; resolution: DriveCompressionResolution; storage_key: string; size_bytes: string }
 
-async function processJob(job: Job): Promise<void> {
+export async function processJob(job: Job): Promise<void> {
   const work = path.join(DRIVE_STORAGE_ROOT, 'transcodes', job.id);
   const output = path.join(work, 'output.mp4');
   let publishedPath: string | undefined;
   let publishedNodeId: string | undefined;
   let committed = false;
+  const controller = new AbortController();
+  jobSignal = controller.signal;
+  let checking = false;
+  const checkCancellation = async () => {
+    if (checking || controller.signal.aborted) return;
+    checking = true;
+    try {
+      const [current] = await sql<{ status: string }[]>`SELECT status FROM drive_compressions WHERE id = ${job.id}`;
+      if (!current || !['encoding', 'validating'].includes(current.status)) controller.abort(new Error('compression-cancelled'));
+    } catch (error) {
+      controller.abort(error);
+    } finally { checking = false; }
+  };
+  const cancellationTimer = setInterval(() => void checkCancellation(), 2000);
   try {
+    await checkCancellation();
+    controller.signal.throwIfAborted();
     await fs.mkdir(work, { recursive: true });
     const input = driveStoredPath(job.storage_key), originalHash = await fileHash(input);
     const info = await probe(input), v = sourceVideo(info);
     const [width, height] = videoSize(v.width!, v.height!, job.resolution);
-    const args = ['-hide_banner', '-nostdin', '-y', '-xerror', '-filter_threads', '2', ...inputOptions,
+    // SVT 4.x lp is a parallelism level, not a CPU count; level 2 bounds buffering under MemoryMax.
+    const args = ['-hide_banner', '-nostdin', '-y', '-xerror', '-filter_threads', '4', ...inputOptions,
       '-copyts', '-noautorotate', '-i', input, '-map', '0:v:0', '-map', '0:a?', '-map_metadata', '0',
-      '-c:v', 'libsvtav1', '-preset', '6', '-crf', '18', '-svtav1-params', 'lp=2:film-grain=0', '-threads', '2',
+      '-c:v', 'libsvtav1', '-preset', '6', '-crf', '18', '-svtav1-params', 'lp=2:film-grain=0', '-threads', '4',
       '-pix_fmt', v.pix_fmt!, '-fps_mode', 'passthrough', '-enc_time_base', 'demux',
       '-video_track_timescale', v.time_base.split('/')[1], '-avoid_negative_ts', 'disabled', '-c:a', 'copy', '-movflags', '+faststart'];
     if (width !== v.width || height !== v.height) args.push('-vf', `scale=${width}:${height}:flags=lanczos,setsar=1`);
@@ -185,10 +210,11 @@ async function processJob(job: Job): Promise<void> {
       lastWrite = Date.now();
       progressWrite = progressWrite.then(async () => {
         await sql`UPDATE drive_compressions SET progress = ${progress}, updated_at = NOW() WHERE id = ${job.id} AND status = 'encoding'`;
-      }).catch(() => { child?.kill('SIGTERM'); });
+      }).catch((error) => { controller.abort(error); });
     });
     await progressWrite;
-    await sql`UPDATE drive_compressions SET status = 'validating', progress = ${progress}, updated_at = NOW() WHERE id = ${job.id}`;
+    if (!(await sql`UPDATE drive_compressions SET status = 'validating', progress = ${progress}, updated_at = NOW()
+      WHERE id = ${job.id} AND status = 'encoding' RETURNING id`).length) throw new Error('compression-cancelled');
     const report = await validateVideo(input, output, job.resolution);
     if (report.sourceSha256 !== originalHash) throw new Error('source-changed');
     const nodeId = randomUUID(), key = driveStorageKey(nodeId);
@@ -199,7 +225,8 @@ async function processJob(job: Job): Promise<void> {
       const [source] = await tx<{ owner_user_id: string; parent_id: string | null; name: string }[]>`
         SELECT owner_user_id, parent_id, name FROM drive_nodes WHERE id = ${job.source_node_id}
         AND status = 'ready' AND trashed_at IS NULL FOR UPDATE`;
-      if (!source || !(await tx`SELECT 1 FROM drive_compressions WHERE id = ${job.id} FOR UPDATE`).length) throw new Error('source-unavailable');
+      if (!source) throw new Error('source-unavailable');
+      if (!(await tx`SELECT 1 FROM drive_compressions WHERE id = ${job.id} AND status = 'validating' FOR UPDATE`).length) throw new Error('compression-cancelled');
       const [quota] = await tx<{ bytes: string }[]>`SELECT
         COALESCE((SELECT SUM(size_bytes) FROM drive_nodes WHERE status = 'ready'), 0)
         + COALESCE((SELECT SUM(expected_bytes) FROM drive_uploads WHERE expires_at > NOW()), 0)
@@ -222,8 +249,11 @@ async function processJob(job: Job): Promise<void> {
   } catch (error) {
     const reason = error instanceof Error ? error.message : 'processing-failed';
     console.error(`[drive-video] failed ${job.id}: ${reason}`);
-    if (!stopping) await sql`UPDATE drive_compressions SET status = 'failed', error = ${reason.slice(0, 200)}, updated_at = NOW() WHERE id = ${job.id} AND status <> 'ready'`;
+    if (!stopping) await sql`UPDATE drive_compressions SET status = 'failed', error = ${reason.slice(0, 200)}, updated_at = NOW()
+      WHERE id = ${job.id} AND status IN ('encoding', 'validating')`;
   } finally {
+    clearInterval(cancellationTimer);
+    jobSignal = undefined;
     if (publishedPath && publishedNodeId && !committed) {
       // A lost COMMIT response is ambiguous: retain the file unless rollback is confirmed.
       const nodes = await sql`SELECT 1 FROM drive_nodes WHERE id = ${publishedNodeId}`.catch(() => null);
@@ -257,7 +287,7 @@ async function main(): Promise<void> {
       const [job] = await sql<Job[]>`
         UPDATE drive_compressions j SET status = 'encoding', progress = 0, error = NULL, updated_at = NOW()
         FROM drive_nodes n WHERE j.id = (SELECT id FROM drive_compressions WHERE status = 'queued' ORDER BY created_at LIMIT 1)
-          AND n.id = j.source_node_id RETURNING j.id, j.source_node_id, j.resolution, n.storage_key, n.size_bytes`;
+          AND j.status = 'queued' AND n.id = j.source_node_id RETURNING j.id, j.source_node_id, j.resolution, n.storage_key, n.size_bytes`;
       if (!job) { if (process.argv.includes('--once')) break; await delay(2000); continue; }
       await processJob(job);
       if (process.argv.includes('--once')) break;

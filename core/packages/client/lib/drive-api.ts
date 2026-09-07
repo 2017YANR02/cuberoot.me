@@ -168,6 +168,10 @@ export const compressDriveVideo = (nodeId: string, resolution: DriveCompressionR
   write<{ compression: DriveCompression }>(`/v1/drive/files/${encodeURIComponent(nodeId)}/compress`, 'POST', { resolution })
 );
 
+export const cancelDriveCompression = (jobId: string) => (
+  write<{ compression: DriveCompression }>(`/v1/drive/compressions/${encodeURIComponent(jobId)}/cancel`, 'POST')
+);
+
 export async function createDriveShare(nodeId: string): Promise<DriveShare> {
   const result = await write<{ id: string }>(`/v1/drive/files/${encodeURIComponent(nodeId)}/share`, 'POST');
   return { url: publicApiUrl(`/v1/drive/shared/${encodeURIComponent(result.id)}`) };

@@ -62,6 +62,7 @@ import { useAuthStore } from '@/lib/auth-store';
 import { searchFriendUsers, type FriendSearchUser } from '@/lib/friends-api';
 import {
   addDriveMember,
+  cancelDriveCompression,
   cancelDriveUpload,
   compressDriveVideo,
   createDriveAccess,
@@ -197,7 +198,9 @@ function compressionStatus(job: DriveCompression, t: ReturnType<typeof useT>): s
     case 'encoding': return `${t('正在压缩', 'Compressing')} ${job.progress}%`;
     case 'validating': return t('正在检查画质和帧率', 'Checking quality and frame timing');
     case 'ready': return t('压缩副本已保存', 'Compressed copy saved');
-    case 'failed': return t('压缩未完成，原片已保留', 'Compression failed; original retained');
+    case 'failed': return job.error === 'compression-cancelled'
+      ? t('已取消压缩，原片已保留', 'Compression cancelled; original retained')
+      : t('压缩未完成，原片已保留', 'Compression failed; original retained');
   }
 }
 
@@ -225,6 +228,20 @@ function DriveCompressionDialog({ node, onQueued, onClose }: {
     }
   };
 
+  const cancel = async () => {
+    if (!job || !pending) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await cancelDriveCompression(job.id);
+      await onQueued();
+    } catch {
+      setError(t('取消失败，请稍后重试。', 'Could not cancel compression. Please try again.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="drive-preview-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onClose(); }}>
       <div className="drive-preview drive-share-dialog" role="dialog" aria-modal="true" aria-label={t('压缩视频', 'Compress video')}>
@@ -244,13 +261,16 @@ function DriveCompressionDialog({ node, onQueued, onClose }: {
             : t('按比例缩至最高 1080P，保留原帧率；较小的视频不会放大。压缩后另存一份，原片保留。', 'Scale proportionally to at most 1080p and keep the original frame timing. Smaller videos are not enlarged. The original is retained alongside the new copy.')}</p>
           <small>{t('在云端处理，关闭页面也会继续。画质检查通过且文件变小后才保存副本。部分设备无法播放 AV1，可继续使用原片。', 'Processing continues in the cloud after you close the page. A copy is saved only after quality checks pass and its size decreases. Devices without AV1 playback can use the original.')}</small>
           {job && <p role="status">{compressionStatus(job, t)}</p>}
-          {job?.status === 'failed' && <small>{t('该视频可能不适合继续压缩，或转码暂时失败。可以重试。', 'This video may not benefit from further compression, or processing failed temporarily. You can retry.')}</small>}
+          {job?.status === 'failed' && job.error !== 'compression-cancelled' && <small>{t('该视频可能不适合继续压缩，或转码暂时失败。可以重试。', 'This video may not benefit from further compression, or processing failed temporarily. You can retry.')}</small>}
           {error && <p className="drive-error" role="alert">{error}</p>}
           <div className="drive-share-mode">
-            <button type="button" className="drive-control" disabled={busy || !!pending || (job?.status === 'ready' && !!job.outputNodeId)} onClick={() => void start()}>
-              {busy || pending ? <Loader2 className="drive-spin" aria-hidden="true" /> : <Shrink size={16} aria-hidden="true" />}
+            {pending ? <button type="button" className="drive-control" disabled={busy} onClick={() => void cancel()}>
+              {busy && <Loader2 className="drive-spin" aria-hidden="true" />}
+              {t('取消压缩', 'Cancel compression')}
+            </button> : <button type="button" className="drive-control" disabled={busy || (job?.status === 'ready' && !!job.outputNodeId)} onClick={() => void start()}>
+              {busy ? <Loader2 className="drive-spin" aria-hidden="true" /> : <Shrink size={16} aria-hidden="true" />}
               {job?.status === 'failed' ? t('重试压缩', 'Retry compression') : t('开始云端压缩', 'Start cloud compression')}
-            </button>
+            </button>}
           </div>
         </div>
       </div>
