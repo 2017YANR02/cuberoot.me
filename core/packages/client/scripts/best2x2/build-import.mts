@@ -1,12 +1,14 @@
 /**
  * derived-site.json + 站内 2x2 快照 → 确定性导入清单。
  *
- * 现有 case 保留 name/subgroup/sticker(用户进度键不变),表格公式先对齐到该格标准题面;
+ * 现有 case 保留 name/subgroup/sticker(用户进度键不变),保留原公式主体,只允许起手 U 调整;
  * 新 case 使用表格分组名。校验失败的来源分支只进 quarantine,绝不混入可训练公式。
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { alignAlgToState } from './derive.mts';
+import { Alg } from 'cubing/alg';
+import { preserveAlg } from './preserve-alg.mjs';
 const { faceletToPocketState } = await import('../../lib/pocket-facelet.ts');
 
 const ROOT = resolve(import.meta.dirname, '../../../../..');
@@ -84,14 +86,15 @@ for (const [sheet, slug] of Object.entries(SHEET_TO_SET)) {
 
     const lead = slot.algs.find((alg) => alg.row === slot.lead && alg.ok) ?? slot.algs.find((alg) => alg.ok);
     if (!lead?.alignedAlg) throw new Error(`${sheet} ${slot.group}#${slot.col}:没有有效主公式`);
-    const sheetEntries = [lead, ...slot.algs.filter((alg) => alg !== lead && alg.ok)]
-      .map((alg) => ({ alg: alg.alignedAlg!, source: 'cuberoot' }));
-    const oldEntries = (old?.algs.flat() ?? []).map((entry) => {
+    const setup = new Alg(lead.alg).invert().toString();
+    const sheetEntries = await Promise.all([lead, ...slot.algs.filter((alg) => alg !== lead && alg.ok)]
+      .map((alg) => preserveAlg(setup, { alg: alg.alg })));
+    const oldEntries = await Promise.all((old?.algs.flat() ?? []).map(async (entry) => {
       const sourceAlg = String(entry.alg ?? '');
       const aligned = alignAlgToState(state, sourceAlg);
       if (!aligned) throw new Error(`${sheet} ${slot.group}#${slot.col}:站内公式对不齐 ${sourceAlg}`);
-      return { ...entry, alg: aligned };
-    });
+      return preserveAlg(setup, entry);
+    }));
     const merged = dedupe([...sheetEntries, ...oldEntries]);
     if (!merged.length) throw new Error(`${sheet} ${slot.group}#${slot.col}:合并后没有公式`);
 
@@ -105,7 +108,7 @@ for (const [sheet, slug] of Object.entries(SHEET_TO_SET)) {
       existingName,
       name: old?.name ?? `${sheet} ${slot.group} ${slot.col + 1}`,
       subgroup: old?.subgroup ?? slot.group,
-      setup: slot.setup,
+      setup,
       sticker: old?.sticker ?? stickerOf(slot.facelet),
       algs: [merged],
     });
