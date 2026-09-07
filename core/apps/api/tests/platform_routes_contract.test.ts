@@ -44,6 +44,10 @@ function routeBlock(source: string, router: string, method: string, path: string
 }
 
 describe('Platform typed quiz contract', () => {
+  it('pins revision CASE parameters to the status and publisher column types', () => {
+    expect(catalogSource.match(/CASE WHEN \$[89]::varchar = 'published' THEN \$1[01]::bigint ELSE NULL END/g)).toHaveLength(4);
+    expect(catalogSource).not.toMatch(/CASE WHEN \$[89] = 'published' THEN \$1[01] ELSE NULL END/);
+  });
   it('normalizes each supported answer type consistently for authoring and submission', () => {
     expect(normalizePlatformQuizChoices('single_choice', [' Red ', 'Blue'])).toEqual(['Red', 'Blue']);
     expect(normalizePlatformQuizAnswer({
