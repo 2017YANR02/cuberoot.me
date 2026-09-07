@@ -70,6 +70,7 @@ export default function PersonUpcomingComps({ wcaId, isZh }: Props) {
             isZh={isZh}
             lang={isZh ? 'zh' : 'en'}
             roundsSeed={wcaRoundsSeed(competition.rounds)}
+            fetchIfMissing
           />
         ))}
       </div>
