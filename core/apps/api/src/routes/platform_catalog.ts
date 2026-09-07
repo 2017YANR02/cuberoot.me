@@ -346,7 +346,7 @@ platformCatalogRoutes.post('/platform/instructor/applications', async (c) => {
         applicant_user_id, applicant_display_name_snapshot, application_snapshot
       ) VALUES ($1, $2, $3::jsonb)
       RETURNING id::text AS id, status
-    `, [actor.userId, actor.displayName, JSON.stringify({ experience, specialties, contact })]);
+    `, [actor.userId, actor.displayName, { experience, specialties, contact }]);
     await enqueuePlatformEvent(db, 'platform.instructor.application_submitted', 'instructor_application', rows[0].id,
       `instructor-application:${rows[0].id}:submitted`, { applicationId: rows[0].id });
     return { status: 201, body: { application: rows[0] }, resourceType: 'instructor_application', resourceId: rows[0].id };
@@ -560,7 +560,7 @@ async function saveLesson(c: Context, admin: boolean, creating: boolean): Promis
             status, content_hash, created_by_user_id, published_by_user_id, published_at
           ) VALUES ($1::uuid, 1, $2, $3, $4::jsonb, $5::jsonb, $6::uuid, $7, $8, decode($9, 'hex'), $10,
             CASE WHEN $8::varchar = 'published' THEN $10::bigint ELSE NULL END, CASE WHEN $8::varchar = 'published' THEN NOW() ELSE NULL END)
-        `, [rows[0].id, revision.titleZh, revision.titleEn, JSON.stringify(revision.bodyZh), JSON.stringify(revision.bodyEn),
+        `, [rows[0].id, revision.titleZh, revision.titleEn, revision.bodyZh, revision.bodyEn,
           mediaId, input.durationSeconds ?? null, revisionStatus, hashJson(revision), actor.userId]);
         return { status: 201, body: { lesson: rows[0] }, resourceType: 'lesson', resourceId: rows[0].id };
       } catch (error) {
@@ -593,7 +593,7 @@ async function saveLesson(c: Context, admin: boolean, creating: boolean): Promis
         status, content_hash, created_by_user_id, published_by_user_id, published_at
       ) VALUES ($1::uuid, $2, $3, $4, $5::jsonb, $6::jsonb, $7::uuid, $8, $9, decode($10, 'hex'), $11,
         CASE WHEN $9::varchar = 'published' THEN $11::bigint ELSE NULL END, CASE WHEN $9::varchar = 'published' THEN NOW() ELSE NULL END)
-    `, [old.id, nextRevision, revision.titleZh, revision.titleEn, JSON.stringify(revision.bodyZh), JSON.stringify(revision.bodyEn),
+    `, [old.id, nextRevision, revision.titleZh, revision.titleEn, revision.bodyZh, revision.bodyEn,
       mediaId, input.durationSeconds === undefined ? old.durationSeconds : input.durationSeconds,
       revisionStatus, hashJson(revisionWithMedia), actor.userId]);
     await platformQuery(db, `
@@ -820,7 +820,7 @@ async function saveQuiz(c: Context, admin: boolean, creating: boolean): Promise<
       await platformQuery(db, `
         INSERT INTO platform_quiz_questions(quiz_id,quiz_revision,ordinal,question_type,prompt_zh,prompt_en,choices,answer_key_encrypted,answer_key_version,points)
         VALUES($1::uuid,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10)
-      `, [id, revision, index, question.type, question.promptZh, question.promptEn, JSON.stringify(question.choices), encrypted.payload, encrypted.keyVersion, question.points]);
+      `, [id, revision, index, question.type, question.promptZh, question.promptEn, question.choices, encrypted.payload, encrypted.keyVersion, question.points]);
     }
     if (creating) {
       await platformQuery(db, `UPDATE platform_quizzes SET current_revision=$2 WHERE id=$1::uuid`, [id, revision]);

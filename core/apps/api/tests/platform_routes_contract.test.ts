@@ -44,6 +44,12 @@ function routeBlock(source: string, router: string, method: string, path: string
 }
 
 describe('Platform typed quiz contract', () => {
+  it('passes JSONB objects and arrays to postgres without double serialization', () => {
+    expect(catalogSource).not.toContain('JSON.stringify(revision.body');
+    expect(catalogSource).not.toContain('JSON.stringify(question.choices)');
+    expect(catalogSource).not.toContain('JSON.stringify({ experience');
+    expect(catalogSource.match(/revision.titleEn, revision.bodyZh, revision.bodyEn/g)).toHaveLength(2);
+  });
   it('pins revision CASE parameters to the status and publisher column types', () => {
     expect(catalogSource.match(/CASE WHEN \$[89]::varchar = 'published' THEN \$1[01]::bigint ELSE NULL END/g)).toHaveLength(4);
     expect(catalogSource).not.toMatch(/CASE WHEN \$[89] = 'published' THEN \$1[01] ELSE NULL END/);
