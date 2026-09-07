@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { validateReconTiming } from '@cuberoot/shared/recon-completion';
-import type { ReconSolve } from '@cuberoot/shared';
 import { buildReconAttemptMap, computeReconTimingMean } from '@/lib/recon-attempt-lookup';
 
 describe('pickup and putdown durations', () => {
@@ -22,7 +21,7 @@ describe('pickup and putdown durations', () => {
       { ...base, id: 3 },
       { ...base, id: 4, solveNum: 2, pickupTime: 0, putdownTime: 0.4 },
       { ...base, id: 5, event: '2x2', pickupTime: 2, putdownTime: 3 },
-    ] as ReconSolve[];
+    ] as Parameters<typeof buildReconAttemptMap>[0];
     for (const input of [records, [...records].reverse()]) {
       const mean = computeReconTimingMean(buildReconAttemptMap(input), '333');
       expect(mean.count).toBe(2);
