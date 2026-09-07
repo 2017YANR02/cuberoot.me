@@ -4,7 +4,9 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { VILLA_ROOMS, type RoomStyle, type WalkObstacle } from './space-state';
+import { VILLA_ROOMS, type RoomStyle, type WalkObstacle, type Environment } from './space-state';
+
+import { createIsland } from './space-island';
 
 const PALETTES = {
   minimal: { sky: 0x9aadb9, ground: 0x7e8986, stone: 0xbcbdb8, frame: 0xc9d0d2, wall: 0xe7e5de, wood: 0x847768, fabric: 0xd6d5cd, mirror: 0x727977, glow: 0xffedce, secondary: 0xe1eeff },
@@ -51,7 +53,7 @@ export class SpaceRoom {
   private dark = new THREE.MeshStandardMaterial({ color: 0x242a2b, roughness: 0.5 });
   private ceramic = new THREE.MeshPhysicalMaterial({ color: 0xf0efdf, roughness: 0.12, clearcoat: 1 });
   private led: THREE.MeshBasicMaterial;
-  constructor(readonly style: RoomStyle, private helpers: THREE.Object3D[], private invalidate = () => {}) {
+  constructor(readonly style: RoomStyle, private helpers: THREE.Object3D[], private invalidate = () => {}, readonly environment: Environment = 'original') {
     this.palette = style in PALETTES ? PALETTES[style as keyof typeof PALETTES] : EXTRA[style as keyof typeof EXTRA];
     const p = this.palette;
     if (!('LTC_FLOAT_1' in THREE.UniformsLib)) RectAreaLightUniformsLib.init();
@@ -827,8 +829,10 @@ export class SpaceRoom {
     }
   }
   private landscape() {
+    const island = this.environment === 'island';
+    if (island) this.root.add(createIsland());
     if (this.style === 'company') return;
-    const urban = this.style === 'penthouse' || this.style === 'cyberpunk';
+    const urban = !island && (this.style === 'penthouse' || this.style === 'cyberpunk');
     if (urban) {
       const facades = [0x536779, 0x8b8174, 0x3d464e, 0x7c6252].map((color, variant) => {
         const material = new THREE.MeshStandardMaterial({ color, metalness: variant % 2 ? 0.2 : 0.7, roughness: 0.45 });
@@ -884,18 +888,20 @@ export class SpaceRoom {
       }
     } else {
       for (const [x, z, size] of [[-39, -20, 2.7], [-28, -30, 3.2], [-12, -28, 2.5], [6, -27, 3], [25, -26, 2.6], [39, 3, 2.8], [-41, 14, 3], [-31, 31, 2.4]]) this.tree(x, -0.6, z, size);
-      const ground = new THREE.MeshStandardMaterial({ color: 0x526048, roughness: 1, vertexColors: true });
-      const terrain = new THREE.PlaneGeometry(800, 800, 96, 96); terrain.rotateX(-Math.PI / 2);
-      const vertices = terrain.getAttribute('position');
-      const colors = new Float32Array(vertices.count * 3), tint = new THREE.Color();
-      for (let i = 0; i < vertices.count; i++) {
-        const x = vertices.getX(i), z = vertices.getZ(i), rise = Math.min(1, Math.max(0, (Math.hypot(x + 9, z + 3) - 65) / 100));
-        vertices.setY(i, -0.65 + rise * (13 + 11 * Math.sin(x / 43) * Math.cos(z / 59) + 5 * Math.sin(x / 17 + z / 31)));
-        tint.setHSL(0.22, 0.15, 0.48 + 0.08 * Math.sin(x * 0.37) * Math.cos(z * 0.23)); tint.toArray(colors, i * 3);
+      if (!island) {
+        const ground = new THREE.MeshStandardMaterial({ color: 0x526048, roughness: 1, vertexColors: true });
+        const terrain = new THREE.PlaneGeometry(800, 800, 96, 96); terrain.rotateX(-Math.PI / 2);
+        const vertices = terrain.getAttribute('position');
+        const colors = new Float32Array(vertices.count * 3), tint = new THREE.Color();
+        for (let i = 0; i < vertices.count; i++) {
+          const x = vertices.getX(i), z = vertices.getZ(i), rise = Math.min(1, Math.max(0, (Math.hypot(x + 9, z + 3) - 65) / 100));
+          vertices.setY(i, -0.65 + rise * (13 + 11 * Math.sin(x / 43) * Math.cos(z / 59) + 5 * Math.sin(x / 17 + z / 31)));
+          tint.setHSL(0.22, 0.15, 0.48 + 0.08 * Math.sin(x * 0.37) * Math.cos(z * 0.23)); tint.toArray(colors, i * 3);
+        }
+        terrain.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        terrain.computeVertexNormals();
+        const hills = new THREE.Mesh(terrain, ground); hills.receiveShadow = true; this.root.add(hills);
       }
-      terrain.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-      terrain.computeVertexNormals();
-      const hills = new THREE.Mesh(terrain, ground); hills.receiveShadow = true; this.root.add(hills);
       for (let row = 0; row < 5; row++) for (let col = 0; col < 8; col++) this.box(4.95, 0.15, 2.45, -26.5 + col * 5, -0.42, 14.5 + row * 2.5, this.stone, this.root, 0);
       for (let i = 0; i < 3; i++) this.platform(8, 0.75, 0, -0.04 - i * 0.12, 13.4 + i * 0.8, this.stone);
       for (const x of [-31.8, 32.2]) {
@@ -998,6 +1004,7 @@ export class SpaceRoom {
     const geometries = new Set<THREE.BufferGeometry>();
     const materials = new Set<THREE.Material>();
     this.root.traverse(o => {
+      if (o instanceof THREE.InstancedMesh) o.dispose();
       if (o instanceof THREE.Mesh || o instanceof THREE.LineSegments) {
         geometries.add(o.geometry);
         for (const m of Array.isArray(o.material) ? o.material : [o.material]) materials.add(m);

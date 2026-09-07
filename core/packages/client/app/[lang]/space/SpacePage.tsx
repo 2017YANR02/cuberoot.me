@@ -11,7 +11,7 @@ import { ClearButton } from '@/components/ClearButton';
 import { persistItem } from '@/lib/safe-storage';
 import { tr } from '@/i18n/tr';
 import { SpaceScene, type Mode, type View } from './space-scene';
-import { commitLayout, DESTINATIONS, INITIAL_LAYOUT, isPuzzleKind, MAX_OBJECTS, movePosition, parseLayout, PUZZLES, ROOMS, SPACE_KEY, travelHistory, WEATHER, type Weather, type Destination, type History, type PuzzleKind, type RoomStyle, type SpaceObject } from './space-state';
+import { commitLayout, DESTINATIONS, ENVIRONMENTS, type Environment, INITIAL_LAYOUT, isPuzzleKind, MAX_OBJECTS, movePosition, parseLayout, PUZZLES, ROOMS, SPACE_KEY, travelHistory, WEATHER, type Weather, type Destination, type History, type PuzzleKind, type RoomStyle, type SpaceObject } from './space-state';
 import './space.css';
 import { turnButtons } from './space-turn';
 
@@ -35,6 +35,7 @@ export default function SpacePage() {
   const [unavailable, setUnavailable] = useState(false);
   const objects = history.current.objects;
   const room = history.current.room ?? 'minimal';
+  const environment = history.current.environment ?? 'original';
   const weather = history.current.weather ?? 'sunny';
   const active = objects.find(o => o.id === selected);
 
@@ -158,13 +159,18 @@ export default function SpacePage() {
     <main className="cube-space">
       <header className="space-header">
         <div className="space-heading"><h1>{tr({ zh: '魔方空间', en: 'Cube space' })}</h1><CompactSelect label={tr(ROOMS[room])} ariaLabel={tr({ zh: '选择房间风格', en: 'Choose room style' })} value={room} valueText={tr(ROOMS[room])} items={(Object.keys(ROOMS) as RoomStyle[]).map(value => ({ value, label: tr(ROOMS[value]) }))} onChange={room => { cancel(); setHistory(h => commitLayout(h, { ...h.current, room })); }} />
+          <CompactSelect label={tr(ENVIRONMENTS[environment])} ariaLabel={tr({ zh: '选择环境', en: 'Choose environment' })} value={environment} valueText={tr(ENVIRONMENTS[environment])} items={(Object.keys(ENVIRONMENTS) as Environment[]).map(value => ({ value, label: tr(ENVIRONMENTS[value]) }))} onChange={environment => { cancel(); setHistory(h => commitLayout(h, { ...h.current, environment })); }} />
           <CompactSelect label={<span className="space-weather-label"><CloudSun size={16} />{tr(WEATHER[weather])}</span>} ariaLabel={tr({ zh: '切换天气', en: 'Change weather' })} value={weather} valueText={tr(WEATHER[weather])} items={(Object.keys(WEATHER) as Weather[]).map(value => ({ value, label: tr(WEATHER[value]) }))} onChange={weather => { cancel(); setHistory(h => commitLayout(h, { ...h.current, weather })); }} />
-          {weather !== 'sunny' && <BoolToggle value={history.current.weatherMotion ?? true} onChange={weatherMotion => setHistory(h => commitLayout(h, { ...h.current, weatherMotion }))} label={tr({ zh: '动态天气', en: 'Animate weather' })} />}
+          {(weather !== 'sunny' || environment === 'island') && <BoolToggle value={history.current.weatherMotion ?? true} onChange={weatherMotion => setHistory(h => commitLayout(h, { ...h.current, weatherMotion }))} label={tr({ zh: '动态天气', en: 'Animate weather' })} />}
         </div>
         <div className="space-header-actions"><AppLink href="/sim">{tr({ zh: '模拟器', en: 'Simulator' })}</AppLink><HeaderToggles /></div>
       </header>
       <nav className="space-destinations" aria-label={tr({ zh: '前往房间', en: 'Go to a room' })}>
         {(room === 'company' ? ['interior', 'study', 'courtyard'] as const : Object.keys(DESTINATIONS) as Destination[]).map(destination => <button className="space-destination" key={destination} onClick={() => { cancel(); scene.current?.view(destination); }}>{tr(room === 'company' ? ({ interior: { zh: '办公室 406', en: 'Office 406' }, study: { zh: '公共休息区', en: 'Shared lounge' }, courtyard: { zh: '电话亭', en: 'Phone booths' } }[destination as 'interior' | 'study' | 'courtyard']) : DESTINATIONS[destination])}</button>)}
+        {environment === 'island' && <>
+          <button className="space-destination" onClick={() => { cancel(); scene.current?.view('island'); }}>{tr({ zh: '全岛鸟瞰', en: 'Island overview' })}</button>
+          <button className="space-destination" onClick={() => { cancel(); scene.current?.view('shore'); }}>{tr({ zh: '海边观浪', en: 'Watch the waves' })}</button>
+        </>}
       </nav>
       <div className="space-workspace">
         <div ref={host} className="space-canvas" role="region" aria-label={tr({ zh: '三维魔方空间', en: '3D cube space' })} />

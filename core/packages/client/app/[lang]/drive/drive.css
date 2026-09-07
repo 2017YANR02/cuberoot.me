@@ -341,7 +341,7 @@
 .drive-file-head,
 .drive-file-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 96px 174px 184px;
+  grid-template-columns: minmax(0, 1fr) 96px 174px 214px;
   align-items: center;
   gap: 16px;
 }
@@ -376,6 +376,14 @@
   height: 20px;
   flex: 0 0 auto;
   color: var(--accent);
+}
+
+.drive-file-name small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  max-width: 40%;
 }
 
 .drive-file-name a,

@@ -23,6 +23,7 @@ export interface AttemptsListProps {
   canEdit?: boolean;            // 任何登录用户:可在弹窗里展开编辑/提议。
   // 「#」开关开 + 该轮有复盘 → 在每把成绩下方补 STM / TPS 两行(标签在轮次列,见 ByEventView/ByCompList)。
   showReconStats?: boolean;
+  showTimingStats?: boolean;
   // submit 预填上下文(无复盘 solve 点击跳 /recon/submit 用)
   personId: string;
   personName: string;
@@ -50,7 +51,7 @@ export interface AttemptsListProps {
 }
 
 export function AttemptsList({
-  attempts, best, eventId, compId, roundTypeId, reconLookup, isZh, admin, isOwner, canEdit, showReconStats,
+  attempts, best, eventId, compId, roundTypeId, reconLookup, isZh, admin, isOwner, canEdit, showReconStats, showTimingStats,
   personId, personName, personCountry, compName, compCountry, compDate,
   attemptOlds, penalties, penaltyNote, attemptVideos, pendingVideos, onAddVideo,
   attemptRanks, singleRecord, cols, onEdit, onSetOriginal, onSetPenalty, onEditRecord,
@@ -126,12 +127,11 @@ export function AttemptsList({
           />
         );
       })}
+      {(showStats || showTimingStats) && Array.from({ length: Math.max(0, colCount - atts.length) }, (_, k) => (
+        <span key={`pad-${k}`} aria-hidden="true" />
+      ))}
       {showStats && (
         <>
-          {/* 补齐首行到 colCount 格,使 STM / TPS 两行各自从下一网格行首列开始、逐把对齐 */}
-          {Array.from({ length: Math.max(0, colCount - atts.length) }, (_, k) => (
-            <span key={`pad-${k}`} aria-hidden="true" />
-          ))}
           {Array.from({ length: colCount }, (_, i) => {
             const s = recs[i]?.stm;
             return <span key={`stm-${i}`} className="wp-att wp-att-sub">{s != null && s > 0 ? s : ''}</span>;
@@ -141,6 +141,14 @@ export function AttemptsList({
             return <span key={`tps-${i}`} className="wp-att wp-att-sub">{p != null && p > 0 ? p.toFixed(2) : ''}</span>;
           })}
         </>
+      )}
+      {showTimingStats && ['pickup', 'putdown', 'total'].flatMap((kind) =>
+        Array.from({ length: colCount }, (_, i) => {
+          const info = recs[i];
+          const value = kind === 'pickup' ? info?.pickupTime : kind === 'putdown' ? info?.putdownTime
+            : info?.pickupTime != null && info?.putdownTime != null ? info.pickupTime + info.putdownTime : null;
+          return <span key={`${kind}-${i}`} className="wp-att wp-att-sub">{value == null ? '' : value.toFixed(3)}</span>;
+        })
       )}
     </span>
   );

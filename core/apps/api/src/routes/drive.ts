@@ -13,9 +13,10 @@ import {
   type DriveSnapshot,
   type DriveUpload,
 } from '@cuberoot/shared/drive';
-import { isAdminWcaId } from '@cuberoot/shared/admin';
+import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 import { Hono, type Context } from 'hono';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
+import type postgres from 'postgres';
 import { sql } from '../db/connection.js';
 import { requireAppUserId } from '../utils/app_user_auth.js';
 import { getIp } from '../utils/analytics_helpers.js';
@@ -48,6 +49,8 @@ interface NodeRow {
   name: string;
   kind: 'file' | 'folder';
   shared?: boolean;
+  member_shared?: boolean;
+  owner_name?: string;
   mime_type: string | null;
   size_bytes: number | string;
   storage_key: string | null;
@@ -106,6 +109,8 @@ function nodeJson(row: NodeRow): DriveNode {
     name: row.name,
     kind: row.kind,
     shared: row.shared === true,
+    memberShared: row.member_shared === true,
+    ownerName: row.owner_name,
     mimeType: row.mime_type,
     sizeBytes: Number(row.size_bytes),
     createdAt: asIso(row.created_at),
@@ -193,14 +198,43 @@ async function cleanupExpiredUploads(userId?: number): Promise<void> {
   })));
 }
 
-async function validFolder(userId: number, parentId: string | null): Promise<boolean> {
+async function validFolder(userId: number, parentId: string | null, db: postgres.Sql | postgres.TransactionSql = sql): Promise<boolean> {
   if (parentId === null) return true;
-  const rows = await sql`
+  const rows = await db`
     SELECT 1 FROM drive_nodes
      WHERE id = ${parentId} AND owner_user_id = ${userId}
        AND kind = 'folder' AND status = 'ready' AND trashed_at IS NULL
      LIMIT 1`;
   return rows.length > 0;
+}
+
+// Read-only member access is inherited from a shared folder. Writes stay owner-only.
+// UNION also prevents duplicates when shared folders are nested.
+function memberNodes() {
+  return sql`
+    WITH RECURSIVE visible AS (
+      SELECT n.id, n.owner_user_id FROM drive_nodes n
+      JOIN app_users owner ON owner.id = n.owner_user_id
+      LEFT JOIN drive_members member ON member.user_id = owner.id
+      WHERE n.member_shared AND n.trashed_at IS NULL AND n.status = 'ready'
+        AND (owner.is_admin OR owner.wca_id = ANY(${[...ADMIN_WCA_IDS]}::text[]) OR member.enabled)
+      UNION
+      SELECT child.id, child.owner_user_id FROM drive_nodes child
+      JOIN visible ON child.parent_id = visible.id AND child.owner_user_id = visible.owner_user_id
+      WHERE child.trashed_at IS NULL AND child.status = 'ready'
+    ) SELECT id FROM visible`;
+}
+
+async function readableFile(nodeId: string, userId: number): Promise<StoredFileRow | null> {
+  const rows = await sql<StoredFileRow[]>`
+    SELECT n.*, owner.wca_id AS owner_wca_id, owner.is_admin AS owner_is_admin,
+           member.enabled AS drive_enabled
+    FROM drive_nodes n JOIN app_users owner ON owner.id = n.owner_user_id
+    LEFT JOIN drive_members member ON member.user_id = owner.id
+    WHERE n.id = ${nodeId} AND n.kind = 'file' AND n.status = 'ready' AND n.trashed_at IS NULL
+      AND (n.owner_user_id = ${userId} OR n.id IN (${memberNodes()}))
+    LIMIT 1`;
+  return rows[0] ?? null;
 }
 
 function isUniqueViolation(error: unknown): boolean {
@@ -218,19 +252,21 @@ async function uploadById(uploadId: string, userId: number): Promise<UploadRow |
   return rows[0] ?? null;
 }
 
-async function breadcrumbs(userId: number, parentId: string | null): Promise<Array<{ id: string; name: string }>> {
+async function breadcrumbs(userId: number, parentId: string | null, members = false): Promise<Array<{ id: string; name: string }>> {
   if (!parentId) return [];
   const rows = await sql<{ id: string; name: string; depth: number }[]>`
     WITH RECURSIVE chain AS (
       SELECT id, parent_id, name, 0 AS depth
         FROM drive_nodes
-       WHERE id = ${parentId} AND owner_user_id = ${userId}
+       WHERE id = ${parentId} AND (${members} OR owner_user_id = ${userId})
+         AND (NOT ${members} OR id IN (${memberNodes()}))
          AND kind = 'folder' AND trashed_at IS NULL
       UNION ALL
       SELECT parent.id, parent.parent_id, parent.name, chain.depth + 1
         FROM drive_nodes parent
         JOIN chain ON chain.parent_id = parent.id
-       WHERE parent.owner_user_id = ${userId} AND parent.trashed_at IS NULL
+       WHERE (${members} OR parent.owner_user_id = ${userId}) AND parent.trashed_at IS NULL
+         AND (NOT ${members} OR parent.id IN (${memberNodes()}))
     )
     SELECT id, name, depth FROM chain ORDER BY depth DESC`;
   return rows.map((row) => ({ id: row.id, name: row.name }));
@@ -253,23 +289,38 @@ driveRoutes.get('/drive', async (c) => {
 
   await cleanupExpiredUploads();
   const trash = c.req.query('trash') === '1';
+  const members = c.req.query('members') === '1';
+  if (trash && members) return c.json({ error: 'shared folders have no member trash view' }, 400);
   const parentParam = c.req.query('parent');
   const parentId = parentParam ? uuid(parentParam) : null;
   if (parentParam && !parentId) return c.json({ error: 'valid parent is required' }, 400);
-  if (!trash && !(await validFolder(current.userId, parentId))) return c.json({ error: 'folder not found' }, 404);
+  if (!trash && members && parentId) {
+    const folder = await sql`SELECT id FROM drive_nodes WHERE id = ${parentId} AND kind = 'folder' AND id IN (${memberNodes()})`;
+    if (!folder.length) return c.json({ error: 'folder not found' }, 404);
+  } else if (!trash && !members && !(await validFolder(current.userId, parentId))) {
+    return c.json({ error: 'folder not found' }, 404);
+  }
 
   const [nodes, uploads, currentQuota, currentBreadcrumbs] = await Promise.all([
-    trash
+    members
+      ? sql<NodeRow[]>`
+          SELECT n.*, owner.display_name AS owner_name
+          FROM drive_nodes n JOIN app_users owner ON owner.id = n.owner_user_id
+          WHERE n.id IN (${memberNodes()})
+            AND ((${parentId}::uuid IS NULL AND n.member_shared)
+              OR (${parentId}::uuid IS NOT NULL AND n.parent_id = ${parentId}))
+          ORDER BY CASE WHEN n.kind = 'folder' THEN 0 ELSE 1 END, LOWER(n.name), n.id`
+      : trash
       ? sql<NodeRow[]>`
           SELECT n.id, n.parent_id, n.name, n.kind, n.mime_type, n.size_bytes, n.storage_key,
-                 n.status, n.created_at, n.updated_at, share.id IS NOT NULL AS shared
+                 n.status, n.created_at, n.updated_at, n.member_shared, share.id IS NOT NULL AS shared
             FROM drive_nodes n
             LEFT JOIN drive_shares share ON share.node_id = n.id
            WHERE n.owner_user_id = ${current.userId} AND n.trashed_at IS NOT NULL AND n.trash_root_id = n.id
            ORDER BY n.trashed_at DESC, n.id`
       : sql<NodeRow[]>`
           SELECT n.id, n.parent_id, n.name, n.kind, n.mime_type, n.size_bytes, n.storage_key,
-                 n.status, n.created_at, n.updated_at, share.id IS NOT NULL AS shared
+                 n.status, n.created_at, n.updated_at, n.member_shared, share.id IS NOT NULL AS shared
             FROM drive_nodes n
             LEFT JOIN drive_shares share ON share.node_id = n.id
            WHERE n.owner_user_id = ${current.userId} AND n.parent_id IS NOT DISTINCT FROM ${parentId}
@@ -283,7 +334,7 @@ driveRoutes.get('/drive', async (c) => {
        WHERE u.owner_user_id = ${current.userId} AND u.expires_at > NOW()
        ORDER BY u.updated_at DESC`,
     quota(),
-    trash ? Promise.resolve([]) : breadcrumbs(current.userId, parentId),
+    trash ? Promise.resolve([]) : breadcrumbs(current.userId, parentId, members),
   ]);
 
   const snapshot: DriveSnapshot = {
@@ -575,40 +626,48 @@ driveRoutes.patch('/drive/nodes/:id', async (c) => {
   const body: Record<string, unknown> = await c.req.json<Record<string, unknown>>().catch(() => ({}));
   const hasName = Object.hasOwn(body, 'name');
   const hasParent = Object.hasOwn(body, 'parentId');
+  const hasMemberShared = Object.hasOwn(body, 'memberShared');
   const name = hasName ? normalizeDriveName(body.name) : null;
   const parentId = hasParent ? (body.parentId == null ? null : uuid(body.parentId)) : null;
-  if (!hasName && !hasParent) return c.json({ error: 'name or parentId is required' }, 400);
+  if (!hasName && !hasParent && !hasMemberShared) return c.json({ error: 'name, parentId or memberShared is required' }, 400);
+  if (hasMemberShared && typeof body.memberShared !== 'boolean') return c.json({ error: 'memberShared must be boolean' }, 400);
   if (hasName && !name) return c.json({ error: 'valid name is required' }, 400);
   if (hasParent && body.parentId != null && !parentId) return c.json({ error: 'valid parentId is required' }, 400);
-  const nodes = await sql<NodeRow[]>`
-    SELECT id, parent_id, name, kind, mime_type, size_bytes, storage_key, status, created_at, updated_at
-      FROM drive_nodes
-     WHERE id = ${nodeId} AND owner_user_id = ${current.userId}
-       AND status = 'ready' AND trashed_at IS NULL
-     LIMIT 1`;
-  if (!nodes[0]) return c.json({ error: 'item not found' }, 404);
-  if (hasParent) {
-    if (!(await validFolder(current.userId, parentId))) return c.json({ error: 'parent folder not found' }, 404);
-    if (parentId === nodeId) return c.json({ error: 'folder cannot contain itself' }, 409);
-    if (nodes[0].kind === 'folder' && parentId) {
-      const cycle = await sql`
-        WITH RECURSIVE subtree AS (
-          SELECT id FROM drive_nodes WHERE id = ${nodeId} AND owner_user_id = ${current.userId}
-          UNION ALL
-          SELECT child.id FROM drive_nodes child JOIN subtree ON child.parent_id = subtree.id
-           WHERE child.owner_user_id = ${current.userId}
-        ) SELECT 1 FROM subtree WHERE id = ${parentId} LIMIT 1`;
-      if (cycle.length) return c.json({ error: 'folder cannot be moved into its descendant' }, 409);
-    }
-  }
   try {
-    const rows = await sql<NodeRow[]>`
-      UPDATE drive_nodes
-         SET name = ${hasName ? name : nodes[0].name},
-             parent_id = ${hasParent ? parentId : nodes[0].parent_id}
-       WHERE id = ${nodeId} AND owner_user_id = ${current.userId}
-       RETURNING id, parent_id, name, kind, mime_type, size_bytes, storage_key, status, created_at, updated_at`;
-    return c.json({ node: nodeJson(rows[0]) });
+    return await sql.begin(async (tx) => {
+      // ponytail: serialize tree changes with trash; per-owner locks if Drive outgrows ten members.
+      await tx`SELECT pg_advisory_xact_lock(${QUOTA_LOCK_ID})`;
+      const nodes = await tx<NodeRow[]>`
+        SELECT id, parent_id, name, kind, mime_type, size_bytes, storage_key, status, created_at, updated_at, member_shared
+          FROM drive_nodes
+         WHERE id = ${nodeId} AND owner_user_id = ${current.userId}
+           AND status = 'ready' AND trashed_at IS NULL
+         LIMIT 1`;
+      if (!nodes[0]) return c.json({ error: 'item not found' }, 404);
+      if (hasMemberShared && nodes[0].kind !== 'folder') return c.json({ error: 'only folders can be shared with members' }, 400);
+      if (hasParent) {
+        if (!(await validFolder(current.userId, parentId, tx))) return c.json({ error: 'parent folder not found' }, 404);
+        if (parentId === nodeId) return c.json({ error: 'folder cannot contain itself' }, 409);
+        if (nodes[0].kind === 'folder' && parentId) {
+          const cycle = await tx`
+            WITH RECURSIVE subtree AS (
+              SELECT id FROM drive_nodes WHERE id = ${nodeId} AND owner_user_id = ${current.userId}
+              UNION
+              SELECT child.id FROM drive_nodes child JOIN subtree ON child.parent_id = subtree.id
+               WHERE child.owner_user_id = ${current.userId}
+            ) SELECT 1 FROM subtree WHERE id = ${parentId} LIMIT 1`;
+          if (cycle.length) return c.json({ error: 'folder cannot be moved into its descendant' }, 409);
+        }
+      }
+      const rows = await tx<NodeRow[]>`
+        UPDATE drive_nodes
+           SET name = ${hasName ? name : nodes[0].name},
+               parent_id = ${hasParent ? parentId : nodes[0].parent_id},
+               member_shared = ${hasMemberShared ? body.memberShared as boolean : nodes[0].member_shared === true}
+         WHERE id = ${nodeId} AND owner_user_id = ${current.userId}
+         RETURNING id, parent_id, name, kind, mime_type, size_bytes, storage_key, status, created_at, updated_at, member_shared`;
+      return c.json({ node: nodeJson(rows[0]) });
+    });
   } catch (error) {
     if (isUniqueViolation(error)) return c.json({ error: 'an item with this name already exists' }, 409);
     throw error;
@@ -665,7 +724,7 @@ driveRoutes.post('/drive/nodes/:id/trash', async (c) => {
         SELECT child.id FROM drive_nodes child JOIN subtree ON child.parent_id = subtree.id
          WHERE child.owner_user_id = ${current.userId} AND child.trashed_at IS NULL
       )
-      UPDATE drive_nodes SET trashed_at = NOW(), trash_root_id = ${nodeId}
+      UPDATE drive_nodes SET trashed_at = NOW(), trash_root_id = ${nodeId}, member_shared = FALSE
        WHERE id IN (SELECT id FROM subtree)
        RETURNING id`;
     return rows.length ? 'trashed' as const : 'missing' as const;
@@ -745,13 +804,7 @@ driveRoutes.post('/drive/files/:id/access', async (c) => {
   if (!nodeId) return c.json({ error: 'valid file id is required' }, 400);
   const body: Record<string, unknown> = await c.req.json<Record<string, unknown>>().catch(() => ({}));
   const requestedInline = body.inline === true;
-  const rows = await sql<NodeRow[]>`
-    SELECT id, parent_id, name, kind, mime_type, size_bytes, storage_key, status, created_at, updated_at
-      FROM drive_nodes
-     WHERE id = ${nodeId} AND owner_user_id = ${current.userId}
-       AND kind = 'file' AND status = 'ready' AND trashed_at IS NULL
-     LIMIT 1`;
-  const file = rows[0];
+  const file = await readableFile(nodeId, current.userId);
   if (!file) return c.json({ error: 'file not found' }, 404);
   const inline = requestedInline && isDrivePreviewableMime(file.mime_type);
   const token = jwt.sign(
@@ -816,7 +869,7 @@ function contentDisposition(name: string, inline: boolean): string {
   return `${inline ? 'inline' : 'attachment'}; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(name)}`;
 }
 
-type StoredFileRow = NodeRow & { owner_wca_id: string | null; drive_enabled: boolean | null };
+type StoredFileRow = NodeRow & { owner_wca_id: string | null; owner_is_admin: boolean; drive_enabled: boolean | null };
 
 async function streamDriveFile(
   c: Context,
@@ -824,7 +877,7 @@ async function streamDriveFile(
   inline: boolean,
   cacheControl = 'private, no-store',
 ): Promise<Response> {
-  if (!file.storage_key || (!file.drive_enabled && !isAdminWcaId(file.owner_wca_id ?? ''))) {
+  if (!file.storage_key || (!file.drive_enabled && !file.owner_is_admin && !isAdminWcaId(file.owner_wca_id ?? ''))) {
     return c.json({ error: 'file not found' }, 404);
   }
   const filePath = driveStoredPath(file.storage_key);
@@ -878,17 +931,13 @@ async function driveContent(c: Context): Promise<Response> {
   if (payload.driveFile !== nodeId || ticketUserId == null || ticketUserId <= 0) {
     return c.json({ error: 'file access token invalid' }, 401);
   }
-  const rows = await sql<StoredFileRow[]>`
-    SELECT n.id, n.parent_id, n.name, n.kind, n.mime_type, n.size_bytes, n.storage_key,
-           n.status, n.created_at, n.updated_at, owner.wca_id AS owner_wca_id,
-           member.enabled AS drive_enabled
-      FROM drive_nodes n
-      JOIN app_users owner ON owner.id = n.owner_user_id
-      LEFT JOIN drive_members member ON member.user_id = n.owner_user_id
-     WHERE n.id = ${nodeId} AND n.owner_user_id = ${ticketUserId}
-       AND n.kind = 'file' AND n.status = 'ready' AND n.trashed_at IS NULL
-     LIMIT 1`;
-  const file = rows[0];
+  // Recheck the ticket holder and folder access on every GET/HEAD, including Range resumes.
+  const viewers = await sql`
+    SELECT 1 FROM app_users viewer LEFT JOIN drive_members member ON member.user_id = viewer.id
+    WHERE viewer.id = ${ticketUserId}
+      AND (viewer.is_admin OR viewer.wca_id = ANY(${[...ADMIN_WCA_IDS]}::text[]) OR member.enabled)`;
+  if (!viewers.length) return c.json({ error: 'file not found' }, 404);
+  const file = await readableFile(nodeId, ticketUserId);
   if (!file) return c.json({ error: 'file not found' }, 404);
   return streamDriveFile(c, file, payload.inline === true && isDrivePreviewableMime(file.mime_type));
 }
@@ -898,7 +947,7 @@ async function driveSharedContent(c: Context): Promise<Response> {
   if (!shareId) return c.json({ error: 'file not found' }, 404);
   const rows = await sql<StoredFileRow[]>`
     SELECT n.id, n.parent_id, n.name, n.kind, n.mime_type, n.size_bytes, n.storage_key,
-           n.status, n.created_at, n.updated_at, owner.wca_id AS owner_wca_id,
+           n.status, n.created_at, n.updated_at, owner.wca_id AS owner_wca_id, owner.is_admin AS owner_is_admin,
            member.enabled AS drive_enabled
       FROM drive_shares share
       JOIN drive_nodes n ON n.id = share.node_id

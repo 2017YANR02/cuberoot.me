@@ -11,6 +11,8 @@ export interface DriveNode {
   name: string;
   kind: DriveNodeKind;
   shared: boolean;
+  memberShared?: boolean;
+  ownerName?: string;
   mimeType: string | null;
   sizeBytes: number;
   createdAt: string;

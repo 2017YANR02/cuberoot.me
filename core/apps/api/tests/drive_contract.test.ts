@@ -52,7 +52,10 @@ describe('Drive contract', () => {
     expect(migration).toContain('expected_bytes <= 21474836480');
     expect(shareMigration).toContain('CREATE TABLE drive_shares');
     expect(shareMigration).toContain('node_id    UUID NOT NULL UNIQUE REFERENCES drive_nodes(id) ON DELETE CASCADE');
-    expect(normalizeSql(schema)).toContain(normalizeSql(migration));
+    expect(normalizeSql(schema.replace(/^  member_shared .*\n/m, ''))).toContain(normalizeSql(migration));
+    const foldersMigration = await read('../migrations/0216_drive_member_folders.sql');
+    expect(foldersMigration).toContain('ADD COLUMN member_shared BOOLEAN NOT NULL DEFAULT FALSE');
+    expect(schema).toContain("CONSTRAINT drive_member_shared_folder CHECK (NOT member_shared OR kind = 'folder')");
     expect(normalizeSql(schema)).toContain(normalizeSql(shareMigration));
   });
 
