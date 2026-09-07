@@ -332,14 +332,17 @@ function SubgroupIndex({
   querySuffix?: string;
 }) {
   // 顶层组 → { 代表 case, 组内总数, 二级子组(parts[1] → 代表 case + 计数) }
+  const inlineCases = (puzzle === '2x2' && set === 'cll') || (puzzle === '3x3' && set === 'coll');
+  const caseSlugs = useMemo(() => buildCaseSlugMap(cases, set), [set, cases]);
   const tops = useMemo(() => {
-    const map = new Map<string, { sample: AlgCase; total: number; subs: Map<string, { sample: AlgCase; count: number }> }>();
+    const map = new Map<string, { sample: AlgCase; total: number; cases: AlgCase[]; subs: Map<string, { sample: AlgCase; count: number }> }>();
     for (const c of cases) {
       const parts = (c.subgroup || '').split('/');
       const top = parts[0] || '';
       let e = map.get(top);
-      if (!e) { e = { sample: c, total: 0, subs: new Map() }; map.set(top, e); }
+      if (!e) { e = { sample: c, total: 0, cases: [], subs: new Map() }; map.set(top, e); }
       e.total++;
+      e.cases.push(c);
       if (parts.length >= 2 && parts[1]) {
         const se = e.subs.get(parts[1]);
         if (se) se.count++;
@@ -350,7 +353,7 @@ function SubgroupIndex({
   }, [cases]);
 
   // 就地展开只在「两级 + 顶层组不多」时用;组太多(1LLL)就地展开会太长,退回卡片网格。
-  const inlineExpand = tops.some(([, e]) => e.subs.size > 0) && tops.length <= 10;
+  const inlineExpand = (inlineCases || tops.some(([, e]) => e.subs.size > 0)) && tops.length <= 10;
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set()); // 默认全展开(一眼看全所有二级子组)
   const toggle = (t: string) => setCollapsed(prev => {
     const next = new Set(prev);
@@ -417,7 +420,7 @@ function SubgroupIndex({
       {tops.map(([topLabel, e]) => {
         const isCollapsed = collapsed.has(topLabel);
         const firstAlg = e.sample.algs.flat()[0]?.alg ?? e.sample.standard ?? '';
-        const dispTop = set === 'zbll' ? displayZbllToken(topLabel) : topLabel;
+        const dispTop = set === 'zbll' ? displayZbllToken(topLabel) : displayAlgCaseName(puzzle, set, topLabel);
         // 封面卡标题不必再带 set 名(页首 H1 已写 ZBLL)。1lll 组号是纯数字 → 换字母制 OLL 名。
         const ollName = ollByGroup.get(topLabel);
         const title = ollName ?? (dispTop || tr({ zh: '其他', en: 'Other' }));
@@ -427,18 +430,22 @@ function SubgroupIndex({
               expand={isCollapsed ? 'closed' : 'open'}
               onClick={() => toggle(topLabel)}
               tooltip={isCollapsed ? tr({ zh: '展开', en: 'Expand' }) : tr({ zh: '收起', en: 'Collapse' })}
-              thumb={<VisualCube setup={e.sample.setup} algorithm={firstAlg} view="oll" size={thumbSize} hideGreySides />}
+              thumb={<VisualCube setup={e.sample.setup} algorithm={firstAlg} view="oll" puzzleSize={puzzle === '2x2' ? 2 : 3} size={thumbSize} hideGreySides />}
               title={title}
             />
-            {!isCollapsed && Array.from(e.subs.entries()).map(([subLabel, { sample }]) => {
+            {!isCollapsed && (inlineCases
+              ? e.cases.map(sample => [String(sample.id ?? sample.name), { sample }] as const)
+              : Array.from(e.subs.entries())).map(([subLabel, { sample }]) => {
               const subFirstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
               const subSlug = encodeURIComponent(subLabel.toLowerCase());
               return (
                 <AlgCard
                   key={subLabel}
-                  href={`/alg/${puzzle}/${set}/${subSlug}${querySuffix ?? ''}`}
+                  href={inlineCases
+                    ? algCaseDetailHref(puzzle, set, (sample.id != null && caseSlugs.byId.get(sample.id)) || caseSlugBase(set, sample))
+                    : `/alg/${puzzle}/${set}/${subSlug}${querySuffix ?? ''}`}
                   thumb={<CaseThumb puzzle={puzzle} set={set} sticker={sample.sticker} alg={subFirstAlg} setup={sample.setup} size={thumbSize} mask={pickerMask} loading="lazy" />}
-                  title={set === 'zbll' ? displayZbllToken(subLabel) : subLabel}
+                  title={inlineCases ? primaryCaseName(puzzle, set, sample) : set === 'zbll' ? displayZbllToken(subLabel) : subLabel}
                 />
               );
             })}
