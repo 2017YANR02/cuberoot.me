@@ -1227,40 +1227,8 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
 
 /* ── 未来比赛 ───────────────────────────────────────────────────── */
 .wp-upcoming-card { padding: 0 20px; }
-.wp-upcoming-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.wp-upcoming-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
 .wp-upcoming-title { margin: 0; font-size: 1rem; font-weight: 600; }
-.wp-upcoming-list {
-    display: grid;
-    grid-template-columns: max-content minmax(240px, max-content) max-content minmax(0, 1fr);
-    column-gap: 24px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-.wp-upcoming-row {
-    display: contents;
-}
-.wp-upcoming-row > * {
-    align-self: center;
-    padding: 4px 0;
-}
-.wp-upcoming-date {
-    color: var(--wp-text-sub);
-    font-family: var(--font-mono);
-    font-size: 0.82rem;
-    white-space: nowrap;
-}
-.wp-upcoming-comp { min-width: 0; }
-.wp-upcoming-place {
-    display: flex;
-    min-width: 0;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 4px 12px;
-    color: var(--wp-text-sub);
-    font-size: 0.82rem;
-}
-.wp-upcoming-events { justify-self: start; }
 .wp-cell-events .wp-event-strip { gap: 6px; }
 .wp-cell-num { text-align: right; font-variant-numeric: tabular-nums; }
 /* 数值列表头随数据右对齐(默认 thead th 左对齐特异度更高,这里显式压过 → 表头与数字齐)。
@@ -1393,15 +1361,6 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
     .wp-main { padding: 12px 12px 48px; }
     .wp-hero-card { padding: 12px 16px; gap: 10px 20px; }
     .wp-upcoming-card { padding: 0 16px; }
-    .wp-upcoming-list { grid-template-columns: minmax(0, 1fr); column-gap: 0; }
-    .wp-upcoming-row {
-        display: grid;
-        grid-column: 1;
-        grid-template-columns: minmax(0, 1fr);
-        gap: 4px;
-        padding: 4px 0;
-    }
-    .wp-upcoming-row > * { padding: 0; }
     .wp-hero-collections { flex-basis: 100%; gap: 24px; }
     .wp-hero-collection { flex: 1 1 0; min-width: 0; }
     .wp-hero-collection dl { justify-content: center; flex-wrap: wrap; row-gap: 10px; }
