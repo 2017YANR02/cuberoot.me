@@ -10,10 +10,96 @@ import { pickTurn, turnPuzzle, turnButtons, type SpacePuzzle } from '@/app/[lang
 import { mirrorFaces } from '@/components/puzzle-models/mirror/mirrorGeometry';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { COLORS } from '@cuberoot/puzzle-render-core/engine/define';
-import { visibleBounds } from '@/app/[lang]/space/space-scene';
-import { commitLayout, INITIAL_LAYOUT, MAX_OBJECTS, movePosition, parseLayout, ROOMS, travelHistory, validSpaceMove, type History, type PuzzleKind, type RoomStyle } from '@/app/[lang]/space/space-state';
+import { surfaceHit, visibleBounds } from '@/app/[lang]/space/space-scene';
+import { weatherRoof } from '@/app/[lang]/space/space-weather';
+import { createUniforms } from '@/app/[lang]/space/abyssal/core/SharedUniforms.js';
+import { Lightning } from '@/app/[lang]/space/abyssal/weather/Lightning.js';
+import { WEATHER, VILLA_ROOMS, type Weather } from '@/app/[lang]/space/space-state';
+import { commitLayout, INITIAL_LAYOUT, MAX_OBJECTS, movePosition, parseLayout, ROOMS, travelHistory, validSpaceMove, walkFloor, walkStep, type Vec3, type History, type PuzzleKind, type RoomStyle } from '@/app/[lang]/space/space-state';
+
+describe('space walking and tabletop placement', () => {
+  it('blocks walls, slides along them and prevents tunneling or invalid movement', () => {
+    const walls = [{ minX: 1, maxX: 1.1, minY: 0, maxY: 3, minZ: -4, maxZ: 4 }];
+    const p = walkStep([0, 0, 0], 3, 4, 'modern', walls);
+    expect(p[0].toFixed(2)).toBe('0.72'); expect(p[1]).toBe(0); expect(p[2]).toBeCloseTo(4);
+    for (const dx of [NaN, Infinity, 100]) expect(walkStep([0, 0, 0], dx, 0, 'modern', walls)).toEqual([0, 0, 0]);
+    expect(walkStep([0, 0, 0], 0, 0, 'modern', walls)).toEqual([0, 0, 0]);
+    expect(walkFloor(-13, 0, 0, 'modern')).toBeNull();
+    expect(walkFloor(-13, 5, 0, 'modern')).toBe(0);
+    expect(walkFloor(-23, 3, 5, 'modern')).toBe(5);
+    expect(walkFloor(0, 0, 5, 'modern')).toBeNull();
+    expect(walkFloor(0, 20, 0, 'penthouse')).toBeNull();
+    expect(walkFloor(0, 20, 0, 'modern')).toBe(0);
+    expect(walkFloor(5, 0, 0, 'company')).toBeNull();
+  });
+
+  it('climbs every stair and returns to the same ground floor without jumping levels', () => {
+    let p: Vec3 = [9.6, 0, -12.4];
+    for (let i = 0; i < 135; i++) p = walkStep(p, -0.1, 0, 'modern', []);
+    expect(p[0]).toBeCloseTo(-3.9); expect(p[1]).toBe(5);
+    for (let i = 0; i < 135; i++) p = walkStep(p, 0.1, 0, 'modern', []);
+    expect(p[0]).toBeCloseTo(9.6); expect(p[1]).toBe(0);
+  });
+
+  it('uses the actual tabletop footprint and rejects its sides and hidden surfaces', () => {
+    const table = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.1, 64), new THREE.MeshBasicMaterial());
+    table.position.set(2, 1, 3); table.updateMatrixWorld();
+    const down = (x: number, z: number) => new THREE.Raycaster(new THREE.Vector3(x, 3, z), new THREE.Vector3(0, -1, 0));
+    expect(surfaceHit(down(2, 3), [table])?.point.y).toBeCloseTo(1.05);
+    expect(surfaceHit(down(2.9, 3.9), [table])).toBeUndefined();
+    expect(surfaceHit(new THREE.Raycaster(new THREE.Vector3(0, 1, 3), new THREE.Vector3(1, 0, 0)), [table])).toBeUndefined();
+    table.visible = false; expect(surfaceHit(down(2, 3), [table])).toBeUndefined();
+    table.geometry.dispose(); table.material.dispose();
+  });
+});
 
 describe('cube space saved layouts', () => {
+  it('isolates weather scenes and clears active and scheduled lightning on weather changes', () => {
+    const uniforms = createUniforms(), other = createUniforms();
+    const lightning = new Lightning(uniforms);
+    lightning.strike(0, -1400, 600);
+    lightning.schedule(400, -1400, 600, 1);
+    lightning.update(0.01, 0.01, { lightningRate: 0 });
+    expect(lightning.mesh.visible).toBe(true);
+    expect(uniforms.uLightning0.value.w > 0).toBe(true);
+    expect(other.uLightning0.value.toArray()).toEqual([0, 0, 0, 0]);
+    expect(other.uAmbientFlash.value).toBe(0);
+    lightning.clear();
+    lightning.update(2, 2, { lightningRate: 0 });
+    expect(lightning.mesh.visible).toBe(false);
+    expect(lightning.geom.instanceCount).toBe(0);
+    expect(uniforms.uLightning0.value.toArray()).toEqual([0, 0, 0, 0]);
+    expect(uniforms.uAmbientFlash.value).toBe(0);
+    lightning.dispose();
+  });
+
+  it('persists every weather and animation choice through save, undo and redo without changing cubes', () => {
+    let history: History = { past: [], current: INITIAL_LAYOUT, future: [] };
+    expect(Object.keys(WEATHER).length).toBe(19);
+    expect(parseLayout(JSON.stringify(INITIAL_LAYOUT)).weather).toBeUndefined();
+    expect(parseLayout(JSON.stringify(INITIAL_LAYOUT)).weatherMotion).toBeUndefined();
+    for (const weather of Object.keys(WEATHER) as Weather[]) for (const weatherMotion of [true, false]) {
+      const before = history.current;
+      history = commitLayout(history, { ...before, weather, weatherMotion });
+      expect(parseLayout(JSON.stringify(history.current))).toEqual({ ...INITIAL_LAYOUT, weather, weatherMotion });
+      const undo = travelHistory(history, 'undo');
+      expect(undo.current).toEqual(before);
+      expect(travelHistory(undo, 'redo').current).toEqual(history.current);
+    }
+    for (const weather of ['unknown', '__proto__', 'constructor', null, 3, {}]) expect(() => parseLayout(JSON.stringify({ ...INITIAL_LAYOUT, weather }))).toThrow('weather');
+    for (const weatherMotion of [null, 'false', 0, {}]) expect(() => parseLayout(JSON.stringify({ ...INITIAL_LAYOUT, weatherMotion }))).toThrow('weatherMotion');
+  });
+
+  it('shelters every villa room and the office while exposing the exterior', () => {
+    expect(Object.values(VILLA_ROOMS).map(room => weatherRoof(room.x, room.z, 'modern'))).toEqual([7.8, 9.4, 9.4, 9.4, 9.4, 9.4, 4.2, 4.2, 4.2, 4.2]);
+    expect(weatherRoof(-23, 3, 'modern')).toBe(9.4);
+    expect(weatherRoof(-23, -10, 'penthouse')).toBe(9.4);
+    expect(weatherRoof(0, 0, 'company')).toBe(3.8);
+    expect(weatherRoof(-26.2, 13.1, 'company')).toBe(3.8);
+    expect(weatherRoof(-26.21, 13.1, 'company')).toBe(-120);
+    expect(weatherRoof(50, 50, 'modern')).toBe(-120);
+  });
+
   it('round-trips layouts and allows an empty scene', () => {
     expect(parseLayout(JSON.stringify(INITIAL_LAYOUT))).toEqual(INITIAL_LAYOUT);
     expect(parseLayout('{"version":1,"objects":[]}')).toEqual({ version: 1, objects: [] });

@@ -14,7 +14,7 @@ export function ReconCompletionBadge({
   recordType?: ReconSolve['recordType'];
   className?: string;
 }) {
-  if (recordType === 'timing') return <span>{tr({ zh: '仅录耗时', en: 'Timing only' })}</span>;
+  if (recordType === 'timing') return null;
   if (status !== 'unsolved') return null;
   const label = tr({ zh: '未还原', en: 'Unsolved' });
   return (

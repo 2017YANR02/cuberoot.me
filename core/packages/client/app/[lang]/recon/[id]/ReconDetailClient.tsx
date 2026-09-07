@@ -257,7 +257,6 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
             {' '}
             <Link href={`/recon/submit/${solve.id}`} className="recon-btn recon-btn-edit detail-title-edit" title={t('recon.edit')} aria-label={t('recon.edit')}>
               <Pencil size={14} />
-              {solve.recordType === 'timing' && tr({ zh: '编辑耗时 / 补充复盘', en: 'Edit timing / add reconstruction' })}
             </Link>
           </h1>
         </div>
@@ -433,13 +432,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           </div>
         )}
 
-        {solve.recordType !== 'timing' && <StatsGrid solve={solve} />}
-        {solve.pickupTime != null && solve.putdownTime != null && (
-          <div className="detail-section">
-            <p>{tr({ zh: '起表耗时', en: 'Pickup' })}: {solve.pickupTime.toFixed(3)}s <small>{tr({ zh: '起表到第一步', en: 'Timer start to first move' })}</small></p>
-            <p>{tr({ zh: '拍表耗时', en: 'Putdown' })}: {solve.putdownTime.toFixed(3)}s <small>{tr({ zh: '最后一步到拍表', en: 'Last move to timer stop' })}</small></p>
-          </div>
-        )}
+        <StatsGrid solve={solve} />
 
         {solve.videoUrl && <VideoSection videoUrl={solve.videoUrl} />}
 
@@ -633,6 +626,10 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
   ];
 
   const validItems = items.filter(([, v]) => v != null && v !== '' && v !== 0);
+  validItems.push(
+    [tr({ zh: '起表耗时', en: 'Pickup' }), <span title={tr({ zh: '起表到第一步', en: 'Timer start to first move' })}>{solve.pickupTime == null ? '—' : `${solve.pickupTime.toFixed(3)}s`}</span>],
+    [tr({ zh: '拍表耗时', en: 'Putdown' }), <span title={tr({ zh: '最后一步到拍表', en: 'Last move to timer stop' })}>{solve.putdownTime == null ? '—' : `${solve.putdownTime.toFixed(3)}s`}</span>],
+  );
   if (validItems.length === 0) return null;
 
   return (
@@ -1680,9 +1677,11 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime, event }: {
 
   return (
     <div className="detail-section">
-      <div className="detail-section-label">
-        {t('recon.alternativeCount', { count: alts.length })}
-      </div>
+      {alts.length > 0 && (
+        <div className="detail-section-label">
+          {t('recon.alternativeCount', { count: alts.length })}
+        </div>
+      )}
 
       {myKey ? (
         <div className="alt-add-bar">
@@ -1935,9 +1934,11 @@ function CommentsView({
 
   return (
     <div className="detail-section">
-      <div className="detail-section-label">
-        {t('recon.commentCount', { count: comments.length })}
-      </div>
+      {comments.length > 0 && (
+        <div className="detail-section-label">
+          {t('recon.commentCount', { count: comments.length })}
+        </div>
+      )}
       <DiscussionComposer
         value={newComment}
         onChange={setNewComment}
