@@ -117,6 +117,14 @@ describe('displayAlgCaseName 按 set 路由', () => {
   it('其它 set 原样', () => expect(displayAlgCaseName('3x3', 'f2l', 'F2L 1')).toBe('F2L 1'));
 
   // COLL 的组名跟 ZBLL 同一套(Sune=S+ / Anti-Sune=S-),编号紧跟不留空格。
+  it('CLL/COLL 分组兼容来源名与已规范名称', () => {
+    for (const [puzzle, set] of [['2x2', 'cll'], ['3x3', 'coll']]) {
+      for (const [name, expected] of [['Sune', 'S+'], ['S', 'S+'], ['Anti Sune', 'S-'], ['AS', 'S-'], ['S+', 'S+'], ['S-', 'S-'], ['Pi', 'Pi'], ['', '']]) {
+        expect(displayAlgCaseName(puzzle, set, name)).toBe(expected);
+      }
+    }
+  });
+
   it('2x2 cll 与 COLL 共用名称规则，保留来源编号', () => {
     for (const [source, coll, count] of [
       ['AS', 'AS', 6], ['Sune', 'S', 6], ['L', 'L', 6], ['U', 'U', 6],
