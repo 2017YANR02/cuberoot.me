@@ -24,6 +24,7 @@ import {
 } from '@cuberoot/shared';
 import { VisualCube } from '@/components/VisualCube';
 import { CaseThumb } from '@/components/CaseThumb';
+import { EventIcon } from '@/components/EventIcon';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import {
   cubeThumbParams,
@@ -1121,8 +1122,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           <ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}
         </Link>
         <h1 className="alg-cat-title">
-          <span className="alg-cat-puzzle">{puzzleParam}</span>
-          {' '}
+          <EventIcon event={puzzleParam} className="alg-cat-title-icon" title={puzzleParam} />
           {setHeading}
           {subgroupDisplay && <span className="alg-cat-subgroup"> {subgroupDisplay}</span>}
         </h1>
