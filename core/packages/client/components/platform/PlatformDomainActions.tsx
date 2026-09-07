@@ -76,6 +76,7 @@ interface PlatformLessonPayload {
   bodyZh: Record<string, unknown>;
   bodyEn: Record<string, unknown>;
   durationSeconds?: number | null;
+  driveVideo?: string | null;
   status: 'draft' | 'published' | 'archived';
   accessScope: 'public' | 'entitled';
 }
@@ -181,6 +182,7 @@ const LESSON_FIELDS = [
   field('titleEn', '英文标题', 'English title', { required: true, maxLength: 240 }),
   field('bodyZh', '中文课时内容 JSON', 'Chinese lesson content JSON', { kind: 'json', rows: 9, required: true, defaultValue: '{}' }),
   field('bodyEn', '英文课时内容 JSON', 'English lesson content JSON', { kind: 'json', rows: 9, required: true, defaultValue: '{}' }),
+  field('driveVideo', '网盘视频（文件 ID 或预览网址）', 'Drive video (file ID or preview URL)', { maxLength: 2048, placeholder: text('在网盘打开视频预览后，复制地址栏网址', 'Open the video preview in Drive, then copy the address-bar URL') }),
   field('durationSeconds', '时长（秒）', 'Duration (seconds)', { kind: 'number', min: 0, max: 86400, step: 1 }),
   field('status', '状态', 'Status', { kind: 'select', defaultValue: 'draft', options: [option('draft', '草稿', 'Draft'), option('published', '已发布', 'Published'), option('archived', '已归档', 'Archived')] }),
   field('accessScope', '访问范围', 'Access scope', { kind: 'select', defaultValue: 'entitled', options: [option('public', '公开', 'Public'), option('entitled', '需课程权益', 'Entitled learners')] }),
