@@ -420,8 +420,8 @@ async function createCourse(c: Context, admin: boolean): Promise<Response> {
           description_zh, description_en, status, content_hash,
           created_by_user_id, published_by_user_id, published_at
         ) VALUES ($1::uuid, 1, $2, $3, $4, $5, $6, $7, $8, decode($9, 'hex'), $10,
-          CASE WHEN $8 = 'published' THEN $10 ELSE NULL END,
-          CASE WHEN $8 = 'published' THEN NOW() ELSE NULL END)
+          CASE WHEN $8::varchar = 'published' THEN $10::bigint ELSE NULL END,
+          CASE WHEN $8::varchar = 'published' THEN NOW() ELSE NULL END)
       `, [row.id, revision.titleZh, revision.titleEn, revision.summaryZh, revision.summaryEn,
         revision.descriptionZh, revision.descriptionEn, revisionStatus, hashJson(revision), actor.userId]);
       if (instructorId) {
@@ -475,7 +475,7 @@ async function updateCourse(c: Context, admin: boolean): Promise<Response> {
         course_id, revision, title_zh, title_en, summary_zh, summary_en, description_zh, description_en,
         status, content_hash, created_by_user_id, published_by_user_id, published_at
       ) VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, decode($10, 'hex'), $11,
-        CASE WHEN $9 = 'published' THEN $11 ELSE NULL END, CASE WHEN $9 = 'published' THEN NOW() ELSE NULL END)
+        CASE WHEN $9::varchar = 'published' THEN $11::bigint ELSE NULL END, CASE WHEN $9::varchar = 'published' THEN NOW() ELSE NULL END)
     `, [id, nextRevision, revision.titleZh, revision.titleEn, revision.summaryZh, revision.summaryEn,
       revision.descriptionZh, revision.descriptionEn, revisionStatus, hashJson(revision), actor.userId]);
     await platformQuery(db, `
@@ -559,7 +559,7 @@ async function saveLesson(c: Context, admin: boolean, creating: boolean): Promis
             lesson_id, revision, title_zh, title_en, body_zh, body_en, media_id, duration_seconds,
             status, content_hash, created_by_user_id, published_by_user_id, published_at
           ) VALUES ($1::uuid, 1, $2, $3, $4::jsonb, $5::jsonb, $6::uuid, $7, $8, decode($9, 'hex'), $10,
-            CASE WHEN $8 = 'published' THEN $10 ELSE NULL END, CASE WHEN $8 = 'published' THEN NOW() ELSE NULL END)
+            CASE WHEN $8::varchar = 'published' THEN $10::bigint ELSE NULL END, CASE WHEN $8::varchar = 'published' THEN NOW() ELSE NULL END)
         `, [rows[0].id, revision.titleZh, revision.titleEn, JSON.stringify(revision.bodyZh), JSON.stringify(revision.bodyEn),
           mediaId, input.durationSeconds ?? null, revisionStatus, hashJson(revision), actor.userId]);
         return { status: 201, body: { lesson: rows[0] }, resourceType: 'lesson', resourceId: rows[0].id };
@@ -592,7 +592,7 @@ async function saveLesson(c: Context, admin: boolean, creating: boolean): Promis
         lesson_id, revision, title_zh, title_en, body_zh, body_en, media_id, duration_seconds,
         status, content_hash, created_by_user_id, published_by_user_id, published_at
       ) VALUES ($1::uuid, $2, $3, $4, $5::jsonb, $6::jsonb, $7::uuid, $8, $9, decode($10, 'hex'), $11,
-        CASE WHEN $9 = 'published' THEN $11 ELSE NULL END, CASE WHEN $9 = 'published' THEN NOW() ELSE NULL END)
+        CASE WHEN $9::varchar = 'published' THEN $11::bigint ELSE NULL END, CASE WHEN $9::varchar = 'published' THEN NOW() ELSE NULL END)
     `, [old.id, nextRevision, revision.titleZh, revision.titleEn, JSON.stringify(revision.bodyZh), JSON.stringify(revision.bodyEn),
       mediaId, input.durationSeconds === undefined ? old.durationSeconds : input.durationSeconds,
       revisionStatus, hashJson(revisionWithMedia), actor.userId]);
