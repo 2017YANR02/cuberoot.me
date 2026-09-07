@@ -69,7 +69,7 @@ async function requireLessonAccess(
   const lesson = rows[0];
   if (!lesson) notFound('Lesson');
   if (lesson.access_scope !== 'public') {
-    await requireCourseEntitlement(db, actor, lesson.course_id);
+    await requireCourseEntitlement(db, actor, lesson.course_id, lessonId);
   }
   return { courseId: lesson.course_id, revision: lesson.current_revision };
 }
@@ -415,7 +415,12 @@ platformLearningRoutes.post('/courses/:courseId/enrollment', async (c) => {
       WHERE user_id = $1 AND course_id = $2::uuid FOR UPDATE
     `, [actor.userId, courseId]);
     if (existing[0]?.status === 'active') {
-      return { status: 200, body: { id: existing[0].id, courseId, status: 'active' }, resourceType: 'course_entitlement', resourceId: existing[0].id };
+      try {
+        await requireCourseEntitlement(db, actor, courseId);
+        return { status: 200, body: { id: existing[0].id, courseId, status: 'active' }, resourceType: 'course_entitlement', resourceId: existing[0].id };
+      } catch (error) {
+        if (!(error instanceof PlatformApiError) || error.code !== 'FORBIDDEN') throw error;
+      }
     }
     const rows = await platformQuery<{ id: string }>(db, `
       INSERT INTO platform_course_entitlements (user_id, course_id, status, valid_from, valid_until)
@@ -440,17 +445,37 @@ function physicalBundleCode(): string {
   return `CR-${randomBytes(8).toString('hex').toUpperCase().match(/.{1,4}/g)!.join('-')}`;
 }
 
-function inviteBenefit(body: Record<string, unknown>): { courseId?: string; membershipPlanId?: string } {
+function inviteBenefit(body: Record<string, unknown>): { courseId?: string; membershipPlanId?: string; lessonIds?: string[] } {
   const raw = objectField(body, 'benefitSnapshot') ?? objectField(body, 'benefit', { required: true })!;
   const courseId = stringField(raw, 'courseId', { max: 128 });
   const membershipPlanId = stringField(raw, 'membershipPlanId', { max: 128 });
   if ((courseId == null) === (membershipPlanId == null)) {
     badRequest('benefit must identify exactly one courseId or membershipPlanId');
   }
+  let lessonIds: string[] | undefined;
+  if (Object.hasOwn(raw, 'lessonIds')) {
+    if (!courseId || !Array.isArray(raw.lessonIds) || raw.lessonIds.length === 0 || raw.lessonIds.length > 1000) {
+      badRequest('lessonIds must contain 1 to 1000 lesson IDs and requires courseId');
+    }
+    lessonIds = raw.lessonIds.map((id: unknown) => {
+      if (typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) badRequest('lessonIds must contain UUID strings');
+      return resourceId(id, 'lessonIds').toLowerCase();
+    });
+    if (new Set(lessonIds).size !== lessonIds.length) badRequest('lessonIds must not contain duplicates');
+  }
   return {
+    ...(lessonIds ? { lessonIds } : {}),
     ...(courseId ? { courseId: resourceId(courseId, 'courseId') } : {}),
     ...(membershipPlanId ? { membershipPlanId: resourceId(membershipPlanId, 'membershipPlanId') } : {}),
   };
+}
+
+async function validateInviteLessons(db: PlatformDb, benefit: ReturnType<typeof inviteBenefit>): Promise<void> {
+  if (!benefit.lessonIds) return;
+  const rows = await platformQuery(db, `
+    SELECT id FROM platform_lessons WHERE course_id = $1::uuid AND id = ANY($2::uuid[]) FOR SHARE
+  `, [benefit.courseId, benefit.lessonIds]);
+  if (rows.length !== benefit.lessonIds.length) badRequest('Every lesson must belong to the selected course');
 }
 
 function addMembershipPeriod(base: Date, unit: string, count: number): string | null {
@@ -489,7 +514,8 @@ platformLearningRoutes.post('/invites/redeem', async (c) => {
       `, [invite.id]);
       if (counts[0].count >= invite.max_redemptions) conflict('Invitation redemption limit reached');
     }
-    const benefit = invite.benefit_snapshot;
+    const benefit = inviteBenefit({ benefitSnapshot: invite.benefit_snapshot });
+    await validateInviteLessons(db, benefit);
     let entitlementId: string | null = null;
     let entitlementGrantLedgerId: string | null = null;
     let membershipId: string | null = null;
@@ -505,10 +531,10 @@ platformLearningRoutes.post('/invites/redeem', async (c) => {
       `, [actor.userId, courseId]);
       entitlementId = entitlements[0].id;
       const grants = await platformQuery<{ id: string }>(db, `
-        INSERT INTO platform_entitlement_ledger (entitlement_id, entry_type, delta_access, valid_from, reason, actor_user_id)
-        VALUES ($1::uuid, 'grant', 1, NOW(), 'invitation redemption', $2)
+        INSERT INTO platform_entitlement_ledger (entitlement_id, entry_type, delta_access, valid_from, reason, actor_user_id, lesson_ids)
+        VALUES ($1::uuid, 'grant', 1, NOW(), 'invitation redemption', $2, $3::uuid[])
         RETURNING id::text
-      `, [entitlementId, actor.userId]);
+      `, [entitlementId, actor.userId, benefit.lessonIds ?? null]);
       entitlementGrantLedgerId = grants[0].id;
     } else if (typeof benefit.membershipPlanId === 'string') {
       const planId = resourceId(benefit.membershipPlanId, 'membershipPlanId');
@@ -585,6 +611,7 @@ platformLearningRoutes.post('/admin/invites', async (c) => {
   const expiresAt = isoTimestampField(body, 'expiresAt');
   const benefit = inviteBenefit(body);
   const result = await withIdempotency(c, actor, 'learning.admin.invite.create', body, async (db) => {
+    await validateInviteLessons(db, benefit);
     if (benefit.courseId) {
       const rows = await platformQuery(db, `SELECT id::text FROM platform_courses WHERE id = $1::uuid`, [benefit.courseId]);
       if (!rows[0]) notFound('Course');
@@ -687,6 +714,7 @@ platformLearningRoutes.patch('/admin/invites/:id', async (c) => {
   const benefit = body.benefit != null || body.benefitSnapshot != null ? inviteBenefit(body) : undefined;
   if (label == null && status == null && maxRedemptions == null && expiresAt === undefined && benefit == null) badRequest('No invitation fields were provided');
   const result = await withIdempotency(c, actor, `learning.admin.invite.update:${id}`, body, async (db) => {
+    if (benefit) await validateInviteLessons(db, benefit);
     const current = await platformQuery<{ distribution_type: string }>(db, `
       SELECT distribution_type FROM platform_invite_codes WHERE id = $1::uuid FOR UPDATE
     `, [id]);
@@ -735,17 +763,17 @@ platformLearningRoutes.get('/lessons/:lessonId/media', async (c) => {
   const lessonId = resourceId(c.req.param('lessonId'), 'lessonId');
   const token = c.req.query('token');
   const db = platformDb();
-  let revision: number;
-  if (token == null) {
-    const actor = await requirePlatformActor(c);
-    revision = (await requireLessonAccess(actor, lessonId, db)).revision;
-  } else {
-    const lessons = await platformQuery<{ current_revision: number }>(db, `
-      SELECT current_revision FROM platform_lessons
-      WHERE id = $1::uuid AND status = 'published' AND current_revision IS NOT NULL
-    `, [lessonId]);
-    if (!lessons[0]) notFound('Lesson');
-    revision = lessons[0].current_revision;
+  const lessons = await platformQuery<{ current_revision: number; course_id: string; access_scope: string }>(db, `
+    SELECT lesson.current_revision, lesson.course_id::text, lesson.access_scope
+    FROM platform_lessons lesson JOIN platform_courses course ON course.id = lesson.course_id
+    WHERE lesson.id = $1::uuid AND lesson.status = 'published' AND lesson.current_revision IS NOT NULL
+      AND course.status IN ('published', 'unlisted')
+  `, [lessonId]);
+  const lesson = lessons[0];
+  if (!lesson) notFound('Lesson');
+  const revision = lesson.current_revision;
+  if (token == null && lesson.access_scope !== 'public') {
+    await requireCourseEntitlement(db, await requirePlatformActor(c), lesson.course_id, lessonId);
   }
   const assets = await platformQuery<{
     id: string; storage_key: string; mime_type: string; size_bytes: number | string;
