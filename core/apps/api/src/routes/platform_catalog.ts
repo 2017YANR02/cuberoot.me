@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { createReadStream, promises as fs } from 'node:fs';
 import type { Context } from 'hono';
 import { requirePlatformActor, requirePlatformAdmin, type PlatformActor } from '../platform/auth.js';
 import {
@@ -33,6 +34,7 @@ import {
   stringField,
   type JsonObject,
 } from '../platform/validation.js';
+import { driveStoredPath } from '../utils/drive_storage.js';
 
 export const platformCatalogRoutes = platformRouter();
 
@@ -43,9 +45,84 @@ const ENROLLMENT_MODES = ['free', 'purchase', 'invite', 'admin_grant'] as const;
 const LESSON_STATUSES = ['draft', 'published', 'archived'] as const;
 const ACCESS_SCOPES = ['public', 'entitled'] as const;
 const PATH_STATUSES = ['draft', 'published', 'archived'] as const;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const MAX_PLATFORM_MEDIA_BYTES = 1_073_741_824;
 
 function hashJson(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(value), 'utf8').digest('hex');
+}
+
+export function driveVideoNodeId(value: unknown): string | undefined {
+  if (value == null || value === '') return undefined;
+  if (typeof value !== 'string') badRequest('driveVideo must be a Drive file ID or preview URL');
+  const reference = value.trim();
+  if (!reference) return undefined;
+  let id = reference;
+  if (!UUID.test(id)) {
+    try {
+      id = new URL(reference).searchParams.get('preview') ?? '';
+    } catch {
+      badRequest('driveVideo must be a Drive file ID or preview URL');
+    }
+  }
+  if (!UUID.test(id)) badRequest('driveVideo must contain a valid Drive file ID');
+  return id.toLowerCase();
+}
+
+async function driveVideoMediaId(db: PlatformDb, actor: PlatformActor, nodeId: string): Promise<string> {
+  if (actor.userId == null) badRequest('A signed-in account is required to use a Drive video');
+  const nodes = await platformQuery<{
+    storageKey: string; mimeType: string | null; sizeBytes: number | string;
+  }>(db, `
+    SELECT storage_key AS "storageKey", mime_type AS "mimeType", size_bytes AS "sizeBytes"
+    FROM drive_nodes
+    WHERE id = $1::uuid AND owner_user_id = $2 AND kind = 'file'
+      AND status = 'ready' AND trashed_at IS NULL
+  `, [nodeId, actor.userId]);
+  const node = nodes[0];
+  if (!node) badRequest('Drive video is unavailable or is not owned by the current account');
+  if (!node.mimeType?.startsWith('video/')) badRequest('The selected Drive file is not a video');
+  const sizeBytes = Number(node.sizeBytes);
+  if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 1 || sizeBytes > MAX_PLATFORM_MEDIA_BYTES) {
+    badRequest('Drive video size must be between 1 byte and 1 GB');
+  }
+  const storageKey = `drive:${node.storageKey}`;
+  const existing = await platformQuery<{ id: string }>(db, `
+    SELECT id::text AS id FROM platform_media_assets
+    WHERE storage_key = $1 AND status = 'ready'
+  `, [storageKey]);
+  if (existing[0]) return existing[0].id;
+
+  let filePath: string;
+  try {
+    filePath = driveStoredPath(node.storageKey);
+  } catch {
+    badRequest('Drive video file is unavailable');
+  }
+  const stat = await fs.stat(filePath).catch(() => null);
+  if (!stat?.isFile()) badRequest('Drive video file is unavailable');
+  if (stat.size !== sizeBytes) badRequest('Drive video storage metadata does not match the uploaded file');
+
+  let sha256: string;
+  try {
+    const hash = createHash('sha256');
+    for await (const chunk of createReadStream(filePath)) hash.update(chunk);
+    sha256 = hash.digest('hex');
+  } catch {
+    badRequest('Drive video file is unavailable');
+  }
+
+  const media = await platformQuery<{ id: string }>(db, `
+    INSERT INTO platform_media_assets (
+      owner_user_id, storage_key, mime_type, size_bytes, sha256, access_scope, status, metadata
+    ) VALUES ($1, $2, $3, $4, decode($5, 'hex'), 'entitled', 'ready',
+      jsonb_build_object('source', 'drive', 'driveNodeId', $6))
+    ON CONFLICT (storage_key) DO UPDATE SET
+      mime_type = EXCLUDED.mime_type, size_bytes = EXCLUDED.size_bytes, sha256 = EXCLUDED.sha256,
+      access_scope = 'entitled', status = 'ready', metadata = platform_media_assets.metadata || EXCLUDED.metadata
+    RETURNING id::text AS id
+  `, [actor.userId, storageKey, node.mimeType, sizeBytes, sha256, nodeId]);
+  return media[0]!.id;
 }
 
 function requiredParam(c: Context, name: string): string {
@@ -288,7 +365,8 @@ async function listManagedCourses(c: Context, admin: boolean): Promise<Response>
     SELECT ${COURSE_PROJECTION},
       COALESCE((SELECT jsonb_agg(jsonb_build_object('id', l.id::text, 'slug', l.slug,
         'ordinal', l.ordinal, 'status', l.status, 'accessScope', l.access_scope,
-        'titleZh', lr.title_zh, 'titleEn', lr.title_en) ORDER BY l.ordinal)
+        'titleZh', lr.title_zh, 'titleEn', lr.title_en,
+        'driveVideo', (SELECT media.metadata->>'driveNodeId' FROM platform_media_assets media WHERE media.id = lr.media_id)) ORDER BY l.ordinal)
       FROM platform_lessons l LEFT JOIN platform_lesson_revisions lr
         ON lr.lesson_id = l.id AND lr.revision = l.current_revision WHERE l.course_id = c.id), '[]'::jsonb) AS lessons
     FROM platform_courses c
@@ -450,6 +528,7 @@ function lessonFields(body: JsonObject, required: boolean) {
     titleEn: stringField(body, 'titleEn', { max: 240 }),
     bodyZh, bodyEn,
     durationSeconds: body.durationSeconds === null ? null : integerField(body, 'durationSeconds', { min: 0, max: 86_400 }),
+    driveVideo: driveVideoNodeId(body.driveVideo),
     status: enumField(body, 'status', LESSON_STATUSES),
     accessScope: enumField(body, 'accessScope', ACCESS_SCOPES),
   };
@@ -468,20 +547,21 @@ async function saveLesson(c: Context, admin: boolean, creating: boolean): Promis
     if (creating) {
       const status = input.status ?? 'draft';
       const revisionStatus = status === 'published' ? 'published' : 'draft';
+      const mediaId = input.driveVideo ? await driveVideoMediaId(db, actor, input.driveVideo) : null;
       try {
         const rows = await platformQuery<{ id: string }>(db, `
           INSERT INTO platform_lessons (course_id, slug, ordinal, status, access_scope, current_revision)
           VALUES ($1::uuid, $2, $3, $4, $5, 1) RETURNING id::text AS id
         `, [id, input.slug, input.ordinal, status, input.accessScope ?? 'entitled']);
-        const revision = { titleZh: input.titleZh ?? '', titleEn: input.titleEn ?? '', bodyZh: input.bodyZh ?? {}, bodyEn: input.bodyEn ?? {} };
+        const revision = { titleZh: input.titleZh ?? '', titleEn: input.titleEn ?? '', bodyZh: input.bodyZh ?? {}, bodyEn: input.bodyEn ?? {}, mediaId };
         await platformQuery(db, `
           INSERT INTO platform_lesson_revisions (
-            lesson_id, revision, title_zh, title_en, body_zh, body_en, duration_seconds,
+            lesson_id, revision, title_zh, title_en, body_zh, body_en, media_id, duration_seconds,
             status, content_hash, created_by_user_id, published_by_user_id, published_at
-          ) VALUES ($1::uuid, 1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, decode($8, 'hex'), $9,
-            CASE WHEN $7 = 'published' THEN $9 ELSE NULL END, CASE WHEN $7 = 'published' THEN NOW() ELSE NULL END)
+          ) VALUES ($1::uuid, 1, $2, $3, $4::jsonb, $5::jsonb, $6::uuid, $7, $8, decode($9, 'hex'), $10,
+            CASE WHEN $8 = 'published' THEN $10 ELSE NULL END, CASE WHEN $8 = 'published' THEN NOW() ELSE NULL END)
         `, [rows[0].id, revision.titleZh, revision.titleEn, JSON.stringify(revision.bodyZh), JSON.stringify(revision.bodyEn),
-          input.durationSeconds ?? null, revisionStatus, hashJson(revision), actor.userId]);
+          mediaId, input.durationSeconds ?? null, revisionStatus, hashJson(revision), actor.userId]);
         return { status: 201, body: { lesson: rows[0] }, resourceType: 'lesson', resourceId: rows[0].id };
       } catch (error) {
         if (isPostgresConflict(error)) conflict('Lesson slug or order conflicts with an existing lesson');
@@ -491,7 +571,7 @@ async function saveLesson(c: Context, admin: boolean, creating: boolean): Promis
     const found = await platformQuery<Record<string, unknown>>(db, `
       SELECT l.id::text AS id, l.slug, l.ordinal, l.status, l.access_scope AS "accessScope", l.current_revision AS "currentRevision",
         r.title_zh AS "titleZh", r.title_en AS "titleEn", r.body_zh AS "bodyZh", r.body_en AS "bodyEn",
-        r.duration_seconds AS "durationSeconds"
+        r.media_id::text AS "mediaId", r.duration_seconds AS "durationSeconds"
       FROM platform_lessons l JOIN platform_lesson_revisions r ON r.lesson_id = l.id AND r.revision = l.current_revision
       WHERE l.course_id = $1::uuid AND (l.id::text = $2 OR l.slug = $2) FOR UPDATE
     `, [id, lessonKey]);
@@ -505,14 +585,17 @@ async function saveLesson(c: Context, admin: boolean, creating: boolean): Promis
     const status = input.status ?? String(old.status);
     const revisionStatus = status === 'published' ? 'published' : 'draft';
     const nextRevision = Number(old.currentRevision) + 1;
+    const mediaId = input.driveVideo ? await driveVideoMediaId(db, actor, input.driveVideo) : old.mediaId ?? null;
+    const revisionWithMedia = { ...revision, mediaId };
     await platformQuery(db, `
       INSERT INTO platform_lesson_revisions (
-        lesson_id, revision, title_zh, title_en, body_zh, body_en, duration_seconds,
+        lesson_id, revision, title_zh, title_en, body_zh, body_en, media_id, duration_seconds,
         status, content_hash, created_by_user_id, published_by_user_id, published_at
-      ) VALUES ($1::uuid, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8, decode($9, 'hex'), $10,
-        CASE WHEN $8 = 'published' THEN $10 ELSE NULL END, CASE WHEN $8 = 'published' THEN NOW() ELSE NULL END)
+      ) VALUES ($1::uuid, $2, $3, $4, $5::jsonb, $6::jsonb, $7::uuid, $8, $9, decode($10, 'hex'), $11,
+        CASE WHEN $9 = 'published' THEN $11 ELSE NULL END, CASE WHEN $9 = 'published' THEN NOW() ELSE NULL END)
     `, [old.id, nextRevision, revision.titleZh, revision.titleEn, JSON.stringify(revision.bodyZh), JSON.stringify(revision.bodyEn),
-      input.durationSeconds === undefined ? old.durationSeconds : input.durationSeconds, revisionStatus, hashJson(revision), actor.userId]);
+      mediaId, input.durationSeconds === undefined ? old.durationSeconds : input.durationSeconds,
+      revisionStatus, hashJson(revisionWithMedia), actor.userId]);
     await platformQuery(db, `
       UPDATE platform_lessons SET slug=$2, ordinal=$3, status=$4, access_scope=$5, current_revision=$6
       WHERE id=$1::uuid

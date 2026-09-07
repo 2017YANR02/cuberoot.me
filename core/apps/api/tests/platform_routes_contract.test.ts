@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
 import { decryptPlatformPrivateData, encryptPlatformPrivateData } from '../src/platform/data_encryption.js';
 import { PlatformApiError } from '../src/platform/errors.js';
-import { createPlatformMediaToken, verifyPlatformMediaToken } from '../src/platform/media_access.js';
+import { createPlatformMediaToken, platformMediaPath, verifyPlatformMediaToken } from '../src/platform/media_access.js';
+import { driveVideoNodeId } from '../src/routes/platform_catalog.js';
 import {
   normalizePlatformQuizAnswer,
   normalizePlatformQuizChoices,
@@ -121,6 +122,14 @@ describe('Platform private data and media tokens', () => {
     expect(verifyPlatformMediaToken({
       token: signed.token, mediaId: 'media-1', binding: 'lesson:lesson-1:3', nowSeconds: 1_800_000_301,
     })).toBe(false);
+  });
+
+  it('accepts a Drive preview URL and resolves only validated Drive storage keys', () => {
+    const id = '9b80f142-7f25-44b4-a440-f30291819d2d';
+    expect(driveVideoNodeId(`http://localhost:3000/zh/drive?preview=${id}`)).toBe(id);
+    expect(platformMediaPath(`drive:${id.slice(0, 2)}/${id}`)).toContain(id);
+    expect(() => driveVideoNodeId('http://localhost:3000/zh/drive')).toThrow(PlatformApiError);
+    expect(() => platformMediaPath('drive:../secret')).toThrow(PlatformApiError);
   });
 });
 
