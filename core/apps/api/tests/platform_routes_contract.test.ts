@@ -189,7 +189,7 @@ describe('Platform route and security contract', () => {
     expect(learningSource).toContain('answers_snapshot_encrypted');
     expect(learningSource).not.toContain('answers_snapshot,');
     expect(routeBlock(learningSource, 'platformLearningRoutes', 'get', '/lessons/:lessonId/media'))
-      .toContain('requireLessonAccess(actor, lessonId, db)');
+      .toContain('requireCourseEntitlement(db, await requirePlatformActor(c), lesson.course_id, lessonId)');
     expect(routeBlock(learningSource, 'platformLearningRoutes', 'post', '/analytics'))
       .toContain("consents[0]?.status !== 'granted'");
     expect(routeBlock(learningSource, 'platformLearningRoutes', 'get', '/certificates/:code/image'))
