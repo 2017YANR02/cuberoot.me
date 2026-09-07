@@ -1167,8 +1167,8 @@
 }
 
 .platform-course-outline {
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 64px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px;
   scroll-margin-top: 100px;
 }
 
@@ -1178,26 +1178,67 @@
   font-size: 0.85rem;
   margin-bottom: 24px;
 }
-.platform-course-outline .platform-lesson-folder {
-  border-radius: 16px;
-  transition: background 200ms ease;
+.platform-lesson-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 32px;
 }
-.platform-course-outline .platform-lesson-folder:hover {
-  background: color-mix(in srgb, var(--card) 65%, transparent);
+.platform-lesson-folder { min-width: 0; }
+.platform-lesson-cover {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--accent) 16%, var(--card));
+  isolation: isolate;
+}
+.platform-lesson-cover-1 { background: color-mix(in srgb, var(--signal-info) 16%, var(--card)); }
+.platform-lesson-cover-2 { background: color-mix(in srgb, var(--accent) 24%, var(--card)); }
+.platform-lesson-cover-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 66% center;
+}
+.platform-lesson-cover .puzzle-art, .platform-lesson-cover-photo {
+  transition: transform 240ms ease;
+}
+.platform-lesson-folder > summary:hover .puzzle-art,
+.platform-lesson-folder > summary:hover .platform-lesson-cover-photo { transform: scale(1.05); }
+.platform-lesson-cover-number {
+  position: absolute;
+  inset: 14px auto auto 16px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
 }
 .platform-course-outline .platform-lesson-folder > summary {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding-block: 24px;
+  gap: 8px 12px;
+  padding: 0 0 16px;
   font-size: 1.4rem;
   letter-spacing: -0.03em;
   list-style: none;
+  border-radius: 22px;
 }
+.platform-lesson-folder > summary .platform-lesson-cover { grid-column: 1 / -1; margin-bottom: 10px; }
+.platform-lesson-card-title { grid-column: 1; }
+.platform-lesson-card-cue { grid-column: 1; color: var(--muted-foreground); font-size: 0.85rem; font-weight: 400; letter-spacing: normal; }
 .platform-course-outline summary::-webkit-details-marker { display: none; }
 .platform-course-outline summary::after {
-  content: '+';
+  content: '⌄';
+  grid-column: 2;
+  grid-row: 2 / 4;
   display: grid;
   flex: 0 0 auto;
   place-items: center;
@@ -1209,7 +1250,7 @@
   font-weight: 400;
   color: var(--muted-foreground);
 }
-.platform-course-outline details[open] > summary::after { content: '−'; }
+.platform-course-outline details[open] > summary::after { transform: rotate(180deg); }
 .platform-course-outline .platform-detail-list strong { font-size: 1rem; font-weight: 500; }
 .platform-course-outline .platform-detail-list a { display: inline-flex; align-items: center; min-height: 44px; }
 .platform-course-outline .platform-lesson-folder .platform-detail-list > div { padding-block: 4px; }
@@ -1217,6 +1258,7 @@
 .platform-course-list .platform-entity h2 { font-size: clamp(1.4rem, 3vw, 2rem); letter-spacing: -0.03em; }
 
 @media (max-width: 760px) {
+  .platform-lesson-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
   .platform-course-hero, .platform-course-outline { grid-template-columns: minmax(0, 1fr); gap: 28px; }
   .platform-teacher-feature { min-height: 650px; }
   .platform-feature-photo { object-position: 65% center; }
