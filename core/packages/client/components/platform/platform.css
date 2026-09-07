@@ -854,6 +854,13 @@
   border-top: 1px solid var(--border-default);
 }
 
+.platform-lesson-folder > summary {
+  padding-block: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
 .platform-detail-list > div {
   display: flex;
   flex-wrap: wrap;
