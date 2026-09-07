@@ -440,6 +440,26 @@ driveRoutes.post('/drive/files/:id/compress', async (c) => {
   return c.json({ compression: compressionJson(result) }, 202);
 });
 
+driveRoutes.post('/drive/compressions/:id/cancel', async (c) => {
+  noStore(c);
+  const current = await requireDrive(c);
+  checkRateLimit(getIp(c), { bucket: 'drive-write', max: 120 });
+  const jobId = uuid(c.req.param('id'));
+  if (!jobId) return c.json({ error: 'valid compression id is required' }, 400);
+  const job = await sql.begin(async (tx) => {
+    const [existing] = await tx<CompressionRow[]>`
+      SELECT j.* FROM drive_compressions j JOIN drive_nodes n ON n.id = j.source_node_id
+      WHERE j.id = ${jobId} AND (n.owner_user_id = ${current.userId} OR ${current.isSuperAdmin}) FOR UPDATE OF j`;
+    if (!existing || !['queued', 'encoding', 'validating'].includes(existing.status)) return existing;
+    const [cancelled] = await tx<CompressionRow[]>`
+      UPDATE drive_compressions SET status = 'failed', error = 'compression-cancelled', progress = 0, updated_at = NOW()
+      WHERE id = ${jobId} RETURNING *`;
+    return cancelled;
+  });
+  if (!job) return c.json({ error: 'compression not found' }, 404);
+  return c.json({ compression: compressionJson(job) });
+});
+
 driveRoutes.post('/drive/folders', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c), { bucket: 'drive-write', max: 120 });

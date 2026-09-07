@@ -7,13 +7,13 @@ Type=simple
 WorkingDirectory=/root/core-api
 ExecStart=/usr/bin/env node --env-file=/root/core-api/.env /root/core-api/dist/drive-video.mjs
 Environment=NODE_ENV=production
-Environment=OMP_NUM_THREADS=2
+Environment=OMP_NUM_THREADS=4
 Restart=on-failure
 RestartSec=10
 KillMode=control-group
 TimeoutStopSec=20
 Nice=15
-CPUQuota=200%
+CPUQuota=400%
 MemoryMax=4G
 # SVT's helper threads share this limit with Node; CPU use stays capped above.
 TasksMax=128
