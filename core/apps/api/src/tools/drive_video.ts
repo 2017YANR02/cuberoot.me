@@ -166,7 +166,7 @@ async function processJob(job: Job): Promise<void> {
     const [width, height] = videoSize(v.width!, v.height!, job.resolution);
     const args = ['-hide_banner', '-nostdin', '-y', '-xerror', '-filter_threads', '2', ...inputOptions,
       '-copyts', '-noautorotate', '-i', input, '-map', '0:v:0', '-map', '0:a?', '-map_metadata', '0',
-      '-c:v', 'libsvtav1', '-preset', '6', '-crf', '24', '-svtav1-params', 'lp=2:film-grain=0', '-threads', '2',
+      '-c:v', 'libsvtav1', '-preset', '6', '-crf', '18', '-svtav1-params', 'lp=2:film-grain=0', '-threads', '2',
       '-pix_fmt', v.pix_fmt!, '-fps_mode', 'passthrough', '-enc_time_base', 'demux',
       '-video_track_timescale', v.time_base.split('/')[1], '-avoid_negative_ts', 'disabled', '-c:a', 'copy', '-movflags', '+faststart'];
     if (width !== v.width || height !== v.height) args.push('-vf', `scale=${width}:${height}:flags=lanczos,setsar=1`);

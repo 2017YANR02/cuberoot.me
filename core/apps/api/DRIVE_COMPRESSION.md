@@ -1,6 +1,6 @@
 # Drive cloud compression
 
-The API queues PostgreSQL jobs; `dist/drive-video.mjs` processes one job at a time in a separate systemd service. The original is never overwritten. Both modes use SVT-AV1 preset 6, CRF 24, copied audio, passthrough frame timing and MP4 faststart. This uses public AV1 technology, not YouTube's private encoding pipeline.
+The API queues PostgreSQL jobs; `dist/drive-video.mjs` processes one job at a time in a separate systemd service. The original is never overwritten. Both modes use SVT-AV1 preset 6, CRF 18, copied audio, passthrough frame timing and MP4 faststart. This uses public AV1 technology, not YouTube's private encoding pipeline.
 
 - `original` retains dimensions; `1080p` fits 1920×1080 or 1080×1920 without upscaling, with even pixel dimensions.
 - Current inputs: MP4/MOV or Matroska/WebM, one progressive SDR 4:2:0 video stream, square pixels, up to 4096×2160 pixels total, optional audio copied verbatim. HDR, rotation, non-video/audio streams and odd dimensions fail safely.
