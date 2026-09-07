@@ -10,6 +10,12 @@
 
 一次性恢复工具为 `scripts/best2x2/repair-cll.mjs`：默认只生成带线上备份的清单，`--apply` 写入，`--resume <清单>` 可续传限流中断的任务。它要求历史 `.tmp/best2x2` 快照存在，并拒绝覆盖导入后被他人改动的公式；原 0104 迁移保持不变。
 
+## 全部二阶公式集手法恢复（2026-09-07）
+
+已扩展检查到全部 18 个二阶公式集、791 个情况。CLL 之外的 16 集共 744 个情况、2,849 条公式已通过带行锁与旧值断言的数据库事务恢复；Ortega OLL 的 7 个情况、27 条公式通过原有阶段目标校验，无需修改。最终全部 3,299 条公式通过站内 `validateAlgCase(..., { storedAlg: true })`，18 集线上回读与预期一致。
+
+`scripts/best2x2/repair-import.mjs` 从修正后的导入清单生成备份及事务 SQL，逐条要求公式等于对应来源原文或仅前置 U/U2/U'。只有线上 setup/algs 仍与旧导入一致的记录可更新；SQL 只改 setup/algs。`--verify <备份清单>` 比较全部情况的回读数据，并再次实测还原（Ortega OLL 由阶段目标校验）。本轮备份为 `.tmp/png/2x2-repair-1788788205090.json`，回读为同名 `-verified.json`。原 0104 迁移未改。
+
 ## 目标与边界
 
 - 上游功能：[`WACWCA/two-tool`](https://github.com/WACWCA/two-tool)，已获授权。
@@ -111,6 +117,5 @@ Get-Content apps/api/migrations/0104_best_2x2_algs.sql | docker exec -i pg13 psq
 
 ## 上线状态
 
-- 代码与迁移已在本地完成和验证。
-- 尚未 push，因此线上 API 仍会对新增 set 返回 404；push 后部署流程会自动执行迁移。
-- 本次没有触碰工作区中并行进行的 timer / reconstruct / meet 改动。
+- 17 个表格公式集已在线上存在；2026-09-07 完成全部二阶公式集的手法恢复与逐项回读。
+- 本次数据修复已直接生效；维护脚本仅本地提交，未 push。
