@@ -336,7 +336,6 @@
   display: grid;
   grid-template-columns: minmax(180px, 0.34fr) minmax(0, 1fr);
   gap: 28px 48px;
-  border-top: 1px solid var(--border-strong);
   padding-top: 28px;
 }
 
@@ -379,7 +378,6 @@
   gap: 20px;
   align-items: center;
   min-height: 104px;
-  border-block: 1px solid var(--border-default);
   padding-block: 18px;
   color: var(--foreground);
   text-decoration: none;
@@ -434,7 +432,6 @@
 }
 
 .platform-home-empty {
-  border-block: 1px solid var(--border-default);
   padding-block: 18px;
 }
 
@@ -483,7 +480,6 @@
 .platform-home-workspace-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  border-top: 1px solid var(--border-default);
 }
 
 .platform-home-action-list a,
@@ -493,7 +489,6 @@
   gap: 16px;
   align-items: center;
   min-height: 94px;
-  border-bottom: 1px solid var(--border-default);
   padding-block: 16px;
   color: var(--foreground);
   text-decoration: none;
@@ -528,7 +523,6 @@
   flex-wrap: wrap;
   gap: 10px 22px;
   align-items: center;
-  border-top: 1px solid var(--border-default);
   padding-top: 22px;
 }
 
@@ -544,7 +538,6 @@
 }
 
 .platform-static-view section {
-  border-top: 1px solid var(--border-strong);
   padding-top: 20px;
 }
 
@@ -650,13 +643,8 @@
   color: var(--foreground);
 }
 
-.platform-entity-list {
-  border-top: 1px solid var(--border-strong);
-}
-
 .platform-entity {
   padding-block: 22px;
-  border-bottom: 1px solid var(--border-default);
 }
 
 .platform-entity-heading {
@@ -781,7 +769,6 @@
   display: flex;
   gap: 14px;
   align-items: flex-start;
-  border-block: 1px solid var(--border-default);
   padding-block: 22px;
 }
 
@@ -848,7 +835,6 @@
 .platform-related {
   width: 100%;
   margin-top: 14px;
-  border-top: 1px solid var(--border-default);
   padding-top: 20px;
 }
 
@@ -865,7 +851,6 @@
 
 .platform-write-panel {
   margin-top: 32px;
-  border-top: 1px solid var(--border-strong);
   padding-top: 24px;
 }
 
@@ -909,7 +894,6 @@
 .platform-domain-form,
 .platform-domain-actions {
   margin-top: 32px;
-  border-top: 1px solid var(--border-strong);
   padding-top: 24px;
 }
 
@@ -977,7 +961,6 @@
 .platform-domain-content,
 .platform-course-editor {
   margin-top: 32px;
-  border-top: 1px solid var(--border-strong);
   padding-top: 24px;
 }
 
@@ -992,10 +975,6 @@
   font-size: 1.08rem;
 }
 
-.platform-detail-list {
-  border-top: 1px solid var(--border-default);
-}
-
 .platform-lesson-folder > summary {
   padding-block: 12px;
   cursor: pointer;
@@ -1008,7 +987,6 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 7px 12px;
-  border-bottom: 1px solid var(--border-default);
   padding-block: 12px;
 }
 
@@ -1075,7 +1053,6 @@
 
 .platform-course-editor-section,
 .platform-course-editor-item {
-  border-top: 1px solid var(--border-default);
   padding-top: 22px;
 }
 
@@ -1195,7 +1172,6 @@
   scroll-margin-top: 100px;
 }
 
-.platform-course-outline > .platform-domain-content { border-color: var(--border-default); }
 .platform-course-outline .platform-domain-content h2 {
   color: var(--muted-foreground);
   font-weight: 500;
@@ -1203,7 +1179,6 @@
   margin-bottom: 24px;
 }
 .platform-course-outline .platform-lesson-folder {
-  border-bottom: 1px solid var(--border-default);
   transition: background 200ms ease;
 }
 .platform-course-outline .platform-lesson-folder:hover {
@@ -1234,11 +1209,9 @@
   color: var(--muted-foreground);
 }
 .platform-course-outline details[open] > summary::after { content: '−'; }
-.platform-course-outline .platform-detail-list { border-top: 0; }
 .platform-course-outline .platform-detail-list strong { font-size: 1rem; font-weight: 500; }
 .platform-course-outline .platform-detail-list a { display: inline-flex; align-items: center; min-height: 44px; }
 .platform-course-outline .platform-lesson-folder .platform-detail-list > div { padding-block: 4px; }
-.platform-course-outline .platform-lesson-folder .platform-detail-list > div:last-child { border-bottom: 0; }
 .platform-course-list .platform-entity { padding-block: 32px; }
 .platform-course-list .platform-entity h2 { font-size: clamp(1.4rem, 3vw, 2rem); letter-spacing: -0.03em; }
 
