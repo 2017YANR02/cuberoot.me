@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type SyntheticEvent } from 'react';
 import AppLink from '@/components/AppLink';
+import { VisualCube } from '@/components/VisualCube';
 import { useT } from '@/hooks/useT';
 import { loadPlatformLessonMedia, type PlatformLessonMedia } from '@/lib/platform-gateway';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
@@ -36,11 +37,11 @@ function readableJson(value: unknown): string | null {
   return values.length ? values.join('\n\n') : null;
 }
 
-function DomainList({ title, items, href, collapsible = false }: {
+function DomainList({ title, items, href, cover }: {
   title: string;
   items: unknown[];
   href?: (item: Record<string, unknown>) => string | null;
-  collapsible?: boolean;
+  cover?: ReactNode;
 }) {
   const t = useT();
   if (!items.length) return <p className="platform-domain-note">{t('当前没有可展示的内容。', 'There is no content to display yet.')}</p>;
@@ -62,9 +63,13 @@ function DomainList({ title, items, href, collapsible = false }: {
       })}
     </div>
   );
-  return collapsible ? (
+  return cover ? (
     <details className="platform-lesson-folder">
-      <summary>{title}</summary>
+      <summary>
+        {cover}
+        <span className="platform-lesson-card-title">{title}</span>
+        <span className="platform-lesson-card-cue">{t('查看课时', 'View lessons')}</span>
+      </summary>
       {list}
     </details>
   ) : <section className="platform-domain-content"><h2>{title}</h2>{list}</section>;
@@ -184,11 +189,17 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
       <div className="platform-domain-stack platform-course-outline" id="platform-course-outline">
         {canGroup ? <section className="platform-domain-content">
           <h2>{t('课程课时', 'Course lessons')}</h2>
-          {grouped.map((items, index) => items.length > 0 ? <DomainList
+          <div className="platform-lesson-grid">{grouped.map((items, index) => items.length > 0 ? <DomainList
             key={sections[index]}
             title={[t('先导课', 'Introduction'), t('试听课', 'Trial lessons'), t('正式课', 'Core lessons')][index]}
-            items={items} href={lessonHref} collapsible
-          /> : null)}
+            items={items} href={lessonHref}
+            cover={<span className={`platform-lesson-cover platform-lesson-cover-${index}`} aria-hidden="true">
+              {index === 0 && data.slug === 'yan-ruimin-3x3-beginner'
+                ? <img className="platform-lesson-cover-photo" src="/images/ruimin/gallery/photo-03.webp" alt="" loading="lazy" />
+                : <VisualCube view={index === 1 ? 'f2l' : 'iso'} size={144} local alt="" />}
+              <span className="platform-lesson-cover-number">0{index + 1}</span>
+            </span>}
+          /> : null)}</div>
         </section> : <DomainList
           title={t('课程课时', 'Course lessons')}
           items={lessons}
