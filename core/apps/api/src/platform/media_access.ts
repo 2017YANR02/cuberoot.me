@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import type { Context } from 'hono';
+import { driveStoredPath } from '../utils/drive_storage.js';
 import { storedVideoResponse } from '../utils/video_upload.js';
 import { PlatformApiError, notFound } from './errors.js';
 
@@ -48,8 +49,15 @@ export function verifyPlatformMediaToken(input: {
   return received.length === expected.length && timingSafeEqual(received, expected);
 }
 
-function mediaPath(storageKey: string): string {
+export function platformMediaPath(storageKey: string): string {
   if (!storageKey || storageKey.includes('\0')) notFound('Media');
+  if (storageKey.startsWith('drive:')) {
+    try {
+      return driveStoredPath(storageKey.slice('drive:'.length));
+    } catch {
+      notFound('Media');
+    }
+  }
   const root = path.resolve(process.env.PLATFORM_MEDIA_DIR || path.join(process.cwd(), '.platform-media'));
   const resolved = path.resolve(root, storageKey);
   if (resolved !== root && !resolved.startsWith(`${root}${path.sep}`)) notFound('Media');
@@ -61,7 +69,7 @@ export async function servePlatformMedia(c: Context, asset: {
   mimeType: string;
   sizeBytes: number | string;
 }, cacheControl: string): Promise<Response> {
-  const filePath = mediaPath(asset.storageKey);
+  const filePath = platformMediaPath(asset.storageKey);
   const stat = await fs.stat(filePath).catch(() => null);
   const expectedSize = Number(asset.sizeBytes);
   if (!stat?.isFile()) notFound('Media');
