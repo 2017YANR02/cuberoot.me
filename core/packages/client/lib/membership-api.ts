@@ -151,10 +151,18 @@ export async function listPlans(): Promise<{ plans: MembershipPlan[]; payEnabled
   return handleApi(await fetch(`${BASE}/plans`));
 }
 
-export async function listPublicMembers(): Promise<PublicMember[]> {
-  const result = await handleApi<{ members: PublicMember[] }>(await fetch(`${BASE}/members`));
+export async function listPublicMembers(signal?: AbortSignal): Promise<PublicMember[]> {
+  const result = await handleApi<{ members: PublicMember[] }>(await fetch(`${BASE}/members`, { signal, cache: 'no-store' }));
   // 管理员可能没有 WCA ID;公开名单和图库均只链接有效的 WCA 个人页。
   return result.members.filter((member) => typeof member.wcaId === 'string' && WCA_ID_REGEX.test(member.wcaId));
+}
+
+/** Public opt-in and active status are enforced by the existing members endpoint.
+ * Administrator access alone is not a purchased membership identity. */
+export function publicMemberBadgeKind(member: Pick<PublicMember, 'planSlug'> | undefined): 'personalMember' | 'enterpriseMember' | null {
+  const slug = member?.planSlug;
+  if (!slug || slug === 'admin') return null;
+  return slug.startsWith('enterprise_') ? 'enterpriseMember' : 'personalMember';
 }
 
 export async function getMyMembership(): Promise<{

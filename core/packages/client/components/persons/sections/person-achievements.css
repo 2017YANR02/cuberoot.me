@@ -21,6 +21,8 @@
 .wp-achievement-art-wr, .wp-achievement-art-historicalWR { --badge-accent: var(--signal-info); }
 .wp-achievement-art-historicalCR, .wp-achievement-art-allEvents { --badge-accent: var(--signal-success); }
 .wp-achievement-art-historicalNR, .wp-achievement-art-slam { --badge-accent: var(--accent); }
+.wp-achievement-art-personalMember { --badge-accent: var(--signal-info); }
+.wp-achievement-art-enterpriseMember { --badge-accent: var(--signal-warning); }
 /* anchored-panel: clamped by usePanelClamp; vertical positioning respects viewport height. */
 .wp-achievement-card { position: fixed; z-index: 1100; width: min(360px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); overflow: auto; overscroll-behavior: contain; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--popover); color: var(--foreground); box-shadow: 0 16px 48px color-mix(in srgb, var(--foreground) 20%, transparent); }
 .wp-achievement-card-art { position: relative; display: grid; place-items: center; padding: 22px; background: radial-gradient(ellipse at 35% 10%, color-mix(in srgb, var(--badge-accent) 35%, var(--popover)), color-mix(in srgb, var(--badge-accent) 10%, var(--popover))); }

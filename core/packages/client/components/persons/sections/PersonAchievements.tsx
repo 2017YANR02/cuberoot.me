@@ -6,6 +6,8 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { useT } from '@/hooks/useT';
+import { displayCuberName } from '@/lib/cuber-name-display';
+import { listPublicMembers, publicMemberBadgeKind } from '@/lib/membership-api';
 import { apiUrl } from '@/lib/api-base';
 import { eventDisplayName } from '@/lib/wca-events';
 import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from '@/lib/event-constants';
@@ -20,7 +22,7 @@ interface Achievement {
   isOnlyFirst: boolean;
 }
 
-export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [], results = [], comps = [], countryIso2 = '', extraAchievements = [] }: {
+export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [], results = [], comps = [], countryIso2 = '', extraAchievements = [], memberKind = null }: {
   rows: Achievement[]; wcaId: string; isZh: boolean;
   records?: WcaPersonProfile['personal_records'];
   podiums?: (Pick<ChampionshipPodiumRow, 'level' | 'place' | 'eventId'> & Partial<ChampionshipPodiumRow>)[];
@@ -28,6 +30,7 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [],
   comps?: WcaCompetition[];
   countryIso2?: string;
   extraAchievements?: ExplorerAchievement[];
+  memberKind?: ReturnType<typeof publicMemberBadgeKind>;
 }) {
   const t = useT();
   const explorer = useMemo(() => [...personalExplorerAchievements(results, comps, countryIso2, podiums), ...extraAchievements], [results, comps, countryIso2, podiums, extraAchievements]);
@@ -62,10 +65,15 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [],
     CANCELLED_EVENT_IDS.has(event) ? [] : (['single', 'average'] as const)
       .filter(type => results[type]?.world_rank === 1 && results[type]!.best > 0)
       .map(type => `${eventDisplayName(event, isZh)} ${type === 'single' ? t('单次', 'Single') : t('平均', 'Average')} ${formatWcaResult(results[type]!.best, event, type)}`));
-  if (!achievements.length && !champions.length && !currentRecords.length && !historical.size && !hundred && !allEvents && !explorer.length) return null;
+  if (!memberKind && !achievements.length && !champions.length && !currentRecords.length && !historical.size && !hundred && !allEvents && !explorer.length) return null;
   return (
     <section className="wp-achievements" aria-label={t('成就', 'Achievements')}>
       <div className="wp-achievements-list">
+        {memberKind && <AchievementBadge kind={memberKind} description={memberKind === 'enterpriseMember'
+          ? t('CubeRoot 有效企业会员。感谢你对 CubeRoot 的支持。', 'An active CubeRoot enterprise member. Thank you for supporting CubeRoot.')
+          : t('CubeRoot 有效个人会员。感谢你对 CubeRoot 的支持。', 'An active CubeRoot individual member. Thank you for supporting CubeRoot.')}>
+          <AppLink href="/membership" prefetch={false}>{t('了解会员权益', 'Explore membership benefits')}</AppLink>
+        </AchievementBadge>}
         {explorer.map(a => <AchievementBadge key={`${a.kind}:${a.event}:${a.record}`} kind={a.kind} event={a.event} achievement={a}
           name={[a.event ? eventDisplayName(a.event, isZh) : '', a.record].filter(Boolean).join(' ')}
           description={t(EXPLORER_ACHIEVEMENTS[a.kind].description.zh, EXPLORER_ACHIEVEMENTS[a.kind].description.en)}>
@@ -73,11 +81,12 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [],
             {e.event && <strong>{eventDisplayName(e.event, isZh)} </strong>}
             {e.value && e.event && <span>{formatWcaResult(e.value, e.event, e.type ?? 'single')} </span>}
             {e.text && <span>{e.text} </span>}
+            {e.personId && <AppLink href={`/wca/persons/${e.personId}`} prefetch={false}>{displayCuberName(e.personName || e.personId, isZh)}</AppLink>}
             {e.place && <span>{t(`第 ${e.place} 名`, `Place ${e.place}`)} </span>}
             {e.date && <time>{formatDateRangeIso(e.date, e.endDate)}</time>}
             {e.compId && <div><AppLink href={`/wca/comp/${e.compId}`} prefetch={false}><CompCell compId={e.compId} compName={compNames.get(e.compId)} isZh={isZh} noFlag date={null} /></AppLink></div>}
           </li>)}</ol>}
-          <AppLink href={`/wca/${EXPLORER_ACHIEVEMENTS[a.kind].stat}`} prefetch={false}>{t('查看相关统计', 'View related statistics')}</AppLink>
+          {EXPLORER_ACHIEVEMENTS[a.kind].stat && <AppLink href={`/wca/${EXPLORER_ACHIEVEMENTS[a.kind].stat}`} prefetch={false}>{t('查看相关统计', 'View related statistics')}</AppLink>}
         </AchievementBadge>)}
         {hundred && <AchievementBadge kind="hundred" description={t('参加过至少 100 场正式 WCA 比赛。', 'Participated in at least 100 official WCA competitions.')}>
           <p>{t(`已参加 ${attended.size} 场比赛`, `${attended.size} competitions attended`)}</p>
@@ -119,16 +128,35 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [],
 }
 
 export default function PersonAchievements({ wcaId, isZh, records, results, comps, countryIso2 }: { wcaId: string; isZh: boolean; records: WcaPersonProfile['personal_records']; results: WcaResultRow[] | null; comps: WcaCompetition[] | null; countryIso2?: string }) {
+  const [member, setMember] = useState<{ wcaId: string; kind: ReturnType<typeof publicMemberBadgeKind> } | null>(null);
+  useEffect(() => {
+    let controller: AbortController | undefined;
+    const refresh = () => {
+      if (document.visibilityState === 'hidden') return;
+      controller?.abort();
+      const request = new AbortController();
+      controller = request;
+      listPublicMembers(request.signal).then(members => {
+        if (!request.signal.aborted) setMember({ wcaId, kind: publicMemberBadgeKind(members.find(m => m.wcaId === wcaId)) });
+      }).catch(() => {
+        if (!request.signal.aborted) setMember({ wcaId, kind: null });
+      });
+    };
+    refresh();
+    const interval = window.setInterval(refresh, 60_000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { controller?.abort(); window.clearInterval(interval); document.removeEventListener('visibilitychange', refresh); };
+  }, [wcaId]);
   const [extra, setExtra] = useState<{ wcaId: string; rows: ExplorerAchievement[] } | null>(null);
+  const [podiums, setPodiums] = useState<{ wcaId: string; rows: ChampionshipPodiumRow[] } | null>(null);
   const markers = results === null ? null : [...new Set(results.filter(r => !r.live).flatMap(r => [r.regional_single_record, r.regional_average_record]).filter((v): v is string => !!v))].sort().join(',');
   useEffect(() => {
     if (markers === null) return;
     const controller = new AbortController();
-    fetchExplorerAchievements(wcaId, markers.split(','), controller.signal).then(rows => { if (!controller.signal.aborted) setExtra({ wcaId, rows }); });
+    fetchExplorerAchievements(wcaId, markers.split(','), controller.signal, podiums?.wcaId === wcaId ? podiums.rows : []).then(rows => { if (!controller.signal.aborted) setExtra({ wcaId, rows }); });
     return () => controller.abort();
-  }, [wcaId, markers]);
+  }, [wcaId, markers, podiums]);
   const [rows, setRows] = useState<Achievement[]>([]);
-  const [podiums, setPodiums] = useState<{ wcaId: string; rows: ChampionshipPodiumRow[] } | null>(null);
   useEffect(() => {
     let cancelled = false;
     fetchWcaPersonChampionshipPodiums(wcaId)
@@ -145,5 +173,5 @@ export default function PersonAchievements({ wcaId, isZh, records, results, comp
       .catch(() => { /* An unavailable achievement feed must not block the person profile. */ });
     return () => controller.abort();
   }, []);
-  return <GrandSlamBadges rows={rows} wcaId={wcaId} isZh={isZh} records={records} results={results ?? []} comps={comps ?? []} countryIso2={countryIso2} extraAchievements={extra?.wcaId === wcaId ? extra.rows : []} podiums={podiums?.wcaId === wcaId ? podiums.rows : []} />;
+  return <GrandSlamBadges rows={rows} wcaId={wcaId} isZh={isZh} records={records} results={results ?? []} comps={comps ?? []} countryIso2={countryIso2} memberKind={member?.wcaId === wcaId ? member.kind : null} extraAchievements={extra?.wcaId === wcaId ? extra.rows : []} podiums={podiums?.wcaId === wcaId ? podiums.rows : []} />;
 }

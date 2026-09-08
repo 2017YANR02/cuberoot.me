@@ -17,6 +17,13 @@ function combinations<T>(arr: T[], k: number): T[][] {
 }
 
 export class MostPodiumsTogether extends GroupedStatistic {
+  private achievementRows: [string, string, number, string, string][] = [];
+
+  override async toJson() {
+    const json = await super.toJson();
+    return { ...json, achievementRows: this.achievementRows };
+  }
+
   constructor() {
     super();
     this.title = 'Most podiums together';
@@ -48,6 +55,7 @@ export class MostPodiumsTogether extends GroupedStatistic {
   // NOTE: 对每组领奖台选手取组合，统计共同登台频率
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     const podiums = rows.map(r => (r['people'] as string).split(','));
+    this.achievementRows = [];
 
     const groups: Record<number, string> = { 2: 'Pairs', 3: 'Triples' };
 
@@ -63,8 +71,13 @@ export class MostPodiumsTogether extends GroupedStatistic {
         }
       }
 
-      const results = [...freq.entries()]
-        .sort((a, b) => b[1] - a[1])
+      const sorted = [...freq.entries()].sort((a, b) => b[1] - a[1]);
+      // Complete eligibility data; the visible leaderboard remains its existing top 100.
+      if (peopleCount === 2) this.achievementRows = sorted.flatMap(([people, count]) => {
+        const matches = [...people.matchAll(/\[([^\]]+)\]\(https:\/\/www\.worldcubeassociation\.org\/persons\/([^/)]+)\)/g)];
+        return count >= 10 && matches.length === 2 ? [[matches[0][2], matches[1][2], count, matches[0][1], matches[1][1]] as [string, string, number, string, string]] : [];
+      });
+      const results = sorted
         .slice(0, 100)
         .map(([people, count]) => [count, people]);
 
