@@ -432,8 +432,8 @@ describe('Shanghai geographic asset and river cruise', () => {
       expect((o.material as THREE.MeshStandardMaterial).map).toBe(null);
       materials.add(o.material as THREE.Material); o.geometry.dispose();
     });
-    // No. 6 has eleven rounded ground openings; No. 18 has five shopfronts.
-    expect(meshes).toBe(103); expect(triangles).toBe(664124);
+    // No. 6 now has four window orders, an openwork annex and five dormers.
+    expect(meshes).toBe(105); expect(triangles).toBe(706297);
     for (const m of materials) m.dispose();
   });
 
@@ -443,7 +443,6 @@ describe('Shanghai geographic asset and river cruise', () => {
     for (const [name, probes] of [
       ['Chartered Bank Bund', [[1.8, 13.7, .6]]],
       ['Bund Public Service Center 15-1', [[.8, 6.2, .6]]],
-      ['China Commercial Bank', [[.25, 14.05, .6], [1.05, 14.1, -.06]]],
     ] as const) {
       const building = root.getObjectByName(name)!;
       for (const [x, y, depth] of probes) {
@@ -453,6 +452,29 @@ describe('Shanghai geographic asset and river cruise', () => {
       }
     }
     root.traverse(o => { if (o instanceof THREE.Mesh) { o.geometry.dispose(); (o.material as THREE.Material).dispose(); } });
+  });
+
+  it('keeps every Commercial Bank window recessed and preserves masonry between its paired openings', () => {
+    const root = createBundBuildings(data.polygons, () => new THREE.MeshStandardMaterial());
+    root.updateMatrixWorld(true);
+    const b=root.getObjectByName('China Commercial Bank')!;
+    const probe=(x:number,y:number)=>{
+      const hit=new THREE.Raycaster(b.localToWorld(new THREE.Vector3(x,y,-10)),new THREE.Vector3(0,0,1).transformDirection(b.matrixWorld)).intersectObject(b,true)[0];
+      expect(hit,`No. 6 at ${x}, ${y}`).toBeDefined();
+      return b.worldToLocal(hit.point).z;
+    };
+    // Probe actual meshes, including glazing, reveals, frames and the whole shell.
+    // Eleven axes on four floors; offset from the centre mullion and transoms.
+    const axes=[-13.031815,-11.841254,-7.754734,-6.531996,-2.300678,0,2.300678,6.531996,7.754734,11.841254,13.031815];
+    for(const [i,x] of axes.entries()) for(const y of [2.8,7.35,11.65,i===5?16:15.2]) expect(probe(x+.15,y),`No. 6 glazing at ${x}, ${y}`).toBeCloseTo(.6,4);
+    // Adjacent openings must not cut away their shared pier above the columns.
+    for(const i of [0,2,7,9]) expect(probe((axes[i]+axes[i+1])/2,9.05)).toBeCloseTo(-.06,4);
+    // The central gable's three slits penetrate its recessed plaster panel.
+    for(const x of [-.34,0,.34]) expect(probe(x,19.3)).toBeCloseTo(.6,4);
+    expect(probe(.17,19.3)).toBeCloseTo(.15,4);
+    // Annex glazing is also recessed; the old uninterrupted OSM wall is gone.
+    for(const x of [17.418454,19.012925,20.607396]) for(const y of [2.7,7.35,11.65]) expect(probe(x,y)).toBeCloseTo(-1.990334,4);
+    root.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();(o.material as THREE.Material).dispose();}});
   });
 
   it('allocates no photo-reconstruction materials for a map without Bund buildings', () => {

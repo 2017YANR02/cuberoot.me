@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CityGeometry, type MaterialFactory, type ShanghaiPolygon } from './space-shanghai-geometry';
 import { buildingFrame, centre, edges, frontShell, bundStone, roofMetal, wallLedge, windowBay, windowBays, type FrontOpening } from './space-shanghai-facades';
+import { commercialBank } from './space-shanghai-commercial-bank';
 
 // Each street elevation was compared with the actual photographs linked in the
 // credits and replica tracker. Widths follow OSM; vertical dimensions below are
@@ -16,7 +17,7 @@ export const BUND_BUILDINGS: readonly BundBuilding[] = [
   { number: 2, id: 'way/178410325', name: 'Shanghai Club', edge: 4, top: 22.5, floors: [3, 7, 12, 17, 20.5], bays: 9, stone: 'ivory', cornices: [8.8, 19.2, 22.5], arches: [3, 7, 20.5], order: { count: 6, bottom: 9, top: 18.8, span: .64 } },
   { number: 3, id: 'way/178408816', name: 'Union Building', edge: 2, top: 26.5, floors: [3, 7.4, 12, 16.4, 20.7, 24.5], bays: 7, stone: 'grey', cornices: [8.9, 18.6, 22.3, 26.5], arches: [3, 24.5] },
   { number: 5, id: 'way/178408821', name: 'Nissin Building', edge: 6, top: 26, floors: [3, 7, 11.5, 16, 20.5, 24], bays: 5, stone: 'warm', cornices: [8.9, 22, 26], arches: [3, 7], order: { count: 4, bottom: 9, top: 22, span: .65, pilaster: true } },
-  { number: 6, id: 'way/178408827', name: 'China Commercial Bank', edge: 9, top: 16.2, floors: [3, 8.3, 13.1], bays: 9, groundBays: 11, stone: 'grey', cornices: [5.5, 10.6, 16], arches: [3, 8.3, 13.1] },
+  { number: 6, id: 'way/178408827', name: 'China Commercial Bank', edge: 9, top: 14.15, floors: [2.7, 7.35, 11.65, 15.7], bays: 11, stone: 'grey', cornices: [4.95, 9.65, 14.15] },
   { number: 7, id: 'way/178408810', name: 'Great Northern Telegraph', edge: 3, top: 19.2, floors: [3, 8.5, 13.7, 17.3], bays: 7, stone: 'warm', cornices: [5.7, 15.8, 19], arches: [3] },
   { number: 9, id: 'way/178408820', name: 'China Merchants Building', edge: 17, top: 13.8, floors: [2.7, 7, 11.5], bays: 5, stone: 'brick', cornices: [4.7, 9.3, 13.8], arches: [2.7] },
   { number: 14, id: 'way/178405872', name: 'Bank of Communications Bund', edge: 5, top: 27.5, floors: [3, 8, 12.3, 16.6, 20.9, 25.2], bays: 5, stone: 'ivory', cornices: [5.8, 27.5] },
@@ -158,6 +159,11 @@ export function createBundBuildings(polygons: ShanghaiPolygon[], material: Mater
     g.group.userData.groundBayPitch = width / (b.groundBays ?? b.bays);
     g.group.userData.groundOpeningWidth = Math.min(2.5, g.group.userData.groundBayPitch * .53);
     g.group.userData.reconstruction = `Individual facade and roof from ${b.number === 15.1 ? 'Wenhui completed-building photograph (2019 report)' : 'Asisbiz onsite photographs'}; OSM plan, estimated vertical dimensions; not a surveyed replica`;
+    if (b.number === 6) {
+      commercialBank(g, plan, width, material);
+      root.add(frame.place(g.finish()));
+      continue;
+    }
     const pitch = width / b.bays, windowWidth = Math.min(2.5, pitch * .53);
     const openings: FrontOpening[] = [];
     const porticoWidth = b.order && !b.order.pilaster ? width * (b.order.span + .1) : 0;
@@ -169,7 +175,7 @@ export function createBundBuildings(polygons: ShanghaiPolygon[], material: Mater
         if (b.number === 23 && y > 9) continue;
         if (porticoWidth && b.order && y > b.order.bottom && y < b.order.top && Math.abs(x) < porticoWidth / 2 + windowWidth / 2) continue;
         openings.push({ x, y, width: y < 4 ? g.group.userData.groundOpeningWidth : windowWidth,
-          height: Math.min(y < 4 ? 4.5 : 2.7, (b.top - y) * 1.6), arch: b.number === 6 && y > 4 ? 'pointed' : b.arches?.includes(y) || (b.number === 17 && y === 37.4 && i % 2 === 0),
+          height: Math.min(y < 4 ? 4.5 : 2.7, (b.top - y) * 1.6), arch: b.arches?.includes(y) || (b.number === 17 && y === 37.4 && i % 2 === 0),
           pediment: [3, 7, 19, 29].includes(b.number) && y > 6 && y < 17,
         });
       }
@@ -227,18 +233,6 @@ export function createBundBuildings(polygons: ShanghaiPolygon[], material: Mater
         const x = side * width * .33;
         pediment(g, x, b.top + .6, -.5, width * .36, 2.4, trim);
         g.add(new THREE.CircleGeometry(.68, 18, 0, Math.PI), glass, [x, b.top + .8, -.56]);
-      }
-    } else if (b.number === 6) {
-      hipRoof(g, centrePlan[0], Math.min(8, depth / 2), width, Math.min(16, depth), b.top, 5.4, slate);
-      for (let i = 0; i < 5; i++) {
-        const x = (i - 2) * width / 5.3;
-        pediment(g, x, b.top - .5, -.65, width / 5.8, i % 2 ? 3.8 : 5.2, stone.grey);
-        g.box([.7, 1.8, .16], [x, b.top + 1, -.74], glass);
-        for (const sign of [-1, 1]) {
-          const bx = x + sign * width / 12;
-          g.beam([bx, 6, -.65], [bx, b.top + 1.4, -.65], .38, trim, .7);
-          g.add(new THREE.ConeGeometry(.32, 1.5, 4), trim, [bx, b.top + 2.1, -.65]);
-        }
       }
     } else if (b.number === 7) {
       hipRoof(g, 0, 5, width - 2, 10, b.top, 3.8, slate);

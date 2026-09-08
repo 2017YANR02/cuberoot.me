@@ -48,7 +48,9 @@ export function addShanghaiSigns(architecture: THREE.Group, font: Font, material
     const g = new CityGeometry(); g.group.name = `Bund ${item.building} physical signage`;
     g.group.userData.signTexts = item.lines.map(s => s.text);
     const letter = (line: SignLine) => {
-      const x = line.bay === undefined ? line.x ?? (line.xFraction ?? 0) * (building.userData.frontage ?? 0) : line.bay * building.userData.groundBayPitch;
+      const centers: number[] | undefined = building.userData.groundOpeningCenters;
+      const x = line.bay === undefined ? line.x ?? (line.xFraction ?? 0) * (building.userData.frontage ?? 0)
+        : centers?.[line.bay + (centers.length - 1) / 2] ?? line.bay * building.userData.groundBayPitch;
       const width = line.bay === undefined ? line.width : Math.min(line.width, building.userData.groundOpeningWidth - .16);
       const position: Vec3 = [x, line.y, line.z];
       const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), line.yaw ?? Math.PI);
