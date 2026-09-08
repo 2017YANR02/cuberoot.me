@@ -109,7 +109,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 
 ### 通用功能接入
 
-新增 engine 魔方或修改调试开关、材质、手部、导出时，必须读 [通用功能契约](references/engine-features.md)，逐项保留适用接线与验收；其中 `engine/` 等局部路径相对 `core/packages/client/app/[lang]/sim/`。
+新增 engine 魔方，或修改渲染、交互、设置、伴图/背面小窗、手部、导出前，必须读 [通用功能契约](references/engine-features.md)，逐项保留适用接线与验收；其中 `engine/` 等局部路径相对 `core/packages/client/app/[lang]/sim/`。
 
 ## 双渲染器(cubing.js 原生 + 自有引擎可选)
 - cubing.js 已支持(skewb/pyraminx/megaminx)又想要引擎独占开关时,保留两版:`SimPage.ENGINE_TWISTY` += id;`useEngine = isTwisty && ENGINE_TWISTY.has(id) && renderer!=='cubing'`、`twisty = isTwisty && !useEngine`;`PlayerControls` 收 `renderer`/`onRendererChange`、`isXEngine=id&&renderer!=='cubing'` 进 `cornerKind`;simCaps 声明 `engine:'engineMode'`(渲染器下拉自动出);引擎版用自有记号 → `reconEvent` 置 null。

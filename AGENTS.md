@@ -150,7 +150,7 @@ pnpm --filter @cuberoot/client lint
 
 ## 页面标题 / SEO metadata
 
-新增路由或修改标题、SEO metadata 时使用 `document-title` skill，并必须读取其 [SEO 契约](.agents/skills/document-title/references/seo-metadata.md)；保留静态 metadata 单一来源与 SSG 边界。
+新增路由或修改标题、SEO metadata、sitemap、hreflang、索引策略或长文结构化数据时使用 `document-title` skill，并必须读取其 [SEO 契约](.agents/skills/document-title/references/seo-metadata.md)；保留静态 metadata 单一来源与 SSG 边界。
 
 ## URL 状态(全站统一 nuqs)
 
