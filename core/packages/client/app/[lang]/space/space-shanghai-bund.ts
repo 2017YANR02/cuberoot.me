@@ -7,7 +7,7 @@ import { buildingFrame, centre, edges, frontShell, bundStone, roofMetal, wallLed
 // photo estimates, NOT survey data. Do not substitute the generic city facade.
 type BundBuilding = {
   number: number; id: string; name: string; edge: number; top: number;
-  floors: number[]; bays: number; stone: 'grey' | 'warm' | 'ivory' | 'brick';
+  floors: number[]; bays: number; groundBays?: number; stone: 'grey' | 'warm' | 'ivory' | 'brick';
   cornices: number[]; arches?: number[];
   order?: { count: number; bottom: number; top: number; span: number; pilaster?: boolean };
 };
@@ -16,7 +16,7 @@ export const BUND_BUILDINGS: readonly BundBuilding[] = [
   { number: 2, id: 'way/178410325', name: 'Shanghai Club', edge: 4, top: 22.5, floors: [3, 7, 12, 17, 20.5], bays: 9, stone: 'ivory', cornices: [8.8, 19.2, 22.5], arches: [3, 7, 20.5], order: { count: 6, bottom: 9, top: 18.8, span: .64 } },
   { number: 3, id: 'way/178408816', name: 'Union Building', edge: 2, top: 26.5, floors: [3, 7.4, 12, 16.4, 20.7, 24.5], bays: 7, stone: 'grey', cornices: [8.9, 18.6, 22.3, 26.5], arches: [3, 24.5] },
   { number: 5, id: 'way/178408821', name: 'Nissin Building', edge: 6, top: 26, floors: [3, 7, 11.5, 16, 20.5, 24], bays: 5, stone: 'warm', cornices: [8.9, 22, 26], arches: [3, 7], order: { count: 4, bottom: 9, top: 22, span: .65, pilaster: true } },
-  { number: 6, id: 'way/178408827', name: 'China Commercial Bank', edge: 9, top: 16.2, floors: [3, 8.3, 13.1], bays: 9, stone: 'grey', cornices: [5.5, 10.6, 16], arches: [3, 8.3, 13.1] },
+  { number: 6, id: 'way/178408827', name: 'China Commercial Bank', edge: 9, top: 16.2, floors: [3, 8.3, 13.1], bays: 9, groundBays: 11, stone: 'grey', cornices: [5.5, 10.6, 16], arches: [3, 8.3, 13.1] },
   { number: 7, id: 'way/178408810', name: 'Great Northern Telegraph', edge: 3, top: 19.2, floors: [3, 8.5, 13.7, 17.3], bays: 7, stone: 'warm', cornices: [5.7, 15.8, 19], arches: [3] },
   { number: 9, id: 'way/178408820', name: 'China Merchants Building', edge: 17, top: 13.8, floors: [2.7, 7, 11.5], bays: 5, stone: 'brick', cornices: [4.7, 9.3, 13.8], arches: [2.7] },
   { number: 14, id: 'way/178405872', name: 'Bank of Communications Bund', edge: 5, top: 27.5, floors: [3, 8, 12.3, 16.6, 20.9, 25.2], bays: 5, stone: 'ivory', cornices: [5.8, 27.5] },
@@ -25,7 +25,7 @@ export const BUND_BUILDINGS: readonly BundBuilding[] = [
   { number: 15, id: 'way/178405875', name: 'Russo-Chinese Bank', edge: 2, top: 18, floors: [3, 8.7, 14.1], bays: 9, stone: 'grey', cornices: [5.6, 16.3, 18], arches: [3], order: { count: 6, bottom: 5.8, top: 16.1, span: .67 } },
   { number: 16, id: 'way/1196704496', name: 'Bank of Taiwan Bund', edge: 2, top: 20.3, floors: [3, 8.2, 13.2, 18.1], bays: 5, stone: 'ivory', cornices: [5.7, 16.2, 20.3], arches: [3], order: { count: 4, bottom: 5.9, top: 16, span: .7 } },
   { number: 17, id: 'way/1196704497', name: 'North China Daily News AIA', edge: 2, top: 39.5, floors: [3.1, 7.6, 12.2, 16.5, 20.8, 25.1, 29.4, 33.5, 37.4], bays: 5, stone: 'ivory', cornices: [9.8, 31.4, 39.5], arches: [3.1] },
-  { number: 18, id: 'way/1196704498', name: 'Chartered Bank Bund', edge: 2, top: 28.3, floors: [3.2, 8.5, 13, 17.5, 22, 26.2], bays: 7, stone: 'warm', cornices: [5.8, 20.1, 24.1, 28.3], order: { count: 2, bottom: 6, top: 19.9, span: .23 } },
+  { number: 18, id: 'way/1196704498', name: 'Chartered Bank Bund', edge: 2, top: 28.3, floors: [3.2, 8.5, 13, 17.5, 22, 26.2], bays: 7, groundBays: 5, stone: 'warm', cornices: [5.8, 20.1, 24.1, 28.3], order: { count: 2, bottom: 6, top: 19.9, span: .23 } },
   { number: 19, id: 'way/177998982', name: 'Palace Hotel Peace South', edge: 16, top: 25.8, floors: [2.9, 7.4, 11.8, 16.2, 20.6, 24], bays: 3, stone: 'brick', cornices: [5.1, 9.4, 18.5, 22.5, 25.8], arches: [2.9] },
   { number: 23, id: 'way/177995050', name: 'Bank of China Bund', edge: 2, top: 57.8, floors: [3, 7, 11, 15, 19, 23, 27, 31, 35, 39, 43, 47, 51, 55], bays: 7, stone: 'warm', cornices: [9.2, 57.8] },
   { number: 24, id: 'way/177993356', name: 'Yokohama Specie Bank', edge: 2, top: 29.2, floors: [3.1, 8.4, 13, 17.6, 22.2, 27], bays: 7, stone: 'grey', cornices: [5.9, 24.3, 29.2], arches: [3.1], order: { count: 4, bottom: 6.1, top: 24.1, span: .62 } },
@@ -155,19 +155,24 @@ export function createBundBuildings(polygons: ShanghaiPolygon[], material: Mater
     const plan = frame.plan(source), g = new CityGeometry();
     g.group.name = b.name; g.group.userData.osmIds = [b.id]; g.group.userData.bundNumber = b.number;
     g.group.userData.frontage = width;
+    g.group.userData.groundBayPitch = width / (b.groundBays ?? b.bays);
+    g.group.userData.groundOpeningWidth = Math.min(2.5, g.group.userData.groundBayPitch * .53);
     g.group.userData.reconstruction = `Individual facade and roof from ${b.number === 15.1 ? 'Wenhui completed-building photograph (2019 report)' : 'Asisbiz onsite photographs'}; OSM plan, estimated vertical dimensions; not a surveyed replica`;
     const pitch = width / b.bays, windowWidth = Math.min(2.5, pitch * .53);
     const openings: FrontOpening[] = [];
     const porticoWidth = b.order && !b.order.pilaster ? width * (b.order.span + .1) : 0;
-    for (const y of b.floors) for (let i = 0; i < b.bays; i++) {
-      const x = (i - (b.bays - 1) / 2) * pitch;
-      if (b.number === 15.1 && y < 9 && Math.abs(x) < width * .23) continue;
-      if (b.number === 23 && y > 9) continue;
-      if (porticoWidth && b.order && y > b.order.bottom && y < b.order.top && Math.abs(x) < porticoWidth / 2 + windowWidth / 2) continue;
-      openings.push({ x, y, width: windowWidth,
-        height: Math.min(y < 4 ? 4.5 : 2.7, (b.top - y) * 1.6), arch: b.number === 6 ? 'pointed' : b.arches?.includes(y) || (b.number === 17 && y === 37.4 && i % 2 === 0),
-        pediment: [3, 7, 19, 29].includes(b.number) && y > 6 && y < 17,
-      });
+    for (const y of b.floors) {
+      const count = y < 4 ? b.groundBays ?? b.bays : b.bays;
+      for (let i = 0; i < count; i++) {
+        const x = (i - (count - 1) / 2) * width / count;
+        if (b.number === 15.1 && y < 9 && Math.abs(x) < width * .23) continue;
+        if (b.number === 23 && y > 9) continue;
+        if (porticoWidth && b.order && y > b.order.bottom && y < b.order.top && Math.abs(x) < porticoWidth / 2 + windowWidth / 2) continue;
+        openings.push({ x, y, width: y < 4 ? g.group.userData.groundOpeningWidth : windowWidth,
+          height: Math.min(y < 4 ? 4.5 : 2.7, (b.top - y) * 1.6), arch: b.number === 6 && y > 4 ? 'pointed' : b.arches?.includes(y) || (b.number === 17 && y === 37.4 && i % 2 === 0),
+          pediment: [3, 7, 19, 29].includes(b.number) && y > 6 && y < 17,
+        });
+      }
     }
     if (porticoWidth && b.order) openings.push({x:0,y:(b.order.bottom+b.order.top)/2,width:porticoWidth,height:b.order.top-b.order.bottom-.7});
     if (b.number === 15.1) openings.push({x:0,y:4.4,width:width*.4,height:8.5});

@@ -57,8 +57,8 @@
     "name": "和平饭店入口与灯牌实拍 / Peace Hotel entrance and blade sign",
     "space": true,
     "url": "https://n.sinaimg.cn/sinakd20119/320/w717h403/20220831/51c5-e438a768e27ecac8115bad5575bd3b71.jpg",
-    "zh": "新浪图床的 2022 年文章配图，用于和平饭店南侧双面竖灯牌、临江入口中英文字与门厅位置。原文章现不可用，链接直达实际对照照片；比例、字形和灯光为估算，未作为运行贴图。查阅于 2026-09-08",
-    "en": "Photo hosted by Sina from a 2022 article, used for the south-side double-faced blade, riverfront entrance lettering and doorway. The article is now unavailable; this link opens the actual reference photo. Dimensions, lettering and lighting are estimated, not a runtime texture. Accessed 2026-09-08"
+    "zh": "新浪图床的 2022 年文章配图，用于和平饭店南侧双面弧顶竖灯牌、中英文并列竖排、入口与临江立面较亮而侧翼较暗的夜间层次。原文章现不可用，实际拍摄日期未确认；比例、字形和灯光为估算，未作为运行贴图。查阅于 2026-09-08",
+    "en": "Sina-hosted photo from a 2022 article: curved double-faced blade, adjacent vertical Chinese and English lettering, entrance and brighter riverfront versus dimmer wings at night. The article is unavailable and the capture date is unconfirmed. Dimensions, lettering and lighting are estimated, not a runtime texture. Accessed 2026-09-08"
   },
   {
     "name": "携程：原汇丰大楼实拍 / Ctrip: former HSBC Building",
@@ -71,8 +71,8 @@
     "name": "文泉驿微米黑 / WenQuanYi Micro Hei",
     "space": true,
     "url": "https://sourceforge.net/projects/wqy/files/wqy-microhei/",
-    "zh": "外滩招牌复用仓库现有字体，经 Three.js TTFLoader 提取 58 个字形，本地托管约 34 KB 轮廓数据。字体内嵌 Apache-2.0 许可和作者信息随子集保留，许可证随资源附带；通用字体不等于实物品牌字体。生成于 2026-09-08",
-    "en": "Bund signs subset 58 glyphs from the font already in this repository using Three.js TTFLoader, serving about 34 KB of outlines locally. Embedded Apache-2.0 and author notices are preserved and the license accompanies the asset. This general typeface is not an exact brand font. Generated 2026-09-08"
+    "zh": "外滩招牌复用仓库现有字体，经 Three.js TTFLoader 提取 70 个字形，本地托管约 40 KB 轮廓数据。字体内嵌 Apache-2.0 许可和作者信息随子集保留，许可证随资源附带；通用字体不等于实物品牌字体。生成于 2026-09-08",
+    "en": "Bund signs subset 70 glyphs from the font already in this repository using Three.js TTFLoader, serving about 40 KB of outlines locally. Embedded Apache-2.0 and author notices are preserved and the license accompanies the asset. This general typeface is not an exact brand font. Generated 2026-09-08"
   },
   {
     "name": "SOM: Jin Mao Tower",
@@ -240,9 +240,9 @@
   {
     "name": "Asisbiz: 外滩 6 中国通商银行大楼 / China Commercial Bank",
     "space": true,
-    "url": "https://www.asisbiz.com/China/6-Zhongshan-Rd.html",
-    "zh": "实拍对照：尖拱窗、五座尖山墙、扶壁尖顶、坡屋面。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: pointed arches, five gables, pinnacles and pitched roof. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "url": "https://asisbiz.com/China/6-Zhongshan-Rd.html",
+    "zh": "实拍对照：五座尖山墙、扶壁尖顶、坡屋面；2026-09-08 补十一处底层圆拱洞口与八处 DOLCE&GABBANA 店招。平面据 OSM，尺寸、字形及细部为照片估算，尚未通过 1:1 验收。实际拍摄日期未确认，不能据此认定当前租户；照片仅供建模参考。",
+    "en": "Photo reference: five gables, pinnacles and pitched roof; reviewed 2026-09-08 for eleven rounded ground openings and eight DOLCE&GABBANA signs. OSM plan; dimensions, lettering and details are estimates, not a verified 1:1 replica. Capture date is unconfirmed and does not establish current tenancy; reference photos only."
   },
   {
     "name": "Asisbiz: 外滩 7 大北电报公司大楼 / Great Northern Telegraph",
@@ -289,9 +289,9 @@
   {
     "name": "Asisbiz: 外滩 18 麦加利银行大楼 / Chartered Bank",
     "space": true,
-    "url": "https://www.asisbiz.com/China/18-Zhongshan-Rd.html",
-    "zh": "实拍对照：中央双柱深凹廊、外侧壁柱、退台山花。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: recessed central two-column portico, outer pilasters and setback pediment. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "url": "https://asisbiz.com/China/18-Zhongshan-Rd.html",
+    "zh": "实拍对照：中央双柱深凹廊、退台山花；2026-09-08 补五处底层洞口、Cartier / Ermenegildo Zegna 店招与橱窗边框、展示台。平面据 OSM，字形、尺寸和室内深度为估算，尚未通过 1:1 验收。实际拍摄日期未确认，不能据此认定当前租户；照片仅供建模参考。",
+    "en": "Photo reference: recessed two-column portico and setback pediment; reviewed 2026-09-08 for five ground openings, Cartier / Ermenegildo Zegna signs, display surrounds and plinths. OSM plan; lettering, dimensions and interior depth are estimated, not verified 1:1. Capture date and current tenancy are unconfirmed; reference photos only."
   },
   {
     "name": "Asisbiz: 外滩 19 汇中饭店（和平南楼） / Palace Hotel Peace South",
@@ -324,9 +324,9 @@
   {
     "name": "Asisbiz: 外滩 27 怡和洋行大楼 / Jardine Matheson Building",
     "space": true,
-    "url": "https://www.asisbiz.com/China/27-Zhongshan-Rd.html",
-    "zh": "实拍对照：六根巨柱、上部两层、中央山花。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: six-column order, two upper storeys and central pediment. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "url": "https://asisbiz.com/China/27-Zhongshan-Rd.html",
+    "zh": "实拍对照：六根巨柱、中央山花；2026-09-08 补 THE HOUSE OF ROOSEVELT / ROLEX 店招、绿色下窗与金属窗框。平面据 OSM，尺寸与灯光仍为估算，品牌专用字体及皇冠图形尚未复刻，未通过 1:1 验收。实际拍摄日期未确认，不能据此认定当前租户；照片仅供建模参考。",
+    "en": "Photo reference: six-column order and central pediment; reviewed 2026-09-08 for THE HOUSE OF ROOSEVELT / ROLEX signs, green lower panes and metal frames. OSM plan; dimensions and lighting remain estimated, with exact brand typefaces and crown symbols still missing. Not verified 1:1; capture date and current tenancy are unconfirmed. Reference photos only."
   },
   {
     "name": "Asisbiz: 外滩 28 格林邮船大楼 / Glen Line Building",

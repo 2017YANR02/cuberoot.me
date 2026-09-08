@@ -201,7 +201,7 @@ export class ShanghaiScene {
       this.root.add(createShanghaiBridges(this.material.bind(this)));
       const architecture = createShanghaiArchitecture(data.polygons, this.material.bind(this), data.roads);
       this.root.add(architecture);
-      const fontResponse = await fetch('/assets/space/shanghai-v1/sign-font.json?v=20260908', { signal: this.abort.signal });
+      const fontResponse = await fetch('/assets/space/shanghai-v1/sign-font.json?v=20260908b', { signal: this.abort.signal });
       if (!fontResponse.ok) throw new Error(`Bund sign font HTTP ${fontResponse.status}`);
       const fontData = await fontResponse.json();
       if (this.disposed) return;
