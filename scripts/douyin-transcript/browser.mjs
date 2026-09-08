@@ -1,14 +1,9 @@
-import { readFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
-import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
 import { Transcript, BASE_PATH, CONTENT_PATH, ORIGIN, windows } from './transcript.mjs';
+import { browserExecutable, disableWebRTC, localPaths } from './runtime.mjs';
 
-const require = createRequire(import.meta.url);
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-export const PROFILE = join(process.env.LOCALAPPDATA || join(homedir(), '.local', 'share'), 'DouyinTranscript', 'browser-profile');
+export const PROFILE = localPaths().profile;
 
 function fail(code, message) { return Object.assign(new Error(message), { code }); }
 
@@ -31,18 +26,8 @@ async function requirePublic(page, roomId) {
 }
 
 export async function launchBrowser(login) {
-  // Use the user's canonical WebRTC guard, fail closed if it is missing.
-  const { disableWebRTC } = require(join(homedir(), '.codex', 'bin', 'pw-no-webrtc.cjs'));
-  let executablePath = process.env.DOUYIN_BROWSER_EXECUTABLE;
-  if (!executablePath) {
-    try {
-      const config = JSON.parse(await readFile(join(homedir(), '.codex', 'playwright-mcp.json'), 'utf8'));
-      const candidate = config.browser?.launchOptions?.executablePath;
-      if (candidate && existsSync(candidate)) executablePath = candidate;
-    } catch { /* Fall back to Playwright's installed Chromium. */ }
-  }
   const context = await chromium.launchPersistentContext(PROFILE, {
-    executablePath,
+    executablePath: await browserExecutable(),
     headless: !login,
     viewport: { width: 1280, height: 900 },
     args: ['--force-webrtc-ip-handling-policy=disable_non_proxied_udp'],
