@@ -13,10 +13,10 @@ WCA API 返回的选手名常带括号中文，如`Xuanyi Geng (耿暄一)`。**
 
 ## 统一工具
 
-`core/packages/client/lib/name-utils.ts` 的 `displayCuberName(rawName, isZh)`。
+`core/packages/client/lib/cuber-name-display.ts` 的 `displayCuberName(rawName, isZh)`。
 
 ```ts
-import { displayCuberName } from '@/lib/name-utils';
+import { displayCuberName } from '@/lib/cuber-name-display';
 // ...
 <span>{displayCuberName(person.name, isZh)}</span>
 ```
