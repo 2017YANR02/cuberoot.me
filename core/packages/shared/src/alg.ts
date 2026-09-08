@@ -313,8 +313,8 @@ export interface AlgSetMeta {
 
 export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
   '2x2': [
-    { slug: 'ortega-oll', scd: 'OrtegaOLL', en: 'Ortega OLL', zh: 'Ortega OLL', umbrella: true },
-    { slug: 'ortega-pbl', scd: 'OrtegaPBL', en: 'Ortega PBL', zh: 'Ortega PBL', umbrella: true },
+    { slug: 'ortega-oll', scd: 'OrtegaOLL', short: 'OLL', en: 'Ortega OLL', zh: 'Ortega OLL', umbrella: true },
+    { slug: 'ortega-pbl', scd: 'OrtegaPBL', short: 'PBL', en: 'Ortega PBL', zh: 'Ortega PBL', umbrella: true },
     { slug: 'cll',        scd: 'CLL',       en: 'CLL',        zh: 'CLL', umbrella: true },
     { slug: 'eg1',        scd: 'EG1',       en: 'EG1',        zh: 'EG1', umbrella: true },
     { slug: 'eg2',        scd: 'EG2',       en: 'EG2',        zh: 'EG2', umbrella: true },
