@@ -34,7 +34,8 @@ it('awards historical records per event and level, deduplicating and rejecting i
       result('666', 'WR', null, { live: true }), result('777', 'PR'), result('skewb', null),
     ],
   }));
-  expect((html.match(/<article /g) ?? []).length).toBe(5);
+  expect((html.match(/data-kind="historical/g) ?? []).length).toBe(5);
+  expect(html).toContain('data-kind="haul"');
   expect(html).toContain('data-kind="historicalWR" data-count="3">2×2');
   expect(html).toContain('data-kind="historicalCR" data-count="7">3×3');
   expect(html).toContain('data-kind="historicalNR" data-count="1">2×2');
@@ -45,8 +46,8 @@ it('awards historical records per event and level, deduplicating and rejecting i
   expect(html).toContain('Feet');
   expect(html).not.toContain('5×5');
   expect(html).not.toContain('6×6');
-  expect(html).not.toContain('7×7');
-  expect(html).not.toContain('Skewb');
+  expect(html).not.toMatch(/>7×7 Historical/);
+  expect(html).not.toMatch(/>Skewb Historical/);
   expect(html).not.toContain('Current world record holder');
 });
 
@@ -85,9 +86,9 @@ it('requires successful official results in every active event, without substitu
   const results = active.map(event => participation('OneCompetition', event));
   expect(renderParticipation(results)).toContain('data-kind="allEvents"');
   const partial = results.slice(1);
-  expect(renderParticipation([...partial, participation('Other', 'magic'), participation('Other', 'unknown')])).toBe('');
-  expect(renderParticipation([...partial, participation('Other', active[0], -1)])).toBe('');
-  expect(renderParticipation([...partial, participation('Other', active[0], 100, true)])).toBe('');
+  expect(renderParticipation([...partial, participation('Other', 'magic'), participation('Other', 'unknown')])).not.toContain('data-kind="allEvents"');
+  expect(renderParticipation([...partial, participation('Other', active[0], -1)])).not.toContain('data-kind="allEvents"');
+  expect(renderParticipation([...partial, participation('Other', active[0], 100, true)])).not.toContain('data-kind="allEvents"');
 });
 
 it('awards only the requested person’s listed events, distinguishes all-gold and hides empty sections', () => {
@@ -127,10 +128,11 @@ it('groups world titles and current records, excluding other podiums, retired ev
       '333ft': { single: record(1) },
     },
   }));
-  expect((html.match(/<article /g) ?? []).length).toBe(2);
+  expect((html.match(/<article /g) ?? []).length).toBe(5);
+  expect((html.match(/data-kind="worldPodium"/g) ?? []).length).toBe(3);
   expect(html).toContain('World champion<ul><li>2×2</li><li>Skewb</li>');
   expect(html).toContain('Current world record holder<ul><li>2×2 Single 1.00</li><li>2×2 Average 1.00</li>');
-  expect(html).not.toContain('3×3');
+  expect(html).toContain('3×3 World Championship podium');
   expect(html).not.toContain('4×4');
   expect(html).not.toContain('5×5');
   expect(html).not.toContain('Feet');

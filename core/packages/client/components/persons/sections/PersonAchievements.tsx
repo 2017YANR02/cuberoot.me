@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { RecordBadge } from '@/components/RecordBadge';
 import AppLink from '@/components/AppLink';
 import { AchievementBadge } from './AchievementBadge';
 import { formatWcaResult } from '@/lib/wca-format-result';
+import { formatDateRangeIso } from '@/lib/wca-date';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { useT } from '@/hooks/useT';
 import { apiUrl } from '@/lib/api-base';
@@ -11,6 +12,7 @@ import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from '@/lib/event-constants';
 import { CONTINENT_RECORD_ABBR } from '@/lib/continent';
 import { fetchWcaPersonChampionshipPodiums, type ChampionshipPodiumRow, type WcaCompetition, type WcaPersonProfile, type WcaResultRow } from '@/lib/wca-person-api';
 import './person-achievements.css';
+import { EXPLORER_ACHIEVEMENTS, personalExplorerAchievements, fetchExplorerAchievements, type ExplorerAchievement } from '@/lib/person-achievements';
 
 interface Achievement {
   wcaId: string;
@@ -18,14 +20,17 @@ interface Achievement {
   isOnlyFirst: boolean;
 }
 
-export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [], results = [], comps = [] }: {
+export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [], results = [], comps = [], countryIso2 = '', extraAchievements = [] }: {
   rows: Achievement[]; wcaId: string; isZh: boolean;
   records?: WcaPersonProfile['personal_records'];
-  podiums?: Pick<ChampionshipPodiumRow, 'level' | 'place' | 'eventId'>[];
+  podiums?: (Pick<ChampionshipPodiumRow, 'level' | 'place' | 'eventId'> & Partial<ChampionshipPodiumRow>)[];
   results?: WcaResultRow[];
   comps?: WcaCompetition[];
+  countryIso2?: string;
+  extraAchievements?: ExplorerAchievement[];
 }) {
   const t = useT();
+  const explorer = useMemo(() => [...personalExplorerAchievements(results, comps, countryIso2, podiums), ...extraAchievements], [results, comps, countryIso2, podiums, extraAchievements]);
   const achievements = rows.filter(row => row.wcaId === wcaId);
   const compNames = new Map(comps.map(comp => [comp.id, comp.name]));
   const official = results.filter(row => !row.live && row.competition_id && row.event_id);
@@ -57,10 +62,23 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [],
     CANCELLED_EVENT_IDS.has(event) ? [] : (['single', 'average'] as const)
       .filter(type => results[type]?.world_rank === 1 && results[type]!.best > 0)
       .map(type => `${eventDisplayName(event, isZh)} ${type === 'single' ? t('单次', 'Single') : t('平均', 'Average')} ${formatWcaResult(results[type]!.best, event, type)}`));
-  if (!achievements.length && !champions.length && !currentRecords.length && !historical.size && !hundred && !allEvents) return null;
+  if (!achievements.length && !champions.length && !currentRecords.length && !historical.size && !hundred && !allEvents && !explorer.length) return null;
   return (
     <section className="wp-achievements" aria-label={t('成就', 'Achievements')}>
       <div className="wp-achievements-list">
+        {explorer.map(a => <AchievementBadge key={`${a.kind}:${a.event}:${a.record}`} kind={a.kind} event={a.event} achievement={a}
+          name={[a.event ? eventDisplayName(a.event, isZh) : '', a.record].filter(Boolean).join(' ')}
+          description={t(EXPLORER_ACHIEVEMENTS[a.kind].description.zh, EXPLORER_ACHIEVEMENTS[a.kind].description.en)}>
+          {!!a.evidence.length && <ol>{a.evidence.map((e, i) => <li key={i}>
+            {e.event && <strong>{eventDisplayName(e.event, isZh)} </strong>}
+            {e.value && e.event && <span>{formatWcaResult(e.value, e.event, e.type ?? 'single')} </span>}
+            {e.text && <span>{e.text} </span>}
+            {e.place && <span>{t(`第 ${e.place} 名`, `Place ${e.place}`)} </span>}
+            {e.date && <time>{formatDateRangeIso(e.date, e.endDate)}</time>}
+            {e.compId && <div><AppLink href={`/wca/comp/${e.compId}`} prefetch={false}><CompCell compId={e.compId} compName={compNames.get(e.compId)} isZh={isZh} noFlag date={null} /></AppLink></div>}
+          </li>)}</ol>}
+          <AppLink href={`/wca/${EXPLORER_ACHIEVEMENTS[a.kind].stat}`} prefetch={false}>{t('查看相关统计', 'View related statistics')}</AppLink>
+        </AchievementBadge>)}
         {hundred && <AchievementBadge kind="hundred" description={t('参加过至少 100 场正式 WCA 比赛。', 'Participated in at least 100 official WCA competitions.')}>
           <p>{t(`已参加 ${attended.size} 场比赛`, `${attended.size} competitions attended`)}</p>
         </AchievementBadge>}
@@ -100,7 +118,15 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [],
   );
 }
 
-export default function PersonAchievements({ wcaId, isZh, records, results, comps }: { wcaId: string; isZh: boolean; records: WcaPersonProfile['personal_records']; results: WcaResultRow[] | null; comps: WcaCompetition[] | null }) {
+export default function PersonAchievements({ wcaId, isZh, records, results, comps, countryIso2 }: { wcaId: string; isZh: boolean; records: WcaPersonProfile['personal_records']; results: WcaResultRow[] | null; comps: WcaCompetition[] | null; countryIso2?: string }) {
+  const [extra, setExtra] = useState<{ wcaId: string; rows: ExplorerAchievement[] } | null>(null);
+  const markers = results === null ? null : [...new Set(results.filter(r => !r.live).flatMap(r => [r.regional_single_record, r.regional_average_record]).filter((v): v is string => !!v))].sort().join(',');
+  useEffect(() => {
+    if (markers === null) return;
+    const controller = new AbortController();
+    fetchExplorerAchievements(wcaId, markers.split(','), controller.signal).then(rows => { if (!controller.signal.aborted) setExtra({ wcaId, rows }); });
+    return () => controller.abort();
+  }, [wcaId, markers]);
   const [rows, setRows] = useState<Achievement[]>([]);
   const [podiums, setPodiums] = useState<{ wcaId: string; rows: ChampionshipPodiumRow[] } | null>(null);
   useEffect(() => {
@@ -119,5 +145,5 @@ export default function PersonAchievements({ wcaId, isZh, records, results, comp
       .catch(() => { /* An unavailable achievement feed must not block the person profile. */ });
     return () => controller.abort();
   }, []);
-  return <GrandSlamBadges rows={rows} wcaId={wcaId} isZh={isZh} records={records} results={results ?? []} comps={comps ?? []} podiums={podiums?.wcaId === wcaId ? podiums.rows : []} />;
+  return <GrandSlamBadges rows={rows} wcaId={wcaId} isZh={isZh} records={records} results={results ?? []} comps={comps ?? []} countryIso2={countryIso2} extraAchievements={extra?.wcaId === wcaId ? extra.rows : []} podiums={podiums?.wcaId === wcaId ? podiums.rows : []} />;
 }

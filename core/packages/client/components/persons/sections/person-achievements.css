@@ -1,4 +1,5 @@
 .wp-achievements { max-width: 100%; }
+.wp-achievement-medal, .wp-achievement-card { --badge-accent: var(--signal-info); }
 .wp-achievements-list { display: flex; flex-wrap: wrap; gap: 16px; }
 .wp-achievement { display: flex; flex-direction: column; align-items: center; gap: 5px; appearance: none; padding: 0; border: 0; background: none; font: inherit; color: var(--foreground); cursor: pointer; border-radius: 8px; }
 .wp-achievement-medal { position: relative; display: inline-block; width: 80px; height: 80px; flex-shrink: 0; }
