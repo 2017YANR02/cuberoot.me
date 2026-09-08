@@ -1,0 +1,25 @@
+.lbl-page { max-width: 1040px; margin: 0 auto; padding: 24px 24px 64px; color: var(--foreground); }
+.lbl-header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.lbl-header h1 { width: 100%; margin: 12px 0 0; font-size: clamp(2rem, 5vw, 2.8rem); }
+.lbl-header p { width: 100%; margin: 0; color: var(--muted-foreground); }
+.lbl-page a { color: var(--accent); text-underline-offset: 4px; }
+.lbl-nav { display: flex; align-items: center; gap: 16px; margin: 36px 0 28px; }
+.lbl-progress { font-variant-numeric: tabular-nums; color: var(--muted-foreground); white-space: nowrap; }
+.lbl-lesson { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: start; }
+.lbl-copy h2 { margin: 0 0 12px; font-size: 1.5rem; }
+.lbl-copy p { margin: 0 0 20px; line-height: 1.85; }
+.lbl-copy .lbl-goal { color: var(--accent); font-weight: 600; }
+.lbl-demo { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; gap: 12px; }
+.lbl-cube { width: 100%; max-width: 400px; aspect-ratio: 1; align-self: center; }
+.lbl-alg { font-size: 1.05rem; font-weight: 600; line-height: 1.8; overflow-wrap: anywhere; }
+.lbl-demo p { margin: 0; line-height: 1.75; }
+.lbl-demo .lbl-help { color: var(--muted-foreground); font-size: .85rem; }
+.lbl-footer { display: flex; gap: 12px; margin-top: 36px; }
+.lbl-footer button { appearance: none; font: inherit; cursor: pointer; border: 0; border-radius: 6px; background: var(--muted); color: var(--foreground); padding: 10px 16px; }
+.lbl-footer button:disabled { opacity: .4; cursor: default; }
+.lbl-footer button:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+@media (max-width: 700px) {
+  .lbl-page { padding: 16px 18px 40px; }
+  .lbl-lesson { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .lbl-nav { margin: 28px 0 24px; }
+}
