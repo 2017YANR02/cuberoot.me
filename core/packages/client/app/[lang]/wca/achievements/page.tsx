@@ -1,7 +1,8 @@
 'use client';
 
 import AppLink from '@/components/AppLink';
-import { AchievementMedal, ACHIEVEMENT_TITLES } from '@/components/persons/sections/PersonAchievements';
+import { ACHIEVEMENT_TITLES } from '@/components/persons/sections/AchievementMedal';
+import { AchievementBadge } from '@/components/persons/sections/AchievementBadge';
 import { useT } from '@/hooks/useT';
 import './achievements.css';
 
@@ -60,7 +61,9 @@ export default function AchievementsPage() {
       <div className="wca-achievements-catalog">
         {badges.map(badge => (
           <section className="wca-achievements-entry" key={badge.kind}>
-            <AchievementMedal kind={badge.kind} />
+            <AchievementBadge kind={badge.kind} description={badge.description}>
+              <AppLink href={badge.href} prefetch={false}>{badge.link}</AppLink>
+            </AchievementBadge>
             <div>
               <h2>{t(ACHIEVEMENT_TITLES[badge.kind].zh, ACHIEVEMENT_TITLES[badge.kind].en)}</h2>
               <p>{badge.description}</p>
