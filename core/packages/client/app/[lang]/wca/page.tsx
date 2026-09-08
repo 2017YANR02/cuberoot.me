@@ -71,6 +71,7 @@ const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; ex
 },
   { path: '/wca/grand-slam',      zh: '大满贯',       en: 'Grand Slam',      Icon: Crown
 },
+  { path: '/wca/achievements', zh: '荣誉徽章', en: 'Achievement badges', Icon: Medal },
   { path: '/wca/fun-stats',       zh: '趣味统计',     en: 'Fun Stats',       Icon: Sparkles
 },
   { path: '/wca/result-watch',    zh: '成绩变更',     en: 'Result Changes',  Icon: BellRing, adminOnly: true },
@@ -257,7 +258,7 @@ export default function WcaStatsIndex() {
                 {LOOKUP_ITEMS.filter(it => !it.adminOnly || isAdmin).map(it => {
                   const to = it.extraQuery ? `${it.path}?${it.extraQuery}` : it.path;
                   return (
-                    <Link key={`${it.path}|${it.extraQuery ?? ''}`} href={to} className="wca-tool-card">
+                    <Link key={`${it.path}|${it.extraQuery ?? ''}`} href={to} prefetch={false} className="wca-tool-card">
                       <it.Icon size={28} strokeWidth={1.5} />
                       <span>{tr(it)}</span>
                     </Link>

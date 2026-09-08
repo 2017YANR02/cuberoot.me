@@ -746,6 +746,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'wca/fun-stats': { title: { zh: '趣味统计', en: 'Fun Statistics' } },
   'wca/globe-about': { title: { zh: '地球视图说明', en: 'Globe Guide' } },
   'wca/grand-slam': { title: { zh: '大满贯', en: 'Grand Slam' } },
+  'wca/achievements': { title: { zh: '荣誉徽章', en: 'Achievement badges' }, description: { zh: '了解 CubeRoot 选手主页荣誉徽章、获得条件，以及世界冠军、当前世界纪录与大满贯选手。', en: 'Explore CubeRoot person-profile badges, their eligibility rules, world champions, current world record holders and Grand Slam achievers.' } },
   'wca/kinch': {
     title: { zh: 'Kinch 综合分', en: 'Kinch Ranks' },
     description: {
