@@ -21,7 +21,7 @@ try {
       '  node cli.mjs --har "记录.har" ["复盘链接"] [-o "输出.txt"]\n\n' +
       '--login  打开专用浏览器供首次登录，随后自动导出。以后不加此参数即可后台运行。\n' +
       '--timeout 秒  登录后读取全场的超时，默认 180 秒（范围 10–3600）。\n' +
-      '默认保存到用户 Downloads；不覆盖同名文件。时间均为北京时间。');
+      '默认保存到桌面；不覆盖同名文件。时间均为北京时间。');
     process.exitCode = values.help ? 0 : 2;
   } else {
     if (positionals.length > 1) throw new Error('每次只接受一个复盘链接。');
@@ -48,7 +48,7 @@ try {
     }
     transcript.assertComplete();
     const name = `抖音直播文字记录_${transcript.meta.start.slice(0, 10)}_${transcript.roomId}_${Date.now()}.txt`;
-    const path = await saveText(transcript, values.output || join(homedir(), 'Downloads', name));
+    const path = await saveText(transcript, values.output || join(homedir(), 'Desktop', name));
     console.log(JSON.stringify({ ok: true, path, roomId: transcript.roomId, count: transcript.rows.length,
       start: transcript.meta.start, end: transcript.meta.end, complete: true }));
   }

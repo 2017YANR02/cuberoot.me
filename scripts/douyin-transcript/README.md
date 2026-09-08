@@ -23,7 +23,7 @@ node D:/cube/cuberoot.me/scripts/douyin-transcript/cli.mjs '复盘链接' --logi
 
 其他场次：在平台点「切换场次」，选择左侧日期，再点右侧对应场次的「查看复盘」，复制地址栏链接。工具严格核对链接中的 roomId；登录后跳转到其他场次，会重新定位原链接。
 
-默认保存到用户 `Downloads`，文件名包含直播日期、roomId 和导出时间，不覆盖已有文件。AI 在本仓库验证时请用 `-o` 指向 `.tmp/png/`。成功时 stdout 输出一行 JSON（含 `path`、`count`、`complete`）；进度和错误输出到 stderr，失败退出码为 1。非公开场次错误码为 `PRIVATE_ROOM`，没有输出 TXT。
+默认保存到桌面，文件名包含直播日期、roomId 和导出时间，不覆盖已有文件。AI 在本仓库验证时请用 `-o` 指向 `.tmp/png/`。成功时 stdout 输出一行 JSON（含 `path`、`count`、`complete`）；进度和错误输出到 stderr，失败退出码为 1。非公开场次错误码为 `PRIVATE_ROOM`，没有输出 TXT。
 
 现有 HAR 也可直接转换，无需启动浏览器：
 
