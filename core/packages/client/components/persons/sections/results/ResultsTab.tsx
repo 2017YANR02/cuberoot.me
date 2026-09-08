@@ -11,8 +11,10 @@ import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-p
 import { mergePersonLive } from '@/lib/person-live-merge';
 import type { ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 
+// 默认子视图不再串行请求第二层 chunk；其他视图仍按需加载。
+import ByEventView from './ByEventView';
+
 const ByCompList = lazy(() => import('./ByCompList'));
-const ByEventView = lazy(() => import('./ByEventView'));
 const CompsTab = lazy(() => import('../CompsTab'));
 
 interface Props {

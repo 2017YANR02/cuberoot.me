@@ -8,7 +8,9 @@ import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-p
 import { fetchWcaPersonChampionshipPodiums, type ChampionshipPodiumRow } from '@/lib/wca-person-api';
 import type { ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 
-const ResultsTab = lazy(() => import('./results/ResultsTab'));
+// 默认成绩视图随页面加载，避免等 profile 返回后才开始请求代码。
+import ResultsTab from './results/ResultsTab';
+
 const RecordsTab = lazy(() => import('./RecordsTab'));
 const ChampionshipPodiumsTab = lazy(() => import('./ChampionshipPodiumsTab'));
 const EventStatsTab = lazy(() => import('./EventStatsTab'));
