@@ -90,6 +90,25 @@
 .lesson-video-help { max-width: 370px; font-size: 12px; }
 .lesson-video-help p { margin: 10px 0; }
 .lesson-video-help > button { border: 0; padding: 6px 0; text-decoration: underline; background: transparent; }
+/* Theater mode keeps the lesson directory reachable below the expanded stage. */
+.platform-classroom:has(.lesson-video-player.is-theater) { grid-template-columns: minmax(0, 1fr); }
+.platform-classroom:has(.lesson-video-player.is-theater) .platform-classroom-stage { grid-row: 1; }
+.lesson-video-player.is-theater:not(:fullscreen) video { height: 75vh; }
+.lesson-video-shortcuts { position: fixed; inset: 0; margin: auto; box-sizing: border-box; width: min(1164px, calc(100% - 32px)); max-width: none; max-height: calc(100dvh - 32px); overflow: auto; overscroll-behavior: contain; border: 0; border-radius: 12px; padding: 24px; background: color-mix(in srgb, var(--player-ink) 13%, var(--player-base)); color: var(--player-ink); font: 13px/1.45 Arial, var(--font-sans); }
+.lesson-video-shortcuts::backdrop { background: color-mix(in srgb, var(--player-base) 60%, transparent); }
+.lesson-video-shortcuts h2 { margin: 0 0 36px; font-size: 22px; font-weight: 700; }
+.lesson-video-shortcut-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 30px; }
+.lesson-video-shortcut-groups h3 { margin: 0 8px 16px; font-size: 12px; font-weight: 400; color: color-mix(in srgb, var(--player-ink) 65%, transparent); }
+.lesson-video-shortcut-groups dl { margin: 0; }
+.lesson-video-shortcut-groups dl > div { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); gap: 14px; border-top: 1px solid var(--player-track); padding: 7px 8px; }
+.lesson-video-shortcut-groups dt { color: color-mix(in srgb, var(--player-ink) 72%, transparent); }
+.lesson-video-shortcut-groups dd { margin: 0; }
+.lesson-video-shortcut-groups kbd { font: 600 13px/1.45 var(--font-mono), monospace; overflow-wrap: anywhere; }
+.lesson-video-shortcut-groups small { display: inline-block; margin-left: 8px; font-size: 10px; }
+.lesson-video-shortcut-groups .is-unavailable { opacity: .5; }
+.lesson-video-shortcut-note { margin: 24px 8px 0; font-size: 11px; color: color-mix(in srgb, var(--player-ink) 60%, transparent); }
+.lesson-video-shortcuts footer { display: flex; justify-content: flex-end; margin-top: 16px; }
+.lesson-video-shortcuts footer button { border: 0; padding: 8px; background: transparent; color: var(--signal-info); }
 @media (max-width: 600px) {
   .lesson-video-controls { padding-inline: 8px; }
   .lesson-video-toolbar { height: 44px; gap: 2px; }
@@ -97,12 +116,15 @@
   .lesson-video-icon { flex-basis: 32px; width: 32px; height: 40px; padding: 7px; }
   .lesson-video-icon svg { width: 20px; height: 20px; }
   .lesson-video-time { font-size: 11px; margin-inline: 3px; }
-  .lesson-video-capture, .lesson-video-pip { display: none; }
+  .lesson-video-capture, .lesson-video-pip, .lesson-video-theater { display: none; }
   .lesson-video-autoplay { padding-inline: 4px; }
   .lesson-video-volume:focus-within input, .lesson-video-volume:hover input { width: 42px; margin-right: 3px; }
   .lesson-video-toolbar:has(.lesson-video-volume:focus-within) .lesson-video-time { display: none; }
   .lesson-video-menu { right: 8px; bottom: 68px; max-height: calc(100% - 76px); max-width: calc(100% - 16px); }
   .lesson-video-menu-row { gap: 12px; padding: 10px 14px; }
   .lesson-video-menu-row > span:not(.bool-toggle) { margin-right: 12px; }
+  .lesson-video-shortcuts { width: calc(100% - 16px); max-height: calc(100dvh - 16px); padding: 20px 12px; }
+  .lesson-video-shortcut-groups { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .lesson-video-shortcut-groups dl > div { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 10px; }
 }
 @media (prefers-reduced-motion: reduce) { .lesson-video-player *, .lesson-video-player *::after { transition: none; } }

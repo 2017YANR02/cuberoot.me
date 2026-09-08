@@ -68,12 +68,13 @@ function DomainList({ title, items, href, showStatus = true }: {
   return <section className="platform-domain-content"><h2>{title}</h2>{list}</section>;
 }
 
-function LessonMedia({ lessonId, autoContinue, onAutoContinueChange, onNext, autoPlay, startTime }: {
+function LessonMedia({ lessonId, autoContinue, onAutoContinueChange, onNext, onPrevious, autoPlay, startTime }: {
   lessonId: string;
   startTime?: number;
   autoContinue?: boolean;
   onAutoContinueChange?: (enabled: boolean) => void;
   onNext?: () => void;
+  onPrevious?: () => void;
   autoPlay?: boolean;
 }) {
   const t = useT();
@@ -115,7 +116,7 @@ function LessonMedia({ lessonId, autoContinue, onAutoContinueChange, onNext, aut
   if (!media) return <p className="platform-domain-note">{t('正在取得课时媒体访问权限。', 'Requesting lesson media access.')}</p>;
   if (media.mimeType.startsWith('video/')) return <LessonVideoPlayer src={media.accessUrl} onError={onError} onLoadedMetadata={onLoadedMetadata}
     lessonId={lessonId} mediaId={media.mediaId} mimeType={media.mimeType} startTime={startTime}
-    autoContinue={autoContinue} onAutoContinueChange={onAutoContinueChange} onNext={onNext} autoPlay={autoPlay} />;
+    autoContinue={autoContinue} onAutoContinueChange={onAutoContinueChange} onNext={onNext} onPrevious={onPrevious} autoPlay={autoPlay} />;
   if (media.mimeType.startsWith('audio/')) return <audio className="platform-lesson-media" controls preload="metadata" src={media.accessUrl} onError={onError} onLoadedMetadata={onLoadedMetadata} />;
   return <a className="platform-action-link" href={media.accessUrl} target="_blank" rel="noreferrer">{t('打开课时媒体', 'Open lesson media')}</a>;
 }
@@ -208,6 +209,11 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
       });
       const active = sectionLessons.find(lesson => lesson.id === selectedLessonId) ?? sectionLessons[0];
       if (!active) return <p className="platform-domain-note">{t('暂无课时。', 'No lessons yet.')}</p>;
+      const activeIndex = sectionLessons.findIndex(lesson => lesson.id === active.id);
+      const playLesson = (index: number) => {
+        const lesson = sectionLessons[index];
+        if (lesson && onSelectLesson) { setAutoPlayLessonId(lesson.id); onSelectLesson(lesson.id); }
+      };
       return <div className="platform-classroom">
         <nav className="platform-classroom-directory platform-glass" aria-label={t('课时目录', 'Lesson directory')}>
           <h2>{t('课时目录', 'Lesson directory')}</h2>
@@ -220,10 +226,8 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
           <h2 aria-live="polite">{active.title}</h2>
           <div className="platform-classroom-player"><LessonMedia key={active.id} lessonId={active.id} startTime={lessonStartTime}
             autoContinue={autoContinue} onAutoContinueChange={onSelectLesson ? setAutoContinue : undefined} autoPlay={autoPlayLessonId === active.id}
-            onNext={() => {
-              const next = sectionLessons[sectionLessons.findIndex(lesson => lesson.id === active.id) + 1];
-              if (next && onSelectLesson) { setAutoPlayLessonId(next.id); onSelectLesson(next.id); }
-            }} /></div>
+            onPrevious={onSelectLesson && activeIndex > 0 ? () => playLesson(activeIndex - 1) : undefined}
+            onNext={onSelectLesson && activeIndex < sectionLessons.length - 1 ? () => playLesson(activeIndex + 1) : undefined} /></div>
         </section>
       </div>;
     }
