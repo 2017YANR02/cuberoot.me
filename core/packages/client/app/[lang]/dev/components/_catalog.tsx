@@ -1255,6 +1255,14 @@ export const CATALOG: ComponentEntry[] = [
     Demo: ReconCompletionBadgeDemo,
   },
   {
+    name: 'AchievementMedal',
+    import: "import { AchievementMedal } from '@/components/persons/sections/PersonAchievements';",
+    category: 'badge',
+    zh: '选手主页与荣誉徽章目录共用的奖章图案。',
+    en: 'Shared medal artwork for person profiles and the achievement directory.',
+    usage: '<AchievementMedal kind="wr" />',
+  },
+  {
     name: 'PersonAchievements',
     import: "import PersonAchievements, { GrandSlamBadges } from '@/components/persons/sections/PersonAchievements';",
     category: 'badge',
