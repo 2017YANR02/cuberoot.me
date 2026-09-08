@@ -199,7 +199,7 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
         <nav className="platform-classroom-directory platform-glass" aria-label={t('课时目录', 'Lesson directory')}>
           <h2>{t('课时目录', 'Lesson directory')}</h2>
           <div className="platform-classroom-lessons">{sectionLessons.map(lesson => <button
-            key={lesson.id} type="button" aria-current={lesson.id === active.id ? 'true' : undefined}
+            key={lesson.id} className="platform-classroom-lesson" type="button" aria-current={lesson.id === active.id ? 'true' : undefined}
             onClick={() => onSelectLesson?.(lesson.id)}
           >{lesson.title}</button>)}</div>
         </nav>

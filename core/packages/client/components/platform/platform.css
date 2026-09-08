@@ -970,7 +970,7 @@
 .platform-star-rating legend { padding: 0; margin-bottom: 6px; font-size: 0.78rem; color: var(--muted-foreground); }
 .platform-rating-stars { display: flex; width: fit-content; }
 .platform-rating-star { position: relative; display: grid; place-items: center; width: 48px; height: 48px; color: var(--accent); cursor: pointer; border-radius: 8px; }
-.platform-rating-star input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: inherit; }
+.platform-rating-input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: inherit; }
 .platform-rating-star svg { pointer-events: none; fill: none; }
 .platform-rating-star[data-filled="true"] svg { fill: currentColor; }
 .platform-rating-star:has(input:focus-visible) { outline: 2px solid var(--ring); outline-offset: 2px; }
@@ -1083,14 +1083,14 @@
 .platform-classroom-directory { border-radius: 24px; padding: 20px 10px 10px; min-width: 0; }
 .platform-classroom-directory h2 { margin: 0 14px 16px; font-size: 1rem; }
 .platform-classroom-lessons { max-height: min(680px, 65vh); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
-.platform-classroom-lessons button {
+.platform-classroom-lesson {
   display: block; width: 100%; min-height: 48px; padding: 14px;
   border: 0; border-radius: 14px; background: transparent; color: var(--muted-foreground);
   text-align: left; font: inherit; font-size: 0.92rem; line-height: 1.5; cursor: pointer;
   overflow-wrap: anywhere; transition: background 160ms, color 160ms;
 }
-.platform-classroom-lessons button:hover { background: color-mix(in srgb, var(--foreground) 5%, transparent); color: var(--foreground); }
-.platform-classroom-lessons button[aria-current] { background: var(--accent-soft); color: var(--foreground); font-weight: 600; }
+.platform-classroom-lesson:hover { background: color-mix(in srgb, var(--foreground) 5%, transparent); color: var(--foreground); }
+.platform-classroom-lesson[aria-current] { background: var(--accent-soft); color: var(--foreground); font-weight: 600; }
 .platform-classroom-stage { min-width: 0; }
 .platform-classroom-stage h2 { margin: 0 0 18px; font-size: clamp(1.1rem, 2vw, 1.45rem); line-height: 1.5; overflow-wrap: anywhere; }
 .platform-classroom-player { border-radius: 24px; overflow: hidden; background: var(--muted); min-height: 240px; }

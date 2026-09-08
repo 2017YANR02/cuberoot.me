@@ -423,7 +423,7 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onR
                 <div className="platform-rating-stars">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <label key={star} className="platform-rating-star" data-filled={star <= Number(value)}>
-                      <input type="radio" name={item.key} value={star} checked={Number(value) === star} required={item.required}
+                      <input className="platform-rating-input" type="radio" name={item.key} value={star} checked={Number(value) === star} required={item.required}
                         aria-label={t(`${star} 星`, `${star} ${star === 1 ? 'star' : 'stars'}`)}
                         onChange={() => setValues((current) => ({ ...current, [item.key]: String(star) }))} />
                       <Star size={32} strokeWidth={1.5} aria-hidden="true" />
