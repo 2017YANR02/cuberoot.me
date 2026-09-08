@@ -829,6 +829,7 @@ export class SpaceRoom {
     }
   }
   private landscape() {
+    if (this.environment === 'shanghai') return;
     const island = this.environment === 'island';
     if (island) this.root.add(createIsland());
     if (this.style === 'company') return;

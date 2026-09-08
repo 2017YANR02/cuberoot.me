@@ -139,10 +139,10 @@ export class Weather {
       // Equilibrium coverage is rate*dutyCycle/decay, and at gale force roughly
       // 7% of the surface is folding at any instant, which lands near the ~13%
       // whitecap coverage a storm sea actually shows.
-      p.foamMul = lerp(0.30, 0.54, wt) * s.foamStrength;
+      p.foamMul = lerp(0.30, 0.95, wt) * s.foamStrength;
       // Whitecap decay: the bright active phase lasts a couple of seconds, the
       // bubble raft it leaves behind lingers for tens of seconds.
-      p.foamDecay = lerp(0.9, 0.5, wt);
+      p.foamDecay = lerp(0.9, 0.28, wt);
       p.bubbleDecay = lerp(0.35, 0.11, wt);
 
       U.uWhitecapCoverage.value = whitecap;

@@ -314,7 +314,7 @@ void main(){
   // crest can no longer support itself and spills. That threshold lives in the
   // surface slope, which the FFT gives us directly, and it fires on the whole
   // spilling-breaker population that folding misses.
-  vec4 prev = texture(uPrevTurb, vUv);
+  vec4 prev = texture(uPrevTurb, vUv - uWindDir * uDt * .45 / uLengthScale);
   float fold = 1.0 - smoothstep(uFoamBias - 0.30, uFoamBias, jacobian);
 
   vec2 grad = vec2(DyDx, DyDz);
@@ -327,7 +327,7 @@ void main(){
   // to be high in its own band as well. uCrestK turns the cascade's elevation
   // into the same units as its slope, making the gate scale-free.
   float above = smoothstep(0.035, 0.265, Dy * uCrestK);
-  float steep = smoothstep(uSteepBias, uSteepBias + 0.106, slope) * lee * above;
+  float steep = smoothstep(uSteepBias, uSteepBias + 0.075, slope) * lee * above;
 
   fold = max(fold, steep);
 
@@ -486,7 +486,7 @@ class Cascade {
     ap.set('uFoamBias', foam.bias);
     // Calibrate the upstream visual breaker gate to the normalized spectrum.
     // ponytail: per-band foam proxy; overturning waves require a fluid solver.
-    ap.set('uSteepBias', foam.steepBias * Math.SQRT1_2 * 0.5 / Math.max(foamScale, 0.35));
+    ap.set('uSteepBias', foam.steepBias * Math.SQRT1_2 * 0.32 / Math.max(foamScale, 0.35));
     ap.uniforms.uWindDir.value.copy(foam.windDir);
     ap.set('uFoamMul', foam.mul * foamScale);
     ap.set('uFoamDecay', foam.decay / Math.max(foamScale, 0.15));

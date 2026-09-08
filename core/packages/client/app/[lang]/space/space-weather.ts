@@ -1,6 +1,19 @@
 import * as THREE from 'three';
 import { WeatherSystem } from './abyssal/WeatherSystem.js';
-import { VILLA_ROOMS, type RoomStyle, type Weather } from './space-state';
+import { VILLA_ROOMS, validSceneTime, type RoomStyle, type Weather } from './space-state';
+
+export function sceneDaylight(timeOfDay: string) {
+  if (!validSceneTime(timeOfDay)) throw new Error('timeOfDay');
+  const [hours, minutes] = timeOfDay.split(':').map(Number);
+  const angle = ((hours * 60 + minutes) / 720 - 1) * Math.PI;
+  const latitude = THREE.MathUtils.degToRad(31.2534);
+  // NOAA hour-angle/zenith equations: docs/space-sources.md.
+  // ponytail: fixed equinox and local solar time; calendar/time-zone astronomy needs a date/location control.
+  const direction = new THREE.Vector3(-Math.sin(angle), Math.cos(latitude) * Math.cos(angle), Math.sin(latitude) * Math.cos(angle));
+  const elevation = Math.asin(direction.y);
+  return { direction, elevation, azimuth: Math.atan2(direction.z, direction.x),
+    day: THREE.MathUtils.smoothstep(elevation, -.12, .12), sun: THREE.MathUtils.smoothstep(elevation, 0, .18) };
+}
 
 // Bounds: weather never enters layout geometry or picking; roofs shelter interiors,
 // including cutaways. All effects have fixed budgets and own their GPU resources.
@@ -37,21 +50,23 @@ float noise(vec3 p) {
 export class SpaceWeather {
   readonly root = new THREE.Group();
   readonly engine: WeatherSystem;
+  daylight = sceneDaylight('09:00');
   private particles: THREE.Points | THREE.LineSegments | null = null;
   private mud: THREE.Mesh | null = null;
   private rocks: THREE.InstancedMesh | null = null;
+  private rainbowSky: THREE.Mesh<THREE.SphereGeometry, THREE.ShaderMaterial> | null = null;
   private uniforms = {
     uTime: { value: 0 }, uCompany: { value: 0 }, uUrban: { value: 0 }, uWind: { value: 0 },
     uKind: { value: 0 }, uDensity: { value: 0 }, uSnow: { value: 0 }, uWet: { value: 0 },
     uAnchor: { value: new THREE.Vector3() }, uTint: { value: new THREE.Color() },
   };
   private kind: Weather = 'sunny';
-  private style: RoomStyle = 'minimal';
   private elapsed = 0;
   private lastTime = 0;
   private animated = false;
   private patched = new Set<THREE.Material>();
   private storm = false;
+  private fogScale = 1;
   private matrix = new THREE.Object3D();
   private readonly budget: number;
 
@@ -64,22 +79,23 @@ export class SpaceWeather {
 
   get environment() { return this.engine.environment?.texture; }
 
-  set(kind: Weather, style: RoomStyle, room: THREE.Group, island = false) {
+  set(kind: Weather, style: RoomStyle, room: THREE.Group, island = false, city = false) {
     this.clearEffects();
-    this.kind = kind; this.style = style; this.elapsed = 0; this.lastTime = 0;
+    this.kind = kind; this.elapsed = 0; this.lastTime = 0;
+    this.fogScale = city ? .025 : island && kind !== 'fog' ? .15 : 1;
     const [cloud, particle, density, wind] = presets[kind];
     this.uniforms.uTime.value = 0;
     this.uniforms.uKind.value = particle; this.uniforms.uDensity.value = density; this.uniforms.uWind.value = wind;
     this.uniforms.uCompany.value = Number(style === 'company');
-    this.uniforms.uUrban.value = Number(!island && (style === 'penthouse' || style === 'cyberpunk'));
+    this.uniforms.uUrban.value = Number(!island && !city && (style === 'penthouse' || style === 'cyberpunk'));
     this.uniforms.uSnow.value = kind === 'snow' || kind === 'blizzard' ? 0.88 : kind === 'sleet' ? 0.3 : 0;
     this.uniforms.uWet.value = particle === 1 || particle === 3 || kind === 'sleet' || kind === 'rainbow' ? 1 : 0;
     this.uniforms.uTint.value.setHex(particle === 4 ? kind === 'sandstorm' ? 0xb9a17c : 0x9f997b : 0xdce8f0);
     this.storm = ['lightning', 'thunderstorm', 'typhoon'].includes(kind);
-    this.animated = island || wind > 0 || particle > 0 || this.storm || kind === 'mudslide';
+    this.animated = island || city || wind > 0 || particle > 0 || this.storm || kind === 'mudslide';
     this.engine.set({ cloud, rain: particle === 1 ? density : kind === 'sleet' ? density * .5 : 0,
-      island, wind, fog: presets[kind][4], storm: this.storm, tornado: kind === 'tornado',
-      night: style === 'cyberpunk', sand: kind === 'sandstorm', urban: this.uniforms.uUrban.value > 0 });
+      island, city, wind, fog: presets[kind][4] * this.fogScale, storm: this.storm, tornado: kind === 'tornado',
+      sand: kind === 'sandstorm', urban: this.uniforms.uUrban.value > 0 });
     if (kind === 'sleet') this.precipitation(2, density * .5);
     else if (particle > 1) this.precipitation(particle, density);
     if (kind === 'mudslide') this.mudslide();
@@ -87,10 +103,17 @@ export class SpaceWeather {
     this.patchSurfaces(room);
   }
 
+  setTime(timeOfDay: string) {
+    this.daylight = sceneDaylight(timeOfDay);
+    const { elevation, azimuth, day } = this.daylight;
+    this.engine.setTime(elevation, azimuth, day);
+  }
+
   lighting() {
     const [cloud, , , , fog] = presets[this.kind];
+    const fogColor = new THREE.Color(0x17202e).lerp(new THREE.Color(this.kind === 'sandstorm' ? 0x978267 : cloud > 0.8 ? 0x647581 : 0xadc4d2), this.daylight.day);
     return { sun: Math.max(0.04, 1 - cloud * 0.96), ambient: 1 - cloud * 0.32,
-      fog: new THREE.FogExp2(this.kind === 'sandstorm' ? 0x978267 : this.style === 'cyberpunk' ? 0x17202e : cloud > 0.8 ? 0x647581 : 0xadc4d2, fog || 0.0008) };
+      fog: new THREE.FogExp2(fogColor, Math.max(this.fogScale === .025 ? .000035 : 0, (fog || 0.0008) * this.fogScale)) };
   }
 
   private precipitation(kind: number, density: number) {
@@ -165,19 +188,25 @@ export class SpaceWeather {
   }
 
   private rainbow() {
-    const material = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide,
-      vertexShader: 'varying vec2 vArc;void main(){vArc=position.xy;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-      fragmentShader: `varying vec2 vArc;void main(){
-        float r=length(vArc), hue=clamp((55.-r)/9.,0.,1.)*.76;
+    // An angular sky effect keeps its apparent size from a room to a city flight.
+    const material = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, side: THREE.BackSide,
+      uniforms: { uSun: { value: this.daylight.direction.clone() }, uDay: { value: 1 } },
+      vertexShader: 'varying vec3 vDirection;void main(){vDirection=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+      fragmentShader: `varying vec3 vDirection;uniform vec3 uSun;uniform float uDay;void main(){
+        vec3 direction=normalize(vDirection);
+        float angle=degrees(acos(clamp(dot(direction,-uSun),-1.,1.)));
+        float band=(angle-40.4)/2.4, hue=(1.-clamp(band,0.,1.))*.76;
         vec3 color=clamp(abs(mod(hue*6.+vec3(0.,4.,2.),6.)-3.)-1.,0.,1.);
-        float a=smoothstep(46.,48.,r)*(1.-smoothstep(53.,55.,r))*smoothstep(0.,14.,vArc.y)*.2;
+        float a=smoothstep(0.,.18,band)*(1.-smoothstep(.78,1.,band))*smoothstep(-.01,.025,direction.y)*.34*uDay;
         gl_FragColor=vec4(mix(color,vec3(1.),.2),a);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }`,
     });
-    const mesh = new THREE.Mesh(new THREE.RingGeometry(46, 55, 128, 1, 0, Math.PI), material);
-    mesh.position.set(-25, 0, -110); mesh.rotation.y = .3; this.root.add(mesh);
+    this.rainbowSky = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 24), material);
+    this.rainbowSky.name = 'rainbow-sky';
+    this.rainbowSky.frustumCulled = false;
+    this.root.add(this.rainbowSky);
   }
 
   patchSurfaces(room: THREE.Group) {
@@ -213,6 +242,13 @@ export class SpaceWeather {
     this.lastTime = running ? time : 0;
     this.uniforms.uTime.value = this.elapsed; this.uniforms.uAnchor.value.copy(camera.position);
     this.engine.update(camera, this.elapsed, dt, motion);
+    if (this.rainbowSky) {
+      this.rainbowSky.position.copy(camera.position);
+      this.rainbowSky.scale.setScalar(camera.far * .8);
+      this.rainbowSky.material.uniforms.uSun.value.copy(this.daylight.direction);
+      this.rainbowSky.material.uniforms.uDay.value = this.daylight.sun;
+      this.rainbowSky.visible = this.daylight.sun > 0;
+    }
     if (this.rocks) {
       for (let i = 0; i < this.rocks.count; i++) {
         const t = (i * .61803398875 + this.elapsed * .045) % 1;
@@ -230,7 +266,7 @@ export class SpaceWeather {
       if (o instanceof THREE.InstancedMesh) o.dispose();
       if (o instanceof THREE.Mesh || o instanceof THREE.Points || o instanceof THREE.LineSegments) { o.geometry.dispose(); for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.dispose(); }
     }
-    this.particles = null; this.mud = null; this.rocks = null;
+    this.particles = null; this.mud = null; this.rocks = null; this.rainbowSky = null;
   }
 
   forgetRoom() { this.patched.clear(); }
