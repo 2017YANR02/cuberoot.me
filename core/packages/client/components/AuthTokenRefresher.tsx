@@ -95,13 +95,13 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
         box-shadow:inset 0 1px 0 color-mix(in srgb,var(--foreground) 16%,transparent),
           inset 0 -1px 0 color-mix(in srgb,var(--background) 30%,transparent),
           0 6px 24px color-mix(in srgb,var(--foreground) 8%,transparent);}
-      .admin-tools .compact-select-trigger{border:0;background:transparent;}
+      .admin-tools .compact-select-trigger{border:0;background:transparent;padding:6px;}
       .admin-tools .compact-select-trigger:hover{background:transparent;color:var(--accent);}
-      .admin-tool-action{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+      .admin-tool-action{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:29px;height:29px;flex-shrink:0;gap:6px;white-space:nowrap;
         border:0;background:transparent;color:inherit;font:inherit;text-decoration:none;padding:6px;cursor:pointer;}
       .admin-tool-action svg{width:17px;height:17px;}
       .admin-tool-action:hover{color:var(--accent);}
-      .admin-env-switch{display:inline-flex;align-items:center;gap:2px;}
+      .admin-env-switch{display:inline-flex;align-items:center;gap:8px;}
       .admin-env-switch .admin-tool-action{color:var(--faint-foreground);}
       .admin-env-switch .admin-tool-action[aria-current="page"]{color:var(--foreground);}
     `}</style>
