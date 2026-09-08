@@ -1,0 +1,13 @@
+{
+  "name": "douyin-transcript",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "本地抖音直播复盘文字记录导出工具",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test",
+    "start": "node cli.mjs"
+  },
+  "dependencies": { "playwright": "1.63.0" }
+}
