@@ -1274,7 +1274,7 @@ export const CATALOG: ComponentEntry[] = [
     name: 'PersonAchievements',
     import: "import PersonAchievements, { GrandSlamBadges } from '@/components/persons/sections/PersonAchievements';",
     category: 'badge',
-    zh: '选手大满贯成就奖章，复用大满贯榜数据，按项目展示并区分全金。',
+    zh: '选手大满贯成就奖章，复用大满贯榜数据，按项目展示并区分金牌大满贯。',
     en: 'Per-event person achievement medals from the Grand Slam leaderboard, with an all-gold variant.',
     usage: '<PersonAchievements wcaId="2018KHAN28" isZh />',
   },

@@ -12,7 +12,7 @@ export const ACHIEVEMENT_TITLES = {
   historicalCR: { zh: '曾获洲际纪录', en: 'Historical continental record' },
   historicalNR: { zh: '曾获国家纪录', en: 'Historical national record' },
   slam: { zh: '大满贯', en: 'Grand Slam' },
-  gold: { zh: '全金大满贯', en: 'All-gold Grand Slam' },
+  gold: { zh: '金牌大满贯', en: 'Gold Medal Grand Slam' },
 };
 export type AchievementKind = keyof typeof ACHIEVEMENT_TITLES;
 
