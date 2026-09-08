@@ -1,0 +1,48 @@
+[
+  {"building":5,"lines":[
+    {"text":"华夏银行","xFraction":-0.4,"y":4.55,"z":-0.78,"height":0.55,"width":3.2,"panel":"bronze"},
+    {"text":"华夏银行","xFraction":0.4,"y":4.55,"z":-0.78,"height":0.55,"width":3.2,"panel":"bronze"}
+  ]},
+  {"building":7,"lines":[
+    {"text":"盘谷银行","y":5.8,"z":-1.05,"height":0.78,"width":7.5,"panel":"bronze"},
+    {"text":"Bangkok Bank","y":5.12,"z":-1.06,"height":0.36,"width":6}
+  ]},
+  {"building":12,"lines":[
+    {"text":"上海浦东发展银行","y":6.25,"z":-1.15,"height":0.76,"width":13,"panel":"bronze"}
+  ]},
+  {"building":14,"lines":[
+    {"text":"上海市总工会","y":4.75,"z":-1,"height":0.64,"width":7.6,"panel":"bronze"}
+  ]},
+  {"building":15,"lines":[
+    {"text":"中国外汇交易中心","y":17.1,"z":-1.91,"height":0.91,"width":18}
+  ]},
+  {"building":16,"lines":[
+    {"text":"招商银行","y":17.1,"z":-1.92,"height":1.16,"width":10.5},
+    {"text":"CHINA MERCHANTS BANK","y":5.65,"z":-0.96,"height":0.43,"width":9,"panel":"bronze"}
+  ]},
+  {"building":17,"lines":[
+    {"text":"AIA","y":33.15,"z":-1.22,"height":2.7,"width":7.8,"finish":"red"},
+    {"text":"AMERICAN INTERNATIONAL ASSURANCE","y":9.58,"z":-1.45,"height":0.38,"width":12.5,"panel":"bronze"}
+  ]},
+  {"building":19,"lines":[
+    {"text":"THE SWATCH ART PEACE HOTEL","y":26.75,"z":-0.86,"height":0.58,"width":17}
+  ]},
+  {"building":20,"lines":[
+    {"text":"PEACE HOTEL","x":-1309.42,"y":4.92,"z":1366.5,"yaw":1.5707963267948966,"height":0.7,"width":9.3,"finish":"warm","panel":"bronze"},
+    {"text":"和平饭店","x":-1309.4,"y":4.04,"z":1366.5,"yaw":1.5707963267948966,"height":0.65,"width":5,"finish":"warm"}
+  ],"blade":{"text":"和平饭店","english":"PEACE HOTEL"}},
+  {"building":23,"lines":[
+    {"text":"中国银行","y":4.65,"z":-0.9,"height":0.65,"width":5,"finish":"ink","panel":"lightbox"},
+    {"text":"BANK OF CHINA","y":3.95,"z":-0.91,"height":0.28,"width":5,"finish":"ink","panel":"lightbox"}
+  ]},
+  {"building":24,"lines":[
+    {"text":"ICBC  中国工商银行","y":25.15,"z":-1.92,"height":0.92,"width":18,"finish":"ink"}
+  ]},
+  {"building":26,"lines":[
+    {"text":"ABC  中国农业银行","y":17.5,"z":-0.74,"height":0.87,"width":13,"finish":"teal"},
+    {"text":"AGRICULTURAL BANK OF CHINA","y":5.2,"z":-1.12,"height":0.39,"width":10,"panel":"bronze"}
+  ]},
+  {"building":29,"lines":[
+    {"text":"中国光大银行","y":16.94,"z":-0.94,"height":0.72,"width":13.5}
+  ]}
+]

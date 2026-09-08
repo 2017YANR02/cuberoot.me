@@ -49,9 +49,30 @@
     "name": "Three.js",
     "space": true,
     "url": "https://github.com/mrdoob/three.js",
-    "zh": "魔方空间的 3D 渲染、物理材质、视角控制、镜面反射、江水及后期处理",
-    "en": "3D rendering, physical materials, camera controls, reflections, river water and postprocessing in Cube Space",
+    "zh": "魔方空间的 3D 渲染、物理材质、视角控制、镜面反射、江水及后期处理；外滩立体招牌复用官方 TTFLoader、FontLoader 和 ExtrudeGeometry，使用本地字体子集",
+    "en": "3D rendering, physical materials, camera controls, reflections, river water and postprocessing in Cube Space; raised Bund signs reuse official TTFLoader, FontLoader and ExtrudeGeometry with a local font subset",
     "long_en": "Three.js is licensed under the MIT license. Cube Space reuses its renderer, controls, Water shader, Reflector and postprocessing modules. The water normal texture from r183 is bundled locally."
+  },
+  {
+    "name": "和平饭店入口与灯牌实拍 / Peace Hotel entrance and blade sign",
+    "space": true,
+    "url": "https://n.sinaimg.cn/sinakd20119/320/w717h403/20220831/51c5-e438a768e27ecac8115bad5575bd3b71.jpg",
+    "zh": "新浪图床的 2022 年文章配图，用于和平饭店南侧双面竖灯牌、临江入口中英文字与门厅位置。原文章现不可用，链接直达实际对照照片；比例、字形和灯光为估算，未作为运行贴图。查阅于 2026-09-08",
+    "en": "Photo hosted by Sina from a 2022 article, used for the south-side double-faced blade, riverfront entrance lettering and doorway. The article is now unavailable; this link opens the actual reference photo. Dimensions, lettering and lighting are estimated, not a runtime texture. Accessed 2026-09-08"
+  },
+  {
+    "name": "携程：原汇丰大楼实拍 / Ctrip: former HSBC Building",
+    "space": true,
+    "url": "https://you.ctrip.com/sight/shanghai2/1831446.html",
+    "zh": "游客实拍用于上海浦东发展银行位于底层入口上方的招牌，避免误放到高处柱廊檐口；尺寸和字体未实测，照片未作为运行贴图。查阅于 2026-09-08",
+    "en": "Visitor photographs locate the Shanghai Pudong Development Bank sign above the ground-floor entrances, rather than the upper portico cornice. Dimensions and typeface are not surveyed; photos are not runtime textures. Accessed 2026-09-08"
+  },
+  {
+    "name": "文泉驿微米黑 / WenQuanYi Micro Hei",
+    "space": true,
+    "url": "https://sourceforge.net/projects/wqy/files/wqy-microhei/",
+    "zh": "外滩招牌复用仓库现有字体，经 Three.js TTFLoader 提取 58 个字形，本地托管约 34 KB 轮廓数据。字体内嵌 Apache-2.0 许可和作者信息随子集保留，许可证随资源附带；通用字体不等于实物品牌字体。生成于 2026-09-08",
+    "en": "Bund signs subset 58 glyphs from the font already in this repository using Three.js TTFLoader, serving about 34 KB of outlines locally. Embedded Apache-2.0 and author notices are preserved and the license accompanies the asset. This general typeface is not an exact brand font. Generated 2026-09-08"
   },
   {
     "name": "SOM: Jin Mao Tower",
@@ -213,8 +234,8 @@
     "name": "Asisbiz: 外滩 5 日清大楼 / Nissin Building",
     "space": true,
     "url": "https://www.asisbiz.com/China/5-Zhongshan-Rd.html",
-    "zh": "实拍对照：六层分区、四壁柱、双山花半圆窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: six-storey elevation, four pilasters and twin gables. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "zh": "实拍对照：六层分区、四壁柱、双山花半圆窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：华夏银行。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
+    "en": "Photo reference: six-storey elevation, four pilasters and twin gables. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 华夏银行. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
   },
   {
     "name": "Asisbiz: 外滩 6 中国通商银行大楼 / China Commercial Bank",
@@ -227,8 +248,8 @@
     "name": "Asisbiz: 外滩 7 大北电报公司大楼 / Great Northern Telegraph",
     "space": true,
     "url": "https://www.asisbiz.com/China/7-Zhongshan-Rd.html",
-    "zh": "实拍对照：双侧穹顶、中央坡顶老虎窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: twin domes and central roof dormers. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "zh": "实拍对照：双侧穹顶、中央坡顶老虎窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：盘谷银行 / Bangkok Bank。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
+    "en": "Photo reference: twin domes and central roof dormers. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 盘谷银行 / Bangkok Bank. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
   },
   {
     "name": "Asisbiz: 外滩 9 轮船招商局大楼 / China Merchants Building",
@@ -241,29 +262,29 @@
     "name": "Asisbiz: 外滩 14 交通银行大楼 / Bank of Communications",
     "space": true,
     "url": "https://www.asisbiz.com/China/14-Zhongshan-Rd.html",
-    "zh": "实拍对照：竖向翼墙、中央退台、深色入口。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: vertical fins, stepped central crown and dark entrance. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "zh": "实拍对照：竖向翼墙、中央退台、深色入口。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：上海市总工会。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
+    "en": "Photo reference: vertical fins, stepped central crown and dark entrance. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 上海市总工会. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
   },
   {
     "name": "Asisbiz: 外滩 15 华俄道胜银行大楼 / Russo-Chinese Bank",
     "space": true,
     "url": "https://www.asisbiz.com/China/15-Zhongshan-Rd.html",
-    "zh": "实拍对照：跨两层六柱廊、基座拱窗、檐口。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: two-storey six-column portico, base arches and cornices. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "zh": "实拍对照：跨两层六柱廊、基座拱窗、檐口。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：中国外汇交易中心。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
+    "en": "Photo reference: two-storey six-column portico, base arches and cornices. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 中国外汇交易中心. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
   },
   {
     "name": "Asisbiz: 外滩 16 台湾银行大楼 / Bank of Taiwan",
     "space": true,
     "url": "https://www.asisbiz.com/China/16-Zhongshan-Rd.html",
-    "zh": "实拍对照：四柱门廊、基座、上层窗区。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: four-column portico, base and upper window level. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "zh": "实拍对照：四柱门廊、基座、上层窗区。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：招商银行 / CHINA MERCHANTS BANK。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
+    "en": "Photo reference: four-column portico, base and upper window level. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 招商银行 / CHINA MERCHANTS BANK. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
   },
   {
     "name": "Asisbiz: 外滩 17 字林西报大楼 / North China Daily News AIA",
     "space": true,
     "url": "https://www.asisbiz.com/China/17-Zhongshan-Rd.html",
-    "zh": "实拍对照：深色基座及顶部、浅色主体、双亭和上层拱窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: dark base and upper floors, pale shaft, twin pavilions and upper arches. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "zh": "实拍对照：深色基座及顶部、浅色主体、双亭和上层拱窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：AIA / AMERICAN INTERNATIONAL ASSURANCE。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
+    "en": "Photo reference: dark base and upper floors, pale shaft, twin pavilions and upper arches. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: AIA / AMERICAN INTERNATIONAL ASSURANCE. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
   },
   {
     "name": "Asisbiz: 外滩 18 麦加利银行大楼 / Chartered Bank",
@@ -276,29 +297,29 @@
     "name": "Asisbiz: 外滩 19 汇中饭店（和平南楼） / Palace Hotel Peace South",
     "space": true,
     "url": "https://www.asisbiz.com/China/19-Zhongshan-Rd.html",
-    "zh": "实拍对照：红砖浅石分区、圆角窗、铜顶八角亭、南京路长翼。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: red brick and pale stone, corner windows, copper-capped drums and Nanjing Road wing. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "zh": "实拍对照：红砖浅石分区、圆角窗、铜顶八角亭、南京路长翼。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：THE SWATCH ART PEACE HOTEL。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
+    "en": "Photo reference: red brick and pale stone, corner windows, copper-capped drums and Nanjing Road wing. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: THE SWATCH ART PEACE HOTEL. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
   },
   {
     "name": "Asisbiz: 外滩 23 中国银行大楼 / Bank of China",
     "space": true,
     "url": "https://www.asisbiz.com/China/23-Zhongshan-Rd.html",
-    "zh": "实拍对照：两侧石花格、三列竖向窗、退台翘檐及西侧附楼。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: stone lattice screens, three central window bands, stepped Chinese eaves and west wing. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "zh": "实拍对照：两侧石花格、三列竖向窗、退台翘檐及西侧附楼。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：中国银行 / BANK OF CHINA。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
+    "en": "Photo reference: stone lattice screens, three central window bands, stepped Chinese eaves and west wing. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 中国银行 / BANK OF CHINA. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
   },
   {
     "name": "Asisbiz: 外滩 24 横滨正金银行大楼 / Yokohama Specie Bank",
     "space": true,
     "url": "https://www.asisbiz.com/China/24-Zhongshan-Rd.html",
-    "zh": "实拍对照：四根巨柱、上部小柱廊、檐口。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: four-column giant order, upper colonnade and cornices. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "zh": "实拍对照：四根巨柱、上部小柱廊、檐口。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：ICBC  中国工商银行。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
+    "en": "Photo reference: four-column giant order, upper colonnade and cornices. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: ICBC  中国工商银行. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
   },
   {
     "name": "Asisbiz: 外滩 26 扬子水火保险公司大楼 / Yangtze Insurance Building",
     "space": true,
     "url": "https://www.asisbiz.com/China/26-Zhongshan-Rd.html",
-    "zh": "实拍对照：窄立面、上部双柱、双侧深色老虎窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: narrow facade, upper paired columns and dark end dormers. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "zh": "实拍对照：窄立面、上部双柱、双侧深色老虎窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：ABC  中国农业银行 / AGRICULTURAL BANK OF CHINA。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
+    "en": "Photo reference: narrow facade, upper paired columns and dark end dormers. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: ABC  中国农业银行 / AGRICULTURAL BANK OF CHINA. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
   },
   {
     "name": "Asisbiz: 外滩 27 怡和洋行大楼 / Jardine Matheson Building",
@@ -318,8 +339,8 @@
     "name": "Asisbiz: 外滩 29 东方汇理银行大楼 / Banque de Indochine",
     "space": true,
     "url": "https://www.asisbiz.com/China/29-Zhongshan-Rd.html",
-    "zh": "实拍对照：三层古典立面、壁柱与中央山花。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: three-storey classical facade, pilasters and central pediment. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "zh": "实拍对照：三层古典立面、壁柱与中央山花。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：中国光大银行。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
+    "en": "Photo reference: three-storey classical facade, pilasters and central pediment. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 中国光大银行. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
   },
   {
     "name": "Asisbiz: 外滩 33 英国领事馆 / Former British Consulate",

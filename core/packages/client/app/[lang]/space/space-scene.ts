@@ -29,7 +29,8 @@ type Entry = { root: THREE.Group; model: Cube | Sq1Cube | PyraCube | MegaminxCub
 export type View = Destination | ShanghaiView | 'island' | 'shore' | 'home' | 'front' | 'side' | 'top';
 export type Mode = 'translate' | 'rotate' | 'twist';
 export type Navigation = 'orbit' | 'walk' | 'drone';
-export const DRONE_SPEEDS = [2, 10, 50, 200] as const;
+export const DRONE_DEFAULT_SPEED = 500;
+export const DRONE_SPEEDS = [2, 10, 50, 200, DRONE_DEFAULT_SPEED] as const;
 export const DRONE_MIN_SPEED = 0.1;
 export const DRONE_MAX_SPEED = 2000;
 export const DRONE_MAX_HEIGHT = 6000;
@@ -130,7 +131,7 @@ export class SpaceScene {
   private turnDrag: { id: number; x: number; y: number; entry: Entry; resolve: (dx: number, dy: number) => string | null; fired: boolean } | null = null;
   navigation: Navigation = 'orbit';
   private freeCamera = false;
-  private droneSpeed = 10;
+  private droneSpeed = DRONE_DEFAULT_SPEED;
   private altitude = NaN;
   get navigating() { return this.navigation !== 'orbit'; }
   get droneMinHeight() { return this.room?.environment === 'island' ? -5 : 1; }

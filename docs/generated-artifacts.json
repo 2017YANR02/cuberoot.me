@@ -7,6 +7,21 @@
   },
   "artifacts": [
     {
+      "id": "space.shanghai-sign-font",
+      "kind": "checked-in-generated",
+      "source": {
+        "url": "https://sourceforge.net/projects/wqy/files/wqy-microhei/",
+        "paths": ["core/packages/client/public/fonts/wqy-microhei.ttf", "core/packages/client/app/[lang]/space/space-shanghai-signs-data.json"]
+      },
+      "license": { "spdx": "Apache-2.0", "evidence": "Original font copyright and license metadata retained in sign-font.json; full license in sign-font.LICENSE.txt alongside it" },
+      "owner": "core/packages/client/scripts/build-shanghai-sign-font.mjs",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/client exec node scripts/build-shanghai-sign-font.mjs",
+      "outputs": ["core/packages/client/public/assets/space/shanghai-v1/sign-font.json"],
+      "verification": ["core/packages/client/tests/space_shanghai.test.ts checks all signage glyphs, finite geometry, dimensions and physical placement"],
+      "driftPolicy": "Regenerate this local Three.js font subset after changing signage text; do not edit glyph outlines by hand. Reference photos are not runtime textures."
+    },
+    {
       "id": "stats.wca",
       "kind": "checked-in-generated",
       "source": {

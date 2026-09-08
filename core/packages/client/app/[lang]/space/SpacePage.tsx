@@ -11,7 +11,7 @@ import { ClearButton } from '@/components/ClearButton';
 import NumberCommitInput from '@/components/NumberCommitInput';
 import { persistItem } from '@/lib/safe-storage';
 import { tr } from '@/i18n/tr';
-import { DRONE_MAX_HEIGHT, DRONE_MIN_SPEED, DRONE_MAX_SPEED, DRONE_SPEEDS, SpaceScene, type Mode, type Navigation, type View } from './space-scene';
+import { DRONE_MAX_HEIGHT, DRONE_MIN_SPEED, DRONE_MAX_SPEED, DRONE_DEFAULT_SPEED, DRONE_SPEEDS, SpaceScene, type Mode, type Navigation, type View } from './space-scene';
 import { commitLayout, DESTINATIONS, ENVIRONMENTS, type Environment, INITIAL_LAYOUT, isPuzzleKind, layoutTime, validSceneTime, MAX_OBJECTS, movePosition, parseLayout, PUZZLES, RIVER_COLORS, type RiverColor, ROOMS, SPACE_KEY, travelHistory, WEATHER, type Weather, type Destination, type History, type PuzzleKind, type RoomStyle, type SpaceObject } from './space-state';
 import './space.css';
 import { turnButtons } from './space-turn';
@@ -42,7 +42,7 @@ export default function SpacePage() {
   const [ready, setReady] = useState(false);
   const [navigation, setNavigation] = useState<Navigation>('orbit');
   const [altitude, setAltitude] = useState(0);
-  const [droneSpeed, setDroneSpeed] = useState(10);
+  const [droneSpeed, setDroneSpeed] = useState(DRONE_DEFAULT_SPEED);
   const navigating = navigation !== 'orbit';
   const [zoom, setZoom] = useState(50);
   const [cityState, setCityState] = useState<'loading' | 'ready' | 'error' | null>(null);
