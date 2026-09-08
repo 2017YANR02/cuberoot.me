@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Megaphone, Sparkles, UserCog, Laptop, Globe, GripVertical, Drama } from 'lucide-react';
+import { Megaphone, Sparkles, UserCog, Laptop, Globe, Drama } from 'lucide-react';
 import { ensureFreshToken, refreshSessionUser, canTestRoles, getRolePreview, startRolePreview, endRolePreview, useAuthUser, isAdmin, type TestRole } from '@/lib/auth-store';
 import AppLink from './AppLink';
 import { openPageNoticeEditor, pageKeyFromPathname } from '@/lib/page-notices-api';
@@ -27,8 +27,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const toolbarRef = useRef<HTMLElement>(null);
-  const dragRef = useRef<{ x: number; y: number } | null>(null);
-  // The pet owns the only position; either drag handle moves that same root.
+  // The pet owns the position; viewport clamping moves that same root.
   const moveTo = useCallback((left: number, top: number) => {
     const toolbar = toolbarRef.current;
     const root = toolbar?.parentElement;
@@ -105,31 +104,6 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       .admin-env-switch .admin-tool-action{color:var(--faint-foreground);}
       .admin-env-switch .admin-tool-action[aria-current="page"]{color:var(--foreground);}
     `}</style>
-    <button type="button" className="admin-tool-action" aria-label={t('移动桌宠和管理工具', 'Move pet and admin tools')}
-      title={t('拖动，或用方向键移动', 'Drag, or use arrow keys to move')}
-      style={{ cursor: 'grab', touchAction: 'none' }}
-      onPointerDown={event => {
-        if (!event.isPrimary || event.button !== 0) return;
-        const rect = toolbarRef.current!.getBoundingClientRect();
-        dragRef.current = { x: event.clientX - rect.left, y: event.clientY - rect.top };
-        event.currentTarget.setPointerCapture(event.pointerId);
-      }}
-      onPointerMove={event => {
-        if (dragRef.current) moveTo(event.clientX - dragRef.current.x, event.clientY - dragRef.current.y);
-      }}
-      onPointerUp={event => {
-        dragRef.current = null;
-        if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
-      }}
-      onPointerCancel={() => { dragRef.current = null; }}
-      onLostPointerCapture={() => { dragRef.current = null; }}
-      onKeyDown={event => {
-        const delta = { ArrowLeft: [-16, 0], ArrowRight: [16, 0], ArrowUp: [0, -16], ArrowDown: [0, 16] }[event.key];
-        if (!delta) return;
-        event.preventDefault();
-        const rect = toolbarRef.current!.getBoundingClientRect();
-        moveTo(rect.left + delta[0], rect.top + delta[1]);
-      }}><GripVertical size={16} aria-hidden /></button>
     {admin && <>
       <button type="button" className="admin-tool-action" onClick={() => openPageNoticeEditor('page_top')}
         title={t('添加本页通知', 'Add notice for this page')} aria-label={t('添加本页通知', 'Add notice for this page')}>
