@@ -2,11 +2,14 @@ import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 import { describe, expect, it } from 'vitest';
 
-describe('person results initial loading', () => {
-  it('includes the default table without pulling reconstruction code into its static import graph', async () => {
+describe('results initial loading', () => {
+  it.each([
+    'components/persons/sections/PersonTabs.tsx',
+    'app/[lang]/wca/comp/[slug]/CompDetailPage.tsx',
+  ])('%s keeps reconstruction and calendar code out of its static import graph', async (entryPoint) => {
     const result = await build({
       absWorkingDir: fileURLToPath(new URL('..', import.meta.url)),
-      entryPoints: ['components/persons/sections/PersonTabs.tsx'],
+      entryPoints: [entryPoint],
       bundle: true,
       write: false,
       outdir: '../../../.tmp/png/person-results-imports',
@@ -25,12 +28,15 @@ describe('person results initial loading', () => {
       }],
     });
     const inputs = Object.keys(result.metafile.inputs).map((path) => path.replaceAll('\\', '/'));
-    expect(inputs).toContain('components/persons/sections/results/ResultsTab.tsx');
-    expect(inputs).toContain('components/persons/sections/results/ByEventView.tsx');
+    if (entryPoint.includes('PersonTabs')) {
+      expect(inputs).toContain('components/persons/sections/results/ResultsTab.tsx');
+      expect(inputs).toContain('components/persons/sections/results/ByEventView.tsx');
+    }
+    expect(inputs.filter((path) => /ScheduleCalendar|ScheduleView|CompScramblesTab/.test(path))).toEqual([]);
     expect(inputs).toContain('components/persons/sections/results/AttemptPopover.tsx');
     expect(inputs.filter((path) => /components\/(?:recon\/|SolutionView|puzzle-models\/)|\/sim\/engine\//.test(path))).toEqual([]);
     const eagerGraphics = Object.values(result.metafile.inputs).flatMap((input) => input.imports)
-      .filter((entry) => entry.kind !== 'dynamic-import' && /^(?:three|cubing)(?:\/|$)/.test(entry.path));
+      .filter((entry) => entry.kind !== 'dynamic-import' && /^(?:three|cubing|@fullcalendar)(?:\/|$)/.test(entry.path));
     expect(eagerGraphics).toEqual([]);
   });
 });
