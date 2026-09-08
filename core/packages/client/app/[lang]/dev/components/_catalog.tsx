@@ -857,6 +857,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Visible loading, timeout, and startup-failure states for route-critical client chunks, with an actionable retry after timeout.',
   },
   {
+    name: 'LessonVideoPlayer',
+    import: "import { LessonVideoPlayer } from '@/components/video/LessonVideoPlayer'",
+    category: 'more',
+    zh: '课程视频播放器：进度、音量、自动连播、倍速、休眠、画中画与全屏。',
+    en: 'Lesson video controls with seeking, volume, autoplay, speed, sleep timer, picture-in-picture and fullscreen.',
+  },
+  {
     name: 'ForumVideoPlayer',
     import: "import { ForumVideoPlayer } from '@/components/forum/ForumVideoPlayer';",
     category: 'more',
