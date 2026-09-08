@@ -58,7 +58,7 @@ it('awards only the requested person’s listed events, distinguishes all-gold a
   expect(html).toContain('href="/wca/grand-slam?event=skewb"');
   expect(html).not.toContain('event=333');
   expect((html.match(/data-kind="gold"/g) ?? []).length).toBe(1);
-  expect(html).toContain('All-gold Grand Slam');
+  expect(html).toContain('Gold Medal Grand Slam');
   expect(render('2017YANR02')).toBe('');
   expect(renderToStaticMarkup(createElement(GrandSlamBadges, { rows: [], wcaId: '2018KHAN28', isZh: false }))).toBe('');
 });
