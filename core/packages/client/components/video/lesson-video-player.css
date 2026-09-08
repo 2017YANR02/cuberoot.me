@@ -109,6 +109,7 @@
 .lesson-video-shortcut-note { margin: 24px 8px 0; font-size: 11px; color: color-mix(in srgb, var(--player-ink) 60%, transparent); }
 .lesson-video-shortcuts footer { display: flex; justify-content: flex-end; margin-top: 16px; }
 .lesson-video-shortcuts footer button { border: 0; padding: 8px; background: transparent; color: var(--signal-info); }
+.lesson-video-shortcuts footer button:focus-visible { outline: none; }
 @media (max-width: 600px) {
   .lesson-video-controls { padding-inline: 8px; }
   .lesson-video-toolbar { height: 44px; gap: 2px; }
