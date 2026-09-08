@@ -488,7 +488,7 @@ export default function AlgPuzzleClient() {
       {puzzle === '2x2' && (
         <section className="alg-set-section" aria-labelledby="alg-ls-index-title">
           <div className="alg-set-section-heading">
-            <h2 id="alg-ls-index-title">{tr({ zh: 'LS 方法', en: 'LS method' })}</h2>
+            <h2 id="alg-ls-index-title">LS</h2>
           </div>
           <LsSubsetGuide samples={firstCases} size={narrow ? 88 : 112} />
           {renderSetGrid(lsSets, [], 'alg-bento alg-ls-bento')}
