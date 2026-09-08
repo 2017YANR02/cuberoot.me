@@ -78,7 +78,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     setBusy(true); setError(false);
     try {
       if (role) {
-        if (!window.confirm(t('进入独立测试身份。业务操作会真实保存；不修改你的账号角色。继续？', 'Enter a separate test identity. Business changes are real; your account role is unchanged. Continue?'))) return;
+        if (!preview && !window.confirm(t('进入独立测试身份。业务操作会真实保存；不修改你的账号角色。继续？', 'Enter a separate test identity. Business changes are real; your account role is unchanged. Continue?'))) return;
         await startRolePreview(role);
       } else await endRolePreview();
     } catch { setError(true); }
@@ -133,10 +133,9 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
         ariaLabel={t('测试角色与说明', 'Test role and details')}
         title={t('正在测试角色', 'Testing role')}
         value={preview.role}
-        items={items.filter(item => item.value === preview.role).map(item => ({ ...item, disabled: true }))}
-        onChange={() => {}}
+        items={items.map(item => ({ ...item, disabled: busy }))}
+        onChange={role => { if (role !== preview.role) void run(role); }}
         footer={() => <small style={{ display: 'block', maxWidth: 240, margin: '6px 8px', whiteSpace: 'normal', lineHeight: 1.5 }}>
-          {t('切换角色前，请先退出当前测试。', 'Exit the current test before choosing another role.')}<br />
           {t('仅当前标签页，30 分钟有效；业务操作会真实保存。', 'This tab only, valid for 30 minutes. Business changes are real.')}
         </small>}
       />

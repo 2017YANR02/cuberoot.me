@@ -75,9 +75,10 @@ export function canTestRoles(): boolean {
 }
 
 export async function startRolePreview(role: TestRole): Promise<void> {
-  if (getRolePreview()) throw new Error('Exit the current test session first.');
+  const current = getRolePreview();
+  if (current) await revokeRolePreview(current.id);
   const response = await fetch(apiUrl('/v1/auth/role-preview'), {
-    method: 'POST', headers: { Authorization: `Bearer ${getSessionToken()}`, 'Content-Type': 'application/json' },
+    method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem(JWT_KEY) || ''}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ role }),
   });
   if (!response.ok) throw new Error('Could not start role test.');
@@ -94,13 +95,17 @@ export async function startRolePreview(role: TestRole): Promise<void> {
   window.location.reload();
 }
 
-export async function endRolePreview(): Promise<void> {
-  const preview = getRolePreview();
-  if (!preview) return;
-  const response = await fetch(apiUrl(`/v1/auth/role-preview/${encodeURIComponent(preview.id)}`), {
+async function revokeRolePreview(id: string): Promise<void> {
+  const response = await fetch(apiUrl(`/v1/auth/role-preview/${encodeURIComponent(id)}`), {
     method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem(JWT_KEY) || ''}` },
   });
   if (!response.ok) throw new Error('Could not end role test. Please retry.');
+}
+
+export async function endRolePreview(): Promise<void> {
+  const preview = getRolePreview();
+  if (!preview) return;
+  await revokeRolePreview(preview.id);
   sessionStorage.removeItem(PREVIEW_KEY);
   window.location.reload();
 }
