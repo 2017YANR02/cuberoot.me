@@ -133,9 +133,12 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
         ariaLabel={t('测试角色与说明', 'Test role and details')}
         title={t('正在测试角色', 'Testing role')}
         value={preview.role}
-        items={items.map(item => ({ ...item, disabled: busy }))}
-        onChange={role => { if (role !== preview.role) void run(role); }}
-        footer={() => <small style={{ display: 'block', maxWidth: 240, margin: '6px 8px', whiteSpace: 'normal', lineHeight: 1.5 }}>{t('仅当前标签页，30 分钟有效；业务操作会真实保存。', 'This tab only, valid for 30 minutes. Business changes are real.')}</small>}
+        items={items.filter(item => item.value === preview.role).map(item => ({ ...item, disabled: true }))}
+        onChange={() => {}}
+        footer={() => <small style={{ display: 'block', maxWidth: 240, margin: '6px 8px', whiteSpace: 'normal', lineHeight: 1.5 }}>
+          {t('切换角色前，请先退出当前测试。', 'Exit the current test before choosing another role.')}<br />
+          {t('仅当前标签页，30 分钟有效；业务操作会真实保存。', 'This tab only, valid for 30 minutes. Business changes are real.')}
+        </small>}
       />
       <button type="button" className="admin-tool-action" disabled={busy} onClick={() => void run()}
         title={t('退出测试', 'Exit test')} aria-label={t('退出测试', 'Exit test')}><LogOut size={17} aria-hidden /></button>
