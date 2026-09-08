@@ -5,6 +5,7 @@ import type { Vec3 } from './space-state';
 
 type Point = [number, number];
 const WEST_WALK = 178412507;
+const BUND_PROMENADE = 909213000;
 const CROSSINGS = new Set([178412509, 226657312, 745201528, 745201529, 745201530, 745201536]);
 export const isShanghaiWalkway = (r: ShanghaiRoad) => ['footway', 'pedestrian', 'steps', 'path', 'cycleway'].includes(r.kind ?? '');
 const inBund = ([x, z]: Point) => x > -1400 && x < -1100 && z >= 1200 && z <= 1840;
@@ -42,14 +43,14 @@ export function shanghaiStreetMaterial(material: MaterialFactory, paving: boolea
       diffuseColor.rgb*= ${paving ? '(1.-joint*.22*detail)*(1.+(streetHash(floor(cell))-.5)*.08*detail)' : '1.'} *(1.+grain*.12);
     `);
     if (lit) shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-      // Analytic irradiance from alternating streetlights, confined to mapped
-      // asphalt. Shared path distance prevents a new bright spot at every vertex.
+      // Analytic irradiance confined to mapped road and walk surfaces. Shared
+      // path distance prevents a new bright spot at every vertex.
       float along=streetLightUV.x;
       float a=fract(along+.5)-.5, b=fract(along)-.5;
       float pools=exp(-a*a*30.-pow(streetLightUV.y-.85,2.)*1.8)+exp(-b*b*30.-pow(streetLightUV.y+.85,2.)*1.8);
       float resolved=1.-smoothstep(.25,1.3,fwidth(along));
       pools=mix(.22,pools,resolved)*step(-999.,along);
-      totalEmissiveRadiance+=vec3(1.,.59,.26)*pools*cityNight*.19;
+      totalEmissiveRadiance+=(vec3(.014,.02,.03)+vec3(1.,.67,.38)*pools*${paving ? '.1' : '.14'})*cityNight;
     `);
   };
   m.customProgramCacheKey = () => `${key}-bund-street-${paving}-${lit}`;
@@ -102,7 +103,7 @@ export function createBundStreets(roads: ShanghaiRoad[], polygons: ShanghaiPolyg
     }
     return inside;
   });
-  const paving = shanghaiStreetMaterial(material, true);
+  const paving = shanghaiStreetMaterial(material, true, true);
   const curb = material(0xc2c1b5, .015, .85), paint = material(0xdad8c6, .01, .87), yellow = material(0xb8a55f, .01, .87);
   // Road markings are decals. Depth bias keeps a shallow camera from resolving
   // the asphalt and paint as the same depth; retain depth testing for occlusion.
@@ -122,9 +123,9 @@ export function createBundStreets(roads: ShanghaiRoad[], polygons: ShanghaiPolyg
     };
     m.customProgramCacheKey = () => `${key}-bund-marking-aa`;
   }
-  const metal = material(0x535c58, .6, .48), lamp = material(0xe8dcc0, .1, .55, 1.5);
+  const metal = material(0x535c58, .6, .48), lamp = material(0xffecd0, .1, .55, 18);
   const walks: number[] = [], whiteLines: number[] = [], yellowLines: number[] = [];
-  const whiteUV: number[] = [], yellowUV: number[] = [];
+  const whiteUV: number[] = [], yellowUV: number[] = [], walkUV: number[] = [];
   const quad = (out: number[], a: Point, b: Point, c: Point, d: Point, y: number) => out.push(a[0], y, a[1], b[0], y, b[1], c[0], y, c[1], a[0], y, a[1], c[0], y, c[1], d[0], y, d[1]);
   const stripe = (a: Point, b: Point, width: number, out: number[]) => {
     const dx = b[0] - a[0], dz = b[1] - a[1], length = Math.hypot(dx, dz);
@@ -136,6 +137,27 @@ export function createBundStreets(roads: ShanghaiRoad[], polygons: ShanghaiPolyg
     (out === whiteLines ? whiteUV : yellowUV).push(-half, width / 2, half, width / 2, half, width / 2, -half, width / 2, half, width / 2, -half, width / 2);
   };
   let pavingSections = 0, lamps = 0, crossingStripes = 0;
+  const addLamp = (p: Point, nx: number, nz: number) => {
+    lamps++;
+    g.add(new THREE.CylinderGeometry(.15, .23, .8, 10), metal, [p[0], -.04, p[1]]);
+    g.add(new THREE.CylinderGeometry(.075, .13, 7.3, 10), metal, [p[0], 3.5, p[1]]);
+    for (const side of [-1, 1]) {
+      let previous: Vec3 = [p[0], 6.8, p[1]];
+      for (let i = 1; i <= 8; i++) {
+        const t = i / 8, reach = side * 1.45 * t;
+        const next: Vec3 = [p[0] + nx * reach, 6.8 + .7 * Math.sin(t * Math.PI / 2), p[1] + nz * reach];
+        g.beam(previous, next, .065, metal, .065, true); previous = next;
+      }
+      const housing = new THREE.SphereGeometry(.25, 10, 6); housing.scale(1.5, .4, .8);
+      g.add(housing, metal, previous);
+      const lens = new THREE.SphereGeometry(.2, 10, 6); lens.scale(1.5, .22, .8);
+      g.add(lens, lamp, [previous[0], previous[1] - .07, previous[2]]);
+    }
+  };
+  const pavingUV = (distance: number, length: number, left = -1, right = 1) => {
+    const a = distance / 32, b = (distance + length) / 32;
+    walkUV.push(a,left,a,right,b,right,a,left,b,right,b,left);
+  };
   // Straight subsegments retain the OSM bends. Cumulative stations keep dashes
   // and lamp spacing independent of how densely OSM has sampled each polyline.
   const walkSegments = (r: ShanghaiRoad, visit: (a: Point, b: Point, nx: number, nz: number, distance: number) => void) => {
@@ -180,6 +202,7 @@ export function createBundStreets(roads: ShanghaiRoad[], polygons: ShanghaiPolyg
       // of the proposed slab, rather than only checking its center point.
       if (containsBarrier || [...corners, center].some(p => onRoad(p, .3) || onBarrier(p, .2))) return;
       quad(walks, corners[0], corners[1], corners[2], corners[3], -.44); pavingSections++;
+      pavingUV(distance, halfLength * 2);
       for (const side of [-1, 1]) {
         const p = at(a, side * 4.6), q = at(b, side * 4.6);
         if (atCrossing(p) || atCrossing(q)) continue;
@@ -190,21 +213,53 @@ export function createBundStreets(roads: ShanghaiRoad[], polygons: ShanghaiPolyg
       // per-pole shadow maps or point lights: lenses share the city night state.
       const p = at(a, nx < 0 ? -3.7 : 3.7);
       if (onRoad(p, 1.2) || onBarrier(p, 1.2) || atCrossing(p)) return;
-      lastLamp = distance; lamps++;
-      g.add(new THREE.CylinderGeometry(.15, .23, .8, 10), metal, [p[0], -.04, p[1]]);
-      g.add(new THREE.CylinderGeometry(.075, .13, 7.3, 10), metal, [p[0], 3.5, p[1]]);
-      for (const side of [-1, 1]) {
-        let previous: Vec3 = [p[0], 6.8, p[1]];
-        for (let i = 1; i <= 8; i++) {
-          const t = i / 8, reach = side * 1.45 * t;
-          const next: Vec3 = [p[0] + nx * reach, 6.8 + .7 * Math.sin(t * Math.PI / 2), p[1] + nz * reach];
-          g.beam(previous, next, .065, metal, .065, true); previous = next;
-        }
-        const housing = new THREE.SphereGeometry(.25, 10, 6); housing.scale(1.5, .4, .8);
-        g.add(housing, metal, previous);
-        const lens = new THREE.SphereGeometry(.2, 10, 6); lens.scale(1.5, .22, .8);
-        g.add(lens, lamp, [previous[0], previous[1] - .07, previous[2]]);
+      lastLamp = distance; addLamp(p, nx, nz);
+    });
+  }
+  // The acquired waterfront footway fixes alignment; pavement width and furniture
+  // are photo-guided estimates. Never fill across the water, buildings or streets.
+  let promenadeSections = 0, benches = 0;
+  for (const r of roads.filter(r => r.id === BUND_PROMENADE && !r.bridge)) {
+    const wood = material(0x65523d,.02,.83,.12);
+    let lastLamp = -32, lastBench = -46;
+    walkSegments(r, (a,b,nx,nz,distance) => {
+      const at = (p:Point, offset:number):Point => [p[0]+nx*offset,p[1]+nz*offset];
+      const center:Point = [(a[0]+b[0])/2,(a[1]+b[1])/2];
+      const length = Math.hypot(b[0]-a[0],b[1]-a[1]);
+      // This OSM line follows the river edge, not the plaza centre. Extend towards
+      // the road in small strips so obstacles clip only their own portion.
+      for (let offset=-4; offset<56; offset+=2) {
+        const reachesRoad=[a,b,center].some(p=>onRoad(at(p,offset+2),.5));
+        if ([a,b,center].some(p=>onRoad(at(p,offset),.5))) break;
+        // Finish at the actual road margin instead of dropping the whole final
+        // strip, which leaves a visible two-metre staircase along the curb.
+        const edge=(p:Point)=>{
+          let low=offset,high=offset+2;
+          if(!onRoad(at(p,high),.5)) return high;
+          for(let i=0;i<12;i++){const mid=(low+high)/2;if(onRoad(at(p,mid),.5))high=mid;else low=mid;}
+          return low;
+        };
+        const endA=reachesRoad?edge(a):offset+2,endB=reachesRoad?edge(b):offset+2;
+        const corners=[at(a,offset),at(a,endA),at(b,endB),at(b,offset)];
+        const middle=at(center,(offset+(endA+endB)/2)/2);
+        const containsBarrier=barriers.some(p=>p.points.some(([x,z])=>
+          Math.abs((x-middle[0])*nx+(z-middle[1])*nz)<=1.5 &&
+          Math.abs((x-middle[0])*nz-(z-middle[1])*nx)<=length/2+.5));
+        if([...corners,middle,at(center,(endA+endB)/2)].some(p=>onRoad(p,.499))) break;
+        if(containsBarrier || [...corners,middle].some(p=>onBarrier(p,.5))) continue;
+        quad(walks,corners[0],corners[1],corners[2],corners[3],-.44);
+        const u=distance/32,v=(distance+length)/32;
+        walkUV.push(u,offset/6,u,endA/6,v,endB/6,u,offset/6,v,endB/6,v,offset/6); promenadeSections++;
+        if(reachesRoad) break;
       }
+      const lampPoint=at(a,1.5);
+      if (distance-lastLamp>=32 && !onRoad(lampPoint,1.5) && !onBarrier(lampPoint,1.5)) { addLamp(lampPoint,nx,nz); lastLamp=distance; }
+      if (distance-lastBench<46) return;
+      const p=at(a,4.5), rotation=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.atan2(nx,nz));
+      if(onRoad(p,2)||onBarrier(p,2)) return;
+      lastBench=distance; benches++;
+      for(const offset of [-.7,.7]) g.add(new THREE.BoxGeometry(.18,.43,.58),metal,[p[0]-nz*offset,-.225,p[1]+nx*offset],rotation);
+      for(let slat=0;slat<5;slat++) g.add(new THREE.BoxGeometry(2,.055,.095),wood,[p[0]+nx*(slat-2)*.11,.01,p[1]+nz*(slat-2)*.11],rotation);
     });
   }
   for (const r of crossings) walkSegments(r, (a, b, nx, nz, distance) => {
@@ -216,10 +271,10 @@ export function createBundStreets(roads: ShanghaiRoad[], polygons: ShanghaiPolyg
   });
   for (const [vertices, m] of [[whiteLines, paint], [yellowLines, yellow], [walks, paving]] as const) if (vertices.length) {
     const geom = new THREE.BufferGeometry(); geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)); geom.computeVertexNormals();
-    const uv = vertices === whiteLines ? whiteUV : vertices === yellowLines ? yellowUV : new Float32Array(vertices.length / 3 * 2);
+    const uv = vertices === whiteLines ? whiteUV : vertices === yellowLines ? yellowUV : walkUV;
     geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.add(geom, m);
   }
-  Object.assign(g.group.userData, { pavingSections, lamps, crossingStripes });
+  Object.assign(g.group.userData, { pavingSections, promenadeSections, benches, lamps, crossingStripes });
   const root = g.finish();
   root.traverse(o => { if (o instanceof THREE.Mesh && (o.material === paint || o.material === yellow || o.material === paving)) o.castShadow = false; });
   return root;

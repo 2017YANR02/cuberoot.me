@@ -4,7 +4,7 @@ import { isShanghaiWalkway, shanghaiRoadWidth, shanghaiStreetMaterial } from './
 import type { Vec3 } from './space-state';
 
 type Point = [number, number];
-export type ShanghaiRoad = { id?: number; kind?: string; points: Point[]; width: number; bridge: boolean; name?: string; layer?: number };
+export type ShanghaiRoad = { id?: number; kind?: string; points: Point[]; width: number; bridge: boolean; name?: string; layer?: number; oneway?: -1 | 0 | 1; lanes?: number };
 type RoadNode = { p: Point; edges: Map<string, number>; deck?: number; ground: boolean; fallback: number };
 
 // OSM plan alignment + published engineering dimensions. Elevations, member sections,

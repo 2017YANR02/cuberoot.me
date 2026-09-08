@@ -101,7 +101,8 @@ for (const e of elements.values()) {
     let segment = [];
     const lanes = Number(tags.lanes), recordedWidth = Number.parseFloat(tags.width), layer = Number(tags.layer);
     const width = recordedWidth > 0 && recordedWidth <= 100 ? recordedWidth : Number.isInteger(lanes) && lanes > 0 && lanes <= 12 ? lanes * 3.5 + 1 : widths[tags.highway];
-    const add = () => { if (segment.length > 1) roads.push({ id: e.id, kind: tags.highway, width, bridge: tags.bridge === 'yes' || tags.bridge === 'viaduct', ...(Number.isInteger(layer) && Math.abs(layer) <= 5 ? { layer } : {}), ...(tags.name ? { name: tags.name } : {}), points: segment.map(project) }); segment = []; };
+    const oneway = tags.oneway === '-1' ? -1 : ['yes', '1', 'true'].includes(tags.oneway) || tags.junction === 'roundabout' && tags.oneway !== 'no' ? 1 : 0;
+    const add = () => { if (segment.length > 1) roads.push({ id: e.id, kind: tags.highway, width, bridge: tags.bridge === 'yes' || tags.bridge === 'viaduct', oneway, ...(Number.isInteger(lanes) && lanes > 0 && lanes <= 12 ? { lanes } : {}), ...(Number.isInteger(layer) && Math.abs(layer) <= 5 ? { layer } : {}), ...(tags.name ? { name: tags.name } : {}), points: segment.map(project) }); segment = []; };
     for (const p of points) { if (inside(p)) segment.push(p); else add(); } add();
   }
 }
