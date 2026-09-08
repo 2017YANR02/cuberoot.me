@@ -278,6 +278,7 @@ it('renews expired playback access, keeps position, and does not loop on codec e
 
 it('connects playback, seeking, mute and speed controls to the media element', async () => {
   const host = document.createElement('div'), root = createRoot(host);
+  document.body.append(host);
   try {
     await act(async () => root.render(createElement(LessonVideoPlayer, { src: '/test', onError: vi.fn(), onLoadedMetadata: vi.fn() })));
     const video = host.querySelector('video')!;
@@ -301,7 +302,7 @@ it('connects playback, seeking, mute and speed controls to the media element', a
     expect(video.playbackRate).toBe(1.5);
     await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
     expect(host.querySelector('[role="dialog"]')).toBeNull();
-  } finally { await act(async () => root.unmount()); }
+  } finally { await act(async () => root.unmount()); host.remove(); }
 });
 
 it('pauses when the sleep timer expires and cancels a timer when disabled', async () => {
