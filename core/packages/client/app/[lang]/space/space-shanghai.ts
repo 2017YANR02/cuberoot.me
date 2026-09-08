@@ -9,6 +9,7 @@ import { createShanghaiArchitecture, setShanghaiClockTime, SHANGHAI_ARCHITECTURE
 import { createBundStreets, createShanghaiQuays } from './space-shanghai-streets';
 import { createShanghaiSupertalls } from './space-shanghai-supertalls';
 import { shanghaiWindowTexture } from './space-shanghai-facades';
+import { ShanghaiTraffic } from './space-shanghai-traffic';
 
 type Point = [number, number];
 type Road = ShanghaiRoad;
@@ -44,7 +45,7 @@ export function validateShanghaiData(raw: unknown): asserts raw is ShanghaiData 
   if (!d || d.version !== 1 || !point(d.origin) || Math.abs(d.origin[0]) > 180 || Math.abs(d.origin[1]) > 90 || !Array.isArray(d.river) || d.river.length < 2 || d.river.length > 20000 || !d.river.every(point) || !d.river.some(p => p[0] !== d.river[0][0] || p[1] !== d.river[0][1]) ||
     !Array.isArray(d.polygons) || !d.polygons.length || d.polygons.length > 50000 || d.polygons.some(p => !p || !ring(p.points) || p.holes !== undefined && (!Array.isArray(p.holes) || p.holes.some(h => !ring(h))) ||
       !['building', 'water', 'green'].includes(p.kind) || p.kind === 'building' && (!Number.isFinite(p.height) || p.height! < 0 || p.height! > 650 || !Number.isFinite(p.minHeight) || p.minHeight! < 0 || p.minHeight! > p.height!)) ||
-    !Array.isArray(d.roads) || d.roads.length > 50000 || d.roads.some(r => !r || !Array.isArray(r.points) || r.points.length < 2 || r.points.length > 20000 || !r.points.every(point) || !Number.isFinite(r.width) || r.width <= 0 || r.width > 100 || typeof r.bridge !== 'boolean' || r.layer !== undefined && (!Number.isInteger(r.layer) || r.layer < -5 || r.layer > 5))) throw new Error('Invalid Shanghai map');
+    !Array.isArray(d.roads) || d.roads.length > 50000 || d.roads.some(r => !r || !Array.isArray(r.points) || r.points.length < 2 || r.points.length > 20000 || !r.points.every(point) || !Number.isFinite(r.width) || r.width <= 0 || r.width > 100 || typeof r.bridge !== 'boolean' || r.layer !== undefined && (!Number.isInteger(r.layer) || r.layer < -5 || r.layer > 5) || r.oneway !== undefined && ![-1,0,1].includes(r.oneway) || r.lanes !== undefined && (!Number.isInteger(r.lanes) || r.lanes < 1 || r.lanes > 12))) throw new Error('Invalid Shanghai map');
 }
 
 const landmarks = [
@@ -68,6 +69,7 @@ export class ShanghaiScene {
   private water?: Reflector & { material: THREE.ShaderMaterial };
   private boats?: THREE.InstancedMesh;
   private boatDetails: THREE.InstancedMesh[] = [];
+  private traffic?: ShanghaiTraffic;
   private night = { value: 0 };
   private timeOfDay = '09:00';
   private textures = new Set<THREE.Texture>();
@@ -150,7 +152,7 @@ export class ShanghaiScene {
 
   private async load() {
     try {
-      const response = await fetch('/assets/space/shanghai-v1/huangpu.json', { signal: this.abort.signal });
+      const response = await fetch('/assets/space/shanghai-v1/huangpu.json?v=20260908-traffic', { signal: this.abort.signal });
       if (!response.ok) throw new Error(`Shanghai map HTTP ${response.status}`);
       const data: unknown = await response.json(); validateShanghaiData(data);
       if (this.disposed) return;
@@ -187,6 +189,8 @@ export class ShanghaiScene {
       this.root.add(createShanghaiRoads(data.roads, this.material.bind(this)));
       this.root.add(createBundStreets(data.roads, data.polygons, this.material.bind(this)));
       this.root.add(createShanghaiQuays(data.polygons, this.material.bind(this)));
+      this.traffic = new ShanghaiTraffic(data.roads, this.material.bind(this), this.narrow);
+      this.root.add(this.traffic.root);
       this.flush();
       const normals = await new THREE.TextureLoader().loadAsync('/assets/space/shanghai-v1/waternormals.jpg');
       if (this.disposed) { normals.dispose(); return; }
@@ -326,6 +330,7 @@ export class ShanghaiScene {
 
   setWeather(weather: Weather, night: number, sunDirection: THREE.Vector3, riverColor: RiverColor = 'huangpu', timeOfDay?: string) {
     this.night.value = night;
+    this.traffic?.setWeather(night, ['drizzle','rain','downpour','thunderstorm','typhoon'].includes(weather) ? 1 : 0);
     if (timeOfDay !== undefined) this.timeOfDay = timeOfDay;
     setShanghaiClockTime(this.root, this.timeOfDay);
     if (!this.water) return;
@@ -348,6 +353,7 @@ export class ShanghaiScene {
     const dt = this.lastTime ? Math.min(.1, (time - this.lastTime) / 1000) : 0; this.lastTime = time;
     if (motion) this.elapsed += dt;
     if (this.water) this.water.material.uniforms.time.value = this.elapsed * .65;
+    this.traffic?.update(this.elapsed);
     if (!this.route) return;
     const length = this.route.getLength();
     if (this.cruising) {

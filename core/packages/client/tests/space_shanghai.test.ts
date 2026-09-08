@@ -8,6 +8,7 @@ import { BUND_BUILDING_IDS, createBundBuildings } from '@/app/[lang]/space/space
 import { createBundStreets, createShanghaiQuays } from '@/app/[lang]/space/space-shanghai-streets';
 import { createShanghaiSupertalls } from '@/app/[lang]/space/space-shanghai-supertalls';
 import { shanghaiWindowTexture } from '@/app/[lang]/space/space-shanghai-facades';
+import { ShanghaiTraffic, shanghaiTrafficTracks, sampleShanghaiTraffic } from '@/app/[lang]/space/space-shanghai-traffic';
 
 const windows = new THREE.Texture();
 
@@ -23,6 +24,91 @@ const inside = (x: number, z: number, ring: number[][]) => {
 };
 
 describe('Shanghai geographic asset and river cruise', () => {
+  it('respects forward, reverse and two-way streets and excludes pedestrian routes and tunnels', () => {
+    const road: ShanghaiRoad = { kind: 'residential', bridge: false, width: 8, points: [[0,0],[0,0],[0,100]] };
+    const position = new THREE.Vector3(), direction = new THREE.Vector3();
+    const tracks = shanghaiTrafficTracks([road, {...road, oneway:1}, {...road, oneway:-1}]);
+    expect(tracks).toHaveLength(4);
+    for(const [i,x,z,dz] of [[0,-2,25,1],[1,2,75,-1],[2,0,25,1],[3,0,75,-1]]) {
+      sampleShanghaiTraffic(tracks[i],25,position,direction);
+      expect(position.toArray()).toEqual([x,-.64,z]); expect(direction.toArray()).toEqual([0,0,dz]);
+    }
+    for(const invalid of [{...road,kind:'footway'}, {...road,layer:-1}, {...road,width:4}, {...road,points:[[0,0],[0,0]] as [number,number][]}]) expect(shanghaiTrafficTracks([invalid])).toEqual([]);
+    sampleShanghaiTraffic(tracks[2],-1,position,direction); expect(position.z).toBe(0);
+    sampleShanghaiTraffic(tracks[2],101,position,direction); expect(position.z).toBe(100);
+  });
+
+  it('uses the rendered road elevations for every traffic track and connects only matching endpoints', () => {
+    const tracks = shanghaiTrafficTracks(data.roads), heights = shanghaiRoadElevations(data.roads);
+    expect(tracks).toHaveLength(4517);
+    const position = new THREE.Vector3(), direction = new THREE.Vector3();
+    for(const track of tracks) {
+      const road=data.roads[track.road];
+      expect(road.oneway===1 ? track.points[0].x===road.points[0][0] : true).toBe(true);
+      for(let i=0;i<track.points.length;i++) {
+        const p=track.points[i], ri=road.points.findIndex(([x,z])=>x===p.x&&z===p.z);
+        expect(p.y).toBe(heights[track.road][ri]);
+        sampleShanghaiTraffic(track,track.distances[i],position,direction);
+        expect(position.toArray().every(Number.isFinite)).toBe(true);
+        expect(position.y).toBeCloseTo(p.y,6);
+        expect(Math.hypot(position.x-p.x,position.z-p.z)).toBeLessThanOrEqual(road.width/2);
+      }
+      for(const next of track.next) {
+        expect(tracks[next].road).not.toBe(track.road);
+        expect(tracks[next].points[0].toArray()).toEqual(track.points.at(-1)!.toArray());
+      }
+    }
+  });
+
+  it('moves finite instanced cars, stays paused at the same time and caps desktop and narrow allocations', () => {
+    for(const [narrow,count] of [[false,1200],[true,420]] as const) {
+      const traffic=new ShanghaiTraffic(data.roads,()=>new THREE.MeshStandardMaterial(),narrow);
+      expect(traffic.root.userData.cars).toBe(count); expect(traffic.root.children).toHaveLength(7);
+      const meshes=traffic.root.children as THREE.InstancedMesh[];
+      const before=Array.from(meshes[0].instanceMatrix.array);
+      traffic.update(.05);
+      const moved=Array.from(meshes[0].instanceMatrix.array);
+      expect(moved.every(Number.isFinite)).toBe(true); expect(moved).not.toEqual(before);
+      traffic.update(.05); expect(Array.from(meshes[0].instanceMatrix.array)).toEqual(moved);
+      for(const mesh of meshes) {
+        expect(mesh.count).toBe(count); expect(mesh.instanceMatrix).toBe(meshes[0].instanceMatrix);
+        expect(mesh.boundingSphere!.radius).toBeGreaterThan(0);
+        mesh.dispose(); mesh.geometry.dispose(); (mesh.material as THREE.Material).dispose();
+      }
+    }
+    let allocated=0;
+    const empty=new ShanghaiTraffic([],()=>{allocated++; return new THREE.MeshStandardMaterial();},false);
+    empty.update(1); expect(empty.root.children).toEqual([]); expect(allocated).toBe(0);
+  });
+
+  it('validates optional OSM traffic metadata while preserving older maps', () => {
+    const road={kind:'secondary',bridge:false,width:8,points:[[0,0],[0,100]]};
+    for(const oneway of [undefined,-1,0,1]) expect(()=>validateShanghaiData({...data,roads:[{...road,oneway}]})).not.toThrow();
+    for(const metadata of [{oneway:2},{oneway:'yes'},{lanes:0},{lanes:13},{lanes:1.5},{lanes:'2'}]) expect(()=>validateShanghaiData({...data,roads:[{...road,...metadata}]})).toThrow('Invalid Shanghai map');
+  });
+
+  it('clips the waterfront promenade around roads, water and narrow obstacles', () => {
+    const root=createBundStreets([
+      { name:'中山东一路',width:7,bridge:false,kind:'secondary',points:[[-1280,1250],[-1280,1370]] },
+      { id:909213000,kind:'footway',width:2,bridge:false,points:[[-1240,1250],[-1240,1370]] },
+      { width:8,bridge:false,kind:'residential',points:[[-1310,1310],[-1240,1310]] },
+    ],[
+      {id:'river',kind:'water',points:[[-1237,1200],[-1200,1200],[-1200,1400],[-1237,1400]]},
+      {id:'small-obstacle',kind:'building',points:[[-1245,1340],[-1244.8,1340],[-1244.8,1340.2],[-1245,1340.2]]},
+    ],()=>new THREE.MeshStandardMaterial());
+    root.updateMatrixWorld(true);
+    const probe=(x:number,z:number)=>new THREE.Raycaster(new THREE.Vector3(x,1,z),new THREE.Vector3(0,-1,0)).intersectObject(root,true).filter(hit=>Math.abs(hit.point.y+.44)<.001);
+    expect(probe(-1250,1270)[0].point.y).toBeCloseTo(-.44,4);
+    // The last slab must reach the road margin, without whole-strip steps.
+    expect(probe(-1275.8,1270)[0].point.y).toBeCloseTo(-.44,4);
+    expect(probe(-1276.2,1270)).toEqual([]);
+    for(const [x,z] of [[-1280,1270],[-1250,1310],[-1235,1270],[-1244.9,1340.1]]) expect(probe(x,z).length,`${x},${z}`).toBe(0);
+    root.traverse(o=>{if(o instanceof THREE.Mesh){
+      for(const name of ['position','normal','uv']) expect(Array.from(o.geometry.getAttribute(name).array).every(Number.isFinite)).toBe(true);
+      o.geometry.dispose();(o.material as THREE.Material).dispose();
+    }});
+  });
+
   it('keeps illuminated quays on the acquired central Huangpu banks, leaving the navigation channel open', () => {
     const root = createShanghaiQuays(data.polygons, () => new THREE.MeshStandardMaterial());
     expect(root.userData.segments).toBe(258);
