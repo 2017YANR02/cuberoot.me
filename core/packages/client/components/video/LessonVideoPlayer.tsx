@@ -508,7 +508,13 @@ export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue
         <button type="button" onClick={() => void copy(JSON.stringify(readStats(), null, 2))}>{t('复制调试信息', 'Copy debug info')}</button>
       </div>}
     </div>}
+    {/* allow-static-onclick: native dialog backdrop clicks are retargeted to the dialog. */}
     {shortcuts && <dialog ref={shortcutDialog} className="lesson-video-shortcuts" aria-label={t('键盘快捷键', 'Keyboard shortcuts')}
+      onClick={event => {
+        if (event.target !== event.currentTarget) return;
+        const bounds = event.currentTarget.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) setShortcuts(false);
+      }}
       onCancel={event => { event.preventDefault(); setShortcuts(false); }}>
       <h2>{t('键盘快捷键', 'Keyboard shortcuts')}</h2>
       <div className="lesson-video-shortcut-groups">{shortcutGroups.map(group => <section key={group.title}>
