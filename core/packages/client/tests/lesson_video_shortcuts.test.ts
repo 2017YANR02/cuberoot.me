@@ -35,20 +35,25 @@ async function key(key: string, options: KeyboardEventInit = {}, target: EventTa
   return event;
 }
 
-it('opens help from Shift+I or settings, contains all four groups, blocks playback and restores focus', async () => {
+it('opens help from ? or settings, contains all four groups, blocks playback and restores focus', async () => {
   const video = await mount();
   const player = host.querySelector<HTMLElement>('.lesson-video-player')!;
   player.focus();
   await key('I', { shiftKey: true }, player);
+  expect(host.querySelector('dialog')).toBeNull();
+  await key('?', { shiftKey: true }, player);
   expect(host.querySelector('dialog')?.open).toBe(true);
   expect([...host.querySelectorAll('dialog h3')].map(el => el.textContent)).toEqual(['播放', '常规', '字幕', '全景视频']);
-  expect(host.querySelector('dialog')?.textContent).toContain('Shift + I');
+  expect(host.querySelector('dialog')?.textContent).toContain('? (Shift + /)');
   expect(host.querySelector('dialog')?.textContent).toContain('不可用');
   await key('l', {}, document.activeElement!);
   expect(video.currentTime).toBe(0);
   await key('Escape', {}, document.activeElement!);
   expect(host.querySelector('dialog')).toBeNull();
   expect(document.activeElement).toBe(player);
+  await key('?', {}, player);
+  expect(host.querySelector('dialog')?.open).toBe(true);
+  await key('Escape', {}, document.activeElement!);
   await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="设置"]')!.click());
   await act(async () => [...host.querySelectorAll<HTMLButtonElement>('.lesson-video-menu button')].find(button => button.textContent?.includes('键盘快捷键'))!.click());
   expect(host.querySelector('dialog')?.open).toBe(true);
@@ -79,11 +84,12 @@ it('does not hijack typing, IME, modified browser shortcuts or unrelated buttons
   const input = document.createElement('input'); host.append(input);
   const editable = document.createElement('div'); editable.contentEditable = 'true'; editable.setAttribute('contenteditable', 'true'); host.append(editable);
   for (const target of [input, editable]) {
-    await key('l', {}, target); await key('I', { shiftKey: true }, target);
+    await key('l', {}, target); await key('?', { shiftKey: true }, target);
   }
   const unrelated = document.createElement('button'); host.append(unrelated);
   await key('l', {}, unrelated);
   await key('l', { ctrlKey: true }); await key('l', { metaKey: true }); await key('l', { altKey: true }); await key('l', { isComposing: true });
+  for (const options of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }, { isComposing: true }]) await key('?', options);
   expect(video.currentTime).toBe(0); expect(host.querySelector('dialog')).toBeNull();
   const play = host.querySelector<HTMLButtonElement>('[aria-label="播放"]')!;
   expect((await key(' ', {}, play)).defaultPrevented).toBe(false);

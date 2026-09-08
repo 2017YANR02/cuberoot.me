@@ -276,7 +276,7 @@ export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue
       if (target && target !== document.body && target !== document.documentElement && !root.current?.contains(target) && !root.current?.closest('.platform-classroom')?.contains(target)) return;
       if (document.querySelector('.lesson-video-player') !== root.current && !root.current?.contains(target)) return;
       const key = event.key.toLowerCase();
-      if (event.shiftKey && key === 'i' && !event.ctrlKey) {
+      if (key === '?' && !event.ctrlKey) {
         event.preventDefault(); if (!event.repeat) openShortcuts(); return;
       }
       if (event.key === 'Escape') {
@@ -342,7 +342,7 @@ export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue
       [t('关闭迷你播放器或当前对话框', 'Close miniplayer or current dialog'), 'Esc'],
       [t('静音／取消静音', 'Mute / unmute'), 'm'],
       [t('增大／减小音量', 'Increase / decrease volume'), '↑ / ↓'],
-      [t('显示键盘快捷键', 'Show keyboard shortcuts'), 'Shift + I'],
+      [t('显示键盘快捷键', 'Show keyboard shortcuts'), '? (Shift + /)'],
     ] },
     { title: t('字幕', 'Subtitles'), rows: [
       [t('开启／关闭字幕', 'Toggle subtitles'), 'c', true], [t('放大字体', 'Increase font size'), '+', true], [t('缩小字体', 'Decrease font size'), '-', true],
@@ -459,7 +459,7 @@ export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue
         <button type="button" className="lesson-video-menu-row" onClick={() => setMenu('sleep')}><Moon /><span>{t('休眠定时器', 'Sleep timer')}</span><small>{sleep}</small><ChevronRight /></button>
         <button type="button" className="lesson-video-menu-row" onClick={() => setMenu('speed')}><Gauge /><span>{t('播放速度', 'Playback speed')}</span><small>{speed}</small><ChevronRight /></button>
         <button type="button" className="lesson-video-menu-row" onClick={() => setMenu('quality')}><SlidersHorizontal /><span>{t('画质', 'Quality')}</span><small>{quality}</small><ChevronRight /></button>
-        <button type="button" className="lesson-video-menu-row" onClick={openShortcuts}><Keyboard /><span>{t('键盘快捷键', 'Keyboard shortcuts')}</span><small>Shift + I</small></button>
+        <button type="button" className="lesson-video-menu-row" onClick={openShortcuts}><Keyboard /><span>{t('键盘快捷键', 'Keyboard shortcuts')}</span><small>?</small></button>
       </> : <>
         <button type="button" className="lesson-video-menu-back" onClick={() => setMenu('main')}><ChevronLeft />{menu === 'speed' ? t('播放速度', 'Playback speed') : menu === 'sleep' ? t('休眠定时器', 'Sleep timer') : t('画质', 'Quality')}</button>
         {menu === 'speed' && PLAYBACK_RATES.map(value => <button type="button" className="lesson-video-option" key={value} aria-pressed={rate === value} onClick={() => { if (video.current) video.current.playbackRate = value; setMenu('main'); }}><Check visibility={rate === value ? 'visible' : 'hidden'} />{value === 1 ? t('正常', 'Normal') : `${value}×`}</button>)}
