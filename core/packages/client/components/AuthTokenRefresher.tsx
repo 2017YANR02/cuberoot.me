@@ -78,7 +78,6 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     setBusy(true); setError(false);
     try {
       if (role) {
-        if (!preview && !window.confirm(t('进入独立测试身份。业务操作会真实保存；不修改你的账号角色。继续？', 'Enter a separate test identity. Business changes are real; your account role is unchanged. Continue?'))) return;
         await startRolePreview(role);
       } else await endRolePreview();
     } catch { setError(true); }
