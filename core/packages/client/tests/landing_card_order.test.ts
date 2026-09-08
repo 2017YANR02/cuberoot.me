@@ -1,8 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { PRIMARY_CARDS, SECTIONS, applyLandingCardOrder } from '@/lib/landing-sections';
+import { PRIMARY_CARDS, SEARCH_CARDS, SECTIONS, applyLandingCardOrder, isLandingSearchCardVisible } from '@/lib/landing-sections';
 import { CREATOR_PROFILE } from '@/lib/creator-profile';
 
 describe('homepage card order', () => {
+  it.each(['platform', 'teaching-management', 'learning-center'])('keeps %s visible but locked for non-admins and searchable only by admins', (id) => {
+    const card = SECTIONS.find((section) => section.id === 'learn')?.cards.find((entry) => entry.id === id);
+    const searchCard = SEARCH_CARDS.find((entry) => entry.id === id)!;
+    expect(card?.lockedForNonAdmin).toBe(true);
+    expect(card?.adminOnly).toBeUndefined();
+    expect(card?.comingSoon).toBeUndefined();
+    expect(searchCard.lockedForNonAdmin).toBe(true);
+    expect(isLandingSearchCardVisible(searchCard, false)).toBe(false);
+    expect(isLandingSearchCardVisible(searchCard, true)).toBe(true);
+  });
+
   it('applies saved known ids once and appends new cards in source order', () => {
     const cards = SECTIONS.find(({ id }) => id === 'tool')!.cards;
     const ordered = applyLandingCardOrder(cards, ['timezone', 'missing', 'timezone', 'contests']);
