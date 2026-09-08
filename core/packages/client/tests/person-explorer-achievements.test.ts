@@ -23,11 +23,22 @@ it('counts distinct official countries and continents, including DNF but excludi
   const comps = countries.map((c, i) => comp(i, c));
   const rows = countries.map((_, i) => row(i, i === 5 ? { best: -1 } : i === 6 ? { best: -2 } : i === 7 ? { live: true } : {}));
   const awards = personalExplorerAchievements([...rows, rows[0]], comps);
-  expect(awards.find(a => a.kind === 'traveler')?.count).toBe(6);
+  expect(awards.find(a => a.kind === 'traveler')).toBeUndefined();
   expect(awards.find(a => a.kind === 'continents')?.count).toBe(6);
   expect(get(rows, 'traveler', [])).toEqual([]);
   expect(get(rows, 'passport', comps, 'US')[0]?.count).toBe(4);
   expect(get(rows, 'passport', comps, '')).toEqual([]);
+});
+it('unlocks travel at ten countries and two continents without counting duplicates or multi-country venues', () => {
+  const countries = ['US', 'CN', 'AU', 'BR', 'DE', 'ZA', 'FR', 'CA', 'JP', 'GB', 'US', 'XW'];
+  const comps = countries.map((country, i) => comp(i, country));
+  const rows = countries.map((_, i) => row(i));
+  expect(get(rows, 'traveler', comps).map(a => [a.count, a.tier])).toEqual([[10, 10]]);
+  expect(get(rows.slice(0, 9), 'traveler', comps)).toEqual([]);
+  expect(get(rows.slice(0, 1), 'continents', comps)).toEqual([]);
+  expect(get(rows.slice(0, 2), 'continents', comps).map(a => [a.count, a.tier])).toEqual([[2, 2]]);
+  expect(EXPLORER_ACHIEVEMENTS.traveler.tiers).toEqual([10, 20, 50]);
+  expect(EXPLORER_ACHIEVEMENTS.continents.tiers).toEqual([2, 3, 4, 5, 6]);
 });
 it('preserves longest PR ties and podium streaks after they end; absent dates cannot establish streaks', () => {
   const rows = Array.from({ length: 6 }, (_, i) => row(i, i === 5 ? { best: 300, average: 400, pos: 4 } : {}));
