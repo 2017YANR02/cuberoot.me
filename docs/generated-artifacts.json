@@ -568,6 +568,21 @@
       "driftPolicy": "Generated headers forbid hand edits. There is currently no cheap stale-output CI guard, so relevant source changes require explicit regeneration and diff review."
     },
     {
+      "id": "client.deskpet-playtime",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "Original Clawd playtime choreography and canonical character geometry",
+        "paths": ["core/packages/client/scripts/deskpet-playtime/**", "core/packages/client/public/deskpet/clawd-static-base.svg"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
+      "owner": "core/packages/client/scripts/deskpet-playtime",
+      "workingDirectory": "core/packages/client",
+      "command": "node scripts/deskpet-playtime/build-playtime.mjs",
+      "outputs": ["core/packages/client/public/deskpet/playtime/**"],
+      "verification": ["node scripts/deskpet-playtime/build-playtime.mjs --check", "preview all 30 complete loops in a browser"],
+      "driftPolicy": "Edit choreography sources and regenerate. The manifest is the gallery data source. Bump the gallery cache version when regenerating published assets."
+    },
+    {
       "id": "mobile.android-assets",
       "kind": "checked-in-generated",
       "source": {
