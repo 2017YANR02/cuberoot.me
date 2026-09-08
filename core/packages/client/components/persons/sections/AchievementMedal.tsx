@@ -3,9 +3,11 @@
 import { useId } from 'react';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { RecordBadge } from '@/components/RecordBadge';
+import { EXPLORER_ACHIEVEMENTS, type ExplorerAchievement } from '@/lib/person-achievements';
 import './person-achievements.css';
 
 export const ACHIEVEMENT_TITLES = {
+  ...Object.fromEntries(Object.entries(EXPLORER_ACHIEVEMENTS).map(([kind, entry]) => [kind, entry.title])) as { [K in keyof typeof EXPLORER_ACHIEVEMENTS]: { zh: string; en: string } },
   champion: { zh: '世界冠军', en: 'World champion' },
   wr: { zh: '当前世界纪录保持者', en: 'Current world record holder' },
   historicalWR: { zh: '曾获世界纪录', en: 'Historical world record' },
@@ -33,6 +35,22 @@ export function recordAchievementTier(count?: number) {
 
 // Original enamel-pin artwork. Illustration pigments are independent of UI theme tokens.
 const ART = {
+  traveler: { light: '#92eddd', dark: '#155e79', rim: '#e0fff0', shape: 'M24 15H176V185H24V15Z' },
+  continents: { light: '#90e0fa', dark: '#234e94', rim: '#c5fbff', shape: 'M100 8 180 54V146L100 192 20 146V54Z' },
+  breakthrough: { light: '#ffd0b1', dark: '#ae3658', rim: '#fff0cf', shape: 'M30 20H170V105Q167 158 100 190Q33 158 30 105Z' },
+  podiumStreak: { light: '#d6b4ff', dark: '#59358e', rim: '#ffe3a4', shape: 'M24 180V85A76 76 0 0 1 176 85V180Z' },
+  haul: { light: '#f8c9bd', dark: '#8d405f', rim: '#ffdd99', shape: 'M100 9Q129-1 140 29Q175 17 174 55Q209 65 185 99Q209 134 174 145Q176 181 141 172Q131 206 100 187Q70 207 59 172Q24 181 26 145Q-9 134 15 100Q-9 65 26 55Q25 18 60 29Q71-1 100 9Z' },
+  sweep: { light: '#ffb1a9', dark: '#982c56', rim: '#ffe197', shape: 'M30 20H170V105Q167 158 100 190Q33 158 30 105Z' },
+  storm: { light: '#bbbcff', dark: '#5337a2', rim: '#eff1ff', shape: 'M100 7 123 62 182 43 157 100 184 157 123 139 100 193 77 139 16 157 43 100 18 43 77 62Z' },
+  constellation: { light: '#a4d1fa', dark: '#333571', rim: '#d9e4ff', shape: 'M100 8 187 100 100 192 13 100Z' },
+  monument: { light: '#f9d49e', dark: '#835941', rim: '#ffe6bf', shape: 'M24 180V85A76 76 0 0 1 176 85V180Z' },
+  solves: { light: '#7de4d1', dark: '#225d74', rim: '#c2ffec', shape: 'M100 8 180 54V146L100 192 20 146V54Z' },
+  firstWin: { light: '#bbe6ae', dark: '#246f66', rim: '#ffe1a3', shape: 'M30 20H170V105Q167 158 100 190Q33 158 30 105Z' },
+  butterfly: { light: '#c5c5ff', dark: '#643a92', rim: '#f8d8ff', shape: 'M100 9Q129-1 140 29Q175 17 174 55Q209 65 185 99Q209 134 174 145Q176 181 141 172Q131 206 100 187Q70 207 59 172Q24 181 26 145Q-9 134 15 100Q-9 65 26 55Q25 18 60 29Q71-1 100 9Z' },
+  calendar: { light: '#f9cba9', dark: '#965774', rim: '#fff0bd', shape: 'M15 27H185V69Q158 100 185 131V173H15V131Q42 100 15 69Z' },
+  triplets: { light: '#c7a8f5', dark: '#354986', rim: '#f3dafa', shape: 'M100 7 123 62 182 43 157 100 184 157 123 139 100 193 77 139 16 157 43 100 18 43 77 62Z' },
+  passport: { light: '#a5d2f9', dark: '#405186', rim: '#e1f1ff', shape: 'M24 15H176V185H24V15Z' },
+  worldPodium: { light: '#a9dcf7', dark: '#315e94', rim: '#f9e2a8', shape: 'M30 20H170V105Q167 158 100 190Q33 158 30 105Z' },
   hundred: { light: '#ffd4a0', dark: '#964568', rim: '#ffe8b5', shape: 'M49 12H151L185 48V152L151 188H49L15 152V48Z' },
   allEvents: { light: '#b4f2e3', dark: '#305a98', rim: '#d9fff5', shape: 'M100 8 166 29 191 94 169 156 100 192 31 156 9 94 34 29Z' },
   champion: { light: '#ffbb96', dark: '#862d56', rim: '#ffd27d', shape: 'M100 9 173 35V98Q171 153 100 190Q29 153 27 98V35Z' },
@@ -44,15 +62,16 @@ const ART = {
   gold: { light: '#ffe6a6', dark: '#9a4727', rim: '#fff1b5', shape: 'M100 5 119 22 147 13 155 42 182 51 174 79 195 100 175 121 183 149 155 158 147 187 120 178 100 195 80 178 52 187 44 158 17 149 25 120 5 100 25 80 17 51 45 42 53 13 80 22Z' },
 };
 
-export function AchievementMedal({ kind, event, recordCount }: { kind: AchievementKind; event?: string; recordCount?: number }) {
+export function AchievementMedal({ kind, event, recordCount, achievement }: { kind: AchievementKind; event?: string; recordCount?: number; achievement?: ExplorerAchievement }) {
   const id = useId();
   const paint = (name: string) => `url(#${id}-${name})`;
   const art = ART[kind];
   const tier = kind.startsWith('historical') ? recordAchievementTier(recordCount) : undefined;
-  const rim = tier && tier.count > 1 ? tier.rim : art.rim;
-  const record = kind === 'wr' ? 'WR' : kind.startsWith('historical') ? kind.slice(10) : null;
+  const explorerIndex = achievement ? (EXPLORER_ACHIEVEMENTS[achievement.kind].tiers as readonly number[]).indexOf(achievement.tier) : 0;
+  const rim = tier && tier.count > 1 ? tier.rim : explorerIndex > 0 ? ['#ce925c', '#c7deef', '#ffd27d', '#a9f4ff'][explorerIndex] : art.rim;
+  const record = achievement?.record ?? (kind === 'wr' ? 'WR' : kind.startsWith('historical') ? kind.slice(10) : null);
   return (
-    <span className={`wp-achievement-medal wp-achievement-art-${kind}`} data-tier={tier?.count} aria-hidden="true">
+    <span className={`wp-achievement-medal wp-achievement-art-${kind}`} data-tier={tier?.count ?? achievement?.tier} aria-hidden="true">
       <svg className="wp-achievement-illustration" viewBox="0 0 200 200" fill="none">
         <defs>
           <linearGradient id={`${id}-enamel`} x1="40" y1="20" x2="150" y2="180" gradientUnits="userSpaceOnUse"><stop stopColor={art.light} /><stop offset=".55" stopColor={art.dark} /><stop offset="1" stopColor="#172343" /></linearGradient>
@@ -64,14 +83,139 @@ export function AchievementMedal({ kind, event, recordCount }: { kind: Achieveme
           <radialGradient id={`${id}-shine`} cx=".28" cy=".15" r=".85"><stop stopColor="#fff" stopOpacity=".44" /><stop offset="1" stopColor="#fff" stopOpacity="0" /></radialGradient>
           <clipPath id={`${id}-clip`}><path d={art.shape} /></clipPath>
         </defs>
-        <path d={art.shape} fill={paint('enamel')} stroke={tier && tier.count > 1 ? rim : paint('metal')} strokeWidth={tier && tier.count > 1 ? 10 : 6} strokeLinejoin="round" />
+        <path d={art.shape} fill={paint('enamel')} stroke={tier && tier.count > 1 || explorerIndex > 0 ? rim : paint('metal')} strokeWidth={tier && tier.count > 1 || explorerIndex > 0 ? 10 : 6} strokeLinejoin="round" />
         <g clipPath={paint('clip')}>
           <circle cx="100" cy="85" r="65" stroke={art.rim} strokeOpacity=".2" strokeWidth="1" />
           <circle cx="100" cy="85" r="73" stroke={art.rim} strokeOpacity=".12" strokeWidth="1" />
           <path d="M5 48Q70 3 143 31T202 16V0H0Z" fill="#fff" opacity=".16" />
           <path d="M-10 167Q76 111 210 151V205H-10Z" fill={art.dark} opacity=".55" />
           <path d={art.shape} fill={paint('shine')} />
+          {kind === 'traveler' && <>
+            <path d="M34 27H166V173H34Z" stroke="#fff4d8" strokeWidth="3" strokeDasharray="3 7" />
+            <circle cx="99" cy="94" r="48" fill={paint('ocean')} stroke="#d0ffff" strokeWidth="2" />
+            <path d="m68 56 23 2 8 14-20 12-5 20-22-15ZM106 97l26-10 13 19-24 25-17-12Z" fill={paint('jade')} />
+            <path d="M46 142Q100 172 157 95" stroke="#fff4b2" strokeWidth="3" strokeDasharray="5 5" />
+            <path d="m139 76 26-17-13 31 13 15-9 6-17-13-22 3-2-7 21-9-9-14 5-3Z" fill={paint('gold')} stroke="#fff1d1" strokeWidth="2" />
+          </>}
+          {kind === 'continents' && <>
+            <circle cx="100" cy="100" r="63" fill={paint('ocean')} stroke={paint('metal')} strokeWidth="4" />
+            <circle cx="100" cy="100" r="50" fill={art.dark} />
+            {[0,60,120,180,240,300].map((angle,i) => <g key={angle} transform={`rotate(${angle} 100 100)`}>
+              <path d="m100 42 12 37-12 21-12-21Z" fill={paint(['ruby','gold','jade','ocean','ruby','gold'][i])} stroke="#e4ffff" strokeWidth="2" />
+              <circle cx="100" cy="49" r="3" fill="#fff6d5" />
+            </g>)}
+            <circle cx="100" cy="100" r="15" fill={paint('gold')} stroke="#fff4c1" strokeWidth="3" />
+          </>}
+          {kind === 'breakthrough' && <>
+            <path d="M48 145 79 143 60 122Z" fill={paint('ruby')} />
+            <path d="M54 153Q48 130 78 119Q84 150 54 153Z" fill={paint('gold')} />
+            <path d="M69 126 88 153 99 127M72 98 46 111 72 128" fill={paint('ruby')} stroke="#ffc5cb" strokeWidth="2" />
+            <path d="M65 115Q86 56 145 47Q149 103 94 137Z" fill="#fff1d4" stroke="#ffd59b" strokeWidth="3" />
+            <path d="M106 62Q124 51 145 47L141 83Z" fill={paint('ruby')} />
+            <circle cx="108" cy="91" r="16" fill={paint('ocean')} stroke={paint('gold')} strokeWidth="5" />
+            <path d="m40 159-9 9m51-14-9 17m-32-58-12 8" stroke="#ffdc9a" strokeWidth="3" strokeLinecap="round" />
+          </>}
+          {kind === 'podiumStreak' && <>
+            <path d="M42 133H77V91H118V115H158V162H42Z" fill={paint('gold')} stroke="#fff1c6" strokeWidth="3" />
+            <path d="M48 139H71V156H48ZM84 98H111V156H84ZM125 122H151V156H125Z" fill={paint('ruby')} opacity=".7" />
+            <path d="M48 121Q24 72 69 47M151 113Q178 70 131 47" stroke={paint('jade')} strokeWidth="5" />
+            {[0,1,2].map(i => <g key={i}><ellipse cx={41+i*5} cy={93-i*15} rx="7" ry="12" transform={`rotate(-40 ${41+i*5} ${93-i*15})`} fill={paint('jade')} /><ellipse cx={159-i*5} cy={93-i*15} rx="7" ry="12" transform={`rotate(40 ${159-i*5} ${93-i*15})`} fill={paint('jade')} /></g>)}
+            <path d="m99 49 7 14 16 3-12 11 3 16-14-8-14 8 3-16-12-11 16-3Z" fill={paint('gold')} />
+          </>}
+          {kind === 'haul' && <>
+            <path d="m56 121 44 54 45-54" fill={paint('jade')} stroke="#ccffdf" strokeWidth="2" />
+            {[['62','91','ruby'],['138','91','ocean'],['100','66','jade']].map(([x,y,color]) => <g key={x} transform={`translate(${x} ${y})`}>
+              <path d="m-20-35 8 34H12L20-35" fill={paint(color)} stroke="#ffebd1" strokeWidth="2" />
+              <circle cy="10" r="25" fill={paint('gold')} stroke="#fff2c4" strokeWidth="3" />
+              <circle cy="10" r="17" stroke="#ba7038" strokeWidth="2" />
+              <path d="m0-1 4 8 9 1-7 6 2 9-8-4-8 4 2-9-7-6 9-1Z" fill="#fff1bd" />
+            </g>)}
+            <path d="m78 143 22 8 22-8-2 17-20-5-20 5Z" fill={paint('ruby')} stroke="#ffd0d9" strokeWidth="2" />
+          </>}
+          {kind === 'sweep' && <>
+            <path d="M60 94 35 156Q66 146 100 177Q137 145 167 156L141 93Z" fill={paint('ruby')} stroke="#ffc4bf" strokeWidth="3" />
+            <path d="m73 112-14 39m39-33 2 50m27-56 15 39" stroke="#ffb185" strokeWidth="3" />
+            <path d="m54 56 25 21 21-36 22 36 26-21-11 56H65Z" fill={paint('gold')} stroke="#fff4c5" strokeWidth="3" />
+            <path d="M65 112H137V126H65Z" fill={paint('gold')} stroke="#fff1ca" strokeWidth="2" />
+            {[77,101,125].map((x,i) => <path key={x} d={`m${x} 87 6 8-6 8-6-8Z`} fill={paint(['ocean','ruby','jade'][i])} />)}
+            {[54,100,148].map(x => <circle key={x} cx={x} cy={x===100?41:56} r="5" fill="#fff0a9" />)}
+          </>}
+          {kind === 'storm' && <>
+            <path d="m99 39 48 43-14 52-47 14-38-50Z" fill={paint('ocean')} stroke="#d5faff" strokeWidth="3" />
+            <path d="m99 39 2 51 46-8m-46 8 32 44m-32-44-15 58m15-58-53 8" stroke="#b6d5ff" strokeWidth="2" />
+            <path d="m107 33-45 68h32l-12 43 55-68h-33l16-43Z" fill={paint('gold')} stroke="#fff2c1" strokeWidth="3" />
+            <path d="m39 55 15 6m93 69 13 8m-117-9 13-8m92-60 14-6" stroke="#ffcbed" strokeWidth="4" strokeLinecap="round" />
+          </>}
+          {kind === 'constellation' && <>
+            <path d="m59 76 69-25 18 72-64 25-23-72 87 47-18-72-46 97" stroke="#bbe6ff" strokeOpacity=".8" strokeWidth="2" />
+            {[[59,76],[128,51],[146,123],[82,148],[100,96]].map(([x,y],i) => <g key={i} transform={`translate(${x} ${y})`}>
+              <path d="M0-16 14-5 10 12 0 18-10 12-14-5Z" fill={paint(['ruby','gold','jade','ocean','ruby'][i])} stroke="#f7e5ff" strokeWidth="2" />
+              <path d="M0-16V18M-14-5H14L0 18Z" stroke="#fff" strokeOpacity=".5" />
+            </g>)}
+          </>}
+          {kind === 'monument' && <>
+            <path d="M55 46H145V151H55Z" fill={art.dark} stroke={paint('gold')} strokeWidth="5" />
+            <path d="M66 56H134Q133 83 109 99Q133 117 134 142H66Q66 117 91 99Q66 83 66 56Z" fill={paint('ocean')} stroke="#ffe4b0" strokeWidth="3" />
+            <path d="M74 68H126Q119 86 101 98Q83 87 74 68ZM74 138l26-24 26 24Z" fill={paint('gold')} />
+            <path d="M100 98V119" stroke="#ffe69e" strokeWidth="3" />
+            <path d="M49 41H151V53H49ZM49 146H151V160H49Z" fill={paint('gold')} stroke="#fff1c8" strokeWidth="2" />
+          </>}
+          {kind === 'solves' && <>
+            {[0,45,90,135,180,225,270,315].map(angle => <path key={angle} transform={`rotate(${angle} 100 98)`} d="M89 34H111L116 58H84Z" fill={paint('gold')} stroke="#ffe7b5" strokeWidth="2" />)}
+            <circle cx="100" cy="98" r="48" fill={paint('jade')} stroke={paint('gold')} strokeWidth="9" />
+            <path d="M53 80H147V117H53Z" fill={art.dark} stroke="#c6ffe1" strokeWidth="2" />
+            <text x="100" y="106" textAnchor="middle" fontSize="24" fontWeight="800" fill="#ffedb7" fontFamily="sans-serif">10 000</text>
+            <path d="m81 145 12 12 27-28" stroke="#fff1b8" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+          </>}
+          {kind === 'firstWin' && <>
+            <path d="M100 157V106M98 133Q58 139 55 105Q89 100 98 133ZM103 121Q142 126 148 92Q111 93 103 121Z" fill={paint('jade')} stroke="#c7ffd8" strokeWidth="3" />
+            <path d="M78 65H61Q61 92 81 94M122 65H139Q139 92 119 94" stroke={paint('gold')} strokeWidth="6" />
+            <path d="M77 55H123V81Q119 108 100 110Q81 108 77 81Z" fill={paint('gold')} stroke="#fff2bd" strokeWidth="3" />
+            <path d="M58 157Q100 143 143 157" stroke="#ffd6aa" strokeWidth="5" strokeLinecap="round" />
+            <path d="m100 66 4 8 9 1-7 6 2 9-8-4-8 4 2-9-7-6 9-1Z" fill="#fff8dd" />
+          </>}
+          {kind === 'butterfly' && <>
+            <path d="M100 98Q42 17 42 81Q36 123 92 113Q44 116 64 150Q89 163 100 113Q110 162 139 150Q158 116 109 113Q164 123 158 81Q158 17 100 98Z" fill={paint('ocean')} stroke="#e2d8ff" strokeWidth="3" />
+            <path d="M91 95Q53 50 56 83Q58 103 91 95ZM109 95Q147 50 144 83Q142 103 109 95ZM88 122Q64 130 74 143ZM112 122Q136 130 126 143Z" fill={paint('ruby')} stroke="#f3b5ed" strokeWidth="2" />
+            <path d="M100 91V123M98 91Q87 72 82 77M102 91Q113 72 118 77" stroke={paint('gold')} strokeWidth="5" strokeLinecap="round" />
+            <path d="M52 164Q77 148 100 162Q124 148 148 164L139 177H61Z" fill={art.dark} stroke="#dcc7ff" strokeWidth="2" />
+          </>}
+          {kind === 'calendar' && <>
+            <path d="M48 48H151V147Q151 159 139 159H48Z" fill="#fff0d2" stroke="#ffe9ab" strokeWidth="3" />
+            <path d="M48 48H151V78H48Z" fill={paint('ruby')} />
+            <path d="M68 40V59M128 40V59" stroke={paint('gold')} strokeWidth="7" strokeLinecap="round" />
+            <text x="97" y="115" textAnchor="middle" fontSize="31" fontWeight="800" fill="#a94f68" fontFamily="sans-serif">5.20</text>
+            <path d="M59 133Q98 103 139 133" stroke={paint('ruby')} strokeWidth="5" />
+            <path d="M62 140Q98 111 136 140" stroke={paint('gold')} strokeWidth="5" />
+            <path d="M67 146Q98 120 131 146" stroke={paint('jade')} strokeWidth="5" />
+          </>}
+          {kind === 'triplets' && <>
+            <path d="M60 113 100 64 140 113Z" stroke="#dcd7ff" strokeWidth="4" />
+            {[[60,113],[100,64],[140,113]].map(([x,y],i) => <g key={i} transform={`translate(${x} ${y})`}>
+              <path d="m0-25 8 16 18 3-13 13 3 18-16-9-16 9 3-18-13-13 18-3Z" fill={paint(['ruby','gold','jade'][i])} stroke="#fff3d6" strokeWidth="3" />
+              <path d="M-6 0H6M-6 6H6" stroke="#fff5dc" strokeWidth="3" strokeLinecap="round" />
+            </g>)}
+          </>}
+          {kind === 'passport' && <>
+            <path d="M49 38H139Q151 38 151 51V161H49Z" fill={paint('ocean')} stroke="#daeaff" strokeWidth="3" />
+            <path d="M58 39V160" stroke="#c0d8ff" strokeWidth="3" />
+            <circle cx="102" cy="77" r="24" stroke={paint('gold')} strokeWidth="3" />
+            <path d="M78 77H126M102 53Q82 77 102 101Q122 77 102 53Z" stroke={paint('gold')} strokeWidth="2" />
+            {[75,103,131].map((x,i) => <g key={x}>
+              <path d={`m${x-9} 112 9 17 9-17`} fill={paint(['ruby','jade','ruby'][i])} />
+              <circle cx={x} cy="137" r="13" fill={['#fbd283','#d0e8f5','#d7a083'][i]} stroke="#fff1d2" strokeWidth="2" />
+            </g>)}
+          </>}
+          {kind === 'worldPodium' && <>
+            <circle cx="100" cy="88" r="49" fill={paint('ocean')} stroke="#c9f2ff" strokeWidth="3" />
+            <path d="M51 88H149M100 39Q65 88 100 137Q135 88 100 39ZM59 63H141M59 113H141" stroke="#c5efff" strokeWidth="2" opacity=".6" />
+            <path d="M60 62 85 103H115L140 62" fill={paint('ruby')} stroke="#ffccdc" strokeWidth="3" />
+            <circle cx="100" cy="121" r="34" fill={achievement?.place === 2 ? '#bfd6eb' : achievement?.place === 3 ? '#d99b75' : paint('gold')} stroke="#ffefcc" strokeWidth="4" />
+            <circle cx="100" cy="121" r="25" stroke="#90653e" strokeWidth="2" />
+            <path d="m100 104 5 11 12 2-9 8 2 12-10-6-10 6 2-12-9-8 12-2Z" fill="#fff3d4" />
+          </>}
           {kind === 'hundred' && <>
+
             <path d="M56 147 41 175 67 169 77 184 91 151M109 151 123 184 134 169 159 175 144 147" fill={paint('ruby')} stroke="#ffd6d5" strokeWidth="2" />
             <path d="M47 41H153V143Q100 172 47 143Z" fill={paint('gold')} stroke="#fff2c7" strokeWidth="3" />
             <path d="M55 52H145V135Q100 160 55 135Z" fill={paint('ruby')} />
@@ -146,6 +290,7 @@ export function AchievementMedal({ kind, event, recordCount }: { kind: Achieveme
       {record && <span className="wp-achievement-record"><RecordBadge record={record} /></span>}
       {event && <span className="wp-achievement-event"><EventIcon event={event} /></span>}
       {tier && <span className="wp-achievement-count">×{recordCount}</span>}
+      {achievement && <span className="wp-achievement-count">{achievement.kind === 'worldPodium' ? ['','1','2','3'][achievement.place ?? 1] : achievement.kind === 'monument' ? `${achievement.count}d` : `×${achievement.count}`}</span>}
     </span>
   );
 }
