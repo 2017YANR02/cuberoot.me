@@ -225,7 +225,7 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
         size={size}
         mount={mount}
         onReady={() => setReady(true)}
-        onResetView={resetView}
+        onResetView={controlMode === 'none' ? resetView : undefined}
         busyLabel={t('正在加载 FTO', 'Loading the FTO')}
       />
       {invalid.length > 0 && (
@@ -238,6 +238,7 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
           mode="replay"
           count={parsedAlg.groups.length}
           onReplay={replay}
+          onResetView={resetView}
         />
       ) : controlMode === 'full' ? (
         <AlgPlaybackControls
@@ -248,6 +249,7 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
           onStepBack={stepBack}
           onTogglePlay={togglePlayback}
           onStepForward={stepForward}
+          onResetView={resetView}
         />
       ) : null}
     </div>
