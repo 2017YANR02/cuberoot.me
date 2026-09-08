@@ -108,7 +108,10 @@ export function CompactSelect<T extends string | number>({
       const belowTop = anchor.bottom + PANEL_GAP;
       const belowSpace = Math.max(0, safeBottom - belowTop);
       const aboveSpace = Math.max(0, anchor.top - PANEL_GAP - safeTop);
-      const desiredHeight = panel.scrollHeight || panelRect.height;
+      const panelCss = getComputedStyle(panel);
+      const borderHeight = (parseFloat(panelCss.borderTopWidth) || 0) + (parseFloat(panelCss.borderBottomWidth) || 0);
+      // scrollHeight includes padding, but the border-box height also needs both borders.
+      const desiredHeight = panel.scrollHeight ? panel.scrollHeight + borderHeight : panelRect.height;
       const placeBelow = belowSpace >= Math.min(desiredHeight, aboveSpace);
       const availableHeight = placeBelow ? belowSpace : aboveSpace;
       const maxHeight = Math.min(Math.max(0, desiredHeight), availableHeight);

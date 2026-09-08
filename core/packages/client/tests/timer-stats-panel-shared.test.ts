@@ -218,6 +218,21 @@ describe('shared TimerRollingStatsPicker interaction and viewport contract', () 
     expect(document.querySelector('.compact-select-popup')).toBeNull();
   });
 
+  it('includes popup borders when all options fit without scrolling', async () => {
+    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+      configurable: true,
+      get() { return (this as HTMLElement).classList?.contains('compact-select-popup') ? 164 : 0; },
+    });
+    const css = document.createElement('style');
+    css.textContent = '.compact-select-popup { box-sizing: border-box; border-top-width: 1px; border-bottom-width: 1px; border-style: solid; }';
+    document.head.appendChild(css);
+    try {
+      await render(vi.fn());
+      const { panel } = await openFirst();
+      expect(panel.style.maxHeight).toBe('166px');
+    } finally { css.remove(); }
+  });
+
   it('validates custom aoN, supports Enter, and restores Escape focus', async () => {
     const onColumnsChange = vi.fn();
     await render(onColumnsChange, ['ao5']);
