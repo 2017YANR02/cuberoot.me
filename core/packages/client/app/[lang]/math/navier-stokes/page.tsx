@@ -6,6 +6,7 @@ import BackHome from '@/components/BackHome';
 import JsonLd, { articleJsonLd } from '@/components/JsonLd';
 import { TeXBlock } from '@/components/math/Tex';
 import { useT } from '@/hooks/useT';
+import article from './article.json';
 
 const SOURCE = 'https://openai.com/index/navier-stokes-solution/';
 const CLAY = 'https://www.claymath.org/wp-content/uploads/2022/06/navierstokes.pdf';
@@ -19,24 +20,38 @@ export default function NavierStokesPage() {
   const [exponent, setExponent] = useState(1);
   const speed = radius ** -exponent;
   const energy = radius ** (3 - 2 * exponent);
-  const heading = t('Navier–Stokes：流体会出现奇性吗？', 'Navier–Stokes: can fluid flow become singular?');
-  const description = t('公告摘要与数学背景，附原始资料及交互示意。', 'An announcement digest and mathematical background, with sources and an interactive illustration.');
+  const heading = t('关于纳维–斯托克斯千禧年大奖难题', 'On the Navier–Stokes Millennium Prize Problem');
+  const description = t('OpenAI 文章全文中文翻译，含研究过程、同期研究、原图与图注。', 'The OpenAI article with a full Chinese translation, original figures, and captions.');
 
   return (
     <main style={{ maxWidth: 760, margin: '0 auto', padding: '24px 16px 64px', lineHeight: 1.85, overflowWrap: 'anywhere' }}>
-      <JsonLd data={articleJsonLd({ headline: heading, description, url: t('https://cuberoot.me/zh/math/navier-stokes', 'https://cuberoot.me/math/navier-stokes'), lang: t('zh', 'en') })} />
+      <JsonLd data={{ ...articleJsonLd({ headline: heading, description, url: t('https://cuberoot.me/zh/math/navier-stokes', 'https://cuberoot.me/math/navier-stokes'), lang: t('zh', 'en') }), author: { '@type': 'Organization', name: 'OpenAI', url: 'https://openai.com' }, isBasedOn: SOURCE }} />
       <header className="navier-header">
         <div className="page-back-row"><BackHome /></div>
         <p>{t('数学 / 偏微分方程', 'Mathematics / Partial differential equations')}</p>
         <h1 style={{ fontSize: 'clamp(1.8rem, 5vw, 2.7rem)', lineHeight: 1.3 }}>{heading}</h1>
-        <p>{t('独立导读：官方公告摘要 + 数学背景，非全文翻译。', 'An independent guide: announcement summary and mathematical background, not a full translation.')}</p>
+        <p>{t('原文：OpenAI ｜ 中文翻译：CubeRoot', 'Original: OpenAI | Chinese translation: CubeRoot')}</p>
+        <p><a href={SOURCE} target="_blank" rel="noreferrer">{t('阅读原文', 'Read the original')}</a></p>
+        <p>{t('以下为所提供正文的完整译文。文中的“我们”指 OpenAI，研究结论及相关表述均沿用原文。', 'The article below follows the supplied source text. “We” refers to OpenAI; research claims and statements are those of the original author.')}</p>
       </header>
-      <section style={{ marginTop: 36 }}>
-        <h2 className="gt-sec-title">{t('OpenAI 宣布了什么', 'What OpenAI announced')}</h2>
-        <p>{t('2026-09-08，OpenAI 宣布：内部 AI 系统构造了带光滑外力的三维 Navier–Stokes 有限时间奇性，并公布解析证明及 Lean 形式化，称其满足千禧年问题的 C、D 两种表述。', 'On September 8, 2026, OpenAI announced an AI-produced finite-time singularity for three-dimensional Navier–Stokes with smooth forcing, publishing an analytical proof and Lean formalization that it says establish formulations C and D of the Millennium problem.')}</p>
-        <p><a href={SOURCE} target="_blank" rel="noreferrer">{t('来源：OpenAI 原文', 'Source: OpenAI announcement')}</a></p>
-        <p>{t('这里转述发布方的结论；本站未独立复核证明。', 'This reports the publisher’s claim; CubeRoot has not independently verified the proof.')}</p>
-      </section>
+      <article>
+        {article.map((block, index) => {
+          const text = t(block.zh, block.en);
+          if (block.kind === 'heading') return <h2 key={index} style={{ marginTop: 40 }}>{text}</h2>;
+          if (block.kind === 'vortex' || block.kind === 'benchmark') return (
+            <figure key={index} style={{ margin: '32px 0' }}>
+              {/* Original source figures are served locally at their native aspect ratio. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/assets/math/navier-stokes/${block.kind === 'vortex' ? 'vortex.webp' : 'benchmark.png'}`} alt={text} width={block.kind === 'vortex' ? 1254 : 944} height={block.kind === 'vortex' ? 1254 : 732} loading="lazy" style={{ display: 'block', width: '100%', height: 'auto' }} />
+              <figcaption style={{ marginTop: 12, whiteSpace: 'pre-line' }}>{text}</figcaption>
+            </figure>
+          );
+          return <p key={index} style={{ whiteSpace: 'pre-line' }}>{text}</p>;
+        })}
+        <p><small>{t('译注：[1] 为原文脚注标记；所提供的文本未包含脚注正文，可前往原文查看。图中英文标注的中文释义见图注。', 'Translation note: [1] is a source footnote marker; its text was not included in the supplied document. See the original article for the footnote. Figure labels are explained in the captions.')}</small></p>
+      </article>
+      <details style={{ marginTop: 48 }}>
+        <summary>{t('附录：数学背景与交互示意（CubeRoot 补充，非原文）', 'Appendix: mathematical background and interactive illustration (added by CubeRoot)')}</summary>
       <section style={{ marginTop: 36 }}>
         <h2>{t('先看清问题的条件', 'Read the assumptions first')}</h2>
         <div style={{ overflowX: 'auto' }}><TeXBlock src={String.raw`\partial_t u+(u\cdot\nabla)u=-\nabla p+\nu\Delta u+f,\qquad \nabla\cdot u=0`} /></div>
@@ -78,6 +93,7 @@ export default function NavierStokesPage() {
         <p>{t('读者可以从正式定理的量词与假设开始，再对照形式化代码。特别要区分“存在一个反例”和“所有初值都会出现奇性”。', 'Start with the formal theorem’s quantifiers and assumptions, then compare the formalization. Distinguish existence of a counterexample from a claim about every initial condition.')}</p>
         <p><a href={LEAN} target="_blank" rel="noreferrer">{t('OpenAI 的 Lean 证明仓库', 'OpenAI’s Lean proof repository')}</a></p>
       </section>
+      </details>
     </main>
   );
 }
