@@ -61,6 +61,22 @@ it('opens help from ? or settings, contains all four groups, blocks playback and
   expect(host.querySelector('dialog')).toBeNull();
 });
 
+it('closes help on a backdrop click while keeping content and panel padding clicks open', async () => {
+  await mount();
+  const player = host.querySelector<HTMLElement>('.lesson-video-player')!;
+  player.focus();
+  await key('?', { shiftKey: true }, player);
+  const dialog = host.querySelector('dialog')!;
+  vi.spyOn(dialog, 'getBoundingClientRect').mockReturnValue({ left: 100, right: 500, top: 100, bottom: 500 } as DOMRect);
+  await act(async () => dialog.querySelector('h2')!.click());
+  expect(dialog.open).toBe(true);
+  await act(async () => dialog.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 110, clientY: 110 })));
+  expect(dialog.open).toBe(true);
+  await act(async () => dialog.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 50, clientY: 110 })));
+  expect(host.querySelector('dialog')).toBeNull();
+  expect(document.activeElement).toBe(player);
+});
+
 it('seeks from live media time, clamps bounds and keeps native slider navigation', async () => {
   const video = await mount();
   video.currentTime = 50;
