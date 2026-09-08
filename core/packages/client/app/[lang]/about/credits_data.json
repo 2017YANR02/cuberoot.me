@@ -28,8 +28,8 @@
     "name": "新华社：上海夜景实拍 / Xinhua: Shanghai night photographs",
     "space": true,
     "url": "https://www.xinhuanet.com/photo/20251231/f4a640207f67437c86c2d5db1b82644c/c.html",
-    "zh": "实拍参考：王翔于 2025-12-31 拍摄的外滩和陆家嘴，用于建筑照明的明暗关系、江岸层次及水面倒影。照片包含跨年特别灯光，不将红色活动灯幕作为日常现状；图片仅本地审图，未用作运行贴图。模型与灯光仍含估算。查阅于 2026-09-08",
-    "en": "Photo reference: Wang Xiang's 2025-12-31 Bund and Lujiazui photographs, used for lighting contrast, riverbank layers and water reflections. They show special New Year lighting; red event displays are not treated as everyday conditions. Photos were reviewed locally, not distributed as runtime textures. Geometry and lighting remain estimates. Accessed 2026-09-08"
+    "zh": "实拍参考：王翔于 2025-12-31 拍摄的外滩和陆家嘴，用于建筑照明的明暗关系、江岸层次、水面倒影及白色前灯、红色尾灯的街道层次。滨江步道、路灯和长椅沿 OSM 位置近似重建，设施细节未实测。照片包含跨年特别灯光，不将红色活动灯幕作为日常现状；图片仅本地审图，未用作运行贴图。模型与灯光仍含估算。查阅于 2026-09-08",
+    "en": "Photo reference: Wang Xiang's 2025-12-31 Bund and Lujiazui photographs, used for lighting contrast, riverbank layers, water reflections and white headlights/red taillights at street level. Promenade paving, lamps and benches follow OSM alignment with estimated fixture details. They show special New Year lighting; red event displays are not treated as everyday conditions. Photos were reviewed locally, not distributed as runtime textures. Geometry and lighting remain estimates. Accessed 2026-09-08"
   },
   {
     "name": "文汇报：外滩 15-1 号 / Wenhui: Bund 15-1",
@@ -128,9 +128,9 @@
     "name": "OpenStreetMap contributors",
     "space": true,
     "url": "https://www.openstreetmap.org/copyright",
-    "zh": "上海河道、道路、绿地与建筑平面轮廓，ODbL 1.0。建筑由 Three.js 向上拉伸：优先使用记录高度，其次按楼层数 × 3.2 米估算，缺失时默认 12 米。目前多数建筑使用默认高度；地标外形、立面和窗光由本站代码简化生成，并非实景三维扫描",
-    "en": "Shanghai water, roads, parks and building footprints, ODbL 1.0. Three.js extrudes footprints using recorded heights, then floor counts × 3.2 m, or a 12 m fallback. Most buildings currently use the fallback. Landmark shapes, facades and window lights are simplified local code-generated models, not a real-world 3D scan",
-    "long_en": "Map data copyright OpenStreetMap contributors, distributed under ODbL 1.0. Local extracts acquired 2026-09-07; bounds, source snapshots, height completeness and texture provenance are recorded in assets/space/shanghai-v1/SOURCE.json. Missing building heights use an explicit fallback; authored landmark meshes are approximate."
+    "zh": "上海河道、道路、绿地与建筑平面轮廓，ODbL 1.0。建筑由 Three.js 向上拉伸：优先使用记录高度，其次按楼层数 × 3.2 米估算，缺失时默认 12 米。目前多数建筑使用默认高度；地标外形、立面和窗光由本站代码简化生成，并非实景三维扫描。2026-09-08 从既有缓存补入道路单行方向与车道数，车流沿道路及桥面行驶；车辆外形、数量、速度和灯光为本站演示估算，未接入实时交通",
+    "en": "Shanghai water, roads, parks and building footprints, ODbL 1.0. Three.js extrudes footprints using recorded heights, then floor counts × 3.2 m, or a 12 m fallback. Most buildings currently use the fallback. Landmark shapes, facades and window lights are simplified local models, not a 3D scan. On 2026-09-08, one-way and lane-count tags were added from existing cached extracts. Cars follow roads and bridge elevations; vehicle shapes, counts, speeds and lighting are locally authored visual estimates, not live traffic",
+    "long_en": "Map data copyright OpenStreetMap contributors, distributed under ODbL 1.0. Local extracts acquired 2026-09-07; bounds, source snapshots, height completeness and texture provenance are recorded in assets/space/shanghai-v1/SOURCE.json. Road metadata was reprocessed on 2026-09-08 without changing geographic coverage. Lane counts are retained as source metadata; traffic uses one central stream per one-way carriageway and two right-hand streams on two-way roads. Missing building heights use an explicit fallback; authored landmark meshes are approximate."
   },
   {
     "name": "上海市土木工程学会：南浦大桥",
