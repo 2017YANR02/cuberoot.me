@@ -62,7 +62,7 @@ function stage(index, draw) {
       const expression = mood==='happy' ? l('M4 9l1-1 1 1m3 0l1-1 1 1',ink,.65)
         : mood==='dizzy' ? l('M3.5 8l2 2m0-2l-2 2m6-2l2 2m0-2l-2 2',ink,.65)
         : mood==='sleep' ? l('M4 9h2m3 0h2',ink,.65)
-        : r(3.5,7.5,2,3,cream)+r(9.5,7.5,2,3,cream)+r(4.2,8.3,.7,1.4,ink)+r(10.2,8.3,.7,1.4,ink)+r(7,11,1,1,ink);
+        : normal+r(7,11,1,1,ink);
       face += v(expression,moodAt,moodEnd);
     }
     const body = `<g fill="${skin}">${part('torso')}${['outer-left-leg','inner-left-leg','inner-right-leg','outer-right-leg'].map(part).join('')}${a(part('left-arm'),left,'2px 10px')}${a(part('right-arm'),right,'13px 10px')}</g>`;
@@ -249,7 +249,7 @@ add('pixel-sneeze','喷嚏散架','Pixel sneeze','一个喷嚏打散成像素，
     pieces+=v(a(r(x,y,1.8,2.4,skin),[[0,t()],[35,t()],[48,t(dx,dy,i*37)],[58,t(dx,dy+2,i*37)],[71,t()]]),35,71);
   }
   const intact = a(crab([[0,t()],[13,t(0,-.3,0,1.03,.98)],[23,t(0,-.8,0,.94,1.08)],[31,t(0,1,0,1.15,.8)],[35,t(0,-1)],[72,t()]],'',{eyes:[[0,t()],[19,t(0,0,0,1,.2)],[31,t(0,0,0,1,.2)],[72,t()]]}),[[0,o(1)],[34.9,o(1)],[35,o(0)],[71,o(0)],[71.1,o(1)]]);
-  return intact+pieces+v(r(3,7,3,4,skin)+r(9,7,3,4,skin)+a(r(4,11,1,2,ink)+r(10,7,2,1,ink),[[0,t()],[76,t()],[83,t(0,-.6)]]) ,71.1,85)+v(at(cloud,18,8,.5),33,40)+v(at(star(pink),19,1,.5),86,91);
+  return intact+pieces+v(r(3,7,3,4,skin)+r(9,7,3,4,skin)+a(r(4,11,1,2,ink)+r(10,7,1,2,ink),[[0,t()],[76,t()],[83,t(0,-.6)]]) ,71.1,85)+v(at(cloud,18,8,.5),33,40)+v(at(star(pink),19,1,.5),86,91);
 });
 add('rebel-shadow','影子先下班','Shadow has plans','自己停下了，影子还在跳舞，最后只好跟着它跳。','The crab stops. Its shadow keeps dancing. Better join in.',({a,v,crab})=>{
   const silhouette = `<g fill="#A391ED">${part('torso')}${part('left-arm')}${part('right-arm')}${part('outer-left-leg')}${part('outer-right-leg')}</g>`;

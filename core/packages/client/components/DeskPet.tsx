@@ -21,6 +21,7 @@ import { AdminTools } from '@/components/AuthTokenRefresher';
 import { ClearButton } from '@/components/ClearButton';
 import { persistItem } from '@/lib/safe-storage';
 import { subscribeBeat, getMetronomeState } from '@/lib/metronome';
+import { getPlaytimeScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
 // SSR-safe layout effect (DeskPet is rendered in the root layout).
 const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
@@ -353,6 +354,7 @@ export default function DeskPet() {
   // Edge-cling (mini) state, mirrored out of the engine closure so the
   // size/character recenter effect can keep the pet pinned to its edge.
   const miniRef = useRef<{ active: boolean; edge: 'left' | 'right' }>({ active: false, edge: 'right' });
+  const pendingPlaytimeRef = useRef<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -554,20 +556,25 @@ export default function DeskPet() {
     // never an empty box. `replay` restarts a one-shot animation from the memory
     // cache instead of re-downloading it.
     let frameSeq = 0;
-    const paintFrame = (url: string, replay: boolean) => {
+    let storyUrl: string | undefined;
+    let storyRequest: AbortController | undefined;
+    const paintFrame = (url: string, replay: boolean, onPaint: () => void, story = false) => {
       const seq = ++frameSeq;
-      const show = () => {
+      let painted = false;
+      const show = (src: string) => {
         if (seq !== frameSeq) return;
-        if (replay && img.getAttribute('src') === url) img.removeAttribute('src');
-        img.src = url;
+        if (painted) return;
+        painted = true;
+        if (replay && img.getAttribute('src') === src) img.removeAttribute('src');
+        img.src = src;
         img.style.display = 'block';
         img.style.visibility = '';
         svg.style.display = 'none';
+        onPaint();
       };
-      const pre = new Image();
-      pre.onload = show;
-      pre.onerror = () => {
+      const fail = () => {
         if (seq !== frameSeq) return;
+        onPaint(); // still return to idle after a failed load
         if (img.getAttribute('src')) {
           img.style.visibility = ''; // keep the last good frame (may be hidden by a char switch)
           return;
@@ -579,8 +586,25 @@ export default function DeskPet() {
           applyEye(0, 0);
         }
       };
-      pre.src = url;
-      if (pre.complete && pre.naturalWidth) show(); // already in cache → paint synchronously
+      const decode = (src: string) => {
+        const pre = new Image();
+        pre.onload = () => show(src);
+        pre.onerror = fail;
+        pre.src = src;
+        if (pre.complete && pre.naturalWidth) show(src);
+      };
+      if (!story) { decode(url); return; }
+      // Give each story its own timeline, even while the gallery is showing the
+      // same SVG. The versioned fetch still uses the browser's immutable cache.
+      storyRequest = new AbortController();
+      fetch(url, { signal: storyRequest.signal })
+        .then((response) => { if (!response.ok) throw new Error('Playtime asset unavailable'); return response.blob(); })
+        .then((blob) => {
+          if (seq !== frameSeq) return;
+          storyUrl = URL.createObjectURL(blob);
+          decode(storyUrl);
+        })
+        .catch(fail);
     };
 
     // Prewarm the poses the pet reaches on its own (idle → yawn → doze → sleep,
@@ -597,8 +621,20 @@ export default function DeskPet() {
     const setState = (s: string, force = false) => {
       if (s === state && !force) return;
       clearTimeout(autoTimer);
+      ++frameSeq; // invalidate pending loads, including transitions to inline idle
+      storyRequest?.abort();
+      if (storyUrl) { URL.revokeObjectURL(storyUrl); storyUrl = undefined; }
       state = s;
+      root.dataset.state = s;
       const isMini = s.startsWith('mini-');
+      const story = character === 'clawd' ? getPlaytimeScene(s) : undefined;
+      const back = story?.durationMs ?? (isMini ? MINI_AUTO[s] : AUTO[s]);
+      const onPaint = () => {
+        if (back) autoTimer = setTimeout(() => {
+          if (isMini) onMiniAutoReturn(s);
+          else setState('idle');
+        }, back);
+      };
       asleep = s === 'sleeping' || s === 'dozing' || s === 'mini-sleep';
       if (!isMini && s === 'idle' && theme.inlineIdle) {
         img.style.display = 'none';
@@ -616,13 +652,8 @@ export default function DeskPet() {
         // No cache-buster: the assets ship immutable, so a repeated state must hit
         // the browser cache instead of a fresh round-trip. `force` (a re-triggered
         // one-shot) still restarts the animation, from cache.
-        paintFrame(theme.base + file, force);
+        paintFrame(story?.src ?? theme.base + file, force, onPaint, !!story);
       }
-      const back = isMini ? MINI_AUTO[s] : AUTO[s];
-      if (back) autoTimer = setTimeout(() => {
-        if (isMini) onMiniAutoReturn(s);
-        else setState('idle');
-      }, back);
     };
 
     // After a one-shot mini pose (peek/alert/happy) finishes, settle back to the
@@ -777,7 +808,7 @@ export default function DeskPet() {
         if (s === 'idle') return setState(mouseOverPet ? 'mini-peek' : 'mini-idle', true);
         return;
       }
-      if (s === 'idle' || theme.files[s]) setState(s, true);
+      if (s === 'idle' || theme.files[s] || (character === 'clawd' && getPlaytimeScene(s))) setState(s, true);
     };
 
     let lastMove = 0;
@@ -787,10 +818,13 @@ export default function DeskPet() {
     // debugger/wizard/ultrathink/boss/error all show too), minus interaction-only
     // reactions and the sleep-cycle poses that shouldn't fire unprompted.
     const RANDOM_EXCLUDE = new Set(['idle', 'reactDouble', 'reactAnnoyed', 'reactDrag', 'waking', 'sleeping', 'dozing']);
-    const RANDOM_POOL = Object.keys(theme.files).filter((k) => !RANDOM_EXCLUDE.has(k));
+    const RANDOM_POOL = [
+      ...Object.keys(theme.files).filter((k) => !RANDOM_EXCLUDE.has(k)),
+      ...(character === 'clawd' ? PLAYTIME_SCENES.map((scene) => scene.state) : []),
+    ];
     let lastRandom = '';
     const playRandom = () => {
-      if (dnd || dragging || RANDOM_POOL.length === 0) return;
+      if (dnd || dragging || document.hidden || getPlaytimeScene(state) || RANDOM_POOL.length === 0) return;
       // Avoid repeating the same pose twice in a row so the variety reads.
       let pick = RANDOM_POOL[Math.floor(Math.random() * RANDOM_POOL.length)];
       if (RANDOM_POOL.length > 1 && pick === lastRandom)
@@ -908,10 +942,37 @@ export default function DeskPet() {
       if (!dnd && !mini) { setState('idle', true); resetIdle(); }
     };
 
+    const requestState = (s: string) => {
+      if (!getPlaytimeScene(s)) { drive(s); return; }
+      // An explicit gallery selection wakes the crab and leaves edge-cling so
+      // the whole story is visible. Other characters keep their own random pool.
+      setSearchOpen(false);
+      if (mini) {
+        const pr = preMiniRight, pb = preMiniBottom;
+        liftFromMini();
+        const r = root.getBoundingClientRect();
+        const c = clampAnchor(pr, pb, r.width, r.height, VC[character][0], VC[character][1]);
+        root.style.right = c.right + 'px'; root.style.bottom = c.bottom + 'px';
+        persistItem(POS_KEY, JSON.stringify(c));
+      }
+      if (character !== 'clawd') {
+        const r = root.getBoundingClientRect();
+        recenterRef.current = { x: r.left + r.width * VC[character][0], y: r.top + r.height * VC[character][1] };
+        pendingPlaytimeRef.current = s;
+        persistItem(CHAR_KEY, 'clawd');
+        setCharacter('clawd');
+        return;
+      }
+      dnd = false;
+      setResting(false);
+      clearTimeout(idleTimer);
+      setState(s, true);
+      if (!randomMode) resetIdle();
+    };
     const onExternal = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       const s = typeof detail === 'string' ? detail : detail?.state;
-      if (typeof s === 'string') drive(s);
+      if (typeof s === 'string') requestState(s);
     };
 
     // Hover the clinging pet (mouse only) → nudge it on-screen + peek pose.
@@ -952,7 +1013,7 @@ export default function DeskPet() {
     };
 
     (window as unknown as { clawdPet?: object }).clawdPet = {
-      set: (s: string) => drive(s),
+      set: (s: string) => requestState(s),
       idle: () => drive('idle'),
       cling: () => clingViaMenu(),
     };
@@ -977,8 +1038,16 @@ export default function DeskPet() {
     setState(restoredMini ? (dnd ? 'mini-sleep' : 'mini-idle') : 'idle', true);
     if (randomMode) { playRandom(); scheduleRandom(); }
     else if (!mini) resetIdle();
+    if (pendingPlaytimeRef.current) {
+      const pending = pendingPlaytimeRef.current;
+      pendingPlaytimeRef.current = null;
+      requestState(pending);
+    }
 
     return () => {
+      ++frameSeq;
+      storyRequest?.abort();
+      if (storyUrl) URL.revokeObjectURL(storyUrl);
       clearTimeout(autoTimer);
       clearTimeout(idleTimer);
       clearTimeout(clickTimer);
