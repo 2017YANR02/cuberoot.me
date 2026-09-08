@@ -192,9 +192,9 @@ export const SITE_DIRECTORY_GROUPS = [
       zh: '寻找魔方老师和培训机构，浏览直播话术、录播课方案与图文教程，学习术语、规则和群论，再用问答检验掌握程度。',
     },
     entries: [
-      { id: 'platform', href: '/platform', internal: true, tier: 'medium', nameKey: 'platform' },
-      { id: 'teaching-management', href: '/org', internal: true, tier: 'medium', nameKey: 'teachingManagement' },
-      { id: 'learning-center', href: '/learn', internal: true, tier: 'medium', nameKey: 'learningCenter' },
+      { id: 'platform', href: '/platform', internal: true, tier: 'medium', nameKey: 'platform', lockedForNonAdmin: true },
+      { id: 'teaching-management', href: '/org', internal: true, tier: 'medium', nameKey: 'teachingManagement', lockedForNonAdmin: true },
+      { id: 'learning-center', href: '/learn', internal: true, tier: 'medium', nameKey: 'learningCenter', lockedForNonAdmin: true },
       { id: 'teaching', href: '/courses', internal: true, tier: 'medium', nameKey: 'teaching' },
       { id: 'teachers', href: '/teachers', internal: true, tier: 'medium', nameKey: 'teachers' },
       { id: 'live-scripts', href: '/teachers/scripts', internal: true, tier: 'medium', nameKey: 'liveScripts' },

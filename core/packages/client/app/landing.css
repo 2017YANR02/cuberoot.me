@@ -566,6 +566,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 .landing-page .landing-card.is-disabled {
     position: relative;
     cursor: not-allowed;
+    filter: grayscale(1);
     opacity: 0.55;
     background: var(--surface);
 }
