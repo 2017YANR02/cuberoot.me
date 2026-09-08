@@ -1,6 +1,6 @@
 // ABYSSAL, MIT, Copyright (c) 2026 Davi (Token-Gremlin). See LICENSE and UPSTREAM.md.
 import * as THREE from 'three';
-import { ISLAND_GLSL } from '../../space-island';
+import { ISLAND_GLSL, SHORE_GLSL } from '../../space-island';
 import { OCEAN_SAMPLE_GLSL } from './OceanSampleGLSL.js';
 import { NOISE_GLSL } from '../gfx/NoiseGLSL.js';
 import { ATMO_COMMON } from '../sky/AtmosphereGLSL.js';
@@ -32,8 +32,8 @@ function buildProjectedGrid(nx, ny) {
       const b = a + 1;
       const c = a + (nx + 1);
       const d = c + 1;
-      idx[k++] = a; idx[k++] = c; idx[k++] = d;
-      idx[k++] = a; idx[k++] = d; idx[k++] = b;
+      idx[k++] = a; idx[k++] = d; idx[k++] = c;
+      idx[k++] = a; idx[k++] = b; idx[k++] = d;
     }
   }
   const g = new THREE.BufferGeometry();
@@ -43,19 +43,6 @@ function buildProjectedGrid(nx, ny) {
   return g;
 }
 
-// One inward-moving breaker field for geometry, normals and residual foam.
-const SHORE_GLSL = /* glsl */ `
-float shorePhase(vec2 p, float depth) {
-  return depth * 1.75 + uTime * 1.25 + sin(p.x * .11 + p.y * .08) * 1.1
-       + sin(p.x * .23 - p.y * .17) * .45;
-}
-float shoreHeight(vec2 p) {
-  float depth = uSeaLevel - islandHeight(p);
-  float phase = shorePhase(p, depth);
-  float envelope = smoothstep(0., 1., depth) * (1. - smoothstep(1.5, 8., depth));
-  return (sin(phase) * .82 - cos(phase * 2.) * .18) * envelope * min(.65, .16 + uWindSpeed * .02);
-}
-`;
 
 const VERT = /* glsl */ `
 precision highp float;
@@ -575,14 +562,13 @@ void main(){
   vec3 Nflat = N;
   bool underwater = uUnderwater > 0.5;
   vec3 V = normalize(uCamPos - vWorldPos);
-  // Seeing the underside of the surface means the eye is inside the water — in
-  // the trough of a wave that has closed over it, or behind the face of a
-  // tsunami. The mesh is double-sided so the geometry is there, but with the
-  // normal pointing away every lighting term collapses and the wall renders as
-  // a black hole in the middle of the frame. Flip it and mark the fragment so
-  // it can be shaded as a thick, backlit body of water instead.
-  bool backLit = dot(N, V) < 0.0;
+  // Only the geometric underside is submerged. A shaded ripple facing away
+  // from the eye is still above water; treating it as submerged printed dark
+  // horizontal strips across the grazing-angle sea. Keep its normal in the
+  // visible hemisphere without switching the water-body shading branch.
+  bool backLit = !gl_FrontFacing;
   if (backLit) N = -N;
+  N = normalize(N + V * max(0., -dot(N, V) + .001));
   underwater = underwater || backLit;
 
   // -------------------------------------------------------------- roughness
@@ -604,9 +590,9 @@ void main(){
   vec4 t2 = sampleCascadeGrad(uOceanTurb2, q, uOceanScales.z, ddx, ddy);
   // The cascades overlap in space, so take the strongest raft rather than the
   // sum — adding them triple-counts a crest that all three see.
-  float rawFoam = max(max(t0.r * 0.75, t1.r), t2.r * 0.45);
+  float rawFoam = max(max(t0.r * 0.22, t1.r), t2.r * 0.45);
   // Active spilling crests show immediately; accumulated rafts trail behind.
-  rawFoam = max(rawFoam * 1.4, max(t1.b * .65, t2.b * .16));
+  rawFoam = max(rawFoam * 1.45, max(t1.b * .95, t2.b * .22));
   float bubbles = t0.g * 0.35 + t1.g * 0.7 + t2.g * 0.3;
 
   float foamMask = (rawFoam * uFoamStrength + vCrest * 0.8) * (1.0 - vCalm * 0.9);
@@ -618,7 +604,7 @@ void main(){
   vec2 wd = normalize(uWindDir + vec2(1e-5, 0.0));
   mat2 windFrame = mat2(wd.x, -wd.y, wd.y, wd.x);
   vec2 qs = windFrame * q;
-  vec2 stretch = vec2(0.22, 1.0);   // long downwind, narrow across
+  vec2 stretch = vec2(0.24, 1.0);   // wind tears old rafts into narrow streamers
   float t = uTime;
   vec2 gx = windFrame * ddx, gy = windFrame * ddy;
   vec4 fx0 = textureGrad(uFoamTex, qs * 0.031 * stretch + vec2(t * 0.004, -t * 0.003),
@@ -635,9 +621,9 @@ void main(){
   // The noise multiplies rather than merely modulates, so where the windrow
   // pattern is empty the water stays water no matter how much foam the
   // simulation deposited there.
-  float onset = mix(0.62, 0.18, clamp(uWhitecapCoverage / 0.16, 0.0, 1.0));
+  float onset = mix(0.62, 0.28, clamp(uWhitecapCoverage / 0.16, 0.0, 1.0));
   float carved = foamMask * (0.10 + foamNoise * 1.55);
-  float foam = smoothstep(onset, onset + 0.30, carved);
+  float foam = smoothstep(onset, onset + 0.24, carved);
   float surfPhase = shorePhase(vFlatPos, uSeaLevel - islandHeight(vFlatPos));
   float breaker = smoothstep(.50, .96, sin(surfPhase));
   float foamAge = mod(surfPhase - 1.5707963 + 6.2831853, 6.2831853) / 1.25;
@@ -645,11 +631,18 @@ void main(){
   float shoreBand = smoothstep(-.1, .45, coastDepth) * (1. - smoothstep(2., 5.5, coastDepth));
   vec4 surfTex = textureGrad(uFoamTex, vFlatPos * .055 + vec2(t * .003, -t * .002), ddx * .055, ddy * .055);
   float surfPatch = smoothstep(.46, .72, surfTex.a + fx1.r * .08);
-  float shoreFoam = shoreBand * max(breaker * .92, wash * .64) * surfPatch;
+  float shoreFoam = shoreBand * max(breaker * .92, wash * .64) * surfPatch * shoreBreakup(vFlatPos);
   foam = max(foam, shoreFoam);
   // Opaque bubble clusters with porous edges, instead of a uniformly grey film.
-  foam *= smoothstep(.12, .72, foamDetail + foam * .45);
-  float foamThin = smoothstep(onset * 0.55, onset + 0.30, carved);
+  // Resolve holes inside a raft as well as its outline, without painting a
+  // solid white sheet wherever the low-resolution breaking field saturates.
+  foam *= smoothstep(.40, .65, foamNoise) * smoothstep(.25, .65, foamDetail + fx0.r * .08);
+  // Fresh aerated crests are denser than the perforated rafts left behind.
+  // Keep their position tied to instantaneous breaking, not accumulated foam.
+  float fresh = smoothstep(.42, .78, max(t1.b, t0.b * .5));
+  fresh *= smoothstep(.36, .65, fx0.a * .65 + fx1.a * .35) * (.55 + fx1.r * .45);
+  foam = max(foam, fresh);
+  float foamThin = smoothstep(onset * 0.55, onset + 0.30, carved) * smoothstep(.35, .65, foamNoise);
 
   // foam perturbs the normal too
   N = normalize(N + vec3(fx2.r - fx2.b, 0.0, fx2.g - fx2.a) * foam * 0.35 * microFade);
@@ -764,7 +757,9 @@ void main(){
     float foamAO = mix(0.82, 1.0, foamFine);
     vec3 foamAlbedo = vec3(0.93, 0.96, 0.985) * foamAO;
     float wrapNoL = clamp((dot(N, L) + 0.45) / 1.45, 0.0, 1.0);
-    vec3 foamLit = foamAlbedo * (sun * wrapNoL * 0.30 + skyAmb * 0.95);
+    // The cloud probe carries only single scattering. Account for diffuse
+    // interreflection inside the dense bubble layer, with the same sky tint.
+    vec3 foamLit = foamAlbedo * (sun * wrapNoL * 0.30 + skyAmb * 6.0);
     // bubbles scatter the sun through the raft
     foamLit += foamAlbedo * sun * pow(clamp(dot(V, -L), 0.0, 1.0), 3.0) * 0.10 * foamFine;
     vec3 fspec = vec3(0.0);

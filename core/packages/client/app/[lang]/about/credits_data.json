@@ -18,21 +18,305 @@
     "en": "Perceptual quality checks for compressed Drive videos"
   },
   {
+    "name": "文汇报：外滩 15-1 号 / Wenhui: Bund 15-1",
+    "space": true,
+    "url": "https://wenhui.whb.cn/third/yidian/201911/15/303082.html",
+    "zh": "实拍对照：外滩公共服务中心的五层立面、中央通高玻璃入口及简洁竖向构件。采用 2019 年报道组合图最下方建成照片，不采用上方未建方案；OSM 平面，垂直尺寸估算，未获现状测绘。查阅于 2026-09-07",
+    "en": "Photo reference: the five-storey Bund Public Service Center, tall central glazed entrance and restrained vertical members. Uses the bottom completed-building photo in the 2019 report, not the unbuilt proposals above; OSM plan and estimated vertical dimensions, without a current survey. Accessed 2026-09-07"
+  },
+  {
+    "name": "NOAA Global Monitoring Laboratory",
+    "space": true,
+    "url": "https://gml.noaa.gov/grad/solcalc/solareqns.PDF",
+    "zh": "魔方空间太阳方向的时角与天顶角公式参考；场景采用固定春秋分的太阳时近似，查阅于 2026-09-07",
+    "en": "Hour-angle and zenith equations for Cube Space sun direction, using a fixed equinox and local solar time approximation; accessed 2026-09-07"
+  },
+  {
     "name": "Three.js",
+    "space": true,
     "url": "https://github.com/mrdoob/three.js",
-    "zh": "魔方空间的 3D 渲染、物理材质、视角控制、镜面反射和后期处理",
-    "en": "3D rendering, physical materials, camera controls, reflections and postprocessing in Cube Space",
-    "long_en": "Three.js is licensed under the MIT license. Cube Space reuses its renderer, controls, reflection and postprocessing modules."
+    "zh": "魔方空间的 3D 渲染、物理材质、视角控制、镜面反射、江水及后期处理",
+    "en": "3D rendering, physical materials, camera controls, reflections, river water and postprocessing in Cube Space",
+    "long_en": "Three.js is licensed under the MIT license. Cube Space reuses its renderer, controls, Water shader, Reflector and postprocessing modules. The water normal texture from r183 is bundled locally."
+  },
+  {
+    "name": "SOM: Jin Mao Tower",
+    "space": true,
+    "url": "https://www.som.com/projects/jin-mao-tower/",
+    "zh": "设计事务所的日景、夜景实拍用于金茂银灰立面、退台与塔冠对照；三座超高层采用本站独立几何，未导入官方模型。照片未作为运行贴图，开间、构件和照明仍有估算。查阅于 2026-09-07",
+    "en": "The architect's daytime and nighttime photographs reference Jin Mao's silver facade, setbacks and crown. The three supertalls use locally authored geometry, not official models. Photos are not runtime textures; bays, details and lighting remain estimated. Accessed 2026-09-07"
+  },
+  {
+    "name": "The Skyscraper Museum: Jin Mao",
+    "space": true,
+    "url": "https://old.skyscraper.org/EXHIBITIONS/BIG_BUILDINGS/CONTENT/jumbos/j_27.htm",
+    "zh": "博物馆引用 SOM 的 88 层分段规则：底部 16 层，先每段减 2 层，再每段减 1 层。本站据此推导分段序列，宽度、层高和塔冠仍待施工图校准。查阅于 2026-09-07",
+    "en": "The museum quotes SOM's 88-floor setback rule: start with 16 floors, then reduce sections by two floors and subsequently by one. The model derives its sequence from this rule; widths, floor heights and crown details still lack construction-drawing calibration. Accessed 2026-09-07"
+  },
+  {
+    "name": "Jinmao: 2014 prospectus",
+    "space": true,
+    "url": "https://www.hkexnews.hk/listedco/listconews/sehk/2014/0619/LTN20140619048_C.pdf",
+    "zh": "业主 2014 年招股资料提供金茂大厦 420.5 米、88 层依据；用于模型总高，不代表其他尺寸已经测绘。查阅于 2026-09-07",
+    "en": "The owner's 2014 prospectus documents Jin Mao Tower's 420.5 m height and 88 floors. It supplies the overall model height, not a survey of other dimensions. Accessed 2026-09-07"
+  },
+  {
+    "name": "Gensler: Shanghai Tower facade design",
+    "space": true,
+    "url": "https://www.gensler.com/uploads/document/242/file/Shanghai_Tower_Facade_Design_Process_11_10_2011.pdf",
+    "zh": "设计研究用于上海中心 632 米轮廓、120° 扭转、圆角三角形外皮、收窄与倾斜塔顶。图 4 的 56.86% 上部比例作为建模参考；资料属于设计阶段，不能代替竣工测绘。查阅于 2026-09-07",
+    "en": "Design research references Shanghai Tower's 632 m profile, 120-degree twist, rounded triangular skin, taper and sloping crown. Figure 4's 56.86% upper-profile scale informs the model; this design-stage document is not an as-built survey. Accessed 2026-09-07"
+  },
+  {
+    "name": "KPF: Shanghai World Financial Center",
+    "space": true,
+    "url": "https://www.kpf.com/project/shanghai-world-financial-center",
+    "zh": "设计事务所项目资料用于环球金融中心方形基部、弧形收分与顶部梯形开口；模型开口可从两面看穿，幕墙和开口尺寸仍为照片估算。查阅于 2026-09-07",
+    "en": "The architect's project references SWFC's square base, curved taper and trapezoidal top portal. The model has a real opening visible from both faces; facade and portal dimensions remain photo-derived estimates. Accessed 2026-09-07"
+  },
+  {
+    "name": "Shanghai World Financial Center: project facts",
+    "space": true,
+    "url": "https://swfc-shanghai.com/about_intro.php?l=en",
+    "zh": "项目官网提供环球金融中心 492 米高度、地上 101 层依据；本站总高按此设定。查阅于 2026-09-07",
+    "en": "The project website documents SWFC's 492 m height and 101 above-ground floors, used for the model's overall height. Accessed 2026-09-07"
+  },
+  {
+    "name": "上海绿色照明发展报告 2022",
+    "space": true,
+    "url": "https://www.shgbc.org/uploads/202311/08/231108103633829.pdf",
+    "zh": "报告第 41–42 页的金外滩与汇丰穹顶夜景，用于暖色洗墙、檐口、绿色铜顶和金色穹顶对照。本站按建筑分层近似照明，未取得现场灯位、配光或色温测量；报告照片不代表当天亮灯状态。查阅于 2026-09-07",
+    "en": "Pages 41–42 show the Golden Bund and HSBC dome, referencing warm facade washes, cornices, green copper and a golden dome. Lighting is approximated per building without measured fixtures, photometry or color temperatures; historical photos do not document today's lighting state. Accessed 2026-09-07"
+  },
+  {
+    "name": "上海市政府：外滩综合改造",
+    "space": true,
+    "url": "https://www.shanghai.gov.cn/nw9822/20200906/0001-9822_397499.html",
+    "zh": "2010-03-23 改造报道提供地面四车道依据；本站沿 OSM 道路线重建外滩路面、标线、铺装和路灯。每侧 7 米宽度、铺装与灯具为估算，未取得现状测绘。查阅于 2026-09-07",
+    "en": "Shanghai's 2010-03-23 Bund renovation report documents four surface lanes. Roads, markings, paving and lamps follow OSM alignment; 7 m carriageways, paving and fixtures are estimates without a current street survey. Accessed 2026-09-07"
+  },
+  {
+    "name": "Three.js: Shadows",
+    "space": true,
+    "url": "https://threejs.org/manual/en/shadows.html",
+    "zh": "官方阴影文档用于外滩近景的阴影覆盖与分辨率调整；汇丰和江海关的窗洞、石材及夜间洗墙为本站实现，尺寸和灯光尚未实测校准。查阅于 2026-09-07",
+    "en": "Official shadow documentation informs shadow coverage and resolution for close Bund views. Recessed windows, stone and night facade wash are local implementations, without surveyed dimensions or measured lighting. Accessed 2026-09-07"
   },
   {
     "name": "ABYSSAL / natural-disasters",
+    "space": true,
     "url": "https://github.com/Token-Gremlin/natural-disasters",
-    "zh": "魔方空间的大气散射、体积云、雨幕、分叉闪电、体积龙卷风与 FFT 海浪，MIT，已适配住宅、孤岛海岸与镜面",
-    "en": "Atmospheric scattering, volumetric clouds, rain, branching lightning, volumetric tornadoes and FFT ocean waves in Cube Space, adapted for buildings, island shores and mirrors under MIT",
-    "long_en": "Copyright (c) 2026 Davi (Token-Gremlin), MIT. Weather and ocean sources are pinned to d2bae38301ff43bc1d43bfdfd9477a552ca5420b. Adaptations include per-scene uniforms, resource disposal, a corrected 3D noise atlas, cloud sampling and spatial resolve, roof shelter, three-cascade FFT waves, projected-grid water shading, foam and ripple baking, and integration with architectural lighting and planar reflections. Island terrain and shoreline attenuation are local additions. Airborne spray, disaster event simulation and demo postprocessing are omitted. Snow, hail, dust, mudslide, rainbow and surface wetness remain local effects."
+    "zh": "魔方空间的大气散射、体积云、雨幕、分叉闪电、体积龙卷风、FFT 海浪与 GPU 飞沫，MIT，已适配住宅、孤岛海岸与镜面",
+    "en": "Atmospheric scattering, volumetric clouds, rain, branching lightning, volumetric tornadoes, FFT ocean waves and GPU spray in Cube Space, adapted for buildings, island shores and mirrors under MIT",
+    "long_en": "Copyright (c) 2026 Davi (Token-Gremlin), MIT. Weather and ocean sources are pinned to d2bae38301ff43bc1d43bfdfd9477a552ca5420b. Adaptations include per-scene uniforms, resource disposal, a corrected 3D noise atlas, cloud sampling and spatial resolve, roof shelter, three-cascade FFT waves, projected-grid water shading, foam and ripple baking, airborne GPU spray, and integration with architectural lighting and planar reflections. Island terrain and shoreline attenuation are local additions. Disaster event simulation and demo postprocessing are omitted. Snow, hail, dust, mudslide, rainbow and surface wetness remain local effects."
+  },
+  {
+    "name": "OpenStreetMap contributors",
+    "space": true,
+    "url": "https://www.openstreetmap.org/copyright",
+    "zh": "上海河道、道路、绿地与建筑平面轮廓，ODbL 1.0。建筑由 Three.js 向上拉伸：优先使用记录高度，其次按楼层数 × 3.2 米估算，缺失时默认 12 米。目前多数建筑使用默认高度；地标外形、立面和窗光由本站代码简化生成，并非实景三维扫描",
+    "en": "Shanghai water, roads, parks and building footprints, ODbL 1.0. Three.js extrudes footprints using recorded heights, then floor counts × 3.2 m, or a 12 m fallback. Most buildings currently use the fallback. Landmark shapes, facades and window lights are simplified local code-generated models, not a real-world 3D scan",
+    "long_en": "Map data copyright OpenStreetMap contributors, distributed under ODbL 1.0. Local extracts acquired 2026-09-07; bounds, source snapshots, height completeness and texture provenance are recorded in assets/space/shanghai-v1/SOURCE.json. Missing building heights use an explicit fallback; authored landmark meshes are approximate."
+  },
+  {
+    "name": "上海市土木工程学会：南浦大桥",
+    "space": true,
+    "url": "https://www.cnssce.org/50/201308/1188.html",
+    "zh": "南浦大桥主桥 846 米、主跨 423 米、桥宽 30.35 米、塔高 150 米及拉索、横梁尺寸参考。本站重建几何，引桥高程和构件细部仍有估算。查阅于 2026-09-07",
+    "en": "Shanghai Society of Civil Engineering: Nanpu's 846 m main bridge, 423 m main span, 30.35 m width, 150 m towers, stays and crossbeams. Locally reconstructed geometry; approach elevations and some details remain estimated. Accessed 2026-09-07"
+  },
+  {
+    "name": "上海市土木工程学会：卢浦大桥",
+    "space": true,
+    "url": "https://www.cnssce.org/50/201308/1191.html",
+    "zh": "卢浦大桥 100＋550＋100 米跨径、40 米桥宽、100 米拱矢高和 1:5 内倾比例参考。本站重建双拱与吊杆，拱线、杆件截面及高程未按施工图校准。查阅于 2026-09-07",
+    "en": "Shanghai Society of Civil Engineering: Lupu's 100 + 550 + 100 m spans, 40 m width, 100 m arch rise and 1:5 inward inclination. Locally reconstructed arches and hangers; profiles, member sections and elevations are not calibrated to construction drawings. Accessed 2026-09-07"
+  },
+  {
+    "name": "上海市档案馆：外白渡桥",
+    "space": true,
+    "url": "https://www.shda.gov.cn/archives/gdxw/202601/t20260120_76430.html",
+    "zh": "外白渡桥 107 米长度、18 米宽度、11 米车行道及不等高桁架形式参考。桁架高度、节点板和铆钉仍为形态重建，未取得完整工程模型。查阅于 2026-09-07",
+    "en": "Shanghai Municipal Archives: Waibaidu's 107 m length, 18 m width, 11 m carriageway and variable-height trusses. Truss heights, gussets and rivets are approximations; no complete engineering model was obtained. Accessed 2026-09-07"
+  },
+  {
+    "name": "Tomson Group：Tomson Riviera",
+    "space": true,
+    "url": "https://en.tomson-group.com/product/20.html",
+    "zh": "汤臣一品开发商项目实拍，用于四栋塔楼的石材、阳台、玻璃和冠顶对照。塔楼、五处裙房及泳池保留 OSM 轮廓；逐栋高度、立面和景观细节仍为估算，庭院没有实测图纸。实拍未作为运行贴图。查阅于 2026-09-07",
+    "en": "Developer photographs reference the four towers' stone, balconies, glazing and crowns. Tower, five podium and pool footprints follow OSM; individual heights, facades and landscape details remain estimated, without a surveyed garden plan. Photos are not runtime textures. Accessed 2026-09-07"
+  },
+  {
+    "name": "新华社：上海海关钟楼",
+    "space": true,
+    "url": "https://www.news.cn/20251001/b3a3d636f61c47e4a23226b8f1680323/c.html",
+    "zh": "2025-10-01 现场报道与实拍，提供江海关 79.2 米总高及钟楼形态参考。模型按 OSM 六处主体/附属轮廓重建，补正面凹窗、铜色窗间板和钟楼百叶；钟径、分层高度及构件尺寸仍为估算，四面指针随场景时间同步。查阅于 2026-09-07",
+    "en": "Xinhua onsite report and photographs, 2025-10-01: Customs House's 79.2 m overall height and clock-tower form. The local model uses six OSM building parts, with recessed front windows, bronze-colored spandrels and tower louvers. Dial diameter, stage heights and details remain estimated; all four clocks follow scene time. Accessed 2026-09-07"
+  },
+  {
+    "name": "乐游上海：外滩汇丰银行大楼",
+    "space": true,
+    "url": "https://www.thepaper.cn/newsDetail_forward_16367281",
+    "zh": "上海旅游图文，经澎湃号转载于 2022-01-20；实拍用于六柱门廊、拱门铜格、凹窗与三角窗饰、八角塔楼、穹顶和石材层次对照。模型保留 OSM 内院，总高暂取 46.3 米，未获测绘证实，雕像等细部尚缺；夜景为近似照明。查阅于 2026-09-07",
+    "en": "Shanghai tourism text and photographs, republished on The Paper on 2022-01-20, reference the six-column portico, bronze arch grilles, recessed windows and pediments, octagonal drum, dome and stone facade. The OSM courtyard remains open; the model's 46.3 m height is unverified, statues remain missing and night lighting is approximate. Accessed 2026-09-07"
+  },
+  {
+    "name": "上海市政府：和平饭店建筑沿革",
+    "space": true,
+    "url": "https://www.shanghai.gov.cn/nw5827/20200905/0001-5827_632318.html",
+    "zh": "和平饭店 77 米总高、19 米铜皮金字塔屋顶及花岗岩外墙参考；模型保留 OSM 三处内院，窗格、退台和楼层分配仍有估算。查阅于 2026-09-07",
+    "en": "Shanghai municipal architectural history: Peace Hotel's 77 m overall height, 19 m copper pyramid roof and granite facade. The model preserves three OSM courtyards; windows, setbacks and floor distribution remain approximate. Accessed 2026-09-07"
+  },
+  {
+    "name": "上海市民政局：外滩建筑群",
+    "space": true,
+    "url": "https://mzj.sh.gov.cn/lnb-wsws/20200518/MZ_LNB12_9104.html",
+    "zh": "外滩建筑名称、门牌、年代与建筑风格的研究清单，用于后续逐栋核对；不代表文中建筑已全部精细复刻。查阅于 2026-09-07",
+    "en": "Shanghai Civil Affairs Bureau: a research inventory of Bund building names, addresses, dates and styles for individual reconstruction. Inclusion here does not mean every listed building has been rebuilt in detail. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 1 亚细亚大楼 / Asia Building",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/1-Zhongshan-Rd.html",
+    "zh": "实拍对照：七层分区、上部柱列、双端山花。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: seven-storey elevation, upper columns and end pediments. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 2 上海总会 / Shanghai Club",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/2-Zhongshan-Rd.html",
+    "zh": "实拍对照：六根巨柱、基座拱窗、顶部双亭。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: six-column order, base arches and twin roof pavilions. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 3 有利大楼 / Union Building",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/3-Zhongshan-Rd.html",
+    "zh": "实拍对照：东南角灯笼塔、拱窗、壁柱。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: southeast lantern tower, arched windows and pilasters. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 5 日清大楼 / Nissin Building",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/5-Zhongshan-Rd.html",
+    "zh": "实拍对照：六层分区、四壁柱、双山花半圆窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: six-storey elevation, four pilasters and twin gables. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 6 中国通商银行大楼 / China Commercial Bank",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/6-Zhongshan-Rd.html",
+    "zh": "实拍对照：尖拱窗、五座尖山墙、扶壁尖顶、坡屋面。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: pointed arches, five gables, pinnacles and pitched roof. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 7 大北电报公司大楼 / Great Northern Telegraph",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/7-Zhongshan-Rd.html",
+    "zh": "实拍对照：双侧穹顶、中央坡顶老虎窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: twin domes and central roof dormers. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 9 轮船招商局大楼 / China Merchants Building",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/9-Zhongshan-Rd.html",
+    "zh": "实拍对照：三层红砖、细柱廊道、栏杆与坡顶。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: three-storey red brick, slender veranda columns and hipped roof. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 14 交通银行大楼 / Bank of Communications",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/14-Zhongshan-Rd.html",
+    "zh": "实拍对照：竖向翼墙、中央退台、深色入口。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: vertical fins, stepped central crown and dark entrance. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 15 华俄道胜银行大楼 / Russo-Chinese Bank",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/15-Zhongshan-Rd.html",
+    "zh": "实拍对照：跨两层六柱廊、基座拱窗、檐口。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: two-storey six-column portico, base arches and cornices. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 16 台湾银行大楼 / Bank of Taiwan",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/16-Zhongshan-Rd.html",
+    "zh": "实拍对照：四柱门廊、基座、上层窗区。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: four-column portico, base and upper window level. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 17 字林西报大楼 / North China Daily News AIA",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/17-Zhongshan-Rd.html",
+    "zh": "实拍对照：深色基座及顶部、浅色主体、双亭和上层拱窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: dark base and upper floors, pale shaft, twin pavilions and upper arches. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 18 麦加利银行大楼 / Chartered Bank",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/18-Zhongshan-Rd.html",
+    "zh": "实拍对照：中央双柱深凹廊、外侧壁柱、退台山花。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: recessed central two-column portico, outer pilasters and setback pediment. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 19 汇中饭店（和平南楼） / Palace Hotel Peace South",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/19-Zhongshan-Rd.html",
+    "zh": "实拍对照：红砖浅石分区、圆角窗、铜顶八角亭、南京路长翼。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: red brick and pale stone, corner windows, copper-capped drums and Nanjing Road wing. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 23 中国银行大楼 / Bank of China",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/23-Zhongshan-Rd.html",
+    "zh": "实拍对照：两侧石花格、三列竖向窗、退台翘檐及西侧附楼。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: stone lattice screens, three central window bands, stepped Chinese eaves and west wing. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 24 横滨正金银行大楼 / Yokohama Specie Bank",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/24-Zhongshan-Rd.html",
+    "zh": "实拍对照：四根巨柱、上部小柱廊、檐口。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: four-column giant order, upper colonnade and cornices. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 26 扬子水火保险公司大楼 / Yangtze Insurance Building",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/26-Zhongshan-Rd.html",
+    "zh": "实拍对照：窄立面、上部双柱、双侧深色老虎窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: narrow facade, upper paired columns and dark end dormers. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 27 怡和洋行大楼 / Jardine Matheson Building",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/27-Zhongshan-Rd.html",
+    "zh": "实拍对照：六根巨柱、上部两层、中央山花。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: six-column order, two upper storeys and central pediment. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 28 格林邮船大楼 / Glen Line Building",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/2-Beijing-Rd.html",
+    "zh": "实拍对照：巨壁柱、中央逐级屋顶塔及半圆窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: giant pilasters, stepped central roof pavilion and semicircular window. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 29 东方汇理银行大楼 / Banque de Indochine",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/29-Zhongshan-Rd.html",
+    "zh": "实拍对照：三层古典立面、壁柱与中央山花。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: three-storey classical facade, pilasters and central pediment. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+  },
+  {
+    "name": "Asisbiz: 外滩 33 英国领事馆 / Former British Consulate",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/32-Zhongshan-Rd/images/Wiki-The-Consulate-General-of-the-United-Kingdom-building-in-Shanghai-01.jpg",
+    "zh": "实拍对照：南侧两层主楼、坡顶烟囱、北侧官邸。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
+    "en": "Photo reference: southern two-storey main house, hipped roof, chimneys and northern residence. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
   },
   {
     "name": "Car Concept: Eric Chadwick / DGG",
+    "space": true,
     "url": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept",
     "zh": "魔方空间车库模型及贴图，Eric Chadwick / Darmstadt Graphics Group，2024，CC BY 4.0",
     "en": "Garage model and textures by Eric Chadwick / Darmstadt Graphics Group, 2024, CC BY 4.0",
@@ -40,6 +324,7 @@
   },
   {
     "name": "Poly Haven",
+    "space": true,
     "url": "https://polyhaven.com/license",
     "zh": "魔方空间使用本地托管的 CC0 环境光、材质、家具与植物模型",
     "en": "Self-hosted CC0 lighting, materials, furniture and plant models for Cube Space",
@@ -180,6 +465,7 @@
   },
   {
     "name": "huazhechen/cuber",
+    "space": true,
     "url": "https://github.com/huazhechen/cuber",
     "zh": "/sim 与 /space 共用的 three.js 魔方引擎(原 Vue + Vuetify,已 port 为 React)",
     "en": "Shared three.js cube engine for /sim and /space (originally Vue + Vuetify, ported to React)",

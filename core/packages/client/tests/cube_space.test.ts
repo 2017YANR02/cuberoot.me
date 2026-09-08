@@ -10,14 +10,63 @@ import { pickTurn, turnPuzzle, turnButtons, type SpacePuzzle } from '@/app/[lang
 import { mirrorFaces } from '@/components/puzzle-models/mirror/mirrorGeometry';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { COLORS } from '@cuberoot/puzzle-render-core/engine/define';
-import { surfaceHit, visibleBounds } from '@/app/[lang]/space/space-scene';
-import { weatherRoof } from '@/app/[lang]/space/space-weather';
+import { droneMovement, SpaceScene, surfaceHit, visibleBounds } from '@/app/[lang]/space/space-scene';
+import { sceneDaylight, weatherRoof } from '@/app/[lang]/space/space-weather';
 import { createUniforms } from '@/app/[lang]/space/abyssal/core/SharedUniforms.js';
+import { OceanMesh } from '@/app/[lang]/space/abyssal/ocean/OceanMesh.js';
 import { Lightning } from '@/app/[lang]/space/abyssal/weather/Lightning.js';
 import { Weather as AbyssalWeather } from '@/app/[lang]/space/abyssal/weather/Weather.js';
 import { ISLAND, islandHeight } from '@/app/[lang]/space/space-island';
-import { WEATHER, VILLA_ROOMS, type Weather } from '@/app/[lang]/space/space-state';
+import { RIVER_COLORS, WEATHER, VILLA_ROOMS, layoutTime, validSceneTime, type Weather } from '@/app/[lang]/space/space-state';
 import { commitLayout, ENVIRONMENTS, type Environment, INITIAL_LAYOUT, MAX_OBJECTS, movePosition, parseLayout, ROOMS, travelHistory, validSpaceMove, walkFloor, walkStep, type Vec3, type History, type PuzzleKind, type RoomStyle } from '@/app/[lang]/space/space-state';
+
+describe('space drone controls', () => {
+  it('moves horizontally in camera heading, with independent rise and fall', () => {
+    const facing = new THREE.Vector3(0, -.8, -.6);
+    const delta = (...keys: string[]) => droneMovement(facing, new Set(keys), 10, .05).toArray().map(n => n + 0);
+    expect(delta('forward')).toEqual([0, 0, -.5]);
+    expect(delta('back')).toEqual([0, 0, .5]);
+    expect(delta('left')).toEqual([-.5, 0, 0]);
+    expect(delta('right')).toEqual([.5, 0, 0]);
+    expect(delta('up')).toEqual([0, .5, 0]);
+    expect(delta('down')).toEqual([0, -.5, 0]);
+    expect(droneMovement(new THREE.Vector3(1, 0, 0), new Set(['forward']), 10, .05).toArray()).toEqual([.5, 0, 0]);
+    expect(droneMovement(facing, new Set(['forward', 'left', 'up']), 10, .05).length()).toBeCloseTo(.5, 12);
+    expect(delta('forward', 'back', 'up', 'down')).toEqual([0, 0, 0]);
+  });
+
+  it('rejects non-finite input and caps speed and elapsed time after long frames', () => {
+    const facing = new THREE.Vector3(0, 0, -1), keys = new Set(['forward']);
+    for (const [speed, dt] of [[NaN, .05], [10, Infinity], [-1, .05], [10, -1], [10, 0]]) expect(droneMovement(facing, keys, speed, dt).length()).toBe(0);
+    expect(droneMovement(new THREE.Vector3(NaN, 0, 0), keys, 10, .05).length()).toBe(0);
+    expect(droneMovement(facing, keys, 1000, 30).length()).toBe(50);
+    expect(droneMovement(facing, keys, 10000, 30).length()).toBe(100);
+    expect(droneMovement(facing, keys, 37.5, .05).length()).toBe(1.875);
+    expect(droneMovement(facing, new Set(), 10, .05).length()).toBe(0);
+  });
+
+  it('clamps explicit altitude without changing framing and tracks independent input sources', () => {
+    const scene = Object.create(SpaceScene.prototype) as SpaceScene;
+    const camera = new THREE.PerspectiveCamera(); camera.position.set(100, 70, 200);
+    const target = new THREE.Vector3(20, 30, 50), offset = target.clone().sub(camera.position);
+    const keys = new Map<string, string>();
+    Object.assign(scene, { camera, orbit: { target }, navigation: 'drone', walkKeys: keys, render: () => {}, callbacks: { altitude: () => {} } });
+    scene.setDroneHeight(350); expect(camera.position.y).toBe(350);
+    expect(target.clone().sub(camera.position).toArray()).toEqual(offset.toArray());
+    scene.setDroneHeight(Infinity); expect(camera.position.y).toBe(350);
+    scene.setDroneHeight(-100); expect(camera.position.y).toBe(1);
+    scene.setDroneHeight(10000); expect(camera.position.y).toBe(6000);
+    Object.assign(scene, { room: { environment: 'island' } });
+    scene.setDroneHeight(-100); expect(camera.position.y).toBe(-5);
+    scene.navigationInput('forward', true, 'KeyW'); scene.navigationInput('forward', true, 'ArrowUp');
+    scene.navigationInput('forward', false, 'KeyW'); expect([...keys]).toEqual([['ArrowUp', 'forward']]);
+    scene.navigationInput('up', true, 'pointer:2'); expect([...keys.values()]).toEqual(['forward', 'up']);
+    scene.navigationInput('forward', false, 'ArrowUp'); scene.navigationInput('up', false, 'pointer:2'); expect(keys.size).toBe(0);
+    scene.navigation = 'walk'; scene.navigationInput('up', true); expect(keys.size).toBe(0);
+    scene.navigation = 'orbit'; scene.setDroneHeight(100); scene.navigationInput('forward', true);
+    expect(camera.position.y).toBe(-5); expect(keys.size).toBe(0);
+  });
+});
 
 describe('space walking and tabletop placement', () => {
   it('blocks walls, slides along them and prevents tunneling or invalid movement', () => {
@@ -56,6 +105,54 @@ describe('space walking and tabletop placement', () => {
 });
 
 describe('cube space saved layouts', () => {
+  it('round-trips every river color and rejects invalid imported selections', () => {
+    for (const riverColor of Object.keys(RIVER_COLORS)) {
+      const layout = { ...INITIAL_LAYOUT, environment: 'shanghai', weather: 'rainbow', riverColor };
+      expect(parseLayout(JSON.stringify(layout))).toEqual(layout);
+    }
+    expect(parseLayout(JSON.stringify(INITIAL_LAYOUT)).riverColor).toBeUndefined();
+    for (const riverColor of ['', 'toString', 'unknown', null, 3, {}]) {
+      expect(() => parseLayout(JSON.stringify({ ...INITIAL_LAYOUT, riverColor }))).toThrow('riverColor');
+    }
+  });
+  it('round-trips all 1440 minutes with undo and preserves legacy layouts and cube states', () => {
+    const original = { ...INITIAL_LAYOUT, room: 'modern' as const, weather: 'typhoon' as const };
+    expect(layoutTime(original)).toBe('09:00');
+    expect(layoutTime({ ...original, room: 'cyberpunk' })).toBe('21:00');
+    expect(parseLayout(JSON.stringify(original)).timeOfDay).toBeUndefined();
+    for (let minute = 0; minute < 1440; minute++) {
+      const timeOfDay = `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
+      expect(validSceneTime(timeOfDay)).toBe(true);
+      const next = { ...original, timeOfDay };
+      expect(parseLayout(JSON.stringify(next))).toEqual(next);
+      expect(layoutTime({ ...next, room: 'cyberpunk' })).toBe(timeOfDay);
+      const history = commitLayout({ past: [], current: original, future: [] }, next);
+      const undo = travelHistory(history, 'undo');
+      expect(undo.current).toEqual(original);
+      expect(travelHistory(undo, 'redo').current).toEqual(next);
+    }
+    for (const timeOfDay of ['', '9:00', '00:0', '24:00', '12:60', '12:00:01', ' 09:00', '09:00\n', null, 0, {}, [], ['09:00']]) {
+      expect(validSceneTime(timeOfDay)).toBe(false);
+      expect(() => parseLayout(JSON.stringify({ ...original, timeOfDay }))).toThrow('timeOfDay');
+    }
+  });
+
+  it('keeps sun direction finite and continuous through sunrise, sunset and midnight', () => {
+    const frames = Array.from({ length: 1440 }, (_, minute) => sceneDaylight(`${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`));
+    for (let minute = 0; minute < frames.length; minute++) {
+      const frame = frames[minute], next = frames[(minute + 1) % frames.length];
+      expect(frame.direction.length()).toBeCloseTo(1, 12);
+      expect(frame.direction.distanceTo(next.direction)).toBeCloseTo(2 * Math.sin(Math.PI / 1440), 12);
+      expect(frame.day >= 0 && frame.day <= 1 && frame.sun >= 0 && frame.sun <= 1).toBe(true);
+    }
+    expect(frames[0].day).toBe(0); expect(frames[0].sun).toBe(0);
+    expect(frames[720].day).toBe(1); expect(frames[720].sun).toBe(1);
+    expect(frames[720].elevation * 180 / Math.PI).toBeCloseTo(58.7466, 8);
+    expect(frames[360].direction.x).toBe(1); expect(frames[1080].direction.x).toBe(-1);
+    expect(frames[360].day).toBeCloseTo(.5); expect(frames[1080].day).toBeCloseTo(.5);
+    expect(() => sceneDaylight('24:00')).toThrow('timeOfDay');
+  });
+
   it('preserves cubes and environment across every style/weather combination, including undo and legacy imports', () => {
     expect(parseLayout(JSON.stringify(INITIAL_LAYOUT)).environment).toBeUndefined();
     let history: History = { past: [], current: INITIAL_LAYOUT, future: [] };
@@ -112,7 +209,7 @@ describe('cube space saved layouts', () => {
     expect(app.ocean.params.swellHs).toBe(3.6);
     expect(app.ocean.params.choppiness).toBe(1.164);
     expect(uniforms.uWhitecapCoverage.value).toBe(.16);
-    expect(app.ocean.params.foamDecay).toBe(.5);
+    expect(app.ocean.params.foamDecay).toBe(.28);
     expect(app.ocean.params.bubbleDecay).toBe(.11);
     const before = { ...app.ocean.params };
     weather.update(0);
@@ -136,6 +233,23 @@ describe('cube space saved layouts', () => {
     expect(uniforms.uLightning0.value.toArray()).toEqual([0, 0, 0, 0]);
     expect(uniforms.uAmbientFlash.value).toBe(0);
     lightning.dispose();
+  });
+
+  it('keeps the projected sea front-facing so shaded ripples cannot be classified as submerged', () => {
+    const bindings = { bind: () => {} };
+    const sea = new OceanMesh(bindings, bindings, { oceanGridX: 16, oceanGridY: 12 }, null, createUniforms());
+    for (const [nx, ny] of [[16, 12], [32, 24]]) {
+      sea.setResolution(nx, ny);
+      const grid = sea.mesh.geometry.getAttribute('aGrid'), index = sea.mesh.geometry.getIndex()!;
+      expect(index.count).toBe(nx * ny * 6);
+      for (let i = 0; i < index.count; i += 3) {
+        const a = index.getX(i), b = index.getX(i + 1), c = index.getX(i + 2);
+        const area = (grid.getX(b) - grid.getX(a)) * (grid.getY(c) - grid.getY(a))
+          - (grid.getY(b) - grid.getY(a)) * (grid.getX(c) - grid.getX(a));
+        expect(area).toBeCloseTo(1 / (nx * ny), 7);
+      }
+    }
+    sea.dispose();
   });
 
   it('persists every weather and animation choice through save, undo and redo without changing cubes', () => {
