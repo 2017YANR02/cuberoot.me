@@ -8,6 +8,15 @@ import type { AlgCase } from '@cuberoot/shared';
 import { ALG_CATALOG } from '@cuberoot/shared/alg';
 
 describe('primaryCaseName compact card labels', () => {
+  it('normalizes Sune names across every catalog set', () => {
+    for (const [puzzle, sets] of Object.entries(ALG_CATALOG)) {
+      for (const { slug } of sets) {
+        for (const [source, expected] of [['Sune', 'S+'], ['Anti Sune', 'S-'], ['ANTI-SUNE', 'S-'], ['Antisune', 'S-'], ['anti_sune', 'S-'], ['S+', 'S+'], ['S-', 'S-'], ['', '']]) {
+          expect(displayAlgCaseName(puzzle, slug, source)).toBe(expected);
+        }
+      }
+    }
+  });
   it.each([
     ['2x2', 'eg1', 'EG1 S 1', 'S+1'],
     ['2x2', 'eg2', 'EG2 Pi 6', 'Pi6'],

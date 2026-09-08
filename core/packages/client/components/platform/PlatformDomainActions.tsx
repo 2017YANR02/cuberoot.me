@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { Star } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { DateInput } from '@/components/DateInput';
@@ -30,7 +31,7 @@ import { isPlatformPaymentAttemptResult } from '@/lib/platform-types';
 import { PlatformState } from './PlatformState';
 import { PlatformQrMetadataEditor } from './PlatformQrMetadataEditor';
 
-type FieldKind = 'text' | 'textarea' | 'number' | 'date' | 'datetime-local' | 'tel' | 'url' | 'select' | 'boolean' | 'lines' | 'json';
+type FieldKind = 'text' | 'textarea' | 'number' | 'rating' | 'date' | 'datetime-local' | 'tel' | 'url' | 'select' | 'boolean' | 'lines' | 'json';
 
 interface FieldSpec<Key extends string = string> {
   key: Key;
@@ -300,7 +301,7 @@ function initialValue(spec: FieldSpec, entity?: PlatformEntity): string | boolea
 function payloadValue(spec: FieldSpec, value: string | boolean): unknown {
   if (spec.kind === 'boolean') return Boolean(value);
   const string = String(value).trim();
-  if (spec.kind === 'number') return string === '' ? null : Number(string);
+  if (spec.kind === 'number' || spec.kind === 'rating') return string === '' ? null : Number(string);
   if (spec.kind === 'lines') return string ? string.split(/\r?\n/).map((item) => item.trim()).filter(Boolean) : [];
   if (spec.kind === 'json') return string ? JSON.parse(string) : null;
   return string || null;
@@ -382,6 +383,10 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onR
     let payload: Record<string, unknown>;
     try {
       payload = { ...spec.payloadBase, ...Object.fromEntries(spec.fields.map((item) => [item.key, payloadValue(item, values[item.key] ?? '')])) };
+      if (spec.fields.some((item) => item.kind === 'rating' && (!Number.isInteger(payload[item.key]) || Number(payload[item.key]) < 1 || Number(payload[item.key]) > 5))) {
+        setValidation(t('请先选择星级评分。', 'Choose a star rating first.'));
+        return;
+      }
       if (spec.resourceIdField) delete payload[spec.resourceIdField];
       const problem = validatePayload(definition.id, payload, t);
       if (problem) { setValidation(problem); return; }
@@ -411,6 +416,23 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onR
             );
           }
           const label = t(item.label.zh, item.label.en);
+          if (item.kind === 'rating') {
+            return (
+              <fieldset key={item.key} className="platform-star-rating platform-form-wide" disabled={busy === actionKey}>
+                <legend>{label}</legend>
+                <div className="platform-rating-stars">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <label key={star} className="platform-rating-star" data-filled={star <= Number(value)}>
+                      <input type="radio" name={item.key} value={star} checked={Number(value) === star} required={item.required}
+                        aria-label={t(`${star} 星`, `${star} ${star === 1 ? 'star' : 'stars'}`)}
+                        onChange={() => setValues((current) => ({ ...current, [item.key]: String(star) }))} />
+                      <Star size={32} strokeWidth={1.5} aria-hidden="true" />
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            );
+          }
           return (
             <label key={item.key} className={item.kind === 'textarea' || item.kind === 'lines' || item.kind === 'json' ? 'platform-form-wide' : undefined}>
               <span>{label}</span>
@@ -419,7 +441,7 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onR
                   {item.options?.map((choice) => <option key={choice.value} value={choice.value}>{t(choice.label.zh, choice.label.en)}</option>)}
                 </select>
               ) : item.kind === 'textarea' || item.kind === 'lines' || item.kind === 'json' ? (
-                <textarea className="platform-field-control platform-field-textarea" value={String(value)} rows={item.rows ?? 4} required={item.required} onChange={(event) => setValues((current) => ({ ...current, [item.key]: event.target.value }))} />
+                <textarea className="platform-field-control platform-field-textarea" value={String(value)} rows={item.rows ?? 4} required={item.required} maxLength={item.maxLength} onChange={(event) => setValues((current) => ({ ...current, [item.key]: event.target.value }))} />
               ) : item.kind === 'date' ? (
                 <DateInput
                   value={String(value)}
@@ -891,6 +913,59 @@ function PlatformPayoutManager({ definition, entities = [], busy, runAction }: C
   );
 }
 
+const COURSE_REVIEW_FORM: DomainFormSpec = {
+  title: text('撰写评论', 'Write a Review'),
+  action: 'submit-review',
+  fields: [field('rating', '轻点星星评分', 'Tap to rate', { kind: 'rating', required: true }), field('title', '标题（选填）', 'Title (optional)', { maxLength: 160 }), field('body', '评价内容（选填）', 'Review (optional)', { kind: 'textarea', rows: 5, maxLength: 4000 })],
+};
+
+function ReviewStars({ rating }: { rating: number }) {
+  const t = useT();
+  const value = Math.max(0, Math.min(5, Number.isFinite(rating) ? rating : 0));
+  return <span className="platform-review-stars" role="img" aria-label={t(`${value} 分，满分 5 分`, `${value} out of 5 stars`)}>
+    {[1, 2, 3, 4, 5].map(star => <span key={star} className="platform-review-star">
+      <Star aria-hidden="true" />
+      <span style={{ width: `${Math.max(0, Math.min(1, value - star + 1)) * 100}%` }}><Star aria-hidden="true" /></span>
+    </span>)}
+  </span>;
+}
+
+function CourseReviewSummary({ entity }: { entity?: PlatformEntity }) {
+  const t = useT();
+  const raw = entity?.data?.reviewSummary;
+  const summary = raw && typeof raw === 'object' ? raw as Record<string, unknown> : null;
+  const count = Number(summary?.count);
+  const average = Number(summary?.average);
+  const loaded = summary !== null && Number.isInteger(count) && count >= 0
+    && (count === 0 || (Number.isFinite(average) && average >= 1 && average <= 5));
+  const reviews = Array.isArray(entity?.data?.reviews) ? entity.data.reviews as Record<string, unknown>[] : [];
+  return <>
+    <h2>{t('评分及评论', 'Ratings & Reviews')}</h2>
+    {loaded ? <div className="platform-review-summary">
+      <div className="platform-review-score">{count > 0 ? average.toFixed(1) : '—'}</div>
+      <div className="platform-review-total">
+        <ReviewStars rating={count > 0 ? average : 0} />
+        <p>{t(`${count.toLocaleString('zh-CN')} 个评分`, `${count.toLocaleString('en-US')} ${count === 1 ? 'rating' : 'ratings'}`)}</p>
+      </div>
+    </div> : <p className="platform-domain-note">{t('评分暂未加载。', 'Ratings are not available yet.')}</p>}
+    {loaded && count === 0 ? <p className="platform-domain-note">{t('还没有评价，分享你的学习感受吧。', 'No reviews yet. Share your learning experience.')}</p> : null}
+    {reviews.length ? <>
+      <h3>{t('最新评论', 'Latest Reviews')}</h3>
+      <div className="platform-review-list" tabIndex={0} role="region" aria-label={t('最新评论', 'Latest Reviews')}>
+        {reviews.map(review => <article className="platform-review-card" key={String(review.id)}>
+          {review.title ? <h4>{String(review.title)}</h4> : null}
+          <div className="platform-review-byline">
+            <ReviewStars rating={Number(review.rating)} />
+            <span>{typeof review.authorName === 'string' && review.authorName.trim() ? review.authorName : t('学员', 'Learner')}</span>
+            {typeof review.createdAt === 'string' && /^\d{4}-\d{2}-\d{2}/.test(review.createdAt) ? <time dateTime={review.createdAt}>{review.createdAt.slice(0, 10)}</time> : null}
+          </div>
+          {review.body ? <p>{String(review.body)}</p> : null}
+        </article>)}
+      </div>
+    </> : null}
+  </>;
+}
+
 export function PlatformLearningActions(props: CommonProps) {
   const { definition, params, entity, busy, runAction } = props;
   const t = useT();
@@ -915,11 +990,10 @@ export function PlatformLearningActions(props: CommonProps) {
             fields: [field('quantity', '数量', 'Quantity', { kind: 'number', min: 1, max: 1, step: 1, required: true, defaultValue: 1 }), field('couponCode', '优惠券', 'Coupon code')],
           }} />
         ) : null}
-        <DomainForm definition={definition} entity={entity} resourceId={entity?.id ?? params.id} busy={busy} runAction={runAction} spec={{
-          title: text('课程评价', 'Course review'),
-          action: 'submit-review',
-          fields: [field('rating', '评分', 'Rating', { kind: 'number', min: 1, max: 5, step: 1, required: true }), field('title', '标题', 'Title', { maxLength: 160 }), field('body', '评价内容', 'Review', { kind: 'textarea', rows: 5, maxLength: 4000 })],
-        }} />
+        <section className="platform-course-reviews" aria-label={t('评分及评论', 'Ratings & Reviews')}>
+          <CourseReviewSummary entity={entity} />
+          <DomainForm definition={definition} resourceId={entity?.id ?? params.id} busy={busy} runAction={runAction} spec={COURSE_REVIEW_FORM} />
+        </section>
       </div>
     );
   }

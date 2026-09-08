@@ -61,9 +61,10 @@ html[data-theme=dark] .alg-root {
   padding: 0 24px;
   display: grid;
   /* 180 而不是 200:容器封顶 1200(内容 1152)时正好排到六列,一屏看全一个魔方的所有套。 */
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 12px;
 }
+.alg-bento .alg-card { width: 100%; }
 .alg-puzzle-method-intro {
   max-width: 1200px;
   margin: 0 auto;
