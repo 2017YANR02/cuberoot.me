@@ -1,6 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { addShanghaiSigns, shanghaiSignLetters } from '@/app/[lang]/space/space-shanghai-signs';
+import signage from '@/app/[lang]/space/space-shanghai-signs-data.json';
 import { SHANGHAI_VIEWS, ShanghaiScene, validateShanghaiData, type ShanghaiData } from '@/app/[lang]/space/space-shanghai';
 import { createShanghaiBridges, createShanghaiRoads, shanghaiRoadElevations, type ShanghaiRoad } from '@/app/[lang]/space/space-shanghai-bridges';
 import { createShanghaiArchitecture, setShanghaiClockTime, SHANGHAI_ARCHITECTURE_IDS } from '@/app/[lang]/space/space-shanghai-architecture';
@@ -24,6 +27,50 @@ const inside = (x: number, z: number, ring: number[][]) => {
 };
 
 describe('Shanghai geographic asset and river cruise', () => {
+  it('bundles every inscription glyph with finite, bounded raised lettering', () => {
+    const font = new FontLoader().parse(JSON.parse(readFileSync(new URL('../public/assets/space/shanghai-v1/sign-font.json', import.meta.url), 'utf8')));
+    expect(Object.keys(font.data.glyphs)).toHaveLength(58);
+    for (const item of signage) for (const line of [...item.lines, ...(item.blade ? [{text:item.blade.text,height:1.45,width:1.6},{text:item.blade.english,height:.28,width:1.95}] : [])]) {
+      const geometry = shanghaiSignLetters(font, line.text, line.height, line.width);
+      geometry.computeBoundingBox();
+      const size = geometry.boundingBox!.getSize(new THREE.Vector3());
+      expect(size.x).toBeLessThanOrEqual(line.width + .00001);
+      expect(size.y).toBeLessThanOrEqual(line.height + .00001);
+      expect(size.z).toBeCloseTo(.051, 5);
+      for (const name of ['position','normal','uv']) expect(Array.from(geometry.getAttribute(name).array).every(Number.isFinite)).toBe(true);
+      geometry.dispose();
+    }
+    for (const [text, height, width] of [['',1,1],[' ',1,1],['?',1,1],['A',0,1],['A',1,-1],['A',NaN,1],['A',1,Infinity]] as const) expect(()=>shanghaiSignLetters(font,text,height,width)).toThrow();
+  });
+
+  it('attaches physical signage to all 13 photographed buildings and keeps empty regions allocation-free', () => {
+    const font = new FontLoader().parse(JSON.parse(readFileSync(new URL('../public/assets/space/shanghai-v1/sign-font.json', import.meta.url), 'utf8')));
+    const material = () => new THREE.MeshStandardMaterial();
+    let allocated = 0;
+    addShanghaiSigns(new THREE.Group(), font, () => { allocated++; return material(); });
+    expect(allocated).toBe(0);
+    const root = createShanghaiArchitecture(data.polygons, material, data.roads);
+    addShanghaiSigns(root, font, material);
+    root.updateMatrixWorld(true);
+    expect(signage).toHaveLength(13);
+    for (const item of signage) {
+      const signs = root.getObjectByName(`Bund ${item.building} physical signage`)!;
+      expect(signs.userData.signTexts).toEqual([...item.lines.map(l=>l.text), ...(item.blade ? [item.blade.text,item.blade.english] : [])]);
+      expect(signs.parent?.name).not.toBe('');
+      const bounds = new THREE.Box3().setFromObject(signs);
+      expect([...bounds.min.toArray(),...bounds.max.toArray()].every(Number.isFinite)).toBe(true);
+      signs.traverse(o => { if(o instanceof THREE.Mesh) expect(o.geometry.getAttribute('position').count).toBeGreaterThan(0); });
+    }
+    const peace = root.getObjectByName('Bund 20 physical signage')!;
+    // Both faces of the projecting blade are solid and visible from the street.
+    for(const side of [-1,1]) {
+      const hits = new THREE.Raycaster(new THREE.Vector3(-1318.7 + side * 2, 12.1, 1383.2), new THREE.Vector3(-side,0,0)).intersectObject(peace,true);
+      expect(hits.length).toBeGreaterThan(0);
+      expect(hits[0].distance).toBeLessThan(2);
+    }
+    root.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();(o.material as THREE.Material).dispose();}});
+  });
+
   it('respects forward, reverse and two-way streets and excludes pedestrian routes and tunnels', () => {
     const road: ShanghaiRoad = { kind: 'residential', bridge: false, width: 8, points: [[0,0],[0,0],[0,100]] };
     const position = new THREE.Vector3(), direction = new THREE.Vector3();
@@ -382,7 +429,8 @@ describe('Shanghai geographic asset and river cruise', () => {
       expect((o.material as THREE.MeshStandardMaterial).map).toBe(null);
       materials.add(o.material as THREE.Material); o.geometry.dispose();
     });
-    expect(meshes).toBe(103); expect(triangles).toBe(663354);
+    // No. 19 brick sign parapet and its two coping strips add 36 triangles.
+    expect(meshes).toBe(103); expect(triangles).toBe(663390);
     for (const m of materials) m.dispose();
   });
 
