@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
 import { join } from 'node:path';
-import { homedir } from 'node:os';
 import { fromHar, parseLink, saveText } from './transcript.mjs';
+import { localPaths } from './runtime.mjs';
 
 try {
   const { values, positionals } = parseArgs({
@@ -48,7 +48,7 @@ try {
     }
     transcript.assertComplete();
     const name = `抖音直播文字记录_${transcript.meta.start.slice(0, 10)}_${transcript.roomId}_${Date.now()}.txt`;
-    const path = await saveText(transcript, values.output || join(homedir(), 'Desktop', name));
+    const path = await saveText(transcript, values.output || join(localPaths().desktop, name));
     console.log(JSON.stringify({ ok: true, path, roomId: transcript.roomId, count: transcript.rows.length,
       start: transcript.meta.start, end: transcript.meta.end, complete: true }));
   }

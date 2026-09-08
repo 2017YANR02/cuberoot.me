@@ -1,16 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
 import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
 import { collect } from './browser.mjs';
+import { browserExecutable, disableWebRTC } from './runtime.mjs';
 import { ORIGIN, BASE_PATH, CONTENT_PATH, parseLink } from './transcript.mjs';
 
 const require = createRequire(import.meta.url);
-const { disableWebRTC } = require(join(homedir(), '.codex', 'bin', 'pw-no-webrtc.cjs'));
-const config = JSON.parse(await readFile(join(homedir(), '.codex', 'playwright-mcp.json'), 'utf8'));
+const portableGuard = require('./pw-no-webrtc.cjs');
 const id = '7682751505497279270';
 const link = parseLink(`${ORIGIN}/anchor/review?roomId=${id}`);
 const start = '2026-09-07 19:19:50', end = '2026-09-07 20:39:02';
@@ -20,9 +17,10 @@ function contentUrl(a, b) {
 }
 
 for (const privateRoom of [false, true]) test(privateRoom ? 'private replay is skipped before transcript bodies are read' : 'real browser fetches all windows with page session headers', async () => {
-  const browser = await chromium.launch({ executablePath: config.browser.launchOptions.executablePath, headless: true });
+  const browser = await chromium.launch({ executablePath: await browserExecutable(), headless: true });
   const context = await browser.newContext();
   await disableWebRTC(context);
+  await portableGuard.disableWebRTC(context);
   try {
     const page = await context.newPage();
     let requests = 0, bodiesRead = 0;
