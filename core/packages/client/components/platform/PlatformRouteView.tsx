@@ -9,6 +9,9 @@ import { AccountPanel, LoginForm } from '@/components/AuthPanel';
 import BoolToggle from '@/components/BoolToggle';
 import SearchInput from '@/components/SearchInput';
 import SortArrow from '@/components/SortArrow';
+import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
+import { EventIcon } from '@/components/EventIcon/EventIcon';
+import { eventDisplayName } from '@/lib/wca-events';
 import { useT } from '@/hooks/useT';
 import { getSessionToken, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import {
@@ -79,8 +82,23 @@ function favoriteType(definition: PlatformRouteDefinition, item: PlatformEntity)
   return 'course';
 }
 
+const TEACHER_EVENTS = ['all', '333', '222', '444', '555', '333oh', 'pyram', 'skewb'] as const;
+
 function PlatformLanding() {
   const t = useT();
+  const [teacherEvent, setTeacherEvent] = useQueryState('teacherEvent', parseAsStringEnum([...TEACHER_EVENTS]).withDefault('all'));
+  // Presentation-only fictional people; never seed these into the real teacher directory.
+  const demoTeachers = [
+    { name: t('林知远', 'Lin Zhiyuan'), events: ['333', '222'], focus: t('从零开始，也可以很从容', 'A confident first solve'), bio: t('把复杂步骤拆成小目标，陪你理解每一次转动。', 'Small, clear goals that make every move feel natural.') },
+    { name: t('陈予安', 'Chen Yuan'), events: ['333', '333oh'], focus: t('找到自己的流畅节奏', 'Find your flow'), bio: t('从双手到单手，让观察与转动慢慢连成一体。', 'Connect recognition and movement, with one hand or two.') },
+    { name: t('诺亚 布鲁克斯', 'Noah Brooks'), events: ['444', '555', '333'], focus: t('多一层，也多一种可能', 'Go beyond three layers'), bio: t('从三阶走向高阶，用清晰的思路处理更多模块。', 'Build on your 3×3 skills with a clear approach to bigger cubes.') },
+    { name: t('许星禾', 'Xu Xinghe'), events: ['222', 'pyram', 'skewb'], focus: t('小魔方，大乐趣', 'Small puzzles, big discoveries'), bio: t('换一种形状探索，在短小练习中发现解题的乐趣。', 'Explore new shapes and discover the joy in short practice sessions.') },
+    { name: t('利奥 摩根', 'Leo Morgan'), events: ['333', '444', '333oh'], focus: t('让每一次练习更有方向', 'Practice with a purpose'), bio: t('关注停顿与衔接，把练习变成看得见的小进步。', 'Work on pauses and transitions, one achievable improvement at a time.') },
+    { name: t('米拉 沙阿', 'Mira Shah'), events: ['pyram', 'skewb', '222'], focus: t('不止一种解法', 'A different way to think'), bio: t('从直觉出发理解结构，在不同项目间找到相通之处。', 'Start with intuition and find connections between different puzzles.') },
+  ];
+  const teacherEvents = [...new Set(demoTeachers.flatMap(teacher => teacher.events))];
+  const visibleTeachers = demoTeachers.map((teacher, index) => ({ ...teacher, index }))
+    .filter(teacher => teacherEvent === 'all' || teacher.events.includes(teacherEvent));
   const user = useAuthUser();
   const isAdmin = useIsAdmin();
   const [mounted, setMounted] = useState(false);
@@ -191,8 +209,43 @@ function PlatformLanding() {
         <div className="platform-feature-copy platform-glass">
           <span className="platform-kicker">{t('跟着老师，一起练', 'Meet your instructor')}</span>
           <h2 id="platform-feature-title">{t('颜瑞民课程', 'Yan Ruimin Courses')}</h2>
-          <p>{t('认识魔方，也认识每一步的道理。先导课、试听课与正式课，循序渐进地学。', 'Understand the cube, and the reason behind every move. Explore the introduction, trial lessons, and full course at your own pace.')}</p>
+          <p>{t('认识魔方，也认识每一步的道理。引言、试听课与正式课，循序渐进地学。', 'Understand the cube, and the reason behind every move. Explore the introduction, trial lessons, and full course at your own pace.')}</p>
           <AppLink className="platform-home-secondary" href="/platform/courses/yan-ruimin-3x3-beginner" prefetch={false}><span className="platform-play-orb" aria-hidden><Play /></span>{t('了解课程', 'Explore the course')}<ArrowRight aria-hidden /></AppLink>
+        </div>
+      </section>
+
+      <section className="platform-instructors" aria-labelledby="platform-instructors-title">
+        <div className="platform-instructors-heading">
+          <span className="platform-kicker">{t('不同专长，同样热爱', 'Different specialties. Shared passion.')}</span>
+          <h2 id="platform-instructors-title">{t('找到合拍的老师。', 'Find your kind of teacher.')}</h2>
+          <p>{t('一个项目，不止一位老师。一位老师，也不止一种可能。', 'More than one teacher for every puzzle. More than one path with every teacher.')}</p>
+        </div>
+        <div className="platform-instructors-toolbar">
+          <PuzzlePicker selectedEvent={teacherEvent} isZh={t('zh', 'en') === 'zh'} showTriggerIcon={false}
+            placeholderLabel={t('按项目找老师', 'Find teachers by puzzle')}
+            groups={[{ id: 'teacher-events', label: t('教学项目', 'Teaching specialties'), items: [
+              { id: 'all', label: t('全部项目', 'All puzzles'), textLabel: t('全部', 'All') },
+              ...teacherEvents.map(id => ({ id, label: eventDisplayName(id, t('zh', 'en') === 'zh'), iconClass: `event-${id}` })),
+            ] }]}
+            onSelect={id => {
+              const selected = TEACHER_EVENTS.find(event => event === id);
+              if (selected) void setTeacherEvent(selected);
+            }} />
+          <p>{t('以下为虚拟老师展示，尚未开放课程或预约。', 'Fictional teacher previews. Courses and bookings are not available yet.')}</p>
+        </div>
+        <div className="platform-instructor-grid" aria-live="polite">
+          {visibleTeachers.map(teacher => <article key={teacher.index} className="platform-instructor-card">
+            <div className="platform-instructor-portrait" aria-hidden="true" style={{ backgroundPosition: `${(teacher.index % 3) * 50}% ${Math.floor(teacher.index / 3) * 100}%` }}>
+              <span className="platform-instructor-demo platform-glass">{t('虚拟老师', 'Demo teacher')}</span>
+            </div>
+            <div className="platform-instructor-info platform-glass">
+              <span className="platform-instructor-focus">{teacher.focus}</span>
+              <h3>{teacher.name}</h3>
+              <p>{teacher.bio}</p>
+              <div className="platform-instructor-events">{teacher.events.map(event => <span key={event}><EventIcon event={event} />{eventDisplayName(event, t('zh', 'en') === 'zh')}</span>)}</div>
+              <span className="platform-instructor-availability">{t('展示样例', 'Preview only')}</span>
+            </div>
+          </article>)}
         </div>
       </section>
 
@@ -414,6 +467,8 @@ function PlatformEntityList({
     ...(['admin-paths', 'admin-events', 'admin-news', 'admin-products', 'admin-teachers'].includes(definition.id) ? ['admin-delete' as const] : []),
   ];
   const learnerCourses = ['courses', 'account-courses'].includes(definition.id);
+  // Course API fields and publication statuses are not learner-facing content.
+  const learnerContent = learnerCourses || definition.id === 'course-lesson';
   return (
     <div className={`platform-entity-list${learnerCourses ? ' platform-course-list' : ''}`}>
       {items.map((item) => {
@@ -425,10 +480,10 @@ function PlatformEntityList({
                 {item.eyebrow ? <span>{item.eyebrow}</span> : null}
                 <h2>{href ? <AppLink href={href} prefetch={false}>{item.title}</AppLink> : item.title}</h2>
               </div>
-              {!learnerCourses && item.status ? <span className="platform-status">{item.status}</span> : null}
+              {!learnerContent && item.status ? <span className="platform-status">{item.status}</span> : null}
             </div>
             {item.summary ? <p>{item.summary}</p> : null}
-            {!learnerCourses && item.fields?.length ? (
+            {!learnerContent && item.fields?.length ? (
               <dl>
                 {item.fields.map((field) => (
                   <div key={field.label}><dt>{field.label}</dt><dd>{field.value}</dd></div>
@@ -483,6 +538,7 @@ export function PlatformRouteView({
   const isAdmin = useIsAdmin();
   const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useQueryState('q', parseAsString.withDefault(''));
+  const [selectedLessonId, setSelectedLessonId] = useQueryState('lesson', parseAsString.withOptions({ history: 'push', scroll: false }));
   const [sort, setSort] = useQueryState('sort', parseAsStringEnum(['title', 'updated'] as const).withDefault('updated'));
   const [owned, setOwned] = useQueryState('owned', parseAsStringEnum(['0', '1'] as const).withDefault('0'));
   const [stay] = useQueryState('stay', parseAsStringEnum(['0', '1'] as const).withDefault('0'));
@@ -553,29 +609,25 @@ export function PlatformRouteView({
 
   if (definition.id === 'home') return <PlatformLanding />;
   const courseDetail = definition.id === 'course-detail';
+  const courseSection = definition.id.startsWith('course-section-');
   const course = courseDetail && !error ? sortedItems[0] : undefined;
-  const ruiminCourse = course?.data?.slug === 'yan-ruimin-3x3-beginner';
 
   return (
-    <div className={`platform-route${courseDetail ? ' platform-course-detail' : ''}`}>
-      <header className={`platform-route-header${ruiminCourse ? ' platform-course-hero' : ''}`}>
+    <div className={`platform-route${courseDetail ? ' platform-course-detail' : ''}${courseSection ? ' platform-course-classroom' : ''}`}>
+      <header className="platform-route-header">
         <div className="platform-route-heading">
-          <span className="platform-route-area">{courseDetail || definition.id === 'courses' ? t('CubeRoot 课程', 'CubeRoot Courses') : definition.area}</span>
+          {courseSection && params.id ? <div>
+            <AppLink className="platform-home-secondary" href={`/platform/courses/${encodeURIComponent(params.id)}`} prefetch={false}>
+              {t('返回课程', 'Back to course')}
+            </AppLink>
+          </div> : null}
+          <span className="platform-route-area">{courseDetail || courseSection || definition.id === 'course-lesson' || definition.id === 'courses' ? t('CubeRoot 课程', 'CubeRoot Courses') : definition.area}</span>
           <h1>{course?.title ?? titleFor(t, definition)}</h1>
-          <p>{course?.summary ?? t(definition.description.zh, definition.description.en)}</p>
+          {!courseSection && !courseDetail ? <p>{t(definition.description.zh, definition.description.en)}</p> : null}
           {course ? <div className="platform-home-actions">
-            <a className="platform-button platform-button-primary" href="#platform-course-outline">{t('查看课时', 'Explore lessons')}<ArrowRight aria-hidden /></a>
             <AppLink className="platform-home-secondary" href="/platform/account/invites" prefetch={false}>{t('兑换课程', 'Redeem a code')}<ArrowRight aria-hidden /></AppLink>
           </div> : null}
         </div>
-        {ruiminCourse ? <div className="platform-course-portrait">
-          <Image src="/images/ruimin/gallery/photo-03.webp" width={3200} height={2400} sizes="(max-width: 760px) 100vw, 560px" priority alt={t('讲师颜瑞民在魔方比赛现场', 'Instructor Yan Ruimin at a cubing competition')} />
-          <a className="platform-portrait-link platform-glass" href="#platform-course-outline">
-            <span className="platform-play-orb" aria-hidden><Play /></span>
-            <span><strong>{t('从先导课开始', 'Start with the introduction')}</strong><small>{t('认识课程，认识你的老师', 'Meet the course. Meet your instructor.')}</small></span>
-            <ArrowRight aria-hidden />
-          </a>
-        </div> : null}
       </header>
 
       {definition.id === 'about' ? (
@@ -646,7 +698,7 @@ export function PlatformRouteView({
                 ? t('这个旧讲师标识没有对应的主站讲师资料。旧 Platform 的演示讲师未导入，请返回主站讲师名录查找真实资料。', 'This legacy teacher identifier has no matching main-site profile. Demo teachers from the legacy Platform were not imported; use the main-site directory to find current profiles.')
                 : undefined}
             />
-          ) : courseDetail || definition.id === 'membership' || definition.id === 'me-membership' || definition.id === 'qr' ? null : (
+          ) : courseDetail || courseSection || definition.id === 'membership' || definition.id === 'me-membership' || definition.id === 'qr' ? null : (
             <PlatformEntityList
               definition={definition}
               items={sortedItems}
@@ -662,7 +714,7 @@ export function PlatformRouteView({
             </AppLink>
           ) : null}
 
-          {!permissionDenied ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} previewRedirect={stay === '1'} /> : null}
+          {!permissionDenied ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} previewRedirect={stay === '1'} selectedLessonId={selectedLessonId} onSelectLesson={id => { void setSelectedLessonId(id); }} /> : null}
 
           {permissionDenied || definition.id === 'qr' || (['membership', 'me-membership'].includes(definition.id) && !result) ? null : (
             <PlatformDomainActions

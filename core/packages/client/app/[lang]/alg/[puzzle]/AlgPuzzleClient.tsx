@@ -389,11 +389,15 @@ export default function AlgPuzzleClient() {
           linkFor={(id) => ({ href: `/alg/${id}` })}
         />
         {/* 合练:多套混成一场练(PLL + ZBLL 一起过)。开着时卡片改成勾选。 */}
-        <BoolToggle
-          value={picking}
-          onChange={v => { setPicking(v); if (!v) setPicked([]); }}
-          label={tr({ zh: '合练', en: 'Mix' })}
-        />
+        <button
+          type="button"
+          className="alg-train-cta"
+          style={{ border: 0, background: 'none', padding: 0, marginLeft: 0, fontFamily: 'inherit', cursor: 'pointer' }}
+          aria-pressed={picking}
+          onClick={() => { setPicking(!picking); if (picking) setPicked([]); }}
+        >
+          {picking ? tr({ zh: '取消训练', en: 'Cancel training' }) : tr({ zh: '训练', en: 'Train' })}
+        </button>
         {puzzle === 'sq1' && (
           <BoolToggle
             value={sq1BlackTop}

@@ -103,14 +103,16 @@ export default function AuthTokenRefresher() {
         moveTo(rect.left + delta[0], rect.top + delta[1]);
       }}><GripVertical size={16} aria-hidden /></button>
     {admin && <>
-      <button type="button" className="admin-tool-action" onClick={() => openPageNoticeEditor('page_top')}>
-        <Plus size={13} aria-hidden />{t('添加本页通知', 'Add notice for this page')}
+      <button type="button" className="admin-tool-action" onClick={() => openPageNoticeEditor('page_top')}
+        title={t('添加本页通知', 'Add notice for this page')} aria-label={t('添加本页通知', 'Add notice for this page')}>
+        <Plus size={13} aria-hidden />
       </button>
       {pageKeyFromPathname(pathname || '/') === '/' && <button type="button" className="admin-tool-action" onClick={() => openPageNoticeEditor('home_featured')}>
         <Pencil size={13} aria-hidden />{t('首页焦点', 'Homepage feature')}
       </button>}
-      <AppLink href="/admin" className="admin-tool-action" prefetch={false}>
-        <UserCog size={13} aria-hidden />{t('管理后台', 'Administration')}
+      <AppLink href="/admin" className="admin-tool-action" prefetch={false}
+        title={t('管理后台', 'Administration')} aria-label={t('管理后台', 'Administration')}>
+        <UserCog size={13} aria-hidden />
       </AppLink>
       {liveUrlSuffix && <div className="admin-env-switch" role="group" aria-label={t('切换环境', 'Switch environment')}>
         {[

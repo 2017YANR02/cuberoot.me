@@ -735,6 +735,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 217, slug: 'role_preview', desc: { zh: '增加独立测试身份、短效可撤销角色测试会话与写入审计。', en: 'Add separate test identities, revocable short-lived role sessions and mutation audit.' } },
   { n: 218, slug: 'drive_compressions', desc: { zh: '增加保留原片与帧率的视频压缩队列，支持原分辨率和 1080P 两种输出。', en: 'Add a video compression queue preserving originals and frame timing, with original-resolution and 1080p outputs.' } },
   { n: 219, slug: 'platform_lesson_grants', desc: { zh: '课程授权流水记录限定课时，分别兑换试听课和正式课。', en: 'Scope immutable course grants to selected lessons for separate trial and full-lesson codes.' } },
+  { n: 220, slug: 'platform_review_titles', desc: { zh: '课程评价支持选填标题。', en: 'Support optional titles for course reviews.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState, type ReactNode, type SyntheticEvent } from 'react';
+import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import AppLink from '@/components/AppLink';
 import { VisualCube } from '@/components/VisualCube';
 import { useT } from '@/hooks/useT';
 import { loadPlatformLessonMedia, type PlatformLessonMedia } from '@/lib/platform-gateway';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
+import { PLATFORM_COURSE_SECTIONS } from '@/lib/platform-routes';
 import { PlatformQrLanding } from './PlatformQrLanding';
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -37,11 +38,11 @@ function readableJson(value: unknown): string | null {
   return values.length ? values.join('\n\n') : null;
 }
 
-function DomainList({ title, items, href, cover }: {
+function DomainList({ title, items, href, showStatus = true }: {
   title: string;
   items: unknown[];
   href?: (item: Record<string, unknown>) => string | null;
-  cover?: ReactNode;
+  showStatus?: boolean;
 }) {
   const t = useT();
   if (!items.length) return <p className="platform-domain-note">{t('当前没有可展示的内容。', 'There is no content to display yet.')}</p>;
@@ -52,7 +53,7 @@ function DomainList({ title, items, href, cover }: {
         const item = record(raw) ?? {};
         const id = string(item.id) ?? string(item.slug) ?? String(index + 1);
         const label = localized(item, 'title', english) ?? string(item.displayName) ?? string(item.name) ?? string(item.label) ?? string(item.code) ?? id;
-        const detail = localized(item, 'summary', english) ?? string(item.status) ?? string(item.sku);
+        const detail = localized(item, 'summary', english) ?? (showStatus ? string(item.status) ?? string(item.sku) : null);
         const target = href?.(item) ?? null;
         return (
           <div key={id}>
@@ -63,16 +64,7 @@ function DomainList({ title, items, href, cover }: {
       })}
     </div>
   );
-  return cover ? (
-    <details className="platform-lesson-folder">
-      <summary>
-        {cover}
-        <span className="platform-lesson-card-title">{title}</span>
-        <span className="platform-lesson-card-cue">{t('查看课时', 'View lessons')}</span>
-      </summary>
-      {list}
-    </details>
-  ) : <section className="platform-domain-content"><h2>{title}</h2>{list}</section>;
+  return <section className="platform-domain-content"><h2>{title}</h2>{list}</section>;
 }
 
 function LessonMedia({ lessonId }: { lessonId: string }) {
@@ -157,22 +149,30 @@ function OrderItems({ items }: { items: unknown[] }) {
   );
 }
 
-export function PlatformDomainContent({ definition, entity, params, previewRedirect }: {
+export function PlatformDomainContent({ definition, entity, params, previewRedirect, selectedLessonId, onSelectLesson }: {
   definition: PlatformRouteDefinition;
   entity?: PlatformEntity;
   params: Record<string, string>;
   previewRedirect?: boolean;
+  selectedLessonId?: string | null;
+  onSelectLesson?: (id: string) => void;
 }) {
   const t = useT();
   if (!entity?.data) return null;
   const data = entity.data;
   const english = t('zh', 'en') === 'en';
 
-  if (definition.id === 'course-detail') {
-    const lessons = Array.isArray(data.lessons) ? data.lessons : [];
+  const selectedSection = PLATFORM_COURSE_SECTIONS.find(section => definition.id === `course-section-${section.slug}`);
+  if (definition.id === 'course-detail' || selectedSection) {
+    const lessons = Array.isArray(data.lessons) ? data.lessons.map(raw => {
+      const lesson = record(raw);
+      const titleZh = string(lesson?.titleZh);
+      // Keep existing lesson data readable after the introduction label change.
+      return lesson && titleZh ? { ...lesson, titleZh: titleZh.replace(/^先导课/, PLATFORM_COURSE_SECTIONS[0].title.zh) } : raw;
+    }) : [];
     const instructors = Array.isArray(data.instructors) ? data.instructors : [];
     // Group explicitly numbered sections only; unrelated course outlines stay unchanged.
-    const sections = ['先导课', '试听课', '正式课'];
+    const sections = PLATFORM_COURSE_SECTIONS.map(section => section.title.zh);
     const grouped = sections.map(() => [] as unknown[]);
     const canGroup = lessons.length > 0 && lessons.every((lesson) => {
       const title = string(record(lesson)?.titleZh) ?? '';
@@ -185,25 +185,52 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
       const lessonId = string(item.id) ?? string(item.slug);
       return lessonId ? `/platform/courses/${encodeURIComponent(entity.id)}/learn/${encodeURIComponent(lessonId)}` : null;
     };
+    if (selectedSection) {
+      // Invalid or stale query IDs fall back to the first lesson in this section.
+      const sectionLessons = lessons.flatMap(raw => {
+        const lesson = record(raw);
+        const id = string(lesson?.id);
+        return lesson && id && (string(lesson.titleZh) ?? '').startsWith(selectedSection.title.zh)
+          ? [{ id, title: localized(lesson, 'title', english) ?? t('未命名课时', 'Untitled lesson') }] : [];
+      });
+      const active = sectionLessons.find(lesson => lesson.id === selectedLessonId) ?? sectionLessons[0];
+      if (!active) return <p className="platform-domain-note">{t('暂无课时。', 'No lessons yet.')}</p>;
+      return <div className="platform-classroom">
+        <nav className="platform-classroom-directory platform-glass" aria-label={t('课时目录', 'Lesson directory')}>
+          <h2>{t('课时目录', 'Lesson directory')}</h2>
+          <div className="platform-classroom-lessons">{sectionLessons.map(lesson => <button
+            key={lesson.id} type="button" aria-current={lesson.id === active.id ? 'true' : undefined}
+            onClick={() => onSelectLesson?.(lesson.id)}
+          >{lesson.title}</button>)}</div>
+        </nav>
+        <section className="platform-classroom-stage" aria-label={t('课程视频', 'Lesson video')}>
+          <h2 aria-live="polite">{active.title}</h2>
+          <div className="platform-classroom-player"><LessonMedia key={active.id} lessonId={active.id} /></div>
+        </section>
+      </div>;
+    }
     return (
       <div className="platform-domain-stack platform-course-outline" id="platform-course-outline">
         {canGroup ? <section className="platform-domain-content">
           <h2>{t('课程课时', 'Course lessons')}</h2>
-          <div className="platform-lesson-grid">{grouped.map((items, index) => items.length > 0 ? <DomainList
+          <div className="platform-lesson-grid">{grouped.map((items, index) => items.length > 0 ? <AppLink
             key={sections[index]}
-            title={[t('先导课', 'Introduction'), t('试听课', 'Trial lessons'), t('正式课', 'Core lessons')][index]}
-            items={items} href={lessonHref}
-            cover={<span className={`platform-lesson-cover platform-lesson-cover-${index}`} aria-hidden="true">
+            className="platform-lesson-card"
+            href={`/platform/courses/${encodeURIComponent(entity.id)}/sections/${PLATFORM_COURSE_SECTIONS[index].slug}`} prefetch={false}
+          >
+            <span className={`platform-lesson-cover platform-lesson-cover-${index}`} aria-hidden="true">
               {index === 0 && data.slug === 'yan-ruimin-3x3-beginner'
                 ? <img className="platform-lesson-cover-photo" src="/images/ruimin/gallery/photo-03.webp" alt="" loading="lazy" />
                 : <VisualCube view={index === 1 ? 'f2l' : 'iso'} size={144} local alt="" />}
               <span className="platform-lesson-cover-number">0{index + 1}</span>
-            </span>}
-          /> : null)}</div>
+            </span>
+            <span className="platform-lesson-card-title">{t(PLATFORM_COURSE_SECTIONS[index].title.zh, PLATFORM_COURSE_SECTIONS[index].title.en)}</span>
+          </AppLink> : null)}</div>
         </section> : <DomainList
           title={t('课程课时', 'Course lessons')}
           items={lessons}
           href={lessonHref}
+          showStatus={false}
         />}
         <DomainList title={t('授课讲师', 'Instructors')} items={instructors} href={(item) => {
           const teacherId = string(item.teacherEntryId);

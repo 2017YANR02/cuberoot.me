@@ -5,6 +5,11 @@ import type {
 } from './platform-types';
 
 const text = (zh: string, en: string) => ({ zh, en } as const);
+export const PLATFORM_COURSE_SECTIONS = [
+  { slug: 'introduction', title: text('引言', 'Introduction') },
+  { slug: 'trial', title: text('试听课', 'Trial lessons') },
+  { slug: 'core', title: text('正式课', 'Core lessons') },
+] as const;
 const PUBLIC = text('浏览可公开访问的内容与服务。', 'Browse content and services available to everyone.');
 const ACCOUNT = text('查看并管理与你的账号关联的数据。', 'Review and manage data connected to your account.');
 const INSTRUCTOR = text('面向讲师的课程、学员和结算工作区。', 'Workspace for instructor courses, learners, and payouts.');
@@ -62,6 +67,7 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   route({ id: 'algorithm-detail', pattern: 'algorithms/:id', area: 'learning', access: 'public', kind: 'canonical', title: text('旧公式详情', 'Legacy algorithm details'), canonicalHref: '/alg/3x3', canonicalLabel: text('在主站公式库中查找', 'Find it in the main-site library'), description: text('旧 Platform 的公式 ID 来自自动播种的演示数据，未作为稳定产品标识迁移；请在主站公式库按公式或分类查找。', 'Legacy Platform algorithm IDs came from auto-seeded demo data and were not migrated as stable product identifiers. Find the algorithm by notation or category in the main-site library.') }),
   route({ id: 'courses', pattern: 'courses', area: 'learning', access: 'public', kind: 'collection', title: text('课程', 'Courses'), resource: 'courses' }),
   route({ id: 'course-detail', pattern: 'courses/:id', area: 'learning', access: 'public', kind: 'detail', title: text('课程详情', 'Course details'), resource: 'courses', actions: ['enroll', 'favorite', 'submit-review'] }),
+  ...PLATFORM_COURSE_SECTIONS.map(section => route({ id: `course-section-${section.slug}`, pattern: `courses/:id/sections/${section.slug}`, area: 'learning', access: 'public', kind: 'detail', title: section.title, resource: 'courses', description: text('选择课时，开始学习。', 'Choose a lesson and start learning.') })),
   route({ id: 'course-lesson', pattern: 'courses/:id/learn/:lessonId', area: 'learning', access: 'public', kind: 'detail', title: text('课程学习', 'Course lesson'), resource: 'course-lesson', actions: ['update-progress', 'save-note', 'submit-quiz'] }),
   route({ id: 'teachers', pattern: 'teachers', area: 'discover', access: 'public', kind: 'collection', title: text('讲师', 'Teachers'), resource: 'teachers', canonicalHref: '/teachers', canonicalLabel: text('打开讲师名录', 'Open the teacher directory') }),
   route({ id: 'teacher-detail', pattern: 'teachers/:id', area: 'discover', access: 'public', kind: 'detail', title: text('讲师详情', 'Teacher details'), resource: 'teachers', canonicalHref: '/teachers', canonicalLabel: text('打开讲师名录', 'Open the teacher directory'), description: text('直接读取主站讲师名录；旧 Platform 自动播种的演示讲师未导入，找不到时请返回主站名录。', 'This reads the main-site teacher directory directly. Auto-seeded demo teachers from the legacy Platform were not imported; use the main-site directory when an entry is not found.') }),

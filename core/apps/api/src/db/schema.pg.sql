@@ -1795,6 +1795,7 @@ CREATE TABLE platform_course_reviews (
   course_id UUID NOT NULL REFERENCES platform_courses(id) ON DELETE RESTRICT,
   entitlement_id UUID NOT NULL,
   rating SMALLINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  title VARCHAR(160) NOT NULL DEFAULT '',
   body TEXT NOT NULL DEFAULT '' CHECK (CHAR_LENGTH(body) <= 20000),
   status VARCHAR(20) NOT NULL DEFAULT 'published' CHECK (status IN ('pending', 'published', 'hidden', 'removed')),
   moderation_note TEXT,
