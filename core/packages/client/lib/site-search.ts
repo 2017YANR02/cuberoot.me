@@ -94,6 +94,7 @@ export const TOOL_ITEMS: ToolItem[] = [
 ];
 
 export const LOOKUP_ITEMS: LookupItem[] = [
+  { path: '/wca/achievements', zh: '荣誉徽章', en: 'Achievement badges' },
   { path: '/wca/grand-slam',       zh: '大满贯',       en: 'Grand Slam'
 },
   { path: '/wca/results',          zh: '全部成绩排名', en: 'All Results'
