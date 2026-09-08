@@ -10,7 +10,7 @@ describe('primaryCaseName compact card labels', () => {
   it.each([
     ['2x2', 'eg1', 'EG1 S 1', 'S+1'],
     ['2x2', 'eg2', 'EG2 Pi 6', 'Pi6'],
-    ['2x2', 'leg1', 'LEG1 AS 2', 'AS2'],
+    ['2x2', 'leg1', 'LEG1 AS 2', 'S-2'],
     ['3x3', 'zbll', 'ZBLL U 13', 'U13'],
     ['3x3', 'coll', 'AS 1', 'S-1'],
     ['3x3', 'oll', 'OLL 27', 'S+ (27)'],
@@ -167,6 +167,16 @@ describe('displayAlgCaseName 按 set 路由', () => {
           expect(displayAlgCaseName('2x2', set, `${set.toUpperCase()} ${group} ${n}`))
             .toBe(displayAlgCaseName('2x2', 'cll', `CLL ${group} ${n}`));
         }
+      }
+    }
+  });
+
+  it('LEG1 全部 40 个名称及分组与 EG1 一致', () => {
+    for (const [source, group] of [['Sune', 'S'], ['Anti-Sune', 'AS'], ['Pi', 'Pi'], ['U', 'U'], ['L', 'L'], ['T', 'T'], ['H', 'H']]) {
+      expect(displayAlgCaseName('2x2', 'leg1', source)).toBe(displayAlgCaseName('2x2', 'eg1', group));
+      for (let n = 1; n <= (group === 'H' ? 4 : 6); n++) {
+        expect(displayAlgCaseName('2x2', 'leg1', `LEG-1 ${source} ${n}`))
+          .toBe(displayAlgCaseName('2x2', 'eg1', `EG1 ${group} ${n}`));
       }
     }
   });

@@ -332,7 +332,7 @@ function SubgroupIndex({
   querySuffix?: string;
 }) {
   // 顶层组 → { 代表 case, 组内总数, 二级子组(parts[1] → 代表 case + 计数) }
-  const inlineCases = (puzzle === '2x2' && ['cll', 'eg1', 'eg2'].includes(set)) || (puzzle === '3x3' && set === 'coll');
+  const inlineCases = puzzle === '2x2' || (puzzle === '3x3' && set === 'coll');
   const caseSlugs = useMemo(() => buildCaseSlugMap(cases, set), [set, cases]);
   const tops = useMemo(() => {
     const map = new Map<string, { sample: AlgCase; total: number; cases: AlgCase[]; subs: Map<string, { sample: AlgCase; count: number }> }>();
@@ -349,7 +349,7 @@ function SubgroupIndex({
         else e.subs.set(parts[1], { sample: c, count: 1 });
       }
     }
-    // CLL / COLL 情况卡按显示编号排列，不沿用角块换位优先级。
+    // 二阶 / COLL 情况卡按显示编号排列，不沿用角块换位优先级。
     if (inlineCases) {
       for (const e of map.values()) {
         e.cases.sort((a, b) => compareAlgGroupLabel(primaryCaseName(puzzle, set, a), primaryCaseName(puzzle, set, b)));
@@ -429,14 +429,16 @@ function SubgroupIndex({
         const dispTop = set === 'zbll' ? displayZbllToken(topLabel) : displayAlgCaseName(puzzle, set, topLabel);
         // 封面卡标题不必再带 set 名(页首 H1 已写 ZBLL)。1lll 组号是纯数字 → 换字母制 OLL 名。
         const ollName = ollByGroup.get(topLabel);
-        const title = ollName ?? (dispTop || tr({ zh: '其他', en: 'Other' }));
+        const title = ollName ?? (dispTop || (set === 'ortega-oll' ? 'OLL' : tr({ zh: '其他', en: 'Other' })));
         return (
           <div key={topLabel || '_root_'} className="alg-subgroup-grid alg-l2-grid">
             <AlgCard
               expand={isCollapsed ? 'closed' : 'open'}
               onClick={() => toggle(topLabel)}
               tooltip={isCollapsed ? tr({ zh: '展开', en: 'Expand' }) : tr({ zh: '收起', en: 'Collapse' })}
-              thumb={<VisualCube setup={e.sample.setup} algorithm={firstAlg} view="oll" puzzleSize={puzzle === '2x2' ? 2 : 3} size={thumbSize} hideGreySides />}
+              thumb={set === 'ortega-pbl'
+                ? <CaseThumb puzzle={puzzle} set={set} sticker={e.sample.sticker} alg={firstAlg} setup={e.sample.setup} size={thumbSize} />
+                : <VisualCube setup={e.sample.setup} algorithm={firstAlg} view="oll" puzzleSize={puzzle === '2x2' ? 2 : 3} size={thumbSize} hideGreySides />}
               title={title}
             />
             {!isCollapsed && (inlineCases
@@ -1103,7 +1105,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       groupLabel: (sub) => (isSq1Ep && sq1EpNumericNames ? sq1EpNumericGroupName(sub) : null)
         ?? ollByGroup.get(sub)
         ?? (set === 'zbll' ? displayZbllToken(sub.split('/').pop() ?? sub)
-          : ['cll', 'coll', 'eg1', 'eg2'].includes(set) ? displayAlgCaseName(puzzleParam, set, sub) : sub),
+          : ['cll', 'coll', 'eg1', 'eg2', 'leg1'].includes(set) ? displayAlgCaseName(puzzleParam, set, sub) : sub),
       sectionOf: isSq1Ep
         ? (c => classifySq1EpParity(c.name) === 'no-parity'
           ? tr({ zh: '无特', en: 'No parity' })
@@ -1523,7 +1525,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                     ? `${sq1EpNumericLayerName(subgroup) ?? subgroup}.*`
                     : tr({ zh: `上层 ${subgroup}`, en: `Top ${subgroup}` }))
                   : (ollByGroup.get(subgroup)
-                    ?? (['cll', 'coll', 'eg1', 'eg2'].includes(set) ? displayAlgCaseName(puzzleParam, set, subgroup) : subgroup)
+                    ?? (['cll', 'coll', 'eg1', 'eg2', 'leg1'].includes(set) ? displayAlgCaseName(puzzleParam, set, subgroup) : subgroup)
                     ?? tr({ zh: '其他', en: 'Other' }))}
                 <span className="alg-subgroup-count">{cases.length}</span>
               </h2>
