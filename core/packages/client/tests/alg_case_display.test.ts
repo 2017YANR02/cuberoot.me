@@ -8,7 +8,7 @@ import type { AlgCase } from '@cuberoot/shared';
 
 describe('primaryCaseName compact card labels', () => {
   it.each([
-    ['2x2', 'eg1', 'EG1 S 1', 'S1'],
+    ['2x2', 'eg1', 'EG1 S 1', 'S+1'],
     ['2x2', 'eg2', 'EG2 Pi 6', 'Pi6'],
     ['2x2', 'leg1', 'LEG1 AS 2', 'AS2'],
     ['3x3', 'zbll', 'ZBLL U 13', 'U13'],
@@ -138,7 +138,7 @@ describe('displayAlgCaseName 按 set 路由', () => {
 
   // COLL 的组名跟 ZBLL 同一套(Sune=S+ / Anti-Sune=S-),编号紧跟不留空格。
   it('CLL/COLL 分组兼容来源名与已规范名称', () => {
-    for (const [puzzle, set] of [['2x2', 'cll'], ['3x3', 'coll']]) {
+    for (const [puzzle, set] of [['2x2', 'cll'], ['2x2', 'eg1'], ['2x2', 'eg2'], ['3x3', 'coll']]) {
       for (const [name, expected] of [['Sune', 'S+'], ['S', 'S+'], ['Anti Sune', 'S-'], ['AS', 'S-'], ['S+', 'S+'], ['S-', 'S-'], ['Pi', 'Pi'], ['', '']]) {
         expect(displayAlgCaseName(puzzle, set, name)).toBe(expected);
       }
@@ -157,7 +157,18 @@ describe('displayAlgCaseName 按 set 路由', () => {
     }
     expect(displayAlgCaseName('2x2', 'cll', 'CLL Sune 6')).toBe('S+6');
     expect(displayAlgCaseName('2x2', 'cll', 'Unknown 1')).toBe('Unknown 1');
-    expect(displayAlgCaseName('2x2', 'eg1', 'EG1 S 1')).toBe('EG1 S 1');
+    expect(displayAlgCaseName('2x2', 'eg1', 'EG1 S 1')).toBe('S+1');
+  });
+
+  it('EG1/EG2 全部 40 个名称与 CLL 一致', () => {
+    for (const set of ['eg1', 'eg2']) {
+      for (const group of ['S', 'AS', 'Pi', 'U', 'L', 'T', 'H']) {
+        for (let n = 1; n <= (group === 'H' ? 4 : 6); n++) {
+          expect(displayAlgCaseName('2x2', set, `${set.toUpperCase()} ${group} ${n}`))
+            .toBe(displayAlgCaseName('2x2', 'cll', `CLL ${group} ${n}`));
+        }
+      }
+    }
   });
 
   it('3x3 coll:AS/S 换成 S-/S+,空格去掉', () => {

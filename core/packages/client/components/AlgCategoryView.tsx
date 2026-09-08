@@ -332,7 +332,7 @@ function SubgroupIndex({
   querySuffix?: string;
 }) {
   // 顶层组 → { 代表 case, 组内总数, 二级子组(parts[1] → 代表 case + 计数) }
-  const inlineCases = (puzzle === '2x2' && set === 'cll') || (puzzle === '3x3' && set === 'coll');
+  const inlineCases = (puzzle === '2x2' && ['cll', 'eg1', 'eg2'].includes(set)) || (puzzle === '3x3' && set === 'coll');
   const caseSlugs = useMemo(() => buildCaseSlugMap(cases, set), [set, cases]);
   const tops = useMemo(() => {
     const map = new Map<string, { sample: AlgCase; total: number; cases: AlgCase[]; subs: Map<string, { sample: AlgCase; count: number }> }>();
@@ -1103,7 +1103,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       groupLabel: (sub) => (isSq1Ep && sq1EpNumericNames ? sq1EpNumericGroupName(sub) : null)
         ?? ollByGroup.get(sub)
         ?? (set === 'zbll' ? displayZbllToken(sub.split('/').pop() ?? sub)
-          : set === 'cll' || set === 'coll' ? displayAlgCaseName(puzzleParam, set, sub) : sub),
+          : ['cll', 'coll', 'eg1', 'eg2'].includes(set) ? displayAlgCaseName(puzzleParam, set, sub) : sub),
       sectionOf: isSq1Ep
         ? (c => classifySq1EpParity(c.name) === 'no-parity'
           ? tr({ zh: '无特', en: 'No parity' })
@@ -1523,7 +1523,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                     ? `${sq1EpNumericLayerName(subgroup) ?? subgroup}.*`
                     : tr({ zh: `上层 ${subgroup}`, en: `Top ${subgroup}` }))
                   : (ollByGroup.get(subgroup)
-                    ?? (set === 'cll' || set === 'coll' ? displayAlgCaseName(puzzleParam, set, subgroup) : subgroup)
+                    ?? (['cll', 'coll', 'eg1', 'eg2'].includes(set) ? displayAlgCaseName(puzzleParam, set, subgroup) : subgroup)
                     ?? tr({ zh: '其他', en: 'Other' }))}
                 <span className="alg-subgroup-count">{cases.length}</span>
               </h2>
