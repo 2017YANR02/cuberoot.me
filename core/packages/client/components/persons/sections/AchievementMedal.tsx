@@ -37,6 +37,10 @@ export function recordAchievementTier(count?: number) {
 
 // Original enamel-pin artwork. Illustration pigments are independent of UI theme tokens.
 const ART = {
+  reunion: { light: '#d1edbe', dark: '#326658', rim: '#ffe5ad', shape: 'M84 10H116V25Q176 39 181 100Q185 163 100 190Q15 163 19 100Q24 39 84 25Z' },
+  thaw: { light: '#c4f7ff', dark: '#4057a1', rim: '#e2fbff', shape: 'M100 7 149 29 187 93 164 150 100 194 36 150 13 93 51 29Z' },
+  twelveMonths: { light: '#e9c4fa', dark: '#584381', rim: '#ffebbc', shape: 'M35 20H165Q181 20 181 36V167Q181 183 165 183H35Q19 183 19 167V36Q19 20 35 20Z' },
+  allInOne: { light: '#a6e8e6', dark: '#343d84', rim: '#fff0b6', shape: 'M100 6 123 25 151 20 163 47 188 61 181 91 195 117 175 140 171 170 140 175 118 195 91 181 62 188 47 162 20 151 25 123 6 100 25 77 20 49 47 37 61 12 91 19Z' },
   personalMember: { light: '#c9ecff', dark: '#485ea5', rim: '#e6f8ff', shape: 'M63 10H137L184 57V132L137 183H63L16 132V57Z' },
   enterpriseMember: { light: '#53607d', dark: '#1d2948', rim: '#ffe2a2', shape: 'M100 8 177 34V107Q171 155 100 191Q29 155 23 107V34Z' },
   perfectBlind: { light: '#b5d1ff', dark: '#3c377d', rim: '#d9f9ff', shape: 'M100 7 130 31 169 29 172 70 192 100 172 130 169 171 130 169 100 193 70 169 31 171 28 130 8 100 28 70 31 29 70 31Z' },
@@ -110,6 +114,54 @@ export function AchievementMedal({ kind, event, recordCount, achievement }: { ki
           <path d="M5 48Q70 3 143 31T202 16V0H0Z" fill="#fff" opacity=".16" />
           <path d="M-10 167Q76 111 210 151V205H-10Z" fill={art.dark} opacity=".55" />
           <path d={art.shape} fill={paint('shine')} />
+          {kind === 'reunion' && <>
+            <path d="M90 28V17Q100 7 110 17V28" stroke={paint('gold')} strokeWidth="7" />
+            <path d="M83 32H117" stroke={paint('gold')} strokeWidth="8" strokeLinecap="round" />
+            <circle cx="100" cy="103" r="63" fill={paint('gold')} stroke="#fff0c5" strokeWidth="2" />
+            <circle cx="100" cy="103" r="55" fill="#203f4f" stroke="#cebc80" strokeWidth="2" />
+            <circle cx="100" cy="103" r="48" fill={paint('pearl')} stroke="#fff2cc" strokeWidth="2" />
+            {Array.from({ length: 12 }, (_, i) => <path key={i} d="M100 60V66" transform={`rotate(${i * 30} 100 103)`} stroke="#a98851" strokeWidth={i % 3 === 0 ? 3 : 1.5} strokeLinecap="round" />)}
+            <path d="M100 103 81 85M100 103 125 97" stroke="#486177" strokeWidth="4" strokeLinecap="round" />
+            <circle cx="100" cy="103" r="5" fill={paint('gold')} />
+            <path d="M100 153Q110 130 130 111Q139 102 143 80" stroke="#276e58" strokeWidth="4" strokeLinecap="round" />
+            <path d="M133 108Q110 107 112 84Q137 85 133 108ZM141 91Q141 65 164 67Q163 89 141 91ZM115 135Q123 113 146 122Q138 143 115 135Z" fill={paint('jade')} stroke="#ddffd3" strokeWidth="2" />
+            <path d="m118 91 15 17m24-35-16 18m-4 35-22 9" stroke="#3f9670" strokeWidth="1.5" />
+            <path d="M48 143Q65 173 103 171" stroke="#ffe7b0" strokeWidth="2" strokeLinecap="round" />
+          </>}
+          {kind === 'thaw' && <>
+            <path d="m99 25 43 24 24 50-17 45-49 32-49-32-17-45 24-50Z" fill={paint('ocean')} stroke="#e8fcff" strokeWidth="3" />
+            <path d="m99 25-6 46-35-22 7 45-31 5 29 27-12 18 43 4 6 28 22-37 27 5-10-31 27-14-34-14 10-36-32 26Z" fill="#ccfaff" opacity=".48" />
+            <path d="m99 25-6 46-17 12 13 15-23 27 28 23 6 28M142 49l-32 26 15 19-10 25 24-6 10 31" stroke="#efffff" strokeWidth="3" strokeLinejoin="round" />
+            <path d="m76 81 24-17 25 17 8 24-33 40-33-40Z" fill={paint('ruby')} stroke="#ffe9d6" strokeWidth="3" />
+            <path d="m76 81 24 10 25-10M67 105h66M100 64V91L83 105l17 40 17-40-17-14" stroke="#fff0e2" strokeWidth="1.5" />
+            <path d="m100 64-24 17 24 10Z" fill="#ffe9bf" opacity=".8" />
+            <path d="m37 70-10-15 4 24Zm125 51 13-8-5 23ZM66 163l-12 4 13 11Z" fill={paint('pearl')} stroke="#e3ffff" strokeWidth="1.5" />
+            <path d="M55 112 44 119M146 66l9-6M132 158l6 10" stroke="#e3fbff" strokeWidth="2" strokeLinecap="round" />
+          </>}
+          {kind === 'twelveMonths' && <>
+            <path d="M37 44H163V162H37Z" fill="#302e60" stroke={paint('gold')} strokeWidth="4" strokeLinejoin="round" />
+            <path d="M37 44H163V66H37Z" fill={paint('ruby')} stroke="#ffe4cd" strokeWidth="2" />
+            {[61, 139].map(x => <g key={x}><path d={`M${x} 32V51`} stroke="#765277" strokeWidth="9" strokeLinecap="round" /><path d={`M${x - 1} 30V48`} stroke={paint('gold')} strokeWidth="6" strokeLinecap="round" /></g>)}
+            {['ruby', 'gold', 'jade', 'ocean', 'gold', 'jade', 'ocean', 'ruby', 'jade', 'ocean', 'ruby', 'gold'].map((color, i) => <g key={i} transform={`translate(${46 + i % 4 * 28} ${76 + Math.floor(i / 4) * 27})`}>
+              <path d="M0 0H24V23H0Z" fill={paint(color)} stroke="#fff0c9" strokeWidth="1.3" />
+              <path d="M0 0 12 11 24 0M0 23 12 11 24 23" stroke="#fff6e5" strokeWidth=".8" opacity=".6" />
+              <path d="M0 0H24L12 11Z" fill="#fff5da" opacity=".25" />
+            </g>)}
+            <path d="M85 151 95 161 117 139" stroke="#443a68" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M85 148 95 158 117 136" stroke={paint('gold')} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+          </>}
+          {kind === 'allInOne' && <>
+            <circle cx="100" cy="101" r="66" stroke={paint('gold')} strokeWidth="2" />
+            <circle cx="100" cy="101" r="52" stroke="#b8e4eb" strokeWidth="1" strokeDasharray="2 6" />
+            {Array.from({ length: 17 }, (_, i) => <g key={i} transform={`rotate(${i * 360 / 17} 100 101)`}>
+              <path d="m100 24 7 10-1 9-6 6-6-6-1-9Z" fill={paint(['ruby', 'gold', 'jade', 'ocean'][i % 4])} stroke="#fff0ce" strokeWidth="1.5" />
+              <path d="M100 24V49M93 34H107L100 42Z" stroke="#fff5df" strokeWidth=".7" opacity=".8" />
+            </g>)}
+            <path d="m100 52 13 28 30 5-22 22 5 31-26-15-26 15 5-31-22-22 30-5Z" fill={paint('gold')} stroke="#fff2c5" strokeWidth="3" />
+            <path d="m100 52 1 47 42-14-31 20 14 33-26-23-26 23 14-33-31-20 42 14Z" fill="#fff4cc" opacity=".4" />
+            <path d="m100 81 16 20-16 23-16-23Z" fill={paint('ocean')} stroke="#ecfcff" strokeWidth="2" />
+            <path d="M100 81V124M84 101H116M100 81l7 20-7 23-7-23Z" stroke="#efffff" strokeWidth="1" />
+          </>}
           {kind === 'personalMember' && <>
             <path d="M63 10 72 32H128L137 10M184 57 159 68V123L184 132M137 183 128 157H72L63 183M16 57 41 68V123L16 132" fill={paint('pearl')} stroke="#e9f9ff" strokeWidth="1.5" opacity=".8" />
             <path d="M72 32 41 68M128 32 159 68M159 123 128 157M41 123 72 157" stroke="#a7d8ff" strokeWidth="3" />

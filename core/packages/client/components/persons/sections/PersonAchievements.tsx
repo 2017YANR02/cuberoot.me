@@ -78,6 +78,9 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [],
           name={[a.event ? eventDisplayName(a.event, isZh) : '', a.record].filter(Boolean).join(' ')}
           description={t(EXPLORER_ACHIEVEMENTS[a.kind].description.zh, EXPLORER_ACHIEVEMENTS[a.kind].description.en)}>
           {!!a.evidence.length && <ol>{a.evidence.map((e, i) => <li key={i}>
+            {a.kind === 'thaw' && <strong>{i % 2 === 0 ? t('原 PB：', 'Previous PB: ') : t('新 PB：', 'New PB: ')}</strong>}
+            {a.kind === 'reunion' && <strong>{i === 0 ? t('上次参赛：', 'Previous competition: ') : t('回归赛场：', 'Return: ')}</strong>}
+            {a.kind === 'thaw' && <span>{e.type === 'average' ? t('平均 ', 'Average ') : t('单次 ', 'Single ')}</span>}
             {e.event && <strong>{eventDisplayName(e.event, isZh)} </strong>}
             {e.value && e.event && <span>{formatWcaResult(e.value, e.event, e.type ?? 'single')} </span>}
             {e.text && <span>{e.text} </span>}

@@ -9,6 +9,10 @@ import { statsUrl } from './stats-base';
 
 // One catalog owns the rules shown in the directory and on earned badges.
 export const EXPLORER_ACHIEVEMENTS = {
+  reunion: { title: { zh: '久别重逢', en: 'Welcome back' }, tiers: [1], stat: null, description: { zh: '至少三年未正式参赛后，回归的第一场比赛取得有效成绩。DNF 算参赛，DNS 不算。', en: 'Return after at least three years without official participation and record a successful result at your first competition back. DNF counts as participation; DNS does not.' } },
+  thaw: { title: { zh: '尘封纪录再见', en: 'Breaking the ice' }, tiers: [1], stat: null, description: { zh: '打破至少三年前创下的个人最佳单次或平均，追平不算。每个项目一枚徽章。', en: 'Improve a personal-best single or average first set at least three years earlier. Ties do not count. One badge per event.' } },
+  twelveMonths: { title: { zh: '十二月拼图', en: 'Twelve-month mosaic' }, tiers: [12], stat: null, description: { zh: '同一自然年的十二个月均正式参赛，按比赛开始月份计算。DNF 计入，DNS 不计。', en: 'Compete officially in every month of one calendar year, using competition start months. DNF counts; DNS does not.' } },
+  allInOne: { title: { zh: '一站全能', en: 'All in one' }, tiers: [17], stat: null, description: { zh: '在同一场正式比赛的全部 17 个现役项目取得有效单次成绩。', en: 'Record a successful single in all 17 active events at one official competition.' } },
   together: { title: { zh: '并肩登台', en: 'Side by side' }, tiers: [10, 50, 100, 500], stat: 'most_podiums_together', description: { zh: '与同一选手共同登上项目领奖台至少 10／50／100／500 次。', en: 'Share an event podium with the same person at least 10 / 50 / 100 / 500 times.' } },
   finals: { title: { zh: '决赛常客', en: 'Finals regular' }, tiers: [100, 500, 1000, 2000], stat: 'most_finals', description: { zh: '正式参加至少 100／500／1000／2000 场项目决赛，DNF 计入，DNS 不计。', en: 'Participate in at least 100 / 500 / 1000 / 2000 official event finals. DNF counts; DNS does not.' } },
   weekly: { title: { zh: '每周之巅', en: 'Weekly summit' }, tiers: [10, 50, 100], stat: 'winned_week_count', description: { zh: '某项目累计至少 10／50／100 周取得全球当周最快单次，含并列，周次按比赛开始日期计算。', en: 'Record an event’s fastest worldwide single in at least 10 / 50 / 100 weeks, including ties. Weeks use competition start dates.' } },
@@ -84,6 +88,71 @@ export function personalExplorerAchievements(results: WcaResultRow[], comps: Wca
   }
   const finals = rows.filter(r => ['f', 'c'].includes(r.round_type_id) && r.best > 0 && r.pos >= 1 && r.pos <= 3);
   const participation = rows.filter(r => r.best > 0 || r.best === -1);
+  const activeEvents = ALL_EVENT_IDS.filter(event => !CANCELLED_EVENT_IDS.has(event));
+  const successes = new Map<string, Map<string, WcaResultRow>>();
+  for (const r of rows) if (r.best > 0 && activeEvents.includes(r.event_id)) {
+    const events = successes.get(r.competition_id) ?? new Map<string, WcaResultRow>();
+    if (!events.has(r.event_id)) events.set(r.event_id, r);
+    successes.set(r.competition_id, events);
+  }
+  const completeEventSet = [...successes.values()].find(events => activeEvents.every(event => events.has(event)));
+  if (completeEventSet) add('allInOne', activeEvents.length, [...completeEventSet.values()].map(ev));
+  // Date-only comparisons use UTC, with the latest possible old date and earliest
+  // possible new date. Overlapping competitions cannot prove a three-year gap.
+  const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
+  const end = (r: WcaResultRow) => compMap.get(r.competition_id)?.end_date || date(r);
+  const threeYears = (from: string, to: string) => {
+    const anniversary = new Date(from);
+    anniversary.setUTCFullYear(anniversary.getUTCFullYear() + 3);
+    return Date.parse(to) >= anniversary.getTime();
+  };
+  if (rows.every(r => validDate(date(r)) && validDate(end(r)) && end(r) >= date(r))) {
+    const visits = new Map<string, WcaResultRow[]>();
+    const months = new Map<string, Map<string, WcaResultRow>>();
+    for (const r of participation) {
+      const visit = visits.get(r.competition_id) ?? [];
+      visit.push(r);
+      visits.set(r.competition_id, visit);
+      const year = date(r).slice(0, 4), month = date(r).slice(5, 7);
+      const entries = months.get(year) ?? new Map<string, WcaResultRow>();
+      if (!entries.has(month)) entries.set(month, r);
+      months.set(year, entries);
+    }
+    const fullYear = [...months.values()].find(entries => entries.size === 12);
+    if (fullYear) add('twelveMonths', 12, [...fullYear.values()].map(ev));
+    let lastVisit: WcaResultRow | undefined;
+    for (const visit of visits.values()) {
+      const first = visit[0], successful = visit.find(r => r.best > 0);
+      if (lastVisit && successful && threeYears(end(lastVisit), date(first)) && !out.some(a => a.kind === 'reunion')) {
+        add('reunion', 1, [ev(lastVisit), ev(successful)]);
+      }
+      if (!lastVisit || end(first) > end(lastVisit)) lastVisit = first;
+    }
+    const personalBests = new Map<string, { row: WcaResultRow; value: number }>();
+    const thawed = new Map<string, AchievementEvidence[]>();
+    // Compare competition-best values, so several improvements in one competition
+    // cannot manufacture a chronological gap or duplicate an award.
+    for (const visit of visits.values()) {
+      const bests = new Map<string, { row: WcaResultRow; value: number; type: 'single' | 'average' }>();
+      for (const r of visit) for (const type of ['single', 'average'] as const) {
+        if (type === 'average' && ['333mbf', '333mbo'].includes(r.event_id)) continue;
+        const value = type === 'single' ? r.best : r.average;
+        const key = `${r.event_id}:${type}`;
+        if (value > 0 && value < (bests.get(key)?.value ?? Infinity)) bests.set(key, { row: r, value, type });
+      }
+      for (const [key, current] of bests) {
+        const previous = personalBests.get(key);
+        if (previous && current.value >= previous.value) continue;
+        if (previous && threeYears(end(previous.row), date(current.row))) {
+          const evidence = thawed.get(current.row.event_id) ?? [];
+          evidence.push({ ...ev(previous.row), value: previous.value, type: current.type }, { ...ev(current.row), value: current.value, type: current.type });
+          thawed.set(current.row.event_id, evidence);
+        }
+        personalBests.set(key, current);
+      }
+    }
+    for (const [event, evidence] of thawed) add('thaw', 1, evidence, { event });
+  }
   const enteredFinals = participation.filter(r => ['f', 'c'].includes(r.round_type_id));
   add('finals', enteredFinals.length, EXPLORER_ACHIEVEMENTS.finals.tiers.flatMap(n => enteredFinals[n - 1] ? [{ ...ev(enteredFinals[n - 1]), text: String(n) }] : []));
   const activeMedals = finals.filter(r => !CANCELLED_EVENT_IDS.has(r.event_id));
