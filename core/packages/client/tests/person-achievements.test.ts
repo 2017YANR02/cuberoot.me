@@ -4,13 +4,14 @@ import { expect, it, vi } from 'vitest';
 import { GrandSlamBadges } from '@/components/persons/sections/PersonAchievements';
 import type { WcaResultRow } from '@/lib/wca-person-api';
 import type { ReactNode } from 'react';
+import { AchievementMedal, recordAchievementTier } from '@/components/persons/sections/AchievementMedal';
 
 // Keep eligibility and evidence assertions independent of the portal's closed state.
 // Actual hover, keyboard and touch behavior is exercised in the browser.
 vi.mock('@/components/persons/sections/AchievementBadge', async () => {
   const { ACHIEVEMENT_TITLES } = await import('@/components/persons/sections/AchievementMedal');
-  return { AchievementBadge: ({ kind, name, children }: { kind: keyof typeof ACHIEVEMENT_TITLES; name?: string; children?: ReactNode }) =>
-    createElement('article', { className: 'wp-achievement', 'data-kind': kind }, `${name ?? ''} ${ACHIEVEMENT_TITLES[kind].en}`, children) };
+  return { AchievementBadge: ({ kind, name, children, recordCount }: { kind: keyof typeof ACHIEVEMENT_TITLES; name?: string; children?: ReactNode; recordCount?: number }) =>
+    createElement('article', { className: 'wp-achievement', 'data-kind': kind, 'data-count': recordCount }, `${name ?? ''} ${ACHIEVEMENT_TITLES[kind].en}`, children) };
 });
 
 vi.mock('@/hooks/useT', () => ({ useT: () => (_zh: string, en: string) => en }));
@@ -33,6 +34,9 @@ it('awards historical records per event and level, deduplicating and rejecting i
     ],
   }));
   expect((html.match(/<article /g) ?? []).length).toBe(5);
+  expect(html).toContain('data-kind="historicalWR" data-count="3">2×2');
+  expect(html).toContain('data-kind="historicalCR" data-count="7">3×3');
+  expect(html).toContain('data-kind="historicalNR" data-count="1">2×2');
   expect(html).toContain('2×2 Historical world record');
   expect(html).toContain('2×2 Historical national record');
   expect(html).toContain('3×3 Historical continental record');
@@ -43,6 +47,23 @@ it('awards historical records per event and level, deduplicating and rejecting i
   expect(html).not.toContain('7×7');
   expect(html).not.toContain('Skewb');
   expect(html).not.toContain('Current world record holder');
+});
+
+it.each([
+  [1, 1], [9, 1], [10, 10], [49, 10], [50, 50], [99, 50], [100, 100],
+  [199, 100], [200, 200], [499, 200], [500, 500], [999, 500], [1000, 1000], [1250, 1000],
+  [0, undefined], [-1, undefined], [1.5, undefined], [NaN, undefined], [Infinity, undefined], [undefined, undefined],
+])('selects the highest earned tier for %s records', (count, expected) => {
+  expect(recordAchievementTier(count)?.count).toBe(expected);
+});
+
+it('keeps the actual count above the highest tier and only upgrades historical badges', () => {
+  const html = renderToStaticMarkup(createElement(AchievementMedal, { kind: 'historicalWR', recordCount: 1250, event: '333' }));
+  expect(html).toContain('data-tier="1000"');
+  expect(html).toContain('×1250');
+  const current = renderToStaticMarkup(createElement(AchievementMedal, { kind: 'wr', recordCount: 1250 }));
+  expect(current).not.toContain('data-tier');
+  expect(current).not.toContain('×1250');
 });
 
 it('awards only the requested person’s listed events, distinguishes all-gold and hides empty sections', () => {

@@ -1,7 +1,7 @@
 'use client';
 
 import AppLink from '@/components/AppLink';
-import { ACHIEVEMENT_TITLES } from '@/components/persons/sections/AchievementMedal';
+import { ACHIEVEMENT_TITLES, RECORD_ACHIEVEMENT_TIERS } from '@/components/persons/sections/AchievementMedal';
 import { AchievementBadge } from '@/components/persons/sections/AchievementBadge';
 import { useT } from '@/hooks/useT';
 import './achievements.css';
@@ -57,6 +57,7 @@ export default function AchievementsPage() {
       <header>
         <h1>{t('荣誉徽章', 'Achievement badges')}</h1>
         <p>{t('CubeRoot 根据 WCA 成绩数据设计的自定义荣誉徽章，并非 WCA 官方颁发。满足条件后自动显示在选手主页，展示可能随数据更新而延迟。', 'Custom achievement badges designed by CubeRoot using WCA results, not issued by the WCA. They appear automatically on qualifying person profiles and may lag behind data updates.')}</p>
+        <p>{t('纪录徽章按项目和 WR／CR／NR 分别累计，只展示最高等级，角标为实际次数。单次和平均分别计数，包含追平；按成绩的官方纪录标记分类，WR 不重复计入 CR 或 NR。', 'Record badges count each event and WR/CR/NR category separately. Only the highest tier is shown, with the actual count in the corner. Singles and averages count separately, including ties. Official record markers determine the category; WR does not also count as CR or NR.')}</p>
       </header>
       <div className="wca-achievements-catalog">
         {badges.map(badge => (
@@ -69,6 +70,14 @@ export default function AchievementsPage() {
               <p>{badge.description}</p>
               <AppLink href={badge.href} prefetch={false}>{badge.link}</AppLink>
             </div>
+            {badge.kind.startsWith('historical') && <div className="wca-achievements-tiers">
+              {RECORD_ACHIEVEMENT_TIERS.map(tier => <figure key={tier.count}>
+                <AchievementBadge kind={badge.kind} recordCount={tier.count} description={badge.description}>
+                  <AppLink href={badge.href} prefetch={false}>{badge.link}</AppLink>
+                </AchievementBadge>
+                <figcaption>{t(tier.zh, tier.en)}</figcaption>
+              </figure>)}
+            </div>}
           </section>
         ))}
       </div>

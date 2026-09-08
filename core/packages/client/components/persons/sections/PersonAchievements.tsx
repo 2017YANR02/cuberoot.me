@@ -62,7 +62,7 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [],
           <ul>{currentRecords.map(detail => <li key={detail}>{detail}</li>)}</ul>
         </AchievementBadge>}
         {[...historical.values()].sort((a, b) => a.event.localeCompare(b.event) || ['historicalWR', 'historicalCR', 'historicalNR'].indexOf(a.kind) - ['historicalWR', 'historicalCR', 'historicalNR'].indexOf(b.kind)).map(({ event, kind, history }) => (
-          <AchievementBadge key={event + kind} kind={kind} event={event} name={eventDisplayName(event, isZh)} description={t('正式比赛中获得过的纪录。', 'Records achieved in official competitions.')}>
+          <AchievementBadge key={event + kind} kind={kind} event={event} recordCount={history.length} name={eventDisplayName(event, isZh)} description={t('正式比赛中获得过的纪录。', 'Records achieved in official competitions.')}>
             <h4>{t('纪录历程', 'Record history')}</h4>
             <ol>{history.map(({ row, type, marker, value }, index) => <li key={index}>
               <div className="wp-achievement-result"><RecordBadge record={marker} /><strong>{formatWcaResult(value, event, type)}</strong><span>{type === 'single' ? t('单次', 'Single') : t('平均', 'Average')}</span></div>
