@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Crown, Globe, Trophy } from 'lucide-react';
+import { Crown, Trophy } from 'lucide-react';
+import { RecordBadge } from '@/components/RecordBadge';
 import AppLink from '@/components/AppLink';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { useT } from '@/hooks/useT';
@@ -28,17 +29,17 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [] 
       .filter(type => results[type]?.world_rank === 1 && results[type]!.best > 0)
       .map(type => `${eventDisplayName(event, isZh)} ${type === 'single' ? t('单次', 'Single') : t('平均', 'Average')}`));
   const awards = [
-    { label: t('世界冠军', 'World champion'), icon: Trophy, details: champions.map(event => eventDisplayName(event, isZh)) },
-    { label: t('当前世界纪录保持者', 'Current world record holder'), icon: Globe, details: currentRecords },
+    { label: t('世界冠军', 'World champion'), icon: <Trophy size={36} strokeWidth={1.5} />, details: champions.map(event => eventDisplayName(event, isZh)) },
+    { label: t('当前世界纪录保持者', 'Current world record holder'), icon: <RecordBadge record="WR" />, details: currentRecords },
   ].filter(award => award.details.length);
   if (!achievements.length && !awards.length) return null;
   return (
     <section className="wp-achievements" aria-label={t('成就', 'Achievements')}>
       <div className="wp-achievements-list">
-        {awards.map(({ label, icon: Icon, details }) => (
+        {awards.map(({ label, icon, details }) => (
           <details className="wp-achievement-details" key={label}>
             <summary className="wp-achievement" title={`${label}: ${details.join(', ')}`}>
-              <span className="wp-achievement-medal" aria-hidden="true"><Icon size={36} strokeWidth={1.5} /></span>
+              <span className="wp-achievement-medal" aria-hidden="true">{icon}</span>
               <span className="wp-achievement-label">{label}</span>
             </summary>
             <div className="wp-achievement-detail-text">{details.join(', ')}</div>
