@@ -8,6 +8,14 @@ import type { RowDataPacket } from 'mysql2';
 const DNF = new SolveTime(null, null, -1);
 
 export class WorldChampionshipRecords extends GroupedStatistic {
+  private achievementRows: [string, string, 'single' | 'average', number, string][] = [];
+  private worldEditions: { compId: string; date: string; events: string[] }[] = [];
+
+  override async toJson() {
+    const json = await super.toJson();
+    return { ...json, achievementRows: this.achievementRows, worldEditions: this.worldEditions };
+  }
+
   constructor() {
     super();
     this.title = 'World Championship records';
@@ -27,6 +35,9 @@ export class WorldChampionshipRecords extends GroupedStatistic {
     return `
       SELECT
         event_id,
+        results.person_id,
+        results.competition_id,
+        DATE_FORMAT(competition.start_date, '%Y-%m-%d') competition_date,
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
         CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') competition_link,
         country.name country_name,
@@ -43,6 +54,15 @@ export class WorldChampionshipRecords extends GroupedStatistic {
 
   // NOTE: 按 Single/Average 分组 → 按项目找最佳
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
+    const editions = new Map<string, { compId: string; date: string; events: Set<string> }>();
+    for (const row of rows) {
+      const compId = String(row['competition_id']);
+      const edition = editions.get(compId) ?? { compId, date: String(row['competition_date']), events: new Set<string>() };
+      edition.events.add(String(row['event_id']));
+      editions.set(compId, edition);
+    }
+    this.worldEditions = [...editions.values()].sort((a, b) => a.date.localeCompare(b.date)).map(e => ({ ...e, events: [...e.events].sort() }));
+    this.achievementRows = [];
     return (['Single', 'Average'] as const).map(header => {
       const type = header.toLowerCase() as 'single' | 'average';
 
@@ -61,6 +81,21 @@ export class WorldChampionshipRecords extends GroupedStatistic {
         if (st.compareTo(current.result) <= 0) {
           recordsByEvent.set(eventId, { result: st, row });
         }
+      }
+
+      // Keep every tied holder for badges, even though the existing table shows one.
+      const seen = new Set<string>();
+      for (const row of rows) {
+        const eventId = String(row['event_id']);
+        const value = Number(row[type]);
+        const entry = recordsByEvent.get(eventId);
+        if (!entry || value <= 0 || type === 'average' && ['333mbf', '333mbo'].includes(eventId)) continue;
+        if (new SolveTime(eventId, type, value).compareTo(entry.result) !== 0) continue;
+        const personId = String(row['person_id']);
+        const key = `${personId}:${eventId}:${type}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        this.achievementRows.push([personId, eventId, type, value, String(row['competition_id'])]);
       }
 
       // NOTE: 按官方项目顺序输出
