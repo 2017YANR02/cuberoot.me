@@ -154,6 +154,7 @@ export function createBundBuildings(polygons: ShanghaiPolygon[], material: Mater
     const frame = buildingFrame([(a[0] + end[0]) / 2, (a[1] + end[1]) / 2], -Math.atan2(end[1] - a[1], end[0] - a[0]));
     const plan = frame.plan(source), g = new CityGeometry();
     g.group.name = b.name; g.group.userData.osmIds = [b.id]; g.group.userData.bundNumber = b.number;
+    g.group.userData.frontage = width;
     g.group.userData.reconstruction = `Individual facade and roof from ${b.number === 15.1 ? 'Wenhui completed-building photograph (2019 report)' : 'Asisbiz onsite photographs'}; OSM plan, estimated vertical dimensions; not a surveyed replica`;
     const pitch = width / b.bays, windowWidth = Math.min(2.5, pitch * .53);
     const openings: FrontOpening[] = [];
@@ -281,6 +282,9 @@ export function createBundBuildings(polygons: ShanghaiPolygon[], material: Mater
       pediment(g,0,b.top+3.3,.35,width*.58,1.8,trim);
       for (const sign of [-1, 1]) g.box([1.1, 14, 1.4], [sign * width * .34, 13, -.65], trim);
     } else if (b.number === 19) {
+      // Photographed rooftop lettering is mounted over the brick parapet.
+      g.box([width, 1.45, .7], [0, b.top + .86, -.12], stone.brick);
+      for (const y of [b.top + .18, b.top + 1.56]) g.box([width + .25, .16, .85], [0, y, -.12], trim);
       // Long Nanjing Road wing: alternate cream panels, red brick piers and
       // mouldings all the way around the plan, including the rounded corners.
       // Rounded OSM corners consist of sub-window-length edges. Join those

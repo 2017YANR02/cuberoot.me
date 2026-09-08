@@ -43,6 +43,14 @@
 
 本批没有新增 GitHub 项目：城市窗光图集、道路光池、江岸设施和夜景参数为本站实现；江面仍复用 Three.js r183 Water / Reflector 及已下载法线图，新增多尺度法线混合、夜间散射和反射分辨率调整。ABYSSAL 天空与场景雾的地平线衔接属于本站适配，记录在其 `UPSTREAM.md`。中央江岸位置来自既有 OSM 水域，断面和灯具为估算。详细审图、47 项回归及仍未通过的游戏级画质要求见[第六批跟踪](shanghai-replica-tracker.md#第六批上海夜景雨夜地平线与江面反射)。
 
+## 外滩实拍招牌与本地字形
+
+2026-09-08。补充[和平饭店实拍照片](https://n.sinaimg.cn/sinakd20119/320/w717h403/20220831/51c5-e438a768e27ecac8115bad5575bd3b71.jpg)、[原汇丰大楼游客实拍](https://you.ctrip.com/sight/shanghai2/1831446.html)及[文泉驿微米黑](https://sourceforge.net/projects/wqy/files/wqy-microhei/)三个来源，并为既有 11 条 Asisbiz 逐栋来源增加招牌文字、用途、日期与精度说明。网页共 50 个外部链接，中英文 320px 已实际查看；来源只维护 `credits_data.json`，没有另建产品数据副本。
+
+13 栋招牌是本站 Three.js 实体几何，复用官方 TTFLoader / FontLoader / ExtrudeGeometry。字体来自仓库已有 `public/fonts/wqy-microhei.ttf`，由 `scripts/build-shanghai-sign-font.mjs` 按 `space-shanghai-signs-data.json` 提取 58 字形，生成 33,997 字节的 `public/assets/space/shanghai-v1/sign-font.json`；原字体作者与 Apache-2.0 元数据保留，完整许可在相邻 `sign-font.LICENSE.txt`。生成命令及所有权已登记 `docs/generated-artifacts.json`，改招牌文字需重跑生成脚本，不能手改生成字形。
+
+照片只供本地审图，未成为运行贴图或外部加载依赖。字体为通用字体，品牌专用字形、图形商标、招牌尺寸、灯位、夜间亮度和部分位置尚未实测。历史照片也不能证明当前租户或当天亮灯情况；没有从建筑历史名称推断今天的招牌。来源可追溯不表示所有招牌或建筑已 1:1 复刻。逐栋覆盖、三轮审图及验证限制见[第八批跟踪](shanghai-replica-tracker.md#第八批实拍招牌与入口)。
+
 ## 调研但尚未接入
 
 [CesiumJS](https://github.com/CesiumGS/cesium)、[MapLibre GL JS](https://github.com/maplibre/maplibre-gl-js) 和 [NASA 3DTilesRendererJS](https://github.com/NASA-AMMOS/3DTilesRendererJS) 的历史星数、候选用途和取舍在[上海跟踪文档](shanghai-huangpu-space-tracker.md)。当前运行时没有安装它们，也没有获取上海全段摄影测量 tileset。已调研而未成功下载的模型不能列作已集成资产。

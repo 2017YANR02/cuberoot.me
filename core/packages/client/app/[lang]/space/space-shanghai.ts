@@ -6,6 +6,8 @@ import { RIVER_COLORS, type RiverColor, type Vec3, type Weather } from './space-
 import { createShanghaiBridges, createShanghaiRoads, type ShanghaiRoad } from './space-shanghai-bridges';
 import { shanghaiShape as shape, type ShanghaiPolygon as Polygon } from './space-shanghai-geometry';
 import { createShanghaiArchitecture, setShanghaiClockTime, SHANGHAI_ARCHITECTURE_IDS } from './space-shanghai-architecture';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { addShanghaiSigns } from './space-shanghai-signs';
 import { createBundStreets, createShanghaiQuays } from './space-shanghai-streets';
 import { createShanghaiSupertalls } from './space-shanghai-supertalls';
 import { shanghaiWindowTexture } from './space-shanghai-facades';
@@ -197,7 +199,13 @@ export class ShanghaiScene {
       this.textures.add(normals);
       this.makeWater(waters, normals); this.makeLandmarks(this.material(0xadb7b6, .58, .3));
       this.root.add(createShanghaiBridges(this.material.bind(this)));
-      this.root.add(createShanghaiArchitecture(data.polygons, this.material.bind(this), data.roads));
+      const architecture = createShanghaiArchitecture(data.polygons, this.material.bind(this), data.roads);
+      this.root.add(architecture);
+      const fontResponse = await fetch('/assets/space/shanghai-v1/sign-font.json?v=20260908', { signal: this.abort.signal });
+      if (!fontResponse.ok) throw new Error(`Bund sign font HTTP ${fontResponse.status}`);
+      const fontData = await fontResponse.json();
+      if (this.disposed) return;
+      addShanghaiSigns(architecture, new FontLoader().parse(fontData), this.material.bind(this));
       this.makeTrees(data.polygons, grass); this.makeBoats();
       this.changed();
     } catch (error) { if (!this.disposed) { this.dispose(); throw error; } }
