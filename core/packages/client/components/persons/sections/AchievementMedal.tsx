@@ -16,6 +16,21 @@ export const ACHIEVEMENT_TITLES = {
 };
 export type AchievementKind = keyof typeof ACHIEVEMENT_TITLES;
 
+export const RECORD_ACHIEVEMENT_TIERS = [
+  { count: 1, zh: '基础', en: 'Base', rim: '#e9daff' },
+  { count: 10, zh: '青铜', en: 'Bronze', rim: '#ce925c' },
+  { count: 50, zh: '白银', en: 'Silver', rim: '#c7deef' },
+  { count: 100, zh: '黄金', en: 'Gold', rim: '#ffd27d' },
+  { count: 200, zh: '水晶', en: 'Crystal', rim: '#a9f4ff' },
+  { count: 500, zh: '皇冠', en: 'Crown', rim: '#ffe4a3' },
+  { count: 1000, zh: '传奇', en: 'Legendary', rim: '#efb8ff' },
+] as const;
+
+export function recordAchievementTier(count?: number) {
+  if (count === undefined || !Number.isSafeInteger(count) || count < 1) return undefined;
+  return RECORD_ACHIEVEMENT_TIERS.findLast(tier => count >= tier.count);
+}
+
 // Original enamel-pin artwork. Illustration pigments are independent of UI theme tokens.
 const ART = {
   champion: { light: '#ffbb96', dark: '#862d56', rim: '#ffd27d', shape: 'M100 9 173 35V98Q171 153 100 190Q29 153 27 98V35Z' },
@@ -27,13 +42,15 @@ const ART = {
   gold: { light: '#ffe6a6', dark: '#9a4727', rim: '#fff1b5', shape: 'M100 5 119 22 147 13 155 42 182 51 174 79 195 100 175 121 183 149 155 158 147 187 120 178 100 195 80 178 52 187 44 158 17 149 25 120 5 100 25 80 17 51 45 42 53 13 80 22Z' },
 };
 
-export function AchievementMedal({ kind, event }: { kind: AchievementKind; event?: string }) {
+export function AchievementMedal({ kind, event, recordCount }: { kind: AchievementKind; event?: string; recordCount?: number }) {
   const id = useId();
   const paint = (name: string) => `url(#${id}-${name})`;
   const art = ART[kind];
+  const tier = kind.startsWith('historical') ? recordAchievementTier(recordCount) : undefined;
+  const rim = tier && tier.count > 1 ? tier.rim : art.rim;
   const record = kind === 'wr' ? 'WR' : kind.startsWith('historical') ? kind.slice(10) : null;
   return (
-    <span className={`wp-achievement-medal wp-achievement-art-${kind}`} aria-hidden="true">
+    <span className={`wp-achievement-medal wp-achievement-art-${kind}`} data-tier={tier?.count} aria-hidden="true">
       <svg className="wp-achievement-illustration" viewBox="0 0 200 200" fill="none">
         <defs>
           <linearGradient id={`${id}-enamel`} x1="40" y1="20" x2="150" y2="180" gradientUnits="userSpaceOnUse"><stop stopColor={art.light} /><stop offset=".55" stopColor={art.dark} /><stop offset="1" stopColor="#172343" /></linearGradient>
@@ -45,7 +62,7 @@ export function AchievementMedal({ kind, event }: { kind: AchievementKind; event
           <radialGradient id={`${id}-shine`} cx=".28" cy=".15" r=".85"><stop stopColor="#fff" stopOpacity=".44" /><stop offset="1" stopColor="#fff" stopOpacity="0" /></radialGradient>
           <clipPath id={`${id}-clip`}><path d={art.shape} /></clipPath>
         </defs>
-        <path d={art.shape} fill={paint('enamel')} stroke={paint('metal')} strokeWidth="6" strokeLinejoin="round" />
+        <path d={art.shape} fill={paint('enamel')} stroke={tier && tier.count > 1 ? rim : paint('metal')} strokeWidth={tier && tier.count > 1 ? 10 : 6} strokeLinejoin="round" />
         <g clipPath={paint('clip')}>
           <circle cx="100" cy="85" r="65" stroke={art.rim} strokeOpacity=".2" strokeWidth="1" />
           <circle cx="100" cy="85" r="73" stroke={art.rim} strokeOpacity=".12" strokeWidth="1" />
@@ -100,9 +117,24 @@ export function AchievementMedal({ kind, event }: { kind: AchievementKind; event
           </>}
           <g fill="#fff8df"><path d="m43 44 2 6 6 2-6 2-2 6-2-6-6-2 6-2Z" /><path d="m157 96 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z" /><circle cx="145" cy="37" r="2" /><circle cx="58" cy="31" r="1.5" /><circle cx="35" cy="106" r="1.5" /></g>
         </g>
+        {tier && tier.count >= 10 && <path d={art.shape} transform="translate(8 8) scale(.92)" stroke={paint('metal')} strokeWidth="2" opacity=".85" />}
+        {tier && tier.count >= 200 && [35, 165].map(x => <g key={x} transform={`translate(${x} 119)`}>
+          <path d="M0-24 11-8 7 13 0 24-7 13-11-8Z" fill={paint(tier.count >= 1000 ? 'ruby' : 'ocean')} stroke="#e9ffff" strokeWidth="2" />
+          <path d="M0-24V24M-11-8H11L0 24Z" stroke="#fff" strokeOpacity=".7" />
+        </g>)}
+        {tier && tier.count >= 500 && <g>
+          <path d="m72 34-4-22 18 10 14-18 14 18 18-10-4 22Z" fill={paint('gold')} stroke="#fff2bd" strokeWidth="2" />
+          <path d="M73 36H127" stroke={paint('gold')} strokeWidth="5" strokeLinecap="round" />
+          <path d="m100 15 4 6-4 6-4-6Z" fill={paint('ruby')} />
+        </g>}
+        {tier && tier.count >= 1000 && <g stroke={paint('gold')} strokeWidth="3" strokeLinecap="round">
+          <path d="M49 154Q64 179 88 181M151 154Q136 179 112 181" />
+          {[0, 1, 2].map(i => <g key={i}><ellipse cx={54 + i * 11} cy={157 + i * 9} rx="4" ry="8" transform={`rotate(-40 ${54 + i * 11} ${157 + i * 9})`} fill={paint('gold')} /><ellipse cx={146 - i * 11} cy={157 + i * 9} rx="4" ry="8" transform={`rotate(40 ${146 - i * 11} ${157 + i * 9})`} fill={paint('gold')} /></g>)}
+        </g>}
       </svg>
       {record && <span className="wp-achievement-record"><RecordBadge record={record} /></span>}
       {event && <span className="wp-achievement-event"><EventIcon event={event} /></span>}
+      {tier && <span className="wp-achievement-count">×{recordCount}</span>}
     </span>
   );
 }

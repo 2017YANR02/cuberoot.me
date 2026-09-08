@@ -11,3 +11,7 @@
   .wca-achievements-entry { grid-template-columns: 80px minmax(0, 1fr); gap: 16px; }
   .wca-achievements-entry > .wp-achievement .wp-achievement-medal { width: 80px; height: 80px; }
 }
+.wca-achievements-tiers { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 20px; }
+.wca-achievements-tiers figure { margin: 0; display: grid; justify-items: center; gap: 8px; }
+.wca-achievements-tiers .wp-achievement-label { display: none; }
+.wca-achievements-tiers figcaption { font-size: .75rem; color: var(--muted-foreground); }
