@@ -18,7 +18,7 @@
 //   · <AttemptPopoverBody>(懒挂载)= 点开那一把才挂,承载复盘/编辑/视频/定位全部重逻辑。
 // 公开 API 不变(选手页 AttemptsList / comp 页 CompDetailPage 均无需改动)。
 
-import { useState, useRef, useEffect, useCallback, useLayoutEffect, type CSSProperties, type RefObject } from 'react';
+import { lazy, Suspense, useState, useRef, useEffect, useCallback, useLayoutEffect, type CSSProperties, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, X } from 'lucide-react';
 import Link from '@/components/AppLink';
@@ -29,10 +29,12 @@ import { getRecon } from '@/lib/recon-api';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getReconScramble } from '@cuberoot/shared/recon-completion';
 import { VideoCoverThumb } from '@/components/VideoCoverThumb';
-import ReconPlayerCanvas from '@/components/recon/ReconPlayerCanvas';
-import SolutionView from '@/components/SolutionView';
 import { SolveValue } from './SolveValue';
 import { AttemptBelow } from './AttemptBelow';
+
+// 懒挂载弹窗不会阻止静态依赖下载；3D 与解法代码只在展示复盘时加载。
+const ReconPlayerCanvas = lazy(() => import('@/components/recon/ReconPlayerCanvas'));
+const SolutionView = lazy(() => import('@/components/SolutionView'));
 
 // 弹窗基准宽:窄屏自动夹到 100vw - 16(见 boxStyle width 的 min())。
 const BASE_W = 480;
@@ -312,12 +314,16 @@ function AttemptPopoverBody({
   // 挂载后用实测高度重新定位(翻转/夹取);滚动/缩放跟随;Esc 关闭。
   useLayoutEffect(() => {
     reposition();
+    // 复盘代码异步加载完成后内容会增高，重新钳住弹窗位置。
+    const observer = new ResizeObserver(() => reposition());
+    if (popRef.current) observer.observe(popRef.current);
     const onMove = () => reposition();
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('scroll', onMove, true);
     window.addEventListener('resize', onMove);
     window.addEventListener('keydown', onKey);
     return () => {
+      observer.disconnect();
       window.removeEventListener('scroll', onMove, true);
       window.removeEventListener('resize', onMove);
       window.removeEventListener('keydown', onKey);
@@ -397,7 +403,7 @@ function AttemptPopoverBody({
             {reconSolve?.recordType === 'timing' ? (
               <div>{tr({ zh: '起表 / 拍表', en: 'Pickup / putdown' })}: {reconSolve.pickupTime?.toFixed(3)}s / {reconSolve.putdownTime?.toFixed(3)}s</div>
             ) : reconScramble ? (
-              <>
+              <Suspense fallback={<div style={playerLoadingStyle}>{tr({ zh: '载入复盘…', en: 'Loading…' })}</div>}>
                 <div style={playerWrapStyle}>
                   <ReconPlayerCanvas
                     event={reconEvent}
@@ -415,7 +421,7 @@ function AttemptPopoverBody({
                     <SolutionView text={reconSolution} playerRef={playerRef} />
                   </div>
                 )}
-              </>
+              </Suspense>
             ) : (
               <div style={playerLoadingStyle}>{tr({ zh: '载入复盘…', en: 'Loading…' })}</div>
             )}
