@@ -10,6 +10,7 @@ vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string, en: string) => locale.
 vi.mock('@/components/AppLink', () => ({ default: ({ href, children, className }: { href: string; children: ReactNode; className?: string }) => createElement('a', { href, className }, children) }));
 vi.mock('@/components/platform/PlatformQrLanding', () => ({ PlatformQrLanding: () => null }));
 import { PlatformDomainContent } from '@/components/platform/PlatformDomainContent';
+import { LessonVideoPlayer } from '@/components/video/LessonVideoPlayer';
 
 beforeEach(() => {
   load.mockReset().mockResolvedValue({ mimeType: 'video/mp4', accessUrl: '/signed-video', expiresAt: '2099-01-01T00:00:00Z' });
@@ -127,7 +128,8 @@ it('renews expired playback access, keeps position, and does not loop on codec e
   try {
     await act(async () => root.render(createElement(PlatformDomainContent, props('lesson-1'))));
     const first = host.querySelector('video')!;
-    expect(first.controls).toBe(true); expect(first.playsInline).toBe(true);
+    expect(first.controls).toBe(false); expect(first.playsInline).toBe(true);
+    expect(host.querySelector('button[aria-label="播放"]')).not.toBeNull();
     first.currentTime = 123;
     await act(async () => first.dispatchEvent(new Event('error')));
     expect(load).toHaveBeenCalledTimes(2);
@@ -144,5 +146,81 @@ it('renews expired playback access, keeps position, and does not loop on codec e
     const next = host.querySelector('video')!;
     await act(async () => next.dispatchEvent(new Event('loadedmetadata')));
     expect(next.currentTime).toBe(0);
+  } finally { await act(async () => root.unmount()); }
+});
+
+it('connects playback, seeking, mute and speed controls to the media element', async () => {
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(LessonVideoPlayer, { src: '/test', onError: vi.fn(), onLoadedMetadata: vi.fn() })));
+    const video = host.querySelector('video')!;
+    const play = vi.spyOn(video, 'play').mockImplementation(async () => { video.dispatchEvent(new Event('play')); });
+    Object.defineProperty(video, 'duration', { value: 120, configurable: true });
+    await act(async () => video.dispatchEvent(new Event('loadedmetadata')));
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="播放"]')!.click());
+    expect(play).toHaveBeenCalledOnce();
+    expect(host.querySelector('button[aria-label="暂停"]')).not.toBeNull();
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="静音"]')!.click());
+    expect(video.muted).toBe(true);
+    const player = host.querySelector('.lesson-video-player')!;
+    video.currentTime = 118;
+    await act(async () => video.dispatchEvent(new Event('timeupdate')));
+    await act(async () => player.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));
+    expect(video.currentTime).toBe(120);
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="设置"]')!.click());
+    const button = (text: string) => [...host.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(element => element.textContent?.includes(text))!;
+    await act(async () => button('播放速度').click());
+    await act(async () => button('1.5×').click());
+    expect(video.playbackRate).toBe(1.5);
+    await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+  } finally { await act(async () => root.unmount()); }
+});
+
+it('pauses when the sleep timer expires and cancels a timer when disabled', async () => {
+  vi.useFakeTimers();
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(LessonVideoPlayer, { src: '/test', onError: vi.fn(), onLoadedMetadata: vi.fn() })));
+    const pause = vi.spyOn(host.querySelector('video')!, 'pause').mockImplementation(() => {});
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="设置"]')!.click());
+    const button = (text: string) => [...host.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(element => element.textContent?.includes(text))!;
+    await act(async () => button('休眠定时器').click());
+    await act(async () => button('10 分钟').click());
+    await act(async () => vi.advanceTimersByTime(599_999));
+    expect(pause).not.toHaveBeenCalled();
+    await act(async () => vi.advanceTimersByTime(1));
+    expect(pause).toHaveBeenCalledOnce();
+    await act(async () => button('休眠定时器').click());
+    await act(async () => button('10 分钟').click());
+    await act(async () => button('休眠定时器').click());
+    await act(async () => button('关闭').click());
+    await act(async () => vi.advanceTimersByTime(600_000));
+    expect(pause).toHaveBeenCalledOnce();
+  } finally { await act(async () => root.unmount()); vi.useRealTimers(); }
+});
+
+it('autoplays the next lesson only when enabled and stops at the last lesson', async () => {
+  const host = document.createElement('div'), root = createRoot(host);
+  function Classroom() {
+    const [selectedLessonId, onSelectLesson] = useState<string | null>(null);
+    return createElement(PlatformDomainContent, {
+      definition: { id: 'course-section-core' } as PlatformRouteDefinition,
+      entity: { id: 'course', title: 'Course', data: { lessons: [{ id: 'first', titleZh: '正式课 01' }, { id: 'last', titleZh: '正式课 02' }] } } as PlatformEntity,
+      params: {}, selectedLessonId, onSelectLesson,
+    });
+  }
+  try {
+    await act(async () => root.render(createElement(Classroom)));
+    await act(async () => host.querySelector('video')!.dispatchEvent(new Event('ended')));
+    expect(host.querySelector('[aria-current]')?.textContent).toBe('正式课 01');
+    await act(async () => host.querySelector<HTMLButtonElement>('[role="switch"][aria-label="自动播放下一课"]')!.click());
+    await act(async () => host.querySelector('video')!.dispatchEvent(new Event('ended')));
+    expect(host.querySelector('[aria-current]')?.textContent).toBe('正式课 02');
+    expect(host.querySelector('video')!.autoplay).toBe(true);
+    await act(async () => host.querySelector('video')!.dispatchEvent(new Event('ended')));
+    expect(load).toHaveBeenCalledTimes(2);
+    await act(async () => host.querySelector<HTMLButtonElement>('nav button')!.click());
+    expect(host.querySelector('video')!.autoplay).toBe(false);
   } finally { await act(async () => root.unmount()); }
 });

@@ -8,6 +8,7 @@ import { loadPlatformLessonMedia, type PlatformLessonMedia } from '@/lib/platfor
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 import { PLATFORM_COURSE_SECTIONS } from '@/lib/platform-routes';
 import { PlatformQrLanding } from './PlatformQrLanding';
+import { LessonVideoPlayer } from '@/components/video/LessonVideoPlayer';
 
 function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -67,7 +68,13 @@ function DomainList({ title, items, href, showStatus = true }: {
   return <section className="platform-domain-content"><h2>{title}</h2>{list}</section>;
 }
 
-function LessonMedia({ lessonId }: { lessonId: string }) {
+function LessonMedia({ lessonId, autoContinue, onAutoContinueChange, onNext, autoPlay }: {
+  lessonId: string;
+  autoContinue?: boolean;
+  onAutoContinueChange?: (enabled: boolean) => void;
+  onNext?: () => void;
+  autoPlay?: boolean;
+}) {
   const t = useT();
   const [media, setMedia] = useState<PlatformLessonMedia | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +112,8 @@ function LessonMedia({ lessonId }: { lessonId: string }) {
     <button type="button" className="platform-action-link" onClick={() => setReload(value => value + 1)}>{t('重新加载播放器', 'Reload player')}</button>
   </div>;
   if (!media) return <p className="platform-domain-note">{t('正在取得课时媒体访问权限。', 'Requesting lesson media access.')}</p>;
-  if (media.mimeType.startsWith('video/')) return <video className="platform-lesson-media" controls playsInline preload="metadata" src={media.accessUrl} onError={onError} onLoadedMetadata={onLoadedMetadata} />;
+  if (media.mimeType.startsWith('video/')) return <LessonVideoPlayer src={media.accessUrl} onError={onError} onLoadedMetadata={onLoadedMetadata}
+    autoContinue={autoContinue} onAutoContinueChange={onAutoContinueChange} onNext={onNext} autoPlay={autoPlay} />;
   if (media.mimeType.startsWith('audio/')) return <audio className="platform-lesson-media" controls preload="metadata" src={media.accessUrl} onError={onError} onLoadedMetadata={onLoadedMetadata} />;
   return <a className="platform-action-link" href={media.accessUrl} target="_blank" rel="noreferrer">{t('打开课时媒体', 'Open lesson media')}</a>;
 }
@@ -158,6 +166,8 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
   onSelectLesson?: (id: string) => void;
 }) {
   const t = useT();
+  const [autoContinue, setAutoContinue] = useState(false);
+  const [autoPlayLessonId, setAutoPlayLessonId] = useState<string | null>(null);
   if (!entity?.data) return null;
   const data = entity.data;
   const english = t('zh', 'en') === 'en';
@@ -200,12 +210,17 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
           <h2>{t('课时目录', 'Lesson directory')}</h2>
           <div className="platform-classroom-lessons">{sectionLessons.map(lesson => <button
             key={lesson.id} className="platform-classroom-lesson" type="button" aria-current={lesson.id === active.id ? 'true' : undefined}
-            onClick={() => onSelectLesson?.(lesson.id)}
+            onClick={() => { setAutoPlayLessonId(null); onSelectLesson?.(lesson.id); }}
           >{lesson.title}</button>)}</div>
         </nav>
         <section className="platform-classroom-stage" aria-label={t('课程视频', 'Lesson video')}>
           <h2 aria-live="polite">{active.title}</h2>
-          <div className="platform-classroom-player"><LessonMedia key={active.id} lessonId={active.id} /></div>
+          <div className="platform-classroom-player"><LessonMedia key={active.id} lessonId={active.id}
+            autoContinue={autoContinue} onAutoContinueChange={onSelectLesson ? setAutoContinue : undefined} autoPlay={autoPlayLessonId === active.id}
+            onNext={() => {
+              const next = sectionLessons[sectionLessons.findIndex(lesson => lesson.id === active.id) + 1];
+              if (next && onSelectLesson) { setAutoPlayLessonId(next.id); onSelectLesson(next.id); }
+            }} /></div>
         </section>
       </div>;
     }
