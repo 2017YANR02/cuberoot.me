@@ -455,6 +455,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'math/unit-distance': { title: { zh: '单位距离问题', en: 'Unit Distance Problem' } },
+  'math/navier-stokes': {
+    title: { zh: 'Navier–Stokes：流体会出现奇性吗？', en: 'Navier–Stokes: Can Fluid Flow Become Singular?' },
+    description: {
+      zh: 'OpenAI 公告摘要与数学背景：光滑性、外力、有限时间奇性和有限能量，附原始资料及交互示意。',
+      en: 'An OpenAI announcement digest and mathematical background: smoothness, forcing, finite-time singularities and finite energy, with sources and an interactive illustration.',
+    },
+  },
   'meet': {
     title: { zh: '会议', en: 'Meeting' },
     // 不写人数:上限是服务端 MAX_MEET_PARTICIPANTS,静态 metadata 读不到 /video/config,
