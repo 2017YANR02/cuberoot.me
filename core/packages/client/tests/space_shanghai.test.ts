@@ -5,8 +5,11 @@ import { SHANGHAI_VIEWS, ShanghaiScene, validateShanghaiData, type ShanghaiData 
 import { createShanghaiBridges, createShanghaiRoads, shanghaiRoadElevations, type ShanghaiRoad } from '@/app/[lang]/space/space-shanghai-bridges';
 import { createShanghaiArchitecture, setShanghaiClockTime, SHANGHAI_ARCHITECTURE_IDS } from '@/app/[lang]/space/space-shanghai-architecture';
 import { BUND_BUILDING_IDS, createBundBuildings } from '@/app/[lang]/space/space-shanghai-bund';
-import { createBundStreets } from '@/app/[lang]/space/space-shanghai-streets';
+import { createBundStreets, createShanghaiQuays } from '@/app/[lang]/space/space-shanghai-streets';
 import { createShanghaiSupertalls } from '@/app/[lang]/space/space-shanghai-supertalls';
+import { shanghaiWindowTexture } from '@/app/[lang]/space/space-shanghai-facades';
+
+const windows = new THREE.Texture();
 
 const data: unknown = JSON.parse(readFileSync(new URL('../public/assets/space/shanghai-v1/huangpu.json', import.meta.url), 'utf8'));
 validateShanghaiData(data);
@@ -20,8 +23,46 @@ const inside = (x: number, z: number, ring: number[][]) => {
 };
 
 describe('Shanghai geographic asset and river cruise', () => {
+  it('keeps illuminated quays on the acquired central Huangpu banks, leaving the navigation channel open', () => {
+    const root = createShanghaiQuays(data.polygons, () => new THREE.MeshStandardMaterial());
+    expect(root.userData.segments).toBe(258);
+    expect(root.children).toHaveLength(2);
+    root.updateMatrixWorld(true);
+    for (const [x, z] of data.river.filter(p => p[1] > 700 && p[1] < 2600)) {
+      expect(new THREE.Raycaster(new THREE.Vector3(x, 10, z), new THREE.Vector3(0, -1, 0)).intersectObject(root, true)).toHaveLength(0);
+    }
+    const bounds = new THREE.Box3().setFromObject(root);
+    expect(bounds.min.y).toBeCloseTo(-.65, 5); expect(bounds.max.y).toBeCloseTo(.95, 5);
+    expect(bounds.min.z).toBeGreaterThan(699); expect(bounds.max.z).toBeLessThan(2601);
+    root.traverse(o => { if (o instanceof THREE.Mesh) { expect(Array.from(o.geometry.getAttribute('position').array).every(Number.isFinite)).toBe(true); o.geometry.dispose(); (o.material as THREE.Material).dispose(); } });
+  });
+
+  it('does not allocate quays for unrelated ponds, missing banks or degenerate segments', () => {
+    let allocations = 0;
+    const factory = () => { allocations++; return new THREE.MeshStandardMaterial(); };
+    const pond = { id: 'pond', kind: 'water' as const, points: [[0, 1000], [0, 1000], [10, 1020]] as [number, number][] };
+    for (const polygons of [[], [pond], [{ ...pond, id: 'way/71118583', points: [[0, 1000], [0, 1000], [0, 1000]] as [number, number][] }]]) expect(createShanghaiQuays(polygons, factory).children).toHaveLength(0);
+    expect(allocations).toBe(0);
+  });
+
+  it('keeps the night-window atlas deterministic, filtered and mostly unlit', () => {
+    const office = shanghaiWindowTexture(true), home = shanghaiWindowTexture(false), repeat = shanghaiWindowTexture(true);
+    expect(office.image.data).toEqual(repeat.image.data);
+    for (const texture of [office, home]) {
+      expect(texture.image.width).toBe(256); expect(texture.image.height).toBe(512);
+      expect(texture.minFilter).toBe(THREE.LinearMipmapLinearFilter);
+      expect(texture.generateMipmaps).toBe(true);
+      expect(texture.wrapS).toBe(THREE.RepeatWrapping); expect(texture.wrapT).toBe(THREE.RepeatWrapping);
+      const bytes = texture.image.data!;
+      let lit = 0;
+      for (let i = 0; i < bytes.length; i += 4) if (bytes[i]) lit++;
+      expect(lit).toBe(texture === office ? 21660 : 20676);
+    }
+    for (const texture of [office, home, repeat]) texture.dispose();
+  });
+
   it('keeps the three supertalls at documented heights with finite batched geometry', () => {
-    const root = createShanghaiSupertalls(() => new THREE.MeshStandardMaterial());
+    const root = createShanghaiSupertalls(() => new THREE.MeshStandardMaterial(), windows);
     root.updateMatrixWorld(true);
     for (const [name, height] of [['Jin Mao Tower', 420.5], ['Shanghai World Financial Center', 492], ['Shanghai Tower', 632]] as const) {
       const building = root.getObjectByName(name)!;
@@ -43,7 +84,7 @@ describe('Shanghai geographic asset and river cruise', () => {
   });
 
   it('keeps the SWFC trapezoidal portal open from both faces with solid jambs and roof', () => {
-    const root = createShanghaiSupertalls(() => new THREE.MeshStandardMaterial());
+    const root = createShanghaiSupertalls(() => new THREE.MeshStandardMaterial(), windows);
     root.updateMatrixWorld(true);
     const building = root.getObjectByName('Shanghai World Financial Center')!;
     for (const side of [-1, 1]) {
@@ -60,7 +101,7 @@ describe('Shanghai geographic asset and river cruise', () => {
   });
 
   it('leaves Shanghai Tower crown open with its inner roof below the sloping glass rim', () => {
-    const root = createShanghaiSupertalls(() => new THREE.MeshStandardMaterial());
+    const root = createShanghaiSupertalls(() => new THREE.MeshStandardMaterial(), windows);
     root.updateMatrixWorld(true);
     const tower = root.getObjectByName('Shanghai Tower')!;
     const ray = new THREE.Raycaster(tower.localToWorld(new THREE.Vector3(0, 700, 0)), new THREE.Vector3(0, -1, 0));
@@ -76,6 +117,18 @@ describe('Shanghai geographic asset and river cruise', () => {
       const mesh = root.children.at(-1) as THREE.Mesh;
       mesh.geometry.computeBoundingBox();
       expect(mesh.geometry.boundingBox!.max.x - mesh.geometry.boundingBox!.min.x).toBe(width);
+      root.traverse(o => { if (o instanceof THREE.Mesh) { o.geometry.dispose(); (o.material as THREE.Material).dispose(); } });
+    }
+  });
+
+  it('keeps road light spacing continuous through bends and excludes narrow paths', () => {
+    for (const [width, lit] of [[8, true], [3, false]] as const) {
+      const root = createShanghaiRoads([{ kind: 'residential', width, bridge: false, points: [[0, 0], [34, 0], [34, 0], [34, 68]] }], () => new THREE.MeshStandardMaterial());
+      const geometry = (root.children[0] as THREE.Mesh).geometry;
+      const position = geometry.getAttribute('position'), uv = geometry.getAttribute('uv');
+      expect(position.count).toBe(12); expect(uv.count).toBe(position.count);
+      expect(Array.from({ length: uv.count }, (_, i) => uv.getX(i))).toEqual(lit ? [0, 0, 1, 0, 1, 1, 1, 1, 3, 1, 3, 3] : Array(12).fill(-1000));
+      expect(Array.from({ length: uv.count }, (_, i) => uv.getY(i))).toEqual([-1, 1, 1, -1, 1, -1, -1, 1, 1, -1, 1, -1]);
       root.traverse(o => { if (o instanceof THREE.Mesh) { o.geometry.dispose(); (o.material as THREE.Material).dispose(); } });
     }
   });

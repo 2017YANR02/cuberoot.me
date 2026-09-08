@@ -15,6 +15,12 @@ export function sceneDaylight(timeOfDay: string) {
     day: THREE.MathUtils.smoothstep(elevation, -.12, .12), sun: THREE.MathUtils.smoothstep(elevation, 0, .18) };
 }
 
+// One linear-radiance horizon for city fog, sky and the reflection probe. At
+// sunset the old 50% daylight fog sat next to an already-dark atmosphere LUT.
+export function cityHorizon(day: number, cloud: number, sand = false) {
+  return new THREE.Color(0x283344).lerp(new THREE.Color(sand ? 0x978267 : cloud > .7 ? 0x869aa9 : 0xadc4d2), day ** 3);
+}
+
 // Bounds: weather never enters layout geometry or picking; roofs shelter interiors,
 // including cutaways. All effects have fixed budgets and own their GPU resources.
 const presets = {
@@ -56,7 +62,7 @@ export class SpaceWeather {
   private rocks: THREE.InstancedMesh | null = null;
   private rainbowSky: THREE.Mesh<THREE.SphereGeometry, THREE.ShaderMaterial> | null = null;
   private uniforms = {
-    uTime: { value: 0 }, uCompany: { value: 0 }, uUrban: { value: 0 }, uWind: { value: 0 },
+    uTime: { value: 0 }, uCompany: { value: 0 }, uUrban: { value: 0 }, uCity: { value: 0 }, uWind: { value: 0 },
     uKind: { value: 0 }, uDensity: { value: 0 }, uSnow: { value: 0 }, uWet: { value: 0 },
     uAnchor: { value: new THREE.Vector3() }, uTint: { value: new THREE.Color() },
   };
@@ -87,6 +93,7 @@ export class SpaceWeather {
     this.uniforms.uTime.value = 0;
     this.uniforms.uKind.value = particle; this.uniforms.uDensity.value = density; this.uniforms.uWind.value = wind;
     this.uniforms.uCompany.value = Number(style === 'company');
+    this.uniforms.uCity.value = Number(city);
     this.uniforms.uUrban.value = Number(!island && !city && (style === 'penthouse' || style === 'cyberpunk'));
     this.uniforms.uSnow.value = kind === 'snow' || kind === 'blizzard' ? 0.88 : kind === 'sleet' ? 0.3 : 0;
     this.uniforms.uWet.value = particle === 1 || particle === 3 || kind === 'sleet' || kind === 'rainbow' ? 1 : 0;
@@ -107,11 +114,12 @@ export class SpaceWeather {
     this.daylight = sceneDaylight(timeOfDay);
     const { elevation, azimuth, day } = this.daylight;
     this.engine.setTime(elevation, azimuth, day);
+    this.engine.sky.shared.uHorizonColor.value.copy(this.lighting().fog.color);
   }
 
   lighting() {
     const [cloud, , , , fog] = presets[this.kind];
-    const fogColor = new THREE.Color(0x17202e).lerp(new THREE.Color(this.kind === 'sandstorm' ? 0x978267 : cloud > 0.8 ? 0x647581 : 0xadc4d2), this.daylight.day);
+    const fogColor = this.uniforms.uCity.value ? cityHorizon(this.daylight.day, cloud, this.kind === 'sandstorm') : new THREE.Color(0x17202e).lerp(new THREE.Color(this.kind === 'sandstorm' ? 0x978267 : cloud > 0.8 ? 0x647581 : 0xadc4d2), this.daylight.day);
     return { sun: Math.max(0.04, 1 - cloud * 0.96), ambient: 1 - cloud * 0.32,
       fog: new THREE.FogExp2(fogColor, Math.max(this.fogScale === .025 ? .000035 : 0, (fog || 0.0008) * this.fogScale)) };
   }
@@ -218,7 +226,7 @@ export class SpaceWeather {
         const compile = material.onBeforeCompile, key = material.customProgramCacheKey();
         material.onBeforeCompile = (shader, renderer) => {
           compile.call(material, shader, renderer);
-          shader.uniforms.uCompany = this.uniforms.uCompany; shader.uniforms.uSnow = this.uniforms.uSnow; shader.uniforms.uWet = this.uniforms.uWet;
+          shader.uniforms.uCompany = this.uniforms.uCompany; shader.uniforms.uSnow = this.uniforms.uSnow; shader.uniforms.uWet = this.uniforms.uWet; shader.uniforms.uCity = this.uniforms.uCity;
           shader.vertexShader = 'varying vec3 vWeatherPosition; varying vec3 vWeatherNormal;\n' + shader.vertexShader;
           shader.vertexShader = shader.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>
             vec4 weatherPosition=vec4(transformed,1.); vec3 weatherNormal=objectNormal;
@@ -226,9 +234,16 @@ export class SpaceWeather {
             weatherPosition=instanceMatrix*weatherPosition; weatherNormal=mat3(instanceMatrix)*weatherNormal;
             #endif
             vWeatherPosition=(modelMatrix*weatherPosition).xyz; vWeatherNormal=normalize(mat3(modelMatrix)*weatherNormal);`);
-          shader.fragmentShader = `${roofShader}\nuniform float uSnow,uWet; varying vec3 vWeatherPosition,vWeatherNormal;\n` + shader.fragmentShader;
+          shader.fragmentShader = `${roofShader}\n${noiseShader}\nuniform float uSnow,uWet,uCity; varying vec3 vWeatherPosition,vWeatherNormal;\n` + shader.fragmentShader;
           shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\nfloat exposed=step(roofAt(vWeatherPosition.xz)-.55,vWeatherPosition.y)*smoothstep(.45,.85,vWeatherNormal.y); diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.86,.92,.95),exposed*uSnow); diffuseColor.rgb*=1.-exposed*uWet*.14;');
-          shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor=mix(roughnessFactor,.16,exposed*uWet); roughnessFactor=mix(roughnessFactor,.88,exposed*uSnow);');
+          shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
+            // Rain darkens porous surfaces but does not turn an entire city into
+            // polished metal. Broad puddle variation stays stable while flying.
+            float puddle=noise(vec3(vWeatherPosition.xz*.012,2.7))*.7+noise(vec3(vWeatherPosition.xz*.037,7.1))*.3;
+            float wetRoughness=mix(.16,mix(.42,.64,puddle),uCity);
+            roughnessFactor=mix(roughnessFactor,min(roughnessFactor,wetRoughness),exposed*uWet);
+            roughnessFactor=mix(roughnessFactor,.88,exposed*uSnow);
+          `);
         };
         material.customProgramCacheKey = () => key + '-space-weather'; material.needsUpdate = true;
       }

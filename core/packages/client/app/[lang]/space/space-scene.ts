@@ -404,7 +404,7 @@ export class SpaceScene {
         this.shadowDirty = true;
       }
       const animateWeather = this.weather.update(time, this.camera, this.weatherMotion && !this.reducedMotion.matches);
-      if (this.room?.style !== 'company' && this.weather.environment) this.scene.environment = this.weather.environment;
+      if ((this.room?.style !== 'company' || this.city) && this.weather.environment) this.scene.environment = this.weather.environment;
       // Weather changes don't move the building or cubes; retain their shadow maps.
       this.renderer.shadowMap.needsUpdate = this.shadowDirty;
       this.shadowDirty = false;
@@ -583,7 +583,13 @@ export class SpaceScene {
       this.weather.setTime(timeOfDay);
       const daylight = this.weather.daylight;
       this.scene.background = null;
-      const light = this.weather.lighting(), company = style === 'company';
+      const light = this.weather.lighting(), company = style === 'company' && environment !== 'shanghai';
+      const city = environment === 'shanghai';
+      // City photometry must not inherit the selected villa's interior exposure.
+      this.renderer.toneMappingExposure = city ? THREE.MathUtils.lerp(1.08, .92, daylight.day) : style === 'cyberpunk' ? .85 : .92;
+      this.bloom.strength = city ? THREE.MathUtils.lerp(.18, .06, daylight.day) : style === 'cyberpunk' ? .18 : .04;
+      this.bloom.radius = city ? .55 : .65;
+      this.bloom.threshold = city ? 1.2 : 1.1;
       this.scene.environment = company ? this.environment.texture : this.weather.environment ?? this.environment.texture;
       this.scene.environmentIntensity = company ? 0.25 : THREE.MathUtils.lerp(.45, .8, daylight.day);
       this.scene.environmentRotation.y = 0;
@@ -591,8 +597,8 @@ export class SpaceScene {
       this.sun.intensity = (company ? .12 : 2.2) * light.sun * daylight.sun;
       this.sun.color.setHex(0xffb66e).lerp(new THREE.Color(0xffead4), daylight.sun);
       this.hemisphere.color.setHex(environment === 'shanghai' ? 0xe2e8e6 : 0xcbdfff);
-      this.hemisphere.intensity = (company ? .16 : environment === 'shanghai' ? THREE.MathUtils.lerp(.24, .85, daylight.day) : THREE.MathUtils.lerp(.08, .28, daylight.day)) * light.ambient;
-      this.fill.intensity = THREE.MathUtils.lerp(.035, environment === 'shanghai' ? .22 : .12, daylight.day) * light.ambient;
+      this.hemisphere.intensity = (company ? .16 : city ? THREE.MathUtils.lerp(.25, .85, daylight.day ** 2) : THREE.MathUtils.lerp(.08, .28, daylight.day)) * light.ambient;
+      this.fill.intensity = THREE.MathUtils.lerp(city ? .025 : .035, city ? .22 : .12, city ? daylight.day ** 2 : daylight.day) * light.ambient;
       this.positionSun();
     }
     this.city?.setWeather(weather, 1 - this.weather.daylight.day, this.weather.daylight.direction, this.riverColor, timeOfDay);

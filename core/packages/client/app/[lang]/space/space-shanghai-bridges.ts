@@ -193,15 +193,17 @@ export function createShanghaiBridges(material: MaterialFactory) {
 export function createShanghaiRoads(roads: ShanghaiRoad[], material: MaterialFactory) {
   const g = new CityGeometry(), elevations = shanghaiRoadElevations(roads);
   g.group.name = 'Shanghai roads and graded approaches';
-  const asphalt = shanghaiStreetMaterial(material, false), concrete = material(0xafafa3, 0, .82), steel = material(0xb3b8b0, .25, .6);
+  const asphalt = shanghaiStreetMaterial(material, false, true), concrete = material(0xafafa3, 0, .82), steel = material(0xb3b8b0, .25, .6);
   const paving = shanghaiStreetMaterial(material, true);
   // OSM crossings overlap the road in plan. Asphalt must win their coincident
   // depth; paint is supplied separately by the detailed Bund streetscape.
   paving.polygonOffset = true; paving.polygonOffsetFactor = 1; paving.polygonOffsetUnits = 2;
   const positions: number[] = [], walkPositions: number[] = [], sidePositions: number[] = [];
+  const roadUV: number[] = [];
   roads.forEach((r, index) => {
     const surfacePositions = isShanghaiWalkway(r) ? walkPositions : positions;
     let pierDistance = 0;
+    let along = 0;
     for (let i = 1; i < r.points.length; i++) {
       const a = r.points[i - 1], b = r.points[i], dx = b[0] - a[0], dz = b[1] - a[1], len = Math.hypot(dx, dz);
       if (len < .01) continue;
@@ -213,6 +215,11 @@ export function createShanghaiRoads(roads: ShanghaiRoad[], material: MaterialFac
         if (r.bridge && roadBridgeAt(r, [(ax + bx) / 2, (az + bz) / 2])) continue;
         const ay = THREE.MathUtils.lerp(elevations[index][i - 1], elevations[index][i], t0), by = THREE.MathUtils.lerp(elevations[index][i - 1], elevations[index][i], t1);
         surfacePositions.push(ax - nx, ay, az - nz, ax + nx, ay, az + nz, bx + nx, by, bz + nz, ax - nx, ay, az - nz, bx + nx, by, bz + nz, bx - nx, by, bz - nz);
+        if (!isShanghaiWalkway(r)) {
+          const lit = ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'residential', 'unclassified'].includes(r.kind ?? '') && width >= 5;
+          const start = lit ? (along + len * t0) / 34 : -1000, end = lit ? (along + len * t1) / 34 : -1000;
+          roadUV.push(start, -1, start, 1, end, 1, start, -1, end, 1, end, -1);
+        }
         if (!r.bridge || Math.min(ay, by) < 2) continue;
         // Detailed supports are limited to the bridge approaches, not every city viaduct.
         const detailed = Object.values(SHANGHAI_BRIDGES).some(b => Math.hypot(ax - b.x, az - b.z) < (b.length > 200 ? 1050 : 85));
@@ -229,13 +236,14 @@ export function createShanghaiRoads(roads: ShanghaiRoad[], material: MaterialFac
         pierDistance += len / steps;
         if (pierDistance >= 32) { pierDistance %= 32; g.box([2.3, ay - 1.6, 2.3], [ax, (ay - 1.6) / 2, az], concrete); }
       }
+      along += len;
     }
   });
-  const surface = (vertices: number[], m: THREE.Material) => {
+  const surface = (vertices: number[], m: THREE.Material, uv?: number[]) => {
     if (!vertices.length) return;
     const geom = new THREE.BufferGeometry(); geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)); geom.computeVertexNormals();
     // Match the primitive batch attributes before merging.
-    geom.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(vertices.length / 3 * 2), 2)); g.add(geom, m);
+    geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv ?? new Float32Array(vertices.length / 3 * 2), 2)); g.add(geom, m);
   };
-  surface(positions, asphalt); surface(walkPositions, paving); surface(sidePositions, concrete); return g.finish();
+  surface(positions, asphalt, roadUV); surface(walkPositions, paving); surface(sidePositions, concrete); return g.finish();
 }
