@@ -331,7 +331,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
         size={size}
         mount={mount}
         onReady={() => setReady(true)}
-        onResetView={resetView}
+        onResetView={controlMode === 'none' ? resetView : undefined}
         busyLabel={t('正在加载魔方', 'Loading the cube')}
       >
         {puzzle === 'clock' && (
@@ -349,6 +349,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
           mode="replay"
           count={moves.length}
           onReplay={replay}
+          onResetView={resetView}
         />
       ) : controlMode === 'full' ? (
         <AlgPlaybackControls
@@ -359,6 +360,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
           onStepBack={stepBack}
           onTogglePlay={togglePlayback}
           onStepForward={stepForward}
+          onResetView={resetView}
         />
       ) : null}
     </div>

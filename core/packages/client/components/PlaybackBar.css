@@ -72,3 +72,9 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* Keep all six controls together in compact 240px cube previews. */
+.playback-bar-controls:has(.playback-bar-reset-view) .playback-bar-btn {
+  min-width: 30px;
+  padding-inline: 6px;
+}
