@@ -173,7 +173,7 @@ export default function DeskPetGallery({ lang, onClose }: { lang: 'zh' | 'en'; o
         </button>
         <h2 className="deskpet-gallery-title" id="deskpet-gallery-title">{tr({ zh: '桌宠动画图鉴', en: 'Desk-pet Animations' })}</h2>
         <p className="deskpet-gallery-sub">
-          {tr({ zh: '30 个螃蟹小剧场，点选预览；打开桌宠「随机」可自动播放。', en: '30 Clawd stories. Select one to preview, or turn on Random in the pet toolbar for automatic playback.' })}
+          {tr({ zh: '点选动画预览；打开桌宠「随机」可自动播放。', en: 'Select an animation to preview, or turn on Random in the pet toolbar for automatic playback.' })}
         </p>
         {scene ? <>
           <div className="deskpet-story-controls"><button type="button" onClick={() => setSelected(null)}><ArrowLeft size={15} />{tr({ zh: '所有动画', en: 'All animations' })}</button></div>
@@ -207,11 +207,11 @@ export default function DeskPetGallery({ lang, onClose }: { lang: 'zh' | 'en'; o
                 const zoom = g.scale
                   ? { transform: `scale(${g.scale})`, transformOrigin: g.scaleOrigin || 'center' }
                   : undefined;
-                const src = g.base + a.file + (g.v ? `?v=${g.v}` : '');
+                const src = a.src ?? g.base + a.file + (g.v ? `?v=${g.v}` : '');
                 if (a.state) return (
                   <button type="button" className="deskpet-gallery-tile" key={a.file}
                     onClick={() => setSelected(a.state!)} aria-label={tr(a)}>
-                    <figure><div className="deskpet-gallery-media"><img src={src} alt="" loading="lazy" /></div><figcaption>{tr(a)}</figcaption></figure>
+                    <figure><div className="deskpet-gallery-media"><img src={src} alt="" loading="lazy" style={zoom} /></div><figcaption>{tr(a)}</figcaption></figure>
                   </button>
                 );
                 return (

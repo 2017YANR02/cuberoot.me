@@ -306,7 +306,7 @@ export default function DeskPetSearch({
             </button>
           </>
         )}
-        <button type="button" className={`icon-only${randomMode ? ' is-active' : ''}`} onClick={onToggleRandom}
+        <button type="button" className="icon-only" aria-pressed={randomMode} onClick={onToggleRandom}
           title={randomMode ? t('动画:随机', 'Animation: Random') : t('动画:默认', 'Animation: Default')}>
           <Shuffle size={16} />
         </button>

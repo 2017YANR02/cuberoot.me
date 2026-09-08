@@ -4,13 +4,14 @@
 // so states the runtime state-machine doesn't drive yet still preview here.
 
 import { CLAWD_AVATAR_PRESETS } from '@cuberoot/shared/account-avatar';
-import { PLAYTIME_BASE, PLAYTIME_SCENES, PLAYTIME_VERSION } from './deskpet-playtime';
+import { PLAYTIME_SCENES } from './deskpet-playtime';
 
 export interface PetAnim {
   file: string;
   zh: string;
   en: string;
   state?: string;
+  src?: string;
 }
 
 export interface PetGalleryGroup {
@@ -37,10 +38,6 @@ export interface PetGalleryGroup {
 }
 
 export const PET_GALLERY: PetGalleryGroup[] = [
-  {
-    id: 'playtime', zh: '螃蟹小剧场', en: 'Clawd Playtime', base: PLAYTIME_BASE, v: PLAYTIME_VERSION,
-    anims: PLAYTIME_SCENES,
-  },
   {
     id: 'cubing', zh: '魔方秀 Cube Show', en: 'Cube Show', base: '/deskpet/cubing/', v: '3', scale: 1.85, scaleOrigin: 'center 82%',
     anims: [
@@ -148,7 +145,10 @@ export const PET_GALLERY: PetGalleryGroup[] = [
   },
   {
     id: 'clawd', zh: '螃蟹 Clawd', en: 'Clawd', base: '/deskpet/', scale: 1.85, scaleOrigin: 'center 82%',
-    anims: CLAWD_AVATAR_PRESETS.map(({ file, zh, en }) => ({ file, zh, en })),
+    anims: [
+      ...CLAWD_AVATAR_PRESETS.map(({ file, zh, en }) => ({ file, zh, en })),
+      ...PLAYTIME_SCENES,
+    ],
   },
   {
     id: 'calico', zh: '三花猫 Calico', en: 'Calico', base: '/deskpet/calico/',
