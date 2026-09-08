@@ -5,6 +5,7 @@ import { ACHIEVEMENT_TITLES, RECORD_ACHIEVEMENT_TIERS } from '@/components/perso
 import { AchievementBadge } from '@/components/persons/sections/AchievementBadge';
 import { useT } from '@/hooks/useT';
 import './achievements.css';
+import { EXPLORER_ACHIEVEMENTS, type ExplorerKind } from '@/lib/person-achievements';
 
 export default function AchievementsPage() {
   const t = useT();
@@ -70,6 +71,20 @@ export default function AchievementsPage() {
         <p>{t('纪录徽章按项目和 WR／CR／NR 分别累计，只展示最高等级，角标为实际次数。单次和平均分别计数，包含追平；按成绩的官方纪录标记分类，WR 不重复计入 CR 或 NR。', 'Record badges count each event and WR/CR/NR category separately. Only the highest tier is shown, with the actual count in the corner. Singles and averages count separately, including ties. Official record markers determine the category; WR does not also count as CR or NR.')}</p>
       </header>
       <div className="wca-achievements-catalog">
+        {(Object.keys(EXPLORER_ACHIEVEMENTS) as ExplorerKind[]).map(kind => {
+          const entry = EXPLORER_ACHIEVEMENTS[kind];
+          const description = t(entry.description.zh, entry.description.en);
+          return <section className="wca-achievements-entry" key={kind}>
+            <AchievementBadge kind={kind} description={description} />
+            <div><h2>{t(entry.title.zh, entry.title.en)}</h2><p>{description}</p>
+              <AppLink href={`/wca/${entry.stat}`} prefetch={false}>{t('查看相关统计', 'View related statistics')}</AppLink>
+            </div>
+            <div className="wca-achievements-tiers">{(kind === 'worldPodium' ? [1, 2, 3] : [...entry.tiers]).map(level => <figure key={level}>
+              <AchievementBadge kind={kind} description={description} achievement={{ kind, count: level, tier: kind === 'worldPodium' ? 1 : level, place: kind === 'worldPodium' ? level : undefined, record: ['storm', 'constellation', 'monument'].includes(kind) ? 'WR' : undefined, evidence: [] }} />
+              <figcaption>{kind === 'worldPodium' ? t(['金牌', '银牌', '铜牌'][level - 1], ['Gold', 'Silver', 'Bronze'][level - 1]) : level}</figcaption>
+            </figure>)}</div>
+          </section>;
+        })}
         {badges.map(badge => (
           <section className="wca-achievements-entry" key={badge.kind}>
             <AchievementBadge kind={badge.kind} description={badge.description}>
