@@ -1,0 +1,146 @@
+// Accepted bubblegum choreography, kept intact as the first story.
+export const bubblegum = `<svg class="cb-stage" xmlns="http://www.w3.org/2000/svg" viewBox="-13 -22 41 42" data-duration="8" role="img" aria-labelledby="cb-title cb-description">
+<style>
+    { width:100%; }
+
+    .cb-body { transform-origin:7.5px 15px; animation:cb-body 8s infinite; }
+    .cb-shadow { transform-origin:7.5px 15.5px; animation:cb-shadow 8s infinite; }
+    .cb-left { transform-origin:2px 10px; animation:cb-left 8s infinite; }
+    .cb-right { transform-origin:13px 10px; animation:cb-right 8s infinite; }
+    .cb-eyes { transform-origin:7.5px 9px; animation:cb-eyes 8s infinite; }
+    .cb-mouth { transform-origin:7.5px 11px; animation:cb-mouth 8s infinite; }
+    .cb-bubble { animation:cb-inflate 8s infinite; }
+    .cb-splat { opacity:0; transform-origin:7.5px 12px; animation:cb-splat 8s infinite; }
+    .cb-peek-left { opacity:0; animation:cb-peek-left 8s infinite; }
+    .cb-peek-right { opacity:0; animation:cb-peek-right 8s infinite; }
+    .cb-fragment { opacity:0; animation:cb-fragment 8s infinite; }
+    .cb-burst { opacity:0; transform-origin:7.5px 2px; animation:cb-burst 8s infinite; }
+    .cb-blush { opacity:0; animation:cb-blush 8s infinite; }
+    @keyframes cb-body {
+      0%,15%,96%,100% { transform:translateY(0) scale(1,1); }
+      3%,9% { transform:translateY(.25px) scale(1.015,.98); }
+      6%,12% { transform:translateY(0) scale(.99,1.01); }
+      20% { transform:scale(1.06,.94); }
+      28%,38%,48% { transform:translateY(-.15px) scale(.97,1.02); }
+      33%,43%,53% { transform:translateY(.15px) scale(1.025,.975); }
+      59%,61.9% { transform:translateY(.3px) scale(1.04,.94); }
+      62.5% { transform:translateY(-1.7px) scale(.92,1.12); }
+      66% { transform:translateY(.25px) scale(1.13,.84); }
+      69% { transform:scale(.97,1.04); }
+      72%,83% { transform:scale(1,1); }
+      87% { transform:rotate(-5deg); }
+      92% { transform:rotate(3deg); }
+    }
+    @keyframes cb-shadow {
+      0%,61%,72%,100% { transform:scaleX(1); opacity:.16; }
+      63% { transform:scaleX(.7); opacity:.09; }
+      66% { transform:scaleX(1.2); opacity:.22; }
+    }
+    @keyframes cb-left {
+      0%,16%,96%,100% { transform:rotate(0deg); }
+      22%,60% { transform:rotate(-27deg); }
+      63%,67% { transform:rotate(65deg); }
+      73%,82% { transform:rotate(8deg); }
+      88% { transform:translate(2.5px,-1px) rotate(-20deg); }
+      92% { transform:translate(1px,1px) rotate(-45deg); }
+    }
+    @keyframes cb-right {
+      0%,16%,96%,100% { transform:rotate(0deg); }
+      22%,60% { transform:rotate(27deg); }
+      63%,67% { transform:rotate(-65deg); }
+      73%,82% { transform:rotate(-8deg); }
+      88% { transform:translate(-2.5px,-1px) rotate(20deg); }
+      92% { transform:translate(-1px,1px) rotate(45deg); }
+    }
+    @keyframes cb-eyes {
+      0%,5%,10%,19%,94%,100% { transform:translate(0,0) scaleY(1); }
+      7% { transform:scaleY(.12); }
+      24%,60% { transform:translate(0,-.5px) scaleY(.8); }
+      62%,68% { transform:scaleY(.15); }
+      73%,79% { transform:translate(.55px,0); }
+      83%,89% { transform:translate(-.4px,0); }
+    }
+    @keyframes cb-mouth {
+      0%,3%,9%,15% { transform:scale(1,.4); opacity:1; }
+      6%,12%,20%,60% { transform:scale(.6,1); opacity:1; }
+      62%,93% { opacity:0; }
+      95%,100% { transform:scale(1,.35); opacity:1; }
+    }
+    @keyframes cb-inflate {
+      0%,17% { transform:translateY(0) scale(0); opacity:0; }
+      19% { transform:translateY(-.6px) scale(.09); opacity:1; }
+      27% { transform:translateY(-2px) scale(.24,.25); }
+      32% { transform:translateY(-2.8px) scale(.33,.35); }
+      37% { transform:translateY(-3.6px) scale(.44,.43); }
+      42% { transform:translateY(-4.7px) scale(.56,.55); }
+      47% { transform:translateY(-5.8px) scale(.67,.68); }
+      52% { transform:translateY(-7px) scale(.82,.81); }
+      57% { transform:translateY(-8px) scale(.95,.93); }
+      59% { transform:translateY(-8px) scale(.99,.91); }
+      60% { transform:translateY(-8.3px) scale(.94,.98); }
+      61.9% { transform:translateY(-8.3px) scale(1.03,.98); opacity:1; }
+      62%,100% { transform:translateY(-8.3px) scale(1.08); opacity:0; }
+    }
+    @keyframes cb-splat {
+      0%,61.9% { opacity:0; transform:scale(.5); }
+      62% { opacity:1; transform:scale(1.15,.8); }
+      65%,83% { opacity:1; transform:scale(1,1); }
+      87% { opacity:1; transform:translateY(.5px) scale(1.07,.9); }
+      91% { opacity:1; transform:translateY(2px) scale(.6,.5); }
+      94%,100% { opacity:0; transform:translateY(3px) scale(.2,.2); }
+    }
+    @keyframes cb-peek-left { 0%,71% { opacity:0; } 72%,85% { opacity:1; } 88%,100% { opacity:0; } }
+    @keyframes cb-peek-right { 0%,76% { opacity:0; } 77%,85% { opacity:1; } 88%,100% { opacity:0; } }
+    @keyframes cb-fragment {
+      0%,61.9% { opacity:0; transform:translate(0,0); }
+      62% { opacity:1; transform:translate(0,0); }
+      68% { opacity:1; transform:translate(var(--cb-dx),var(--cb-dy)) rotate(65deg); }
+      73%,100% { opacity:0; transform:translate(var(--cb-dx),calc(var(--cb-dy) + 5px)) rotate(110deg); }
+    }
+    @keyframes cb-burst {
+      0%,61.9% { opacity:0; transform:scale(.7); }
+      62%,63% { opacity:1; transform:scale(1); }
+      65%,100% { opacity:0; transform:scale(1.2); }
+    }
+    @keyframes cb-blush { 0%,78% { opacity:0; } 82%,94% { opacity:.7; } 98%,100% { opacity:0; } }
+
+@media(prefers-reduced-motion:reduce){.cb-stage g,.cb-stage rect{animation-play-state:paused!important;animation-delay:-6.32s!important}}</style>
+    <title id="cb-title">Clawd 吹泡泡糖</title>
+    <desc id="cb-description">小螃蟹把粉色泡泡越吹越大，泡泡突然爆掉糊在脸上，它先后露出两只眼睛，害羞地把糖扒下来。八秒循环动画。</desc>
+    <rect class="cb-shadow" x="2" y="15.5" width="11" height=".8" fill="currentColor"/>
+    <g class="cb-body">
+      <!-- Preserve the existing Clawd silhouette and character colors. -->
+      <g fill="#DE886D">
+        <rect x="3" y="13" width="1" height="2"/><rect x="5" y="13" width="1" height="2"/>
+        <rect x="9" y="13" width="1" height="2"/><rect x="11" y="13" width="1" height="2"/>
+        <rect x="2" y="6" width="11" height="7"/>
+        <g class="cb-left"><rect x="0" y="9" width="2" height="2"/></g>
+        <g class="cb-right"><rect x="13" y="9" width="2" height="2"/></g>
+      </g>
+      <g class="cb-eyes" fill="#171717"><rect x="4" y="8" width="1" height="2"/><rect x="10" y="8" width="1" height="2"/></g>
+      <rect class="cb-mouth" x="7" y="10.8" width="1" height="1" fill="#8C4738"/>
+      <g class="cb-blush" fill="#F46485"><rect x="3" y="10.5" width="2" height=".65"/><rect x="10" y="10.5" width="2" height=".65"/></g>
+      <g class="cb-splat">
+        <path fill="#EE73A2" d="M3 6h3V5h3v1h3v1h2v3h-1v3h-2v-1H9v2H7v-2H5v1H3v-3H1V8h2z"/>
+        <path fill="#FF9FC5" d="M4 6h3v1H4zM3 7h1v2H3zM9 7h3v1H9zM6 10h4v1H6z"/>
+        <g class="cb-peek-left"><rect x="3.5" y="7.5" width="2" height="3" fill="#DE886D"/><rect x="4.25" y="8.1" width=".8" height="1.7" fill="#171717"/></g>
+        <g class="cb-peek-right"><rect x="9.5" y="7.5" width="2" height="3" fill="#DE886D"/><rect x="10.25" y="8.1" width=".8" height="1.7" fill="#171717"/></g>
+      </g>
+    </g>
+    <g transform="translate(7.5 10)">
+      <g class="cb-bubble">
+        <path fill="#D95E91" d="M-3-9H3v1H6v2H8v3H9V3H8V6H6V8H3V9H-3V8H-6V6H-8V3H-9V-3H-8V-6H-6V-8H-3z"/>
+        <path fill="#F68DB7" d="M-3-8H3v1H6v2H7v3H8V2H7V5H5V7H2V8H-3V7H-6V5H-7V2H-8V-3H-7V-5H-5V-7H-3z"/>
+        <path fill="#FFACCF" d="M-3-8H2v1H5v2H6v3H7V1H6V3H4V5H0V6H-3V5H-6V2H-7V-3H-6V-5H-4V-7H-3z"/>
+        <path fill="#FFE0EE" d="M-4-6h4v1h-4zM-6-4h2v4h-2z"/>
+        <rect x="4" y="4" width="2" height="1" fill="#FFBEDA"/>
+      </g>
+    </g>
+    <g class="cb-burst" fill="#FFBEDA"><path d="M-5-6h1v3h-1zM19-6h1v3h-1zM6-12h1v3H6zM-7 3h3v1h-3zM20 2h3v1h-3zM17 10h2v1h-2z"/></g>
+    <g fill="#F68DB7">
+      <rect class="cb-fragment" x="0" y="0" width="1.5" height="1" style="--cb-dx:-6px;--cb-dy:-3px"/>
+      <rect class="cb-fragment" x="15" y="0" width="1" height="1.5" style="--cb-dx:6px;--cb-dy:-4px"/>
+      <rect class="cb-fragment" x="5" y="-5" width="1" height="1" style="--cb-dx:-3px;--cb-dy:-5px"/>
+      <rect class="cb-fragment" x="10" y="-5" width="1.5" height="1" style="--cb-dx:4px;--cb-dy:-5px"/>
+    </g>
+  </svg>`;

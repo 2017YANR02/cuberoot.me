@@ -4,6 +4,7 @@
 // so states the runtime state-machine doesn't drive yet still preview here.
 
 import { CLAWD_AVATAR_PRESETS } from '@cuberoot/shared/account-avatar';
+import playtime from '../public/deskpet/playtime/manifest.json';
 
 export interface PetAnim {
   file: string;
@@ -35,6 +36,10 @@ export interface PetGalleryGroup {
 }
 
 export const PET_GALLERY: PetGalleryGroup[] = [
+  {
+    id: 'playtime', zh: '螃蟹小剧场', en: 'Clawd Playtime', base: '/deskpet/playtime/', v: '1',
+    anims: playtime,
+  },
   {
     id: 'cubing', zh: '魔方秀 Cube Show', en: 'Cube Show', base: '/deskpet/cubing/', v: '3', scale: 1.85, scaleOrigin: 'center 82%',
     anims: [

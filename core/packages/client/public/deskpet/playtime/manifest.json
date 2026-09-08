@@ -1,0 +1,272 @@
+[
+  {
+    "file": "01-bubblegum.svg",
+    "zh": "吹泡泡糖",
+    "en": "Bubble trouble",
+    "description": "越吹越大，啪！糊一脸，再偷偷露出眼睛。",
+    "descriptionEn": "Bigger, bigger… POP! Two eyes peek out of the gum.",
+    "duration": 8,
+    "poster": 0.79
+  },
+  {
+    "file": "02-sock-fishing.svg",
+    "zh": "今日大鱼",
+    "en": "Catch of the day",
+    "description": "使出吃奶的劲，钓上来一只袜子。",
+    "descriptionEn": "A mighty tug lands one very unimpressive sock.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "03-skateboard.svg",
+    "zh": "帅不过三秒",
+    "en": "Almost a pro",
+    "description": "起跳转板，落地摇晃，假装一切尽在掌握。",
+    "descriptionEn": "A kickflip, a wobbly landing, and a very deliberate cool pose.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "04-cardboard.svg",
+    "zh": "箱子成精",
+    "en": "Suspicious box",
+    "description": "纸箱悄悄走路，被发现后立刻装死。",
+    "descriptionEn": "The box tiptoes past, then freezes when its eyes are spotted.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "05-soda.svg",
+    "zh": "汽水上头",
+    "en": "Soda hiccup",
+    "description": "猛灌汽水，打出一个把自己罩住的嗝。",
+    "descriptionEn": "One fizzy sip traps the drinker in a giant hiccup bubble.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "06-butterfly.svg",
+    "zh": "头顶有客",
+    "en": "Butterfly guest",
+    "description": "追着蝴蝶转来转去，最后它停在头顶。",
+    "descriptionEn": "Following a butterfly in circles, then trying to look up at the guest.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "07-jetpack.svg",
+    "zh": "点火失败",
+    "en": "Chicken-powered",
+    "description": "认真倒数点火，背包喷出来的却是一只小鸡。",
+    "descriptionEn": "A dramatic launch countdown. The jetpack ejects a chicken.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "08-mini-me.svg",
+    "zh": "分身慢半拍",
+    "en": "Copycat lag",
+    "description": "大螃蟹挥手，小分身总慢半拍，最后抢先跳起来。",
+    "descriptionEn": "The tiny copy lags behind every wave, then jumps ahead.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "09-paper-weights.svg",
+    "zh": "纸片猛男",
+    "en": "Paperweight champion",
+    "description": "举铁憋得满脸通红，风一吹才发现是纸片。",
+    "descriptionEn": "A heroic lift… until a breeze reveals the paper barbell.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "10-star-catch.svg",
+    "zh": "接住流星",
+    "en": "Pocket starlight",
+    "description": "接住一颗流星，捂一捂，胸前亮起小小的光。",
+    "descriptionEn": "Catch a falling star and tuck its warm glow close.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "11-portal.svg",
+    "zh": "门怎么又是我",
+    "en": "Portal problem",
+    "description": "走进右边的门，却从左边掉出来，回头看懵了。",
+    "descriptionEn": "Enter on the right, tumble out on the left, stare in disbelief.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "12-pancake.svg",
+    "zh": "煎饼帽子",
+    "en": "Pancake hat",
+    "description": "一抛一转很专业，一接……接在了脑袋上。",
+    "descriptionEn": "A professional flip. A perfectly unprofessional landing.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "13-popcorn.svg",
+    "zh": "爆米花雪崩",
+    "en": "Popcorn avalanche",
+    "description": "一粒玉米试探着跳起，下一秒爆米花把螃蟹埋了。",
+    "descriptionEn": "One innocent kernel, then a popcorn avalanche.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "14-yarn.svg",
+    "zh": "越理越乱",
+    "en": "Yarn trap",
+    "description": "追毛线球追得很开心，回头发现自己被缠成粽子。",
+    "descriptionEn": "Chase the yarn, then discover the yarn has caught you.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "15-rainboat.svg",
+    "zh": "雨伞变小船",
+    "en": "Umbrella boat",
+    "description": "撑伞躲雨，伞被吹翻，干脆坐进去划船。",
+    "descriptionEn": "The umbrella flips in the rain. Fine: it is a boat now.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "16-invisible-wall.svg",
+    "zh": "空气墙",
+    "en": "Invisible wall",
+    "description": "小心摸到一堵空气墙，绕过去才发现墙也跟着走。",
+    "descriptionEn": "Feel an invisible wall, sidestep it, and find it has followed.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "17-ufo.svg",
+    "zh": "外星人退货",
+    "en": "Alien return policy",
+    "description": "被飞碟吸走，三秒后退回来，头上多了两根天线。",
+    "descriptionEn": "Beamed up, promptly returned, now with complimentary antennae.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "18-balloon.svg",
+    "zh": "气球遛螃蟹",
+    "en": "Balloon walks crab",
+    "description": "本想牵着气球散步，结果被气球牵着飞。",
+    "descriptionEn": "Taking the balloon for a walk turns into the balloon taking charge.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "19-rabbit-hat.svg",
+    "zh": "魔术被反杀",
+    "en": "Rabbit magician",
+    "description": "伸手进帽子抓兔子，兔子却把螃蟹提了起来。",
+    "descriptionEn": "Reaching for a rabbit… which lifts the magician instead.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "20-magnet.svg",
+    "zh": "磁铁不听话",
+    "en": "Magnet mayhem",
+    "description": "想吸回一枚硬币，结果连锅都飞到脸上。",
+    "descriptionEn": "Trying to fetch a coin attracts an entire frying pan.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "21-snowball.svg",
+    "zh": "滚出一个自己",
+    "en": "Snow clone",
+    "description": "认真滚雪球，最后给雪螃蟹点上两只眼睛。",
+    "descriptionEn": "Roll a snowball, then reveal a tiny snow-crab friend.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "22-leaf-parachute.svg",
+    "zh": "树叶降落伞",
+    "en": "Leaf parachute",
+    "description": "拿树叶当降落伞，落地后还要优雅地鞠一躬。",
+    "descriptionEn": "A drifting leaf parachute, a bumpy landing, and a gracious bow.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "23-selfie.svg",
+    "zh": "拍照必眨眼",
+    "en": "Blink and miss it",
+    "description": "摆好姿势，闪光一响就闭眼，照片还慢慢显影。",
+    "descriptionEn": "Perfect pose, perfectly timed blink, an awkward instant photo.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "24-treasure.svg",
+    "zh": "宝箱有脾气",
+    "en": "Chest surprise",
+    "description": "开箱期待大宝贝，弹出来的拳套把小皇冠送上头。",
+    "descriptionEn": "A spring-loaded boxing glove delivers a surprisingly royal reward.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "25-donut.svg",
+    "zh": "甜甜圈救生圈",
+    "en": "Donut dilemma",
+    "description": "呼啦圈摇得起劲，才发现甜甜圈卡在了肚子上。",
+    "descriptionEn": "Hula-hoop triumph becomes a rather sticky waist situation.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "26-origami.svg",
+    "zh": "纸鹤活了",
+    "en": "Paper takes flight",
+    "description": "折好的纸鹤突然活了，叼走头上的小花。",
+    "descriptionEn": "A folded crane comes alive and steals the flower.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "27-drum-solo.svg",
+    "zh": "鼓点炸开花",
+    "en": "Drumroll fireworks",
+    "description": "鼓棒越敲越快，最后一击把音符敲成烟花。",
+    "descriptionEn": "A faster and faster drumroll ends in pixel fireworks.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "28-moon-hammock.svg",
+    "zh": "月亮吊床",
+    "en": "Moon hammock",
+    "description": "拉下月亮当吊床，刚躺好就开始打盹。",
+    "descriptionEn": "Pull the moon down, curl up, and rock yourself to sleep.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "29-pixel-sneeze.svg",
+    "zh": "喷嚏散架",
+    "en": "Pixel sneeze",
+    "description": "一个喷嚏打散成像素，装回去时眼睛还装反了。",
+    "descriptionEn": "Sneeze into pixels, rebuild, then fix the misplaced eyes.",
+    "duration": 8,
+    "poster": 0.65
+  },
+  {
+    "file": "30-rebel-shadow.svg",
+    "zh": "影子先下班",
+    "en": "Shadow has plans",
+    "description": "自己停下了，影子还在跳舞，最后只好跟着它跳。",
+    "descriptionEn": "The crab stops. Its shadow keeps dancing. Better join in.",
+    "duration": 8,
+    "poster": 0.65
+  }
+]
