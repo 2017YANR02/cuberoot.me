@@ -37,6 +37,45 @@ const { applySession, ensureFreshToken, persistAuthItem, useAuthStore, getSessio
 function setLS(ls: FakeLS) { g.localStorage = ls; }
 
 describe('role preview identity isolation', () => {
+  it.each(['success', 'revoke-failure', 'start-failure'] as const)('switches roles with the real credential: %s', async outcome => {
+    const ls = makeLocalStorage(10000);
+    setLS(ls);
+    ls.setItem('cuberoot_jwt', 'real-token');
+    const session = makeLocalStorage(10000);
+    const previous = JSON.stringify({ id: 'previous', role: 'user', token: 'test-token', user: null });
+    session.setItem('cuberoot_role_preview', previous);
+    const reload = vi.fn();
+    vi.stubGlobal('sessionStorage', session);
+    vi.stubGlobal('window', { addEventListener() {}, location: { reload } });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: outcome !== 'revoke-failure' })
+      .mockResolvedValueOnce({ ok: outcome !== 'start-failure', json: async () => ({ id: 'next', role: 'guest', token: '', user: null }) });
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      if (outcome === 'success') {
+        await startRolePreview('guest');
+        expect(JSON.parse(session.getItem('cuberoot_role_preview')!).id).toBe('next');
+        expect(getSessionToken()).toBe('');
+        expect(reload).toHaveBeenCalledTimes(1);
+      } else {
+        await expect(startRolePreview('guest')).rejects.toThrow();
+        // A failed transition never falls back to the real administrator identity.
+        expect(session.getItem('cuberoot_role_preview')).toBe(previous);
+        expect(getSessionToken()).toBe('test-token');
+        expect(reload).not.toHaveBeenCalled();
+      }
+      expect(fetchMock.mock.calls[0][1].method).toBe('DELETE');
+      expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer real-token');
+      expect(fetchMock).toHaveBeenCalledTimes(outcome === 'revoke-failure' ? 1 : 2);
+      if (outcome !== 'revoke-failure') {
+        expect(fetchMock.mock.calls[1][1].method).toBe('POST');
+        expect(fetchMock.mock.calls[1][1].headers.Authorization).toBe('Bearer real-token');
+        expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ role: 'guest' });
+      }
+      expect(ls.getItem('cuberoot_jwt')).toBe('real-token');
+    } finally { vi.unstubAllGlobals(); }
+  });
+
   it('keeps the real login intact, suppresses WCA fallback and restores it on exit', async () => {
     const ls = makeLocalStorage(10000);
     setLS(ls);
