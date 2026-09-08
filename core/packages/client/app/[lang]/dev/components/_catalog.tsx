@@ -1256,11 +1256,19 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'AchievementMedal',
-    import: "import { AchievementMedal } from '@/components/persons/sections/PersonAchievements';",
+    import: "import { AchievementMedal } from '@/components/persons/sections/AchievementMedal';",
     category: 'badge',
     zh: '选手主页与荣誉徽章目录共用的奖章图案。',
     en: 'Shared medal artwork for person profiles and the achievement directory.',
     usage: '<AchievementMedal kind="wr" />',
+  },
+  {
+    name: 'AchievementBadge',
+    import: "import { AchievementBadge } from '@/components/persons/sections/AchievementBadge';",
+    category: 'badge',
+    zh: '彩色荣誉徽章，悬停或点击展开详情，支持键盘与窄屏。',
+    en: 'Colorful achievement badge with hover, tap and keyboard details, clamped to the viewport.',
+    usage: '<AchievementBadge kind="wr" description="World record" />',
   },
   {
     name: 'PersonAchievements',

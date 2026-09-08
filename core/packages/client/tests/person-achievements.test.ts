@@ -3,6 +3,15 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, it, vi } from 'vitest';
 import { GrandSlamBadges } from '@/components/persons/sections/PersonAchievements';
 import type { WcaResultRow } from '@/lib/wca-person-api';
+import type { ReactNode } from 'react';
+
+// Keep eligibility and evidence assertions independent of the portal's closed state.
+// Actual hover, keyboard and touch behavior is exercised in the browser.
+vi.mock('@/components/persons/sections/AchievementBadge', async () => {
+  const { ACHIEVEMENT_TITLES } = await import('@/components/persons/sections/AchievementMedal');
+  return { AchievementBadge: ({ kind, name, children }: { kind: keyof typeof ACHIEVEMENT_TITLES; name?: string; children?: ReactNode }) =>
+    createElement('article', { className: 'wp-achievement', 'data-kind': kind }, `${name ?? ''} ${ACHIEVEMENT_TITLES[kind].en}`, children) };
+});
 
 vi.mock('@/hooks/useT', () => ({ useT: () => (_zh: string, en: string) => en }));
 vi.mock('next/navigation', () => ({ useParams: () => ({ lang: 'en' }) }));
@@ -23,7 +32,7 @@ it('awards historical records per event and level, deduplicating and rejecting i
       result('666', 'WR', null, { live: true }), result('777', 'PR'), result('skewb', null),
     ],
   }));
-  expect((html.match(/<details /g) ?? []).length).toBe(5);
+  expect((html.match(/<article /g) ?? []).length).toBe(5);
   expect(html).toContain('2×2 Historical world record');
   expect(html).toContain('2×2 Historical national record');
   expect(html).toContain('3×3 Historical continental record');
@@ -48,7 +57,7 @@ it('awards only the requested person’s listed events, distinguishes all-gold a
   expect(html).toContain('href="/wca/grand-slam?event=222"');
   expect(html).toContain('href="/wca/grand-slam?event=skewb"');
   expect(html).not.toContain('event=333');
-  expect((html.match(/wp-achievement-medal is-gold/g) ?? []).length).toBe(1);
+  expect((html.match(/data-kind="gold"/g) ?? []).length).toBe(1);
   expect(html).toContain('All-gold Grand Slam');
   expect(render('2017YANR02')).toBe('');
   expect(renderToStaticMarkup(createElement(GrandSlamBadges, { rows: [], wcaId: '2018KHAN28', isZh: false }))).toBe('');
@@ -73,9 +82,9 @@ it('groups world titles and current records, excluding other podiums, retired ev
       '333ft': { single: record(1) },
     },
   }));
-  expect((html.match(/<details /g) ?? []).length).toBe(2);
-  expect(html).toContain('World champion: 2×2, Skewb');
-  expect(html).toContain('Current world record holder: 2×2 Single, 2×2 Average');
+  expect((html.match(/<article /g) ?? []).length).toBe(2);
+  expect(html).toContain('World champion<ul><li>2×2</li><li>Skewb</li>');
+  expect(html).toContain('Current world record holder<ul><li>2×2 Single 1.00</li><li>2×2 Average 1.00</li>');
   expect(html).not.toContain('3×3');
   expect(html).not.toContain('4×4');
   expect(html).not.toContain('5×5');
