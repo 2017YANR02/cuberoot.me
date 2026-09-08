@@ -4,6 +4,13 @@ import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
 import type { RowDataPacket } from 'mysql2';
 
 export class WinnedWeekCount extends GroupedStatistic {
+  private achievementRows: [string, string, number][] = [];
+
+  override async toJson() {
+    const json = await super.toJson();
+    return { ...json, achievementRows: this.achievementRows };
+  }
+
   constructor() {
     super();
     this.title = 'Winned week count';
@@ -48,6 +55,11 @@ export class WinnedWeekCount extends GroupedStatistic {
   }
 
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
+    this.achievementRows = rows.flatMap(r => {
+      const id = String(r['person_link']).match(/\/persons\/([^/)]+)\)/)?.[1];
+      const count = Number(r['winned_weeks']);
+      return id && count >= 10 ? [[id, String(r['event_id']), count] as [string, string, number]] : [];
+    });
     return EVENTS_ENTRIES.map(([eventId, eventName]) => {
       const results = rows
         .filter(r => r['event_id'] === eventId)

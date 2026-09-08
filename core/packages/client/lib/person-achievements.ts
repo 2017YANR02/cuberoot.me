@@ -1,6 +1,7 @@
 import { calculateCompetitionStreak, calculatePersonalRecordStreak } from '@cuberoot/shared/pr-streak';
 import { roundChronologicalOrder } from '@cuberoot/shared/wca-round';
-import { ALL_EVENT_IDS } from './event-constants';
+import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from './event-constants';
+import { decodeMbldFields } from './mbf-average';
 import { CONTINENT_RECORD_ABBR, ISO2_TO_CONTINENT } from './continent';
 import { toWcaEventId } from './wca-events';
 import { wcaResultRowKey, type WcaResultRow, type WcaCompetition, type ChampionshipPodiumRow } from './wca-person-api';
@@ -8,6 +9,21 @@ import { statsUrl } from './stats-base';
 
 // One catalog owns the rules shown in the directory and on earned badges.
 export const EXPLORER_ACHIEVEMENTS = {
+  together: { title: { zh: '并肩登台', en: 'Side by side' }, tiers: [10, 50, 100, 500], stat: 'most_podiums_together', description: { zh: '与同一选手共同登上项目领奖台至少 10／50／100／500 次。', en: 'Share an event podium with the same person at least 10 / 50 / 100 / 500 times.' } },
+  finals: { title: { zh: '决赛常客', en: 'Finals regular' }, tiers: [100, 500, 1000, 2000], stat: 'most_finals', description: { zh: '正式参加至少 100／500／1000／2000 场项目决赛，DNF 计入，DNS 不计。', en: 'Participate in at least 100 / 500 / 1000 / 2000 official event finals. DNF counts; DNS does not.' } },
+  weekly: { title: { zh: '每周之巅', en: 'Weekly summit' }, tiers: [10, 50, 100], stat: 'winned_week_count', description: { zh: '某项目累计至少 10／50／100 周取得全球当周最快单次，含并列，周次按比赛开始日期计算。', en: 'Record an event’s fastest worldwide single in at least 10 / 50 / 100 weeks, including ties. Weeks use competition start dates.' } },
+  sub5: { title: { zh: '五秒连击', en: 'Sub-five streak' }, tiers: [5, 10, 20, 50], stat: 'consecutive_sub_5_average', description: { zh: '三阶连续至少 5／10／20／50 个正式轮次的平均低于 5 秒，DNF、DNS 或无平均会中断。', en: 'Finish at least 5 / 10 / 20 / 50 consecutive official 3×3 rounds with averages under five seconds. DNF, DNS or missing averages break the streak.' } },
+  firstRecord: { title: { zh: '一鸣惊人', en: 'World-class debut record' }, tiers: [1], stat: 'first_r_is_wr', description: { zh: '生涯第一条正式纪录就是 WR；同日先后无法确认时不推断。', en: 'Your first official record is a WR. Ambiguous ordering within the same day is not inferred.' } },
+  worldsBest: { title: { zh: '世锦赛最佳', en: 'Worlds best' }, tiers: [1], stat: 'world_championship_records', description: { zh: '保持某项目世锦赛历史最佳单次或平均，包含追平。', en: 'Hold an event’s best single or average across World Championships, including ties.' } },
+  debutWin: { title: { zh: '初战告捷', en: 'Winning debut' }, tiers: [1], stat: null, description: { zh: '首次正式参加某项目的比赛就获得该项目冠军，DNS 不算参赛。', en: 'Win an event at your first official competition in that event. DNS does not count as participation.' } },
+  blindQuartet: { title: { zh: '盲拧四重奏', en: 'Blindfold quartet' }, tiers: [4], stat: null, description: { zh: '三盲、四盲、五盲和现行多盲均取得正式有效成绩。', en: 'Record successful official results in 3BLD, 4BLD, 5BLD and current multi-blind.' } },
+  championPuzzle: { title: { zh: '冠军拼图', en: 'Champion mosaic' }, tiers: [5, 10, 17], stat: null, description: { zh: '曾在至少 5／10／全部 17 个现行项目夺冠。', en: 'Win at least 5 / 10 / all 17 current events.' } },
+  podiumPuzzle: { title: { zh: '领奖台拼图', en: 'Podium mosaic' }, tiers: [5, 10, 17], stat: null, description: { zh: '曾在至少 5／10／全部 17 个现行项目登上领奖台。', en: 'Reach the podium in at least 5 / 10 / all 17 current events.' } },
+  evergreen: { title: { zh: '常青树', en: 'Evergreen competitor' }, tiers: [5, 10, 15, 20], stat: null, description: { zh: '连续至少 5／10／15／20 个自然年正式参赛。DNF 计入，DNS 不计。', en: 'Compete officially in at least 5 / 10 / 15 / 20 consecutive calendar years. DNF counts; DNS does not.' } },
+  defend: { title: { zh: '卫冕王冠', en: 'Defending crown' }, tiers: [2, 3], stat: null, description: { zh: '同项目连续至少两届实际举行的世锦赛夺冠，缺席或未夺冠会中断。', en: 'Win the same event at two or more consecutive held World Championships. Missing an edition or not winning breaks the streak.' } },
+  medalTrio: { title: { zh: '奖牌三色', en: 'Medal trilogy' }, tiers: [3], stat: null, description: { zh: '同项目在历届世锦赛集齐金、银、铜牌。', en: 'Collect gold, silver and bronze in the same event across World Championships.' } },
+  perfectBlind: { title: { zh: '完美多盲', en: 'Perfect multi-blind' }, tiers: [10, 20, 30], stat: null, description: { zh: '一次现行多盲正式尝试零失误成功至少 10／20／30 个魔方。', en: 'Solve at least 10 / 20 / 30 cubes without a miss in one official current multi-blind attempt.' } },
+  blindRelay: { title: { zh: '盲拧接力', en: 'Blindfold relay' }, tiers: [3], stat: null, description: { zh: '同场正式比赛的三盲、四盲、五盲全部取得有效成绩。', en: 'Record successful 3BLD, 4BLD and 5BLD results at the same official competition.' } },
   traveler: { title: { zh: '环球旅人', en: 'World traveler' }, tiers: [5, 10, 20], stat: 'most_visited_countries', description: { zh: '在 5／10／20 个国家或地区正式参赛。', en: 'Compete officially in 5 / 10 / 20 countries or regions.' } },
   continents: { title: { zh: '洲际足迹', en: 'Continental footprints' }, tiers: [3, 4, 5, 6], stat: 'most_visited_continents', description: { zh: '在 3／4／5／6 个大洲正式参赛。', en: 'Compete officially on 3 / 4 / 5 / 6 continents.' } },
   breakthrough: { title: { zh: '突破不停', en: 'Personal best streak' }, tiers: [5, 10, 20], stat: 'longest_streak_of_personal_records', description: { zh: '连续 5／10／20 场正式比赛取得至少一项 PR，包含追平。', en: 'Set or tie a personal best at 5 / 10 / 20 consecutive official competitions.' } },
@@ -26,7 +42,7 @@ export const EXPLORER_ACHIEVEMENTS = {
   worldPodium: { title: { zh: '世锦赛领奖台', en: 'World Championship podium' }, tiers: [1], stat: 'world_championship_podiums_by_person', description: { zh: '曾获世锦赛项目奖牌，每项目展示历史最好奖牌，包含银牌和铜牌。', en: 'Win a World Championship medal. Each event displays its best historical medal, including silver and bronze.' } },
 } as const;
 export type ExplorerKind = keyof typeof EXPLORER_ACHIEVEMENTS;
-export type AchievementEvidence = { compId?: string; date?: string; endDate?: string; event?: string; value?: number; type?: 'single' | 'average'; text?: string; place?: number };
+export type AchievementEvidence = { compId?: string; date?: string; endDate?: string; event?: string; value?: number; type?: 'single' | 'average'; text?: string; place?: number; personId?: string; personName?: string };
 export type ExplorerAchievement = { kind: ExplorerKind; count: number; tier: number; event?: string; record?: 'WR' | 'CR' | 'NR'; place?: number; evidence: AchievementEvidence[] };
 export function explorerTier(kind: ExplorerKind, count: number) {
   return Number.isSafeInteger(count) && count > 0 ? EXPLORER_ACHIEVEMENTS[kind].tiers.findLast(n => count >= n) : undefined;
@@ -34,7 +50,7 @@ export function explorerTier(kind: ExplorerKind, count: number) {
 function recordLevel(marker?: string | null): 'WR' | 'CR' | 'NR' | undefined {
   return marker === 'WR' || marker === 'NR' ? marker : marker === 'CR' || Object.values(CONTINENT_RECORD_ABBR).includes(marker ?? '') ? 'CR' : undefined;
 }
-export function personalExplorerAchievements(results: WcaResultRow[], comps: WcaCompetition[], country = '', podiums: (Pick<ChampionshipPodiumRow, 'level' | 'place' | 'eventId'> & Partial<ChampionshipPodiumRow>)[] = []): ExplorerAchievement[] {
+export function personalExplorerAchievements(results: WcaResultRow[], comps: WcaCompetition[], country = '', podiums: (Pick<ChampionshipPodiumRow, 'level' | 'place' | 'eventId'> & Partial<ChampionshipPodiumRow>)[] = [], worldEditions: string[] = []): ExplorerAchievement[] {
   const out: ExplorerAchievement[] = [];
   const add = (kind: ExplorerKind, count: number, evidence: AchievementEvidence[], extra: Partial<ExplorerAchievement> = {}) => {
     const tier = explorerTier(kind, count);
@@ -67,6 +83,54 @@ export function personalExplorerAchievements(results: WcaResultRow[], comps: Wca
     add('breakthrough', streak.length, streak.map(compId => ({ compId, date: compMap.get(compId)?.start_date })));
   }
   const finals = rows.filter(r => ['f', 'c'].includes(r.round_type_id) && r.best > 0 && r.pos >= 1 && r.pos <= 3);
+  const participation = rows.filter(r => r.best > 0 || r.best === -1);
+  const enteredFinals = participation.filter(r => ['f', 'c'].includes(r.round_type_id));
+  add('finals', enteredFinals.length, EXPLORER_ACHIEVEMENTS.finals.tiers.flatMap(n => enteredFinals[n - 1] ? [{ ...ev(enteredFinals[n - 1]), text: String(n) }] : []));
+  const activeMedals = finals.filter(r => !CANCELLED_EVENT_IDS.has(r.event_id));
+  for (const kind of ['championPuzzle', 'podiumPuzzle'] as const) {
+    const events = new Map<string, WcaResultRow>();
+    for (const r of activeMedals) if ((kind === 'podiumPuzzle' || r.pos === 1) && !events.has(r.event_id)) events.set(r.event_id, r);
+    add(kind, events.size, [...events.values()].map(ev));
+  }
+  const blindEvents = ['333bf', '444bf', '555bf', '333mbf'];
+  const blindSuccess = blindEvents.flatMap(event => { const r = rows.find(r => r.event_id === event && r.best > 0); return r ? [r] : []; });
+  add('blindQuartet', blindSuccess.length, blindSuccess.map(ev));
+  const blindByComp = new Map<string, Map<string, WcaResultRow>>();
+  for (const r of rows) if (r.best > 0 && blindEvents.slice(0, 3).includes(r.event_id)) {
+    const success = blindByComp.get(r.competition_id) ?? new Map<string, WcaResultRow>();
+    if (!success.has(r.event_id)) success.set(r.event_id, r);
+    blindByComp.set(r.competition_id, success);
+  }
+  const relay = [...blindByComp.values()].find(success => success.size === 3);
+  if (relay) add('blindRelay', 3, [...relay.values()].map(ev));
+  let perfect: { row: WcaResultRow; value: number; count: number } | undefined;
+  for (const r of rows.filter(r => r.event_id === '333mbf')) for (const value of r.attempts) {
+    if (!Number.isSafeInteger(value) || value <= 0 || value >= 1_000_000_000) continue;
+    const decoded = decodeMbldFields(value);
+    const count = 99 - decoded.dd;
+    if (decoded.missed === 0 && decoded.seconds > 0 && decoded.seconds <= 3600 && count >= 2 && count > (perfect?.count ?? 0)) perfect = { row: r, value, count };
+  }
+  if (perfect) add('perfectBlind', perfect.count, [{ ...ev(perfect.row), value: perfect.value, type: 'single' }], { event: '333mbf' });
+  if (completeDates) {
+    const years = [...new Map(participation.map(r => [Number(date(r).slice(0, 4)), r])).entries()].sort((a, b) => a[0] - b[0]);
+    let run: WcaResultRow[] = [], longest: WcaResultRow[] = [], previous = -1;
+    for (const [year, r] of years) { run = year === previous + 1 ? [...run, r] : [r]; previous = year; if (run.length > longest.length) longest = run; }
+    add('evergreen', longest.length, longest.map(ev));
+    let subRun: WcaResultRow[] = [], subBest: WcaResultRow[] = [];
+    for (const r of rows.filter(r => r.event_id === '333')) { subRun = r.average > 0 && r.average < 500 ? [...subRun, r] : []; if (subRun.length > subBest.length) subBest = subRun; }
+    add('sub5', subBest.length, subBest.map(ev), { event: '333' });
+    const marked = rows.filter(r => r.best > 0 && recordLevel(r.regional_single_record) || r.average > 0 && recordLevel(r.regional_average_record));
+    if (marked.length) {
+      const earliest = marked.filter(r => date(r) === date(marked[0]));
+      const markers = earliest.flatMap(r => [[r.best, r.regional_single_record], [r.average, r.regional_average_record]] as const).filter(([value, marker]) => value > 0 && recordLevel(marker));
+      if (markers.every(([, marker]) => marker === 'WR')) add('firstRecord', 1, earliest.map(ev));
+    }
+    for (const event of new Set(participation.map(r => r.event_id))) {
+      const first = participation.find(r => r.event_id === event)!;
+      const win = finals.find(r => r.event_id === event && r.competition_id === first.competition_id && r.pos === 1);
+      if (win) add('debutWin', 1, [ev(win)], { event });
+    }
+  }
   const medals = new Map<string, WcaResultRow[]>();
   for (const r of finals) medals.set(r.competition_id, [...medals.get(r.competition_id) ?? [], r]);
   const bestHaul = [...medals.values()].sort((a, b) => b.length - a.length)[0];
@@ -108,6 +172,16 @@ export function personalExplorerAchievements(results: WcaResultRow[], comps: Wca
     if (out.some(a => a.kind === 'worldPodium' && a.event === event)) continue;
     const world = podiums.filter(p => p.level === 'world' && p.eventId === event && p.place >= 1 && p.place <= 3);
     add('worldPodium', world.length, world.map(p => ({ compId: p.compId, date: p.compDate ?? undefined, event, place: p.place })), { event, place: Math.min(...world.map(p => p.place)) });
+    const colors = new Map(world.map(p => [p.place, p]));
+    add('medalTrio', colors.size, [...colors.values()].map(p => ({ compId: p.compId, date: p.compDate ?? undefined, event, place: p.place })), { event });
+    const wins = new Map(world.filter(p => p.place === 1 && p.compId).map(p => [p.compId!, p]));
+    let run: AchievementEvidence[] = [], longest: AchievementEvidence[] = [];
+    for (const compId of worldEditions) {
+      const p = wins.get(compId);
+      run = p ? [...run, { compId, date: p.compDate ?? undefined, event, place: 1 }] : [];
+      if (run.length > longest.length) longest = run;
+    }
+    add('defend', longest.length, longest, { event });
   }
   for (const record of ['WR', 'CR', 'NR'] as const) {
     const records: AchievementEvidence[] = [];
@@ -124,7 +198,43 @@ export function personalExplorerAchievements(results: WcaResultRow[], comps: Wca
   return out;
 }
 
-export interface AchievementStat { rows?: unknown[][]; sections?: { title: string; rows: unknown[][] }[]; panels?: { id: string; sections?: { title: string; rows: unknown[][] }[] }[] }
+export interface AchievementStat { rows?: unknown[][]; sections?: { title: string; rows: unknown[][] }[]; panels?: { id: string; sections?: { title: string; rows: unknown[][] }[] }[]; achievementRows?: unknown[][]; worldEditions?: { compId: string; date: string; events: string[] }[] }
+
+// These compact rows come from the full calculation, independently of visible top-N tables.
+export function expansionStatAchievements(kind: 'together' | 'weekly' | 'worldsBest', data: AchievementStat, wcaId: string): ExplorerAchievement[] {
+  const out = new Map<string, ExplorerAchievement>();
+  for (const row of data.achievementRows ?? []) {
+    if (kind === 'together') {
+      if (row[0] !== wcaId && row[1] !== wcaId) continue;
+      const count = Number(row[2]), tier = explorerTier(kind, count);
+      if (!tier || row[0] === row[1]) continue;
+      const partner = row[0] === wcaId ? 1 : 0;
+      const personId = String(row[partner]);
+      out.set(personId, { kind, count, tier, evidence: [{ personId, personName: typeof row[partner + 3] === 'string' ? String(row[partner + 3]) : undefined, text: String(count) }] });
+    } else {
+      if (row[0] !== wcaId || !ALL_EVENT_IDS.includes(String(row[1]))) continue;
+      const event = String(row[1]);
+      if (kind === 'weekly') {
+        const count = Number(row[2]), tier = explorerTier(kind, count);
+        if (tier) out.set(event, { kind, count, tier, event, evidence: [{ event, text: String(count) }] });
+      } else {
+        const type = row[2];
+        const value = Number(row[3]);
+        if ((type !== 'single' && type !== 'average') || !Number.isSafeInteger(value) || value <= 0 || type === 'average' && ['333mbf', '333mbo'].includes(event)) continue;
+        const previous = out.get(event);
+        const evidence: AchievementEvidence = { event, type, value, compId: String(row[4]) };
+        if (previous) previous.evidence.push(evidence);
+        else out.set(event, { kind, count: 1, tier: 1, event, evidence: [evidence] });
+      }
+    }
+  }
+  // One badge per family, with every qualifying partner in its history.
+  if (kind === 'together' && out.size) {
+    const all = [...out.values()].sort((a, b) => b.count - a.count);
+    return [{ ...all[0], evidence: all.flatMap(a => a.evidence) }];
+  }
+  return [...out.values()];
+}
 export function statExplorerAchievements(kind: 'sweep' | 'calendar' | 'triplets', data: AchievementStat, wcaId: string): ExplorerAchievement[] {
   const groups = kind === 'calendar' ? data.panels?.find(p => p.id === 'ranking')?.sections ?? [] : data.sections ?? [{ title: '', rows: data.rows ?? [] }];
   const earned = new Map<string, ExplorerAchievement>();
@@ -174,12 +284,30 @@ export function standingRecordAchievements(bundle: RecordHistoryBundle, wcaId: s
 }
 
 // Reuse complete existing feeds, never infer eligibility from truncated top-N lists.
-export async function fetchExplorerAchievements(wcaId: string, markers: string[], signal: AbortSignal): Promise<ExplorerAchievement[]> {
+const achievementFeedCache = new Map<string, { expires: number; data: AchievementStat }>();
+async function fetchAchievementFeed(stat: string, signal: AbortSignal): Promise<AchievementStat> {
+  const cached = achievementFeedCache.get(stat);
+  if (cached && cached.expires > Date.now()) return cached.data;
+  const response = await fetch(statsUrl(`/stats/${stat}.json`), { signal });
+  if (!response.ok) throw new Error(String(response.status));
+  const data = await response.json() as AchievementStat;
+  if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+  achievementFeedCache.set(stat, { expires: Date.now() + 300_000, data });
+  return data;
+}
+export async function fetchExplorerAchievements(wcaId: string, markers: string[], signal: AbortSignal, podiums: (Pick<ChampionshipPodiumRow, 'level' | 'place' | 'eventId'> & Partial<ChampionshipPodiumRow>)[] = []): Promise<ExplorerAchievement[]> {
   const tasks: Promise<ExplorerAchievement[]>[] = (['sweep', 'calendar', 'triplets'] as const).map(async kind => {
-    const response = await fetch(statsUrl(`/stats/${EXPLORER_ACHIEVEMENTS[kind].stat}.json`), { signal });
-    if (!response.ok) throw new Error(String(response.status));
-    return statExplorerAchievements(kind, await response.json(), wcaId);
+    return statExplorerAchievements(kind, await fetchAchievementFeed(EXPLORER_ACHIEVEMENTS[kind].stat, signal), wcaId);
   });
+  for (const kind of ['together', 'weekly', 'worldsBest'] as const) tasks.push((async () => {
+    const data = await fetchAchievementFeed(EXPLORER_ACHIEVEMENTS[kind].stat, signal);
+    const awards = expansionStatAchievements(kind, data, wcaId);
+    if (kind === 'worldsBest' && data.worldEditions) {
+      const editions = [...data.worldEditions].sort((a, b) => a.date.localeCompare(b.date)).map(e => e.compId);
+      awards.push(...personalExplorerAchievements([], [], '', podiums, [...new Set(editions)]).filter(a => a.kind === 'defend'));
+    }
+    return awards;
+  })());
   const regions: Record<string, string> = { WR: 'world', AfR: 'continent/africa', AsR: 'continent/asia', ER: 'continent/europe', NAR: 'continent/northAmerica', OcR: 'continent/oceania', SAR: 'continent/southAmerica' };
   for (const marker of new Set(markers)) if (regions[marker]) tasks.push((async () => {
     const response = await fetch(statsUrl(`/stats/records/history/${regions[marker]}.json`), { signal });
