@@ -10,7 +10,7 @@ const grand_slam: AboutEntry = {
   badgeEn: 'Person',
   introZh: [
     '一个 `(选手, 项目)` 算「大满贯」需要四件事同时成立:在该项目登上**世界锦标赛**(WC)的决赛领奖台、**所在大洲冠军赛**的决赛领奖台、**所在国家锦标赛**的决赛领奖台,并且在职业生涯**至少一次**刷新过该项目的 single 或 average WR。',
-    '门槛高度叠加 — 既要常年保持世界顶级,又要在主场国和大洲都拿到名次,还得有那么一刻是地球最快。`onlyFirst=1` 进一步只留三个领奖台都是金牌(pos=1)的人,这是「全金大满贯」。',
+    '门槛高度叠加 — 既要常年保持世界顶级,又要在主场国和大洲都拿到名次,还得有那么一刻是地球最快。`onlyFirst=1` 进一步只留三个领奖台都是金牌(pos=1)的人,这是「金牌大满贯」。',
   ],
   introEn: [
     'A `(person, event)` qualifies as a "Grand Slam" when **four** things hold at once: a final-round podium at a **World Championship** (WC), a final-round podium at the person\'s **Continental Championship**, a final-round podium at their **National Championship**, and **at least one** WR (single or average) at some point in their career in that event.',
@@ -97,7 +97,7 @@ ORDER BY gs.best_value NULLS LAST;`,
     },
     { id: 'wr_aoxr', titleZh: 'AoXR — 跨轮平均', titleEn: 'AoXR — across-round average', hintZh: '同样靠 WR 列表筛人 — has_wr=TRUE 选手集合的交集', hintEn: 'Also keyed off the WR list — overlaps the has_wr=TRUE cohort'
     },
-    { id: 'grand-slam', toStat: true, titleZh: '直接打开大满贯排名', titleEn: 'Open the Grand Slam table', hintZh: '看实际选手 / 项目切换 / 全金过滤', hintEn: 'Live table + event picker + only-gold toggle'
+    { id: 'grand-slam', toStat: true, titleZh: '直接打开大满贯排名', titleEn: 'Open the Grand Slam table', hintZh: '看实际选手 / 项目切换 / 金牌过滤', hintEn: 'Live table + event picker + only-gold toggle'
     },
   ]
 };

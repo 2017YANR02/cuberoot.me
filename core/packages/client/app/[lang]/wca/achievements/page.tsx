@@ -29,9 +29,9 @@ export default function AchievementsPage() {
     },
     {
       kind: 'gold' as const,
-      description: t('满足大满贯条件，且同一项目在世锦赛、洲际赛、国家赛都获得过冠军。以更亮的金色徽章替代该项目的普通大满贯徽章。“全金大满贯”是本站用于区分这一条件的名称。', 'Meet the Grand Slam conditions with first place in all three championship levels in the same event. A brighter gold medal replaces that event’s regular Grand Slam badge. “All-gold Grand Slam” is CubeRoot’s name for this distinction.'),
+      description: t('满足大满贯条件，且同一项目在世锦赛、洲际赛、国家赛都获得过冠军。以更亮的金色徽章替代该项目的普通大满贯徽章。“金牌大满贯”是本站用于区分这一条件的名称。', 'Meet the Grand Slam conditions with first place in all three championship levels in the same event. A brighter gold medal replaces that event’s regular Grand Slam badge. “Gold Medal Grand Slam” is CubeRoot’s name for this distinction.'),
       href: '/wca/grand-slam?onlyFirst=1',
-      link: t('查看全金大满贯选手', 'View all-gold Grand Slam achievers'),
+      link: t('查看金牌大满贯选手', 'View Gold Medal Grand Slam achievers'),
     },
     {
       kind: 'historicalWR' as const,
