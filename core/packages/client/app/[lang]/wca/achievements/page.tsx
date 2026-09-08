@@ -73,6 +73,26 @@ export default function AchievementsPage() {
       link: t('查看国家纪录，可切换国家', 'View national records; select a country'),
     },
   ];
+  const renderBadge = (badge: (typeof badges)[number]) => (
+    <section className="wca-achievements-entry" key={badge.kind}>
+      <AchievementBadge kind={badge.kind} description={badge.description}>
+        {badge.href && <AppLink href={badge.href} prefetch={false}>{badge.link}</AppLink>}
+      </AchievementBadge>
+      <div>
+        <h2>{t(ACHIEVEMENT_TITLES[badge.kind].zh, ACHIEVEMENT_TITLES[badge.kind].en)}</h2>
+        <p>{badge.description}</p>
+        {badge.href && <AppLink href={badge.href} prefetch={false}>{badge.link}</AppLink>}
+      </div>
+      {badge.kind.startsWith('historical') && <div className="wca-achievements-tiers">
+        {RECORD_ACHIEVEMENT_TIERS.map(tier => <figure key={tier.count}>
+          <AchievementBadge kind={badge.kind} recordCount={tier.count} description={badge.description}>
+            {badge.href && <AppLink href={badge.href} prefetch={false}>{badge.link}</AppLink>}
+          </AchievementBadge>
+          <figcaption>{t(tier.zh, tier.en)}</figcaption>
+        </figure>)}
+      </div>}
+    </section>
+  );
   return (
     <main className="wca-achievements-page">
       <header>
@@ -81,6 +101,7 @@ export default function AchievementsPage() {
         <p>{t('纪录徽章按项目和 WR／CR／NR 分别累计，只展示最高等级，角标为实际次数。单次和平均分别计数，包含追平；按成绩的官方纪录标记分类，WR 不重复计入 CR 或 NR。', 'Record badges count each event and WR/CR/NR category separately. Only the highest tier is shown, with the actual count in the corner. Singles and averages count separately, including ties. Official record markers determine the category; WR does not also count as CR or NR.')}</p>
       </header>
       <div className="wca-achievements-catalog">
+        {badges.filter(badge => badge.kind.endsWith('Member')).map(renderBadge)}
         {(Object.keys(EXPLORER_ACHIEVEMENTS) as ExplorerKind[]).map(kind => {
           const entry = EXPLORER_ACHIEVEMENTS[kind];
           const description = t(entry.description.zh, entry.description.en);
@@ -95,26 +116,7 @@ export default function AchievementsPage() {
             </figure>)}</div>
           </section>;
         })}
-        {badges.map(badge => (
-          <section className="wca-achievements-entry" key={badge.kind}>
-            <AchievementBadge kind={badge.kind} description={badge.description}>
-              {badge.href && <AppLink href={badge.href} prefetch={false}>{badge.link}</AppLink>}
-            </AchievementBadge>
-            <div>
-              <h2>{t(ACHIEVEMENT_TITLES[badge.kind].zh, ACHIEVEMENT_TITLES[badge.kind].en)}</h2>
-              <p>{badge.description}</p>
-              {badge.href && <AppLink href={badge.href} prefetch={false}>{badge.link}</AppLink>}
-            </div>
-            {badge.kind.startsWith('historical') && <div className="wca-achievements-tiers">
-              {RECORD_ACHIEVEMENT_TIERS.map(tier => <figure key={tier.count}>
-                <AchievementBadge kind={badge.kind} recordCount={tier.count} description={badge.description}>
-                  {badge.href && <AppLink href={badge.href} prefetch={false}>{badge.link}</AppLink>}
-                </AchievementBadge>
-                <figcaption>{t(tier.zh, tier.en)}</figcaption>
-              </figure>)}
-            </div>}
-          </section>
-        ))}
+        {badges.filter(badge => !badge.kind.endsWith('Member')).map(renderBadge)}
       </div>
     </main>
   );
