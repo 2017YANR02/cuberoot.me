@@ -1,12 +1,13 @@
 'use client';
 
-// Desk-pet animation gallery — opened from the DeskPetSearch toolbar. Shows every
-// showcase animation per character as a plain <img> grid (so even states the
-// runtime doesn't drive yet still preview). Overlay sits above the search backdrop.
+// Gallery and story player, opened from the existing search toolbar.
 
-import { useEffect } from 'react';
-import { X, Boxes } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { X, Boxes, ArrowLeft, ArrowRight, Play, Pause, RotateCcw } from 'lucide-react';
 import { PET_GALLERY } from '@/lib/deskpet-gallery';
+import { getPlaytimeScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
+import { tr } from '@/i18n/tr';
 
 const CSS = `
 .deskpet-gallery-overlay{position:fixed;inset:0;z-index:100040;display:flex;align-items:center;
@@ -48,34 +49,141 @@ const CSS = `
 .deskpet-gallery-close{position:absolute;top:10px;right:12px;background:transparent;border:0;cursor:pointer;
   color:var(--muted-foreground);padding:6px;border-radius:8px;display:flex;}
 .deskpet-gallery-close:hover{background:var(--accent-soft);color:var(--foreground);}
+.deskpet-gallery-tile{display:block;width:100%;padding:0;border:0;background:transparent;cursor:pointer;color:inherit;font:inherit;}
+.deskpet-gallery-tile:hover figcaption{color:var(--accent);}
+.deskpet-gallery button:focus-visible{outline:2px solid var(--ring);outline-offset:3px;}
+.deskpet-story{max-width:600px;margin:0 auto;}
+.deskpet-story-art{display:block;width:100%;height:min(42svh,350px);color-scheme:normal;pointer-events:none;}
+.deskpet-gallery .deskpet-story h3{font-size:1.2rem;color:var(--foreground);margin:12px 0 8px;}
+.deskpet-story p{font-size:.88rem;line-height:1.6;color:var(--muted-foreground);margin:0 0 12px;}
+.deskpet-story input{width:100%;accent-color:var(--accent);cursor:pointer;}
+.deskpet-story output{display:block;font-size:.75rem;color:var(--muted-foreground);font-variant-numeric:tabular-nums;}
+.deskpet-story-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:14px 0;}
+.deskpet-story-controls button{display:inline-flex;align-items:center;gap:6px;padding:8px 0;border:0;background:transparent;
+  color:var(--foreground);font:inherit;font-size:.84rem;cursor:pointer;white-space:nowrap;}
+.deskpet-story-controls button:hover{color:var(--accent);}
+.deskpet-story-controls button:disabled{opacity:.4;cursor:default;}
+.deskpet-story-controls .deskpet-story-perform{color:var(--accent);font-weight:600;}
 @media (max-width:480px){
   .deskpet-gallery-grid{grid-template-columns:repeat(auto-fill,minmax(92px,1fr));}
+  .deskpet-gallery{padding:20px 14px;}
 }
 `;
 
+function PlaytimePreview({ scene, onStep, onPerform }: {
+  scene: typeof PLAYTIME_SCENES[number]; onStep: (delta: number) => void; onPerform: () => void;
+}) {
+  const animations = useRef<Animation[]>([]);
+  const [paused, setPaused] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [time, setTime] = useState(0);
+  const control = (pause: boolean, at?: number) => {
+    for (const animation of animations.current) {
+      if (at !== undefined) animation.currentTime = at;
+      if (pause) animation.pause(); else animation.play();
+    }
+    if (at !== undefined) setTime(at);
+    setPaused(pause);
+  };
+  useEffect(() => {
+    if (!ready || paused) return;
+    const timer = setInterval(() => {
+      const current = animations.current[0]?.currentTime;
+      if (typeof current === 'number') setTime(current % scene.durationMs);
+    }, 100);
+    return () => clearInterval(timer);
+  }, [ready, paused, scene.durationMs]);
+  return (
+    <div className="deskpet-story">
+      <object
+        className="deskpet-story-art" type="image/svg+xml" data={scene.src} aria-label={tr(scene)} tabIndex={-1}
+        onLoad={(event) => {
+          animations.current = event.currentTarget.contentDocument?.getAnimations() ?? [];
+          if (!animations.current.length) { setFailed(true); return; }
+          for (const animation of animations.current) animation.effect?.updateTiming({ delay: 0 });
+          const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          control(reduced, reduced ? scene.poster * scene.durationMs : 0);
+          setReady(true);
+        }}
+        onError={() => setFailed(true)}
+      />
+      <h3>{tr(scene)}</h3>
+      <p>{tr({ zh: scene.description, en: scene.descriptionEn })}</p>
+      {failed && <p role="status">{tr({ zh: '动画加载失败，请重新打开。', en: 'The animation could not load. Please reopen it.' })}</p>}
+      <input type="range" min={0} max={scene.durationMs} step={10} value={time} disabled={!ready}
+        aria-label={tr({ zh: '动画进度', en: 'Animation progress' })}
+        onChange={(event) => control(true, Number(event.target.value))} />
+      <output>{(time / 1000).toFixed(1)} / {scene.duration.toFixed(1)} s</output>
+      <div className="deskpet-story-controls">
+        <button type="button" onClick={() => onStep(-1)}><ArrowLeft size={15} />{tr({ zh: '上一个', en: 'Previous' })}</button>
+        <button type="button" disabled={!ready} onClick={() => control(!paused)}>
+          {paused ? <Play size={15} /> : <Pause size={15} />}
+          {paused ? tr({ zh: '播放', en: 'Play' }) : tr({ zh: '暂停', en: 'Pause' })}
+        </button>
+        <button type="button" disabled={!ready} onClick={() => control(false, 0)}><RotateCcw size={15} />{tr({ zh: '重播', en: 'Replay' })}</button>
+        <button type="button" onClick={() => onStep(1)}>{tr({ zh: '下一个', en: 'Next' })}<ArrowRight size={15} /></button>
+      </div>
+      <div className="deskpet-story-controls">
+        <button type="button" className="deskpet-story-perform" onClick={onPerform}>
+          <Play size={16} />{tr({ zh: '让螃蟹表演', en: 'Play on the crab' })}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function DeskPetGallery({ lang, onClose }: { lang: 'zh' | 'en'; onClose: () => void }) {
-  const zh = lang === 'zh';
+  const [selected, setSelected] = useState<string | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const scene = getPlaytimeScene(selected);
+  const step = (delta: number) => {
+    const index = PLAYTIME_SCENES.findIndex((item) => item.state === selected);
+    setSelected(PLAYTIME_SCENES[(index + delta + PLAYTIME_SCENES.length) % PLAYTIME_SCENES.length].state);
+  };
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+    const previous = document.activeElement;
+    panelRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault(); e.stopImmediatePropagation();
+        if (selected) setSelected(null); else onClose();
+      } else if (e.key === 'Tab') {
+        const items = Array.from(panelRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled)') ?? []);
+        const target = e.shiftKey ? items.at(-1) : items[0];
+        if ((e.shiftKey && document.activeElement === items[0]) || (!e.shiftKey && document.activeElement === items.at(-1))) {
+          e.preventDefault(); target?.focus();
+        }
+      }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => {
+      window.removeEventListener('keydown', onKey, true);
+      if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
+    };
+  }, [onClose, selected]);
 
-  return (
-    <div className="deskpet-gallery-overlay" onClick={onClose} role="dialog" aria-modal="true">
+  return createPortal(
+    <div className="deskpet-gallery-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="deskpet-gallery-title" lang={lang}>
       <style>{CSS}</style>
-      <div className="deskpet-gallery" onClick={(e) => e.stopPropagation()}>
-        <button className="deskpet-gallery-close" onClick={onClose} aria-label={zh ? '关闭' : 'Close'}>
+      <div className="deskpet-gallery" ref={panelRef} onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="deskpet-gallery-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close' })}>
           <X size={18} />
         </button>
-        <h2 className="deskpet-gallery-title">{zh ? '桌宠动画图鉴' : 'Desk-pet Animations'}</h2>
+        <h2 className="deskpet-gallery-title" id="deskpet-gallery-title">{tr({ zh: '桌宠动画图鉴', en: 'Desk-pet Animations' })}</h2>
         <p className="deskpet-gallery-sub">
-          {zh ? '魔方秀 30 连、全套转动记号演示,加三个形象的全部动画' : '30 cube animations, the full move-notation demo, plus every character animation'}
+          {tr({ zh: '30 个螃蟹小剧场，点选预览；打开桌宠「随机」可自动播放。', en: '30 Clawd stories. Select one to preview, or turn on Random in the pet toolbar for automatic playback.' })}
         </p>
-        {PET_GALLERY.map((g) => (
+        {scene ? <>
+          <div className="deskpet-story-controls"><button type="button" onClick={() => setSelected(null)}><ArrowLeft size={15} />{tr({ zh: '所有动画', en: 'All animations' })}</button></div>
+          <PlaytimePreview key={scene.state} scene={scene} onStep={step} onPerform={() => {
+            onClose();
+            window.dispatchEvent(new CustomEvent('clawd:state', { detail: scene.state }));
+          }} />
+        </> : PET_GALLERY.map((g) => (
           <section key={g.id}>
-            <h3>{zh ? g.zh : g.en}</h3>
+            <h3>{tr(g)}</h3>
             <div className="deskpet-gallery-grid">
               {g.id === 'cubing' && (
                 <button
@@ -88,9 +196,9 @@ export default function DeskPetGallery({ lang, onClose }: { lang: 'zh' | 'en'; o
                 >
                   <Boxes size={26} />
                   <span className="deskpet-gallery-launch-text">
-                    <span className="deskpet-gallery-launch-title">{zh ? 'PLL 表演' : 'PLL Show'}</span>
+                    <span className="deskpet-gallery-launch-title">{tr({ zh: 'PLL 表演', en: 'PLL Show' })}</span>
                     <span className="deskpet-gallery-launch-sub">
-                      {zh ? '点击启动真实 3D 魔方表演' : 'Launch the interactive 3D cube'}
+                      {tr({ zh: '点击启动真实 3D 魔方表演', en: 'Launch the interactive 3D cube' })}
                     </span>
                   </span>
                 </button>
@@ -100,17 +208,23 @@ export default function DeskPetGallery({ lang, onClose }: { lang: 'zh' | 'en'; o
                   ? { transform: `scale(${g.scale})`, transformOrigin: g.scaleOrigin || 'center' }
                   : undefined;
                 const src = g.base + a.file + (g.v ? `?v=${g.v}` : '');
+                if (a.state) return (
+                  <button type="button" className="deskpet-gallery-tile" key={a.file}
+                    onClick={() => setSelected(a.state!)} aria-label={tr(a)}>
+                    <figure><div className="deskpet-gallery-media"><img src={src} alt="" loading="lazy" /></div><figcaption>{tr(a)}</figcaption></figure>
+                  </button>
+                );
                 return (
                   <figure key={a.file}>
                     <div className="deskpet-gallery-media">
                       {g.scripted ? (
                         // script-driven SVG: <object> runs its animation; <img> would stay blank
-                        <object type="image/svg+xml" data={src} aria-label={zh ? a.zh : a.en} style={zoom} />
+                        <object type="image/svg+xml" data={src} aria-label={tr(a)} style={zoom} />
                       ) : (
-                        <img src={src} alt={zh ? a.zh : a.en} loading="lazy" style={zoom} />
+                        <img src={src} alt={tr(a)} loading="lazy" style={zoom} />
                       )}
                     </div>
-                    <figcaption>{zh ? a.zh : a.en}</figcaption>
+                    <figcaption>{tr(a)}</figcaption>
                   </figure>
                 );
               })}
@@ -118,6 +232,6 @@ export default function DeskPetGallery({ lang, onClose }: { lang: 'zh' | 'en'; o
           </section>
         ))}
       </div>
-    </div>
+    </div>, document.body
   );
 }

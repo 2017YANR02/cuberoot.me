@@ -1,8 +1,6 @@
 // Accepted bubblegum choreography, kept intact as the first story.
 export const bubblegum = `<svg class="cb-stage" xmlns="http://www.w3.org/2000/svg" viewBox="-13 -22 41 42" data-duration="8" role="img" aria-labelledby="cb-title cb-description">
 <style>
-    { width:100%; }
-
     .cb-body { transform-origin:7.5px 15px; animation:cb-body 8s infinite; }
     .cb-shadow { transform-origin:7.5px 15.5px; animation:cb-shadow 8s infinite; }
     .cb-left { transform-origin:2px 10px; animation:cb-left 8s infinite; }
@@ -123,8 +121,8 @@ export const bubblegum = `<svg class="cb-stage" xmlns="http://www.w3.org/2000/sv
       <g class="cb-splat">
         <path fill="#EE73A2" d="M3 6h3V5h3v1h3v1h2v3h-1v3h-2v-1H9v2H7v-2H5v1H3v-3H1V8h2z"/>
         <path fill="#FF9FC5" d="M4 6h3v1H4zM3 7h1v2H3zM9 7h3v1H9zM6 10h4v1H6z"/>
-        <g class="cb-peek-left"><rect x="3.5" y="7.5" width="2" height="3" fill="#DE886D"/><rect x="4.25" y="8.1" width=".8" height="1.7" fill="#171717"/></g>
-        <g class="cb-peek-right"><rect x="9.5" y="7.5" width="2" height="3" fill="#DE886D"/><rect x="10.25" y="8.1" width=".8" height="1.7" fill="#171717"/></g>
+        <g class="cb-peek-left"><rect x="3.5" y="7.5" width="2" height="3" fill="#DE886D"/><rect x="4" y="8" width="1" height="2" fill="#171717"/></g>
+        <g class="cb-peek-right"><rect x="9.5" y="7.5" width="2" height="3" fill="#DE886D"/><rect x="10" y="8" width="1" height="2" fill="#171717"/></g>
       </g>
     </g>
     <g transform="translate(7.5 10)">

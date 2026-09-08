@@ -580,7 +580,7 @@
       "command": "node scripts/deskpet-playtime/build-playtime.mjs",
       "outputs": ["core/packages/client/public/deskpet/playtime/**"],
       "verification": ["node scripts/deskpet-playtime/build-playtime.mjs --check", "preview all 30 complete loops in a browser"],
-      "driftPolicy": "Edit choreography sources and regenerate. The manifest is the gallery data source. Bump the gallery cache version when regenerating published assets."
+      "driftPolicy": "Edit choreography sources and regenerate. The manifest drives the gallery and pet runtime. Bump PLAYTIME_VERSION in client/lib/deskpet-playtime.ts when regenerating published assets."
     },
     {
       "id": "mobile.android-assets",
