@@ -5,6 +5,7 @@
 //   (committed: scripts/place-tail-zh.json)。大中华区(CN/HK/MO/TW)不在此,走 cn-region。
 // 重新生成:见 packages/shared/scripts/gen-place-zh.mjs 顶部。
 export const PLACE_CITY_ZH: Record<string, string> = {
+  "GB:cardiff": "加的夫",
   "AR:puertoiguazu": "伊瓜苏港",
   "AR:misiones": "米西奥内斯省",
   "NL:apeldoorn": "阿珀尔多伦",

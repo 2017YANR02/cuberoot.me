@@ -1071,15 +1071,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/lib/alg_case_display.ts",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/lib/alg_case_link.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
