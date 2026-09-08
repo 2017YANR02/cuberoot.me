@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Megaphone, Sparkles, UserCog, Laptop, Globe, Drama } from 'lucide-react';
+import { Megaphone, Sparkles, UserCog, Laptop, Globe, Drama, LogOut } from 'lucide-react';
 import { ensureFreshToken, refreshSessionUser, canTestRoles, getRolePreview, startRolePreview, endRolePreview, useAuthUser, isAdmin, type TestRole } from '@/lib/auth-store';
 import AppLink from './AppLink';
 import { openPageNoticeEditor, pageKeyFromPathname } from '@/lib/page-notices-api';
@@ -128,9 +128,17 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       </div>}
     </>}
     {roleTesting && (preview ? <>
-      <span>{t('测试中：', 'Testing: ')}{items.find(item => item.value === preview.role)?.label}</span>
-      <button type="button" disabled={busy} onClick={() => void run()}>{t('退出测试', 'Exit test')}</button>
-      <small>{t('仅当前标签页，30 分钟有效；业务操作会真实保存。', 'This tab only, valid for 30 minutes. Business changes are real.')}</small>
+      <CompactSelect
+        label={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Drama size={17} aria-hidden />{preview.role === 'user' ? t('普通用户', 'User') : items.find(item => item.value === preview.role)?.label}</span>}
+        ariaLabel={t('测试角色与说明', 'Test role and details')}
+        title={t('正在测试角色', 'Testing role')}
+        value={preview.role}
+        items={items.map(item => ({ ...item, disabled: busy }))}
+        onChange={role => { if (role !== preview.role) void run(role); }}
+        footer={() => <small style={{ display: 'block', maxWidth: 240, margin: '6px 8px', whiteSpace: 'normal', lineHeight: 1.5 }}>{t('仅当前标签页，30 分钟有效；业务操作会真实保存。', 'This tab only, valid for 30 minutes. Business changes are real.')}</small>}
+      />
+      <button type="button" className="admin-tool-action" disabled={busy} onClick={() => void run()}
+        title={t('退出测试', 'Exit test')} aria-label={t('退出测试', 'Exit test')}><LogOut size={17} aria-hidden /></button>
     </> : <CompactSelect label={<Drama size={17} aria-hidden />} title={busy ? t('正在切换…', 'Switching…') : t('角色测试', 'Test role')} ariaLabel={busy ? t('正在切换…', 'Switching…') : t('选择测试角色', 'Choose test role')} items={items.map(item => ({ ...item, disabled: busy }))} onChange={role => void run(role)} />)}
     {error && <span role="alert">{t('切换失败，请重试。', 'Switch failed. Please retry.')}</span>}
   </aside>;
