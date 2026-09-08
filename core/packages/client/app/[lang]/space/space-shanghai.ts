@@ -6,8 +6,9 @@ import { RIVER_COLORS, type RiverColor, type Vec3, type Weather } from './space-
 import { createShanghaiBridges, createShanghaiRoads, type ShanghaiRoad } from './space-shanghai-bridges';
 import { shanghaiShape as shape, type ShanghaiPolygon as Polygon } from './space-shanghai-geometry';
 import { createShanghaiArchitecture, setShanghaiClockTime, SHANGHAI_ARCHITECTURE_IDS } from './space-shanghai-architecture';
-import { createBundStreets } from './space-shanghai-streets';
+import { createBundStreets, createShanghaiQuays } from './space-shanghai-streets';
 import { createShanghaiSupertalls } from './space-shanghai-supertalls';
+import { shanghaiWindowTexture } from './space-shanghai-facades';
 
 type Point = [number, number];
 type Road = ShanghaiRoad;
@@ -70,11 +71,14 @@ export class ShanghaiScene {
   private night = { value: 0 };
   private timeOfDay = '09:00';
   private textures = new Set<THREE.Texture>();
+  private officeWindows = shanghaiWindowTexture(true);
+  private homeWindows = shanghaiWindowTexture(false);
   private materials = new Set<THREE.Material>();
   private batches = new Map<string, { geometries: THREE.BufferGeometry[]; material: THREE.Material }>();
 
   constructor(private narrow: boolean, private changed: () => void) {
     this.root.name = 'Shanghai Huangpu River';
+    this.textures.add(this.officeWindows); this.textures.add(this.homeWindows);
     this.ready = this.load();
   }
 
@@ -95,9 +99,10 @@ export class ShanghaiScene {
     const m = this.material(color, glass ? .58 : .06, glass ? .3 : .83);
     m.onBeforeCompile = shader => {
       shader.uniforms.cityNight = this.night;
-      shader.vertexShader = 'varying vec3 cityPosition,cityNormal; varying vec2 cityUV;\n' + shader.vertexShader;
-      shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\ncityPosition=(modelMatrix*vec4(position,1.)).xyz; cityNormal=normalize(mat3(modelMatrix)*normal); cityUV=uv;');
-      shader.fragmentShader = 'varying vec3 cityPosition,cityNormal; varying vec2 cityUV; uniform float cityNight;\n' + shader.fragmentShader;
+      shader.uniforms.cityWindows = { value: glass ? this.officeWindows : this.homeWindows };
+      shader.vertexShader = 'attribute vec3 buildingData; varying vec3 cityBuilding,cityPosition,cityNormal; varying vec2 cityUV;\n' + shader.vertexShader;
+      shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\ncityPosition=(modelMatrix*vec4(position,1.)).xyz; cityNormal=normalize(mat3(modelMatrix)*normal); cityUV=uv; cityBuilding=buildingData;');
+      shader.fragmentShader = 'varying vec3 cityBuilding,cityPosition,cityNormal; varying vec2 cityUV; uniform float cityNight; uniform sampler2D cityWindows;\n' + shader.fragmentShader;
       shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
         vec2 facadeUV=${tower ? 'cityUV' : 'vec2(abs(cityNormal.x)>.6?cityPosition.z:cityPosition.x,cityPosition.y)'}/vec2(${glass ? '2.8,3.8' : '3.4,3.2'});
         vec2 edge=abs(fract(facadeUV)-.5), aa=fwidth(facadeUV);
@@ -105,13 +110,22 @@ export class ShanghaiScene {
         float windowMask=(1.-smoothstep(.39-aa.x,.39+aa.x,edge.x))*(1.-smoothstep(.36-aa.y,.36+aa.y,edge.y));
         windowMask=mix(.5616,windowMask,resolved)*(1.-smoothstep(.5,.85,abs(cityNormal.y)));
         diffuseColor.rgb*=mix(1.,${glass ? '.66' : '.32'},windowMask);
-        float roomSeed=fract(sin(dot(floor(facadeUV/vec2(3.,1.)),vec2(12.9898,78.233)))*43758.5453);
-        // Filter room groups separately from window frames; fade unresolved lights to avoid glowing solid buildings.
-        float lightResolved=1.-smoothstep(.25,.85,max(aa.x/3.,aa.y));
-        float lit=mix(.06,step(.65,roomSeed),lightResolved);
-        vec3 lampColor=mix(vec3(1.,.64,.32),vec3(.6,.78,1.),step(.85,roomSeed)*resolved);
+        // Each footprint owns a seed, height and base. Offices light up in floor
+        // groups; homes in separate rooms, with one colour temperature per block.
+        // Keep the per-building atlas offset constant across every triangle.
+        float seed=floor(cityBuilding.x+.5), localHeight=max(0.,cityPosition.y-cityBuilding.z);
+        float office=step(65.,cityBuilding.y);
+        float lit=texture2D(cityWindows,(facadeUV+vec2(mod(seed,32.),floor(seed/32.)))/vec2(32.,64.)).r;
+        vec3 lampColor=mix(vec3(1.,.66,.34),vec3(.65,.82,1.),step(.57,fract(seed*.017)) * office);
+        float wall=1.-smoothstep(.5,.85,abs(cityNormal.y));
+        float crownDistance=abs(localHeight-cityBuilding.y+1.2);
+        float crownAA=max(fwidth(localHeight),.2);
+        float crown=(1.-smoothstep(.35,.35+crownAA,crownDistance))*min(1.,1.4/crownAA)*office*step(.72,fract(seed*.031));
       `);
-      shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance+=lampColor*windowMask*lit*cityNight*.35;');
+      shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        float occupancy=mix(.12,1.,smoothstep(.15,.85,fract(seed*.043)));
+        totalEmissiveRadiance+=cityNight*wall*(lampColor*lit*.09*occupancy + vec3(1.,.52,.18)*crown*.9 + vec3(.055,.029,.012)*exp(-localHeight*.14));
+      `);
     };
     m.customProgramCacheKey = () => `shanghai-facade-${glass}-${tower}`;
     return m;
@@ -160,17 +174,24 @@ export class ShanghaiScene {
         if (p.kind === 'building' && p.height! <= p.minHeight!) continue;
         const geometry = p.kind === 'building' ? new THREE.ExtrudeGeometry(shape(p), { depth: p.height! - p.minHeight!, bevelEnabled: false, steps: 1 }) : new THREE.ShapeGeometry(shape(p));
         geometry.rotateX(-Math.PI / 2); geometry.translate(0, p.kind === 'building' ? -.65 + p.minHeight! : -.75, 0);
+        if (p.kind === 'building') {
+          const values = new Float32Array(geometry.attributes.position.count * 3);
+          const seed = [...p.id].reduce((hash, c) => (hash * 31 + c.charCodeAt(0)) % 9973, 0);
+          for (let j = 0; j < values.length; j += 3) values.set([seed, p.height! - p.minHeight!, p.minHeight! - .65], j);
+          geometry.setAttribute('buildingData', new THREE.BufferAttribute(values, 3));
+        }
         const variant = p.kind === 'green' ? 4 : p.height! > 65 ? 2 + i % 2 : i % 2;
         this.batch(`${Math.floor(x / 2000)}:${Math.floor(z / 2000)}:${variant}`, geometry, p.kind === 'green' ? grass : facades[variant]);
         if (i % 700 === 699) { await new Promise(resolve => setTimeout(resolve, 0)); if (this.disposed) return; }
       }
       this.root.add(createShanghaiRoads(data.roads, this.material.bind(this)));
       this.root.add(createBundStreets(data.roads, data.polygons, this.material.bind(this)));
+      this.root.add(createShanghaiQuays(data.polygons, this.material.bind(this)));
       this.flush();
       const normals = await new THREE.TextureLoader().loadAsync('/assets/space/shanghai-v1/waternormals.jpg');
       if (this.disposed) { normals.dispose(); return; }
       this.textures.add(normals);
-      this.makeWater(waters, normals); this.makeLandmarks(facades[3]);
+      this.makeWater(waters, normals); this.makeLandmarks(this.material(0xadb7b6, .58, .3));
       this.root.add(createShanghaiBridges(this.material.bind(this)));
       this.root.add(createShanghaiArchitecture(data.polygons, this.material.bind(this), data.roads));
       this.makeTrees(data.polygons, grass); this.makeBoats();
@@ -189,10 +210,15 @@ export class ShanghaiScene {
     const uniforms = { ...source.uniforms }; delete uniforms.mirrorSampler;
     // Reflector already includes modelMatrix in textureMatrix; Water normally does not.
     const vertexShader = source.vertexShader.replace('mirrorCoord = textureMatrix * mirrorCoord;', 'mirrorCoord = textureMatrix * vec4( position, 1.0 );');
-    this.water = new Reflector(geometry, { textureWidth: this.narrow ? 256 : 512, textureHeight: this.narrow ? 256 : 512, multisample: 0,
-      shader: { name: 'HuangpuWater', uniforms: { ...uniforms, riverSlope: { value: .28 }, riverTint: { value: 0 }, tDiffuse: { value: null }, color: { value: new THREE.Color() } }, vertexShader,
-        fragmentShader: ('uniform float riverSlope, riverTint;\n' + source.fragmentShader).replaceAll('mirrorSampler', 'tDiffuse')
+    this.water = new Reflector(geometry, { textureWidth: this.narrow ? 512 : 1024, textureHeight: this.narrow ? 512 : 1024, multisample: 0,
+      shader: { name: 'HuangpuWater', uniforms: { ...uniforms, riverSlope: { value: .28 }, riverTint: { value: 0 }, riverNight: this.night, tDiffuse: { value: null }, color: { value: new THREE.Color() } }, vertexShader,
+        fragmentShader: ('uniform float riverSlope, riverTint, riverNight;\n' + source.fragmentShader).replaceAll('mirrorSampler', 'tDiffuse')
+          // Retain metre-scale ripples and add a resolved, broader wave scale so
+          // night reflections break up even from the high drone viewpoints.
+          .replace('vec4 noise = getNoise( worldPosition.xz * size );', 'vec4 noise = mix(getNoise(worldPosition.xz*size),getNoise(worldPosition.xz*2.4),.45);')
+          .replace('( 0.001 + 1.0 / distance )', '( 0.004 + 1.0 / distance )')
           .replace('noise.xzy * vec3( 1.5, 1.0, 1.5 )', 'noise.xzy * vec3( riverSlope, 1.0, riverSlope )')
+          .replace('* waterColor;', '* waterColor * mix(1.0, 0.06, riverNight);')
           // Filter diffuse sunlight through the chosen water tint, while leaving
           // surface reflections/specular highlights and the natural preset intact.
           .replace('sunColor * diffuseLight * 0.3', 'sunColor * diffuseLight * mix(vec3(0.3), waterColor * 0.8, riverTint)') } }) as Reflector & { material: THREE.ShaderMaterial };
@@ -214,16 +240,37 @@ export class ShanghaiScene {
   }
 
   private makeLandmarks(silver: THREE.Material) {
-    const concrete = this.material(0xd8d3c2, .1, .65, .065), pearl = this.material(0xc3629a, .55, .34, .45);
-    const coolLight = this.material(0x96c4e0, .25, .4, 1.8);
-    this.root.add(createShanghaiSupertalls(this.material.bind(this)));
+    const concrete = this.material(0xd8d3c2, .1, .65, .065), pearl = this.material(0xc3629a, .55, .34, .008);
+    const compilePearl = pearl.onBeforeCompile;
+    pearl.onBeforeCompile = (shader, renderer) => {
+      compilePearl.call(pearl, shader, renderer);
+      shader.vertexShader = 'varying vec2 pearlUV; varying vec3 pearlViewNormal;\n' + shader.vertexShader;
+      shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\npearlUV=uv; pearlViewNormal=normalize(normalMatrix*normal);');
+      shader.fragmentShader = 'varying vec2 pearlUV; varying vec3 pearlViewNormal;\n' + shader.fragmentShader;
+      shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        vec2 led=pearlUV*vec2(96.,48.); vec2 pixel=max(fwidth(led),vec2(.001));
+        vec2 edge=abs(fract(led)-.5);
+        float dots=(1.-smoothstep(.075,.075+pixel.x,edge.x))*(1.-smoothstep(.075,.075+pixel.y,edge.y));
+        dots=mix(.0225,dots,1.-smoothstep(.15,.55,max(pixel.x,pixel.y)));
+        // Photo reference shows discrete LEDs on a dark shell. Preserve their
+        // integrated energy at distance instead of flooding the whole sphere.
+        float facing=pow(abs(normalize(pearlViewNormal).z),.65);
+        vec3 ledColor=mix(vec3(.035,.22,1.),vec3(.1,.8,.7),smoothstep(.18,.7,pearlUV.y));
+        ledColor=mix(ledColor,vec3(.8,.025,.24),smoothstep(.72,.95,pearlUV.y));
+        totalEmissiveRadiance+=cityNight*ledColor*dots*3.2*facing;
+      `);
+    };
+    pearl.customProgramCacheKey = () => 'oriental-pearl-led';
+    const coolLight = this.material(0x3158ed, .25, .4, 5);
+    this.root.add(createShanghaiSupertalls(this.material.bind(this), this.officeWindows));
     const oriental = new THREE.Group(); oriental.name = landmarks[0].name; oriental.position.set(-365, -.65, 1280); this.root.add(oriental);
     for (let i = 0; i < 3; i++) {
       const a = i * Math.PI * 2 / 3;
       this.beam([Math.cos(a) * 67, 0, Math.sin(a) * 67], [Math.cos(a) * 10, 100, Math.sin(a) * 10], 6, concrete, oriental);
       this.beam([Math.cos(a) * 8, 105, Math.sin(a) * 8], [Math.cos(a) * 8, 350, Math.sin(a) * 8], 4.5, concrete, oriental);
+      this.beam([Math.cos(a) * 12, 113, Math.sin(a) * 12], [Math.cos(a) * 12, 345, Math.sin(a) * 12], .65, coolLight, oriental);
     }
-    for (const [height, radius] of [[93, 25], [272, 22.5], [350, 7]]) { const sphere = this.mesh(new THREE.SphereGeometry(radius, 40, 24), pearl, [0, height, 0], oriental); const ring = new THREE.TorusGeometry(radius * 1.006, .7, 6, 48); this.mesh(ring, coolLight, [0, height, 0], oriental).rotation.x = Math.PI / 2; sphere.name = 'Observation sphere'; }
+    for (const [height, radius] of [[93, 25], [272, 22.5], [350, 7]]) { const sphere = this.mesh(new THREE.SphereGeometry(radius, 40, 24), pearl, [0, height, 0], oriental); const ring = new THREE.TorusGeometry(radius * 1.006, .22, 6, 48); this.mesh(ring, coolLight, [0, height, 0], oriental).rotation.x = Math.PI / 2; sphere.name = 'Observation sphere'; }
     this.mesh(new THREE.CylinderGeometry(.3, 4, 118, 12), concrete, [0, 409, 0], oriental);
     // Landmark silhouettes are authored approximations at OSM positions, not surveyed meshes.
     this.mesh(new THREE.SphereGeometry(87, 48, 20), silver, [-991, 20, 6952]).scale.set(1, .26, .82);
@@ -258,7 +305,20 @@ export class ShanghaiScene {
     const deck = new THREE.BoxGeometry(10,3,34); deck.translate(0,3,-3);
     const windows = new THREE.BoxGeometry(8.8,2.2,25); windows.translate(0,5.6,-5);
     const roof = new THREE.BoxGeometry(10, .7, 29); roof.translate(0,7,-4);
-    for (const [g,m] of [[deck,this.material(0xd9d9cd,.2,.45)],[windows,this.material(0x244653,.6,.18)],[roof,this.material(0xe1e1d5,.2,.5)]] as const) {
+    const cabin = this.material(0x244653,.2,.3,.001), compile = cabin.onBeforeCompile;
+    cabin.onBeforeCompile = (shader, renderer) => {
+      compile.call(cabin, shader, renderer);
+      shader.vertexShader = 'varying float cabinAlong,cabinWall;\n' + shader.vertexShader;
+      shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\ncabinAlong=(abs(normal.x)>.5?position.z:position.x)/2.8; cabinWall=1.-abs(normal.y);');
+      shader.fragmentShader = 'varying float cabinAlong,cabinWall;\n' + shader.fragmentShader;
+      shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        float frame=abs(fract(cabinAlong)-.5), aa=max(fwidth(cabinAlong),.001);
+        float windowLight=mix(.7,1.-smoothstep(.35-aa,.35+aa,frame),1.-smoothstep(.3,1.,aa));
+        totalEmissiveRadiance+=vec3(1.,.65,.3)*cityNight*1.8*windowLight*cabinWall;
+      `);
+    };
+    cabin.customProgramCacheKey = () => 'shanghai-lit-boat-cabin';
+    for (const [g,m] of [[deck,this.material(0xd9d9cd,.2,.45,.2)],[windows,cabin],[roof,this.material(0xe1e1d5,.2,.5,.15)]] as const) {
       const mesh = new THREE.InstancedMesh(g,m,12); mesh.instanceMatrix = this.boats.instanceMatrix;
       this.boatDetails.push(mesh); this.root.add(mesh);
     }
@@ -270,8 +330,9 @@ export class ShanghaiScene {
     setShanghaiClockTime(this.root, this.timeOfDay);
     if (!this.water) return;
     const storm = ['typhoon', 'thunderstorm', 'downpour'].includes(weather);
-    this.water.material.uniforms.riverSlope.value = storm ? .9 : weather === 'windy' ? .55 : .28;
-    this.water.material.uniforms.distortionScale.value = storm ? 1.8 : weather === 'windy' ? .75 : .25;
+    const rippled = ['windy', 'rain', 'drizzle'].includes(weather);
+    this.water.material.uniforms.riverSlope.value = storm ? .9 : rippled ? .65 : .4;
+    this.water.material.uniforms.distortionScale.value = storm ? 8 : rippled ? 4 : 1.8;
     const tint = this.water.material.uniforms.waterColor.value as THREE.Color;
     this.water.material.uniforms.riverTint.value = Number(riverColor !== 'huangpu');
     tint.setHex(RIVER_COLORS[riverColor].color);

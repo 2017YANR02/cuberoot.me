@@ -7,14 +7,15 @@ import type { Vec3 } from './space-state';
 // References and the distinction between design studies/as-built are in /about credits.
 const JIN_MAO_FLOORS = [16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1];
 
-function glazing(material: MaterialFactory, color: number, floor: number, panel: number, horizontal = false) {
+function glazing(material: MaterialFactory, windows: THREE.Texture, color: number, floor: number, panel: number, horizontal = false) {
   const m = material(color, .38, .3, .001);
   const compile = m.onBeforeCompile, key = m.customProgramCacheKey();
   m.onBeforeCompile = (shader, renderer) => {
     compile.call(m, shader, renderer);
+    shader.uniforms.towerWindows = { value: windows };
     shader.vertexShader = 'varying vec2 towerUV;\n' + shader.vertexShader;
     shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\ntowerUV=uv;');
-    shader.fragmentShader = 'varying vec2 towerUV;\n' + shader.fragmentShader;
+    shader.fragmentShader = 'varying vec2 towerUV; uniform sampler2D towerWindows;\n' + shader.fragmentShader;
     shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
       vec2 grid=towerUV/vec2(${panel.toFixed(3)},${floor.toFixed(3)});
       vec2 footprint=max(fwidth(grid),vec2(.0001));
@@ -24,11 +25,9 @@ function glazing(material: MaterialFactory, color: number, floor: number, panel:
       line=mix(vec2(.044),line,resolved);
       float frame=max(line.x*${horizontal ? '.38' : '.75'},line.y);
       diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.57,.6,.59),frame*.8);
-      float room=fract(sin(dot(floor(grid/vec2(4.,1.)),vec2(23.31,87.12)))*43758.5453);
-      float roomResolved=1.-smoothstep(.2,.75,max(footprint.x/4.,footprint.y));
-      float lit=mix(.035,step(.79,room)*(.3+.35*room),roomResolved);
+      float lit=texture2D(towerWindows,grid/vec2(32.,64.)).r;
     `);
-    shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance+=vec3(1.,.82,.6)*lit*(1.-frame)*cityNight*.35;');
+    shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance+=vec3(1.,.82,.6)*lit*(1.-frame)*cityNight*.14;');
   };
   m.customProgramCacheKey = () => `${key}-supertall-glass-${floor}-${panel}-${horizontal}`;
   return m;
@@ -69,11 +68,11 @@ function ring(g: CityGeometry, points: Plan, y: number, width: number, m: THREE.
   points.forEach(([x, z], i) => { const b = points[(i + 1) % points.length]; g.beam([x, y, z], [b[0], y, b[1]], width, m, depth); });
 }
 
-function jinMao(material: MaterialFactory) {
+function jinMao(material: MaterialFactory, windows: THREE.Texture) {
   const g = new CityGeometry(); g.group.name = 'Jin Mao Tower'; g.group.position.set(218, -.65, 1796); g.group.rotation.y = -.12;
-  const glass = glazing(material, 0x829398, 4.04, 1.4);
-  const steel = material(0xc1c1b4, .48, .38, .16), ribs = material(0xbdbdaf, .42, .4, .6);
-  const crown = material(0xc8c6b8, .4, .38, 1.25), recess = material(0x35464b, .32, .5);
+  const glass = glazing(material, windows, 0x829398, 4.04, 1.4);
+  const steel = material(0xc1c1b4, .48, .38, .32), ribs = material(0xbdbdaf, .42, .4, 1.4);
+  const crown = material(0xc8c6b8, .4, .38, 3.2), recess = material(0x35464b, .32, .5);
   // SOM: the initial 16 floors lose two floors per section until eight;
   // subsequent sections lose one floor each. 88 floors, unlike the old 15 drums.
   const halfWidths = [29.3, 28.5, 27.7, 26.9, 26.1, 25.3, 24.5, 23.7, 22.9, 22.1, 21.3, 20.5];
@@ -119,10 +118,10 @@ function jinMao(material: MaterialFactory) {
   const root = g.finish(); root.userData.reconstruction = { height: 420.5, floors: 88, sectionFloors: JIN_MAO_FLOORS, estimated: ['plan widths', 'crown details', 'lighting'] }; return root;
 }
 
-function financialCenter(material: MaterialFactory) {
+function financialCenter(material: MaterialFactory, windows: THREE.Texture) {
   const g = new CityGeometry(); g.group.name = 'Shanghai World Financial Center'; g.group.position.set(371, -.65, 1871); g.group.rotation.y = -.58;
-  const glass = glazing(material, 0x829fae, 4.4, 1.45, true), steel = material(0xafbcc0, .48, .3, .11);
-  const light = material(0xb5d3de, .3, .38, .75), dark = material(0x334954, .36, .4);
+  const glass = glazing(material, windows, 0x829fae, 4.4, 1.45, true), steel = material(0xafbcc0, .48, .3, .11);
+  const light = material(0x427edb, .3, .38, 6.4), dark = material(0x334954, .36, .4);
   // True trapezoidal portal, wider at the top, with four visible inside reveals.
   // The two sweeping side surfaces narrow a square base into a slender roof
   // blade. Keep the opening a hole during deformation, including its reveals.
@@ -173,10 +172,10 @@ function towerPlan(): Plan {
   return curve.getSpacedPoints(96).slice(0, -1).map(p => [p.x, p.y]);
 }
 
-function shanghaiTower(material: MaterialFactory) {
+function shanghaiTower(material: MaterialFactory, windows: THREE.Texture) {
   const g = new CityGeometry(); g.group.name = 'Shanghai Tower'; g.group.position.set(206, -.65, 1982);
-  const glass = glazing(material, 0xa5b8bb, 4.2, 1.5, true); glass.side = THREE.DoubleSide;
-  const mullion = material(0xb2c0bf, .45, .32, .075), seam = material(0xc6cec8, .42, .36, .4), core = material(0x43565a, .3, .5, .02);
+  const glass = glazing(material, windows, 0xa5b8bb, 4.2, 1.5, true); glass.side = THREE.DoubleSide;
+  const mullion = material(0xb2c0bf, .45, .32, .075), seam = material(0xd9c6a1, .42, .36, 3), core = material(0x43565a, .3, .5, .02);
   const plan = towerPlan(), segments = plan.length, rows = 100;
   const at = (i: number, t: number): Vec3 => {
     // Figure 4 labels the upper profile at 56.86% of the default profile.
@@ -205,7 +204,7 @@ function shanghaiTower(material: MaterialFactory) {
   const root = g.finish(); root.userData.reconstruction = { height: 632, twistDegrees: 120, estimated: ['plan curves', 'design-stage taper', 'cladding', 'lighting'] }; return root;
 }
 
-export function createShanghaiSupertalls(material: MaterialFactory) {
+export function createShanghaiSupertalls(material: MaterialFactory, windows: THREE.Texture) {
   const root = new THREE.Group(); root.name = 'Shanghai supertall reconstructions';
-  root.add(jinMao(material), financialCenter(material), shanghaiTower(material)); return root;
+  root.add(jinMao(material, windows), financialCenter(material, windows), shanghaiTower(material, windows)); return root;
 }
