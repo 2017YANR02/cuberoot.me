@@ -5,12 +5,22 @@ import {
   buildOllNameByGroup, primaryCaseName,
 } from '@/lib/alg_case_display';
 import type { AlgCase } from '@cuberoot/shared';
+import { ALG_CATALOG } from '@cuberoot/shared/alg';
 
 describe('primaryCaseName compact card labels', () => {
   it.each([
     ['2x2', 'eg1', 'EG1 S 1', 'S+1'],
     ['2x2', 'eg2', 'EG2 Pi 6', 'Pi6'],
     ['2x2', 'leg1', 'LEG1 AS 2', 'S-2'],
+    ['2x2', 'teg2-plus', 'TEG2+ Hammer 1', 'Hammer1'],
+    ['2x2', 'tcll-plus', 'TCLL+ Two-Face 2', 'Two-Face2'],
+    ['2x2', 'tcll-minus', 'TCLL- Hammer 1', 'Hammer1'],
+    ['2x2', 'ortega-pbl', 'Ortega PBL Bar 1', 'Bar1'],
+    ['3x3', 'adv-f2l', 'Advanced F2L 1', '1'],
+    ['3x3', 'adv-f2l', 'AdvancedF2L 2', '2'],
+    ['4x4', 'oll-parity', 'OLL Parity 1', '1'],
+    ['2x2', 'teg2-plus', 'TEG2+Extra 1', 'TEG2+Extra1'],
+    ['2x2', 'teg2-plus', 'TEG2+', 'TEG2+'],
     ['3x3', 'zbll', 'ZBLL U 13', 'U13'],
     ['3x3', 'coll', 'AS 1', 'S-1'],
     ['3x3', 'oll', 'OLL 27', 'S+ (27)'],
@@ -23,6 +33,16 @@ describe('primaryCaseName compact card labels', () => {
   });
   it('retains the metadata name priority', () => {
     expect(primaryCaseName('3x3', 'pll', { name: 'Aa', algs: [], subgroup: '', setup: '', sticker: { kind: 'f2l', fl: '' }, meta: { no: 1, ollcp: 'PLL-A+' } })).toBe('A+');
+  });
+  it('removes catalog prefixes across every puzzle and set', () => {
+    for (const [puzzle, sets] of Object.entries(ALG_CATALOG)) {
+      for (const set of sets) {
+        for (const prefix of [set.slug, set.en, set.zh, set.short, set.scd].filter(Boolean)) {
+          const c = { name: `${prefix} Example 9`, algs: [], subgroup: '', setup: '', sticker: { kind: 'f2l', fl: '' } } as AlgCase;
+          expect(primaryCaseName(puzzle, set.slug, c), `${puzzle}/${set.slug}: ${prefix}`).toBe('Example9');
+        }
+      }
+    }
   });
 });
 
