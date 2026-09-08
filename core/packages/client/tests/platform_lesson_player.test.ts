@@ -13,7 +13,134 @@ import { PlatformDomainContent } from '@/components/platform/PlatformDomainConte
 import { LessonVideoPlayer } from '@/components/video/LessonVideoPlayer';
 
 beforeEach(() => {
+  (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   load.mockReset().mockResolvedValue({ mimeType: 'video/mp4', accessUrl: '/signed-video', expiresAt: '2099-01-01T00:00:00Z' });
+});
+
+it('opens the video menu, prioritizes looping, and copies safe lesson links and diagnostics', async () => {
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+  const host = document.createElement('div'), root = createRoot(host);
+  document.body.append(host);
+  const next = vi.fn();
+  try {
+    await act(async () => root.render(createElement(LessonVideoPlayer, {
+      src: '/private-video?token=secret', lessonId: 'lesson-2', mediaId: 'media-2', mimeType: 'video/mp4',
+      onError: vi.fn(), onLoadedMetadata: vi.fn(), autoContinue: true, onNext: next,
+    })));
+    const video = host.querySelector('video')!;
+    const open = () => act(async () => { host.querySelector('.lesson-video-surface')!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 100, clientY: 80 })); });
+    const item = (name: string) => [...host.querySelectorAll<HTMLButtonElement>('[role="menu"] button')].find(button => button.textContent === name)!;
+    await open();
+    expect(host.querySelectorAll('[role="menu"] button')).toHaveLength(8);
+    expect(document.activeElement?.textContent).toBe('循环播放');
+    await act(async () => item('循环播放').click());
+    expect(video.loop).toBe(true);
+    await act(async () => video.dispatchEvent(new Event('ended')));
+    expect(next).not.toHaveBeenCalled();
+    await open();
+    expect(item('循环播放').getAttribute('aria-checked')).toBe('true');
+    await act(async () => item('循环播放').click());
+    await act(async () => video.dispatchEvent(new Event('ended')));
+    expect(next).toHaveBeenCalledOnce();
+    video.currentTime = 42.8;
+    await open();
+    await act(async () => item('复制当前时间的视频网址').click());
+    const timed = new URL(writeText.mock.calls.at(-1)![0]);
+    expect(timed.searchParams.get('lesson')).toBe('lesson-2');
+    expect(timed.searchParams.get('t')).toBe('42');
+    expect(timed.href).not.toContain('secret');
+    expect(host.textContent).toContain('已复制');
+    await open();
+    await act(async () => item('复制视频网址').click());
+    expect(new URL(writeText.mock.calls.at(-1)![0]).searchParams.has('t')).toBe(false);
+    await open();
+    await act(async () => item('复制嵌入代码').click());
+    expect(writeText.mock.calls.at(-1)![0]).toContain('<iframe src=');
+    expect(writeText.mock.calls.at(-1)![0]).not.toContain('private-video');
+    await open();
+    await act(async () => item('复制调试信息').click());
+    const debug = JSON.parse(writeText.mock.calls.at(-1)![0]);
+    expect(debug.mediaId).toBe('media-2');
+    expect(debug.currentTime).toBe(42.8);
+    expect(JSON.stringify(debug)).not.toContain('secret');
+    writeText.mockRejectedValueOnce(new Error('denied'));
+    await open();
+    await act(async () => item('复制视频网址').click());
+    expect(host.textContent).toContain('复制失败');
+    await open();
+    await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
+    expect(host.querySelector('[role="menu"]')).toBeNull();
+    await open();
+    await act(async () => document.body.dispatchEvent(new Event('pointerdown', { bubbles: true })));
+    expect(host.querySelector('[role="menu"]')).toBeNull();
+  } finally { await act(async () => root.unmount()); host.remove(); vi.unstubAllGlobals(); }
+});
+
+it('updates real frame and contiguous-buffer statistics and stops sampling when closed', async () => {
+  vi.useFakeTimers();
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(LessonVideoPlayer, { src: '/test', onError: vi.fn(), onLoadedMetadata: vi.fn() })));
+    const video = host.querySelector('video')!;
+    const frames = vi.fn(() => ({ totalVideoFrames: 403, droppedVideoFrames: 5 }));
+    Object.defineProperties(video, {
+      getVideoPlaybackQuality: { value: frames, configurable: true },
+      buffered: { value: { length: 2, start: (index: number) => [0, 80][index], end: (index: number) => [30, 100][index] }, configurable: true },
+      videoWidth: { value: 1280 }, videoHeight: { value: 720 },
+    });
+    video.currentTime = 20;
+    const open = () => act(async () => { host.querySelector('.lesson-video-surface')!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true })); });
+    await open();
+    await act(async () => [...host.querySelectorAll<HTMLButtonElement>('[role="menu"] button')].find(button => button.textContent === '详细统计信息')!.click());
+    expect(host.querySelector('[role="dialog"]')?.textContent).toContain('丢失 5 / 共 403 帧');
+    expect(host.querySelector('[role="dialog"]')?.textContent).toContain('1280×720');
+    expect(host.querySelector('meter')?.value).toBe(10);
+    video.currentTime = 50;
+    await act(async () => vi.advanceTimersByTime(1000));
+    expect(host.querySelector('meter')?.value).toBe(0);
+    await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="关闭统计与诊断"]')!.click());
+    const samples = frames.mock.calls.length;
+    await act(async () => vi.advanceTimersByTime(5000));
+    expect(frames).toHaveBeenCalledTimes(samples);
+    await open();
+    video.muted = true;
+    await act(async () => [...host.querySelectorAll<HTMLButtonElement>('[role="menu"] button')].find(button => button.textContent === '排查播放问题')!.click());
+    expect(host.querySelector('[role="dialog"]')?.textContent).toContain('当前播放器已静音');
+  } finally { await act(async () => root.unmount()); vi.useRealTimers(); vi.unstubAllGlobals(); }
+});
+
+it('keeps the long-press menu open when touch release clicks the newly covered menu item', async () => {
+  vi.useFakeTimers();
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(LessonVideoPlayer, { src: '/test', onError: vi.fn(), onLoadedMetadata: vi.fn() })));
+    const down = new MouseEvent('pointerdown', { bubbles: true, clientX: 100, clientY: 60 });
+    Object.defineProperty(down, 'pointerType', { value: 'touch' });
+    await act(async () => host.querySelector('.lesson-video-surface')!.dispatchEvent(down));
+    await act(async () => vi.advanceTimersByTime(550));
+    const loopButton = host.querySelector<HTMLButtonElement>('[role="menuitemcheckbox"]')!;
+    expect(loopButton).not.toBeNull();
+    await act(async () => loopButton.click());
+    expect(host.querySelector('[role="menu"]')).not.toBeNull();
+    expect(host.querySelector('video')!.loop).toBe(false);
+    await act(async () => loopButton.click());
+    expect(host.querySelector('video')!.loop).toBe(true);
+  } finally { await act(async () => root.unmount()); vi.useRealTimers(); vi.unstubAllGlobals(); }
+});
+
+it.each([[42, 42], [999, 120], [-1, 0], [NaN, 0], [Infinity, 0]])('seeks shared timestamp %s within video bounds', async (startTime, expected) => {
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(LessonVideoPlayer, { src: '/test', startTime, onError: vi.fn(), onLoadedMetadata: vi.fn() })));
+    const video = host.querySelector('video')!;
+    Object.defineProperty(video, 'duration', { value: 120, configurable: true });
+    await act(async () => video.dispatchEvent(new Event('loadedmetadata')));
+    expect(video.currentTime).toBe(expected);
+  } finally { await act(async () => root.unmount()); }
 });
 
 it('links section cards to separate lesson pages without losing lessons or changing other courses', async () => {

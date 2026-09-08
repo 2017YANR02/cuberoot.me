@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { ArrowRight, ExternalLink, Play, Search } from 'lucide-react';
-import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
+import { parseAsFloat, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
 import { AccountPanel, LoginForm } from '@/components/AuthPanel';
 import BoolToggle from '@/components/BoolToggle';
@@ -539,6 +539,7 @@ export function PlatformRouteView({
   const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useQueryState('q', parseAsString.withDefault(''));
   const [selectedLessonId, setSelectedLessonId] = useQueryState('lesson', parseAsString.withOptions({ history: 'push', scroll: false }));
+  const [lessonStartTime, setLessonStartTime] = useQueryState('t', parseAsFloat.withDefault(0));
   const [sort, setSort] = useQueryState('sort', parseAsStringEnum(['title', 'updated'] as const).withDefault('updated'));
   const [owned, setOwned] = useQueryState('owned', parseAsStringEnum(['0', '1'] as const).withDefault('0'));
   const [stay] = useQueryState('stay', parseAsStringEnum(['0', '1'] as const).withDefault('0'));
@@ -714,7 +715,7 @@ export function PlatformRouteView({
             </AppLink>
           ) : null}
 
-          {!permissionDenied ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} previewRedirect={stay === '1'} selectedLessonId={selectedLessonId} onSelectLesson={id => { void setSelectedLessonId(id); }} /> : null}
+          {!permissionDenied ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} previewRedirect={stay === '1'} selectedLessonId={selectedLessonId} lessonStartTime={lessonStartTime} onSelectLesson={id => { void setLessonStartTime(null); void setSelectedLessonId(id); }} /> : null}
 
           {permissionDenied || definition.id === 'qr' || (['membership', 'me-membership'].includes(definition.id) && !result) ? null : (
             <PlatformDomainActions
