@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Plus, Pencil, UserCog, Laptop, Globe, GripVertical, Drama } from 'lucide-react';
+import { Megaphone, Sparkles, UserCog, Laptop, Globe, GripVertical, Drama } from 'lucide-react';
 import { ensureFreshToken, refreshSessionUser, canTestRoles, getRolePreview, startRolePreview, endRolePreview, useAuthUser, isAdmin, type TestRole } from '@/lib/auth-store';
 import AppLink from './AppLink';
 import { openPageNoticeEditor, pageKeyFromPathname } from '@/lib/page-notices-api';
@@ -133,10 +133,11 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     {admin && <>
       <button type="button" className="admin-tool-action" onClick={() => openPageNoticeEditor('page_top')}
         title={t('添加本页通知', 'Add notice for this page')} aria-label={t('添加本页通知', 'Add notice for this page')}>
-        <Plus size={13} aria-hidden />
+        <Megaphone size={17} aria-hidden />
       </button>
-      {pageKeyFromPathname(pathname || '/') === '/' && <button type="button" className="admin-tool-action" onClick={() => openPageNoticeEditor('home_featured')}>
-        <Pencil size={13} aria-hidden />{t('首页焦点', 'Homepage feature')}
+      {pageKeyFromPathname(pathname || '/') === '/' && <button type="button" className="admin-tool-action" onClick={() => openPageNoticeEditor('home_featured')}
+        title={t('首页焦点', 'Homepage feature')} aria-label={t('首页焦点', 'Homepage feature')}>
+        <Sparkles size={17} aria-hidden />
       </button>}
       <AppLink href="/admin" className="admin-tool-action" prefetch={false}
         title={t('管理后台', 'Administration')} aria-label={t('管理后台', 'Administration')}>
