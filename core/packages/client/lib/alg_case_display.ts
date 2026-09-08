@@ -9,7 +9,7 @@
  * 同一份映射既给 /alg/3x3/{oll,pll} 列表展示用,也给 recon 自动补全的注释
  * (`// OLL-S+` / `// PLL-Gd`)用。
  */
-import type { AlgCase } from '@cuberoot/shared';
+import { ALG_CATALOG, type AlgCase, type AlgPuzzle } from '@cuberoot/shared/alg';
 import { displaySq1ShapeName } from '@/lib/sq1-shapes';
 export { SQ1_SHAPE_NAMES } from '@/lib/sq1-shapes';
 
@@ -198,10 +198,15 @@ export function displayAlgCaseName(puzzle: string, set: string, name: string): s
  */
 export function primaryCaseName(puzzle: string, set: string, c: AlgCase): string {
   let name = (c.meta?.ollcp || displayAlgCaseName(puzzle, set, c.name)).trim();
-  const prefix = set.toUpperCase();
-  if (name.toUpperCase().startsWith(prefix) && /^[\s-]/.test(name.slice(prefix.length))) {
-    const shortName = name.slice(prefix.length).replace(/^[\s-]+/, '');
-    if (shortName) name = shortName;
+  const meta = ALG_CATALOG[puzzle as AlgPuzzle]?.find(entry => entry.slug === set);
+  const prefixes = [set, meta?.en, meta?.zh, meta?.short, meta?.scd]
+    .filter((prefix): prefix is string => Boolean(prefix))
+    .sort((a, b) => b.length - a.length);
+  for (const prefix of prefixes) {
+    if (name.toUpperCase().startsWith(prefix.toUpperCase()) && /^[\s-]/.test(name.slice(prefix.length))) {
+      const shortName = name.slice(prefix.length).replace(/^[\s-]+/, '');
+      if (shortName) { name = shortName; break; }
+    }
   }
   return name.replace(/^([A-Za-z][A-Za-z0-9+-]*)\s+(\d+)$/, '$1$2');
 }
