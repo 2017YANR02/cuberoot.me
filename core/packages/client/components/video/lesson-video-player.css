@@ -71,6 +71,25 @@
 .lesson-video-menu button:not(:disabled):hover { background: color-mix(in srgb, var(--player-ink) 12%, transparent); }
 .lesson-video-menu-note { max-width: 230px; margin: 8px 20px; font-size: 12px; opacity: .7; }
 .lesson-video-notice { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); padding: 8px 12px; border-radius: 4px; background: color-mix(in srgb, var(--player-base) 80%, transparent); font-size: 13px; z-index: 3; }
+/* anchored-panel: clamped (usePanelClamp plus measured player/viewport bounds). */
+.lesson-video-context { position: absolute; width: max-content; max-width: calc(100% - 16px); overflow: auto; overscroll-behavior: contain; padding: 6px 0; border-radius: 10px; background: color-mix(in srgb, var(--player-base) 90%, transparent); backdrop-filter: blur(16px); z-index: 5; scrollbar-width: thin; }
+.lesson-video-context button { display: flex; align-items: center; gap: 12px; width: 100%; border: 0; padding: 9px 14px; background: transparent; font-size: 12px; font-weight: 600; text-align: left; white-space: nowrap; }
+.lesson-video-context button:hover, .lesson-video-context button:focus-visible { background: color-mix(in srgb, var(--player-ink) 15%, transparent); }
+.lesson-video-context svg { width: 20px; height: 20px; flex-shrink: 0; }
+.lesson-video-context .lesson-video-context-check { width: 14px; margin-left: auto; }
+.lesson-video-details { position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); max-height: calc(100% - 16px); overflow: auto; overscroll-behavior: contain; box-sizing: border-box; padding: 8px 30px 8px 10px; background: color-mix(in srgb, var(--player-base) 82%, transparent); color: var(--player-ink); z-index: 4; font-size: 11px; line-height: 1.3; scrollbar-width: thin; }
+.lesson-video-player .lesson-video-details-close { position: absolute; right: 4px; top: 4px; color: var(--player-ink); width: 24px; height: 24px; }
+.lesson-video-details dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: start; gap: 2px 8px; margin: 0; }
+.lesson-video-details dt { font-weight: 700; text-align: right; white-space: nowrap; }
+.lesson-video-details dd { margin: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.lesson-video-stat-meter { display: flex; align-items: center; gap: 8px; }
+.lesson-video-stat-meter meter { width: 100px; max-width: 45%; height: 12px; }
+.lesson-video-stat-meter meter::-webkit-meter-bar { background: var(--player-track); border: 0; border-radius: 0; }
+.lesson-video-stat-meter meter::-webkit-meter-optimum-value { background: var(--signal-success); }
+.lesson-video-stat-meter meter::-moz-meter-bar { background: var(--signal-success); }
+.lesson-video-help { max-width: 370px; font-size: 12px; }
+.lesson-video-help p { margin: 10px 0; }
+.lesson-video-help > button { border: 0; padding: 6px 0; text-decoration: underline; background: transparent; }
 @media (max-width: 600px) {
   .lesson-video-controls { padding-inline: 8px; }
   .lesson-video-toolbar { height: 44px; gap: 2px; }
