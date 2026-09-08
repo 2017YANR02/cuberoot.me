@@ -26,6 +26,7 @@ export const SHANGHAI_VIEWS = {
   peace: { zh: '和平饭店', en: 'Peace Hotel', camera: [-1165, 64, 1475], target: [-1345, 36, 1367] },
   customs: { zh: '江海关', en: 'Customs House', camera: [-1188, 49, 1678], target: [-1301, 37, 1644] },
   hsbc: { zh: '汇丰大楼', en: 'HSBC Building', camera: [-1169, 22, 1765], target: [-1302, 20, 1718] },
+  commercialBank: { zh: '通商银行', en: 'Commercial Bank', camera: [-1188.28, 11.28, 1834.96], target: [-1228.35, 10.34, 1853.15] },
   tomson: { zh: '汤臣一品', en: 'Tomson Riviera', camera: [-570, 115, 2260], target: [-185, 80, 2050] },
   tomsonGarden: { zh: '汤臣庭院', en: 'Tomson garden', camera: [-257, 18, 2095], target: [-205, 3, 2064] },
   waibaidu: { zh: '外白渡桥', en: 'Waibaidu Bridge', camera: [-1130, 45, 965], target: [-1272, 10, 900] },

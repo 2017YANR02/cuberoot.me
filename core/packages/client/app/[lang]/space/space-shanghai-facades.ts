@@ -71,9 +71,9 @@ export function windowBay(g: CityGeometry, at: Vec3, q: THREE.Quaternion, glass:
   }
 }
 
-export function windowBays(g: CityGeometry, p: ShanghaiPolygon, levels: number[], spacing: number, glass: THREE.Material, trim: THREE.Material, omitFront = false) {
+export function windowBays(g: CityGeometry, p: ShanghaiPolygon, levels: number[], spacing: number, glass: THREE.Material, trim: THREE.Material, omitFront = false, frontDepths: readonly number[] = [0]) {
   edges(p, (a, b, length) => {
-    if (omitFront && Math.abs(a[1]) < .25 && Math.abs(b[1]) < .25) return;
+    if (omitFront && frontDepths.some(z => Math.abs(a[1]-z) < .25 && Math.abs(b[1]-z) < .25)) return;
     const count = Math.floor(length / spacing);
     const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.atan2(b[1] - a[1], b[0] - a[0]));
     for (let i = 0; i < count; i++) for (const y of levels) {
@@ -157,7 +157,7 @@ export function roofMetal(material: MaterialFactory, color: number, strength: nu
   return m;
 }
 
-export type FrontOpening = { x: number; y: number; width: number; height: number; arch?: boolean | 'pointed'; pediment?: boolean };
+export type FrontOpening = { x: number; y: number; width: number; height: number; arch?: boolean | 'pointed' | 'segmental'; pediment?: boolean };
 export function openingPath(o: FrontOpening) {
   const left = o.x - o.width / 2, right = o.x + o.width / 2, bottom = o.y - o.height / 2, top = o.y + o.height / 2;
   const path = new THREE.Path().moveTo(left, bottom).lineTo(right, bottom);
@@ -165,6 +165,10 @@ export function openingPath(o: FrontOpening) {
     path.lineTo(right, top - o.width * .72);
     path.quadraticCurveTo(right, top - o.width * .3, o.x, top);
     path.quadraticCurveTo(left, top - o.width * .3, left, top - o.width * .72);
+  }
+  else if (o.arch === 'segmental') {
+    path.lineTo(right, top - o.width * .18);
+    path.quadraticCurveTo(o.x, top + o.width * .18, left, top - o.width * .18);
   }
   else if (o.arch) { path.lineTo(right, top - o.width / 2); path.absarc(o.x, top - o.width / 2, o.width / 2, 0, Math.PI, false); }
   else path.lineTo(right, top).lineTo(left, top);
@@ -190,18 +194,18 @@ export function wallLedge(g: CityGeometry, plan: ShanghaiPolygon, y: number, wid
 
 // Replace the street-facing wall in the local plan. The remaining OSM shell,
 // roof and courtyard are unchanged; openings have real reveals and recessed glass.
-export function frontShell(g: CityGeometry, plan: ShanghaiPolygon, top: number, openings: FrontOpening[], stone: THREE.Material, trim: THREE.Material, glass: THREE.Material, bronze: THREE.Material) {
+export function frontShell(g: CityGeometry, plan: ShanghaiPolygon, top: number, openings: FrontOpening[], stone: THREE.Material, trim: THREE.Material, glass: THREE.Material, bronze: THREE.Material, options: { outline?: THREE.Shape; decorate?: boolean; frontDepths?: readonly number[] } = {}) {
   const shell = new THREE.ExtrudeGeometry(shanghaiShape(plan), { depth: top + .65, bevelEnabled: false });
   shell.rotateX(-Math.PI / 2); shell.translate(0, -.65, 0);
   const positions = shell.getAttribute('position'), normals = shell.getAttribute('normal'), indices: number[] = [];
   for (let i = 0; i < positions.count; i += 3) {
-    if (normals.getZ(i) < -.9 && [i, i + 1, i + 2].every(j => Math.abs(positions.getZ(j)) < .25)) continue;
+    if (normals.getZ(i) < -.9 && (options.frontDepths ?? [0]).some(z => [i, i + 1, i + 2].every(j => Math.abs(positions.getZ(j)-z) < .25))) continue;
     indices.push(i, i + 1, i + 2);
   }
   shell.setIndex(indices); g.add(shell, stone);
   const front = plan.points.filter(p => Math.abs(p[1]) < .25);
   const left = Math.min(...front.map(p => p[0])), right = Math.max(...front.map(p => p[0]));
-  const wall = new THREE.Shape().moveTo(left, -.65).lineTo(right, -.65).lineTo(right, top).lineTo(left, top).closePath();
+  const wall = options.outline ?? new THREE.Shape().moveTo(left, -.65).lineTo(right, -.65).lineTo(right, top).lineTo(left, top).closePath();
   wall.holes = openings.map(openingPath);
   g.add(new THREE.ExtrudeGeometry(wall, { depth: .72, bevelEnabled: false, curveSegments: 16 }), stone, [0, 0, -.06]);
   for (const o of openings) {
@@ -210,25 +214,30 @@ export function frontShell(g: CityGeometry, plan: ShanghaiPolygon, top: number, 
     const glazing = new THREE.ShapeGeometry(face);
     glazing.rotateY(Math.PI);
     g.add(glazing, glass, [2 * o.x, 0, .6]);
+    if (options.decorate === false) continue;
     if (o.arch) {
       // Radial voussoirs surround the real opening, with a projecting keystone.
-      const radius = o.width / 2, spring = upper - radius;
+      const radius = o.width / 2, rise = o.arch === 'pointed' ? o.width * .72 : o.arch === 'segmental' ? o.width * .18 : radius, spring = upper - rise;
       if (o.arch === 'pointed') {
         for (const side of [-1, 1]) {
           const curve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(o.x + side * (radius + .2), upper - o.width * .72, -.2), new THREE.Vector3(o.x + side * (radius + .2), upper - o.width * .3, -.2), new THREE.Vector3(o.x, upper + .2, -.2));
           const points = curve.getPoints(12);
           for (let i = 0; i < 12; i++) g.beam(points[i].toArray(), points[i + 1].toArray(), .28, trim, .38);
         }
+      } else if (o.arch === 'segmental') {
+        const curve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(o.x-radius-.2, upper-o.width*.18, -.2), new THREE.Vector3(o.x, upper+o.width*.18+.25, -.2), new THREE.Vector3(o.x+radius+.2, upper-o.width*.18, -.2));
+        const points = curve.getPoints(16);
+        for (let i=0;i<16;i++) g.beam(points[i].toArray(),points[i+1].toArray(),.28,trim,.38);
       } else for (let i = 0; i < 17; i++) {
         const a = (i + .5) * Math.PI / 17;
         const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), a - Math.PI / 2);
         g.add(new THREE.BoxGeometry((radius + .22) * Math.PI / 17 * .95, .4, .38), trim, [o.x + Math.cos(a) * (radius + .22), spring + Math.sin(a) * (radius + .22), -.21], q);
       }
       g.box([.4, .58, .48], [o.x, upper + .17, -.25], trim);
-      for (const offset of [-o.width * .28, 0, o.width * .28]) g.box([.055, o.height - radius, .1], [o.x + offset, bottom + (o.height - radius) / 2, .49], bronze);
+      for (const offset of [-o.width * .28, 0, o.width * .28]) g.box([.055, o.height - rise, .1], [o.x + offset, bottom + (o.height - rise) / 2, .49], bronze);
       for (let y = bottom + .9; y < spring; y += 1.1) g.box([o.width, .065, .1], [o.x, y, .49], bronze);
       g.box([o.width, .08, .1], [o.x, spring, .49], bronze);
-      for (let ray = 1; o.arch !== 'pointed' && ray < 6; ray++) {
+      for (let ray = 1; o.arch === true && ray < 6; ray++) {
         const a = ray * Math.PI / 6;
         g.beam([o.x, spring, .49], [o.x + Math.cos(a) * radius, spring + Math.sin(a) * radius, .49], .045, bronze, .08);
       }

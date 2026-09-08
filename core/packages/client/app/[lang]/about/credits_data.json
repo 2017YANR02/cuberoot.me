@@ -241,8 +241,22 @@
     "name": "Asisbiz: 外滩 6 中国通商银行大楼 / China Commercial Bank",
     "space": true,
     "url": "https://asisbiz.com/China/6-Zhongshan-Rd.html",
-    "zh": "实拍对照：五座尖山墙、扶壁尖顶、坡屋面；2026-09-08 补十一处底层圆拱洞口与八处 DOLCE&GABBANA 店招。平面据 OSM，尺寸、字形及细部为照片估算，尚未通过 1:1 验收。实际拍摄日期未确认，不能据此认定当前租户；照片仅供建模参考。",
-    "en": "Photo reference: five gables, pinnacles and pitched roof; reviewed 2026-09-08 for eleven rounded ground openings and eight DOLCE&GABBANA signs. OSM plan; dimensions, lettering and details are estimates, not a verified 1:1 replica. Capture date is unconfirmed and does not establish current tenancy; reference photos only."
+    "zh": "实拍对照：五座主次山墙、四层不同窗型、门廊与八处 DOLCE&GABBANA 店招。2026-09-08 重新校正开间与店招位置。平面据 OSM，尺寸、字形及细部为照片估算，尚未通过 1:1 验收。实际拍摄日期未确认，不能据此认定当前租户；照片仅供建模参考。",
+    "en": "Photo reference: five gables of different sizes, four window orders, entrance portico and eight DOLCE&GABBANA signs. Bays and sign positions revised 2026-09-08. OSM plan; dimensions, lettering and details are estimates, not a verified 1:1 replica. Capture date is unconfirmed and does not establish current tenancy; reference photos only."
+  },
+  {
+    "name": "上海城建档案：外滩 6 号 / Shanghai Urban Construction Archives",
+    "space": true,
+    "url": "https://www.thepaper.cn/newsDetail_forward_25669123",
+    "zh": "2023-12-16 发布，2026-09-08 查阅。用于校正通商银行圆拱、弧拱、矩形、尖拱四层窗型，中央高山墙、三条窄缝、四座小山墙、附楼和屋顶栏杆。尺寸按 OSM 与照片比例估算；档案照与店招照并非同一时期。夜间灯位、光度与侧后立面尚未实测，不能认定 1:1 或电影级通过。照片未作为在线贴图。",
+    "en": "Published 2023-12-16; accessed 2026-09-08. Reference for the bank's round, segmental, rectangular and pointed window orders, tall central gable with three slits, four small gables, annex and roof balustrade. Dimensions use OSM and photo proportions; archival and storefront photos show different periods. Night fixtures, photometry and side/rear elevations remain unverified; neither 1:1 nor cinematic quality is certified. Photos are not runtime textures."
+  },
+  {
+    "name": "商务旅行杂志：外滩 6 号夜景 / Business Travel Magazine",
+    "space": true,
+    "url": "https://style.sina.com.cn/lei/travel/2010-07-29/155165252.shtml",
+    "zh": "新浪转载页面发表于 2010-07-29，2026-09-08 查阅并查看夜景照片。用于通商银行暖金色窗边照明、较亮的水平檐口与暗窗关系；小幅照片不用于精确配光或色温测量。拍摄日期与摄影者未标明，不代表当前灯光。本站灯位、光强及遮挡为近似，照片仅本地审图，不是运行贴图。",
+    "en": "Sina republication dated 2010-07-29; accessed and night photograph inspected 2026-09-08. Reference for warm window lighting, brighter horizontal cornices and dark glazing at the China Commercial Bank. The small image cannot establish exact photometry or color temperature. Capture date and photographer are unspecified; it does not establish current lighting. Fixture placement, intensity and occlusion are approximations. Local reference only, not a runtime texture."
   },
   {
     "name": "Asisbiz: 外滩 7 大北电报公司大楼 / Great Northern Telegraph",
