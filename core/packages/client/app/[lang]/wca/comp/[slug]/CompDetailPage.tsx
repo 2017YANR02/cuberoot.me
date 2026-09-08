@@ -28,6 +28,7 @@ import { isAo5Bracketed, trimEmptyAttempts } from '@/lib/wca-ao5-brackets';
 import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
 import { fetchPb, prefetchPbs, type PbByEvent } from '@/lib/wca-pb';
 import { fetchCompInfo, fetchCubingZh, type CompInfo, type CubingZhMeta } from '@/lib/comp-wcif';
+import { fetchCompSchedule } from '@/lib/comp-schedule';
 import { loadNoScrambleIds } from '@/lib/comp-no-scrambles';
 import { fetchWcaScrambles } from '@/lib/wca-results-api';
 import { formatDateRangeIso, formatDateTimeLocal, toIsoDate, weekdayRangeLabel } from '@/lib/wca-date';
@@ -785,15 +786,6 @@ export default function CompDetailPage() {
   const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
   // 本场逐把成绩 → 复盘 id 映射((compWcaId|event|round|solveNum) → reconId),成绩/领奖台单元据此变可点链接。
   const [reconMap, setReconMap] = useState<Map<string, number> | null>(null);
-  useEffect(() => {
-    let alive = true;
-    setReconMap(null);
-    if (!slug) return;
-    listReconsByComp(slug)
-      .then(rs => { if (alive) setReconMap(buildReconPersonAttemptMap(rs)); })
-      .catch(() => { if (alive) setReconMap(null); });
-    return () => { alive = false; };
-  }, [slug]);
   // 比赛关注「盯一下」— 与首页 / 比赛列表共用同一份 server 关注集合
   const { loggedIn: followLoggedIn, follows, toggle: toggleFollow } = useCompFollows();
 
@@ -935,6 +927,16 @@ export default function CompDetailPage() {
     () => !!data && Object.values(data.resultsByRound).some(arr => arr.length > 0),
     [data],
   );
+  useEffect(() => {
+    let alive = true;
+    setReconMap(null);
+    // 没有成绩的未来赛用不到逐把复盘映射;切比赛时先等本场数据。
+    if (!slug || data?.slug !== slug || !hasResults) return;
+    listReconsByComp(slug)
+      .then(rs => { if (alive) setReconMap(buildReconPersonAttemptMap(rs)); })
+      .catch(() => { if (alive) setReconMap(null); });
+    return () => { alive = false; };
+  }, [slug, data?.slug, hasResults]);
   // 「打乱」入口跳到打乱生成器,只有 WCA 已公布打乱时才有内容。两层判断:
   //  1) 便宜短路:无成绩(未来赛)→ 必无打乱;命中「办过但 dump 无 scrambles」黑名单
   //     (2003-2014 那 1675 场)→ 跳过实测。
@@ -958,34 +960,11 @@ export default function CompDetailPage() {
   // 「相似比赛」:名字只差版本号(I/II/III…)或年份的同系列比赛。读预算好的 stats/comp_series.json
   // (整取一次 memoize),延迟到首屏后不阻塞;有 ≥1 场才亮 tab(同 showScramblesTab 的懒亮法)。
   const [similarComps, setSimilarComps] = useState<SeriesComp[]>([]);
-  useEffect(() => {
-    setSimilarComps([]);
-    if (!slug) return;
-    let alive = true;
-    // comp_series.json ~300KB,只决定「相似比赛」tab 亮不亮 —— 推到空闲再拉,
-    // 别跟成绩数据抢首屏的连接。
-    const cancelIdle = onIdle(() => {
-      getSimilarComps(slug).then(list => { if (alive) setSimilarComps(list); }).catch(() => {});
-    });
-    return () => { alive = false; cancelIdle(); };
-  }, [slug]);
   // 同城市(第 3 条判据:只比城市)。整取的 comp_series.json 装不下它 —— 分片成一国一文件,
   // 只拉本场所在国那份(见 lib/comp-city.ts)。已在「同系列」里出现过的场次剔掉,不重复列。
   const [sameCityComps, setSameCityComps] = useState<SeriesComp[]>([]);
   const compIso2 = compInfo?.country_iso2 || compFlagIso2(slug);
   const similarIds = useMemo(() => similarComps.map(c => c.id), [similarComps]);
-  useEffect(() => {
-    setSameCityComps([]);
-    if (!slug || !compIso2) return;
-    let alive = true;
-    // 同 comp_series:一国一文件也有几百 KB(美国 300KB),同样推到空闲。
-    const cancelIdle = onIdle(() => {
-      getSameCityComps(slug, compIso2, compInfo?.city, similarIds)
-        .then(list => { if (alive) setSameCityComps(list); })
-        .catch(() => {});
-    });
-    return () => { alive = false; cancelIdle(); };
-  }, [slug, compIso2, compInfo?.city, similarIds]);
   const showSimilarTab = similarComps.length > 0 || sameCityComps.length > 0;
   // 领奖台:各项目决赛前三。比赛结束(所有项目末轮都有成绩)且有领奖台时默认展示。
   // 领奖台 / 纪录要看全部项目的末轮,分片数据只有一个项目 — 必须等全量到位才算,
@@ -1040,6 +1019,46 @@ export default function CompDetailPage() {
     setExplicitView(viewParam, { history: 'replace' });
   }, [explicitView, data, hasResults, compInfoSettled, viewParam, setExplicitView]);
   const schedView: 'calendar' | 'table' | 'poster' = layoutParam === 'table' || layoutParam === 'poster' ? layoutParam : 'calendar';
+  const [scheduleSettledSlug, setScheduleSettledSlug] = useState('');
+  useEffect(() => {
+    if (!slug || !isSchedule) return;
+    let alive = true;
+    // 数据与视图代码并行加载,不再等 ScheduleView 挂载后才请求数据,
+    // 也不等数据返回后才开始下载日历。表格和海报仍不下载日历。
+    const schedule = fetchCompSchedule(slug);
+    const view = import('./ScheduleView');
+    const calendar = schedView === 'calendar' ? import('./ScheduleCalendar') : Promise.resolve();
+    void Promise.allSettled([schedule, view, calendar]).then(() => {
+      if (alive) setScheduleSettledSlug(slug);
+    });
+    return () => { alive = false; };
+  }, [slug, isSchedule, schedView]);
+
+  // 浏览器空闲不代表关键网络请求已结束;先让当前视图的数据/代码就绪。
+  // 相似比赛直链直接放行,避免入口可见性和请求互相等待。
+  const canLoadSimilar = explicitView === 'similar' || (
+    data?.slug === slug && compInfoSettled && (!isSchedule || scheduleSettledSlug === slug)
+  );
+  useEffect(() => {
+    setSimilarComps([]);
+    if (!slug || !canLoadSimilar) return;
+    let alive = true;
+    const cancelIdle = onIdle(() => {
+      getSimilarComps(slug).then(list => { if (alive) setSimilarComps(list); }).catch(() => {});
+    });
+    return () => { alive = false; cancelIdle(); };
+  }, [slug, canLoadSimilar]);
+  useEffect(() => {
+    setSameCityComps([]);
+    if (!slug || !compIso2 || !canLoadSimilar) return;
+    let alive = true;
+    const cancelIdle = onIdle(() => {
+      getSameCityComps(slug, compIso2, compInfo?.city, similarIds)
+        .then(list => { if (alive) setSameCityComps(list); })
+        .catch(() => {});
+    });
+    return () => { alive = false; cancelIdle(); };
+  }, [slug, compIso2, compInfo?.city, similarIds, canLoadSimilar]);
   // "Show round details" lives up in the view-tab row (next to the calendar/table
   // toggle); default on so Format / Time limit / Cutoff / Proceed show like WCA.
   const [schedDetailsExpanded, setSchedDetailsExpanded] = useState(true);
@@ -1609,7 +1628,7 @@ export default function CompDetailPage() {
   if (error || !data) {
     return (
       <div className="comp-detail-page">
-        <Link href="/wca/comp" className="comp-back-link"><ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}</Link>
+        <Link href="/wca/comp" prefetch={false} className="comp-back-link"><ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}</Link>
         <div className="comp-err comp-err-block">
           <div className="comp-err-title">{tr({ zh: '加载失败', en: 'Failed to load'
         })}</div>
@@ -1686,7 +1705,7 @@ export default function CompDetailPage() {
     <div className="comp-detail-page">
       <div className="comp-table-section">
         <header className="comp-detail-header">
-          <Link href="/wca/comp" className="comp-back-link"><ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}</Link>
+          <Link href="/wca/comp" prefetch={false} className="comp-back-link"><ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}</Link>
           <h1 className="comp-detail-title">
             {(() => {
               // 国家旗:compInfo(权威,来自比赛详情)优先,回退 slug 推断 —— 当天刚公示的比赛
