@@ -68,8 +68,9 @@ function DomainList({ title, items, href, showStatus = true }: {
   return <section className="platform-domain-content"><h2>{title}</h2>{list}</section>;
 }
 
-function LessonMedia({ lessonId, autoContinue, onAutoContinueChange, onNext, autoPlay }: {
+function LessonMedia({ lessonId, autoContinue, onAutoContinueChange, onNext, autoPlay, startTime }: {
   lessonId: string;
+  startTime?: number;
   autoContinue?: boolean;
   onAutoContinueChange?: (enabled: boolean) => void;
   onNext?: () => void;
@@ -113,6 +114,7 @@ function LessonMedia({ lessonId, autoContinue, onAutoContinueChange, onNext, aut
   </div>;
   if (!media) return <p className="platform-domain-note">{t('正在取得课时媒体访问权限。', 'Requesting lesson media access.')}</p>;
   if (media.mimeType.startsWith('video/')) return <LessonVideoPlayer src={media.accessUrl} onError={onError} onLoadedMetadata={onLoadedMetadata}
+    lessonId={lessonId} mediaId={media.mediaId} mimeType={media.mimeType} startTime={startTime}
     autoContinue={autoContinue} onAutoContinueChange={onAutoContinueChange} onNext={onNext} autoPlay={autoPlay} />;
   if (media.mimeType.startsWith('audio/')) return <audio className="platform-lesson-media" controls preload="metadata" src={media.accessUrl} onError={onError} onLoadedMetadata={onLoadedMetadata} />;
   return <a className="platform-action-link" href={media.accessUrl} target="_blank" rel="noreferrer">{t('打开课时媒体', 'Open lesson media')}</a>;
@@ -157,12 +159,13 @@ function OrderItems({ items }: { items: unknown[] }) {
   );
 }
 
-export function PlatformDomainContent({ definition, entity, params, previewRedirect, selectedLessonId, onSelectLesson }: {
+export function PlatformDomainContent({ definition, entity, params, previewRedirect, selectedLessonId, onSelectLesson, lessonStartTime }: {
   definition: PlatformRouteDefinition;
   entity?: PlatformEntity;
   params: Record<string, string>;
   previewRedirect?: boolean;
   selectedLessonId?: string | null;
+  lessonStartTime?: number;
   onSelectLesson?: (id: string) => void;
 }) {
   const t = useT();
@@ -215,7 +218,7 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
         </nav>
         <section className="platform-classroom-stage" aria-label={t('课程视频', 'Lesson video')}>
           <h2 aria-live="polite">{active.title}</h2>
-          <div className="platform-classroom-player"><LessonMedia key={active.id} lessonId={active.id}
+          <div className="platform-classroom-player"><LessonMedia key={active.id} lessonId={active.id} startTime={lessonStartTime}
             autoContinue={autoContinue} onAutoContinueChange={onSelectLesson ? setAutoContinue : undefined} autoPlay={autoPlayLessonId === active.id}
             onNext={() => {
               const next = sectionLessons[sectionLessons.findIndex(lesson => lesson.id === active.id) + 1];
@@ -262,7 +265,7 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
       <section className="platform-domain-content platform-prose">
         <h2>{t('课时内容', 'Lesson content')}</h2>
         {body ? body.split('\n\n').map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 24)}`}>{paragraph}</p>) : null}
-        {mediaId ? <LessonMedia key={entity.id} lessonId={entity.id} /> : null}
+        {mediaId ? <LessonMedia key={entity.id} lessonId={entity.id} startTime={lessonStartTime} /> : null}
       </section>
     ) : null;
   }
