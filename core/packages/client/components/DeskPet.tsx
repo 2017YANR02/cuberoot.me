@@ -12,11 +12,12 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import i18n from '@/i18n/i18n-client';
-import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
+import { canTestRoles, getRolePreview, hasAdminAccess, useAuthStore } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
 import { useAlgSubmissionUnread, refreshAlgSubmissionUnread } from '@/lib/alg-submission-unread';
 import { useNotificationsUnread, refreshNotificationsUnread } from '@/lib/notifications-unread';
 import AppLink from '@/components/AppLink';
+import { AdminTools } from '@/components/AuthTokenRefresher';
 import { ClearButton } from '@/components/ClearButton';
 import { persistItem } from '@/lib/safe-storage';
 import { subscribeBeat, getMetronomeState } from '@/lib/metronome';
@@ -506,6 +507,7 @@ export default function DeskPet() {
     const body = svg.querySelector<SVGGElement>('#clawddp-body');
     const shadow = svg.querySelector<SVGGElement>('#clawddp-shadow');
     const theme = THEMES[character];
+    const grouped = hasAdminAccess(user) || canTestRoles() || !!getRolePreview();
 
     try {
       const p = JSON.parse(localStorage.getItem(POS_KEY) || 'null');
@@ -733,6 +735,7 @@ export default function DeskPet() {
 
     // On drop: cling if the visual center landed within MINI_SNAP_FRAC of an edge.
     const snapEdge = (): 'left' | 'right' | null => {
+      if (grouped) return null;
       const r = root.getBoundingClientRect();
       const vcx = r.left + r.width * VC[character][0];
       const d = MINI_SNAP_FRAC * r.width;
@@ -744,6 +747,7 @@ export default function DeskPet() {
     // Toolbar toggle: cling to the nearest edge (crabwalking over) or un-cling
     // back to the pre-cling spot.
     const clingViaMenu = () => {
+      if (grouped) return;
       if (mini) {
         const pr = preMiniRight, pb = preMiniBottom;
         liftFromMini(dnd ? 'sleeping' : 'idle');
@@ -957,7 +961,7 @@ export default function DeskPet() {
     let restoredMini = false;
     try {
       const m = JSON.parse(localStorage.getItem(MINI_KEY) || 'null');
-      if (m && (m.edge === 'left' || m.edge === 'right')) {
+      if (!grouped && m && (m.edge === 'left' || m.edge === 'right')) {
         mini = true; miniEdge = m.edge;
         preMiniRight = typeof m.preRight === 'number' ? m.preRight : 0;
         preMiniBottom = typeof m.preBottom === 'number' ? m.preBottom : 0;
@@ -993,7 +997,7 @@ export default function DeskPet() {
       ctrlRef.current = null;
       delete (window as unknown as { clawdPet?: object }).clawdPet;
     };
-  }, [mounted, character, randomMode]);
+  }, [mounted, character, randomMode, user]);
 
   if (!mounted || hidden) return null;
 
@@ -1051,6 +1055,7 @@ export default function DeskPet() {
       />
       <div className={`clawd-deskpet${searchOpen ? ' pet-front' : ''}${touchActionsVisible ? ' touch-actions' : ''}`} data-size={size} data-char={character} ref={rootRef}>
         <style>{CSS}</style>
+        <AdminTools />
         <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" aria-hidden>
           <defs>
             <style>{`

@@ -2430,6 +2430,13 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `需传 lang 与 onClose;DeskPet 在 I18nProvider 外故靠 lang prop。`, en: `Takes lang and onClose props; uses lang prop since DeskPet lives outside I18nProvider.` },
   },
   {
+    name: 'AdminTools',
+    import: "import { AdminTools } from '@/components/AuthTokenRefresher';",
+    category: 'more',
+    zh: `桌宠内的管理工具，含通知、首页焦点与角色测试，拖动时整组移动。`,
+    en: `Admin controls inside the desk pet for notices, homepage features and role testing; the whole group moves together.`,
+  },
+  {
     name: 'AuthTokenRefresher',
     import: "import AuthTokenRefresher from '@/components/AuthTokenRefresher';",
     category: 'more',
