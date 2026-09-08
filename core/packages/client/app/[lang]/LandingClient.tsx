@@ -176,11 +176,11 @@ export default function LandingPage() {
       cardElement = (
         <div className={className} id={`card-${card.id}`}
           title={isLocked
-            ? tr({ zh: '教程维护中', en: 'Tutorials under maintenance' })
+            ? tr({ zh: '开发中', en: 'In development' })
             : t('comingSoon')}
           aria-disabled="true" role="link">
           {content}
-          {card.comingSoon && <span className="coming-soon-badge">{t('comingSoon')}</span>}
+          {(card.comingSoon || isLocked) && <span className="coming-soon-badge">{isLocked ? tr({ zh: '开发中', en: 'In development' }) : t('comingSoon')}</span>}
         </div>
       );
     } else if (card.internal) {
