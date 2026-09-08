@@ -21,8 +21,14 @@ type ReplayControlsProps = {
   onReplay: () => void;
 };
 
-export default function AlgPlaybackControls(props: FullControlsProps | ReplayControlsProps) {
+export default function AlgPlaybackControls(props: (FullControlsProps | ReplayControlsProps) & { onResetView?: () => void }) {
   const t = useT();
+  const resetView = props.onResetView && (
+    <button type="button" className="playback-bar-btn playback-bar-reset-view" onClick={props.onResetView}
+      title={t('重置视角', 'Reset view')} aria-label={t('重置视角', 'Reset view')}>
+      <RotateCcw size={14} aria-hidden="true" />
+    </button>
+  );
 
   if (props.mode === 'replay') {
     return (
@@ -37,6 +43,7 @@ export default function AlgPlaybackControls(props: FullControlsProps | ReplayCon
         >
           <RotateCcw size={15} aria-hidden="true" />
         </button>
+        {resetView}
       </div>
     );
   }
@@ -52,6 +59,7 @@ export default function AlgPlaybackControls(props: FullControlsProps | ReplayCon
       onTogglePlay={props.onTogglePlay}
       onStepForward={props.onStepForward}
       onSkipEnd={() => props.onScrub(props.count)}
+      trailing={resetView}
       labels={{
         skipStart: t('回到起点', 'Skip to start'),
         stepBack: t('上一步', 'Step back'),
