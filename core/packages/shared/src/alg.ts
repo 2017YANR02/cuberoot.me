@@ -465,6 +465,11 @@ export interface AlgCatalogSection {
 }
 
 export const ALG_CATALOG_SECTIONS: Partial<Record<AlgPuzzle, AlgCatalogSection[]>> = {
+  '2x2': [
+    { id: 'ortega', en: 'Ortega', zh: 'Ortega', slugs: ['ortega-oll', 'ortega-pbl'] },
+    { id: 'eg', en: 'EG', zh: 'EG', slugs: ['cll', 'eg1', 'eg2', 'leg1'] },
+    { id: 'teg', en: 'TEG', zh: 'TEG', slugs: ['tcll-plus', 'tcll-minus', 'teg2-plus'] },
+  ],
   fto: [
     { id: '3-look-l3t', en: '3-Look L3T', zh: '3-Look L3T', slugs: ['pf', 'tl', 'lt'] },
     { id: '2-look-l3t', en: '2-Look L3T', zh: '2-Look L3T', slugs: ['pf', 'tcp'] },
