@@ -378,12 +378,17 @@
   color: var(--accent);
 }
 
-.drive-file-name small {
+.drive-file-owner {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--muted-foreground);
-  max-width: 40%;
+}
+
+.drive-files-with-owner .drive-file-head,
+.drive-files-with-owner .drive-file-row {
+  grid-template-columns: minmax(0, .45fr) minmax(0, 1fr) 96px 174px 214px;
 }
 
 .drive-file-name a,
@@ -724,6 +729,28 @@
 
   .drive-upload-row {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 720px) {
+  .drive-files-with-owner .drive-file-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+  }
+
+  .drive-files-with-owner .drive-file-owner {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .drive-files-with-owner .drive-file-name,
+  .drive-files-with-owner .drive-file-size,
+  .drive-files-with-owner .drive-file-actions {
+    grid-column: 2;
+    grid-row: auto;
+  }
+
+  .drive-files-with-owner .drive-file-actions {
+    flex-wrap: wrap;
   }
 }
 

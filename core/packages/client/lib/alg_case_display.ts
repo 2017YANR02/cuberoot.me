@@ -180,7 +180,8 @@ export function displaySq1CsName(name: string): string {
 
 /** /alg 列表用:按 (puzzle, set) 决定是否套 OLL/PLL/ZBLL/COLL/LS 展示变换。 */
 export function displayAlgCaseName(puzzle: string, set: string, name: string): string {
-  if (puzzle === '2x2' && ['cll', 'eg1', 'eg2', 'leg1'].includes(set)) return displayCollName(name);
+  if ((puzzle === '2x2' && ['cll', 'eg1', 'eg2', 'leg1'].includes(set)) || (puzzle === '3x3' && set === 'coll')) name = displayCollName(name);
+  name = name.replace(/\b(anti[\s_-]*sune|sune)\b/gi, token => /^anti/i.test(token) ? 'S-' : 'S+');
   if (puzzle === '2x2' && /^ls[1-9]$/.test(set)) return display2x2LsName(name);
   if (puzzle === 'sq1' && (set === 'cs' || set === 'csp' || set === 'obl')) return displaySq1CsName(name);
   if (puzzle === '3x3' && set === 'oll') return displayOllName(name);
@@ -197,7 +198,7 @@ export function displayAlgCaseName(puzzle: string, set: string, name: string): s
  * 去掉当前 set 的冗余前缀,组名与编号紧排,例如 `EG1 S 1` → `S1`。
  */
 export function primaryCaseName(puzzle: string, set: string, c: AlgCase): string {
-  let name = (c.meta?.ollcp || displayAlgCaseName(puzzle, set, c.name)).trim();
+  let name = displayAlgCaseName(puzzle, set, c.meta?.ollcp || c.name).trim();
   const meta = ALG_CATALOG[puzzle as AlgPuzzle]?.find(entry => entry.slug === set);
   const prefixes = [set, meta?.en, meta?.zh, meta?.short, meta?.scd]
     .filter((prefix): prefix is string => Boolean(prefix))

@@ -71,7 +71,7 @@ function readPath(resource: PlatformResource, options: PlatformLoadOptions): str
     case 'membership-plans': return '/v1/platform/membership-plans';
     case 'account-memberships': return '/v1/platform/me/memberships';
     case 'entitlements': return `/v1/platform/entitlements${query}`;
-    case 'courses': return `/v1/platform/courses${id ? `/${id}` : ''}${query}`;
+    case 'courses': return `/v1/platform/courses${id ? `/${id}` : ''}${query}${id ? `${query ? '&' : '?'}v=2` : ''}`;
     case 'course-lesson': return `/v1/platform/courses/${encodeURIComponent(options.params.id ?? '')}/lessons/${encodeURIComponent(options.params.lessonId ?? '')}`;
     case 'paths': return `/v1/platform/paths${id ? `/${id}` : ''}${query}`;
     case 'events': return `/v1/platform/events${id ? `/${id}` : ''}${query}`;

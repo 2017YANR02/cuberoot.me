@@ -176,7 +176,7 @@ function DriveShareDialog({ node, url, busy, onVisibilityChange, onClose }: Driv
           )}
           {!folder && node.shared && !url && <div className="drive-loading drive-share-loading"><Loader2 className="drive-spin" />{t('正在生成链接…', 'Preparing link…')}</div>}
           <small>{folder
-            ? t('成员可从“共享文件夹”找到它。关闭本目录共享不会关闭其他目录单独设置的共享或文件公开链接；父目录的共享仍会继承。移入回收站会关闭整棵目录树的共享，恢复后需重新开启。', 'Members can find it under Shared folders. Turning this off does not revoke other directly shared folders or public file links; parent-folder access is still inherited. Trash revokes sharing throughout the subtree; restoring does not re-enable it.')
+            ? t('成员可从“共享”找到它。关闭本目录共享不会关闭其他目录单独设置的共享或文件公开链接；父目录的共享仍会继承。移入回收站会关闭整棵目录树的共享，恢复后需重新开启。', 'Members can find it under Shared. Turning this off does not revoke other directly shared folders or public file links; parent-folder access is still inherited. Trash revokes sharing throughout the subtree; restoring does not re-enable it.')
             : t('停止分享后旧链接立即失效；重新公开会生成新链接。移入回收站也会停止分享。', 'Stopping sharing invalidates the old link immediately. Enabling it again creates a new link. Moving the file to Trash also stops sharing.')}</small>
         </div>
       </div>
@@ -335,7 +335,6 @@ function DrivePageContent() {
 
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => { tasksRef.current = tasks; }, [tasks]);
-  useEffect(() => { downloadTasksRef.current = downloadTasks; }, [downloadTasks]);
 
   const updateTask = useCallback((id: string, changes: Partial<UploadTask>) => {
     setTasks((current) => {
@@ -346,11 +345,8 @@ function DrivePageContent() {
   }, []);
 
   const updateDownloadTask = useCallback((id: string, changes: Partial<DownloadTask>) => {
-    setDownloadTasks((current) => {
-      const next = current.map((item) => item.id === id ? { ...item, ...changes } : item);
-      downloadTasksRef.current = next;
-      return next;
-    });
+    downloadTasksRef.current = downloadTasksRef.current.map((item) => item.id === id ? { ...item, ...changes } : item);
+    setDownloadTasks(downloadTasksRef.current);
   }, []);
 
   const load = useCallback(async () => {
@@ -777,11 +773,9 @@ function DrivePageContent() {
       state: 'downloading',
       error: null,
     };
-    setDownloadTasks((current) => {
-      const next = [...current, task];
-      downloadTasksRef.current = next;
-      return next;
-    });
+    // Register synchronously: React may defer state updaters until after runDownload.
+    downloadTasksRef.current = [...downloadTasksRef.current, task];
+    setDownloadTasks(downloadTasksRef.current);
     void runDownload(taskId);
   };
 
@@ -795,11 +789,8 @@ function DrivePageContent() {
   const removeDownloadTask = (task: DownloadTask) => {
     discardedDownloadsRef.current.add(task.id);
     downloadControllersRef.current.get(task.id)?.abort();
-    setDownloadTasks((current) => {
-      const next = current.filter((item) => item.id !== task.id);
-      downloadTasksRef.current = next;
-      return next;
-    });
+    downloadTasksRef.current = downloadTasksRef.current.filter((item) => item.id !== task.id);
+    setDownloadTasks(downloadTasksRef.current);
   };
 
   useEffect(() => {
@@ -918,9 +909,9 @@ function DrivePageContent() {
 
       <nav className="drive-view-tabs" aria-label={t('网盘视图', 'Drive views')}>
         <AppLink href="/drive" className={view === 'files' ? 'is-active' : ''} prefetch={false}>{t('文件', 'Files')}</AppLink>
-        <AppLink href="/drive?view=members" className={view === 'members' ? 'is-active' : ''} prefetch={false}><Users aria-hidden="true" />{t('共享文件夹', 'Shared folders')}</AppLink>
+        <AppLink href="/drive?view=members" className={view === 'members' ? 'is-active' : ''} prefetch={false}><Users aria-hidden="true" />{t('共享', 'Shared')}</AppLink>
         {snapshot?.isSuperAdmin && <AppLink href="/drive?view=all" className={view === 'all' ? 'is-active' : ''} prefetch={false}>{t('全部文件', 'All files')}</AppLink>}
-        <AppLink href="/drive?view=trash" className={view === 'trash' ? 'is-active' : ''} prefetch={false}><Trash2 aria-hidden="true" />{t('回收站', 'Trash')}</AppLink>
+        <AppLink href="/drive?view=trash" className={view === 'trash' ? 'is-active' : ''} prefetch={false} aria-label={t('回收站', 'Trash')} title={t('回收站', 'Trash')}><Trash2 aria-hidden="true" /></AppLink>
       </nav>
 
       {view === 'files' && (
@@ -947,7 +938,6 @@ function DrivePageContent() {
           <ClearButton variant="standalone" ariaLabel={t('取消移动', 'Cancel move')} onClick={() => setMovingNode(null)} />
         </div>
       )}
-      {view === 'members' && <p>{t('成员可查看和下载；上传、移动或管理请由所有者在“文件”中操作。已有文件不会自动共享：请所有者开启所在文件夹的共享。', 'Members can browse and download. Owners upload, move, and manage items under Files. Existing files are not shared automatically: their owner must enable folder sharing.')}</p>}
 
       {membersOpen && snapshot?.isAdmin && (
         <section className="drive-members" aria-labelledby="drive-members-title">
@@ -1035,18 +1025,19 @@ function DrivePageContent() {
 
       {view !== 'trash' && (
         <nav className="drive-breadcrumbs" aria-label={t('当前文件夹路径', 'Current folder path')}>
-          <AppLink href={`/drive?view=${view}`} prefetch={false}>{view === 'all' ? t('全部文件', 'All files') : view === 'members' ? t('共享文件夹', 'Shared folders') : t('我的文件', 'My files')}</AppLink>
+          <AppLink href={`/drive?view=${view}`} prefetch={false}>{view === 'all' ? t('全部文件', 'All files') : view === 'members' ? t('共享', 'Shared') : t('我的文件', 'My files')}</AppLink>
           {breadcrumbs.map((crumb) => <span key={crumb.id}><span aria-hidden="true">/</span><AppLink href={`/drive?folder=${encodeURIComponent(crumb.id)}&view=${view}`} prefetch={false}>{crumb.name}</AppLink></span>)}
         </nav>
       )}
 
-      <section className="drive-files" aria-label={view === 'trash' ? t('回收站项目', 'Trash items') : t('文件和文件夹', 'Files and folders')}>
-        <div className="drive-file-head"><span>{t('名称', 'Name')}</span><span>{t('大小', 'Size')}</span><span>{t('更新时间', 'Updated')}</span><span>{t('操作', 'Actions')}</span></div>
+      <section className={`drive-files${view === 'members' || view === 'all' ? ' drive-files-with-owner' : ''}`} aria-label={view === 'trash' ? t('回收站项目', 'Trash items') : t('文件和文件夹', 'Files and folders')}>
+        <div className="drive-file-head">{(view === 'members' || view === 'all') && <span>{t('所有者', 'Owner')}</span>}<span>{t('名称', 'Name')}</span><span>{t('大小', 'Size')}</span><span>{t('更新时间', 'Updated')}</span><span>{t('操作', 'Actions')}</span></div>
         {loading && <div className="drive-loading"><Loader2 className="drive-spin" />{t('正在加载…', 'Loading…')}</div>}
         {!loading && snapshot?.nodes.length === 0 && <div className="drive-empty">{view === 'trash' ? t('回收站是空的。', 'Trash is empty.') : view === 'members' ? t('这里还没有共享内容。', 'No shared items here yet.') : view === 'all' ? t('这里还没有文件。', 'No files here yet.') : t('这里还没有文件。可拖入文件或点击上传。', 'No files here yet. Drop files here or use Upload.')}</div>}
         {!loading && snapshot?.nodes.map((node) => (
           <div className="drive-file-row" key={node.id}>
-            <div className="drive-file-name"><FileKindIcon node={node} />{node.kind === 'folder' && view !== 'trash' ? <AppLink href={`/drive?folder=${encodeURIComponent(node.id)}&view=${view}`} prefetch={false}>{node.name}</AppLink> : <strong>{node.name}</strong>}{(view === 'members' || view === 'all') && node.ownerName && <small>{node.ownerName}</small>}</div>
+            {(view === 'members' || view === 'all') && <span className="drive-file-owner" title={node.ownerName ?? undefined}>{node.ownerName || '—'}</span>}
+            <div className="drive-file-name"><FileKindIcon node={node} />{node.kind === 'folder' && view !== 'trash' ? <AppLink href={`/drive?folder=${encodeURIComponent(node.id)}&view=${view}`} prefetch={false}>{node.name}</AppLink> : <strong>{node.name}</strong>}</div>
             <span className="drive-file-size">{node.kind === 'file' ? formatBytes(node.sizeBytes) : '—'}</span>
             <time dateTime={node.updatedAt}>{new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(node.updatedAt))}</time>
             <div className="drive-file-actions">

@@ -232,7 +232,24 @@ platformCatalogRoutes.get('/platform/courses/:id', async (c) => {
     WHERE (c.id::text = $1 OR c.slug = $1) AND c.status IN ('published', 'unlisted')
   `, [key]);
   if (!rows[0]) notFound('Course');
-  publicCache(c);
+  const [summary, reviews] = await Promise.all([
+    platformQuery(platformDb(), `
+      SELECT COUNT(*)::int AS count, AVG(rating)::float8 AS average
+      FROM platform_course_reviews WHERE course_id = $1::uuid AND status = 'published'
+    `, [rows[0].id]),
+    platformQuery(platformDb(), `
+      SELECT review.id::text, review.rating, review.title, review.body,
+        review.created_at AS "createdAt", NULLIF(author.display_name, '') AS "authorName"
+      FROM platform_course_reviews review LEFT JOIN app_users author ON author.id = review.user_id
+      WHERE review.course_id = $1::uuid AND review.status = 'published'
+        AND (review.title <> '' OR review.body <> '')
+      ORDER BY review.created_at DESC, review.id DESC LIMIT 10
+    `, [rows[0].id]),
+  ]);
+  rows[0].reviewSummary = summary[0];
+  rows[0].reviews = reviews;
+  // A successful review write is immediately followed by a fresh course read.
+  c.header('Cache-Control', 'no-store');
   return c.json({ course: rows[0] });
 });
 

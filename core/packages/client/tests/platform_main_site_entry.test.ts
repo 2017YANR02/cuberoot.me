@@ -7,6 +7,13 @@ import { PLATFORM_SITEMAP_PATHS } from '@/app/sitemap';
 const read = (relativePath: string) => readFileSync(new URL(`../${relativePath}`, import.meta.url), 'utf8');
 
 describe('Platform capabilities stay in canonical main-site entrypoints', () => {
+  it('does not expose internal API fields or status in learner course lists and lesson pages', () => {
+    const view = read('components/platform/PlatformRouteView.tsx');
+    expect(view).toContain("const learnerContent = learnerCourses || definition.id === 'course-lesson';");
+    expect(view).toContain('!learnerContent && item.status');
+    expect(view).toContain('!learnerContent && item.fields?.length');
+  });
+
   it('keeps /search as a URL-backed reuse of LandingSearch', () => {
     const page = read('app/[lang]/search/page.tsx');
     const layout = read('app/[lang]/search/layout.tsx');
@@ -71,15 +78,16 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(routeView).toMatch(/permissionDenied \|\| definition\.id === 'qr' \|\| \(\['membership', 'me-membership'\]/);
   });
 
-  it('keeps glass progressive and limits the instructor portrait to his course', () => {
+  it('keeps glass progressive without a duplicate course hero or summary', () => {
     const shell = read('components/platform/PlatformShell.tsx');
     const view = read('components/platform/PlatformRouteView.tsx');
     const styles = read('components/platform/platform.css');
 
     expect(shell).toContain('className="platform-nav platform-glass"');
-    expect(view).toContain("const ruiminCourse = course?.data?.slug === 'yan-ruimin-3x3-beginner';");
-    expect(view).toContain('{ruiminCourse ? <div className="platform-course-portrait">');
-    expect(view).toContain('<a className="platform-portrait-link platform-glass" href="#platform-course-outline">');
+    expect(view).not.toContain('className="platform-course-portrait"');
+    expect(view).not.toContain('className="platform-portrait-link platform-glass"');
+    expect(view).toContain('!courseSection && !courseDetail ? <p>');
+    expect(view).not.toContain('course?.summary');
     expect(styles).toContain('@supports not (backdrop-filter: blur(1px))');
     expect(styles).toContain('@media (prefers-reduced-transparency: reduce)');
     expect(styles).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*animation: none !important/);

@@ -384,7 +384,7 @@ function SubgroupIndex({
         {tops.map(([topLabel, { sample }]) => {
           const firstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
           const slug = encodeURIComponent(topLabel.toLowerCase()) || '_'; // slug 用原名(避免 "+" 进 URL)
-          const dispTop = set === 'zbll' ? displayZbllToken(topLabel) : topLabel;
+          const dispTop = set === 'zbll' ? displayZbllToken(topLabel) : displayAlgCaseName(puzzle, set, topLabel);
           const ollName = ollByGroup.get(topLabel);
           return (
             <AlgCard
@@ -424,7 +424,8 @@ function SubgroupIndex({
   return (
     <div className="alg-l2-index">
       {tops.map(([topLabel, e]) => {
-        const isCollapsed = collapsed.has(topLabel);
+        const showCover = !(puzzle === '2x2' && (set === 'ortega-oll' || set === 'ortega-pbl'));
+        const isCollapsed = showCover && collapsed.has(topLabel);
         const firstAlg = e.sample.algs.flat()[0]?.alg ?? e.sample.standard ?? '';
         const dispTop = set === 'zbll' ? displayZbllToken(topLabel) : displayAlgCaseName(puzzle, set, topLabel);
         // 封面卡标题不必再带 set 名(页首 H1 已写 ZBLL)。1lll 组号是纯数字 → 换字母制 OLL 名。
@@ -432,7 +433,7 @@ function SubgroupIndex({
         const title = ollName ?? (dispTop || (set === 'ortega-oll' ? 'OLL' : tr({ zh: '其他', en: 'Other' })));
         return (
           <div key={topLabel || '_root_'} className="alg-subgroup-grid alg-l2-grid">
-            <AlgCard
+            {showCover && <AlgCard
               expand={isCollapsed ? 'closed' : 'open'}
               onClick={() => toggle(topLabel)}
               tooltip={isCollapsed ? tr({ zh: '展开', en: 'Expand' }) : tr({ zh: '收起', en: 'Collapse' })}
@@ -440,7 +441,7 @@ function SubgroupIndex({
                 ? <CaseThumb puzzle={puzzle} set={set} sticker={e.sample.sticker} alg={firstAlg} setup={e.sample.setup} size={thumbSize} />
                 : <VisualCube setup={e.sample.setup} algorithm={firstAlg} view="oll" puzzleSize={puzzle === '2x2' ? 2 : 3} size={thumbSize} hideGreySides />}
               title={title}
-            />
+            />}
             {!isCollapsed && (inlineCases
               ? e.cases.map(sample => [String(sample.id ?? sample.name), { sample }] as const)
               : Array.from(e.subs.entries())).map(([subLabel, { sample }]) => {
@@ -1105,7 +1106,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       groupLabel: (sub) => (isSq1Ep && sq1EpNumericNames ? sq1EpNumericGroupName(sub) : null)
         ?? ollByGroup.get(sub)
         ?? (set === 'zbll' ? displayZbllToken(sub.split('/').pop() ?? sub)
-          : ['cll', 'coll', 'eg1', 'eg2', 'leg1'].includes(set) ? displayAlgCaseName(puzzleParam, set, sub) : sub),
+          : displayAlgCaseName(puzzleParam, set, sub)),
       sectionOf: isSq1Ep
         ? (c => classifySq1EpParity(c.name) === 'no-parity'
           ? tr({ zh: '无特', en: 'No parity' })
@@ -1525,7 +1526,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                     ? `${sq1EpNumericLayerName(subgroup) ?? subgroup}.*`
                     : tr({ zh: `上层 ${subgroup}`, en: `Top ${subgroup}` }))
                   : (ollByGroup.get(subgroup)
-                    ?? (['cll', 'coll', 'eg1', 'eg2', 'leg1'].includes(set) ? displayAlgCaseName(puzzleParam, set, subgroup) : subgroup)
+                    ?? displayAlgCaseName(puzzleParam, set, subgroup)
                     ?? tr({ zh: '其他', en: 'Other' }))}
                 <span className="alg-subgroup-count">{cases.length}</span>
               </h2>
