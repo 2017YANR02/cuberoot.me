@@ -14,6 +14,11 @@ import { useT } from '@/hooks/useT';
  * Global session refresh and the superadmin's current-tab role-test controls.
  */
 export default function AuthTokenRefresher() {
+  useEffect(() => { void ensureFreshToken().then(refreshSessionUser); }, []);
+  return null;
+}
+
+export function AdminTools() {
   const user = useAuthUser();
   const t = useT();
   const pathname = usePathname();
@@ -23,31 +28,43 @@ export default function AuthTokenRefresher() {
   const [error, setError] = useState(false);
   const toolbarRef = useRef<HTMLElement>(null);
   const dragRef = useRef<{ x: number; y: number } | null>(null);
-  const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
+  // The pet owns the only position; either drag handle moves that same root.
   const moveTo = useCallback((left: number, top: number) => {
-    const rect = toolbarRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    setPosition({
-      left: Math.max(16, Math.min(left, window.innerWidth - rect.width - 16)),
-      top: Math.max(16, Math.min(top, window.innerHeight - rect.height - 16)),
-    });
+    const toolbar = toolbarRef.current;
+    const root = toolbar?.parentElement;
+    if (!toolbar || !root) return;
+    const rect = toolbar.getBoundingClientRect();
+    const anchor = getComputedStyle(root);
+    const right = parseFloat(anchor.right), bottom = parseFloat(anchor.bottom);
+    root.style.right = `${right - (left - rect.left)}px`;
+    root.style.bottom = `${bottom - (top - rect.top)}px`;
   }, []);
-  const moved = position !== null;
+  useEffect(() => { setReady(true); }, []);
   useEffect(() => {
-    if (!moved || !toolbarRef.current) return;
+    const toolbar = toolbarRef.current;
+    const root = toolbar?.parentElement;
+    const hit = root?.querySelector('.clawd-deskpet-hit');
+    if (!toolbar || !root || !hit) return;
+    // Clamp the whole group, including wrapped role-test text on narrow screens.
     const clamp = () => {
-      const rect = toolbarRef.current?.getBoundingClientRect();
-      if (rect) moveTo(rect.left, rect.top);
+      const viewportWidth = document.documentElement.getBoundingClientRect().width;
+      toolbar.style.maxWidth = `${viewportWidth - 32}px`;
+      const rect = toolbar.getBoundingClientRect();
+      const pet = hit.getBoundingClientRect();
+      const left = Math.min(rect.left, pet.left), right = Math.max(rect.right, pet.right);
+      const top = Math.min(rect.top, pet.top), bottom = Math.max(rect.bottom, pet.bottom);
+      const dx = Math.max(16 - left, Math.min(0, viewportWidth - 16 - right));
+      const dy = Math.max(16 - top, Math.min(0, window.innerHeight - 16 - bottom));
+      if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) moveTo(rect.left + dx, rect.top + dy);
     };
-    const observer = new ResizeObserver(clamp);
-    observer.observe(toolbarRef.current);
+    const resize = new ResizeObserver(clamp);
+    resize.observe(toolbar); resize.observe(root);
+    const mutation = new MutationObserver(clamp);
+    mutation.observe(root, { attributes: true, attributeFilter: ['style', 'class'] });
     window.addEventListener('resize', clamp);
-    return () => { observer.disconnect(); window.removeEventListener('resize', clamp); };
-  }, [moved, moveTo]);
-  useEffect(() => {
-    setReady(true);
-    void ensureFreshToken().then(refreshSessionUser);
-  }, []);
+    clamp();
+    return () => { resize.disconnect(); mutation.disconnect(); window.removeEventListener('resize', clamp); };
+  }, [ready, user, moveTo]);
   const preview = ready ? getRolePreview() : null;
   const admin = ready && !!user && isAdmin();
   const roleTesting = ready && (!!preview || (!!user && canTestRoles()));
@@ -68,7 +85,7 @@ export default function AuthTokenRefresher() {
     } catch { setError(true); }
     finally { setBusy(false); }
   };
-  return <aside ref={toolbarRef} aria-label={t('管理工具', 'Admin tools')} style={{ position: 'fixed', ...(position ?? { bottom: 16, right: 'max(16px, calc((100vw - 1100px) / 2))' }), zIndex: 10000, maxWidth: 'calc(100vw - 32px)', background: 'var(--background)', color: 'var(--foreground)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+  return <aside ref={toolbarRef} className="admin-tools" aria-label={t('管理工具', 'Admin tools')} style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, width: 'max-content', maxWidth: 'calc(100vw - 32px)', pointerEvents: 'auto', background: 'var(--background)', color: 'var(--foreground)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
     <style>{`
       .admin-tool-action{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
         border:0;background:transparent;color:inherit;font:inherit;text-decoration:none;padding:6px;cursor:pointer;}
@@ -77,7 +94,7 @@ export default function AuthTokenRefresher() {
       .admin-env-switch .admin-tool-action{color:var(--faint-foreground);}
       .admin-env-switch .admin-tool-action[aria-current="page"]{color:var(--foreground);}
     `}</style>
-    <button type="button" className="admin-tool-action" aria-label={t('拖动管理工具栏', 'Move admin toolbar')}
+    <button type="button" className="admin-tool-action" aria-label={t('移动桌宠和管理工具', 'Move pet and admin tools')}
       title={t('拖动，或用方向键移动', 'Drag, or use arrow keys to move')}
       style={{ cursor: 'grab', touchAction: 'none' }}
       onPointerDown={event => {
