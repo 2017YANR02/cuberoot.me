@@ -85,8 +85,18 @@ export function AdminTools() {
     } catch { setError(true); }
     finally { setBusy(false); }
   };
-  return <aside ref={toolbarRef} className="admin-tools" aria-label={t('管理工具', 'Admin tools')} style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, width: 'max-content', maxWidth: 'calc(100vw - 32px)', pointerEvents: 'auto', background: 'var(--background)', color: 'var(--foreground)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+  return <aside ref={toolbarRef} className="admin-tools" aria-label={t('管理工具', 'Admin tools')} style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, width: 'max-content', maxWidth: 'calc(100vw - 32px)', pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
     <style>{`
+      .admin-tools{box-sizing:border-box;padding:4px 6px;border-radius:24px;
+        border:1px solid color-mix(in srgb,var(--foreground) 14%,transparent);
+        background:linear-gradient(135deg,color-mix(in srgb,var(--foreground) 9%,transparent),transparent 55%),
+          color-mix(in srgb,var(--background) 48%,transparent);
+        backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
+        box-shadow:inset 0 1px 0 color-mix(in srgb,var(--foreground) 16%,transparent),
+          inset 0 -1px 0 color-mix(in srgb,var(--background) 30%,transparent),
+          0 6px 24px color-mix(in srgb,var(--foreground) 8%,transparent);}
+      .admin-tools .compact-select-trigger{background:color-mix(in srgb,var(--foreground) 5%,transparent);}
+      .admin-tools .compact-select-trigger:hover{background:color-mix(in srgb,var(--foreground) 10%,transparent);}
       .admin-tool-action{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
         border:0;background:transparent;color:inherit;font:inherit;text-decoration:none;padding:6px;cursor:pointer;}
       .admin-tool-action:hover{color:var(--accent);}
