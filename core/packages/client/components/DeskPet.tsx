@@ -1055,7 +1055,7 @@ export default function DeskPet() {
       />
       <div className={`clawd-deskpet${searchOpen ? ' pet-front' : ''}${touchActionsVisible ? ' touch-actions' : ''}`} data-size={size} data-char={character} ref={rootRef}>
         <style>{CSS}</style>
-        <AdminTools />
+        <AdminTools centerX={VC[character][0]} />
         <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" aria-hidden>
           <defs>
             <style>{`
