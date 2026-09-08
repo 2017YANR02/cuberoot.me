@@ -18,7 +18,7 @@ export default function AuthTokenRefresher() {
   return null;
 }
 
-export function AdminTools() {
+export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   const user = useAuthUser();
   const t = useT();
   const pathname = usePathname();
@@ -64,7 +64,7 @@ export function AdminTools() {
     window.addEventListener('resize', clamp);
     clamp();
     return () => { resize.disconnect(); mutation.disconnect(); window.removeEventListener('resize', clamp); };
-  }, [ready, user, moveTo]);
+  }, [ready, user, moveTo, centerX]);
   const preview = ready ? getRolePreview() : null;
   const admin = ready && !!user && isAdmin();
   const roleTesting = ready && (!!preview || (!!user && canTestRoles()));
@@ -85,7 +85,7 @@ export function AdminTools() {
     } catch { setError(true); }
     finally { setBusy(false); }
   };
-  return <aside ref={toolbarRef} className="admin-tools" aria-label={t('管理工具', 'Admin tools')} style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, width: 'max-content', maxWidth: 'calc(100vw - 32px)', pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+  return <aside ref={toolbarRef} className="admin-tools" aria-label={t('管理工具', 'Admin tools')} style={{ position: 'absolute', top: '100%', left: `${centerX * 100}%`, transform: 'translateX(-50%)', marginTop: 8, width: 'max-content', maxWidth: 'calc(100vw - 32px)', pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
     <style>{`
       .admin-tools{box-sizing:border-box;padding:4px 6px;border-radius:24px;
         border:1px solid color-mix(in srgb,var(--foreground) 14%,transparent);
