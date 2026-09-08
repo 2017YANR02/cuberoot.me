@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Plus, Pencil, UserCog, Laptop, Globe, GripVertical } from 'lucide-react';
+import { Plus, Pencil, UserCog, Laptop, Globe, GripVertical, Drama } from 'lucide-react';
 import { ensureFreshToken, refreshSessionUser, canTestRoles, getRolePreview, startRolePreview, endRolePreview, useAuthUser, isAdmin, type TestRole } from '@/lib/auth-store';
 import AppLink from './AppLink';
 import { openPageNoticeEditor, pageKeyFromPathname } from '@/lib/page-notices-api';
@@ -156,7 +156,7 @@ export function AdminTools() {
       <span>{t('测试中：', 'Testing: ')}{items.find(item => item.value === preview.role)?.label}</span>
       <button type="button" disabled={busy} onClick={() => void run()}>{t('退出测试', 'Exit test')}</button>
       <small>{t('仅当前标签页，30 分钟有效；业务操作会真实保存。', 'This tab only, valid for 30 minutes. Business changes are real.')}</small>
-    </> : <CompactSelect label={busy ? t('正在切换…', 'Switching…') : t('角色测试', 'Test role')} ariaLabel={t('选择测试角色', 'Choose test role')} items={items.map(item => ({ ...item, disabled: busy }))} onChange={role => void run(role)} />)}
+    </> : <CompactSelect label={<Drama size={17} aria-hidden />} title={busy ? t('正在切换…', 'Switching…') : t('角色测试', 'Test role')} ariaLabel={busy ? t('正在切换…', 'Switching…') : t('选择测试角色', 'Choose test role')} items={items.map(item => ({ ...item, disabled: busy }))} onChange={role => void run(role)} />)}
     {error && <span role="alert">{t('切换失败，请重试。', 'Switch failed. Please retry.')}</span>}
   </aside>;
 }
