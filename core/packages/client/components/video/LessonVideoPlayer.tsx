@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type SyntheticEvent } from 'react';
-import { AudioLines, Bug, Check, ChevronLeft, ChevronRight, CircleHelp, Code, Gauge, Info, Link, Maximize, Minimize, Moon, Pause, PictureInPicture2, Play, Repeat2, Settings, SlidersHorizontal, Subtitles, Volume1, Volume2, VolumeX } from 'lucide-react';
+import { AudioLines, Bug, Check, ChevronLeft, ChevronRight, CircleHelp, Code, Gauge, Info, Keyboard, Link, Maximize, Minimize, Moon, Pause, PictureInPicture2, Play, RectangleHorizontal, Repeat2, Settings, SlidersHorizontal, Subtitles, Volume1, Volume2, VolumeX } from 'lucide-react';
 import { browserClipboardTransport } from '@cuberoot/timer-ui';
 import { ClearButton } from '@/components/ClearButton';
 import BoolToggle from '@/components/BoolToggle';
@@ -16,6 +16,7 @@ interface Props {
   autoContinue?: boolean;
   onAutoContinueChange?: (enabled: boolean) => void;
   onNext?: () => void;
+  onPrevious?: () => void;
   autoPlay?: boolean;
   lessonId?: string;
   mediaId?: string;
@@ -23,13 +24,15 @@ interface Props {
   startTime?: number;
 }
 
+const PLAYBACK_RATES = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
 function timeLabel(time: number) {
   const seconds = Number.isFinite(time) ? Math.max(0, Math.floor(time)) : 0;
   const minutes = Math.floor(seconds / 60);
   return `${minutes >= 60 ? `${Math.floor(minutes / 60)}:` : ''}${minutes >= 60 ? String(minutes % 60).padStart(2, '0') : minutes}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
-export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue = false, onAutoContinueChange, onNext, autoPlay = false, lessonId, mediaId, mimeType, startTime = 0 }: Props) {
+export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue = false, onAutoContinueChange, onNext, onPrevious, autoPlay = false, lessonId, mediaId, mimeType, startTime = 0 }: Props) {
   const t = useT();
   const root = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
@@ -51,6 +54,10 @@ export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue
   const [canPip, setCanPip] = useState(false);
   const [resolution, setResolution] = useState(0);
   const [notice, setNotice] = useState('');
+  const [theater, setTheater] = useState(false);
+  const [shortcuts, setShortcuts] = useState(false);
+  const shortcutDialog = useRef<HTMLDialogElement>(null);
+  const frameDuration = useRef(1 / 30);
   const contextPanel = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [loop, setLoop] = useState(false);
@@ -63,6 +70,38 @@ export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue
   useEffect(() => cancelLongPress, []);
   usePanelClamp(menu !== null, panel);
   usePanelClamp(contextMenu !== null, contextPanel);
+
+  useEffect(() => {
+    if (!shortcuts) return;
+    const dialog = shortcutDialog.current;
+    const previous = document.activeElement;
+    dialog?.showModal();
+    return () => {
+      dialog?.close();
+      if (previous instanceof HTMLElement && previous.isConnected) previous.focus({ preventScroll: true });
+      else root.current?.focus({ preventScroll: true });
+    };
+  }, [shortcuts]);
+  useEffect(() => {
+    const element = video.current;
+    frameDuration.current = 1 / 30;
+    if (!element?.requestVideoFrameCallback) return;
+    let last: VideoFrameCallbackMetadata | null = null;
+    let handle = 0;
+    const sample: VideoFrameRequestCallback = (_now, metadata) => {
+      if (last && !element.paused && !element.seeking) {
+        const frames = metadata.presentedFrames - last.presentedFrames;
+        const interval = (metadata.mediaTime - last.mediaTime) / frames;
+        if (frames > 0 && interval >= 1 / 240 && interval <= 1 / 12) frameDuration.current = interval;
+      }
+      last = metadata;
+      handle = element.requestVideoFrameCallback(sample);
+    };
+    const reset = () => { last = null; };
+    element.addEventListener('seeking', reset);
+    handle = element.requestVideoFrameCallback(sample);
+    return () => { element.cancelVideoFrameCallback(handle); element.removeEventListener('seeking', reset); };
+  }, [src]);
 
   function readStats() {
     const element = video.current;
@@ -225,6 +264,95 @@ export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue
       else await video.current?.requestPictureInPicture();
     } catch { setNotice(t('画中画暂时不可用', 'Picture-in-picture is currently unavailable')); }
   };
+  const openShortcuts = () => { setMenu(null); setContextMenu(null); setShortcuts(true); };
+  // Ignore typing and browser shortcuts; preserve native range/button keys.
+  // Read media state at keydown time so rapid seeks never use a stale render.
+  useEffect(() => {
+    const keydown = (event: KeyboardEvent) => {
+      const element = video.current;
+      const target = event.target instanceof HTMLElement ? event.target : null;
+      if (!element || event.defaultPrevented || event.isComposing || event.altKey || event.metaKey) return;
+      if (target?.closest('textarea, select, [contenteditable]:not([contenteditable="false"]), input:not([type="range"])')) return;
+      if (target && target !== document.body && target !== document.documentElement && !root.current?.contains(target) && !root.current?.closest('.platform-classroom')?.contains(target)) return;
+      if (document.querySelector('.lesson-video-player') !== root.current && !root.current?.contains(target)) return;
+      const key = event.key.toLowerCase();
+      if (event.shiftKey && key === 'i' && !event.ctrlKey) {
+        event.preventDefault(); if (!event.repeat) openShortcuts(); return;
+      }
+      if (event.key === 'Escape') {
+        if (shortcuts) { event.preventDefault(); setShortcuts(false); }
+        else if (details) { event.preventDefault(); setDetails(null); root.current?.focus(); }
+        else if (!menu && !contextMenu && document.pictureInPictureElement === element) { event.preventDefault(); void togglePip(); }
+        return;
+      }
+      if (shortcuts || menu || contextMenu || target?.closest('[role="dialog"], dialog')) return;
+      if (event.ctrlKey) {
+        if (['ArrowLeft', 'ArrowRight'].includes(event.key)) { event.preventDefault(); setNotice(t('此视频没有章节', 'This video has no chapters')); }
+        return;
+      }
+      if (target?.closest('input[type="range"]') && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+      let action: (() => void) | undefined;
+      let repeatable = false;
+      if (event.shiftKey) {
+        if (key === 'p') action = () => onPrevious ? onPrevious() : setNotice(t('已是第一课', 'This is the first lesson'));
+        else if (key === 'n') action = () => onNext ? onNext() : setNotice(t('已是最后一课', 'This is the last lesson'));
+        else if (['<', '>', ',', '.'].includes(key)) {
+          repeatable = true;
+          action = () => {
+            const faster = key === '>' || key === '.';
+            element.playbackRate = (faster ? PLAYBACK_RATES.find(value => value > element.playbackRate) : [...PLAYBACK_RATES].reverse().find(value => value < element.playbackRate)) ?? element.playbackRate;
+            setNotice(`${element.playbackRate}×`);
+          };
+        } else if (key === '+') action = () => setNotice(t('此视频没有字幕', 'This video has no subtitles'));
+      } else if (key === 'k' || (key === ' ' && !target?.closest('button, a'))) action = () => { void togglePlay(); };
+      else if (['j', 'l', 'arrowleft', 'arrowright'].includes(key)) {
+        repeatable = true;
+        action = () => seek(element.currentTime + (key === 'j' ? -10 : key === 'l' ? 10 : key === 'arrowleft' ? -5 : 5));
+      } else if (/^[0-9]$/.test(key)) action = () => seek(duration * Number(key) / 10);
+      else if (key === ',' || key === '.') {
+        repeatable = true;
+        action = () => { if (element.paused) seek(element.currentTime + (key === ',' ? -1 : 1) * frameDuration.current); };
+      } else if (key === 'm') action = toggleMute;
+      else if (key === 'f') action = () => { void toggleFullscreen(); };
+      else if (key === 't') action = () => setTheater(value => !value);
+      else if (key === 'i') action = () => { void togglePip(); };
+      else if (key === 'arrowup' || key === 'arrowdown') {
+        repeatable = true;
+        action = () => { element.volume = Math.min(1, Math.max(0, element.volume + (key === 'arrowup' ? .05 : -.05))); element.muted = false; };
+      } else if (key === 'c' || key === '+' || key === '-' || key === '=') action = () => setNotice(t('此视频没有字幕', 'This video has no subtitles'));
+      if (action) { event.preventDefault(); if (!event.repeat || repeatable) { action(); reveal(); } }
+    };
+    document.addEventListener('keydown', keydown);
+    return () => document.removeEventListener('keydown', keydown);
+  });
+  const shortcutGroups: { title: string; rows: [string, string, boolean?][] }[] = [
+    { title: t('播放', 'Playback'), rows: [
+      [t('在播放和暂停之间切换', 'Toggle play / pause'), 'k / Space'],
+      [t('快退 10 秒', 'Rewind 10 seconds'), 'j'], [t('快进 10 秒', 'Forward 10 seconds'), 'l'],
+      [t('上一个视频', 'Previous video'), 'P (Shift + p)', !onPrevious],
+      [t('下一个视频', 'Next video'), 'N (Shift + n)', !onNext],
+      [t('上一帧（暂停时）', 'Previous frame (while paused)'), ','], [t('下一帧（暂停时）', 'Next frame (while paused)'), '.'],
+      [t('减慢播放速度', 'Decrease playback speed'), '< (Shift + ,)'], [t('加快播放速度', 'Increase playback speed'), '> (Shift + .)'],
+      [t('跳转至视频的某个时间点（例如 7 为总时长的 70%）', 'Seek to a point in the video (e.g. 7 for 70%)'), '0…9'],
+      [t('跳到上一章', 'Previous chapter'), 'Ctrl + ←', true], [t('跳到下一章', 'Next chapter'), 'Ctrl + →', true],
+    ] },
+    { title: t('常规', 'General'), rows: [
+      [t('切换全屏模式', 'Toggle fullscreen'), 'f'], [t('切换影院模式', 'Toggle theater mode'), 't'],
+      [t('切换迷你播放器', 'Toggle miniplayer'), 'i', !canPip],
+      [t('关闭迷你播放器或当前对话框', 'Close miniplayer or current dialog'), 'Esc'],
+      [t('静音／取消静音', 'Mute / unmute'), 'm'],
+      [t('增大／减小音量', 'Increase / decrease volume'), '↑ / ↓'],
+      [t('显示键盘快捷键', 'Show keyboard shortcuts'), 'Shift + I'],
+    ] },
+    { title: t('字幕', 'Subtitles'), rows: [
+      [t('开启／关闭字幕', 'Toggle subtitles'), 'c', true], [t('放大字体', 'Increase font size'), '+', true], [t('缩小字体', 'Decrease font size'), '-', true],
+    ] },
+    { title: t('全景视频', '360° video'), rows: [
+      [t('向上平移', 'Pan up'), 'w', true], [t('向左平移', 'Pan left'), 'a', true],
+      [t('向下平移', 'Pan down'), 's', true], [t('向右平移', 'Pan right'), 'd', true],
+      [t('放大', 'Zoom in'), t('] 或数字小键盘 +', '] or Numpad +'), true], [t('缩小', 'Zoom out'), t('[ 或数字小键盘 -', '[ or Numpad -'), true],
+    ] },
+  ];
   const screenshot = () => {
     const element = video.current;
     if (!element?.videoWidth || element.readyState < 2) return;
@@ -245,14 +373,15 @@ export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue
   const unavailable = t('当前视频不提供此功能', 'This feature is unavailable for this video');
   const controlsVisible = visible || !playing || menu !== null || contextMenu !== null;
 
-  return <div ref={root} className={`lesson-video-player${controlsVisible ? ' controls-visible' : ''}`} tabIndex={0}
+  // allow-static-onclick: root captures synthetic touch clicks; playback actions are real buttons.
+  return <div ref={root} className={`lesson-video-player${controlsVisible ? ' controls-visible' : ''}${theater ? ' is-theater' : ''}`} tabIndex={0}
     aria-label={t('视频播放器', 'Video player')} onPointerMove={reveal} onPointerDown={() => { suppressTap.current = false; reveal(); }} onFocus={reveal}
     onClickCapture={event => {
       // Touch release can retarget its synthesized click to a newly opened menu item.
       if (suppressTap.current) { suppressTap.current = false; event.preventDefault(); event.stopPropagation(); }
     }}
     onContextMenu={event => {
-      if ((event.target as HTMLElement).closest('.lesson-video-details')) return;
+      if ((event.target as HTMLElement).closest('.lesson-video-details, dialog')) return;
       event.preventDefault();
       const bounds = event.currentTarget.getBoundingClientRect();
       setMenu(null);
@@ -262,11 +391,6 @@ export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue
       if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
         event.preventDefault(); setMenu(null); setContextMenu({ x: 16, y: 16 }); return;
       }
-      if (event.target instanceof HTMLElement && event.target.closest('button, input, [role="dialog"]')) return;
-      if (event.key === ' ' || event.key.toLowerCase() === 'k') { event.preventDefault(); void togglePlay(); }
-      else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); seek(current + (event.key === 'ArrowLeft' ? -5 : 5)); reveal(); }
-      else if (event.key.toLowerCase() === 'm') toggleMute();
-      else if (event.key.toLowerCase() === 'f') void toggleFullscreen();
     }}>
     <video ref={video} src={src} playsInline preload="metadata" autoPlay={autoPlay} loop={loop} onError={onError}
       onLoadedMetadata={event => {
@@ -322,6 +446,7 @@ export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue
           <button type="button" className="lesson-video-icon" aria-label={t('字幕不可用', 'Subtitles unavailable')} disabled title={t('此视频没有字幕', 'This video has no subtitles')}><Subtitles /></button>
           <button ref={settingsButton} type="button" className={`lesson-video-icon lesson-video-settings${menu ? ' is-open' : ''}`} aria-label={t('设置', 'Settings')} aria-expanded={menu !== null} aria-haspopup="dialog" data-tooltip={t('设置', 'Settings')} onClick={() => setMenu(menu ? null : 'main')}><Settings /></button>
           {canPip && <button type="button" className="lesson-video-icon lesson-video-pip" aria-label={t('画中画', 'Picture-in-picture')} aria-pressed={pip} data-tooltip={t('画中画', 'Picture-in-picture')} onClick={() => void togglePip()}><PictureInPicture2 /></button>}
+          <button type="button" className="lesson-video-icon lesson-video-theater" aria-label={t('影院模式', 'Theater mode')} aria-pressed={theater} data-tooltip={t('影院模式 (t)', 'Theater mode (t)')} onClick={() => setTheater(!theater)}><RectangleHorizontal /></button>
           <button type="button" className="lesson-video-icon" aria-label={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏', 'Fullscreen')} data-tooltip={fullscreen ? t('退出全屏 (f)', 'Exit fullscreen (f)') : t('全屏 (f)', 'Fullscreen (f)')} onClick={() => void toggleFullscreen()}>{fullscreen ? <Minimize /> : <Maximize />}</button>
         </div>
       </div>
@@ -334,9 +459,10 @@ export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue
         <button type="button" className="lesson-video-menu-row" onClick={() => setMenu('sleep')}><Moon /><span>{t('休眠定时器', 'Sleep timer')}</span><small>{sleep}</small><ChevronRight /></button>
         <button type="button" className="lesson-video-menu-row" onClick={() => setMenu('speed')}><Gauge /><span>{t('播放速度', 'Playback speed')}</span><small>{speed}</small><ChevronRight /></button>
         <button type="button" className="lesson-video-menu-row" onClick={() => setMenu('quality')}><SlidersHorizontal /><span>{t('画质', 'Quality')}</span><small>{quality}</small><ChevronRight /></button>
+        <button type="button" className="lesson-video-menu-row" onClick={openShortcuts}><Keyboard /><span>{t('键盘快捷键', 'Keyboard shortcuts')}</span><small>Shift + I</small></button>
       </> : <>
         <button type="button" className="lesson-video-menu-back" onClick={() => setMenu('main')}><ChevronLeft />{menu === 'speed' ? t('播放速度', 'Playback speed') : menu === 'sleep' ? t('休眠定时器', 'Sleep timer') : t('画质', 'Quality')}</button>
-        {menu === 'speed' && [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map(value => <button type="button" className="lesson-video-option" key={value} aria-pressed={rate === value} onClick={() => { if (video.current) video.current.playbackRate = value; setMenu('main'); }}><Check visibility={rate === value ? 'visible' : 'hidden'} />{value === 1 ? t('正常', 'Normal') : `${value}×`}</button>)}
+        {menu === 'speed' && PLAYBACK_RATES.map(value => <button type="button" className="lesson-video-option" key={value} aria-pressed={rate === value} onClick={() => { if (video.current) video.current.playbackRate = value; setMenu('main'); }}><Check visibility={rate === value ? 'visible' : 'hidden'} />{value === 1 ? t('正常', 'Normal') : `${value}×`}</button>)}
         {menu === 'sleep' && [0, 10, 15, 20, 30, 45, 60].map(value => <button type="button" className="lesson-video-option" key={value} aria-pressed={sleepMinutes === value} onClick={() => { setSleepMinutes(value); setMenu('main'); }}><Check visibility={sleepMinutes === value ? 'visible' : 'hidden'} />{value ? t(`${value} 分钟`, `${value} minutes`) : t('关闭', 'Off')}</button>)}
         {menu === 'quality' && <><button type="button" className="lesson-video-option" aria-pressed="true" onClick={() => setMenu('main')}><Check />{t('原画', 'Original')} {resolution ? `${resolution}p` : ''}</button><p className="lesson-video-menu-note">{t('当前视频仅提供原始画质', 'Only the original quality is available for this video')}</p></>}
       </>}
@@ -382,5 +508,17 @@ export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue
         <button type="button" onClick={() => void copy(JSON.stringify(readStats(), null, 2))}>{t('复制调试信息', 'Copy debug info')}</button>
       </div>}
     </div>}
+    {shortcuts && <dialog ref={shortcutDialog} className="lesson-video-shortcuts" aria-label={t('键盘快捷键', 'Keyboard shortcuts')}
+      onCancel={event => { event.preventDefault(); setShortcuts(false); }}>
+      <h2>{t('键盘快捷键', 'Keyboard shortcuts')}</h2>
+      <div className="lesson-video-shortcut-groups">{shortcutGroups.map(group => <section key={group.title}>
+        <h3>{group.title}</h3>
+        <dl>{group.rows.map(([label, keys, disabled]) => <div key={keys} className={disabled ? 'is-unavailable' : undefined}>
+          <dt>{label}{disabled && <small>{t('不可用', 'Unavailable')}</small>}</dt><dd><kbd>{keys}</kbd></dd>
+        </div>)}</dl>
+      </section>)}</div>
+      <p className="lesson-video-shortcut-note">{t('逐帧按播放采样估算帧长，采样前按 30 fps；当前视频未提供字幕、章节及全景数据。', 'Frame stepping uses sampled frame timing, or 30 fps before sampling. This video has no subtitles, chapters or 360° data.')}</p>
+      <footer><button type="button" onClick={() => setShortcuts(false)}>{t('关闭', 'Close')}</button></footer>
+    </dialog>}
   </div>;
 }
