@@ -8,7 +8,10 @@ describe('Clawd playtime integration', () => {
   it('makes all 30 gallery entries addressable by the pet without duplicating the manifest', () => {
     expect(PLAYTIME_SCENES).toHaveLength(30);
     expect(new Set(PLAYTIME_SCENES.map((scene) => scene.state)).size).toBe(30);
-    expect(PET_GALLERY.find((group) => group.id === 'playtime')?.anims).toBe(PLAYTIME_SCENES);
+    expect(PET_GALLERY.some((group) => group.id === 'playtime')).toBe(false);
+    const clawd = PET_GALLERY.find((group) => group.id === 'clawd')!;
+    expect(clawd.anims.filter((animation) => animation.state)).toEqual(PLAYTIME_SCENES);
+    expect(clawd.anims.slice(-30)).toEqual(PLAYTIME_SCENES);
     for (const scene of PLAYTIME_SCENES) {
       expect(getPlaytimeScene(scene.state)).toBe(scene);
       expect(scene.durationMs).toBe(8000);
