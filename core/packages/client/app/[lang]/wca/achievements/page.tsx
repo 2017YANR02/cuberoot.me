@@ -10,6 +10,16 @@ export default function AchievementsPage() {
   const t = useT();
   const badges = [
     {
+      kind: 'hundred' as const,
+      description: t('参加过至少 100 场正式 WCA 比赛。同一比赛只计一次，DNF 计入参赛，只有 DNS 的比赛不计。', 'Participate in at least 100 official WCA competitions. Each competition counts once; DNF counts as participation, while DNS-only competitions do not.'),
+      href: undefined, link: undefined,
+    },
+    {
+      kind: 'allEvents' as const,
+      description: t('所有现役 WCA 项目均有正式有效单次成绩，包含盲拧、最少步和多盲。', 'Record an official successful single in every active WCA event, including blindfolded, fewest moves and multi-blind.'),
+      href: undefined, link: undefined,
+    },
+    {
       kind: 'champion' as const,
       description: t('在 WCA 世锦赛中获得过至少一个项目的冠军。不同年份、不同项目合并为一枚徽章，点击可查看项目明细。', 'Win at least one event at a WCA World Championship. Titles across years and events share one badge; click it to see the events.'),
       href: '/wca/world_championship_podiums_by_person',
@@ -63,17 +73,17 @@ export default function AchievementsPage() {
         {badges.map(badge => (
           <section className="wca-achievements-entry" key={badge.kind}>
             <AchievementBadge kind={badge.kind} description={badge.description}>
-              <AppLink href={badge.href} prefetch={false}>{badge.link}</AppLink>
+              {badge.href && <AppLink href={badge.href} prefetch={false}>{badge.link}</AppLink>}
             </AchievementBadge>
             <div>
               <h2>{t(ACHIEVEMENT_TITLES[badge.kind].zh, ACHIEVEMENT_TITLES[badge.kind].en)}</h2>
               <p>{badge.description}</p>
-              <AppLink href={badge.href} prefetch={false}>{badge.link}</AppLink>
+              {badge.href && <AppLink href={badge.href} prefetch={false}>{badge.link}</AppLink>}
             </div>
             {badge.kind.startsWith('historical') && <div className="wca-achievements-tiers">
               {RECORD_ACHIEVEMENT_TIERS.map(tier => <figure key={tier.count}>
                 <AchievementBadge kind={badge.kind} recordCount={tier.count} description={badge.description}>
-                  <AppLink href={badge.href} prefetch={false}>{badge.link}</AppLink>
+                  {badge.href && <AppLink href={badge.href} prefetch={false}>{badge.link}</AppLink>}
                 </AchievementBadge>
                 <figcaption>{t(tier.zh, tier.en)}</figcaption>
               </figure>)}

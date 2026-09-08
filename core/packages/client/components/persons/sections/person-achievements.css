@@ -16,9 +16,9 @@
 .wp-achievement-label { font-size: .65rem; color: var(--muted-foreground); white-space: nowrap; }
 .wp-achievement:hover .wp-achievement-illustration { transform: translateY(-2px); }
 .wp-achievement:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
-.wp-achievement-art-champion, .wp-achievement-art-gold { --badge-accent: var(--signal-warning); }
+.wp-achievement-art-champion, .wp-achievement-art-gold, .wp-achievement-art-hundred { --badge-accent: var(--signal-warning); }
 .wp-achievement-art-wr, .wp-achievement-art-historicalWR { --badge-accent: var(--signal-info); }
-.wp-achievement-art-historicalCR { --badge-accent: var(--signal-success); }
+.wp-achievement-art-historicalCR, .wp-achievement-art-allEvents { --badge-accent: var(--signal-success); }
 .wp-achievement-art-historicalNR, .wp-achievement-art-slam { --badge-accent: var(--accent); }
 /* anchored-panel: clamped by usePanelClamp; vertical positioning respects viewport height. */
 .wp-achievement-card { position: fixed; z-index: 1100; width: min(360px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); overflow: auto; overscroll-behavior: contain; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--popover); color: var(--foreground); box-shadow: 0 16px 48px color-mix(in srgb, var(--foreground) 20%, transparent); }
