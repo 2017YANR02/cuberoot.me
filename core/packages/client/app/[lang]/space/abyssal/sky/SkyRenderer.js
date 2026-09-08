@@ -103,6 +103,7 @@ uniform bool uScreenClouds;
 uniform float uCloudEnabled;
 uniform float uTimeStars;
 uniform float uFogDensity;
+uniform float uUrbanGlow;
 
 ${ATMO_COMMON}
 ${SHADING_GLSL}
@@ -139,6 +140,7 @@ void main(){
   }
 
   sky += uAmbientFlash * uLightningColor * 0.012 * max(0.0, 1.0 - abs(dir.y));
+  sky += vec3(.012,.019,.04) * (.25 + .75 * exp(-max(dir.y,0.) * 5.)) * uUrbanGlow;
 
   oColor = vec4(sky, 1.0);
 
@@ -160,6 +162,7 @@ precision highp sampler2D;
 uniform sampler2D uCloudEnvTex;
 uniform float uCloudEnabled;
 uniform float uTimeStars;
+uniform float uUrbanGlow;
 
 ${ATMO_COMMON}
 ${SHADING_GLSL}
@@ -185,6 +188,7 @@ void main(){
     sky = sky * cl.a + cl.rgb;
   }
   sky += uAmbientFlash * uLightningColor * 0.012;
+  sky += vec3(.012,.019,.04) * (.25 + .75 * exp(-max(lookDir.y,0.) * 5.)) * uUrbanGlow;
   sky = mix(sky, sky * vec3(0.16, 0.30, 0.38), below);
   oColor = vec4(sky, 1.0);
 }
@@ -215,6 +219,7 @@ export class SkyRenderer {
       uAtmoGroundAlbedo: this.U.uAtmoGroundAlbedo,
       uTimeStars: { value: 0 },
       uCloudEnabled: { value: 0 },
+      uUrbanGlow: { value: 0 },
     };
     this.shared = shared;
 

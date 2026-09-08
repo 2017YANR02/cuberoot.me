@@ -9,25 +9,28 @@
  *
  * Empty / invalid input on blur ⇒ revert to the last committed value.
  */
-import { useEffect, useState, type InputHTMLAttributes } from 'react';
+import { useEffect, useRef, useState, type InputHTMLAttributes } from 'react';
 
 interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>,
   'value' | 'onChange' | 'onBlur' | 'min' | 'max' | 'type'> {
   value: number;
   min: number;
   max: number;
+  allowDecimal?: boolean;
   onCommit: (n: number) => void;
 }
 
 export default function NumberCommitInput({
-  value, min, max, onCommit, onKeyDown, onFocus, ...rest
+  value, min, max, allowDecimal = false, onCommit, onKeyDown, onFocus, ...rest
 }: Props) {
   const [text, setText] = useState<string>(String(value));
+  const cancelled = useRef(false);
   // 外部 value 变化(如别处 setState、reset)→ 同步内部缓冲
   useEffect(() => { setText(String(value)); }, [value]);
 
   const commit = () => {
-    const n = parseInt(text, 10);
+    if (cancelled.current) { cancelled.current = false; return; }
+    const n = allowDecimal ? (text.trim() ? Number(text) : NaN) : parseInt(text, 10);
     if (isFinite(n)) {
       const clamped = Math.max(min, Math.min(max, n));
       if (clamped !== value) onCommit(clamped);
@@ -58,6 +61,7 @@ export default function NumberCommitInput({
           e.currentTarget.blur();
         } else if (e.key === 'Escape') {
           e.preventDefault();
+          cancelled.current = true;
           setText(String(value));
           e.currentTarget.blur();
         }

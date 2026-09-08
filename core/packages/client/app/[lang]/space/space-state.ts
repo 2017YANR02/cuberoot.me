@@ -16,8 +16,18 @@ export const ROOMS = {
   company: { zh: '我的公司', en: 'My company' },
 } as const;
 export type RoomStyle = keyof typeof ROOMS;
-export const ENVIRONMENTS = { original: { zh: '原有环境', en: 'Original setting' }, island: { zh: '孤岛大海', en: 'Ocean island' } } as const;
+export const ENVIRONMENTS = { original: { zh: '原有环境', en: 'Original setting' }, island: { zh: '孤岛大海', en: 'Ocean island' }, shanghai: { zh: '上海黄浦江', en: 'Shanghai Huangpu' } } as const;
 export type Environment = keyof typeof ENVIRONMENTS;
+export const RIVER_COLORS = {
+  huangpu: { zh: '黄浦江原色', en: 'Huangpu natural', color: 0x4d5746 },
+  yellow: { zh: '黄褐色', en: 'Yellow brown', color: 0x997438 },
+  sanya: { zh: '三亚浅蓝', en: 'Sanya light blue', color: 0x29b6cf },
+  tahiti: { zh: '大溪地碧蓝', en: 'Tahiti turquoise', color: 0x08c9b8 },
+  lightBlue: { zh: '浅蓝', en: 'Light blue', color: 0x63a9de },
+  blue: { zh: '蔚蓝', en: 'Azure blue', color: 0x157fca },
+  deepBlue: { zh: '深蓝', en: 'Deep blue', color: 0x103969 },
+} as const;
+export type RiverColor = keyof typeof RIVER_COLORS;
 export const WEATHER = {
   sunny: { zh: '晴天', en: 'Sunny' },
   cloudy: { zh: '多云', en: 'Cloudy' },
@@ -37,7 +47,7 @@ export const WEATHER = {
   typhoon: { zh: '台风', en: 'Typhoon' },
   tornado: { zh: '龙卷风', en: 'Tornado' },
   mudslide: { zh: '泥石流', en: 'Mudslide' },
-  rainbow: { zh: '雨后彩虹', en: 'Rainbow' },
+  rainbow: { zh: '彩虹', en: 'Rainbow' },
 } as const;
 export type Weather = keyof typeof WEATHER;
 export const DESTINATIONS = {
@@ -89,8 +99,15 @@ export type SpaceObject = {
   level?: Level;
   moves?: string[];
 };
-export type Layout = { version: 1; room?: RoomStyle; environment?: Environment; weather?: Weather; weatherMotion?: boolean; objects: SpaceObject[] };
+export type Layout = { version: 1; room?: RoomStyle; environment?: Environment; weather?: Weather; weatherMotion?: boolean; timeOfDay?: string; riverColor?: RiverColor; objects: SpaceObject[] };
 export type History = { past: Layout[]; current: Layout; future: Layout[] };
+
+export function validSceneTime(value: unknown): value is string {
+  return typeof value === 'string' && /^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(value);
+}
+export function layoutTime(layout: Layout) {
+  return layout.timeOfDay ?? (layout.room === 'cyberpunk' ? '21:00' : '09:00');
+}
 
 // Layouts contain data only. Models, GPU resources and selection never enter history.
 export const INITIAL_LAYOUT: Layout = {
@@ -171,7 +188,9 @@ export function parseLayout(text: string): Layout {
   if ('room' in data && (typeof data.room !== 'string' || !Object.hasOwn(ROOMS, data.room))) throw new Error('room');
   if ('environment' in data && (typeof data.environment !== 'string' || !Object.hasOwn(ENVIRONMENTS, data.environment))) throw new Error('environment');
   if ('weather' in data && (typeof data.weather !== 'string' || !Object.hasOwn(WEATHER, data.weather))) throw new Error('weather');
+  if ('riverColor' in data && (typeof data.riverColor !== 'string' || !Object.hasOwn(RIVER_COLORS, data.riverColor))) throw new Error('riverColor');
   if ('weatherMotion' in data && typeof data.weatherMotion !== 'boolean') throw new Error('weatherMotion');
+  if ('timeOfDay' in data && !validSceneTime(data.timeOfDay)) throw new Error('timeOfDay');
   const ids = new Set<string>();
   const vector = (v: unknown, n: number, max: number): v is number[] =>
     Array.isArray(v) && v.length === n && v.every(x => typeof x === 'number' && Number.isFinite(x) && Math.abs(x) <= max);
@@ -193,7 +212,7 @@ export function parseLayout(text: string): Layout {
     ids.add(v.id);
     return { id: v.id, kind: v.kind, position: [...v.position] as [number, number], rotation: [...v.rotation] as Vec3, scale: v.scale, ...('level' in v ? { level: v.level as Level } : {}), ...('moves' in v ? { moves: [...v.moves as string[]] } : {}) };
   });
-  return { version: 1, ...('environment' in data ? { environment: data.environment as Environment } : {}), ...('room' in data ? { room: data.room as RoomStyle } : {}), ...('weather' in data ? { weather: data.weather as Weather } : {}), ...('weatherMotion' in data ? { weatherMotion: data.weatherMotion as boolean } : {}), objects };
+  return { version: 1, ...('environment' in data ? { environment: data.environment as Environment } : {}), ...('room' in data ? { room: data.room as RoomStyle } : {}), ...('weather' in data ? { weather: data.weather as Weather } : {}), ...('weatherMotion' in data ? { weatherMotion: data.weatherMotion as boolean } : {}), ...('timeOfDay' in data ? { timeOfDay: data.timeOfDay as string } : {}), ...('riverColor' in data ? { riverColor: data.riverColor as RiverColor } : {}), objects };
 }
 
 export function commitLayout(history: History, next: Layout): History {

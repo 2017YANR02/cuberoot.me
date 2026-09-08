@@ -17,6 +17,23 @@ float islandHeight(vec2 p) {
   return -.65 - 4.05 * smoothstep(.64, .9, r) - 1.8 * smoothstep(.9, 1.02, r) - 20. * smoothstep(1.02, 1.5, r);
 }`;
 
+// One inward-moving breaker field for geometry, normals and residual foam.
+export const SHORE_GLSL = /* glsl */ `
+float shorePhase(vec2 p, float depth) {
+  return depth * 1.75 + uTime * 1.25 + sin(p.x * .11 + p.y * .08) * 1.1
+       + sin(p.x * .23 - p.y * .17) * .45;
+}
+float shoreBreakup(vec2 p) {
+  return .45 + .55 * smoothstep(-.6, .65, sin(p.x * .19 + sin(p.y * .13) * 2.) * cos(p.y * .21));
+}
+float shoreHeight(vec2 p) {
+  float depth = uSeaLevel - islandHeight(p);
+  float phase = shorePhase(p, depth);
+  float envelope = smoothstep(0., 1., depth) * (1. - smoothstep(1.5, 8., depth));
+  return (sin(phase) * .82 - cos(phase * 2.) * .18) * envelope * min(1.25, .16 + uWindSpeed * .035) * shoreBreakup(p);
+}
+`;
+
 export function createIsland() {
   const root = new THREE.Group(); root.name = 'island'; root.userData.spaceBackdrop = true;
   const geometry = new THREE.PlaneGeometry(270, 240, 200, 180); geometry.rotateX(-Math.PI / 2);

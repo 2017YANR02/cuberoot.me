@@ -18,15 +18,34 @@ import Sq1Cube from '@cuberoot/puzzle-render-core/engine/sq1/Sq1Cube';
 import PyraCube from '@cuberoot/puzzle-render-core/engine/pyra/PyraCube';
 import MegaminxCube from '@cuberoot/puzzle-render-core/engine/mega/MegaminxCube';
 import SkewbCube from '@cuberoot/puzzle-render-core/engine/skewb/SkewbCube';
-import { movePosition, PEDESTALS, VILLA_ROOMS, floorHeight, walkFloor, walkStep, type Destination, type Level, type Layout, type SpaceObject, type Vec3 } from './space-state';
+import { movePosition, PEDESTALS, VILLA_ROOMS, floorHeight, walkFloor, walkStep, type Destination, type Level, type Layout, type RiverColor, type SpaceObject, type Vec3 } from './space-state';
 import { SpaceRoom } from './space-room';
 import { pickTurn, turnBusy, turnPuzzle } from './space-turn';
-import { validSpaceMove } from './space-state';
+import { validSpaceMove, layoutTime, type Weather } from './space-state';
 import { SpaceWeather } from './space-weather';
+import { ShanghaiScene, SHANGHAI_VIEWS, type ShanghaiView } from './space-shanghai';
 
 type Entry = { root: THREE.Group; model: Cube | Sq1Cube | PyraCube | MegaminxCube | SkewbCube; proxy: THREE.Mesh; data: SpaceObject; appliedMoves: string; turning?: boolean; materials: Map<THREE.Material, THREE.MeshPhysicalMaterial>; originals: Map<THREE.Mesh, THREE.Material | THREE.Material[]> };
-export type View = Destination | 'island' | 'shore' | 'home' | 'front' | 'side' | 'top';
+export type View = Destination | ShanghaiView | 'island' | 'shore' | 'home' | 'front' | 'side' | 'top';
 export type Mode = 'translate' | 'rotate' | 'twist';
+export type Navigation = 'orbit' | 'walk' | 'drone';
+export const DRONE_SPEEDS = [2, 10, 50, 200] as const;
+export const DRONE_MIN_SPEED = 0.1;
+export const DRONE_MAX_SPEED = 2000;
+export const DRONE_MAX_HEIGHT = 6000;
+
+// Horizontal flight follows heading, independently of the camera's pitch.
+// Normalize combined axes and cap delayed frames so tab switches cannot teleport.
+export function droneMovement(direction: THREE.Vector3, keys: ReadonlySet<string>, speed: number, dt: number) {
+  const movement = new THREE.Vector3();
+  if (![direction.x, direction.y, direction.z, speed, dt].every(Number.isFinite) || speed <= 0 || dt <= 0) return movement;
+  const forward = new THREE.Vector3(direction.x, 0, direction.z).normalize();
+  const right = new THREE.Vector3(-forward.z, 0, forward.x);
+  return movement.copy(forward).multiplyScalar(Number(keys.has('forward')) - Number(keys.has('back')))
+    .addScaledVector(right, Number(keys.has('right')) - Number(keys.has('left')))
+    .setY(Number(keys.has('up')) - Number(keys.has('down')))
+    .normalize().multiplyScalar(Math.min(speed, DRONE_MAX_SPEED) * Math.min(dt, .05));
+}
 
 export function surfaceHit(ray: THREE.Raycaster, surfaces: THREE.Mesh[]) {
   return ray.intersectObjects(surfaces.filter(o => o.visible), false).find(hit => hit.face && hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y > 0.8);
@@ -66,6 +85,7 @@ export class SpaceScene {
   private fill = new THREE.DirectionalLight(0xc4daff, 0.25);
   private interiorLight = new THREE.SpotLight(0xffe2bb, 0, 35, Math.PI / 2.8, 1, 2);
   private orbit: OrbitControls;
+  private zoomValue = -1;
   private transform: TransformControls;
   private entries = new Map<string, Entry>();
   private surfaces: THREE.Mesh[] = [];
@@ -77,10 +97,14 @@ export class SpaceScene {
   private floorMaterial = new THREE.MeshStandardMaterial({ roughness: 0.95 });
   private pedestalMaterial = new THREE.MeshStandardMaterial({ roughness: 0.7 });
   private room: SpaceRoom | null = null;
+  private city: ShanghaiScene | null = null;
   private environment: THREE.WebGLRenderTarget;
   private outdoorEnvironment?: THREE.WebGLRenderTarget;
   private weather: SpaceWeather;
   private weatherKey = '';
+  private lightingKey = '';
+  private currentWeather: Weather = 'sunny';
+  private riverColor: RiverColor = 'huangpu';
   private weatherMotion = true;
   private weatherTimer = 0;
   private shadowDirty = true;
@@ -104,8 +128,13 @@ export class SpaceScene {
   private drag: { id: number; entry: Entry; before: SpaceObject; plane: THREE.Plane; offset: THREE.Vector3; x: number; y: number; moved: boolean } | null = null;
   private press: { x: number; y: number; blank: boolean } | null = null;
   private turnDrag: { id: number; x: number; y: number; entry: Entry; resolve: (dx: number, dy: number) => string | null; fired: boolean } | null = null;
-  walking = false;
-  private walkKeys = new Set<string>();
+  navigation: Navigation = 'orbit';
+  private freeCamera = false;
+  private droneSpeed = 10;
+  private altitude = NaN;
+  get navigating() { return this.navigation !== 'orbit'; }
+  get droneMinHeight() { return this.room?.environment === 'island' ? -5 : 1; }
+  private walkKeys = new Map<string, string>();
   private walkTime = 0;
   private walkLook: { id: number; x: number; y: number } | null = null;
 
@@ -114,8 +143,12 @@ export class SpaceScene {
     change: (object: SpaceObject) => void;
     place: (position: [number, number], level: Level, scale: number) => void;
     unavailable: () => void;
-    walking: (active: boolean) => void;
+    navigation: (mode: Navigation) => void;
+    altitude: (height: number) => void;
     weatherError: () => void;
+    cityState: (state: 'loading' | 'ready' | 'error' | null) => void;
+    cruising: (active: boolean) => void;
+    zoom: (value: number) => void;
   }) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -252,7 +285,7 @@ export class SpaceScene {
     this.reducedMotion.addEventListener('change', this.render, { signal: this.events.signal });
     document.addEventListener('visibilitychange', () => {
       clearTimeout(this.weatherTimer);
-      if (document.hidden) { cancelAnimationFrame(this.frame); this.frame = 0; }
+      if (document.hidden) { this.cancel(); cancelAnimationFrame(this.frame); this.frame = 0; }
       else this.render();
     }, { signal: this.events.signal });
     // Appearance previews animate CSS tokens after the attribute mutation.
@@ -264,7 +297,14 @@ export class SpaceScene {
     this.theme();
     const options = { capture: true, signal: this.events.signal };
     canvas.addEventListener('pointerdown', this.down, options);
-    canvas.addEventListener('wheel', () => { this.flight = null; }, { passive: true, signal: this.events.signal });
+    canvas.addEventListener('wheel', event => {
+      this.flight = null; this.cruise(false);
+      if (!this.navigating) return;
+      event.preventDefault();
+      const pixels = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? this.host.clientHeight : 1);
+      this.reportZoom();
+      this.setZoom(this.zoomValue - pixels * .05);
+    }, { passive: false, signal: this.events.signal });
     canvas.addEventListener('pointermove', this.move, options);
     canvas.addEventListener('pointerleave', () => { this.drop.visible = false; this.render(); }, { signal: this.events.signal });
     canvas.addEventListener('pointerup', this.up, options);
@@ -272,13 +312,15 @@ export class SpaceScene {
     canvas.addEventListener('lostpointercapture', this.cancel, options);
     canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); this.callbacks.unavailable(); }, { signal: this.events.signal });
     window.addEventListener('blur', () => { this.touches.clear(); this.consumedTouch = null; this.cancel(); }, { signal: this.events.signal });
-    const movement: Record<string, string> = { KeyW: 'forward', ArrowUp: 'forward', KeyS: 'back', ArrowDown: 'back', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right' };
+    const movement: Record<string, string> = { KeyW: 'forward', ArrowUp: 'forward', KeyS: 'back', ArrowDown: 'back', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right', KeyR: 'up', KeyF: 'down', KeyE: 'up', KeyQ: 'down' };
+    const look: Record<string, string> = { ArrowUp: 'look-up', ArrowDown: 'look-down', ArrowLeft: 'look-left', ArrowRight: 'look-right' };
+    canvas.addEventListener('blur', () => { this.walkKeys.clear(); this.walkTime = 0; }, { signal: this.events.signal });
     canvas.addEventListener('keydown', event => {
-      if (!this.walking || event.ctrlKey || event.metaKey || event.altKey) return;
-      const direction = movement[event.code];
-      if (direction) { event.preventDefault(); this.walkInput(direction, true); }
+      if (!this.navigating || event.ctrlKey || event.metaKey || event.altKey) return;
+      const direction = (this.navigation === 'drone' && look[event.code]) || movement[event.code];
+      if (direction) { event.preventDefault(); this.navigationInput(direction, true, event.code); }
     }, { signal: this.events.signal });
-    window.addEventListener('keyup', event => { const direction = movement[event.code]; if (direction) this.walkInput(direction, false); }, { signal: this.events.signal });
+    window.addEventListener('keyup', event => { const direction = movement[event.code]; if (direction) this.navigationInput(direction, false, event.code); }, { signal: this.events.signal });
     this.view('interior');
   }
 
@@ -323,14 +365,17 @@ export class SpaceScene {
     if (this.disposed || this.frame || document.hidden) return;
     this.frame = requestAnimationFrame(time => {
       this.frame = 0;
-      if (this.walking && this.walkKeys.size && this.room) {
+      if (this.navigating && this.walkKeys.size && this.room) {
         const dt = this.walkTime ? Math.min(0.05, (time - this.walkTime) / 1000) : 0;
         this.walkTime = time;
-        const forward = this.camera.getWorldDirection(new THREE.Vector3()); forward.y = 0; forward.normalize();
-        const right = new THREE.Vector3(-forward.z, 0, forward.x);
-        const movement = forward.multiplyScalar(Number(this.walkKeys.has('forward')) - Number(this.walkKeys.has('back'))).addScaledVector(right, Number(this.walkKeys.has('right')) - Number(this.walkKeys.has('left'))).normalize().multiplyScalar(dt * 2.2);
+        const keys = new Set(this.walkKeys.values());
+        if (this.navigation === 'drone') this.look(
+          (Number(keys.has('look-left')) - Number(keys.has('look-right'))) * dt * Math.PI / 3,
+          (Number(keys.has('look-up')) - Number(keys.has('look-down'))) * dt * Math.PI / 3,
+        );
+        const movement = droneMovement(this.camera.getWorldDirection(new THREE.Vector3()), keys, this.navigation === 'drone' ? this.droneSpeed : 2.2, dt);
         const p = this.camera.position, foot = p.y - 1.65;
-        const next = walkStep([p.x, foot, p.z], movement.x, movement.z, this.room.style, this.room.obstacles);
+        const next = this.navigation === 'drone' ? [p.x + movement.x, THREE.MathUtils.clamp(p.y + movement.y, this.droneMinHeight, DRONE_MAX_HEIGHT) - 1.65, p.z + movement.z] : walkStep([p.x, foot, p.z], movement.x, movement.z, this.room.style, this.room.obstacles);
         const delta = new THREE.Vector3(next[0] - p.x, next[1] - foot, next[2] - p.z);
         this.camera.position.add(delta); this.orbit.target.add(delta); this.render();
       } else this.walkTime = 0;
@@ -349,7 +394,15 @@ export class SpaceScene {
         if (turnBusy(e.model)) this.render();
         else if (e.turning) { e.turning = false; this.apply(e, e.data); }
       }
-      this.room?.update(this.camera, ['home', 'front', 'side', 'top'].includes(this.currentView));
+      this.room?.update(this.camera, !this.freeCamera && ['home', 'front', 'side', 'top'].includes(this.currentView));
+      this.city?.update(time, this.weatherMotion && !this.reducedMotion.matches, this.camera, this.orbit.target);
+      this.reportZoom();
+      this.reportAltitude();
+      if ((this.city?.cruising || this.navigation === 'drone') && this.sun.target.position.distanceToSquared(this.orbit.target) > 250000) {
+        this.sun.target.position.copy(this.orbit.target);
+        this.positionSun();
+        this.shadowDirty = true;
+      }
       const animateWeather = this.weather.update(time, this.camera, this.weatherMotion && !this.reducedMotion.matches);
       if (this.room?.style !== 'company' && this.weather.environment) this.scene.environment = this.weather.environment;
       // Weather changes don't move the building or cubes; retain their shadow maps.
@@ -357,7 +410,7 @@ export class SpaceScene {
       this.shadowDirty = false;
       this.composer.render();
       clearTimeout(this.weatherTimer);
-      if (animateWeather) this.weatherTimer = window.setTimeout(this.scheduleRender, Math.max(0, 33 - (performance.now() - time)));
+      if (animateWeather || this.city?.cruising) this.weatherTimer = window.setTimeout(this.scheduleRender, Math.max(0, 33 - (performance.now() - time)));
     });
   };
 
@@ -468,8 +521,24 @@ export class SpaceScene {
     if (!this.turnDrag || mode !== this.mode || selected !== this.selected || layout.objects.find(o => o.id === selected)?.moves?.join(' ') !== this.turnDrag.entry.appliedMoves) this.cancel();
     const style = layout.room ?? 'minimal';
     const environment = layout.environment ?? 'original';
-    this.orbit.maxTargetRadius = environment === 'island' ? 500 : 70;
+    this.currentWeather = layout.weather ?? 'sunny';
+    this.riverColor = layout.riverColor ?? 'huangpu';
+    this.orbit.maxTargetRadius = environment === 'shanghai' ? 20000 : environment === 'island' ? 500 : 70;
+    this.orbit.maxDistance = environment === 'shanghai' ? 24000 : 240;
     const environmentChanged = this.room?.environment !== environment;
+    if (environmentChanged) {
+      this.cruise(false); this.city?.dispose(); this.city = null;
+      if (environment === 'shanghai') {
+        this.callbacks.cityState('loading');
+        const city = new ShanghaiScene(this.host.clientWidth < 600, () => { this.callbacks.cruising(city.cruising); this.render(); });
+        this.city = city; this.scene.add(city.root);
+        void city.ready.then(() => {
+          if (this.disposed || this.city !== city) return;
+          city.setWeather(this.currentWeather, 1 - this.weather.daylight.day, this.weather.daylight.direction, this.riverColor);
+          this.weather.patchSurfaces(city.root); this.callbacks.cityState('ready'); this.render();
+        }).catch(() => { if (!this.disposed && this.city === city) this.callbacks.cityState('error'); });
+      } else this.callbacks.cityState(null);
+    }
     if (this.room?.style !== style || environmentChanged) {
       this.weather.forgetRoom();
       this.room?.dispose();
@@ -500,23 +569,33 @@ export class SpaceScene {
       this.pedestalMaterial.roughness = 0.22;
       // The room owns terrain and paving; the legacy plane would cover them.
       this.surfaces.forEach((surface, i) => { surface.visible = style !== 'company' && i > 0; });
-      this.view(environmentChanged ? environment === 'island' ? 'island' : 'exterior' : style === 'company' ? 'interior' : this.currentView);
+      this.view(environmentChanged ? environment === 'shanghai' ? 'northBund' : environment === 'island' ? 'island' : 'exterior' : style === 'company' ? 'interior' : this.currentView);
     }
     this.weatherMotion = layout.weatherMotion ?? true;
     const weather = layout.weather ?? 'sunny', weatherKey = `${style}:${environment}:${weather}`;
     if (weatherKey !== this.weatherKey) {
       this.weatherKey = weatherKey;
-      this.weather.set(weather, style, this.room!.root, environment === 'island');
+      this.weather.set(weather, style, this.room!.root, environment === 'island', environment === 'shanghai');
+    }
+    const timeOfDay = layoutTime(layout), lightingKey = `${weatherKey}:${timeOfDay}`;
+    if (lightingKey !== this.lightingKey) {
+      this.lightingKey = lightingKey;
+      this.weather.setTime(timeOfDay);
+      const daylight = this.weather.daylight;
       this.scene.background = null;
-      const light = this.weather.lighting(), cyber = style === 'cyberpunk', company = style === 'company';
+      const light = this.weather.lighting(), company = style === 'company';
       this.scene.environment = company ? this.environment.texture : this.weather.environment ?? this.environment.texture;
-      this.scene.environmentIntensity = company ? 0.25 : cyber ? 0.45 : 0.8;
+      this.scene.environmentIntensity = company ? 0.25 : THREE.MathUtils.lerp(.45, .8, daylight.day);
       this.scene.environmentRotation.y = 0;
       this.scene.fog = light.fog;
-      this.sun.intensity = (cyber ? 0.15 : company ? 0.12 : 2.2) * light.sun;
-      this.hemisphere.intensity = (cyber ? 0.08 : company ? 0.16 : 0.28) * light.ambient;
-      this.fill.intensity = (cyber ? 0.08 : 0.12) * light.ambient;
+      this.sun.intensity = (company ? .12 : 2.2) * light.sun * daylight.sun;
+      this.sun.color.setHex(0xffb66e).lerp(new THREE.Color(0xffead4), daylight.sun);
+      this.hemisphere.color.setHex(environment === 'shanghai' ? 0xe2e8e6 : 0xcbdfff);
+      this.hemisphere.intensity = (company ? .16 : environment === 'shanghai' ? THREE.MathUtils.lerp(.24, .85, daylight.day) : THREE.MathUtils.lerp(.08, .28, daylight.day)) * light.ambient;
+      this.fill.intensity = THREE.MathUtils.lerp(.035, environment === 'shanghai' ? .22 : .12, daylight.day) * light.ambient;
+      this.positionSun();
     }
+    this.city?.setWeather(weather, 1 - this.weather.daylight.day, this.weather.daylight.direction, this.riverColor, timeOfDay);
     for (const [id, entry] of this.entries) {
       if (!layout.objects.some(o => o.id === id && o.kind === entry.data.kind)) {
         this.transform.detach();
@@ -540,9 +619,9 @@ export class SpaceScene {
     this.transform.setTranslationSnap(snap ? 0.5 : null);
     this.transform.setRotationSnap(snap ? Math.PI / 12 : null);
     const entry = selected && this.entries.get(selected);
-    if (entry && !placing && !this.walking && mode !== 'twist') this.transform.attach(entry.root);
+    if (entry && !placing && !this.navigating && mode !== 'twist') this.transform.attach(entry.root);
     else this.transform.detach();
-    this.outline.visible = !!entry && !placing;
+    this.outline.visible = !!entry && !placing && !this.navigating;
     this.renderer.domElement.style.cursor = placing ? 'crosshair' : 'grab';
     this.render();
   }
@@ -559,21 +638,79 @@ export class SpaceScene {
   }
 
   private cameraChanged = () => {
-    const r = VILLA_ROOMS[this.currentView as keyof typeof VILLA_ROOMS];
-    if (r && this.room?.style !== 'company' && !this.flight && !this.walking) {
-      this.camera.position.clamp(new THREE.Vector3(r.x - r.width / 2 + 0.3, r.level * 5 + 0.4, r.z - r.depth / 2 + 0.3), new THREE.Vector3(r.x + r.width / 2 - 0.3, r.ceiling - 0.3, r.z + r.depth / 2 - 0.3));
+    const bounds = this.cameraRoomBounds();
+    if (bounds && !this.flight && !this.navigating) {
+      this.camera.position.clamp(bounds.min, bounds.max);
       this.camera.lookAt(this.orbit.target);
     }
+    this.reportZoom();
     this.render();
   };
 
+  private cameraRoomBounds() {
+    if (this.freeCamera) return null;
+    const r = VILLA_ROOMS[this.currentView as keyof typeof VILLA_ROOMS];
+    return r && this.room?.style !== 'company' ? new THREE.Box3(
+      new THREE.Vector3(r.x - r.width / 2 + .3, r.level * 5 + .4, r.z - r.depth / 2 + .3),
+      new THREE.Vector3(r.x + r.width / 2 - .3, r.ceiling - .3, r.z + r.depth / 2 - .3)) : null;
+  }
+
+  private zoomLimits() {
+    const min = this.orbit.minDistance;
+    let max = this.orbit.maxDistance;
+    const bounds = this.cameraRoomBounds();
+    if (bounds?.containsPoint(this.orbit.target)) {
+      const direction = this.camera.position.clone().sub(this.orbit.target).normalize();
+      const edge = new THREE.Ray(this.orbit.target, direction).intersectBox(bounds, new THREE.Vector3());
+      if (edge) max = Math.min(max, edge.distanceTo(this.orbit.target));
+    }
+    return { min, max: Math.max(min + .001, max) };
+  }
+
+  private reportZoom() {
+    const { min, max } = this.zoomLimits();
+    const distance = THREE.MathUtils.clamp(this.orbit.getDistance(), min, max);
+    const value = this.navigating ? Math.round((90 - this.camera.fov) / 75 * 1000) / 10
+      : Math.round(1000 * Math.log(max / distance) / Math.log(max / min)) / 10;
+    if (value !== this.zoomValue) { this.zoomValue = value; this.callbacks.zoom(value); }
+  }
+
+  setZoom(value: number) {
+    if (!Number.isFinite(value)) return;
+    this.flight = null; this.cruise(false);
+    if (this.navigating) {
+      // Free flight zooms the lens without changing position, altitude or heading.
+      this.camera.fov = 90 - THREE.MathUtils.clamp(value, 0, 100) * .75;
+      this.camera.updateProjectionMatrix(); this.reportZoom(); this.render();
+      return;
+    }
+    const { min, max } = this.zoomLimits();
+    // Log distance keeps both tabletop details and the city-scale range usable.
+    const distance = max * (min / max) ** (THREE.MathUtils.clamp(value, 0, 100) / 100);
+    const offset = this.camera.position.clone().sub(this.orbit.target).setLength(distance);
+    this.camera.position.copy(this.orbit.target).add(offset);
+    this.orbit.update(); this.reportZoom(); this.render();
+  }
+
+  private positionSun() {
+    this.sun.position.copy(this.sun.target.position).addScaledVector(this.weather.daylight.direction, this.sun.shadow.camera.far > 180 ? 6000 : 65);
+    this.shadowDirty = true;
+  }
+
   view(view: View) {
-    this.setWalking(false);
+    this.cruise(false);
+    this.setNavigation('orbit');
     this.cancel();
+    this.freeCamera = false;
+    this.orbit.cursor.set(0, 0, 0);
+    this.orbit.maxPolarAngle = Math.PI / 2 - .025;
     this.currentView = view;
     const inside = ['interior', 'study', 'bedroom', 'bathroom', 'courtyard', 'garage', 'cinema', 'gym'].includes(view);
     this.scene.backgroundIntensity = 0.12;
     this.orbit.minDistance = inside ? 0.2 : 4;
+    const cityView = !!this.city && Object.hasOwn(SHANGHAI_VIEWS, view);
+    this.ao.enabled = !cityView;
+    this.camera.near = cityView ? 1 : .05;
     const mobile = this.host.clientWidth < 600;
     this.camera.fov = inside ? (mobile ? 76 : this.room?.style === 'company' ? 65 : 58) : mobile ? 60 : 46;
     this.camera.updateProjectionMatrix();
@@ -587,6 +724,22 @@ export class SpaceScene {
     }
     if (view === 'island') { position.set(mobile ? 162 : 155, mobile ? 90 : 64, mobile ? 168 : 162); target.set(-6, -2, 3); }
     if (view === 'shore') { position.set(32, -1.8, 63); target.set(8, -4.8, 135); }
+    if (cityView) {
+      const preset = SHANGHAI_VIEWS[view as ShanghaiView]; position.set(...preset.camera); target.set(...preset.target);
+      if (mobile) position.sub(target).multiplyScalar(1.2).add(target);
+    }
+    // Metre-scale city shadows are focused on the current district; room views
+    // restore the original small shadow camera and directional-light position.
+    this.sun.target.position.copy(cityView ? target : new THREE.Vector3(-9, 0, -3));
+    // A 4.6 km map cannot retain sub-metre cornices/columns. Close architectural
+    // presets focus the existing shadow map; broad city/bridge views keep coverage.
+    const closeArchitecture = cityView && ['hsbc', 'customs', 'peace', 'tomsonGarden'].includes(view);
+    const span = cityView ? closeArchitecture ? 160 : 2300 : 42;
+    Object.assign(this.sun.shadow.camera, { left: -span, right: span, top: span, bottom: -span, near: .5, far: cityView ? 11000 : 180 });
+    this.sun.shadow.normalBias = cityView ? closeArchitecture ? .06 : 1 : .025;
+    this.sun.shadow.bias = closeArchitecture ? -.000008 : -.0002;
+    this.sun.shadow.camera.updateProjectionMatrix(); this.shadowDirty = true;
+    this.positionSun();
     const cameras: Partial<Record<View, [Vec3, Vec3]>> = this.room?.style === 'company' ? {
       interior: [[-21.5, 1.7, 4.9], [-23.3, 1.15, 0.8]], study: [[-8.2, 1.65, 3.8], [-13.3, 1.25, -2.4]], courtyard: [[-14.3, 1.7, 12], [-16.5, 1.15, 8.6]],
     } : {
@@ -620,7 +773,8 @@ export class SpaceScene {
   }
 
   focus() {
-    this.setWalking(false);
+    this.cruise(false); this.ao.enabled = true; this.camera.near = .05; this.camera.updateProjectionMatrix();
+    this.setNavigation('orbit');
     const entry = this.selected && this.entries.get(this.selected);
     if (!entry) return;
     this.currentView = 'home';
@@ -635,30 +789,72 @@ export class SpaceScene {
     this.ray.setFromCamera(this.pointer, this.camera);
   }
 
-  setWalking(active: boolean) {
-    if (active === this.walking) return;
+  setNavigation(mode: Navigation) {
+    if (!['orbit', 'walk', 'drone'].includes(mode) || mode === this.navigation) return;
+    const active = mode !== 'orbit';
     if (active && !this.room) return;
-    if (active && !['interior', 'study', 'bedroom', 'bathroom', 'courtyard', 'garage', 'cinema', 'gym'].includes(this.currentView)) this.view('interior');
-    if (active && this.flight) {
+    this.cancel();
+    if (mode === 'walk' && (this.freeCamera || !['interior', 'study', 'bedroom', 'bathroom', 'courtyard', 'garage', 'cinema', 'gym'].includes(this.currentView))) this.view('interior');
+    if (mode === 'walk' && this.flight) {
       this.camera.position.copy(this.flight.to); this.orbit.target.copy(this.flight.target); this.camera.lookAt(this.orbit.target); this.flight = null;
     }
-    if (active) {
+    if (mode === 'walk') {
       const p = this.camera.position;
       const floor = walkFloor(p.x, p.z, p.y > 5 ? 5 : 0, this.room!.style);
       if (floor === null) return;
       const delta = floor + 1.65 - p.y; p.y += delta; this.orbit.target.y += delta;
+    }
+    if (mode === 'drone') {
+      this.flight = null;
+      this.freeCamera = true;
+      // Let orbiting resume at the flown-to location, without snapping back to
+      // the old room boundary, target radius or downward-only viewing angle.
+      this.orbit.maxPolarAngle = Math.PI - .025;
+    }
+    if (active) {
       this.transform.detach(); this.outline.visible = false;
       this.renderer.domElement.focus({ preventScroll: true });
+    } else if (this.freeCamera) {
+      this.orbit.cursor.copy(this.orbit.target);
     }
-    this.walking = active; this.walkKeys.clear(); this.walkLook = null; this.walkTime = 0;
+    this.navigation = mode;
     this.orbit.enabled = this.transform.enabled = !active;
-    this.callbacks.walking(active); this.render();
+    this.callbacks.navigation(mode); this.reportAltitude(); this.reportZoom(); this.render();
   }
 
-  walkInput(direction: string, pressed: boolean) {
-    if (!this.walking || !['forward', 'back', 'left', 'right'].includes(direction)) return;
-    if (pressed) this.walkKeys.add(direction); else this.walkKeys.delete(direction);
+  navigationInput(direction: string, pressed: boolean, source = direction) {
+    if (!pressed) { this.walkKeys.delete(source); if (!this.walkKeys.size) this.walkTime = 0; return; }
+    if (!this.navigating || !['forward', 'back', 'left', 'right', ...(this.navigation === 'drone' ? ['up', 'down', 'look-up', 'look-down', 'look-left', 'look-right'] : [])].includes(direction)) return;
+    this.flight = null; this.cruise(false);
+    this.walkKeys.set(source, direction);
     this.render();
+  }
+
+  setDroneSpeed(speed: number) {
+    if (Number.isFinite(speed)) this.droneSpeed = THREE.MathUtils.clamp(speed, DRONE_MIN_SPEED, DRONE_MAX_SPEED);
+  }
+
+  private look(yaw: number, pitch: number) {
+    if (!yaw && !pitch) return;
+    const euler = new THREE.Euler().setFromQuaternion(this.camera.quaternion, 'YXZ');
+    euler.y += yaw;
+    euler.x = THREE.MathUtils.clamp(euler.x + pitch, -1.3, 1.3);
+    const distance = this.orbit.getDistance();
+    this.camera.quaternion.setFromEuler(euler);
+    this.orbit.target.copy(this.camera.position).addScaledVector(this.camera.getWorldDirection(new THREE.Vector3()), distance);
+  }
+
+  setDroneHeight(height: number) {
+    if (this.navigation !== 'drone' || !Number.isFinite(height)) return;
+    const delta = THREE.MathUtils.clamp(height, this.droneMinHeight, DRONE_MAX_HEIGHT) - this.camera.position.y;
+    this.camera.position.y += delta; this.orbit.target.y += delta;
+    this.reportAltitude(); this.render();
+  }
+
+  private reportAltitude() {
+    if (this.navigation !== 'drone') return;
+    const height = Math.round(this.camera.position.y);
+    if (height !== this.altitude) { this.altitude = height; this.callbacks.altitude(height); }
   }
 
   private placementHit() {
@@ -671,8 +867,9 @@ export class SpaceScene {
   }
 
   private down = (event: PointerEvent) => {
+    this.cruise(false);
     if (this.forwarding) return;
-    if (this.walking) {
+    if (this.navigating) {
       if (event.button === 0 && !this.walkLook) {
         this.renderer.domElement.focus({ preventScroll: true });
         this.walkLook = { id: event.pointerId, x: event.clientX, y: event.clientY };
@@ -738,13 +935,9 @@ export class SpaceScene {
   };
 
   private move = (event: PointerEvent) => {
-    if (this.walking) {
+    if (this.navigating) {
       if (this.walkLook?.id === event.pointerId) {
-        const euler = new THREE.Euler().setFromQuaternion(this.camera.quaternion, 'YXZ');
-        euler.y -= (event.clientX - this.walkLook.x) * 0.003;
-        euler.x = THREE.MathUtils.clamp(euler.x - (event.clientY - this.walkLook.y) * 0.003, -1.3, 1.3);
-        this.camera.quaternion.setFromEuler(euler);
-        this.orbit.target.copy(this.camera.position).add(this.camera.getWorldDirection(new THREE.Vector3()));
+        this.look(-(event.clientX - this.walkLook.x) * 0.003, -(event.clientY - this.walkLook.y) * 0.003);
         this.walkLook.x = event.clientX; this.walkLook.y = event.clientY; this.render();
       }
       event.stopImmediatePropagation(); return;
@@ -781,7 +974,7 @@ export class SpaceScene {
   };
 
   private up = (event: PointerEvent) => {
-    if (this.walking) {
+    if (this.navigating) {
       if (this.walkLook?.id === event.pointerId) { this.walkLook = null; if (this.renderer.domElement.hasPointerCapture(event.pointerId)) this.renderer.domElement.releasePointerCapture(event.pointerId); }
       event.stopImmediatePropagation(); return;
     }
@@ -820,7 +1013,11 @@ export class SpaceScene {
   };
 
   cancel = () => {
-    this.walkKeys.clear(); this.walkLook = null; this.walkTime = 0;
+    this.cruise(false);
+    this.walkKeys.clear();
+    const look = this.walkLook;
+    this.walkLook = null; this.walkTime = 0;
+    if (look && this.renderer.domElement.hasPointerCapture(look.id)) this.renderer.domElement.releasePointerCapture(look.id);
     if (this.turnDrag && this.renderer.domElement.hasPointerCapture(this.turnDrag.id)) this.renderer.domElement.releasePointerCapture(this.turnDrag.id);
     this.turnDrag = null;
     const drag = this.drag;
@@ -836,9 +1033,20 @@ export class SpaceScene {
       this.transform.pointerUp(new PointerEvent('pointerup', { button: 0 }));
       this.cancelling = false;
     }
-    this.orbit.enabled = this.transform.enabled = !this.walking;
+    this.orbit.enabled = this.transform.enabled = !this.navigating;
     this.render();
   };
+
+  cruise(active: boolean) {
+    if (!this.city?.route || active === this.city.cruising) return;
+    if (active) {
+      this.view('northBund'); this.flight = null; this.currentView = 'huangpu';
+      this.ao.enabled = false; this.camera.near = 1; this.camera.fov = 58; this.camera.updateProjectionMatrix();
+      if (this.city.distance >= this.city.route.getLength() - 1) this.city.distance = 0;
+      this.transform.detach(); this.outline.visible = false;
+    }
+    this.city.cruising = active; this.callbacks.cruising(active); this.render();
+  }
 
   private remove(entry: Entry) {
     this.scene.remove(entry.root);
@@ -865,6 +1073,7 @@ export class SpaceScene {
     this.floorMaterial.dispose();
     this.pedestalMaterial.dispose();
     this.room?.dispose();
+    this.city?.dispose();
     clearTimeout(this.weatherTimer);
     this.weather.dispose();
     this.environment.dispose();

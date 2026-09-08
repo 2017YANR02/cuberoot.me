@@ -26,8 +26,10 @@ void main(){
   float bubbles = clamp(w3 * 0.5 + w4 * 0.7, 0.0, 1.0);
   bubbles = smoothstep(0.32, 0.92, bubbles);
 
-  float fbm = fbm2Tiled(p, 8.0, 6);
-  float streak = fbm2Tiled(vec2(p.x * 0.35, p.y * 3.0), 8.0, 5);
+  // fbm2Tiled takes lattice coordinates, unlike worley2Tiled's unit UVs.
+  // Cover whole periods on each texture axis so RepeatWrapping has no seam.
+  float fbm = fbm2Tiled(p * 8.0, 8.0, 6);
+  float streak = fbm2Tiled(p * vec2(8.0, 24.0), 8.0, 5);
 
   // dissolve mask drives foam erosion over time
   float dissolve = clamp(fbm * 0.6 + w2 * 0.4, 0.0, 1.0);
@@ -50,8 +52,8 @@ uniform float uSlope;
 in vec2 vUv;
 layout(location = 0) out vec4 oCol;
 float h(vec2 p){
-  float a = fbm2Tiled(p, 11.0, 5);
-  float b = fbm2Tiled(p + vec2(3.71, 1.29), 26.0, 4);
+  float a = fbm2Tiled(p * 11.0, 11.0, 5);
+  float b = fbm2Tiled((p + vec2(3.71, 1.29)) * 26.0, 26.0, 4);
   // A trace of cellular structure for the dimpled look of a wind-ruffled
   // surface, rounded off hard so it contributes shape and not creases.
   float c = smoothstep(0.10, 0.95, 1.0 - worley2Tiled(p, 30.0));
@@ -146,19 +148,19 @@ void main(){
   // isotropic blobs a plain fbm produces. The ridge is smoothed because a bare
   // absolute value has a crease along its zero set, and a crease in coverage
   // becomes a dead-straight edge to the cloud deck kilometres long.
-  float f1 = fbm2Tiled(p, 4.0, 5);
-  float f2 = fbm2Tiled(p + vec2(3.7, 1.3), 6.0, 5);
+  float f1 = fbm2Tiled(p * 4.0, 4.0, 5);
+  float f2 = fbm2Tiled((p + vec2(3.7, 1.3)) * 6.0, 6.0, 5);
   float r = f2 * 2.0 - 1.0;
   float band = 1.0 - sqrt(r * r + 0.035);
   float synoptic = clamp(f1 * 0.62 + band * 0.55 - 0.10, 0.0, 1.0);
 
   // Mesoscale cells inside a system, with worley to give them discrete edges.
   float cells = 1.0 - worley2Tiled(p + vec2(0.41, 0.77), 9.0);
-  float meso = clamp(fbm2Tiled(p * 1.0 + vec2(9.1, 4.4), 11.0, 4) * 0.7 + cells * 0.5, 0.0, 1.0);
+  float meso = clamp(fbm2Tiled((p + vec2(9.1, 4.4)) * 11.0, 11.0, 4) * 0.7 + cells * 0.5, 0.0, 1.0);
 
   // Type: the deepest, most persistent parts of a system grow towers.
   float type = clamp(smoothstep(0.42, 0.86, synoptic) * 0.8
-                   + fbm2Tiled(p + vec2(6.3, 2.9), 7.0, 3) * 0.5, 0.0, 1.0);
+                   + fbm2Tiled((p + vec2(6.3, 2.9)) * 7.0, 7.0, 3) * 0.5, 0.0, 1.0);
 
   // Convective cores: sparse, small, and only inside an active region.
   float core = smoothstep(0.55, 0.95, 1.0 - worley2Tiled(p + vec2(2.2, 8.8), 14.0));
@@ -175,13 +177,13 @@ in vec2 vUv;
 layout(location = 0) out vec4 oCol;
 void main(){
   float e = 1.0 / 256.0;
-  float n1 = fbm2Tiled(vUv + vec2(0.0, e), 6.0, 4);
-  float n2 = fbm2Tiled(vUv - vec2(0.0, e), 6.0, 4);
-  float n3 = fbm2Tiled(vUv + vec2(e, 0.0), 6.0, 4);
-  float n4 = fbm2Tiled(vUv - vec2(e, 0.0), 6.0, 4);
+  float n1 = fbm2Tiled((vUv + vec2(0.0, e)) * 6.0, 6.0, 4);
+  float n2 = fbm2Tiled((vUv - vec2(0.0, e)) * 6.0, 6.0, 4);
+  float n3 = fbm2Tiled((vUv + vec2(e, 0.0)) * 6.0, 6.0, 4);
+  float n4 = fbm2Tiled((vUv - vec2(e, 0.0)) * 6.0, 6.0, 4);
   vec2 curl = vec2(n1 - n2, n4 - n3) / (2.0 * e);
   curl = normalize(curl + 1e-6) * 0.5 + 0.5;
-  oCol = vec4(curl, fbm2Tiled(vUv, 12.0, 5), fbm2Tiled(vUv, 3.0, 4));
+  oCol = vec4(curl, fbm2Tiled(vUv * 12.0, 12.0, 5), fbm2Tiled(vUv * 3.0, 3.0, 4));
 }
 `;
 
