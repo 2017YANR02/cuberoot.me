@@ -47,7 +47,9 @@
 
 2026-09-08。补充[和平饭店实拍照片](https://n.sinaimg.cn/sinakd20119/320/w717h403/20220831/51c5-e438a768e27ecac8115bad5575bd3b71.jpg)、[原汇丰大楼游客实拍](https://you.ctrip.com/sight/shanghai2/1831446.html)及[文泉驿微米黑](https://sourceforge.net/projects/wqy/files/wqy-microhei/)三个来源，并为既有 11 条 Asisbiz 逐栋来源增加招牌文字、用途、日期与精度说明。网页共 50 个外部链接，中英文 320px 已实际查看；来源只维护 `credits_data.json`，没有另建产品数据副本。
 
-13 栋招牌是本站 Three.js 实体几何，复用官方 TTFLoader / FontLoader / ExtrudeGeometry。字体来自仓库已有 `public/fonts/wqy-microhei.ttf`，由 `scripts/build-shanghai-sign-font.mjs` 按 `space-shanghai-signs-data.json` 提取 58 字形，生成 33,997 字节的 `public/assets/space/shanghai-v1/sign-font.json`；原字体作者与 Apache-2.0 元数据保留，完整许可在相邻 `sign-font.LICENSE.txt`。生成命令及所有权已登记 `docs/generated-artifacts.json`，改招牌文字需重跑生成脚本，不能手改生成字形。
+当前 16 栋招牌是本站 Three.js 实体几何，复用官方 TTFLoader / FontLoader / ExtrudeGeometry。字体来自仓库已有 `public/fonts/wqy-microhei.ttf`，由 `scripts/build-shanghai-sign-font.mjs` 按 `space-shanghai-signs-data.json` 提取 70 字形，生成 39,734 字节的 `public/assets/space/shanghai-v1/sign-font.json`；原字体作者与 Apache-2.0 元数据保留，完整许可在相邻 `sign-font.LICENSE.txt`。生成命令及所有权已登记 `docs/generated-artifacts.json`，改招牌文字需重跑生成脚本，不能手改生成字形。
+
+同日第二批对照 Asisbiz 6、18、27 号实拍：增加 DOLCE&GABBANA、Cartier、Ermenegildo Zegna、THE HOUSE OF ROOSEVELT 和 ROLEX 文字；6 号底层改为十一处圆拱，18 号底层改为五个橱窗与入口，27 号补绿色下窗。和平饭店的新浪参考照片用于修正弧顶双面灯牌、中英并列竖排以及临江较亮、侧翼较暗的照明分布。橱窗、灯光、尺寸仍为近似，未补品牌专用字体或皇冠等图形。三个摄影页面的实际拍摄日期未确认，公开来源均注明不能据此推断当前租户。
 
 照片只供本地审图，未成为运行贴图或外部加载依赖。字体为通用字体，品牌专用字形、图形商标、招牌尺寸、灯位、夜间亮度和部分位置尚未实测。历史照片也不能证明当前租户或当天亮灯情况；没有从建筑历史名称推断今天的招牌。来源可追溯不表示所有招牌或建筑已 1:1 复刻。逐栋覆盖、三轮审图及验证限制见[第八批跟踪](shanghai-replica-tracker.md#第八批实拍招牌与入口)。
 

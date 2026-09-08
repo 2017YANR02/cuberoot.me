@@ -380,6 +380,21 @@ export function createShanghaiArchitecture(polygons: ShanghaiPolygon[], material
     // Approximate warm architectural wash, driven by the shared night uniform.
     const granite = bundStone(material, 0xbeb5a1, 1.15, true, [5.2, 11.2, 33, 37.6, 44.5, 50, 58], 3.4);
     const trim = bundStone(material, 0xd9d0b8, 1.7, false, [11.2, 33, 37.6, 50, 58], 3.4);
+    // The referenced night photograph lights the riverfront and stepped tower
+    // much more strongly than the west wings. Coordinates are the OSM world
+    // frame used by this building's merged geometry, not camera coordinates.
+    for (const surface of [granite, trim]) {
+      const compile = surface.onBeforeCompile, key = surface.customProgramCacheKey();
+      surface.onBeforeCompile = (shader, renderer) => {
+        compile.call(surface, shader, renderer);
+        shader.fragmentShader = shader.fragmentShader.replace('totalEmissiveRadiance+=vec3(1.,.56,.22)', `
+          float peaceRiverfront=smoothstep(-1344.,-1315.,bundPosition.x);
+          float peaceTower=smoothstep(36.,42.,bundPosition.y);
+          wash*=mix(.09,.82,max(peaceRiverfront,peaceTower));
+          totalEmissiveRadiance+=vec3(1.,.56,.22)`);
+      };
+      surface.customProgramCacheKey = () => `${key}-peace-riverfront-wash`;
+    }
     const copper = roofMetal(material, 0x487b61, 1.7, 64);
     g.extrude(peace, -.65, 38.5, granite);
     // The west wing retains all three mapped courtyards; only the riverfront steps up.

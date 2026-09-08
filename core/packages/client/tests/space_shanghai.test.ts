@@ -29,7 +29,7 @@ const inside = (x: number, z: number, ring: number[][]) => {
 describe('Shanghai geographic asset and river cruise', () => {
   it('bundles every inscription glyph with finite, bounded raised lettering', () => {
     const font = new FontLoader().parse(JSON.parse(readFileSync(new URL('../public/assets/space/shanghai-v1/sign-font.json', import.meta.url), 'utf8')));
-    expect(Object.keys(font.data.glyphs)).toHaveLength(58);
+    expect(Object.keys(font.data.glyphs)).toHaveLength(70);
     for (const item of signage) for (const line of [...item.lines, ...(item.blade ? [{text:item.blade.text,height:1.45,width:1.6},{text:item.blade.english,height:.28,width:1.95}] : [])]) {
       const geometry = shanghaiSignLetters(font, line.text, line.height, line.width);
       geometry.computeBoundingBox();
@@ -43,7 +43,7 @@ describe('Shanghai geographic asset and river cruise', () => {
     for (const [text, height, width] of [['',1,1],[' ',1,1],['?',1,1],['A',0,1],['A',1,-1],['A',NaN,1],['A',1,Infinity]] as const) expect(()=>shanghaiSignLetters(font,text,height,width)).toThrow();
   });
 
-  it('attaches physical signage to all 13 photographed buildings and keeps empty regions allocation-free', () => {
+  it('attaches physical signage to all 16 photographed buildings and keeps empty regions allocation-free', () => {
     const font = new FontLoader().parse(JSON.parse(readFileSync(new URL('../public/assets/space/shanghai-v1/sign-font.json', import.meta.url), 'utf8')));
     const material = () => new THREE.MeshStandardMaterial();
     let allocated = 0;
@@ -52,7 +52,7 @@ describe('Shanghai geographic asset and river cruise', () => {
     const root = createShanghaiArchitecture(data.polygons, material, data.roads);
     addShanghaiSigns(root, font, material);
     root.updateMatrixWorld(true);
-    expect(signage).toHaveLength(13);
+    expect(signage).toHaveLength(16);
     for (const item of signage) {
       const signs = root.getObjectByName(`Bund ${item.building} physical signage`)!;
       expect(signs.userData.signTexts).toEqual([...item.lines.map(l=>l.text), ...(item.blade ? [item.blade.text,item.blade.english] : [])]);
@@ -67,6 +67,9 @@ describe('Shanghai geographic asset and river cruise', () => {
       const hits = new THREE.Raycaster(new THREE.Vector3(-1318.7 + side * 2, 12.1, 1383.2), new THREE.Vector3(-side,0,0)).intersectObject(peace,true);
       expect(hits.length).toBeGreaterThan(0);
       expect(hits[0].distance).toBeLessThan(2);
+      const cap = (dz: number) => new THREE.Raycaster(new THREE.Vector3(-1318.7 + side * 2, 17.96, 1383.2 + dz), new THREE.Vector3(-side,0,0)).intersectObject(peace,true);
+      expect(cap(0).length).toBeGreaterThan(0);
+      for (const dz of [-1.1,1.1]) expect(cap(dz)).toHaveLength(0);
     }
     root.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();(o.material as THREE.Material).dispose();}});
   });
@@ -429,8 +432,8 @@ describe('Shanghai geographic asset and river cruise', () => {
       expect((o.material as THREE.MeshStandardMaterial).map).toBe(null);
       materials.add(o.material as THREE.Material); o.geometry.dispose();
     });
-    // No. 19 brick sign parapet and its two coping strips add 36 triangles.
-    expect(meshes).toBe(103); expect(triangles).toBe(663390);
+    // No. 6 has eleven rounded ground openings; No. 18 has five shopfronts.
+    expect(meshes).toBe(103); expect(triangles).toBe(664124);
     for (const m of materials) m.dispose();
   });
 
