@@ -13,6 +13,8 @@ export const ACHIEVEMENT_TITLES = {
   historicalNR: { zh: '曾获国家纪录', en: 'Historical national record' },
   slam: { zh: '大满贯', en: 'Grand Slam' },
   gold: { zh: '金牌大满贯', en: 'Gold Medal Grand Slam' },
+  hundred: { zh: '百赛选手', en: 'Century competitor' },
+  allEvents: { zh: '全项目选手', en: 'All-event explorer' },
 };
 export type AchievementKind = keyof typeof ACHIEVEMENT_TITLES;
 
@@ -22,8 +24,6 @@ export const RECORD_ACHIEVEMENT_TIERS = [
   { count: 50, zh: '白银', en: 'Silver', rim: '#c7deef' },
   { count: 100, zh: '黄金', en: 'Gold', rim: '#ffd27d' },
   { count: 200, zh: '水晶', en: 'Crystal', rim: '#a9f4ff' },
-  { count: 500, zh: '皇冠', en: 'Crown', rim: '#ffe4a3' },
-  { count: 1000, zh: '传奇', en: 'Legendary', rim: '#efb8ff' },
 ] as const;
 
 export function recordAchievementTier(count?: number) {
@@ -33,6 +33,8 @@ export function recordAchievementTier(count?: number) {
 
 // Original enamel-pin artwork. Illustration pigments are independent of UI theme tokens.
 const ART = {
+  hundred: { light: '#ffd4a0', dark: '#964568', rim: '#ffe8b5', shape: 'M49 12H151L185 48V152L151 188H49L15 152V48Z' },
+  allEvents: { light: '#b4f2e3', dark: '#305a98', rim: '#d9fff5', shape: 'M100 8 166 29 191 94 169 156 100 192 31 156 9 94 34 29Z' },
   champion: { light: '#ffbb96', dark: '#862d56', rim: '#ffd27d', shape: 'M100 9 173 35V98Q171 153 100 190Q29 153 27 98V35Z' },
   wr: { light: '#9eeaff', dark: '#3153b7', rim: '#d0f6ff', shape: 'M100 6 123 26 154 20 162 51 190 67 178 98 190 130 160 147 151 179 120 174 100 195 78 174 47 179 39 148 10 131 23 100 10 69 39 52 46 21 78 26Z' },
   historicalWR: { light: '#ad9cf4', dark: '#392278', rim: '#e9daff', shape: 'M100 10A90 90 0 1 1 99.99 10Z' },
@@ -69,6 +71,24 @@ export function AchievementMedal({ kind, event, recordCount }: { kind: Achieveme
           <path d="M5 48Q70 3 143 31T202 16V0H0Z" fill="#fff" opacity=".16" />
           <path d="M-10 167Q76 111 210 151V205H-10Z" fill={art.dark} opacity=".55" />
           <path d={art.shape} fill={paint('shine')} />
+          {kind === 'hundred' && <>
+            <path d="M56 147 41 175 67 169 77 184 91 151M109 151 123 184 134 169 159 175 144 147" fill={paint('ruby')} stroke="#ffd6d5" strokeWidth="2" />
+            <path d="M47 41H153V143Q100 172 47 143Z" fill={paint('gold')} stroke="#fff2c7" strokeWidth="3" />
+            <path d="M55 52H145V135Q100 160 55 135Z" fill={paint('ruby')} />
+            <path d="m100 58 4 8 9 1-7 6 2 9-8-4-8 4 2-9-7-6 9-1Z" fill={paint('gold')} />
+            <text x="100" y="122" textAnchor="middle" fill="#fff4d1" fontSize="43" fontWeight="800" fontFamily="sans-serif">100</text>
+            <path d="M66 132Q100 148 134 132" stroke={paint('gold')} strokeWidth="3" strokeLinecap="round" />
+          </>}
+          {kind === 'allEvents' && <>
+            <circle cx="100" cy="99" r="61" fill={paint('ocean')} stroke={paint('metal')} strokeWidth="4" />
+            <circle cx="100" cy="99" r="48" fill={art.dark} stroke="#b8f7ef" strokeWidth="1" />
+            {[0, 60, 120, 180, 240, 300].map((angle, i) => <g key={angle} transform={`rotate(${angle} 100 99)`}>
+              <path d="M100 42 118 75 100 89 82 75Z" fill={paint(['ruby', 'gold', 'jade', 'ocean', 'ruby', 'gold'][i])} stroke="#e7fff6" strokeWidth="1.5" />
+              <path d="M100 42V89L118 75Z" fill="#fff" opacity=".2" />
+            </g>)}
+            <circle cx="100" cy="99" r="21" fill={paint('gold')} stroke="#fff7d6" strokeWidth="2" />
+            <path d="m89 99 8 8 15-18" stroke="#315d72" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+          </>}
           {kind === 'champion' && <>
             <path d="M67 66H49Q43 105 80 110M133 66H151Q157 105 120 110" stroke={paint('gold')} strokeWidth="9" />
             <path d="M67 51H133L129 90Q124 117 100 119Q76 117 71 90Z" fill={paint('gold')} stroke="#fff1b5" strokeWidth="2" />
@@ -119,18 +139,9 @@ export function AchievementMedal({ kind, event, recordCount }: { kind: Achieveme
         </g>
         {tier && tier.count >= 10 && <path d={art.shape} transform="translate(8 8) scale(.92)" stroke={paint('metal')} strokeWidth="2" opacity=".85" />}
         {tier && tier.count >= 200 && [35, 165].map(x => <g key={x} transform={`translate(${x} 119)`}>
-          <path d="M0-24 11-8 7 13 0 24-7 13-11-8Z" fill={paint(tier.count >= 1000 ? 'ruby' : 'ocean')} stroke="#e9ffff" strokeWidth="2" />
+          <path d="M0-24 11-8 7 13 0 24-7 13-11-8Z" fill={paint('ocean')} stroke="#e9ffff" strokeWidth="2" />
           <path d="M0-24V24M-11-8H11L0 24Z" stroke="#fff" strokeOpacity=".7" />
         </g>)}
-        {tier && tier.count >= 500 && <g>
-          <path d="m72 34-4-22 18 10 14-18 14 18 18-10-4 22Z" fill={paint('gold')} stroke="#fff2bd" strokeWidth="2" />
-          <path d="M73 36H127" stroke={paint('gold')} strokeWidth="5" strokeLinecap="round" />
-          <path d="m100 15 4 6-4 6-4-6Z" fill={paint('ruby')} />
-        </g>}
-        {tier && tier.count >= 1000 && <g stroke={paint('gold')} strokeWidth="3" strokeLinecap="round">
-          <path d="M49 154Q64 179 88 181M151 154Q136 179 112 181" />
-          {[0, 1, 2].map(i => <g key={i}><ellipse cx={54 + i * 11} cy={157 + i * 9} rx="4" ry="8" transform={`rotate(-40 ${54 + i * 11} ${157 + i * 9})`} fill={paint('gold')} /><ellipse cx={146 - i * 11} cy={157 + i * 9} rx="4" ry="8" transform={`rotate(40 ${146 - i * 11} ${157 + i * 9})`} fill={paint('gold')} /></g>)}
-        </g>}
       </svg>
       {record && <span className="wp-achievement-record"><RecordBadge record={record} /></span>}
       {event && <span className="wp-achievement-event"><EventIcon event={event} /></span>}

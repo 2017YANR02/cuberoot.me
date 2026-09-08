@@ -5,6 +5,7 @@ import { GrandSlamBadges } from '@/components/persons/sections/PersonAchievement
 import type { WcaResultRow } from '@/lib/wca-person-api';
 import type { ReactNode } from 'react';
 import { AchievementMedal, recordAchievementTier } from '@/components/persons/sections/AchievementMedal';
+import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from '@/lib/event-constants';
 
 // Keep eligibility and evidence assertions independent of the portal's closed state.
 // Actual hover, keyboard and touch behavior is exercised in the browser.
@@ -51,7 +52,7 @@ it('awards historical records per event and level, deduplicating and rejecting i
 
 it.each([
   [1, 1], [9, 1], [10, 10], [49, 10], [50, 50], [99, 50], [100, 100],
-  [199, 100], [200, 200], [499, 200], [500, 500], [999, 500], [1000, 1000], [1250, 1000],
+  [199, 100], [200, 200], [499, 200], [500, 200], [999, 200], [1000, 200], [1250, 200],
   [0, undefined], [-1, undefined], [1.5, undefined], [NaN, undefined], [Infinity, undefined], [undefined, undefined],
 ])('selects the highest earned tier for %s records', (count, expected) => {
   expect(recordAchievementTier(count)?.count).toBe(expected);
@@ -59,11 +60,34 @@ it.each([
 
 it('keeps the actual count above the highest tier and only upgrades historical badges', () => {
   const html = renderToStaticMarkup(createElement(AchievementMedal, { kind: 'historicalWR', recordCount: 1250, event: '333' }));
-  expect(html).toContain('data-tier="1000"');
+  expect(html).toContain('data-tier="200"');
   expect(html).toContain('×1250');
   const current = renderToStaticMarkup(createElement(AchievementMedal, { kind: 'wr', recordCount: 1250 }));
   expect(current).not.toContain('data-tier');
   expect(current).not.toContain('×1250');
+});
+
+const participation = (competition_id: string, event_id = '333', best = 100, live = false): WcaResultRow => ({
+  competition_id, event_id, best, live, average: 0, pos: 1, attempts: [], round_type_id: 'f', format_id: '3',
+});
+const renderParticipation = (results: WcaResultRow[]) => renderToStaticMarkup(createElement(GrandSlamBadges, { rows: [], wcaId: 'TEST', isZh: false, results }));
+
+it('awards a century for 100 distinct official competitions, including DNF but not DNS or live rows', () => {
+  const results = Array.from({ length: 99 }, (_, i) => participation(`Competition${i}`));
+  expect(renderParticipation([...results, results[0], participation('DNS', '333', -2), participation('Live', '333', 100, true)])).toBe('');
+  const html = renderParticipation([...results, participation('Hundredth', '333', -1)]);
+  expect(html).toContain('data-kind="hundred"');
+  expect(html).toContain('100 competitions attended');
+});
+
+it('requires successful official results in every active event, without substituting retired or unknown events', () => {
+  const active = ALL_EVENT_IDS.filter(event => !CANCELLED_EVENT_IDS.has(event));
+  const results = active.map(event => participation('OneCompetition', event));
+  expect(renderParticipation(results)).toContain('data-kind="allEvents"');
+  const partial = results.slice(1);
+  expect(renderParticipation([...partial, participation('Other', 'magic'), participation('Other', 'unknown')])).toBe('');
+  expect(renderParticipation([...partial, participation('Other', active[0], -1)])).toBe('');
+  expect(renderParticipation([...partial, participation('Other', active[0], 100, true)])).toBe('');
 });
 
 it('awards only the requested person’s listed events, distinguishes all-gold and hides empty sections', () => {
