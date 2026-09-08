@@ -1,6 +1,8 @@
 'use client';
 
 import BackHome from '@/components/BackHome';
+import AlgCard from '@/components/AlgCard';
+import SimCubeView from '@/components/sim-embed/SimCubeView';
 import AlgPuzzlePicker, {
   TUTORIAL_PUZZLE_PICKER_IDS,
 } from '@/components/AlgPuzzlePicker';
@@ -15,6 +17,7 @@ import '../alg/alg.css';
 import './tutorial.css';
 
 const FOUR_CENTER_SETUP = "D' B' D B L' R' L R";
+const LBL_COVER_MOVES: string[] = [];
 const FOUR_CENTER_MOVES = ["R'", "L'", 'R', 'L', "B'", "D'", 'B', 'D'] as const;
 
 function FourCenterGuide() {
@@ -255,6 +258,12 @@ export default function TutorialPage() {
         </Link>
       </header>
       {puzzle === 'ivy' ? <IvyTutorial /> : null}
+      {puzzle === '3x3' && <div className="tutorial-methods">
+        <AlgCard href="/tutorial/lbl" prefetch={false}
+          thumb={<SimCubeView moves={LBL_COVER_MOVES} pose="z2" className="tutorial-lbl-thumb" ariaLabel={tr({ zh: '复原的三阶魔方', en: 'Solved 3×3 cube' })} />}
+          title={<T zh="层先法" en="LBL" />}
+          sub={<T zh="从小花到六面复原" en="From daisy to solved cube" />} />
+      </div>}
     </main>
   );
 }
