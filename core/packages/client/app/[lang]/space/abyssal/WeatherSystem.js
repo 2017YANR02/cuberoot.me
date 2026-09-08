@@ -71,6 +71,7 @@ export class WeatherSystem {
   set({ cloud, rain, wind, fog, storm, tornado, sand, urban, island = false, city = false }) {
     this.island = island;
     this.city = city; this.anchorDirty = city;
+    this.sky.shared.uCityHaze.value = Number(city);
     this.ensureOcean();
     this.oceanDirty = island;
     this.weather.set({

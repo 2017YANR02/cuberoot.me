@@ -18,6 +18,20 @@
     "en": "Perceptual quality checks for compressed Drive videos"
   },
   {
+    "name": "上海市政府：外滩亮灯 / Shanghai Government: Bund lighting",
+    "space": true,
+    "url": "https://www.shanghai.gov.cn/nw4411/20260820/f441a5da943447e79613ab4d5dbcc0a5.html",
+    "zh": "夜景参考：2026-08-20 转载解放日报关于外滩 38 栋建筑、约 2000K 日常暖金照明与分层景观的报道。用于照明色彩和层次，不代表取得现场灯位、配光或测绘；不将夏季开灯时间套用到场景的固定春秋分时钟。查阅于 2026-09-08",
+    "en": "Night reference: the 2026-08-20 Jiefang Daily report on 38 Bund buildings, roughly 2000K everyday warm lighting and layered city illumination. Guides colour and hierarchy, without surveyed luminaire positions or photometry; its summer switch-on schedule is not applied to the scene's fixed-equinox clock. Accessed 2026-09-08"
+  },
+  {
+    "name": "新华社：上海夜景实拍 / Xinhua: Shanghai night photographs",
+    "space": true,
+    "url": "https://www.xinhuanet.com/photo/20251231/f4a640207f67437c86c2d5db1b82644c/c.html",
+    "zh": "实拍参考：王翔于 2025-12-31 拍摄的外滩和陆家嘴，用于建筑照明的明暗关系、江岸层次及水面倒影。照片包含跨年特别灯光，不将红色活动灯幕作为日常现状；图片仅本地审图，未用作运行贴图。模型与灯光仍含估算。查阅于 2026-09-08",
+    "en": "Photo reference: Wang Xiang's 2025-12-31 Bund and Lujiazui photographs, used for lighting contrast, riverbank layers and water reflections. They show special New Year lighting; red event displays are not treated as everyday conditions. Photos were reviewed locally, not distributed as runtime textures. Geometry and lighting remain estimates. Accessed 2026-09-08"
+  },
+  {
     "name": "文汇报：外滩 15-1 号 / Wenhui: Bund 15-1",
     "space": true,
     "url": "https://wenhui.whb.cn/third/yidian/201911/15/303082.html",

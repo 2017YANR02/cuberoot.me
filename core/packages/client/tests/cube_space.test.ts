@@ -11,7 +11,7 @@ import { mirrorFaces } from '@/components/puzzle-models/mirror/mirrorGeometry';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { COLORS } from '@cuberoot/puzzle-render-core/engine/define';
 import { droneMovement, SpaceScene, surfaceHit, visibleBounds } from '@/app/[lang]/space/space-scene';
-import { sceneDaylight, weatherRoof } from '@/app/[lang]/space/space-weather';
+import { cityHorizon, sceneDaylight, weatherRoof } from '@/app/[lang]/space/space-weather';
 import { createUniforms } from '@/app/[lang]/space/abyssal/core/SharedUniforms.js';
 import { OceanMesh } from '@/app/[lang]/space/abyssal/ocean/OceanMesh.js';
 import { Lightning } from '@/app/[lang]/space/abyssal/weather/Lightning.js';
@@ -151,6 +151,13 @@ describe('cube space saved layouts', () => {
     expect(frames[360].direction.x).toBe(1); expect(frames[1080].direction.x).toBe(-1);
     expect(frames[360].day).toBeCloseTo(.5); expect(frames[1080].day).toBeCloseTo(.5);
     expect(() => sceneDaylight('24:00')).toThrow('timeOfDay');
+  });
+
+  it('uses a night horizon at midnight and dims rain haze before sunset', () => {
+    expect(cityHorizon(sceneDaylight('00:00').day, .8).getHex()).toBe(0x283344);
+    expect(cityHorizon(sceneDaylight('12:00').day, .8).getHex()).toBe(0x869aa9);
+    expect(cityHorizon(sceneDaylight('18:00').day, .8).r).toBeCloseTo(.04836633, 7);
+    expect(cityHorizon(sceneDaylight('23:59').day, .8).getHex()).toBe(0x283344);
   });
 
   it('preserves cubes and environment across every style/weather combination, including undo and legacy imports', () => {

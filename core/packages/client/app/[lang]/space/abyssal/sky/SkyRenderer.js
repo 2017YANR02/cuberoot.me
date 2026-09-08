@@ -18,6 +18,15 @@ uniform vec3 uLightningColor;
 uniform vec4 uLightning0;
 uniform vec4 uLightning1;
 uniform vec3 uCamPos;
+uniform vec3 uHorizonColor;
+uniform float uCityHaze;
+
+vec3 cityHaze(vec3 sky, vec3 dir) {
+  // Same linear colour as Three's exponential fog. The horizon limit is exact;
+  // blend upward through the low cloud deck instead of ending at a hard plane.
+  float belt=exp(-abs(dir.y)*22.0);
+  return mix(sky,uHorizonColor,belt*uCityHaze);
+}
 
 const float SUN_ANGULAR_RADIUS = 0.00465;
 
@@ -141,6 +150,7 @@ void main(){
 
   sky += uAmbientFlash * uLightningColor * 0.012 * max(0.0, 1.0 - abs(dir.y));
   sky += vec3(.012,.019,.04) * (.25 + .75 * exp(-max(dir.y,0.) * 5.)) * uUrbanGlow;
+  sky = cityHaze(sky,dir);
 
   oColor = vec4(sky, 1.0);
 
@@ -189,6 +199,7 @@ void main(){
   }
   sky += uAmbientFlash * uLightningColor * 0.012;
   sky += vec3(.012,.019,.04) * (.25 + .75 * exp(-max(lookDir.y,0.) * 5.)) * uUrbanGlow;
+  sky = cityHaze(sky,lookDir);
   sky = mix(sky, sky * vec3(0.16, 0.30, 0.38), below);
   oColor = vec4(sky, 1.0);
 }
@@ -220,6 +231,8 @@ export class SkyRenderer {
       uTimeStars: { value: 0 },
       uCloudEnabled: { value: 0 },
       uUrbanGlow: { value: 0 },
+      uCityHaze: { value: 0 },
+      uHorizonColor: { value: new THREE.Color() },
     };
     this.shared = shared;
 

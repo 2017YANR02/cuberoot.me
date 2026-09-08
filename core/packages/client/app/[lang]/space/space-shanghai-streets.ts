@@ -22,14 +22,14 @@ function segmentDistance(p: Point, a: Point, b: Point) {
 
 // Meter-scale paving, with subpixel joints and aggregate fading out during flight.
 // Materials stay owned by ShanghaiScene's factory and use its day/night uniform.
-export function shanghaiStreetMaterial(material: MaterialFactory, paving: boolean) {
-  const m = material(paving ? 0xa7a69a : 0x414746, .025, .93);
+export function shanghaiStreetMaterial(material: MaterialFactory, paving: boolean, lit = false) {
+  const m = material(paving ? 0xa7a69a : 0x414746, .025, .93, lit ? .001 : 0);
   const compile = m.onBeforeCompile, key = m.customProgramCacheKey();
   m.onBeforeCompile = (shader, renderer) => {
     compile.call(m, shader, renderer);
-    shader.vertexShader = 'varying vec2 streetPosition;\n' + shader.vertexShader;
-    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nstreetPosition=position.xz;');
-    shader.fragmentShader = 'varying vec2 streetPosition;\nfloat streetHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\n' + shader.fragmentShader;
+    shader.vertexShader = 'varying vec2 streetPosition,streetLightUV;\n' + shader.vertexShader;
+    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nstreetPosition=position.xz; streetLightUV=uv;');
+    shader.fragmentShader = 'varying vec2 streetPosition,streetLightUV;\nfloat streetHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\n' + shader.fragmentShader;
     shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
       vec2 stoneUV=vec2(streetPosition.x*.992+streetPosition.y*.126,-streetPosition.x*.126+streetPosition.y*.992);
       vec2 cell=stoneUV/vec2(.6,1.2);
@@ -41,9 +41,44 @@ export function shanghaiStreetMaterial(material: MaterialFactory, paving: boolea
       float grain=(streetHash(floor(stoneUV*55.))-.5)*grainDetail;
       diffuseColor.rgb*= ${paving ? '(1.-joint*.22*detail)*(1.+(streetHash(floor(cell))-.5)*.08*detail)' : '1.'} *(1.+grain*.12);
     `);
+    if (lit) shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      // Analytic irradiance from alternating streetlights, confined to mapped
+      // asphalt. Shared path distance prevents a new bright spot at every vertex.
+      float along=streetLightUV.x;
+      float a=fract(along+.5)-.5, b=fract(along)-.5;
+      float pools=exp(-a*a*30.-pow(streetLightUV.y-.85,2.)*1.8)+exp(-b*b*30.-pow(streetLightUV.y+.85,2.)*1.8);
+      float resolved=1.-smoothstep(.25,1.3,fwidth(along));
+      pools=mix(.22,pools,resolved)*step(-999.,along);
+      totalEmissiveRadiance+=vec3(1.,.59,.26)*pools*cityNight*.19;
+    `);
   };
-  m.customProgramCacheKey = () => `${key}-bund-street-${paving}`;
+  m.customProgramCacheKey = () => `${key}-bund-street-${paving}-${lit}`;
   return m;
+}
+
+export function createShanghaiQuays(polygons: ShanghaiPolygon[], material: MaterialFactory) {
+  const g = new CityGeometry(); g.group.name = 'Central Huangpu illuminated quays';
+  // Only the acquired Huangpu ring, inside the photographed central waterfront.
+  // Exclude cut edges outside this reach; never illuminate ponds or draw a line
+  // across the river. Wall section and concealed warm fixtures are estimates.
+  const river = polygons.find(p => p.id === 'way/71118583' && p.kind === 'water');
+  const within = ([x, z]: Point) => x > -1500 && x < 450 && z > 700 && z < 2600;
+  if (!river) return g.group;
+  const segments = river.points.flatMap((b, i) => {
+    const a = river.points[(i + river.points.length - 1) % river.points.length];
+    const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    return within(a) && within(b) && length > .01 && length < 120 ? [{ a, b, length }] : [];
+  });
+  if (!segments.length) return g.group;
+  const stone = material(0xb6ac96, .03, .84, .07), light = material(0xffbe68, .05, .55, 2.4);
+  for (const { a, b, length } of segments) {
+    const rotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(b[0] - a[0], b[1] - a[1]));
+    const x = (a[0] + b[0]) / 2, z = (a[1] + b[1]) / 2;
+    g.add(new THREE.BoxGeometry(.75, 1.6, length), stone, [x, .15, z], rotation);
+    g.add(new THREE.BoxGeometry(.78, .12, length), light, [x, .78, z], rotation);
+  }
+  g.group.userData.segments = segments.length;
+  return g.finish();
 }
 
 export function createBundStreets(roads: ShanghaiRoad[], polygons: ShanghaiPolygon[], material: MaterialFactory) {

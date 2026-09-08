@@ -2,6 +2,34 @@ import * as THREE from 'three';
 import { CityGeometry, shanghaiShape, type MaterialFactory, type ShanghaiPolygon } from './space-shanghai-geometry';
 import type { Vec3 } from './space-state';
 
+// 32 x 64 rooms, eight texels per room. A fixed CPU pattern with mipmaps avoids
+// fragment-hash precision noise and keeps distant windows stable during flight.
+// The caller owns the texture; both city blocks and landmark glazing share it.
+export function shanghaiWindowTexture(office: boolean) {
+  const width = 256, height = 512, data = new Uint8Array(width * height * 4);
+  let seed = office ? 107 : 307;
+  const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+  for (let row = 0; row < 64; row++) {
+    const occupied = !office || random() > .35;
+    let brightness = 0;
+    for (let column = 0; column < 32; column++) {
+      if (!office || column % 2 === 0) brightness = occupied && random() > (office ? .48 : .7) ? Math.round(100 + random() * 155) : 0;
+      const blind = random() > .75 ? 3 : 1;
+      for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
+        const offset = ((row * 8 + y) * width + column * 8 + x) * 4;
+        const light = x >= 1 && x <= 6 && y >= blind && y <= 6 ? brightness : 0;
+        data.set([light, light, light, 255], offset);
+      }
+    }
+  }
+  const texture = new THREE.DataTexture(data, width, height);
+  texture.name = office ? 'Shanghai office windows' : 'Shanghai residential windows';
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.magFilter = THREE.LinearFilter; texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.generateMipmaps = true; texture.anisotropy = 8; texture.needsUpdate = true;
+  return texture;
+}
+
 export function centre(p: ShanghaiPolygon): [number, number] {
   // Bounding centre avoids bias from densely mapped rounded corners.
   return [(Math.min(...p.points.map(p => p[0])) + Math.max(...p.points.map(p => p[0]))) / 2,
@@ -99,7 +127,7 @@ export function bundStone(material: MaterialFactory, color: number, wash: number
       float wash=(.19+.3*pools)*(.7+.3*exp(-height/35.));
       ${bands.map(y => `wash+=.22*exp(-abs(height-${y.toFixed(3)})/1.8);`).join('\n')}
       float relief=.45+.55*max(abs(bundNormal.z),abs(bundNormal.x)*.8);
-      totalEmissiveRadiance+=vec3(1.,.68,.35)*diffuseColor.rgb*cityNight*${wash.toFixed(3)}*wash*relief*mix(.12,1.,wall);
+      totalEmissiveRadiance+=vec3(1.,.56,.22)*diffuseColor.rgb*cityNight*${wash.toFixed(3)}*wash*relief*mix(.12,1.,wall)*1.7;
     `);
   };
   m.customProgramCacheKey = () => `${key}-bund-stone-${wash}-${courses}-${bands.join(',')}-${lampSpacing}`;
