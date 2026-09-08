@@ -1,0 +1,152 @@
+[
+  {
+    "kind": "paragraph",
+    "zh": "我们正在公布纳维–斯托克斯（Navier–Stokes）存在性与光滑性问题的一个解答。这是千禧年大奖难题之一。该证明由 OpenAI 的一个内部系统给出，表明描述流体运动的 Navier–Stokes 方程在演化过程中可以在有限时间内产生奇性。我们同时公布了证明文稿及其 Lean 形式化版本。",
+    "en": "We’re sharing a solution to the Navier–Stokes existence and smoothness problem, one of the Millennium Prize Problems. This proof, produced by an internal OpenAI system, shows that the dynamics of the Navier-Stokes equations for fluid motion can develop a singularity in finite time. We’re sharing both a writeup of the proof and a formalization in Lean."
+  },
+  {
+    "kind": "paragraph",
+    "zh": "千禧年大奖难题涵盖了数学前沿一些最深刻的问题。光滑的三维流体运动是否可能失去光滑性，这个问题大约 90 年来一直悬而未决。",
+    "en": "The Millennium Prize Problems represent some of the deepest questions at the frontier of mathematics. The question of whether smooth three-dimensional fluid motion can break down has remained unresolved for roughly 90 years."
+  },
+  {
+    "kind": "paragraph",
+    "zh": "我们工作的一项重要目标，是帮助科学家推动造福全人类的科研与技术进步。为解决 Navier–Stokes 问题，我们使用了一个能力显著强于 GPT‑6 Astra 的内部模型。我们认为，让全世界了解 AI 进步的速度，以及未来模型可能带来的变化，十分重要。",
+    "en": "A major goal of our work is to empower scientists to advance research and technology that benefits all of humanity. To solve the Navier–Stokes problem, we used an internal model that is significantly more capable than GPT‑6 Astra. We believe it is important to inform the world about the pace of AI progress and what to expect from upcoming models."
+  },
+  {
+    "kind": "heading",
+    "zh": "问题",
+    "en": "The problem"
+  },
+  {
+    "kind": "paragraph",
+    "zh": "Navier–Stokes 方程以牛顿第二运动定律（F=ma）描述流体如何运动。关键在于，它把流体视为连续介质，而不是逐个追踪分子。这组方程用于飞机设计、天气预报和血流研究。",
+    "en": "The Navier–Stokes equations use Newton’s second law of motion (“F=ma”) to describe how fluids move. Importantly, they treat a fluid as a continuous medium rather than tracking individual molecules. These equations are used for aircraft design, weather forecasting, and the study of blood flow."
+  },
+  {
+    "kind": "paragraph",
+    "zh": "关于这组动力学方程，一个根本性的悬而未决的问题是：流体的连续介质近似是否可能失效？具体来说，对于密度恒定的三维不可压缩流体，即使运动最初是光滑的，Navier–Stokes 方程仍有可能产生“奇性”吗？这里，奇性是指流体在演化过程中，其速度在有限时间内无限增大。奇性若要形成，就必须在黏性存在的情况下发生，而黏性通常会使运动变得平滑。真实流体不可能以无限大的速度运动，因此，这将标志着方程对流体的描述失效。若要继续为这个系统建立模型，就需要分别追踪每个粒子的行为。",
+    "en": "A fundamental open question for these dynamical equations has been whether the continuum approximation of the fluid can break down. Specifically, can the Navier–Stokes equations for a three-dimensional incompressible fluid with constant density develop a “singularity,” even when the motion starts smoothly? Here, a singularity means the dynamics lead to speeds in the fluid growing without bound within a finite amount of time. The development of a singularity would have to happen despite the presence of viscosity, which tends to smooth out motion. Because a real fluid cannot move infinitely fast, this would mark a breakdown in how the equations model the fluid. To continue modeling the system, one would then need to track the behaviour of each particle individually."
+  },
+  {
+    "kind": "paragraph",
+    "zh": "这组方程可以追溯到 19 世纪克洛德－路易·纳维（Claude-Louis Navier）和乔治·加布里埃尔·斯托克斯（George Gabriel Stokes）的工作。1934 年，让·勒雷（Jean Leray）证明了广义意义下的解存在，但这些解是否始终保持光滑，成为一个核心的未解问题。2000 年，克雷数学研究所将 Navier–Stokes 存在性与光滑性问题列为七个千禧年大奖难题之一。",
+    "en": "The equations date to the nineteenth-century work of Claude-Louis Navier and George Gabriel Stokes. In 1934, Jean Leray proved that solutions exist in a generalized sense, but whether they always remain smooth became a central unanswered question. In 2000, the Clay Mathematics Institute named the Navier–Stokes existence and smoothness problem one of seven Millennium Prize Problems."
+  },
+  {
+    "kind": "heading",
+    "zh": "结果",
+    "en": "The result"
+  },
+  {
+    "kind": "paragraph",
+    "zh": "我们的系统给出了解析证明及其 Lean 形式化版本，证明一个初始状态光滑、处于静止状态的流体，可以在有限时间内产生奇性。流体受到一个光滑外力的作用，并且从静止到奇性形成的整个演化过程中，能量始终保持有限。这一结果证明了千禧年大奖难题官方表述中的命题 C（以及命题 D），从而解决了 Navier–Stokes 千禧年大奖难题。",
+    "en": "Our system produced an analytical proof and a Lean formalization that an initially smooth fluid at rest can develop a singularity in a finite time. The fluid has a smooth force applied to it, and its energy remains finite through the entire dynamics, from rest to the formation of the singularity. This resolves the Navier–Stokes Millennium Prize problem by establishing statement “C” (and also “D”) in the official Millennium Prize formulation."
+  },
+  {
+    "kind": "paragraph",
+    "zh": "这个解呈现为一个涡旋，也就是一团旋转的流体：它沿螺旋向内收缩，并像意大利面条一样越拉越长。中心区域一边缩小，一边加速，而其缩小与加速的方式使能量仍然保持有限，符合物理定律的要求。技术上的难点在于，让方程通过流体自身的运动产生这种失效，而不是由我们人为加入一个无限大的力之类的手段来制造它。更数学地说，Navier–Stokes 方程中描述运动的各项——加速度、压力梯度、动量传递和黏性——必须在变得很大的同时，以精确的方式相互抵消。正是这种细致的平衡，使得即使流体速度无限增大，外力仍然保持光滑。",
+    "en": "The solution is a vortex, a spinning swirl of fluid, that spirals inward and gets increasingly elongated, like spaghetti. This central region shrinks while it speeds up in such a way that its energy still stays finite, as required by the laws of physics. The technical challenge is for the equations to develop the breakdown through the motion of the fluid itself, rather than, for example, us putting in an infinite force by hand. More mathematically, the terms in the Navier–Stokes equations that describe the motion—acceleration, pressure gradients, momentum transfer, viscosity—must both become big yet cancel in a precise way. This detailed balance leaves a smooth external force even as the velocity of the fluid grows without bound."
+  },
+  {
+    "kind": "vortex",
+    "zh": "图像描述：旋转涡旋示意图，展示沿螺旋向内收缩和沿轴向拉伸。\n图注：局部不可压缩运动的一个瞬间。橙色表示较快的角向旋转，蓝绿色表示较慢的旋转。绕转的线速度还取决于半径。轨迹展示了沿螺旋向内收缩和沿轴向拉伸的过程。",
+    "en": "Diagram of a swirling vortex illustrating inward spiral and axial stretching.\nA snapshot of local incompressible motion. Orange marks faster angular rotation; teal marks slower rotation. Circulating speed also depends on radius. The trajectories show inward spiraling and axial stretching."
+  },
+  {
+    "kind": "heading",
+    "zh": "我们如何找到证明",
+    "en": "How we found the proof"
+  },
+  {
+    "kind": "paragraph",
+    "zh": "从 8 月 28 日起，我们一直在训练一个新的内部模型。它在我们的基准测试中展现出前所未有的表现，其中包括数学测试。该模型仍在训练，性能也在持续提升。",
+    "en": "Since August 28 we have been training a new internal model that has exhibited unprecedented performance in our benchmarks, including mathematics. This model’s training is ongoing and its performance continues to improve."
+  },
+  {
+    "kind": "benchmark",
+    "zh": "图表标题：GPT‑6 Astra 与我们的内部模型在一组精选数学未解问题上的表现",
+    "en": "Performance of GPT-6 Astra and our Internal Model on a curated set of open math problems"
+  },
+  {
+    "kind": "caption",
+    "zh": "图例：GPT‑6 Astra、内部模型。横轴：测试时计算量（对数刻度）。纵轴：通过率；刻度为 0、0.1、0.2、0.3、0.4、0.5。",
+    "en": "Legend: GPT-6 Astra, Internal Model. Horizontal axis: Test-time compute (log scale). Vertical axis: Pass rate; ticks: 0, 0.1, 0.2, 0.3, 0.4, 0.5."
+  },
+  {
+    "kind": "paragraph",
+    "zh": "9 月 1 日，星期二，我们听到传闻，说有两个千禧年大奖难题已经得到解决。受到这些传闻以及内部模型性能跃升的启发，我们启动了一项工作：在所有尚未解决的千禧年大奖难题，以及另外几个影响重大的问题上，评估这个模型的能力。",
+    "en": "On Tuesday, September 1, we heard rumors that two Millennium Prize problems had been resolved. Inspired by these rumors and by the step change in performance of our internal model, we launched an effort to evaluate it on all open Millennium Prize problems and a few other high-impact problems."
+  },
+  {
+    "kind": "paragraph",
+    "zh": "我们使用了一个由内部模型驱动、能够协同工作的智能体系统。这些智能体可以使用工具，例如读取互联网内容的缓存副本，以及运行代码。智能体被分成若干组，同组智能体之间可以相互通信。各组规模不一，最终解决 Navier–Stokes 问题的那一组，包含约一万个同时运行的智能体。在整个过程中，我们始终执行与所有前沿模型评估相同的严格安全措施，包括监控和隔离。",
+    "en": "We used a system of coordinating agents powered by our internal model. The agents had access to tools such as the ability to read from a cached version of the internet and the ability to run code. Agents were subdivided into groups with the ability to communicate within the group. The groups varied in size, and the group that produced the Navier–Stokes resolution involved on the order of 10,000 concurrent agents. At all times we maintained the same strict safeguards that we apply to all our frontier model evaluations, including monitoring and isolation."
+  },
+  {
+    "kind": "paragraph",
+    "zh": "针对每个问题，我们向不同的智能体组提供了不同版本的问题表述，覆盖该问题的所有变体。对于 Navier–Stokes 问题，我们将版本 A、B（对应于证明成立的特定表述）和版本 C、D（对应于给出反例的表述）分别交给不同的智能体组。",
+    "en": "For each problem, we prompted different groups of agents with different variants of the problem statement, covering all variants of the problem. For the Navier–Stokes problem, we suggested versions “A” and “B” (particular forms of the Navier–Stokes problem which would result in a proof) and versions “C” and “D” (which would result in a disproof) to separate groups of agents."
+  },
+  {
+    "kind": "paragraph",
+    "zh": "除了完整的千禧年大奖难题，我们还让多智能体系统尝试了一组“更容易”的问题。其中一个问题，是去掉 Navier–Stokes 方程中的黏性项后，所得极限情形中的一个类似爆破问题。这被称为 Euler（欧拉）方程的正则性问题。出乎我们意料，智能体解决了这个问题。它们解决的具体版本是不受外力作用的情形，即没有外力施加于流体。近 100 个智能体协同工作了约 50 小时，给出了我们关于 Euler 方程正则性命题的反证。[1]",
+    "en": "In addition to the full Millennium Prize problems, we asked our multiagent system to try a set of “easier” problems. One of these problems was a similar blowup question for the limit of the Navier–Stokes problem with the viscosity term removed. This is known as the regularity problem for the Euler equations, and our agents surprised us by resolving this question. The specific variant of the question that they resolved was the unforced version, where no external force is applied to the fluid. Nearly 100 agents worked together for approximately 50 hours to produce our Euler regularity disproof.[1]"
+  },
+  {
+    "kind": "paragraph",
+    "zh": "看到 Euler 方程问题的解答后，我们认为 Navier–Stokes 是最有希望取得进展的问题。因此，我们决定把资源集中到 Navier–Stokes 上。为此，我们将智能体从其他千禧年大奖难题转移过来，并在提示中向它们提供 Euler 方程问题的解答。在这项工作进行期间，当内部模型经过进一步训练的新版本可用时，我们也将智能体更新为使用该版本。",
+    "en": "Once we saw the Euler solution, we thought that Navier–Stokes was the most promising problem to work on. Thus, we decided to devote our resources to Navier–Stokes. To do so, we shifted agents away from the other Millennium Problems and prompted these agents with the Euler resolution. When a further trained version of our internal model became available over the course of the effort, we updated our agents to that model."
+  },
+  {
+    "kind": "paragraph",
+    "zh": "我们鼓励不同的智能体组探索多种思路。一段时间后，我们用 Codex 汇总各组最有价值的见解，促进不同组之间的思路交流。这些后续提示利用了智能体自身产生的中间结果。最终找到 Navier–Stokes 问题解答的那一组，就是这样获得引导的。",
+    "en": "We encouraged different groups of agents to explore a diversity of approaches. After some time, we cross-pollinated the agent groups by using Codex to consolidate the most useful insights from each agent group. These follow-up prompts drew on the agents’ own intermediate results. The group that found the solution to Navier–Stokes was guided in such a way."
+  },
+  {
+    "kind": "paragraph",
+    "zh": "9 月 5 日，星期六，智能体得出了解答，距离首批智能体启动约 88 小时。随后，通过 GPT‑6 Astra 完成 Lean 形式化与验证，又用了 17 小时。",
+    "en": "The agents arrived at their resolution on Saturday, September 5, about 88 hours after the first agents were launched. Lean formalization and verification took an additional 17 hours via GPT‑6 Astra."
+  },
+  {
+    "kind": "paragraph",
+    "zh": "在尝试解决所有这些问题的过程中，智能体总共发送了 490 万条消息，使用了约 3000 亿个输出 token。其中，在解决 Navier–Stokes 问题的过程中，智能体发送了 270 万条消息，使用了约 1300 亿个输出 token。",
+    "en": "Across all attempted problems, the agents sent 4.9 million messages and used about 300 billion output tokens. In the process of resolving the Navier–Stokes problem, the agents sent 2.7 million messages and used approximately 130 billion output tokens."
+  },
+  {
+    "kind": "heading",
+    "zh": "同期研究",
+    "en": "Concurrent work"
+  },
+  {
+    "kind": "paragraph",
+    "zh": "我们的工作始于 9 月 1 日听到的一则传闻。后来我们才了解到，这则传闻与 Anthropic 员工 Levent Alpöge，以及纽约大学数学教授 Tristan Buckmaster 有关。在完成整个项目和 Lean 验证之后（9 月 6 日），由于那则传闻让我们以为他们也解决了 Navier–Stokes 问题，我们联系了他们，提议同时公布各自的结果，并在联合公告中承认他们的优先权。那时我们才得知，他们解决的是带外力的 Euler 方程问题。在讨论中，我们提出让他们查看我们使用过的全部提示，之后又提出让他们查看证明。我们承认他们在带外力 Euler 方程问题上的工作具有优先权，并祝贺他们取得这一卓越的数学成就。",
+    "en": "Our effort began on September 1st after hearing a rumor which we later realized was related to Levent Alpöge, an Anthropic employee, and Tristan Buckmaster, a math professor at NYU. After the completion of our full project and Lean verification (on September 6th), believing from the rumor they also had a solution of Navier–Stokes, we reached out to them to offer a concurrent release of our result and to recognize their priority in a joint announcement. At that point we found out that they had a resolution of the forced Euler problem. In these discussions we offered them visibility into all of the prompts we used and later to see the proof. We recognize the priority of their work on forced Euler and congratulate them on their remarkable mathematical achievement."
+  },
+  {
+    "kind": "paragraph",
+    "zh": "在他们公开发布成果之前，我们——包括研究人员和智能体——没有通过任何途径看到过他们的工作。尤其是，我们没有为了求解这个问题而访问特定用户的数据。虽然这种可能性很小，但我们无法排除：由他们使用我们产品的活动所产生的去标识化数据，曾帮助改进我们的模型。不过，双方的证明有显著差异；即便只看 Euler 方程，所证明的具体结论也不同：一方研究带外力的情形，另一方研究无外力的情形。",
+    "en": "We (the researchers and the agents) did not see any of their work through any means until they released it publicly — in particular, no specific user data was accessed in order to solve this problem. While unlikely, we cannot rule out that de-identified data derived from their usage of our products helped improve our models. However, our proofs differ significantly and even the precise results proved are different in the Euler case (forced vs unforced)."
+  },
+  {
+    "kind": "heading",
+    "zh": "进步与责任",
+    "en": "Progress and responsibility"
+  },
+  {
+    "kind": "paragraph",
+    "zh": "我们发布这一结果，是为了报告 AI 模型取得的重大进展。我们无意凭借这一结果申领千禧年大奖。",
+    "en": "Our goal in releasing this result is to report on the substantial progress of our AI models. We do not intend to claim the Millennium Prize for this result."
+  },
+  {
+    "kind": "paragraph",
+    "zh": "这一里程碑凝聚了数学家和 AI 研究人员的大量工作。然而，它并不是 AI 发展的终点，而是这一进程在某个时刻的一幅截面。",
+    "en": "This milestone represents substantial work by mathematicians and AI researchers. However, this is not a culmination, but rather a snapshot in time, of progress on AI development."
+  },
+  {
+    "kind": "paragraph",
+    "zh": "我们相信，AI 的进步如今已进入下一个阶段，今天的结果为此提供了进一步证据。我们正着力理解这个模型，并利用从中获得的认识，指导我们如何继续提升能力，以及把握推进的节奏。我们的关键目标之一，是构建可引导、可问责、与人保持联系的 AI 系统。在继续履行确保通用人工智能造福全人类这一使命的过程中，这可能要求我们更审慎地选择发展的步调。",
+    "en": "We believe we are now in the next period of AI progress, and today’s results provide further evidence of this. We are focusing on understanding this model, and using what we learn to help us guide and pace how we pursue further advances in capability. One of our key goals is to build AI systems which are steerable, accountable, and connected to people, which may require more deliberate choices about the pace of progress, as we continue our mission to ensure AGI benefits all of humanity."
+  }
+]

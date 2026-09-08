@@ -25,8 +25,8 @@ const CARDS: Card[] = [
   {
     to: '/math/navier-stokes',
     Icon: Sigma,
-    zh: { title: 'Navier–Stokes：流体会出现奇性吗？', desc: 'OpenAI 公告摘要、千禧年问题的准确范围，以及有限能量的交互解释' },
-    en: { title: 'Navier–Stokes: can fluid flow become singular?', desc: 'An OpenAI announcement digest, the precise problem, and an interactive explanation of finite energy' },
+    zh: { title: '关于纳维–斯托克斯千禧年大奖难题', desc: 'OpenAI 文章全文中文翻译，含研究过程、同期研究、原图与图注' },
+    en: { title: 'On the Navier–Stokes Millennium Prize Problem', desc: 'The OpenAI article with a full Chinese translation, original figures, and captions' },
   },
   {
     to: '/math/god',
