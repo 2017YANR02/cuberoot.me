@@ -17,6 +17,7 @@
     box-shadow: inset 0 0 0 3px var(--background), inset 0 0 0 4px color-mix(in srgb, var(--signal-warning) 35%, transparent);
 }
 .wp-achievement-medal .cubing-icon { font-size: 26px; }
+.wp-achievement-medal .record-badge { font-size: 26px; font-weight: 800; color: inherit; background: transparent; padding: 0; }
 .wp-achievement-medal.is-gold {
     background: radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--signal-warning) 55%, var(--background)), color-mix(in srgb, var(--signal-warning) 18%, var(--background)));
 }
