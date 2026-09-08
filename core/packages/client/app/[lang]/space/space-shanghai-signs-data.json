@@ -3,6 +3,16 @@
     {"text":"华夏银行","xFraction":-0.4,"y":4.55,"z":-0.78,"height":0.55,"width":3.2,"panel":"bronze"},
     {"text":"华夏银行","xFraction":0.4,"y":4.55,"z":-0.78,"height":0.55,"width":3.2,"panel":"bronze"}
   ]},
+  {"building":6,"lines":[
+    {"text":"DOLCE&GABBANA","bay":-5,"y":3.65,"z":0.24,"height":0.2,"width":1.8,"finish":"ivory","panel":"ink"},
+    {"text":"DOLCE&GABBANA","bay":-4,"y":3.65,"z":0.24,"height":0.2,"width":1.8,"finish":"ivory","panel":"ink"},
+    {"text":"DOLCE&GABBANA","bay":-3,"y":3.65,"z":0.24,"height":0.2,"width":1.8,"finish":"ivory","panel":"ink"},
+    {"text":"DOLCE&GABBANA","bay":-2,"y":3.65,"z":0.24,"height":0.2,"width":1.8,"finish":"ivory","panel":"ink"},
+    {"text":"DOLCE&GABBANA","bay":2,"y":3.65,"z":0.24,"height":0.2,"width":1.8,"finish":"ivory","panel":"ink"},
+    {"text":"DOLCE&GABBANA","bay":3,"y":3.65,"z":0.24,"height":0.2,"width":1.8,"finish":"ivory","panel":"ink"},
+    {"text":"DOLCE&GABBANA","bay":4,"y":3.65,"z":0.24,"height":0.2,"width":1.8,"finish":"ivory","panel":"ink"},
+    {"text":"DOLCE&GABBANA","bay":5,"y":3.65,"z":0.24,"height":0.2,"width":1.8,"finish":"ivory","panel":"ink"}
+  ]},
   {"building":7,"lines":[
     {"text":"盘谷银行","y":5.8,"z":-1.05,"height":0.78,"width":7.5,"panel":"bronze"},
     {"text":"Bangkok Bank","y":5.12,"z":-1.06,"height":0.36,"width":6}
@@ -24,6 +34,12 @@
     {"text":"AIA","y":33.15,"z":-1.22,"height":2.7,"width":7.8,"finish":"red"},
     {"text":"AMERICAN INTERNATIONAL ASSURANCE","y":9.58,"z":-1.45,"height":0.38,"width":12.5,"panel":"bronze"}
   ]},
+  {"building":18,"lines":[
+    {"text":"Cartier","bay":2,"y":4.92,"z":0.24,"height":0.31,"width":1.5,"finish":"ivory","panel":"bronze"},
+    {"text":"Cartier","bay":1,"y":4.92,"z":0.24,"height":0.31,"width":1.5,"finish":"ivory","panel":"bronze"},
+    {"text":"Ermenegildo Zegna","bay":-1,"y":4.92,"z":0.24,"height":0.22,"width":2.2,"finish":"ivory","panel":"bronze"},
+    {"text":"Ermenegildo Zegna","bay":-2,"y":4.92,"z":0.24,"height":0.22,"width":2.2,"finish":"ivory","panel":"bronze"}
+  ]},
   {"building":19,"lines":[
     {"text":"THE SWATCH ART PEACE HOTEL","y":26.75,"z":-0.86,"height":0.58,"width":17}
   ]},
@@ -41,6 +57,21 @@
   {"building":26,"lines":[
     {"text":"ABC  中国农业银行","y":17.5,"z":-0.74,"height":0.87,"width":13,"finish":"teal"},
     {"text":"AGRICULTURAL BANK OF CHINA","y":5.2,"z":-1.12,"height":0.39,"width":10,"panel":"bronze"}
+  ]},
+  {"building":27,"lines":[
+    {"text":"THE HOUSE OF ROOSEVELT","bay":1,"y":3.45,"z":0.22,"height":0.21,"width":2.1,"panel":"bronze"},
+    {"text":"THE HOUSE OF ROOSEVELT","bay":2,"y":3.45,"z":0.22,"height":0.21,"width":2.1,"panel":"bronze"},
+    {"text":"THE HOUSE OF ROOSEVELT","bay":3,"y":3.45,"z":0.22,"height":0.21,"width":2.1,"panel":"bronze"},
+    {"text":"ROLEX","bay":-5,"y":1.8,"z":0.25,"height":0.2,"width":0.75,"finish":"ivory"},
+    {"text":"ROLEX","bay":-4,"y":1.8,"z":0.25,"height":0.2,"width":0.75,"finish":"ivory"},
+    {"text":"ROLEX","bay":-3,"y":1.8,"z":0.25,"height":0.2,"width":0.75,"finish":"ivory"},
+    {"text":"ROLEX","bay":-2,"y":1.8,"z":0.25,"height":0.2,"width":0.75,"finish":"ivory"},
+    {"text":"ROLEX","bay":-1,"y":1.8,"z":0.25,"height":0.2,"width":0.75,"finish":"ivory"},
+    {"text":"ROLEX","bay":1,"y":1.8,"z":0.25,"height":0.2,"width":0.75,"finish":"ivory"},
+    {"text":"ROLEX","bay":2,"y":1.8,"z":0.25,"height":0.2,"width":0.75,"finish":"ivory"},
+    {"text":"ROLEX","bay":3,"y":1.8,"z":0.25,"height":0.2,"width":0.75,"finish":"ivory"},
+    {"text":"ROLEX","bay":4,"y":1.8,"z":0.25,"height":0.2,"width":0.75,"finish":"ivory"},
+    {"text":"ROLEX","bay":5,"y":1.8,"z":0.25,"height":0.2,"width":0.75,"finish":"ivory"}
   ]},
   {"building":29,"lines":[
     {"text":"中国光大银行","y":16.94,"z":-0.94,"height":0.72,"width":13.5}
