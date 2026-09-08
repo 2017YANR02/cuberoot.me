@@ -23,6 +23,12 @@ interface Card {
 
 const CARDS: Card[] = [
   {
+    to: '/math/navier-stokes',
+    Icon: Sigma,
+    zh: { title: 'Navier–Stokes：流体会出现奇性吗？', desc: 'OpenAI 公告摘要、千禧年问题的准确范围，以及有限能量的交互解释' },
+    en: { title: 'Navier–Stokes: can fluid flow become singular?', desc: 'An OpenAI announcement digest, the precise problem, and an interactive explanation of finite energy' },
+  },
+  {
     to: '/math/god',
     Icon: InfinityIcon,
     zh: { title: '上帝之数', desc: '17 个 WCA 项目的群直径 (精确值 / 上下界) + 群论 + 现场 BFS' },
