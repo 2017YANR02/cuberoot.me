@@ -26,6 +26,9 @@ describe('Root Beast animation integration', () => {
       expect(svg, scene.file).toContain(`data-rootbeast="${scene.id}"`);
       expect(svg, scene.file).toContain('prefers-reduced-motion:reduce');
       expect(svg, scene.file).toContain('viewBox="0 0 640 640"');
+      // <img> rendering must composite the white underpaint and colored skin
+      // before strip clipping; <object>-only previews hide this regression.
+      expect([...svg.matchAll(/data-shell-strip="\d+" clip-path="[^"]+"><g filter="url\(#rb-skin-/g)], scene.file).toHaveLength(8);
       expect(svg, scene.file).not.toMatch(/<(?:script|image|foreignObject|video|canvas)\b|(?:href=["']|url\(["']?)(?:https?:|data:)/);
       // Duplicate clip IDs made pupils disappear when an emotion reused an eye.
       const ids = [...svg.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);

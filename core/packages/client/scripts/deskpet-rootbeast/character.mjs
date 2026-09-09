@@ -74,6 +74,12 @@ export function animateCharacter({ a, part, at, t, plan, options, id, duration, 
   // Only the curved transition needs subdivisions; the broad front and far
   // side each stay a single strip to keep gallery playback inexpensive.
   const edges = [-248, 93, 108, 123, 138, 153, 168, 183, 262];
+  // Chromium's SVG-as-image path clips each traced paint unless the skin is first
+  // composited. That exposes the white underpaint along every strip boundary,
+  // even with crisp clips and overlap. An identity filter flattens only the
+  // skin before clipping, without changing its colors or contour geometry.
+  const skinComposite = `rb-skin-${id}`;
+  const skinFilter = `<filter id="${skinComposite}" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0"/></filter>`;
   const surface = edges.slice(0, -1).map((left, i) => {
     const right = edges[i + 1];
     const clip = `rb-view-${id}-${i}`;
@@ -82,7 +88,7 @@ export function animateCharacter({ a, part, at, t, plan, options, id, duration, 
     // pale vertical seams. Only the invisible clip is crisp; traced contours
     // retain their normal antialiasing.
     return `<clipPath id="${clip}"><rect shape-rendering="crispEdges" x="${left - 2}" y="-390" width="${right - left + 4}" height="410"/></clipPath>`
-      + a(`<g data-shell-strip="${i}" clip-path="url(#${clip})">${part('shell', -248, -371, 510, 352)}</g>`, viewFrames(v => {
+      + a(`<g data-shell-strip="${i}" clip-path="url(#${clip})"><g filter="url(#${skinComposite})">${part('shell', -248, -371, 510, 352)}</g></g>`, viewFrames(v => {
         const sx = (project(right, v) - project(left, v)) / (right - left);
         return `transform:matrix(${number(sx)},0,0,1,${number(project(left, v) - sx * left)},0);`;
       }));
@@ -172,7 +178,7 @@ export function animateCharacter({ a, part, at, t, plan, options, id, duration, 
   const face = a(a(`<g data-rig-part="face">${faceArt}</g>`, visibility, undefined, 'steps(1,end)'), viewFrames(v => {
     return `transform:matrix(${number(v.f)},0,0,1,${number(v.tx)},0);`;
   }));
-  const shell = a(`<g data-rig-part="shell">${surface + face}</g>`, frames(s => joint(s.b)), '0px -190px');
+  const shell = skinFilter + a(`<g data-rig-part="shell">${surface + face}</g>`, frames(s => joint(s.b)), '0px -190px');
   const tail = a(`<g class="rb-tail-outline">${part('tail', -59.4, -160.72, 180, 164)}</g>`, frames(s => joint(s.T)));
   const heldArt = held.map(({ bone = 'L', art, angle = 0, size = 1, inFront = false }) => ({ inFront, svg: a(art, frames(s => {
     const [px, py, rotation, , sy] = s[bone], radians = rotation * Math.PI / 180;
