@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
-import { Bell, BookOpen, Building2, ChevronLeft, HeartHandshake, LockKeyhole, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, Upload, UserRound, Users, UserCog } from 'lucide-react';
+import { Bell, BookOpen, Building2, ChevronLeft, Crown, LockKeyhole, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, Upload, UserRound, Users, UserCog } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
@@ -776,14 +776,6 @@ export default function AccountPage() {
       icon: <Building2 size={22} className="account-card-icon" />,
       title: tr({ zh: '企业信息', en: 'Enterprise' }),
     },
-    ...(commerceRestricted ? [] : [
-      {
-        key: 'membership',
-        href: '/membership',
-        icon: <HeartHandshake size={22} className="account-card-icon" />,
-        title: tr({ zh: '会员', en: 'Membership' }),
-      },
-    ]),
     {
       key: 'friends',
       href: '/friends',
@@ -901,6 +893,12 @@ export default function AccountPage() {
             </section>
           ) : (
             <>
+              {!commerceRestricted && (
+                <AppLink href="/membership" className="account-subscribe" prefetch={false}>
+                  <Crown size={20} aria-hidden="true" />
+                  <span>{t('订阅会员', 'Subscribe to membership')}</span>
+                </AppLink>
+              )}
               <nav className="account-cards">
                 {cards.map(({ key, href, icon, title, desc }) => (
                   <AppLink key={key} href={href} className="account-card" prefetch={false}>

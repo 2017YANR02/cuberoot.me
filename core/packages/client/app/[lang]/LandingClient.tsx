@@ -270,11 +270,6 @@ export default function LandingPage() {
         <span className="brand-name">{t('brand')}</span>
       </div>
       <LandingSearch cards={searchCards} lang={lang} />
-      <Link href="/membership" className="landing-membership-cta" prefetch={false}>
-        <Crown size={18} aria-hidden="true" />
-        <span>{tr({ zh: '会员权益', en: 'Membership benefits' })}</span>
-        <ArrowRight size={16} aria-hidden="true" />
-      </Link>
       {featuredNotice && featuredNotice.href && (() => {
         const FeaturedIcon = iconFor(featuredNotice);
         const body = tr({
