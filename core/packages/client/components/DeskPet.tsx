@@ -71,7 +71,7 @@ const THEMES: Record<ThemeId, PetTheme> = {
     base: ROOTBEAST_BASE, version: ROOTBEAST_VERSION, inlineIdle: false,
     thumb: `${ROOTBEAST_BASE}${ROOTBEAST_FILES.idle}?v=${ROOTBEAST_VERSION}`, thumbScale: 1.5,
     label: { zh: '根号兽', en: 'Root Beast' }, files: ROOTBEAST_FILES, auto: ROOTBEAST_AUTO,
-    mini: { offsetRatio: .42, files: ROOTBEAST_MINI_FILES },
+    mini: { offsetRatio: .14, files: ROOTBEAST_MINI_FILES },
   },
   clawd: {
     base: '/deskpet/', inlineIdle: true,
@@ -178,7 +178,7 @@ const CRABWALK_SPEED = 0.12;      // px/ms — sideways walk speed when entering
 const MINI_PEEK_FRAC = 0.1;       // hover peek nudges the pet this fraction of its width back on-screen
 const MINI_SNAP_FRAC = 0.32;      // on drop, if the visual center is within this fraction of W from an edge → cling
 
-// eye-tracking tuning (from clawd theme.json) — clawd only
+// Shared cursor reach; each character maps this offset to its own eye geometry.
 const MAX = 3, BODY_SCALE = 0.33, SHADOW_STRETCH = 0.15, SHADOW_SHIFT = 0.3;
 const REACH = MAX * 40;
 const SLEEP_AFTER = 60000;
@@ -246,7 +246,7 @@ const CSS = `
 .clawd-deskpet[data-char=calico]{--pet-scale:.42;}
 .clawd-deskpet[data-char=cloudling]{--pet-scale:1.27;}
 .clawd-deskpet[data-char=rootbeast]{--pet-scale:.7;}
-.clawd-deskpet>svg,.clawd-deskpet>img{position:absolute;inset:0;width:100%;height:100%;
+.clawd-deskpet>svg,.clawd-deskpet>img,.clawd-deskpet>object{position:absolute;inset:0;width:100%;height:100%;
   image-rendering:pixelated;-webkit-user-drag:none;pointer-events:none;}
 .clawd-deskpet>img{display:none;object-fit:contain;}
 .clawd-deskpet[data-char=rootbeast]>img{image-rendering:auto;}
@@ -313,8 +313,8 @@ const CSS = `
    peek nudge; plain drags clear it so they stay 1:1 with the pointer. */
 .clawd-deskpet.mini-anim{transition:right .14s ease-out,bottom .14s ease-out;}
 .clawd-deskpet.mini-left>img{transform:scaleX(-1);}
-.clawd-deskpet[data-char=rootbeast].mini-mode>img{transform:rotate(90deg);}
-.clawd-deskpet[data-char=rootbeast].mini-mode.mini-left>img{transform:scaleX(-1) rotate(90deg);}
+.clawd-deskpet[data-char=rootbeast].mini-mode>img{transform:rotate(-90deg);}
+.clawd-deskpet[data-char=rootbeast].mini-mode.mini-left>img{transform:scaleX(-1) rotate(-90deg);}
 .clawd-deskpet.mini-mode .clawd-deskpet-hit{left:0;top:0;width:100%;height:100%;}
 @media (max-width:768px){
   .clawd-deskpet{right:max(12px,var(--sar,0px));bottom:max(12px,var(--sab,0px));}
@@ -349,6 +349,7 @@ export default function DeskPet() {
   const rootRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+  const rootIdleRef = useRef<HTMLObjectElement>(null);
   const hitRef = useRef<HTMLDivElement>(null);
   // Off-screen primer input: on touch we focus it synchronously inside the tap
   // gesture so the mobile keyboard opens; the search overlay's real input then
@@ -462,7 +463,7 @@ export default function DeskPet() {
       // the beat interval — at the top of the tempo range a fixed 130ms would be
       // cancelled mid-swell every time and leave the pet stuck enlarged.
       const duration = Math.max(24, Math.min(130, (60000 / getMetronomeState().bpm) * 0.8));
-      for (const el of [svgRef.current, imgRef.current]) {
+      for (const el of [svgRef.current, imgRef.current, rootIdleRef.current]) {
         if (!el || el.style.visibility === 'hidden') continue;
         live.push(el.animate(
           [{ scale: '1' }, { scale: `${peak}` }, { scale: '1' }],
@@ -518,6 +519,7 @@ export default function DeskPet() {
       prevCharRef.current = character;
       if (svgRef.current) svgRef.current.style.visibility = 'hidden';
       if (imgRef.current) imgRef.current.style.visibility = 'hidden';
+      if (rootIdleRef.current) rootIdleRef.current.style.visibility = 'hidden';
     }
     const r = root.getBoundingClientRect();
     // While clinging, a size change must re-pin to the edge, not recenter.
@@ -535,13 +537,15 @@ export default function DeskPet() {
   }, [size, character]);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || hidden) return;
     const root = rootRef.current, svg = svgRef.current, img = imgRef.current, hit = hitRef.current;
     if (!root || !svg || !img || !hit) return;
     const eyes = svg.querySelector<SVGGElement>('#clawddp-eyes');
     const body = svg.querySelector<SVGGElement>('#clawddp-body');
     const shadow = svg.querySelector<SVGGElement>('#clawddp-shadow');
     const theme = THEMES[character];
+    const rootIdle = rootIdleRef.current;
+    let rootPupils: SVGGElement[] = [];
     const assetUrl = (file: string) => theme.base + file + (theme.version ? `?v=${theme.version}` : '');
     const characterScene = (state: unknown) => {
       const scene = getDeskPetScene(state);
@@ -577,6 +581,13 @@ export default function DeskPet() {
     const syncMiniRef = () => { miniRef.current = { active: mini, edge: miniEdge }; };
 
     const applyEye = (ox: number, oy: number) => {
+      if (character === 'rootbeast') {
+        for (const pupil of rootPupils) {
+          // Match the generated rig's safe gaze bounds inside the eye whites.
+          pupil.style.transform = `translate(${ox / MAX * 9}px,${oy / MAX * 7}px)`;
+        }
+        return;
+      }
       eyes?.setAttribute('transform', `translate(${ox},${oy})`);
       const bdx = Math.round(ox * BODY_SCALE * 2) / 2;
       const bdy = Math.round(oy * BODY_SCALE * 2) / 2;
@@ -585,6 +596,32 @@ export default function DeskPet() {
       const shift = Math.round(bdx * SHADOW_SHIFT * 2) / 2;
       shadow?.setAttribute('transform', `translate(${shift},0) scale(${sx},1)`);
     };
+
+    const showRootIdle = () => {
+      if (!rootIdle || rootPupils.length < 2 || state !== 'idle' || mini || dragging || randomMode) return;
+      rootIdle.style.visibility = '';
+      img.style.display = 'none';
+      svg.style.display = 'none';
+    };
+    // Same-origin generated art stays the single source. Loading or accessing
+    // the document may fail; the already decoded img remains the fallback.
+    const loadRootIdle = () => {
+      try {
+        const doc = rootIdle?.contentDocument;
+        const pupils = Array.from(doc?.querySelectorAll<SVGGElement>('[data-rig-part="pupil"]') ?? []);
+        // Idle has separate normal and happy expression layers for each eye.
+        if (pupils.length < 2) return;
+        rootPupils = pupils.map(pupil => pupil.parentNode as SVGGElement);
+        for (const pupil of rootPupils) {
+          pupil.style.animation = 'none';
+          pupil.style.transition = 'transform .12s ease-out';
+        }
+        applyEye(0, 0);
+        showRootIdle();
+      } catch { /* Keep the image if the SVG document is unavailable. */ }
+    };
+    rootIdle?.addEventListener('load', loadRootIdle);
+    loadRootIdle();
 
     // Paint an <img> frame. Decode first, swap after: assigning img.src directly
     // blanks the box for the whole round-trip — and forever if the request fails
@@ -609,6 +646,7 @@ export default function DeskPet() {
         img.style.visibility = '';
         svg.style.display = 'none';
         onPaint();
+        showRootIdle();
       };
       const fail = () => {
         if (seq !== frameSeq) return;
@@ -663,6 +701,10 @@ export default function DeskPet() {
       storyRequest?.abort();
       if (storyUrl) { URL.revokeObjectURL(storyUrl); storyUrl = undefined; }
       state = s;
+      if (rootIdle) {
+        rootIdle.style.visibility = 'hidden';
+        img.style.display = 'block';
+      }
       root.dataset.state = s;
       const isMini = s.startsWith('mini-');
       const story = characterScene(s);
@@ -690,6 +732,7 @@ export default function DeskPet() {
         // A stable asset version preserves caching; stories get independent
         // timelines so selecting a gallery thumbnail starts a complete loop.
         paintFrame(story?.src ?? assetUrl(file), force, onPaint, !!story);
+        showRootIdle();
       }
     };
 
@@ -702,10 +745,10 @@ export default function DeskPet() {
     };
 
     const trackCursor = (cx: number, cy: number) => {
-      if (!theme.inlineIdle || state !== 'idle' || dragging || randomMode) return;
+      if ((!theme.inlineIdle && rootPupils.length < 2) || state !== 'idle' || dragging || randomMode) return;
       const r = root.getBoundingClientRect();
-      const dx = cx - (r.left + r.width * 0.489);
-      const dy = cy - (r.top + r.height * 0.756);
+      const dx = cx - (r.left + r.width * (character === 'rootbeast' ? .42 : .489));
+      const dy = cy - (r.top + r.height * (character === 'rootbeast' ? .59 : .756));
       const dist = Math.hypot(dx, dy);
       if (dist < 0.001) return applyEye(0, 0);
       const clamp = (Math.min(dist, REACH) / REACH) * MAX;
@@ -1083,6 +1126,9 @@ export default function DeskPet() {
     }
 
     return () => {
+      rootIdle?.removeEventListener('load', loadRootIdle);
+      if (rootIdle) rootIdle.style.visibility = 'hidden';
+      rootPupils = [];
       ++frameSeq;
       storyRequest?.abort();
       if (storyUrl) URL.revokeObjectURL(storyUrl);
@@ -1104,7 +1150,7 @@ export default function DeskPet() {
       ctrlRef.current = null;
       delete (window as unknown as { clawdPet?: object }).clawdPet;
     };
-  }, [mounted, character, randomMode, user]);
+  }, [mounted, hidden, character, randomMode, user]);
 
   if (!mounted || hidden) return null;
 
@@ -1187,6 +1233,9 @@ export default function DeskPet() {
           </g></g>
         </svg>
         <img ref={imgRef} alt="" />
+        {character === 'rootbeast' && !randomMode && (
+          <object ref={rootIdleRef} data={`${ROOTBEAST_BASE}${ROOTBEAST_FILES.idle}?v=${ROOTBEAST_VERSION}`} type="image/svg+xml" aria-hidden tabIndex={-1} style={{ visibility: 'hidden', imageRendering: 'auto', colorScheme: 'normal' }} />
+        )}
         {fbUnread > 0 && (
           <span className="clawd-deskpet-badge" aria-hidden>{fbUnread > 9 ? '9+' : fbUnread}</span>
         )}
