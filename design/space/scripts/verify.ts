@@ -42,7 +42,25 @@ try {
         }
       });
       if (!buildingAttributes || shaderMaterials < 50) throw new Error('Building attributes or night shaders lost');
-      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count});
+      // glTF sanitizes imported names; the authoring contract uses stable IDs.
+      let jinMao: THREE.Object3D | undefined;
+      city.root.traverse(o => { if (o.userData.spaceId === 'root/132/0') jinMao = o; });
+      if (!jinMao) throw new Error('Jin Mao runtime root lost');
+      let authoredJinMao: unknown = null;
+      if (jinMao?.userData.spaceAuthoringRevision) {
+        city.root.updateMatrixWorld(true);
+        const height = new THREE.Box3().setFromObject(jinMao).getSize(new THREE.Vector3()).y;
+        const metalwork = jinMao.getObjectByName('Jin Mao crown metalwork');
+        if (Math.abs(height - 420.5) > .1 || jinMao.userData.reconstruction?.floors !== 88 || !metalwork) throw new Error('Authored Jin Mao height, floors or crown lost');
+        let facadeMeshes = 0;
+        jinMao.traverse(o => {
+          if (!(o instanceof THREE.Mesh)) return;
+          if (!o.geometry.getAttribute('uv') || !o.castShadow || !o.receiveShadow) throw new Error('Authored facade UVs or shadows lost');
+          facadeMeshes++;
+        });
+        authoredJinMao = {revision: jinMao.userData.spaceAuthoringRevision, height, floors: 88, facadeMeshes};
+      }
+      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao});
       city.dispose(); continue;
     }
     const [style, env] = key.split('-') as [RoomStyle, Environment];
