@@ -272,9 +272,8 @@ export function readEffective(): EffectiveTheme {
 }
 
 export function useEffectiveTheme(): EffectiveTheme {
-  const [t, setT] = useState<EffectiveTheme>(() =>
-    typeof window === 'undefined' ? 'light' : readEffective(),
-  );
+  // Match the server snapshot; refresh persisted/system appearance after hydration.
+  const [t, setT] = useState<EffectiveTheme>('light');
   useEffect(() => {
     const refresh = () => setT(readEffective());
     refresh();
