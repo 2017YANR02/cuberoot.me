@@ -35,12 +35,12 @@ export default function LblTutorial() {
     </header>
     <JsonLd data={{ '@context': 'https://schema.org', '@type': 'Article', headline: tr({ zh: '三阶魔方层先法', en: '3×3 LBL tutorial' }), description: tr({ zh: '配有交互演示的层先法入门教程。', en: 'A beginner layer-by-layer guide with interactive demonstrations.' }) }} />
     <nav className="lbl-nav lbl-glass" aria-label={tr({ zh: '教程步骤', en: 'Tutorial steps' })}>
-      <button type="button" disabled={stepIndex === 0} aria-label={tr({ zh: '上一步', en: 'Previous step' })} onClick={() => { void setStepId(LBL_STEPS[stepIndex - 1].id); }}><ChevronLeft size={18} /></button>
+      <button className="lbl-button" type="button" disabled={stepIndex === 0} aria-label={tr({ zh: '上一步', en: 'Previous step' })} onClick={() => { void setStepId(LBL_STEPS[stepIndex - 1].id); }}><ChevronLeft size={18} /></button>
       <span className="lbl-progress">{stepIndex + 1} / {LBL_STEPS.length}</span>
       <CompactSelect label={tr(step.title)} value={step.id} ariaLabel={tr({ zh: '选择步骤', en: 'Choose a step' })}
         items={LBL_STEPS.map((s, i) => ({ value: s.id, label: `${i + 1}. ${tr(s.title)}` }))}
         onChange={value => { void setStepId(value); }} />
-      <button type="button" disabled={stepIndex === LBL_STEPS.length - 1} aria-label={tr({ zh: '下一步', en: 'Next step' })} onClick={() => { void setStepId(LBL_STEPS[stepIndex + 1].id); }}><ChevronRight size={18} /></button>
+      <button className="lbl-button" type="button" disabled={stepIndex === LBL_STEPS.length - 1} aria-label={tr({ zh: '下一步', en: 'Next step' })} onClick={() => { void setStepId(LBL_STEPS[stepIndex + 1].id); }}><ChevronRight size={18} /></button>
     </nav>
     <article className="lbl-lesson" key={step.id}>
       <div className="lbl-intro">
@@ -57,7 +57,7 @@ export default function LblTutorial() {
       </div>
       <aside className="lbl-visuals">
         <div className="lbl-cases" role="group" aria-label={tr({ zh: '选择演示情况', en: 'Choose an example' })}>
-          {step.examples.map((e, i) => <button type="button" key={i} className="lbl-case" aria-pressed={i === exampleIndex}
+          {step.examples.map((e, i) => <button type="button" key={i} className="lbl-button lbl-case" aria-pressed={i === exampleIndex}
             onClick={() => setSelection({ step: step.id, index: i })}>
             <VisualCube local view="iso" scheme="yogwrb" size={84} setup={new Alg(resolvePlayerSetup('3x3', e.alg, e.setup, e.startSolved ?? false)).expand().toString()} alt={tr(e.title)} />
             <span>{tr(e.title)}</span>

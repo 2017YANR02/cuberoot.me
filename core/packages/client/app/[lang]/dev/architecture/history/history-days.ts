@@ -102,8 +102,8 @@ export const HISTORY_PLACES = DAYS.map((day, index) => {
   return {
     date: day.date, zh: design.zh, en: design.en,
     caption: authored >= 0 ? PLACES[authored].caption : null,
-    note: { zh: note(day.zh, 24, 30, HEADINGS[day.date]?.zh), en: note(day.en, 58, 68, HEADINGS[day.date]?.en) },
-    ...(authored >= 0 ? PLACES[authored] : {}),
+    note: authored >= 0 ? PLACES[authored].note
+      : { zh: note(day.zh, 24, 30, HEADINGS[day.date]?.zh), en: note(day.en, 58, 68, HEADINGS[day.date]?.en) },
     day, motif, seed, authored: authored >= 0,
     biome: authored >= 0 ? authored : (Math.floor(index / 3) * 5 + Math.floor(index / 24)) % 8,
   };

@@ -29,7 +29,7 @@ const JourneyNodes = memo(function JourneyNodes({ current, ready, nodes, onVisit
 }) {
   return <div className="journey-node-layer" hidden={!ready}>{HISTORY_PLACES.map((place, i) => {
     const note = tr<{ title: string; detail: string }>(place.note);
-    return <button key={place.date} ref={node => { nodes.current[i] = node; }} type="button" className={`journey-date-node${current === i ? ' is-current' : ''}`} onClick={() => onVisit(i, true)} aria-label={`${place.date} ${note.title} ${note.detail}`} aria-pressed={current === i} aria-controls="journey-reader">
+    return <button key={place.date} ref={node => { nodes.current[i] = node; }} type="button" className={`journey-button journey-date-node${current === i ? ' is-current' : ''}`} onClick={() => onVisit(i, true)} aria-label={`${place.date} ${note.title} ${note.detail}`} aria-pressed={current === i} aria-controls="journey-reader">
       <span className="journey-date-dot" /><time dateTime={place.date}>{place.date}</time>
       <span className="journey-node-note"><strong>{note.title}</strong>{note.detail && <span>{note.detail}</span>}</span>
     </button>;
@@ -195,26 +195,26 @@ export default function HistoryJourney() {
               title={tr({ zh: '选择这一站的天气', en: 'Choose this landscape’s weather' })} onChange={setWeatherVariation} />
           </div></div>}
           <JourneyNodes current={current} ready={status === 'ready'} nodes={nodeRefs} onVisit={pauseAndVisit} />
-          <div className="journey-node-layer" hidden={status !== 'ready'}>{HISTORY_SECRETS.map((item, index) => <button key={item.id} ref={node => { secretRefs.current[index] = node; }} type="button" className="journey-secret" data-secret={item.id} aria-label={tr({ zh: '查看这件闪光的小物件', en: 'Inspect this little glimmering object' })} aria-expanded={secret?.id === item.id} aria-controls="journey-secret-story" onClick={() => { pauseWalking(); setOpenedSecret(item); }}><Sparkles size={17} aria-hidden="true" /></button>)}</div>
+          <div className="journey-node-layer" hidden={status !== 'ready'}>{HISTORY_SECRETS.map((item, index) => <button key={item.id} ref={node => { secretRefs.current[index] = node; }} type="button" className="journey-button journey-secret" data-secret={item.id} aria-label={tr({ zh: '查看这件闪光的小物件', en: 'Inspect this little glimmering object' })} aria-expanded={secret?.id === item.id} aria-controls="journey-secret-story" onClick={() => { pauseWalking(); setOpenedSecret(item); }}><Sparkles size={17} aria-hidden="true" /></button>)}</div>
           {status === 'loading' && <div className="journey-load"><ClientLoadStatus label={{ zh: '山河正在展开…', en: 'Unfolding the landscape…' }} /></div>}
-          {status === 'failed' && <div className="journey-load" role="alert"><p>{tr({ zh: '画卷暂时未能展开，完整记录仍可在下方阅读。', en: 'The landscape could not load. The full archive is available below.' })}</p><button type="button" onClick={() => { initialPosition.current = current; setRetry(n => n + 1); }}>{tr({ zh: '重新展开', en: 'Try again' })}</button></div>}
+          {status === 'failed' && <div className="journey-load" role="alert"><p>{tr({ zh: '画卷暂时未能展开，完整记录仍可在下方阅读。', en: 'The landscape could not load. The full archive is available below.' })}</p><button className="journey-button" type="button" onClick={() => { initialPosition.current = current; setRetry(n => n + 1); }}>{tr({ zh: '重新展开', en: 'Try again' })}</button></div>}
           <div className="journey-stage-hint"><MoveHorizontal size={15} /><span>{tr({ zh: '拖动画卷，或轻滚鼠标', en: 'Drag the landscape, or gently scroll' })}</span></div>
           {(current === 0 || current === HISTORY_LAST) && <span className="journey-seal" aria-hidden="true">立<br />方<br />根</span>}
         </div>
         <nav className="journey-controls" aria-label={tr({ zh: '画卷日期导航', en: 'Landscape date navigation' })}>
           <div className="journey-transport">
           <div className="journey-playback-controls">
-          <button className="journey-playback" type="button" disabled={status !== 'ready'} onClick={togglePlayback} aria-label={tr(motion ? { zh: '暂停行走', en: 'Pause walking' } : { zh: '继续行走', en: 'Resume walking' })}>{motion ? <Pause size={17} /> : <Play size={17} />}<span>{tr(motion ? { zh: '暂停行走', en: 'Pause walking' } : { zh: '继续行走', en: 'Resume walking' })}</span></button>
+          <button className="journey-button journey-playback" type="button" disabled={status !== 'ready'} onClick={togglePlayback} aria-label={tr(motion ? { zh: '暂停行走', en: 'Pause walking' } : { zh: '继续行走', en: 'Resume walking' })}>{motion ? <Pause size={17} /> : <Play size={17} />}<span>{tr(motion ? { zh: '暂停行走', en: 'Pause walking' } : { zh: '继续行走', en: 'Resume walking' })}</span></button>
           <CompactSelect className="journey-speed" variant="plain" label={`${speed}×`} value={speed} valueText={`${speed}×`} items={PLAYBACK_SPEEDS} onChange={setSpeed} ariaLabel={tr({ zh: '行走速度', en: 'Walking speed' })} title={tr({ zh: '调整自动行走速度，天气保持自然速度', en: 'Adjust automatic walking speed; weather keeps its natural pace' })} />
           </div>
           <div className="journey-date-controls">
-          <button className="journey-arrow" type="button" disabled={current === 0} onClick={() => visit(current - 1)} aria-label={tr({ zh: '前一天', en: 'Previous day' })}><ArrowLeft size={19} /></button>
+          <button className="journey-button journey-arrow" type="button" disabled={current === 0} onClick={() => visit(current - 1)} aria-label={tr({ zh: '前一天', en: 'Previous day' })}><ArrowLeft size={19} /></button>
           <DateInput className="journey-current-date" size="compact" value={place.date} min={DATES[0]} max={DATES[HISTORY_LAST]} clearable={false} aria-label={tr({ zh: '跳转日期', en: 'Jump to date' })} title={tr({ zh: '选择日期，前往这天或之后的首次更新', en: 'Visit this date or the next recorded update' })} onFocus={pauseWalking} onChange={date => { if (!date) return; const index = DATES.findIndex(value => value >= date); pauseAndVisit(index < 0 ? HISTORY_LAST : index); }} />
-          <button className="journey-arrow" type="button" disabled={current === HISTORY_LAST} onClick={() => visit(current + 1)} aria-label={tr({ zh: '后一天', en: 'Next day' })}><ArrowRight size={19} /></button>
+          <button className="journey-button journey-arrow" type="button" disabled={current === HISTORY_LAST} onClick={() => visit(current + 1)} aria-label={tr({ zh: '后一天', en: 'Next day' })}><ArrowRight size={19} /></button>
           </div>
           </div>
           <PlaybackScrubber className="journey-scrubber" step={Math.round(position * 100)} total={HISTORY_LAST * 100} disabled={status !== 'ready'} ariaLabel={tr({ zh: '在画卷中移动', en: 'Travel through the landscape' })} onScrub={value => engine.current?.seek(value / 100, true)} />
-          <button ref={readButton} type="button" className="journey-read" onClick={() => { if (!reading) pauseWalking(); setReading(!reading); }} aria-expanded={reading} aria-controls="journey-reader"><BookOpen size={16} />{tr({ zh: '阅读这一天', en: 'Read this day' })}<ArrowUpRight size={15} /></button>
+          <button ref={readButton} type="button" className="journey-button journey-read" onClick={() => { if (!reading) pauseWalking(); setReading(!reading); }} aria-expanded={reading} aria-controls="journey-reader"><BookOpen size={16} />{tr({ zh: '阅读这一天', en: 'Read this day' })}<ArrowUpRight size={15} /></button>
         </nav>
       </section>
       <p className="journey-art-note">{tr({ zh: '每八站走过晨昼暮夜。37 种地貌与 36 种野生动物沿途相伴，留意闪光的小物件。自然景观为艺术化演绎，日期与更新内容来自真实记录。', en: 'Dawn to moonlight unfolds over every eight stops, with 37 landforms and 36 wildlife species. Look out for little glimmering objects. Imagined nature accompanies real dates and updates.' })}</p>
