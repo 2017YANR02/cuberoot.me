@@ -10,7 +10,7 @@ import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortab
 import Link from '@/components/AppLink';
 import SortableCard from '@/components/SortableCard';
 import HeaderToggles from '@/components/HeaderToggles';
-import HomeBackground from './HomeBackground';
+import useHomeBackground from './HomeBackground';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import LandingSearch from '@/components/LandingSearch';
@@ -94,6 +94,7 @@ export default function LandingPage() {
   // to the bare brand after hydration, which would now overwrite that title.
   const { i18n } = useTranslation();
   const effectiveTheme = useEffectiveTheme();
+  const homeBackground = useHomeBackground();
   // `mounted` flips on client after hydration; gates anything that differs
   // between SSR and CSR (theme-dependent logo src, hostname-based beian)
   // to avoid React #418 hydration mismatches.
@@ -270,7 +271,7 @@ export default function LandingPage() {
   return (
     <div className="landing-page">
       <div className="landing-auth">
-        <HeaderToggles />
+        <HeaderToggles appearanceContent={homeBackground.control} />
         <Link href="/membership" className="landing-auth-icon landing-membership-icon"
           title={tr({ zh: '会员', en: 'Membership' })}
           aria-label={tr({ zh: '会员', en: 'Membership' })} prefetch={false}>
@@ -305,7 +306,7 @@ export default function LandingPage() {
         <img src={mounted && effectiveTheme === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png'} alt="" className="brand-logo" />
         <span className="brand-name">{t('brand')}</span>
       </div>
-      <HomeBackground />
+      {homeBackground.background}
       <LandingSearch cards={searchCards} lang={lang} />
       {featuredNotice && featuredNotice.href && (() => {
         const FeaturedIcon = iconFor(featuredNotice);
