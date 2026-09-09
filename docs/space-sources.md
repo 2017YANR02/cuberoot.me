@@ -77,6 +77,12 @@ Blender 负责静态模型编辑，Three.js 保留魔方转动、天气、水面
 
 外滩继续使用已有逐栋摄影来源，检查 24 栋联系表并补看亚细亚、上海总会与英国领事馆实拍，排除总会内景及误标为领事馆的半岛酒店照片。石材法线/粗糙度是本站可重复生成的程序纹理；照片只在本地供建模对照，未复制为运行贴图，没有新增第三方建筑库。逐栋差异、实际保存版本与日夜检查图见[上海地标档案](../design/space/references/shanghai-landmarks.md)，验证和未达标项见[Blender 跟踪](space-blender-tracker.md#2026-09-08-三件套与外滩-24-栋-blender-细部)。
 
+## 亚细亚与上海总会入口实拍对照
+
+2026-09-08 再次查看既有 [Asisbiz 1 号亚细亚实拍](https://www.asisbiz.com/China/1-Zhongshan-Rd.html)与 [2 号上海总会实拍](https://www.asisbiz.com/China/2-Zhongshan-Rd.html)。前者用于纠正平顶阁楼、半圆窗及成对柱弧形门廊，后者用于双端山花、入口圆窗、中央拱门和金属玻璃坡面雨棚。尺寸、柱式与花饰仍按照片估算；拍摄时期未核实为当前现状。
+
+两条公开说明已在唯一来源 `credits_data.json` 更新，中英文网页 DOM 与截图检查可见。几何由本站 Blender 增量脚本制作，复用此前材质和 glTF 导出流程，没有复制第三方建模代码、增加建筑库或将照片打包为运行贴图。三轮审图、保存与实际导出检查见[Blender 跟踪](space-blender-tracker.md#2026-09-08-亚细亚与上海总会屋顶入口)。
+
 ## 调研但尚未接入
 
 [CesiumJS](https://github.com/CesiumGS/cesium)、[MapLibre GL JS](https://github.com/maplibre/maplibre-gl-js) 和 [NASA 3DTilesRendererJS](https://github.com/NASA-AMMOS/3DTilesRendererJS) 的历史星数、候选用途和取舍在[上海跟踪文档](shanghai-huangpu-space-tracker.md)。当前运行时没有安装它们，也没有获取上海全段摄影测量 tileset。已调研而未成功下载的模型不能列作已集成资产。

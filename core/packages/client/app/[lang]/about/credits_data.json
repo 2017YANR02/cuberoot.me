@@ -234,15 +234,15 @@
     "name": "Asisbiz: 外滩 1 亚细亚大楼 / Asia Building",
     "space": true,
     "url": "https://www.asisbiz.com/China/1-Zhongshan-Rd.html",
-    "zh": "实拍对照：七层分区、上部柱列、双端山花。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: seven-storey elevation, upper columns and end pediments. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "zh": "实拍对照：平顶阁楼、半圆窗、女儿墙端部凹曲线、成对入口柱和弧形门廊。平面据 OSM，高度、柱式及雨棚尺寸仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考，拍摄时期不代表当前现状。查阅于 2026-09-08",
+    "en": "Photo reference: flat attic caps, semicircular windows, curved parapet ends, paired entrance columns and a barrel-vaulted portico. OSM plan; heights, column details and canopy dimensions remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only and do not establish current conditions. Accessed 2026-09-08"
   },
   {
     "name": "Asisbiz: 外滩 2 上海总会 / Shanghai Club",
     "space": true,
     "url": "https://www.asisbiz.com/China/2-Zhongshan-Rd.html",
-    "zh": "实拍对照：六根巨柱、基座拱窗、顶部双亭。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: six-column order, base arches and twin roof pavilions. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "zh": "实拍对照：六根巨柱、顶部双亭及端部山花、入口上方双圆窗、中央拱门与坡面金属玻璃雨棚。平面据 OSM，高度、雕饰和雨棚尺寸仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考，拍摄时期不代表当前现状。查阅于 2026-09-08",
+    "en": "Photo reference: six-column order, twin roof pavilions and end pediments, entrance oculi, central arch and pitched metal-and-glass canopy. OSM plan; heights, reliefs and canopy dimensions remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only and do not establish current conditions. Accessed 2026-09-08"
   },
   {
     "name": "Asisbiz: 外滩 3 有利大楼 / Union Building",
