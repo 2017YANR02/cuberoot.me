@@ -1,0 +1,82 @@
+.landing-page:has(.home-background-toolbar) {
+  isolation: isolate;
+}
+
+.landing-page .home-scenery {
+  /* Stay behind the viewport throughout the homepage's full scroll length. */
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.landing-page .home-scenery img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--home-scene-position) top;
+}
+
+.landing-page .home-scenery::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--background) 72%, transparent),
+    color-mix(in srgb, var(--background) 16%, transparent) 18%,
+    color-mix(in srgb, var(--background) 48%, transparent) 42%,
+    color-mix(in srgb, var(--background) 48%, transparent) 100%);
+}
+
+html[data-contrast='soft'] .landing-page .home-scenery img {
+  filter: saturate(.65) contrast(.85);
+}
+
+.landing-page .home-background-toolbar {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  align-items: flex-end;
+  min-height: 105px;
+  margin-bottom: 24px;
+}
+
+.landing-page .home-background-toolbar .compact-select-trigger {
+  background: color-mix(in srgb, var(--background) 88%, transparent);
+}
+
+.landing-page .home-background-toolbar .compact-select {
+  align-self: flex-end;
+}
+
+.landing-page .home-background-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.home-background-menu .home-background-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.home-background-menu .home-background-option img {
+  display: block;
+  width: 64px;
+  height: 36px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+@media (max-width: 480px) {
+  .landing-page:has(.home-background-toolbar) .brand-line {
+    margin-top: 40px;
+  }
+  .landing-page .home-background-toolbar {
+    min-height: 45px;
+    margin-bottom: 20px;
+  }
+}
