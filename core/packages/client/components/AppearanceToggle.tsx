@@ -10,7 +10,7 @@
 // 没有单独的「经典 / 跟随系统」项:明暗区本身就是经典(无 palette),浅 / 深两项
 // 直接预览经典亮 / 暗三色块,跟配色块同列对齐;勾跟随当前实际明暗。
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Sun, Moon, Check } from 'lucide-react';
 import { persistItem } from '@/lib/safe-storage';
 import {
@@ -48,7 +48,7 @@ function Swatch({ colors }: { colors: [string, string, string] }) {
   );
 }
 
-export default function AppearanceToggle({ className, showLabel = false }: { className?: string; showLabel?: boolean }) {
+export default function AppearanceToggle({ className, showLabel = false, menuContent }: { className?: string; showLabel?: boolean; menuContent?: ReactNode }) {
   const t = useT();
   const L = {
     title: t('外观', 'Appearance'),
@@ -260,6 +260,13 @@ export default function AppearanceToggle({ className, showLabel = false }: { cla
             />
           </div>
           <div className="appearance-hint">{L.softenHint}</div>
+
+          {menuContent && <div
+            onPointerEnter={endPreview}
+            onFocus={endPreview}
+            // Nested pickers portal to body; keep their mouse events inside this menu.
+            onMouseDown={event => event.stopPropagation()}
+          >{menuContent}</div>}
 
           <AppLink
             href="/appearance"

@@ -35,7 +35,7 @@ function readChoice(): Choice {
 }
 
 /** Homepage-only decoration and preference; never changes the site's appearance settings. */
-export default function HomeBackground() {
+export default function useHomeBackground() {
   const [choice, setChoice] = useState<Choice>('auto');
   const [ready, setReady] = useState(false);
   const theme = useEffectiveTheme();
@@ -69,22 +69,22 @@ export default function HomeBackground() {
     })),
   ];
 
-  return <>
-    {ready && scene && failedScene !== scene.id && <div
+  const background = ready && scene && failedScene !== scene.id ? <div
       className="home-scenery" aria-hidden="true"
       style={{ '--home-scene-position': scene.position } as CSSProperties}
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- One precompressed decorative image, selected locally. */}
       <img key={scene.id} src={`${ASSET_ROOT}/${scene.id}.webp`} alt=""
         onError={() => setFailedScene(scene.id)} />
-    </div>}
-    <div className="home-background-toolbar">
+    </div> : null;
+  const control = <div className="home-background-control">
+      <div className="appearance-sec-label appearance-sec-div">{tr({ zh: '主页背景', en: 'Homepage background' })}</div>
       <CompactSelect<Choice>
         label={<span className="home-background-label"><ImageIcon size={15} />{selectedLabel}</span>}
         valueText={selectedLabel} ariaLabel={tr({ zh: '选择主页背景', en: 'Choose homepage background' })}
         value={choice} items={items} popupClassName="home-background-menu"
         onChange={value => { setFailedScene(null); setChoice(value); persistItem(STORAGE_KEY, value); }}
       />
-    </div>
-  </>;
+    </div>;
+  return { background, control };
 }
