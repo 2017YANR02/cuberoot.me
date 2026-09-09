@@ -3,7 +3,7 @@
  * server 实现 routes/membership.ts。公开 GET 套餐;其余走 WCA OAuth Bearer(authHeaders)。
  * 支付:支付宝、微信、虎皮椒或银行卡托管收银台异步入账,前端下单后轮询查单。
  */
-import { API_ORIGIN } from './api-base';
+import { API_ORIGIN, apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import { WCA_ID_REGEX } from '@cuberoot/shared/wca-person';
 
@@ -55,6 +55,38 @@ export interface Membership {
   profileIntro?: string;
   profileImageIds?: number[];
   showInMemberList?: boolean;
+}
+
+export interface MembershipSubscription {
+  id: string;
+  planSlug: string;
+  priceCents: number;
+  currency: 'CNY';
+  period: 'month' | 'year';
+  periodCount: number;
+  state: 'pending' | 'active' | 'terminated';
+  cancellationRequested: boolean;
+  verifiedAt: string | null;
+  syncStatus: 'verified' | 'unavailable';
+  createdAt: string;
+}
+
+export interface MembershipSubscriptions {
+  subscriptions: MembershipSubscription[];
+  managementAvailable: boolean;
+}
+
+export async function listMySubscriptions(signal?: AbortSignal): Promise<MembershipSubscriptions> {
+  return handleApi(await fetch(apiUrl('/v1/membership/subscriptions'), {
+    headers: authHeaders(false), cache: 'no-store', signal,
+  }));
+}
+
+/** HTTP 202 is accepted, not completed; only a verified terminated state confirms cancellation. */
+export async function cancelMySubscription(id: string, signal?: AbortSignal): Promise<{ subscription: MembershipSubscription }> {
+  return handleApi(await fetch(apiUrl(`/v1/membership/subscriptions/${encodeURIComponent(id)}/cancel`), {
+    method: 'POST', headers: authHeaders(), body: JSON.stringify({ confirm: true }), cache: 'no-store', signal,
+  }));
 }
 
 export interface PublicMember {

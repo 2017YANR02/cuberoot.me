@@ -172,6 +172,13 @@ export async function mergeAccounts(sourceUserId: number, targetUserId: number):
         WHERE target.id = ? AND source.id = ?
       `, [finalWcaId, !!source.wca_id, !!source.wca_id, !!source.wca_id, targetUserId, sourceUserId]);
 
+      // WCA mirror triggers already move each account's contracts to its current key.
+      // Transfer source contracts only after target owns the final WCA key.
+      await tx(
+        'UPDATE membership_contracts SET wca_id = ? WHERE wca_id IN (?, ?)',
+        [finalOwnerKey, ownerKey(sourceUserId, null), ownerKey(sourceUserId, source.wca_id)],
+      );
+
       await tx(`
         UPDATE app_users SET
           display_name = '', avatar_url = NULL, avatar_source = 'auto', avatar_preset = NULL,

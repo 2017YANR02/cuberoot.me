@@ -1,10 +1,10 @@
 import * as T from 'three';
-import { clampHistoryPosition, HISTORY_SPACING } from './history-days';
+import { clampHistoryPosition, HISTORY_SPACING, HISTORY_WALK_SPEED } from './history-days';
 import { groundY, pathZ } from './history-environment';
 import type { PaperScenery } from './history-scenery';
 
 // Three times the previous stroll's fastest speed, now maintained throughout the walk.
-export const HISTORY_WALK_SPEED = 2.145;
+export { HISTORY_WALK_SPEED } from './history-days';
 
 /** A small paper traveller, built with the landscape's materials and animation clock. */
 export class PaperTraveler {

@@ -18,13 +18,21 @@ export interface HistoryScene {
   setWeather: (variation: number) => void;
   setMotion: (enabled: boolean) => void;
   setSpeed: (multiplier: number) => void;
+  /** Manual scenes use the same render path, independent of the live page's clock. */
+  captureFrame: (position: number, seconds: number) => {
+    canvas: HTMLCanvasElement;
+    points: { index: number; x: number; y: number }[];
+    ink: string;
+  };
+  ready: () => Promise<void>;
   dispose: () => void;
 }
 
 /** The camera follows one bounded coordinate; navigation never rotates the artwork. */
 export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElement | null)[], initial: number,
   onProgress: (position: number) => void, onSettle: (position: number) => void, onFailure: () => void,
-  secretNodes: (HTMLButtonElement | null)[] = []): HistoryScene {
+  secretNodes: (HTMLButtonElement | null)[] = [],
+  capture?: { labelHeight: number }): HistoryScene {
   const style = getComputedStyle(host);
   const palette = Object.fromEntries(['paper', 'limestone', 'jade', 'forest', 'water', 'vermilion', 'gold', 'mist', 'ink', 'ice', 'snow', 'ocean', 'clay', 'sand', 'heather']
     .map(key => [key, style.getPropertyValue(`--scroll-${key}`).trim()])) as PaperPalette;
@@ -41,7 +49,7 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
   let traveler: PaperTraveler | undefined;
   let position = clampHistoryPosition(initial), target = position, settled = position;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-  motion = !reducedMotion.matches;
+  motion = !capture && !reducedMotion.matches;
   const images: HTMLImageElement[] = [];
   const exhibitMaterials: T.MeshBasicMaterial[] = [];
   const secretAnchors = new Map<number, T.Vector3>();
@@ -103,6 +111,13 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
     });
   }
 
+  function prepareExhibit(img: HTMLImageElement, index: number) {
+    if (disposed || exhibitMaterials[index]) return;
+    const texture = new T.Texture(img); texture.colorSpace = T.SRGBColorSpace; texture.needsUpdate = true; art.textures.add(texture);
+    exhibitMaterials[index] = new T.MeshBasicMaterial({ map: texture });
+    passages.forEach((passage, day) => addExhibits(day, passage.landmark)); invalidate();
+  }
+
   function syncPassages() {
     const wanted = new Set(historyWindow(position));
     for (const [day, passage] of passages) if (!wanted.has(day)) { disposePassage(passage); passages.delete(day); secretAnchors.delete(day); }
@@ -154,19 +169,14 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
     setups.forEach((alg, i) => {
       const svg = renderFromSimpleQuery({ alg, view: 'iso', size: 384, bg: palette.paper });
       const img = new Image(); images.push(img);
-      img.onload = () => {
-        if (disposed) return;
-        const texture = new T.Texture(img); texture.colorSpace = T.SRGBColorSpace; texture.needsUpdate = true; art.textures.add(texture);
-        exhibitMaterials[i] = new T.MeshBasicMaterial({ map: texture });
-        passages.forEach((passage, day) => addExhibits(day, passage.landmark)); invalidate();
-      };
+      img.onload = () => prepareExhibit(img, i);
       img.onerror = () => { if (!disposed) onFailure(); };
       img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
     });
 
     let shadowPosition = -1;
     function render() {
-      if (disposed || document.hidden || !visible) return;
+      if (disposed || (!capture && (document.hidden || !visible))) return;
       const x = position * HISTORY_SPACING;
       const elevation = groundY(x);
       syncPassages();
@@ -175,7 +185,7 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
       camera.updateMatrixWorld();
       // Reserve room for the longest translated annotation while keeping its dot on the road.
       // One shared height avoids a camera jump when the current day's text changes.
-      if (!labelHeight) labelHeight = Math.max(0, ...nodes.map(node => node?.offsetHeight ?? 0));
+      if (!labelHeight) labelHeight = capture?.labelHeight ?? Math.max(0, ...nodes.map(node => node?.offsetHeight ?? 0));
       const road = new T.Vector3(x, pathY(x), pathZ(x)).project(camera);
       const overflow = (-road.y * .5 + .5) * height + labelHeight - 14 - (height - 46);
       if (overflow > 0) {
@@ -186,7 +196,7 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
       passages.forEach(passage => { passage.art.update(animationTime, position); passage.wildlife?.update(animationTime); });
       art.update(animationTime, position);
       traveler!.update(animationTime, position, width < 700);
-      const currentWeather = weather!.update(animationTime, position, variation, !reducedMotion.matches, canvas.width / width, width < 700);
+      const currentWeather = weather!.update(animationTime, position, variation, !!capture || !reducedMotion.matches, canvas.width / width, width < 700);
       weather!.fitView(camera);
       host.dataset.weather = currentWeather;
       host.dataset.lightning = weather!.lightningStrength.toFixed(3);
@@ -277,6 +287,25 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
     document.addEventListener('visibilitychange', visibilityChanged);
     resize();
     return { seek, dispose,
+      ready: async () => {
+        await Promise.all(images.map(image => image.decode()));
+        // SVG decode can resolve before its load event attaches the exhibit meshes.
+        images.forEach(prepareExhibit);
+      },
+      captureFrame(value, seconds) {
+        if (!capture || disposed) throw new Error('History capture is unavailable');
+        position = target = clampHistoryPosition(value);
+        animationTime = seconds;
+        render();
+        return {
+          canvas,
+          points: historyWindow(position).map(index => {
+            const point = new T.Vector3(index * HISTORY_SPACING, pathY(index * HISTORY_SPACING), pathZ(index * HISTORY_SPACING)).project(camera);
+            return { index, x: (point.x * .5 + .5) * width, y: (-point.y * .5 + .5) * height };
+          }),
+          ink: host.parentElement!.style.getPropertyValue('--scroll-label-ink'),
+        };
+      },
       setWeather(value) { variation = Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0; invalidate(); },
       setMotion(enabled) { motion = enabled; if (!enabled) target = position; previousTime = 0; invalidate(); },
       setSpeed(value) { speed = [1, 2, 5, 10].includes(value) ? value : 1; invalidate(); },
@@ -289,7 +318,7 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
     if (immediate || reducedMotion.matches || Math.abs(target - position) > 3) position = target;
     invalidate();
   }
-  function invalidate() { if (!disposed && !frame && !document.hidden && visible) frame = requestAnimationFrame(time => drawFrame(time)); }
+  function invalidate() { if (!capture && !disposed && !frame && !document.hidden && visible) frame = requestAnimationFrame(time => drawFrame(time)); }
   function resize() {
     if (disposed) return;
     width = Math.max(1, host.clientWidth); height = Math.max(1, host.clientHeight);
@@ -300,7 +329,7 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
     camera.top = viewHeight / 2; camera.bottom = -camera.top; camera.updateProjectionMatrix();
     // Page zoom changes DPR; touchpad/pinch zoom changes the visual viewport instead.
     // Re-render at the displayed density, with a total-pixel budget for extreme zoom.
-    const density = (window.devicePixelRatio || 1) * (viewport?.scale ?? 1);
+    const density = capture ? 1 : (window.devicePixelRatio || 1) * (viewport?.scale ?? 1);
     const scale = Math.min(density, Math.sqrt(16_777_216 / (width * height)), maxBufferSide / width, maxBufferSide / height);
     const bufferWidth = Math.max(1, Math.floor(width * scale)), bufferHeight = Math.max(1, Math.floor(height * scale));
     if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) renderer.setSize(bufferWidth, bufferHeight, false);

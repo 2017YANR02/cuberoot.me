@@ -9,36 +9,77 @@ const base = {
 };
 export const poses = {
   rest: base,
-  stand: { ...base, yaw: 8, b: [0, -48, 0, .9, 1], L: [-181, -228, 30, .94, 1.06], R: [181, -227, -30, .94, 1.06], HL: [-92, -81, -7, 1.03, 1.18], HR: [105, -80, 7, 1.03, 1.18], T: [124, -336, 16, .9, .9] },
-  sit: { ...base, yaw: 12, b: [0, 19, -2, .94, .97], L: [-190, -92, -45, .93, .94], R: [171, -92, 45, .93, .94], HL: [-167, -17, 57, 1.1, .8], HR: [140, -13, -57, 1.1, .8], T: [153, -343, 23, .9, .9] },
+  stand: { ...base, yaw: 8, b: [0, -48, 0, .9, 1], L: [-195, -65, 30, .94, 1], R: [166, -65, -30, .94, 1], HL: [-92, -81, -7, 1.03, 1.18], HR: [105, -80, 7, 1.03, 1.18], T: [124, -336, 16, .9, .9] },
+  sit: { ...base, yaw: 12, b: [0, 19, -2, .94, .97], L: [-205, -25, 0, .93, .94], R: [180, -38, 20, .93, .94], HL: [-167, -17, 57, 1.1, .8], HR: [140, -13, -57, 1.1, .8], T: [153, -343, 23, .9, .9] },
   low: { ...base, b: [0, 68, -3, 1.07, .74], L: [-237, -16, 50, 1.04, .8], R: [58, -7, 49, 1.04, .8], HL: [-107, -22, -28, .8, .65], HR: [244, -40, -36, .95, .85], T: [164, -352, 47, 1, 1] },
   side: { ...base, yaw: 72, b: [0, -5, -4, 1, .95], L: [-166, -48, 20, .8, 1], R: [-103, -27, -20, .96, 1], HL: [124, -62, -18, .76, .9], HR: [184, -35, 21, 1, 1], T: [197, -305, 31, 1, 1] },
   back: { ...base, yaw: 160, L: [-131, -71, 10, .8, 1], R: [134, -72, -10, .8, 1], HL: [-187, -42, -12, 1, 1], HR: [195, -44, 12, 1, 1], T: [36, -221, -24, 1.13, 1.13] },
-  air: { ...base, yaw: 6, b: [0, -26, 0, .91, 1.01], L: [-187, -233, 128, .9, 1], R: [190, -231, -128, .9, 1], HL: [-101, -60, 27, .95, .9], HR: [126, -53, -27, .95, .9], T: [165, -360, -16, .9, .9], ry: -44 },
+  air: { ...base, yaw: 6, b: [0, -26, 0, .91, 1.01], L: [-200, -60, 75, .9, 1], R: [176, -60, -75, .9, 1], HL: [-101, -60, 27, .95, .9], HR: [126, -53, -27, .95, .9], T: [165, -360, -16, .9, .9], ry: -44 },
   curl: { ...base, yaw: 28, b: [0, 68, 0, 1.03, .78], L: [-206, -7, 52, 1, .6], R: [55, -3, 47, 1, .6], HL: [-90, -11, -10, .75, .5], HR: [207, -12, -14, .9, .55], T: [147, -267, 52, .72, .72], ry: 8 },
-  belly: { ...base, yaw: 0, b: [0, 0, 0, .87, .85], L: [-171, -244, 113, .95, .9], R: [171, -244, -113, .95, .9], HL: [-129, -58, -43, .95, 1], HR: [129, -58, 43, .95, 1], T: [180, -294, 45, .8, .8], spin: -85, ry: -15, zoom: .87 },
+  belly: { ...base, yaw: 0, b: [0, 0, 0, .87, .85], L: [-190, -45, 75, .95, .9], R: [166, -45, -75, .95, .9], HL: [-129, -58, -43, .95, 1], HR: [129, -58, 43, .95, 1], T: [180, -294, 45, .8, .8], spin: -85, ry: -15, zoom: .87 },
   bow: { ...base, yaw: 57, b: [-23, 43, -18, 1, .82], L: [-237, 1, 59, 1.1, .8], R: [-91, 22, 52, 1.1, .8], HL: [100, -106, -24, .85, 1.3], HR: [206, -119, -29, 1, 1.45], T: [147, -328, -14, 1, 1] },
   kneel: { ...base, yaw: 53, b: [8, 0, 12, .9, .96], L: [-175, -160, -51, .95, 1.12], R: [87, -161, 58, .95, 1.12], HL: [-74, -43, 78, .9, .9], HR: [188, -23, -67, 1, .9], T: [154, -342, 24, .9, .9] },
-  oneleg: { ...base, yaw: 12, b: [0, -49, 7, .91, 1], L: [-175, -224, 91, 1, 1], R: [159, -220, -103, 1, 1], HL: [-60, -79, 0, 1.03, 1.15], HR: [119, -131, -55, 1, .94], T: [149, -331, -24, .9, .9], ry: -5 },
+  oneleg: { ...base, yaw: 12, b: [0, -49, 7, .91, 1], L: [-195, -65, 65, .95, 1], R: [166, -65, -65, .95, 1], HL: [-60, -79, 0, 1.03, 1.15], HR: [119, -131, -55, 1, .94], T: [149, -331, -24, .9, .9], ry: -5 },
 };
 
 const number = n => Number(n.toFixed(4));
 function view(yaw) {
   const angle = Math.abs(yaw) * Math.PI / 180;
-  const f = Math.max(.12, Math.abs(Math.cos(angle)) * 1.11);
+  const front = Math.max(.12, Math.abs(Math.cos(angle)) * 1.11);
   // Keep a little rounded depth when facing forward; a zero-width side turns
   // the outer contour into a straight cut, even with a continuous projection.
-  const s = Math.max(.28, 2.48 * Math.abs(Math.sin(angle)));
-  const width = 386 * f + 124 * s;
+  const side = Math.max(.28, 2.48 * Math.abs(Math.sin(angle)));
+  const width = 386 * front + 124 * side;
+  // The traced skin already has perspective. Applying the full cosine/sine
+  // ratio again stretches its rounded flank into a wedge (over 3:1 at 55°).
+  // Ease the extra depth toward a bounded ratio, preserving the projected
+  // width and using the same front scale for the face and its paw clearance.
+  const ratio = side / front;
+  const depth = ratio <= 1 ? ratio : 1 + .65 * Math.tanh((ratio - 1) / .65);
+  const f = width / (386 + 124 * depth), s = f * depth;
   return { f, s, width, tx: -width / 2 + 248 * f, face: Math.abs(yaw) < 89 ? 1 : 0 };
 }
 
-export function animateCharacter({ a, part, at, t, plan, options, id, duration, colors }) {
+const bounds = points => ({
+  left: Math.min(...points.map(p => p[0])), right: Math.max(...points.map(p => p[0])),
+  top: Math.min(...points.map(p => p[1])), bottom: Math.max(...points.map(p => p[1])),
+});
+const rotate = (x, y, angle) => {
+  const radians = angle * Math.PI / 180;
+  return [x * Math.cos(radians) - y * Math.sin(radians), x * Math.sin(radians) + y * Math.cos(radians)];
+};
+
+// Resolve the same pose for paws, connectors and props. Keep the full eye
+// region clear even while blinking; expression changes must not move a hand.
+export function resolvePose(name, change = {}) {
+  if (!poses[name]) throw Error(`Unknown pose ${name}`);
+  const state = { ...poses[name], ...change };
+  const v = view(state.yaw);
+  if (!v.face) return state;
+  const [bx, by, angle, sx, sy] = state.b;
+  const eyes = [-192, 45].map(eyeX => bounds([-37, 37].flatMap(dx => [-40, 40].map(dy => {
+    const [x, y] = rotate(((eyeX + dx) * v.f + v.tx) * sx, (50 + dy) * sy, angle);
+    return [x + bx, y + by - 190];
+  }))));
+  for (const bone of ['L', 'R']) {
+    const [px, py, rotation, scaleX, scaleY] = state[bone];
+    // Bounds of the existing traced paw's use viewport, including its outline.
+    const paw = bounds([-55, 55].flatMap(x => [-11, 90].map(y => {
+      const [rx, ry] = rotate(x * scaleX, y * scaleY, rotation);
+      return [px + rx, py + ry];
+    })));
+    const obstacles = eyes.filter(eye => paw.right > eye.left - 10 && paw.left < eye.right + 10 && paw.bottom > eye.top - 10 && paw.top < eye.bottom + 10);
+    if (obstacles.length) state[bone] = [px, py + Math.max(...obstacles.map(eye => eye.bottom + 10 - paw.top)), rotation, scaleX, scaleY];
+  }
+  return state;
+}
+
+export function animateCharacter({ a, part, at, t, plan, options, id, duration, pawGrip, colors }) {
   const { ink, cream, pink, blue } = colors;
   const { x = 320, y = 520, scale = .73, front = '', extra = '', held = [], carried = '' } = options;
   const keys = plan.poses.map(([time, name, change = {}, curve]) => {
     if (!poses[name]) throw Error(`Unknown pose ${name}`);
-    const state = { ...poses[name], ...change };
+    const state = resolvePose(name, change);
     if (![state.yaw, state.rx, state.ry, state.spin, state.zoom, ...state.b, ...state.L, ...state.R, ...state.HL, ...state.HR, ...state.T].every(Number.isFinite)) throw Error('Non-finite pose coordinate');
     return [time, state, curve];
   });
@@ -53,11 +94,30 @@ export function animateCharacter({ a, part, at, t, plan, options, id, duration, 
   const joint = values => t(...values);
   // Upper limbs originate beneath the shell, with their roots occluded by
   // the body. This keeps a lifted or side-on paw physically attached.
-  const connector = (bone, fill, width) => a(`<rect x="0" y="${-width / 2}" width="100" height="${width}" rx="${width / 2}" fill="${fill}"/>`, frames(s => {
-    const cx = s.b[0], cy = -190 + s.b[1];
-    const dx = s[bone][0] - cx, dy = s[bone][1] - cy;
-    return t(cx, cy, Math.atan2(dy, dx) * 180 / Math.PI, Math.hypot(dx, dy) / 100, 1);
+  const connector = (bone, fill, width) => {
+    let previousAngle;
+    return a(`<rect x="0" y="${-width / 2}" width="100" height="${width}" rx="${width / 2}" fill="${fill}"/>`, frames(s => {
+    const isArm = bone === 'L' || bone === 'R';
+    const cx = s.b[0], cy = (isArm ? -65 : -190) + s.b[1];
+    const [px, py, angle, sx, sy] = s[bone];
+    // The traced paw's wrist sits inside its upper-right lobe, not at the
+    // animation pivot. Follow that point through rotation to avoid a gap.
+    const radians = angle * Math.PI / 180;
+    const wristX = isArm ? 28 * sx : 0, wristY = isArm ? 9 * sy : 0;
+    const dx = px + wristX * Math.cos(radians) - wristY * Math.sin(radians) - cx;
+    const dy = py + wristX * Math.sin(radians) + wristY * Math.cos(radians) - cy;
+    // Unwrap the left-pointing angle so crossing -180/180 never spins the
+    // connector through the head while the paw takes the short route.
+    let direction = Math.atan2(dy, dx) * 180 / Math.PI;
+    if (previousAngle !== undefined) {
+      while (direction - previousAngle > 180) direction -= 360;
+      while (direction - previousAngle < -180) direction += 360;
+    }
+    previousAngle = direction;
+    // Bury the rounded end inside the paw, including between rotation keys.
+    return t(cx, cy, direction, (Math.hypot(dx, dy) + (isArm ? 24 : 0)) / 100, 1);
   }));
+  };
   const connections = ['L', 'R', 'HL', 'HR'].map(bone => connector(bone, blue, 34)).join('') + connector('T', ink, 15);
   const limb = (name, bone, w, h) => `<g data-rig-part="${bone}">${a(part(name, -w / 2, -15, w, h), frames(s => joint(s[bone])))}</g>`;
   const hind = limb('rear', 'HL', 100, 120) + limb('rear', 'HR', 106, 123);
@@ -180,10 +240,16 @@ export function animateCharacter({ a, part, at, t, plan, options, id, duration, 
   }));
   const shell = skinFilter + a(`<g data-rig-part="shell">${surface + face}</g>`, frames(s => joint(s.b)), '0px -190px');
   const tail = a(`<g class="rb-tail-outline">${part('tail', -59.4, -160.72, 180, 164)}</g>`, frames(s => joint(s.T)));
-  const heldArt = held.map(({ bone = 'L', art, angle = 0, size = 1, inFront = false }) => ({ inFront, svg: a(art, frames(s => {
-    const [px, py, rotation, , sy] = s[bone], radians = rotation * Math.PI / 180;
-    return t(px - Math.sin(radians) * 65 * sy, py + Math.cos(radians) * 65 * sy, angle, size);
-  })) }));
+  const heldArt = held.map(({ bone = 'L', art, angle = 0, size = 1, inFront = false }) => {
+    // Follow the wrist's rotation arc, not a straight line between grips.
+    // Counter-rotate the artwork so books and cups keep their intended tilt.
+    const item = a(`<g data-held-by="${bone}">${art}</g>`, frames(s => {
+      const [, , rotation, , sy] = s[bone];
+      const [gx, gy] = pawGrip([0, 0, 0, 1, sy]);
+      return t(gx, gy, angle - rotation, size);
+    }));
+    return { inFront, svg: a(item, frames(s => t(...s[bone].slice(0, 3)))) };
+  });
   const carriedArt = carried ? a(carried, frames(s => joint(s.b)), '0px -190px') : '';
   const model = connections + tail + hind + shell + carriedArt + heldArt.filter(item => !item.inFront).map(item => item.svg).join('') + arms + heldArt.filter(item => item.inFront).map(item => item.svg).join('') + front;
   // Rotation is about the body centre, so rolling never swings the entire

@@ -43,6 +43,7 @@ import { scrambleMarksRoutes } from './routes/scramble_marks.js';
 import { announcedCompsRoutes, startAnnouncedCompsPoller } from './routes/announced_comps.js';
 import { sponsorsRoutes } from './routes/sponsors.js';
 import { membershipRoutes } from './routes/membership.js';
+import { membershipSubscriptionRoutes } from './routes/membership_subscriptions.js';
 import { compFollowsRoutes } from './routes/comp_follows.js';
 import { algMarksRoutes } from './routes/alg_marks.js';
 import { algTimeAttackOrderRoutes } from './routes/alg_time_attack_order.js';
@@ -90,6 +91,7 @@ import { warmCnCompZh } from './utils/cn_comp_zh_cache.js';
 import { startPrewarmCron } from './routes/cubing_live.js';
 import { startMonitors } from './monitors/index.js';
 import { startDouyinOrderSync } from './platform/douyin_order_sync.js';
+import { startMembershipContractSync } from './payment/membership-contract-sync.js';
 
 const app = new Hono();
 const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
@@ -162,6 +164,7 @@ app.route('/v1', scrambleMarksRoutes);
 app.route('/v1', announcedCompsRoutes);
 app.route('/v1', sponsorsRoutes);
 app.route('/v1', membershipRoutes);
+app.route('/v1', membershipSubscriptionRoutes);
 app.route('/v1', compFollowsRoutes);
 app.route('/v1', algMarksRoutes);
 app.route('/v1', algTimeAttackOrderRoutes);
@@ -330,6 +333,7 @@ startWatchedForeignRegMonitor();
 // 抖店实体捆绑订单:付款后订单号可直接兑换课程,退款成功后撤回该次课程权益。
 // 未配置 DOUYIN_* 环境变量时保持关闭。
 startDouyinOrderSync();
+startMembershipContractSync();
 
 const PORT = Number(process.env.PORT) || 3001;
 

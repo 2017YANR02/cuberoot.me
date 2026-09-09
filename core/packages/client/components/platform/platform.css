@@ -986,6 +986,56 @@
   margin-top: 18px;
 }
 
+.platform-redemption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: min(100%, 420px);
+  min-height: min(480px, 60svh);
+  margin-inline: auto;
+  text-align: center;
+}
+
+.platform-redemption .platform-domain-form {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.platform-redemption .platform-form-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.platform-redemption .platform-field-control {
+  text-align: center;
+}
+
+.platform-invite-page .platform-route-header { margin-bottom: 32px; }
+.platform-invite-page .platform-route-header h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); }
+.platform-invite-manager { max-width: 780px; display: grid; gap: 32px; }
+.platform-invite-manager h2 { font-size: 1.2rem; margin: 0 0 20px; }
+.platform-invite-manager .platform-domain-note { margin: 12px 0; line-height: 1.65; }
+.platform-invite-create > .platform-button { margin-top: 20px; }
+.platform-invite-options > summary { cursor: pointer; width: fit-content; font-size: .9rem; color: var(--muted-foreground); }
+.platform-invite-options > summary:hover { color: var(--foreground); }
+.platform-invite-options[open] > summary { margin-bottom: 18px; }
+.platform-invite-options .platform-domain-form { margin-top: 16px; padding-top: 0; }
+.platform-invite-create .platform-form-grid label { display: grid; gap: 8px; min-width: 0; font-size: .9rem; }
+.platform-invite-result { padding: 24px; border-radius: 24px; background: color-mix(in srgb, var(--card) 78%, transparent); backdrop-filter: blur(20px); }
+.platform-invite-records { display: grid; gap: 28px; }
+.platform-invite-records > h2 { margin-bottom: 0; }
+.platform-invite-record { min-width: 0; }
+.platform-invite-record-title { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.platform-invite-record-title h3 { margin: 0; font-size: 1rem; overflow-wrap: anywhere; }
+.platform-invite-meta { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 8px 0 12px; color: var(--muted-foreground); font-size: .85rem; }
+.platform-invite-manager .platform-field-control { min-width: 0; max-width: 100%; }
+@media (max-width: 479px) {
+  .platform-invite-manager .platform-form-grid { grid-template-columns: minmax(0, 1fr); }
+  .platform-invite-result { padding: 18px; }
+}
+
 .platform-form-error {
   margin: 12px 0 0;
   color: var(--destructive);

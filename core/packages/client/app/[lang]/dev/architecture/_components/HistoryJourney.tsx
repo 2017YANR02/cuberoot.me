@@ -2,7 +2,7 @@
 
 import { memo, useRef, useState, useEffect, useCallback, type RefObject } from 'react';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
-import { ArrowLeft, ArrowRight, ArrowUpRight, MoveHorizontal, BookOpen, Pause, Play, Sun, Moon, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, MoveHorizontal, BookOpen, Pause, Play, Sun, Moon, Sparkles, Download } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
 import { CompactSelect } from '@/components/CompactSelect';
@@ -19,6 +19,7 @@ import { HISTORY_LANDFORMS, LANDFORMS, type HistoryLandform } from '../history/h
 import { ANIMALS, HISTORY_FAUNA, type AnimalSpecies } from '../history/history-fauna';
 import { HISTORY_SECRETS, type HistorySecret } from '../history/history-secrets';
 import HistoryArchive from './HistoryView';
+import HistoryVideoExport from './HistoryVideoExport';
 
 const DATES = HISTORY_PLACES.map(place => place.date);
 const PLAYBACK_SPEEDS = [1, 2, 5, 10].map(value => ({ value, label: `${value}×` }));
@@ -43,6 +44,7 @@ export default function HistoryJourney() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
   const [retry, setRetry] = useState(0);
   const [reading, setReading] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [weatherVariation, setWeatherVariation] = useState(0);
   const [motion, setMotion] = useState(true);
@@ -58,6 +60,7 @@ export default function HistoryJourney() {
   const initialPosition = useRef(initial);
   const reader = useRef<HTMLElement>(null);
   const readButton = useRef<HTMLButtonElement>(null);
+  const exportButton = useRef<HTMLButtonElement>(null);
   const current = Math.round(clampHistoryPosition(position));
   const place = HISTORY_PLACES[current];
   const secret = openedSecret;
@@ -215,7 +218,9 @@ export default function HistoryJourney() {
           </div>
           <PlaybackScrubber className="journey-scrubber" step={Math.round(position * 100)} total={HISTORY_LAST * 100} disabled={status !== 'ready'} ariaLabel={tr({ zh: '在画卷中移动', en: 'Travel through the landscape' })} onScrub={value => engine.current?.seek(value / 100, true)} />
           <button ref={readButton} type="button" className="journey-button journey-read" onClick={() => { if (!reading) pauseWalking(); setReading(!reading); }} aria-expanded={reading} aria-controls="journey-reader"><BookOpen size={16} />{tr({ zh: '阅读这一天', en: 'Read this day' })}<ArrowUpRight size={15} /></button>
+          <button ref={exportButton} type="button" className="journey-button journey-download" disabled={status !== 'ready'} aria-label={tr({ zh: '下载视频', en: 'Download video' })} title={tr({ zh: '下载视频', en: 'Download video' })} aria-expanded={exportOpen} aria-controls="journey-video-export" onClick={() => { pauseWalking(); setExportOpen(!exportOpen); }}><Download size={18} aria-hidden="true" /></button>
         </nav>
+        {exportOpen && <HistoryVideoExport source={host} current={current} initialSpeed={speed} weatherVariation={weatherVariation} onClose={() => { setExportOpen(false); exportButton.current?.focus({ preventScroll: true }); }} />}
       </section>
       <p className="journey-art-note">{tr({ zh: '每八站走过晨昼暮夜。37 种地貌与 36 种野生动物沿途相伴，留意闪光的小物件。自然景观为艺术化演绎，日期与更新内容来自真实记录。', en: 'Dawn to moonlight unfolds over every eight stops, with 37 landforms and 36 wildlife species. Look out for little glimmering objects. Imagined nature accompanies real dates and updates.' })}</p>
       <section id="journey-reader" ref={reader} tabIndex={-1} className={`journey-reader${reading ? ' is-open' : ''}`} aria-label={tr({ zh: '这一天的故事', en: 'The story of this day' })}>
