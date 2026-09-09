@@ -1,5 +1,145 @@
+@import '../../components/glass-material.css';
+
 .landing-page {
   isolation: isolate;
+}
+
+/* One material for every homepage card and its floating admin controls.
+   Other routes retain the existing shared material. */
+:root .landing-page,
+:root:has(.landing-page) .admin-tools {
+  --glass-light: var(--background);
+  --glass-shade: var(--foreground);
+  --glass-background: linear-gradient(145deg, color-mix(in srgb, var(--glass-light) 16%, transparent), transparent 48%),
+    color-mix(in srgb, var(--background) 38%, transparent);
+  --glass-edge: color-mix(in srgb, var(--glass-light) 28%, transparent);
+  --glass-filter: blur(8px) saturate(150%);
+  --glass-shadow: inset 0 1px 1px color-mix(in srgb, var(--glass-light) 45%, transparent),
+    inset 0 -1px 1px color-mix(in srgb, var(--glass-shade) 20%, transparent),
+    0 8px 26px color-mix(in srgb, var(--glass-shade) 12%, transparent);
+}
+
+/* Match the existing theme/palette precedence, including a system dark theme. */
+@media (prefers-color-scheme: dark) {
+  :root:has(.landing-page):not([data-theme='light']):not([data-palette-scheme='light']) :is(.landing-page, .admin-tools) {
+    --glass-light: var(--foreground);
+    --glass-shade: var(--background);
+  }
+}
+:root:has(.landing-page)[data-theme='dark']:not([data-palette-scheme='light']) :is(.landing-page, .admin-tools),
+:root:has(.landing-page)[data-palette-scheme='dark'] :is(.landing-page, .admin-tools) {
+  --glass-light: var(--foreground);
+  --glass-shade: var(--background);
+}
+
+:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip, .admin-tools),
+:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip, .admin-tools):hover,
+:root .landing-page :is(.landing-card, .card).is-disabled,
+:root .landing-page :is(.landing-card, .card).is-disabled:hover {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: transparent;
+  border-color: var(--glass-edge);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: var(--glass-shadow);
+}
+
+:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip, .admin-tools)::before,
+:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip, .admin-tools)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Only the scenery bends. Negative stacking keeps every text node and icon crisp. */
+:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip, .admin-tools)::before {
+  z-index: -1;
+  background: var(--glass-background);
+  -webkit-backdrop-filter: var(--home-glass-refraction, var(--glass-filter));
+  backdrop-filter: var(--home-glass-refraction, var(--glass-filter));
+}
+
+/* A curved rim catches light from the pointer without tinting the content. */
+:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip, .admin-tools)::after {
+  z-index: 1;
+  padding: 1px;
+  background: radial-gradient(ellipse at var(--glass-pointer-x, 20%) var(--glass-pointer-y, 0%),
+      color-mix(in srgb, var(--glass-light) 80%, transparent), transparent 72%),
+    linear-gradient(155deg, color-mix(in srgb, var(--glass-light) 32%, transparent), transparent 38% 62%,
+      color-mix(in srgb, var(--glass-light) 22%, transparent));
+  -webkit-mask: linear-gradient(var(--foreground) 0 0) content-box, linear-gradient(var(--foreground) 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(var(--foreground) 0 0) content-box, linear-gradient(var(--foreground) 0 0);
+  mask-composite: exclude;
+}
+
+:root .landing-page :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip) {
+  transition: transform 320ms cubic-bezier(.2, .8, .2, 1.15), box-shadow 220ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :root .landing-page :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip):not(.is-disabled):hover {
+    transform: translateY(-2px) scale(1.006);
+  }
+}
+
+:root .landing-page :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip):not(.is-disabled):active {
+  transform: scale(.98);
+  transition-duration: 100ms;
+}
+
+/* Muting the whole element creates a backdrop root and destroys its glass.
+   Keep the material identical and mute only the disabled card's content. */
+:root .landing-page :is(.landing-card, .card).is-disabled {
+  filter: none;
+  opacity: 1;
+}
+:root .landing-page :is(.landing-card, .card).is-disabled > :not(.coming-soon-badge) {
+  filter: grayscale(1);
+  opacity: .5;
+}
+
+.home-glass-engine {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  pointer-events: none;
+  /* SVG filter definitions must remain mounted, including when scrolled away. */
+  clip-path: inset(100%);
+}
+
+/* Keep the admin menu free to extend past its pill-shaped surface. */
+:root:has(.landing-page) .admin-tools { overflow: visible; }
+:root:has(.landing-page) .admin-tools::before { clip-path: inset(0 round 24px); }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root .landing-page,
+  :root:has(.landing-page) .admin-tools {
+    --glass-background: var(--card);
+    --home-glass-refraction: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root .landing-page,
+  :root:has(.landing-page) .admin-tools {
+    --glass-background: var(--card);
+    --glass-filter: none;
+    --home-glass-refraction: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root .landing-page :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip),
+  :root .landing-page :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip):not(.is-disabled):is(:hover, :active) {
+    transform: none;
+    transition: none;
+  }
 }
 
 .landing-page .home-scenery {

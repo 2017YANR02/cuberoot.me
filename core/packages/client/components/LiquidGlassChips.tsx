@@ -13,7 +13,7 @@ import './LiquidGlassChips.css';
  *  `feDisplacementMap` 跟 `backdrop-filter` 这一对,liquid-glass-react 只特判
  *  了 Firefox,Safari 上 thumb 会渲染成不透明黑块。检测到 → 退一档 CSS
  *  frosted thumb,iOS 26 native 那一档放弃但至少不丑。 */
-const needsCssGlassFallback = (): boolean => {
+export const needsCssGlassFallback = (): boolean => {
   if (typeof navigator === 'undefined') return false;
   const ua = navigator.userAgent;
   if (/iPhone|iPad|iPod/.test(ua)) return true;
