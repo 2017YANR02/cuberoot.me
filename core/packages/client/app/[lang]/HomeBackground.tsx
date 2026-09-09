@@ -3,56 +3,24 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { ImageIcon } from 'lucide-react';
 import { CompactSelect } from '@/components/CompactSelect';
-import { persistItem } from '@/lib/safe-storage';
+import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
+import { HOME_BACKGROUND_ASSETS as ASSET_ROOT, HOME_BACKGROUNDS as SCENES, resolveHomeBackground, type HomeBackgroundChoice as Choice } from '@/lib/home-backgrounds';
 import { useEffectiveTheme } from '@/lib/theme';
 import { tr } from '@/i18n/tr';
 import './home-background.css';
 
-const STORAGE_KEY = 'home-background.v1';
-const ASSET_ROOT = '/assets/home-backgrounds/v1';
-const SCENES = [
-  { id: '01', zh: '雪山初晴', en: 'Snowy Dawn', position: '50%' },
-  { id: '02', zh: '暮色松岭', en: 'Sunset Pines', position: '50%' },
-  { id: '03', zh: '蓝夜远山', en: 'Moonlit Peaks', position: '50%' },
-  { id: '04', zh: '沙海日落', en: 'Desert Sunset', position: '50%' },
-  { id: '05', zh: '紫夜沙丘', en: 'Violet Dunes', position: '50%' },
-  { id: '06', zh: '青绿峡谷', en: 'Jade Canyon', position: '65%' },
-  { id: '07', zh: '粉彩阶庭', en: 'Pastel Courtyard', position: '75%' },
-  { id: '08', zh: '月下迷宫', en: 'Moonlit Labyrinth', position: '30%' },
-  { id: '09', zh: '浮岛花园', en: 'Floating Gardens', position: '65%' },
-  { id: '10', zh: '沙丘之门', en: 'Dune Gateway', position: '70%' },
-] as const;
-type Choice = 'auto' | 'none' | typeof SCENES[number]['id'];
-
-function readChoice(): Choice {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === 'auto' || saved === 'none' || SCENES.some(scene => scene.id === saved)) {
-      return saved as Choice;
-    }
-  } catch { /* Storage may be unavailable; the picker still works for this visit. */ }
-  return 'auto';
-}
-
 /** Homepage-only decoration and preference; never changes the site's appearance settings. */
 export default function useHomeBackground() {
-  const [choice, setChoice] = useState<Choice>('auto');
+  const [choice, setChoice] = useHomeBackgroundChoice();
   const [ready, setReady] = useState(false);
   const theme = useEffectiveTheme();
   const [failedScene, setFailedScene] = useState<string | null>(null);
 
   useEffect(() => {
-    setChoice(readChoice());
     setReady(true);
-    const sync = (event: StorageEvent) => {
-      if (event.key === STORAGE_KEY || event.key === null) setChoice(readChoice());
-    };
-    window.addEventListener('storage', sync);
-    return () => window.removeEventListener('storage', sync);
   }, []);
 
-  const sceneId = choice === 'auto' ? (theme === 'dark' ? '03' : '01') : choice;
-  const scene = SCENES.find(item => item.id === sceneId);
+  const scene = resolveHomeBackground(choice, theme);
   const autoLabel = tr({ zh: '随明暗切换', en: 'Follow light / dark' });
   const noneLabel = tr({ zh: '无背景', en: 'No background' });
   const selectedLabel = choice === 'auto' ? autoLabel : scene ? tr(scene) : noneLabel;
@@ -83,7 +51,7 @@ export default function useHomeBackground() {
         label={<span className="home-background-label"><ImageIcon size={15} />{selectedLabel}</span>}
         valueText={selectedLabel} ariaLabel={tr({ zh: '选择主页背景', en: 'Choose homepage background' })}
         value={choice} items={items} popupClassName="home-background-menu"
-        onChange={value => { setFailedScene(null); setChoice(value); persistItem(STORAGE_KEY, value); }}
+        onChange={value => { setFailedScene(null); setChoice(value); }}
       />
     </div>;
   return { background, control };
