@@ -72,6 +72,23 @@ html[lang='en'] .journey-place-copy h2 { letter-spacing: .02em; }
 .journey-current-date .date-input__icon { width: 13px; }
 .journey-controls .journey-scrubber { flex: 1; min-width: 50px; width: auto; margin: 0 26px; --accent: var(--scroll-vermilion); --border-default: color-mix(in srgb, var(--scroll-ink) 15%, var(--scroll-paper)); accent-color: var(--scroll-vermilion); }
 .journey-controls .journey-read { white-space: nowrap; min-height: 44px; }
+.journey-controls .journey-download { width: 44px; height: 44px; flex-shrink: 0; }
+.journey-export { margin: 0 28px; padding-bottom: 24px; font: 12px/1.7 var(--sans); }
+.journey-export-heading, .journey-export-settings, .journey-export-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
+.journey-export-heading h3 { margin: 0; font: 400 22px/1.5 var(--serif); }
+.journey-export-settings { margin: 12px 0 0; padding: 0; border: 0; min-width: 0; }
+.journey-export .date-range-input { flex-wrap: wrap; }
+.journey-export .date-range-input__field { flex: 0 0 auto; }
+.journey-export .date-range-input__label { color: var(--scroll-ink); }
+.journey-export .compact-select { width: fit-content; align-self: center; }
+.journey-export .compact-select-trigger { min-height: 44px; }
+.journey-export .journey-button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0; border: 0; background: none; color: var(--scroll-vermilion); font: inherit; cursor: pointer; }
+.journey-export .journey-button:disabled, .journey-controls .journey-download:disabled { opacity: .4; cursor: default; }
+.journey-export-description { margin: 10px 0 14px; color: color-mix(in srgb, var(--scroll-ink) 80%, var(--scroll-paper)); }
+.journey-export-description span { display: block; }
+.journey-export-preview { width: 100%; max-width: 720px; height: auto; aspect-ratio: 16 / 9; }
+.journey-export-actions { margin-top: 6px; }
+.journey-export progress { width: min(180px, 100%); height: 6px; accent-color: var(--scroll-vermilion); }
 .journey-load { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 16px; justify-content: center; align-items: center; text-align: center; background: var(--scroll-paper); padding: 24px; color: var(--scroll-ink); }
 .journey-load .app-startup { min-height: 0; color: var(--scroll-ink); background: var(--scroll-paper); }
 .journey-load .journey-button { text-decoration: underline; text-underline-offset: 5px; }
@@ -121,6 +138,7 @@ html[lang='en'] .journey-place-copy h2 { letter-spacing: .02em; }
   .journey-controls .journey-arrow { width: 32px; }
   .journey-current-date { font-size: 10px; }
   .journey-controls .journey-read > svg:last-child { display: none; }
+  .journey-export { margin-inline: 18px; }
   .journey-reader.is-open { padding-top: 30px; }
   .journey-archive summary span { display: block; margin: 6px 0 0; }
 }

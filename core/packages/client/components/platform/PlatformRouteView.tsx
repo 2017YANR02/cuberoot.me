@@ -548,7 +548,9 @@ export function PlatformRouteView({
   const [retry, setRetry] = useState(0);
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [redeemed, setRedeemed] = useState(false);
   const loadsResource = Boolean(definition.resource)
+    && definition.id !== 'account-invites'
     && definition.id !== 'account-privacy'
     && (definition.kind !== 'form' || definition.id === 'teacher-apply');
   const permissionDenied = error instanceof PlatformPermissionError;
@@ -589,6 +591,7 @@ export function PlatformRouteView({
     setActionMessage(null);
     try {
       const response = await executePlatformAction(definition, { action, resourceId: id, payload });
+      if (action === 'redeem-invite') setRedeemed(true);
       setActionMessage(response.message ?? t('操作已完成。', 'Action completed.'));
       if (definition.id === 'admin-qr-detail' && action === 'admin-save' && params.code
         && response.code && response.code !== params.code) {
@@ -609,12 +612,30 @@ export function PlatformRouteView({
   };
 
   if (definition.id === 'home') return <PlatformLanding />;
+  if (definition.id === 'account-invites') {
+    return <div className="platform-route platform-redemption">
+      {!mounted ? <PlatformState kind="loading" /> : !user ? (
+        <AppLink href="/account" className="platform-button" prefetch={false}>{t('登录', 'Sign in')}</AppLink>
+      ) : redeemed ? (
+        <>
+          <p role="status">{t('兑换成功', 'Code redeemed')}</p>
+          <AppLink href="/platform/account/courses" className="platform-button" prefetch={false}>{t('开始学习', 'Start learning')}</AppLink>
+        </>
+      ) : (
+        <>
+          <PlatformDomainActions definition={definition} params={params} busy={actionBusy} runAction={runAction} />
+          {actionMessage ? <p className="platform-action-message" role="status">{actionMessage}</p> : null}
+        </>
+      )}
+    </div>;
+  }
   const courseDetail = definition.id === 'course-detail';
+  const inviteManager = definition.id === 'admin-invites';
   const courseSection = definition.id.startsWith('course-section-');
   const course = courseDetail && !error ? sortedItems[0] : undefined;
 
   return (
-    <div className={`platform-route${courseDetail ? ' platform-course-detail' : ''}${courseSection ? ' platform-course-classroom' : ''}`}>
+    <div className={`platform-route${courseDetail ? ' platform-course-detail' : ''}${courseSection ? ' platform-course-classroom' : ''}${inviteManager ? ' platform-invite-page' : ''}`}>
       <header className="platform-route-header">
         <div className="platform-route-heading">
           {courseSection && params.id ? <div>
@@ -622,9 +643,9 @@ export function PlatformRouteView({
               {t('返回课程', 'Back to course')}
             </AppLink>
           </div> : null}
-          <span className="platform-route-area">{courseDetail || courseSection || definition.id === 'course-lesson' || definition.id === 'courses' ? t('CubeRoot 课程', 'CubeRoot Courses') : definition.area}</span>
+          {!inviteManager ? <span className="platform-route-area">{courseDetail || courseSection || definition.id === 'course-lesson' || definition.id === 'courses' ? t('CubeRoot 课程', 'CubeRoot Courses') : definition.area}</span> : null}
           <h1>{course?.title ?? titleFor(t, definition)}</h1>
-          {!courseSection && !courseDetail ? <p>{t(definition.description.zh, definition.description.en)}</p> : null}
+          {!courseSection && !courseDetail && !inviteManager ? <p>{t(definition.description.zh, definition.description.en)}</p> : null}
           {course ? <div className="platform-home-actions">
             <AppLink className="platform-home-secondary" href="/platform/account/invites" prefetch={false}>{t('兑换课程', 'Redeem a code')}<ArrowRight aria-hidden /></AppLink>
           </div> : null}
@@ -651,6 +672,7 @@ export function PlatformRouteView({
             && definition.id !== 'membership'
             && definition.id !== 'me-membership'
             && !isQrCardStudio
+            && !inviteManager
             && !permissionDenied ? (
             <div className="platform-toolbar">
               <SearchInput
@@ -692,7 +714,7 @@ export function PlatformRouteView({
               query={query}
               onQueryChange={(value) => { void setQuery(value || null); }}
             />
-          ) : sortedItems.length === 0 && definition.id !== 'membership' && definition.id !== 'me-membership' ? (
+          ) : inviteManager ? null : sortedItems.length === 0 && definition.id !== 'membership' && definition.id !== 'me-membership' ? (
             <PlatformState
               kind="empty"
               message={definition.id === 'teacher-detail'

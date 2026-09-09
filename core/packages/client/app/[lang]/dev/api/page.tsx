@@ -67,7 +67,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   then add the file stem to this list.
 //   account_auth alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
 //   comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends health historical_ranks pb private_vault
-//   membership music nav_sites nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
+//   membership membership_subscriptions music nav_sites nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
 // ─ covers-routes-end ─
@@ -584,6 +584,9 @@ const ENDPOINTS: Ep[] = [
   { d: 'platform', m: 'PATCH', p: '/v1/platform/admin/qr/:id/card', g: 'admin', c: 'no-store', zh: '保存二维码卡片设计版本', en: 'Save a QR card design version' },
 
   // ---- membership ----
+  { d: 'membership', m: 'GET', p: '/v1/membership/subscriptions', g: 'login', c: 'no-store', zh: '查询本人自动续费合约并向微信核验状态', en: 'List owned renewal contracts and verify their state with WeChat' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/subscriptions/:id/cancel', g: 'login', c: 'no-store', zh: '本人确认退订；微信确认后返回成功，待确认返回 202', en: 'Cancel an owned contract after confirmation; return 202 until verified' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/subscriptions/wechat/notify', g: 'public', c: 'no-store', zh: '微信合约通知：APIv2 验签、绑定已有记录并查证状态', en: 'WeChat contract notification: verify APIv2 signature, saved binding and current state' },
   { d: 'membership', m: 'GET', p: '/v1/membership/plans', g: 'public', zh: '会员套餐', en: 'Membership plans' },
   { d: 'membership', m: 'GET', p: '/v1/membership/members', g: 'public', c: 'no-store', zh: '首页公开会员名单', en: 'Public homepage member list' },
   { d: 'membership', m: 'GET', p: '/v1/membership/profile/:wcaId', g: 'public', zh: '有效会员的公开个人资料和图片', en: 'Public profile and images for an active member' },

@@ -628,6 +628,8 @@ export async function removeIdentity(
   // FOR UPDATE 锁住该用户全部身份行,把「最后一个身份」判定与删除放进同一事务。
   // 否则两个并发解绑各读到同一份 [email,phone] 各删一条 → 账号被删空、永久失联(TOCTOU)。
   return sql.begin(async (tx) => {
+    // Match merge/deletion and renewal-contract writes: account before identity/contract locks.
+    await tx`SELECT id FROM app_users WHERE id = ${userId} FOR UPDATE`;
     const rows = await tx`
       SELECT provider, provider_uid FROM auth_identities WHERE user_id = ${userId} FOR UPDATE`;
     const all = rows as unknown as { provider: string; provider_uid: string }[];

@@ -36,7 +36,7 @@ import {
   ownerKey, primaryHandle,
   type Provider,
 } from '../utils/account.js';
-import { AccountOwnsOrganizationError, deleteAccount } from '../utils/account_delete.js';
+import { AccountHasMembershipContractError, AccountOwnsOrganizationError, deleteAccount } from '../utils/account_delete.js';
 import { AccountMergeError, mergeAccounts, parseAccountMergeCode } from '../utils/account_merge.js';
 import { emailConfigured, sendEmailCode } from '../utils/email.js';
 import { smsConfigured, sendSmsCode } from '../utils/sms.js';
@@ -1324,7 +1324,7 @@ accountAuthRoutes.post('/auth/account/delete', async (c) => {
   try {
     await deleteAccount(uid, ownerKey(uid, user.wca_id));
   } catch (error) {
-    if (error instanceof AccountOwnsOrganizationError) {
+    if (error instanceof AccountOwnsOrganizationError || error instanceof AccountHasMembershipContractError) {
       return c.json({ error: error.message }, 409);
     }
     throw error;

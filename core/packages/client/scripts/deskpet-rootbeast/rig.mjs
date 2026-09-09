@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { renderFromSimpleQuery } from '@cuberoot/visualcube';
-import { animateCharacter } from './character.mjs';
+import { animateCharacter, resolvePose } from './character.mjs';
 import { choreography } from './choreography.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -52,6 +52,10 @@ export const board = rect(-139, -8, 278, 19, violet, 9) + circle(-94, 27, 17, in
 export const cup = rect(-35, -60, 70, 85, cream, 12) + rect(-29, -42, 58, 50, pink, 6) + line('M14-37 24-97 49-105', blue, 7);
 
 const part = (name, x, y, w, h) => `<use href="#rb-${name}" x="${x}" y="${y}" width="${w}" height="${h}"/>`;
+export const pawGrip = ([px, py, rotation, , sy]) => {
+  const radians = rotation * Math.PI / 180;
+  return [px - Math.sin(radians) * 65 * sy, py + Math.cos(radians) * 65 * sy];
+};
 export function stage(id, duration, draw, sceneId) {
   const styles = [];
   let serial = 0;
@@ -68,7 +72,20 @@ export function stage(id, duration, draw, sceneId) {
   const glints = (x, y) => at(a(star(), [[0, t(0, 0, 0, .25)], [35, t(0, -7, 35, 1)], [70, t(0, 0, 90, .35)]]), x, y) + at(a(star(cream), [[0, t(0, 0, 0, .6)], [55, t(0, 8, -45, .25)]]), x + 48, y + 30, .5);
   const plan = choreography[sceneId];
   if (!plan) throw new Error(`Missing character choreography: ${sceneId}`);
-  const pet = (options = {}) => animateCharacter({ a, part, at, t, plan, options, id, duration, colors: { red, blue, ink, cream, pink } });
-  const art = draw({ a, v, float, glints, pet });
+  const petPlacement = { x: 320, y: 520, scale: .73 };
+  // Scene-space handoffs use the same resolved wrist as held artwork.
+  const grip = (time, bone = 'L', offset = [0, 0]) => {
+    const key = plan.poses.find(([at]) => Math.abs(at - time) < .0001);
+    if (!key) throw Error(`Missing grip key at ${time}% in ${sceneId}`);
+    const state = resolvePose(key[1], key[2]);
+    if (!state[bone]) throw Error(`Unknown grip bone ${bone}`);
+    const [px, py] = pawGrip(state[bone]);
+    const radians = state.spin * Math.PI / 180;
+    const x = (px + offset[0]) * state.zoom, y = (py + offset[1] + 190) * state.zoom;
+    return [petPlacement.x + petPlacement.scale * (state.rx + x * Math.cos(radians) - y * Math.sin(radians)),
+      petPlacement.y + petPlacement.scale * (state.ry - 190 + x * Math.sin(radians) + y * Math.cos(radians))];
+  };
+  const pet = (options = {}) => animateCharacter({ a, part, at, t, plan, options: { ...petPlacement, ...options }, id, duration, pawGrip, colors: { red, blue, ink, cream, pink } });
+  const art = draw({ a, v, float, glints, pet, grip });
   return { art, css: styles.join('\n') };
 }

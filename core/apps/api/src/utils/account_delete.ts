@@ -199,6 +199,7 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   teaching_conversation_messages: '家校沟通消息不可变保留,作者账号随删除置空且保留身份快照',
   memberships: '会员权益状态:留着,同一个人重新绑 WCA 回来还认',
   membership_orders: '交易凭证,财务对账要;只有归属键,没有姓名邮箱',
+  membership_contracts: '未终止合约阻止注销;已终止合约保留支付审计凭证',
   music_tracks: '曲库内容独立保留,上传账号随删除置空',
   contributors: '站方手录的致谢名单,单独处理(只把 wca_id 置 NULL,名字留着)',
   sponsors: '赞助名录保留,认领账号注销时解除关联',
@@ -220,6 +221,13 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   wca_result_changes: 'WCA 成绩变更记录',
   wca_kinch: 'WCA 官方成绩派生的 Kinch 综合排名,不属于站内账号数据',
 };
+
+export class AccountHasMembershipContractError extends Error {
+  constructor() {
+    super('cancel automatic renewal before deleting account');
+    this.name = 'AccountHasMembershipContractError';
+  }
+}
 
 export class AccountOwnsOrganizationError extends Error {
   constructor() {
@@ -244,6 +252,14 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
     // 与已读游标都必须先等待删除完成,不能在持有 conversation 锁后再反向等待账号行。
     const accounts = await tx`SELECT id FROM app_users WHERE id = ${userId} FOR UPDATE`;
     if (!accounts.length) return;
+
+    // Contract writes lock the same account first, so creation cannot race past deletion.
+    const contracts = await tx`
+      SELECT id FROM membership_contracts
+      WHERE (wca_id = ${key} OR wca_id = ${`u${userId}`})
+        AND state IN ('pending', 'active')
+      LIMIT 1`;
+    if (contracts.length) throw new AccountHasMembershipContractError();
 
     // 锁住机构与本人 owner 行,和成员角色变更使用同一把机构锁。DB 的 deferred
     // constraint trigger 是最终兜底;这里先给账号注销接口一个稳定、可解释的 409。

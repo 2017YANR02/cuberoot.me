@@ -51,6 +51,9 @@ describe('account merge code', () => {
       ['2020TEST01', 'u330'],
     ]);
     expect(calls[targetUpdate][1]).toEqual(['2020TEST01', true, true, true, 330, 655]);
+    const contractMove = calls.findIndex(([text]) => text.includes('UPDATE membership_contracts'));
+    expect(contractMove).toBeGreaterThan(targetUpdate);
+    expect(calls[contractMove][1]).toEqual(['2020TEST01', 'u655', '2020TEST01']);
     expect(calls).toContainEqual([
       expect.stringContaining('merged_into_user_id = ?'),
       [330, 655],

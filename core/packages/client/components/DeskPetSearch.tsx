@@ -48,7 +48,7 @@ const CSS = `
 .deskpet-toolbar .char-btn{position:relative;justify-content:center;width:44px;min-height:54px;padding:6px;}
 .deskpet-toolbar .char-btn .compact-select-current{overflow:visible;}
 .deskpet-character-label{display:flex;flex-direction:column;align-items:center;gap:4px;}
-.deskpet-toolbar .char-btn .compact-select-arrow{position:absolute;right:1px;top:9px;width:10px;height:10px;}
+.deskpet-toolbar .char-btn .compact-select-arrow{display:none;}
 /* anchored-panel: clamped (CompactSelect body portal and visualViewport bounds) */
 .deskpet-character-menu{z-index:100030;}
 .deskpet-character-menu .compact-select-option{padding:6px 10px;}
@@ -331,7 +331,6 @@ export default function DeskPetSearch({
                 <div className="deskpet-character-setting">
                   <span className="deskpet-character-option">
                     <span className="deskpet-character-thumb" aria-hidden><Maximize2 size={18} /></span>
-                    <span>{tr({ zh: '大小', en: 'Size' })}</span>
                   </span>
                   <div className="deskpet-character-sizes" role="group" aria-label={tr({ zh: '桌宠大小', en: 'Pet size' })}>
                     {([
@@ -370,7 +369,7 @@ export default function DeskPetSearch({
                 }}>
                   <span className="deskpet-character-option">
                     <span className="deskpet-character-thumb" aria-hidden><Sparkles size={18} /></span>
-                    <span>{tr({ zh: '动画图鉴', en: 'Animations' })}</span>
+                    <span>{tr({ zh: '图鉴', en: 'Gallery' })}</span>
                   </span>
                 </button>
               </div>}
@@ -380,7 +379,7 @@ export default function DeskPetSearch({
       </div>
       {donateOpen && <DonateModal lang={lang} onClose={() => setDonateOpen(false)} />}
       {feedbackOpen && <FeedbackModal lang={lang} onClose={() => setFeedbackOpen(false)} />}
-      {galleryOpen && <DeskPetGallery lang={lang} onClose={() => setGalleryOpen(false)} />}
+      {galleryOpen && <DeskPetGallery lang={lang} character={character} characters={characters} onClose={() => setGalleryOpen(false)} />}
       {wechatShareOpen && <WeChatPcShareModal onClose={() => setWechatShareOpen(false)} />}
       {mobileShareHelp && (
         <MobilePageShareModal mode={mobileShareHelp} onClose={() => setMobileShareHelp(null)} />

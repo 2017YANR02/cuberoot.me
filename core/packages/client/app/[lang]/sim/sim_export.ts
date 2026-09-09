@@ -6,7 +6,7 @@
  *   tweener.update() 推一帧 → renderer.render() → new VideoFrame(canvas) → encoder.encode
  * 直到 queue + 活跃 tween 都空, 末尾再 hold 30 帧便于观看, 收尾走 mp4-muxer。
  *
- * 复用 wr_metric (top10_export.ts) 的 VideoEncoder/mp4-muxer 编码套路: avc1.640033 / 12 Mbps / 30 fps。
+ * 与成绩页、历史画卷复用 canvas-video-export 编码器: avc1.640033 / 12 Mbps / 30 fps。
  */
 import * as THREE from 'three';
 import { Alg } from 'cubing/alg';
@@ -14,6 +14,10 @@ import World from './engine/world';
 import { timing } from './engine/tweenTiming';
 import tweener from './engine/tweener';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
+import { createCanvasVideoEncoder, type ExportProgress } from '@/lib/canvas-video-export';
+import { saveBlob } from '@/lib/document-export';
+
+export type { ExportProgress } from '@/lib/canvas-video-export';
 
 const W = 1920;
 const H = 1080;
@@ -22,13 +26,6 @@ const BITRATE = 12_000_000;
 const HOLD_END_FRAMES = FPS;          // 末尾停 1 秒
 const HOLD_START_FRAMES = Math.round(FPS * 0.5); // 起始停 0.5 秒
 const MAX_FRAMES = 30 * 60 * FPS;     // 30 分钟硬上限, 防失控
-
-export interface ExportProgress {
-  phase: string;
-  pct: number;
-  framesDone: number;
-  framesTotal: number;
-}
 
 export interface SimExportOptions {
   world: World;
@@ -84,6 +81,7 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
   const origWorldW = world.width;
   const origWorldH = world.height;
   const origFrames = timing.frames;
+  const origPaused = tweener.paused;
 
   let previewCtx: CanvasRenderingContext2D | null = null;
   if (previewCanvas) {
@@ -92,55 +90,24 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
     previewCtx = previewCanvas.getContext('2d');
   }
 
-  // 2. 切到 1080p; manual stepping
-  tweener.paused = true;
-  // setPixelRatio(1) 让 setSize 真的拿到 1920×1080 像素 buffer, 不被 devicePixelRatio 放大
-  renderer.setPixelRatio(1);
-  renderer.setSize(W, H, false);
-  world.width = W;
-  world.height = H;
-  world.resize();
-
   onProgress?.({
     phase: (isZh ? '准备...' : 'Preparing...'),
     pct: 0, framesDone: 0, framesTotal: estimateTotalFrames(alg),
   });
 
-  // 3. mp4-muxer + VideoEncoder
-  const { Muxer, ArrayBufferTarget } = await import('mp4-muxer');
-  const target = new ArrayBufferTarget();
-  const muxer = new Muxer({
-    target,
-    video: { codec: 'avc', width: W, height: H, frameRate: FPS },
-    fastStart: 'in-memory',
-    firstTimestampBehavior: 'offset',
+  // 2. 能力预检和编码器创建在改变场景前完成。
+  const encoder = await createCanvasVideoEncoder({
+    width: W, height: H, fps: FPS, bitrate: BITRATE, abortRef, keyFrameInterval: FPS,
   });
 
-  let encoderError: Error | null = null;
-  const encoder = new VideoEncoder({
-    output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
-    error: (e) => { encoderError = e instanceof Error ? e : new Error(String(e)); },
-  });
-  encoder.configure({
-    codec: 'avc1.640033',
-    width: W,
-    height: H,
-    bitrate: BITRATE,
-    framerate: FPS,
-  });
-
-  const encodeFrame = (frameIndex: number): void => {
-    const ts = Math.round(frameIndex * 1e6 / FPS);
-    const vf = new VideoFrame(origCanvas, { timestamp: ts, duration: Math.round(1e6 / FPS) });
-    const isKey = frameIndex % FPS === 0;
-    encoder.encode(vf, { keyFrame: isKey });
-    vf.close();
+  const encodeFrame = async (frameIndex: number): Promise<void> => {
     if (previewCtx && (frameIndex % 5 === 0)) {
       // WebGL 源 canvas 透明背景,2D 预览必须先 clear,否则历代帧 alpha=0 区叠加成残影
       previewCtx.fillStyle = '#000';
       previewCtx.fillRect(0, 0, W, H);
       previewCtx.drawImage(origCanvas, 0, 0, W, H);
     }
+    await encoder.encode(origCanvas, frameIndex);
   };
 
   const renderOnce = (): void => {
@@ -150,17 +117,12 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
     renderer.render(world.scene, world.camera);
   };
 
-  const yieldForBackpressure = async (): Promise<void> => {
-    while (encoder.encodeQueueSize > 4 && !abortRef.aborted) {
-      await new Promise<void>(r => setTimeout(r, 0));
-    }
-  };
-
   // 4. 离线渲染 + 编码
   let frameIndex = 0;
   const encodeStartTs = performance.now();
   let lastProgressTs = encodeStartTs;
   const totalEstimate = estimateTotalFrames(alg);
+  let blob: Blob;
 
   const tickProgress = async (phaseZh: string, phaseEn: string): Promise<void> => {
     const now = performance.now();
@@ -181,6 +143,14 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
   };
 
   try {
+    // 3. 切到 1080p; manual stepping，出错同样通过 finally 恢复。
+    tweener.paused = true;
+    renderer.setPixelRatio(1);
+    renderer.setSize(W, H, false);
+    world.width = W;
+    world.height = H;
+    world.resize();
+
     // a) 应用 setup (立即同步, 内部 tweener.finish 跳过动画)
     world.cube.twister.setup(setup);
     world.cube.dirty = true;
@@ -189,9 +159,7 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
     // b) 起始 hold
     for (let i = 0; i < HOLD_START_FRAMES; i++) {
       if (abortRef.aborted) throw new Error('aborted');
-      if (encoderError) throw encoderError;
-      encodeFrame(frameIndex++);
-      await yieldForBackpressure();
+      await encodeFrame(frameIndex++);
       if (frameIndex % 6 === 0) await tickProgress('录制开头', 'Recording intro');
     }
 
@@ -200,7 +168,6 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
 
     while (frameIndex < MAX_FRAMES) {
       if (abortRef.aborted) throw new Error('aborted');
-      if (encoderError) throw encoderError;
 
       const hasWork = tweener.length > 0 || world.cube.twister.length > 0;
       if (!hasWork) break;
@@ -214,17 +181,14 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
       tweener.update();
       world.cube.dirty = true;
       renderOnce();
-      encodeFrame(frameIndex++);
-      await yieldForBackpressure();
+      await encodeFrame(frameIndex++);
       if (frameIndex % 6 === 0) await tickProgress('编码中', 'Encoding');
     }
 
     // d) 末尾 hold
     for (let i = 0; i < HOLD_END_FRAMES; i++) {
       if (abortRef.aborted) throw new Error('aborted');
-      if (encoderError) throw encoderError;
-      encodeFrame(frameIndex++);
-      await yieldForBackpressure();
+      await encodeFrame(frameIndex++);
       if (frameIndex % 6 === 0) await tickProgress('录制末尾', 'Recording outro');
     }
 
@@ -232,16 +196,11 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
       phase: (isZh ? '正在封装 mp4...' : 'Finalizing mp4...'),
       pct: 1, framesDone: frameIndex, framesTotal: frameIndex,
     });
-    await encoder.flush();
-    if (encoderError) throw encoderError;
-    encoder.close();
-    muxer.finalize();
-  } catch (e) {
-    try { encoder.close(); } catch { /* ignore */ }
-    throw e;
+    blob = await encoder.finish();
   } finally {
+    encoder.close();
     // 5. 恢复 — 不管成功失败都要复位, 否则 UI canvas 卡在 1080p
-    tweener.paused = false;
+    tweener.paused = origPaused;
     timing.frames = origFrames;
     renderer.setPixelRatio(origPixelRatio);
     renderer.setSize(origWorldW, origWorldH, false);
@@ -259,14 +218,6 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
   if (abortRef.aborted) throw new Error('aborted');
 
   // 6. 下载
-  const blob = new Blob([target.buffer], { type: 'video/mp4' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
   const tsTag = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-  a.href = url;
-  a.download = `sim-${tsTag}.mp4`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  saveBlob(blob, `sim-${tsTag}.mp4`);
 }

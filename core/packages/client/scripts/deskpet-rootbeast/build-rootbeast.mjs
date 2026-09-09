@@ -39,27 +39,29 @@ add('drag','被拎起来','Picked up','离开地面时四爪轻晃，尾巴也�
 add('annoyed','轻轻抗议','A little protest','左右摇摇身子，尾巴抖一下就原谅你。','A small wiggle and a tail flick, then all is forgiven.',({pet,v})=>pet()+v(at(line('M-14-14V0H0M14 14V0H0',red,8),109,328),15,48));
 add('thinking','认真思考','Thinking','歪头看看冒出来的想法，根号尾巴也像在思考。','A head tilt follows a trail of floating ideas.',({pet,float})=>pet()+float(circle(0,0,8),132,283,5)+float(circle(0,0,14),107,246,8)+float(at(cloud,0,0,.67)+at(tile(red,36),0,-5),83,195));
 add('typing','打字','Typing','前爪交替敲键盘，写完一行就停一下。','Two paws alternate at the keyboard, pausing between lines.',({pet,a})=>pet()+at(laptop,313,524)+a(line('M288 467H309',gold,5),[[0,opacity(1)],[48,opacity(1)],[50,opacity(0)],[98,opacity(0)]],undefined,'steps(1)'));
-add('building','搭积木','Building blocks','把红蓝积木一层层叠好，最后轻轻扶正。','Red and blue blocks rise into a stack, then get a final gentle nudge.',({pet,a})=>{
+add('building','搭积木','Building blocks','把红蓝积木一层层叠好，最后轻轻扶正。','Red and blue blocks rise into a stack, then get a final gentle nudge.',({pet,a,grip})=>{
   // The hand releases each block at its final world position; it never drops
   // out of the sky. These beats and paw positions match the character plan.
   const blocks = [0,1,2].map(i => {
     const pickup = [0,30,50][i], placed = [23,43,63][i];
     const color = i % 2 ? red : blue;
-    const held = a(tile(color,57/.73),[[0,opacity(pickup === 0 ? 1 : 0)],[pickup,opacity(1)],[placed,opacity(0)]],undefined,'steps(1,end)');
-    const stacked = a(at(tile(color,57),130,531-i*57),[[0,opacity(0)],[placed-.001,opacity(0)],[placed,opacity(1)],[92,opacity(1)],[96,opacity(0)],[100,opacity(0)]]);
+    const held = a(tile(color,32/.73),[[0,opacity(pickup === 0 ? 1 : 0)],[pickup,opacity(1)],[placed,opacity(0)]],undefined,'steps(1,end)');
+    const stacked = a(at(tile(color,32),...grip(placed)),[[0,opacity(0)],[placed-.001,opacity(0)],[placed,opacity(1)],[92,opacity(1)],[96,opacity(0)],[100,opacity(0)]]);
     return { held, stacked };
   });
   return pet({held:blocks.map(({held})=>({art:held}))})+blocks.map(({stacked})=>stacked).join('');
 });
 add('headphones','戴耳机','Headphones','戴上耳机点头打拍子，尾巴跟着音乐轻摆。','Headphones on, head bobbing, and the tail keeping time.',({pet,float})=>pet({extra:line('M-239-161Q-254-305-89-309 87-315 99-175',ink,22)+rect(-257,-196,39,87,ink,15)+rect(81,-191,39,87,ink,15)})+float(at(`<text fill="${gold}" font-size="57" font-family="serif">♪</text>`,0,0),90,265)+float(at(`<text fill="${pink}" font-size="47" font-family="serif">♫</text>`,0,0),520,390));
-add('juggling','抛接方块','Juggling','三枚彩色方块轮流飞起，前爪忙得刚刚好。','Three colorful tiles arc between busy paws.',({pet,a})=>pet()+[red,blue,gold].map((color,i)=>{
+add('juggling','抛接方块','Juggling','三枚彩色方块轮流飞起，前爪忙得刚刚好。','Three colorful tiles arc between busy paws.',({pet,a,grip})=>pet()+[red,blue,gold].map((color,i)=>{
+  const left = grip(0), right = grip(0,'R');
   const phase = i/3;
   const times = [...new Set([0,100,...Array.from({length:32},(_,step)=>((step/32-phase+1)%1)*100)])].sort((left,right)=>left-right);
   const frames = times.map(time=>{
     const cycle = time/100+phase, position = cycle%1;
     const outward = position<.5, flight = outward ? position*2 : (position-.5)*2;
-    const x = outward ? 163+282*flight : 445-282*flight;
-    const y = 430-4*280*flight*(1-flight);
+    const from = outward ? left : right, to = outward ? right : left;
+    const x = from[0]+(to[0]-from[0])*flight;
+    const y = from[1]+(to[1]-from[1])*flight-4*280*flight*(1-flight);
     return [time,t(x,y,cycle*360)];
   });
   return a(tile(color,37),frames,undefined,'linear');
@@ -111,12 +113,13 @@ add('skateboard','滑板出发','Skateboard ride','站稳滑板向前滑，拐�
 add('box','箱子里探头','Box surprise','躲进快递箱，再慢慢探出头来看看你。','Hide in a parcel, then peek out to see who is there.',({pet,a})=>pet({scale:.58,y:469})+rect(162,427,317,142,gold,10)+p('M162 427 125 391H284L314 427ZM314 427 347 390H516L479 427Z',cream)+rect(295,427,33,142,cream,0)+a(at(heart,319,492,.8),[[0,t(0,0,0,.85)],[50,t(0,0,0,1.05)]],'319px 492px'));
 add('soda','汽水打嗝','Soda hiccup','喝一口汽水，忍不住小小地打个嗝。','A sip of soda ends in one tiny surprise hiccup.',({pet,a,v})=>pet({held:[{art:a(cup,[[0,t()],[22,t(0,-15,-12)],[40,t(0,-15,-12)],[53,t()]])}]})+v(at(circle(0,0,9,mint),160,380)+at(circle(0,0,6,mint),177,348),49,74));
 add('paper-plane','纸飞机','Paper plane','轻轻一推，纸飞机绕过根号尾巴飞回来。','A paper plane loops around the radical tail and comes back.',({pet,a})=>pet()+a(at(p('M-45 10 47-29 13 32-1 8Z',cream)+p('M-1 8 47-29-16 20Z',mint),102,407),[[0,t()],[20,t()],[40,t(185,-285,9)],[62,t(426,-99,56)],[83,t(68,-50,-20)],[100,t()]],'102px 407px'));
-add('catch-star','接住星星','Catch a star','一颗星星慢慢落下，刚好落进小爪子里。','A falling star lands softly in a waiting paw.',({pet,a,glints,v})=>{
+add('catch-star','接住星星','Catch a star','一颗星星慢慢落下，刚好落进小爪子里。','A falling star lands softly in a waiting paw.',({pet,a,glints,v,grip})=>{
   // The world-space fall meets the left paw at 50%, then stays attached as
   // the character brings the star in for a hug. Reset after it is hidden.
-  const falling = a(at(star(gold),130,151,1.5),[[0,t(0,0,-15)],[10,t(0,-5,-8)],[18,t(0,0,-15),'ease-in'],[50,t(0,233.88,0)],[96,t(0,0,-15)],[100,t(0,0,-15)]],'130px 151px');
+  const catchOffset = [0,-44], landing = grip(50,'L',catchOffset);
+  const falling = a(at(star(gold),130,151,1.5),[[0,t(0,0,-15)],[10,t(0,-5,-8)],[18,t(0,0,-15),'ease-in'],[50,t(landing[0]-130,landing[1]-151,0)],[96,t(0,0,-15)],[100,t(0,0,-15)]],'130px 151px');
   const visibleFall = a(falling,[[0,opacity(1)],[49.999,opacity(1)],[50,opacity(0)],[96,opacity(0)],[100,opacity(1)]]);
-  const held = a(at(star(gold),0,-44,1.5/.73),[[0,opacity(0)],[49.999,opacity(0)],[50,opacity(1)],[90,opacity(1)],[96,opacity(0)],[100,opacity(0)]]);
+  const held = a(at(star(gold),...catchOffset,1.5/.73),[[0,opacity(0)],[49.999,opacity(0)],[50,opacity(1)],[90,opacity(1)],[96,opacity(0)],[100,opacity(0)]]);
     return pet({held:[{art:held,inFront:true}]})+visibleFall+v(glints(83,361),50,69);
 });
 add('umbrella','撑伞听雨','Rainy day','撑起红白小伞，听雨点落在伞面上。','A red-and-white umbrella catches the gentle rain.',({pet,a})=>pet({held:[{art:at(umbrella,-32,-176,1.2)}]})+[0,1,2,3,4,5].map(i=>a(at(line('M0 0-6 19',mint,5),76+i*92,117+(i%2)*38),[[0,t()+opacity(0)],[15,t()+opacity(.8)],[80,t(-18,115)+opacity(0)],[100,t()+opacity(0)]])).join(''));
@@ -130,7 +133,7 @@ add('sneak','悄悄靠近','Sneaking up','压低身子，放轻每一步，偷�
 add('dance','方块舞步','Cube shuffle','左右换重心，再用前爪打两个拍子。','Shift weight left and right, then tap out a little paw rhythm.',({pet,glints})=>pet()+glints(103,340)+glints(532,425));
 add('portal','方块任意门','Cube portal','从发光的小门后探头，再一小步跨出来。','Peek through a glowing little doorway and step out.',({pet,a})=>rect(145,210,350,369,violet,92)+rect(158,223,324,343,ink,81)+a(pet({scale:.58,y:500}),[[0,t(0,32,0,.8)],[26,t(0,32,0,.8)],[60,t(0,4,0,1.1)],[84,t(0,4,0,1.1)],[100,t(0,32,0,.8)]],'320px 550px')+line('M173 462V299Q173 238 230 238',cream,6));
 add('moon-hug','抱月亮晚安','Goodnight moon','抱住一弯月亮，闭上眼睛慢慢睡着。','Hug a crescent moon and drift gently into sleep.',s=>s.pet({carried:at(moon,-55,-40,1.8,-12)})+s.float(at(star(),0,0,.5),103,317,7)+zzz(s,494,323));
-add('cube-pop','魔方 POP 了','Cube POP','刚转两下，棱块突然弹出！愣一下，伸爪接回去，再害羞地看你一眼。','Two quick turns eject an edge! Pause in surprise, catch it back into place, then share a sheepish look.',({pet,a})=>pet()+at(turningCube(a,150,{moves:['U',"U'"],beats:[[12,26],[30,42]],pop:[46,60,84],popVector:[-90,-145]}),314,508),.60);
+add('cube-pop','魔方 POP 了','Cube POP','刚转两下，棱块突然弹出！愣一下，伸爪接回去，再害羞地看你一眼。','Two quick turns eject an edge! Pause in surprise, catch it back into place, then share a sheepish look.',({pet,a})=>pet()+at(turningCube(a,150,{moves:['U',"U'"],beats:[[12,26],[30,42]],pop:[46,60,84],popVector:[-103,-20]}),314,508),.60);
 
 if (scenes.length !== 51 || new Set(scenes.map(s => s.id)).size !== 51) throw Error('Exactly 51 distinct animations are required');
 const xml = text => text.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
@@ -143,6 +146,7 @@ const manifest = scenes.map(({id,zh,en,description,descriptionEn,draw,duration,p
 <title id="rb-title">${xml(zh+' / '+en)}</title><desc id="rb-desc">${xml(description+' '+descriptionEn)}</desc>
 <defs>${defs}</defs>
 <style>.rb-tail-outline use{stroke:${cream};stroke-width:10;stroke-linejoin:round;paint-order:stroke fill}
+#rb-paw{overflow:visible}#rb-paw path:first-child{stroke:color-mix(in srgb, ${blue} 55%, ${ink});stroke-width:9;stroke-linejoin:round;paint-order:stroke fill}
 ${css}
 @media(prefers-reduced-motion:reduce){g{animation-play-state:paused!important;animation-delay:-${poster*duration}s!important}}
 </style>

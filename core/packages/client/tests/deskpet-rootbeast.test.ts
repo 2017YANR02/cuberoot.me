@@ -45,6 +45,26 @@ describe('Root Beast animation integration', () => {
     expect(choreography.size).toBe(ROOTBEAST_SCENES.length);
   });
 
+  it('keeps the traced head rounded through every generated turn', () => {
+    for (const scene of ROOTBEAST_SCENES) {
+      const svg = readFileSync(resolve('public/deskpet/rootbeast', scene.file), 'utf8');
+      const scales = [0, 7].map(strip => {
+        const animation = svg.match(new RegExp(`<g class="([^"]+)"><g data-shell-strip="${strip}"`))![1];
+        const keyframes = svg.slice(svg.indexOf(`@keyframes ${animation}{`)).split('\n')[0];
+        return [...keyframes.matchAll(/transform:matrix\(([\d.]+),/g)].map(match => Number(match[1]));
+      });
+      expect(scales[0].length, scene.id).toBe(scales[1].length);
+      expect(scales[0].length, scene.id).toBeGreaterThan(1);
+      for (let i = 0; i < scales[0].length; i++) {
+        // The old 55-degree teaching pose stretched the flank 3.19 times
+        // more than the face; profile poses exceeded 20 times.
+        expect(scales[1][i] / scales[0][i], `${scene.id} pose ${i}`).toBeLessThanOrEqual(1.651);
+        expect(Math.min(scales[0][i], scales[1][i]), scene.id).toBeGreaterThan(0);
+      }
+      if (scene.id === 'teaching') expect(scales[0][1]).toBe(.8429);
+    }
+  });
+
   it('groups two complete WeChat releases without duplicates and keeps the rest as candidates', () => {
     expect(ROOTBEAST_COLLECTIONS.map(item => item.id)).toEqual(['daily', 'adventures', 'candidates']);
     const releases = ROOTBEAST_COLLECTIONS.filter(item => item.id !== 'candidates');
