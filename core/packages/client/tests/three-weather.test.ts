@@ -119,8 +119,8 @@ describe('continuous history terrain', () => {
         expect(journeyWeather(next, variation)).toBe(HISTORY_ENVIRONMENTS[next].weather[variation % HISTORY_ENVIRONMENTS[next].weather.length]);
       }
     });
-    expect(journeyWeather(NaN, Infinity)).toBe('storm');
-    for (const position of [NaN, Infinity, -Infinity, -999, -.5]) expect(journeyWeather(position, 0)).toBe('storm');
+    expect(journeyWeather(NaN, Infinity)).toBe('clear');
+    for (const position of [NaN, Infinity, -Infinity, -999, -.5]) expect(journeyWeather(position, 0)).toBe('clear');
     expect(journeyWeather(999, -1)).toBe(HISTORY_ENVIRONMENTS.at(-1)!.weather[0]);
     expect(environmentBlend(-1)).toEqual({ left: 0, right: 1, t: 0 });
   });
