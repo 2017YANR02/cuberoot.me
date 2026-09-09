@@ -15,8 +15,8 @@ body:has(.lbl-page) {
   backdrop-filter: blur(24px) saturate(1.65);
 }
 .lbl-nav { position: relative; z-index: 2; display: flex; align-items: center; gap: 8px; width: fit-content; max-width: 100%; padding: 6px; border-radius: 28px; }
-.lbl-nav > button { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; }
-.lbl-nav > button:disabled { opacity: .3; cursor: default; }
+.lbl-nav > .lbl-button { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; }
+.lbl-nav > .lbl-button:disabled { opacity: .3; cursor: default; }
 .lbl-progress { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted-foreground); white-space: nowrap; }
 .lbl-nav .compact-select { min-width: 0; }
 .lbl-nav .compact-select-trigger { max-width: 100%; }
@@ -46,7 +46,7 @@ body:has(.lbl-page) {
 .lbl-details { grid-column: 1 / -1; margin-top: 16px; max-width: 720px; font-size: .9rem; line-height: 1.85; color: var(--muted-foreground); }
 .lbl-details summary { width: fit-content; cursor: pointer; color: var(--foreground); }
 .lbl-details p { margin: 16px 0; }
-.lbl-page button:focus-visible, .lbl-page summary:focus-visible, .lbl-page a:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.lbl-page .lbl-button:focus-visible, .lbl-page summary:focus-visible, .lbl-page a:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
 @media (max-width: 700px) {
   .lbl-page { padding: 16px 16px 40px; }
   .lbl-lesson { grid-template-columns: minmax(0, 1fr); gap: 20px; margin-top: 24px; }

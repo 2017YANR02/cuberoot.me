@@ -126,6 +126,10 @@ jobs:
             /.githooks/pre-commit
             /stats/all_past_comps.json
             /stats/all_upcoming_comps.json
+            # Achievement tests validate every row in these three complete snapshots.
+            /stats/date_match_pr.json
+            /stats/tied_podium_results.json
+            /stats/complete_competition_winners.json
             /stats/scramble/2x2_essential.json
             /stats/scramble/puzzle_distribution.json
             /stats/scramble/recent_scrambles.json

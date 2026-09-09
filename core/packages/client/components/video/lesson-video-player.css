@@ -14,9 +14,9 @@
 .lesson-video-player video { display: block; width: 100%; max-height: 75vh; aspect-ratio: 16 / 9; object-fit: contain; }
 .lesson-video-player:fullscreen { display: flex; align-items: center; height: 100%; }
 .lesson-video-player:fullscreen video { height: 100%; max-height: none; }
-.lesson-video-player button { font: inherit; color: inherit; cursor: pointer; }
-.lesson-video-player button:disabled { cursor: default; opacity: .4; }
-.lesson-video-player button:focus-visible, .lesson-video-player input:focus-visible { outline: 2px solid var(--player-ink); outline-offset: -2px; }
+.lesson-video-player .lesson-video-button { font: inherit; color: inherit; cursor: pointer; }
+.lesson-video-player .lesson-video-button:disabled { cursor: default; opacity: .4; }
+.lesson-video-player .lesson-video-button:focus-visible, .lesson-video-player .lesson-video-range:focus-visible { outline: 2px solid var(--player-ink); outline-offset: -2px; }
 .lesson-video-surface { position: absolute; inset: 0; width: 100%; border: 0; padding: 0; background: transparent; }
 .lesson-video-controls { position: absolute; bottom: 0; inset-inline: 0; padding: 24px 12px 0; background: linear-gradient(transparent, color-mix(in srgb, var(--player-base) 90%, transparent)); opacity: 0; pointer-events: none; transition: opacity .18s; }
 .controls-visible .lesson-video-controls, .lesson-video-controls:has(:focus-visible) { opacity: 1; pointer-events: auto; }
@@ -33,14 +33,14 @@
 .lesson-video-progress { position: relative; height: 16px; display: flex; align-items: center; }
 .lesson-video-progress::before { content: ''; position: absolute; inset-inline: 0; height: 3px; background: linear-gradient(to right, var(--player-ink) var(--played), transparent var(--played)), linear-gradient(to right, color-mix(in srgb, var(--player-ink) 40%, transparent) var(--buffered), var(--player-track) var(--buffered)); border-radius: 3px; pointer-events: none; }
 .lesson-video-progress:hover::before { height: 5px; }
-.lesson-video-player input[type=range] { appearance: none; -webkit-appearance: none; border: 0; padding: 0; margin: 0; border-radius: 0; cursor: pointer; background: transparent; accent-color: var(--player-ink); }
-.lesson-video-progress input { position: relative; width: 100%; height: 16px; }
-.lesson-video-player input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--player-ink); }
-.lesson-video-player input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--player-ink); }
-.lesson-video-progress input::-webkit-slider-thumb { opacity: 0; }
-.lesson-video-progress:hover input::-webkit-slider-thumb, .lesson-video-progress input:focus-visible::-webkit-slider-thumb { opacity: 1; }
-.lesson-video-volume input[type=range] { width: 0; height: 24px; opacity: 0; transition: width .15s, opacity .15s; background: linear-gradient(to right, var(--player-ink) var(--volume), var(--player-track) var(--volume)) center / 100% 3px no-repeat; }
-.lesson-video-volume:hover input, .lesson-video-volume:focus-within input { width: 60px; margin-right: 10px; opacity: 1; }
+.lesson-video-player .lesson-video-range[type=range] { appearance: none; -webkit-appearance: none; border: 0; padding: 0; margin: 0; border-radius: 0; cursor: pointer; background: transparent; accent-color: var(--player-ink); }
+.lesson-video-progress .lesson-video-range { position: relative; width: 100%; height: 16px; }
+.lesson-video-player .lesson-video-range[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--player-ink); }
+.lesson-video-player .lesson-video-range[type=range]::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--player-ink); }
+.lesson-video-progress .lesson-video-range::-webkit-slider-thumb { opacity: 0; }
+.lesson-video-progress:hover .lesson-video-range::-webkit-slider-thumb, .lesson-video-progress .lesson-video-range:focus-visible::-webkit-slider-thumb { opacity: 1; }
+.lesson-video-volume .lesson-video-range[type=range] { width: 0; height: 24px; opacity: 0; transition: width .15s, opacity .15s; background: linear-gradient(to right, var(--player-ink) var(--volume), var(--player-track) var(--volume)) center / 100% 3px no-repeat; }
+.lesson-video-volume:hover .lesson-video-range, .lesson-video-volume:focus-within .lesson-video-range { width: 60px; margin-right: 10px; opacity: 1; }
 .lesson-video-capture { border: 0; background: transparent; font-size: 10px !important; padding: 10px 3px; }
 .lesson-video-autoplay { position: relative; display: flex; padding: 10px 6px; }
 .lesson-video-player .bool-toggle { gap: 0; position: relative; }
@@ -68,13 +68,13 @@
 .lesson-video-menu-back, .lesson-video-option { display: flex; align-items: center; gap: 20px; width: 100%; padding: 10px 20px; border: 0; background: transparent; text-align: left; font-size: 13px !important; }
 .lesson-video-menu-back { border-bottom: 1px solid var(--player-track); padding-bottom: 14px; margin-bottom: 6px; }
 .lesson-video-menu-back svg, .lesson-video-option svg { width: 18px; height: 18px; }
-.lesson-video-menu button:not(:disabled):hover { background: color-mix(in srgb, var(--player-ink) 12%, transparent); }
+.lesson-video-menu .lesson-video-button:not(:disabled):hover { background: color-mix(in srgb, var(--player-ink) 12%, transparent); }
 .lesson-video-menu-note { max-width: 230px; margin: 8px 20px; font-size: 12px; opacity: .7; }
 .lesson-video-notice { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); padding: 8px 12px; border-radius: 4px; background: color-mix(in srgb, var(--player-base) 80%, transparent); font-size: 13px; z-index: 3; }
 /* anchored-panel: clamped (usePanelClamp plus measured player/viewport bounds). */
 .lesson-video-context { position: absolute; width: max-content; max-width: calc(100% - 16px); overflow: auto; overscroll-behavior: contain; padding: 6px 0; border-radius: 10px; background: color-mix(in srgb, var(--player-base) 90%, transparent); backdrop-filter: blur(16px); z-index: 5; scrollbar-width: thin; }
-.lesson-video-context button { display: flex; align-items: center; gap: 12px; width: 100%; border: 0; padding: 9px 14px; background: transparent; font-size: 12px; font-weight: 600; text-align: left; white-space: nowrap; }
-.lesson-video-context button:hover, .lesson-video-context button:focus-visible { background: color-mix(in srgb, var(--player-ink) 15%, transparent); }
+.lesson-video-context .lesson-video-button { display: flex; align-items: center; gap: 12px; width: 100%; border: 0; padding: 9px 14px; background: transparent; font-size: 12px; font-weight: 600; text-align: left; white-space: nowrap; }
+.lesson-video-context .lesson-video-button:hover, .lesson-video-context .lesson-video-button:focus-visible { background: color-mix(in srgb, var(--player-ink) 15%, transparent); }
 .lesson-video-context svg { width: 20px; height: 20px; flex-shrink: 0; }
 .lesson-video-context .lesson-video-context-check { width: 14px; margin-left: auto; }
 .lesson-video-details { position: absolute; top: 8px; left: 8px; max-width: calc(100% - 16px); max-height: calc(100% - 16px); overflow: auto; overscroll-behavior: contain; box-sizing: border-box; padding: 8px 30px 8px 10px; background: color-mix(in srgb, var(--player-base) 82%, transparent); color: var(--player-ink); z-index: 4; font-size: 11px; line-height: 1.3; scrollbar-width: thin; }
@@ -89,7 +89,7 @@
 .lesson-video-stat-meter meter::-moz-meter-bar { background: var(--signal-success); }
 .lesson-video-help { max-width: 370px; font-size: 12px; }
 .lesson-video-help p { margin: 10px 0; }
-.lesson-video-help > button { border: 0; padding: 6px 0; text-decoration: underline; background: transparent; }
+.lesson-video-help > .lesson-video-button { border: 0; padding: 6px 0; text-decoration: underline; background: transparent; }
 /* Theater mode keeps the lesson directory reachable below the expanded stage. */
 .platform-classroom:has(.lesson-video-player.is-theater) { grid-template-columns: minmax(0, 1fr); }
 .platform-classroom:has(.lesson-video-player.is-theater) .platform-classroom-stage { grid-row: 1; }
@@ -108,8 +108,8 @@
 .lesson-video-shortcut-groups .is-unavailable { opacity: .5; }
 .lesson-video-shortcut-note { margin: 24px 8px 0; font-size: 11px; color: color-mix(in srgb, var(--player-ink) 60%, transparent); }
 .lesson-video-shortcuts footer { display: flex; justify-content: flex-end; margin-top: 16px; }
-.lesson-video-shortcuts footer button { border: 0; padding: 8px; background: transparent; color: var(--signal-info); }
-.lesson-video-shortcuts footer button:focus-visible { outline: none; }
+.lesson-video-shortcuts footer .lesson-video-button { border: 0; padding: 8px; background: transparent; color: var(--signal-info); }
+.lesson-video-shortcuts footer .lesson-video-button:focus-visible { outline: none; }
 @media (max-width: 600px) {
   .lesson-video-controls { padding-inline: 8px; }
   .lesson-video-toolbar { height: 44px; gap: 2px; }
@@ -119,7 +119,7 @@
   .lesson-video-time { font-size: 11px; margin-inline: 3px; }
   .lesson-video-capture, .lesson-video-pip, .lesson-video-theater { display: none; }
   .lesson-video-autoplay { padding-inline: 4px; }
-  .lesson-video-volume:focus-within input, .lesson-video-volume:hover input { width: 42px; margin-right: 3px; }
+  .lesson-video-volume:focus-within .lesson-video-range, .lesson-video-volume:hover .lesson-video-range { width: 42px; margin-right: 3px; }
   .lesson-video-toolbar:has(.lesson-video-volume:focus-within) .lesson-video-time { display: none; }
   .lesson-video-menu { right: 8px; bottom: 68px; max-height: calc(100% - 76px); max-width: calc(100% - 16px); }
   .lesson-video-menu-row { gap: 12px; padding: 10px 14px; }
