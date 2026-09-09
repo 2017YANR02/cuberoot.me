@@ -46,6 +46,7 @@ export default function SpacePage() {
   const navigating = navigation !== 'orbit';
   const [zoom, setZoom] = useState(50);
   const [cityState, setCityState] = useState<'loading' | 'ready' | 'error' | null>(null);
+  const [roomState, setRoomState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [cruising, setCruising] = useState(false);
   const [storage, setStorage] = useState<'saved' | 'blocked' | 'failed'>('saved');
   const [message, setMessage] = useState<'import' | 'time' | 'limit' | 'weather' | null>(null);
@@ -140,6 +141,7 @@ export default function SpacePage() {
         altitude: setAltitude,
         weatherError: () => setMessage('weather'),
         cityState: setCityState,
+        roomState: setRoomState,
         cruising: setCruising,
         zoom: setZoom,
       });
@@ -298,6 +300,7 @@ export default function SpacePage() {
         {unavailable && <div className="space-unavailable" role="alert"><p>{tr({ zh: '3D 画面暂时不可用，请开启浏览器硬件加速后刷新。已有布局仍可导出。', en: 'The 3D view is unavailable. Enable browser hardware acceleration and reload. You can still export your layout.' })}</p><button className="space-control" onClick={exportLayout}><ArrowDownToLine size={16} />{tr({ zh: '导出布局', en: 'Export layout' })}</button></div>}
       </div>
       <footer className="space-footer">
+        {roomState !== 'ready' && <span role="status">{roomState === 'loading' ? tr({ zh: '正在载入房间模型…', en: 'Loading the room model…' }) : tr({ zh: '房间模型加载失败，请切换风格后重试。', en: 'Room model failed to load. Switch styles to retry.' })}</span>}
         {environment === 'shanghai' && <span role="status">{cityState === 'loading' ? tr({ zh: '正在载入黄浦江两岸…', en: 'Loading both banks of the Huangpu…' }) : cityState === 'error' ? tr({ zh: '上海场景加载失败，请切换环境后重试。', en: 'Shanghai failed to load. Switch environments to retry.' }) : tr({ zh: '部分建筑和桥梁已单独重建，仍有估算尺寸；其余多为简化底模。', en: 'Selected buildings and bridges have individual reconstructions with estimated dimensions; much of the city remains simplified.' })} <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a></span>}
         <span id="space-instructions">{navigation === 'drone' ? tr({ zh: '键盘与屏幕箭头均原地转镜头：↑ ↓ 俯仰，← → 转向；WASD 平移，R / E 上升、F / Q 下降。屏幕按钮可长按，拖动画面环顾、滚轮缩放。点击速度数字自定义，Esc 退出无人机。', en: 'Keyboard and onscreen arrows look in place: ↑ ↓ tilt, ← → turn. WASD moves; R / E ascends, F / Q descends. Hold onscreen buttons, drag to look, scroll to zoom. Click the speed to customize; Esc exits Drone.' }) : navigation === 'walk' ? tr({ zh: 'WASD、方向键或按住箭头行走；拖动画面环顾、滚轮缩放，Esc 退出漫游。', en: 'Walk with WASD, arrow keys or hold the arrows. Drag to look, scroll to zoom; Esc exits walking.' }) : mode === 'twist' ? tr({ zh: '拖动魔方表面转层，也可点击转动按钮；拖动空白处环绕，双指或滚轮缩放。', en: 'Drag a puzzle face or use the move buttons to turn a layer. Drag empty space to orbit; pinch or scroll to zoom.' }) : tr({ zh: '选中后拖动魔方；拖动空白处环绕，双指或滚轮缩放。方向键也可移动。', en: 'Select, then drag a cube. Drag empty space to orbit; pinch or scroll to zoom. Arrow keys move the selected cube.' })}</span>
         {weather === 'rainbow' && <span>{tr({ zh: '彩虹出现在太阳的相反方向，清晨或傍晚更容易看到；夜间不显示。', en: 'Look away from the sun for the rainbow, best seen in the morning or late afternoon. It is hidden at night.' })}</span>}

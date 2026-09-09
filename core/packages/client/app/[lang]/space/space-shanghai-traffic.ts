@@ -59,7 +59,7 @@ export class ShanghaiTraffic {
   private transform = new THREE.Object3D();
   private direction = new THREE.Vector3();
 
-  constructor(roads: ShanghaiRoad[], material: MaterialFactory, narrow: boolean) {
+  constructor(roads: ShanghaiRoad[], material: MaterialFactory, narrow: boolean, authored?: THREE.Object3D) {
     this.root.name = 'Shanghai road traffic';
     this.tracks = shanghaiTrafficTracks(roads);
     // Deterministic spread, with the dense central waterfront loaded first.
@@ -76,29 +76,11 @@ export class ShanghaiTraffic {
     this.root.userData.cars = this.cars.length; this.root.userData.tracks = this.tracks.length;
     if (!this.cars.length) return;
 
-    // A compact city sedan, metre-scale body panels, sloping cabin and four tyres.
-    // The villa's concept-car GLB is a different vehicle and is too costly to
-    // duplicate across city traffic. All city cars share these six geometry batches.
-    const g = new CityGeometry(), body = material(0xc6cbd0, .55, .3, .1), glass = material(0x10212b, .55, .22, .035);
-    const rubber = material(0x13191c, .05, .94), trim = material(0x606b72, .72, .28, .07);
-    const head = material(0xe1efff, .1, .24, 18), tail = material(0xff2610, .1, .28, 12);
-    const outline = new THREE.Shape([[-.88,-2.08],[-.72,-2.28],[.72,-2.28],[.88,-2.08],[.9,1.75],[.7,2.2],[-.7,2.2],[-.9,1.75]].map(([x,z]) => new THREE.Vector2(x,-z)));
-    const shell = new THREE.ExtrudeGeometry(outline, { depth: .52, bevelEnabled: true, bevelSize: .1, bevelThickness: .1, bevelSegments: 2, steps: 1 });
-    shell.rotateX(-Math.PI / 2); g.add(shell, body, [0,.38,0]);
-    // Cabin slopes along Z and narrows towards the roof.
-    const cabin = new THREE.BoxGeometry(1.62,.58,2.35), cp = cabin.getAttribute('position');
-    for (let i=0;i<cp.count;i++) if(cp.getY(i)>0) { cp.setX(i,cp.getX(i)*.83); cp.setZ(i,cp.getZ(i)*.61-.13); }
-    cabin.computeVertexNormals(); g.add(cabin, glass, [0,1.13,-.18]);
-    g.box([1.39,.07,1.4],[0,1.45,-.31],body);
-    for (const x of [-.77,.77]) { g.box([.055,.5,.08],[x,1.15,-.18],trim); g.box([.22,.16,.3],[x*1.27,1.04,.52],body); }
-    for (const x of [-.86,.86]) for(const z of [-1.43,1.4]) {
-      const rotation=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),Math.PI/2);
-      g.add(new THREE.CylinderGeometry(.32,.32,.22,12),rubber,[x,.32,z],rotation);
-      g.add(new THREE.CylinderGeometry(.19,.19,.235,10),trim,[x,.32,z],rotation);
-    }
-    g.box([1.25,.14,.055],[0,.5,2.27],rubber);
-    for(const x of [-.59,.59]) { g.box([.48,.13,.075],[x,.78,2.22],head); g.box([.49,.15,.08],[x,.79,-2.3],tail); }
-    const template=g.finish();
+    const parts = authored?.children.filter((o): o is THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial> => o instanceof THREE.Mesh && o.material instanceof THREE.MeshStandardMaterial && !o.material.userData.spaceRuntimeShader);
+    const beam = authored?.children.find((o): o is THREE.Mesh => o instanceof THREE.Mesh && o.material.userData.spaceRuntimeShader);
+    const bodyMesh = parts?.find(o => o.material.userData.spaceShaderKey === 'traffic-shanghai-illumination-0.1');
+    if (authored && (parts?.length !== 6 || !bodyMesh || !beam)) throw new Error('Incomplete Blender traffic prefab');
+    const { template, body } = authored ? { template: { children: parts! }, body: bodyMesh!.material } : this.carTemplate(material);
     for(const child of template.children) {
       const mesh=child as THREE.Mesh<THREE.BufferGeometry,THREE.MeshStandardMaterial>, m=mesh.material, compile=m.onBeforeCompile;
       m.onBeforeCompile=(shader,renderer)=>{
@@ -117,7 +99,8 @@ export class ShanghaiTraffic {
     this.cars.forEach((car,i)=>paint.setColorAt(i,new THREE.Color(palette[car.seed%palette.length])));
     // Light projected onto the road is an analytic approximation. It is confined
     // to each car's lane and changes with rain; it is not a second mirror plane.
-    const lightGeometry=new THREE.PlaneGeometry(3.1,12); lightGeometry.rotateX(-Math.PI/2); lightGeometry.translate(0,.035,2.4);
+    const lightGeometry=beam?.geometry ?? new THREE.PlaneGeometry(3.1,12);
+    if (!beam) { lightGeometry.rotateX(-Math.PI/2); lightGeometry.translate(0,.035,2.4); }
     const light=new THREE.ShaderMaterial({ transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2, fog:true,
       uniforms:{...THREE.UniformsLib.fog,night:this.night,wet:this.wet},
       vertexShader:`attribute float trafficVisibility; varying vec2 lightUV; varying float lightVisibility;
@@ -145,11 +128,42 @@ export class ShanghaiTraffic {
           #endif
         }` });
     this.instance(lightGeometry,light);
+    if (authored) {
+      this.root.position.copy(authored.position); this.root.quaternion.copy(authored.quaternion); this.root.scale.copy(authored.scale);
+      authored.removeFromParent();
+      authored.traverse(o => { if (o instanceof THREE.InstancedMesh) o.dispose(); });
+    }
     // Static bounds cover every connected road, including later junction turns.
     const bounds=new THREE.Box3(); for(const track of this.tracks) for(const point of track.points) bounds.expandByPoint(point);
     const sphere=bounds.expandByScalar(20).getBoundingSphere(new THREE.Sphere());
     for(const mesh of this.meshes) mesh.boundingSphere=sphere;
     this.update(0);
+  }
+
+  private carTemplate(material: MaterialFactory) {
+    // A compact city sedan, metre-scale body panels, sloping cabin and four tyres.
+    // The villa's concept-car GLB is a different vehicle and is too costly to
+    // duplicate across city traffic. All city cars share these six geometry batches.
+    const g = new CityGeometry(), body = material(0xc6cbd0, .55, .3, .1), glass = material(0x10212b, .55, .22, .035);
+    const rubber = material(0x13191c, .05, .94), trim = material(0x606b72, .72, .28, .07);
+    const head = material(0xe1efff, .1, .24, 18), tail = material(0xff2610, .1, .28, 12);
+    const outline = new THREE.Shape([[-.88,-2.08],[-.72,-2.28],[.72,-2.28],[.88,-2.08],[.9,1.75],[.7,2.2],[-.7,2.2],[-.9,1.75]].map(([x,z]) => new THREE.Vector2(x,-z)));
+    const shell = new THREE.ExtrudeGeometry(outline, { depth: .52, bevelEnabled: true, bevelSize: .1, bevelThickness: .1, bevelSegments: 2, steps: 1 });
+    shell.rotateX(-Math.PI / 2); g.add(shell, body, [0,.38,0]);
+    // Cabin slopes along Z and narrows towards the roof.
+    const cabin = new THREE.BoxGeometry(1.62,.58,2.35), cp = cabin.getAttribute('position');
+    for (let i=0;i<cp.count;i++) if(cp.getY(i)>0) { cp.setX(i,cp.getX(i)*.83); cp.setZ(i,cp.getZ(i)*.61-.13); }
+    cabin.computeVertexNormals(); g.add(cabin, glass, [0,1.13,-.18]);
+    g.box([1.39,.07,1.4],[0,1.45,-.31],body);
+    for (const x of [-.77,.77]) { g.box([.055,.5,.08],[x,1.15,-.18],trim); g.box([.22,.16,.3],[x*1.27,1.04,.52],body); }
+    for (const x of [-.86,.86]) for(const z of [-1.43,1.4]) {
+      const rotation=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),Math.PI/2);
+      g.add(new THREE.CylinderGeometry(.32,.32,.22,12),rubber,[x,.32,z],rotation);
+      g.add(new THREE.CylinderGeometry(.19,.19,.235,10),trim,[x,.32,z],rotation);
+    }
+    g.box([1.25,.14,.055],[0,.5,2.27],rubber);
+    for(const x of [-.59,.59]) { g.box([.48,.13,.075],[x,.78,2.22],head); g.box([.49,.15,.08],[x,.79,-2.3],tail); }
+    return { template: g.finish(), body };
   }
 
   private instance(geometry:THREE.BufferGeometry, material:THREE.Material) {

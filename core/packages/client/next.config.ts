@@ -125,6 +125,11 @@ const nextConfig: NextConfig = {
         source: "/assets/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
       },
+      // Blender exports update the manifest; its hash versions the model URL.
+      {
+        source: "/assets/space/blender-v1/:asset.json",
+        headers: [{ key: "Cache-Control", value: "no-store" }],
+      },
       // High-resolution certificate photographs are content-stable. Filenames
       // change if a scan is replaced, so they can be cached immutably.
       {

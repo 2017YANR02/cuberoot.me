@@ -204,46 +204,51 @@ export function commercialBank(g: CityGeometry, plan: ShanghaiPolygon, width: nu
   // unlit undersides. Ledge limits approximate occlusion; this is not a full
   // shadow/lightmap bake. No global lights or per-frame shadow passes are added.
   function facadeStone(color: number) {
-    const m=bundStone(material,color,0,false), compile=m.onBeforeCompile, key=m.customProgramCacheKey();
-    m.onBeforeCompile=(shader,renderer)=>{
-      compile.call(m,shader,renderer);
-      shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_end>',`#include <lights_fragment_end>
-        {
-        float fixtureX[14]=float[14](${[...axes,...wingAxes].map(x=>x.toFixed(4)).join(',')});
-        float fixtureY[4]=float[4](.25,5.2,9.9,14.4);
-        float irradiance=0.;
-        for(int row=0;row<4;row++) {
-          float ceiling=row==0?4.95:row==1?9.65:row==2?14.15:24.;
-          float visible=smoothstep(fixtureY[row]-.1,fixtureY[row]+.2,bundPosition.y)*(1.-smoothstep(ceiling-.18,ceiling+.05,bundPosition.y));
-          for(int i=0;i<14;i++) {
-            if(i>=11 && row==3) continue;
-            float depth=i<11?0.:${wingZ.toFixed(4)};
-            vec3 toLight=vec3(fixtureX[i],fixtureY[row],depth-.85)-bundPosition;
-            float d2=max(.1,dot(toLight,toLight));
-            vec3 l=toLight*inversesqrt(d2);
-            float cone=smoothstep(.2,.88,dot(-l,normalize(vec3(0.,1.,.27))));
-            float facade=1.-smoothstep(depth+.2,depth+.65,bundPosition.z);
-            irradiance+=facade*visible*cone*max(0.,dot(normalize(bundNormal),l))*8./(1.+d2);
-          }
-        }
-        // The 2010 night photograph also shows continuous illuminated cornices.
-        // Approximate shielded linear fixtures separately from the window lights;
-        // retain the underside response and keep this light off the roof/rear.
-        float ledges[3]=float[3](4.95,9.65,14.15);
-        float depth=bundPosition.x>${(width/2).toFixed(4)}?${wingZ.toFixed(4)}:0.;
-        float frontage=1.-smoothstep(depth+.1,depth+.4,bundPosition.z);
-        for(int row=0;row<3;row++) {
-          vec3 toLight=vec3(0.,ledges[row]-.48-bundPosition.y,depth-1.05-bundPosition.z);
-          float d2=max(.1,dot(toLight,toLight));
-          float strip=exp(-pow((bundPosition.y-ledges[row])/.62,2.));
-          irradiance+=frontage*strip*max(0.,dot(normalize(bundNormal),normalize(toLight)))*1.8/(1.+d2);
-        }
-        // Deep reveals and the unlit rear keep their environment lighting.
-        reflectedLight.directDiffuse+=diffuseColor.rgb*vec3(1.,.52,.19)*cityNight*irradiance;
-        }
-      `);
-    };
-    m.customProgramCacheKey=()=>key+'-commercial-bank-fixtures-'+width;
+    const m = bundStone(material, color, 0, false);
+    applyCommercialFixtures(m, width, axes, wingAxes, wingZ);
     return m;
   }
+}
+
+export function applyCommercialFixtures(m: THREE.Material, width: number, axes: number[], wingAxes: number[], wingZ: number) {
+  const compile=m.onBeforeCompile, key=m.customProgramCacheKey();
+  m.onBeforeCompile=(shader,renderer)=>{
+    compile.call(m,shader,renderer);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_end>',`#include <lights_fragment_end>
+      {
+      float fixtureX[14]=float[14](${[...axes,...wingAxes].map(x=>x.toFixed(4)).join(',')});
+      float fixtureY[4]=float[4](.25,5.2,9.9,14.4);
+      float irradiance=0.;
+      for(int row=0;row<4;row++) {
+        float ceiling=row==0?4.95:row==1?9.65:row==2?14.15:24.;
+        float visible=smoothstep(fixtureY[row]-.1,fixtureY[row]+.2,bundPosition.y)*(1.-smoothstep(ceiling-.18,ceiling+.05,bundPosition.y));
+        for(int i=0;i<14;i++) {
+          if(i>=11 && row==3) continue;
+          float depth=i<11?0.:${wingZ.toFixed(4)};
+          vec3 toLight=vec3(fixtureX[i],fixtureY[row],depth-.85)-bundPosition;
+          float d2=max(.1,dot(toLight,toLight));
+          vec3 l=toLight*inversesqrt(d2);
+          float cone=smoothstep(.2,.88,dot(-l,normalize(vec3(0.,1.,.27))));
+          float facade=1.-smoothstep(depth+.2,depth+.65,bundPosition.z);
+          irradiance+=facade*visible*cone*max(0.,dot(normalize(bundNormal),l))*8./(1.+d2);
+        }
+      }
+      // The 2010 night photograph also shows continuous illuminated cornices.
+      // Approximate shielded linear fixtures separately from the window lights;
+      // retain the underside response and keep this light off the roof/rear.
+      float ledges[3]=float[3](4.95,9.65,14.15);
+      float depth=bundPosition.x>${(width/2).toFixed(4)}?${wingZ.toFixed(4)}:0.;
+      float frontage=1.-smoothstep(depth+.1,depth+.4,bundPosition.z);
+      for(int row=0;row<3;row++) {
+        vec3 toLight=vec3(0.,ledges[row]-.48-bundPosition.y,depth-1.05-bundPosition.z);
+        float d2=max(.1,dot(toLight,toLight));
+        float strip=exp(-pow((bundPosition.y-ledges[row])/.62,2.));
+        irradiance+=frontage*strip*max(0.,dot(normalize(bundNormal),normalize(toLight)))*1.8/(1.+d2);
+      }
+      // Deep reveals and the unlit rear keep their environment lighting.
+      reflectedLight.directDiffuse+=diffuseColor.rgb*vec3(1.,.52,.19)*cityNight*irradiance;
+      }
+    `);
+  };
+  m.customProgramCacheKey=()=>key+'-commercial-bank-fixtures-'+width;
 }
