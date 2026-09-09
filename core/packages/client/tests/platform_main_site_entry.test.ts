@@ -41,8 +41,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(platformEntry).not.toHaveProperty('adminOnly');
     expect(teachingEntry).toMatchObject({ href: '/courses', internal: true });
     expect(teachingEntry).not.toHaveProperty('adminOnly');
-    expect(account).toContain("key: 'membership'");
-    expect(account).toContain("href: '/membership'");
+    expect(account).toMatch(/<AppLink href="\/membership" className="account-subscribe" prefetch=\{false\}>/);
     expect(account).toContain("key: 'notifications'");
     expect(account).toContain("href: '/notifications'");
     expect(account).toMatch(/<AppLink key=\{key\} href=\{href\} className="account-card" prefetch=\{false\}>/);
