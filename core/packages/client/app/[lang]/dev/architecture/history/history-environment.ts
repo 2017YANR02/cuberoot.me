@@ -131,6 +131,8 @@ export const HISTORY_ENVIRONMENTS = HISTORY_PLACES.map((place, day) => {
   }
   // Keep the original music pavilion's rainbow as an authored landmark.
   if (place.date === '2026-09-02') start = choices.indexOf('rainbow');
+  // The opening page begins in clear morning light; its other weather remains selectable.
+  if (place.date === '2025-12-13') start = choices.indexOf('clear');
   const weather = [...choices.slice(start), ...choices.slice(0, start)];
   return { ...biome, elevation: biome.elevation * variation, ridge: biome.ridge * variation, weather };
 });

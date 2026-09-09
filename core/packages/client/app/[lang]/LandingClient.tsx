@@ -35,7 +35,7 @@ const HOME_WIDGET_HEIGHT = {
   recentScrambles: 320,
   todayRecon: 360,
   ongoingComps: 240,
-  communityFeed: 460,
+  communityFeed: 240,
 } as const;
 
 const OngoingComps = dynamic(() => import('@/components/OngoingComps'), {

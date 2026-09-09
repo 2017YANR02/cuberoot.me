@@ -2,10 +2,87 @@ import * as T from 'three';
 import { HISTORY_LAST, HISTORY_PLACES, HISTORY_SPACING, clampHistoryPosition } from './history-days';
 import { environmentBlend, environmentValue, groundY, HISTORY_ENVIRONMENTS, pathY, pathZ, riverZ } from './history-environment';
 import type { PaperScenery } from './history-scenery';
-import { HISTORY_LANDFORMS } from './history-landforms';
+import { HISTORY_LANDFORMS, type HistoryLandform } from './history-landforms';
 import { LANDFORM_BUILDERS } from './history-landform-builders';
 
 type Point = [number, number, number];
+type Shore = [number, number];
+
+/** Every layer samples world space, including where two streamed passages meet. */
+export function historyRidgeHeight(x: number, layer: number) {
+  const { left, right, t } = environmentBlend(x / HISTORY_SPACING);
+  const profile = (day: number) => {
+    const id = HISTORY_LANDFORMS[day], ridge = HISTORY_ENVIRONMENTS[day].ridge;
+    const phase = x * .13 + layer * 1.7;
+    const wave = .5 + Math.sin(phase) * .5;
+    const tooth = 1 - Math.abs(((phase / Math.PI % 2) + 2) % 2 - 1);
+    let silhouette: number;
+    switch (id) {
+      case 'alpine': case 'glacier': case 'cirque': case 'fjord':
+        silhouette = Math.pow(tooth, .8) * (.7 + .3 * Math.sin(phase * 2.7) ** 2); break;
+      case 'fault': case 'mesa': case 'plateau': case 'basalt':
+        silhouette = T.MathUtils.smoothstep(wave, .25, .48) * (.55 + .35 * Math.sin(phase * .43) ** 2); break;
+      case 'karst': case 'cave': case 'sinkhole':
+        silhouette = Math.pow(wave, 5) * .85 + Math.pow(.5 + .5 * Math.sin(phase * 1.7), 12) * .2; break;
+      case 'folded': case 'hills': case 'basin': case 'waterfall':
+        silhouette = .18 + wave * .55 + Math.sin(phase * 1.8) ** 2 * .15; break;
+      case 'dunes': case 'yardang': case 'badlands': case 'oasis':
+        silhouette = Math.pow(wave, .7) * .6 + Math.pow(.5 + .5 * Math.sin(phase + 1.2), 3) * .22; break;
+      case 'atoll': case 'lagoon': case 'delta': case 'mangrove': case 'saltpan':
+        silhouette = .07 + wave * .12; break;
+      case 'grassland': case 'savanna': case 'meander': case 'braided': case 'alluvial': case 'tundra': case 'icecap':
+        silhouette = .12 + wave * .28; break;
+      case 'volcano': case 'caldera':
+        silhouette = Math.min(.78, tooth * 1.3); break;
+      default: silhouette = .15 + wave * .5;
+    }
+    const open = ['atoll', 'lagoon', 'delta', 'mangrove', 'saltpan'].includes(id);
+    return (open ? .09 : .32) + ridge * silhouette * (.72 + layer * .09);
+  };
+  return T.MathUtils.lerp(profile(left), profile(right), t);
+}
+
+/** Bays carve the far shore only; the traveler and current retain their continuous route. */
+export function historyRiverEdge(x: number, side: number) {
+  const coast = riverZ(x) + side * environmentValue(x, 'water') / 2;
+  if (side > 0) return coast;
+  const day = Math.round(clampHistoryPosition(x / HISTORY_SPACING)), id = HISTORY_LANDFORMS[day];
+  const local = Math.abs(x - day * HISTORY_SPACING);
+  let center = 0, width = 0, depth = 0;
+  if (id === 'fjord') { center = 9.3; width = 2.8; depth = 7; }
+  else if (id === 'atoll' || id === 'lagoon') { center = 11.1; width = 2.5; depth = 4.5; }
+  else if (id === 'seaarch') { center = 10.7; width = 2.7; depth = 3.1; }
+  else if (id === 'delta' || id === 'mangrove') { center = 10.4; width = 2.4; depth = 2; }
+  if (!width) return coast;
+  const inlet = 1 - T.MathUtils.smoothstep(Math.abs(local - center), id === 'fjord' ? 1.1 : .45, width);
+  return coast - inlet * depth;
+}
+
+/** Ground under a dated model is a ledge, cape or bank with a clear footprint, never a generic oval plinth. */
+function buildExhibitGround(art: PaperScenery, root: T.Group, day: number, id: HistoryLandform) {
+  const p = art.palette, env = HISTORY_ENVIRONMENTS[day];
+  const outlines: Record<number, Shore[]> = {
+    0: [[-11.6, -4.1], [-9.2, -6], [-3.2, -5.8], [-1.4, -6.6], [5.8, -6], [9.8, -4.9], [11.2, -2.3], [9.8, .5], [7, 2.3], [.7, 2.6], [-2, 1.9], [-8.8, 2.1], [-10.6, .1]],
+    1: [[-12.7, -3.9], [-8.9, -5.6], [-3, -5.9], [4.2, -5.6], [9, -4.3], [12.6, -2.7], [10.8, -.7], [8, 1.8], [2.4, 2.7], [-3.3, 2.4], [-7.8, 1.7], [-11.6, .1]],
+    2: [[-12.3, -5], [-6.6, -6.2], [.5, -5.8], [6.7, -6.1], [10.7, -3.5], [12, -.9], [8.8, 1.8], [3.7, 2.5], [-2.2, 2.1], [-8.5, 2.6], [-11.2, .9], [-9.7, -.9]],
+    3: [[-11.5, -4.6], [-7.7, -6.1], [-2.8, -5.5], [2.3, -6.4], [7.8, -5.5], [10.8, -3.1], [11.6, -.6], [8.4, 1.2], [4.3, 2.6], [-1.5, 2.3], [-5.4, 2.8], [-9.6, 1.5], [-10.5, -.5]],
+    4: [[-11.7, -4.8], [-7.6, -5.8], [-2.6, -5.8], [-2.3, -6.4], [5.8, -6.1], [10.6, -4.8], [11.5, -1.9], [9.3, -.9], [10.1, .7], [7.5, 2.5], [3.6, 2.4], [3.2, 1.5], [2.3, 2.5], [-5.6, 2.3], [-9.7, .9], [-10.9, -1.7]],
+    5: [[-9.8, -4.7], [-7.8, -6], [-2.6, -5.6], [3, -6.2], [8.5, -4.9], [9.3, -2.7], [10.8, -.5], [8.3, .2], [7.2, 2.5], [1.3, 2.3], [-4.2, 2.6], [-8.2, 1.5], [-7.8, -.8], [-10.1, -2]],
+    6: [[-11.6, -4.9], [-8.6, -5.8], [8.8, -5.8], [11.2, -4.1], [11.2, -1.1], [9.7, -1.1], [9.7, 1.7], [6.6, 1.7], [6.6, 2.7], [1.8, 2.7], [1.8, 1.9], [-4.9, 1.9], [-4.9, 2.7], [-8.3, 2.7], [-8.3, .8], [-11.6, .8]],
+    7: [[-11.6, -4.9], [-8.3, -6.1], [-2, -6.1], [-2, -5.5], [4.8, -5.5], [4.8, -6], [10.6, -4.5], [11.1, -1.7], [9.1, -.7], [9.1, 1.7], [5.4, 1.7], [5.4, 2.7], [-1.1, 2.7], [-1.1, 2.1], [-8.1, 2.1], [-10.5, .7]],
+  };
+  const outline = outlines[HISTORY_PLACES[day].biome];
+  const soft = ['grassland', 'savanna', 'hills', 'dunes', 'oasis', 'tundra'].includes(id);
+  const layers = soft ? 2 : 4;
+  for (let layer = 0; layer < layers; layer++) {
+    const inset = (layers - 1 - layer) * (soft ? .055 : .017);
+    const points = outline.map(([x, z]): Shore => [x * (1 + inset), z * (1 + inset)]);
+    const color = layer === layers - 1 ? art.mix(p[env.ground], p.paper, .68)
+      : art.mix(p.limestone, p.paper, .23 + layer * .15);
+    const ground = art.shape(root, points, .7 / layers, color, [0, .7 * (layer + 1) / layers, 0]);
+    ground.rotation.x = Math.PI / 2; ground.name = `history-exhibit-ground-${id}-${layer}`;
+  }
+}
 
 function landColor(art: PaperScenery, x: number, water = false) {
   const { left, right, t } = environmentBlend(x / HISTORY_SPACING), p = art.palette;
@@ -42,15 +119,7 @@ export function buildHistoryLand(art: PaperScenery, root: T.Group, day: number, 
     const mesh = new T.Mesh(geometry, material); mesh.receiveShadow = true; root.add(mesh);
     return mesh;
   };
-  const waterEdge = (x: number, side: number) => {
-    const coast = riverZ(x) + side * environmentValue(x, 'water') / 2;
-    if (side > 0) return coast;
-    const nearest = Math.round(clampHistoryPosition(x / HISTORY_SPACING));
-    if (HISTORY_LANDFORMS[nearest] !== 'fjord') return coast;
-    const distance = Math.abs(Math.abs(x - nearest * HISTORY_SPACING) - 9.3);
-    const inlet = 1 - T.MathUtils.smoothstep(distance, 1.1, 2.8);
-    return coast - inlet * 7;
-  };
+  const waterEdge = historyRiverEdge;
   const edge = (x: number, side: number) => waterEdge(x, side) + side * .2;
   // A broad continental shelf, then the open foreground bank. Neither is a repeated oval island.
   surface((x, v) => {
@@ -91,13 +160,11 @@ export function buildHistoryLand(art: PaperScenery, root: T.Group, day: number, 
     surface((x, v) => [x, -1.2 + (groundY(x) + 1.2) * (layer + v) / 5, edge(x, 1) + 15.95 + (4 - layer) * .1],
       x => landColor(art, x).lerp(new T.Color(layer % 2 ? p.limestone : p.paper), .8));
   }
-  // Far ridges inherit local terrain height and palette, so icy peaks fade into open plains.
+  // Relief shapes the entire skyline: mountain teeth, flat escarpments and nearly open seas.
   for (let layer = 0; layer < 3; layer++) {
-    surface((x, v) => {
-      const ridge = environmentValue(x, 'ridge');
-      const wave = Math.abs(Math.sin(x * .16 + layer * 1.8)) * .65 + Math.abs(Math.sin(x * .31 + layer)) * .35;
-      return [x, groundY(x) + v * (1.2 + ridge * wave * (.55 + layer * .12)), -13.5 - layer * 4.3];
-    }, x => landColor(art, x).lerp(new T.Color(p.paper), .38 + layer * .2));
+    const ridge = surface((x, v) => [x, groundY(x) + v * historyRidgeHeight(x, layer), -13.5 - layer * 4.3],
+      x => landColor(art, x).lerp(new T.Color(p.paper), .38 + layer * .2));
+    ridge.name = `history-ridge-${day}-${layer}`;
   }
   class Trail extends T.Curve<T.Vector3> {
     constructor() { super(); }
@@ -115,8 +182,7 @@ export function buildDayTerrain(art: PaperScenery, root: T.Group, day: number) {
   const id = HISTORY_LANDFORMS[day];
   const terrain = new T.Group(); terrain.name = `history-landform-${id}`; root.add(terrain);
   root = terrain;
-  // Low paper contours support the exhibit; the surrounding relief has its own authored structure.
-  art.island(root, 0, -1.6, 8.1, 4.1, .7, place.seed % 59, art.mix(p[env.ground], p.paper, .72));
+  buildExhibitGround(art, root, day, id);
   LANDFORM_BUILDERS[id](art, root, day);
 
   // Small watercraft belong to the river throughout the journey, including its first date.

@@ -12,7 +12,7 @@ import PlaybackScrubber from '@/components/PlaybackScrubber';
 import { tr } from '@/i18n/tr';
 import { TIMELINE } from '../_lib/arch-data';
 import DAYS from '../timeline_commits.json';
-import { HISTORY_PLACES, HISTORY_LAST, clampHistoryPosition } from '../history/history-days';
+import { HISTORY_PLACES, HISTORY_LAST, HISTORY_GAITS, type HistoryGait, clampHistoryPosition } from '../history/history-days';
 import type { HistoryScene } from '../history/history-scene';
 import { HISTORY_ENVIRONMENTS, WEATHER_LABELS, DAYLIGHT_LABELS, historyDaylight, journeyWeather } from '../history/history-environment';
 import { HISTORY_LANDFORMS, LANDFORMS, type HistoryLandform } from '../history/history-landforms';
@@ -49,6 +49,7 @@ export default function HistoryJourney() {
   const [weatherVariation, setWeatherVariation] = useState(0);
   const [motion, setMotion] = useState(true);
   const [speed, setSpeed] = useState(1);
+  const [gait, setGait] = useState<HistoryGait>('walk');
   const [openedSecret, setOpenedSecret] = useState<HistorySecret | null>(null);
   const host = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -104,6 +105,7 @@ export default function HistoryJourney() {
     engine.current.setMotion(motion); appliedMotion.current = motion;
   }, [motion, status]);
   useEffect(() => { engine.current?.setSpeed(speed); }, [speed, status]);
+  useEffect(() => { engine.current?.setGait(gait); }, [gait, status]);
   useEffect(() => { engine.current?.setWeather(weatherVariation); }, [weatherVariation, status]);
 
   useEffect(() => {
@@ -172,7 +174,7 @@ export default function HistoryJourney() {
             if (event.key === ' ') { event.preventDefault(); togglePlayback(); }
           }}>
           <div className="journey-scene" ref={host} />
-          {status === 'ready' && <div className="journey-overlay"><div className="journey-place-copy" aria-live="polite">
+          {status === 'ready' && <div className="journey-overlay"><div className={`journey-place-copy${current === 0 && !secret ? ' is-opening' : ''}`} aria-live="polite">
             {secret ? <div className="journey-secret-story" id="journey-secret-story">
               <p className="journey-place-number">{tr({ zh: '你发现了一枚彩蛋', en: 'A small discovery' })}</p>
               <h2>{tr(secret)}</h2><p>{tr(secret.description)}</p>
@@ -202,13 +204,16 @@ export default function HistoryJourney() {
           {status === 'loading' && <div className="journey-load"><ClientLoadStatus label={{ zh: '山河正在展开…', en: 'Unfolding the landscape…' }} /></div>}
           {status === 'failed' && <div className="journey-load" role="alert"><p>{tr({ zh: '画卷暂时未能展开，完整记录仍可在下方阅读。', en: 'The landscape could not load. The full archive is available below.' })}</p><button className="journey-button" type="button" onClick={() => { initialPosition.current = current; setRetry(n => n + 1); }}>{tr({ zh: '重新展开', en: 'Try again' })}</button></div>}
           <div className="journey-stage-hint"><MoveHorizontal size={15} /><span>{tr({ zh: '拖动画卷，或轻滚鼠标', en: 'Drag the landscape, or gently scroll' })}</span></div>
-          {(current === 0 || current === HISTORY_LAST) && <span className="journey-seal" aria-hidden="true">立<br />方<br />根</span>}
+          {(current === 0 || current === HISTORY_LAST) && <span className="journey-seal" aria-hidden="true">魔<br />方<br />根</span>}
         </div>
         <nav className="journey-controls" aria-label={tr({ zh: '画卷日期导航', en: 'Landscape date navigation' })}>
           <div className="journey-transport">
           <div className="journey-playback-controls">
-          <button className="journey-button journey-playback" type="button" disabled={status !== 'ready'} onClick={togglePlayback} aria-label={tr(motion ? { zh: '暂停行走', en: 'Pause walking' } : { zh: '继续行走', en: 'Resume walking' })}>{motion ? <Pause size={17} /> : <Play size={17} />}<span>{tr(motion ? { zh: '暂停行走', en: 'Pause walking' } : { zh: '继续行走', en: 'Resume walking' })}</span></button>
-          <CompactSelect className="journey-speed" variant="plain" label={`${speed}×`} value={speed} valueText={`${speed}×`} items={PLAYBACK_SPEEDS} onChange={setSpeed} ariaLabel={tr({ zh: '行走速度', en: 'Walking speed' })} title={tr({ zh: '调整自动行走速度，天气保持自然速度', en: 'Adjust automatic walking speed; weather keeps its natural pace' })} />
+          <button className="journey-button journey-playback" type="button" disabled={status !== 'ready'} onClick={togglePlayback} aria-label={tr(motion ? { zh: '暂停行进', en: 'Pause travel' } : { zh: '继续行进', en: 'Resume travel' })}>{motion ? <Pause size={17} /> : <Play size={17} />}<span>{tr(motion ? { zh: '暂停', en: 'Pause' } : { zh: '继续', en: 'Resume' })}</span></button>
+          <CompactSelect variant="plain" label={tr(HISTORY_GAITS[gait])} value={gait} valueText={tr(HISTORY_GAITS[gait])}
+            items={(Object.keys(HISTORY_GAITS) as HistoryGait[]).map(value => ({ value, label: tr(HISTORY_GAITS[value]) }))}
+            onChange={setGait} ariaLabel={tr({ zh: '行进方式', en: 'Travel style' })} title={tr({ zh: '行走或跑步，同一倍速下跑步快一倍', en: 'Walk or run; running is twice as fast at the same multiplier' })} />
+          <CompactSelect className="journey-speed" variant="plain" label={`${speed}×`} value={speed} valueText={`${speed}×`} items={PLAYBACK_SPEEDS} onChange={setSpeed} ariaLabel={tr({ zh: '行进速度', en: 'Travel speed' })} title={tr({ zh: '调整行进速度，天气保持自然速度', en: 'Adjust travel speed; weather keeps its natural pace' })} />
           </div>
           <div className="journey-date-controls">
           <button className="journey-button journey-arrow" type="button" disabled={current === 0} onClick={() => visit(current - 1)} aria-label={tr({ zh: '前一天', en: 'Previous day' })}><ArrowLeft size={19} /></button>
@@ -220,7 +225,7 @@ export default function HistoryJourney() {
           <button ref={readButton} type="button" className="journey-button journey-read" onClick={() => { if (!reading) pauseWalking(); setReading(!reading); }} aria-expanded={reading} aria-controls="journey-reader"><BookOpen size={16} />{tr({ zh: '阅读这一天', en: 'Read this day' })}<ArrowUpRight size={15} /></button>
           <button ref={exportButton} type="button" className="journey-button journey-download" disabled={status !== 'ready'} aria-label={tr({ zh: '下载视频', en: 'Download video' })} title={tr({ zh: '下载视频', en: 'Download video' })} aria-expanded={exportOpen} aria-controls="journey-video-export" onClick={() => { pauseWalking(); setExportOpen(!exportOpen); }}><Download size={18} aria-hidden="true" /></button>
         </nav>
-        {exportOpen && <HistoryVideoExport source={host} current={current} initialSpeed={speed} weatherVariation={weatherVariation} onClose={() => { setExportOpen(false); exportButton.current?.focus({ preventScroll: true }); }} />}
+        {exportOpen && <HistoryVideoExport source={host} current={current} initialSpeed={speed} initialGait={gait} weatherVariation={weatherVariation} onClose={() => { setExportOpen(false); exportButton.current?.focus({ preventScroll: true }); }} />}
       </section>
       <p className="journey-art-note">{tr({ zh: '每八站走过晨昼暮夜。37 种地貌与 36 种野生动物沿途相伴，留意闪光的小物件。自然景观为艺术化演绎，日期与更新内容来自真实记录。', en: 'Dawn to moonlight unfolds over every eight stops, with 37 landforms and 36 wildlife species. Look out for little glimmering objects. Imagined nature accompanies real dates and updates.' })}</p>
       <section id="journey-reader" ref={reader} tabIndex={-1} className={`journey-reader${reading ? ' is-open' : ''}`} aria-label={tr({ zh: '这一天的故事', en: 'The story of this day' })}>

@@ -158,6 +158,23 @@ describe('authored history weather', () => {
     expect(particles.material.uniforms.snowTint.value.equals(particles.material.uniforms.tint.value)).toBe(false);
   });
 
+  it.each([false, true])('retains three depth layers at every rain intensity with only one tenth in the foreground (narrow=%s)', narrow => {
+    const weather = createWeather(narrow);
+    const particles = weather.root.getObjectByName('history-precipitation') as T.Points<T.BufferGeometry, T.ShaderMaterial>;
+    const layers = particles.geometry.getAttribute('weatherLayer');
+    expect(layers.count).toBe(narrow ? 850 : 1600);
+    for (const kind of ['drizzle', 'rain', 'storm', 'monsoon'] as const) {
+      const { day, variation } = example(kind);
+      update(weather, 2, day, variation, false, narrow);
+      const completeGroups = Math.floor(particles.geometry.drawRange.count / 10);
+      const counts = [0, 0, 0];
+      for (let index = 0; index < completeGroups * 10; index++) counts[layers.getX(index)]++;
+      expect(counts).toEqual([completeGroups * 6, completeGroups * 3, completeGroups]);
+      const captionArea = particles.material.uniforms.captionArea.value as T.Vector3;
+      expect(captionArea.toArray()).toEqual(narrow ? [.88, .27, .32] : [.43, .24, .29]);
+    }
+  });
+
   it.each([[320, 680, 1], [1564, 820, 1], [2560, 800, .75], [1280, 720, 2]])(
     'covers every viewport edge in depth while seeking and resizing (%s x %s, zoom %s)', (width, height, zoom) => {
       const weather = createWeather(width < 700);

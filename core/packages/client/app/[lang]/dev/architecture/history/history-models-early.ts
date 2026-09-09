@@ -65,16 +65,50 @@ function ticks(a: Art, r: T.Object3D, center: Point, radius: number, count: numb
 export const EARLY_MODELS: Record<keyof typeof EARLY_DESIGNS, Model> = {
   '2025-12-13': (a, r) => {
     const p = a.palette;
-    // The first, still empty HTML document stands like a folded paper monolith.
-    a.shape(r, [[-3, 0], [2.8, 0], [2.8, 6.3], [1.6, 7.5], [-3, 7.5]], .2, p.paper, [-.8, .75, -1.5]);
-    a.shape(r, [[0, 0], [1.2, 0], [0, 1.2]], .18, p.limestone, [.8, 7.05, -1.22]);
-    rod(a, r, [-3.6, 1.2, -1.22], [-3.6, 7.7, -1.22], .035, p.gold);
-    for (let i = 0; i < 3; i++) a.box(r, [2.8 - i * .45, .035, .04], [-.7, 5.6 - i * .35, -1.23], p.mist);
-    a.shape(r, [[-2.3, 0], [2.9, 0], [4, .7], [-1.7, .7]], .18, p.limestone, [-.8, .77, -1.6]).rotation.x = Math.PI / 2;
-    curve(a, r, [[.3, .8, .5], [.15, 1.7, .4], [.7, 2.8, .35]], .08, p.forest);
-    for (const s of [-1, 1]) a.shape(r, [[0, 0], [s * 1.1, .25], [s * 1.45, 1], [s * .45, .85]], .08, p.jade, [.25, 1.7 + s * .12, .35]);
-    orb(a, r, [.25, .96, .45], .35, p.gold, [1, .5, 1]);
-    for (let i = 0; i < 7; i++) rod(a, r, [.25, .85, .45], [Math.sin(i * 2.1) * 1.4, .75, .45 + Math.cos(i * 2.1) * .8], .026, p.gold);
+    // The first blank document unfurls into a landscape, with a seed in its fold.
+    const spine = new T.CatmullRomCurve3([
+      new T.Vector3(-4.5, 2.5, 0), new T.Vector3(-5.8, 3.4, 0),
+      new T.Vector3(-6.3, 2.1, 0), new T.Vector3(-4.8, 1.15, 0),
+      new T.Vector3(-1.8, 1.15, 0), new T.Vector3(1.2, 1.5, 0),
+      new T.Vector3(3.4, 3.3, 0), new T.Vector3(4.1, 5.8, 0),
+      new T.Vector3(5.5, 7.1, 0),
+    ]);
+    const page = spine.getPoints(100);
+    for (let layer = 0; layer < 4; layer++) {
+      const profile = new T.Shape();
+      const offset = layer * .11;
+      page.forEach((v, i) => i ? profile.lineTo(v.x, v.y + offset) : profile.moveTo(v.x, v.y + offset));
+      for (let i = page.length - 1; i >= 0; i--) profile.lineTo(page[i].x, page[i].y + offset - .055);
+      profile.closePath();
+      a.mesh(r, new T.ExtrudeGeometry(profile, { depth: 4.7 - layer * .1, bevelEnabled: false, curveSegments: 32 }),
+        layer === 3 ? p.paper : a.mix(p.limestone, p.paper, .35 + layer * .18), [0, 0, -3.15 + layer * .05]);
+    }
+    for (const z of [-2.92, 1.32]) curve(a, r, page.map(v => [v.x, v.y + .36, z] as Point), .022, p.gold);
+    // Fine blank-page ruling follows the curl, instead of floating in front of it.
+    for (let i = 0; i < 3; i++) {
+      const v = spine.getPoint(.79 + i * .036);
+      rod(a, r, [v.x - .04, v.y + .37, -2.5], [v.x - .04, v.y + .37, .68 - i * .25], .018, p.mist);
+    }
+    const seed: Point = [-1.5, 1.58, .4];
+    orb(a, r, seed, .5, p.gold, [1.15, .6, .8]);
+    curve(a, r, [[-1.5, 1.6, .4], [-1.8, 2.9, .25], [-1.4, 4.1, .05], [-.5, 5.4, -.05]], .1, p.forest);
+    // Faceted, gently cupped leaves catch both morning light and the night rim light.
+    for (const [position, rotation, scale] of [
+      [[-1.65, 3.1, .24], -.48, 1.2], [[-1.2, 4.35, .05], .45, .95], [[-.55, 5.1, -.05], .85, .62],
+    ] as [Point, number, number][]) {
+      const leaf = group(r, position); leaf.rotation.z = rotation; leaf.scale.setScalar(scale);
+      a.shape(leaf, [[0, 0], [-.8, .35], [-1.8, 1.35], [-.75, 1.18]], .06, p.forest);
+      a.shape(leaf, [[0, 0], [-.75, 1.18], [-1.8, 1.35], [-.75, .75]], .06, p.jade, [0, 0, .07]);
+      curve(a, leaf, [[0, 0, .15], [-.75, .75, .15], [-1.8, 1.35, .15]], .02, p.gold);
+    }
+    for (let i = 0; i < 5; i++) {
+      const end: Point = [-4 + i * 1.25, 1.57 + Math.max(0, i - 2) * .17, 1.31];
+      curve(a, r, [seed, [-1.5 + (i - 2) * .48, 1.56, .85], end], .024, p.gold);
+      orb(a, r, end, .055, p.gold);
+    }
+    const bud = group(r, [-.5, 5.42, -.05]);
+    orb(a, bud, [0, 0, 0], .15, p.gold, [.8, 1.3, .8]);
+    a.animate(bud, 'leaf');
   },
   '2026-02-17': (a, r) => {
     const p = a.palette;

@@ -10,10 +10,12 @@ export class PaperWater {
     riverTime: { value: 0 }, riverWind: { value: 0 }, riverRain: { value: 0 },
     riverNight: { value: 0 }, riverLight: { value: new T.Color() },
     riverFoam: { value: new T.Color() }, riverSky: { value: new T.Color() },
+    riverWarm: { value: new T.Color() },
   };
 
   constructor(palette: PaperPalette) {
     this.uniforms.riverFoam.value.set(palette.paper).lerp(new T.Color(palette.ice), .55);
+    this.uniforms.riverWarm.value.set(palette.gold).lerp(new T.Color(palette.paper), .3);
     this.material = new T.MeshStandardMaterial({
       color: new T.Color(1, 1, 1), vertexColors: true, side: T.DoubleSide,
       roughness: .6, metalness: 0,
@@ -27,7 +29,7 @@ export class PaperWater {
           riverPosition=(modelMatrix*vec4(position,1.)).xyz; riverUV=uv; riverSpan=riverWidth; riverMidline=riverCenter;`);
       shader.fragmentShader = `
         uniform float riverTime,riverWind,riverRain,riverNight;
-        uniform vec3 riverLight,riverFoam,riverSky;
+        uniform vec3 riverLight,riverFoam,riverSky,riverWarm;
         varying vec3 riverPosition; varying vec2 riverUV; varying float riverSpan,riverMidline;
         ${WEATHER_NOISE_GLSL}
         float riverLine(float phase,float width){
@@ -61,6 +63,11 @@ export class PaperWater {
           float distanceToDrop=length((local-center)*vec2(1.,.78));
           float ring=1.-smoothstep(.009,.009+max(fwidth(distanceToDrop),.008),abs(distanceToDrop-age*.34));
           float rain=ring*(1.-age)*(1.-age)*riverRain;
+          // Broken silver ink catches the moon; faint warm strokes stay close to the inhabited bank.
+          float moonThread=riverLine((crossStream+bend)*8.2+downstream*.13,.045)
+            *smoothstep(.48,.78,wash)*smoothstep(.14,.65,bank);
+          float bankLight=exp(-bank*1.45)*smoothstep(.46,.74,noise(vec3(riverPosition.x*.42,0.,6.)))
+            *riverLine(bank*13.+sin(downstream*.55)*.32,.08)*smoothstep(.025,.12,bank);
           diffuseColor.rgb*=.77+wash*.17+undertow*.035;
           diffuseColor.rgb=mix(diffuseColor.rgb,riverFoam,shallows*.18);
           diffuseColor.rgb=mix(diffuseColor.rgb,riverSky,.045+wash*.04);
@@ -73,16 +80,18 @@ export class PaperWater {
         `)
         .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
           totalEmissiveRadiance+=riverLight*(glints*.12+current*.018+shore*.025)*(1.+riverNight*.35);
+          totalEmissiveRadiance+=riverFoam*moonThread*riverNight*.11;
+          totalEmissiveRadiance+=riverWarm*bankLight*riverNight*.10;
         `);
     };
-    this.material.customProgramCacheKey = () => 'history-flowing-water-v1';
+    this.material.customProgramCacheKey = () => 'history-flowing-water-v2';
   }
 
   update(time: number, weather: JourneyWeather, night: number, sky: T.Color, light: T.Color) {
     this.uniforms.riverTime.value = Number.isFinite(time) ? Math.max(0, time) : 0;
     this.uniforms.riverWind.value = ['storm', 'monsoon', 'blizzard', 'tornado'].includes(weather) ? 1 : ['wind', 'rain', 'hail', 'sandstorm'].includes(weather) ? .55 : .12;
     this.uniforms.riverRain.value = ['storm', 'rain', 'monsoon', 'mudslide', 'sleet', 'hail'].includes(weather) ? 1 : ['drizzle', 'sunshower'].includes(weather) ? .4 : 0;
-    this.uniforms.riverNight.value = night;
+    this.uniforms.riverNight.value = Number.isFinite(night) ? T.MathUtils.clamp(night, 0, 1) : 0;
     this.uniforms.riverSky.value.copy(sky);
     this.uniforms.riverLight.value.copy(light);
   }

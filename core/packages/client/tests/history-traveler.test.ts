@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import * as T from 'three';
-import { HISTORY_LAST, HISTORY_SPACING } from '@/app/[lang]/dev/architecture/history/history-days';
+import { HISTORY_GAITS, HISTORY_LAST, HISTORY_SPACING, type HistoryGait } from '@/app/[lang]/dev/architecture/history/history-days';
 import { groundY, pathY, pathZ } from '@/app/[lang]/dev/architecture/history/history-environment';
 import { PaperScenery, type PaperPalette } from '@/app/[lang]/dev/architecture/history/history-scenery';
 import { HISTORY_WALK_SPEED, PaperTraveler } from '@/app/[lang]/dev/architecture/history/history-traveler';
@@ -58,6 +58,7 @@ describe('history traveller beside the selected date', () => {
 
   it('preserves forward and backward travel, facing, and the existing walk speed', () => {
     expect(HISTORY_WALK_SPEED).toBe(2.145);
+    expect(HISTORY_GAITS.run.speed).toBe(4.29);
     const figure = traveler.root.children.find(object => object instanceof T.Group)!;
     traveler.update(0, 1, false);
     let previous = traveler.root.position.x;
@@ -73,5 +74,41 @@ describe('history traveller beside the selected date', () => {
       previous = traveler.root.position.x;
     }
     expect(new T.Vector3(0, 0, 1).applyQuaternion(figure.quaternion).x).toBeLessThan(-.9);
+  });
+
+  it.each(['walk', 'run'] as HistoryGait[])('%s keeps shoes above the path and settles both feet when paused', gait => {
+    const figure = traveler.root.children.find(object => object instanceof T.Group)!;
+    const body = figure.children[0] as T.Group;
+    const feet = figure.children.slice(1).map(hip => hip.children.find(child => child instanceof T.Group)!
+      .children.find(child => child instanceof T.Group)!);
+    let airborneHeight = 0;
+    for (let frame = 0; frame <= 180; frame++) {
+      traveler.update(frame / 60, 10 + frame / 60 * HISTORY_GAITS[gait].speed / HISTORY_SPACING, false, gait);
+      traveler.root.updateMatrixWorld(true);
+      const clearance = feet.map(foot => {
+        const point = foot.getWorldPosition(new T.Vector3());
+        return point.y - .0525 - groundY(point.x);
+      });
+      expect(Math.min(...clearance)).toBeGreaterThanOrEqual(-.001);
+      airborneHeight = Math.max(airborneHeight, Math.min(...clearance));
+    }
+    if (gait === 'run') {
+      expect(airborneHeight).toBeGreaterThan(.1);
+      expect(body.rotation.x).toBeGreaterThan(.15);
+    } else {
+      expect(airborneHeight).toBeLessThan(.03);
+      expect(body.rotation.x).toBe(0);
+    }
+    const pausedPosition = 10 + 3 * HISTORY_GAITS[gait].speed / HISTORY_SPACING;
+    const pausedX = traveler.root.position.x;
+    for (let frame = 181; frame <= 300; frame++) traveler.update(frame / 60, pausedPosition, false, gait);
+    expect(traveler.root.position.x).toBe(pausedX);
+    expect(figure.position.y).toBeCloseTo(0, 6);
+    expect(body.rotation.x).toBeCloseTo(0, 6);
+    traveler.root.updateMatrixWorld(true);
+    for (const foot of feet) {
+      const point = foot.getWorldPosition(new T.Vector3());
+      expect(point.y - .0525 - groundY(point.x)).toBeCloseTo(.0225, 4);
+    }
   });
 });

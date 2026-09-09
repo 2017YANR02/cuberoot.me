@@ -1,5 +1,5 @@
 import * as T from 'three';
-import { clampHistoryPosition, HISTORY_SPACING, HISTORY_WALK_SPEED } from './history-days';
+import { clampHistoryPosition, HISTORY_SPACING, type HistoryGait } from './history-days';
 import { groundY, pathZ } from './history-environment';
 import type { PaperScenery } from './history-scenery';
 
@@ -13,12 +13,14 @@ export class PaperTraveler {
   private readonly body = new T.Group();
   private readonly scarf = new T.Group();
   private readonly legs: { hip: T.Group; knee: T.Group; foot: T.Group }[] = [];
-  private readonly arms: T.Group[] = [];
+  private readonly arms: { shoulder: T.Group; elbow: T.Group }[] = [];
   private readonly shadowMaterial: T.MeshBasicMaterial;
   private previousX: number | undefined;
   private previousTime = 0;
   private phase = Math.PI / 2;
   private heading = Math.PI / 2;
+  private running = 0;
+  private activity = 0;
 
   constructor(art: PaperScenery) {
     const p = art.palette;
@@ -48,9 +50,11 @@ export class PaperTraveler {
 
     for (const side of [-1, 1]) {
       const arm = new T.Group(); arm.position.set(side * .31, 1.52, 0); this.body.add(arm);
-      art.mesh(arm, new T.CylinderGeometry(.12, .16, .42, 6), cloth, [side * .04, -.2, 0]);
-      art.mesh(arm, new T.IcosahedronGeometry(.095, 0), p.limestone, [side * .04, -.44, .025]);
-      this.arms.push(arm);
+      art.mesh(arm, new T.CylinderGeometry(.12, .14, .23, 6), cloth, [side * .04, -.115, 0]);
+      const elbow = new T.Group(); elbow.position.set(side * .04, -.23, 0); arm.add(elbow);
+      art.mesh(elbow, new T.CylinderGeometry(.14, .10, .21, 6), cloth, [0, -.105, 0]);
+      art.mesh(elbow, new T.IcosahedronGeometry(.095, 0), p.limestone, [0, -.23, .025]);
+      this.arms.push({ shoulder: arm, elbow });
 
       const hip = new T.Group(), knee = new T.Group();
       hip.position.set(side * .16, .76, 0); this.figure.add(hip);
@@ -65,31 +69,39 @@ export class PaperTraveler {
     this.root.traverse(o => { if (o instanceof T.Mesh) o.castShadow = false; });
   }
 
-  update(time: number, position: number, narrow: boolean) {
+  update(time: number, position: number, narrow: boolean, gait: HistoryGait = 'walk') {
     // Apply the left-side resting offset after clamping, including at the first and last dates.
     const x = clampHistoryPosition(position) * HISTORY_SPACING - 1.5;
     const elapsed = Math.min(.08, Math.max(0, time - this.previousTime));
     const delta = this.previousX === undefined ? 0 : x - this.previousX;
     const scale = narrow ? 1.4 : 1;
     const slope = (pathZ(x + .08) - pathZ(x - .08)) / .16;
+    const moving = Math.abs(delta) > .00001;
+    const blend = 1 - Math.exp(-elapsed * 12);
+    this.running += ((gait === 'run' ? 1 : 0) - this.running) * blend;
+    this.activity += ((moving ? 1 : 0) - this.activity) * blend;
+    const run = this.running;
     if (Math.abs(delta) > .00001) {
       const direction = Math.sign(delta);
       const angle = Math.atan2(direction, slope * direction);
       const turn = Math.atan2(Math.sin(angle - this.heading), Math.cos(angle - this.heading));
       this.heading += turn * (elapsed ? 1 - Math.exp(-elapsed * 7) : 1);
       // Fast scrubbing should not make the legs flicker; normal steps follow distance travelled.
-      this.phase += Math.min(Math.hypot(delta, slope * delta) / scale, elapsed * HISTORY_WALK_SPEED * 2) * 8;
+      this.phase += Math.min(Math.hypot(delta, slope * delta) / scale * (8 - run * 3), elapsed * (18 + run * 5));
     }
     this.root.position.set(x, groundY(x) + .02, pathZ(x) - .8);
     this.root.scale.setScalar(scale); this.figure.rotation.y = this.heading;
-    this.body.position.y = Math.sin(this.phase * 2) * .018;
-    this.body.rotation.z = Math.sin(this.phase) * .018;
-    this.scarf.rotation.x = -.15 + Math.sin(time * 1.7) * .08;
+    // Both feet leave the paper briefly in a run; pausing settles the figure onto the path.
+    this.figure.position.y = Math.max(0, Math.cos(this.phase * 2)) * .12 * run * this.activity;
+    this.body.position.y = Math.sin(this.phase * 2) * .018 * this.activity;
+    this.body.rotation.x = .19 * run * this.activity;
+    this.body.rotation.z = Math.sin(this.phase) * .018 * this.activity;
+    this.scarf.rotation.x = -.15 - run * this.activity * .55 + Math.sin(time * 1.7) * .08;
 
     this.legs.forEach(({ hip, knee, foot }, i) => {
       const phase = this.phase + i * Math.PI;
-      const forward = Math.sin(phase) * .21;
-      const lift = Math.max(0, Math.cos(phase)) * .11;
+      const forward = Math.sin(phase) * (.21 + run * .11) * this.activity;
+      const lift = Math.max(0, Math.cos(phase)) * (.11 + run * .17) * this.activity;
       // Two short paper folds keep the planted shoe level instead of swinging through the ground.
       const footX = x + scale * (hip.position.x * Math.cos(this.heading) + forward * Math.sin(this.heading));
       const drop = .705 - lift - (groundY(footX) - groundY(x)) / scale;
@@ -97,7 +109,8 @@ export class PaperTraveler {
       hip.rotation.x = Math.atan2(-forward, drop) - Math.acos(T.MathUtils.clamp((.4 ** 2 + distance ** 2 - .43 ** 2) / (.8 * distance), -1, 1));
       knee.rotation.x = Math.PI - Math.acos(T.MathUtils.clamp((.4 ** 2 + .43 ** 2 - distance ** 2) / (.8 * .43), -1, 1));
       foot.rotation.x = -hip.rotation.x - knee.rotation.x;
-      this.arms[i].rotation.x = Math.sin(phase) * .24;
+      this.arms[i].shoulder.rotation.x = Math.sin(phase) * (.24 + run * .51) * this.activity;
+      this.arms[i].elbow.rotation.x = -.08 - run * this.activity * 1.05;
     });
     this.previousX = x; this.previousTime = time;
   }

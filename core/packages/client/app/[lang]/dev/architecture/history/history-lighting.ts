@@ -40,6 +40,8 @@ export class PaperLighting {
   private readonly disc: T.Mesh<T.CircleGeometry, T.MeshBasicMaterial>;
   private readonly halo: T.Mesh<T.CircleGeometry, T.MeshBasicMaterial>;
   private readonly moon: T.Mesh<T.ShapeGeometry, T.MeshBasicMaterial>;
+  private readonly moonHalo: T.Mesh<T.PlaneGeometry, T.ShaderMaterial>;
+  private readonly rim: T.DirectionalLight;
   private readonly stars: T.Points<T.BufferGeometry, T.ShaderMaterial>;
   private readonly paper: T.Color;
   private readonly ink: T.Color;
@@ -87,6 +89,22 @@ export class PaperLighting {
     crescent.bezierCurveTo(-1.8, 1.25, -1.8, -1.45, .55, -1.08);
     crescent.bezierCurveTo(-.5, -.75, -.5, .72, .55, 1.08);
     this.moon = new T.Mesh(new T.ShapeGeometry(crescent, 48), basic(p.paper));
+    this.moonHalo = new T.Mesh(new T.PlaneGeometry(7, 7), new T.ShaderMaterial({
+      transparent: true, depthWrite: false, fog: false,
+      uniforms: { tint: { value: new T.Color(p.ice) }, opacity: { value: 0 } },
+      vertexShader: 'varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+      fragmentShader: `uniform vec3 tint; uniform float opacity; varying vec2 vUv;
+        void main(){float halo=pow(max(0.,1.-length((vUv-.5)*2.)),3.);
+          gl_FragColor=vec4(tint,halo*opacity);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }`,
+    }));
+    this.moonHalo.name = 'history-moon-halo';
+    // A shadowless grazing light reveals folded edges without washing every paper face equally.
+    this.rim = new T.DirectionalLight(new T.Color(p.ice).lerp(this.paper, .22), 0);
+    this.rim.name = 'history-moon-rim'; this.rim.position.set(-16, 12, -17);
+    this.rim.target.position.set(0, 2, 0);
     this.disc.name = 'history-sun'; this.moon.name = 'history-moon';
     const positions: number[] = [], seeds: number[] = [];
     for (let i = 0; i < 96; i++) {
@@ -108,7 +126,7 @@ export class PaperLighting {
         }`,
     }));
     this.stars.name = 'history-stars';
-    this.root.add(this.sky, this.stars, this.halo, this.disc, this.moon);
+    this.root.add(this.sky, this.stars, this.halo, this.disc, this.moonHalo, this.moon, this.rim, this.rim.target);
   }
 
   update(position: number, time: number, weather: JourneyWeather, camera: T.OrthographicCamera, narrow: boolean, density: number) {
@@ -130,6 +148,7 @@ export class PaperLighting {
     this.sun.color.copy(this.ice).lerp(this.nightColor, night * .2).lerp(this.paper, daylight).lerp(twilightColor, twilight * .65);
     this.sun.color.lerp(this.weatherColor, wash * .36);
     this.sun.intensity = (.62 + daylight * 2.48) * (1 - overcast * .38);
+    this.rim.intensity = night * .48 * (1 - overcast * .55);
     // The same shadow light becomes soft moonlight at night, keeping the sculpture legible.
     const solarX = -Math.cos(angle) * 21;
     this.sun.position.set(x + T.MathUtils.lerp(solarX, -14, night), y + 23 + Math.max(0, Math.sin(angle)) * 12, 13);
@@ -149,7 +168,10 @@ export class PaperLighting {
     this.halo.visible = this.disc.visible;
     skyPoint(this.moon.position, narrow ? .55 : .45, .83);
     this.moon.material.opacity = night * (1 - overcast * .55); this.moon.visible = night > .01;
-    for (const body of [this.disc, this.halo, this.moon]) body.quaternion.copy(camera.quaternion);
+    this.moonHalo.position.copy(this.moon.position).addScaledVector(this.direction, .06);
+    this.moonHalo.material.uniforms.opacity.value = this.moon.material.opacity * .12;
+    this.moonHalo.visible = this.moon.visible;
+    for (const body of [this.disc, this.halo, this.moon, this.moonHalo]) body.quaternion.copy(camera.quaternion);
     skyPoint(this.stars.position, 0, 0);
     this.stars.quaternion.copy(camera.quaternion);
     this.stars.scale.set((camera.right - camera.left) / 2, (camera.top - camera.bottom) / 2, 1);
@@ -167,6 +189,6 @@ export class PaperLighting {
     this.root.traverse(object => {
       if (object instanceof T.Mesh || object instanceof T.Points) { object.geometry.dispose(); object.material.dispose(); }
     });
-    this.sun.dispose();
+    this.sun.dispose(); this.rim.dispose();
   }
 }

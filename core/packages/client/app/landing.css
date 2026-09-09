@@ -267,6 +267,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     height: auto;
     aspect-ratio: 1080 / 293;
     object-fit: cover;
+    border-radius: 16px;
 }
 .landing-page .landing-history-feature .landing-featured-news-body {
     display: grid;

@@ -1,13 +1,13 @@
 import * as T from 'three';
 import { renderFromSimpleQuery } from '@cuberoot/visualcube';
-import { HISTORY_PLACES, HISTORY_SPACING, clampHistoryPosition, historyWindow } from './history-days';
+import { HISTORY_PLACES, HISTORY_SPACING, HISTORY_GAITS, type HistoryGait, clampHistoryPosition, historyWindow } from './history-days';
 import { PaperScenery, type PaperPalette } from './history-scenery';
 import { groundY, pathZ, pathY } from './history-environment';
 import { buildHistoryLand } from './history-terrain';
 import { PaperWeather } from './history-weather';
 import { PaperLighting } from './history-lighting';
 import { PaperWater } from './history-water';
-import { PaperTraveler, HISTORY_WALK_SPEED } from './history-traveler';
+import { PaperTraveler } from './history-traveler';
 import { HISTORY_LANDFORMS } from './history-landforms';
 import { PaperWildlife } from './history-wildlife';
 import { HISTORY_SECRETS } from './history-secrets';
@@ -18,6 +18,7 @@ export interface HistoryScene {
   setWeather: (variation: number) => void;
   setMotion: (enabled: boolean) => void;
   setSpeed: (multiplier: number) => void;
+  setGait: (gait: HistoryGait) => void;
   /** Manual scenes use the same render path, independent of the live page's clock. */
   captureFrame: (position: number, seconds: number) => {
     canvas: HTMLCanvasElement;
@@ -39,10 +40,12 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
   const renderer = new T.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'low-power' });
   const scene = new T.Scene();
   const art = new PaperScenery(palette);
+  const goldGlow = new T.Color(palette.gold).lerp(new T.Color(palette.paper), .18);
   const camera = new T.OrthographicCamera(-20, 20, 14, -14, .1, 150);
   let disposed = false, frame = 0, width = 1, height = 1, previousTime = 0, labelHeight = 0;
   let visible = true, motion = true, variation = 0, animationTime = 0, lastRender = 0, reportedPosition = -1;
   let speed = 1;
+  let gait: HistoryGait = 'walk';
   let weather: PaperWeather | undefined;
   let lighting: PaperLighting | undefined;
   let water: PaperWater | undefined;
@@ -195,7 +198,7 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
       if (shadowPosition !== position) { renderer.shadowMap.needsUpdate = true; shadowPosition = position; }
       passages.forEach(passage => { passage.art.update(animationTime, position); passage.wildlife?.update(animationTime); });
       art.update(animationTime, position);
-      traveler!.update(animationTime, position, width < 700);
+      traveler!.update(animationTime, position, width < 700, gait);
       const currentWeather = weather!.update(animationTime, position, variation, !!capture || !reducedMotion.matches, canvas.width / width, width < 700);
       weather!.fitView(camera);
       host.dataset.weather = currentWeather;
@@ -203,11 +206,12 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
       const light = lighting!.update(position, animationTime, currentWeather, camera, width < 700, canvas.width / width);
       water!.update(animationTime, currentWeather, light.night, lighting!.horizonColor, lighting!.sun.color);
       scene.fog!.color.copy(lighting!.horizonColor);
-      host.parentElement?.style.setProperty('--scroll-sky-ink', lighting!.skyInk(1 - light.night));
+      host.parentElement?.style.setProperty('--scroll-sky-ink', light.night > .5 ? palette.paper : palette.ink);
+      host.parentElement?.style.setProperty('--scroll-caption-wash', light.night > .5 ? 'var(--scroll-night)' : palette.paper);
       host.parentElement?.style.setProperty('--scroll-label-ink', lighting!.skyInk(1 - light.night));
       passages.forEach(passage => {
         const gold = passage.art.materials.get(palette.gold);
-        if (gold) { gold.emissive.set(palette.gold); gold.emissiveIntensity = light.night * .18; }
+        if (gold) { gold.emissive.copy(goldGlow); gold.emissiveIntensity = light.night * .28; }
       });
       renderer.render(scene, camera);
       nodes.forEach((node, i) => {
@@ -241,6 +245,7 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
       host.dataset.animationTime = animationTime.toFixed(3);
       host.dataset.elevation = elevation.toFixed(3);
       host.dataset.travelerX = traveler!.root.position.x.toFixed(3);
+      host.dataset.gait = gait;
       host.dataset.solarHour = light.hour.toFixed(3);
       host.dataset.daylight = light.daylight.toFixed(3);
       host.dataset.timeOfDay = light.phase;
@@ -260,7 +265,7 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
       if (motion && !travelling && !drag) {
         // Only automatic travel uses the multiplier; atmosphere keeps its natural clock.
         // The last date is a stop, never a turnaround or loop.
-        target = clampHistoryPosition(position + HISTORY_WALK_SPEED * speed * elapsed / 1000 / HISTORY_SPACING);
+        target = clampHistoryPosition(position + HISTORY_GAITS[gait].speed * speed * elapsed / 1000 / HISTORY_SPACING);
         position = target;
       } else {
         position += (target - position) * (reducedMotion.matches ? 1 : 1 - Math.exp(-elapsed / 110));
@@ -309,6 +314,7 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
       setWeather(value) { variation = Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0; invalidate(); },
       setMotion(enabled) { motion = enabled; if (!enabled) target = position; previousTime = 0; invalidate(); },
       setSpeed(value) { speed = [1, 2, 5, 10].includes(value) ? value : 1; invalidate(); },
+      setGait(value) { gait = value === 'run' ? 'run' : 'walk'; invalidate(); },
     };
   } catch (error) { dispose(); throw error; }
 
