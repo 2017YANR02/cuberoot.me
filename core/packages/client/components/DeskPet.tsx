@@ -314,7 +314,7 @@ const CSS = `
 .clawd-deskpet.mini-anim{transition:right .14s ease-out,bottom .14s ease-out;}
 .clawd-deskpet.mini-left>img{transform:scaleX(-1);}
 .clawd-deskpet[data-char=rootbeast].mini-mode>img{transform:rotate(-90deg);}
-.clawd-deskpet[data-char=rootbeast].mini-mode.mini-left>img{transform:scaleX(-1) rotate(-90deg);}
+.clawd-deskpet[data-char=rootbeast].mini-mode.mini-left>img{transform:rotate(90deg);}
 .clawd-deskpet.mini-mode .clawd-deskpet-hit{left:0;top:0;width:100%;height:100%;}
 @media (max-width:768px){
   .clawd-deskpet{right:max(12px,var(--sar,0px));bottom:max(12px,var(--sab,0px));}
