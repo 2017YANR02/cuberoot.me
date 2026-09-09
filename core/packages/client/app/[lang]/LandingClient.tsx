@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { ArrowRight, Heart, Lock, LogIn, User, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Crown, Heart, Lock, LogIn, User, type LucideIcon } from 'lucide-react';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
@@ -235,6 +235,11 @@ export default function LandingPage() {
     <div className="landing-page">
       <div className="landing-auth">
         <HeaderToggles />
+        <Link href="/membership" className="landing-auth-icon landing-membership-icon"
+          title={tr({ zh: '会员', en: 'Membership' })}
+          aria-label={tr({ zh: '会员', en: 'Membership' })} prefetch={false}>
+          <Crown size={16} aria-hidden="true" />
+        </Link>
         <Link
           href={SUPPORT_FOOTER_ENTRY.href}
           className="landing-auth-icon"
@@ -265,6 +270,11 @@ export default function LandingPage() {
         <span className="brand-name">{t('brand')}</span>
       </div>
       <LandingSearch cards={searchCards} lang={lang} />
+      <Link href="/membership" className="landing-membership-cta" prefetch={false}>
+        <Crown size={18} aria-hidden="true" />
+        <span>{tr({ zh: '会员权益', en: 'Membership benefits' })}</span>
+        <ArrowRight size={16} aria-hidden="true" />
+      </Link>
       {featuredNotice && featuredNotice.href && (() => {
         const FeaturedIcon = iconFor(featuredNotice);
         const body = tr({
@@ -366,6 +376,10 @@ export default function LandingPage() {
         <Link href={SUPPORT_FOOTER_ENTRY.href} className="footer-credits" prefetch={false}>
           <Heart size={12} aria-hidden="true" />
           <span>{t(SUPPORT_FOOTER_ENTRY.nameKey)}</span>
+        </Link>
+        <Link href="/membership" className="footer-membership" prefetch={false}>
+          <Crown size={14} aria-hidden="true" />
+          <span>{tr({ zh: '会员', en: 'Membership' })}</span>
         </Link>
         <a
           href={GITHUB_FOOTER_ENTRY.href}
