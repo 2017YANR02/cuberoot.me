@@ -101,7 +101,37 @@ try {
         }
         authoredLandmarks = {revision, towerHeight, bundBuildings: bundIds.length, fittedWindows, stoneMeshes, apertureRays: 4};
       }
-      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks});
+      let authoredEntrances: unknown = null;
+      const asia = roots.get('root/147/8/0'), club = roots.get('root/147/8/1');
+      if (asia?.userData.spaceBundEntranceRevision || club?.userData.spaceBundEntranceRevision) {
+        const entranceRevision = 'bund-entrances-20260908';
+        if (asia?.userData.spaceBundEntranceRevision !== entranceRevision || club?.userData.spaceBundEntranceRevision !== entranceRevision) throw new Error('Bund entrance revision mismatch');
+        const ray = (building: THREE.Object3D, start: THREE.Vector3, direction: THREE.Vector3) => new THREE.Raycaster(
+          start.applyMatrix4(building.matrixWorld), direction.transformDirection(building.matrixWorld), 0, 60,
+        ).intersectObject(building, true)[0];
+        const front = (building: THREE.Object3D, x: number, height: number) => ray(building, new THREE.Vector3(x, height, -10), new THREE.Vector3(0, 0, 1));
+        const mustHit = (hit: THREE.Intersection | undefined, part: string, label: string) => {
+          if (hit?.object.userData.spaceBundEntrancePart !== part) throw new Error(`${label}: expected recessed ${part}, hit ${hit?.object.userData.spaceId}`);
+        };
+        // Test real exported surfaces: masonry must leave both attic/oculus
+        // openings clear, and both roof slopes must face an overhead camera.
+        for (const side of [-1, 1]) {
+          mustHit(front(asia, side * asia.userData.frontage * .37 + .2, 31.5), 'glass', 'Asia attic');
+          mustHit(front(club, side * 3.9 + .24, 7.85), 'glass', 'Club oculus');
+          mustHit(front(club, side * club.userData.frontage * .37 + .3, 23.9), 'stone', 'Club gable');
+          const neighbor = front(club, side * club.userData.frontage / 9 * 2 + .18, 7);
+          if (neighbor?.object.userData.spaceId !== 'root/147/8/1/1') throw new Error('Neighboring Club window was clipped');
+          const canopy = ray(club, new THREE.Vector3(side * 5.1, 12, -2.4), new THREE.Vector3(0, -1, 0));
+          mustHit(canopy, 'glass', 'Club canopy');
+          const local = club.worldToLocal(canopy!.point.clone());
+          if (Math.abs(local.y - 4.63125) > .02) throw new Error('Club canopy slope changed');
+        }
+        mustHit(front(club, 0, 7.2), 'stone', 'Club entrance spandrel');
+        const height = new THREE.Box3().setFromObject(asia).getSize(new THREE.Vector3()).y;
+        if (Math.abs(height - 35.11) > .03) throw new Error('Asia old triangular roof remains or cap lost');
+        authoredEntrances = {revision: entranceRevision, buildings: 2, surfaceRays: 11, asiaHeight: height, canopyProjection: club.userData.spaceBundEntranceDetail.canopyProjection};
+      }
+      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks, authoredEntrances});
       city.dispose(); continue;
     }
     const [style, env] = key.split('-') as [RoomStyle, Environment];
