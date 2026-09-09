@@ -6,7 +6,7 @@ Blender 是静态场景的编辑源，Three.js 是网页运行引擎。住宅、
 
 | 内容 | 位置 | Git |
 | --- | --- | --- |
-| 25 份可编辑原工程 | `design/space/scenes/*.blend` | 本地保留，重资产单独备份 |
+| 25 份可编辑原工程 | `design/space/scenes/*.blend` | 后续使用 Git LFS；当前暂缓启用，本地保留并单独备份 |
 | 首次导入清单 | `design/space/scenes/*.import.json` | 跟踪首次导入，不代表后续编辑状态 |
 | 网页模型、共享纹理 | `core/packages/client/public/assets/space/blender-v1/` | GLB 和纹理单独打包，JSON 清单入库 |
 | Blender 软件 | `E:/Apps/Blender/blender.exe` | 仓库外 |
@@ -62,9 +62,11 @@ pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset italian-original -Pr
 
 ## 备份与发布
 
+2026-09-09 用户确定后续资产版本管理使用 Git LFS，但暂不配置或上传。`.blend` 和必要原始贴图通过 LFS 保存版本，脚本、文档和清单继续普通 Git；`.blend1`、缓存和临时渲染不入库。网页 GLB 和运行贴图按资源发布流程提供，不能把 LFS 当成网页资源地址。恢复资产入库时同步配置 `.gitattributes` 与精确忽略例外，核对 LFS 指针、用量预算及干净检出；不要用 `git add -f` 将大文件塞进普通 Git。
+
 源工程和网页 GLB/纹理被 Git 忽略，提交代码不会备份这些重资产。完整备份需同时包含 `design/space/scenes` 与 `client/public/assets/space/blender-v1`；2026-09-08 迁出的 8 份旧 `.blend1` 备份在 `E:/CubeRoot-Assets/space/backups/20260908/`，随后修正预览相机时生成的 `.blend1` 留在原工程旁。E 盘缓存可重建，不能取代 `.blend` 备份。
 
-本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。本任务没有上传资产或 push。上海模型当前约 284 MB，正式发布前仍需分区加载、压缩与移动设备验证。
+本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 285,677,784 字节（约 286 MB），正式发布前仍需分区加载、压缩与移动设备验证。
 
 Blender 和 glTF 插件来源已加入网页的“来源与致谢”，统一数据在 `credits_data.json`；建筑及天气等既有资料见 [来源记录](../../docs/space-sources.md)，迁移状态见 [跟踪文档](../../docs/space-blender-tracker.md)。
 
