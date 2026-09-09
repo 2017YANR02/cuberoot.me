@@ -81,6 +81,13 @@
 }
 
 .account-id-row { margin-bottom: 32px; }
+.account-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.account-name-row .account-name { min-width: 0; overflow-wrap: anywhere; }
 .account-name {
   display: flex;
   align-items: center;
@@ -99,8 +106,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 24px;
-  padding: 12px 20px;
+  padding: 8px 12px;
   border-radius: 8px;
   background: var(--accent);
   color: var(--accent-foreground);
