@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState, type CSSProperties } from 'react';
-import { ImageIcon } from 'lucide-react';
-import { CompactSelect } from '@/components/CompactSelect';
+import { Check } from 'lucide-react';
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
 import { HOME_BACKGROUND_ASSETS as ASSET_ROOT, HOME_BACKGROUNDS as SCENES, resolveHomeBackground, type HomeBackgroundChoice as Choice } from '@/lib/home-backgrounds';
 import { useEffectiveTheme } from '@/lib/theme';
@@ -23,19 +22,10 @@ export default function useHomeBackground() {
   const scene = resolveHomeBackground(choice, theme);
   const autoLabel = tr({ zh: '随明暗切换', en: 'Follow light / dark' });
   const noneLabel = tr({ zh: '无背景', en: 'No background' });
-  const selectedLabel = choice === 'auto' ? autoLabel : scene ? tr(scene) : noneLabel;
-  const items = [
-    { value: 'auto' as Choice, label: autoLabel },
-    { value: 'none' as Choice, label: noneLabel },
-    ...SCENES.map(item => ({
-      value: item.id as Choice,
-      label: <span className="home-background-option">
-        {/* eslint-disable-next-line @next/next/no-img-element -- Tiny local WebP thumbnails. */}
-        <img src={`${ASSET_ROOT}/${item.id}-thumb.webp`} alt="" width={64} height={36} loading="lazy" />
-        <span>{tr(item)}</span>
-      </span>,
-    })),
-  ];
+  const selectBackground = (value: Choice) => {
+    setFailedScene(null);
+    setChoice(value);
+  };
 
   const background = ready && scene && failedScene !== scene.id ? <div
       className="home-scenery" aria-hidden="true"
@@ -45,14 +35,29 @@ export default function useHomeBackground() {
       <img key={scene.id} src={`${ASSET_ROOT}/${scene.id}.webp`} alt=""
         onError={() => setFailedScene(scene.id)} />
     </div> : null;
-  const control = <div className="home-background-control">
-      <div className="appearance-sec-label appearance-sec-div">{tr({ zh: '主页背景', en: 'Homepage background' })}</div>
-      <CompactSelect<Choice>
-        label={<span className="home-background-label"><ImageIcon size={15} />{selectedLabel}</span>}
-        valueText={selectedLabel} ariaLabel={tr({ zh: '选择主页背景', en: 'Choose homepage background' })}
-        value={choice} items={items} popupClassName="home-background-menu"
-        onChange={value => { setFailedScene(null); setChoice(value); }}
-      />
+  const control = <div className="home-background-control" role="group" aria-label={tr({ zh: '主页背景', en: 'Homepage background' })}>
+      <div className="appearance-sec-label">{tr({ zh: '主页背景', en: 'Homepage background' })}</div>
+      <div className="home-background-modes">
+        {([{ value: 'auto', label: autoLabel }, { value: 'none', label: noneLabel }] as const).map(item => (
+          <button key={item.value} type="button" role="menuitemradio" aria-checked={choice === item.value}
+            className="home-background-mode" onClick={() => selectBackground(item.value)}>
+            <span className="home-background-check">{choice === item.value && <Check size={13} />}</span>
+            {item.label}
+          </button>
+        ))}
+      </div>
+      <div className="home-background-grid">
+        {SCENES.map(item => (
+          <button key={item.id} type="button" role="menuitemradio" aria-checked={choice === item.id}
+            className="home-background-option" onClick={() => selectBackground(item.id)}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- Tiny local WebP thumbnails. */}
+            <img src={`${ASSET_ROOT}/${item.id}-thumb.webp`} alt="" width={128} height={72} />
+            <span className="home-background-caption"><span>{tr(item)}</span>
+              <span className="home-background-check">{choice === item.id && <Check size={13} />}</span>
+            </span>
+          </button>
+        ))}
+      </div>
     </div>;
   return { background, control };
 }
