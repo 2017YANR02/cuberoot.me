@@ -11,6 +11,7 @@ import Link from '@/components/AppLink';
 import SortableCard from '@/components/SortableCard';
 import HeaderToggles from '@/components/HeaderToggles';
 import useHomeBackground from './HomeBackground';
+import HomeGlass from './HomeGlass';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import LandingSearch from '@/components/LandingSearch';
@@ -286,6 +287,7 @@ export default function LandingPage() {
 
   return (
     <div className="landing-page">
+      <HomeGlass />
       <div className="landing-auth">
         <HeaderToggles appearanceContent={homeBackground.control} />
         <Link href="/membership" className="landing-auth-icon landing-membership-icon"
