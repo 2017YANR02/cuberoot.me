@@ -312,7 +312,7 @@ export default function DeskPetSearch({
           label={<span className="deskpet-character-label">
             {currentCharacter && <img src={currentCharacter.thumb} alt="" className="deskpet-toolbar-thumb"
               style={{ transform: `scale(${currentCharacter.thumbScale ?? 1})` }} />}
-            <span className="toolbar-label">{tr({ zh: '形象', en: 'Pet' })}</span>
+            <span className="toolbar-label">{tr({ zh: '桌宠', en: 'Pet' })}</span>
           </span>}
           items={characters.map(item => ({
             value: item.id,
