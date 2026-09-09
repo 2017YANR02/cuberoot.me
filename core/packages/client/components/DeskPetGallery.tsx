@@ -20,9 +20,11 @@ const CSS = `
   background:var(--popover);border:1px solid var(--border-default);border-radius:16px;
   padding:20px 22px 24px;}
 .deskpet-gallery-title{margin:0 0 4px;font-size:1.05rem;font-weight:600;color:var(--foreground);text-align:center;}
-.deskpet-gallery-sub{margin:0 0 12px;font-size:.78rem;color:var(--muted-foreground);text-align:center;}
 .deskpet-gallery h3{margin:18px 0 10px;font-size:.82rem;color:var(--muted-foreground);font-weight:600;}
-.deskpet-gallery-collection{margin-bottom:12px;}
+.deskpet-gallery-filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:18px 0 12px;}
+.deskpet-gallery-pet-option{display:flex;align-items:center;gap:8px;white-space:nowrap;}
+.deskpet-gallery-pet-thumb{display:flex;align-items:center;justify-content:center;width:26px;height:26px;overflow:hidden;flex:none;}
+.deskpet-gallery-pet-thumb img{width:26px;height:26px;object-fit:contain;}
 /* anchored-panel: clamped (CompactSelect body portal and visualViewport bounds) */
 .deskpet-gallery-collection-menu{z-index:100050;}
 .deskpet-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
@@ -130,8 +132,14 @@ function PlaytimePreview({ scene, onStep, onPerform }: {
   );
 }
 
-export default function DeskPetGallery({ lang, onClose }: { lang: 'zh' | 'en'; onClose: () => void }) {
+export default function DeskPetGallery({ lang, character, characters, onClose }: {
+  lang: 'zh' | 'en';
+  character: string;
+  characters: { id: string; label: { zh: string; en: string }; thumb: string; thumbScale?: number }[];
+  onClose: () => void;
+}) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [petId, setPetId] = useState(character);
   const [collectionId, setCollectionId] = useState('all');
   const panelRef = useRef<HTMLDivElement>(null);
   const collection = ROOTBEAST_COLLECTIONS.find(item => item.id === collectionId);
@@ -139,6 +147,12 @@ export default function DeskPetGallery({ lang, onClose }: { lang: 'zh' | 'en'; o
     ? ROOTBEAST_SCENES.filter(item => collection.sceneIds.includes(item.id))
     : ROOTBEAST_SCENES;
   const scene = getDeskPetScene(selected);
+  const pet = characters.find(item => item.id === petId) ?? characters[0];
+  const groups = PET_GALLERY.filter(group => group.id === pet?.id || (pet?.id === 'clawd' && ['cubing', 'moves'].includes(group.id)));
+  const petLabel = (item: typeof pet) => item && <span className="deskpet-gallery-pet-option">
+    <span className="deskpet-gallery-pet-thumb"><img src={item.thumb} alt="" style={{ transform: `scale(${item.thumbScale ?? 1})` }} /></span>
+    {tr(item.label)}
+  </span>;
   const step = (delta: number) => {
     const scenes = scene?.character === 'rootbeast' ? rootBeastScenes : PLAYTIME_SCENES;
     if (!scenes.length) return;
@@ -181,31 +195,35 @@ export default function DeskPetGallery({ lang, onClose }: { lang: 'zh' | 'en'; o
         <button type="button" className="deskpet-gallery-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close' })}>
           <X size={18} />
         </button>
-        <h2 className="deskpet-gallery-title" id="deskpet-gallery-title">{tr({ zh: '桌宠动画图鉴', en: 'Desk-pet Animations' })}</h2>
-        <p className="deskpet-gallery-sub">
-          {tr({ zh: '点选动画预览；打开桌宠「随机」可自动播放。', en: 'Select an animation to preview, or turn on Random in the pet toolbar for automatic playback.' })}
-        </p>
+        <h2 className="deskpet-gallery-title" id="deskpet-gallery-title">{tr({ zh: '桌宠图鉴', en: 'Desk-pet Gallery' })}</h2>
         {scene ? <>
           <div className="deskpet-story-controls"><button type="button" onClick={() => setSelected(null)}><ArrowLeft size={15} />{scene.character === 'rootbeast' && collection ? tr(collection) : tr({ zh: '所有动画', en: 'All animations' })}</button></div>
           <PlaytimePreview key={scene.state} scene={scene} onStep={step} onPerform={() => {
             onClose();
             window.dispatchEvent(new CustomEvent('clawd:state', { detail: scene.state }));
           }} />
-        </> : PET_GALLERY.map((g) => (
-          <section key={g.id} data-pet={g.id}>
-            <h3>{tr(g)}</h3>
-            {g.id === 'rootbeast' && <CompactSelect
-              className="deskpet-gallery-collection"
+        </> : <>
+          <div className="deskpet-gallery-filters">
+            <CompactSelect
+              popupClassName="deskpet-gallery-collection-menu"
+              ariaLabel={tr({ zh: '图鉴宠物', en: 'Gallery pet' })}
+              label={petLabel(pet)} value={pet?.id ?? ''} onChange={setPetId}
+              items={characters.map(item => ({ value: item.id, label: petLabel(item) }))}
+            />
+            {pet?.id === 'rootbeast' && <CompactSelect
               popupClassName="deskpet-gallery-collection-menu"
               ariaLabel={tr({ zh: '根号兽表情分期', en: 'Root Beast sticker collection' })}
               label={collection ? tr(collection) : tr({ zh: '全部', en: 'All' })}
-              value={collectionId}
-              onChange={setCollectionId}
+              value={collectionId} onChange={setCollectionId}
               items={[
                 { value: 'all', label: tr({ zh: '全部', en: 'All' }) },
                 ...ROOTBEAST_COLLECTIONS.map(item => ({ value: item.id, label: tr(item) })),
               ]}
             />}
+          </div>
+          {groups.map((g) => (
+          <section key={g.id} data-pet={g.id}>
+            {groups.length > 1 && <h3>{tr(g)}</h3>}
             <div className="deskpet-gallery-grid">
               {(g.id === 'rootbeast' ? rootBeastScenes : g.anims).map((a) => {
                 const zoom = g.scale
@@ -234,7 +252,7 @@ export default function DeskPetGallery({ lang, onClose }: { lang: 'zh' | 'en'; o
               })}
             </div>
           </section>
-        ))}
+        ))}</>}
       </div>
     </div>, document.body
   );

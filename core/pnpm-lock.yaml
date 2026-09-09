@@ -77,6 +77,9 @@ importers:
       cubing:
         specifier: ^0.63.3
         version: 0.63.3(patch_hash=026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6)
+      fast-xml-parser:
+        specifier: 5.7.3
+        version: 5.7.3
       hono:
         specifier: ^4.0.0
         version: 4.12.9

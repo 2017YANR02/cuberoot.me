@@ -7,6 +7,22 @@ import { PLATFORM_SITEMAP_PATHS } from '@/app/sitemap';
 const read = (relativePath: string) => readFileSync(new URL(`../${relativePath}`, import.meta.url), 'utf8');
 
 describe('Platform capabilities stay in canonical main-site entrypoints', () => {
+  it('keeps redemption focused on login, code entry and starting the course', () => {
+    const view = read('components/platform/PlatformRouteView.tsx');
+    const start = view.indexOf("  if (definition.id === 'account-invites') {");
+    const end = view.indexOf("  const courseDetail =", start);
+    const redemption = view.slice(start, end);
+    expect(start).toBeGreaterThan(0);
+    expect(redemption).toContain("!user ? (");
+    expect(redemption).toContain('href="/account"');
+    expect(redemption).toContain('<PlatformDomainActions');
+    expect(redemption).toContain('href="/platform/account/courses"');
+    expect(redemption).toContain('role="status"');
+    expect(redemption).not.toMatch(/kind="permission"|platform-route-header|PlatformEntityList|SearchInput/);
+    expect(view).toContain("&& definition.id !== 'account-invites'");
+    expect(view).toContain("if (action === 'redeem-invite') setRedeemed(true);");
+  });
+
   it('does not expose internal API fields or status in learner course lists and lesson pages', () => {
     const view = read('components/platform/PlatformRouteView.tsx');
     expect(view).toContain("const learnerContent = learnerCourses || definition.id === 'course-lesson';");
@@ -85,7 +101,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(shell).toContain('className="platform-nav platform-glass"');
     expect(view).not.toContain('className="platform-course-portrait"');
     expect(view).not.toContain('className="platform-portrait-link platform-glass"');
-    expect(view).toContain('!courseSection && !courseDetail ? <p>');
+    expect(view).toContain('!courseSection && !courseDetail && !inviteManager ? <p>');
     expect(view).not.toContain('course?.summary');
     expect(styles).toContain('@supports not (backdrop-filter: blur(1px))');
     expect(styles).toContain('@media (prefers-reduced-transparency: reduce)');

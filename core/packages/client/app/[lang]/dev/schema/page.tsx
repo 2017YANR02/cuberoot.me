@@ -417,6 +417,7 @@ const TABLES: Table[] = [
     { name: 'slug (PK)', note: { zh: 'monthly | yearly | lifetime', en: 'monthly | yearly | lifetime' } }, { name: 'period, currency' }, { name: 'perks JSONB' },
   ] },
   { name: 'membership_orders', domain: 'commerce', origin: '0046', purpose: { zh: '会员订单(我方单号 + provider / channel)', en: 'Membership orders (out_trade_no + provider/channel)' } },
+  { name: 'membership_contracts', domain: 'commerce', origin: '0222', purpose: { zh: '微信续费合约与核验状态；未终止合约阻止账号注销', en: 'WeChat renewal contracts and verification state; unterminated contracts block account deletion' }, cols: [{ name: 'last_sync_attempt_at' }] },
   { name: 'memberships', domain: 'commerce', origin: '0046', evolved: [212], purpose: { zh: '会员编号与有效期', en: 'Stable member IDs and active membership validity' }, cols: [
     { name: 'wca_id (PK)' }, { name: 'vip_number (UNIQUE)', note: { zh: '对外格式为 VIP + 至少 6 位数字', en: 'Public format is VIP plus at least six digits' } }, { name: 'plan_slug, started_at, expires_at' },
   ] },
@@ -738,6 +739,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 219, slug: 'platform_lesson_grants', desc: { zh: '课程授权流水记录限定课时，分别兑换试听课和正式课。', en: 'Scope immutable course grants to selected lessons for separate trial and full-lesson codes.' } },
   { n: 220, slug: 'platform_review_titles', desc: { zh: '课程评价支持选填标题。', en: 'Support optional titles for course reviews.' } },
   { n: 221, slug: 'home_card_locks', desc: { zh: '保存管理员设置的首页卡片锁定状态。', en: 'Persist administrator-controlled homepage card locks.' } },
+  { n: 222, slug: 'membership_contracts', desc: { zh: '保存微信续费合约，以账号锁防止签约与注销并发绕过。', en: 'Store WeChat renewal contracts and serialize contract writes with account deletion.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

@@ -401,6 +401,11 @@
 .mem-service-document h1 { font-size: 26px; line-height: 1.4; margin: 0 0 20px; }
 .mem-service-document h2 { font-size: 18px; line-height: 1.5; margin: 32px 0 10px; }
 .mem-service-document p { margin: 10px 0; }
+.mem-subscription { margin: 28px 0; }
+.mem-subscription-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
+.mem-cancel-dialog { max-width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); box-sizing: border-box; overflow: auto; margin: auto; padding: 24px; border: none; border-radius: 12px; background: var(--popover); color: var(--foreground); line-height: 1.8; }
+.mem-cancel-dialog::backdrop { background: color-mix(in srgb, var(--foreground) 45%, transparent); }
+.mem-cancel-dialog h2 { margin: 0 0 16px; font-size: 20px; }
 
 /* ── member contact ── */
 .mem-contact { margin-top: 32px; }

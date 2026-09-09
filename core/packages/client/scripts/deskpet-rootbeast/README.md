@@ -21,6 +21,8 @@ node scripts/deskpet-rootbeast/build-rootbeast.mjs
 node scripts/deskpet-rootbeast/build-rootbeast.mjs --check
 ```
 
+The traced shell already includes perspective, so turns smoothly limit the side/front stretch ratio to 1.65 while preserving projected width. This keeps its bread-like contour instead of stretching the flank into a wedge. Face placement and eye/paw clearance use the same bounded projection.
+
 The generated transparent SVGs contain their own paths and CSS timelines; they use no scripts, bitmap sprites, video, network fonts or remote images. Every loop has a reduced-motion poster. When revising published assets, bump `ROOTBEAST_VERSION` in `lib/deskpet-rootbeast.ts` because `/deskpet/` uses immutable caching.
 
 The same manifest supplies gallery previews and character-specific event states (`rootbeast:<id>`). Gallery playback can pause, seek, replay and switch within the selected collection. Selecting “Play on the pet” switches to Root Beast and exits edge-cling/rest before starting a full loop. Regular application reactions use the existing state names, including `happy`, `thinking`, `working` and `sleeping`.

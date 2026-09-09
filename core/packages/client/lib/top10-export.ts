@@ -8,8 +8,11 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { axisFor, tickLabel, type Metric } from '@/lib/top10-axis';
 import { EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { COUNTRY_TO_CONTINENT, type Continent } from '@/lib/country-continents';
+import { createCanvasVideoEncoder, type ExportProgress } from '@/lib/canvas-video-export';
+import { saveBlob } from '@/lib/document-export';
 
 export type { Metric };
+export type { ExportProgress } from '@/lib/canvas-video-export';
 
 export interface PbEvent { d: string; p: string; v: number; c: string }
 export interface PersonInfo { name: string; country: string; iso2: string | null }
@@ -437,12 +440,6 @@ function renderFrame(ctx: Ctx2D, p: FrameParams): void {
 }
 
 // === 主导出函数 ===
-export interface ExportProgress {
-  phase: string;
-  pct: number;
-  framesDone: number;
-  framesTotal: number;
-}
 export type RaceMode = 'persons' | 'results';
 export interface ExportOptions {
   events: PbEvent[];
@@ -508,36 +505,13 @@ export async function exportTop10Video(opts: ExportOptions): Promise<void> {
   const flagCache = await loadFlagImages([...isoSet]);
   if (abortRef.aborted) throw new Error('aborted');
 
-  // 3. mp4-muxer + VideoEncoder
-  const { Muxer, ArrayBufferTarget } = await import('mp4-muxer');
-  const target = new ArrayBufferTarget();
-  const muxer = new Muxer({
-    target,
-    video: { codec: 'avc', width: W, height: H, frameRate: FPS },
-    fastStart: 'in-memory',
-    firstTimestampBehavior: 'offset',
-  });
-
-  let encoderError: Error | null = null;
-  const encoder = new VideoEncoder({
-    output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
-    error: (e) => { encoderError = e instanceof Error ? e : new Error(String(e)); },
-  });
-  encoder.configure({
-    codec: 'avc1.640033',
-    width: W,
-    height: H,
-    bitrate: BITRATE,
-    framerate: FPS,
-  });
-
-  // 4. 渲染 + 编码循环
+  // 3. 准备画布和共享编码器
   const canvas = new OffscreenCanvas(W, H);
   const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    try { encoder.close(); } catch { /* ignore */ }
-    throw new Error('OffscreenCanvas 2d unavailable');
-  }
+  if (!ctx) throw new Error('OffscreenCanvas 2d unavailable');
+  const encoder = await createCanvasVideoEncoder({
+    width: W, height: H, fps: FPS, bitrate: BITRATE, abortRef,
+  });
 
   // 增量推进 state(避免每帧 O(events) 重 replay)
   // key:选手模式=pid(去重,同人更优 PB 覆盖);成绩模式=`i${序号}`(唯一,同人可多条)
@@ -564,11 +538,11 @@ export async function exportTop10Video(opts: ExportOptions): Promise<void> {
 
   const encodeStartTs = performance.now();
   let lastProgressTs = encodeStartTs;
+  let blob: Blob;
 
   try {
     for (let f = 0; f < totalFrames; f++) {
       if (abortRef.aborted) throw new Error('aborted');
-      if (encoderError) throw encoderError;
 
       // 帧 → 日期
       let frameDateMs: number;
@@ -608,20 +582,11 @@ export async function exportTop10Video(opts: ExportOptions): Promise<void> {
         dateIso, eventId, metric, metricLabel, persons, comps, isZh, flagCache,
       });
 
-      const ts = Math.round(f * 1e6 / FPS);
-      const vf = new VideoFrame(canvas, { timestamp: ts, duration: Math.round(1e6 / FPS) });
-      const isKey = f % 60 === 0;
-      encoder.encode(vf, { keyFrame: isKey });
-      vf.close();
+      await encoder.encode(canvas, f);
 
       // 预览(每 5 帧一次,避免阻塞)
       if (previewCtx && (f % 5 === 0 || f === totalFrames - 1)) {
         previewCtx.drawImage(canvas, 0, 0);
-      }
-
-      // backpressure:encoder 队列满时让步
-      while (encoder.encodeQueueSize > 4 && !abortRef.aborted) {
-        await new Promise<void>(r => setTimeout(r, 0));
       }
 
       // 进度
@@ -647,26 +612,12 @@ export async function exportTop10Video(opts: ExportOptions): Promise<void> {
       phase: (isZh ? '正在封装 mp4...' : 'Finalizing mp4...'),
       pct: 1, framesDone: totalFrames, framesTotal: totalFrames,
     });
-    await encoder.flush();
-    if (encoderError) throw encoderError;
-    encoder.close();
-    muxer.finalize();
-  } catch (e) {
-    try { encoder.close(); } catch { /* ignore */ }
-    throw e;
-  }
+    blob = await encoder.finish();
+  } finally { encoder.close(); }
 
   if (abortRef.aborted) throw new Error('aborted');
 
   // 5. 下载
-  const blob = new Blob([target.buffer], { type: 'video/mp4' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
   const tsTag = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-  a.href = url;
-  a.download = `top10_${eventId}_${metric}_${raceMode}_${mode}_${tsTag}.mp4`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  saveBlob(blob, `top10_${eventId}_${metric}_${raceMode}_${mode}_${tsTag}.mp4`);
 }

@@ -16,6 +16,7 @@ import PillToggle from '@/components/PillToggle/PillToggle';
 import { PasswordInput } from '@/components/PasswordInput';
 import { useAuthStore, applySession } from '@/lib/auth-store';
 import { useLang } from '@/i18n/tr';
+import { useT } from '@/hooks/useT';
 import {
   sendEmailCode, verifyEmailCode, sendPhoneCode, verifyPhoneCode,
   sendPhonePasswordResetCode, verifyPhonePasswordResetCode,
@@ -140,6 +141,7 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
   if (m.includes('wrong current password')) return t('当前密码不正确', 'Current password is incorrect');
   if (m.includes('phone not linked to an account')) return t('该手机号未绑定账号', 'No account is linked to this phone number');
   if (m.includes('confirmation does not match')) return t('输入的内容与账号标识不一致', "That doesn't match your account identifier");
+  if (m.includes('cancel automatic renewal before deleting account')) return t('请先取消自动续费，确认退订成功后再注销账号。注销账号不会代替微信解约。', 'Cancel automatic renewal and confirm it has ended before deleting your account. Account deletion does not revoke your WeChat payment authorization.');
   if (m.includes('invalid password')) return t('密码至少 8 位', 'Password must be at least 8 characters');
   if (m.includes('not configured')) return t('该登录方式暂未开放', "This sign-in method isn't available yet");
   if (m.includes('account already has an email')) return t('一个账号只能绑定一个邮箱,请先解绑现有邮箱', 'An account can have only one email — unlink the current one first');
@@ -1227,8 +1229,7 @@ export function AccountPanel() {
  * 前者要求人先认一眼这是哪个账号 —— 多账号的人最容易在这里删错。
  */
 export function DeleteAccountPanel({ backHref }: { backHref: string }) {
-  const lang = useLang();
-  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
+  const t = useT();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const [handle, setHandle] = useState<string | null>(null);
@@ -1238,6 +1239,7 @@ export function DeleteAccountPanel({ backHref }: { backHref: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [renewalBlocked, setRenewalBlocked] = useState(false);
 
   useEffect(() => {
     void fetchIdentities().then((acct) => {
@@ -1252,17 +1254,20 @@ export function DeleteAccountPanel({ backHref }: { backHref: string }) {
 
   const submit = useCallback(async () => {
     setError(null);
+    setRenewalBlocked(false);
     setBusy(true);
     try {
       await deleteAccount(confirm.trim(), hasPassword ? pw : undefined);
       logout();       // 账号已经没了,本地会话立刻清掉,别留一个指向空账号的 token
       setDone(true);
     } catch (e) {
-      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
+      const message = e instanceof Error ? e.message : String(e);
+      setError(authErrorText(message, t));
+      setRenewalBlocked(message.toLowerCase().includes('cancel automatic renewal before deleting account'));
       setBusy(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [confirm, pw, hasPassword, logout]);
+  }, [confirm, pw, hasPassword, logout, t]);
 
   if (done) {
     return (
@@ -1340,6 +1345,11 @@ export function DeleteAccountPanel({ backHref }: { backHref: string }) {
               </>
             )}
             {error && <p className="auth-error">{error}</p>}
+            {renewalBlocked && (
+              <AppLink href="/membership/subscription" className="auth-textbtn" prefetch={false}>
+                {t('管理并取消自动续费', 'Manage and cancel automatic renewal')}
+              </AppLink>
+            )}
             <button
               type="button"
               className="auth-danger"

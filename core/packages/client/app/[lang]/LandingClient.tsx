@@ -63,6 +63,14 @@ const ABOUT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'about')!
 const SUPPORT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'support')!;
 const GITHUB_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'github')!;
 
+// Temporary homepage feature; restore the managed notice on 2026-09-17 (UTC+8).
+const HISTORY_HOME_FEATURE: PageNotice = {
+  id: -1, path: '/', placement: 'home_featured', level: 'info',
+  bodyZh: '把时间，走成风景。', bodyEn: 'Walk through a landscape of time.',
+  href: '/dev/architecture/history', enabled: true, dismissible: false,
+  endsAt: '2026-09-17T00:00:00+08:00', updatedAt: '2026-09-09T00:00:00+08:00',
+};
+
 interface LandingCardContentProps {
   label: string;
   Icon?: LucideIcon;
@@ -113,13 +121,21 @@ export default function LandingPage() {
 
   useEffect(() => {
     let active = true;
+    let managedNotice: PageNotice | null = null;
+    const endsAt = Date.parse(HISTORY_HOME_FEATURE.endsAt!);
+    const refresh = () => {
+      if (active) setFeaturedNotice(Date.now() < endsAt ? HISTORY_HOME_FEATURE : managedNotice);
+    };
+    refresh();
+    const expiryTimer = window.setTimeout(refresh, Math.max(0, endsAt - Date.now()));
     fetchPageNotices()
       .then((rows) => {
-        if (!active) return;
-        setFeaturedNotice(rows.find((row) => row.placement === 'home_featured' && row.path === '/') ?? null);
+        managedNotice = rows.find((row) => row.placement === 'home_featured' && row.path === '/') ?? null;
+        refresh();
       })
       .catch(() => { /* 焦点新闻不可阻断首页 */ });
-    return () => { active = false; };
+    window.addEventListener('focus', refresh);
+    return () => { active = false; window.clearTimeout(expiryTimer); window.removeEventListener('focus', refresh); };
   }, []);
 
   useEffect(() => {
@@ -310,26 +326,35 @@ export default function LandingPage() {
       <LandingSearch cards={searchCards} lang={lang} />
       {featuredNotice && featuredNotice.href && (() => {
         const FeaturedIcon = iconFor(featuredNotice);
+        const isHistoryFeature = featuredNotice === HISTORY_HOME_FEATURE;
+        const featureClass = `landing-featured-news${isHistoryFeature ? ' landing-history-feature' : ''}`;
         const body = tr({
           zh: featuredNotice.bodyZh || featuredNotice.bodyEn,
           en: featuredNotice.bodyEn || featuredNotice.bodyZh,
         });
         const inner = (
           <>
-            <FeaturedIcon className="landing-featured-news-icon" size={15} aria-hidden="true" />
-            <span className="landing-featured-news-body">{body}</span>
+            {isHistoryFeature
+              ? <img className="landing-history-preview" src="/assets/history-home-v1.webp" width={1080} height={293} alt="" decoding="async" />
+              : <FeaturedIcon className="landing-featured-news-icon" size={15} aria-hidden="true" />}
+            <span className="landing-featured-news-body">
+              {isHistoryFeature && <span className="landing-history-label">{tr({ zh: '新功能：交互历史画卷', en: 'New: an interactive history scroll' })}</span>}
+              <span className={isHistoryFeature ? 'landing-history-title' : undefined}>{body}</span>
+              {isHistoryFeature && <span className="landing-history-invitation">{tr({ zh: '进入画卷，沿途看看 CubeRoot 的每一次更新。', en: 'Explore CubeRoot’s story, one day at a time.' })}</span>}
+            </span>
             <ArrowRight className="landing-featured-news-arrow" size={16} aria-hidden="true" />
           </>
         );
         const style = { '--home-news-color': colorFor(featuredNotice) } as CSSProperties;
+        // allow-nested-link: internal AppLink and external anchor are mutually exclusive branches, with no links inside inner.
         return featuredNotice.href.startsWith('/') && !featuredNotice.href.startsWith('//')
           ? (
-              <Link href={featuredNotice.href} className="landing-featured-news" style={style} prefetch={false}>
+              <Link href={featuredNotice.href} className={featureClass} style={style} prefetch={false}>
                 {inner}
               </Link>
             )
           : (
-              <a href={featuredNotice.href} className="landing-featured-news" style={style}
+              <a href={featuredNotice.href} className={featureClass} style={style}
                 target="_blank" rel="noopener noreferrer">
                 {inner}
               </a>

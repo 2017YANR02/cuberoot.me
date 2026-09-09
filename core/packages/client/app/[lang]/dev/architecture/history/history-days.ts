@@ -109,6 +109,7 @@ export const HISTORY_PLACES = DAYS.map((day, index) => {
   };
 });
 export const HISTORY_SPACING = 28;
+export const HISTORY_WALK_SPEED = 2.145;
 export const HISTORY_LAST = HISTORY_PLACES.length - 1;
 
 export function clampHistoryPosition(position: number): number {

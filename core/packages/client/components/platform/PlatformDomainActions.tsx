@@ -28,6 +28,7 @@ import type {
   PlatformPaymentAttemptResult,
 } from '@/lib/platform-types';
 import { isPlatformPaymentAttemptResult } from '@/lib/platform-types';
+import { PLATFORM_COURSE_SECTIONS } from '@/lib/platform-routes';
 import { PlatformState } from './PlatformState';
 import { PlatformQrMetadataEditor } from './PlatformQrMetadataEditor';
 
@@ -435,7 +436,7 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onR
           }
           return (
             <label key={item.key} className={item.kind === 'textarea' || item.kind === 'lines' || item.kind === 'json' ? 'platform-form-wide' : undefined}>
-              <span>{label}</span>
+              <span className={spec.action === 'redeem-invite' ? 'sr-only' : undefined}>{label}</span>
               {item.kind === 'select' ? (
                 <select className="platform-field-control" value={String(value)} required={item.required} onChange={(event) => setValues((current) => ({ ...current, [item.key]: event.target.value }))}>
                   {item.options?.map((choice) => <option key={choice.value} value={choice.value}>{t(choice.label.zh, choice.label.en)}</option>)}
@@ -782,22 +783,82 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
   const [courseError, setCourseError] = useState<Error | null>(null);
   const [generated, setGenerated] = useState<PlatformActionResult | null>(null);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
+  const [courseId, setCourseId] = useState('');
+  const [courseDetail, setCourseDetail] = useState<PlatformEntity | null>(null);
+  const [scope, setScope] = useState('core');
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
     setCourseError(null);
     void loadPlatformResource('admin-courses', { routeId: 'admin-courses', params: {}, signal: controller.signal })
-      .then((result) => setCourses(result.items.filter((item) => item.status === 'published' || item.status === 'unlisted')))
+      .then((result) => {
+        const available = result.items.filter((item) => item.status === 'published' || item.status === 'unlisted');
+        setCourses(available);
+        setCourseId(available[0]?.id ?? '');
+      })
       .catch((reason: unknown) => {
         if (!controller.signal.aborted) setCourseError(reason instanceof Error ? reason : new Error(String(reason)));
       });
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    setCourseDetail(null);
+    setFormError(null);
+    if (!courseId) return;
+    const controller = new AbortController();
+    void loadPlatformResource('courses', { routeId: 'course-detail', params: { id: courseId }, signal: controller.signal })
+      .then(result => { if (!controller.signal.aborted) setCourseDetail(result.items[0] ?? null); })
+      .catch(() => { if (!controller.signal.aborted) setFormError(t('课程加载失败，请刷新页面重试。', 'Could not load lessons. Refresh the page to retry.')); });
+    return () => controller.abort();
+  }, [courseId]);
+
+  const lessons = (Array.isArray(courseDetail?.data?.lessons) ? courseDetail.data.lessons : []) as Record<string, unknown>[];
+  // Match the course directory's section names; never infer permissions from an invite's label.
+  const sectionIds = (slug: string) => {
+    const section = PLATFORM_COURSE_SECTIONS.find(item => item.slug === slug);
+    return lessons.filter(lesson => section && typeof lesson.id === 'string'
+      && String(lesson.titleZh ?? '').startsWith(section.title.zh)).map(lesson => String(lesson.id));
+  };
+  const generateCode = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (busy) return;
+    const values = new FormData(event.currentTarget);
+    const lessonIds = sectionIds(scope);
+    if (!courseDetail || courseDetail.id !== courseId || (scope !== 'all' && !lessonIds.length)) {
+      setFormError(t('请选择课程中已有的课时范围。', 'Choose an available lesson section.'));
+      return;
+    }
+    const expires = String(values.get('expiresAt') ?? '');
+    const maximum = String(values.get('maxRedemptions') ?? '1');
+    if (maximum && (!Number.isInteger(Number(maximum)) || Number(maximum) < 1 || Number(maximum) > 1000000000)) {
+      setFormError(t('可用人数请填写正整数。', 'Enter a positive whole number of learners.'));
+      return;
+    }
+    if (expires && (!Number.isFinite(Date.parse(expires)) || Date.parse(expires) <= Date.now())) {
+      setFormError(t('请选择将来的到期时间。', 'Choose an expiry time in the future.'));
+      return;
+    }
+    const section = PLATFORM_COURSE_SECTIONS.find(item => item.slug === scope);
+    const label = String(values.get('label') ?? '').trim()
+      || `${courseDetail.title} ${section ? t(section.title.zh, section.title.en) : t('全部课程', 'Full course')}`;
+    setFormError(null);
+    const response = await runAction('admin-save', undefined, {
+      label, status: 'active', maxRedemptions: maximum ? Number(maximum) : null,
+      expiresAt: expires ? new Date(expires).toISOString() : null,
+      benefit: { courseId, ...(scope === 'all' ? {} : { lessonIds }) },
+    });
+    if (response?.code) {
+      setGenerated({ codes: [...(generated?.codes ?? []), { id: response.id ?? '', code: response.code }] });
+      setCopyMessage(null);
+    }
+  };
+
   const codeLines = generated?.codes?.map((item) => item.code).join('\n') ?? '';
   const downloadCsv = () => {
     if (!generated?.codes?.length) return;
-    const csv = ['code,internal_id', ...generated.codes.map((item) => `${escapeCsv(item.code)},${escapeCsv(item.id)}`)].join('\r\n');
+    const csv = [escapeCsv(t('兑换码', 'Redemption code')), ...generated.codes.map((item) => escapeCsv(item.code))].join('\r\n');
     const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
     const anchor = document.createElement('a');
     anchor.href = url;
@@ -814,64 +875,126 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
     }
   };
 
-  const base = ADMIN_FORMS['admin-invites'];
   const courseOptions = (courses ?? []).map((course) => ({ value: course.id, label: text(course.title, course.title) }));
   return (
-    <div className="platform-domain-stack">
+    <div className="platform-invite-manager">
       {courseError ? <PlatformState kind="error" message={courseError.message} /> : courses === null ? <PlatformState kind="loading" /> : courseOptions.length === 0 ? (
-        <p className="platform-domain-note">{t('请先发布或设为不公开列出的课程，再生成实体捆绑兑换码。', 'Publish or unlist a course before generating physical-bundle codes.')}</p>
+        <p className="platform-domain-note">{t('还没有可发码的课程，请先发布课程。', 'Publish a course before generating codes.')}</p>
       ) : (
+        <form className="platform-invite-create" onSubmit={event => void generateCode(event)}>
+          <h2>{t('生成兑换码', 'Create a code')}</h2>
+          <div className="platform-form-grid">
+            <label><span>{t('课程', 'Course')}</span>
+              <select className="platform-field-control" value={courseId} onChange={event => { setCourseId(event.target.value); setScope('core'); }}>
+                {courseOptions.map(course => <option key={course.value} value={course.value}>{t(course.label.zh, course.label.en)}</option>)}
+              </select>
+            </label>
+            <label><span>{t('开放内容', 'Access to')}</span>
+              <select className="platform-field-control" value={scope} onChange={event => setScope(event.target.value)}>
+                {PLATFORM_COURSE_SECTIONS.filter(section => section.slug !== 'introduction').map(section => (
+                  <option key={section.slug} value={section.slug} disabled={!sectionIds(section.slug).length}>{t(section.title.zh, section.title.en)}</option>
+                ))}
+                <option value="all">{t('全部课程', 'Full course')}</option>
+              </select>
+            </label>
+          </div>
+          <p className="platform-domain-note">{t('引言免费公开，不需要兑换。默认每个码供 1 人使用，不限兑换日期。', 'Introductions are free. Each code is for one learner, with no expiry by default.')}</p>
+          <details className="platform-invite-options">
+            <summary>{t('更多设置', 'More options')}</summary>
+            <div className="platform-form-grid">
+              <label><span>{t('备注（选填）', 'Note (optional)')}</span><input name="label" className="platform-field-control" maxLength={160} /></label>
+              <label><span>{t('可用人数（留空不限）', 'Learners (blank for unlimited)')}</span><input name="maxRedemptions" className="platform-field-control" type="number" min={1} max={1000000000} step={1} defaultValue={1} /></label>
+              <label><span>{t('兑换截止时间（选填）', 'Redeem by (optional)')}</span><input name="expiresAt" className="platform-field-control" type="datetime-local" /></label>
+            </div>
+          </details>
+          {formError ? <p role="alert" className="platform-form-error">{formError}</p> : null}
+          <button className="platform-button platform-button-primary" type="submit" disabled={Boolean(busy) || !courseDetail || (scope !== 'all' && !sectionIds(scope).length)}>{busy === 'admin-save' ? t('生成中…', 'Creating…') : t('生成一个兑换码', 'Create one code')}</button>
+        </form>
+      )}
+      {generated?.codes?.length ? (
+        <section className="platform-invite-result" aria-label={t('新生成的兑换码', 'New codes')}>
+          <h2>{t('复制后发给买家', 'Copy and send to your buyer')}</h2>
+          <p className="platform-domain-note">{t('离开页面后无法再次查看，请先保存。', 'Save these codes before leaving. They cannot be viewed again.')}</p>
+          <textarea className="platform-field-control platform-field-textarea" rows={Math.min(8, generated.codes.length + 1)} readOnly value={codeLines} aria-label={t('新生成的兑换码', 'New redemption codes')} />
+          <div className="platform-write-actions">
+            <button type="button" className="platform-button platform-button-primary" onClick={() => void copyCodes()}>{t('复制', 'Copy')}</button>
+            <button type="button" className="platform-button" onClick={downloadCsv}>{t('保存表格', 'Save spreadsheet')}</button>
+          </div>
+          {copyMessage ? <p className="platform-domain-note" role="status">{copyMessage}</p> : null}
+        </section>
+      ) : null}
+      {courseOptions.length ? <details className="platform-invite-options">
+        <summary>{t('随实体魔方批量发码', 'Bulk codes for physical cube packages')}</summary>
         <DomainForm
           definition={definition}
           busy={busy}
-          runAction={runAction}
-          onResult={(result) => { setGenerated(result); setCopyMessage(null); }}
+          runAction={(action, id, payload) => runAction(action, id, { ...payload, expiresAt: payload?.expiresAt ? new Date(String(payload.expiresAt)).toISOString() : null })}
+          onResult={(result) => { setGenerated({ ...result, codes: [...(generated?.codes ?? []), ...(result.codes ?? [])] }); setCopyMessage(null); }}
           spec={{
-            title: text('生成实体魔方随包兑换码', 'Generate physical-bundle redemption codes'),
+            title: text('批量生成', 'Create multiple codes'),
             action: 'admin-invite-batch',
             fields: [
-              field('courseId', '赠送课程', 'Gifted course', { kind: 'select', required: true, options: courseOptions }),
+              field('courseId', '赠送整门课程', 'Gifted full course', { kind: 'select', required: true, options: courseOptions }),
               field('count', '生成数量', 'Quantity', { kind: 'number', min: 1, max: 200, step: 1, required: true, defaultValue: 20 }),
-              field('batchReference', '批次编号', 'Batch reference', { required: true, maxLength: 160, placeholder: text('例如：DY-20260829-A', 'For example: DY-20260829-A') }),
+              field('batchReference', '这批码的名称', 'Name for this batch', { required: true, maxLength: 160, placeholder: text('例如：九月赠课', 'For example: September gifts') }),
               field('label', '备注', 'Label', { maxLength: 160 }),
               field('expiresAt', '有效期至', 'Expires at', { kind: 'datetime-local' }),
             ],
           }}
         />
-      )}
-      <p className="platform-domain-note">{t('明文兑换码只在生成成功后显示一次。离开页面前请复制或下载 CSV，并把兑换卡随实体魔方放入包裹。', 'Plaintext codes are shown only after creation. Copy or download the CSV before leaving, then place a redemption card inside the physical cube package.')}</p>
-      {generated?.codes?.length ? (
-        <section className="platform-domain-actions">
-          <h2>{t(`已生成 ${generated.codes.length} 个兑换码`, `${generated.codes.length} redemption codes generated`)}</h2>
-          <textarea className="platform-field-control platform-field-textarea" rows={Math.min(12, generated.codes.length + 1)} readOnly value={codeLines} aria-label={t('新生成的兑换码', 'New redemption codes')} />
-          <div className="platform-write-actions">
-            <button type="button" className="platform-button platform-button-primary" onClick={() => void copyCodes()}>{t('复制全部兑换码', 'Copy all codes')}</button>
-            <button type="button" className="platform-button" onClick={downloadCsv}>{t('下载 CSV', 'Download CSV')}</button>
-          </div>
-          {copyMessage ? <p className="platform-domain-note" role="status">{copyMessage}</p> : null}
-        </section>
-      ) : null}
+        <p className="platform-domain-note">{t('每个码限 1 人使用，开放整门课程，可登记订单和退款撤销。', 'Each code unlocks the full course for one learner and supports order references and refund revocation.')}</p>
+      </details> : null}
+      <section className="platform-invite-records">
+      <h2>{t('已有兑换码', 'Existing codes')}</h2>
+      {!entities.length ? <p className="platform-domain-note">{t('还没有兑换码。', 'No codes yet.')}</p> : null}
       {entities.map((raw) => {
         const entity = editableEntity(raw);
         const physical = entity.data?.distributionType === 'physical_bundle';
-        if (!physical) {
-          return (
-            <section className="platform-domain-actions" key={entity.id}>
-              <DomainForm definition={definition} entity={entity} resourceId={entity.id} busy={busy} runAction={runAction} spec={{ ...base, title: text(`编辑：${entity.title}`, `Edit: ${entity.title}`) }} />
-              <ActionButton action="admin-delete" resourceId={entity.id} label={text('归档', 'Archive')} confirm={text('确定归档这条记录吗？', 'Archive this record?')} busy={busy} runAction={runAction} />
-            </section>
-          );
-        }
         const revoked = entity.status === 'revoked';
+        const used = Number(entity.data?.redemptionCount ?? 0);
+        const maximum = Number(entity.data?.maxRedemptions ?? 0);
+        const expires = entity.data?.expiresAt ? new Date(String(entity.data.expiresAt)) : null;
+        const validExpiry = expires && Number.isFinite(expires.getTime()) ? expires : null;
+        const editEntity = validExpiry ? { ...entity, data: { ...entity.data, expiresAt: new Date(validExpiry.getTime() - validExpiry.getTimezoneOffset() * 60000).toISOString().slice(0, 16) } } : entity;
+        const expired = entity.status === 'expired' || Boolean(validExpiry && validExpiry.getTime() <= Date.now());
+        const status = revoked ? t('已撤销', 'Revoked') : entity.status === 'archived' ? t('已归档', 'Archived')
+          : entity.status === 'paused' ? t('已暂停', 'Paused') : expired ? t('已过期', 'Expired')
+          : maximum > 0 && used >= maximum ? t('已用完', 'Used up') : entity.status === 'active' ? t('可用', 'Available') : t('不可用', 'Unavailable');
+        const benefit = entity.data?.benefit as Record<string, unknown> | undefined;
+        const linkedCourse = courses?.find(course => course.id === benefit?.courseId);
+        const ids = Array.isArray(benefit?.lessonIds) ? benefit.lessonIds : null;
+        const matchedSection = benefit?.courseId === courseDetail?.id && ids?.length
+          ? PLATFORM_COURSE_SECTIONS.find(section => {
+            const matching = sectionIds(section.slug);
+            return matching.length === ids.length && matching.every(id => ids.includes(id));
+          }) : undefined;
+        const scopeLabel = matchedSection ? t(matchedSection.title.zh, matchedSection.title.en) : ids
+          ? t(`指定的 ${ids.length} 节课`, `${ids.length} selected lessons`) : benefit?.membershipPlanId ? t('会员权益', 'Membership') : t('全部课程', 'Full course');
         return (
-          <section className="platform-domain-actions" key={entity.id}>
-            <h2>{entity.title}</h2>
-            <p className="platform-domain-note">{t(
-              `批次：${String(entity.data?.batchReference ?? '—')}，状态：${entity.status ?? '—'}，兑换次数：${String(entity.data?.redemptionCount ?? 0)}`,
-              `Batch: ${String(entity.data?.batchReference ?? '—')}, status: ${entity.status ?? '—'}, redemptions: ${String(entity.data?.redemptionCount ?? 0)}`,
-            )}</p>
+          <article className="platform-invite-record" key={entity.id}>
+            <div className="platform-invite-record-title"><h3>{entity.title === entity.id ? t('未备注的兑换码', 'Code without a note') : entity.title}</h3><span className="platform-badge">{status}</span></div>
+            <p className="platform-domain-note">{linkedCourse?.title} {scopeLabel}</p>
+            <div className="platform-invite-meta">
+              <span>{maximum ? t(`已用 ${used} / ${maximum} 次`, `Used ${used} / ${maximum} times`) : t(`已用 ${used} 次，不限人数`, `Used ${used} times, unlimited learners`)}</span>
+              <span>{validExpiry ? t(`${validExpiry.toLocaleString('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })} 到期`, `Expires ${validExpiry.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`) : t('不限兑换日期', 'No expiry')}</span>
+            </div>
+            <details className="platform-invite-options">
+            <summary>{t('管理', 'Manage')}</summary>
+            <p className="platform-domain-note">{t('旧码无法再次查看，请从生成时保存的记录中复制。', 'Existing codes cannot be shown again. Use your saved copy.')}</p>
+            {!physical ? <>
+              <DomainForm definition={definition} entity={editEntity} resourceId={entity.id} busy={busy} runAction={async (action, id, payload) => {
+                const expiry = payload?.expiresAt;
+                return runAction(action, id, { ...payload, expiresAt: expiry ? new Date(String(expiry)).toISOString() : null });
+              }} spec={{ title: text('修改设置', 'Edit settings'), action: 'admin-save', submit: text('保存', 'Save'), fields: [
+                field('label', '备注', 'Note', { maxLength: 160 }),
+                field('status', '状态', 'Status', { kind: 'select', options: [option('active', '启用', 'Active'), option('paused', '暂停', 'Paused'), option('expired', '已过期', 'Expired'), option('archived', '已归档', 'Archived')] }),
+                field('maxRedemptions', '可用人数', 'Learners', { kind: 'number', min: 1, max: 1000000000, step: 1 }),
+                field('expiresAt', '兑换截止时间（留空不限）', 'Redeem by (blank for no expiry)', { kind: 'datetime-local' }),
+              ] }} />
+              <ActionButton action="admin-delete" resourceId={entity.id} label={text('停用并归档', 'Disable and archive')} confirm={text('归档后将不能继续兑换，已兑换的课程不受影响。确定吗？', 'Stop future redemptions? Previously redeemed access will not change.')} busy={busy} runAction={runAction} />
+            </> : <>
             {!revoked ? <DomainForm definition={definition} entity={entity} resourceId={entity.id} busy={busy} runAction={runAction} spec={{
-              title: text('绑定抖店订单号', 'Bind Douyin order reference'),
+              title: text('登记订单', 'Record order'),
               action: 'admin-invite-order',
               fields: [field('externalOrderReference', '订单号（留空可解除）', 'Order reference (clear to unbind)', { maxLength: 240 })],
             }} /> : null}
@@ -881,10 +1004,12 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
               fields: [field('reason', '撤销原因', 'Revocation reason', { kind: 'textarea', rows: 3, required: true, maxLength: 500 })],
               submit: text('撤销兑换码并收回对应权益', 'Revoke code and reverse its entitlement'),
             }} /> : <p className="platform-domain-note">{t(`撤销原因：${String(entity.data?.revokedReason ?? '')}`, `Revocation reason: ${String(entity.data?.revokedReason ?? '')}`)}</p>}
-          </section>
+            </>}
+            </details>
+          </article>
         );
       })}
-      <DomainForm definition={definition} busy={busy} runAction={runAction} spec={base} />
+      </section>
     </div>
   );
 }
@@ -998,7 +1123,7 @@ export function PlatformLearningActions(props: CommonProps) {
     );
   }
   if (definition.id === 'account-invites') {
-    return <DomainForm definition={definition} entity={entity} busy={busy} runAction={runAction} spec={{ title: text('兑换课程码', 'Redeem course code'), action: 'redeem-invite', fields: [field('code', '兑换码', 'Redemption code', { required: true, minLength: 3, maxLength: 128 })] }} />;
+    return <DomainForm definition={definition} entity={entity} busy={busy} runAction={runAction} spec={{ title: text('兑换课程码', 'Redeem course code'), action: 'redeem-invite', submit: text('兑换', 'Redeem'), fields: [field('code', '兑换码', 'Redemption code', { required: true, minLength: 3, maxLength: 128 })] }} />;
   }
   if (definition.id === 'progress') {
     return <DomainForm definition={definition} busy={busy} runAction={runAction} spec={{ title: text('每日签到', 'Daily check-in'), action: 'check-in', fields: [field('localDate', '本地日期（留空使用今天）', 'Local date (leave blank for today)', { kind: 'date' })] }} />;
