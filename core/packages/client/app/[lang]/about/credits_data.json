@@ -238,6 +238,27 @@
     "en": "Shanghai Civil Affairs Bureau: a research inventory of Bund building names, addresses, dates and styles for individual reconstruction. Inclusion here does not mean every listed building has been rebuilt in detail. Accessed 2026-09-07"
   },
   {
+    "name": "Asisbiz: 外滩 12 汇丰大楼 / HSBC Building",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/12-Zhongshan-Rd.html",
+    "zh": "实拍用于修正六柱等距排列、柱身凹槽、柱头叶饰、窗下线脚和入口银行招牌位置。石材分缝与法线贴图为原创程序纹理，非照片扫描；柱距、雕饰及灯具尺寸为照片估算，穹顶雕像和完整立面仍未达到 1:1。档案照片不代表当前招牌现状。查阅于 2026-09-09",
+    "en": "Photographs guide six evenly spaced fluted columns, capital leaves, window mouldings and the entrance bank sign. Ashlar color and normal maps are original procedural textures, not scans. Spacing, ornament and fixtures are photographic estimates; dome statues and the complete facade are not verified 1:1. Archive photos do not establish current signage. Accessed 2026-09-09"
+  },
+  {
+    "name": "Asisbiz: 外滩 13 江海关 / Customs House",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/13-Zhongshan-Rd.html",
+    "zh": "实拍用于铜色窗间板的多层边框、花饰、珠饰、檐下分格及投光灯外形；四面钟表继续绑定场景时间。分缝纹理为原创程序生成，照片仅用于建模参考；七条窗轴、矩形入口和钟楼百叶仍待重建，灯位与光度未实测。查阅于 2026-09-09",
+    "en": "Photographs guide bronze spandrel frames, rosettes, beads, cornice frieze and projector housings; clocks remain linked to scene time. Masonry textures are original procedural work. Seven window axes, rectangular entrances and tower louvres still need rebuilding; light positions and output are not surveyed. Accessed 2026-09-09"
+  },
+  {
+    "name": "Asisbiz: 外滩 20 和平饭店 / Peace Hotel",
+    "space": true,
+    "url": "https://www.asisbiz.com/China/20-Zhongshan-Rd.html",
+    "zh": "实拍用于截顶铜屋面、独立顶亭、平行立边咬口、红铜包边、檐下浮雕和灯具。铜板色差与石材分缝为原创程序纹理；细部比例仍为照片估算，浮雕尚简化，上部拱窗、退台及全楼窗组待重建，夜间铜顶照明仍未达标。既有和平饭店灯牌保留。查阅于 2026-09-09",
+    "en": "Photographs guide the truncated copper roof, separate lantern, parallel standing seams, red copper edging, relief and fixtures. Copper variation and masonry maps are original procedural textures. Fine dimensions remain estimates; relief is simplified, upper arches, setbacks and grouped windows need rebuilding, and roof night lighting remains unfinished. Existing Peace Hotel signs are retained. Accessed 2026-09-09"
+  },
+  {
     "name": "Asisbiz: 外滩 1 亚细亚大楼 / Asia Building",
     "space": true,
     "url": "https://www.asisbiz.com/China/1-Zhongshan-Rd.html",

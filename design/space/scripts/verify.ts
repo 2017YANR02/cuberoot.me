@@ -220,7 +220,70 @@ try {
         if (detail?.atticGroups !== 5 || detail.atticWindows !== 15 || detail.endArches !== 2 || detail.pairedWindows !== 10) throw new Error('Club window grouping metadata lost');
         authoredWindows = {revision: windowRevision, surfaceRays, windows, atticGroups: 5, pairedGroups: 5, estimatedDimensions: true};
       }
-      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks, authoredEntrances, authoredGalleries, authoredWindows});
+      let authoredHeroDetails: unknown = null;
+      const heroRevision = 'bund-hero-details-20260909';
+      const bank = roots.get('root/147/6'), customs = roots.get('root/147/5'), peace = roots.get('root/147/4');
+      if ([bank, customs, peace].some(b => b?.userData.spaceBundHeroRevision)) {
+        for (const b of [bank, customs, peace]) {
+          if (b?.userData.spaceBundHeroRevision !== heroRevision) throw new Error('Bund hero revision mismatch');
+          const body = roots.get(b.userData.spaceId + '/0');
+          if (!(body instanceof THREE.Mesh) || !body.geometry.getAttribute('uv')) throw new Error('Stone metric UV lost');
+          const mat = body.material;
+          if (!(mat instanceof THREE.MeshStandardMaterial) || !mat.map || !mat.normalMap || !mat.roughnessMap) throw new Error('Stone PBR maps lost');
+          const lenses = roots.get(heroRevision + '/' + b.userData.spaceId + '/lamp-lenses');
+          if (!(lenses instanceof THREE.Mesh) || !(lenses.material instanceof THREE.MeshStandardMaterial) ||
+              lenses.material.userData.spaceShaderKey !== 'shanghai-illumination-1.2') throw new Error('Fixture runtime night binding lost');
+        }
+        let surfaceRays = 0;
+        const cast = (building: THREE.Object3D, target: THREE.Object3D, start: THREE.Vector3, direction: THREE.Vector3, far = 100) => {
+          surfaceRays++;
+          return new THREE.Raycaster(start.applyMatrix4(building.matrixWorld), direction.transformDirection(building.matrixWorld), 0, far).intersectObject(target, true)[0];
+        };
+        const columns = roots.get(heroRevision + '/root/147/6/fluted-columns');
+        if (!bank || !customs || !peace || !columns) throw new Error('Hero building or shafts missing');
+        const grooveDepths: number[] = [];
+        for (const x of [-12.7, -7.62, -2.54, 2.54, 7.62, 12.7]) {
+          const radii = [Math.PI / 2, Math.PI / 2 + Math.PI / 24].map(angle => {
+            const center = new THREE.Vector3(x, 14, -2.1);
+            const outward = new THREE.Vector3(Math.cos(angle), 0, -Math.sin(angle));
+            const hit = cast(bank, columns, center.clone().addScaledVector(outward, 10), outward.clone().negate(), 20);
+            if (!hit) throw new Error('Fluted column surface missing at ' + x);
+            return bank.worldToLocal(hit.point.clone()).distanceTo(center);
+          });
+          const depth = radii[0] - radii[1];
+          if (Math.abs(depth - .058) > .005) throw new Error('Column fluting flattened at ' + x);
+          grooveDepths.push(depth);
+        }
+        // The original body mesh carried raised flutes and capital leaves.
+        // Probe those old positions through the entire building, not just the
+        // new shafts, so floating geometry after changing the spacing fails.
+        for (const x of [-6.3, -4.5, 4.5, 6.3]) {
+          for (const height of [14, 22.05]) {
+            if (cast(bank, bank, new THREE.Vector3(x, height, -4), new THREE.Vector3(0, 0, 1), 3)) throw new Error('Old column decoration remains at ' + x);
+          }
+        }
+        for (const x of [-8, 0, 8]) for (const height of [11.5, 15.8, 20.2, 24.6]) {
+          for (const [offset, part] of [[.14, 'bronze-relief'], [.55, 'bronze-panels']] as const) {
+            const hit = cast(customs, customs, new THREE.Vector3(x + offset, height, -10), new THREE.Vector3(0, 0, 1));
+            if (hit?.object.userData.spaceBundHeroPart !== part) throw new Error(`Customs ${part} blocked at ${x}, ${height}: ${hit?.object.userData.spaceId}`);
+          }
+        }
+        const roof = roots.get('root/147/4/5');
+        if (!roof) throw new Error('Peace roof missing');
+        for (const [height, expected] of [[66, 11.52588 - (11.52588 - 1.6) * 6 / 13.6], [75, 1.05]]) {
+          const center = new THREE.Vector3(-1328, height, 1367);
+          for (let side = 0; side < 4; side++) {
+            const outward = new THREE.Vector3(Math.cos(side * Math.PI / 2), 0, Math.sin(side * Math.PI / 2));
+            const hit = cast(peace, roof, center.clone().addScaledVector(outward, 30), outward.clone().negate(), 60);
+            if (!hit || Math.abs(peace.worldToLocal(hit.point.clone()).distanceTo(center) - expected) > .025) throw new Error('Peace copper roof or lantern surface missing');
+          }
+        }
+        const cap = cast(peace, roof, new THREE.Vector3(-1327.8, 80, 1367), new THREE.Vector3(0, -1, 0), 10);
+        if (!cap || Math.abs(peace.worldToLocal(cap.point.clone()).y - 76.6) > .025) throw new Error('Peace lantern top is open');
+        authoredHeroDetails = {revision: heroRevision, buildings: 3, surfaceRays, flutedColumns: 6,
+          grooveDepthMin: Math.min(...grooveDepths), grooveDepthMax: Math.max(...grooveDepths), bronzeSpandrels: 12, estimatedDimensions: true};
+      }
+      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks, authoredEntrances, authoredGalleries, authoredWindows, authoredHeroDetails});
       city.dispose(); continue;
     }
     const [style, env] = key.split('-') as [RoomStyle, Environment];
