@@ -1,6 +1,6 @@
 import { createCanvasVideoEncoder, type ExportProgress } from '@/lib/canvas-video-export';
 import { tr } from '@/i18n/tr';
-import { HISTORY_PLACES } from './history-days';
+import { HISTORY_PLACES, type HistoryGait } from './history-days';
 import { HISTORY_ENVIRONMENTS, DAYLIGHT_LABELS, WEATHER_LABELS, historyDaylight, journeyWeather } from './history-environment';
 import { mountHistoryScene, type HistoryScene } from './history-scene';
 import { HISTORY_VIDEO_FPS, historyVideoPlan } from './history-video-plan';
@@ -21,12 +21,12 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
 }
 
 export async function exportHistoryVideo(options: {
-  source: HTMLDivElement; start: number; end: number; speed: number; weatherVariation: number;
+  source: HTMLDivElement; start: number; end: number; speed: number; gait: HistoryGait; weatherVariation: number;
   abortRef: { aborted: boolean }; preview: HTMLCanvasElement | null;
   onProgress: (progress: ExportProgress) => void;
 }): Promise<Blob> {
-  const { source, start, end, speed, weatherVariation, abortRef, preview, onProgress } = options;
-  const plan = historyVideoPlan(start, end, speed);
+  const { source, start, end, speed, gait, weatherVariation, abortRef, preview, onProgress } = options;
+  const plan = historyVideoPlan(start, end, speed, gait);
   const encoder = await createCanvasVideoEncoder({ width: WIDTH, height: HEIGHT, fps: HISTORY_VIDEO_FPS, bitrate: 12_000_000, abortRef });
   const stage = document.createElement('div'), host = document.createElement('div');
   let scene: HistoryScene | undefined;
@@ -56,6 +56,7 @@ export async function exportHistoryVideo(options: {
     const labelHeight = Math.max(...notes.map(note => 58 + note.title.length * 36 + note.detail.length * 29));
     scene = mountHistoryScene(host, [], start, () => {}, () => {}, () => { contextLost = true; }, [], { labelHeight });
     scene.setWeather(weatherVariation);
+    scene.setGait(gait);
     await scene.ready();
     if (abortRef.aborted) throw new Error('aborted');
     let previewCtx: CanvasRenderingContext2D | null = null;
@@ -71,7 +72,14 @@ export async function exportHistoryVideo(options: {
       const view = scene.captureFrame(position, frame / HISTORY_VIDEO_FPS);
       // Copy synchronously, before WebGL's drawing buffer can be cleared by the browser.
       ctx.drawImage(view.canvas, 0, 0, WIDTH, HEIGHT);
-      ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = view.ink;
+      // Match the live caption's soft paper wash as dark ridges pass behind the title.
+      const captionStyle = getComputedStyle(stage);
+      const captionWash = captionStyle.getPropertyValue('--scroll-caption-wash').trim() || paper;
+      ctx.save(); ctx.translate(155, 105); ctx.scale(2.7, 1);
+      const wash = ctx.createRadialGradient(0, 0, 0, 0, 0, 150);
+      wash.addColorStop(0, captionWash); wash.addColorStop(.42, captionWash); wash.addColorStop(1, 'transparent');
+      ctx.fillStyle = wash; ctx.globalAlpha = .88; ctx.fillRect(-150, -150, 300, 300); ctx.restore();
+      ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = captionStyle.getPropertyValue('--scroll-sky-ink').trim() || view.ink;
       ctx.font = `18px ${mono}`; ctx.fillText(`${String(current + 1).padStart(2, '0')} / ${HISTORY_PLACES.length}`, 64, 52);
       ctx.font = `40px ${serif}`; ctx.fillText(tr(place), 64, 93);
       ctx.font = `20px ${sans}`;

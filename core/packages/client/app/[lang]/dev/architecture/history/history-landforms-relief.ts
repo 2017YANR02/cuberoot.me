@@ -55,6 +55,13 @@ function pool(art: PaperScenery, root: T.Object3D, center: Point, rx: number, rz
 export const RELIEF_LANDFORMS: Record<ReliefLandform, Landform> = {
   alpine(art, root, _day) {
     const p = art.palette;
+    // One close spur overlaps the distant chain, so the peaks occupy real depth in the scroll.
+    art.shape(root, [[-13, .12], [-12.1, 2.3], [-10.7, 4.6], [-10.1, 3.5], [-8.8, 1.6], [-8.5, .12]],
+      2.6, art.mix(p.forest, p.limestone, .37), [0, 0, -5.8]);
+    art.shape(root, [[-12.1, 2.3], [-10.7, 4.6], [-10.1, 3.5], [-10.8, 3.9], [-11.4, 2.7]],
+      .06, p.snow, [0, .01, -3.14]);
+    for (let i = 0; i < 4; i++) shard(art, root, [-12.2 + i * .6, .26, -2.5 + Math.sin(i) * .2],
+      [.43, .25, .31], p.limestone, i * .4);
     // An uneven knife-edge skyline, with separate rock faces instead of stacked cones.
     art.shape(root, [[-12.7, .15], [-11.3, 2.8], [-9.5, 3.4], [-7.8, 7.2], [-6.2, 10.3], [-5.5, 7.9], [-3.8, 5.3], [-1.2, 6.8],
       [1, 4.7], [3.1, 8], [4.5, 9.5], [5.5, 6.7], [7, 5.9], [9.2, 7.1], [11, 3], [12.5, .15]], 3.8,

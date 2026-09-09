@@ -101,7 +101,8 @@ export const HISTORY_PLACES = DAYS.map((day, index) => {
   const motif = authored >= 0 ? authored : null;
   return {
     date: day.date, zh: design.zh, en: design.en,
-    caption: authored >= 0 ? PLACES[authored].caption : null,
+    caption: authored >= 0 ? PLACES[authored].caption : day.date === '2025-12-13'
+      ? { zh: '从一页空白开始，慢慢长出山河。', en: 'From a blank page, a whole landscape begins to grow.' } : null,
     note: authored >= 0 ? PLACES[authored].note
       : { zh: note(day.zh, 24, 30, HEADINGS[day.date]?.zh), en: note(day.en, 58, 68, HEADINGS[day.date]?.en) },
     day, motif, seed, authored: authored >= 0,
@@ -110,6 +111,11 @@ export const HISTORY_PLACES = DAYS.map((day, index) => {
 });
 export const HISTORY_SPACING = 28;
 export const HISTORY_WALK_SPEED = 2.145;
+export const HISTORY_GAITS = {
+  walk: { zh: '行走', en: 'Walk', speed: HISTORY_WALK_SPEED },
+  run: { zh: '跑步', en: 'Run', speed: HISTORY_WALK_SPEED * 2 },
+} as const;
+export type HistoryGait = keyof typeof HISTORY_GAITS;
 export const HISTORY_LAST = HISTORY_PLACES.length - 1;
 
 export function clampHistoryPosition(position: number): number {

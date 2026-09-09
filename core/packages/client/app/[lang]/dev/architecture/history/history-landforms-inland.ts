@@ -459,6 +459,16 @@ function alluvial(art: PaperScenery, root: T.Group, day: number) {
 
 function waterfall(art: PaperScenery, root: T.Group, day: number) {
   const p = art.palette;
+  // A nearer gorge wall faces the falls, giving the viewer a framed view into the valley.
+  for (let layer = 0; layer < 8; layer++) {
+    const inset = layer * .055;
+    slab(art, root, [[-13.1 + inset, -7.8], [-10.8, -8.3], [-8.6 - inset, -6.1],
+      [-8.9 - inset, -3.4], [-10.4, -1.9 - inset], [-12.7 + inset, -3]],
+    .06 + layer * .52, .54, art.mix(p.limestone, layer % 3 ? p.forest : p.jade, .24));
+  }
+  art.tree(root, -11.7, -5.2, .72, 'pine', day, 4.22);
+  for (let i = 0; i < 3; i++) stone(art, root, -10.5 - i * .8, -1.3 + i * .12,
+    [.43, .26 - i * .04, .37], p.limestone, .05, i * .6);
   const cliffs: [number, number, number, number, number][] = [[8.8, -10.7, 3.6, 2.0, 7.8], [9.35, -8.15, 2.5, 1.2, 4.45], [10, -6.5, 2.05, 1.0, 1.85]];
   cliffs.forEach(([x, z, rx, rz, h], cliff) => {
     for (let layer = 0; layer < 9; layer++) {

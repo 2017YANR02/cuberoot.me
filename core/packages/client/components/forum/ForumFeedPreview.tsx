@@ -13,7 +13,7 @@ export default function ForumFeedPreview() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchForumFeed('active', 1, 3)
+    fetchForumFeed('latest', 1, 1)
       .then((data) => { if (!cancelled) setThreads(data.threads); })
       .catch(() => { /* Homepage preview is optional. */ })
       .finally(() => { if (!cancelled) setReady(true); });

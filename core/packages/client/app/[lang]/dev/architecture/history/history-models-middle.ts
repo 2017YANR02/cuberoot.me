@@ -581,7 +581,23 @@ export const MIDDLE_MODELS: Record<keyof typeof MIDDLE_DESIGNS, Build> = {
     for (const yy of [.08, .25, 1.7]) { const rr = yy < .3 ? 1.86 : .9; const ring = a.ring(bell, rr, .045, [0, yy, 0], p.paper); ring.rotation.x = Math.PI / 2; }
     a.mesh(bell, new T.SphereGeometry(.25, 12, 8), p.vermilion, [0, -.08, 0]);
     a.line(r, [[0, 4.3, -1.5], [.4, 2.7, -.8], [.2, 1.1, .1]], .04, p.gold);
-    for (const s of [-1, 1]) a.shape(r, [[0, 0], [s * 2, -.4], [s * 3.2, -1.7], [s * 2.5, -1.2], [s * 1.4, -.15], [0, .6]], .075, p.paper, [s * 3.1, 5.6, -.7]);
+    for (const s of [-1, 1]) {
+      a.shape(r, [[0, 0], [s * 2, -.4], [s * 3.2, -1.7], [s * 2.5, -1.2], [s * 1.4, -.15], [0, .6]], .075, p.paper, [s * 3.1, 5.6, -.7]);
+      // The belfry has real depth: mortised braces support the bell axle and news banners.
+      beam(a, r, [s * 3.1, 4.9, -1.5], [s * 1.2, 7.2, -1.5], .14, p.gold);
+      beam(a, r, [s * 3.1, 1.05, -3.1], [s * 3.1, 5.9, -1.5], .18, p.forest);
+      disc(a, r, s * 3.1, 6.55, -.98, .3, p.gold);
+      for (let j = 0; j < 3; j++) beam(a, r, [s * (3.55 + j * .65), 5.48 - j * .25, -.59], [s * (4.1 + j * .65), 5.34 - j * .29, -.59], .04, p.jade);
+    }
+    for (let i = 0; i < 12; i++) {
+      const angle = i * TAU / 12;
+      a.line(bell, [[Math.cos(angle) * 1.72, .32, Math.sin(angle) * 1.72], [Math.cos(angle) * 1.16, .92, Math.sin(angle) * 1.16], [Math.cos(angle) * .85, 1.8, Math.sin(angle) * .85]], .025, p.paper);
+    }
+    const striker = a.cylinder(r, .22, 3.5, [1.1, 4.9, .8], p.forest); striker.rotation.z = Math.PI / 2;
+    for (const x of [-.15, 2.35]) {
+      a.line(r, [[x, 7.2, -1.5], [x, 6.1, .4], [x, 4.9, .8]], .025, p.gold);
+      const binding = a.ring(r, .235, .055, [x, 4.9, .8], p.gold); binding.rotation.y = Math.PI / 2;
+    }
   },
   '2026-05-31': (a, r) => {
     const p = a.palette;
@@ -728,6 +744,17 @@ export const MIDDLE_MODELS: Record<keyof typeof MIDDLE_DESIGNS, Build> = {
       for (let j = 0; j < 4; j++) a.box(r, [1.02 - (j % 2) * .27, .04, .085], [x, 1.27, -.98 + j * .25], p.vermilion);
     }
     a.box(r, [2, .15, 1.4], [4.8, 1, -3.2], p.jade); a.box(r, [1.7, .04, 1.1], [4.8, 1.1, -3.2], p.forest);
+    // Copying results is legible as a working stamp: carved die, fastening screws and hinged ink lid.
+    for (const x of [-1.33, 1.33]) for (const z of [-.82, .82]) rivet(a, stamp, x, .2, z, .1);
+    for (let j = 0; j < 4; j++) a.box(stamp, [2.15 - (j % 2) * .5, .075, .09], [0, -.34, -.66 + j * .42], p.paper);
+    for (const z of [-1.1, 1.1]) a.box(stamp, [3.5, .12, .08], [0, .14, z], p.paper);
+    const lid = new T.Group(); lid.position.set(4.8, 1.15, -3.9); lid.rotation.x = .95; r.add(lid);
+    a.box(lid, [2, .14, 1.45], [0, 0, -.72], p.jade);
+    a.box(lid, [1.64, .05, 1.08], [0, .1, -.72], p.paper);
+    for (const x of [-.6, .6]) {
+      const hinge = a.cylinder(r, .12, .36, [4.8 + x, 1.16, -3.9], p.gold); hinge.rotation.z = Math.PI / 2;
+    }
+    a.line(r, [[-.2, 1.27, .85], [2.3, 1.27, .85], [5.4, 1.27, .85]], .025, p.gold);
   },
   '2026-06-08': (a, r) => {
     const p = a.palette;
@@ -878,6 +905,14 @@ export const MIDDLE_MODELS: Record<keyof typeof MIDDLE_DESIGNS, Build> = {
     for (let j = 0; j < 4; j++) a.box(r, [.6, .055, .65], [2.7 + j * .74, 1.42, -.5 + (j - 1.5) * .22], p.paper).rotation.y = -.32;
     a.line(r, [[-3.6, 5.1, -.6], [-4, 6, -.6], [-3.6, 6.9, -.6]], .035, p.gold);
     a.line(r, [[2.8, 5.1, -.6], [3.2, 6, -.6], [2.8, 6.9, -.6]], .035, p.gold);
+    // Two language voices share an open resonating chamber; its front is a cavity, not a solid block.
+    a.box(r, [3.65, .16, 3.6], [-.5, 1.35, .1], p.forest);
+    a.box(r, [3.65, .16, 3.6], [-.5, 2.65, .1], p.jade);
+    for (const x of [-2.24, 1.24]) a.box(r, [.18, 1.3, 3.6], [x, 2, .1], p.jade);
+    a.box(r, [3.3, 1.3, .16], [-.5, 2, -1.6], p.forest);
+    for (const x of [-1.7, -.9, -.1, .7]) a.box(r, [.045, .035, 3.35], [x, 2.75, .1], p.gold);
+    for (const x of [-2.24, 1.24]) for (const y of [1.52, 2.48]) rivet(a, r, x, y, 1.98);
+    beam(a, r, [-.5, 2.73, -.2], [-.5, 3.6, -1.3], .18, p.gold);
   },
   '2026-06-15': (a, r) => {
     const p = a.palette;
@@ -965,10 +1000,18 @@ export const MIDDLE_MODELS: Record<keyof typeof MIDDLE_DESIGNS, Build> = {
       a.shape(r, [[0, -.34], [s * (w - .6), -.34], [s * w, 0], [s * (w - .6), .34], [0, .34]], .2, i % 2 ? p.jade : p.paper, [-1.3, y, -1.45]);
       for (let j = 0; j < 5; j++) a.box(r, [.13, .21, .04], [-1.3 + s * (.45 + j * (w - 1.1) / 5), y, -1.19], p.gold);
       rivet(a, r, -1.3 + s * .2, y, -1.17);
+      // Raised place-name rails and a folded back edge make a sign, rather than a flat arrow icon.
+      for (const dy of [-.27, .27]) beam(a, r, [-1.3 + s * .3, y + dy, -1.12], [-1.3 + s * (w - .68), y + dy, -1.12], .035, p.gold);
+      beam(a, r, [-1.3, y, -1.62], [-1.3 + s * .95, y - .18, -1.62], .11, p.forest);
     });
     for (const end of [[-5.9, 1, .9], [5.1, 1, .6], [2.7, 1, -4]] as P[]) {
       beam(a, r, [-1.3, 1, -1.4], end, .35, p.paper, .55);
       a.box(r, [1, .15, .8], end, p.gold);
+      for (let j = 1; j < 5; j++) {
+        const t = j / 5, x = -1.3 + (end[0] + 1.3) * t, z = -1.4 + (end[2] + 1.4) * t;
+        const stone = a.box(r, [.62, .09, .85], [x, 1.04, z], j % 2 ? p.limestone : p.paper);
+        stone.rotation.y = Math.atan2(end[0] + 1.3, end[2] + 1.4);
+      }
     }
     for (let i = 0; i < 4; i++) {
       a.box(r, [.62, .6 + i * .3, .72], [3.9 + (i % 2) * .8, 1.25 + i * .15, -2.7 + Math.floor(i / 2) * .9], p.paper);

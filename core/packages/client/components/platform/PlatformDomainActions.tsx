@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Star } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { DateInput } from '@/components/DateInput';
+import { toLocalIsoDate } from '@cuberoot/shared/iso-date';
 import { useT } from '@/hooks/useT';
 import { apiUrl } from '@/lib/api-base';
 import { useAuthUser } from '@/lib/auth-store';
@@ -358,7 +359,26 @@ function validatePayload(routeId: string, payload: Record<string, unknown>, t: R
   return null;
 }
 
-function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onResult }: {
+function InviteExpiryField({ label, value, onChange, name }: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  name?: string;
+}) {
+  const t = useT();
+  const [date = '', time = ''] = value.split('T');
+  return <div className="platform-invite-expiry">
+    <span>{label}</span>
+    <div className="platform-invite-datetime">
+      <DateInput value={date} aria-label={label} onChange={next => onChange(next ? `${next}T${time || '00:00'}` : '')} />
+      <input className="platform-field-control" type="time" aria-label={t('截止时刻', 'Expiry time')} value={time} disabled={!date}
+        required={Boolean(date)} onChange={event => onChange(`${date}T${event.target.value}`)} />
+    </div>
+    {name ? <input type="hidden" name={name} value={value} /> : null}
+  </div>;
+}
+
+function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onResult, secondaryAction }: {
   spec: DomainFormSpec;
   definition: PlatformRouteDefinition;
   entity?: PlatformEntity;
@@ -366,6 +386,7 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onR
   busy: string | null;
   runAction: RunAction;
   onResult?: (result: PlatformActionResult) => void;
+  secondaryAction?: ReactNode;
 }) {
   const t = useT();
   const initial = useMemo(() => Object.fromEntries(spec.fields.map((item) => [item.key, initialValue(item, entity)])), [entity, spec.fields]);
@@ -417,6 +438,10 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onR
             );
           }
           const label = t(item.label.zh, item.label.en);
+          if (item.kind === 'datetime-local' && definition.id === 'admin-invites') {
+            return <InviteExpiryField key={item.key} label={label} value={String(value)}
+              onChange={next => setValues(current => ({ ...current, [item.key]: next }))} />;
+          }
           if (item.kind === 'rating') {
             return (
               <fieldset key={item.key} className="platform-star-rating platform-form-wide" disabled={busy === actionKey}>
@@ -471,9 +496,12 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onR
         })}
       </div>
       {validation ? <p className="platform-form-error" role="alert">{validation}</p> : null}
+      <div className="platform-write-actions">
       <button type="submit" className="platform-button platform-button-primary" disabled={busy === actionKey}>
         {busy === actionKey ? t('处理中…', 'Working…') : t(spec.submit?.zh ?? PLATFORM_ACTION_LABELS[spec.action].zh, spec.submit?.en ?? PLATFORM_ACTION_LABELS[spec.action].en)}
       </button>
+      {secondaryAction}
+      </div>
     </form>
   );
 }
@@ -779,6 +807,8 @@ function escapeCsv(value: string): string {
 
 function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAction }: CommonProps) {
   const t = useT();
+  // Ordinary invitation DELETE archives the code; retain physical-bundle audit management.
+  const visibleEntities = entities.filter(entity => entity.status !== 'archived' || entity.data?.distributionType === 'physical_bundle');
   const [courses, setCourses] = useState<PlatformEntity[] | null>(null);
   const [courseError, setCourseError] = useState<Error | null>(null);
   const [generated, setGenerated] = useState<PlatformActionResult | null>(null);
@@ -786,6 +816,7 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
   const [courseId, setCourseId] = useState('');
   const [courseDetail, setCourseDetail] = useState<PlatformEntity | null>(null);
   const [scope, setScope] = useState('core');
+  const [expiresAt, setExpiresAt] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -904,7 +935,7 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
             <div className="platform-form-grid">
               <label><span>{t('备注（选填）', 'Note (optional)')}</span><input name="label" className="platform-field-control" maxLength={160} /></label>
               <label><span>{t('可用人数（留空不限）', 'Learners (blank for unlimited)')}</span><input name="maxRedemptions" className="platform-field-control" type="number" min={1} max={1000000000} step={1} defaultValue={1} /></label>
-              <label><span>{t('兑换截止时间（选填）', 'Redeem by (optional)')}</span><input name="expiresAt" className="platform-field-control" type="datetime-local" /></label>
+              <InviteExpiryField label={t('兑换截止时间（选填）', 'Redeem by (optional)')} name="expiresAt" value={expiresAt} onChange={setExpiresAt} />
             </div>
           </details>
           {formError ? <p role="alert" className="platform-form-error">{formError}</p> : null}
@@ -914,11 +945,12 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
       {generated?.codes?.length ? (
         <section className="platform-invite-result" aria-label={t('新生成的兑换码', 'New codes')}>
           <h2>{t('复制后发给买家', 'Copy and send to your buyer')}</h2>
-          <p className="platform-domain-note">{t('离开页面后无法再次查看，请先保存。', 'Save these codes before leaving. They cannot be viewed again.')}</p>
-          <textarea className="platform-field-control platform-field-textarea" rows={Math.min(8, generated.codes.length + 1)} readOnly value={codeLines} aria-label={t('新生成的兑换码', 'New redemption codes')} />
+          {generated.codes.length === 1
+            ? <input className="platform-field-control" readOnly value={codeLines} aria-label={t('新生成的兑换码', 'New redemption codes')} />
+            : <textarea className="platform-field-control platform-invite-code-lines" rows={Math.min(8, generated.codes.length)} readOnly value={codeLines} aria-label={t('新生成的兑换码', 'New redemption codes')} />}
           <div className="platform-write-actions">
             <button type="button" className="platform-button platform-button-primary" onClick={() => void copyCodes()}>{t('复制', 'Copy')}</button>
-            <button type="button" className="platform-button" onClick={downloadCsv}>{t('保存表格', 'Save spreadsheet')}</button>
+            <button type="button" className="platform-button" onClick={downloadCsv}>{t('下载', 'Download')}</button>
           </div>
           {copyMessage ? <p className="platform-domain-note" role="status">{copyMessage}</p> : null}
         </section>
@@ -946,8 +978,8 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
       </details> : null}
       <section className="platform-invite-records">
       <h2>{t('已有兑换码', 'Existing codes')}</h2>
-      {!entities.length ? <p className="platform-domain-note">{t('还没有兑换码。', 'No codes yet.')}</p> : null}
-      {entities.map((raw) => {
+      {!visibleEntities.length ? <p className="platform-domain-note">{t('还没有兑换码。', 'No codes yet.')}</p> : null}
+      {visibleEntities.map((raw) => {
         const entity = editableEntity(raw);
         const physical = entity.data?.distributionType === 'physical_bundle';
         const revoked = entity.status === 'revoked';
@@ -957,6 +989,8 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
         const validExpiry = expires && Number.isFinite(expires.getTime()) ? expires : null;
         const editEntity = validExpiry ? { ...entity, data: { ...entity.data, expiresAt: new Date(validExpiry.getTime() - validExpiry.getTimezoneOffset() * 60000).toISOString().slice(0, 16) } } : entity;
         const expired = entity.status === 'expired' || Boolean(validExpiry && validExpiry.getTime() <= Date.now());
+        const available = entity.status === 'active' && !expired && !(maximum > 0 && used >= maximum);
+        const expiryLabel = validExpiry ? `${toLocalIsoDate(validExpiry)} ${validExpiry.toTimeString().slice(0, 5)}` : '';
         const status = revoked ? t('已撤销', 'Revoked') : entity.status === 'archived' ? t('已归档', 'Archived')
           : entity.status === 'paused' ? t('已暂停', 'Paused') : expired ? t('已过期', 'Expired')
           : maximum > 0 && used >= maximum ? t('已用完', 'Used up') : entity.status === 'active' ? t('可用', 'Available') : t('不可用', 'Unavailable');
@@ -970,13 +1004,14 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
           }) : undefined;
         const scopeLabel = matchedSection ? t(matchedSection.title.zh, matchedSection.title.en) : ids
           ? t(`指定的 ${ids.length} 节课`, `${ids.length} selected lessons`) : benefit?.membershipPlanId ? t('会员权益', 'Membership') : t('全部课程', 'Full course');
+        const courseLabel = [linkedCourse?.title, scopeLabel].filter(Boolean).join(' ');
         return (
           <article className="platform-invite-record" key={entity.id}>
-            <div className="platform-invite-record-title"><h3>{entity.title === entity.id ? t('未备注的兑换码', 'Code without a note') : entity.title}</h3><span className="platform-badge">{status}</span></div>
-            <p className="platform-domain-note">{linkedCourse?.title} {scopeLabel}</p>
+            <div className="platform-invite-record-title"><h3>{entity.title === entity.id ? t('未备注的兑换码', 'Code without a note') : entity.title}</h3><span className="platform-invite-status" data-available={available}>{status}</span></div>
+            {entity.title !== courseLabel ? <p className="platform-domain-note">{courseLabel}</p> : null}
             <div className="platform-invite-meta">
               <span>{maximum ? t(`已用 ${used} / ${maximum} 次`, `Used ${used} / ${maximum} times`) : t(`已用 ${used} 次，不限人数`, `Used ${used} times, unlimited learners`)}</span>
-              <span>{validExpiry ? t(`${validExpiry.toLocaleString('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })} 到期`, `Expires ${validExpiry.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`) : t('不限兑换日期', 'No expiry')}</span>
+              <span>{validExpiry ? t(`${expiryLabel} 到期`, `Expires ${expiryLabel}`) : t('不限兑换日期', 'No expiry')}</span>
             </div>
             <details className="platform-invite-options">
             <summary>{t('管理', 'Manage')}</summary>
@@ -987,11 +1022,10 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
                 return runAction(action, id, { ...payload, expiresAt: expiry ? new Date(String(expiry)).toISOString() : null });
               }} spec={{ title: text('修改设置', 'Edit settings'), action: 'admin-save', submit: text('保存', 'Save'), fields: [
                 field('label', '备注', 'Note', { maxLength: 160 }),
-                field('status', '状态', 'Status', { kind: 'select', options: [option('active', '启用', 'Active'), option('paused', '暂停', 'Paused'), option('expired', '已过期', 'Expired'), option('archived', '已归档', 'Archived')] }),
+                field('status', '状态', 'Status', { kind: 'select', options: [option('active', '启用', 'Active'), option('paused', '暂停', 'Paused'), option('expired', '已过期', 'Expired')] }),
                 field('maxRedemptions', '可用人数', 'Learners', { kind: 'number', min: 1, max: 1000000000, step: 1 }),
                 field('expiresAt', '兑换截止时间（留空不限）', 'Redeem by (blank for no expiry)', { kind: 'datetime-local' }),
-              ] }} />
-              <ActionButton action="admin-delete" resourceId={entity.id} label={text('停用并归档', 'Disable and archive')} confirm={text('归档后将不能继续兑换，已兑换的课程不受影响。确定吗？', 'Stop future redemptions? Previously redeemed access will not change.')} busy={busy} runAction={runAction} />
+              ] }} secondaryAction={<ActionButton action="admin-delete" resourceId={entity.id} label={text('删除', 'Delete')} confirm={text(`删除“${entity.title}”？此码将停止兑换并从列表移除，已兑换的课程不受影响。兑换记录会保留。`, `Delete “${entity.title}”? This code will stop working and leave this list. Previously redeemed course access and redemption records will be kept.`)} disabled={Boolean(busy)} busy={busy} runAction={runAction} />} />
             </> : <>
             {!revoked ? <DomainForm definition={definition} entity={entity} resourceId={entity.id} busy={busy} runAction={runAction} spec={{
               title: text('登记订单', 'Record order'),
