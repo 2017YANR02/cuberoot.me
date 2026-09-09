@@ -42,12 +42,19 @@ describe('history daylight', () => {
     expect(lighting.root.getObjectByName('history-sun')!.visible).toBe(true);
     expect(lighting.root.getObjectByName('history-moon')!.visible).toBe(false);
     expect(lighting.root.getObjectByName('history-stars')!.visible).toBe(false);
+    const rim = lighting.root.getObjectByName('history-moon-rim') as T.DirectionalLight;
+    const moonHalo = lighting.root.getObjectByName('history-moon-halo') as T.Mesh<T.PlaneGeometry, T.ShaderMaterial>;
+    expect(rim.intensity).toBe(0); expect(rim.castShadow).toBe(false);
+    expect(moonHalo.visible).toBe(false);
     for (const narrow of [false, true]) {
       lighting.update(6, 0, 'cloudy', camera, narrow, 2);
       expect(lighting.root.getObjectByName('history-sun')!.visible).toBe(false);
       expect(lighting.root.getObjectByName('history-moon')!.visible).toBe(true);
       expect(lighting.root.getObjectByName('history-stars')!.visible).toBe(true);
       expect(lighting.ambient.intensity).toBe(.9);
+      expect(rim.intensity).toBeCloseTo(.4536, 10);
+      expect(moonHalo.material.uniforms.opacity.value).toBeCloseTo(.1134, 10);
+      expect(moonHalo.visible).toBe(true);
       const height = narrow ? 620 : 720, width = narrow ? 390 : 1361;
       const viewHeight = Math.max(38, 30 * height / width);
       camera.left = -viewHeight * width / height / 2; camera.right = -camera.left;

@@ -328,7 +328,7 @@ const CSS = `
 export default function DeskPet() {
   const [mounted, setMounted] = useState(false);
   const [size, setSize] = useState<Size>('m');
-  const [character, setCharacter] = useState<ThemeId>('clawd');
+  const [character, setCharacter] = useState<ThemeId>('rootbeast');
   const [hidden, setHidden] = useState(false);
   const [resting, setResting] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -376,7 +376,8 @@ export default function DeskPet() {
       const sz = localStorage.getItem(SIZE_KEY);
       if (sz === 's' || sz === 'l') setSize(sz);
       const ch = localStorage.getItem(CHAR_KEY);
-      if (ch === 'calico' || ch === 'cloudling' || ch === 'rootbeast') setCharacter(ch);
+      const savedCharacter = THEME_IDS.find(id => id === ch);
+      if (savedCharacter) setCharacter(savedCharacter);
       // 动画(随机播放)默认关闭:仅显式存为 'random' 才开,空/未设(新用户)→ 关。
       if (localStorage.getItem('clawd-deskpet-mode') === 'random') setRandomMode(true);
     } catch {}

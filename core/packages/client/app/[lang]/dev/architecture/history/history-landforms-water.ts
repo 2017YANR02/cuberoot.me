@@ -227,6 +227,14 @@ export const WATER_LANDFORMS = {
 
   fjord: (art, root, _day) => {
     const p = art.palette;
+    // Foreground shoulders close the valley at its sides while its central sculpture stays visible.
+    for (const side of [-1, 1]) {
+      cliff(art, root, side * 11.9, -4.3, 1.45, 2.9, side < 0 ? 4.6 : 3.5, p.forest);
+      cliff(art, root, side * 12.15, -.85, .9, 1.25, side < 0 ? 1.8 : 1.2, p.limestone);
+      for (let bed = 0; bed < 4; bed++) contour(art, root,
+        [[side * 10.9, -5.7], [side * 10.65, -4], [side * 11.3, -2]],
+        .5 + bed * .46, art.mix(p.forest, p.paper, .51), .045);
+    }
     // The main river already cuts in at ±9.3. These lips and falls meet those existing cuts.
     for (const side of [-1, 1]) {
       const x = side * 9.3;

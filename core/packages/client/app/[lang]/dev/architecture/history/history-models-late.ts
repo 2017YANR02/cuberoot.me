@@ -106,7 +106,25 @@ export const LATE_MODELS: Record<keyof typeof LATE_DESIGNS, Build> = {
     const p = a.palette; slab(a, r, [0, .9, -.8], 8.8, 4);
     // Three unlike collectors feed a graduated basin, a sculptural daily-data instrument.
     a.cylinder(r, 1.25, .38, [0, 1.2, -.5], p.paper); a.cylinder(r, 1.04, .04, [0, 1.41, -.5], p.water);
-    for (let i = 0; i < 3; i++) { const x = -3.7 + i * 3.5, y = 4.4 + (i === 1 ? 1.8 : i * .4); a.cylinder(r, .16, y - 1, [x, (y + 1) / 2, -1.5], p.gold); a.cylinder(r, .32, 1.2, [x, y, -1.5], p.paper, 1.15 - i * .2); for (let j = 0; j < 8; j++) a.box(r, [.24, .035, .04], [x + .18, 1.5 + j * .38, -1.29], p.ink); a.line(r, [[x, y - .5, -1.5], [x + .7, 2, -1.5], [0, 1.7, -.5]], .09, p.jade); }
+    for (let i = 0; i < 3; i++) {
+      const x = -3.7 + i * 3.5, y = 4.4 + (i === 1 ? 1.8 : i * .4), mouth = 1.15 - i * .2;
+      a.cylinder(r, .16, y - 1, [x, (y + 1) / 2, -1.5], p.gold);
+      // Double-walled, open funnels expose their inner slope and drain, with no capped "water cup".
+      const section = [[.25, -.6], [.32, -.6], [mouth, .6], [mouth - .075, .6], [.25, -.5], [.25, -.6]].map(([u, v]) => new T.Vector2(u, v));
+      a.mesh(r, new T.LatheGeometry(section, 24), p.paper, [x, y, -1.5]);
+      const rim = a.ring(r, mouth - .025, .055, [x, y + .6, -1.5], p.gold); rim.rotation.x = Math.PI / 2;
+      a.cylinder(r, .235, .04, [x, y - .48, -1.5], p.water);
+      for (let j = 0; j < 8; j++) a.box(r, [.24, .035, .04], [x + .18, 1.5 + j * .38, -1.29], p.ink);
+      for (const side of [-1, 1]) rod(a, r, [x + side * .55, 1.08, -1.8], [x, 2.9, -1.5], .04, p.forest);
+      a.line(r, [[x, y - .5, -1.5], [x + .7, 2, -1.5], [0, 1.7, -.5]], .09, p.jade);
+      const valve = a.ring(r, .22, .045, [x + .46, 2.85, -1.37], p.gold);
+      rod(a, r, [valve.position.x - .2, 2.85, -1.37], [valve.position.x + .2, 2.85, -1.37], .03);
+    }
+    // A tipping bucket and ratchet make the accumulation mechanism visible at the front.
+    rod(a, r, [-1.25, 2.35, .05], [1.25, 2.35, .05], .08, p.forest);
+    for (const x of [-1.2, 1.2]) rod(a, r, [x, 1.03, .05], [x, 2.45, .05], .07, p.gold);
+    fin(a, r, [[-1.05, .38], [0, -.25], [1.05, .38], [.8, -.45], [-.8, -.45]], [0, 2.3, -.35], p.jade, .72);
+    joint(a, r, [0, 2.3, .46], .14);
     for (let i = 0; i < 6; i++) { const drop = a.mesh(r, new T.SphereGeometry(.13, 8, 6), p.water, [-3.9 + i * 1.45, 6.5 + Math.sin(i) * .7, -1.5]); drop.scale.y = 1.7; }
     rod(a, r, [2.8, 1, 1.1], [2.8, 2.2, 1.1], .035); card(a, r, [2.8, 2.05, 1.1], 1.3, .8);
   },
@@ -191,7 +209,25 @@ export const LATE_MODELS: Record<keyof typeof LATE_DESIGNS, Build> = {
     const p = a.palette;
     // A message tree is made of bent brass stems and distinctive folded swallow wings.
     slab(a, r, [0, .95, -1], 5.1, 3.3); rod(a, r, [0, 1, -1], [-.6, 7.8, -1], .18, p.forest);
-    for (let i = 0; i < 5; i++) { const side = i % 2 ? 1 : -1, x = side * (2.2 + (i % 3) * .65), y = 3 + i; a.line(r, [[-.2, 2 + i * .5, -1], [side * 1.1, y, -1], [x, y + .35, -1]], .075, p.gold); const wing = [[-1.1, .8], [-.3, .3], [0, 0], [.3, .3], [1.15, .9], [.55, -.15], [0, -.35], [-.55, -.15]] as [number, number][]; fin(a, r, wing, [x, y + .45, -1], i % 2 ? p.jade : p.paper, .1); rod(a, r, [x, y + .1, -.9], [x, y - .75, -.9], .02); const letter = a.box(r, [.8, .5, .08], [x, y - 1, -.9], p.paper); letter.rotation.z = side * .13; a.line(r, [[x - .4, y - .75, -.84], [x, y - 1.07, -.84], [x + .4, y - .75, -.84]], .022, p.vermilion); }
+    for (let i = 0; i < 5; i++) {
+      const side = i % 2 ? 1 : -1, x = side * (2.2 + (i % 3) * .65), y = 3 + i;
+      a.line(r, [[-.2, 2 + i * .5, -1], [side * 1.1, y, -1], [x, y + .35, -1]], .075, p.gold);
+      const bird = new T.Group(); bird.position.set(x, y + .45, -1); bird.rotation.y = side * .3; r.add(bird);
+      // Two separately folded wings, a keel and forked tail turn each paper swallow into a volume.
+      for (const wingSide of [-1, 1]) {
+        const wing = fin(a, bird, [[0, 0], [wingSide * .3, .28], [wingSide * 1.15, .9], [wingSide * .57, -.13], [0, -.3]], [0, 0, 0], i % 2 ? p.jade : p.paper, .055);
+        wing.rotation.y = wingSide * .48;
+      }
+      fin(a, bird, [[0, .2], [.18, -.1], [.15, -.53], [0, -.82], [-.15, -.53], [-.18, -.1]], [0, 0, -.05], p.gold, .2);
+      fin(a, bird, [[-.13, -.4], [-.4, -.85], [0, -.67], [.4, -.85], [.13, -.4]], [0, 0, -.04], p.paper, .055);
+      rod(a, r, [x, y + .1, -.75], [x, y - .75, -.75], .02);
+      const letter = new T.Group(); letter.position.set(x, y - 1, -.75); letter.rotation.z = side * .13; r.add(letter);
+      a.box(letter, [.95, .58, .08], [0, 0, 0], p.paper);
+      fin(a, letter, [[-.47, .29], [0, -.04], [.47, .29]], [0, 0, .06], p.limestone, .035);
+      a.line(letter, [[-.47, -.29, .06], [0, .03, .06], [.47, -.29, .06]], .018, p.gold);
+      joint(a, letter, [0, -.04, .13], .065);
+    }
+    for (const x of [-1.3, .9]) a.line(r, [[0, 2.2, -1], [x * .45, 1.4, -.2], [x, 1.05, .35]], .095, p.forest);
     for (let i = 0; i < 7; i++) joint(a, r, [-1.9 + i * .65, 1.06, .25], .08);
   },
   '2026-07-15': (a, r) => {
@@ -324,7 +360,21 @@ export const LATE_MODELS: Record<keyof typeof LATE_DESIGNS, Build> = {
   '2026-07-29': (a, r) => {
     const p = a.palette; slab(a, r, [0, 1, -1], 11.7, 4.6);
     const colors = [p.vermilion, p.jade, p.gold, p.ice, p.heather];
-    for (let i = 0; i < 5; i++) { const x = -4.7 + i * 2.35, h = 2.4 + (i % 3) * 1.3; const column = a.mesh(r, new T.CylinderGeometry(.95, .95, h, 3), colors[i], [x, 1.1 + h / 2, -1]); column.rotation.y = .2 + i * .3; const cap = a.mesh(r, new T.CylinderGeometry(1.06, 1.06, .13, 3), p.paper, [x, 1.2 + h, -1]); cap.rotation.y = column.rotation.y; const plate = a.box(r, [1.5, .65, .1], [x, h + 2.15, -.65], colors[(i + 2) % 5]); plate.rotation.z = (i % 2 ? -1 : 1) * .15; rod(a, r, [x, h + 1.2, -1], [x, h + 2, -.65], .03); for (let j = 0; j < i % 3 + 1; j++) a.box(r, [.12, .23, .05], [x - .25 + j * .23, h + 2.15, -.56], p.paper); }
+    for (let i = 0; i < 5; i++) {
+      const x = -4.7 + i * 2.35, h = 2.4 + (i % 3) * 1.3;
+      // Mismatched color prisms are suspended inside open response frames, not solid histogram columns.
+      const column = a.mesh(r, new T.CylinderGeometry(.74, .74, h * .66, 3), colors[i], [x, 1.8 + h / 2, -1]); column.rotation.y = .2 + i * .3;
+      rod(a, r, [x, 1.2, -1], [x, h + 2.35, -1], .055, p.gold);
+      for (const side of [-1, 1]) rod(a, r, [x + side * .91, 1.12, -.85], [x + side * .91, h + 2.5, -.85], .08, p.forest);
+      rod(a, r, [x - .91, h + 2.5, -.85], [x + .91, h + 2.5, -.85], .09, p.gold);
+      for (const y of [1.8 + h * .17, 1.8 + h * .83]) {
+        const cap = a.mesh(r, new T.CylinderGeometry(.83, .83, .11, 3), p.paper, [x, y, -1]); cap.rotation.y = column.rotation.y;
+      }
+      const plate = a.box(r, [1.5, .65, .1], [x, h + 2.15, -.65], colors[(i + 2) % 5]); plate.rotation.z = (i % 2 ? -1 : 1) * .15;
+      for (let j = 0; j < i % 3 + 1; j++) a.box(r, [.12, .23, .05], [x - .25 + j * .23, h + 2.15, -.56], p.paper);
+      a.cylinder(r, .42, .14, [x, 1.24, .65], p.gold); a.cylinder(r, .33, .13, [x, 1.36, .65], colors[(i + 2) % 5]);
+      a.line(r, [[x, 1.35, .32], [x + .28, 1.55, -.05], [x, 1.55, -1]], .03, p.gold);
+    }
     a.line(r, [[-5.2, 1.15, 1.2], [-2.1, 1.15, .7], [1.8, 1.15, 1.6], [5.3, 1.15, 1.1]], .045, p.gold);
   },
   '2026-07-30': (a, r) => {
@@ -449,6 +499,16 @@ export const LATE_MODELS: Record<keyof typeof LATE_DESIGNS, Build> = {
     rod(a, r, posts[0], posts[2], .03); rod(a, r, posts[1], posts[3], .03);
     for (const [x, y, z] of [[-1.8, 6.9, -1.8], [1.3, 7.15, -1.8]] as P[]) { rod(a, r, [x, y, z], [x, 2.2, z], .02); a.mesh(r, new T.ConeGeometry(.23, .62, 8), p.gold, [x, 1.9, z]); }
     const ruler = a.box(r, [10.8, .16, .55], [0, 1.35, 1.6], p.paper); ruler.rotation.z = .07; for (let i = 0; i < 21; i++) a.box(r, [.03, .035, i % 5 ? .16 : .34], [-5 + i * .5, 1.47 + i * .035, 1.6], p.gold);
+    // Three targets and a sloped plotting plane make triangulation readable across the empty frame.
+    for (const [x, y, z] of [[-3.55, 5.8, -.7], [.1, 5.9, -1.8], [3.65, 5.15, -.2]] as P[]) {
+      fin(a, r, [[-.55, -.37], [0, .58], [.55, -.37]], [x, y, z], p.paper, .13);
+      rod(a, r, [x - .48, y - .31, z + .16], [x + .48, y - .31, z + .16], .035, p.gold);
+      joint(a, r, [x, y + .04, z + .17], .1);
+    }
+    const table = new T.Group(); table.position.set(-.5, 2.2, -.5); table.rotation.x = .15; r.add(table);
+    a.box(table, [4.7, .16, 2.4], [0, 0, 0], p.jade); a.box(table, [4.2, .035, 2], [0, .105, 0], p.paper);
+    a.line(table, [[-1.65, .15, .55], [-.15, .15, -.75], [1.75, .15, .45], [-1.65, .15, .55]], .03, p.vermilion);
+    for (const x of [-2.2, 1.2]) for (const z of [-1.25, .25]) rod(a, r, [x, 1, z], [x, 2.12, z], .08, p.forest);
   },
   '2026-08-11': (a, r) => {
     const p = a.palette;
@@ -612,6 +672,15 @@ export const LATE_MODELS: Record<keyof typeof LATE_DESIGNS, Build> = {
     a.line(r,[[-3.7,1.2,-.7],[-3.3,5.8,-.7],[-2.65,7.2,-.7]],.035,p.paper);
     for(let i=0;i<5;i++){const x=-1.8+i*.85;rod(a,r,[x,1.1,.2],[x,2.1+(i%2)*.3,.2],.045,p.gold);const mark=a.box(r,[.5,.65,.15],[x,2.5+(i%2)*.3,.2],i%2?p.jade:p.vermilion);mark.rotation.z=(i-2)*.2;}
     a.ring(r,.55,.075,[.2,7.6,-1.1],p.gold);rod(a,r,[.2,6.4,-1.1],[.2,7.05,-1.1],.035);
+    // The notation gate has a second depth plane and a curled turn stroke passing through it.
+    for (const x of [-3.25, 3.18]) {
+      rod(a,r,[x,1.12,-3.2],[x,5.4,-3.2],.1,p.forest);
+      rod(a,r,[x,5.4,-3.2],[x,5.4,-.72],.085,p.gold);
+      for(let j=0;j<4;j++)rod(a,r,[x,1.2+j*.96,-3.2],[x,1.2+j*.96,-.72],.035,p.gold);
+    }
+    const turn = arc(a,r,1.65,-Math.PI*.15,Math.PI*1.38,[-.15,3.95,-1.7],p.vermilion,.1);turn.rotation.y=.48;
+    fin(a,r,[[-.4,.34],[.34,0],[-.35,-.38],[-.13,0]],[-1.36,2.86,-.94],p.vermilion,.13);
+    a.line(r,[[-1.65,1.16,.8],[-.6,1.16,.35],[.7,1.16,.8],[1.65,1.16,.35]],.045,p.gold);
   },
   '2026-08-24': (a, r) => {
     const p=a.palette;
@@ -682,7 +751,26 @@ export const LATE_MODELS: Record<keyof typeof LATE_DESIGNS, Build> = {
     const p=a.palette;
     // Five distinct product wings share a central structural spine; each wing is a unique folded shell.
     const wings:[number,number,number,number][]=[[-4.8,2.5,2,0],[-2.4,4.5,1.8,-.16],[0,6.8,2.1,0],[2.8,5.2,1.9,.2],[5.1,3.1,1.65,.12]];
-    wings.forEach(([x,h,w,tilt],i)=>{const g=new T.Group();g.position.set(x,1,-1+(i%2)*.45);g.rotation.z=tilt;r.add(g);fin(a,g,[[-w/2,0],[-w*.6,h*.65],[-w*.3,h],[w*.45,h-.35],[w*.6,h*.38],[w/2,0]],[0,0,0],i%2?p.jade:p.paper,.55);rod(a,g,[0,.3,.61],[0,h-.45,.61],.045);for(let j=0;j<4;j++)a.box(g,[w*.55,.035,.03],[0,1+j*(h-1.5)/4,.62],p.gold);joint(a,g,[0,h-.45,.66],.115);slab(a,r,[x,.97,-1+(i%2)*.45],w+ .55,2.25);});
+    const profiles: [number, number][][] = [
+      [[-.5,0],[-.64,.65],[-.38,1],[.3,1],[.56,.65],[.5,0]],
+      [[-.5,0],[-.5,.88],[-.3,1],[.3,1],[.5,.88],[.5,0]],
+      [[-.5,0],[-.65,.5],[-.4,.87],[0,1],[.44,.84],[.65,.48],[.5,0]],
+      [[-.6,0],[-.6,.72],[-.2,.72],[-.2,1],[.5,.86],[.62,.3],[.4,0]],
+      [[-.5,0],[-.72,.35],[-.38,.95],[.2,1],[.65,.55],[.5,0]],
+    ];
+    wings.forEach(([x,h,w,tilt],i)=>{
+      const g=new T.Group();g.position.set(x,1,-1+(i%2)*.45);g.rotation.z=tilt;r.add(g);
+      // Different host shells join one shared spine; folded side returns expose their construction.
+      fin(a,g,profiles[i].map(([u,v])=>[u*w,v*h]),[0,0,0],i%2?p.jade:p.paper,.55);
+      rod(a,g,[0,.3,.61],[0,h-.45,.61],.045);
+      for(let j=0;j<4;j++)a.box(g,[w*.55,.035,.03],[0,1+j*(h-1.5)/4,.62],p.gold);
+      for(const side of [-1,1]){
+        fin(a,g,[[side*w*.38,.18],[side*w*.38,h*.72],[side*w*.2,h*.8],[side*w*.2,.18]],[0,0,-.72],i%2?p.paper:p.jade,.14);
+        for(const y of [.35,h*.65])rod(a,g,[side*w*.32,y,-.6],[side*w*.32,y,.6],.035);
+      }
+      joint(a,g,[0,h-.45,.66],.115);slab(a,r,[x,.97,-1+(i%2)*.45],w+.55,2.25);
+      a.line(r,[[x,1.3,-.35],[x*.62,2.1,.55],[0,3.45,1.35]],.045,p.gold);
+    });
     a.line(r,[[-5.4,1.15,1.35],[-2.8,2,1.35],[0,3.45,1.35],[2.8,2,1.35],[5.4,1.15,1.35]],.18,p.gold);
     const heart=a.mesh(r,new T.DodecahedronGeometry(.8),p.vermilion,[0,3.65,1.35]);heart.rotation.z=.22;
     for(const x of [-1.2,1.2])rod(a,r,[x,1,-2.2],[0,6.6,-1],.055,p.forest);

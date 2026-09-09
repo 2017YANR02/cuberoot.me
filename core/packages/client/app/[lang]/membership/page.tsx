@@ -286,7 +286,7 @@ export default function MembershipPage() {
         <div className={`mem-status${expiry?.expiringSoon ? ' is-warning' : ''}${expiry?.expired ? ' is-expired' : ''}`}>
           {expiry?.expired && <AlertTriangle size={16} className="mem-status-icon" />}
           <span className="mem-status-text">
-            {membership.vipId && <><strong>{membership.vipId}</strong>{' '}</>}
+            {membership.vipId && <><strong>{membership.vipId.replace(/^VIP0+(\d+)$/, 'VIP$1')}</strong>{' '}</>}
             {membership.lifetime
               ? tr({ zh: '你是永久会员,感谢长期的支持 ♡', en: "You're a lifetime member — thank you for the support ♡"
             })

@@ -89,6 +89,11 @@ describe('the continuous history river', () => {
       expect(shader.uniforms.riverTime.value).toBe(0);
       expect(shader.uniforms.riverRain.value).toBe(.4);
     }
+    for (const [night, expected] of [[-1, 0], [2, 1], [NaN, 0], [Infinity, 0]]) {
+      water.update(12, 'clear', night, sky, light);
+      expect(shader.uniforms.riverNight.value).toBe(expected);
+    }
+    expect(shader.uniforms.riverWarm.value.equals(new T.Color(palette.gold).lerp(new T.Color(palette.paper), .3))).toBe(true);
     water.dispose();
   });
 });

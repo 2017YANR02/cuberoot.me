@@ -39,7 +39,8 @@ export class PaperWeather {
   private readonly uniforms = {
     time: { value: 0 }, kind: { value: 0 }, amount: { value: 0 }, density: { value: 1 },
     tint: { value: new T.Color() }, snowTint: { value: new T.Color() }, wind: { value: .5 },
-    fallSpeed: { value: 1 }, size: { value: 1 },
+    fallSpeed: { value: 1 }, size: { value: 1 }, rainVeil: { value: 0 },
+    captionArea: { value: new T.Vector3(.43, .24, .29) },
     viewSize: { value: new T.Vector2(38, 19) },
     viewToLocal: { value: new T.Matrix4().makeTranslation(0, 9.5, -2) },
   };
@@ -123,8 +124,10 @@ export class PaperWeather {
 
     const precipitation = new T.ShaderMaterial({
       uniforms: this.uniforms, transparent: true, depthWrite: false,
-      vertexShader: `attribute vec4 seed; uniform float time,kind,wind,density,fallSpeed,size;
-        uniform vec2 viewSize; uniform mat4 viewToLocal; varying float strength,streak,flake;
+      vertexShader: `attribute vec4 seed; attribute float weatherLayer;
+        uniform float time,kind,wind,density,fallSpeed,size,rainVeil;
+        uniform vec2 viewSize; uniform vec3 captionArea; uniform mat4 viewToLocal;
+        varying float strength,streak,flake,thinness;
         void main(){
           float sleet=step(3.5,kind)*(1.-step(4.5,kind));
           float leaf=step(4.5,kind);
@@ -133,9 +136,12 @@ export class PaperWeather {
           float hail=step(2.5,kind)*(1.-step(3.5,kind));
           streak=1.-max(max(snow,sand),max(hail,leaf));
           flake=snow;
-          float speed=mix(1.25,.13,snow)*fallSpeed; speed=mix(speed,.22,sand);
+          float speed=mix(1.25,.13,snow)*fallSpeed*(.72+weatherLayer*.17); speed=mix(speed,.22,sand);
           float fall=fract(seed.y+time*speed*(.6+seed.w*.4));
-          vec3 volume=vec3((seed.x-.5)*viewSize.x,(.5-fall)*viewSize.y,(seed.z-.5)*38.);
+          float depth=mix(-19.,-6.,seed.z);
+          if(weatherLayer>.5)depth=mix(-6.,7.,seed.z);
+          if(weatherLayer>1.5)depth=mix(7.,19.,seed.z);
+          vec3 volume=vec3((seed.x-.5)*viewSize.x,(.5-fall)*viewSize.y,depth);
           volume.x+=sin(time*.6+seed.y*30.)*snow*.65+fall*wind*3.;
           volume.x=mod(volume.x+viewSize.x*.5,viewSize.x)-viewSize.x*.5;
           vec3 p=(viewToLocal*vec4(volume,1.)).xyz;
@@ -144,14 +150,24 @@ export class PaperWeather {
           if(leaf>.5){p.x=(fract(seed.x+time*.017)-.5)*32.;p.y=1.+seed.y*5.+sin(time*.7+seed.z*20.)*.8;}
           if(sand+leaf>.5)p.z=(seed.z-.5)*18.-2.;
           if(hail>.5&&fall>.83)p.y=abs(sin((fall-.83)*37.))*.65;
-          strength=.35+seed.w*.55;
           gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);
-          gl_PointSize=clamp(mix(12.,4.2,snow+hail)*size*density,1.,30.);
+          vec2 screen=gl_Position.xy/gl_Position.w*.5+.5;
+          // Keep a continuous veil over the whole frame, with breathing room for the captions.
+          float title=(1.-smoothstep(captionArea.x-.08,captionArea.x+.08,screen.x))
+            *smoothstep(1.-captionArea.y-.09,1.-captionArea.y,screen.y);
+          float notes=1.-smoothstep(captionArea.z-.10,captionArea.z+.08,screen.y);
+          float readable=(1.-title*.63)*(1.-notes*.77);
+          strength=(.38+seed.w*.42)*mix(.60,.90,weatherLayer*.5)*readable;
+          strength*=1.+rainVeil*(1.-step(1.5,weatherLayer));
+          if(weatherLayer>1.5)strength*=.65;
+          thinness=mix(9.,6.5,weatherLayer*.5);
+          float pointSize=mix(5.2,12.,weatherLayer*.5);
+          gl_PointSize=clamp(mix(pointSize,2.8+weatherLayer*1.25,snow+hail)*size*density,1.,30.);
         }`,
-      fragmentShader: `uniform vec3 tint,snowTint; uniform float amount,kind; varying float strength,streak,flake;
+      fragmentShader: `uniform vec3 tint,snowTint; uniform float amount,kind; varying float strength,streak,flake,thinness;
         void main(){
           vec2 p=gl_PointCoord-.5;
-          if(streak>.5){p.x+=p.y*.18; p.x*=7.;}
+          if(streak>.5){p.x+=p.y*.18; p.x*=thinness;}
           if(kind>4.5){p=vec2(p.x+p.y,p.y-p.x);p.y*=2.;}
           float a=1.-smoothstep(.24,.5,length(p));
           gl_FragColor=vec4(mix(tint,snowTint,flake),a*strength*amount);
@@ -160,7 +176,11 @@ export class PaperWeather {
         }`,
     });
     this.materials.push(precipitation);
-    this.particles = new T.Points(precipitationGeometry(narrow ? 850 : 1600), precipitation);
+    const precipitationShape = precipitationGeometry(narrow ? 850 : 1600);
+    // Interleave layers so even drizzle's short draw range retains a dense distance and sparse foreground.
+    const layers = Float32Array.from({ length: precipitationShape.getAttribute('position').count }, (_, i) => i % 10 < 6 ? 0 : i % 10 < 9 ? 1 : 2);
+    precipitationShape.setAttribute('weatherLayer', new T.BufferAttribute(layers, 1));
+    this.particles = new T.Points(precipitationShape, precipitation);
     this.particles.name = 'history-precipitation';
     this.particles.frustumCulled = false; this.root.add(this.particles);
 
@@ -244,13 +264,15 @@ export class PaperWeather {
     const sunset = weather === 'sunset';
     const fog = weather === 'fog' || weather === 'sleet';
     this.uniforms.time.value = time;
+    this.uniforms.captionArea.value.set(narrow ? .88 : .43, narrow ? .27 : .24, narrow ? .32 : .29);
     this.uniforms.density.value = Number.isFinite(density) ? Math.max(.5, Math.min(4, density)) : 1;
     this.uniforms.kind.value = snow ? 1 : sand ? 2 : weather === 'hail' ? 3 : weather === 'sleet' ? 4 : breeze ? 5 : 0;
     this.uniforms.wind.value = weather === 'blizzard' || sand ? 3 : weather === 'monsoon' ? 2.4 : thunder ? 1.8 : .5;
     this.uniforms.snowTint.value.set(p.snow);
     this.uniforms.tint.value.set(snow || weather === 'hail' ? p.snow : sand ? p.clay : breeze ? p.gold : p.water).lerp(new T.Color(p.ice), light.night * .7);
     this.uniforms.fallSpeed.value = weather === 'monsoon' ? 1.6 : weather === 'blizzard' ? 1.7 : weather === 'drizzle' ? .55 : 1;
-    this.uniforms.size.value = weather === 'monsoon' ? 1.45 : weather === 'drizzle' ? .7 : weather === 'sunshower' ? .85 : 1;
+    this.uniforms.size.value = weather === 'monsoon' ? 1.2 : weather === 'drizzle' ? .7 : weather === 'sunshower' ? .85 : 1;
+    this.uniforms.rainVeil.value = weather === 'monsoon' ? .65 : weather === 'storm' ? .5 : weather === 'rain' ? .35 : 0;
     this.uniforms.amount.value = fade * (snow ? .85 : sand ? .32 : breeze ? .7 : weather === 'drizzle' ? .32 : thunder ? .8 : wet || weather === 'hail' ? .6 : 0);
     const count = this.particles.geometry.getAttribute('position').count;
     const proportion = weather === 'monsoon' || weather === 'blizzard' ? 1 : weather === 'storm' || weather === 'sandstorm' ? .75 : weather === 'drizzle' || weather === 'sunshower' ? .2 : .42;
