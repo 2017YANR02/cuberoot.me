@@ -200,72 +200,73 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
             if (!event.currentTarget.contains(event.relatedTarget as Node | null)) endPreview();
           }}
         >
-          <div className="appearance-sec-label">{L.scheme}</div>
+          <div className="appearance-settings">
+            <div className="appearance-sec-label">{L.scheme}</div>
 
-          <button
-            type="button"
-            role="menuitemradio"
-            aria-checked={onScheme && eff === 'dark'}
-            className={`lang-menu-item${onScheme && eff === 'dark' ? ' is-active' : ''}`}
-            onPointerEnter={() => showThemePreview('dark')}
-            onFocus={() => showThemePreview('dark')}
-            onClick={() => pickTheme('dark')}
-          >
-            <span className="lang-menu-check">{onScheme && eff === 'dark' && <Check size={13} />}</span>
-            <Swatch colors={CLASSIC_DARK} />
-            <span>{L.dark}</span>
-          </button>
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={onScheme && eff === 'dark'}
+              className={`lang-menu-item${onScheme && eff === 'dark' ? ' is-active' : ''}`}
+              onPointerEnter={() => showThemePreview('dark')}
+              onFocus={() => showThemePreview('dark')}
+              onClick={() => pickTheme('dark')}
+            >
+              <span className="lang-menu-check">{onScheme && eff === 'dark' && <Check size={13} />}</span>
+              <Swatch colors={CLASSIC_DARK} />
+              <span>{L.dark}</span>
+            </button>
 
-          <button
-            type="button"
-            role="menuitemradio"
-            aria-checked={onScheme && eff === 'light'}
-            className={`lang-menu-item${onScheme && eff === 'light' ? ' is-active' : ''}`}
-            onPointerEnter={() => showThemePreview('light')}
-            onFocus={() => showThemePreview('light')}
-            onClick={() => pickTheme('light')}
-          >
-            <span className="lang-menu-check">{onScheme && eff === 'light' && <Check size={13} />}</span>
-            <Swatch colors={CLASSIC_LIGHT} />
-            <span>{L.light}</span>
-          </button>
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={onScheme && eff === 'light'}
+              className={`lang-menu-item${onScheme && eff === 'light' ? ' is-active' : ''}`}
+              onPointerEnter={() => showThemePreview('light')}
+              onFocus={() => showThemePreview('light')}
+              onClick={() => pickTheme('light')}
+            >
+              <span className="lang-menu-check">{onScheme && eff === 'light' && <Check size={13} />}</span>
+              <Swatch colors={CLASSIC_LIGHT} />
+              <span>{L.light}</span>
+            </button>
 
-          <div className="appearance-sec-label appearance-sec-div">{L.palette}</div>
+            <div className="appearance-sec-label appearance-sec-div">{L.palette}</div>
 
-          {PALETTES.map((p) => {
-            const on = p.id === palette;
-            return (
-              <button
-                key={p.id}
-                type="button"
-                role="menuitemradio"
-                aria-checked={on}
-                className={`lang-menu-item${on ? ' is-active' : ''}`}
-                onPointerEnter={() => showPalettePreview(p.id)}
-                onFocus={() => showPalettePreview(p.id)}
-                onClick={() => pickPalette(p.id)}
-              >
-                <span className="lang-menu-check">{on && <Check size={13} />}</span>
-                <Swatch colors={p.swatch} />
-                <span>{tr(p)}</span>
-              </button>
-            );
-          })}
+            {PALETTES.map((p) => {
+              const on = p.id === palette;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={on}
+                  className={`lang-menu-item${on ? ' is-active' : ''}`}
+                  onPointerEnter={() => showPalettePreview(p.id)}
+                  onFocus={() => showPalettePreview(p.id)}
+                  onClick={() => pickPalette(p.id)}
+                >
+                  <span className="lang-menu-check">{on && <Check size={13} />}</span>
+                  <Swatch colors={p.swatch} />
+                  <span>{tr(p)}</span>
+                </button>
+              );
+            })}
 
-          <div className="appearance-sec-label appearance-sec-div">
-            <BoolToggle
-              value={contrast === 'soft'}
-              onChange={(enabled) => pickContrast(enabled ? 'soft' : 'normal')}
-              label={L.lowContrast}
-            />
+            <div className="appearance-sec-label appearance-sec-div">
+              <BoolToggle
+                value={contrast === 'soft'}
+                onChange={(enabled) => pickContrast(enabled ? 'soft' : 'normal')}
+                label={L.lowContrast}
+              />
+            </div>
+            <div className="appearance-hint">{L.softenHint}</div>
           </div>
-          <div className="appearance-hint">{L.softenHint}</div>
 
           {menuContent && <div
+            className="appearance-extra"
             onPointerEnter={endPreview}
             onFocus={endPreview}
-            // Nested pickers portal to body; keep their mouse events inside this menu.
-            onMouseDown={event => event.stopPropagation()}
           >{menuContent}</div>}
 
           <AppLink
