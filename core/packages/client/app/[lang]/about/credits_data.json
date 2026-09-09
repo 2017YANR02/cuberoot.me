@@ -82,6 +82,13 @@
     "en": "Bund signs subset 70 glyphs from the font already in this repository using Three.js TTFLoader, serving about 40 KB of outlines locally. Embedded Apache-2.0 and author notices are preserved and the license accompanies the asset. This general typeface is not an exact brand font. Generated 2026-09-08"
   },
   {
+    "name": "Permasteelisa: Jin Mao Tower curtain wall",
+    "space": true,
+    "url": "https://www.permasteelisagroup.com/historic-project/jin-mao-tower/",
+    "zh": "幕墙承建方记录金茂大厦 420.5 米、88 层，以及铝制翼片、不锈钢构件和退台铝板。已查看其俯拍、塔冠近景及幕墙细部照片，用于 Blender 工程的分段幕墙、横向栏杆、退台构件和分层翼片塔冠。宽度、层高、构件尺寸与照明仍为照片估算，未取得竣工测绘；照片仅作对照，未作为运行贴图。查阅于 2026-09-08",
+    "en": "The facade contractor documents Jin Mao Tower's 420.5 m height, 88 storeys, aluminum fins, stainless-steel members and aluminum-clad terraces. Aerial, crown and facade-detail photographs guide the Blender model's tiered curtain wall, horizontal rails, setback members and layered crown fins. Widths, floor heights, member dimensions and lighting remain photo estimates without an as-built survey. Photos are references, not runtime textures. Accessed 2026-09-08"
+  },
+  {
     "name": "SOM: Jin Mao Tower",
     "space": true,
     "url": "https://www.som.com/projects/jin-mao-tower/",

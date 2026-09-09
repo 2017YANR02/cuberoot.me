@@ -4,6 +4,8 @@
 
 关联：[城市总跟踪](shanghai-huangpu-space-tracker.md)、[技术来源索引](space-sources.md)。来源及查阅日期同时显示在 `/space` 底部，来自唯一的 `credits_data.json`。工程尺寸、照片参考与代码依赖分别说明；未下载的模型不计作已接入。
 
+2026-09-08 Blender 后续制作：金茂已在上海源工程中精修幕墙双横杆、竖向构件、退台及分层翼片塔冠，并保存、导出和完成运行绑定检查。新模型 51 个可编辑网格，88 层、包围盒总高约 420.506 m；尺寸仍含照片估算，不能据此认定 1:1。实拍对照和验收记录见[金茂档案](../design/space/references/jin-mao.md)及[Blender 跟踪](space-blender-tracker.md#2026-09-08-金茂-blender-精修)。本轮为后台 Cycles 日夜审图，无新的网页 GPU 画质验收。
+
 ## 第一批独立重建
 
 | 对象 | 已接入 | 有来源的尺寸与依据 | 尚需校准，当前不算 1:1 |

@@ -69,6 +69,8 @@
 
 Blender 负责静态模型编辑，Three.js 保留魔方转动、天气、水面、交通和时间等交互。原有建筑、摄影与天气来源继续适用，格式迁移不会提高原始几何的实测准确度，也不代表完成电影级美术。源工程、资源包和日常编辑流程见[Blender 编辑说明](../design/space/README.md)，全量验证与剩余工作见[迁移跟踪](space-blender-tracker.md)。
 
+金茂的 Blender 精修新增幕墙承建方 [Permasteelisa](https://www.permasteelisagroup.com/historic-project/jin-mao-tower/) 的俯拍、塔冠与幕墙细部照片作为对照，并结合既有 SOM 日夜实拍。尺寸事实、照片估算与三轮审图记录见[金茂参考档案](../design/space/references/jin-mao.md)和[Blender 跟踪](space-blender-tracker.md#2026-09-08-金茂-blender-精修)。该来源的用途和查阅日期已加入网页中英文来源入口；无新增建筑库或运行照片贴图。
+
 ## 调研但尚未接入
 
 [CesiumJS](https://github.com/CesiumGS/cesium)、[MapLibre GL JS](https://github.com/maplibre/maplibre-gl-js) 和 [NASA 3DTilesRendererJS](https://github.com/NASA-AMMOS/3DTilesRendererJS) 的历史星数、候选用途和取舍在[上海跟踪文档](shanghai-huangpu-space-tracker.md)。当前运行时没有安装它们，也没有获取上海全段摄影测量 tileset。已调研而未成功下载的模型不能列作已集成资产。
