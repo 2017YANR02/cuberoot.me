@@ -405,24 +405,41 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 
 @media (max-width: 480px) {
+    /* 品牌与操作区共用一行，通知条存在时也保留自己的顶部空间。 */
+    body .landing-page,
     body:has(.page-notice-wrap) .landing-page {
-        padding-top: 0.75rem;
+        padding-top: calc(4rem + var(--sat));
     }
-    .landing-page .landing-auth {
-        top: 2.5rem;
-        min-height: 38px;
-    }
+    .landing-page .landing-auth,
     body:has(.page-notice-wrap) .landing-page .landing-auth {
-        top: 0.25rem;
+        top: calc(0.5rem + var(--sat));
+        right: max(1rem, var(--sar));
         min-height: 38px;
+    }
+    .landing-page .landing-auth,
+    .landing-page .landing-auth .header-toggles {
+        gap: clamp(0px, calc((100vw - 360px) / 8), 8px);
     }
     .landing-page .brand-line,
     body:has(.page-notice-wrap) .landing-page .brand-line {
-        position: static;
-        align-self: flex-start;
-        min-height: 0;
-        margin-bottom: 0.75rem;
+        top: calc(0.5rem + var(--sat));
+        left: max(1rem, var(--sal));
+        min-height: 38px;
+        gap: 0.25rem;
         font-size: 1rem;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 360px) {
+    .landing-page .landing-auth .lang-toggle,
+    .landing-page .landing-auth .theme-toggle-inline,
+    .landing-page .landing-auth-icon {
+        width: 24px;
+    }
+    .landing-page .landing-auth-btn.is-login {
+        gap: 0.25rem;
+        padding-inline: 0.2rem;
     }
 }
 
