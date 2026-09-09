@@ -41,6 +41,22 @@ export function createIsland() {
   for (let i = 0; i < p.count; i++) p.setY(i, islandHeight(p.getX(i), p.getZ(i)));
   geometry.computeVertexNormals();
   const material = new THREE.MeshStandardMaterial({ roughness: .88 });
+  applyIslandMaterial(material);
+  const terrain = new THREE.Mesh(geometry, material); terrain.receiveShadow = true; root.add(terrain);
+  const rocks = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 2), new THREE.MeshStandardMaterial({ color: 0x746f60, roughness: .82 }), 54);
+  const transform = new THREE.Object3D();
+  for (let i = 0; i < rocks.count; i++) {
+    const cluster = Math.floor(i / 9), angle = cluster * 1.39 + Math.sin(i * 2.39) * .105, radius = .86 + (i % 7) * .021;
+    const x = ISLAND.x + Math.cos(angle) * ISLAND.rx * radius, z = ISLAND.z + Math.sin(angle) * ISLAND.rz * radius;
+    transform.position.set(x, islandHeight(x,z) + .15, z);
+    transform.rotation.set(i*.73,i*1.19,i*.31);
+    transform.scale.set(1.2+i%3*.55,.5+i%5*.27,.9+i%4*.42); transform.updateMatrix(); rocks.setMatrixAt(i, transform.matrix);
+  }
+  rocks.castShadow = rocks.receiveShadow = true; root.add(rocks);
+  return root;
+}
+
+export function applyIslandMaterial(material: THREE.MeshStandardMaterial) {
   material.onBeforeCompile = shader => {
     shader.vertexShader = 'varying vec3 vCoast;\n' + shader.vertexShader;
     shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvCoast = (modelMatrix * vec4(position,1.)).xyz;');
@@ -54,16 +70,5 @@ export function createIsland() {
     `);
     shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(.34,.9,smoothstep(-5.8,-4.4,vCoast.y));');
   };
-  const terrain = new THREE.Mesh(geometry, material); terrain.receiveShadow = true; root.add(terrain);
-  const rocks = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 2), new THREE.MeshStandardMaterial({ color: 0x746f60, roughness: .82 }), 54);
-  const transform = new THREE.Object3D();
-  for (let i = 0; i < rocks.count; i++) {
-    const cluster = Math.floor(i / 9), angle = cluster * 1.39 + Math.sin(i * 2.39) * .105, radius = .86 + (i % 7) * .021;
-    const x = ISLAND.x + Math.cos(angle) * ISLAND.rx * radius, z = ISLAND.z + Math.sin(angle) * ISLAND.rz * radius;
-    transform.position.set(x, islandHeight(x,z) + .15, z);
-    transform.rotation.set(i*.73,i*1.19,i*.31);
-    transform.scale.set(1.2+i%3*.55,.5+i%5*.27,.9+i%4*.42); transform.updateMatrix(); rocks.setMatrixAt(i, transform.matrix);
-  }
-  rocks.castShadow = rocks.receiveShadow = true; root.add(rocks);
-  return root;
+  material.customProgramCacheKey = () => 'space-island-terrain';
 }

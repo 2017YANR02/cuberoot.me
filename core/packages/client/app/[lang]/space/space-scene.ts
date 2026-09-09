@@ -20,6 +20,7 @@ import MegaminxCube from '@cuberoot/puzzle-render-core/engine/mega/MegaminxCube'
 import SkewbCube from '@cuberoot/puzzle-render-core/engine/skewb/SkewbCube';
 import { movePosition, PEDESTALS, VILLA_ROOMS, floorHeight, walkFloor, walkStep, type Destination, type Level, type Layout, type RiverColor, type SpaceObject, type Vec3 } from './space-state';
 import { SpaceRoom } from './space-room';
+import roomCameras from './space-room-cameras.json';
 import { pickTurn, turnBusy, turnPuzzle } from './space-turn';
 import { validSpaceMove, layoutTime, type Weather } from './space-state';
 import { SpaceWeather } from './space-weather';
@@ -148,6 +149,7 @@ export class SpaceScene {
     altitude: (height: number) => void;
     weatherError: () => void;
     cityState: (state: 'loading' | 'ready' | 'error' | null) => void;
+    roomState?: (state: 'loading' | 'ready' | 'error') => void;
     cruising: (active: boolean) => void;
     zoom: (value: number) => void;
   }) {
@@ -545,6 +547,18 @@ export class SpaceScene {
       this.room?.dispose();
       this.room = new SpaceRoom(style, [this.transform.getHelper(), this.outline, this.grid, this.drop], this.render, environment);
       this.scene.add(this.room.root);
+      const room = this.room;
+      this.callbacks.roomState?.('loading');
+      void room.ready.then(() => {
+        if (this.disposed || this.room !== room) return;
+        room.resize(this.host.clientWidth);
+        this.weather.patchSurfaces(room.root);
+        this.callbacks.roomState?.('ready'); this.render();
+      }).catch(error => {
+        if (this.disposed || this.room !== room) return;
+        console.error('Space room asset failed to load', error);
+        this.callbacks.roomState?.('error');
+      });
       this.room.resize(this.host.clientWidth);
       const p = this.room.palette;
       this.scene.background = this.sky && style !== 'cyberpunk' && style !== 'company' ? this.sky : new THREE.Color(p.sky);
@@ -747,12 +761,7 @@ export class SpaceScene {
     this.sun.shadow.bias = closeArchitecture ? -.000008 : -.0002;
     this.sun.shadow.camera.updateProjectionMatrix(); this.shadowDirty = true;
     this.positionSun();
-    const cameras: Partial<Record<View, [Vec3, Vec3]>> = this.room?.style === 'company' ? {
-      interior: [[-21.5, 1.7, 4.9], [-23.3, 1.15, 0.8]], study: [[-8.2, 1.65, 3.8], [-13.3, 1.25, -2.4]], courtyard: [[-14.3, 1.7, 12], [-16.5, 1.15, 8.6]],
-    } : {
-      interior: [[-9.3, 1.65, -3.4], [-4.8, 1.2, -6.5]], study: [[-20, 1.75, 5], [-25, 1.35, -0.5]], bedroom: [[-20, 6.75, 3.8], [-24.3, 6.1, -0.9]], bathroom: [[-19.9, 7, -5.1], [-23.5, 6.5, -11.5]], courtyard: [[-13.4, 2.1, 10], [-13.4, 2.5, -5]],
-      garage: [[13.7, 1.65, -5.2], [22, 0.85, -11]], cinema: [[13.8, 1.65, 7.8], [26, 1.4, 2.8]], gym: [[13.3, 1.65, 15.5], [24, 1.1, 19]],
-    };
+    const cameras = roomCameras[this.room?.style === 'company' ? 'company' : 'villa'] as Partial<Record<View, [Vec3, Vec3]>>;
     if (cameras[view]) { position.set(...cameras[view][0]); target.set(...cameras[view][1]); }
     const lighting: Partial<Record<View, [Vec3, Vec3]>> = this.room?.style === 'company' ? {
       interior: [[-23, 2.65, 2], [-23, 0, 1.5]], study: [[-13, 3.15, 2], [-13, 0, -1]], courtyard: [[-17, 3.2, 11], [-17, 0, 9]],

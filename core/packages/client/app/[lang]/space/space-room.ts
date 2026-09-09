@@ -4,9 +4,10 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { loadSpaceBlender, SPACE_ASSET_SOURCE } from './space-blender';
 import { VILLA_ROOMS, type RoomStyle, type WalkObstacle, type Environment } from './space-state';
 
-import { createIsland } from './space-island';
+import { applyIslandMaterial, createIsland } from './space-island';
 
 const PALETTES = {
   minimal: { sky: 0x9aadb9, ground: 0x7e8986, stone: 0xbcbdb8, frame: 0xc9d0d2, wall: 0xe7e5de, wood: 0x847768, fabric: 0xd6d5cd, mirror: 0x727977, glow: 0xffedce, secondary: 0xe1eeff },
@@ -31,7 +32,8 @@ const opaqueShadow: THREE.Mesh['onBeforeShadow'] = (_renderer, _object, _camera,
 export class SpaceRoom {
   readonly root = new THREE.Group();
   readonly palette;
-  readonly floor: Reflector;
+  readonly ready: Promise<void>;
+  floor!: Reflector;
   readonly surfaces: THREE.Mesh[] = [];
   readonly obstacles: WalkObstacle[] = [];
   private solids: THREE.Object3D[] = [];
@@ -45,18 +47,24 @@ export class SpaceRoom {
   private carsLoaded = false;
   private disposed = false;
   private glass = new THREE.MeshPhysicalMaterial({ color: 0xd7e6e5, roughness: 0.07, metalness: 0.15, transparent: true, opacity: 0.1, depthWrite: false, side: THREE.DoubleSide });
-  private stone: THREE.MeshStandardMaterial;
-  private wall: THREE.MeshStandardMaterial;
-  private wood: THREE.MeshStandardMaterial;
-  private fabric: THREE.MeshStandardMaterial;
-  private metal: THREE.MeshStandardMaterial;
+  private stone!: THREE.MeshStandardMaterial;
+  private wall!: THREE.MeshStandardMaterial;
+  private wood!: THREE.MeshStandardMaterial;
+  private fabric!: THREE.MeshStandardMaterial;
+  private metal!: THREE.MeshStandardMaterial;
   private dark = new THREE.MeshStandardMaterial({ color: 0x242a2b, roughness: 0.5 });
   private ceramic = new THREE.MeshPhysicalMaterial({ color: 0xf0efdf, roughness: 0.12, clearcoat: 1 });
-  private led: THREE.MeshBasicMaterial;
-  constructor(readonly style: RoomStyle, private helpers: THREE.Object3D[], private invalidate = () => {}, readonly environment: Environment = 'original') {
+  private led!: THREE.MeshBasicMaterial;
+  constructor(readonly style: RoomStyle, private helpers: THREE.Object3D[], private invalidate = () => {}, readonly environment: Environment = 'original', source: 'blender' | 'bootstrap' = SPACE_ASSET_SOURCE) {
     this.palette = style in PALETTES ? PALETTES[style as keyof typeof PALETTES] : EXTRA[style as keyof typeof EXTRA];
     const p = this.palette;
     if (!('LTC_FLOAT_1' in THREE.UniformsLib)) RectAreaLightUniformsLib.init();
+    if (source === 'blender') {
+      this.carsLoaded = true;
+      this.ready = this.loadBlender().catch(error => { this.dispose(); throw error; });
+      return;
+    }
+    this.ready = Promise.resolve();
     this.stone = this.material(p.stone, 'marble', 0.25);
     this.wall = new THREE.MeshStandardMaterial({ color: p.wall, roughness: 0.9 });
     this.wood = this.material(p.wood, 'wood', 0.48);
@@ -84,8 +92,72 @@ export class SpaceRoom {
     for (const child of this.root.children) if (child instanceof THREE.Group && child !== this.roof) this.batch(child);
     for (const child of this.roof.children) if (child instanceof THREE.Group) this.batch(child);
     this.batch(this.root);
-    this.batch(this.roof);
+    this.batch(this.roof as THREE.Group);
     this.root.traverse(o => { if (o instanceof THREE.Mesh) o.onBeforeShadow = opaqueShadow; });
+  }
+
+  private async loadBlender() {
+    const { scene } = await loadSpaceBlender(`${this.style}-${this.environment}`);
+    if (this.disposed) { this.disposeModel(scene); return; }
+    let source: THREE.Object3D = scene;
+    scene.traverse(o => { if (o.userData.spaceId === 'root') source = o; });
+    if (scene.userData.space_contract !== 2) { this.disposeModel(scene); throw new Error('Space Blender asset needs contract 2 export'); }
+    this.root.add(scene);
+    this.root.userData.spaceSource = 'blender';
+    const objects: THREE.Object3D[] = [];
+    scene.traverse(o => objects.push(o));
+    const materials = new Set<THREE.Material>();
+    for (let object of objects) {
+      const tags = object.userData;
+      if (typeof tags.spaceVisible === 'boolean') object.visible = tags.spaceVisible;
+      if (typeof tags.spaceRenderOrder === 'number') object.renderOrder = tags.spaceRenderOrder;
+      if (tags.spaceRole === 'roof') this.roof = object as THREE.Group;
+      if (tags.spaceRole === 'back') this.back = object as THREE.Group;
+      if (!(object instanceof THREE.Mesh)) continue;
+      if (tags.spaceRuntime === 'reflection') {
+        // Retain Blender's edited plane and transform; only reflection rendering is live.
+        const mirror = this.mirror(1, tags.spaceRole === 'floor' ? 18 : 1, [0, tags.spaceRole === 'floor' ? 0 : 1, 0]);
+        mirror.geometry.dispose(); mirror.geometry = object.geometry;
+        mirror.position.copy(object.position); mirror.quaternion.copy(object.quaternion); mirror.scale.copy(object.scale);
+        mirror.userData = tags; mirror.renderOrder = object.renderOrder;
+        object.parent!.add(mirror); object.removeFromParent();
+        for (const material of Array.isArray(object.material) ? object.material : [object.material]) material.dispose();
+        object = mirror;
+        if (tags.spaceRole === 'floor') this.floor = mirror;
+      } else if (tags.spaceRuntime === 'shadow') {
+        for (const material of Array.isArray(object.material) ? object.material : [object.material]) material.dispose();
+        object.material = new THREE.ShadowMaterial({ opacity: .3, depthWrite: false });
+      }
+      const mesh = object as THREE.Mesh;
+      mesh.castShadow = tags.spaceCastShadow === true;
+      mesh.receiveShadow = tags.spaceReceiveShadow === true;
+      mesh.onBeforeShadow = opaqueShadow;
+      if (tags.spaceSurface) this.surfaces.push(mesh);
+      for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) materials.add(material);
+    }
+    for (const material of materials) {
+      if (typeof material.userData.spaceDepthWrite === 'boolean') material.depthWrite = material.userData.spaceDepthWrite;
+      if (material.userData.spaceGlass) this.glass = material as THREE.MeshPhysicalMaterial;
+      const key = String(material.userData.spaceShaderKey ?? '');
+      const kind = /^space-world-texture-(wood|marble|fabric|carpet|parquet)/.exec(key)?.[1];
+      if (kind && material instanceof THREE.MeshStandardMaterial) this.configureMaterial(material, kind as 'wood' | 'marble' | 'fabric' | 'carpet' | 'parquet');
+      if (material instanceof THREE.MeshStandardMaterial) {
+        if (key === 'space-island-terrain' || key.includes('vCoast')) applyIslandMaterial(material);
+        const facade = /^space-city-facade-([0-3])/.exec(key);
+        if (facade) this.configureCityFacade(material, Number(facade[1]));
+      }
+    }
+    const rootTags = source.userData;
+    if (Array.isArray(rootTags.spaceObstacles)) this.obstacles.push(...rootTags.spaceObstacles);
+    for (const light of rootTags.spaceLights ?? []) {
+      const area = new THREE.RectAreaLight();
+      area.position.fromArray(light.position); area.quaternion.fromArray(light.quaternion);
+      area.color.fromArray(light.color); area.intensity = light.intensity; area.width = light.width; area.height = light.height;
+      this.lights.push(area);
+    }
+    this.root.add(...this.lightSlots);
+    this.root.updateWorldMatrix(true, true);
+    this.invalidate();
   }
 
   private material(color: number, kind: 'wood' | 'marble' | 'fabric' | 'carpet' | 'parquet', roughness: number) {
@@ -101,6 +173,11 @@ export class SpaceRoom {
       material[channel] = texture; this.textures.set(name, texture);
     }
     material.normalScale.setScalar(kind === 'fabric' ? 0.25 : 0.3);
+    this.configureMaterial(material, kind);
+    return material;
+  }
+
+  private configureMaterial(material: THREE.MeshStandardMaterial, kind: 'wood' | 'marble' | 'fabric' | 'carpet' | 'parquet') {
     // World-scale UVs keep the veining/wood grain consistent across different furniture sizes.
     material.onBeforeCompile = shader => {
       if (kind === 'fabric' || kind === 'carpet') {
@@ -115,7 +192,6 @@ export class SpaceRoom {
       }
     };
     material.customProgramCacheKey = () => 'space-world-texture-' + kind + (this.style === 'company' ? '-company' : '');
-    return material;
   }
 
   private box(w: number, h: number, d: number, x: number, y: number, z: number, mat: THREE.Material, parent = this.root, round = 0.025) {
@@ -828,6 +904,27 @@ export class SpaceRoom {
       this.area([x, 2.2, z], [x, 0, z], 0.9, 0.9, i === 2 ? 6 : 1, 0xf1f0e7);
     }
   }
+  private configureCityFacade(material: THREE.MeshStandardMaterial, variant: number) {
+    material.onBeforeCompile = shader => {
+      shader.vertexShader = 'varying vec3 vFacadePosition; varying vec3 vFacadeNormal;\n' + shader.vertexShader;
+      shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvFacadePosition = (modelMatrix * vec4(position, 1.0)).xyz; vFacadeNormal = abs(mat3(modelMatrix) * normal);');
+      shader.fragmentShader = 'varying vec3 vFacadePosition; varying vec3 vFacadeNormal;\n' + shader.fragmentShader;
+      shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+        vec2 facadeUv = vec2(vFacadeNormal.x > vFacadeNormal.z ? vFacadePosition.z : vFacadePosition.x, vFacadePosition.y) / vec2(${variant % 2 ? '2.4, 3.5' : '1.5, 3.2'});
+        vec2 cell = fract(facadeUv), edge = max(fwidth(facadeUv), vec2(0.006));
+        vec2 margin = vec2(${variant % 2 ? '0.2, 0.16' : '0.035, 0.09'});
+        vec2 opening = smoothstep(margin, margin + edge, cell) * (1.0 - smoothstep(1.0 - margin - edge, 1.0 - margin, cell));
+        float windowMask = opening.x * opening.y * (1.0 - step(0.5, vFacadeNormal.y));
+        float suite = fract(sin(dot(floor(facadeUv), vec2(127.1,311.7))) * 43758.5453);
+        float occupied = step(${this.style === 'cyberpunk' ? '0.58' : '0.84'}, suite);
+        diffuseColor.rgb = mix(diffuseColor.rgb * 0.8, vec3(0.11, 0.16, 0.19) * (0.7 + suite * 0.5), windowMask);
+      `);
+      shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(0.78, 0.2, windowMask);');
+      shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(${variant % 2 ? '0.8, 0.53, 0.29' : '0.5, 0.64, 0.75'}) * windowMask * occupied * (0.1 + suite * 0.3);`);
+    };
+    material.customProgramCacheKey = () => 'space-city-facade-' + variant + this.style;
+  }
+
   private landscape() {
     if (this.environment === 'shanghai') return;
     const island = this.environment === 'island';
@@ -837,24 +934,7 @@ export class SpaceRoom {
     if (urban) {
       const facades = [0x536779, 0x8b8174, 0x3d464e, 0x7c6252].map((color, variant) => {
         const material = new THREE.MeshStandardMaterial({ color, metalness: variant % 2 ? 0.2 : 0.7, roughness: 0.45 });
-        material.onBeforeCompile = shader => {
-          shader.vertexShader = 'varying vec3 vFacadePosition; varying vec3 vFacadeNormal;\n' + shader.vertexShader;
-          shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvFacadePosition = (modelMatrix * vec4(position, 1.0)).xyz; vFacadeNormal = abs(mat3(modelMatrix) * normal);');
-          shader.fragmentShader = 'varying vec3 vFacadePosition; varying vec3 vFacadeNormal;\n' + shader.fragmentShader;
-          shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
-            vec2 facadeUv = vec2(vFacadeNormal.x > vFacadeNormal.z ? vFacadePosition.z : vFacadePosition.x, vFacadePosition.y) / vec2(${variant % 2 ? '2.4, 3.5' : '1.5, 3.2'});
-            vec2 cell = fract(facadeUv), edge = max(fwidth(facadeUv), vec2(0.006));
-            vec2 margin = vec2(${variant % 2 ? '0.2, 0.16' : '0.035, 0.09'});
-            vec2 opening = smoothstep(margin, margin + edge, cell) * (1.0 - smoothstep(1.0 - margin - edge, 1.0 - margin, cell));
-            float windowMask = opening.x * opening.y * (1.0 - step(0.5, vFacadeNormal.y));
-            float suite = fract(sin(dot(floor(facadeUv), vec2(127.1,311.7))) * 43758.5453);
-            float occupied = step(${this.style === 'cyberpunk' ? '0.58' : '0.84'}, suite);
-            diffuseColor.rgb = mix(diffuseColor.rgb * 0.8, vec3(0.11, 0.16, 0.19) * (0.7 + suite * 0.5), windowMask);
-          `);
-          shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(0.78, 0.2, windowMask);');
-          shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(${variant % 2 ? '0.8, 0.53, 0.29' : '0.5, 0.64, 0.75'}) * windowMask * occupied * (0.1 + suite * 0.3);`);
-        };
-        material.customProgramCacheKey = () => 'space-city-facade-' + variant + this.style;
+        this.configureCityFacade(material, variant);
         return material;
       });
       this.box(60.5, 119, 42.5, 0, -60, 3, facades[0], this.root, 0);
@@ -927,7 +1007,7 @@ export class SpaceRoom {
     }
   }
 
-  private batch(parent: THREE.Group) {
+  private batch(parent: THREE.Object3D) {
     const groups = new Map<THREE.Material, THREE.Mesh[]>();
     for (const o of [...parent.children]) if (o instanceof THREE.Mesh && !(o instanceof THREE.InstancedMesh) && o.type !== 'Reflector' && !this.surfaces.includes(o) && !o.userData.spaceBackdrop && !Array.isArray(o.material) && !o.material.transparent) {
       const group = groups.get(o.material) ?? []; group.push(o); groups.set(o.material, group);
@@ -985,15 +1065,16 @@ export class SpaceRoom {
       this.carsLoaded = true;
       for (const x of [16.3, 25.5]) this.model('car-concept', x, 0.04, -10, 1.35, 0);
     }
-    for (const child of this.root.children) if (child.name === 'car-concept') child.visible = nearGarage || cutaway;
+    this.root.traverse(child => { if (child.name.startsWith('car-concept')) child.visible = nearGarage || cutaway; });
     // A fixed light count avoids recompiling every material when changing styles.
     const nearby = [...this.lights].sort((a, b) => b.intensity * b.width * b.height / (4 + b.position.distanceToSquared(camera.position)) - a.intensity * a.width * a.height / (4 + a.position.distanceToSquared(camera.position))).slice(0, this.lightSlots.length);
     this.lightSlots.forEach((slot, i) => { const source = nearby[i]; if (source) { slot.copy(source); slot.intensity = source.intensity; } else slot.intensity = 0; });
     this.roof.visible = !cutaway;
     this.back.visible = true;
     for (const mirror of this.mirrors) {
-      const distance = camera.position.distanceTo(mirror.position);
-      mirror.visible = this.style === 'company' ? mirror !== this.floor && distance < 14 : (mirror === this.floor ? distance < 85 : mirror.position.y > 5 ? distance < 23 : distance < 85);
+      const world = mirror.getWorldPosition(new THREE.Vector3());
+      const distance = camera.position.distanceTo(world);
+      mirror.visible = this.style === 'company' ? mirror !== this.floor && distance < 14 : (mirror === this.floor ? distance < 85 : world.y > 5 ? distance < 23 : distance < 85);
     }
     this.glass.opacity = cutaway ? 0.035 : 0.075;
   }

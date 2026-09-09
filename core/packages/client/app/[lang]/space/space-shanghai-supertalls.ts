@@ -7,7 +7,7 @@ import type { Vec3 } from './space-state';
 // References and the distinction between design studies/as-built are in /about credits.
 const JIN_MAO_FLOORS = [16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1];
 
-function glazing(material: MaterialFactory, windows: THREE.Texture, color: number, floor: number, panel: number, horizontal = false) {
+export function glazing(material: MaterialFactory, windows: THREE.Texture, color: number, floor: number, panel: number, horizontal = false) {
   const m = material(color, .38, .3, .001);
   const compile = m.onBeforeCompile, key = m.customProgramCacheKey();
   m.onBeforeCompile = (shader, renderer) => {

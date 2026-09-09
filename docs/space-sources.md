@@ -63,6 +63,12 @@
 
 五轮网页审图、55 项回归、最终截图与仍未通过的 1:1/电影级要求见[第十批跟踪](shanghai-replica-tracker.md#第十批通商银行四层立面与灯位照明)。
 
+## Blender 编辑与 glTF 导出
+
+2026-09-08。25 份静态场景迁入仓库本地 `.blend`，后续通过 Blender 5.2.1 LTS 内置的 [Khronos glTF-Blender-IO](https://github.com/KhronosGroup/glTF-Blender-IO) 导出网页 GLB。首次捕获使用 Three.js GLTFExporter；迁移、打包去重和运行时绑定脚本为本站实现，未复制 Blender 插件源码。网页来源仍统一维护在 `credits_data.json`，中英文入口已验证可见。
+
+Blender 负责静态模型编辑，Three.js 保留魔方转动、天气、水面、交通和时间等交互。原有建筑、摄影与天气来源继续适用，格式迁移不会提高原始几何的实测准确度，也不代表完成电影级美术。源工程、资源包和日常编辑流程见[Blender 编辑说明](../design/space/README.md)，全量验证与剩余工作见[迁移跟踪](space-blender-tracker.md)。
+
 ## 调研但尚未接入
 
 [CesiumJS](https://github.com/CesiumGS/cesium)、[MapLibre GL JS](https://github.com/maplibre/maplibre-gl-js) 和 [NASA 3DTilesRendererJS](https://github.com/NASA-AMMOS/3DTilesRendererJS) 的历史星数、候选用途和取舍在[上海跟踪文档](shanghai-huangpu-space-tracker.md)。当前运行时没有安装它们，也没有获取上海全段摄影测量 tileset。已调研而未成功下载的模型不能列作已集成资产。

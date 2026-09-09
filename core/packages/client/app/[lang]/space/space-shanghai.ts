@@ -5,12 +5,15 @@ import { Reflector } from 'three/addons/objects/Reflector.js';
 import { RIVER_COLORS, type RiverColor, type Vec3, type Weather } from './space-state';
 import { createShanghaiBridges, createShanghaiRoads, type ShanghaiRoad } from './space-shanghai-bridges';
 import { shanghaiShape as shape, type ShanghaiPolygon as Polygon } from './space-shanghai-geometry';
-import { createShanghaiArchitecture, setShanghaiClockTime, SHANGHAI_ARCHITECTURE_IDS } from './space-shanghai-architecture';
+import { createShanghaiArchitecture, setShanghaiClockTime, SHANGHAI_ARCHITECTURE_IDS, applyPeaceWash } from './space-shanghai-architecture';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { addShanghaiSigns } from './space-shanghai-signs';
-import { createBundStreets, createShanghaiQuays } from './space-shanghai-streets';
-import { createShanghaiSupertalls } from './space-shanghai-supertalls';
-import { shanghaiWindowTexture } from './space-shanghai-facades';
+import { createBundStreets, createShanghaiQuays, shanghaiStreetMaterial, applyShanghaiMarking } from './space-shanghai-streets';
+import { createShanghaiSupertalls, glazing } from './space-shanghai-supertalls';
+import { shanghaiWindowTexture, bundStone, roofMetal } from './space-shanghai-facades';
+import { applyNewsStone } from './space-shanghai-bund';
+import { applyCommercialFixtures } from './space-shanghai-commercial-bank';
+import { loadSpaceBlender, SPACE_ASSET_SOURCE } from './space-blender';
 import { ShanghaiTraffic } from './space-shanghai-traffic';
 
 type Point = [number, number];
@@ -81,14 +84,14 @@ export class ShanghaiScene {
   private materials = new Set<THREE.Material>();
   private batches = new Map<string, { geometries: THREE.BufferGeometry[]; material: THREE.Material }>();
 
-  constructor(private narrow: boolean, private changed: () => void) {
+  constructor(private narrow: boolean, private changed: () => void, private source: 'blender' | 'bootstrap' = SPACE_ASSET_SOURCE) {
     this.root.name = 'Shanghai Huangpu River';
     this.textures.add(this.officeWindows); this.textures.add(this.homeWindows);
     this.ready = this.load();
   }
 
-  private material(color: number, metalness = 0, roughness = .8, illumination = 0) {
-    const m = new THREE.MeshStandardMaterial({ color, metalness, roughness });
+  private material(color: number, metalness = 0, roughness = .8, illumination = 0, target?: THREE.MeshStandardMaterial) {
+    const m = target ?? new THREE.MeshStandardMaterial({ color, metalness, roughness });
     if (illumination) {
       m.onBeforeCompile = shader => {
         shader.uniforms.cityNight = this.night;
@@ -100,8 +103,8 @@ export class ShanghaiScene {
     this.materials.add(m); return m;
   }
 
-  private facade(color: number, glass: boolean, tower = false) {
-    const m = this.material(color, glass ? .58 : .06, glass ? .3 : .83);
+  private facade(color: number, glass: boolean, tower = false, target?: THREE.MeshStandardMaterial) {
+    const m = this.material(color, glass ? .58 : .06, glass ? .3 : .83, 0, target);
     m.onBeforeCompile = shader => {
       shader.uniforms.cityNight = this.night;
       shader.uniforms.cityWindows = { value: glass ? this.officeWindows : this.homeWindows };
@@ -161,6 +164,7 @@ export class ShanghaiScene {
       if (this.disposed) return;
       this.route = new THREE.CurvePath();
       for (let i = 1; i < data.river.length; i++) this.route.add(new THREE.LineCurve3(new THREE.Vector3(data.river[i - 1][0], 0, data.river[i - 1][1]), new THREE.Vector3(data.river[i][0], 0, data.river[i][1])));
+      if (this.source === 'blender') { await this.loadBlender(data); return; }
       const facades = [this.facade(0xc2beb0, false), this.facade(0xa4a49b, false), this.facade(0x7e9caa, true), this.facade(0xadb7b6, true)];
       const grass = this.material(0x536548), pavement = this.material(0x9a9788);
       // Draw the city ground as a background, before water and structures, without
@@ -212,10 +216,98 @@ export class ShanghaiScene {
     } catch (error) { if (!this.disposed) { this.dispose(); throw error; } }
   }
 
-  private makeWater(shapes: THREE.Shape[], normals: THREE.Texture) {
+  private async loadBlender(data: ShanghaiData) {
+    const { scene } = await loadSpaceBlender('shanghai');
+    // Attach first so the same disposer owns even an interrupted or failed load.
+    this.root.add(scene);
+    if (this.disposed) { this.dispose(); return; }
+    if (scene.userData.space_contract !== 2) throw new Error('Shanghai needs Blender contract 2');
+    this.root.userData.spaceSource = 'blender';
+    const nodes = new Map<string, THREE.Object3D>();
+    scene.traverse(o => {
+      nodes.set(o.userData.spaceId, o);
+      if (typeof o.userData.spaceName === 'string') o.name = o.userData.spaceName;
+      // Legacy bootstrap predates spaceName. glTF sanitizes spaces in node names.
+      if (/^Customs_(hour|minute)_hand$/.test(o.name)) o.name = o.name.replaceAll('_', ' ');
+      if (typeof o.userData.spaceVisible === 'boolean') o.visible = o.userData.spaceVisible;
+      if (Number.isFinite(o.userData.spaceRenderOrder)) o.renderOrder = o.userData.spaceRenderOrder;
+      if (!(o instanceof THREE.Mesh)) return;
+      o.castShadow = o.userData.spaceCastShadow === true;
+      o.receiveShadow = o.userData.spaceReceiveShadow === true;
+      for (const [from, to] of [['_buildingdata', 'buildingData'], ['_bundbuildingid', 'bundBuildingId'], ['_bundlighttop', 'bundLightTop']]) {
+        const attribute = o.geometry.getAttribute(from);
+        if (attribute) o.geometry.setAttribute(to, attribute);
+      }
+      for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+        this.materials.add(m);
+        for (const value of Object.values(m)) if (value instanceof THREE.Texture) this.textures.add(value);
+      }
+    });
+    // Stable IDs belong to the one-time migration contract, independent of
+    // artist renaming/reordering. Their geometry remains editable in the source.
+    const pool = nodes.get('root/0'), traffic = nodes.get('root/5');
+    const water = nodes.get('root/131'), boats = ['149', '150', '151', '152'].map(id => nodes.get(`root/${id}`));
+    if (!pool || !traffic || !(water instanceof THREE.Mesh) || boats.some(o => !(o instanceof THREE.InstancedMesh))) throw new Error(`Missing Shanghai animation bindings: ${[pool, traffic, water, ...boats].map(o => `${o?.userData.spaceId}:${o?.type}`).join(', ')}`);
+    pool.removeFromParent();
+    scene.updateWorldMatrix(true, true);
+    const bank = [...nodes.values()].find(o => o.userData.bundNumber === 6);
+    const polygon = data.polygons.find(p => p.id === 'way/178408827');
+    const bankWidth = bank?.userData.frontage as number;
+    const annex = bank && polygon ? polygon.points.map(([x, z]) => bank.worldToLocal(new THREE.Vector3(x, 0, z))).filter(p => p.x > bankWidth / 2 - .2 && p.z < -.5) : [];
+    const left = Math.min(...annex.map(p => p.x)), right = Math.max(...annex.map(p => p.x)), wingZ = Math.min(...annex.map(p => p.z));
+    if (![bankWidth, left, right, wingZ].every(Number.isFinite) || right - left < 1) throw new Error('Invalid Commercial Bank lighting binding');
+    const bankLights = { width: bankWidth, axes: bank!.userData.groundOpeningCenters as number[], wingAxes: [.24, .5, .76].map(t => THREE.MathUtils.lerp(left, right, t)), wingZ };
+    for (const m of this.materials) {
+      if (typeof m.userData.spaceDepthWrite === 'boolean') m.depthWrite = m.userData.spaceDepthWrite;
+      if (m instanceof THREE.MeshStandardMaterial && !m.userData.spaceRuntimeShader) this.restoreBlenderMaterial(m, bankLights);
+    }
+    this.traffic = new ShanghaiTraffic(data.roads, this.material.bind(this), this.narrow, traffic);
+    this.root.add(this.traffic.root);
+    this.boats = boats[0] as THREE.InstancedMesh;
+    this.boatDetails = boats.slice(1) as THREE.InstancedMesh[];
+    for (const part of this.boatDetails) part.instanceMatrix = this.boats.instanceMatrix;
+    const normals = await new THREE.TextureLoader().loadAsync('/assets/space/shanghai-v1/waternormals.jpg');
+    this.textures.add(normals);
+    if (this.disposed) { this.dispose(); return; }
+    this.makeWater(water.geometry, normals);
+    this.water!.position.copy(water.position); this.water!.quaternion.copy(water.quaternion); this.water!.scale.copy(water.scale);
+    this.water!.renderOrder = water.renderOrder;
+    water.parent!.add(this.water!); water.removeFromParent();
+    this.changed();
+  }
+
+  private restoreBlenderMaterial(m: THREE.MeshStandardMaterial, bank: { width: number; axes: number[]; wingAxes: number[]; wingZ: number }) {
+    const key = String(m.userData.spaceShaderKey ?? '').replace(/^traffic-/, '');
+    const factory = (color: number, metal?: number, rough?: number, light?: number) => this.material(color, metal, rough, light, m);
+    const facade = /^shanghai-facade-(true|false)-(true|false)$/.exec(key);
+    const stone = /-bund-stone-shadowed-([\d.]+)-(true|false)-([\d.,]*)-([\d.]+)/.exec(key);
+    const roof = /-bund-roof-shadowed-([\d.]+)-([\d.]+)/.exec(key);
+    const street = /-bund-street-(true|false)-(true|false)/.exec(key);
+    const tower = /-supertall-glass-([\d.]+)-([\d.]+)-(true|false)/.exec(key);
+    if (facade) this.facade(m.color.getHex(), facade[1] === 'true', facade[2] === 'true', m);
+    else if (stone) {
+      bundStone(factory, m.color.getHex(), Number(stone[1]), stone[2] === 'true', stone[3] ? stone[3].split(',').map(Number) : [], Number(stone[4]));
+      if (key.endsWith('-peace-riverfront-wash')) applyPeaceWash(m);
+      if (key.endsWith('-news-two-stone-zones')) applyNewsStone(m);
+      if (key.includes('-commercial-bank-fixtures-')) applyCommercialFixtures(m, bank.width, bank.axes, bank.wingAxes, bank.wingZ);
+    } else if (roof) roofMetal(factory, m.color.getHex(), Number(roof[1]), Number(roof[2]));
+    else if (street) shanghaiStreetMaterial(factory, street[1] === 'true', street[2] === 'true');
+    else if (tower) glazing(factory, this.officeWindows, m.color.getHex(), Number(tower[1]), Number(tower[2]), tower[3] === 'true');
+    else if (key.endsWith('-bund-marking-aa')) applyShanghaiMarking(m);
+    else if (key === 'oriental-pearl-led') this.pearlMaterial(m);
+    else if (key === 'shanghai-lit-boat-cabin') this.cabinMaterial(m);
+    else {
+      const illumination = /^shanghai-illumination-([\d.]+)$/.exec(key);
+      if (illumination) factory(m.color.getHex(), m.metalness, m.roughness, Number(illumination[1]));
+      else if (key && !key.includes('onBeforeCompile') && !key.includes('trafficVisibility')) throw new Error(`Unsupported Blender material: ${key}`);
+    }
+    m.needsUpdate = true;
+  }
+
+  private makeWater(shapes: THREE.Shape[] | THREE.BufferGeometry, normals: THREE.Texture) {
     // Three.js Water's bundled normal map is served locally, including mipmaps.
     normals.wrapS = normals.wrapT = THREE.RepeatWrapping; normals.anisotropy = 4; normals.needsUpdate = true;
-    const geometry = new THREE.ShapeGeometry(shapes);
+    const geometry = shapes instanceof THREE.BufferGeometry ? shapes : new THREE.ShapeGeometry(shapes);
     const template = new Water(geometry, { waterNormals: normals, waterColor: 0x4d5746, sunColor: 0xffebca, sunDirection: new THREE.Vector3(-.5, .55, .5).normalize(), distortionScale: 1.2, fog: true });
     // Reuse Water's shader with Reflector's public dispose/getRenderTarget lifecycle.
     // The template is never rendered and therefore allocates no GPU render target.
@@ -252,8 +344,8 @@ export class ShanghaiScene {
     mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); return mesh;
   }
 
-  private makeLandmarks(silver: THREE.Material) {
-    const concrete = this.material(0xd8d3c2, .1, .65, .065), pearl = this.material(0xc3629a, .55, .34, .008);
+  private pearlMaterial(target?: THREE.MeshStandardMaterial) {
+    const pearl = this.material(0xc3629a, .55, .34, .008, target);
     const compilePearl = pearl.onBeforeCompile;
     pearl.onBeforeCompile = (shader, renderer) => {
       compilePearl.call(pearl, shader, renderer);
@@ -274,6 +366,11 @@ export class ShanghaiScene {
       `);
     };
     pearl.customProgramCacheKey = () => 'oriental-pearl-led';
+    return pearl;
+  }
+
+  private makeLandmarks(silver: THREE.Material) {
+    const concrete = this.material(0xd8d3c2, .1, .65, .065), pearl = this.pearlMaterial();
     const coolLight = this.material(0x3158ed, .25, .4, 5);
     this.root.add(createShanghaiSupertalls(this.material.bind(this), this.officeWindows));
     const oriental = new THREE.Group(); oriental.name = landmarks[0].name; oriental.position.set(-365, -.65, 1280); this.root.add(oriental);
@@ -310,15 +407,8 @@ export class ShanghaiScene {
     this.root.add(trees);
   }
 
-  private makeBoats() {
-    const hull = new THREE.Shape([[-6,-24],[6,-24],[6,16],[3,25],[0,29],[-3,25],[-6,16]].map(([x,z]) => new THREE.Vector2(x,-z)));
-    const geometry = new THREE.ExtrudeGeometry(hull, { depth: 4, bevelEnabled: false }); geometry.rotateX(-Math.PI / 2); geometry.translate(0,-2,0);
-    this.boats = new THREE.InstancedMesh(geometry, this.material(0x334347, .3, .4), 12);
-    this.root.add(this.boats);
-    const deck = new THREE.BoxGeometry(10,3,34); deck.translate(0,3,-3);
-    const windows = new THREE.BoxGeometry(8.8,2.2,25); windows.translate(0,5.6,-5);
-    const roof = new THREE.BoxGeometry(10, .7, 29); roof.translate(0,7,-4);
-    const cabin = this.material(0x244653,.2,.3,.001), compile = cabin.onBeforeCompile;
+  private cabinMaterial(target?: THREE.MeshStandardMaterial) {
+    const cabin = this.material(0x244653,.2,.3,.001,target), compile = cabin.onBeforeCompile;
     cabin.onBeforeCompile = (shader, renderer) => {
       compile.call(cabin, shader, renderer);
       shader.vertexShader = 'varying float cabinAlong,cabinWall;\n' + shader.vertexShader;
@@ -331,6 +421,18 @@ export class ShanghaiScene {
       `);
     };
     cabin.customProgramCacheKey = () => 'shanghai-lit-boat-cabin';
+    return cabin;
+  }
+
+  private makeBoats() {
+    const hull = new THREE.Shape([[-6,-24],[6,-24],[6,16],[3,25],[0,29],[-3,25],[-6,16]].map(([x,z]) => new THREE.Vector2(x,-z)));
+    const geometry = new THREE.ExtrudeGeometry(hull, { depth: 4, bevelEnabled: false }); geometry.rotateX(-Math.PI / 2); geometry.translate(0,-2,0);
+    this.boats = new THREE.InstancedMesh(geometry, this.material(0x334347, .3, .4), 12);
+    this.root.add(this.boats);
+    const deck = new THREE.BoxGeometry(10,3,34); deck.translate(0,3,-3);
+    const windows = new THREE.BoxGeometry(8.8,2.2,25); windows.translate(0,5.6,-5);
+    const roof = new THREE.BoxGeometry(10, .7, 29); roof.translate(0,7,-4);
+    const cabin = this.cabinMaterial();
     for (const [g,m] of [[deck,this.material(0xd9d9cd,.2,.45,.2)],[windows,cabin],[roof,this.material(0xe1e1d5,.2,.5,.15)]] as const) {
       const mesh = new THREE.InstancedMesh(g,m,12); mesh.instanceMatrix = this.boats.instanceMatrix;
       this.boatDetails.push(mesh); this.root.add(mesh);

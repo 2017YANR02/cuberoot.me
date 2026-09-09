@@ -7,6 +7,21 @@
   },
   "artifacts": [
     {
+      "id": "space.blender-scenes",
+      "kind": "local-heavy-artifact",
+      "source": {
+        "locator": "Editable Blender scenes kept locally in the repository and backed up as a separate asset bundle",
+        "paths": ["design/space/scenes/*.blend", "design/space/scripts/**", "design/space/README.md"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE; existing asset provenance is listed in docs/space-sources.md and the website credits" },
+      "owner": "design/space/scripts/export_scene.py",
+      "workingDirectory": ".",
+      "command": "pwsh -NoProfile -File design/space/scripts/batch.ps1 -Mode all",
+      "outputs": ["core/packages/client/public/assets/space/blender-v1/*.glb", "core/packages/client/public/assets/space/blender-v1/*.json", "core/packages/client/public/assets/space/blender-v1/textures/**"],
+      "verification": ["design/space/scripts/verify.ts loads all 25 exports and checks room and city runtime contracts", "design/space/scripts/test_pack_gltf.py checks mesh buffer preservation and shared image round trips", "Inspect the local /zh/space page in daylight and at night after authoring changes"],
+      "driftPolicy": "Edit the saved .blend sources and export; never regenerate authored models from bootstrap captures. Heavy binaries stay outside Git. Provision and verify the complete asset bundle before enabling NEXT_PUBLIC_SPACE_BLENDER=1 for a release. Ordinary CI uses the existing procedural scene source."
+    },
+    {
       "id": "space.shanghai-sign-font",
       "kind": "checked-in-generated",
       "source": {
