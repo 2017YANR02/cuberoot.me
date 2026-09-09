@@ -143,10 +143,11 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       </AppLink>
       {liveUrlSuffix && <div className="admin-env-switch" role="group" aria-label={t('切换环境', 'Switch environment')}>
         {[
-          { env: 'local', origin: 'http://localhost:3000', label: t('本地', 'Local'), Icon: Laptop },
-          { env: 'prod', origin: 'https://cuberoot.me', label: t('线上', 'Live'), Icon: Globe },
-        ].map(({ env, origin, label, Icon }) => <a key={env} className="admin-tool-action" href={origin + liveUrlSuffix}
-          title={label} aria-label={label} aria-current={env === (['localhost', '127.0.0.1'].includes(window.location.hostname) ? 'local' : 'prod') ? 'page' : undefined}>
+          { env: 'local', origin: 'http://localhost:3000', label: t('切换到本地', 'Switch to local'), Icon: Laptop },
+          { env: 'prod', origin: 'https://cuberoot.me', label: t('切换到线上', 'Switch to live'), Icon: Globe },
+        ].filter(({ env }) => env !== (['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname) ? 'local' : 'prod'))
+          .map(({ env, origin, label, Icon }) => <a key={env} className="admin-tool-action" href={origin + liveUrlSuffix}
+          title={label} aria-label={label}>
           <Icon size={13} aria-hidden />
         </a>)}
       </div>}
