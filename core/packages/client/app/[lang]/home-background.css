@@ -68,7 +68,4 @@ html[data-contrast='soft'] .landing-page .home-scenery img {
     max-width: calc(100vw - 16px);
     max-height: calc(100dvh - 100px - var(--sat));
   }
-  .landing-page .brand-line {
-    margin-top: 40px;
-  }
 }
