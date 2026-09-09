@@ -10,6 +10,7 @@ import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortab
 import Link from '@/components/AppLink';
 import SortableCard from '@/components/SortableCard';
 import HeaderToggles from '@/components/HeaderToggles';
+import HomeBackground from './HomeBackground';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import LandingSearch from '@/components/LandingSearch';
@@ -304,6 +305,7 @@ export default function LandingPage() {
         <img src={mounted && effectiveTheme === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png'} alt="" className="brand-logo" />
         <span className="brand-name">{t('brand')}</span>
       </div>
+      <HomeBackground />
       <LandingSearch cards={searchCards} lang={lang} />
       {featuredNotice && featuredNotice.href && (() => {
         const FeaturedIcon = iconFor(featuredNotice);
