@@ -384,16 +384,7 @@ export function createShanghaiArchitecture(polygons: ShanghaiPolygon[], material
     // much more strongly than the west wings. Coordinates are the OSM world
     // frame used by this building's merged geometry, not camera coordinates.
     for (const surface of [granite, trim]) {
-      const compile = surface.onBeforeCompile, key = surface.customProgramCacheKey();
-      surface.onBeforeCompile = (shader, renderer) => {
-        compile.call(surface, shader, renderer);
-        shader.fragmentShader = shader.fragmentShader.replace('totalEmissiveRadiance+=vec3(1.,.56,.22)', `
-          float peaceRiverfront=smoothstep(-1344.,-1315.,bundPosition.x);
-          float peaceTower=smoothstep(36.,42.,bundPosition.y);
-          wash*=mix(.09,.82,max(peaceRiverfront,peaceTower));
-          totalEmissiveRadiance+=vec3(1.,.56,.22)`);
-      };
-      surface.customProgramCacheKey = () => `${key}-peace-riverfront-wash`;
+      applyPeaceWash(surface);
     }
     const copper = roofMetal(material, 0x487b61, 1.7, 64);
     g.extrude(peace, -.65, 38.5, granite);
@@ -433,4 +424,17 @@ export function createShanghaiArchitecture(polygons: ShanghaiPolygon[], material
   if (bund.children.length) root.add(bund);
   setShanghaiClockTime(root, '09:00');
   return root;
+}
+
+export function applyPeaceWash(surface: THREE.Material) {
+  const compile = surface.onBeforeCompile, key = surface.customProgramCacheKey();
+  surface.onBeforeCompile = (shader, renderer) => {
+    compile.call(surface, shader, renderer);
+    shader.fragmentShader = shader.fragmentShader.replace('totalEmissiveRadiance+=vec3(1.,.56,.22)', `
+      float peaceRiverfront=smoothstep(-1344.,-1315.,bundPosition.x);
+      float peaceTower=smoothstep(36.,42.,bundPosition.y);
+      wash*=mix(.09,.82,max(peaceRiverfront,peaceTower));
+      totalEmissiveRadiance+=vec3(1.,.56,.22)`);
+  };
+  surface.customProgramCacheKey = () => `${key}-peace-riverfront-wash`;
 }

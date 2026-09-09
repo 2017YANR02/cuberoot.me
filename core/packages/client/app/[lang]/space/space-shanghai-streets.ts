@@ -108,20 +108,7 @@ export function createBundStreets(roads: ShanghaiRoad[], polygons: ShanghaiPolyg
   // Road markings are decals. Depth bias keeps a shallow camera from resolving
   // the asphalt and paint as the same depth; retain depth testing for occlusion.
   for (const m of [paint, yellow]) {
-    m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -2;
-    m.transparent = true; m.depthWrite = false;
-    const compile = m.onBeforeCompile, key = m.customProgramCacheKey();
-    m.onBeforeCompile = (shader, renderer) => {
-      compile.call(m, shader, renderer);
-      shader.vertexShader = 'varying vec2 roadMark;\n' + shader.vertexShader;
-      shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nroadMark=uv;');
-      shader.fragmentShader = 'varying vec2 roadMark;\n' + shader.fragmentShader;
-      shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
-        float pixel=max(fwidth(roadMark.x),.001);
-        diffuseColor.a*=min(2.*roadMark.y/pixel,clamp((roadMark.y+pixel*.5-abs(roadMark.x))/pixel,0.,1.));
-      `);
-    };
-    m.customProgramCacheKey = () => `${key}-bund-marking-aa`;
+    applyShanghaiMarking(m);
   }
   const metal = material(0x535c58, .6, .48), lamp = material(0xffecd0, .1, .55, 18);
   const walks: number[] = [], whiteLines: number[] = [], yellowLines: number[] = [];
@@ -278,4 +265,21 @@ export function createBundStreets(roads: ShanghaiRoad[], polygons: ShanghaiPolyg
   const root = g.finish();
   root.traverse(o => { if (o instanceof THREE.Mesh && (o.material === paint || o.material === yellow || o.material === paving)) o.castShadow = false; });
   return root;
+}
+
+export function applyShanghaiMarking(m: THREE.Material) {
+  m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -2;
+  m.transparent = true; m.depthWrite = false;
+  const compile = m.onBeforeCompile, key = m.customProgramCacheKey();
+  m.onBeforeCompile = (shader, renderer) => {
+    compile.call(m, shader, renderer);
+    shader.vertexShader = 'varying vec2 roadMark;\n' + shader.vertexShader;
+    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nroadMark=uv;');
+    shader.fragmentShader = 'varying vec2 roadMark;\n' + shader.fragmentShader;
+    shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+      float pixel=max(fwidth(roadMark.x),.001);
+      diffuseColor.a*=min(2.*roadMark.y/pixel,clamp((roadMark.y+pixel*.5-abs(roadMark.x))/pixel,0.,1.));
+    `);
+  };
+  m.customProgramCacheKey = () => `${key}-bund-marking-aa`;
 }

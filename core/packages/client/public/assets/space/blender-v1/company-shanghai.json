@@ -1,0 +1,27 @@
+{
+  "asset": "company-shanghai",
+  "source": "design/space/scenes/company-shanghai.blend",
+  "objects": 180,
+  "blender": "5.2.1 LTS",
+  "sha256": "b6985ed71142e221f9ecb7aa2fad542f6d92eb15a4cca4dd848346bce5e686be",
+  "bytes": 19025496,
+  "textures": [
+    "textures/07ea1b47efe74d67f9e9f7eb.png",
+    "textures/12ddad7d8821d28d922fd538.jpg",
+    "textures/1ccd1142c494024af33035e8.png",
+    "textures/2460466894e3c11376f7bb00.png",
+    "textures/255947e2a2bd50f75461aca2.jpg",
+    "textures/3a2122bbcf1679cb9c24f3a8.png",
+    "textures/3e1a96892a37e08bbfa77593.png",
+    "textures/797caa905c55db1799c4dd27.jpg",
+    "textures/8f0351e4642d65a6d67a93d1.jpg",
+    "textures/b484e21a64ba36f35b19f3b9.png",
+    "textures/c2031f1c5fdd1269748cad20.jpg",
+    "textures/c66f9f8801a1de3208c982a0.jpg",
+    "textures/dfbac18d1a8082ede1194803.png",
+    "textures/e8171c2e7df27cd25b78f8ed.png",
+    "textures/ec83dbd47990bd31c8e3d54e.png",
+    "textures/f14d0eb04eaf1c07e11d4536.jpg"
+  ],
+  "schemaVersion": 2
+}

@@ -138,12 +138,7 @@ export function createBundBuildings(polygons: ShanghaiPolygon[], material: Mater
   const glass = material(0x34433f, .38, .3, .48), bronze = material(0x645740, .4, .5, .035);
   const copper = roofMetal(material, 0x35675c, .9, 24), slate = roofMetal(material, 0x555b57, .55, 32);
   const newsStone = bundStone(material, 0xd3d0bc, .8);
-  const newsCompile = newsStone.onBeforeCompile, newsKey = newsStone.customProgramCacheKey();
-  newsStone.onBeforeCompile = (shader, renderer) => {
-    newsCompile.call(newsStone, shader, renderer);
-    shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\nif(bundPosition.y>31.3 || bundPosition.y<9.8) diffuseColor.rgb*=vec3(.52,.54,.52);');
-  };
-  newsStone.customProgramCacheKey = () => `${newsKey}-news-two-stone-zones`;
+  applyNewsStone(newsStone);
   for (const b of found) {
     const source = polygons.find(p => p.id === b.id)!;
     let a = source.points[b.edge], end = source.points[b.edge + 1];
@@ -376,4 +371,13 @@ export function createBundBuildings(polygons: ShanghaiPolygon[], material: Mater
     root.add(frame.place(g.finish()));
   }
   return root;
+}
+
+export function applyNewsStone(newsStone: THREE.Material) {
+  const newsCompile = newsStone.onBeforeCompile, newsKey = newsStone.customProgramCacheKey();
+  newsStone.onBeforeCompile = (shader, renderer) => {
+    newsCompile.call(newsStone, shader, renderer);
+    shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\nif(bundPosition.y>31.3 || bundPosition.y<9.8) diffuseColor.rgb*=vec3(.52,.54,.52);');
+  };
+  newsStone.customProgramCacheKey = () => `${newsKey}-news-two-stone-zones`;
 }

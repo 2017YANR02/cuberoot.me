@@ -113,3 +113,9 @@ core/apps/fmc-solver/**/target/
 # MANO / SMPL-X hand+forearm models (MPI licensed, no redistribution — converted per-machine by scripts/convert-mano.py)
 core/packages/client/public/sim/hands/mano/
 core/packages/client/public/sim/hands/smplx/
+
+# Editable Space sources stay locally in this repository; heavy binaries use a separate asset bundle.
+/design/space/scenes/*.blend*
+/design/space/scripts/__pycache__/
+/core/packages/client/public/assets/space/blender-v1/*.glb
+/core/packages/client/public/assets/space/blender-v1/textures/

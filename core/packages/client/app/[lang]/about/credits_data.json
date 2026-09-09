@@ -1,5 +1,12 @@
 [
   {
+    "name": "Blender / KhronosGroup glTF-Blender-IO",
+    "space": true,
+    "url": "https://github.com/KhronosGroup/glTF-Blender-IO",
+    "zh": "魔方空间的住宅、公司、海岛和上海静态场景使用 Blender 5.2.1 编辑，以内置 glTF 插件导入、导出 GLB。首次迁移使用 Three.js GLTFExporter；本站维护场景属性、纹理去重和网页加载脚本，未复制 Blender 插件源码。魔方、天气、水面和交通仍由 Three.js 实时运行。查阅于 2026-09-08",
+    "en": "Homes, office, island and Shanghai static scenes are edited in Blender 5.2.1 and imported/exported as GLB through its bundled glTF add-on. The initial migration used Three.js GLTFExporter. CubeRoot maintains scene metadata, texture deduplication and web loading scripts without copying the Blender add-on source. Puzzles, weather, water and traffic still run in Three.js. Accessed 2026-09-08"
+  },
+  {
     "name": "FFmpeg",
     "url": "https://ffmpeg.org/",
     "zh": "网盘云端视频转码与媒体校验，使用独立部署的 FFmpeg 和 ffprobe",
