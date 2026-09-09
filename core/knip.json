@@ -10,6 +10,9 @@
   "ignoreBinaries": ["netstat", "wasm-pack", "pwsh", "xcrun"],
   "ignoreDependencies": ["tsx"],
   "workspaces": {
+    ".": {
+      "entry": ["scripts/build-shanghai-space.mjs"]
+    },
     "{packages/client,apps/web}": {
       "entry": [
         "postcss.config.{js,mjs}",
