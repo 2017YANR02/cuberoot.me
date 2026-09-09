@@ -60,7 +60,48 @@ try {
         });
         authoredJinMao = {revision: jinMao.userData.spaceAuthoringRevision, height, floors: 88, facadeMeshes};
       }
-      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao});
+      const roots = new Map<string, THREE.Object3D>();
+      city.root.traverse(o => { if (o.userData.spaceId) roots.set(o.userData.spaceId, o); });
+      const revision = 'shanghai-landmarks-20260908';
+      const financial = roots.get('root/132/1'), tower = roots.get('root/132/2');
+      if (!financial || !tower) throw new Error('Supertall runtime roots lost');
+      let authoredLandmarks: unknown = null;
+      if (financial.userData.spaceAuthoringRevision === revision) {
+        if (tower.userData.spaceAuthoringRevision !== revision) throw new Error('Shanghai Tower revision lost');
+        const towerHeight = new THREE.Box3().setFromObject(tower).getSize(new THREE.Vector3()).y;
+        if (Math.abs(towerHeight - 632) > .5 || !tower.userData.spaceFacadeDetail?.crownInnerSkin) throw new Error('Shanghai Tower height or crown lost');
+        // Rays traverse the real exported opening from both faces; the slab
+        // above it must remain solid. This catches accidental mullion bridges.
+        for (const side of [-1, 1]) {
+          const direction = new THREE.Vector3(0, 0, -side).transformDirection(financial.matrixWorld);
+          const probe = (height: number) => new THREE.Raycaster(
+            new THREE.Vector3(0, height, side * 100).applyMatrix4(financial.matrixWorld), direction, 0, 200,
+          ).intersectObject(financial, true);
+          if (probe(460).length || !probe(486).length) throw new Error('SWFC aperture or crown slab lost');
+        }
+        const bundIds = [...Array.from({length: 21}, (_, i) => `root/147/8/${i}`), 'root/147/4', 'root/147/5', 'root/147/6'];
+        let stoneMeshes = 0, fittedWindows = 0;
+        for (const id of bundIds) {
+          const building = roots.get(id);
+          if (building?.userData.spaceAuthoringRevision !== revision) throw new Error(`Bund authoring revision lost: ${id}`);
+          fittedWindows += building.userData.spaceFacadeDetail.fittedWindows;
+          let surfaces = 0;
+          building.traverse(o => {
+            if (!(o instanceof THREE.Mesh)) return;
+            for (const mat of Array.isArray(o.material) ? o.material : [o.material]) {
+              if (!mat.userData.spaceSurfaceProvenance) continue;
+              // Frames copy provenance but intentionally omit the stone maps.
+              if (!String(mat.userData.spaceShaderKey).includes('bund-stone')) continue;
+              if (!(mat instanceof THREE.MeshStandardMaterial) || !mat.normalMap || !mat.roughnessMap || !o.geometry.getAttribute('uv')) throw new Error(`Stone maps or UV lost: ${id}`);
+              surfaces++;
+            }
+          });
+          if (surfaces !== building.userData.spaceFacadeDetail.stoneMeshes) throw new Error(`Stone surface count changed: ${id}`);
+          stoneMeshes += surfaces;
+        }
+        authoredLandmarks = {revision, towerHeight, bundBuildings: bundIds.length, fittedWindows, stoneMeshes, apertureRays: 4};
+      }
+      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks});
       city.dispose(); continue;
     }
     const [style, env] = key.split('-') as [RoomStyle, Environment];
