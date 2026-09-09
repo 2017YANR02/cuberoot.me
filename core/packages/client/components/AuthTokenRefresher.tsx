@@ -10,6 +10,7 @@ import { useLiveUrlSuffix } from '@/hooks/useLiveUrlSuffix';
 import { CompactSelect } from './CompactSelect';
 import { useT } from '@/hooks/useT';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
+import './glass-material.css';
 
 /**
  * Global session refresh and the superadmin's current-tab role-test controls.
@@ -103,13 +104,9 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     style={{ position: 'absolute', top: '100%', left: `${centerX * 100}%`, transform: 'translateX(calc(-100% + 21px))', marginTop: 8, width: 'max-content', maxWidth: 'calc(100vw - 32px)', pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', flexDirection: 'row-reverse', alignItems: 'center' }}>
     <style>{`
       .admin-tools{box-sizing:border-box;padding:4px;border-radius:24px;
-        border:1px solid color-mix(in srgb,var(--foreground) 14%,transparent);
-        background:linear-gradient(135deg,color-mix(in srgb,var(--foreground) 9%,transparent),transparent 55%),
-          color-mix(in srgb,var(--background) 48%,transparent);
-        backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
-        box-shadow:inset 0 1px 0 color-mix(in srgb,var(--foreground) 16%,transparent),
-          inset 0 -1px 0 color-mix(in srgb,var(--background) 30%,transparent),
-          0 6px 24px color-mix(in srgb,var(--foreground) 8%,transparent);}
+        border:1px solid var(--glass-edge);background:var(--glass-background);
+        backdrop-filter:var(--glass-filter);-webkit-backdrop-filter:var(--glass-filter);
+        box-shadow:var(--glass-shadow);}
       .admin-tools .compact-select-trigger{border:0;background:transparent;padding:6px;}
       .admin-tools .compact-select-trigger:hover{background:transparent;color:var(--accent);}
       .admin-tool-action{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:29px;height:29px;flex-shrink:0;gap:6px;white-space:nowrap;
