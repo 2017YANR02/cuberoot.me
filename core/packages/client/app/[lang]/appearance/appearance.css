@@ -3,7 +3,7 @@
    走整页当前 token,所以会跟随用户已选的主题。 */
 
 .ac-page {
-  max-width: 960px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 40px 20px 80px;
 }
@@ -13,6 +13,75 @@
   font-weight: 700;
   color: var(--foreground);
   margin-bottom: 10px;
+}
+
+.ac-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.ac-h2 { font-size: 1.3rem; font-weight: 650; margin: 0 0 10px; }
+.ac-section { scroll-margin-top: 28px; }
+.ac-section + .ac-section { margin-top: 64px; }
+.ac-nav { display: flex; flex-wrap: wrap; gap: 24px; margin: 0 0 36px; }
+.ac-nav a { color: var(--foreground); text-decoration: underline; text-underline-offset: 8px; text-decoration-color: var(--border-strong); }
+.ac-nav a:hover { text-decoration-color: var(--accent); }
+.ac-background-controls { margin-bottom: 16px; }
+.ac-background-modes { display: flex; flex-wrap: wrap; gap: 8px; }
+.ac-background-mode,
+.ac-background-apply {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: fit-content;
+  white-space: nowrap;
+  font: inherit;
+  font-size: .85rem;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+.ac-background-mode[aria-pressed='true'],
+.ac-background-apply[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.ac-background-mode:hover,
+.ac-background-apply:hover { border-color: var(--accent); }
+.ac-background-hint { margin: 10px 0 0; color: var(--muted-foreground); font-size: .85rem; line-height: 1.6; }
+.ac-background-current { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin-bottom: 24px; font-size: .88rem; }
+.ac-background-current a,
+.ac-background-credits a { color: var(--accent); text-underline-offset: 3px; }
+.ac-background-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 24px; }
+.ac-background-item { min-width: 0; }
+.ac-background-image {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--muted);
+}
+.ac-background-image img { display: block; width: 100%; height: auto; }
+.ac-background-item.is-current .ac-background-image { outline: 2px solid var(--accent); outline-offset: 3px; }
+.ac-background-expand { position: absolute; bottom: 10px; right: 10px; display: inline-flex; padding: 7px; border-radius: 8px; background: var(--popover); color: var(--foreground); }
+.ac-background-caption { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.ac-background-caption h3 { margin: 0; font-size: 1.05rem; font-weight: 600; }
+.ac-background-family { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; color: var(--muted-foreground); font-size: .8rem; }
+.ac-background-family span { color: var(--accent); }
+.ac-background-description { margin: 5px 0 0; font-size: .88rem; color: var(--muted-foreground); line-height: 1.6; }
+.ac-background-credits { margin-top: 32px; color: var(--muted-foreground); font-size: .8rem; line-height: 1.8; }
+.ac-background-credits p { margin: 0 0 6px; }
+.ac-page :is(a, button):focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+
+@media (max-width: 600px) {
+  .ac-background-grid { grid-template-columns: 1fr; gap: 28px; }
+  .ac-background-caption { margin-top: 12px; }
 }
 
 .ac-lead {

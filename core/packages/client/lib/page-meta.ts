@@ -245,7 +245,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'alg/roux': { title: { zh: '桥式训练器', en: 'Roux Trainer' } },
   'alg/skewb-trainer': { title: { zh: 'Skewb 技巧训练', en: 'Skewb Skills' } },
   'algTrainer': { title: { zh: '公式训练器', en: 'Alg Trainer' } },
-  'appearance': { title: { zh: '配色主题', en: 'Color Themes' } },
+  'appearance': { title: { zh: '外观', en: 'Appearance' }, description: { zh: '比较主页风景背景与全站配色，选择适合自己的外观。', en: 'Compare homepage landscapes and site-wide color palettes to find your preferred appearance.' } },
   'blddb': {
     title: { zh: 'BLDDB 盲拧公式库', en: 'BLDDB' },
     description: {
