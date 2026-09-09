@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import postgres from 'postgres';
+import jwt from 'jsonwebtoken';
 import { Hono } from 'hono';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -63,9 +64,12 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('role preview (PostgreSQL)', 
       const response = await request(rootToken, '/auth/role-preview', 'POST', { role });
       expect(response.status).toBe(200);
       const preview = await response.json();
+      const [expiry] = await sql`SELECT expires_at = 'infinity'::timestamptz AS unlimited FROM role_preview_sessions WHERE id = ${preview.id}`;
+      expect(expiry.unlimited).toBe(true);
       if (role === 'guest') {
         expect(preview.user).toBeNull(); expect(preview.token).toBe('');
       } else {
+        expect(jwt.decode(preview.token)).not.toHaveProperty('exp');
         expect(preview.user.uid).not.toBe(1);
         expect(preview.user.wcaId).toBeNull();
         expect(preview.user.isAdmin).toBe(role === 'admin');

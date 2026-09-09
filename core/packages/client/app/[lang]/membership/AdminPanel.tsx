@@ -24,9 +24,10 @@ interface Props {
   plans: MembershipPlan[];
   isZh: boolean;
   onPlanUpdated: (plan: MembershipPlan) => void;
+  onViewRenewal: (plan: MembershipPlan) => void;
 }
 
-export default function AdminPanel({ plans, isZh, onPlanUpdated }: Props) {
+export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }: Props) {
   const grantablePlans = useMemo(
     () => plans.filter((plan) => !isAutoRenewPlanSlug(plan.slug)),
     [plans],
@@ -115,6 +116,7 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated }: Props) {
   }
 
   async function updateVisibility(p: MembershipPlan, active: boolean) {
+    if (active && isAutoRenewPlanSlug(p.slug)) return;
     setPlanUpdating(p.slug);
     try {
       const updatedPlan = await adminUpdatePlan(p.slug, { active });
@@ -175,11 +177,19 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated }: Props) {
                 value={p.active !== false}
                 onChange={(active) => void updateVisibility(p, active)}
                 label={tr({ zh: '公开', en: 'Public' })}
-                disabled={planUpdating === p.slug}
+                disabled={planUpdating === p.slug || (isAutoRenewPlanSlug(p.slug) && p.active === false)}
               />
             </div>
           ))}
         </div>
+        <div className="mem-service-links">
+          {adminPlans.filter((plan) => isAutoRenewPlanSlug(plan.slug)).map((plan) => (
+            <button key={plan.slug} type="button" className="mem-link-btn" onClick={() => onViewRenewal(plan)}>
+              {tr({ zh: '查看 {name} 签约说明', en: 'View {name} authorization details' }).replace('{name}', tr({ zh: plan.nameZh, en: plan.nameEn }))}
+            </button>
+          ))}
+        </div>
+        <p className="mem-note">{tr({ zh: '自动续费尚未接通，暂不能公开；仍可保存价格、查看签约说明或关闭已公开的套餐。签约说明使用已保存的价格，不代表已开通代扣。', en: 'Auto-renewal cannot be made public yet. You can still save prices, view authorization details, or hide an active plan. Saved prices in these details do not mean recurring billing is available.' })}</p>
       </div>
 
       {/* 会员列表 */}

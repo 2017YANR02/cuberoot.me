@@ -26,6 +26,18 @@ function localized(item: Record<string, unknown>, stem: string, english: boolean
     ?? string(item[stem]);
 }
 
+// Section pages: directory and video titles omit the section prefix but keep lesson numbers.
+// Display only: preserve source titles and full titles outside a section context.
+function sectionLessonTitle(title: string, section: typeof PLATFORM_COURSE_SECTIONS[number]): string {
+  const prefixes = [section.title.zh, section.title.en, section.title.en.replace(/s$/, ''), section.title.en.replace(/ lessons$/, '')];
+  for (const prefix of prefixes) {
+    if (!title.toLowerCase().startsWith(prefix.toLowerCase())) continue;
+    const remainder = title.slice(prefix.length).trimStart();
+    if (/^\d/.test(remainder)) return remainder;
+  }
+  return title;
+}
+
 function readableJson(value: unknown): string | null {
   if (typeof value === 'string') return value.trim() || null;
   if (!value || typeof value !== 'object') return null;
@@ -205,7 +217,7 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
         const lesson = record(raw);
         const id = string(lesson?.id);
         return lesson && id && (string(lesson.titleZh) ?? '').startsWith(selectedSection.title.zh)
-          ? [{ id, title: localized(lesson, 'title', english) ?? t('未命名课时', 'Untitled lesson') }] : [];
+          ? [{ id, title: sectionLessonTitle(localized(lesson, 'title', english) ?? t('未命名课时', 'Untitled lesson'), selectedSection) }] : [];
       });
       const active = sectionLessons.find(lesson => lesson.id === selectedLessonId) ?? sectionLessons[0];
       if (!active) return <p className="platform-domain-note">{t('暂无课时。', 'No lessons yet.')}</p>;

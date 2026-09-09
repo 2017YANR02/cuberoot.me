@@ -48,7 +48,7 @@ function Swatch({ colors }: { colors: [string, string, string] }) {
   );
 }
 
-export default function AppearanceToggle({ className }: { className?: string }) {
+export default function AppearanceToggle({ className, showLabel = false }: { className?: string; showLabel?: boolean }) {
   const t = useT();
   const L = {
     title: t('外观', 'Appearance'),
@@ -189,6 +189,7 @@ export default function AppearanceToggle({ className }: { className?: string }) 
         aria-expanded={open}
       >
         <ButtonIcon size={14} />
+        {showLabel && <span className="toolbar-label">{L.title}</span>}
       </button>
       {open && (
         <div

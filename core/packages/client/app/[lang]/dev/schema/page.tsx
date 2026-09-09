@@ -42,6 +42,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'home_card_locks', domain: 'community', origin: '0221', purpose: { zh: '管理员设置的首页卡片锁定覆盖值', en: 'Administrator overrides for homepage card locks' }, cols: [{ name: 'item_id' }, { name: 'locked' }] },
   { name: 'role_preview_profiles', domain: 'account', origin: '0217', purpose: { zh: '超级管理员专用的独立角色测试身份', en: 'Separate role-test identities for superadministrators' } },
   { name: 'role_preview_sessions', domain: 'account', origin: '0217', purpose: { zh: '可撤销的短效角色测试会话与实际操作者', en: 'Revocable short-lived test sessions and their real actors' } },
   { name: 'role_preview_events', domain: 'account', origin: '0217', purpose: { zh: '角色测试写入请求审计，不记录正文或凭据', en: 'Role-test mutation audit without bodies or credentials' } },
@@ -736,6 +737,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 218, slug: 'drive_compressions', desc: { zh: '增加保留原片与帧率的视频压缩队列，支持原分辨率和 1080P 两种输出。', en: 'Add a video compression queue preserving originals and frame timing, with original-resolution and 1080p outputs.' } },
   { n: 219, slug: 'platform_lesson_grants', desc: { zh: '课程授权流水记录限定课时，分别兑换试听课和正式课。', en: 'Scope immutable course grants to selected lessons for separate trial and full-lesson codes.' } },
   { n: 220, slug: 'platform_review_titles', desc: { zh: '课程评价支持选填标题。', en: 'Support optional titles for course reviews.' } },
+  { n: 221, slug: 'home_card_locks', desc: { zh: '保存管理员设置的首页卡片锁定状态。', en: 'Persist administrator-controlled homepage card locks.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

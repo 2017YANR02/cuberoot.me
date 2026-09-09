@@ -337,7 +337,7 @@
 }
 
 /* ── auto-renew ── */
-.mem-autorenew-modal { max-width: 420px; }
+.mem-autorenew-modal { max-width: 420px; max-height: calc(100dvh - 40px); overflow-y: auto; }
 .mem-autorenew-wechat { color: var(--signal-success); margin-bottom: 10px; }
 .mem-autorenew-price-unit { margin-left: 4px; font-size: 13px; color: var(--muted-foreground); }
 .mem-autorenew-rules {
@@ -370,6 +370,8 @@
   cursor: pointer;
 }
 .mem-autorenew-consent-input { margin: 3px 0 0; accent-color: var(--signal-success); }
+.mem-autorenew-consent a, .mem-autorenew-caption a { color: var(--accent); text-decoration: underline; }
+.mem-autorenew-caption + .mem-autorenew-consent { margin-top: 16px; }
 .mem-autorenew-sign {
   width: 100%;
   display: inline-flex;
@@ -392,6 +394,13 @@
   font-size: 12px;
   line-height: 1.5;
 }
+
+.mem-service-links { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 18px; margin: 18px 0 24px; }
+.mem-service-links a, .mem-service-document a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.mem-service-document { max-width: 760px; line-height: 1.8; overflow-wrap: anywhere; }
+.mem-service-document h1 { font-size: 26px; line-height: 1.4; margin: 0 0 20px; }
+.mem-service-document h2 { font-size: 18px; line-height: 1.5; margin: 32px 0 10px; }
+.mem-service-document p { margin: 10px 0; }
 
 /* ── member contact ── */
 .mem-contact { margin-top: 32px; }

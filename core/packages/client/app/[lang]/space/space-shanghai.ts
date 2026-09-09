@@ -15,6 +15,7 @@ import { applyNewsStone } from './space-shanghai-bund';
 import { applyCommercialFixtures } from './space-shanghai-commercial-bank';
 import { loadSpaceBlender, SPACE_ASSET_SOURCE } from './space-blender';
 import { ShanghaiTraffic } from './space-shanghai-traffic';
+import { ShanghaiFacadeLighting } from './space-shanghai-lighting';
 
 type Point = [number, number];
 type Road = ShanghaiRoad;
@@ -82,16 +83,20 @@ export class ShanghaiScene {
   private officeWindows = shanghaiWindowTexture(true);
   private homeWindows = shanghaiWindowTexture(false);
   private materials = new Set<THREE.Material>();
+  private facadeLighting: ShanghaiFacadeLighting;
   private batches = new Map<string, { geometries: THREE.BufferGeometry[]; material: THREE.Material }>();
 
   constructor(private narrow: boolean, private changed: () => void, private source: 'blender' | 'bootstrap' = SPACE_ASSET_SOURCE) {
     this.root.name = 'Shanghai Huangpu River';
+    this.facadeLighting = new ShanghaiFacadeLighting(narrow);
+    this.root.add(this.facadeLighting.root);
     this.textures.add(this.officeWindows); this.textures.add(this.homeWindows);
     this.ready = this.load();
   }
 
   private material(color: number, metalness = 0, roughness = .8, illumination = 0, target?: THREE.MeshStandardMaterial) {
     const m = target ?? new THREE.MeshStandardMaterial({ color, metalness, roughness });
+    m.userData.cityFacadeLight = this.facadeLighting.active;
     if (illumination) {
       m.onBeforeCompile = shader => {
         shader.uniforms.cityNight = this.night;
@@ -206,6 +211,7 @@ export class ShanghaiScene {
       this.root.add(createShanghaiBridges(this.material.bind(this)));
       const architecture = createShanghaiArchitecture(data.polygons, this.material.bind(this), data.roads);
       this.root.add(architecture);
+      this.facadeLighting.register(architecture);
       const fontResponse = await fetch('/assets/space/shanghai-v1/sign-font.json?v=20260908b', { signal: this.abort.signal });
       if (!fontResponse.ok) throw new Error(`Bund sign font HTTP ${fontResponse.status}`);
       const fontData = await fontResponse.json();
@@ -273,6 +279,7 @@ export class ShanghaiScene {
     this.water!.position.copy(water.position); this.water!.quaternion.copy(water.quaternion); this.water!.scale.copy(water.scale);
     this.water!.renderOrder = water.renderOrder;
     water.parent!.add(this.water!); water.removeFromParent();
+    this.facadeLighting.register(scene);
     this.changed();
   }
 
@@ -465,7 +472,8 @@ export class ShanghaiScene {
     if (motion) this.elapsed += dt;
     if (this.water) this.water.material.uniforms.time.value = this.elapsed * .65;
     this.traffic?.update(this.elapsed);
-    if (!this.route) return;
+    const shadowChanged = this.facadeLighting?.update(camera, this.night.value) ?? false;
+    if (!this.route) return shadowChanged;
     const length = this.route.getLength();
     if (this.cruising) {
       this.distance = Math.min(length, this.distance + dt * 95);
@@ -482,6 +490,7 @@ export class ShanghaiScene {
       this.boats.instanceMatrix.needsUpdate = true; this.boats.computeBoundingSphere();
       this.boatDetails.forEach(mesh => mesh.computeBoundingSphere());
     }
+    return shadowChanged;
   }
 
   dispose() {
@@ -493,6 +502,7 @@ export class ShanghaiScene {
     });
     // Reflector owns the reflection framebuffer as well as its color texture.
     this.water?.dispose();
+    this.facadeLighting.dispose();
     this.materials.forEach(m => m.dispose()); this.textures.forEach(t => t.dispose()); this.root.clear();
   }
 }

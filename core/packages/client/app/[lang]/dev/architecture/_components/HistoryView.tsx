@@ -207,7 +207,7 @@ function CommitsCalendar() {
   );
 }
 
-export default function HistoryView() {
+export default function HistoryArchive() {
   const lang = useLang();
   const [mode, setMode] = useState<'list' | 'calendar'>('list');
   return (

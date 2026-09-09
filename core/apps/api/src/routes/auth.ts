@@ -33,7 +33,7 @@ const WCA_REDIRECT_URI = process.env.WCA_REDIRECT_URI || 'http://localhost:3000/
  */
 export const authRoutes = new Hono();
 
-/** Validate the short-lived test session before any route can consume its identity. */
+/** Validate the revocable test session before any route can consume its identity. */
 export const rolePreviewGuard: MiddlewareHandler = async (c, next) => {
   const token = c.req.header('Authorization')?.replace(/^Bearer /, '');
   if (!token) return next();
@@ -87,12 +87,12 @@ authRoutes.post('/auth/role-preview', async (c) => {
       else await tx`UPDATE drive_members SET enabled = FALSE WHERE user_id = ${userId}`;
     }
     await tx`INSERT INTO role_preview_sessions (id, actor_user_id, user_id, role, expires_at)
-      VALUES (${id}, ${actor.uid!}, ${userId}, ${role}, NOW() + INTERVAL '30 minutes')`;
+      VALUES (${id}, ${actor.uid!}, ${userId}, ${role}, 'infinity'::timestamptz)`;
     return userId;
   });
   const user = uid === null ? null : await getUserById(uid);
   const token = uid === null ? '' : jwt.sign({ uid, previewId: id }, JWT_SECRET,
-    { audience: 'role-preview', issuer: 'cuberoot', expiresIn: '30m' });
+    { audience: 'role-preview', issuer: 'cuberoot' });
   c.header('Cache-Control', 'no-store');
   return c.json({ id, role, token, user: user ? publicUser(user) : null });
 });

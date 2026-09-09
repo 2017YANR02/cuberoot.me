@@ -4,7 +4,8 @@ import {
   DateInput as SharedDateInput,
   type DateInputLabels,
   type DateInputProps as SharedDateInputProps,
-} from '@cuberoot/timer-ui';
+} from '@cuberoot/timer-ui/date-input';
+import '@cuberoot/timer-ui/date-input.css';
 
 import { tr } from '@/i18n/tr';
 

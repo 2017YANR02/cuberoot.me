@@ -6,12 +6,12 @@
 import LangToggle from './LangToggle';
 import AppearanceToggle from './AppearanceToggle';
 
-export default function HeaderToggles({ className }: { className?: string }) {
+export default function HeaderToggles({ className, showLabels = false }: { className?: string; showLabels?: boolean }) {
   const cls = ['header-toggles', className].filter(Boolean).join(' ');
   return (
     <div className={cls}>
-      <LangToggle />
-      <AppearanceToggle />
+      <LangToggle showLabel={showLabels} />
+      <AppearanceToggle showLabel={showLabels} />
     </div>
   );
 }

@@ -3377,6 +3377,11 @@ CREATE TRIGGER nav_sites_updated_at BEFORE UPDATE ON nav_sites
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
 -- 首页目录卡片分组内顺序(0213)。卡片清单仍以 shared/site_directory.ts 为准。
+CREATE TABLE home_card_locks (
+  item_id VARCHAR(100) PRIMARY KEY,
+  locked BOOLEAN NOT NULL
+);
+
 CREATE TABLE home_card_positions (
   group_id    VARCHAR(20) NOT NULL,
   item_id     VARCHAR(64) NOT NULL,

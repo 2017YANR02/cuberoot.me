@@ -472,6 +472,11 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'membership': { title: { zh: '会员', en: 'Membership' } },
+  'membership/renewal-terms': {
+    title: { zh: '自动续费服务协议', en: 'Auto-renewal Agreement' },
+    description: { zh: 'CubeRoot 会员自动续费的服务、扣款、通知、取消与售后说明。', en: 'CubeRoot membership auto-renewal service, billing, notices, cancellation, and support.' },
+  },
+  'membership/subscription': { title: { zh: '管理自动续费', en: 'Manage auto-renewal' } },
   'gallery': {
     title: { zh: '图库', en: 'Gallery' },
     description: {

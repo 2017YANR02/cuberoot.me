@@ -8,6 +8,7 @@
 // pages to bail to CSR during prerender.
 
 import type { MouseEvent } from 'react';
+import { tr } from '@/i18n/tr';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { changeAppLanguage, normalizeAppLang, syncLangToUrl, type AppLang } from '@/i18n/i18n-client';
@@ -19,6 +20,7 @@ interface LangToggleProps {
    *  (e.g. an open modal) keeps its React state. The choice still persists via
    *  cookie / localStorage / ?lang=. */
   soft?: boolean;
+  showLabel?: boolean;
 }
 
 function TranslateIcon({ size = 14 }: { size?: number }) {
@@ -34,7 +36,7 @@ function TranslateIcon({ size = 14 }: { size?: number }) {
   );
 }
 
-export default function LangToggle({ variant = 'inline', className, soft = false }: LangToggleProps) {
+export default function LangToggle({ variant = 'inline', className, soft = false, showLabel = false }: LangToggleProps) {
   const { i18n } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
@@ -90,6 +92,7 @@ export default function LangToggle({ variant = 'inline', className, soft = false
         aria-label={next === 'zh' ? '切换到简体中文' : 'Switch to English'}
       >
         <TranslateIcon size={14} />
+        {showLabel && <span className="toolbar-label">{tr({ zh: '语言', en: 'Language' })}</span>}
       </a>
     </div>
   );
