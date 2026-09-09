@@ -156,7 +156,10 @@ try {
         }
         for (let i = 0; i < 5; i++) {
           const x = (i - 2) * club.userData.frontage * .64 / 5;
-          for (const bottom of [9.65, 16]) glazing(club, x + .31, bottom + 1.43, 1.8525);
+          // The later window revision replaces every upper pane with a pair;
+          // those openings have their own exhaustive surface probes below.
+          const bottoms = club.userData.spaceBundWindowRevision ? [9.65] : [9.65, 16];
+          for (const bottom of bottoms) glazing(club, x + .31, bottom + 1.43, 1.8525);
         }
         // The colonnade stands in front of the wall; verify both surfaces.
         const column = front(club, 1.9, 12.2);
@@ -178,7 +181,46 @@ try {
         authoredGalleries = {revision: galleryRevision, buildings: 2, surfaceRays, recessedWindows: recesses.length,
           glassDepthMin: Math.min(...recesses), glassDepthMax: Math.max(...recesses), estimatedDimensions: true};
       }
-      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks, authoredEntrances, authoredGalleries});
+      let authoredWindows: unknown = null;
+      if (club?.userData.spaceBundWindowRevision) {
+        const windowRevision = 'bund-windows-20260909';
+        if (club.userData.spaceBundWindowRevision !== windowRevision) throw new Error('Bund window revision mismatch');
+        let surfaceRays = 0, windows = 0;
+        const front = (x: number, height: number, part: string, depth?: number) => {
+          surfaceRays++;
+          const hit = new THREE.Raycaster(
+            new THREE.Vector3(x, height, -10).applyMatrix4(club.matrixWorld),
+            new THREE.Vector3(0, 0, 1).transformDirection(club.matrixWorld), 0, 60,
+          ).intersectObject(club, true)[0];
+          if (hit?.object.userData.spaceBundWindowPart !== part) throw new Error(`Club ${part} at ${x}, ${height} blocked by ${hit?.object.userData.spaceId}`);
+          if (depth !== undefined && Math.abs(club.worldToLocal(hit.point.clone()).z - depth) > .025) throw new Error(`Club ${part} depth changed at ${x}, ${height}`);
+          return hit;
+        };
+        for (let group = 0; group < 5; group++) {
+          const center = (group - 2) * club.userData.frontage * .64 / 5;
+          for (const offset of [-.93, 0, .93]) {
+            // Above the spring line, glazing must remain visible inside the
+            // arch; just outside that curve the spandrel must stay solid.
+            front(center + offset + .10, 21.48, 'glass', .57); windows++;
+            front(center + offset + .33, 21.675, 'stone', -.03);
+          }
+          for (const offset of [-.60, .60]) {
+            front(center + offset + .11, 17.57, 'glass', 1.8525); windows++;
+          }
+          // Adjacent jambs meet at the center of the pair, in front of the
+          // masonry. Probe the jamb and clear wall above the lintel separately.
+          front(center, 17.57, 'trim', 1.55);
+          front(center, 18.70, 'stone', 1.80);
+        }
+        for (const side of [-1, 1]) {
+          front(side * club.userData.frontage * .37 + .21, 21.5, 'glass', .57); windows++;
+          front(side * 18.40, 21, 'stone', -.03);
+        }
+        const detail = club.userData.spaceBundWindowDetail;
+        if (detail?.atticGroups !== 5 || detail.atticWindows !== 15 || detail.endArches !== 2 || detail.pairedWindows !== 10) throw new Error('Club window grouping metadata lost');
+        authoredWindows = {revision: windowRevision, surfaceRays, windows, atticGroups: 5, pairedGroups: 5, estimatedDimensions: true};
+      }
+      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks, authoredEntrances, authoredGalleries, authoredWindows});
       city.dispose(); continue;
     }
     const [style, env] = key.split('-') as [RoomStyle, Environment];
