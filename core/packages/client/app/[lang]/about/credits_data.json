@@ -117,11 +117,18 @@
     "en": "Design research references Shanghai Tower's 632 m profile, 120-degree twist, rounded triangular skin, taper and sloping crown. Figure 4's 56.86% upper-profile scale informs the model; this design-stage document is not an as-built survey. Accessed 2026-09-07"
   },
   {
+    "name": "Gensler: Shanghai Tower project photographs",
+    "space": true,
+    "url": "https://www.gensler.com/projects/shanghai-tower",
+    "zh": "2026-09-08 查看建筑师的竣工远景与仰拍照片，用于 Blender 上海中心的浅银蓝幕墙、水平分格、银色螺旋接缝和倾斜冠部。顶部内层与支撑尺寸仍为估算；程序石材微表面为本站制作，照片未用作运行贴图。尚未通过测绘 1:1 或电影级验收。",
+    "en": "Completed-building distance and upward photographs reviewed 2026-09-08 for the Blender model's pale silver-blue glazing, horizontal grid, silver spiral seam and sloping crown. Inner crown and strut dimensions remain estimates. Procedural stone micro-surfaces are original work; photographs are not runtime textures. Surveyed 1:1 and cinematic quality remain unverified."
+  },
+  {
     "name": "KPF: Shanghai World Financial Center",
     "space": true,
     "url": "https://www.kpf.com/project/shanghai-world-financial-center",
-    "zh": "设计事务所项目资料用于环球金融中心方形基部、弧形收分与顶部梯形开口；模型开口可从两面看穿，幕墙和开口尺寸仍为照片估算。查阅于 2026-09-07",
-    "en": "The architect's project references SWFC's square base, curved taper and trapezoidal top portal. The model has a real opening visible from both faces; facade and portal dimensions remain photo-derived estimates. Accessed 2026-09-07"
+    "zh": "设计事务所项目资料用于环球金融中心方形基部、弧形收分与顶部梯形开口。2026-09-08 再次查看远景实拍和结构立面图，补 Blender 实体幕墙分格与开口内衬，减弱蓝色轮廓光；新增构件避开贯通开口。幕墙节距、层高与开口尺寸仍为估算，结构图不视为实拍照片。",
+    "en": "The architect's project references SWFC's square base, curved taper and trapezoidal portal. Distance photographs and a structural elevation were reviewed again 2026-09-08 for physical Blender curtain-wall framing and aperture linings, with restrained blue edge light. New framing leaves the portal open. Mullion pitch, floor levels and aperture dimensions remain estimates; the structural drawing is not a photograph."
   },
   {
     "name": "Shanghai World Financial Center: project facts",

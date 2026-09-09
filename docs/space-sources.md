@@ -71,6 +71,12 @@ Blender 负责静态模型编辑，Three.js 保留魔方转动、天气、水面
 
 金茂的 Blender 精修新增幕墙承建方 [Permasteelisa](https://www.permasteelisagroup.com/historic-project/jin-mao-tower/) 的俯拍、塔冠与幕墙细部照片作为对照，并结合既有 SOM 日夜实拍。尺寸事实、照片估算与三轮审图记录见[金茂参考档案](../design/space/references/jin-mao.md)和[Blender 跟踪](space-blender-tracker.md#2026-09-08-金茂-blender-精修)。该来源的用途和查阅日期已加入网页中英文来源入口；无新增建筑库或运行照片贴图。
 
+## 上海地标 Blender 细部参考
+
+2026-09-08 再次查看 [KPF 环球金融中心项目](https://www.kpf.com/project/shanghai-world-financial-center)的远景照片及结构立面图，并查看 [Gensler 上海中心竣工照片](https://www.gensler.com/projects/shanghai-tower)，用于 Blender 实体框格、开口内衬、浅银蓝玻璃、银色接缝与倾斜冠部。结构图不作为实拍，既有设计研究不等于竣工测绘；框格节距、内冠支撑和开口尺寸仍有估算。两条用途说明维护在网页唯一来源 `credits_data.json`，Gensler 照片条目为本批新增。
+
+外滩继续使用已有逐栋摄影来源，检查 24 栋联系表并补看亚细亚、上海总会与英国领事馆实拍，排除总会内景及误标为领事馆的半岛酒店照片。石材法线/粗糙度是本站可重复生成的程序纹理；照片只在本地供建模对照，未复制为运行贴图，没有新增第三方建筑库。逐栋差异、实际保存版本与日夜检查图见[上海地标档案](../design/space/references/shanghai-landmarks.md)，验证和未达标项见[Blender 跟踪](space-blender-tracker.md#2026-09-08-三件套与外滩-24-栋-blender-细部)。
+
 ## 调研但尚未接入
 
 [CesiumJS](https://github.com/CesiumGS/cesium)、[MapLibre GL JS](https://github.com/maplibre/maplibre-gl-js) 和 [NASA 3DTilesRendererJS](https://github.com/NASA-AMMOS/3DTilesRendererJS) 的历史星数、候选用途和取舍在[上海跟踪文档](shanghai-huangpu-space-tracker.md)。当前运行时没有安装它们，也没有获取上海全段摄影测量 tileset。已调研而未成功下载的模型不能列作已集成资产。
