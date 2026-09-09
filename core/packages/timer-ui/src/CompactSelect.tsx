@@ -32,6 +32,8 @@ export interface CompactSelectProps<T extends string | number> {
   variant?: 'pill' | 'plain';
   footer?: (close: () => void) => ReactNode;
   dataNoTimer?: boolean;
+  /** Mouse hover opens the menu; touch and keyboard keep click activation. */
+  openOnHover?: boolean;
   /** Fixed content below the popup, such as Mobile's bottom navigation. */
   viewportBottomInset?: number;
 }
@@ -65,6 +67,7 @@ export function CompactSelect<T extends string | number>({
   variant = 'pill',
   footer,
   dataNoTimer = false,
+  openOnHover = false,
   viewportBottomInset = 0,
 }: CompactSelectProps<T>) {
   const [open, setOpen] = useState(false);
@@ -158,6 +161,9 @@ export function CompactSelect<T extends string | number>({
         type="button"
         className={['compact-select-trigger', triggerClassName].filter(Boolean).join(' ')}
         onClick={() => setOpen(current => !current)}
+        onPointerEnter={event => {
+          if (openOnHover && event.pointerType === 'mouse') setOpen(true);
+        }}
         aria-label={ariaLabel}
         aria-description={valueText}
         aria-expanded={open}

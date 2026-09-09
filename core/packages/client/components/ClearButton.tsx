@@ -3,7 +3,8 @@
 import {
   ClearButton as SharedClearButton,
   type ClearButtonProps as SharedClearButtonProps,
-} from '@cuberoot/timer-ui';
+} from '@cuberoot/timer-ui/clear-button';
+import '@cuberoot/timer-ui/date-input.css';
 import type { JSX } from 'react';
 
 import { tr } from '@/i18n/tr';

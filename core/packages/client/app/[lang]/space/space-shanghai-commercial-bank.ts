@@ -246,7 +246,7 @@ export function applyCommercialFixtures(m: THREE.Material, width: number, axes: 
         irradiance+=frontage*strip*max(0.,dot(normalize(bundNormal),normalize(toLight)))*1.8/(1.+d2);
       }
       // Deep reveals and the unlit rear keep their environment lighting.
-      reflectedLight.directDiffuse+=diffuseColor.rgb*vec3(1.,.52,.19)*cityNight*irradiance;
+      reflectedLight.directDiffuse+=diffuseColor.rgb*vec3(1.,.52,.19)*cityNight*irradiance*bundDistantWash;
       }
     `);
   };

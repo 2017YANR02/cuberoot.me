@@ -166,8 +166,8 @@ it('links section cards to separate lesson pages without losing lessons or chang
       await render(lessons, `course-section-${section}`);
       expect(host.textContent).not.toContain('published');
       expect([...host.querySelectorAll('nav button')].map(node => node.textContent)).toEqual(
-        lessons.filter(lesson => lesson.id.startsWith(`${index}-`)).map(lesson => lesson.titleZh.replace(/^先导课/, '引言')));
-      expect(host.querySelector('.platform-classroom-stage h2')?.textContent).toBe(lessons.find(lesson => lesson.id.startsWith(`${index}-`))!.titleZh.replace(/^先导课/, '引言'));
+        Array.from({ length: [2, 2, 19][index] }, (_, lessonIndex) => String(lessonIndex + 1)));
+      expect(host.querySelector('.platform-classroom-stage h2')?.textContent).toBe('1');
       expect(host.querySelectorAll('video')).toHaveLength(1);
       expect(host.querySelector('a')).toBeNull();
     }
@@ -184,6 +184,31 @@ it('links section cards to separate lesson pages without losing lessons or chang
     await render([]);
     expect(host.querySelector('details')).toBeNull();
     expect(host.querySelector('a')).toBeNull();
+  } finally { locale.english = false; await act(async () => root.unmount()); }
+});
+
+it.each([
+  ['introduction', '先导课 01：课程介绍', undefined, false, '01：课程介绍'],
+  ['introduction', '引言 02：讲师介绍', 'Introduction 02: Instructor', true, '02: Instructor'],
+  ['trial', '试听课 01：做小花', 'Trial lessons 01: Daisy', true, '01: Daisy'],
+  ['trial', '试听课 01：做小花', 'Trial 01: Daisy', true, '01: Daisy'],
+  ['core', '正式课 01：还原十字', 'Core lesson 01: Cross', true, '01: Cross'],
+  ['core', '正式课 01：还原十字', 'Core lessons 01: Cross', true, '01: Cross'],
+  ['core', '正式课 01：还原十字', '', true, '01：还原十字'],
+  ['core', '正式课 01：还原十字', 'Cross fundamentals', true, 'Cross fundamentals'],
+  ['core', '正式课的学习方法', undefined, false, '正式课的学习方法'],
+] as const)('removes only redundant numbered section prefixes: %s %s %s', async (section, titleZh, titleEn, english, expected) => {
+  const host = document.createElement('div'), root = createRoot(host);
+  const lesson = { id: 'lesson', titleZh, titleEn };
+  locale.english = english;
+  try {
+    await act(async () => root.render(createElement(PlatformDomainContent, {
+      definition: { id: `course-section-${section}` } as PlatformRouteDefinition,
+      entity: { id: 'course', title: 'Course', data: { lessons: [lesson] } } as PlatformEntity, params: {},
+    })));
+    expect(host.querySelector('nav button')?.textContent).toBe(expected);
+    expect(host.querySelector('.platform-classroom-stage h2')?.textContent).toBe(expected);
+    expect(lesson).toEqual({ id: 'lesson', titleZh, titleEn });
   } finally { locale.english = false; await act(async () => root.unmount()); }
 });
 
@@ -208,7 +233,7 @@ it('switches videos in place, resets position, rejects stale IDs and ignores abo
     expect(host.querySelectorAll('nav button')).toHaveLength(2);
     await act(async () => (host.querySelectorAll('nav button')[1] as HTMLButtonElement).click());
     expect(load.mock.calls[0][1].aborted).toBe(true);
-    expect(host.querySelector('[aria-current]')?.textContent).toBe('正式课 02');
+    expect(host.querySelector('[aria-current]')?.textContent).toBe('02');
     expect(host.querySelector('video')?.getAttribute('src')).toBe('/signed-video');
     await act(async () => resolveOld({ mimeType: 'video/mp4', accessUrl: '/stale' }));
     expect(host.querySelector('video')?.getAttribute('src')).toBe('/signed-video');
@@ -341,10 +366,10 @@ it('autoplays the next lesson only when enabled and stops at the last lesson', a
   try {
     await act(async () => root.render(createElement(Classroom)));
     await act(async () => host.querySelector('video')!.dispatchEvent(new Event('ended')));
-    expect(host.querySelector('[aria-current]')?.textContent).toBe('正式课 01');
+    expect(host.querySelector('[aria-current]')?.textContent).toBe('01');
     await act(async () => host.querySelector<HTMLButtonElement>('[role="switch"][aria-label="自动播放下一课"]')!.click());
     await act(async () => host.querySelector('video')!.dispatchEvent(new Event('ended')));
-    expect(host.querySelector('[aria-current]')?.textContent).toBe('正式课 02');
+    expect(host.querySelector('[aria-current]')?.textContent).toBe('02');
     expect(host.querySelector('video')!.autoplay).toBe(true);
     await act(async () => host.querySelector('video')!.dispatchEvent(new Event('ended')));
     expect(load).toHaveBeenCalledTimes(2);

@@ -13,8 +13,9 @@ import { useTranslation } from 'react-i18next';
 import AppLink from '@/components/AppLink';
 import { useAuthStore, nextQuery } from '@/lib/auth-store';
 import './wca_auth.css';
+import { tr } from '@/i18n/tr';
 
-export default function WcaAuth({ onNavigate }: { onNavigate?: () => void }) {
+export default function WcaAuth({ onNavigate, showLabel = false }: { onNavigate?: () => void; showLabel?: boolean }) {
   const { t } = useTranslation();
   const pathname = usePathname();
   const user = useAuthStore(s => s.user);
@@ -36,6 +37,7 @@ export default function WcaAuth({ onNavigate }: { onNavigate?: () => void }) {
         onClick={onNavigate}
       >
         <Key size={18} />
+        {showLabel && <span className="toolbar-label">{tr({ zh: '登录', en: 'Login' })}</span>}
       </AppLink>
     );
   }
@@ -59,6 +61,7 @@ export default function WcaAuth({ onNavigate }: { onNavigate?: () => void }) {
       onClick={onNavigate}
     >
       {face}
+      {showLabel && <span className="toolbar-label">{tr({ zh: '我的', en: 'Account' })}</span>}
     </AppLink>
   );
 }

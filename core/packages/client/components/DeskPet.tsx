@@ -21,7 +21,8 @@ import { AdminTools } from '@/components/AuthTokenRefresher';
 import { ClearButton } from '@/components/ClearButton';
 import { persistItem } from '@/lib/safe-storage';
 import { subscribeBeat, getMetronomeState } from '@/lib/metronome';
-import { getPlaytimeScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
+import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
+import { ROOTBEAST_AUTO, ROOTBEAST_BASE, ROOTBEAST_FILES, ROOTBEAST_MINI_FILES, ROOTBEAST_RANDOM_SCENES, ROOTBEAST_VERSION } from '@/lib/deskpet-rootbeast';
 // SSR-safe layout effect (DeskPet is rendered in the root layout).
 const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
@@ -33,14 +34,12 @@ const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffe
 // its own 168KB at click time (measured).
 const loadDeskPetSearch = () => import('@/components/DeskPetSearch');
 const DeskPetSearch = dynamic(loadDeskPetSearch, { ssr: false });
-// Lazy: three (~1.2MB) + the cuber engine only load when the PLL performer opens.
-const PllPerformerOverlay = dynamic(() => import('@/components/PllPerformerOverlay'), { ssr: false });
 // Lazy: admin-only new-submission dropdown, only loads when an admin opens it.
 const AdminSubmissionsPanel = dynamic(() => import('@/components/AdminSubmissionsPanel'), { ssr: false });
 // Lazy: the floating metronome, only loads once the user opens it from the toolbar.
 const FloatingMetronome = dynamic(() => import('@/components/FloatingMetronome'), { ssr: false });
 
-type ThemeId = 'clawd' | 'calico' | 'cloudling';
+type ThemeId = 'clawd' | 'calico' | 'cloudling' | 'rootbeast';
 
 interface MiniTheme {
   offsetRatio: number; // box overhangs the edge by offsetRatio*W; (1-ratio)*W stays on screen
@@ -55,6 +54,8 @@ interface MiniTheme {
 
 interface PetTheme {
   base: string;
+  version?: string;
+  auto?: Record<string, number>;
   inlineIdle: boolean; // clawd uses the inline eye-tracking SVG for idle
   thumb: string;
   thumbScale?: number; // zoom the toolbar thumb to crop dead viewBox margin
@@ -66,6 +67,12 @@ interface PetTheme {
 
 // State→asset maps mirror each clawd-on-desk theme.json `states`/`reactions`.
 const THEMES: Record<ThemeId, PetTheme> = {
+  rootbeast: {
+    base: ROOTBEAST_BASE, version: ROOTBEAST_VERSION, inlineIdle: false,
+    thumb: `${ROOTBEAST_BASE}${ROOTBEAST_FILES.idle}?v=${ROOTBEAST_VERSION}`, thumbScale: 1.5,
+    label: { zh: '根号兽', en: 'Root Beast' }, files: ROOTBEAST_FILES, auto: ROOTBEAST_AUTO,
+    mini: { offsetRatio: .42, files: ROOTBEAST_MINI_FILES },
+  },
   clawd: {
     base: '/deskpet/', inlineIdle: true,
     thumb: '/deskpet/clawd-happy.svg', thumbScale: 1.6, label: { zh: '螃蟹', en: 'Clawd' },
@@ -155,7 +162,7 @@ const THEMES: Record<ThemeId, PetTheme> = {
   },
 };
 
-const THEME_IDS: ThemeId[] = ['clawd', 'calico', 'cloudling'];
+const THEME_IDS: ThemeId[] = ['rootbeast', 'clawd', 'calico', 'cloudling'];
 
 // one-shot states auto-return to idle after N ms
 const AUTO: Record<string, number> = {
@@ -189,6 +196,7 @@ const VC: Record<ThemeId, [number, number]> = {
   clawd: [0.5, 0.775],
   calico: [0.48, 0.477],
   cloudling: [0.5, 0.5],
+  rootbeast: [0.5, 0.64],
 };
 
 // Viewport size excluding the scrollbar — CSS right/bottom anchor to this, not
@@ -237,9 +245,11 @@ const CSS = `
    the box per character (clawd = reference) to equalize on-screen pet size. */
 .clawd-deskpet[data-char=calico]{--pet-scale:.42;}
 .clawd-deskpet[data-char=cloudling]{--pet-scale:1.27;}
+.clawd-deskpet[data-char=rootbeast]{--pet-scale:.7;}
 .clawd-deskpet>svg,.clawd-deskpet>img{position:absolute;inset:0;width:100%;height:100%;
   image-rendering:pixelated;-webkit-user-drag:none;pointer-events:none;}
 .clawd-deskpet>img{display:none;object-fit:contain;}
+.clawd-deskpet[data-char=rootbeast]>img{image-rendering:auto;}
 /* The inline SVG is clawd's art only — it doubles as the frame shown while an
    <img> pose is still decoding, so the other characters must never fall back to
    it (the engine also sets display:none on swap). */
@@ -249,6 +259,7 @@ const CSS = `
 .clawd-deskpet[data-char=clawd] .clawd-deskpet-hit{left:31%;top:66%;width:38%;height:28%;}
 .clawd-deskpet[data-char=calico] .clawd-deskpet-hit{left:20%;top:30%;width:60%;height:60%;}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-hit{left:27%;top:28%;width:46%;height:54%;}
+.clawd-deskpet[data-char=rootbeast] .clawd-deskpet-hit{left:19%;top:36%;width:64%;height:54%;}
 .clawd-deskpet.dragging .clawd-deskpet-hit{cursor:grabbing;}
 /* The hide action belongs to the pet itself. Reuse the shared ClearButton and
    reveal it on real hover, keyboard focus, or briefly after a touch tap. */
@@ -260,6 +271,7 @@ const CSS = `
 .clawd-deskpet[data-char=clawd] .clawd-deskpet-dismiss{left:calc(69% - 10px);top:calc(66% - 10px);}
 .clawd-deskpet[data-char=calico] .clawd-deskpet-dismiss{left:calc(80% - 10px);top:calc(30% - 10px);}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-dismiss{left:calc(73% - 10px);top:calc(28% - 10px);}
+.clawd-deskpet[data-char=rootbeast] .clawd-deskpet-dismiss{left:calc(83% - 10px);top:calc(36% - 10px);}
 .clawd-deskpet.mini-mode:not(.mini-left) .clawd-deskpet-dismiss{left:12%;top:12%;}
 .clawd-deskpet.mini-mode.mini-left .clawd-deskpet-dismiss{left:calc(88% - 20px);top:12%;}
 /* Unread-feedback badge — anchored to each character's body, always visible while
@@ -276,6 +288,7 @@ const CSS = `
 .clawd-deskpet[data-char=clawd] .clawd-deskpet-badge{left:60%;top:54%;}
 .clawd-deskpet[data-char=calico] .clawd-deskpet-badge{left:66%;top:22%;}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-badge{left:58%;top:37%;}
+.clawd-deskpet[data-char=rootbeast] .clawd-deskpet-badge{left:73%;top:35%;}
 /* Site-notification badge (recon replies / comments / alternatives) — clickable
    link to /notifications, info-colored so it reads apart from the red fb badge and
    the accent admin one. Sits above both so all three can show at once. */
@@ -284,6 +297,7 @@ const CSS = `
 .clawd-deskpet[data-char=clawd] .clawd-deskpet-badge-ntf{left:46%;top:38%;}
 .clawd-deskpet[data-char=calico] .clawd-deskpet-badge-ntf{left:44%;top:8%;}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-badge-ntf{left:44%;top:22%;}
+.clawd-deskpet[data-char=rootbeast] .clawd-deskpet-badge-ntf{left:57%;top:21%;}
 /* Admin new-submission badge — clickable, accent-colored (distinct from the red
    fb badge). Sits on the pet's body, mirrored opposite the fb badge so both can
    show at once without overlapping (was pinned to the container corner, which is
@@ -293,11 +307,14 @@ const CSS = `
 .clawd-deskpet[data-char=clawd] .clawd-deskpet-badge-admin{left:33%;top:54%;}
 .clawd-deskpet[data-char=calico] .clawd-deskpet-badge-admin{left:22%;top:22%;}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-badge-admin{left:30%;top:37%;}
+.clawd-deskpet[data-char=rootbeast] .clawd-deskpet-badge-admin{left:24%;top:35%;}
 /* Mini (edge-cling) mode: the art is drawn lying sideways; flip on the left edge
    so it faces inward. The mini-anim class eases the slide-into-place / crabwalk /
    peek nudge; plain drags clear it so they stay 1:1 with the pointer. */
 .clawd-deskpet.mini-anim{transition:right .14s ease-out,bottom .14s ease-out;}
 .clawd-deskpet.mini-left>img{transform:scaleX(-1);}
+.clawd-deskpet[data-char=rootbeast].mini-mode>img{transform:rotate(90deg);}
+.clawd-deskpet[data-char=rootbeast].mini-mode.mini-left>img{transform:scaleX(-1) rotate(90deg);}
 .clawd-deskpet.mini-mode .clawd-deskpet-hit{left:0;top:0;width:100%;height:100%;}
 @media (max-width:768px){
   .clawd-deskpet{right:max(12px,var(--sar,0px));bottom:max(12px,var(--sab,0px));}
@@ -316,10 +333,6 @@ export default function DeskPet() {
   const [resting, setResting] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [touchActionsVisible, setTouchActionsVisible] = useState(false);
-  // PLL performer overlay — opened by the toolbar button or a `clawd:perform`
-  // CustomEvent (optional detail.caseName).
-  const [performOpen, setPerformOpen] = useState(false);
-  const [performCase, setPerformCase] = useState<string | undefined>(undefined);
   const [lang, setLang] = useState<'zh' | 'en'>('en');
   const [randomMode, setRandomMode] = useState(false);
   // Floating metronome panel — opened from the toolbar, lives here (root layout)
@@ -362,7 +375,7 @@ export default function DeskPet() {
       const sz = localStorage.getItem(SIZE_KEY);
       if (sz === 's' || sz === 'l') setSize(sz);
       const ch = localStorage.getItem(CHAR_KEY);
-      if (ch === 'calico' || ch === 'cloudling') setCharacter(ch);
+      if (ch === 'calico' || ch === 'cloudling' || ch === 'rootbeast') setCharacter(ch);
       // 动画(随机播放)默认关闭:仅显式存为 'random' 才开,空/未设(新用户)→ 关。
       if (localStorage.getItem('clawd-deskpet-mode') === 'random') setRandomMode(true);
     } catch {}
@@ -392,6 +405,41 @@ export default function DeskPet() {
     i18n.on('languageChanged', close);
     return () => { i18n.off('languageChanged', close); };
   }, []);
+
+  // Keep the pet and its attached tools above the mobile search controls.
+  // Move the actual anchor so dragging and the touch dismiss button still work.
+  useEffect(() => {
+    if (!searchOpen) return;
+    const avoidControls = () => {
+      const root = rootRef.current;
+      const box = document.querySelector('.deskpet-search-box');
+      const toolbar = document.querySelector('.deskpet-toolbar');
+      if (!root || !box || !toolbar || window.innerWidth > 768) return;
+      const pet = root.getBoundingClientRect();
+      const admin = root.querySelector('.admin-tools')?.getBoundingClientRect();
+      const input = box.getBoundingClientRect(), controls = toolbar.getBoundingClientRect();
+      const top = Math.min(input.top, controls.top);
+      const bottom = Math.max(pet.bottom, admin?.bottom ?? pet.bottom);
+      if (Math.max(pet.right, admin?.right ?? pet.right) <= controls.left ||
+          Math.min(pet.left, admin?.left ?? pet.left) >= controls.right || bottom <= top - 12) return;
+      const dy = Math.min(bottom - top + 12, Math.max(0, pet.top - 12));
+      root.style.bottom = `${parseFloat(getComputedStyle(root).bottom) + dy}px`;
+    };
+    const resize = new ResizeObserver(avoidControls);
+    const observeControls = () => {
+      const box = document.querySelector('.deskpet-search-box');
+      const toolbar = document.querySelector('.deskpet-toolbar');
+      if (!box || !toolbar) return;
+      mount.disconnect();
+      resize.observe(box); resize.observe(toolbar);
+      avoidControls();
+    };
+    const mount = new MutationObserver(observeControls);
+    mount.observe(document.body, { childList: true, subtree: true });
+    observeControls();
+    window.visualViewport?.addEventListener('resize', avoidControls);
+    return () => { mount.disconnect(); resize.disconnect(); window.visualViewport?.removeEventListener('resize', avoidControls); };
+  }, [searchOpen, character, size]);
 
   useEffect(() => {
     const showAudioControls = () => setMetronomeOpen(true);
@@ -446,21 +494,6 @@ export default function DeskPet() {
     prevUnreadRef.current = total;
   }, [fbUnread, ntfUnread]);
 
-  // Open the PLL performer from anywhere:
-  //   window.dispatchEvent(new CustomEvent('clawd:perform', { detail: { caseName: 'Aa' } }))
-  // detail is optional (defaults to the first case). Verification scripts the
-  // bare `new CustomEvent('clawd:perform')` form.
-  useEffect(() => {
-    const onPerform = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { caseName?: string } | string | undefined;
-      const name = typeof detail === 'string' ? detail : detail?.caseName;
-      setPerformCase(name || undefined);
-      setPerformOpen(true);
-    };
-    window.addEventListener('clawd:perform', onPerform as EventListener);
-    return () => window.removeEventListener('clawd:perform', onPerform as EventListener);
-  }, []);
-
   // Close the search overlay after a result navigates to a new page (the pet
   // lives in the persistent root layout, so client navigation won't unmount it).
   // Ignore locale-only changes so the toolbar's language toggle doesn't close it.
@@ -473,7 +506,7 @@ export default function DeskPet() {
 
   // After a size or character change, re-anchor so the pet's visual center lands
   // on the captured point (grows/shrinks about itself; characters share one
-  // point). recenterRef is only set by cycleSize/cycleChar, so mount/restore skips.
+  // point). recenterRef is only set by cycleSize/selectChar, so mount/restore skips.
   useIsoLayout(() => {
     const root = rootRef.current, pt = recenterRef.current;
     if (!root || !pt) return;
@@ -509,6 +542,11 @@ export default function DeskPet() {
     const body = svg.querySelector<SVGGElement>('#clawddp-body');
     const shadow = svg.querySelector<SVGGElement>('#clawddp-shadow');
     const theme = THEMES[character];
+    const assetUrl = (file: string) => theme.base + file + (theme.version ? `?v=${theme.version}` : '');
+    const characterScene = (state: unknown) => {
+      const scene = getDeskPetScene(state);
+      return scene?.character === character ? scene : undefined;
+    };
     const grouped = hasAdminAccess(user) || canTestRoles() || !!getRolePreview();
 
     try {
@@ -612,7 +650,7 @@ export default function DeskPet() {
     const prewarm = () => {
       for (const k of ['working', 'happy', 'yawning', 'dozing', 'sleeping', 'idle']) {
         const f = theme.files[k];
-        if (f) new Image().src = theme.base + f;
+        if (f) new Image().src = assetUrl(f);
       }
     };
     if (typeof requestIdleCallback === 'function') requestIdleCallback(prewarm);
@@ -627,8 +665,8 @@ export default function DeskPet() {
       state = s;
       root.dataset.state = s;
       const isMini = s.startsWith('mini-');
-      const story = character === 'clawd' ? getPlaytimeScene(s) : undefined;
-      const back = story?.durationMs ?? (isMini ? MINI_AUTO[s] : AUTO[s]);
+      const story = characterScene(s);
+      const back = story?.durationMs ?? (isMini ? MINI_AUTO[s] : theme.auto?.[s] ?? AUTO[s]);
       const onPaint = () => {
         if (back) autoTimer = setTimeout(() => {
           if (isMini) onMiniAutoReturn(s);
@@ -649,10 +687,9 @@ export default function DeskPet() {
         } else {
           file = theme.files[s] || theme.files.working;
         }
-        // No cache-buster: the assets ship immutable, so a repeated state must hit
-        // the browser cache instead of a fresh round-trip. `force` (a re-triggered
-        // one-shot) still restarts the animation, from cache.
-        paintFrame(story?.src ?? theme.base + file, force, onPaint, !!story);
+        // A stable asset version preserves caching; stories get independent
+        // timelines so selecting a gallery thumbnail starts a complete loop.
+        paintFrame(story?.src ?? assetUrl(file), force, onPaint, !!story);
       }
     };
 
@@ -808,7 +845,7 @@ export default function DeskPet() {
         if (s === 'idle') return setState(mouseOverPet ? 'mini-peek' : 'mini-idle', true);
         return;
       }
-      if (s === 'idle' || theme.files[s] || (character === 'clawd' && getPlaytimeScene(s))) setState(s, true);
+      if (s === 'idle' || theme.files[s] || characterScene(s)) setState(s, true);
     };
 
     let lastMove = 0;
@@ -819,12 +856,12 @@ export default function DeskPet() {
     // reactions and the sleep-cycle poses that shouldn't fire unprompted.
     const RANDOM_EXCLUDE = new Set(['idle', 'reactDouble', 'reactAnnoyed', 'reactDrag', 'waking', 'sleeping', 'dozing']);
     const RANDOM_POOL = [
-      ...Object.keys(theme.files).filter((k) => !RANDOM_EXCLUDE.has(k)),
+      ...(character === 'rootbeast' ? ROOTBEAST_RANDOM_SCENES.map(scene => scene.state) : Object.keys(theme.files).filter((k) => !RANDOM_EXCLUDE.has(k))),
       ...(character === 'clawd' ? PLAYTIME_SCENES.map((scene) => scene.state) : []),
     ];
     let lastRandom = '';
     const playRandom = () => {
-      if (dnd || dragging || document.hidden || getPlaytimeScene(state) || RANDOM_POOL.length === 0) return;
+      if (dnd || dragging || document.hidden || getDeskPetScene(state) || RANDOM_POOL.length === 0) return;
       // Avoid repeating the same pose twice in a row so the variety reads.
       let pick = RANDOM_POOL[Math.floor(Math.random() * RANDOM_POOL.length)];
       if (RANDOM_POOL.length > 1 && pick === lastRandom)
@@ -943,9 +980,10 @@ export default function DeskPet() {
     };
 
     const requestState = (s: string) => {
-      if (!getPlaytimeScene(s)) { drive(s); return; }
-      // An explicit gallery selection wakes the crab and leaves edge-cling so
-      // the whole story is visible. Other characters keep their own random pool.
+      const scene = getDeskPetScene(s);
+      if (!scene) { drive(s); return; }
+      // A gallery selection wakes the selected character and leaves edge-cling
+      // so the entire scene is visible.
       setSearchOpen(false);
       if (mini) {
         const pr = preMiniRight, pb = preMiniBottom;
@@ -955,12 +993,12 @@ export default function DeskPet() {
         root.style.right = c.right + 'px'; root.style.bottom = c.bottom + 'px';
         persistItem(POS_KEY, JSON.stringify(c));
       }
-      if (character !== 'clawd') {
+      if (character !== scene.character) {
         const r = root.getBoundingClientRect();
         recenterRef.current = { x: r.left + r.width * VC[character][0], y: r.top + r.height * VC[character][1] };
         pendingPlaytimeRef.current = s;
-        persistItem(CHAR_KEY, 'clawd');
-        setCharacter('clawd');
+        persistItem(CHAR_KEY, scene.character);
+        setCharacter(scene.character);
         return;
       }
       dnd = false;
@@ -1082,22 +1120,20 @@ export default function DeskPet() {
     recenterRef.current = { x: r.left + r.width * fx, y: r.top + r.height * fy };
   };
 
-  const SIZE_ORDER: Size[] = ['s', 'm', 'l'];
-  const cycleSize = () => {
+  const selectSize = (next: Size) => {
+    if (next === size) return;
     captureCenter();
-    const next = SIZE_ORDER[(SIZE_ORDER.indexOf(size) + 1) % SIZE_ORDER.length];
     setSize(next);
     persistItem(SIZE_KEY, next);
   };
-  const sizeLabel = size === 's' ? t('小', 'S') : size === 'l' ? t('大', 'L') : t('中', 'M');
 
-  const cycleChar = () => {
+  const selectChar = (value: string) => {
+    const next = THEME_IDS.find(id => id === value);
+    if (!next || next === character) return;
     captureCenter(); // capture with the OLD character's fractions before switching
-    const next = THEME_IDS[(THEME_IDS.indexOf(character) + 1) % THEME_IDS.length];
     setCharacter(next);
     persistItem(CHAR_KEY, next);
   };
-  const charLabel = zh ? THEMES[character].label.zh : THEMES[character].label.en;
 
   const toggleRandom = () => {
     setRandomMode(m => {
@@ -1196,13 +1232,15 @@ export default function DeskPet() {
           lang={curLang}
           origin={searchOriginRef.current}
           onClose={() => setSearchOpen(false)}
-          charThumb={THEMES[character].thumb}
-          charScale={THEMES[character].thumbScale ?? 1}
-          charLabel={charLabel}
-          sizeLabel={sizeLabel}
+          character={character}
+          characters={THEME_IDS.map(id => ({
+            id, label: THEMES[id].label, thumb: THEMES[id].thumb,
+            thumbScale: THEMES[id].thumbScale,
+          }))}
+          size={size}
           resting={resting}
-          onCycleChar={cycleChar}
-          onCycleSize={cycleSize}
+          onSelectChar={selectChar}
+          onSelectSize={selectSize}
           onToggleRest={() => { if (resting) ctrlRef.current?.wake(); else ctrlRef.current?.rest(); }}
           randomMode={randomMode}
           onToggleRandom={toggleRandom}
@@ -1222,14 +1260,6 @@ export default function DeskPet() {
         <FloatingMetronome
           lang={curLang}
           onClose={() => setMetronomeOpen(false)}
-        />
-      )}
-
-      {performOpen && (
-        <PllPerformerOverlay
-          lang={curLang}
-          initialCaseName={performCase}
-          onClose={() => setPerformOpen(false)}
         />
       )}
 

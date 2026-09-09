@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Megaphone, Sparkles, UserCog, Laptop, Globe, Drama, LogOut } from 'lucide-react';
+import { Megaphone, Sparkles, UserCog, Laptop, Globe, Drama } from 'lucide-react';
 import { ensureFreshToken, refreshSessionUser, canTestRoles, getRolePreview, startRolePreview, endRolePreview, useAuthUser, isAdmin, type TestRole } from '@/lib/auth-store';
 import AppLink from './AppLink';
 import { openPageNoticeEditor, pageKeyFromPathname } from '@/lib/page-notices-api';
@@ -69,6 +69,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   const roleTesting = ready && (!!preview || (!!user && canTestRoles()));
   if (!ready || (!admin && !roleTesting)) return null;
   const items = [
+    { value: 'superadmin' as const, label: t('超级管理员', 'Super administrator') },
     { value: 'admin' as const, label: t('管理员', 'Administrator') },
     { value: 'member' as const, label: t('网盘成员', 'Drive member') },
     { value: 'user' as const, label: t('普通用户（无网盘权限）', 'User without Drive access') },
@@ -100,8 +101,6 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       .admin-tool-action svg{width:17px;height:17px;}
       .admin-tool-action:hover{color:var(--accent);}
       .admin-env-switch{display:inline-flex;align-items:center;gap:8px;}
-      .admin-env-switch .admin-tool-action{color:var(--faint-foreground);}
-      .admin-env-switch .admin-tool-action[aria-current="page"]{color:var(--foreground);}
     `}</style>
     {admin && <>
       <button type="button" className="admin-tool-action" onClick={() => openPageNoticeEditor('page_top')}
@@ -126,21 +125,16 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
         </a>)}
       </div>}
     </>}
-    {roleTesting && (preview ? <>
+    {roleTesting &&
       <CompactSelect
-        label={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Drama size={17} aria-hidden />{preview.role === 'user' ? t('普通用户', 'User') : items.find(item => item.value === preview.role)?.label}</span>}
-        ariaLabel={t('测试角色与说明', 'Test role and details')}
-        title={t('正在测试角色', 'Testing role')}
-        value={preview.role}
+        label={preview ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Drama size={17} aria-hidden />{preview.role === 'user' ? t('普通用户', 'User') : items.find(item => item.value === preview.role)?.label}</span> : <Drama size={17} aria-hidden />}
+        ariaLabel={busy ? t('正在切换…', 'Switching…') : t('选择测试角色', 'Choose test role')}
+        title={busy ? t('正在切换…', 'Switching…') : t('角色测试', 'Test role')}
+        value={preview?.role ?? 'superadmin'}
         items={items.map(item => ({ ...item, disabled: busy }))}
-        onChange={role => { if (role !== preview.role) void run(role); }}
-        footer={() => <small style={{ display: 'block', maxWidth: 240, margin: '6px 8px', whiteSpace: 'normal', lineHeight: 1.5 }}>
-          {t('仅当前标签页，30 分钟有效；业务操作会真实保存。', 'This tab only, valid for 30 minutes. Business changes are real.')}
-        </small>}
+        onChange={role => { if (role !== (preview?.role ?? 'superadmin')) void run(role === 'superadmin' ? undefined : role); }}
       />
-      <button type="button" className="admin-tool-action" disabled={busy} onClick={() => void run()}
-        title={t('退出测试', 'Exit test')} aria-label={t('退出测试', 'Exit test')}><LogOut size={17} aria-hidden /></button>
-    </> : <CompactSelect label={<Drama size={17} aria-hidden />} title={busy ? t('正在切换…', 'Switching…') : t('角色测试', 'Test role')} ariaLabel={busy ? t('正在切换…', 'Switching…') : t('选择测试角色', 'Choose test role')} items={items.map(item => ({ ...item, disabled: busy }))} onChange={role => void run(role)} />)}
+    }
     {error && <span role="alert">{t('切换失败，请重试。', 'Switch failed. Please retry.')}</span>}
   </aside>;
 }

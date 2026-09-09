@@ -561,7 +561,27 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 .landing-page .card.tier-standard .card-name { font-size: 1.1rem; }
 .landing-page .card.tier-utility .card-name { font-size: 0.95rem; }
 
-/* ── 即将上线：灰显，不可点击 ── */
+/* ── 开发中：统一灰显，管理员保留链接 ── */
+.landing-card-lock {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--muted-foreground);
+    cursor: pointer;
+    touch-action: manipulation;
+}
+.landing-card-lock:hover { color: var(--foreground); }
+.landing-card-lock:disabled { cursor: wait; opacity: 0.5; }
+.landing-page .landing-card-lock ~ .landing-card .coming-soon-badge { right: 38px; }
 .landing-page .card.is-disabled,
 .landing-page .landing-card.is-disabled {
     position: relative;
@@ -569,6 +589,9 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     filter: grayscale(1);
     opacity: 0.55;
     background: var(--surface);
+}
+.landing-page a.landing-card.is-disabled {
+    cursor: pointer;
 }
 .landing-page .card.is-disabled:hover,
 .landing-page .landing-card.is-disabled:hover {

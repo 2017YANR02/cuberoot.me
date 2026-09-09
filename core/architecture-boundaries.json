@@ -981,15 +981,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/components/PllPerformerOverlay.tsx",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/components/recon/ReconCompletionBadge.tsx",
       "importKind": "type-only",
       "mechanism": "static-import",

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { WEATHER_NOISE_GLSL as noiseShader, precipitationGeometry, debrisFlowSample } from '@/lib/three-weather';
 import { WeatherSystem } from './abyssal/WeatherSystem.js';
 import { VILLA_ROOMS, validSceneTime, type RoomStyle, type Weather } from './space-state';
 
@@ -44,13 +45,6 @@ float roofAt(vec2 p) {
   float h = -120.;
   ${Object.values(VILLA_ROOMS).map(r => `if(abs(p.x - ${r.x.toFixed(2)}) <= ${(r.width / 2 + 0.35).toFixed(2)} && abs(p.y - ${r.z.toFixed(2)}) <= ${(r.depth / 2 + 0.35).toFixed(2)}) h = max(h, ${r.ceiling.toFixed(2)});`).join('\n')}
   return h;
-}`;
-const noiseShader = `
-float hash(vec3 p) { return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453); }
-float noise(vec3 p) {
-  vec3 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
-  return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
-    mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);
 }`;
 
 export class SpaceWeather {
@@ -126,15 +120,7 @@ export class SpaceWeather {
 
   private precipitation(kind: number, density: number) {
     const count = Math.floor(this.budget * density);
-    const vertices = new Float32Array(count * 3), seeds = new Float32Array(count * 4);
-    const rand = THREE.MathUtils.seededRandom;
-    rand(7283);
-    for (let i = 0; i < count; i++) {
-      const seed = [rand(), rand(), rand(), rand()];
-      seeds.set(seed, i * 4);
-    }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3)); geometry.setAttribute('seed', new THREE.BufferAttribute(seeds, 4));
+    const geometry = precipitationGeometry(count);
     const material = new THREE.ShaderMaterial({ uniforms: { ...this.uniforms, uKind: { value: kind } }, transparent: true, depthWrite: false,
       vertexShader: `${roofShader}
         attribute vec4 seed; uniform float uTime, uWind, uKind, uUrban; uniform vec3 uAnchor;
@@ -266,8 +252,8 @@ export class SpaceWeather {
     }
     if (this.rocks) {
       for (let i = 0; i < this.rocks.count; i++) {
-        const t = (i * .61803398875 + this.elapsed * .045) % 1;
-        this.matrix.position.set(-42 + Math.sin(t * 5) * 3 + Math.sin(i * 3.1) * 5 * (.45 + t * .75), (this.uniforms.uUrban.value ? -119.6 : -.6) + (1 - t) ** 3 * 18 + .7, -20 + t * 75);
+        const point = debrisFlowSample(i, this.elapsed);
+        this.matrix.position.set(-42 + point.x * 15, (this.uniforms.uUrban.value ? -119.6 : -.6) + point.y * 18 + .7, -20 + point.z * 75);
         this.matrix.rotation.set(i + this.elapsed, i * .7, this.elapsed * .8); this.matrix.scale.setScalar(.2 + i % 7 * .09); this.matrix.updateMatrix(); this.rocks.setMatrixAt(i, this.matrix.matrix);
       }
       this.rocks.instanceMatrix.needsUpdate = true;

@@ -1,13 +1,24 @@
 ---
 name: timeline-update
-description: "Use when user wants to fill in /dev/architecture 第 11 节的日历 + 列表 — 从 JSON 最后一条日期之后开始, 把每个有 commit 的日子补上中英 1 行总结 (日历); 每个新页面/路由上线都加进 TIMELINE 数组 (列表)。Triggers: \"/timeline-update\", \"更新 timeline\", \"补日历\", \"补 timeline\", \"update commit calendar\"."
+description: "Use when updating /dev/architecture history, commit calendar, TIMELINE or the interactive Three.js history scroll; cover every recorded date with bilingual facts and a unique carefully crafted 3D scene. Triggers: 时间线, 历史画卷, 日期模型, 补日历, 补 timeline, /timeline-update, update commit calendar."
 ---
 
 # /timeline-update — 补 /dev/architecture 日历 + 列表
 
-两个视图:
+同一历史的三个视图:
 - 日历 → `core/packages/client/app/[lang]/dev/architecture/timeline_commits.json` (升序, 每天 1 行 `{date, zh, en}`)
 - 列表 → `app/[lang]/dev/architecture/_lib/arch-data.tsx` 里 `TIMELINE` (降序 newest-first, 产品级 changelog)
+- 交互画卷 → `core/packages/client/app/[lang]/dev/architecture/history/` 与 `_components/HistoryJourney.tsx`, 日期和正文复用日历与 TIMELINE
+
+## 画卷硬要求
+
+- 每个日期必须独立精雕主体模型、轮廓和空间构图,与当天真实内容对应;所有日期都不能重复主体场景,纯数据更新日也不例外。
+- 禁止按关键词循环套用少数预制场景,改色、缩放、旋转、随机种子、地形或配饰不能冒充新模型;允许复用杆件、纸层等基础几何与已有渲染能力。
+- 每日模型须有可近看的结构与细节,保持纸雕山水画风;新增日期必须显式补齐设计和模型,缺失时校验失败,不得静默退回通用模型。
+- 用真实 Three.js 几何生成可交互长画卷,每日期一个点,地图文字简洁且正文完整;保留人物行走、前后移动和播放暂停,到终点停止,不得自动倒退。
+- 彩虹等有固定位置的景物必须锚定地图世界坐标,不能挂在跟随人物或镜头的天气层上一起平移。
+- 修改模型后检查全部日期的覆盖与几何重复,并生成逐日对照图检查轮廓、构图、细节及内容对应;唯一 ID、哈希或少量截图不能单独证明视觉不重复。
+- 桌面和窄屏均验证清晰度与交互,长画卷只加载附近场景并释放离开视野的资源。
 
 ## 三条铁律
 
@@ -53,7 +64,7 @@ tag: `migration` 换栈/迁数据 · `dx` 开发流程 · `feature` 新页/新�
 
 ## Calibration
 
-日历当前 135 条 (每个有非 merge 提交的日子全覆盖, 含纯 cron 日), TIMELINE 当前 44 条 (产品事件, 约 1 周一件)。新 batch 大概率 1-3 件值得进 TIMELINE。**宁多勿少**, 用户翻列表想看每个新页的上线日。
+条目数从当前数据读取,不依赖旧快照;每个有非 merge 提交的日子全覆盖,每个新页面据实补充 TIMELINE 与画卷。
 
 ## 验收
 

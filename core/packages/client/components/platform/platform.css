@@ -1182,7 +1182,7 @@
 }
 
 .platform-course-detail .platform-route-header {
-  padding-block: 32px 64px;
+  padding-block: 32px 24px;
   margin-bottom: 0;
   animation: platform-arrive 800ms both;
 }
@@ -1234,7 +1234,12 @@
 .platform-course-outline {
   grid-template-columns: minmax(0, 1fr);
   gap: 32px;
+  margin-top: 0;
   scroll-margin-top: 100px;
+}
+
+.platform-course-outline > .platform-domain-content:first-child {
+  padding-top: 0;
 }
 
 .platform-course-outline .platform-domain-content h2 {

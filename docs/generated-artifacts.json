@@ -598,6 +598,21 @@
       "driftPolicy": "Edit choreography sources and regenerate. The manifest drives the gallery and pet runtime. Bump PLAYTIME_VERSION in client/lib/deskpet-playtime.ts when regenerating published assets."
     },
     {
+      "id": "client.deskpet-rootbeast",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "Approved CubeRoot B2 traced vector parts and original choreography",
+        "paths": ["core/packages/client/scripts/deskpet-rootbeast/**"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
+      "owner": "core/packages/client/scripts/deskpet-rootbeast",
+      "workingDirectory": "core/packages/client",
+      "command": "node scripts/deskpet-rootbeast/build-rootbeast.mjs",
+      "outputs": ["core/packages/client/public/deskpet/rootbeast/**"],
+      "verification": ["node scripts/deskpet-rootbeast/build-rootbeast.mjs --check", "tests/deskpet-rootbeast.test.ts", "preview all 50 complete loops and the mobile gallery in a browser"],
+      "driftPolicy": "Edit traced rig or choreography sources and regenerate. The manifest drives the gallery and pet runtime. Bump ROOTBEAST_VERSION when regenerating published assets."
+    },
+    {
       "id": "mobile.android-assets",
       "kind": "checked-in-generated",
       "source": {

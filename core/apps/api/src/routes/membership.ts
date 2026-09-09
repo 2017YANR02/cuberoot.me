@@ -2,7 +2,7 @@
  * /v1/membership — 会员订阅 (membership / subscription)。
  *
  * 身份沿用 WCA OAuth(wca_id),不建本站账号。按周期一次性付款(月/年/永久)+ 手动续费;
- * 国内个人/聚合支付拿不到自动代扣,故无 auto-renew(见 docs/MEMBERSHIP.md)。
+ * 自动代扣尚未接通,申请与上线门槛见 docs/wechat-autorenew-application.md。
  * 支付多 provider:官方支付宝 / 官方微信支付(有营业执照 + 备案)优先,虎皮椒聚合支付兜底;
  * 银行卡使用 Airwallex 托管收银台,中国银联卡和国际卡各自独立开关;
  * 异步 notify 验签后入账;都未配置时 admin 仍可手动开通。渠道可用性由 /plans 的 channels 暴露。
@@ -909,7 +909,14 @@ membershipRoutes.put('/membership/admin/plans/:slug', async (c) => {
     if (!Number.isFinite(n) || n < 0 || n > 100_000_00) return c.json({ error: 'invalid priceCents' }, 400);
     add('price_cents', n);
   }
-  if (b.active != null) add('active', !!b.active);
+  if (b.active != null) {
+    if (typeof b.active !== 'boolean') return c.json({ error: 'invalid active' }, 400);
+    // Keep activation closed until signing, billing and cancellation are implemented.
+    if (b.active && AUTO_RENEW_PLAN_SLUGS.has(slug)) {
+      return c.json({ error: 'automatic renewal is not available' }, 503);
+    }
+    add('active', b.active);
+  }
   if (b.sort != null) add('sort', Math.round(Number(b.sort)) || 0);
   if (b.perks != null) add('perks', JSON.stringify(Array.isArray(b.perks) ? b.perks : []));
   if (b.period != null) {

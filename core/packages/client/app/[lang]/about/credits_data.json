@@ -25,6 +25,13 @@
     "en": "Perceptual quality checks for compressed Drive videos"
   },
   {
+    "name": "汇丰大楼照明设计实拍 / HSBC lighting project photographs",
+    "space": true,
+    "url": "https://www.elicht.com/view/100309.html",
+    "zh": "2019-04-28 发布的 2018 年汇丰大楼照明项目，设计署名 FMS 与十聿照明。已查看夜间实拍及屋顶灯位图，用于区分街边灯杆投光、柱廊阴影和屋顶独立照亮穹顶，并调整石材色彩。本站使用固定数量的 Three.js 投光灯，灯位、强度与尺寸仍为估算，未取得实测配光或现状测绘；照片仅本地对照，未作为运行贴图。查阅于 2026-09-08",
+    "en": "Published 2019-04-28 about the 2018 HSBC lighting project, credited to FMS and 十聿照明. Reviewed night photographs and roof luminaire diagrams to distinguish street-pole facade lighting, colonnade shadows and separate dome lighting, and to adjust stone colour. Implemented with a bounded Three.js spotlight pool; positions, intensity and dimensions remain estimates without measured photometry or an as-built survey. Photographs are local references, not runtime textures. Accessed 2026-09-08"
+  },
+  {
     "name": "上海市政府：外滩亮灯 / Shanghai Government: Bund lighting",
     "space": true,
     "url": "https://www.shanghai.gov.cn/nw4411/20260820/f441a5da943447e79613ab4d5dbcc0a5.html",

@@ -83,16 +83,18 @@ export function windowBays(g: CityGeometry, p: ShanghaiPolygon, levels: number[]
   });
 }
 
-// Metre-scaled stone and a graded night wash. The shared factory still owns the
-// material and cityNight uniform; no textures, extra lights or frame allocations.
+// Metre-scaled stone and distant fixture irradiance. The nearby light pool
+// replaces this approximation with shadowed Three.js spotlights.
 export function bundStone(material: MaterialFactory, color: number, wash: number, courses = true, bands: number[] = [], lampSpacing = 4.7) {
   const m = material(color, .025, .84, .001);
+  m.userData.bundStone = true;
   const compile = m.onBeforeCompile, key = m.customProgramCacheKey();
   m.onBeforeCompile = (shader, renderer) => {
     compile.call(m, shader, renderer);
-    shader.vertexShader = 'varying vec3 bundPosition, bundNormal;\n' + shader.vertexShader;
-    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nbundPosition=position; bundNormal=normal;');
-    shader.fragmentShader = `varying vec3 bundPosition, bundNormal;
+    shader.uniforms.cityFacadeLight = m.userData.cityFacadeLight ?? { value: new THREE.Vector2(-1, 0) };
+    shader.vertexShader = 'attribute float bundBuildingId, bundLightTop; varying float bundId, bundTop; varying vec3 bundPosition, bundNormal;\n' + shader.vertexShader;
+    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nbundPosition=position; bundNormal=normal; bundId=bundBuildingId; bundTop=bundLightTop;');
+    shader.fragmentShader = `uniform vec2 cityFacadeLight; varying float bundId, bundTop; varying vec3 bundPosition, bundNormal;
       float bundHash(vec2 p) { return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
       float bundNoise(vec2 p) {
         vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
@@ -113,10 +115,12 @@ export function bundStone(material: MaterialFactory, color: number, wash: number
       float grain=(bundNoise(stoneUV*18.)-.5)*grainResolved;
       float age=bundNoise(stoneUV*.34);
       diffuseColor.rgb*= ${courses ? 'blockTint*(1.-min(1.,mortar)*.16*resolved)' : '1.'} *(.95+.06*age+grain*.055);
+      float bundDistantWash=1.-.92*cityFacadeLight.y*(1.-step(.1,abs(bundId-cityFacadeLight.x)))*(1.-smoothstep(bundTop-2.,bundTop+4.,bundPosition.y));
       // Fade subpixel courses and grain to avoid crawling in drone/zoom views.
     `);
     shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor=clamp(roughnessFactor+grain*.14,0.55,1.);');
-    shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+    shader.fragmentShader = shader.fragmentShader.replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
+      {
       float wall=1.-smoothstep(.45,.85,abs(bundNormal.y));
       float height=max(0.,bundPosition.y);
       // Broad overlapping uplights: no repeating vertical reset that paints
@@ -126,11 +130,16 @@ export function bundStone(material: MaterialFactory, color: number, wash: number
       float pools=exp(-lampOffset*lampOffset/(spread*spread));
       float wash=(.19+.3*pools)*(.7+.3*exp(-height/35.));
       ${bands.map(y => `wash+=.22*exp(-abs(height-${y.toFixed(3)})/1.8);`).join('\n')}
-      float relief=.45+.55*max(abs(bundNormal.z),abs(bundNormal.x)*.8);
-      totalEmissiveRadiance+=vec3(1.,.56,.22)*diffuseColor.rgb*cityNight*${wash.toFixed(3)}*wash*relief*mix(.12,1.,wall)*1.7;
+      // Upward light responds to the actual surface orientation. Undersides,
+      // curved columns and side returns no longer emit the same golden colour.
+      vec3 fixtureDirection=normalize(vec3(.16,-.64,-.75));
+      float relief=max(0.,dot(normalize(bundNormal),fixtureDirection));
+      float frontage=mix(.32,1.,1.-smoothstep(.2,2.,bundPosition.z));
+      reflectedLight.directDiffuse+=vec3(1.,.69,.38)*diffuseColor.rgb*cityNight*${wash.toFixed(3)}*wash*(.12+.88*relief)*mix(.08,1.,wall)*frontage*bundDistantWash*2.1;
+      }
     `);
   };
-  m.customProgramCacheKey = () => `${key}-bund-stone-${wash}-${courses}-${bands.join(',')}-${lampSpacing}`;
+  m.customProgramCacheKey = () => `${key}-bund-stone-shadowed-${wash}-${courses}-${bands.join(',')}-${lampSpacing}`;
   return m;
 }
 
@@ -138,22 +147,25 @@ export function bundStone(material: MaterialFactory, color: number, wash: number
 // standing seams preserve the faces instead of making an evenly luminous cap.
 export function roofMetal(material: MaterialFactory, color: number, strength: number, panels: number) {
   const m = material(color, .28, .62, .001), compile = m.onBeforeCompile, key = m.customProgramCacheKey();
+  m.userData.bundRoof = true;
   m.onBeforeCompile = (shader, renderer) => {
     compile.call(m, shader, renderer);
-    shader.vertexShader = 'varying vec3 roofNormal; varying vec2 roofUV;\n' + shader.vertexShader;
-    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nroofNormal=normal; roofUV=uv;');
-    shader.fragmentShader = 'varying vec3 roofNormal; varying vec2 roofUV;\n' + shader.fragmentShader;
+    shader.uniforms.cityFacadeLight = m.userData.cityFacadeLight ?? { value: new THREE.Vector2(-1, 0) };
+    shader.vertexShader = 'attribute float bundBuildingId; varying float roofId; varying vec3 roofNormal; varying vec2 roofUV;\n' + shader.vertexShader;
+    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nroofNormal=normal; roofUV=uv; roofId=bundBuildingId;');
+    shader.fragmentShader = 'uniform vec2 cityFacadeLight; varying float roofId; varying vec3 roofNormal; varying vec2 roofUV;\n' + shader.fragmentShader;
     shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
       float panel=roofUV.x*${panels.toFixed(1)}, footprint=max(fwidth(panel),.0001);
       float joint=(1.-smoothstep(.007,.007+footprint,min(fract(panel),1.-fract(panel))))*(1.-smoothstep(.15,.6,footprint));
       diffuseColor.rgb*=1.-joint*.35;
     `);
-    shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+    shader.fragmentShader = shader.fragmentShader.replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
       float grazing=.26+.74*pow(max(0.,dot(normalize(roofNormal),normalize(vec3(.65,.55,-.45)))),.75);
-      totalEmissiveRadiance+=diffuseColor.rgb*vec3(1.,.9,.7)*cityNight*${strength.toFixed(3)}*grazing;
+      float roofDistantWash=1.-.92*cityFacadeLight.y*(1.-step(.1,abs(roofId-cityFacadeLight.x)));
+      reflectedLight.directDiffuse+=diffuseColor.rgb*vec3(1.,.9,.7)*cityNight*${strength.toFixed(3)}*grazing*roofDistantWash;
     `);
   };
-  m.customProgramCacheKey = () => `${key}-bund-roof-${strength}-${panels}`;
+  m.customProgramCacheKey = () => `${key}-bund-roof-shadowed-${strength}-${panels}`;
   return m;
 }
 
@@ -205,6 +217,7 @@ export function frontShell(g: CityGeometry, plan: ShanghaiPolygon, top: number, 
   shell.setIndex(indices); g.add(shell, stone);
   const front = plan.points.filter(p => Math.abs(p[1]) < .25);
   const left = Math.min(...front.map(p => p[0])), right = Math.max(...front.map(p => p[0]));
+  g.group.userData.facadeLighting = { width: right - left, height: top };
   const wall = options.outline ?? new THREE.Shape().moveTo(left, -.65).lineTo(right, -.65).lineTo(right, top).lineTo(left, top).closePath();
   wall.holes = openings.map(openingPath);
   g.add(new THREE.ExtrudeGeometry(wall, { depth: .72, bevelEnabled: false, curveSegments: 16 }), stone, [0, 0, -.06]);
