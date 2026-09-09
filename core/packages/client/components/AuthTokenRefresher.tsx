@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Megaphone, Sparkles, UserCog, Laptop, Globe, Drama } from 'lucide-react';
+import { Megaphone, Sparkles, UserCog, Laptop, Globe, Drama, Settings2 } from 'lucide-react';
 import { ensureFreshToken, refreshSessionUser, canTestRoles, getRolePreview, startRolePreview, endRolePreview, useAuthUser, isAdmin, type TestRole } from '@/lib/auth-store';
 import AppLink from './AppLink';
 import { openPageNoticeEditor, pageKeyFromPathname } from '@/lib/page-notices-api';
 import { useLiveUrlSuffix } from '@/hooks/useLiveUrlSuffix';
 import { CompactSelect } from './CompactSelect';
 import { useT } from '@/hooks/useT';
+import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 
 /**
  * Global session refresh and the superadmin's current-tab role-test controls.
@@ -26,7 +27,12 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [pinned, setPinned] = useState(false);
   const toolbarRef = useRef<HTMLElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const collapse = () => { setExpanded(false); setPinned(false); };
+  usePopoverDismiss(expanded, collapse, toolbarRef, toggleRef);
   // The pet owns the position; viewport clamping moves that same root.
   const moveTo = useCallback((left: number, top: number) => {
     const toolbar = toolbarRef.current;
@@ -84,9 +90,19 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     } catch { setError(true); }
     finally { setBusy(false); }
   };
-  return <aside ref={toolbarRef} className="admin-tools" aria-label={t('管理工具', 'Admin tools')} style={{ position: 'absolute', top: '100%', left: `${centerX * 100}%`, transform: 'translateX(-50%)', marginTop: 8, width: 'max-content', maxWidth: 'calc(100vw - 32px)', pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+  return <aside ref={toolbarRef} className="admin-tools" aria-label={t('管理工具', 'Admin tools')}
+    onPointerEnter={event => { if (event.pointerType === 'mouse') setExpanded(true); }}
+    onPointerLeave={() => {
+      if (!pinned && !toolbarRef.current?.contains(document.activeElement)
+        && !toolbarRef.current?.querySelector('[aria-haspopup="listbox"][aria-expanded="true"]')) setExpanded(false);
+    }}
+    onBlur={event => {
+      if (!event.currentTarget.contains(event.relatedTarget as Node | null)
+        && !(event.relatedTarget as Element | null)?.closest?.('.admin-tools-role-popup')) collapse();
+    }}
+    style={{ position: 'absolute', top: '100%', left: `${centerX * 100}%`, transform: 'translateX(calc(-100% + 21px))', marginTop: 8, width: 'max-content', maxWidth: 'calc(100vw - 32px)', pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', flexDirection: 'row-reverse', alignItems: 'center' }}>
     <style>{`
-      .admin-tools{box-sizing:border-box;padding:4px 6px;border-radius:24px;
+      .admin-tools{box-sizing:border-box;padding:4px;border-radius:24px;
         border:1px solid color-mix(in srgb,var(--foreground) 14%,transparent);
         background:linear-gradient(135deg,color-mix(in srgb,var(--foreground) 9%,transparent),transparent 55%),
           color-mix(in srgb,var(--background) 48%,transparent);
@@ -100,8 +116,18 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
         border:0;background:transparent;color:inherit;font:inherit;text-decoration:none;padding:6px;cursor:pointer;}
       .admin-tool-action svg{width:17px;height:17px;}
       .admin-tool-action:hover{color:var(--accent);}
+      .admin-tools-toggle{width:32px;height:32px;border-radius:50%;}
+      .admin-tools-toggle:focus-visible{outline:2px solid var(--ring);outline-offset:2px;}
+      .admin-tools-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0;margin-right:4px;}
+      .admin-tools-actions[hidden]{display:none;}
       .admin-env-switch{display:inline-flex;align-items:center;gap:8px;}
     `}</style>
+    <button ref={toggleRef} type="button" className="admin-tool-action admin-tools-toggle"
+      aria-label={t('管理工具', 'Admin tools')} title={t('管理工具', 'Admin tools')} aria-expanded={expanded}
+      onClick={() => { if (pinned) collapse(); else { setPinned(true); setExpanded(true); } }}>
+      <Settings2 size={17} aria-hidden />
+    </button>
+    <div className="admin-tools-actions" hidden={!expanded}>
     {admin && <>
       <button type="button" className="admin-tool-action" onClick={() => openPageNoticeEditor('page_top')}
         title={t('添加本页通知', 'Add notice for this page')} aria-label={t('添加本页通知', 'Add notice for this page')}>
@@ -127,6 +153,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     </>}
     {roleTesting &&
       <CompactSelect
+        popupClassName="admin-tools-role-popup"
         label={preview ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Drama size={17} aria-hidden />{preview.role === 'user' ? t('普通用户', 'User') : items.find(item => item.value === preview.role)?.label}</span> : <Drama size={17} aria-hidden />}
         ariaLabel={busy ? t('正在切换…', 'Switching…') : t('选择测试角色', 'Choose test role')}
         title={busy ? t('正在切换…', 'Switching…') : t('角色测试', 'Test role')}
@@ -136,5 +163,6 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       />
     }
     {error && <span role="alert">{t('切换失败，请重试。', 'Switch failed. Please retry.')}</span>}
+    </div>
   </aside>;
 }
