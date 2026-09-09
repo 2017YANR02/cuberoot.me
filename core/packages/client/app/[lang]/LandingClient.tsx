@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { ArrowRight, Crown, Heart, Lock, LogIn, User, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Crown, Heart, Lock, LockOpen, LogIn, User, type LucideIcon } from 'lucide-react';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
@@ -56,7 +56,7 @@ import { fetchPageNotices, type PageNotice } from '@/lib/page-notices-api';
 import { colorFor, iconFor } from '@/lib/page-notice-visuals';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { listPublicMembers, type PublicMember } from '@/lib/membership-api';
-import { getHomeCardOrders, reorderHomeCards } from '@/lib/home-card-order-api';
+import { getHomeCardLocks, getHomeCardOrders, reorderHomeCards, setHomeCardLock } from '@/lib/home-card-order-api';
 
 const ABOUT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'about')!;
 const SUPPORT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'support')!;
@@ -66,10 +66,9 @@ interface LandingCardContentProps {
   label: string;
   Icon?: LucideIcon;
   iconImg?: string;
-  locked?: boolean;
 }
 
-function LandingCardContent({ label, Icon, iconImg, locked = false }: LandingCardContentProps) {
+function LandingCardContent({ label, Icon, iconImg }: LandingCardContentProps) {
   return (
     <>
       {(iconImg || Icon) && (
@@ -83,7 +82,6 @@ function LandingCardContent({ label, Icon, iconImg, locked = false }: LandingCar
       )}
       <div className="landing-card-name">
         <span>{label}</span>
-        {locked && <Lock size={16} strokeWidth={1.7} aria-hidden="true" />}
       </div>
     </>
   );
@@ -135,8 +133,22 @@ export default function LandingPage() {
   // 右上角 登录 / 我的 入口,两态都是真链接、都指 /account(全站无登录弹层)。useAuthUser
   // 是 hydration-safe(SSG 首帧按未登录渲染,挂载后才切到已登录),避免 SSG/CSR 错配。
   const user = useAuthUser();
-  const isAdmin = isAdminWcaId(user?.wcaId);
+  const isAdmin = Boolean(user?.isAdmin || isAdminWcaId(user?.wcaId));
   const [cardOrders, setCardOrders] = useState<Record<string, string[]>>({});
+  const [cardLocks, setCardLocks] = useState<Record<string, boolean>>({});
+  const [locksLoaded, setLocksLoaded] = useState(false);
+  const [savingLocks, setSavingLocks] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    let active = true;
+    const refresh = () => {
+      getHomeCardLocks().then((locks) => {
+        if (active) { setCardLocks(locks); setLocksLoaded(true); }
+      }).catch(() => { /* 保留默认锁定状态；读取成功前禁止管理操作。 */ });
+    };
+    refresh();
+    window.addEventListener('focus', refresh);
+    return () => { active = false; window.removeEventListener('focus', refresh); };
+  }, []);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   useEffect(() => {
@@ -148,8 +160,8 @@ export default function LandingPage() {
   }, [isAdmin]);
 
   const searchCards = useMemo(
-    () => SEARCH_CARDS.filter((card) => isLandingSearchCardVisible(card, isAdmin)),
-    [isAdmin],
+    () => SEARCH_CARDS.filter((card) => isLandingSearchCardVisible({ ...card, lockedForNonAdmin: cardLocks[card.id] ?? card.lockedForNonAdmin }, isAdmin)),
+    [isAdmin, cardLocks],
   );
   const pathname = usePathname();
   // 已登录时右上角只保留头像(去掉名字);无头像退回 User 图标。
@@ -160,27 +172,31 @@ export default function LandingPage() {
   );
 
   const renderCard = (card: CardConfig) => {
-    const isLocked = Boolean(card.lockedForNonAdmin && !isAdmin);
+    const locked = cardLocks[card.id] ?? Boolean(card.lockedForNonAdmin || card.comingSoon);
+    const isLocked = locked && !isAdmin;
+    const isDevelopment = locked;
+    const developmentLabel = locked
+      ? tr({ zh: '开发中', en: 'In development' })
+      : t('comingSoon');
     const content = (
-      <LandingCardContent
-        label={t(card.nameKey)}
-        Icon={card.Icon}
-        iconImg={card.iconImg}
-        locked={isLocked}
-      />
+      <>
+        <LandingCardContent
+          label={t(card.nameKey)}
+          Icon={card.Icon}
+          iconImg={card.iconImg}
+        />
+        {isDevelopment && <span className="coming-soon-badge">{developmentLabel}</span>}
+      </>
     );
-    const isDisabled = Boolean(card.comingSoon || isLocked);
-    const className = `landing-card tier-${card.tier}${isDisabled ? ' is-disabled' : ''}`;
+    const isDisabled = isLocked;
+    const className = `landing-card tier-${card.tier}${isDevelopment ? ' is-disabled' : ''}`;
     let cardElement;
     if (isDisabled) {
       cardElement = (
         <div className={className} id={`card-${card.id}`}
-          title={isLocked
-            ? tr({ zh: '开发中', en: 'In development' })
-            : t('comingSoon')}
+          title={developmentLabel}
           aria-disabled="true" role="link">
           {content}
-          {(card.comingSoon || isLocked) && <span className="coming-soon-badge">{isLocked ? tr({ zh: '开发中', en: 'In development' }) : t('comingSoon')}</span>}
         </div>
       );
     } else if (card.internal) {
@@ -199,6 +215,25 @@ export default function LandingPage() {
     }
     return (
       <SortableCard key={card.id} id={card.id} draggable={isAdmin}>
+        {isAdmin && (
+          <button type="button" className="landing-card-lock" aria-pressed={locked}
+            disabled={!locksLoaded || savingLocks.has(card.id)}
+            title={!locksLoaded ? tr({ zh: '锁定状态尚未加载', en: 'Lock status has not loaded' }) : locked ? tr({ zh: '解锁卡片', en: 'Unlock card' }) : tr({ zh: '锁定卡片', en: 'Lock card' })}
+            aria-label={locked ? tr({ zh: '解锁卡片', en: 'Unlock card' }) : tr({ zh: '锁定卡片', en: 'Lock card' })}
+            onClick={async () => {
+              setSavingLocks((current) => new Set(current).add(card.id));
+              try {
+                await setHomeCardLock(card.id, !locked);
+                setCardLocks((current) => ({ ...current, [card.id]: !locked }));
+              } catch (error) {
+                alert(tr({ zh: `保存失败：${error instanceof Error ? error.message : String(error)}`, en: `Save failed: ${error instanceof Error ? error.message : String(error)}` }));
+              } finally {
+                setSavingLocks((current) => { const next = new Set(current); next.delete(card.id); return next; });
+              }
+            }}>
+            {locked ? <Lock size={14} /> : <LockOpen size={14} />}
+          </button>
+        )}
         {cardElement}
       </SortableCard>
     );

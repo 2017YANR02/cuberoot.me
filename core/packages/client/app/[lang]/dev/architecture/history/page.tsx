@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L } from '../../_lib/Lang';
 import type { Lang } from '../../_lib/Lang';
 import ArchNav from '../_components/ArchNav';
-import HistoryView from '../_components/HistoryView';
-import { TIMELINE } from '../_lib/arch-data';
+import HistoryJourney from '../_components/HistoryJourney';
 import '../architecture.css';
+import './history.css';
 
 export default function ArchHistoryPage() {
   const { i18n } = useTranslation();
@@ -15,31 +15,10 @@ export default function ArchHistoryPage() {
 
   return (
     <LangCtx.Provider value={lang}>
-      <div className="arch-page">
+      <div className="arch-page history-page">
         <ArchNav />
 
-        <header className="arch-subhero">
-          <div className="arch-subhero-num">
-            <L zh="架构 · 历程" en="Architecture · History" />
-          </div>
-          <h1 className="arch-subhero-title">
-            <L zh="近一年的关键改动" en="The past year's key changes" />
-          </h1>
-          <p className="arch-subhero-lede">
-            <L
-              zh={<>项目 2025-12-13 诞生 (一个空的 index.html), 到现在约半年、4100+ 提交。列表视图只挑 <strong>{TIMELINE.length} 件</strong>重大改动讲清楚因果; 日历视图把每天的"非琐碎"提交全列出来, 看哪些天提交最集中。</>}
-              en={<>The project was born 2025-12-13 — a single empty index.html. About half a year and 4100+ commits later: the list view covers <strong>{TIMELINE.length} major changes</strong>; the calendar view shows every non-trivial commit by date so you can see which days had the most commits.</>}
-            />
-          </p>
-        </header>
-
-        <section className="arch-sec">
-          <div className="arch-sec-head">
-            <span className="arch-sec-num">11</span>
-            <h2 className="arch-sec-title"><L zh="时间线" en="Timeline" /></h2>
-          </div>
-          <HistoryView />
-        </section>
+        <HistoryJourney />
 
         <footer className="arch-foot">
           <div className="arch-foot-line">

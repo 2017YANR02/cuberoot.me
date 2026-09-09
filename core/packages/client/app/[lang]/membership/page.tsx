@@ -268,6 +268,19 @@ export default function MembershipPage() {
         </h1>
       </header>
 
+      <p className="mem-sub" role="status">
+        {tr({ zh: '会员服务暂未正式开放，正在测试中。现有单次购买使用真实支付，请勿用于测试扣款；自动续费尚未开放。', en: 'Membership is being tested and is not officially launched. One-time purchases use real payments, not test transactions. Auto-renewal is unavailable.' })}
+      </p>
+
+      <p className="mem-sub">
+        {tr({ zh: 'CubeRoot 魔方根提供魔方公式、训练、计时与解法复盘服务。会员可使用下列专属权益；具体服务与额度以所选套餐为准。', en: 'CubeRoot provides cubing algorithms, training, timing, and solve reconstructions. Membership includes the benefits below, subject to the selected plan and its allowances.' })}
+      </p>
+      <nav className="mem-service-links" aria-label={tr({ zh: '会员服务', en: 'Membership services' })}>
+        <AppLink href="/membership/subscription" prefetch={false}>{tr({ zh: '管理自动续费', en: 'Manage auto-renewal' })}</AppLink>
+        <AppLink href="/membership/renewal-terms" prefetch={false}>{tr({ zh: '自动续费服务协议', en: 'Auto-renewal Agreement' })}</AppLink>
+        <AppLink href="/contact" prefetch={false}>{tr({ zh: '会员客服', en: 'Membership support' })}</AppLink>
+      </nav>
+
       {/* 当前会员状态 / 到期提醒 */}
       {membership && (activeMember || expiry?.expired) && (
         <div className={`mem-status${expiry?.expiringSoon ? ' is-warning' : ''}${expiry?.expired ? ' is-expired' : ''}`}>
@@ -429,7 +442,7 @@ export default function MembershipPage() {
       )}
 
       {/* admin 面板 */}
-      {admin && <AdminPanel plans={plans ?? []} isZh={isZh} onPlanUpdated={handlePlanUpdated} />}
+      {admin && <AdminPanel plans={plans ?? []} isZh={isZh} onPlanUpdated={handlePlanUpdated} onViewRenewal={setSelectedAutoRenewPlan} />}
 
       {buyPlan && (
         <PayModal

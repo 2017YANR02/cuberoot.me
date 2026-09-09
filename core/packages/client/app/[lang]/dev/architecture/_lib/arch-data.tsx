@@ -167,7 +167,7 @@ export const TRACER_PATTERNS: Pattern[] = [
 ];
 
 // 写作约定(列表 TIMELINE + 日历 timeline_commits.json 同此): 日期只写单个完整 YYYY-MM-DD, 禁用范围或月份;
-// 内容面向访客(速拧玩家 / 普通访客), 不是开发日志。极简——title 点明用户能感知的变化, body 一句话, expand 两句内;
+// 内容面向访客(速拧玩家 / 普通访客): title 点明变化, body 概述内容, expand 解释具体操作与用途; 地图短注另行压缩。
 // 禁路由路径当主标识 / 行数 / 内部组件名 / 缩写黑话。
 type TimelineDate = `${number}-${number}-${number}`;
 
@@ -178,6 +178,538 @@ export interface TLEntry {
   en: { title: string; body: string; expand: string };
 }
 export const TIMELINE: TLEntry[] = ([
+  {
+    "date": "2026-09-08",
+    "tag": "feature",
+    "zh": {
+      "title": "交互式层先法教程上线",
+      "body": "三阶入门教程从结构与转动记号讲起，依次演示小花、白十字、底层角块、中层棱块和顶层还原。每一步都有目标、操作说明与对应的魔方动画，可以边看边跟着自己的魔方练习。",
+      "expand": "示例区分不同拿方和块的位置，说明应该观察什么、何时使用对应公式。中英文共用同一组步骤与动画；学习时可以控制播放、旋转视角查看背面和底面，再回到示范朝向继续。"
+    },
+    "en": {
+      "title": "Interactive layer-by-layer tutorial",
+      "body": "The beginner 3x3 guide starts with pieces and move notation, then covers the daisy, white cross, first-layer corners, middle-layer edges and the last layer. Each step pairs a goal and instructions with an interactive cube demonstration.",
+      "expand": "Examples explain what to inspect, how to hold the cube and when to use each algorithm. Chinese and English share the same steps and animations. Learners can control playback, rotate the view to inspect the back and bottom, and return to the demonstration orientation."
+    }
+  },
+  {
+    "date": "2026-09-08",
+    "tag": "feature",
+    "zh": {
+      "title": "历史纪录成就加入里程碑等级",
+      "body": "历史世界、洲际和国家纪录成就按项目展示，并根据累计纪录次数呈现对应的里程碑等级。奖章同时保留实际次数，方便了解选手在同一项目上的长期积累。",
+      "expand": "成就图鉴可以查看等级与说明，选手资料则展示本人已获得的成就。历史纪录与当前纪录保持者分别呈现，曾经创造过纪录的经历也会留在个人资料中。"
+    },
+    "en": {
+      "title": "Milestone tiers for historical records",
+      "body": "Historical world, continental and national record achievements appear by event, with milestone tiers based on accumulated record counts. Medals also retain the actual count to show a competitor’s progress over time.",
+      "expand": "The directory explains the tiers, while profiles show earned achievements. Historical records and current record-holder medals appear separately, preserving past record-setting achievements on a person’s profile."
+    }
+  },
+  {
+    "date": "2026-09-08",
+    "tag": "feature",
+    "zh": {
+      "title": "上海场景补充车流与滨江灯光",
+      "body": "上海场景加入沿道路行驶的车辆，并补充外滩滨江步道的照明。浏览城市时，道路上的移动与岸边灯光共同呈现江畔的夜间景象。",
+      "expand": "这一轮也校准雨夜灯光与江面反射，让建筑、道路和水面在同一场景里相互呼应。画卷中的沿江展馆与一排滨江灯，取意于这两天持续完善的上海场景。"
+    },
+    "en": {
+      "title": "Traffic and riverside lighting in Shanghai",
+      "body": "Vehicles follow roads through the Shanghai scene, and new lighting lines the Bund promenade. Moving traffic and illuminated riverbanks add activity to the city’s night view.",
+      "expand": "This update also calibrates rainy-night lighting and river reflections across the buildings, streets and water. The landscape’s riverside gallery and promenade lamps refer to the Shanghai work developed across these two days."
+    }
+  },
+  {
+    "date": "2026-09-08",
+    "tag": "dx",
+    "zh": {
+      "title": "公式播放与视角重置放在一起",
+      "body": "公式播放器将视角重置放到播放控制旁边。拖动魔方观察其他方向后，可以在同一处恢复示范朝向，再接着查看后续动作。",
+      "expand": "教程与公式界面沿用共享的播放交互，让逐步看动作和调整观察方向使用一致的操作位置。"
+    },
+    "en": {
+      "title": "View reset joins algorithm playback controls",
+      "body": "Algorithm players place view reset beside the playback controls. After rotating a cube to inspect another side, learners can restore the demonstration orientation and continue from the same control area.",
+      "expand": "Tutorials and algorithm views use shared playback interactions, keeping step-by-step inspection and view adjustment in a consistent place."
+    }
+  },
+  {
+    "date": "2026-09-07",
+    "tag": "feature",
+    "zh": {
+      "title": "WCA 成就图鉴上线",
+      "body": "独立图鉴展示大满贯、世界冠军和纪录保持者等成就。",
+      "expand": "图鉴将各类奖章集中展示，并提供对应的成就说明。选手资料显示本人获得的奖章，既可以从个人经历查看成就，也可以从图鉴了解不同奖章的含义；历史纪录与里程碑等级在次日继续补充。"
+    },
+    "en": {
+      "title": "WCA achievement directory",
+      "body": "A dedicated directory presents grand slams, world champions and record-holder achievements.",
+      "expand": "The directory brings medal designs and achievement descriptions together. Profiles show each person’s earned medals, so visitors can explore achievements through a competitor or browse their meanings in the directory. Historical records and milestone tiers follow the next day."
+    }
+  },
+  {
+    "date": "2026-09-07",
+    "tag": "feature",
+    "zh": {
+      "title": "三维空间加入上海场景",
+      "body": "可在三维空间浏览上海城市与外滩建筑场景。",
+      "expand": "外滩建筑立面参考照片制作，把城市轮廓与沿江建筑带入可浏览的三维环境。画卷以江边展馆和城市剪影记录这次更新；雨夜灯光、江面反射、车流与步道照明在次日继续完善。"
+    },
+    "en": {
+      "title": "Shanghai scenes in the 3D space",
+      "body": "The 3D space adds Shanghai city scenes and Bund architecture.",
+      "expand": "Bund facades use photographic references to bring the city skyline and waterfront buildings into the explorable environment. This landscape marks the update with riverside galleries and a city silhouette. Rainy-night lighting, reflections, traffic and promenade lamps follow the next day."
+    }
+  },
+  {
+    "date": "2026-09-07",
+    "tag": "feature",
+    "zh": {
+      "title": "课程接入云盘视频与章节目录",
+      "body": "课程课次可绑定云盘视频，并按编号组织为可折叠章节。",
+      "expand": "学习者可以先展开章节，再在课内直接播放视频；播放链接过期时会重新获取。课程兑换权限也区分试听课和正式课，让章节组织、视频访问与实际学习范围对应起来。"
+    },
+    "en": {
+      "title": "Courses gain Drive videos and chapters",
+      "body": "Lessons can use Drive videos and appear in collapsible numbered sections.",
+      "expand": "Learners can expand a chapter and play its videos inline, with expired playback links renewed automatically. Redemption access distinguishes trial and full lessons so the course outline, video access and available lessons stay aligned."
+    }
+  },
+  {
+    "date": "2026-09-07",
+    "tag": "dx",
+    "zh": {
+      "title": "二阶公式按方法整理",
+      "body": "二阶公式目录按 Ortega、EG 和 TEG 方法分组，方便先选择学习路线，再查找对应公式集。",
+      "expand": "CLL、EG 等公式集的分组卡片与名称同步整理，减少标题中重复出现的方法前缀，并按编号组织案例。浏览不同公式集时，可以沿用相近的分类与查找方式。"
+    },
+    "en": {
+      "title": "2x2 algorithms organized by method",
+      "body": "The 2x2 catalog groups algorithms under Ortega, EG and TEG, letting learners choose a method before opening its sets.",
+      "expand": "Group cards and names are aligned across sets such as CLL and EG, with repeated method prefixes removed and cases arranged by number. Related sets use consistent grouping to make browsing easier."
+    }
+  },
+  {
+    "date": "2026-09-06",
+    "tag": "feature",
+    "zh": {
+      "title": "云盘加入共享文件夹与视频压缩",
+      "body": "文件可按文件夹共享，视频可提交云端 AV1 压缩。",
+      "expand": "共享以文件夹为单位组织资料；需要缩减视频体积时，可以提交云端 AV1 压缩，并选择是否输出为 1080p。这两项能力分别服务于文件分发和视频整理，取消压缩任务的操作在次日补充。"
+    },
+    "en": {
+      "title": "Shared Drive folders and video compression",
+      "body": "Folders can be shared, and videos can be submitted for cloud AV1 compression.",
+      "expand": "Folders provide a shared collection of files. Videos can be submitted for cloud AV1 compression, with optional 1080p output when a smaller version is needed. These features support file sharing and video organization; task cancellation follows the next day."
+    }
+  },
+  {
+    "date": "2026-09-06",
+    "tag": "feature",
+    "zh": {
+      "title": "复盘记录拿起与放下用时",
+      "body": "复盘可分别保存拿起魔方和放下魔方的时长。",
+      "expand": "录入页面分别填写这两段时间，详情页展示同一份记录。分析一次还原时，就能把开始前拿起魔方、实际转动和结束后放下魔方的过程分开观察，避免把前后操作都混进转动用时。"
+    },
+    "en": {
+      "title": "Pickup and putdown timing in reconstructions",
+      "body": "Reconstructions can save cube pickup and putdown durations separately.",
+      "expand": "The entry form records both durations, and the detail view displays the same values. A reconstruction can then distinguish picking up the cube, performing the turns and putting it down, instead of folding all handling time into the turning phase."
+    }
+  },
+  {
+    "date": "2026-09-06",
+    "tag": "feature",
+    "zh": {
+      "title": "选手资料展示大满贯奖章",
+      "body": "选手资料新增按项目展示的大满贯成就奖章，并区分大满贯与全金大满贯。获得多个项目成就时，对应奖章会分别出现。",
+      "expand": "奖章连接到相应项目的大满贯统计，方便继续查看成就依据。没有符合条件的成就时不显示空区域；画卷山路旁的奖章对应这次更新。"
+    },
+    "en": {
+      "title": "Grand slam medals on person profiles",
+      "body": "Profiles gain event-specific grand slam medals, distinguishing grand slams from all-gold grand slams. Achievements in multiple events receive separate medals.",
+      "expand": "Each medal links to the relevant event’s grand slam statistics. Profiles without qualifying achievements omit the section. The medal beside the landscape’s mountain path marks this update."
+    }
+  },
+  {
+    "date": "2026-09-05",
+    "tag": "feature",
+    "zh": {
+      "title": "三维空间上线",
+      "body": "新增可交互的三维环境，将魔方模型放入室内与自然场景。",
+      "expand": "魔方可以放在完整的环境中观察，页面沿用站内已有的模型与转动能力，并为场景浏览提供独立入口。画卷把这一天画成通往悬浮庭院的门，记录从单独观察魔方走向探索周围空间的变化。"
+    },
+    "en": {
+      "title": "Interactive 3D space",
+      "body": "A new interactive environment places cube models in indoor and natural scenes.",
+      "expand": "Visitors can inspect a cube within a complete environment, using the site’s existing puzzle models and turning interactions on a dedicated scene page. The landscape depicts a portal to a suspended courtyard, marking the move from inspecting a puzzle to exploring its surroundings."
+    }
+  },
+  {
+    "date": "2026-09-05",
+    "tag": "feature",
+    "zh": {
+      "title": "选手纪录页补齐个人纪录",
+      "body": "选手页的纪录页签加入历史个人纪录，单次与平均分别显示刷新纪录的成绩。记录按项目和比赛日期组织，可以回看某个项目一路进步的过程。",
+      "expand": "成绩列表也补充清晰的排序入口：未排序时显示“排序”，选中后用方向箭头表示当前顺序。同日计时器复用站内的底色选择器，使配色选择沿用一致的操作。"
+    },
+    "en": {
+      "title": "Personal-record history on WCA profiles",
+      "body": "The records tab adds historical personal records, showing record-setting singles and averages separately. Results are grouped by event and competition date so visitors can trace progress in each event.",
+      "expand": "Result lists also expose sorting more clearly: an inactive control says “Sort”, then shows a direction arrow once selected. The timer adopts the shared bottom-colour picker on the same day for consistent colour selection."
+    }
+  },
+  {
+    "date": "2026-09-04",
+    "tag": "feature",
+    "zh": {
+      "title": "会员相册上线",
+      "body": "会员可上传和展示照片，管理员可管理相册内容。",
+      "expand": "相册提供独立的照片浏览与上传入口，使用会员身份控制上传权限，并提供管理相册内容的操作。画卷把照片展开成林间画廊，与同日上线的枫叶教程共同组成这一段枫林。"
+    },
+    "en": {
+      "title": "Member photo gallery",
+      "body": "Members can upload and display photos, and administrators can manage gallery content.",
+      "expand": "A dedicated gallery supports browsing and uploading photos, with membership-based upload access and administrative content management. In the landscape, photo exhibits form a woodland gallery alongside the Ivy tutorial introduced on the same day."
+    }
+  },
+  {
+    "date": "2026-09-04",
+    "tag": "feature",
+    "zh": {
+      "title": "枫叶动画教程上线",
+      "body": "教程通过魔方动画展示枫叶的还原步骤。",
+      "expand": "教学过程配合站内播放器呈现公式与状态变化，学习者可以停下来逐步查看每个动作，再对照自己的魔方练习。林间的枫叶景物取意于教程名称，让当天新增的内容也出现在风景中。"
+    },
+    "en": {
+      "title": "Animated Ivy tutorial",
+      "body": "The tutorial demonstrates Ivy Cube solving with puzzle animations.",
+      "expand": "The shared player presents algorithms and state changes so learners can pause, inspect individual moves and follow along with their own puzzle. The landscape’s leaves refer to the tutorial’s Chinese name, bringing the day’s lesson into the scenery."
+    }
+  },
+  {
+    "date": "2026-09-04",
+    "tag": "feature",
+    "zh": {
+      "title": "账号支持自助合并与同设备微信登录",
+      "body": "用户可合并自己的重复账号，并在同一设备完成微信登录。",
+      "expand": "登录流程同时处理合并后的会话恢复，减少重复身份带来的使用中断。"
+    },
+    "en": {
+      "title": "Self-service account merging and same-device WeChat login",
+      "body": "Users can merge duplicate accounts and complete WeChat login on the same device.",
+      "expand": "The login flow also recovers sessions after merging to reduce interruptions caused by duplicate identities."
+    }
+  },
+  {
+    "date": "2026-09-04",
+    "tag": "feature",
+    "zh": {
+      "title": "连续刷新个人纪录统计上线",
+      "body": "WCA 统计增加连续刷新个人纪录的查询。",
+      "expand": "选手页的个人纪录与计时器排名展示也同步扩展，可按需要选择显示的排名级别。"
+    },
+    "en": {
+      "title": "Personal-record streak statistics",
+      "body": "WCA statistics add consecutive personal-record queries.",
+      "expand": "Profile records and timer rankings also expand, with selectable rank levels in the timer."
+    }
+  },
+  {
+    "date": "2026-09-03",
+    "tag": "feature",
+    "zh": {
+      "title": "架构页加入交互地图",
+      "body": "架构概览可通过交互地图查看应用、共享能力与服务之间的联系。",
+      "expand": "地图把原本分散的应用与服务关系放到同一视图，再与请求流程视图配合说明数据如何流转。阅读架构时，可以先了解系统由哪些部分组成，再顺着连接理解它们之间的协作。"
+    },
+    "en": {
+      "title": "Interactive architecture atlas",
+      "body": "The architecture overview gains an interactive map of applications, shared capabilities and services.",
+      "expand": "The atlas brings application and service relationships into one view, while request-flow views explain how data travels between them. Readers can first identify the system’s parts, then follow their connections to understand how they work together."
+    }
+  },
+  {
+    "date": "2026-09-03",
+    "tag": "feature",
+    "zh": {
+      "title": "音乐库支持会员上传与管理",
+      "body": "会员可上传音乐，管理员在独立管理页审核和维护曲库。",
+      "expand": "已有曲库和会员上传的曲目进入同一套管理入口，播放则接入前一天上线的全站播放器。上传、管理和收听因此各有对应的位置，会员添加的音乐也能沿用全站的播放体验。"
+    },
+    "en": {
+      "title": "Member music uploads and management",
+      "body": "Members can upload music, and administrators can review and maintain tracks on a dedicated page.",
+      "expand": "Existing tracks and member uploads share a management area and connect to the site-wide player introduced the day before. Uploading, managing and listening each have a clear place, while added tracks use the same playback experience."
+    }
+  },
+  {
+    "date": "2026-09-03",
+    "tag": "migration",
+    "zh": {
+      "title": "旧教程迁入归档入口",
+      "body": "原有教程目录迁到独立归档页，保留分类浏览与搜索。",
+      "expand": "新的教程入口与历史资料分开组织，旧目录中的分类浏览和搜索继续保留，并通过归档链接访问。这样既能继续查找积累下来的资料，也能为新的教程内容留下独立的入口。"
+    },
+    "en": {
+      "title": "Legacy tutorial archive",
+      "body": "The original tutorial catalog moves to a dedicated archive with category browsing and search.",
+      "expand": "New tutorials and historical material have separate entry points. The legacy collection retains category browsing and search through its archive link, keeping accumulated resources accessible alongside the new tutorial area."
+    }
+  },
+  {
+    "date": "2026-09-02",
+    "tag": "feature",
+    "zh": {
+      "title": "全站音乐播放器上线",
+      "body": "音乐可通过统一播放器在站内收听，曲库提供独立浏览入口。",
+      "expand": "曲库页负责选曲与浏览，全站播放器负责统一控制播放。不同页面沿用同一播放器，切换页面时无需重新寻找各自的音乐入口；次日继续补充会员上传与曲库管理。"
+    },
+    "en": {
+      "title": "Site-wide music player",
+      "body": "A shared player brings music across the site, with a dedicated library page.",
+      "expand": "The library provides browsing and track selection, while the site-wide player handles playback. Pages share the same player and controls, so listening does not require a separate music interface on each page. Member uploads and library management follow the next day."
+    }
+  },
+  {
+    "date": "2026-09-02",
+    "tag": "feature",
+    "zh": {
+      "title": "侧面颜色顺序训练上线",
+      "body": "颜色训练新增侧面顺序、颜色位置与对色判断。",
+      "expand": "练习从侧面颜色排列、指定颜色的位置以及相对的两种颜色切入，帮助熟悉魔方的配色关系。新题型与已有对色、邻色练习放在同一组入口，可按想练习的关系选择题型。"
+    },
+    "en": {
+      "title": "Side-colour order training",
+      "body": "Colour practice adds side ordering, colour positions and opposite-colour questions.",
+      "expand": "Questions cover side-colour sequences, the position of a given colour and opposite-colour pairs. They join existing opposite and adjacent colour drills in one training area, letting learners choose the relationship they want to practise."
+    }
+  },
+  {
+    "date": "2026-09-02",
+    "tag": "feature",
+    "zh": {
+      "title": "用户管理与增长概览上线",
+      "body": "管理员可在独立页面查看用户资料与用户增长情况。",
+      "expand": "用户列表补充最近设备信息，增长视图支持时间范围选择。"
+    },
+    "en": {
+      "title": "User management and growth dashboards",
+      "body": "Administrators gain dedicated pages for user information and growth trends.",
+      "expand": "User lists include recent device information, and growth views support date ranges."
+    }
+  },
+  {
+    "date": "2026-09-02",
+    "tag": "feature",
+    "zh": {
+      "title": "教学二维码卡片制作与落地页补齐",
+      "body": "教学平台支持设计可打印的二维码卡片并管理扫码落地页。",
+      "expand": "卡片用于线下打印与分发，扫码后打开对应的教学落地页。卡片样式、落地页内容和二维码信息都由教学平台的管理流程维护，使纸上的入口与线上看到的内容能够对应起来。"
+    },
+    "en": {
+      "title": "Teaching QR card studio and landing pages",
+      "body": "The teaching platform supports printable QR card design and configurable scan landing pages.",
+      "expand": "Cards can be printed and distributed offline, with each scan opening its teaching landing page. Designs, landing content and QR information share the platform management flow, connecting the printed entry point with the material shown online."
+    }
+  },
+  {
+    "date": "2026-09-01",
+    "tag": "feature",
+    "zh": {
+      "title": "私密保险箱上线",
+      "body": "私密内容在浏览器加密后保存，并按授权控制查看。",
+      "expand": "内容先在浏览器中加密，再保存密文；查看范围按授权控制。恢复码与口令重置随后补充，忘记口令时需要相应的恢复凭据。画卷中的山间藏阁和圆形箱门，用来标记这一天新增的私密存放空间。"
+    },
+    "en": {
+      "title": "Encrypted private vault",
+      "body": "Private content is encrypted in the browser before storage, with controlled viewer access.",
+      "expand": "Content is encrypted in the browser before ciphertext is stored, with viewer access controlled by authorization. Recovery codes and passphrase reset follow, requiring the corresponding recovery credentials if the passphrase is forgotten. The hillside vault and circular door in the landscape mark this new private space."
+    }
+  },
+  {
+    "date": "2026-09-01",
+    "tag": "infra",
+    "zh": {
+      "title": "小程序增加抖音目标",
+      "body": "微信与抖音小程序共用业务源码，通过平台适配处理运行差异。",
+      "expand": "构建、登录与接口适配分别对应平台；代码接入记录不代表已经通过平台审核或发布。"
+    },
+    "en": {
+      "title": "Douyin Mini Program target",
+      "body": "WeChat and Douyin share business source code with adapters for runtime differences.",
+      "expand": "Builds, login and API adapters remain platform-specific; implementation does not establish store approval or release."
+    }
+  },
+  {
+    "date": "2026-09-01",
+    "tag": "feature",
+    "zh": {
+      "title": "课程接入抖音订单同步",
+      "body": "教学平台加入课程组合订单同步与兑换处理。",
+      "expand": "同步服务补充实时核对和访问令牌刷新，真实订单履约仍需按对应环境验收。"
+    },
+    "en": {
+      "title": "Douyin course order synchronization",
+      "body": "The teaching platform adds course-bundle order synchronization and redemption handling.",
+      "expand": "The service adds live reconciliation and token refresh; real-order fulfillment still requires environment-specific acceptance."
+    }
+  },
+  {
+    "date": "2026-08-31",
+    "tag": "migration",
+    "zh": {
+      "title": "五端应用共用 React 产品层",
+      "body": "Android、iOS、HarmonyOS NEXT、Windows 与 macOS 的应用界面归入同一共享产品层。",
+      "expand": "各平台保留薄宿主与系统能力适配，构建、真机验证和商店发布分别记录。"
+    },
+    "en": {
+      "title": "One React product layer for five installed clients",
+      "body": "Android, iOS, HarmonyOS NEXT, Windows and macOS share one application UI layer.",
+      "expand": "Each platform retains a thin host and system adapters, with builds, device testing and store releases tracked separately."
+    }
+  },
+  {
+    "date": "2026-08-30",
+    "tag": "feature",
+    "zh": {
+      "title": "私人云盘上线",
+      "body": "文件上传和下载支持断点续传，并显示传输速度。",
+      "expand": "后续加入可撤销的分享链接，用户可停止已有链接的访问。"
+    },
+    "en": {
+      "title": "Private Drive",
+      "body": "File uploads and downloads support resuming and display transfer speeds.",
+      "expand": "Revocable sharing links are added afterward so users can stop access through existing links."
+    }
+  },
+  {
+    "date": "2026-08-30",
+    "tag": "feature",
+    "zh": {
+      "title": "SQ2 与 SQ4 模拟器上线",
+      "body": "模拟器新增 SQ2 和 SQ4，可查看状态并执行转动。",
+      "expand": "后续完善伴图接缝与记号格式，沿用共享朝向和播放控制。"
+    },
+    "en": {
+      "title": "SQ2 and SQ4 simulators",
+      "body": "The simulator adds SQ2 and SQ4 state views and turns.",
+      "expand": "Later updates refine companion-image seams and notation formats using shared orientation and playback controls."
+    }
+  },
+  {
+    "date": "2026-08-30",
+    "tag": "feature",
+    "zh": {
+      "title": "赞助认领流程上线",
+      "body": "用户可提交赞助认领，由管理端审核并关联账号。",
+      "expand": "认领与支持者展示衔接，后续要求登录后再进入赞助流程。"
+    },
+    "en": {
+      "title": "Supporter claim workflow",
+      "body": "Users can submit supporter claims for administrators to review and associate with accounts.",
+      "expand": "Claims connect to supporter displays, with sign-in required for the donation flow afterward."
+    }
+  },
+  {
+    "date": "2026-08-29",
+    "tag": "feature",
+    "zh": {
+      "title": "十字训练获得独立入口",
+      "body": "最优阶段训练整合到十字入口，集中选择阶段与查看答案。",
+      "expand": "默认底色为白色，答案放在打乱下方，后续与训练导航共用控制。"
+    },
+    "en": {
+      "title": "Dedicated Cross training entry",
+      "body": "Optimal stage drills move into the Cross entry, with stage selection and answers together.",
+      "expand": "White is the default base colour, answers appear below scrambles, and later updates share training navigation controls."
+    }
+  },
+  {
+    "date": "2026-08-29",
+    "tag": "feature",
+    "zh": {
+      "title": "会员权益与课包兑换扩展",
+      "body": "会员方案区分个人与企业权益，实体课包可通过兑换码领取。",
+      "expand": "管理端可控制方案展示，课包兑换与教学平台的课程授权相连。"
+    },
+    "en": {
+      "title": "Membership benefits and course redemption",
+      "body": "Plans distinguish personal and enterprise benefits, while physical course bundles can be redeemed by code.",
+      "expand": "Administrators control plan visibility, and redemption connects to teaching-platform course access."
+    }
+  },
+  {
+    "date": "2026-08-28",
+    "tag": "feature",
+    "zh": {
+      "title": "学员成绩分享页上线",
+      "body": "老师可在独立页面集中展示学员单次、平均与项目成绩。",
+      "expand": "名单支持无 WCA ID 的学员，并可按成绩排序和维护国籍资料。"
+    },
+    "en": {
+      "title": "Student result sharing page",
+      "body": "Teachers can share student singles, averages and event results on a dedicated page.",
+      "expand": "Rosters support students without WCA IDs, result sorting and nationality information."
+    }
+  },
+  {
+    "date": "2026-08-28",
+    "tag": "migration",
+    "zh": {
+      "title": "Android 与 iOS 复用计时界面和网页登录",
+      "body": "移动端共用计时器界面，并通过网页登录接入账号。",
+      "expand": "宿主补充屏幕常亮和触觉反馈，平台构建与发布仍各自验证。"
+    },
+    "en": {
+      "title": "Shared Android and iOS timer UI and web login",
+      "body": "Mobile clients share the timer interface and connect accounts through web login.",
+      "expand": "Hosts add wake lock and haptics, while platform builds and releases remain separately verified."
+    }
+  },
+  {
+    "date": "2026-08-27",
+    "tag": "feature",
+    "zh": {
+      "title": "好友关系系统上线",
+      "body": "用户可发送好友请求、管理关系并查看好友联系方式。",
+      "expand": "账号生命周期与好友权限联动，后续补充 WCA 联系人与关系管理。"
+    },
+    "en": {
+      "title": "Friend relationships",
+      "body": "Users can send friend requests, manage relationships and view friend contact details.",
+      "expand": "Friend permissions follow the account lifecycle, with WCA contacts and relationship management added afterward."
+    }
+  },
+  {
+    "date": "2026-08-27",
+    "tag": "feature",
+    "zh": {
+      "title": "创作者档案上线",
+      "body": "创作者介绍与相关资料有了独立档案页面。",
+      "expand": "页面将公开介绍与作品资料集中展示，方便从站内入口访问。"
+    },
+    "en": {
+      "title": "Creator profile archive",
+      "body": "A dedicated creator profile brings introductions and related material together.",
+      "expand": "Public background and work references are collected on one page accessible from the site."
+    }
+  },
+  {
+    "date": "2026-08-27",
+    "tag": "feature",
+    "zh": {
+      "title": "微信群目录与联系入口上线",
+      "body": "微信群有了独立目录，用户可查找公开的入群与联系信息。",
+      "expand": "次日与联系方式整合为联系页，随后在网站与小程序间共享同一份目录。"
+    },
+    "en": {
+      "title": "WeChat group directory and contacts",
+      "body": "A dedicated directory helps users find public group and contact information.",
+      "expand": "It merges into the contact page the next day, with one directory later shared by the website and Mini Program."
+    }
+  },
   {
     date: '2026-08-25',
     tag: 'migration',

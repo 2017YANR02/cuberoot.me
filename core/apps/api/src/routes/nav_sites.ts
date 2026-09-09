@@ -149,6 +149,25 @@ navSitesRoutes.get('/nav/sites', async (c) => {
 });
 
 // GET /v1/nav/home-order — 首页各分组卡片顺序。
+navSitesRoutes.get('/nav/home-locks', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const rows = await query<{ item_id: string; locked: boolean }>('SELECT item_id, locked FROM home_card_locks');
+  return c.json({ locks: Object.fromEntries(rows.map((row) => [row.item_id, row.locked])) });
+});
+
+navSitesRoutes.put('/nav/home-locks', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  await requireAdminOrApiKey(c);
+  const body = await c.req.json().catch(() => null);
+  if (!body || typeof body.id !== 'string' || ![...HOME_CARD_GROUPS.values()].some((ids) => ids.includes(body.id))) {
+    return c.json({ error: 'unknown homepage card' }, 400);
+  }
+  if (typeof body.locked !== 'boolean') return c.json({ error: 'locked must be boolean' }, 400);
+  await query('INSERT INTO home_card_locks (item_id, locked) VALUES (?, ?) ON CONFLICT (item_id) DO UPDATE SET locked = EXCLUDED.locked', [body.id, body.locked]);
+  return c.json({ ok: true });
+});
+
 navSitesRoutes.get('/nav/home-order', async (c) => {
   c.header('Cache-Control', 'public, max-age=60');
   const rows = await query<{ group_id: string; item_id: string }>(

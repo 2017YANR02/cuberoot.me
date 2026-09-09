@@ -2301,14 +2301,6 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `需站内共享 Rust / WASM 求解器池,首次拉数 MB 级表。3D 播放直接用 /recon 那个播放器(CuberReconPlayer),连方位字母、背面小窗、PlaybackBar 一起。`, en: `Requires the shared Rust/WASM solver pool and downloads MB-scale tables on first use. The 3D playback is the /recon player itself (CuberReconPlayer) — orientation letters, back-view window and PlaybackBar included.` },
   },
   {
-    name: 'PllPerformerOverlay',
-    import: "import PllPerformerOverlay from '@/components/PllPerformerOverlay';",
-    category: 'more',
-    zh: `全屏弹层让桌宠 clawd 端着真 3D 魔方演示 21 个 PLL,可选 case、播放 / 速度,由 clawd:perform 事件驱动。`,
-    en: `Full-screen overlay where the clawd mascot presents a real 3D cube running any of the 21 PLLs, with case picker and play/speed; driven by the clawd:perform event.`,
-    note: { zh: `懒加载 three + /sim cuber 引擎,并从 alg 库 loadAlg 取 PLL 数据。`, en: `Lazy-loads three + the /sim cuber engine and pulls PLL data via loadAlg from the alg library.` },
-  },
-  {
     name: 'DeskPet',
     import: "import DeskPet from '@/components/DeskPet';",
     category: 'more',
@@ -2320,8 +2312,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'DeskPetGallery',
     import: "import DeskPetGallery from '@/components/DeskPetGallery';",
     category: 'more',
-    zh: `桌宠动画图鉴浮层,按形象网格展示每个角色的全部动画帧,并提供 PLL 表演启动按钮;从桌宠搜索工具栏打开,admin 专用。`,
-    en: `Desk-pet animation gallery overlay showing every character's animation frames in a grid plus a PLL-show launcher; opened from the desk-pet search toolbar, admin-only.`,
+    zh: `桌宠动画图鉴浮层,按形象网格展示每个角色的全部动画,支持预览与播放控制;从桌宠搜索工具栏打开,admin 专用。`,
+    en: `Desk-pet animation gallery overlay showing every character's animations in a grid with preview and playback controls; opened from the desk-pet search toolbar, admin-only.`,
     note: { zh: `需传 lang 与 onClose。`, en: `Takes lang and onClose props.` },
   },
   {

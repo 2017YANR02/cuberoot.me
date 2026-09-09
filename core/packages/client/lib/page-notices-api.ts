@@ -45,10 +45,19 @@ export interface PageNoticeInput {
   endsAt: string | null;
 }
 
-/** enabled 通知(全站访客用,60s 浏览器缓存)。 */
-export async function fetchPageNotices(): Promise<PageNotice[]> {
-  const r = await fetch(apiUrl('/v1/page-notices'));
-  return handleApi<PageNotice[]>(r);
+let pendingNotices: Promise<PageNotice[]> | null = null;
+
+/** 仅合并进行中的公开请求;完成后仍使用原有浏览器缓存规则。 */
+export function fetchPageNotices(): Promise<PageNotice[]> {
+  if (!pendingNotices) {
+    const request = fetch(apiUrl('/v1/page-notices'))
+      .then((r) => handleApi<PageNotice[]>(r))
+      .finally(() => {
+        if (pendingNotices === request) pendingNotices = null;
+      });
+    pendingNotices = request;
+  }
+  return pendingNotices;
 }
 
 /** 全部通知含 disabled(admin,行内编辑器预填用)。 */
@@ -64,13 +73,16 @@ export async function savePageNotice(body: PageNoticeInput): Promise<PageNotice>
     headers: authHeaders(),
     body: JSON.stringify(body),
   });
-  return handleApi<PageNotice>(r);
+  const notice = await handleApi<PageNotice>(r);
+  pendingNotices = null;
+  return notice;
 }
 
 /** 删除(admin)。 */
 export async function deletePageNotice(id: number): Promise<void> {
   const r = await fetch(apiUrl(`/v1/page-notices/${id}`), { method: 'DELETE', headers: authHeaders(false) });
   await handleApi<{ ok: boolean }>(r);
+  pendingNotices = null;
 }
 
 // ── 路径匹配(前端按当前 pathname 选出该显示哪些通知)──

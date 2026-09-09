@@ -121,6 +121,7 @@ function hsbcBuilding(polygons: ShanghaiPolygon[], material: MaterialFactory) {
   g.group.userData.reconstruction = 'OSM plan and courtyard; façade composition from Shanghai tourism photographs; 46.3 m model height and detail dimensions remain estimates';
   const stone = bundStone(material, 0xc4bdaa, 1.12, true, [6.2, 20.8, 28.7, 35.5]), trim = bundStone(material, 0xd5ccb8, 1.65, false, [20.8, 28.7, 35.5]);
   const dark = material(0x233638, .4, .27), bronze = material(0x685d48, .48, .44);
+  const windowFrame = material(0xb6b3a1, .12, .57);
   const plan = frame.plan(p);
   const openings: FrontOpening[] = [];
   for (const side of [-1, 1]) for (const offset of [19, 23.5, 28, 32.5, 37.5]) {
@@ -137,7 +138,10 @@ function hsbcBuilding(polygons: ShanghaiPolygon[], material: MaterialFactory) {
     for (const y of [9.5, 14.6, 19.7]) openings.push({ x, y, width: 4.4, height: 3.5 });
     openings.push({ x, y: 27.1, width: 2.25, height: 2.7 });
   }
-  frontShell(g, plan, 29.4, openings, stone, trim, dark, bronze);
+  frontShell(g, plan, 29.4, openings, stone, trim, dark, windowFrame);
+  // 2018 lighting-design photographs show independent roof-mounted dome spots.
+  // Fixture coordinates and photometry are estimates, not surveyed positions.
+  g.group.userData.facadeLighting.crown = { height: 41, depth: 4.7, width: 22 };
   windowBays(g, plan, [3.2, 9, 14.1, 19.2, 27.1], 4.8, dark, trim, true);
   for (const y of [1.3, 5.9, 6.6, 23.1, 24.1, 29.3]) wallLedge(g, plan, y, y === 24.1 ? .85 : .38, trim, openings);
   // Paired middle shafts and single end shafts match the photographed six-column portico.
@@ -205,9 +209,8 @@ function hsbcBuilding(polygons: ShanghaiPolygon[], material: MaterialFactory) {
     }
   }
   const dome = new THREE.SphereGeometry(8.3, 48, 20, 0, Math.PI * 2, 0, Math.PI / 2); dome.scale(1, .64, 1);
-  // Shanghai's 2022 lighting report shows a honey-gold dome, brighter than the
-  // facade wash. Retain the ribs and stone drum as separate materials/shadows.
-  g.add(dome, roofMetal(material, 0xcaa052, 1.3, 32), [0, 37.9, z]);
+  // Pale stone in the 2018 project photographs takes its warm colour from light.
+  g.add(dome, roofMetal(material, 0xc6baa0, 1.3, 32), [0, 37.9, z]);
   for (let rib = 0; rib < 16; rib++) {
     const a = rib * Math.PI / 8;
     for (let segment = 0; segment < 12; segment++) {
@@ -430,11 +433,12 @@ export function applyPeaceWash(surface: THREE.Material) {
   const compile = surface.onBeforeCompile, key = surface.customProgramCacheKey();
   surface.onBeforeCompile = (shader, renderer) => {
     compile.call(surface, shader, renderer);
-    shader.fragmentShader = shader.fragmentShader.replace('totalEmissiveRadiance+=vec3(1.,.56,.22)', `
+    shader.fragmentShader = shader.fragmentShader.replace('vec3 fixtureDirection=normalize(vec3(.16,-.64,-.75));', `
       float peaceRiverfront=smoothstep(-1344.,-1315.,bundPosition.x);
       float peaceTower=smoothstep(36.,42.,bundPosition.y);
       wash*=mix(.09,.82,max(peaceRiverfront,peaceTower));
-      totalEmissiveRadiance+=vec3(1.,.56,.22)`);
+      vec3 fixtureDirection=normalize(vec3(.75,-.64,.16));`);
+    shader.fragmentShader = shader.fragmentShader.replace('float frontage=mix(.32,1.,1.-smoothstep(.2,2.,bundPosition.z));', 'float frontage=1.;');
   };
   surface.customProgramCacheKey = () => `${key}-peace-riverfront-wash`;
 }

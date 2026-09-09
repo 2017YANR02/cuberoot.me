@@ -1,0 +1,512 @@
+[
+  {
+    "id": "idle",
+    "file": "01-idle.svg",
+    "zh": "待机",
+    "en": "Idle",
+    "description": "轻轻呼吸，先用眼睛看向两边，再小幅转头，停下来对你笑。",
+    "descriptionEn": "Breathe softly, glance before a small head turn, then pause with a smile.",
+    "duration": 5.4,
+    "poster": 0.45
+  },
+  {
+    "id": "hello",
+    "file": "02-hello.svg",
+    "zh": "挥爪问好",
+    "en": "Hello",
+    "description": "坐稳后举起一只爪子挥两下，眨眨眼，再收好爪子微笑等你。",
+    "descriptionEn": "Sit comfortably, wave one paw twice, give a wink, then settle with a smile.",
+    "duration": 2.8,
+    "poster": 0.45
+  },
+  {
+    "id": "walk",
+    "file": "03-walk.svg",
+    "zh": "小步散步",
+    "en": "Little steps",
+    "description": "四爪按对角交替落地、抬起，迈着轻快的小步，偶尔瞄你一眼。",
+    "descriptionEn": "Plant and lift diagonal pairs of paws in a brisk little walk, with an occasional glance at you.",
+    "duration": 1.6,
+    "poster": 0.45
+  },
+  {
+    "id": "double-jump",
+    "file": "04-double-jump.svg",
+    "zh": "腾空翻跟头",
+    "en": "Somersault",
+    "description": "快速蹲下发力，空中翻一圈，落地压低缓冲，再举爪定格。",
+    "descriptionEn": "A quick crouch and takeoff, one airborne somersault, a cushioned landing, then a victory pose.",
+    "duration": 2.6,
+    "poster": 0.45
+  },
+  {
+    "id": "drag",
+    "file": "05-drag.svg",
+    "zh": "被拎起来",
+    "en": "Picked up",
+    "description": "离开地面时四爪轻晃，尾巴也跟着摆。",
+    "descriptionEn": "All four feet dangle and sway when lifted.",
+    "duration": 2.4,
+    "poster": 0.45
+  },
+  {
+    "id": "annoyed",
+    "file": "06-annoyed.svg",
+    "zh": "轻轻抗议",
+    "en": "A little protest",
+    "description": "站起来叉腰，气鼓鼓地抖两下，瞪你一眼后又消气了。",
+    "descriptionEn": "Paws on hips, two indignant shakes, a pointed stare, then forgiveness.",
+    "duration": 2.8,
+    "poster": 0.45
+  },
+  {
+    "id": "thinking",
+    "file": "07-thinking.svg",
+    "zh": "认真思考",
+    "en": "Thinking",
+    "description": "坐下来托腮，眼睛左右转着想，想通后突然站起。",
+    "descriptionEn": "Sit with a paw on the cheek, look around in thought, then stand with an idea.",
+    "duration": 3.6,
+    "poster": 0.45
+  },
+  {
+    "id": "typing",
+    "file": "08-typing.svg",
+    "zh": "打字",
+    "en": "Typing",
+    "description": "前爪交替敲键盘，写完一行就停一下。",
+    "descriptionEn": "Two paws alternate at the keyboard, pausing between lines.",
+    "duration": 2.4,
+    "poster": 0.45
+  },
+  {
+    "id": "building",
+    "file": "09-building.svg",
+    "zh": "搭积木",
+    "en": "Building blocks",
+    "description": "一块一块举起积木，轻轻叠好，扶稳后满意地看看你。",
+    "descriptionEn": "Lift each block into place, steady the stack, then share a satisfied look.",
+    "duration": 3.2,
+    "poster": 0.45
+  },
+  {
+    "id": "headphones",
+    "file": "10-headphones.svg",
+    "zh": "戴耳机",
+    "en": "Headphones",
+    "description": "坐稳听音乐，脑袋点两拍，尾尖跟着轻轻打拍子。",
+    "descriptionEn": "Sit and nod to the beat while the tail tip keeps time.",
+    "duration": 2.4,
+    "poster": 0.45
+  },
+  {
+    "id": "juggling",
+    "file": "11-juggling.svg",
+    "zh": "抛接方块",
+    "en": "Juggling",
+    "description": "三枚方块错开飞起，双爪轮流抛接，目光追着落点走。",
+    "descriptionEn": "Toss three staggered arcs, alternate the catching paws, and follow each landing.",
+    "duration": 2.4,
+    "poster": 0.45
+  },
+  {
+    "id": "sweeping",
+    "file": "12-sweeping.svg",
+    "zh": "打扫桌面",
+    "en": "Sweeping",
+    "description": "挥动小扫帚，把灰尘扫成一颗小星星。",
+    "descriptionEn": "A tiny broom gathers dust into a little star.",
+    "duration": 2.8,
+    "poster": 0.45
+  },
+  {
+    "id": "carrying",
+    "file": "13-carrying.svg",
+    "zh": "搬运方块",
+    "en": "Special delivery",
+    "description": "抱住一枚大方块，小心翼翼往前挪。",
+    "descriptionEn": "One oversized tile takes careful little steps to deliver.",
+    "duration": 3.2,
+    "poster": 0.45
+  },
+  {
+    "id": "debugger",
+    "file": "14-debugger.svg",
+    "zh": "捉虫侦探",
+    "en": "Bug detective",
+    "description": "放大镜追着小虫走，找到以后开心地抬爪。",
+    "descriptionEn": "A magnifier follows the bug, then a paw celebrates the discovery.",
+    "duration": 3,
+    "poster": 0.45
+  },
+  {
+    "id": "wizard",
+    "file": "15-wizard.svg",
+    "zh": "根号魔法",
+    "en": "Radical magic",
+    "description": "小魔杖一挥，尾巴召来一串闪亮星星。",
+    "descriptionEn": "A tiny wand calls a trail of stars from the radical tail.",
+    "duration": 3.2,
+    "poster": 0.45
+  },
+  {
+    "id": "deep-thought",
+    "file": "16-deep-thought.svg",
+    "zh": "深度思考",
+    "en": "Deep thought",
+    "description": "几枚方块围着根号尾巴转，想法逐渐连起来。",
+    "descriptionEn": "Orbiting tiles connect into a new idea above the radical tail.",
+    "duration": 4,
+    "poster": 0.45
+  },
+  {
+    "id": "boss",
+    "file": "17-boss.svg",
+    "zh": "小小老板",
+    "en": "Tiny boss",
+    "description": "戴墨镜敲键盘，写完以后自信地点点头。",
+    "descriptionEn": "Sunglasses, a keyboard, and a very confident nod.",
+    "duration": 3,
+    "poster": 0.45
+  },
+  {
+    "id": "happy",
+    "file": "18-happy.svg",
+    "zh": "开心庆祝",
+    "en": "Celebration",
+    "description": "轻轻跳起来，彩纸在两边洒下。",
+    "descriptionEn": "A joyful hop under a shower of confetti.",
+    "duration": 2.4,
+    "poster": 0.45
+  },
+  {
+    "id": "error",
+    "file": "19-error.svg",
+    "zh": "出错了",
+    "en": "Oops",
+    "description": "先吓一跳，再坐地委屈大哭；擦擦眼泪，重新鼓起勇气。",
+    "descriptionEn": "Startle, sit down and cry, wipe away the tears, then try again.",
+    "duration": 3.2,
+    "poster": 0.45
+  },
+  {
+    "id": "notification",
+    "file": "20-notification.svg",
+    "zh": "来消息啦",
+    "en": "New message",
+    "description": "小铃铛响了，根号兽立刻抬起头。",
+    "descriptionEn": "A bell rings and the little beast perks up.",
+    "duration": 2.4,
+    "poster": 0.45
+  },
+  {
+    "id": "reading",
+    "file": "21-reading.svg",
+    "zh": "翻书",
+    "en": "Reading",
+    "description": "坐稳摊开书，瞳孔逐行扫过文字，读到精彩处抬头一笑。",
+    "descriptionEn": "Sit with an open book, scan line by line, and look up at a good part.",
+    "duration": 3.6,
+    "poster": 0.45
+  },
+  {
+    "id": "bubble",
+    "file": "22-bubble.svg",
+    "zh": "吹泡泡",
+    "en": "Bubbles",
+    "description": "吹出大小泡泡，用鼻尖轻轻碰一碰。",
+    "descriptionEn": "Small bubbles drift away from a curious nose.",
+    "duration": 3.2,
+    "poster": 0.45
+  },
+  {
+    "id": "yawning",
+    "file": "23-yawning.svg",
+    "zh": "打哈欠",
+    "en": "Yawn and stretch",
+    "description": "眼皮慢慢垂下，前爪往前伸，尾巴向后舒展。",
+    "descriptionEn": "Sleepy eyes, paws stretched forward, and a long tail stretch.",
+    "duration": 3.8,
+    "poster": 0.45
+  },
+  {
+    "id": "dozing",
+    "file": "24-dozing.svg",
+    "zh": "打盹",
+    "en": "Nodding off",
+    "description": "眼睛半闭，脑袋一点一点，又努力坐稳。",
+    "descriptionEn": "Half-closed eyes and a head that keeps nodding off.",
+    "duration": 3.6,
+    "poster": 0.45
+  },
+  {
+    "id": "sleeping",
+    "file": "25-sleeping.svg",
+    "zh": "睡个好觉",
+    "en": "Sleeping",
+    "description": "收好四爪安稳睡着，只有呼吸和尾尖有轻微起伏。",
+    "descriptionEn": "Sleep with paws tucked in, with only a soft breath and a tiny tail-tip movement.",
+    "duration": 4.8,
+    "poster": 0.45
+  },
+  {
+    "id": "waking",
+    "file": "26-waking.svg",
+    "zh": "睡醒伸懒腰",
+    "en": "Waking up",
+    "description": "坐着揉开睡意，舒舒服服伸个懒腰，再收好双爪眯一会儿。",
+    "descriptionEn": "Wake from a seated doze, enjoy a long stretch, then tuck the paws in for another moment of rest.",
+    "duration": 3.2,
+    "poster": 0.45
+  },
+  {
+    "id": "inspection",
+    "file": "27-inspection.svg",
+    "zh": "研究魔方",
+    "en": "Exploring the cube",
+    "description": "坐稳捧好魔方，转动顶层，认真看看颜色怎样变化。",
+    "descriptionEn": "Hold the cube steadily, turn the top layer, and study how the colors change.",
+    "duration": 3.4,
+    "poster": 0.45
+  },
+  {
+    "id": "cubing",
+    "file": "28-cubing.svg",
+    "zh": "练习复原",
+    "en": "Solving practice",
+    "description": "前爪忙着练习，打乱的魔方复原后闪一下。",
+    "descriptionEn": "Busy paws practice a solve; the finished cube gets a sparkle.",
+    "duration": 2.8,
+    "poster": 0.45
+  },
+  {
+    "id": "timer",
+    "file": "29-timer.svg",
+    "zh": "计时准备",
+    "en": "Ready to time",
+    "description": "双爪触板准备，抬爪开始计时，再拍回触板停表，最后看一眼成绩。",
+    "descriptionEn": "Set both paws on the pads, lift to start, tap back down to stop, then check the result.",
+    "duration": 4,
+    "poster": 0.45
+  },
+  {
+    "id": "personal-best",
+    "file": "30-personal-best.svg",
+    "zh": "新纪录",
+    "en": "Personal best",
+    "description": "金色奖牌亮起来，根号兽开心地跳一下。",
+    "descriptionEn": "A golden medal lights up a proud little victory hop.",
+    "duration": 2.8,
+    "poster": 0.45
+  },
+  {
+    "id": "pop",
+    "file": "31-pop.svg",
+    "zh": "飞棱救援",
+    "en": "Flying piece",
+    "description": "魔方转动后飞出一枚棱块，赶紧扑过去救回来。",
+    "descriptionEn": "A turn ejects an edge piece, prompting a quick rescue.",
+    "duration": 2.6,
+    "poster": 0.45
+  },
+  {
+    "id": "teaching",
+    "file": "32-teaching.svg",
+    "zh": "魔方小老师",
+    "en": "Cube tutor",
+    "description": "拿起教棒，配合顶层转动讲解一个小技巧。",
+    "descriptionEn": "Use a pointer to demonstrate a top-layer turning tip.",
+    "duration": 3.2,
+    "poster": 0.45
+  },
+  {
+    "id": "bubblegum",
+    "file": "33-bubblegum.svg",
+    "zh": "泡泡糖",
+    "en": "Bubblegum",
+    "description": "鼓起泡泡，啪的一声缩缩肩，愣一下，再害羞地笑起来。",
+    "descriptionEn": "Blow a bubble, flinch at the pop, pause in surprise, then giggle.",
+    "duration": 3.2,
+    "poster": 0.45
+  },
+  {
+    "id": "fishing",
+    "file": "34-fishing.svg",
+    "zh": "钓一只小虫",
+    "en": "Bug fishing",
+    "description": "耐心等一会，轻轻提竿，发现钓到小虫后忍不住笑。",
+    "descriptionEn": "Wait patiently, lift the rod, and smile at the little bug on the line.",
+    "duration": 3.2,
+    "poster": 0.45
+  },
+  {
+    "id": "skateboard",
+    "file": "35-skateboard.svg",
+    "zh": "滑板出发",
+    "en": "Skateboard ride",
+    "description": "双脚站稳滑板，前爪张开保持平衡，身体和尾巴跟着转弯轻摆。",
+    "descriptionEn": "Keep both feet planted on the board, spread the front paws for balance, and lean gently through each turn.",
+    "duration": 2.8,
+    "poster": 0.45
+  },
+  {
+    "id": "box",
+    "file": "36-box.svg",
+    "zh": "箱子里探头",
+    "en": "Box surprise",
+    "description": "躲进快递箱，再慢慢探出头来看看你。",
+    "descriptionEn": "Hide in a parcel, then peek out to see who is there.",
+    "duration": 3,
+    "poster": 0.45
+  },
+  {
+    "id": "soda",
+    "file": "37-soda.svg",
+    "zh": "汽水打嗝",
+    "en": "Soda hiccup",
+    "description": "喝一口汽水，忍不住小小地打个嗝。",
+    "descriptionEn": "A sip of soda ends in one tiny surprise hiccup.",
+    "duration": 2.8,
+    "poster": 0.45
+  },
+  {
+    "id": "paper-plane",
+    "file": "38-paper-plane.svg",
+    "zh": "纸飞机",
+    "en": "Paper plane",
+    "description": "轻轻一推，纸飞机绕过根号尾巴飞回来。",
+    "descriptionEn": "A paper plane loops around the radical tail and comes back.",
+    "duration": 3.2,
+    "poster": 0.45
+  },
+  {
+    "id": "catch-star",
+    "file": "39-catch-star.svg",
+    "zh": "接住星星",
+    "en": "Catch a star",
+    "description": "先抬眼发现星星，伸爪接住，再把闪亮的小宝贝抱到胸前。",
+    "descriptionEn": "Spot the star, catch it in a waiting paw, then bring the treasure close.",
+    "duration": 3.2,
+    "poster": 0.45
+  },
+  {
+    "id": "umbrella",
+    "file": "40-umbrella.svg",
+    "zh": "撑伞听雨",
+    "en": "Rainy day",
+    "description": "撑起红白小伞，听雨点落在伞面上。",
+    "descriptionEn": "A red-and-white umbrella catches the gentle rain.",
+    "duration": 3.6,
+    "poster": 0.45
+  },
+  {
+    "id": "puddle",
+    "file": "41-puddle.svg",
+    "zh": "踩水坑",
+    "en": "Puddle hop",
+    "description": "轻轻跳进小水坑，溅出一圈圆圆的水花。",
+    "descriptionEn": "One small jump into a puddle makes a ring of round splashes.",
+    "duration": 2.6,
+    "poster": 0.45
+  },
+  {
+    "id": "balloon",
+    "file": "42-balloon.svg",
+    "zh": "气球旅行",
+    "en": "Balloon trip",
+    "description": "抓住气球绳，四只小爪子慢慢离开地面。",
+    "descriptionEn": "Hold the balloon string and float up with dangling feet.",
+    "duration": 3.6,
+    "poster": 0.45
+  },
+  {
+    "id": "popcorn",
+    "file": "43-popcorn.svg",
+    "zh": "爆米花雨",
+    "en": "Popcorn shower",
+    "description": "盯着爆米花，第一声响吓得弹一下，坐稳后笑着等下一颗。",
+    "descriptionEn": "Watch the popcorn, bounce at the first pop, then settle with a smile.",
+    "duration": 2.8,
+    "poster": 0.45
+  },
+  {
+    "id": "butterfly",
+    "file": "44-butterfly.svg",
+    "zh": "追蝴蝶",
+    "en": "Butterfly chase",
+    "description": "蹑手蹑脚追蝴蝶，蝴蝶又停到鼻尖附近。",
+    "descriptionEn": "Quiet little steps follow a butterfly that returns for a closer look.",
+    "duration": 2.8,
+    "poster": 0.45
+  },
+  {
+    "id": "paper-boat",
+    "file": "45-paper-boat.svg",
+    "zh": "纸船远航",
+    "en": "Paper boat",
+    "description": "轻推纸船下水，坐着目送它，挥挥爪祝它一路顺风。",
+    "descriptionEn": "Push the boat onto the water, watch it sail away, and wave goodbye.",
+    "duration": 3.2,
+    "poster": 0.45
+  },
+  {
+    "id": "stretch",
+    "file": "46-stretch.svg",
+    "zh": "四爪伸展",
+    "en": "Full stretch",
+    "description": "前爪伸出去，后爪稳稳撑住，舒服地拉伸，再慢慢收回来。",
+    "descriptionEn": "Reach the front paws out, brace the back feet, enjoy the stretch, then settle.",
+    "duration": 3.6,
+    "poster": 0.45
+  },
+  {
+    "id": "sneak",
+    "file": "47-sneak.svg",
+    "zh": "悄悄靠近",
+    "en": "Sneaking up",
+    "description": "压低身子悄悄迈两步，忽然瞄到你，停住假装什么也没做。",
+    "descriptionEn": "Creep forward in two small steps, spot you watching, and freeze innocently.",
+    "duration": 3.2,
+    "poster": 0.45
+  },
+  {
+    "id": "dance",
+    "file": "48-dance.svg",
+    "zh": "方块舞步",
+    "en": "Cube shuffle",
+    "description": "一只脚站稳，另一只脚轻轻点拍，左右摆爪扭腰，跳一支小舞。",
+    "descriptionEn": "Plant one foot while the other taps the beat, alternating paws and a gentle sway.",
+    "duration": 2.4,
+    "poster": 0.45
+  },
+  {
+    "id": "portal",
+    "file": "49-portal.svg",
+    "zh": "方块任意门",
+    "en": "Cube portal",
+    "description": "从发光的小门后探头，再一小步跨出来。",
+    "descriptionEn": "Peek through a glowing little doorway and step out.",
+    "duration": 3.2,
+    "poster": 0.45
+  },
+  {
+    "id": "moon-hug",
+    "file": "50-moon-hug.svg",
+    "zh": "抱月亮晚安",
+    "en": "Goodnight moon",
+    "description": "抱住一弯月亮，闭上眼睛慢慢睡着。",
+    "descriptionEn": "Hug a crescent moon and drift gently into sleep.",
+    "duration": 4,
+    "poster": 0.45
+  },
+  {
+    "id": "cube-pop",
+    "file": "51-cube-pop.svg",
+    "zh": "魔方 POP 了",
+    "en": "Cube POP",
+    "description": "刚转两下，棱块突然弹出！愣一下，伸爪接回去，再害羞地看你一眼。",
+    "descriptionEn": "Two quick turns eject an edge! Pause in surprise, catch it back into place, then share a sheepish look.",
+    "duration": 3.4,
+    "poster": 0.6
+  }
+]

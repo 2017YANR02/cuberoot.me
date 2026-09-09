@@ -5,6 +5,7 @@
 
 import { CLAWD_AVATAR_PRESETS } from '@cuberoot/shared/account-avatar';
 import { PLAYTIME_SCENES } from './deskpet-playtime';
+import { ROOTBEAST_BASE, ROOTBEAST_SCENES, ROOTBEAST_VERSION } from './deskpet-rootbeast';
 
 export interface PetAnim {
   file: string;
@@ -38,6 +39,10 @@ export interface PetGalleryGroup {
 }
 
 export const PET_GALLERY: PetGalleryGroup[] = [
+  {
+    id: 'rootbeast', zh: '根号兽', en: 'Root Beast',
+    base: ROOTBEAST_BASE, v: ROOTBEAST_VERSION, anims: ROOTBEAST_SCENES,
+  },
   {
     id: 'cubing', zh: '魔方秀 Cube Show', en: 'Cube Show', base: '/deskpet/cubing/', v: '3', scale: 1.85, scaleOrigin: 'center 82%',
     anims: [

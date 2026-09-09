@@ -12,6 +12,7 @@ import { createBundStreets, createShanghaiQuays } from '@/app/[lang]/space/space
 import { createShanghaiSupertalls } from '@/app/[lang]/space/space-shanghai-supertalls';
 import { shanghaiWindowTexture } from '@/app/[lang]/space/space-shanghai-facades';
 import { ShanghaiTraffic, shanghaiTrafficTracks, sampleShanghaiTraffic } from '@/app/[lang]/space/space-shanghai-traffic';
+import { ShanghaiFacadeLighting } from '@/app/[lang]/space/space-shanghai-lighting';
 
 const windows = new THREE.Texture();
 
@@ -27,6 +28,94 @@ const inside = (x: number, z: number, ring: number[][]) => {
 };
 
 describe('Shanghai geographic asset and river cruise', () => {
+  it('initializes dormant shadow samplers and keeps facade lamps fixed during camera movement', () => {
+    const pool = new ShanghaiFacadeLighting(false);
+    expect(pool.lights).toHaveLength(6);
+    for (const light of pool.lights) {
+      expect(light.shadow.needsUpdate).toBe(true);
+      expect(light.shadow.autoUpdate).toBe(false);
+      expect(light.shadow.mapSize.toArray()).toEqual([1024, 1024]);
+    }
+    const building = new THREE.Group();
+    building.position.set(100, 0, 200); building.rotation.y = Math.PI / 2;
+    building.userData.facadeLighting = { width: 80, height: 30 };
+    const material = new THREE.MeshStandardMaterial(); material.userData.bundStone = true;
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(80, 30, 1), material);
+    building.add(wall); pool.register(building);
+    expect(new Set(wall.geometry.getAttribute('bundBuildingId').array)).toEqual(new Set([1]));
+    expect(new Set(wall.geometry.getAttribute('bundLightTop').array)).toEqual(new Set([30]));
+    const camera = new THREE.PerspectiveCamera(); camera.position.set(0, 20, 200); camera.lookAt(100, 15, 200);
+    expect(pool.update(camera, 1)).toBe(true);
+    expect(pool.active.value.toArray()).toEqual([1, 1]);
+    expect(pool.lights[0].position.toArray()).toEqual([88, 5.5, 230]);
+    const positions = pool.lights.map(light => light.position.toArray());
+    pool.lights.forEach(light => { light.shadow.needsUpdate = false; });
+    camera.position.x += 1;
+    expect(pool.update(camera, 1)).toBe(false);
+    expect(pool.lights.map(light => light.position.toArray())).toEqual(positions);
+    expect(pool.lights.every(light => !light.shadow.needsUpdate)).toBe(true);
+    camera.lookAt(-100, 20, 200);
+    pool.update(camera, 1);
+    expect(pool.active.value.toArray()).toEqual([-1, 0]);
+    expect(pool.lights.every(light => light.intensity === 0)).toBe(true);
+    camera.lookAt(100, 15, 200); pool.update(camera, NaN);
+    expect(pool.lights.every(light => light.intensity === 0)).toBe(true);
+    expect(pool.update(camera, .5)).toBe(true);
+    pool.dispose(); expect(pool.root.children).toHaveLength(0);
+    wall.geometry.dispose(); material.dispose();
+  });
+
+  it('fades frontage lighting before the aerial view and rejects invalid building dimensions', () => {
+    const pool = new ShanghaiFacadeLighting(true), root = new THREE.Group();
+    for (const width of [0, -1, NaN, Infinity]) {
+      const invalid = new THREE.Group(); invalid.userData.facadeLighting = { width, height: 30 }; root.add(invalid);
+    }
+    const building = new THREE.Group(); building.userData.facadeLighting = { width: 60, height: 30 }; root.add(building);
+    pool.register(root);
+    const camera = new THREE.PerspectiveCamera(); camera.position.set(0, 15, -235); camera.lookAt(0, 15, 0);
+    pool.update(camera, 1);
+    expect(pool.active.value.toArray()).toEqual([1, .5]);
+    expect(pool.lights[0].shadow.mapSize.x).toBe(512);
+    camera.position.z = -321; pool.update(camera, 1);
+    expect(pool.active.value.toArray()).toEqual([-1, 0]);
+    expect(pool.lights).toHaveLength(6);
+    pool.dispose();
+  });
+
+  it('lights the photographed HSBC crown from the roof and releases those lights at the next building', () => {
+    const pool = new ShanghaiFacadeLighting(false), root = new THREE.Group();
+    const crown = new THREE.Group(); crown.userData.facadeLighting = { width: 83, height: 29.4, crown: { height: 41, depth: 4.7, width: 22 } }; root.add(crown);
+    const plain = new THREE.Group(); plain.position.x = 500; plain.userData.facadeLighting = { width: 40, height: 20 }; root.add(plain);
+    pool.register(root);
+    const camera = new THREE.PerspectiveCamera(); camera.position.set(0, 20, -100); camera.lookAt(0, 20, 0);
+    pool.update(camera, 1);
+    expect(pool.lights[4].position.toArray()).toEqual([-22, 33, -9]);
+    expect(pool.lights[5].position.toArray()).toEqual([22, 33, -9]);
+    expect(pool.lights[4].target.position.toArray()).toEqual([0, 41, 4.7]);
+    expect(pool.lights[4].intensity).toBe(1300);
+    camera.position.x = 500; camera.lookAt(500, 10, 0); pool.update(camera, 1);
+    expect(pool.active.value.x).toBe(2);
+    expect(pool.lights.slice(4).map(light => light.intensity)).toEqual([0, 0]);
+    pool.dispose();
+  });
+
+  it('illuminates the building being inspected instead of a nearer side building', () => {
+    const pool = new ShanghaiFacadeLighting(false), root = new THREE.Group();
+    for (const [x, y, z, width, height] of [[-1259.5, 0, 1780.3, 21.63, 13.8], [-1277.3, 0, 1716.3, 83.45, 29.4]]) {
+      const building = new THREE.Group(); building.position.set(x, y, z);
+      building.userData.facadeLighting = { width, height }; root.add(building);
+    }
+    pool.register(root);
+    const camera = new THREE.PerspectiveCamera(); camera.position.set(-1169, 23.5, 1765);
+    camera.lookAt(-1259.5, 6.9, 1780.3); pool.update(camera, 1);
+    expect(pool.active.value.x).toBe(1);
+    expect(pool.lights[0].intensity).toBeCloseTo(127.74715398442, 6);
+    camera.lookAt(-1302, 20, 1718); pool.update(camera, 1);
+    expect(pool.active.value.x).toBe(2);
+    expect(pool.lights[0].intensity).toBe(1050);
+    pool.dispose();
+  });
+
   it('bundles every inscription glyph with finite, bounded raised lettering', () => {
     const font = new FontLoader().parse(JSON.parse(readFileSync(new URL('../public/assets/space/shanghai-v1/sign-font.json', import.meta.url), 'utf8')));
     expect(Object.keys(font.data.glyphs)).toHaveLength(70);

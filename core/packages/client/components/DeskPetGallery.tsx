@@ -4,9 +4,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Boxes, ArrowLeft, ArrowRight, Play, Pause, RotateCcw } from 'lucide-react';
+import { X, ArrowLeft, ArrowRight, Play, Pause, RotateCcw } from 'lucide-react';
 import { PET_GALLERY } from '@/lib/deskpet-gallery';
-import { getPlaytimeScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
+import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
+import { ROOTBEAST_COLLECTIONS, ROOTBEAST_SCENES } from '@/lib/deskpet-rootbeast';
+import { CompactSelect } from '@/components/CompactSelect';
 import { tr } from '@/i18n/tr';
 
 const CSS = `
@@ -20,26 +22,21 @@ const CSS = `
 .deskpet-gallery-title{margin:0 0 4px;font-size:1.05rem;font-weight:600;color:var(--foreground);text-align:center;}
 .deskpet-gallery-sub{margin:0 0 12px;font-size:.78rem;color:var(--muted-foreground);text-align:center;}
 .deskpet-gallery h3{margin:18px 0 10px;font-size:.82rem;color:var(--muted-foreground);font-weight:600;}
+.deskpet-gallery-collection{margin-bottom:12px;}
+/* anchored-panel: clamped (CompactSelect body portal and visualViewport bounds) */
+.deskpet-gallery-collection-menu{z-index:100050;}
 .deskpet-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
   column-gap:6px;row-gap:2px;}
-/* PLL 表演 launcher — a real interactive 3D cube, set apart from the static tiles.
-   Spans the whole grid row, accent-tinted, so it reads as a button not a thumbnail. */
-.deskpet-gallery-launch{grid-column:1/-1;display:flex;align-items:center;gap:10px;
-  width:100%;margin:0 0 8px;padding:12px 14px;cursor:pointer;text-align:left;
-  background:color-mix(in srgb, var(--accent) 14%, var(--card));
-  border:1px solid color-mix(in srgb, var(--accent) 40%, var(--border-default));
-  border-radius:12px;color:var(--foreground);}
-.deskpet-gallery-launch:hover{background:color-mix(in srgb, var(--accent) 22%, var(--card));
-  border-color:var(--accent);}
-.deskpet-gallery-launch svg{flex:none;color:var(--accent);}
-.deskpet-gallery-launch-text{display:flex;flex-direction:column;gap:1px;}
-.deskpet-gallery-launch-title{font-size:.86rem;font-weight:600;line-height:1.2;}
-.deskpet-gallery-launch-sub{font-size:.72rem;color:var(--muted-foreground);line-height:1.2;}
 .deskpet-gallery figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:0;padding:0;}
 /* square media cell; clips per-group scale (sprites are authored small with motion
    headroom) so a zoomed figure can't bleed onto its caption or neighbours. */
 .deskpet-gallery-media{width:100%;aspect-ratio:1/1;overflow:hidden;display:flex;}
 .deskpet-gallery-media img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;}
+.deskpet-gallery section[data-pet=rootbeast] img{image-rendering:auto;}
+/* Keep dark paws and the radical tail readable in every site theme. */
+.deskpet-gallery section[data-pet=rootbeast] .deskpet-gallery-media,
+.deskpet-story[data-pet=rootbeast] .deskpet-story-art{
+  background:color-mix(in srgb, var(--popover) 18%, white);border-radius:12px;}
 /* color-scheme:normal stops the object inheriting the page color-scheme (light dark);
    otherwise Chrome paints the embedded SVG doc an opaque white canvas on OS-light
    machines (visible as white tiles behind the clouds in dark mode). */
@@ -71,7 +68,7 @@ const CSS = `
 `;
 
 function PlaytimePreview({ scene, onStep, onPerform }: {
-  scene: typeof PLAYTIME_SCENES[number]; onStep: (delta: number) => void; onPerform: () => void;
+  scene: NonNullable<ReturnType<typeof getDeskPetScene>>; onStep: (delta: number) => void; onPerform: () => void;
 }) {
   const animations = useRef<Animation[]>([]);
   const [paused, setPaused] = useState(false);
@@ -95,7 +92,7 @@ function PlaytimePreview({ scene, onStep, onPerform }: {
     return () => clearInterval(timer);
   }, [ready, paused, scene.durationMs]);
   return (
-    <div className="deskpet-story">
+    <div className="deskpet-story" data-pet={scene.character}>
       <object
         className="deskpet-story-art" type="image/svg+xml" data={scene.src} aria-label={tr(scene)} tabIndex={-1}
         onLoad={(event) => {
@@ -126,7 +123,7 @@ function PlaytimePreview({ scene, onStep, onPerform }: {
       </div>
       <div className="deskpet-story-controls">
         <button type="button" className="deskpet-story-perform" onClick={onPerform}>
-          <Play size={16} />{tr({ zh: '让螃蟹表演', en: 'Play on the crab' })}
+          <Play size={16} />{tr({ zh: '让桌宠表演', en: 'Play on the pet' })}
         </button>
       </div>
     </div>
@@ -135,22 +132,35 @@ function PlaytimePreview({ scene, onStep, onPerform }: {
 
 export default function DeskPetGallery({ lang, onClose }: { lang: 'zh' | 'en'; onClose: () => void }) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [collectionId, setCollectionId] = useState('all');
   const panelRef = useRef<HTMLDivElement>(null);
-  const scene = getPlaytimeScene(selected);
+  const collection = ROOTBEAST_COLLECTIONS.find(item => item.id === collectionId);
+  const rootBeastScenes = collection
+    ? ROOTBEAST_SCENES.filter(item => collection.sceneIds.includes(item.id))
+    : ROOTBEAST_SCENES;
+  const scene = getDeskPetScene(selected);
   const step = (delta: number) => {
-    const index = PLAYTIME_SCENES.findIndex((item) => item.state === selected);
-    setSelected(PLAYTIME_SCENES[(index + delta + PLAYTIME_SCENES.length) % PLAYTIME_SCENES.length].state);
+    const scenes = scene?.character === 'rootbeast' ? rootBeastScenes : PLAYTIME_SCENES;
+    if (!scenes.length) return;
+    const index = scenes.findIndex((item) => item.state === selected);
+    setSelected(scenes[(index + delta + scenes.length) % scenes.length].state);
   };
 
   useEffect(() => {
     const previous = document.activeElement;
     panelRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
     const onKey = (e: KeyboardEvent) => {
+      const menu = document.querySelector('.deskpet-gallery-collection-menu');
       if (e.key === 'Escape') {
+        // The shared select dismisses its portal before this dialog closes.
+        if (menu) return;
         e.preventDefault(); e.stopImmediatePropagation();
         if (selected) setSelected(null); else onClose();
       } else if (e.key === 'Tab') {
-        const items = Array.from(panelRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled)') ?? []);
+        const items = [
+          ...Array.from(panelRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled)') ?? []),
+          ...Array.from(menu?.querySelectorAll<HTMLElement>('button:not(:disabled)') ?? []),
+        ];
         const target = e.shiftKey ? items.at(-1) : items[0];
         if ((e.shiftKey && document.activeElement === items[0]) || (!e.shiftKey && document.activeElement === items.at(-1))) {
           e.preventDefault(); target?.focus();
@@ -176,34 +186,28 @@ export default function DeskPetGallery({ lang, onClose }: { lang: 'zh' | 'en'; o
           {tr({ zh: '点选动画预览；打开桌宠「随机」可自动播放。', en: 'Select an animation to preview, or turn on Random in the pet toolbar for automatic playback.' })}
         </p>
         {scene ? <>
-          <div className="deskpet-story-controls"><button type="button" onClick={() => setSelected(null)}><ArrowLeft size={15} />{tr({ zh: '所有动画', en: 'All animations' })}</button></div>
+          <div className="deskpet-story-controls"><button type="button" onClick={() => setSelected(null)}><ArrowLeft size={15} />{scene.character === 'rootbeast' && collection ? tr(collection) : tr({ zh: '所有动画', en: 'All animations' })}</button></div>
           <PlaytimePreview key={scene.state} scene={scene} onStep={step} onPerform={() => {
             onClose();
             window.dispatchEvent(new CustomEvent('clawd:state', { detail: scene.state }));
           }} />
         </> : PET_GALLERY.map((g) => (
-          <section key={g.id}>
+          <section key={g.id} data-pet={g.id}>
             <h3>{tr(g)}</h3>
+            {g.id === 'rootbeast' && <CompactSelect
+              className="deskpet-gallery-collection"
+              popupClassName="deskpet-gallery-collection-menu"
+              ariaLabel={tr({ zh: '根号兽表情分期', en: 'Root Beast sticker collection' })}
+              label={collection ? tr(collection) : tr({ zh: '全部', en: 'All' })}
+              value={collectionId}
+              onChange={setCollectionId}
+              items={[
+                { value: 'all', label: tr({ zh: '全部', en: 'All' }) },
+                ...ROOTBEAST_COLLECTIONS.map(item => ({ value: item.id, label: tr(item) })),
+              ]}
+            />}
             <div className="deskpet-gallery-grid">
-              {g.id === 'cubing' && (
-                <button
-                  type="button"
-                  className="deskpet-gallery-launch"
-                  onClick={() => {
-                    onClose();
-                    window.dispatchEvent(new CustomEvent('clawd:perform'));
-                  }}
-                >
-                  <Boxes size={26} />
-                  <span className="deskpet-gallery-launch-text">
-                    <span className="deskpet-gallery-launch-title">{tr({ zh: 'PLL 表演', en: 'PLL Show' })}</span>
-                    <span className="deskpet-gallery-launch-sub">
-                      {tr({ zh: '点击启动真实 3D 魔方表演', en: 'Launch the interactive 3D cube' })}
-                    </span>
-                  </span>
-                </button>
-              )}
-              {g.anims.map((a) => {
+              {(g.id === 'rootbeast' ? rootBeastScenes : g.anims).map((a) => {
                 const zoom = g.scale
                   ? { transform: `scale(${g.scale})`, transformOrigin: g.scaleOrigin || 'center' }
                   : undefined;

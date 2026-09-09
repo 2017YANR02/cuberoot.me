@@ -69,8 +69,7 @@ export interface SimMountOpts {
    */
   onRendered?: (world: World) => void;
   /**
-   * 画布尺寸。默认取 host 的 client box;返回别的尺寸就按它渲染(PLL 表演浮层的
-   * 立方体只占舞台的一小块,舞台还要留给桌宠的身体和爪子)。
+   * 画布尺寸。默认取 host 的 client box;可返回自定义尺寸用于局部画布。
    */
   measure?: (host: HTMLElement) => { width: number; height: number };
 }

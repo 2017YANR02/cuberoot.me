@@ -398,7 +398,7 @@ export class SpaceScene {
         else if (e.turning) { e.turning = false; this.apply(e, e.data); }
       }
       this.room?.update(this.camera, !this.freeCamera && ['home', 'front', 'side', 'top'].includes(this.currentView));
-      this.city?.update(time, this.weatherMotion && !this.reducedMotion.matches, this.camera, this.orbit.target);
+      if (this.city?.update(time, this.weatherMotion && !this.reducedMotion.matches, this.camera, this.orbit.target)) this.shadowDirty = true;
       this.reportZoom();
       this.reportAltitude();
       if ((this.city?.cruising || this.navigation === 'drone') && this.sun.target.position.distanceToSquared(this.orbit.target) > 250000) {

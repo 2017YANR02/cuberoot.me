@@ -1,0 +1,71 @@
+{
+  "source": "Approved CubeRoot B2 artwork, palette sampled from pixels and paths traced with VTracer 0.6.12",
+  "palette": [
+    "#fc1b25",
+    "#0085fd",
+    "#2a2d36",
+    "#fefbfa"
+  ],
+  "parts": {
+    "body": {
+      "width": 530,
+      "height": 368,
+      "crop": [
+        33,
+        99,
+        563,
+        467
+      ]
+    },
+    "tail": {
+      "width": 321,
+      "height": 292,
+      "crop": [
+        604,
+        144,
+        925,
+        436
+      ]
+    },
+    "paw": {
+      "width": 275,
+      "height": 250,
+      "crop": [
+        1024,
+        196,
+        1299,
+        446
+      ]
+    },
+    "rear": {
+      "width": 221,
+      "height": 278,
+      "crop": [
+        1471,
+        163,
+        1692,
+        441
+      ]
+    },
+    "eye": {
+      "width": 192,
+      "height": 204,
+      "crop": [
+        169,
+        585,
+        361,
+        789
+      ]
+    },
+    "blink": {
+      "width": 220,
+      "height": 105,
+      "crop": [
+        595,
+        661,
+        815,
+        766
+      ]
+    }
+  }
+}

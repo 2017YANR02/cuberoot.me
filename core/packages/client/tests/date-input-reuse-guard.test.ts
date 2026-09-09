@@ -32,7 +32,8 @@ describe('date-only controls reuse DateInput / DateRangeInput', () => {
   it('keeps the Web DateInput path as a thin shared-component wrapper', () => {
     const source = readFileSync(join(CLIENT_ROOT, 'components/DateInput.tsx'), 'utf8');
     expect(scanRawDateInputs(source)).toHaveLength(0);
-    expect(source).toContain("from '@cuberoot/timer-ui'");
+    expect(source).toContain("from '@cuberoot/timer-ui/date-input'");
+    expect(source).toContain("import '@cuberoot/timer-ui/date-input.css'");
     expect(source).toContain('<SharedDateInput');
   });
 

@@ -953,5 +953,70 @@
     "date": "2026-08-26",
     "zh": "站点目录改为主题优先筛选 + 公开反馈支持固定链接 + 论坛动态统计可直接进入对应内容 + 教程维护期间锁定页面 + 首页卡片改用共享布局并修正中等宽度网格",
     "en": "The site directory adopts topic-first filtering + public feedback gains permalinks + forum activity statistics link directly to matching content + tutorial pages lock during maintenance + home-page cards share one layout with corrected medium-width grids"
+  },
+  {
+    "date": "2026-08-27",
+    "zh": "好友关系与创作者档案上线 + 微信群目录上线 + 老师学员名单支持无 WCA ID 学员与成绩排序 + 智能魔方连接提速",
+    "en": "Friend relationships and creator profiles launch + a WeChat group directory launches + teacher rosters support students without WCA IDs and result sorting + smart-cube connections become faster"
+  },
+  {
+    "date": "2026-08-28",
+    "zh": "联系方式与微信群合并为联系页 + 学员成绩分享页上线 + Android 与 iOS 共用计时界面和网页登录 + 会员加入银行卡支付入口",
+    "en": "Contact details and WeChat groups merge into one page + student result sharing launches + Android and iOS share timer UI and web login + membership adds hosted card payment"
+  },
+  {
+    "date": "2026-08-29",
+    "zh": "十字最优阶段训练独立入口上线 + 会员方案加入企业权益与实体课包兑换码 + 外观设置支持悬停预览 + 求解器按内存选择表配置",
+    "en": "Optimal stage training gains a dedicated Cross entry + membership adds enterprise benefits and physical course bundle codes + appearance settings support hover previews + solvers select table profiles by memory"
+  },
+  {
+    "date": "2026-08-30",
+    "zh": "私人云盘支持断点续传 + SQ2 与 SQ4 模拟器上线 + SQ1 EP 公式库补齐奇偶分类 + WCA 成绩加入衍生指标排行 + 赞助认领上线",
+    "en": "Private Drive adds resumable transfers + SQ2 and SQ4 simulators launch + the SQ1 EP catalog gains complete parity categories + WCA results add derived-metric rankings + supporter claims launch"
+  },
+  {
+    "date": "2026-08-31",
+    "zh": "五端应用统一共享产品层 + 计时器共用本地对战与成绩记录 + 云盘支持可撤销分享链接 + 论坛支持嵌入模拟器",
+    "en": "Five installed clients adopt one shared product layer + timers share local battle and solve history + Drive adds revocable share links + forum posts embed the simulator"
+  },
+  {
+    "date": "2026-09-01",
+    "zh": "私密保险箱上线 + 小程序增加抖音目标 + 课程接入抖音订单同步 + 计时器跨端复用成绩详情与智能魔方引导 + 账号支持手机验证重置密码",
+    "en": "The private vault launches + the Mini Program adds a Douyin target + courses integrate Douyin order synchronization + timers share solve details and smart-cube guidance across clients + accounts support verified-phone password resets"
+  },
+  {
+    "date": "2026-09-02",
+    "zh": "全站音乐播放器上线 + 侧面颜色顺序训练上线 + 用户管理与增长概览上线 + 教学二维码卡片制作与落地页补齐 + 计时器跨端共享 WCA 练习进度和随机难度",
+    "en": "The site-wide music player launches + side-colour order training launches + user management and growth dashboards launch + teaching QR card design and landing pages expand + timers share WCA practice progress and random difficulty across clients"
+  },
+  {
+    "date": "2026-09-03",
+    "zh": "架构页加入交互地图 + 音乐库支持会员上传与独立管理页 + 旧教程迁入归档入口 + 账号加入私密姓名 + 应用启动诊断补齐",
+    "en": "Architecture gains an interactive atlas + the music library adds member uploads and a management page + legacy tutorials move to an archive + accounts add private full names + installed apps gain startup diagnostics"
+  },
+  {
+    "date": "2026-09-04",
+    "zh": "会员相册与枫叶动画教程上线 + 账号支持自助合并与同设备微信登录 + 会员获得固定编号 + 计时器排名显示可选 + WCA 加入连续刷新个人纪录统计",
+    "en": "The member gallery and animated Ivy tutorial launch + accounts add self-service merging and same-device WeChat login + members receive stable IDs + timer rank display becomes selectable + WCA adds personal-record streak statistics"
+  },
+  {
+    "date": "2026-09-05",
+    "zh": "三维空间上线 + WCA 选手页展示个人纪录并改进成绩排序 + 计时器复用底色选择器",
+    "en": "The 3D space launches + WCA profiles show personal records and improve result sorting + the timer reuses the base-colour picker"
+  },
+  {
+    "date": "2026-09-06",
+    "zh": "云盘加入共享文件夹与云端 AV1 压缩 + 复盘记录拿起和放下魔方用时 + WCA 选手页加入大满贯成就奖章",
+    "en": "Drive adds shared folders and cloud AV1 compression + reconstructions record cube pickup and putdown durations + WCA profiles add grand slam achievement medals"
+  },
+  {
+    "date": "2026-09-07",
+    "zh": "WCA 成就图鉴上线 + 三维空间加入上海场景 + 课程绑定云盘视频并按章节展示 + 二阶公式按 Ortega、EG 与 TEG 方法分组",
+    "en": "The WCA achievement directory launches + the 3D space adds Shanghai scenes + courses bind Drive videos and group lessons into sections + 2x2 algorithms are organized by Ortega, EG and TEG methods"
+  },
+  {
+    "date": "2026-09-08",
+    "zh": "双语交互式层先法教程上线 + WCA 纪录成就加入里程碑等级 + 三维空间补充沿路车流和滨江灯光 + 公式界面统一播放控制",
+    "en": "The bilingual interactive layer-by-layer tutorial launches + WCA record achievements gain milestone tiers + the 3D space adds road traffic and promenade lighting + algorithm views unify playback controls"
   }
 ]

@@ -15,6 +15,9 @@
     },
     "runtime": {
       ".": "react-dom",
+      "./clear-button": "react-dom",
+      "./date-input": "react-dom",
+      "./date-input.css": "react-dom",
       "./compact-select": "react-dom",
       "./compact-select.css": "react-dom",
       "./country-flag": "react-dom",
@@ -27,6 +30,9 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./clear-button": "./src/ClearButton.tsx",
+    "./date-input": "./src/DateInput.tsx",
+    "./date-input.css": "./src/date-input.css",
     "./compact-select": "./src/CompactSelect.tsx",
     "./compact-select.css": "./src/compact-select.css",
     "./country-flag": "./src/CountryFlag.tsx",
