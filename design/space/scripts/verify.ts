@@ -131,7 +131,54 @@ try {
         if (Math.abs(height - 35.11) > .03) throw new Error('Asia old triangular roof remains or cap lost');
         authoredEntrances = {revision: entranceRevision, buildings: 2, surfaceRays: 11, asiaHeight: height, canopyProjection: club.userData.spaceBundEntranceDetail.canopyProjection};
       }
-      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks, authoredEntrances});
+      let authoredGalleries: unknown = null;
+      if (asia?.userData.spaceBundGalleryRevision || club?.userData.spaceBundGalleryRevision) {
+        const galleryRevision = 'bund-galleries-20260909';
+        if (asia?.userData.spaceBundGalleryRevision !== galleryRevision || club?.userData.spaceBundGalleryRevision !== galleryRevision) throw new Error('Bund gallery revision mismatch');
+        let surfaceRays = 0;
+        const cast = (building: THREE.Object3D, start: THREE.Vector3, direction: THREE.Vector3, far = 60) => {
+          surfaceRays++;
+          return new THREE.Raycaster(start.applyMatrix4(building.matrixWorld), direction.transformDirection(building.matrixWorld), 0, far).intersectObject(building, true)[0];
+        };
+        const front = (building: THREE.Object3D, x: number, height: number, far = 60) => cast(building, new THREE.Vector3(x, height, -10), new THREE.Vector3(0, 0, 1), far);
+        const recesses: number[] = [];
+        const glazing = (building: THREE.Object3D, x: number, height: number, depth: number) => {
+          const hit = front(building, x, height);
+          if (hit?.object.userData.spaceBundGalleryPart !== 'glass') throw new Error(`Gallery opening blocked: ${building.userData.spaceId} at ${x}, ${height}; hit ${hit?.object.userData.spaceId}`);
+          const measured = building.worldToLocal(hit.point.clone()).z;
+          if (Math.abs(measured - depth) > .025) throw new Error(`Gallery glazing not recessed: ${measured}`);
+          recesses.push(measured);
+        };
+        // Probe all new windows through the exported colonnades and balconies.
+        // A front pane, remaining old window, or filled arch must fail here.
+        for (const x of [-5.76, 0, 5.76]) {
+          for (const bottom of [9.08, 13.08, 17.08, 21.6, 25.78]) glazing(asia, x + .31, bottom + 1.43, 2.7525);
+        }
+        for (let i = 0; i < 5; i++) {
+          const x = (i - 2) * club.userData.frontage * .64 / 5;
+          for (const bottom of [9.65, 16]) glazing(club, x + .31, bottom + 1.43, 1.8525);
+        }
+        // The colonnade stands in front of the wall; verify both surfaces.
+        const column = front(club, 1.9, 12.2);
+        if (column?.object.userData.spaceBundGalleryPart !== 'columns') throw new Error(`Club foreground column missing: hit ${column?.object.userData.spaceId}`);
+        const pier = front(club, 1.6, 12.2);
+        if (pier?.object.userData.spaceBundGalleryPart !== 'stone') throw new Error(`Club back wall between windows missing: hit ${pier?.object.userData.spaceId}`);
+        for (const side of [-1, 1]) {
+          if (front(club, side * club.userData.frontage * .37 + .2, 25.3, 16)) throw new Error('Club lantern arch is filled');
+        }
+        // Downward rays catch inverted slab/roof faces invisible to the camera.
+        for (const height of [21.38, 25.50]) {
+          const hit = cast(asia, new THREE.Vector3(.31, height + 2, -.3), new THREE.Vector3(0, -1, 0));
+          if (hit?.object.userData.spaceBundGalleryPart !== 'trim' || Math.abs(asia.worldToLocal(hit.point.clone()).y - height) > .02) throw new Error('Asia balcony upper surface missing');
+        }
+        for (const depth of [12, 35, 50]) {
+          const hit = cast(club, new THREE.Vector3(.31, 32, depth), new THREE.Vector3(0, -1, 0));
+          if (hit?.object.userData.spaceBundGalleryPart !== 'roof') throw new Error(`Club roof missing at depth ${depth}`);
+        }
+        authoredGalleries = {revision: galleryRevision, buildings: 2, surfaceRays, recessedWindows: recesses.length,
+          glassDepthMin: Math.min(...recesses), glassDepthMax: Math.max(...recesses), estimatedDimensions: true};
+      }
+      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks, authoredEntrances, authoredGalleries});
       city.dispose(); continue;
     }
     const [style, env] = key.split('-') as [RoomStyle, Environment];
