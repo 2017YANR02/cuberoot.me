@@ -1,6 +1,7 @@
 'use client';
 
-import { CheckCircle2, Clock3, MessageCircleQuestion, Mic2, MoveRight, Radio } from 'lucide-react';
+import { useRef } from 'react';
+import { CheckCircle2, ChevronDown, Clock3, List, MessageCircleQuestion, Mic2, MoveRight, Radio } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import type { LiveScriptCueKind, TeacherLiveScript } from '@/lib/teacher-live-scripts-api';
@@ -13,6 +14,7 @@ const cueLabels: Record<LiveScriptCueKind, { zh: string; en: string }> = {
 };
 
 export default function LiveScriptDocument({ script }: { script: TeacherLiveScript }) {
+  const contentsRef = useRef<HTMLDetailsElement>(null);
   const title = tr({ zh: script.titleZh, en: script.titleEn });
   const summary = tr({ zh: script.summaryZh, en: script.summaryEn });
   const author = tr({ zh: script.teacher.nameZh, en: script.teacher.nameEn });
@@ -35,13 +37,27 @@ export default function LiveScriptDocument({ script }: { script: TeacherLiveScri
         </section>}
       </div>
 
-      <nav className="live-script-nav" aria-label={tr({ zh: '直播流程', en: 'Livestream flow' })}><div className="live-script-nav-inner">
-        {script.content.sections.map((section, index) => <a key={section.id} href={`#${section.id}`}><span>{String(index + 1).padStart(2, '0')}</span>{tr(section.title).split('：')[0].split(':')[0]}</a>)}
-      </div></nav>
+      {script.content.sections.length > 0 && <nav className="live-script-nav" aria-label={tr({ zh: '直播流程', en: 'Livestream flow' })}>
+        <details ref={contentsRef} className="live-script-nav-inner" onKeyDown={(event) => {
+          if (event.key === 'Escape' && contentsRef.current?.open) {
+            contentsRef.current.open = false;
+            contentsRef.current.querySelector('summary')?.focus();
+          }
+        }}>
+          <summary><List size={17} aria-hidden /><span>{tr({ zh: '章节目录', en: 'Contents' })}</span><ChevronDown className="live-script-nav-chevron" size={16} aria-hidden /></summary>
+          <div className="live-script-nav-links">
+            {script.content.sections.map((section, index) => <a key={section.id} href={`#${section.id}`} onClick={(event) => {
+              if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && contentsRef.current) {
+                contentsRef.current.open = false;
+              }
+            }}><span>{String(index + 1).padStart(2, '0')}</span>{tr(section.title)}</a>)}
+          </div>
+        </details>
+      </nav>}
 
       <div className="live-script-wrap live-script-flow">
         <div className="live-script-flow-heading"><Mic2 aria-hidden size={20} /><h2>{tr({ zh: '正式话术', en: 'Full script' })}</h2><p>{tr({ zh: '正文可直接说，标签内容是现场提示。', en: 'Read the main text aloud; labelled lines are cues.' })}</p></div>
-        {script.content.sections.map((section, sectionIndex) => <section key={section.id} id={section.id} className="live-script-segment">
+        {script.content.sections.map((section, sectionIndex) => <section key={section.id} id={section.id} tabIndex={-1} className="live-script-segment">
           <div className="live-script-segment-meta"><span className="live-script-number">{String(sectionIndex + 1).padStart(2, '0')}</span>{tr(section.duration) && <p className="live-script-duration"><Clock3 aria-hidden size={14} />{tr(section.duration)}</p>}</div>
           <div className="live-script-segment-content"><header><h2>{tr(section.title)}</h2>{tr(section.goal) && <p>{tr(section.goal)}</p>}</header><div className="live-script-beats">
             {section.beats.map((beat, beatIndex) => beat.kind === 'say'
