@@ -179,6 +179,10 @@ Skill 路径按 catalog 的 root alias 展开,禁猜路径。
 
 主题命中 trigger 时主动调对应 skill,不凭记忆(描述已由 harness 加载,不在此列索引)。
 
+## Space / Blender
+
+Space 的 `.blend` 源工程及必要原始贴图纳入版本管理时必须使用 Git LFS，禁普通 Git 强制加入；`.blend1`、缓存和临时渲染不入库；当前暂缓 LFS 配置与资产上传，后续编辑先读 `design/space/README.md` 和 `docs/space-blender-tracker.md`。
+
 ## 造求解器 loop
 
 `/loop 继续造求解器`(或"造求解器")= 读 `solver/SOLVER_LOOP.md` 全文,按 §0 推进 §1 backlog 下一个未完成单元。
