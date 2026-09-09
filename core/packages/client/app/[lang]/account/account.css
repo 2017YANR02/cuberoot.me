@@ -95,6 +95,23 @@
 }
 
 /* 入口卡片:双列,整块可点。 */
+.account-subscribe {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.account-subscribe:hover { filter: brightness(1.08); }
+.account-subscribe:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+
 .account-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
