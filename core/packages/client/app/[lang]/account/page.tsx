@@ -871,7 +871,15 @@ export default function AccountPage() {
       ) : (
         <>
           <div className="account-id-row">
-            <AccountName name={user?.name || ''} wcaId={wcaId} />
+            <div className="account-name-row">
+              <AccountName name={user?.name || ''} wcaId={wcaId} />
+              {view !== 'signin' && !commerceRestricted && (
+                <AppLink href="/membership" className="account-subscribe" prefetch={false}>
+                  <Crown size={20} aria-hidden="true" />
+                  <span>{t('订阅会员', 'Subscribe to membership')}</span>
+                </AppLink>
+              )}
+            </div>
             <UserIdLabel userId={user?.uid} full />
           </div>
 
@@ -893,12 +901,6 @@ export default function AccountPage() {
             </section>
           ) : (
             <>
-              {!commerceRestricted && (
-                <AppLink href="/membership" className="account-subscribe" prefetch={false}>
-                  <Crown size={20} aria-hidden="true" />
-                  <span>{t('订阅会员', 'Subscribe to membership')}</span>
-                </AppLink>
-              )}
               <nav className="account-cards">
                 {cards.map(({ key, href, icon, title, desc }) => (
                   <AppLink key={key} href={href} className="account-card" prefetch={false}>
