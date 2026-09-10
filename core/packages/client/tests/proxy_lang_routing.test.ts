@@ -39,6 +39,15 @@ describe('proxy: 裸路径 → 英文', () => {
 });
 
 describe('proxy: 其它分支不受影响', () => {
+  it('music assets bypass language redirects even with a Chinese cookie', () => {
+    for (const asset of ['tracks/a.mp3', 'lyrics/a.lrc', 'manifest.v1.json']) {
+      const res = request(`http://127.0.0.1:3000/music/library/${asset}`, { cookie: 'lang=zh' });
+      expect(res.headers.get('x-middleware-next')).toBe('1');
+      expect(res.headers.get('location')).toBeNull();
+      expect(res.headers.get('x-middleware-rewrite')).toBeNull();
+    }
+  });
+
   it('/zh 原样服务,不重定向也不 rewrite', () => {
     const res = request('https://dev.cuberoot.me/zh', FORWARDED_HTTPS);
     expect(res.status).toBe(200);
