@@ -5,8 +5,10 @@
 ## 参考与日期
 
 - 原始实拍来源：[Asisbiz 外滩 13 号江海关](https://www.asisbiz.com/China/13-Zhongshan-Rd.html)及[对应原图页面](https://www.asisbiz.com/China/13-Zhongshan-Rd/pages/13-Zhongshan-Rd-Shanghai-Customs-House-The-Bund-Huangpu-District-Shanghai-China-built-1927-01.html)，原图页面署名摄影师 **Matthew Laird Acred**。本轮查看了本地原图 `.tmp/png/bund-hero-details/13-Zhongshan-Rd-Shanghai-Customs-House-The-Bund-Huangpu-District-Shanghai-China-built-1927-01.jpg`，沿用[第八批参考档案](shanghai-landmarks.md)的同一照片。
-- **拍摄日期无法确认**。本地 JPEG 没有可读取的 `DateTime`、`DateTimeOriginal`、`DateTimeDigitized` EXIF 字段；2026-09-10 重新访问来源及原图页面后，确认页面更新时间均为 **2020-01-27**，未给出此照片拍摄日期。文件名中的 1927 是建筑建造年；汇总页另一位摄影师邮件提及的 1994 年也不能套用到这张图，更不能据照片断言 2026 年的实际灯位。原始 HTML 已保存在本次证据目录的 `source-page.html` 与 `source-photo-page.html`。
-- 照片能支持前方双阁楼的连续转折檐口、钟楼下部完整石墙及基座檐上朝上的投光器。正面可辨识五盏投光器，原图横向像素中心约为 `484/578/669/764/861`；两侧另有斜向灯具，本次未复刻。檐口细部尺寸、灯具间距及材质参数仍为估算；没有测绘或现场色卡。
+- **拍摄 EXIF 更正**：2026-09-10 读取 JPEG 的嵌套 EXIF IFD（34665），`DateTimeOriginal`（36867）与 `DateTimeDigitized`（36868）均为 **2008-11-14 17:25:05**，相机为 SONY DSC-W300。此前“没有可读取的 EXIF、拍摄日期未知”的结论漏读了嵌套字段，应撤回。顶层 `DateTime`（306）为 **2011-05-05 22:22:16**，属于修改时间字段；页面更新时间 **2020-01-27**、文件名中的建造年 1927、汇总页另一位摄影师提到的 1994 年均不能替代拍摄字段。**相机时钟与时区未独立验证**；该旧照中的主要夜间泛光未开启，不能作为当前灯位或照明光度的实测。
+- 重新下载的 Asisbiz 原图与本地文件完全相同，SHA-256 为 `1d122b588aa6322b8e53ba68b5c962796befb3ee938976460ed89fff804e779c`。原图页面署名 Matthew Laird Acred，并标明 **CC BY-SA 3.0**；原始 HTML 保存在 `.tmp/png/space-parallel-20260910/customs/source-page.html` 与 `source-photo-page.html`。照片仅作本地建模参考，未作为运行贴图。
+- **首要夜景参考**：[DvTor8303 自摄江海关与汇丰大楼夜景](https://commons.wikimedia.org/wiki/File:HSBC_Building_and_Custom_House,_Shanghai_at_night_20260417_(2).jpg)，**CC0 1.0**。文件页与原 JPEG 的嵌套 `DateTimeOriginal`、`DateTimeDigitized` 均标记 **2026-04-17 20:34:53**；相机 iQOO 12，时钟与时区未独立验证。[同夜另一视角](https://commons.wikimedia.org/wiki/File:HSBC_Building_and_Custom_House,_Shanghai_at_night_20260417.jpg)标记 20:33:35，亦为本人作品、CC0。已实际查看两张原图：白色钟盘、暖亮石框与塔冠、亮檐线和檐下暗带、基座下缘较亮、主立面上洗及深色窗洞均可辨；入口部分受树和人群遮挡。手机曝光、自动白平衡与图像处理影响色彩和反差，只用于明暗分布与层次，不能反算色温或光度。原图、来源页及其余历史互证见 `.tmp/png/space-customs-night-20260910/references/research.md`，照片未转为正式纹理或发布资产。
+- Asisbiz 日景照片能支持前方双阁楼的连续转折檐口、钟楼下部完整石墙及基座檐上朝上的投光器。正面可辨识五盏投光器，原图横向像素中心约为 `484/578/669/764/861`；两侧另有斜向灯具，本次未复刻。檐口细部尺寸、灯具间距及材质参数仍为估算；没有测绘或现场色卡。
 - 代码复用本仓库既有 `refine_customs_roof.py`、`refine_bund_galleries.py`、`refine_bund_hero_details.py`、`refine_shanghai_landmarks.py` 与 `refine_jin_mao.py` 的网格、备份、裁切、材质和检查舞台工具。本轮未移植其他 GitHub 项目的代码。
 
 ## 实证根因
@@ -80,3 +82,22 @@ detail = refine_customs_junctions.author(customs_root, archive)
 最终 GLB 的 53 处江海关表面检查全部通过，包括六层回折、玻璃与五个倾斜投光器。`web-customs-day-final.png`、`web-customs-night-final.png` 已在真实网页渲染并打开复查，证据位于 `.tmp/png/space-parallel-20260910/`：回折连续、玻璃色偏减轻、时钟与新增灯具正常；21:00 的基座仍有硬明暗分界，底层与窗带偏暗，不能认定夜景已还原。五盏临时 Cycles 检查灯没有保存或导出。
 
 最终上海工程 122,328,032 字节，GLB 为 310,649,984 字节；备份、哈希、全部稳定 ID 和运行绑定记录见[本批跟踪](../../../docs/space-blender-tracker.md#2026-09-10-三栋细部合并与网页首帧修复)。
+
+## 2026-09-10 网页夜景照明保存与复验
+
+本节是上述几何与玻璃修正后的独立照明记录。先用网页临时参数进行三轮候选对照，主流程随后将第三版保存到 Blender 源工程，正常导出正式 GLB，并重新加载网页复验；最终证据与候选分别保留。
+
+证据位于 `.tmp/png/space-customs-night-20260910/`。候选保持现有 **6 盏聚合投光代理**，调整上部基座、百叶层与底部石柱、夹层的照明分配；并非复刻照片中的实际灯具数量。位置、目标、锥角、软边、强度与色值均为网页 A/B 估算，没有现场测光、IES 或完整配光图。此前五个灯具外形及五盏临时 Cycles 检查灯与这 6 盏网页代理是不同对象。
+
+| 截图 | 实际审图结果与取舍 |
+| --- | --- |
+| `baseline-night.png`、`upper-off.png` | 基准图的宽基座偏乳白亮板，入口柱与底部石墙偏暗；关闭上部灯的对照图中，基座亮度降低，下部入口没有随之改善。这里只记录网页对照现象，不套用此前临时 Cycles 舞台的遮挡结论 |
+| `candidate-1.png` | 入口四柱与夹层石墙显出，门洞保持深色；基座下缘出现两个明显近圆形热点，拒绝作为落地方案 |
+| `candidate-2.png` | 双圆斑消失，但基座仍近似一整块均匀浅色亮板，层次偏平，继续调整 |
+| `candidate-3.png` | 基座贡献收敛，石纹与檐下暗带保留；入口四柱、夹层石墙清楚，门洞仍深。三版中选此版，接受为本轮候选 |
+| `candidate-3-oblique.png` | 已实际打开审图。双圆斑未复发；侧墙、檐下与门洞仍暗，入口柱列可辨，未见明显穿墙光或新增局部热点 |
+| `candidate-3-far.png` | 已实际打开审图。钟盘、百叶层、基座和入口仍可区分，没有局部突然过亮或明显脱离邻楼的亮度；石纹与柔和渐变在远景有所合并 |
+
+独立审图认为候选 3 在预设、斜侧和远景均未出现阻断本轮落地的新问题。**这不等于整栋夜景或 1:1 验收通过**：两级塔冠仍偏暗，横向檐线缺少实拍的暖亮层次，基座在远景仍偏整片，斜侧照明较单薄；实际灯具布局、侧后立面、色温与光度仍待核对。三张静态视点也不能证明缩放过程完全没有亮度跳变。
+
+主流程已保存修订 `customs-night-lighting-20260910` 并正常导出，正式 GLB 为 310,655,468 字节。最终正面、斜侧、远景夜图及日图 `final-preset-night.png`、`final-oblique-night.png`、`final-far-night.png`、`final-preset-day.png` 已逐张打开复查：入口与基座的改善保持，双圆斑未复发，日间六灯全零。真实网页确认最终哈希且无候选注入；完整导出合同检查通过。源备份、哈希、保留检查及运行证据见[本轮跟踪](../../../docs/space-blender-tracker.md#2026-09-10-江海关基座与入口夜景配光)。后续单独细化冠部与檐口，以上未达标项继续保留。
