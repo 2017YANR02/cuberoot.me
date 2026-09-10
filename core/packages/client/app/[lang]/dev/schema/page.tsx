@@ -42,6 +42,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'sim_mask_layouts', domain: 'alg', origin: '0223', purpose: { zh: '按阶数保存阶段分组顺序与归属', en: 'Stage group order and membership per cube size' }, cols: [{ name: 'cube_size, groups' }] },
   { name: 'home_card_locks', domain: 'community', origin: '0221', purpose: { zh: '管理员设置的首页卡片锁定覆盖值', en: 'Administrator overrides for homepage card locks' }, cols: [{ name: 'item_id' }, { name: 'locked' }] },
   { name: 'role_preview_profiles', domain: 'account', origin: '0217', purpose: { zh: '超级管理员专用的独立角色测试身份', en: 'Separate role-test identities for superadministrators' } },
   { name: 'role_preview_sessions', domain: 'account', origin: '0217', purpose: { zh: '可撤销的短效角色测试会话与实际操作者', en: 'Revocable short-lived test sessions and their real actors' } },
@@ -740,6 +741,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 220, slug: 'platform_review_titles', desc: { zh: '课程评价支持选填标题。', en: 'Support optional titles for course reviews.' } },
   { n: 221, slug: 'home_card_locks', desc: { zh: '保存管理员设置的首页卡片锁定状态。', en: 'Persist administrator-controlled homepage card locks.' } },
   { n: 222, slug: 'membership_contracts', desc: { zh: '保存微信续费合约，以账号锁防止签约与注销并发绕过。', en: 'Store WeChat renewal contracts and serialize contract writes with account deletion.' } },
+  { n: 223, slug: 'sim_mask_layouts', desc: { zh: '按阶数保存阶段分组顺序与跨组归属。', en: 'Store stage group order and membership per cube size.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

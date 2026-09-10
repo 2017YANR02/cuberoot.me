@@ -21,6 +21,29 @@ const row = (p: Partial<SimMaskRow> & { maskKey: string }): SimMaskRow => ({
 });
 
 describe('applyMaskConfig', () => {
+  it('保存分组顺序与跨组移动，隐藏项保留原位置，新阶段仍可见', () => {
+    const layout = [
+      { group: 'CFOP', items: ['PLL', 'custom', 'deleted'] },
+      { group: 'Stickering', items: ['full', 'Cross', 'OLL'] },
+    ];
+    const rows = [row({ maskKey: 'OLL', hidden: true })];
+    expect(applyMaskConfig(GROUPS, rows, 3, { layout })).toEqual([
+      { group: 'CFOP', items: ['PLL', 'custom', 'F2L'] },
+      { group: 'Stickering', items: ['full', 'Cross'] },
+    ]);
+    expect(applyMaskConfig(GROUPS, rows, 3, { layout, includeHidden: true })[1].items).toEqual(['full', 'Cross', 'OLL']);
+  });
+
+  it('空分组仅管理可见，自建阶段能跨组且只出现一次', () => {
+    const rows = [row({ maskKey: 'preset:a', kind: 'custom', sids: 'U:0' })];
+    const layout = [
+      { group: 'CFOP', items: ['preset:a', 'Cross', 'F2L', 'OLL', 'PLL', 'full', 'custom'] },
+      { group: 'Stickering', items: [] },
+      { group: PRESET_GROUP, items: [] },
+    ];
+    expect(applyMaskConfig(GROUPS, rows, 3, { layout })).toEqual([layout[0]]);
+    expect(applyMaskConfig(GROUPS, rows, 3, { layout, includeHidden: true })).toEqual(layout);
+  });
   it('没有覆盖行 → 与代码默认清单逐字相同', () => {
     expect(applyMaskConfig(GROUPS, [], 3)).toEqual(GROUPS);
   });
@@ -33,7 +56,7 @@ describe('applyMaskConfig', () => {
   it('hidden 从下拉里去掉,但管理抽屉(includeHidden)仍列出来', () => {
     const rows = [row({ maskKey: 'OLL', hidden: true })];
     expect(applyMaskConfig(GROUPS, rows, 3)[1].items).toEqual(['Cross', 'F2L', 'PLL']);
-    expect(applyMaskConfig(GROUPS, rows, 3, { includeHidden: true })[1].items)
+    expect(applyMaskConfig(GROUPS, rows, 3, { includeHidden: true }).find((g) => g.group === 'CFOP')!.items)
       .toEqual(['Cross', 'F2L', 'OLL', 'PLL']);
   });
 
@@ -58,7 +81,7 @@ describe('applyMaskConfig', () => {
 
   it('只为隐藏建的行不改顺序(藏了再取消,条目回到原位)', () => {
     const rows = [row({ maskKey: 'PLL', hidden: true })];
-    expect(applyMaskConfig(GROUPS, rows, 3, { includeHidden: true })[1].items)
+    expect(applyMaskConfig(GROUPS, rows, 3, { includeHidden: true }).find((g) => g.group === 'CFOP')!.items)
       .toEqual(['Cross', 'F2L', 'OLL', 'PLL']);
   });
 
@@ -75,6 +98,12 @@ describe('applyMaskConfig', () => {
 });
 
 describe('maskLabelOverride', () => {
+  it('内置阶段移入空自建组后也出现在公开下拉中', () => {
+    const result = applyMaskConfig(GROUPS, [], 3, { layout: [{ group: PRESET_GROUP, items: ['Cross'] }] });
+    expect(result.find((g) => g.group === PRESET_GROUP)?.items).toEqual(['Cross']);
+    expect(result.find((g) => g.group === 'CFOP')?.items).toEqual(['F2L', 'OLL', 'PLL']);
+  });
+
   const cfg = maskRowsForOrder([
     row({ id: 1, maskKey: 'OLL', labelZh: '顶层朝向', labelEn: 'Top orientation' }),
     row({ id: 2, maskKey: 'PLL', labelZh: '只改了中文' }),

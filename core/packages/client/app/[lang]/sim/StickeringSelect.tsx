@@ -123,7 +123,7 @@ export default function StickeringSelect({
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');   // 仅作 maskLabelOverride 的取值参数
   const isAdmin = useIsAdmin();
-  const { rows, reload } = useSimMasks();
+  const { rows, layouts, reload } = useSimMasks();
   const [adminOpen, setAdminOpen] = useState(false);
   // 代码里的默认清单(单一源);管理员的覆盖层再叠上去。
   const baseGroups = useMemo<StickeringGroup[]>(() => {
@@ -137,9 +137,10 @@ export default function StickeringSelect({
   // 覆盖层只管 NxN(megaminx / fto 的清单由 cubing.js 注册,遮罩函数也不在我们手里);
   // -1 是「本拼图没有覆盖层」的哨兵阶数,查出来必然是空 Map。
   const order = typeof puzzleKind === 'number' ? puzzleKind : -1;
+  const layout = layouts.find((entry) => entry.cubeSize === order)?.groups;
   const groups = useMemo<StickeringGroup[]>(
-    () => (order > 0 ? applyMaskConfig(baseGroups, rows, order) : baseGroups),
-    [baseGroups, rows, order],
+    () => (order > 0 ? applyMaskConfig(baseGroups, rows, order, { layout }) : baseGroups),
+    [baseGroups, rows, order, layout],
   );
   const cfg = useMemo(() => maskRowsForOrder(rows, order), [rows, order]);
   const label = (name: string): string => maskLabelOverride(cfg, name, isZh) || itemLabel(name, t);
@@ -218,12 +219,12 @@ export default function StickeringSelect({
       {adminOpen && order > 0 && (
         <SimMaskAdmin
           order={order}
-          groups={applyMaskConfig(baseGroups, rows, order, { includeHidden: true })}
+          groups={applyMaskConfig(baseGroups, rows, order, { includeHidden: true, layout })}
           rows={rows}
           onReload={reload}
           onClose={() => setAdminOpen(false)}
           groupLabel={(g) => groupLabel(g, t)}
-          defaultLabel={(name) => itemLabel(name, t)}
+          defaultLabel={(name, lang) => itemLabel(name, lang === 'zh' ? (zh) => zh : (_zh, en) => en)}
           pickedSids={isCustom ? mask : ''}
           pick={pick}
           rest={rest}
