@@ -320,7 +320,46 @@ try {
         if (peaceDetail?.upperGroupedWindows !== 24 || peaceDetail.topWindows !== 5 || peaceDetail.centralArches !== 1 || peaceDetail.carvedParapetPanels !== 11 || peaceDetail.terraces !== 2) throw new Error('Peace upper frontage metadata lost');
         authoredFrontages = {revision: frontageRevision, buildings: 2, surfaceRays, customsMainWindows: 28, peaceUpperWindows: 29, estimatedDimensions: true};
       }
-      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks, authoredEntrances, authoredGalleries, authoredWindows, authoredHeroDetails, authoredFrontages});
+      let authoredPeaceRiverfront: unknown = null;
+      if (peace?.userData.spacePeaceRiverfrontRevision) {
+        const revision = 'peace-riverfront-20260909';
+        if (peace.userData.spacePeaceRiverfrontRevision !== revision) throw new Error('Peace riverfront revision mismatch');
+        const detail = peace.userData.spacePeaceRiverfrontDetail;
+        if (detail?.windows !== 63 || detail.spandrels !== 63 || detail.groundArches !== 2 || detail.fanlightRibs !== 22) throw new Error('Peace riverfront metadata lost');
+        let surfaceRays = 0;
+        const front = (x: number, height: number, part: string, depth: number) => {
+          surfaceRays++;
+          const start = new THREE.Vector3(-1280, height, 1367 + x).applyMatrix4(peace.matrixWorld);
+          const direction = new THREE.Vector3(-1, 0, 0).transformDirection(peace.matrixWorld);
+          const hit = new THREE.Raycaster(start, direction, 0, 100).intersectObject(peace, true)[0];
+          if (hit?.object.userData.spacePeaceRiverfrontPart !== part || Math.abs(peace.worldToLocal(hit.point.clone()).x - depth) > .025) {
+            throw new Error(`Peace riverfront ${part} at ${x}, ${height}: ${hit?.object.userData.spaceId}, ${hit ? peace.worldToLocal(hit.point.clone()).toArray() : 'no hit'}`);
+          }
+        };
+        // Probe every new aperture and spandrel, then masonry between the bays.
+        for (const group of [-7.4, 0, 7.4]) for (const offset of [-1.72, 0, 1.72]) {
+          for (let level = 0; level < 7; level++) {
+            const bottom = 9.65 + 4.2 * level;
+            front(group + offset + .15, bottom + 1.1, 'glass', -1313.55);
+            front(group + offset + .1, bottom + 3.35, 'trim', -1312.98);
+          }
+        }
+        for (const x of [-11, -3.6, 3.6, 11]) {
+          for (let level = 0; level < 7; level++) front(x, 10.75 + 4.2 * level, 'stone', -1313);
+          for (const height of [38.5, 38.8]) front(x, height, 'stone', -1313);
+        }
+        // These strips replaced intersecting wall and closure-box faces.
+        for (const x of [-12.71, 12.71]) for (const height of [39.1, 42, 45.7]) front(x, height, 'stone', -1313);
+        for (const x of [-11, 11]) front(x, 46.51, 'stone', -1313);
+        for (const x of [-7.4, 7.4]) {
+          front(x + .4, 3.5, 'glass', -1312.1);
+          front(x + 1.4 * Math.cos(Math.PI * .37), 5.8 + 1.4 * Math.sin(Math.PI * .37), 'glass', -1312.1);
+          front(x + 1.137 * Math.cos(Math.PI * .37), 5.8 + 1.137 * Math.sin(Math.PI * .37), 'metal', -1311.98);
+          front(x + 2.56, 2, 'stone', -1311.5);
+        }
+        authoredPeaceRiverfront = {revision, surfaceRays, windows: 63, spandrels: 63, groundArches: 2, estimatedDimensions: true};
+      }
+      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks, authoredEntrances, authoredGalleries, authoredWindows, authoredHeroDetails, authoredFrontages, authoredPeaceRiverfront});
       city.dispose(); continue;
     }
     const [style, env] = key.split('-') as [RoomStyle, Environment];
