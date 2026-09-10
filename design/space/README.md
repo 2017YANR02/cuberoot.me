@@ -80,7 +80,7 @@ pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset italian-original -Pr
 
 源工程和网页 GLB/纹理被 Git 忽略，提交代码不会备份这些重资产。完整备份需同时包含 `design/space/scenes` 与 `client/public/assets/space/blender-v1`；2026-09-08 迁出的 8 份旧 `.blend1` 备份在 `E:/CubeRoot-Assets/space/backups/20260908/`，随后修正预览相机时生成的 `.blend1` 留在原工程旁。E 盘缓存可重建，不能取代 `.blend` 备份。
 
-本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 310,655,332 字节（约 311 MB），正式发布前仍需分区加载、压缩与移动设备验证。
+本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 310,655,468 字节（约 311 MB），正式发布前仍需分区加载、压缩与移动设备验证。
 
 Blender 和 glTF 插件来源已加入网页的“来源与致谢”，统一数据在 `credits_data.json`；建筑及天气等既有资料见 [来源记录](../../docs/space-sources.md)，迁移状态见 [跟踪文档](../../docs/space-blender-tracker.md)。
 
@@ -105,3 +105,5 @@ Blender 和 glTF 插件来源已加入网页的“来源与致谢”，统一数
 四张既有颜色贴图已通过 `refine_bund_color_encoding.py` 增量修正，工程带 `spaceBundColorEncodingRevision = bund-albedo-srgb-20260910`。该工具默认只生成临时候选，`--apply` 要求同一源文件的候选报告并先备份；已有标记时拒绝重复编码。不要重新运行整栋生成器。Blender 非浮点 sRGB 图像的像素写入需要编码后的颜色，法线等数据贴图保持原值；校准、正式导出与网页证据见[颜色编码记录](references/peace-crown.md#铜顶与三栋石材的颜色编码修正)。
 
 和平饭店铜顶夜间配光已保存 `spacePeaceNightRevision = peace-night-roof-20260910`，六盏既有灯及两份铜材质经正常导出进入网页。`refine_peace_night_lighting.py` 默认只生成候选报告，`--apply` 要求同一源文件的候选报告并先备份；已有修订时拒绝重跑。后续继续编辑当前工程并导出；四轮实拍对照、日夜检查与剩余差距见[夜景档案](references/peace-crown.md#夜间铜顶配光2026-09-10)。
+
+江海关已保存 `spaceCustomsNightRevision = customs-night-lighting-20260910`，四盏下部、两盏上部代理灯及 `washTop=43` 经正常导出进入网页。`refine_customs_night_lighting.py` 与和平饭店脚本共用 `facade_rig.py` 的候选、源漂移和备份检查；已有修订时拒绝重复执行。三轮取舍、正式日夜及三视点检查、仍偏暗的塔冠与待补檐线见[夜景档案](references/customs-junctions.md#2026-09-10-网页夜景照明保存与复验)。
