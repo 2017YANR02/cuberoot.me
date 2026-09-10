@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: {
   if (!match) return { robots: { index: false, follow: false } };
 
   const noindex = match.definition.access !== 'public'
-    || ['search', 'offline', 'login', 'notifications'].includes(match.definition.id);
+    || ['search', 'offline', 'login', 'notifications', 'online-competition-preview'].includes(match.definition.id);
   const metadata = metadataFromEntry({
     title: match.definition.title,
     description: match.definition.description,

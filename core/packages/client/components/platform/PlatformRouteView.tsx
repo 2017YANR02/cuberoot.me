@@ -36,6 +36,7 @@ import { PlatformDomainActions } from './PlatformDomainActions';
 import { PlatformDomainContent } from './PlatformDomainContent';
 import { PlatformPrivacySettings } from './PlatformPrivacySettings';
 import { PlatformQrCardStudio } from './PlatformQrCardStudio';
+import { OnlineCompetitionPreview } from './OnlineCompetitionPreview';
 
 function titleFor(t: ReturnType<typeof useT>, definition: PlatformRouteDefinition): string {
   return t(definition.title.zh, definition.title.en);
@@ -526,7 +527,7 @@ function PlatformEntityList({
   );
 }
 
-export function PlatformRouteView({
+function PlatformResourceRouteView({
   definition,
   params,
 }: {
@@ -652,6 +653,8 @@ export function PlatformRouteView({
         </div>
       </header>
 
+      {definition.id === 'events' ? <p><AppLink href="/platform/events/preview" prefetch={false} className="platform-home-secondary">{t('体验线上赛事流程', 'Explore online competitions')}<ArrowRight aria-hidden /></AppLink></p> : null}
+
       {definition.id === 'about' ? (
         <PlatformAboutView />
       ) : definition.id === 'offline' ? (
@@ -756,4 +759,9 @@ export function PlatformRouteView({
       )}
     </div>
   );
+}
+
+export function PlatformRouteView(props: { definition: PlatformRouteDefinition; params: Record<string, string> }) {
+  if (props.definition.id === 'online-competition-preview') return <OnlineCompetitionPreview />;
+  return <PlatformResourceRouteView {...props} />;
 }
