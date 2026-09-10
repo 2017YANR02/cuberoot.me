@@ -480,6 +480,8 @@ export interface BluetoothAdvertisementDiagnostic {
 }
 
 interface UseBluetoothCubeOpts {
+  /** Official competition sessions only accept physical peripherals. */
+  allowSimulated?: boolean;
   /** Called for each move. `timestamp` is a calibrated `performance.now()`-domain
    * estimate of when the cube made the move. The caller is responsible for
    * re-basing it against any "solve start" reference. */
@@ -547,6 +549,8 @@ function prettyDeviceName(device: BluetoothDevice): string {
 }
 
 export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCubeHandle {
+  const allowSimulatedRef = useRef(opts.allowSimulated !== false);
+  allowSimulatedRef.current = opts.allowSimulated !== false;
   const [status, setStatus] = useState<BluetoothCubeStatus>(INITIAL_STATUS);
   const [advertisementDiagnostic, setAdvertisementDiagnostic] = useState<BluetoothAdvertisementDiagnostic | null>(null);
   const [lastMove, setLastMove] = useState<string | null>(null);
@@ -1287,7 +1291,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     // without hardware. It joins the normal path below at the same point a real
     // device does — driver selection, MAC handling and the handshake all run
     // for real. Compiled out of production; see ./fake_cube.ts.
-    const fake = armedFakeCube();
+    const fake = allowSimulatedRef.current ? armedFakeCube() : null;
     if (fake) {
       const generation = connectionGenerationRef.current + 1;
       connectionGenerationRef.current = generation;

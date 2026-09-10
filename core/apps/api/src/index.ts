@@ -71,8 +71,15 @@ import { teachingRoutes } from './routes/teaching.js';
 import { teachingSaasRoutes } from './routes/teaching_saas.js';
 import { platformCatalogRoutes } from './routes/platform_catalog.js';
 import { platformContentRoutes } from './routes/platform_content.js';
+import { platformCompetitionRoutes } from './routes/platform_competitions.js';
+import { platformCompetitionAttemptRoutes } from './routes/platform_competition_attempts.js';
+import { platformCompetitionEvidenceRoutes } from './routes/platform_competition_evidence.js';
+import { platformCompetitionSettlementRoutes } from './routes/platform_competition_settlements.js';
+import { platformCompetitionDeviceReportRoutes } from './routes/platform_competition_device_reports.js';
+import { platformOrganizerApplicationRoutes } from './routes/platform_organizer_applications.js';
 import { platformLearningRoutes } from './routes/platform_learning.js';
 import { platformCommerceRoutes } from './routes/platform_commerce.js';
+import { platformRefundRoutes, startPlatformRefundReconciliation } from './routes/platform_refunds.js';
 import { platformQrRoutes } from './routes/platform_qr.js';
 import { smsReceiptRoutes } from './routes/sms_receipt.js';
 import { documentRoutes } from './routes/documents.js';
@@ -192,8 +199,15 @@ app.route('/v1', teachingRoutes);
 app.route('/v1', teachingSaasRoutes);
 app.route('/v1', platformCatalogRoutes);
 app.route('/v1', platformContentRoutes);
+app.route('/v1', platformCompetitionRoutes);
+app.route('/v1', platformCompetitionAttemptRoutes);
+app.route('/v1', platformCompetitionEvidenceRoutes);
+app.route('/v1', platformCompetitionSettlementRoutes);
+app.route('/v1', platformCompetitionDeviceReportRoutes);
+app.route('/v1', platformOrganizerApplicationRoutes);
 app.route('/v1/platform', platformLearningRoutes);
 app.route('/v1/platform', platformCommerceRoutes);
+app.route('/v1', platformRefundRoutes);
 app.route('/v1/platform', platformQrRoutes);
 app.get('/v1/documents/realtime', upgradeWebSocket((c) => {
   let connection: ReturnType<typeof collaborativeDocuments.handleConnection> | undefined;
@@ -334,6 +348,7 @@ startWatchedForeignRegMonitor();
 // 未配置 DOUYIN_* 环境变量时保持关闭。
 startDouyinOrderSync();
 startMembershipContractSync();
+startPlatformRefundReconciliation();
 
 const PORT = Number(process.env.PORT) || 3001;
 

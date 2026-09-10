@@ -833,6 +833,14 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'CompetitionVideoRoom',
+    import: "import { CompetitionVideoRoom } from '@/components/platform/CompetitionVideoRoom';",
+    category: 'more',
+    zh: '按报名授权的双方监督视频，复用站内 LiveKit 参数与视频控件。',
+    en: 'Registration-scoped supervision video using the shared LiveKit settings and video controls.',
+    usage: '<CompetitionVideoRoom registrationId={registration.id} />',
+  },
+  {
     name: 'MemberProfileEditor',
     import: "import MemberProfileEditor from '@/components/MemberProfileEditor';",
     category: 'more',

@@ -42,6 +42,14 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'platform_organizer_applications', domain: 'platform', origin: '0229', purpose: { zh: '主办方申请、关联组织与平台审批记录', en: 'Organizer applications, linked organizations and platform reviews' } },
+  { name: 'platform_competitions', domain: 'platform', origin: '0224', purpose: { zh: '主办组织、报名窗口、抽成及结算配置', en: 'Organizer, registration window, commission and settlement configuration' } },
+  { name: 'platform_competition_sessions', domain: 'platform', origin: '0224', purpose: { zh: '监督场次、名额与人员排班', en: 'Supervised session capacity and staff assignment' } },
+  { name: 'platform_competition_attempts', domain: 'platform', origin: '0224', purpose: { zh: '服务器逐把打乱与监督员成绩确认', en: 'Server-issued scrambles and supervisor-recorded attempts' } },
+  { name: 'platform_competition_disputes', domain: 'platform', origin: '0224', purpose: { zh: '成绩争议与平台处理记录', en: 'Result disputes and platform resolutions' } },
+  { name: 'platform_competition_evidence', domain: 'platform', origin: '0225', purpose: { zh: '限授权访问的争议录像与保留期限', en: 'Private dispute videos and retention dates' } },
+  { name: 'platform_competition_settlement_ledger', domain: 'platform', origin: '0226', purpose: { zh: '主办方转账、追回与退款调整的审计台账', en: 'Audited organizer transfers, recoveries and refund adjustments' } },
+  { name: 'platform_competition_device_reports', domain: 'platform', origin: '0227', purpose: { zh: '绑定已下发打乱的设备采集场次与辅助证据', en: 'Device runs and supporting evidence bound to issued attempts' } },
   { name: 'sim_mask_layouts', domain: 'alg', origin: '0223', purpose: { zh: '按阶数保存阶段分组顺序与归属', en: 'Stage group order and membership per cube size' }, cols: [{ name: 'cube_size, groups' }] },
   { name: 'home_card_locks', domain: 'community', origin: '0221', purpose: { zh: '管理员设置的首页卡片锁定覆盖值', en: 'Administrator overrides for homepage card locks' }, cols: [{ name: 'item_id' }, { name: 'locked' }] },
   { name: 'role_preview_profiles', domain: 'account', origin: '0217', purpose: { zh: '超级管理员专用的独立角色测试身份', en: 'Separate role-test identities for superadministrators' } },
@@ -742,6 +750,12 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 221, slug: 'home_card_locks', desc: { zh: '保存管理员设置的首页卡片锁定状态。', en: 'Persist administrator-controlled homepage card locks.' } },
   { n: 222, slug: 'membership_contracts', desc: { zh: '保存微信续费合约，以账号锁防止签约与注销并发绕过。', en: 'Store WeChat renewal contracts and serialize contract writes with account deletion.' } },
   { n: 223, slug: 'sim_mask_layouts', desc: { zh: '按阶数保存阶段分组顺序与跨组归属。', en: 'Store stage group order and membership per cube size.' } },
+  { n: 224, slug: 'online_competitions', desc: { zh: '增加线上赛事配置、监督排班、报名名额、逐把成绩与争议处理。', en: 'Add online competition configuration, supervision, registration capacity, attempts and disputes.' } },
+  { n: 225, slug: 'competition_evidence', desc: { zh: '增加私密争议录像，未结争议暂停到期清理。', en: 'Add private dispute videos; unresolved disputes pause expiration.' } },
+  { n: 226, slug: 'competition_settlement_ledger', desc: { zh: '登记已完成的主办方转账与追回，冻结结算快照并追踪后续退款调整。', en: 'Record completed organizer transfers and recoveries with frozen statements and subsequent refund adjustments.' } },
+  { n: 227, slug: 'competition_device_reports', desc: { zh: '智能魔方采集场次绑定服务器已下发打乱，动作和计时作为监督确认的辅助证据。', en: 'Bind smart cube runs to server-issued scrambles and retain moves and timings as supporting evidence for supervision.' } },
+  { n: 228, slug: 'platform_provider_refunds', desc: { zh: '记录退款批准、固定渠道请求号及异步对账状态。', en: 'Persist refund approval, stable provider request numbers and asynchronous reconciliation.' } },
+  { n: 229, slug: 'organizer_applications', desc: { zh: '主办方申请关联已有组织或审核后创建组织，明确平台批准后方可办赛。', en: 'Organizer applications reuse existing organizations or create an organization on approval; competition hosting requires explicit platform approval.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

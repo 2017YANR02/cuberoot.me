@@ -155,6 +155,28 @@ export async function retrieveAirwallexPaymentIntent(intentId: string): Promise<
   return apiRequest<AirwallexPaymentIntent>(`/api/v1/pa/payment_intents/${encodeURIComponent(intentId)}`);
 }
 
+export async function createAirwallexRefund(input: {
+  paymentIntentId: string; requestId: string; amountMinor: number; reason: string;
+}): Promise<Record<string, unknown>> {
+  return apiRequest('/api/v1/pa/refunds/create', { method: 'POST', body: JSON.stringify({
+    payment_intent_id: input.paymentIntentId, request_id: input.requestId,
+    amount: input.amountMinor / 100, reason: input.reason.slice(0, 128),
+  }) });
+}
+
+export async function queryAirwallexRefund(input: {
+  paymentIntentId: string; requestId: string; refundId?: string | null;
+}): Promise<Record<string, unknown> | null> {
+  if (input.refundId) return apiRequest(`/api/v1/pa/refunds/${encodeURIComponent(input.refundId)}`);
+  // Recover a lost create response by its stable request_id before sending again.
+  const query = new URLSearchParams({ payment_intent_id: input.paymentIntentId, page_size: '1000' });
+  const result = await apiRequest<{ items: Record<string, unknown>[]; has_more: boolean }>(`/api/v1/pa/refunds?${query}`);
+  const found = result.items.find(item => item.request_id === input.requestId);
+  if (found) return found;
+  if (result.has_more) throw new Error('Airwallex refund history requires reconciliation');
+  return null;
+}
+
 export function verifyAirwallexWebhook(rawBody: string, timestamp: string, signature: string): boolean {
   if (!airwallexConfigured() || !/^\d{10,16}$/.test(timestamp) || !/^[a-fA-F0-9]{64}$/.test(signature)) {
     return false;

@@ -23,6 +23,7 @@ const TICKET = 'A'.repeat(43);
 const coreRoot = resolve(import.meta.dirname, '..', '..', '..');
 const websiteRoot = resolve(coreRoot, resolveWorkspacePath('@cuberoot/client'));
 const websiteConfigSource = readFileSync(join(websiteRoot, 'next.config.ts'), 'utf8');
+const platformRoutesSource = readFileSync(join(websiteRoot, 'lib', 'platform-routes.ts'), 'utf8');
 const trackingSource = readFileSync(join(coreRoot, 'docs', 'MINIPROGRAM.md'), 'utf8');
 
 describe('mini program web routes', () => {
@@ -121,13 +122,13 @@ describe('mini program web routes', () => {
     }
   });
 
-  it('derives all 56 homepage destinations from the shared ordered catalog', () => {
-    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 4, 6, 10, 16, 12, 3]);
-    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 4, 6, 10, 16, 12, 3]);
-    expect(listWebTools()).toHaveLength(56);
+  it('derives all 58 homepage destinations from the shared ordered catalog', () => {
+    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 4, 6, 11, 17, 12, 3]);
+    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 4, 6, 11, 17, 12, 3]);
+    expect(listWebTools()).toHaveLength(58);
     expect(listWebTools()).toContainEqual(expect.objectContaining({ id: 'gallery', href: '/gallery' }));
-    expect(new Set(listWebTools().map((tool) => tool.id))).toHaveProperty('size', 56);
-    expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(55);
+    expect(new Set(listWebTools().map((tool) => tool.id))).toHaveProperty('size', 58);
+    expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(56);
     expect(resolveWebTool('algdb')).toMatchObject({ id: 'algdb', key: 'alg', action: 'web' });
     expect(resolveWebTool('timer')).toMatchObject({ id: 'timer', key: 'timer', action: 'native' });
     expect(resolveWebTool('alg')).toMatchObject({ id: 'alg', key: 'alg', action: 'web' });
@@ -140,7 +141,7 @@ describe('mini program web routes', () => {
       expect(trackingSource, tool.id).toContain(`| \`${tool.id}\` |`);
     }
     expect(trackingSource).toContain(
-      '共 56 项：网站首页直接渲染它们，工具 tab 通过一个固定白名单路由复用整个首页',
+      '共 58 项：网站首页直接渲染它们，工具 tab 通过一个固定白名单路由复用整个首页',
     );
   });
 
@@ -182,7 +183,7 @@ describe('mini program web routes', () => {
       path: '/pages/web/index?key=alg',
     });
     const routeBackedTools = listWebTools().filter((tool) => tool.key !== null);
-    expect(routeBackedTools).toHaveLength(55);
+    expect(routeBackedTools).toHaveLength(56);
     expect(routeBackedTools.every((tool) => resolveWebRouteShare(tool.key) !== null)).toBe(true);
     expect(resolveWebRouteShare('account')).toBeNull();
     expect(resolveWebRouteShare('privacy')).toBeNull();
@@ -208,8 +209,11 @@ describe('mini program web routes', () => {
       const hasPage = existsSync(join(websiteRoot, 'app', '[lang]', relativePagePath, 'page.tsx'));
       const hasRedirect = websiteConfigSource.includes(`source: "${unlocalizedPath}"`)
         || websiteConfigSource.includes(`source: '${unlocalizedPath}'`);
+      const hasPlatformRoute = relativePagePath.startsWith('platform/')
+        && existsSync(join(websiteRoot, 'app', '[lang]', 'platform', '[...segments]', 'page.tsx'))
+        && platformRoutesSource.includes(`pattern: '${relativePagePath.slice('platform/'.length)}'`);
       expect(
-        hasPage || hasRedirect,
+        hasPage || hasRedirect || hasPlatformRoute,
         `${key}: ${route.path}`,
       ).toBe(true);
     }

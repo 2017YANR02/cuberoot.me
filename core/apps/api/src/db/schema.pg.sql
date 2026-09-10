@@ -1341,6 +1341,9 @@ CREATE TRIGGER platform_events_set_updated_at BEFORE UPDATE ON platform_events
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
 CREATE TABLE platform_event_ticket_types (
+  CONSTRAINT competition_ticket_device CHECK ((competition_project IS NULL) = (competition_device IS NULL) AND (competition_device <> 'smart' OR competition_project = '333')),
+  competition_device TEXT CHECK (competition_device IN ('ordinary','smart')),
+  competition_project TEXT CHECK (competition_project IN ('222','333','444','555')),
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES platform_events(id) ON DELETE RESTRICT,
   code VARCHAR(64) NOT NULL CHECK (code = LOWER(BTRIM(code)) AND code ~ '^[a-z0-9][a-z0-9_-]{0,63}$'),
@@ -1549,6 +1552,7 @@ CREATE TRIGGER platform_coupon_redemptions_set_updated_at BEFORE UPDATE ON platf
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
 CREATE TABLE platform_payment_attempts (
+  checkout_payload JSONB,
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID NOT NULL REFERENCES platform_orders(id) ON DELETE RESTRICT,
   attempt_number INTEGER NOT NULL CHECK (attempt_number BETWEEN 1 AND 1000),
@@ -1688,6 +1692,15 @@ CREATE TABLE platform_fulfillment_ledger (
 CREATE INDEX idx_platform_fulfillment_ledger_item ON platform_fulfillment_ledger(order_item_id, created_at, id);
 
 CREATE TABLE platform_event_registrations (
+  CONSTRAINT competition_registration_single CHECK ((competition_session_id IS NULL) = (competition_project IS NULL) AND (competition_session_id IS NULL OR quantity=1)),
+  CONSTRAINT competition_registration_session_fk FOREIGN KEY(event_id,competition_session_id) REFERENCES platform_competition_sessions(event_id,id) ON DELETE RESTRICT,
+  result_recorded_at TIMESTAMPTZ,
+  result_recorded_by BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
+  competition_attempts JSONB,
+  competition_video_generation UUID NOT NULL DEFAULT gen_random_uuid(),
+  checked_in_at TIMESTAMPTZ,
+  competition_project TEXT,
+  competition_session_id UUID,
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES platform_events(id) ON DELETE RESTRICT,
   ticket_type_id UUID NOT NULL REFERENCES platform_event_ticket_types(id) ON DELETE RESTRICT,
@@ -8493,3 +8506,162 @@ CREATE TABLE IF NOT EXISTS drive_compressions (
 );
 CREATE INDEX IF NOT EXISTS idx_drive_compressions_pending ON drive_compressions (created_at)
   WHERE status IN ('queued', 'encoding', 'validating');
+
+
+-- Online competition configuration, sessions and supervised evidence.
+CREATE TABLE platform_competitions (
+  event_id UUID PRIMARY KEY REFERENCES platform_events(id) ON DELETE RESTRICT,
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+  registration_opens_at TIMESTAMPTZ NOT NULL,
+  registration_closes_at TIMESTAMPTZ NOT NULL,
+  commission_bps INTEGER CHECK (commission_bps BETWEEN 0 AND 10000),
+  settlement_days INTEGER CHECK (settlement_days BETWEEN 0 AND 3650),
+  settlement_anchor TEXT CHECK (settlement_anchor IN ('ended','finalized')),
+  refund_policy TEXT NOT NULL DEFAULT '',
+  recording_policy TEXT NOT NULL DEFAULT '',
+  submitted_at TIMESTAMPTZ,
+  finalized_at TIMESTAMPTZ,
+  CHECK (registration_closes_at > registration_opens_at)
+);
+CREATE TABLE platform_competition_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id UUID NOT NULL REFERENCES platform_competitions(event_id) ON DELETE RESTRICT,
+  starts_at TIMESTAMPTZ NOT NULL,
+  ends_at TIMESTAMPTZ NOT NULL,
+  capacity INTEGER NOT NULL CHECK (capacity BETWEEN 1 AND 1000),
+  supervisor_user_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
+  assistance_requested BOOLEAN NOT NULL DEFAULT FALSE,
+  UNIQUE(event_id,id),
+  CHECK (ends_at > starts_at)
+);
+CREATE UNIQUE INDEX idx_competition_registration_active ON platform_event_registrations(event_id,user_id,competition_project) WHERE competition_project IS NOT NULL AND status IN ('reserved','confirmed','attended');
+CREATE INDEX idx_competition_registration_session ON platform_event_registrations(competition_session_id,status);
+CREATE TABLE platform_competition_disputes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  registration_id UUID NOT NULL REFERENCES platform_event_registrations(id) ON DELETE RESTRICT,
+  user_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
+  reason TEXT NOT NULL CHECK (length(reason) BETWEEN 1 AND 4000),
+  resolution TEXT,
+  original_attempts JSONB,
+  corrected_attempts JSONB,
+  resolved_by BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  resolved_at TIMESTAMPTZ,
+  CHECK ((resolved_at IS NULL) = (resolution IS NULL))
+);
+CREATE UNIQUE INDEX idx_competition_dispute_open ON platform_competition_disputes(registration_id) WHERE resolved_at IS NULL;
+CREATE TABLE platform_competition_attempts (
+  registration_id UUID NOT NULL REFERENCES platform_event_registrations(id) ON DELETE RESTRICT,
+  attempt_number SMALLINT NOT NULL CHECK(attempt_number BETWEEN 1 AND 5),
+  scramble TEXT NOT NULL,
+  issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  centiseconds INTEGER CHECK(centiseconds BETWEEN 1 AND 8640000),
+  penalty TEXT CHECK(penalty IN ('none','+2','DNF','DNS')),
+  recorded_at TIMESTAMPTZ,
+  recorded_by BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
+  PRIMARY KEY(registration_id,attempt_number),
+  CHECK ((recorded_at IS NULL) = (penalty IS NULL)),
+  CHECK (penalty IS NULL OR ((penalty IN ('DNF','DNS')) = (centiseconds IS NULL)))
+);
+
+CREATE TABLE platform_competition_evidence (
+  id UUID PRIMARY KEY,
+  registration_id UUID NOT NULL REFERENCES platform_event_registrations(id) ON DELETE RESTRICT,
+  uploaded_by BIGINT NOT NULL REFERENCES app_users(id) ON DELETE RESTRICT,
+  mime TEXT NOT NULL CHECK (mime IN ('video/mp4','video/webm','video/quicktime')),
+  size_bytes INTEGER NOT NULL CHECK (size_bytes BETWEEN 1 AND 67108864),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '30 days'
+);
+CREATE INDEX idx_competition_evidence_registration ON platform_competition_evidence(registration_id);
+CREATE INDEX idx_competition_evidence_expiry ON platform_competition_evidence(expires_at);
+
+-- 0226 Competition settlement ledger
+CREATE TABLE platform_competition_settlement_ledger (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  entry_number BIGSERIAL UNIQUE NOT NULL,
+  event_id UUID NOT NULL REFERENCES platform_competitions(event_id) ON DELETE RESTRICT,
+  entry_type TEXT NOT NULL CHECK (entry_type IN ('payout','recovery','adjustment')),
+  amount_minor BIGINT NOT NULL CHECK (amount_minor >= 0),
+  currency TEXT NOT NULL DEFAULT 'CNY' CHECK (currency='CNY'),
+  provider_reference_hash TEXT UNIQUE,
+  transferred_at TIMESTAMPTZ,
+  statement_snapshot JSONB NOT NULL,
+  actor_user_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
+  actor_key TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK ((entry_type='adjustment' AND amount_minor=0 AND transferred_at IS NULL AND provider_reference_hash IS NULL)
+    OR (entry_type IN ('payout','recovery') AND amount_minor>0 AND transferred_at IS NOT NULL AND provider_reference_hash IS NOT NULL))
+);
+CREATE INDEX idx_competition_settlement_event ON platform_competition_settlement_ledger(event_id,entry_number);
+
+CREATE TABLE platform_competition_device_reports (
+  registration_id UUID NOT NULL,
+  attempt_number SMALLINT NOT NULL,
+  run_id UUID NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  report JSONB CHECK (jsonb_typeof(report) = 'object'),
+  reported_by BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
+  reported_at TIMESTAMPTZ,
+  CHECK ((report IS NULL) = (reported_at IS NULL)),
+  PRIMARY KEY (registration_id, attempt_number),
+  FOREIGN KEY (registration_id, attempt_number) REFERENCES platform_competition_attempts(registration_id, attempt_number) ON DELETE RESTRICT
+);
+
+-- 0228 Provider refund execution and reconciliation
+ALTER TABLE platform_refunds
+  ADD COLUMN merchant_request_id VARCHAR(64),
+  ADD COLUMN provider_status VARCHAR(32),
+  ADD COLUMN failure_code VARCHAR(100),
+  ADD COLUMN rejection_reason VARCHAR(64),
+  ADD COLUMN approved_at TIMESTAMPTZ,
+  ADD COLUMN last_checked_at TIMESTAMPTZ,
+  ADD COLUMN processing_until TIMESTAMPTZ;
+CREATE UNIQUE INDEX uq_platform_refunds_merchant_request
+  ON platform_refunds(provider, merchant_request_id) WHERE merchant_request_id IS NOT NULL;
+CREATE INDEX idx_platform_refunds_provider_pending
+  ON platform_refunds(last_checked_at) WHERE status = 'pending' AND merchant_request_id IS NOT NULL;
+
+CREATE OR REPLACE FUNCTION trg_guard_platform_refund() RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.order_id <> OLD.order_id OR NEW.payment_attempt_id <> OLD.payment_attempt_id
+     OR NEW.order_item_id IS DISTINCT FROM OLD.order_item_id OR NEW.amount_minor <> OLD.amount_minor
+     OR NEW.currency <> OLD.currency OR NEW.provider <> OLD.provider OR NEW.reason_code <> OLD.reason_code
+     OR NEW.merchant_request_id IS DISTINCT FROM OLD.merchant_request_id
+     OR (OLD.approved_at IS NOT NULL AND NEW.approved_at IS DISTINCT FROM OLD.approved_at) THEN
+    RAISE EXCEPTION 'platform refund target, amount, currency, reason, and approved request are immutable';
+  END IF;
+  IF NEW.status <> OLD.status AND NOT (
+    (OLD.status = 'requested' AND NEW.status IN ('pending', 'succeeded', 'failed', 'cancelled'))
+    OR (OLD.status = 'pending' AND NEW.status IN ('succeeded', 'failed', 'cancelled'))
+    OR (OLD.status = 'failed' AND OLD.approved_at IS NOT NULL AND OLD.merchant_request_id IS NOT NULL
+      AND NEW.status IN ('pending', 'succeeded'))
+  ) THEN
+    RAISE EXCEPTION 'invalid platform refund status transition: % -> %', OLD.status, NEW.status;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 0229 Organizer application approval
+ALTER TABLE organizations ADD COLUMN competition_organizer_approved_at TIMESTAMPTZ;
+
+CREATE TABLE platform_organizer_applications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  applicant_user_id BIGINT NOT NULL REFERENCES app_users(id) ON DELETE RESTRICT,
+  organization_id UUID REFERENCES organizations(id) ON DELETE RESTRICT,
+  name VARCHAR(160) NOT NULL CHECK (length(trim(name)) > 0),
+  slug VARCHAR(64) NOT NULL CHECK (slug ~ '^[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?$'),
+  contact VARCHAR(500) NOT NULL CHECK (length(trim(contact)) > 0),
+  description VARCHAR(4000) NOT NULL CHECK (length(trim(description)) > 0),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
+  review_note VARCHAR(4000),
+  reviewed_by BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
+  reviewed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK ((status='pending' AND reviewed_at IS NULL) OR (status<>'pending' AND reviewed_at IS NOT NULL)),
+  CHECK (status<>'approved' OR organization_id IS NOT NULL)
+);
+CREATE UNIQUE INDEX platform_organizer_one_pending_user ON platform_organizer_applications(applicant_user_id) WHERE status='pending';
+CREATE UNIQUE INDEX platform_organizer_one_pending_org ON platform_organizer_applications(organization_id) WHERE status='pending' AND organization_id IS NOT NULL;
+CREATE INDEX platform_organizer_review_queue ON platform_organizer_applications(status,created_at);

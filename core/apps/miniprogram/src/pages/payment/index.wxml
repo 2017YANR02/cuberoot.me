@@ -1,0 +1,12 @@
+<view class="page payment-page">
+  <text class="page-title">{{labels.title}}</text>
+  <text wx:if="orderNumber" class="page-intro">{{orderNumber}}</text>
+  <text wx:if="amount" class="payment-amount">{{amount}}</text>
+  <text class="page-intro">{{message}}</text>
+  <text wx:if="error" class="status-text status-text--error">{{error}}</text>
+  <view class="payment-actions">
+    <button wx:if="canPay" class="primary-button" hover-class="press-feedback" disabled="{{busy}}" loading="{{busy}}" bindtap="pay">{{labels.pay}}</button>
+    <button wx:if="hasOrder" class="text-button" hover-class="press-feedback" disabled="{{busy}}" bindtap="refresh">{{labels.refresh}}</button>
+    <button class="text-button" hover-class="press-feedback" bindtap="returnToOrder">{{labels.return}}</button>
+  </view>
+</view>

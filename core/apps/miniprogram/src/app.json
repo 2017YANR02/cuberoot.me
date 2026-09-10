@@ -4,7 +4,8 @@
     "pages/smart-cube/index",
     "pages/tools/index",
     "pages/account/index",
-    "pages/web/index"
+    "pages/web/index",
+    "pages/payment/index"
   ],
   "lazyCodeLoading": "requiredComponents",
   "darkmode": true,

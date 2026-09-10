@@ -139,6 +139,10 @@ export async function getMeetToken(code: string): Promise<VideoToken> {
   return postToken('/v1/video/meet/token', { code }, true);
 }
 
+export async function getCompetitionVideoToken(registrationId: string): Promise<VideoToken> {
+  return postToken('/v1/video/competition/token', { registrationId }, true);
+}
+
 /**
  * 分配一个当前未被活跃会议或待入会创建流程占用的四位数字码。
  * 由服务端分配，客户端本地随机无法看见其他活跃房间。

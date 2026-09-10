@@ -97,6 +97,53 @@ export function verifyAlipayNotify(params: SignParams & { sign?: string; sign_ty
   }
 }
 
+async function refundRequest(method: string, biz: Record<string, unknown>): Promise<Record<string, unknown>> {
+  if (!alipayConfigured()) throw new Error('Alipay is not configured');
+  const params: SignParams = { app_id: APP_ID, method, format: 'JSON', charset: 'utf-8', sign_type: 'RSA2',
+    timestamp: beijingTimestamp(), version: '1.0', biz_content: JSON.stringify(biz) };
+  params.sign = sign(buildAlipaySignContent(params, ['sign']));
+  const body = new URLSearchParams();
+  for (const [key,value] of Object.entries(params)) if (value != null) body.set(key,String(value));
+  const response = await fetch(GATEWAY, { method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=utf-8'},
+    body:body.toString(),signal:AbortSignal.timeout(15000) });
+  if (!response.ok) throw new Error(`Alipay refund HTTP ${response.status}`);
+  const raw = await response.text(), envelope = JSON.parse(raw) as Record<string, unknown>;
+  const key = `${method.replaceAll('.','_')}_response`;
+  // Alipay signs the original JSON object bytes, so parsing/re-stringifying would invalidate escaped text.
+  const keyAt=raw.indexOf(JSON.stringify(key)), start=raw.indexOf('{',keyAt);
+  let depth=0,quoted=false,escaped=false,end=-1;
+  for(let i=start;i>=0 && i<raw.length;i++){
+    const ch=raw[i];
+    if(quoted){if(escaped)escaped=false;else if(ch==='\\')escaped=true;else if(ch==='"')quoted=false;}
+    else if(ch==='"')quoted=true;
+    else if(ch==='{')depth++;
+    else if(ch==='}' && --depth===0){end=i+1;break;}
+  }
+  if(keyAt<0 || start<0 || end<0 || typeof envelope.sign!=='string'
+    || !createVerify('RSA-SHA256').update(raw.slice(start,end),'utf8').verify(ALIPAY_PUBLIC_KEY,envelope.sign,'base64')) {
+    throw new Error('Alipay refund response signature verification failed');
+  }
+  return envelope[key] as Record<string, unknown>;
+}
+
+export async function createAlipayRefund(input: {transactionId:string;requestId:string;amountMinor:number;reason:string}): Promise<Record<string,unknown>> {
+  const result=await refundRequest('alipay.trade.refund',{trade_no:input.transactionId,out_request_no:input.requestId,
+    refund_amount:centsToYuan(input.amountMinor),refund_reason:input.reason});
+  if(result.code!=='10000')throw new Error('Alipay refund was not accepted');
+  // Query the named refund to verify its identity and final status even when fund_change=N (a replay).
+  const verified=await queryAlipayRefund(input.transactionId,input.requestId);
+  if(!verified)throw new Error('Alipay refund confirmation is pending');
+  return verified;
+}
+
+export async function queryAlipayRefund(transactionId:string,requestId:string): Promise<Record<string,unknown>|null> {
+  const result=await refundRequest('alipay.trade.fastpay.refund.query',{trade_no:transactionId,out_request_no:requestId});
+  if(result.sub_code==='ACQ.TRADE_NOT_EXIST' || result.sub_code==='ACQ.REFUND_NOT_EXIST')return null;
+  if(result.code!=='10000')throw new Error('Alipay refund query failed');
+  if(!result.refund_status && !result.refund_amount)return null;
+  return result;
+}
+
 /** 主动查单(轮询补偿)。返回 paid / 平台流水号。出错返回 null。 */
 export async function queryAlipayTrade(
   outTradeNo: string,
