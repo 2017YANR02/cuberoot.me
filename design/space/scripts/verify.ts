@@ -275,8 +275,12 @@ try {
           const center = new THREE.Vector3(-1328, height, 1367);
           for (let side = 0; side < 4; side++) {
             const outward = new THREE.Vector3(Math.cos(side * Math.PI / 2), 0, Math.sin(side * Math.PI / 2));
-            const hit = cast(peace, roof, center.clone().addScaledVector(outward, 30), outward.clone().negate(), 60);
-            if (!hit || Math.abs(peace.worldToLocal(hit.point.clone()).distanceTo(center) - expected) > .025) throw new Error('Peace copper roof or lantern surface missing');
+            // The later crown opens the central lantern skin for real louvers.
+            // Keep checking the unchanged 1.05 m skin at its uncut side strip.
+            const target = center.clone();
+            if (height === 75 && peace.userData.spacePeaceCrownRevision) target.add(new THREE.Vector3(-outward.z, 0, outward.x).multiplyScalar(.90));
+            const hit = cast(peace, roof, target.clone().addScaledVector(outward, 30), outward.clone().negate(), 60);
+            if (!hit || Math.abs(peace.worldToLocal(hit.point.clone()).distanceTo(target) - expected) > .025) throw new Error('Peace copper roof or lantern surface missing');
           }
         }
         const cap = cast(peace, roof, new THREE.Vector3(-1327.8, 80, 1367), new THREE.Vector3(0, -1, 0), 10);
@@ -397,7 +401,149 @@ try {
         for (let i = 0; i < 9; i++) front(tx - 4.64 + i * 1.16 + .40, 42.55, 'trim', -(face + .21));
         authoredCustomsRoof = {revision, surfaceRays, pavilions: 2, terraceWindows: 5, plinthPanels: 9, estimatedDimensions: true};
       }
-      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks, authoredEntrances, authoredGalleries, authoredWindows, authoredHeroDetails, authoredFrontages, authoredPeaceRiverfront, authoredCustomsRoof});
+      // Mirror the author scripts' root-local coordinates: Blender (x,y,z)
+      // becomes glTF (x,z,-y). Hit the entire building, including legacy meshes,
+      // and measure locally so a retained root transform cannot skew the depth.
+      if (!peace?.userData.spacePeaceCrownRevision || !customs?.userData.spaceCustomsJunctionRevision || !bank?.userData.spaceHsbcDrumRevision) {
+        throw new Error('Shanghai GLB is missing the current Peace crown, Customs junction or HSBC drum revision');
+      }
+      city.root.updateMatrixWorld(true);
+      const gltfPoint = ([x, y, z]: readonly number[]) => new THREE.Vector3(x, z, -y);
+      const firstSurface = (building: THREE.Object3D, label: string, origin: readonly number[], direction: readonly number[], id: string, depth: number) => {
+        const start = gltfPoint(origin);
+        const hit = new THREE.Raycaster(start.clone().applyMatrix4(building.matrixWorld), gltfPoint(direction).transformDirection(building.matrixWorld), 0, 100).intersectObject(building, true)[0];
+        const measured = hit ? building.worldToLocal(hit.point.clone()).distanceTo(start) : NaN;
+        if (hit?.object.userData.spaceId !== id || !Number.isFinite(measured) || Math.abs(measured - depth) > .025) {
+          throw new Error(`${label}: expected ${id} at ${depth}, hit ${hit?.object.userData.spaceId} at ${measured}`);
+        }
+        return {label, firstId: id, depth: measured};
+      };
+      const boundPart = (id: string, property: string, part: string, materialId: string, shaderKey?: string) => {
+        const mesh = roots.get(id);
+        if (!(mesh instanceof THREE.Mesh) || mesh.userData[property] !== part ||
+            !mesh.geometry.getAttribute('position')?.count || !mesh.geometry.getAttribute('normal') || !mesh.geometry.getAttribute('uv') ||
+            !mesh.castShadow || !mesh.receiveShadow || !(mesh.material instanceof THREE.MeshStandardMaterial) ||
+            mesh.material.userData.spaceMaterialId !== materialId || (shaderKey !== undefined && mesh.material.userData.spaceShaderKey !== shaderKey)) {
+          throw new Error(`Authored part geometry, material or runtime binding lost: ${id}`);
+        }
+        return mesh.material;
+      };
+      let authoredPeaceCrown: unknown = null;
+      if (peace?.userData.spacePeaceCrownRevision) {
+        const revision = 'peace-crown-20260910', detail = peace.userData.spacePeaceCrownDetail;
+        if (peace.userData.spacePeaceCrownRevision !== revision || detail?.lanternOpenings !== 4 || detail.louverBlades !== 40 ||
+            detail.hipCapJoints !== 156 || detail.eavesSwags !== 80 || detail.newMeshes !== 3 || !(detail.removedRoofFaces > 0)) throw new Error('Peace crown metadata lost');
+        for (const part of ['copper', 'raised-copper', 'recess']) boundPart(`${revision}/root/147/4/${part}`, 'spacePeaceCrownPart', part, `${revision}/${part}`, 'shanghai-illumination-0');
+        const surfaceChecks = [];
+        const half = 11.52588;
+        const facePoint = (u: number, v: number, height: number, face: number) => {
+          const c = Math.round(Math.cos(face * Math.PI / 2)), s = Math.round(Math.sin(face * Math.PI / 2));
+          return [-1328 + u * c - v * s, -1367 + u * s + v * c, height];
+        };
+        const front = (face: number, u: number, height: number, start: number, part: string, surface: number, label: string) => {
+          const angle = face * Math.PI / 2;
+          surfaceChecks.push(firstSurface(peace, `Peace ${label} face ${face}`, facePoint(u, start, height, face),
+            [Math.round(Math.sin(angle)), -Math.round(Math.cos(angle)), 0], `${revision}/root/147/4/${part}`, start - surface));
+        };
+        for (let face = 0; face < 4; face++) {
+          for (let i = 0; i < 10; i++) {
+            const bottom = 74.56 + i * .122;
+            front(face, .23, bottom + .015, 2, 'raised-copper', 1.115, `louver ${i}`);
+            front(face, .23, bottom + .070, 2, 'recess', 1.11 - .24 * .070 / .105, `louver cavity ${i}`);
+          }
+          // The retained central shield covers the fold and two swag centers.
+          // Inspect the exposed fold and outer arcs of those same two swags.
+          front(face, 2.3, 60.088, half + 1, 'raised-copper', half + .226, 'eaves fold');
+          for (let i = 0; i < 20; i++) {
+            const center = -half + (i + .5) * 2 * half / 20;
+            const t = i === 9 ? 2 / 16 : i === 10 ? 14 / 16 : .5;
+            front(face, center + (t - .5) * (2 * half / 20 - .11), 59.99 - .15 * Math.sin(Math.PI * t),
+              half + 1, 'raised-copper', half + .212 + .039 / (2 * Math.SQRT2), `eaves swag ${i}`);
+          }
+          // Every short hip collar must remain outside the older continuous cap.
+          const tangent = new THREE.Vector3(1.6 - half, 1.6 - half, 13.6).normalize();
+          const cross = tangent.clone().cross(new THREE.Vector3(0, 0, 1)).normalize();
+          const outward = tangent.clone().cross(cross).normalize().negate();
+          const c = Math.round(Math.cos(face * Math.PI / 2)), s = Math.round(Math.sin(face * Math.PI / 2));
+          const direction = [-outward.x * c + outward.y * s, -outward.x * s - outward.y * c, -outward.z];
+          for (let i = 1; i < 40; i++) {
+            const t = i / 40, u = half - (half - 1.6) * t;
+            const origin = facePoint(u + outward.x * .5, u + outward.y * .5, 60 + 13.6 * t + outward.z * .5, face);
+            surfaceChecks.push(firstSurface(peace, `Peace hip joint ${face}/${i}`, origin, direction,
+              `${revision}/root/147/4/raised-copper`, .5 - .230 / (2 * Math.SQRT2)));
+          }
+        }
+        authoredPeaceCrown = {revision, surfaceRays: surfaceChecks.length, surfaceChecks, estimatedDimensions: true};
+      }
+      let authoredCustomsJunctions: unknown = null;
+      if (customs?.userData.spaceCustomsJunctionRevision) {
+        const revision = 'customs-junctions-20260910', detail = customs.userData.spaceCustomsJunctionDetail;
+        if (customs.userData.spaceCustomsJunctionRevision !== revision || detail?.returns?.length !== 2 || detail.removedFaces !== 640 ||
+            detail.glassObjects?.length !== 3 || detail.plinthProjectors !== 5 || detail.projectorAnchors?.length !== 5) throw new Error('Customs junction metadata lost');
+        boundPart(`${revision}/root/147/5/plinth-projectors`, 'spaceCustomsJunctionPart', 'plinth-projectors', `${revision}/plinth-projectors`, 'shanghai-illumination-0');
+        boundPart(`${revision}/root/147/5/plinth-lenses`, 'spaceCustomsJunctionPart', 'plinth-lenses', `${revision}/plinth-lenses`, 'shanghai-illumination-1.2');
+        const glassIds = ['root/147/5/1', 'bund-frontages-20260909/root/147/5/glass', 'customs-roof-20260910/root/147/5/glass'];
+        const materialIds = new Set<string>();
+        for (const id of glassIds) {
+          const mesh = roots.get(id), mat = mesh instanceof THREE.Mesh ? mesh.material : undefined;
+          if (!(mat instanceof THREE.MeshStandardMaterial) || ![`${revision}/glass-0`, `${revision}/glass-1`].includes(mat.userData.spaceMaterialId) ||
+              Math.abs(mat.metalness) > .0001 || Math.abs(mat.roughness - .34) > .0001 || !detail.glassObjects.includes(id)) throw new Error(`Customs dielectric glazing lost: ${id}`);
+          materialIds.add(mat.userData.spaceMaterialId);
+        }
+        if (materialIds.size !== 2) throw new Error('Customs glazing material identities lost');
+        const surfaceChecks = [];
+        for (const [center, half, back] of [[-16.45, 3.95, -7.486844062805176], [15.61, 4.22, -6.345259666442871]]) {
+          const item = detail.returns.find((value: {center: number}) => value.center === center);
+          if (!item || Math.abs(item.back - back) > .001) throw new Error('Customs cornice rear extent changed');
+          for (const [height, projection] of [[36.98, .17], [37.20, .36], [37.53, .20], [38.00, .42], [38.40, .25], [39.46, .30]]) {
+            for (const side of [-1, 1]) {
+              // Inspect the newly extended side at two depths, not the already
+              // checked front profile; leftover old ledges must be first-hit failures.
+              for (const depth of [-3, back + .30]) surfaceChecks.push(firstSurface(customs, `Customs return ${center}/${height}/${side}/${depth}`,
+                [center + side * (half + 1), depth, height], [-side, 0, 0], 'customs-roof-20260910/root/147/5/trim', 1 - projection));
+            }
+          }
+        }
+        const tx = -1.3615846633911133, face = -5.227914094924927 + 7.25;
+        const normal = new THREE.Vector3(0, -.5, Math.sqrt(3) / 2);
+        for (const [i, offset] of [-6.1, -3.05, 0, 3.05, 6.1].entries()) {
+          const anchor = new THREE.Vector3(tx + offset, face + .44, 35.71);
+          if (anchor.distanceTo(new THREE.Vector3(...detail.projectorAnchors[i])) > .001) throw new Error('Customs projector anchor changed');
+          // Begin outside the lens but clear of the nearby stone pillar.
+          surfaceChecks.push(firstSurface(customs, `Customs projector ${i}`, anchor.addScaledVector(normal, .12).toArray(), normal.clone().negate().toArray(),
+            `${revision}/root/147/5/plinth-lenses`, .032));
+        }
+        authoredCustomsJunctions = {revision, surfaceRays: surfaceChecks.length, surfaceChecks, dielectricGlassObjects: 3, physicalProjectors: 5, runtimeLightingVerified: false, estimatedDimensions: true};
+      }
+      let authoredHsbcDrum: unknown = null;
+      if (bank?.userData.spaceHsbcDrumRevision) {
+        const revision = 'hsbc-drum-20260910', detail = bank.userData.spaceHsbcDrumDetail;
+        if (bank.userData.spaceHsbcDrumRevision !== revision || detail?.frontDrumColumns !== 2 || detail.upperRecessedWindows !== 4 ||
+            detail.upperBalconies !== 4 || detail.diagonalDecoratedPiers !== 4 || detail.crownBalustradeFaces !== 8 ||
+            detail.flatHeadedDormers !== 4 || detail.projectors !== 32 || detail.newMeshes !== 5 || detail.reusedDomeId !== 'root/147/6/5') throw new Error('HSBC drum metadata lost');
+        for (const part of ['stone', 'glass', 'trim', 'metal', 'dome', 'lenses']) {
+          const id = part === 'dome' ? 'root/147/6/5' : `${revision}/root/147/6/${part}`;
+          boundPart(id, 'spaceHsbcDrumPart', part, `${revision}/${part}`, part === 'lenses' ? 'shanghai-illumination-0.3' : undefined);
+        }
+        const surfaceChecks: ReturnType<typeof firstSurface>[] = [];
+        const cy = -4.7, distance = 8.4 * Math.cos(Math.PI / 8);
+        const probe = (label: string, origin: number[], direction: number[], part: string, depth: number) => surfaceChecks.push(firstSurface(bank, `HSBC ${label}`, origin, direction,
+          part === 'dome' ? 'root/147/6/5' : `${revision}/root/147/6/${part}`, depth));
+        // Exact 14 first-hit probes from refine_hsbc_drum.verify(). Dormer rays
+        // sit above the legitimate stone handrail, not inside its lower pane.
+        for (let side = 0; side < 8; side++) {
+          const angle = side * Math.PI / 4, c = Math.cos(angle), s = Math.sin(angle);
+          probe(`upper drum ${side}`, [.34 * c - (distance + 1.4) * s, .34 * s + (distance + 1.4) * c + cy, 35.58], [s, -c, 0], side % 2 === 0 ? 'glass' : 'stone', side % 2 === 0 ? 1.97 : 1.4);
+        }
+        for (let side = 0; side < 4; side++) {
+          const angle = side * Math.PI / 2, c = Math.cos(angle), s = Math.sin(angle);
+          probe(`dormer ${side}`, [.23 * c - 10 * s, .23 * s + 10 * c + cy, 38.72], [s, -c, 0], 'glass', 1.87);
+        }
+        probe('lower portico', [.40, cy + 10 * Math.cos(Math.PI / 8) + 1.4, 31.2], [0, -1, 0], 'glass', 2.22);
+        probe('smooth dome', [0, cy + 10, 40.5], [0, -1, 0], 'dome', 10 - 8.3 * Math.sqrt(1 - ((40.5 - 37.9) / 5.312) ** 2));
+        authoredHsbcDrum = {revision, surfaceRays: surfaceChecks.length, surfaceChecks, retainedDomeId: 'root/147/6/5', runtimeLightingVerified: false, estimatedDimensions: true};
+      }
+      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks, authoredEntrances, authoredGalleries, authoredWindows, authoredHeroDetails, authoredFrontages, authoredPeaceRiverfront, authoredCustomsRoof, authoredPeaceCrown, authoredCustomsJunctions, authoredHsbcDrum});
       city.dispose(); continue;
     }
     const [style, env] = key.split('-') as [RoomStyle, Environment];

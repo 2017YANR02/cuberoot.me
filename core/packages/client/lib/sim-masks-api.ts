@@ -29,11 +29,26 @@ export interface SimMaskRow {
   rest: string;
 }
 
+export interface SimMaskLayout {
+  cubeSize: number;
+  groups: { group: string; items: string[] }[];
+}
+
+export async function listSimMaskLayouts(): Promise<SimMaskLayout[]> {
+  return handleApi<SimMaskLayout[]>(await fetch(`${BASE}/layout`, { cache: 'no-store' }));
+}
+
+export async function saveSimMaskLayout(body: SimMaskLayout): Promise<{ ok: boolean }> {
+  return handleApi<{ ok: boolean }>(await fetch(`${BASE}/layout`, {
+    method: 'PUT', headers: authHeaders(), body: JSON.stringify(body),
+  }));
+}
+
 export type SimMaskInput = Pick<SimMaskRow,
   'maskKey' | 'kind' | 'cubeSize' | 'hidden' | 'labelEn' | 'labelZh' | 'sids' | 'pick' | 'rest'>;
 
 export async function listSimMasks(): Promise<SimMaskRow[]> {
-  return handleApi<SimMaskRow[]>(await fetch(BASE));
+  return handleApi<SimMaskRow[]>(await fetch(BASE, { cache: 'no-store' }));
 }
 
 /** 按 maskKey upsert(admin)。 */

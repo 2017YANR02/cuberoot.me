@@ -16,6 +16,49 @@ import { ShanghaiFacadeLighting } from '@/app/[lang]/space/space-shanghai-lighti
 
 const windows = new THREE.Texture();
 
+describe('Shanghai illumination program sharing', () => {
+  const city = () => {
+    const scene = Object.create(ShanghaiScene.prototype) as ShanghaiScene;
+    Object.assign(scene, { materials: new Set(), night: { value: .65 }, facadeLighting: { active: { value: new THREE.Vector4() } } });
+    return scene;
+  };
+  const shader = (material: THREE.MeshStandardMaterial) => {
+    const program = { uniforms: {}, vertexShader: '', fragmentShader: '#include <emissivemap_fragment>' } as THREE.WebGLProgramParametersWithUniforms;
+    material.onBeforeCompile(program, {} as THREE.WebGLRenderer);
+    return program;
+  };
+
+  it('shares identical GLSL while retaining each material strength and the shared clock uniform', () => {
+    const scene = city(), a = scene['material'](0xffffff, .1, .5, .12349), b = scene['material'](0xffffff, .1, .5, 1.2);
+    const first = shader(a), second = shader(b);
+    expect(a.customProgramCacheKey()).toBe('shanghai-illumination-uniform-v1');
+    expect(b.customProgramCacheKey()).toBe(a.customProgramCacheKey());
+    expect(first.fragmentShader).toBe(second.fragmentShader);
+    expect(first.uniforms.cityIllumination.value).toBe(.123); expect(second.uniforms.cityIllumination.value).toBe(1.2);
+    expect(first.uniforms.cityNight).toBe(second.uniforms.cityNight); expect(first.uniforms.cityNight.value).toBe(.65);
+    expect(a.userData.spaceIllumination).toBe(.12349); expect(b.userData.spaceIllumination).toBe(1.2);
+    a.dispose(); b.dispose();
+  });
+
+  it('restores legacy numeric keys and new metadata without rewriting stored Blender provenance', () => {
+    const scene = city(), bank = { width: 1, axes: [], wingAxes: [], wingZ: 0 };
+    for (const [key, metadata] of [['shanghai-illumination-0.1', undefined], ['traffic-shanghai-illumination-0.1', 99], ['shanghai-illumination-uniform-v1', .1], ['traffic-shanghai-illumination-uniform-v1', .1]] as const) {
+      const material = new THREE.MeshStandardMaterial();
+      material.userData = { spaceShaderKey: key, spaceIllumination: metadata, authoredDetail: 'preserved' };
+      scene['restoreBlenderMaterial'](material, bank);
+      expect(material.userData.spaceShaderKey).toBe(key); expect(material.userData.authoredDetail).toBe('preserved');
+      expect(material.userData.spaceIllumination).toBe(.1); expect(shader(material).uniforms.cityIllumination.value).toBe(.1);
+      material.dispose();
+    }
+    for (const invalid of [undefined, '0.1', NaN, Infinity, -1]) {
+      const material = new THREE.MeshStandardMaterial();
+      material.userData = { spaceShaderKey: 'shanghai-illumination-uniform-v1', spaceIllumination: invalid };
+      expect(() => scene['restoreBlenderMaterial'](material, bank)).toThrow('Invalid Blender illumination');
+      material.dispose();
+    }
+  });
+});
+
 const data: unknown = JSON.parse(readFileSync(new URL('../public/assets/space/shanghai-v1/huangpu.json', import.meta.url), 'utf8'));
 validateShanghaiData(data);
 const inside = (x: number, z: number, ring: number[][]) => {

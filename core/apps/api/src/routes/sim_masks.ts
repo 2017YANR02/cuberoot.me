@@ -100,6 +100,45 @@ function normalize(b: MaskInput): { error: string } | { value: Normalized } {
 
 const COLS = 'id, mask_key, kind, cube_size, position, hidden, label_en, label_zh, sids, pick, rest';
 
+// Group order and membership are saved atomically, independently for each cube size.
+simMasksRoutes.get('/sim-masks/layout', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const rows = await query<{ cube_size: number; groups: unknown }>('SELECT cube_size, groups FROM sim_mask_layouts ORDER BY cube_size');
+  return c.json(rows.map((r) => ({ cubeSize: r.cube_size, groups: r.groups })));
+});
+
+simMasksRoutes.put('/sim-masks/layout', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  await requireAdminOrApiKey(c);
+  const b = await c.req.json();
+  if (!b || !Number.isInteger(b.cubeSize) || b.cubeSize < SIZE_MIN || b.cubeSize > SIZE_MAX) {
+    return c.json({ error: 'cubeSize must be 2..9' }, 400);
+  }
+  if (!Array.isArray(b.groups) || !b.groups.length || b.groups.length > 64) {
+    return c.json({ error: 'groups must contain 1..64 groups' }, 400);
+  }
+  const names = new Set<string>();
+  const keys = new Set<string>();
+  for (const g of b.groups) {
+    if (!g || typeof g.group !== 'string' || !/^[A-Za-z0-9 _:-]{1,80}$/.test(g.group)
+      || names.has(g.group) || !Array.isArray(g.items) || g.items.length > 512) {
+      return c.json({ error: 'Invalid or duplicate group' }, 400);
+    }
+    names.add(g.group);
+    for (const key of g.items) {
+      if (typeof key !== 'string' || !KEY_RE.test(key) || keys.has(key)) {
+        return c.json({ error: 'Invalid or duplicate mask key' }, 400);
+      }
+      keys.add(key);
+    }
+  }
+  if (keys.size > 512) return c.json({ error: 'Too many masks' }, 400);
+  await query('INSERT INTO sim_mask_layouts (cube_size, groups) VALUES (?, ?::jsonb) ON CONFLICT (cube_size) DO UPDATE SET groups = EXCLUDED.groups',
+    [b.cubeSize, b.groups.map((g: { group: string; items: string[] }) => ({ group: g.group, items: g.items }))]);
+  return c.json({ ok: true });
+});
+
 // GET /v1/sim-masks — 全表(public)
 simMasksRoutes.get('/sim-masks', async (c) => {
   c.header('Cache-Control', 'public, max-age=60');

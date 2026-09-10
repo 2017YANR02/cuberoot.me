@@ -1,14 +1,12 @@
 'use client';
 // 遮罩清单管理(仅管理员可见,/sim 播放条上的齿轮)。
 //
-// 能做四件事:改双语名字、调组内顺序、藏起不想看的条目、把当前点选的贴纸存成一条新遮罩。
-// 存的是覆盖层(lib/sim-masks-api.ts),代码里的默认清单不动;某条「恢复默认」= 删掉它那行。
-// 顺序按组来 —— 一次上/下就把该组全量 keys 发去 /reorder,于是抽屉里看到的顺序就是落库的顺序。
+// 标签与显隐用条目覆盖层；分组顺序、组内顺序与跨组归属一次保存完整布局。
 import { useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, Eye, EyeOff, RotateCcw, Trash2, X } from 'lucide-react';
 import { useT } from '@/hooks/useT';
 import {
-  deleteSimMask, reorderSimMasks, saveSimMask, PRESET_PREFIX,
+  deleteSimMask, saveSimMaskLayout, saveSimMask, PRESET_PREFIX,
   type SimMaskRow,
 } from '@/lib/sim-masks-api';
 import { maskRowsForOrder } from './engine/nxn/maskConfig';
@@ -37,7 +35,7 @@ export default function SimMaskAdmin({
   onClose: () => void;
   groupLabel: (group: string) => string;
   /** 代码里的默认标签(改名输入框的 placeholder,让人看得见默认是什么)。 */
-  defaultLabel: (key: string) => string;
+  defaultLabel: (key: string, lang: 'zh' | 'en') => string;
   /** 当前「自定义阶段」点选的贴纸清单 + 画法 —— 存成新遮罩用的就是这三样。 */
   pickedSids: string;
   pick: string;
@@ -110,17 +108,31 @@ export default function SimMaskAdmin({
     const j = i + delta;
     if (j < 0 || j >= items.length) return;
     [items[i], items[j]] = [items[j], items[i]];
-    // 只发这一组的全量 keys:组间顺序由代码决定,不跨组搬
-    void run(() => reorderSimMasks(order, items));
+    void run(() => saveSimMaskLayout({ cubeSize: order, groups: groups.map((g, index) => index === groupIdx ? { ...g, items } : g) }));
+  };
+
+  const moveGroup = (index: number, delta: number) => {
+    const next = [...groups];
+    const target = index + delta;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    void run(() => saveSimMaskLayout({ cubeSize: order, groups: next }));
+  };
+
+  const moveToGroup = (key: string, target: string) => {
+    if (!groups.some((g) => g.group === target)) return;
+    const next = groups.map((g) => ({ ...g, items: g.items.filter((item) => item !== key) }));
+    next.find((g) => g.group === target)!.items.push(key);
+    void run(() => saveSimMaskLayout({ cubeSize: order, groups: next }));
   };
 
   const resetRow = (key: string) => {
     const isPreset = key.startsWith(PRESET_PREFIX);
-    const label = defaultLabel(key) || key;
+    const label = defaultLabel(key, 'zh') || key;
     const ok = window.confirm(isPreset
       ? t(`删除自建遮罩「${label}」?`, `Delete custom mask “${label}”?`)
-      : t(`把「${label}」恢复成代码默认(名字 / 顺序 / 显隐 全部还原)?`,
-        `Reset “${label}” to the code default (label, order and visibility)?`));
+      : t(`把「${label}」的名字和显隐恢复默认?`,
+        `Reset the label and visibility of “${label}”?`));
     if (!ok) return;
     void run(() => deleteSimMask(key));
   };
@@ -195,7 +207,14 @@ export default function SimMaskAdmin({
         <div className="sim-mask-admin-list">
           {groups.map((g, gi) => (
             <div key={g.group} className="sim-mask-admin-group">
-              <div className="sim-mask-admin-group-title">{groupLabel(g.group)}</div>
+              <div className="sim-mask-admin-group-title">
+                <strong>{groupLabel(g.group)}</strong>
+                <button type="button" className="sim-mask-admin-icon" disabled={busy || gi === 0}
+                  onClick={() => moveGroup(gi, -1)} aria-label={t('分组上移', 'Move group up')} title={t('分组上移', 'Move group up')}><ArrowUp size={14} /></button>
+                <button type="button" className="sim-mask-admin-icon" disabled={busy || gi === groups.length - 1}
+                  onClick={() => moveGroup(gi, 1)} aria-label={t('分组下移', 'Move group down')} title={t('分组下移', 'Move group down')}><ArrowDown size={14} /></button>
+                {g.items.length === 0 && <span>{t('空分组，可移入阶段', 'Empty group; move a stage here')}</span>}
+              </div>
               {g.items.map((key, i) => {
                 const r = rowOf(key);
                 const d = draftOf(key);
@@ -215,20 +234,33 @@ export default function SimMaskAdmin({
                       <ArrowDown size={14} />
                     </button>
                     <code className="sim-mask-admin-key" title={key}>{key}</code>
+                    <label className="sim-mask-admin-field">
+                    <span>{t('中文名', 'Chinese name')}</span>
                     <input
                       className="sim-mask-admin-input"
                       value={d.zh}
                       onChange={(e) => setDraft((p) => ({ ...p, [key]: { ...draftOf(key), zh: e.target.value } }))}
-                      placeholder={defaultLabel(key)}
+                      placeholder={defaultLabel(key, 'zh')}
                       aria-label={t('中文名', 'Chinese name')}
                     />
+                    </label>
+                    <label className="sim-mask-admin-field">
+                    <span>{t('英文名', 'English name')}</span>
                     <input
                       className="sim-mask-admin-input"
                       value={d.en}
                       onChange={(e) => setDraft((p) => ({ ...p, [key]: { ...draftOf(key), en: e.target.value } }))}
-                      placeholder={defaultLabel(key)}
+                      placeholder={defaultLabel(key, 'en')}
                       aria-label={t('英文名', 'English name')}
                     />
+                    </label>
+                    <label className="sim-mask-admin-field">
+                      <span>{t('分组', 'Group')}</span>
+                      <select className="sim-mask-admin-input" value={g.group} disabled={busy} aria-label={t('分组', 'Group')}
+                        onChange={(e) => moveToGroup(key, e.target.value)}>
+                        {groups.map((target) => <option key={target.group} value={target.group}>{groupLabel(target.group)}</option>)}
+                      </select>
+                    </label>
                     <button
                       type="button" className="sim-mask-admin-btn" disabled={busy || !dirty(key)}
                       onClick={() => saveRow(key, {})}

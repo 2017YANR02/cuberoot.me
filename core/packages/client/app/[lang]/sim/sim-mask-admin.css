@@ -1,5 +1,5 @@
 /* 遮罩清单管理抽屉(仅管理员)。列表可能有几十条 → 自己滚,别把页面撑长。
-   窄屏:key 那列藏掉、双语输入框各占一行(网格换成两行布局)。 */
+   窄屏隐藏 key，字段和操作按可用宽度换行。 */
 .sim-mask-admin-scrim {
   position: fixed;
   inset: 0;
@@ -72,6 +72,10 @@
 }
 
 .sim-mask-admin-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
   font-size: 12px;
   color: var(--muted-foreground);
   margin-bottom: 4px;
@@ -84,6 +88,18 @@
   gap: 6px;
   padding: 2px 0;
 }
+
+.sim-mask-admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+.sim-mask-admin-field > span { white-space: nowrap; }
+.sim-mask-admin-field select { width: fit-content; max-width: 100%; }
 
 .sim-mask-admin-row.is-hidden .sim-mask-admin-key,
 .sim-mask-admin-row.is-hidden .sim-mask-admin-input {
@@ -177,6 +193,5 @@
 
   .sim-mask-admin-input {
     width: 10ch;
-    flex: 1 1 10ch;
   }
 }

@@ -241,22 +241,29 @@
     "name": "Asisbiz: 外滩 12 汇丰大楼 / HSBC Building",
     "space": true,
     "url": "https://www.asisbiz.com/China/12-Zhongshan-Rd.html",
-    "zh": "实拍用于修正六柱等距排列、柱身凹槽、柱头叶饰、窗下线脚和入口银行招牌位置。石材分缝与法线贴图为原创程序纹理，非照片扫描；柱距、雕饰及灯具尺寸为照片估算，穹顶雕像和完整立面仍未达到 1:1。档案照片不代表当前招牌现状。查阅于 2026-09-09",
-    "en": "Photographs guide six evenly spaced fluted columns, capital leaves, window mouldings and the entrance bank sign. Ashlar color and normal maps are original procedural textures, not scans. Spacing, ornament and fixtures are photographic estimates; dome statues and the complete facade are not verified 1:1. Archive photos do not establish current signage. Accessed 2026-09-09"
+    "zh": "实拍用于六柱门廊、柱头叶饰、窗下线脚、入口银行招牌，以及两级八角鼓座、上层平头窗、石栏和穹顶轮廓。石材图为原创程序纹理，非照片扫描；尺寸、雕饰及全圈灯具布置含估算，穹顶雕像和完整立面未达到 1:1。拍摄日期未知，不能据档案照片判断当前招牌与灯光。实拍复核于 2026-09-10",
+    "en": "Photographs guide the six-column portico, capital leaves, window mouldings, bank sign, two octagonal drum levels, flat-headed upper windows, balustrades and dome silhouette. Masonry maps are original procedural textures, not scans. Dimensions, ornament and fixtures around the dome remain estimates; statues and the complete facade are not verified 1:1. Capture date unknown; archive photos do not establish current signage or lighting. Reviewed 2026-09-10"
+  },
+  {
+    "name": "Hermann Luyken：汇丰外部穹顶夜景 / HSBC exterior dome at night",
+    "space": true,
+    "url": "https://commons.wikimedia.org/wiki/File:2014.11.15.192101_Dome_HSBC_Building_Bund_night_Shanghai.jpg",
+    "zh": "Hermann Luyken 于 2014-11-15 19:21:01 拍摄，CC0。对照外部平滑穹顶、水平细线、矩形窗亭、石栏、成组投光器和尖顶；不是室内马赛克穹顶。照片仅本地审图，未作为运行贴图。细部尺寸与灯具总数含估算，照片不代表当前配光或实测色温。查阅于 2026-09-10",
+    "en": "Photographed by Hermann Luyken on 2014-11-15 at 19:21:01, CC0. References the smooth exterior dome, horizontal details, rectangular dormers, balustrades, grouped floodlights and finial, rather than the interior mosaic ceiling. Reviewed locally, not used as a runtime texture. Fine dimensions and total fixture count remain estimates; this photo does not establish current photometry or measured color temperature. Accessed 2026-09-10"
   },
   {
     "name": "Asisbiz: 外滩 13 江海关 / Customs House",
     "space": true,
     "url": "https://www.asisbiz.com/China/13-Zhongshan-Rd.html",
-    "zh": "实拍用于七条主窗带、28 扇主窗、21 块铜饰板、五处矩形入口、四根凹槽石柱和钟楼三列格栅；屋顶新增两处带拱门与三角山花的侧亭、五扇露台窗、铁栏杆及钟楼基座饰框。四面钟表继续绑定场景时间，原有灯具保留。石材分缝为原创程序纹理。尺寸、饰纹与颜色仍为照片估算，侧后立面、钟面及现场灯位待校准，尚非测绘 1:1。本地存档实拍复核于 2026-09-10，拍摄年份未确定",
-    "en": "Photographs guide seven window bands, 28 main windows, 21 bronze spandrels, five portals, four fluted stone columns and three tower grilles. Roof additions include two arched pavilions with triangular pediments, five terrace windows, iron railings and clock-plinth frames. Clocks remain linked to scene time and existing fixtures are retained. Masonry maps are original procedural textures. Dimensions, ornament and colors are photographic estimates; other elevations, clock faces and lighting need calibration, not a surveyed 1:1 model. Archived photographs reviewed 2026-09-10; capture year unknown"
+    "zh": "实拍用于七条主窗带、铜饰板、入口石柱、钟楼格栅及双侧亭；本轮核对六层转折檐口、基座正面可见的五个投光器，保留场景时间驱动的四面钟表。原图署名 Matthew Laird Acred，拍摄日期未知，页面更新时间 2020-01-27 不能当拍摄日期。石材图为原创程序纹理；尺寸、颜色及灯具均含估算，新增灯具外形不等于现场配光已还原。侧后立面、钟面与夜景待校准，尚非测绘 1:1。查阅于 2026-09-10",
+    "en": "Photographs guide seven window bands, bronze panels, entrance columns, tower grilles and paired roof pavilions. This review covers six-layer cornice returns and five visible front plinth floodlights; all four clocks retain scene-time control. The source credits Matthew Laird Acred. Capture date unknown; the page update of 2020-01-27 is not a capture date. Masonry maps are original procedural textures. Dimensions, colors and fixtures remain estimates; modeled lamp housings do not establish restored photometry. Other elevations, clock faces and night lighting remain uncalibrated, not surveyed 1:1. Accessed 2026-09-10"
   },
   {
     "name": "Asisbiz: 外滩 20 和平饭店 / Peace Hotel",
     "space": true,
     "url": "https://www.asisbiz.com/China/20-Zhongshan-Rd.html",
-    "zh": "实拍用于截顶铜顶、咬口与包边、上部拱窗和退台，以及中下部七层 63 扇窗、竖向窗间饰板、底层双拱窗和扇形金属花格。细化墙面衔接，保留五扇顶层窗、铁栏、雕饰实心阳台与既有和平饭店灯牌。铜板与石材图为原创程序纹理；细部尺寸为照片估算，浮雕仍简化，侧后立面和夜间铜顶照明未达标。档案照片不证明当前招牌或灯光现状。查阅于 2026-09-09",
-    "en": "Photographs guide the truncated copper roof, seams, upper arch and setbacks, plus 63 windows across seven lower levels, tall spandrel panels, two ground arches and radial metal fanlights. Wall joins are refined; five top windows, iron rails, the carved solid balcony and existing Peace Hotel signs are retained. Copper and masonry maps are original procedural textures. Fine dimensions remain estimates; relief is simplified, and other elevations and roof night lighting remain unfinished. Archive photos do not establish current signage or lighting. Accessed 2026-09-09"
+    "zh": "实拍用于截顶铜屋面、咬口、上部退台、七层 63 扇窗及底层双拱窗；本轮核对塔顶百叶凹腔、窄柱、分层铜檐、连续弧纹及屋脊接缝，保留现有灯牌。铜板与石材图为原创程序纹理；板缝与细部数量为照片估算，背面缺少独立实拍，浮雕、旗帜与夜间铜顶照明未完成。拍摄日期未知，文件名 1929 是建筑年代；不能据此推断当前招牌与灯光。查阅于 2026-09-10",
+    "en": "Photographs guide the truncated copper roof, seams, upper setbacks, 63 windows across seven levels and two ground arches. This review covers recessed crown louvers, narrow posts, layered copper eaves, repeated arcs and hip joints, retaining existing signs. Copper and masonry maps are original procedural textures. Joint spacing and detail counts are estimates; the rear lacks independent photographs, and relief, flags and roof night lighting remain unfinished. Capture date unknown; 1929 in filenames is the building year, not evidence of current signage or lighting. Accessed 2026-09-10"
   },
   {
     "name": "Asisbiz: 外滩 1 亚细亚大楼 / Asia Building",

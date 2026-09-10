@@ -834,6 +834,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'GET', p: '/v1/sim-masks', g: 'public', zh: '/sim 遮罩清单的管理员覆盖层 + 自建遮罩', en: '/sim mask-list overrides and admin-built masks' },
   { d: 'content', m: 'PUT', p: '/v1/sim-masks', g: 'admin', zh: '按 maskKey upsert(改名 / 显隐 / 存自建遮罩)', en: 'Upsert by maskKey (label, visibility, custom mask)' },
   { d: 'content', m: 'PUT', p: '/v1/sim-masks/reorder', g: 'admin', zh: '遮罩重排(该阶全量 keys)', en: 'Reorder masks (all keys of that cube size)' },
+  { d: 'content', m: 'GET', p: '/v1/sim-masks/layout', g: 'public', zh: '按阶数读取阶段分组顺序与归属', en: 'Read stage group order and membership per cube size' },
+  { d: 'content', m: 'PUT', p: '/v1/sim-masks/layout', g: 'admin', zh: '保存阶段分组排序与跨组移动', en: 'Save stage group order and moves between groups' },
   { d: 'content', m: 'DELETE', p: '/v1/sim-masks/:key', g: 'admin', zh: '删覆盖行:内置=恢复默认,自建=删遮罩', en: 'Delete a row: builtin = reset to default, custom = delete mask' },
   { d: 'content', m: 'GET', p: '/v1/paint/drawings', g: 'login', zh: '我的矢量画作', en: 'My paint drawings' },
   { d: 'content', m: 'GET', p: '/v1/paint/drawings/:id', g: 'public', zh: '单个画作', en: 'Single drawing' },

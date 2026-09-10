@@ -5,9 +5,10 @@
 // 首屏一定是空数组(fetch 只在 effect 里发),SSG 的 hydration 输出与服务端一致 ——
 // 拉到之后再重渲染,拉不到就当没有覆盖,按代码默认清单跑。
 import { useEffect, useState } from 'react';
-import { listSimMasks, type SimMaskRow } from '@/lib/sim-masks-api';
+import { listSimMasks, listSimMaskLayouts, type SimMaskRow, type SimMaskLayout } from '@/lib/sim-masks-api';
 
 let cache: SimMaskRow[] = [];
+let layouts: SimMaskLayout[] = [];
 let loaded = false;
 let inflight: Promise<void> | null = null;
 const listeners = new Set<() => void>();
@@ -17,26 +18,27 @@ export function refreshSimMasks(): Promise<void> {
   if (!inflight) {
     inflight = (async () => {
       try {
-        cache = await listSimMasks();
-      } catch {
-        // 后端没起 / 表还没迁移:当作没有覆盖,清单照代码默认渲染
+        const next = await Promise.all([listSimMasks(), listSimMaskLayouts()]);
+        [cache, layouts] = next;
+        loaded = true;
+        for (const l of listeners) l();
+      } finally {
+        inflight = null;
       }
-      loaded = true;
-      inflight = null;
-      for (const l of listeners) l();
     })();
   }
   return inflight;
 }
 
-export function useSimMasks(): { rows: SimMaskRow[]; reload: () => Promise<void> } {
+export function useSimMasks(): { rows: SimMaskRow[]; layouts: SimMaskLayout[]; reload: () => Promise<void> } {
   const [rows, setRows] = useState<SimMaskRow[]>(cache);
+  const [savedLayouts, setLayouts] = useState(layouts);
   useEffect(() => {
-    const onChange = () => setRows(cache);
+    const onChange = () => { setRows(cache); setLayouts(layouts); };
     listeners.add(onChange);
-    if (loaded) setRows(cache);
-    else void refreshSimMasks();
+    if (loaded) onChange();
+    else void refreshSimMasks().catch(() => {});
     return () => { listeners.delete(onChange); };
   }, []);
-  return { rows, reload: refreshSimMasks };
+  return { rows, layouts: savedLayouts, reload: refreshSimMasks };
 }
