@@ -133,7 +133,7 @@ function LessonMedia({ lessonId, autoContinue, onAutoContinueChange, onNext, onP
   return <a className="platform-action-link" href={media.accessUrl} target="_blank" rel="noreferrer">{t('打开课时媒体', 'Open lesson media')}</a>;
 }
 
-function OrderItems({ items }: { items: unknown[] }) {
+function OrderItems({ items, status }: { items: unknown[]; status?: string }) {
   const t = useT();
   const english = t('zh', 'en') === 'en';
   if (!items.length) return <p className="platform-domain-note">{t('订单没有项目。', 'This order has no items.')}</p>;
@@ -144,6 +144,7 @@ function OrderItems({ items }: { items: unknown[] }) {
         {items.map((raw, index) => {
           const item = record(raw) ?? {};
           const snapshot = record(item.snapshot) ?? {};
+          const competitionId = record(snapshot.competition) && string(snapshot.eventId);
           const fulfillment = record(item.fulfillment) ?? {};
           const events = Array.isArray(fulfillment.events) ? fulfillment.events : [];
           const label = localized(snapshot, 'title', english) ?? localized(snapshot, 'name', english) ?? string(snapshot.sku) ?? string(item.sellableType) ?? t('订单项目', 'Order item');
@@ -156,7 +157,13 @@ function OrderItems({ items }: { items: unknown[] }) {
               <strong>{label}</strong>
               <span>{item.fulfillmentType === 'shipment'
                 ? t(`共 ${quantity}，已发 ${shipped}，已送达 ${delivered}，已退回 ${returned}`, `${quantity} total, ${shipped} shipped, ${delivered} delivered, ${returned} returned`)
-                : t(`数量 ${quantity}，支付成功后自动发放`, `Quantity ${quantity}, granted automatically after payment`)}</span>
+                : competitionId
+                  ? status === 'fulfilled' ? t('报名已确认，请前往比赛查看场次和检录。', 'Your entry is confirmed. Open the competition for your session and check-in.')
+                    : status === 'pending_payment' ? t('付款后确认报名，预留名额以订单有效期为准。', 'Payment confirms your entry. Your place is reserved until the order expires.')
+                      : t('报名状态请在比赛页面查看。', 'Check your entry status on the competition page.')
+                  : status === 'fulfilled' ? t(`数量 ${quantity}，已发放`, `Quantity ${quantity}, fulfilled`)
+                    : t(`数量 ${quantity}`, `Quantity ${quantity}`)}</span>
+              {competitionId ? <AppLink href={`/platform/events/online/${encodeURIComponent(competitionId)}`} prefetch={false}>{t('查看比赛与报名', 'View competition and entry')}</AppLink> : null}
               {events.map((eventRaw, eventIndex) => {
                 const event = record(eventRaw) ?? {};
                 const type = string(event.type) ?? t('履约', 'Fulfillment');
@@ -312,7 +319,7 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
     const refunds = Array.isArray(data.refunds) ? data.refunds : [];
     return (
       <div className="platform-domain-stack">
-        <OrderItems items={lines} />
+        <OrderItems items={lines} status={string(data.status) ?? undefined} />
         {payments.length ? <DomainList title={t('支付记录', 'Payment attempts')} items={payments} /> : null}
         {refunds.length ? <DomainList title={t('退款记录', 'Refunds')} items={refunds} /> : null}
       </div>

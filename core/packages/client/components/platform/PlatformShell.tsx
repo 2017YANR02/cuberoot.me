@@ -39,25 +39,28 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
   const user = useAuthUser();
   const definition = matchPlatformRoute(platformSegments(pathname))?.definition;
   const activeId = publicNavId(definition);
+  const competitionPage = definition?.id === 'online-competitions' || definition?.id === 'online-competition';
+  const orderPage = definition?.id === 'orders' || definition?.id === 'order-detail';
+  const compactPage = competitionPage || orderPage;
 
   return (
-    <div className="platform-shell">
+    <div className={`platform-shell${compactPage ? ' platform-shell--competitions' : ''}`}>
       <header className="platform-masthead">
-        <AppLink href="/platform" className="platform-wordmark" aria-label={t('Platform 首页', 'Platform home')}>
+        <AppLink href={competitionPage ? '/platform/events/online' : orderPage ? '/platform/orders' : '/platform'} className="platform-wordmark" aria-label={competitionPage ? t('比赛首页', 'Competitions home') : orderPage ? t('我的订单', 'My orders') : t('Platform 首页', 'Platform home')}>
           <span className="platform-wordmark-mark" aria-hidden>CR</span>
-          <span>{t('学习空间', 'Learning')}</span>
+          <span>{competitionPage ? t('比赛', 'Competitions') : orderPage ? t('订单', 'Orders') : t('学习空间', 'Learning')}</span>
         </AppLink>
         <p>CubeRoot</p>
         <AppLink
-          href={user ? '/platform/account/courses' : '/account'}
+          href={user ? (compactPage ? '/platform/orders' : '/platform/account/courses') : '/account'}
           className="platform-account-link"
           prefetch={false}
         >
-          {user ? t('我的学习', 'My learning') : t('登录', 'Sign in')}
+          {user ? (compactPage ? t('我的订单', 'My orders') : t('我的学习', 'My learning')) : t('登录', 'Sign in')}
         </AppLink>
       </header>
 
-      <nav className="platform-nav platform-glass" aria-label={t('Platform 功能区', 'Platform sections')}>
+      {!compactPage && <nav className="platform-nav platform-glass" aria-label={t('Platform 功能区', 'Platform sections')}>
         {PLATFORM_PUBLIC_NAV.map((item) => {
           const Icon = AREA_ICONS[item.id];
           const active = item.id === activeId;
@@ -74,7 +77,7 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
             </AppLink>
           );
         })}
-      </nav>
+      </nav>}
 
       <main className="platform-main">{children}</main>
     </div>

@@ -118,6 +118,12 @@ const actionContracts: ActionContract[] = [
 afterEach(() => vi.unstubAllGlobals());
 
 describe('Platform route conservation', () => {
+  it('reserves real online competition routes independently of generic events and the preview', () => {
+    expect(matchPlatformRoute(['events', 'online'])?.definition.id).toBe('online-competitions');
+    expect(matchPlatformRoute(['events', 'online', 'event-123'])).toMatchObject({ definition: { id: 'online-competition' }, params: { id: 'event-123' } });
+    expect(matchPlatformRoute(['events', 'event-123'])?.definition.id).toBe('event-detail');
+    expect(matchPlatformRoute(['events', 'online', 'event-123', 'extra'])).toBeNull();
+  });
   it('reserves the online competition preview without capturing event detail routes', () => {
     expect(matchPlatformRoute(['events', 'preview'])?.definition).toMatchObject({
       id: 'online-competition-preview', access: 'public', kind: 'landing',

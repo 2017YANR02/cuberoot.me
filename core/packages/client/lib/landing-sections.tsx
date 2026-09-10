@@ -77,6 +77,7 @@ const CARD_VISUALS: Partial<Record<SiteDirectoryEntry['id'], CardVisual>> = {
   trainer: { iconImg: '/icons/upstream/algtrainer.png' },
   cstimer: { iconImg: '/cstimer_logo.png' },
   contests: { iconImg: '/icons/upstream/recordranks.png' },
+  'online-competitions': { Icon: Trophy },
   'comp-sim': { Icon: Radio },
   'frame-count': { Icon: Film },
   solver: { iconImg: '/icons/upstream/solver.png' },

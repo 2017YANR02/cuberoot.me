@@ -16,6 +16,7 @@ const isProd = process.env.NODE_ENV === "production";
 const isVercel = process.env.VERCEL === "1";
 
 const nextConfig: NextConfig = {
+  ...(!isProd && process.env.NEXT_DEV_DIST_DIR && { distDir: process.env.NEXT_DEV_DIST_DIR }),
   // Self-contained server bundle for systemd `next start` on next.cuberoot.me
   // (prod only). In dev, `output: standalone` + `outputFileTracingRoot`
   // pointing at the workspace root makes Turbopack walk the entire monorepo

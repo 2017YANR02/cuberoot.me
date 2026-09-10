@@ -21,6 +21,7 @@ export const SITE_DIRECTORY_TEXTS = {
   globe: { en: 'Globe', zh: '地球' },
   cstimer: { en: 'csTimer', zh: 'csTimer' },
   contests: { en: 'Contests', zh: '比赛系统' },
+  onlineCompetitions: { en: 'Online competitions', zh: '线上比赛' },
   timer: { en: 'Timer', zh: '计时' },
   predict: { en: 'Lookahead', zh: '预判' },
   colorTest: { en: 'Colour Tests', zh: '颜色测试' },
@@ -173,6 +174,7 @@ export const SITE_DIRECTORY_GROUPS = [
     },
     entries: [
       { id: 'contests', href: '/contests', internal: true, tier: 'medium', nameKey: 'contests' },
+      { id: 'online-competitions', href: '/platform/events/online', internal: true, tier: 'medium', nameKey: 'onlineCompetitions' },
       { id: 'comp-sim', href: '/comp-sim', internal: true, tier: 'medium', nameKey: 'compSim' },
       { id: 'frame-count', href: '/frame-count', internal: true, tier: 'medium', nameKey: 'frameCount' },
       { id: 'solver', href: '/solver', internal: true, tier: 'medium', nameKey: 'solver' },

@@ -9,6 +9,8 @@ import { toLocalIsoDate } from '@cuberoot/shared/iso-date';
 import { useT } from '@/hooks/useT';
 import { apiUrl } from '@/lib/api-base';
 import { useAuthUser } from '@/lib/auth-store';
+import { approveCompetitionOrderRefund, listCompetitionOrderRefunds, refreshCompetitionOrderRefund, rejectCompetitionOrderRefund, requestCompetitionOrderRefund, type CompetitionRefund } from '@/lib/online-competition-api';
+import { isMiniProgramCommerceRestricted, openMiniProgramOrderPayment } from '@/lib/miniprogram-bridge';
 import { platformQrLinksProblem, platformQrTargetProblem, type PlatformQrLink, type PlatformQrTargetKind } from '@/lib/platform-qr-landing';
 import { loadPlatformManagedQuizzes, loadPlatformMembershipPlans, loadPlatformMemberships, loadPlatformResource, loadPlatformShippingAddresses, PLATFORM_ACTION_LABELS } from '@/lib/platform-gateway';
 import type {
@@ -1383,29 +1385,55 @@ function PlatformOrderPayment({ entity, orderId, busy, runAction }: {
 }) {
   const t = useT();
   const [attempt, setAttempt] = useState<PlatformPaymentAttemptResult | null>(null);
+  const [embedded, setEmbedded] = useState<boolean | null>(null);
+  const [nativeBusy, setNativeBusy] = useState(false);
+  const [nativeError, setNativeError] = useState('');
+  useEffect(() => { setEmbedded(isMiniProgramCommerceRestricted()); }, []);
   const status = typeof entity?.data?.status === 'string' ? entity.data.status : entity?.status;
   const totalAmountMinor = Number(entity?.data?.totalAmountMinor ?? 0);
   const canPay = status === 'pending_payment' && totalAmountMinor > 0;
   const canCancel = status === 'pending_payment';
+  const ticketOnly = Array.isArray(entity?.data?.items) && entity.data.items.length > 0
+    && entity.data.items.every(item => item && typeof item === 'object' && item.sellableType === 'event_ticket');
+  const paymentDisabled = !canPay || embedded === null || nativeBusy || busy === `start-payment:${orderId}`;
   const start = async (provider: 'wechat' | 'alipay') => {
-    const response = await runAction('start-payment', orderId, { provider });
+    if (!canPay || paymentDisabled) return;
+    if (isMiniProgramCommerceRestricted()) {
+      if (!ticketOnly || provider !== 'wechat') return;
+      setNativeBusy(true);
+      setNativeError('');
+      try {
+        if (!await openMiniProgramOrderPayment(entity?.id ?? orderId)) {
+          setNativeError(t('当前环境无法打开微信小程序支付，请使用支持此功能的微信小程序版本。', 'Native checkout is unavailable here. Use a WeChat Mini Program version that supports competition payment.'));
+        }
+      } finally { setNativeBusy(false); }
+      return;
+    }
+    const clientType = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'wap' : 'pc';
+    const response = await runAction('start-payment', orderId, { provider, clientType });
     if (!response || !isPlatformPaymentAttemptResult(response)) return;
     setAttempt(response);
     if (response.checkoutUrl) window.location.assign(response.checkoutUrl);
   };
+  if (!entity?.data || !canCancel) return null;
   return (
     <section className="platform-domain-actions">
       <h2>{t('支付与订单状态', 'Payment and order status')}</h2>
-      <p className="platform-domain-note">{canPay
+      <p className="platform-domain-note">{embedded && !ticketOnly
+        ? t('此类订单暂不支持小程序支付。', 'This order type cannot be paid in the Mini Program.')
+        : embedded && canPay
+        ? t('将打开小程序微信支付，完成后返回本页查看报名状态。', 'Continue to native WeChat checkout, then return here to see your entry status.')
+        : canPay
         ? t('订单待支付。选择支付渠道后，将跳转到渠道页面或显示支付二维码。', 'This order is awaiting payment. Choose a provider to continue by checkout URL or QR code.')
         : status === 'pending_payment'
           ? t('零金额订单不需要发起支付。', 'Zero-value orders do not require a payment attempt.')
           : t('当前订单状态不允许再次发起支付或取消。', 'The current order state does not allow another payment attempt or cancellation.')}</p>
       <div className="platform-write-actions">
-        <button type="button" className="platform-button platform-button-primary" disabled={!canPay || busy === `start-payment:${orderId}`} onClick={() => { void start('wechat'); }}>{t('微信支付', 'WeChat Pay')}</button>
-        <button type="button" className="platform-button platform-button-primary" disabled={!canPay || busy === `start-payment:${orderId}`} onClick={() => { void start('alipay'); }}>{t('支付宝', 'Alipay')}</button>
+        {canPay && (!embedded || ticketOnly) ? <button type="button" className="platform-button platform-button-primary" disabled={paymentDisabled} onClick={() => { void start('wechat'); }}>{t('微信支付', 'WeChat Pay')}</button> : null}
+        {canPay && embedded === false ? <button type="button" className="platform-button platform-button-primary" disabled={paymentDisabled} onClick={() => { void start('alipay'); }}>{t('支付宝', 'Alipay')}</button> : null}
         <ActionButton action="cancel-order" resourceId={orderId} disabled={!canCancel} confirm={text('确定取消这笔未支付订单吗？', 'Cancel this unpaid order?')} busy={busy} runAction={runAction} />
       </div>
+      {nativeError ? <p role="alert">{nativeError}</p> : null}
       {attempt?.qrCodeDataUrl ? (
         <div className="platform-payment-result" role="status">
           <img src={attempt.qrCodeDataUrl} alt={t('支付二维码', 'Payment QR code')} />
@@ -1415,6 +1443,70 @@ function PlatformOrderPayment({ entity, orderId, busy, runAction }: {
       {attempt && !attempt.checkoutUrl && !attempt.qrCodeDataUrl ? <p className="platform-domain-note">{t('支付请求已创建，请刷新订单确认支付状态。', 'The payment attempt was created. Refresh the order to confirm its status.')}</p> : null}
     </section>
   );
+}
+
+function PlatformOrderRefunds({ entity, orderId, admin = false, manualFallback, onSaved }: { entity?: PlatformEntity; orderId: string; admin?: boolean; manualFallback?: ReactNode; onSaved?: () => void }) {
+  const t = useT();
+  const [items, setItems] = useState<CompetitionRefund[]>([]);
+  const [reason, setReason] = useState('');
+  const [rejectReasons, setRejectReasons] = useState<Record<string, string>>({});
+  const [confirmedId, setConfirmedId] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [revision, setRevision] = useState(0);
+  const rawItems = Array.isArray(entity?.data?.items) ? entity.data.items : [];
+  const competitionOrder = rawItems.length > 0 && rawItems.every(raw => {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
+    const item = raw as Record<string, unknown>;
+    return item.sellableType === 'event_ticket' && !!item.snapshot && typeof item.snapshot === 'object' && 'competition' in item.snapshot;
+  });
+  const enabled = !!orderId && !!entity?.data && Number(entity.data.totalAmountMinor) > 0 && (admin || competitionOrder);
+  const status = typeof entity?.data?.status === 'string' ? entity.data.status : entity?.status;
+  const shouldPoll = items.some(item => item.status === 'requested' || item.status === 'pending' || (item.status === 'failed' && !!item.approvedAt));
+  useEffect(() => { if (status !== 'refunded' && items.some(item => item.status === 'succeeded')) onSaved?.(); }, [items, onSaved, status]);
+  useEffect(() => {
+    setItems([]); setError(''); setConfirmedId(''); setReason('');
+  }, [orderId]);
+  useEffect(() => {
+    if (!enabled) return;
+    let active = true;
+    setLoading(true);
+    const refresh = async () => {
+      try { const result = await listCompetitionOrderRefunds(orderId); if (active) { setItems(result.items); setError(''); } }
+      catch (error) { if (active) setError(error instanceof Error ? error.message : t('退款状态加载失败。', 'Could not load refund status.')); }
+      finally { if (active) setLoading(false); }
+    };
+    void refresh();
+    const interval = shouldPoll ? window.setInterval(() => { if (document.visibilityState === 'visible') void refresh(); }, 10000) : undefined;
+    return () => { active = false; window.clearInterval(interval); };
+  }, [enabled, orderId, revision, shouldPoll, t]);
+  if (!enabled) return null;
+  const activeRefund = items.some(item => item.approvedAt || ['requested', 'pending', 'succeeded', 'chargeback'].includes(item.status));
+  const canRequest = competitionOrder && !loading && !error && !activeRefund && Number(entity?.data?.totalAmountMinor ?? 0) > 0 && ['paid', 'partially_fulfilled', 'fulfilled'].includes(status ?? '');
+  async function act(action: () => Promise<CompetitionRefund>) {
+    if (busy) return;
+    setBusy(true); setError('');
+    try { const result = await action(); setItems(current => [result, ...current.filter(item => item.id !== result.id)]); setConfirmedId(''); setRevision(value => value + 1); }
+    catch (error) { setError(error instanceof Error ? error.message : t('退款操作未完成，请重试。', 'Could not complete the refund action. Try again.')); }
+    finally { setBusy(false); }
+  }
+  const labels: Record<string, string> = { requested: t('等待平台审核', 'Awaiting platform review'), pending: t('支付渠道处理中', 'Payment provider processing'), succeeded: t('退款成功', 'Refund completed'), failed: t('退款异常，需平台处理', 'Refund issue: platform review required'), cancelled: t('退款申请已拒绝', 'Refund request declined'), chargeback: t('支付争议处理中', 'Payment dispute in progress') };
+  return <section className="platform-domain-actions"><h2>{t('退款', 'Refunds')}</h2>
+    {loading ? <p role="status" className="platform-domain-note">{t('正在查询退款状态…', 'Loading refund status…')}</p> : null}
+    {items.map(item => <div key={item.id} className="platform-domain-stack"><p><strong>{labels[item.status] ?? t('等待确认', 'Awaiting confirmation')}</strong> {new Intl.NumberFormat(undefined, { style: 'currency', currency: item.currency }).format(Number(item.amountMinor) / 100)}</p><p className="platform-domain-note">{item.reasonCode}</p>{item.rejectionReason ? <p>{t('拒绝原因：', 'Declined because: ')}{item.rejectionReason}</p> : null}
+      {item.approvedAt && item.status !== 'succeeded' ? <p className="platform-domain-note">{t('已批准的退款正在核对支付渠道结果。收到成功结果前，不视为退款完成。', 'The approved refund is being reconciled with the payment provider. It is complete only after success is confirmed.')}</p> : null}
+      {item.failureCode ? <p className="platform-domain-note">{t('渠道暂未确认完成，平台将继续查询。', 'Provider completion is not confirmed; the platform will continue checking.')}</p> : null}
+      {admin && (item.status === 'requested' || (item.approvedAt && item.status !== 'succeeded' && item.status !== 'chargeback')) ? <>
+        <BoolToggle value={confirmedId === item.id} onChange={value => setConfirmedId(value ? item.id : '')} label={t('确认按赛事退款政策原路退还上述全额', 'Confirm the full original-payment refund under the competition policy')} />
+        <div className="platform-write-actions"><button type="button" className="platform-button" disabled={busy || confirmedId !== item.id} onClick={() => { void act(() => approveCompetitionOrderRefund(item.id)); }}>{item.approvedAt ? t('继续原路退款', 'Retry original refund') : t('批准并实际退款', 'Approve and issue refund')}</button>{item.approvedAt ? <button type="button" className="platform-button" disabled={busy} onClick={() => { void act(() => refreshCompetitionOrderRefund(item.id)); }}>{t('查询支付渠道', 'Check payment provider')}</button> : null}</div>
+        {!item.approvedAt ? <><label>{t('拒绝原因', 'Reason for declining')}<input className="platform-field-control" maxLength={64} value={rejectReasons[item.id] ?? ''} onChange={event => setRejectReasons(current => ({ ...current, [item.id]: event.target.value }))} /></label><button type="button" className="platform-button" disabled={busy || !rejectReasons[item.id]?.trim()} onClick={() => { void act(() => rejectCompetitionOrderRefund(item.id, rejectReasons[item.id].trim())); }}>{t('拒绝退款申请', 'Decline refund request')}</button></> : null}
+      </> : null}
+    </div>)}
+    {canRequest ? <><p className="platform-domain-note">{t('提交全额退款申请，由 CubeRoot 按赛事退款政策审核。', 'Request a full refund for CubeRoot to review under the competition refund policy.')}</p><label>{t('退款原因', 'Refund reason')}<input className="platform-field-control" value={reason} maxLength={64} onChange={event => setReason(event.target.value)} /></label><button type="button" className="platform-button" disabled={busy || !reason.trim()} onClick={() => { void act(() => requestCompetitionOrderRefund(orderId, reason.trim())); }}>{t('申请全额退款', 'Request full refund')}</button></> : null}
+    {error ? <p role="alert">{error}</p> : null}<button type="button" className="platform-button" disabled={busy || loading} onClick={() => { setError(''); setRevision(value => value + 1); }}>{t('刷新退款状态', 'Refresh refund status')}</button>
+    {admin && !loading && !error && !activeRefund ? manualFallback : null}
+  </section>;
 }
 
 export function PlatformCommerceActions(props: CommonProps) {
@@ -1454,7 +1546,7 @@ export function PlatformCommerceActions(props: CommonProps) {
     );
   }
   if (definition.id !== 'order-detail') return null;
-  return <PlatformOrderPayment entity={entity} orderId={params.id} busy={busy} runAction={runAction} />;
+  return <><PlatformOrderPayment entity={entity} orderId={params.id} busy={busy} runAction={runAction} /><PlatformOrderRefunds key={params.id} entity={entity} orderId={params.id} onSaved={props.onSaved} /></>;
 }
 
 export function PlatformEventActions(props: CommonProps) {
@@ -1543,15 +1635,15 @@ function PlatformAdminOrderActions(props: CommonProps) {
   const canRefund = ['paid', 'partially_fulfilled', 'fulfilled'].includes(status ?? '');
   return (
     <div className="platform-domain-stack">
-      {canRefund ? <DomainForm definition={definition} entity={entity} resourceId={orderId} busy={busy} runAction={runAction} spec={{
-        title: text('全额退款', 'Full refund'),
+      <PlatformOrderRefunds key={orderId} entity={entity} orderId={orderId} admin onSaved={props.onSaved} manualFallback={canRefund ? <DomainForm definition={definition} entity={entity} resourceId={orderId} busy={busy} runAction={runAction} spec={{
+        title: text('登记已完成的全额退款', 'Record a completed full refund'),
         action: 'admin-refund',
         fields: [
           field('reasonCode', '退款原因代码', 'Reason code', { required: true, maxLength: 64 }),
           field('providerRefundId', '支付渠道退款编号', 'Provider refund ID', { required: true, maxLength: 200 }),
-          field('evidenceReference', '凭证说明', 'Evidence reference', { required: true, maxLength: 240 }),
+          field('evidenceReference', '已完成退款的凭证说明', 'Evidence of completed refund', { required: true, maxLength: 240 }),
         ],
-      }} /> : null}
+      }} /> : null} />
       <section className="platform-domain-actions">
         <h2>{t('逐项履约', 'Item fulfillment')}</h2>
         {items.length === 0 ? <PlatformState kind="empty" /> : (
@@ -1697,6 +1789,7 @@ interface CommonProps {
   entities?: PlatformEntity[];
   busy: string | null;
   runAction: RunAction;
+  onSaved?: () => void;
 }
 
 export function PlatformDomainActions(props: CommonProps) {

@@ -150,6 +150,7 @@ export const EXPECTED_APP_PAGES = [
   'pages/tools/index',
   'pages/account/index',
   'pages/web/index',
+  'pages/payment/index',
 ];
 
 export const EXPECTED_TAB_BAR = [

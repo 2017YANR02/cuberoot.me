@@ -20,6 +20,8 @@ const PRIVATE_KEY = normalizePem(process.env.WECHAT_PRIVATE_KEY || '', 'PRIVATE 
 const PLATFORM_PUBKEY_ID = process.env.WECHAT_PLATFORM_PUBKEY_ID || '';
 const PLATFORM_PUBKEY = normalizePem(process.env.WECHAT_PLATFORM_PUBKEY || '', 'PUBLIC KEY');
 const H5_ENABLED = process.env.WECHAT_H5_ENABLED === 'true';
+const MINI_APPID = process.env.WECHAT_MINI_APP_ID?.trim() || '';
+const MINI_PAY_ENABLED = process.env.WECHAT_MINI_PAY_ENABLED === 'true';
 const MAX_SIGNATURE_AGE_SECONDS = 300;
 
 export function wechatConfigured(): boolean {
@@ -37,6 +39,49 @@ export function wechatConfigured(): boolean {
 /** H5 是独立签约产品，只有商户平台已开通并显式启用时才可下单。 */
 export function wechatH5Configured(): boolean {
   return wechatConfigured() && H5_ENABLED;
+}
+
+/** Enable only after the Mini Program AppID is associated with this merchant. */
+export function wechatMiniProgramPayConfigured(): boolean {
+  return wechatConfigured() && Boolean(MINI_APPID) && MINI_PAY_ENABLED;
+}
+
+export function isWechatPaymentAppId(appId: string): boolean {
+  return Boolean(appId) && (appId === APPID || (wechatMiniProgramPayConfigured() && appId === MINI_APPID));
+}
+
+export interface WechatMiniProgramPayment {
+  timeStamp: string;
+  nonceStr: string;
+  package: string;
+  signType: 'RSA';
+  paySign: string;
+}
+
+/** Same V3 merchant transport and verified response; only the native invocation differs. */
+export async function createWechatMiniProgram(opts: {
+  outTradeNo: string;
+  amountCents: number;
+  description: string;
+  notifyUrl: string;
+  openid: string;
+}): Promise<WechatMiniProgramPayment> {
+  if (!wechatMiniProgramPayConfigured()) throw new Error('WeChat Mini Program Pay is not configured');
+  const { status, json } = await apiRequest('POST', '/v3/pay/transactions/jsapi', {
+    appid: MINI_APPID, mchid: MCHID,
+    description: opts.description, out_trade_no: opts.outTradeNo, notify_url: opts.notifyUrl,
+    amount: { total: opts.amountCents, currency: 'CNY' }, payer: { openid: opts.openid },
+  });
+  if (status !== 200 || typeof json.prepay_id !== 'string' || !json.prepay_id) {
+    throw new Error(`wechat jsapi failed (${status})`);
+  }
+  const timeStamp = Math.floor(Date.now() / 1000).toString();
+  const nonceStr = randomUUID().replace(/-/g, '');
+  const paymentPackage = `prepay_id=${json.prepay_id}`;
+  return {
+    timeStamp, nonceStr, package: paymentPackage, signType: 'RSA',
+    paySign: sign(`${MINI_APPID}\n${timeStamp}\n${nonceStr}\n${paymentPackage}\n`),
+  };
 }
 
 function normalizePem(raw: string, type: 'PRIVATE KEY' | 'PUBLIC KEY'): string {
@@ -88,6 +133,27 @@ async function apiRequest(
   let json: Record<string, unknown> = {};
   try { json = text ? (JSON.parse(text) as Record<string, unknown>) : {}; } catch { /* 非 JSON */ }
   return { status: res.status, json };
+}
+
+/** Refunds share the merchant signing and response verification used by checkout. */
+export async function createWechatRefund(input: {
+  transactionId: string; refundNo: string; amountMinor: number; totalMinor: number; reason: string;
+}): Promise<Record<string, unknown>> {
+  if (!wechatConfigured()) throw new Error('WeChat Pay is not configured');
+  const { status, json } = await apiRequest('POST', '/v3/refund/domestic/refunds', {
+    transaction_id: input.transactionId, out_refund_no: input.refundNo, reason: input.reason.slice(0, 80),
+    amount: { refund: input.amountMinor, total: input.totalMinor, currency: 'CNY' },
+  });
+  if (status < 200 || status >= 300) throw new Error(`WeChat refund HTTP ${status}`);
+  return json;
+}
+
+export async function queryWechatRefund(refundNo: string): Promise<Record<string, unknown> | null> {
+  if (!wechatConfigured()) throw new Error('WeChat Pay is not configured');
+  const { status, json } = await apiRequest('GET', `/v3/refund/domestic/refunds/${encodeURIComponent(refundNo)}`);
+  if (status === 404 && json.code === 'RESOURCE_NOT_EXISTS') return null;
+  if (status !== 200) throw new Error(`WeChat refund query HTTP ${status}`);
+  return json;
 }
 
 /** Native 下单(PC 扫码):返回 code_url(weixin:// 串,前端生成二维码)。 */

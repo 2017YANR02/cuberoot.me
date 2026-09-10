@@ -6,7 +6,6 @@ import {
   decodeWebSessionUserEnvelope,
   isWebSessionTicket,
   type WebSessionTicketEnvelope,
-  type WebSessionErrorCode,
 } from '@cuberoot/shared/auth/web-session';
 import {
   clearRuntimeTimeout,
@@ -59,7 +58,7 @@ export class ApiError extends Error {
   constructor(
     public readonly status: number,
     message: string,
-    public readonly code: WebSessionErrorCode | null = null,
+    public readonly code: string | null = null,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -149,13 +148,14 @@ function writeStoredSessionValue(session: SessionData): boolean {
   }
 }
 
-function requestJson<T>(
+export function requestJson<T>(
   path: string,
   options: {
     method?: 'GET' | 'POST';
     body?: WechatMiniprogram.IAnyObject;
     timeoutMs?: number;
     token?: string;
+    idempotencyKey?: string;
   } = {},
 ): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -165,6 +165,7 @@ function requestJson<T>(
     const timeoutMs = options.timeoutMs ?? REQUEST_TIMEOUT_MS;
     const header: Record<string, string> = { 'Content-Type': 'application/json' };
     if (options.token) header.Authorization = `Bearer ${options.token}`;
+    if (options.idempotencyKey) header['Idempotency-Key'] = options.idempotencyKey;
     const settle = (action: () => void) => {
       if (settled) return;
       settled = true;
@@ -202,11 +203,14 @@ function requestJson<T>(
               return;
             }
             const authError = decodeWebSessionError(body);
+            const platformError = body?.error && typeof body.error === 'object'
+              ? body.error as Record<string, unknown> : null;
             reject(new ApiError(
               response.statusCode,
               authError?.message
+                ?? (typeof platformError?.message === 'string' ? platformError.message : undefined)
                 ?? (typeof body?.error === 'string' ? body.error : `HTTP ${response.statusCode}`),
-              authError?.code ?? null,
+              authError?.code ?? (typeof platformError?.code === 'string' ? platformError.code : null),
             ));
           });
         },
@@ -223,7 +227,7 @@ function requestJson<T>(
   });
 }
 
-function miniProgramLoginCode(): Promise<string> {
+export function miniProgramLoginCode(): Promise<string> {
   return new Promise((resolve, reject) => {
     let settled = false;
     let hardTimeout: RuntimeTimer | null = null;

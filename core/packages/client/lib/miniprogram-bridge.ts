@@ -161,3 +161,27 @@ export async function notifyMiniProgramLogout(): Promise<boolean> {
     return false;
   }
 }
+
+/** Native WeChat checkout accepts only an order ID; no token or return URL crosses the bridge. */
+export async function openMiniProgramOrderPayment(orderId: string): Promise<boolean> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId)) return false;
+  if (!mayUseMiniProgramBridge() || isDouyinWebViewCandidate()) return false;
+  const miniProgram = await loadMiniProgramNavigationApi();
+  if (!miniProgram || !await confirmMiniProgramEnvironment(miniProgram)) return false;
+  return new Promise<boolean>((resolve) => {
+    let settled = false;
+    const finish = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      resolve(ok);
+    };
+    const timeout = window.setTimeout(() => finish(false), SDK_LOAD_TIMEOUT_MS);
+    try {
+      miniProgram.navigateTo({
+        url: `/pages/payment/index?orderId=${encodeURIComponent(orderId)}`,
+        success: () => finish(true), fail: () => finish(false),
+      });
+    } catch { finish(false); }
+  });
+}

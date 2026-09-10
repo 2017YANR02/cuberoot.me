@@ -37,6 +37,7 @@ import { PlatformDomainContent } from './PlatformDomainContent';
 import { PlatformPrivacySettings } from './PlatformPrivacySettings';
 import { PlatformQrCardStudio } from './PlatformQrCardStudio';
 import { OnlineCompetitionPreview } from './OnlineCompetitionPreview';
+import { OnlineCompetitions } from './OnlineCompetitions';
 
 function titleFor(t: ReturnType<typeof useT>, definition: PlatformRouteDefinition): string {
   return t(definition.title.zh, definition.title.en);
@@ -470,23 +471,36 @@ function PlatformEntityList({
   const learnerCourses = ['courses', 'account-courses'].includes(definition.id);
   // Course API fields and publication statuses are not learner-facing content.
   const learnerContent = learnerCourses || definition.id === 'course-lesson';
+  const orderContent = definition.resource === 'orders' || definition.resource === 'admin-orders';
+  const orderStatuses: Record<string, string> = {
+    pending_payment: t('待付款', 'Awaiting payment'), paid: t('已付款', 'Paid'),
+    partially_fulfilled: t('部分完成', 'Partially fulfilled'), fulfilled: t('已完成', 'Completed'),
+    cancelled: t('已取消', 'Cancelled'), expired: t('已过期', 'Expired'), refunded: t('已退款', 'Refunded'),
+  };
   return (
     <div className={`platform-entity-list${learnerCourses ? ' platform-course-list' : ''}`}>
       {items.map((item) => {
         const href = item.href?.startsWith('/') ? item.href : localDetailHref(definition, item);
+        const title = orderContent ? String(item.data?.orderNumber ?? item.title) : item.title;
+        const amount = Number(item.data?.totalAmountMinor);
+        const currency = typeof item.data?.currency === 'string' ? item.data.currency : '';
+        const fields = orderContent ? [
+          ...(Number.isFinite(amount) && /^[A-Z]{3}$/.test(currency) ? [{ label: t('订单金额', 'Order total'), value: amount === 0 ? t('免费', 'Free') : new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount / 100) }] : []),
+          ...(typeof item.data?.createdAt === 'string' ? [{ label: t('下单时间', 'Created'), value: new Date(item.data.createdAt).toLocaleString(t('zh-CN', 'en-US')) }] : []),
+        ] : item.fields;
         return (
           <article className="platform-entity" key={item.id}>
             <div className="platform-entity-heading">
               <div>
                 {item.eyebrow ? <span>{item.eyebrow}</span> : null}
-                <h2>{href ? <AppLink href={href} prefetch={false}>{item.title}</AppLink> : item.title}</h2>
+                <h2>{href ? <AppLink href={href} prefetch={false}>{title}</AppLink> : title}</h2>
               </div>
-              {!learnerContent && item.status ? <span className="platform-status">{item.status}</span> : null}
+              {!learnerContent && item.status ? <span className="platform-status">{orderContent ? orderStatuses[item.status] ?? t('等待确认', 'Awaiting confirmation') : item.status}</span> : null}
             </div>
             {item.summary ? <p>{item.summary}</p> : null}
-            {!learnerContent && item.fields?.length ? (
+            {!learnerContent && fields?.length ? (
               <dl>
-                {item.fields.map((field) => (
+                {fields.map((field) => (
                   <div key={field.label}><dt>{field.label}</dt><dd>{field.value}</dd></div>
                 ))}
               </dl>
@@ -586,6 +600,32 @@ function PlatformResourceRouteView({
       : (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
   }, [result, sort]);
 
+  // Keep the entire order current after native checkout, QR payment, or a provider return.
+  const orderStatus = definition.id === 'order-detail' ? result?.items[0]?.data?.status : undefined;
+  useEffect(() => {
+    if (definition.id !== 'order-detail' || !mounted || !allowed || orderStatus !== 'pending_payment') return;
+    const controller = new AbortController();
+    let loading = false;
+    const refreshOrder = async () => {
+      if (loading || document.visibilityState === 'hidden' || controller.signal.aborted) return;
+      loading = true;
+      try {
+        const next = await loadPlatformResource('orders', { routeId: 'order-detail', params, signal: controller.signal });
+        if (!controller.signal.aborted) setResult(next);
+      } catch { /* Preserve the last confirmed order; subsequent polls can recover. */ }
+      finally { loading = false; }
+    };
+    const timer = window.setInterval(() => { void refreshOrder(); }, 3000);
+    const onReturn = () => { void refreshOrder(); };
+    window.addEventListener('focus', onReturn);
+    document.addEventListener('visibilitychange', onReturn);
+    return () => {
+      controller.abort(); window.clearInterval(timer);
+      window.removeEventListener('focus', onReturn);
+      document.removeEventListener('visibilitychange', onReturn);
+    };
+  }, [definition.id, mounted, allowed, orderStatus, params]);
+
   const runAction = async (action: PlatformActionId, id?: string, payload: Record<string, unknown> = {}): Promise<PlatformActionResult | undefined> => {
     const key = id ? `${action}:${id}` : action;
     setActionBusy(key);
@@ -634,6 +674,8 @@ function PlatformResourceRouteView({
   const inviteManager = definition.id === 'admin-invites';
   const courseSection = definition.id.startsWith('course-section-');
   const course = courseDetail && !error ? sortedItems[0] : undefined;
+  const orderPage = ['orders', 'order-detail', 'admin-orders', 'admin-order'].includes(definition.id);
+  const orderUnavailable = ['order-detail', 'admin-order'].includes(definition.id) && (!!error || !result || !sortedItems[0]);
 
   return (
     <div className={`platform-route${courseDetail ? ' platform-course-detail' : ''}${courseSection ? ' platform-course-classroom' : ''}${inviteManager ? ' platform-invite-page' : ''}`}>
@@ -644,9 +686,9 @@ function PlatformResourceRouteView({
               {t('返回课程', 'Back to course')}
             </AppLink>
           </div> : null}
-          {!inviteManager ? <span className="platform-route-area">{courseDetail || courseSection || definition.id === 'course-lesson' || definition.id === 'courses' ? t('CubeRoot 课程', 'CubeRoot Courses') : definition.area}</span> : null}
+          {!inviteManager && !orderPage ? <span className="platform-route-area">{courseDetail || courseSection || definition.id === 'course-lesson' || definition.id === 'courses' ? t('CubeRoot 课程', 'CubeRoot Courses') : definition.area}</span> : null}
           <h1>{course?.title ?? titleFor(t, definition)}</h1>
-          {!courseSection && !courseDetail && !inviteManager ? <p>{t(definition.description.zh, definition.description.en)}</p> : null}
+          {!courseSection && !courseDetail && !inviteManager && !orderPage ? <p>{t(definition.description.zh, definition.description.en)}</p> : null}
           {course ? <div className="platform-home-actions">
             <AppLink className="platform-home-secondary" href="/platform/account/invites" prefetch={false}>{t('兑换课程', 'Redeem a code')}<ArrowRight aria-hidden /></AppLink>
           </div> : null}
@@ -740,9 +782,9 @@ function PlatformResourceRouteView({
             </AppLink>
           ) : null}
 
-          {!permissionDenied ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} previewRedirect={stay === '1'} selectedLessonId={selectedLessonId} lessonStartTime={lessonStartTime} onSelectLesson={id => { void setLessonStartTime(null); void setSelectedLessonId(id); }} /> : null}
+          {!permissionDenied && !orderUnavailable ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} previewRedirect={stay === '1'} selectedLessonId={selectedLessonId} lessonStartTime={lessonStartTime} onSelectLesson={id => { void setLessonStartTime(null); void setSelectedLessonId(id); }} /> : null}
 
-          {permissionDenied || definition.id === 'qr' || (['membership', 'me-membership'].includes(definition.id) && !result) ? null : (
+          {permissionDenied || orderUnavailable || definition.id === 'qr' || (['membership', 'me-membership'].includes(definition.id) && !result) ? null : (
             <PlatformDomainActions
               definition={definition}
               params={params}
@@ -750,6 +792,7 @@ function PlatformResourceRouteView({
               entities={sortedItems}
               busy={actionBusy}
               runAction={runAction}
+              onSaved={() => setRetry(value => value + 1)}
             />
           )}
           {actionMessage ? <p className="platform-action-message" role="status">{actionMessage}</p> : null}
@@ -762,6 +805,8 @@ function PlatformResourceRouteView({
 }
 
 export function PlatformRouteView(props: { definition: PlatformRouteDefinition; params: Record<string, string> }) {
+  if (props.definition.id === 'online-competitions') return <OnlineCompetitions />;
+  if (props.definition.id === 'online-competition') return <OnlineCompetitions id={props.params.id} />;
   if (props.definition.id === 'online-competition-preview') return <OnlineCompetitionPreview />;
   return <PlatformResourceRouteView {...props} />;
 }
