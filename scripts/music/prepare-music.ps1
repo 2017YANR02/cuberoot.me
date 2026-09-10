@@ -1123,6 +1123,22 @@ foreach ($asset in $auxiliary) {
     }
 }
 
+# Preserve the imported LRCGET batch on later audio preparation/replays.
+$lrcgetReportPath = Join-Path (Split-Path -Parent $resolvedInventoryPath) 'lrcget-import.v1.json'
+if (Test-Path -LiteralPath $lrcgetReportPath) {
+    $lrcgetReport = Get-Content -LiteralPath $lrcgetReportPath -Raw | ConvertFrom-Json
+    foreach ($entry in $lrcgetReport.tracks) {
+        $lyricsBindings.Remove($entry.id)
+        if ($entry.status -ne 'synced') { continue }
+        if ($entry.sha256 -notmatch '^[a-f0-9]{64}$') { throw 'Invalid LRCGET asset hash.' }
+        $lyricsPath = Join-Path $script:LyricsDirectory "$($entry.sha256).lrc"
+        if (-not (Test-Path -LiteralPath $lyricsPath) -or (Get-FileSha256 $lyricsPath) -ne $entry.sha256) {
+            throw "LRCGET asset missing or corrupt: $($entry.sha256)"
+        }
+        $lyricsBindings[$entry.id] = "/music/library/lyrics/$($entry.sha256).lrc"
+    }
+}
+
 $tracks = @($completed | Sort-Object { "$(Get-PropertyValue $_ 'relativePath')" } | ForEach-Object {
     $record = $_
     $id = "$(Get-PropertyValue $record 'id')"

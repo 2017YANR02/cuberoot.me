@@ -280,6 +280,11 @@ type MusicTrackV1 = {
 
 ## 验收记录
 
+- 2026-09-10：使用 LRCGET 2.2.0 为 `Z:\cuberoot-music-staging\library\tracks` 批量获取现成歌词；用户选择仅补充缺同步歌词的曲目、自动导出 `.lrc`，不嵌入音频。界面 `284/284` 是处理数，导出 84 个 sidecar，其中 83 个属于当前 486 首 manifest。当前导入结果为同步歌词 50 首、LRCGET 纯音乐标记 32 首、可疑匹配 1 首、无 sidecar 403 首；无 sidecar 不等于有人声且缺歌词，扫描也未覆盖所有音频格式。
+- 2026-09-10：新增 `scripts/music/import-lrcget.py`，默认只读报告，`uv run python -B -X utf8 scripts/music/import-lrcget.py --apply` 才写本地歌词资产、`inventory/lrcget-import.v1.json` 和 manifest。按音频哈希文件名精确绑定，校验 UTF-8、时间戳与录音时长，跳过纯音乐标记；Kenny G《The Joy Of Life》此次下载的可疑人声歌词按内容哈希隔离，等待人工核对。格式检查不保证版本匹配或每句内容准确，未做逐首听音验收。
+- 2026-09-10：此次 LRCGET 导入替换旧歌词绑定，旧 manifest 自动备份为 `inventory/manifest-before-lrcget-<sha256>.json`，已有媒体文件保留；`prepare-music.ps1` 在生成清单时最后应用导入报告并校验歌词资产哈希，避免后续 replay 恢复旧匹配。原始 `E:\Music` 未写入，音频与封面不变，导入不访问网络或发布。
+- 2026-09-10：导入 fixture 的时间戳边界、只读模式、精确绑定、媒体保持、备份、幂等、空结果保护与路径拒绝通过；PowerShell 语法、真实 486 条报告覆盖、50 条绑定一致性和缺失资产拒绝通过，播放器现有测试 4/4 通过。发布器仅本地验证通过 486 首、543 个唯一资产、5.01 GiB，候选 manifest SHA-256 为 `7470d819cba2d45d45ed3dabd554c9ec5863ceac15505d393aca57bf5f3f58ea`；本批尚未上传或上线。
+
 - 2026-09-02：创建本跟踪表并登记文档索引；未修改播放器源码，未读取或改动 `E:\Music` 内容，未创建 `Z:` staging，未转码、上传、部署或提交。
 - 2026-09-02：完成 8 个开源候选调查与 `E:\Music` 只读盘点；实现 `/music`、首页卡片、唯一浏览器 transport、同步 LRC、Media Session 及音乐/节拍器悬浮音频中心。媒体脚本以 9 个跨格式样本试跑成功并验证幂等，输出约 54.53 MiB；共享构建、客户端 typecheck、29 个聚焦测试及 1440px/390px Chromium 视觉验收通过。该阶段内容哈希去重、人工分类、全量转码和静态发布尚未完成，后续进展见下列记录。
 - 2026-09-02：`scripts/music/prepare-music.ps1` 以 6 个普通批次处理 486 个唯一源，批次曲目数为 63、57、93、138、104、31，最大预计输出 1023.0 MiB；动作合计 copy 321、remux-audio 126、transcode-aac 39。所有批次保持并发 4、ffmpeg 每进程 2 线程、20 GiB 保留门槛与 15% 预估余量，失败 0。
