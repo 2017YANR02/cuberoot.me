@@ -30,6 +30,17 @@ IDS = {'20': 'root/147/4', '13': 'root/147/5', '12': 'root/147/6'}
 HSBC_COLUMN_AXES = [-12.7, -6.0, -3.4, 3.4, 6.0, 12.7]
 
 
+def encode_srgb(pixels):
+    """Encode scene-linear RGB before writing a non-float sRGB image buffer.
+
+    Blender byte-image pixels store encoded channels, unlike float buffers.
+    Normal/data maps bypass this conversion. See references/peace-crown.md.
+    """
+    pixels = np.clip(np.asarray(pixels), 0, 1)
+    return np.where(pixels <= .0031308, pixels * 12.92,
+                    1.055 * np.power(pixels, 1 / 2.4) - .055)
+
+
 def copied(source, name, **kwargs):
     mat = previous.material(source, name, **kwargs)
     mat['spaceMaterialId'] = REVISION + '/' + name
@@ -74,8 +85,9 @@ def masonry(obj, number, archive):
     color = np.clip(base[None,None,:] * (1 + blocks + grain - joint*.13)[...,None], 0, 1)
     for label, pixels, socket in [('albedo',color,'Base Color'), ('normal',normal*.5+.5,'Normal')]:
         image = bpy.data.images.new(REVISION+'/'+number+'/'+label,n,m,alpha=True)
-        # Blender image pixel values are scene-linear for color images.
+        # Byte color buffers need sRGB encoding; normal maps are raw data.
         image.colorspace_settings.name = 'sRGB' if label == 'albedo' else 'Non-Color'
+        if label == 'albedo': pixels = encode_srgb(pixels)
         image.pixels.foreach_set(np.dstack((pixels,np.ones((m,n)))).astype(np.float32).ravel())
         image.pack()
         texture = mat.node_tree.nodes.new('ShaderNodeTexImage')
@@ -299,7 +311,7 @@ def peace(root,archive):
     pixels=np.clip(base[None,None,:]*(1+patina[...,None]),0,1)
     image=bpy.data.images.new(REVISION+'/20/copper-albedo',n,n,alpha=True)
     image.colorspace_settings.name='sRGB'
-    image.pixels.foreach_set(np.dstack((pixels,np.ones((n,n)))).astype(np.float32).ravel()); image.pack()
+    image.pixels.foreach_set(np.dstack((encode_srgb(pixels),np.ones((n,n)))).astype(np.float32).ravel()); image.pack()
     texture=roof_mat.node_tree.nodes.new('ShaderNodeTexImage'); texture.image=image
     roof_mat.node_tree.links.new(texture.outputs['Color'],roof_mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
     finish(root,seams,copied(old_roof.data.materials[0],'20 patinated standing seams',rgb=(93,134,111),metal=.62,roughness=.39),'copper-standing-seams')
