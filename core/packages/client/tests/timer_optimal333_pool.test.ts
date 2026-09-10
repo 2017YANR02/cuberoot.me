@@ -6,6 +6,7 @@ import {
   peekOptimal333,
   peekOptimal333Result,
   prefetchOptimal333,
+  releaseOptimal333,
   retryOptimal333,
   shouldUseRandomOptimal333,
   type Optimal333Source,
@@ -144,6 +145,29 @@ describe('timer optimal 3x3 pool', () => {
     prefetchOptimal333(fresh);
     expect(await awaitOptimal333(fresh)).toBe('ready');
     expect(peekOptimal333(fresh)).toBe('fresh-optimal');
+  });
+
+  it('cancels the wait on fallback and discards even an uncooperative late result', async () => {
+    let finish: (value: string) => void = () => undefined;
+    let signal: AbortSignal | undefined;
+    const source: Optimal333Source = {
+      key: 'owner|fallback',
+      generateBase: () => 'base',
+      optimize: (_, currentSignal) => {
+        signal = currentSignal;
+        return new Promise((resolve) => { finish = resolve; });
+      },
+    };
+    const waiting = awaitOptimal333(source);
+    await vi.waitFor(() => expect(signal).toBeDefined());
+    releaseOptimal333();
+    expect(signal!.aborted).toBe(true);
+    expect(await waiting).toBe('idle');
+    finish('late-optimal');
+    await Promise.resolve();
+    await Promise.resolve();
+    // Re-enabling the same context must not consume the discarded old result.
+    expect(peekOptimal333(source)).toBe('');
   });
 
   it('latches failures until the explicit retry action', async () => {
