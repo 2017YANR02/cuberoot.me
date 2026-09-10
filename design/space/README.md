@@ -78,7 +78,7 @@ pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset italian-original -Pr
 
 源工程和网页 GLB/纹理被 Git 忽略，提交代码不会备份这些重资产。完整备份需同时包含 `design/space/scenes` 与 `client/public/assets/space/blender-v1`；2026-09-08 迁出的 8 份旧 `.blend1` 备份在 `E:/CubeRoot-Assets/space/backups/20260908/`，随后修正预览相机时生成的 `.blend1` 留在原工程旁。E 盘缓存可重建，不能取代 `.blend` 备份。
 
-本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 310,654,952 字节（约 311 MB），正式发布前仍需分区加载、压缩与移动设备验证。
+本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 310,655,104 字节（约 311 MB），正式发布前仍需分区加载、压缩与移动设备验证。
 
 Blender 和 glTF 插件来源已加入网页的“来源与致谢”，统一数据在 `credits_data.json`；建筑及天气等既有资料见 [来源记录](../../docs/space-sources.md)，迁移状态见 [跟踪文档](../../docs/space-blender-tracker.md)。
 
@@ -98,4 +98,6 @@ Blender 和 glTF 插件来源已加入网页的“来源与致谢”，统一数
 
 江海关屋顶侧亭与钟楼基座的增量工具为 `refine_customs_roof.py`，当前工程已保存 `customs-roof-20260910` 标记。后续用 `--review-saved` 渲染近景，`--wide` 看整栋、`--night` 看夜间结构；已有标记时拒绝重复建模，保存前检查磁盘源未变化。审图与作者报告分开命名，临时灯光不保存。实拍依据和剩余问题见[第八批参考档案](references/shanghai-landmarks.md#第八批江海关屋顶侧亭与钟楼基座)。
 
-2026-09-10 已串行合并[和平饭店铜顶](references/peace-crown.md)、[江海关檐口接缝](references/customs-junctions.md)和[汇丰鼓座与穹顶](references/hsbc-drum.md)，对应脚本为 `refine_peace_crown.py`、`refine_customs_junctions.py`、`refine_hsbc_drum.py`。当前工程分别带 `peace-crown-20260910`、`customs-junctions-20260910`、`hsbc-drum-20260910` 标记；江海关另带玻璃收口修订。三份 CLI 均不保存主工程，已有修订禁止重复作者操作；用 `--review-saved` 只读审图，继续修改当前工程后正常导出。最终 GLB 新增 387 处表面检查通过，三栋网页日夜已实际复查，但铜顶偏暗、穹顶及基座配光仍未达标，不能把结构检查当作 1:1 或电影级完成。
+2026-09-10 已串行合并[和平饭店铜顶](references/peace-crown.md)、[江海关檐口接缝](references/customs-junctions.md)和[汇丰鼓座与穹顶](references/hsbc-drum.md)，对应脚本为 `refine_peace_crown.py`、`refine_customs_junctions.py`、`refine_hsbc_drum.py`。当前工程分别带 `peace-crown-20260910`、`customs-junctions-20260910`、`hsbc-drum-20260910` 标记；江海关另带玻璃收口修订。三份 CLI 均不保存主工程，已有修订禁止重复作者操作；用 `--review-saved` 只读审图，继续修改当前工程后正常导出。最终 GLB 新增 387 处表面检查通过，三栋网页日夜已实际复查；后续已纠正铜顶与石材贴图的颜色编码，真实反照率、穹顶及基座配光仍未达标，不能把结构检查当作 1:1 或电影级完成。
+
+四张既有颜色贴图已通过 `refine_bund_color_encoding.py` 增量修正，工程带 `spaceBundColorEncodingRevision = bund-albedo-srgb-20260910`。该工具默认只生成临时候选，`--apply` 要求同一源文件的候选报告并先备份；已有标记时拒绝重复编码。不要重新运行整栋生成器。Blender 非浮点 sRGB 图像的像素写入需要编码后的颜色，法线等数据贴图保持原值；校准、正式导出与网页证据见[颜色编码记录](references/peace-crown.md#铜顶与三栋石材的颜色编码修正)。

@@ -4,18 +4,18 @@
   "objects": 11877,
   "facadeRigs": 3,
   "blender": "5.2.1 LTS",
-  "sha256": "d35b14c725c228bca3b5533a42ac1fa1b1fb73e3b87a228a885ed3365331f6f9",
-  "bytes": 310655044,
+  "sha256": "94673644091fd5de399eec23b9624961ea76dfeb84a997e4d1e078eed8525d72",
+  "bytes": 310655104,
   "textures": [
+    "textures/05a642214fbc39bbbee426c2.png",
     "textures/29967e2e492eaa2f811e5601.png",
+    "textures/36042fcaaac9c7279d450f8b.png",
     "textures/3d58316f5deb1f495fa393b5.png",
-    "textures/4b479f835ea6a127d3f1c92e.png",
-    "textures/6a0b8c4dce31971147997f01.png",
-    "textures/988701abfb61b85f5f9304d2.png",
-    "textures/9f35550673563e42e07c119b.png",
+    "textures/3d628930675060145e5fa229.png",
     "textures/a7897b147a003bb93e05d792.png",
     "textures/aeb34b5cba17e002045f40a2.png",
-    "textures/e85cfb19c4973ab1d2c10a90.png"
+    "textures/e85cfb19c4973ab1d2c10a90.png",
+    "textures/edd972345e334bfe03093a9c.png"
   ],
   "schemaVersion": 2
 }
