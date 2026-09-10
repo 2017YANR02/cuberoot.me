@@ -5,9 +5,7 @@
 // 不该发一次版。所以 DB 只存差异(lib/sim-masks-api.ts 的 SimMaskRow),这里把两边合成
 // 最终下拉。没有任何行时,合成结果必须与代码默认逐字相同 —— 测试钉死这条。
 //
-// 排序规则:管理员排过的条目(有行、position 有意义)升序排在组内最前,没排过的按代码顺序
-// 跟在后面。抽屉里点一次上/下就会把该组全量 keys 发去 /reorder(全组都有行),于是「看到的
-// 顺序 = 摆好的顺序」;半截数据也不会乱序,只是新条目落在末尾。
+// 先合成旧 position 排序，再应用按阶数保存的完整布局；新条目追加到默认分组。
 import { customMaskFn, type CustomTreatment } from './customStickering';
 import type { StickeringGroup, StickeringMaskFn } from './stickering';
 import { PRESET_PREFIX, type SimMaskRow } from '@/lib/sim-masks-api';
@@ -36,12 +34,12 @@ export function applyMaskConfig(
   groups: readonly StickeringGroup[],
   rows: readonly SimMaskRow[],
   order: number,
-  opts: { includeHidden?: boolean } = {},
+  opts: { includeHidden?: boolean; layout?: readonly StickeringGroup[] } = {},
 ): StickeringGroup[] {
   const cfg = maskRowsForOrder(rows, order);
   const out: StickeringGroup[] = [];
   for (const g of groups) {
-    const kept = opts.includeHidden ? g.items : g.items.filter((k) => !cfg.get(k)?.hidden);
+    const kept = g.items;
     const ranked = kept.map((k, i) => {
       const r = cfg.get(k);
       // position < 0 = 还没排过(只为「改名 / 隐藏」建的行也是这个值)—— 那就按代码顺序,
@@ -53,16 +51,35 @@ export function applyMaskConfig(
     if (ranked.length) out.push({ group: g.group, items: ranked.map((x) => x.k) });
   }
   const presets = [...cfg.values()]
-    .filter((r) => r.kind === 'custom' && (opts.includeHidden || !r.hidden))
+    .filter((r) => r.kind === 'custom')
     .map((r) => ({ r, tier: r.position >= 0 ? 0 : 1 }))
     .sort((a, b) => (a.tier - b.tier) || (a.r.position - b.r.position) || (a.r.id - b.r.id))
     .map((x) => x.r.maskKey);
-  if (presets.length) {
+  {
     // 紧跟在「阶段」那组后面:自建遮罩是常用入口,不该沉到几十条遮罩底下
     const at = out.findIndex((g) => g.group === 'Stickering');
     out.splice(at < 0 ? 0 : at + 1, 0, { group: PRESET_GROUP, items: presets });
   }
-  return out;
+  const known = new Set(out.flatMap((g) => g.items));
+  const placed = new Set<string>();
+  const arranged: StickeringGroup[] = [];
+  // Ignore removed stages and obsolete groups; append newly introduced stages in default order.
+  for (const saved of opts.layout ?? []) {
+    if (!out.some((g) => g.group === saved.group) || arranged.some((g) => g.group === saved.group)) continue;
+    const items = saved.items.filter((key) => {
+      if (!known.has(key) || placed.has(key)) return false;
+      placed.add(key);
+      return true;
+    });
+    arranged.push({ group: saved.group, items });
+  }
+  for (const g of out) {
+    let target = arranged.find((x) => x.group === g.group);
+    if (!target) { target = { group: g.group, items: [] }; arranged.push(target); }
+    target.items.push(...g.items.filter((key) => !placed.has(key)));
+  }
+  return arranged.map((g) => ({ ...g, items: opts.includeHidden ? g.items : g.items.filter((key) => !cfg.get(key)?.hidden) }))
+    .filter((g) => opts.includeHidden || g.items.length > 0);
 }
 
 /** 自建遮罩(`preset:` 前缀)→ 遮罩函数;不是自建 / 查不到 → null(调用方回退)。 */

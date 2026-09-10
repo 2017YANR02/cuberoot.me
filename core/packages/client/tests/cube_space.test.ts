@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import Cube from '@/components/puzzle-models/nxn/cube';
 import SimCube from '@/app/[lang]/sim/engine/nxn/cube';
@@ -19,6 +19,101 @@ import { Weather as AbyssalWeather } from '@/app/[lang]/space/abyssal/weather/We
 import { ISLAND, islandHeight } from '@/app/[lang]/space/space-island';
 import { RIVER_COLORS, WEATHER, VILLA_ROOMS, layoutTime, validSceneTime, type Weather } from '@/app/[lang]/space/space-state';
 import { commitLayout, ENVIRONMENTS, type Environment, INITIAL_LAYOUT, MAX_OBJECTS, movePosition, parseLayout, ROOMS, travelHistory, validSpaceMove, walkFloor, walkStep, type Vec3, type History, type PuzzleKind, type RoomStyle } from '@/app/[lang]/space/space-state';
+
+describe('Shanghai first draw preparation', () => {
+  const deferred = <T,>() => {
+    let resolve!: (value: T) => void, reject!: (error: Error) => void;
+    const promise = new Promise<T>((ok, fail) => { resolve = ok; reject = fail; });
+    return { promise, resolve, reject };
+  };
+  const fixture = () => {
+    const scene = Object.create(SpaceScene.prototype) as SpaceScene;
+    const graph = new THREE.Scene(), camera = new THREE.PerspectiveCamera();
+    const cityReady = deferred<void>(), roomReady = deferred<void>(), weatherReady = deferred<void>(), gpu = deferred<THREE.Object3D>();
+    const city = { root: new THREE.Group(), ready: cityReady.promise, setWeather: vi.fn(), update: vi.fn(), dispose: vi.fn() };
+    const room = { root: new THREE.Group(), ready: roomReady.promise, update: vi.fn(), dispose: vi.fn() };
+    graph.add(new THREE.DirectionalLight(), city.root, room.root);
+    city.root.add(new THREE.SpotLight()); room.root.add(new THREE.RectAreaLight());
+    const readBuffer = new THREE.WebGLRenderTarget(), originalTarget = new THREE.WebGLRenderTarget();
+    let target = originalTarget;
+    const renderer = { getRenderTarget: () => target, setRenderTarget: vi.fn((value: THREE.WebGLRenderTarget) => { target = value; }), compileAsync: vi.fn(() => gpu.promise) };
+    const weather = { engine: { ready: weatherReady.promise }, daylight: { day: .8, direction: new THREE.Vector3(0, 1, 0) }, patchSurfaces: vi.fn(), update: vi.fn(), environment: new THREE.Texture() };
+    const callbacks = { cityState: vi.fn(), roomState: vi.fn() }, render = vi.fn();
+    Object.assign(scene, { scene: graph, camera, city, room, renderer, composer: { readBuffer }, weather, callbacks, render,
+      orbit: { target: new THREE.Vector3() }, cityPreparation: 0, cityCompilation: null, weatherPatchedCity: null, disposed: false });
+    const prepare = () => scene['prepareCity'](city as never, room as never);
+    const ready = () => { cityReady.resolve(); roomReady.resolve(); weatherReady.resolve(); };
+    return { scene, graph, city, room, renderer, weather, callbacks, render, readBuffer, originalTarget, prepare, ready, cityReady, roomReady, weatherReady, gpu };
+  };
+
+  it('waits for assets, light slots and environment, and compiles the composer variant with each light once', async () => {
+    const f = fixture();
+    f.renderer.compileAsync.mockImplementation((...args: unknown[]) => {
+      const [assets, , targetScene] = args as [THREE.Group, THREE.Camera, THREE.Scene];
+      expect(f.renderer.getRenderTarget()).toBe(f.readBuffer);
+      expect(targetScene).toBe(f.graph);
+      const lights: THREE.Object3D[] = [];
+      for (const root of [assets, targetScene]) root.traverseVisible(o => { if (o instanceof THREE.Light) lights.push(o); });
+      expect(lights.length).toBe(3); expect(new Set(lights).size).toBe(3);
+      expect(assets.children).toEqual([f.city.root, f.room.root]);
+      expect(f.weather.patchSurfaces.mock.calls.map(([root]) => root)).toEqual([f.city.root, f.room.root]);
+      expect(f.room.update).toHaveBeenCalledOnce(); expect(f.city.update).toHaveBeenCalledOnce();
+      expect(f.graph.environment).toBe(f.weather.environment);
+      return f.gpu.promise;
+    });
+    const preparation = f.prepare();
+    expect(f.scene['preparingCity']).toBe(true);
+    f.cityReady.resolve(); await Promise.resolve(); expect(f.renderer.compileAsync).not.toHaveBeenCalled();
+    f.roomReady.resolve(); await Promise.resolve(); expect(f.renderer.compileAsync).not.toHaveBeenCalled();
+    f.weatherReady.resolve(); await vi.waitFor(() => expect(f.renderer.compileAsync).toHaveBeenCalledOnce());
+    expect(f.renderer.getRenderTarget()).toBe(f.originalTarget);
+    expect(f.city.root.parent).toBe(f.graph); expect(f.room.root.parent).toBe(f.graph);
+    expect(f.callbacks.cityState).not.toHaveBeenCalled(); expect(f.render).not.toHaveBeenCalled();
+    f.gpu.resolve(f.graph); await preparation;
+    expect(f.scene['preparingCity']).toBe(false); expect(f.scene['cityCompilation']).toBeNull();
+    expect(f.callbacks.cityState).toHaveBeenCalledExactlyOnceWith('ready'); expect(f.render).toHaveBeenCalledOnce();
+  });
+
+  it('retires compiled assets immediately from the scene but disposes them only when polling ends', async () => {
+    const f = fixture(); f.ready(); const preparation = f.prepare();
+    await vi.waitFor(() => expect(f.renderer.compileAsync).toHaveBeenCalledOnce());
+    f.scene['retireScene'](f.city as never);
+    const disposeRenderer = vi.fn(); f.scene['afterCityCompilation'](disposeRenderer);
+    expect(f.city.root.parent).toBeNull(); expect(f.city.dispose).not.toHaveBeenCalled(); expect(disposeRenderer).not.toHaveBeenCalled();
+    Object.assign(f.scene, { disposed: true });
+    f.gpu.resolve(f.graph); await preparation;
+    expect(f.city.dispose).toHaveBeenCalledOnce(); expect(disposeRenderer).toHaveBeenCalledOnce();
+    expect(f.callbacks.cityState).not.toHaveBeenCalled(); expect(f.render).not.toHaveBeenCalled();
+  });
+
+  it('ignores a superseded preparation and avoids applying the city weather shader twice after a room switch', async () => {
+    const f = fixture(); f.ready(); const first = f.prepare();
+    await vi.waitFor(() => expect(f.renderer.compileAsync).toHaveBeenCalledOnce());
+    const nextRoom = { ...f.room, root: new THREE.Group(), ready: Promise.resolve() };
+    f.scene['retireScene'](f.room as never);
+    f.graph.add(nextRoom.root); Object.assign(f.scene, { room: nextRoom });
+    const second = f.scene['prepareCity'](f.city as never, nextRoom as never);
+    expect(f.renderer.compileAsync).toHaveBeenCalledTimes(1);
+    f.gpu.resolve(f.graph); await first; await second;
+    expect(f.renderer.compileAsync).toHaveBeenCalledTimes(2);
+    expect(f.callbacks.cityState).toHaveBeenCalledExactlyOnceWith('ready'); expect(f.render).toHaveBeenCalledOnce();
+    expect(f.weather.patchSurfaces.mock.calls.filter(([root]) => root === f.city.root)).toHaveLength(1);
+    expect(f.room.dispose).toHaveBeenCalledOnce();
+  });
+
+  it('reports compile failure and resumes the UI without drawing the partial city', async () => {
+    const f = fixture(), error = new Error('shader failed'), log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      f.ready(); const preparation = f.prepare();
+      await vi.waitFor(() => expect(f.renderer.compileAsync).toHaveBeenCalledOnce());
+      f.gpu.reject(error); await preparation;
+      expect(f.scene['preparingCity']).toBe(false); expect(f.scene['cityCompilation']).toBeNull();
+      expect(f.city.root.visible).toBe(false); expect(f.room.root.visible).toBe(false);
+      expect(f.callbacks.cityState).toHaveBeenCalledExactlyOnceWith('error'); expect(f.render).toHaveBeenCalledOnce();
+      expect(log).toHaveBeenCalledWith('Space city preparation failed', error);
+    } finally { log.mockRestore(); }
+  });
+});
 
 describe('space drone controls', () => {
   it('moves horizontally in camera heading, with independent rise and fall', () => {

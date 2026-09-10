@@ -100,6 +100,10 @@ export class SpaceScene {
   private pedestalMaterial = new THREE.MeshStandardMaterial({ roughness: 0.7 });
   private room: SpaceRoom | null = null;
   private city: ShanghaiScene | null = null;
+  private preparingCity = false;
+  private cityPreparation = 0;
+  private cityCompilation: Promise<THREE.Object3D> | null = null;
+  private weatherPatchedCity: ShanghaiScene | null = null;
   private environment: THREE.WebGLRenderTarget;
   private outdoorEnvironment?: THREE.WebGLRenderTarget;
   private weather: SpaceWeather;
@@ -365,9 +369,10 @@ export class SpaceScene {
   };
 
   private scheduleRender = () => {
-    if (this.disposed || this.frame || document.hidden) return;
+    if (this.disposed || this.preparingCity || this.frame || document.hidden) return;
     this.frame = requestAnimationFrame(time => {
       this.frame = 0;
+      if (this.disposed || this.preparingCity) return;
       if (this.navigating && this.walkKeys.size && this.room) {
         const dt = this.walkTime ? Math.min(0.05, (time - this.walkTime) / 1000) : 0;
         this.walkTime = time;
@@ -416,6 +421,74 @@ export class SpaceScene {
       if (animateWeather || this.city?.cruising) this.weatherTimer = window.setTimeout(this.scheduleRender, Math.max(0, 33 - (performance.now() - time)));
     });
   };
+
+  private afterCityCompilation(dispose: () => void) {
+    // Three's compileAsync polls material properties until the GPU is ready.
+    // Disposing one of those materials or the renderer deletes that state.
+    if (this.cityCompilation) void this.cityCompilation.then(dispose, dispose);
+    else dispose();
+  }
+
+  private retireScene(asset: SpaceRoom | ShanghaiScene | null) {
+    if (!asset) return;
+    asset.root.removeFromParent();
+    this.afterCityCompilation(() => asset.dispose());
+  }
+
+  private async prepareCity(city: ShanghaiScene | null, room: SpaceRoom) {
+    const revision = ++this.cityPreparation;
+    const current = () => !this.disposed && this.cityPreparation === revision && this.city === city && this.room === room;
+    this.preparingCity = true;
+    try {
+      // The room supplies four area-light slots. The weather environment's
+      // CubeUV layout also changes after its initial texture bake.
+      await Promise.all([city?.ready, room.ready, this.weather.engine.ready, this.cityCompilation?.catch(() => {})]);
+      if (!current() || !city) return;
+      city.root.visible = true;
+      room.root.visible = true;
+      city.setWeather(this.currentWeather, 1 - this.weather.daylight.day, this.weather.daylight.direction, this.riverColor);
+      if (this.weatherPatchedCity !== city) {
+        this.weather.patchSurfaces(city.root);
+        this.weatherPatchedCity = city;
+      }
+      this.weather.patchSurfaces(room.root);
+      room.update(this.camera, !this.freeCamera && ['home', 'front', 'side', 'top'].includes(this.currentView));
+      city.update(performance.now(), false, this.camera, this.orbit.target);
+      this.weather.update(performance.now(), this.camera, false);
+      if (this.weather.environment) this.scene.environment = this.weather.environment;
+
+      // Compile the stable asset materials, with all scene lights counted once.
+      // Weather effects and editable puzzles may be replaced while awaiting the
+      // GPU, so they must not enter compileAsync's material polling set.
+      const assets = new THREE.Group();
+      assets.add(city.root, room.root);
+      const target = this.renderer.getRenderTarget();
+      let compilation: Promise<THREE.Object3D>;
+      try {
+        // RenderPass draws into readBuffer, whose output/tone-mapping program
+        // differs from the default framebuffer. Prewarm that actual variant.
+        this.renderer.setRenderTarget(this.composer.readBuffer);
+        compilation = this.renderer.compileAsync(assets, this.camera, this.scene);
+        this.cityCompilation = compilation;
+      } finally {
+        this.renderer.setRenderTarget(target);
+        this.scene.add(city.root, room.root);
+      }
+      try { await compilation; }
+      finally { if (this.cityCompilation === compilation) this.cityCompilation = null; }
+      if (current()) this.callbacks.cityState('ready');
+    } catch (error) {
+      if (!current()) return;
+      console.error('Space city preparation failed', error);
+      // Keep the controls and weather usable after an asset/compile failure;
+      // a new environment selection can retry without drawing a partial city.
+      if (city) { city.root.visible = false; this.callbacks.cityState('error'); }
+      room.root.visible = false;
+      this.callbacks.roomState?.('error');
+    } finally {
+      if (current()) { this.preparingCity = false; this.render(); }
+    }
+  }
 
   private create(data: SpaceObject): Entry {
     const model = data.kind === 'sq1' ? new Sq1Cube() : data.kind === 'pyram' ? new PyraCube() :
@@ -529,22 +602,19 @@ export class SpaceScene {
     this.orbit.maxTargetRadius = environment === 'shanghai' ? 20000 : environment === 'island' ? 500 : 70;
     this.orbit.maxDistance = environment === 'shanghai' ? 24000 : 240;
     const environmentChanged = this.room?.environment !== environment;
+    const roomChanged = this.room?.style !== style || environmentChanged;
     if (environmentChanged) {
-      this.cruise(false); this.city?.dispose(); this.city = null;
+      this.cruise(false); this.retireScene(this.city); this.city = null;
+      this.weatherPatchedCity = null;
       if (environment === 'shanghai') {
         this.callbacks.cityState('loading');
         const city = new ShanghaiScene(this.host.clientWidth < 600, () => { this.callbacks.cruising(city.cruising); this.render(); });
         this.city = city; this.scene.add(city.root);
-        void city.ready.then(() => {
-          if (this.disposed || this.city !== city) return;
-          city.setWeather(this.currentWeather, 1 - this.weather.daylight.day, this.weather.daylight.direction, this.riverColor);
-          this.weather.patchSurfaces(city.root); this.callbacks.cityState('ready'); this.render();
-        }).catch(() => { if (!this.disposed && this.city === city) this.callbacks.cityState('error'); });
       } else this.callbacks.cityState(null);
     }
-    if (this.room?.style !== style || environmentChanged) {
+    if (roomChanged) {
       this.weather.forgetRoom();
-      this.room?.dispose();
+      this.retireScene(this.room);
       this.room = new SpaceRoom(style, [this.transform.getHelper(), this.outline, this.grid, this.drop], this.render, environment);
       this.scene.add(this.room.root);
       const room = this.room;
@@ -644,6 +714,10 @@ export class SpaceScene {
     else this.transform.detach();
     this.outline.visible = !!entry && !placing && !this.navigating;
     this.renderer.domElement.style.cursor = placing ? 'crosshair' : 'grab';
+    if (roomChanged) {
+      if (this.city || this.cityCompilation) void this.prepareCity(this.city, this.room!);
+      else { ++this.cityPreparation; this.preparingCity = false; }
+    }
     this.render();
   }
 
@@ -1083,6 +1157,14 @@ export class SpaceScene {
     this.media.removeEventListener('change', this.theme);
     this.transform.dispose();
     this.orbit.dispose();
+    clearTimeout(this.weatherTimer);
+    cancelAnimationFrame(this.frame);
+    cancelAnimationFrame(this.themeFrame);
+    this.renderer.domElement.remove();
+    this.afterCityCompilation(() => this.disposeRenderer());
+  }
+
+  private disposeRenderer() {
     for (const entry of this.entries.values()) this.remove(entry);
     for (const surface of this.surfaces) surface.geometry.dispose();
     this.scene.traverse(o => { if (o instanceof THREE.DirectionalLight) o.shadow.dispose(); });
@@ -1090,7 +1172,6 @@ export class SpaceScene {
     this.pedestalMaterial.dispose();
     this.room?.dispose();
     this.city?.dispose();
-    clearTimeout(this.weatherTimer);
     this.weather.dispose();
     this.environment.dispose();
     this.interiorLight.shadow.dispose();
@@ -1102,9 +1183,6 @@ export class SpaceScene {
     this.grid.dispose();
     this.composer.passes.forEach(pass => pass.dispose());
     this.composer.dispose();
-    cancelAnimationFrame(this.frame);
-    cancelAnimationFrame(this.themeFrame);
     this.renderer.dispose();
-    this.renderer.domElement.remove();
   }
 }

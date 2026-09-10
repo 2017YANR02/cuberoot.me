@@ -78,7 +78,8 @@ export class ShanghaiTraffic {
 
     const parts = authored?.children.filter((o): o is THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial> => o instanceof THREE.Mesh && o.material instanceof THREE.MeshStandardMaterial && !o.material.userData.spaceRuntimeShader);
     const beam = authored?.children.find((o): o is THREE.Mesh => o instanceof THREE.Mesh && o.material.userData.spaceRuntimeShader);
-    const bodyMesh = parts?.find(o => o.material.userData.spaceShaderKey === 'traffic-shanghai-illumination-0.1');
+    const bodyMesh = parts?.find(({ material: { userData } }) => userData.spaceShaderKey === 'traffic-shanghai-illumination-0.1' ||
+      userData.spaceShaderKey === 'traffic-shanghai-illumination-uniform-v1' && userData.spaceIllumination === .1);
     if (authored && (parts?.length !== 6 || !bodyMesh || !beam)) throw new Error('Incomplete Blender traffic prefab');
     const { template, body } = authored ? { template: { children: parts! }, body: bodyMesh!.material } : this.carTemplate(material);
     for(const child of template.children) {

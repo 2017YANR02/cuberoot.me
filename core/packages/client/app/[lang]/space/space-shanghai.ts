@@ -97,13 +97,18 @@ export class ShanghaiScene {
   private material(color: number, metalness = 0, roughness = .8, illumination = 0, target?: THREE.MeshStandardMaterial) {
     const m = target ?? new THREE.MeshStandardMaterial({ color, metalness, roughness });
     m.userData.cityFacadeLight = this.facadeLighting.active;
+    // Keep the asset's value independent of its program key. Different lamp
+    // strengths share GLSL instead of compiling a program for every constant.
+    m.userData.spaceIllumination = illumination;
     if (illumination) {
+      const strength = { value: Number(illumination.toFixed(3)) };
       m.onBeforeCompile = shader => {
         shader.uniforms.cityNight = this.night;
-        shader.fragmentShader = 'uniform float cityNight;\n' + shader.fragmentShader;
-        shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\ntotalEmissiveRadiance+=diffuse*cityNight*${illumination.toFixed(3)};`);
+        shader.uniforms.cityIllumination = strength;
+        shader.fragmentShader = 'uniform float cityNight, cityIllumination;\n' + shader.fragmentShader;
+        shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance+=diffuse*cityNight*cityIllumination;');
       };
-      m.customProgramCacheKey = () => `shanghai-illumination-${illumination}`;
+      m.customProgramCacheKey = () => 'shanghai-illumination-uniform-v1';
     }
     this.materials.add(m); return m;
   }
@@ -305,7 +310,13 @@ export class ShanghaiScene {
     else if (key === 'shanghai-lit-boat-cabin') this.cabinMaterial(m);
     else {
       const illumination = /^shanghai-illumination-([\d.]+)$/.exec(key);
-      if (illumination) factory(m.color.getHex(), m.metalness, m.roughness, Number(illumination[1]));
+      if (illumination || key === 'shanghai-illumination-uniform-v1') {
+        // Existing .blend/GLB assets encode this in the old key; new exports
+        // retain the unrounded authoring value in a separate userData field.
+        const value = illumination ? Number(illumination[1]) : m.userData.spaceIllumination;
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) throw new Error(`Invalid Blender illumination: ${key}`);
+        factory(m.color.getHex(), m.metalness, m.roughness, value);
+      }
       else if (key && !key.includes('onBeforeCompile') && !key.includes('trafficVisibility')) throw new Error(`Unsupported Blender material: ${key}`);
     }
     m.needsUpdate = true;
