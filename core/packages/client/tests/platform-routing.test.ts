@@ -118,6 +118,14 @@ const actionContracts: ActionContract[] = [
 afterEach(() => vi.unstubAllGlobals());
 
 describe('Platform route conservation', () => {
+  it('reserves the online competition preview without capturing event detail routes', () => {
+    expect(matchPlatformRoute(['events', 'preview'])?.definition).toMatchObject({
+      id: 'online-competition-preview', access: 'public', kind: 'landing',
+    });
+    expect(matchPlatformRoute(['events', 'event-123'])?.definition.id).toBe('event-detail');
+    expect(matchPlatformRoute(['events', 'preview', 'extra'])).toBeNull();
+  });
+
   it('matches all 95 legacy page mappings while allowing required new target routes', () => {
     const targets = manifest.capabilities
       .filter((capability) => capability.kind === 'page')
