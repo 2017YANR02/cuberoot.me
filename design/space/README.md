@@ -66,6 +66,8 @@ pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset italian-original -Pr
 
 `author_bund_lighting.py` 仅用于本次首次建立灯组，已有 `spaceFacadeRig` 修订时拒绝覆盖。后续编辑现有灯具并正常导出，务必在网页查看整栋、斜侧、白天和夜间；Blender 预览与网页 PBR 仍有差异。
 
+单栋照明烘焙研究使用 `probe_facade_bake.py`，仅输出到 `.tmp/png/space-light-bake/`，不修改正式城市或网页资产。当前仅完成脚本语法检查，实际烘焙与多视角效果尚未验收，不能作为正式导出工具使用；复现步骤、技术来源和待验收项见[实验记录](references/facade-baking.md)。
+
 在仓库根运行 `node design/space/scripts/capture-server.mjs`，再用浏览器访问 `http://127.0.0.1:3016/verify`。它检查完整 25 个场景的几何、表面、反射和城市运行绑定，结果在页面和 `window.verification`。单资产可加 `?asset=modern-original`。该检查不需要 GPU，实际光照效果仍须在 `/zh/space` 检查。
 
 打包器检查：`uv run python -m unittest discover -s design/space/scripts -p test_pack_gltf.py`。前端逻辑改动在 `core/` 运行 `pnpm --filter @cuberoot/client typecheck` 及适用的 Space 测试；开发服务器运行时不执行 Next build。
