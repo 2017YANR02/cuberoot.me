@@ -3052,6 +3052,15 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                   : {
                       kind: scrambleStatus.kind,
                       message: tr(scrambleStatus.message),
+                      delayedAction: randomOptimalLoading ? {
+                        key: `${randomOptimalKey}|${currentScrambleEntryId}|${randomOptimalRetry}`,
+                        delayMs: 5000,
+                        label: tr({ zh: '切换为非最优打乱', en: 'Switch to non-optimal scrambles' }),
+                        onSelect: () => {
+                          releaseOptimal333();
+                          updateSettings({ wcaUseOptimal: false });
+                        },
+                      } : undefined,
                     }
                 : undefined}
               title={tr(TIMER_SCRAMBLE_CLICK_TITLE_COPY[scrambleClickEffect])}

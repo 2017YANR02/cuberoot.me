@@ -36,6 +36,7 @@ describe('shared TimerScrambleStrip', () => {
   afterEach(() => {
     act(() => root.unmount());
     host.remove();
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -217,6 +218,66 @@ describe('shared TimerScrambleStrip', () => {
     act(() => retryButton.click());
     expect(retry).toHaveBeenCalledOnce();
     expect(activate).not.toHaveBeenCalled();
+  });
+
+  it('offers a fallback only after five seconds and only switches on an explicit click', () => {
+    vi.useFakeTimers();
+    const select = vi.fn();
+    const activate = vi.fn();
+    const props: Partial<TimerScrambleStripProps> = {
+      scramble: '',
+      onActivate: activate,
+      status: {
+        kind: 'loading',
+        message: 'Generating optimal scramble',
+        delayedAction: { key: 'slot-1', delayMs: 5000, label: 'Use non-optimal', onSelect: select },
+      },
+    };
+    render(props);
+    act(() => vi.advanceTimersByTime(4999));
+    expect(host.querySelector('button')).toBeNull();
+    // Host rerenders must not restart the clock for the same waiting slot.
+    render({ ...props, status: { ...props.status! } });
+    act(() => vi.advanceTimersByTime(1));
+    const button = host.querySelector<HTMLButtonElement>('button')!;
+    expect(button.textContent).toBe('Use non-optimal');
+    expect(shouldIgnoreTimerTarget(button)).toBe(true);
+    expect(select).not.toHaveBeenCalled();
+    act(() => button.click());
+    expect(select).toHaveBeenCalledOnce();
+    expect(activate).not.toHaveBeenCalled();
+    render({ scramble: 'R U' });
+    expect(host.querySelector('button')).toBeNull();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('resets the delay for a new slot and cancels it when loading ends or unmounts', () => {
+    vi.useFakeTimers();
+    const select = vi.fn();
+    const loading = (key: string) => render({
+      scramble: '',
+      status: {
+        kind: 'loading', message: 'Generating optimal scramble',
+        delayedAction: { key, delayMs: 5000, label: 'Use non-optimal', onSelect: select },
+      },
+    });
+    loading('slot-1');
+    act(() => vi.advanceTimersByTime(4000));
+    loading('slot-2');
+    act(() => vi.advanceTimersByTime(1000));
+    expect(host.querySelector('button')).toBeNull();
+    act(() => vi.advanceTimersByTime(4000));
+    expect(host.querySelector('button')).not.toBeNull();
+    loading('slot-3');
+    expect(host.querySelector('button')).toBeNull();
+    render({ scramble: '', status: { kind: 'error', message: 'Failed' } });
+    expect(vi.getTimerCount()).toBe(0);
+    act(() => vi.advanceTimersByTime(5000));
+    expect(host.querySelector('button')).toBeNull();
+    loading('slot-4');
+    act(() => root.render(null));
+    expect(vi.getTimerCount()).toBe(0);
+    expect(select).not.toHaveBeenCalled();
   });
 
   it('keeps the legacy hint import as the shared implementation identity', () => {
