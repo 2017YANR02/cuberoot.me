@@ -93,6 +93,7 @@ const CARD_VISUALS: Partial<Record<SiteDirectoryEntry['id'], CardVisual>> = {
   'live-scripts': { Icon: Radio },
   meet: { Icon: Video },
   documents: { Icon: FileText },
+  interview: { Icon: MessagesSquare },
   spreadsheets: { Icon: Table2 },
   alg: { Icon: Library },
   quiz: { Icon: CircleQuestionMark },
@@ -123,6 +124,7 @@ function toCardConfig(entry: SiteDirectoryEntry): CardConfig {
     tier: entry.tier,
     nameKey: entry.nameKey,
     ...CARD_VISUALS[entry.id],
+    ...('adminOnly' in entry && entry.adminOnly ? { adminOnly: true } : {}),
     ...('lockedForNonAdmin' in entry && typeof entry.lockedForNonAdmin === 'boolean'
       ? { lockedForNonAdmin: entry.lockedForNonAdmin }
       : {}),

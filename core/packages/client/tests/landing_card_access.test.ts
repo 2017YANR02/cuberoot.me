@@ -46,6 +46,13 @@ describe('homepage development cards', () => {
       expect(card.querySelector('.lucide-lock')).toBeNull();
     }
     expect(host.querySelector('#card-teaching')?.getAttribute('href')).toBe('/zh/courses');
+    const interview = host.querySelector('#card-interview');
+    if (admin) {
+      expect(interview?.getAttribute('href')).toBe('/zh/docs/edit?id=b769490d-292b-4423-8e83-3ada43c1d96b');
+      expect(interview?.textContent).toContain('面试');
+    } else {
+      expect(interview).toBeNull();
+    }
     expect(host.querySelectorAll('.landing-card-lock').length > 0).toBe(admin);
   });
   it('saves a lock, preserves the admin link, restores access on unlock and keeps state on save failure', async () => {
