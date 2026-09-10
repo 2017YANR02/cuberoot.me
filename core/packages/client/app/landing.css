@@ -33,6 +33,11 @@
     position: relative;   /* 锚定右上角 auth 入口 */
 }
 
+/* Keep card drag handles below the header menus within their own stacking context. */
+.landing-page .sortable-card {
+    isolation: isolate;
+}
+
 /* ── 右上角 语言 / 外观 / 致谢 + 登录 / 我的主页 入口 ── */
 /* 对齐内容列右沿(内容列 max-width 1100px,见 .cards-sections / .recent-scrambles),
    宽屏不贴浏览器最右侧;窄屏退回页面自身的 padding 地板。 */
