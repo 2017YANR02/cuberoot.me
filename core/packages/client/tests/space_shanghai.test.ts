@@ -71,6 +71,10 @@ const inside = (x: number, z: number, ring: number[][]) => {
 };
 
 describe('Shanghai geographic asset and river cruise', () => {
+  const settleLights = (pool: ShanghaiFacadeLighting, camera: THREE.Camera, night = 1) => {
+    for (let frame = 0; frame < 40; frame++) pool.update(camera, night, 1 / 60);
+    expect(pool.transitioning).toBe(false);
+  };
   const authoredRig = () => ({ width: 28, height: 58, centre: [10, 36, 20], washTop: 0,
     lamps: Array.from({ length: 6 }, (_, i) => ({ position: [i, 40, -7], target: [0, 42, 4.7],
       color: [1, .5, .2], intensity: 360, angle: Math.PI * .32, penumbra: .65, distance: 44 })) });
@@ -96,6 +100,7 @@ describe('Shanghai geographic asset and river cruise', () => {
     expect(pool.lights[0].shadow.camera.far).toBe(44);
     expect(new Set(wall.geometry.getAttribute('bundLightTop').array)).toEqual(new Set([0]));
     camera.position.set(600, 10, -100); camera.lookAt(600, 10, 0); pool.update(camera, 1);
+    settleLights(pool, camera);
     expect(pool.active.value.x).toBe(2);
     expect(pool.lights[0].color.getHex()).toBe(0xffdbaf);
     expect(pool.lights[0].penumbra).toBe(.8);
@@ -162,6 +167,7 @@ describe('Shanghai geographic asset and river cruise', () => {
     expect(pool.lights.every(light => !light.shadow.needsUpdate)).toBe(true);
     camera.lookAt(-100, 20, 200);
     pool.update(camera, 1);
+    settleLights(pool, camera);
     expect(pool.active.value.toArray()).toEqual([-1, 0]);
     expect(pool.lights.every(light => light.intensity === 0)).toBe(true);
     camera.lookAt(100, 15, 200); pool.update(camera, NaN);
@@ -183,6 +189,7 @@ describe('Shanghai geographic asset and river cruise', () => {
     expect(pool.active.value.toArray()).toEqual([1, .5]);
     expect(pool.lights[0].shadow.mapSize.x).toBe(512);
     camera.position.z = -321; pool.update(camera, 1);
+    settleLights(pool, camera);
     expect(pool.active.value.toArray()).toEqual([-1, 0]);
     expect(pool.lights).toHaveLength(6);
     pool.dispose();
@@ -200,6 +207,7 @@ describe('Shanghai geographic asset and river cruise', () => {
     expect(pool.lights[4].target.position.toArray()).toEqual([0, 41, 4.7]);
     expect(pool.lights[4].intensity).toBe(1300);
     camera.position.x = 500; camera.lookAt(500, 10, 0); pool.update(camera, 1);
+    settleLights(pool, camera);
     expect(pool.active.value.x).toBe(2);
     expect(pool.lights.slice(4).map(light => light.intensity)).toEqual([0, 0]);
     pool.dispose();
@@ -217,9 +225,86 @@ describe('Shanghai geographic asset and river cruise', () => {
     expect(pool.active.value.x).toBe(1);
     expect(pool.lights[0].intensity).toBeCloseTo(127.74715398442, 6);
     camera.lookAt(-1302, 20, 1718); pool.update(camera, 1);
+    settleLights(pool, camera);
     expect(pool.active.value.x).toBe(2);
     expect(pool.lights[0].intensity).toBe(1050);
     pool.dispose();
+  });
+
+  it('hands adjacent facades over at zero power and keeps shadow maps static while fading', () => {
+    const pool = new ShanghaiFacadeLighting(false), root = new THREE.Group();
+    for (const x of [-60, 60]) {
+      const building = new THREE.Group(); building.position.x = x;
+      building.userData.facadeLighting = { width: 40, height: 20 }; root.add(building);
+    }
+    pool.register(root);
+    const camera = new THREE.PerspectiveCamera(); camera.position.set(0, 10, -80); camera.lookAt(-60, 10, 0);
+    pool.update(camera, 1);
+    const positions = pool.lights.map(l => l.position.toArray()), power = pool.lights[0].intensity;
+    pool.lights.forEach(l => { l.shadow.needsUpdate = false; });
+    camera.lookAt(60, 10, 0);
+    expect(pool.update(camera, 1, .075)).toBe(false);
+    expect(pool.active.value.toArray()).toEqual([1, .75]);
+    expect(pool.lights[0].intensity).toBe(power * .75);
+    expect(pool.lights.map(l => l.position.toArray())).toEqual(positions);
+    expect(pool.lights.every(l => !l.shadow.needsUpdate)).toBe(true);
+    pool.update(camera, 1, .075); pool.update(camera, 1, .075);
+    expect(pool.update(camera, 1, .075)).toBe(true);
+    expect(pool.active.value.toArray()).toEqual([2, 0]);
+    expect(pool.lights.every(l => l.intensity === 0 && l.shadow.needsUpdate)).toBe(true);
+    expect(pool.lights[0].position.toArray()).toEqual([45, 5.5, -12]);
+    expect(pool.transitioning).toBe(true);
+    pool.lights.forEach(l => { l.shadow.needsUpdate = false; });
+    expect(pool.update(camera, 1, .075)).toBe(false);
+    expect(pool.active.value.toArray()).toEqual([2, .25]);
+    expect(pool.lights[0].intensity).toBe(power * .25);
+    settleLights(pool, camera);
+    expect(pool.active.value.toArray()).toEqual([2, 1]);
+    expect(pool.lights.every(l => !l.shadow.needsUpdate)).toBe(true);
+    pool.dispose();
+  });
+
+  it('reverses an interrupted fade without teleporting lamps or flickering at the aim boundary', () => {
+    const pool = new ShanghaiFacadeLighting(true), root = new THREE.Group();
+    root.userData.facadeLighting = { width: 40, height: 20 }; pool.register(root);
+    const camera = new THREE.PerspectiveCamera(); camera.position.set(0, 10, -100); camera.lookAt(0, 10, 0);
+    pool.update(camera, 1); const positions = pool.lights.map(l => l.position.toArray());
+    camera.lookAt(0, 10, -200); pool.update(camera, 1, .075);
+    expect(pool.active.value.toArray()).toEqual([1, .75]);
+    camera.lookAt(0, 10, 0); pool.update(camera, 1, .0375);
+    expect(pool.active.value.toArray()).toEqual([1, .875]);
+    for (const invalid of [NaN, Infinity, -1, 0]) {
+      pool.update(camera, 1, invalid); expect(pool.active.value.toArray()).toEqual([1, .875]);
+    }
+    pool.update(camera, 1, .0375);
+    expect(pool.active.value.toArray()).toEqual([1, 1]); expect(pool.transitioning).toBe(false);
+    expect(pool.lights.map(l => l.position.toArray())).toEqual(positions);
+    camera.lookAt(0, 10, -200); pool.update(camera, 1, 100);
+    expect(pool.active.value.y).toBeCloseTo(2 / 3, 10);
+    settleLights(pool, camera); expect(pool.active.value.toArray()).toEqual([-1, 0]);
+    camera.lookAt(0, 10, 0); pool.update(camera, 1, .075);
+    expect(pool.active.value.toArray()).toEqual([1, 0]); expect(pool.transitioning).toBe(true);
+    settleLights(pool, camera); expect(pool.active.value.toArray()).toEqual([1, 1]);
+    pool.dispose();
+  });
+
+  it('advances the same light fade at different frame rates while weather is paused', () => {
+    const weights: number[] = [];
+    for (const hz of [30, 60, 120]) {
+      const pool = new ShanghaiFacadeLighting(false), root = new THREE.Group();
+      root.userData.facadeLighting = { width: 40, height: 20 }; pool.register(root);
+      const scene = Object.create(ShanghaiScene.prototype) as ShanghaiScene;
+      Object.assign(scene, { facadeLighting: pool, night: { value: 1 }, lastTime: 0, elapsed: 0 });
+      const camera = new THREE.PerspectiveCamera(); camera.position.set(0, 10, -100); camera.lookAt(0, 10, 0);
+      scene.update(1000, false, camera, new THREE.Vector3());
+      camera.lookAt(0, 10, -200);
+      for (let frame = 1; frame <= hz * .2; frame++) scene.update(1000 + frame * 1000 / hz, false, camera, new THREE.Vector3());
+      weights.push(pool.active.value.y);
+      expect(scene['elapsed']).toBe(0); expect(scene.lightingTransitioning).toBe(true);
+      settleLights(pool, camera); expect(scene.lightingTransitioning).toBe(false);
+      pool.dispose();
+    }
+    for (const weight of weights) expect(weight).toBeCloseTo(1 / 3, 10);
   });
 
   it('bundles every inscription glyph with finite, bounded raised lettering', () => {

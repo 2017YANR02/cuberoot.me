@@ -31,6 +31,8 @@ export class ShanghaiFacadeLighting {
   private direction = new THREE.Vector3();
   private offset = new THREE.Vector3();
   private lastNight = -1;
+  private initialized = false;
+  transitioning = false;
 
   constructor(narrow: boolean) {
     this.root.name = 'Bund facade light pool';
@@ -53,6 +55,10 @@ export class ShanghaiFacadeLighting {
     root.updateWorldMatrix(true, true);
     this.frontages = [];
     this.selected = undefined;
+    this.initialized = false;
+    this.transitioning = false;
+    this.active.value.set(-1, 0);
+    this.lights.forEach(light => { light.intensity = 0; });
     root.traverse(building => {
       const frontage = building.userData.facadeLighting as FrontageData | undefined;
       if (!frontage || !Number.isFinite(frontage.width) || !Number.isFinite(frontage.height) || frontage.width <= 0 || frontage.height <= 0) return;
@@ -71,7 +77,7 @@ export class ShanghaiFacadeLighting {
     });
   }
 
-  update(camera: THREE.Camera, night: number) {
+  update(camera: THREE.Camera, night: number, deltaSeconds = 0) {
     night = Number.isFinite(night) ? THREE.MathUtils.clamp(night, 0, 1) : 0;
     camera.getWorldDirection(this.direction);
     let selected: Frontage | undefined, best = Infinity;
@@ -90,6 +96,24 @@ export class ShanghaiFacadeLighting {
       const distance = this.offset.length(), facing = this.offset.normalize().dot(this.direction);
       if (distance < 320 && facing > .35 && distance * (1 + 8 * (1 - facing)) < best * 1.15) selected = this.selected;
     }
+    const desired = selected;
+    const desiredBlend = desired ? 1 - THREE.MathUtils.smoothstep(camera.position.distanceTo(desired.centre), 150, 320) : 0;
+    let blend = this.active.value.y;
+    if (!this.initialized || night === 0) {
+      // Initial compilation and daylight need no visible light handoff.
+      blend = desiredBlend;
+      this.initialized = true;
+    } else {
+      // Restore the outgoing wall's distant wash before moving the light pool.
+      // Both the real lamps and the shader wash use this same weight, so neither
+      // the wall nor the crown jumps when the selected building ID changes.
+      const target = desired === this.selected ? desiredBlend : 0;
+      const step = (Number.isFinite(deltaSeconds) ? THREE.MathUtils.clamp(deltaSeconds, 0, .1) : 0) / .3;
+      blend += THREE.MathUtils.clamp(target - blend, -step, step);
+      if (blend < .000001) blend = 0;
+      if (selected !== this.selected && blend > 0) selected = this.selected;
+    }
+    this.transitioning = selected !== desired || Math.abs(blend - desiredBlend) > .000001;
     let shadowChanged = false;
     if (selected !== this.selected) {
       this.selected = selected;
@@ -118,7 +142,6 @@ export class ShanghaiFacadeLighting {
         shadowChanged = true;
       }
     }
-    const blend = selected ? 1 - THREE.MathUtils.smoothstep(camera.position.distanceTo(selected.centre), 150, 320) : 0;
     this.active.value.set(selected?.id ?? -1, blend);
     // Calibrated against the HSBC frontage; smaller facades need less power.
     const facadePower = selected ? 1050 * THREE.MathUtils.clamp(selected.width * selected.height / (83.45 * 29.4), .12, 1.25) : 0;
