@@ -59,7 +59,16 @@
 .wca-src-config {
   margin: 4px 0 10px;
 }
-.date-range-input.wca-src-dates { flex: 0 1 310px; width: min(310px, 100%); gap: 6px; }
+.date-range-input.wca-src-dates {
+  flex: 0 1 auto;
+  width: fit-content;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+/* Reserve one ISO date even when empty; never stretch fields across the row. */
+.wca-src-dates > .date-input { flex: 0 0 auto; }
+.wca-src-dates .date-input__value,
+.wca-src-dates .date-input__placeholder { min-width: 10ch; }
 .wca-src-hint {
   margin: 2px 0 0;
   font-size: 12px;
