@@ -241,8 +241,12 @@ try {
         };
         const columns = roots.get(heroRevision + '/root/147/6/fluted-columns');
         if (!bank || !customs || !peace || !columns) throw new Error('Hero building or shafts missing');
+        const columnAxes = [-12.7, -6, -3.4, 3.4, 6, 12.7];
+        if (bank.userData.spaceHsbcColumnRevision !== 'hsbc-paired-columns-20260910' ||
+            JSON.stringify(bank.userData.spaceBundHeroDetail?.columnAxes) !== JSON.stringify(columnAxes) ||
+            bank.userData.spaceHsbcColumnSpacingEstimated !== true) throw new Error('HSBC paired column revision lost');
         const grooveDepths: number[] = [];
-        for (const x of [-12.7, -7.62, -2.54, 2.54, 7.62, 12.7]) {
+        for (const x of columnAxes) {
           const radii = [Math.PI / 2, Math.PI / 2 + Math.PI / 24].map(angle => {
             const center = new THREE.Vector3(x, 14, -2.1);
             const outward = new THREE.Vector3(Math.cos(angle), 0, -Math.sin(angle));
@@ -253,13 +257,20 @@ try {
           const depth = radii[0] - radii[1];
           if (Math.abs(depth - .058) > .005) throw new Error('Column fluting flattened at ' + x);
           grooveDepths.push(depth);
+          for (const [height, front] of [[6.86, -3.20], [22.99, -3.21]]) {
+            const hit = cast(bank, bank, new THREE.Vector3(x, height, -4), new THREE.Vector3(0, 0, 1), 3);
+            if (hit?.object.userData.spaceId !== heroRevision + '/root/147/6/stone-carving' ||
+                Math.abs(bank.worldToLocal(hit.point.clone()).z - front) > .025) throw new Error('HSBC base or capital detached at ' + x);
+          }
         }
         // The original body mesh carried raised flutes and capital leaves.
-        // Probe those old positions through the entire building, not just the
-        // new shafts, so floating geometry after changing the spacing fails.
+        // Probe the old body directly: corrected paired columns now occupy
+        // some of these positions and must not hide obsolete body decorations.
+        const originalBankBody = roots.get('root/147/6/0');
+        if (!originalBankBody) throw new Error('HSBC original body missing');
         for (const x of [-6.3, -4.5, 4.5, 6.3]) {
           for (const height of [14, 22.05]) {
-            if (cast(bank, bank, new THREE.Vector3(x, height, -4), new THREE.Vector3(0, 0, 1), 3)) throw new Error('Old column decoration remains at ' + x);
+            if (cast(bank, originalBankBody, new THREE.Vector3(x, height, -4), new THREE.Vector3(0, 0, 1), 3)) throw new Error('Old column decoration remains at ' + x);
           }
         }
         const rebuiltFrontage = customs.userData.spaceBundFrontageRevision === 'bund-frontages-20260909';
@@ -285,7 +296,7 @@ try {
         }
         const cap = cast(peace, roof, new THREE.Vector3(-1327.8, 80, 1367), new THREE.Vector3(0, -1, 0), 10);
         if (!cap || Math.abs(peace.worldToLocal(cap.point.clone()).y - 76.6) > .025) throw new Error('Peace lantern top is open');
-        authoredHeroDetails = {revision: heroRevision, buildings: 3, surfaceRays, flutedColumns: 6,
+        authoredHeroDetails = {revision: heroRevision, buildings: 3, surfaceRays, flutedColumns: 6, columnAxes,
           grooveDepthMin: Math.min(...grooveDepths), grooveDepthMax: Math.max(...grooveDepths), bronzeSpandrels: rebuiltFrontage ? 21 : 12, estimatedDimensions: true};
       }
       let authoredFrontages: unknown = null;

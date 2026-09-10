@@ -26,6 +26,8 @@ ROOT = Path(__file__).resolve().parents[3]
 OUTPUT = ROOT / '.tmp/png/bund-hero-details'
 REVISION = 'bund-hero-details-20260909'
 IDS = {'20': 'root/147/4', '13': 'root/147/5', '12': 'root/147/6'}
+# 2021 frontal photograph: two close inner pairs; metric spacing is estimated.
+HSBC_COLUMN_AXES = [-12.7, -6.0, -3.4, 3.4, 6.0, 12.7]
 
 
 def copied(source, name, **kwargs):
@@ -134,9 +136,9 @@ def hsbc(root,archive):
     by_id={o.get('spaceId'):o for o in previous.meshes(root)}
     trim=by_id[root['spaceId']+'/2']
     columns, ornaments, lamps, lenses=Mesh(),Mesh(),Mesh(),Mesh()
-    # The photograph has six evenly spaced shafts, not two close inner pairs.
+    # Preserve the paired rhythm visible in the dated frontal photograph.
     old_xs=[-12.7,-6.3,-4.5,4.5,6.3,12.7]
-    xs=[-12.7,-7.62,-2.54,2.54,7.62,12.7]
+    xs=HSBC_COLUMN_AXES
     removed=0
     for x in old_xs:
         # Shafts/base are in trim, but the original raised wires and leaves
