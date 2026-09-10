@@ -359,7 +359,45 @@ try {
         }
         authoredPeaceRiverfront = {revision, surfaceRays, windows: 63, spandrels: 63, groundArches: 2, estimatedDimensions: true};
       }
-      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks, authoredEntrances, authoredGalleries, authoredWindows, authoredHeroDetails, authoredFrontages, authoredPeaceRiverfront});
+      let authoredCustomsRoof: unknown = null;
+      if (customs?.userData.spaceCustomsRoofRevision) {
+        const revision = 'customs-roof-20260910';
+        const detail = customs.userData.spaceCustomsRoofDetail;
+        if (customs.userData.spaceCustomsRoofRevision !== revision || detail?.pavilions?.length !== 2 || detail.terraceWindows !== 5 || detail.plinthPanels !== 9 || detail.towerPiers !== 2) throw new Error('Customs roof metadata lost');
+        let surfaceRays = 0;
+        const probe = (start: THREE.Vector3, direction: THREE.Vector3, part: string, axis: 'y' | 'z', depth: number) => {
+          surfaceRays++;
+          const hit = new THREE.Raycaster(start.applyMatrix4(customs.matrixWorld), direction.transformDirection(customs.matrixWorld), 0, 100).intersectObject(customs, true)[0];
+          const actualPart = hit?.object.userData.spaceCustomsRoofPart ?? hit?.object.userData.spaceId;
+          if (actualPart !== part || Math.abs(customs.worldToLocal(hit.point.clone())[axis] - depth) > .025) {
+            throw new Error(`Customs roof ${part}: ${actualPart}, ${hit ? customs.worldToLocal(hit.point.clone()).toArray() : 'no hit'}`);
+          }
+        };
+        const front = (x: number, height: number, part: string, depth: number) => probe(new THREE.Vector3(x, height, -10), new THREE.Vector3(0, 0, 1), part, 'z', depth);
+        // Check both arch crowns, jambs, chamfer returns and continuous cornices.
+        for (const [center, face, half] of [[-16.45, 1.02, 3.95], [15.61, 1.27, 4.22]]) {
+          for (const height of [32.85, 34.55]) front(center + .25, height, 'glass', .60 - face);
+          front(center + .75, 34.75, 'stone', -face);
+          front(center + .86, 33.7, 'trim', -(face + .105));
+          front(center + .20, 35.91, 'stone', -(face + .30));
+          for (const sign of [-1, 1]) {
+            front(center + sign * (half - .325), 36.2, 'stone', -(face - .325));
+            front(center + sign * (half - .325), 38.02, 'trim', -(face + .2714));
+          }
+        }
+        for (const x of [-8, -4, 0, 4, 8]) front(x + .22, 32.2, 'glass', 3.17);
+        probe(new THREE.Vector3(2.1, 33, .2), new THREE.Vector3(0, -1, 0), 'stone', 'y', 31.23);
+        const tx = customs.userData.spaceBundFrontageDetail.towerCenter[0];
+        const face = detail.towerFront;
+        for (const sign of [-1, 1]) {
+          front(tx + sign * 6.10, 40.2, 'stone', -(face + .33));
+          // The old front louvers must be removed, exposing the original masonry.
+          front(tx + sign * 14.5 * .27, 38.2, 'root/147/5/0', -face);
+        }
+        for (let i = 0; i < 9; i++) front(tx - 4.64 + i * 1.16 + .40, 42.55, 'trim', -(face + .21));
+        authoredCustomsRoof = {revision, surfaceRays, pavilions: 2, terraceWindows: 5, plinthPanels: 9, estimatedDimensions: true};
+      }
+      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks, authoredEntrances, authoredGalleries, authoredWindows, authoredHeroDetails, authoredFrontages, authoredPeaceRiverfront, authoredCustomsRoof});
       city.dispose(); continue;
     }
     const [style, env] = key.split('-') as [RoomStyle, Environment];
