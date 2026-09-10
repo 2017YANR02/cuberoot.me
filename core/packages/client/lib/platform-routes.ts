@@ -82,6 +82,7 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   route({ id: 'paths', pattern: 'paths', area: 'learning', access: 'public', kind: 'collection', title: text('学习路径', 'Learning paths'), resource: 'paths' }),
   route({ id: 'path-detail', pattern: 'paths/:id', area: 'learning', access: 'public', kind: 'detail', title: text('学习路径详情', 'Learning path details'), resource: 'paths' }),
   route({ id: 'events', pattern: 'events', area: 'discover', access: 'public', kind: 'collection', title: text('活动', 'Events'), resource: 'events' }),
+  route({ id: 'online-competition-preview', pattern: 'events/preview', area: 'discover', access: 'public', kind: 'landing', title: text('线上赛事预览', 'Online competition preview'), description: text('体验项目选择、监督场次、报名确认与候场流程。样例数据不会创建真实报名或扣款。', 'Explore event selection, supervised sessions, registration and check-in with sample data. No real registration or payment is created.') }),
   route({ id: 'event-detail', pattern: 'events/:id', area: 'discover', access: 'public', kind: 'detail', title: text('活动详情', 'Event details'), resource: 'events', actions: ['create-order', 'favorite'] }),
   route({ id: 'news', pattern: 'news', area: 'discover', access: 'public', kind: 'collection', title: text('资讯', 'News'), resource: 'news' }),
   route({ id: 'news-detail', pattern: 'news/:id', area: 'discover', access: 'public', kind: 'detail', title: text('资讯详情', 'News details'), resource: 'news' }),
