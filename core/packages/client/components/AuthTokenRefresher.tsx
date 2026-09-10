@@ -29,11 +29,51 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [pinned, setPinned] = useState(false);
+  const [actionsWidth, setActionsWidth] = useState(0);
+  const actionsRef = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toolbarRef = useRef<HTMLElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
-  const collapse = () => { setExpanded(false); setPinned(false); };
-  usePopoverDismiss(expanded, collapse, toolbarRef, toggleRef);
+  const cancelCollapse = useCallback(() => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = null;
+  }, []);
+  const collapse = () => { cancelCollapse(); setExpanded(false); };
+  usePopoverDismiss(expanded, reason => {
+    // The role list is a body portal; let its own dismissal finish first.
+    if (reason === 'outside' && document.querySelector('.admin-tools-role-popup')) return;
+    collapse();
+  }, toolbarRef, toggleRef);
+  useEffect(() => {
+    const actions = actionsRef.current;
+    if (!actions) return;
+    const measure = () => setActionsWidth(actions.getBoundingClientRect().width);
+    const observer = new ResizeObserver(measure);
+    observer.observe(actions);
+    measure();
+    return () => observer.disconnect();
+  }, [ready, user]);
+  useEffect(() => {
+    if (!expanded) return;
+    const onMove = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse') return;
+      const target = event.target as Element;
+      if (toolbarRef.current?.contains(target) || target.closest('.admin-tools-role-popup')) {
+        cancelCollapse();
+        return;
+      }
+      if (closeTimer.current) return;
+      closeTimer.current = setTimeout(() => {
+        closeTimer.current = null;
+        if (toolbarRef.current?.querySelector('[aria-haspopup="listbox"][aria-expanded="true"]')) return;
+        // A mouse click leaves focus on the toggle; only keyboard focus keeps it open.
+        if (toolbarRef.current?.querySelector(':focus-visible')) return;
+        setExpanded(false);
+      }, 200);
+    };
+    document.addEventListener('pointermove', onMove);
+    return () => { document.removeEventListener('pointermove', onMove); cancelCollapse(); };
+  }, [expanded, cancelCollapse]);
   // The pet owns the position; viewport clamping moves that same root.
   const moveTo = useCallback((left: number, top: number) => {
     const toolbar = toolbarRef.current;
@@ -91,22 +131,18 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     } catch { setError(true); }
     finally { setBusy(false); }
   };
-  return <aside ref={toolbarRef} className="admin-tools" aria-label={t('管理工具', 'Admin tools')}
-    onPointerEnter={event => { if (event.pointerType === 'mouse') setExpanded(true); }}
-    onPointerLeave={() => {
-      if (!pinned && !toolbarRef.current?.contains(document.activeElement)
-        && !toolbarRef.current?.querySelector('[aria-haspopup="listbox"][aria-expanded="true"]')) setExpanded(false);
-    }}
+  return <aside ref={toolbarRef} className="admin-tools" data-expanded={expanded} aria-label={t('管理工具', 'Admin tools')}
     onBlur={event => {
       if (!event.currentTarget.contains(event.relatedTarget as Node | null)
         && !(event.relatedTarget as Element | null)?.closest?.('.admin-tools-role-popup')) collapse();
     }}
-    style={{ position: 'absolute', top: '100%', left: `${centerX * 100}%`, transform: 'translateX(calc(-100% + 21px))', marginTop: 8, width: 'max-content', maxWidth: 'calc(100vw - 32px)', pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', flexDirection: 'row-reverse', alignItems: 'center' }}>
+    style={{ position: 'absolute', top: '100%', left: `${centerX * 100}%`, transform: 'translateX(-50%)', marginTop: 8, width: expanded ? actionsWidth + 46 : 42, maxWidth: 'calc(100vw - 32px)', pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', flexDirection: 'row-reverse', alignItems: 'center' }}>
     <style>{`
       .admin-tools{box-sizing:border-box;padding:4px;border-radius:24px;
         border:1px solid var(--glass-edge);background:var(--glass-background);
         backdrop-filter:var(--glass-filter);-webkit-backdrop-filter:var(--glass-filter);
-        box-shadow:var(--glass-shadow);}
+        box-shadow:var(--glass-shadow);height:42px;
+        transition:width 420ms cubic-bezier(.22,1,.36,1);}
       .admin-tools .compact-select-trigger{border:0;background:transparent;padding:6px;}
       .admin-tools .compact-select-trigger:hover{background:transparent;color:var(--accent);}
       .admin-tool-action{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:29px;height:29px;flex-shrink:0;gap:6px;white-space:nowrap;
@@ -115,16 +151,21 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       .admin-tool-action:hover{color:var(--accent);}
       .admin-tools-toggle{width:32px;height:32px;border-radius:50%;}
       .admin-tools-toggle:focus-visible{outline:2px solid var(--ring);outline-offset:2px;}
-      .admin-tools-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0;margin-right:4px;}
-      .admin-tools-actions[hidden]{display:none;}
+      .admin-tools-actions{position:absolute;right:41px;display:flex;align-items:center;gap:8px;width:max-content;max-width:calc(100vw - 78px);min-width:0;
+        opacity:0;visibility:hidden;transform:translateX(8px);pointer-events:none;
+        transition:opacity 140ms ease,transform 300ms cubic-bezier(.22,1,.36,1),visibility 0s 140ms;}
+      .admin-tools[data-expanded="true"] .admin-tools-actions{opacity:1;visibility:visible;transform:none;pointer-events:auto;
+        transition:opacity 220ms ease 100ms,transform 420ms cubic-bezier(.22,1,.36,1),visibility 0s;}
+      .admin-tools-actions .compact-select{min-width:0;}
+      @media(prefers-reduced-motion:reduce){.admin-tools,.admin-tools .admin-tools-actions{transition:none;}}
       .admin-env-switch{display:inline-flex;align-items:center;gap:8px;}
     `}</style>
     <button ref={toggleRef} type="button" className="admin-tool-action admin-tools-toggle"
       aria-label={t('管理工具', 'Admin tools')} title={t('管理工具', 'Admin tools')} aria-expanded={expanded}
-      onClick={() => { if (pinned) collapse(); else { setPinned(true); setExpanded(true); } }}>
+      onClick={() => { cancelCollapse(); setExpanded(value => !value); }}>
       <Settings2 size={17} aria-hidden />
     </button>
-    <div className="admin-tools-actions" hidden={!expanded}>
+    <div ref={actionsRef} className="admin-tools-actions" inert={!expanded}>
     {admin && <>
       <button type="button" className="admin-tool-action" onClick={() => openPageNoticeEditor('page_top')}
         title={t('添加本页通知', 'Add notice for this page')} aria-label={t('添加本页通知', 'Add notice for this page')}>
