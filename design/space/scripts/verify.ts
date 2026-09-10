@@ -262,7 +262,8 @@ try {
             if (cast(bank, bank, new THREE.Vector3(x, height, -4), new THREE.Vector3(0, 0, 1), 3)) throw new Error('Old column decoration remains at ' + x);
           }
         }
-        for (const x of [-8, 0, 8]) for (const height of [11.5, 15.8, 20.2, 24.6]) {
+        const rebuiltFrontage = customs.userData.spaceBundFrontageRevision === 'bund-frontages-20260909';
+        for (const x of rebuiltFrontage ? [-16, -9.6, -4.8, 0, 4.8, 9.6, 16] : [-8, 0, 8]) for (const height of rebuiltFrontage ? [15.7, 20, 24.3] : [11.5, 15.8, 20.2, 24.6]) {
           for (const [offset, part] of [[.14, 'bronze-relief'], [.55, 'bronze-panels']] as const) {
             const hit = cast(customs, customs, new THREE.Vector3(x + offset, height, -10), new THREE.Vector3(0, 0, 1));
             if (hit?.object.userData.spaceBundHeroPart !== part) throw new Error(`Customs ${part} blocked at ${x}, ${height}: ${hit?.object.userData.spaceId}`);
@@ -281,9 +282,45 @@ try {
         const cap = cast(peace, roof, new THREE.Vector3(-1327.8, 80, 1367), new THREE.Vector3(0, -1, 0), 10);
         if (!cap || Math.abs(peace.worldToLocal(cap.point.clone()).y - 76.6) > .025) throw new Error('Peace lantern top is open');
         authoredHeroDetails = {revision: heroRevision, buildings: 3, surfaceRays, flutedColumns: 6,
-          grooveDepthMin: Math.min(...grooveDepths), grooveDepthMax: Math.max(...grooveDepths), bronzeSpandrels: 12, estimatedDimensions: true};
+          grooveDepthMin: Math.min(...grooveDepths), grooveDepthMax: Math.max(...grooveDepths), bronzeSpandrels: rebuiltFrontage ? 21 : 12, estimatedDimensions: true};
       }
-      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks, authoredEntrances, authoredGalleries, authoredWindows, authoredHeroDetails});
+      let authoredFrontages: unknown = null;
+      const frontageRevision = 'bund-frontages-20260909';
+      if ([customs, peace].some(b => b?.userData.spaceBundFrontageRevision)) {
+        if (!customs || !peace || [customs, peace].some(b => b.userData.spaceBundFrontageRevision !== frontageRevision)) throw new Error('Bund frontage revision mismatch');
+        let surfaceRays = 0;
+        const probe = (building: THREE.Object3D, start: THREE.Vector3, direction: THREE.Vector3, part: string, axis: 'x' | 'y' | 'z', depth: number) => {
+          surfaceRays++;
+          const hit = new THREE.Raycaster(start.applyMatrix4(building.matrixWorld), direction.transformDirection(building.matrixWorld), 0, 100).intersectObject(building, true)[0];
+          if (hit?.object.userData.spaceBundFrontagePart !== part || Math.abs(building.worldToLocal(hit.point.clone())[axis] - depth) > .025) {
+            throw new Error(`Bund frontage ${part} at ${start.toArray()}: ${hit?.object.userData.spaceId}, ${hit ? building.worldToLocal(hit.point.clone()).toArray() : 'no hit'}`);
+          }
+        };
+        const customsFront = (x: number, height: number, part: string, depth: number) => probe(customs, new THREE.Vector3(x, height, -10), new THREE.Vector3(0, 0, 1), part, 'z', depth);
+        for (const x of [-16, -9.6, -4.8, 0, 4.8, 9.6, 16]) {
+          for (const z of [12, 16.3, 20.6, 24.9]) customsFront(x + .22, z + .9, 'glass', .39);
+          customsFront(x + .20, 8.8, 'glass', .39);
+        }
+        for (const x of [-8, -4, 0, 4, 8]) customsFront(x + .3, 3.0, 'glass', .83);
+        for (const x of [-18, -12.8, -7.2, -2.4, 2.4, 7.2, 12.8, 18]) customsFront(x, 18.3, 'stone', -.16);
+        const customsDetail = customs.userData.spaceBundFrontageDetail;
+        if (customsDetail?.mainWindows !== 28 || customsDetail.portals !== 5 || customsDetail.doricColumns !== 4 || customsDetail.towerGrilles !== 3 || customsDetail.bronzeSpandrels !== 21) throw new Error('Customs frontage metadata lost');
+        for (const offset of [-2.18, 0, 2.18]) customsFront(customsDetail.towerCenter[0] + offset + .22, 44.51, 'glass', .65 - customsDetail.towerFront);
+        const peaceFront = (x: number, height: number, part: string, depth: number) => probe(peace, new THREE.Vector3(-1280, height, 1367 + x), new THREE.Vector3(-1, 0, 0), part, 'x', depth);
+        for (const group of [-7.4, 0, 7.4]) for (const offset of [-1.72, 0, 1.72]) {
+          for (const z of [39.05, 43.25]) peaceFront(group + offset + .15, z + 1.1, 'glass', -1313.55);
+        }
+        for (const x of [-9.12, -7.4, -5.68, 5.68, 7.4, 9.12]) peaceFront(x + .15, 48.35, 'glass', -1315.35);
+        for (const x of [-8, -4, 0, 4, 8]) peaceFront(x + .15, 55.3, 'glass', -1317.05);
+        peaceFront(.23, 50.8, 'glass', -1316.8);
+        for (const x of [-1.7, 1.7]) peaceFront(x, 52.25, 'stone', -1316.2);
+        // Downward probes catch missing horizontal returns at the rebuilt tiers.
+        for (const x of [-10, 10]) probe(peace, new THREE.Vector3(-1313.5, 47, 1367 + x), new THREE.Vector3(0, -1, 0), 'stone', 'y', 46.58);
+        const peaceDetail = peace.userData.spaceBundFrontageDetail;
+        if (peaceDetail?.upperGroupedWindows !== 24 || peaceDetail.topWindows !== 5 || peaceDetail.centralArches !== 1 || peaceDetail.carvedParapetPanels !== 11 || peaceDetail.terraces !== 2) throw new Error('Peace upper frontage metadata lost');
+        authoredFrontages = {revision: frontageRevision, buildings: 2, surfaceRays, customsMainWindows: 28, peaceUpperWindows: 29, estimatedDimensions: true};
+      }
+      results.push({key, source: city.root.userData.spaceSource, meshes, shaderMaterials, buildingAttributes, clocks: clocks.length, traffic: internal.traffic.root.userData.cars, boats: internal.boats.count, authoredJinMao, authoredLandmarks, authoredEntrances, authoredGalleries, authoredWindows, authoredHeroDetails, authoredFrontages});
       city.dispose(); continue;
     }
     const [style, env] = key.split('-') as [RoomStyle, Environment];
