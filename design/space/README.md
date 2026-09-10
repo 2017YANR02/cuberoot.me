@@ -56,6 +56,14 @@ pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset italian-original -Pr
 
 ## 验收
 
+### 外滩近景灯光编辑
+
+和平饭店、江海关和汇丰在 `AUTHORING | Bund light rigs (metadata export)` 集合内各有 6 盏原生 SPOT 灯。直接修改灯具的位置、旋转、颜色、Spot Size、Blend 和 Custom Distance；对象自定义属性 `spaceCandela` 控制网页强度，Blender 的 Power 仅用于 Blender 预览，两者没有现场光度标定。灯具是合并多盏现场灯的视觉代理，不能当作实测灯位。
+
+每盏灯保持所属建筑的父子关系及唯一 `spaceFacadeSlot`（0 至 5），不设置 `space_export`。正常导出时 `facade_rig.py` 将当前灯具转换为 Y-up 的 `facadeLighting.lamps`，不保存回源工程；网页复用原有 6 盏带阴影灯。缺灯、重复槽号、错误类型或非法强度会拒绝导出。建筑的 `facadeLighting.centre` 是局部 Y-up 选光中心；`washTop` 控制旧有立面补光退让的高度，0 表示保留绝大部分补光。高处未被近景灯覆盖的石材仍使用原有远景补光。
+
+`author_bund_lighting.py` 仅用于本次首次建立灯组，已有 `spaceFacadeRig` 修订时拒绝覆盖。后续编辑现有灯具并正常导出，务必在网页查看整栋、斜侧、白天和夜间；Blender 预览与网页 PBR 仍有差异。
+
 在仓库根运行 `node design/space/scripts/capture-server.mjs`，再用浏览器访问 `http://127.0.0.1:3016/verify`。它检查完整 25 个场景的几何、表面、反射和城市运行绑定，结果在页面和 `window.verification`。单资产可加 `?asset=modern-original`。该检查不需要 GPU，实际光照效果仍须在 `/zh/space` 检查。
 
 打包器检查：`uv run python -m unittest discover -s design/space/scripts -p test_pack_gltf.py`。前端逻辑改动在 `core/` 运行 `pnpm --filter @cuberoot/client typecheck` 及适用的 Space 测试；开发服务器运行时不执行 Next build。
@@ -66,7 +74,7 @@ pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset italian-original -Pr
 
 源工程和网页 GLB/纹理被 Git 忽略，提交代码不会备份这些重资产。完整备份需同时包含 `design/space/scenes` 与 `client/public/assets/space/blender-v1`；2026-09-08 迁出的 8 份旧 `.blend1` 备份在 `E:/CubeRoot-Assets/space/backups/20260908/`，随后修正预览相机时生成的 `.blend1` 留在原工程旁。E 盘缓存可重建，不能取代 `.blend` 备份。
 
-本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 310,649,984 字节（约 311 MB），正式发布前仍需分区加载、压缩与移动设备验证。
+本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 310,654,952 字节（约 311 MB），正式发布前仍需分区加载、压缩与移动设备验证。
 
 Blender 和 glTF 插件来源已加入网页的“来源与致谢”，统一数据在 `credits_data.json`；建筑及天气等既有资料见 [来源记录](../../docs/space-sources.md)，迁移状态见 [跟踪文档](../../docs/space-blender-tracker.md)。
 

@@ -71,6 +71,69 @@ const inside = (x: number, z: number, ring: number[][]) => {
 };
 
 describe('Shanghai geographic asset and river cruise', () => {
+  const authoredRig = () => ({ width: 28, height: 58, centre: [10, 36, 20], washTop: 0,
+    lamps: Array.from({ length: 6 }, (_, i) => ({ position: [i, 40, -7], target: [0, 42, 4.7],
+      color: [1, .5, .2], intensity: 360, angle: Math.PI * .32, penumbra: .65, distance: 44 })) });
+
+  it('uses Blender-authored local lamps and aim centre, then fully restores the legacy pool', () => {
+    const pool = new ShanghaiFacadeLighting(false), root = new THREE.Group(), building = new THREE.Group();
+    building.position.set(100, 0, 200); building.rotation.y = Math.PI / 2;
+    building.userData.facadeLighting = authoredRig(); root.add(building);
+    const material = new THREE.MeshStandardMaterial(); material.userData.bundStone = true;
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(), material); building.add(wall);
+    const legacy = new THREE.Group(); legacy.position.x = 600;
+    legacy.userData.facadeLighting = { width: 40, height: 20 }; root.add(legacy);
+    pool.register(root);
+    const camera = new THREE.PerspectiveCamera(); camera.position.set(120, 36, 90); camera.lookAt(120, 36, 190);
+    pool.update(camera, .5);
+    expect(pool.active.value.toArray()).toEqual([1, 1]);
+    expect(pool.lights[0].position.toArray()).toEqual([93, 40, 200]);
+    expect(pool.lights[0].target.position.x).toBeCloseTo(104.7, 6);
+    expect(pool.lights[0].color.toArray()).toEqual([1, .5, .2]);
+    expect(pool.lights[0].intensity).toBe(180);
+    expect(pool.lights[0].angle).toBe(Math.PI * .32);
+    expect(pool.lights[0].penumbra).toBe(.65);
+    expect(pool.lights[0].shadow.camera.far).toBe(44);
+    expect(new Set(wall.geometry.getAttribute('bundLightTop').array)).toEqual(new Set([0]));
+    camera.position.set(600, 10, -100); camera.lookAt(600, 10, 0); pool.update(camera, 1);
+    expect(pool.active.value.x).toBe(2);
+    expect(pool.lights[0].color.getHex()).toBe(0xffdbaf);
+    expect(pool.lights[0].penumbra).toBe(.8);
+    expect(pool.lights[0].angle).toBe(Math.PI * .29);
+    expect(pool.lights[4].intensity).toBe(0);
+    pool.dispose(); wall.geometry.dispose(); material.dispose();
+  });
+
+  it('rejects malformed authored rigs before using their GPU light parameters', () => {
+    const pool = new ShanghaiFacadeLighting(true), root = new THREE.Group();
+    for (const patch of [{ centre: [1, 2] }, { centre: [1, NaN, 3] }, { washTop: -1 }, { washTop: Infinity }, { lamps: [] }, { lamps: null }]) {
+      root.userData.facadeLighting = { ...authoredRig(), ...patch };
+      expect(() => pool.register(root)).toThrow('Invalid Blender facade');
+    }
+    for (const patch of [{ position: [NaN, 0, 0] }, { target: [0, 40, -7] }, { color: [1, -1, 0] },
+      { intensity: -1 }, { intensity: Infinity }, { angle: 0 }, { angle: Math.PI }, { penumbra: 2 }, { distance: .3 }]) {
+      const rig = authoredRig(); Object.assign(rig.lamps[0], patch); root.userData.facadeLighting = rig;
+      expect(() => pool.register(root)).toThrow('Invalid Blender facade light rig');
+    }
+    pool.dispose();
+  });
+
+  it('re-registers saved lamp edits and keeps night transitions and zero-power lamps deterministic', () => {
+    const pool = new ShanghaiFacadeLighting(false), root = new THREE.Group(), rig = authoredRig();
+    rig.lamps[0].intensity = 0; root.userData.facadeLighting = rig; pool.register(root);
+    const camera = new THREE.PerspectiveCamera(); camera.position.set(10, 36, -80); camera.lookAt(10, 36, 20);
+    pool.update(camera, 1); expect(pool.lights[0].intensity).toBe(0);
+    rig.lamps[1].position = [9, 45, -10]; pool.register(root);
+    expect(pool.update(camera, 1)).toBe(true);
+    expect(pool.lights[1].position.toArray()).toEqual([9, 45, -10]);
+    pool.update(camera, 0); expect(pool.lights.every(l => l.intensity === 0)).toBe(true);
+    expect(pool.update(camera, .5)).toBe(true); expect(pool.lights[1].intensity).toBe(180);
+    pool.lights.forEach(l => { l.shadow.needsUpdate = false; });
+    expect(pool.update(camera, .5)).toBe(false);
+    expect(pool.lights.every(l => !l.shadow.needsUpdate)).toBe(true);
+    pool.dispose();
+  });
+
   it('initializes dormant shadow samplers and keeps facade lamps fixed during camera movement', () => {
     const pool = new ShanghaiFacadeLighting(false);
     expect(pool.lights).toHaveLength(6);
