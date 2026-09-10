@@ -62,7 +62,7 @@
 .date-range-input.wca-src-dates {
   flex: 0 1 auto;
   width: fit-content;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 6px;
 }
 /* Reserve one ISO date even when empty; never stretch fields across the row. */
