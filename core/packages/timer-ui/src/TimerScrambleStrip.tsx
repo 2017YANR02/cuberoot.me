@@ -5,6 +5,8 @@ import type { SmartCubeScrambleHint } from '@cuberoot/shared/smart-cube/scramble
 import type { TimerScrambleStatusKind } from '@cuberoot/shared/timer';
 import {
   Fragment,
+  useEffect,
+  useState,
   type CSSProperties,
   type KeyboardEvent,
   type ReactNode,
@@ -28,6 +30,13 @@ export interface TimerScrambleNonOptimalLabel {
 interface TimerScrambleStatusBaseProps {
   kind: TimerScrambleStatusKind;
   message: ReactNode;
+  /** Offer an explicit alternative after this empty slot has waited long enough. */
+  delayedAction?: Readonly<{
+    key: string;
+    delayMs: number;
+    label: string;
+    onSelect: () => void;
+  }>;
 }
 
 export type TimerScrambleStatusProps = TimerScrambleStatusBaseProps & (
@@ -121,7 +130,7 @@ export function TimerScrambleStrip({
     : null;
   const style = { '--scramble-scale': fontScale } as CSSProperties;
 
-  const stripActivate = status?.onRetry ? undefined : onActivate;
+  const stripActivate = status?.onRetry || status?.delayedAction ? undefined : onActivate;
   const activateFromKeyboard = (event: KeyboardEvent<HTMLSpanElement>) => {
     if (event.target !== event.currentTarget
       || !stripActivate
@@ -200,7 +209,18 @@ export function TimerScrambleStatus({
   message,
   onRetry,
   retryLabel,
+  delayedAction,
 }: TimerScrambleStatusProps) {
+  const [elapsedKey, setElapsedKey] = useState<string | null>(null);
+  const actionKey = delayedAction?.key;
+  const delayMs = delayedAction?.delayMs;
+  useEffect(() => {
+    setElapsedKey(null);
+    if (kind !== 'loading' || actionKey === undefined || delayMs === undefined) return;
+    const timeout = setTimeout(() => setElapsedKey(actionKey), delayMs);
+    return () => clearTimeout(timeout);
+  }, [kind, actionKey, delayMs]);
+
   return (
     <span className={`scramble-status is-${kind}`}>
       <span
@@ -221,6 +241,17 @@ export function TimerScrambleStatus({
           }}
           type="button"
         >{retryLabel}</button>
+      )}
+      {kind === 'loading' && delayedAction && elapsedKey === delayedAction.key && (
+        <button
+          className="scramble-status-retry"
+          data-no-timer
+          onClick={(event) => {
+            event.stopPropagation();
+            delayedAction.onSelect();
+          }}
+          type="button"
+        >{delayedAction.label}</button>
       )}
     </span>
   );
