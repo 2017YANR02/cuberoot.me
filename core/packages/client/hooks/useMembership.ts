@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { getMyMembership, type EditableMemberProfile, type Membership } from '@/lib/membership-api';
-import { useAuthStore, getSessionToken, getWcaToken } from '@/lib/auth-store';
+import { useAuthUser, getSessionToken, getWcaToken } from '@/lib/auth-store';
 
 function hasToken(): boolean {
   if (typeof window === 'undefined') return false;
@@ -16,7 +16,7 @@ function hasToken(): boolean {
 }
 
 export function useMembership() {
-  const wcaId = useAuthStore((s) => s.user?.wcaId);
+  const wcaId = useAuthUser()?.wcaId;
   const admin = isAdminWcaId(wcaId);
   const [membership, setMembership] = useState<Membership | null>(null);
   const [profile, setProfile] = useState<EditableMemberProfile | null>(null);
