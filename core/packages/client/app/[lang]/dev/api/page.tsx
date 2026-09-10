@@ -70,8 +70,16 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   membership membership_subscriptions music nav_sites nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
+//   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'platform', m: 'POST', p: '/v1/platform/organizer-applications', g: 'login', c: 'no-store', zh: '提交主办方申请，可关联已有组织', en: 'Apply to host competitions using a new or existing organization' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/organizer-applications/me', g: 'login', c: 'no-store', zh: '读取本人申请与获准办赛的组织', en: 'Read own applications and eligible organizer organizations' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/organizer-applications/review-queue', g: 'admin', c: 'no-store', zh: '读取待审核主办方申请', en: 'Read pending organizer applications' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/organizer-applications/:id/review', g: 'admin', c: 'no-store', zh: '审核主办方资格并复用组织权限', en: 'Review organizer eligibility and reuse organization roles' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/competitions/registrations/:id/attempts/:number/telemetry/start', g: 'login', c: 'no-store', zh: '绑定智能魔方采集场次与已下发打乱', en: 'Bind a smart cube run to an issued scramble' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/competitions/registrations/:id/attempts/:number/telemetry', g: 'login', c: 'no-store', zh: '提交计时与动作供监督员确认', en: 'Submit device timing and moves for supervisor confirmation' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/competitions/registrations/:id/attempts/:number/telemetry', g: 'login', c: 'no-store', zh: '授权读取设备采集辅助证据', en: 'Read authorized device supporting evidence' },
   // ---- auth ----
   { d: 'auth', m: 'GET', p: '/v1/auth/login', g: 'public', zh: '跳转 WCA OAuth 授权页', en: 'Redirect to WCA OAuth' },
   { d: 'auth', m: 'GET', p: '/v1/auth/callback', g: 'public', zh: 'OAuth 回调,建立登录态', en: 'OAuth callback, establish session' },
@@ -410,6 +418,32 @@ const ENDPOINTS: Ep[] = [
   { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/weekly-reports/:reportId/publish', g: 'login', c: 'no-store', zh: '以总结、下周计划与可见性发布并冻结周报，要求幂等键', en: 'Publish and freeze a weekly report with summary, next-week plan, and visibility; requires an idempotency key' },
 
   // ---- platform: public catalog ----
+  { d: 'platform', m: 'GET', p: '/v1/platform/competitions', g: 'public', c: 'no-store', zh: '公开线上比赛', en: 'List published online competitions' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/competitions/manage', g: 'login', c: 'no-store', zh: '本人可管理的赛事', en: 'List managed competitions' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/competitions/:id', g: 'public', c: 'no-store', zh: '赛事、项目与监督场次', en: 'Read competition, projects and supervised sessions' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/competitions', g: 'login', c: 'no-store', zh: '主办方创建赛事草稿', en: 'Organizer creates a competition draft' },
+  { d: 'platform', m: 'PUT', p: '/v1/platform/competitions/:id/config', g: 'login', c: 'no-store', zh: '配置项目、收费与结算条款', en: 'Configure projects, prices and settlement terms' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/competitions/:id/sessions', g: 'login', c: 'no-store', zh: '配置监督场次与人员', en: 'Configure supervised sessions and staff' },
+  { d: 'platform', m: 'PATCH', p: '/v1/platform/competitions/:id/sessions/:sessionId', g: 'login', c: 'no-store', zh: '修改草稿监督场次', en: 'Update a draft supervision session' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/competitions/:id/settlement', g: 'login', c: 'no-store', zh: '读取实际收入、退款和主办方结算单', en: 'Read actual receipts, refunds and organizer settlement statement' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/competitions/:id/settlement-record', g: 'admin', c: 'no-store', zh: '登记已完成的外部转账或款项追回', en: 'Record a completed external payout or recovery' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/competitions/:id/publish', g: 'login', c: 'no-store', zh: '主办方提交与平台审核发布', en: 'Submit a competition or approve publication' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/competitions/:id/registrations', g: 'login', c: 'no-store', zh: '读取本人报名或授权场次名单', en: 'Read own registrations or authorized session roster' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/competitions/registrations/:id/check-in', g: 'login', c: 'no-store', zh: '选手在场次内签到', en: 'Entrant checks in during the session' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/competitions/registrations/:id/result', g: 'login', c: 'no-store', zh: '监督员确认五把已记录成绩', en: 'Supervisor finalizes five stored attempts' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/competitions/registrations/:id/disputes', g: 'login', c: 'no-store', zh: '提交成绩争议', en: 'Submit a result dispute' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/competitions/:id/results', g: 'public', c: 'no-store', zh: '读取公开比赛成绩', en: 'Read public competition results' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/competitions/:id/disputes', g: 'login', c: 'no-store', zh: '读取本人或授权赛事争议', en: 'Read own or authorized competition disputes' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/competitions/disputes/:id/resolve', g: 'admin', c: 'no-store', zh: '平台处理成绩争议', en: 'Platform resolves a result dispute' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/competitions/:id/finalize', g: 'admin', c: 'no-store', zh: '争议处理后定稿比赛', en: 'Finalize an ended competition after disputes' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/competitions/registrations/:id/attempts', g: 'login', c: 'no-store', zh: '双方读取已发打乱和逐把成绩', en: 'Entrant and supervisor read issued attempts' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/competitions/registrations/:id/evidence', g: 'login', c: 'no-store', zh: '授权人员读取私密录像列表', en: 'Authorized viewers list private evidence videos' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/competitions/registrations/:id/evidence', g: 'login', c: 'no-store', zh: '选手或监督员上传争议录像', en: 'Entrant or supervisor uploads dispute evidence' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/competitions/evidence/:id/content', g: 'login', c: 'no-store', zh: '授权下载私密争议录像', en: 'Authenticated private dispute video download' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/competitions/registrations/:id/attempts/next', g: 'login', c: 'no-store', zh: '实时监督下发下一把打乱', en: 'Release the next scramble under live supervision' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/competitions/registrations/:id/attempts/:number/result', g: 'login', c: 'no-store', zh: '监督员记录当前一把成绩', en: 'Supervisor records the issued attempt' },
+  { d: 'timer', m: 'POST', p: '/v1/video/competition/token', g: 'login', c: 'no-store', zh: '仅向选手和指定监督员签发比赛视频凭证', en: 'Mint competition video credentials only for the entrant and assigned supervisor' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/competitions/:id/close-sessions', g: 'login', c: 'no-store', zh: '处理已结束场次的缺赛与未完成成绩', en: 'Close unfinished results of ended sessions' },
   { d: 'platform', m: 'GET', p: '/v1/platform/search', g: 'public', c: 'short', zh: '搜索课程、路径、活动、资讯和商品', en: 'Search courses, paths, events, news, and products' },
   { d: 'platform', m: 'GET', p: '/v1/platform/courses', g: 'public', c: 'short', zh: '公开课程目录', en: 'Public course catalog' },
   { d: 'platform', m: 'GET', p: '/v1/platform/courses/:id', g: 'public', c: 'short', zh: '课程详情与课时目录', en: 'Course detail and lesson outline' },
@@ -547,7 +581,12 @@ const ENDPOINTS: Ep[] = [
   { d: 'platform', m: 'POST', p: '/v1/platform/admin/orders/:orderId/items/:itemId/ship', g: 'admin', c: 'no-store', zh: '记录实物订单项发货与物流凭据', en: 'Record shipment and tracking evidence for a physical order item' },
   { d: 'platform', m: 'POST', p: '/v1/platform/admin/orders/:orderId/items/:itemId/deliver', g: 'admin', c: 'no-store', zh: '记录实物订单项签收并推进订单履约状态', en: 'Record delivery of a physical order item and advance order fulfillment state' },
   { d: 'platform', m: 'POST', p: '/v1/platform/admin/orders/:orderId/items/:itemId/return', g: 'admin', c: 'no-store', zh: '记录退款后实物退回并恢复对应库存', en: 'Record a physical return after refund and restore the matching inventory' },
-  { d: 'platform', m: 'POST', p: '/v1/platform/admin/orders/:id/refund', g: 'admin', c: 'no-store', zh: '按原账本退款并精确逆向履约', en: 'Refund and precisely reverse original fulfillment ledgers' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/admin/orders/:id/refund', g: 'admin', c: 'no-store', zh: '登记已完成退款并逆向履约', en: 'Record an externally completed refund and reverse fulfillment' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/orders/:id/refunds', g: 'login', c: 'no-store', zh: '查询本人订单退款', en: 'Read refunds for an owned order' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/orders/:id/refund-requests', g: 'login', c: 'no-store', zh: '申请线上赛事全额退款', en: 'Request a full online competition refund' },
+  { d: 'platform', m: 'POST', p: '/v1/admin/refunds/:id/approve', g: 'admin', c: 'no-store', zh: '批准并提交原渠道退款', en: 'Approve and submit a refund to the original provider' },
+  { d: 'platform', m: 'POST', p: '/v1/admin/refunds/:id/refresh', g: 'admin', c: 'no-store', zh: '核对渠道退款状态与履约', en: 'Reconcile provider refund status and fulfillment' },
+  { d: 'platform', m: 'POST', p: '/v1/admin/refunds/:id/reject', g: 'admin', c: 'no-store', zh: '拒绝尚未批准的退款申请', en: 'Reject a refund request before approval' },
   { d: 'platform', m: 'POST', p: '/v1/platform/admin/orders/expire-reservations', g: 'admin', c: 'no-store', zh: '过期未支付订单并原子释放库存、名额和优惠额度', en: 'Expire unpaid orders and atomically release inventory, capacity, and coupon reservations' },
   { d: 'platform', m: 'GET', p: '/v1/platform/admin/instructor-payouts', g: 'admin', c: 'no-store', zh: '讲师结算批次', en: 'Instructor payout batches' },
   { d: 'platform', m: 'POST', p: '/v1/platform/admin/instructor-payouts/generate', g: 'admin', c: 'no-store', zh: '从未结算收入账本生成结算批次', en: 'Generate a payout batch from unsettled earnings ledgers' },

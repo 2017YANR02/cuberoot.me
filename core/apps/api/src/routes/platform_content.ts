@@ -231,6 +231,10 @@ async function saveEvent(c: Context,creating:boolean):Promise<Response>{
   if(input.startsAt&&input.endsAt&&Date.parse(input.endsAt)<=Date.parse(input.startsAt))badRequest('endsAt must be after startsAt');
   const result=await withIdempotency(c,actor,`platform.admin.event.${creating?'create':'update'}:${id??'new'}`,body,async(db)=>{
     let eventId:string;
+    if (!creating) {
+      const competitions = await platformQuery(db, `SELECT c.event_id FROM platform_competitions c JOIN platform_events e ON e.id=c.event_id WHERE e.id::text=$1 OR e.slug=$1`, [id]);
+      if (competitions.length) conflict('Use the competition workflow to edit or publish this event');
+    }
     try{
       if(creating){const status=input.status??'draft';const rows=await platformQuery<{id:string}>(db,`
         INSERT INTO platform_events(slug,title_zh,title_en,description_zh,description_en,status,starts_at,ends_at,timezone,venue_snapshot,created_by_user_id,published_at)

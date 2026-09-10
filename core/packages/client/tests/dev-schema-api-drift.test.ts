@@ -155,6 +155,13 @@ describe('/dev/api endpoint catalog drift', () => {
     const platformFiles = new Map([
       ['platform_catalog.ts', '/v1'],
       ['platform_content.ts', '/v1'],
+      ['platform_competitions.ts', '/v1'],
+      ['platform_competition_device_reports.ts', '/v1'],
+      ['platform_organizer_applications.ts', '/v1'],
+      ['platform_competition_attempts.ts', '/v1'],
+      ['platform_competition_evidence.ts', '/v1'],
+      ['platform_competition_settlements.ts', '/v1'],
+      ['platform_refunds.ts', '/v1'],
       ['platform_learning.ts', '/v1/platform'],
       ['platform_commerce.ts', '/v1/platform'],
       ['platform_qr.ts', '/v1/platform'],

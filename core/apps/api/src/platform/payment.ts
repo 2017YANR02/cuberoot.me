@@ -3,6 +3,8 @@ import QRCode from 'qrcode';
 import type { SignParams } from '@cuberoot/shared/payment';
 import * as alipay from '../payment/alipay.js';
 import * as wechat from '../payment/wechat.js';
+import { findUserByIdentity } from '../utils/account.js';
+import { exchangeWechatMiniProgramCode, wechatMiniProgramConfigured } from '../utils/wechat_miniprogram.js';
 import { PlatformApiError, badRequest } from './errors.js';
 
 export const PLATFORM_PAYMENT_PROVIDERS = ['alipay', 'wechat'] as const;
@@ -20,18 +22,41 @@ export function paymentAvailability(): Record<PlatformPaymentProvider, boolean> 
 
 export async function createProviderPayment(input: {
   provider: PlatformPaymentProvider;
-  clientType: 'pc' | 'wap';
+  clientType: 'pc' | 'wap' | 'miniprogram';
   orderNo: string;
   returnOrderNo?: string;
   amountCents: number;
   currency: string;
   subject: string;
   payerIp: string;
-}): Promise<{ checkoutUrl?: string; qrCodeDataUrl?: string }> {
+  miniProgramCode?: string;
+  payerUserId?: number;
+}): Promise<{ checkoutUrl?: string; qrCodeDataUrl?: string; requestPayment?: wechat.WechatMiniProgramPayment }> {
   if (input.currency !== 'CNY') badRequest('Online payment currently supports CNY only');
   if (!Number.isSafeInteger(input.amountCents) || input.amountCents <= 0) badRequest('Invalid payment amount');
   const notifyUrl = `${API_ORIGIN}/v1/platform/payments/${input.provider}/notify`;
   const returnUrl = `${SITE_ORIGIN}/platform/orders/${encodeURIComponent(input.returnOrderNo ?? input.orderNo)}`;
+
+  if (input.clientType === 'miniprogram') {
+    if (input.provider !== 'wechat') badRequest('Mini Program payment requires WeChat Pay');
+    if (!wechat.wechatMiniProgramPayConfigured() || !wechatMiniProgramConfigured()) {
+      throw new PlatformApiError('PAYMENT_NOT_CONFIGURED', 503, 'WeChat Mini Program Pay is not configured');
+    }
+    if (!input.miniProgramCode || input.miniProgramCode.length > 512 || !input.payerUserId) {
+      badRequest('Mini Program login code and payer are required');
+    }
+    let identity;
+    try { identity = await exchangeWechatMiniProgramCode(input.miniProgramCode); }
+    catch { throw new PlatformApiError('PROVIDER_VERIFICATION_FAILED', 403, 'WeChat login expired; try again'); }
+    const account = identity.unionid ? await findUserByIdentity('wechat', identity.unionid) : null;
+    if (!account || account.id !== input.payerUserId) {
+      throw new PlatformApiError('FORBIDDEN', 403, 'WeChat identity does not match the signed-in account');
+    }
+    return { requestPayment: await wechat.createWechatMiniProgram({
+      outTradeNo: input.orderNo, amountCents: input.amountCents,
+      description: input.subject.slice(0, 120), notifyUrl, openid: identity.openid,
+    }) };
+  }
 
   if (input.provider === 'alipay') {
     if (!alipay.alipayConfigured()) {
@@ -144,7 +169,7 @@ async function verifyWechatNotification(c: Context): Promise<VerifiedPaymentEven
   const raw = result.raw as Record<string, unknown>;
   const appId = String(raw.appid ?? '');
   const merchantId = String(raw.mchid ?? '');
-  if (!appId || appId !== process.env.WECHAT_APPID || !merchantId || merchantId !== process.env.WECHAT_MCHID) {
+  if (!wechat.isWechatPaymentAppId(appId) || !merchantId || merchantId !== process.env.WECHAT_MCHID) {
     throw new PlatformApiError('PROVIDER_VERIFICATION_FAILED', 403, 'WeChat Pay merchant identity mismatch');
   }
   const amount = raw.amount;

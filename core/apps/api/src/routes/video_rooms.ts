@@ -7,6 +7,8 @@ import { query, withTransaction } from '../db/connection.js';
 import { battlePlayerTokenMatchesHash } from '../utils/battle_room_auth.js';
 import { checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
 import { pickAvailableRoomCode, ROOM_CODE_RE } from '../utils/room_code.js';
+import { requirePlatformActor } from '../platform/auth.js';
+import { platformErrorHandler } from '../platform/errors.js';
 
 /**
  * /v1/video — 全站视频通话的凭证签发(LiveKit SFU)。两种房,同一套带宽闸:
@@ -45,6 +47,7 @@ import { pickAvailableRoomCode, ROOM_CODE_RE } from '../utils/room_code.js';
  * 形式,不能写 `players ? pid` 操作符(与 battle_rooms 同一约束)。
  */
 export const videoRoomsRoutes = new Hono();
+videoRoomsRoutes.onError(platformErrorHandler);
 
 const LIVEKIT_URL = process.env.LIVEKIT_URL ?? '';
 const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY ?? '';
@@ -155,6 +158,59 @@ export async function retireBattleVideoGeneration(code: string, videoGeneration:
     code, videoGeneration, error: lastError,
   });
 }
+
+/** Competition identities are account IDs; the generation is private and never a public meeting code. */
+function competitionRoom(id: string, generation: string): string {
+  return `competition-${id}-${generation}`;
+}
+
+export async function retireCompetitionVideoGeneration(id: string, generation: string): Promise<void> {
+  if (!videoEnabled()) return;
+  try { await svc().deleteRoom(competitionRoom(id, generation)); }
+  catch (error) { console.error('[video] competition room retirement failed', { id, error }); }
+}
+
+/** Live presence is checked by the attempt API, never inferred from a browser checkbox. */
+export async function competitionSupervisionReady(id: string, generation: string, entrantId: number, supervisorId: number): Promise<boolean> {
+  if (!videoEnabled() || entrantId === supervisorId) return false;
+  try {
+    const participants = await svc().listParticipants(competitionRoom(id, generation));
+    return [entrantId, supervisorId].every(userId => participants.some(participant =>
+      participant.identity === `u${userId}` && participant.tracks.some(track => track.source === TrackSource.CAMERA && !track.muted)));
+  } catch { return false; }
+}
+
+type CompetitionVideoAdmission = {
+  id: string; user_id: number; supervisor_user_id: number; competition_video_generation: string;
+};
+const COMPETITION_VIDEO_ADMISSION = `
+  SELECT r.id::text,r.user_id,s.supervisor_user_id,r.competition_video_generation::text
+  FROM platform_event_registrations r
+  JOIN platform_competition_sessions s ON s.id=r.competition_session_id
+  JOIN platform_events e ON e.id=r.event_id
+  WHERE r.id=?::uuid AND r.status IN ('confirmed','attended') AND e.status='published'
+    AND r.checked_in_at IS NOT NULL AND r.result_recorded_at IS NULL
+    AND NOW()>=s.starts_at AND NOW()<s.ends_at AND s.supervisor_user_id<>r.user_id`;
+
+/** Expiry and failed post-transaction retirements are reconciled even if both browsers stay idle. */
+async function reconcileCompetitionVideoRooms(): Promise<void> {
+  if (!videoEnabled()) return;
+  try {
+    const rooms = (await svc().listRooms()).filter(room => room.name.startsWith('competition-'));
+    for (const room of rooms) {
+      const match = /^competition-([0-9a-f-]{36})-([0-9a-f-]{36})$/.exec(room.name);
+      if (!match) continue;
+      const [admission] = await query<CompetitionVideoAdmission>(COMPETITION_VIDEO_ADMISSION, [match[1]]);
+      if (!admission || admission.competition_video_generation !== match[2]) await svc().deleteRoom(room.name);
+    }
+  } catch (error) { console.error('[video] competition room reconciliation failed', { error }); }
+}
+let competitionReconciliationRunning = false;
+if (videoEnabled()) setInterval(() => {
+  if (competitionReconciliationRunning) return;
+  competitionReconciliationRunning = true;
+  void reconcileCompetitionVideoRooms().finally(() => { competitionReconciliationRunning = false; });
+}, 30_000).unref();
 
 /**
  * 房间出向带宽估算(Mbps)。n 人各发一路,服务端把每路转发给其余 n-1 人 ⟹ n*(n-1) 路。
@@ -424,4 +480,32 @@ videoRoomsRoutes.post('/video/meet/token', async (c) => {
     return c.json({ error: cap.reason }, status);
   }
   return c.json(await mintToken(roomName, user.wcaId, user.name || user.wcaId, MAX_MEET_PARTICIPANTS));
+});
+
+videoRoomsRoutes.post('/video/competition/token', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c), RATE.token);
+  const actor = await requirePlatformActor(c);
+  if (!videoEnabled()) return c.json({ error: 'video not configured' }, 503);
+  const body = await c.req.json<{ registrationId?: unknown }>().catch(() => null);
+  const id = body?.registrationId;
+  if (typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return c.json({ error: 'invalid registration' }, 400);
+  }
+  const allowed = (row: CompetitionVideoAdmission | undefined) => row &&
+    [Number(row.user_id), Number(row.supervisor_user_id)].includes(Number(actor.userId));
+  const [checked] = await query<CompetitionVideoAdmission>(COMPETITION_VIDEO_ADMISSION, [id]);
+  if (!allowed(checked)) return c.json({ error: 'not in room' }, 403);
+  const name = competitionRoom(id, checked!.competition_video_generation);
+  const identity = `u${actor.userId}`;
+  const capacity = await capacityCheck(name, identity, 2);
+  // Lock both rows so a changed assignment/refund cannot reuse an earlier capacity decision.
+  return withTransaction(async (transactionQuery) => {
+    const [current] = await transactionQuery<CompetitionVideoAdmission>(`${COMPETITION_VIDEO_ADMISSION} FOR UPDATE OF r,s`, [id]);
+    if (!allowed(current)) return c.json({ error: 'not in room' }, 403);
+    if (current!.competition_video_generation !== checked!.competition_video_generation ||
+      Number(current!.supervisor_user_id) !== Number(checked!.supervisor_user_id)) return c.json({ error: 'changed' }, 409);
+    if (!capacity.ok) return c.json({ error: capacity.reason }, capacity.reason === 'unavailable' ? 503 : 429);
+    return c.json(await mintToken(name, identity, actor.displayName || identity, 2));
+  });
 });

@@ -10,9 +10,11 @@ const mocks = vi.hoisted(() => ({
   removeParticipant: vi.fn(),
   deleteRoom: vi.fn(),
   toJwt: vi.fn(),
+  actor: vi.fn(),
 }));
 
 vi.mock('../src/db/connection.js', () => ({ query: mocks.query, withTransaction: mocks.withTransaction }));
+vi.mock('../src/platform/auth.js', () => ({ requirePlatformActor: mocks.actor }));
 vi.mock('../src/utils/analytics_helpers.js', () => ({ getIp: vi.fn(() => '127.0.0.1') }));
 vi.mock('../src/utils/recon_helpers.js', () => ({
   checkRateLimit: vi.fn(),
@@ -40,6 +42,7 @@ import { hashBattlePlayerToken } from '../src/utils/battle_room_auth.js';
 const PLAYER_TOKEN = 'a'.repeat(43);
 let app: Hono;
 let retireBattleVideoGeneration: (code: string, generation: string) => Promise<void>;
+let competitionSupervisionReady: (id: string, generation: string, entrant: number, supervisor: number) => Promise<boolean>;
 
 beforeAll(async () => {
   vi.stubEnv('LIVEKIT_URL', 'wss://livekit.example.test');
@@ -48,7 +51,68 @@ beforeAll(async () => {
   const routes = await import('../src/routes/video_rooms.js');
   const { videoRoomsRoutes } = routes;
   retireBattleVideoGeneration = routes.retireBattleVideoGeneration;
+  competitionSupervisionReady = routes.competitionSupervisionReady;
   app = new Hono().route('/v1', videoRoomsRoutes);
+});
+
+describe('competition video admission', () => {
+  const id = '11111111-1111-4111-8111-111111111111';
+  const generation = '22222222-2222-4222-8222-222222222222';
+  const row = { id, user_id: 1, supervisor_user_id: 2, competition_video_generation: generation };
+  const request = () => app.request('/v1/video/competition/token', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ registrationId: id }),
+  });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.actor.mockResolvedValue({ userId: 1, displayName: 'Entrant' });
+    mocks.query.mockReset().mockResolvedValue([row]);
+    mocks.withTransaction.mockImplementation(async run => run(mocks.query));
+    mocks.listRooms.mockResolvedValue([]);
+    mocks.listParticipants.mockResolvedValue([]);
+    mocks.toJwt.mockResolvedValue('signed-jwt');
+  });
+  it('preserves the platform unauthenticated HTTP status', async () => {
+    const { PlatformApiError } = await import('../src/platform/errors.js');
+    mocks.actor.mockRejectedValueOnce(new PlatformApiError('UNAUTHENTICATED', 401, 'Authentication required'));
+    expect((await request()).status).toBe(401);
+    expect(mocks.toJwt).not.toHaveBeenCalled();
+  });
+  it('rejects unrelated users without contacting the media server', async () => {
+    mocks.actor.mockResolvedValue({ userId: 3 });
+    expect((await request()).status).toBe(403);
+    expect(mocks.listRooms).not.toHaveBeenCalled();
+  });
+  it('issues a private generation room to the entrant and supervisor', async () => {
+    for (const userId of [1, 2]) {
+      mocks.actor.mockResolvedValue({ userId });
+      const response = await request();
+      expect(response.status).toBe(200);
+      expect(response.headers.get('Cache-Control')).toBe('no-store');
+      expect(await response.json()).toMatchObject({ room: `competition-${id}-${generation}`, token: 'signed-jwt' });
+    }
+  });
+  it('denies a registration cancelled during the capacity request', async () => {
+    mocks.query.mockResolvedValueOnce([row]).mockResolvedValueOnce([]);
+    expect((await request()).status).toBe(403);
+    expect(mocks.toJwt).not.toHaveBeenCalled();
+  });
+  it('denies a rotated generation or changed supervisor during admission', async () => {
+    for (const change of [{ competition_video_generation: id }, { supervisor_user_id: 4 }]) {
+      mocks.query.mockResolvedValueOnce([row]).mockResolvedValueOnce([{ ...row, ...change }]);
+      expect((await request()).status).toBe(409);
+    }
+    expect(mocks.toJwt).not.toHaveBeenCalled();
+  });
+  it('requires both distinct participants to have an unmuted camera', async () => {
+    const camera = { source: 'camera', muted: false };
+    mocks.listParticipants.mockResolvedValue([{ identity: 'u1', tracks: [camera] }, { identity: 'u2', tracks: [camera] }]);
+    expect(await competitionSupervisionReady(id, generation, 1, 2)).toBe(true);
+    expect(await competitionSupervisionReady(id, generation, 1, 1)).toBe(false);
+    mocks.listParticipants.mockResolvedValue([{ identity: 'u1', tracks: [camera] }, { identity: 'u2', tracks: [{ ...camera, muted: true }] }]);
+    expect(await competitionSupervisionReady(id, generation, 1, 2)).toBe(false);
+    mocks.listParticipants.mockRejectedValueOnce(new Error('unavailable'));
+    expect(await competitionSupervisionReady(id, generation, 1, 2)).toBe(false);
+  });
 });
 
 afterAll(() => vi.unstubAllEnvs());

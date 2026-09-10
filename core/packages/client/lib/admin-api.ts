@@ -15,7 +15,11 @@ export function authHeaders(json = true): Record<string, string> {
 export async function handleApi<T>(r: Response): Promise<T> {
   if (!r.ok) {
     const err = await r.json().catch(() => ({ error: r.statusText }));
-    throw new Error(err.error || `API error ${r.status}`);
+    const detail: unknown = err?.error;
+    const message = typeof detail === 'string' ? detail
+      : detail && typeof detail === 'object' && 'message' in detail && typeof detail.message === 'string'
+        ? detail.message : '';
+    throw new Error(message || `API error ${r.status}`);
   }
   return r.json();
 }
