@@ -3,7 +3,10 @@
 //
 // 标签与显隐用条目覆盖层；分组顺序、组内顺序与跨组归属一次保存完整布局。
 import { useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, Eye, EyeOff, RotateCcw, Trash2, X } from 'lucide-react';
+import { Eye, EyeOff, RotateCcw, Trash2, X } from 'lucide-react';
+import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import SortableCard from '@/components/SortableCard';
 import { useT } from '@/hooks/useT';
 import {
   deleteSimMask, saveSimMaskLayout, saveSimMask, PRESET_PREFIX,
@@ -102,20 +105,34 @@ export default function SimMaskAdmin({
     });
   };
 
-  const move = (groupIdx: number, i: number, delta: number) => {
-    const g = groups[groupIdx];
-    const items = [...g.items];
-    const j = i + delta;
-    if (j < 0 || j >= items.length) return;
-    [items[i], items[j]] = [items[j], items[i]];
-    void run(() => saveSimMaskLayout({ cubeSize: order, groups: groups.map((g, index) => index === groupIdx ? { ...g, items } : g) }));
-  };
-
-  const moveGroup = (index: number, delta: number) => {
-    const next = [...groups];
-    const target = index + delta;
-    if (target < 0 || target >= next.length) return;
-    [next[index], next[target]] = [next[target], next[index]];
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
+    if (busy || !over || active.id === over.id) return;
+    const fromId = String(active.id);
+    const toId = String(over.id);
+    let next = groups.map((g) => ({ ...g, items: [...g.items] }));
+    if (fromId.startsWith('group:')) {
+      const from = groups.findIndex((g) => `group:${g.group}` === fromId);
+      const to = groups.findIndex((g) => `group:${g.group}` === toId);
+      if (from < 0 || to < 0) return;
+      next = arrayMove(next, from, to);
+    } else {
+      const key = fromId.slice(5);
+      const from = next.find((g) => g.items.includes(key));
+      const targetKey = toId.slice(5);
+      const to = next.find((g) => toId.startsWith('group:') ? `group:${g.group}` === toId : g.items.includes(targetKey));
+      if (!from || !to) return;
+      if (from === to && toId.startsWith('item:')) {
+        from.items = arrayMove(from.items, from.items.indexOf(key), from.items.indexOf(targetKey));
+      } else {
+        from.items.splice(from.items.indexOf(key), 1);
+        const at = toId.startsWith('item:') ? to.items.indexOf(targetKey) : to.items.length;
+        to.items.splice(at, 0, key);
+      }
+    }
     void run(() => saveSimMaskLayout({ cubeSize: order, groups: next }));
   };
 
@@ -204,35 +221,24 @@ export default function SimMaskAdmin({
           )}
         </div>
 
+        <DndContext sensors={sensors} onDragEnd={onDragEnd}
+          collisionDetection={(args) => closestCenter({ ...args, droppableContainers: args.droppableContainers.filter((container) =>
+            !String(args.active.id).startsWith('group:') || String(container.id).startsWith('group:')) })}>
+        <SortableContext items={groups.map((g) => `group:${g.group}`)} strategy={verticalListSortingStrategy}>
         <div className="sim-mask-admin-list">
-          {groups.map((g, gi) => (
-            <div key={g.group} className="sim-mask-admin-group">
+          {groups.map((g) => (
+            <SortableCard key={g.group} id={`group:${g.group}`} draggable={!busy} stretch={false} className="sim-mask-admin-group" dragLabel={t('拖动调整分组顺序', 'Drag to reorder groups')}>
               <div className="sim-mask-admin-group-title">
                 <strong>{groupLabel(g.group)}</strong>
-                <button type="button" className="sim-mask-admin-icon" disabled={busy || gi === 0}
-                  onClick={() => moveGroup(gi, -1)} aria-label={t('分组上移', 'Move group up')} title={t('分组上移', 'Move group up')}><ArrowUp size={14} /></button>
-                <button type="button" className="sim-mask-admin-icon" disabled={busy || gi === groups.length - 1}
-                  onClick={() => moveGroup(gi, 1)} aria-label={t('分组下移', 'Move group down')} title={t('分组下移', 'Move group down')}><ArrowDown size={14} /></button>
                 {g.items.length === 0 && <span>{t('空分组，可移入阶段', 'Empty group; move a stage here')}</span>}
               </div>
-              {g.items.map((key, i) => {
+              <SortableContext items={g.items.map((key) => `item:${key}`)} strategy={verticalListSortingStrategy}>
+              {g.items.map((key) => {
                 const r = rowOf(key);
                 const d = draftOf(key);
                 const hidden = r?.hidden ?? false;
                 return (
-                  <div key={key} className={`sim-mask-admin-row${hidden ? ' is-hidden' : ''}`}>
-                    <button
-                      type="button" className="sim-mask-admin-icon" disabled={busy || i === 0}
-                      onClick={() => move(gi, i, -1)} title={t('上移', 'Move up')} aria-label={t('上移', 'Move up')}
-                    >
-                      <ArrowUp size={14} />
-                    </button>
-                    <button
-                      type="button" className="sim-mask-admin-icon" disabled={busy || i === g.items.length - 1}
-                      onClick={() => move(gi, i, 1)} title={t('下移', 'Move down')} aria-label={t('下移', 'Move down')}
-                    >
-                      <ArrowDown size={14} />
-                    </button>
+                  <SortableCard key={key} id={`item:${key}`} draggable={!busy} stretch={false} className={`sim-mask-admin-row${hidden ? ' is-hidden' : ''}`} dragLabel={t('拖动调整阶段顺序或分组', 'Drag to reorder or move stage')}>
                     <code className="sim-mask-admin-key" title={key}>{key}</code>
                     <label className="sim-mask-admin-field">
                     <span>{t('中文名', 'Chinese name')}</span>
@@ -283,12 +289,15 @@ export default function SimMaskAdmin({
                     >
                       {key.startsWith(PRESET_PREFIX) ? <Trash2 size={14} /> : <RotateCcw size={14} />}
                     </button>
-                  </div>
+                  </SortableCard>
                 );
               })}
-            </div>
+              </SortableContext>
+            </SortableCard>
           ))}
         </div>
+        </SortableContext>
+        </DndContext>
 
         {err && <div className="sim-mask-admin-err">{err}</div>}
       </div>
