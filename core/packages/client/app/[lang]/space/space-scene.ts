@@ -418,7 +418,7 @@ export class SpaceScene {
       this.shadowDirty = false;
       this.composer.render();
       clearTimeout(this.weatherTimer);
-      if (animateWeather || this.city?.cruising) this.weatherTimer = window.setTimeout(this.scheduleRender, Math.max(0, 33 - (performance.now() - time)));
+      if (animateWeather || this.city?.cruising || this.city?.lightingTransitioning) this.weatherTimer = window.setTimeout(this.scheduleRender, Math.max(0, 33 - (performance.now() - time)));
     });
   };
 
