@@ -21,6 +21,102 @@ const SESSIONS = [
 ] as const;
 const projectSet = new Set<string>(PROJECTS);
 
+function OrganizerPreview() {
+  const t = useT();
+  const [commission, setCommission] = useState('');
+  const [settlementDays, setSettlementDays] = useState('');
+  const [settlementFrom, setSettlementFrom] = useState('');
+  const [supervisors, setSupervisors] = useState<Record<string, string>>({});
+  const [checkedConfiguration, setCheckedConfiguration] = useState('');
+
+  // Blank is unconfigured, not zero. Reject non-finite, negative, fractional-day
+  // and out-of-range values before enabling this demo's publication check.
+  const commissionValid = /^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/.test(commission)
+    && Number(commission) <= 100;
+  const daysValid = /^(?:0|[1-9]\d*)$/.test(settlementDays)
+    && Number.isSafeInteger(Number(settlementDays));
+  const settlementValid = daysValid && ['finalized', 'ended'].includes(settlementFrom);
+  const scheduled = SESSIONS.every(s => ['organizer-a', 'organizer-b'].includes(supervisors[s.id] ?? ''));
+  const configuration = JSON.stringify([commission, settlementDays, settlementFrom, supervisors]);
+  const ready = commissionValid && settlementValid && scheduled;
+  const checked = ready && checkedConfiguration === configuration;
+  const supervisorOptions = [
+    { value: '', label: t('请选择监督员', 'Choose a supervisor') },
+    { value: 'organizer-a', label: t('本组织监督员 A（示例）', 'Organizer supervisor A (sample)') },
+    { value: 'organizer-b', label: t('本组织监督员 B（示例）', 'Organizer supervisor B (sample)') },
+    { value: 'assistance', label: t('需要 CubeRoot 协助安排', 'Request help from CubeRoot') },
+  ];
+  const settlementOptions = [
+    { value: '', label: t('请选择起算时间', 'Choose a starting point') },
+    { value: 'finalized', label: t('成绩最终定稿后', 'After results are finalized') },
+    { value: 'ended', label: t('比赛结束后', 'After the competition ends') },
+  ];
+
+  return <section className="oc-workspace">
+    <div className="oc-section-heading">
+      <h3>{t('主办方工作区预览', 'Organizer workspace preview')}</h3>
+      <p>{t('各主办方安排本组织赛事的监督员，CubeRoot 可以协助。以下配置只用于本页演示，不会保存或提交申请。', 'Each organizer schedules supervisors for its own events, with help available from CubeRoot. These settings are a temporary demo; nothing is saved or requested.')}</p>
+    </div>
+    <div className="oc-workflow">
+      {[t('提交办赛申请', 'Apply to host'), t('配置项目与监督场次', 'Configure events and sessions'), t('明确费用与结算条款', 'Set fees and settlement terms'), t('发布报名', 'Open registration')].map((label, i) => <div key={label}><span>0{i + 1}</span><h4>{label}</h4></div>)}
+    </div>
+    <h3>{t('监督排班', 'Supervision schedule')}</h3>
+    {SESSIONS.map(session => <div className="oc-workspace-row" key={session.id}>
+      <strong>{session.date} {session.time}</strong>
+      <CompactSelect
+        label={supervisorOptions.find(option => option.value === (supervisors[session.id] ?? ''))!.label}
+        value={supervisors[session.id] ?? ''}
+        items={supervisorOptions}
+        ariaLabel={t(`${session.date} 监督员`, `Supervisor for ${session.date}`)}
+        onChange={value => setSupervisors(current => ({ ...current, [session.id]: value }))}
+      />
+      {supervisors[session.id] === 'assistance' ? <span>{t('待协助安排，尚未完成排班', 'Help requested in demo; assignment still pending')}</span> : null}
+    </div>)}
+    <div className="oc-finance">
+      <Wallet />
+      <div>
+        <h3>{t('平台统一收款，按赛事配置结算', 'Central collection, terms per competition')}</h3>
+        <p>{t('平台抽成和结算周期不设默认值。0% 需要明确填写，留空表示尚未配置。正式条款需由 CubeRoot 与主办方约定。', 'Commission and settlement timing have no defaults. Enter 0% explicitly if agreed; blank means unconfigured. CubeRoot and the organizer must agree on the live terms.')}</p>
+      </div>
+    </div>
+    <div className="oc-finance-fields">
+      <label>
+        <span>{t('平台抽成（%）', 'Platform commission (%)')}</span>
+        <input className="platform-field-control" type="number" inputMode="decimal" min={0} max={100} step="0.01" value={commission}
+          aria-invalid={commission !== '' && !commissionValid} aria-describedby="oc-commission-hint"
+          onChange={event => setCommission(event.target.value)} />
+        <small id="oc-commission-hint">{t('0–100，最多两位小数', '0–100, up to two decimal places')}</small>
+      </label>
+      <div className="oc-finance-field">
+        <span>{t('结算起算时间', 'Settlement starts from')}</span>
+        <CompactSelect label={settlementOptions.find(option => option.value === settlementFrom)!.label}
+          value={settlementFrom} items={settlementOptions} onChange={setSettlementFrom}
+          ariaLabel={t('结算起算时间', 'Settlement starts from')} />
+      </div>
+      <label>
+        <span>{t('结算等待天数', 'Settlement delay in days')}</span>
+        <input className="platform-field-control" type="number" inputMode="numeric" min={0} step={1} value={settlementDays}
+          aria-invalid={settlementDays !== '' && !daysValid} aria-describedby="oc-settlement-hint"
+          onChange={event => setSettlementDays(event.target.value)} />
+        <small id="oc-settlement-hint">{t('非负整数；0 表示起算当天', 'Whole days; 0 means the starting day')}</small>
+      </label>
+    </div>
+    <p className="oc-footnote">{t('到期不代表自动打款。有争议或待退款的金额仍需处理，再核对可结算金额。退款政策和录像保留期也须在正式报名开放前明确。', 'Reaching the date does not trigger an automatic transfer. Disputed or pending-refund amounts still need resolution before reconciliation. Refund and recording-retention policies are also required before live registration.')}</p>
+    <div className="oc-publication-check" aria-live="polite">
+      <h3>{t('收费发布前检查', 'Paid-publication checklist')}</h3>
+      <ul>
+        <li>{commissionValid ? t('已配置平台抽成', 'Commission configured') : t('待配置：有效的平台抽成比例', 'Required: a valid commission rate')}</li>
+        <li>{settlementValid ? t('已配置结算起算时间与周期', 'Settlement starting point and delay configured') : t('待配置：结算起算时间与等待天数', 'Required: settlement starting point and delay')}</li>
+        <li>{scheduled ? t('各场次已安排示例监督员', 'Sample supervisors assigned to every session') : t('待配置：每个场次的监督员，待协助不算已排班', 'Required: a supervisor for each session; requested help is still pending')}</li>
+      </ul>
+      <button type="button" className="oc-primary" disabled={!ready} onClick={() => setCheckedConfiguration(configuration)}>
+        {t('模拟发布检查', 'Simulate publication check')}
+      </button>
+      {checked ? <p role="status" className="oc-alert">{t('本页样例配置检查通过。没有发布赛事或开放收费；正式发布还需验证办赛授权、真实排班及完整条款。', 'Sample configuration checks passed. No event was published and no paid registration was opened. Live publication also requires organizer authorization, real assignments and complete terms.')}</p> : null}
+    </div>
+  </section>;
+}
+
 export function OnlineCompetitionPreview() {
   const t = useT();
   const [view, setView] = useQueryState('view', parseAsStringEnum(['entry', 'organizer', 'supervisor'] as const).withDefault('entry').withOptions({ history: 'push' }));
@@ -104,6 +200,6 @@ export function OnlineCompetitionPreview() {
           <div className="oc-summary-help"><Clock3 size={16} /><span>{t('未获监督员确认前，不能开始正式尝试。', 'Official attempts require supervisor approval.')}</span></div>
         </aside>
       </div>
-    </> : view === 'organizer' ? <section className="oc-workspace"><div className="oc-section-heading"><h3>{t('主办方工作区预览', 'Organizer workspace preview')}</h3><p>{t('平台审核办赛申请后，仅授予本组织赛事权限。', 'After application approval, organizers receive access only to their own events.')}</p></div><div className="oc-workflow">{[t('提交办赛申请', 'Apply to host'), t('配置项目与监督场次', 'Configure events and sessions'), t('明确费用与结算条款', 'Set fees and settlement terms'), t('发布报名', 'Open registration')].map((s, i) => <div key={s}><span>0{i + 1}</span><h4>{s}</h4></div>)}</div><h3>{t('监督排班', 'Supervision schedule')}</h3>{SESSIONS.map(s => <div className="oc-workspace-row" key={s.id}><strong>{s.date} {s.time}</strong><span>{t('监督员待分配', 'Supervisor unassigned')}</span></div>)}<div className="oc-finance"><Wallet /><div><h3>{t('平台统一收款，按赛事结算', 'Central collection, settlement per event')}</h3><p>{t('真实账目将列出收款、退款、平台费用与可结算金额。目前没有真实交易。抽成和结算周期未定，正式收费发布入口保持关闭。', 'The live ledger will show receipts, refunds, platform fees and settlement eligibility. There are no real transactions. Paid publication stays closed until commission and settlement timing are agreed.')}</p></div></div></section> : <section className="oc-workspace"><div className="oc-section-heading"><h3>{t('监督员工作区预览', 'Supervisor workspace preview')}</h3><p>{t('这里只演示检查流程。正式监督员须登录并被分配到该场次，且不能监督自己的成绩。', 'This demonstrates the checklist. Real supervisors must sign in and be assigned to the session, and cannot supervise their own results.')}</p></div><h4>{t('示例选手的赛前检查', 'Sample competitor check-in')}</h4><div className="oc-judge-checks">{[t('画面包含双手、魔方与计时器', 'Hands, cube and timer are visible'), t('身份与所报项目一致', 'Identity and registered event match'), t('音视频正常，选手已准备', 'Audio and video work; competitor is ready')].map((label, i) => <BoolToggle key={i} value={checklist.includes(String(i))} onChange={value => { setChecklist(items => value ? [...items, String(i)] : items.filter(item => item !== String(i))); setJudgeReady(false); }} label={label} />)}</div><button type="button" className="oc-primary" disabled={checklist.length !== 3} onClick={() => setJudgeReady(true)}>{t('模拟监督员确认', 'Simulate supervisor approval')}</button>{judgeReady ? <p className="oc-alert" role="status">{t('检查流程已演示。正式尝试需要服务端授权和有效参赛资格；本页不生成打乱或成绩。', 'Checklist demonstrated. Official attempts require server authorization and valid eligibility; this page generates no scrambles or results.')}</p> : null}</section>}
+    </> : view === 'organizer' ? <OrganizerPreview /> : <section className="oc-workspace"><div className="oc-section-heading"><h3>{t('监督员工作区预览', 'Supervisor workspace preview')}</h3><p>{t('这里只演示检查流程。正式监督员须登录并被分配到该场次，且不能监督自己的成绩。', 'This demonstrates the checklist. Real supervisors must sign in and be assigned to the session, and cannot supervise their own results.')}</p></div><h4>{t('示例选手的赛前检查', 'Sample competitor check-in')}</h4><div className="oc-judge-checks">{[t('画面包含双手、魔方与计时器', 'Hands, cube and timer are visible'), t('身份与所报项目一致', 'Identity and registered event match'), t('音视频正常，选手已准备', 'Audio and video work; competitor is ready')].map((label, i) => <BoolToggle key={i} value={checklist.includes(String(i))} onChange={value => { setChecklist(items => value ? [...items, String(i)] : items.filter(item => item !== String(i))); setJudgeReady(false); }} label={label} />)}</div><button type="button" className="oc-primary" disabled={checklist.length !== 3} onClick={() => setJudgeReady(true)}>{t('模拟监督员确认', 'Simulate supervisor approval')}</button>{judgeReady ? <p className="oc-alert" role="status">{t('检查流程已演示。正式尝试需要服务端授权和有效参赛资格；本页不生成打乱或成绩。', 'Checklist demonstrated. Official attempts require server authorization and valid eligibility; this page generates no scrambles or results.')}</p> : null}</section>}
   </div>;
 }
