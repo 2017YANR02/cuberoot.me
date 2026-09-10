@@ -930,18 +930,18 @@
       "Urho Kinnunen"
     ],
     [
+      "2010WEYE01",
+      "2010WEYE02",
+      174,
+      "Philipp Weyer",
+      "Sebastian Weyer"
+    ],
+    [
       "2013WALL03",
       "2019EKLU01",
       173,
       "Daniel Wallin",
       "Samuel Eklund-Hanna"
-    ],
-    [
-      "2010WEYE01",
-      "2010WEYE02",
-      173,
-      "Philipp Weyer",
-      "Sebastian Weyer"
     ],
     [
       "2016SATO01",
@@ -974,7 +974,7 @@
     [
       "2017PITK01",
       "2018KINN05",
-      152,
+      154,
       "Antto Pitkänen",
       "Urho Kinnunen"
     ],
@@ -1357,6 +1357,13 @@
       "Suzane Coelho"
     ],
     [
+      "2015SALO01",
+      "2010GARC02",
+      98,
+      "Álvaro Aguilar Salobreña",
+      "Carlos Méndez García-Barroso"
+    ],
+    [
       "2013WALL03",
       "2016JENS09",
       98,
@@ -1378,6 +1385,13 @@
       "Frederico Canal Gomes"
     ],
     [
+      "2010RONK01",
+      "2018KINN05",
+      97,
+      "Niko Ronkainen",
+      "Urho Kinnunen"
+    ],
+    [
       "2016SANC08",
       "2015UGAR01",
       97,
@@ -1392,13 +1406,6 @@
       "Gael Augusto Lapeyre"
     ],
     [
-      "2010RONK01",
-      "2018KINN05",
-      95,
-      "Niko Ronkainen",
-      "Urho Kinnunen"
-    ],
-    [
       "2013WALL03",
       "2021BACK01",
       95,
@@ -1411,13 +1418,6 @@
       95,
       "Gabriel Santiago Velez Gonzalez",
       "Michael Andres Castillo Lemus"
-    ],
-    [
-      "2015SALO01",
-      "2010GARC02",
-      94,
-      "Álvaro Aguilar Salobreña",
-      "Carlos Méndez García-Barroso"
     ],
     [
       "2019KALL02",
@@ -2358,6 +2358,13 @@
       "Serban Stelian"
     ],
     [
+      "2018RUSH01",
+      "2022OSBU01",
+      64,
+      "Daniel Rush",
+      "Jesse Osburn"
+    ],
+    [
       "2014MAUR06",
       "2009ROTA01",
       64,
@@ -2685,13 +2692,6 @@
       58,
       "Kaur Tuule",
       "Remo Pihel"
-    ],
-    [
-      "2018RUSH01",
-      "2022OSBU01",
-      58,
-      "Daniel Rush",
-      "Jesse Osburn"
     ],
     [
       "2008BARA01",
@@ -3100,6 +3100,13 @@
       "David Vujasić"
     ],
     [
+      "2017PITK01",
+      "2022ALAN02",
+      54,
+      "Antto Pitkänen",
+      "Leo Alanen"
+    ],
+    [
       "2014BAND04",
       "2010WHIT05",
       54,
@@ -3266,13 +3273,6 @@
       52,
       "Anthony Lafourcade",
       "Lucas Déglise"
-    ],
-    [
-      "2017PITK01",
-      "2022ALAN02",
-      52,
-      "Antto Pitkänen",
-      "Leo Alanen"
     ],
     [
       "2023GENG02",
@@ -3457,6 +3457,13 @@
       "Roberts Dreijers"
     ],
     [
+      "2018RUSH01",
+      "2014PEAR02",
+      50,
+      "Daniel Rush",
+      "Maverick Pearson"
+    ],
+    [
       "2014CHER05",
       "2012BUBE01",
       50,
@@ -3560,13 +3567,6 @@
       49,
       "Arnav Arora",
       "Shivam Bansal"
-    ],
-    [
-      "2018RUSH01",
-      "2014PEAR02",
-      49,
-      "Daniel Rush",
-      "Maverick Pearson"
     ],
     [
       "2016SATO01",
@@ -3744,6 +3744,13 @@
       "Valerio Locatelli"
     ],
     [
+      "2012CARL03",
+      "2010WEYE02",
+      48,
+      "Alexandre Carlier",
+      "Sebastian Weyer"
+    ],
+    [
       "2015VACA01",
       "2015UGAR01",
       48,
@@ -3826,13 +3833,6 @@
       47,
       "Knut Skaug Haraldsen",
       "Ulrik Bredland"
-    ],
-    [
-      "2012CARL03",
-      "2010WEYE02",
-      47,
-      "Alexandre Carlier",
-      "Sebastian Weyer"
     ],
     [
       "2015VUJA01",
@@ -4773,6 +4773,13 @@
       "Remo Pihel"
     ],
     [
+      "2022ALAN02",
+      "2010RONK01",
+      41,
+      "Leo Alanen",
+      "Niko Ronkainen"
+    ],
+    [
       "2007GUIM01",
       "2007CINO01",
       41,
@@ -4960,13 +4967,6 @@
       40,
       "Ng Jia Quan (黄佳铨)",
       "Wong Chong Wen (黄崇文)"
-    ],
-    [
-      "2022ALAN02",
-      "2010RONK01",
-      40,
-      "Leo Alanen",
-      "Niko Ronkainen"
     ],
     [
       "2009LIUE01",
@@ -5585,6 +5585,13 @@
       "Ramses Amaya"
     ],
     [
+      "2023SUAR08",
+      "2023BELT07",
+      37,
+      "Dereck Samuel Marin Suarez",
+      "Manuel Francisco Beltrán"
+    ],
+    [
       "2019BREM02",
       "2016HOUG01",
       37,
@@ -5690,6 +5697,13 @@
       "Przemysław Kaleta"
     ],
     [
+      "2022ALAN02",
+      "2018KINN05",
+      37,
+      "Leo Alanen",
+      "Urho Kinnunen"
+    ],
+    [
       "2011ZALE02",
       "2009PLES01",
       37,
@@ -5786,6 +5800,13 @@
       37,
       "Frederico Canal Gomes",
       "Lucas Ichiro Yunomae"
+    ],
+    [
+      "2022SALA09",
+      "2018KINN05",
+      37,
+      "Aarni Salakari",
+      "Urho Kinnunen"
     ],
     [
       "2014YELI01",
@@ -6087,6 +6108,13 @@
       36,
       "Alexis Rodrigo Cazu Mendoza",
       "Daniel Guardado Cabral"
+    ],
+    [
+      "2022SALA09",
+      "2022ALAN02",
+      36,
+      "Aarni Salakari",
+      "Leo Alanen"
     ],
     [
       "2016PFEI01",
@@ -6523,13 +6551,6 @@
       "Tim Major"
     ],
     [
-      "2023SUAR08",
-      "2023BELT07",
-      34,
-      "Dereck Samuel Marin Suarez",
-      "Manuel Francisco Beltrán"
-    ],
-    [
       "2017HUYN05",
       "2016PILA03",
       34,
@@ -6724,13 +6745,6 @@
       34,
       "Arttu Puttonen",
       "Luukas Lempinen"
-    ],
-    [
-      "2022SALA09",
-      "2018KINN05",
-      34,
-      "Aarni Salakari",
-      "Urho Kinnunen"
     ],
     [
       "2009HAYS01",
@@ -7363,13 +7377,6 @@
       "Gustav Wälivaara"
     ],
     [
-      "2022SALA09",
-      "2022ALAN02",
-      32,
-      "Aarni Salakari",
-      "Leo Alanen"
-    ],
-    [
       "2010OMUL02",
       "2013FURL01",
       32,
@@ -7788,6 +7795,13 @@
       31,
       "Richmond Mico Rigor",
       "Wonder Dygico"
+    ],
+    [
+      "2015DEGL01",
+      "2010WEYE02",
+      31,
+      "Lucas Déglise",
+      "Sebastian Weyer"
     ],
     [
       "2016COSS01",
@@ -8420,6 +8434,13 @@
       "Luiz Fellipe Oliuza Leal Silva"
     ],
     [
+      "2023RODR80",
+      "2023SUAR08",
+      29,
+      "Axel Juan Pablo Moreno Rodriguez",
+      "Dereck Samuel Marin Suarez"
+    ],
+    [
       "2021OCHO01",
       "2022GRIS03",
       29,
@@ -8553,13 +8574,6 @@
       "Morten Arborg"
     ],
     [
-      "2022ALAN02",
-      "2018KINN05",
-      29,
-      "Leo Alanen",
-      "Urho Kinnunen"
-    ],
-    [
       "2012HUAN12",
       "2010WUIF01",
       29,
@@ -8649,13 +8663,6 @@
       29,
       "Max Park",
       "Varun Mohanraj"
-    ],
-    [
-      "2015DEGL01",
-      "2010WEYE02",
-      29,
-      "Lucas Déglise",
-      "Sebastian Weyer"
     ],
     [
       "2010WANG68",
@@ -9449,11 +9456,11 @@
       "Pedro Giuseppe Garcia Milla"
     ],
     [
-      "2006TABU02",
       "2007NAKA03",
+      "2006TABU02",
       27,
-      "Yumu Tabuchi (田渕雄夢)",
-      "Yu Nakajima (中島悠)"
+      "Yu Nakajima (中島悠)",
+      "Yumu Tabuchi (田渕雄夢)"
     ],
     [
       "2011BILC01",
@@ -9937,13 +9944,6 @@
       26,
       "Eli Rogers",
       "Evan Liu"
-    ],
-    [
-      "2023RODR80",
-      "2023SUAR08",
-      26,
-      "Axel Juan Pablo Moreno Rodriguez",
-      "Dereck Samuel Marin Suarez"
     ],
     [
       "2017GARR05",
@@ -10665,6 +10665,13 @@
       25,
       "Diogo Rafael Almeida da Silva",
       "Jefferson Nunes Brito de Oliveira"
+    ],
+    [
+      "2012CARL03",
+      "2015DEGL01",
+      25,
+      "Alexandre Carlier",
+      "Lucas Déglise"
     ],
     [
       "2011SOAR01",
@@ -12053,13 +12060,6 @@
       "Tommy Kiprillis"
     ],
     [
-      "2012CARL03",
-      "2015DEGL01",
-      23,
-      "Alexandre Carlier",
-      "Lucas Déglise"
-    ],
-    [
       "2015SILV55",
       "2015MELO03",
       23,
@@ -12494,11 +12494,11 @@
       "Netanel Pour"
     ],
     [
-      "2008TAKA01",
       "2007NAKA03",
+      "2008TAKA01",
       23,
-      "Yuhei Takagi (高木佑平)",
-      "Yu Nakajima (中島悠)"
+      "Yu Nakajima (中島悠)",
+      "Yuhei Takagi (高木佑平)"
     ],
     [
       "2013JOHN10",
@@ -13640,6 +13640,13 @@
       22,
       "Anyu Zhang (张安宇)",
       "Seung Hyuk Nahm (남승혁)"
+    ],
+    [
+      "2023RODR80",
+      "2023BELT07",
+      22,
+      "Axel Juan Pablo Moreno Rodriguez",
+      "Manuel Francisco Beltrán"
     ],
     [
       "2016BRAV03",
@@ -15959,13 +15966,6 @@
       "Tristan Chua Yong"
     ],
     [
-      "2023RODR80",
-      "2023BELT07",
-      20,
-      "Axel Juan Pablo Moreno Rodriguez",
-      "Manuel Francisco Beltrán"
-    ],
-    [
       "2013EGDA01",
       "2008ANDE02",
       20,
@@ -17457,6 +17457,13 @@
       "Harry Savage"
     ],
     [
+      "2015SALO01",
+      "2022GOME12",
+      18,
+      "Álvaro Aguilar Salobreña",
+      "Marco Criado Gómez"
+    ],
+    [
       "2023CERT01",
       "2023MAGA09",
       18,
@@ -18311,11 +18318,11 @@
       "Tymon Kolasiński"
     ],
     [
-      "2022SILJ01",
       "2016RADO01",
+      "2022SILJ01",
       18,
-      "Aleksandar D. Siljanoski (Александар Д. Сиљаноски)",
-      "Aleksa Radovanović"
+      "Aleksa Radovanović",
+      "Aleksandar D. Siljanoski (Александар Д. Сиљаноски)"
     ],
     [
       "2015ZEBA01",
@@ -18724,6 +18731,13 @@
       "Sean Moran"
     ],
     [
+      "2023SUAR08",
+      "2021LOPE03",
+      18,
+      "Dereck Samuel Marin Suarez",
+      "Diego Alejandro Camelo López"
+    ],
+    [
       "2015LEAN01",
       "2012MAHV01",
       18,
@@ -18826,7 +18840,7 @@
       "2016YIUN01",
       18,
       "Nico Harper (李有為)",
-      "Nolan Yiu"
+      "Nolan Lata Yiu"
     ],
     [
       "2019SAMU06",
@@ -18864,11 +18878,11 @@
       "Vladislav Kaminskiy"
     ],
     [
-      "2006TABU02",
       "2008SAJI01",
+      "2006TABU02",
       17,
-      "Yumu Tabuchi (田渕雄夢)",
-      "Yu Sajima (佐島優)"
+      "Yu Sajima (佐島優)",
+      "Yumu Tabuchi (田渕雄夢)"
     ],
     [
       "2008CABA03",
@@ -18890,13 +18904,6 @@
       17,
       "Danny Buschert",
       "Kyle Santucci"
-    ],
-    [
-      "2015SALO01",
-      "2022GOME12",
-      17,
-      "Álvaro Aguilar Salobreña",
-      "Marco Criado Gómez"
     ],
     [
       "2018ARGA01",
@@ -18960,6 +18967,13 @@
       17,
       "Jônatas Tavares Andrade",
       "Kaique de Oliveira Neves"
+    ],
+    [
+      "2023SUAR08",
+      "2017LLAN01",
+      17,
+      "Dereck Samuel Marin Suarez",
+      "Juan Sebastian Mendez Llanos"
     ],
     [
       "2014SEBA01",
@@ -19543,6 +19557,13 @@
       "Rodrigo Ugarte"
     ],
     [
+      "2018RUSH01",
+      "2017SWAR03",
+      17,
+      "Daniel Rush",
+      "Dylan Swarts"
+    ],
+    [
       "2023GONZ18",
       "2016CATR01",
       17,
@@ -19611,6 +19632,13 @@
       17,
       "Alonzo Sanchez Arica",
       "Pedro Giuseppe Garcia Milla"
+    ],
+    [
+      "2022KOPE01",
+      "2022ALAN02",
+      17,
+      "Atilla Kopecky",
+      "Leo Alanen"
     ],
     [
       "2013BURL01",
@@ -20572,13 +20600,6 @@
       "Jonah Crosby"
     ],
     [
-      "2023SUAR08",
-      "2021LOPE03",
-      17,
-      "Dereck Samuel Marin Suarez",
-      "Diego Alejandro Camelo López"
-    ],
-    [
       "2016GONZ52",
       "2018GONZ30",
       17,
@@ -20626,6 +20647,13 @@
       17,
       "Takayuki Ookusa (大艸尊之)",
       "Tomoya Iida (飯田朋也)"
+    ],
+    [
+      "2022MIZE01",
+      "2018RUSH01",
+      17,
+      "Daniel David Mizen",
+      "Daniel Rush"
     ],
     [
       "2008ANDE02",
@@ -20684,6 +20712,13 @@
       "Jacob Ambrose"
     ],
     [
+      "2022SALA09",
+      "2022KOPE01",
+      17,
+      "Aarni Salakari",
+      "Atilla Kopecky"
+    ],
+    [
       "2022SANT05",
       "2022GONC01",
       17,
@@ -20710,6 +20745,13 @@
       17,
       "Justin Lee",
       "Saisabari Ramesh"
+    ],
+    [
+      "2018PROV01",
+      "2015DEGL01",
+      17,
+      "Arthur Provot",
+      "Lucas Déglise"
     ],
     [
       "2015HOLD01",
@@ -21447,13 +21489,6 @@
       "Rami Sbahi"
     ],
     [
-      "2018RUSH01",
-      "2017SWAR03",
-      16,
-      "Daniel Rush",
-      "Dylan Swarts"
-    ],
-    [
       "2023GONZ18",
       "2018ALVA16",
       16,
@@ -21522,13 +21557,6 @@
       16,
       "Jose Antonio Cuipal Maguiña",
       "Robert Yomi Cadenas Nuñez"
-    ],
-    [
-      "2022KOPE01",
-      "2022ALAN02",
-      16,
-      "Atilla Kopecky",
-      "Leo Alanen"
     ],
     [
       "2011BENZ01",
@@ -22266,6 +22294,13 @@
       "Javier Tirado Ortiz"
     ],
     [
+      "2015RUSN01",
+      "2010MATT02",
+      16,
+      "Ethan Rusnak",
+      "Kevin Matthews"
+    ],
+    [
       "2022SAND19",
       "2018GONZ30",
       16,
@@ -22770,13 +22805,6 @@
       "Rémi Perrin"
     ],
     [
-      "2018PROV01",
-      "2015DEGL01",
-      16,
-      "Arthur Provot",
-      "Lucas Déglise"
-    ],
-    [
       "2016LUIJ01",
       "2012VERS02",
       16,
@@ -22838,6 +22866,13 @@
       15,
       "Leo Lindqvist",
       "William Jensen"
+    ],
+    [
+      "2017LLAN01",
+      "2023BELT07",
+      15,
+      "Juan Sebastian Mendez Llanos",
+      "Manuel Francisco Beltrán"
     ],
     [
       "2014RAJE03",
@@ -23398,6 +23433,13 @@
       15,
       "Daniel Gutierrez",
       "Nipun Kisari"
+    ],
+    [
+      "2015RONQ01",
+      "2023LEAL04",
+      15,
+      "Franklin Ronquillo",
+      "Joseth Camilo Sanchez Leal"
     ],
     [
       "2018RIVE09",
@@ -25388,13 +25430,6 @@
       "Seung Hyuk Nahm (남승혁)"
     ],
     [
-      "2022MIZE01",
-      "2018RUSH01",
-      15,
-      "Daniel David Mizen",
-      "Daniel Rush"
-    ],
-    [
       "2012ZHAN08",
       "2009KONV01",
       15,
@@ -25484,13 +25519,6 @@
       15,
       "Marcin Jakubowski",
       "Owidiusz Pryk"
-    ],
-    [
-      "2022SALA09",
-      "2022KOPE01",
-      15,
-      "Aarni Salakari",
-      "Atilla Kopecky"
     ],
     [
       "2021FINK02",
@@ -25603,13 +25631,6 @@
       15,
       "Andrew Nelson",
       "Takao Hashimoto (橋本貴夫)"
-    ],
-    [
-      "2017LLAN01",
-      "2023BELT07",
-      14,
-      "Juan Sebastian Mendez Llanos",
-      "Manuel Francisco Beltrán"
     ],
     [
       "2021SOTO01",
@@ -25743,13 +25764,6 @@
       14,
       "Hector David Martinez Argaez",
       "Lorenzo Gonzalez"
-    ],
-    [
-      "2023SUAR08",
-      "2017LLAN01",
-      14,
-      "Dereck Samuel Marin Suarez",
-      "Juan Sebastian Mendez Llanos"
     ],
     [
       "2016ULKU01",
@@ -26746,6 +26760,13 @@
       "Dmitry Dobrjakov"
     ],
     [
+      "2022OSBU01",
+      "2014PEAR02",
+      14,
+      "Jesse Osburn",
+      "Maverick Pearson"
+    ],
+    [
       "2016ESCO02",
       "2013VERA03",
       14,
@@ -27731,13 +27752,6 @@
       14,
       "Jordi Lleixà López",
       "Josete Sánchez"
-    ],
-    [
-      "2015RUSN01",
-      "2010MATT02",
-      14,
-      "Ethan Rusnak",
-      "Kevin Matthews"
     ],
     [
       "2022MEEU02",
@@ -29826,13 +29840,6 @@
       "Dmitry Kryuzban"
     ],
     [
-      "2022OSBU01",
-      "2014PEAR02",
-      13,
-      "Jesse Osburn",
-      "Maverick Pearson"
-    ],
-    [
       "2017ZHAD01",
       "2017BAKI01",
       13,
@@ -30680,11 +30687,11 @@
       "Nathan Dwyer"
     ],
     [
-      "2009PLES01",
       "2014ZAHN01",
+      "2009PLES01",
       13,
-      "Michał Pleskowicz",
-      "Micha Zahnd"
+      "Micha Zahnd",
+      "Michał Pleskowicz"
     ],
     [
       "2013ASBE01",
@@ -31994,6 +32001,13 @@
       13,
       "Jakub Wolniewicz",
       "Owidiusz Pryk"
+    ],
+    [
+      "2022TUCK09",
+      "2016TRAG01",
+      13,
+      "Clem Tucker",
+      "Parker Trager"
     ],
     [
       "2012WOLN01",
@@ -34453,6 +34467,13 @@
       "Simone Santarsiero"
     ],
     [
+      "2012CARL03",
+      "2011HOFF02",
+      12,
+      "Alexandre Carlier",
+      "Valentin Hoffmann"
+    ],
+    [
       "2014STIN01",
       "2010WUIF01",
       12,
@@ -34975,7 +34996,7 @@
       "2016YIUN01",
       12,
       "Anto Kam (甘浩東)",
-      "Nolan Yiu"
+      "Nolan Lata Yiu"
     ],
     [
       "2013TITO02",
@@ -36189,6 +36210,13 @@
       "Lin Chen (陈霖)"
     ],
     [
+      "2022MIZE01",
+      "2022OSBU01",
+      12,
+      "Daniel David Mizen",
+      "Jesse Osburn"
+    ],
+    [
       "2011PARR02",
       "2014NIET03",
       12,
@@ -36446,13 +36474,6 @@
       12,
       "Adam Romanowski",
       "Jakub Majchrzak"
-    ],
-    [
-      "2022TUCK09",
-      "2016TRAG01",
-      12,
-      "Clem Tucker",
-      "Parker Trager"
     ],
     [
       "2015GORN01",
@@ -38709,11 +38730,11 @@
       "Suzane Coelho"
     ],
     [
-      "2007SUNT01",
       "2005REYN01",
+      "2007SUNT01",
       11,
-      "Timothy Sun",
-      "Tim Reynolds"
+      "Tim Reynolds",
+      "Timothy Sun"
     ],
     [
       "2008MORA02",
@@ -38989,11 +39010,11 @@
       "Kunaal Parekh"
     ],
     [
-      "2008TAKA01",
       "2008SAJI01",
+      "2008TAKA01",
       11,
-      "Yuhei Takagi (高木佑平)",
-      "Yu Sajima (佐島優)"
+      "Yu Sajima (佐島優)",
+      "Yuhei Takagi (高木佑平)"
     ],
     [
       "2020CALV01",
@@ -39232,13 +39253,6 @@
       11,
       "Ivan Lew Yi Wen (刘义文)",
       "Muhammad Hariz Bin Azizan"
-    ],
-    [
-      "2012CARL03",
-      "2011HOFF02",
-      11,
-      "Alexandre Carlier",
-      "Valentin Hoffmann"
     ],
     [
       "2017GALL07",
@@ -40037,6 +40051,13 @@
       11,
       "John Edison Ubaldo (ᜇ᜔ᜌᜓ︀ᜈ᜔ ᜁᜇᜒᜐᜓ︀ᜈ᜔ ᜂᜊᜎ᜔ᜇᜓ︀)",
       "Richard Espinosa"
+    ],
+    [
+      "2018DALO01",
+      "2018MADR02",
+      11,
+      "Charles Daloz-Baltenberger",
+      "Maxime Madrzyk"
     ],
     [
       "2007OOBA01",
@@ -42706,13 +42727,6 @@
       "Luis Gael Alonso Guardado"
     ],
     [
-      "2015RONQ01",
-      "2023LEAL04",
-      10,
-      "Franklin Ronquillo",
-      "Joseth Camilo Sanchez Leal"
-    ],
-    [
       "2008BARA01",
       "2014QUYN02",
       10,
@@ -44120,11 +44134,11 @@
       "Tomoya Firman"
     ],
     [
-      "2019DUNG04",
       "2019HUNG16",
+      "2019DUNG04",
       10,
-      "Đoàn Anh Dũng",
-      "Đỗ Quang Hưng"
+      "Đỗ Quang Hưng",
+      "Đoàn Anh Dũng"
     ],
     [
       "2019DUNG04",
@@ -44384,6 +44398,13 @@
       10,
       "Chris Mills",
       "George Scholey"
+    ],
+    [
+      "2021WONG02",
+      "2016TRAG01",
+      10,
+      "Aaron Jake Wong",
+      "Parker Trager"
     ],
     [
       "2012PATE01",
@@ -45786,13 +45807,6 @@
       "Riadi Arsandi"
     ],
     [
-      "2018DALO01",
-      "2018MADR02",
-      10,
-      "Charles Daloz-Baltenberger",
-      "Maxime Madrzyk"
-    ],
-    [
       "2018MADR02",
       "2020ROUY01",
       10,
@@ -46162,6 +46176,13 @@
       10,
       "Arnaud van Galen",
       "Sébastien Auroux"
+    ],
+    [
+      "2022SALA09",
+      "2010RONK01",
+      10,
+      "Aarni Salakari",
+      "Niko Ronkainen"
     ],
     [
       "2008DONG06",
@@ -46696,6 +46717,20 @@
       "Mikul Chanakya"
     ],
     [
+      "2016CHIL02",
+      "2023THIR06",
+      10,
+      "Akshaansh Chilakapati",
+      "Dhruv Thirumalairajan"
+    ],
+    [
+      "2019THAN04",
+      "2016CHIL02",
+      10,
+      "Aadhiran Thangarathan",
+      "Akshaansh Chilakapati"
+    ],
+    [
       "2019THAN04",
       "2014KOUL01",
       10,
@@ -47191,13 +47226,6 @@
       10,
       "Cezary Rokita",
       "Przemysław Kaleta"
-    ],
-    [
-      "2022MIZE01",
-      "2022OSBU01",
-      10,
-      "Daniel David Mizen",
-      "Jesse Osburn"
     ],
     [
       "2017FIGU03",
