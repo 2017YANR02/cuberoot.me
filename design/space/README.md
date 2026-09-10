@@ -62,6 +62,8 @@ pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset italian-original -Pr
 
 每盏灯保持所属建筑的父子关系及唯一 `spaceFacadeSlot`（0 至 5），不设置 `space_export`。正常导出时 `facade_rig.py` 将当前灯具转换为 Y-up 的 `facadeLighting.lamps`，不保存回源工程；网页复用原有 6 盏带阴影灯。缺灯、重复槽号、错误类型或非法强度会拒绝导出。建筑的 `facadeLighting.centre` 是局部 Y-up 选光中心；`washTop` 控制旧有立面补光退让的高度，0 表示保留绝大部分补光。高处未被近景灯覆盖的石材仍使用原有远景补光。
 
+铜顶材质可用 `spaceRoofWash = { bottom, top, color }` 调整远景补光；高度为网格局部 Y-up 米制坐标，颜色为线性 RGB，必须有限、在 0–1 内且 `top > bottom`。它是网页补光近似，不是 Blender 节点或烘焙结果；改动屋顶顶点或本地原点后同步校准高度。和平饭店当前六灯为四盏绿色坡面代理灯和两盏暖色冠部代理灯，近景屋顶随所属建筑的灯光权重退让，未设置该材质属性的屋顶保持原公式。
+
 镜头转向邻栋时，网页将旧灯和立面补光同步渐变，在近景灯强度归零时换灯位，再渐亮新灯；单程按 0.3 秒计算，低帧率下因帧间隔限幅会延长。过渡使用独立于天气开关的帧时间，完成后停止额外绘制；渐变期间不重复刷新静态阴影。此机制消除整组灯瞬间换位，但没有消除近景灯与远景补光的配光差异，仍须逐栋校准并继续评估烘焙照明。
 
 `author_bund_lighting.py` 仅用于本次首次建立灯组，已有 `spaceFacadeRig` 修订时拒绝覆盖。后续编辑现有灯具并正常导出，务必在网页查看整栋、斜侧、白天和夜间；Blender 预览与网页 PBR 仍有差异。
@@ -78,7 +80,7 @@ pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset italian-original -Pr
 
 源工程和网页 GLB/纹理被 Git 忽略，提交代码不会备份这些重资产。完整备份需同时包含 `design/space/scenes` 与 `client/public/assets/space/blender-v1`；2026-09-08 迁出的 8 份旧 `.blend1` 备份在 `E:/CubeRoot-Assets/space/backups/20260908/`，随后修正预览相机时生成的 `.blend1` 留在原工程旁。E 盘缓存可重建，不能取代 `.blend` 备份。
 
-本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 310,655,104 字节（约 311 MB），正式发布前仍需分区加载、压缩与移动设备验证。
+本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 310,655,332 字节（约 311 MB），正式发布前仍需分区加载、压缩与移动设备验证。
 
 Blender 和 glTF 插件来源已加入网页的“来源与致谢”，统一数据在 `credits_data.json`；建筑及天气等既有资料见 [来源记录](../../docs/space-sources.md)，迁移状态见 [跟踪文档](../../docs/space-blender-tracker.md)。
 
@@ -101,3 +103,5 @@ Blender 和 glTF 插件来源已加入网页的“来源与致谢”，统一数
 2026-09-10 已串行合并[和平饭店铜顶](references/peace-crown.md)、[江海关檐口接缝](references/customs-junctions.md)和[汇丰鼓座与穹顶](references/hsbc-drum.md)，对应脚本为 `refine_peace_crown.py`、`refine_customs_junctions.py`、`refine_hsbc_drum.py`。当前工程分别带 `peace-crown-20260910`、`customs-junctions-20260910`、`hsbc-drum-20260910` 标记；江海关另带玻璃收口修订。三份 CLI 均不保存主工程，已有修订禁止重复作者操作；用 `--review-saved` 只读审图，继续修改当前工程后正常导出。最终 GLB 新增 387 处表面检查通过，三栋网页日夜已实际复查；后续已纠正铜顶与石材贴图的颜色编码，真实反照率、穹顶及基座配光仍未达标，不能把结构检查当作 1:1 或电影级完成。
 
 四张既有颜色贴图已通过 `refine_bund_color_encoding.py` 增量修正，工程带 `spaceBundColorEncodingRevision = bund-albedo-srgb-20260910`。该工具默认只生成临时候选，`--apply` 要求同一源文件的候选报告并先备份；已有标记时拒绝重复编码。不要重新运行整栋生成器。Blender 非浮点 sRGB 图像的像素写入需要编码后的颜色，法线等数据贴图保持原值；校准、正式导出与网页证据见[颜色编码记录](references/peace-crown.md#铜顶与三栋石材的颜色编码修正)。
+
+和平饭店铜顶夜间配光已保存 `spacePeaceNightRevision = peace-night-roof-20260910`，六盏既有灯及两份铜材质经正常导出进入网页。`refine_peace_night_lighting.py` 默认只生成候选报告，`--apply` 要求同一源文件的候选报告并先备份；已有修订时拒绝重跑。后续继续编辑当前工程并导出；四轮实拍对照、日夜检查与剩余差距见[夜景档案](references/peace-crown.md#夜间铜顶配光2026-09-10)。

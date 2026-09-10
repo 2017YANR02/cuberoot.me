@@ -266,6 +266,20 @@
     "en": "Photographs guide seven window bands, bronze panels, entrance columns, tower grilles and paired roof pavilions. This review covers six-layer cornice returns and five visible front plinth floodlights; all four clocks retain scene-time control. The source credits Matthew Laird Acred. Capture date unknown; the page update of 2020-01-27 is not a capture date. Masonry maps are original procedural textures. Dimensions, colors and fixtures remain estimates; modeled lamp housings do not establish restored photometry. Other elevations, clock faces and night lighting remain uncalibrated, not surveyed 1:1. Accessed 2026-09-10"
   },
   {
+    "name": "Fairmont: 和平饭店官方夜景 / Peace Hotel night exterior",
+    "space": true,
+    "url": "https://www.fairmont.com/en/hotels/shanghai/fairmont-peace-hotel.html",
+    "zh": "业主图集 aja_p_6133-03 与 HCM_P_6963970 用于铜顶下沿局部绿光、上部深绿、顶冠暖光及退台檐线的照明层次。官网未标明拍摄者和日期，原图没有相关 EXIF；不按照片反推光度。六盏 Blender 灯是合并视觉代理，灯位、颜色与强度含估算，未作为运行贴图，未通过 1:1 验收。查阅于 2026-09-10",
+    "en": "Owner gallery images aja_p_6133-03 and HCM_P_6963970 guide localized green light along the lower copper roof, a darker upper slope, a warm crown and lit setback cornices. Photographer and capture date are unspecified, with no corresponding EXIF; photographs are not photometric measurements. Six Blender lamps are grouped visual proxies with estimated positions, colors and intensities. Photos are not runtime textures; the replica is not verified 1:1. Accessed 2026-09-10"
+  },
+  {
+    "name": "Suicasmo: 和平饭店夜景 2025 / Peace Hotel at night",
+    "space": true,
+    "url": "https://commons.wikimedia.org/wiki/File:Peace_Hotel_20250503.jpg",
+    "zh": "Suicasmo 自摄，CC0 1.0；文件页和 EXIF 均标记 2025-05-03 23:04:28，时区与相机时钟未经独立校验。用于交叉核对整楼铜顶下亮上暗、暖色顶冠、檐线与暗拱洞。仅作夜景结构参考，不是当前现场的测量，也未作为运行贴图。查阅于 2026-09-10",
+    "en": "Own photograph by Suicasmo, CC0 1.0. Both the file page and EXIF report 2025-05-03 23:04:28; timezone and camera clock have not been independently verified. Cross-checks the brighter lower roof, dark upper slope, warm crown, cornices and dark ground arches. A lighting reference, not a present-day survey or runtime texture. Accessed 2026-09-10"
+  },
+  {
     "name": "Asisbiz: 外滩 20 和平饭店 / Peace Hotel",
     "space": true,
     "url": "https://www.asisbiz.com/China/20-Zhongshan-Rd.html",
