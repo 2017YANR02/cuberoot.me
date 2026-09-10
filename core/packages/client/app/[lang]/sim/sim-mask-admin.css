@@ -86,8 +86,11 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  padding: 2px 0;
+  padding: 2px 0 2px 28px;
 }
+
+.sim-mask-admin-group-title { min-height: 28px; padding-left: 28px; }
+.sim-mask-admin-row > .sortable-card-drag-handle { top: 18px; }
 
 .sim-mask-admin-field {
   display: flex;
