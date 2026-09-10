@@ -29,7 +29,7 @@ def uv_hash(layer):
 
 
 def geometry_hash(mesh):
-    """Check source positions, polygon corners and tessellation across unwrap."""
+    """Check source geometry and shading normals across light-UV edits."""
     mesh.calc_loop_triangles()
     digest = hashlib.sha256()
     for data, prop, width, dtype in (
@@ -37,6 +37,7 @@ def geometry_hash(mesh):
         (mesh.loops, 'vertex_index', 1, np.int32),
         (mesh.polygons, 'loop_total', 1, np.int32),
         (mesh.loop_triangles, 'loops', 3, np.int32),
+        (mesh.corner_normals, 'vector', 3, np.float32),
     ):
         values = np.empty(len(data) * width, dtype=dtype)
         data.foreach_get(prop, values)
@@ -112,7 +113,7 @@ def unwrap_light_uv(receiver, size):
     if uv_hash(mesh.uv_layers[0]) != surface_hash:
         raise RuntimeError('Unwrap changed original surface UVs')
     if geometry_hash(mesh) != original_geometry:
-        raise RuntimeError('Unwrap changed source geometry or tessellation')
+        raise RuntimeError('Unwrap changed source geometry, tessellation or shading normals')
     mesh.calc_loop_triangles()
     triangle_loops = np.empty(len(mesh.loop_triangles) * 3, dtype=np.int32)
     mesh.loop_triangles.foreach_get('loops', triangle_loops)
@@ -123,6 +124,7 @@ def unwrap_light_uv(receiver, size):
     subpixel = areas * size ** 2 < 1
     metrics = {'method': 'welded proxy with face-corner transfer', 'paddingPixels': 2,
                'sourceGeometryUnchanged': True, 'sourceGeometryHash': original_geometry,
+               'sourceGeometryHashVersion': 'positions-corners-triangles-cornerNormals-v2',
                'sourceVertices': len(mesh.vertices), 'proxyVertices': proxy_vertices,
                'protectedFaces': len(protected), 'mappedCorners': len(ids),
                'triangleAreaSum': float(areas.sum()), 'triangles': len(areas),
