@@ -66,7 +66,7 @@ pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset italian-original -Pr
 
 源工程和网页 GLB/纹理被 Git 忽略，提交代码不会备份这些重资产。完整备份需同时包含 `design/space/scenes` 与 `client/public/assets/space/blender-v1`；2026-09-08 迁出的 8 份旧 `.blend1` 备份在 `E:/CubeRoot-Assets/space/backups/20260908/`，随后修正预览相机时生成的 `.blend1` 留在原工程旁。E 盘缓存可重建，不能取代 `.blend` 备份。
 
-本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 301,710,436 字节（约 302 MB），正式发布前仍需分区加载、压缩与移动设备验证。
+本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 304,835,044 字节（约 305 MB），正式发布前仍需分区加载、压缩与移动设备验证。
 
 Blender 和 glTF 插件来源已加入网页的“来源与致谢”，统一数据在 `credits_data.json`；建筑及天气等既有资料见 [来源记录](../../docs/space-sources.md)，迁移状态见 [跟踪文档](../../docs/space-blender-tracker.md)。
 
@@ -79,3 +79,5 @@ Blender 和 glTF 插件来源已加入网页的“来源与致谢”，统一数
 上海总会窗组与檐口的增量工具为 `refine_bund_windows.py`，已保存 `bund-windows-20260909` 标记。后续使用 `--review-saved` 检查当前工程，可加 `--oblique` 同时渲染侧面、`--night` 检查夜间结构。默认候选和 `--apply` 都会拒绝在已有本批标记的工程上重复建模；继续修改现有工程，再按正常命令导出。参考依据、三轮纠错和未达标项见[第四批参考档案](references/shanghai-landmarks.md#第四批上海总会窗组与檐口)。
 
 汇丰柱廊、江海关铜饰与和平饭店铜顶的增量工具为 `refine_bund_hero_details.py`，当前工程已保存 `bund-hero-details-20260909` 标记。后续审图用 `--review-saved --focus 12`，楼号可选 `12 / 13 / 20`，加 `--close` 看细部、`--night` 看夜间结构，`--suite` 依次生成三栋日夜图。已有本批标记时禁止重复作者操作；继续编辑当前工程，不用首次脚本覆盖。原始实拍来源、程序纹理说明与未完成项见[第五批参考档案](references/shanghai-landmarks.md#第五批汇丰柱廊江海关铜饰与和平饭店铜顶)。
+
+江海关窗带与和平饭店上部立面的增量工具为 `refine_bund_frontages.py`，当前工程已保存 `bund-frontages-20260909` 标记。后续审图用 `--review-saved --focus 13 --close`，楼号可选 `13 / 20`，可加 `--night`；`--review-saved --suite` 生成两栋日夜近景及江海关钟下格栅近景。已有标记时拒绝重复建模，保存前检查磁盘源未被其他编辑器修改。照片依据、三轮修正和剩余项见[第六批参考档案](references/shanghai-landmarks.md#第六批江海关窗带与和平饭店上部立面)。

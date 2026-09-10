@@ -308,7 +308,7 @@ def peace(root,archive):
             'roofTopMetres':77,'remaining':'Front setbacks, arched upper window and full-height grouped window bays still need reconstruction'}
 
 
-def review(root,number,label,night=False,close=False):
+def review(root,number,label,night=False,close=False,aim_height=None,scale=None):
     """Disposable per-building photography stage; never saved or exported."""
     scene=bpy.context.scene
     for obj in scene.objects:
@@ -372,9 +372,11 @@ def review(root,number,label,night=False,close=False):
     stage.objects.link(cam); scene.camera=cam
     aim=Vector((0,0,height*.48))
     if close: aim.z={'20':65,'12':17,'13':23}[number]
+    if aim_height is not None: aim.z=aim_height
     cam.location=aim+Vector((25 if close else 0,200,16))
     cam.rotation_euler=(aim-cam.location).to_track_quat('-Z','Y').to_euler()
     cam.data.type='ORTHO'; cam.data.ortho_scale=32 if close else max(width+8,height+9)
+    if scale is not None: cam.data.ortho_scale=scale
     cam.data.clip_end=2000
     scene.render.engine='CYCLES'; scene.cycles.device='CPU'; scene.cycles.samples=24; scene.cycles.use_denoising=True
     scene.render.threads_mode='FIXED'; scene.render.threads=14
