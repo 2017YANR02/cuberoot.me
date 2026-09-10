@@ -10,6 +10,13 @@ import { customMaskFn, type CustomTreatment } from './customStickering';
 import type { StickeringGroup, StickeringMaskFn } from './stickering';
 import { PRESET_PREFIX, type SimMaskRow } from '@/lib/sim-masks-api';
 
+/** Editable English label rendered as a variable-style name; engine keys stay stable. */
+export function maskDisplayIdentifier(label: string): string {
+  let name = label.trim().replace(/[^A-Za-z0-9_$]+/g, '_') || 'stage';
+  if (/^[0-9]/.test(name) || /^(?:await|break|case|catch|class|const|continue|debugger|default|delete|do|else|enum|export|extends|false|finally|for|function|if|implements|import|in|instanceof|interface|let|new|null|package|private|protected|public|return|static|super|switch|this|throw|true|try|typeof|var|void|while|with|yield)$/.test(name)) name = `_${name}`;
+  return name;
+}
+
 /** 自建遮罩单独一组(不混进内置分组,免得管理员的东西看着像站内预设)。 */
 export const PRESET_GROUP = 'AdminPresets';
 

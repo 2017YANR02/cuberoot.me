@@ -3,7 +3,7 @@
 // 「只存差异」的设计就漏了,访客会看到与代码不一致的清单。
 import { describe, it, expect } from 'vitest';
 import {
-  applyMaskConfig, maskLabelOverride, maskRowsForOrder, presetMaskFn, isPresetMask, PRESET_GROUP,
+  applyMaskConfig, maskLabelOverride, maskRowsForOrder, presetMaskFn, isPresetMask, PRESET_GROUP, maskDisplayIdentifier,
 } from '@/app/[lang]/sim/engine/nxn/maskConfig';
 import { FM_REGULAR, FM_IGNORED } from '@/app/[lang]/sim/engine/nxn/stickering';
 import { FACE } from '@/app/[lang]/sim/engine/define';
@@ -13,6 +13,15 @@ const GROUPS = [
   { group: 'Stickering', items: ['full', 'custom'] },
   { group: 'CFOP', items: ['Cross', 'F2L', 'OLL', 'PLL'] },
 ];
+
+describe('maskDisplayIdentifier', () => {
+  it.each([
+    ['LL', 'LL'], ['Last Layer', 'Last_Layer'], ['2-look OLL', '_2_look_OLL'],
+    ['class', '_class'], ['', 'stage'], ['_LL', '_LL'], ['$LL', '$LL'],
+  ])('%s becomes %s', (label, expected) => {
+    expect(maskDisplayIdentifier(label)).toBe(expected);
+  });
+});
 
 const row = (p: Partial<SimMaskRow> & { maskKey: string }): SimMaskRow => ({
   // position: -1 = 还没排过(改名 / 隐藏建的行就是这个值),与 DB 默认一致

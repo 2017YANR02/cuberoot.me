@@ -12,7 +12,7 @@ import {
   deleteSimMask, saveSimMaskLayout, saveSimMask, PRESET_PREFIX,
   type SimMaskRow,
 } from '@/lib/sim-masks-api';
-import { maskRowsForOrder } from './engine/nxn/maskConfig';
+import { maskRowsForOrder, maskDisplayIdentifier } from './engine/nxn/maskConfig';
 import type { StickeringGroup } from './engine/nxn/stickering';
 import './sim-mask-admin.css';
 
@@ -136,13 +136,6 @@ export default function SimMaskAdmin({
     void run(() => saveSimMaskLayout({ cubeSize: order, groups: next }));
   };
 
-  const moveToGroup = (key: string, target: string) => {
-    if (!groups.some((g) => g.group === target)) return;
-    const next = groups.map((g) => ({ ...g, items: g.items.filter((item) => item !== key) }));
-    next.find((g) => g.group === target)!.items.push(key);
-    void run(() => saveSimMaskLayout({ cubeSize: order, groups: next }));
-  };
-
   const resetRow = (key: string) => {
     const isPreset = key.startsWith(PRESET_PREFIX);
     const label = defaultLabel(key, 'zh') || key;
@@ -237,9 +230,10 @@ export default function SimMaskAdmin({
                 const r = rowOf(key);
                 const d = draftOf(key);
                 const hidden = r?.hidden ?? false;
+                const identifier = maskDisplayIdentifier(d.en.trim() || defaultLabel(key, 'en'));
                 return (
                   <SortableCard key={key} id={`item:${key}`} draggable={!busy} stretch={false} className={`sim-mask-admin-row${hidden ? ' is-hidden' : ''}`} dragLabel={t('拖动调整阶段顺序或分组', 'Drag to reorder or move stage')}>
-                    <code className="sim-mask-admin-key" title={key}>{key}</code>
+                    <code className="sim-mask-admin-key" title={identifier}>{identifier}</code>
                     <label className="sim-mask-admin-field">
                     <span>{t('中文名', 'Chinese name')}</span>
                     <input
@@ -259,13 +253,6 @@ export default function SimMaskAdmin({
                       placeholder={defaultLabel(key, 'en')}
                       aria-label={t('英文名', 'English name')}
                     />
-                    </label>
-                    <label className="sim-mask-admin-field">
-                      <span>{t('分组', 'Group')}</span>
-                      <select className="sim-mask-admin-input" value={g.group} disabled={busy} aria-label={t('分组', 'Group')}
-                        onChange={(e) => moveToGroup(key, e.target.value)}>
-                        {groups.map((target) => <option key={target.group} value={target.group}>{groupLabel(target.group)}</option>)}
-                      </select>
                     </label>
                     <button
                       type="button" className="sim-mask-admin-btn" disabled={busy || !dirty(key)}
