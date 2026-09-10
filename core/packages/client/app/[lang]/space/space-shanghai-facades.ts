@@ -147,9 +147,25 @@ export function bundStone(material: MaterialFactory, color: number, wash: number
 // standing seams preserve the faces instead of making an evenly luminous cap.
 export function roofMetal(material: MaterialFactory, color: number, strength: number, panels: number) {
   const m = material(color, .28, .62, .001), compile = m.onBeforeCompile, key = m.customProgramCacheKey();
+  // Optional Blender-authored wash in mesh-local Y-up metres and linear RGB.
+  // Keep legacy roofs unchanged when the authored profile is absent.
+  const wash = m.userData.spaceRoofWash;
+  if (wash !== undefined && (!wash || typeof wash !== 'object'
+    || !Number.isFinite(wash.bottom) || !Number.isFinite(wash.top) || wash.top <= wash.bottom
+    || !Array.isArray(wash.color) || wash.color.length !== 3
+    || !wash.color.every((v: unknown) => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1))) {
+    throw new Error('Invalid Blender roof wash profile');
+  }
   m.userData.bundRoof = true;
   m.onBeforeCompile = (shader, renderer) => {
     compile.call(m, shader, renderer);
+    if (wash) {
+      shader.uniforms.roofWashHeight = { value: new THREE.Vector2(wash.bottom, wash.top) };
+      shader.uniforms.roofWashColor = { value: new THREE.Color().fromArray(wash.color) };
+      shader.vertexShader = 'varying float roofHeight;\n' + shader.vertexShader;
+      shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nroofHeight=position.y;');
+      shader.fragmentShader = 'uniform vec2 roofWashHeight; uniform vec3 roofWashColor; varying float roofHeight;\n' + shader.fragmentShader;
+    }
     shader.uniforms.cityFacadeLight = m.userData.cityFacadeLight ?? { value: new THREE.Vector2(-1, 0) };
     shader.vertexShader = 'attribute float bundBuildingId; varying float roofId; varying vec3 roofNormal; varying vec2 roofUV;\n' + shader.vertexShader;
     shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nroofNormal=normal; roofUV=uv; roofId=bundBuildingId;');
@@ -162,10 +178,10 @@ export function roofMetal(material: MaterialFactory, color: number, strength: nu
     shader.fragmentShader = shader.fragmentShader.replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
       float grazing=.26+.74*pow(max(0.,dot(normalize(roofNormal),normalize(vec3(.65,.55,-.45)))),.75);
       float roofDistantWash=1.-.92*cityFacadeLight.y*(1.-step(.1,abs(roofId-cityFacadeLight.x)));
-      reflectedLight.directDiffuse+=diffuseColor.rgb*vec3(1.,.9,.7)*cityNight*${strength.toFixed(3)}*grazing*roofDistantWash;
+      reflectedLight.directDiffuse+=diffuseColor.rgb*${wash ? 'roofWashColor*mix(1.,.04,smoothstep(roofWashHeight.x,roofWashHeight.y,roofHeight))' : 'vec3(1.,.9,.7)'}*cityNight*${strength.toFixed(3)}*grazing*roofDistantWash;
     `);
   };
-  m.customProgramCacheKey = () => `${key}-bund-roof-shadowed-${strength}-${panels}`;
+  m.customProgramCacheKey = () => `${key}-bund-roof-shadowed-${strength}-${panels}${wash ? '-height-wash-v1' : ''}`;
   return m;
 }
 

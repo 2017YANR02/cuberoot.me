@@ -67,7 +67,7 @@ export class ShanghaiFacadeLighting {
       const crown = frontage.crown && Object.values(frontage.crown).every(Number.isFinite) && frontage.crown.width > 0 && frontage.crown.height > frontage.height ? frontage.crown : undefined;
       building.traverse(mesh => {
         if (!(mesh instanceof THREE.Mesh) || Array.isArray(mesh.material) || !(mesh.material.userData.bundStone || mesh.material.userData.bundRoof)) return;
-        if (mesh.material.userData.bundRoof && !crown) return;
+        if (mesh.material.userData.bundRoof && !crown && !frontage.lamps) return;
         const count = mesh.geometry.getAttribute('position').count;
         mesh.geometry.setAttribute('bundBuildingId', new THREE.Float32BufferAttribute(new Float32Array(count).fill(id), 1));
         // The facade pool does not reach independent high clock towers.

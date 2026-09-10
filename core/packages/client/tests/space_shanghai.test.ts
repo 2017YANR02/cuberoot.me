@@ -23,7 +23,7 @@ describe('Shanghai illumination program sharing', () => {
     return scene;
   };
   const shader = (material: THREE.MeshStandardMaterial) => {
-    const program = { uniforms: {}, vertexShader: '', fragmentShader: '#include <emissivemap_fragment>' } as THREE.WebGLProgramParametersWithUniforms;
+    const program = { uniforms: {}, vertexShader: THREE.ShaderLib.standard.vertexShader, fragmentShader: THREE.ShaderLib.standard.fragmentShader } as THREE.WebGLProgramParametersWithUniforms;
     material.onBeforeCompile(program, {} as THREE.WebGLRenderer);
     return program;
   };
@@ -57,6 +57,63 @@ describe('Shanghai illumination program sharing', () => {
       material.dispose();
     }
   });
+
+  it('restores authored roof wash heights and linear colors while sharing programs across uniform values', () => {
+    const scene = city(), bank = { width: 1, axes: [], wingAxes: [], wingZ: 0 };
+    const profiles = [{ bottom: 60, top: 73.6, color: [.1, .4, .8] }, { bottom: -5, top: 7, color: [0, 1, .5] }];
+    const keys = ['shanghai-illumination-0.001-bund-roof-shadowed-1.7-64', 'shanghai-illumination-uniform-v1-bund-roof-shadowed-1.7-64-height-wash-v1'];
+    const materials = profiles.map((profile, i) => {
+      const material = new THREE.MeshStandardMaterial();
+      material.userData = { spaceShaderKey: keys[i], spaceRoofWash: profile, authoredDetail: 'preserved' };
+      scene['restoreBlenderMaterial'](material, bank);
+      expect(material.userData.spaceRoofWash).toBe(profile);
+      expect(material.userData.spaceShaderKey).toBe(keys[i]);
+      expect(material.userData.authoredDetail).toBe('preserved');
+      return material;
+    });
+    const programs = materials.map(shader);
+    for (const [i, program] of programs.entries()) {
+      expect(program.uniforms.roofWashHeight.value.toArray()).toEqual([profiles[i].bottom, profiles[i].top]);
+      expect(program.uniforms.roofWashColor.value.toArray()).toEqual(profiles[i].color);
+      expect(program.vertexShader).toContain('roofHeight=position.y;');
+      expect(program.fragmentShader).toContain('smoothstep(roofWashHeight.x,roofWashHeight.y,roofHeight)');
+      expect(program.uniforms.cityFacadeLight).toBe(scene['facadeLighting'].active);
+    }
+    expect(materials[0].customProgramCacheKey()).toBe('shanghai-illumination-uniform-v1-bund-roof-shadowed-1.7-64-height-wash-v1');
+    expect(materials[1].customProgramCacheKey()).toBe(materials[0].customProgramCacheKey());
+    expect(programs[1].vertexShader).toBe(programs[0].vertexShader);
+    expect(programs[1].fragmentShader).toBe(programs[0].fragmentShader);
+    materials.forEach(material => material.dispose());
+  });
+
+  it('keeps roofs without authored wash on their original shader and cache variant', () => {
+    const scene = city(), material = new THREE.MeshStandardMaterial();
+    material.userData.spaceShaderKey = 'shanghai-illumination-0.001-bund-roof-shadowed-1.7-64';
+    scene['restoreBlenderMaterial'](material, { width: 1, axes: [], wingAxes: [], wingZ: 0 });
+    const program = shader(material);
+    expect(material.customProgramCacheKey()).toBe('shanghai-illumination-uniform-v1-bund-roof-shadowed-1.7-64');
+    expect(material.userData.spaceRoofWash).toBeUndefined();
+    expect(program.uniforms.roofWashHeight).toBeUndefined();
+    expect(program.uniforms.roofWashColor).toBeUndefined();
+    expect(program.vertexShader).not.toContain('roofHeight');
+    expect(program.fragmentShader).not.toContain('roofWashColor');
+    expect(program.fragmentShader).toContain('diffuseColor.rgb*vec3(1.,.9,.7)*cityNight*1.700*grazing*roofDistantWash');
+    material.dispose();
+  });
+
+  it('rejects malformed roof wash metadata before shader compilation', () => {
+    const scene = city(), profile = { bottom: 60, top: 73.6, color: [.1, .4, .8] };
+    const invalid = [null, false, 1, 'profile', [], {},
+      ...[undefined, '60', NaN, Infinity, -Infinity].map(bottom => ({ ...profile, bottom })),
+      ...[undefined, '73.6', NaN, Infinity, -Infinity, 60, 59].map(top => ({ ...profile, top })),
+      ...[undefined, null, [], [0, 1], [0, 1, .5, .2], ['0', 1, .5], [NaN, 1, .5], [Infinity, 1, .5], [-.01, 1, .5], [0, 1.01, .5]].map(color => ({ ...profile, color }))];
+    for (const spaceRoofWash of invalid) {
+      const material = new THREE.MeshStandardMaterial();
+      material.userData = { spaceShaderKey: 'shanghai-illumination-0.001-bund-roof-shadowed-1.7-64', spaceRoofWash };
+      expect(() => scene['restoreBlenderMaterial'](material, { width: 1, axes: [], wingAxes: [], wingZ: 0 })).toThrow('Invalid Blender roof wash profile');
+      material.dispose();
+    }
+  });
 });
 
 const data: unknown = JSON.parse(readFileSync(new URL('../public/assets/space/shanghai-v1/huangpu.json', import.meta.url), 'utf8'));
@@ -78,6 +135,21 @@ describe('Shanghai geographic asset and river cruise', () => {
   const authoredRig = () => ({ width: 28, height: 58, centre: [10, 36, 20], washTop: 0,
     lamps: Array.from({ length: 6 }, (_, i) => ({ position: [i, 40, -7], target: [0, 42, 4.7],
       color: [1, .5, .2], intensity: 360, angle: Math.PI * .32, penumbra: .65, distance: 44 })) });
+
+  it('hands authored roof wash to its lamps without requiring a legacy crown, while leaving unlit clock roofs independent', () => {
+    const pool = new ShanghaiFacadeLighting(false), root = new THREE.Group();
+    const authored = new THREE.Group(); authored.userData.facadeLighting = authoredRig(); root.add(authored);
+    const clock = new THREE.Group(); clock.userData.facadeLighting = { width: 36, height: 34.5 }; root.add(clock);
+    const material = new THREE.MeshStandardMaterial(); material.userData.bundRoof = true;
+    const authoredRoof = new THREE.Mesh(new THREE.BoxGeometry(), material), clockRoof = new THREE.Mesh(new THREE.BoxGeometry(), material);
+    authored.add(authoredRoof); clock.add(clockRoof);
+    pool.register(root);
+    expect(new Set(authoredRoof.geometry.getAttribute('bundBuildingId').array)).toEqual(new Set([1]));
+    expect(new Set(authoredRoof.geometry.getAttribute('bundLightTop').array)).toEqual(new Set([0]));
+    expect(clockRoof.geometry.getAttribute('bundBuildingId')).toBeUndefined();
+    expect(clockRoof.geometry.getAttribute('bundLightTop')).toBeUndefined();
+    pool.dispose(); authoredRoof.geometry.dispose(); clockRoof.geometry.dispose(); material.dispose();
+  });
 
   it('uses Blender-authored local lamps and aim centre, then fully restores the legacy pool', () => {
     const pool = new ShanghaiFacadeLighting(false), root = new THREE.Group(), building = new THREE.Group();
