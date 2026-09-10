@@ -55,7 +55,7 @@ function cannotRewrite(req: NextRequest): boolean {
 // worker-asset trees, the kill-switch service worker. These pass through
 // untouched: rewriting bare /tools/… to /en/tools/… would 404 (no such page in
 // the [lang] tree). Static assets + /v1 are already dropped by config.matcher.
-const NON_LANG = /^\/(api|auth|callback\.html|cubing-chunks|stats|tools|cubeopt|analyze-worker|sw\.js|v1)(\/|$)/;
+const NON_LANG = /^\/(api|auth|callback\.html|cubing-chunks|stats|tools|music\/library|cubeopt|analyze-worker|sw\.js|v1)(\/|$)/;
 
 function stripLocalePrefix(pathname: string): { locale: Locale | null; rest: string } {
   for (const loc of SUPPORTED_LOCALES) {

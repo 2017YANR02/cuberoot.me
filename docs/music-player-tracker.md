@@ -280,6 +280,9 @@ type MusicTrackV1 = {
 
 ## 验收记录
 
+- 2026-09-10：按用户“本地能看到、不 push”要求，新增仅 development 生效的 `/music/library/[...slug]` 文件读取路由，默认读取 `Z:/cuberoot-music-staging/library`（可用 `MUSIC_LIBRARY_ROOT` 覆盖），不复制媒体到仓库。仅允许生成清单与哈希命名的媒体文件，支持 HEAD 与音频 Range，生产环境返回 404；语言代理放行 `/music/library/`，避免中文 cookie 将音频和 LRC 请求错误重定向到 `/zh/music/library/`。
+- 2026-09-10：本地 `http://127.0.0.1:3000/zh/music` 实测加载 486 首/50 首同步歌词；《不能说的秘密》实际播放、34 行歌词、当前行高亮与歌词点击跳转通过，390px 窄屏无横向溢出，截图 `.tmp/png/music-local-lyrics-mobile.png`。客户端 typecheck 与资源/播放器/语言代理聚焦测试 16/16 通过；未 push、未上传或发布远端。
+
 - 2026-09-10：使用 LRCGET 2.2.0 为 `Z:\cuberoot-music-staging\library\tracks` 批量获取现成歌词；用户选择仅补充缺同步歌词的曲目、自动导出 `.lrc`，不嵌入音频。界面 `284/284` 是处理数，导出 84 个 sidecar，其中 83 个属于当前 486 首 manifest。当前导入结果为同步歌词 50 首、LRCGET 纯音乐标记 32 首、可疑匹配 1 首、无 sidecar 403 首；无 sidecar 不等于有人声且缺歌词，扫描也未覆盖所有音频格式。
 - 2026-09-10：新增 `scripts/music/import-lrcget.py`，默认只读报告，`uv run python -B -X utf8 scripts/music/import-lrcget.py --apply` 才写本地歌词资产、`inventory/lrcget-import.v1.json` 和 manifest。按音频哈希文件名精确绑定，校验 UTF-8、时间戳与录音时长，跳过纯音乐标记；Kenny G《The Joy Of Life》此次下载的可疑人声歌词按内容哈希隔离，等待人工核对。格式检查不保证版本匹配或每句内容准确，未做逐首听音验收。
 - 2026-09-10：此次 LRCGET 导入替换旧歌词绑定，旧 manifest 自动备份为 `inventory/manifest-before-lrcget-<sha256>.json`，已有媒体文件保留；`prepare-music.ps1` 在生成清单时最后应用导入报告并校验歌词资产哈希，避免后续 replay 恢复旧匹配。原始 `E:\Music` 未写入，音频与封面不变，导入不访问网络或发布。
