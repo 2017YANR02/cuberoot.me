@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
-  Disc3, Download, ImagePlus, ListMusic, Music2, Pause, Pencil, Play, Repeat, Repeat1,
-  Shuffle, SkipBack, SkipForward, Trash2, Upload, Volume2,
+  ChevronDown, Disc3, Download, ImagePlus, ListMusic, MoreHorizontal, Music2, Pause, Pencil, Play, Repeat, Repeat1,
+  Shuffle, SkipBack, SkipForward, TextQuote, Trash2, Upload, Volume2,
 } from 'lucide-react';
-import { parseAsString, useQueryState } from 'nuqs';
+import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import HeaderToggles from '@/components/HeaderToggles';
 import AppLink from '@/components/AppLink';
+import BackHome from '@/components/BackHome';
 import { ClearButton } from '@/components/ClearButton';
 import SearchInput from '@/components/SearchInput';
 import { useMembership } from '@/hooks/useMembership';
@@ -163,6 +164,8 @@ function Cover({ track, small = false }: { track: MusicTrack | null; small?: boo
 
 function SyncedLyrics({ track, time }: { track: MusicTrack | null; time: number }) {
   const [lines, setLines] = useState<LyricLine[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [following, setFollowing] = useState(true);
   const activeIndex = useMemo(() => {
     for (let index = lines.length - 1; index >= 0; index -= 1) {
       if (time >= lines[index].time) return index;
@@ -174,40 +177,61 @@ function SyncedLyrics({ track, time }: { track: MusicTrack | null; time: number 
   useEffect(() => {
     let active = true;
     setLines([]);
-    if (track) void loadTrackLyrics(track).then((next) => { if (active) setLines(next); });
+    setLoading(Boolean(track));
+    setFollowing(true);
+    if (track) void loadTrackLyrics(track).then((next) => {
+      if (active) { setLines(next); setLoading(false); }
+    });
     return () => { active = false; };
   }, [track]);
 
   useEffect(() => {
-    scroller.current?.querySelector<HTMLElement>('[aria-current="true"]')
-      ?.scrollIntoView({
-        block: 'center',
-        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    const container = scroller.current;
+    if (!container || !following) return;
+    const center = () => {
+      const line = container.querySelector<HTMLElement>('[aria-current="true"]');
+      if (!line || !container.clientHeight) return;
+      // Scroll only the lyrics pane; scrollIntoView also moves the entire page.
+      container.scrollTo({
+        top: container.scrollTop + line.getBoundingClientRect().top - container.getBoundingClientRect().top
+          - (container.clientHeight - line.clientHeight) / 2,
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
       });
-  }, [activeIndex]);
+    };
+    center();
+    const resize = new ResizeObserver(center);
+    resize.observe(container);
+    return () => resize.disconnect();
+  }, [activeIndex, following, lines]);
 
   if (!track) return <div className="music-lyrics-empty"><Music2 aria-hidden="true" /></div>;
   if (lines.length === 0) {
     return (
       <div className="music-lyrics-empty">
-        <span>{tr({ zh: '这首歌暂时没有同步歌词', en: 'No synced lyrics for this track' })}</span>
+        <span>{loading ? tr({ zh: '正在载入歌词…', en: 'Loading lyrics…' }) : tr({ zh: '这首歌暂时没有同步歌词', en: 'No synced lyrics for this track' })}</span>
       </div>
     );
   }
   return (
-    <div ref={scroller} className="music-lyrics-lines" aria-label={tr({ zh: '同步歌词', en: 'Synced lyrics' })}>
+    <>
+    <div ref={scroller} className="music-lyrics-lines" aria-label={tr({ zh: '同步歌词', en: 'Synced lyrics' })}
+      onWheel={() => setFollowing(false)} onTouchStart={() => setFollowing(false)}>
       {lines.map((line, index) => (
         <button
           key={`${line.time}-${index}`}
           type="button"
           className="music-lyric-line"
           aria-current={index === activeIndex ? 'true' : undefined}
-          onClick={() => seekMusic(line.time)}
+          onClick={() => { seekMusic(line.time); setFollowing(true); }}
         >
           {line.text}
         </button>
       ))}
     </div>
+    {!following && <button type="button" className="music-follow-button" onClick={() => setFollowing(true)}>
+      {tr({ zh: '跟随歌词', en: 'Follow lyrics' })}
+    </button>}
+    </>
   );
 }
 
@@ -218,12 +242,14 @@ export default function MusicPage() {
   const isAdmin = useIsAdmin();
   const [query, setQuery] = useQueryState('q', parseAsString.withDefault(''));
   const [genre, setGenre] = useQueryState('genre', parseAsString.withDefault(''));
+  const [view, setView] = useQueryState('view', parseAsStringEnum(['library', 'player', 'lyrics']).withDefault('library').withOptions({ history: 'push' }));
   const [dialog, setDialog] = useState<'upload' | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [actionMessage, setActionMessage] = useState<'uploaded' | 'uploadedWithoutCover' | 'downloaded' | 'deleted' | 'error' | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const current = player.tracks.find((track) => track.id === player.currentId) ?? null;
+  const artworkTouch = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => { void loadMusicLibrary(); }, []);
 
@@ -292,27 +318,39 @@ export default function MusicPage() {
   };
 
   return (
-    <main className="music-page">
+    <main className="music-page" data-view={view}>
       <header className="music-header">
-        <div>
-          <span className="music-kicker">{tr({ zh: 'CUBEROOT 音频', en: 'CUBEROOT AUDIO' })}</span>
+        <div className="music-heading-copy">
           <h1>{tr({ zh: '音乐', en: 'Music' })}</h1>
-          <p>{tr({ zh: '听歌、看同步歌词，也能随时切回节拍训练。', en: 'Listen, follow synced lyrics, or switch back to tempo training.' })}</p>
-          <AppLink href="/about" className="music-credits-link">
-            {tr({ zh: '开源项目与致谢', en: 'Open-source references and credits' })}<span aria-hidden="true">→</span>
-          </AppLink>
         </div>
+        <button type="button" className="music-collapse music-transport-button" onClick={() => { void setView(null, { history: 'replace' }); }}
+          aria-label={tr({ zh: '收起播放器', en: 'Collapse player' })}><ChevronDown /></button>
+        <span className="music-mobile-heading">{tr({ zh: '正在播放', en: 'Now playing' })}</span>
         <HeaderToggles />
       </header>
 
       <div className="music-workspace">
         <section className="music-library" aria-labelledby="music-library-title">
           <div className="music-section-heading">
-            <div>
-              <span className="music-kicker">{tr({ zh: '曲库', en: 'LIBRARY' })}</span>
-              <h2 id="music-library-title">{tr({ zh: '曲库与队列', en: 'Library & queue' })}</h2>
-            </div>
-            <span>{player.tracks.length}</span>
+            <h2 id="music-library-title">{tr({ zh: '歌曲', en: 'Songs' })}</h2>
+            <details className="music-library-more">
+              <summary aria-label={tr({ zh: '曲库选项', en: 'Library options' })}><MoreHorizontal size={22} /></summary>
+              <div className="music-library-actions">
+                {isMember && !membershipLoading && <>
+                  <button type="button" className="music-text-button" onClick={() => setDialog('upload')}>
+                    <Upload aria-hidden="true" />{tr({ zh: '上传音乐', en: 'Upload music' })}
+                  </button>
+                  <AppLink href="/music/manage" prefetch={false} className="music-text-button">
+                    <ListMusic aria-hidden="true" />{isAdmin ? tr({ zh: '审核与管理', en: 'Review & manage' }) : tr({ zh: '我的上传', en: 'My uploads' })}
+                  </AppLink>
+                </>}
+                {!isMember && !membershipLoading && <AppLink href="/membership" prefetch={false} className="music-text-button">
+                  {tr({ zh: '会员上传与下载', en: 'Member uploads & downloads' })}
+                </AppLink>}
+                <AppLink href="/about" prefetch={false} className="music-text-button">{tr({ zh: '开源项目与致谢', en: 'Open-source credits' })}</AppLink>
+                <div className="music-back-row"><BackHome prefetch={false} /></div>
+              </div>
+            </details>
           </div>
           <div className="music-filters">
             <SearchInput
@@ -335,25 +373,6 @@ export default function MusicPage() {
               </select>
             )}
           </div>
-          {!membershipLoading && (
-            <div className="music-library-actions">
-              {isMember ? (
-                <>
-                  <button type="button" className="music-primary-button" onClick={() => setDialog('upload')}>
-                    <Upload aria-hidden="true" />{tr({ zh: '上传音乐', en: 'Upload music' })}
-                  </button>
-                  <AppLink href="/music/manage" prefetch={false} className="music-text-button">
-                    <ListMusic aria-hidden="true" />
-                    {isAdmin ? tr({ zh: '审核与管理', en: 'Review & manage' }) : tr({ zh: '我的上传', en: 'My uploads' })}
-                  </AppLink>
-                </>
-              ) : (
-                <AppLink href="/membership" className="music-membership-link">
-                  {tr({ zh: '会员可以上传和下载音乐', en: 'Members can upload and download music' })}<span aria-hidden="true">→</span>
-                </AppLink>
-              )}
-            </div>
-          )}
           {actionMessage && (
             <p className={actionMessage === 'error' ? 'music-form-error music-action-message' : 'music-form-success music-action-message'} role="status">
               {actionMessage === 'uploaded' && tr({ zh: '已提交审核，可在“我的上传”查看进度。', en: 'Submitted for review. Follow its progress in My uploads.' })}
@@ -366,7 +385,9 @@ export default function MusicPage() {
           <div className="music-track-list">
             {player.status === 'loading' && <p className="music-state">{tr({ zh: '正在载入曲库…', en: 'Loading library…' })}</p>}
             {player.status === 'error' && (
-              <p className="music-state">{tr({ zh: '曲库尚未发布。播放器界面已就绪。', en: 'The library is not published yet. The player is ready.' })}</p>
+              <div className="music-state"><p>{tr({ zh: '曲库载入失败', en: 'Could not load the library' })}</p>
+                <button type="button" className="music-text-button" onClick={() => { void loadMusicLibrary(true); }}>{tr({ zh: '重试', en: 'Try again' })}</button>
+              </div>
             )}
             {player.status === 'ready' && player.error && (
               <p className="music-state">{tr({ zh: '这首歌无法播放，请尝试其他歌曲。', en: 'This track could not be played. Try another track.' })}</p>
@@ -381,7 +402,7 @@ export default function MusicPage() {
                   key={track.id}
                   type="button"
                   className={isCurrent ? 'music-track is-current' : 'music-track'}
-                  onClick={() => { void playMusic(track.id); }}
+                  onClick={() => { void playMusic(track.id); void setView('player'); }}
                   aria-current={isCurrent ? 'true' : undefined}
                 >
                   <span className="music-track-index">{isCurrent && player.playing ? <Music2 size={14} /> : index + 1}</span>
@@ -398,15 +419,26 @@ export default function MusicPage() {
         </section>
 
         <section className="music-now" aria-labelledby="music-now-title">
-          <div className="music-artwork-wrap"><Cover track={current} /></div>
+          <div className="music-artwork-wrap"
+            onTouchStart={(event) => { artworkTouch.current = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null; }}
+            onTouchCancel={() => { artworkTouch.current = null; }}
+            onTouchEnd={(event) => {
+              const start = artworkTouch.current;
+              artworkTouch.current = null;
+              const end = event.changedTouches[0];
+              if (!start || !end || !current) return;
+              const dx = end.clientX - start.x;
+              if (Math.abs(dx) > 64 && Math.abs(dx) > Math.abs(end.clientY - start.y) * 1.5) {
+                if (dx < 0) void nextMusic(); else void previousMusic();
+              }
+            }}><Cover track={current} /></div>
           <div className="music-now-copy" aria-live="polite">
-            <span className="music-kicker">{tr({ zh: '正在播放', en: 'NOW PLAYING' })}</span>
             <h2 id="music-now-title">{current?.title ?? tr({ zh: '选择一首歌', en: 'Choose a track' })}</h2>
             <p>{current ? (current.artist || tr({ zh: '未知艺术家', en: 'Unknown artist' })) : tr({ zh: '你的 CubeRoot 曲库', en: 'Your CubeRoot library' })}</p>
-            {current?.album && <span>{current.album}</span>}
           </div>
 
           {current?.databaseId && (
+            <details className="music-current-more"><summary aria-label={tr({ zh: '歌曲选项', en: 'Track options' })}><MoreHorizontal size={22} /></summary>
             <div className="music-current-actions">
               {isMember && (
                 <button type="button" className="music-text-button" onClick={() => { void downloadCurrent(); }} disabled={downloading}>
@@ -415,7 +447,7 @@ export default function MusicPage() {
                 </button>
               )}
               {!membershipLoading && !isMember && (
-                <AppLink href="/membership" className="music-membership-link">
+                <AppLink href="/membership" prefetch={false} className="music-membership-link">
                   {tr({ zh: '开通会员后下载', en: 'Join to download' })}<span aria-hidden="true">→</span>
                 </AppLink>
               )}
@@ -430,6 +462,7 @@ export default function MusicPage() {
                 </>
               )}
             </div>
+            </details>
           )}
 
           <div className="music-progress">
@@ -449,14 +482,14 @@ export default function MusicPage() {
               aria-pressed={player.shuffle} aria-label={tr({ zh: '随机播放', en: 'Shuffle' })}>
               <Shuffle size={18} />
             </button>
-            <button type="button" className="music-transport-button" onClick={() => { void previousMusic(); }} aria-label={tr({ zh: '上一首', en: 'Previous track' })}>
+            <button type="button" className="music-transport-button" disabled={!current} onClick={() => { void previousMusic(); }} aria-label={tr({ zh: '上一首', en: 'Previous track' })}>
               <SkipBack size={22} fill="currentColor" />
             </button>
             <button type="button" className="music-transport-button music-main-play" onClick={toggleMusic} disabled={!current}
               aria-label={player.playing ? tr({ zh: '暂停', en: 'Pause' }) : tr({ zh: '播放', en: 'Play' })}>
               {player.playing ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
             </button>
-            <button type="button" className="music-transport-button" onClick={() => { void nextMusic(); }} aria-label={tr({ zh: '下一首', en: 'Next track' })}>
+            <button type="button" className="music-transport-button" disabled={!current} onClick={() => { void nextMusic(); }} aria-label={tr({ zh: '下一首', en: 'Next track' })}>
               <SkipForward size={22} fill="currentColor" />
             </button>
             <button type="button" className={player.repeat === 'off' ? 'music-transport-button' : 'music-transport-button is-active'} onClick={cycleMusicRepeat}
@@ -471,19 +504,35 @@ export default function MusicPage() {
             <input className="music-volume-input" type="range" min={0} max={1} step={0.01} value={player.volume}
               onChange={(event) => setMusicVolume(Number(event.target.value))} />
           </label>
+          {player.error && <p className="music-play-error" role="status">{tr({ zh: '播放失败，请尝试下一首', en: 'Playback failed. Try the next track.' })}</p>}
+          <div className="music-view-controls">
+            <button type="button" className="music-text-button music-lyrics-toggle" aria-pressed={view === 'lyrics'}
+              onClick={() => { void setView(view === 'lyrics' ? 'player' : 'lyrics'); }}>
+              <TextQuote />{tr({ zh: '歌词', en: 'Lyrics' })}
+            </button>
+            <button type="button" className="music-text-button music-library-toggle" onClick={() => { void setView(null, { history: 'replace' }); }}>
+              <ListMusic />{tr({ zh: '歌曲', en: 'Songs' })}
+            </button>
+          </div>
         </section>
 
         <section className="music-lyrics" aria-labelledby="music-lyrics-title">
           <div className="music-section-heading">
-            <div>
-              <span className="music-kicker">{tr({ zh: '歌词', en: 'LYRICS' })}</span>
-              <h2 id="music-lyrics-title">{tr({ zh: '歌词', en: 'Lyrics' })}</h2>
-            </div>
-            <ListMusic aria-hidden="true" />
+            <h2 id="music-lyrics-title">{tr({ zh: '歌词', en: 'Lyrics' })}</h2>
           </div>
-          <SyncedLyrics track={current} time={player.currentTime} />
+          <SyncedLyrics key={current?.id ?? 'empty'} track={current} time={player.currentTime} />
         </section>
       </div>
+      {current && <div className="music-mini-player">
+        <button type="button" className="music-mini-track" onClick={() => { void setView('player'); }} aria-label={tr({ zh: `打开播放器：${current.title}`, en: `Open player: ${current.title}` })}>
+          <Cover track={current} small />
+          <span className="music-track-copy"><strong>{current.title}</strong><span>{current.artist || tr({ zh: '未知艺术家', en: 'Unknown artist' })}</span></span>
+        </button>
+        <button type="button" className="music-transport-button" onClick={toggleMusic} aria-label={player.playing ? tr({ zh: '暂停', en: 'Pause' }) : tr({ zh: '播放', en: 'Play' })}>
+          {player.playing ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
+        </button>
+        <button type="button" className="music-transport-button" onClick={() => { void nextMusic(); }} aria-label={tr({ zh: '下一首', en: 'Next track' })}><SkipForward size={22} fill="currentColor" /></button>
+      </div>}
       {dialog === 'upload' && (
         <MusicUploadDialog
           onClose={() => setDialog(null)}

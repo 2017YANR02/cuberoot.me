@@ -238,6 +238,7 @@ export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'
     <div
       ref={cardRef}
       className={`cr-metro${collapsed ? ' is-collapsed' : ''}${dragging ? ' is-dragging' : ''}`}
+      data-mode={mode}
       style={{ left: pos.left, top: pos.top }}
       role="group"
       aria-label={t('音频中心', 'Audio center')}

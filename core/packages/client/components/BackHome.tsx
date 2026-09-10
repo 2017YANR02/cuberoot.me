@@ -11,10 +11,10 @@ import { ChevronLeft } from 'lucide-react';
 import HomeLink from './HomeLink';
 import { tr } from '@/i18n/tr';
 
-export default function BackHome({ className }: { className?: string }) {
+export default function BackHome({ className, prefetch }: { className?: string; prefetch?: false }) {
   const cls = ['back-home', className].filter(Boolean).join(' ');
   return (
-    <HomeLink className={cls} aria-label={tr({ zh: '返回首页', en: 'Back to home' })}>
+    <HomeLink className={cls} prefetch={prefetch} aria-label={tr({ zh: '返回首页', en: 'Back to home' })}>
       <ChevronLeft size={16} aria-hidden="true" /> {tr({ zh: '首页', en: 'Home' })}
     </HomeLink>
   );
