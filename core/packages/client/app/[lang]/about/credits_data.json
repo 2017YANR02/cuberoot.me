@@ -245,6 +245,13 @@
     "en": "Photographs guide the six-column portico, capital leaves, window mouldings, bank sign, two octagonal drum levels, flat-headed upper windows, balustrades and dome silhouette. Masonry maps are original procedural textures, not scans. Dimensions, ornament and fixtures around the dome remain estimates; statues and the complete facade are not verified 1:1. Capture date unknown; archive photos do not establish current signage or lighting. Reviewed 2026-09-10"
   },
   {
+    "name": "ScareCriterion12：汇丰大楼正立面 / HSBC frontal photograph",
+    "space": true,
+    "url": "https://commons.wikimedia.org/wiki/File:上海外滩汇丰银行大楼2021.jpg",
+    "zh": "ScareCriterion12 于 2021-06-20 拍摄，CC BY-SA 4.0。用于纠正六柱门廊的两组内侧成对柱列，柱间距依次为宽、窄、宽、窄、宽；取代此前误判的等距排列。照片未做正射校正，模型米制间距仍为估算；仅作几何对照，未作为运行贴图。查阅于 2026-09-10",
+    "en": "Photographed by ScareCriterion12 on 2021-06-20, CC BY-SA 4.0. Corrects the six-column portico to two close inner pairs with wide, narrow, wide, narrow, wide gaps, replacing the previously misread equal spacing. The photograph is not orthorectified; model dimensions in metres remain estimates. Used as a geometry reference, not a runtime texture. Accessed 2026-09-10"
+  },
+  {
     "name": "Hermann Luyken：汇丰外部穹顶夜景 / HSBC exterior dome at night",
     "space": true,
     "url": "https://commons.wikimedia.org/wiki/File:2014.11.15.192101_Dome_HSBC_Building_Bund_night_Shanghai.jpg",
