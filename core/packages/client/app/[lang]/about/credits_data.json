@@ -262,8 +262,15 @@
     "name": "Asisbiz: 外滩 13 江海关 / Customs House",
     "space": true,
     "url": "https://www.asisbiz.com/China/13-Zhongshan-Rd.html",
-    "zh": "实拍用于七条主窗带、铜饰板、入口石柱、钟楼格栅及双侧亭；本轮核对六层转折檐口、基座正面可见的五个投光器，保留场景时间驱动的四面钟表。原图署名 Matthew Laird Acred，拍摄日期未知，页面更新时间 2020-01-27 不能当拍摄日期。石材图为原创程序纹理；尺寸、颜色及灯具均含估算，新增灯具外形不等于现场配光已还原。侧后立面、钟面与夜景待校准，尚非测绘 1:1。查阅于 2026-09-10",
-    "en": "Photographs guide seven window bands, bronze panels, entrance columns, tower grilles and paired roof pavilions. This review covers six-layer cornice returns and five visible front plinth floodlights; all four clocks retain scene-time control. The source credits Matthew Laird Acred. Capture date unknown; the page update of 2020-01-27 is not a capture date. Masonry maps are original procedural textures. Dimensions, colors and fixtures remain estimates; modeled lamp housings do not establish restored photometry. Other elevations, clock faces and night lighting remain uncalibrated, not surveyed 1:1. Accessed 2026-09-10"
+    "zh": "实拍用于七条主窗带、铜饰板、入口石柱、钟楼格栅及双侧亭；本轮核对六层转折檐口、基座正面可见的五个投光器，保留场景时间驱动的四面钟表。原图署名 Matthew Laird Acred，CC BY-SA 3.0；嵌套 EXIF 的 DateTimeOriginal 和 DateTimeDigitized 均标记 2008-11-14 17:25:05，纠正此前日期未知的说明。相机时钟与时区未经独立核验，页面更新于 2020-01-27；旧照不能作为当前灯光实测。石材图为原创程序纹理；尺寸、颜色及灯具均含估算，新增灯具外形不等于现场配光已还原。侧后立面、钟面与夜景待校准，尚非测绘 1:1。查阅于 2026-09-10",
+    "en": "Photographs guide seven window bands, bronze panels, entrance columns, tower grilles and paired roof pavilions. This review covers six-layer cornice returns and five visible front plinth floodlights; all four clocks retain scene-time control. The original credits Matthew Laird Acred, CC BY-SA 3.0. Nested EXIF DateTimeOriginal and DateTimeDigitized both report 2008-11-14 17:25:05, correcting the earlier unknown-date statement. The camera clock and timezone have not been independently verified; the page was updated on 2020-01-27. This older photo does not establish present-day lighting measurements. Masonry maps are original procedural textures. Dimensions, colors and fixtures remain estimates; modeled lamp housings do not establish restored photometry. Other elevations, clock faces and night lighting remain uncalibrated, not surveyed 1:1. Accessed 2026-09-10"
+  },
+  {
+    "name": "Wikimedia Commons: DvTor8303 江海关夜景 / Customs House at night",
+    "space": true,
+    "url": "https://commons.wikimedia.org/wiki/File:HSBC_Building_and_Custom_House,_Shanghai_at_night_20260417_(2).jpg",
+    "zh": "DvTor8303 自摄，CC0 1.0；文件页与原图 EXIF 均标记 2026-04-17 20:34:53，相机时钟与时区未经独立核验。江海关夜景的首要实拍参考，用于核对钟盘石框、暖色塔冠、基座下亮上暗、檐下阴影与底层石墙的照明层次。照片仅本地审图，未作为运行贴图；六盏聚合投光代理的灯位与光度仍为估算，尚非现场配光或 1:1 复原。查阅于 2026-09-10",
+    "en": "Own photograph by DvTor8303, CC0 1.0. The file page and original EXIF both report 2026-04-17 20:34:53; camera clock and timezone have not been independently verified. The primary night reference for Customs House, covering the clock surround, warm crown, brighter lower plinth, cornice shadows and lower stonework. Reviewed locally, not used as a runtime texture. Positions and photometry of the six aggregate spotlights remain estimates, not a surveyed lighting scheme or a verified 1:1 replica. Accessed 2026-09-10"
   },
   {
     "name": "Fairmont: 和平饭店官方夜景 / Peace Hotel night exterior",
