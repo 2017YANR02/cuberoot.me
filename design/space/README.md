@@ -62,6 +62,8 @@ pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset italian-original -Pr
 
 每盏灯保持所属建筑的父子关系及唯一 `spaceFacadeSlot`（0 至 5），不设置 `space_export`。正常导出时 `facade_rig.py` 将当前灯具转换为 Y-up 的 `facadeLighting.lamps`，不保存回源工程；网页复用原有 6 盏带阴影灯。缺灯、重复槽号、错误类型或非法强度会拒绝导出。建筑的 `facadeLighting.centre` 是局部 Y-up 选光中心；`washTop` 控制旧有立面补光退让的高度，0 表示保留绝大部分补光。高处未被近景灯覆盖的石材仍使用原有远景补光。
 
+镜头转向邻栋时，网页将旧灯和立面补光同步渐变，在近景灯强度归零时换灯位，再渐亮新灯；单程按 0.3 秒计算，低帧率下因帧间隔限幅会延长。过渡使用独立于天气开关的帧时间，完成后停止额外绘制；渐变期间不重复刷新静态阴影。此机制消除整组灯瞬间换位，但没有消除近景灯与远景补光的配光差异，仍须逐栋校准并继续评估烘焙照明。
+
 `author_bund_lighting.py` 仅用于本次首次建立灯组，已有 `spaceFacadeRig` 修订时拒绝覆盖。后续编辑现有灯具并正常导出，务必在网页查看整栋、斜侧、白天和夜间；Blender 预览与网页 PBR 仍有差异。
 
 在仓库根运行 `node design/space/scripts/capture-server.mjs`，再用浏览器访问 `http://127.0.0.1:3016/verify`。它检查完整 25 个场景的几何、表面、反射和城市运行绑定，结果在页面和 `window.verification`。单资产可加 `?asset=modern-original`。该检查不需要 GPU，实际光照效果仍须在 `/zh/space` 检查。
