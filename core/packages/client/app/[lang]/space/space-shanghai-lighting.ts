@@ -1,7 +1,24 @@
 import * as THREE from 'three';
 
 type Crown = { height: number; depth: number; width: number };
-type Frontage = { building: THREE.Object3D; width: number; height: number; crown?: Crown; centre: THREE.Vector3; id: number };
+type Triple = [number, number, number];
+type Lamp = { position: Triple; target: Triple; color: Triple; intensity: number; angle: number; penumbra: number; distance: number };
+type FrontageData = { width: number; height: number; crown?: Crown; centre?: Triple; washTop?: number; lamps?: Lamp[] };
+type Frontage = Omit<FrontageData, 'centre'> & { building: THREE.Object3D; centre: THREE.Vector3; id: number };
+
+const triple = (value: unknown): value is Triple => Array.isArray(value) && value.length === 3 && value.every(Number.isFinite);
+function validateRig(data: FrontageData) {
+  if (data.centre !== undefined && !triple(data.centre)) throw new Error('Invalid Blender facade light centre');
+  if (data.washTop !== undefined && (!Number.isFinite(data.washTop) || data.washTop < 0)) throw new Error('Invalid Blender facade wash height');
+  if (data.lamps === undefined) return;
+  if (!Array.isArray(data.lamps) || data.lamps.length !== 6 || !data.lamps.every(lamp => lamp &&
+    triple(lamp.position) && triple(lamp.target) && lamp.position.some((v, i) => Math.abs(v - lamp.target[i]) > .00001) &&
+    triple(lamp.color) && lamp.color.every(v => v >= 0 && v <= 1) &&
+    Number.isFinite(lamp.intensity) && lamp.intensity >= 0 &&
+    Number.isFinite(lamp.angle) && lamp.angle > 0 && lamp.angle <= Math.PI / 2 &&
+    Number.isFinite(lamp.penumbra) && lamp.penumbra >= 0 && lamp.penumbra <= 1 &&
+    Number.isFinite(lamp.distance) && lamp.distance > .3)) throw new Error('Invalid Blender facade light rig');
+}
 
 // A fixed pool follows the inspected frontage. Light positions stay attached to
 // the building, never to the camera. Distant elevations retain their cheaper wash.
@@ -35,9 +52,11 @@ export class ShanghaiFacadeLighting {
   register(root: THREE.Object3D) {
     root.updateWorldMatrix(true, true);
     this.frontages = [];
+    this.selected = undefined;
     root.traverse(building => {
-      const frontage = building.userData.facadeLighting as { width: number; height: number; crown?: Crown } | undefined;
+      const frontage = building.userData.facadeLighting as FrontageData | undefined;
       if (!frontage || !Number.isFinite(frontage.width) || !Number.isFinite(frontage.height) || frontage.width <= 0 || frontage.height <= 0) return;
+      validateRig(frontage);
       const id = this.frontages.length + 1;
       const crown = frontage.crown && Object.values(frontage.crown).every(Number.isFinite) && frontage.crown.width > 0 && frontage.crown.height > frontage.height ? frontage.crown : undefined;
       building.traverse(mesh => {
@@ -46,9 +65,9 @@ export class ShanghaiFacadeLighting {
         const count = mesh.geometry.getAttribute('position').count;
         mesh.geometry.setAttribute('bundBuildingId', new THREE.Float32BufferAttribute(new Float32Array(count).fill(id), 1));
         // The facade pool does not reach independent high clock towers.
-        mesh.geometry.setAttribute('bundLightTop', new THREE.Float32BufferAttribute(new Float32Array(count).fill(crown ? crown.height + 6 : frontage.height), 1));
+        mesh.geometry.setAttribute('bundLightTop', new THREE.Float32BufferAttribute(new Float32Array(count).fill(frontage.washTop ?? (crown ? crown.height + 6 : frontage.height)), 1));
       });
-      this.frontages.push({ building, ...frontage, crown, id, centre: building.localToWorld(new THREE.Vector3(0, frontage.height / 2, 0)) });
+      this.frontages.push({ building, ...frontage, crown, id, centre: building.localToWorld(new THREE.Vector3(...(frontage.centre ?? [0, frontage.height / 2, 0]))) });
     });
   }
 
@@ -75,7 +94,7 @@ export class ShanghaiFacadeLighting {
     if (selected !== this.selected) {
       this.selected = selected;
       if (selected) {
-        const { building, width, height, crown } = selected;
+        const { building, width, height, crown, lamps } = selected;
         for (let i = 0; i < this.lights.length; i++) {
           const light = this.lights[i], x = width * ((i + .5) / 4 - .5);
           const roof = i >= 4 && crown;
@@ -84,6 +103,14 @@ export class ShanghaiFacadeLighting {
           light.target.position.copy(building.localToWorld(roof ? new THREE.Vector3(0, crown.height, crown.depth) : new THREE.Vector3(x, height * .65, .5)));
           light.distance = roof ? 45 : Math.max(65, height * 2.2);
           light.angle = Math.PI * (roof ? .22 : .29);
+          light.color.set(0xffdbaf); light.penumbra = .8;
+          if (lamps) {
+            const lamp = lamps[i];
+            light.position.copy(building.localToWorld(new THREE.Vector3(...lamp.position)));
+            light.target.position.copy(building.localToWorld(new THREE.Vector3(...lamp.target)));
+            light.color.setRGB(...lamp.color, THREE.LinearSRGBColorSpace);
+            light.distance = lamp.distance; light.angle = lamp.angle; light.penumbra = lamp.penumbra;
+          }
           light.shadow.camera.far = light.distance;
           light.shadow.camera.updateProjectionMatrix();
           light.shadow.needsUpdate = true;
@@ -95,7 +122,7 @@ export class ShanghaiFacadeLighting {
     this.active.value.set(selected?.id ?? -1, blend);
     // Calibrated against the HSBC frontage; smaller facades need less power.
     const facadePower = selected ? 1050 * THREE.MathUtils.clamp(selected.width * selected.height / (83.45 * 29.4), .12, 1.25) : 0;
-    this.lights.forEach((light, i) => { light.intensity = night * blend * (i < 4 ? facadePower : selected?.crown ? 1300 : 0); });
+    this.lights.forEach((light, i) => { light.intensity = night * blend * (selected?.lamps?.[i].intensity ?? (i < 4 ? facadePower : selected?.crown ? 1300 : 0)); });
     // Maps are static between frontage changes. Enabling night after daylight
     // must also populate them, including when weather motion is paused.
     if (night > 0 && this.lastNight <= 0 && selected) {
