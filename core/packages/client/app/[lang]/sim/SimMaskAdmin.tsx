@@ -188,14 +188,12 @@ export default function SimMaskAdmin({
                 className="sim-mask-admin-input"
                 value={newZh}
                 onChange={(e) => setNewZh(e.target.value)}
-                placeholder={t('中文名', 'Chinese name')}
                 aria-label={t('中文名', 'Chinese name')}
               />
               <input
                 className="sim-mask-admin-input"
                 value={newEn}
                 onChange={(e) => setNewEn(e.target.value)}
-                placeholder={t('英文名', 'English name')}
                 aria-label={t('英文名', 'English name')}
               />
               <button
@@ -214,6 +212,10 @@ export default function SimMaskAdmin({
           )}
         </div>
 
+        <div className="sim-mask-admin-columns" aria-hidden="true">
+          <span>{t('中文名', 'Chinese name')}</span>
+          <span>{t('英文名', 'English name')}</span>
+        </div>
         <DndContext sensors={sensors} onDragEnd={onDragEnd}
           collisionDetection={(args) => closestCenter({ ...args, droppableContainers: args.droppableContainers.filter((container) =>
             !String(args.active.id).startsWith('group:') || String(container.id).startsWith('group:')) })}>
@@ -235,7 +237,6 @@ export default function SimMaskAdmin({
                   <SortableCard key={key} id={`item:${key}`} draggable={!busy} stretch={false} className={`sim-mask-admin-row${hidden ? ' is-hidden' : ''}`} dragLabel={t('拖动调整阶段顺序或分组', 'Drag to reorder or move stage')}>
                     <code className="sim-mask-admin-key" title={identifier}>{identifier}</code>
                     <label className="sim-mask-admin-field">
-                    <span>{t('中文名', 'Chinese name')}</span>
                     <input
                       className="sim-mask-admin-input"
                       value={d.zh}
@@ -245,7 +246,6 @@ export default function SimMaskAdmin({
                     />
                     </label>
                     <label className="sim-mask-admin-field">
-                    <span>{t('英文名', 'English name')}</span>
                     <input
                       className="sim-mask-admin-input"
                       value={d.en}
