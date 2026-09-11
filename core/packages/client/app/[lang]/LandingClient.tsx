@@ -177,8 +177,9 @@ export default function LandingPage() {
   }, [isAdmin]);
 
   const searchCards = useMemo(
-    () => SEARCH_CARDS.filter((card) => isLandingSearchCardVisible({ ...card, lockedForNonAdmin: cardLocks[card.id] ?? card.lockedForNonAdmin }, isAdmin)),
-    [isAdmin, cardLocks],
+    () => SEARCH_CARDS.filter((card) => (isAdmin || locksLoaded)
+      && isLandingSearchCardVisible({ ...card, lockedForNonAdmin: cardLocks[card.id] ?? card.lockedForNonAdmin }, isAdmin)),
+    [isAdmin, cardLocks, locksLoaded],
   );
   const pathname = usePathname();
   // 已登录时右上角只保留头像(去掉名字);无头像退回 User 图标。
@@ -258,7 +259,12 @@ export default function LandingPage() {
 
   const renderCardGrid = (groupId: string, cards: CardConfig[], className: string) => {
     const orderedCards = applyLandingCardOrder(cards, cardOrders[groupId] ?? []);
-    const visibleCards = orderedCards.filter((card) => isAdmin || !card.adminOnly);
+    // Wait for persisted locks before showing visitor cards, avoiding a locked-card flash.
+    const visibleCards = orderedCards.filter((card) => (isAdmin || locksLoaded)
+      && isLandingSearchCardVisible({
+        adminOnly: card.adminOnly,
+        lockedForNonAdmin: cardLocks[card.id] ?? Boolean(card.lockedForNonAdmin || card.comingSoon),
+      }, isAdmin));
     const handleDragEnd = (event: DragEndEvent) => {
       const { active, over } = event;
       if (!isAdmin || !over || active.id === over.id) return;
