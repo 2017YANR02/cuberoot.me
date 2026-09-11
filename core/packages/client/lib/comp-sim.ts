@@ -1,5 +1,6 @@
 import {
   decodeTimerSolve,
+  roundResult,
   EVENTS,
   roundAttempts,
   type EventId,
@@ -13,8 +14,19 @@ import type { CompWcifRound, RoundFormat as WcaRoundFormat } from './comp-wcif';
 import type { WcaResultRow, WcaRound, WcaScrambleRow } from './wca-results-api';
 
 export const SUPPORTED_COMP_SIM_EVENTS = new Set([
-  '333', '222', '444', '555', '666', '777', '333oh',
-  'clock', 'minx', 'pyram', 'skewb', 'sq1', 'fto',
+  '333',
+  '222',
+  '444',
+  '555',
+  '666',
+  '777',
+  '333oh',
+  'clock',
+  'minx',
+  'pyram',
+  'skewb',
+  'sq1',
+  'fto',
 ]);
 
 export interface PlayableScrambleGroup {
@@ -54,22 +66,180 @@ export function matchPublishedCompSimRounds(
   details: readonly CompWcifRound[],
   publishedRounds: readonly WcaRound[],
 ): MatchedPublishedRound[] | null {
-  const ordered = publishedRounds.toSorted((a, b) => (
-    roundChronologicalOrder(a.roundTypeId) - roundChronologicalOrder(b.roundTypeId)
-  ));
+  const ordered = publishedRounds.toSorted(
+    (a, b) => roundChronologicalOrder(a.roundTypeId) - roundChronologicalOrder(b.roundTypeId),
+  );
   if (ordered.length > details.length) return null;
   const matched = ordered.map((officialRound, index) => ({
     detail: details[index],
     officialRound,
   }));
-  if (matched.some(({ detail, officialRound }) => {
-    const publishedFormat = officialRound.results[0]?.format_id;
-    return !detail || (!!publishedFormat && publishedFormat !== detail.format);
-  })) return null;
+  if (
+    matched.some(({ detail, officialRound }) => {
+      const publishedFormat = officialRound.results[0]?.format_id;
+      return !detail || (!!publishedFormat && publishedFormat !== detail.format);
+    })
+  )
+    return null;
   return matched as MatchedPublishedRound[];
 }
 
 export const COMP_SIM_ACTIVE_VERSION = 1;
+
+export const PRACTICE_VERSION = 2;
+export const PRACTICE_ISSUES = {
+  none: { zh: '不记录失误', en: 'No issue noted' },
+  inspection: { zh: '观察不足', en: 'Inspection planning' },
+  pause: { zh: '还原停顿', en: 'Pause during solve' },
+  turning: { zh: '转动失误', en: 'Turning mistake' },
+} as const;
+export type PracticeIssue = keyof typeof PRACTICE_ISSUES;
+export interface PracticeRound {
+  detail: CompWcifRound;
+  config: RoundConfig;
+  roundTypeId: string;
+  officialRows: WcaResultRow[];
+  group: PlayableScrambleGroup;
+}
+export interface PracticeSession {
+  version: typeof PRACTICE_VERSION;
+  id: string;
+  owner: string;
+  eventId: string;
+  competition: { id: string; name: string; country: string } | null;
+  rounds: PracticeRound[];
+  roundIndex: number;
+  solves: Solve[];
+  issues: PracticeIssue[];
+  targetMs: number | null;
+  voice: boolean;
+  stage: 'ready' | 'inspection' | 'entry' | 'results';
+  inspectionAt: number | null;
+  entry: string;
+  plusTwo: boolean;
+  note: string;
+  issue: PracticeIssue;
+  personalRecords: { single: number | null; average: number | null };
+}
+export interface PracticeRecord {
+  version: typeof PRACTICE_VERSION;
+  id: string;
+  owner: string;
+  eventId: string;
+  competition: PracticeSession['competition'];
+  roundTypeId: string;
+  config: RoundConfig;
+  solves: Solve[];
+  issues: PracticeIssue[];
+  targetMs: number | null;
+  at: number;
+}
+
+function isPracticeIssue(value: unknown): value is PracticeIssue {
+  return typeof value === 'string' && Object.hasOwn(PRACTICE_ISSUES, value);
+}
+function isPracticeData(value: Record<string, unknown>): boolean {
+  return (
+    value.version === PRACTICE_VERSION &&
+    typeof value.id === 'string' &&
+    value.id.length > 0 &&
+    typeof value.owner === 'string' &&
+    typeof value.eventId === 'string' &&
+    SUPPORTED_COMP_SIM_EVENTS.has(value.eventId) &&
+    (value.competition === null ||
+      (isRecord(value.competition) &&
+        typeof value.competition.id === 'string' &&
+        typeof value.competition.name === 'string' &&
+        typeof value.competition.country === 'string')) &&
+    (value.targetMs === null || (isFiniteNumber(value.targetMs) && value.targetMs > 0)) &&
+    Array.isArray(value.solves) &&
+    value.solves.every(
+      (solve) =>
+        isValidSolve(solve) &&
+        (solve.comment === undefined || (typeof solve.comment === 'string' && solve.comment.length <= 500)),
+    ) &&
+    Array.isArray(value.issues) &&
+    value.issues.every(isPracticeIssue) &&
+    value.issues.length === value.solves.length
+  );
+}
+
+export function isPracticeSession(value: unknown): value is PracticeSession {
+  if (
+    !isRecord(value) ||
+    !isPracticeData(value) ||
+    !Array.isArray(value.rounds) ||
+    value.rounds.length === 0 ||
+    !value.rounds.every(isValidRoundBundle) ||
+    !Number.isInteger(value.roundIndex) ||
+    (value.roundIndex as number) < 0 ||
+    (value.roundIndex as number) >= value.rounds.length ||
+    !['ready', 'inspection', 'entry', 'results'].includes(String(value.stage)) ||
+    !isNullableFiniteNumber(value.inspectionAt) ||
+    typeof value.entry !== 'string' ||
+    value.entry.length > 16 ||
+    typeof value.note !== 'string' ||
+    value.note.length > 500 ||
+    typeof value.plusTwo !== 'boolean' ||
+    typeof value.voice !== 'boolean' ||
+    !isPracticeIssue(value.issue) ||
+    !isRecord(value.personalRecords) ||
+    !isNullableFiniteNumber(value.personalRecords.single) ||
+    !isNullableFiniteNumber(value.personalRecords.average)
+  )
+    return false;
+  const session = value as unknown as PracticeSession;
+  const result = roundResult(session.solves, session.rounds[session.roundIndex].config);
+  return (
+    session.solves.length <= result.attempts &&
+    session.rounds.every((round) => round.group.scrambles.length >= roundAttempts(round.config.format)) &&
+    (session.stage === 'results' ? result.complete : !result.complete) &&
+    (session.stage !== 'inspection' || session.inspectionAt !== null)
+  );
+}
+
+export function isPracticeRecord(value: unknown): value is PracticeRecord {
+  if (
+    !isRecord(value) ||
+    !isPracticeData(value) ||
+    !isValidRoundConfig(value.config) ||
+    !isFiniteNumber(value.at) ||
+    typeof value.roundTypeId !== 'string'
+  )
+    return false;
+  const record = value as unknown as PracticeRecord;
+  const result = roundResult(record.solves, record.config);
+  return record.solves.length <= result.attempts && result.complete;
+}
+
+/** A missed cutoff is not a completed average; DNF is never converted to zero. */
+export function practiceTargetDelta(
+  solves: Solve[],
+  config: RoundConfig,
+  targetMs: number | null,
+): number | null {
+  const result = roundResult(solves, config);
+  return targetMs !== null && result.complete && result.official !== null && Number.isFinite(result.official)
+    ? result.official - targetMs
+    : null;
+}
+
+export function practiceRecord(session: PracticeSession): PracticeRecord {
+  const round = session.rounds[session.roundIndex];
+  return {
+    version: PRACTICE_VERSION,
+    id: `${session.id}:${session.roundIndex}`,
+    owner: session.owner,
+    eventId: session.eventId,
+    competition: session.competition,
+    roundTypeId: round.roundTypeId,
+    config: round.config,
+    solves: session.solves,
+    issues: session.issues,
+    targetMs: session.targetMs,
+    at: session.solves.at(-1)?.ts ?? 0,
+  };
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
@@ -84,73 +254,90 @@ function isNullableFiniteNumber(value: unknown): boolean {
 }
 
 function isValidAdvancement(value: unknown): boolean {
-  return value === null || (isRecord(value)
-    && ['ranking', 'percent', 'attemptResult'].includes(String(value.type))
-    && isFiniteNumber(value.level));
+  return (
+    value === null ||
+    (isRecord(value) &&
+      ['ranking', 'percent', 'attemptResult'].includes(String(value.type)) &&
+      isFiniteNumber(value.level))
+  );
 }
 
 function isValidRoundDetail(value: unknown): boolean {
-  if (!isRecord(value)
-    || typeof value.id !== 'string'
-    || !['1', '2', '3', '5', 'a', 'm', 'h'].includes(String(value.format))
-    || !isNullableFiniteNumber(value.timeLimitCs)
-    || typeof value.cumulative !== 'boolean'
-    || !Array.isArray(value.cumulativeRoundIds)
-    || !value.cumulativeRoundIds.every((id) => typeof id === 'string')
-    || !isValidAdvancement(value.advancementCondition)) return false;
-  return value.cutoff === null || (isRecord(value.cutoff)
-    && isFiniteNumber(value.cutoff.numberOfAttempts)
-    && isFiniteNumber(value.cutoff.attemptResult));
+  if (
+    !isRecord(value) ||
+    typeof value.id !== 'string' ||
+    !['1', '2', '3', '5', 'a', 'm', 'h'].includes(String(value.format)) ||
+    !isNullableFiniteNumber(value.timeLimitCs) ||
+    typeof value.cumulative !== 'boolean' ||
+    !Array.isArray(value.cumulativeRoundIds) ||
+    !value.cumulativeRoundIds.every((id) => typeof id === 'string') ||
+    !isValidAdvancement(value.advancementCondition)
+  )
+    return false;
+  return (
+    value.cutoff === null ||
+    (isRecord(value.cutoff) &&
+      isFiniteNumber(value.cutoff.numberOfAttempts) &&
+      isFiniteNumber(value.cutoff.attemptResult))
+  );
 }
 
 function isValidRoundConfig(value: unknown): boolean {
-  return isRecord(value)
-    && value.on === true
-    && ['bo1', 'bo2', 'bo3', 'bo5', 'ao5', 'mo3'].includes(String(value.format))
-    && isNullableFiniteNumber(value.cutoffMs)
-    && isFiniteNumber(value.cutoffAttempts)
-    && isNullableFiniteNumber(value.limitMs)
-    && typeof value.cumulative === 'boolean';
+  return (
+    isRecord(value) &&
+    value.on === true &&
+    ['bo1', 'bo2', 'bo3', 'bo5', 'ao5', 'mo3'].includes(String(value.format)) &&
+    isNullableFiniteNumber(value.cutoffMs) &&
+    isFiniteNumber(value.cutoffAttempts) &&
+    isNullableFiniteNumber(value.limitMs) &&
+    typeof value.cumulative === 'boolean'
+  );
 }
 
 function isValidResultRow(value: unknown): boolean {
-  return isRecord(value)
-    && typeof value.wca_id === 'string'
-    && typeof value.competition_id === 'string'
-    && typeof value.event_id === 'string'
-    && Array.isArray(value.attempts)
-    && value.attempts.every(isFiniteNumber)
-    && typeof value.round_type_id === 'string'
-    && typeof value.format_id === 'string'
-    && isFiniteNumber(value.best)
-    && isFiniteNumber(value.average)
-    && isFiniteNumber(value.pos);
+  return (
+    isRecord(value) &&
+    typeof value.wca_id === 'string' &&
+    typeof value.competition_id === 'string' &&
+    typeof value.event_id === 'string' &&
+    Array.isArray(value.attempts) &&
+    value.attempts.every(isFiniteNumber) &&
+    typeof value.round_type_id === 'string' &&
+    typeof value.format_id === 'string' &&
+    isFiniteNumber(value.best) &&
+    isFiniteNumber(value.average) &&
+    isFiniteNumber(value.pos)
+  );
 }
 
 function isValidScrambleRow(value: unknown): boolean {
-  return isRecord(value)
-    && typeof value.event_id === 'string'
-    && typeof value.round_type_id === 'string'
-    && typeof value.group_id === 'string'
-    && typeof value.is_extra === 'boolean'
-    && isFiniteNumber(value.scramble_num)
-    && typeof value.scramble === 'string';
+  return (
+    isRecord(value) &&
+    typeof value.event_id === 'string' &&
+    typeof value.round_type_id === 'string' &&
+    typeof value.group_id === 'string' &&
+    typeof value.is_extra === 'boolean' &&
+    isFiniteNumber(value.scramble_num) &&
+    typeof value.scramble === 'string'
+  );
 }
 
 function isValidRoundBundle(value: unknown): boolean {
-  return isRecord(value)
-    && isValidRoundDetail(value.detail)
-    && isValidRoundConfig(value.config)
-    && typeof value.roundTypeId === 'string'
-    && Array.isArray(value.officialRows)
-    && value.officialRows.every(isValidResultRow)
-    && isRecord(value.group)
-    && typeof value.group.groupId === 'string'
-    && Array.isArray(value.group.scrambles)
-    && value.group.scrambles.length > 0
-    && value.group.scrambles.every(isValidScrambleRow)
-    && Array.isArray(value.group.extras)
-    && value.group.extras.every(isValidScrambleRow);
+  return (
+    isRecord(value) &&
+    isValidRoundDetail(value.detail) &&
+    isValidRoundConfig(value.config) &&
+    typeof value.roundTypeId === 'string' &&
+    Array.isArray(value.officialRows) &&
+    value.officialRows.every(isValidResultRow) &&
+    isRecord(value.group) &&
+    typeof value.group.groupId === 'string' &&
+    Array.isArray(value.group.scrambles) &&
+    value.group.scrambles.length > 0 &&
+    value.group.scrambles.every(isValidScrambleRow) &&
+    Array.isArray(value.group.extras) &&
+    value.group.extras.every(isValidScrambleRow)
+  );
 }
 
 function isValidSolve(value: unknown): boolean {
@@ -164,47 +351,64 @@ function isValidSolve(value: unknown): boolean {
 export function isValidCompSimActiveSnapshot(value: unknown): boolean {
   if (!isRecord(value)) return false;
   const options = value.options;
-  if (value.version !== COMP_SIM_ACTIVE_VERSION
-    || typeof value.wcaId !== 'string'
-    || !isRecord(value.competition)
-    || typeof value.competition.id !== 'string'
-    || typeof value.competition.name !== 'string'
-    || typeof value.competition.country !== 'string'
-    || typeof value.competition.start_date !== 'string'
-    || typeof value.competition.end_date !== 'string'
-    || typeof value.eventId !== 'string'
-    || !isRecord(options)
-    || !['inspectionVoice', 'ambiance', 'distractions', 'announcements', 'duplicateScrambles', 'visuals', 'stationary']
-      .every((key) => typeof options[key] === 'boolean')
-    || !Number.isInteger(options.maxWaitMinutes)
-    || (options.maxWaitMinutes as number) < 1
-    || (options.maxWaitMinutes as number) > 15
-    || !Array.isArray(value.rounds)
-    || value.rounds.length === 0
-    || !value.rounds.every(isValidRoundBundle)
-    || !Number.isInteger(value.roundIndex)
-    || (value.roundIndex as number) < 0
-    || (value.roundIndex as number) >= value.rounds.length
-    || !Array.isArray(value.solves)
-    || !value.solves.every(isValidSolve)
-    || typeof value.currentScramble !== 'string'
-    || !Number.isInteger(value.usedExtras)
-    || (value.usedExtras as number) < 0
-    || !Number.isInteger(value.tableNumber)
-    || (value.tableNumber as number) < 1
-    || (value.tableNumber as number) > 10
-    || !['waiting', 'called', 'ready', 'entry', 'results'].includes(String(value.stage))
-    || !isNullableFiniteNumber(value.callupAt)
-    || !isNullableFiniteNumber(value.inspectionStartedAt)
-    || !isRecord(value.personalRecords)
-    || !isNullableFiniteNumber(value.personalRecords.single)
-    || !isNullableFiniteNumber(value.personalRecords.average)) return false;
+  if (
+    value.version !== COMP_SIM_ACTIVE_VERSION ||
+    typeof value.wcaId !== 'string' ||
+    !isRecord(value.competition) ||
+    typeof value.competition.id !== 'string' ||
+    typeof value.competition.name !== 'string' ||
+    typeof value.competition.country !== 'string' ||
+    typeof value.competition.start_date !== 'string' ||
+    typeof value.competition.end_date !== 'string' ||
+    typeof value.eventId !== 'string' ||
+    !isRecord(options) ||
+    ![
+      'inspectionVoice',
+      'ambiance',
+      'distractions',
+      'announcements',
+      'duplicateScrambles',
+      'visuals',
+      'stationary',
+    ].every((key) => typeof options[key] === 'boolean') ||
+    !Number.isInteger(options.maxWaitMinutes) ||
+    (options.maxWaitMinutes as number) < 1 ||
+    (options.maxWaitMinutes as number) > 15 ||
+    !Array.isArray(value.rounds) ||
+    value.rounds.length === 0 ||
+    !value.rounds.every(isValidRoundBundle) ||
+    !Number.isInteger(value.roundIndex) ||
+    (value.roundIndex as number) < 0 ||
+    (value.roundIndex as number) >= value.rounds.length ||
+    !Array.isArray(value.solves) ||
+    !value.solves.every(isValidSolve) ||
+    typeof value.currentScramble !== 'string' ||
+    !Number.isInteger(value.usedExtras) ||
+    (value.usedExtras as number) < 0 ||
+    !Number.isInteger(value.tableNumber) ||
+    (value.tableNumber as number) < 1 ||
+    (value.tableNumber as number) > 10 ||
+    !['waiting', 'called', 'ready', 'entry', 'results'].includes(String(value.stage)) ||
+    !isNullableFiniteNumber(value.callupAt) ||
+    !isNullableFiniteNumber(value.inspectionStartedAt) ||
+    !isRecord(value.personalRecords) ||
+    !isNullableFiniteNumber(value.personalRecords.single) ||
+    !isNullableFiniteNumber(value.personalRecords.average)
+  )
+    return false;
   const voice = value.inspectionVoice;
-  if (voice !== null && (!isRecord(voice) || typeof voice.eight !== 'string' || typeof voice.twelve !== 'string')) return false;
+  if (
+    voice !== null &&
+    (!isRecord(voice) || typeof voice.eight !== 'string' || typeof voice.twelve !== 'string')
+  )
+    return false;
   const video = value.crowdVideo;
-  return video === null || (isRecord(video)
-    && typeof video.src === 'string'
-    && (video.poster === undefined || typeof video.poster === 'string'));
+  return (
+    video === null ||
+    (isRecord(video) &&
+      typeof video.src === 'string' &&
+      (video.poster === undefined || typeof video.poster === 'string'))
+  );
 }
 
 export function wcaFormatToRoundFormat(format: WcaRoundFormat): RoundFormat | null {
@@ -250,26 +454,15 @@ export function selectPlayableScrambleGroup(
       scrambles: group.regular.toSorted((a, b) => a.scramble_num - b.scramble_num),
       extras: group.extras.toSorted((a, b) => a.scramble_num - b.scramble_num),
     }))
-    .filter((group) => group.scrambles.length >= attempts && group.scrambles.slice(0, attempts).every((row) => row.scramble.trim()));
+    .filter(
+      (group) =>
+        group.scrambles.length >= attempts &&
+        group.scrambles.slice(0, attempts).every((row) => row.scramble.trim()),
+    );
   if (playable.length === 0) return null;
   const index = Math.min(playable.length - 1, Math.floor(random() * playable.length));
   const chosen = playable[index];
   return { ...chosen, scrambles: chosen.scrambles.slice(0, attempts) };
-}
-
-export function callupDelayMs(maxWaitMinutes: number, random: () => number = Math.random): number {
-  const safeMinutes = Math.min(15, Math.max(1, Math.floor(maxWaitMinutes)));
-  const maximumSeconds = safeMinutes * 60;
-  const minimumSeconds = Math.max(10, Math.min(120, Math.floor(maximumSeconds / 3)));
-  return Math.round((minimumSeconds + random() * (maximumSeconds - minimumSeconds)) * 1000);
-}
-
-export function shouldDuplicateScramble(
-  enabled: boolean,
-  attemptIndex: number,
-  random: () => number = Math.random,
-): boolean {
-  return enabled && attemptIndex > 0 && random() < 0.05;
 }
 
 export function makeCompSimSolve(
@@ -306,13 +499,14 @@ function droppedIndexes(values: readonly number[]): { bestIndex: number; worstIn
   return { bestIndex, worstIndex };
 }
 
-function officialDroppedIndexes(row: WcaResultRow, format: RoundFormat): { bestIndex: number; worstIndex: number } {
+function officialDroppedIndexes(
+  row: WcaResultRow,
+  format: RoundFormat,
+): { bestIndex: number; worstIndex: number } {
   if (format !== 'ao5' || row.attempts.length < 5 || row.attempts.some((value) => value === 0)) {
     return { bestIndex: -1, worstIndex: -1 };
   }
-  return droppedIndexes(row.attempts.map((value) => (
-    value > 0 ? value : Number.POSITIVE_INFINITY
-  )));
+  return droppedIndexes(row.attempts.map((value) => (value > 0 ? value : Number.POSITIVE_INFINITY)));
 }
 
 function primaryValue(row: Pick<CompSimLeaderboardRow, 'average' | 'best'>, format: RoundFormat): number {
@@ -372,16 +566,18 @@ export function buildCompSimLeaderboard(args: {
     if (attempt.state === 'pending' || attempt.state === 'ineligible') return 0;
     return resultToCs(attempt.ms);
   });
-  const dropped = (format === 'ao5' && args.result.list.every((attempt) => (
-    attempt.state === 'done' || attempt.state === 'dns'
-  )))
-    ? droppedIndexes(args.result.list.map((attempt) => attempt.ms ?? Number.POSITIVE_INFINITY))
-    : { bestIndex: -1, worstIndex: -1 };
+  const dropped =
+    format === 'ao5' &&
+    args.result.list.every((attempt) => attempt.state === 'done' || attempt.state === 'dns')
+      ? droppedIndexes(args.result.list.map((attempt) => attempt.ms ?? Number.POSITIVE_INFINITY))
+      : { bestIndex: -1, worstIndex: -1 };
   const simBest = resultToCs(args.result.best);
   const simAverage = format === 'ao5' || format === 'mo3' ? resultToCs(args.result.official) : 0;
   const simPrimary = primaryValue({ best: simBest, average: simAverage }, format);
-  const xprBest = simBest > 0 && args.personalRecords.single !== null && simBest < args.personalRecords.single;
-  const xprAverage = simAverage > 0 && args.personalRecords.average !== null && simAverage < args.personalRecords.average;
+  const xprBest =
+    simBest > 0 && args.personalRecords.single !== null && simBest < args.personalRecords.single;
+  const xprAverage =
+    simAverage > 0 && args.personalRecords.average !== null && simAverage < args.personalRecords.average;
   const sim: CompSimLeaderboardRow = {
     kind: 'sim',
     rank: 0,
@@ -416,7 +612,7 @@ export function advancesFromRound(
   if (!condition) return false;
   if (condition.type === 'ranking') return row.rank <= condition.level;
   if (condition.type === 'percent') {
-    return row.rank <= Math.ceil(officialCompetitorCount * condition.level / 100);
+    return row.rank <= Math.ceil((officialCompetitorCount * condition.level) / 100);
   }
   return row.primary > 0 && row.primary < condition.level;
 }
@@ -427,9 +623,11 @@ export function filterNextRoundOfficialRows(
   currentLeaderboard: readonly CompSimLeaderboardRow[],
   condition: CompWcifRound['advancementCondition'],
 ): WcaResultRow[] {
-  const qualified = new Set(currentLeaderboard
-    .filter((row) => advancesFromRound(row, condition, currentLeaderboard.length))
-    .map((row) => row.wcaId));
+  const qualified = new Set(
+    currentLeaderboard
+      .filter((row) => advancesFromRound(row, condition, currentLeaderboard.length))
+      .map((row) => row.wcaId),
+  );
   return nextRoundRows.filter((row) => qualified.has(row.wca_id));
 }
 

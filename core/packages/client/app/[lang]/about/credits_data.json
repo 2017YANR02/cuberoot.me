@@ -859,12 +859,5 @@
     "zh": "WCA 选手页个人 PB、历史记录与编辑流程来源；用 CubeRoot 现有账号、WCA 项目和成绩格式能力重新实现",
     "en": "Product flow behind personal PBs, history and editing on WCA person pages; reimplemented with CubeRoot's account, WCA event and result-formatting infrastructure",
     "long_en": "CubePB established the personal-best profile, history and editing workflow. CubeRoot's implementation is a clean integration on WCA person pages, built on its existing authentication, WCA event selection, raw result encoding, bilingual UI and PostgreSQL API. Original project licensed under GPL-3.0."
-  },
-  {
-    "name": "Your Next PR — Competition Simulator",
-    "url": "https://yournextpr.shop/comp-sim/",
-    "zh": "/comp-sim 比赛现场模拟的产品流程、交互与训练理念来源；CubeRoot 复用本站 WCA 数据、轮次与计时基础设施重新实现",
-    "en": "Product flow, interactions and training concept behind /comp-sim; reimplemented on CubeRoot's WCA, round and timer infrastructure",
-    "long_en": "Your Next PR's Competition Simulator established the one-chance competition rehearsal: authentic WCA competitions, opponents and scrambles; randomized call-ups; inspection cues; manual result entry; official-style standings and progression. CubeRoot's implementation is a clean integration with its existing WCA data, round engine, identity, event, result-formatting and responsive UI components. Media remains an explicit local manifest until licensed audio and video files are supplied."
   }
 ]
