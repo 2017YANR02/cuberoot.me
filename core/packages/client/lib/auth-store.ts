@@ -17,6 +17,7 @@ import {
 import { apiUrl } from './api-base';
 import { persistItem } from './safe-storage';
 import { resolveAccountAvatar } from './account-avatar';
+import { syncPageSessionCookie } from './home-card-access';
 
 export { ADMIN_WCA_IDS };
 export { safeNext } from './safe-next';
@@ -91,6 +92,7 @@ export async function startRolePreview(role: TestRole): Promise<void> {
     user: user ? { ...user, wcaId: user.wcaId ?? '', country: '' } : null,
   };
   sessionStorage.setItem(PREVIEW_KEY, JSON.stringify(preview));
+  syncPageSessionCookie(preview.token);
   // Reload clears queries, open files and owner-scoped state from the previous identity.
   window.location.reload();
 }
@@ -107,6 +109,7 @@ export async function endRolePreview(): Promise<void> {
   if (!preview) return;
   await revokeRolePreview(preview.id);
   sessionStorage.removeItem(PREVIEW_KEY);
+  syncPageSessionCookie(localStorage.getItem(JWT_KEY) || '');
   window.location.reload();
 }
 
@@ -204,10 +207,12 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem('cuberoot_jwt');
+    syncPageSessionCookie('');
     set({ user: null });
   },
 
   refresh: () => {
+    syncPageSessionCookie(getSessionToken());
     set({ user: readUser() });
   },
 }));
@@ -339,7 +344,7 @@ export function getSessionToken(): string {
 
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {
-    if (e.key === SESSION_KEY || e.key === TOKEN_KEY) {
+    if (e.key === null || e.key === JWT_KEY || e.key === SESSION_KEY || e.key === TOKEN_KEY) {
       useAuthStore.getState().refresh();
     }
   });

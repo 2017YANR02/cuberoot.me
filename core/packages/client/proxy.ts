@@ -27,6 +27,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { fillPlatformParams, matchPlatformRoute } from './lib/platform-routes';
+import { homeCardsRequireAdmin, matchingHomeCards, PAGE_SESSION_COOKIE } from './lib/home-card-access';
+import { verifyPageAdmin } from './lib/page-admin-session';
+import { apiUrl } from './lib/api-base';
 
 const SUPPORTED_LOCALES = ['en', 'zh'] as const;
 type Locale = typeof SUPPORTED_LOCALES[number];
@@ -150,12 +153,44 @@ function setSeoLinkHeaders(res: NextResponse, rest: string, locale: Locale) {
   res.headers.append('Link', links.join(', '));
 }
 
-export function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest) {
+  try {
+    const cards = matchingHomeCards(req.nextUrl);
+    if (!cards.length) return routeLanguage(req);
+    const upstream = await fetch(apiUrl('/v1/nav/home-locks'), { cache: 'no-store', signal: AbortSignal.timeout(5000) });
+    if (!upstream.ok) throw new Error('Lock status unavailable');
+    const data = await upstream.json();
+    if (!data?.locks || typeof data.locks !== 'object' || Array.isArray(data.locks)
+      || Object.values(data.locks).some((value) => typeof value !== 'boolean')) throw new Error('Invalid lock status');
+    const locked = homeCardsRequireAdmin(cards, data.locks);
+    let response: NextResponse;
+    if (locked && !await verifyPageAdmin(req.cookies.get(PAGE_SESSION_COOKIE)?.value ?? '')) {
+      const target = req.nextUrl.clone();
+      target.searchParams.delete('_rsc');
+      const next = `${target.pathname}${target.search}`;
+      target.pathname = '/auth/page-access';
+      target.search = '';
+      target.searchParams.set('next', next);
+      response = NextResponse.redirect(target, 307);
+    } else {
+      response = routeLanguage(req);
+    }
+    response.headers.set('Cache-Control', 'private, no-store');
+    if (locked) response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    return response;
+  } catch {
+    return new NextResponse('Page access verification unavailable. Please retry.', {
+      status: 503, headers: { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow', 'Retry-After': '5' },
+    });
+  }
+}
+
+function routeLanguage(req: NextRequest) {
   const url = req.nextUrl;
   const { pathname, searchParams } = url;
 
   // App-root, non-[lang] routes: leave entirely alone.
-  if (NON_LANG.test(pathname)) return NextResponse.next();
+  if (NON_LANG.test(pathname) || /\.[a-z0-9]+$/i.test(pathname)) return NextResponse.next();
 
   const { locale, rest } = stripLocalePrefix(pathname);
 
@@ -231,6 +266,6 @@ export function proxy(req: NextRequest) {
 export const config = {
   // Skip Next internals, API rewrites, worker chunks, and static assets.
   matcher: [
-    '/((?!_next/static|_next/image|favicon\\.ico|icons/|fonts/|cubing-chunks/|v1/|.*\\.(?:png|apng|jpg|jpeg|gif|svg|webp|avif|ico|woff2?|ttf|otf|css|js|mjs|map|wasm|json|xml|txt|html|geojson|tsv|csv|bin|gz|mp3|mp4|webm|glb|gltf)$).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|icons/|fonts/|cubing-chunks/|v1/).*)',
   ],
 };
