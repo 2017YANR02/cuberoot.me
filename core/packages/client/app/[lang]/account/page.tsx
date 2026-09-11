@@ -339,6 +339,7 @@ type AccountRegion = { code: string; name: string; cities: string[] };
 
 function BasicProfileEditor() {
   const t = useT();
+  const user = useAuthStore((s) => s.user);
   const isZh = useLang() !== 'en';
   const [profile, setProfile] = useState<AccountBasicProfile | null>(null);
   const [draft, setDraft] = useState<EditableBasicProfile | null>(null);
@@ -399,7 +400,9 @@ function BasicProfileEditor() {
   }
 
   const countryLocked = profile.countrySource === 'wca';
-  const dirty = draft.fullName !== profile.fullName
+  const nameLocked = Boolean(user?.wcaId);
+  const fullNameValue = nameLocked ? (user?.name ?? '') : (draft.fullName ?? '');
+  const dirty = (normalizeDisplayName(fullNameValue) || null) !== profile.fullName
     || draft.birthDate !== profile.birthDate
     || draft.gender !== profile.gender
     || (!countryLocked && draft.countryIso2 !== profile.countryIso2)
@@ -411,7 +414,7 @@ function BasicProfileEditor() {
     setError(null);
   };
   const save = async () => {
-    const fullName = normalizeDisplayName(draft.fullName ?? '') || null;
+    const fullName = normalizeDisplayName(fullNameValue) || null;
     if (fullName !== null && !isValidDisplayName(fullName)) {
       setError(t(`请输入不超过 ${DISPLAY_NAME_MAX_LENGTH} 个字符的姓名，不能包含换行或控制字符。`, `Enter a name of up to ${DISPLAY_NAME_MAX_LENGTH} characters without line breaks or control characters.`));
       return;
@@ -471,16 +474,18 @@ function BasicProfileEditor() {
           <input
             id="account-full-name"
             className="auth-input"
-            value={draft.fullName ?? ''}
-            disabled={saving}
+            value={nameLocked ? displayCuberName(fullNameValue, isZh) : fullNameValue}
+            disabled={saving || nameLocked}
             autoComplete="name"
             aria-describedby="account-full-name-hint"
             onChange={(event) => updateDraft({ fullName: event.target.value || null })}
           />
-          {draft.fullName && !saving && <ClearButton onClick={() => updateDraft({ fullName: null })} preserveFocus />}
+          {draft.fullName && !saving && !nameLocked && <ClearButton onClick={() => updateDraft({ fullName: null })} preserveFocus />}
         </div>
         <p id="account-full-name-hint" className="auth-hint">
-          {t(`最多 ${DISPLAY_NAME_MAX_LENGTH} 个字符，不会替代公开显示的用户名。`, `Up to ${DISPLAY_NAME_MAX_LENGTH} characters. This does not replace your public username.`)}
+          {nameLocked
+            ? t('已绑定 WCA，姓名使用 WCA 实名，无需填写。', 'WCA is linked, so your name comes from WCA and cannot be edited here.')
+            : t(`最多 ${DISPLAY_NAME_MAX_LENGTH} 个字符，不会替代公开显示的用户名。`, `Up to ${DISPLAY_NAME_MAX_LENGTH} characters. This does not replace your public username.`)}
         </p>
       </div>
       <div className="account-basic-profile-field">
