@@ -134,15 +134,50 @@
     "name": "KPF: Shanghai World Financial Center",
     "space": true,
     "url": "https://www.kpf.com/project/shanghai-world-financial-center",
-    "zh": "设计事务所项目资料用于环球金融中心方形基部、弧形收分与顶部梯形开口。2026-09-08 再次查看远景实拍和结构立面图，补 Blender 实体幕墙分格与开口内衬，减弱蓝色轮廓光；新增构件避开贯通开口。幕墙节距、层高与开口尺寸仍为估算，结构图不视为实拍照片。",
-    "en": "The architect's project references SWFC's square base, curved taper and trapezoidal portal. Distance photographs and a structural elevation were reviewed again 2026-09-08 for physical Blender curtain-wall framing and aperture linings, with restrained blue edge light. New framing leaves the portal open. Mullion pitch, floor levels and aperture dimensions remain estimates; the structural drawing is not a photograph."
+    "zh": "设计事务所的建成实拍与双向剖面，用于核对环球金融中心方形基部、弧形收削、顶部开口及观光桥底。2008 年为竣工年，照片作者与拍摄日期未列，未核得开放许可。顶部修订仍处于参考核查与候选准备，曲面、洞口尺寸及幕墙分格含估算，尚未完成模型验收。查阅于 2026-09-10",
+    "en": "The architect's completed-building photographs and two sectional views reference SWFC's square base, curved cuts, top aperture and observation-bridge underside. 2008 is the completion year; photo authors and capture dates are unlisted, with no open license established. Top revisions remain in reference review and candidate preparation. Curves, aperture dimensions and curtain-wall spacing include estimates; model acceptance is pending. Accessed 2026-09-10"
   },
   {
     "name": "Shanghai World Financial Center: project facts",
     "space": true,
-    "url": "https://swfc-shanghai.com/about_intro.php?l=en",
-    "zh": "项目官网提供环球金融中心 492 米高度、地上 101 层依据；本站总高按此设定。查阅于 2026-09-07",
-    "en": "The project website documents SWFC's 492 m height and 101 above-ground floors, used for the model's overall height. Accessed 2026-09-07"
+    "url": "https://www.swfc-shanghai.com/pdf/swfc_project_brochure_cn.pdf",
+    "zh": "业主项目册提供 492 米总高、地上 101 层，以及约 58×58 米标准办公层和北箭头。观光层图文用于核对 97 层玻璃顶与 100 层玻璃地板；顶部尺寸及跨图推定的朝向仍需校准。PDF 元数据日期为 2014-01-16，不代表照片拍摄日；单张图片作者与开放许可未核得。查阅于 2026-09-10",
+    "en": "The owner's brochure documents the 492 m height, 101 above-ground floors and an approximately 58×58 m standard office floor with a north arrow. Observatory text and images reference the 97F glass roof and 100F glass floor. Top dimensions and orientation inferred across drawings still need calibration. The PDF metadata date, 2014-01-16, is not a photo capture date; individual image authors and an open license were not established. Accessed 2026-09-10"
+  },
+  {
+    "name": "Mori Building: SWFC observatory announcement",
+    "space": true,
+    "url": "https://www.mori.co.jp/press/release/post_202/",
+    "zh": "2009-08-27 业主公告区分 100 层地上 474 米与海拔 477.96 米，并说明约 55 米观光桥和 97 层可开启玻璃顶。用于楼层与尺度核对；楼面标高不是桥底高度，走廊长度不是冠部外宽，也不代表当前灯光实测。查阅于 2026-09-10",
+    "en": "The owner's 2009-08-27 announcement distinguishes 100F at 474 m above ground from 477.96 m above sea level, and describes the approximately 55 m observation bridge and openable 97F glass roof. These anchor floor levels and scale: floor elevation is not the bridge underside, corridor length is not crown width, and the announcement provides no current lighting measurements. Accessed 2026-09-10"
+  },
+  {
+    "name": "Quan et al. (2013): SWFC field measurements",
+    "space": true,
+    "url": "https://doi.org/10.1155/2013/902643",
+    "zh": "同济大学 Quan、Wang、Gu、Kuang 的现场测风论文，2013 年发表，采用知识共享署名许可。图 2、5 及北箭头确认塔顶长轴沿东北—西南，用于纠正候选模型的对角朝向；示意图不能提供精确测绘方位。仪器间距与安装高度不作为观光桥尺寸。查阅于 2026-09-10",
+    "en": "The 2013 field-measurement paper by Quan, Wang, Gu and Kuang at Tongji University is published under a Creative Commons Attribution license. Figures 2 and 5 establish the northeast–southwest rooftop axis, informing correction of the candidate model's diagonal. These diagrams do not provide surveyed bearings; instrument spacing and mounting height are not observation-bridge dimensions. Accessed 2026-09-10"
+  },
+  {
+    "name": "The Skyscraper Museum: SWFC drawings",
+    "space": true,
+    "url": "https://old.skyscraper.org/EXHIBITIONS/TEN_TOPS/swfc.php",
+    "zh": "博物馆发布、署名 KPF 的逐层平面与剖面，用于核对方形向对角收削截面的变化，以及 98/99 层两端分离、100 层由桥连接的关系。立面配图为渲染图，图纸日期未列，未见开放许可；图线不能替代竣工尺寸测绘。查阅于 2026-09-10",
+    "en": "Museum-published floor plans and sections credited to KPF reference the square-to-diagonally-cut profile and the separated ends at 98/99F joined by the 100F bridge. The accompanying elevations are renderings. Drawing dates are unlisted and no open license was found; the drawings do not replace an as-built dimensional survey. Accessed 2026-09-10"
+  },
+  {
+    "name": "Irie Miyake Architects & Engineers: SWFC photographs",
+    "space": true,
+    "url": "https://www.imae.co.jp/en/works/shanghai-world-financial-center",
+    "zh": "项目页建成实拍用于核对 97 层白色玻璃顶框、100 层桥底与两端连接，以及高位外观。页面记载 2008 年竣工，未列摄影者或拍摄日，未核得开放许可。照片仅作参考，构件尺寸与材料参数仍为估算。查阅于 2026-09-10",
+    "en": "Completed-building photographs on the project page reference the white 97F glass-roof framing, the 100F bridge underside and end connections, and the elevated exterior view. The page records completion in 2008, without a photographer or capture date; no open license was established. Photos are references only, with member dimensions and material parameters still estimated. Accessed 2026-09-10"
+  },
+  {
+    "name": "ArcelorMittal HISTAR: SWFC aerial photograph",
+    "space": true,
+    "url": "https://constructalia.arcelormittal.com/files/5_3_1_HISTAR_web--01d1dbea37a973eac1d0153ef74c1d7e.pdf",
+    "zh": "2020 年 HISTAR 技术册第 34 页的建成俯照，原图署名 © Teri Meyer Boake / CTBUH，用于核对顶桥、97 层顶棚及冠部设备槽。2020 年为技术册版权年，照片拍摄日期未列，未见开放许可。照片仅作参考，槽深、设备尺寸与准确数量尚未核定。查阅于 2026-09-10",
+    "en": "The completed-building aerial photograph on page 34 of the 2020 HISTAR brochure is credited exactly as © Teri Meyer Boake / CTBUH. It references the top bridge, 97F canopy and crown equipment channel. 2020 is the brochure copyright year; the photo capture date is unlisted and no open license was found. The photo is a reference only; channel depth, equipment dimensions and exact counts remain unverified. Accessed 2026-09-10"
   },
   {
     "name": "上海绿色照明发展报告 2022",

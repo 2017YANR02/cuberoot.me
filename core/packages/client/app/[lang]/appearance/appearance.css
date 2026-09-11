@@ -310,3 +310,14 @@
     gap: 12px;
   }
 }
+
+@media screen {
+  body[data-site-scenery] :is(.ac-card, .ac-background-expand) {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+    box-shadow: var(--glass-shadow);
+  }
+  /* Palette swatches remain solid to accurately compare their native colors. */
+}

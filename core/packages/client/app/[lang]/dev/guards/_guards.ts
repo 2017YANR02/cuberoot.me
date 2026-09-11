@@ -15,6 +15,15 @@ export interface PairedGuard {
 
 export const PAIRED_GUARDS: PairedGuard[] = [
   {
+    id: 'modal-dismiss',
+    scope: 'project',
+    hook: 'hook-detect-modal-dismiss.mjs',
+    test: 'modal-dismiss-guard.test.ts',
+    baseline: '0',
+    zh: { title: '弹窗外部点击关闭', desc: '识别 backdrop、scrim、dialog-layer 和带 dialog 的 overlay,拦截未接关闭事件的遮罩。新改弹窗复用 useModalDismiss / useModalBackdrop,内部点击和拖出不误关。CI 全量扫描接线,交互测试验证共享行为;静态检查不能证明任意自写回调真的关闭弹窗。' },
+    en: { title: 'Outside-click modal dismissal', desc: 'Detects backdrops, scrims, dialog layers and overlays containing dialogs without dismissal wiring. New or edited modals use useModalDismiss / useModalBackdrop to avoid inside-click and drag-out dismissal. CI scans wiring and interaction tests verify shared behavior; static analysis cannot prove arbitrary callbacks actually close a dialog.' },
+  },
+  {
     id: 'architecture-boundaries',
     scope: 'project',
     hook: 'check-architecture-boundaries.mjs',

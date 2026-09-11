@@ -396,3 +396,10 @@
   .api-path { min-width: 100%; order: 3; }
   .api-detail-h { min-width: 0; width: 100%; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .api-page {
+    background: transparent;
+  }
+}

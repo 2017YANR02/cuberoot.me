@@ -1,0 +1,10 @@
+import {C,p,e,line,face,paper} from './art.mjs';
+const feather=(x,y,w,h,c)=>paper(`M${x} ${y}q${w/2} -3 ${w} 0v${h-6}q-${w/2} 11 -${w} 0Z`,c,'#657568');
+export default {id:'owl',number:26,zh:'叠羽鸮',en:'Layerfeather Owl',pixel:false,locomotion:'flutter',gesture:'wing',render({joint:j}){
+ const feet=j('footLeft',p('M100 179v11l-10 4h25l-7-5v-10Z',C.gold)+line('M99 190v4m8-4v4',C.brown,2),[103,181])+j('footRight',p('M137 179v11l-10 4h25l-7-5v-10Z',C.gold)+line('M136 190v4m8-4v4',C.brown,2),[140,181]);
+ const body=e(121,145,44,43,C.teal)+p('M83 136Q100 144 111 138L111 159Q96 163 80 153Z',C.teal)+p('M112 137Q122 141 132 137L135 155Q124 167 109 156Z',C.cream)+p('M84 154Q96 162 110 156L114 177Q92 180 83 166Z',C.cream)+p('M111 157Q125 164 137 156L141 177Q124 188 111 176Z',C.orange)+p('M138 156Q151 161 160 152L160 168Q154 178 142 178Z',C.orange)+p('M97 177Q109 181 120 182L119 188Q105 189 97 183Z',C.teal)+p('M121 182Q134 184 144 178L145 184Q132 191 121 188Z',C.cream);
+ const wing=(side)=>side==='left'?paper('M83 125Q68 132 70 153L75 171Q81 183 87 174L87 141Z',C.teal)+paper('M78 135Q71 142 74 156L80 164L84 143Z',C.orange)+paper('M74 155Q74 168 81 176L85 170L83 155Z',C.cream):paper('M157 125Q174 132 172 153L167 171Q161 183 155 174L155 141Z',C.teal)+paper('M164 135Q171 142 168 156L162 164L158 143Z',C.orange)+paper('M168 155Q168 168 161 176L157 170L159 155Z',C.cream);
+ const ears=j('earLeft',paper('M86 83Q74 76 78 55Q93 63 98 82Z',C.teal)+p('M80 60l6 18l7 2Z',C.cream),[90,83])+j('earRight',paper('M145 82Q149 63 164 55Q168 74 156 85Z',C.teal)+p('M161 61l-7 18l-5 2Z',C.cream),[151,82]);
+ const head=ears+p('M77 105Q78 75 119 72Q163 75 165 105L158 134Q122 146 84 135Z',C.teal)+p('M104 76l18 14l16-14Z',C.orange)+e(102,109,21,27,C.cream)+e(140,109,21,27,C.cream)+face(j,{x:121,y:109,gap:19,size:11,color:'#80552C',white:'#F7DFB3',smile:false})+j('mouth',p('M115 121Q121 115 127 121L121 133Z',C.gold),[121,123]);
+ return j('body',feet+body+j('left',wing('left'),[84,130])+j('right',wing('right'),[158,130])+j('head',head,[121,135]),[121,151]);
+}};

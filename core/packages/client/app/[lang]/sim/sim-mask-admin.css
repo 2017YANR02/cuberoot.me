@@ -15,7 +15,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: min(920px, 100%);
+  width: min(660px, 100%);
   max-height: min(80vh, 720px);
   padding: 14px 16px;
   border-radius: 8px;
@@ -37,8 +37,14 @@
   color: var(--muted-foreground);
 }
 
-.sim-mask-admin-x {
+.sim-mask-admin-actions {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sim-mask-admin-x {
   display: inline-flex;
   align-items: center;
   padding: 4px;
@@ -85,11 +91,11 @@
 .sim-mask-admin-row,
 .sim-mask-admin-columns {
   display: grid;
-  grid-template-columns: 15ch 14ch 14ch 4em 28px 28px;
+  grid-template-columns: 15ch minmax(0, 1fr) minmax(0, 1fr) 28px 28px;
   font-size: 12px;
   align-items: center;
   gap: 6px;
-  padding: 2px 0 2px 28px;
+  padding: 2px 34px 2px 16px;
 }
 
 .sim-mask-admin-columns > span { white-space: nowrap; }
@@ -97,8 +103,18 @@
 .sim-mask-admin-columns > span:first-child { grid-column: 2; }
 .sim-mask-admin-columns > span:last-child { grid-column: 3; }
 
-.sim-mask-admin-group-title { min-height: 28px; padding-left: 28px; }
-.sim-mask-admin-row > .sortable-card-drag-handle { top: 2px; height: 28px; }
+.sim-mask-admin-group-title { min-height: 28px; padding-right: 34px; }
+.sim-mask-admin-group > .sortable-card-drag-handle,
+.sim-mask-admin-row > .sortable-card-drag-handle {
+  left: auto;
+  right: 0;
+  top: 2px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
 .sim-mask-admin-row .sim-mask-admin-input,
 .sim-mask-admin-row .sim-mask-admin-btn,
 .sim-mask-admin-row .sim-mask-admin-icon { height: 28px; box-sizing: border-box; }
@@ -115,7 +131,6 @@
 }
 
 .sim-mask-admin-field > span { white-space: nowrap; }
-.sim-mask-admin-field select { width: fit-content; max-width: 100%; }
 
 .sim-mask-admin-row.is-hidden .sim-mask-admin-key,
 .sim-mask-admin-row.is-hidden .sim-mask-admin-input {
@@ -203,6 +218,7 @@
 }
 
 @media (max-width: 720px) {
+  .sim-mask-admin-head > .sim-mask-admin-note { order: 1; width: 100%; }
   .sim-mask-admin-key {
     display: none;
   }
@@ -213,7 +229,7 @@
 
   .sim-mask-admin-row,
   .sim-mask-admin-columns {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 4em 28px 28px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 28px 28px;
     gap: 4px;
   }
   .sim-mask-admin-columns > span:first-child { grid-column: 1; }

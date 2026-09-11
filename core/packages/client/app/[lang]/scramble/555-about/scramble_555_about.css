@@ -422,3 +422,32 @@
     text-decoration: none;
 }
 .s555-refs a:hover { text-decoration: underline; }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .s555-page {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .s555-header,
+  body[data-site-scenery] .s555-card {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+}
+
+/* Local neutral aliases follow the active scenery palette. */
+@media screen {
+  body[data-site-scenery] .s555-page {
+    --s555-bg: var(--background);
+    --s555-surface: var(--card);
+    --s555-text: var(--foreground);
+    --s555-text-sub: var(--muted-foreground);
+    --s555-text-mute: var(--faint-foreground);
+    --s555-border: var(--border-default);
+    --s555-border-strong: var(--border-strong);
+  }
+}

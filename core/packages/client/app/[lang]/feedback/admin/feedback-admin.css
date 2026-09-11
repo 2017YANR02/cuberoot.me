@@ -108,3 +108,14 @@
 @media (max-width: 480px) {
   .fba-media { width: calc(50% - 4px); height: 110px; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .fba-card {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+}

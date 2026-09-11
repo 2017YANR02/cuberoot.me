@@ -742,3 +742,10 @@ html[data-theme=dark] .colpi-page .colpi-flag-btn {
   .colpi-detail-pair { font-size: 22px; }
   .colpi-recent-table, .colpi-leaders-table { font-size: 12px; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .colpi-page {
+    background: transparent;
+  }
+}

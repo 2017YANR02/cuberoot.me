@@ -264,3 +264,10 @@ img.cg-flag { width: 34px; height: 25px; object-fit: cover; }
 @media (max-width: 640px) {
   .cg { padding: 56px 16px 40px; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .cg {
+    background: transparent;
+  }
+}

@@ -171,7 +171,7 @@ export function OnlineCompetitionPreview() {
       <div className="oc-columns">
         <section className="oc-main-content">
           <nav className="oc-tabs" aria-label={t('赛事内容', 'Event information')}>
-            {(['schedule', 'rules', 'results'] as const).map((key, index) => <button type="button" key={key} aria-current={tab === key ? 'page' : undefined} onClick={() => { void setTab(key); }}>{[t('项目与场次', 'Events & sessions'), t('参赛规则', 'Rules'), t('比赛成绩', 'Results')][index]}</button>)}
+            {(['schedule', 'rules', 'results'] as const).map((key, index) => <button type="button" className="oc-tab" key={key} aria-current={tab === key ? 'page' : undefined} onClick={() => { void setTab(key); }}>{[t('项目与场次', 'Events & sessions'), t('参赛规则', 'Rules'), t('比赛成绩', 'Results')][index]}</button>)}
           </nav>
           {tab === 'schedule' ? <>
             <div className="oc-section-heading"><h3>{t('选一个项目，留出一小时', 'Pick an event. Set aside an hour.')}</h3><p>{t('在比赛期限内任选有名额的监督场次。每个项目选择一次。', 'Choose an available supervised session within the competition window. One session per event.')}</p></div>

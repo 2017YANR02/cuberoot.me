@@ -401,3 +401,32 @@
   .dc-layer-card { padding: 16px; gap: 12px; }
   .dc-code-pre { font-size: 11.5px; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .dc-page {
+    --dc-bg: var(--background);
+    --dc-bg-2: var(--card);
+    --dc-panel: var(--card);
+    --dc-panel-2: var(--muted);
+    --dc-line: var(--border-default);
+    --dc-line-2: var(--border-strong);
+    --dc-line-3: var(--border-strong);
+    --dc-text: var(--foreground);
+    --dc-text-dim: var(--muted-foreground);
+    --dc-text-faint: var(--faint-foreground);
+    color-scheme: inherit;
+    background: transparent;
+  }
+
+  body[data-site-scenery] .dc-detect-card,
+  body[data-site-scenery] .dc-layer-card {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery] .dc-bg-glow { display: none; }
+}

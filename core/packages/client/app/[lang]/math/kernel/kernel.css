@@ -113,3 +113,18 @@
   .kn-main { padding: 1.5rem 0.9rem 3rem; }
   .kn-detail-lbl { min-width: auto; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .kernel-page {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .kn-card {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+}

@@ -48,6 +48,10 @@ const rotate = (x, y, angle) => {
   const radians = angle * Math.PI / 180;
   return [x * Math.cos(radians) - y * Math.sin(radians), x * Math.sin(radians) + y * Math.cos(radians)];
 };
+// Samples of the approved traced paw outline in its 104×109 use viewport.
+// Rotating an empty rectangular viewport exaggerated eye collisions and
+// pushed the real paw away from its body, especially in curled poses.
+const pawContour = [[23.9,-7.2],[36.4,-4.9],[46.3,3],[51.2,14.8],[50.4,27.2],[46.3,39.3],[39.4,50.3],[33.8,60.9],[28.9,72.6],[19,80.9],[6.9,84.7],[-5.6,85.9],[-18.4,85.9],[-30.9,84.3],[-42.2,78.7],[-49.8,68.5],[-50.9,56],[-46.8,43.9],[-39.2,33.7],[-29.4,25.3],[-18.8,18.5],[-7.8,11.7],[2.4,4.2],[11.5,-4.5]];
 
 // Resolve the same pose for paws, connectors and props. Keep the full eye
 // region clear even while blinking; expression changes must not move a hand.
@@ -55,21 +59,33 @@ export function resolvePose(name, change = {}) {
   if (!poses[name]) throw Error(`Unknown pose ${name}`);
   const state = { ...poses[name], ...change };
   const v = view(state.yaw);
-  if (!v.face) return state;
   const [bx, by, angle, sx, sy] = state.b;
+  // Paws grow directly from the lower shell. Keep their wrists inside that
+  // short attachment band instead of filling distant targets with long limbs.
+  for (const bone of ['L', 'R', 'HL', 'HR']) {
+    const front = bone === 'L' || bone === 'R';
+    const [px, py, rotation, scaleX, rawScaleY] = state[bone];
+    const scaleY = Math.min(rawScaleY, 1);
+    const wrist = rotate(front ? 28 * scaleX : 0, front ? 9 * scaleY : 0, rotation);
+    const local = rotate(px + wrist[0] - bx, py + wrist[1] + 190 - by, -angle);
+    const localX = Math.max(-v.width / 2 + 30, Math.min(v.width / 2 - 30, local[0] / sx));
+    const localY = Math.max(100, Math.min(155, local[1] / sy));
+    const anchor = rotate(localX * sx, localY * sy, angle);
+    state[bone] = [anchor[0] + bx - wrist[0], anchor[1] + by - 190 - wrist[1], rotation, scaleX, scaleY];
+  }
+  if (!v.face) return state;
   const eyes = [-192, 45].map(eyeX => bounds([-37, 37].flatMap(dx => [-40, 40].map(dy => {
     const [x, y] = rotate(((eyeX + dx) * v.f + v.tx) * sx, (50 + dy) * sy, angle);
     return [x + bx, y + by - 190];
   }))));
   for (const bone of ['L', 'R']) {
     const [px, py, rotation, scaleX, scaleY] = state[bone];
-    // Bounds of the existing traced paw's use viewport, including its outline.
-    const paw = bounds([-55, 55].flatMap(x => [-11, 90].map(y => {
+    const paw = bounds(pawContour.map(([x, y]) => {
       const [rx, ry] = rotate(x * scaleX, y * scaleY, rotation);
       return [px + rx, py + ry];
-    })));
-    const obstacles = eyes.filter(eye => paw.right > eye.left - 10 && paw.left < eye.right + 10 && paw.bottom > eye.top - 10 && paw.top < eye.bottom + 10);
-    if (obstacles.length) state[bone] = [px, py + Math.max(...obstacles.map(eye => eye.bottom + 10 - paw.top)), rotation, scaleX, scaleY];
+    }));
+    const obstacles = eyes.filter(eye => paw.right > eye.left - 5 && paw.left < eye.right + 5 && paw.bottom > eye.top - 5 && paw.top < eye.bottom + 5);
+    if (obstacles.length) state[bone] = [px, py + Math.max(...obstacles.map(eye => eye.bottom + 5 - paw.top)), rotation, scaleX, scaleY];
   }
   return state;
 }
@@ -92,34 +108,20 @@ export function animateCharacter({ a, part, at, t, plan, options, id, duration, 
   const views = keys.map(([time, state, curve]) => [time, state.yaw, curve]);
   const viewFrames = fn => views.map(([time, yaw, curve]) => [time, fn(view(yaw)), curve]);
   const joint = values => t(...values);
-  // Upper limbs originate beneath the shell, with their roots occluded by
-  // the body. This keeps a lifted or side-on paw physically attached.
-  const connector = (bone, fill, width) => {
-    let previousAngle;
-    return a(`<rect x="0" y="${-width / 2}" width="100" height="${width}" rx="${width / 2}" fill="${fill}"/>`, frames(s => {
-    const isArm = bone === 'L' || bone === 'R';
-    const cx = s.b[0], cy = (isArm ? -65 : -190) + s.b[1];
-    const [px, py, angle, sx, sy] = s[bone];
-    // The traced paw's wrist sits inside its upper-right lobe, not at the
-    // animation pivot. Follow that point through rotation to avoid a gap.
-    const radians = angle * Math.PI / 180;
-    const wristX = isArm ? 28 * sx : 0, wristY = isArm ? 9 * sy : 0;
-    const dx = px + wristX * Math.cos(radians) - wristY * Math.sin(radians) - cx;
-    const dy = py + wristX * Math.sin(radians) + wristY * Math.cos(radians) - cy;
-    // Unwrap the left-pointing angle so crossing -180/180 never spins the
-    // connector through the head while the paw takes the short route.
+  // Only the root-sign stalk needs a connector. Paws attach directly.
+  let previousAngle;
+  const connections = a(`<rect x="0" y="-7.5" width="100" height="15" rx="7.5" fill="${ink}"/>`, frames(s => {
+    const cx = s.b[0], cy = -190 + s.b[1];
+    const dx = s.T[0] - cx, dy = s.T[1] - cy;
     let direction = Math.atan2(dy, dx) * 180 / Math.PI;
     if (previousAngle !== undefined) {
       while (direction - previousAngle > 180) direction -= 360;
       while (direction - previousAngle < -180) direction += 360;
     }
     previousAngle = direction;
-    // Bury the rounded end inside the paw, including between rotation keys.
-    return t(cx, cy, direction, (Math.hypot(dx, dy) + (isArm ? 24 : 0)) / 100, 1);
+    return t(cx, cy, direction, Math.hypot(dx, dy) / 100, 1);
   }));
-  };
-  const connections = ['L', 'R', 'HL', 'HR'].map(bone => connector(bone, blue, 34)).join('') + connector('T', ink, 15);
-  const limb = (name, bone, w, h) => `<g data-rig-part="${bone}">${a(part(name, -w / 2, -15, w, h), frames(s => joint(s[bone])))}</g>`;
+  const limb = (name, bone, w, h) => `<g data-rig-part="${bone}">${a(`<g transform="scale(1 ${name === 'rear' ? .64 : 1})">${part(name, -w / 2, -15, w, h)}</g>`, frames(s => joint(s[bone])))}</g>`;
   const hind = limb('rear', 'HL', 100, 120) + limb('rear', 'HR', 106, 123);
   const arms = limb('paw', 'L', 104, 109) + limb('paw', 'R', 106, 109);
   // A shared projection keeps every part of the original outline. Adjacent
@@ -134,12 +136,10 @@ export function animateCharacter({ a, part, at, t, plan, options, id, duration, 
   // Only the curved transition needs subdivisions; the broad front and far
   // side each stay a single strip to keep gallery playback inexpensive.
   const edges = [-248, 93, 108, 123, 138, 153, 168, 183, 262];
-  // Chromium's SVG-as-image path clips each traced paint unless the skin is first
-  // composited. That exposes the white underpaint along every strip boundary,
-  // even with crisp clips and overlap. An identity filter flattens only the
-  // skin before clipping, without changing its colors or contour geometry.
-  const skinComposite = `rb-skin-${id}`;
-  const skinFilter = `<filter id="${skinComposite}" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0"/></filter>`;
+  // Composite the traced paints before clipping so their white underpaint
+  // cannot leak along strip edges in <img>. Near-opaque group opacity keeps
+  // this isolation without the identity filter's blurry scaled raster surface.
+  // Keep this below 1: fully opaque groups lose the isolation in Chromium.
   const surface = edges.slice(0, -1).map((left, i) => {
     const right = edges[i + 1];
     const clip = `rb-view-${id}-${i}`;
@@ -148,7 +148,7 @@ export function animateCharacter({ a, part, at, t, plan, options, id, duration, 
     // pale vertical seams. Only the invisible clip is crisp; traced contours
     // retain their normal antialiasing.
     return `<clipPath id="${clip}"><rect shape-rendering="crispEdges" x="${left - 2}" y="-390" width="${right - left + 4}" height="410"/></clipPath>`
-      + a(`<g data-shell-strip="${i}" clip-path="url(#${clip})"><g filter="url(#${skinComposite})">${part('shell', -248, -371, 510, 352)}</g></g>`, viewFrames(v => {
+      + a(`<g data-shell-strip="${i}" clip-path="url(#${clip})"><g opacity="0.999">${part('shell', -248, -371, 510, 352)}</g></g>`, viewFrames(v => {
         const sx = (project(right, v) - project(left, v)) / (right - left);
         return `transform:matrix(${number(sx)},0,0,1,${number(project(left, v) - sx * left)},0);`;
       }));
@@ -238,7 +238,7 @@ export function animateCharacter({ a, part, at, t, plan, options, id, duration, 
   const face = a(a(`<g data-rig-part="face">${faceArt}</g>`, visibility, undefined, 'steps(1,end)'), viewFrames(v => {
     return `transform:matrix(${number(v.f)},0,0,1,${number(v.tx)},0);`;
   }));
-  const shell = skinFilter + a(`<g data-rig-part="shell">${surface + face}</g>`, frames(s => joint(s.b)), '0px -190px');
+  const shell = a(`<g data-rig-part="shell">${surface + face}</g>`, frames(s => joint(s.b)), '0px -190px');
   const tail = a(`<g class="rb-tail-outline">${part('tail', -59.4, -160.72, 180, 164)}</g>`, frames(s => joint(s.T)));
   const heldArt = held.map(({ bone = 'L', art, angle = 0, size = 1, inFront = false }) => {
     // Follow the wrist's rotation arc, not a straight line between grips.

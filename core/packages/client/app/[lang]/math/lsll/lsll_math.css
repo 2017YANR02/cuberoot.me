@@ -177,3 +177,19 @@
 .lmath-xlink-body { flex: 1 1 260px; }
 .lmath-xlink-title { font-weight: 700; color: var(--accent); }
 .lmath-xlink-desc { font-size: 0.88rem; color: var(--lm-sub); line-height: 1.55; margin-top: 2px; }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .lmath-page {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .lmath-header,
+  body[data-site-scenery] .lmath-num-card {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+}

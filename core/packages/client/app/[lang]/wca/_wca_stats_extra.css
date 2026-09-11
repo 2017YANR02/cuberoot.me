@@ -449,3 +449,10 @@ th.wse-sor-evcell { padding: 4px 2px !important; }
   max-width: 200px;
   line-height: 1.3;
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .wse-page {
+    background: transparent;
+  }
+}

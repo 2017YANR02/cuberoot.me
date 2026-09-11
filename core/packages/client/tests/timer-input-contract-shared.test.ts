@@ -419,19 +419,27 @@ describe('Web migration consumes the shared contract', () => {
     expect(wheelWrapper).not.toContain('forwardRef');
   });
 
-  it('routes pointer, keyboard, smart-cube, and hardware starts through the shared gate', () => {
+  it('routes starts through the practice gate or authorized competition preparation', () => {
     const soloSource = readFileSync(new URL(
       '../app/[lang]/timer/_shell/SoloView.tsx', import.meta.url,
     ), 'utf8');
 
-    expect(soloSource).toContain('const attemptCanStart = timerCanStartAttempt({');
+    expect(soloSource).toMatch(
+      /const attemptCanStart = competition\.enabled\s*\? competition\.authorized && Boolean\(competition\.attempt\)\s*:\s*timerCanStartAttempt\(\{/,
+    );
     expect(soloSource).toContain("? 'loading'");
     expect(soloSource).toContain("? 'unavailable'");
     expect(soloSource).toContain(
       'sourceMatches: scrambleGeneratorAtHistoryResetRef.current === genScramble',
     );
     expect(soloSource).toContain('timerCanHandleAttemptPress(');
-    expect(soloSource.match(/timer\.onPressDown\(\)/g)).toHaveLength(1);
+    expect(soloSource.match(/timer\.onPressDown\(\)/g)).toHaveLength(2);
+    expect(soloSource).toMatch(
+      /if \(competitionRef\.current\.enabled\) return false;\s*if \(!timerCanHandleAttemptPress\([\s\S]*?timer\.onPressDown\(\)/,
+    );
+    expect(soloSource).toMatch(
+      /if \(!await competition\.begin\(scrambleTarget, bluetoothCube\.status\)\) return;[\s\S]*?if \(!latest\?\.status\.connected \|\| latest\.hijacked \|\| !latestFaces \|\| toFaceletString\(latestFaces\) !== scrambleTarget\) \{[\s\S]*?return;\s*\}\s*timer\.onPressDown\(\)/,
+    );
     expect(soloSource).toMatch(
       /startFromCubeRef\.current[\s\S]*?if \(!attemptCanStartRef\.current\) return;[\s\S]*?timer\.startFromCube/,
     );

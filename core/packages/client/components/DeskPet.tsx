@@ -22,7 +22,9 @@ import { ClearButton } from '@/components/ClearButton';
 import { persistItem } from '@/lib/safe-storage';
 import { subscribeBeat, getMetronomeState } from '@/lib/metronome';
 import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
-import { ROOTBEAST_AUTO, ROOTBEAST_BASE, ROOTBEAST_FILES, ROOTBEAST_MINI_FILES, ROOTBEAST_RANDOM_SCENES, ROOTBEAST_VERSION } from '@/lib/deskpet-rootbeast';
+import { getOriginalScene, ORIGINAL_CHARACTERS, ORIGINAL_SCENES, ORIGINAL_THEMES, type OriginalCharacterId } from '@/lib/deskpet-originals';
+import { getRootBeastScene, ROOTBEAST_AUTO, ROOTBEAST_BASE, ROOTBEAST_FILES, ROOTBEAST_MINI_FILES, ROOTBEAST_RANDOM_SCENES, ROOTBEAST_SCENES, ROOTBEAST_VERSION } from '@/lib/deskpet-rootbeast';
+import type { CareAction } from '@/lib/deskpet-care';
 // SSR-safe layout effect (DeskPet is rendered in the root layout).
 const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
@@ -34,12 +36,13 @@ const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffe
 // its own 168KB at click time (measured).
 const loadDeskPetSearch = () => import('@/components/DeskPetSearch');
 const DeskPetSearch = dynamic(loadDeskPetSearch, { ssr: false });
+const DeskPetHome = dynamic(() => import('@/components/DeskPetHome'), { ssr: false });
 // Lazy: admin-only new-submission dropdown, only loads when an admin opens it.
 const AdminSubmissionsPanel = dynamic(() => import('@/components/AdminSubmissionsPanel'), { ssr: false });
 // Lazy: the floating metronome, only loads once the user opens it from the toolbar.
 const FloatingMetronome = dynamic(() => import('@/components/FloatingMetronome'), { ssr: false });
 
-type ThemeId = 'clawd' | 'calico' | 'cloudling' | 'rootbeast';
+type ThemeId = 'clawd' | 'calico' | 'cloudling' | 'rootbeast' | OriginalCharacterId;
 
 interface MiniTheme {
   offsetRatio: number; // box overhangs the edge by offsetRatio*W; (1-ratio)*W stays on screen
@@ -53,6 +56,7 @@ interface MiniTheme {
 }
 
 interface PetTheme {
+  pixel?: boolean;
   base: string;
   version?: string;
   auto?: Record<string, number>;
@@ -67,6 +71,7 @@ interface PetTheme {
 
 // State→asset maps mirror each clawd-on-desk theme.json `states`/`reactions`.
 const THEMES: Record<ThemeId, PetTheme> = {
+  ...ORIGINAL_THEMES,
   rootbeast: {
     base: ROOTBEAST_BASE, version: ROOTBEAST_VERSION, inlineIdle: false,
     thumb: `${ROOTBEAST_BASE}${ROOTBEAST_FILES.idle}?v=${ROOTBEAST_VERSION}`, thumbScale: 1.5,
@@ -162,7 +167,7 @@ const THEMES: Record<ThemeId, PetTheme> = {
   },
 };
 
-const THEME_IDS: ThemeId[] = ['rootbeast', 'clawd', 'calico', 'cloudling'];
+const THEME_IDS: ThemeId[] = ['rootbeast', 'clawd', 'calico', 'cloudling', ...ORIGINAL_CHARACTERS.map(character => character.id)];
 
 // one-shot states auto-return to idle after N ms
 const AUTO: Record<string, number> = {
@@ -193,6 +198,7 @@ type Size = 's' | 'm' | 'l';
 // (measured from rendered art). The pet sits at different spots in the box, so
 // we keep this point — not the box center — fixed across size/character changes.
 const VC: Record<ThemeId, [number, number]> = {
+  ...Object.fromEntries(ORIGINAL_CHARACTERS.map(character => [character.id, [0.5, 0.62]])) as Record<OriginalCharacterId, [number, number]>,
   clawd: [0.5, 0.775],
   calico: [0.48, 0.477],
   cloudling: [0.5, 0.5],
@@ -246,10 +252,13 @@ const CSS = `
 .clawd-deskpet[data-char=calico]{--pet-scale:.42;}
 .clawd-deskpet[data-char=cloudling]{--pet-scale:1.27;}
 .clawd-deskpet[data-char=rootbeast]{--pet-scale:.7;}
+.clawd-deskpet[data-original=true]{--pet-scale:.7;}
 .clawd-deskpet>svg,.clawd-deskpet>img,.clawd-deskpet>object{position:absolute;inset:0;width:100%;height:100%;
   image-rendering:pixelated;-webkit-user-drag:none;pointer-events:none;}
 .clawd-deskpet>img{display:none;object-fit:contain;}
 .clawd-deskpet[data-char=rootbeast]>img{image-rendering:auto;}
+.clawd-deskpet[data-original=true]>img{image-rendering:auto;}
+.clawd-deskpet[data-pixel=true]>img{image-rendering:pixelated;}
 /* The inline SVG is clawd's art only — it doubles as the frame shown while an
    <img> pose is still decoding, so the other characters must never fall back to
    it (the engine also sets display:none on swap). */
@@ -260,6 +269,7 @@ const CSS = `
 .clawd-deskpet[data-char=calico] .clawd-deskpet-hit{left:20%;top:30%;width:60%;height:60%;}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-hit{left:27%;top:28%;width:46%;height:54%;}
 .clawd-deskpet[data-char=rootbeast] .clawd-deskpet-hit{left:19%;top:36%;width:64%;height:54%;}
+.clawd-deskpet[data-original=true] .clawd-deskpet-hit{left:17%;top:29%;width:66%;height:58%;}
 .clawd-deskpet.dragging .clawd-deskpet-hit{cursor:grabbing;}
 /* The hide action belongs to the pet itself. Reuse the shared ClearButton and
    reveal it on real hover, keyboard focus, or briefly after a touch tap. */
@@ -272,6 +282,7 @@ const CSS = `
 .clawd-deskpet[data-char=calico] .clawd-deskpet-dismiss{left:calc(80% - 10px);top:calc(30% - 10px);}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-dismiss{left:calc(73% - 10px);top:calc(28% - 10px);}
 .clawd-deskpet[data-char=rootbeast] .clawd-deskpet-dismiss{left:calc(83% - 10px);top:calc(36% - 10px);}
+.clawd-deskpet[data-original=true] .clawd-deskpet-dismiss{left:calc(83% - 10px);top:calc(29% - 10px);}
 .clawd-deskpet.mini-mode:not(.mini-left) .clawd-deskpet-dismiss{left:12%;top:12%;}
 .clawd-deskpet.mini-mode.mini-left .clawd-deskpet-dismiss{left:calc(88% - 20px);top:12%;}
 /* Unread-feedback badge — anchored to each character's body, always visible while
@@ -289,6 +300,7 @@ const CSS = `
 .clawd-deskpet[data-char=calico] .clawd-deskpet-badge{left:66%;top:22%;}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-badge{left:58%;top:37%;}
 .clawd-deskpet[data-char=rootbeast] .clawd-deskpet-badge{left:73%;top:35%;}
+.clawd-deskpet[data-original=true] .clawd-deskpet-badge{left:73%;top:29%;}
 /* Site-notification badge (recon replies / comments / alternatives) — clickable
    link to /notifications, info-colored so it reads apart from the red fb badge and
    the accent admin one. Sits above both so all three can show at once. */
@@ -298,6 +310,7 @@ const CSS = `
 .clawd-deskpet[data-char=calico] .clawd-deskpet-badge-ntf{left:44%;top:8%;}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-badge-ntf{left:44%;top:22%;}
 .clawd-deskpet[data-char=rootbeast] .clawd-deskpet-badge-ntf{left:57%;top:21%;}
+.clawd-deskpet[data-original=true] .clawd-deskpet-badge-ntf{left:57%;top:15%;}
 /* Admin new-submission badge — clickable, accent-colored (distinct from the red
    fb badge). Sits on the pet's body, mirrored opposite the fb badge so both can
    show at once without overlapping (was pinned to the container corner, which is
@@ -308,6 +321,7 @@ const CSS = `
 .clawd-deskpet[data-char=calico] .clawd-deskpet-badge-admin{left:22%;top:22%;}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-badge-admin{left:30%;top:37%;}
 .clawd-deskpet[data-char=rootbeast] .clawd-deskpet-badge-admin{left:24%;top:35%;}
+.clawd-deskpet[data-original=true] .clawd-deskpet-badge-admin{left:24%;top:29%;}
 /* Mini (edge-cling) mode: the art is drawn lying sideways; flip on the left edge
    so it faces inward. The mini-anim class eases the slide-into-place / crabwalk /
    peek nudge; plain drags clear it so they stay 1:1 with the pointer. */
@@ -315,6 +329,8 @@ const CSS = `
 .clawd-deskpet.mini-left>img{transform:scaleX(-1);}
 .clawd-deskpet[data-char=rootbeast].mini-mode>img{transform:rotate(-90deg);}
 .clawd-deskpet[data-char=rootbeast].mini-mode.mini-left>img{transform:rotate(90deg);}
+.clawd-deskpet[data-original=true].mini-mode>img{transform:rotate(-90deg);}
+.clawd-deskpet[data-original=true].mini-mode.mini-left>img{transform:rotate(90deg);}
 .clawd-deskpet.mini-mode .clawd-deskpet-hit{left:0;top:0;width:100%;height:100%;}
 @media (max-width:768px){
   .clawd-deskpet{right:max(12px,var(--sar,0px));bottom:max(12px,var(--sab,0px));}
@@ -332,6 +348,7 @@ export default function DeskPet() {
   const [hidden, setHidden] = useState(false);
   const [resting, setResting] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [petHomeOpen, setPetHomeOpen] = useState(false);
   const [touchActionsVisible, setTouchActionsVisible] = useState(false);
   const [lang, setLang] = useState<'zh' | 'en'>('en');
   const [randomMode, setRandomMode] = useState(false);
@@ -626,10 +643,10 @@ export default function DeskPet() {
 
     // Paint an <img> frame. Decode first, swap after: assigning img.src directly
     // blanks the box for the whole round-trip — and forever if the request fails
-    // — which is why the pet used to vanish into an empty square on a flaky or
-    // slow network. On failure we keep whatever is already painted (falling back
-    // to the inline idle art when nothing has been painted yet), so the pet is
-    // never an empty box. `replay` restarts a one-shot animation from the memory
+    // — which is why the pet used to vanish on a flaky or slow network. On
+    // failure keep a decoded frame of the same character, or try its idle art.
+    // A previous character stays hidden while the replacement loads.
+    // `replay` restarts a one-shot animation from the memory
     // cache instead of re-downloading it.
     let frameSeq = 0;
     let storyUrl: string | undefined;
@@ -643,6 +660,7 @@ export default function DeskPet() {
         painted = true;
         if (replay && img.getAttribute('src') === src) img.removeAttribute('src');
         img.src = src;
+        img.dataset.character = character;
         img.style.display = 'block';
         img.style.visibility = '';
         svg.style.display = 'none';
@@ -651,9 +669,9 @@ export default function DeskPet() {
       };
       const fail = () => {
         if (seq !== frameSeq) return;
-        onPaint(); // still return to idle after a failed load
-        if (img.getAttribute('src')) {
-          img.style.visibility = ''; // keep the last good frame (may be hidden by a char switch)
+        if (img.getAttribute('src') && img.dataset.character === character) {
+          img.style.visibility = ''; // only keep a frame belonging to this pet
+          onPaint();
           return;
         }
         if (theme.inlineIdle) {
@@ -661,6 +679,16 @@ export default function DeskPet() {
           svg.style.display = 'block';
           svg.style.visibility = '';
           applyEye(0, 0);
+          onPaint();
+        } else {
+          // A failed first pose must not reveal the previous character. Load
+          // this pet's idle art once; show() still rejects superseded loads.
+          img.style.visibility = 'hidden';
+          const fallback = new Image();
+          const idle = assetUrl(theme.files.idle);
+          fallback.onload = () => show(idle);
+          fallback.onerror = () => { if (seq === frameSeq) onPaint(); };
+          fallback.src = idle;
         }
       };
       const decode = (src: string) => {
@@ -900,7 +928,10 @@ export default function DeskPet() {
     // reactions and the sleep-cycle poses that shouldn't fire unprompted.
     const RANDOM_EXCLUDE = new Set(['idle', 'reactDouble', 'reactAnnoyed', 'reactDrag', 'waking', 'sleeping', 'dozing']);
     const RANDOM_POOL = [
-      ...(character === 'rootbeast' ? ROOTBEAST_RANDOM_SCENES.map(scene => scene.state) : Object.keys(theme.files).filter((k) => !RANDOM_EXCLUDE.has(k))),
+      ...(character === 'rootbeast' ? ROOTBEAST_RANDOM_SCENES.map(scene => scene.state)
+        : ORIGINAL_CHARACTERS.some(pet => pet.id === character)
+          ? ORIGINAL_SCENES.filter(scene => scene.character === character && !['idle', 'sleep', 'doze', 'wake'].includes(scene.id)).map(scene => scene.state)
+          : Object.keys(theme.files).filter((k) => !RANDOM_EXCLUDE.has(k))),
       ...(character === 'clawd' ? PLAYTIME_SCENES.map((scene) => scene.state) : []),
     ];
     let lastRandom = '';
@@ -1191,6 +1222,15 @@ export default function DeskPet() {
   };
 
   const curLang: 'zh' | 'en' = zh ? 'zh' : 'en';
+  const careStates: Record<CareAction | 'idle', string> = { idle: 'idle', feed: 'happy', pet: 'happy', play: 'cubing', rest: 'dozing' };
+  const careArt = (action: CareAction | 'idle') => {
+    if (character === 'rootbeast' && action === 'feed') return getRootBeastScene('rootbeast:popcorn')!.src;
+    const original = getOriginalScene(`original:${character}:${({ idle: 'idle', feed: 'snack', pet: 'happy', play: 'ball', rest: 'doze' })[action]}`);
+    if (original) return original.src;
+    const theme = THEMES[character];
+    return `${theme.base}${theme.files[careStates[action]]}${theme.version ? `?v=${theme.version}` : ''}`;
+  };
+  const careDuration = (action: CareAction) => [...ROOTBEAST_SCENES, ...ORIGINAL_SCENES].find(scene => scene.src === careArt(action))?.durationMs ?? 4000;
 
 
   return (
@@ -1205,7 +1245,7 @@ export default function DeskPet() {
         inputMode="search"
         style={{ position: 'fixed', bottom: 0, left: 0, width: 1, height: 1, opacity: 0, padding: 0, margin: 0, border: 0, fontSize: 16, background: 'transparent', pointerEvents: 'none', zIndex: -1 }}
       />
-      <div className={`clawd-deskpet${searchOpen ? ' pet-front' : ''}${touchActionsVisible ? ' touch-actions' : ''}`} data-size={size} data-char={character} ref={rootRef}>
+      <div className={`clawd-deskpet${searchOpen ? ' pet-front' : ''}${touchActionsVisible ? ' touch-actions' : ''}`} data-size={size} data-char={character} data-original={ORIGINAL_CHARACTERS.some(pet => pet.id === character)} data-pixel={THEMES[character].pixel} ref={rootRef}>
         <style>{CSS}</style>
         <AdminTools centerX={VC[character][0]} />
         <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" aria-hidden>
@@ -1282,6 +1322,7 @@ export default function DeskPet() {
           lang={curLang}
           origin={searchOriginRef.current}
           onClose={() => setSearchOpen(false)}
+          onOpenPetHome={() => { setSearchOpen(false); setTouchActionsVisible(false); setPetHomeOpen(true); }}
           character={character}
           characters={THEME_IDS.map(id => ({
             id, label: THEMES[id].label, thumb: THEMES[id].thumb,
@@ -1305,6 +1346,19 @@ export default function DeskPet() {
           }}
         />
       )}
+
+      {petHomeOpen && <DeskPetHome
+        character={character}
+        characters={THEME_IDS.map(id => ({ id, label: THEMES[id].label, thumb: THEMES[id].thumb }))}
+        animations={{ idle: careArt('idle'), feed: careArt('feed'), pet: careArt('pet'), play: careArt('play'), rest: careArt('rest') }}
+        durations={{ feed: careDuration('feed'), pet: careDuration('pet'), play: careDuration('play'), rest: careDuration('rest') }}
+        onSelectChar={selectChar}
+        onInteract={action => {
+          ctrlRef.current?.wake();
+          window.dispatchEvent(new CustomEvent('clawd:state', { detail: careStates[action] }));
+        }}
+        onClose={() => setPetHomeOpen(false)}
+      />}
 
       {metronomeOpen && (
         <FloatingMetronome

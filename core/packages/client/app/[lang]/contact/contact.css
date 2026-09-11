@@ -446,3 +446,10 @@
     gap-inline: 14px;
   }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .contact-page {
+    background: transparent;
+  }
+}

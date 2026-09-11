@@ -1,0 +1,10 @@
+import { C, p, e, line, face } from './art.mjs';
+export default { id: 'fox', number: 14, zh: '拧尾狐', en: 'Twisttail Fox', pixel: false, locomotion: 'walk', gesture: 'paw', render({ joint: j }) {
+  const tail = j('tail', p('M140 166C184 180 213 143 189 108C186 124 170 121 162 131L164 138L157 136L151 147L156 149L145 154L147 159Z', C.cream, C.brown) + p('M189 108Q189 122 175 127L174 134L167 134L174 142L184 139L183 149Q201 139 189 108Z', C.orange), [146, 163]);
+  const feet = j('footRight', p('M135 160Q155 159 157 180Q157 187 151 189Q148 196 133 193Q126 188 139 185Q130 174 135 160Z', C.cream, C.brown) + line('M142 190v3m6-4v3', C.brown, 1.2), [140, 166]) + j('footLeft', p('M101 161Q87 168 93 185Q82 188 88 192Q100 196 107 188L111 169Z', C.cream, C.brown), [103, 165]);
+  const body = p('M100 134Q122 126 140 143Q156 155 148 179Q135 190 108 180Q96 173 94 159Z', C.cream, C.brown) + p('M101 140L109 157L115 151L118 163L125 155L130 158L135 140Z', '#F8DDBC');
+  const paws = j('left', p('M102 146Q99 159 102 181Q95 190 103 193Q112 195 115 190L114 152', C.cream, C.brown) + line('M104 189v4m5-4v4', C.brown, 1.2), [106, 149]) + j('right', p('M129 146Q135 159 130 184Q124 191 131 194Q140 194 142 189L140 154', C.cream, C.brown) + line('M131 190v3m5-4v4', C.brown, 1.2), [134, 149]);
+  const ears = j('earLeft', p('M75 107Q58 85 61 55Q87 61 100 88Z', C.cream, C.brown) + p('M64 61L69 86L85 77Z', C.orange), [80, 95]) + j('earRight', p('M119 88Q127 57 153 44Q161 80 146 104Z', C.cream, C.brown) + p('M150 50L134 71L155 73Z', C.orange), [138, 94]);
+  const head = ears + p('M74 87Q104 77 127 87Q147 84 155 103L165 113L157 116L159 124L150 125L151 132Q114 153 76 132L68 126L75 121L66 115L75 111Q69 100 74 87Z', C.cream, C.brown) + face(j, { x: 115, y: 112, gap: 20, size: 7, color: C.brown }) + e(115, 124, 3.5, 2.5, C.brown) + line('M115 126v4', C.brown, 1.5) + p('M91 90l9-6l-1 7l10-7l-2 8', C.cream, C.brown, 1.5);
+  return j('body', tail + feet + body + paws + j('head', head, [117, 138]), [121, 160]);
+} };

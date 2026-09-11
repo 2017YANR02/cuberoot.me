@@ -279,3 +279,32 @@
     .ga-engine-table { font-size: 0.82rem; }
     .ga-engine-table th, .ga-engine-table td { padding: 7px 9px; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .ga-page {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .ga-header,
+  body[data-site-scenery] .ga-mode-card {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+}
+
+/* Local neutral aliases follow the active scenery palette. */
+@media screen {
+  body[data-site-scenery] .ga-page {
+    --ga-bg: var(--background);
+    --ga-surface: var(--card);
+    --ga-text: var(--foreground);
+    --ga-text-sub: var(--muted-foreground);
+    --ga-text-mute: var(--faint-foreground);
+    --ga-border: var(--border-default);
+    --ga-border-strong: var(--border-strong);
+  }
+}

@@ -1013,3 +1013,18 @@ body:has(.battle-container .penalty-dropdown.open) .clawd-deskpet {
 .timer-shell.fullscreen .shell-rail {
   display: none;
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .timer-shell {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .shell-panel {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+}

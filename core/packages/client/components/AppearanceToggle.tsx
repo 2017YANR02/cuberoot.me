@@ -29,6 +29,7 @@ import {
   type ContrastLevel,
 } from '@/lib/theme';
 import { PALETTES, type PaletteId } from '@/lib/palettes';
+import { SiteBackgroundControl } from '@/components/SiteBackground';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { useT } from '@/hooks/useT';
@@ -263,11 +264,11 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
             <div className="appearance-hint">{L.softenHint}</div>
           </div>
 
-          {menuContent && <div
+          {<div
             className="appearance-extra"
             onPointerEnter={endPreview}
             onFocus={endPreview}
-          >{menuContent}</div>}
+          ><SiteBackgroundControl />{menuContent}</div>}
 
           <AppLink
             href="/appearance"

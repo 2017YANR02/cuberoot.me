@@ -1,0 +1,163 @@
+.site-scenery {
+  /* Stay behind the viewport throughout the page's full scroll length. */
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.site-scenery img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--site-scene-position) top;
+}
+
+.site-scenery::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--background) 72%, transparent),
+    color-mix(in srgb, var(--background) 16%, transparent) 18%,
+    color-mix(in srgb, var(--background) 48%, transparent) 42%,
+    color-mix(in srgb, var(--background) 48%, transparent) 100%);
+}
+
+html[data-contrast='soft'] .site-scenery img {
+  filter: saturate(.65) contrast(.85);
+}
+
+
+/* anchored-panel: safe (fixed to viewport, bounded by viewport margins, bounded by viewport margins) */
+.appearance-menu:has(.site-background-control) {
+  position: fixed;
+  top: calc(76px + var(--sat));
+  right: max(8px, calc((100vw - 1100px) / 2));
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: start;
+  column-gap: 12px;
+  width: min(580px, calc(100vw - 16px));
+  min-width: 0;
+  max-height: calc(100dvh - 92px - var(--sat));
+  padding: 8px;
+}
+
+.appearance-extra {
+  min-width: 0;
+}
+
+.appearance-menu:has(.site-background-control) .palette-menu-more {
+  grid-column: 1 / -1;
+}
+
+.site-background-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 3px 4px 10px;
+}
+
+.site-background-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 4px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: .75rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.site-background-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 6px;
+}
+
+.site-background-option {
+  min-width: 0;
+  padding: 4px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.site-background-option img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.site-background-caption {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 0 1px;
+  font-size: .75rem;
+  line-height: 1.35;
+}
+
+.site-background-check {
+  display: inline-flex;
+  width: 13px;
+  flex-shrink: 0;
+}
+
+:is(.site-background-option, .site-background-mode):hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+:is(.site-background-option, .site-background-mode)[aria-checked='true'] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+:is(.site-background-option, .site-background-mode):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+@media (max-width: 600px) {
+  .appearance-menu:has(.site-background-control) {
+    grid-template-columns: minmax(0, 1fr);
+    left: 8px;
+    right: auto;
+  }
+
+  .appearance-menu:has(.site-background-control) .appearance-settings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  }
+
+  .appearance-menu:has(.site-background-control) .appearance-settings :is(.appearance-sec-label, .appearance-hint) {
+    grid-column: 1 / -1;
+  }
+
+  .appearance-extra {
+    margin-top: 8px;
+  }
+
+  .site-background-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* A document stacking context keeps the negative scenery above the html canvas.
+   Isolation leaves fixed and sticky positioning intact. */
+body[data-site-scenery] { isolation: isolate; background: transparent; }
+.site-glass-engine { position: fixed; width: 1px; height: 1px; overflow: hidden; pointer-events: none; clip-path: inset(100%); }
+@media print { .site-scenery, .site-glass-engine { display: none; } }

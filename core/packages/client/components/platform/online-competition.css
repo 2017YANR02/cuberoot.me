@@ -1,7 +1,7 @@
 .online-comp { margin: 20px 0 80px; color: var(--foreground); }
-.online-comp button { font: inherit; cursor: pointer; }
-.online-comp button:disabled { cursor: not-allowed; opacity: .46; }
-.online-comp button:focus-visible, .online-comp a:focus-visible { outline: 2px solid var(--ring); outline-offset: 5px; }
+:is(.oc-primary, .oc-text-button, .oc-session, .oc-tab) { font: inherit; cursor: pointer; }
+:is(.oc-primary, .oc-text-button, .oc-session, .oc-tab):disabled { cursor: not-allowed; opacity: .46; }
+:is(.oc-primary, .oc-text-button, .oc-session, .oc-tab):focus-visible, .online-comp a:focus-visible { outline: 2px solid var(--ring); outline-offset: 5px; }
 .oc-preview-note { display: flex; align-items: baseline; gap: 12px; color: var(--muted-foreground); font-size: .78rem; }
 .oc-preview-note > span { color: var(--accent); white-space: nowrap; font-weight: 700; }
 .oc-preview-note p { margin: 0; }
@@ -29,8 +29,8 @@
 .oc-columns { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 72px; align-items: start; }
 .oc-main-content, .oc-entry-summary { min-width: 0; }
 .oc-tabs { display: flex; gap: 26px; margin-bottom: 32px; }
-.oc-tabs button { padding: 0 0 10px; background: none; border: 0; color: var(--muted-foreground); white-space: nowrap; }
-.oc-tabs button[aria-current] { color: var(--foreground); box-shadow: 0 2px var(--accent); font-weight: 700; }
+.oc-tab { padding: 0 0 10px; background: none; border: 0; color: var(--muted-foreground); white-space: nowrap; }
+.oc-tab[aria-current] { color: var(--foreground); box-shadow: 0 2px var(--accent); font-weight: 700; }
 .oc-section-heading h3, .oc-guidance h3, .oc-rules h3, .oc-workspace h3 { font-size: 1.1rem; margin: 0 0 12px; }
 .oc-section-heading p { color: var(--muted-foreground); font-size: .84rem; line-height: 1.8; margin: 0; }
 .oc-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 24px 0 10px; }
@@ -86,7 +86,7 @@
 .oc-finance p { font-size: .85rem; color: var(--muted-foreground); line-height: 1.9; }
 .oc-finance-fields { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 24px; margin-block: 24px; }
 .oc-finance-fields > label, .oc-finance-field { display: flex; flex-direction: column; gap: 10px; max-width: 100%; font-size: .85rem; }
-.oc-finance-fields input { width: 12rem; max-width: 100%; box-sizing: border-box; }
+.oc-finance-fields .platform-field-control { width: 12rem; max-width: 100%; box-sizing: border-box; }
 .oc-finance-fields small { color: var(--muted-foreground); font-size: .74rem; }
 .oc-publication-check { margin-top: 36px; max-width: 680px; }
 .oc-publication-check ul { padding-left: 20px; margin-block: 18px 24px; font-size: .85rem; line-height: 1.9; }

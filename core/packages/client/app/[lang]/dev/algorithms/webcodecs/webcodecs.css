@@ -407,3 +407,10 @@
   .wc-pipe-node { min-width: 0; }
   .wc-pipe-arrow { transform: rotate(90deg); padding: 4px 0; align-self: center; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .wc-page {
+    background: transparent;
+  }
+}

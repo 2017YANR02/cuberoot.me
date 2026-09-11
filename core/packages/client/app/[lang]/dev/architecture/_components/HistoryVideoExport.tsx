@@ -9,20 +9,17 @@ import { saveBlob } from '@/lib/document-export';
 import type { ExportProgress } from '@/lib/canvas-video-export';
 import { tr } from '@/i18n/tr';
 import { HISTORY_LAST, HISTORY_PLACES, HISTORY_GAITS, type HistoryGait } from '../history/history-days';
-import { HISTORY_VIDEO_SPEEDS, historyVideoPlan } from '../history/history-video-plan';
+import { historyVideoPlan } from '../history/history-video-plan';
 
 const DATES = HISTORY_PLACES.map(place => place.date);
 
-export default function HistoryVideoExport({ source, current, initialSpeed, initialGait, weatherVariation, onClose }: {
-  source: RefObject<HTMLDivElement | null>; current: number; initialSpeed: number;
+export default function HistoryVideoExport({ source, current, initialGait, weatherVariation, onClose }: {
+  source: RefObject<HTMLDivElement | null>; current: number;
   initialGait: HistoryGait; weatherVariation: number; onClose: () => void;
 }) {
   const [from, setFrom] = useState(DATES[current]);
   const [to, setTo] = useState(DATES[HISTORY_LAST]);
   const [gait, setGait] = useState(initialGait);
-  const [speed, setSpeed] = useState(() => {
-    try { historyVideoPlan(current, HISTORY_LAST, initialSpeed, initialGait); return initialSpeed; } catch { return 5; }
-  });
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<ExportProgress | null>(null);
   const [message, setMessage] = useState('');
@@ -40,7 +37,7 @@ export default function HistoryVideoExport({ source, current, initialSpeed, init
   const end = DATES.findLastIndex(date => date <= to);
   let plan: ReturnType<typeof historyVideoPlan> | undefined;
   let invalid = '';
-  try { plan = historyVideoPlan(start, end, speed, gait); } catch (cause) {
+  try { plan = historyVideoPlan(start, end, gait); } catch (cause) {
     invalid = cause instanceof Error && cause.message === 'duration'
       ? tr({ zh: '单次视频最长 30 分钟，请加快速度或缩短日期范围。', en: 'Videos can be up to 30 minutes. Increase the speed or select a shorter date range.' })
       : tr({ zh: '这个日期范围内没有更新记录。', en: 'There are no updates in this date range.' });
@@ -56,10 +53,10 @@ export default function HistoryVideoExport({ source, current, initialSpeed, init
     try {
       const { exportHistoryVideo } = await import('../history/history-video');
       if (abortRef.aborted) return;
-      const blob = await exportHistoryVideo({ source: source.current, start, end, speed, gait, weatherVariation, abortRef,
+      const blob = await exportHistoryVideo({ source: source.current, start, end, gait, weatherVariation, abortRef,
         preview: preview.current, onProgress: value => { if (!abortRef.aborted) setProgress(value); } });
       if (!abortRef.aborted) {
-        saveBlob(blob, `cuberoot-history_${DATES[start]}_${DATES[end]}_${gait}_${speed}x.mp4`);
+        saveBlob(blob, `cuberoot-history_${DATES[start]}_${DATES[end]}_${gait}.mp4`);
         setMessage(tr({ zh: '视频已生成，下载已开始。', en: 'Your video is ready. The download has started.' }));
       }
     } catch (cause) {
@@ -91,8 +88,6 @@ export default function HistoryVideoExport({ source, current, initialSpeed, init
       <CompactSelect variant="plain" label={tr(HISTORY_GAITS[gait])} value={gait} valueText={tr(HISTORY_GAITS[gait])}
         items={(Object.keys(HISTORY_GAITS) as HistoryGait[]).map(value => ({ value, label: tr(HISTORY_GAITS[value]) }))}
         onChange={setGait} ariaLabel={tr({ zh: '视频行进方式', en: 'Video travel style' })} />
-      <CompactSelect variant="plain" label={`${speed}×`} value={speed} valueText={`${speed}×`} items={HISTORY_VIDEO_SPEEDS.map(value => ({ value, label: `${value}×` }))}
-        onChange={setSpeed} ariaLabel={tr({ zh: '视频行进速度', en: 'Video travel speed' })} />
     </fieldset>
     <p className="journey-export-description">{tr({ zh: '1080p MP4，30 帧/秒，无声。保留人物、天气、日期与简述。', en: '1080p MP4, 30 fps, silent. Includes the traveler, weather, dates and notes.' })}
       {plan && <span>{tr({ zh: `预计时长 ${Math.floor(seconds / 60)} 分 ${seconds % 60} 秒`, en: `Duration: ${Math.floor(seconds / 60)} min ${seconds % 60} sec` })}</span>}</p>

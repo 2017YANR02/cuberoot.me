@@ -1534,3 +1534,21 @@
     .globe-page .globe-title-compact { font-size: 0.85rem; }
     .globe-page .globe-topbar { padding: 0.4rem 0.55rem; gap: 0.35rem; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .globe-page .draw-card,
+  body[data-site-scenery] .globe-page .nearby-card,
+  body[data-site-scenery] .globe-page .cuber-info-card,
+  body[data-site-scenery] .globe-page.is-light .cuber-info-card,
+  body[data-site-scenery] .globe-page .bin-panel {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+  body[data-site-scenery] .globe-page .bin-panel {
+    background: var(--glass-popover-bg);
+  }
+}

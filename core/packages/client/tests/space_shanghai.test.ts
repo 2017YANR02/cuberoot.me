@@ -86,6 +86,28 @@ describe('Shanghai illumination program sharing', () => {
     materials.forEach(material => material.dispose());
   });
 
+  it('preserves independent SWFC top PBR materials without applying the opaque tower window shader', () => {
+    const scene = city(), bank = { width: 1, axes: [], wingAxes: [], wingZ: 0 };
+    const glass = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(.92, .96, .98),
+      transmission: .9, roughness: .12, metalness: 0, ior: 1.45, opacity: 1, side: THREE.FrontSide });
+    const panels = new THREE.MeshStandardMaterial({ color: new THREE.Color(.64, .66, .65),
+      roughness: .58, metalness: 0, side: THREE.FrontSide });
+    for (const [role, material] of [['top_glass', glass], ['soffit_panels', panels]] as const) {
+      material.userData = { spaceMaterialId: `swfc-top-20260910/material/${role}`, spaceSwfcTopMaterialRole: role, spaceOpticsEstimated: true };
+      const before = material.toJSON(), callback = material.onBeforeCompile, cacheKey = material.customProgramCacheKey();
+      scene['restoreBlenderMaterial'](material, bank);
+      expect(material.toJSON()).toEqual(before);
+      expect(material.onBeforeCompile).toBe(callback);
+      expect(material.customProgramCacheKey()).toBe(cacheKey);
+      expect(material.userData.spaceShaderKey).toBeUndefined();
+      expect(shader(material).uniforms.cityIllumination).toBeUndefined();
+    }
+    expect(glass.transmission).toBe(.9); expect(glass.ior).toBe(1.45);
+    expect(glass.transparent).toBe(false); expect(glass.depthWrite).toBe(true);
+    expect(glass.side).toBe(THREE.FrontSide); expect(panels.emissive.getHex()).toBe(0);
+    glass.dispose(); panels.dispose();
+  });
+
   it('keeps roofs without authored wash on their original shader and cache variant', () => {
     const scene = city(), material = new THREE.MeshStandardMaterial();
     material.userData.spaceShaderKey = 'shanghai-illumination-0.001-bund-roof-shadowed-1.7-64';

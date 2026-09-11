@@ -1364,3 +1364,61 @@ main { position: relative; z-index: 1; }
   }
 }
 /* end @scope (.sql-intro-root) */
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .sql-intro-root {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .sql-intro-root .def-card,
+  body[data-site-scenery] .sql-intro-root .tl-card,
+  body[data-site-scenery] .sql-intro-root .why-card,
+  body[data-site-scenery] .sql-intro-root .logo-card,
+  body[data-site-scenery] .sql-intro-root .future-card,
+  body[data-site-scenery] .sql-intro-root .ts-card,
+  body[data-site-scenery] .sql-intro-root .anti-card {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery] .sql-intro-root {
+    --bg: var(--background);
+    --bg-2: var(--card);
+    --bg-3: var(--muted);
+    --text: var(--foreground);
+    --text-dim: var(--muted-foreground);
+    --text-faint: var(--faint-foreground);
+    --line: var(--border-default);
+    --line-2: var(--border-strong);
+  }
+
+  body[data-site-scenery] .sql-intro-root .grid-bg { display: none; }
+
+  body[data-site-scenery] .sql-intro-root .glow-tl { display: none; }
+
+  body[data-site-scenery] .sql-intro-root .glow-br { display: none; }
+}
+
+/* Keep the existing code canvas foreground independent of the scenery theme. */
+@media screen {
+  body[data-site-scenery] .sql-intro-root { --code-plain: #DCE8F0; }
+
+  body[data-site-scenery] .sql-intro-root .code,
+  body[data-site-scenery] .sql-intro-root .why-code,
+  body[data-site-scenery] .sql-intro-root .ts-code,
+  body[data-site-scenery] .sql-intro-root .spotlight-code,
+  body[data-site-scenery] .sql-intro-root .qres {
+    --text: var(--code-plain);
+    color: var(--code-plain);
+  }
+
+  body[data-site-scenery] .sql-intro-root .hero-name {
+    background: none;
+    color: var(--foreground);
+    -webkit-text-fill-color: currentColor;
+  }
+}
