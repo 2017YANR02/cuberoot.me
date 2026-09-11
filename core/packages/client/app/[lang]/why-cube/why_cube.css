@@ -305,3 +305,10 @@
   .wc-stat-value { font-size: 19px; }
   .wc-sizes { gap: 14px 12px; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .wc-page {
+    background: transparent;
+  }
+}

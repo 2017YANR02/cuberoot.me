@@ -107,3 +107,25 @@ Blender 和 glTF 插件来源已加入网页的“来源与致谢”，统一数
 和平饭店铜顶夜间配光已保存 `spacePeaceNightRevision = peace-night-roof-20260910`，六盏既有灯及两份铜材质经正常导出进入网页。`refine_peace_night_lighting.py` 默认只生成候选报告，`--apply` 要求同一源文件的候选报告并先备份；已有修订时拒绝重跑。后续继续编辑当前工程并导出；四轮实拍对照、日夜检查与剩余差距见[夜景档案](references/peace-crown.md#夜间铜顶配光2026-09-10)。
 
 江海关已保存 `spaceCustomsNightRevision = customs-night-lighting-20260910`，四盏下部、两盏上部代理灯及 `washTop=43` 经正常导出进入网页。`refine_customs_night_lighting.py` 与和平饭店脚本共用 `facade_rig.py` 的候选、源漂移和备份检查；已有修订时拒绝重复执行。三轮取舍、正式日夜及三视点检查、仍偏暗的塔冠与待补檐线见[夜景档案](references/customs-junctions.md#2026-09-10-网页夜景照明保存与复验)。
+
+## 2026-09-10 和平饭店中央入口候选，视觉未通过
+
+`refine_peace_central_arch.py` 的 candidate03 已后台导出隔离 GLB，**32 nodes、30 meshes、12,889,748 字节**，SHA-256 为 `b893d694a8611cb1d0a112d6bb5161ff15e03d170c9a26e2d14d35f8fe080761`；[候选报告](../../.tmp/png/space-peace-central-arch-20260910/candidate03/candidate-report.json)记录 `saved=false`、`officialAssetsWritten=false`、源指纹未变。candidate02 已修正 candidate01 遗漏的 `spaceFacadeDetail.stoneMeshes` 计数为 4；candidate03 仅在原 `/1` 石材线脚追加两小盒裁切，清除入口两侧残块，保留其余几何、UV、法线和归档检查。正式上海 GLB 仍为 **310,655,468 字节**。
+
+主 Agent 已在真实 `/zh/space` 临时注入 candidate03：26 个原网格只替换几何并保留现场材质，4 个新增网格复用对应现场材质及适用的灯光属性。[网页报告](../../.tmp/png/space-peace-central-arch-20260910/candidate03-runtime.json)确认 **30 项全部通过**：原 10 条门玻璃与 6 条保留探针，加 8 条残块清除和 6 条邻窗、窗台、拱顶保护检查，未修改实际材质朝向；[candidate02 负对照](../../.tmp/png/space-peace-central-arch-20260910/candidate02-residual-negative.json)的 8 条清除检查全部失败、6 条保护通过。主 Agent 已逐张查看[入口日景](../../.tmp/png/space-peace-central-arch-20260910/web-candidate03-entrance-day.png)、[入口夜景](../../.tmp/png/space-peace-central-arch-20260910/web-candidate03-entrance-night.png)、[斜侧夜景](../../.tmp/png/space-peace-central-arch-20260910/web-candidate03-oblique-night.png)，与[Commons 实照](https://commons.wikimedia.org/wiki/File:Peace_Hotel_20250503.jpg)对照，确认两残块消失。
+
+**整体视觉仍未通过：**中央门夜间仍黑，缺少实拍中的暖色上扇与入口层次；盾饰与尖叶仍是简化轮廓，全部尺寸仍为估算。下一步校准局部门窗材质与夜景、继续核对饰纹，再复查同机位日夜及斜侧。残块清除和射线通过不代表达到 1:1；候选未保存到正式 `.blend`，正式网页资产未写入。
+
+## 2026-09-10 环球金融中心顶部候选
+
+SWFC 已从参考研究进入 Blender 候选和隔离 GLB 网页检查。candidate01 未通过匿名 GPU instance ID 保留守卫；修正后 candidate02 导出成功，为 **7 nodes、6 meshes、35,998,448 字节**，塔体 **950,442 顶点、238,454 面**。全部原对象与运行 ID、九张内嵌图和三组灯保持。candidate03、candidate04 均实际导出成功，各为 **98,314 顶点、25,422 面、7 nodes、6 meshes、3,467,436 字节**；两版字节数相同但 UV 与文件哈希不同，candidate04 的 SHA-256 见参考档案。隔离候选只用于临时替换原塔审图。
+
+原模型旧 4 项洞口检查通过，但新增 30 个楼面与 15 个桥底检查点均缺失；candidate02 至 candidate05 使用实际原材质的 **49 项检查均全部通过**。candidate04 的同机位对照已确认玻璃每 2 m 分段 UV 折线变成连续直线，**该 UV 缺陷已修复**。candidate05 已实际导出 **103,042 顶点、26,612 面、3,633,596 字节**；三张日景与独立审查发现旧外幕墙遮挡新棚侧退台及小支撑缝。candidate06 已实际导出并正常退出，**103,222 顶点、26,678 面、3,639,856 字节**，Blender 46 项交接检查及网页 **60 项检查全部通过**，包含 05 失败的 6 条外侧首命中。主 Agent 已看 97F 内外两张日景，确认旧中央外幕墙遮挡消除，新屋棚和退台可见。
+
+candidate07-direction 已实际导出 **103,222 顶点、26,678 面、3,639,872 字节**，Blender 正常退出且 stderr 为空。mesh-local 已从 `−4.97°` 转为 **85.04°**，对应世界约 **38.191°** 东北—西南方向；文献已核定对角，精确角度仍为图纸估算。真实完整城市中临时替换后 **60 项全部通过**，主 Agent 逐张看城市全景、顶部斜侧、近地面三张日景，三件套相对位置保持、开口可见；近地面被既有简模裙楼部分遮挡，裙楼与地面衔接尚未通过准确度核查。候选报告中的冻结旧元数据 `siteOrientationConfirmed:false` 不代表已核定对角仍未知，也不授予精确方位实测结论。**整体视觉仍未通过**：不透明玻璃、单面屋棚、100F 桥底、机械层及夜景继续待修验，精确尺寸未知，不补开合机构。`verify.ts` 的旧场景、非法 metadata 与旋转场景源码回归及相应 typecheck 已通过。`candidate07-contract.json` 确认当前验证器分别复验正式原场景和临时注入实际 candidate07 GLB 的完整城市，**均为 `ok=true`、`errors=[]`**；候选替换 6 个 Mesh，加载器复制真实 JSON 的 `bridgeAngleLocalDegrees=85.04`，执行新方向探针而非旧 0° fallback，其他既有合同全部通过，`formalAssetChanged=false`。该结果不代表候选已写入正式资产或视觉验收通过。
+
+candidate09 在生成临时 GLB 后未通过新增细部变换守卫，见[错误日志](../../.tmp/png/space-swfc-top-20260910/candidate09-blender.err.log)；该次失败保留。**后续 candidate10 已修正导出变换校验并实际导出成功**，为 **107,446 顶点、28,074 面、9 nodes、8 meshes、3,788,588 字节**。其[导出报告](../../.tmp/png/space-swfc-top-20260910/candidate10/candidate-report.json)确认八个直接子网格的导出变换与局部顶点精确核对通过；约 **0.0974 mm** 是导出数值往返误差界，不是现场尺寸精度。
+
+[candidate10 网页报告](../../.tmp/png/space-swfc-top-20260910/candidate10-runtime.json)确认实际材质的 **60 项射线检查和完整城市合同均通过**（`ok=true`、`errors=[]`）。97F 顶棚与侧窗改用独立透射玻璃；主 Agent 与独立审图已查看内外日景，确认能看到后方框架、室内和天空。主 Agent 另已查看[桥底仰视日景](../../.tmp/png/space-swfc-top-20260910/candidate10-bridge-underside-day.png)，两组板带、中央深色缝及网格可见，但阴影下仍明显蓝灰；[97F 内部夜景](../../.tmp/png/space-swfc-top-20260910/candidate10-97-interior-night.png)可见玻璃后的夜空与外围框架，整个室内仍偏暗。**玻璃可见性已改善，整体视觉仍未通过**：屋架和桥底色感未匹配实拍，97F 照明层次未达标，100F 楼面玻璃仍沿用旧不透明材质，机械层及准确尺寸继续待验。光学参数和构件尺度仍为估算，未达到 1:1。
+
+candidate02 至 candidate07 及最新 candidate10 的报告均为 `saved=false`、`officialAssetsWritten=false`。**正式 `.blend` 尚未保存本轮候选，正式上海 GLB 未变，仍为 310,655,468 字节。** 三名子 Agent 分工模型修改、实拍审核和来源文档，主 Agent 执行导出与浏览器验收，共四人，主 Agent 独占 Blender 写入与导出。新增 Quan 论文后，本轮累计七项来源链接已在真实网页 DOM 确认；此前六项来源的 **390 × 844** 展开截图 `sources-candidate-390.png` 已查看，`innerWidth=390`、`scrollWidth=375`，未见横向溢出，新增第七项后窄屏尚未复验。报告、导出哈希、已查实拍、估算边界及后续保存和复验要求见[顶部参考档案](references/swfc-top.md#2026-09-10-候选实施与网页核查进度)；本轮仅本地提交脚本、文档与来源，重资产、LFS 配置及发布暂缓。

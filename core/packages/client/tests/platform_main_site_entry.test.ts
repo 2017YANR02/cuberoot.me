@@ -27,7 +27,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     const view = read('components/platform/PlatformRouteView.tsx');
     expect(view).toContain("const learnerContent = learnerCourses || definition.id === 'course-lesson';");
     expect(view).toContain('!learnerContent && item.status');
-    expect(view).toContain('!learnerContent && item.fields?.length');
+    expect(view).toContain('!learnerContent && fields?.length');
   });
 
   it('keeps /search as a URL-backed reuse of LandingSearch', () => {
@@ -89,8 +89,8 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(home).toMatch(/listTeachingOrganizations\(/);
     expect(home).not.toMatch(/\bPLATFORM_ROUTES\b|\bexecutePlatformAction\b|<PlatformDomainActions\b/);
     expect(routeView).toContain('const permissionDenied = error instanceof PlatformPermissionError;');
-    expect(routeView).toMatch(/!permissionDenied \? <PlatformDomainContent/);
-    expect(routeView).toMatch(/permissionDenied \|\| definition\.id === 'qr' \|\| \(\['membership', 'me-membership'\]/);
+    expect(routeView).toMatch(/!permissionDenied && !orderUnavailable \? <PlatformDomainContent/);
+    expect(routeView).toMatch(/permissionDenied \|\| orderUnavailable \|\| definition\.id === 'qr' \|\| \(\['membership', 'me-membership'\]/);
   });
 
   it('keeps glass progressive without a duplicate course hero or summary', () => {
@@ -101,7 +101,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(shell).toContain('className="platform-nav platform-glass"');
     expect(view).not.toContain('className="platform-course-portrait"');
     expect(view).not.toContain('className="platform-portrait-link platform-glass"');
-    expect(view).toContain('!courseSection && !courseDetail && !inviteManager ? <p>');
+    expect(view).toContain('!courseSection && !courseDetail && !inviteManager && !orderPage ? <p>');
     expect(view).not.toContain('course?.summary');
     expect(styles).toContain('@supports not (backdrop-filter: blur(1px))');
     expect(styles).toContain('@media (prefers-reduced-transparency: reduce)');

@@ -4,29 +4,8 @@
   isolation: isolate;
 }
 
-/* One material for every homepage card and its floating admin controls.
-   Other routes retain the existing shared material. */
-:root .landing-page,
-:root:has(.landing-page) .admin-tools {
-  --glass-light: var(--background);
-  --glass-shade: var(--foreground);
-  --glass-background: transparent;
-  --glass-edge: color-mix(in srgb, var(--glass-light) 28%, transparent);
-  --glass-filter: blur(8px);
-  --glass-shadow: 0 8px 26px color-mix(in srgb, var(--glass-shade) 12%, transparent);
-}
-
-/* Match the existing theme/palette precedence, including a system dark theme. */
-@media (prefers-color-scheme: dark) {
-  :root:has(.landing-page):not([data-theme='light']):not([data-palette-scheme='light']) :is(.landing-page, .admin-tools) {
-    --glass-light: var(--foreground);
-    --glass-shade: var(--background);
-  }
-}
-:root:has(.landing-page)[data-theme='dark']:not([data-palette-scheme='light']) :is(.landing-page, .admin-tools),
-:root:has(.landing-page)[data-palette-scheme='dark'] :is(.landing-page, .admin-tools) {
-  --glass-light: var(--foreground);
-  --glass-shade: var(--background);
+@media screen {
+  body[data-site-scenery] .landing-page { background: transparent; }
 }
 
 :root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip, .admin-tools),
@@ -55,8 +34,8 @@
 :root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip, .admin-tools)::before {
   z-index: -1;
   background: var(--glass-background);
-  -webkit-backdrop-filter: var(--home-glass-refraction, var(--glass-filter));
-  backdrop-filter: var(--home-glass-refraction, var(--glass-filter));
+  -webkit-backdrop-filter: var(--site-glass-refraction, var(--glass-filter));
+  backdrop-filter: var(--site-glass-refraction, var(--glass-filter));
 }
 
 /* Surface color comes entirely from the backdrop, without a painted highlight. */
@@ -90,16 +69,6 @@
   opacity: .5;
 }
 
-.home-glass-engine {
-  position: fixed;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  pointer-events: none;
-  /* SVG filter definitions must remain mounted, including when scrolled away. */
-  clip-path: inset(100%);
-}
-
 /* Keep the admin menu free to extend past its pill-shaped surface. */
 :root:has(.landing-page) .admin-tools { overflow: visible; }
 :root:has(.landing-page) .admin-tools::before { clip-path: inset(0 round 24px); }
@@ -108,7 +77,7 @@
   :root .landing-page,
   :root:has(.landing-page) .admin-tools {
     --glass-background: var(--card);
-    --home-glass-refraction: none;
+    --site-glass-refraction: none;
   }
 }
 
@@ -117,7 +86,7 @@
   :root:has(.landing-page) .admin-tools {
     --glass-background: var(--card);
     --glass-filter: none;
-    --home-glass-refraction: none;
+    --site-glass-refraction: none;
   }
 }
 
@@ -126,162 +95,5 @@
   :root .landing-page :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip):not(.is-disabled):is(:hover, :active) {
     transform: none;
     transition: none;
-  }
-}
-
-.landing-page .home-scenery {
-  /* Stay behind the viewport throughout the homepage's full scroll length. */
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: -1;
-}
-
-.landing-page .home-scenery img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: var(--home-scene-position) top;
-}
-
-.landing-page .home-scenery::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom,
-    color-mix(in srgb, var(--background) 72%, transparent),
-    color-mix(in srgb, var(--background) 16%, transparent) 18%,
-    color-mix(in srgb, var(--background) 48%, transparent) 42%,
-    color-mix(in srgb, var(--background) 48%, transparent) 100%);
-}
-
-html[data-contrast='soft'] .landing-page .home-scenery img {
-  filter: saturate(.65) contrast(.85);
-}
-
-/* anchored-panel: safe (fixed to homepage content edge, bounded by viewport margins) */
-.landing-page .appearance-menu:has(.home-background-control) {
-  position: fixed;
-  top: calc(76px + var(--sat));
-  right: max(8px, calc((100vw - 1100px) / 2));
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  align-items: start;
-  column-gap: 12px;
-  width: min(580px, calc(100vw - 16px));
-  min-width: 0;
-  max-height: calc(100dvh - 92px - var(--sat));
-  padding: 8px;
-}
-
-.landing-page .appearance-extra {
-  min-width: 0;
-}
-
-.landing-page .appearance-menu:has(.home-background-control) .palette-menu-more {
-  grid-column: 1 / -1;
-}
-
-.landing-page .home-background-modes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 10px;
-  margin: 3px 4px 10px;
-}
-
-.landing-page .home-background-mode {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px 4px;
-  border: 0;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--muted-foreground);
-  font: inherit;
-  font-size: .75rem;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.landing-page .home-background-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px 6px;
-}
-
-.landing-page .home-background-option {
-  min-width: 0;
-  padding: 4px;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--foreground);
-  font: inherit;
-  cursor: pointer;
-  text-align: left;
-}
-
-.landing-page .home-background-option img {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 9;
-  border-radius: 4px;
-  object-fit: cover;
-}
-
-.landing-page .home-background-caption {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px 0 1px;
-  font-size: .75rem;
-  line-height: 1.35;
-}
-
-.landing-page .home-background-check {
-  display: inline-flex;
-  width: 13px;
-  flex-shrink: 0;
-}
-
-.landing-page :is(.home-background-option, .home-background-mode):hover {
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
-}
-
-.landing-page :is(.home-background-option, .home-background-mode)[aria-checked='true'] {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-.landing-page :is(.home-background-option, .home-background-mode):focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 1px;
-}
-
-@media (max-width: 600px) {
-  .landing-page .appearance-menu:has(.home-background-control) {
-    grid-template-columns: minmax(0, 1fr);
-    left: 8px;
-    right: auto;
-  }
-
-  .landing-page .appearance-menu:has(.home-background-control) .appearance-settings {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
-  }
-
-  .landing-page .appearance-menu:has(.home-background-control) .appearance-settings :is(.appearance-sec-label, .appearance-hint) {
-    grid-column: 1 / -1;
-  }
-
-  .landing-page .appearance-extra {
-    margin-top: 8px;
-  }
-
-  .landing-page .home-background-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

@@ -1287,3 +1287,59 @@ main { position: relative; z-index: 1; }
   }
 }
 /* end @scope (.haskell-intro-root) */
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .haskell-intro-root {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .haskell-intro-root .def-card,
+  body[data-site-scenery] .haskell-intro-root .tl-card,
+  body[data-site-scenery] .haskell-intro-root .why-card,
+  body[data-site-scenery] .haskell-intro-root .logo-card,
+  body[data-site-scenery] .haskell-intro-root .future-card,
+  body[data-site-scenery] .haskell-intro-root .ts-card {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery] .haskell-intro-root {
+    --bg: var(--background);
+    --bg-2: var(--card);
+    --bg-3: var(--muted);
+    --text: var(--foreground);
+    --text-dim: var(--muted-foreground);
+    --text-faint: var(--faint-foreground);
+    --line: var(--border-default);
+    --line-2: var(--border-strong);
+  }
+
+  body[data-site-scenery] .haskell-intro-root .grid-bg { display: none; }
+
+  body[data-site-scenery] .haskell-intro-root .glow-tl { display: none; }
+
+  body[data-site-scenery] .haskell-intro-root .glow-br { display: none; }
+}
+
+/* Keep the existing code canvas foreground independent of the scenery theme. */
+@media screen {
+  body[data-site-scenery] .haskell-intro-root { --code-plain: #ECE4F5; }
+
+  body[data-site-scenery] .haskell-intro-root .code,
+  body[data-site-scenery] .haskell-intro-root .why-code,
+  body[data-site-scenery] .haskell-intro-root .ts-code,
+  body[data-site-scenery] .haskell-intro-root .monad-code {
+    --text: var(--code-plain);
+    color: var(--code-plain);
+  }
+
+  body[data-site-scenery] .haskell-intro-root .hero-name {
+    background: none;
+    color: var(--foreground);
+    -webkit-text-fill-color: currentColor;
+  }
+}

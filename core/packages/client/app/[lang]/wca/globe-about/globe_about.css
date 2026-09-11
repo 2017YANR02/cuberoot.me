@@ -108,3 +108,30 @@
 .gla-refs li { font-size: 0.93rem; line-height: 1.5; }
 .gla-refs a { color: var(--gla-accent); text-decoration: none; }
 .gla-refs a:hover { text-decoration: underline; }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .gla-page {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .gla-header {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+}
+
+/* Local neutral aliases follow the active scenery palette. */
+@media screen {
+  body[data-site-scenery] .gla-page {
+    --gla-bg: var(--background);
+    --gla-surface: var(--card);
+    --gla-text: var(--foreground);
+    --gla-text-sub: var(--muted-foreground);
+    --gla-text-mute: var(--faint-foreground);
+    --gla-border: var(--border-default);
+  }
+}

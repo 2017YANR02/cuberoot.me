@@ -6,6 +6,7 @@
 import { CLAWD_AVATAR_PRESETS } from '@cuberoot/shared/account-avatar';
 import { PLAYTIME_SCENES } from './deskpet-playtime';
 import { ROOTBEAST_BASE, ROOTBEAST_SCENES, ROOTBEAST_VERSION } from './deskpet-rootbeast';
+import { ORIGINAL_BASE, ORIGINAL_CHARACTERS, ORIGINAL_SCENES, ORIGINAL_VERSION } from './deskpet-originals';
 
 export interface PetAnim {
   file: string;
@@ -36,9 +37,15 @@ export interface PetGalleryGroup {
   // (e.g. 'center 82%' keeps a ground-standing sprite's feet in frame).
   scale?: number;
   scaleOrigin?: string;
+  pixel?: boolean;
+  lightBackground?: boolean;
 }
 
 export const PET_GALLERY: PetGalleryGroup[] = [
+  ...ORIGINAL_CHARACTERS.map(character => ({
+    ...character, base: ORIGINAL_BASE, v: ORIGINAL_VERSION, lightBackground: true,
+    anims: ORIGINAL_SCENES.filter(scene => scene.character === character.id),
+  })),
   {
     id: 'rootbeast', zh: '根号兽', en: 'Root Beast',
     base: ROOTBEAST_BASE, v: ROOTBEAST_VERSION, anims: ROOTBEAST_SCENES,

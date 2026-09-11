@@ -1171,3 +1171,24 @@
     outline: 2px solid var(--ring);
     outline-offset: -2px;
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .calc-page {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .calc-page .info-modal,
+  body[data-site-scenery] .calc-page .me-menu {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery] .calc-page .info-modal,
+  body[data-site-scenery] .calc-page .me-menu {
+    background: var(--glass-popover-bg);
+  }
+}

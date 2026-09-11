@@ -105,3 +105,30 @@
 .moa-refs li { font-size: 0.93rem; line-height: 1.5; }
 .moa-refs a { color: var(--moa-accent); text-decoration: none; }
 .moa-refs a:hover { text-decoration: underline; }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .moa-page {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .moa-header {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+}
+
+/* Local neutral aliases follow the active scenery palette. */
+@media screen {
+  body[data-site-scenery] .moa-page {
+    --moa-bg: var(--background);
+    --moa-surface: var(--card);
+    --moa-text: var(--foreground);
+    --moa-text-sub: var(--muted-foreground);
+    --moa-text-mute: var(--faint-foreground);
+    --moa-border: var(--border-default);
+  }
+}

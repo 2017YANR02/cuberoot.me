@@ -493,3 +493,19 @@
 .sim-keymap-reset:hover {
   background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .sim-drawer,
+  body[data-site-scenery] .sim-keymap-modal {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+  body[data-site-scenery] .sim-drawer,
+  body[data-site-scenery] .sim-keymap-modal {
+    background: var(--glass-popover-bg);
+  }
+}

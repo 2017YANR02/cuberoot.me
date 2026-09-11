@@ -749,3 +749,36 @@
   .ops-filters { gap: 6px; }
   .ops-filter { padding: 6px 10px; font-size: 11px; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .ops-page {
+    --ops-bg: var(--background);
+    --ops-bg-2: var(--card);
+    --ops-panel: var(--card);
+    --ops-panel-2: var(--muted);
+    --ops-line: var(--border-default);
+    --ops-line-2: var(--border-strong);
+    --ops-line-3: var(--border-strong);
+    --ops-text: var(--foreground);
+    --ops-text-dim: var(--muted-foreground);
+    --ops-text-faint: var(--faint-foreground);
+    color-scheme: inherit;
+    background: transparent;
+  }
+
+  body[data-site-scenery] .ops-card,
+  body[data-site-scenery] .ops-modal {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery] .ops-bg-glow { display: none; }
+
+  body[data-site-scenery] .ops-modal {
+    background: var(--glass-popover-bg);
+  }
+}

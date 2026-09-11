@@ -25,6 +25,7 @@ body {
 
 :root {
   color-scheme: light dark;
+  --site-color-scheme: light;
 
   /* iOS PWA safe area insets */
   --sat: env(safe-area-inset-top, 0px);
@@ -108,6 +109,7 @@ body {
 }
 
 @media (prefers-color-scheme: dark) {
+  html:not([data-theme=light]) { --site-color-scheme: dark; }
   html:not([data-theme=light]) {
     --background: #171717;
     --foreground: #ededed;
@@ -167,6 +169,7 @@ html:root:not([data-palette-scheme=dark]):has(.tr-page),
 html:root:not([data-palette-scheme=dark]):has(.comp-sim-page),
 html:root:not([data-palette-scheme=dark]):has(.comp-sim-live) {
   color-scheme: dark;
+  --site-color-scheme: dark;
   --background: #171717;
   --foreground: #ededed;
   --card: #1f1f1f;
@@ -189,6 +192,7 @@ html:root:not([data-palette-scheme=dark]):has(.comp-sim-live) {
 }
 
 html[data-theme=dark] {
+  --site-color-scheme: dark;
   --background: #171717;
   --foreground: #ededed;
   --card: #1f1f1f;
@@ -230,6 +234,7 @@ html[data-theme=dark] {
    深底 palette 把 --accent-soft 抬到 16% 增强可见度。 */
 .palette-scope[data-palette=classic] {
   color-scheme: light;
+  --site-color-scheme: light;
   --background: #fafafa;
   --foreground: #171717;
   --card: #ffffff;
@@ -253,6 +258,7 @@ html[data-theme=dark] {
 .palette-scope[data-palette=claude] {
   /* Anthropic / claude.ai 风:暖奶油纸质底 + 赭陶强调 + 暖墨字。刻意比经典的冷白更暖,做成「暖纸」变体跟经典明显错开。 */
   color-scheme: light;
+  --site-color-scheme: light;
   --background: #ece3d0;
   --foreground: #2b2620;
   --card: #f3ecdc;
@@ -275,6 +281,7 @@ html[data-theme=dark] {
 :root[data-palette=xinhuang],
 .palette-scope[data-palette=xinhuang] {
   color-scheme: light;
+  --site-color-scheme: light;
   --background: #eef7f2;
   --foreground: #1f3a2e;
   --card: #f7fbf8;
@@ -297,6 +304,7 @@ html[data-theme=dark] {
 :root[data-palette=yanqing],
 .palette-scope[data-palette=yanqing] {
   color-scheme: light;
+  --site-color-scheme: light;
   --background: #f7f4ed;
   --foreground: #1b1c1f;
   --card: #fdfbf6;
@@ -319,6 +327,7 @@ html[data-theme=dark] {
 :root[data-palette=danxia],
 .palette-scope[data-palette=danxia] {
   color-scheme: light;
+  --site-color-scheme: light;
   --background: #faf3ec;
   --foreground: #3a2420;
   --card: #fefaf5;
@@ -341,6 +350,7 @@ html[data-theme=dark] {
 :root[data-palette=hantan],
 .palette-scope[data-palette=hantan] {
   color-scheme: dark;
+  --site-color-scheme: dark;
   --background: #142b32;
   --foreground: #dfeae8;
   --card: #1b3740;
@@ -364,6 +374,7 @@ html[data-theme=dark] {
 :root[data-palette=wujin],
 .palette-scope[data-palette=wujin] {
   color-scheme: dark;
+  --site-color-scheme: dark;
   --background: #1a1916;
   --foreground: #e8e1d2;
   --card: #232019;

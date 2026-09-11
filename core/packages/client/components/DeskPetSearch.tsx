@@ -107,6 +107,7 @@ export default function DeskPetSearch({
   onToggleRandom,
   metronomeOpen,
   onToggleMetronome,
+  onOpenPetHome,
 }: {
   lang: 'zh' | 'en';
   origin?: { x: number; y: number } | null;
@@ -122,6 +123,7 @@ export default function DeskPetSearch({
   onToggleRandom: () => void;
   metronomeOpen: boolean;
   onToggleMetronome: () => void;
+  onOpenPetHome: () => void;
 }) {
   const searchCards = SEARCH_CARDS.filter((card) => isLandingSearchCardVisible(card, isAdmin()));
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -327,6 +329,12 @@ export default function DeskPetSearch({
           }))}
           footer={close => (
             <>
+              <div className="deskpet-character-gallery">
+                <button type="button" className="compact-select-option" onClick={() => { close(); onOpenPetHome(); }}>
+                  <span className="deskpet-character-option"><span className="deskpet-character-thumb" aria-hidden><Home size={18} /></span>
+                    {tr({ zh: '宠物小窝', en: 'Pet home' })}</span>
+                </button>
+              </div>
               <div className="deskpet-character-settings">
                 <div className="deskpet-character-setting">
                   <span className="deskpet-character-option">
@@ -362,7 +370,7 @@ export default function DeskPetSearch({
                   </span>
                 </button>
               </div>
-              {isAdmin() && <div className="deskpet-character-gallery">
+              <div className="deskpet-character-gallery">
                 <button type="button" className="compact-select-option" onClick={() => {
                   close();
                   setGalleryOpen(true);
@@ -372,7 +380,7 @@ export default function DeskPetSearch({
                     <span>{tr({ zh: '图鉴', en: 'Gallery' })}</span>
                   </span>
                 </button>
-              </div>}
+              </div>
             </>
           )}
         />

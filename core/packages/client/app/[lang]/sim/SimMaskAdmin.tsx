@@ -3,16 +3,17 @@
 //
 // 标签与显隐用条目覆盖层；分组顺序、组内顺序与跨组归属一次保存完整布局。
 import { useMemo, useState } from 'react';
-import { Eye, EyeOff, RotateCcw, Trash2, X } from 'lucide-react';
+import { Eye, EyeOff, Menu, Trash2, X } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import SortableCard from '@/components/SortableCard';
 import { useT } from '@/hooks/useT';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
 import {
   deleteSimMask, saveSimMaskLayout, saveSimMask, PRESET_PREFIX,
-  type SimMaskRow,
+  type SimMaskRow, type SimMaskInput,
 } from '@/lib/sim-masks-api';
-import { maskRowsForOrder, maskDisplayIdentifier } from './engine/nxn/maskConfig';
+import { maskRowsForOrder, maskDisplayIdentifier, PRESET_GROUP } from './engine/nxn/maskConfig';
 import type { StickeringGroup } from './engine/nxn/stickering';
 import './sim-mask-admin.css';
 
@@ -26,7 +27,7 @@ function presetKey(labelEn: string, labelZh: string, taken: Set<string>): string
 }
 
 export default function SimMaskAdmin({
-  order, groups, rows, onReload, onClose, groupLabel, defaultLabel,
+  order, groups: initialGroups, rows, onReload, onClose, groupLabel, defaultLabel,
   pickedSids, pick, rest,
 }: {
   /** 阶数(覆盖行按阶存:点选清单绑死阶数,内置条目也按阶各记一份)。 */
@@ -47,18 +48,23 @@ export default function SimMaskAdmin({
   const t = useT();
   const cfg = useMemo(() => maskRowsForOrder(rows, order), [rows, order]);
   const [busy, setBusy] = useState(false);
+  const backdropProps = useModalDismiss(onClose, busy);
   const [err, setErr] = useState<string | null>(null);
-  // 改名草稿:key → { zh, en };没进过输入框的条目不在里面(= 未改动)
-  const [draft, setDraft] = useState<Record<string, { zh: string; en: string }>>({});
+  const [groups, setGroups] = useState(initialGroups);
+  const [draft, setDraft] = useState<Record<string, SimMaskInput>>({});
+  const [deleted, setDeleted] = useState<string[]>([]);
   const [newZh, setNewZh] = useState('');
   const [newEn, setNewEn] = useState('');
-
-  const run = async (fn: () => Promise<unknown>) => {
+  const saveAll = async () => {
+    if (busy) return;
     setBusy(true);
     setErr(null);
     try {
-      await fn();
+      for (const row of Object.values(draft)) await saveSimMask(row);
+      for (const key of deleted) await deleteSimMask(key);
+      if (groups !== initialGroups) await saveSimMaskLayout({ cubeSize: order, groups });
       await onReload();
+      onClose();
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -66,27 +72,18 @@ export default function SimMaskAdmin({
     }
   };
 
-  const rowOf = (key: string): SimMaskRow | undefined => cfg.get(key);
+  const rowOf = (key: string) => draft[key] ?? cfg.get(key);
   const draftOf = (key: string) => {
-    const d = draft[key];
-    if (d) return d;
     const r = rowOf(key);
     return { zh: r?.labelZh ?? '', en: r?.labelEn ?? '' };
   };
-  const dirty = (key: string) => {
-    const d = draft[key];
-    if (!d) return false;
-    const r = rowOf(key);
-    return d.zh !== (r?.labelZh ?? '') || d.en !== (r?.labelEn ?? '');
-  };
 
   /** 一行的完整 upsert(标签 / 显隐 都走它;custom 行要把 sids 原样带回去,别被覆盖成空)。 */
-  const saveRow = (key: string, patch: { zh?: string; en?: string; hidden?: boolean }) => {
+  const editRow = (key: string, patch: { zh?: string; en?: string; hidden?: boolean }) => {
     const r = rowOf(key);
     const d = draftOf(key);
     const isPreset = key.startsWith(PRESET_PREFIX);
-    void run(async () => {
-      await saveSimMask({
+    setDraft((prev) => ({ ...prev, [key]: {
         maskKey: key,
         kind: isPreset ? 'custom' : 'builtin',
         cubeSize: order,
@@ -96,13 +93,7 @@ export default function SimMaskAdmin({
         sids: r?.sids ?? '',
         pick: r?.pick ?? 'regular',
         rest: r?.rest ?? 'ignored',
-      });
-      setDraft((prev) => {
-        const next = { ...prev };
-        delete next[key];
-        return next;
-      });
-    });
+    } }));
   };
 
   const sensors = useSensors(
@@ -133,26 +124,25 @@ export default function SimMaskAdmin({
         to.items.splice(at, 0, key);
       }
     }
-    void run(() => saveSimMaskLayout({ cubeSize: order, groups: next }));
+    setGroups(next);
   };
 
-  const resetRow = (key: string) => {
-    const isPreset = key.startsWith(PRESET_PREFIX);
-    const label = defaultLabel(key, 'zh') || key;
-    const ok = window.confirm(isPreset
-      ? t(`删除自建遮罩「${label}」?`, `Delete custom mask “${label}”?`)
-      : t(`把「${label}」的名字和显隐恢复默认?`,
-        `Reset the label and visibility of “${label}”?`));
-    if (!ok) return;
-    void run(() => deleteSimMask(key));
+  const removeRow = (key: string) => {
+      if (cfg.has(key)) setDeleted((prev) => [...prev, key]);
+      setDraft((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      setGroups((prev) => prev.map((g) => ({ ...g, items: g.items.filter((item) => item !== key) })));
   };
 
   const createPreset = () => {
     if (!pickedSids) return;
-    const taken = new Set(rows.map((r) => r.maskKey));
-    void run(async () => {
-      await saveSimMask({
-        maskKey: presetKey(newEn, newZh, taken),
+    const taken = new Set([...rows.map((r) => r.maskKey), ...Object.keys(draft)]);
+    const key = presetKey(newEn, newZh, taken);
+    setDraft((prev) => ({ ...prev, [key]: {
+        maskKey: key,
         kind: 'custom',
         cubeSize: order,
         hidden: false,
@@ -161,23 +151,30 @@ export default function SimMaskAdmin({
         sids: pickedSids,
         pick,
         rest,
-      });
+      } }));
+      setGroups((prev) => prev.some((g) => g.group === PRESET_GROUP)
+        ? prev.map((g) => g.group === PRESET_GROUP ? { ...g, items: [...g.items, key] } : g)
+        : [...prev, { group: PRESET_GROUP, items: [key] }]);
       setNewZh('');
       setNewEn('');
-    });
   };
 
   return (
-    <div className="sim-mask-admin-scrim" role="dialog" aria-modal="true" aria-label={t('遮罩清单管理', 'Manage mask list')}>
+    <div className="sim-mask-admin-scrim" {...backdropProps} role="dialog" aria-modal="true" aria-label={t('遮罩清单管理', 'Manage mask list')}>
       <div className="sim-mask-admin">
         <div className="sim-mask-admin-head">
           <strong>{t('遮罩清单管理', 'Manage mask list')}</strong>
           <span className="sim-mask-admin-note">
             {t(`${order} 阶;改动对所有人生效`, `Cube size ${order}; changes are live for everyone`)}
           </span>
-          <button type="button" className="sim-mask-admin-x" onClick={onClose} aria-label={t('关闭', 'Close')}>
+          <div className="sim-mask-admin-actions">
+          <button type="button" className="sim-mask-admin-btn" disabled={busy || (!Object.keys(draft).length && !deleted.length && groups === initialGroups)} onClick={saveAll}>
+            {t('保存', 'Save')}
+          </button>
+          <button type="button" className="sim-mask-admin-x" disabled={busy} onClick={onClose} aria-label={t('关闭', 'Close')}>
             <X size={16} />
           </button>
+          </div>
         </div>
 
         <div className="sim-mask-admin-new">
@@ -187,12 +184,14 @@ export default function SimMaskAdmin({
               <input
                 className="sim-mask-admin-input"
                 value={newZh}
+                disabled={busy}
                 onChange={(e) => setNewZh(e.target.value)}
                 aria-label={t('中文名', 'Chinese name')}
               />
               <input
                 className="sim-mask-admin-input"
                 value={newEn}
+                disabled={busy}
                 onChange={(e) => setNewEn(e.target.value)}
                 aria-label={t('英文名', 'English name')}
               />
@@ -202,7 +201,7 @@ export default function SimMaskAdmin({
                 onClick={createPreset}
                 disabled={busy || (!newZh.trim() && !newEn.trim())}
               >
-                {t('保存', 'Save')}
+                {t('添加', 'Add')}
               </button>
             </>
           ) : (
@@ -222,7 +221,7 @@ export default function SimMaskAdmin({
         <SortableContext items={groups.map((g) => `group:${g.group}`)} strategy={verticalListSortingStrategy}>
         <div className="sim-mask-admin-list">
           {groups.map((g) => (
-            <SortableCard key={g.group} id={`group:${g.group}`} draggable={!busy} stretch={false} className="sim-mask-admin-group" dragLabel={t('拖动调整分组顺序', 'Drag to reorder groups')}>
+            <SortableCard key={g.group} id={`group:${g.group}`} draggable disabled={busy} stretch={false} dragIcon={<Menu size={16} />} className="sim-mask-admin-group" dragLabel={t('拖动调整分组顺序', 'Drag to reorder groups')}>
               <div className="sim-mask-admin-group-title">
                 <strong>{groupLabel(g.group)}</strong>
                 {g.items.length === 0 && <span>{t('空分组，可移入阶段', 'Empty group; move a stage here')}</span>}
@@ -234,13 +233,14 @@ export default function SimMaskAdmin({
                 const hidden = r?.hidden ?? false;
                 const identifier = maskDisplayIdentifier(d.en.trim() || defaultLabel(key, 'en'));
                 return (
-                  <SortableCard key={key} id={`item:${key}`} draggable={!busy} stretch={false} className={`sim-mask-admin-row${hidden ? ' is-hidden' : ''}`} dragLabel={t('拖动调整阶段顺序或分组', 'Drag to reorder or move stage')}>
+                  <SortableCard key={key} id={`item:${key}`} draggable disabled={busy} stretch={false} dragIcon={<Menu size={16} />} className={`sim-mask-admin-row${hidden ? ' is-hidden' : ''}`} dragLabel={t('拖动调整阶段顺序或分组', 'Drag to reorder or move stage')}>
                     <code className="sim-mask-admin-key" title={identifier}>{identifier}</code>
                     <label className="sim-mask-admin-field">
                     <input
                       className="sim-mask-admin-input"
                       value={d.zh}
-                      onChange={(e) => setDraft((p) => ({ ...p, [key]: { ...draftOf(key), zh: e.target.value } }))}
+                      disabled={busy}
+                      onChange={(e) => editRow(key, { zh: e.target.value })}
                       placeholder={defaultLabel(key, 'zh')}
                       aria-label={t('中文名', 'Chinese name')}
                     />
@@ -249,33 +249,28 @@ export default function SimMaskAdmin({
                     <input
                       className="sim-mask-admin-input"
                       value={d.en}
-                      onChange={(e) => setDraft((p) => ({ ...p, [key]: { ...draftOf(key), en: e.target.value } }))}
+                      disabled={busy}
+                      onChange={(e) => editRow(key, { en: e.target.value })}
                       placeholder={defaultLabel(key, 'en')}
                       aria-label={t('英文名', 'English name')}
                     />
                     </label>
                     <button
-                      type="button" className="sim-mask-admin-btn" disabled={busy || !dirty(key)}
-                      onClick={() => saveRow(key, {})}
-                    >
-                      {t('保存', 'Save')}
-                    </button>
-                    <button
                       type="button" className="sim-mask-admin-icon" disabled={busy}
-                      onClick={() => saveRow(key, { hidden: !hidden })}
+                      onClick={() => editRow(key, { hidden: !hidden })}
                       title={hidden ? t('取消隐藏', 'Show again') : t('隐藏', 'Hide')}
                       aria-label={hidden ? t('取消隐藏', 'Show again') : t('隐藏', 'Hide')}
                     >
                       {hidden ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
-                    <button
+                    {key.startsWith(PRESET_PREFIX) && <button
                       type="button" className="sim-mask-admin-icon" disabled={busy || !r}
-                      onClick={() => resetRow(key)}
-                      title={key.startsWith(PRESET_PREFIX) ? t('删除', 'Delete') : t('恢复默认', 'Reset to default')}
-                      aria-label={key.startsWith(PRESET_PREFIX) ? t('删除', 'Delete') : t('恢复默认', 'Reset to default')}
+                      onClick={() => removeRow(key)}
+                      title={t('删除', 'Delete')}
+                      aria-label={t('删除', 'Delete')}
                     >
-                      {key.startsWith(PRESET_PREFIX) ? <Trash2 size={14} /> : <RotateCcw size={14} />}
-                    </button>
+                      <Trash2 size={14} />
+                    </button>}
                   </SortableCard>
                 );
               })}

@@ -833,6 +833,20 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'SiteBackground',
+    import: "import SiteBackground, { SiteBackgroundControl } from '@/components/SiteBackground';",
+    category: 'more',
+    zh: '全站唯一风景层与共享外观选择器，复用背景偏好并跟随页面实际明暗。',
+    en: 'One site landscape and shared appearance picker, preserving preferences and following the rendered page scheme.',
+  },
+  {
+    name: 'SiteGlass',
+    import: "import SiteGlass from '@/components/SiteGlass';",
+    category: 'more',
+    zh: '全站表面共用的光学入口，文字保持清晰，按浏览器能力降级。',
+    en: 'Shared optical engine for site surfaces, with clear content and browser-appropriate fallbacks.',
+  },
+  {
     name: 'CompetitionVideoRoom',
     import: "import { CompetitionVideoRoom } from '@/components/platform/CompetitionVideoRoom';",
     category: 'more',
@@ -2315,6 +2329,14 @@ export const CATALOG: ComponentEntry[] = [
     zh: `全站桌宠组件,渲染会跟随光标的螃蟹 / 猫 / 云宝形象,点击打开搜索浮层、可拖动贴边、显示反馈未读角标,挂在 root layout。`,
     en: `Site-wide desk-pet widget rendering a cursor-tracking crab/cat/cloud character; click to open the search overlay, draggable with edge-cling, shows the unread-feedback badge, mounted in the root layout.`,
     note: { zh: `通过 window.dispatchEvent('clawd:state') 或 window.clawdPet 驱动姿势;唯一的桌宠入口。`, en: `Drive poses via window.dispatchEvent('clawd:state') or window.clawdPet; the single desk-pet entry point.` },
+  },
+  {
+    name: 'DeskPetHome',
+    import: "import DeskPetHome from '@/components/DeskPetHome';",
+    category: 'more',
+    zh: `桌宠小窝:复用当前形象与动画,提供喂食、抚摸、玩耍、小睡与本地独立成长存档。`,
+    en: `Pet home reusing character animations for feeding, petting, playing and napping, with independent local friendship records.`,
+    note: { zh: `由 DeskPet 懒加载,养成规则统一在 lib/deskpet-care.ts。`, en: `Lazy-loaded by DeskPet; care rules live in lib/deskpet-care.ts.` },
   },
   {
     name: 'DeskPetGallery',

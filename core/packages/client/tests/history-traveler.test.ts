@@ -58,7 +58,9 @@ describe('history traveller beside the selected date', () => {
 
   it('preserves forward and backward travel, facing, and the existing walk speed', () => {
     expect(HISTORY_WALK_SPEED).toBe(2.145);
-    expect(HISTORY_GAITS.run.speed).toBe(4.29);
+    expect(HISTORY_GAITS.jog.speed).toBe(4.29);
+    expect(HISTORY_GAITS.run.speed).toBe(10.725);
+    expect(HISTORY_GAITS.glide.speed).toBe(42.9);
     const figure = traveler.root.children.find(object => object instanceof T.Group)!;
     traveler.update(0, 1, false);
     let previous = traveler.root.position.x;
@@ -76,7 +78,7 @@ describe('history traveller beside the selected date', () => {
     expect(new T.Vector3(0, 0, 1).applyQuaternion(figure.quaternion).x).toBeLessThan(-.9);
   });
 
-  it.each(['walk', 'run'] as HistoryGait[])('%s keeps shoes above the path and settles both feet when paused', gait => {
+  it.each(['walk', 'jog', 'run'] as HistoryGait[])('%s keeps shoes above the path and settles both feet when paused', gait => {
     const figure = traveler.root.children.find(object => object instanceof T.Group)!;
     const body = figure.children[0] as T.Group;
     const feet = figure.children.slice(1).map(hip => hip.children.find(child => child instanceof T.Group)!
@@ -95,7 +97,7 @@ describe('history traveller beside the selected date', () => {
     if (gait === 'run') {
       expect(airborneHeight).toBeGreaterThan(.1);
       expect(body.rotation.x).toBeGreaterThan(.15);
-    } else {
+    } else if (gait === 'walk') {
       expect(airborneHeight).toBeLessThan(.03);
       expect(body.rotation.x).toBe(0);
     }
@@ -110,5 +112,20 @@ describe('history traveller beside the selected date', () => {
       const point = foot.getWorldPosition(new T.Vector3());
       expect(point.y - .0525 - groundY(point.x)).toBeCloseTo(.0225, 4);
     }
+  });
+
+  it('glides on a board, lifts it with a jump, and removes it when walking again', () => {
+    const board = traveler.root.getObjectByName('history-traveler-board')!;
+    for (let frame = 0; frame <= 120; frame++) traveler.update(frame / 60, 10 + frame / 60, false, 'glide');
+    expect(board.visible).toBe(true);
+    expect(board.scale.x).toBeCloseTo(1, 5);
+    traveler.update(2.02, 12.02, false, 'glide', 2);
+    expect(board.position.y).toBe(2);
+    const figure = traveler.root.children.find(object => object instanceof T.Group)!;
+    expect(figure.position.y).toBeGreaterThan(1.8);
+    for (let frame = 122; frame <= 300; frame++) traveler.update(frame / 60, 12.02, false, 'walk');
+    expect(board.visible).toBe(false);
+    expect(figure.position.y).toBeCloseTo(0, 5);
+    expect(traveler.root.position.x).toBe(12.02 * HISTORY_SPACING - 1.5);
   });
 });

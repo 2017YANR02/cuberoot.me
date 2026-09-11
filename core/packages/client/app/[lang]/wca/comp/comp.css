@@ -2042,3 +2042,26 @@ td.is-pr {
   .comp-similar-place, .comp-similar-date { padding-left: calc(1.33em + 0.6rem); }
   .comp-similar-date { width: auto; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .comp-detail-page,
+  body[data-site-scenery] .comp-sources-page {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .comp-info-past-panel,
+  body[data-site-scenery] .comp-modal,
+  body[data-site-scenery] .comp-round-modal {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery] .comp-modal,
+  body[data-site-scenery] .comp-round-modal {
+    background: var(--glass-popover-bg);
+  }
+}

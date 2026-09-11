@@ -112,7 +112,7 @@ describe('Platform QR card main-site contract', () => {
     expect(landing).not.toContain('/redirect');
     expect(landing).toContain('<AppLink');
     expect(landing).toContain('<a className={className}');
-    expect(routeView).toMatch(/permissionDenied \|\| definition\.id === 'qr' \|\|/);
+    expect(routeView).toMatch(/permissionDenied \|\| orderUnavailable \|\| definition\.id === 'qr' \|\|/);
   });
 
   it('edits landing metadata as structured fields while keeping intro and term in the card contract', () => {

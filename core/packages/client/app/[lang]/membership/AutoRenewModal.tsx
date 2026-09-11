@@ -28,10 +28,10 @@ export default function AutoRenewModal({ price, period, onClose }: Props) {
         firstCharge: { zh: '首期及以后每月均为 {price}，支付成功后开通相应服务期', en: 'The first and each subsequent month cost {price}. Membership starts after successful payment.' },
       };
 
-  useModalDismiss(onClose);
+  const backdropProps = useModalDismiss(onClose);
 
   return (
-    <div className="mem-pay-backdrop">
+    <div className="mem-pay-backdrop" {...backdropProps}>
       <section className="mem-pay mem-autorenew-modal" role="dialog" aria-modal="true" aria-labelledby="mem-autorenew-title" aria-describedby="mem-autorenew-availability">
         <ClearButton
           variant="standalone"

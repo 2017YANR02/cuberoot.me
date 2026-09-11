@@ -2235,3 +2235,25 @@ a.alg-community-author:hover {
 }
 .alg-mirror-link:hover .alg-mirror-name { color: var(--accent); }
 .alg-mirror-name { font-weight: 600; }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .alg-root {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .alg-pdf-menu,
+  body[data-site-scenery] .alg-case,
+  body[data-site-scenery] .alg-admin-modal {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery] .alg-pdf-menu,
+  body[data-site-scenery] .alg-admin-modal {
+    background: var(--glass-popover-bg);
+  }
+}

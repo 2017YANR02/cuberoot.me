@@ -179,6 +179,20 @@ export interface TLEntry {
 }
 export const TIMELINE: TLEntry[] = ([
   {
+    date: '2026-09-10',
+    tag: 'feature',
+    zh: {
+      title: '山河滑行加入首页游戏入口',
+      body: '在纸雕山河间滑行、跳跃和拾光。按住可以空翻，松开后稳稳落地能够获得顺风加速，沿途地貌、天气和昼夜随行程变化。',
+      expand: '手机可以轻点画面或跳跃键，键盘可以使用空格和方向上键，支持二段跳与暂停。雪地、沙地和雨天呈现不同的飞溅与滑痕；游戏与历史画卷共用山河场景，也可以退出游戏继续阅读日期记录。',
+    },
+    en: {
+      title: 'Paper Odyssey joins the homepage',
+      body: 'Glide, jump and gather light across paper landscapes. Hold to flip and release for a clean landing to earn a tailwind boost, with changing terrain, weather and daylight along the journey.',
+      expand: 'Tap the scene or jump button on touchscreens, or use Space and the up arrow on a keyboard. Double jumps and pausing are supported. Snow, sand and rain produce distinct spray and tracks. The game shares the history landscape, and players can leave the game to read the dated stories.',
+    },
+  },
+  {
     "date": "2026-09-08",
     "tag": "feature",
     "zh": {

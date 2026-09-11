@@ -1039,3 +1039,22 @@ a.scramble-timeline-scramble:hover {
   vertical-align: -3px;
   border: 1.5px dashed var(--muted-foreground);
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .scramble-stats-page {
+    background: transparent;
+  }
+}
+
+/* Local neutral aliases follow the active scenery palette. */
+@media screen {
+  body[data-site-scenery] .scramble-stats-page {
+    --bg: var(--background);
+    --surface: var(--card);
+    --text: var(--foreground);
+    --text-sub: var(--muted-foreground);
+    --border: var(--border-default);
+    --border-strong: var(--border-strong);
+  }
+}

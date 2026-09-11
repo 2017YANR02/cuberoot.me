@@ -427,3 +427,10 @@
     gap: 18px;
   }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .infra-page {
+    background: transparent;
+  }
+}

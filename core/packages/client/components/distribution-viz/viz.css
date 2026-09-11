@@ -85,6 +85,40 @@
 .viz-page .mode-switcher .compact-select { width: 160px; }
 
 /* ─── Canvas 容器 ─── */
+/* Site scenery replaces the old painted page background; chart series keep
+   their own palette, including the canvas ink RGB contract below. */
+html body[data-site-scenery] .viz-page.wp-distviz {
+  --bg-primary: transparent;
+  --bg-card: var(--glass-surface-bg);
+  --bg-glass: var(--glass-surface-bg);
+  --bg-pop: var(--glass-popover-bg);
+  --text-primary: var(--foreground);
+  --text-secondary: var(--muted-foreground);
+  --text-muted: var(--faint-foreground);
+  --border-subtle: var(--glass-border);
+  background: transparent;
+}
+
+body[data-site-scenery] .viz-page :is(
+  .canvas-wrapper, .stats-bar, .controls, .ridgeline-wrapper, .toolbar
+) {
+  background: var(--glass-surface-bg);
+  border-color: var(--glass-border);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  box-shadow: var(--glass-shadow);
+}
+
+body[data-site-scenery] .viz-page :is(
+  .legend-tooltip, .csv-player-menu, .wca-pp-inline .wca-pp-results
+) {
+  background: var(--glass-popover-bg);
+  border-color: var(--glass-border);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  box-shadow: var(--glass-shadow);
+}
+
 .viz-page .canvas-wrapper {
   position: relative;
   width: 100%;

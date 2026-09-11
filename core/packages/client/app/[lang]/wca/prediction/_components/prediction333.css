@@ -370,3 +370,16 @@
   font-weight: 600;
   color: var(--foreground);
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .pred-recon-card,
+  body[data-site-scenery] .pred-pll-card,
+  body[data-site-scenery] .pred-cuber-card {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+}

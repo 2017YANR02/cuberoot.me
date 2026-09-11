@@ -21,12 +21,12 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
 }
 
 export async function exportHistoryVideo(options: {
-  source: HTMLDivElement; start: number; end: number; speed: number; gait: HistoryGait; weatherVariation: number;
+  source: HTMLDivElement; start: number; end: number; gait: HistoryGait; weatherVariation: number;
   abortRef: { aborted: boolean }; preview: HTMLCanvasElement | null;
   onProgress: (progress: ExportProgress) => void;
 }): Promise<Blob> {
-  const { source, start, end, speed, gait, weatherVariation, abortRef, preview, onProgress } = options;
-  const plan = historyVideoPlan(start, end, speed, gait);
+  const { source, start, end, gait, weatherVariation, abortRef, preview, onProgress } = options;
+  const plan = historyVideoPlan(start, end, gait);
   const encoder = await createCanvasVideoEncoder({ width: WIDTH, height: HEIGHT, fps: HISTORY_VIDEO_FPS, bitrate: 12_000_000, abortRef });
   const stage = document.createElement('div'), host = document.createElement('div');
   let scene: HistoryScene | undefined;

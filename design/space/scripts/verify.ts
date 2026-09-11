@@ -72,10 +72,28 @@ try {
         if (Math.abs(towerHeight - 632) > .5 || !tower.userData.spaceFacadeDetail?.crownInnerSkin) throw new Error('Shanghai Tower height or crown lost');
         // Rays traverse the real exported opening from both faces; the slab
         // above it must remain solid. This catches accidental mullion bridges.
+        let bridgeAngle = 0;
+        if (Object.hasOwn(financial.userData, 'spaceSwfcTopCandidate')) {
+          const encoded = financial.userData.spaceSwfcTopCandidate;
+          if (typeof encoded !== 'string') throw new Error('SWFC candidate metadata must be a JSON string');
+          let candidate: unknown;
+          try { candidate = JSON.parse(encoded); }
+          catch { throw new Error('SWFC candidate metadata contains invalid JSON'); }
+          if (typeof candidate !== 'object' || candidate === null || Array.isArray(candidate)
+            || !('bridgeAngleLocalDegrees' in candidate)
+            || typeof candidate.bridgeAngleLocalDegrees !== 'number'
+            || !Number.isFinite(candidate.bridgeAngleLocalDegrees)) {
+            throw new Error('SWFC candidate metadata requires finite bridgeAngleLocalDegrees');
+          }
+          bridgeAngle = THREE.MathUtils.degToRad(candidate.bridgeAngleLocalDegrees);
+        }
+        // Blender (u, v, height) exports to Three.js (u, height, -v).
+        // Match the candidate review's V axis; absent metadata keeps the old ray pair.
+        const apertureNormal = new THREE.Vector3(-Math.sin(bridgeAngle), 0, -Math.cos(bridgeAngle));
         for (const side of [-1, 1]) {
-          const direction = new THREE.Vector3(0, 0, -side).transformDirection(financial.matrixWorld);
+          const direction = apertureNormal.clone().multiplyScalar(-side).transformDirection(financial.matrixWorld);
           const probe = (height: number) => new THREE.Raycaster(
-            new THREE.Vector3(0, height, side * 100).applyMatrix4(financial.matrixWorld), direction, 0, 200,
+            apertureNormal.clone().multiplyScalar(side * 100).setY(height).applyMatrix4(financial.matrixWorld), direction, 0, 200,
           ).intersectObject(financial, true);
           if (probe(460).length || !probe(486).length) throw new Error('SWFC aperture or crown slab lost');
         }

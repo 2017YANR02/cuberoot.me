@@ -3,24 +3,20 @@
 .lg-chips {
     position: relative;
     display: inline-flex;
-    background: color-mix(in srgb, currentColor 10%, transparent);
+    background: var(--glass-surface-bg);
     border: 1px solid color-mix(in srgb, currentColor 8%, transparent);
     border-radius: 999px;
     padding: 3px;
     gap: 0;
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     touch-action: pan-y;
     user-select: none;
     -webkit-user-select: none;
-    box-shadow: inset 0 0 0 0.5px color-mix(in srgb, #fff 18%, transparent);
+    box-shadow: var(--glass-shadow);
 }
 
-/* liquid-glass-react 渲染多个 sibling 层 (overLight ×2 + glass + border ×2),
-   全塞这层 absolute wrapper → 一并被 z-index:0 锁在 chip 文字下方,
-   pointer-events:none 避免拦住 chip 点击 / pointer drag。
-   overflow:hidden + border-radius:inherit 把 displacement 170% 扩展区 + lib 自带
-   下沉 drop shadow 都裁回 chips 胶囊形,不再下漏一坨。 */
+/* Shared optical thumb stays below labels and never receives pointer events. */
 .lg-chips-thumb-layer {
     position: absolute;
     inset: 0;
@@ -29,26 +25,16 @@
     overflow: hidden;
     border-radius: inherit;
 }
-/* lib 给 .glass 内联 `box-shadow: 0 12px 40px rgba(0,0,0,0.25)` 当 drop shadow,
-   小尺寸 chip 上很扎眼;盖掉 (inline → 必须 !important)。 */
-.lg-chips-thumb-layer .glass {
-    box-shadow: none !important;
-}
-
-/* Safari / iOS 兜底 thumb:lib 的 SVG displacement 不工作,退一档 CSS frosted。
-   位置同 LiquidGlass:top/left 取 chip 中心,translate(-50%,-50%) 居中。
-   transition 模拟 lib 的 0.2s ease-out。 */
+/* One thumb consumes the document material, including browser fallbacks. */
 .lg-chips-thumb-fallback {
     position: absolute;
     transform: translate(-50%, -50%);
     border-radius: 999px;
-    background: color-mix(in srgb, currentColor 14%, transparent);
-    box-shadow:
-        inset 0 0 0 0.5px color-mix(in srgb, #fff 22%, transparent),
-        inset 0 1px 2px color-mix(in srgb, #fff 18%, transparent),
-        0 1px 3px rgba(0, 0, 0, 0.18);
-    backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    background: var(--glass-popover-bg);
+    box-shadow: var(--glass-shadow);
+    border: 1px solid var(--glass-border);
+    -webkit-backdrop-filter: var(--site-glass-refraction, var(--glass-filter));
+    backdrop-filter: var(--site-glass-refraction, var(--glass-filter));
     transition: top 0.2s ease-out, left 0.2s ease-out, width 0.2s ease-out, height 0.2s ease-out;
 }
 

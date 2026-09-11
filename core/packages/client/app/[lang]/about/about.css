@@ -103,3 +103,10 @@
 .about-source a:hover {
   color: var(--foreground);
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .about-page {
+    background: transparent;
+  }
+}

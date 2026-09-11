@@ -209,3 +209,31 @@
     word-break: break-word;
   }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .algo-page {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .algo-page {
+    --bg: var(--background);
+    --bg-2: var(--card);
+    --bg-3: var(--muted);
+    --text: var(--foreground);
+    --text-dim: var(--muted-foreground);
+    --text-faint: var(--faint-foreground);
+    --line: var(--border-default);
+    --line-2: var(--border-strong);
+  }
+}
+
+/* Keep the existing code canvas foreground independent of the scenery theme. */
+@media screen {
+  body[data-site-scenery] .algo-page { --code-plain: #E6EDF7; }
+
+  body[data-site-scenery] .algo-page pre.algo-code {
+    --text: var(--code-plain);
+    color: var(--code-plain);
+  }
+}

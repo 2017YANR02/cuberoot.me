@@ -112,8 +112,10 @@ export const HISTORY_PLACES = DAYS.map((day, index) => {
 export const HISTORY_SPACING = 28;
 export const HISTORY_WALK_SPEED = 2.145;
 export const HISTORY_GAITS = {
-  walk: { zh: '行走', en: 'Walk', speed: HISTORY_WALK_SPEED },
-  run: { zh: '跑步', en: 'Run', speed: HISTORY_WALK_SPEED * 2 },
+  walk: { zh: '漫步', en: 'Stroll', speed: HISTORY_WALK_SPEED },
+  jog: { zh: '慢跑', en: 'Jog', speed: HISTORY_WALK_SPEED * 2 },
+  run: { zh: '快跑', en: 'Run', speed: HISTORY_WALK_SPEED * 5 },
+  glide: { zh: '滑行', en: 'Glide', speed: HISTORY_WALK_SPEED * 20 },
 } as const;
 export type HistoryGait = keyof typeof HISTORY_GAITS;
 export const HISTORY_LAST = HISTORY_PLACES.length - 1;

@@ -2,7 +2,7 @@
 
 import { memo, useRef, useState, useEffect, useCallback, type RefObject } from 'react';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
-import { ArrowLeft, ArrowRight, ArrowUpRight, MoveHorizontal, BookOpen, Pause, Play, Sun, Moon, Sparkles, Download } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, MoveHorizontal, BookOpen, Pause, Play, Sun, Moon, Sparkles, Download, RotateCcw, Gamepad2 } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
 import { CompactSelect } from '@/components/CompactSelect';
@@ -14,6 +14,7 @@ import { TIMELINE } from '../_lib/arch-data';
 import DAYS from '../timeline_commits.json';
 import { HISTORY_PLACES, HISTORY_LAST, HISTORY_GAITS, type HistoryGait, clampHistoryPosition } from '../history/history-days';
 import type { HistoryScene } from '../history/history-scene';
+import { EMPTY_HISTORY_SCORE, type HistoryPlayScore } from '../history/history-play';
 import { HISTORY_ENVIRONMENTS, WEATHER_LABELS, DAYLIGHT_LABELS, historyDaylight, journeyWeather } from '../history/history-environment';
 import { HISTORY_LANDFORMS, LANDFORMS, type HistoryLandform } from '../history/history-landforms';
 import { ANIMALS, HISTORY_FAUNA, type AnimalSpecies } from '../history/history-fauna';
@@ -22,7 +23,6 @@ import HistoryArchive from './HistoryView';
 import HistoryVideoExport from './HistoryVideoExport';
 
 const DATES = HISTORY_PLACES.map(place => place.date);
-const PLAYBACK_SPEEDS = [1, 2, 5, 10].map(value => ({ value, label: `${value}×` }));
 const MemoHistoryArchive = memo(HistoryArchive);
 const JourneyNodes = memo(function JourneyNodes({ current, ready, nodes, onVisit }: {
   current: number; ready: boolean; nodes: RefObject<(HTMLButtonElement | null)[]>;
@@ -38,6 +38,9 @@ const JourneyNodes = memo(function JourneyNodes({ current, ready, nodes, onVisit
 });
 
 export default function HistoryJourney() {
+  const [mode, setMode] = useQueryState('mode', parseAsStringLiteral(['play'] as const).withOptions({ history: 'push', scroll: false }));
+  const isGame = mode === 'play';
+  const [started, setStarted] = useState(false);
   const [requested, setDay] = useQueryState('day', parseAsStringLiteral(DATES).withDefault(DATES[0]).withOptions({ history: 'push', scroll: false }));
   const initial = Math.max(0, DATES.indexOf(requested));
   const [position, setPosition] = useState(initial);
@@ -47,9 +50,9 @@ export default function HistoryJourney() {
   const [exportOpen, setExportOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [weatherVariation, setWeatherVariation] = useState(0);
-  const [motion, setMotion] = useState(true);
-  const [speed, setSpeed] = useState(1);
-  const [gait, setGait] = useState<HistoryGait>('walk');
+  const [motion, setMotion] = useState(!isGame);
+  const [gait, setGait] = useState<HistoryGait>(isGame ? 'glide' : 'walk');
+  const [playScore, setPlayScore] = useState<HistoryPlayScore>(EMPTY_HISTORY_SCORE);
   const [openedSecret, setOpenedSecret] = useState<HistorySecret | null>(null);
   const host = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -57,11 +60,14 @@ export default function HistoryJourney() {
   const secretLink = useRef<HTMLAnchorElement>(null);
   const engine = useRef<HistoryScene | null>(null);
   const appliedMotion = useRef<boolean | null>(null);
+  const latestPlayback = useRef({ gait, motion, isGame, weatherVariation });
+  latestPlayback.current = { gait, motion, isGame, weatherVariation };
   const latestRequested = useRef(requested);
   const initialPosition = useRef(initial);
   const reader = useRef<HTMLElement>(null);
   const readButton = useRef<HTMLButtonElement>(null);
   const exportButton = useRef<HTMLButtonElement>(null);
+  const startButton = useRef<HTMLButtonElement>(null);
   const current = Math.round(clampHistoryPosition(position));
   const place = HISTORY_PLACES[current];
   const secret = openedSecret;
@@ -86,7 +92,13 @@ export default function HistoryJourney() {
       if (cancelled || !host.current) return;
       engine.current = mountHistoryScene(host.current, nodeRefs.current, initialPosition.current,
         value => { setPosition(value); setOpenedSecret(previous => previous && Math.abs(previous.day - value) > 1.5 ? null : previous); },
-        value => settled.current(value), () => setStatus('failed'), secretRefs.current);
+        value => settled.current(value), () => setStatus('failed'), secretRefs.current, undefined, setPlayScore);
+      const playback = latestPlayback.current;
+      engine.current.setGait(playback.gait);
+      engine.current.setWeather(playback.weatherVariation);
+      engine.current.setGameMode(playback.isGame);
+      engine.current.setMotion(playback.motion);
+      appliedMotion.current = playback.motion;
       setStatus('ready');
     }).catch(error => {
       if (!cancelled) { console.error('History landscape failed to start', error); setStatus('failed'); }
@@ -96,7 +108,7 @@ export default function HistoryJourney() {
 
   useEffect(() => {
     const preference = matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setMotion(!preference.matches);
+    const update = () => setMotion(!latestPlayback.current.isGame && !preference.matches);
     update(); preference.addEventListener('change', update);
     return () => preference.removeEventListener('change', update);
   }, []);
@@ -104,9 +116,18 @@ export default function HistoryJourney() {
     if (!engine.current || appliedMotion.current === motion) return;
     engine.current.setMotion(motion); appliedMotion.current = motion;
   }, [motion, status]);
-  useEffect(() => { engine.current?.setSpeed(speed); }, [speed, status]);
   useEffect(() => { engine.current?.setGait(gait); }, [gait, status]);
   useEffect(() => { engine.current?.setWeather(weatherVariation); }, [weatherVariation, status]);
+  useEffect(() => { engine.current?.setGameMode(isGame); }, [isGame, status]);
+  useEffect(() => {
+    if (isGame) { setGait('glide'); setMotion(false); setStarted(false); setReading(false); setExportOpen(false); }
+  }, [isGame]);
+  useEffect(() => { if (isGame && !started && status === 'ready') startButton.current?.focus({ preventScroll: true }); }, [isGame, started, status]);
+  useEffect(() => {
+    const release = () => engine.current?.hold(false);
+    window.addEventListener('blur', release);
+    return () => window.removeEventListener('blur', release);
+  }, []);
 
   useEffect(() => {
     if (requested === latestRequested.current) return;
@@ -147,9 +168,16 @@ export default function HistoryJourney() {
   }, [pauseWalking, visit]);
 
   function togglePlayback() {
+    setStarted(true);
     setOpenedSecret(null);
-    if (!motion) { setReading(false); if (position === HISTORY_LAST) visit(0); }
+    if (!motion) { setReading(false); if (position === HISTORY_LAST) { engine.current?.resetPlay(); visit(0); } }
     setMotion(value => !value);
+  }
+  function jump() {
+    if (!engine.current?.jump()) return;
+    setStarted(true);
+    setOpenedSecret(null); setReading(false);
+    engine.current.setMotion(true); appliedMotion.current = true; setMotion(true);
   }
   function closeSecret() {
     const index = HISTORY_SECRETS.findIndex(item => item.id === openedSecret?.id);
@@ -157,21 +185,29 @@ export default function HistoryJourney() {
   }
 
   return (
-    <main className="history-journey">
+    <main className={`history-journey${isGame ? ' is-game' : ''}`}>
       <header className="journey-heading">
         <div><p className="journey-eyebrow">CUBEROOT / {tr({ zh: '生长纪', en: 'A living history' })}</p><h1>{tr({ zh: '把时间，走成风景。', en: 'Time becomes a landscape.' })}</h1></div>
         <p className="journey-edition">{tr({ zh: `${DATES.length} 日山河`, en: `${DATES.length} days of landscapes` })}<span>{DATES[0]} — {DATES[HISTORY_LAST]}</span></p>
       </header>
       <section className="journey-scroll" aria-label={tr({ zh: '项目历程交互画卷', en: 'Interactive project landscape' })}>
-        <div className="journey-stage" tabIndex={0} role="region" aria-label={tr({ zh: '拖动画卷或滚动鼠标前后移动，方向键切换日期', en: 'Drag or scroll to travel; use arrow keys to change dates' })}
+        <div className="journey-stage" tabIndex={0} role="region" aria-label={tr({ zh: '左右键切换日期，空格起跳，滑行时按住空翻，P 暂停', en: 'Left and right change dates; Space jumps, hold to flip while gliding; P pauses' })}
+          onPointerDown={event => {
+            if (!isGame || !(event.target instanceof HTMLCanvasElement) || event.button !== 0) return;
+            event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); jump(); engine.current?.hold(true);
+          }}
+          onPointerUp={() => engine.current?.hold(false)} onPointerCancel={() => engine.current?.hold(false)} onLostPointerCapture={() => engine.current?.hold(false)}
+          onKeyUp={event => { if (event.key === ' ' || event.key === 'ArrowUp') engine.current?.hold(false); }}
+          onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) engine.current?.hold(false); }}
           onKeyDown={event => {
             if (event.key === 'Escape' && secret) { event.preventDefault(); closeSecret(); return; }
+            if (event.key.toLowerCase() === 'p' && (event.target === event.currentTarget || (event.target instanceof Element && event.target.closest('.journey-jump')))) { event.preventDefault(); if (!event.repeat) togglePlayback(); return; }
+            if ((event.key === ' ' || event.key === 'ArrowUp') && (event.target === event.currentTarget || (event.target instanceof Element && event.target.closest('.journey-jump')))) { event.preventDefault(); if (!event.repeat) { jump(); engine.current?.hold(true); } return; }
             if (event.target !== event.currentTarget) return;
             if (event.key === 'ArrowRight') { event.preventDefault(); visit(current + 1); }
             if (event.key === 'ArrowLeft') { event.preventDefault(); visit(current - 1); }
             if (event.key === 'Home') { event.preventDefault(); visit(0); }
             if (event.key === 'End') { event.preventDefault(); visit(HISTORY_LAST); }
-            if (event.key === ' ') { event.preventDefault(); togglePlayback(); }
           }}>
           <div className="journey-scene" ref={host} />
           {status === 'ready' && <div className="journey-overlay"><div className={`journey-place-copy${current === 0 && !secret ? ' is-opening' : ''}`} aria-live="polite">
@@ -203,17 +239,44 @@ export default function HistoryJourney() {
           <div className="journey-node-layer" hidden={status !== 'ready'}>{HISTORY_SECRETS.map((item, index) => <button key={item.id} ref={node => { secretRefs.current[index] = node; }} type="button" className="journey-button journey-secret" data-secret={item.id} aria-label={tr({ zh: '查看这件闪光的小物件', en: 'Inspect this little glimmering object' })} aria-expanded={secret?.id === item.id} aria-controls="journey-secret-story" onClick={() => { pauseWalking(); setOpenedSecret(item); }}><Sparkles size={17} aria-hidden="true" /></button>)}</div>
           {status === 'loading' && <div className="journey-load"><ClientLoadStatus label={{ zh: '山河正在展开…', en: 'Unfolding the landscape…' }} /></div>}
           {status === 'failed' && <div className="journey-load" role="alert"><p>{tr({ zh: '画卷暂时未能展开，完整记录仍可在下方阅读。', en: 'The landscape could not load. The full archive is available below.' })}</p><button className="journey-button" type="button" onClick={() => { initialPosition.current = current; setRetry(n => n + 1); }}>{tr({ zh: '重新展开', en: 'Try again' })}</button></div>}
-          <div className="journey-stage-hint"><MoveHorizontal size={15} /><span>{tr({ zh: '拖动画卷，或轻滚鼠标', en: 'Drag the landscape, or gently scroll' })}</span></div>
+          {status === 'ready' && <div className="journey-play-hud">
+            <div className="journey-play-score" aria-label={tr({ zh: `已拾 ${playScore.lights} 枚光点，${playScore.score} 分`, en: `${playScore.lights} lights collected, ${playScore.score} points` })}>
+              <Sparkles size={15} aria-hidden="true" /><span>{tr({ zh: '拾光', en: 'Light trail' })} <strong>{playScore.score}</strong></span>
+              {playScore.combo > 1 && <span className="journey-play-combo">{tr({ zh: `连收 ${playScore.combo}`, en: `${playScore.combo} in a row` })}</span>}
+              {playScore.flips > 0 && <span>{tr({ zh: `空翻 ${playScore.flips}`, en: `${playScore.flips} flips` })}</span>}
+              {playScore.score > 0 && <button type="button" className="journey-button journey-play-reset" onClick={() => engine.current?.resetPlay()} aria-label={tr({ zh: '重置本次得分', en: 'Reset this run’s score' })} title={tr({ zh: '重置本次得分', en: 'Reset this run’s score' })}><RotateCcw size={14} /></button>}
+            </div>
+            <button className="journey-button journey-jump" type="button"
+              onPointerDown={event => { if (event.button !== 0) return; event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); jump(); engine.current?.hold(true); }}
+              onPointerUp={() => engine.current?.hold(false)} onPointerCancel={() => engine.current?.hold(false)} onLostPointerCapture={() => engine.current?.hold(false)}
+              onClick={event => { if (event.detail === 0) jump(); }} disabled={position === HISTORY_LAST}
+              aria-label={tr({ zh: '轻点跳跃，滑行时按住空翻，空中再按可二段跳', en: 'Tap to jump, hold to flip while gliding; tap again to double jump' })}
+              title={tr({ zh: '轻点跳跃，滑行时按住空翻', en: 'Tap to jump; hold to flip while gliding' })}><ArrowUp size={23} aria-hidden="true" /><span>{tr({ zh: '跳跃', en: 'Jump' })}</span></button>
+          </div>}
+          <div className={`journey-trick-feedback is-${playScore.status}`} role="status">{playScore.status === 'boost' ? tr({ zh: '漂亮落地！顺风加速', en: 'Clean landing! A tailwind boost' }) : playScore.status === 'stumble' ? tr({ zh: '稳住，再来一次', en: 'Find your balance. Try again' }) : ''}</div>
+          <div className="journey-landing-cue">{tr({ zh: '松手，准备落地', en: 'Release to land' })}</div>
+          {isGame && <>
+            <div className="journey-game-bar"><h1>{tr({ zh: '山河滑行', en: 'Paper Odyssey' })}</h1><ClearButton variant="standalone" ariaLabel={tr({ zh: '退出游戏，返回画卷', en: 'Leave game and return to the landscape' })} onClick={() => { pauseWalking(); void setMode(null); }} /></div>
+            {started && position !== HISTORY_LAST && <p className="journey-game-mission">{playScore.lights < 12 ? tr({ zh: `沿途拾光 ${playScore.lights} / 12`, en: `Gather light ${playScore.lights} / 12` }) : playScore.flips < 3 ? tr({ zh: `乘风空翻 ${playScore.flips} / 3`, en: `Ride the wind ${playScore.flips} / 3 flips` }) : tr({ zh: '拾光成章，继续探索山河', en: 'A chapter of light. Keep exploring' })}</p>}
+            {(!started || position === HISTORY_LAST) && status === 'ready' && <div className="journey-game-welcome">
+              <p className="journey-eyebrow">CUBEROOT / PAPER ODYSSEY</p>
+              <h2>{tr(position === HISTORY_LAST ? { zh: '山河尽处，还有下一程。', en: 'Every horizon is a new beginning.' } : { zh: '借一阵风，越过山河。', en: 'Catch the wind. Follow the horizon.' })}</h2>
+              <p>{tr(position === HISTORY_LAST ? { zh: `收获 ${playScore.score} 分，完成 ${playScore.flips} 次空翻。`, en: `${playScore.score} points and ${playScore.flips} flips along the way.` } : { zh: '从雪岭到沙海，在极光与骤雨间拾光。', en: 'Gather light through snowy peaks, dunes, auroras and rain.' })}</p>
+              <button ref={startButton} className="journey-button journey-game-start" type="button" onClick={() => { if (position === HISTORY_LAST) { engine.current?.resetPlay(); visit(0); } setStarted(true); setMotion(true); host.current?.parentElement?.focus({ preventScroll: true }); }}><Play size={18} />{tr(position === HISTORY_LAST ? { zh: '再出发', en: 'Ride again' } : { zh: '乘风出发', en: 'Begin the ride' })}<ArrowRight size={19} /></button>
+              <p className="journey-game-instructions">{tr({ zh: '轻点起跳，按住空翻，松开准备落地。空中再点可二段跳。', en: 'Tap to jump, hold to flip, release to land. Tap again for a double jump.' })}<span className="journey-keyboard-hint">{tr({ zh: '空格 / ↑ 起跳，P 暂停', en: 'Space / ↑ to jump, P to pause' })}</span></p>
+            </div>}
+          </>}
+          <div className="journey-stage-hint"><MoveHorizontal size={15} /><span>{tr({ zh: '拖动画卷', en: 'Drag to explore' })}<span className="journey-keyboard-hint">{tr({ zh: '空格跳跃 / P 暂停', en: 'Space to jump / P to pause' })}</span><span className="journey-touch-hint">{tr({ zh: '空中再按可二段跳', en: 'Tap again in the air to double jump' })}</span></span></div>
           {(current === 0 || current === HISTORY_LAST) && <span className="journey-seal" aria-hidden="true">魔<br />方<br />根</span>}
         </div>
         <nav className="journey-controls" aria-label={tr({ zh: '画卷日期导航', en: 'Landscape date navigation' })}>
           <div className="journey-transport">
           <div className="journey-playback-controls">
+          {!isGame && <button className="journey-button journey-game-launch" type="button" onClick={() => void setMode('play')}><Gamepad2 size={18} />{tr({ zh: '山河滑行', en: 'Play' })}</button>}
           <button className="journey-button journey-playback" type="button" disabled={status !== 'ready'} onClick={togglePlayback} aria-label={tr(motion ? { zh: '暂停行进', en: 'Pause travel' } : { zh: '继续行进', en: 'Resume travel' })}>{motion ? <Pause size={17} /> : <Play size={17} />}<span>{tr(motion ? { zh: '暂停', en: 'Pause' } : { zh: '继续', en: 'Resume' })}</span></button>
           <CompactSelect variant="plain" label={tr(HISTORY_GAITS[gait])} value={gait} valueText={tr(HISTORY_GAITS[gait])}
             items={(Object.keys(HISTORY_GAITS) as HistoryGait[]).map(value => ({ value, label: tr(HISTORY_GAITS[value]) }))}
-            onChange={setGait} ariaLabel={tr({ zh: '行进方式', en: 'Travel style' })} title={tr({ zh: '行走或跑步，同一倍速下跑步快一倍', en: 'Walk or run; running is twice as fast at the same multiplier' })} />
-          <CompactSelect className="journey-speed" variant="plain" label={`${speed}×`} value={speed} valueText={`${speed}×`} items={PLAYBACK_SPEEDS} onChange={setSpeed} ariaLabel={tr({ zh: '行进速度', en: 'Travel speed' })} title={tr({ zh: '调整行进速度，天气保持自然速度', en: 'Adjust travel speed; weather keeps its natural pace' })} />
+            onChange={setGait} ariaLabel={tr({ zh: '行进方式', en: 'Travel style' })} title={tr({ zh: '从漫步到滑行，速度逐档加快', en: 'From strolling to gliding, each style travels faster' })} />
           </div>
           <div className="journey-date-controls">
           <button className="journey-button journey-arrow" type="button" disabled={current === 0} onClick={() => visit(current - 1)} aria-label={tr({ zh: '前一天', en: 'Previous day' })}><ArrowLeft size={19} /></button>
@@ -225,7 +288,7 @@ export default function HistoryJourney() {
           <button ref={readButton} type="button" className="journey-button journey-read" onClick={() => { if (!reading) pauseWalking(); setReading(!reading); }} aria-expanded={reading} aria-controls="journey-reader"><BookOpen size={16} />{tr({ zh: '阅读这一天', en: 'Read this day' })}<ArrowUpRight size={15} /></button>
           <button ref={exportButton} type="button" className="journey-button journey-download" disabled={status !== 'ready'} aria-label={tr({ zh: '下载视频', en: 'Download video' })} title={tr({ zh: '下载视频', en: 'Download video' })} aria-expanded={exportOpen} aria-controls="journey-video-export" onClick={() => { pauseWalking(); setExportOpen(!exportOpen); }}><Download size={18} aria-hidden="true" /></button>
         </nav>
-        {exportOpen && <HistoryVideoExport source={host} current={current} initialSpeed={speed} initialGait={gait} weatherVariation={weatherVariation} onClose={() => { setExportOpen(false); exportButton.current?.focus({ preventScroll: true }); }} />}
+        {exportOpen && <HistoryVideoExport source={host} current={current} initialGait={gait} weatherVariation={weatherVariation} onClose={() => { setExportOpen(false); exportButton.current?.focus({ preventScroll: true }); }} />}
       </section>
       <p className="journey-art-note">{tr({ zh: '每八站走过晨昼暮夜。37 种地貌与 36 种野生动物沿途相伴，留意闪光的小物件。自然景观为艺术化演绎，日期与更新内容来自真实记录。', en: 'Dawn to moonlight unfolds over every eight stops, with 37 landforms and 36 wildlife species. Look out for little glimmering objects. Imagined nature accompanies real dates and updates.' })}</p>
       <section id="journey-reader" ref={reader} tabIndex={-1} className={`journey-reader${reading ? ' is-open' : ''}`} aria-label={tr({ zh: '这一天的故事', en: 'The story of this day' })}>

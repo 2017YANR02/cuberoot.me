@@ -8,6 +8,8 @@ import { PaperWeather } from './history-weather';
 import { PaperLighting } from './history-lighting';
 import { PaperWater } from './history-water';
 import { PaperTraveler } from './history-traveler';
+import { PaperSkiTrail } from './history-ski-trail';
+import { PaperJourneyPlay, type HistoryPlayScore } from './history-play';
 import { HISTORY_LANDFORMS } from './history-landforms';
 import { PaperWildlife } from './history-wildlife';
 import { HISTORY_SECRETS } from './history-secrets';
@@ -17,8 +19,11 @@ export interface HistoryScene {
   seek: (position: number, immediate?: boolean) => void;
   setWeather: (variation: number) => void;
   setMotion: (enabled: boolean) => void;
-  setSpeed: (multiplier: number) => void;
   setGait: (gait: HistoryGait) => void;
+  jump: () => boolean;
+  hold: (enabled: boolean) => void;
+  setGameMode: (enabled: boolean) => void;
+  resetPlay: () => void;
   /** Manual scenes use the same render path, independent of the live page's clock. */
   captureFrame: (position: number, seconds: number) => {
     canvas: HTMLCanvasElement;
@@ -33,7 +38,7 @@ export interface HistoryScene {
 export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElement | null)[], initial: number,
   onProgress: (position: number) => void, onSettle: (position: number) => void, onFailure: () => void,
   secretNodes: (HTMLButtonElement | null)[] = [],
-  capture?: { labelHeight: number }): HistoryScene {
+  capture?: { labelHeight: number }, onPlay?: (score: HistoryPlayScore) => void): HistoryScene {
   const style = getComputedStyle(host);
   const palette = Object.fromEntries(['paper', 'limestone', 'jade', 'forest', 'water', 'vermilion', 'gold', 'mist', 'ink', 'ice', 'snow', 'ocean', 'clay', 'sand', 'heather']
     .map(key => [key, style.getPropertyValue(`--scroll-${key}`).trim()])) as PaperPalette;
@@ -44,12 +49,15 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
   const camera = new T.OrthographicCamera(-20, 20, 14, -14, .1, 150);
   let disposed = false, frame = 0, width = 1, height = 1, previousTime = 0, labelHeight = 0;
   let visible = true, motion = true, variation = 0, animationTime = 0, lastRender = 0, reportedPosition = -1;
-  let speed = 1;
   let gait: HistoryGait = 'walk';
+  let gameMode = false;
   let weather: PaperWeather | undefined;
   let lighting: PaperLighting | undefined;
   let water: PaperWater | undefined;
   let traveler: PaperTraveler | undefined;
+  let play: PaperJourneyPlay | undefined;
+  let skiTrail: PaperSkiTrail | undefined;
+  let reportedScore: HistoryPlayScore | undefined;
   let position = clampHistoryPosition(initial), target = position, settled = position;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   motion = !capture && !reducedMotion.matches;
@@ -90,6 +98,8 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
     lighting?.dispose();
     water?.dispose();
     traveler?.dispose();
+    play?.dispose();
+    skiTrail?.dispose();
     passages.forEach(disposePassage); passages.clear();
     scene.traverse(o => { if (o instanceof T.Mesh) o.geometry.dispose(); });
     art.dispose(); exhibitMaterials.forEach(m => m.dispose());
@@ -166,6 +176,8 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
     syncPassages();
     weather = new PaperWeather(art, host.clientWidth < 700); scene.add(weather.root);
     traveler = new PaperTraveler(art); scene.add(traveler.root);
+    skiTrail = new PaperSkiTrail(palette); scene.add(skiTrail.root);
+    if (!capture) { play = new PaperJourneyPlay(art); scene.add(play.root); }
 
     // Tutorial exhibits use the site's canonical cube renderer, with real first/two/three-layer states.
     const setups = ["U R U' R' U' F' U F", "R U R' U R U2 R'", ''];
@@ -183,23 +195,27 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
       const x = position * HISTORY_SPACING;
       const elevation = groundY(x);
       syncPassages();
-      camera.position.set(x + 7.8, 29 + elevation, 38);
-      camera.lookAt(x, 3.5 + elevation, .3);
+      const lookAhead = gameMode ? (width < 700 ? 1 : 5) : 0;
+      camera.position.set(x + (gameMode ? 3 : 7.8) + lookAhead, (gameMode ? 18 : 29) + elevation, 38);
+      camera.lookAt(x + lookAhead, (gameMode ? 2 : 3.5) + elevation, gameMode ? 4 : .3);
       camera.updateMatrixWorld();
       // Reserve room for the longest translated annotation while keeping its dot on the road.
       // One shared height avoids a camera jump when the current day's text changes.
       if (!labelHeight) labelHeight = capture?.labelHeight ?? Math.max(0, ...nodes.map(node => node?.offsetHeight ?? 0));
       const road = new T.Vector3(x, pathY(x), pathZ(x)).project(camera);
       const overflow = (-road.y * .5 + .5) * height + labelHeight - 14 - (height - 46);
-      if (overflow > 0) {
+      if (!gameMode && overflow > 0) {
         camera.translateY(-overflow * (camera.top - camera.bottom) / height);
         camera.updateMatrixWorld();
       }
       if (shadowPosition !== position) { renderer.shadowMap.needsUpdate = true; shadowPosition = position; }
       passages.forEach(passage => { passage.art.update(animationTime, position); passage.wildlife?.update(animationTime); });
       art.update(animationTime, position);
-      traveler!.update(animationTime, position, width < 700, gait);
+      play?.update(animationTime, position, width < 700);
+      traveler!.update(animationTime, position, width < 700, gait, play?.game.height, play?.game.landing, play?.game.rotation, play?.game.boost, play?.game.stumble);
+      if (play && reportedScore !== play.game.score) { reportedScore = play.game.score; onPlay?.(reportedScore); }
       const currentWeather = weather!.update(animationTime, position, variation, !!capture || !reducedMotion.matches, canvas.width / width, width < 700);
+      skiTrail!.update(animationTime, position, width < 700, gait, play?.game.height ?? 0, play?.game.landing ?? 0, play?.game.boost ?? 0, currentWeather);
       weather!.fitView(camera);
       host.dataset.weather = currentWeather;
       host.dataset.lightning = weather!.lightningStrength.toFixed(3);
@@ -216,7 +232,7 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
       renderer.render(scene, camera);
       nodes.forEach((node, i) => {
         if (!node) return;
-        if (Math.abs(i - position) > 2) { node.style.visibility = 'hidden'; node.tabIndex = -1; return; }
+        if (gameMode || Math.abs(i - position) > 2) { node.style.visibility = 'hidden'; node.tabIndex = -1; return; }
         const point = new T.Vector3(i * HISTORY_SPACING, pathY(i * HISTORY_SPACING), pathZ(i * HISTORY_SPACING)).project(camera);
         const px = (point.x * .5 + .5) * width, py = (-point.y * .5 + .5) * height;
         const half = node.offsetWidth / 2;
@@ -227,7 +243,7 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
       secretNodes.forEach((node, i) => {
         if (!node) return;
         const anchor = secretAnchors.get(HISTORY_SECRETS[i].day);
-        if (!anchor) { node.style.visibility = 'hidden'; node.tabIndex = -1; return; }
+        if (gameMode || !anchor) { node.style.visibility = 'hidden'; node.tabIndex = -1; return; }
         const point = anchor.clone().project(camera);
         const px = (point.x * .5 + .5) * width, py = (-point.y * .5 + .5) * height;
         const visible = px > 36 && px < width - 36 && py > 180 && py < height - 70;
@@ -246,6 +262,16 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
       host.dataset.elevation = elevation.toFixed(3);
       host.dataset.travelerX = traveler!.root.position.x.toFixed(3);
       host.dataset.gait = gait;
+      host.dataset.jumpHeight = (play?.game.height ?? 0).toFixed(3);
+      host.dataset.lights = String(play?.game.score.lights ?? 0);
+      host.dataset.score = String(play?.game.score.score ?? 0);
+      host.dataset.flip = (play?.game.rotation ?? 0).toFixed(3);
+      const rotation = play?.game.rotation ?? 0;
+      host.dataset.landingReady = String(rotation > Math.PI && Math.abs(rotation - Math.round(rotation / (Math.PI * 2)) * Math.PI * 2) < 1.05);
+      host.dataset.playStatus = play?.game.score.status ?? 'cruise';
+      host.dataset.flips = String(play?.game.score.flips ?? 0);
+      host.dataset.skiSurface = skiTrail!.surface;
+      host.dataset.gameMode = String(gameMode);
       host.dataset.solarHour = light.hour.toFixed(3);
       host.dataset.daylight = light.daylight.toFixed(3);
       host.dataset.timeOfDay = light.phase;
@@ -256,17 +282,20 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
       if (disposed || document.hidden || !visible) return;
       const travelling = Math.abs(target - position) > .0005;
       // Atmospheric motion is capped at 30 fps; travel retains the display's frame rate.
-      if (!travelling && time - lastRender < 32) { invalidate(); return; }
+      if (!travelling && !motion && time - lastRender < 32) { invalidate(); return; }
       const elapsed = previousTime ? Math.min(80, time - previousTime) : 16;
       previousTime = time;
       lastRender = time;
       // Stopping to look around pauses the traveller, while wildlife and water keep their natural clock.
-      if (!reducedMotion.matches) animationTime += elapsed / 1000;
+      if (!reducedMotion.matches || motion) animationTime += elapsed / 1000;
       if (motion && !travelling && !drag) {
-        // Only automatic travel uses the multiplier; atmosphere keeps its natural clock.
+        // Travel style owns speed; atmosphere keeps its natural clock.
         // The last date is a stop, never a turnaround or loop.
-        target = clampHistoryPosition(position + HISTORY_GAITS[gait].speed * speed * elapsed / 1000 / HISTORY_SPACING);
+        const previousPosition = position;
+        target = clampHistoryPosition(position + HISTORY_GAITS[gait].speed * (play?.game.speedFactor ?? 1) * elapsed / 1000 / HISTORY_SPACING);
         position = target;
+        play?.game.step(elapsed / 1000, previousPosition * HISTORY_SPACING - 1.5, position * HISTORY_SPACING - 1.5, width < 700);
+        if (position === HISTORY_PLACES.length - 1) play?.game.seek();
       } else {
         position += (target - position) * (reducedMotion.matches ? 1 : 1 - Math.exp(-elapsed / 110));
       }
@@ -312,14 +341,24 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
         };
       },
       setWeather(value) { variation = Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0; invalidate(); },
-      setMotion(enabled) { motion = enabled; if (!enabled) target = position; previousTime = 0; invalidate(); },
-      setSpeed(value) { speed = [1, 2, 5, 10].includes(value) ? value : 1; invalidate(); },
-      setGait(value) { gait = value === 'run' ? 'run' : 'walk'; invalidate(); },
+      setMotion(enabled) { motion = enabled; if (!enabled) { target = position; play?.game.hold(false); } previousTime = 0; invalidate(); },
+      setGait(value) { gait = Object.hasOwn(HISTORY_GAITS, value) ? value : 'walk'; play?.game.setGliding(gait === 'glide'); invalidate(); },
+      hold(enabled) { play?.game.hold(enabled); },
+      setGameMode(enabled) { gameMode = enabled; resize(); },
+      jump() {
+        if (!play || position >= HISTORY_PLACES.length - 1 || Math.abs(target - position) > .0005 || drag) return false;
+        const jumped = play.game.jump();
+        if (jumped) invalidate();
+        return jumped;
+      },
+      resetPlay() { play?.game.reset(); skiTrail?.clear(); invalidate(); },
     };
   } catch (error) { dispose(); throw error; }
 
   // Input listeners and scheduler stay outside the construction block for deterministic teardown.
   function seek(value: number, immediate = false) {
+    play?.game.seek();
+    skiTrail?.clear();
     target = clampHistoryPosition(value);
     if (immediate || reducedMotion.matches || Math.abs(target - position) > 3) position = target;
     invalidate();
@@ -330,7 +369,7 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
     width = Math.max(1, host.clientWidth); height = Math.max(1, host.clientHeight);
     labelHeight = 0;
     // Keep a complete local scene in portrait while showing adjacent dates in landscape.
-    const viewHeight = Math.max(38, 30 * height / width);
+    const viewHeight = gameMode ? Math.max(29, 21 * height / width) : Math.max(38, 30 * height / width);
     camera.left = -viewHeight * width / height / 2; camera.right = -camera.left;
     camera.top = viewHeight / 2; camera.bottom = -camera.top; camera.updateProjectionMatrix();
     // Page zoom changes DPR; touchpad/pinch zoom changes the visual viewport instead.
@@ -356,6 +395,8 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
   }
   function down(event: PointerEvent) {
     if (event.button !== 0) return;
+    host.parentElement?.focus({ preventScroll: true });
+    if (gameMode) return;
     drag = { id: event.pointerId, x: event.clientX, position: target };
     canvas.setPointerCapture(event.pointerId); canvas.classList.add('is-dragging');
   }
@@ -369,6 +410,6 @@ export function mountHistoryScene(host: HTMLDivElement, nodes: (HTMLButtonElemen
     if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
   }
   function motionChanged() { motion = !reducedMotion.matches; if (reducedMotion.matches) seek(target, true); else invalidate(); }
-  function visibilityChanged() { previousTime = 0; if (!document.hidden) invalidate(); else { cancelAnimationFrame(frame); frame = 0; } }
+  function visibilityChanged() { previousTime = 0; play?.game.hold(false); if (!document.hidden) invalidate(); else { cancelAnimationFrame(frame); frame = 0; } }
   function contextLost(event: Event) { event.preventDefault(); if (!disposed) onFailure(); }
 }
