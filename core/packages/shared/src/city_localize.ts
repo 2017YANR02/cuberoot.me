@@ -62,6 +62,8 @@ const CITY_ZH: Record<string, string> = {
   'Filadelfia': '菲拉德尔菲亚',
   'Frenaros': '弗雷纳罗斯',
   'Manzini': '曼齐尼',
+  'Saint-Quentin-Fallavier': '圣康坦-法拉维耶',
+  'Sömmerda': '瑟默达',
   'Valdivia': '瓦尔迪维亚',
 };
 
