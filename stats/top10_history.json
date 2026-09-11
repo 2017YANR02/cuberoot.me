@@ -7884,6 +7884,11 @@
       "country": "Australia",
       "iso2": "AU"
     },
+    "2022TAOA01": {
+      "name": "Andrew Tao",
+      "country": "USA",
+      "iso2": "US"
+    },
     "2006BITE01": {
       "name": "Niklas Bitén",
       "country": "Sweden",
@@ -16534,6 +16539,11 @@
       "country": "USA",
       "iso2": "US"
     },
+    "2019SUNY09": {
+      "name": "Yuhang Sun (孙煜航)",
+      "country": "China",
+      "iso2": "CN"
+    },
     "2015HETI01": {
       "name": "Ting He (禾廷)",
       "country": "China",
@@ -16703,11 +16713,6 @@
       "name": "Jorian Meeuse",
       "country": "Netherlands",
       "iso2": "NL"
-    },
-    "2022TAOA01": {
-      "name": "Andrew Tao",
-      "country": "USA",
-      "iso2": "US"
     },
     "2010GORK01": {
       "name": "Krzysztof Górka",
@@ -35589,6 +35594,9 @@
     "HawaiiChampionship2026": {
       "name": "Hawaii Championship 2026"
     },
+    "RoundRockMegaCubeDay2026": {
+      "name": "Round Rock Mega Cube Day 2026"
+    },
     "FlorenceOpen2010": {
       "name": "Florence Open 2010"
     },
@@ -41979,6 +41987,9 @@
     "PatnaCubeChallenge2026": {
       "name": "Patna Cube Challenge 2026"
     },
+    "NYBigQuietChampionship2026": {
+      "name": "NY Big & Quiet Championship 2026"
+    },
     "SantiagoOpen2009": {
       "name": "Santiago Open 2009"
     },
@@ -43620,11 +43631,17 @@
     "PanthersCubeDay2023": {
       "name": "Panthers Cube Day 2023"
     },
+    "PBQNYCSpring2023": {
+      "name": "PBQ NYC Spring 2023"
+    },
     "ItsBlindTimeMontevideo2023": {
       "name": "It's Blind Time Montevideo 2023"
     },
     "MayMBLDMadnessSingapore2023": {
       "name": "May MBLD Madness Singapore 2023"
+    },
+    "MYHMPuzzlinginPlano2023": {
+      "name": "MYHM Puzzling in Plano 2023"
     },
     "SydneySquare1v12023": {
       "name": "Sydney Square-1v1 2023"
@@ -43658,6 +43675,12 @@
     },
     "RioCuartoalCubo2023": {
       "name": "Río Cuarto al Cubo 2023"
+    },
+    "ManhattanMiniC2023": {
+      "name": "Manhattan Mini C 2023"
+    },
+    "DontDNFDenton2023": {
+      "name": "Don't DNF Denton 2023"
     },
     "PourGesteJaiGateau2024": {
       "name": "Pour Gesté J'ai Gâteau 2024"
@@ -43694,6 +43717,9 @@
     },
     "PoznanMentalBreakdown2024": {
       "name": "Poznań Mental Breakdown 2024"
+    },
+    "NewJerseyQuietChampionship2024": {
+      "name": "NJ Quiet Championship 2024"
     },
     "QuietSeattleSpring2024": {
       "name": "Quiet Seattle Spring 2024"
@@ -43739,6 +43765,9 @@
     },
     "CoffsBigBananaBonanza2024": {
       "name": "Coffs Big Banana Bonanza 2024"
+    },
+    "MidAtlanticQuietChampionship2024": {
+      "name": "Mid-Atlantic Quiet Champs 2024"
     },
     "ChevryOpen2024": {
       "name": "Chevry Open 2024"
@@ -43871,6 +43900,12 @@
     },
     "BigNBlindBangaloreMarch2026": {
       "name": "Big N Blind Bangalore March 2026"
+    },
+    "ManhattanMegaminxMayhem2026": {
+      "name": "Manhattan Megaminx Mayhem 2026"
+    },
+    "NewYorkMultimatePBQIV2026": {
+      "name": "New York Multimate PBQ IV 2026"
     },
     "TokyoBLDSpring2026": {
       "name": "Tokyo BLD Spring 2026"
@@ -44138,6 +44173,12 @@
     },
     "VegasBigandBlind2024": {
       "name": "Vegas Big and Blind 2024"
+    },
+    "ManhattanMiniAM2024": {
+      "name": "Manhattan Mini AM 2024"
+    },
+    "ManhattanMegaminxMayhem2025": {
+      "name": "Manhattan Megaminx Mayhem 2025"
     },
     "EaubonneOpen2025": {
       "name": "Eaubonne Open 2025"
@@ -47949,9 +47990,6 @@
     "OddSidesinSydney2024": {
       "name": "Odd Sides in Sydney 2024"
     },
-    "ManhattanMiniAM2024": {
-      "name": "Manhattan Mini AM 2024"
-    },
     "LuziceWinter2024": {
       "name": "Lužice Winter 2024"
     },
@@ -48005,9 +48043,6 @@
     },
     "FlushingGlowOpenPM2025": {
       "name": "Flushing Glow Open PM 2025"
-    },
-    "ManhattanMegaminxMayhem2025": {
-      "name": "Manhattan Megaminx Mayhem 2025"
     },
     "SolveLaCrosse2025": {
       "name": "Solve La Crosse 2025"
@@ -49877,9 +49912,6 @@
     },
     "AalborgSpecial2026": {
       "name": "Aalborg Special 2026"
-    },
-    "ManhattanMegaminxMayhem2026": {
-      "name": "Manhattan Megaminx Mayhem 2026"
     },
     "SolvingFerryFastRosslare2026": {
       "name": "Solving Ferry Fast Rosslare 2026"
@@ -53025,9 +53057,6 @@
     "CougarQualifier2023": {
       "name": "Cougar Qualifier 2023"
     },
-    "MYHMPuzzlinginPlano2023": {
-      "name": "MYHM Puzzling in Plano 2023"
-    },
     "RunawayBayMaySunday2023": {
       "name": "Runaway Bay May Sunday 2023"
     },
@@ -53766,6 +53795,9 @@
     "MallorcaOpen2026": {
       "name": "Mallorca Open 2026"
     },
+    "HefeiSeptemberOpen2026": {
+      "name": "Hefei September Open 2026"
+    },
     "SilentSwapOpen2018": {
       "name": "Silent Swap Open 2018"
     },
@@ -53804,9 +53836,6 @@
     },
     "SacQuietFall2025": {
       "name": "SacQuiet Fall 2025"
-    },
-    "NewYorkMultimatePBQIV2026": {
-      "name": "New York Multimate PBQ IV 2026"
     },
     "BergshamraBlind2013": {
       "name": "Bergshamra 2013"
@@ -54018,20 +54047,11 @@
     "SidenblindSamobor2023": {
       "name": "Side 'n blind Samobor 2023"
     },
-    "PBQNYCSpring2023": {
-      "name": "PBQ NYC Spring 2023"
-    },
-    "DontDNFDenton2023": {
-      "name": "Don't DNF Denton 2023"
-    },
     "OntheSideSouthAustralia2024": {
       "name": "On the Side South Australia 2024"
     },
     "PocosCuposBogotaVIII2024": {
       "name": "Pocos Cupos Bogotá VIII 2024"
-    },
-    "NewJerseyQuietChampionship2024": {
-      "name": "NJ Quiet Championship 2024"
     },
     "BigandBlindSamobor2024": {
       "name": "Big and Blind Samobor 2024"
