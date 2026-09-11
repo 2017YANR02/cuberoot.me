@@ -57,7 +57,7 @@ export const mergeAccount = (code: string) =>
 export const updateDisplayName = (name: string) =>
   post<{ ok: true; token: string; user: SessionUser }>('/v1/auth/profile', { name }, true);
 export async function fetchAccountBasicProfile(): Promise<AccountBasicProfile> {
-  const response = await fetch(apiUrl('/v1/auth/profile'), {
+  const response = await fetch(apiUrl('/v1/auth/profile?v=2'), {
     headers: { Authorization: `Bearer ${getSessionToken()}` },
     cache: 'no-store',
   });
