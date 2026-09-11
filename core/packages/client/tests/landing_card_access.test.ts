@@ -37,14 +37,15 @@ describe('homepage development cards', () => {
     const admin = user?.wcaId === ADMIN_WCA_IDS[0];
     for (const [id, href] of [['platform', '/zh/platform'], ['teaching-management', '/zh/org'], ['learning-center', '/zh/learn']]) {
       const card = host.querySelector(`#card-${id}`)!;
-      expect(card.tagName).toBe(admin ? 'A' : 'DIV');
-      expect(card.getAttribute('href')).toBe(admin ? href : null);
-      expect(card.getAttribute('aria-disabled')).toBe(admin ? null : 'true');
+      if (!admin) { expect(card).toBeNull(); continue; }
+      expect(card.tagName).toBe('A');
+      expect(card.getAttribute('href')).toBe(href);
+      expect(card.getAttribute('aria-disabled')).toBeNull();
       expect(card.classList.contains('is-disabled')).toBe(true);
       expect(card.querySelector('.coming-soon-badge')?.textContent).toBe('开发中');
       expect(card.querySelector('.lucide-lock')).toBeNull();
     }
-    expect(host.querySelector('#card-teaching')?.getAttribute('href')).toBe('/zh/courses');
+    expect(host.querySelector('#card-teaching')?.getAttribute('href')).toBe(admin ? '/zh/courses' : undefined);
     const interview = host.querySelector('#card-interview');
     if (admin) {
       expect(interview?.getAttribute('href')).toBe('/zh/docs/edit?id=b769490d-292b-4423-8e83-3ada43c1d96b');
@@ -79,8 +80,7 @@ describe('homepage development cards', () => {
       lockApi.getHomeCardLocks.mockResolvedValue({ teaching: true, platform: false });
       auth.user = null;
       await act(async () => { window.dispatchEvent(new Event('focus')); });
-      expect(card().tagName).toBe('DIV');
-      expect(card().getAttribute('href')).toBeNull();
+      expect(card()).toBeNull();
       expect(host.querySelector('#card-platform')?.tagName).toBe('A');
       expect(host.querySelector('.landing-card-lock')).toBeNull();
     } finally {
@@ -88,6 +88,30 @@ describe('homepage development cards', () => {
       host.remove();
       alert.mockRestore();
       lockApi.getHomeCardLocks.mockResolvedValue({});
+    }
+  });
+  it.each([null, { wcaId: 'ordinary-user' }])('hides persisted locks without a first-render flash for %j', async (user) => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+    auth.user = user;
+    let resolveLocks!: (locks: Record<string, boolean>) => void;
+    lockApi.getHomeCardLocks.mockImplementationOnce(() => new Promise((resolve) => { resolveLocks = resolve; }));
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(createElement(LandingPage)));
+      expect(host.querySelector('[id^="card-"]')).toBeNull();
+      await act(async () => resolveLocks({ contests: true, 'online-competitions': true, 'comp-sim': true }));
+      for (const id of ['contests', 'online-competitions', 'comp-sim', 'platform', 'teaching-management', 'learning-center']) {
+        expect(host.querySelector(`#card-${id}`)).toBeNull();
+      }
+      expect(host.querySelector('#card-teaching')?.getAttribute('href')).toBe('/zh/courses');
+      lockApi.getHomeCardLocks.mockResolvedValueOnce({ contests: false, 'online-competitions': false, 'comp-sim': false });
+      await act(async () => { window.dispatchEvent(new Event('focus')); });
+      for (const id of ['contests', 'online-competitions', 'comp-sim']) {
+        expect(host.querySelector(`#card-${id}`)?.tagName).toBe('A');
+      }
+    } finally {
+      await act(async () => root.unmount());
     }
   });
 });

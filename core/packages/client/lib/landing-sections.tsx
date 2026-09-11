@@ -194,6 +194,6 @@ export const SEARCH_CARDS: LandingSearchCard[] = [
   { id: 'fable', href: '/dev/llm/fable', internal: true, nameEn: 'Claude Fable 5', nameZh: 'Claude Fable 5', sectionTitleEn: 'Dev', sectionTitleZh: '开发' },
 ];
 
-export function isLandingSearchCardVisible(card: LandingSearchCard, isAdmin: boolean): boolean {
+export function isLandingSearchCardVisible(card: Pick<LandingSearchCard, 'adminOnly' | 'lockedForNonAdmin'>, isAdmin: boolean): boolean {
   return isAdmin || (!card.adminOnly && !card.lockedForNonAdmin);
 }
