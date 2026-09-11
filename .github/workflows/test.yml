@@ -180,6 +180,12 @@ jobs:
           PGPASSWORD: postgres
         run: psql -h 127.0.0.1 -U postgres -d cuberoot_test -f tests/fixtures/platform_account_deletion_pg.sql
 
+      - name: Apple identity token PostgreSQL 13 upgrade regression
+        working-directory: core/${{ steps.workspace.outputs.api }}
+        env:
+          PGPASSWORD: postgres
+        run: psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d cuberoot_test -f tests/fixtures/auth_apple_token_pg.sql
+
       # client typecheck 走 tsgo --noEmit,不像旧 tsc -b 会自建 project references,
       # 它 import workspace Node exports 的产物;server 也直接消费
       # puzzle-render-core 的 node export,干净 CI 必须先产出对应 dist。

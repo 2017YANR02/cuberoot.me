@@ -6,16 +6,13 @@ import {
   type WebSessionTicketEnvelope,
 } from '@cuberoot/shared/auth/web-session';
 import { query } from '../db/connection.js';
+import { challengeFromVerifier } from './auth_pkce.js';
 
 export const WEB_SESSION_TICKET_TTL_SECONDS = 90;
 export const WECHAT_BROWSER_SESSION_TTL_SECONDS = 5 * 60;
 
 function hashTicket(ticket: string): string {
   return createHash('sha256').update(ticket).digest('hex');
-}
-
-function challengeFromVerifier(verifier: string): string {
-  return createHash('sha256').update(verifier).digest('base64url');
 }
 
 function assertUserId(userId: number): void {

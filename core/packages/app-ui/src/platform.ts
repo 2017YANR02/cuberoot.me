@@ -10,6 +10,8 @@ import type {
 } from '@cuberoot/shared/timer';
 
 import type { SupportedLanguage } from './copy';
+import type { GyroQuaternion, GyroVelocity } from '@cuberoot/shared/smart-cube/gan-crypto';
+import type { GanV4CubeStatus } from './smart-cube/gan-v4-cube';
 
 export interface InstalledAppAuth {
   busy: boolean;
@@ -25,6 +27,7 @@ export interface InstalledAppSmartCubeOptions {
   language: SupportedLanguage;
   onMove(move: string, timestamp: number, facelets: string): void;
   onSolved?(timestamp: number): void;
+  onGyro?(quaternion: GyroQuaternion, timestamp: number, velocity?: GyroVelocity): void;
 }
 
 export interface InstalledAppSmartCube {
@@ -34,6 +37,12 @@ export interface InstalledAppSmartCube {
   facelets: string;
   lastMove: string;
   phase: 'idle' | 'requesting' | 'connecting' | 'connected' | 'error';
+  /** Optional for older host/test adapters; the shared GAN adapter supplies these. */
+  quaternion?: GyroQuaternion | null;
+  status?: GanV4CubeStatus | null;
+  solved?: boolean;
+  resetState?(): void;
+  requestState?(): Promise<void>;
 }
 
 export interface InstalledAppListener {

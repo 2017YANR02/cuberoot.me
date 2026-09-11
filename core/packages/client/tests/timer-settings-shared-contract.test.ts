@@ -23,6 +23,7 @@ import {
 import {
   TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
   TIMER_TIMING_SETTING_FIELD_IDS,
+  TIMER_SMART_CUBE_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
 const EXPECTED_FIELDS_BY_CATEGORY = {
@@ -296,9 +297,11 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     const sharedFieldIds = [
       ...TIMER_TIMING_SETTING_FIELD_IDS,
       ...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
+      ...TIMER_SMART_CUBE_SETTING_FIELD_IDS,
     ];
     expect(directPanelIds.filter((id) => sharedFieldIds.includes(id))).toEqual([]);
     const panelIds = [...directPanelIds];
+    expect(panel).toContain('<TimerSmartCubeSettingsFields');
     if (panel.includes('<TimerScrambleClickActionSetting')) {
       panelIds.push('settings.appearance.scramble-click-action');
     }

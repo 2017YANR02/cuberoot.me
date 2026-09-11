@@ -69,6 +69,21 @@ function repository(driver = new MemoryDriver()) {
 }
 
 describe('mobile timer repository contract', () => {
+  it('persists reconstruction feedback without dropping moves or device provenance', async () => {
+    const { repo } = repository();
+    const data = await repo.addSolve({
+      timeMs: 1_000, penalty: 'ok', scramble: 'R', event: '333',
+      moves: [{ m: "R'", ts: 0 }],
+      device: { name: 'GAN test', model: 'gan-v4' },
+    });
+    const solve = activeTimerSolves(data, '333')[0]!;
+    const accepted = activeTimerSolves(await repo.updateSolve('333', solve.id, { reconOk: false }), '333')[0]!;
+    expect(accepted).toEqual({ ...solve, reconOk: false });
+    const cleared = activeTimerSolves(await repo.updateSolve('333', solve.id, { reconOk: undefined }), '333')[0]!;
+    expect(cleared.reconOk).toBeUndefined();
+    expect(cleared.moves).toEqual(solve.moves);
+    expect(cleared.device).toEqual(solve.device);
+  });
   it('creates and persists an empty store on first load', async () => {
     const { driver, repo } = repository();
     const data = await repo.load();

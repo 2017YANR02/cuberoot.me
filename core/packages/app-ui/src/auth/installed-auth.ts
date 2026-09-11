@@ -1,8 +1,10 @@
 import {
+  createAuthCodeChallenge,
   decodeMobileAuthCallback,
   decodeWebSession,
   decodeWebSessionTicketEnvelope,
   decodeWebSessionUserEnvelope,
+  encodeAuthRandomValue,
   isMobileAuthCallbackUrl,
   isMobileAuthRandomValue,
   type MobileAuthProvider,
@@ -41,12 +43,6 @@ export interface MobileAuthRuntime {
   openBrowser(url: string): Promise<void>;
   randomBytes(length: number): Uint8Array;
   storage: MobileAuthStorage;
-}
-
-function base64Url(bytes: Uint8Array): string {
-  let binary = '';
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 }
 
 function decodePending(value: string | null): PendingMobileAuth | null {
@@ -201,13 +197,14 @@ export class InstalledAuthClient {
     if (pending && this.runtime.now() - pending.createdAt > PENDING_TTL_MS) pending = null;
     const created = !pending;
     pending ??= {
-      codeVerifier: base64Url(this.runtime.randomBytes(32)),
+      codeVerifier: encodeAuthRandomValue(this.runtime.randomBytes(32)),
       createdAt: this.runtime.now(),
-      state: base64Url(this.runtime.randomBytes(32)),
+      state: encodeAuthRandomValue(this.runtime.randomBytes(32)),
     };
-    const codeChallenge = base64Url(await this.runtime.digestSha256(
-      new TextEncoder().encode(pending.codeVerifier),
-    ));
+    const codeChallenge = await createAuthCodeChallenge(
+      pending.codeVerifier,
+      (value) => this.runtime.digestSha256(value),
+    );
     if (!isMobileAuthRandomValue(pending.codeVerifier)
       || !isMobileAuthRandomValue(pending.state)
       || !isMobileAuthRandomValue(codeChallenge)) {

@@ -8,9 +8,10 @@ interface AuthCallbackStatusProps {
   pendingLabel: string;
   error?: string;
   children?: ReactNode;
+  pendingActions?: ReactNode;
 }
 
-export function AuthCallbackStatus({ pendingLabel, error = '', children }: AuthCallbackStatusProps) {
+export function AuthCallbackStatus({ pendingLabel, error = '', children, pendingActions }: AuthCallbackStatusProps) {
   useEffect(() => {
     const root = document.documentElement;
     const previous = root.style.overflow;
@@ -32,6 +33,7 @@ export function AuthCallbackStatus({ pendingLabel, error = '', children }: AuthC
         <div className="auth-callback-status__result" role="status" aria-live="polite">
           <span className="auth-callback-status__spinner" aria-hidden="true" />
           <p>{pendingLabel}</p>
+          {pendingActions}
         </div>
       )}
     </main>

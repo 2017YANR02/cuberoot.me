@@ -31,19 +31,15 @@
  * (退回平面图)。少一次 3D 是小事,画一颗没人验证过的魔方不是。
  */
 
-import { faceletToCubie, validateFacelet, type CubieCube } from '@/lib/cube-facelet';
-import { applyScramble, toFaceletString } from '../cube/state';
+import { anchorAlgFor as sharedAnchorAlgFor, type Solve333 } from '@cuberoot/shared/smart-cube/anchor';
 import { solve333 } from '../scramble/kociemba/random_state';
-
-/** 复原态那 54 个字符。 */
-const SOLVED = toFaceletString(applyScramble(3, ''));
 
 /**
  * 求解器。默认走 timer 自己那台两阶段(worker 里跑,表已经被打乱生成器焐热了,
  * 通常 50-200ms)。作为参数是为了能在测试里换掉 —— `scramble_fixup.ts` 的
  * `FixupDeps.solve` 是同一个路子。
  */
-export type Solve333 = (state: CubieCube) => Promise<string>;
+export type { Solve333 } from '@cuberoot/shared/smart-cube/anchor';
 
 /**
  * 从复原态到 `facelets` 的一段公式,拆成记号数组。
@@ -56,26 +52,5 @@ export async function anchorAlgFor(
   facelets: string,
   solve: Solve333 = solve333,
 ): Promise<string[] | null> {
-  const s = facelets.toUpperCase();
-  if (validateFacelet(s) !== null) return null;
-  if (s === SOLVED) return [];
-
-  let alg: string;
-  try {
-    alg = await solve(faceletToCubie(s));
-  } catch {
-    return null;
-  }
-
-  const tokens = alg.trim().split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) return null;
-
-  // 验算:把它重放一遍,必须**逐格**等于目标。
-  let reached: string;
-  try {
-    reached = toFaceletString(applyScramble(3, tokens.join(' ')));
-  } catch {
-    return null;
-  }
-  return reached === s ? tokens : null;
+  return sharedAnchorAlgFor(facelets, solve);
 }

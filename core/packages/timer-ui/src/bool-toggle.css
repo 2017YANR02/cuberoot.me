@@ -1,0 +1,22 @@
+/* 布尔开关:左滑钮 + 右文字。见 components/BoolToggle.tsx。 */
+.bool-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.bool-toggle-label {
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.bool-toggle.is-disabled { opacity: 0.5; }
+.bool-toggle.is-disabled .bool-toggle-label { cursor: not-allowed; }

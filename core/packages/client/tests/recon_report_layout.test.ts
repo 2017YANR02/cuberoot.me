@@ -33,8 +33,8 @@ import { join, dirname } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
 const TIMER = join(ROOT, 'app', '[lang]', 'timer');
-const REPORT = join(TIMER, '_components', 'ReconstructReport.tsx');
-const STEP_LIST = join(TIMER, '_components', 'StepMoveList.tsx');
+const REPORT = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'ReconstructReport.tsx');
+const STEP_LIST = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'StepMoveList.tsx');
 const SOLVE_MODAL = join(TIMER, '_components', 'SolveModal.tsx');
 const TIMER_UI = join(ROOT, '..', 'timer-ui', 'src');
 const DETAIL_MODAL = join(TIMER_UI, 'TimerSolveDetailModal.tsx');
@@ -77,18 +77,18 @@ describe('报告顺序:回放和谱子在前,数据在后', () => {
 
 describe('同一个数不写两遍', () => {
   const report = read(REPORT);
-  const timeline = join(TIMER, '_components', 'SolveTimeline.tsx');
+  const timeline = join(TIMER_UI, 'reconstruct', 'SolveTimeline.tsx');
 
   it('阶段条整页只有一根,且长在回放上', () => {
     // 报告顶部那根和回放那根是同一个组件、同一份切分,只差一个游标。两根并存时
     // 读者第一反应是去找它们的区别 —— 而并不存在区别。
     expect(report).not.toMatch(/<SolveTimeline\b/);
-    expect(read(join(TIMER, '_components', 'PlaybackPanel.tsx'))).toMatch(/<SolveTimeline\b/);
+    expect(read(join(TIMER_UI, 'reconstruct', 'PlaybackPanel.tsx'))).toMatch(/<SolveTimeline\b/);
     expect(readFileSync(timeline, 'utf8')).toMatch(/export default function SolveTimeline/);
   });
 
   it('留下的那根带阶段名和阶段用时', () => {
-    const pb = read(join(TIMER, '_components', 'PlaybackPanel.tsx'));
+    const pb = read(join(TIMER_UI, 'reconstruct', 'PlaybackPanel.tsx'));
     // 一根没有标注的彩条只能看出「有几段」。
     expect(pb).toMatch(/<SolveTimeline[\s\S]{0,240}showLabels/);
   });
@@ -102,7 +102,7 @@ describe('同一个数不写两遍', () => {
 });
 
 describe('回放进度条匀速走', () => {
-  const pb = read(join(TIMER, '_components', 'PlaybackPanel.tsx'));
+  const pb = read(join(TIMER_UI, 'reconstruct', 'PlaybackPanel.tsx'));
 
   it('时钟按墙钟每帧算,不是一手一个定时器', () => {
     // 一手一个 setTimeout 时长是对的,但游标只在那一手落下的瞬间跳一格 —— 两手
@@ -115,7 +115,7 @@ describe('回放进度条匀速走', () => {
 
   it('每帧不走 React 状态 —— 60fps 的 setState 会把右栏列表也重画', () => {
     expect(pb).toMatch(/setPlayhead\(/);
-    expect(read(join(TIMER, '_components', 'SolveTimeline.tsx'))).toMatch(/style\.left/);
+    expect(read(join(TIMER_UI, 'reconstruct', 'SolveTimeline.tsx'))).toMatch(/style\.left/);
   });
 
   it('该播到第几手是从时间反查的,不是自增', () => {
@@ -126,7 +126,7 @@ describe('回放进度条匀速走', () => {
 
 describe('关闭连续陀螺仪仍回放已识别转体', () => {
   const report = read(REPORT);
-  const pb = read(join(TIMER, '_components', 'PlaybackPanel.tsx'));
+  const pb = read(join(TIMER_UI, 'reconstruct', 'PlaybackPanel.tsx'));
 
   it('文字复盘的转体事件传进回放面板', () => {
     expect(report).toMatch(/<PlaybackPanel[\s\S]{0,500}rotations=\{reconText\?\.rotations\}/);
@@ -152,7 +152,7 @@ describe('打乱是谱子的第一行', () => {
   });
 
   it('recon.scramble 就是原始打乱,不是共轭过的那条(2026-08-04)', () => {
-    const recon = read(join(TIMER, '_lib', 'reconstruct', 'recon_text.ts'));
+    const recon = read(join(ROOT, '..', 'shared', 'src', 'timer', 'reconstruct', 'recon_text.ts'));
     // `phys` 是「魔方自己配色系里的那一份」= 计时器发的原始打乱。
     expect(recon).toMatch(/scramble: phys\.scramble/);
   });
@@ -164,7 +164,7 @@ describe('打乱是谱子的第一行', () => {
     expect(insp).toBeGreaterThan(scramble);
     expect(insp).toBeLessThan(src.indexOf('{groups.map('));
     // 剪贴板那一份也得带上,否则粘出去的谱子照着拧是错的。
-    const recon = read(join(TIMER, '_lib', 'reconstruct', 'recon_text.ts'));
+    const recon = read(join(ROOT, '..', 'shared', 'src', 'timer', 'reconstruct', 'recon_text.ts'));
     expect(recon).toMatch(/viewRot === '' \? \[\] : \[`\$\{viewRot\} \/\/ insp`\]/);
   });
 
@@ -179,7 +179,7 @@ describe('打乱是谱子的第一行', () => {
   it('屏上这条和复制出去的那条是同一条', () => {
     // reconTextForClipboard 拼的就是 r.scramble;哪天有人给显示换了个来源,
     // 「复制出来和看到的不一样」是最难被发现的那种 bug。
-    const recon = read(join(TIMER, '_lib', 'reconstruct', 'recon_text.ts'));
+    const recon = read(join(ROOT, '..', 'shared', 'src', 'timer', 'reconstruct', 'recon_text.ts'));
     expect(recon).toMatch(/reconTextForClipboard[\s\S]{0,200}r\.scramble/);
   });
 });

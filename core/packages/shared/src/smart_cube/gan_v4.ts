@@ -39,6 +39,37 @@ const GAN_V4_KNOWN_MODES = new Set([
 ]);
 const FACELET_RESYNC_QUIET_MS = 500;
 
+/** Bounded quiet-stream checks: a dropped FINAL turn has no next move to reveal its gap. */
+export const GAN_V4_IDLE_STATE_CHECK_MS = [650, 1600, 3200] as const;
+
+/** Web/native hosts supply only their scheduler and GATT writer; recovery policy is shared. */
+export function createGanV4IdleStateChecks<Handle>(options: {
+  schedule(callback: () => void, delayMs: number): Handle;
+  cancel(handle: Handle): void;
+  requestState(): void;
+}): { afterMoves(): void; dispose(): void } {
+  const pending = new Set<Handle>();
+  let disposed = false;
+  const clear = () => {
+    for (const handle of pending) options.cancel(handle);
+    pending.clear();
+  };
+  return {
+    afterMoves() {
+      if (disposed) return;
+      clear();
+      for (const delay of GAN_V4_IDLE_STATE_CHECK_MS) {
+        const handle = options.schedule(() => {
+          pending.delete(handle);
+          if (!disposed) options.requestState();
+        }, delay);
+        pending.add(handle);
+      }
+    },
+    dispose() { disposed = true; clear(); },
+  };
+}
+
 /** Decode a GAN v4 state snapshot into the timer's canonical URFDLB facelets. */
 export function decodeGanV4Facelets(frame: Uint8Array): string | null {
   const corners: number[] = [];
@@ -94,15 +125,15 @@ export function decodeGanV4Frame(
   state: GanV4DecodeState,
   onGyro?: GyroSink,
 ): TimedMove[] {
-  if (frame.length < 16) return [];
+  if (frame.length < 16) { state.badFrames++; return []; }
   const mode = frame[0];
-  if (GAN_V4_KNOWN_MODES.has(mode)) state.badFrames = 0;
-  else {
+  if (!GAN_V4_KNOWN_MODES.has(mode)) {
     state.badFrames++;
     return [];
   }
 
   if (mode === 0xec) {
+    state.badFrames = 0;
     if (onGyro) {
       const gyro = decodeGanGyro(frame, 16, 80);
       onGyro(gyro.quaternion, gyro.velocity);
@@ -112,13 +143,17 @@ export function decodeGanV4Frame(
 
   if (mode === 0xef) {
     const index = 1 + frame[1];
-    if (index < frame.length && frame[index] <= 100) state.battery = frame[index];
+    if (index < frame.length && frame[index] <= 100) {
+      state.badFrames = 0;
+      state.battery = frame[index];
+    } else state.badFrames++;
     return [];
   }
 
   if (mode === 0xed) {
     const moveCounter = (frame[3] << 8) | frame[2];
     if (state.sync.seeded) {
+      state.badFrames = 0;
       state.sync.observe(moveCounter);
       if (state.prevMoveLocTime !== null
         && state.now() - state.prevMoveLocTime > FACELET_RESYNC_QUIET_MS) {
@@ -131,6 +166,7 @@ export function decodeGanV4Frame(
       state.badFrames++;
       return [];
     }
+    state.badFrames = 0;
     state.sync.seed(moveCounter);
     if (facelets) state.onState?.(facelets);
     return [];
@@ -141,7 +177,8 @@ export function decodeGanV4Frame(
     state.prevMoveLocTime = state.now();
     const power = readBits(frame, 64, 2);
     const axis = GAN_V4_AXIS_LOOKUP.indexOf(readBits(frame, 66, 6));
-    if (axis === -1 || power >= 2) return [];
+    if (axis === -1 || power >= 2) { state.badFrames++; return []; }
+    state.badFrames = 0;
     const face = GAN_V4_FACE_ORDER[axis];
     const deviceTs = (
       frame[2]
@@ -155,6 +192,8 @@ export function decodeGanV4Frame(
   if (mode === 0xd1) {
     const startMoveCounter = frame[2];
     const numberOfMoves = Math.max(0, (frame[1] - 1) * 2);
+    if (numberOfMoves > (frame.length - 3) * 2) { state.badFrames++; return []; }
+    state.badFrames = 0;
     const replay: Array<{ cnt: number; mv: string }> = [];
     for (let index = 0; index < numberOfMoves; index++) {
       const axis = readBits(frame, 24 + 4 * index, 3);
@@ -170,6 +209,7 @@ export function decodeGanV4Frame(
     return state.sync.injectHistory(replay);
   }
 
+  state.badFrames = 0;
   return [];
 }
 

@@ -3,8 +3,19 @@
 import { isMobileAuthProvider } from '@cuberoot/shared/auth/web-session';
 import {
   mobileEmbedAuthRequestMessage,
+  type MobileEmbedInitMessage,
   type MobileEmbedAuthRequestMessage,
 } from '@cuberoot/shared/mobile-embed';
+
+export function mobileEmbedSupportsApple(init: MobileEmbedInitMessage | null, managingAccount = false): boolean {
+  return init?.authProviders?.includes('apple') === true
+    && (!managingAccount || init.accountManagement === true);
+}
+
+export function isMobileEmbedAppleLink(target: EventTarget | null): boolean {
+  return target instanceof Element
+    && Boolean(target.closest('[data-mobile-account-link="apple"]'));
+}
 
 /**
  * Map every interaction inside the canonical LoginForm to a native Browser

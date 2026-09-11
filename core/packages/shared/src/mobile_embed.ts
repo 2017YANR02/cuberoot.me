@@ -14,6 +14,24 @@ export type MobileEmbedSurface = keyof typeof MOBILE_EMBED_FRAME_NAMES;
 export interface MobileEmbedInitMessage {
   surface: MobileEmbedSurface;
   type: 'cuberoot:mobile:init';
+  authProviders?: readonly MobileAuthProvider[];
+  accountManagement?: boolean;
+}
+
+export interface MobileEmbedAccountManageMessage {
+  surface: 'account';
+  type: 'cuberoot:mobile:account-manage';
+  provider: 'apple';
+  intent: 'link';
+  expectedUid: number;
+  requestId: string;
+}
+
+export interface MobileEmbedAccountManageResultMessage {
+  surface: 'account';
+  type: 'cuberoot:mobile:account-manage-result';
+  requestId: string;
+  ok: boolean;
 }
 
 export interface MobileEmbedNavigationMessage {
@@ -82,8 +100,19 @@ export function mobileEmbedBackMessage(surface: MobileEmbedSurface): MobileEmbed
   return { surface, type: 'cuberoot:mobile:back' };
 }
 
-export function mobileEmbedInitMessage(surface: MobileEmbedSurface): MobileEmbedInitMessage {
-  return { surface, type: 'cuberoot:mobile:init' };
+export function mobileEmbedInitMessage(
+  surface: MobileEmbedSurface,
+  capabilities?: Pick<MobileEmbedInitMessage, 'authProviders' | 'accountManagement'>,
+): MobileEmbedInitMessage {
+  return { surface, type: 'cuberoot:mobile:init', ...capabilities };
+}
+
+export function mobileEmbedAccountManageMessage(expectedUid: number, requestId: string): MobileEmbedAccountManageMessage {
+  return { surface: 'account', type: 'cuberoot:mobile:account-manage', provider: 'apple', intent: 'link', expectedUid, requestId };
+}
+
+export function mobileEmbedAccountManageResultMessage(ok: boolean, requestId: string): MobileEmbedAccountManageResultMessage {
+  return { surface: 'account', type: 'cuberoot:mobile:account-manage-result', requestId, ok };
 }
 
 export function mobileEmbedAuthRequestMessage(
@@ -158,10 +187,32 @@ export function decodeMobileEmbedInit(value: unknown): MobileEmbedInitMessage | 
   if (!value || typeof value !== 'object') return null;
   const candidate = value as Partial<MobileEmbedInitMessage>;
   if (candidate.type !== 'cuberoot:mobile:init'
-    || (candidate.surface !== 'tools' && candidate.surface !== 'account')) {
+    || (candidate.surface !== 'tools' && candidate.surface !== 'account')
+    || (candidate.authProviders !== undefined && (!Array.isArray(candidate.authProviders)
+      || !candidate.authProviders.every(isMobileAuthProvider)
+      || new Set(candidate.authProviders).size !== candidate.authProviders.length))
+    || (candidate.accountManagement !== undefined && typeof candidate.accountManagement !== 'boolean')) {
     return null;
   }
   return candidate as MobileEmbedInitMessage;
+}
+
+export function decodeMobileEmbedAccountManage(value: unknown): MobileEmbedAccountManageMessage | null {
+  if (!value || typeof value !== 'object') return null;
+  const candidate = value as Partial<MobileEmbedAccountManageMessage>;
+  if (candidate.type !== 'cuberoot:mobile:account-manage' || candidate.surface !== 'account'
+    || candidate.provider !== 'apple' || candidate.intent !== 'link'
+    || !Number.isSafeInteger(candidate.expectedUid) || (candidate.expectedUid ?? 0) <= 0
+    || !isMobileEmbedRequestId(candidate.requestId)) return null;
+  return mobileEmbedAccountManageMessage(candidate.expectedUid!, candidate.requestId);
+}
+
+export function decodeMobileEmbedAccountManageResult(value: unknown): MobileEmbedAccountManageResultMessage | null {
+  if (!value || typeof value !== 'object') return null;
+  const candidate = value as Partial<MobileEmbedAccountManageResultMessage>;
+  if (candidate.type !== 'cuberoot:mobile:account-manage-result' || candidate.surface !== 'account'
+    || typeof candidate.ok !== 'boolean' || !isMobileEmbedRequestId(candidate.requestId)) return null;
+  return mobileEmbedAccountManageResultMessage(candidate.ok, candidate.requestId);
 }
 
 export function decodeMobileEmbedAuthRequest(value: unknown): MobileEmbedAuthRequestMessage | null {

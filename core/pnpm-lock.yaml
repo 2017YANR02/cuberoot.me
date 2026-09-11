@@ -866,12 +866,24 @@ importers:
 
   packages/puzzle-render-core:
     dependencies:
+      '@cuberoot/puzzle-solvers':
+        specifier: workspace:*
+        version: link:../puzzle-solvers
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../shared
+      '@cuberoot/stack-kernel':
+        specifier: workspace:*
+        version: link:../stack-kernel
+      '@cuberoot/visualcube':
+        specifier: workspace:*
+        version: link:../visualcube
       three:
         specifier: ^0.183.2
         version: 0.183.2
+      three-bvh-csg:
+        specifier: ^0.0.18
+        version: 0.0.18(three-mesh-bvh@0.9.10(three@0.183.2))(three@0.183.2)
     devDependencies:
       '@types/three':
         specifier: ^0.183.1
@@ -943,6 +955,9 @@ importers:
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../shared
+      '@cuberoot/visualcube':
+        specifier: workspace:*
+        version: link:../visualcube
       cubing:
         specifier: ^0.63.3
         version: 0.63.3(patch_hash=026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6)

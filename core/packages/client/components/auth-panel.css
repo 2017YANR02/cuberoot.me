@@ -52,6 +52,14 @@
   border-color: var(--border-strong);
 }
 .auth-sso:disabled { opacity: 0.6; cursor: not-allowed; }
+/* Apple brand artwork is monochrome, independent of the site's color palette. */
+.auth-sso[data-mobile-auth-provider="apple"],
+.auth-sso[data-mobile-auth-provider="apple"]:not(:disabled):hover {
+  color: white;
+  background: black;
+  border-color: white;
+  min-height: 44px;
+}
 /* 标与文字成组居中,标紧挨文字左侧 */
 .auth-sso-icon {
   display: inline-flex;

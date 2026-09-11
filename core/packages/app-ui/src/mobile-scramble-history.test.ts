@@ -274,7 +274,20 @@ describe('mobile displayed-scramble history', () => {
     expect(css).toContain('.app-shell--timer-fullscreen .timer-view > .shell-topbar');
     expect(css).toContain('.app-shell--timer-fullscreen > .primary-nav');
     expect(css).toContain('.app-shell--timer-fullscreen .mobile-timer-stage > .shell-stat-rail');
-    expect(css).toContain('.app-shell--timer-fullscreen .mobile-timer-stage > .shell-device-actions');
+    expect(css).toContain('.app-shell--timer-fullscreen > .shell-device-actions');
+  });
+
+  it('reserves a normal-flow device footer outside long content without changing timer gestures', () => {
+    const footer = app.indexOf('<TimerDeviceActions');
+    const navigation = app.indexOf('<nav className="primary-nav"');
+    expect(footer).toBeGreaterThan(app.indexOf('settings-meta'));
+    expect(footer).toBeLessThan(navigation);
+    expect(app.slice(footer - 70, footer)).toContain("view === 'timer' && timerMode === 1");
+    expect(app.match(/<TimerDeviceActions/g)).toHaveLength(1);
+    expect(css).toMatch(/\.app-shell--device-footer\s*\{\s*grid-template-rows: minmax\(0, 1fr\) auto auto;/);
+    expect(css).toMatch(/\.app-shell--device-footer > \.shell-device-actions\s*\{\s*position: static;/);
+    expect(css).toMatch(/\.shell-device-connect\s*\{\s*min-width: 0;\s*min-height: 44px;/);
+    expect(css).not.toContain('touch-action: pan-y');
   });
 
   it('consumes the shared history row/menu/editor and wires filters plus host effects', () => {
@@ -289,7 +302,9 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('<TimerHistoryRow');
     expect(app).toContain('<TimerSolveDetailModal');
     expect(app).toContain('<TimerCubePreview');
-    expect(app).toContain('cornerSlot={store!.settings.showCubePreview');
+    expect(app).toContain("cornerSlot={smartCube.phase === 'connected'");
+    expect(app).toContain(') : store!.settings.showCubePreview && scrambleReady');
+    expect(app).toContain('<LiveCubeState');
     expect(app).toContain('<div className="mobile-cube-preview" data-no-timer>');
     const stripStart = app.indexOf('<TimerScrambleStrip');
     const stripEnd = app.indexOf('</TimerScrambleStrip>', stripStart);

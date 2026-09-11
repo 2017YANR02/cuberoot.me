@@ -168,6 +168,8 @@ export type {
   TimerPrintControllerProps,
 } from './TimerPrintController';
 export { browserPrintTransport } from './browser-print';
+export { useAutoReady, type AutoReadyOpts } from './useAutoReady';
+export { TimerSmartCubeSettingsFields, TIMER_SMART_CUBE_SETTING_FIELD_IDS, type TimerSmartCubeSettingsFieldsProps } from './TimerSmartCubeSettingsFields';
 export { browserClipboardTransport } from './browser-clipboard';
 export {
   TIMER_TIMING_SETTING_FIELD_IDS,
