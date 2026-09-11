@@ -8,6 +8,7 @@
  * 可选服务:email/sms 未配 env 时对应端点返 503(不崩),与 membership 同款降级。
  */
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import type { Context } from 'hono';
 import { isClawdAvatarPreset } from '@cuberoot/shared/account-avatar';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
@@ -41,6 +42,7 @@ import { AccountMergeError, mergeAccounts, parseAccountMergeCode } from '../util
 import { emailConfigured, sendEmailCode } from '../utils/email.js';
 import { smsConfigured, sendSmsCode } from '../utils/sms.js';
 import { googleConfigured, googleClientId, googleRelayUrl, verifyGoogleAssertion } from '../utils/google.js';
+import { AppleLoginError, appleAuthorize, appleCallbackUrl, appleConfigured, exchangeAppleCode } from '../utils/apple_login.js';
 import {
   socialLoginConfigured, socialAppId, socialAuthorizeUrl, exchangeSocialCode, verifySocialState,
   isSocialProvider, SOCIAL_PROVIDERS, type SocialProvider, type SocialUser,
@@ -132,11 +134,76 @@ accountAuthRoutes.get('/auth/providers', (c) => {
   const social: Record<string, string | null> = {};
   for (const p of SOCIAL_PROVIDERS) social[p] = socialAppId(p);
   return c.json({
-    email: emailConfigured(), phone: smsConfigured(), wca: true,
+    email: emailConfigured(), phone: smsConfigured(), wca: true, apple: appleConfigured(),
     googleClientId: googleClientId(), googleRelayUrl: googleRelayUrl(),
     social,
   });
 });
+
+function appleErrorResponse(c: Context, error: unknown): Response {
+  if (error instanceof Error && error.name === 'BodyLimitError') throw error;
+  const reason = error instanceof AppleLoginError ? error.code : 'unavailable';
+  if (reason === 'not-configured') return c.json({ error: 'apple not configured' }, 503);
+  if (reason === 'invalid-credential') return c.json({ error: 'invalid apple credential' }, 401);
+  return c.json({ error: 'apple service unavailable; please retry' }, 502);
+}
+
+accountAuthRoutes.get('/auth/apple/authorize', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const rateLimited = authRateLimitResponse(c, { bucket: 'apple-authorize', max: 30 });
+  if (rateLimited) return rateLimited;
+  const intent = c.req.query('intent') ?? 'login';
+  if (intent !== 'login' && intent !== 'link') return c.json({ error: 'invalid intent' }, 400);
+  const accountId = intent === 'link' ? await requireAppUserId(c) : undefined;
+  try { return c.json(appleAuthorize(intent, c.req.query('codeChallenge') ?? '', accountId)); }
+  catch (error) { return appleErrorResponse(c, error); }
+});
+
+// Apple's form_post ends at the API. The existing website callback performs browser-state
+// verification and resumes the canonical LoginForm/mobile PKCE handoff; never put JWTs in URLs.
+accountAuthRoutes.post('/auth/apple/callback', bodyLimit({ maxSize: 16 * 1024 }), async (c) => {
+  c.header('Cache-Control', 'no-store');
+  c.header('Referrer-Policy', 'no-referrer');
+  const rateLimited = authRateLimitResponse(c, { bucket: 'apple-callback', max: 30 });
+  if (rateLimited) return rateLimited;
+  if (!(c.req.header('Content-Type') ?? '').toLowerCase().startsWith('application/x-www-form-urlencoded')) {
+    return c.json({ error: 'invalid apple callback' }, 400);
+  }
+  try {
+    const fields = await c.req.parseBody();
+    return c.redirect(appleCallbackUrl(fields), 303);
+  } catch (error) { return appleErrorResponse(c, error); }
+});
+
+async function completeAppleLogin(c: Context, intent: 'login' | 'link'): Promise<Response> {
+  c.header('Cache-Control', 'no-store');
+  const rateLimited = authRateLimitResponse(c, { bucket: 'apple-exchange', max: 30 });
+  if (rateLimited) return rateLimited;
+  if (!appleConfigured()) return c.json({ error: 'apple not configured' }, 503);
+  const uid = intent === 'link' ? await requireAppUserId(c) : null;
+  const body = await c.req.json<{ code?: unknown; state?: unknown; codeVerifier?: unknown }>().catch((error: unknown) => {
+    if (!(error instanceof SyntaxError)) throw error;
+    return {} as { code?: unknown; state?: unknown; codeVerifier?: unknown };
+  });
+  if (!body || typeof body.code !== 'string' || typeof body.state !== 'string' || typeof body.codeVerifier !== 'string') {
+    return c.json({ error: 'code, state and verifier required' }, 400);
+  }
+  let identity;
+  try { identity = await exchangeAppleCode(body.code, body.state, intent, body.codeVerifier, uid ?? undefined); }
+  catch (error) { return appleErrorResponse(c, error); }
+  if (uid !== null) {
+    if (await addIdentity(uid, 'apple', identity.sub, undefined, undefined, undefined, undefined, identity) === 'conflict') {
+      return c.json({ error: 'apple account already linked to another account' }, 409);
+    }
+    return c.json({ ok: true, identities: await getIdentities(uid) });
+  }
+  const { user, isNew } = await loginWithIdentity('apple', identity.sub, { name: '' }, identity);
+  await captureAccountDevice(user.id, c.req.header('User-Agent'));
+  const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
+  return c.json({ token, user: publicUser(user), isNew });
+}
+accountAuthRoutes.post('/auth/apple', bodyLimit({ maxSize: 4096 }), (c) => completeAppleLogin(c, 'login'));
+accountAuthRoutes.post('/auth/link/apple', bodyLimit({ maxSize: 4096 }), (c) => completeAppleLogin(c, 'link'));
 
 // ── 国内三方授权页 URL(服务端下发,redirect_uri 固定,state 为服务端签名的自包含 token)──
 // state 内含 provider/intent/exp/签名,回调只从 URL 读回、服务端验签,不依赖浏览器 sessionStorage
@@ -762,7 +829,12 @@ accountAuthRoutes.post('/auth/unlink', async (c) => {
   const { provider, providerUid } = await c.req.json<{ provider?: string; providerUid?: string }>().catch(() => ({ provider: undefined, providerUid: undefined }));
   const allowed: Provider[] = ['email', 'phone', 'wca', 'apple', 'google', 'wechat', 'douyin', 'alipay', 'qq'];
   if (!allowed.includes(provider as Provider)) return c.json({ error: 'invalid provider' }, 400);
-  const r = await removeIdentity(uid, provider as Provider, providerUid);
+  let r;
+  try { r = await removeIdentity(uid, provider as Provider, providerUid); }
+  catch (error) {
+    if (error instanceof AppleLoginError) return appleErrorResponse(c, error);
+    throw error;
+  }
   if (r === 'last') return c.json({ error: 'cannot unlink your only login method' }, 409);
   if (r === 'not_found') return c.json({ error: 'identity not found' }, 404);
   const user = await getUserById(uid);
@@ -1327,6 +1399,7 @@ accountAuthRoutes.post('/auth/account/delete', async (c) => {
     if (error instanceof AccountOwnsOrganizationError || error instanceof AccountHasMembershipContractError) {
       return c.json({ error: error.message }, 409);
     }
+    if (error instanceof AppleLoginError) return appleErrorResponse(c, error);
     throw error;
   }
   return c.json({ ok: true });

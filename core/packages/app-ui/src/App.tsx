@@ -1,4 +1,11 @@
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
+import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
+import { GyroRecorder, encodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
+import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
+import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';
+import { encodeReplayUrl } from '@cuberoot/shared/timer/replay-encode';
+import { shouldAutoRecap } from '@cuberoot/shared/timer/reconstruct/recap';
+import { Spinner } from '@cuberoot/timer-ui/Spinner';
 import { isWcaIdFormat, ownerKey } from '@cuberoot/shared/account';
 import {
   createSmartCubeGuidanceController,
@@ -6,17 +13,21 @@ import {
 } from '@cuberoot/shared/smart-cube/scramble-guidance';
 import {
   decodeMobileEmbedAuthClear,
+  decodeMobileEmbedAccountManage,
   decodeMobileEmbedAuthRequest,
   decodeMobileEmbedExternal,
   decodeMobileEmbedNavigation,
   decodeMobileEmbedWebSessionResult,
   MOBILE_EMBED_FRAME_NAMES,
   mobileEmbedAuthClearMessage,
+  mobileEmbedAccountManageResultMessage,
   mobileEmbedBackMessage,
   mobileEmbedInitMessage,
   mobileEmbedWebSessionMessage,
   type MobileEmbedSurface,
 } from '@cuberoot/shared/mobile-embed';
+import { MOBILE_AUTH_PROVIDERS } from '@cuberoot/shared/auth/web-session';
+import { openInstalledAccountManagement } from './auth/account-management';
 import { toLocalIsoDate } from '@cuberoot/shared/iso-date';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import {
@@ -232,6 +243,8 @@ import {
   type TimerWcaSourceDataAdapter,
   type TimerWcaSourceLabels,
   type TimerWcaDifficultyLabels,
+  TimerSmartCubeSettingsFields,
+  useAutoReady,
 } from '@cuberoot/timer-ui';
 import {
   Clock3,
@@ -242,6 +255,8 @@ import {
 } from 'lucide-react';
 import {
   Fragment,
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -332,9 +347,12 @@ import { startWebSurfaceHandshake } from './web-surface-handshake';
 import {
   solveMobileRandomDifficultyCase,
   solveMobileSmartCubeFixup,
+  solveMobileSmartCubeAnchor,
 } from './smart-cube/fixup';
 
 const SITE_ORIGIN = 'https://cuberoot.me';
+const ReconstructReport = lazy(() => import('@cuberoot/timer-ui/reconstruct-report'));
+const SolveRecap = lazy(() => import('@cuberoot/timer-ui/solve-recap'));
 const MOBILE_EMBED_SURFACES = ['tools', 'account'] as const;
 const MOBILE_EMBED_INIT_RETRY_MS = 400;
 const MOBILE_EMBED_INIT_RETRIES = 25;
@@ -497,6 +515,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   storeRef.current = store;
   const [lastResult, setLastResult] = useState<SolveResult | null>(null);
   const [lastPenalty, setLastPenalty] = useState<Penalty | null>(null);
+  const [recapSolveId, setRecapSolveId] = useState<string | null>(null);
+  const recapAttemptRevisionRef = useRef(0);
   const [loadError, setLoadError] = useState<Error | null>(null);
   const [view, setView] = useState<AppView>('timer');
   const [timerMode, setTimerMode] = useState<TimerPlayersValue>(1);
@@ -594,6 +614,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     tools: false,
   });
   const accountLoginRequestedRef = useRef(false);
+  const accountManagementRequestRef = useRef<string | null>(null);
   const accountSyncInFlightRef = useRef<{ requestId: string; token: string } | null>(null);
   const accountSyncTimeoutRef = useRef<number | null>(null);
   const accountSyncedTokenRef = useRef<string | null>(null);
@@ -1866,7 +1887,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     clearWebSurfaceHandshake(surface);
     if (connection !== 'online') return;
     const postInit = () => webFrameRefs.current[surface]?.contentWindow?.postMessage(
-      mobileEmbedInitMessage(surface),
+      mobileEmbedInitMessage(surface, { authProviders: MOBILE_AUTH_PROVIDERS, accountManagement: true }),
       SITE_ORIGIN,
     );
     webHandshakeRetryRef.current[surface] = startWebSurfaceHandshake(
@@ -2112,6 +2133,22 @@ export function App({ host }: { host: InstalledAppHost }) {
       const accountFrame = webFrameRefs.current.account;
       const accountSource = Boolean(accountFrame && event.source === accountFrame.contentWindow);
 
+      const management = decodeMobileEmbedAccountManage(event.data);
+      if (accountSource && management) {
+        const reply = (ok: boolean) => accountFrame?.contentWindow?.postMessage(
+          mobileEmbedAccountManageResultMessage(ok, management.requestId), SITE_ORIGIN,
+        );
+        if (accountManagementRequestRef.current) { reply(false); return; }
+        accountManagementRequestRef.current = management.requestId;
+        void openInstalledAccountManagement(management, accountWebUrl, {
+          currentSession: () => authSessionRef.current,
+          openExternal: (href) => host.openExternal(href),
+        }).then(() => reply(true)).catch(() => reply(false)).finally(() => {
+          accountManagementRequestRef.current = null;
+        });
+        return;
+      }
+
       const authRequest = decodeMobileEmbedAuthRequest(event.data);
       if (accountSource && authRequest) {
         accountLoginRequestedRef.current = true;
@@ -2170,6 +2207,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     return () => window.removeEventListener('message', onMessage);
   }, [
     announce,
+    accountWebUrl,
     auth.login,
     auth.logout,
     clearAccountSyncTimeout,
@@ -2348,6 +2386,11 @@ export function App({ host }: { host: InstalledAppHost }) {
   });
   const attemptRef = useRef<MobileScrambleAttemptSnapshot | null>(null);
   const smartCubeMoveRecorderRef = useRef(new TimerSmartCubeMoveRecorder());
+  const smartCubeGyroRecorderRef = useRef(new GyroRecorder());
+  const smartCubeMoveSubscribersRef = useRef(new Set<(move: string, timestamp: number) => void>());
+  const smartCubeQuatRef = useRef<Quat | null>(null);
+  const [smartCubeCalibration, setSmartCubeCalibration] = useState(0);
+  const [smartCubeRenderedView, setSmartCubeRenderedView] = useState('net');
   const smartCubeDeviceAtStartRef = useRef<Solve['device']>(undefined);
   const connectedSmartCubeRef = useRef<Solve['device']>(undefined);
   const [attemptSplitState, setAttemptSplitState] = useState<TimerAttemptSplitState>({ stages: {} });
@@ -2369,6 +2412,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     }
     const recordedMoves = smartCubeMoveRecorderRef.current.take();
     const moves = recordedMoves.length > 0 ? recordedMoves : undefined;
+    const gyro = encodeGyroTrack(smartCubeGyroRecorderRef.current.take());
     const device = moves ? smartCubeDeviceAtStartRef.current : undefined;
     const { bld, stages } = splitResult;
     smartCubeDeviceAtStartRef.current = undefined;
@@ -2380,6 +2424,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       event: attempt.event,
       inspectionMs: result.inspectionMs || undefined,
       ...(moves ? { moves } : {}),
+      ...(moves && gyro ? { gyro } : {}),
       ...(bld ? { bld } : {}),
       ...(stages ? { stages } : {}),
       penalty: result.autoPenalty,
@@ -2390,9 +2435,18 @@ export function App({ host }: { host: InstalledAppHost }) {
     const stageSegments = stageSegmentsFor(solve);
     if (stageSegments) solve.stageSegments = stageSegments;
     const ownerAtSaveStart = wcaAutoMarkOwnerKey(authSessionRef.current);
+    const recapRevision = recapAttemptRevisionRef.current;
+    const priorSolveIds = new Set((storeRef.current?.database.dataBySession[sessionId]?.[solve.event] ?? []).map((item) => item.id));
     void repository.addSolve(solve, sessionId).then((data) => {
       storeSnapshotGateRef.current.commitIfLatest(revision, data, applyStoreSnapshot);
       markSavedWcaSolve(solve, ownerAtSaveStart);
+      if (recapRevision === recapAttemptRevisionRef.current
+        && storeRef.current?.database.activeSessionId === sessionId
+        && shouldAutoRecap(solve, storeRef.current?.settings ?? {})) {
+        const saved = [...(data.database.dataBySession[sessionId]?.[solve.event] ?? [])].reverse().find((item) => !priorSolveIds.has(item.id)
+          && item.timeMs === solve.timeMs && item.scramble === solve.scramble);
+        if (saved) setRecapSolveId(saved.id);
+      }
     }).catch(() => {
       setPendingSolves((current) => current.some((pending) => pending.solve === solve)
         ? current
@@ -2443,6 +2497,8 @@ export function App({ host }: { host: InstalledAppHost }) {
     inspectionSec: store?.settings.inspectionSec ?? 0,
     onComplete: completeSolve,
     onStart: (startedAtMs) => {
+      recapAttemptRevisionRef.current++;
+      setRecapSolveId(null);
       const entry = scrambleHistoryRef.current.list[scrambleHistoryRef.current.idx];
       if (!entry
         || entry.availability !== 'ready'
@@ -2457,6 +2513,10 @@ export function App({ host }: { host: InstalledAppHost }) {
           && timerSupportsStageSplits(entry.event),
       });
       smartCubeMoveRecorderRef.current.begin(startedAtMs);
+      smartCubeGyroRecorderRef.current.reset();
+      if (storeRef.current?.settings.recordGyro && smartCubeQuatRef.current) {
+        smartCubeGyroRecorderRef.current.push(smartCubeQuatRef.current, 0);
+      }
       smartCubeDeviceAtStartRef.current = connectedSmartCubeRef.current;
       timerPhaseRef.current = 'running';
     },
@@ -2493,9 +2553,23 @@ export function App({ host }: { host: InstalledAppHost }) {
     onChange: setSmartCubeGuidance,
     solve: solveMobileSmartCubeFixup,
   }), []);
+  const [smartCubeAnchor, setSmartCubeAnchor] = useState<LiveSmartCubeAnchorSnapshot>({ moves: [], algAnchored: false });
+  const [smartCubeAnchorController] = useState(() => new LiveSmartCubeAnchor({
+    solve: solveMobileSmartCubeAnchor,
+    onChange: setSmartCubeAnchor,
+  }));
   const smartCube = host.useSmartCube({
     language,
+    onGyro: (quaternion, timestamp) => {
+      smartCubeQuatRef.current = quaternion;
+      if (timerModeRef.current === 1 && timerPhaseRef.current === 'running'
+        && storeRef.current?.settings.recordGyro) {
+        smartCubeGyroRecorderRef.current.push(quaternion, timestamp - attemptStartedAtRef.current);
+      }
+    },
     onMove: (move, timestamp, facelets) => {
+      smartCubeAnchorController.move(move);
+      try {
       if (timerModeRef.current !== 1) {
         battleSmartCubeHandlersRef.current?.onMove(move, timestamp, facelets);
         return;
@@ -2528,8 +2602,11 @@ export function App({ host }: { host: InstalledAppHost }) {
       const observation = smartCubeGuidanceController.observe(facelets);
       if (observation.completedNow
         && timingEnabled
+        && storeRef.current?.settings.bluetoothAutoReady === 'scrambled'
         && timerSmartCubeStartsAttemptOnTurn(event)) timer.armFromCube();
-      console.info('[smart-cube] move', move);
+      } finally {
+        for (const subscriber of smartCubeMoveSubscribersRef.current) subscriber(move, timestamp);
+      }
     },
     onSolved: (timestamp) => {
       if (timerModeRef.current !== 1) {
@@ -2545,6 +2622,25 @@ export function App({ host }: { host: InstalledAppHost }) {
   connectedSmartCubeRef.current = smartCube.phase === 'connected' && smartCube.deviceName
     ? { model: 'gan-v4', name: smartCube.deviceName }
     : undefined;
+  useAutoReady({
+    enabled: view === 'timer' && timerMode === 1 && smartCube.phase === 'connected' && timingEnabled
+      && attemptCanStart
+      && !moreOpen && !manualEntryOpen && openOverlay === null
+      && (timer.machine.phase === 'idle' || timer.machine.phase === 'inspecting' || timer.machine.phase === 'stopped')
+      && !timerContextMutationBusy
+      && (store?.settings.bluetoothAutoReady === 'still' || store?.settings.bluetoothAutoReady === 'double-flick'),
+    mode: store?.settings.bluetoothAutoReady === 'double-flick' ? 'double-flick' : 'still',
+    onReady: () => { timer.armFromCube(); },
+    onMoveSubscriber: (callback) => {
+      smartCubeMoveSubscribersRef.current.add(callback);
+      return () => { smartCubeMoveSubscribersRef.current.delete(callback); };
+    },
+  });
+  useLayoutEffect(() => {
+    smartCubeAnchorController.setConnection(smartCube.phase === 'connected' ? smartCube.deviceName : null);
+    smartCubeAnchorController.observeFacelets(smartCube.facelets);
+  }, [smartCube.phase, smartCube.deviceName, smartCube.facelets, smartCubeAnchorController]);
+  useEffect(() => () => smartCubeAnchorController.setConnection(null), [smartCubeAnchorController]);
   const smartCubeScrambleMatch = timerMode === 1
     && timer.machine.phase !== 'running'
     && smartCube.phase === 'connected'
@@ -2561,8 +2657,12 @@ export function App({ host }: { host: InstalledAppHost }) {
   useLayoutEffect(() => {
     const connected = smartCube.phase === 'connected';
     smartCubeGuidanceController.setConnected(connected);
+    if (!connected) {
+      timer.cancelArm();
+      smartCubeQuatRef.current = null;
+    }
     return () => smartCubeGuidanceController.setConnected(false);
-  }, [smartCube.phase, smartCubeGuidanceController]);
+  }, [smartCube.phase, smartCubeGuidanceController, timer.cancelArm]);
 
   useLayoutEffect(() => {
     smartCubeGuidanceController.setRunning(timer.machine.phase === 'running');
@@ -2880,7 +2980,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     });
   }, [activeEvent, announce, applyStoreSnapshot, beginTimerContextMutation, copy.actionFailed, copy.finishAttemptFirst, endTimerContextMutation, invalidateCurrentScramble, recoverLatestStoreSnapshot, smartCube, timer]);
 
-  const updateSolve = useCallback((solve: Solve, changes: Partial<Pick<Solve, 'penalty' | 'comment'>>) => {
+  const updateSolve = useCallback((solve: Solve, changes: Partial<Pick<Solve, 'penalty' | 'comment' | 'bld' | 'reconOk'>>) => {
     const last = solvesRef.current[solvesRef.current.length - 1];
     if (last?.id === solve.id && changes.penalty) setLastPenalty(changes.penalty);
     const revision = storeSnapshotGateRef.current.beginMutation();
@@ -2893,6 +2993,37 @@ export function App({ host }: { host: InstalledAppHost }) {
         announce(copy.actionFailed);
       });
   }, [announce, applyStoreSnapshot, copy.actionFailed, recoverLatestStoreSnapshot]);
+
+  const useReconstructionScramble = useCallback((text: string) => {
+    if (!timerCanSwitchScramble(timerPhaseRef.current) || timerContextMutationBusy) {
+      announce(copy.finishAttemptFirst);
+      return;
+    }
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    timer.cancelArm();
+    const source = scrambleSourceRef.current;
+    const event = activeEventRef.current;
+    const entry = createMobileScrambleHistoryEntry(event, source, scrambleIdentityFor(source, event));
+    applyScrambleHistory(histPush(scrambleHistoryRef.current, {
+      ...entry,
+      availability: 'ready',
+      scramble: trimmed,
+      sourceSnapshot: { kind: 'manual', identity: `replay:${entry.id}` },
+    }));
+    closeHistorySolveDetail();
+    setRecapSolveId(null);
+    setView('timer');
+  }, [announce, applyScrambleHistory, closeHistorySolveDetail, copy.finishAttemptFirst, scrambleIdentityFor, timer.cancelArm, timerContextMutationBusy]);
+
+  const reconstructionHost = {
+    localize: <T,>(text: { en: T; zh: T }) => text[language],
+    writeClipboardText: host.writeClipboardText,
+    replayUrl: (solve: Solve) => encodeReplayUrl(solve, `${SITE_ORIGIN}${language === 'zh' ? '/zh' : ''}/timer`),
+    recordGyro: store?.settings.recordGyro ?? true,
+    onEnableGyro: () => updateSettings({ recordGyro: true }),
+  };
+  const recapSolve = solves.find((solve) => solve.id === recapSolveId) ?? null;
 
   const updateHistoryFilter = useCallback(<Key extends keyof TimerHistoryFilters,>(
     key: Key,
@@ -3467,7 +3598,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   return (
     <main
-      className={`app-shell app-shell--${view}${shellViewport.classNameSuffix}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
+      className={`app-shell app-shell--${view}${shellViewport.classNameSuffix}${view === 'timer' && timerMode === 1 ? ' app-shell--device-footer' : ''}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
       style={shellViewport.style}
     >
       <TimerPrintController
@@ -3744,7 +3875,27 @@ export function App({ host }: { host: InstalledAppHost }) {
               <TimingSurface
                 ariaLabel={copy.timer}
                 colorClass={timerColorClass}
-                cornerSlot={store!.settings.showCubePreview && scrambleReady && scramble.length > 0 ? (
+                cornerSlot={smartCube.phase === 'connected' ? (
+                  <div className="mobile-cube-preview mobile-live-cube" data-no-timer>
+                    <div className="timer-live-cube">
+                      <LiveCubeState
+                        algAnchored={smartCubeAnchor.algAnchored}
+                        calibrateToken={smartCubeCalibration}
+                        facelets={smartCube.facelets || null}
+                        language={language}
+                        mode={store!.settings.liveCubeView}
+                        moves={[...smartCubeAnchor.moves]}
+                        onViewChange={setSmartCubeRenderedView}
+                        quatRef={smartCubeQuatRef}
+                      />
+                    </div>
+                    {smartCubeRenderedView === '3d' && smartCube.quaternion && (
+                      <button type="button" className="live-cube-calibrate" onClick={() => setSmartCubeCalibration((value) => value + 1)}>
+                        {{ en: 'Calibrate', zh: '校准' }[language]}
+                      </button>
+                    )}
+                  </div>
+                ) : store!.settings.showCubePreview && scrambleReady && scramble.length > 0 ? (
                   <div className="mobile-cube-preview" data-no-timer>
                     <TimerCubePreview
                       ariaLabel={copy.cubeState}
@@ -3896,6 +4047,20 @@ export function App({ host }: { host: InstalledAppHost }) {
                   />
                 )}
               </TimingSurface>
+              {recapSolve && (
+                <Suspense fallback={<Spinner label={{ en: 'Loading', zh: '加载中' }[language]} />}>
+                  <SolveRecap
+                    history={solves}
+                    host={reconstructionHost}
+                    isZh={language === 'zh'}
+                    onDismiss={() => setRecapSolveId(null)}
+                    onFull={() => { setView('history'); openHistorySolveDetail(recapSolve); }}
+                    onReconFeedback={(reconOk) => updateSolve(recapSolve, { reconOk })}
+                    onUseScramble={useReconstructionScramble}
+                    solve={recapSolve}
+                  />
+                </Suspense>
+              )}
               <TimerStatRail
                 disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
                 emptyLabel={copy.times}
@@ -3928,16 +4093,6 @@ export function App({ host }: { host: InstalledAppHost }) {
                 language={language}
                 phase={timer.machine.phase}
                 scramble={scramble}
-              />
-              <TimerDeviceActions
-                active={smartCube.phase === 'connected'}
-                connectAriaLabel={smartCube.phase === 'connected' ? copy.disconnectBluetooth : copy.connectBluetooth}
-                connectLabel={smartCube.phase === 'connected'
-                  ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
-                  : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
-                    ? copy.connectingBluetooth
-                    : copy.connect}
-                onConnect={toggleSmartCube}
               />
             </div>
           </section>
@@ -4309,7 +4464,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                 moveTargets={historyMoveTargets}
                 onChangeComment={(comment) => updateSolve(historyDetailSolve, { comment })}
                 onChangePenalty={(penalty) => updateSolve(historyDetailSolve, { penalty })}
-                onClose={closeHistorySolveDetail}
+                onClose={() => closeHistorySolveDetail()}
                 onDelete={() => {
                   void deleteSolveNow(historyDetailSolve).then((committed) => {
                     if (committed) closeHistorySolveDetail(historyDetail);
@@ -4328,6 +4483,19 @@ export function App({ host }: { host: InstalledAppHost }) {
                   />
                 )}
                 solve={historyDetailSolve}
+                report={historyDetailSolve.moves?.length ? (
+                  <Suspense fallback={<Spinner label={{ en: 'Loading', zh: '加载中' }[language]} />}>
+                    <ReconstructReport
+                      hideDate
+                      history={solves}
+                      host={reconstructionHost}
+                      isZh={language === 'zh'}
+                      onReconFeedback={(reconOk) => updateSolve(historyDetailSolve, { reconOk })}
+                      onUseScramble={useReconstructionScramble}
+                      solve={historyDetailSolve}
+                    />
+                  </Suspense>
+                ) : undefined}
               />
             )}
           </section>
@@ -4373,6 +4541,18 @@ export function App({ host }: { host: InstalledAppHost }) {
               )}
               value={store!.settings}
             />
+
+            <section className="settings-section">
+              <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => category.id === 'smart-cube')?.label[language]}</h2>
+              <TimerSmartCubeSettingsFields
+                localize={(value) => value[language]}
+                onChange={updateSettings}
+                renderBooleanControl={({ disabled, label, onChange, value }) => (
+                  <TimerPillToggle ariaLabel={label} disabled={disabled} onChange={onChange} value={value} />
+                )}
+                value={store!.settings}
+              />
+            </section>
 
             {(activeEvent !== '222' || scrambleSource === 'wca') && (
               <section className="settings-section">
@@ -4554,6 +4734,19 @@ export function App({ host }: { host: InstalledAppHost }) {
           </section>
         )}
       </div>
+
+      {view === 'timer' && timerMode === 1 && (
+        <TimerDeviceActions
+          active={smartCube.phase === 'connected'}
+          connectAriaLabel={smartCube.phase === 'connected' ? copy.disconnectBluetooth : copy.connectBluetooth}
+          connectLabel={smartCube.phase === 'connected'
+            ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
+            : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
+              ? copy.connectingBluetooth
+              : copy.connect}
+          onConnect={toggleSmartCube}
+        />
+      )}
 
       <nav className="primary-nav" aria-label={copy.title} ref={primaryNavRef}>
         <button

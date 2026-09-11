@@ -1524,61 +1524,6 @@
       "target": "netstat -ano -p tcp"
     },
     {
-      "file": "packages/client/scripts/recon-ground-truth-gate.mjs",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "core/apps/api/migrations/0105_recon_ground_truth.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/scripts/recon-ground-truth-gate.mjs",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "core/apps/api/migrations/0106_recon_ground_truth_candidates.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/scripts/recon-ground-truth-gate.mjs",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "core/apps/api/src/routes/recon_ground_truth.ts",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/scripts/recon-ground-truth-gate.mjs",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "core/packages/shared/src/recon_ground_truth.ts",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/scripts/recon-ground-truth-gate.mjs",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "core/packages/shared/src/recon_slice.ts",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/scripts/recon-ground-truth-gate.mjs",
-      "mechanism": "spawnSync",
-      "rule": "subprocess-call",
-      "sourceKind": "subprocess",
-      "target": "<dynamic>",
-      "occurrences": 2
-    },
-    {
-      "file": "packages/client/scripts/recon-ground-truth-gate.mjs",
-      "mechanism": "spawnSync",
-      "rule": "subprocess-call",
-      "sourceKind": "subprocess",
-      "target": "git"
-    },
-    {
       "file": "packages/client/scripts/sq1-pbl-check.mjs",
       "mechanism": "spawnSync",
       "rule": "subprocess-call",

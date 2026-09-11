@@ -1,0 +1,51 @@
+/* Spinner — iOS 风格转圈。契约见 Spinner.tsx 头注:颜色继承 currentColor,尺寸靠
+   --spinner-size,辐条几何全用百分比所以任意尺寸等比。这里不写任何 token 色值。 */
+
+.spinner {
+  --spinner-size: 16px;
+  /* 辐条的最暗档;动画在 1 和它之间跑,@keyframes 里也引用同一个值。 */
+  --spinner-dim: 0.15;
+  position: relative;
+  display: inline-block;
+  width: var(--spinner-size);
+  height: var(--spinner-size);
+  /* 挨着文字排时不被 flex 压扁,也不跟着行高抖。 */
+  flex: none;
+  vertical-align: -0.15em;
+}
+
+.spinner-spoke {
+  position: absolute;
+  inset: 0;
+  transform: rotate(calc(var(--spinner-i) * 30deg));
+}
+
+/* 辐条本体画在 ::before 上:旋转交给父层,渐隐交给自己,两个 transform 不打架。 */
+.spinner-spoke::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 11%;
+  height: 28%;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: currentColor;
+  opacity: var(--spinner-dim);
+  animation: spinner-fade 1s linear infinite;
+  /* 负延迟 = 12 根辐条相位错开一圈,首帧就是稳定状态,不会有「刚出现时全亮」。 */
+  animation-delay: calc(var(--spinner-i) * -1s / 12);
+}
+
+@keyframes spinner-fade {
+  0% { opacity: 1; }
+  100% { opacity: var(--spinner-dim); }
+}
+
+/* 减少动态:不闪,留一圈均匀的淡辐条 —— 仍然读作「忙」,但没有周期性亮暗。 */
+@media (prefers-reduced-motion: reduce) {
+  .spinner-spoke::before {
+    animation: none;
+    opacity: 0.45;
+  }
+}

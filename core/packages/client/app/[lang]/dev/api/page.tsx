@@ -100,6 +100,10 @@ const ENDPOINTS: Ep[] = [
 
   // ---- account (邮箱 / 手机验证码登录 + 多身份绑定) ----
   { d: 'auth', m: 'GET', p: '/v1/auth/providers', g: 'public', zh: '已配置的登录方式(前端隐藏未开放 tab)', en: 'Configured login methods (client hides unavailable tabs)' },
+  { d: 'auth', m: 'GET', p: '/v1/auth/apple/authorize', g: 'public', c: 'no-store', zh: '生成绑定浏览器 PKCE challenge 的授权 URL、签名 state 与规范站点 origin；link 模式要求 Bearer 并绑定当前 uid', en: 'Create a browser-PKCE-bound authorization URL, signed state and canonical origin; link intent requires Bearer and binds the current uid' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/apple/callback', g: 'public', c: 'no-store', zh: '接收 Apple form_post 并回到唯一第三方授权回调页，不在 URL 传递会话', en: 'Receive Apple form_post and return to the canonical social callback without a session in the URL' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/apple', g: 'public', c: 'no-store', zh: '校验 Apple 授权码、签名与 nonce，登录同一 CubeRoot 账号', en: 'Verify Apple code, signature and nonce, then sign in to the canonical CubeRoot account' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/link/apple', g: 'login', c: 'no-store', zh: '核对浏览器 PKCE 与发起时签名 uid，将已验证 Apple 身份绑定到同一账号', en: 'Verify browser PKCE and the signed initiating uid, then link the verified Apple identity to that same account' },
   { d: 'auth', m: 'POST', p: '/v1/auth/email/send', g: 'public', zh: '发邮箱验证码(登录/注册)', en: 'Send email login code' },
   { d: 'auth', m: 'POST', p: '/v1/auth/email/verify', g: 'public', zh: '校验邮箱验证码,签发 JWT', en: 'Verify email code, issue JWT' },
   { d: 'auth', m: 'POST', p: '/v1/auth/email/password', g: 'public', zh: '邮箱 + 密码登录,签发 JWT', en: 'Sign in with email + password, issue JWT' },

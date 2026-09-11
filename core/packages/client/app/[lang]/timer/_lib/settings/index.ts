@@ -13,6 +13,8 @@ import {
   DEFAULT_ROUND_CONFIG,
   DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
   DEFAULT_TIMER_TIMING_SETTINGS,
+  DEFAULT_TIMER_SMART_CUBE_SETTINGS,
+  normalizeTimerSmartCubeSettings,
   normalizeTimerAttemptSplitSettings,
   normalizeTimerScrambleClickAction,
   normalizeTimerScramblePreviewSettings,
@@ -23,6 +25,7 @@ import {
   type TimerScrambleClickAction,
   type TimerScramblePreviewSettings,
   type TimerTimingSettings,
+  type TimerSmartCubeSettings,
   type TimerAttemptSplitOptions,
   type TimerRandomDifficultySettings,
 } from '@cuberoot/shared/timer';
@@ -42,6 +45,7 @@ export type TimerFontId = 'lcd' | 'mono' | 'liberation' | 'sans';
 
 export interface TimerSettings extends
   TimerTimingSettings,
+  TimerSmartCubeSettings,
   TimerAttemptSplitOptions,
   TimerScramblePreviewSettings,
   TimerRandomDifficultySettings {
@@ -191,58 +195,11 @@ export interface TimerSettings extends
   /** Auto-backup every N saves. 0 = disabled, max 30. */
   autoBackupEvery: number;
 
-  /**
-   * Bluetooth auto-ready: arm the attempt automatically when the cube says the
-   * user is ready. Arming is passive — the clock only starts on the first turn —
-   * which is why 'scrambled' can be the default without ever surprising anyone
-   * with a running timer.
-   *   'scrambled'    — the cube matches the scramble (default; csTimer's `giiSD='s'`)
-   *   'off'          — manual: press space
-   *   'still'        — 2s without any move
-   *   'double-flick' — confirm via U U' U U' (any quarter-turn pair pattern)
-   */
-  bluetoothAutoReady: 'off' | 'still' | 'double-flick' | 'scrambled';
 
   /** One-shot migration marker for the default changing from off to scrambled. */
   bluetoothAutoReadyMigrated?: boolean;
 
-  /**
-   * How the live smart-cube mirror (which takes over the picture under the
-   * digits once a cube is connected) renders.
-   *   '3d'  — the /sim engine's cube, turning with your own, its orientation
-   *           following the cube's gyroscope (default). Only some protocols
-   *           carry orientation at all, so this is a request, not a guarantee:
-   *           with no gyro samples, on a phone, or before the state has been
-   *           anchored at a solved cube, it falls back to the net rather than
-   *           showing a 3D cube that is lying about something. It also turns the
-   *           gyro stream on, which costs the cube some battery.
-   *   'net' — the unfolded WCA net. All six faces flat, which is the view you
-   *           can check face-by-face against the cube in your hands, and the
-   *           only one csTimer has. This is also what every fallback lands on.
-   *   'q2look' — compact U + F + R projection for two-look recognition.
-   *   '2d'  — the isometric still. Legacy value name, kept so a stored setting
-   *           keeps meaning what it meant: three faces visible, three hidden.
-   */
-  liveCubeView: '2d' | 'net' | '3d' | 'q2look';
 
-  /**
-   * 把陀螺仪的姿态流一起存进成绩,好在复盘里重放「怎么拧的」——转体在哪儿发生、
-   * 握持怎么换。动作流答不了这些。
-   *
-   * **2026-08-03 改成默认开。** 原来默认关,理由是「一把几百字节也是在花别人的
-   * 存储配额」。那个理由把这条当成了「回放的一个可选装饰」——它不是。姿态流是
-   * 中心核转没转的唯一证据,而那件事决定了两个**每把都在用**的东西:
-   *
-   *   - 谱子里有没有转体(魔方一手也不报,只能从这儿推);
-   *   - 那一对相对面到底是一个 `M` 还是两手真转(没有它只能靠时间猜,猜错了
-   *     `ρ` 从此就错,后面每一手的名字跟着错 —— 用户看到的就是「PLL 不像公式」)。
-   *
-   * 默认关的代价因此不是「少一个回放功能」,而是**复盘默认是错的**。几百字节
-   * (死区 + int8 定点 + base64,见 `_lib/bluetooth/gyro_track.ts`)换这个,值。
-   *
-   * 开着会让魔方一直发姿态(有些型号要显式开),费电 —— 所以开关留着。
-   */
-  recordGyro: boolean;
 
   /**
    * Keyboard-binding OVERRIDES for the rebindable timer actions — not the
@@ -282,16 +239,11 @@ export interface TimerSettings extends
    */
   rankCountry?: string;
 
-  /**
-   * 智能魔方拧完一把后,复盘直接摊在计时页上(不遮挡,开下一把即收起)。默认开。
-   * 只对录到动作流的成绩生效 —— 手动/键盘计时那些没有可复盘的东西。旧存档无此键
-   * -> 视为 true。
-   */
-  autoRecap?: boolean;
 }
 
 export const DEFAULTS: TimerSettings = {
   ...DEFAULT_TIMER_TIMING_SETTINGS,
+  ...DEFAULT_TIMER_SMART_CUBE_SETTINGS,
   ...DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
   soundsEnabled: false,
   volume: 0.5,
@@ -338,17 +290,13 @@ export const DEFAULTS: TimerSettings = {
   syncSeed: null,
   syncSeedCounter: 0,
   autoBackupEvery: 10,
-  bluetoothAutoReady: 'scrambled',
   bluetoothAutoReadyMigrated: true,
-  liveCubeView: '3d',
-  recordGyro: true,
   keymap: {},
   round: DEFAULT_ROUND_CONFIG,
   targetMsByEvent: {},
   dailySolveGoal: null,
   rankScopes: normalizeTimerRankScopes(undefined),
   rankCountry: '',
-  autoRecap: true,
 };
 
 /**
@@ -428,12 +376,14 @@ function load(): TimerSettings {
     });
     const normalizedSplits = normalizeTimerAttemptSplitSettings(parsed);
     const normalizedScramblePreview = normalizeTimerScramblePreviewSettings(parsed);
+    const normalizedSmartCube = normalizeTimerSmartCubeSettings(parsed);
     const merged = {
       ...DEFAULTS,
       ...parsed,
       ...normalizedTiming,
       ...normalizedSplits,
       ...normalizedScramblePreview,
+      ...normalizedSmartCube,
       rankScopes: showRankBadge === false ? [] : normalizeTimerRankScopes(parsed.rankScopes),
     } as TimerSettings & {
       statsAoWindows?: unknown;
@@ -452,6 +402,9 @@ function load(): TimerSettings {
     }
     for (const key of Object.keys(normalizedScramblePreview) as Array<keyof TimerScramblePreviewSettings>) {
       if (key in parsed && parsed[key] !== normalizedScramblePreview[key]) dirty = true;
+    }
+    for (const key of Object.keys(normalizedSmartCube) as Array<keyof TimerSmartCubeSettings>) {
+      if (key in parsed && parsed[key] !== normalizedSmartCube[key]) dirty = true;
     }
     const normalizedScrambleClickAction = normalizeTimerScrambleClickAction(
       parsed.scrambleClickAction,
@@ -541,6 +494,7 @@ export function updateSettings(patch: Partial<TimerSettings>): void {
     ...normalizeTimerTimingSettings(candidate),
     ...normalizeTimerAttemptSplitSettings(candidate),
     ...normalizeTimerScramblePreviewSettings(candidate),
+    ...normalizeTimerSmartCubeSettings(candidate),
     scrambleClickAction: normalizeTimerScrambleClickAction(candidate.scrambleClickAction),
     rankScopes: normalizeTimerRankScopes(candidate.rankScopes),
   };

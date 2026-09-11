@@ -39,9 +39,9 @@ const TIMER = join(ROOT, 'app', '[lang]', 'timer');
 
 const SOLVE_MODAL = join(TIMER, '_components', 'SolveModal.tsx');
 const SOLO_VIEW = join(TIMER, '_shell', 'SoloView.tsx');
-const PLAYBACK = join(TIMER, '_components', 'PlaybackPanel.tsx');
+const PLAYBACK = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'PlaybackPanel.tsx');
 // 三维魔方是 /timer 和公式训练器共用的,住在共享的 sim-embed 里,不在 timer 页里。
-const SIM_CUBE = join(ROOT, 'components', 'sim-embed', 'SimCubeView.tsx');
+const SIM_CUBE = join(ROOT, '..', 'timer-ui', 'src', 'SimCubeView.tsx');
 
 const read = (p: string) => readFileSync(p, 'utf8');
 
@@ -56,10 +56,12 @@ function dynamicImports(src: string): string[] {
  * 同一个模块,不归一化就比不出来。`@/` 是 client 根别名。
  */
 function resolveSpec(spec: string, fromFile: string): string {
-  const abs = spec.startsWith('@/')
+  const abs = spec.startsWith('@cuberoot/')
+    ? fileURLToPath(import.meta.resolve(spec))
+    : spec.startsWith('@/')
     ? join(ROOT, spec.slice(2))
     : resolve(dirname(fromFile), spec);
-  return relative(ROOT, abs).split('\\').join('/');
+  return relative(ROOT, abs).split('\\').join('/').replace(/\.(?:tsx?|js)$/, '');
 }
 
 const prefetched = new Set(
@@ -104,8 +106,8 @@ describe('复盘打开路径:懒加载的都得先预取', () => {
   // 后两段藏在它内部,不显式预取就得等它先跑起来。
   const CHAIN: Array<{ what: string; file: string; match: RegExp }> = [
     { what: '报告本体', file: SOLVE_MODAL, match: /_components\/ReconstructReport$/ },
-    { what: '三维魔方', file: PLAYBACK, match: /sim-embed\/SimCubeView$/ },
-    { what: 'sim 引擎挂载', file: SIM_CUBE, match: /sim-embed\/mountSimWorld$/ },
+    { what: '三维魔方', file: PLAYBACK, match: /timer-ui\/src\/SimCubeView$/ },
+    { what: 'sim 引擎挂载', file: SIM_CUBE, match: /puzzle-render-core\/src\/sim\/mountSimWorld$/ },
   ];
 
   for (const { what, file, match } of CHAIN) {
@@ -140,7 +142,7 @@ describe('三维魔方等滚到跟前再建', () => {
 
   it('SimCubeView 挂在可见性门后面,不是无条件渲染', () => {
     // `cubeNear ? <SimCubeView` —— 中间允许换行/空白。
-    expect(src).toMatch(/cubeNear\s*\?\s*\(\s*\n\s*<SimCubeView/);
+    expect(src).toMatch(/cubeNear\s*\?\s*\(\s*\n\s*<Suspense[^\n]*><SimCubeView/);
   });
 
   it('门是 IntersectionObserver,且带提前量', () => {

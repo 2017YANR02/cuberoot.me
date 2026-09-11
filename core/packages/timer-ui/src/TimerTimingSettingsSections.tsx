@@ -120,7 +120,7 @@ function TimerSettingsSection({
   );
 }
 
-function TimerSettingRow({
+export function TimerSettingRow({
   children,
   field,
   label,

@@ -19,6 +19,7 @@
 import { sql } from '../db/connection.js';
 import { deletedOwnerKey } from '@cuberoot/shared/account';
 import { removeDriveAccountFiles } from './drive_storage.js';
+import { revokeAppleIdentities, type AppleRevocationIdentity } from './apple_login.js';
 
 /** 私有数据:[表, 归属列]。整行删除。 */
 export const PURGE_TABLES: readonly (readonly [string, string])[] = [
@@ -298,7 +299,10 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
     // (且有测试把它们钉在 schema 上),不接受任何外部输入 —— 注入面为零。
     // 不用 postgres.js 的 ${tx(name)} 标识符 helper:同一个写法在不同上下文会被猜成标识符
     // 或值列表,而这段代码删的是删不回来的东西,不给驱动留推断空间。
-    const ids = await tx`SELECT provider, provider_uid FROM auth_identities WHERE user_id = ${userId}`;
+    const ids = await tx`
+      SELECT provider, provider_uid, apple_refresh_token_encrypted, apple_token_key_version
+      FROM auth_identities WHERE user_id = ${userId} FOR UPDATE`;
+    await revokeAppleIdentities(ids as unknown as AppleRevocationIdentity[]);
     const targets = (ids as unknown as { provider: string; provider_uid: string }[])
       .filter((i) => i.provider === 'email' || i.provider === 'phone')
       .map((i) => i.provider_uid);

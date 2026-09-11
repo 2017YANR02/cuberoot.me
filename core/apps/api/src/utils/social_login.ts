@@ -74,14 +74,16 @@ const STATE_TTL_SEC = 600; // 10 分钟
 function stateSig(payload: string): string {
   return createHmac('sha256', JWT_SECRET).update(payload).digest('base64url').slice(0, 27);
 }
-export function signSocialState(provider: SocialProvider, intent: SocialIntent): string {
-  const nonce = randomBytes(6).toString('base64url');
+export function signSocialState(provider: SocialProvider | 'apple', intent: SocialIntent, appleCodeChallenge?: string, appleAccountId?: number): string {
+  let nonce = provider === 'apple' && appleCodeChallenge
+    ? appleCodeChallenge : randomBytes(provider === 'apple' ? 32 : 6).toString('base64url');
+  if (provider === 'apple' && intent === 'link' && appleAccountId) nonce += `~${appleAccountId}`;
   const exp = Math.floor(Date.now() / 1000) + STATE_TTL_SEC;
   const payload = `${nonce}.${provider}.${intent}.${exp}`;
   return `${payload}.${stateSig(payload)}`;
 }
 /** 验签 state:签名对 + 未过期 + provider 匹配 → 返 {intent};否则 null。 */
-export function verifySocialState(state: string, expectProvider: SocialProvider): { intent: SocialIntent } | null {
+export function verifySocialState(state: string, expectProvider: SocialProvider | 'apple'): { intent: SocialIntent } | null {
   const parts = (state || '').split('.');
   if (parts.length !== 5) return null;
   const [nonce, p, i, expStr, sig] = parts;

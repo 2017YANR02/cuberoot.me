@@ -35,6 +35,7 @@ import MoreMenu, { type MoreMenuItem } from '../_components/MoreMenu';
 import { syncLangToUrl } from '@/i18n/i18n-client';
 
 import { generateScramble, registerScramble } from '../_lib/scramble';
+import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import {
   peekWcaRow,
   nextWcaRow,
@@ -1640,25 +1641,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     },
   });
 
-  useAutoReady({
-    // 'scrambled' is not a move-stream gesture, so it is handled by the effect
-    // below instead — this hook only knows about turns.
-    enabled: !competition.enabled && (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick')
-      && bluetoothCube.status.connected,
-    mode: settings.bluetoothAutoReady === 'double-flick' ? 'double-flick' : 'still',
-    onReady: () => {
-      if (!getSettings().timingEnabled) return; // 练习模式不自动预备计时
-      const ph = timer.phase;
-      if (ph === 'idle' || ph === 'inspecting' || ph === 'stopped') {
-        onPressDown(true);
-      }
-    },
-    onMoveSubscriber: (cb) => {
-      const subs = bluetoothSubscribersRef.current;
-      subs.add(cb);
-      return () => { subs.delete(cb); };
-    },
-  });
   const bluetoothCubeRef = useRef<typeof bluetoothCube | null>(null);
   useEffect(() => { bluetoothCubeRef.current = bluetoothCube; }, [bluetoothCube]);
   useEffect(() => {
@@ -1699,15 +1681,27 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // reproduces the current state exactly. `algAnchored` says whether that
   // anchor exists at all — without it the 3D view would be drawing a state
   // nobody verified, so we stay on the flat one.
-  const [liveMoves, setLiveMoves] = useState<string[]>([]);
-  const [algAnchored, setAlgAnchored] = useState(false);
+  const [{ moves: liveMoves, algAnchored }, setLiveAnchor] = useState<LiveSmartCubeAnchorSnapshot>({ moves: [], algAnchored: false });
+  const liveAnchor = useMemo(() => new LiveSmartCubeAnchor({
+    solve: async (state) => {
+      const { solve333 } = await import('../_lib/scramble/kociemba/random_state');
+      return solve333(state);
+    },
+    onChange: setLiveAnchor,
+  }), []);
   useEffect(() => {
     const subs = bluetoothSubscribersRef.current;
-    const mirror = (m: string) => { setLiveMoves(prev => [...prev, m]); };
+    const mirror = (m: string) => { liveAnchor.move(m); };
     subs.add(mirror);
-    return () => { subs.delete(mirror); };
-  }, []);
+    return () => { subs.delete(mirror); liveAnchor.setConnection(null); };
+  }, [liveAnchor]);
   const cubeConnected = bluetoothCube.status.connected;
+  useEffect(() => {
+    liveAnchor.setConnection(cubeConnected ? bluetoothCube.status.deviceId || bluetoothCube.status.deviceName || 'cube' : null);
+  }, [liveAnchor, cubeConnected, bluetoothCube.status.deviceId, bluetoothCube.status.deviceName]);
+  useEffect(() => {
+    liveAnchor.observeFacelets(bluetoothCube.facelets);
+  }, [liveAnchor, cubeConnected, bluetoothCube.facelets]);
   const latestPresenceSolve = solves.at(-1);
   useEffect(() => {
     onPresenceChange?.({
@@ -1737,50 +1731,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     latestPresenceSolve?.ts,
     onPresenceChange,
   ]);
-  const cubeSolved = bluetoothCube.solved;
-  useEffect(() => {
-    if (!cubeConnected) { setLiveMoves([]); setAlgAnchored(false); return; }
-    // Runs after the move that solved the cube has already been appended
-    // above, so clearing here leaves the log correctly empty.
-    if (cubeSolved) { setLiveMoves([]); setAlgAnchored(true); }
-  }, [cubeConnected, cubeSolved]);
-
-  // Connect a cube that is ALREADY scrambled and there is no anchor: nobody
-  // knows how it got that way, so the 3D view had nothing to replay and the
-  // first solve of a session never got one. The missing piece is not the
-  // renderer, it is the opening — and the cube reports its own facelets, so we
-  // can solve for it (see _lib/bluetooth/anchor.ts, which also verifies the
-  // result before handing it over).
-  //
-  // Ordering: moves that land while the solver is running have already been
-  // appended, so the answer is spliced in FRONT of them rather than replacing
-  // the log.
-  //
-  // ONCE PER CONNECTION, and the ref is what enforces it: `facelets` changes on
-  // every single turn, so keying the attempt on its value would fire a fresh
-  // two-phase solve per move for as long as the cube stays un-anchored. One
-  // attempt is also the right answer for a state the solver rejects — retrying
-  // it per turn would just burn the worker on the same impossible cube.
-  const anchorAskedRef = useRef(false);
-  const liveMovesLenRef = useRef(0);
-  liveMovesLenRef.current = liveMoves.length;
-  const anchorFacelets = cubeConnected && !algAnchored ? bluetoothCube.facelets : null;
-  useEffect(() => {
-    if (!anchorFacelets || anchorAskedRef.current) return;
-    anchorAskedRef.current = true;
-    const baseLen = liveMovesLenRef.current;
-    let cancelled = false;
-    void (async () => {
-      const { anchorAlgFor } = await import('../_lib/bluetooth/anchor');
-      const tokens = await anchorAlgFor(anchorFacelets);
-      if (cancelled || tokens === null) return;
-      setLiveMoves(prev => [...tokens, ...prev.slice(baseLen)]);
-      setAlgAnchored(true);
-    })();
-    return () => { cancelled = true; };
-  }, [anchorFacelets]);
-  // A disconnect must let the next connection ask again.
-  useEffect(() => { if (!cubeConnected) anchorAskedRef.current = false; }, [cubeConnected]);
+  // Anchor generation, late-turn queue and resync invalidation are shared with
+  // installed clients. A changing facelet render never cancels the only request.
 
   // 复盘那一屏的整条懒加载链,魔方一连上就预取。连了智能魔方的人下一步几乎必然是
   // 拧一把,而拧完那一下 SolveRecap 就要渲染 —— 到那时才开始下载 200 KB 的报告
@@ -1818,7 +1770,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         >
           <LiveCubeState
             facelets={bluetoothCube.facelets}
-            moves={liveMoves}
+            moves={[...liveMoves]}
             algAnchored={algAnchored}
             // 陀螺仪只决定这颗魔方**朝哪儿**,不决定它是什么状态 —— 没有姿态流
             // 的魔方照样该用 3D:贴纸一模一样准,而且每拧一手能把那一层转给你看,
@@ -2534,6 +2486,26 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const anyModalOpen = otherModalOpen || hintsSheetOpen;
   const anyModalOpenRef = useRef(anyModalOpen);
   useEffect(() => { anyModalOpenRef.current = anyModalOpen; }, [anyModalOpen]);
+  useAutoReady({
+    // A subscription belongs to one armable attempt. Leaving that phase or
+    // covering the timer cancels gestures; returning starts a fresh lifetime.
+    // 'scrambled' is state matching, not a move-stream gesture.
+    enabled: !competition.enabled && settings.timingEnabled && attemptCanStart && !anyModalOpen
+      && (timer.phase === 'idle' || timer.phase === 'inspecting' || timer.phase === 'stopped')
+      && (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick')
+      && bluetoothCube.status.connected,
+    mode: settings.bluetoothAutoReady === 'double-flick' ? 'double-flick' : 'still',
+    onReady: () => {
+      if (!getSettings().timingEnabled || anyModalOpenRef.current) return;
+      const ph = phaseSnapshotRef.current;
+      if (ph === 'idle' || ph === 'inspecting' || ph === 'stopped') onPressDown(true);
+    },
+    onMoveSubscriber: (cb) => {
+      const subs = bluetoothSubscribersRef.current;
+      subs.add(cb);
+      return () => { subs.delete(cb); };
+    },
+  });
   // 解法全屏浮层是唯一的例外:它盖住整屏,但讲的就是眼前这条打乱 —— 换题键(默认左右键)
   // 仍要能用,否则全屏形态下只能先关掉浮层才能换题。其余键照旧被吞(空格不能穿到后面预备计时)。
   const hintsOnlyRef = useRef(false);

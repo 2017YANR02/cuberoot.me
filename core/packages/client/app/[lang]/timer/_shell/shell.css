@@ -663,59 +663,7 @@
    flex-shrink 永远不触发 —— 实测就是整页多出 105px 滚动条,复盘的下半截落在屏外。
    只在有复盘时钉,不动其它形态。 */
 .timer-shell:has(.shell-recap) { height: calc(100dvh - var(--page-notice-h, 0px)); }
-.shell-recap {
-  /* 收缩允许:上面的计时区(读数 + 打乱 + 魔方)有它压不动的最小高度,矮屏上该让的
-     是复盘 —— 反正它自己会滚,少一格是少看两行,不是丢内容。 */
-  flex: 0 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  height: var(--recap-h);
-  border-top: 1px solid var(--shell-divider);
-}
-.shell-recap-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-}
-.shell-recap-title { font-size: 13px; color: var(--muted-foreground); }
-.shell-recap-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  border: 1px solid var(--border-default);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--foreground);
-  font-size: 12px;
-  cursor: pointer;
-}
-.shell-recap-btn:hover { background: var(--shell-hover); }
-/* 工具栏形态:左标题右关闭,这个 auto 是有意的两端对齐。 */
-.shell-recap-x {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--muted-foreground);
-  cursor: pointer;
-}
-.shell-recap-x:hover { background: var(--shell-hover); color: var(--foreground); }
-.shell-recap-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 0 12px 12px;
-}
-/* 报告在宽屏上不铺满整行 —— 一行几十厘米的表格读起来要来回甩头。 */
-.shell-recap-body .rc-report { max-width: 1000px; margin: 0 auto; }
+/* SolveRecap owns its component styles in @cuberoot/timer-ui/solve-recap.css. */
 
 /* 复盘吃掉的那半屏得有人让。让的是魔方图那一格:它是四件东西里唯一按比例缩了还
    照样成立的(读数是主角,打乱要能读,复盘是刚打开的那件事)。缩不是藏 —— 连着智能

@@ -666,6 +666,8 @@ export default function AccountPage() {
     parseAsStringEnum<'main' | 'signin' | 'delete' | 'submissions' | 'user'>(['main', 'signin', 'delete', 'submissions', 'user']).withDefault('main').withOptions({ history: 'push' }),
   );
   const [managedUserId] = useQueryState('user', parseAsInteger);
+  const [linkProvider] = useQueryState('link_provider', parseAsStringEnum(['apple']));
+  const [expectedLinkUid] = useQueryState('expected_uid', parseAsInteger);
 
   // 'wait' = 还没判定(SSR / 正在跳走)—— auth-store 从 localStorage 同步初始化,服务端恒为
   // null,所以判定只能在挂载后做,渲染前固定空壳避免 hydration 错配。
@@ -681,6 +683,10 @@ export default function AccountPage() {
   const accountHref = (nextView?: 'signin' | 'delete' | 'submissions') => {
     const params = new URLSearchParams();
     if (nextView) params.set('view', nextView);
+    if (linkProvider === 'apple') {
+      params.set('link_provider', 'apple');
+      if (expectedLinkUid !== null) params.set('expected_uid', String(expectedLinkUid));
+    }
     if (mobileAuth) {
       params.set('auth', 'mobile');
       if (mobileAuthProvider) params.set('provider', mobileAuthProvider);
@@ -692,10 +698,10 @@ export default function AccountPage() {
 
   const handleLogout = useCallback(() => {
     logout();
-    void setView(null);
+    void setView(linkProvider === 'apple' ? 'signin' : null);
     setMode('login');
     void notifyMiniProgramLogout();
-  }, [logout, setView]);
+  }, [logout, setView, linkProvider]);
 
   useDocumentTitle(
     mode !== 'me' ? '登录' : view === 'delete' ? '注销账号' : view === 'submissions' ? '公式投稿' : view === 'user' ? '编辑用户' : '我的',
@@ -869,6 +875,7 @@ export default function AccountPage() {
 
       {mode === 'login' ? (
         <div data-mobile-auth-entry>
+          {linkProvider === 'apple' ? <p>{t('请先在浏览器中登录与 App 相同的账号，再主动点击绑定 Apple。', 'Sign in to the same account as your app in this browser, then choose Link next to Apple.')}</p> : null}
           <LoginForm firstPartyOnly={mobileAuth && !mobileAuthProvider} onDone={settle} />
         </div>
       ) : mode === 'onboard' ? (
@@ -902,7 +909,7 @@ export default function AccountPage() {
             <section className="account-creds">
               <DisplayNameEditor />
               <h2 className="account-creds-title">{t('登录方式', 'Sign-in methods')}</h2>
-              <AccountPanel />
+              <AccountPanel expectedAppleUid={linkProvider === 'apple' ? expectedLinkUid : undefined} />
               {/* 清掉 ?view= —— 否则重新登录后会莫名其妙落在登录方式视图 */}
               <button type="button" className="account-logout" onClick={handleLogout}>
                 <LogOut size={14} />

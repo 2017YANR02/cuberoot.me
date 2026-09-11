@@ -12,6 +12,38 @@
       "react-dom": "react-dom"
     },
     "runtime": {
+      "./timer/reconstruct/recap": "runtime-neutral",
+      "./timer/replay-encode": "runtime-neutral",
+      "./smart-cube/orientation": "runtime-neutral",
+      "./smart-cube/gyro-track": "runtime-neutral",
+      "./timer/sim-log": "runtime-neutral",
+      "./timer/reconstruct/steps": "runtime-neutral",
+      "./cube-facelet": "runtime-neutral",
+      "./recon/cube3": "runtime-neutral",
+      "./recon/stage-detect": "runtime-neutral",
+      "./recon/popup-suggest": "mixed",
+      "./recon/sticker-tables": "runtime-neutral",
+      "./recon/oll-lookup": "mixed",
+      "./recon/pll-lookup": "mixed",
+      "./recon/zbll-lookup": "mixed",
+      "./recon/f2l-lookup": "mixed",
+      "./recon/alg-case-display": "mixed",
+      "./recon/build-yield": "runtime-neutral",
+      "./timer/reconstruct/step-metrics": "runtime-neutral",
+      "./timer/reconstruct/error-detect": "runtime-neutral",
+      "./timer/reconstruct/f2l-slots": "runtime-neutral",
+      "./timer/reconstruct/methods": "runtime-neutral",
+      "./timer/reconstruct/method-walk": "runtime-neutral",
+      "./timer/reconstruct/reference": "runtime-neutral",
+      "./timer/reconstruct/quality": "runtime-neutral",
+      "./timer/reconstruct/rotation-detect": "runtime-neutral",
+      "./timer/reconstruct/core-track": "runtime-neutral",
+      "./timer/reconstruct/humanize": "runtime-neutral",
+      "./timer/reconstruct/recon-text": "mixed",
+      "./timer/reconstruct/slice": "runtime-neutral",
+      "./timer/reconstruct/stage-segments": "runtime-neutral",
+      "./timer/reconstruct/gyro-orient": "runtime-neutral",
+      "./timer/reconstruct/bld-helper": "runtime-neutral",
       "./build-account-location-requirements": "node",
       ".": "react-dom",
       "./nemesizer-format": "runtime-neutral",
@@ -81,6 +113,7 @@
       "./smart-cube/gocube": "runtime-neutral",
       "./smart-cube/moyu": "runtime-neutral",
       "./smart-cube/cubie": "runtime-neutral",
+      "./smart-cube/anchor": "runtime-neutral",
       "./smart-cube/gan-crypto": "runtime-neutral",
       "./smart-cube/gan-move-sync": "runtime-neutral",
       "./smart-cube/move-clock": "runtime-neutral",
@@ -100,6 +133,128 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
+    "./timer/reconstruct/recap": { "node": "./dist/timer/reconstruct/recap.js", "default": "./src/timer/reconstruct/recap.ts" },
+    "./timer/replay-encode": { "node": "./dist/timer/replay_encode.js", "default": "./src/timer/replay_encode.ts" },
+    "./smart-cube/orientation": {
+      "node": "./dist/smart_cube/orientation.js",
+      "default": "./src/smart_cube/orientation.ts"
+    },
+    "./smart-cube/gyro-track": {
+      "node": "./dist/smart_cube/gyro_track.js",
+      "default": "./src/smart_cube/gyro_track.ts"
+    },
+    "./timer/sim-log": {
+      "node": "./dist/timer/sim_log.js",
+      "default": "./src/timer/sim_log.ts"
+    },
+    "./timer/reconstruct/steps": {
+      "node": "./dist/timer/reconstruct/steps.js",
+      "default": "./src/timer/reconstruct/steps.ts"
+    },
+    "./cube-facelet": {
+      "node": "./dist/cube_facelet.js",
+      "default": "./src/cube_facelet.ts"
+    },
+    "./recon/cube3": {
+      "node": "./dist/recon/cube3.js",
+      "default": "./src/recon/cube3.ts"
+    },
+    "./recon/stage-detect": {
+      "node": "./dist/recon/stage_detect.js",
+      "default": "./src/recon/stage_detect.ts"
+    },
+    "./recon/popup-suggest": {
+      "node": "./dist/recon/popup_suggest.js",
+      "default": "./src/recon/popup_suggest.ts"
+    },
+    "./recon/sticker-tables": {
+      "node": "./dist/recon/sticker_tables.js",
+      "default": "./src/recon/sticker_tables.ts"
+    },
+    "./recon/oll-lookup": {
+      "node": "./dist/recon/oll_lookup.js",
+      "default": "./src/recon/oll_lookup.ts"
+    },
+    "./recon/pll-lookup": {
+      "node": "./dist/recon/pll_lookup.js",
+      "default": "./src/recon/pll_lookup.ts"
+    },
+    "./recon/zbll-lookup": {
+      "node": "./dist/recon/zbll_lookup.js",
+      "default": "./src/recon/zbll_lookup.ts"
+    },
+    "./recon/f2l-lookup": {
+      "node": "./dist/recon/f2l_lookup.js",
+      "default": "./src/recon/f2l_lookup.ts"
+    },
+    "./recon/alg-case-display": {
+      "node": "./dist/recon/alg_case_display.js",
+      "default": "./src/recon/alg_case_display.ts"
+    },
+    "./recon/build-yield": {
+      "node": "./dist/recon/build-yield.js",
+      "default": "./src/recon/build-yield.ts"
+    },
+    "./timer/reconstruct/step-metrics": {
+      "node": "./dist/timer/reconstruct/step_metrics.js",
+      "default": "./src/timer/reconstruct/step_metrics.ts"
+    },
+    "./timer/reconstruct/error-detect": {
+      "node": "./dist/timer/reconstruct/error_detect.js",
+      "default": "./src/timer/reconstruct/error_detect.ts"
+    },
+    "./timer/reconstruct/f2l-slots": {
+      "node": "./dist/timer/reconstruct/f2l_slots.js",
+      "default": "./src/timer/reconstruct/f2l_slots.ts"
+    },
+    "./timer/reconstruct/methods": {
+      "node": "./dist/timer/reconstruct/methods.js",
+      "default": "./src/timer/reconstruct/methods.ts"
+    },
+    "./timer/reconstruct/method-walk": {
+      "node": "./dist/timer/reconstruct/method_walk.js",
+      "default": "./src/timer/reconstruct/method_walk.ts"
+    },
+    "./timer/reconstruct/reference": {
+      "node": "./dist/timer/reconstruct/reference.js",
+      "default": "./src/timer/reconstruct/reference.ts"
+    },
+    "./timer/reconstruct/quality": {
+      "node": "./dist/timer/reconstruct/quality.js",
+      "default": "./src/timer/reconstruct/quality.ts"
+    },
+    "./timer/reconstruct/rotation-detect": {
+      "node": "./dist/timer/reconstruct/rotation_detect.js",
+      "default": "./src/timer/reconstruct/rotation_detect.ts"
+    },
+    "./timer/reconstruct/core-track": {
+      "node": "./dist/timer/reconstruct/core_track.js",
+      "default": "./src/timer/reconstruct/core_track.ts"
+    },
+    "./timer/reconstruct/humanize": {
+      "node": "./dist/timer/reconstruct/humanize.js",
+      "default": "./src/timer/reconstruct/humanize.ts"
+    },
+    "./timer/reconstruct/recon-text": {
+      "node": "./dist/timer/reconstruct/recon_text.js",
+      "default": "./src/timer/reconstruct/recon_text.ts"
+    },
+    "./timer/reconstruct/slice": {
+      "node": "./dist/timer/reconstruct/slice.js",
+      "default": "./src/timer/reconstruct/slice.ts"
+    },
+    "./timer/reconstruct/stage-segments": {
+      "node": "./dist/timer/reconstruct/stage_segments.js",
+      "default": "./src/timer/reconstruct/stage_segments.ts"
+    },
+    "./timer/reconstruct/gyro-orient": {
+      "node": "./dist/timer/reconstruct/gyro_orient.js",
+      "default": "./src/timer/reconstruct/gyro_orient.ts"
+    },
+    "./timer/reconstruct/bld-helper": {
+      "node": "./dist/timer/reconstruct/bld_helper.js",
+      "default": "./src/timer/reconstruct/bld_helper.ts"
+    },
     "./build-account-location-requirements": "./scripts/account-location-artifact.mjs",
     ".": "./src/index.ts",
     "./nemesizer-format": {
@@ -271,6 +426,7 @@
     "./smart-cube/gocube": "./src/smart_cube/gocube.ts",
     "./smart-cube/moyu": "./src/smart_cube/moyu.ts",
     "./smart-cube/cubie": "./src/smart_cube/cubie.ts",
+    "./smart-cube/anchor": "./src/smart_cube/anchor.ts",
     "./smart-cube/gan-crypto": "./src/smart_cube/gan_crypto.ts",
     "./smart-cube/gan-move-sync": "./src/smart_cube/gan_move_sync.ts",
     "./smart-cube/move-clock": "./src/smart_cube/move_clock.ts",

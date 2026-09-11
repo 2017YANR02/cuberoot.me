@@ -204,7 +204,7 @@ export class TimerRepository {
   updateSolve(
     event: EventId,
     id: string,
-    changes: Partial<Pick<Solve, 'penalty' | 'comment'>>,
+    changes: Partial<Pick<Solve, 'penalty' | 'comment' | 'bld' | 'reconOk'>>,
   ): Promise<TimerStoreData> {
     return this.run(async () => {
       const data = await this.loadUnlocked();

@@ -80,6 +80,7 @@ export interface WebSessionTicketEnvelope {
 }
 
 export const MOBILE_AUTH_PROVIDERS = [
+  'apple',
   'wca',
   'google',
   'wechat',
@@ -164,6 +165,30 @@ export function isMobileAuthRandomValue(value: unknown): value is string {
 export const isMobileAuthCodeChallenge = isMobileAuthRandomValue;
 export const isMobileAuthCodeVerifier = isMobileAuthRandomValue;
 export const isMobileAuthState = isMobileAuthRandomValue;
+
+/** Shared S256 implementation; each host supplies cryptographically secure randomness/digest. */
+export function encodeAuthRandomValue(bytes: Uint8Array): string {
+  if (bytes.length !== 32) throw new Error('auth randomness unavailable');
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+export async function createAuthCodeChallenge(
+  codeVerifier: string,
+  digestSha256: (value: Uint8Array) => Promise<Uint8Array>,
+): Promise<string> {
+  if (!isMobileAuthCodeVerifier(codeVerifier)) throw new Error('invalid auth verifier');
+  return encodeAuthRandomValue(await digestSha256(new TextEncoder().encode(codeVerifier)));
+}
+
+export async function createAuthPkcePair(
+  randomBytes: (length: number) => Uint8Array,
+  digestSha256: (value: Uint8Array) => Promise<Uint8Array>,
+): Promise<{ codeVerifier: string; codeChallenge: string }> {
+  const codeVerifier = encodeAuthRandomValue(randomBytes(32));
+  return { codeVerifier, codeChallenge: await createAuthCodeChallenge(codeVerifier, digestSha256) };
+}
 
 export function isMobileAuthProvider(value: unknown): value is MobileAuthProvider {
   return typeof value === 'string'

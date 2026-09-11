@@ -52,6 +52,7 @@ import {
   createGanV4FaceletsCommand,
   createGanV4HardwareInfoCommand,
   createGanV4HistoryCommand,
+  createGanV4IdleStateChecks,
   decodeGanV4Frame,
   matchesGanV4Name,
   type GanV4DecodeState,
@@ -83,9 +84,6 @@ function tryParseMacFromName(name: string | undefined): Uint8Array | null {
   if (m12) return hexToBytes(m12[1]);
   return null;
 }
-
-/** See the matching GAN v3 constant. */
-const IDLE_STATE_CHECK_MS = [650, 1600, 3200] as const;
 
 export type MoveDecodeState = GanV4DecodeState;
 export { createGanV4DecodeState, decodeGanV4Frame };
@@ -147,21 +145,11 @@ export const ganV4Driver: CubeDriver = {
     });
     let keyErrorFired = false;
     let cleaned = false;
-    const idleStateChecks = new Set<ReturnType<typeof setTimeout>>();
-    const clearIdleStateChecks = (): void => {
-      for (const timer of idleStateChecks) clearTimeout(timer);
-      idleStateChecks.clear();
-    };
-    const scheduleIdleStateChecks = (): void => {
-      clearIdleStateChecks();
-      for (const delay of IDLE_STATE_CHECK_MS) {
-        const timer = setTimeout(() => {
-          idleStateChecks.delete(timer);
-          if (!cleaned) void sendCmd(createGanV4FaceletsCommand());
-        }, delay);
-        idleStateChecks.add(timer);
-      }
-    };
+    const idleStateChecks = createGanV4IdleStateChecks({
+      schedule: (callback, delay) => setTimeout(callback, delay),
+      cancel: (handle) => clearTimeout(handle),
+      requestState: () => { if (!cleaned) void sendCmd(createGanV4FaceletsCommand()); },
+    });
 
     const onChar = (ev: Event): void => {
       const target = ev.target as BluetoothRemoteGATTCharacteristic;
@@ -176,7 +164,7 @@ export const ganV4Driver: CubeDriver = {
       }
       const moves = decodeGanV4Frame(pt, decState, ctx?.onGyro);
       for (const mv of moves) onMove(mv.mv, mv.ts);
-      if (moves.length > 0) scheduleIdleStateChecks();
+      if (moves.length > 0) idleStateChecks.afterMoves();
       // Several unrecognised frames in a row ⇒ wrong MAC. Tell the hook once.
       if (!keyErrorFired && decState.badFrames >= 6) {
         keyErrorFired = true;
@@ -224,7 +212,7 @@ export const ganV4Driver: CubeDriver = {
     const cleanup = (): void => {
       if (cleaned) return;
       cleaned = true;
-      clearIdleStateChecks();
+      idleStateChecks.dispose();
       notifyChar.removeEventListener('characteristicvaluechanged', onChar);
       void notifyChar.stopNotifications().catch(() => {});
     };

@@ -30,7 +30,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/cl
 const TIMER = join(ROOT, 'app', '[lang]', 'timer');
 const SOLO_VIEW = join(TIMER, '_shell', 'SoloView.tsx');
 const SHELL_CSS = join(TIMER, '_shell', 'shell.css');
-const RECAP = join(TIMER, '_components', 'SolveRecap.tsx');
+const RECAP = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'SolveRecap.tsx');
+const RECAP_CSS = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'solve-recap.css');
 
 const read = (p: string) => readFileSync(p, 'utf8');
 
@@ -125,7 +126,7 @@ describe('计时中那颗智能魔方留在屏幕上', () => {
 });
 
 describe('复盘那一格不许把计时区挤出视口', () => {
-  const css = read(SHELL_CSS);
+  const css = read(SHELL_CSS) + read(RECAP_CSS);
 
   it('普通态、复盘态和桌面侧栏态都扣除页面通知栏高度', () => {
     // PageNoticeBar 是计时器前面的兄弟节点。直接占 100dvh 会把底部连接胶囊推出视口；

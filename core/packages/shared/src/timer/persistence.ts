@@ -30,12 +30,17 @@ import {
   DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
   DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
   DEFAULT_TIMER_TIMING_SETTINGS,
+  DEFAULT_TIMER_SMART_CUBE_SETTINGS,
+  TIMER_SMART_CUBE_AUTO_READY_MODES,
+  TIMER_SMART_CUBE_LIVE_VIEWS,
   normalizeTimerScrambleClickAction,
   normalizeTimerScramblePreviewSettings,
   normalizeTimerTimingSettings,
+  normalizeTimerSmartCubeSettings,
   type TimerScrambleClickAction,
   type TimerScramblePreviewSettings,
   type TimerTimingSettings,
+  type TimerSmartCubeSettings,
 } from './settings-contract';
 import {
   DEFAULT_ROLLING_STAT_COLUMNS,
@@ -68,6 +73,7 @@ export interface TimerStoreSettings extends
   TimerByStepsSettings,
   TimerAttemptSplitOptions,
   TimerTimingSettings,
+  TimerSmartCubeSettings,
   TimerScramblePreviewSettings {
   event: EventId;
   /** Shared 2x2 full-state generation style; also selects WCA original vs optimal-equivalent rows. */
@@ -333,6 +339,8 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     'bldMemo',
     'showCubePreview',
     'prefer3D',
+    'recordGyro',
+    'autoRecap',
     'autoMarkWcaScramble',
   ] as const) {
     if (value[key] !== undefined && typeof value[key] !== 'boolean') return null;
@@ -415,6 +423,10 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
       )))) return null;
   if (value.language !== 'en' && value.language !== 'zh') return null;
   if (value.theme !== 'system' && value.theme !== 'light' && value.theme !== 'dark') return null;
+  if (value.bluetoothAutoReady !== undefined
+    && !TIMER_SMART_CUBE_AUTO_READY_MODES.includes(value.bluetoothAutoReady as TimerSmartCubeSettings['bluetoothAutoReady'])) return null;
+  if (value.liveCubeView !== undefined
+    && !TIMER_SMART_CUBE_LIVE_VIEWS.includes(value.liveCubeView as TimerSmartCubeSettings['liveCubeView'])) return null;
   const wcaSource = normalizeTimerWcaSourceSettings({
     wcaScrambleMode: value.wcaScrambleMode as TimerWcaSourceSettings['wcaScrambleMode'] | undefined,
     wcaComp: value.wcaComp as string | undefined,
@@ -482,6 +494,7 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
       : DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS.bldMemo,
     scrambleClickAction: normalizeTimerScrambleClickAction(value.scrambleClickAction),
     ...scramblePreview,
+    ...normalizeTimerSmartCubeSettings(value),
     ...randomDifficulty,
     ...wcaSource,
     language: value.language,
@@ -631,6 +644,7 @@ export function createTimerStoreData(
     settings: {
       event: '333',
       ...DEFAULT_TIMER_TIMING_SETTINGS,
+      ...DEFAULT_TIMER_SMART_CUBE_SETTINGS,
       scramble222Mode: DEFAULT_SCRAMBLE_222_MODE,
       scramble222Type: DEFAULT_SCRAMBLE_222_TYPE,
       ...DEFAULT_TIMER_BY_STEPS_SETTINGS,

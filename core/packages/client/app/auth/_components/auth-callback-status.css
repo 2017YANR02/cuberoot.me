@@ -3,7 +3,8 @@
   inset: 0;
   z-index: 9999;
   display: grid;
-  place-items: center;
+  place-items: safe center;
+  overflow: auto;
   padding: 24px;
   color: var(--foreground);
   background: var(--background);
@@ -12,6 +13,8 @@
 }
 
 .auth-callback-status__result {
+  min-width: 0;
+  margin-block: auto;
   display: grid;
   justify-items: center;
   gap: 14px;

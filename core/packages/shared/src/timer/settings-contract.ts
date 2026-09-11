@@ -175,6 +175,36 @@ function normalizedBoolean(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
 }
 
+export const TIMER_SMART_CUBE_AUTO_READY_MODES = ['scrambled', 'off', 'still', 'double-flick'] as const;
+export const TIMER_SMART_CUBE_LIVE_VIEWS = ['3d', 'q2look', 'net', '2d'] as const;
+
+export interface TimerSmartCubeSettings {
+  /** Arming never starts the clock; the first turn after ready does. */
+  bluetoothAutoReady: (typeof TIMER_SMART_CUBE_AUTO_READY_MODES)[number];
+  /** 3D is available without a gyro; an unanchored state falls back to the net. */
+  liveCubeView: (typeof TIMER_SMART_CUBE_LIVE_VIEWS)[number];
+  recordGyro: boolean;
+  autoRecap: boolean;
+}
+
+export const DEFAULT_TIMER_SMART_CUBE_SETTINGS: TimerSmartCubeSettings = {
+  bluetoothAutoReady: 'scrambled',
+  liveCubeView: '3d',
+  recordGyro: true,
+  autoRecap: true,
+};
+
+export function normalizeTimerSmartCubeSettings(value: Partial<Record<keyof TimerSmartCubeSettings, unknown>>): TimerSmartCubeSettings {
+  return {
+    bluetoothAutoReady: TIMER_SMART_CUBE_AUTO_READY_MODES.includes(value.bluetoothAutoReady as TimerSmartCubeSettings['bluetoothAutoReady'])
+      ? value.bluetoothAutoReady as TimerSmartCubeSettings['bluetoothAutoReady'] : DEFAULT_TIMER_SMART_CUBE_SETTINGS.bluetoothAutoReady,
+    liveCubeView: TIMER_SMART_CUBE_LIVE_VIEWS.includes(value.liveCubeView as TimerSmartCubeSettings['liveCubeView'])
+      ? value.liveCubeView as TimerSmartCubeSettings['liveCubeView'] : DEFAULT_TIMER_SMART_CUBE_SETTINGS.liveCubeView,
+    recordGyro: normalizedBoolean(value.recordGyro, DEFAULT_TIMER_SMART_CUBE_SETTINGS.recordGyro),
+    autoRecap: normalizedBoolean(value.autoRecap, DEFAULT_TIMER_SMART_CUBE_SETTINGS.autoRecap),
+  };
+}
+
 export function normalizeTimerScramblePreviewSettings(value: {
   showCubePreview?: unknown;
   prefer3D?: unknown;
@@ -235,8 +265,8 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
 
   // Smart cube
   { id: 'settings.smart-cube.fake-cube', category: 'smart-cube', copy: { en: 'Fake cube', zh: '假魔方' }, storagePath: 'showDevFakeCube', value: bool, visibility: 'development-only', disabledWhen: 'never', effect: 'persist-development-fake-cube-controls' },
-  { id: 'settings.smart-cube.auto-ready', category: 'smart-cube', copy: { en: 'Smart-cube auto-ready', zh: '智能魔方自动预备' }, storagePath: 'bluetoothAutoReady', value: { kind: 'enum', values: ['scrambled', 'off', 'still', 'double-flick'] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-smart-cube-auto-ready' },
-  { id: 'settings.smart-cube.live-view', category: 'smart-cube', copy: { en: 'Live cube', zh: '实况魔方' }, storagePath: 'liveCubeView', value: { kind: 'enum', values: ['3d', 'q2look', 'net', '2d'] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-view' },
+  { id: 'settings.smart-cube.auto-ready', category: 'smart-cube', copy: { en: 'Smart-cube auto-ready', zh: '智能魔方自动预备' }, storagePath: 'bluetoothAutoReady', value: { kind: 'enum', values: TIMER_SMART_CUBE_AUTO_READY_MODES }, visibility: 'always', disabledWhen: 'never', effect: 'persist-smart-cube-auto-ready' },
+  { id: 'settings.smart-cube.live-view', category: 'smart-cube', copy: { en: 'Live cube', zh: '实况魔方' }, storagePath: 'liveCubeView', value: { kind: 'enum', values: TIMER_SMART_CUBE_LIVE_VIEWS }, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-view' },
   { id: 'settings.smart-cube.record-orientation', category: 'smart-cube', copy: { en: 'Record orientation for replay', zh: '录姿态用于回放' }, storagePath: 'recordGyro', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-record-orientation' },
   { id: 'settings.smart-cube.auto-recap', category: 'smart-cube', copy: { en: 'Open reconstruction after each solve', zh: '拧完后打开复盘' }, storagePath: 'autoRecap', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-recap' },
 

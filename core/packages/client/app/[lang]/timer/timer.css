@@ -966,61 +966,7 @@
   border-color: var(--border-strong);
 }
 
-/* --- Live cube state mirror (smart cube).
-   Sits directly under the digits, in the same box the scramble preview uses
-   (SoloView's cornerSlot → .shell-corner-net-imgbox, height = --cube-h). It
-   takes that box over while a cube is connected, so it must fill the height
-   exactly: any disagreement shows up as the column jumping the moment the
-   Bluetooth handshake completes. Height here, width from each view's own
-   aspect — never the other way round. */
-.timer-live-cube {
-  /* flex, not block: the views inside are sized from their height and have to
-     shrink to their own width, or a block box would stretch them to the full
-     column and the cube would come out oblong. */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  line-height: 0;
-}
-
-/* Both flat views (unfolded net, isometric still) are SVGs carrying a viewBox,
-   so pinning one axis lets the other follow the drawing's own proportions. */
-.timer-live-cube svg {
-  display: block;
-  height: 100%;
-  width: auto;
-}
-.timer-live-net {
-  display: block;
-  height: 100%;
-  line-height: 0;
-}
-
-/* 3D (gyro) mode. Both axes are pinned to the token rather than to the parent,
-   because the size here has to be decided WITHOUT looking at the content:
-   mountSimWorld measures this box and then writes the result back as an inline
-   px size on the canvas (three's setSize updates the style), so "as wide as the
-   content" would just echo whatever it measured first and lock in the net's
-   wider box. Two explicit sides, no feedback loop, always square. */
-.timer-live-cube-3d {
-  width: var(--cube-h, 200px);
-  height: var(--cube-h, 200px);
-}
-
-/* Calibrate button, under the cube. */
-.live-cube-calibrate {
-  padding: 2px 8px;
-  font: inherit;
-  font-size: 11px;
-  line-height: 1.6;
-  color: var(--muted-foreground);
-  background: color-mix(in srgb, var(--foreground) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--foreground) 20%, transparent);
-  border-radius: 4px;
-  cursor: pointer;
-}
-.live-cube-calibrate:hover { color: var(--foreground); }
+/* Live smart-cube styles are owned by @cuberoot/timer-ui/live-cube.css. */
 
 /* --- Mobile (touch + narrow) --- */
 @media (max-width: 540px) {
