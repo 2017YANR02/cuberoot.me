@@ -543,9 +543,9 @@
   {
     "name": "WACWCA/two-tool + Best 2x2 Algs",
     "url": "https://github.com/WACWCA/two-tool",
-    "zh": "二阶实战解法查找器的双向搜索、手感排序与方法结构；公式数据经授权合并自 Best 2x2 Algs 表格，状态计算和 3D 展示改用本站引擎",
-    "en": "Two-Tools bidirectional search, ergonomic ranking, and method structure; authorized Best 2x2 Algs sheet data is merged into the library, with state math and 3D rendering moved to the site's own engines",
-    "long_en": "Will Callan's practical 2×2 solution finder provides the bidirectional face/layer search design, method filters, and measured three-move timing table. Its authorized Best 2x2 Algs spreadsheet is normalized and merged into CubeRoot's algorithm database; the port replaces the upstream sticker mapper and twisty-player with CubeRoot's existing pocket-state solver and /sim engine."
+    "zh": "二阶实战解法查找器的双向搜索、手感排序与方法结构；公式数据合并自 Best 2x2 Algs 表格，状态计算和 3D 展示改用本站引擎",
+    "en": "Two-Tools bidirectional search, ergonomic ranking, and method structure; Best 2x2 Algs sheet data is merged into the library, with state math and 3D rendering moved to the site's own engines",
+    "long_en": "Will Callan's practical 2×2 solution finder provides the bidirectional face/layer search design, method filters, and measured three-move timing table. Its Best 2x2 Algs spreadsheet is normalized and merged into CubeRoot's algorithm database; the port replaces the upstream sticker mapper and twisty-player with CubeRoot's existing pocket-state solver and /sim engine."
   },
   {
     "name": "mikavilpas/squanmate",
@@ -557,9 +557,9 @@
   {
     "name": "Daniel's Public PBL Doc",
     "url": "https://docs.google.com/spreadsheets/d/1VQNYNwdOLqqBkacHcfYtEBst22FOVhH9EAhTOYOZTgo/",
-    "zh": "Square-1 PBL 公式数据与维护来源；公开访问不等于开源授权，许可证与复用条款尚未核实",
-    "en": "Square-1 PBL algorithm-data and maintenance source; public access does not establish an open-source license, and its license and reuse terms remain unverified",
-    "long_en": "Daniel's public Square-1 PBL workbook is the source reference for the normalized PBL algorithm library presented on CubeRoot. Public availability alone does not grant an open-source license; the workbook's license and reuse terms remain unverified."
+    "zh": "Square-1 PBL 公式数据与维护来源",
+    "en": "Square-1 PBL algorithm-data and maintenance source",
+    "long_en": "Daniel's public Square-1 PBL workbook is the source reference for the normalized PBL algorithm library presented on CubeRoot."
   },
   {
     "name": "Simple Square-1 PBL Finder v1.2 by Anuar and Lucas",
@@ -759,16 +759,16 @@
   {
     "name": "cubing.pro",
     "url": "https://cubing.pro/",
-    "zh": "/wca 各子页与选手详情页 UI/概念参考；/sim 绘图模式的 SQ1、五魔方、Skewb、Pyraminx、FTO 平面模板与交互经授权移植",
-    "en": "UI / concept reference for /wca pages; authorized drawing templates and interactions for SQ1, Megaminx, Skewb, Pyraminx, and FTO in /sim",
-    "long_en": "UI/concept reference for `/wca` sub-pages and person details. The authorized source also provides the flat SVG templates and puzzle-specific controls ported into `/sim` drawing mode for SQ1, Megaminx, Skewb, Pyraminx, and FTO; CubeRoot supplies the shared editor, theme, responsive UI, and export pipeline."
+    "zh": "/wca 各子页与选手详情页 UI/概念参考；/sim 绘图模式的 SQ1、五魔方、Skewb、Pyraminx、FTO 平面模板与交互移植",
+    "en": "UI / concept reference for /wca pages; drawing templates and interactions for SQ1, Megaminx, Skewb, Pyraminx, and FTO in /sim",
+    "long_en": "UI/concept reference for `/wca` sub-pages and person details. The source also provides the flat SVG templates and puzzle-specific controls ported into `/sim` drawing mode for SQ1, Megaminx, Skewb, Pyraminx, and FTO; CubeRoot supplies the shared editor, theme, responsive UI, and export pipeline."
   },
   {
     "name": "LowCubes / Raul Low",
     "url": "https://www.lowcubes.com/",
-    "zh": "经作者许可移植 FTO Bencisco L3T、Megaminx Full PLL 公式数据及 FTO EIF 图片生成器；页面、渲染器与交互按本站架构重写",
-    "en": "Authorized FTO Bencisco L3T and Megaminx Full PLL data, plus the FTO EIF image-generator behavior; pages, renderer, and interactions are reimplemented for CubeRoot",
-    "long_en": "Authorized source for the FTO Bencisco last-three-triangles library, Megaminx Full PLL library, and the EIF-notation FTO image generator behavior. CubeRoot reimplements the pages, strict notation parser, SVG renderer, simulator integration, responsive UI, and export flow in its own architecture."
+    "zh": "移植 FTO Bencisco L3T、Megaminx Full PLL 公式数据及 FTO EIF 图片生成器；页面、渲染器与交互按本站架构重写",
+    "en": "FTO Bencisco L3T and Megaminx Full PLL data, plus the FTO EIF image-generator behavior; pages, renderer, and interactions are reimplemented for CubeRoot",
+    "long_en": "Source for the FTO Bencisco last-three-triangles library, Megaminx Full PLL library, and the EIF-notation FTO image generator behavior. CubeRoot reimplements the pages, strict notation parser, SVG renderer, simulator integration, responsive UI, and export flow in its own architecture."
   },
   {
     "name": "rullerzhou-afk/clawd-on-desk",
@@ -856,15 +856,15 @@
   {
     "name": "cubing/CubePB (James Chang)",
     "url": "https://github.com/cubing/CubePB",
-    "zh": "WCA 选手页个人 PB、历史记录与编辑流程来源；经作者许可复刻，并用 CubeRoot 现有账号、WCA 项目和成绩格式能力重新实现",
-    "en": "Product flow behind personal PBs, history and editing on WCA person pages; reproduced with the author's permission and reimplemented with CubeRoot's account, WCA event and result-formatting infrastructure",
-    "long_en": "CubePB established the personal-best profile, history and editing workflow. CubeRoot's implementation is an authorized, clean integration on WCA person pages, built on its existing authentication, WCA event selection, raw result encoding, bilingual UI and PostgreSQL API. Original project licensed under GPL-3.0."
+    "zh": "WCA 选手页个人 PB、历史记录与编辑流程来源；用 CubeRoot 现有账号、WCA 项目和成绩格式能力重新实现",
+    "en": "Product flow behind personal PBs, history and editing on WCA person pages; reimplemented with CubeRoot's account, WCA event and result-formatting infrastructure",
+    "long_en": "CubePB established the personal-best profile, history and editing workflow. CubeRoot's implementation is a clean integration on WCA person pages, built on its existing authentication, WCA event selection, raw result encoding, bilingual UI and PostgreSQL API. Original project licensed under GPL-3.0."
   },
   {
     "name": "Your Next PR — Competition Simulator",
     "url": "https://yournextpr.shop/comp-sim/",
-    "zh": "/comp-sim 比赛现场模拟的产品流程、交互与训练理念来源；经作者授权复刻，CubeRoot 复用本站 WCA 数据、轮次与计时基础设施重新实现",
-    "en": "Product flow, interactions and training concept behind /comp-sim; reproduced with the author's permission and reimplemented on CubeRoot's WCA, round and timer infrastructure",
+    "zh": "/comp-sim 比赛现场模拟的产品流程、交互与训练理念来源；CubeRoot 复用本站 WCA 数据、轮次与计时基础设施重新实现",
+    "en": "Product flow, interactions and training concept behind /comp-sim; reimplemented on CubeRoot's WCA, round and timer infrastructure",
     "long_en": "Your Next PR's Competition Simulator established the one-chance competition rehearsal: authentic WCA competitions, opponents and scrambles; randomized call-ups; inspection cues; manual result entry; official-style standings and progression. CubeRoot's implementation is a clean integration with its existing WCA data, round engine, identity, event, result-formatting and responsive UI components. Media remains an explicit local manifest until licensed audio and video files are supplied."
   }
 ]
