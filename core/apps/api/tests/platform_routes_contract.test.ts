@@ -232,7 +232,14 @@ describe('Platform route and security contract', () => {
   });
 
   it('keeps refunds and payouts signed, reversible, and explicitly reconcilable', () => {
-    const refund = routeBlock(commerceSource, 'platformCommerceRoutes', 'post', '/admin/orders/:id/refund');
+    const refundRoute = routeBlock(commerceSource, 'platformCommerceRoutes', 'post', '/admin/orders/:id/refund');
+    expect(refundRoute).toContain('await completePlatformFullRefund(db, actor, id, refundId, evidenceReferenceHash)');
+    expect(refundRoute).toContain('const evidenceReferenceHash = hashReference(evidenceReference)');
+    const helperStart = commerceSource.indexOf('export async function completePlatformFullRefund(');
+    const helperEnd = commerceSource.indexOf("\nplatformCommerceRoutes.post('/admin/orders/:id/refund'", helperStart);
+    expect(helperStart).toBeGreaterThanOrEqual(0);
+    expect(helperEnd).toBeGreaterThan(helperStart);
+    const refund = commerceSource.slice(helperStart, helperEnd);
     expect(refund).toContain("['paid', 'partially_fulfilled', 'fulfilled']");
     expect(refund).toContain("source.entry_type = 'grant'");
     expect(refund).toContain('reversal.reversal_of_ledger_id = source.id');
@@ -244,7 +251,6 @@ describe('Platform route and security contract', () => {
     expect(refund).toContain("SET status = 'failed', failure_code = 'refund_after_processing'");
     expect(refund).toContain('ORDER BY source.created_at DESC, source.id DESC FOR UPDATE OF source');
     expect(refund).toContain('cancelled_at = NOW()');
-    expect(refund).toContain('const evidenceReferenceHash = hashReference(evidenceReference)');
     expect(refund).toContain('const evidenceReason = `evidence_sha256:${evidenceReferenceHash}`');
     expect(refund).not.toContain('JSON.stringify({ evidenceReference })');
     expect(refund).not.toContain('JSON.stringify({ refundId, evidenceReference,');

@@ -1693,7 +1693,6 @@ CREATE INDEX idx_platform_fulfillment_ledger_item ON platform_fulfillment_ledger
 
 CREATE TABLE platform_event_registrations (
   CONSTRAINT competition_registration_single CHECK ((competition_session_id IS NULL) = (competition_project IS NULL) AND (competition_session_id IS NULL OR quantity=1)),
-  CONSTRAINT competition_registration_session_fk FOREIGN KEY(event_id,competition_session_id) REFERENCES platform_competition_sessions(event_id,id) ON DELETE RESTRICT,
   result_recorded_at TIMESTAMPTZ,
   result_recorded_by BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
   competition_attempts JSONB,
@@ -8534,6 +8533,9 @@ CREATE TABLE platform_competition_sessions (
   UNIQUE(event_id,id),
   CHECK (ends_at > starts_at)
 );
+-- Both tables must exist before the registration/session foreign key is added.
+ALTER TABLE platform_event_registrations ADD CONSTRAINT competition_registration_session_fk
+  FOREIGN KEY(event_id,competition_session_id) REFERENCES platform_competition_sessions(event_id,id) ON DELETE RESTRICT;
 CREATE UNIQUE INDEX idx_competition_registration_active ON platform_event_registrations(event_id,user_id,competition_project) WHERE competition_project IS NOT NULL AND status IN ('reserved','confirmed','attended');
 CREATE INDEX idx_competition_registration_session ON platform_event_registrations(competition_session_id,status);
 CREATE TABLE platform_competition_disputes (
