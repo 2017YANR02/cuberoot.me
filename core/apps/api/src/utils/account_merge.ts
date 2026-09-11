@@ -147,6 +147,7 @@ export async function mergeAccounts(sourceUserId: number, targetUserId: number):
             WHEN target.avatar_source = 'auto' AND ? THEN source.avatar_url
             ELSE target.avatar_url
           END,
+          forum_banned = target.forum_banned OR source.forum_banned,
           full_name = COALESCE(target.full_name, source.full_name),
           birth_date = COALESCE(target.birth_date, source.birth_date),
           gender = COALESCE(target.gender, source.gender),

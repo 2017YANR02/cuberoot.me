@@ -101,3 +101,5 @@ WCA 自学来源增量 `0185_wca_self_taught.sql` 允许老师关系的老师 ID
 ```bash
 psql "$DATABASE_URL" -c 'SELECT filename, applied_at FROM _schema_migrations ORDER BY filename;'
 ```
+
+`0230_forum_bans.sql` adds an account-level forum ban. Existing accounts default to unbanned; bans survive account merges. Existing forum content is retained.

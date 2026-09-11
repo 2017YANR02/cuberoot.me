@@ -15,7 +15,8 @@ import {
 } from '../utils/recon_helpers.js';
 import type { WcaUser } from '../utils/recon_helpers.js';
 import { notify, adminRecipients } from '../utils/notify.js';
-import { publicUserIdsForOwnerKeys } from '../utils/account.js';
+import { isForumReplyProfileComplete } from '@cuberoot/shared/account';
+import { publicUserIdsForOwnerKeys, getAccountBasicProfile, findUserByWcaId } from '../utils/account.js';
 import {
   FORUM_VIDEO_MAX_DURATION_MS,
   excerptFromMarkdown,
@@ -85,6 +86,37 @@ async function requirePostAuthor(c: Context): Promise<WcaUser> {
   if (!rows[0]?.display_name) throw new Error('Forum API author is not configured');
   return { wcaId, realWcaId: wcaId, name: rows[0].display_name, isAdmin: true };
 }
+
+async function forumProfileFor(user: WcaUser) {
+  const uid = user.uid ?? (await findUserByWcaId(user.realWcaId ?? user.wcaId))?.id;
+  return uid == null ? null : getAccountBasicProfile(uid);
+}
+
+async function forumWriteDenial(c: Context, user: WcaUser) {
+  return (await forumProfileFor(user))?.forumBanned
+    ? c.json({ error: 'FORUM_BANNED' }, 403) : null;
+}
+
+// Only administrators can change a ban; staff and merged account aliases are protected.
+forumRoutes.put('/forum/users/:id/ban', async (c) => {
+  noStore(c);
+  await requireAdminOrApiKey(c);
+  checkRateLimit(getIp(c));
+  const id = Number(c.req.param('id'));
+  const body = await c.req.json<{ banned?: unknown }>().catch(() => ({} as { banned?: unknown }));
+  if (!Number.isSafeInteger(id) || id <= 0 || typeof body.banned !== 'boolean') {
+    return c.json({ error: 'Invalid forum ban request' }, 400);
+  }
+  const staff = ADMIN_WCA_IDS.length ? `AND (wca_id IS NULL OR wca_id NOT IN (${ADMIN_WCA_IDS.map(() => '?').join(',')}))` : '';
+  const rows = await query<{ id: string; forum_banned: boolean }>(
+    `UPDATE app_users SET forum_banned = ? WHERE id = ? AND NOT is_admin
+       AND merged_into_user_id IS NULL ${staff}
+     RETURNING id, forum_banned`,
+    [body.banned, id, ...ADMIN_WCA_IDS],
+  );
+  if (!rows.length) return c.json({ error: 'Account unavailable or protected' }, 404);
+  return c.json({ ok: true, banned: rows[0].forum_banned });
+});
 
 /** 解析正整数参数,非法回落默认值并夹在 [min, max] */
 function posInt(raw: string | undefined, def: number, min: number, max: number): number {
@@ -304,6 +336,7 @@ interface ForumAuthorProfile {
   wcaId: string | null;
   userId: number | null;
   isAdmin: boolean;
+  forumBanned: boolean;
 }
 
 /** Build the canonical forum author card for both thread pages and activity feeds. */
@@ -325,17 +358,17 @@ async function authorProfilesFor(authorNames: Map<string, string>): Promise<Reco
 
   const wcaKeys = authorIds.filter((a) => !/^u\d+$/.test(a));
   const uidKeys = authorIds.filter((a) => /^u\d+$/.test(a));
-  const profile = new Map<string, { id: string; avatar_url: string | null; avatar_preset: string | null; created_at: Date; display_name: string; is_admin: boolean }>();
+  const profile = new Map<string, { id: string; avatar_url: string | null; avatar_preset: string | null; created_at: Date; display_name: string; is_admin: boolean; forum_banned: boolean }>();
   if (wcaKeys.length > 0) {
-    const rows = await query<{ id: string; wca_id: string; avatar_url: string | null; avatar_preset: string | null; created_at: Date; display_name: string; is_admin: boolean }>(
-      `SELECT id, wca_id, avatar_url, avatar_preset, created_at, display_name, is_admin FROM app_users WHERE wca_id IN (${wcaKeys.map(() => '?').join(',')})`,
+    const rows = await query<{ id: string; wca_id: string; avatar_url: string | null; avatar_preset: string | null; created_at: Date; display_name: string; is_admin: boolean; forum_banned: boolean }>(
+      `SELECT id, wca_id, avatar_url, avatar_preset, created_at, display_name, is_admin, forum_banned FROM app_users WHERE wca_id IN (${wcaKeys.map(() => '?').join(',')})`,
       wcaKeys,
     );
     for (const r of rows) profile.set(r.wca_id, r);
   }
   if (uidKeys.length > 0) {
-    const rows = await query<{ id: string; avatar_url: string | null; avatar_preset: string | null; created_at: Date; display_name: string; is_admin: boolean }>(
-      `SELECT id, avatar_url, avatar_preset, created_at, display_name, is_admin FROM app_users WHERE id IN (${uidKeys.map(() => '?').join(',')})`,
+    const rows = await query<{ id: string; avatar_url: string | null; avatar_preset: string | null; created_at: Date; display_name: string; is_admin: boolean; forum_banned: boolean }>(
+      `SELECT id, avatar_url, avatar_preset, created_at, display_name, is_admin, forum_banned FROM app_users WHERE id IN (${uidKeys.map(() => '?').join(',')})`,
       uidKeys.map((a) => Number(a.slice(1))),
     );
     for (const r of rows) profile.set(`u${r.id}`, r);
@@ -352,6 +385,7 @@ async function authorProfilesFor(authorNames: Map<string, string>): Promise<Reco
       wcaId: /^u\d+$/.test(authorId) ? null : authorId,
       userId: p ? Number(p.id) : null,
       isAdmin: p?.is_admin === true || ADMIN_WCA_IDS.includes(authorId),
+      forumBanned: p?.forum_banned === true,
     };
   }
   return authors;
@@ -362,6 +396,8 @@ async function authorProfilesFor(authorNames: Map<string, string>): Promise<Reco
 forumRoutes.post('/forum/video', async (c) => {
   noStore(c);
   const authUser = await requireAuth(c);
+  const denial = await forumWriteDenial(c, authUser);
+  if (denial) return denial;
   checkRateLimit(getIp(c), { bucket: 'forum-video-upload-ip', max: 40 });
   checkRateLimit(authUser.wcaId, { bucket: 'forum-video-upload-user', max: 25 });
   await cleanupExpiredForumVideos();
@@ -429,6 +465,8 @@ forumRoutes.post('/forum/video', async (c) => {
 forumRoutes.delete('/forum/video/:id', async (c) => {
   noStore(c);
   const authUser = await requireAuth(c);
+  const denial = await forumWriteDenial(c, authUser);
+  if (denial) return denial;
   const id = Number(c.req.param('id'));
   if (!Number.isSafeInteger(id) || id <= 0) return c.json({ error: 'Not found' }, 404);
   const removed = await query<{ storage_key: string }>(
@@ -676,6 +714,8 @@ forumRoutes.post('/forum/threads', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
+  const denial = await forumWriteDenial(c, authUser);
+  if (denial) return denial;
   const body = await c.req.json<{ forumSlug?: string; title?: string; content?: string; videoId?: number }>();
   const title = (body.title ?? '').trim();
   const content = (body.content ?? '').trim();
@@ -753,6 +793,11 @@ forumRoutes.post('/forum/posts', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requirePostAuthor(c);
+  const profile = await forumProfileFor(authUser);
+  if (profile?.forumBanned) return c.json({ error: 'FORUM_BANNED' }, 403);
+  if (!profile?.forumProfileExempt && !isForumReplyProfileComplete(profile, new Date().toISOString().slice(0, 10))) {
+    return c.json({ error: 'FORUM_PROFILE_INCOMPLETE', code: 'FORUM_PROFILE_INCOMPLETE' }, 403);
+  }
   const body = await c.req.json<{ threadId?: number; content?: string }>();
   const threadId = Number(body.threadId);
   if (!Number.isInteger(threadId) || threadId <= 0) return c.json({ error: 'threadId is required' }, 400);
@@ -825,6 +870,8 @@ forumRoutes.patch('/forum/posts/:id', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
+  const denial = await forumWriteDenial(c, authUser);
+  if (denial) return denial;
   const id = Number(c.req.param('id'));
   if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'Invalid post id' }, 400);
   const body = await c.req.json<{ content?: string }>();
@@ -854,6 +901,8 @@ forumRoutes.delete('/forum/posts/:id', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
+  const denial = await forumWriteDenial(c, authUser);
+  if (denial) return denial;
   const id = Number(c.req.param('id'));
   if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'Invalid post id' }, 400);
 
@@ -903,6 +952,8 @@ forumRoutes.delete('/forum/threads/:id', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
+  const denial = await forumWriteDenial(c, authUser);
+  if (denial) return denial;
   const id = Number(c.req.param('id'));
   if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'Invalid thread id' }, 400);
 
@@ -924,6 +975,8 @@ forumRoutes.patch('/forum/threads/:id', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
+  const denial = await forumWriteDenial(c, authUser);
+  if (denial) return denial;
   const id = Number(c.req.param('id'));
   if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'Invalid thread id' }, 400);
   const body = await c.req.json<{ title?: string; isPinned?: boolean; isLocked?: boolean }>();
@@ -963,6 +1016,8 @@ forumRoutes.post('/forum/posts/:id/react', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
+  const denial = await forumWriteDenial(c, authUser);
+  if (denial) return denial;
   const id = Number(c.req.param('id'));
   if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'Invalid post id' }, 400);
   const body = await c.req.json<{ kind?: string | null }>();
@@ -1149,6 +1204,8 @@ forumRoutes.post('/forum/posts/:id/report', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
+  const denial = await forumWriteDenial(c, authUser);
+  if (denial) return denial;
   const id = Number(c.req.param('id'));
   if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'Invalid post id' }, 400);
   const body = await c.req.json<{ reason?: string }>();

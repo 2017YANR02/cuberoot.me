@@ -54,6 +54,7 @@ const THREAD: ForumFeedThread = {
     wcaId: null,
     userId: 1,
     isAdmin: false,
+    forumBanned: false,
   },
 };
 

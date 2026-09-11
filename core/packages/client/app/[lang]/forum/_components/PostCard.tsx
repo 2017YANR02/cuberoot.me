@@ -19,7 +19,7 @@ import { UserIdLabel } from '@/components/UserIdLabel';
 
 export function PostCard({
   post, author, myKind, permalink, canEdit, canDelete, canQuote, canReport,
-  onQuote, onEdit, onDelete, onReact, onReport, onModerate, bodyOverride,
+  onQuote, onEdit, onDelete, onReact, onReport, onModerate, onToggleBan, bodyOverride,
 }: {
   post: ForumPost;
   author: PostAuthor | undefined;
@@ -38,6 +38,7 @@ export function PostCard({
   onReport: (post: ForumPost) => void;
   /** 管理员对待审楼层就地过审/驳回;不传 = 非管理员,不显按钮。 */
   onModerate?: (post: ForumPost, action: 'approve' | 'reject') => void;
+  onToggleBan?: (userId: number, banned: boolean) => void;
   /** Replaces body + footer while keeping the post frame (inline edit). */
   bodyOverride?: React.ReactNode;
 }) {
@@ -95,6 +96,14 @@ export function PostCard({
             <span className="forum-post-author-name">{name}</span>
           )}
           <UserIdLabel userId={author?.userId} />
+          {onToggleBan && author?.userId && !author.isAdmin && (
+            <button type="button" className="forum-post-action is-danger"
+              onClick={() => onToggleBan(author.userId!, !author.forumBanned)}>
+              {author.forumBanned
+                ? tr({ zh: '解除拉黑', en: 'Unban user' })
+                : tr({ zh: '拉黑', en: 'Ban user' })}
+            </button>
+          )}
           {author?.isAdmin && (
             <span className="forum-staff-badge">
               <ShieldCheck size={11} aria-hidden="true" />

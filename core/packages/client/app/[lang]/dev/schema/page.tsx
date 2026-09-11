@@ -756,6 +756,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 227, slug: 'competition_device_reports', desc: { zh: '智能魔方采集场次绑定服务器已下发打乱，动作和计时作为监督确认的辅助证据。', en: 'Bind smart cube runs to server-issued scrambles and retain moves and timings as supporting evidence for supervision.' } },
   { n: 228, slug: 'platform_provider_refunds', desc: { zh: '记录退款批准、固定渠道请求号及异步对账状态。', en: 'Persist refund approval, stable provider request numbers and asynchronous reconciliation.' } },
   { n: 229, slug: 'organizer_applications', desc: { zh: '主办方申请关联已有组织或审核后创建组织，明确平台批准后方可办赛。', en: 'Organizer applications reuse existing organizations or create an organization on approval; competition hosting requires explicit platform approval.' } },
+  { n: 230, slug: 'forum_bans', desc: { zh: '管理员在帖子页拉黑或解除拉黑账号，保留历史内容。', en: 'Let administrators ban or unban forum accounts from a post while retaining existing content.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

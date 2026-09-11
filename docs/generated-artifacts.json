@@ -429,7 +429,7 @@
       "owner": "core/packages/client/scripts/build-account-locations.mjs",
       "workingDirectory": "core/packages/client",
       "command": "pnpm build:account-locations",
-      "outputs": ["core/packages/client/public/account-locations/*.json"],
+      "outputs": ["core/packages/client/public/account-locations/*.json", "core/packages/shared/src/data/account_location_requirements.ts"],
       "verification": ["pnpm check:account-locations"],
       "driftPolicy": "Regenerate the compact per-country files through the pinned development dependency; never hand-edit them."
     },

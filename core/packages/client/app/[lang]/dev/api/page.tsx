@@ -731,6 +731,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'drive', m: 'DELETE', p: '/v1/drive/members/:userId', g: 'admin', c: 'no-store', zh: '撤销站内账号的网盘访问权', en: 'Revoke Drive access from a site account' },
 
   // ---- forum ----
+  { d: 'forum', m: 'PUT', p: '/v1/forum/users/:id/ban', g: 'admin', zh: '拉黑或解除拉黑论坛账号(历史内容保留)', en: 'Ban or unban a forum account (existing content retained)' },
   { d: 'forum', m: 'GET', p: '/v1/forum/index', g: 'public', zh: '论坛首页:分类 → 子版 + 全站统计', en: 'Forum index: categories, boards, site stats' },
   { d: 'forum', m: 'GET', p: '/v1/forum/f/:slug', g: 'public', zh: '子版主题列表(置顶单列,分页)', en: 'Board thread list (pinned split, paged)' },
   { d: 'forum', m: 'GET', p: '/v1/forum/t/:id', g: 'public', zh: '主题帖子分页(登录附本人反应)', en: 'Thread posts (my reactions when signed in)' },
@@ -741,7 +742,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'forum', m: 'POST', p: '/v1/forum/video', g: 'login', zh: '上传论坛短视频(原始文件流，服务端校验格式、大小与时长)', en: 'Upload forum short video (raw stream with server-side format, size, and duration validation)' },
   { d: 'forum', m: 'DELETE', p: '/v1/forum/video/:id', g: 'login', zh: '删除本人尚未发布的论坛视频', en: 'Delete one of your unattached forum-video uploads' },
   { d: 'forum', m: 'GET', p: '/v1/forum/video/:token', g: 'public', zh: '播放已绑定且可见的论坛视频，支持 Range', en: 'Stream an attached, visible forum video with Range support' },
-  { d: 'forum', m: 'POST', p: '/v1/forum/posts', g: 'login', zh: '回帖(锁帖仅管理员)', en: 'Reply (locked threads admin-only)' },
+  { d: 'forum', m: 'POST', p: '/v1/forum/posts', g: 'login', zh: '回帖(须完整个人资料，锁帖仅管理员)', en: 'Reply (complete profile required; locked threads admin-only)' },
   { d: 'forum', m: 'PATCH', p: '/v1/forum/posts/:id', g: 'login', zh: '编辑自己的帖子', en: 'Edit own post' },
   { d: 'forum', m: 'DELETE', p: '/v1/forum/posts/:id', g: 'login', zh: '软删帖子(首帖禁单删)', en: 'Soft-delete post (not the first post)' },
   { d: 'forum', m: 'PATCH', p: '/v1/forum/threads/:id', g: 'login', zh: '改标题;置顶 / 锁帖仅管理员', en: 'Edit title; pin/lock admin-only' },

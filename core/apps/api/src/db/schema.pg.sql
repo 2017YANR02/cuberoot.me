@@ -414,6 +414,7 @@ CREATE TABLE app_users (
   avatar_preset       VARCHAR(32),
   wca_id              VARCHAR(20),
   is_admin            BOOLEAN NOT NULL DEFAULT FALSE,
+  forum_banned        BOOLEAN NOT NULL DEFAULT FALSE,
   full_name           VARCHAR(50),
   birth_date          DATE CHECK (birth_date IS NULL OR birth_date >= DATE '1900-01-01'),
   gender              VARCHAR(16)
