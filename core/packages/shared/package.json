@@ -12,6 +12,7 @@
       "react-dom": "react-dom"
     },
     "runtime": {
+      "./build-account-location-requirements": "node",
       ".": "react-dom",
       "./nemesizer-format": "runtime-neutral",
       "./wca-events": "runtime-neutral",
@@ -99,6 +100,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
+    "./build-account-location-requirements": "./scripts/account-location-artifact.mjs",
     ".": "./src/index.ts",
     "./nemesizer-format": {
       "node": "./dist/nemesizer_format.js",
