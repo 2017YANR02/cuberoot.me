@@ -9,6 +9,10 @@
   --faint-foreground: #9b9690;
   --popover: #ffffff;
   --subtle: #eeebe7;
+  /* Shared timer/reconstruction surfaces use the same host palette. */
+  --card: var(--popover);
+  --muted: var(--subtle);
+  --signal-info: #4a9eff; /* Same semantic information color as the Web host. */
   --accent: #bd5d3d;
   --accent-foreground: #ffffff;
   --accent-soft: rgb(189 93 61 / 13%);
@@ -136,6 +140,12 @@ button {
 .app-shell--history,
 .app-shell--settings {
   grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+/* Reserve a real row for device controls: long timer content scrolls above
+ * it instead of pushing Connect behind the navigation / home indicator. */
+.app-shell--device-footer {
+  grid-template-rows: minmax(0, 1fr) auto auto;
 }
 
 .app-titlebar {
@@ -394,6 +404,19 @@ button {
   height: 100%;
 }
 
+/* The same live renderer as Web, inside the existing host-sized preview slot. */
+.mobile-live-cube {
+  --cube-h: 114px;
+  position: relative;
+  justify-content: center;
+}
+
+.mobile-live-cube .live-cube-calibrate {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+}
+
 .mobile-timer-stage > .timing-surface {
   /* Never let flex sizing clip the readout when source controls leave less
      room than the digits + scramble + preview intrinsically need. */
@@ -405,9 +428,8 @@ button {
   outline: none;
 }
 
-/* Mobile keeps the Web DOM order (surface → stats → hints → devices), but
- * places all four in normal flow so the narrow screen never stacks controls
- * on top of one another. The shared chrome defaults remain absolute for Web. */
+/* Content stays in scrollable normal flow; device controls have their own
+ * app-shell row. The shared chrome defaults remain absolute for Web. */
 .mobile-timer-stage > .shell-stat-rail {
   position: static;
   flex: 0 0 auto;
@@ -415,12 +437,25 @@ button {
   margin-inline-start: max(12px, env(safe-area-inset-left));
 }
 
-.mobile-timer-stage > .shell-device-actions {
+.app-shell--device-footer > .shell-device-actions {
   position: static;
-  flex: 0 0 auto;
-  align-self: center;
+  min-width: 0;
+  max-width: calc(100% - 24px);
+  justify-self: center;
   margin: 2px 0 10px;
   transform: none;
+}
+
+.app-shell--device-footer > .shell-device-actions .shell-device-connect {
+  min-width: 0;
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.app-shell--device-footer > .shell-device-actions .shell-device-connect span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .mobile-timer-stage .timing-surface-core {
@@ -909,7 +944,7 @@ button {
 .app-shell--timer-fullscreen .timer-view > .mobile-scramble-source-config,
 .app-shell--timer-fullscreen .mobile-timer-stage > .shell-stat-rail,
 .app-shell--timer-fullscreen .mobile-timer-stage > .mobile-solution-hints,
-.app-shell--timer-fullscreen .mobile-timer-stage > .shell-device-actions,
+.app-shell--timer-fullscreen > .shell-device-actions,
 .app-shell--timer-fullscreen > .primary-nav {
   display: none;
 }
@@ -996,6 +1031,7 @@ button {
 .app-shell--compact-viewport .mobile-cube-preview {
   width: 120px;
   height: 90px;
+  --cube-h: 90px;
 }
 
 .battle-mode {

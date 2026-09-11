@@ -8,7 +8,7 @@
 
 > 状态：执行中
 >
-> 更新日期：2026-09-01
+> 更新日期：2026-09-11
 >
 > 目标：以最低长期维护成本，把同一个 CubeRoot 产品发布到 Android、iOS、HarmonyOS NEXT、Windows 和 macOS，并逐步覆盖对应商店和安装渠道。
 >
@@ -27,7 +27,8 @@
 - [ ] 确定公开开发者名称、地址和联系电话。（需要所有者确认公开资料）
 - [ ] 注册并完成 Google Play Console 组织账号验证。（需要所有者操作账号、付款和身份验证）
 - [x] Google Play 组织核验所需的 D-U-N-S 已由邓白氏门户核验通过。（所有者提供门户结果）
-- [ ] 核对 Apple Developer Program 个人会员已激活，并在 Xcode 选择付费 Team。（个人独资企业当前走 Apple 个人路线，不把 Google 的 D-U-N-S 当作 Apple 组织验证）
+- [x] 核对 Apple Developer Program 个人会员有效期、已接受协议与 Xcode Team。（2026-09-11 门户显示个人 Team、续费日期 2027-09-11，Program License Agreement 于 9 月 10 日接受、Developer Agreement 于 9 月 3 日接受，所见页面无待处理提示；未出现字面 `Active`，不虚构该标签。Xcode 开发签名已通过；不包含 App Store Connect Paid Apps Agreement/税务/收款验收）
+- [ ] 为 App 内会员购买完成 Paid Apps Agreement、税务、收款与商品配置。（2026-09-11 所有者明确要求会员内购；商品、周期和价格待确认，不再按“首版无购买入口”规划）
 - [ ] 建立 Android 真机和测试者名单。（组织账号不预设个人账号的 12 人/14 天门槛；质量测试仍建议 15 到 20 人）
 - [ ] 建立发布账号 2FA、恢复方式、密码管理和签名密钥备份规则。（需要账号所有者参与）
 - [x] 完成当前构建的数据与 SDK 清单：本地计时数据、可选账号、网络状态、Browser/Network/Haptics/Secure Storage/BLE；无广告、分析或用户画像 SDK。
@@ -60,6 +61,17 @@
 - 首个 BLE 验证组合已跑通：上述 Reno7 Pro + GAN 16 UI。Android 13“附近设备”授权、扫描、选择、GATT 连接、FFF5 写入、FFF6 notify、GAN v4 解密和真实 `L` / `L'` 转动解析均有 adb 证据。
 
 ### 阶段 2：共享核心边界
+
+2026-09-11 智能魔方与登录增量（本地证据，不代表发布完成）：
+
+- Web 的 `LiveCubeState`、`SimCubeView`、完整 `ReconstructReport`、`SolveRecap`、时间线与动作谱已提取到既有 `timer-ui`；几何/动画移入既有 `puzzle-render-core`，纯复盘/姿态/定锚逻辑移入 `shared`。Web 保留薄适配，App 消费相同公开入口，没有第二套 renderer 或复盘算法。
+- App 已接入实时定锚、姿态记录、还原停止事件、自动展开复盘、历史完整报告、反馈与回放分享；智能魔方四组设置与 Web 共用默认值、持久化和控件。GAN 停止转动后主动状态校验用于恢复丢失的末帧；不能把恢复时的到达时间称为原始设备计时精度。
+- 真实 App 组件集成覆盖两次连续 GAN 还原、首末手/姿态落盘、重复停止去重、自动复盘、完整详情和关闭后重新打开。四条 canonical 复盘真值全量通过；生产 Mobile bundle 经浏览器导入同四条样本，逐条渲染 WebGL、动作谱与阶段分析，390px 文档宽度均为 390，无页面异常。样本只导入隔离浏览器，不触碰用户手机数据。
+- 仍未完成：其他品牌 native driver、完整连接诊断/重置 UI、自动重连、多人独立 BLE、权限/后台/断连压力矩阵及五平台真实交互。iPhone 12 Pro Max 的旧版异常计时已人工停止并保留记录；新版本真实转动、还原停表与姿态仍待所有者实拧验收，不能打勾为“智能魔方整体完成”。
+- 登录继续复用网站唯一 `LoginForm`/`AccountPanel`：请求有时限、失败可重试、等待可取消，账号绑定加载失败不会伪装为空列表；App 旧票据在登出、换号和卸载后失效。Apple 门户配置与本地协议/安全测试不等于生产 Apple 登录 E2E；IAP 与上架门槛仍保持未完成。
+- 本轮最终本地验证：App 41 files / 295 tests、Mobile 7 files / 20 tests；Apple API 4 files / 44 tests、登录/bridge 定向 87 tests（随后新增真实 502 双语回归）；相关包类型检查、架构守卫、凭据扫描和全部四条复盘真值通过。登录真实组件另有隔离 API 的 32 格视觉验证。WebGL 故障/重试、旧连接清理误杀新连接、详情关闭事件参数和长读数布局循环均有独立审查及回归，不把这些测试计作真实 Apple 授权。
+- Xcode 开发签名构建与 `codesign --verify --deep --strict` 通过；Android `assembleDebug` 304 tasks 成功，最终 APK SHA-256 `d663e21fa9840dc17d6379054f89f0e8b534c999ef03b04304f1e856bb477c27`，本次未安装到 Android 设备。iPhone 的现有异常记录已实测打开三维回放/动作流并播放，仍保留原始 `48:13.98`，没有伪造新实体魔方成绩或修改该记录。
+- 最终前端再次 build + 双平台 sync、iOS/Android 编译后覆盖安装到 iPhone 12 Pro Max。XCTest 截图/界面树确认 428px 屏内 Timer 宽 428，连接按钮 y=781～825、44px 高，导航从 y=836 开始，不再遮挡；旧成绩仍为 1 条。完整统计可滚动的 390/428×926、844×390 浏览器布局矩阵通过，真实手机的大字/旋转/VoiceOver 仍待验。最终 `dist/index.html` 与签名 App 内文件 SHA-256 均为 `df57768fdb5f528d0ed4cf2ccd41eb3b133aae0aa731f0ded90bec85e52b5e0a`。
 
 - [x] 完成计时器、打乱、统计、存储、训练、BLE、API 和设置的依赖盘点。
 - [x] 提取计时记录模型、校验、统计和序列化，网站与 App 使用同一实现。
@@ -229,8 +241,8 @@
 
 ### 阶段 9：iOS 移植与 TestFlight
 
-- [x] 已准备 Mac、Xcode 26.6 正式版和 iPhone 真机。（本机实测 Xcode 26.6 build 17F113、iOS SDK 26.5；设备由所有者确认，尚未作为真机构建/签名证据）
-- [ ] 确认 Apple Developer Program 付费个人会员已激活，且 Xcode 显示可用于发布的付费 Team。
+- [x] 已准备 Mac、Xcode 26.6 正式版和 iPhone 真机。（2026-09-11：Xcode 26.6 build 17F113；iPhone 15 Pro Max / iOS 26.6.1 已实际连接、安装并运行 App）
+- [x] 确认 Apple Developer Program 个人会员有效期、已接受开发者协议与 Xcode Team；证据与边界见阶段 0。App Store Connect 收款协议和付费发布条件仍独立待验。
 - [ ] iOS 工程、签名、Core Bluetooth、Keychain、Universal Links 和分享完成。
 - [x] 已在同一个 React + Vite + Capacitor 8 App 中加入并维护 iOS 工程；`@capacitor/ios` 与 Core/CLI/Android 同为 `8.5.0`，App ID 为 `me.cuberoot.app`，未另写 iOS 业务 UI。
 - [x] 已完成 mobile 测试、typecheck、production build、`cap sync ios`、无签名 iOS Simulator 编译、安装和启动验证；iOS 26.5 的 iPhone 模拟器可见并运行 CubeRoot。
@@ -239,11 +251,17 @@
 - [x] iOS 模拟器已验证真实比赛打乱在线获取、共享项目图标、共享七段计时界面和共享展开魔方图。
 - [x] 真实比赛打乱采用 50 条、固定抓取时间起算 7 天的有界缓存；缓存过期、去重以及错误项目/记号过滤由移动端测试覆盖，不把 130 万条比赛打乱打进安装包。已映射项目冷离线无缓存时明确失败，不用随机题冒充比赛真题；无映射项目才按网站契约使用同项目本地 provider。
 - [ ] 在 iOS 模拟器实际执行一次无缓存断网冷启动并保存取证。（当前只有在线模拟器画面和自动化测试证据）
-- [x] Xcode 工程当前保持 Automatic Signing，Debug/Release Bundle ID 均为 `me.cuberoot.app`；付费 Team 尚未选择，不能作为签名成功证据。
-- [ ] iOS GAN v4 transport 已能在原生 picker 返回 UUID 后，通过 manufacturer advertisement 提取协议所需 MAC，并有握手单测；仍需 Apple 账号恢复后用 iPhone + GAN 16 UI 验证扫描、连接、解密、转动、自动起停与断线恢复。
+- [x] Xcode 工程保持 Automatic Signing，Debug/Release Bundle ID 均为 `me.cuberoot.app`；2026-09-11 已选择 Team，签名构建、`codesign` 校验、iPhone 覆盖安装与启动通过。此处仅证明开发签名，不证明 App Store 分发签名。
+- [x] 当前共享前端重新 build + sync 后已覆盖安装到 iPhone 15 Pro Max；自动截图证实“难度”在顶栏、“最优打乱”在设置 → 打乱，原有 1 条成绩保留。
+- [ ] iOS GAN v4 的完整实体设备验收。2026-09-11 所有者已确认 iPhone 12 Pro Max + GAN 连接，旧版仍出现无实时立体图、还原不停表；新代码已接共享实况图/复盘并修复停止状态 edge/补漏末帧，但必须用新包实拧确认扫描、连接、解密、首末手、姿态、自动起停与断线恢复，不能沿用 Android 成功记录或纯测试打勾。
 - [x] 同一移动端 Web 构建已重新同步 Android，并在本机用 JDK 21 完成既有 `assembleRelease`/`bundleRelease` 与本轮 `assembleDebug`；当前 Debug APK 为 8,788,813 bytes（SHA-256 `04553497db3a00d8b2d702d9ade9566212e263b0f9b2030cb2b4b9c6857f0fb9`），已重装到 OPPO Reno7 Pro 5G；真实 3×3 打乱、Capacitor Clipboard、Tools 断网恢复、断网时系统返回回计时和完整 Account 首屏均通过真机回归。
 - [ ] iOS 权限、后台、系统中断、安全区、动态字体和 VoiceOver 验证通过。
 - [ ] 网站唯一 `LoginForm`/后端提供满足 Apple 4.8 的等价登录（优先 Sign in with Apple），且完成全 provider、会话衔接、TestFlight 和 App Store 审核取证。（当前 P0 `BLOCKED`）
+- [x] Apple 门户已配置 Sign in with Apple primary App ID `me.cuberoot.app` 与 Services ID `me.cuberoot.web`，并取得仅本机保存的有效 SIWA 私钥。（2026-09-11，配置/密钥格式证据；不代表生产配置、令牌交换或登录 E2E）
+- [ ] Release Archive、Validate App 与最终 Xcode Privacy Report 通过。
+- [ ] App Store Connect 应用条目、构建上传与 Apple 处理完成。
+- [ ] TestFlight 内部构建在 iPhone 安装、启动并完成首发核心回归。
+- [ ] Apple IAP 复用网站会员、订单和服务端权益，完成购买、恢复、续期/到期、退款/撤销及跨端会话验收；全球发行包含中国大陆，备案和地区材料须完成后才能开放对应地区。
 - [ ] App Store 审核通过，且业务逻辑未复制为 iOS 专属实现。
 
 当前 iOS 证据与阻塞：
@@ -252,7 +270,10 @@
 - iOS 原生工程只承载 Capacitor 壳，计时 UI、项目图标和魔方展开图分别复用 `@cuberoot/timer-ui`、`@cuberoot/event-icon` 和 `@cuberoot/visualcube`；架构边界守卫与相关定向测试通过。
 - 小程序的计时页已确认只是指向网站 `/zh/timer` 的 WebView；移动 App 以该真实网站界面为产品事实源，但不跨 app 导入小程序源码。计时器状态正按 `docs/mobile-timer-parity-tracker.md` 与零遗漏审计迁到 shared/timer-ui；迁移未完成，未接真实行为的控件不能用占位、外跳或隐藏冒充完成。当前仍是 `ACTIVE — NOT COMPLETE`。
 - Android/iOS 原生安全会话交接共用一个 React/Capacitor 客户端和网站唯一 `LoginForm`；服务端使用 90 秒单次 ticket、PKCE S256 与原子核销，原生会话进入 Keychain/Keystore 保护的安全存储。底栏 Account 是未改写的网站 `/account` surface并显示全部当前 provider；源码已把其所有登录入口交给 Browser，并用另一张 90 秒 web ticket 回灌 iframe，也同步 iframe/App logout。协议、错误和账号响应继续复用 shared 契约，不建第二套账号系统；生产部署、真实 OAuth 回跳、异常恢复、绑定/解绑、退出和注销仍需双平台端到端验收。
-- Apple Developer 账号当前登录异常，所有者计划联系 Apple；因此会员 Active、付费 Team、真机签名、Archive 和 TestFlight 均保持未勾选。
+- 2026-09-11：所有者已重新登录并在 Xcode 选中 Team；使用现有 `cap:sync:ios`（含 production build）后执行 `cap run ios --no-sync`，开发签名构建、安装和启动成功。`codesign --verify` 通过，原生包的 `public/index.html` 与 Vite `dist/index.html` SHA-256 一致；不再把先前账号登录异常写成当前已确认阻塞。
+- 本轮重打包前，`@cuberoot/app-ui` 37 files / 274 tests、`@cuberoot/mobile` 7 files / 20 tests 及两包 typecheck 通过。Appium/XCUITest 真实 iPhone 截图确认上述布局与旧成绩保留；这是局部 UI/升级数据证据，不替代完整计时、BLE、登录、隐私或五端验收。自动化入口见 [mobile-ios-automation.md](./mobile-ios-automation.md)。
+- 2026-09-11 门户显示个人 Team `R25HL7AXXK`、续费日期 `2027-09-11`，两份开发者协议的接受日期如阶段 0 所记。早先 Keys 空且 SIWA key 因没有可用 identifier 禁用的阻塞已解除：所有者注册并配置 primary App ID `me.cuberoot.app`，Services ID `me.cuberoot.web` 已关联它，域名为 `cuberoot.me`、`www.cuberoot.me`、`api.cuberoot.me`，return URL 为 `https://api.cuberoot.me/v1/auth/apple/callback`；所有者 Save 后回到列表。SIWA `.p8` 已生成并下载，`openssl pkey -check -noout` 返回 `Key valid`，本机权限为 `600`；未输出内容、未入 Git，文档不保存私钥路径。生产 secret 配置、Apple 实际令牌交换和真实登录/注销 E2E 仍待验，不能以“已下载 key”关闭发布门槛。
+- 当前剩余门槛是 iOS BLE 故障验收、Apple 登录与账号删除 E2E、Apple IAP/收款协议/商品及购买生命周期、完整真机矩阵、Release archive/privacy report、全球（含中国大陆）地区材料、上传与 TestFlight。会员年费、有效期和开发签名成功不能倒推这些步骤已完成；具体准备与现有会员复用边界见 `docs/mobile-store-submission.md` 第 9 节。
 
 ### 阶段 10：全球发布和长期维护
 
@@ -592,11 +613,7 @@ CubeRoot 已有大量核心代码和后端，自研的现金成本较低，但�
 
 数字功能、订阅、会员和内容购买会触发 Apple/Google 的支付政策、佣金、税务和地区差异。2026 年各地区支付规则仍在变化，不能先假定网站付款链接一定允许直接放进 App。
 
-第一版最省心做法：
-
-- 不在 App 内新增购买入口。
-- 允许已有账号登录并使用其合法权益前，逐条核对对应商店政策。
-- 真正准备做移动端付费时单独设计商品、恢复购买、退款、家庭共享、服务端收据校验和地区规则。
+2026-09-11 所有者已确认 App 内提供会员购买，全球发行包含中国大陆；原“首版不放购买入口”建议已失效。实施必须复用网站同一会员和权益，新增 StoreKit 支付 adapter、服务端交易验证、恢复、退款/撤销与地区规则，不另建 Apple 会员。商品类型、周期、SKU、价格、既有网站权益叠加和家庭共享由所有者确认；详细盘点见 `docs/mobile-store-submission.md` 第 9.4 节。
 
 ## 9. 审核与总时间
 
@@ -665,7 +682,7 @@ Apple 公布的数据是 90% 的提交在 24 小时内完成审核，但这不�
 - Google Play 不能当作中国大陆 Android 的完整分发渠道。
 - 中国大陆 Android 往往需要多个本地商店、不同签名/资料/SDK、备案和持续适配，是独立项目，不符合“最低维护成本”。
 
-建议：第一阶段先覆盖全球官方商店可直接支持的地区；等中国大陆 Android 用户量和需求有证据后，再单独立项。Apple 中国大陆是否开启，在备案和类别确认后决定。
+2026-09-11 所有者已确认全球发行目标包含 Apple 中国大陆；须按实际类别完成对应 App 备案/材料，不能把网站备案直接当作 App 备案。材料未齐时不得自行宣称大陆可上架，也不擅自永久排除该地区。中国大陆 Android 多商店仍是独立渠道工作，不因 iOS 地区选择自动完成。
 
 ### 10.4 欧盟和其他地区材料
 
@@ -1115,9 +1132,9 @@ CubeRoot 应以这些证据证明不是简单套壳：
 | 业务逻辑 | 共享 TypeScript 核心 | 不复制三套 |
 | 内容更新 | API/数据驱动 | 保持 |
 | 代码更新 | 商店构建和审核 | 保持 |
-| 首发付费 | 免费，无 App 内购买入口 | 支付专项完成后再变 |
+| 首发付费 | App 内会员购买已纳入目标；复用网站权益，Apple IAP 未接通 | 商品类型、周期、SKU、价格与商店配置由所有者确认 |
 | 首发语言 | 英文 + 简体中文 | 有用户和支持能力后增加 |
-| 中国大陆 Android | 后置独立项目 | 有明确用户量和合规预算后启动 |
+| 中国大陆 | 全球发行目标明确包含 Apple 中国大陆；Android 多商店独立记账 | 按实际 App 备案、类别与渠道材料开放，不以网站备案替代 |
 | 发布节奏 | staged rollout + 月度版本 | 严重故障走紧急版 |
 
 ## 21. 官方资料索引

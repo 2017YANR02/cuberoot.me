@@ -9,7 +9,7 @@ export default function PrivacyPage() {
   return (
     <main className="privacy-page">
       <h1>{t('CubeRoot 用户协议与隐私政策', 'CubeRoot User Agreement and Privacy Policy')}</h1>
-      <p className="privacy-updated">{t('生效日期:2026-09-01', 'Effective date: September 1, 2026')}</p>
+      <p className="privacy-updated">{t('生效日期:2026-09-11', 'Effective date: September 11, 2026')}</p>
       <p>
         {t(
           '本政策适用于 CubeRoot 官方 Android、iOS App、微信小程序与抖音小程序。App 的核心计时功能可离线且无需登录使用;App 与小程序登录均由你主动选择。',
@@ -44,8 +44,8 @@ export default function PrivacyPage() {
         </li>
         <li>
           {t(
-            '连接期间,App 在设备本地读取并处理魔方名称、蓝牙地址、转动和状态,用于协议解密、显示打乱进度和自动计时。扫描列表、蓝牙地址和实时魔方数据不会上传到 CubeRoot 服务器,也不会写入 App 数据库;断开连接或关闭 App 后会从运行内存清除。',
-            'While connected, the app processes the cube name, Bluetooth address, turns, and state locally on your device for protocol decryption, scramble progress, and automatic timing. Scan results, Bluetooth addresses, and live cube data are not uploaded to CubeRoot servers or written to the app database; they are cleared from runtime memory after disconnection or app exit.',
+            '连接期间,App 在设备本地读取并处理魔方名称、蓝牙地址、转动和状态,用于协议解密、显示打乱进度和自动计时。扫描列表与连接地址不会自动上传或写入成绩库,断开连接或关闭 App 后从运行内存清除。成绩会在本机保存转动记录、设备型号和名称;开启“记录姿态”时也保存该次还原的姿态轨迹,用于复盘。设备名称可能含设备标识。你可以在设置中关闭姿态记录,也可以删除对应成绩。',
+            'While connected, the app processes the cube name, Bluetooth address, turns, and state locally for protocol decryption, scramble progress, and automatic timing. Scan results and connection addresses are not automatically uploaded or written to the solve database and are cleared from runtime memory after disconnection or app exit. Solves retain turns, device model and name locally; when Record orientation is enabled, they also retain that solve’s orientation track for replay. Device names may contain device identifiers. You can turn off orientation recording in Settings or delete the corresponding solve.',
           )}
         </li>
       </ul>
@@ -54,8 +54,14 @@ export default function PrivacyPage() {
       <ul>
         <li>
           {t(
-            '只有在你点击 App 登录后,App 才会在系统浏览器打开 CubeRoot 网站的统一邮箱或手机号登录页。浏览器返回短时、单次使用且与本次 App 请求绑定的换票;长期会话凭证不会放入网址。',
-            'Only after you tap sign in does the app open CubeRoot’s shared email or phone sign-in page in the system browser. The browser returns a short-lived, single-use handoff ticket bound to that app request; the long-lived session token is never placed in the URL.',
+            '当 Apple 登录已开放且你主动选择登录或绑定时,服务器会验证 Apple 返回的凭据,保存 Apple 账号标识和加密的授权令牌,用于维护绑定和撤销授权。此流程不保存 Apple 返回的姓名或邮箱,也不按邮箱自动合并已有账号。解除 Apple 绑定或注销该账号时,需先完成 Apple 授权撤销;失败时会保留必要记录供你重试。',
+            'When Apple sign-in is available and you choose to sign in or link it, the server verifies Apple’s credentials and stores the Apple account identifier and encrypted authorization token to maintain the link and revoke authorization. This flow does not store the name or email returned by Apple or automatically merge accounts by email. Unlinking Apple or deleting that account requires successful Apple authorization revocation first; if it fails, necessary records are retained so you can retry.',
+          )}
+        </li>
+        <li>
+          {t(
+            '只有在你主动登录或绑定账号时,App 才会在系统浏览器打开 CubeRoot 网站的统一账号流程,使用当时已启用的邮箱、手机号或第三方登录方式。登录回到 App 时使用短时、单次使用且与本次请求绑定的换票;账号绑定在独立浏览器会话中完成。长期会话凭证不会放入网址。',
+            'Only when you choose to sign in or link an account does the app open CubeRoot’s shared account flow in the system browser, using the email, phone, or third-party sign-in methods currently enabled. Sign-in returns to the app through a short-lived, single-use handoff ticket bound to that request; account linking takes place in a separate browser session. Long-lived session tokens are never placed in URLs.',
           )}
         </li>
         <li>
@@ -112,6 +118,13 @@ export default function PrivacyPage() {
         )}
       </p>
 
+      <h2>{t('复盘分享', 'Replay sharing')}</h2>
+      <p>
+        {t(
+          '主动分享复盘时,生成的链接会包含该条成绩的打乱、时间、动作、设备名称、可用的姿态轨迹以及已确认的复盘谱子。链接接收方可以查看并再次转发这些数据;删除本机成绩不会撤回已分享链接或导出副本。App 不会自动分享复盘。',
+          'When you choose to share a replay, its link contains that solve’s scramble, time, turns, device name, available orientation track, and confirmed reconstruction lines. Recipients can view and forward these data; deleting the local solve does not revoke shared links or exported copies. The app does not share replays automatically.',
+        )}
+      </p>
       <h2>{t('导入与本地恢复', 'Import and local recovery')}</h2>
       <p>
         {t(

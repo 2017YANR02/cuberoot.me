@@ -44,6 +44,13 @@ const smartCubeRpc = createMobile333Rpc('mobile smart-cube worker');
 const trainerGenerationRpc = createMobile333Rpc('mobile trainer generation worker');
 const trainerSolutionRpc = createMobile333Rpc('mobile trainer solution worker');
 
+/** Same two-phase worker/representation as correction paths; the shared anchor verifies it. */
+export async function solveMobileSmartCubeAnchor(state: CubieCube): Promise<string> {
+  const result = await smartCubeRpc.request({ kind: 'solve-state', state }, undefined, 12_000);
+  if (result.kind !== 'scramble') throw new Error('unexpected smart-cube worker response');
+  return result.scramble;
+}
+
 export async function solveMobileSmartCubeFixup(
   fromFacelets: string,
   targetFacelets: string,

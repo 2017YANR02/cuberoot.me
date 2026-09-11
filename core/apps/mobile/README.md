@@ -12,6 +12,8 @@ Android and iOS smart-cube access use a thin `@capacitor-community/bluetooth-le`
 
 ## Maintenance rule
 
+Smart-cube live views and complete solve reports use `@cuberoot/timer-ui/LiveCubeState`, `@cuberoot/timer-ui/reconstruct-report`, and `@cuberoot/timer-ui/solve-recap`. The same components are consumed by Web; their geometry/animation comes from the existing `puzzle-render-core` package and pure reconstruction/orientation logic from `shared`. Keep the four smart-cube settings and `useAutoReady` shared as well. Stored solves can contain moves, device metadata, and optional gyro tracks; replay links intentionally include this data when the user shares them. Do not replace this with an iOS-only renderer, report, or account form. Current proof levels and remaining drivers/device tests belong in the roadmap and timer parity tracker.
+
 - The highest-level installed-client contract is `docs/cross-platform-app-contract.md`: Android, iOS, HarmonyOS NEXT, Windows, and macOS are one product backed by shared domain/UI code and thin platform hosts. This package remains the Android/iOS Capacitor host; it must not become a source dependency of the existing Harmony/Desktop apps.
 - The three-surface contract is `docs/mobile-three-tab-contract.md`: all installed clients share Timer, Tools, and Account. Timer follows the dedicated parity tracker; Tools and Account display the real website instead of copying its cards, routes, or account UI into a host.
 - Tools and Account keep separate website browsing contexts inside the shared React shell. Their system-back behavior uses the runtime-neutral `@cuberoot/shared/mobile-embed` message contract plus the website's no-UI `MobileEmbedBridge`; never replace that with Android-only or iOS-only route tables.
@@ -90,6 +92,10 @@ An emulator does not close the physical-device gates. BLE smart-cube transport, 
 On macOS, run `ios:doctor` first, use `ios:build` for a repeatable unsigned Simulator build, and use `ios:open` for signing or device work in the checked-in Xcode project. If `ios:doctor` cannot find `simctl`, open Xcode > Settings > Locations > Command Line Tools and select the installed Xcode. A shell-scoped `DEVELOPER_DIR` or `sudo xcode-select --switch <Xcode.app>/Contents/Developer` is also valid; no personal Xcode path is stored in the repository. Keep Automatic Signing enabled and select the paid Apple Developer team locally; Xcode account state, signing credentials, provisioning profiles, DerivedData and `xcuserdata` must never be committed.
 
 `assets:android` first regenerates the website/PWA icons, then derives every Android launcher density and the light/dark Android system splash. `assets:ios` derives the opaque App Store icon and light/dark launch images from the same brand source. The brand SVG and one locked `sharp` dependency are the only sources, so there is no second hand-maintained image set. CI reruns both generators and fails on tracked or untracked drift.
+
+## iPhone UI automation
+
+For this Mac's real-iPhone screenshot and UI automation setup, see [iOS device automation](../../../docs/mobile-ios-automation.md). It uses Appium/XCUITest against the installed app without resetting its data; it is separate from production dependencies and native release builds.
 
 ## Persistence
 

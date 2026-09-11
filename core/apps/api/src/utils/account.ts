@@ -7,12 +7,14 @@
  * 合成键以小写 `u` 打头,WCA id 全大写(^\d{4}[A-Z]{4}\d{2}$),两者天然不可能相撞。
  */
 import crypto from 'node:crypto';
+import type { TransactionSql } from 'postgres';
 import type { AccountBasicProfile, AccountGender } from '@cuberoot/shared/account';
 import type { AvatarSource, ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
 import type { WebSessionUser } from '@cuberoot/shared/auth/web-session';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { query, sql } from '../db/connection.js';
 import { JWT_SECRET } from './session.js';
+import { revokeAppleIdentities, type AppleRevocationIdentity } from './apple_login.js';
 
 // 纯逻辑(归属键 + 输入校验)在 shared,前后端共用 + 客户端可单测;这里再导出保持调用方不变。
 export {
@@ -27,6 +29,32 @@ export {
 export type Provider = 'email' | 'phone' | 'wca' | 'apple' | 'google' | 'wechat' | 'douyin' | 'alipay' | 'qq';
 export type Channel = 'email' | 'phone' | 'merge';
 export type CodePurpose = 'login' | 'link' | 'password_reset' | 'account_merge';
+
+export interface AppleIdentityCredential {
+  encryptedToken: Buffer;
+  keyVersion: number;
+}
+
+function assertIdentityCredential(provider: Provider, credential?: AppleIdentityCredential): void {
+  if (provider === 'apple') {
+    if (!credential || !Buffer.isBuffer(credential.encryptedToken)
+      || credential.encryptedToken.length <= 28 || credential.keyVersion !== 1) {
+      throw new Error('Apple identity requires an encrypted revocation credential');
+    }
+  } else if (credential) {
+    throw new Error('Apple credential cannot belong to another provider');
+  }
+}
+
+async function updateAppleIdentityCredential(tx: TransactionSql, userId: number, sub: string, credential: AppleIdentityCredential): Promise<void> {
+  // Account first, matching unlink/delete/merge; a moved or removed identity must not receive a token.
+  const accounts = await tx`SELECT id FROM app_users WHERE id = ${userId} AND merged_into_user_id IS NULL FOR UPDATE`;
+  if (!accounts.length) throw new Error('Account changed; sign in again');
+  const rows = await tx`
+    UPDATE auth_identities SET apple_refresh_token_encrypted = ${credential.encryptedToken}, apple_token_key_version = ${credential.keyVersion}
+    WHERE user_id = ${userId} AND provider = 'apple' AND provider_uid = ${sub} RETURNING id`;
+  if (!rows.length) throw new Error('Apple identity changed; sign in again');
+}
 
 export interface AppUser {
   id: number;
@@ -425,9 +453,14 @@ export async function loginWithIdentity(
   provider: Provider,
   providerUid: string,
   profile: { name?: string; avatar?: string | null; wcaId?: string | null; countryIso2?: string | null },
+  appleCredential?: AppleIdentityCredential,
 ): Promise<{ user: AppUser; isNew: boolean }> {
+  assertIdentityCredential(provider, appleCredential);
   const existing = await findUserByIdentity(provider, providerUid);
   if (existing) {
+    if (appleCredential) {
+      await sql.begin((tx) => updateAppleIdentityCredential(tx, existing.id, providerUid, appleCredential));
+    }
     // WCA 姓名是实名认证来源,每次 WCA 登录都刷新;其它来源仍只机会式回填空展示名。
     if (provider === 'wca' || (!existing.display_name && profile.name)) {
       await query(
@@ -467,8 +500,8 @@ export async function loginWithIdentity(
       if (!row) throw new Error('account creation returned no user');
       const u = appUserFromRow(row);
       await tx`
-        INSERT INTO auth_identities (user_id, provider, provider_uid, verified_at)
-        VALUES (${u.id}, ${provider}, ${providerUid}, NOW())`;
+        INSERT INTO auth_identities (user_id, provider, provider_uid, verified_at, apple_refresh_token_encrypted, apple_token_key_version)
+        VALUES (${u.id}, ${provider}, ${providerUid}, NOW(), ${appleCredential?.encryptedToken ?? null}, ${appleCredential?.keyVersion ?? null})`;
       return u;
     });
     return { user: created, isNew: true };
@@ -476,7 +509,12 @@ export async function loginWithIdentity(
     // 并发下另一个请求已创建同一身份(唯一约束触发,事务回滚无孤儿)→ 重查返回。
     // 账号确实是这一瞬间建的,但建它的是另一个请求,本次不认领 isNew(引导只做一次)。
     const raced = await findUserByIdentity(provider, providerUid);
-    if (raced) return { user: raced, isNew: false };
+    if (raced) {
+      if (appleCredential) {
+        await sql.begin((tx) => updateAppleIdentityCredential(tx, raced.id, providerUid, appleCredential));
+      }
+      return { user: raced, isNew: false };
+    }
     throw new Error('account creation failed');
   }
 }
@@ -501,10 +539,15 @@ export async function addIdentity(
   verifiedDisplayName?: string | null,
   verifiedAvatarUrl?: string | null,
   verifiedCountryIso2?: string | null,
+  appleCredential?: AppleIdentityCredential,
 ): Promise<'ok' | 'conflict' | `has-${SingleProvider}`> {
+  assertIdentityCredential(provider, appleCredential);
   const owner = await findUserByIdentity(provider, providerUid);
   if (owner) {
     if (owner.id !== userId) return 'conflict';
+    if (appleCredential) {
+      await sql.begin((tx) => updateAppleIdentityCredential(tx, userId, providerUid, appleCredential));
+    }
     // 幂等重绑也要刷新 WCA 官方姓名,不能让旧自定义名继续留在实名账号上。
     if (provider === 'wca' && verifiedDisplayName) {
       await query(
@@ -531,6 +574,11 @@ export async function addIdentity(
   }
   try {
     const status = await sql.begin(async (tx) => {
+      // Provider credentials and identity ownership must commit together under the account lock.
+      if (appleCredential) {
+        const accounts = await tx`SELECT id FROM app_users WHERE id = ${userId} AND merged_into_user_id IS NULL FOR UPDATE`;
+        if (!accounts.length) throw new Error('Account changed; sign in again');
+      }
       // 单账号仅允许一个 WCA(app_users 只有一列 wca_id 镜像)。先占镜像列:已有非空
       // wca_id 时 0 行受影响 → 冲突,不插入孤儿身份(否则镜像与 auth_identities 失同步)。
       if (provider === 'wca') {
@@ -563,12 +611,20 @@ export async function addIdentity(
         if (dup.count > 0) return `has-${provider}`;
       }
       await tx`
-        INSERT INTO auth_identities (user_id, provider, provider_uid, verified_at)
-        VALUES (${userId}, ${provider}, ${providerUid}, NOW())`;
+        INSERT INTO auth_identities (user_id, provider, provider_uid, verified_at, apple_refresh_token_encrypted, apple_token_key_version)
+        VALUES (${userId}, ${provider}, ${providerUid}, NOW(), ${appleCredential?.encryptedToken ?? null}, ${appleCredential?.keyVersion ?? null})`;
       return 'ok';
     });
     return status as 'ok' | 'conflict' | `has-${SingleProvider}`;
   } catch (e) {
+    if (appleCredential) {
+      // A concurrent login/link may have won; retry only its exact owner, never swallow storage errors.
+      if ((e as { code?: string }).code !== '23505') throw e;
+      const raced = await findUserByIdentity(provider, providerUid);
+      if (raced?.id !== userId) return 'conflict';
+      await sql.begin((tx) => updateAppleIdentityCredential(tx, userId, providerUid, appleCredential));
+      return 'ok';
+    }
     // 并发绑第二个邮箱 / 手机时晚到的那条落这里 —— 认约束名还原成准确状态,别混进「已被他人占用」。
     const detail = `${(e as { constraint_name?: string }).constraint_name ?? ''} ${(e as Error).message ?? ''}`;
     if (detail.includes('uq_auth_identity_one_email')) return 'has-email';
@@ -643,13 +699,15 @@ export async function removeIdentity(
     // Match merge/deletion and renewal-contract writes: account before identity/contract locks.
     await tx`SELECT id FROM app_users WHERE id = ${userId} FOR UPDATE`;
     const rows = await tx`
-      SELECT provider, provider_uid FROM auth_identities WHERE user_id = ${userId} FOR UPDATE`;
-    const all = rows as unknown as { provider: string; provider_uid: string }[];
+      SELECT provider, provider_uid, apple_refresh_token_encrypted, apple_token_key_version
+      FROM auth_identities WHERE user_id = ${userId} FOR UPDATE`;
+    const all = rows as unknown as AppleRevocationIdentity[];
     const toRemove = all.filter(
       (r) => r.provider === provider && (providerUid == null || r.provider_uid === providerUid),
     );
     if (!toRemove.length) return 'not_found';
     if (all.length - toRemove.length < 1) return 'last';
+    await revokeAppleIdentities(toRemove);
     if (providerUid == null) {
       await tx`DELETE FROM auth_identities WHERE user_id = ${userId} AND provider = ${provider}`;
     } else {

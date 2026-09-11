@@ -3159,9 +3159,17 @@ CREATE TABLE auth_identities (
   user_id      BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
   provider     VARCHAR(16) NOT NULL,
   provider_uid VARCHAR(320) NOT NULL,
+  apple_refresh_token_encrypted BYTEA,
+  apple_token_key_version SMALLINT,
   verified_at  TIMESTAMPTZ,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT uq_auth_identity UNIQUE (provider, provider_uid)
+  CONSTRAINT uq_auth_identity UNIQUE (provider, provider_uid),
+  CONSTRAINT auth_identity_apple_token CHECK (
+    (apple_refresh_token_encrypted IS NULL AND apple_token_key_version IS NULL)
+    OR (provider = 'apple' AND apple_refresh_token_encrypted IS NOT NULL
+        AND octet_length(apple_refresh_token_encrypted) > 28
+        AND apple_token_key_version IS NOT NULL AND apple_token_key_version = 1)
+  )
 );
 CREATE INDEX idx_auth_identities_user ON auth_identities(user_id);
 CREATE UNIQUE INDEX uq_auth_identity_one_email ON auth_identities(user_id) WHERE provider = 'email';

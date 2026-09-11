@@ -4,19 +4,23 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import {
   decodeMobileEmbedAuthClear,
+  decodeMobileEmbedAccountManageResult,
   decodeMobileEmbedBack,
   decodeMobileEmbedInit,
   decodeMobileEmbedWebSession,
   isMobileEmbedExternalHref,
   mobileEmbedAuthClearMessage,
+  mobileEmbedAccountManageMessage,
   mobileEmbedExternalMessage,
   mobileEmbedNavigationMessage,
   mobileEmbedSurfaceFromFrameName,
   mobileEmbedWebSessionResultMessage,
+  type MobileEmbedInitMessage,
 } from '@cuberoot/shared/mobile-embed';
 import { applySession, getSessionToken, useAuthStore } from '@/lib/auth-store';
-import { mobileEmbedAccountAuthRequest } from '@/lib/mobile-embed-auth';
+import { isMobileEmbedAppleLink, mobileEmbedAccountAuthRequest, mobileEmbedSupportsApple } from '@/lib/mobile-embed-auth';
 import { exchangeWebSessionTicket } from '@/lib/web-session-handoff';
+import { tr } from '@/i18n/tr';
 
 const MOBILE_PARENT_ORIGINS = new Set([
   'capacitor://localhost',
@@ -45,8 +49,25 @@ export default function MobileEmbedBridge() {
     const stack = [window.location.href];
     let index = 0;
     let pendingWebTicket: string | null = null;
+    let webSessionGeneration = 0;
+    let active = true;
+    const invalidateWebSession = () => {
+      webSessionGeneration++;
+      pendingWebTicket = null;
+    };
     let hadWebsiteSession = Boolean(getSessionToken());
     let parentOrigin: string | null = null;
+    let capabilities: MobileEmbedInitMessage | null = null;
+    let pendingManagement: { requestId: string; timeout: number } | null = null;
+
+    const managementFailed = () => window.alert(tr({
+      zh: '未能打开系统浏览器，请确认 App 仍登录当前账号后重试。',
+      en: 'Could not open the system browser. Check that the app is still signed in to this account and retry.',
+    }));
+    const upgradeRequired = () => window.alert(tr({
+      zh: '请先更新 CubeRoot App，再使用 Apple 登录或绑定 Apple。',
+      en: 'Update the CubeRoot app before signing in with or linking Apple.',
+    }));
 
     const postToParent = (message: object) => {
       if (parentOrigin) window.parent.postMessage(message, parentOrigin);
@@ -77,17 +98,35 @@ export default function MobileEmbedBridge() {
     };
     recordRouteRef.current = recordRoute;
 
+    const delegateAccountInteraction = (event: MouseEvent | KeyboardEvent): boolean => {
+      if (surface !== 'account') return false;
+      const linking = isMobileEmbedAppleLink(event.target);
+      const authRequest = mobileEmbedAccountAuthRequest(event.target);
+      if (!linking && !authRequest) return false;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if ((linking || authRequest?.provider === 'apple') && !mobileEmbedSupportsApple(capabilities, linking)) {
+        upgradeRequired();
+        return true;
+      }
+      if (linking) {
+        if (pendingManagement) return true;
+        const uid = useAuthStore.getState().user?.uid;
+        if (!uid || !getSessionToken()) { managementFailed(); return true; }
+        const requestId = crypto.randomUUID();
+        const timeout = window.setTimeout(() => {
+          pendingManagement = null;
+          managementFailed();
+        }, 15_000);
+        pendingManagement = { requestId, timeout };
+        postToParent(mobileEmbedAccountManageMessage(uid, requestId));
+      } else if (authRequest) postToParent(authRequest);
+      return true;
+    };
+
     const onClick = (event: MouseEvent) => {
       const target = event.target;
-      const authRequest = surface === 'account'
-        ? mobileEmbedAccountAuthRequest(target)
-        : null;
-      if (authRequest) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        postToParent(authRequest);
-        return;
-      }
+      if (delegateAccountInteraction(event)) return;
       const anchor = target instanceof Element ? target.closest<HTMLAnchorElement>('a[href]') : null;
       if (!anchor || anchor.hasAttribute('download')) return;
       const next = new URL(anchor.href, window.location.href);
@@ -103,21 +142,27 @@ export default function MobileEmbedBridge() {
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (surface !== 'account' || event.key === 'Tab' || event.key === 'Escape') return;
-      const authRequest = mobileEmbedAccountAuthRequest(event.target);
-      if (!authRequest) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      postToParent(authRequest);
+      if (isMobileEmbedAppleLink(event.target) && event.key !== 'Enter' && event.key !== ' ') return;
+      delegateAccountInteraction(event);
     };
     const onMessage = (event: MessageEvent) => {
       if (event.source !== window.parent || !MOBILE_PARENT_ORIGINS.has(event.origin)) return;
       const init = decodeMobileEmbedInit(event.data);
       if (init?.surface === surface) {
         parentOrigin = event.origin;
+        capabilities = init;
         postNavigation();
         return;
       }
       if (event.origin !== parentOrigin) return;
+      const managementResult = decodeMobileEmbedAccountManageResult(event.data);
+      if (surface === 'account' && managementResult) {
+        if (pendingManagement?.requestId !== managementResult.requestId) return;
+        window.clearTimeout(pendingManagement.timeout);
+        pendingManagement = null;
+        if (!managementResult.ok) managementFailed();
+        return;
+      }
       const back = decodeMobileEmbedBack(event.data);
       if (back?.surface === surface) {
         index = Math.max(0, index - 1);
@@ -128,6 +173,7 @@ export default function MobileEmbedBridge() {
 
       const clear = decodeMobileEmbedAuthClear(event.data);
       if (surface === 'account' && clear) {
+        invalidateWebSession();
         useAuthStore.getState().logout();
         return;
       }
@@ -135,21 +181,28 @@ export default function MobileEmbedBridge() {
       const webSession = decodeMobileEmbedWebSession(event.data);
       if (surface !== 'account' || !webSession || pendingWebTicket === webSession.ticket) return;
       pendingWebTicket = webSession.ticket;
+      const generation = ++webSessionGeneration;
+      const current = () => active && generation === webSessionGeneration;
+      // The shared exchange helper owns single-flight ticket consumption (also
+      // across StrictMode remounts). Invalidate this consumer, not that shared
+      // request: an old response may never restore a logged-out/replaced user.
       void exchangeWebSessionTicket(webSession.ticket).then((session) => {
+        if (!current()) return;
         const persisted = applySession(session.token, session.user);
         const ok = persisted && getSessionToken() === session.token;
         postToParent(mobileEmbedWebSessionResultMessage(ok, webSession.requestId));
         if (ok) window.location.reload();
       }).catch(() => {
-        postToParent(mobileEmbedWebSessionResultMessage(false, webSession.requestId));
+        if (current()) postToParent(mobileEmbedWebSessionResultMessage(false, webSession.requestId));
       }).finally(() => {
-        pendingWebTicket = null;
+        if (current()) pendingWebTicket = null;
       });
     };
     const unsubscribeAuth = surface === 'account'
       ? useAuthStore.subscribe((state) => {
         const hasWebsiteSession = Boolean(state.user && getSessionToken());
         if (hadWebsiteSession && !hasWebsiteSession) {
+          invalidateWebSession();
           postToParent(mobileEmbedAuthClearMessage());
         }
         hadWebsiteSession = hasWebsiteSession;
@@ -160,7 +213,10 @@ export default function MobileEmbedBridge() {
     document.addEventListener('keydown', onKeyDown, true);
     window.addEventListener('message', onMessage);
     return () => {
+      active = false;
+      invalidateWebSession();
       recordRouteRef.current = null;
+      if (pendingManagement) window.clearTimeout(pendingManagement.timeout);
       document.removeEventListener('click', onClick, true);
       document.removeEventListener('keydown', onKeyDown, true);
       window.removeEventListener('message', onMessage);

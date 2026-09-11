@@ -10,11 +10,15 @@ const CLIENT_ROOT = join(HERE, '..');
 const REPO_ROOT = join(CLIENT_ROOT, '..', '..', '..');
 const GATE = join(CLIENT_ROOT, 'scripts', 'recon-ground-truth-gate.mjs');
 
-function isGuarded(path: string): boolean {
-  return spawnSync(process.execPath, [GATE, 'is-guarded', path], {
+function runGate(args: string[]) {
+  return spawnSync(process.execPath, [GATE, ...args], {
     cwd: CLIENT_ROOT,
     encoding: 'utf8',
-  }).status === 0;
+  });
+}
+
+function isGuarded(path: string): boolean {
+  return runGate(['is-guarded', path]).status === 0;
 }
 
 describe('reconstruction ground-truth commit gate', () => {
@@ -33,6 +37,23 @@ describe('reconstruction ground-truth commit gate', () => {
   it('uses a package command that refreshes the content-fingerprint credential', () => {
     const pkg = JSON.parse(readFileSync(join(CLIENT_ROOT, 'package.json'), 'utf8'));
     expect(pkg.scripts['test:recon-ground-truth']).toBe('node scripts/recon-ground-truth-gate.mjs run');
+  });
+
+  it('fingerprints the canonical shared analysis, not just the website compatibility files', () => {
+    const result = runGate(['list-guarded']);
+    expect(result.status).toBe(0);
+    const discovered: string[] = JSON.parse(result.stdout);
+    for (const suffix of [
+      '/shared/src/recon/popup_suggest.ts',
+      '/shared/src/timer/reconstruct/recon_text.ts',
+      '/shared/src/smart_cube/gyro_track.ts',
+      '/shared/src/smart_cube/orientation.ts',
+      '/shared/src/timer/sim_log.ts',
+    ]) {
+      const file = discovered.find((path) => path.endsWith(suffix));
+      expect(file, suffix).toBeDefined();
+      expect(isGuarded(file!)).toBe(true);
+    }
   });
 
   it('denies through the supported JSON decision and keeps CI as the fallback', () => {

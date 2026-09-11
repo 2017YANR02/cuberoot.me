@@ -201,10 +201,10 @@ shared 映射快照是 19 个 Timer ID：
 | `history.quick-actions` | OK/+2/DNF/DNS、备注、复制、删除 | 7 个稳定 action ID/effect/visible/disabled/active、完整成绩行与单一快捷菜单/底部操作表（右键/长按、焦点、Escape/点外/scroll/resize、viewport clamp、quick-delete once/no-confirm）已迁 `timer-ui` 并由 Web/Mobile 共用。Mobile quick delete 已接 repository restore + 共用 5 秒 Undo；菜单也接入受控 overlay。OPPO 600ms 原位长按打开 sheet，七项、360px 宽度、64px 底部预留及真实 Back 只关菜单已验；备注 textarea 在 461px IME 视口完整可见且无横向溢出。iPhone 17 模拟器只验证了当前共享构建安装/启动，History 交互与全状态矩阵仍缺 |
 | `history.compare` | 二选/取消/第三项替换、结果/阶段/HTM/TPS/case 差异、删改与上下文清理、焦点/关闭/返回 | 选择和比较模型在 shared，完整 UI 在 timer-ui；Web/五端共用，render-time context gate 与定向回归通过。最新 APK 已安装，OPPO 仍锁屏，窄屏点击/可读/无遮挡真机验收待补 |
 | `history.bulk` | 选择、批量删除 | `HistoryPanel` 保留可选代码，但网站 `SoloView` 当前未传 `onBulkDelete`，主路径不可达；不为 App 复制死代码。若网站重新开放，先提取 shared 原子操作与共用 UI 再五端接入 |
-| `solve.detail` | 原始/生效成绩、日期、4 罚时、打乱/图、分段、BLD/MBLD、备注、tag | Web/五端已共用同一 `TimerSolveDetailModal`、同一打乱预览和同一基础复盘指标卡，基础字段、动作、焦点、关闭、窄屏布局、脏旧分段归一化及网站当前预览项目均为单源；tag 继续属于共用成绩行。Web 重型复盘仍由动态 slot 注入，故完整 parity 未关闭 |
+| `solve.detail` | 原始/生效成绩、日期、4 罚时、打乱/图、分段、BLD/MBLD、备注、tag | 共用 TimerSolveDetailModal；2026-09-11 Web/App 同一 slot 注入完整 ReconstructReport。真实 App 回归锁连续两条记录、关闭按钮及从历史重新打开；五平台交互仍待验 |
 | `solve.move-session` | 移动到其他 session | shared 不可变 move effect、详情 action/目标规则与共用详情入口已由 Web/五端消费；成功写仓储后才关闭，失败保持详情可见 |
-| `solve.reconstruction` | 动作流、谱子、方法/阶段、质量、时间线、回放、反馈 | App 智能魔方成绩的 `moves/device/stageSegments` 已与 Web 共用 producer 并落盘；QTM/QTPS、首动延迟、最长停顿和停顿次数已由 shared 单次计算并由 Web/五端共用同一指标卡。完整动作谱、方法/阶段质量、时间线、回放和反馈仍缺 |
-| `solve.auto-recap` | 智能魔方停表后内联 recap，下一把收起 | 缺 |
+| `solve.reconstruction` | 动作流、谱子、方法/阶段、质量、时间线、回放、反馈 | 2026-09-11 完整报告/UI 已单源提取，moves/device/gyro 与反馈持久化接入；四条 canonical 真值全量回归及 Mobile 生产 bundle 浏览器逐条 WebGL 报告通过。新产生的实体魔方记录/姿态仍待验 |
+| `solve.auto-recap` | 智能魔方停表后内联 recap，下一把收起 | 共用 SolveRecap/shouldAutoRecap，App 保存成功后展开，下一把收起；连续两把真实 App 组件集成通过，实拧待验 |
 | `panel.times-chart-stats` | 成绩/图表/统计三 tab，桌面 rail/手机整屏 sheet | 缺 |
 | `chart.types` | 分布/趋势/散点/时段/日历五图 | 缺 |
 | `stats.overview` | count/best/PB 日期/mean/σ/CV/mo3/bo3/ao5/12/50/100/1000 当前与最佳 | 紧凑 current/best、σ/CV/count、展开 extras、Sub-X 与 rolling picker 已由 Web/Mobile 共用；OPPO 基础面板 360px 无横向溢出。完整字段、rolling 弹层/展开态和五图仍缺 |
@@ -244,7 +244,7 @@ Web 当前有 8 类、64 个可达偏好/命令 surface；稳定 ID 与交互策
 | 类别 | Web 项目 | Mobile 快照 |
 | --- | --- | --- |
 | 计时 | 计时开关、WCA 观察、按住阈值、切项目匹配 session、切 session 匹配项目、隐藏运行时间、运行精度、成绩精度 | shared 已统一默认/normalizer，`TimerTimingSettingsSections` 已成为 Web/Mobile 共用真实 UI consumer；Mobile 8 字段 effect 已接且 OPPO 读到 8/8 canonical ID、无横向溢出并可滚动到底。仍缺逐字段效果、iOS、横屏/大字与全视口证据 |
-| 智能魔方 | 自动预备：打乱正确/关/静止 2s/双拨；实况 3D/q2look/net/2D；记录姿态；每把后展开复盘 | 缺设置 UI，行为部分写死 |
+| 智能魔方 | 自动预备：打乱正确/关/静止 2s/双拨；实况 3D/q2look/net/2D；记录姿态；每把后展开复盘 | 四组设置的默认/归一化/持久化与 TimerSmartCubeSettingsFields、useAutoReady 已由 Web/App 共用；模式/弹层/阶段门禁及连续手势自动化已锁，五平台实操待验 |
 | 打乱 | 最优打乱、真题自动打卡、预打乱朝向、训练预朝向、颜色中立、同步种子/计数器 | 缺 |
 | 训练 | CFOP 分段、BLD memo/执行分段、每项目目标时间、每日目标、轮次模拟开关/赛制/cutoff/time limit/累计口径 | 缺 |
 | 外观 | 计时器字体/字号、打乱字体/字号、紧凑打乱、打乱图、3D 魔方、点击打乱动作、运行隐藏全 UI、排名徽章、排名国家 | “打乱图”“3D 魔方”“点击打乱动作”已用 shared schema/default/normalizer、共用 UI 与真实 effect；单人/联网复用同一预览 renderer，3D 拖动区与打乱点击区隔离。OPPO 已完成点击打乱三动作与 360px 无溢出实证；新增两开关只具备自动化、构建和安装证据，仍待解锁后实点。其余 8 项仍缺，且 iOS/Harmony/Windows/macOS 的实体环境视觉与交互矩阵未验 |
@@ -260,10 +260,10 @@ Web 当前有 8 类、64 个可达偏好/命令 surface；稳定 ID 与交互策
 | --- | --- | --- |
 | `device.picker` | 统一设备入口区分智能魔方/智能计时器/Stackmat | 图标位置近似，功能集不等 |
 | `device.smart-cube.protocols` | GAN v2/v3/v4、Giiker、GoCube、MoYu/MoYu32、QiYi 等 Web 已有 driver，统一选择 | 只实证 GAN v4 |
-| `device.smart-cube.connect` | 扫描/连接/加密/MAC 输入/超时/拒绝/断连/重连/重置 | Android 主链已实证，断线/协议错误会清除共享 tracker 与可视状态；iOS picker UUID 后用 exact-name scan 捕获 manufacturer data 并复用 shared GAN MAC 提取，单测通过但尚无 iPhone/GAN 实证；拒绝、后台、蓝牙关闭、距离中断与反复重连仍未完成设备矩阵 |
+| `device.smart-cube.connect` | 扫描/连接/加密/MAC 输入/超时/拒绝/断连/重连/重置 | iOS 复用 manufacturer-data MAC，所有者已确认 iPhone 12 + GAN 连接；旧版出现还原不停止，本轮修复状态停止 edge、末帧查询与迟到回调，不能提前宣称真机修好。多品牌/MAC fallback UI、自动重连、拒绝/后台/蓝牙关闭/距离中断仍缺矩阵 |
 | `device.smart-cube.status` | 型号、电量、协议、最后动作、魔方时钟/丢步诊断 | Mobile 只显名称/最后动作 |
 | `device.smart-cube.scramble` | 状态定锚、打乱匹配、逐步提示、走偏修正、第一手起表、还原停表 | 3×3 GAN v4 自动起停主链已有旧版实证；提示、匹配、走偏修正、同批帧和 pending Worker 现在由 Web/五端共享并有自动回归，但最新 OPPO 可视提示/走偏修正仍待实体魔方复测，不能据此宣布设备完成 |
-| `device.live-cube` | 3D/q2look/net/2D、陀螺仪、朝向、校准、fallback | 缺 |
+| `device.live-cube` | 3D/q2look/net/2D、陀螺仪、朝向、校准、fallback | 共用 LiveCubeState/SimCubeView，定锚、姿态/校准和现有 VisualCube 平面视图接入；无重复几何。生产 bundle 四条报告 WebGL 可见；真机实时转动/朝向/校准与图形失败恢复待验 |
 | `device.smart-timer` | GAN/QiYi timer 选择、连接、MAC、读数、错误、断开 | 缺 |
 | `device.stackmat` | 麦克风权限、输入设备、监听、信号级别、状态、精度、解码错误、停止 | 未实现；Mobile 不渲染麦克风假入口 |
 | `device.permission` | 未支持/未开蓝牙/拒绝/不再询问/系统设置返回后重试 | 需 Android、iOS、HarmonyOS NEXT、Windows 和 macOS 各平台状态矩阵 |

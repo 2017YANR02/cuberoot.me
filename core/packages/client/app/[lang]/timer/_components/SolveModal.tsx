@@ -50,10 +50,10 @@ export default function SolveModal({
   useEffect(() => {
     if (!hasMoves) return;
     return onIdle(() => {
-      void import('@/components/sim-embed/SimCubeView');
-      void import('@/components/sim-embed/mountSimWorld');
-      void import('@/lib/oll_lookup').then((module) => module.prewarmOllTable());
-      void import('@/lib/pll_lookup').then((module) => module.prewarmPllTable());
+      void import('@cuberoot/timer-ui/SimCubeView');
+      void import('@cuberoot/puzzle-render-core/sim/mountSimWorld');
+      void import('@cuberoot/shared/recon/oll-lookup').then((module) => module.prewarmOllTable());
+      void import('@cuberoot/shared/recon/pll-lookup').then((module) => module.prewarmPllTable());
     }, { timeout: 500 });
   }, [hasMoves]);
 

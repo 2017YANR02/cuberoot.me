@@ -757,6 +757,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 228, slug: 'platform_provider_refunds', desc: { zh: '记录退款批准、固定渠道请求号及异步对账状态。', en: 'Persist refund approval, stable provider request numbers and asynchronous reconciliation.' } },
   { n: 229, slug: 'organizer_applications', desc: { zh: '主办方申请关联已有组织或审核后创建组织，明确平台批准后方可办赛。', en: 'Organizer applications reuse existing organizations or create an organization on approval; competition hosting requires explicit platform approval.' } },
   { n: 230, slug: 'forum_bans', desc: { zh: '管理员在帖子页拉黑或解除拉黑账号，保留历史内容。', en: 'Let administrators ban or unban forum accounts from a post while retaining existing content.' } },
+  { n: 231, slug: 'auth_apple_token', desc: { zh: '在已有登录身份中加密保存 Apple 撤销凭据与密钥版本，仅供解绑和注销撤销授权，不进入身份列表响应。', en: 'Keep an encrypted Apple revocation credential and key version on the existing identity for unlinking and account deletion; never expose it in identity-list responses.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

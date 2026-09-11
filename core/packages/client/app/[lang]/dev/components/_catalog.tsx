@@ -1499,6 +1499,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Basic reconstruction metric cards shared by Web and all five installed clients. QTM/QTPS, first-move delay, longest pause, and pause count are computed only by @cuberoot/shared/timer/reconstruct/solve-metrics; the component receives the computed result so the full Web report does not traverse moves twice. The full move stream, timeline, replay, and feedback remain separate surfaces.',
   },
   {
+    name: 'ReconstructReport / SolveRecap / PlaybackPanel / SolveTimeline / StepAnalysis / StepMoveList',
+    import: "import ReconstructReport from '@cuberoot/timer-ui/reconstruct-report';",
+    category: 'display',
+    zh: 'Web 与安装端共用的完整智能魔方复盘：分步动作谱、可定位时间线、三维/陀螺仪回放、方法切换、参考解法、质量和反馈只维护一份。纯分析来自 shared/recon 与 shared/timer/reconstruct；宿主只注入双语解析、剪贴板、分享 URL 和录姿态设置。按需加载，不能以基础指标卡或网站外跳代替。',
+    en: 'The full smart-cube reconstruction shared by Web and installed clients: per-step move score, seekable timeline, 3D/gyro replay, method selection, reference lines, quality and feedback have one implementation. Analysis comes from shared/recon and shared/timer/reconstruct; hosts inject localization, clipboard, public share URLs and gyro settings. Load on demand; metric cards and external website links are not substitutes.',
+  },
+  {
     name: 'TimerPrintController / TimerPrintDocument',
     import: "import { TimerPrintController, TimerPrintDocument } from '@cuberoot/timer-ui';",
     category: 'more',
@@ -1511,6 +1518,13 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: 'Web、Android 与 iOS 计时器共用的“计时”设置 8 字段 UI；字段顺序、双语标签、按住阈值、观察开关和两类精度选项都来自 @cuberoot/shared/timer 的 settings-contract。宿主只注入持久化和平台已有的布尔开关视觉原语，不得另写字段列表或归一化。',
     en: 'The eight-field Timing settings UI shared by the Web, Android, and iOS timers. Field order, bilingual copy, hold threshold, inspection toggle, and both precision selectors come from @cuberoot/shared/timer settings-contract. Hosts only inject persistence and their existing switch visual primitive; they must not duplicate the field list or normalization.',
+  },
+  {
+    name: 'TimerSmartCubeSettingsFields / useAutoReady',
+    import: "import { TimerSmartCubeSettingsFields, useAutoReady } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: '网站与安装端共用的智能魔方四项设置：自动预备、实况视图、录姿态、自动复盘。字段与默认值来自 shared；静止和双反扭预备使用同一个转动订阅 hook，宿主只注入转动流与设置持久化。',
+    en: 'The shared smart-cube controls for auto-ready, live view, orientation recording, and automatic recap. Fields and defaults come from shared; still/double-flick readiness uses the same move-subscription hook. Hosts inject only move streams and settings persistence.',
   },
   {
     name: 'TimerScramblePreviewSettings',
@@ -1587,11 +1601,19 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'FaceletsCube',
-    import: "import { FaceletsCube } from '@/components/FaceletsCube';",
+    import: "import { FaceletsCube } from '@cuberoot/timer-ui/FaceletsCube';",
     category: 'display',
     zh: '54 位 fd 贴纸串 → 3x3 状态图,纯前端本地渲染(visualcube 引擎,无后端)。状态没有对应 alg 时用它(如 LSLL 的 58 万 case 缩略图);有 alg/setup 时仍走 <VisualCube>。`view="plan"` 出顶视 + 四周顶排(通行的 OLL/PLL/ZBLL 图)。',
     en: 'A 54-char fd sticker string → 3x3 state image, rendered locally (visualcube engine, no backend). Use when a state has no generating alg (e.g. the 583k LSLL case thumbs); with an alg/setup prefer <VisualCube>. Pass view="plan" for the top-down OLL/PLL/ZBLL diagram.',
     usage: "<FaceletsCube fd={caseFacelets(state)} size={88} />",
+  },
+  {
+    name: 'LiveCubeState / SimCubeView',
+    import: "import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';",
+    category: 'more',
+    zh: '网站与已安装 App 共用的智能魔方实况图。以设备贴纸与验算后的动作锚点为准；三维动画和姿态回放共用 SimCubeView，宿主只传语言与设备状态。',
+    en: 'Smart-cube mirror shared by Web and installed apps. Uses device facelets and a verified move anchor; live animation and orientation replay share SimCubeView. Hosts supply language and device state only.',
+    usage: '<LiveCubeState facelets={facelets} moves={moves} algAnchored={anchored} mode="3d" language="en" />',
   },
   {
     name: 'ScramblePreview2D',

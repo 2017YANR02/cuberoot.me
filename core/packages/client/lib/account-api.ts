@@ -7,6 +7,7 @@ import { authHeaders, handleApi } from './admin-api';
 import type { WebSession, WebSessionUser } from '@cuberoot/shared/auth/web-session';
 import type { ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
 import type { AccountBasicProfile } from '@cuberoot/shared/account';
+import { tr } from '@/i18n/tr';
 
 export type SessionUser = WebSessionUser;
 export interface SessionResp extends WebSession {
@@ -20,14 +21,52 @@ export interface Identity {
   createdAt: string;
 }
 
-async function post<T>(path: string, body: unknown, auth = false): Promise<T> {
+// Bound both headers and body reads. Never automatically retry account mutations:
+// a lost response does not imply the server rolled the operation back.
+async function authJson<T>(path: string, init: RequestInit = {}): Promise<{ response: Response; data: T }> {
+  const controller = new AbortController();
+  let timedOut = false;
+  const cancel = () => controller.abort();
+  const timeout = setTimeout(() => { timedOut = true; cancel(); }, 12_000);
+  init.signal?.addEventListener('abort', cancel, { once: true });
+  if (init.signal?.aborted) cancel();
+  let onAbort: (() => void) | undefined;
+  try {
+    controller.signal.throwIfAborted();
+    const aborted = new Promise<never>((_, reject) => {
+      onAbort = () => reject(new DOMException('Request canceled', 'AbortError'));
+      controller.signal.addEventListener('abort', onAbort, { once: true });
+    });
+    return await Promise.race([
+      (async () => {
+        const response = await fetch(apiUrl(path), { ...init, signal: controller.signal });
+        const data = await response.json().catch(() => ({})) as T;
+        controller.signal.throwIfAborted();
+        return { response, data };
+      })(),
+      aborted,
+    ]);
+  } catch (error) {
+    if (timedOut) throw new Error(tr({
+      zh: '请求超时。请检查网络和账号状态后重试。',
+      en: 'Request timed out. Check your connection and account status before retrying.',
+    }));
+    if (controller.signal.aborted) throw new DOMException('Request canceled', 'AbortError');
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+    if (onAbort) controller.signal.removeEventListener('abort', onAbort);
+    init.signal?.removeEventListener('abort', cancel);
+  }
+}
+
+async function post<T>(path: string, body: unknown, auth = false, signal?: AbortSignal): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (auth) {
     const tok = getSessionToken();
     if (tok) headers.Authorization = `Bearer ${tok}`;
   }
-  const res = await fetch(apiUrl(path), { method: 'POST', headers, body: JSON.stringify(body) });
-  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  const { response: res, data } = await authJson<Record<string, unknown>>(path, { method: 'POST', headers, body: JSON.stringify(body), signal });
   if (!res.ok) throw new Error((data.error as string) || `HTTP ${res.status}`);
   return data as T;
 }
@@ -218,15 +257,21 @@ export const linkGoogle = (assertion: string) => post<{ ok: true; identities: Id
 // 国内三方(微信/QQ/支付宝):授权码重定向流。浏览器跳授权页 → 回调拿 code → 交后端换身份。
 export type SocialProvider = 'wechat' | 'qq' | 'alipay';
 export const SOCIAL_PROVIDERS: readonly SocialProvider[] = ['wechat', 'qq', 'alipay'];
-// state 为服务端签名的自包含 token(从回调 URL 读回),服务端验签做 CSRF,不依赖 sessionStorage。
-export const loginSocial = (provider: SocialProvider, code: string, state: string) => post<SessionResp>(`/v1/auth/social/${provider}`, { code, state });
-export const linkSocial = (provider: SocialProvider, code: string, state: string) => post<{ ok: true; identities: Identity[] }>(`/v1/auth/link/social/${provider}`, { code, state }, true);
+export type RedirectAuthProvider = SocialProvider | 'apple';
+export const REDIRECT_AUTH_PROVIDERS: readonly RedirectAuthProvider[] = ['apple', ...SOCIAL_PROVIDERS];
+// 服务端验签 state；Apple 额外验证只在 POST body 传递的浏览器 PKCE verifier。
+export const loginSocial = (provider: RedirectAuthProvider, code: string, state: string, codeVerifier?: string, signal?: AbortSignal) => post<SessionResp>(provider === 'apple' ? '/v1/auth/apple' : `/v1/auth/social/${provider}`, { code, state, ...(provider === 'apple' ? { codeVerifier } : {}) }, false, signal);
+export const linkSocial = (provider: RedirectAuthProvider, code: string, state: string, codeVerifier?: string, signal?: AbortSignal) => post<{ ok: true; identities: Identity[] }>(provider === 'apple' ? '/v1/auth/link/apple' : `/v1/auth/link/social/${provider}`, { code, state, ...(provider === 'apple' ? { codeVerifier } : {}) }, true, signal);
 /** 服务端下发的授权页 URL(redirect_uri + 签名 state 均由服务端固定,保证与换 code 时一致)。 */
-export async function fetchSocialAuthorizeUrl(provider: SocialProvider, intent: 'login' | 'link'): Promise<string> {
-  const res = await fetch(apiUrl(`/v1/auth/social/authorize?provider=${provider}&intent=${intent}`));
-  const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+export async function fetchSocialAuthorization(provider: RedirectAuthProvider, intent: 'login' | 'link', codeChallenge?: string, signal?: AbortSignal): Promise<{ url: string; siteOrigin?: string }> {
+  const path = provider === 'apple' ? `/v1/auth/apple/authorize?intent=${intent}&codeChallenge=${encodeURIComponent(codeChallenge ?? '')}` : `/v1/auth/social/authorize?provider=${provider}&intent=${intent}`;
+  const { response: res, data } = await authJson<{ url?: string; siteOrigin?: string; error?: string }>(path, {
+    cache: 'no-store',
+    signal,
+    ...(provider === 'apple' && intent === 'link' ? { headers: authHeaders(false) } : {}),
+  });
   if (!res.ok || !data.url) throw new Error(data.error || `HTTP ${res.status}`);
-  return data.url;
+  return { url: data.url, siteOrigin: data.siteOrigin };
 }
 
 export interface WechatBrowserLoginStart {
@@ -254,6 +299,7 @@ export async function exchangeWechatBrowserLogin(ticket: string): Promise<Sessio
 
 export interface AuthProviders {
   email: boolean; phone: boolean; wca: boolean;
+  apple: boolean;
   googleClientId: string | null; googleRelayUrl: string | null;
   social: Record<SocialProvider, string | null>;
 }
@@ -271,22 +317,21 @@ function normSocial(raw: unknown): Record<SocialProvider, string | null> {
 export async function fetchAuthProviders(): Promise<AuthProviders> {
   if (providersCache) return providersCache;
   try {
-    const res = await fetch(apiUrl('/v1/auth/providers'));
+    const { response: res, data: d } = await authJson<Partial<AuthProviders>>('/v1/auth/providers');
     if (res.ok) {
-      const d = (await res.json()) as Partial<AuthProviders>;
-      providersCache = { email: !!d.email, phone: !!d.phone, wca: d.wca !== false, googleClientId: d.googleClientId ?? null, googleRelayUrl: d.googleRelayUrl ?? null, social: normSocial(d.social) };
+      providersCache = { email: !!d.email, phone: !!d.phone, wca: d.wca !== false, apple: d.apple === true, googleClientId: d.googleClientId ?? null, googleRelayUrl: d.googleRelayUrl ?? null, social: normSocial(d.social) };
       return providersCache;
     }
   } catch { /* ignore */ }
-  return { email: true, phone: true, wca: true, googleClientId: null, googleRelayUrl: null, social: { ...NO_SOCIAL } };
+  return { email: true, phone: true, wca: true, apple: false, googleClientId: null, googleRelayUrl: null, social: { ...NO_SOCIAL } };
 }
 
 /** canResetPassword:本次会话刚用邮箱验证码登录 → 改 / 移除密码时无需当前密码。 */
 export async function fetchIdentities(): Promise<{ identities: Identity[]; hasPassword: boolean; canResetPassword: boolean }> {
-  const res = await fetch(apiUrl('/v1/auth/identities'), {
+  const { response: res, data } = await authJson<{ identities?: Identity[]; hasPassword?: boolean; canResetPassword?: boolean }>('/v1/auth/identities', {
     headers: { Authorization: `Bearer ${getSessionToken()}` },
+    cache: 'no-store',
   });
-  if (!res.ok) return { identities: [], hasPassword: false, canResetPassword: false };
-  const data = (await res.json().catch(() => ({}))) as { identities?: Identity[]; hasPassword?: boolean; canResetPassword?: boolean };
-  return { identities: data.identities ?? [], hasPassword: !!data.hasPassword, canResetPassword: !!data.canResetPassword };
+  if (!res.ok || !Array.isArray(data.identities)) throw new Error(tr({ zh: '无法读取账号信息，请重试或重新登录。', en: 'Could not load account details. Retry or sign in again.' }));
+  return { identities: data.identities, hasPassword: !!data.hasPassword, canResetPassword: !!data.canResetPassword };
 }

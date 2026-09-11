@@ -63,6 +63,7 @@ import {
   TimerScramblePreviewSettings,
   TimerBooleanSettingRow,
   TimerTimingSettingsSections,
+  TimerSmartCubeSettingsFields,
   type TimerBooleanControlProps,
 } from '@cuberoot/timer-ui';
 import { canUseRandomOptimal333 } from '../_lib/scramble/optimal333_pool';
@@ -769,57 +770,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
               onChange={(v) => updateSettings({ showDevFakeCube: v })}
             />
           )}
-          <SettingRow id="settings.smart-cube.auto-ready">
-            <select
-              className="settings-row-control-select"
-              value={s.bluetoothAutoReady}
-              onChange={(e) => updateSettings({ bluetoothAutoReady: e.target.value as 'off' | 'still' | 'double-flick' | 'scrambled' })}
-            >
-              <option value="scrambled">{tr({ zh: '打乱正确即预备', en: 'When scrambled' })}</option>
-              <option value="off">{tr({ zh: '关闭', en: 'Off'
-            })}</option>
-              <option value="still">{tr({ zh: '静止 2 秒', en: 'Still 2s'
-            })}</option>
-              <option value="double-flick">{tr({ zh: "双反扭 (U U')²", en: "Double-flick (U U')²"
-            })}</option>
-            </select>
-            <span className="hint">{tr({
-              zh: '进入预备后，第一下转动立即起表，无需按空格',
-              en: 'Once ready, the first turn starts the timer without pressing Space',
-            })}</span>
-          </SettingRow>
-          <SettingRow id="settings.smart-cube.live-view">
-            <select
-              className="settings-row-control-select"
-              value={s.liveCubeView}
-              onChange={(e) => updateSettings({ liveCubeView: e.target.value as '2d' | 'net' | '3d' | 'q2look' })}
-              aria-label={tr({ zh: '实况魔方渲染方式', en: 'Live cube rendering' })}
-            >
-              <option value="3d">{tr({ zh: '三维', en: '3D' })}</option>
-              <option value="q2look">q2Look</option>
-              <option value="net">{tr({ zh: '展开图', en: 'Net' })}</option>
-              <option value="2d">{tr({ zh: '立体图', en: 'Isometric' })}</option>
-            </select>
-            <span className="hint">{tr({
-              zh: '连接后在时间下方同步显示；三维模式可跟随陀螺仪',
-              en: 'Mirrors the cube below the timer; 3D mode can follow the gyroscope',
-            })}</span>
-          </SettingRow>
-          <BooleanSettingRow
-            id="settings.smart-cube.record-orientation"
-            value={s.recordGyro}
-            onChange={(v) => updateSettings({ recordGyro: v })}
-          >
-            <span className="hint">{tr({
-              zh: '提高转体和中层动作识别准确度，会略微增加耗电',
-              en: 'Improves rotation and slice recognition with slightly higher battery use',
-            })}</span>
-          </BooleanSettingRow>
-          <BooleanSettingRow
-            id="settings.smart-cube.auto-recap"
-            value={s.autoRecap !== false}
-            onChange={(v) => updateSettings({ autoRecap: v })}
-          />
+          <TimerSmartCubeSettingsFields value={s} localize={tr} onChange={updateSettings} renderBooleanControl={renderTimingBooleanControl} />
         </SettingsSection>
 
         <SettingsSection

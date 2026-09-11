@@ -8,7 +8,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Loader2, Mail, Smartphone, KeyRound, Merge } from 'lucide-react';
-import { SiWechat, SiQq, SiAlipay } from 'react-icons/si';
+import { SiApple, SiWechat, SiQq, SiAlipay } from 'react-icons/si';
 import { primaryHandle } from '@cuberoot/shared/account';
 import type { MobileAuthProvider } from '@cuberoot/shared/auth/web-session';
 import AppLink from '@/components/AppLink';
@@ -24,7 +24,7 @@ import {
   linkEmailSend, linkEmailVerify, linkPhoneSend, linkPhoneVerify,
   unlinkIdentity, fetchIdentities, fetchAuthProviders, loginGoogle, linkGoogle, replaceEmailVerify, replacePhoneVerify,
   deleteAccount, issueAccountMergeCode, mergeAccount,
-  type Identity, type AuthProviders, type SocialProvider,
+  type Identity, type AuthProviders, type RedirectAuthProvider,
 } from '@/lib/account-api';
 import { requestGoogleAssertion } from '@/lib/google-auth';
 import { startSocialLogin, isBlockedWebview } from '@/lib/social-auth';
@@ -33,6 +33,45 @@ import './auth-panel.css';
 const ICON = 16;
 const CODE_LEN = 6;
 type Channel = 'email' | 'phone';
+
+/** Login and identity-linking share one cancellable redirect lifecycle. */
+function useSocialRedirect() {
+  const [busy, setBusy] = useState<RedirectAuthProvider | null>(null);
+  const request = useRef<AbortController | null>(null);
+  const cancel = useCallback(() => {
+    request.current?.abort();
+    request.current = null;
+    setBusy(null);
+  }, []);
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => { if (event.persisted) cancel(); };
+    window.addEventListener('pageshow', onPageShow);
+    return () => { window.removeEventListener('pageshow', onPageShow); request.current?.abort(); };
+  }, [cancel]);
+  const start = async (provider: RedirectAuthProvider, intent: 'login' | 'link', expectedUid?: number) => {
+    if (request.current) return null;
+    const controller = new AbortController();
+    request.current = controller;
+    setBusy(provider);
+    let navigated = false;
+    try {
+      const result = await startSocialLogin(provider, intent, expectedUid, controller.signal);
+      if (controller.signal.aborted) return null;
+      navigated = result.navigated;
+      return result;
+    } catch (error) {
+      if (controller.signal.aborted) return null;
+      throw error;
+    } finally {
+      // A late canceled request must not clear a newer attempt's busy state.
+      if (!navigated && request.current === controller && !controller.signal.aborted) {
+        request.current = null;
+        setBusy(null);
+      }
+    }
+  };
+  return { busy, cancel, start };
+}
 
 /**
  * 登录/注册完成时回传给宿主页的信息。isNew 由服务端给(登录与注册合流,只有它知道账号是不是
@@ -63,12 +102,14 @@ const WcaGlyph = ({ size = 16 }: { size?: number }) => (
 const WechatGlyph = ({ size = 16 }: { size?: number }) => <SiWechat size={size} color="#07C160" aria-hidden="true" />;
 const QqGlyph = ({ size = 16 }: { size?: number }) => <SiQq size={size} color="#1EBAFC" aria-hidden="true" />;
 const AlipayGlyph = ({ size = 16 }: { size?: number }) => <SiAlipay size={size} color="#1677FF" aria-hidden="true" />;
+const AppleGlyph = ({ size = 16 }: { size?: number }) => <SiApple size={size} aria-hidden="true" />;
 const DouyinGlyph = ({ size = 16 }: { size?: number }) => (
   <img src="/assets/douyin_logo.svg" alt="" width={size} height={size} aria-hidden="true" />
 );
 
 /** 国内三方 provider 配置(标 + 名),供 SSO 按钮 / 账号绑定 chip 共用。 */
-const SOCIALS: { key: SocialProvider; Glyph: (p: { size?: number }) => React.ReactNode; name: { zh: string; en: string } }[] = [
+const SOCIALS: { key: RedirectAuthProvider; Glyph: (p: { size?: number }) => React.ReactNode; name: { zh: string; en: string } }[] = [
+  { key: 'apple', Glyph: AppleGlyph, name: { zh: 'Apple', en: 'Apple' } },
   { key: 'wechat', Glyph: WechatGlyph, name: { zh: '微信', en: 'WeChat' } },
   { key: 'qq', Glyph: QqGlyph, name: { zh: 'QQ', en: 'QQ' } },
   { key: 'alipay', Glyph: AlipayGlyph, name: { zh: '支付宝', en: 'Alipay' } },
@@ -81,6 +122,7 @@ const SOCIALS: { key: SocialProvider; Glyph: (p: { size?: number }) => React.Rea
 const PROVIDER_GLYPH: Record<string, (p: { size?: number }) => React.ReactNode> = {
   wca: WcaGlyph,
   google: GoogleGlyph,
+  apple: AppleGlyph,
   wechat: WechatGlyph,
   qq: QqGlyph,
   alipay: AlipayGlyph,
@@ -161,8 +203,11 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
   if (m.includes('send failed')) return t('发送失败,请稍后重试', 'Send failed — please try again');
   if (m.includes('popup_closed')) return t('登录窗口已关闭', 'Sign-in window closed');
   if (m.includes('popup_failed_to_open')) return t('无法打开登录窗口,请检查浏览器弹窗拦截', 'Could not open sign-in window — check your popup blocker');
-  if (/invalid (wechat|qq|alipay|google) (code|token)/.test(m)) return t('第三方登录失败,请重试', 'Third-party sign-in failed — please try again');
-  if (m.includes('http 404') || /http 5\d\d/.test(m)) return t('服务暂时不可用,请稍后重试', 'Service temporarily unavailable — please try again');
+  if (m.includes('apple sign-in requires browser storage')) return t('请允许浏览器存储后重试 Apple 登录', 'Allow browser storage and try Apple sign-in again');
+  if (m.includes('apple authorization requires system browser')) return t('请更新 App 后在系统浏览器中完成 Apple 授权', 'Update the app and complete Apple authorization in the system browser');
+  if (m.startsWith('apple linking requires canonical site: ')) return t('请先在以下网站登录已有账号，再绑定 Apple：', 'Sign in to your existing account on this site before linking Apple: ') + raw.slice('Apple linking requires canonical site: '.length);
+  if (/invalid (wechat|qq|alipay|google|apple) (code|token|authorization|credential)/.test(m)) return t('第三方登录失败,请重试', 'Third-party sign-in failed — please try again');
+  if (m.includes('apple service unavailable') || m.includes('http 404') || /http 5\d\d/.test(m)) return t('服务暂时不可用,请稍后重试', 'Service temporarily unavailable — please try again');
   return raw;
 }
 
@@ -672,7 +717,7 @@ export function LoginForm({
   // reload 即自动亮。拿不到默认全开 email/phone/wca(退化成旧行为),google/三方拿不到凭据不乐观开。
   const [providers, setProviders] = useState<AuthProviders | null>(null);
   useEffect(() => { void fetchAuthProviders().then(setProviders); }, []);
-  const avail = providers ?? { email: true, phone: true, wca: true, googleClientId: null, googleRelayUrl: null, social: { wechat: null, qq: null, alipay: null } };
+  const avail = providers ?? { email: true, phone: true, wca: true, apple: false, googleClientId: null, googleRelayUrl: null, social: { wechat: null, qq: null, alipay: null } };
   const googleOn = !!(avail.googleClientId && avail.googleRelayUrl);
 
   // 主凭据区:邮箱(默认)/ 手机;仅邮箱未开放时落到手机。
@@ -703,8 +748,9 @@ export function LoginForm({
 
   // 国内三方:桌面/扫码整页跳授权页(navigated);手机支付宝唤起 App(页面不卸载 → 提示返回本页,
   // 切回时 refresh 拉回会话)。微信/QQ 内置浏览器直接引导去浏览器。(原 SocialPane 逻辑内联到此。)
-  const [socialBusy, setSocialBusy] = useState<SocialProvider | null>(null);
-  const [socialLaunched, setSocialLaunched] = useState<SocialProvider | null>(null);
+  const socialRedirect = useSocialRedirect();
+  const socialBusy = socialRedirect.busy;
+  const [socialLaunched, setSocialLaunched] = useState<RedirectAuthProvider | null>(null);
   const [socialError, setSocialError] = useState<string | null>(null);
   useEffect(() => {
     if (!socialLaunched) return;
@@ -713,19 +759,17 @@ export function LoginForm({
     window.addEventListener('focus', refresh);
     return () => { document.removeEventListener('visibilitychange', onVis); window.removeEventListener('focus', refresh); };
   }, [socialLaunched, refresh]);
-  const startSocial = async (p: SocialProvider) => {
+  const startSocial = async (p: RedirectAuthProvider) => {
     setSocialError(null);
     if (p === 'alipay' && isBlockedWebview()) {
       setSocialError(t('微信 / QQ 内暂不支持支付宝登录,请点右上角「···」在浏览器中打开。', 'Alipay sign-in does not work inside WeChat / QQ — open this page in your browser first.'));
       return;
     }
-    setSocialBusy(p);
     try {
-      const r = await startSocialLogin(p, 'login');
-      if (!r.navigated) { setSocialBusy(null); setSocialLaunched(p); }
+      const r = await socialRedirect.start(p, 'login');
+      if (r && !r.navigated) setSocialLaunched(p);
     } catch (e) {
       setSocialError(authErrorText(e instanceof Error ? e.message : String(e), t));
-      setSocialBusy(null);
     }
   };
 
@@ -745,7 +789,7 @@ export function LoginForm({
     );
   }
 
-  const activeSocials = SOCIALS.filter((s) => !!avail.social[s.key]);
+  const activeSocials = SOCIALS.filter((s) => s.key === 'apple' ? avail.apple : !!avail.social[s.key]);
   const hasCred = avail.email || avail.phone;
   const hasSso = !firstPartyOnly && (avail.wca || googleOn || activeSocials.length > 0);
 
@@ -772,11 +816,12 @@ export function LoginForm({
             <SsoButton icon={<GoogleGlyph size={ICON} />} busy={gBusy} label={t('用 Google 登录', 'Continue with Google')} mobileAuthProvider="google" onClick={() => void handleGoogleLogin()} />
           )}
           {activeSocials.map((s) => (
-            <SsoButton key={s.key} icon={<s.Glyph size={ICON} />} busy={socialBusy === s.key} label={t(`用${s.name.zh}登录`, `Continue with ${s.name.en}`)} mobileAuthProvider={s.key} onClick={() => void startSocial(s.key)} />
+            <SsoButton key={s.key} icon={<s.Glyph size={ICON} />} busy={socialBusy === s.key} label={s.key === 'apple' ? t('通过 Apple 登录', 'Continue with Apple') : t(`用${s.name.zh}登录`, `Continue with ${s.name.en}`)} mobileAuthProvider={s.key} onClick={() => void startSocial(s.key)} />
           ))}
         </div>
       )}
       {(gError || socialError) && <p className="auth-error auth-sso-error">{gError || socialError}</p>}
+      {socialBusy && <button type="button" className="auth-textbtn" onClick={socialRedirect.cancel}>{t('取消等待', 'Cancel waiting')}</button>}
     </>
   );
 }
@@ -843,11 +888,15 @@ const PROVIDER_LABEL: Record<string, { zh: string; en: string }> = {
  * 账号面板:已绑定身份 + 绑定新方式 + 解绑 + 设/改密码。只渲染于 /account。
  * 姓名与登出归宿主页头部管(那是页面级信息),这里只管凭据本身。
  */
-export function AccountPanel() {
+export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number | null }) {
   const lang = useLang();
+  const currentUid = useAuthStore((s) => s.user?.uid);
+  const appleAccountMismatch = expectedAppleUid !== undefined && (!expectedAppleUid || currentUid !== expectedAppleUid);
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const loginWithWca = useAuthStore((s) => s.loginWithWca);
   const [identities, setIdentities] = useState<Identity[] | null>(null);
+  const [identityLoadFailed, setIdentityLoadFailed] = useState(false);
+  const identityRequest = useRef(0);
   const [hasPassword, setHasPassword] = useState(false);
   // 本次会话刚用邮箱验证码登录 → 改 / 移除密码免输当前密码(忘了密码的人正是这样进来的)。
   const [canReset, setCanReset] = useState(false);
@@ -863,27 +912,44 @@ export function AccountPanel() {
   // googleClientId 拿不到没法弹窗,不能乐观开。
   const [providers, setProviders] = useState<AuthProviders | null>(null);
   useEffect(() => { void fetchAuthProviders().then(setProviders); }, []);
-  const avail = providers ?? { email: true, phone: true, wca: true, googleClientId: null, googleRelayUrl: null, social: { wechat: null, qq: null, alipay: null } };
+  const avail = providers ?? { email: true, phone: true, wca: true, apple: false, googleClientId: null, googleRelayUrl: null, social: { wechat: null, qq: null, alipay: null } };
   const googleOn = !!(avail.googleClientId && avail.googleRelayUrl);
   const [linkingGoogle, setLinkingGoogle] = useState(false);
-  const [linkingSocial, setLinkingSocial] = useState<SocialProvider | null>(null);
+  const socialRedirect = useSocialRedirect();
+  const linkingSocial = socialRedirect.busy;
   const [mergeMode, setMergeMode] = useState<'keep' | 'move' | null>(null);
   const [mergeCode, setMergeCode] = useState('');
   const [generatedMergeCode, setGeneratedMergeCode] = useState('');
   const [mergeBusy, setMergeBusy] = useState(false);
 
   const reload = useCallback(async () => {
-    const acct = await fetchIdentities();
-    setIdentities(acct.identities);
-    setHasPassword(acct.hasPassword);
-    setCanReset(acct.canResetPassword);
-  }, []);
+    const requestId = ++identityRequest.current;
+    setIdentityLoadFailed(false);
+    try {
+      const acct = await fetchIdentities();
+      if (requestId !== identityRequest.current || useAuthStore.getState().user?.uid !== currentUid) return;
+      setIdentities(acct.identities);
+      setHasPassword(acct.hasPassword);
+      setCanReset(acct.canResetPassword);
+    } catch {
+      if (requestId !== identityRequest.current || useAuthStore.getState().user?.uid !== currentUid) return;
+      setIdentities(null);
+      setHasPassword(false);
+      setCanReset(false);
+      setIdentityLoadFailed(true);
+    }
+  }, [currentUid]);
   useEffect(() => { void reload(); }, [reload]);
   // 手机支付宝唤起 App 绑定后切回本页时,重拉身份列表(同浏览器完成的绑定即刻反映)。
   useEffect(() => {
     const onVis = () => { if (document.visibilityState === 'visible') void reload(); };
+    const onFocus = () => { void reload(); };
     document.addEventListener('visibilitychange', onVis);
-    return () => document.removeEventListener('visibilitychange', onVis);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('focus', onFocus);
+    };
   }, [reload]);
 
   const hasWca = (identities ?? []).some((i) => i.provider === 'wca');
@@ -892,7 +958,7 @@ export function AccountPanel() {
   const hasEmail = (identities ?? []).some((i) => i.provider === 'email');
   const hasPhone = (identities ?? []).some((i) => i.provider === 'phone');
   const boundProviders = new Set((identities ?? []).map((i) => i.provider));
-  const availableSocials = SOCIALS.filter((s) => !!avail.social[s.key] && !boundProviders.has(s.key));
+  const availableSocials = SOCIALS.filter((s) => (s.key === 'apple' ? avail.apple : !!avail.social[s.key]) && !boundProviders.has(s.key));
 
   const doUnlink = async (provider: string, providerUid: string) => {
     setError(null);
@@ -929,19 +995,21 @@ export function AccountPanel() {
 
   // 国内三方绑定:桌面/微信扫码整页跳授权页;手机支付宝唤起 App(页面不卸载 → 收起 chip spinner,
   // 切回时上面的 visibilitychange 会 reload 拉到新绑定)。微信/QQ 内置浏览器直接引导去浏览器。
-  const linkSocialStart = async (provider: SocialProvider) => {
+  const linkSocialStart = async (provider: RedirectAuthProvider) => {
     setError(null);
+    if (provider === 'apple' && expectedAppleUid !== undefined
+      && (!expectedAppleUid || useAuthStore.getState().user?.uid !== expectedAppleUid)) {
+      setError(t('浏览器账号与 App 不一致，请退出后登录 App 中的同一账号再绑定。', 'This browser account differs from the app. Sign out and sign in to the same account before linking.'));
+      return;
+    }
     if (provider === 'alipay' && isBlockedWebview()) {
       setError(t('微信 / QQ 内暂不支持支付宝绑定,请在浏览器中打开本页。', 'Alipay linking does not work inside WeChat / QQ — open this page in your browser.'));
       return;
     }
-    setLinkingSocial(provider);
     try {
-      const r = await startSocialLogin(provider, 'link');
-      if (!r.navigated) setLinkingSocial(null); // 唤起了 App,页面还在
+      await socialRedirect.start(provider, 'link', provider === 'apple' ? expectedAppleUid ?? currentUid : undefined);
     } catch (e) {
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
-      setLinkingSocial(null);
     }
   };
 
@@ -975,8 +1043,20 @@ export function AccountPanel() {
 
   return (
     <>
+      {expectedAppleUid !== undefined ? (
+        <p className={appleAccountMismatch ? 'auth-error' : 'auth-hint'} role={appleAccountMismatch ? 'alert' : undefined}>
+          {appleAccountMismatch
+            ? t('浏览器账号与 App 不一致，请退出后登录 App 中的同一账号再绑定。', 'This browser account differs from the app. Sign out and sign in to the same account before linking.')
+            : t('浏览器账号与 App 一致。请主动点击 Apple 旁的绑定按钮完成授权。', 'This browser is signed in to the same account as the app. Choose Link next to Apple to authorize linking.')}
+        </p>
+      ) : null}
       <div className="auth-idlist">
-        {identities === null ? (
+        {identityLoadFailed ? (
+          <div role="alert">
+            <p className="auth-error">{t('无法读取账号信息，请重试或重新登录。', 'Could not load account details. Retry or sign in again.')}</p>
+            <button type="button" className="auth-textbtn" onClick={() => void reload()}>{t('重试', 'Retry')}</button>
+          </div>
+        ) : identities === null ? (
           <div className="auth-loading"><Loader2 size={ICON} className="auth-spin" /></div>
         ) : identities.length === 0 ? (
           <p className="auth-hint">{t('暂无已绑定的登录方式。', 'No linked login methods yet.')}</p>
@@ -1119,7 +1199,7 @@ export function AccountPanel() {
               <ProviderGlyph provider={s.key} />
               <span className="auth-idprov">{t(s.name.zh, s.name.en)}</span>
               <div className="auth-idactions">
-                <button type="button" className="auth-link" disabled={linkingSocial === s.key} onClick={() => void linkSocialStart(s.key)}>
+                <button type="button" className="auth-link" data-mobile-account-link={s.key === 'apple' ? s.key : undefined} disabled={linkingSocial === s.key || (s.key === 'apple' && appleAccountMismatch)} onClick={() => void linkSocialStart(s.key)}>
                   {linkingSocial === s.key ? <Loader2 size={12} className="auth-spin" /> : t('绑定', 'Link')}
                 </button>
               </div>
@@ -1128,6 +1208,7 @@ export function AccountPanel() {
         </div>
       )}
 
+      {linkingSocial && <button type="button" className="auth-textbtn" onClick={socialRedirect.cancel}>{t('取消等待', 'Cancel waiting')}</button>}
       {linking && (
         <CodeFlow channel={linking} mode="link" onDone={() => { setLinking(null); void reload(); }} />
       )}
@@ -1245,7 +1326,7 @@ export function DeleteAccountPanel({ backHref }: { backHref: string }) {
     void fetchIdentities().then((acct) => {
       setHandle(primaryHandle(acct.identities, user?.uid));
       setHasPassword(acct.hasPassword);
-    });
+    }).catch(() => setHandle(''));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

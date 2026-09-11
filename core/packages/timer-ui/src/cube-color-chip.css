@@ -1,0 +1,18 @@
+/* CubeColorChip —— 一两片贴纸的颜色。见同目录 .tsx 的头注。
+   边框色走 --chip-edge,调用方可以就地换一档(StageSolver 的槽位下拉就换了),
+   不给就用全站的 --border-strong。 */
+.ccc-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  width: 20px;
+  height: 13px;
+  gap: 1.5px;                       /* 缝隙透出背景色 = 两色间的竖分隔线 */
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--chip-edge, var(--border-strong));
+  border: 1px solid var(--chip-edge, var(--border-strong));
+  vertical-align: middle;
+  flex: 0 0 auto;
+}
+.ccc-chip > span { flex: 1 1 0; min-width: 0; }

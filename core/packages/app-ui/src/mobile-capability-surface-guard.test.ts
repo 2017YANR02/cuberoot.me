@@ -36,7 +36,7 @@ describe('Mobile capability surface guard', () => {
   });
 
   it('reuses the shared smart-cube guide and consumes an armed first turn before verification', () => {
-    const onMove = app.match(/onMove: \(move, timestamp, facelets\) => \{[\s\S]*?console\.info\('\[smart-cube\] move'/)?.[0];
+    const onMove = app.match(/onMove: \(move, timestamp, facelets\) => \{[\s\S]*?(?=\n    onSolved:)/)?.[0];
 
     expect(onMove).toBeDefined();
     expect(onMove).toContain('if (timerModeRef.current !== 1)');
@@ -48,6 +48,8 @@ describe('Mobile capability surface guard', () => {
     expect(onMove).toContain('smartCubeGuidanceController.setRunning(true)');
     expect(onMove).toContain('smartCubeGuidanceController.observe(facelets)');
     expect(onMove).toContain('observation.completedNow');
+    expect(onMove).toContain("settings.bluetoothAutoReady === 'scrambled'");
+    expect(onMove).toContain('smartCubeAnchorController.move(move)');
     expect(onMove!.indexOf('timer.startFromCube(timestamp)'))
       .toBeLessThan(onMove!.indexOf('smartCubeGuidanceController.observe(facelets)'));
     expect(onMove!.indexOf("timerPhaseRef.current === 'running'"))
@@ -75,7 +77,10 @@ describe('Mobile capability surface guard', () => {
     expect(app).toContain('actionBusy={retryingPendingSolve}');
     expect(app).toContain('copy.saveFailed(pendingSolves.length)');
     expect(app).toMatch(/timer\.stopFromCube\(timestamp\)\) timerPhaseRef\.current = 'stopped'/);
-    expect(app.match(/timer\.armFromCube\(\)/g)).toHaveLength(1);
+    // Scramble verification and the shared still/double-flick gesture are the
+    // two explicit ready sources; neither may bypass the shared controller.
+    expect(app.match(/timer\.armFromCube\(\)/g)).toHaveLength(2);
+    expect(app).toContain('useAutoReady({');
     expect(battleModes.match(/timer\.armFromCube\(\)/g)).toHaveLength(1);
   });
 });
