@@ -1,3 +1,5 @@
+import { ACCOUNT_LOCATION_REQUIREMENTS } from './data/account_location_requirements';
+
 // 内部账号相关的纯逻辑(无 DB / 无 crypto 依赖),前后端共用 + 可单测。
 // 后端 apps/api/src/utils/account.ts 从这里再导出,前端可直接 import 校验输入。
 
@@ -92,6 +94,9 @@ export const ACCOUNT_GENDERS = ['male', 'female', 'nonbinary', 'other', 'undiscl
 export type AccountGender = (typeof ACCOUNT_GENDERS)[number];
 
 export interface AccountBasicProfile {
+  /** Server-derived exemption for authors who participated before the profile rule. */
+  forumProfileExempt?: boolean;
+  forumBanned?: boolean;
   fullName: string | null;
   birthDate: string | null;
   gender: AccountGender | null;
@@ -163,4 +168,15 @@ export function isValidAccountLocation(
 // 前后端共用同一判据。真正的抗爆破靠服务端 scrypt 慢哈希 + 每 IP 限流。
 export function isValidPassword(pw: unknown): pw is string {
   return typeof pw === 'string' && pw.length >= 8 && pw.length <= 128;
+}
+
+/** Saved private profile required for forum replies; unavailable location inputs are exempt. */
+export function isForumReplyProfileComplete(profile: AccountBasicProfile | null, todayIso: string): boolean {
+  if (!profile || !profile.fullName?.trim() || !isValidDisplayName(profile.fullName)
+    || !isValidBirthDate(profile.birthDate, todayIso) || !isAccountGender(profile.gender)
+    || !profile.countryIso2 || !Object.hasOwn(ACCOUNT_LOCATION_REQUIREMENTS, profile.countryIso2)) return false;
+  const regions = ACCOUNT_LOCATION_REQUIREMENTS[profile.countryIso2];
+  if (Object.keys(regions).length === 0) return true;
+  if (!profile.regionCode || !Object.hasOwn(regions, profile.regionCode)) return false;
+  return !regions[profile.regionCode] || Boolean(profile.cityName?.trim() && isValidAccountCityName(profile.cityName));
 }

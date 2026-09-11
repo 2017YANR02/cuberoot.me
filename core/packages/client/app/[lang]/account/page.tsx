@@ -29,6 +29,7 @@ import {
   ACCOUNT_BIRTH_DATE_MIN,
   DISPLAY_NAME_MAX_LENGTH,
   isValidDisplayName,
+  isForumReplyProfileComplete,
   normalizeDisplayName,
   type AccountBasicProfile,
   type AccountGender,
@@ -453,7 +454,16 @@ function BasicProfileEditor() {
   return (
     <form className="account-basic-profile" onSubmit={(event) => { event.preventDefault(); void save(); }}>
       <p className="auth-hint account-basic-profile-privacy">
-        {t('以下资料默认不公开，仅用于账户归属与后续认领核验。', 'These details are private by default and are used for account ownership and future claim verification.')}
+        {t('以下资料默认不公开，用于账户归属、认领核验和论坛评论资格校验。', 'These details are private by default and are used for account ownership, claim verification and forum comment eligibility.')}
+      </p>
+      <p className="auth-hint" role="status">
+        {profile.forumBanned
+          ? t('你的账号已被禁止在论坛发帖和评论。', 'Your account is banned from posting and commenting in the forum.')
+          : profile.forumProfileExempt
+          ? t('你在新规前已参与论坛，可继续评论，无需补填资料。', 'You participated before the new rule and can continue commenting without completing these details.')
+          : isForumReplyProfileComplete(profile, today)
+          ? t('已保存的资料完整，可以在论坛评论。', 'Your saved profile is complete. You can comment in the forum.')
+          : t('论坛评论前请填写并保存姓名、出生日期、性别、国家、省份和城市；没有可选省市的地区无需填写对应项。', 'Before commenting, save your name, birth date, gender, country, state and city. Location fields without available options are exempt.')}
       </p>
       <div className="account-basic-profile-field">
         <label className="auth-label" htmlFor="account-full-name">{t('姓名', 'Name')}</label>

@@ -1,9 +1,12 @@
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 // 内部账号纯逻辑回归。核心安全不变量:合成归属键 `u<uid>` 永远不会与真实 WCA id 撞
 // (业务表 801 处仍以 wcaId 为主键,撞了就会串号 / 越权),外加邮箱 / 手机的规范化 + 校验。
 import { describe, it, expect } from 'vitest';
 import {
   ownerKey, isWcaIdFormat, normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
   DISPLAY_NAME_MAX_LENGTH, displayNameLength, normalizeDisplayName, isValidDisplayName,
+  isForumReplyProfileComplete, type AccountBasicProfile,
   ACCOUNT_BIRTH_DATE_MIN, isAccountGender, isValidBirthDate,
   normalizeCountryIso2, isValidCountryIso2,
   normalizeAccountRegionCode, normalizeAccountCityName, isValidAccountLocation,
@@ -137,5 +140,37 @@ describe('站内用户名规范化 + 校验', () => {
     expect(isValidDisplayName('name\u202Eabc')).toBe(false);
     expect(isValidDisplayName('name\uD800')).toBe(false);
     expect(isValidDisplayName(undefined)).toBe(false);
+  });
+});
+
+describe('forum reply profile completeness', () => {
+  const profile: AccountBasicProfile = { fullName: 'Test User', birthDate: '2000-01-01', gender: 'male', countryIso2: 'CN', regionCode: 'GD', cityName: 'Shenzhen', countrySource: 'self' };
+  const complete = (patch: Partial<AccountBasicProfile>) => isForumReplyProfileComplete({ ...profile, ...patch }, '2026-09-11');
+  it('requires valid saved identity fields and location selections', () => {
+    expect(complete({})).toBe(true);
+    expect(isForumReplyProfileComplete(null, '2026-09-11')).toBe(false);
+    for (const field of ['fullName', 'birthDate', 'gender', 'countryIso2', 'regionCode', 'cityName']) {
+      expect(complete({ [field]: null })).toBe(false);
+    }
+    expect(complete({ fullName: '   ' })).toBe(false);
+    expect(complete({ birthDate: '2026-09-12' })).toBe(false);
+    expect(complete({ countryIso2: 'ZZ' })).toBe(false);
+    expect(complete({ regionCode: 'INVALID' })).toBe(false);
+    expect(complete({ cityName: '   ' })).toBe(false);
+  });
+  it('matches every available country, state and city exemption in the account form', () => {
+    const directory = join(__dirname, '../public/account-locations');
+    for (const filename of readdirSync(directory).filter(name => name.endsWith('.json'))) {
+      const countryIso2 = filename.slice(0, -5);
+      const regions: Array<{ code: string; cities: string[] }> = JSON.parse(readFileSync(join(directory, filename), 'utf8'));
+      expect(complete({ countryIso2, regionCode: null, cityName: null })).toBe(regions.length === 0);
+      for (const region of regions) {
+        expect(complete({ countryIso2, regionCode: region.code, cityName: null })).toBe(region.cities.length === 0);
+        if (region.cities.length) expect(complete({ countryIso2, regionCode: region.code, cityName: region.cities[0] })).toBe(true);
+      }
+    }
+  });
+  it('accepts countries without selectable states', () => {
+    expect(complete({ countryIso2: 'AQ', regionCode: null, cityName: null })).toBe(true);
   });
 });

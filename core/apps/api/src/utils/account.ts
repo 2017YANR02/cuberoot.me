@@ -254,7 +254,17 @@ export async function getUserById(id: number): Promise<AppUser | null> {
   return firstAppUser(rows);
 }
 
+// Fixed policy boundary: later threads/replies must never create an exemption.
+// Use original post timestamps so account linking/merging preserves earlier participation.
+const FORUM_PROFILE_EXEMPT_SQL = `EXISTS (
+  SELECT 1 FROM forum_posts p
+  WHERE p.author_id IN ('u' || app_users.id::text, app_users.wca_id)
+    AND p.created_at < TIMESTAMPTZ '2026-09-11 09:20:14+00'
+) AS "forumProfileExempt"`;
+
 type AccountBasicProfileRow = {
+  forumProfileExempt: boolean;
+  forumBanned: boolean;
   fullName: string | null;
   birthDate: string | null;
   gender: AccountGender | null;
@@ -266,6 +276,8 @@ type AccountBasicProfileRow = {
 
 function basicProfileFromRow(row: AccountBasicProfileRow): AccountBasicProfile {
   return {
+    forumProfileExempt: row.forumProfileExempt,
+    forumBanned: row.forumBanned,
     fullName: row.fullName,
     birthDate: row.birthDate,
     gender: row.gender,
@@ -280,7 +292,7 @@ export async function getAccountBasicProfile(id: number): Promise<AccountBasicPr
   const rows = await query<AccountBasicProfileRow>(
     `SELECT full_name AS "fullName", birth_date::text AS "birthDate", gender,
             country_iso2 AS "countryIso2", region_code AS "regionCode",
-            city_name AS "cityName", wca_id AS "wcaId"
+            city_name AS "cityName", wca_id AS "wcaId", ${FORUM_PROFILE_EXEMPT_SQL}, forum_banned AS "forumBanned"
      FROM app_users WHERE id = ?`,
     [id],
   );
@@ -307,7 +319,7 @@ export async function updateAccountBasicProfile(
      WHERE id = ?
      RETURNING full_name AS "fullName", birth_date::text AS "birthDate", gender,
                country_iso2 AS "countryIso2", region_code AS "regionCode",
-               city_name AS "cityName", wca_id AS "wcaId"`,
+               city_name AS "cityName", wca_id AS "wcaId", ${FORUM_PROFILE_EXEMPT_SQL}, forum_banned AS "forumBanned"`,
     [
       profile.fullName !== undefined, profile.fullName ?? null,
       profile.birthDate, profile.gender, profile.countryIso2,
