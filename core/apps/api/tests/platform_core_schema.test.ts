@@ -163,14 +163,26 @@ describe('main-site Platform PostgreSQL schema', () => {
       .map((match) => match[1]);
     const schemaTables = [...schema.matchAll(/^CREATE TABLE (platform_[a-z0-9_]+) \(/gm)]
       .map((match) => match[1]);
+    const laterMigrations = await Promise.all([
+      '0202_qr_card_designs.sql',
+      '0224_online_competitions.sql',
+      '0225_competition_evidence.sql',
+      '0226_competition_settlement_ledger.sql',
+      '0227_competition_device_reports.sql',
+      '0229_organizer_applications.sql',
+    ].map((filename) => read(`../migrations/${filename}`)));
+    const laterTables = laterMigrations.flatMap((source) =>
+      [...source.matchAll(/^CREATE TABLE (platform_[a-z0-9_]+) \(/gm)].map((match) => match[1]));
     expect(migrationTables).toEqual(PLATFORM_TABLES);
-    expect(schemaTables.filter((table) => table !== 'platform_qr_card_designs')).toEqual(PLATFORM_TABLES);
+    expect(schemaTables.filter((table) => !laterTables.includes(table))).toEqual(PLATFORM_TABLES);
+    expect(schemaTables.filter((table) => laterTables.includes(table))).toEqual(laterTables);
     expect(new Set(migrationTables).size).toBe(62);
-    expect(new Set(schemaTables).size).toBe(63);
+    expect(laterTables).toHaveLength(9);
+    expect(new Set(schemaTables).size).toBe(71);
     expect(schemaTables).toContain('platform_qr_card_designs');
     expect(schema.indexOf('CREATE TABLE app_users')).toBeLessThan(schema.indexOf('CREATE TABLE platform_instructors'));
     expect(schema.indexOf('CREATE TABLE teacher_directory_entries')).toBeLessThan(schema.indexOf('CREATE TABLE platform_instructors'));
-    for (const table of PLATFORM_TABLES) {
+    for (const table of schemaTables) {
       expect(devSchema).toContain(`'${table}'`);
     }
     expect(devSchema).toContain("{ name: 'platform_qr_card_designs'");
