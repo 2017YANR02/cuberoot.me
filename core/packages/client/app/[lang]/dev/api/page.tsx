@@ -742,7 +742,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'forum', m: 'POST', p: '/v1/forum/video', g: 'login', zh: '上传论坛短视频(原始文件流，服务端校验格式、大小与时长)', en: 'Upload forum short video (raw stream with server-side format, size, and duration validation)' },
   { d: 'forum', m: 'DELETE', p: '/v1/forum/video/:id', g: 'login', zh: '删除本人尚未发布的论坛视频', en: 'Delete one of your unattached forum-video uploads' },
   { d: 'forum', m: 'GET', p: '/v1/forum/video/:token', g: 'public', zh: '播放已绑定且可见的论坛视频，支持 Range', en: 'Stream an attached, visible forum video with Range support' },
-  { d: 'forum', m: 'POST', p: '/v1/forum/posts', g: 'login', zh: '回帖(须完整个人资料，锁帖仅管理员)', en: 'Reply (complete profile required; locked threads admin-only)' },
+  { d: 'forum', m: 'POST', p: '/v1/forum/posts', g: 'login', zh: '回帖(新参与者须完整个人资料，锁帖仅管理员)', en: 'Reply (new participants need a complete profile; locked threads admin-only)' },
   { d: 'forum', m: 'PATCH', p: '/v1/forum/posts/:id', g: 'login', zh: '编辑自己的帖子', en: 'Edit own post' },
   { d: 'forum', m: 'DELETE', p: '/v1/forum/posts/:id', g: 'login', zh: '软删帖子(首帖禁单删)', en: 'Soft-delete post (not the first post)' },
   { d: 'forum', m: 'PATCH', p: '/v1/forum/threads/:id', g: 'login', zh: '改标题;置顶 / 锁帖仅管理员', en: 'Edit title; pin/lock admin-only' },
