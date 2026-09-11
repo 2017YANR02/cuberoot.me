@@ -2,6 +2,7 @@
 // Same shape as lib/recon-api.ts: API_BASE + authHeaders/handleApi.
 
 import type { ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
+import { tr } from '@/i18n/tr';
 import { API_ORIGIN } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
@@ -136,6 +137,7 @@ export interface ForumPost {
 }
 
 export interface PostAuthor {
+  forumBanned: boolean;
   name: string;
   avatarUrl: string | null;
   avatarPreset: ClawdAvatarPresetId | null;
@@ -217,6 +219,7 @@ function originForUrl(): string {
 
 async function apiGet<T>(path: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(`${API_BASE}${path}`, originForUrl());
+  url.searchParams.set('v', '2');
   for (const [k, v] of Object.entries(params)) {
     if (v) url.searchParams.set(k, v);
   }
@@ -228,7 +231,12 @@ async function apiSend<T>(method: string, path: string, body?: unknown): Promise
     method,
     headers: authHeaders(body !== undefined),
     body: body !== undefined ? JSON.stringify(body) : undefined,
-  }));
+  })).catch((error: Error) => {
+    if (error.message === 'FORUM_BANNED') {
+      throw new Error(tr({ zh: '你的账号已被禁止在论坛发帖和评论。', en: 'Your account is banned from posting and commenting in the forum.' }));
+    }
+    throw error;
+  });
 }
 
 export async function fetchForumIndex(): Promise<ForumIndexData> {
@@ -373,4 +381,8 @@ export async function moderateReview(
   type: 'thread' | 'post', id: number, action: 'approve' | 'reject', reason?: string,
 ): Promise<{ ok: boolean }> {
   return apiSend('POST', `/review/${type}/${id}/${action}`, action === 'reject' ? { reason } : undefined);
+}
+
+export async function setForumBan(userId: number, banned: boolean): Promise<{ ok: boolean; banned: boolean }> {
+  return apiSend('PUT', `/users/${userId}/ban`, { banned });
 }

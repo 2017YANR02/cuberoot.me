@@ -13,7 +13,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { useAuthStore, useIsAdmin, useOwnerKey } from '@/lib/auth-store';
 import {
-  fetchThread, createPost, updatePost, deletePost, deleteThread, updateThread,
+  setForumBan, fetchThread, createPost, updatePost, deletePost, deleteThread, updateThread,
   reactToPost, trackThreadView, reportPost, moderateReview,
   type ThreadPageData, type ForumPost, type ReactionKind,
 } from '@/lib/forum-api';
@@ -165,6 +165,20 @@ export default function ThreadClient() {
     await updatePost(editingPost.id, editText.trim());
     setEditingPost(null);
     await load(data.thread.id, page, size);
+  };
+
+  const handleToggleBan = async (userId: number, banned: boolean) => {
+    if (!data || !isAdmin) return;
+    const message = banned
+      ? tr({ zh: '确定拉黑此用户？该账号将无法继续发帖、评论或编辑内容，已有帖子保留。', en: 'Ban this user? They will no longer be able to post, comment or edit content. Existing posts will remain.' })
+      : tr({ zh: '确定解除拉黑此用户？', en: 'Unban this user?' });
+    if (!window.confirm(message)) return;
+    try {
+      await setForumBan(userId, banned);
+      await load(data.thread.id, page, size);
+    } catch {
+      alert(tr({ zh: '操作失败，请刷新页面后重试。管理员账号不能被拉黑。', en: 'Could not update the ban. Refresh and try again. Staff accounts cannot be banned.' }));
+    }
   };
 
   const handleDeletePost = async (post: ForumPost) => {
@@ -409,6 +423,7 @@ export default function ThreadClient() {
                 onDelete={handleDeletePost}
                 onReact={handleReact}
                 onReport={handleReport}
+                onToggleBan={isAdmin && post.authorId !== myKey ? handleToggleBan : undefined}
                 onModerate={isAdmin ? (p, action) => handleModerate('post', p.id, action) : undefined}
                 bodyOverride={editingPost?.id === post.id ? (
                   <div className="forum-post-editwrap">
