@@ -167,6 +167,29 @@
   color: var(--accent);
 }
 
+/* 平板与电脑提高阅读字号；手机保留现有紧凑布局。 */
+@media (min-width: 641px) {
+  .ongoing-comps-tab,
+  .ongoing-comps-chip {
+    font-size: 0.9375rem;
+  }
+  .ongoing-comps-date,
+  .ongoing-comps-scope {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ongoing-comps-tab,
+  .ongoing-comps-chip {
+    font-size: 1rem;
+  }
+  .ongoing-comps-date,
+  .ongoing-comps-scope {
+    font-size: 0.875rem;
+  }
+}
+
 @media (max-width: 640px) {
   .ongoing-comps {
     margin-top: -1rem;

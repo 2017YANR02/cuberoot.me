@@ -58,7 +58,7 @@ export const SITE_DIRECTORY_TEXTS = {
   sim: { en: 'Sim', zh: '模拟' },
   space: { en: 'Cube space', zh: '魔方空间' },
   paperOdyssey: { en: 'Paper Odyssey', zh: '山河滑行' },
-  compSim: { en: 'Comp Sim', zh: '比赛模拟' },
+  compSim: { en: 'Competition Practice', zh: '赛前训练' },
   icon: { en: 'Icons', zh: '图标' },
   comp: { en: 'Comp', zh: '比赛' },
   theoryGroup: { en: 'Math', zh: '数学' },

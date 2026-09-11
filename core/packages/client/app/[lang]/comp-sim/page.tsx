@@ -1,1069 +1,1237 @@
 'use client';
 
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent as ReactKeyboardEvent,
-} from 'react';
-import { useParams } from 'next/navigation';
-import {
+  ArrowRight,
+  BookOpen,
+  Check,
   CircleAlert,
-  FastForward,
-  LogIn,
-  RotateCcw,
-  Share2,
-  Trophy,
+  Flag as FinishFlag,
+  History,
+  Play,
+  Target,
 } from 'lucide-react';
 import {
   fromWcaSpelling,
   parseTimerEntry,
+  roundAttempts,
   roundResult,
   type RoundConfig,
-  type Solve,
 } from '@cuberoot/shared/timer';
 import BackHome from '@/components/BackHome';
 import BoolToggle from '@/components/BoolToggle';
+import { ClearButton } from '@/components/ClearButton';
 import { CompPicker } from '@/components/CompPicker';
+import { CompCell } from '@/components/CompCell/CompCell';
 import { Flag } from '@/components/Flag';
 import HeaderToggles from '@/components/HeaderToggles';
 import PersonLink from '@/components/PersonLink';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
-import { displayCuberName } from '@/lib/cuber-name-display';
-import { localizeCompName } from '@/lib/comp-localize';
+import Paginator from '@/components/wca-stats/Paginator';
+import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { loadFlagData } from '@/lib/country-flags';
 import type { Comp } from '@/lib/comp-search';
 import { roundTypeName } from '@/lib/comp-schedule';
-import {
-  fetchCompWcif,
-  type CompWcifRound,
-} from '@/lib/comp-wcif';
-import {
-  advancesFromRound,
-  buildCompSimLeaderboard,
-  callupDelayMs,
-  COMP_SIM_ACTIVE_VERSION,
-  expectedAttemptCount,
-  filterNextRoundOfficialRows,
-  hasCrossRoundCumulativeLimit,
-  isValidCompSimActiveSnapshot,
-  matchPublishedCompSimRounds,
-  makeCompSimSolve,
-  roundConfigFromWcif,
-  selectPlayableScrambleGroup,
-  shouldDuplicateScramble,
-  SUPPORTED_COMP_SIM_EVENTS,
-  type CompSimLeaderboardRow,
-  type PlayableScrambleGroup,
-} from '@/lib/comp-sim';
-import {
-  COMP_SIM_MEDIA,
-  type CompSimCrowdVideo,
-  type CompSimInspectionVoice,
-} from '@/lib/comp-sim-media';
-import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { fetchCompWcif } from '@/lib/comp-wcif';
+import { fetchWcaResults, fetchWcaScrambles } from '@/lib/wca-results-api';
+import { fetchWcaPerson } from '@/lib/wca-person-api';
 import { eventDisplayName, toWcaEventId } from '@/lib/wca-events';
 import { formatWcaResult } from '@/lib/wca-format-result';
-import { fetchWcaPerson } from '@/lib/wca-person-api';
-import {
-  fetchWcaResults,
-  fetchWcaScrambles,
-  type WcaResultRow,
-} from '@/lib/wca-results-api';
 import { persistItem } from '@/lib/safe-storage';
-import { tr } from '@/i18n/tr';
+import {
+  buildCompSimLeaderboard,
+  expectedAttemptCount,
+  hasCrossRoundCumulativeLimit,
+  isPracticeRecord,
+  isPracticeSession,
+  makeCompSimSolve,
+  matchPublishedCompSimRounds,
+  PRACTICE_ISSUES,
+  PRACTICE_VERSION,
+  practiceRecord,
+  practiceTargetDelta,
+  roundConfigFromWcif,
+  selectPlayableScrambleGroup,
+  SUPPORTED_COMP_SIM_EVENTS,
+  type PracticeIssue,
+  type PracticeRecord,
+  type PracticeRound,
+  type PracticeSession,
+} from '@/lib/comp-sim';
+import { tr, useLang } from '@/i18n/tr';
 import './comp-sim.css';
 
-type Stage = 'setup' | 'loading' | 'waiting' | 'called' | 'ready' | 'entry' | 'results';
-
-interface RoundBundle {
-  detail: CompWcifRound;
-  config: RoundConfig;
-  roundTypeId: string;
-  officialRows: WcaResultRow[];
-  group: PlayableScrambleGroup;
-}
-
-interface SimOptions {
-  inspectionVoice: boolean;
-  ambiance: boolean;
-  distractions: boolean;
-  announcements: boolean;
-  duplicateScrambles: boolean;
-  visuals: boolean;
-  stationary: boolean;
-  maxWaitMinutes: number;
-}
-
-interface SavedRound {
-  key: string;
-  competition: string;
-  event: string;
-  round: string;
-  rank: number;
-  result: string;
-  at: number;
-}
-
-interface ActiveSimulation {
-  version: typeof COMP_SIM_ACTIVE_VERSION;
-  wcaId: string;
-  competition: Comp;
-  eventId: string;
-  options: SimOptions;
-  rounds: RoundBundle[];
-  roundIndex: number;
-  solves: Solve[];
-  currentScramble: string;
-  usedExtras: number;
-  tableNumber: number;
-  stage: Exclude<Stage, 'setup' | 'loading'>;
-  callupAt: number | null;
-  inspectionStartedAt: number | null;
-  inspectionVoice: CompSimInspectionVoice | null;
-  crowdVideo: CompSimCrowdVideo | null;
-  personalRecords: { single: number | null; average: number | null };
-}
-
-const SAVED_KEY = 'cuberoot-comp-sim-results-v1';
-const ACTIVE_KEY = 'cuberoot-comp-sim-active-v1';
-const DEFAULT_OPTIONS: SimOptions = {
-  inspectionVoice: true,
-  ambiance: false,
-  distractions: false,
-  announcements: true,
-  duplicateScrambles: true,
-  visuals: false,
-  stationary: false,
-  maxWaitMinutes: 3,
+const HISTORY_KEY = 'cuberoot-competition-practice-history-v2';
+const ACTIVE_PREFIX = 'cuberoot-competition-practice-active-v2:';
+const LOCAL_CONFIG: RoundConfig = {
+  on: true,
+  format: 'ao5',
+  cutoffMs: null,
+  cutoffAttempts: 0,
+  limitMs: null,
+  cumulative: false,
 };
 
-function speak(text: string): void {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-US';
-  window.speechSynthesis.speak(utterance);
-}
-
-function randomItem<T>(items: readonly T[]): T | null {
-  if (items.length === 0) return null;
-  return items[Math.min(items.length - 1, Math.floor(Math.random() * items.length))] ?? null;
-}
-
-function stopAudio(audio: HTMLAudioElement | null): void {
-  if (!audio) return;
-  audio.pause();
-  audio.removeAttribute('src');
-  audio.load();
-}
-
-function playClip(src: string, volume: number, fallback?: () => void): HTMLAudioElement | null {
-  if (!src || typeof Audio === 'undefined') {
-    fallback?.();
+function readJson(key: string): unknown {
+  try {
+    return JSON.parse(localStorage.getItem(key) ?? 'null');
+  } catch {
     return null;
   }
-  const audio = new Audio(src);
-  audio.volume = volume;
-  void audio.play().catch(() => fallback?.());
-  return audio;
 }
-
-function attemptText(
-  value: number,
-  eventId: string,
-  dropped: boolean,
-): string {
-  const formatted = formatWcaResult(value, eventId, 'single', { zero: 'empty' });
-  return dropped && formatted ? `(${formatted})` : formatted;
+function readHistory(): PracticeRecord[] {
+  const value = readJson(HISTORY_KEY);
+  return Array.isArray(value) ? value.filter(isPracticeRecord) : [];
 }
-
-function resultText(row: CompSimLeaderboardRow, eventId: string, averageFormat: boolean): string {
-  return formatWcaResult(
-    averageFormat ? row.average : row.best,
-    eventId,
-    averageFormat ? 'average' : 'single',
+function displayMs(ms: number | null, event: string, average = false): string {
+  return (
+    formatWcaResult(
+      ms === null ? 0 : Number.isFinite(ms) ? Math.round(ms / 10) : -1,
+      event,
+      average ? 'average' : 'single',
+      { zero: 'empty' },
+    ) || '—'
   );
 }
+function targetLabel(record: Pick<PracticeRecord, 'solves' | 'config' | 'targetMs' | 'eventId'>): string {
+  if (record.targetMs === null) return tr({ zh: '未设置目标', en: 'No target set' });
+  const delta = practiceTargetDelta(record.solves, record.config, record.targetMs);
+  if (delta === null) return tr({ zh: '本轮没有可比较的有效成绩', en: 'No valid round result to compare' });
+  if (delta === 0) return tr({ zh: '达到目标', en: 'Target reached' });
+  const gap = displayMs(Math.abs(delta), record.eventId, true);
+  return delta < 0
+    ? tr({ zh: `比目标快 ${gap}`, en: `${gap} faster than target` })
+    : tr({ zh: `距目标还差 ${gap}`, en: `${gap} above target` });
+}
 
-function loadSavedRounds(): SavedRound[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const parsed = JSON.parse(localStorage.getItem(SAVED_KEY) || '[]') as unknown;
-    return Array.isArray(parsed) ? parsed.filter((row): row is SavedRound => (
-      !!row && typeof row === 'object' && typeof (row as SavedRound).key === 'string'
-    )) : [];
-  } catch {
-    return [];
-  }
+// Page-local review: all arithmetic comes from the shared round engine.
+function RoundReview({ record }: { record: PracticeRecord }) {
+  const result = roundResult(record.solves, record.config);
+  const average = record.config.format === 'ao5' || record.config.format === 'mo3';
+  const finite = result.list.flatMap((attempt) =>
+    attempt.ms !== null && Number.isFinite(attempt.ms) ? [attempt.ms] : [],
+  );
+  const longest = Math.max(1, ...finite);
+  const issues = Object.keys(PRACTICE_ISSUES).filter(
+    (issue) => issue !== 'none' && record.issues.includes(issue as PracticeIssue),
+  ) as PracticeIssue[];
+  return (
+    <div className="practice-review">
+      <div className="practice-metrics">
+        <div>
+          <span>
+            {average
+              ? tr({ zh: '本轮平均', en: 'Round average' })
+              : tr({ zh: '本轮成绩', en: 'Round result' })}
+          </span>
+          <strong>{displayMs(result.official, record.eventId, average)}</strong>
+        </div>
+        <div>
+          <span>{tr({ zh: '最佳单次', en: 'Best attempt' })}</span>
+          <strong>{displayMs(result.best, record.eventId)}</strong>
+        </div>
+        <div>
+          <span>{tr({ zh: '目标成绩', en: 'Target result' })}</span>
+          <strong>{displayMs(record.targetMs, record.eventId, average)}</strong>
+        </div>
+      </div>
+      <p className="practice-target-message">
+        <Target size={18} aria-hidden="true" />
+        {targetLabel(record)}
+      </p>
+      {result.endedBy === 'cutoff' && (
+        <p role="status">
+          {tr({
+            zh: '本轮未达到及格线，已按轮次规则结束；未进行的单次不计为 DNS。',
+            en: 'The cutoff was missed, so this round ended early. Unattempted solves do not count as DNS.',
+          })}
+        </p>
+      )}
+      {result.endedBy === 'limit' && (
+        <p role="status">
+          {tr({
+            zh: '本轮已达到累计时限，后续单次按轮次规则处理。',
+            en: 'The cumulative time limit ended this round. Remaining attempts follow the round rules.',
+          })}
+        </p>
+      )}
+      <h3>{tr({ zh: '逐把记录', en: 'Attempt breakdown' })}</h3>
+      <ol className="practice-attempts">
+        {result.list.map((attempt, index) => (
+          <li key={index}>
+            <div className="practice-attempt-row">
+              <span className="practice-attempt-number">{index + 1}</span>
+              <span className="practice-bar-track" aria-hidden="true">
+                <span
+                  style={{
+                    width: `${attempt.ms !== null && Number.isFinite(attempt.ms) ? (attempt.ms / longest) * 100 : 0}%`,
+                  }}
+                />
+              </span>
+              <strong>{displayMs(attempt.ms, record.eventId)}</strong>
+              {attempt.solve?.penalty === '+2' && <span className="practice-penalty">+2</span>}
+            </div>
+            {attempt.overLimit && <p>{tr({ zh: '超过时限', en: 'Time limit exceeded' })}</p>}
+            {record.issues[index] && record.issues[index] !== 'none' && (
+              <p>{tr(PRACTICE_ISSUES[record.issues[index]])}</p>
+            )}
+            {attempt.solve?.comment && <p className="practice-note">{attempt.solve.comment}</p>}
+            {attempt.solve && (
+              <details>
+                <summary>{tr({ zh: '查看本把打乱', en: 'View scramble' })}</summary>
+                <p className="practice-scramble-small">{attempt.solve.scramble}</p>
+              </details>
+            )}
+          </li>
+        ))}
+      </ol>
+      <h3>{tr({ zh: '下次关注', en: 'Focus for next time' })}</h3>
+      {issues.length ? (
+        <ul className="practice-focus-list">
+          {issues.map((issue) => (
+            <li key={issue}>
+              {tr(PRACTICE_ISSUES[issue])}
+              <strong>
+                {record.issues.filter((item) => item === issue).length} / {record.solves.length}
+              </strong>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>
+          {tr({
+            zh: '本轮没有记录失误。下次可在录入成绩时留下一条观察。',
+            en: 'No issues were noted this round. Add an observation with your next attempt.',
+          })}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export default function CompSimPage() {
-  const params = useParams();
-  const isZh = params?.lang === 'zh';
+  const isZh = useLang() === 'zh';
   const user = useAuthUser();
   const loginWithWca = useAuthStore((state) => state.loginWithWca);
+  const owner = user?.wcaId || 'guest';
+  const [source, setSource] = useState<'generated' | 'historical'>('generated');
   const [competitionInput, setCompetitionInput] = useState('');
   const [competition, setCompetition] = useState<Comp | null>(null);
-  const [eventId, setEventId] = useState('');
-  const [options, setOptions] = useState(DEFAULT_OPTIONS);
-  const [stage, setStage] = useState<Stage>('setup');
-  const [status, setStatus] = useState('');
+  const [eventId, setEventId] = useState('333');
+  const [target, setTarget] = useState('');
+  const [voice, setVoice] = useState(false);
+  const [session, setSession] = useState<PracticeSession | null>(null);
+  const [resume, setResume] = useState<PracticeSession | null>(null);
+  const [history, setHistory] = useState<PracticeRecord[]>([]);
+  const [legacy, setLegacy] = useState<
+    { key: string; competition: string; event: string; round: string; result: string }[]
+  >([]);
+  const [comparisonPage, setComparisonPage] = useState(1);
+  const [comparisonSize, setComparisonSize] = useState(50);
+  const [review, setReview] = useState<PracticeRecord | null>(null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [toast, setToast] = useState('');
-  const [rounds, setRounds] = useState<RoundBundle[]>([]);
-  const [roundIndex, setRoundIndex] = useState(0);
-  const [solves, setSolves] = useState<Solve[]>([]);
-  const [currentScramble, setCurrentScramble] = useState('');
-  const [usedExtras, setUsedExtras] = useState(0);
-  const [tableNumber, setTableNumber] = useState(1);
-  const [callupAt, setCallupAt] = useState<number | null>(null);
-  const [inspectionStartedAt, setInspectionStartedAt] = useState<number | null>(null);
-  const [inspectionVoice, setInspectionVoice] = useState<CompSimInspectionVoice | null>(null);
-  const [crowdVideo, setCrowdVideo] = useState<CompSimCrowdVideo | null>(null);
-  const [entry, setEntry] = useState('');
-  const [plusTwo, setPlusTwo] = useState(false);
-  const [personalRecords, setPersonalRecords] = useState<{ single: number | null; average: number | null }>({ single: null, average: null });
-  const [savedRounds, setSavedRounds] = useState<SavedRound[]>([]);
-  const [hasSpeech, setHasSpeech] = useState(false);
-  const inspectionTimers = useRef<number[]>([]);
-  const callupTimer = useRef<number | null>(null);
-  const ambienceAudio = useRef<HTMLAudioElement | null>(null);
-  const distractionTimer = useRef<number | null>(null);
-  const distractionAudios = useRef(new Set<HTMLAudioElement>());
-  const announcementAudio = useRef<HTMLAudioElement | null>(null);
-  const inspectionAudio = useRef<HTMLAudioElement[]>([]);
-  const restoredFor = useRef<string | null>(null);
-  const loadRequestId = useRef(0);
+  const [storageWarning, setStorageWarning] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const requestId = useRef(0);
+  const historyRef = useRef<PracticeRecord[]>([]);
+  const submitLock = useRef(false);
   const entryRef = useRef<HTMLInputElement>(null);
-
-  const hasAmbiance = COMP_SIM_MEDIA.ambience.length > 0;
-  const hasDistractions = COMP_SIM_MEDIA.effects.length > 0;
-  const hasVisuals = COMP_SIM_MEDIA.crowdVideos.length > 0;
-  const hasAnnouncements = hasSpeech || Object.values(COMP_SIM_MEDIA.announcements.events).some((items) => items.length > 0)
-    || Object.values(COMP_SIM_MEDIA.announcements.rounds).some((items) => items.length > 0)
-    || Object.values(COMP_SIM_MEDIA.announcements.groups).some((items) => items.length > 0);
-  const currentRound = rounds[roundIndex] ?? null;
-  const currentResult = currentRound ? roundResult(solves, currentRound.config) : null;
-  const liveMediaActive = stage === 'waiting' || stage === 'called' || stage === 'ready' || stage === 'entry';
-  const averageFormat = currentRound?.config.format === 'ao5' || currentRound?.config.format === 'mo3';
-  const attemptNumber = currentResult ? Math.min(currentResult.attempts, solves.length + 1) : 1;
-  const currentIsExtra = usedExtras > 0
-    && currentRound?.group.extras[usedExtras - 1]?.scramble === currentScramble;
-  const supportedEvents = useMemo(() => new Set(
-    (competition?.events ?? [])
-      .map(toWcaEventId)
-      .filter((id) => SUPPORTED_COMP_SIM_EVENTS.has(id)),
-  ), [competition]);
-  const eventGroups = useMemo(() => [{
-    id: 'competition-events',
-    label: tr({ zh: '本场比赛项目', en: 'Competition events' }),
-    items: [...supportedEvents].map((id) => ({
-      id,
-      label: eventDisplayName(id, isZh),
-      iconClass: `event-${id}`,
-    })),
-  }], [supportedEvents, isZh]);
-
-  const leaderboard = useMemo(() => {
-    if (!currentRound || !currentResult?.complete || !user) return [];
-    return buildCompSimLeaderboard({
-      officialRows: currentRound.officialRows,
-      result: currentResult,
-      sim: { wcaId: user.wcaId, name: user.name, countryIso2: user.country },
-      personalRecords,
-    });
-  }, [averageFormat, currentResult, currentRound, personalRecords, solves, user]);
-  const simRow = leaderboard.find((row) => row.kind === 'sim') ?? null;
-  const advances = !!(simRow && currentRound && roundIndex < rounds.length - 1 && advancesFromRound(
-    simRow,
-    currentRound.detail.advancementCondition,
-    leaderboard.length,
-  ));
-
-  useEffect(() => {
-    setHasSpeech('speechSynthesis' in window);
-  }, []);
-
-  const clearInspectionTimers = useCallback(() => {
-    inspectionTimers.current.forEach((id) => window.clearTimeout(id));
-    inspectionTimers.current = [];
-    inspectionAudio.current.forEach(stopAudio);
-    inspectionAudio.current = [];
-  }, []);
-
-  const showToast = useCallback((message: string) => {
-    setToast(message);
-    window.setTimeout(() => setToast(''), 3500);
-  }, []);
-
-  useEffect(() => {
-    setSavedRounds(loadSavedRounds());
-    return () => {
-      loadRequestId.current += 1;
-      clearInspectionTimers();
-      if (callupTimer.current !== null) window.clearTimeout(callupTimer.current);
-      if (distractionTimer.current !== null) window.clearTimeout(distractionTimer.current);
-      stopAudio(ambienceAudio.current);
-      distractionAudios.current.forEach(stopAudio);
-      distractionAudios.current.clear();
-      stopAudio(announcementAudio.current);
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel();
-    };
-  }, [clearInspectionTimers]);
-
-  useEffect(() => {
-    if (!user?.wcaId || restoredFor.current === user.wcaId) return;
-    restoredFor.current = user.wcaId;
-    try {
-      const raw = localStorage.getItem(ACTIVE_KEY);
-      if (!raw) return;
-      const parsed: unknown = JSON.parse(raw);
-      if (!isValidCompSimActiveSnapshot(parsed)) {
-        localStorage.removeItem(ACTIVE_KEY);
-        return;
-      }
-      const saved = parsed as ActiveSimulation;
-      if (saved.wcaId !== user.wcaId) {
-        localStorage.removeItem(ACTIVE_KEY);
-        return;
-      }
-      setCompetition(saved.competition);
-      setCompetitionInput(saved.competition.name);
-      setEventId(saved.eventId);
-      setOptions({ ...DEFAULT_OPTIONS, ...saved.options });
-      setRounds(saved.rounds);
-      setRoundIndex(saved.roundIndex);
-      setSolves(saved.solves);
-      setCurrentScramble(saved.currentScramble);
-      setUsedExtras(saved.usedExtras);
-      setTableNumber(saved.tableNumber);
-      setCallupAt(saved.callupAt);
-      setInspectionStartedAt(saved.inspectionStartedAt);
-      setInspectionVoice(saved.inspectionVoice);
-      setCrowdVideo(saved.crowdVideo);
-      setPersonalRecords(saved.personalRecords);
-      setStage(saved.stage);
-    } catch {
-      // A malformed or stale local snapshot must not block starting a new sim.
-      localStorage.removeItem(ACTIVE_KEY);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (!user?.wcaId || !competition || rounds.length === 0 || stage === 'setup' || stage === 'loading') return;
-    const snapshot: ActiveSimulation = {
-      version: COMP_SIM_ACTIVE_VERSION,
-      wcaId: user.wcaId,
-      competition,
-      eventId,
-      options,
-      rounds,
-      roundIndex,
-      solves,
-      currentScramble,
-      usedExtras,
-      tableNumber,
-      stage,
-      callupAt,
-      inspectionStartedAt,
-      inspectionVoice,
-      crowdVideo,
-      personalRecords,
-    };
-    persistItem(ACTIVE_KEY, JSON.stringify(snapshot));
-  }, [callupAt, competition, crowdVideo, currentScramble, eventId, inspectionStartedAt, inspectionVoice, options, personalRecords, roundIndex, rounds, solves, stage, tableNumber, usedExtras, user]);
-
-  useEffect(() => {
-    if (stage !== 'entry') return;
-    requestAnimationFrame(() => entryRef.current?.focus());
-  }, [stage]);
-
-  useEffect(() => {
-    stopAudio(ambienceAudio.current);
-    ambienceAudio.current = null;
-    if (!liveMediaActive || !options.ambiance) return;
-    const src = randomItem(COMP_SIM_MEDIA.ambience);
-    if (!src) return;
-    const audio = playClip(src, 0.32);
-    if (!audio) return;
-    audio.loop = true;
-    ambienceAudio.current = audio;
-    return () => {
-      stopAudio(audio);
-      if (ambienceAudio.current === audio) ambienceAudio.current = null;
-    };
-  }, [liveMediaActive, options.ambiance]);
-
-  useEffect(() => {
-    if (distractionTimer.current !== null) window.clearTimeout(distractionTimer.current);
-    distractionAudios.current.forEach(stopAudio);
-    distractionAudios.current.clear();
-    if (ambienceAudio.current) ambienceAudio.current.volume = 0.32;
-    if (!liveMediaActive || !options.distractions || COMP_SIM_MEDIA.effects.length === 0) return;
-    let cancelled = false;
-    const schedule = (first: boolean) => {
-      const delay = first
-        ? 1500 + Math.random() * 3500
-        : 25_000 + Math.random() * 40_000;
-      distractionTimer.current = window.setTimeout(() => {
-        if (cancelled) return;
-        const src = randomItem(COMP_SIM_MEDIA.effects);
-        if (src) {
-          const ambience = ambienceAudio.current;
-          if (ambience) ambience.volume = 0.12;
-          let audio: HTMLAudioElement | null = null;
-          let finished = false;
-          const finish = () => {
-            if (finished) return;
-            finished = true;
-            if (audio) {
-              distractionAudios.current.delete(audio);
-              stopAudio(audio);
-            }
-            if (ambienceAudio.current) ambienceAudio.current.volume = 0.32;
-            if (!cancelled) schedule(false);
-          };
-          audio = playClip(src, 0.12 + Math.random() * 0.16, finish);
-          if (audio) {
-            distractionAudios.current.add(audio);
-            audio.addEventListener('ended', finish, { once: true });
-            audio.addEventListener('error', finish, { once: true });
-          } else if (!finished) finish();
-        } else {
-          schedule(false);
-        }
-      }, delay);
-    };
-    schedule(true);
-    return () => {
-      cancelled = true;
-      if (distractionTimer.current !== null) window.clearTimeout(distractionTimer.current);
-      distractionTimer.current = null;
-      distractionAudios.current.forEach(stopAudio);
-      distractionAudios.current.clear();
-      if (ambienceAudio.current) ambienceAudio.current.volume = 0.32;
-    };
-  }, [liveMediaActive, options.distractions]);
-
-  const playRoundAnnouncement = useCallback((bundle: RoundBundle) => {
-    if (!options.announcements) return;
-    stopAudio(announcementAudio.current);
-    announcementAudio.current = null;
-    const sources = [
-      randomItem(COMP_SIM_MEDIA.announcements.events[eventId] ?? []),
-      randomItem(COMP_SIM_MEDIA.announcements.rounds[bundle.roundTypeId] ?? []),
-      randomItem(COMP_SIM_MEDIA.announcements.groups[bundle.group.groupId] ?? []),
-    ].filter((src): src is string => !!src);
-    const fallback = `${eventDisplayName(eventId, false)}, ${roundTypeName(bundle.roundTypeId, false)}, group ${bundle.group.groupId}`;
-    if (sources.length === 0) {
-      if (hasSpeech) speak(fallback);
-      return;
-    }
-    let index = 0;
-    const playNext = () => {
-      const src = sources[index++];
-      if (!src) return;
-      const audio = playClip(src, 1, playNext);
-      if (!audio) return;
-      announcementAudio.current = audio;
-      audio.addEventListener('ended', playNext, { once: true });
-    };
-    playNext();
-  }, [eventId, hasSpeech, options.announcements]);
-
-  const callUp = useCallback(() => {
-    const table = Math.floor(Math.random() * 10) + 1;
-    setTableNumber(table);
-    setCallupAt(null);
-    setStage('called');
-    if (user) speak(`${user.name}, table ${table}`);
-  }, [user]);
-
-  useEffect(() => {
-    if (stage !== 'waiting') return;
-    const target = callupAt ?? (Date.now() + callupDelayMs(options.maxWaitMinutes));
-    if (callupAt === null) setCallupAt(target);
-    callupTimer.current = window.setTimeout(callUp, Math.max(0, target - Date.now()));
-    return () => {
-      if (callupTimer.current !== null) window.clearTimeout(callupTimer.current);
-      callupTimer.current = null;
-    };
-  }, [callUp, callupAt, options.maxWaitMinutes, stage]);
-
-  const pickCompetition = (picked: Comp) => {
-    loadRequestId.current += 1;
-    setCompetition(picked);
-    setCompetitionInput(picked.name);
-    setEventId('');
-    setError('');
-  };
-
-  const startRound = useCallback((bundle: RoundBundle) => {
-    const first = bundle.group.scrambles[0]?.scramble ?? '';
-    setSolves([]);
-    setUsedExtras(0);
-    setCurrentScramble(first);
-    setEntry('');
-    setPlusTwo(false);
-    setInspectionStartedAt(null);
-    setCallupAt(options.stationary ? null : Date.now() + callupDelayMs(options.maxWaitMinutes));
-    playRoundAnnouncement(bundle);
-    setStage(options.stationary ? 'ready' : 'waiting');
-  }, [options.maxWaitMinutes, options.stationary, playRoundAnnouncement]);
-
-  const startSimulation = async () => {
-    if (!user?.wcaId || !competition || !eventId) return;
-    const requestId = ++loadRequestId.current;
-    setStage('loading');
-    setError('');
-    setStatus(tr({ zh: '正在加载比赛成绩、打乱和轮次规则…', en: 'Loading results, scrambles, and round rules…' }));
-    try {
-      const [resultData, scrambleRows, wcif, person] = await Promise.all([
-        fetchWcaResults(competition.id, eventId),
-        fetchWcaScrambles(competition.id),
-        fetchCompWcif(competition.id),
-        fetchWcaPerson(user.wcaId).catch(() => null),
-      ]);
-      if (requestId !== loadRequestId.current) return;
-      if (!resultData?.rounds.length) {
-        throw new Error(tr({ zh: '这场比赛没有已发布的该项目成绩。请选择已结束且已发布成绩的比赛。', en: 'This competition has no published results for that event. Choose a completed competition with posted results.' }));
-      }
-      if (!scrambleRows?.length) {
-        throw new Error(tr({ zh: '这场比赛没有可用的官方打乱。', en: 'No official scrambles are available for this competition.' }));
-      }
-      const details = wcif.roundDetails[eventId] ?? [];
-      if (!details.length) {
-        throw new Error(tr({ zh: '比赛轮次规则与已发布成绩无法对应。', en: 'The published results do not match the competition round rules.' }));
-      }
-      const matchedRounds = matchPublishedCompSimRounds(details, resultData.rounds);
-      if (!matchedRounds) {
-        throw new Error(tr({ zh: '比赛轮次规则与已发布成绩无法一一对应。', en: 'The published results do not match the competition round rules one-to-one.' }));
-      }
-      const loaded: RoundBundle[] = [];
-      for (const { detail, officialRound } of matchedRounds) {
-        if (hasCrossRoundCumulativeLimit(detail)) {
-          throw new Error(tr({
-            zh: '该轮使用跨项目或跨轮累计时限，无法在单项目模拟中可靠还原。',
-            en: 'This round shares a cumulative time limit across rounds or events, which cannot be reproduced reliably in a single-event simulation.',
-          }));
-        }
-        const config = roundConfigFromWcif(detail);
-        const attempts = expectedAttemptCount(detail.format);
-        if (!config || attempts === null) {
-          if (loaded.length > 0) break;
-          throw new Error(tr({ zh: '该轮次的赛制暂不支持模拟。', en: 'That round format is not supported by the simulator.' }));
-        }
-        const group = selectPlayableScrambleGroup(
-          scrambleRows,
-          eventId,
-          officialRound.roundTypeId,
-          attempts,
-        );
-        if (!group) {
-          if (loaded.length > 0) break;
-          throw new Error(tr({ zh: '没有包含足够打乱的可用分组。', en: 'No scramble group contains enough scrambles.' }));
-        }
-        loaded.push({
-          detail,
-          config,
-          roundTypeId: officialRound.roundTypeId,
-          officialRows: officialRound.results,
-          group,
-        });
-      }
-      if (loaded.length === 0) {
-        throw new Error(tr({ zh: '没有可模拟的已发布轮次。', en: 'No published rounds are playable.' }));
-      }
-      const records = person?.personal_records[eventId];
-      setPersonalRecords({
-        single: records?.single?.best ?? null,
-        average: records?.average?.best ?? null,
-      });
-      setRounds(loaded);
-      setRoundIndex(0);
-      setCrowdVideo(options.visuals ? randomItem(COMP_SIM_MEDIA.crowdVideos) : null);
-      setStatus('');
-      startRound(loaded[0]);
-    } catch (caught) {
-      if (requestId !== loadRequestId.current) return;
-      setStage('setup');
-      setStatus('');
-      setError(caught instanceof Error ? caught.message : tr({ zh: '比赛数据加载失败。', en: 'Could not load competition data.' }));
-    }
-  };
-
-  const scheduleInspectionCues = useCallback((startedAt: number, voice: CompSimInspectionVoice | null) => {
-    clearInspectionTimers();
-    if (!options.inspectionVoice) return;
-    const cues = [
-      { at: 8000, src: voice?.eight ?? '', text: 'Eight seconds' },
-      { at: 12000, src: voice?.twelve ?? '', text: 'Twelve seconds' },
-    ];
-    for (const cue of cues) {
-      const remaining = startedAt + cue.at - Date.now();
-      if (remaining <= 0) continue;
-      inspectionTimers.current.push(window.setTimeout(() => {
-        const fallback = hasSpeech ? () => speak(cue.text) : undefined;
-        const audio = cue.src ? playClip(cue.src, 1, fallback) : (fallback?.(), null);
-        if (audio) inspectionAudio.current.push(audio);
-      }, remaining));
-    }
-  }, [clearInspectionTimers, hasSpeech, options.inspectionVoice]);
-
-  useEffect(() => {
-    if (stage !== 'entry' || inspectionStartedAt === null) return;
-    scheduleInspectionCues(inspectionStartedAt, inspectionVoice);
-    return clearInspectionTimers;
-  }, [clearInspectionTimers, inspectionStartedAt, inspectionVoice, scheduleInspectionCues, stage]);
-
-  const beginInspection = () => {
-    const startedAt = Date.now();
-    const voice = randomItem(COMP_SIM_MEDIA.inspectionVoices);
-    setEntry('');
-    setPlusTwo(false);
-    setInspectionStartedAt(startedAt);
-    setInspectionVoice(voice);
-    setStage('entry');
-    scheduleInspectionCues(startedAt, voice);
-  };
-
-  const useExtra = () => {
-    if (!currentRound) return;
-    const extra = currentRound.group.extras[usedExtras];
-    if (!extra?.scramble) {
-      showToast(tr({ zh: '这个分组没有更多备打。', en: 'No extra scrambles are available for this group.' }));
-      return;
-    }
-    clearInspectionTimers();
-    setUsedExtras((count) => count + 1);
-    setCurrentScramble(extra.scramble);
-    setEntry('');
-    setPlusTwo(false);
-    setInspectionStartedAt(null);
-    setInspectionVoice(null);
-    setStage('ready');
-  };
-
-  const finishRound = (nextSolves: Solve[]) => {
-    setSolves(nextSolves);
-    setInspectionStartedAt(null);
-    setInspectionVoice(null);
-    setCallupAt(null);
-    setStage('results');
-  };
-
-  const submitResult = (forced?: 'DNF') => {
-    if (!currentRound) return;
-    const parsed = forced === 'DNF' ? { ms: 0, penalty: 'DNF' as const } : parseTimerEntry(entry);
-    if (!parsed || parsed.penalty === 'DNS') {
-      showToast(tr({ zh: '请输入有效成绩，例如 12.34、1:23.45、DNF 或 12.34+2。', en: 'Enter a valid result like 12.34, 1:23.45, DNF, or 12.34+2.' }));
-      entryRef.current?.focus();
-      return;
-    }
-    clearInspectionTimers();
-    const penalty = parsed.penalty === 'DNF' ? 'DNF' : (plusTwo || parsed.penalty === '+2' ? '+2' : 'ok');
-    const solve = makeCompSimSolve(fromWcaSpelling(eventId), currentScramble, parsed.ms, penalty);
-    const nextSolves = [...solves, solve];
-    const nextResult = roundResult(nextSolves, currentRound.config);
-    setEntry('');
-    setPlusTwo(false);
-    if (nextResult.complete) {
-      finishRound(nextSolves);
-      return;
-    }
-    const nextIndex = nextSolves.length;
-    const shouldDuplicate = usedExtras < currentRound.group.extras.length
-      && shouldDuplicateScramble(options.duplicateScrambles, nextIndex);
-    setCurrentScramble(shouldDuplicate
-      ? currentScramble
-      : (currentRound.group.scrambles[nextIndex]?.scramble ?? ''));
-    setSolves(nextSolves);
-    setInspectionStartedAt(null);
-    setInspectionVoice(null);
-    setCallupAt(options.stationary ? null : Date.now() + callupDelayMs(options.maxWaitMinutes));
-    setStage(options.stationary ? 'ready' : 'waiting');
-  };
-
-  const handleEntryKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
-    if ((event.ctrlKey || event.metaKey) && event.key === '2') {
-      event.preventDefault();
-      setPlusTwo((value) => !value);
-    } else if ((event.ctrlKey || event.metaKey) && event.key === '3') {
-      event.preventDefault();
-      submitResult('DNF');
-    } else if (event.key === 'Enter') {
-      event.preventDefault();
-      submitResult();
-    } else if (event.key === ' ') {
-      event.preventDefault();
-      clearInspectionTimers();
-      showToast(tr({ zh: '本把剩余观察提示已取消。', en: 'Remaining inspection cues cancelled for this solve.' }));
-    }
-  };
-
-  useEffect(() => {
-    if (stage !== 'results' || !simRow || !competition || !currentRound) return;
-    const result = resultText(simRow, eventId, !!averageFormat);
-    const item: SavedRound = {
-      key: `${competition.id}|${eventId}|${roundIndex}|${simRow.primary}`,
-      competition: localizeCompName(competition.id, competition.name, isZh),
-      event: eventDisplayName(eventId, isZh),
-      round: roundTypeName(currentRound.roundTypeId, isZh),
-      rank: simRow.rank,
-      result,
-      at: Date.now(),
-    };
-    setSavedRounds((previous) => {
-      if (previous.some((row) => row.key === item.key)) return previous;
-      const next = [item, ...previous].slice(0, 30);
-      persistItem(SAVED_KEY, JSON.stringify(next));
-      return next;
-    });
-  }, [averageFormat, competition, currentRound, eventId, isZh, roundIndex, simRow, stage]);
-
-  const startNextRound = () => {
-    const nextIndex = roundIndex + 1;
-    const next = rounds[nextIndex];
-    if (!next || !advances) return;
-    const adjusted = {
-      ...next,
-      officialRows: filterNextRoundOfficialRows(
-        next.officialRows,
-        leaderboard,
-        currentRound?.detail.advancementCondition ?? null,
-      ),
-    };
-    setRounds((previous) => previous.map((round, index) => (index === nextIndex ? adjusted : round)));
-    setRoundIndex(nextIndex);
-    startRound(adjusted);
-  };
-
-  const resetSimulation = () => {
-    loadRequestId.current += 1;
-    clearInspectionTimers();
-    if (callupTimer.current !== null) window.clearTimeout(callupTimer.current);
-    localStorage.removeItem(ACTIVE_KEY);
-    setStage('setup');
-    setCompetition(null);
-    setCompetitionInput('');
-    setEventId('');
-    setOptions(DEFAULT_OPTIONS);
-    setRounds([]);
-    setSolves([]);
-    setRoundIndex(0);
-    setCurrentScramble('');
-    setUsedExtras(0);
-    setCallupAt(null);
-    setInspectionStartedAt(null);
-    setInspectionVoice(null);
-    setCrowdVideo(null);
-    setError('');
-    setToast('');
-  };
-
-  const shareResult = async () => {
-    if (!simRow || !competition || !currentRound) return;
-    const text = `${localizeCompName(competition.id, competition.name, isZh)} — ${eventDisplayName(eventId, isZh)} ${roundTypeName(currentRound.roundTypeId, isZh)}: ${resultText(simRow, eventId, !!averageFormat)} (#${simRow.rank})`;
-    try {
-      if (navigator.share) await navigator.share({ title: tr({ zh: '比赛模拟成绩', en: 'Competition simulation result' }), text });
-      else await navigator.clipboard.writeText(text);
-      showToast(tr({ zh: '成绩已分享。', en: 'Result shared.' }));
-    } catch {
-      // Closing the native share sheet is not an error the page needs to report.
-    }
-  };
-
-  const renderHeader = () => (
-    <header className="comp-sim-header">
-      <div className="comp-sim-header-left">
-        <BackHome />
-        <div>
-          <h1>{tr({ zh: '比赛模拟', en: 'Competition Simulator' })}</h1>
-          <p>{tr({ zh: '真实比赛、真实对手、每把只有一次机会', en: 'Real competitions, real opponents, one chance per attempt' })}</p>
-        </div>
-      </div>
-      <HeaderToggles />
-    </header>
+  const liveHeadingRef = useRef<HTMLHeadingElement>(null);
+  const reviewRef = useRef<HTMLElement>(null);
+  const round = session?.rounds[session.roundIndex];
+  const result = useMemo(() => session && round ? roundResult(session.solves, round.config) : null, [session?.solves, round]);
+  const completed = session?.stage === 'results' ? practiceRecord(session) : null;
+  const currentScramble = round?.group.scrambles[session?.solves.length ?? 0]?.scramble ?? '';
+  const availableEvents =
+    source === 'historical'
+      ? (competition?.events ?? []).map(toWcaEventId).filter((id) => SUPPORTED_COMP_SIM_EVENTS.has(id))
+      : [...SUPPORTED_COMP_SIM_EVENTS];
+  const groups = [
+    {
+      id: 'practice-events',
+      label: tr({ zh: '训练项目', en: 'Practice events' }),
+      items: availableEvents.map((id) => ({
+        id,
+        label: eventDisplayName(id, isZh),
+        iconClass: id === 'fto' ? 'unofficial-fto' : `event-${id}`,
+      })),
+    },
+  ];
+  const leaderboard = useMemo(
+    () =>
+      session?.competition && round && result?.complete
+        ? buildCompSimLeaderboard({
+            officialRows: round.officialRows,
+            result,
+            sim: {
+              wcaId: session.owner === 'guest' ? '' : session.owner,
+              name: tr({ zh: '本次训练', en: 'This practice' }),
+              countryIso2: '',
+            },
+            personalRecords: session.personalRecords,
+          })
+        : [],
+    [session, round, result],
   );
 
-  if (stage === 'setup' || stage === 'loading') {
+  useEffect(() => {
+    void loadFlagData();
+    const old = readJson('cuberoot-comp-sim-results-v1');
+    if (Array.isArray(old))
+      setLegacy(
+        old.filter(
+          (row) =>
+            row &&
+            ['key', 'competition', 'event', 'round', 'result'].every((key) => typeof row[key] === 'string'),
+        ),
+      );
+    return () => {
+      requestId.current += 1;
+    };
+  }, []);
+  useEffect(() => {
+    historyRef.current = readHistory();
+    setHistory(historyRef.current.filter((record) => record.owner === owner));
+    const saved = readJson(ACTIVE_PREFIX + owner);
+    setResume(isPracticeSession(saved) && saved.owner === owner ? saved : null);
+  }, [owner]);
+  useEffect(() => {
+    if (!session) return;
+    let saved = persistItem(ACTIVE_PREFIX + session.owner, JSON.stringify(session));
+    if (session.stage === 'results') {
+      const record = practiceRecord(session);
+      const merged = new Map([...readHistory(), ...historyRef.current].map((item) => [item.id, item]));
+      merged.set(record.id, record);
+      const records = [...merged.values()].sort((a, b) => b.at - a.at);
+      historyRef.current = records;
+      saved = persistItem(HISTORY_KEY, JSON.stringify(records)) && saved;
+      setHistory(records.filter((item) => item.owner === owner));
+    }
+    setStorageWarning(!saved);
+  }, [session, owner]);
+  useEffect(() => {
+    submitLock.current = false;
+    setComparisonPage(1);
+    if (session?.stage === 'entry') entryRef.current?.focus();
+    else if (session) liveHeadingRef.current?.focus();
+  }, [session?.stage, session?.solves.length]);
+  useEffect(() => {
+    if (review) reviewRef.current?.focus();
+  }, [review]);
+  useEffect(() => {
+    if (session?.stage !== 'inspection' || session.inspectionAt === null) return;
+    const started = session.inspectionAt;
+    const update = () => setElapsed(Math.max(0, Date.now() - started));
+    update();
+    const interval = window.setInterval(update, 100);
+    const timers: number[] = [];
+    if (session.voice && 'speechSynthesis' in window) {
+      for (const seconds of [8, 12]) {
+        const wait = started + seconds * 1000 - Date.now();
+        if (wait > 0)
+          timers.push(
+            window.setTimeout(() => {
+              const cue = new SpeechSynthesisUtterance(tr({ zh: `${seconds} 秒`, en: `${seconds} seconds` }));
+              cue.lang = isZh ? 'zh-CN' : 'en-US';
+              window.speechSynthesis.speak(cue);
+            }, wait),
+          );
+      }
+    }
+    return () => {
+      window.clearInterval(interval);
+      timers.forEach(window.clearTimeout);
+      if (session.voice && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+    };
+  }, [session?.stage, session?.inspectionAt, session?.voice, isZh]);
+
+  const updateSession = (patch: Partial<PracticeSession>) =>
+    setSession((previous) => (previous ? { ...previous, ...patch } : previous));
+  const changeSource = (value: 'generated' | 'historical') => {
+    setSource(value);
+    setCompetition(null);
+    setCompetitionInput('');
+    setEventId(value === 'generated' ? '333' : '');
+    setError('');
+  };
+  const start = async () => {
+    if (busy || !eventId || (source === 'historical' && !competition)) return;
+    const parsedTarget = target.trim() ? parseTimerEntry(target) : null;
+    if (target.trim() && (!parsedTarget || parsedTarget.penalty !== 'ok' || parsedTarget.ms <= 0)) {
+      setError(tr({ zh: '目标请输入有效时间，例如 20.00。', en: 'Enter a target time such as 20.00.' }));
+      return;
+    }
+    const token = ++requestId.current;
+    setBusy(true);
+    setError('');
+    setReview(null);
+    try {
+      const loaded: PracticeRound[] = [];
+      let records: PracticeSession['personalRecords'] = { single: null, average: null };
+      if (source === 'generated') {
+        const config = {
+          ...LOCAL_CONFIG,
+          format: eventId === '666' || eventId === '777' ? ('mo3' as const) : ('ao5' as const),
+        };
+        const { pooledScramble } = await import('@/lib/cubing-scramble');
+        const scrambles = [];
+        for (let index = 0; index < roundAttempts(config.format); index++) {
+          const scramble = await pooledScramble(eventId);
+          if (token !== requestId.current) return;
+          if (!scramble)
+            throw new Error(
+              tr({ zh: '打乱生成失败，请重试。', en: 'Scramble generation failed. Please try again.' }),
+            );
+          scrambles.push({
+            event_id: eventId,
+            round_type_id: '1',
+            group_id: 'practice',
+            is_extra: false,
+            scramble_num: index + 1,
+            scramble,
+          });
+        }
+        loaded.push({
+          detail: {
+            id: `${eventId}-r1`,
+            format: config.format === 'mo3' ? 'm' : 'a',
+            timeLimitCs: null,
+            cumulative: false,
+            cumulativeRoundIds: [],
+            cutoff: null,
+            advancementCondition: null,
+          },
+          config,
+          roundTypeId: '1',
+          officialRows: [],
+          group: { groupId: 'practice', scrambles, extras: [] },
+        });
+      } else if (competition) {
+        const [data, scrambles, wcif, person] = await Promise.all([
+          fetchWcaResults(competition.id, eventId),
+          fetchWcaScrambles(competition.id),
+          fetchCompWcif(competition.id),
+          user?.wcaId ? fetchWcaPerson(user.wcaId).catch(() => null) : Promise.resolve(null),
+        ]);
+        if (!data?.rounds.length || !scrambles?.length)
+          throw new Error(
+            tr({
+              zh: '该项目尚无完整的已发布成绩和打乱，请选择另一场比赛。',
+              en: 'Published results and scrambles are missing. Choose another competition.',
+            }),
+          );
+        const matched = matchPublishedCompSimRounds(wcif.roundDetails[eventId] ?? [], data.rounds);
+        if (!matched)
+          throw new Error(
+            tr({
+              zh: '比赛规则与成绩轮次无法对应。',
+              en: 'Round rules could not be matched to published results.',
+            }),
+          );
+        for (const { detail, officialRound } of matched) {
+          const config = roundConfigFromWcif(detail);
+          const attempts = expectedAttemptCount(detail.format);
+          if (!config || !attempts || hasCrossRoundCumulativeLimit(detail))
+            throw new Error(
+              tr({
+                zh: '这场比赛包含暂不支持的赛制或跨轮累计时限。',
+                en: 'This competition includes an unsupported format or a cumulative limit shared across rounds.',
+              }),
+            );
+          const group = selectPlayableScrambleGroup(scrambles, eventId, officialRound.roundTypeId, attempts);
+          if (!group)
+            throw new Error(
+              tr({
+                zh: '部分轮次缺少完整打乱，请选择另一场比赛。',
+                en: 'A round is missing a complete scramble set. Choose another competition.',
+              }),
+            );
+          loaded.push({
+            detail,
+            config,
+            roundTypeId: officialRound.roundTypeId,
+            officialRows: officialRound.results,
+            group,
+          });
+        }
+        const personal = person?.personal_records[eventId];
+        records = { single: personal?.single?.best ?? null, average: personal?.average?.best ?? null };
+      }
+      if (source === 'generated' && user?.wcaId) {
+        const person = await fetchWcaPerson(user.wcaId).catch(() => null);
+        const personal = person?.personal_records[eventId];
+        records = { single: personal?.single?.best ?? null, average: personal?.average?.best ?? null };
+      }
+      if (token !== requestId.current) return;
+      if (!loaded.length) throw new Error(tr({ zh: '没有可用轮次。', en: 'No rounds are available.' }));
+      setSession({
+        version: PRACTICE_VERSION,
+        id: crypto.randomUUID(),
+        owner,
+        eventId,
+        competition:
+          source === 'historical' && competition
+            ? { id: competition.id, name: competition.name, country: competition.country }
+            : null,
+        rounds: loaded,
+        roundIndex: 0,
+        solves: [],
+        issues: [],
+        targetMs: parsedTarget?.ms ?? null,
+        voice,
+        stage: 'ready',
+        inspectionAt: null,
+        entry: '',
+        plusTwo: false,
+        note: '',
+        issue: 'none',
+        personalRecords: records,
+      });
+      setResume(null);
+    } catch (caught) {
+      if (token === requestId.current)
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : tr({ zh: '训练准备失败，请重试。', en: 'Could not prepare this practice. Try again.' }),
+        );
+    } finally {
+      if (token === requestId.current) setBusy(false);
+    }
+  };
+  const submit = (dnf = false) => {
+    if (!session || !round || session.stage !== 'entry' || submitLock.current) return;
+    const parsed = dnf ? { ms: 0, penalty: 'DNF' as const } : parseTimerEntry(session.entry);
+    if (!parsed || parsed.penalty === 'DNS' || (parsed.penalty !== 'DNF' && parsed.ms <= 0)) {
+      setError(
+        tr({
+          zh: '请输入有效成绩，例如 12.34、1:23.45 或 DNF。',
+          en: 'Enter a valid result such as 12.34, 1:23.45, or DNF.',
+        }),
+      );
+      return;
+    }
+    submitLock.current = true;
+    const solve = makeCompSimSolve(
+      fromWcaSpelling(session.eventId),
+      currentScramble,
+      parsed.ms,
+      parsed.penalty === 'DNF' ? 'DNF' : session.plusTwo || parsed.penalty === '+2' ? '+2' : 'ok',
+    );
+    solve.comment = session.note.trim();
+    const solves = [...session.solves, solve];
+    updateSession({
+      solves,
+      issues: [...session.issues, session.issue],
+      entry: '',
+      plusTwo: false,
+      note: '',
+      issue: 'none',
+      inspectionAt: null,
+      stage: roundResult(solves, round.config).complete ? 'results' : 'ready',
+    });
+    setError('');
+  };
+  const leave = () => {
+    setResume(session);
+    setSession(null);
+    setError('');
+    setElapsed(0);
+  };
+  const exportHistory = () => {
+    const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'cuberoot-practice.json';
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const sourceName = (record: { competition: PracticeSession['competition'] }) =>
+    record.competition ? (
+      <CompCell compId={record.competition.id} compName={record.competition.name} isZh={isZh} date={null} />
+    ) : (
+      tr({ zh: '自主练习', en: 'Personal practice' })
+    );
+  const messages = (
+    <>
+      {error && (
+        <p className="practice-alert" role="alert">
+          <CircleAlert size={18} aria-hidden="true" />
+          {error}
+        </p>
+      )}
+      {storageWarning && (
+        <p className="practice-alert" role="alert">
+          {tr({
+            zh: '本机存储不可用，记录仅保留在当前页面。请在离开前导出训练历史。',
+            en: 'Local storage is unavailable. Records remain in this page only. Export your history before leaving.',
+          })}
+        </p>
+      )}
+    </>
+  );
+
+  if (session && round && result)
     return (
-      <main className="comp-sim-page">
-        {renderHeader()}
-        <section className="comp-sim-setup" aria-busy={stage === 'loading'} inert={stage === 'loading' ? true : undefined}>
-          <div className="comp-sim-step">
-            <span className="comp-sim-step-number">1</span>
-            <div className="comp-sim-step-body">
-              <h2>{tr({ zh: '使用 WCA 登录', en: 'Sign in with WCA' })}</h2>
-              {user?.wcaId ? (
-                <p>{tr({ zh: '参赛者', en: 'Competitor' })}: <PersonLink wcaId={user.wcaId} name={user.name} isZh={isZh} /></p>
-              ) : (
-                <button type="button" className="comp-sim-primary comp-sim-signin" onClick={() => loginWithWca()}>
-                  <LogIn size={18} aria-hidden="true" />
-                  {tr({ zh: '使用 WCA 继续', en: 'Continue with WCA' })}
+      <main className="practice-page">
+        <header className="practice-topbar">
+          <div>
+            <span className="practice-eyebrow">{tr({ zh: '赛前训练', en: 'Competition Practice' })}</span>
+            <h1 ref={liveHeadingRef} tabIndex={-1}>
+              {session.stage === 'results'
+                ? tr({ zh: '本轮复盘', en: 'Round review' })
+                : eventDisplayName(session.eventId, isZh)}
+            </h1>
+            <p>
+              {sourceName(session)} ·{' '}
+              {session.competition
+                ? roundTypeName(round.roundTypeId, isZh)
+                : tr({ zh: '一轮练习', en: 'Practice round' })}
+            </p>
+          </div>
+          <HeaderToggles />
+        </header>
+        <nav className="practice-progress" aria-label={tr({ zh: '训练进度', en: 'Practice progress' })}>
+          {[
+            tr({ zh: '本轮计划', en: 'Plan' }),
+            tr({ zh: '完成一轮', en: 'Practice' }),
+            tr({ zh: '本轮复盘', en: 'Review' }),
+          ].map((label, index) => (
+            <span
+              key={index}
+              aria-current={index === (session.stage === 'results' ? 2 : 1) ? 'step' : undefined}
+            >
+              {index === 0 ? <Check size={16} aria-hidden="true" /> : <span>{index + 1}</span>}
+              {label}
+            </span>
+          ))}
+        </nav>
+        {messages}
+        {completed ? (
+          <section className="practice-card">
+            <RoundReview record={completed} />
+            {(session.personalRecords.average !== null || session.personalRecords.single !== null) && (
+              <p className="practice-personal-records">
+                {tr({ zh: 'WCA 个人纪录参考', en: 'WCA personal record reference' })}:{' '}
+                {tr({ zh: '单次', en: 'Single' })}{' '}
+                {formatWcaResult(session.personalRecords.single ?? 0, session.eventId, 'single', {
+                  zero: 'empty',
+                }) || '—'}{' '}
+                · {tr({ zh: '平均', en: 'Average' })}{' '}
+                {formatWcaResult(session.personalRecords.average ?? 0, session.eventId, 'average', {
+                  zero: 'empty',
+                }) || '—'}
+              </p>
+            )}
+            {leaderboard.length > 0 && (
+              <details className="practice-comparison">
+                <summary>{tr({ zh: '与历史比赛成绩对照', en: 'Compare with historical results' })}</summary>
+                <p>
+                  {tr({
+                    zh: '这是训练成绩与已发布成绩的假设对照，不是实时比赛，也不会计入官方纪录。',
+                    en: 'This compares practice against published results. It is not a live competition or an official record.',
+                  })}
+                </p>
+                <p>{tr({ zh: '本次训练的对照排名', en: 'Your practice comparison rank' })}: #{leaderboard.find((row) => row.kind === 'sim')?.rank}</p>
+                <Paginator page={comparisonPage} totalPages={Math.max(1, Math.ceil(leaderboard.length / comparisonSize))} size={comparisonSize} pageSizeOptions={[25, 50, 100]} isZh={isZh} className="practice-pagination" onPageChange={setComparisonPage} onSizeChange={(size) => { setComparisonSize(size); setComparisonPage(1); }} />
+                <div className="practice-table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>{tr({ zh: '对照排名', en: 'Comparison rank' })}</th>
+                        <th>{tr({ zh: '选手', en: 'Competitor' })}</th>
+                        <th>{tr({ zh: '成绩', en: 'Result' })}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {leaderboard.slice((comparisonPage - 1) * comparisonSize, comparisonPage * comparisonSize).map((row) => (
+                        <tr
+                          key={`${row.kind}:${row.wcaId}`}
+                          className={row.kind === 'sim' ? 'practice-own' : undefined}
+                        >
+                          <td>{row.rank}</td>
+                          <td>
+                            {row.kind === 'sim' ? (
+                              tr({ zh: '本次训练', en: 'This practice' })
+                            ) : (
+                              <>
+                                <Flag iso2={row.countryIso2} />{' '}
+                                <PersonLink wcaId={row.wcaId} name={row.name} isZh={isZh} />
+                              </>
+                            )}
+                          </td>
+                          <td>
+                            {formatWcaResult(
+                              row.primary,
+                              session.eventId,
+                              round.config.format === 'ao5' || round.config.format === 'mo3'
+                                ? 'average'
+                                : 'single',
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            )}
+            <div className="practice-actions">
+              {session.roundIndex + 1 < session.rounds.length && (
+                <button
+                  type="button"
+                  className="practice-primary"
+                  onClick={() =>
+                    updateSession({
+                      roundIndex: session.roundIndex + 1,
+                      solves: [],
+                      issues: [],
+                      stage: 'ready',
+                      entry: '',
+                      plusTwo: false,
+                      note: '',
+                      issue: 'none',
+                      inspectionAt: null,
+                    })
+                  }
+                >
+                  {tr({ zh: '练习下一轮', en: 'Practice next round' })}
+                  <ArrowRight size={18} aria-hidden="true" />
                 </button>
               )}
+              <button type="button" className="practice-secondary" onClick={leave}>
+                {tr({ zh: '完成训练', en: 'Finish practice' })}
+              </button>
+              <button type="button" className="practice-secondary" onClick={exportHistory}>
+                {tr({ zh: '导出训练历史', en: 'Export practice history' })}
+              </button>
             </div>
+          </section>
+        ) : (
+          <div className="practice-workspace">
+            <section className="practice-card practice-active">
+              <span className="practice-eyebrow">
+                {tr({
+                  zh: `第 ${session.solves.length + 1} 把 / 共 ${result.attempts} 把`,
+                  en: `Attempt ${session.solves.length + 1} of ${result.attempts}`,
+                })}
+              </span>
+              {session.stage === 'ready' && (
+                <>
+                  <h2>{tr({ zh: '准备好，再开始', en: 'Start when you are ready' })}</h2>
+                  <p>
+                    {tr({
+                      zh: '按下方序列打乱魔方，准备好实体计时器。',
+                      en: 'Apply this scramble and prepare your physical timer.',
+                    })}
+                  </p>
+                  <div className="practice-scramble">{currentScramble}</div>
+                  <div className="practice-actions">
+                    <button
+                      type="button"
+                      className="practice-primary"
+                      onClick={() => {
+                        setElapsed(0);
+                        updateSession({ stage: 'inspection', inspectionAt: Date.now() });
+                      }}
+                    >
+                      {tr({ zh: '进入观察', en: 'Start inspection' })}
+                      <Play size={18} aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      className="practice-secondary"
+                      onClick={() => updateSession({ stage: 'entry', inspectionAt: null })}
+                    >
+                      {tr({ zh: '直接录入成绩', en: 'Enter a result directly' })}
+                    </button>
+                  </div>
+                </>
+              )}
+              {session.stage === 'inspection' && (
+                <>
+                  <h2>{tr({ zh: '观察与规划', en: 'Inspect and plan' })}</h2>
+                  <div
+                    className="practice-clock"
+                    role="timer"
+                    aria-label={tr({ zh: '观察已用秒数', en: 'Inspection seconds elapsed' })}
+                  >
+                    {Math.floor(elapsed / 1000)}
+                    <small>/ 15 s</small>
+                  </div>
+                  <p>
+                    {tr({
+                      zh: '屏幕时间仅供辅助。开始还原时停止提示，实际成绩以实体计时器为准。',
+                      en: 'This display is a guide. Stop the cues when you begin solving; use your physical timer for the result.',
+                    })}
+                  </p>
+                  <button
+                    type="button"
+                    className="practice-primary"
+                    onClick={() => updateSession({ stage: 'entry', inspectionAt: null })}
+                  >
+                    {tr({ zh: '开始还原，停止提示', en: 'Begin solving · stop cues' })}
+                    <ArrowRight size={18} aria-hidden="true" />
+                  </button>
+                </>
+              )}
+              {session.stage === 'entry' && (
+                <>
+                  <h2>{tr({ zh: '记录这一次发挥', en: 'Capture this attempt' })}</h2>
+                  <p>
+                    {tr({
+                      zh: '输入实体计时器读数；如有罚时，请手动标记。',
+                      en: 'Enter your physical timer reading and mark any penalty manually.',
+                    })}
+                  </p>
+                  <label htmlFor="practice-result">{tr({ zh: '本把成绩', en: 'Attempt result' })}</label>
+                  <div className="practice-input-wrap">
+                    <input
+ className="practice-input"
+                      id="practice-result"
+                      ref={entryRef}
+                      inputMode="decimal"
+                      autoComplete="off"
+                      maxLength={16}
+                      value={session.entry}
+                      placeholder="12.34"
+                      onChange={(event) => updateSession({ entry: event.target.value })}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          submit();
+                        }
+                      }}
+                    />
+                    {session.entry && <ClearButton onClick={() => updateSession({ entry: '' })} />}
+                  </div>
+                  <BoolToggle
+                    value={session.plusTwo}
+                    onChange={(plusTwo) => updateSession({ plusTwo })}
+                    label={tr({ zh: '加罚 2 秒', en: 'Add a 2-second penalty' })}
+                  />
+                  <label htmlFor="practice-issue">
+                    {tr({ zh: '本把观察（可选）', en: 'Observation (optional)' })}
+                  </label>
+                  <select
+ className="practice-select"
+                    id="practice-issue"
+                    value={session.issue}
+                    onChange={(event) => updateSession({ issue: event.target.value as PracticeIssue })}
+                  >
+                    {Object.entries(PRACTICE_ISSUES).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {tr(label)}
+                      </option>
+                    ))}
+                  </select>
+                  <label htmlFor="practice-note">
+                    {tr({ zh: '给下次的提醒（可选）', en: 'Note for next time (optional)' })}
+                  </label>
+                  <textarea
+ className="practice-textarea"
+                    id="practice-note"
+                    rows={2}
+                    maxLength={500}
+                    value={session.note}
+                    onChange={(event) => updateSession({ note: event.target.value })}
+                    placeholder={tr({
+                      zh: '例如：第一组还原后停顿，下一把注意衔接。',
+                      en: 'For example: paused after the first pair; work on the transition.',
+                    })}
+                  />
+                  <div className="practice-actions">
+                    <button type="button" className="practice-primary" onClick={() => submit()}>
+                      {tr({ zh: '保存本把', en: 'Save attempt' })}
+                      <Check size={18} aria-hidden="true" />
+                    </button>
+                    <button type="button" className="practice-secondary" onClick={() => submit(true)}>
+                      {tr({ zh: '记为 DNF', en: 'Record DNF' })}
+                    </button>
+                  </div>
+                </>
+              )}
+            </section>
+            <aside className="practice-card practice-scorecard">
+              <h2>{tr({ zh: '本轮成绩单', en: 'Round scorecard' })}</h2>
+              <p>{round.config.format.toUpperCase()}</p>
+              <ol>
+                {result.list.map((attempt, index) => (
+                  <li key={index} aria-current={index === session.solves.length ? 'step' : undefined}>
+                    <span>{index + 1}</span>
+                    <strong>{displayMs(attempt.ms, session.eventId)}</strong>
+                  </li>
+                ))}
+              </ol>
+              {session.targetMs !== null && (
+                <p>
+                  <Target size={16} aria-hidden="true" /> {tr({ zh: '目标', en: 'Target' })}{' '}
+                  {displayMs(session.targetMs, session.eventId, true)}
+                </p>
+              )}
+              {round.config.cutoffMs !== null && (
+                <p>
+                  {tr({ zh: '及格线', en: 'Cutoff' })}: {displayMs(round.config.cutoffMs, session.eventId)} (
+                  {round.config.cutoffAttempts})
+                </p>
+              )}
+              {round.config.limitMs !== null && (
+                <p>
+                  {round.config.cumulative
+                    ? tr({ zh: '累计时限', en: 'Cumulative limit' })
+                    : tr({ zh: '单次时限', en: 'Time limit' })}
+                  : {displayMs(round.config.limitMs, session.eventId)}
+                </p>
+              )}
+              <button type="button" className="practice-secondary" onClick={leave}>
+                {tr({ zh: '暂存并离开', en: 'Save for later' })}
+              </button>
+            </aside>
           </div>
+        )}
+      </main>
+    );
 
-          <div className={`comp-sim-step${!user?.wcaId ? ' is-disabled' : ''}`}>
-            <span className="comp-sim-step-number">2</span>
-            <div className="comp-sim-step-body">
-              <h2>{tr({ zh: '选择比赛', en: 'Select a Competition' })}</h2>
-              {user?.wcaId ? (
+  return (
+    <main className="practice-page">
+      <header className="practice-topbar">
+        <div>
+          <BackHome />
+          <h1>{tr({ zh: '赛前训练', en: 'Competition Practice' })}</h1>
+          <p>
+            {tr({
+              zh: '完成一轮练习，记录发挥，找到下一次训练重点。',
+              en: 'Complete a round, track your performance, and find your next focus.',
+            })}
+          </p>
+        </div>
+        <HeaderToggles />
+      </header>
+      {messages}
+      {resume && (
+        <section className="practice-resume">
+          <History size={22} aria-hidden="true" />
+          <div>
+            <strong>
+              {resume.stage === 'results'
+                ? tr({ zh: '上次训练已完成', en: 'Your last round is complete' })
+                : tr({ zh: '接着上次练', en: 'Pick up where you left off' })}
+            </strong>
+            <p>
+              {eventDisplayName(resume.eventId, isZh)} ·{' '}
+              {tr({
+                zh: `已记录 ${resume.solves.length} 把`,
+                en: `${resume.solves.length} attempts recorded`,
+              })}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="practice-primary"
+            disabled={busy}
+            onClick={() => {
+              setSession(
+                resume.stage === 'inspection' ? { ...resume, stage: 'ready', inspectionAt: null } : resume,
+              );
+              setReview(null);
+            }}
+          >
+            {resume.stage === 'results'
+              ? tr({ zh: '查看复盘', en: 'View review' })
+              : tr({ zh: '继续训练', en: 'Resume practice' })}
+            <ArrowRight size={18} aria-hidden="true" />
+          </button>
+        </section>
+      )}
+      <div className="practice-workspace">
+        <section className="practice-card practice-plan" aria-busy={busy}>
+          <div className="practice-section-title">
+            <Target size={22} aria-hidden="true" />
+            <h2>{tr({ zh: '本轮计划', en: 'Your round plan' })}</h2>
+          </div>
+          <fieldset disabled={busy}>
+            <label htmlFor="practice-source">{tr({ zh: '打乱来源', en: 'Scramble source' })}</label>
+            <select
+ className="practice-select"
+              id="practice-source"
+              value={source}
+              onChange={(event) => changeSource(event.target.value as 'generated' | 'historical')}
+            >
+              <option value="generated">
+                {tr({ zh: '生成一组新打乱', en: 'Generate fresh scrambles' })}
+              </option>
+              <option value="historical">
+                {tr({ zh: '使用历史比赛打乱', en: 'Use a historical competition' })}
+              </option>
+            </select>
+            {source === 'historical' && (
+              <div className="practice-field">
+                <label>{tr({ zh: '比赛资料', en: 'Competition archive' })}</label>
                 <CompPicker
                   value={competitionInput}
                   onChange={(value) => {
                     setCompetitionInput(value);
-                    if (competition && value !== competition.name) {
-                      loadRequestId.current += 1;
+                    if (value !== competition?.name) {
                       setCompetition(null);
                       setEventId('');
                     }
                   }}
-                  onPick={pickCompetition}
-                  placeholder={tr({ zh: '搜索已结束的 WCA 比赛', en: 'Search completed WCA competitions' })}
+                  onPick={(picked) => {
+                    setCompetition(picked);
+                    setCompetitionInput(picked.name);
+                    setEventId(
+                      (picked.events ?? [])
+                        .map(toWcaEventId)
+                        .find((id) => SUPPORTED_COMP_SIM_EVENTS.has(id)) ?? '',
+                    );
+                  }}
+                  placeholder={tr({ zh: '搜索已结束的比赛', en: 'Search completed competitions' })}
                   isZh={isZh}
                   hideFuture
                   hideNotEnded
                   hideCancelled
                 />
-              ) : (
-                <input className="comp-sim-step-input" type="text" disabled placeholder={tr({ zh: '请先使用 WCA 登录', en: 'Continue with WCA first' })} />
-              )}
-            </div>
-          </div>
-
-          <div className={`comp-sim-step${!competition ? ' is-disabled' : ''}`}>
-            <span className="comp-sim-step-number">3</span>
-            <div className="comp-sim-step-body">
-              <h2>{tr({ zh: '选择项目', en: 'Choose an Event' })}</h2>
-              {competition && supportedEvents.size > 0 ? (
+              </div>
+            )}
+            <div className="practice-field">
+              <label>{tr({ zh: '训练项目', en: 'Practice event' })}</label>
+              {availableEvents.length ? (
                 <PuzzlePicker
                   isZh={isZh}
                   selectedEvent={eventId}
-                  groups={eventGroups}
+                  groups={groups}
                   onSelect={(id) => {
-                    loadRequestId.current += 1;
                     setEventId(id);
                     setError('');
                   }}
                 />
               ) : (
-                <p className="comp-sim-muted">{competition
-                  ? tr({ zh: '这场比赛没有本站支持的项目。', en: 'No supported events were found.' })
-                  : tr({ zh: '选择比赛后可选项目。', en: 'Choose a competition to see its events.' })}</p>
-              )}
-            </div>
-          </div>
-
-          <div className={`comp-sim-step${!eventId ? ' is-disabled' : ''}`}>
-            <span className="comp-sim-step-number">4</span>
-            <div className="comp-sim-step-body">
-              <h2>{tr({ zh: '设置现场', en: 'Set the Scene' })}</h2>
-              <div className="comp-sim-options">
-                <BoolToggle value={options.inspectionVoice} onChange={(value) => setOptions((old) => ({ ...old, inspectionVoice: value }))} label={tr({ zh: '观察时间语音提示', en: 'Voice alert inspection' })} disabled={!hasSpeech && COMP_SIM_MEDIA.inspectionVoices.length === 0} />
-                <BoolToggle value={options.announcements} onChange={(value) => setOptions((old) => ({ ...old, announcements: value }))} label={tr({ zh: '轮次播报', en: 'Round announcements' })} disabled={!hasAnnouncements} />
-                <BoolToggle value={options.ambiance} onChange={(value) => setOptions((old) => ({ ...old, ambiance: value }))} label={tr({ zh: '比赛环境声', en: 'Competition ambiance' })} disabled={!hasAmbiance} />
-                <BoolToggle value={options.distractions} onChange={(value) => setOptions((old) => ({ ...old, distractions: value }))} label={tr({ zh: '随机声音干扰', en: 'Auditory distractions' })} disabled={!hasDistractions} />
-                <BoolToggle value={options.duplicateScrambles} onChange={(value) => setOptions((old) => ({ ...old, duplicateScrambles: value }))} label={tr({ zh: '模拟重复打乱', en: 'Duplicate scrambles' })} />
-                <BoolToggle value={options.visuals} onChange={(value) => setOptions((old) => ({ ...old, visuals: value }))} label={tr({ zh: '比赛现场画面', en: 'Competition visuals' })} disabled={!hasVisuals} />
-                <BoolToggle value={options.stationary} onChange={(value) => setOptions((old) => ({ ...old, stationary: value }))} label={tr({ zh: '固定座位', en: 'Stationary seating' })} />
-              </div>
-              {(!hasAmbiance || !hasDistractions || !hasVisuals) && (
-                <p className="comp-sim-media-note">
-                  {tr({ zh: '音视频素材尚未加入；对应选项会在素材清单补齐后自动启用。', en: 'Audio and video assets have not been added yet; their options will enable automatically when the media manifest is filled.' })}
+                <p>
+                  {tr({
+                    zh: '选择比赛后显示可练习的项目。',
+                    en: 'Choose a competition to see its available events.',
+                  })}
                 </p>
               )}
-              <label className="comp-sim-wait">
-                <span>{tr({ zh: '每把最长等待', en: 'Max wait between attempts' })}</span>
-                <input
-                  className="comp-sim-wait-input"
-                  type="number"
-                  min={1}
-                  max={15}
-                  step={1}
-                  value={options.maxWaitMinutes}
-                  onChange={(event) => setOptions((old) => ({
-                    ...old,
-                    maxWaitMinutes: Math.min(15, Math.max(1, Number(event.target.value) || 1)),
-                  }))}
-                />
-                <span>{tr({ zh: '分钟', en: 'minutes' })}</span>
-              </label>
-              <button
-                type="button"
-                className="comp-sim-primary comp-sim-start"
-                disabled={!user?.wcaId || !competition || !eventId || stage === 'loading'}
-                onClick={startSimulation}
-              >
-                {stage === 'loading' ? tr({ zh: '正在准备现场…', en: 'Preparing the round…' }) : tr({ zh: '开始模拟', en: 'Start simulation' })}
-              </button>
-              {status && <p className="comp-sim-status" role="status">{status}</p>}
-              {error && <p className="comp-sim-error" role="alert"><CircleAlert size={17} aria-hidden="true" />{error}</p>}
             </div>
-          </div>
+            <label htmlFor="practice-target">
+              {tr({ zh: '目标成绩（可选）', en: 'Target result (optional)' })}
+            </label>
+            <div className="practice-input-wrap">
+              <input
+ className="practice-input"
+                id="practice-target"
+                inputMode="decimal"
+                maxLength={16}
+                value={target}
+                onChange={(event) => setTarget(event.target.value)}
+                placeholder="20.00"
+              />
+              {target && <ClearButton onClick={() => setTarget('')} />}
+            </div>
+            <p className="practice-help">
+              {tr({
+                zh: '目标按本轮赛制比较：平均制比较平均，最佳制比较最佳单次。',
+                en: 'Your target follows the round format: average for average rounds, best single for best-of rounds.',
+              })}
+            </p>
+            <BoolToggle
+              value={voice}
+              onChange={setVoice}
+              label={tr({
+                zh: '观察时朗读 8 秒与 12 秒提示',
+                en: 'Speak the 8- and 12-second inspection cues',
+              })}
+            />
+            <p className="practice-help">
+              {tr({
+                zh: '语音可用性取决于浏览器；始终提供屏幕时间提示。',
+                en: 'Speech depends on your browser. The on-screen time guide is always available.',
+              })}
+            </p>
+            <button
+              type="button"
+              className="practice-primary practice-start"
+              disabled={!eventId || (source === 'historical' && !competition)}
+              onClick={start}
+            >
+              {busy
+                ? tr({ zh: '正在准备打乱与轮次…', en: 'Preparing scrambles and rounds…' })
+                : tr({ zh: '开始本轮训练', en: 'Start this round' })}
+              <ArrowRight size={18} aria-hidden="true" />
+            </button>
+          </fieldset>
+          {busy && (
+            <button
+              type="button"
+              className="practice-secondary"
+              onClick={() => {
+                requestId.current += 1;
+                setBusy(false);
+              }}
+            >
+              {tr({ zh: '取消准备', en: 'Cancel preparation' })}
+            </button>
+          )}
         </section>
-
-        {savedRounds.length > 0 && (
-          <section className="comp-sim-saved" aria-labelledby="comp-sim-saved-title">
-            <h2 id="comp-sim-saved-title">{tr({ zh: '本机最近模拟', en: 'Recent simulations on this device' })}</h2>
+        <aside className="practice-aside">
+          <section className="practice-card practice-overview">
+            <span className="practice-eyebrow">
+              {tr({ zh: '专注一轮，持续进步', en: 'One round at a time' })}
+            </span>
+            <h2>
+              {eventId ? eventDisplayName(eventId, isZh) : tr({ zh: '你的下一轮', en: 'Your next round' })}
+            </h2>
+            <p>
+              {source === 'generated'
+                ? tr({
+                    zh: '新打乱 · 实体计时 · 本机记录',
+                    en: 'Fresh scrambles · physical timer · local history',
+                  })
+                : tr({
+                    zh: '历史打乱 · 原轮次规则 · 成绩对照',
+                    en: 'Archived scrambles · round rules · result comparison',
+                  })}
+            </p>
+            <ul className="practice-benefits">
+              <li>
+                <Play size={18} aria-hidden="true" />
+                <div>
+                  <strong>{tr({ zh: '按自己的节奏准备', en: 'Prepare at your pace' })}</strong>
+                  <p>
+                    {tr({
+                      zh: '准备、观察、还原，每次只关注当前一步。',
+                      en: 'Prepare, inspect, solve. Focus on the current step.',
+                    })}
+                  </p>
+                </div>
+              </li>
+              <li>
+                <BookOpen size={18} aria-hidden="true" />
+                <div>
+                  <strong>{tr({ zh: '留下具体观察', en: 'Keep useful observations' })}</strong>
+                  <p>
+                    {tr({
+                      zh: '成绩之外，记下停顿和失误发生在哪里。',
+                      en: 'Alongside the time, note where pauses and mistakes happened.',
+                    })}
+                  </p>
+                </div>
+              </li>
+              <li>
+                <FinishFlag size={18} aria-hidden="true" />
+                <div>
+                  <strong>{tr({ zh: '带着重点继续练', en: 'Leave with a focus' })}</strong>
+                  <p>
+                    {tr({
+                      zh: '从逐把记录和目标差距中安排下一轮。',
+                      en: 'Use your attempts and target gap to plan the next round.',
+                    })}
+                  </p>
+                </div>
+              </li>
+            </ul>
+            {competition && <p>{sourceName({ competition })}</p>}
+          </section>
+          <section className="practice-account">
+            <p>
+              {tr({
+                zh: '无需登录即可训练，记录保存在当前浏览器。',
+                en: 'Practice without signing in. Records stay in this browser.',
+              })}
+            </p>
+            {!user?.wcaId && (
+              <button type="button" className="practice-secondary" onClick={() => loginWithWca()}>
+                {tr({ zh: '关联 WCA 个人纪录', en: 'Connect WCA personal records' })}
+              </button>
+            )}
+            {user?.wcaId && (
+              <p>
+                <Flag iso2={user.country} /> <PersonLink wcaId={user.wcaId} name={user.name} isZh={isZh} />
+              </p>
+            )}
+          </section>
+        </aside>
+      </div>
+      <section className="practice-card practice-history">
+        <div className="practice-section-title">
+          <History size={22} aria-hidden="true" />
+          <h2>{tr({ zh: '训练历史', en: 'Practice history' })}</h2>
+          {history.length > 0 && (
+            <button type="button" className="practice-secondary" onClick={exportHistory}>
+              {tr({ zh: '导出', en: 'Export' })}
+            </button>
+          )}
+        </div>
+        {history.length ? (
+          <ul>
+            {history.map((record) => (
+              <li key={record.id}>
+                <button type="button" className="practice-history-button" onClick={() => setReview(record)}>
+                  <span>
+                    <strong>{eventDisplayName(record.eventId, isZh)}</strong> · {sourceName(record)}
+                    <small>
+                      {new Date(record.at).toLocaleString(isZh ? 'zh-CN' : 'en-US')} ·{' '}
+                      {record.competition
+                        ? roundTypeName(record.roundTypeId, isZh)
+                        : tr({ zh: '一轮练习', en: 'Practice round' })}
+                    </small>
+                  </span>
+                  <span>
+                    <strong>
+                      {displayMs(
+                        roundResult(record.solves, record.config).official,
+                        record.eventId,
+                        record.config.format === 'ao5' || record.config.format === 'mo3',
+                      )}
+                    </strong>
+                    <small>{targetLabel(record)}</small>
+                  </span>
+                  <ArrowRight size={18} aria-hidden="true" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="practice-empty">
+            <BookOpen size={28} aria-hidden="true" />
+            <p>
+              {tr({
+                zh: '完成第一轮后，在这里查看成绩、目标和逐把备注。',
+                en: 'After your first round, find your results, targets, and attempt notes here.',
+              })}
+            </p>
+          </div>
+        )}
+        {legacy.length > 0 && (
+          <details>
+            <summary>{tr({ zh: '旧版历史摘要', en: 'Earlier history summaries' })}</summary>
             <ul>
-              {savedRounds.slice(0, 5).map((row) => (
-                <li key={row.key}>
-                  <span>{row.competition} {row.event} {row.round}</span>
-                  <strong>{row.result} #{row.rank}</strong>
+              {legacy.map((record) => (
+                <li key={record.key}>
+                  {record.competition} · {record.event} · {record.round} · {record.result}
                 </li>
               ))}
             </ul>
-          </section>
+          </details>
         )}
-      </main>
-    );
-  }
-
-  if (!competition || !currentRound || !user) return null;
-
-  const competitionName = localizeCompName(competition.id, competition.name, isZh);
-  return (
-    <main className={`comp-sim-live${crowdVideo && options.visuals && liveMediaActive ? ' has-visuals' : ''}`}>
-      {crowdVideo && options.visuals && liveMediaActive && (
-        <video
-          className="comp-sim-background-video"
-          src={crowdVideo.src}
-          poster={crowdVideo.poster}
-          autoPlay
-          muted
-          loop
-          playsInline
-          aria-hidden="true"
-        />
-      )}
-      <header className="comp-sim-live-header">
-        <div>
-          <strong>{competitionName}</strong>
-          <span>{eventDisplayName(eventId, isZh)} {roundTypeName(currentRound.roundTypeId, isZh)} {tr({ zh: `第 ${attemptNumber} 把`, en: `Attempt ${attemptNumber}` })}</span>
-        </div>
-        <button type="button" className="comp-sim-icon-button" onClick={resetSimulation} aria-label={tr({ zh: '新建比赛模拟', en: 'New competition simulation' })}>
-          <RotateCcw size={18} aria-hidden="true" />
-        </button>
-      </header>
-
-      {stage === 'waiting' && (
-        <section className="comp-sim-stage" tabIndex={-1}>
-          <p className="comp-sim-kicker">{tr({ zh: '打乱并热手', en: 'Scramble and warm up' })}</p>
-          <div className="comp-sim-scramble">{currentScramble}</div>
-          <p>{tr({ zh: `请打乱并盖住比赛用魔方；热手请使用另一颗魔方。你会在接下来 ${options.maxWaitMinutes} 分钟内收到叫号。`, en: `Scramble and cover your competition puzzle; use another puzzle to warm up. Your call-up will arrive within the next ${options.maxWaitMinutes} minutes.` })}</p>
-          <button type="button" className="comp-sim-secondary" onClick={callUp}>
-            <FastForward size={18} aria-hidden="true" /> {tr({ zh: '跳过等待', en: 'Skip wait' })}
-          </button>
+      </section>
+      {review && (
+        <section ref={reviewRef} tabIndex={-1} className="practice-card practice-history-review">
+          <div className="practice-section-title">
+            <h2>{tr({ zh: '历史复盘', en: 'Past round review' })}</h2>
+            <button type="button" className="practice-secondary" onClick={() => setReview(null)}>
+              {tr({ zh: '收起复盘', en: 'Close review' })}
+            </button>
+          </div>
+          <p>
+            {eventDisplayName(review.eventId, isZh)} · {sourceName(review)}
+          </p>
+          <RoundReview record={review} />
         </section>
       )}
-
-      {stage === 'called' && (
-        <section className="comp-sim-stage comp-sim-callup" tabIndex={-1}>
-          <p>{displayCuberName(user.name, isZh)}</p>
-          <h2>{tr({ zh: `${tableNumber} 号桌`, en: `Table ${tableNumber}` })}</h2>
-          <button type="button" className="comp-sim-primary comp-sim-stage-action" onClick={beginInspection}>
-            {tr({ zh: '开始观察', en: 'Begin inspection' })}
-          </button>
-        </section>
-      )}
-
-      {stage === 'ready' && (
-        <section className="comp-sim-stage" tabIndex={-1}>
-          <p className="comp-sim-kicker">{currentIsExtra ? tr({ zh: '备打', en: 'Extra Scramble' }) : tr({ zh: '打乱并盖住魔方', en: 'Scramble and Cover Your Puzzle' })}</p>
-          <div className="comp-sim-scramble">{currentScramble}</div>
-          <div className="comp-sim-stage-buttons">
-            <button type="button" className="comp-sim-secondary comp-sim-stage-button" onClick={useExtra}>{tr({ zh: '备打', en: 'Extra' })}</button>
-            <button type="button" className="comp-sim-primary comp-sim-stage-action comp-sim-stage-button" onClick={beginInspection}>{tr({ zh: '开始观察', en: 'Begin inspection' })}</button>
-          </div>
-        </section>
-      )}
-
-      {stage === 'entry' && (
-        <section className="comp-sim-entry-stage">
-          <p>{tr({ zh: '使用你的实体计时器完成本把，然后录入成绩。', en: 'Complete the attempt on your physical timer, then enter the result.' })}</p>
-          <div className="comp-sim-entry-controls">
-            <input
-              ref={entryRef}
-              className="comp-sim-entry-input"
-              type="text"
-              inputMode="decimal"
-              maxLength={16}
-              autoComplete="off"
-              value={entry}
-              placeholder="12.34"
-              aria-label={tr({ zh: '本把成绩', en: 'Attempt result' })}
-              onChange={(event) => setEntry(event.target.value)}
-              onKeyDown={handleEntryKeyDown}
-            />
-            <button type="button" className="comp-sim-secondary comp-sim-entry-action" onClick={useExtra}>{tr({ zh: '备打', en: 'Extra' })}</button>
-            <button type="button" className={`comp-sim-secondary comp-sim-entry-action${plusTwo ? ' is-active' : ''}`} aria-pressed={plusTwo} onClick={() => setPlusTwo((value) => !value)}>+2</button>
-            <button type="button" className="comp-sim-secondary comp-sim-entry-action" onClick={() => submitResult('DNF')}>DNF</button>
-            <button type="button" className="comp-sim-primary comp-sim-entry-action" onClick={() => submitResult()}>{tr({ zh: '提交', en: 'Submit' })}</button>
-          </div>
-          <p className="comp-sim-shortcuts">{tr({ zh: 'Enter 提交，Ctrl/⌘+2 切换 +2，Ctrl/⌘+3 记 DNF，空格取消剩余语音提示', en: 'Enter submits; Ctrl/⌘+2 toggles +2; Ctrl/⌘+3 records DNF; Space cancels remaining voice cues' })}</p>
-        </section>
-      )}
-
-      {stage === 'results' && simRow && (
-        <section className="comp-sim-results">
-          <div className="comp-sim-results-heading">
-            <div>
-              <p className="comp-sim-kicker">{tr({ zh: '官方排名模拟', en: 'Simulated official standings' })}</p>
-              <h2>{resultText(simRow, eventId, !!averageFormat)}</h2>
-              <p>#{simRow.rank}{simRow.xpr ? ` ${tr({ zh: '非官方个人纪录', en: 'Unofficial personal record' })}` : ''}</p>
-            </div>
-            <button type="button" className="comp-sim-secondary" onClick={shareResult}><Share2 size={17} aria-hidden="true" />{tr({ zh: '分享', en: 'Share' })}</button>
-          </div>
-          <div className="comp-sim-table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>{tr({ zh: '排名', en: 'Rank' })}</th>
-                  <th>{tr({ zh: '选手', en: 'Name' })}</th>
-                  {Array.from({ length: currentResult?.attempts ?? 0 }, (_, index) => <th className="comp-sim-attempt-col" key={index}>{index + 1}</th>)}
-                  <th className="comp-sim-best-col">{tr({ zh: '单次', en: 'Best' })}</th>
-                  <th>{averageFormat ? tr({ zh: '平均', en: 'Average' }) : tr({ zh: '成绩', en: 'Result' })}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leaderboard.map((row) => (
-                  <tr key={`${row.kind}-${row.wcaId}`} className={row.kind === 'sim' ? 'is-sim' : undefined}>
-                    <td>{row.rank}</td>
-                    <td>
-                      <span className="comp-sim-person">
-                        <Flag iso2={row.countryIso2} />
-                        <PersonLink wcaId={row.wcaId} name={row.name} isZh={isZh} />
-                        {row.kind === 'sim' && <span className="comp-sim-badge">SIM</span>}
-                      </span>
-                    </td>
-                    {Array.from({ length: currentResult?.attempts ?? 0 }, (_, index) => (
-                      <td className="comp-sim-attempt-col" key={index}>{attemptText(row.attempts[index] ?? 0, eventId, index === row.bestIndex || index === row.worstIndex)}</td>
-                    ))}
-                    <td className="comp-sim-best-col">{formatWcaResult(row.best, eventId, 'single')}{row.xprBest && <span className="comp-sim-badge">XPR</span>}</td>
-                    <td>{resultText(row, eventId, !!averageFormat)}{row.xprAverage && <span className="comp-sim-badge">XPR</span>}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="comp-sim-results-actions">
-            {roundIndex < rounds.length - 1 && (
-              <button type="button" className="comp-sim-primary" disabled={!advances} onClick={startNextRound}>
-                <Trophy size={18} aria-hidden="true" />
-                {advances ? tr({ zh: `开始第 ${roundIndex + 2} 轮`, en: `Start Round ${roundIndex + 2}` }) : tr({ zh: '未晋级下一轮', en: 'Not advanced to the next round' })}
-              </button>
-            )}
-            <button type="button" className="comp-sim-secondary" onClick={resetSimulation}><RotateCcw size={17} aria-hidden="true" />{tr({ zh: '新建模拟', en: 'New simulation' })}</button>
-          </div>
-        </section>
-      )}
-
-      {toast && <div className="comp-sim-toast" role="status">{toast}</div>}
     </main>
   );
 }
