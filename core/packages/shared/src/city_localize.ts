@@ -10,6 +10,7 @@ import { PLACE_CITY_ZH, PLACE_ADMIN_ZH } from './data/place_zh';
 const CITY_ZH: Record<string, string> = {
   'Beijing': '北京', 'Shanghai': '上海', 'Tianjin': '天津', 'Chongqing': '重庆',
   'Hong Kong': '香港', 'Macau': '澳门', 'Macao': '澳门',
+  'Hong Kong SAR': '香港', 'Macau SAR': '澳门', 'Macao SAR': '澳门',
   'Anyang': '安阳', 'Baoji': '宝鸡', 'Beihai': '北海', 'Changchun': '长春', 'ChangChun': '长春',
   'Changsha': '长沙', 'Changzhou': '常州', 'Chaozhou': '潮州', 'Chengdu': '成都',
   'Chifeng': '赤峰', 'Dalian': '大连', 'Dandong': '丹东', 'Dongguan': '东莞',

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { localizeCity } from '@/lib/city-localize';
 
 const clientRoot = join(__dirname, '..');
 const accountPage = readFileSync(join(clientRoot, 'app/[lang]/account/page.tsx'), 'utf8');
@@ -26,5 +27,12 @@ describe('账号基本资料 UI 契约', () => {
     expect(countryInput).toContain('id?: string;');
     expect(countryInput).toContain('ariaLabel?: string;');
     expect(countryInput).toContain('aria-label={ariaLabel}');
+  });
+});
+
+describe('账号地区中文名称', () => {
+  it.each([['Hong Kong SAR', '香港'], ['Macau SAR', '澳门'], ['Macao SAR', '澳门']])('%s → %s', (name, expected) => {
+    expect(localizeCity(name, true, 'CN')).toBe(expected);
+    expect(localizeCity(name, false, 'CN')).toBe(name);
   });
 });
