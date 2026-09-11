@@ -203,7 +203,6 @@ export default function LandingPage() {
           Icon={card.Icon}
           iconImg={card.iconImg}
         />
-        {isDevelopment && <span className="coming-soon-badge">{developmentLabel}</span>}
       </>
     );
     const isDisabled = isLocked;

@@ -42,7 +42,7 @@ describe('homepage development cards', () => {
       expect(card.getAttribute('href')).toBe(href);
       expect(card.getAttribute('aria-disabled')).toBeNull();
       expect(card.classList.contains('is-disabled')).toBe(true);
-      expect(card.querySelector('.coming-soon-badge')?.textContent).toBe('开发中');
+      expect(card.querySelector('.coming-soon-badge')).toBeNull();
       expect(card.querySelector('.lucide-lock')).toBeNull();
     }
     expect(host.querySelector('#card-teaching')?.getAttribute('href')).toBe(admin ? '/zh/courses' : undefined);

@@ -669,10 +669,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'comp-sim': {
-    title: { zh: '比赛模拟', en: 'Competition Simulator' },
+    title: { zh: '赛前训练', en: 'Competition Practice' },
     description: {
-      zh: '使用真实 WCA 比赛、轮次、对手、打乱和晋级规则，完整模拟叫号、观察、成绩录入与排名。',
-      en: 'Rehearse a real WCA competition with authentic rounds, competitors, scrambles, call-ups, inspection, results, rankings and advancement.',
+      zh: '使用新打乱或历史比赛打乱完成一轮训练，追踪目标、记录失误，并查看逐把成绩与训练复盘。',
+      en: 'Practice with fresh or historical competition scrambles, track a target, note mistakes, and review every attempt.',
     },
   },
   'sim/stages': { title: { zh: '阶段遮罩速查', en: 'Stage Masks' } },
