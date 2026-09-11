@@ -691,3 +691,30 @@
     word-break: break-word;
   }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .fable-page {
+    --fb-bg: var(--background);
+    --fb-bg-raised: var(--card);
+    --fb-ink: var(--foreground);
+    --fb-ink-soft: var(--muted-foreground);
+    --fb-ink-faint: var(--faint-foreground);
+    --fb-line: var(--border-default);
+    --fb-line-strong: var(--border-strong);
+    color-scheme: inherit;
+    background: transparent;
+  }
+
+  body[data-site-scenery] .fable-twin-card,
+  body[data-site-scenery] .fable-proof-card,
+  body[data-site-scenery] .fable-bench-card,
+  body[data-site-scenery] .fable-cap-card,
+  body[data-site-scenery] .fable-safety-card {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+}

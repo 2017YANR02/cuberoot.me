@@ -2,11 +2,10 @@
 
 /**
  * 通用 iOS UISegmentedControl 风胶囊:容器 frosted glass,active chip 后面
- * 一块 liquid-glass-react 渲染的 thumb 跟着滑。手指按下后横滑过 chip 边界
+ * 一块共享玻璃材质的 thumb 跟着滑。手指按下后横滑过 chip 边界
  * 即切换 (不用抬手)。Safari / iOS 退一档 CSS frosted thumb。
  */
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import LiquidGlass from 'liquid-glass-react';
 import './LiquidGlassChips.css';
 
 /** Safari (desktop + iOS,任何 iOS 浏览器都是 WebKit) 不能正确合成 SVG
@@ -33,7 +32,6 @@ interface Props<T extends string | number> {
 export default function LiquidGlassChips<T extends string | number>({
   items, value, onChange, getLabel, className, ariaLabel,
 }: Props<T>) {
-  const [useFallback] = useState<boolean>(() => needsCssGlassFallback());
   const containerRef = useRef<HTMLDivElement>(null);
   const chipRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const draggingRef = useRef(false);
@@ -111,7 +109,7 @@ export default function LiquidGlassChips<T extends string | number>({
       onPointerCancel={onPointerEnd}
     >
       <div className="lg-chips-thumb-layer">
-        {chipBox.w > 0 && (useFallback ? (
+        {chipBox.w > 0 && (
           <div
             className="lg-chips-thumb-fallback"
             aria-hidden="true"
@@ -122,20 +120,7 @@ export default function LiquidGlassChips<T extends string | number>({
               height: chipBox.h,
             }}
           />
-        ) : (
-          <LiquidGlass
-            mouseContainer={containerRef}
-            padding="0"
-            cornerRadius={999}
-            style={{
-              position: 'absolute',
-              top: chipBox.centerY,
-              left: chipBox.centerX,
-            }}
-          >
-            <div style={{ width: chipBox.w, height: chipBox.h }} aria-hidden="true" />
-          </LiquidGlass>
-        ))}
+        )}
       </div>
       {items.map((item, i) => (
         <button

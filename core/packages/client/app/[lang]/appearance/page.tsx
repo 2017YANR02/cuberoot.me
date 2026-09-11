@@ -1,6 +1,6 @@
 'use client';
 
-// Backgrounds affect the homepage; palette previews keep their local token scope.
+// Backgrounds affect the whole site; palette previews keep their local token scope.
 
 import { useEffect, useState } from 'react';
 import { Check, Play, RotateCcw, Expand, SunMoon, ImageOff } from 'lucide-react';
@@ -67,14 +67,14 @@ export default function AppearancePage() {
         {tr({ zh: '选一处喜欢的风景，配一套舒服的颜色。', en: 'Find a landscape you love and a palette that feels right.' })}
       </p>
       <nav className="ac-nav" aria-label={tr({ zh: '外观设置', en: 'Appearance settings' })}>
-        <AppLink href="/appearance#backgrounds">{tr({ zh: '主页背景', en: 'Homepage backgrounds' })}</AppLink>
+        <AppLink href="/appearance#backgrounds">{tr({ zh: '全站背景', en: 'Site backgrounds' })}</AppLink>
         <AppLink href="/appearance#palettes">{tr({ zh: '配色主题', en: 'Color themes' })}</AppLink>
       </nav>
 
       <section id="backgrounds" className="ac-section" aria-labelledby="ac-background-title">
-        <h2 id="ac-background-title" className="ac-h2">{tr({ zh: '主页背景', en: 'Homepage backgrounds' })}</h2>
+        <h2 id="ac-background-title" className="ac-h2">{tr({ zh: '全站背景', en: 'Site backgrounds' })}</h2>
         <p className="ac-lead">
-          {tr({ zh: '山海之间，奇境之中。雪山、沙漠与不可能建筑，只装点主页。点击图片查看原图。', en: 'Quiet worlds of snowy peaks, deserts and impossible architecture, just for your homepage. Open any image to see the original.' })}
+          {tr({ zh: '山海之间，奇境之中。雪山、沙漠与不可能建筑，全站相伴。点击图片查看原图。', en: 'Quiet worlds of snowy peaks, deserts and impossible architecture, across the whole site. Open any image to see the original.' })}
         </p>
         <div className="ac-background-controls">
           <div className="ac-background-modes" role="group" aria-label={tr({ zh: '背景模式', en: 'Background mode' })}>

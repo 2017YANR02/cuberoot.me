@@ -71,6 +71,12 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 ];
 
 export const CATALOG: UtilEntry[] = [
+  {
+    name: 'getOriginalScene', sig: 'getOriginalScene(state: unknown)',
+    imp: "import { getOriginalScene } from '@/lib/deskpet-originals';", category: 'util',
+    zh: '从统一清单读取原创桌宠的动作、时长和素材。',
+    en: 'Reads original pet scenes, durations and assets from the shared manifest.',
+  },
   // ── hooks ─────────────────────────────────
   {
     name: 'useHomeBackgroundChoice',
@@ -127,12 +133,21 @@ export const CATALOG: UtilEntry[] = [
   },
   {
     name: 'useModalDismiss',
-    sig: 'useModalDismiss(onClose: () => void, disabled?: boolean): void',
+    sig: 'useModalDismiss(onClose: () => void, disabled?: boolean): backdropProps',
     imp: "import { useModalDismiss } from '@/hooks/useModalDismiss';",
-    usage: "useModalDismiss(onClose);  // Escape 关闭 + 锁 body 滚动",
+    usage: "const backdropProps = useModalDismiss(onClose, saving);\n<div className=\"modal-backdrop\" {...backdropProps}>...</div>",
     category: 'hook',
-    zh: '模态框标准关闭接线:挂载期 Escape 关闭 + 锁 body 滚动,卸载复位。disabled(如提交中)不响应 Escape。遮罩点击 / 关闭按钮各模态自己写(onClick vs onMouseDown、✕ vs 图标 不统一,抽进壳会过度抽象)。',
-    en: 'Standard modal dismissal: Escape-to-close + body-scroll lock while mounted; disabled suppresses Escape (e.g. mid-submit). Backdrop/close-button stay per-modal.',
+    zh: '挂载期 Escape 关闭并锁 body 滚动;返回的 props 展开到外部遮罩,支持点击和触摸关闭,内部操作或拖出不误关。disabled 在提交中暂时禁止关闭。',
+    en: 'Escape dismissal and body scroll lock while mounted. Spread returned props onto the backdrop for outside click/tap dismissal without closing on inside clicks or drag-out. disabled temporarily blocks dismissal during submission.',
+  },
+  {
+    name: 'useModalBackdrop',
+    sig: 'useModalBackdrop(onClose: () => void, disabled?: boolean): backdropProps',
+    imp: "import { useModalBackdrop } from '@/hooks/useModalDismiss';",
+    usage: "const backdropProps = useModalBackdrop(onClose, saving);\n<div className=\"modal-backdrop\" {...backdropProps}>...</div>",
+    category: 'hook',
+    zh: '已有键盘与滚动生命周期的弹窗复用此 hook,仅接入外部遮罩关闭。必须在遮罩上按下并点击才关闭,内部拖到外部不关闭。',
+    en: 'Backdrop dismissal for dialogs with an existing keyboard and scroll lifecycle. Pressing and clicking the backdrop closes; dragging from inside to outside does not.',
   },
   {
     name: 'useSingleLineSolve',

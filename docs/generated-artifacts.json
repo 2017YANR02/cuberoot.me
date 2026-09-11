@@ -602,15 +602,30 @@
       "kind": "checked-in-generated",
       "source": {
         "locator": "Approved CubeRoot B2 traced vector parts and original choreography",
-        "paths": ["core/packages/client/scripts/deskpet-rootbeast/**"]
+        "paths": ["core/packages/client/scripts/deskpet-rootbeast/**", "core/packages/client/scripts/deskpet-animation.mjs"]
       },
       "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
       "owner": "core/packages/client/scripts/deskpet-rootbeast",
       "workingDirectory": "core/packages/client",
       "command": "node scripts/deskpet-rootbeast/build-rootbeast.mjs",
       "outputs": ["core/packages/client/public/deskpet/rootbeast/**"],
-      "verification": ["node scripts/deskpet-rootbeast/build-rootbeast.mjs --check", "tests/deskpet-rootbeast.test.ts", "preview all 50 complete loops and the mobile gallery in a browser"],
+      "verification": ["node scripts/deskpet-rootbeast/build-rootbeast.mjs --check", "tests/deskpet-rootbeast.test.ts", "preview all 51 complete loops and the mobile gallery in a browser"],
       "driftPolicy": "Edit traced rig or choreography sources and regenerate. The manifest drives the gallery and pet runtime. Bump ROOTBEAST_VERSION when regenerating published assets."
+    },
+    {
+      "id": "client.deskpet-originals",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "Twelve selected original pet designs with articulated SVG parts and 48 shared story intents",
+        "paths": ["core/packages/client/scripts/deskpet-originals/**", "core/packages/client/scripts/deskpet-animation.mjs", "core/packages/client/scripts/deskpet-rootbeast/rig.mjs"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
+      "owner": "core/packages/client/scripts/deskpet-originals",
+      "workingDirectory": "core/packages/client",
+      "command": "node scripts/deskpet-originals/build-originals.mjs",
+      "outputs": ["core/packages/client/public/deskpet/originals/**"],
+      "verification": ["node scripts/deskpet-originals/build-originals.mjs --check", "tests/deskpet-originals.test.ts", "preview every character and scene, including mobile gallery and playback"],
+      "driftPolicy": "Edit the articulated character, motion, props or bilingual scene sources and regenerate all 576 SVGs. The manifest is the single source for the existing gallery and runtime. Bump the manifest version when regenerating published assets."
     },
     {
       "id": "mobile.android-assets",

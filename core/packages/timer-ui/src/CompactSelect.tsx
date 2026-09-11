@@ -212,7 +212,9 @@ export function CompactSelect<T extends string | number>({
           </div>
           {footer?.(close)}
         </div>,
-        document.body,
+        // Native modal dialogs make the rest of the document inert. Keep the
+        // shared, viewport-clamped popup in its trigger's top-layer surface.
+        triggerRef.current?.closest('dialog') ?? document.body,
       )}
     </div>
   );

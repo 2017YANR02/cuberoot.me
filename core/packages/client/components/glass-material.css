@@ -1,12 +1,40 @@
-/* Shared liquid-glass material: admin toolbar and homepage card surfaces.
-   Resolve theme tokens on each consumer so appearance previews stay live. */
-.admin-tools,
-.landing-page {
-  --glass-background: linear-gradient(135deg, color-mix(in srgb, var(--foreground) 9%, transparent), transparent 55%),
-    color-mix(in srgb, var(--background) 48%, transparent);
-  --glass-edge: color-mix(in srgb, var(--foreground) 14%, transparent);
-  --glass-filter: blur(20px) saturate(180%);
-  --glass-shadow: inset 0 1px 0 color-mix(in srgb, var(--foreground) 16%, transparent),
-    inset 0 -1px 0 color-mix(in srgb, var(--background) 30%, transparent),
-    0 6px 24px color-mix(in srgb, var(--foreground) 8%, transparent);
+/* One natural material. Resolve tokens locally for palette comparison samples. */
+:root, body, .palette-scope, .contrast-scope {
+  --glass-surface-bg: color-mix(in srgb, var(--card) 22%, transparent);
+  --glass-popover-bg: color-mix(in srgb, var(--popover) 68%, transparent);
+  --glass-background: transparent;
+  --glass-border: color-mix(in srgb, var(--foreground) 22%, transparent);
+  --glass-edge: var(--glass-border);
+  --glass-filter: blur(10px);
+  --glass-shadow: 0 8px 26px color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root, body, .palette-scope, .contrast-scope {
+    --glass-surface-bg: var(--card);
+    --glass-popover-bg: var(--popover);
+    --glass-background: var(--card);
+    --glass-filter: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root, body, .palette-scope, .contrast-scope {
+    --glass-surface-bg: var(--card);
+    --glass-popover-bg: var(--popover);
+    --glass-background: var(--card);
+    --glass-filter: none;
+  }
+  body { --site-glass-refraction: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body { --site-glass-refraction: var(--glass-filter) !important; }
+}
+@media print {
+  :root, body, .palette-scope, .contrast-scope {
+    --glass-surface-bg: var(--card);
+    --glass-popover-bg: var(--popover);
+    --glass-background: var(--card);
+    --glass-filter: none;
+    --glass-shadow: none;
+  }
+  body { --site-glass-refraction: none !important; }
 }

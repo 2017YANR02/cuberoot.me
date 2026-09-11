@@ -1,12 +1,46 @@
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { PET_GALLERY } from '@/lib/deskpet-gallery';
 import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
 import { getRootBeastScene, ROOTBEAST_AUTO, ROOTBEAST_COLLECTIONS, ROOTBEAST_FILES, ROOTBEAST_MINI_FILES, ROOTBEAST_RANDOM_SCENES, ROOTBEAST_SCENES, ROOTBEAST_VERSION } from '@/lib/deskpet-rootbeast';
 
 describe('Root Beast animation integration', () => {
+  it('keeps every gesture on short paws without adding arm or leg connectors', async () => {
+    type Pose = { b: number[]; L: number[]; R: number[]; HL: number[]; HR: number[] };
+    const { resolvePose } = await import(pathToFileURL(resolve('scripts/deskpet-rootbeast/character.mjs')).href) as {
+      resolvePose: (name: string, change?: Partial<Pose>) => Pose;
+    };
+    const { choreography } = await import(pathToFileURL(resolve('scripts/deskpet-rootbeast/choreography.mjs')).href) as {
+      choreography: Record<string, { poses: [number, string, Partial<Pose>?][] }>;
+    };
+    const { stage } = await import(pathToFileURL(resolve('scripts/deskpet-rootbeast/rig.mjs')).href) as {
+      stage: (id: number, duration: number, draw: (scene: { pet: () => string }) => string, sceneId: string) => { art: string };
+    };
+    for (const [id, plan] of Object.entries(choreography)) {
+      for (const [time, name, change] of plan.poses) {
+        const pose = resolvePose(name, change);
+        for (const bone of ['L', 'R', 'HL', 'HR'] as const) {
+          expect(pose[bone].every(Number.isFinite), `${id} ${time} ${bone}`).toBe(true);
+          expect(pose[bone][4], `${id} ${time} ${bone}`).toBeLessThanOrEqual(1);
+        }
+      }
+      const { art } = stage(1, 4, scene => scene.pet(), id);
+      // The only connector belongs to the black root-sign stalk. The old
+      // four blue rectangles stretched into long arms and legs when jumping.
+      expect([...art.matchAll(/<rect x="0" y="-7\.5" width="100" height="15"/g)], id).toHaveLength(1);
+      expect(art, id).not.toContain('height="34"');
+    }
+    const requested = { L: [-900, -900, 0, 1, 2] };
+    const resolved = resolvePose('stand', requested);
+    expect(resolved.L[0]).toBeGreaterThan(-250);
+    expect(resolved.L[1]).toBeGreaterThan(-150);
+    expect(resolved.L[4]).toBe(1);
+    expect(requested.L).toEqual([-900, -900, 0, 1, 2]);
+  });
+
   it('exposes independent loops through the same gallery and pet manifest', () => {
     expect(ROOTBEAST_SCENES).toHaveLength(51);
     expect(new Set(ROOTBEAST_SCENES.map(scene => scene.state)).size).toBe(ROOTBEAST_SCENES.length);
@@ -28,7 +62,9 @@ describe('Root Beast animation integration', () => {
       expect(svg, scene.file).toContain('viewBox="0 0 640 640"');
       // <img> rendering must composite the white underpaint and colored skin
       // before strip clipping; <object>-only previews hide this regression.
-      expect([...svg.matchAll(/data-shell-strip="\d+" clip-path="[^"]+"><g filter="url\(#rb-skin-/g)], scene.file).toHaveLength(8);
+      expect([...svg.matchAll(/data-shell-strip="\d+" clip-path="[^"]+"><g opacity="0\.999">/g)], scene.file).toHaveLength(8);
+      // Identity filters made only the shell blurry at enlarged/mobile sizes.
+      expect(svg, scene.file).not.toMatch(/<filter\b|\bfilter="/);
       expect(svg, scene.file).not.toMatch(/<(?:script|image|foreignObject|video|canvas)\b|(?:href=["']|url\(["']?)(?:https?:|data:)/);
       // Duplicate clip IDs made pupils disappear when an emotion reused an eye.
       const ids = [...svg.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);

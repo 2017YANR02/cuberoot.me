@@ -74,8 +74,8 @@ function CompetitionList() {
   return <div className="competitions">
     <header className="competition-heading"><h1>{t('线上比赛', 'Online competitions')}</h1><p>{t('选一个场次，在线监督参赛。', 'Choose a session and compete with live supervision.')}</p></header>
     <nav className="competition-tabs" aria-label={t('赛事视图', 'Competition view')}>
-      <button type="button" aria-current={view === 'browse' ? 'page' : undefined} onClick={() => { void setView('browse'); }}>{t('全部比赛', 'Competitions')}</button>
-      <button type="button" aria-current={view === 'manage' ? 'page' : undefined} onClick={() => { void setView('manage'); }}>{t('我要办赛', 'Host a competition')}</button>
+      <button type="button" className="competition-tab" aria-current={view === 'browse' ? 'page' : undefined} onClick={() => { void setView('browse'); }}>{t('全部比赛', 'Competitions')}</button>
+      <button type="button" className="competition-tab" aria-current={view === 'manage' ? 'page' : undefined} onClick={() => { void setView('manage'); }}>{t('我要办赛', 'Host a competition')}</button>
     </nav>
     {view === 'manage' && !user ? <p><AppLink href="/platform/login">{t('登录后管理赛事', 'Sign in to manage competitions')}</AppLink></p> : null}
     {error ? <div role="alert" className="competition-error"><p>{error}</p><button className="competition-secondary" type="button" onClick={() => setRevision(value => value + 1)}><RefreshCw size={15} />{t('重试', 'Retry')}</button></div> : null}

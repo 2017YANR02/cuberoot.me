@@ -109,3 +109,24 @@
   .sheet-dimension { display: none; }
   .sheet-selection-summary { max-width: 115px; overflow: hidden; text-overflow: ellipsis; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .sheet-workspace {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .sheet-export-menu,
+  body[data-site-scenery] .sheet-menu-panel {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery] .sheet-export-menu,
+  body[data-site-scenery] .sheet-menu-panel {
+    background: var(--glass-popover-bg);
+  }
+}

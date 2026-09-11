@@ -806,3 +806,22 @@
   .cs-record-modal-body { padding: 9px 14px max(16px, env(safe-area-inset-bottom)); }
   .cs-bar-row { grid-template-columns: 90px 1fr 40px; font-size: 0.72rem; gap: 6px; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .cs-page {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .cs-record-modal {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery] .cs-record-modal {
+    background: var(--glass-popover-bg);
+  }
+}

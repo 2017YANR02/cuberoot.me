@@ -1,4 +1,23 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, type HTMLAttributes } from 'react';
+
+/** Spread on the backdrop, not the dialog. Pointer origin protects drag-out gestures. */
+export function useModalBackdrop(onClose: () => void, disabled = false) {
+  const startedOutside = useRef(false);
+  return {
+    onPointerDownCapture: (event) => {
+      startedOutside.current = event.button === 0 && event.target === event.currentTarget;
+    },
+    onPointerCancel: () => { startedOutside.current = false; },
+    onClick: (event) => {
+      const outside = startedOutside.current;
+      startedOutside.current = false;
+      if (!disabled && outside && event.target === event.currentTarget) {
+        event.stopPropagation();
+        onClose();
+      }
+    },
+  } satisfies HTMLAttributes<HTMLElement>;
+}
 
 /**
  * Standard modal dismissal wiring, shared by the hand-rolled modals (8 of them
@@ -8,12 +27,11 @@ import { useEffect } from 'react';
  * `disabled` suppresses Escape (e.g. while a submit is in flight, so the user
  * can't Escape away mid-request).
  *
- * The backdrop/overlay click and the close button stay in each modal — they
- * genuinely vary (onClick vs onMouseDown+target-check, a ✕ text button vs a
- * lucide icon), so folding them into a shared shell would over-abstract. This
- * hook owns only the two universal bits.
+ * Spread the returned props on the backdrop for outside-click/tap dismissal.
+ * Pages with an already-managed modal lifecycle can use useModalBackdrop alone.
  */
-export function useModalDismiss(onClose: () => void, disabled = false): void {
+export function useModalDismiss(onClose: () => void, disabled = false) {
+  const backdropProps = useModalBackdrop(onClose, disabled);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !disabled) onClose(); };
     window.addEventListener('keydown', onKey);
@@ -24,4 +42,5 @@ export function useModalDismiss(onClose: () => void, disabled = false): void {
       document.body.style.overflow = prevOverflow;
     };
   }, [onClose, disabled]);
+  return backdropProps;
 }

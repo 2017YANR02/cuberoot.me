@@ -1854,3 +1854,10 @@ html[data-theme=dark] .arch-page { --accent: #6B8FCE; }
   .architecture-atlas__nodes { grid-template-columns: 1fr; }
   .architecture-atlas__detail { padding: 24px 18px; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .arch-page {
+    background: transparent;
+  }
+}

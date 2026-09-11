@@ -195,3 +195,23 @@
   .doc-canvas-row, .doc-editor { width: 100%; min-height: 0; margin: 0; border: 0; box-shadow: none; }
   .doc-editor .tiptap { min-height: 0; padding: 0; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .doc-workspace {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .doc-menu-panel,
+  body[data-site-scenery] .doc-toolbar {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery] .doc-menu-panel {
+    background: var(--glass-popover-bg);
+  }
+}

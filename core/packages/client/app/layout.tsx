@@ -3,6 +3,10 @@ import { Analytics } from "@vercel/analytics/next";
 import { THEME_BOOTSTRAP, LANG_BOOTSTRAP } from "@/lib/theme-bootstrap";
 import DeskPet from "@/components/DeskPet";
 import AuthRouteBridge from "@/components/AuthRouteBridge";
+import SiteBackground from '@/components/SiteBackground';
+import SiteGlass from '@/components/SiteGlass';
+import '@/components/glass-material.css';
+import '@/components/site-surfaces.css';
 import ThemeColorSync from "@/components/ThemeColorSync";
 import AuthTokenRefresher from "@/components/AuthTokenRefresher";
 import MembershipReminder from "@/components/MembershipReminder";
@@ -110,6 +114,8 @@ export default function RootLayout({
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){if(!location.pathname.startsWith('/auth/'))return;try{var u=sessionStorage.getItem('wca_return_url');if(u){var f=document.createElement('iframe');f.src=u;f.scrolling='no';f.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;border:none;z-index:0;overflow:hidden';f.setAttribute('aria-hidden','true');f.setAttribute('tabindex','-1');document.body.appendChild(f);}}catch(e){}})();` }} />
         <AppNuqsAdapter>
+          <SiteBackground />
+          <SiteGlass />
           {children}
           <MembershipReminder />
           <DeskPet />

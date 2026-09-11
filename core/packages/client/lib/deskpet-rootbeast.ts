@@ -2,7 +2,7 @@ import manifest from '../public/deskpet/rootbeast/manifest.json';
 
 // One generated manifest supplies the theme, gallery, and story durations.
 export const ROOTBEAST_BASE = '/deskpet/rootbeast/';
-export const ROOTBEAST_VERSION = '12';
+export const ROOTBEAST_VERSION = '14';
 export const ROOTBEAST_SCENES = manifest.map(scene => ({
   ...scene,
   character: 'rootbeast' as const,

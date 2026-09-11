@@ -1,27 +1,42 @@
 .platform-shell {
   --platform-measure: 1120px;
-  --platform-glass-edge: color-mix(in srgb, var(--foreground) 14%, transparent);
-  --platform-glass-light: color-mix(in srgb, var(--accent-foreground) 65%, transparent);
+  --platform-glass-edge: var(--glass-border, var(--border-default));
   min-height: 100vh;
   color: var(--foreground);
-  background:
-    radial-gradient(ellipse 70% 480px at 10% 0, color-mix(in srgb, var(--signal-info) 9%, transparent), transparent),
-    radial-gradient(ellipse 65% 640px at 100% 12%, color-mix(in srgb, var(--accent) 9%, transparent), transparent),
-    var(--background);
+  background: var(--background);
 }
 
-/* A translucent material with a bright bevel, soft depth and a clear text layer.
-   Native backdrop filters avoid the SVG displacement compositing bug on iOS. */
+body[data-site-scenery] .platform-shell { background: transparent; }
+
+body[data-site-scenery] :is(
+  .platform-review-card,
+  .platform-button:not(.platform-button-primary),
+  .platform-answer-option:not([aria-pressed='true'])
+) {
+  background: var(--glass-surface-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  box-shadow: var(--glass-shadow);
+}
+
+/* SiteGlass supplies the same natural material as the rest of the site. */
 .platform-glass {
   border: 1px solid var(--platform-glass-edge);
-  background: color-mix(in srgb, var(--background) 78%, transparent);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter: blur(24px) saturate(180%);
-  box-shadow:
-    inset 0 1px 0 var(--platform-glass-light),
-    inset 1px 0 0 color-mix(in srgb, var(--accent-foreground) 16%, transparent),
-    inset 0 -1px 0 color-mix(in srgb, var(--foreground) 8%, transparent),
-    0 10px 40px -12px color-mix(in srgb, var(--foreground) 18%, transparent);
+  background: var(--glass-surface-bg, var(--card));
+  -webkit-backdrop-filter: var(--glass-filter, none);
+  backdrop-filter: var(--glass-filter, none);
+  box-shadow: var(--glass-shadow, none);
+}
+
+/* Captions cross photographic detail and use the shared readable popover tint. */
+body[data-site-scenery] :is(
+  .platform-feature-copy,
+  .platform-feature-caption,
+  .platform-instructor-info,
+  .platform-instructor-demo,
+  .platform-portrait-link
+) {
+  background: var(--glass-popover-bg);
 }
 
 .platform-masthead,
@@ -120,17 +135,6 @@
   height: 16px;
 }
 
-.platform-nav-link::after {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(135deg, var(--platform-glass-light), transparent 45%, color-mix(in srgb, var(--accent-foreground) 20%, transparent));
-  opacity: 0;
-  pointer-events: none;
-  content: '';
-  transition: opacity 220ms ease;
-}
-
 .platform-nav-link:hover,
 .platform-nav-link.is-active {
   color: var(--foreground);
@@ -143,10 +147,6 @@
 .platform-nav-link.is-active {
   background: color-mix(in srgb, var(--card) 85%, transparent);
   box-shadow: inset 0 0 0 1px var(--platform-glass-edge), 0 3px 10px color-mix(in srgb, var(--foreground) 8%, transparent);
-}
-
-.platform-nav-link.is-active::after {
-  opacity: 0.36;
 }
 
 .platform-main {
@@ -173,10 +173,6 @@
 
 .platform-home-hero h1 span {
   color: var(--accent);
-  background: linear-gradient(115deg, var(--accent) 15%, color-mix(in srgb, var(--accent) 45%, var(--foreground)) 58%, var(--signal-info));
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 .platform-home-hero > p {
   max-width: 530px;
@@ -1032,7 +1028,7 @@
 .platform-invite-record .platform-form-grid > label > select.platform-field-control { width: auto; }
 .platform-invite-record .platform-invite-expiry { flex-basis: 100%; }
 .platform-invite-create .platform-form-grid label { display: grid; gap: 8px; min-width: 0; font-size: .9rem; }
-.platform-invite-result { padding: 24px; border-radius: 24px; background: color-mix(in srgb, var(--card) 78%, transparent); backdrop-filter: blur(20px); }
+.platform-invite-result { padding: 24px; border-radius: 24px; background: var(--glass-surface-bg, var(--card)); -webkit-backdrop-filter: var(--glass-filter, none); backdrop-filter: var(--glass-filter, none); }
 .platform-invite-code-lines { min-height: 0; resize: vertical; line-height: 1.5; }
 .platform-invite-expiry { display: grid; align-content: start; gap: 8px; min-width: 0; font-size: .9rem; grid-column: 1 / -1; }
 .platform-invite-datetime { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
@@ -1045,9 +1041,10 @@
   min-width: 0;
   padding: 22px 24px;
   border-radius: 22px;
-  background: color-mix(in srgb, var(--card) 75%, transparent);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--foreground) 8%, transparent), 0 6px 24px color-mix(in srgb, var(--foreground) 3%, transparent);
-  backdrop-filter: blur(20px);
+  background: var(--glass-surface-bg, var(--card));
+  box-shadow: var(--glass-shadow, none);
+  -webkit-backdrop-filter: var(--glass-filter, none);
+  backdrop-filter: var(--glass-filter, none);
 }
 .platform-invite-record-title { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .platform-invite-record-title h3 { margin: 0; font-size: 1rem; line-height: 1.5; overflow-wrap: anywhere; }
@@ -1388,15 +1385,6 @@
   position: relative;
   isolation: isolate;
   padding-block: 36px;
-}
-.platform-instructors::before {
-  content: '';
-  position: absolute;
-  inset: 15% -10px 0;
-  z-index: -1;
-  pointer-events: none;
-  background: radial-gradient(ellipse at 15% 30%, color-mix(in srgb, var(--signal-info) 13%, transparent), transparent 50%),
-    radial-gradient(ellipse at 85% 70%, color-mix(in srgb, var(--accent) 15%, transparent), transparent 55%);
 }
 .platform-instructors-heading h2 {
   margin: 18px 0;

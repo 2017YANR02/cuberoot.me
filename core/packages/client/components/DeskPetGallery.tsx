@@ -8,6 +8,8 @@ import { X, ArrowLeft, ArrowRight, Play, Pause, RotateCcw } from 'lucide-react';
 import { PET_GALLERY } from '@/lib/deskpet-gallery';
 import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
 import { ROOTBEAST_COLLECTIONS, ROOTBEAST_SCENES } from '@/lib/deskpet-rootbeast';
+import { ORIGINAL_CHARACTERS, ORIGINAL_COLLECTIONS, ORIGINAL_SCENES } from '@/lib/deskpet-originals';
+import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { CompactSelect } from '@/components/CompactSelect';
 import { tr } from '@/i18n/tr';
 
@@ -35,8 +37,11 @@ const CSS = `
 .deskpet-gallery-media{width:100%;aspect-ratio:1/1;overflow:hidden;display:flex;}
 .deskpet-gallery-media img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;}
 .deskpet-gallery section[data-pet=rootbeast] img{image-rendering:auto;}
+.deskpet-gallery section[data-pixel=false] img{image-rendering:auto;}
 /* Keep dark paws and the radical tail readable in every site theme. */
 .deskpet-gallery section[data-pet=rootbeast] .deskpet-gallery-media,
+.deskpet-gallery section[data-light=true] .deskpet-gallery-media,
+.deskpet-story[data-light=true] .deskpet-story-art,
 .deskpet-story[data-pet=rootbeast] .deskpet-story-art{
   background:color-mix(in srgb, var(--popover) 18%, white);border-radius:12px;}
 /* color-scheme:normal stops the object inheriting the page color-scheme (light dark);
@@ -94,9 +99,10 @@ function PlaytimePreview({ scene, onStep, onPerform }: {
     return () => clearInterval(timer);
   }, [ready, paused, scene.durationMs]);
   return (
-    <div className="deskpet-story" data-pet={scene.character}>
+    <div className="deskpet-story" data-pet={scene.character} data-light={ORIGINAL_CHARACTERS.some(pet => pet.id === scene.character)}>
       <object
         className="deskpet-story-art" type="image/svg+xml" data={scene.src} aria-label={tr(scene)} tabIndex={-1}
+        style={{ imageRendering: ORIGINAL_CHARACTERS.find(pet => pet.id === scene.character)?.pixel ? 'pixelated' : 'auto' }}
         onLoad={(event) => {
           animations.current = event.currentTarget.contentDocument?.getAnimations() ?? [];
           if (!animations.current.length) { setFailed(true); return; }
@@ -141,11 +147,16 @@ export default function DeskPetGallery({ lang, character, characters, onClose }:
   const [selected, setSelected] = useState<string | null>(null);
   const [petId, setPetId] = useState(character);
   const [collectionId, setCollectionId] = useState('all');
+  const backdropProps = useModalBackdrop(onClose);
   const panelRef = useRef<HTMLDivElement>(null);
-  const collection = ROOTBEAST_COLLECTIONS.find(item => item.id === collectionId);
-  const rootBeastScenes = collection
-    ? ROOTBEAST_SCENES.filter(item => collection.sceneIds.includes(item.id))
+  const isOriginal = ORIGINAL_CHARACTERS.some(item => item.id === petId);
+  const collections = petId === 'rootbeast' ? ROOTBEAST_COLLECTIONS : isOriginal ? ORIGINAL_COLLECTIONS : [];
+  const collection = collections.find(item => item.id === collectionId);
+  const rootCollection = ROOTBEAST_COLLECTIONS.find(item => item.id === collectionId);
+  const rootBeastScenes = rootCollection
+    ? ROOTBEAST_SCENES.filter(item => rootCollection.sceneIds.includes(item.id))
     : ROOTBEAST_SCENES;
+  const originalScenes = ORIGINAL_SCENES.filter(item => item.character === petId && (!collection || item.collection === collection.id));
   const scene = getDeskPetScene(selected);
   const pet = characters.find(item => item.id === petId) ?? characters[0];
   const groups = PET_GALLERY.filter(group => group.id === pet?.id || (pet?.id === 'clawd' && ['cubing', 'moves'].includes(group.id)));
@@ -154,7 +165,7 @@ export default function DeskPetGallery({ lang, character, characters, onClose }:
     {tr(item.label)}
   </span>;
   const step = (delta: number) => {
-    const scenes = scene?.character === 'rootbeast' ? rootBeastScenes : PLAYTIME_SCENES;
+    const scenes = scene?.character === 'rootbeast' ? rootBeastScenes : isOriginal ? originalScenes : PLAYTIME_SCENES;
     if (!scenes.length) return;
     const index = scenes.findIndex((item) => item.state === selected);
     setSelected(scenes[(index + delta + scenes.length) % scenes.length].state);
@@ -189,7 +200,7 @@ export default function DeskPetGallery({ lang, character, characters, onClose }:
   }, [onClose, selected]);
 
   return createPortal(
-    <div className="deskpet-gallery-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="deskpet-gallery-title" lang={lang}>
+    <div className="deskpet-gallery-overlay" {...backdropProps} role="dialog" aria-modal="true" aria-labelledby="deskpet-gallery-title" lang={lang}>
       <style>{CSS}</style>
       <div className="deskpet-gallery" ref={panelRef} onClick={(e) => e.stopPropagation()}>
         <button type="button" className="deskpet-gallery-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close' })}>
@@ -197,7 +208,7 @@ export default function DeskPetGallery({ lang, character, characters, onClose }:
         </button>
         <h2 className="deskpet-gallery-title" id="deskpet-gallery-title">{tr({ zh: '桌宠图鉴', en: 'Desk-pet Gallery' })}</h2>
         {scene ? <>
-          <div className="deskpet-story-controls"><button type="button" onClick={() => setSelected(null)}><ArrowLeft size={15} />{scene.character === 'rootbeast' && collection ? tr(collection) : tr({ zh: '所有动画', en: 'All animations' })}</button></div>
+          <div className="deskpet-story-controls"><button type="button" onClick={() => setSelected(null)}><ArrowLeft size={15} />{collection ? tr(collection) : tr({ zh: '所有动画', en: 'All animations' })}</button></div>
           <PlaytimePreview key={scene.state} scene={scene} onStep={step} onPerform={() => {
             onClose();
             window.dispatchEvent(new CustomEvent('clawd:state', { detail: scene.state }));
@@ -207,25 +218,25 @@ export default function DeskPetGallery({ lang, character, characters, onClose }:
             <CompactSelect
               popupClassName="deskpet-gallery-collection-menu"
               ariaLabel={tr({ zh: '图鉴宠物', en: 'Gallery pet' })}
-              label={petLabel(pet)} value={pet?.id ?? ''} onChange={setPetId}
+              label={petLabel(pet)} value={pet?.id ?? ''} onChange={(id) => { setPetId(id); setCollectionId('all'); }}
               items={characters.map(item => ({ value: item.id, label: petLabel(item) }))}
             />
-            {pet?.id === 'rootbeast' && <CompactSelect
+            {collections.length > 0 && <CompactSelect
               popupClassName="deskpet-gallery-collection-menu"
-              ariaLabel={tr({ zh: '根号兽表情分期', en: 'Root Beast sticker collection' })}
+              ariaLabel={tr({ zh: '表情分期', en: 'Sticker collection' })}
               label={collection ? tr(collection) : tr({ zh: '全部', en: 'All' })}
               value={collectionId} onChange={setCollectionId}
               items={[
                 { value: 'all', label: tr({ zh: '全部', en: 'All' }) },
-                ...ROOTBEAST_COLLECTIONS.map(item => ({ value: item.id, label: tr(item) })),
+                ...collections.map(item => ({ value: item.id, label: tr(item) })),
               ]}
             />}
           </div>
           {groups.map((g) => (
-          <section key={g.id} data-pet={g.id}>
+          <section key={g.id} data-pet={g.id} data-pixel={g.pixel} data-light={g.lightBackground}>
             {groups.length > 1 && <h3>{tr(g)}</h3>}
             <div className="deskpet-gallery-grid">
-              {(g.id === 'rootbeast' ? rootBeastScenes : g.anims).map((a) => {
+              {(g.id === 'rootbeast' ? rootBeastScenes : isOriginal ? originalScenes : g.anims).map((a) => {
                 const zoom = g.scale
                   ? { transform: `scale(${g.scale})`, transformOrigin: g.scaleOrigin || 'center' }
                   : undefined;

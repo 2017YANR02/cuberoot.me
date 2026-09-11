@@ -1,6 +1,6 @@
 ---
 name: timeline-update
-description: "Use when updating /dev/architecture history, commit calendar, TIMELINE or the interactive Three.js history scroll, its video export or temporary homepage feature; cover every recorded date with bilingual facts and a unique carefully crafted 3D scene. Triggers: 时间线, 历史画卷, 日期模型, 画卷视频下载, 首页画卷推荐, 补日历, 补 timeline, /timeline-update, update commit calendar."
+description: "Use when updating /dev/architecture history, commit calendar, TIMELINE or the interactive Three.js history scroll, its skiing game, video export or homepage features; cover every recorded date with bilingual facts and a unique carefully crafted 3D scene. Triggers: 山河滑行, 滑雪特效, 时间线, 历史画卷, 日期模型, 画卷视频下载, 首页画卷推荐, 补日历, 补 timeline, /timeline-update, update commit calendar."
 ---
 
 # /timeline-update — 补 /dev/architecture 日历 + 列表
@@ -19,7 +19,10 @@ description: "Use when updating /dev/architecture history, commit calendar, TIME
 - 彩虹等有固定位置的景物必须锚定地图世界坐标,不能挂在跟随人物或镜头的天气层上一起平移。
 - 修改模型后检查全部日期的覆盖与几何重复,并生成逐日对照图检查轮廓、构图、细节及内容对应;唯一 ID、哈希或少量截图不能单独证明视觉不重复。
 - 桌面和窄屏均验证清晰度与交互,长画卷只加载附近场景并释放离开视野的资源。
-- 日期跳转后人物停在点的左侧一点;保留暂停与倍速选择,基础速度复用 `history-days.ts` 的 `HISTORY_WALK_SPEED`。
+- 日期跳转后人物停在点的左侧一点;保留暂停,行进方式统一为漫步、慢跑、快跑、滑行一个菜单,速度和姿态共用 `history-days.ts` 的 `HISTORY_GAITS`,视频导出也复用,禁再拆倍速菜单。
+- 轻玩法复用 `history-play.ts`:跳跃、二段跳、稀疏拾光与连收计分;暂停冻结物理,拖动和日期跳转不得得分,桌面键盘与触屏跳跃键不能抢占阅读和画卷拖动。
+- 山河滑行由 `history?mode=play` 进入,复用画卷引擎;滑行按住空翻、松手落地,成功加速、失误减速,指针取消和失焦须释放按住状态。
+- 滑痕与飞溅复用 `history-ski-trail.ts` 的有界世界坐标池,按既有地貌和天气区分雪、沙、水;跳转清理、暂停冻结,现场和视频共用。
 - 保留主要地貌、昼夜变化、雷电等气候和至少 30 种水陆空动物;动物须稀疏分布并运动,雨雪覆盖当前整个可见场景,水流保持细节且不得异常隆起,船只须在实页可见。
 - 彩蛋复用站内真实内容入口,内部跳转使用 AppLink,支持中键和 Ctrl 点击。
 
@@ -30,6 +33,7 @@ description: "Use when updating /dev/architecture history, commit calendar, TIME
 - 视频界面在 `_components/HistoryVideoExport.tsx`,渲染在 `history/history-video.ts`;复用 `lib/canvas-video-export.ts` 与同一 Three.js 场景,导出或取消不改变当前游览位置;下载入口仅图标,保留双语 title/aria-label。
 - 首页临时推荐复用 `app/[lang]/LandingClient.tsx` 的推荐位与 `HISTORY_HOME_FEATURE`,截至 `2026-09-17T00:00:00+08:00` 自动隐藏并恢复托管通知;延期只改 `endsAt`,不得覆盖后台原推荐。
 - 首页预览为 `client/public/assets/history-home-v1.webp`,样式在 `app/landing.css`;使用真实画卷截图和 AppLink,不在首页加载整套 Three.js,换图同步版本文件名与引用。
+- 首页常驻游戏卡片 `paper-odyssey` 由 `shared/src/site_directory.ts` 定义、`client/lib/landing-sections.tsx` 配图标;独立于临时画卷推荐的到期机制。
 - 按改动运行 `client/tests/history-*.test.ts` 对应测试,改编码器加 `canvas-video-export.test.ts`;视频须实导出验收,首页须验证到期切换及桌面/窄屏入口。
 
 ## 三条铁律

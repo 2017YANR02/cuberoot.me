@@ -343,3 +343,37 @@ html[data-theme=dark] .pat-modal {
     border-color: var(--pat-accent);
     background: var(--pat-accent-soft);
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .pat-page {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .pat-header,
+  body[data-site-scenery] .pat-card,
+  body[data-site-scenery] .pat-modal {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery] .pat-modal {
+    background: var(--glass-popover-bg);
+  }
+}
+
+/* Local neutral aliases follow the active scenery palette. */
+@media screen {
+  body[data-site-scenery] .pat-page {
+    --pat-bg: var(--background);
+    --pat-surface: var(--card);
+    --pat-text: var(--foreground);
+    --pat-text-sub: var(--muted-foreground);
+    --pat-text-mute: var(--faint-foreground);
+    --pat-border: var(--border-default);
+    --pat-border-strong: var(--border-strong);
+  }
+}

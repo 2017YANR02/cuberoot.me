@@ -1324,3 +1324,40 @@ a.cfop-pillar-link:hover .cfop-pillar-label {
     max-height: 76px;
   }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .tutorial-root {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .tutorial-card,
+  body[data-site-scenery] .case-card,
+  body[data-site-scenery] .case-modal,
+  body[data-site-scenery] .tutorial-landing .tutorial-bento-card,
+  body[data-site-scenery] .cfop-pillar-link {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery] .case-modal {
+    background: var(--glass-popover-bg);
+  }
+}
+
+/* Local neutral aliases follow the active scenery palette. */
+@media screen {
+  body[data-site-scenery] .tutorial-root {
+    --tutorial-bg: var(--background);
+    --tutorial-bg-soft: var(--muted);
+    --tutorial-bg-hover: var(--muted);
+    --tutorial-border: var(--border-default);
+    --tutorial-border-strong: var(--border-strong);
+    --tutorial-text: var(--foreground);
+    --tutorial-text-muted: var(--muted-foreground);
+    --tutorial-text-faint: var(--faint-foreground);
+  }
+}

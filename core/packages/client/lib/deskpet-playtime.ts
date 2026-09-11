@@ -1,5 +1,6 @@
 import manifest from '../public/deskpet/playtime/manifest.json';
 import { getRootBeastScene } from './deskpet-rootbeast';
+import { getOriginalScene } from './deskpet-originals';
 
 // One manifest drives both the gallery and the pet. Bump when SVGs change:
 // /deskpet assets are served immutable for one year.
@@ -19,5 +20,5 @@ export function getPlaytimeScene(state: unknown) {
 
 // The existing story player and pet engine share character-aware dispatch.
 export function getDeskPetScene(state: unknown) {
-  return getPlaytimeScene(state) ?? getRootBeastScene(state);
+  return getPlaytimeScene(state) ?? getRootBeastScene(state) ?? getOriginalScene(state);
 }

@@ -61,3 +61,18 @@ body:has(.lbl-page) {
 @media (prefers-reduced-transparency: reduce) {
   .lbl-glass, .lbl-page .playback-bar-controls, .lbl-case[aria-pressed='true'] { background: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .lbl-glass,
+  body[data-site-scenery] .lbl-page .playback-bar-controls,
+  body[data-site-scenery] .lbl-case[aria-pressed='true'] {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery]:has(.lbl-page) { background-image: none; }
+}

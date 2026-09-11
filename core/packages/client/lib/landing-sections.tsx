@@ -7,7 +7,7 @@ import {
   Brain, Box, Sigma, Scale, Sprout, Brush, MessageCircle, MessagesSquare, Shapes, Blocks, Eye, Palette,
   CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap, School, Building2,
   FileText, Table2, Award, Radio, PanelsTopLeft, UserRound, UsersRound, HardDrive, ListOrdered,
-  Images, Music2,
+  Images, Music2, Gamepad2,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -64,6 +64,7 @@ const CARD_VISUALS: Partial<Record<SiteDirectoryEntry['id'], CardVisual>> = {
   algdb: { Icon: Blocks },
   sim: { Icon: Box },
   space: { Icon: Shapes },
+  'paper-odyssey': { Icon: Gamepad2 },
   recon: { Icon: ScanSearch },
   scramble: { Icon: Shuffle },
   competitions: { Icon: Radio },

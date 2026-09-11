@@ -12,7 +12,8 @@ describe('Web Timer scramble-context arm invalidation', () => {
       /const applyScrambleHist = useCallback[\s\S]*?cancelArmForScrambleChangeRef\.current\(\);[\s\S]*?setScrambleHist\(next\)/,
     );
     expect(solo).toContain(
-      'cancelArmForScrambleChangeRef.current = timer.cancelArm;',
+      'cancelArmForScrambleChangeRef.current = competition.enabled ? () => {} : timer.cancelArm;',
     );
+    expect(solo).toContain('}, [competition.enabled, competition.attemptKey, timer.reset]);');
   });
 });

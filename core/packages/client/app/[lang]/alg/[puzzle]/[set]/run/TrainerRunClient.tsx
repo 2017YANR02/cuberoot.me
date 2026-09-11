@@ -1,4 +1,5 @@
 'use client';
+import { useModalBackdrop } from '@/hooks/useModalDismiss';
 
 // Ported from packages/client-vite/src/pages/trainer/TrainerRunPage.tsx
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
@@ -383,6 +384,7 @@ export default function TrainerRunClient() {
   const recapRoundAcked = useTrainerStore(s => s.recapRoundAcked);
   const continueRecapRound = useTrainerStore(s => s.continueRecapRound);
   const dismissRecapRound = useTrainerStore(s => s.dismissRecapRound);
+  const roundBackdropProps = useModalBackdrop(dismissRecapRound);
   const getTimerReady = useTrainerStore(s => s.getTimerReady);
   const startTimer = useTrainerStore(s => s.startTimer);
   const stopTimer = useTrainerStore(s => s.stopTimer);
@@ -729,9 +731,9 @@ export default function TrainerRunClient() {
           if (nextRoundHrefRef.current) router.push(nextRoundHrefRef.current);
           else st0.continueRecapRound();
         } else if (e.code === 'Escape') {
-          // 单机:Esc = 「先不了」,停在最后这题;房间没这个选项,仍等同「继续下一轮」
+          // 关闭只收起本人的提示,不重置房间的共享队列。
           e.preventDefault();
-          if (st0.room) st0.continueRecapRound(); else st0.dismissRecapRound();
+          st0.dismissRecapRound();
         }
         return;
       }
@@ -2184,9 +2186,9 @@ export default function TrainerRunClient() {
         </div>
       )}
 
-      {/* 「下一轮」会重洗队列(房间还会把全队进度清零)—— 只认按钮,点背景不触发(误触代价太大) */}
+      {/* 点背景只收起提示；下一轮仍由明确的继续操作触发。 */}
       {recapRoundDone && !splitActive && (
-        <div className="trainer-round-modal-backdrop" role="dialog" aria-modal="true" data-no-timer>
+        <div className="trainer-round-modal-backdrop" {...roundBackdropProps} role="dialog" aria-modal="true" data-no-timer>
           <div className="trainer-round-modal">
             <h2>{tr({ zh: '本轮复习结束', en: 'Round complete' })}</h2>
             <p>

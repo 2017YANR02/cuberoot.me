@@ -1,0 +1,149 @@
+/* Explicit adapters for existing shared surfaces. SiteGlass owns the material
+   and accessibility fallbacks. Keep component geometry, media and state colors. */
+
+body[data-site-scenery] :is(.wp-page, .vcs-page) {
+  background: transparent;
+}
+
+body[data-site-scenery] .wp-page {
+  --wp-bg: var(--background);
+  --wp-surface: var(--card);
+  --wp-text: var(--foreground);
+  --wp-text-sub: var(--muted-foreground);
+  --wp-text-mute: var(--faint-foreground);
+  --wp-border: var(--border-default);
+  --wp-border-strong: var(--border-strong);
+}
+
+/* Cards and panels that already have a material, never unframed prose or cells. */
+body[data-site-scenery] :is(
+  .alg-card,
+  .chx-panel,
+  .chx-chain,
+  .rs-scard,
+  .recon-card,
+  .rc-card,
+  .vcs-card,
+  .vc-arrow-builder,
+  .vc-api-doc,
+  .ns-dist-card,
+  .t10h-controls
+) {
+  background: var(--glass-surface-bg);
+  border-color: var(--glass-border);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  box-shadow: var(--glass-shadow);
+}
+
+/* The shared popover tint keeps overlapping text readable on scenery and photos. */
+body[data-site-scenery] :is(
+  .appearance-menu,
+  .lang-menu,
+  .chx-axis-menu,
+  .col-filter-pop,
+  .collab-share,
+  .comp-picker-popup,
+  .country-input-popup,
+  .donate-modal,
+  .fb-modal,
+  .event-select-popup,
+  .info-tooltip-pop,
+  .info-modal,
+  .landing-search-plus-menu,
+  .landing-search-panel,
+  .list-select-popup,
+  .wp-member-dialog,
+  .wp-achievement-card,
+  .wp-rce-modal,
+  .pp-popup,
+  .recon-autofill,
+  .record-select-popup,
+  .region-picker-popup,
+  .stsv-slotsel-panel,
+  .stsv-modal,
+  .tfp-popup,
+  .training-settings-panel,
+  .cuber-search-popup,
+  .t10h-export-card,
+  .wca-teacher-dialog,
+  .wechat-pc-share-modal,
+  .ym-popover-panel,
+  .compact-select-popup
+) {
+  background: var(--glass-popover-bg);
+  border-color: var(--glass-border);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  box-shadow: var(--glass-shadow);
+}
+
+/* The warning border is meaningful; only replace the reminder's neutral fill. */
+body[data-site-scenery] .mem-reminder {
+  background: var(--glass-surface-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Native controls: explicit text/date types exclude checkboxes, radio, ranges,
+   color swatches, uploads, images, hidden fields and semantic submit buttons.
+   Background-color preserves existing select arrows and date-input artwork.
+   Important is limited to the neutral fill because legacy pages set it inline. */
+body[data-site-scenery] :is(
+  select,
+  textarea,
+  input:not([type]),
+  input[type='text'],
+  input[type='search'],
+  input[type='email'],
+  input[type='url'],
+  input[type='tel'],
+  input[type='password'],
+  input[type='number'],
+  input[type='date'],
+  input[type='datetime-local'],
+  input[type='month'],
+  input[type='week'],
+  input[type='time']
+) {
+  background-color: var(--glass-surface-bg) !important;
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
+/* Native option popups are browser/OS surfaces and cannot sample the page. */
+body[data-site-scenery] :is(option, optgroup) {
+  background: var(--popover);
+  color: var(--popover-foreground);
+}
+
+body[data-site-scenery] :is(
+  .compact-select:not(.compact-select--plain) > .compact-select-trigger,
+  .event-select-trigger,
+  .region-picker-trigger,
+  .date-input__display,
+  .pill-toggle:not(.is-on),
+  .landing-search-input:not(.is-drag-over)
+) {
+  background: var(--glass-surface-bg);
+  border-color: var(--glass-border);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Search fields inside their glass shell need no second sheet of glass. */
+body[data-site-scenery] :is(
+  .landing-search-input .landing-search-field,
+  .region-picker-search .region-picker-search-input
+) {
+  background-color: transparent !important;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Sticky list headings need an opaque reading layer, without another blur. */
+body[data-site-scenery] .compact-select-header {
+  background: var(--popover);
+}

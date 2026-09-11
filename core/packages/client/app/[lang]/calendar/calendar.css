@@ -1229,3 +1229,22 @@ html:root[data-theme=dark]:has(.cal-page) {
   /* 时间那行在窄屏上必须能换行,不然日期 + 时间 + 破折号 + 日期一定溢出 */
   .cal-date-field, .cal-time { flex: 0 1 auto; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .cal-page {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .cal-modal {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery] .cal-modal {
+    background: var(--glass-popover-bg);
+  }
+}

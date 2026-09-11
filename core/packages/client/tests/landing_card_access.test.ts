@@ -23,7 +23,6 @@ vi.mock('next/link', () => ({
 vi.mock('@/components/HeaderToggles', () => ({ default: () => null }));
 vi.mock('@/components/LandingSearch', () => ({ default: () => null }));
 // Browser optics are verified in Playwright; this suite exercises card access.
-vi.mock('@/app/[lang]/HomeGlass', () => ({ default: () => null }));
 vi.mock('@/lib/theme', () => ({ useEffectiveTheme: () => 'dark' }));
 
 import LandingPage from '@/app/[lang]/LandingClient';

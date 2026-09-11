@@ -590,3 +590,10 @@ textarea.script-control { min-height: 110px; resize: vertical; line-height: 1.55
   .script-beat-editor { grid-template-columns: 1fr; }
   .script-beat-remove { justify-self: start; }
 }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .live-script-page {
+    background: transparent;
+  }
+}

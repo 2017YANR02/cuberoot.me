@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { loadPersonsIndex } from '@cuberoot/shared/persons-index';
 import type { WcaPersonLite } from '@/lib/wca-api';
@@ -397,6 +398,8 @@ export function WcaStudentAdder({
     return () => { cancelled = true; };
   }, [existingWcaStudentEvents, selectedStudent, teacherWcaId]);
 
+  const backdropProps = useModalBackdrop(() => close(), saving);
+  const batchBackdropProps = useModalBackdrop(() => closeBatch(), batchSaving);
   if (!canAdd) return null;
 
   const close = () => {
@@ -757,7 +760,7 @@ export function WcaStudentAdder({
         )}
       </span>
       {editing && typeof document !== 'undefined' && createPortal(
-        <div className="wca-teacher-dialog-layer">
+        <div className="wca-teacher-dialog-layer" {...backdropProps}>
           <dialog
             className="wca-teacher-dialog"
             open
@@ -874,7 +877,7 @@ export function WcaStudentAdder({
         document.body,
       )}
       {batchEditing && typeof document !== 'undefined' && createPortal(
-        <div className="wca-teacher-dialog-layer">
+        <div className="wca-teacher-dialog-layer" {...batchBackdropProps}>
           <dialog
             className="wca-teacher-dialog wca-student-batch-dialog"
             open
@@ -1080,6 +1083,7 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
   const [competitionEventState, setCompetitionEventState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [countryIso2, setCountryIso2] = useState(() => student.countryIso2?.toLowerCase() ?? '');
   const [saving, setSaving] = useState(false);
+  const backdropProps = useModalBackdrop(() => setEditing(false), saving);
   const [error, setError] = useState('');
   const canManage = directory.isAdmin || directory.userWcaId === teacherWcaId;
   const selectedTeacherSelf = selectedStudent?.id === teacherWcaId;
@@ -1174,7 +1178,7 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
         {tr({ zh: '编辑', en: 'Edit' })}
       </button>
       {editing && typeof document !== 'undefined' && createPortal(
-        <div className="wca-teacher-dialog-layer">
+        <div className="wca-teacher-dialog-layer" {...backdropProps}>
           <dialog
             className="wca-teacher-dialog"
             open
@@ -1358,6 +1362,7 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
   const [selected, setSelected] = useState<WcaPersonLite | null>(null);
   const [isSelfTaught, setIsSelfTaught] = useState(false);
   const [saving, setSaving] = useState(false);
+  const backdropProps = useModalBackdrop(() => setEditing(false), saving);
   const [error, setError] = useState('');
   const editableRelations = normalizedEditableEventIds.flatMap((eventId) => {
     const teacher = directory.teachers.get(wcaTeacherRelationKey(studentWcaId, eventId));
@@ -1559,7 +1564,7 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
       ) : null}
       {error && !editing && <span className="wca-teacher-error" role="alert">{error}</span>}
       {editing && typeof document !== 'undefined' && createPortal(
-        <div className="wca-teacher-dialog-layer">
+        <div className="wca-teacher-dialog-layer" {...backdropProps}>
           <dialog
             className="wca-teacher-dialog"
             open

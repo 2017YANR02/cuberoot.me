@@ -108,3 +108,30 @@
 .calca-refs li { font-size: 0.93rem; line-height: 1.5; }
 .calca-refs a { color: var(--calca-accent); text-decoration: none; }
 .calca-refs a:hover { text-decoration: underline; }
+
+/* Site scenery: preserve the original surface when scenery is disabled. */
+@media screen {
+  body[data-site-scenery] .calca-page {
+    background: transparent;
+  }
+
+  body[data-site-scenery] .calca-header {
+    background: var(--glass-surface-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+}
+
+/* Local neutral aliases follow the active scenery palette. */
+@media screen {
+  body[data-site-scenery] .calca-page {
+    --calca-bg: var(--background);
+    --calca-surface: var(--card);
+    --calca-text: var(--foreground);
+    --calca-text-sub: var(--muted-foreground);
+    --calca-text-mute: var(--faint-foreground);
+    --calca-border: var(--border-default);
+  }
+}

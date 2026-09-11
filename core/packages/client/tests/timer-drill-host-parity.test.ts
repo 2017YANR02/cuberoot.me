@@ -33,7 +33,7 @@ describe('Web and installed Timer drill parity', () => {
     expect(solo).toContain('event === drillTarget.type ? ds.targetCase : null');
     expect(solo).toContain('caseIdAtStartRef.current = currentScrambleEntry.caseId');
     expect(solo).toContain("{ kind: 'random', identity: `drill|${event}|${drillTarget.type}:${drillTarget.id}` }");
-    expect(solo).toContain('const entry = history.list[history.idx];');
+    expect(solo).toContain('const entry = competitionRef.current.enabled ? competitionScrambleEntry : history.list[history.idx];');
     expect(solo).toMatch(/const meta = s\.scrambleSource[\s\S]*?s\.scrambleSource\.kind === 'wca'[\s\S]*?: null[\s\S]*?: wcaMetaFor\(s\.scramble\)/);
   });
 });

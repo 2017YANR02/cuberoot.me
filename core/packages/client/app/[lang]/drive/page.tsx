@@ -55,7 +55,7 @@ import HeaderToggles from '@/components/HeaderToggles';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { SearchInput } from '@/components/SearchInput';
 import { useCopy } from '@/hooks/useCopy';
-import { useModalDismiss } from '@/hooks/useModalDismiss';
+import { useModalBackdrop, useModalDismiss } from '@/hooks/useModalDismiss';
 import { useLang } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
 import { useAuthStore } from '@/lib/auth-store';
@@ -305,6 +305,7 @@ function DrivePageContent() {
     parseAsString.withOptions({ history: 'push', scroll: false }),
   );
   const [snapshot, setSnapshot] = useState<DriveSnapshot | null>(null);
+  const previewBackdropProps = useModalBackdrop(() => void setPreviewId(null));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
@@ -1059,7 +1060,7 @@ function DrivePageContent() {
       {dragging && view === 'files' && <div className="drive-drop-overlay"><Upload aria-hidden="true" /><strong>{t('松开即可上传', 'Drop to upload')}</strong></div>}
 
       {previewId && (
-        <div className="drive-preview-backdrop" role="dialog" aria-modal="true" aria-label={t('文件预览', 'File preview')}>
+        <div className="drive-preview-backdrop" {...previewBackdropProps} role="dialog" aria-modal="true" aria-label={t('文件预览', 'File preview')}>
           <div className="drive-preview">
             <div className="drive-preview-head"><strong>{preview?.node.name ?? t('正在准备预览…', 'Preparing preview…')}</strong><ClearButton variant="standalone" ariaLabel={t('关闭预览', 'Close preview')} onClick={() => void setPreviewId(null)} /></div>
             <div className="drive-preview-body">

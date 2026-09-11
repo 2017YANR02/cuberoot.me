@@ -21,7 +21,7 @@ node scripts/deskpet-rootbeast/build-rootbeast.mjs
 node scripts/deskpet-rootbeast/build-rootbeast.mjs --check
 ```
 
-The traced shell already includes perspective, so turns smoothly limit the side/front stretch ratio to 1.65 while preserving projected width. This keeps its bread-like contour instead of stretching the flank into a wedge. Face placement and eye/paw clearance use the same bounded projection.
+The traced shell already includes perspective, so turns smoothly limit the side/front stretch ratio to 1.65 while preserving projected width. This keeps its bread-like contour instead of stretching the flank into a wedge. Face placement and eye/paw clearance use the same bounded projection. Each strip composites its paints with group opacity 0.999 before clipping; keep it below 1 to prevent white seams in image elements. Avoid SVG filters here: the previous identity filter blurred the shell when scaled while the unfiltered paws stayed sharp.
 
 The generated transparent SVGs contain their own paths and CSS timelines; they use no scripts, bitmap sprites, video, network fonts or remote images. Every loop has a reduced-motion poster. When revising published assets, bump `ROOTBEAST_VERSION` in `lib/deskpet-rootbeast.ts` because `/deskpet/` uses immutable caching.
 
