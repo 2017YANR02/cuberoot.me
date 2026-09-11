@@ -426,7 +426,7 @@
         "paths": ["core/packages/client/scripts/build-account-locations.mjs"]
       },
       "license": { "spdx": "ODbL-1.0", "evidence": "https://github.com/dr5hn/countrystatecity-npm/blob/master/LICENSE" },
-      "owner": "core/packages/client/scripts/build-account-locations.mjs",
+      "owner": ["core/packages/client/scripts/build-account-locations.mjs", "core/packages/shared/scripts/account-location-artifact.mjs"],
       "workingDirectory": "core/packages/client",
       "command": "pnpm build:account-locations",
       "outputs": ["core/packages/client/public/account-locations/*.json", "core/packages/shared/src/data/account_location_requirements.ts"],
