@@ -122,13 +122,17 @@ describe('mini program web routes', () => {
     }
   });
 
-  it('derives all 58 homepage destinations from the shared ordered catalog', () => {
-    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 4, 6, 11, 17, 12, 3]);
-    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 4, 6, 11, 17, 12, 3]);
-    expect(listWebTools()).toHaveLength(58);
+  it('derives all 59 homepage destinations from the shared ordered catalog', () => {
+    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 4, 6, 12, 17, 12, 3]);
+    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 4, 6, 12, 17, 12, 3]);
+    expect(listWebTools()).toHaveLength(59);
     expect(listWebTools()).toContainEqual(expect.objectContaining({ id: 'gallery', href: '/gallery' }));
-    expect(new Set(listWebTools().map((tool) => tool.id))).toHaveProperty('size', 58);
-    expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(56);
+    expect(new Set(listWebTools().map((tool) => tool.id))).toHaveProperty('size', 59);
+    expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(57);
+    expect(resolveWebRoute('paper-odyssey')).toMatchObject({
+      path: '/zh/dev/architecture/history?mode=play',
+      url: 'https://cuberoot.me/zh/dev/architecture/history?mode=play#wechat_redirect',
+    });
     expect(resolveWebTool('algdb')).toMatchObject({ id: 'algdb', key: 'alg', action: 'web' });
     expect(resolveWebTool('timer')).toMatchObject({ id: 'timer', key: 'timer', action: 'native' });
     expect(resolveWebTool('alg')).toMatchObject({ id: 'alg', key: 'alg', action: 'web' });
@@ -141,7 +145,7 @@ describe('mini program web routes', () => {
       expect(trackingSource, tool.id).toContain(`| \`${tool.id}\` |`);
     }
     expect(trackingSource).toContain(
-      '共 58 项：网站首页直接渲染它们，工具 tab 通过一个固定白名单路由复用整个首页',
+      '共 59 项：网站首页直接渲染它们，工具 tab 通过一个固定白名单路由复用整个首页',
     );
   });
 
@@ -183,7 +187,7 @@ describe('mini program web routes', () => {
       path: '/pages/web/index?key=alg',
     });
     const routeBackedTools = listWebTools().filter((tool) => tool.key !== null);
-    expect(routeBackedTools).toHaveLength(56);
+    expect(routeBackedTools).toHaveLength(57);
     expect(routeBackedTools.every((tool) => resolveWebRouteShare(tool.key) !== null)).toBe(true);
     expect(resolveWebRouteShare('account')).toBeNull();
     expect(resolveWebRouteShare('privacy')).toBeNull();
@@ -204,8 +208,9 @@ describe('mini program web routes', () => {
         continue;
       }
       expect(route.path, key).toMatch(/^\/zh\//);
-      const relativePagePath = route.path.replace(/^\/zh\//, '');
-      const unlocalizedPath = route.path.replace(/^\/zh/, '');
+      const pathname = new URL(route.path, 'https://cuberoot.me').pathname;
+      const relativePagePath = pathname.replace(/^\/zh\//, '');
+      const unlocalizedPath = pathname.replace(/^\/zh/, '');
       const hasPage = existsSync(join(websiteRoot, 'app', '[lang]', relativePagePath, 'page.tsx'));
       const hasRedirect = websiteConfigSource.includes(`source: "${unlocalizedPath}"`)
         || websiteConfigSource.includes(`source: '${unlocalizedPath}'`);
