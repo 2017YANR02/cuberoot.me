@@ -228,30 +228,32 @@ describe('Platform route conservation', () => {
     expect(resolvePlatformCanonicalPath(['courses'])).toBeNull();
   });
 
-  it('emits canonical headers for rewritten aliases and aligned alternates for shared pages', () => {
-    const timerLinks = proxy(new NextRequest('https://cuberoot.me/zh/platform/timer')).headers.get('Link');
+  it('emits canonical headers for rewritten aliases and aligned alternates for shared pages', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ locks: { platform: false } })));
+    const timerLinks = (await proxy(new NextRequest('https://cuberoot.me/zh/platform/timer'))).headers.get('Link');
     expect(timerLinks).toContain('<https://cuberoot.me/zh/timer>; rel="canonical"');
     expect(timerLinks).toContain('<https://cuberoot.me/timer>; rel="alternate"; hreflang="en"');
     expect(timerLinks).not.toContain('cuberoot.me/zh/platform/timer');
 
-    const teacherLinks = proxy(new NextRequest('https://cuberoot.me/zh/platform/teachers')).headers.get('Link');
+    const teacherLinks = (await proxy(new NextRequest('https://cuberoot.me/zh/platform/teachers'))).headers.get('Link');
     expect(teacherLinks).not.toContain('rel="canonical"');
     expect(teacherLinks).toContain('<https://cuberoot.me/teachers>; rel="alternate"; hreflang="en"');
   });
 
-  it('keeps private, admin, and login aliases out of search indexes', () => {
+  it('keeps private, admin, and login aliases out of search indexes', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ locks: { platform: false } })));
     for (const path of [
       '/zh/platform/account',
       '/zh/platform/org',
       '/zh/platform/admin/algorithms',
       '/zh/platform/login',
     ]) {
-      const response = proxy(new NextRequest(`https://cuberoot.me${path}`));
+      const response = await proxy(new NextRequest(`https://cuberoot.me${path}`));
       expect(response.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
       expect(response.headers.get('Link')).toBeNull();
     }
 
-    const publicResponse = proxy(new NextRequest('https://cuberoot.me/zh/platform/timer'));
+    const publicResponse = await proxy(new NextRequest('https://cuberoot.me/zh/platform/timer'));
     expect(publicResponse.headers.get('X-Robots-Tag')).toBeNull();
     expect(publicResponse.headers.get('Link')).toContain('rel="canonical"');
   });
