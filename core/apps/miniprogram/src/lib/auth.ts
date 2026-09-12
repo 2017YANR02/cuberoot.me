@@ -305,12 +305,14 @@ export function clearStoredSession(): boolean {
 }
 
 export async function loginWithMiniProgram(
-  options: { createAccount?: boolean; isCurrent?: () => boolean } = {},
+  options: { createAccount?: boolean; phoneCode?: string; isCurrent?: () => boolean } = {},
 ): Promise<LoginResult> {
+  if (options.phoneCode && isDouyinMiniProgram()) throw new ApiError(400, 'unsupported phone authorization');
   const code = await miniProgramLoginCode();
+  if (options.isCurrent && !options.isCurrent()) throw new ApiError(0, 'account choice canceled');
   const response = await requestJson<unknown>(MINI_PROGRAM_LOGIN_ENDPOINT, {
     method: 'POST',
-    body: options.createAccount ? { code, create: true } : { code },
+    body: { code, ...(options.createAccount ? { create: true } : {}), ...(options.phoneCode ? { phoneCode: options.phoneCode } : {}) },
   });
   return saveLoginResponse(response, options.isCurrent);
 }
@@ -348,14 +350,14 @@ export async function previewIdentityLinkCode(ticket: string, linkCode: string):
 
 export async function completeMiniProgramIdentity(
   ticket: string,
-  action: 'create' | 'link_with_code',
+  action: 'create' | 'link_with_code' | 'link_verified_phone',
   options: { linkCode?: string; expectedUid?: number; isCurrent: () => boolean },
 ): Promise<LoginResult> {
   const response = await requestJson<unknown>('/auth/identity/complete', {
     method: 'POST',
-    body: { ticket, action, ...(action === 'link_with_code' ? { linkCode: options.linkCode, expectedUid: options.expectedUid } : {}) },
+    body: { ticket, action, ...(action === 'link_with_code' ? { linkCode: options.linkCode } : {}), ...(action !== 'create' ? { expectedUid: options.expectedUid } : {}) },
   });
-  return saveLoginResponse(response, options.isCurrent, action === 'link_with_code' ? options.expectedUid : undefined);
+  return saveLoginResponse(response, options.isCurrent, action !== 'create' ? options.expectedUid : undefined);
 }
 
 export async function validateStoredSession(session: SessionData): Promise<SessionData> {
@@ -416,10 +418,15 @@ export function loginErrorMessage(error: unknown): string {
   if (error.code === 'WECHAT_UNIONID_REQUIRED') {
     return tr({ en: 'UnionID is unavailable. Complete the Open Platform binding first.', zh: '暂未获得 UnionID，请先完成开放平台绑定' });
   }
+  if (error.code === 'WECHAT_PHONE_REQUIRED') return tr({ en: 'Authorize your phone number to find your existing account, or use another sign-in method.', zh: '授权手机号以查找原账号，或使用其他登录方式。' });
+  if (error.code === 'INVALID_WECHAT_PHONE_CODE') return tr({ en: 'Phone authorization expired. Authorize again.', zh: '手机号授权已失效，请重新授权。' });
+  if (error.code === 'WECHAT_PHONE_UNAVAILABLE') return tr({ en: 'Phone authorization is unavailable. Try again later or use another sign-in method.', zh: '手机号授权暂不可用，请稍后重试或使用其他登录方式。' });
+  if (error.code === 'WECHAT_PHONE_UNSUPPORTED') return tr({ en: 'Quick phone sign-in currently supports mainland China numbers. Use another sign-in method for your existing account.', zh: '手机号快捷登录目前支持中国大陆号码，请使用其他方式登录原账号。' });
+  if (error.code === 'ACCOUNT_HAS_PHONE') return tr({ en: 'Your account already has another phone number. Use account settings to change it; this sign-in will not replace it.', zh: '原账号已绑定其他手机号，请在账号设置中换绑；本次登录不会覆盖它。' });
   if (error.code === 'WECHAT_ACCOUNT_LINK_REQUIRED') {
     return tr({
-      en: 'This WeChat account is not linked yet. Link your existing CubeRoot account, or create a new account only if you do not have one.',
-      zh: '此微信尚未绑定。已有 CubeRoot 账号请先绑定；确定没有账号时再创建新账号。',
+      en: 'Phone authorization is not available on this server yet. Sign in to your existing account to link WeChat, or try again later.',
+      zh: '服务端暂未开放手机号授权。可先登录原账号绑定微信，或稍后重试。',
     });
   }
   if (error.code === 'ACCOUNT_CHOICE_REQUIRED') return tr({ en: 'Choose an existing account or create a new one.', zh: '请选择登录已有账号或创建新账号。' });

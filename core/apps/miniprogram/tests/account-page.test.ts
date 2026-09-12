@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CONTACT_GROUP_COUNT } from '@cuberoot/shared/contact';
+import { readFileSync } from 'node:fs';
 
 import accountConfig from '../src/pages/account/index.json';
 
@@ -8,6 +9,11 @@ interface AccountPageData {
   accountLinkPending: boolean;
   accountLinkRequired: boolean;
   accountLinkCodeMode: boolean;
+  accountCanCreate: boolean;
+  wechatPhoneRequired: boolean;
+  wechatPhoneSupported: boolean;
+  phoneAccountFound: boolean;
+  existingOnly: boolean;
   accountLinkCode: string;
   accountLinkTargetId: number | null;
   accountLinkTargetName: string;
@@ -51,6 +57,9 @@ interface AccountPageData {
 interface AccountPage {
   copyContactValue(event: { currentTarget: { dataset: { value?: unknown } } }): void;
   createAccount(): Promise<void>;
+  beginPhoneAuthorization(): void;
+  authorizePhone(event: { detail?: { code?: unknown; errMsg?: unknown } }): Promise<void>;
+  confirmPhoneAccount(): Promise<void>;
   cancelIdentityChoice(): void;
   clearLinkCode(): void;
   confirmLinkCode(): Promise<void>;
@@ -102,6 +111,263 @@ describe('mini program account page', () => {
     vi.restoreAllMocks();
     vi.resetModules();
     vi.unstubAllGlobals();
+  });
+
+  async function wechatPhoneFixture(options: {
+    knownPhone?: boolean;
+    supported?: boolean;
+    browser?: boolean;
+    existingOnly?: boolean;
+    linkedOnRetry?: boolean;
+    onPhone?: (request: { success(value: unknown): void }) => void;
+    onComplete?: (request: { success(value: unknown): void }) => void;
+    modalFails?: boolean;
+    onModal?: (request: { success(value: unknown): void; fail(value: unknown): void }) => void;
+    approvalFails?: boolean;
+  } = {}) {
+    let storedSession: unknown = null;
+    const ticket = 'w'.repeat(43);
+    const getStorageSync = vi.fn(() => storedSession);
+    const setStorageSync = vi.fn((_key: string, value: unknown) => { storedSession = value; });
+    const phoneResponse = { statusCode: 409, data: { code: 'ACCOUNT_CHOICE_REQUIRED', pending: {
+      ticket, provider: 'wechat', expiresInSeconds: 900,
+      ...(options.knownPhone ? { phoneAccount: { id: 42, displayName: 'Original member' } } : {}),
+    } } };
+    const sessionResponse = { statusCode: 200, data: { token: 's'.repeat(20), user: { uid: 42, name: 'Original member', wcaId: null, avatar: '' } } };
+    const request = vi.fn((request: { url: string; data?: Record<string, unknown>; success(value: unknown): void }) => {
+      if (request.url.endsWith('/auth/wechat/miniprogram')) {
+        if (!request.data?.phoneCode && options.linkedOnRetry && login.mock.calls.length > 1) request.success(sessionResponse);
+        else if (!request.data?.phoneCode) request.success({ statusCode: 409, data: { code: 'WECHAT_PHONE_REQUIRED', error: 'phone required' } });
+        else if (options.onPhone) options.onPhone(request);
+        else request.success(phoneResponse);
+      } else if (request.url.endsWith('/auth/identity/complete')) {
+        if (options.onComplete) options.onComplete(request);
+        else request.success(sessionResponse);
+      } else if (request.url.endsWith('/auth/identity/link-code/preview')) request.success({ statusCode: 200, data: { user: { id: 42, displayName: 'Original member' } } });
+      else if (request.url.endsWith('/auth/wechat/browser-session/approve')) request.success(options.approvalFails ? { statusCode: 503, data: {} } : { statusCode: 200, data: {} });
+      else throw new Error(`Unexpected request: ${request.url}`);
+    });
+    const login = vi.fn((request: { success(value: unknown): void }) => request.success({ code: `fresh-login-${login.mock.calls.length}` }));
+    const canIUse = vi.fn(() => options.supported !== false);
+    const navigateTo = vi.fn((options: { complete?(): void }) => options.complete?.());
+    const showModal = vi.fn((request: { success(value: unknown): void; fail(value: unknown): void }) => {
+      if (options.onModal) options.onModal(request);
+      else if (options.modalFails) request.fail({ errMsg: 'modal failed' });
+      else request.success({ confirm: true });
+    });
+    const page = await loadPage({ getStorageSync, setStorageSync, removeStorageSync: vi.fn(), login, request, canIUse, navigateTo, showModal,
+      exitMiniProgram: vi.fn((request: { fail(): void }) => request.fail()), showShareMenu: vi.fn() });
+    page.onLoad(options.browser ? { browserLogin: 'b'.repeat(43), ...(options.existingOnly ? { existingOnly: '1' } : {}) } : {});
+    if (options.browser) await vi.waitFor(() => expect(page.data.wechatPhoneRequired).toBe(true));
+    else await page.loginWithMiniProgram();
+    const authorize = async () => { page.beginPhoneAuthorization(); await page.authorizePhone({ detail: { code: 'realtime-phone-proof', errMsg: 'getRealtimePhoneNumber:ok' } }); };
+    return { page, authorize, request, login, canIUse, setStorageSync, getStorageSync, navigateTo, phoneResponse, sessionResponse, ticket };
+  }
+
+  it('uses only the realtime native phone capability and keeps provider proofs out of view and storage', async () => {
+    const fixture = await wechatPhoneFixture();
+    expect(fixture.canIUse).toHaveBeenCalledWith('button.open-type.getRealtimePhoneNumber');
+    expect(fixture.page.data.wechatPhoneRequired).toBe(true);
+    expect(fixture.request.mock.calls[0][0].data).toEqual({ code: 'fresh-login-1' });
+    await fixture.authorize();
+    expect(fixture.request.mock.calls[1][0].data).toEqual({ code: 'fresh-login-2', phoneCode: 'realtime-phone-proof' });
+    expect(fixture.page.data).toMatchObject({ accountLinkRequired: true, accountCanCreate: true, wechatPhoneRequired: false, phoneAccountFound: false });
+    expect(fixture.setStorageSync).not.toHaveBeenCalled();
+    const view = JSON.stringify(fixture.page.data);
+    expect(view).not.toContain(fixture.ticket); expect(view).not.toContain('realtime-phone-proof'); expect(view).not.toContain('fresh-login');
+    const template = readFileSync(new URL('../src/pages/account/index.wxml', import.meta.url), 'utf8');
+    expect(template).toContain('open-type="getRealtimePhoneNumber"');
+    expect(template).toContain('bindgetrealtimephonenumber="authorizePhone"');
+    expect(template).not.toContain('open-type="getPhoneNumber"');
+  });
+
+  it.each([undefined, {}, { code: '' }, { code: 123 }, { code: 'x'.repeat(513) }, { code: 'invalid\ncode' }, { errMsg: 'getRealtimePhoneNumber:fail user deny' }, { code: 'unexpected', errMsg: 'getRealtimePhoneNumber:fail' }])('does not send denied or invalid phone callbacks (%j)', async (detail) => {
+    const { page, request, setStorageSync } = await wechatPhoneFixture();
+    page.beginPhoneAuthorization(); await page.authorizePhone({ detail });
+    expect(request).toHaveBeenCalledOnce(); expect(setStorageSync).not.toHaveBeenCalled();
+    expect(page.data.wechatPhoneRequired).toBe(true); expect(page.data.loginBusy).toBe(false);
+    expect(page.data.loginError).toContain('尚未完成手机号授权');
+  });
+
+  it('leaves other sign-in available when realtime phone is unsupported, without quick authorization fallback', async () => {
+    const { page, authorize, request, navigateTo } = await wechatPhoneFixture({ supported: false });
+    expect(page.data.wechatPhoneSupported).toBe(false); expect(page.data.loginError).not.toBe('');
+    await authorize(); expect(request).toHaveBeenCalledOnce();
+    page.linkExistingAccount();
+    expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({ url: '/pages/web/index?key=account-link' }));
+  });
+
+  it('does not accept unsolicited or repeated native callbacks', async () => {
+    const { page, authorize, request } = await wechatPhoneFixture();
+    await page.authorizePhone({ detail: { code: 'unsolicited' } }); expect(request).toHaveBeenCalledOnce();
+    await authorize(); await page.authorizePhone({ detail: { code: 'replayed' } });
+    expect(request).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows the verified phone account and sends an explicit expected-UID confirmation, never creating a duplicate', async () => {
+    const { page, authorize, request, setStorageSync, ticket } = await wechatPhoneFixture({ knownPhone: true });
+    await authorize();
+    expect(page.data).toMatchObject({ phoneAccountFound: true, accountLinkTargetId: 42, accountLinkTargetName: 'Original member', loginRequired: true });
+    await page.createAccount(); expect(request).toHaveBeenCalledTimes(2); expect(setStorageSync).not.toHaveBeenCalled();
+    await page.confirmPhoneAccount();
+    expect(request.mock.calls[2][0].data).toEqual({ ticket, action: 'link_verified_phone', expectedUid: 42 });
+    expect(page.data).toMatchObject({ loginRequired: false, loginBusy: false, uidText: '42' });
+    expect(setStorageSync).toHaveBeenCalledOnce();
+  });
+
+  it('keeps unknown phone at an account choice until explicit create', async () => {
+    const { page, authorize, request, ticket } = await wechatPhoneFixture();
+    await authorize(); expect(page.data.accountLinkRequired).toBe(true);
+    await page.createAccount();
+    expect(request.mock.calls[2][0].data).toEqual({ ticket, action: 'create' });
+    expect(page.data.loginRequired).toBe(false);
+  });
+
+  it('reuses linking-code preview and confirmation for an unknown phone instead of dropping the verified identity', async () => {
+    const { page, authorize, request, navigateTo, ticket } = await wechatPhoneFixture();
+    await authorize(); page.linkExistingAccount();
+    expect(page.data.accountLinkCodeMode).toBe(true); expect(navigateTo).not.toHaveBeenCalled();
+    page.onLinkCodeInput({ detail: { value: 'L42-123456' } }); await page.previewLinkCode();
+    expect(request).toHaveBeenCalledTimes(3); await page.confirmLinkCode();
+    expect(request.mock.calls[3][0].data).toEqual({ ticket, action: 'link_with_code', linkCode: 'L42-123456', expectedUid: 42 });
+  });
+
+  it.each(['cancel', 'unload'] as const)('ignores a native authorization callback after %s', async (action) => {
+    const { page, request } = await wechatPhoneFixture();
+    page.beginPhoneAuthorization();
+    if (action === 'cancel') page.cancelIdentityChoice(); else page.onUnload();
+    await page.authorizePhone({ detail: { code: 'late-phone' } }); await page.createAccount();
+    expect(request).toHaveBeenCalledOnce();
+  });
+
+  it.each(['cancel', 'expire'] as const)('never restarts sign-in from a %s-ed verified phone choice', async (action) => {
+    vi.useFakeTimers();
+    const { page, authorize, request, setStorageSync } = await wechatPhoneFixture();
+    await authorize();
+    if (action === 'cancel') page.cancelIdentityChoice(); else await vi.advanceTimersByTimeAsync(900_001);
+    await page.createAccount();
+    expect(request).toHaveBeenCalledTimes(2); expect(setStorageSync).not.toHaveBeenCalled();
+    expect(page.data.loginBusy).toBe(false); expect(page.data.accountLinkRequired).toBe(false);
+  });
+
+  it('ignores late authorization responses after unloading', async () => {
+    let reply: ((value: unknown) => void) | undefined;
+    const { page, authorize, phoneResponse, setStorageSync } = await wechatPhoneFixture({ onPhone(request) { reply = request.success; } });
+    const operation = authorize(); await vi.waitFor(() => expect(reply).toBeTypeOf('function'));
+    page.onUnload(); reply!(phoneResponse); await operation;
+    expect(page.data.accountLinkRequired).toBe(false); expect(setStorageSync).not.toHaveBeenCalled();
+  });
+
+  it.each(['changed', 'unavailable'] as const)('does not persist a completion after session becomes %s', async (state) => {
+    let reply: ((value: unknown) => void) | undefined;
+    const { page, authorize, sessionResponse, setStorageSync, getStorageSync } = await wechatPhoneFixture({ onComplete(request) { reply = request.success; } });
+    await authorize(); const operation = page.createAccount(); await vi.waitFor(() => expect(reply).toBeTypeOf('function'));
+    getStorageSync.mockImplementation(() => { if (state === 'unavailable') throw new Error('blocked'); return { token: 'other'.repeat(5), user: { uid: 99, wcaId: null, name: 'Other' } }; });
+    reply!(sessionResponse); await operation;
+    expect(setStorageSync).not.toHaveBeenCalled(); expect(page.data.loginBusy).toBe(false);
+  });
+
+  it('does not send phone proof after the session changes while the native sheet is open', async () => {
+    const { page, request, getStorageSync } = await wechatPhoneFixture();
+    page.beginPhoneAuthorization();
+    getStorageSync.mockReturnValue({ token: 'other'.repeat(5), user: { uid: 99, wcaId: null, name: 'Other' } });
+    await page.authorizePhone({ detail: { code: 'late-phone' } });
+    expect(request).toHaveBeenCalledOnce();
+  });
+
+  it.each(['modal', 'request'] as const)('keeps the successfully signed-in account actionable after browser approval %s fails', async (failure) => {
+    const { page, authorize, setStorageSync } = await wechatPhoneFixture({ knownPhone: true, browser: true, modalFails: failure === 'modal', approvalFails: failure === 'request' });
+    await authorize(); await page.confirmPhoneAccount();
+    expect(setStorageSync).toHaveBeenCalledOnce();
+    expect(page.data).toMatchObject({ loginRequired: false, loginBusy: false, browserLoginPending: false, uidText: '42' });
+    expect(page.data.accountError).toContain('未能确认网页登录');
+  });
+
+  it('never creates from an existing-account-only browser handoff after phone authorization', async () => {
+    const { page, authorize, request } = await wechatPhoneFixture({ browser: true, existingOnly: true });
+    await authorize(); await page.createAccount();
+    expect(page.data.existingOnly).toBe(true); expect(request).toHaveBeenCalledTimes(2);
+  });
+
+  it('resumes a browser handoff after choosing another sign-in method and returning from account linking', async () => {
+    const { page, request, navigateTo } = await wechatPhoneFixture({ browser: true, linkedOnRetry: true });
+    expect(page.data.browserLoginPending).toBe(true);
+    page.linkExistingAccount();
+    expect(page.data.accountLinkPending).toBe(true); expect(navigateTo).toHaveBeenCalledOnce();
+    page.onShow();
+    await vi.waitFor(() => expect(page.data.loginRequired).toBe(false));
+    expect(request.mock.calls.map(([request]) => request.url.split('/auth/')[1])).toEqual([
+      'wechat/miniprogram', 'wechat/miniprogram', 'wechat/browser-session/approve',
+    ]);
+    expect(page.data).toMatchObject({ accountLinkPending: false, browserLoginPending: false, loginBusy: false, uidText: '42' });
+  });
+
+  it('preserves an already signed-in account when the browser approval modal fails on initial entry', async () => {
+    const session = { token: 's'.repeat(20), user: { uid: 42, name: 'Existing', wcaId: null, avatar: '' } };
+    const request = vi.fn();
+    const page = await loadPage({ getStorageSync: () => session, request, showShareMenu: vi.fn(),
+      showModal(options: { fail(value: unknown): void }) { options.fail({ errMsg: 'modal failed' }); } });
+    page.onLoad({ browserLogin: 'b'.repeat(43) });
+    await vi.waitFor(() => expect(page.data.loginBusy).toBe(false));
+    expect(page.data).toMatchObject({ loginRequired: false, browserLoginPending: false, uidText: '42' });
+    expect(page.data.accountError).toContain('未能确认网页登录'); expect(request).not.toHaveBeenCalled();
+  });
+
+  it.each(['unload', 'changed', 'unavailable'] as const)('does not approve a stale browser session after %s during the confirmation dialog', async (state) => {
+    let reply: ((value: unknown) => void) | undefined;
+    const { page, authorize, getStorageSync, request } = await wechatPhoneFixture({ knownPhone: true, browser: true, onModal(options) { reply = options.success; } });
+    await authorize(); const operation = page.confirmPhoneAccount();
+    await vi.waitFor(() => expect(reply).toBeTypeOf('function'));
+    if (state === 'unload') page.onUnload();
+    else getStorageSync.mockImplementation(() => {
+      if (state === 'unavailable') throw new Error('storage blocked');
+      return { token: 'other'.repeat(5), user: { uid: 99, wcaId: null, name: 'Other' } };
+    });
+    reply!({ confirm: true }); await operation;
+    expect(request.mock.calls.some(([request]) => request.url.endsWith('/approve'))).toBe(false);
+    if (state !== 'unload') expect(page.data.loginBusy).toBe(false);
+    if (state === 'changed') expect(page.data.uidText).toBe('99');
+  });
+
+  it.each(['INVALID_WECHAT_PHONE_CODE', 'WECHAT_PHONE_UNAVAILABLE', 'WECHAT_PHONE_UNSUPPORTED'])('leaves retry and other sign-in actionable after %s', async (code) => {
+    const { page, authorize, setStorageSync } = await wechatPhoneFixture({ onPhone(request) { request.success({ statusCode: 400, data: { code, error: 'phone failed' } }); } });
+    await authorize();
+    expect(page.data).toMatchObject({ loginBusy: false, loginRequired: true, wechatPhoneRequired: true });
+    expect(page.data.loginError).not.toBe(''); expect(setStorageSync).not.toHaveBeenCalled();
+  });
+
+  it('does not save a session if the server returned a different account than the phone preview', async () => {
+    const { page, authorize, setStorageSync } = await wechatPhoneFixture({ knownPhone: true, onComplete(request) { request.success({ statusCode: 200, data: { token: 'x'.repeat(20), user: { uid: 99, name: 'Wrong user', wcaId: null, avatar: '' } } }); } });
+    await authorize(); await page.confirmPhoneAccount();
+    expect(setStorageSync).not.toHaveBeenCalled();
+    expect(page.data).toMatchObject({ loginRequired: true, accountLinkTargetId: 42, accountLinkTargetName: 'Original member', loginBusy: false });
+    expect(page.data.loginError).toContain('账号或绑定状态已改变');
+  });
+
+  it('does not hide a failed durable session write', async () => {
+    const { page, authorize, setStorageSync } = await wechatPhoneFixture();
+    await authorize(); setStorageSync.mockImplementation(() => { throw new Error('storage full'); });
+    await page.createAccount();
+    expect(page.data.loginRequired).toBe(true); expect(page.data.loginBusy).toBe(false);
+    expect(page.data.loginError).toContain('设备存储不可用');
+  });
+
+  it('does not resume a pending choice from a different account already signed in on another page', async () => {
+    const { page, authorize, request, getStorageSync } = await wechatPhoneFixture();
+    await authorize();
+    getStorageSync.mockReturnValue({ token: 'other'.repeat(5), user: { uid: 99, wcaId: null, name: 'Other' } });
+    await page.createAccount();
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(page.data).toMatchObject({ accountLinkRequired: false, loginRequired: false, uidText: '99' });
+  });
+
+  it('handles browser modal failure after the direct-login response, without resurrecting a phone prompt', async () => {
+    const { page, authorize, setStorageSync } = await wechatPhoneFixture({ browser: true, modalFails: true,
+      onPhone(request) { request.success({ statusCode: 200, data: { token: 's'.repeat(20), user: { uid: 42, name: 'Linked meanwhile', wcaId: null, avatar: '' } } }); } });
+    await authorize();
+    expect(setStorageSync).toHaveBeenCalledOnce();
+    expect(page.data).toMatchObject({ loginRequired: false, loginBusy: false, browserLoginPending: false, wechatPhoneRequired: false });
+    expect(page.data.accountError).toContain('未能确认网页登录');
   });
 
   async function douyinChoiceFixture(overrides: {
@@ -481,6 +747,7 @@ describe('mini program account page', () => {
 
   it('approves an iPhone browser login and exits back to Safari', async () => {
     const approval = 'A'.repeat(43);
+    let storedSession: unknown = null;
     const token = 'n'.repeat(20);
     const exitMiniProgram = vi.fn();
     const request = vi.fn((options: {
@@ -509,13 +776,13 @@ describe('mini program account page', () => {
     const page = await loadPage({
       exitMiniProgram,
       getLaunchOptionsSync: normalLaunchOptions,
-      getStorageSync: () => null,
+      getStorageSync: () => storedSession,
       login(options: { success(result: { code: string }): void }) {
         options.success({ code: 'login-code' });
       },
       removeStorageSync: vi.fn(),
       request,
-      setStorageSync: vi.fn(),
+      setStorageSync: vi.fn((_key: string, value: unknown) => { storedSession = value; }),
       showModal(options: { success(result: { confirm: boolean }): void }) {
         options.success({ confirm: true });
       },
@@ -602,8 +869,12 @@ describe('mini program account page', () => {
 
     expect(page.data).toMatchObject({
       accountLinkRequired: true,
+      accountCanCreate: false,
       loginRequired: true,
     });
+    expect(page.data.loginError).toContain('服务端暂未开放手机号授权');
+    await page.createAccount();
+    expect(request).toHaveBeenCalledOnce();
 
     page.linkExistingAccount();
     expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({

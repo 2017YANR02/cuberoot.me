@@ -1041,12 +1041,12 @@ function MiniProgramLinkCodePanel() {
     }
   };
   return <details className="auth-flow">
-    <summary>{t('绑定抖音小程序到这个账号', 'Link the Douyin mini program to this account')}</summary>
-    <p className="auth-hint">{t(`保留当前账号 ID ${uid ?? ''}。在抖音小程序选择“已有账号”，输入绑定码，再确认绑定。`, `Keep account ID ${uid ?? ''}. Choose “Existing account” in the Douyin mini program, enter this code, then confirm linking.`)}</p>
+    <summary>{t('绑定小程序到这个账号', 'Link a mini program to this account')}</summary>
+    <p className="auth-hint">{t(`保留当前账号 ID ${uid ?? ''}。在微信手机号授权后的账号选择页，或抖音小程序选择“已有账号”，输入绑定码，再确认绑定。`, `Keep account ID ${uid ?? ''}. Choose “Existing account” after WeChat phone authorization, or in the Douyin mini program, enter this code, then confirm linking.`)}</p>
     <p className="auth-hint">{t('绑定码有效期 10 分钟，只能使用一次。它不是合并码；不要截图、转发或提供给他人。', 'The code lasts 10 minutes and works once. It is not a merge code. Do not screenshot, forward or share it.')}</p>
     {result?.uid === uid && result && <>
       <p className="auth-hint">{result.name} · ID {result.uid}</p>
-      <input className="auth-input" readOnly value={result.linkCode} aria-label={t('抖音小程序绑定码', 'Douyin mini program linking code')} />
+      <input className="auth-input" readOnly value={result.linkCode} aria-label={t('小程序绑定码', 'Mini program linking code')} />
       <button type="button" className="auth-textbtn" onClick={async () => {
         setError('');
         try { await navigator.clipboard.writeText(result.linkCode); setCopied(true); }
@@ -1495,7 +1495,7 @@ export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number |
           {mergeMode === 'keep' ? (
             <>
               <p className="auth-hint">{t('生成合并码,再登录另一个账号输入。合并后保留当前账号。', 'Generate a code, then sign in to the other account and enter it. This account will be kept.')}</p>
-              <p className="auth-hint">{t('合并码有效期 10 分钟，只能使用一次。请勿向他人分享；抖音小程序绑定请使用上面的绑定码。', 'The merge code lasts 10 minutes and works once. Do not share it. To link the Douyin mini program, use the linking code above.')}</p>
+              <p className="auth-hint">{t('合并码有效期 10 分钟，只能使用一次。请勿向他人分享；小程序绑定请使用上面的绑定码。', 'The merge code lasts 10 minutes and works once. Do not share it. To link a mini program, use the linking code above.')}</p>
               {generatedMergeCode && <input className="auth-input" readOnly value={generatedMergeCode} aria-label={t('合并码', 'Merge code')} />}
               <button type="button" className="auth-primary" disabled={mergeBusy} onClick={() => void generateMergeCode()}>
                 {mergeBusy ? <Loader2 size={ICON} className="auth-spin" /> : t('生成合并码', 'Generate merge code')}

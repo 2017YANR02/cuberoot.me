@@ -872,7 +872,7 @@ export default function AccountPage() {
             aria-label={t('账号设置', 'Account settings')}
             prefetch={false}
           >
-            <Settings size={18} />
+            <Settings size={28} />
           </AppLink>
         )}
       </header>

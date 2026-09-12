@@ -135,7 +135,7 @@ describe('auth route wire contracts', () => {
     vi.restoreAllMocks();
   });
 
-  it('returns the real first-time WeChat session shape with an empty display name', async () => {
+  it('does not let the legacy create flag bypass first-time phone authorization', async () => {
     mocks.wechatMiniProgramConfigured.mockReturnValue(true);
     mocks.exchangeWechatMiniProgramCode.mockResolvedValue({
       openid: 'openid-1',
@@ -150,11 +150,10 @@ describe('auth route wire contracts', () => {
       body: JSON.stringify({ code: 'wx-code', create: true }),
     });
 
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    expect(body).toEqual({ token, user: publicAccount, isNew: true });
-    expect(decodeWebSession(body)).toEqual({ token, user: publicAccount });
-    expect(mocks.loginWithIdentity).toHaveBeenCalledWith('wechat', 'unionid-1', { name: '' });
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ code: 'WECHAT_PHONE_REQUIRED' });
+    expect(mocks.loginWithIdentity).not.toHaveBeenCalled();
+    expect(mocks.signSession).not.toHaveBeenCalled();
   });
 
   it('starts, approves, and exchanges an iPhone browser login', async () => {
@@ -209,9 +208,9 @@ describe('auth route wire contracts', () => {
 
     expect(response.status).toBe(409);
     expect(decodeWebSessionError(await response.json())).toEqual({
-      code: 'WECHAT_ACCOUNT_LINK_REQUIRED',
-      message: 'link an existing account or explicitly create a new account',
-      error: 'link an existing account or explicitly create a new account',
+      code: 'WECHAT_PHONE_REQUIRED',
+      message: 'authorize a phone number to continue, or link an existing account',
+      error: 'authorize a phone number to continue, or link an existing account',
     });
     expect(mocks.loginWithIdentity).not.toHaveBeenCalled();
   });

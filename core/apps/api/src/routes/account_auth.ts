@@ -22,7 +22,7 @@ import { query } from '../db/connection.js';
 import { AdminActivityRangeError, resolveAdminActivityRange } from '../utils/admin_activity.js';
 import { checkRateLimit, requireAdmin } from '../utils/recon_helpers.js';
 import { signSession, verifySession, hasFreshEmailGrant, hasFreshPhonePasswordResetGrant } from '../utils/session.js';
-import { beginIdentityLogin, completeIdentityChoice, IdentityChoiceError, issueIdentityLinkCode, previewIdentityLinkCode } from '../utils/identity_choice.js';
+import { beginIdentityLogin, beginWechatPhoneIdentityLogin, completeIdentityChoice, IdentityChoiceError, issueIdentityLinkCode, previewIdentityLinkCode } from '../utils/identity_choice.js';
 import { captureAccountDevice } from '../utils/account_device.js';
 import {
   issueCode, verifyCode, loginWithIdentity, IdentityNotFoundError, addIdentity, removeIdentity, replaceCredentialIdentity,
@@ -50,6 +50,7 @@ import {
 } from '../utils/social_login.js';
 import {
   exchangeWechatMiniProgramCode,
+  exchangeWechatMiniProgramPhoneCode,
   generateWechatMiniProgramUrlLink,
   WechatMiniProgramError,
   wechatMiniProgramConfigured,
@@ -249,10 +250,16 @@ accountAuthRoutes.post('/auth/identity/complete', bodyLimit({ maxSize: 4096 }), 
   const limited = authRateLimitResponse(c, { bucket: 'identity-complete', max: 30 });
   if (limited) return limited;
   const body = await c.req.json<{ ticket?: unknown; action?: unknown; expectedUid?: unknown; linkCode?: unknown }>().catch(() => null);
-  if (!body || typeof body.ticket !== 'string' || (body.action !== 'create' && body.action !== 'link' && body.action !== 'link_with_code')) {
+  if (!body || typeof body.ticket !== 'string' || (body.action !== 'create' && body.action !== 'link' && body.action !== 'link_with_code' && body.action !== 'link_verified_phone')) {
     return c.json({ error: 'invalid identity choice' }, 400);
   }
   let uid: number | undefined;
+  if (body.action === 'link_verified_phone') {
+    if (typeof body.expectedUid !== 'number' || !Number.isSafeInteger(body.expectedUid) || body.expectedUid <= 0) {
+      return c.json({ error: 'invalid identity choice' }, 400);
+    }
+    uid = body.expectedUid;
+  }
   if (body.action === 'link_with_code') {
     if (typeof body.linkCode !== 'string' || typeof body.expectedUid !== 'number' || !Number.isSafeInteger(body.expectedUid) || body.expectedUid <= 0) {
       return c.json({ error: 'invalid identity choice' }, 400);
@@ -322,21 +329,28 @@ accountAuthRoutes.post('/auth/social/:provider', async (c) => {
 
 // ── 微信小程序登录(wx.login code → code2Session → UnionID)──
 // UnionID 缺失时绝不退回 openid:两者命名空间不同,回退会给同一个人创建第二个账号。
-accountAuthRoutes.post('/auth/wechat/miniprogram', async (c) => {
+accountAuthRoutes.post('/auth/wechat/miniprogram', bodyLimit({ maxSize: 4096 }), async (c) => {
   c.header('Cache-Control', 'no-store');
   const rateLimited = authRateLimitResponse(c);
   if (rateLimited) return rateLimited;
   if (!wechatMiniProgramConfigured()) {
     return c.json(webSessionError('WECHAT_NOT_CONFIGURED', 'wechat miniprogram not configured'), 503);
   }
-  const body = await c.req.json<{ code?: unknown; create?: unknown }>()
-    .catch(() => ({ code: undefined, create: undefined }));
+  const body = await c.req.json<{ code?: unknown; create?: unknown; phoneCode?: unknown }>()
+    .catch(() => null);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return c.json(webSessionError('INVALID_REQUEST', 'invalid code'), 400);
+  }
   const code = typeof body.code === 'string' ? body.code.trim() : '';
   if (!code || code.length > 512) {
     return c.json(webSessionError('INVALID_REQUEST', 'invalid code'), 400);
   }
   if (body.create !== undefined && typeof body.create !== 'boolean') {
     return c.json(webSessionError('INVALID_REQUEST', 'invalid login request'), 400);
+  }
+  const phoneCode = typeof body.phoneCode === 'string' ? body.phoneCode.trim() : '';
+  if (body.phoneCode !== undefined && (!phoneCode || phoneCode.length > 512)) {
+    return c.json(webSessionError('INVALID_REQUEST', 'invalid phone authorization code'), 400);
   }
 
   let wechatSession;
@@ -354,23 +368,38 @@ accountAuthRoutes.post('/auth/wechat/miniprogram', async (c) => {
         return c.json(webSessionError('ACCOUNT_BLOCKED', 'wechat login blocked'), 403);
       }
     }
-    console.error('[auth] wechat miniprogram exchange failed:', error instanceof Error ? error.message : error);
+    console.error('[auth] wechat miniprogram exchange failed');
     return c.json(webSessionError('WECHAT_UNAVAILABLE', 'wechat service unavailable'), 502);
   }
   if (!wechatSession.unionid) {
     return c.json(webSessionError('WECHAT_UNIONID_REQUIRED', 'wechat unionid required'), 409);
   }
   const linkedUser = await findUserByIdentity('wechat', wechatSession.unionid);
-  if (!linkedUser && body.create !== true) {
+  if (!linkedUser && !phoneCode) {
     return c.json(webSessionError(
-      'WECHAT_ACCOUNT_LINK_REQUIRED',
-      'link an existing account or explicitly create a new account',
+      'WECHAT_PHONE_REQUIRED',
+      'authorize a phone number to continue, or link an existing account',
     ), 409);
   }
-
-  const { user, isNew } = linkedUser
-    ? { user: linkedUser, isNew: false }
-    : await loginWithIdentity('wechat', wechatSession.unionid, { name: '' });
+  let result;
+  if (phoneCode) {
+    try {
+      const phone = await exchangeWechatMiniProgramPhoneCode(phoneCode, wechatSession.openid);
+      result = await beginWechatPhoneIdentityLogin(wechatSession.unionid, phone);
+      if ('pending' in result) return c.json(result, 409);
+    } catch (error) {
+      if (error instanceof IdentityChoiceError) return identityChoiceErrorResponse(c, error);
+      if (error instanceof WechatMiniProgramError) {
+        if (error.code === 'invalid-phone-code') return c.json(webSessionError('INVALID_WECHAT_PHONE_CODE', 'phone authorization expired; please authorize again'), 401);
+        if (error.code === 'unsupported-phone') return c.json(webSessionError('WECHAT_PHONE_UNSUPPORTED', 'use a mainland China phone number or link an existing account'), 400);
+        if (error.code === 'rate-limited') return c.json(webSessionError('RATE_LIMITED', 'wechat phone authorization rate limited'), 429);
+        if (error.code === 'blocked-user') return c.json(webSessionError('ACCOUNT_BLOCKED', 'wechat authorization blocked'), 403);
+      }
+      console.error('[auth] wechat phone authorization failed');
+      return c.json(webSessionError('WECHAT_PHONE_UNAVAILABLE', 'wechat phone service unavailable'), 502);
+    }
+  } else result = { user: linkedUser!, isNew: false };
+  const { user, isNew } = result;
   await captureAccountDevice(user.id, c.req.header('User-Agent'));
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   const session: WebSession = { token, user: publicUser(user) };

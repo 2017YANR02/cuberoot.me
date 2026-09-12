@@ -59,7 +59,7 @@ describe('explicit mini program account linking proof', () => {
   it('issues only on request and clearly separates the linking code from account merging', async () => {
     await render(); await act(async () => button('Generate linking code').click());
     expect(mocks.issueIdentityLinkCode).toHaveBeenCalledExactlyOnceWith(42, expect.any(AbortSignal));
-    expect(host.querySelector<HTMLInputElement>('[aria-label="Douyin mini program linking code"]')?.value).toBe('L42-123456');
+    expect(host.querySelector<HTMLInputElement>('[aria-label="Mini program linking code"]')?.value).toBe('L42-123456');
     expect(host.textContent).toContain('It is not a merge code.');
     expect(host.textContent).toContain('Do not screenshot, forward or share it.');
     expect(mocks.mergeAccount).not.toHaveBeenCalled();
@@ -67,7 +67,7 @@ describe('explicit mini program account linking proof', () => {
   it('removes an expired linking code', async () => {
     vi.useFakeTimers(); await render(); await act(async () => button('Generate linking code').click());
     await act(async () => { await vi.advanceTimersByTimeAsync(600_000); });
-    expect(host.querySelector('[aria-label="Douyin mini program linking code"]')).toBeNull();
+    expect(host.querySelector('[aria-label="Mini program linking code"]')).toBeNull();
   });
   it('ignores late code issuance after the account changes', async () => {
     let resolve!: (value: unknown) => void;
@@ -75,7 +75,7 @@ describe('explicit mini program account linking proof', () => {
     await render(); await act(async () => button('Generate linking code').click());
     mocks.user = { uid: 99, name: 'Other' }; await render();
     await act(async () => resolve({ linkCode: 'L42-123456', expiresInSeconds: 600 }));
-    expect(host.querySelector('[aria-label="Douyin mini program linking code"]')).toBeNull();
+    expect(host.querySelector('[aria-label="Mini program linking code"]')).toBeNull();
     expect(button('Generate linking code').disabled).toBe(false);
   });
   it('offers manual copy when clipboard access is unavailable', async () => {
