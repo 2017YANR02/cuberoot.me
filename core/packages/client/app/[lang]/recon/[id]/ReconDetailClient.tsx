@@ -432,6 +432,8 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           </div>
         )}
 
+        <SameScrambleNav key={solve.id} solve={solve} initial={initialSameScramble} />
+
         <StatsGrid solve={solve} />
 
         {solve.videoUrl && <VideoSection videoUrl={solve.videoUrl} />}
@@ -497,8 +499,6 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
         {solve.official !== 'wca' && !sameCompHasRows && (
           <SameSessionTable solve={solve} onHasRows={setSameSessionHasRows} />
         )}
-
-        <SameScrambleNav solve={solve} initial={initialSameScramble} />
 
         <AlternativesSection
           reconId={solve.id}
@@ -922,19 +922,13 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
   );
 }
 
-// 归一化打乱字符串作为关联键：去首尾空白 + 内部空白折叠为单空格（大小写敏感，r≠R）。
-function scrambleKey(solve: Pick<ReconSolve, 'optimalScramble' | 'wcaScramble' | 'scramble'>): string {
-  return getReconScramble(solve).trim().replace(/\s+/g, ' ');
-}
-
-// 相同打乱的其它复盘（任意选手/项目，只要打乱字符串一致），方便跨复盘对比跳转。
+// 关联由服务端交叉匹配各类打乱,客户端不再用优先显示的一条打乱二次过滤。
 function SameScrambleNav({ solve, initial }: { solve: ReconSolve; initial?: ReconSolve[] }) {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   // Seeded from the server (SSR) so the section is in the initial HTML — instant,
   // no full /list download. Background-refresh via the cheap dedicated endpoint.
   const [matches, setMatches] = useState<ReconSolve[]>(initial ?? []);
-  const key = scrambleKey(solve);
 
   useEffect(() => {
     let cancelled = false;
@@ -943,36 +937,27 @@ function SameScrambleNav({ solve, initial }: { solve: ReconSolve; initial?: Reco
         if (cancelled) return;
         setMatches(rows.filter(s => s.id !== solve.id));
       })
-      .catch(async () => {
-        // 端点未部署(dev 打 prod / 部署错位)时降级:老路径拉全量再客户端过滤。
-        if (!key || cancelled) return;
-        try {
-          const all = await listRecons();
-          if (cancelled) return;
-          setMatches(all
-            .filter(s => s.id !== solve.id && scrambleKey(s) === key)
-            .sort((a, b) => (a.rawTime ?? Infinity) - (b.rawTime ?? Infinity)));
-        } catch { /* keep SSR-seeded matches */ }
-      });
+      .catch(() => { /* keep SSR-seeded matches */ });
     return () => { cancelled = true; };
-  }, [solve.id, key]);
+  }, [solve.id, solve.optimalScramble, solve.wcaScramble, solve.scramble]);
 
-  if (!key || matches.length === 0) return null;
+  if (matches.length === 0) return null;
 
   return (
-    <div className="detail-section">
-      <div className="detail-section-label">{t('recon.sameScramble')}</div>
+    <div className="detail-section detail-related-recons">
+      <div className="detail-section-label">{tr({ zh: '同一打乱的其他复盘', en: 'Other reconstructions of this scramble' })}</div>
       <div className="detail-same-scramble">
         {matches.map(s => {
           const time = isBldEvent(s.event) ? s.execTime : s.rawTime;
           return (
-            <Link key={s.id} href={`/recon/${reconPathSeg(s)}`} className="same-scramble-item">
+            <Link key={s.id} href={`/recon/${reconPathSeg(s)}`} prefetch={false} className="same-scramble-item">
               {time != null && <span className="ss-time">{formatTime(time)}</span>}
               {s.event && <EventIcon event={s.event} title={eventDisplayName(s.event, isZh)} />}
               <span className="ss-name">
                 {s.personId && <Flag iso2={personFlagIso2(s.personId)} className="yt-comment-flag" />}
                 {displayCuberName(s.person ?? '', isZh)}
               </span>
+              {s.method && <span className="ss-method">{s.method}</span>}
             </Link>
           );
         })}

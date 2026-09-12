@@ -8,6 +8,7 @@
  */
 
 import { encodeUrlAlg } from './cubedb-url';
+import { wcaRoundToReconRound } from './recon-attempt-lookup';
 import { cleanFtoReconAlgForPlayer } from '@cuberoot/shared/recon-completion';
 
 /** sim puzzleKind (cuber engine) — number for NxN, else a named twisty/square-family/corner-turn/clock puzzle. */
@@ -48,14 +49,37 @@ export function simPuzzleForReconEvent(ev: string): string | null {
   }
 }
 
-/** Build the /recon/submit query string from sim state. */
-export function buildReconSubmitQuery(reconEvent: string, scramble: string, solution: string): string {
+export interface ReconScrambleSource {
+  ci: string; cn: string;
+  r?: string; g?: string; n?: number; e?: string; cd?: string; x?: 0 | 1;
+}
+
+/** Build the /recon/submit query string from sim state or a sourced scramble. */
+export function buildReconSubmitQuery(reconEvent: string, scramble: string, solution: string, options?: {
+  practice?: boolean;
+  optimal?: boolean;
+  competition?: ReconScrambleSource | null;
+  sourceEn?: string;
+  sourceZh?: string;
+}): string {
   const params = new URLSearchParams();
   params.set('event', reconEvent);
   const scr = encodeUrlAlg(scramble.trim());
   const sol = encodeUrlAlg(solution.trim());
-  if (scr) params.set('scramble', scr);
+  if (scr) params.set(options?.optimal ? 'optimal' : 'scramble', scr);
   if (sol) params.set('alg', sol);
+  if (options?.practice) params.set('official', 'practice');
+  if (options?.competition) {
+    params.set('compWcaId', options.competition.ci);
+    params.set('comp', options.competition.cn);
+    const source = options.competition;
+    const round = source.r ? wcaRoundToReconRound(source.r) : undefined;
+    if (round) params.set('round', round);
+    if (source.g) params.set('groupId', source.g);
+    if (source.n != null && !source.x) params.set('solveNum', String(source.n));
+  }
+  if (options?.sourceEn) params.set('sourceEn', options.sourceEn);
+  if (options?.sourceZh) params.set('sourceZh', options.sourceZh);
   return params.toString();
 }
 

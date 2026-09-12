@@ -40,6 +40,14 @@ const SEP = ' — ';
 const SHARE_IMAGE = '/icons/CubeRoot.png';
 
 export const PAGE_META: Record<string, PageMetaEntry> = {
+  'partnership': {
+    title: { zh: '合作提案', en: '合作提案' },
+    description: { zh: 'CubeRoot 项目愿景、产品与赞助合作提案。', en: 'CubeRoot 项目愿景、产品与赞助合作提案。' },
+  },
+  'partnership/talking-points': {
+    title: { zh: '会谈提纲', en: '会谈提纲' },
+    description: { zh: '项目介绍、六个交流切入点、资金请求与常见问题话术。', en: '项目介绍、六个交流切入点、资金请求与常见问题话术。' },
+  },
   // The landing page is the only browser tab that keeps the site name.
   '': {
     title: {
@@ -79,6 +87,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Selected original work built for CubeRoot from zero: puzzle solvers, the LSLL state space, scramble statistics, reconstructions, 3D simulation and WCA data products.',
     },
   },
+  'pets': { title: { zh: '领养宠物', en: 'Adopt a companion' }, description: { zh: '领养根号兽、螃蟹、三花猫或云宝。喂食、互动，点亮星星、月亮与太阳，一起长大。', en: 'Adopt a Root Beast, Clawd, Calico, or Cloud. Feed, play, and grow a friendship from little stars to suns.' } },
+  'pets/gallery': { title: { zh: '宠物图鉴', en: 'Companion gallery' }, description: { zh: '探索 CubeRoot 小伙伴的动作与表情，播放喜欢的片段，分享给朋友。', en: 'Explore CubeRoot companion animations and expressions. Play your favorite moments and share them with friends.' } },
   'account': { title: { zh: '账号', en: 'Account' } },
   'admin': {
     title: { zh: '管理后台', en: 'Administration' },

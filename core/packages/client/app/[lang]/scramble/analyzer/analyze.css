@@ -23,6 +23,22 @@
 
 /* ── Input row ── */
 
+.analyze-recon-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding: 0.7rem 1.1rem;
+    border-radius: 8px;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+.analyze-recon-link:hover { background: color-mix(in srgb, var(--primary) 88%, black); }
+.analyze-recon-link:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
 .analyze-input-row {
     display: flex;
     align-items: center;

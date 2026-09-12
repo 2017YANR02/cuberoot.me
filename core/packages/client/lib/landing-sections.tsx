@@ -96,6 +96,7 @@ const CARD_VISUALS: Partial<Record<SiteDirectoryEntry['id'], CardVisual>> = {
   meet: { Icon: Video },
   documents: { Icon: FileText },
   interview: { Icon: MessagesSquare },
+  partnership: { Icon: Sprout },
   spreadsheets: { Icon: Table2 },
   alg: { Icon: Library },
   quiz: { Icon: CircleQuestionMark },

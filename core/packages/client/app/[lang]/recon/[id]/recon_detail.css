@@ -560,6 +560,22 @@
   margin-top: 6px;
 }
 
+.detail-related-recons {
+  padding: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--accent-soft);
+}
+.same-scramble-item .ss-method {
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+.same-scramble-item:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
 .same-scramble-item {
   display: flex;
   align-items: center;

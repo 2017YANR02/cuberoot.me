@@ -302,14 +302,14 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     expect(directPanelIds.filter((id) => sharedFieldIds.includes(id))).toEqual([]);
     const panelIds = [...directPanelIds];
     expect(panel).toContain('<TimerSmartCubeSettingsFields');
-    if (panel.includes('<TimerScrambleClickActionSetting')) {
-      panelIds.push('settings.appearance.scramble-click-action');
-    }
+    // Web scramble presses now use the timing surface; the legacy persisted
+    // click preference remains decodable but is intentionally not configurable.
+    expect(panel).not.toContain('<TimerScrambleClickActionSetting');
     if (panel.includes('<TimerScramblePreviewSettings')) {
       panelIds.push(...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS);
     }
     expect([...new Set([...panelIds, ...sharedFieldIds])].sort())
-      .toEqual([...TIMER_SETTING_FIELD_IDS].sort());
+      .toEqual(TIMER_SETTING_FIELD_IDS.filter((id) => id !== 'settings.appearance.scramble-click-action').sort());
   });
 
   it('keeps direct layout-only rows on a fixed whitelist instead of hiding new fields outside the manifest', () => {
@@ -330,7 +330,7 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     expect(panel).toContain('timerSettingFieldContract(id).copy');
     expect(panel).toContain('timerSettingFieldStates({');
     expect(panel).toContain('<TimerTimingSettingsSections');
-    expect(panel).toContain('<TimerScrambleClickActionSetting');
+    expect(panel).not.toContain('<TimerScrambleClickActionSetting');
     expect(panel).toContain('<TimerScramblePreviewSettings');
     expect(panel).toContain('<TimerBooleanSettingRow');
     expect(panel).toContain("field={timerSettingFieldContract('settings.scramble.optimal')}");

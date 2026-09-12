@@ -42,7 +42,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
-  { name: 'auth_identity_pending', domain: 'account', origin: '0232', purpose: { zh: '首次第三方登录的 15 分钟认证尝试；仅存票据摘要，用户明确创建或绑定后单次核销，不提前创建账号', en: '15-minute first-time provider authentication attempts; ticket hashes only, consumed once after explicit creation or linking without creating an account in advance' } },
+  { name: 'auth_identity_pending', domain: 'account', origin: '0232', purpose: { zh: '首次身份认证的 15 分钟尝试；票据只存摘要，另存已验证身份资料及必要加密凭据，明确创建或绑定后单次核销，不提前创建账号', en: '15-minute first-time identity attempts; tickets are hashed, with verified identity data and required encrypted credentials stored separately; consumed once after explicit creation or linking without creating an account in advance' } },
   { name: 'platform_organizer_applications', domain: 'platform', origin: '0229', purpose: { zh: '主办方申请、关联组织与平台审批记录', en: 'Organizer applications, linked organizations and platform reviews' } },
   { name: 'platform_competitions', domain: 'platform', origin: '0224', purpose: { zh: '主办组织、报名窗口、抽成及结算配置', en: 'Organizer, registration window, commission and settlement configuration' } },
   { name: 'platform_competition_sessions', domain: 'platform', origin: '0224', purpose: { zh: '监督场次、名额与人员排班', en: 'Supervised session capacity and staff assignment' } },
@@ -52,6 +52,8 @@ const TABLES: Table[] = [
   { name: 'platform_competition_settlement_ledger', domain: 'platform', origin: '0226', purpose: { zh: '主办方转账、追回与退款调整的审计台账', en: 'Audited organizer transfers, recoveries and refund adjustments' } },
   { name: 'platform_competition_device_reports', domain: 'platform', origin: '0227', purpose: { zh: '绑定已下发打乱的设备采集场次与辅助证据', en: 'Device runs and supporting evidence bound to issued attempts' } },
   { name: 'sim_mask_layouts', domain: 'alg', origin: '0223', purpose: { zh: '按阶数保存阶段分组顺序与归属', en: 'Stage group order and membership per cube size' }, cols: [{ name: 'cube_size, groups' }] },
+  { name: 'user_pets', domain: 'community', origin: '0236', purpose: { zh: '账号领养与养成进度', en: 'Account adoptions and care progress' }, cols: [{ name: 'user_id' }, { name: 'pet_id' }, { name: 'adopted_at' }, { name: 'care' }] },
+  { name: 'deskpet_catalog', domain: 'community', origin: '0235', purpose: { zh: '桌宠名称、开放状态与排序配置', en: 'Pet names, visibility and ordering' }, cols: [{ name: 'id' }, { name: 'revision' }, { name: 'entries', note: { zh: '按稳定 ID 排列的展示配置', en: 'Presentation overrides ordered by stable ID' } }] },
   { name: 'home_card_locks', domain: 'community', origin: '0221', purpose: { zh: '管理员设置的首页卡片锁定覆盖值', en: 'Administrator overrides for homepage card locks' }, cols: [{ name: 'item_id' }, { name: 'locked' }] },
   { name: 'role_preview_profiles', domain: 'account', origin: '0217', purpose: { zh: '超级管理员专用的独立角色测试身份', en: 'Separate role-test identities for superadministrators' } },
   { name: 'role_preview_sessions', domain: 'account', origin: '0217', purpose: { zh: '可撤销的短效角色测试会话与实际操作者', en: 'Revocable short-lived test sessions and their real actors' } },
@@ -761,6 +763,9 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 231, slug: 'auth_apple_token', desc: { zh: '在已有登录身份中加密保存 Apple 撤销凭据与密钥版本，仅供解绑和注销撤销授权，不进入身份列表响应。', en: 'Keep an encrypted Apple revocation credential and key version on the existing identity for unlinking and account deletion; never expose it in identity-list responses.' } },
   { n: 232, slug: 'auth_identity_pending', desc: { zh: '首次第三方授权后暂存短期认证尝试，明确选择新建或验证已有账号后才事务核销；不按邮箱自动关联。', en: 'Keep short-lived first-time provider attempts until explicit creation or verified account linking, then consume them transactionally; never auto-link by email.' } },
   { n: 233, slug: 'role_preview_complete_profile', desc: { zh: '新增资料完整的普通用户测试身份，复用论坛资料校验，不授予管理员或网盘权限。', en: 'Add an ordinary test persona with a complete profile using forum validation, without administrator or Drive access.' } },
+  { n: 234, slug: 'auth_identity_choice_providers', desc: { zh: '将邮箱、手机号和抖音纳入既有首次身份确认机制；验证成功不再隐式创建账号。', en: 'Extend existing first-time identity confirmation to email, phone and Douyin; successful verification no longer implicitly creates accounts.' } },
+  { n: 236, slug: 'pet_adoptions', desc: { zh: '账号领养关系与服务端养成存档。', en: 'Account-owned adoptions and server-side pet care.' } },
+  { n: 235, slug: 'deskpet_catalog', desc: { zh: '桌宠名称、锁定、移除及排序配置，版本检查避免覆盖他人的修改。', en: 'Pet names, locks, removal and ordering with revision checks to prevent lost updates.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

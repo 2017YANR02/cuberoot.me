@@ -9,14 +9,15 @@ vi.mock('@/components/AppLink', () => ({ default: ({ children, prefetch: _prefet
 import AuthFlowPage from '@/app/[lang]/dev/auth/page';
 
 describe('account flow documentation', () => {
-  it.each(['zh', 'en'])('distinguishes the proposal, existing-account escape hatch and current implementation in %s', (lang) => {
+  it.each(['zh', 'en'])('distinguishes local phone integration, existing-account escape hatch and release acceptance in %s', (lang) => {
     locale.lang = lang;
     const html = renderToStaticMarkup(createElement(AuthFlowPage));
     expect(html).toContain('<figure');
     expect(html).toContain('id="existing-account"');
     expect(html).toContain('href="#existing-account"');
     expect(html).toContain('<details');
-    expect(html).toContain(lang === 'zh' ? '手机号授权尚未接入' : 'phone authorization not implemented');
+    expect(html).toContain(lang === 'zh' ? '待后台与真机验收' : 'platform and device acceptance pending');
+    expect(html).toContain(lang === 'zh' ? '手机号实时验证' : 'real-time phone verification');
     expect(html).toContain(lang === 'zh' ? '明确同意注册后' : 'explicit registration consent');
     expect(html).toContain(lang === 'zh' ? '微信和手机号分别属于两个账号' : 'WeChat and phone belong to different accounts');
     expect(html).not.toContain('<form');
@@ -33,11 +34,13 @@ describe('account flow documentation', () => {
     for (const text of lang === 'zh' ? [
       'B → A', '10 分钟有效', '唯一登录方式不能解绑', '不能承诺两份会员时长自动相加',
       '注销账号 ≠ 取消续费', '无恢复期', '公开讨论和公开复盘匿名保留',
-      '登录成功 ≠ 计时记录已云同步', '不是三个账号', '首次登录会创建账号',
+      '登录成功 ≠ 计时记录已云同步', '不是三个账号', '绑定码不是合并码', '陌生凭据先问是否已有账号',
+      '已领养宠物', '亲密度较高', '不把两份经验相加',
     ] : [
       'B → A', 'valid for 10 minutes', 'only sign-in method cannot be removed', 'durations are not guaranteed to add together',
       'delete account ≠ cancel renewal', 'no grace period', 'public discussions and public reconstructions are anonymized',
-      'does not mean timer data is cloud-synced', 'not three accounts', 'creates an account on first sign-in',
+      'does not mean timer data is cloud-synced', 'not three accounts', 'link code is not a merge code', 'unknown credentials ask whether you have an account',
+      'adopted pets', 'higher bond', 'Experience is not added together',
     ]) expect(html).toContain(text);
     expect(html).not.toContain('<button');
   });

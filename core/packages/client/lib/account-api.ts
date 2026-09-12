@@ -79,7 +79,7 @@ async function post<T>(path: string, body: unknown, auth = false, signal?: Abort
 
 // 登录/注册(合并流程)
 export const sendEmailCode = (email: string) => post<{ ok: true }>('/v1/auth/email/send', { email });
-export const verifyEmailCode = (email: string, code: string) => postCanonicalSession('/v1/auth/email/verify', { email, code, ...(existingAccountRequired() ? { existingOnly: true } : {}) });
+export const verifyEmailCode = (email: string, code: string, options: { existingOnly?: boolean; signal?: AbortSignal } = {}) => postCanonicalSession('/v1/auth/email/verify', { email, code, ...(options.existingOnly || existingAccountRequired() ? { existingOnly: true } : {}) }, false, options.signal);
 // 邮箱 + 密码登录(账号已设密码即可,不依赖邮件服务)
 export const loginPassword = (email: string, password: string) => postCanonicalSession('/v1/auth/email/password', { email, password });
 // 设置 / 修改 / 重置密码(登录态)。改密要 currentPassword;刚验证邮箱,或通过专用短信找回流程时可免旧密码。
@@ -94,10 +94,12 @@ export const removePassword = (currentPassword?: string) =>
  */
 export const deleteAccount = (confirm: string, password?: string) =>
   post<{ ok: true }>('/v1/auth/account/delete', { confirm, password }, true);
-export const issueAccountMergeCode = () =>
-  post<{ code: string; expiresInSeconds: number }>('/v1/auth/account/merge/code', {}, true);
-export const mergeAccount = (code: string) =>
-  post<{ ok: true; token: string; user: SessionUser }>('/v1/auth/account/merge', { code }, true);
+export const issueAccountMergeCode = (expectedUid: number) =>
+  post<{ code: string; expiresInSeconds: number }>('/v1/auth/account/merge/code', { expectedUid }, true);
+export const issueIdentityLinkCode = (expectedUid: number, signal?: AbortSignal) =>
+  post<{ linkCode: string; expiresInSeconds: number }>('/v1/auth/identity/link-code', { expectedUid }, true, signal);
+export const mergeAccount = (code: string, expectedSourceUid: number) =>
+  post<{ ok: true; token: string; user: SessionUser }>('/v1/auth/account/merge', { code, expectedSourceUid }, true);
 // 修改站内用户名后同时换发带新名字的 JWT,供本机登录态原子刷新。
 export const updateDisplayName = (name: string) =>
   post<{ ok: true; token: string; user: SessionUser }>('/v1/auth/profile', { name }, true);
@@ -236,11 +238,11 @@ export type AvatarChoice =
 export const updateAvatar = (avatar: AvatarChoice) =>
   post<{ ok: true; token: string; user: SessionUser }>('/v1/auth/profile', { avatar }, true);
 export const sendPhoneCode = (phone: string) => post<{ ok: true }>('/v1/auth/phone/send', { phone });
-export const verifyPhoneCode = (phone: string, code: string) => postCanonicalSession('/v1/auth/phone/verify', { phone, code, ...(existingAccountRequired() ? { existingOnly: true } : {}) });
+export const verifyPhoneCode = (phone: string, code: string, options: { signal?: AbortSignal } = {}) => postCanonicalSession('/v1/auth/phone/verify', { phone, code, ...(existingAccountRequired() ? { existingOnly: true } : {}) }, false, options.signal);
 export const sendPhonePasswordResetCode = (phone: string) =>
   post<{ ok: true }>('/v1/auth/phone/send', { phone, purpose: 'password_reset' });
-export const verifyPhonePasswordResetCode = (phone: string, code: string) =>
-  postCanonicalSession('/v1/auth/phone/verify', { phone, code, purpose: 'password_reset' });
+export const verifyPhonePasswordResetCode = (phone: string, code: string, signal?: AbortSignal) =>
+  postCanonicalSession('/v1/auth/phone/verify', { phone, code, purpose: 'password_reset' }, false, signal);
 
 // 绑定(登录态)
 export const linkEmailSend = (email: string) => post<{ ok: true }>('/v1/auth/link/email/send', { email }, true);

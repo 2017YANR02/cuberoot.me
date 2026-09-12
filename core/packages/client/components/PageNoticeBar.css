@@ -64,15 +64,12 @@ html[data-theme=dark] {
 
 .page-notice-icon { flex: none; color: var(--pn-color); margin-top: 2px; }
 
-/* 首页通知与语言/登录控件同处一行。给通知正文右侧留出控件区,避免相互重叠。
-   会员入口新增一个 28px 图标和 8px 间距,预留宽度相应增加 36px。
-   16.75rem 包含控件与 × 的间距,再加窄屏两者右锚点之差(悬浮块 2rem 地板 vs 本条
-   0.9rem 内边距);宽屏两个锚点重合,多出的余量无害。 */
-body:has(.landing-page) .page-notice-wrap .page-notice { padding-right: 16.75rem; }
-@media (min-width: 481px) {
+/* 首页 44px 操作热区与登录文字需要更宽预留；窄屏通知独立一行，操作栏仍单行。 */
+body:has(.landing-page) .page-notice-wrap .page-notice { padding-right: 21rem; min-height: 44px; }
+@media (min-width: 601px) {
   body:has(.landing-page) .page-notice-wrap .page-notice { padding-left: 10rem; }
 }
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   body:has(.landing-page) .page-notice-wrap .page-notice { padding-right: 0.9rem; }
 }
 /* admin:编辑入口放最左,与图标同起始行 */

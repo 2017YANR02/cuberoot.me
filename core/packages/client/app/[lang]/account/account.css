@@ -27,13 +27,14 @@
 
 /* 齿轮 = 账号设置视图入口。真 <a>(?view=signin),不是弹层开关。
    只在主视图出现 —— 设置视图里出口是左上角面包屑,不是把齿轮点亮当"再点一下返回"。
-   无边框纯图标;留出 32px 方形只为点击热区(移动端手指)。 */
+   无边框纯图标;28px 齿轮配 44px 方形点击热区,便于识别和触摸。 */
 .account-gear {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
   margin-right: -6px; /* 图标视觉右沿对齐内容边,抵掉热区留白 */
   border-radius: 8px;
   color: var(--muted-foreground);

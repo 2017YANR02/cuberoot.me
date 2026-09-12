@@ -1,0 +1,51 @@
+.talking-wrap { width: min(860px, calc(100% - 48px)); margin-inline: auto; }
+.talking-hero { padding: 85px 0 42px; }
+.talking-hero h1 { font-size: clamp(36px, 5vw, 62px); font-weight: 650; line-height: 1.25; letter-spacing: -.045em; margin: 0 0 28px; }
+.talking-hero h1 span { color: var(--signal-success); }
+.talking-hero .partner-body { max-width: none; margin-bottom: 25px; }
+.talking-note { margin: 25px 0 0; font-size: 12px; line-height: 1.9; color: var(--muted-foreground); }
+.talking-toc { display: flex; flex-wrap: wrap; gap: 10px 24px; padding-block: 23px; border-block: 1px solid var(--border-default); }
+.talking-toc > a { color: var(--foreground); font-size: 13px; text-decoration: none; line-height: 1.8; }
+.talking-toc > a:hover { color: var(--signal-success); }
+.talking-toc > a:focus-visible { outline: 2px solid var(--ring); outline-offset: 5px; }
+.talking-section { padding-top: 70px; scroll-margin-top: 25px; }
+.talking-section h2 { font-size: clamp(27px, 4vw, 38px); }
+.talking-intro { color: var(--muted-foreground); font-size: 15px; line-height: 1.9; margin: 0 0 28px; }
+.talking-quote { margin: 18px 0; padding: 26px 30px; border-left: 3px solid var(--signal-success); border-radius: 0 18px 18px 0; background: color-mix(in srgb, var(--signal-success) 7%, var(--card)); font-size: 17px; line-height: 2; color: var(--foreground); }
+.talking-reminder { display: flex; align-items: flex-start; gap: 12px; color: var(--muted-foreground); margin-top: 24px; }
+.talking-reminder > svg { flex-shrink: 0; margin-top: 4px; }
+.talking-reminder > p { font-size: 13px; line-height: 1.9; margin: 0; }
+.talking-angles { display: grid; gap: 25px; }
+.talking-angle { border: 1px solid var(--border-default); border-radius: 24px; padding: 30px; background: var(--card); }
+.talking-angle-heading { display: flex; align-items: baseline; gap: 18px; }
+.talking-angle-heading > span { color: var(--signal-success); font-size: 13px; font-weight: 600; }
+.talking-angle-heading > h3 { margin: 0; font-size: 23px; }
+.talking-context { color: var(--muted-foreground); line-height: 1.8; font-size: 13px; margin: 15px 0 25px; }
+.talking-label { color: var(--muted-foreground); font-size: 11px; letter-spacing: .1em; margin: 25px 0 10px; }
+.talking-question { margin: 0; font-size: 16px; line-height: 1.9; }
+.talking-prepare { color: var(--muted-foreground); font-size: 12px; line-height: 1.9; margin: 24px 0 0; }
+.talking-prepare > strong { display: block; color: var(--foreground); font-weight: 550; margin-bottom: 5px; }
+.talking-budget { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 30px; margin-top: 30px; }
+.talking-budget > div { display: flex; gap: 10px; align-items: flex-start; }
+.talking-budget svg { color: var(--signal-success); margin-top: 4px; flex-shrink: 0; }
+.talking-budget p { margin: 0; }
+.talking-budget strong { display: block; font-size: 14px; font-weight: 550; margin-bottom: 7px; }
+.talking-budget span { color: var(--muted-foreground); font-size: 13px; line-height: 1.8; }
+.talking-faq { display: grid; gap: 0; }
+.talking-faq > article { padding: 24px 0; border-bottom: 1px solid var(--border-default); }
+.talking-faq h3 { font-size: 18px; margin: 0 0 13px; }
+.talking-faq p { font-size: 15px; line-height: 2; margin: 0; color: var(--muted-foreground); }
+.talking-steps { padding-left: 24px; margin: 30px 0; }
+.talking-steps > li { font-size: 14px; line-height: 2; margin-block: 12px; color: var(--muted-foreground); }
+.talking-steps strong { color: var(--foreground); font-weight: 550; }
+.talking-footer { margin-top: 70px; padding: 25px 0; border-top: 1px solid var(--border-default); display: flex; gap: 8px; align-items: center; color: var(--muted-foreground); font-size: 11px; }
+@media (max-width: 520px) {
+  .talking-wrap { width: calc(100% - 40px); }
+  .talking-hero { padding-top: 55px; }
+  .talking-section { padding-top: 50px; }
+  .talking-angle { padding: 22px 18px; }
+  .talking-angle-heading { gap: 12px; }
+  .talking-angle-heading > h3 { font-size: 20px; }
+  .talking-quote { padding: 20px; font-size: 15px; }
+  .talking-budget { grid-template-columns: 1fr; }
+}

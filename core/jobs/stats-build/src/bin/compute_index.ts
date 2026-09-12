@@ -137,7 +137,7 @@ const TITLE_ZH_OVERRIDES: Record<string, string> = {
   current_world_records_by_country: '各国当前世界纪录数',
   delegated_competition_per_year: '每年执裁比赛数（WCA Delegate）',
   first_r_is_wr: '首破纪录即为世界纪录',
-  longest_standing_records: '保持最久的世界纪录',
+  longest_standing_records: '最长保持纪录',
   longest_streak_of_world_records: '同项目同类型最长连续世界纪录',
   most_delegated_competitions: '执裁比赛最多（WCA Delegate）',
   potentially_seen_world_records: '可能现场见证的世界纪录',

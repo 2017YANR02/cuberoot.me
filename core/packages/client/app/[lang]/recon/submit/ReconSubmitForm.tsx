@@ -24,6 +24,7 @@ import {
 import AppLink from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import { Flag } from '@/components/Flag';
+import { CompCell } from '@/components/CompCell/CompCell';
 import { ClearButton } from '@/components/ClearButton';
 import { CompactSelect } from '@/components/CompactSelect';
 import { DateInput } from '@/components/DateInput';
@@ -44,7 +45,6 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { useMembership } from '@/hooks/useMembership';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
-import { localizeCompName } from '@/lib/comp-localize';
 import { fetchCompRounds, type RoundFormat } from '@/lib/comp-wcif';
 import { toWcaEventId } from '@/lib/wca-events';
 import {
@@ -52,7 +52,7 @@ import {
   attemptsPerRound, localizeRound, isBldEvent, truncateCs,
 } from '@/lib/recon-utils';
 import { computeAllStats } from '@/lib/recon-stats';
-import { normalizeIsoDate } from '@/lib/iso-date';
+import { normalizeIsoDate, toLocalIsoDate } from '@/lib/iso-date';
 import { revalidateRecon } from '../revalidate-action';
 import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchScrambles, fetchOptimalScrambles, fetchScrambleGroups, matchRoundType } from '@/lib/wca-results-api';
 import { fetchAttemptPrRank } from '@/lib/recon-attempt-pr-rank';
@@ -234,6 +234,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     regionalAverageRecord: '',
     aoType: '',
   });
+
+  useEffect(() => {
+    if (isEditing || fromId) return;
+    setForm(prev => prev.date ? prev : { ...prev, date: toLocalIsoDate() });
+  }, [isEditing, fromId]);
 
   const [timeInput, setTimeInput] = useState('');
   const [avgInput, setAvgInput] = useState('');
@@ -530,7 +535,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   useEffect(() => {
     if (isEditing || fromId) return;
     const personId = searchParams?.get('personId');
-    if (!personId) return;
+    const hasScramble = !!(searchParams?.get('scramble') || searchParams?.get('optimal') || searchParams?.get('generic'));
+    if (!personId && !hasScramble) return;
     const ev = searchParams?.get('event') || '';
     const round = searchParams?.get('round') || '';
     const solveNumRaw = searchParams?.get('solveNum');
@@ -545,15 +551,16 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       : undefined;
     setForm(prev => ({
       ...prev,
-      official: seededOfficial ?? prev.official,
+      official: seededOfficial ?? (!personId && hasScramble ? 'practice' : prev.official),
       event: EVENTS.includes(ev) ? ev : prev.event,
       person: searchParams?.get('person') || prev.person,
-      personId,
+      personId: personId || prev.personId,
       personCountry: searchParams?.get('personCountry') || prev.personCountry,
       comp: searchParams?.get('comp') || prev.comp,
       compWcaId: searchParams?.get('compWcaId') || prev.compWcaId,
       country: searchParams?.get('country') || prev.country,
       round: round || prev.round,
+      groupId: searchParams?.get('groupId') || prev.groupId,
       solveNum: !isNaN(sn) ? sn : prev.solveNum,
       date: dateRaw ? normalizeIsoDate(dateRaw) : prev.date,
       reconer: authUser?.name ?? prev.reconer,
@@ -855,6 +862,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   // ── Avg auto-fetch ──
   useEffect(() => {
+    if (form.official === 'practice') return;
     if (avgUserTouched) return;
     if (!form.personId || !form.event || !form.round) return;
     if (!form.comp && !form.compWcaId) return;
@@ -946,10 +954,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); setAvgLoading(false); };
-  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, avgUserTouched, isEditing, editId, isZh, personMerged]);
+  }, [form.official, form.personId, form.event, form.comp, form.compWcaId, form.round, avgUserTouched, isEditing, editId, isZh, personMerged]);
 
   // ── Single-time auto-fetch (fills 成绩 + 单次 independently) ──
   useEffect(() => {
+    if (form.official === 'practice') return;
     if (timeUserTouched && singleUserTouched) return;
     if (!form.personId || !form.event || !form.round || form.solveNum == null) return;
     if (!form.comp && !form.compWcaId) return;
@@ -1052,7 +1061,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); setTimeLoading(false); };
-  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, timeUserTouched, singleUserTouched, isEditing, editId, isZh, setField, personMerged]);
+  }, [form.official, form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, timeUserTouched, singleUserTouched, isEditing, editId, isZh, setField, personMerged]);
 
   // ── 非 WCA / 练习:单次由「原始成绩」截断千分位带出(没有 WCA/已录数据可供上面那个自动获取) ──
   useEffect(() => {
@@ -1148,6 +1157,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   // ── Record marker auto-fetch (WCA only) ──
   useEffect(() => {
+    if (form.official !== 'wca') return;
     if (singleRecordUserTouched && averageRecordUserTouched) return;
     if (!form.personId || !form.event || !form.round) return;
     if (!form.compWcaId) return;
@@ -1263,7 +1273,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); setRecordLoading(false); };
-  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, singleRecordUserTouched, averageRecordUserTouched, setField, isZh, personMerged]);
+  }, [form.official, form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, singleRecordUserTouched, averageRecordUserTouched, setField, isZh, personMerged]);
 
   // ── Duplicate detection(同选手 + 同打乱;与后端拒绝口径一致)──
   useEffect(() => {
@@ -1815,12 +1825,13 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   </select>
                 </label>
                 <div className={`submit-field ${form.compWcaId ? 'submit-field-shrink' : ''}${reusedCls('comp')}`}>
-                  <span className="submit-label">{t('recon.competition')}</span>
+                  <span className="submit-label">{form.official === 'practice' && form.compWcaId
+                    ? tr({ zh: '打乱来源比赛', en: 'Scramble competition' })
+                    : t('recon.competition')}</span>
                   {form.compWcaId ? (
                     <div className="submit-comp-pill">
-                      <Flag iso2={form.country || ''} />
                       <AppLink href={`/wca/comp/${encodeURIComponent(form.compWcaId)}`} className="submit-comp-name">
-                        {localizeCompName(form.compWcaId || '', form.comp || '', isZh)}
+                        <CompCell compId={form.compWcaId} compName={form.comp} isZh={isZh} date={null} />
                       </AppLink>
                       <ClearButton onClick={clearPickedComp} isZh={isZh} variant="standalone" preserveFocus />
                     </div>
@@ -1842,6 +1853,12 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   )}
                 </div>
               </div>
+
+              {!isEditing && (searchParams?.get('sourceZh') || searchParams?.get('sourceEn')) && (
+                <div className="submit-source-summary">
+                  {tr({ zh: searchParams?.get('sourceZh') || searchParams?.get('sourceEn') || '', en: searchParams?.get('sourceEn') || searchParams?.get('sourceZh') || '' })}
+                </div>
+              )}
 
               {/* 非 WCA(非WCA比赛 / 练习):补国家(选完显示国旗) + 城市,WCA 比赛由所选比赛自动带出 */}
               {form.official !== 'wca' && (

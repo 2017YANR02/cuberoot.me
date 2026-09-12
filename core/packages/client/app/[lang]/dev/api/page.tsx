@@ -67,7 +67,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   then add the file stem to this list.
 //   account_auth alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
 //   comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends health historical_ranks pb private_vault
-//   membership membership_subscriptions music nav_sites nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
+//   membership membership_subscriptions music nav_sites pets nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
@@ -88,11 +88,11 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'GET', p: '/v1/auth/me', g: 'login', zh: '当前登录用户信息', en: 'Current signed-in user' },
   { d: 'auth', m: 'POST', p: '/v1/auth/role-preview', g: 'admin', zh: '超级管理员创建 30 分钟独立角色测试会话', en: 'Superadmin starts a separate 30-minute role-test session' },
   { d: 'auth', m: 'DELETE', p: '/v1/auth/role-preview/:id', g: 'admin', zh: '超级管理员撤销自己的角色测试会话', en: 'Superadmin revokes their role-test session' },
-  { d: 'auth', m: 'POST', p: '/v1/auth/wechat/miniprogram', g: 'public', zh: '用小程序登录码换取 UnionID 并签发 JWT', en: 'Exchange a Mini Program login code for UnionID and issue a JWT' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/wechat/miniprogram', g: 'public', c: 'no-store', zh: '验证微信 UnionID；已绑定直接登录，未知身份要求实时手机号授权，校验 OpenID 归属后返回待确认票据，不自动建号', en: 'Verify WeChat UnionID; sign in linked users, otherwise require real-time phone authorization, validate OpenID ownership and return a confirmation ticket without automatic registration' },
   { d: 'auth', m: 'POST', p: '/v1/auth/wechat/browser-session/start', g: 'public', c: 'no-store', zh: '创建 iPhone 浏览器登录请求并生成微信小程序 URL Link', en: 'Create an iPhone browser sign-in request and generate a WeChat Mini Program URL Link' },
   { d: 'auth', m: 'POST', p: '/v1/auth/wechat/browser-session/approve', g: 'login', c: 'no-store', zh: '由已登录小程序确认浏览器登录请求', en: 'Approve a browser sign-in request from an authenticated Mini Program' },
   { d: 'auth', m: 'POST', p: '/v1/auth/wechat/browser-session/exchange', g: 'public', c: 'no-store', zh: '轮询并原子核销已确认的浏览器登录票据', en: 'Poll and atomically consume an approved browser sign-in ticket' },
-  { d: 'auth', m: 'POST', p: '/v1/auth/douyin/miniprogram', g: 'public', zh: '用抖音小程序登录码换取 openid 并签发 JWT', en: 'Exchange a Douyin Mini Program login code for openid and issue a JWT' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/douyin/miniprogram', g: 'public', c: 'no-store', zh: '验证抖音身份；已知身份登录，未知身份返回账号选择票据', en: 'Verify Douyin identity; sign in known identities or return an account-choice ticket' },
   { d: 'auth', m: 'POST', p: '/v1/auth/web-session/ticket', g: 'login', zh: '为小程序 web-view 签发 90 秒单次网页登录票据', en: 'Issue a 90-second single-use web session ticket for a Mini Program web-view' },
   { d: 'auth', m: 'POST', p: '/v1/auth/web-session/exchange', g: 'public', zh: '原子核销单次票据并签发网站 JWT', en: 'Atomically consume a single-use ticket and issue a website JWT' },
   { d: 'auth', m: 'POST', p: '/v1/auth/mobile-session/ticket', g: 'login', c: 'no-store', zh: '网站登录态签发绑定 PKCE 的 90 秒移动端票据', en: 'Issue a 90-second PKCE-bound mobile ticket from a website session' },
@@ -100,16 +100,18 @@ const ENDPOINTS: Ep[] = [
 
   // ---- account (邮箱 / 手机验证码登录 + 多身份绑定) ----
   { d: 'auth', m: 'GET', p: '/v1/auth/providers', g: 'public', zh: '已配置的登录方式(前端隐藏未开放 tab)', en: 'Configured login methods (client hides unavailable tabs)' },
-  { d: 'auth', m: 'POST', p: '/v1/auth/identity/complete', g: 'public', c: 'no-store', zh: '单次核销首次第三方认证票据；新建需明确选择，绑定需当前 Bearer 与确认的账号 UID', en: 'Consume a first-time provider ticket once; creation requires an explicit choice, linking requires the current Bearer and confirmed account UID' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/identity/complete', g: 'public', c: 'no-store', zh: '单次核销首次认证票据；明确创建，或以 Bearer、小程序绑定码、已验证微信手机号匹配账号确认绑定；强制核对目标 UID', en: 'Consume a first-time ticket once; explicitly create, or confirm linking using Bearer, a Mini Program link code or a verified WeChat phone match; enforce the target UID' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/identity/link-code', g: 'login', c: 'no-store', zh: '核对 expectedUid 后生成 10 分钟小程序绑定码，供抖音及微信手机号授权后绑定旧号，与合并码隔离', en: 'Check expectedUid and issue a 10-minute Mini Program link code for Douyin or a phone-authorized WeChat identity; isolated from merge codes' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/identity/link-code/preview', g: 'public', c: 'no-store', zh: '验证抖音或微信手机号待确认身份与绑定码后预览目标账号，确认前不绑定或登录', en: 'Verify a pending Douyin or phone-authorized WeChat identity and link code to preview the target account, without linking or signing in' },
   { d: 'auth', m: 'GET', p: '/v1/auth/apple/authorize', g: 'public', c: 'no-store', zh: '生成绑定浏览器 PKCE challenge 的授权 URL、签名 state 与规范站点 origin；link 模式要求 Bearer 并绑定当前 uid', en: 'Create a browser-PKCE-bound authorization URL, signed state and canonical origin; link intent requires Bearer and binds the current uid' },
   { d: 'auth', m: 'POST', p: '/v1/auth/apple/callback', g: 'public', c: 'no-store', zh: '接收 Apple form_post 并回到唯一第三方授权回调页，不在 URL 传递会话', en: 'Receive Apple form_post and return to the canonical social callback without a session in the URL' },
   { d: 'auth', m: 'POST', p: '/v1/auth/apple', g: 'public', c: 'no-store', zh: '校验 Apple 授权码、签名与 nonce，登录同一 CubeRoot 账号', en: 'Verify Apple code, signature and nonce, then sign in to the canonical CubeRoot account' },
   { d: 'auth', m: 'POST', p: '/v1/auth/link/apple', g: 'login', c: 'no-store', zh: '核对浏览器 PKCE 与发起时签名 uid，将已验证 Apple 身份绑定到同一账号', en: 'Verify browser PKCE and the signed initiating uid, then link the verified Apple identity to that same account' },
   { d: 'auth', m: 'POST', p: '/v1/auth/email/send', g: 'public', zh: '发邮箱验证码(登录/注册)', en: 'Send email login code' },
-  { d: 'auth', m: 'POST', p: '/v1/auth/email/verify', g: 'public', zh: '校验邮箱验证码,签发 JWT', en: 'Verify email code, issue JWT' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/email/verify', g: 'public', c: 'no-store', zh: '验证邮箱；已知身份登录，未知身份须明确创建或绑定；existingOnly 不注册', en: 'Verify email; sign in known identities or require explicit create/link; existingOnly never registers' },
   { d: 'auth', m: 'POST', p: '/v1/auth/email/password', g: 'public', zh: '邮箱 + 密码登录,签发 JWT', en: 'Sign in with email + password, issue JWT' },
   { d: 'auth', m: 'POST', p: '/v1/auth/phone/send', g: 'public', zh: '发手机验证码(仅 +86)', en: 'Send phone login code (+86 only)' },
-  { d: 'auth', m: 'POST', p: '/v1/auth/phone/verify', g: 'public', zh: '校验手机验证码,签发 JWT', en: 'Verify phone code, issue JWT' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/phone/verify', g: 'public', c: 'no-store', zh: '验证手机；未知登录身份须明确创建或绑定，找回密码不注册', en: 'Verify phone; unknown login identities require explicit create/link, password recovery never registers' },
   { d: 'auth', m: 'POST', p: '/v1/auth/link/email/send', g: 'login', zh: '给当前账号发绑定邮箱验证码', en: 'Send code to link an email' },
   { d: 'auth', m: 'POST', p: '/v1/auth/link/email/verify', g: 'login', zh: '绑定邮箱到当前账号(已有邮箱则 409,一个账号只能一个)', en: 'Link email to current account (409 if one already exists — one email per account)' },
   { d: 'auth', m: 'POST', p: '/v1/auth/email/replace', g: 'login', zh: '换绑邮箱:原地改掉那条身份(发码复用 link/email/send)。只有邮箱的账号换不了邮箱,靠它开口子', en: 'Change the account email in place (code comes from link/email/send). The escape hatch for accounts whose only identity is that email' },
@@ -121,8 +123,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'POST', p: '/v1/auth/google', g: 'public', zh: '用墙外中继签发的 Google 断言登录/注册', en: 'Sign in/up via relay-signed Google assertion' },
   { d: 'auth', m: 'POST', p: '/v1/auth/link/google', g: 'login', zh: '用墙外中继签发的 Google 断言绑定当前账号', en: 'Link Google identity via relay-signed assertion' },
   { d: 'auth', m: 'POST', p: '/v1/auth/unlink', g: 'login', zh: '解绑一个登录方式(拒绝最后一个)', en: 'Unlink a login method (not the last)' },
-  { d: 'auth', m: 'POST', p: '/v1/auth/account/merge/code', g: 'login', c: 'no-store', zh: '为保留账号生成 10 分钟一次性合并码', en: 'Generate a 10-minute single-use merge code for the account to keep' },
-  { d: 'auth', m: 'POST', p: '/v1/auth/account/merge', g: 'login', c: 'no-store', zh: '把当前账号事务合并进合并码对应的保留账号', en: 'Transactionally merge the current account into the account named by the merge code' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/account/merge/code', g: 'login', c: 'no-store', zh: '核对必填 expectedUid 后为保留账号生成 10 分钟一次性合并码', en: 'Require matching expectedUid, then issue a 10-minute single-use merge code for the account to keep' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/account/merge', g: 'login', c: 'no-store', zh: '核对必填 expectedSourceUid 后，把当前账号事务合并进合并码对应的保留账号', en: 'Require matching expectedSourceUid, then transactionally merge into the account named by the merge code' },
   { d: 'auth', m: 'GET', p: '/v1/auth/profile', g: 'login', c: 'no-store', zh: '读取当前账号的私密姓名、生日、性别和国籍资料', en: 'Read the current account’s private name, birth date, gender, and nationality profile' },
   { d: 'auth', m: 'POST', p: '/v1/auth/profile', g: 'login', c: 'no-store', zh: '修改当前账号用户名、头像或私密基本资料；用户名和头像改动换发 JWT', en: 'Update the current account username, avatar, or private basic profile; username and avatar changes reissue the JWT' },
   { d: 'auth', m: 'GET', p: '/v1/auth/admin/users', g: 'admin', c: 'no-store', zh: '用户注册统计、绑定方式与分页明细', en: 'User registration stats, linked methods, and paginated records' },
@@ -840,6 +842,11 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'DELETE', p: '/v1/colpi/words/:id/vote', g: 'login', zh: '撤销投票', en: 'Remove vote' },
   { d: 'content', m: 'GET', p: '/v1/nav/sites', g: 'public', c: 'cdn', zh: '导航站点', en: 'Nav sites' },
   { d: 'content', m: 'GET', p: '/v1/nav/home-order', g: 'public', c: 'cdn', zh: '首页卡片顺序', en: 'Homepage card order' },
+  { d: 'content', m: 'GET', p: '/v1/pets/mine', g: 'login', c: 'no-store', zh: '我的领养宠物', en: 'My adopted pets' },
+  { d: 'content', m: 'POST', p: '/v1/pets/:id/adopt', g: 'login', c: 'no-store', zh: '领养宠物', en: 'Adopt a pet' },
+  { d: 'content', m: 'POST', p: '/v1/pets/:id/care', g: 'login', c: 'no-store', zh: '与领养宠物互动', en: 'Care for an adopted pet' },
+  { d: 'content', m: 'GET', p: '/v1/nav/deskpet-catalog', g: 'public', c: 'no-store', zh: '桌宠展示配置', en: 'Pet presentation settings' },
+  { d: 'content', m: 'PUT', p: '/v1/nav/deskpet-catalog', g: 'admin', zh: '更新桌宠名称、开放状态及顺序', en: 'Update pet names, visibility and order' },
   { d: 'content', m: 'GET', p: '/v1/nav/home-locks', g: 'public', c: 'no-store', zh: '首页卡片锁定状态', en: 'Homepage card locks' },
   { d: 'content', m: 'PUT', p: '/v1/nav/home-locks', g: 'admin', zh: '锁定或解锁首页卡片', en: 'Lock or unlock a homepage card' },
   { d: 'content', m: 'PUT', p: '/v1/nav/home-order', g: 'admin', zh: '重排首页卡片', en: 'Reorder homepage cards' },

@@ -1088,3 +1088,17 @@
     background: var(--glass-popover-bg);
   }
 }
+.submit-source-summary {
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--foreground);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}

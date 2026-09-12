@@ -22,9 +22,11 @@ import { ClearButton } from '@/components/ClearButton';
 import { persistItem } from '@/lib/safe-storage';
 import { subscribeBeat, getMetronomeState } from '@/lib/metronome';
 import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
-import { getOriginalScene, ORIGINAL_CHARACTERS, ORIGINAL_SCENES, ORIGINAL_THEMES, type OriginalCharacterId } from '@/lib/deskpet-originals';
-import { getRootBeastScene, ROOTBEAST_AUTO, ROOTBEAST_BASE, ROOTBEAST_FILES, ROOTBEAST_MINI_FILES, ROOTBEAST_RANDOM_SCENES, ROOTBEAST_SCENES, ROOTBEAST_VERSION } from '@/lib/deskpet-rootbeast';
-import type { CareAction } from '@/lib/deskpet-care';
+import { ORIGINAL_CHARACTERS, ORIGINAL_SCENES, type OriginalCharacterId } from '@/lib/deskpet-originals';
+import { ROOTBEAST_BASE, ROOTBEAST_FILES, ROOTBEAST_RANDOM_SCENES, ROOTBEAST_VERSION } from '@/lib/deskpet-rootbeast';
+import { resolveDeskPets, type DeskPetCatalog, type DeskPetEntry } from '@cuberoot/shared/deskpet';
+import { getDeskPetCatalog, saveDeskPetCatalog } from '@/lib/deskpet-api';
+import { THEMES, THEME_IDS, type MiniTheme, type ThemeId } from '@/lib/deskpet-themes';
 // SSR-safe layout effect (DeskPet is rendered in the root layout).
 const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
@@ -36,138 +38,10 @@ const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffe
 // its own 168KB at click time (measured).
 const loadDeskPetSearch = () => import('@/components/DeskPetSearch');
 const DeskPetSearch = dynamic(loadDeskPetSearch, { ssr: false });
-const DeskPetHome = dynamic(() => import('@/components/DeskPetHome'), { ssr: false });
 // Lazy: admin-only new-submission dropdown, only loads when an admin opens it.
 const AdminSubmissionsPanel = dynamic(() => import('@/components/AdminSubmissionsPanel'), { ssr: false });
 // Lazy: the floating metronome, only loads once the user opens it from the toolbar.
 const FloatingMetronome = dynamic(() => import('@/components/FloatingMetronome'), { ssr: false });
-
-type ThemeId = 'clawd' | 'calico' | 'cloudling' | 'rootbeast' | OriginalCharacterId;
-
-interface MiniTheme {
-  offsetRatio: number; // box overhangs the edge by offsetRatio*W; (1-ratio)*W stays on screen
-  // Edge-cling poses (the art is already drawn lying sideways). working/enterSleep
-  // optional: calico has no mini-working, falls back to staying put / sleep.
-  files: {
-    idle: string; peek: string; enter: string; crabwalk: string;
-    alert: string; happy: string; sleep: string;
-    working?: string; enterSleep?: string;
-  };
-}
-
-interface PetTheme {
-  pixel?: boolean;
-  base: string;
-  version?: string;
-  auto?: Record<string, number>;
-  inlineIdle: boolean; // clawd uses the inline eye-tracking SVG for idle
-  thumb: string;
-  thumbScale?: number; // zoom the toolbar thumb to crop dead viewBox margin
-  label: { zh: string; en: string
- };
-  files: Record<string, string>;
-  mini: MiniTheme;
-}
-
-// State→asset maps mirror each clawd-on-desk theme.json `states`/`reactions`.
-const THEMES: Record<ThemeId, PetTheme> = {
-  ...ORIGINAL_THEMES,
-  rootbeast: {
-    base: ROOTBEAST_BASE, version: ROOTBEAST_VERSION, inlineIdle: false,
-    thumb: `${ROOTBEAST_BASE}${ROOTBEAST_FILES.idle}?v=${ROOTBEAST_VERSION}`, thumbScale: 1.5,
-    label: { zh: '根号兽', en: 'Root Beast' }, files: ROOTBEAST_FILES, auto: ROOTBEAST_AUTO,
-    mini: { offsetRatio: .14, files: ROOTBEAST_MINI_FILES },
-  },
-  clawd: {
-    base: '/deskpet/', inlineIdle: true,
-    thumb: '/deskpet/clawd-happy.svg', thumbScale: 1.6, label: { zh: '螃蟹', en: 'Clawd' },
-    files: {
-      idle: 'clawd-idle-reading.svg',
-      thinking: 'clawd-working-thinking.svg', working: 'clawd-working-typing.svg',
-      building: 'clawd-working-building.svg', groove: 'clawd-headphones-groove.svg',
-      juggling: 'clawd-working-juggling.svg', sweeping: 'clawd-working-sweeping.svg',
-      carrying: 'clawd-working-carrying.svg', cubing: 'clawd-cubing.svg',
-      debugger: 'clawd-working-debugger.svg', wizard: 'clawd-working-wizard.svg',
-      ultrathink: 'clawd-working-ultrathink.svg', boss: 'clawd-working-typing-boss.svg',
-      error: 'clawd-error.svg',
-      happy: 'clawd-happy.svg', notification: 'clawd-notification.svg',
-      reading: 'clawd-idle-reading.svg', bubble: 'clawd-idle-bubble.svg',
-      yawning: 'clawd-idle-yawn.svg', dozing: 'clawd-idle-doze.svg',
-      sleeping: 'clawd-sleeping.svg', waking: 'clawd-wake.svg',
-      reactDouble: 'clawd-react-double-jump.svg', reactAnnoyed: 'clawd-react-annoyed.svg',
-      reactDrag: 'clawd-react-drag.svg',
-    },
-    mini: {
-      offsetRatio: 0.486,
-      files: {
-        idle: 'clawd-mini-idle.svg', peek: 'clawd-mini-peek.svg',
-        enter: 'clawd-mini-enter.svg', crabwalk: 'clawd-mini-crabwalk.svg',
-        working: 'clawd-mini-typing.svg', alert: 'clawd-mini-alert.svg',
-        happy: 'clawd-mini-happy.svg', sleep: 'clawd-mini-sleep.svg',
-        enterSleep: 'clawd-mini-enter-sleep.svg',
-      },
-    },
-  },
-  calico: {
-    base: '/deskpet/calico/', inlineIdle: false,
-    thumb: '/deskpet/calico/calico-idle.png', label: { zh: '三花猫', en: 'Calico'
-    },
-    files: {
-      idle: 'calico-idle.png',
-      thinking: 'calico-thinking.png', working: 'calico-working-typing.png',
-      building: 'calico-working-building.png', groove: 'calico-working-conducting.png',
-      juggling: 'calico-working-juggling.png', sweeping: 'calico-working-sweeping.png',
-      carrying: 'calico-working-carrying.png', cubing: 'calico-working-juggling.png',
-      error: 'calico-error.png',
-      happy: 'calico-happy.png', notification: 'calico-notification.png',
-      reading: 'calico-idle.png', bubble: 'calico-idle.png',
-      yawning: 'calico-yawning.png', dozing: 'calico-dozing.png',
-      sleeping: 'calico-sleeping.png', waking: 'calico-waking.png',
-      reactDouble: 'calico-react-poke.png', reactAnnoyed: 'calico-react-left.png',
-      reactDrag: 'calico-react-drag.png',
-    },
-    mini: {
-      offsetRatio: 0.4,
-      files: {
-        idle: 'calico-mini-idle.png', peek: 'calico-mini-peek.png',
-        enter: 'calico-mini-enter.png', crabwalk: 'calico-mini-crabwalk.png',
-        alert: 'calico-mini-alert.png', happy: 'calico-mini-happy.png',
-        sleep: 'calico-mini-sleep.png',
-      },
-    },
-  },
-  cloudling: {
-    base: '/deskpet/cloudling/', inlineIdle: false,
-    thumb: '/deskpet/cloudling/cloudling-idle.svg', thumbScale: 3, label: { zh: '云宝', en: 'Cloud'
-    },
-    files: {
-      idle: 'cloudling-idle.svg',
-      thinking: 'cloudling-thinking.svg', working: 'cloudling-typing.svg',
-      building: 'cloudling-building.svg', groove: 'cloudling-conducting.svg',
-      juggling: 'cloudling-juggling.svg', sweeping: 'cloudling-sweeping.svg',
-      carrying: 'cloudling-carrying.svg', cubing: 'cloudling-juggling.svg',
-      error: 'cloudling-error.svg',
-      happy: 'cloudling-attention.svg', notification: 'cloudling-notification.svg',
-      reading: 'cloudling-idle-reading.svg', bubble: 'cloudling-idle-reading.svg',
-      yawning: 'cloudling-idle-to-dozing.svg', dozing: 'cloudling-dozing.svg',
-      sleeping: 'cloudling-sleeping.svg', waking: 'cloudling-sleeping-to-idle.svg',
-      reactDouble: 'cloudling-attention.svg', reactAnnoyed: 'cloudling-attention.svg',
-      reactDrag: 'cloudling-react-drag.svg',
-    },
-    mini: {
-      offsetRatio: 0.486,
-      files: {
-        idle: 'cloudling-mini-idle.svg', peek: 'cloudling-mini-peek.svg',
-        enter: 'cloudling-mini-enter-roll-in.svg', crabwalk: 'cloudling-mini-crabwalk.svg',
-        working: 'cloudling-mini-typing.svg', alert: 'cloudling-mini-alert.svg',
-        happy: 'cloudling-mini-happy.svg', sleep: 'cloudling-mini-sleep.svg',
-        enterSleep: 'cloudling-mini-enter-sleep.svg',
-      },
-    },
-  },
-};
-
-const THEME_IDS: ThemeId[] = ['rootbeast', 'clawd', 'calico', 'cloudling', ...ORIGINAL_CHARACTERS.map(character => character.id)];
 
 // one-shot states auto-return to idle after N ms
 const AUTO: Record<string, number> = {
@@ -348,7 +222,6 @@ export default function DeskPet() {
   const [hidden, setHidden] = useState(false);
   const [resting, setResting] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [petHomeOpen, setPetHomeOpen] = useState(false);
   const [touchActionsVisible, setTouchActionsVisible] = useState(false);
   const [lang, setLang] = useState<'zh' | 'en'>('en');
   const [randomMode, setRandomMode] = useState(false);
@@ -359,6 +232,63 @@ export default function DeskPet() {
   const user = useAuthStore((s) => s.user);
   const fbUnread = useFeedbackUnread();
   const isAdmin = hasAdminAccess(user);
+  const [catalog, setCatalog] = useState<DeskPetCatalog | null>(null);
+  const [catalogError, setCatalogError] = useState(false);
+  const [catalogSaving, setCatalogSaving] = useState(false);
+  const catalogBusy = useRef(false);
+  const entries = resolveDeskPets(THEME_IDS, catalog?.entries ?? []);
+  const visibleEntries = entries.filter(entry => isAdmin || (catalog && !entry.locked && !entry.removed));
+  const visibleIds = visibleEntries.map(entry => entry.id);
+  const visibleKey = visibleIds.join(',');
+  const petAvailable = isAdmin || visibleIds.includes(character);
+  const petChoices = visibleEntries.map(entry => ({
+    ...entry, label: entry.label ?? THEMES[entry.id as ThemeId].label,
+    thumb: THEMES[entry.id as ThemeId].thumb, thumbScale: THEMES[entry.id as ThemeId].thumbScale,
+  }));
+  useEffect(() => {
+    let active = true;
+    const refresh = () => {
+      if (catalogBusy.current) return;
+      void getDeskPetCatalog().then(value => {
+        if (active && !catalogBusy.current) {
+          setCatalog(current => current && current.revision > value.revision ? current : value);
+          setCatalogError(false);
+        }
+      }).catch(() => { if (active) { setCatalogError(true); setCatalog(null); } });
+    };
+    refresh();
+    window.addEventListener('focus', refresh);
+    const timer = window.setInterval(refresh, 60_000);
+    return () => { active = false; window.removeEventListener('focus', refresh); window.clearInterval(timer); };
+  }, [isAdmin, searchOpen]);
+
+  useEffect(() => {
+    if (!catalog && !isAdmin) return;
+    const allowed = resolveDeskPets(THEME_IDS, catalog?.entries ?? [])
+      .filter(entry => isAdmin || (!entry.locked && !entry.removed));
+    let saved: string | null = null;
+    try { saved = localStorage.getItem(CHAR_KEY); } catch {}
+    const next = allowed.find(entry => entry.id === saved)?.id ?? allowed[0]?.id;
+    if (next) setCharacter(next as ThemeId);
+  }, [catalog, isAdmin]);
+
+  const updateCatalog = async (nextEntries: DeskPetEntry[]) => {
+    if (!isAdmin || !catalog || catalogBusy.current) return false;
+    catalogBusy.current = true;
+    setCatalogSaving(true);
+    setCatalogError(false);
+    try {
+      // Another deployed client may know assets this version does not yet have.
+      const unknown = catalog.entries.filter(entry => !THEME_IDS.includes(entry.id as ThemeId));
+      setCatalog(await saveDeskPetCatalog({ revision: catalog.revision, entries: [...nextEntries, ...unknown] }));
+      return true;
+    }
+    catch {
+      setCatalogError(true);
+      try { setCatalog(await getDeskPetCatalog()); } catch { setCatalog(null); }
+      return false;
+    } finally { catalogBusy.current = false; setCatalogSaving(false); }
+  };
   const algUnread = useAlgSubmissionUnread();
   const ntfUnread = useNotificationsUnread();
   const [submPanelOpen, setSubmPanelOpen] = useState(false);
@@ -392,9 +322,6 @@ export default function DeskPet() {
     try {
       const sz = localStorage.getItem(SIZE_KEY);
       if (sz === 's' || sz === 'l') setSize(sz);
-      const ch = localStorage.getItem(CHAR_KEY);
-      const savedCharacter = THEME_IDS.find(id => id === ch);
-      if (savedCharacter) setCharacter(savedCharacter);
       // 动画(随机播放)默认关闭:仅显式存为 'random' 才开,空/未设(新用户)→ 关。
       if (localStorage.getItem('clawd-deskpet-mode') === 'random') setRandomMode(true);
     } catch {}
@@ -435,7 +362,7 @@ export default function DeskPet() {
       const toolbar = document.querySelector('.deskpet-toolbar');
       if (!root || !box || !toolbar || window.innerWidth > 768) return;
       const pet = root.getBoundingClientRect();
-      const admin = root.querySelector('.admin-tools')?.getBoundingClientRect();
+      const admin = root.querySelector('.admin-tools-surface')?.getBoundingClientRect();
       const input = box.getBoundingClientRect(), controls = toolbar.getBoundingClientRect();
       const top = Math.min(input.top, controls.top);
       const bottom = Math.max(pet.bottom, admin?.bottom ?? pet.bottom);
@@ -555,7 +482,7 @@ export default function DeskPet() {
   }, [size, character]);
 
   useEffect(() => {
-    if (!mounted || hidden) return;
+    if (!mounted || hidden || !petAvailable) return;
     const root = rootRef.current, svg = svgRef.current, img = imgRef.current, hit = hitRef.current;
     if (!root || !svg || !img || !hit) return;
     const eyes = svg.querySelector<SVGGElement>('#clawddp-eyes');
@@ -1057,6 +984,7 @@ export default function DeskPet() {
     const requestState = (s: string) => {
       const scene = getDeskPetScene(s);
       if (!scene) { drive(s); return; }
+      if (!visibleIds.includes(scene.character)) return;
       // A gallery selection wakes the selected character and leaves edge-cling
       // so the entire scene is visible.
       setSearchOpen(false);
@@ -1182,9 +1110,9 @@ export default function DeskPet() {
       ctrlRef.current = null;
       delete (window as unknown as { clawdPet?: object }).clawdPet;
     };
-  }, [mounted, hidden, character, randomMode, user]);
+  }, [mounted, hidden, character, randomMode, user, petAvailable, visibleKey]);
 
-  if (!mounted || hidden) return null;
+  if (!mounted || hidden || !petAvailable) return null;
 
   const zh = lang === 'zh';
   const t = (z: string, e: string) => (zh ? z : e);
@@ -1206,7 +1134,7 @@ export default function DeskPet() {
   };
 
   const selectChar = (value: string) => {
-    const next = THEME_IDS.find(id => id === value);
+    const next = THEME_IDS.find(id => id === value && visibleIds.includes(id));
     if (!next || next === character) return;
     captureCenter(); // capture with the OLD character's fractions before switching
     setCharacter(next);
@@ -1222,15 +1150,6 @@ export default function DeskPet() {
   };
 
   const curLang: 'zh' | 'en' = zh ? 'zh' : 'en';
-  const careStates: Record<CareAction | 'idle', string> = { idle: 'idle', feed: 'happy', pet: 'happy', play: 'cubing', rest: 'dozing' };
-  const careArt = (action: CareAction | 'idle') => {
-    if (character === 'rootbeast' && action === 'feed') return getRootBeastScene('rootbeast:popcorn')!.src;
-    const original = getOriginalScene(`original:${character}:${({ idle: 'idle', feed: 'snack', pet: 'happy', play: 'ball', rest: 'doze' })[action]}`);
-    if (original) return original.src;
-    const theme = THEMES[character];
-    return `${theme.base}${theme.files[careStates[action]]}${theme.version ? `?v=${theme.version}` : ''}`;
-  };
-  const careDuration = (action: CareAction) => [...ROOTBEAST_SCENES, ...ORIGINAL_SCENES].find(scene => scene.src === careArt(action))?.durationMs ?? 4000;
 
 
   return (
@@ -1322,12 +1241,13 @@ export default function DeskPet() {
           lang={curLang}
           origin={searchOriginRef.current}
           onClose={() => setSearchOpen(false)}
-          onOpenPetHome={() => { setSearchOpen(false); setTouchActionsVisible(false); setPetHomeOpen(true); }}
+          onOpenPetHome={() => { setSearchOpen(false); setTouchActionsVisible(false); window.location.assign(`${curLang === 'zh' ? '/zh' : ''}/pets?pet=${character}`); }}
           character={character}
-          characters={THEME_IDS.map(id => ({
-            id, label: THEMES[id].label, thumb: THEMES[id].thumb,
-            thumbScale: THEMES[id].thumbScale,
-          }))}
+          characters={petChoices}
+          catalogAdmin={isAdmin}
+          catalogDisabled={!catalog || catalogSaving}
+          catalogError={catalogError}
+          onUpdateCatalog={updateCatalog}
           size={size}
           resting={resting}
           onSelectChar={selectChar}
@@ -1347,18 +1267,7 @@ export default function DeskPet() {
         />
       )}
 
-      {petHomeOpen && <DeskPetHome
-        character={character}
-        characters={THEME_IDS.map(id => ({ id, label: THEMES[id].label, thumb: THEMES[id].thumb }))}
-        animations={{ idle: careArt('idle'), feed: careArt('feed'), pet: careArt('pet'), play: careArt('play'), rest: careArt('rest') }}
-        durations={{ feed: careDuration('feed'), pet: careDuration('pet'), play: careDuration('play'), rest: careDuration('rest') }}
-        onSelectChar={selectChar}
-        onInteract={action => {
-          ctrlRef.current?.wake();
-          window.dispatchEvent(new CustomEvent('clawd:state', { detail: careStates[action] }));
-        }}
-        onClose={() => setPetHomeOpen(false)}
-      />}
+
 
       {metronomeOpen && (
         <FloatingMetronome

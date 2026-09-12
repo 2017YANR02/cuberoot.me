@@ -14,7 +14,7 @@ import {
   rowToJson, jsonToRow, validateRow,
   requireAuth, requireAdmin, optionalAuth, checkRateLimit,
   visibilityDiscoverFilter, visibilityOwnerFilter,
-  buildInsert, buildUpdate, buildDuplicateQuery, DUP_REASONS,
+  buildInsert, buildUpdate, buildDuplicateQuery, buildSameScrambleQuery, DUP_REASONS,
 } from '../utils/recon_helpers.js';
 import {
   checkReconRowCompletion,
@@ -198,25 +198,13 @@ reconRoutes.get('/recon/list', async (c) => {
 });
 
 // ==================== GET /v1/recon/:id/same-scramble ====================
-// 同一打乱串的其它复盘(任意选手/项目),给详情页「相同打乱的复盘」用。
-// 旧实现客户端拉全量 /list(~800KB)再过滤 → 慢且不进 SSR。此端点只回匹配行,
-// 服务端按归一化打乱(trim + 多空白折一)比对,跟客户端 scrambleKey 同语义。
+// 交叉匹配原始、最优与普通打乱,不因某条复盘另存了最优打乱而漏掉相同原始打乱。
+// 只返回公开关联,排除当前复盘与占位打乱。
 // 注:path depth 与 /recon/:id 不同,注册顺序无冲突。
 reconRoutes.get('/recon/:id/same-scramble', async (c) => {
   const id = c.req.param('id');
-  const norm = "regexp_replace(btrim(COALESCE(NULLIF(optimal_scramble, ''), NULLIF(wca_scramble, ''), scramble)), '\\s+', ' ', 'g')";
-  const rowNorm = "regexp_replace(btrim(COALESCE(NULLIF(recons.optimal_scramble, ''), NULLIF(recons.wca_scramble, ''), recons.scramble)), '\\s+', ' ', 'g')";
-  const rows = await query<Record<string, unknown>>(
-    `WITH target AS (SELECT ${norm} AS k FROM recons WHERE id = ?)
-     SELECT ${LIST_COLUMNS} FROM recons, target
-     WHERE recons.id <> ?
-       AND recons.visibility = 'public'
-       AND target.k <> ''
-       AND ${rowNorm} = target.k
-     ORDER BY raw_time ASC NULLS LAST
-     LIMIT 200`,
-    [id, id],
-  );
+  const match = buildSameScrambleQuery(id, LIST_COLUMNS);
+  const rows = await query<Record<string, unknown>>(match.sql, match.params);
   // 可变数据,浏览器短缓存即可(SSR 已给首屏,客户端再刷新求新)。
   c.header('Cache-Control', 'public, max-age=300');
   return c.json(await reconRowsToJson(rows));

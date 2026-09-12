@@ -36,6 +36,7 @@ export const SITE_DIRECTORY_TEXTS = {
   liveScripts: { en: 'Live Scripts', zh: '直播话术' },
   documents: { en: 'Docs', zh: '文档' },
   interview: { en: '面试', zh: '面试' },
+  partnership: { en: '合作提案', zh: '合作提案' },
   spreadsheets: { en: 'Sheets', zh: '表格' },
   algdb: { en: 'Algorithms', zh: '公式' },
   wiki: { en: 'Wiki', zh: 'Wiki' },
@@ -206,6 +207,7 @@ export const SITE_DIRECTORY_GROUPS = [
       { id: 'live-scripts', href: '/teachers/scripts', internal: true, tier: 'medium', nameKey: 'liveScripts' },
       { id: 'meet', href: '/meet', internal: true, tier: 'medium', nameKey: 'meet' },
       { id: 'documents', href: '/docs', internal: true, tier: 'medium', nameKey: 'documents' },
+      { id: 'partnership', href: '/partnership', internal: true, tier: 'medium', nameKey: 'partnership', adminOnly: true, miniProgramAction: 'disabled', miniProgramNote: { en: 'View on the website with an administrator account.', zh: '请在网站使用管理员账号查看' } },
       { id: 'interview', href: '/docs/edit?id=b769490d-292b-4423-8e83-3ada43c1d96b', internal: true, tier: 'medium', nameKey: 'interview', adminOnly: true, miniProgramAction: 'disabled', miniProgramNote: { en: '请在网站使用管理员账号查看', zh: '请在网站使用管理员账号查看' } },
       { id: 'spreadsheets', href: '/sheets', internal: true, tier: 'medium', nameKey: 'spreadsheets' },
       {

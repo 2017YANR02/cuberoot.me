@@ -11,6 +11,7 @@
  * Schema 见 migrations/0001_nav_sites.sql、0170_nav_sites_github.sql 与 0213_home_card_positions.sql。
  */
 import { Hono } from 'hono';
+import { isDeskPetCatalog, type DeskPetCatalog } from '@cuberoot/shared/deskpet';
 import { SITE_DIRECTORY_GROUPS } from '@cuberoot/shared/site-directory';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query, withTransaction } from '../db/connection.js';
@@ -353,4 +354,25 @@ navSitesRoutes.delete('/nav/sites/:id', async (c) => {
   );
   if (deleted.length === 0) return c.json({ error: 'Not found' }, 404);
   return c.json({ ok: true });
+});
+
+// Pet assets remain app-owned; only presentation overrides are persisted here.
+navSitesRoutes.get('/nav/deskpet-catalog', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const [catalog] = await query<DeskPetCatalog>('SELECT revision, entries FROM deskpet_catalog WHERE id = 1');
+  return c.json(catalog);
+});
+
+navSitesRoutes.put('/nav/deskpet-catalog', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  await requireAdminOrApiKey(c);
+  const body = await c.req.json().catch(() => null);
+  if (!isDeskPetCatalog(body)) return c.json({ error: 'invalid pet catalog' }, 400);
+  const [catalog] = await query<DeskPetCatalog>(
+    'UPDATE deskpet_catalog SET entries = ?::jsonb, revision = revision + 1 WHERE id = 1 AND revision = ? RETURNING revision, entries',
+    [body.entries, body.revision],
+  );
+  if (!catalog) return c.json({ error: 'Pet catalog changed. Reload before saving.' }, 409);
+  return c.json(catalog);
 });

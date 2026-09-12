@@ -422,12 +422,12 @@
   {
     "id": "popcorn",
     "file": "43-popcorn.svg",
-    "zh": "等爆米花",
-    "en": "Popcorn time",
-    "description": "盯着爆米花，突然一声响，吓得抖了一下。",
-    "descriptionEn": "Watch the popcorn and jump at the first loud pop.",
-    "duration": 2.8,
-    "poster": 0.45
+    "zh": "吃点心",
+    "en": "Snack time",
+    "description": "拿起饼干，一口一口吃掉，嚼一嚼，满足地咽下。",
+    "descriptionEn": "Pick up a biscuit, eat it bite by bite, chew, and swallow happily.",
+    "duration": 5.4,
+    "poster": 0.24
   },
   {
     "id": "butterfly",

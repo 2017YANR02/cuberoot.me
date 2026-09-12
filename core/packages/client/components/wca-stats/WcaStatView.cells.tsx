@@ -14,7 +14,21 @@ import { rewriteWcaCompUrl, prefetchComp } from '@/lib/comp-link';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import { EVENT_NAME_TO_ID } from '@/lib/event-constants';
-import type { StatHeader, StatPanel, MetricPanel } from './WcaStatView.types';
+import type { StatHeader, StatPanel, MetricPanel, StatSection, RecordScope } from './WcaStatView.types';
+
+// Resolve filters in dependency order. An unavailable deep link falls back to an
+// actual bucket, never to filtering the already truncated overall top ten.
+export function selectRecordSection(sections: StatSection[], query: Partial<Record<keyof RecordScope, string | null>>) {
+  let candidates = sections.filter(section => section.recordScope && section.rows.length > 0);
+  const options: Record<keyof RecordScope, string[]> = { region: [], level: [], event: [], type: [] };
+  for (const key of ['region', 'level', 'event', 'type'] as const) {
+    options[key] = [...new Set(candidates.map(section => section.recordScope![key]))];
+    const requested = query[key];
+    const value = requested != null && options[key].includes(requested) ? requested : options[key][0];
+    candidates = candidates.filter(section => section.recordScope![key] === value);
+  }
+  return { section: candidates[0], options };
+}
 
 export function getAllPanelsFromMetric(mp: MetricPanel): StatPanel[] {
   if (mp.panels) return mp.panels;

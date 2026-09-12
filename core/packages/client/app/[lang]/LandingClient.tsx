@@ -190,9 +190,9 @@ export default function LandingPage() {
   );
 
   const renderCard = (card: CardConfig) => {
-    const locked = cardLocks[card.id] ?? Boolean(card.lockedForNonAdmin || card.comingSoon);
+    const locked = Boolean(card.adminOnly) || (cardLocks[card.id] ?? Boolean(card.lockedForNonAdmin || card.comingSoon));
     const isLocked = locked && !isAdmin;
-    const isDevelopment = locked;
+    const isDevelopment = locked && !card.adminOnly;
     const developmentLabel = locked
       ? tr({ zh: '开发中', en: 'In development' })
       : t('comingSoon');
@@ -234,9 +234,9 @@ export default function LandingPage() {
       <SortableCard key={card.id} id={card.id} draggable={isAdmin}>
         {isAdmin && (
           <button type="button" className="landing-card-lock" aria-pressed={locked}
-            disabled={!locksLoaded || savingLocks.has(card.id)}
-            title={!locksLoaded ? tr({ zh: '锁定状态尚未加载', en: 'Lock status has not loaded' }) : locked ? tr({ zh: '解锁卡片', en: 'Unlock card' }) : tr({ zh: '锁定卡片', en: 'Lock card' })}
-            aria-label={locked ? tr({ zh: '解锁卡片', en: 'Unlock card' }) : tr({ zh: '锁定卡片', en: 'Lock card' })}
+            disabled={card.adminOnly || !locksLoaded || savingLocks.has(card.id)}
+            title={card.adminOnly ? tr({ zh: '仅管理员可见', en: 'Administrators only' }) : !locksLoaded ? tr({ zh: '锁定状态尚未加载', en: 'Lock status has not loaded' }) : locked ? tr({ zh: '解锁卡片', en: 'Unlock card' }) : tr({ zh: '锁定卡片', en: 'Lock card' })}
+            aria-label={card.adminOnly ? tr({ zh: '仅管理员可见', en: 'Administrators only' }) : locked ? tr({ zh: '解锁卡片', en: 'Unlock card' }) : tr({ zh: '锁定卡片', en: 'Lock card' })}
             onClick={async () => {
               setSavingLocks((current) => new Set(current).add(card.id));
               try {
@@ -307,7 +307,8 @@ export default function LandingPage() {
           <Heart size={14} aria-hidden="true" />
         </Link>
         {!user ? (
-          <Link href={`/account${nextQuery(pathname)}`} className="landing-auth-btn is-login" prefetch={false}>
+          <Link href={`/account${nextQuery(pathname)}`} className="landing-auth-btn is-login" prefetch={false}
+            aria-label={tr({ zh: '登录', en: 'Log in' })} title={tr({ zh: '登录', en: 'Log in' })}>
             <LogIn size={16} aria-hidden />
             <span>{tr({ zh: '登录', en: 'Log in' })}</span>
           </Link>

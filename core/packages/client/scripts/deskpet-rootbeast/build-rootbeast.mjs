@@ -18,7 +18,7 @@ const durations = {
   waking:3.2, inspection:3.4, cubing:2.8, timer:4, 'personal-best':2.8,
   pop:2.6, teaching:3.2, bubblegum:3.2, fishing:3.2, skateboard:2.8,
   box:3, soda:2.8, 'paper-plane':3.2, 'catch-star':3.2, umbrella:3.6,
-  puddle:2.6, balloon:3.6, popcorn:2.8, butterfly:2.8, 'paper-boat':3.2,
+  puddle:2.6, balloon:3.6, popcorn:5.4, butterfly:2.8, 'paper-boat':3.2,
   stretch:3.6, sneak:3.2, dance:2.4, portal:3.2, 'moon-hug':4,
   'cube-pop':3.4,
 };
@@ -130,7 +130,32 @@ add('catch-star','接星星','Catch a star','发现一颗落下的星星，伸�
 add('umbrella','撑伞','Under an umbrella','撑好小伞，听着雨声，慢慢放松下来。','Hold up an umbrella and relax to the sound of rain.',({pet,a})=>pet({held:[{art:at(umbrella,-32,-176,1.2)}]})+[0,1,2,3,4,5].map(i=>a(at(line('M0 0-6 19',mint,5),76+i*92,117+(i%2)*38),[[0,t()+opacity(0)],[15,t()+opacity(.8)],[80,t(-18,115)+opacity(0)],[100,t()+opacity(0)]])).join(''));
 add('puddle','踩水坑','Puddle splash','往水坑里一跳，水花溅得到处都是。','Jump into a puddle and send the water splashing.',({pet,a,v})=>`<ellipse cx="320" cy="570" rx="219" ry="23" fill="${mint}" fill-opacity=".5"/>`+pet()+[0,1,2,3,4].map(i=>v(a(at(circle(0,0,9-i*.8,mint),160+i*79,557),[[0,t()],[40,t()],[64,t((i-2)*26,-74+(i%2)*17)],[90,t((i-2)*39,4)]]),39,84)).join(''));
 add('balloon','抓住气球','Balloon ride','抓紧气球绳，飘起来了，低头看看地面。','Hold the balloon string, float up, and look down at the ground.',({pet})=>pet({held:[{art:line('M0 0Q-75-70-60-151',cream,3)+at(balloon,-60,-195)}]}));
-add('popcorn','等爆米花','Popcorn time','盯着爆米花，突然一声响，吓得抖了一下。','Watch the popcorn and jump at the first loud pop.',({pet,a})=>pet()+at(p('M-50-40H50L38 48H-38Z',red)+line('M-22-35-17 44M0-35V44M22-35 17 44',cream,12),122,517)+[0,1,2,3,4].map(i=>a(at(circle(-9,0,12,gold)+circle(8,0,12,gold)+circle(0,-10,12,cream),109+(i%2)*28,477),[[0,t()+opacity(0)],[20+i*6,t()+opacity(0)],[39+i*5,t((i-2)*29,-103-i*14)+opacity(1)],[76+i*3,t((i-2)*45,70)+opacity(0)],[100,opacity(0)]])).join(''));
+add('popcorn','吃点心','Snack time','拿起饼干，一口一口吃掉，嚼一嚼，满足地咽下。','Pick up a biscuit, eat it bite by bite, chew, and swallow happily.',({pet,a,v})=>{
+  // All three silhouettes share the same paw attachment. Bite marks replace
+  // actual cookie geometry at mouth contact; the food never fades in midair.
+  const biscuit = circle(0,-20,27,gold) + circle(-3,-23,22,cream)
+    + circle(-3,-21,20,gold)
+    + [[-11,-29],[8,-32],[-1,-15],[13,-16],[-12,-10]].map(([x,y])=>circle(x,y,3.4,ink)).join('');
+  const masks = `<defs>
+    <mask id="rb-biscuit-bite-1" maskUnits="userSpaceOnUse" x="-30" y="-50" width="60" height="65"><path fill="white" d="M-30-50H30V15H-30Z"/><path fill="black" d="M-30-50H30V-35Q22-25 14-29Q7-17 0-24Q-10-16-16-29Q-24-24-30-35Z"/></mask>
+    <mask id="rb-biscuit-bite-2" maskUnits="userSpaceOnUse" x="-30" y="-50" width="60" height="65"><path fill="white" d="M-30-50H30V15H-30Z"/><path fill="black" d="M-30-50H30V-13Q19-4 12-10Q4 0-3-7Q-14 1-20-10L-30-8Z"/></mask>
+  </defs>`;
+  const portion = (art,start,end) => a(art,[[0,opacity(start===0?1:0)],...(start?[[start,opacity(1)]]:[]),[end,opacity(0)],[100,opacity(0)]],undefined,'steps(1,end)');
+  const food = masks + portion(`<g data-food-portion="whole">${biscuit}</g>`,0,27)
+    + portion(`<g data-food-portion="bitten" mask="url(#rb-biscuit-bite-1)">${biscuit}</g>`,27,54)
+    + portion(`<g data-food-portion="last-bite" mask="url(#rb-biscuit-bite-2)">${biscuit}</g>`,54,78);
+  const crumbs = [27,54,78].map((beat,i)=>at(a(circle(-5,0,2.5,gold)+circle(5,3,2,cream),[
+    [0,opacity(0)],[beat-.01,t()+opacity(0)],[beat, t()+opacity(1)],[beat+5,t(-5+i*4,13,25)+opacity(1)],[beat+9,t(-8+i*5,23,40)+opacity(0)],[100,opacity(0)]]),293,452)).join('');
+  // A bitten morsel travels down inside the mouth's own projection and is
+  // occluded by its lower lip. It cannot float across the shell or the cheeks.
+  const swallowed = `<defs><clipPath id="rb-food-mouth"><ellipse cx="0" cy="0" rx="22" ry="16"/></clipPath></defs>`
+    + at(`<g clip-path="url(#rb-food-mouth)">${[27,54,78].map(beat=>a(
+      `<g data-food-swallow="${beat}">${circle(-5,0,7,gold)+circle(4,-2,8,cream)+circle(2,1,5,gold)}</g>`,
+      [[0,opacity(0)],[beat-.01,t(0,-5)+opacity(0)],[beat,t(0,-5)+opacity(1)],[beat+3,t(0,19,8,.6)+opacity(1)],
+       [beat+3.1,t(0,23,8,.4)+opacity(0)],[100,opacity(0)]],undefined,'linear')).join('')}</g>`,-74,-112);
+  return pet({extra:swallowed,held:[{bone:'L',art:food,inFront:true}]}) + crumbs
+    + v(at(heart,425,326,.42),94,98);
+},.24);
 add('butterfly','追蝴蝶','Butterfly chase','跟着蝴蝶转来转去，怎么又飞到那边去了？','Follow a fluttering butterfly. Where is it going now?',({pet,a})=>pet()+at(a(butterfly,[[0,t(0,0,-14,1)],[13,t(0,0,4,.35,1)],[26,t(0,0,14,1)],[39,t(0,0,4,.35,1)],[52,t(0,0,-14,1)],[65,t(0,0,4,.35,1)],[78,t(0,0,14,1)],[91,t(0,0,4,.35,1)]]),106,351,.8)+a(at(butterfly,84,265,.47),[[0,t()],[30,t(79,-24)],[65,t(-8,79)],[100,t()]]));
 add('paper-boat','放纸船','Paper boat','轻轻把纸船推下水，挥挥爪，看它慢慢漂远。','Push a paper boat onto the water and wave as it drifts away.',({pet,a})=>line('M54 583Q103 567 152 583T348 583T568 583',mint,6)+pet()+a(at(p('M-68 0H68L39 34H-39ZM-41 0 0-52 42 0Z',cream)+p('M0-52V0H42Z',blue),129,555),[[0,t(-23)],[40,t(61,-5,3)],[70,t(270,0,-3)],[94,t(397,0)+opacity(0)],[100,t(-23)+opacity(0)]],'129px 555px'));
 add('stretch','伸懒腰','A good stretch','往前舒舒服服地伸一伸，再慢慢收好爪子。','Lean forward for a good stretch, then settle back down.',({pet})=>pet());

@@ -4,6 +4,7 @@ import LegacyGestureWheel from '@/components/GestureWheel';
 import { useGestureWheel as legacyUseGestureWheel } from '@/hooks/useGestureWheel';
 import {
   GestureWheel,
+  shouldIgnoreTimerTarget,
   useGestureWheel,
   type GestureWheelHandle,
 } from '@cuberoot/timer-ui';
@@ -74,12 +75,18 @@ function HookHarness({
     onPressDown: effects.down,
     onPressUp: effects.up,
     ignoreTarget: ignoreButtons
-      ? (target) => target instanceof Element && target.closest('button') !== null
+      ? shouldIgnoreTimerTarget
       : undefined,
   });
 
   return createElement(Fragment, null,
     createElement('div', { className: 'fixture-surface', ref: surfaceRef },
+      createElement('div', { className: 'timer-display' },
+        createElement('span', { className: 'timer-display-value' }, '0.00')),
+      createElement('div', { className: 'scramble-strip' },
+        createElement('span', { className: 'scramble-moves' }, 'R U')),
+      createElement('div', { className: 'scramble-strip', 'data-interactive': 'true' },
+        createElement('span', { className: 'fixture-retry' }, 'Retry')),
       createElement('button', { type: 'button' }, 'host action')),
     createElement(GestureWheel, { isZh: false, ref: wheelRef }),
   );
@@ -239,6 +246,32 @@ describe('shared useGestureWheel pointer lifecycle', () => {
     expect(effects.down).toHaveBeenCalledTimes(1);
     expect(effects.cancel).toHaveBeenCalledTimes(1);
     expect(effects.fire).toHaveBeenCalledWith(1);
+    expect(effects.up).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['mouse', '.timer-display-value'], ['touch', '.timer-display-value'],
+    ['mouse', '.scramble-moves'], ['touch', '.scramble-moves'],
+  ] as const)('keeps %s presses on %s timing-only even after dragging', (pointerType, selector) => {
+    render({ ignoreButtons: true });
+    const digits = host.querySelector(selector)!;
+    const surface = host.querySelector('.fixture-surface')!;
+    dispatch(digits, 'pointerdown', { pointerType, time: 0, x: 100, y: 100 });
+    dispatch(surface, 'pointermove', { pointerType, time: 700, x: 200, y: 200 });
+    expect(host.querySelector('.gesture-wheel')?.classList.contains('is-visible')).toBe(false);
+    dispatch(surface, 'pointerup', { pointerType, time: 800, x: 200, y: 200 });
+    expect(effects.down).toHaveBeenCalledTimes(1);
+    expect(effects.up).toHaveBeenCalledTimes(1);
+    expect(effects.cancel).not.toHaveBeenCalled();
+    expect(effects.fire).not.toHaveBeenCalled();
+  });
+
+  it('keeps explicit scramble retry controls outside the timing path', () => {
+    render({ ignoreButtons: true });
+    const retry = host.querySelector('.fixture-retry')!;
+    dispatch(retry, 'pointerdown', { pointerType: 'mouse', time: 0, x: 100, y: 100 });
+    dispatch(retry, 'pointerup', { pointerType: 'mouse', time: 800, x: 100, y: 100 });
+    expect(effects.down).not.toHaveBeenCalled();
     expect(effects.up).not.toHaveBeenCalled();
   });
 

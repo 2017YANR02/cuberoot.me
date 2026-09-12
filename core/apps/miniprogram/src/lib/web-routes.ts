@@ -8,7 +8,7 @@ import {
 import { localizedWebsitePath, tr } from './i18n';
 import { SITE_ORIGIN } from './runtime-config';
 import { isSafeWebSessionDestination, isWebSessionTicket } from './web-session-contract';
-import { MINI_PROGRAM_WEB_MARKER } from './platform';
+import { MINI_PROGRAM_WEB_MARKER, isDouyinMiniProgram } from './platform';
 
 type DiscoveryRouteKey = Exclude<SiteDirectoryEntryId, 'algdb' | 'alg' | 'github'> | 'alg';
 export type WebRouteKey = DiscoveryRouteKey | 'home' | 'account' | 'account-link' | 'privacy' | 'logout';
@@ -123,11 +123,14 @@ export const WEB_ROUTES: Record<WebRouteKey, WebRouteDefinition> = {
   },
   'account-link': {
     title: tr({ en: 'Link existing account', zh: '绑定已有账号' }),
-    description: tr({
+    description: tr(isDouyinMiniProgram() ? {
+      en: 'Sign in to your existing account, then generate a Douyin mini program linking code in account settings',
+      zh: '先登录已有账号，再在账号设置获取抖音小程序绑定码',
+    } : {
       en: 'Sign in to your existing account, then link WeChat under sign-in methods',
       zh: '先登录已有账号，再在登录方式中绑定微信',
     }),
-    path: localizedWebsitePath('/account'),
+    path: `${localizedWebsitePath('/account')}${isDouyinMiniProgram() ? '?view=signin' : ''}`,
     publicEntry: false,
     sessionHandoff: false,
   },
