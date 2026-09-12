@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / BGORWY / bin 7
-# Population in this bin: 734
+# Population in this bin: 748
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 1327415027,B R2 F' L2 D2 B2 F' D2 L2 F D' B' L' R F' U B L' D L D2 B' L,R,Comas Speedsolving 2019 (2019-09-28~29),333mbf Final A #1
@@ -116,7 +116,7 @@
 1465085001,B' F L2 B F2 R2 F L' U2 R B2 F' D R' F L2 D2,W,IFAM Open 2019 (2019-12-14~15),333 R2 A E1
 656456001,L2 D2 L2 B2 D2 R F2 R' B' F U R' F' D R' B' L2 B2 U2,O,Grand Cube Open 2017 (2017-11-26),333 Final D #5
 660489007,R2 F2 L2 R2 F' U2 B' F2 L2 B' U2 R B U L2 F2 U2 R' U B' L2 U2,O,Plentzia Open 2014 (2014-06-28~29),333mbf Final A #2
-4049432001,L B D2 L' D L2 B2 U B2 U2 F2 R' U' L B2 F2 U2,R,Telangana Cube Championship 2024 (2024-08-23~25),333oh R1 E E1
+5784464001,L' B' U' L2 D F2 D2 F2 U F2 U2 F R' D U L D F' L',O,Dåstrup Diverse 2026 (2026-08-15~16),333oh R1 C #1
 660997025,B' L2 U2 F L2 U2 F2 U2 B' D R2 D' R U' L2 D B U2 R2 B2 L2,B,Wellington Autumn 2016 (2016-05-22),333mbf Final A #1
 2582960001,L D U2 F2 D2 F2 U' L2 R2 F L2 R' F R D' R' F2 D2,O,Everything in Evanston A 2023 (2023-03-25),333 R1 B #5
 661308009,B2 R2 U B2 U' L2 U' L2 D2 F L' D' B' U' L2 U' B D' B',W,Iruña Open 2017 (2017-04-08~09),333mbf Final A #1
@@ -134,7 +134,7 @@
 2309994001,F L2 B' R2 B L2 F D2 L' U2 L' R' D' B2 R' U' F' D' F,R,Buenos Aires Cubea 2022 (2022-11-19~20),333 R1 F #5
 1793915001,F R B L2 R2 U R2 F2 D' U2 F' R D' L B D2 B' R,G,Jordan Nationals 2022 (2022-01-28~29),333 R1 E E2
 2500831001,F' U' L F' U' B2 U2 B L U2 B' L2 F2 R2 F D2 F',B,Ohio State RPAC Cube Clash 2023 (2023-02-18),333 R1 B #3
-703290001,L2 F2 U2 B2 L' D2 L F2 U' B' D2 L' D2 R D F L' D R2,W,Bulgarian Open 2018 (2018-02-10),333 R1 A E2
+5803201001,L2 D B' D2 L2 B U2 F' D2 F2 R B F R' D' B' R2 B2 D B R,B,Israel Championship 2026 (2026-08-25~27),333bf Final A #2
 5265622017,B' D2 B2 R2 B2 U R2 D2 U L2 D B D L' D2 B2 R' B2 U' B R',R,Tokai Big Cubes 2025 (2025-12-14),333mbf Final A #1
 2216779001,F2 R2 D' U2 F2 D2 R D' F2 U2 R2 D' R U R' B' R2 U',O,Cubetcha 2022 (2022-10-08),333oh Final A #1
 2039522001,R2 F L2 U' R B2 L D2 L F' D2 L' F D R' D,W,El Palmar Cubing Fest 2022 (2022-07-24),333 R1 E #2
@@ -143,7 +143,7 @@
 1359594001,F' D2 R2 D2 R2 B2 L2 F' R D2 R F' D2 L B' L' F2 U',G,Spanish Championship 2019 (2019-10-11~13),333 R3 A #3
 3526780001,L' F R' D2 U R2 U F2 U' B D B' D U' B2 F' R',B,Arauquita Cubing 2024 (2024-02-18),333oh Final A E2
 4949726001,U B' L' B2 L D2 R2 U F' B2 R' F2 R2 U2 L2 U2 F2 R' B' L',R,Korea Open 2025 (2025-08-15~17),333bf R1 C E2
-4788468001,B2 R2 U' L2 B2 U2 L2 F2 R' U F' D B2 U2 R' B' L2 F2 R' D2,R,Swedish Championship 2025 (2025-06-06~08),333bf R1 C E2
+5796569015,D F2 U' L2 R2 B' L B U' L F' L' D' U' F2 U,G,Lugano Big & Blind 2026 (2026-08-22~23),333mbf Final A #2
 2992469001,F' R2 D2 U' L2 U' B2 U2 F2 R D' R' B U F L2 D2 F,G,Odd Day in Sylvan 2023 (2023-08-19),333 Final E #2
 2649194001,B R' B2 U B L2 F U2 F R2 F' R2 L F' D F2 D2 L' U',B,IZcube 2023 (2023-04-14~16),333 R1 D #3
 4871335001,R' U' R2 F' B' L D' L' U D2 F2 D R2 D L2 D R2 B,R,Tooele Open B 2025 (2025-07-19),333oh R2 A E1
@@ -154,7 +154,7 @@
 1965465001,B R2 F U L B R' F L2 F' B' D2 B D2 R2 B' L2 F' L2,G,TCG Fall Arequipa 2022 (2022-06-11),333bf Final A E1
 1882653001,F' D' R2 B2 U2 F' L B D2 L D2 B2 L' D2 R' B2 R' B',W,San Diego Spring 2022 (2022-04-16),333 R1 B E2
 4776336001,R B2 L D' U2 R2 U F2 U2 B2 U L D2 F' U2 B D R',O,Surrey Monday Open 2025 (2025-06-02),333 Final A E1
-774788001,B2 R2 D' R2 D L2 U2 R2 F2 D U2 F U2 R B' U' F' D2 B L,O,Glorioso San Carlos 2018 (2018-05-05),333 Final A #3
+5790758001,F' U2 F2 L2 F' R2 U2 R2 B' L2 D R' B U B' L2 D' B2,Y,Cubing School SCZ 2026 (2026-08-15~16),333 R3 B #5
 775302001,L2 R2 F' D2 B' R2 B F D2 F2 D L2 D' R D' R' F2,Y,SESC Gravataí 2018 (2018-05-05~06),333 Final A E2
 5028044001,U2 L' R2 B2 L R' U' L2 R2 F L2 B L B U2 F2 U,O,Athens Never Ending Summer A 2025 (2025-09-13),333 Final A #5
 4451791001,U' R2 L F' R U' R' D2 R2 U R2 F' D2 F' D2 F' R2 L2,Y,Avenida Chile XIX 2025 (2025-01-25~26),333 R3 A #5
@@ -170,7 +170,7 @@
 1167266001,L2 B2 D2 L2 D' B2 D2 U2 L' D B' L U2 L' B' L' R' D' B',O,Mindanao Championship 2019 (2019-05-31~06-02),333 R2 B #5
 1248059001,F' L2 B2 F' D2 L2 F2 L2 F D2 R B' U2 F D2 F' D' F' R2 D',G,Urnieta Open 2019 (2019-08-03~04),333ft Final A E1
 887276001,L2 F' B2 U R L F2 R U2 B D2 L U2 L B2 R' B2 U2,R,Kew Forest Open 2018 (2018-09-22),333 R2 B E1
-5485794001,F2 U F2 U' R2 D' B R' F' D' R D L2 B2 U2 L2 F2 D,G,Budapest Open 2026 (2026-03-28~29),333 R1 C #3
+5804021001,L' F L F2 L B2 D' R' U' D B2 U R2 D' B2 R D,O,PBQ Žilina 2026 (2026-08-28),333bf Final B E1
 3149560001,F R' U2 L D R F' R L2 U' R2 D' F2 R2 L2 B2 D' F' U L B,B,Balkan Open 2023 (2023-10-07~08),333bf Final A E1
 3629191001,D' F2 U R2 D B2 R2 F' L U2 L2 F R' B' F D R' D2,Y,Manchester Spring 2024 (2024-03-29~31),333 Final A #3
 901881019,B2 U2 B2 D2 L2 F2 D R2 F2 U' L' B' L' B' U' B' R2 D F2 L' F' L2,O,Dutch Open 2018 (2018-10-13~14),333mbf Final A #1
@@ -199,7 +199,7 @@
 5126839001,B D2 R' L' U2 L2 D R2 F' D2 B2 U2 B R2 D2 F' D',G,Cliza Open CBBA 2025 (2025-10-25),333oh Final A #1
 1475236001,B2 F' U2 R2 F' L2 B' L' U R2 B2 U B R2 F L2 B2 R2,Y,Shaoxing Open 2019 (2019-12-21~22),333 R2 A #3
 1024088025,D F2 L2 D' B2 D B2 L2 U' L2 F' D2 U' B' U2 B2 L2 F L D' L' F,B,I Hope It's Solved Edmonton 2019 (2019-02-16~17),333mbf Final C #1
-4426232001,U' D R' L B2 D F B2 D' F' U2 B2 D' R2 U2 R2 F',Y,Kublördag Västerås VI - 2025 (2025-01-18),333 R1 A #3
+5819725001,D2 L' U2 B' D2 R' D' U R' U' R B R2,W,Round Rock Mega Cube Day 2026 (2026-09-05),333 R2 C #1
 3031013026,U2 L U2 L' R U2 F2 D' B2 L' D2 F' D R2 D' R B' D2 B R',Y,Pace Blind 'n Crazy Stockholm 2023 (2023-09-03),333mbf Final A #2
 3315260001,R2 U' R' U2 L U2 R B2 R' U F R F' D' F2 R B',B,ZGZ Open 2023 (2023-12-02~03),333 R1 D E2
 2725138001,U2 B2 L2 B2 U F2 U' L F U F2 R2 F2 U2 L D U2 B2,Y,Cubing In Creek 2023 (2023-05-20),333oh R1 B #1

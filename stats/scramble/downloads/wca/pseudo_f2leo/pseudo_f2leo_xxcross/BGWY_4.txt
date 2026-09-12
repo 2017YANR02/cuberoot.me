@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BGWY / bin 4
-# Population in this bin: 307
+# Population in this bin: 311
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4486197001,B' D2 L2 F U' F2 R U R F2 U R2 U F2 R2 B2 D2 F,G,Cubing Returns Nagpur 2025 (2025-02-16),333 R1 D #2
@@ -45,7 +45,7 @@
 380810001,F D' L2 U' F2 L2 U2 L' F2 L' B2 L2 U' F2 L2 U D,G,Rubik's Cube Pune Open 2016 (2016-10-15~16),333 R1 C #5
 4557663001,B2 D2 U2 F U2 F D2 L2 F D' F U R2 B L' B L B',Y,Charantonnay Cube Clash 2025 (2025-03-08~09),333oh R1 C #1
 5073976001,D B R2 D' B' D2 R2 B' L2 D2 F2 U' B' R D2 R' U F',W,Swiss Science Open 2025 (2025-10-04~05),333 Final B #4
-4712666001,U R F' R' F R B' U L2 D2 F2 R2 D2 F' L2 B L,G,Spring Bozeman 2025 (2025-05-10),333oh Final A E1
+5785108003,D' L' F L R U2 L F2 U2 F2 R2 F2 R U2 B' U L B L' R U2 L2 U',W,Kansas Championship 2026 (2026-08-14~16),333mbf Final A #1
 5702637001,F2 D' B2 R' B2 L2 D2 L2 F2 L2 B D F' U2 B F L U,B,WCA South American Championship 2026 (2026-06-12~15),333oh R1 A #3
 451577001,U' L2 D2 B2 U' R2 D2 F2 U' R B' U' R' U2 B' U2 B2 U' F' D',G,Jogja Mini Competition 2017 (2017-02-26),333oh Final A E2
 466802001,U' R2 B2 U F2 U F2 L2 B2 R2 B' D F' D' U2 B' F2,W,Shanghai Spring 2017 (2017-03-18~19),333 R1 A #4
@@ -75,7 +75,7 @@
 4219003001,D' R2 F2 U' L2 F2 L2 B2 R D' L2 B2 D' L2 R D' R,G,Brazos Cubing Fall 2024 (2024-10-20),333 R1 C #3
 814490001,B2 R' D2 F2 L B2 F2 R U L D F D' U' L F R B D' L2,W,Please Be Quiet Beijing 2018 (2018-06-30),333bf R1 A #2
 4845578001,U' L D' B2 L2 B2 D F2 D' L' B2 U L' R2 U F' D2 B',W,Coping in July Singapore 2025 (2025-07-06),333oh R2 A #5
-5282949001,D2 R2 B' F R2 F2 L2 U2 R U' R2 F U L D F L,B,Turning in Corning 2025 (2025-12-20),333 Final A #4
+5776513001,F R2 F2 D2 L2 F2 U2 B L2 D' R2 D B U' F' L D2 F,Y,Zhanjiang Open 2026 (2026-08-09),333 R1 H #5
 839680001,F' B R2 L2 D' R' U2 F2 U R U B2 D R2 U' R2 D2 R2,B,Beijing Summer 2018 (2018-07-29),333 Final D E1
 848934005,F2 R2 F2 D2 L2 F2 R F2 R B D' B' L2 D F2 L2 B U2 B2 L,G,Project Radom 2018 (2018-08-04~05),333mbf Final A #1
 849464001,D' R2 F2 U' R' U R U' F' R2 F2 D2 B2 R B2 R' L' D2,Y,Swisscubing Better Be Quick 2018 (2018-08-04),333 R2 A E2
@@ -199,7 +199,7 @@
 3443719001,L' D' L U2 B' U2 L2 B' D2 R' F U' F' R2 U',Y,Melbourne Summer 2024 (2024-01-19~21),333 R2 B #2
 3451494001,L D2 B' L' B' D2 R F L B R2 U F2 R2 D' F2 R2 U,Y,Folkets Kub Alvesta 2024 (2024-01-27~28),333oh Final B E1
 3451814001,L B' U R' B' R U' F L2 B' L2 B2 U2 B2 U2 B' L F,G,Longjum'Open 2024 (2024-01-27~28),333oh R1 A #4
-3452114001,U B L' U2 F2 R' U2 L2 D2 L' B D B2 D' B2 D F' R2 U',W,Big Cube Battle of Waterloo 2024 (2024-01-27),333oh Final A #2
+5781104001,R2 F2 R D' L2 F' D' F' D2 F2 D2 F2 L' D2 L U2 R2 U2 B2,G,Rajshahi Cube Open 2026 (2026-08-07),333 R1 B #3
 3486497001,D F' D' B' L' D' F2 D' L' F2 U2 F2 U2 L2 B2 U2 B2 U' L2,B,Egypt Winter 2024 (2024-02-03),333 R2 B E2
 3495339001,R2 F' R' D2 U2 L' D2 F2 B U B F' D U' L' R2 U2,Y,Cubing in Mount Kisco 2024 (2024-02-10),333oh Final B #5
 3515886001,F D R' D L F' R2 B U2 B' L2 U2 R F2 B2 R2 F2,B,Amore Open 2024 (2024-02-17~18),333 R2 C #1

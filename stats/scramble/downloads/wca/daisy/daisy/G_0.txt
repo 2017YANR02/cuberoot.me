@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / G / bin 0
-# Population in this bin: 154
-# Samples listed: 154 (all entries in this bin)
+# Population in this bin: 157
+# Samples listed: 157 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 36720001,L2 B2 U R2 D B2 D' R2 U R2 D' B' D' U' R F R' B' U R2,G,Czech Open 2014 (2014-07-11~13),333ft R1 A #1
@@ -159,3 +159,6 @@
 5693708001,R2 B2 R D L F2 D2 L2 R F2 R F2 B U2 F' L F2 D2 U',G,Las Piñas Speedcubing Open IV 2026 (2026-06-06),333 Final B #1
 5728202001,D' B2 D' U' L2 B2 U R' B L2 U2 R D2 R2 D F L' B',G,Warm Up Carolina Pride 2026 (2026-06-27~28),333oh R1 B #2
 5733572007,F B2 R2 F2 D B L U2 D2 F2 R2 B L2 F2 U2 D' B2 L' F2 L2 U',G,CF Goes Sideways VI Brzeziny 2026 (2026-06-27~28),333mbf Final A #2
+5790151001,F' D' F B' R2 L F' B' L U' B2 U2 F2 U2 L' D2 L' B2 L B' L2,G,Kalibata Agustusan 2026 (2026-08-15~16),333bf Final B #3
+5795706001,U' F2 D' L2 D' R2 B2 F' D2 R2 U F R' U2 F' R2 F' D' F2,G,Xi'an Open 2026 (2026-08-22),333 R1 C #4
+5810695001,U R2 B2 U2 L2 F2 D F2 U F' D' B' F2 R F2 D R2 D2 L,G,Cubithon San José 2026 (2026-08-29),333 R1 C #4

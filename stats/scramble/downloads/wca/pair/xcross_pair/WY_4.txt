@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / WY / bin 4
-# Population in this bin: 617
+# Population in this bin: 628
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5126395001,L' B2 L2 U F L' F' D L R2 F D2 L2 F' B' D2 B2 U2,Y,Hvidovre Liga III 2025 (2025-10-25),333 Final A #1
@@ -49,12 +49,12 @@
 3791972037,B' R2 B2 R2 D B2 F2 R2 U R' B U2 B2 F R2 U L D2 B,Y,Big and Blind Samobor 2024 (2024-05-25~26),333mbf Final A #2
 5562020001,F' R F2 B2 D F D F2 U' B' R2 F2 D2 R' L2 F2 L' B2 D',W,1 Shamelin Cube Open 2026 (2026-04-18~19),333 R2 D E2
 4774604001,F2 R' U2 F D' R' F2 R2 D2 F2 U F2 L2 U' D2 F2 D F L,W,Rheinland-Pfalz Open 2025 (2025-05-30~06-01),333oh Final A E2
-247403001,B R2 D R F B' L' D F' R' U2 F2 L F2 L U2 R B2,W,Rubikeros Open 2016 (2016-01-29~30),333 R1 B #3
+5792252001,D2 F U' F' D' R2 D2 R2 F' L' D2 R F2 L D2 F2 U2 D2,W,Singapore Augu-Skewb Day 2026 (2026-08-23),333oh R1 C #3
 255464001,R F D' F' L F2 L D L F2 B2 U F2 U L2 B2 U' R2,Y,Singapore Rubik's Cube Competition 2016 (2016-02-20~21),333bf Final A #3
 3392855013,D F' D2 B R2 F' U2 F' U B2 R' U2 R F' D2 L B' D B' L2,W,Vilnius Winter 2024 (2024-01-06~07),333mbf Final A #1
 4783500001,L' U R2 U' R D2 R D2 B2 R B2 L2 B L' F' U' B' U L',Y,Siedlce Open 2025 (2025-06-07~08),333 Final B #1
 290548001,D2 U R2 D B2 U2 F2 R' D F2 U L2 B2 F2 U' F' D2 L,Y,North London Open 2016 (2016-04-30~05-01),333 R1 C #1
-309102001,D' B' R U F' D' L D' R D' R U2 B2 R' F2 D2 R2 L' B2,W,El Escorial Open 2016 (2016-05-28~29),333 R2 C #5
+5786929001,U2 L D' B D' F L2 U2 L B' D B D2 L2 B L2 B R2 F' L' F,Y,Norwegian Championship 2026 (2026-08-14~16),333bf R2 A #4
 313579001,U2 L2 D2 B2 L' B2 F2 R D2 R' U B2 F2 U B U2 L2 U F2 L,W,Doge Open 2016 (2016-06-18~19),333 R2 A #5
 1307453001,U B2 R2 F2 U L2 F2 U2 F2 R' B2 U L' U2 L F D2 L B D,Y,Puget Sound Fall 2019 (2019-09-21),333 Final B E1
 3897603001,L D L F' B' U' L U' D F' D2 F2 R D2 B2 U2 B2 R' L2,Y,Cecil Singapore Playoffs 2024 (2024-06-30),333oh R1 A #4
@@ -120,12 +120,12 @@
 3002590001,F2 D F2 D R2 F2 D2 L B U' R2 D2 R B' D2 F D2 L2,W,Rubik's WCA World Championship 2023 (2023-08-12~15),333 R1 AN #5
 4897470001,R F U' B2 D2 L2 D F2 L2 F' L' D U B L D' L2,Y,Yeruham Cubing 2025 (2025-07-31),333 R1 C E2
 2581859001,U2 F2 U F' D2 F L2 B' F2 D' U' L2 B R' B2 D2 F',Y,Aarhus Spring 2023 (2023-03-25~26),333 R2 A #5
-1167192001,R2 F2 D2 R2 D2 U2 F R2 F D L B' L2 R2 F2 D' F2 U' B R2,W,Mindanao Championship 2019 (2019-05-31~06-02),333oh R2 B #3
+5811706001,L F2 D2 F D2 L2 D2 B L2 F2 U2 F D L' U' R2 B U' B2 U2 B',Y,Twist 'n Turn Hyd Open 2026 (2026-08-29~30),333bf Final A #5
 4020097001,R' D2 U2 L' U2 L2 B2 R' U2 R B L' F2 U' L D2 B' L' F2,W,Matatipac Open 2024 (2024-08-17~18),333oh Final C E2
 5658367001,R' U B' R B2 R' D2 L F2 R2 F2 U2 F R' B2 U' R' U,Y,Future Park Thailand Cube Battle 2026 (2026-05-23~24),333oh R1 C #2
 661510010,D2 B2 U2 L2 B' U2 L2 B' F' U' R' F L' F R' D2 F2 R' F D' L B',W,Bucaramanga Cultural 2017 (2017-09-23~24),333mbf Final A #1
 662919001,L2 B2 D F2 U F2 D F U2 R' B L2 F' L2 F2 R D' F',Y,SSL Final Borås 2017 (2017-12-02~03),333 R1 C E1
-4160761001,U2 R2 F2 D U L2 R2 D' R' D2 R B' L2 U2 R' B2 U' F2,Y,Shin Kong Cube Open - New Taipei 2024 (2024-09-28),333 R1 G #5
+5787765001,L F U R F' B U2 B L D F2 D' F2 L2 U' D2 R2 L2 F2,Y,Cultura Campos do Jordão 2026 (2026-08-15~16),333oh Final B #2
 4516039001,D R2 D U L2 B2 L2 U2 R B' D2 R U' L' U F' L' R B2,Y,Maritimes 2025 (2025-02-22~23),333 R2 A #3
 2305984001,L' U2 L' U L' F' U' R' F2 R2 U2 F' L2 F2 U2 F' L2 U2 F',Y,South Coast Spring 2022 (2022-11-19),333 R1 A #5
 3167340001,F' B2 D' L2 D L' F L' R2 F2 R2 B' D2 B' L' F2 U,Y,Chengdu Flash Cube Open 2023 (2023-10-15),333 R1 J #2
@@ -192,7 +192,7 @@
 2719911001,R' B' U2 R2 U2 B' D2 F U2 F' D' B U2 L' B L' D' R' F,Y,Viña Cubing Fest II 2023 (2023-05-14),333 R1 D E1
 1208943001,F' R' D' L' F' L2 F U' B U' R2 F2 L2 F2 U2 B D2 B' L2 B',W,Good Old Days Ankara 2019 (2019-06-29~30),333 R1 B E2
 1321217001,D' F2 L2 D' B2 R2 D2 U2 B L2 F' R U' F2 L' U2 B L U,Y,Hungarian Open 2019 (2019-09-20~22),333oh R2 A #5
-1019526010,B L2 R2 F' U2 B' L2 R2 U2 L U2 F' R' F R U R2 D' U' F D',Y,Please Be Quiet Frisco 2019 (2019-02-16),333mbf Final B #1
+5785749001,R L F D F' R B U B' L D2 R B2 R L U2 F2 B2,W,Oakridge Independence Cube Open 2026 (2026-08-15~16),333 Final B E2
 4190316001,D B U2 F2 D U B2 U' F2 U' L2 R D' F R' F R2 D L,W,Shin Kong Cube Open - Kaohsiung 2024 (2024-10-12),333 R1 E #5
 2484199001,B2 D' L' D2 L' R' F2 L R2 D2 U' R' U L' F U' L B F',W,Frozen Lake Minnesota 2023 (2023-02-11),333 R1 A #5
 4691822001,B' R2 U' D2 R' U B2 L' F2 L2 B' R2 F' U2 B D2 F',Y,CubingZA Nationals 2025 (2025-04-26~28),333 R2 D #3

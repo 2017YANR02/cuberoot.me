@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / B / bin 1
-# Population in this bin: 337
+# Population in this bin: 344
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4780615001,F L2 B' U2 L2 D2 F2 R2 U2 F' L' U2 L' D' L2 B U2 F R,B,Singapore Jumbo June 2025 (2025-06-08),333 Final A #4
@@ -72,7 +72,7 @@
 672588001,U' B2 D' U F2 L2 U' L2 U' L' D' L' D' F R2 U F R B D2,B,Rubik Zamora 2017 (2017-12-16~17),333 R1 C E2
 675676001,U' D2 B' R B2 U2 B L D2 F R2 U2 R2 D B2 R2 D2 B2 R2 U' D',B,Christmas Cube 2017 (2017-12-16~17),333oh R1 B #2
 678611023,B2 R D2 U2 R' B2 R2 U2 L F R B U B' R B L2 R' B2 D L2,B,Bheja Fry Year End Open 2017 (2017-12-30~31),333mbf Final B #1
-686869001,U2 R D F' D' R2 B2 D F L2 D2 B2 D2 B2 L' B2 D2 R L2 U2,B,VI QB'er 2018 (2018-01-13~14),333 R1 C E2
+5797914001,F' D F R D2 L' U' B' L2 D L2 U2 F R2 F R2 U2 L2,B,Mid-Atlantic Speedcubing Championship 2026 (2026-08-14~16),333 R1 F #1
 702343001,B' D2 F' D2 L2 U2 F R2 F' D2 L' B L2 F D F' D R' B D,B,Oradea Cubing Open 2018 (2018-02-03~04),333 R1 B #1
 5428880001,R2 F' U2 B R2 B2 U2 R2 F' D2 L' F U' F D B2 R D' F' U' B R,B,Yuba City Spring 2026 (2026-03-07),333bf Final B #2
 713803001,F2 D2 U B2 U' R2 U' L2 B L' U2 L' R D U2 L' D U2 F',B,Osijek Open 2018 (2018-02-24~25),333 R2 A E1
@@ -107,7 +107,7 @@
 944546001,U2 L U2 F2 L U2 B D' B F' D2 F R B2 L2 U2 F,B,Zibo Open 2018 (2018-12-01),333oh Final A #3
 954332020,L2 B2 L2 D2 U' R2 D2 R' U' L R2 D2 L F U2 F L2 B R' D2,B,Nacionales Argentinas 2018 (2018-12-08~09),333mbf Final E #1
 965468001,L' D B U' B2 D' F U' L' U2 F U2 R2 D2 R2 F2 D2 F' L2 U2,B,La Tienda Cubera Christmas 2018 (2018-12-22~23),333 R2 B #4
-4509776001,D' F D' L2 D B2 F2 U R2 U' B2 F R F U2 R' F U' B',B,LA PRE Pucallpa Speedcubing 2025 (2025-02-22),333 R2 B #4
+5782235001,U2 R L2 U' R2 U' L2 U' F2 U B R' F2 R U' F U' B D,B,Blenkir Junín 2026 (2026-08-08~09),333 R2 C E1
 982792001,L2 F R2 F R2 B' D2 L2 R2 F' L D U2 R' U2 R' F2 D F U' L2,B,Greece New Year 2019 (2019-01-19~20),333bf Final A E1
 994685001,R2 U R2 L' F2 U' B L2 B' L' F2 R2 U2 F2 U' F2 U2 R2 F2,B,Mongolia Championship 2019 (2019-01-26~27),333 R1 G E1
 1017755001,F2 R B2 U2 R D2 U2 B2 U2 B R2 B2 U' B2 L U F D2 F,B,Fontwell Open 2019 (2019-02-09~10),333 R2 C #4
@@ -134,7 +134,7 @@
 1485783001,F2 R F2 R U2 L D2 F2 R' U' R' B L U' R U L U2,B,Sariki in Moscow 2020 (2020-01-02),333oh Final A #4
 1486135001,L' F L U2 B' D2 R' F U R2 D2 L2 D2 F' R2 F2 B' L2 F R2,B,Small Cheese 2019 (2019-12-30),333oh Final A #2
 1503577001,L2 B2 L2 B2 L U R2 B2 D' L2 B' L U L2 F L2,B,Guildford Open 2020 (2020-01-18~19),333 R2 A #4
-5689894001,L U B2 R2 F2 L' D2 L' R D2 B2 U L D2 B' R2 U' L2 D2,B,Tramsheds IX: June Sunday 2026 (2026-06-07),333 Final A #5
+5821448001,B' U' B2 D' R L D B2 L U2 F2 R D2 F2 L' U2 D R2 F2 L' F2,B,Florida Championship 2026 (2026-09-05~06),333bf R1 A E2
 5584828001,U2 R2 F' U B L2 U' R2 D2 B2 L' B2 D2 R' U2 B2 F D2 L,B,Trinidad and Tobago Nationals 2026 (2026-04-25),333 R1 F #2
 4036790001,F2 D2 F2 D' L2 D R2 D' U2 F2 U2 F R' U' B' U' L2 D2 R' B2,B,Kublördag Jönköping III - 2024 (2024-08-24),333oh Final A #4
 3919780001,L2 U' R' D' B2 U2 L D2 B2 L2 F2 R2 F' R2 U B2 U2 L' B2,B,Viña Open 2024 (2024-07-06),333 R2 A E2
@@ -196,7 +196,7 @@
 3089854001,L2 F2 D' F2 R2 U2 B2 F2 U F' L R2 U2 L' D2 F' L2 F2 D2,B,Plaza Center Cube Lima I 2023 (2023-09-16~17),333oh R1 D #5
 3120354031,B' F2 U L2 B2 F2 U' F2 U L B2 L U B2 L' F2 L D2 L2 U,B,Bengal Cube Open 2023 (2023-09-22~24),333mbf Final A #1
 4759221001,F2 D L' B U L D B L' B U2 B2 R2 D2 B D2 U,B,Cube Factory League Koluszki 2025 (2025-05-24~25),333 R1 A #1
-4626884007,R' B' L' D2 B' U' R F L2 U L' B2 L' D2 R F2 L' D2 L2 D,B,New York Multimate PBQ 2025 (2025-04-04~06),333mbf Final A #1
+5817527001,F2 D2 R2 F' R2 B2 D2 F' L U' F L2 U R U' L' R',B,Cube Factory Aleksandrów 2026 (2026-09-05~06),333 R1 B #4
 3205910054,U F U R2 U' D' L D F2 B2 U2 L B2 R' U2 R2 L F D2,B,Please Be Quiet in Astana 2023 (2023-10-28~29),333mbf Final A #1
 3255597001,U' F2 L2 D2 L' B2 R2 U2 B2 R B2 R' F U2 F' U' B2 F2 L2 U2,B,Brisbane Big n Blind 2023 (2023-11-11~12),333bf R2 B #3
 3276035001,U F' D2 U2 F2 D2 F' D2 R2 F R' U' B2 F2 D2 F' U' L,B,Bajío Open 2023 (2023-11-18~19),333 R1 A #2

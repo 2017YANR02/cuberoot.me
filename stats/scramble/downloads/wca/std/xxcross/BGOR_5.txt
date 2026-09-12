@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / BGOR / bin 5
-# Population in this bin: 468
+# Population in this bin: 472
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -84,7 +84,7 @@
 660804002,L2 F2 L2 R2 D F2 D2 R2 F R2 U2 R2 B' U' R U2 B2 R' F2 L B,O,Italian Championship 2015 (2015-08-29~30),333mbf Final A #1
 2981268001,R2 U2 D R D2 B' R' L2 D R' L2 U' R2 F2 U F2 R2,O,Cubing 4 a Cure Farmington 2023 (2023-08-13),333 R1 B #3
 4684952001,B' D' B2 L' D2 L U2 L F U L U2 B2 F U F2 L2,G,Kaunas Open 2025 (2025-04-26~27),333 R2 A #3
-5697437027,R2 L U L B' L' U L2 U2 L2 B2 R2 L' U2 B2 L F' L2 D2 B R,R,Side N Blind Narre Warren 2026 (2026-06-13~14),333mbf Final A #2
+5785543001,U2 B2 R2 B2 L2 D2 L2 U' B2 D2 U R' F R B2 F U' F D',R,Oakridge Independence Cube Open 2026 (2026-08-15~16),333 R1 E #2
 661337004,L2 B2 R2 D B2 U F2 R2 F' U' F2 L2 B2 R2 F2 L B D' U2 L B,R,Wirewood Pro 2017 (2017-04-30),333mbf Final A #1
 661369015,R2 B2 U2 B2 R2 B2 D' L B2 D' B2 L2 B D L2 B' D' L D2,B,Wuhan NxN Open 2017 (2017-05-20~21),333mbf Final A #2
 661466043,R F2 R2 D2 F2 L' B2 L2 B D2 L B2 U' L U R B F L D',O,Michigan 2017 (2017-08-19~20),333mbf Final A #1
@@ -187,7 +187,7 @@
 4892565001,L' D2 B' U2 B D F L' B2 U2 R' B2 L2 D2 L' F2 B2,B,Cuenca Open 2025 (2025-07-26~27),333oh R1 A #2
 1437789001,R L' U B' L2 U' D' R2 U B D R2 D' R2 B2 D2 B2 R2 B2,O,Bay Area Speedcubin' 21 2019 (2019-12-01),333 R2 B E2
 1443499001,U' F U' B U' D2 R' F' U' F' B2 R2 D B2 R2 U R2 B2 L2 B2 U',R,SSL Final Stockholm 2019 (2019-12-07~08),333ft R1 B #5
-1444065001,R2 L' U2 B' D L2 F2 U' B2 D2 B D2 F L2 F' R2 U2 B D2,R,QueTalca Open 2019 (2019-12-07),333 R1 B #1
+5779705001,L F L2 B2 R2 D' R2 D' F2 D U R2 F L F D' U B2 R,O,Toowoomba Carnival of Cubing 2026 (2026-08-08~09),333 R1 B #2
 1451373001,D' U2 F2 L2 U2 L2 R2 U' B' L U B' D B' U2 L' R U B',O,Almaty Snowflake Cube 2019 (2019-12-07~08),333 R2 B #5
 5668787001,U F U L' R2 F R2 B' R2 F' L2 R' F2 D B2 R2 F2 L2,O,Hungarian All-Rounder 4 2026 (2026-05-30),333 R1 A #5
 1482947001,L2 D' L2 B2 D2 U R2 F2 U2 L R2 F2 U' B F2 U' B D L B2 L' F',B,Selangor Cube Open 2019 (2019-12-27~29),333bf R1 A E1

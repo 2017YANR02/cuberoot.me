@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / O / bin 0
-# Population in this bin: 800
+# Population in this bin: 819
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 6864001,F' D2 F R' D' R' F2 R U2 B D' L2 U2 F2 R2 F2 R' F2 R2,O,Carroll Spring Open 2014 (2014-03-29),333oh R1 A #4
@@ -38,7 +38,7 @@
 199813001,F U2 B D2 L2 F' D2 F2 R2 F L B D F' R U L2 D2 F U',O,Polish Championship 2015 (2015-10-09~11),333 R1 F E1
 5419233001,D' L B' D' R2 F2 D2 B2 D2 U F2 L2 F' R2 F R' B D' F2,O,Summer of the Cube Huancayo 2026 (2026-02-28~03-01),333oh R1 A E1
 210399001,U' R' D2 R2 D' R' F2 U L' B D B' U2 F D2 L2 F D2 B2,O,Munich Open 2015 (2015-10-31~11-01),333 R2 A E1
-2598294001,B' R' L2 B' D2 F L2 R2 B' F' L2 U2 R' D' L F2 D2 B D2,O,Bobcat Battle 2023 (2023-04-01),333 Final B #4
+5809180001,D' R' B' F2 L2 D U2 B2 R2 U R D2 R U2 L U2 L2 B',O,Mololoa Open 2026 (2026-08-29~30),333 R1 A E2
 2110370001,R D R2 D2 F2 R2 D' L2 D2 F U' B L B L2 D B' R2 B2,O,Lincoln Summer 2022 (2022-08-20~21),333oh Final B #5
 4585669001,F2 R' L' U' F' R2 D' L2 B' R U2 L2 F2 B2 D F2 D L2 U2,O,Catskills Spring 2025 (2025-03-23),333 Final A #2
 218138001,D2 R2 B R2 U2 F D2 B F' U F2 L B2 R' B' U R2 U' F2 L2 B' L',O,La Plata Open 2015 (2015-11-14~15),333bf R1 A #2
@@ -77,7 +77,7 @@
 343469001,R' U' F R2 U2 B2 L2 D2 B2 U' R2 F R2 D2 B2 R B2 R2 D' B F D' R' U' F,O,N8W8 Summer 2016 (2016-08-06~07),333fm Final A #1
 5489578001,F2 U' R D L B2 R B' R L2 F2 B2 U2 L U2 R' U' R,O,IISER Pune PARAM Open 2026 (2026-03-29),333oh Final A #5
 5031118001,B F D2 B2 U2 L2 F' D2 F L' U B2 D2 B' R F U F U',O,Double Time Bacolod 2025 (2025-09-20),333 Final A E2
-4596887001,B2 D L2 U' R2 D2 L2 B2 D' R F' D2 L F U R2 U F' D2,O,Anaunian Side Events 2025 (2025-03-22~23),333oh Final B #2
+5810617001,D2 B L F2 B' L2 U' D R F2 D2 B2 D' B2 R2 U B2 R2,O,Cubithon San José 2026 (2026-08-29),333 R1 C #1
 356401001,L U D' R2 B' R F2 U' B2 L' U2 D2 L2 D2 L' D2 R U2 R2,O,Lima Rubik 2016 (2016-08-27~28),333 R3 D #3
 357428001,F' R L2 U' R U D2 R' B' L2 U2 D2 B R2 B' D2 B D2 B2,O,Wiscube 2016 (2016-09-03),333 R2 A #3
 1464775001,B2 R2 D' B2 L2 D B2 D' F2 L U2 F' D L' R D B F,O,Rancagua Open 2019 (2019-12-14),333 R1 A #2
@@ -114,7 +114,7 @@
 3414024044,B2 U F' D R U' R2 D' B R' B2 R B2 L B' L' D2,O,Pour Gesté J'ai Gâteau 2024 (2024-01-13~14),333mbf Final B #1
 515076001,U2 B2 R2 D R2 D' B2 L2 U2 B L2 F U' L2 B' L F' R2 B L B2,O,Tangshan Open 2017 (2017-05-28),333bf Final A #3
 4129821001,U B2 L D2 L F2 D2 L B R' B2 L' U' B' U2 R2 U F',O,Wiltshire September 2024 (2024-09-21~22),333 R1 D #3
-1349793004,F2 L2 U' F2 R2 D' R2 B U' R' F R' F' U' R' B' R B U2 B R',O,345 Cube Day Allen 2019 (2019-10-13),333mbf Final A #3
+5784058001,R F D2 B' R2 U2 F' D2 U2 R2 F L2 F U F L' R' B L',O,Timbó ao Cubo 2026 (2026-08-15~16),333 R2 A #2
 4407906001,B' D2 B2 L2 R2 B D2 R2 B L2 R F R' F2 L' F D R B2 L' F',O,TCG Space lV Santa Anita 2025 (2025-01-04~05),333bf R1 A #1
 539173001,D2 F' R2 F U2 F U2 L2 R2 D' L D L' U R U R2 U2 B' L',O,Irish Championship 2017 (2017-06-24~25),333 R1 C #3
 4291062001,F' U2 L' R2 B2 D2 R2 B' L2 B' F2 D F D' R2 D2 L D2,O,Kenosha First B 2024 (2024-11-17),333 Final A #1
@@ -198,7 +198,7 @@
 773619001,L' F2 D2 R2 F2 D2 L' D2 L2 F2 U B' U2 R' F2 U' L2 U2 L,O,Nanchang Summer Is Coming 2018 (2018-05-05~06),333oh R2 A E1
 773982001,R2 L D2 R' F2 D L F D' B2 L U2 F B R2 L2 D2 L2 F',O,Heritage Cubing Day 2018 (2018-05-05),333 Final B #5
 777793001,B2 R B' L D B2 U' F' L' U2 F2 U F2 B2 U D2 B2 R2 D,O,Speedcuber Forever 2018 (2018-05-12~13),333 R2 A #4
-4487534001,R' D2 L2 B' R2 B' F U2 D' F' L' D2 L2 U L' F L2 F2,O,Sandnes Winter 2025 (2025-02-15~16),333oh Final A #3
+5809260001,R2 D U' F2 R2 D2 U' R U L F U2 B' R F2 D B2 F',O,Brampton Summer 2026 (2026-08-29),333 R1 E #2
 3782446001,B' R' B R' F2 L2 D' F' U' D R' B2 R2 L2 D' B2 D B2 R2 B R,O,Zibo Open 2024 (2024-05-19),333bf Final A #2
 4213729010,D2 R2 D B2 F2 R2 F2 D2 L F L' B U2 B D' L B' L2 D' L' F',O,Nacionales Uruguayas 2024 (2024-10-18~20),333mbf Final A #1
 5206335001,F L2 F D U2 L2 D' F2 R2 B2 R' D' B D2 B' R2 B',O,Dublin California Open 2025 (2025-11-22),333oh Final A E1

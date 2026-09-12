@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / BG / bin 3
-# Population in this bin: 697
+# Population in this bin: 705
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 242001,L' U2 F2 L D2 U2 R D2 U' B' R2 D R' B D F' D' B2 D',B,Montréal Open 2014 (2014-03-15),333 R1 A #3
@@ -139,7 +139,7 @@
 1087080001,B L2 U2 R2 F2 R2 U2 F' U2 R' D2 B2 D' L2 B' U F2 D L' F2 L2 U,B,Dual Games Alicante 2019 (2019-04-06),333bf Final A #2
 661072031,D2 F' L2 R2 D2 B' R2 B' L2 U' B F' U L D' F L2 F' L2 D2 B,G,Michigan 2016 (2016-08-13~14),333mbf Final A #1
 1238091001,R2 B2 D2 L2 D R2 F2 L2 F2 U' L2 F' R2 D' L2 U' R U' R F' U,G,Mestre Álvaro 2019 (2019-07-27~28),333 R2 A E2
-5675880001,D2 B' R2 F' R2 U2 F U2 B' U' R D R B2 F R2 D' R',B,Franconia Cube Days 2026 (2026-05-30~31),333 R1 A E2
+5817527001,F2 D2 R2 F' R2 B2 D2 F' L U' F L2 U R U' L' R',B,Cube Factory Aleksandrów 2026 (2026-09-05~06),333 R1 B #4
 3848490001,U2 R2 D2 L2 F2 D2 B' U2 L2 F U2 B2 L' F' R2 D B L2 B',B,Vienna Summer 2024 (2024-06-08~09),333 Final B #5
 3775824001,R' D' B2 R2 F' U2 R' F2 D' B D2 L D2 R2 L' F2 L',G,Country Roads Huntington 2024 (2024-05-18),333oh R1 A E1
 4936686001,U2 B2 R F2 L2 F2 R' D2 B U2 R' B2 F L U B F U' B2,B,Begastri Open 2025 (2025-08-15~17),333 Final A E2

@@ -1,12 +1,12 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / O / bin 3
-# Population in this bin: 363
+# Population in this bin: 368
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 11485001,D2 B' D2 R2 B L2 F2 D2 R2 F' D F' D U L D L B' U2,O,Beijing Spring 2014 (2014-04-19),333 Final A #4
-33876001,L D2 R U2 L F2 L2 U2 B2 D2 F' D U' R2 F L2 F U' R2 D',O,P3 Grand Open 2014 (2014-06-28~29),333bf Final A E1
+5780700001,L' F' U L2 F' B' R F L' U2 F R2 L2 F R2 U2 F' B2 D',O,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R1 D #2
 66709001,R2 F2 D' L D F U' F' L' B R' D F2 U' D2 R2 D' F2 B2,O,OktoberBrest 2014 (2014-10-17~19),333 R1 A E1
 74822001,F2 D2 U F2 U L2 D' B2 F2 R2 U2 L' D2 F' L' R2 F' L2 F U',O,Slow n Steady Fall 2014 (2014-11-09),333 R1 B #4
 106054001,U2 L2 D L2 D' L2 D F2 L2 R' U2 L2 R2 F' L D L R D B',O,Winter West Ukraine 2015 (2015-01-31~02-01),333oh R1 A #5
@@ -16,7 +16,7 @@
 143286001,B2 D2 R F2 R' F2 R2 B' R' F2 L B U2 R B2 R B F',O,Uchi Florida 2015 (2015-05-23~24),333 Final A #5
 160965001,D' L U D2 R U' L2 F R' L F R2 B L2 F R2 F U2 F2 L2,O,Irish Championship 2015 (2015-07-04~05),333 R2 A #1
 164248001,U D2 R L B' D' F2 R' L2 U' R2 U2 F2 D2 R2 U2 F D2 F',O,Campeonato de Portugal 2015 (2015-07-11~12),333 R2 B #5
-172178001,L' U2 D' R U' D2 R2 F' L' F' L2 U2 D' R2 B2 R2 L2 D,O,US Nationals 2015 (2015-07-31~08-02),333oh R1 F #5
+5784464001,L' B' U' L2 D F2 D2 F2 U F2 U2 F R' D U L D F' L',O,Dåstrup Diverse 2026 (2026-08-15~16),333oh R1 C #1
 4079646001,U2 L2 B' D L' D' F' D' R' D R2 F2 U D B2 U B2 L2 D B2,O,Vibra Social Girardot Cundinamarca 2024 (2024-09-07),333 R1 B #4
 5596061001,B2 U2 R' B2 D B' U D B2 R B' L2 B R2 B U2 B2 D2 R2,O,Lonay Euro Qualifier 2026 (2026-05-02~03),333oh Final B E2
 196741001,U L2 F2 D2 U' R2 D2 B2 F L2 R2 U' L U' L F R,O,Prague Open 2015 (2015-10-03~04),333ft Final A E2
@@ -64,7 +64,7 @@
 4949772001,D2 B' R' B D' R B2 D' L' B2 R' D2 B2 R D2 R2 B' R2,O,Korea Open 2025 (2025-08-15~17),333oh R1 F #1
 661493004,B' D2 L2 F R2 B' L2 F2 D F R2 B' R F2 D' L D R D2 L' F2,O,Estonian Open 2017 (2017-09-09),333mbf Final A #1
 662671001,D R2 B2 R2 D R2 D F2 D' B' D B R' D L2 F U' L R F',O,Malabar Winter Cube Open 2017 (2017-12-10),333 R2 D #2
-662716001,U2 R2 U' R2 U L2 B2 L2 U' L' U' L2 F L' U2 R2 U L2 R2,O,Cebu Speedcubing Year End 2017 (2017-12-09),333oh Final A #5
+5806968001,U' L' B' D L2 U2 D' L U F2 U R2 U D' L2 B2 L2 D' L D',O,Slovenian Nationals 2026 (2026-08-28~30),333bf R1 A #3
 3992623001,D2 F B2 U' F2 L2 F' R F' B L2 U2 L2 U2 F' D',O,A Twisty Day in Araneta 2024 (2024-08-04),333oh R1 A E2
 678611034,U2 F2 U2 B' L2 B2 R2 B' D2 R2 D' L2 F' R' D' R' D R' U' L' U2 L' F,O,Bheja Fry Year End Open 2017 (2017-12-30~31),333mbf Final B #1
 681376023,R2 D2 U2 B2 U2 R U2 L U L D' L' D B U' B2 R' F2 R' D,O,Swisscubing Mental Breakdown 2018 (2018-01-06~07),333mbf Final A #3
@@ -90,7 +90,7 @@
 3091336001,L2 R2 U' L2 D2 U' L2 B2 R2 L' U' L' R D2 U2 B2 F' U',O,RioMar Fortaleza Open 2023 (2023-09-16~17),333 R1 A #5
 846875001,F' L2 F' R2 B2 D2 R2 U2 R' D' F2 U2 L B2 L2 F' L2 D L,O,SPB Summer 2018 (2018-08-04~05),333 R3 A #4
 864964001,B2 R' D2 R F2 R D2 B2 R2 B L2 U2 L' U' R D2 B L' R' B' L B',O,Cube Mahotsav 2018 (2018-08-25~26),333bf Final A #3
-5761666001,F2 B U2 L' U B U2 R' F2 L2 U' F2 B2 L2 U D2 R' L2,O,Barpeta Cubing Open 2026 (2026-07-26),333 R1 C #1
+5784680013,U' L2 D2 R2 D U2 F' U2 F R F R2 F2 R D' F' D' L B,O,Silent Brasília 2026 (2026-08-15~16),333mbf Final A #1
 3872288001,L' B2 R' U2 F R2 D2 B' L2 U2 R2 F R D F2 D2 U R B,O,Sambil Barquisimeto 2024 (2024-06-16),333 Final A #4
 918819001,D2 U' B2 F2 R2 U F2 L D R2 B' R2 D' L' D' U B' F2 L2 U',O,Cubing ATMOSphere 2018 (2018-10-27~28),333bf Final A E2
 3095972001,R' B2 R' F U2 F' R' F2 L' U2 L2 F2 L D2 L2 U2,O,Minnesota Cube Day 2023 (2023-09-23),333 R2 A E1

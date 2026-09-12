@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / R / bin 11
-# Population in this bin: 518
+# Population in this bin: 528
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R,Magnolia State Cubing 2026 (2026-05-30),333 R2 B E2
@@ -29,7 +29,7 @@
 5424486027,U2 B D2 R2 U2 B2 R2 B2 U' L' B L2 F R' B' R B' D B R2,R,Richardshhhon 2026 (2026-02-28~03-01),333mbf Final A #3
 166846001,F2 U' R2 F' L2 F2 U B2 U2 L B R2 U2 F' B2 D2 F2 U2 R2,R,Gernika Open 2015 (2015-07-18~19),333ft Final A #2
 169800001,F2 R F2 D2 F2 L' U2 L F' D2 L' D2 B F2 U2 F2 R,R,CUCEI Open 2015 (2015-07-15~16),333ft Final B #1
-179226001,F' U2 F U' L D' L' F' D2 F R2 F2 R2 D2 F2 L2 U2 R',R,I ETEC Rubik Competition 2015 (2015-08-16),333 Final A E2
+5786929001,U2 L D' B D' F L2 U2 L B' D B D2 L2 B L2 B R2 F' L' F,R,Norwegian Championship 2026 (2026-08-14~16),333bf R2 A #4
 183547001,R' U2 B2 L D2 F2 R' D2 U2 R2 D' B2 U' B' U' R B2 L' U L2 U',R,Brain Studio Cube Open 2015 (2015-08-29~30),333bf R1 F E1
 5056920001,U' D2 L' D2 F2 D2 F2 L2 B' U R' U2 L2 R U L B' R,R,Ocean State Cubikon 2025 (2025-09-28),333 Final A #4
 5197216001,L U2 B2 U B2 U R' B U D2 F2 D2 R U2 R F2 B2 R2 D',R,SSN Cube Challenge 2025 (2025-11-15~16),333 R1 A #3
@@ -59,7 +59,7 @@
 4325984001,L' D R2 F2 D' U2 L2 F2 D' R' B D R2 D U2 L2 R',R,Minnesota Championship 2024 (2024-11-30~12-01),333 R1 F #4
 348260001,B2 L' U2 L2 R D2 F2 L D' F' L2 U' L' D' R D' F L B2,R,Michigan 2016 (2016-08-13~14),333 R2 D #4
 359699001,B2 F D2 B' F2 D2 L R U F' D F' L F D' F' D L',R,SPB Championship 2016 (2016-09-03~04),333bf Final B E1
-372824001,U L2 D L2 B2 U2 F2 R2 B L' R2 D2 U2 B' R U2 B2 F R',R,Dixon Fall 2016 (2016-10-08),333oh Final A E1
+5815678001,F2 L F' D2 L2 R2 D F2 L2 F2 D' U' R F U F' D' F' U,R,Seremban Cube Challenge 2026 (2026-09-05),333 Final B #1
 382193001,D' F' D2 F2 B2 L2 D' L2 F2 L' U2 F2 L' F2 R U2 D2 B2,R,Porto Alegre Open 2016 (2016-10-15~16),333 R2 A #2
 438257001,L2 B2 L2 B2 D2 L U2 R' D' L2 B L B U2 F D' L2 B R' B' L',R,Maranhão Open 2017 (2017-01-28~29),333bf Final A #1
 5149984001,R U' B U L2 R2 B' D2 B' F R2 D B L R B' L R',R,Cube Zone Katowice 2025 (2025-11-02),333 R1 D #2
@@ -130,7 +130,7 @@
 5321081001,F' L2 F R' L2 B2 L2 F2 U' B2 U L' U2 L' R2 F R' U',R,SVNIT Cube Open 2026 (2026-01-10~11),333oh R1 C #1
 800362001,B' F' L2 F' L2 R2 D2 L2 D' F D R2 B2 L U2 R F2 R',R,Jaktim Mini Fasting 2018 (2018-06-09),333 R1 B #3
 5333904042,B R2 B D2 F' L2 U2 L2 U' R' F D' F2 U2 R F U' F' D' L,R,No Sprinting NY 2026 (2026-01-17~18),333mbf Final A #1
-5285689001,D' F2 D B2 F2 R2 U2 R2 U F2 D F' L' U' R2 U' R' F L2 U2,R,New Year's Eve in Baku 2025 (2025-12-21),333 R1 B #5
+5780717001,U' B2 F2 U F2 D F2 R D2 U L D F R2 D U2 B2 D2,R,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R1 O #2
 825267001,R B2 L' R2 D2 L' D2 U2 F U2 B2 L B2 F R' B2 F,R,White City Cubing 2018 (2018-07-07~08),333 R1 E #4
 2812580001,R F2 D2 R' B2 R B U2 B' D2 L U2 B L2 R F U,R,Winnipeg Open 2023 (2023-06-17~18),333 R2 B #5
 4602852001,L2 B2 R2 U2 F2 D R2 U B2 F' R U F2 D2 R U2 L F' U,R,First Solves Gothenburg 2025 (2025-03-29~30),333 R1 B #4
@@ -202,6 +202,6 @@
 5755413001,F2 D F' U2 L' R' B2 L2 R F2 D2 F L2 F2 D R D2 F' L2,R,Rubik's WCA European Championship 2026 (2026-07-16~19),333 R2 A #3
 3975037001,B' L F2 U2 D' R D F2 U2 B' R2 U2 R2 F2 L2 F' L' D' B,R,Cochabamba Ultra Cube 2024 (2024-07-21),333 R1 F #3
 1352399001,L' D' B R2 F U2 R' B R' B' L' D2 R2 D2 F2 R U2 L' B2,R,Belgorod Open 2019 (2019-10-12~13),333oh Final A #4
-2439324001,R' L2 D2 B D2 F R2 B2 L2 F' D2 F D U F' R U2 L D U2,R,Melbourne Summer 2023 (2023-01-20~22),333 R2 A #2
+5815523001,F' D2 F R' D F' D F B2 L' D2 L2 B2 R2 F2 L' U',R,Bremium Mega Day 2026 (2026-09-05),333oh Final B #1
 5728514001,F2 L' U2 L U2 R U2 R B L U' B R' U' R D B L2 U,R,Guayaquil Masters Open 2026 (2026-06-27),333 R2 B E1
 1394025001,D B2 R2 U2 B2 U2 F2 R2 B' L2 U' R U L' U B' D' L F2,R,City of Joy Open 2019 (2019-11-09~10),333oh R1 A #5

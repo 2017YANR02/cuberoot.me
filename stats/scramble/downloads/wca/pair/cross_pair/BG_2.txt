@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BG / bin 2
-# Population in this bin: 394
+# Population in this bin: 402
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5484523001,R' F2 R2 U' R F R' B L' F2 U2 R B2 R D2 L2 D2 B U,B,Cube Against Cancer Pittsburgh 2026 (2026-03-28),333 R1 B #4
@@ -42,7 +42,7 @@
 342445001,L' R2 F2 R' U2 B2 U2 L2 D L' F' L' U B2 L D2 U' F',B,SSN Cube Open 2016 (2016-08-05~06),333 R1 H #4
 343083001,L2 D' F2 D2 U B2 R2 D U' L B' L U L' U L' B' F2,G,SSN Cube Open 2016 (2016-08-05~06),333oh R1 A #3
 3842956001,F2 L' F' L' U2 R2 U R' U2 D2 R' U2 L U2 R B2 L F U',B,Berkeley Summer 2024 (2024-06-09),333oh R1 C #4
-404979001,B2 L' F R L2 B' R' L2 B2 R U' R2 F R2 B' L2 B D2 R2,B,Speedcubing Year End 2016 (2016-11-26),333 R2 A #1
+5804944001,B2 U2 B2 R F2 U B L2 D2 L R2 U2 B' D2 R2 F2 B D',B,Calgary Fall 2026 (2026-08-29),333 R2 A #3
 413061001,L2 R2 U' B2 D' U B2 U' F2 U' R B2 L F' L B2 F' D' L2 D,G,2FTI San Diego 2016 (2016-12-10),333oh R2 B #2
 4558189001,D2 L D F2 L2 F' L' F2 U B2 U R2 U' L2 D L' F2 D' L',B,Montemurlo Speedcubing 2025 (2025-03-08~09),333 R1 A #1
 435421001,F L' U2 L' D' B' L2 F' R2 F' B L F2 U2 L' U2 R,G,Trondheim Winter 2017 (2017-01-21~22),333 R2 B #2
@@ -76,7 +76,7 @@
 2966995001,R' D' B2 U' B' U2 B R2 B2 U2 R' B' D B' R2 D2 R',G,Appleby Summer A 2023 (2023-08-12),333 R1 C #2
 5418973001,R2 L2 B2 R' F' U2 D' F L' U2 F2 R2 F' D2 R2 D2 R2 F' L2,G,New Martinsville Newcomers 2026 (2026-02-28),333oh Final A E1
 4668765001,L U2 L2 F' U' D L F L F U' B' U2 F B R2 U2 D2 B R',B,Efficient in Elmsford Spring 2025 (2025-04-20),333bf R1 A E2
-661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,G,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2
+5809223001,L F' D2 R' D' U2 F2 D2 F2 L2 U R' U' F' L F2 R U,B,Brampton Summer 2026 (2026-08-29),333oh Final A #1
 4338634001,U2 F2 L B U L2 D F2 D' L2 B2 F R2 U2 L' F R2 B L',G,Tivat Open 2024 (2024-12-07),333 R1 C #5
 665885001,B2 U2 B2 U2 F2 D F2 D' F2 L2 U B U2 F' D2 B' R B L B L,G,Cubic Meltdown 2017 (2017-12-09),333bf Final B #3
 679966001,F2 D2 B2 D2 L2 B2 R2 U' L' D L' D U F U2 F' R' B2 R2,B,Malaysian Cube Championship 2017 (2017-12-30~31),333oh R1 A #4
@@ -116,11 +116,11 @@
 3891883001,D' L B' F' R2 F D2 U2 F L F2 L R U2 F' U B R2,B,Almost Flaminia Open 2024 (2024-06-22~23),333oh Final C #3
 1089071001,B L2 U2 B R2 U2 L2 D2 L' F' R2 D' L U B2 R2 F R2,G,Bogor Comeback 2019 (2019-04-06~07),333 R1 B #5
 4828902034,D2 F2 D' L' D' L F B' L2 B2 D' R2 F2 D2 L2 F D' B' L B,B,Worlds Prep in Palisades 2025 (2025-06-20~22),333mbf Final B #1
-1127177001,R2 B2 U2 L2 D' B2 U B2 U' F R D R2 U2 R U2 F L2 R' U2 B R,G,Koalafication Adelaide 2019 (2019-05-04),333bf Final A E1
+5781827001,B2 L2 B2 D' F2 U2 L2 F' U L D L R2 U2 B' D F L2,G,Unicentro Tunja VI 2026 (2026-08-08),333 Final A #2
 1137452001,D L' U R' F U2 R' D L2 U' L D L2 U' B2 L2 D' F2 D2,G,Play Cube X4 2019 (2019-05-11~12),333 R1 A E1
 3049191001,U' F2 R2 U L2 U' R2 U' L D' L U2 R' F' L' D F L,B,Singapore Mini 2023 (2023-09-09),333 R1 A #5
 1160360001,L2 F' D2 F L2 B' U2 B2 L U L2 R2 D2 F2 L R2 U',G,Nacionales Uruguayo 2019 (2019-05-18),333 Final A #5
-4966008001,B2 L' D2 F2 L2 D' B2 R2 U R2 D F R D' R2 F2 D R2 D',B,The Mall Lifestore Thapra Cube Battle 2025 (2025-08-23~24),333oh R1 B #1
+5797914001,F' D F R D2 L' U' B' L2 D L2 U2 F R2 F R2 U2 L2,B,Mid-Atlantic Speedcubing Championship 2026 (2026-08-14~16),333 R1 F #1
 1172367001,B2 L B2 U2 B2 R2 U2 L R' B U L2 F U' F2 D2 L D' B' R' B R,B,Trondheim Parity Open 2019 (2019-06-07~09),333bf R1 A #2
 4509776001,D' F D' L2 D B2 F2 U R2 U' B2 F R F U2 R' F U' B',B,LA PRE Pucallpa Speedcubing 2025 (2025-02-22),333 R2 B #4
 3421966021,F R U' B2 L U2 R' D F2 L' D2 L F2 L D2 L' D2 F U' L2 U',B,Tassie Summer 2024 (2024-01-13~14),333mbf Final A #1
@@ -140,7 +140,7 @@
 3901900001,U2 L F L2 B' L2 D2 L2 B' L2 B2 L2 U' F' U2 R F' L U2,B,CubingUSA Southeast Championship 2024 (2024-06-28~30),333 R2 D #4
 3544214001,R' D R2 D F2 L2 D R2 U2 F' R' B U' B2 D2 B' U' R' U,B,Pitic Open 2024 (2024-02-24~25),333 R2 A #3
 1485104001,R2 D2 L2 F' D2 L2 B2 U2 F' L2 F2 R D2 U' R2 B U2 F2 U' F2,B,Lexington Feet Fest 2019 (2019-12-31),333ft R1 B E2
-5456729020,L' U' B2 D' R2 F2 U R2 F2 U' L U2 L D' B F2 U' L B,G,PBQtah 9 2026 (2026-03-14),333mbf Final B #1
+5821448001,B' U' B2 D' R L D B2 L U2 F2 R D2 F2 L' U2 D R2 F2 L' F2,B,Florida Championship 2026 (2026-09-05~06),333bf R1 A E2
 1490039001,L' F2 R' B2 L D2 L2 D' L2 U' R2 U F' L2 B R' B R2,B,Xi'an New Year 2020 (2020-01-01),333 Final A #2
 5660738011,L' D' F2 R2 U L' B2 U' R B L' U2 B2 R' U2 F2 R B L B',B,Ileseum Cube Open 2026 (2026-05-24),333mbf Final A #1
 3895854001,F2 D' F U' B2 R2 D L2 B2 U' B2 D B' U' R' U2 B' R' D2 L2 U',B,Vigo Open 2024 (2024-06-29),333bf Final A E1
@@ -176,7 +176,7 @@
 2266902001,F2 D2 F2 U2 B2 R' B' U B R2 F2 B D2 F L2 F' L F',G,Bangkok Cube Fest 2022 (2022-10-29~30),333 R1 F #2
 3332463001,B L U2 R2 L' D L F2 B' L R2 B2 D2 L2 F R2 F2 B',G,Navidad Explora Medellín 2023 (2023-12-08~10),333oh R1 C #4
 2336044006,R2 D2 B2 L F2 R' D' F U' L U R2 F2 U' F2 U2 R2 D2 R2 B R',B,Silence in Cebu 2022 (2022-11-26),333mbf Final A #2
-4215752001,U' L2 U F2 L2 D2 B2 R2 D' F R D2 F' U' L U F U,B,La Sillan't Monterrey 2024 (2024-10-19~20),333oh R2 A #2
+5813464001,F2 U B2 L2 D B2 U2 F2 D' L2 F D' R2 B F' D2 L' R' F' D2,G,Brookline Favorites IV 2026 (2026-08-29),333 Final A E2
 2367452003,D2 L' D' R2 U2 F U' L' D' R2 D2 B2 L' D2 R' F2 L B2 L2 U B',G,Winter WestSide Events 2022 (2022-12-10~11),333mbf Final B #2
 4087922001,R B2 R' B2 R' D' R B' L2 F2 L2 D' R2 U' D2 R2 U R2 F,G,Apol Open Guayaquil 2024 (2024-09-07),333oh Final A #4
 5280547001,U2 F2 D2 B' F2 R2 B U F' L U L F' U' R2 B2 D',B,Mindanao Championship 2025 (2025-12-14),333 R1 C #2

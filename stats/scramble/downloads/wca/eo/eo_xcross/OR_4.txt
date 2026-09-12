@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / OR / bin 4
-# Population in this bin: 119
-# Samples listed: 119 (all entries in this bin)
+# Population in this bin: 121
+# Samples listed: 121 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 14808001,F B' U2 B U R' F' D F2 D2 R2 L2 F R2 L2 F' B2 U2 D2,O,Didas Brest 2014 (2014-04-26~27),333ft Final A #1
@@ -124,3 +124,5 @@
 5508802001,U2 F B2 R' F' U2 R' U2 L2 U2 D2 B' R2 F2 U2 L2 U2 F L' F,R,No Peeking Calgary 2026 (2026-04-04~05),333bf R1 C #4
 5512705001,D' L2 B2 D2 R B2 U2 L' R2 U2 L' U' L D2 U' B2 D',R,Round Rock Splash & Solve 2026 (2026-04-04),333 R1 E #1
 5653592001,F2 R' L' D' F2 R' L' U B2 L U' D' L2 U F2 B2 U B2,R,Hobart Autumn 2026 (2026-05-24),333 R1 D #4
+5815523001,F' D2 F R' D F' D F B2 L' D2 L2 B2 R2 F2 L' U',R,Bremium Mega Day 2026 (2026-09-05),333oh Final B #1
+5815668001,U2 L2 F L2 U2 L2 F2 R2 L' B2 D U' B2 D' R' U' L F,O,Seremban Cube Challenge 2026 (2026-09-05),333 R1 B #1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / O / bin 9
-# Population in this bin: 322
+# Population in this bin: 330
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5035001,F2 D2 F2 U2 L U2 B2 R' U2 L' F U' B' L' D' L2 F' R2 U' R',O,Tula Open 2014 (2014-03-28~30),333 Final A #1
@@ -89,7 +89,7 @@
 5274502022,U2 R2 B2 D2 F D2 F' D B' F D' B2 F' U L2 R D2 B L B2,O,New Zealand Nationals 2025 (2025-12-12~14),333mbf Final A #2
 833097001,B2 F' U2 F' D2 L2 D2 B2 R2 D' B' F U2 R D R' D2 U' R',O,Baoji Open 2018 (2018-07-21),333oh Final C E2
 839822001,R' U' F U' B2 U F2 U' L2 R2 U2 B2 L2 B2 R' D B' L' R' D R' B' D U' R' U' F,O,Erciyes Weekend 2018 (2018-07-21~22),333fm Final A #1
-840311001,F' U2 R B U2 F D' F R U F' B2 R2 F2 B U2 F U2 R2 L2,O,Korean Championship 2018 (2018-07-20~22),333 R1 H #2
+5793881016,U' L U B' D' R2 L U' R U2 L F2 R' L2 F2 B2 U2 F L D2,O,BrizZon Side Open IV 2026 (2026-08-22~23),333mbf Final A #1
 5383832001,R B2 D F' U B' L' D R F U2 R2 F R2 D2 B' U2 L2 F' B2,O,Velilla Open 2026 (2026-02-14~15),333 R2 C #1
 4448222001,D F' U' R B' D L B2 U2 B2 D2 R2 B2 L2 B R2 F' D2 R' U2,O,VI Recife Open 2025 (2025-01-25~26),333oh R1 A #1
 4332309001,D2 R' F2 U' F U2 F2 R2 U2 F' L2 B' R' U' L' U2 F L R2,O,Berkeley December Weekday Tricubealon 2024 (2024-12-04),333oh R1 B E2
@@ -102,7 +102,7 @@
 4661218014,D F R B U D F2 L B' R2 B2 R2 U2 R2 D R2 D F2 D2 F' L' F,O,Horseheads Spring 2025 (2025-04-20),333mbf Final A #1
 943309021,D2 R2 D2 F2 L2 U R2 D' B2 U B R2 U' L' U' F' D L' B2 R' B,O,Malaysia Cube Championship 2018 (2018-11-23~25),333mbf Final A #1
 5640713001,U' F L2 B F2 D' U' F2 D' B2 R2 U F2 R' F2 D L' R F' U2,O,Perth Puzzle Party 2026 (2026-05-16),333 R1 C #1
-3807240001,B' U' R' U2 R2 F2 R2 U R2 D F2 D' L' D B' U2 L2 R2 D' L2,O,TCG Space lll Santa Anita 2024 (2024-05-25~26),333oh Final A E1
+5796100011,R' U2 B2 R U2 R2 B2 F2 R' F2 D B' L' D B2 D R2 F L' B' L',O,Klemzig Kubing Decathlon 2026 (2026-08-22~23),333mbf Final A #1
 3779895001,F' L' D2 F R' U2 F2 D2 U2 L' U2 B2 R D L2 B' F L' U' R,O,Tramsheds II: May Sunday 2024 (2024-05-19),333 Final A #4
 1001261020,B2 R2 F2 D' B2 U L2 D' F2 D' B' F D' R B2 U L U' R2 D' B2 L' F2,O,Kiev Super Blind 2019 (2019-02-02~03),333mbf Final B #2
 4291397001,F D L2 D R2 U' F2 U' R2 L' D2 F D' B L U' L2 D' F,O,Robinson Latkrabang Open 2024 (2024-11-16~17),333 R1 C #4
@@ -119,7 +119,7 @@
 1195977001,R2 U R2 B2 U' F L' B' D' R' U' R2 U2 R2 F2 U' B2 D' B2 R2 D2,O,Altai Special 2019 (2019-06-25~26),333ft Final A #3
 1225781001,L F' R2 B' L D R' L B2 L' U R2 D2 L F2 R' D2 R2 D2 R U2,O,Teletón Salamá 2019 (2019-07-13),333 R1 A E2
 5066285001,R2 L B' R' L2 U' B R2 D B2 R2 U' D2 L2 U R2 L2 B L' F,O,Puerto Real Camaleón Open 2025 (2025-10-04~05),333 R1 B #4
-1306627001,R2 D2 B' F2 L2 F D2 F2 D' R D2 R2 F D' U2 R' F2 D R2,O,Dutch Nationals 2019 (2019-09-21~22),333oh R1 B E2
+5811840001,L U B' U F' D L' B2 U2 F' D2 R2 U2 L2 B' D2 R2 B R' B2,O,Shin Kong Cube Open - Taichung 2026 (2026-08-30),333 R1 D #1
 1333528001,B2 D' F2 U L2 D' F2 D F' L U2 L B' L' B L U L2 R' D' B' L,O,Shandong Open 2019 (2019-10-04~05),333bf R1 D E1
 5406786001,L D2 B R2 U2 L D2 U2 L D2 F2 R2 D2 F2 B L2 D' L U F R2,O,Lierskogen Vinterkubing 2026 (2026-02-21~22),333oh R1 B #2
 3765551001,F R U F2 U2 L2 U L2 F2 D' R B' R2 D2 L' D B2 D' B',O,SacCubing XVII 2024 (2024-05-18),333 R1 A #3
@@ -140,7 +140,7 @@
 1849428001,B' R' D F' R2 B2 U2 D' L' F2 R2 D R2 U2 F2 U' R2 B' L,O,Vännäs & Friends 2022 (2022-04-01~03),333 R2 B #1
 1900236001,U R' U2 F R2 B' U F2 B2 L2 D2 R' D2 R' B' R U2 L2,O,Utah Puzzling for Awareness 2022 (2022-04-30),333 Final A E2
 1940063001,U F' L F2 D' B2 R2 D2 R2 U' L F2 D' B2 L2 F R2 U' F,O,3x3x3 Only Hamilton A 2022 (2022-05-29),333 R1 C #3
-1947357001,F D R' U' L D2 F2 R' B U R B2 L2 F' U2 L2 F' L2 U2 B',O,SAJ Águas da Prata 2022 (2022-05-28~29),333 Final A E1
+5800524001,U2 L2 F2 U F2 R2 F2 D' B' R F2 U' F' R2 B2 D B2 D' L,O,Beijing Autumn Begins 2026 (2026-08-22~23),333 R2 B E2
 1968205031,R D R2 U L2 U F2 D' F L' R2 D' L' R2 B R F L B L',O,Kidderminster Summer - British Blind Off 2022 (2022-06-11~12),333mbf Final B #3
 4308741046,U F U2 L2 B L2 U2 L2 F D' R' U2 B D2 L2 F' R D' R2,O,Please Be Quiet Luzon 2024 (2024-11-24),333mbf Final A #1
 2088510001,R' D L' F' L2 U2 F2 D2 F2 D B2 L D R D' B F2 D2 L2,O,NxN Minnesota 2022 (2022-08-14),333 R1 C #3
@@ -166,7 +166,7 @@
 4718347001,B2 U D B2 L B2 D2 L' B' R2 D2 F2 B2 D B2 D L D,O,It's Sarzana O'Clock 2025 (2025-05-03~04),333 R2 C E2
 2600327039,B' L' B' D' R2 U2 B2 U' F' L' B' R2 U' F2 D2 R2 F2 L B2,O,Please Be Quiet Brisbane 2023 (2023-04-01~02),333mbf Final A #1
 2643863001,U B2 F2 L' R2 D2 U2 B2 U2 F' D2 U2 F R2 F U B' R2 U B' L,O,Slow N Steady Spring 2023 (2023-04-15~16),333bf R1 B #2
-2667011001,B2 L D' B' U' R' L' U F' R2 U F2 U2 F2 B2 L2 D' L2 U' L',O,CubingZA Cape Cubes Autumn 2023 (2023-04-22~23),333 R1 B E2
+5814799001,B' D' F2 L' F R' B' D B2 L' F2 R2 F2 U2 B2 D2 L2 U' B2 U2,O,Don't DNF Dallas OR 2026 (2026-09-05),333oh Final A #1
 4524330038,U' D F' B' U B D2 R2 F R F2 U2 L' B2 L2 U' F' L2 U2,O,Efficient in Elmsford Winter 2025 (2025-02-22~23),333mbf Final A #3
 2763044074,F2 L2 U' F2 D2 L2 B2 L2 F D L2 R D U2 F2 L2 F U L' R' B' L,O,Please Be Quiet in Tashkent 2023 (2023-05-27~28),333mbf Final A #1
 5750065001,B2 D' B U2 B L U F2 B R' U2 R2 F2 L2 U2 R2 F' R2 B',O,Golden Square Shopping 2026 (2026-07-11~12),333 Final A #3
@@ -193,7 +193,7 @@
 4153517001,F L2 B' U' R D2 L U L2 U F2 U' F2 B2 U D L' B',O,New Zealand Cubing Decathlon 2024 (2024-09-28~29),333 R1 C #1
 5306442019,D2 B2 L2 F2 U' B2 U L2 B2 L F' U' B2 L B' U L2 D' F R' B,O,CF Goes Crazy II Brzeziny 2026 (2026-01-02~04),333mbf Final B #1
 3412053001,R F2 L2 F' D B2 U B2 U2 F2 D2 R B2 L' F2 B R2 F' R2,O,Ke Solo Lur 2024 (2024-01-13~14),333oh R1 D E1
-4981198001,F' L' U F' U2 B' F2 L2 D2 F2 R' D' U B' D2 R' U2 R,O,Hancock County Summer 2025 (2025-08-30),333 R1 D #3
+5783603001,R2 D L' B' U' R' D2 B D' F B2 R' F2 L B2 L2 F2 U2 R' F2,O,BC Championship 2026 (2026-08-07~09),333 R1 D E1
 5304313041,B L U2 F2 D R2 D2 L2 F2 U F' L2 R B2 F' D' F' D' B' D2,O,New York Multimate PBQ III 2025 (2025-12-27~28),333mbf Final A #1
 3562760001,U2 F R' B' R2 U' L2 B2 U' B2 U2 L R' U F' D' U' L2 F2,O,Tramsheds I: Newcomer Sunday 2024 (2024-03-03),333 R1 A E1
 4626886074,F2 L' B2 D2 F2 D2 L' D2 F2 R' F2 R F' D R B F2 U' L D B' L2,O,New York Multimate PBQ 2025 (2025-04-04~06),333mbf Final A #3

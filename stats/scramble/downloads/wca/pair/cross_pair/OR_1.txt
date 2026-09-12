@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / OR / bin 1
-# Population in this bin: 38
-# Samples listed: 38 (all entries in this bin)
+# Population in this bin: 39
+# Samples listed: 39 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 365282001,B' L U2 F' R2 B D F' U F2 U' B2 U2 B2 D L2 D',R,VIT Rubik's Cube Challenge 2016 (2016-09-24~25),333oh R2 C #2
@@ -43,3 +43,4 @@
 5265818001,U' F' R' U L2 U' R2 D' L2 U2 L2 U' B R2 D F' R2 F L,O,Noida Winter Cube Open 2025 (2025-12-14),333 R1 C E1
 5413185001,U2 L2 D2 F U2 L2 F' L2 R B U' L F' D R' B2 L' F D' L2 U,R,CF Goes Sideways Brzeziny 2026 (2026-02-21~22),333bf R2 A #3
 5508209017,D2 B2 R U2 R' U2 L' D' R B' D2 F2 L' D' R2 D2 B U2 B' L,O,Johnshhhtown 2026 (2026-04-04),333mbf Final A #1
+5806539001,R2 D R2 F2 U2 F2 D2 R' B2 L2 U R' F D2 R U L2 B2,O,Kārķi Open 2026 (2026-08-26~30),333oh R1 A #5

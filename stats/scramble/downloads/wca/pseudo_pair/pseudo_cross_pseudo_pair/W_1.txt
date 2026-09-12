@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / W / bin 1
-# Population in this bin: 197
-# Samples listed: 197 (all entries in this bin)
+# Population in this bin: 201
+# Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 2478001,R2 B' D2 F' L2 D2 B F2 D R2 U' L B2 U2 L' F' D' F R2,W,Santo Domingo Spring 2014 (2014-03-23),333oh Final A E2
@@ -164,7 +164,7 @@
 4543243001,R' U2 F2 U2 R2 B2 U R2 U L' D2 L' D' F U2 B2 R' U,W,Luoyang Spring 2025 (2025-03-01),333 Final A #2
 4544991001,L' D' B2 L' D2 L2 R' U2 B2 R D2 B' D' B F U L2 D',W,Villavicencio 2025 (2025-03-08),333 Final B E1
 4558719001,R2 D L F R F2 L' F2 U2 R2 D2 U L F L2 B' R' F',W,Singapore March Classics 2025 (2025-03-15),333 Final A #5
-4572105022,U' L2 B R' B2 L R D2 R' F2 L U' R2 U B L U' B2 L' F2,W,Megaminx on the Madison Isthmus 2025 (2025-03-15~16),333mbf Final A #1
+5816874001,B' U' L2 U' L R2 U2 R' B2 R2 D L B R' B' U2 F',W,Mayo Cubing 2026 (2026-09-05~06),333 R2 A #5
 4620714001,F U2 L U2 R2 U2 R2 U' R2 B2 U' B2 L' F2 D' B R' F2 D',W,Cube Against Cancer Buffalo 2025 (2025-04-05),333 R2 A E2
 4630861001,F U2 B F2 R2 D2 F' R2 F' L2 D B2 F' D2 U' B2 U2 F',W,Virginia Always Open Spring 2025 (2025-04-06),333 R1 E #4
 4656240001,D2 F2 U' B2 F2 U B' R2 U L' D L F' L2 R2 U2 R,W,Tocancipá 2025 (2025-04-19),333 R2 A E1
@@ -202,3 +202,6 @@
 5690708001,U' L U' B U' L2 B2 U F2 U2 F2 L2 U R' D' U2 B D' B' R2,W,SAJ Águas da Prata 2026 (2026-06-06~07),333 R1 A #3
 5735638001,R2 U L2 D2 B R2 B D2 R2 F D2 F' L' U F2 D' B' R U' L2,W,Indian Cube Challenge BLR 2026 (2026-06-27~28),333 R1 C #1
 5760171001,R2 D' B2 D' F2 L2 U R D R' F R2 F2 L' F2 U2 F U2,W,Cube4fun Nowa Sarzyna Summer 2026 (2026-07-25),333oh R1 A #3
+5772703001,B2 D F2 U2 L2 U' R2 F2 L2 B U B' U L' F2 U R' D R,W,Vinnytsia Open 2026 (2026-08-01~02),333 R2 B E2
+5786140001,F2 L2 D2 B2 F2 L' D2 F2 R' U2 B' D L' B D' L2 R2 D' R,W,Kostelec Skewbing 2026 (2026-08-15~16),333 R1 A E1
+5790500001,U' R D' F2 L' U2 L2 R B2 D2 L2 D' R U R F' D U,W,Cube en Baie Open 2026 (2026-08-14~16),333 Final A #5

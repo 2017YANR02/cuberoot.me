@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / G / bin 2
-# Population in this bin: 184
-# Samples listed: 184 (all entries in this bin)
+# Population in this bin: 187
+# Samples listed: 187 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 28543001,D2 R2 D2 B F L2 B U' F' U F' D U' R' D2 R2 F2 U2 L2 U2,G,Bucharest Rubik Summer 2014 (2014-06-15),333bf Final A #1
@@ -189,3 +189,6 @@
 5556227001,B' D U2 B2 L B2 D2 L2 R U2 L B2 U R D B' D2 R' D' F,G,COMO Cube-Off 2026 (2026-04-18),333 R2 C #1
 5726809001,L B2 L R' F2 R2 B2 R' U2 R U2 B R' D B2 D',G,Re-Laois the Cubers 2026 (2026-06-27~28),333 R2 A #3
 5749996001,B U R2 U2 B' L' F' D L2 U D2 F B' R2 B U2 D,G,Warm Up Lent 2026 (2026-07-10~12),333 R3 B E2
+5775855001,B L U' L' U D F L U B2 L2 F2 R2 D R2 F2 B L',G,Cubetec UEA II Manaus 2026 (2026-08-08),333 R1 C #1
+5781827001,B2 L2 B2 D' F2 U2 L2 F' U L D L R2 U2 B' D F L2,G,Unicentro Tunja VI 2026 (2026-08-08),333 Final A #2
+5813464001,F2 U B2 L2 D B2 U2 F2 D' L2 F D' R2 B F' D2 L' R' F' D2,G,Brookline Favorites IV 2026 (2026-08-29),333 Final A E2

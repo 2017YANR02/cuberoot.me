@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / OR / bin 2
-# Population in this bin: 301
+# Population in this bin: 307
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4993400001,F2 R' B2 D2 U2 L' D2 B2 L2 D L2 U2 B' D' F' R F2 R D,O,Bilbao Open 2025 (2025-08-30~31),333 R1 C E1
@@ -54,7 +54,7 @@
 5092082063,R2 B' F2 D B2 D R2 D2 F2 L2 F R F' D' F2 D F2 U2 L2 B R,R,PBQ in Tashkent 2025 (2025-10-11~12),333mbf Final A #3
 4173031001,D' F2 R2 L F L F' U2 F2 U B L2 B U2 F' U2 R2 U,R,Spark Melbourne Spring Sunday 2024 (2024-10-06),333 Final A #4
 628086001,R2 B2 D' U2 L2 U B2 F2 L2 B2 L' B' U F2 L U2 L' B F2,R,Cubing ATMOSphere 2017 (2017-10-28~29),333oh Final B #3
-5394166001,B R2 D R2 F2 R2 U F2 U B2 U' R' D U' R U2 B' D2 U2 F',O,Temple Cubing Winter 2026 (2026-02-20),333 R1 B E1
+5820364008,D2 F L D F D' B2 R' B' L2 U2 F' L2 B U2 B D' L' U2 L2,R,New York Big and Quiet Championship 2026 (2026-09-05~07),333mbf R1 B #2
 638300001,U2 R2 U B2 L2 F2 U2 L2 U F2 U2 R F' L' F' L' R2 F2 D' L',R,Hudson Valley Fall 2017 (2017-11-05),333 R1 E #1
 639548001,D2 U2 L2 F' D2 B D2 B L2 B' U' L2 U R D' B2 F L' D',R,DiabloRubik 2017 (2017-11-12),333 R1 A #1
 4463879001,B' D2 B U2 F2 R2 D2 L' D L' F2 U' L B2 L' R F' U,R,Aldeilla Winter Open 2025 (2025-02-01~02),333oh Final A #2
@@ -63,7 +63,7 @@
 4872166001,F' U2 R2 F2 D2 L' F2 D2 L' R2 F2 B U' F L2 B F2 D' U,R,Calgary Summer A 2025 (2025-07-19),333 R1 C E1
 4265433006,L' D2 L2 B D2 B' R2 U2 B R B L2 F2 D2 F2 L B' D,R,Rubik's Italian Championship 2024 (2024-11-01~03),333mbf Final A #1
 661398010,F2 D' B2 L2 D L2 R' B' U L' U F L U B2 R2 B2 F' L B,R,Plentzia Open 2017 (2017-06-17~18),333mbf Final A #1
-661417119,R2 D' L2 B2 R2 F2 D' U F2 U L D B F2 U B D' U' B2 U' L,O,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #1
+5814539001,B' U' R2 B2 D2 R2 B2 F' R2 F D2 R B2 R U R' B D2 F',O,Greitieji Miško Kuberiai 2026 (2026-09-05),333 R1 B #3
 661493004,B' D2 L2 F R2 B' L2 F2 D F R2 B' R F2 D' L D R D2 L' F2,O,Estonian Open 2017 (2017-09-09),333mbf Final A #1
 662716001,U2 R2 U' R2 U L2 B2 L2 U' L' U' L2 F L' U2 R2 U L2 R2,O,Cebu Speedcubing Year End 2017 (2017-12-09),333oh Final A #5
 4399038001,D2 F2 U' L2 U' L' F' D' L' F' R2 B U2 B' D2 L2 R' U,O,Val di NxN: Nocturnal Edition 2024 (2024-12-28~29),333 Final B E1
@@ -112,7 +112,7 @@
 1381417001,F2 U2 B2 R2 D2 R2 U2 B L' B' L F2 R' U' L2 U' R' B L',R,Music City Speedsolving 2019 (2019-11-01~02),333 R2 A #3
 1386783015,L2 B2 R2 U B2 L2 D2 L2 R2 D F R B2 U F' D L U' R F2 L B2,R,Japan Championship 2019 (2019-11-02~04),333mbf Final B #1
 5456565001,L2 U2 B2 U L2 F2 R B' F2 R F D' L B F L2 B2,R,Penghu Spring Cube Open 2026 (2026-03-14),333 R2 B #5
-1416316001,F' L F2 D' R' B2 U2 R D B U2 B2 L2 B R2 D2 L2 B R2,R,Xuzhou Winter 2019 (2019-11-24),333 R2 A #4
+5778050001,L F2 R2 U F2 U B L2 U' R2 U2 R' F2 U2 B2 D2 F2 L F2,R,Pilzno Cubing Holiday 2026 (2026-08-08~09),333oh R1 A #1
 4542216001,F2 U B' R2 B' L2 D2 B' R2 U2 R' U R' U B L B2 F D,O,Pingtung Winter Open 2025 (2025-03-01~02),333 R1 E #5
 4200695001,R B2 U B2 L B2 U' L' F2 D2 F2 R2 U' F2 R2 D2,R,Centro Suba Bogotá III 2024 (2024-10-19),333oh Final B #2
 1456647001,D2 F2 D2 B L F L' F' B D' F2 B2 L2 F2 D F2 U L2 U2,R,Indianapolis Cubes Winter 2019 (2019-12-14),333 R1 G #3
@@ -130,7 +130,7 @@
 1812047001,R2 U' L2 R2 D' L2 U' F' L' D R2 F L2 B' L D2 B,R,Cocha Sub-X 2022 (2022-02-11~12),333oh R1 B #3
 4984320001,L U' B2 D B2 R2 D U L2 R' B2 R' B2 U R2 U' L U,O,Campeonato Baiano de 3x3 2025 (2025-08-30),333 R1 H E1
 1910813001,R D' R D2 R' B' R2 D' R D B D2 F2 B' R2 F' R2 D2 F2,O,Going Slow in Idaho 2022 (2022-05-07),333 Final B #5
-1968967001,D2 B D2 R2 B' F2 D2 L2 F2 L' D F D' U2 L D' U2 L2 R',R,Bluegrass Spring 2022 (2022-06-11),333 Final A E1
+5803921001,U F' B2 R' D L' U' R2 U' L' U' L2 U' D2 L2 U2 F2 D' F2,O,Waihopai Winter 2026 (2026-08-22~23),333 R1 A E2
 4302140001,R2 B2 D' U' R2 F2 U' B2 L2 U R2 F L2 F D R2 F' L2,R,Acrópolis Bucaramanga III 2024 (2024-11-23),333 R1 C #5
 2055892001,R' F' R' U' F2 R B' D F R2 B2 U2 D' R2 B2 U B D',R,Bangkok Cube Day Rainy 2022 (2022-07-30~31),333 Final A #2
 2058578026,L' R2 F2 U' R2 D' R2 U F2 L2 R2 U' L B' R' D2 F2 D' B D' L,O,Tashkent Open 2022 (2022-07-30~31),333mbf Final A #1
@@ -145,7 +145,7 @@
 2317256001,U' L' D R' F2 U L' F R' D B R2 B2 L' D2 R L2 B2 L2,R,River Hill Fall 2022 (2022-11-19),333 Final A #5
 2322615001,D' L F' R2 B' U2 D R D2 F R2 L2 U2 L2 D2 F2 U F' L B,R,PoliMi Mental Breakdown Mini 2022 (2022-11-27),333bf R1 C E1
 2327610001,L' D2 F2 U' F2 L2 U' R' D' R' U2 R' U' L' U' B' R,O,Jach'a Cubing 2022 (2022-11-19~20),333 R1 D E1
-5038577001,F' R D' R2 F' D R2 F R2 D2 F' U2 F2 L2 B L2 D2 F' L,O,HKRCU 20th Anniversary 2025 (2025-09-20),333 R1 N #3
+5809326001,R2 F2 U2 R' B L2 B' R2 D2 F' D2 R U' F2 D F D2 R2,O,Brampton Summer 2026 (2026-08-29),333 R1 E #5
 2398576031,B R' D F2 D R2 B2 U' F2 D L' U' F2 L' B L' U R' D L B,R,Taiwan Championship 2022 (2022-12-16~18),333mbf Final A #1
 4616143001,B R2 U F L2 F' B2 D F2 U' L2 D' F2 D2 B' L U',R,Xuzhou Newcomers 2025 (2025-03-30),333 R2 F #5
 2433091001,D R2 U2 L2 U2 B2 R' B2 L' F2 B' R' B' D2 U2 B2 U' L2,R,Cubing at The Cube Saturday 2023 (2023-01-21),333 R1 A #3

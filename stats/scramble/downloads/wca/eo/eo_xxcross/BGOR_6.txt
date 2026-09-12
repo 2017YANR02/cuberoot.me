@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BGOR / bin 6
-# Population in this bin: 425
+# Population in this bin: 432
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3270001,D2 R D2 R' F2 D2 F2 R2 F2 R B U' R' U B' U' R2 D F',B,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 S #5
@@ -30,7 +30,7 @@
 2281941001,L2 D L2 D R2 B' L B D B2 D' F2 L2 F2 R2 B',B,Ayase Autumn B 2022 (2022-11-06),333 R2 B E2
 5596414001,F D' R2 B R2 D2 F2 L2 F L2 D' R B' R' U R B L F2,R,Oregon State Spring 2026 (2026-05-02),333 R2 A E2
 5631005027,F' D2 B' F2 D2 U2 F' L R B2 L' F2 L' B L R F',R,Toledo Big & Blind 2026 (2026-05-16),333mbf Final A #1
-275052001,R D2 B R B' U R F2 U' B U2 L2 D' F2 L2 U F2 D,O,VSU Open 2016 (2016-03-26~27),333 Final A #3
+5809683001,B' L' U2 D F D2 B L B' R L' B2 R' U2 D2 L B2,R,DFW Cubing Summer 2026 (2026-08-29~30),333 R3 B E1
 284789001,L U2 R' F2 D2 F2 U2 B' U2 F2 R' U2 L' U2 L2 U F,G,Argentum Open 2016 (2016-04-09~10),333 Final A #1
 4279476001,U2 F R2 D' L2 B2 L2 R2 D L2 B D' B D' U R F L' R,B,Delhi Cube Challenge 2024 (2024-11-09~10),333oh Final A #3
 5361529001,F2 D2 R F2 R2 F2 R D2 F2 B' L B R B2 D2 U L D2,O,Stenay Que le Début 2026 (2026-01-31~02-01),333 Final A #2
@@ -53,7 +53,7 @@
 448139001,D2 U2 L F2 L' U2 R2 U2 F2 L F' L2 D F' U2 R2 D2 F L F2,O,3x3x3 HanMaDang 2017 (2017-02-18),333oh Final A E1
 451513001,R F2 R' L2 F D L B R' D' R' F2 U2 L U2 F2 U2 L',R,P3 Grand Open - Feb 2017 (2017-02-26),333oh R1 D #5
 4020953037,B2 R2 U' B2 D' B2 U B2 R2 B U R' D2 R F2 D R D U L',O,Quiet in the Rotunda - Virginia 2024 (2024-08-17),333mbf Final A #1
-482773001,B2 D2 B' F' R2 D2 R' F D F U2 F' D F L' B2 U',R,Kongens Lyngby Open 2017 (2017-04-08),333 R1 B #5
+5792252001,D2 F U' F' D' R2 D2 R2 F' L' D2 R F2 L D2 F2 U2 D2,O,Singapore Augu-Skewb Day 2026 (2026-08-23),333oh R1 C #3
 519886001,U2 F' U2 B' D2 B' L F2 U2 F2 R U2 B L F2 D2 F,R,Aix-en-Provence Open 2017 (2017-05-27~28),333 R1 A #1
 522578001,D F L D' F2 B' U B2 R' F2 U2 F2 L2 F2 R2 F2 U F2 U2,G,Fecap Open 2017 (2017-05-27),333 Final A #4
 529236001,U' L2 D' F' R2 U' D F' U' L B U2 B' L2 B' D2 R2 F2 R2 L2,G,Texas Two-Day Showdown 2017 (2017-06-09~10),333 Final A E1

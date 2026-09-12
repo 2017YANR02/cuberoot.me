@@ -1,0 +1,11 @@
+# Scramble samples — first_layer / first_face / Y / bin 2
+# Population in this bin: 4
+# Samples listed: 4 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+660508016,R2 F R2 F U2 F' L2 D2 F R' D' R D2 F2 D' U' L B' U' B2 L,Y,Les Santes Open 2014 (2014-07-18~19),333mbf Final A #1
+742039001,U2 F2 D2 B2 F L2 F2 R2 U2 R D' R2 U L2 D R' D' L2 B D,Y,Budapest Open 2018 (2018-03-31~04-01),333bf Final B #3
+3077128001,D B' R2 U2 B D' R' D R B' F2 U' F2 U' R2 D B2 U L2,Y,Goats of Cubing 2023 (2023-09-16~17),333 R2 A #3
+3417474001,U' F L F2 D2 B' U R B2 U2 R2 U' R2 U R2 B' D R2,Y,Adelaide Summer 2024 (2024-01-13~14),333oh R1 C #1

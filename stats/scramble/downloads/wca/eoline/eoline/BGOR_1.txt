@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / BGOR / bin 1
-# Population in this bin: 317
+# Population in this bin: 320
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5416353001,D2 U2 L2 R2 F2 L R' B' D2 L' U2 R2 F L F R F,B,Good Solves in Gibson Park 2026 (2026-03-01),333 R1 C #5
@@ -27,7 +27,7 @@
 170902001,U R2 F2 U F2 R2 B2 R U' R' F2 L' D2 U' L D2 F2,O,N8W8 Summer 2015 (2015-08-01~02),333fm Final A #2
 186800001,R' U L F U2 D' R' U' D F' L2 U2 B2 R B2 L F2 R' F2,R,Oslo Fall 2015 (2015-09-12),333 R2 A E2
 189328001,D2 F' D2 R2 F' R2 U2 B' R2 B2 U' F' D R2 D2 F' D F',O,MCC Gamma 2015 (2015-09-13),333 R1 B #4
-193948001,D' U B2 D' F2 U2 F' D2 U' L2 B D' L2 U2 B' F2 D2,B,Slow n Steady Fall 2015 (2015-09-26),333 R1 H #4
+5804933001,U2 R2 F R2 D2 R2 F' U2 F2 L D2 L2 B L D,R,Calgary Fall 2026 (2026-08-29),333 R1 H #2
 3579747001,L2 F D2 U2 B' D2 F' R2 B' U L2 F L2 U B F U' L,B,Bulldog Winter 2024 (2024-03-09),333 R1 C #2
 235036001,B D2 F R' F D2 R2 L' B' U2 L2 D2 L U2 F2 L' U2 L',R,Brain Studio Winter Open 2015 (2015-12-25~27),333oh R1 D E2
 254415001,D2 L' B2 U2 L' B2 R U2 R F2 U' B' L2 D2 U' R2 U' F,R,Big 'n Weird Pretoria 2016 (2016-02-13),333 R1 A #2
@@ -183,7 +183,7 @@
 5539376001,R D L2 F D' R2 F U2 F2 U D2 F2 R2 U L2 F2 L2,O,NZ South Island Championship 2026 (2026-04-10~12),333 R2 C #2
 2840581001,U' L D2 B2 L D2 B2 L U' B2 D B2 U' F2 R D R,R,Victorian Open 2023 (2023-07-01~02),333oh R1 C #2
 4486321001,B2 D2 L2 D L2 F2 U' R' B2 D L' U F2 D L' R' D2 B,O,NxNs at Finprov 2025 (2025-02-16),333 R1 B E2
-2876134001,L' F R F2 L2 R' F2 D2 R' D2 B' F' L' B' L2 D2 L F2,O,High Gate Irbid 2023 (2023-07-08),333oh Final B #1
+5780713001,F2 U2 F' R D2 R' B2 L' F U2 B R2 F' D2 B2 D,O,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R1 K #2
 2898513015,R2 B2 U' R2 D2 L2 U' F2 U B' U' B' F' D' U R' U R2 B',O,Nod Don Denver 2023 (2023-07-16),333mbf Final B #1
 2917422001,B U B' U B' F' R2 F U2 B D B2 D' B U F' R2,G,Willimiehen Kuutiopäivät 2023 (2023-07-22~23),333 Final B #2
 2944657001,U2 F' U' F' D R2 U' R2 F' D2 R2 D R2 D' F2 R2 L2 U' B R2,B,Big Blind Bucharest 2023 (2023-07-29~30),333bf R1 A #1

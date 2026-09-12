@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / G / bin 2
-# Population in this bin: 130
-# Samples listed: 130 (all entries in this bin)
+# Population in this bin: 135
+# Samples listed: 135 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 53811001,R2 F2 L2 D2 F2 R F2 L2 B' D L' D' R2 B2 F D F2 R' F',G,Fortaleza Open 2014 (2014-08-23~24),333 R2 B #5
@@ -135,3 +135,8 @@
 5700303001,B2 D' B2 F2 L' F2 U2 F2 U2 R' D2 F' D F2 U R2 B2 R' U2,G,Davis County Showdown 2026 (2026-06-13),333 R1 B #4
 5707613001,F U2 F' D2 F' D2 F' L2 D' F L' F2 L' D' F' L' F' D,G,No Veas Ocaña 2026 (2026-06-20),333 R2 A #5
 5728202001,D' B2 D' U' L2 B2 U R' B L2 U2 R D2 R2 D F L' B',G,Warm Up Carolina Pride 2026 (2026-06-27~28),333oh R1 B #2
+5794677041,D2 L' D R' B' L' U' B2 R' L2 D2 L2 U2 B2 U2 B U2 R2 F B2 L B',G,Blekinge Open 2026 (2026-08-22~23),333mbf Final A #2
+5796695001,R B2 L2 D2 R B2 L D U' R' F' L2 U2 F' R F' U' R',G,Kuala Lumpur Cubing Challenge 2026 (2026-08-22~23),333 R1 G #1
+5808073001,R B D' R2 D' R L2 D2 B L2 U2 L' U2 D2 L' B' D,G,Paradise Place Thailand Cube Open 2026 (2026-08-28~30),333 R1 E #2
+5810617001,D2 B L F2 B' L2 U' D R F2 D2 B2 D' B2 R2 U B2 R2,G,Cubithon San José 2026 (2026-08-29),333 R1 C #1
+5817242001,D B' L2 D B2 D' L2 U2 F2 U2 B R D R' B2 D' U F',G,Great North Woods 2026 (2026-09-05),333 Final A #1

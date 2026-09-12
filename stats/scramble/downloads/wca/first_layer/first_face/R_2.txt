@@ -1,0 +1,11 @@
+# Scramble samples — first_layer / first_face / R / bin 2
+# Population in this bin: 4
+# Samples listed: 4 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+500776001,B2 D' B2 L2 D' U R2 F2 U' B' D2 U L' F L' R D' U2 B',R,Changsha Xiangmo 2017 (2017-05-06),333oh R1 A #4
+721380001,F R' F L' F D' R B' U B2 R' U2 R' D2 L2 D2 B2 D2 F2 R,R,San Lucas Open 2018 (2018-03-03~04),333 R1 E #3
+3157181001,R U2 L' F2 L2 D2 U2 L' B' L' D' U' F D B F2 R' B,R,The Art of the Cube Colorado 2023 (2023-10-14),333 R1 A #2
+5450503001,L2 D2 L2 U2 R U2 R' U2 F' R U2 L2 U F2 L D F R2 D,R,North Idaho Newcomers 2026 (2026-03-14),333 Final A E2

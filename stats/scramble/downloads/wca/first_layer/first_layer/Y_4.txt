@@ -1,0 +1,8 @@
+# Scramble samples — first_layer / first_layer / Y / bin 4
+# Population in this bin: 1
+# Samples listed: 1 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+1706757001,R' U R B2 U2 R' B D' L2 U2 D' F2 U D' L U' R',Y,Kharkiv Cubefall 2021 (2021-10-23~24),333 R2 A #5

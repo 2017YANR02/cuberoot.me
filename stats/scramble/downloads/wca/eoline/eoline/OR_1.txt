@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / OR / bin 1
-# Population in this bin: 151
-# Samples listed: 151 (all entries in this bin)
+# Population in this bin: 154
+# Samples listed: 154 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 13215001,B2 L2 D' B2 D F2 D R2 F2 R U L2 U R U,O,Velbert Easter Open 2014 (2014-04-18~20),333 R2 B #5
@@ -156,3 +156,6 @@
 5699272001,U' R' F2 D' L' D R U D2 F2 L' F2 R F2 D2 L B2 D',R,Take Your Time Bergshamra 2026 (2026-06-14),333 R1 B E1
 5704480001,F2 D2 L2 F2 L' F2 R' D2 F2 R' B F' R B' F L' F2 D2,R,Longmont Open 2026 (2026-06-13),333 R1 A E2
 5705148001,D2 L B2 U2 R' D2 L' R2 B D2 R' D2 R U2 B' L F L',O,Rockfort City Cubing Challenge 2026 (2026-06-13~14),333 R2 B E2
+5780713001,F2 U2 F' R D2 R' B2 L' F U2 B R2 F' D2 B2 D,O,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R1 K #2
+5795016001,B2 R D2 U2 R D2 L2 B' R' F' D2 U2 F' L2 B L' B',R,Ecublens Open 2026 (2026-08-22~23),333oh R2 A #4
+5804933001,U2 R2 F R2 D2 R2 F' U2 F2 L D2 L2 B L D,R,Calgary Fall 2026 (2026-08-29),333 R1 H #2

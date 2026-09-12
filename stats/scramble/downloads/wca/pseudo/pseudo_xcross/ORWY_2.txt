@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / ORWY / bin 2
-# Population in this bin: 565
+# Population in this bin: 572
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 261001,R' F D L2 F' B U R2 B' R F L2 U L2 U' R2 U2 L2,W,Montréal Open 2014 (2014-03-15),333 R2 B #1
@@ -49,7 +49,7 @@
 5690417025,R' D' L2 B2 U2 B2 U2 L2 B' D' R2 U R2 B' R2 F2 U' L2 U',R,Headache in Kode 2026 (2026-06-05~07),333mbf R1 B #1
 4582954001,D' L' F' R U' F2 D L2 D2 F2 D' F2 R U2 L F2 L F' R B R,W,Big Side & Blind Olsztyn 2025 (2025-03-22~23),333bf R2 B E1
 329220001,U2 B' F2 R2 F U2 R2 D2 F2 U' B2 F' R2 U2 L B' U' R U B2 L B,O,Czech Open 2016 (2016-07-19~20),333bf Final A #2
-2566606001,L B' D2 L' B2 U2 R' U2 L' R' D' B2 U L D' R B L2 U',W,Bolton Spring 2023 (2023-03-18~19),333oh Final A #3
+5782310001,D' R L' B2 U2 D R' B R2 B2 U R2 U F2 R2 U' R' D,O,Christchurch Winter 2026 (2026-08-08),333 Final B #1
 4265840001,D' L' D2 L2 U F2 R' B' D2 F2 R2 F2 L B2 L U2 R B' L2,W,Olympia Fall 2024 (2024-11-09),333 R1 D #5
 3609399001,D' L2 B2 D B2 R2 D2 L2 D F2 D F2 L D L R B U' L' B',W,Baja Spring 2024 (2024-03-23~24),333 R1 B E1
 3380727001,R2 U F2 D2 R2 F2 U R2 L B2 U' F' D2 L U' B L R2 B' L' F',R,Changsha Open 2023 (2023-12-23),333bf Final A #3
@@ -99,7 +99,7 @@
 5288143001,F2 R2 D2 F R' D2 L' F2 R2 U2 R2 U2 B' R' D' R' B L2 R2 B R',W,DC Hyderabad Winter Open 2025 (2025-12-20~21),333bf R1 B E2
 4147783001,L2 F' D' L2 D2 U' R2 B2 F' R' B2 F' R F' D2 U F',W,Super Duper San Diego 2024 (2024-09-28~29),333 R2 D #1
 5251096001,F2 L U' B L U L' F2 B R' B' D2 R2 D2 L2 F D',O,Rotacube Gaziantep Open 2025 (2025-11-29),333 R1 C #3
-660707002,U' L2 U F2 R2 B2 D2 L2 F2 U F' L D' F D' L D2 R2 F2 D2 B R,O,Mega Rubik 2015 (2015-05-02~03),333mbf Final A #1
+5810167001,F' U B' U B R L2 F U2 B2 R2 F' U2 B' R2 U2 L2 B' U B R,Y,Bay Area Speedcubin' 69 2026 (2026-08-29~30),333bf R1 E #5
 3332252001,U2 F' L D2 R2 U2 B2 D B2 R2 F2 U' L2 R F' R F2 L2 B2,Y,Navidad Explora Medellín 2023 (2023-12-08~10),333 R1 C E1
 5285710001,D F' D2 R2 B U2 R2 F' L2 R' U R' D2 L' B2 R2 F D2 L',O,New Year's Eve in Baku 2025 (2025-12-21),333 R2 A #5
 3642947008,D2 B2 D2 F' R2 D2 U2 F2 R D2 B U' F' U' B' L2 B' U' F',R,Please Be Quiet Auckland 2024 (2024-04-07),333mbf Final A #2

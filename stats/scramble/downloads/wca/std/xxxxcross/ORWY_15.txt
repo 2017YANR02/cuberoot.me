@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / ORWY / bin 15
-# Population in this bin: 29
-# Samples listed: 29 (all entries in this bin)
+# Population in this bin: 30
+# Samples listed: 30 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 290204001,R2 B' L2 F' R2 D2 F U2 F L2 R F2 L R2 D' F U R2 B2 R,O,MIT Spring 2016 (2016-04-30),333 R1 D #2
@@ -34,3 +34,4 @@
 5297405051,F2 U F2 D U B2 R2 D' B R F L' U F' L F' L' B' D2 B D,O,Taiwan Championship 2025 (2025-12-19~21),333mbf Final A #1
 5337153001,U R L2 U2 R2 F' U2 F' D2 U2 F D F U2 B' L' R' U B2 L',O,Just Judge Jura 2026 (2026-01-17~18),333bf Final A E1
 5599614016,D' F B' D2 R' F U L D F R2 F2 B2 U2 R2 F2 L2 F' U2 R2 B' L2,O,Campeonato Mineiro 2026 (2026-05-01~03),333mbf Final B #1
+5780482001,R' F D R F' R2 B U2 B' R2 B' D2 U B2 L' R D F' U' L2 U',O,Couffoul'Events 2026 (2026-08-07~09),333bf R1 A #4

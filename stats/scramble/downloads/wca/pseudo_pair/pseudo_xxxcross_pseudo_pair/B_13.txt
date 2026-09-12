@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / B / bin 13
-# Population in this bin: 218
+# Population in this bin: 223
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5755551001,L' U F U2 R2 B2 U2 L F2 D2 R' D L2 B' F' L2 D B2 D,B,Rubik's WCA European Championship 2026 (2026-07-16~19),333 R2 D #4
@@ -18,7 +18,7 @@
 164224001,D L2 F2 D' U R2 D2 B' U B F' L' D' R' B' U' B2 R,B,Campeonato de Portugal 2015 (2015-07-11~12),333 R1 B #2
 167815001,D2 U L2 U' R2 B2 D' F2 L2 B U2 L' D R B' L' U B D U2,B,Bergen Open 2015 (2015-07-25),333 Final A #2
 196153001,L2 B F R2 F' L2 U2 B2 U2 R' D' L' B2 U B F R' F' D L2,B,China Championship 2015 (2015-10-02~04),333 R3 A #3
-210112001,R2 U2 L2 U2 F' U2 R2 B D2 F R2 D' L2 R B' L' U2 B' D2 U' B',B,Hasselt Open 2015 (2015-10-31~11-01),333bf Final A E1
+5805656001,B2 R B' L F R2 D' R' F2 D' U2 L2 D2 R2 B R2 L2 D',B,Cajun Cube Clash 2026 (2026-08-29),333 R1 B #3
 226880001,L' D2 L U2 F2 L' U2 R2 F2 L2 U L' D F' D2 R2 D B R' U2,B,Cape Town Open 2015 (2015-12-06~07),333 R2 C #4
 227003001,D2 F2 L2 U' L2 U R2 D2 B2 L2 R' B D U' R2 F' R' B2 D2 R,B,INABIF Open 2015 (2015-12-05~06),333 R1 D #1
 228936001,R' F' R L' B' U' D' L B U' D2 F2 R F2 L' D2 F2 L D2,B,Plenty o' Parity 2015 (2015-12-12~13),333 R1 A E1
@@ -148,7 +148,7 @@
 2836388001,L' B2 D2 R2 D' B2 D R2 U2 F' U2 F2 L B U' L' B L2,B,Oslo Open 2023 (2023-06-23~25),333oh Final A E2
 2974929001,F2 R F' U B2 R2 D2 L2 D R2 F2 L U B' F D' B2 R F2,B,San Marcos Open 2023 (2023-08-12~13),333 R3 B #1
 2992540001,R2 F2 L B2 L' D2 L B2 F2 D2 F' R2 U' L' R' B D' L2 B U',B,Odd Day in Sylvan 2023 (2023-08-19),333oh Final B E1
-2999730001,R2 U' F U' L' D' R' U L' U' F' U D2 B2 L2 B2 R2 U2 F2,B,Morro Reuter Cubing 2023 (2023-08-19~20),333 R1 D E1
+5806090001,F R2 U2 F' U2 L2 U2 R2 L F' D' R2 D F2 R' B' U' F R,B,RésoLucens 2026 (2026-08-29~30),333oh R1 A #3
 3035774001,L2 F2 D L2 F2 D U2 L2 D' B2 R' F' L' B' L' D' L F' U' R2 F2,B,Bay Area Speedcubin' 51 Live - SSF 2023 (2023-09-03),333 R1 C #4
 3100656001,U R B' L U' B2 L' U2 D' F R2 L2 F2 D2 B2 U' D2 B2 U' R2,B,Darmstadt Dodecahedron Days 2023 (2023-09-23~24),333 R1 A #5
 3170390001,L B' L' F2 R2 U' D R B L R2 B' L2 D2 R2 D2 F' D2 F2 D',B,Bartebyen 2023 (2023-10-13~15),333bf R1 A #2
@@ -177,11 +177,11 @@
 4071443001,F' R F2 D' L' U' R' L2 B2 D F2 L2 D R2 U2 R' F' U B',B,Portugal Championship 2024 (2024-08-30~09-01),333 R2 C #1
 4080188001,D' L2 F' L2 B2 U2 R2 D2 R2 F U' F' U' B2 D' R B' D R',B,Kent Summer 2024 (2024-09-07),333 R2 C #3
 4124147001,R B2 U' D B R U2 R2 U2 D' R2 L2 F2 U' D2 L' F2 R D2,B,Cube4fun Wisła Masters 2024 (2024-09-21~22),333 R2 B E1
-4204912035,F R2 B' D B2 R' F L' U D2 R2 U B2 U2 D F2 R B D' L2,B,BrizZon Side Open IV 2024 (2024-10-19~20),333mbf Final A #2
+5802902001,U' D B' U' D F' U R U F L2 U2 R F2 B2 R F2 D2,B,IALA School Open 2026 (2026-08-23),333 R1 A #2
 4340431001,B2 L U R' F L2 B F2 D2 F' L2 B2 D F2 U2 B D' L2 R',B,Na'Guara Metropolis Lara 2024 (2024-12-07),333 R1 E #3
 4361132001,R F' D F R' U' L D' L2 F L2 F2 B2 D' L2 F2 U' R2 F2 D,B,Paraíso ao Cubo II DC 2024 (2024-12-14~15),333oh Final A #2
 5431397001,R' U' L2 B L' B2 D2 L U2 F2 D' F2 U' R2 F2 U2 B2 F U',B,Saint Mikes Winter VT 2026 (2026-03-07),333 Final B #5
-4401944021,D2 F' U2 R2 B L' U' D2 F U2 L2 B' D2 F L2 U2 B' L B' L2,B,Tassie Summer 2025 (2025-01-04~05),333mbf Final A #1
+5800360001,R F R2 L U2 D L' F' L' B D R2 L2 D' L2 D2 F2 R2 F2 U',B,Beijing Autumn Begins 2026 (2026-08-22~23),333 R1 C #4
 4465667001,F B2 D2 U F2 R2 U B2 F' D' R' B2 L' U B2 F2 U F D,B,Lyon Last Layer 2025 (2025-02-01~02),333oh R2 A E2
 4486326001,D B2 R2 B2 L2 R2 U' L2 D' U R' D' F' U2 L2 B2 D' L' U F',B,NxNs at Finprov 2025 (2025-02-16),333 R1 C #5
 4579070001,R' B D2 B D2 B D2 R2 U2 L F2 D' B2 D2 U L U' L2 F,B,Alabama Crimson Cubing Spring 2025 (2025-03-22),333oh Final C #2
@@ -204,4 +204,4 @@
 5086685001,D' B2 R' D' B2 D' L2 U2 B2 R2 F2 U2 F U L D' R2 U2 F' U',B,Croatian Championship 2025 (2025-10-04~05),333oh Final B E1
 5170263001,R' B2 D R2 B' R' F' B R2 U' L F' L2 B U2 R2 L2 B L2 F,B,Panama Nationals 2025 (2025-11-08~09),333 Final A E2
 5222106001,F U' B R' D2 U2 R' B2 F2 U2 B2 L2 U R F' D' L2 F' U B,B,Desafío Rubik's Guatemala 2025 (2025-11-22),333 R2 A #3
-5242353001,D2 R L2 D L' F2 U R B F2 D2 B2 R2 L' B2 U2 R L2 D',B,Muchea Cube Day 2025 (2025-12-06),333 R1 B E2
+5817331001,R2 F L' F U F' D L F B' R' F' D2 F B' R2 F' U2,B,Great North Woods 2026 (2026-09-05),333 R1 A E2

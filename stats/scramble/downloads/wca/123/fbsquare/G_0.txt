@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / G / bin 0
-# Population in this bin: 807
+# Population in this bin: 820
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5390296001,D2 F2 R' D2 L F2 R F2 U' R2 D' U2 R F L2 U2 R2 B2,G,Guangdong Open - Revival & Rival 2026 (2026-02-06~08),333 R3 A E1
@@ -36,7 +36,7 @@
 981093001,B' R2 D' F' D L' B L U' R B D2 B L2 F2 L2 D2 R2 F,G,Florence Winter 2019 (2019-01-12),333 R1 B E2
 5340459001,D2 L' U2 R' D2 U2 L' U B' D2 B2 R D2 U2 F U L2 D',G,Saskatoon Winter 2026 (2026-01-24),333 R1 B #2
 4324781001,B2 D L' U B2 U2 R2 D' B2 L2 B2 L2 R B U2 R' F D F,G,Centro Suba Bogotá IV 2024 (2024-12-01),333 Final B #5
-214401001,R D2 L2 F2 L2 R' D R' B L' D' F' R2 D' R F' L,G,Chambéry Cube Open 2015 (2015-11-07~08),333 R2 B #1
+5813726001,R' D' L' F' R2 F2 U2 B2 U B2 U' L' B F' D2 B' R B,G,Mofunland Speedcubing Singapore 2026 (2026-09-05),333 Final A #1
 2590148001,B R U' L D2 B2 L2 B L' D2 B2 U' D2 F2 U B2 L2 U B2,G,Nanaimo Swing into Spring 2023 (2023-03-25~26),333 R2 A #2
 5564107001,U2 F B' D2 B U2 R2 D' F L R2 D2 R2 F2 B2 D' R2 D B R',G,Duper Super Davis Spring 2026 (2026-04-19),333bf Final B #2
 3423093001,B2 R F' D2 B D2 F L2 D2 B L2 D' L' R F' D2 L' D2 R2,G,Iguatemi Fortaleza 2024 (2024-01-13~14),333 Final A #5
@@ -203,5 +203,5 @@
 868791001,L2 R2 D' B2 U F2 D2 F2 L2 F2 U' B' R2 U' R U2 B' L' R D',G,Swisscubing Cup III 2018 (2018-09-01~02),333oh R1 B #3
 4393465007,B2 D2 R B' U' R' B' L' U2 B D2 R F2 R2 L2 U2 F2 R2 B D2,G,Twixmas Flen 2024 (2024-12-27~29),333mbf Final A #1
 4428634001,D2 F U2 R' D2 L2 D2 L' U' L2 U2 B2 D2 L' D2 R U2 F2 L,G,Gdańska Liga Speedcubingu I 2025 (2025-01-18~19),333 R1 C #2
-887458015,B2 D R2 U B2 D F2 U B2 F2 D2 B' R' B2 L R' B' F U' F L2 U',G,Dragon Cubing 2018 (2018-09-22~23),333mbf Final C #1
+5799113001,F B' L2 U2 D' L' F D' L2 U2 D' R2 B2 U2 L2 B2 U R' D',G,Northwest Championship 2026 (2026-08-21~23),333oh R1 C #2
 1065389001,F2 U D2 B L' D B2 D2 F2 L' B R2 L F2 U2 R' D2 L' D2,G,Speedsolving Huancayo 2019 (2019-03-24),333 R1 C #2

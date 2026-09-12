@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / B / bin 10
-# Population in this bin: 122
-# Samples listed: 122 (all entries in this bin)
+# Population in this bin: 124
+# Samples listed: 124 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 15956001,D' B2 R2 D' F2 U' B2 D2 B2 R2 F R2 F2 R U B' L' U F R' F2,B,Hefei Spring 2014 (2014-05-01~02),333 R1 B #2
@@ -127,3 +127,5 @@
 5596144001,U F D L' F R' D' R2 B' R U' F2 U2 L2 D2 F2 R2 U F',B,Rahn Education Open 2026 (2026-05-01~03),333 R2 A E1
 5630618001,F' R2 B2 L' F R' D' L U' B2 D2 B' D2 F L2 F D2 B2 L2 D2 L' F',B,Chess & Cubes Madrid Miniopen 2026 (2026-05-16),333bf Final B #1
 5636178001,D2 R U' B D' L D2 F' R2 F2 U2 L2 D2 B' R2 F' D F' D' B',B,GLS Gdańsk IV 2026 (2026-05-16~17),333bf R1 A E1
+5789632001,R2 U2 B' U2 R2 B2 D2 F' R2 F2 D R2 U2 L' R D' F U R B',B,Birzeit Cubing 2026 (2026-08-17~18),333oh Final B #2
+5815285001,L' R2 B2 D2 L2 D' F2 R2 U2 L D' L' R2 B D L D' L F,B,Ciudad Blanca Ibarra 2026 (2026-09-05),333oh Final A E2

@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BGWY / bin 2
-# Population in this bin: 793
+# Population in this bin: 809
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 28543001,D2 R2 D2 B F L2 B U' F' U F' D U' R' D2 R2 F2 U2 L2 U2,G,Bucharest Rubik Summer 2014 (2014-06-15),333bf Final A #1
@@ -79,7 +79,7 @@
 2788315001,R' U2 B' R L' F2 B U2 L' F2 L U2 R F2 R U B',Y,Energy Cube Ciechanów 2023 (2023-06-10~11),333 Final A #5
 4280293025,L' F' D L' D2 L' F B' L B2 U' R2 L2 U' R2 D L2 U' B',W,Kubing in Kapiti 2024 (2024-11-09),333mbf Final A #1
 379700001,L2 B2 D2 L' U2 R U2 F2 U2 F' L' B2 F' R2 B2 D' L B R,W,Cubing ATMOSphere 2016 (2016-10-15~16),333oh R1 D E2
-2176890001,L' D' F U' D F2 U B L F2 U2 F2 R2 B2 R' D2 L U2 B',B,U24 Open September 2022 (2022-09-18),333oh Final C #3
+5813464001,F2 U B2 L2 D B2 U2 F2 D' L2 F D' R2 B F' D2 L' R' F' D2,G,Brookline Favorites IV 2026 (2026-08-29),333 Final A E2
 5645801001,D2 F2 D2 B' F2 L2 B R D R B2 U' F' L' B2 D2 R F,B,Las Palmas Ahome 2026 (2026-05-16~17),333oh R2 A E2
 3871934001,U2 B2 U2 R' B2 F2 L' F R2 F2 U R2 D2 U' B' U2 L' B,Y,Johor Cube Open 2024 (2024-06-22),333 R1 E E2
 3042782001,D L2 B2 D' F2 D' U' F' L' F D' L' U' F' D2 L' U2 B' L,Y,Azeméis Open 2023 (2023-09-02),333bf Final A E2
@@ -143,7 +143,7 @@
 661210001,F R2 D2 L2 D2 F' L2 R2 D' R D B' F' U R F R U' F2 L2 U2,W,Polish Championship 2016 (2016-12-09~11),333mbf Final A #2
 1228042001,L' F D2 R' F2 R2 L' U F2 R U2 R D2 F2 R L2 U2 F2 L',B,Israel Summer Open 2019 (2019-07-17~18),333 R1 D #4
 4890374001,U R2 U2 R2 U2 B2 U' R2 F U R2 F D' B D L2 F',W,Championnat Canadien 2025 (2025-07-24~27),333 R1 E #5
-661290013,L2 U2 F D2 B L2 F' R' F' L2 R' D L R2 U' B2 R2 D' U L' F',B,Unionville Open Spring 2017 (2017-03-18~19),333mbf Final A #1
+5820346001,L' D' L U' F2 D2 B' U' R' U' F2 D F2 L2 F2 R U2 B' L,Y,New York Big and Quiet Championship 2026 (2026-09-05~07),333mbf R1 A #2
 3617050001,F2 D2 B2 L2 F D B' L' B2 U2 L2 U2 B D' F D2,G,Iguatemi Fortaleza II 2024 (2024-03-23~24),333 R1 B E2
 1434354001,F2 R' F2 R U2 L' B2 L2 B L' F' U' B' U F' U2 L' F U2,Y,Melbourne Cube Days 2019 (2019-11-30~12-01),333 R2 A #1
 953715001,B2 D L2 U' B2 F2 U2 L2 U L' D B D2 F2 D' R' B' F U2 B R,B,Festival SESC Cubo Mágico 2018 (2018-12-08~09),333bf R1 A #1

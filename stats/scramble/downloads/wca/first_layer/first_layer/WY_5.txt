@@ -1,0 +1,30 @@
+# Scramble samples — first_layer / first_layer / WY / bin 5
+# Population in this bin: 23
+# Samples listed: 23 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+343469001,R' U' F R2 U2 B2 L2 D2 B2 U' R2 F R2 D2 B2 R B2 R2 D' B F D' R' U' F,Y,N8W8 Summer 2016 (2016-08-06~07),333fm Final A #1
+763996001,L2 F L' U B2 D L2 U R F L B2 R D2 R L2 B2 R' B2,W,Nipomo Spring 2018 (2018-04-21),333oh R1 B E2
+846356008,L' D2 L B2 U2 R U2 L2 U L2 B L D2 L2 B2 R2 U' B' D2 L,W,Batam Open 2018 (2018-08-04~05),333mbf Final A #1
+870403001,U R' D' F' B2 U' L2 U D R2 F R L B2 L2 F2 L' F2,W,Music City Speedsolving 2018 (2018-08-31~09-01),333 Final A #5
+1019962001,F2 L2 D L2 D' B2 U B' L2 F D F L' B2 F L D2 B,W,Mantua Winter 2019 (2019-02-16),333bf Final A #3
+1021055001,B D2 F D2 F' R2 B2 F U' R' D2 F' R' D' L B' L B' U L' F2,W,Reno Winter 2019 (2019-02-16~17),333bf R1 A E1
+1655432001,U' D F' B' L2 F' U D R U' L2 F2 B2 D B2 L',Y,Welcome Back Kaohsiung 2021 (2021-05-09),333 R2 A #1
+1904205001,F2 L2 B2 L F2 D2 R B2 D L2 R D U F' U B2 U' L2,Y,TCG Nueva Generación 2022 (2022-04-30~05-01),333 R1 C E2
+1915025001,U F2 U' F2 D' L2 U L' F' L2 B' L2 F R2 D B2 R' D,W,GamMa Spring 2022 (2022-05-14~15),333 R1 B E2
+2660292001,F U F D L F' B U F D' B D L2 F2 L2 D F2 U L2,Y,Bay Area Speedcubin' 44 2023 (2023-04-22),333oh R1 C #3
+2919783001,F R U2 R2 U' F2 D' R2 U B U' L' D R' D2 R2 F2 R2,W,Agoura Cubing Again 2023 (2023-07-22),333oh R1 B #3
+3272316001,U2 F' U2 B' L U' D B' U' R2 D' L B2 D2 R U2 L2 F2 R',W,Michigan Mini 8 2023 (2023-11-13),333 R1 C #2
+3603772001,F' U' L2 R2 F2 D F2 U2 L D F' R2 F L' B2 D' R2 F,W,Andina Speedcubing 2024 (2024-03-15~16),333 Final A #4
+3646556001,B L F2 R' B2 U2 L2 D2 F' R2 F L D U' L' B U2 R',W,K-State Cubing Spring 2024 (2024-04-06),333 R1 A #5
+3732954001,R D' B R2 U' R F R D2 F2 L' D2 F2 R' L B2 D' F' U,W,Ottawa Spring 2024 (2024-05-04),333 R1 E #3
+4128822001,D2 L2 D2 L2 U2 B R2 F L2 B2 U R2 U B D' B D' R F,W,Back to School Ankara 2024 (2024-09-21~22),333oh Final A #2
+4199895001,D2 B2 D2 U R2 D R F' D' U2 F' L D2 U2 B2 F' R2 D,Y,Kitchener Mini Morning 2024 (2024-10-19),333 R1 C #3
+4583900001,R B2 D U B2 D U2 R B' L' F' L' B' U2 B' D R2,Y,Start in Veenendaal 2025 (2025-03-22~23),333 R1 B #3
+4778641001,U2 R' B' L' F2 U B2 F2 D' B2 L2 B' L' D L2 R2 D U',W,Oso Cubing Fest II Lima 2025 (2025-05-31~06-01),333 R1 K E1
+5297405024,F U' R D2 R' F2 R B2 D2 L' D L' R' D' B D F2,Y,Taiwan Championship 2025 (2025-12-19~21),333mbf Final A #1
+5337256016,B2 D L' F' B D' L' F' L' F U2 B2 D R2 U L2 U2 L2 U,W,Just Judge Jura 2026 (2026-01-17~18),333mbf Final A #1
+5529942001,U' D F2 L' U' F2 R U2 L2 B R2 F L2 F' U' L2 D' L',W,Richmond Spring 2026 (2026-04-11),333 R1 D #4
+5771219001,B2 R2 B2 D2 B2 D F L' U' F2 U2 L' R2 F U F' D U2,Y,Cavite Side Events Open 2026 (2026-08-01),333oh Final A #3

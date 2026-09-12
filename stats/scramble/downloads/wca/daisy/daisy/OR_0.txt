@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / OR / bin 0
-# Population in this bin: 316
+# Population in this bin: 320
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 23209001,F R D' B2 D2 F' D' R2 L' D2 F R2 L2 D2 F B2 L2 U2 L2 U2,R,Speedcubing Los Alpes 2014 (2014-05-19),333 Final A #5
@@ -58,7 +58,7 @@
 4469099001,D L U' F' B' U L2 F' B' L' U2 D2 B2 D L2 U' R2 U',O,Huashang: Las Tablas Open 2025 (2025-02-01~02),333 R2 A #4
 692816001,F D2 U2 R2 U2 B' U2 B2 D' L' F L2 D' B2 D2 R F' U F,R,Whale Sounds 2018 (2018-01-27),333oh Final A #1
 4718314001,F L D2 U2 L2 F' D2 B' D2 F L2 B' L2 D' R' B' L D' B',O,It's Sarzana O'Clock 2025 (2025-05-03~04),333 R1 C #2
-696917001,F2 D2 L2 D2 F2 L2 B' U' R2 D2 L R U2 F U2 L2 F D',R,Fushun Open 2018 (2018-01-28),333 Final A #5
+5806001001,F2 U2 L F2 U2 R' F2 U2 L2 B2 D B D' L D L D L B',O,Puck Open 2026 (2026-08-29~30),333 Final B E2
 3710153001,R L' B' U D2 F2 B' L2 D' F R' L2 B2 R2 L B2 U2 B2,R,Prague Open 2024 (2024-04-27~28),333 R2 B E2
 725961001,B D' F2 R' L' B' R2 F2 D R B' R F2 R D2 B2 R2 D2,R,Etec Poá 2018 (2018-03-17),333 R1 D E2
 4863792008,R' D2 R D2 F2 L' R' B2 D2 R' F2 B D2 U' L2 F2 D2 R' D F' L' F,R,Ropaži Mental Breakdown 2025 (2025-07-12~13),333mbf Final A #2
@@ -90,7 +90,7 @@
 4871720029,F2 L B' F D2 B L2 B L2 R2 F' D B' R' B' F2 D' R2 U L2 U,O,CubingUSA New England Quiet Championship 2025 (2025-07-19),333mbf Final B #2
 1064797001,U2 R B2 R F2 R2 D2 U' L B2 D R2 F L' F2 D' B2 U,O,GDSY Open 2019 (2019-03-23~24),333oh R1 B #1
 3913070001,R' L2 D B2 L2 U' L2 F2 L U' R2 F2 R F L F' L2 B2,O,Appleby Summer 2024 (2024-07-06),333 R1 B E2
-1106216001,D U2 R2 F2 D' L2 F2 D' B2 L2 F D2 L2 B L' U2 F' R U' F',O,Upstate Cubing 2019 (2019-04-13),333 Final A #2
+5816580001,B' F U2 R2 B2 U2 R2 U2 R' B D B2 D2 U2 B' R' B' R2 U,O,Bilbao Open 2026 (2026-09-05~06),333oh Final A #5
 1110452001,L2 R2 D2 F L2 U2 F' U2 B' L B2 L B F U R2 U F L2,R,Kansai Open 2019 (2019-04-20~21),333 R1 E E1
 5531686001,F2 L2 F' U2 L2 F U B2 U' B' U' R' U' B2 F' U R2,R,Nebraska Championship 2026 (2026-04-10~12),333 R2 B #1
 5128711001,U F D' R2 F2 L' B2 F2 R2 B D F L U L2 D2 U2,R,Gdańska Liga Speedcubingu V 2025 (2025-10-25~26),333 R1 C E2

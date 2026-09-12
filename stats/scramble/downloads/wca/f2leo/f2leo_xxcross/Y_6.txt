@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / Y / bin 6
-# Population in this bin: 804
+# Population in this bin: 820
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5432743001,F2 D L2 D B2 L2 U' B2 L2 U F R B2 R U2 F2 R F,Y,Wiltshire Spring 2026 (2026-03-07~08),333 R2 C E1
@@ -50,7 +50,7 @@
 1365440001,U2 F2 D' L2 U R2 D B2 R' B2 U L' R F L2 F' D2 L,Y,Southern Utah Fall Open 2019 (2019-10-19),333 Final A E1
 238028001,U L2 F2 B2 L U2 L2 F L' B2 R2 B' L2 U2 R2 L2 B,Y,Music City Winter 2016 (2016-01-02),333 Final B #3
 1969090001,R2 U' L2 D2 R2 D' R2 B2 L' F' L' R U' R F2 D F' L D,Y,Aldeílla Mental Breakdown 2022 (2022-06-11~12),333 R1 A #3
-5013827001,U R' U' F R2 U R B L' D F' D L2 U R2 D2 L2 U',Y,NUS Open 2025 (2025-09-13),333 R1 A #5
+5780152001,F R B2 U' F' D B L' B' L D' L2 B2 D L D,Y,Missouri Championship 2026 (2026-08-07~09),333bf Final A #5
 259745001,U L' B L' B2 U B D B U2 D R2 U2 D L2 F2 U2 L2,Y,MathSoc Open 2016 (2016-02-27~28),333oh Final C #2
 1541810001,D2 F2 R2 B' D2 B R2 F D2 R2 B U L B U' B F' U' B,Y,Izhevsk Winter Cube 2020 (2020-02-08~09),333 R1 A E1
 264460001,D' B2 R2 F2 L2 D U L2 U' L' U' R2 F' L2 R' F' L' D' B',Y,Saint Petersburg Welcome To 2016 (2016-02-27~28),333 R1 B E2
@@ -62,7 +62,7 @@
 3607719001,R' B' U F2 L D' L U2 F' L2 F U2 B L2 F' U2 F U,Y,Hanoi Side Events 2024 (2024-03-24),333 R1 F E1
 1761589001,F2 R2 U' B2 L2 D' L2 D2 L F D F2 L D' F' L2 F2 D',Y,Richmond Open A 2021 (2021-12-11),333oh R1 A #5
 4398145001,U' F B R' U B L U R U R' L' U2 B2 R' B2 L D',Y,Chääswürfel 2024 (2024-12-31),333oh Final A E2
-321388001,F' R U2 F' U2 R' F' L' B' L2 F2 U' F2 U2 D' F2 R2 U2 D,Y,Tagum City Open 2016 (2016-06-25~26),333oh Final B #3
+5806537001,D2 F2 D' F2 L2 D' U2 B2 R B L2 R D F D L F,Y,Kārķi Open 2026 (2026-08-26~30),333 R1 A #5
 330239001,F2 R' U' F U B2 L2 B2 R2 L U' B2 L2 B' D2 B D2 R2 F,Y,Iran Nationals 2016 (2016-07-22),333 R1 F E2
 2005776001,R2 F2 L D2 L D2 U2 L' D F' D L2 R2 B2 U2 R' D U2 F,Y,Prienai Open 2022 (2022-07-09),333oh Final A E2
 5391287001,U2 F D' L2 D F2 D' L2 D' B2 R2 U R U2 R' B2 D' F2,Y,Stockholmsligan 3: Surskallar - 2026 (2026-02-17),333 Final B E2
@@ -74,7 +74,7 @@
 2593927051,D2 R' F2 L' D2 F2 R D F B2 U2 D L2 F2 D L2 F2 R' F' L2 U,Y,Oculus Cube Open 2023 (2023-03-25~26),333mbf Final A #1
 2371338001,U2 F D2 F L2 D2 B' R2 D2 R' D' B D' B2 F' U2 L' D2 U,Y,Viña Cubing Fest 2022 (2022-12-10~11),333 R2 C #3
 3963726001,F U2 R' F2 L' B2 L2 B2 F2 R' U' F' D F2 R D2 L U' L2,Y,Open PUCP Cubing Community 2024 (2024-07-19~20),333 R2 G E1
-4251737001,F B D2 R2 F' U' R F B2 R2 B' R2 U2 R2 L2 F' R2 U B' R B' L,Y,Canadian Prairie Championship 2024 (2024-11-02~03),333bf Final B #3
+5774090001,F L' B2 D R2 D' R2 D2 B2 U2 F2 L U2 L U' F2 D2 R2,Y,Egypt National 2026 (2026-07-31~08-01),333 Final A E1
 2676047001,L' D2 R D2 B D2 F R2 U2 L2 B' R B R U2 L2 U' F D2,Y,Lodi Time Trial 2023 (2023-04-29~30),333bf Final B E1
 5164210023,B R2 F2 D' L' D2 L2 B2 D' B2 F2 U2 F' U2 R B' U2 R2 F' L' F2,Y,Ota BLD Autumn 2025 (2025-11-08),333mbf Final B #1
 408541001,L2 D2 B2 R2 D U2 F2 R2 B2 F L F2 R2 F' L D F,Y,Athens Winter 2016 (2016-12-04),333ft R1 A #3
@@ -99,7 +99,7 @@
 512450001,B' U2 F' D2 B2 D2 L2 F D2 R2 F2 R' D B D R U' L D' R,Y,Rose City 2017 (2017-05-20~21),333 R1 B #1
 4770834001,B' R' F R D2 R2 U2 R' D2 R' B2 R2 D L2 B' L U2 F2 L2,Y,Cube More in Taylor 2025 (2025-06-01),333oh R1 B #5
 526860001,D2 L' D2 B2 D2 L' F2 L F2 U B2 F' U B F2 D2 U2 L2 R',Y,Breda Open 2017 (2017-06-10),333oh Final A #5
-4437545001,L' B2 D2 L2 D2 R F2 L' U2 F2 D' L F' L R2 F2 R' B' D2,Y,Unicentro Cúcuta V2 2025 (2025-01-19),333oh R1 A E1
+5790765001,U' L2 R2 B' L2 B' F2 R2 F' U2 F' L2 R D' F' R2 F R B2,Y,Cubing School SCZ 2026 (2026-08-15~16),333 R1 E #5
 1312555001,D2 L' F2 L2 U2 L' F' D L2 D L2 F' D2 L2 B U2 B R2 F',Y,Arnold Classic Europe 2019 (2019-09-21~22),333 Final A #2
 985635001,U2 F R2 U2 R2 B2 U2 R2 F' L2 U B U' F R B2 D' L D',Y,Gobbler Cube Day Winter 2019 (2019-01-19),333 R2 C #3
 533958001,U' F2 L F R D2 L D L B L2 D R2 F2 L2 U2 R2 D B2 L2,Y,Chaozhou Open 2017 (2017-06-18),333 R1 B E2
@@ -153,7 +153,7 @@
 1036236001,D' B' L' U D B R2 B' R' B L' U2 B D2 B D2 R2 D2 F',Y,Shenzhen 3x3 Days 2019 (2019-03-02~03),333oh R2 B #5
 4566327053,U F D2 L' F2 D2 U' R2 D' L2 F2 L2 R U2 B2 U' F' L2 F' D,Y,Side & Blind North Andover 2025 (2025-03-15),333mbf Final B #2
 1340304001,R' U' F D2 R U2 B2 D2 L' U2 R' U2 L' B R B U F' R U2 L2 D' F' R' U' F,Y,U.R.A. Big Cubes and FMC 2019 (2019-10-05),333fm Final A #2
-2496448001,L2 F' U D' B' R' L2 F R' F2 L2 B R2 F D2 B2 L2 U,Y,Sleepless in Seattle 2023 (2023-02-18~19),333oh R1 A E2
+5786929001,U2 L D' B D' F L2 U2 L B' D B D2 L2 B L2 B R2 F' L' F,Y,Norwegian Championship 2026 (2026-08-14~16),333bf R2 A #4
 4667431001,L' U' R B2 D' F2 R2 D R' U F2 R2 D F2 L2 U L' F',Y,Deqing Spring 2025 (2025-04-19),333oh R1 D #4
 3951021001,R2 U' D2 L2 F' R2 B' F U B R U2 R' D2 R2 D L',Y,Czech Open 2024 (2024-07-19~21),333oh Final A #3
 4380203001,F2 U2 B2 R2 D2 F U2 B D2 U2 R U F' D' R' B R' D U',Y,Cainta Puzzle Fest 2024 (2024-12-21),333 R1 B E2

@@ -1,15 +1,15 @@
 # Scramble samples — 123 / fbsquare / B / bin 0
-# Population in this bin: 819
+# Population in this bin: 828
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4406135001,D2 R2 F2 U2 L2 B2 D' L B2 D B2 L D' R B2 L F' R2,B,Xi'an New Year 2025 (2025-01-04),333 R2 A #4
 3910804015,R U' B D' B' D2 B2 R B L F D2 R2 U F2 U L2 U' B',B,PBQ at MSU 2024 (2024-06-28),333mbf Final A #2
 1239811004,R2 B2 U B2 L2 F2 D' B R' D2 F' U2 R F2 D2 R' B F' L2 B R,B,China Championship 2019 (2019-07-26~28),333mbf Final A #1
 16093001,U2 D B' R B R2 D B U B2 D L2 D F2 L2 U' F2 U',B,Chengdu Open 2014 (2014-05-02),333 R1 A E1
-5338845007,L' F U L2 U2 R F2 L2 R B2 L F L2 D2 F' U' L' R B L2,B,BlindCon Venteira 2026 (2026-01-24),333mbf Final A #1
+5776510001,F2 U2 L' D B2 U F2 L U' R F U2 F2 L2 B' L2 B L2 B2,B,Zhanjiang Open 2026 (2026-08-09),333 R1 E #5
 931895006,R2 B' L2 F D2 B R2 U2 R2 F' L' B' F2 D2 F U F' D' F' D B' L,B,Idéale Nabeul Open 2018 (2018-11-17~18),333mbf Final A #1
 23310001,R B2 U2 R F2 R2 U2 B2 D2 B' R B D R2 F R F2 L' F,B,Skanstull Cube 2014 (2014-05-24),333oh R1 B #1
 3914034001,L2 B U2 R2 B2 D2 U2 L2 F2 D2 F2 D L F2 L F' D' B' U L,B,Vacaciones Cuenca Open 2024 (2024-07-06),333 R1 B #4
@@ -183,7 +183,7 @@
 696014001,L2 U' D' R' F' R' F B2 D2 B2 U F2 D L2 F2 R2 F2 D2,B,Wirewood Pre-Nacionales 2018 (2018-01-28),333 R1 C E1
 877404001,D2 U' F R F' R F' R U L' F' L2,B,Sofia Autumn 2018 (2018-09-08),333 Final A E1
 713468001,R2 B2 L2 D' U' L2 B2 U B2 D' F2 L' B2 L' B D' U B2 R D2 U,B,Cannes FIJ 2018 (2018-02-24~25),333oh R1 A #2
-2723956001,L B2 R2 D2 L' U2 F2 D B' R D2 R B' L2 D2 U L' B2,B,Door County Cube Challenge 2023 (2023-05-20),333 R2 A #4
+5787835001,B U D' B U2 B' U D L F' U2 B2 D2 F D2 B' D2 B2,B,Cultura Campos do Jordão 2026 (2026-08-15~16),333oh Final B #4
 3783066001,B2 D R' L B2 U2 B D' R2 U2 F2 R' B2 D2 L2 F2 D2 R B,B,Barby Cube 2024 (2024-05-18~20),333 R2 A #2
 3363944001,F' D2 B L2 U' B' U2 L2 D' B2 U2 R' F2 R' F2 D',B,DFW Cubing Fall 2023 (2023-12-17),333 R1 C #2
 5390208001,U' D2 B2 L' U2 B2 U' B D2 F' D R2 U2 R2 B2 D' R2 F,B,Guangdong Open - Revival & Rival 2026 (2026-02-06~08),333 R1 N #2

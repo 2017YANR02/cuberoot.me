@@ -1,0 +1,33 @@
+# Scramble samples — first_layer / first_face / BGOR / bin 9
+# Population in this bin: 26
+# Samples listed: 26 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+71963001,D F' D2 L2 B U' F L B U2 R F2 B2 U2 B2 U R2 L2 B2 D',B,UK Rubik's Cube Championship 2014 (2014-11-01~02),333 R1 D #5
+124901001,D2 B' U2 F2 D2 R2 B L2 B' L2 B R B' D' U F' D R D F D2 L B2,B,Mariano Melgar 2015 (2015-04-11),333bf Final A E2
+515444001,D2 B2 U' F2 L2 B2 F2 D U L' U L2 R B' U' L' F R U2 F,B,Hessen Open 2017 (2017-05-27~28),333 R2 B #1
+604245001,U D F' D' F2 D' R U2 F' R D L U2 L' D2 L B2 R B2 U2,B,Arnold Open 2017 (2017-09-22~24),333oh Final A E1
+691071001,R2 B' U2 F2 R2 D2 B2 L2 U2 L' U' R D' L2 F' D L2 D2 F R2,B,Drishti Cube Open 2018 (2018-01-20),333oh R1 D E2
+771364001,R' U' F R2 U2 L2 U B2 R2 U' F2 U2 B2 R F R D L' U2 L' F L R U R' U' F,B,FMEntal Breakdown 2018 (2018-04-28),333fm Final A #2
+779005001,D' B R U2 L2 U' R2 L F' U R2 F2 R2 B' R2 D2 R2 F' L2 B2 L2,B,Lower Moreland Spring 2018 (2018-05-12),333 R1 C E1
+1094867001,L2 U B U2 R2 D B' L U2 R' F D' F2 L2 U2 R2 F2 L2,B,CubeIowa 2019 (2019-04-13),333 R2 B #1
+1355768001,F2 D2 R D2 B2 F2 R D2 R' F2 U' F2 L2 F' U' R2 D2 F' R' F' U,B,Oregon State Favorites 2019 (2019-10-19),333 R1 C #3
+1979447001,B' D2 R' D2 F U' D2 F' R D L2 U2 R U2 L U2 B2 R D2,B,DSL Cube Open 2022 (2022-06-18~19),333 R1 F E1
+2135504034,U2 B2 D2 B' F' L2 D2 F' L2 F' D R2 F2 L' B F R' F U' F L' F,B,Amman Summertime 2022 (2022-08-27~28),333mbf Final A #2
+2218467001,D R2 D R2 D2 R2 F2 L' U F2 D' L2 D2 L' D' B' D' U' R2,B,Massy Palais'Open B 2022 (2022-10-08~09),333 R1 D #5
+3021819001,R B2 U2 R D2 B2 D2 U2 R2 D B D L F R2 U F' L R F2,B,IISER-K Autumn Open 2023 (2023-08-26),333 R1 C #4
+3363579001,U B R F D B' D' R B2 R2 U2 D2 F2 R' F2 L U' F L U2 L2,B,Cabanillas del Campo Open 2023 (2023-12-16),333bf Final A E2
+3977897001,U R' D F D2 B2 U R' B' L2 F' B' U2 L2 F2 D' B',B,Lexington Weeknights IV 2024 (2024-07-29),333 Final B #2
+3979576034,R2 F2 D' L2 D' F2 L2 U' B D2 U R F' L' R F2 U F2 R' B' L',B,Side N Blind Narre Warren 2024 (2024-08-03~04),333mbf Final A #1
+4134450001,L F D' R2 F' L B' R D' L' F B2 L2 B R2 F L2 D2 B' L',B,6th Guwahati Open 2024 (2024-09-21~22),333 R1 B #4
+4151710001,U R2 U2 R' B2 D2 B2 R F2 R2 U R' U B D' B F L' F2,B,Rubik's WCA African Championship 2024 (2024-09-21~24),333oh R2 A #1
+4533980037,R2 F2 D2 B2 R' B2 F2 L' D2 L2 D2 U' L U2 R' D' B L' U2 L' B R,B,CFL Goes Sideways Rogów 2025 (2025-02-22~23),333mbf Final A #1
+4608394001,D2 F L F2 L' U2 R' D2 F2 R2 D F R' F2 U L F2 L2 R',B,GA Cuber Jackets Spring 2025 (2025-03-30),333 R3 A #3
+4668790019,L2 B R2 D2 R2 B' U2 F D2 U2 F R F2 U' L D L F' R' B L2,B,Efficient in Elmsford Spring 2025 (2025-04-20),333mbf Final B #1
+4762078001,F' D' U' L2 F2 L2 D' R2 F2 B L' U R' B U' R2 F D U,B,Nub Open Mission Viejo Spring 2025 (2025-05-31),333 Final A E2
+5036736001,U B' U2 L B2 D' F' B U2 B2 L U2 D2 L U2 L B' D' B,B,Neyruz Open 2025 (2025-09-20~21),333 R1 B #1
+5600886001,U L B U F2 D F' B2 R F' U2 R2 D2 F R2 U2 B' R2 U2 B,B,CubiKonce 2026 (2026-05-02~03),333 R1 C E1
+5609655001,U L' B2 R F2 L' B2 R' B2 L' B' U' F' U L B2 L2 B' U2,B,Podlaskie Tour Suwałki 2026 (2026-05-09),333 R1 A #4
+5630968001,D' L' F U' B' R2 B D' R D2 F' B2 U2 B' D2 R2 U2 B',B,Toledo Big & Blind 2026 (2026-05-16),333bf R1 A #2

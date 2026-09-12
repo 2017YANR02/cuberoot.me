@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / BGORWY / bin 7
-# Population in this bin: 400
+# Population in this bin: 404
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3017221001,U2 L2 B D' F2 R F2 D' L' U2 L2 U2 F' L2 F B2 U2 D' L,B,WA Open 2023 (2023-08-26~27),333bf Final B E1
@@ -117,7 +117,7 @@
 961313001,D2 L2 F2 D2 L2 B2 U R2 U2 B' R D2 U' L2 U2 R' B2 F,O,WCA South American Championship 2018 (2018-12-15~16),333oh R1 C E1
 975066001,R2 U' R2 U2 B2 F2 U L' D2 L2 U' L D' R2 U2 B' U R',B,Another Bruin Cube Day 2019 (2019-01-12),333 R1 C #4
 984819001,U2 R2 U' L' U2 R U2 R U2 B U2 L2 F L2 U2 L2 F D2,Y,Poções 2019 (2019-01-19~20),333oh Final A E1
-3155239001,U2 R D2 B2 L' F2 U2 L D2 B' L B D' B2 R' B F L' U2 L2,O,Ankuram Open Saturday 2023 (2023-10-14),333bf Final B E1
+5780865001,D R' F2 U2 B' D2 U2 L2 F' L2 D2 U F' L2 F' D' L2 D,W,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R1 I E2
 3238706014,R' B' L R2 D2 R B2 D2 U2 R U' F U2 B F' U' R' B2 D',G,Uzbekistan Nationals 2023 (2023-11-03~05),333mbf Final A #1
 3277220001,B2 R2 B2 R2 B' R2 F R2 D2 L U' B' U' L U2 B D2,G,Chongqing Open 2023 (2023-11-18),333 R1 I E1
 1015089001,B2 R' F2 R2 B2 D2 L B2 F' L' D2 B' U' B2 D2 F L2 B' L' B',W,Medan Lunar New Year 2019 (2019-02-09~10),333bf Final B E1
@@ -184,10 +184,10 @@
 2073661001,L D2 U2 R' F2 R' B2 R2 F' R2 D' R' B F2 L R B D,W,Sønderjysk Sommercubing 2022 (2022-08-05~07),333 R1 C E2
 3512487020,L2 D B' D2 B L2 D2 F2 L2 D2 F2 L' B L2 D L' R2 B D2 L' F2,Y,Big N Blind Bangalore Feb 2024 (2024-02-17~18),333mbf Final A #1
 2120477016,R2 U F2 L F' B R F R B2 D2 F' B U2 B' L2 R' D2 B R2,O,Silence in Tlaxcala 2022 (2022-08-20~21),333mbf Final A #2
-2126780001,D' R B' R B' U' R F D2 F2 U2 L2 B U2 F' R' D' R2,Y,FING Open 2022 (2022-08-27~28),333 R2 B #1
+5817157001,R' D2 F D2 L2 B F D2 F2 L' F R2 F D B' R2 F2 L' D2,Y,Soorsi 2026 (2026-09-05~06),333 R2 C #5
 5501210001,F' L F D F' D' F L' B' D2 R F' R2 F B2 U2 F L2,B,North Sound Spring 2026 (2026-04-04),333 R2 A #5
 3715494001,R2 D2 L D2 L' U2 L R2 U2 F' D' U2 F U2 L D' R2 D2,B,Dubai Open 2024 (2024-04-27),333 R1 E E1
-4819922001,L D2 L' D2 B2 L2 D' U' B U F L' B' U2 F L R2,R,Perth Winter 2025 (2025-06-21~22),333 R1 A #4
+5817993001,D' B' L2 F2 U R' D2 L2 B2 U' L' U2 R D2 R2 F2 U2 L,W,Long Island Back to School 2026 (2026-09-05),333 R2 C E2
 2269267001,L' D B' F2 L2 D' R2 F2 U2 R2 U B2 D R D R D B F2 D2 B R,Y,Kewbz UK Championship 2022 (2022-10-28~30),333bf Final A #1
 5624269001,R F2 D2 B2 U2 R B2 L B2 D' R B' R2 B2 F D2 L2 F2,G,Bayonne Atoutcubes Open 2026 (2026-05-08~10),333oh Final B #1
 2297396001,R' D' R D R L' B' D B2 U D2 F2 D F2 D' R' F' U,O,Cerrillos al Cubo 2022 (2022-11-05),333 Final A #5

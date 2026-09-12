@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / R / bin 2
-# Population in this bin: 861
+# Population in this bin: 876
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 1710001,L U2 L' F2 L U2 L' B2 U2 B2 L2 D' L2 F' U2 F' U2 L F',R,Kansai Open 2014 (2014-03-21~22),333 R1 C #3
@@ -17,12 +17,12 @@
 43117001,D2 R' B2 L' R' F U2 L' R2 U2 B2 L2 F L' R2 F',R,N8W8 Summer 2014 (2014-08-02~03),333 Final A E1
 5277137001,D B2 L2 D' U' R2 D' L' R' U' L D' R U' L2 D2 B2 D,R,NR Hanukkah B Israel 2025 (2025-12-17),333 R1 A #5
 3373927001,D2 B' D2 L' F U2 R2 D2 F' R2 D2 B' D B' R2 U2 R2 U2 B,R,Indian Nationals 2023 (2023-12-15~17),333 R1 D E1
-3201033001,R2 F L2 B R2 L' F' R2 F R2 B2 L D2 F2 B2 R U2,R,100 Years Republic İstanbul 2023 (2023-10-28~29),333 R1 B E1
+5815523001,F' D2 F R' D F' D F B2 L' D2 L2 B2 R2 F2 L' U',R,Bremium Mega Day 2026 (2026-09-05),333oh Final B #1
 5433831001,D' R2 F R' D' R B' U2 R2 U' B2 L2 U L2 U L2 D' B L2,R,Tyler Twists & Turns 2026 (2026-03-07),333 R2 A #2
 4672338001,D L' F2 U2 D2 L' D B2 R2 U R F2 L B2 U2 L2 D2,R,French Championship 2025 (2025-04-19~21),333 R1 H #2
 2320305024,B2 F2 U2 L D2 R' F2 L2 R' U2 R2 F D B2 D B2 D B' D B R2,R,Thanksgiving PBQ Tour - Rexburg 2022 (2022-11-26),333mbf Final A #1
 1241155001,U2 R2 B2 D2 R2 U2 R2 B D2 L F L B2 D2 F L' F' L',R,Telšiai Open 2019 (2019-07-27~28),333oh R1 A #3
-5489671001,L2 D R D2 F U R2 U' R' B' R2 F' L2 B' U2 L2 R D2,R,Wiler Würfelfäst 2026 (2026-03-29),333 Final A E2
+5810996001,U2 F R B R' F2 U B U' B R2 F2 L2 F' D2 R2 B' L2 D,R,Kewbz UK Championship 2026 (2026-08-28~30),333bf R1 A #4
 809952001,B2 U2 B' R2 D2 U2 B U2 L F2 R D2 U2 F2 R F' L2 B2,R,Project Warszawa 2018 (2018-06-16),333 Final A E2
 2544237046,L B2 U' F L2 R U2 B2 R' B2 U' R' B' R U L D L B,R,Gesté Mentalement Là 2023 (2023-03-11~12),333mbf Final B #2
 3242773001,D2 F2 D' B2 R2 D2 B U2 L2 F R U2 F R B2 R' D',R,CubingUSA Rocky Mountain Championship 2023 (2023-11-03~05),333 Final A E2
@@ -38,7 +38,7 @@
 2261988001,F U B2 R2 U' F L B' D2 L2 B R2 B2 U2 R2 L F2 L',R,Lake Erie Cubing Clash 2022 (2022-10-22),333 R2 B #4
 5600163001,U' B2 L F2 D B2 R2 U' F2 U' R' U' L2 F2 U' L D2,R,DFW Quiet Qualifier 2026 (2026-05-03),333bf Final A #5
 1463691001,D' L2 B2 R2 B2 U2 B2 F2 U L' F' U2 R U2 B2 L' R U B',R,Cubing Zacatecas 2019 (2019-12-14~15),333 Final A #3
-3891648001,R' L2 B2 F2 D R2 D2 L2 B2 D L B2 R' U' F2 R2 U B L2,R,Almost Flaminia Open 2024 (2024-06-22~23),333 R1 B #4
+5811384001,D' B' U B2 L2 R2 F2 R2 U' F2 U' F L D R2 B F',R,GAN Twist & Turn in Pasig 2026 (2026-08-30),333 R2 A #2
 3070475001,F2 L B' R' U R L D R B2 D2 L' U2 F2 D2 F2 R2 B U' L2 U,R,Chanquete Open 2023 (2023-09-09~10),333bf Final A #2
 4058054001,F2 U' B2 D2 L2 D2 F2 L2 R' B2 L' F L U2 L B' F' R,R,Mofunland Speedcubing Singapore 2024 (2024-08-31),333 R1 E #3
 170902001,U R2 F2 U F2 R2 B2 R U' R' F2 L' D2 U' L D2 F2,R,N8W8 Summer 2015 (2015-08-01~02),333fm Final A #2
@@ -50,7 +50,7 @@
 5198638001,U2 L U' D L2 U2 D B' D' F2 D R2 U' R2 F2 B2 U B2 U,R,Bowling Green Fall 2025 (2025-11-16),333 R1 E #2
 215159001,F2 D' U' F2 L2 D R B2 U2 L2 F' R F L' R U2 F',R,Waves Cube Challenge 2015 (2015-11-08),333oh Final A E2
 3450636001,R2 F R' B2 R D2 B2 R' F2 D2 F2 D2 F D R' B D R D2,R,Southern Solves Invercargill 2024 (2024-01-27~28),333 R1 C #4
-3050287001,U L2 U2 F2 U B2 F2 L' D R2 U' F2 U' L' B2 L2 B2,R,Tokai Open 2023 (2023-09-09),333 R1 A E1
+5773782001,D2 L' B2 D2 R F2 D2 R U' L' U L' F R2 B' F L2 U,R,CCPA Open 2026 (2026-08-01),333 R1 A #2
 4134638001,F' R2 U' F B' U2 F R' U' B2 R F2 R' B2 R U2 B' L2,R,Italian Open 2024 (2024-09-21~22),333 R1 F #2
 1902955027,R2 D F L2 F D2 B2 F' D2 F L2 R' U B' D' L D U2 L2 B,R,BrizZon Side Open III 2022 (2022-04-30~05-02),333mbf Final A #1
 852998001,F2 L2 U R2 D F2 D' L2 U2 R' B L' B2 L R2 F R2 B' F2,R,Indonesian Championship 2018 (2018-08-11~12),333ft Final B #4

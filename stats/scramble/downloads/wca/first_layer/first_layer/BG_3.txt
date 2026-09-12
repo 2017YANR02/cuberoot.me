@@ -1,0 +1,9 @@
+# Scramble samples — first_layer / first_layer / BG / bin 3
+# Population in this bin: 2
+# Samples listed: 2 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+3646111001,B2 U' B2 U F2 L2 U2 B' D' B U2 B' D B2 L' F' D B,G,Busan Spring 2024 (2024-04-06~07),333 R1 A #5
+5516180001,L' U2 L2 U2 F R2 B' U2 B R U2 R' B F2 L' F D,G,Marble City Cubing NY 2026 (2026-04-11),333 Final B #1

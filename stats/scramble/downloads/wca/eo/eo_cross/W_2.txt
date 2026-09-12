@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / W / bin 2
-# Population in this bin: 21
-# Samples listed: 21 (all entries in this bin)
+# Population in this bin: 22
+# Samples listed: 22 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 139766001,U' L2 D R2 F2 D R2 U2 R D' F2 U' R2 F2 U' L2 D R2,W,Xi'an Summer 2015 (2015-05-17),333oh R1 A #4
@@ -26,3 +26,4 @@
 5173659001,D2 L F2 D2 L2 F2 U R2 B2 U2 L' B' D' U' B L2 D' L',W,Kjeller Open 2025 (2025-11-08~09),333 R2 C E2
 5307557060,B2 D2 L' F2 R2 B2 F2 R' F2 U' L' U2 R2 U' B D B2 D2 U' L2,W,Multi Mayhem VA 2026 (2026-01-02~04),333mbf R1 A #2
 5467116001,D' F' L2 B2 D B2 R2 D' L2 D' R' B' R' D2 R' D F R2,W,Sumgait Spring Open 2026 (2026-03-19),333 R1 A #4
+5792252001,D2 F U' F' D' R2 D2 R2 F' L' D2 R F2 L D2 F2 U2 D2,W,Singapore Augu-Skewb Day 2026 (2026-08-23),333oh R1 C #3

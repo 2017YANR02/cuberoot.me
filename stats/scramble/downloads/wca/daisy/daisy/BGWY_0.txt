@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / BGWY / bin 0
-# Population in this bin: 645
+# Population in this bin: 659
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3004850001,U R' U' B2 R B2 R2 D2 L' B2 R F2 U L' B' U L D' R',W,Flex in Lex 2023 (2023-08-19),333 R2 A #3
@@ -13,7 +13,7 @@
 5172846001,F D B U B2 U2 L2 U2 F D2 U2 R U' F2 U' R' U B F' L2 U,G,Madrid Norte Open 2025 (2025-11-08~09),333bf Final A #2
 2411235001,F' B2 D R2 U2 L' D L B' D2 B' L2 B2 R2 F R2 U2 L2,W,Welcome Back Calgary 2023 (2023-01-07),333 R2 E #5
 56165001,R U2 L B2 L2 D2 F2 L F2 R' F L' D' B2 L U L2 R2 B2 U',Y,TCG Lima 2014 (2014-09-06~07),333oh Final A #2
-57905001,U2 B2 D2 B' R2 F2 R2 U2 L2 F R' D R U F' R D F2 R U2 B' L',Y,Champagne Summer Open 2014 (2014-09-13~14),333bf Final B #2
+5790151001,F' D' F B' R2 L F' B' L U' B2 U2 F2 U2 L' D2 L' B2 L B' L2,G,Kalibata Agustusan 2026 (2026-08-15~16),333bf Final B #3
 3900354001,R U' L D2 U2 R' D2 R U2 R' F2 L2 D2 F R F D' B R B,Y,Oklahoma Championship 2024 (2024-06-29~30),333oh R1 A #4
 94420001,D R F' B' U2 B2 R U L2 B U R2 B2 U R2 U B2 U2 R2 D,B,Mumbai Open 2014 (2014-12-28~29),333oh R2 C #3
 4652753001,F U' F2 D' F2 R' U F' R' F2 R2 D2 R D2 B2 R2,Y,BQHS Spring Open 2025 (2025-04-13),333oh Final A #2
@@ -137,8 +137,8 @@
 661443028,R2 F2 R2 D2 B' F2 L2 R2 F' L2 D' R' B D L' D' R' D2 L F2 L2 U',W,Korean Championship 2017 (2017-07-28~30),333mbf Final A #1
 4781123001,B2 U2 B2 L' R' U2 F2 B' D' B D R' B2 U' R D L U',W,Ruta Cubera: Isla Cristina Open 2025 (2025-06-07~08),333oh Final A #4
 1831188001,D' R' D2 U2 L B2 L2 B2 L F2 U2 F2 B' D2 F L2 U' F' R' F2,W,Back to İstanbul 2022 (2022-03-12~13),333 R1 C #1
-678748001,L' R B2 L' D2 R B D' B2 F' D B' F2 R2 D2 F2 D,G,Xi'an New Year 2018 (2018-01-01),333bf R1 B #3
-5197586001,U' L2 F' L2 D2 B2 U2 B' L2 F' D U L D2 F U L2 F2 R,B,Halifax Fall 2025 (2025-11-16),333 R1 C #5
+5819319001,D B D' R2 U2 B2 F2 L2 B2 D' L2 U' L' B F L B D' U2 B,B,Cúcuta Library V2 2026 (2026-09-05),333 R1 C #5
+5806842001,B2 D B2 R' D2 R2 U' L2 D' F2 D2 R D' B' U' B' L' U,W,Slovenian Nationals 2026 (2026-08-28~30),333 R2 A #1
 686368004,B2 R2 B F2 D2 B' L2 R D' B F D' L2 B2 U' B2 U' F D',B,Liechtenstein Open 2018 (2018-01-13~14),333mbf Final A #1
 3279102001,L2 D' F2 B' D B' R' L2 U2 F2 D2 F2 D F2 B2 L' U L,B,Czech Championship 2023 (2023-11-17~19),333 R1 C #5
 4151688001,R' U' F R' B2 D2 F' L2 U2 F2 D2 B U' R U' L2 B2 R2 B2 L B' D' R' U' F,G,Rubik's WCA African Championship 2024 (2024-09-21~24),333fm Final A #3
@@ -186,7 +186,7 @@
 5769100001,B2 L' R2 D2 U2 B2 F R2 B F' R2 U2 D F L2 B2 U2 B' L',W,Elmsford Extravaganza II 2026 (2026-07-28),333oh Final B #5
 4439599001,L F U D R' F R B2 U2 R D2 B U2 B' U2 L2 B R2 D2,Y,Hungarian All-Rounder 1: Avengers 2025 (2025-01-25),333 R1 B #3
 5549372001,B2 D2 L F2 U D' B L2 U L F R2 U2 F2 R2 F' B R',Y,Amman Spring A 2026 (2026-04-17),333 R1 B E2
-4615086001,L2 U L' D R2 D F U2 R F U2 L2 F' L2 D2 L2 D2 B' L2 B,Y,Plaza Center Cube Lima V 2025 (2025-03-29~30),333 R1 C E1
+5795706001,U' F2 D' L2 D' R2 B2 F' D2 R2 U F R' U2 F' R2 F' D' F2,G,Xi'an Open 2026 (2026-08-22),333 R1 C #4
 971816001,R' F D2 B' D2 F D' B D' L2 D2 L' B2 D2 L U2 L' B2 R2,G,UBC Open 2019 (2019-01-05),333 R1 F E2
 2919811001,F U' F R2 D2 F2 L R2 U2 L' F' L' D' L' U2 B2 D2 B',W,Stevenage July 2023 (2023-07-22~23),333 R1 B #3
 3012292035,U F2 R' D2 B' D2 B' F D2 L2 R2 B' R D2 R' U R F L' F' D,W,Slovenian Nationals 2023 (2023-08-25~27),333mbf Final A #1
@@ -197,7 +197,7 @@
 3997965001,B2 D' F2 U2 B' R2 F2 D2 F L2 B' U2 R' B' F U2 L B' F2 U,B,San Mateo Speedcubing Open 2024 (2024-08-03~04),333 R1 C E2
 1450774001,U2 D' R' L2 F' B2 L' B2 R U R2 U' R2 B2 U L2 U2 F2 L2,G,Capivara Sunset 2019 (2019-12-07~08),333oh R1 B #1
 1025719001,L2 R2 F R2 F2 U2 R2 F2 U F' U2 R D2 U2 B' L B2 U R',B,Glorioso San Carlos 2019 (2019-02-16),333 R1 A E1
-3523352001,U' B2 D L2 R2 D' F2 R B L' D L U' F2 U2 L2 B',W,SAM Center Open 2024 (2024-02-18),333 Final C #4
+5810516001,F' D2 B2 L F2 U2 R' B2 F L' B' U' B' F D L F2 D2,Y,Lutzelbourg Open 2026 (2026-08-30),333 R1 B #3
 1028965035,R' B2 L' U2 L F2 D2 R' U R2 F' D' U F' L R' B2 F U' L B2,Y,CFL Goes Sideways 2019 (2019-02-16~17),333mbf Final A #2
 3675928001,B2 F2 D' F2 R2 F2 D' L2 U2 R F R U' F' R' D2 F' D F,W,Leuven Open 2024 (2024-04-13~14),333 R2 B #3
 2942227048,F' D' R D2 R2 L2 B' D B2 R L2 U2 L2 B2 R' F2 R' F' R B' L,B,CubingUSA Nationals 2023 (2023-07-27~30),333mbf Final A #2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / B / bin 5
-# Population in this bin: 941
+# Population in this bin: 953
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 2679777001,L2 D R2 U' F2 U B2 D2 U' F' L2 D' F2 R' U' R' B' U2 R',B,Welcome to Olympia 2023 (2023-04-29),333 R1 B E2
@@ -42,7 +42,7 @@
 4279748001,B U L' D2 L2 U F2 U' B2 U F2 D2 U' B' U' R2 F' D' F' R2 D,B,Slow N Steady UMD Fall 2024 (2024-11-09~10),333bf R1 A E2
 1037456001,R2 U L2 R2 F2 D' R2 B2 U B2 F' U B' R F D' L' F R U,B,Grind City 2019 (2019-03-02),333oh Final A #5
 3053839001,B2 R' D2 B2 L2 F2 L' U2 F2 U L2 B L' D2 B' U' B F',B,XMUM Cube Open 2023 (2023-09-10),333 R1 G #1
-3388002001,R D2 B2 L' D2 R U2 B2 R2 F L' R B F' D2 B2 U L2 U' L B,B,Krungthep Farewell 2023 (2023-12-31),333bf Final A E2
+5801180001,F' B D' F D B U D2 R' D2 L2 D2 R' F2 U2 F2 D2 B2 U,B,Rocky Mountain Championship 2026 (2026-08-21~23),333 R2 A #5
 3147158036,B' R' B2 L' D' R L F2 U' B D B2 R2 L2 D L2 D2 R2 D L2 U,B,Polish Championship 2023 (2023-10-06~08),333mbf Final A #1
 1603235016,B2 D2 R2 F2 D' B2 F2 R2 U R' U' B2 R D R2 F L U' F' D,B,Pi Berkeley Quiet 2020 (2020-03-14),333mbf Final B #1
 3460354001,D' F2 D2 B U2 B R2 F' U R' B L' U' B F' L B',B,Istres Open 2024 (2024-01-27~28),333 R1 A E1
@@ -56,7 +56,7 @@
 3815439001,D F U' B2 R' B2 F2 L F2 R D2 R' D2 F U' L R B D' U2 L' F',B,Cato Cubing Cochabamba 2024 (2024-06-01~02),333bf Final A E1
 2771612001,U F' U2 B D F U' D2 F U2 L B2 R2 F2 L F L2,B,Swiss Nationals 2023 (2023-05-27~29),333 R1 D #5
 856094032,R2 U' R2 B2 U' F2 D2 F2 L U B L' F2 D B D L' F',B,WCA Asian Championship 2018 (2018-08-17~19),333mbf Final A #2
-246870001,B' F2 D2 R2 F2 L2 F' L2 B D L' R2 U' L F2 U' B' D,B,Minnesota Winter 2016 (2016-01-23),333fm Final A #2
+5809646001,F2 D R2 F2 D' B2 L F L2 D F' L' B' L2 B2 R B2 U',B,DFW Cubing Summer 2026 (2026-08-29~30),333 R2 D #5
 944546001,U2 L U2 F2 L U2 B D' B F' D2 F R B2 L2 U2 F,B,Zibo Open 2018 (2018-12-01),333oh Final A #3
 253476001,D' U' R2 U' L2 D B2 L2 U2 L' F D R D U B' L D2 L' U',B,Cube Challenge Quark 2016 (2016-02-06~07),333 Final A #3
 1358750019,B D2 R' U L D L2 F L2 F U2 R' U2 L F2 U2 R,B,Nordic Championship 2019 (2019-10-17~20),333mbf Final A #2
@@ -168,7 +168,7 @@
 4484339001,B2 D2 R2 B R2 F L2 B U F' U' B' L' R B2 L D F',B,Gdańsk Cubing Day 2025 (2025-02-15),333 R1 A E2
 5599612036,B L2 B R2 D2 B F2 D2 U R2 U2 L B' L' B D2 R' D U L' F',B,Campeonato Mineiro 2026 (2026-05-01~03),333mbf Final A #1
 3177461001,B' L F2 R' F' L B2 U' B2 D2 L2 F' R2 L2 U2 B' D',B,Tulcan Open 2023 (2023-10-21),333 R1 B #5
-661164004,D B2 U' L2 B2 D' U' B2 L2 F D' B' D F R2 U' F' R' F' R2 D2,B,Jawa Timur Open 2016 (2016-11-05~06),333mbf Final A #1
+5774756001,B2 D2 L' F L2 U2 F B2 R L' F2 D2 R' B' R' F',B,Alexandria Summer 2026 (2026-08-03),333 R1 A E1
 5639637001,F U2 L B' U2 B2 D F D' R L2 D2 R2 F' D2 F2 D2,B,RCBC Cube Day NJ 2026 (2026-05-16),333 R1 A #5
 3921101001,F' R F B R' U' B2 R' F2 D L2 F2 R2 D2 R2 B R2 D2 R2,B,Iguatemi Fortaleza IV 2024 (2024-07-06~07),333 R2 C E2
 3406498001,B D' F2 D2 F2 L R B2 L F2 R' D2 U F L D2 B' F2 U B,B,Don't DNF Dublin 2024 (2024-01-06),333bf R1 B E2
@@ -196,7 +196,7 @@
 709735001,D L2 F2 D' B2 D2 R' D2 U L2 R U2 L2 F2 R U2 F D' L2 U,B,Croissy Open 2018 (2018-02-17~18),333bf Final A #3
 2258382001,R2 F' U L' F2 L' D2 L' D2 R F2 L2 F' U2 F' L B F D',B,Reno Fall 2022 (2022-10-22),333 R1 B #4
 5424486068,B R U' F' L2 F2 D' R D' F' L' D2 L' U2 R D2 L' F' L,B,Richardshhhon 2026 (2026-02-28~03-01),333mbf Final A #3
-825378001,R2 B2 F2 L' F2 U2 L B2 F L' D R D U R D F R U',B,White City Cubing 2018 (2018-07-07~08),333oh R1 A #3
+5819311001,B L2 B2 F' U2 F' R2 F D2 R D U2 B' L' D L2 R' U,B,Cúcuta Library V2 2026 (2026-09-05),333 R1 B #5
 2352914001,B D B U B' R2 B R' B2 D2 L' D2 B2 R F2 U F U2,B,VII CUBIFMA 2022 (2022-11-26~27),333 R1 B #4
 718664024,B2 L F2 U2 F2 R' B2 L F2 R' B F2 U2 F2 L F D L D L',B,Mental Breakdown Germany 2018 (2018-03-03~04),333mbf Final A #3
 2737146001,R2 F D2 R2 F' D2 B' F' L U' R' F' R' U' R2 F L' D,B,Salt Lake Utah Summer 2023 (2023-05-19~21),333 R2 A #3

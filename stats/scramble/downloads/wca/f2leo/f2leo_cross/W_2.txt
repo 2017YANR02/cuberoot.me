@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / W / bin 2
-# Population in this bin: 139
-# Samples listed: 139 (all entries in this bin)
+# Population in this bin: 143
+# Samples listed: 143 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 28707001,R2 F U F L' U B' R' F2 U2 R U2 R2 F L2 F' B,W,New Albany Open 2014 (2014-06-21),333 R2 A E2
@@ -144,3 +144,7 @@
 5746603001,U F D L B D' R2 U' F2 U2 L2 B2 R B2 R U2 R' D' F,W,Cube4fun Lublin Summer 2026 (2026-07-12),333 R1 A #4
 5750761001,R B U L2 U2 L2 F R2 B D2 U F' L' U B2 D U R2,W,GAN New Zealand Nationals 2026 (2026-07-10~12),333oh R2 A #4
 5763976001,D F' L2 F R2 D' L F' U B' U2 D2 R2 B2 U2 D2 B D2 F2,W,Thessaloniki Summer Open 2026 (2026-07-25~26),333 R2 A #2
+5792252001,D2 F U' F' D' R2 D2 R2 F' L' D2 R F2 L D2 F2 U2 D2,W,Singapore Augu-Skewb Day 2026 (2026-08-23),333oh R1 C #3
+5799273001,L2 F2 L' B' L' B2 L2 D L2 F2 D' L2 B L2 F2 B' D2,W,Northwest Championship 2026 (2026-08-21~23),333 R2 D #4
+5816874001,B' U' L2 U' L R2 U2 R' B2 R2 D L B R' B' U2 F',W,Mayo Cubing 2026 (2026-09-05~06),333 R2 A #5
+5821060001,D R' F2 D2 F' D2 B D2 L2 U2 L2 U B2 U' B F2 U B L2 U',W,Presidente Prudente Open 2026 (2026-09-05~06),333bf Final B #5

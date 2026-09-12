@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / BG / bin 4
-# Population in this bin: 903
+# Population in this bin: 921
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 1160360001,L2 F' D2 F L2 B' U2 B2 L U L2 R2 D2 F2 L R2 U',G,Nacionales Uruguayo 2019 (2019-05-18),333 Final A #5
@@ -107,11 +107,11 @@
 2807651001,D2 F2 U2 B' U2 L2 F2 R' F2 L' B2 R' B' L D2 U2 F2,G,CubingUSA Mid-Atlantic Championship 2023 (2023-06-17~19),333oh R2 B E2
 4618945001,R F' L' U2 B2 U2 R' U2 R' U2 L F' D2 U2 R' U' L' B U',B,Moncton 2025 (2025-04-05),333 R2 C #3
 2642362001,R L D F2 D' R2 F' D R2 D2 L' F2 R' U2 R' U2 L2 D2 L2,B,Cavarzere Cube Days 2023 (2023-04-15~16),333 Final A E2
-428862001,R2 U2 R2 B2 R2 F2 R2 D L2 D2 U' L' R2 D L2 D2 L2 B L2,G,South East Texas Open 2017 (2017-01-07),333 Final A #2
+5775855001,B L U' L' U D F L U B2 L2 F2 R2 D R2 F2 B L',G,Cubetec UEA II Manaus 2026 (2026-08-08),333 R1 C #1
 3425823001,F2 R B' D2 B' D L' B2 R L' F U B2 U L2 U2 L2 D2,G,Cubes on the Bayside Winter 2024 (2024-01-14),333oh R1 C #5
 3837666001,F L' D' L B2 L U2 L U2 F2 R2 D L U R2 B2 U2 L2,B,Granada Open 2024 (2024-06-08~09),333 R1 A #5
 3641569019,B F R2 B2 F U2 B F L F2 U' B R2 U' L' U B2 L' F',G,Pocos Cupos Bogotá VIII 2024 (2024-04-06),333mbf Final A #2
-454137001,B2 D R2 B2 D2 L2 R2 D L F2 L' B' D L2 D F2 U' R2,B,Osijek Open 2017 (2017-02-25~26),333 R1 C #1
+5798714001,F2 B' U' R B2 R' F' R' F L2 F R2 U2 B U2 B2 L2 D',B,III Capixaba Challenge 2026 (2026-08-22~23),333oh Final A E2
 457918001,D2 F2 D2 F2 U2 L D2 L B2 D' R' F' D' R D B F2 U2 F R' B' L,B,Morocco Open 2017 (2017-03-05),333bf Final A #3
 5513897003,R' F D B2 D' L U' R L' B2 R' U' D2 B2 R2 B2 R2 D' L2 U,B,Please Don't DNF Kaohsiung 2026 (2026-04-05~06),333mbf R1 A #1
 2441058001,R2 F' U2 L2 U2 B2 F' R2 B2 F' D R B2 R' B U' F2 D2 U',G,Stevenage January 2023 (2023-01-21~22),333 R2 C #4
@@ -130,7 +130,7 @@
 4367810001,F U2 D2 L2 U L D2 F' R U2 R D2 B2 L U2 L2 U L',B,Norwich Winter 2024 (2024-12-14~15),333 R1 C #3
 1828566001,B L2 U' L2 B2 R2 B2 D2 R2 F2 D2 L' D' B' F U R' U B R',G,Lima Cuberano 2022 (2022-03-12~13),333 R1 E E1
 3245955001,R2 F2 D' R' F2 D2 F2 R2 D F2 R2 U' R U R' B' R2 U L,B,Romanian National Championship 2023 (2023-11-02~05),333 R2 A #3
-4080019001,L' D2 B2 L2 R F2 L' R' U2 F D2 B' U L' U R' F R,B,Gøy på Landet 2024 (2024-09-07),333 Final D #2
+5783040001,R2 U2 R2 B2 L2 U2 F' L2 D2 B U2 R' F2 L U' F2 U L R',G,All Rounders Katowice II 2026 (2026-08-15~16),333oh Final A #2
 4712835001,B2 D2 L2 B U2 B L2 U B R F U B2 L2 R F D F2,B,QBERS League In Astana 2025 (2025-05-10~11),333 R1 C #2
 849470001,L2 R' U2 B2 R' B2 L' D2 R' D L' R' U F D F' R U2 F',B,Swisscubing Better Be Quick 2018 (2018-08-04),333 R2 B E1
 833006001,R D2 B2 U2 R F2 D2 R B2 R F' U' R' B L' D' U2 B2 L2 R,G,Baoji Open 2018 (2018-07-21),333 R1 A E2
@@ -158,7 +158,7 @@
 4585667001,U2 L U2 B2 F2 L D2 L' B2 F2 D' B U' L2 B2 L D2 B U2,B,Catskills Spring 2025 (2025-03-23),333 R2 C E2
 660669025,L2 U2 L2 B R2 F L2 R2 B D2 F D' B' L' F2 L' R2 F' R2 B' L',B,Indian Open Rubik's Cube 2015 (2015-03-20~22),333mbf Final A #1
 4529473001,R B2 R2 D' U2 R2 B2 U2 R U R2 D R2 B' U L2,G,Gigiri Cubing Open PM 2025 (2025-03-01),333 R1 D E2
-1520329001,U F U2 B2 U2 B' D R2 F U' F' R2 F L2 B' U2 F2,G,Regreso a Clases Bogotá 2020 (2020-01-18~19),333 R1 C #5
+5799258001,L' U2 R' B2 U' R2 U L2 D2 U' R' D2 R B2 R' B' L2,G,Northwest Championship 2026 (2026-08-21~23),333 R1 C #4
 3038810001,B' L B2 D2 L D2 F2 R B2 L' R2 U F R' F' U' B L,G,Bilbao Open 2023 (2023-09-02~03),333 R1 D #1
 1459938001,R' F B2 R2 L2 U' R' U F2 R U2 R B2 U2 D2 R' B2 L',B,Tirol Open 2019 (2019-12-14~15),333 R1 C E1
 5700996020,B2 U' B2 F2 L2 D U' R D' B' F2 L' R' D U' F' U' F D,B,Redhawk Slow Summer OH 2026 (2026-06-13~14),333mbf Final A #1

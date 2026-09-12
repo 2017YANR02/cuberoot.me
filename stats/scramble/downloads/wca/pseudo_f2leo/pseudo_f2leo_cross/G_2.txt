@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / G / bin 2
-# Population in this bin: 439
+# Population in this bin: 442
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 10544001,F2 D2 R' F2 L2 R' D2 R B F2 D' L' D' B2 L' R B' F2,G,Northpark Adelaide 2014 (2014-04-12),333 R2 A #3
@@ -94,7 +94,7 @@
 2514488001,F' L2 F R2 U2 B' L2 R2 U2 L2 F D' B D' B D2 L',G,Cork Spring 2023 (2023-02-25~26),333 R1 D #3
 5218538001,U' L' U B' U' B' D L B2 R2 U2 R2 U R2 L2 U B2 L2,G,Beijing Only 3x3 2025 (2025-11-23),333 R1 F #1
 4461504001,B R2 F R2 F' D2 B D2 L U2 R B' L' D2 B' R F D2 B' L,G,Melbourne Summer 2025 (2025-01-24~26),333bf R1 D E2
-660999012,D2 L F2 L' D2 F2 L2 D2 R' B' L2 D B2 U' B D' U2 L2 R' B',G,Clash Of Cubers II 2016 (2016-05-28~29),333mbf Final A #1
+5811958001,F2 L U' F' L2 F2 D2 B' R2 U2 F D' L2 R' B U' B R' B,G,Shin Kong Cube Open - Taichung 2026 (2026-08-30),333 R1 G #5
 2674262001,D B' R D' R' D' B2 R' B' R2 B2 U D B2 D' R B2,G,Berisso al Cubo 2023 (2023-04-29~30),333oh R1 C #3
 661213003,U L2 F2 D2 U F2 D2 L U' B2 U2 R B D' U B' U' L2 F2 L',G,Skillcon 2016 (2016-12-17~18),333mbf Final A #1
 661236002,R2 F2 R2 B2 R2 B U2 B' D2 B' L D' B L F' D' U R2 D2 B2 D',G,Santa Cruz Rubik's Challenge 2017 (2017-01-27~28),333mbf Final A #1
@@ -204,4 +204,4 @@
 4648754001,B' F' R2 D2 B2 U2 R B L D2 B U' L2 U' R' F U,G,Birmingham Spring 2025 (2025-04-12~13),333 Final C #3
 1667335001,R L U R2 L' F' B' R L' F2 D' F2 R2 U' B2 R2 D' R',G,Lubelska Liga Speedcubingu I Bełżyce 2021 (2021-07-03~04),333 R2 A #2
 1668719001,U L2 U' L2 R2 D' U2 F2 R2 L' F' L R2 F' R2 D2 R' D U,G,Idaho Summer A 2021 (2021-07-16),333 R1 B E1
-2576477001,F B' R2 U' D2 F U F2 U B D2 R2 U2 L2 F B2 U2,G,Martorell Open 2023 (2023-03-18~19),333oh Final A #4
+5816977001,D' F' R' F2 R2 D2 R2 F2 U' F2 D L' B D' L D R B2 R,G,Mayo Cubing 2026 (2026-09-05~06),333 R2 B E2

@@ -1,0 +1,15 @@
+# Scramble samples — first_layer / first_face / Y / bin 10
+# Population in this bin: 8
+# Samples listed: 8 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+412839001,F2 L' R D2 L' B2 L F2 U' B2 L' R' U' R' B F D F' L2,Y,Wiehnachtswürfelä z Bärn 2016 (2016-12-10~11),333 R2 A E1
+660716028,L2 R2 U F2 D' R2 D L2 B2 U2 B' D2 U' L' D' B2 D L' U R' B R,Y,Uchi Florida 2015 (2015-05-23~24),333mbf Final A #1
+1285518001,R' U2 R B2 L R D2 B2 R D2 L' B D' F L R B' F2 U' F2,Y,Sofia Autumn 2019 (2019-08-31~09-01),333 Final A E1
+2037636001,R' U' F U2 R2 D' F2 U2 F2 L2 U' R2 F2 U' F U F' R' D' L U' B2 D B2 R' U' F,Y,Edukent Weekend 2022 (2022-07-15~17),333fm Final A #3
+3818255001,B2 F2 U R2 D U' F2 L B L R F' D U2 L U2 R D',Y,Sicily Summer: Arancino Open 2024 (2024-06-01~02),333 R1 C E1
+4250459030,F R' L D' F2 B2 R L2 D' F R L2 D2 F2 D2 F' B2 D2 B L2,Y,Hungarian Open 2024 (2024-11-01~03),333mbf Final A #1
+5274502055,D2 U2 F' U2 B L2 F' R2 B' F2 L B2 D L2 B' R D2 L' F U B' L,Y,New Zealand Nationals 2025 (2025-12-12~14),333mbf Final A #2
+5312122001,R2 D B' D2 U2 R U2 L F2 L U2 L' U2 D F L' F2 U2 B L,Y,Scrambled Cubes Legnica 2026 (2026-01-10),333 R1 A E1

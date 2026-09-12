@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / Y / bin 6
-# Population in this bin: 246
+# Population in this bin: 248
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 9262001,D2 F' R2 U2 F' L2 B2 D2 B D B' D R2 D' U B L D' R2,Y,SLS Tarnowskie Gory 2014 (2014-04-05),333oh Final C #3
@@ -80,7 +80,7 @@
 4628160001,U2 R' D2 L F2 R' B2 R U2 R F' U' F2 L D' F L2 U',Y,Langenstein City Blind Open 2025 (2025-04-05~06),333oh R1 A #5
 1097296001,U2 F2 D' B2 U R2 U2 F2 R2 U' L B' L F2 D2 R2 U' R' F2,Y,Euskadi Open Portugalete 2019 (2019-04-13~14),333ft Final A E1
 1130255001,R' L' U2 D R2 F R' U' F B2 U' R2 F2 R B2 R' F2 L U2,Y,Kent State Taco Bash 2019 (2019-05-04),333 R1 C E1
-4595722001,D' L U' R' B U' R2 F2 D F2 R U2 R2 D2 L U2 F' D',Y,Orono Open 2025 (2025-03-22),333 R2 A #2
+5804474001,R2 B U' L2 F L U2 L' U' B' R' F2 R2 F2 B D2 R2 B,Y,Chattogram Cube Mania 2026 (2026-08-29),333 R2 B E2
 1135447001,D2 L2 R2 F' U2 F' D2 L2 U2 B R F2 R' D' R' B U F U R2,Y,George School Open 2019 (2019-05-11),333oh Final B E2
 1238080001,B2 R2 B U2 R2 B' L2 B2 D2 F2 U2 L B' D' U2 F D L2 U F2,Y,Mestre Álvaro 2019 (2019-07-27~28),333 R1 D #3
 4662879001,R U' L' B' U2 F2 U2 L2 U L2 U2 B' F2 U' R F2 D F,Y,Bangalore Cube Open 2025 (2025-04-18~20),333 R1 E #5
@@ -161,7 +161,7 @@
 3511459001,U R F' R2 F R' B U' F' U2 F2 L2 U2 F' U2 F' L2 R F2,Y,Catalina Cube Mixer 2024 (2024-02-17),333oh Final A #2
 3579914001,R L' D2 B2 R2 B' U R2 U2 B D2 F B2 R2 D2 F' L F2,Y,Unicentro Pereira 2024 (2024-03-10),333 R2 A #1
 4898454001,U' B' F2 D B2 D2 R2 F2 U' L' F2 D F' R' U2 R B' L,Y,Boise One-Handed Blitz 2025 (2025-08-02),333 Final A #2
-3603739001,B' D2 B' L2 U2 R2 F R' D' L B L2 D' B L' D2 B D2,Y,Andina Speedcubing 2024 (2024-03-15~16),333 R2 A E1
+5782975054,B2 U' B F U2 R2 B D2 L2 D2 B2 R' B' F' L' B L2 D' L',Y,Kewbz UK Blindfolded Championship 2026 (2026-08-15),333mbf Final A #2
 3648623001,U B U R2 F2 L' U2 R' D' L F2 R' D2 L' B2 R' U2 F',Y,Santa Barbara Cubing 2024 (2024-04-06),333 R2 D #4
 3735450026,R D' R2 U F D2 F B' D2 R2 L' F2 B2 R' U2 F' R D L B',Y,BrizZon Side Open II 2024 (2024-05-01~05),333mbf Final A #3
 3749785001,R2 B2 U2 B L2 F' D2 L2 B2 L2 F U' R' D' U F D R' D,Y,Cube4fun Low Limits Jarosław 2024 (2024-05-11~12),333oh Final A E2

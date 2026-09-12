@@ -1,12 +1,12 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / R / bin 2
-# Population in this bin: 416
+# Population in this bin: 420
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3323001,D B2 D' U2 R2 D' L2 U' R2 U' B R' B2 L B L R2 B F2 R2,R,CMI Fiesta Open 2014 (2014-03-21~23),333oh R2 G #2
-4468832001,D2 R B2 R' F2 R2 D2 L2 R U' L' F D2 F2 L F2 U' B2,R,CETis 156 Broncos 2025 (2025-02-01~02),333 R2 B #3
+5820871010,R' U2 D L D' L F' R2 B D' U2 L D2 B2 L' F2 U2 B2 D B',R,Presidente Prudente Open 2026 (2026-09-05~06),333mbf Final A #1
 4270414001,F2 L2 U R2 U2 B2 F R2 D2 L' U L' F' L2 B2 D F R2 D,R,Cubing ATMOSphere 2024 (2024-11-09~10),333bf R1 A #1
 3070050003,R D2 R2 F2 R' U2 F2 R' U2 R B2 R2 F' U F D L' F2 L' F2,R,Visayas Championship 2023 (2023-09-08~10),333mbf Final A #2
 5653592001,F2 R' L' D' F2 R' L' U B2 L U' D' L2 U F2 B2 U B2,R,Hobart Autumn 2026 (2026-05-24),333 R1 D #4

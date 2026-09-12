@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / G / bin 9
-# Population in this bin: 11
-# Samples listed: 11 (all entries in this bin)
+# Population in this bin: 12
+# Samples listed: 12 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 23724001,R2 U2 R' B2 D2 U2 R' U2 R' F L2 B' R D2 R2 U' F' D' B' R' B' L,G,JRCA Kansai Spring 2014 (2014-05-31),333bf Final A #1
@@ -16,3 +16,4 @@
 5147235001,U B2 R' U2 F2 R2 B2 U2 F2 D' B' D U' L' U2 R B' D' F,G,Crossfield Fall 2025 (2025-11-01),333 R1 A #4
 5384059035,D B2 L2 D2 B2 U L2 D2 F D U' R F' L D' B' R' B' U2,G,Bara Multi-Blind i Jönköping 2026 (2026-02-15),333mbf R1 B #1
 5515801001,U2 L2 B U' L2 D L2 F2 D' R2 L B' R' D' R2 U L B U,G,Kublördag Uppsala V - 2026 (2026-04-11),333 R1 B E2
+5815263001,D2 B2 D L' B U F R F2 D2 R' U2 R F2 L' F2 L U' L' B' L2,G,Ciudad Blanca Ibarra 2026 (2026-09-05),333bf Final A E1

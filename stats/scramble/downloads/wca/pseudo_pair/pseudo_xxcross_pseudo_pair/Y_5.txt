@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / Y / bin 5
-# Population in this bin: 683
+# Population in this bin: 686
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 1801932001,D R U2 F' R2 L2 D' R' U2 R2 D2 R D2 L' U2 B2 L F2 D R',Y,Summer Kube Vila Velha 2022 (2022-02-05~06),333oh Final B #4
@@ -53,7 +53,7 @@
 5560111001,L' D R F2 B' U B2 R' D2 R2 U2 F B R2 F L2 R' D,Y,Michigan Mini 40 2026 (2026-04-16),333 R2 B #1
 2283707001,B2 L' F2 D' B2 L2 U' R2 B2 D2 R U B D' B2 L2 U' B F',Y,That's Odd Trondheim 2022 (2022-11-04~06),333 Final A #5
 231915001,D F2 U' F2 U2 B2 R2 U2 R2 U' F' R D2 B2 R U2 F2 L' R' D,Y,Crazy Cubes Open 2015 (2015-12-20),333 R2 B E2
-238001001,R2 D R2 U L2 D2 L2 R D B' F U' F D2 F2 D F' R,Y,Music City Winter 2016 (2016-01-02),333 R2 A #4
+5817857001,D B L' D' L2 D B2 D U R2 B' L B D R' D2 R' U2,Y,Long Island Back to School 2026 (2026-09-05),333 R2 A #2
 1769240001,D' B2 L U' R L B R L' D' R' F2 D' R2 L2 U' L2 B2,Y,KSF Club Semey 2021 (2021-12-11~12),333 Final A E2
 238169001,L2 D L U' D2 B R2 F2 D' R F2 L2 F2 U2 L2 D2 F' U2 L2,Y,BSD Open 2016 (2016-01-09),333 R1 A E1
 5677607053,F' U2 R D2 B R B' U' F' D' B' D2 R2 B' U2 F U2 B2 R' D',Y,New York Multimate PBQ V 2026 (2026-05-29~31),333mbf R1 A #1
@@ -105,7 +105,7 @@
 2872641001,U2 L' F2 L2 U F' D2 F R L2 B2 U' R2 L2 B2 L2 D B2,Y,Pre-Nacionales UP 2023 (2023-07-08),333oh Final B #2
 3329689001,D2 R2 B' F' D2 F U2 F L' B' U B2 L B D L2 B2 L',Y,5x5 on Madison Ice 2023 (2023-12-09~10),333oh R1 C E1
 2910188001,U L U L2 D R2 B2 D2 B2 L' D L' D2 L D' F,Y,Israel Championship 2023 (2023-07-17~20),333 R3 A #4
-1368371001,R2 F2 U B2 L2 F2 U' F2 L2 F D2 R B L2 R' B' L2 F L2,Y,Santa Marta Open 2019 (2019-10-19),333 R1 A #4
+5800577026,B' D2 R L2 B D2 R2 B' F' D2 F' U R B' F L U' L' F2 L B',Y,Langenstein Summer 2026 (2026-08-22~23),333mbf Final B #1
 3095670001,L2 B2 L U' D' L' B' L U F2 D2 L2 D' B2 U' R2 U L2 F2,Y,Foothills NxNs 2023 (2023-09-23),333 R2 B #5
 506061001,L2 F' D2 B L2 F' L2 D2 L2 F' L' F D2 U' L U' L F' L' B',Y,Nanning Open 2017 (2017-05-14),333 R1 B E2
 3389530001,L' D2 L D L U2 R' D R' B L2 B D2 F U2 R2 D2 L2 R',Y,New Year's in the Dolomites 2023 (2023-12-30~31),333oh Final A #1

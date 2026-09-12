@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / ORWY / bin 1
-# Population in this bin: 70
-# Samples listed: 70 (all entries in this bin)
+# Population in this bin: 73
+# Samples listed: 73 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 6462001,U L2 D U2 R2 U R2 B F' L' U F' L R2 B' F' D',W,Rumia Open 2014 (2014-03-29~30),333bf R1 A E2
@@ -75,3 +75,6 @@
 5413185001,U2 L2 D2 F U2 L2 F' L2 R B U' L F' D R' B2 L' F D' L2 U,R,CF Goes Sideways Brzeziny 2026 (2026-02-21~22),333bf R2 A #3
 5486109007,R' D2 L B2 L2 D2 F' U' R2 F L D B L D' B R B' L',W,Budapest Open 2026 (2026-03-28~29),333mbf Final A #1
 5508209017,D2 B2 R U2 R' U2 L' D' R B' D2 F2 L' D' R2 D2 B U2 B' L,O,Johnshhhtown 2026 (2026-04-04),333mbf Final A #1
+5786929001,U2 L D' B D' F L2 U2 L B' D B D2 L2 B L2 B R2 F' L' F,Y,Norwegian Championship 2026 (2026-08-14~16),333bf R2 A #4
+5806539001,R2 D R2 F2 U2 F2 D2 R' B2 L2 U R' F D2 R U L2 B2,O,Kārķi Open 2026 (2026-08-26~30),333oh R1 A #5
+5813534001,D2 U2 B2 L2 D2 L2 F D R' B D L' F' L' U2 B2 F' U2,Y,Oberlin Weeknights II 2026 (2026-09-03),333oh Final A E2

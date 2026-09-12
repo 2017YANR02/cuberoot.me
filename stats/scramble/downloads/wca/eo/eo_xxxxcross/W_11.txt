@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / W / bin 11
-# Population in this bin: 607
+# Population in this bin: 619
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 38706001,U' L' F' R' F D B' R2 D B2 L U L2 U2 L2 U D2 B2,W,Croatian Open 2014 (2014-07-19~20),333oh Final A #1
@@ -37,7 +37,7 @@
 5745448001,B' R' U F2 L2 D2 L2 F2 D' R' D R' B2 L B D' R',W,No Skewba Diving in Greenport 2026 (2026-07-11),333oh Final B #4
 208474001,D2 F2 U' B2 U2 B2 R2 U B' F D B' R D B2 U2 B2 R,W,Saint Petersburg Autumn Open 2015 (2015-10-24~25),333oh R1 A #3
 2440447001,B R2 U2 L2 B U2 R2 U F2 U F2 L D' B2 D' U2,W,El Carmen de Viboral 2023 (2023-01-21~22),333 R2 A E2
-4009778001,R2 U L2 D2 U2 F2 R' B2 U2 R U2 L F2 B' D F' U2 L2 B2 R,W,Land of Lincoln 2024 (2024-08-10),333 R2 A #5
+5786985001,F' R F' L' B R' B2 D2 F U2 D2 R2 D' F2 U' D' L' F,W,Norwegian Championship 2026 (2026-08-14~16),333 R2 A #5
 1479112001,F' L2 D2 B2 L2 B' D2 U2 B2 U' R F L' B2 U L2 D' U R2,W,La Silla II 2019 (2019-12-21~22),333 R1 A #2
 4520959049,B D2 U R2 D L2 F2 L2 B2 U' F' U' B2 R F' U' B' F' D L B2,W,Hampshire Winter 2025 (2025-02-22~23),333mbf Final A #1
 2668273001,D B U2 R' L' F U2 R F2 L2 F R2 B L2 B' D2 L2,W,Markham 3x3x3 Morning 2023 (2023-04-29),333 R1 C #3
@@ -51,7 +51,7 @@
 2341291034,D2 L' U R B' R U2 B' D2 B2 D' R2 U B2 R2 U' D' B2 R U L2 U,W,Please Be Solved Pickering 2022 (2022-12-03),333mbf Final A #1
 5762220001,L2 R2 U2 R2 U' L2 R2 F L D2 B2 R D2 U,W,Mallorca Open 2026 (2026-07-25~26),333 Final A #4
 288145001,B D F R D F' R U D' L' D R2 L2 D2 B2 U' B2 U' B2 L2,W,Maringá Open 2016 (2016-04-23~24),333oh R1 B #3
-5327470001,L2 B2 D' R2 U' L2 U2 R2 L U2 B2 F R' D R2 F' R2 F' R',W,Dublin Pick 'N' Mix 2026 (2026-01-17),333 R1 C E2
+5814446001,U' B2 D2 R' B2 R2 U2 L2 U2 D' B L B2 L' U2 L2 R,W,KC College Cube Open 2026 (2026-09-05),333 R1 B E1
 2528490018,B' R B' D L2 D R2 L2 U' R' D2 L' B2 L F2 U2 B' L B2,W,SveKub Super League II: Hässleholm 2023 (2023-03-04~05),333mbf Final A #1
 4090288092,R2 U' F2 D' U2 R2 U' R2 F2 L2 R U2 R2 F' L' B L2 B' L R D2,W,Titan Big N' Blind 2024 (2024-09-07~08),333mbf Final A #2
 2617635001,D' R2 L B' U2 L F L2 F2 R B2 R' F2 D2 R2 L' D' F',W,UCSD Spring 2023 (2023-04-02),333 R1 B #5
@@ -170,7 +170,7 @@
 963573001,L U' R U' L D R U2 L2 B L D2 B R2 D2 L2 U2 R2,W,Jakarta Cubing 2018 (2018-12-15~16),333oh R1 C #1
 3641576004,R2 B2 L R' F2 L' R' B L' F' R' U2 L' D U2 R U L2 U',W,Pocos Cupos Bogotá VIII 2024 (2024-04-06),333mbf Final C #3
 4995813001,B' L2 U' F2 L2 R2 D2 L2 D' B2 R' F' U2 B D2 L D' F' U',W,Speedcubing Delhi ESYA 2025 (2025-08-30),333 R1 H E1
-985594001,L F2 U2 F2 L' B2 R' D2 L D L B2 D R' B L2 R2 B2 R2,W,Gobbler Cube Day Winter 2019 (2019-01-19),333 R1 B #4
+5774571001,B' R2 U2 B2 L2 R2 D' L2 R2 D2 B2 D' B D2 U' L D2 U2 F,W,Guangzhou GraDUAL 3x3 I 2026 (2026-08-05),333 Final A #4
 3742491001,B2 F2 U2 L D2 R F2 D' L' U2 R' F2 L2 D' R' B' L2,W,Olympia Classic 2024 (2024-05-05),333oh R1 C E2
 3142148001,U R2 D' F2 U' F2 D' L' B2 D2 F D F' L' U2 L' F2 L',W,T-Town Showdown 2023 (2023-10-07),333 R1 A E2
 4485844001,L B2 L F2 R' F2 R U2 R U2 L2 U2 B' R2 D F2 R U' F2 L2,W,Tokyo Open PM Winter 2025 (2025-02-16),333 R1 B E1
@@ -183,7 +183,7 @@
 1107276001,D R B L F2 R2 L2 D2 R' U L' D R2 U D2 B2 D' L2,W,JukiMods Baztan Open 2019 (2019-04-19~20),333 Final A #1
 2049718001,D' U2 B' D2 B U2 F R2 F R' B2 D2 R2 D B U L2,W,Da Nang Open 2022 (2022-07-24),333oh Final B #1
 1135140001,U2 B' D2 F L2 F' L2 U2 L2 F2 D B2 D2 R2 F' L' B' L2 R,W,Valborg Cubing 2019 (2019-05-03~05),333 Final A #1
-5153447001,R D2 F' U' D' B2 U' R D2 F' B2 L2 U2 L2 U2 F2 L2 U' F,W,Garidech Open 2025 (2025-11-01~02),333 R1 B #1
+5807425001,R' U2 L' D2 F' R2 F U2 L2 F' D2 F' R2 D' B' R2 D' R F2 U2 L2,W,Rubik's German Nationals 2026 (2026-08-28~30),333bf R1 A #3
 3492753001,L2 D B' D L2 U2 F2 R2 U L2 R2 D F D2 U2 L' B2 R' U,W,HCHS Winter Open 2024 (2024-02-03),333 R1 F #3
 1534518001,F2 L B2 R U2 L' R2 B2 U R D' F2 U L' U' F2 R' F,W,CCC Qualification SPB 2020 (2020-02-01~02),333oh R1 C E1
 4581386001,R' B2 L2 U2 L2 D2 U2 F L B2 L2 U2 L' F' R' B D' R,W,Lakewood Newcomers 2025 (2025-03-22),333 R1 A #2
