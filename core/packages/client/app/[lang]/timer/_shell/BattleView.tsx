@@ -350,7 +350,7 @@ function PenaltyDropdown({ playerId }: { playerId: number }) {
 }
 
 // ===== ScramblePanel 组件 =====
-// 打乱文字(点击复制) + 打乱图 + WCA 来源行。可被同排一对玩家共用:
+// 打乱文字 + 打乱图 + WCA 来源行。可被同排一对玩家共用:
 //   ids = 参与共享的玩家槽位,取 ids[0] 为代表读打乱(同 puzzle 时全组打乱相等);
 //   任一玩家计时中则整条隐藏。单人格传 [playerId],共享行传该排的一对(如 [0,1] / [2,3])。
 function ScramblePanel({ ids, imgHeight }: { ids: number[]; imgHeight?: string }) {
@@ -361,42 +361,33 @@ function ScramblePanel({ ids, imgHeight }: { ids: number[]; imgHeight?: string }
   // 藏打乱的判据在引擎里(各自开始时要等最后一个人也起表,见 isScrambleHidden)
   const anyTiming = isScrambleHidden(store.players, ids);
   const scrambleRef = useRef<HTMLDivElement>(null);
-  const [scrambleCopied, setScrambleCopied] = useState(false);
-  const copiedTimerRef = useRef<number | null>(null);
   // WCA 来源行:打乱图正下方显示「国旗 + 比赛名 · 轮次/组别」。国旗 + 中文名需异步
   // 加载的比赛索引,落地后 bump flagVer 重渲。
   const [flagVer, setFlagVer] = useState(() => flagDataVersion());
   useEffect(() => { void loadFlagData().then((v) => setFlagVer((cur) => (v !== cur ? v : cur))); }, []);
 
-  // 点击打乱文字复制;阻止 pointer 冒泡到 .player-area(否则任何 pointerdown 都会 arm 计时器)。
+  // 打乱文字只作展示;阻止 pointer 冒泡到 .player-area，避免误起表。
   // 共享行虽在 player-area 之外,保留此拦截无害。
   useEffect(() => {
     const el = scrambleRef.current;
     if (!el) return;
     const stop = (e: PointerEvent) => e.stopPropagation();
+    const preventDefault = (event: Event) => event.preventDefault();
+    el.addEventListener('touchstart', preventDefault, { passive: false });
+    el.addEventListener('selectstart', preventDefault);
+    el.addEventListener('contextmenu', preventDefault);
     el.addEventListener('pointerdown', stop);
     el.addEventListener('pointerup', stop);
     el.addEventListener('pointercancel', stop);
     return () => {
+      el.removeEventListener('touchstart', preventDefault);
+      el.removeEventListener('selectstart', preventDefault);
+      el.removeEventListener('contextmenu', preventDefault);
       el.removeEventListener('pointerdown', stop);
       el.removeEventListener('pointerup', stop);
       el.removeEventListener('pointercancel', stop);
     };
   }, []);
-  useEffect(() => () => { if (copiedTimerRef.current) window.clearTimeout(copiedTimerRef.current); }, []);
-
-  const copyScramble = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    const st = useBattleStore.getState();
-    const s = st.scrambles[rep];
-    if (!s || s.startsWith('⚠️')) return;
-    // SQ1 copies in compact notation (4/-36/...) to match the displayed text.
-    try { void navigator.clipboard.writeText(formatScrambleForEvent(st.puzzleIds[rep], s)); } catch { /* ignore */ }
-    setScrambleCopied(true);
-    if (copiedTimerRef.current) window.clearTimeout(copiedTimerRef.current);
-    copiedTimerRef.current = window.setTimeout(() => setScrambleCopied(false), 1200);
-  }, [rep]);
-
   const myScramble = store.scrambles[rep];
   const myLoading = store.scrambleLoadings[rep];
   const myPuzzle = store.puzzleIds[rep];
@@ -425,22 +416,14 @@ function ScramblePanel({ ids, imgHeight }: { ids: number[]; imgHeight?: string }
 
   return (
     <>
-      {/* 打乱文字 — 放在打乱图正上方;点击复制 */}
+      {/* 打乱文字 — 放在打乱图正上方 */}
       <div
         ref={scrambleRef}
         className={`scramble-text${anyTiming ? ' hidden' : ''}`}
         data-no-timer
-        onClick={copyScramble}
-        title={tr({ zh: '点击复制打乱', en: 'Click to copy'
-        })}
-        style={{ '--scramble-auto': getScrambleAutoScale(myScrambleDisplay || ''), cursor: 'pointer' } as React.CSSProperties}
+        style={{ '--scramble-auto': getScrambleAutoScale(myScrambleDisplay || ''), cursor: 'default' } as React.CSSProperties}
         dangerouslySetInnerHTML={{ __html: scrambleContent }}
       />
-      {scrambleCopied && (
-        <div className="battle-scramble-copied" data-no-timer>{tr({ zh: '已复制', en: 'Copied'
-        })}</div>
-      )}
-
       {/* 打乱图 — 复用 timer 的 CubingPreview（scramble-display） */}
       <div className={`scramble-img${anyTiming ? ' hidden' : ''}`}>
         {myScramble && !myScramble.startsWith('⚠️') && store.showImage && (
