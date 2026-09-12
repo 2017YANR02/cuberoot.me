@@ -20,6 +20,8 @@ import {
   calculateKinchEvent,
 } from '@cuberoot/shared/kinch';
 import { calculateCompetitionStreak } from '@cuberoot/shared/pr-streak';
+import { importTransactionStart, refreshTable } from '../pg-refresh.js';
+import { mutationCapacityGuard, stagedCapacityGuard } from '../pg-import-capacity.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -945,6 +947,7 @@ async function main() {
   // ════════════ A 各地综合排行 (wca_fs_country_ranks + _meta) ════════════
   // 每 active event 取每国 MIN(world_rank)(current 国籍 bucket);penalty = MAX(world_rank over ALL persons)+1.
   // sum = Σ_event ( 有成绩 ? min_world_rank : penalty ).avg 项 333mbf 不参与(无 average).
+  let cscCount = 0;
   console.log('[fs-A] country sum-of-ranks...');
   {
     const csMinSingle: Map<string, number>[] = []; const csMinAvg: Map<string, number>[] = [];
@@ -970,7 +973,7 @@ async function main() {
       }
     }
     const cscStream = createWriteStream(resolve(outDir, 'wca_fs_country_ranks.copy.tsv'));
-    let cscCount = 0; const csPenaltyVec: { single: number[]; average: number[] } = { single: [], average: [] };
+    const csPenaltyVec: { single: number[]; average: number[] } = { single: [], average: [] };
     const csAllPenalties: { single: number; average: number } = { single: 0, average: 0 };
     const emitCountrySor = (isAvg: boolean) => {
       const minByEv = isAvg ? csMinAvg : csMinSingle, penByEv = isAvg ? csPenaltyAvg : csPenaltySingle, presentByEv = isAvg ? csPresentAvg : csPresentSingle;
@@ -1001,6 +1004,7 @@ async function main() {
   // ════════════ D3 纪录现保持时间 (wca_fs_current_records) ════════════
   // 每 active event × is_avg,从 accByEvent 重建按成绩排序的列表,取 world/各洲/各国 #1,
   // 各带 (world_rank, continent_rank, country_rank);set_date = 该 PB 的 bestCompId/avgCompId 比赛 start_date.
+  let currCount = 0;
   console.log('[fs-D3] current records standing...');
   {
     const dlist = (isAvg: boolean, ev: string) => {
@@ -1012,7 +1016,6 @@ async function main() {
       out.sort((x, y) => x.val - y.val); return out;
     };
     const currStream = createWriteStream(resolve(outDir, 'wca_fs_current_records.copy.tsv'));
-    let currCount = 0;
     for (let i = 0; i < ACTIVE_EVENTS.length; i++) {
       const ev = ACTIVE_EVENTS[i]!;
       for (const isAvg of [false, true]) {
@@ -1364,8 +1367,8 @@ async function main() {
   const wprCols = 'wca_id, comp_id, comp_date, event_id, round_type_id, format_id, pos, best, average, attempts, single_record, average_record';
 
   // 防呆:15 张 wca_fs_* 表正常由 migration 0028 建,但若 deploy_core(apply_migrations)尚未跑到、
-  // 而 stats.yml 先跑,TRUNCATE 缺表会在单事务 ON_ERROR_STOP 下把整个 wca_stats_extra 刷新一起回滚.
-  // 这里内联幂等 CREATE TABLE IF NOT EXISTS(全量/增量两模式都经 smallTables 走到)解耦该跨 workflow 依赖;
+  // 而 stats.yml 先跑,缺表会在 ON_ERROR_STOP 下使整个 wca_stats_extra 刷新回滚.
+  // 幂等 DDL 独立短事务先完成,不把任何 schema 锁带入后续长数据事务;
   // 索引仍由 0028 建(正常路径必跑;缺索引只是临时慢,不致命).表定义须与 0028 / schema_wca_stats_extra.pg.sql 同步.
   const ensureFsTables = `CREATE TABLE IF NOT EXISTS wca_fs_country_ranks (is_avg BOOLEAN NOT NULL, country_id VARCHAR(50) NOT NULL, sum INTEGER NOT NULL, events_present SMALLINT NOT NULL, per_event_rank INTEGER[] NOT NULL, PRIMARY KEY (is_avg, country_id));
 CREATE TABLE IF NOT EXISTS wca_fs_country_ranks_meta (is_avg BOOLEAN PRIMARY KEY, penalties INTEGER[] NOT NULL, all_penalties INTEGER NOT NULL);
@@ -1396,95 +1399,165 @@ CREATE TABLE IF NOT EXISTS wca_pr_streaks (wca_id VARCHAR(20) PRIMARY KEY, count
 CREATE INDEX IF NOT EXISTS pr_streak_world ON wca_pr_streaks (streak DESC, wca_id);
 CREATE INDEX IF NOT EXISTS pr_streak_continent ON wca_pr_streaks (continent_id, streak DESC, wca_id);
 CREATE INDEX IF NOT EXISTS pr_streak_country ON wca_pr_streaks (country_id, streak DESC, wca_id);
--- wca_competitions 补 city / iso2(表由 schema_wca_stats_extra 建,这里只加列,幂等).
-ALTER TABLE wca_competitions ADD COLUMN IF NOT EXISTS city VARCHAR(120) NOT NULL DEFAULT '';
-ALTER TABLE wca_competitions ADD COLUMN IF NOT EXISTS country_iso2 VARCHAR(2) NOT NULL DEFAULT '';`;
+-- 已有列不执行 ALTER,避免日常导入也请求 ACCESS EXCLUSIVE 锁。
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'wca_competitions'::regclass AND attname = 'city' AND NOT attisdropped) THEN
+    ALTER TABLE wca_competitions ADD COLUMN city VARCHAR(120) NOT NULL DEFAULT '';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'wca_competitions'::regclass AND attname = 'country_iso2' AND NOT attisdropped) THEN
+    ALTER TABLE wca_competitions ADD COLUMN country_iso2 VARCHAR(2) NOT NULL DEFAULT '';
+  END IF;
+END $$;`;
 
-  // 6 张全局聚合小表 + 指纹 manifest:两模式都全量 TRUNCATE+重灌(任一成绩变这些排名都会动,无法增量;
-  // 但它们小,翻倍无所谓).边 COPY 边删源 TSV(同分区白占空间;\\copy 读完即删,\\! 不受事务影响).
-  const smallTables = `${ensureFsTables}
-TRUNCATE wca_competitions       CASCADE;
-TRUNCATE wca_grand_slam;
-TRUNCATE wca_cohort_ranks;
-TRUNCATE wca_success_rate;
-TRUNCATE wca_all_events_done;
-TRUNCATE wca_person_ranks;
-TRUNCATE wca_kinch;
-TRUNCATE wca_pr_streaks;
-TRUNCATE wca_fs_country_ranks;
-TRUNCATE wca_fs_country_ranks_meta;
-TRUNCATE wca_fs_medals;
-TRUNCATE wca_fs_placements;
-TRUNCATE wca_fs_best_podiums;
-TRUNCATE wca_fs_misser;
-TRUNCATE wca_fs_records_person;
-TRUNCATE wca_fs_records_comp;
-TRUNCATE wca_fs_current_records;
-TRUNCATE wca_fs_person_comps;
-TRUNCATE wca_fs_comp_persons;
-TRUNCATE wca_fs_person_comp_solves;
-TRUNCATE wca_fs_comp_solves;
-TRUNCATE wca_fs_person_solves;
-TRUNCATE wca_fs_person_year_solves;
-TRUNCATE wca_championship_podiums;
-
-\\copy wca_competitions (id, name, country_id, start_date, end_date, city, country_iso2) FROM 'wca_competitions.copy.tsv';
+  // 有主键的聚合表先 COPY 到暂存表,仅更新变化行;无主键的表保留其重复行语义。
+  // DELETE/INSERT 的 MVCC 让读请求在提交前继续看到完整旧数据。
+  const smallTables = `${refreshTable({
+    table: 'wca_competitions',
+    columns: ['id', 'name', 'country_id', 'start_date', 'end_date', 'city', 'country_iso2'],
+    keyColumns: ['id'], file: 'wca_competitions.copy.tsv', expectedRows: comps.length,
+  })}
 \\! rm -f wca_competitions.copy.tsv
-\\copy wca_grand_slam (wca_id, event_id, best_value, avg_value, country_id, has_wr, is_only_first, world_champ_comp_id, world_champ_pos, continental_champ_comp_id, continental_champ_pos, national_champ_comp_id, national_champ_pos) FROM 'wca_grand_slam.copy.tsv';
+${refreshTable({
+    table: 'wca_grand_slam',
+    columns: ['wca_id', 'event_id', 'best_value', 'avg_value', 'country_id', 'has_wr', 'is_only_first', 'world_champ_comp_id', 'world_champ_pos', 'continental_champ_comp_id', 'continental_champ_pos', 'national_champ_comp_id', 'national_champ_pos'],
+    keyColumns: ['wca_id', 'event_id'], file: 'wca_grand_slam.copy.tsv', expectedRows: gsCount,
+  })}
 \\! rm -f wca_grand_slam.copy.tsv
-\\copy wca_cohort_ranks (cohort_year, event_id, is_avg, wca_id, value, country_id, world_rank, country_rank) FROM 'wca_cohort_ranks.copy.tsv';
+${refreshTable({
+    table: 'wca_cohort_ranks',
+    columns: ['cohort_year', 'event_id', 'is_avg', 'wca_id', 'value', 'country_id', 'world_rank', 'country_rank'],
+    keyColumns: ['cohort_year', 'event_id', 'is_avg', 'wca_id'], file: 'wca_cohort_ranks.copy.tsv', expectedRows: cohortCount,
+  })}
 \\! rm -f wca_cohort_ranks.copy.tsv
-\\copy wca_success_rate (event_id, wca_id, country_id, solved, attempted, pct_x10000) FROM 'wca_success_rate.copy.tsv';
+${refreshTable({
+    table: 'wca_success_rate',
+    columns: ['event_id', 'wca_id', 'country_id', 'solved', 'attempted', 'pct_x10000'],
+    keyColumns: ['event_id', 'wca_id'], file: 'wca_success_rate.copy.tsv', expectedRows: srCount,
+  })}
 \\! rm -f wca_success_rate.copy.tsv
-\\copy wca_all_events_done (wca_id, country_id, done_count, is_done, first_comp_id, first_comp_date, achievement_comp_id, achievement_comp_date, days_to_complete, total_comp_count) FROM 'wca_all_events_done.copy.tsv';
+${refreshTable({
+    table: 'wca_all_events_done',
+    columns: ['wca_id', 'country_id', 'done_count', 'is_done', 'first_comp_id', 'first_comp_date', 'achievement_comp_id', 'achievement_comp_date', 'days_to_complete', 'total_comp_count'],
+    keyColumns: ['wca_id'], file: 'wca_all_events_done.copy.tsv', expectedRows: aedCount,
+  })}
 \\! rm -f wca_all_events_done.copy.tsv
-\\copy wca_person_ranks (wca_id, is_avg, country_id, events_done, total_world_rank, total_country_rank, best_final_pos, ranks_world, ranks_country, continent_id, total_continent_rank, total_world_rank_21, total_country_rank_21, total_continent_rank_21, ranks_continent) FROM 'wca_person_ranks.copy.tsv';
+${refreshTable({
+    table: 'wca_person_ranks',
+    columns: ['wca_id', 'is_avg', 'country_id', 'events_done', 'total_world_rank', 'total_country_rank', 'best_final_pos', 'ranks_world', 'ranks_country', 'continent_id', 'total_continent_rank', 'total_world_rank_21', 'total_country_rank_21', 'total_continent_rank_21', 'ranks_continent'],
+    keyColumns: ['wca_id', 'is_avg'], file: 'wca_person_ranks.copy.tsv', expectedRows: prCount,
+  })}
 \\! rm -f wca_person_ranks.copy.tsv
-\\copy wca_kinch (wca_id, country_id, continent_id, world_score_x100, continent_score_x100, country_score_x100) FROM 'wca_kinch.copy.tsv';
+${refreshTable({
+    table: 'wca_kinch',
+    columns: ['wca_id', 'country_id', 'continent_id', 'world_score_x100', 'continent_score_x100', 'country_score_x100'],
+    keyColumns: ['wca_id'], file: 'wca_kinch.copy.tsv', expectedRows: kinchCount,
+  })}
 \\! rm -f wca_kinch.copy.tsv
-\\copy wca_pr_streaks (wca_id, country_id, continent_id, streak, start_comp_id, end_comp_id) FROM 'wca_pr_streaks.copy.tsv';
+${refreshTable({
+    table: 'wca_pr_streaks',
+    columns: ['wca_id', 'country_id', 'continent_id', 'streak', 'start_comp_id', 'end_comp_id'],
+    keyColumns: ['wca_id'], file: 'wca_pr_streaks.copy.tsv', expectedRows: prStreakCount,
+  })}
 \\! rm -f wca_pr_streaks.copy.tsv
-\\copy wca_fs_country_ranks (is_avg, country_id, sum, events_present, per_event_rank) FROM 'wca_fs_country_ranks.copy.tsv';
+${refreshTable({
+    table: 'wca_fs_country_ranks',
+    columns: ['is_avg', 'country_id', 'sum', 'events_present', 'per_event_rank'],
+    keyColumns: ['is_avg', 'country_id'], file: 'wca_fs_country_ranks.copy.tsv', expectedRows: cscCount,
+  })}
 \\! rm -f wca_fs_country_ranks.copy.tsv
-\\copy wca_fs_country_ranks_meta (is_avg, penalties, all_penalties) FROM 'wca_fs_country_ranks_meta.copy.tsv';
+${refreshTable({
+    table: 'wca_fs_country_ranks_meta',
+    columns: ['is_avg', 'penalties', 'all_penalties'],
+    keyColumns: ['is_avg'], file: 'wca_fs_country_ranks_meta.copy.tsv', expectedRows: 2,
+  })}
 \\! rm -f wca_fs_country_ranks_meta.copy.tsv
+${mutationCapacityGuard({ table: 'wca_fs_medals', file: 'wca_fs_medals.copy.tsv' })}
+DELETE FROM wca_fs_medals;
 \\copy wca_fs_medals (wca_id, country_id, event_id, gold, silver, bronze) FROM 'wca_fs_medals.copy.tsv';
 \\! rm -f wca_fs_medals.copy.tsv
+${mutationCapacityGuard({ table: 'wca_fs_placements', file: 'wca_fs_placements.copy.tsv' })}
+DELETE FROM wca_fs_placements;
 \\copy wca_fs_placements (wca_id, country_id, event_id, pos, count) FROM 'wca_fs_placements.copy.tsv';
 \\! rm -f wca_fs_placements.copy.tsv
+${mutationCapacityGuard({ table: 'wca_fs_best_podiums', file: 'wca_fs_best_podiums.copy.tsv' })}
+DELETE FROM wca_fs_best_podiums;
 \\copy wca_fs_best_podiums (comp_id, event_id, sum_value, pos1_wca_id, pos1_value, pos2_wca_id, pos2_value, pos3_wca_id, pos3_value, tie) FROM 'wca_fs_best_podiums.copy.tsv';
 \\! rm -f wca_fs_best_podiums.copy.tsv
+${mutationCapacityGuard({ table: 'wca_fs_misser', file: 'wca_fs_misser.copy.tsv' })}
+DELETE FROM wca_fs_misser;
 \\copy wca_fs_misser (event_id, is_avg, value, wca_id, country_id, ever_first, ever_podium, ever_record) FROM 'wca_fs_misser.copy.tsv';
 \\! rm -f wca_fs_misser.copy.tsv
-\\copy wca_fs_records_person (wca_id, country_id, wr, cr, nr, score) FROM 'wca_fs_records_person.copy.tsv';
+${refreshTable({
+    table: 'wca_fs_records_person',
+    columns: ['wca_id', 'country_id', 'wr', 'cr', 'nr', 'score'],
+    keyColumns: ['wca_id', 'country_id'], file: 'wca_fs_records_person.copy.tsv', expectedRows: recPersonCount,
+  })}
 \\! rm -f wca_fs_records_person.copy.tsv
-\\copy wca_fs_records_comp (comp_id, comp_country_id, wr, cr, nr, score) FROM 'wca_fs_records_comp.copy.tsv';
+${refreshTable({
+    table: 'wca_fs_records_comp',
+    columns: ['comp_id', 'comp_country_id', 'wr', 'cr', 'nr', 'score'],
+    keyColumns: ['comp_id'], file: 'wca_fs_records_comp.copy.tsv', expectedRows: recCompCount,
+  })}
 \\! rm -f wca_fs_records_comp.copy.tsv
-\\copy wca_fs_current_records (event_id, is_avg, scope_kind, scope_id, wca_id, country_id, value, set_comp_id, set_date, world_rank, continent_rank, country_rank) FROM 'wca_fs_current_records.copy.tsv';
+${refreshTable({
+    table: 'wca_fs_current_records',
+    columns: ['event_id', 'is_avg', 'scope_kind', 'scope_id', 'wca_id', 'country_id', 'value', 'set_comp_id', 'set_date', 'world_rank', 'continent_rank', 'country_rank'],
+    keyColumns: ['event_id', 'is_avg', 'scope_kind', 'scope_id'], file: 'wca_fs_current_records.copy.tsv', expectedRows: currCount,
+  })}
 \\! rm -f wca_fs_current_records.copy.tsv
-\\copy wca_fs_person_comps (wca_id, country_id, comp_count) FROM 'wca_fs_person_comps.copy.tsv';
+${refreshTable({
+    table: 'wca_fs_person_comps',
+    columns: ['wca_id', 'country_id', 'comp_count'],
+    keyColumns: ['wca_id'], file: 'wca_fs_person_comps.copy.tsv', expectedRows: pcCount,
+  })}
 \\! rm -f wca_fs_person_comps.copy.tsv
-\\copy wca_fs_comp_persons (comp_id, comp_country_id, person_count) FROM 'wca_fs_comp_persons.copy.tsv';
+${refreshTable({
+    table: 'wca_fs_comp_persons',
+    columns: ['comp_id', 'comp_country_id', 'person_count'],
+    keyColumns: ['comp_id'], file: 'wca_fs_comp_persons.copy.tsv', expectedRows: cpCount,
+  })}
 \\! rm -f wca_fs_comp_persons.copy.tsv
-\\copy wca_fs_person_comp_solves (wca_id, country_id, comp_id, solve, attempt) FROM 'wca_fs_person_comp_solves.copy.tsv';
+${refreshTable({
+    table: 'wca_fs_person_comp_solves',
+    columns: ['wca_id', 'country_id', 'comp_id', 'solve', 'attempt'],
+    keyColumns: ['wca_id', 'comp_id'], file: 'wca_fs_person_comp_solves.copy.tsv', expectedRows: pcsCount,
+  })}
 \\! rm -f wca_fs_person_comp_solves.copy.tsv
-\\copy wca_fs_comp_solves (comp_id, comp_country_id, solve, attempt) FROM 'wca_fs_comp_solves.copy.tsv';
+${refreshTable({
+    table: 'wca_fs_comp_solves',
+    columns: ['comp_id', 'comp_country_id', 'solve', 'attempt'],
+    keyColumns: ['comp_id'], file: 'wca_fs_comp_solves.copy.tsv', expectedRows: csolvCount,
+  })}
 \\! rm -f wca_fs_comp_solves.copy.tsv
-\\copy wca_fs_person_solves (wca_id, country_id, solve, attempt) FROM 'wca_fs_person_solves.copy.tsv';
+${refreshTable({
+    table: 'wca_fs_person_solves',
+    columns: ['wca_id', 'country_id', 'solve', 'attempt'],
+    keyColumns: ['wca_id'], file: 'wca_fs_person_solves.copy.tsv', expectedRows: psolvCount,
+  })}
 \\! rm -f wca_fs_person_solves.copy.tsv
-\\copy wca_fs_person_year_solves (wca_id, country_id, year, solve, attempt) FROM 'wca_fs_person_year_solves.copy.tsv';
+${refreshTable({
+    table: 'wca_fs_person_year_solves',
+    columns: ['wca_id', 'country_id', 'year', 'solve', 'attempt'],
+    keyColumns: ['wca_id', 'year'], file: 'wca_fs_person_year_solves.copy.tsv', expectedRows: pysCount,
+  })}
 \\! rm -f wca_fs_person_year_solves.copy.tsv
-\\copy wca_championship_podiums (wca_id, comp_id, event_id, level, place, best, average, attempts, single_record, average_record) FROM 'wca_championship_podiums.copy.tsv';
+${refreshTable({
+    table: 'wca_championship_podiums',
+    columns: ['wca_id', 'comp_id', 'event_id', 'level', 'place', 'best', 'average', 'attempts', 'single_record', 'average_record'],
+    keyColumns: ['wca_id', 'comp_id', 'event_id', 'level'], file: 'wca_championship_podiums.copy.tsv', expectedRows: champPodiumCount,
+  })}
 \\! rm -f wca_championship_podiums.copy.tsv`;
 
   // ── wca_person_results 的 load 片段(两模式共用,插在 smallTables 之后) ──
-  // 全量:TRUNCATE + 灌整表.delta:先把新行 COPY 进 temp,再在 DO 块里删旧行 + 插新行 ——
+  // 全量:DELETE + 灌整表.delta:先把新行 COPY 进 temp,再在 DO 块里删旧行 + 插新行 ——
   // 之所以绕 temp 表,是因为 \copy 是 psql 客户端命令、没法写在条件分支里,而首次上线时
   // 本表还是空的(未 bootstrap),此时必须整段跳过:直接灌 delta 会留下一张残缺表,
   // 而 RAISE 会把当晚整个 stats 事务(flat + 20 张小表)一起回滚,代价更大.
   const personResultsSql = wprFull
     ? `-- wca_person_results:全量重灌(无旧指纹 / WPR_FULL=1 bootstrap).
-TRUNCATE wca_person_results;
+${mutationCapacityGuard({ table: 'wca_person_results', file: wprFile })}
+DELETE FROM wca_person_results;
 \\copy wca_person_results (${wprCols}) FROM '${wprFile}';
 \\! rm -f ${wprFile}
 DO $$
@@ -1496,8 +1569,10 @@ BEGIN
   END IF;
 END $$;`
     : `-- wca_person_results:增量(与 wca_results_flat 同一份 del-list:_wrf_del).
+${stagedCapacityGuard('_wpr_delta', wprFile)}
 CREATE TEMP TABLE _wpr_delta (LIKE wca_person_results) ON COMMIT DROP;
 \\copy _wpr_delta (${wprCols}) FROM '${wprFile}';
+${mutationCapacityGuard({ table: 'wca_person_results', file: wprFile, mode: 'delta' })}
 \\! rm -f ${wprFile}
 DO $$
 DECLARE pre bigint; n bigint;
@@ -1518,32 +1593,74 @@ END $$;`;
   // VACUUM (ANALYZE):wca_results_flat 走 Index Only Scan 跑深分页,必须更新 visibility map.
   // 增量同样需要:DELETE 的 dead tuple 页 + delta 新页都要进 vmap,否则 IOS 退化 heap fetch.
   const vacuumAnalyze = `VACUUM (ANALYZE) wca_results_flat;
-ANALYZE wca_competitions;
-ANALYZE wca_grand_slam;
-ANALYZE wca_cohort_ranks;
-ANALYZE wca_success_rate;
-ANALYZE wca_all_events_done;
-ANALYZE wca_person_ranks;
-ANALYZE wca_kinch;
-ANALYZE wca_pr_streaks;
-ANALYZE wca_comp_updated_at;
-ANALYZE wca_fs_country_ranks;
-ANALYZE wca_fs_country_ranks_meta;
-ANALYZE wca_fs_medals;
-ANALYZE wca_fs_placements;
-ANALYZE wca_fs_best_podiums;
-ANALYZE wca_fs_misser;
-ANALYZE wca_fs_records_person;
-ANALYZE wca_fs_records_comp;
-ANALYZE wca_fs_current_records;
-ANALYZE wca_fs_person_comps;
-ANALYZE wca_fs_comp_persons;
-ANALYZE wca_fs_person_comp_solves;
-ANALYZE wca_fs_comp_solves;
-ANALYZE wca_fs_person_solves;
-ANALYZE wca_fs_person_year_solves;
-ANALYZE wca_championship_podiums;
+VACUUM (ANALYZE) wca_competitions;
+VACUUM (ANALYZE) wca_grand_slam;
+VACUUM (ANALYZE) wca_cohort_ranks;
+VACUUM (ANALYZE) wca_success_rate;
+VACUUM (ANALYZE) wca_all_events_done;
+VACUUM (ANALYZE) wca_person_ranks;
+VACUUM (ANALYZE) wca_kinch;
+VACUUM (ANALYZE) wca_pr_streaks;
+VACUUM (ANALYZE) wca_comp_updated_at;
+VACUUM (ANALYZE) wca_fs_country_ranks;
+VACUUM (ANALYZE) wca_fs_country_ranks_meta;
+VACUUM (ANALYZE) wca_fs_medals;
+VACUUM (ANALYZE) wca_fs_placements;
+VACUUM (ANALYZE) wca_fs_best_podiums;
+VACUUM (ANALYZE) wca_fs_misser;
+VACUUM (ANALYZE) wca_fs_records_person;
+VACUUM (ANALYZE) wca_fs_records_comp;
+VACUUM (ANALYZE) wca_fs_current_records;
+VACUUM (ANALYZE) wca_fs_person_comps;
+VACUUM (ANALYZE) wca_fs_comp_persons;
+VACUUM (ANALYZE) wca_fs_person_comp_solves;
+VACUUM (ANALYZE) wca_fs_comp_solves;
+VACUUM (ANALYZE) wca_fs_person_solves;
+VACUUM (ANALYZE) wca_fs_person_year_solves;
+VACUUM (ANALYZE) wca_championship_podiums;
 VACUUM (ANALYZE) wca_person_results;`;
+
+  const ensureFullTables = `-- id BIGSERIAL: PG 深分页 late-join(内子查询走 wrf_main INCLUDE,外层 PK 回表 enrich 100 行).
+CREATE TABLE IF NOT EXISTS wca_results_flat (
+  id                 BIGSERIAL PRIMARY KEY,
+  event_id           VARCHAR(20) NOT NULL,
+  is_avg             BOOLEAN NOT NULL,
+  value              INTEGER NOT NULL,
+  wca_id             VARCHAR(20) NOT NULL,
+  person_country_id  VARCHAR(50) NOT NULL,
+  comp_id            VARCHAR(50) NOT NULL,
+  comp_date          DATE NOT NULL,
+  attempts           INTEGER[],
+  round_type_id      VARCHAR(2)  NOT NULL DEFAULT '',
+  format_id          VARCHAR(2)  NOT NULL DEFAULT '',
+  record_tag         VARCHAR(3)  NOT NULL DEFAULT '',
+  comp_year          SMALLINT GENERATED ALWAYS AS (EXTRACT(YEAR FROM comp_date)::SMALLINT) STORED
+);
+CREATE INDEX IF NOT EXISTS wrf_main         ON wca_results_flat (event_id, is_avg, value, wca_id) INCLUDE (id);
+CREATE INDEX IF NOT EXISTS wrf_country      ON wca_results_flat (event_id, is_avg, person_country_id, value);
+CREATE INDEX IF NOT EXISTS wrf_wca_id       ON wca_results_flat (event_id, is_avg, wca_id, value);
+CREATE INDEX IF NOT EXISTS wrf_comp_id      ON wca_results_flat (event_id, is_avg, comp_id, value);
+CREATE INDEX IF NOT EXISTS wrf_year         ON wca_results_flat (event_id, is_avg, comp_year, value, wca_id) INCLUDE (id);
+-- wrf_month: 选手模式"当期·月"排名走它(comp_year + 月份表达式),DISTINCT ON 切片秒出.
+-- 月份用表达式而非生成列:免整表改写(ALTER ADD STORED 会改写 11M 行+重建全索引,磁盘扛不住).
+-- 替代了旧 wrt_country_year(777MB / idx_scan≈16,近死索引;国家+年份退回 wrf_country+过滤 ~230ms 够用).
+CREATE INDEX IF NOT EXISTS wrf_month         ON wca_results_flat (event_id, is_avg, comp_year, ((EXTRACT(MONTH FROM comp_date))::int), value, wca_id);
+CREATE INDEX IF NOT EXISTS wrf_comp_lookup  ON wca_results_flat (comp_id);
+CREATE INDEX IF NOT EXISTS wrf_prior_pr     ON wca_results_flat (wca_id, event_id, is_avg, comp_date) INCLUDE (value);
+
+CREATE TABLE IF NOT EXISTS wca_comp_updated_at (
+  comp_id      VARCHAR(50)  PRIMARY KEY,
+  content_hash BIGINT       NOT NULL
+);`;
+
+  const schemaSql = `${importTransactionStart('wca_stats_extra_schema')}
+${ensureFsTables}
+${incremental ? '' : ensureFullTables}
+COMMIT;`;
+  const manifestSql = refreshTable({
+    table: 'wca_comp_updated_at', columns: ['comp_id', 'content_hash'],
+    keyColumns: ['comp_id'], file: 'wca_comp_updated_at.copy.tsv', expectedRows: compMaxCount,
+  });
 
   let loadSql: string;
   if (incremental) {
@@ -1555,7 +1672,9 @@ VACUUM (ANALYZE) wca_person_results;`;
     loadSql = `-- 由 wca_stats_extra_build.ts 生成(增量:只重灌指纹变动比赛的 wca_results_flat 行).
 -- changed=${changedComps.size} 场, delta=${allTopCount} 行 / 全表应有 ${fullTopTotal} 行.峰值仅几 MB.
 
-BEGIN;
+${schemaSql}
+
+${importTransactionStart('wca_stats_extra')}
 
 -- 守卫:服务器现有 wca_comp_updated_at 指纹必须 == builder diff 所用的旧指纹(count + sum),
 -- 否则说明 build 拉取指纹后服务器又被改过 → delta 与真实状态失配 → abort 回滚,绝不写脏 wca_results_flat.
@@ -1572,13 +1691,13 @@ END $$;
 CREATE TEMP TABLE _wrf_del (comp_id VARCHAR(50)) ON COMMIT DROP;
 \\copy _wrf_del FROM 'wca_results_flat_del.txt';
 \\! rm -f wca_results_flat_del.txt
+${mutationCapacityGuard({ table: 'wca_results_flat', file: wrfFile, mode: 'delta' })}
 DELETE FROM wca_results_flat WHERE comp_id IN (SELECT comp_id FROM _wrf_del);
 \\copy wca_results_flat (${wrfCols}) FROM '${wrfFile}';
 \\! rm -f ${wrfFile}
 
 -- 指纹 manifest 全量替换为新指纹(下次 build 的 old = 这次的 new);守卫已在上面读过旧值.
-TRUNCATE wca_comp_updated_at;
-\\copy wca_comp_updated_at (comp_id, content_hash) FROM 'wca_comp_updated_at.copy.tsv';
+${manifestSql}
 \\! rm -f wca_comp_updated_at.copy.tsv
 
 ${smallTables}
@@ -1605,56 +1724,35 @@ COMMIT;
 ${vacuumAnalyze}
 `;
   } else {
-    // 全量:缺旧指纹(首次 / FORCE_FULL / CI 拉取失败)→ DROP+CREATE 重建.峰值 ~2×表,靠 TSV 边删压余量.
-    loadSql = `-- 由 wca_stats_extra_build.ts 生成(全量:DROP+CREATE 重建 wca_results_flat).
--- 缺旧指纹时走此路.apply.sh 不调 schema 文件,DROP+CREATE 在此自包含建表/迁移.
+    // 全量:缺旧指纹(首次 / FORCE_FULL / CI 拉取失败)→ 同表 DELETE+COPY,保持索引、依赖与读可用性。
+    loadSql = `-- 由 wca_stats_extra_build.ts 生成(全量:MVCC 替换 wca_results_flat).
+-- 建表在独立短事务完成;现有正式表、索引与依赖保持不变。
 
-BEGIN;
+${schemaSql}
 
-DROP TABLE IF EXISTS wca_results_flat CASCADE;
--- id BIGSERIAL: PG 深分页 late-join(内子查询走 wrf_main INCLUDE,外层 PK 回表 enrich 100 行).
-CREATE TABLE wca_results_flat (
-  id                 BIGSERIAL PRIMARY KEY,
-  event_id           VARCHAR(20) NOT NULL,
-  is_avg             BOOLEAN NOT NULL,
-  value              INTEGER NOT NULL,
-  wca_id             VARCHAR(20) NOT NULL,
-  person_country_id  VARCHAR(50) NOT NULL,
-  comp_id            VARCHAR(50) NOT NULL,
-  comp_date          DATE NOT NULL,
-  attempts           INTEGER[],
-  round_type_id      VARCHAR(2)  NOT NULL DEFAULT '',
-  format_id          VARCHAR(2)  NOT NULL DEFAULT '',
-  record_tag         VARCHAR(3)  NOT NULL DEFAULT '',
-  comp_year          SMALLINT GENERATED ALWAYS AS (EXTRACT(YEAR FROM comp_date)::SMALLINT) STORED
-);
-CREATE INDEX wrf_main         ON wca_results_flat (event_id, is_avg, value, wca_id) INCLUDE (id);
-CREATE INDEX wrf_country      ON wca_results_flat (event_id, is_avg, person_country_id, value);
-CREATE INDEX wrf_wca_id       ON wca_results_flat (event_id, is_avg, wca_id, value);
-CREATE INDEX wrf_comp_id      ON wca_results_flat (event_id, is_avg, comp_id, value);
-CREATE INDEX wrf_year         ON wca_results_flat (event_id, is_avg, comp_year, value, wca_id) INCLUDE (id);
--- wrf_month: 选手模式"当期·月"排名走它(comp_year + 月份表达式),DISTINCT ON 切片秒出.
--- 月份用表达式而非生成列:免整表改写(ALTER ADD STORED 会改写 11M 行+重建全索引,磁盘扛不住).
--- 替代了旧 wrt_country_year(777MB / idx_scan≈16,近死索引;国家+年份退回 wrf_country+过滤 ~230ms 够用).
-CREATE INDEX wrf_month         ON wca_results_flat (event_id, is_avg, comp_year, ((EXTRACT(MONTH FROM comp_date))::int), value, wca_id);
-CREATE INDEX wrf_comp_lookup  ON wca_results_flat (comp_id);
-CREATE INDEX wrf_prior_pr     ON wca_results_flat (wca_id, event_id, is_avg, comp_date) INCLUDE (value);
+${importTransactionStart('wca_stats_extra')}
 
-DROP TABLE IF EXISTS wca_comp_updated_at;
-CREATE TABLE wca_comp_updated_at (
-  comp_id      VARCHAR(50)  PRIMARY KEY,
-  content_hash BIGINT       NOT NULL
-);
+${mutationCapacityGuard({ table: 'wca_results_flat', file: wrfFile })}
+DELETE FROM wca_results_flat;
 
 -- results_flat.copy.tsv(1.1G)删在尾部小表之前,腾出曾致 person_ranks ENOSPC 的那段空间.
 \\copy wca_results_flat (${wrfCols}) FROM '${wrfFile}';
 \\! rm -f ${wrfFile}
-\\copy wca_comp_updated_at (comp_id, content_hash) FROM 'wca_comp_updated_at.copy.tsv';
+${manifestSql}
 \\! rm -f wca_comp_updated_at.copy.tsv
 
 ${smallTables}
 
 ${personResultsSql}
+
+DO $$
+DECLARE n bigint;
+BEGIN
+  SELECT count(*) INTO n FROM wca_results_flat;
+  IF n <> ${fullTopTotal} THEN
+    RAISE EXCEPTION 'wca_results_flat count % != expected ${fullTopTotal} after full load; aborting', n;
+  END IF;
+END $$;
 
 INSERT INTO meta_historical (key, value, updated_at) VALUES ('wca_stats_extra_imported_at', NOW()::TEXT, NOW())
   ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();

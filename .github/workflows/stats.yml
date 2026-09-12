@@ -291,8 +291,9 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         # NOTE: -T -n + ServerAlive 防 ssh 半挂死(2026-05-10 run #222 远端 apply 早完成,
         # 客户端等 FIN 卡 2h+)。同 wca_stats_extra apply。
-        # 4.5 GB = 当前目标关系约 3.6 GB + WAL/索引安全余量;不足时在 TRUNCATE 前失败并清理上传。
-        run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" 'MIN_FREE_BYTES=4500000000 /usr/local/bin/apply_load.sh /tmp/wca_import historical_ranks_apply'
+        # load.sql checks temporary-table capacity, then actual changed rows + WAL before each refresh.
+        # A fixed whole-table threshold would reject safe small deltas or miss large replacements.
+        run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/apply_load.sh /tmp/wca_import historical_ranks_apply'
 
       # apply_load 自己会清理;这里兜住 scp 中断、apply step 未启动等情况。
       - name: Cleanup historical ranks upload

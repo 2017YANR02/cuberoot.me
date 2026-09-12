@@ -19,6 +19,18 @@
   },
   "manualContracts": [
     {
+      "id": "stats-import-postgresql-regression",
+      "from": "jobs/stats-build tests",
+      "to": "loopback PostgreSQL test database via psql",
+      "phase": "subprocess-native",
+      "mechanism": "One shell-free psql spawn adapter; explicit STATS_IMPORT_TEST_PG opt-in, loopback host and isolated test schema",
+      "owner": "stats-build",
+      "rationale": "Verify actual PostgreSQL COPY, MVCC visibility, rollback and concurrent readers for the statistics import outage fix.",
+      "replacement": "Keep test-only; never accept remote production databases or arbitrary executables.",
+      "subprocessCalls": [{"file":"jobs/stats-build/tests/pg-refresh.test.ts","mechanism":"spawn","target":"psql","count":1}],
+      "evidence": [{"file":"core/jobs/stats-build/tests/pg-refresh.test.ts","contains":"STATS_IMPORT_TEST_PG"}]
+    },
+    {
       "id": "server-drive-ffmpeg-subprocess",
       "from": "apps/api Drive compression worker",
       "to": "API-owned checksum-pinned FFmpeg and ffprobe executables",
