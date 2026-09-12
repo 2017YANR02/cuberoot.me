@@ -440,11 +440,10 @@ describe('菜单与 WCA 数据集逐项相同', () => {
   });
 
   it('变体键集合相同', () => {
-    // first_layer 尚待真题灌注；条件式第二层单列为另一数据集，不属于完整状态空间矩阵。
+    // first_layer 真题已灌注；条件式第二层单列为另一数据集，不属于完整状态空间矩阵。
     const exactKeys = Object.keys(EXACT_VARIANT_STAGES);
     const wcaKeys = Object.keys(wca);
-    expect(exactKeys.filter((v) => !wcaKeys.includes(v))).toEqual(['first_layer']);
-    expect(exactKeys.filter((v) => wcaKeys.includes(v)).sort()).toEqual(wcaKeys.sort());
+    expect(exactKeys.sort()).toEqual(wcaKeys.sort());
   });
 
   it('每个变体的阶段序相同', () => {
@@ -455,8 +454,7 @@ describe('菜单与 WCA 数据集逐项相同', () => {
 
   it('展平后的阶段表就是矩阵的行,一个不多一个不少', () => {
     const flat = Object.values(wca).flatMap((v) => v.stages).sort();
-    const aliasOnly = new Set<ExactStage>(EXACT_VARIANT_STAGES.first_layer);
-    expect(EXACT_STAGES.filter((s) => !aliasOnly.has(s)).sort()).toEqual(flat);
+    expect([...EXACT_STAGES].sort()).toEqual(flat);
     expect(EXACT_STAGES.length).toBe(42);
     // 每个阶段都得知道自己属于哪个变体(矩阵分组 + 深链的 variant 参数)
     for (const st of EXACT_STAGES) expect(EXACT_STAGE_VARIANT[st], st).toBeTruthy();

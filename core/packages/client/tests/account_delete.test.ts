@@ -183,6 +183,13 @@ describe('清单 ↔ schema', () => {
     }
   });
 
+  it('宠物私有数据由账号外键级联删除,不保留领养与养成记录', () => {
+    const migration = readFileSync(join(SERVER, 'migrations/0236_pet_adoptions.sql'), 'utf8');
+    expect(NOT_USER_OWNED.user_pets).toContain('级联删');
+    expect(migration).toMatch(/user_id\s+BIGINT\s+NOT NULL\s+REFERENCES app_users\(id\)\s+ON DELETE CASCADE/);
+    expect(SCHEMA_SNAPSHOT_SQL).toMatch(/CREATE TABLE user_pets\s*\(\s*user_id\s+BIGINT\s+NOT NULL\s+REFERENCES app_users\(id\)\s+ON DELETE CASCADE/);
+  });
+
   it('豁免名单里的每张表都存在于受版本控制的 schema 来源', () => {
     for (const table of Object.keys(NOT_USER_OWNED)) {
       expect(SCHEMA.has(table), `豁免表 ${table} 不在 schema snapshot 或 migration 里`).toBe(true);
