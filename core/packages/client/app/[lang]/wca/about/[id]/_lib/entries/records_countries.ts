@@ -493,29 +493,29 @@ const longest_standing_records: AboutEntry = {
   badgeEn: 'Longevity',
   introZh: [
     '把所有曾经的 regional record (`AfR` / `AsR` / `ER` / `NAR` / `OcR` / `SAR` / `WR`) 按"在被打破前活了多少天"排序。仍在保持的纪录,用今天减打破日。',
-    '分 7 个区域看 (World + 6 大洲),每区取 Top 10。WR 在每个洲都重复出现 —— 因为 WR 同时也是该洲的洲纪录。',
+    '可筛选世界或六大洲、项目及单次／平均；每个有效组合独立取前 10。WR 同时计入选手当时所属洲的洲际纪录，地区与比赛举办地无关。',
   ],
   introEn: [
     'For every regional record (`AfR` / `AsR` / `ER` / `NAR` / `OcR` / `SAR` / `WR`), measures how many days it stood until being broken. Active records use today as the upper bound.',
-    'Split across 7 regions (World + 6 continents), Top 10 each. WRs appear in every continent block — a WR is automatically that continent\'s continental record too.',
+    'Filter by world or continent, event and single/average; each valid combination has its own Top 10. A WR also counts for the competitor’s continent at the time, regardless of the competition venue.',
   ],
   stats: [
     { value: '7', labelZh: '区域分组', labelEn: 'Region blocks', hintZh: 'World + 6 大洲', hintEn: 'World + 6 continents'
     },
-    { value: '10', labelZh: '每区域条数', labelEn: 'Rows per region', hintZh: '降序天数前 10', hintEn: 'Top 10 by days standing'
+    { value: '10', labelZh: '每组合条数', labelEn: 'Rows per filter combination', hintZh: '先筛选，再取天数前 10', hintEn: 'Filter before taking the Top 10 by days'
     },
-    { value: 'OFFICIAL_EVENTS', labelZh: '只看现役项目', labelEn: 'Active events only', hintZh: '排除已停办', hintEn: 'Discontinued excluded'
+    { value: 'OFFICIAL_EVENTS', labelZh: '含历史项目', labelEn: 'Historical events included', hintZh: '停办项目截止于最后一场比赛', hintEn: 'Retired events stop at their final competition'
     },
     { value: 'today / 打破日', labelZh: '截止时间', labelEn: 'End boundary', hintZh: '尚未被破 = 今天', hintEn: 'Still active → today'
     },
   ],
   sourceZh: [
     '从 `results` 拉所有 `regional_single_record` 或 `regional_average_record` 是 `WR/AfR/AsR/ER/NAR/OcR/SAR` 之一的行;join `persons` (`sub_id = 1`) + `competitions` + `countries` + `continents` 拿洲信息。SQL 只做拉数据,寿命计算全在 JS 的 `transform()` 里。',
-    'transform 里按 (区域, 类型, 项目) 分组,组内按时间排,找"比当前更好的下一条"的日期差;没有更好 = 今天 − 当前日 = 仍活着。',
+    '按区域、类型、项目计算每条纪录的保持期，再为各筛选组合取前 10。没有后续更好成绩时，现役项目计至构建日，停办项目计至最后一场比赛结束日。',
   ],
   sourceEn: [
     'Pulls all rows from `results` whose `regional_single_record` or `regional_average_record` is `WR/AfR/AsR/ER/NAR/OcR/SAR`; joins `persons` (`sub_id = 1`) + `competitions` + `countries` + `continents` for continent info. SQL only collects data — longevity is computed in JS `transform()`.',
-    'In transform, group by (region, type, event), sort by date, find "next better result" date diff; no better → today minus current date (i.e. still active).',
+    'Compute each record’s duration by region, type and event, then take the Top 10 for each filter combination. Unbroken active records stop at build time; retired events stop at the final competition’s end date.',
   ],
   sourceCode: {
     lang: 'sql',
@@ -541,8 +541,8 @@ WHERE regional_single_record IN ('AfR','AsR','ER','NAR','OcR','SAR','WR')
     {
       titleZh: '按 (区域, 项目, 类型) 分桶',
       titleEn: 'Bucket by (region, event, type)',
-      bodyZh: '`regionRecords` 表:每个区域看哪些 code (e.g. Asia 看 `AsR + WR`,因为 WR 持有者必然在亚洲打出来才同时进 AsR)。',
-      bodyEn: 'A `regionRecords` map: each region accepts which codes (e.g. Asia includes `AsR + WR`, since a WR set in Asia also counts as AsR).'
+      bodyZh: '世界只看 WR；各洲统计该洲选手的洲际纪录及 WR。按成绩当时的国籍划分，不按比赛举办地或选手现在的国籍划分。',
+      bodyEn: 'World uses WR markers; each continent includes its competitors’ CRs and WRs, using nationality at the time of the result, not the venue or current nationality.'
     },
     {
       titleZh: '找"下一条更好"',
@@ -553,27 +553,27 @@ WHERE regional_single_record IN ('AfR','AsR','ER','NAR','OcR','SAR','WR')
     {
       titleZh: '没有更好 = 仍活着',
       titleEn: 'No-better → still active',
-      bodyZh: '当前活着的纪录用今天截止;在 UI 里通常会标"仍在保持"。',
-      bodyEn: 'Still-active records use today as the end boundary; UI typically annotates "still active".'
+      bodyZh: '未被打破的现役纪录计至本次构建日；停办项目计至最后一场比赛结束日，避免停止举办后继续累计。',
+      bodyEn: 'Unbroken active records stop at build time; retired events stop at their final competition’s end date instead of continuing to accrue days.'
     },
     {
       titleZh: '天数降序 + Top 10',
       titleEn: 'Sort by days, Top 10',
-      bodyZh: '`days = ⌊(end − start) / 1d⌋`,按 days 降序;每区域只输出前 10 条 (加粗显示 days)。',
-      bodyEn: '`days = ⌊(end − start) / 1d⌋`, sorted desc; emit only the Top 10 per region (with days bolded).',
+      bodyZh: '`days = ⌊(end − start) / 1d⌋`；先按地区、项目和类型选择，再取天数前 10。无数据组合不提供选项。',
+      bodyEn: '`days = ⌊(end − start) / 1d⌋`; select region, event and type before taking the Top 10. Empty combinations are not offered.',
       highlight: true
     },
   ],
   edgesZh: [
     '"被打破"判定基于值严格更小 (`Number(r2[type]) < Number(r[type])`),平了不算打破。',
     '同人多次破自己的纪录,每条都算独立条目,寿命算到下次他自己又破。',
-    '`OFFICIAL_EVENTS` 过滤:`333mbo` / `magic` 等停办项目不进榜 —— 它们的"永久纪录"不公平。',
+    '`OFFICIAL_EVENTS` 包含停办项目；其未被打破的纪录只计至该项目最后一场比赛结束日。',
     'WR 持有人通常在自己洲也持有 CR,所以同一条 WR 会在 World + 其洲 2 个区块各出现一次。',
   ],
   edgesEn: [
     'Broken-by is strictly less-than (`Number(r2[type]) < Number(r[type])`); ties don\'t count as broken.',
     'Self-improvements split into multiple entries — each older record\'s span ends when its holder improves it.',
-    '`OFFICIAL_EVENTS` filter drops discontinued events (`333mbo`, `magic`, ...) — their "permanent records" would unfairly dominate.',
+    '`OFFICIAL_EVENTS` includes discontinued events; their unbroken records stop at the final competition’s end date.',
     'A WR holder also typically owns the matching CR, so the same WR row appears twice — once under World, once under its continent.',
   ],
   related: [
@@ -887,11 +887,11 @@ const records_in_most_events: AboutEntry = {
   badgeEn: 'Breadth',
   introZh: [
     '每个选手在多少**不同项目**上打破过 regional record (历史上,不限当前)。分 3 个级别看:World (`WR`) / Continental (`AfR/AsR/ER/NAR/OcR/SAR/WR`) / National (`NR + 上级`)。',
-    '高级别天然包含低级别 —— `WR` 必然也是该洲 CR、该国 NR,所以 World 榜的人在 Continental / National 榜上一定项目数 ≥。',
+    'WR 同时计入洲际和国家纪录。地区按成绩当时的国籍划分；先选择地区和级别，再取前 20（含并列），不在全球前 20 内的选手仍可进入各洲榜。',
   ],
   introEn: [
     'Per cuber: how many **distinct events** they\'ve ever set a regional record in (any historical record, not just current). Three tiers shown: World (`WR`) / Continental (`AfR/AsR/ER/NAR/OcR/SAR/WR`) / National (`NR + above`).',
-    'Higher tiers cascade into lower: a `WR` is automatically also that continent\'s CR and that country\'s NR, so the World leaderboard cuber appears in Continental / National with event count ≥.',
+    'WRs also count toward continental and national totals. Region uses nationality at the time of each result. Each region and tier gets its own Top 20 including ties, even for competitors outside the global Top 20.',
   ],
   stats: [
     { value: '3', labelZh: '级别', labelEn: 'Tiers', hintZh: 'World / Continental / National', hintEn: 'World / Continental / National'
@@ -944,8 +944,8 @@ ORDER BY event.rank`,
     {
       titleZh: '按 events.size 降序,Top 20',
       titleEn: 'Sort by events.size, Top 20',
-      bodyZh: '`results.size` 即"破纪录涉及项目数",降序取 Top 20。',
-      bodyEn: '`results.size` = "number of events with records"; sort desc and take Top 20.',
+      bodyZh: '按破纪录涉及的不同项目数降序；每个地区与级别分别取前 20，保留边界并列。',
+      bodyEn: 'Sort by distinct events with records and take the Top 20, including boundary ties, independently for every region and tier.',
       highlight: true
     },
   ],

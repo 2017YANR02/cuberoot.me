@@ -16,7 +16,8 @@ import { useQueryState, useQueryStates, parseAsString, parseAsInteger, parseAsSt
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Copy, Check, Clapperboard } from 'lucide-react';
-import { buildReconSubmitQuery } from '@/lib/sim-recon-link';
+import { buildReconSubmitQuery, type ReconScrambleSource } from '@/lib/sim-recon-link';
+import { wcaToReconEvent } from '@/lib/wca-events';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { normalizeScramble } from '@/lib/cross-solver';
 import { persistItem } from '@/lib/safe-storage';
@@ -155,6 +156,12 @@ const URL_KEYS = {
   compWcaId: parseAsString,
   comp: parseAsString,
   optimal: parseAsInteger,
+  round: parseAsString,
+  event: parseAsString,
+  groupId: parseAsString,
+  solveNum: parseAsInteger,
+  sourceEn: parseAsString,
+  sourceZh: parseAsString,
   howfar: parseAsInteger,
   stage: parseAsStringEnum<Stage>(STAGE_VALUES),
   variant: parseAsStringEnum<Variant>(VARIANT_VALUES),
@@ -301,17 +308,26 @@ function AnalyzePageInner() {
   useEffect(() => { if (preferencesReady) persistItem(WCA_SRC_KEY, JSON.stringify(wcaSrc)); }, [preferencesReady, wcaSrc]);
   const patchWcaSrc = useCallback((patch: Partial<WcaSourceSettings>) => setWcaSrc((p) => ({ ...p, ...patch })), []);
   const [wcaMeta, setWcaMeta] = useState<WcaScrambleMeta | null>(null);
-  const [reconSource, setReconSource] = useState(() => ({
+  const [reconSource, setReconSource] = useState<{ competition: ReconScrambleSource | null; optimal: boolean; sourceEn?: string; sourceZh?: string }>(() => ({
     competition: initUrlRef.current.compWcaId
-      ? { ci: initUrlRef.current.compWcaId, cn: initUrlRef.current.comp || initUrlRef.current.compWcaId }
+      ? { ci: initUrlRef.current.compWcaId, cn: initUrlRef.current.comp || initUrlRef.current.compWcaId,
+          e: initUrlRef.current.event ?? undefined, r: initUrlRef.current.round ?? undefined, g: initUrlRef.current.groupId ?? undefined, n: initUrlRef.current.solveNum ?? undefined }
       : null,
     optimal: initUrlRef.current.optimal === 1,
+    sourceEn: initUrlRef.current.sourceEn ?? undefined,
+    sourceZh: initUrlRef.current.sourceZh ?? undefined,
   }));
   useEffect(() => {
     void setUrlState({
       compWcaId: reconSource.competition?.ci ?? null,
       comp: reconSource.competition?.cn ?? null,
       optimal: reconSource.optimal ? 1 : null,
+      round: reconSource.competition?.r ?? null,
+      event: reconSource.competition?.e ?? null,
+      groupId: reconSource.competition?.g ?? null,
+      solveNum: reconSource.competition?.n ?? null,
+      sourceEn: reconSource.sourceEn ?? null,
+      sourceZh: reconSource.sourceZh ?? null,
     });
   }, [reconSource, setUrlState]);
   const [wcaLoading, setWcaLoading] = useState(false);
@@ -554,7 +570,7 @@ function AnalyzePageInner() {
 
       {scramble.trim() && (
         <Link
-          href={`/recon/submit?${buildReconSubmitQuery('3x3', scramble, '', { practice: true, ...reconSource })}`}
+          href={`/recon/submit?${buildReconSubmitQuery(wcaToReconEvent(reconSource.competition?.e || '333'), scramble, '', { practice: true, ...reconSource })}`}
           prefetch={false}
           className="analyze-recon-link"
         >

@@ -9,6 +9,14 @@ export interface StatSection {
   title: string;
   titleZh: string;
   rows: unknown[][];
+  recordScope?: RecordScope;
+}
+
+export interface RecordScope {
+  region: string;
+  level: 'WR' | 'CR' | 'NR';
+  event: string;
+  type: 'all' | 'single' | 'average';
 }
 
 // NOTE: 双视图面板（Ranking + History）——RoundMetric/AverageOfX/AoRounds 使用
