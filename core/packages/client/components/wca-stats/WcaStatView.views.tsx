@@ -9,6 +9,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { BarChart3, Play, Pause, ChevronRight } from 'lucide-react';
 import BoolToggle from '@/components/BoolToggle';
+import { ListSelect } from '@/components/ListSelect';
+import WcaEventSelector from '@/components/WcaEventSelector';
+import { CONTINENT_NAMES } from '@/lib/continent';
 import { CompactSelect } from '@/components/CompactSelect';
 import { countryToIso2 } from '@/lib/country-flags';
 import { Flag } from '@/components/Flag';
@@ -16,11 +19,63 @@ import { EVENT_NAME_TO_ID } from '@/lib/event-constants';
 import DistributionChart, { type DistDataset } from '@/components/wca-stats/DistributionChart';
 import WrHistoryChart from '@/components/wca-stats/WrHistoryChart';
 import { tr } from '@/i18n/tr';
-import type { StatHeader, StatSection, StatPanel, SourcePanel, MetricPanel, MetricGroup } from './WcaStatView.types';
+import type { StatHeader, StatSection, StatPanel, SourcePanel, MetricPanel, MetricGroup, RecordScope } from './WcaStatView.types';
 import {
   renderCell, shouldHideCountryCol, parseTimeValue, extractSolvesCell,
   extractTextFromMdLink, dedupRows,
+  selectRecordSection,
 } from './WcaStatView.cells';
+
+export function RecordSectionsView({ header, sections, query, onChange, isZh }: {
+  header: StatHeader[];
+  sections: StatSection[];
+  query: Partial<Record<keyof RecordScope, string | null>>;
+  onChange: (scope: RecordScope) => void;
+  isZh: boolean;
+}) {
+  const { section, options } = selectRecordSection(sections, query);
+  const scope = section?.recordScope;
+  if (!scope) return <p className="wca-stats-empty-title">{tr({ zh: '暂无数据', en: 'No data yet' })}</p>;
+  const change = (key: keyof RecordScope, value: string) => {
+    const next = selectRecordSection(sections, { ...scope, [key]: value }).section?.recordScope;
+    if (next) onChange(next);
+  };
+  const label = (key: keyof RecordScope, value: string) => {
+    if (key === 'region') {
+      const continent = Object.values(CONTINENT_NAMES).find(name => name.en === value);
+      return continent ? tr(continent) : tr({ zh: '全球', en: 'Worldwide' });
+    }
+    const labels: Record<string, { zh: string; en: string }> = {
+      WR: { zh: '世界纪录', en: 'World records' },
+      CR: { zh: '洲际纪录', en: 'Continental records' },
+      NR: { zh: '国家纪录', en: 'National records' },
+      all: { zh: '单次与平均', en: 'Single and average' },
+      single: { zh: '单次', en: 'Single' },
+      average: { zh: '平均', en: 'Average' },
+    };
+    return labels[value] ? tr(labels[value]) : value;
+  };
+  return <>
+    {options.event.some(Boolean) && <WcaEventSelector
+      availableEvents={new Set(options.event.filter(Boolean))}
+      selectedEvent={scope.event}
+      onSelect={value => change('event', value)}
+      isZh={isZh}
+      allowAll
+    />}
+    <div className="wca-stats-tab-bar">
+      {(['region', 'level', 'type'] as const).filter(key => options[key].length > 1).map(key => <ListSelect
+        key={key}
+        items={options[key].map(value => ({ value, label: label(key, value) }))}
+        value={scope[key]}
+        onChange={value => change(key, value)}
+        allLabel={label(key, scope[key])}
+        clearable={false}
+      />)}
+    </div>
+    <StatsTable header={header} rows={section.rows} searchTerm="" isZh={isZh} />
+  </>;
+}
 
 // 超过 PAGE_SIZE 行只先渲染前 N 行 + “显示更多/全部”按钮，避免大表（最多 5202 行）
 // 一次性渲染全部 cell（markdown + flag + 本地化）卡死主线程。小分区不受影响。

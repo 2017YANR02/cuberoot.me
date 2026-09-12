@@ -113,7 +113,7 @@ export async function fetchReconForSeo(id: string): Promise<ReconSolve | 'privat
  *  /list download). Returns [] on any failure. */
 export async function fetchSameScrambleForSeo(id: string): Promise<ReconSolve[]> {
   try {
-    const res = await fetch(apiUrl(`/v1/recon/${encodeURIComponent(id)}/same-scramble`), {
+    const res = await fetch(apiUrl(`/v1/recon/${encodeURIComponent(id)}/same-scramble?v=2`), {
       next: { revalidate: REVALIDATE, tags: [reconCacheTag(id)] },
     });
     if (!res.ok) return [];

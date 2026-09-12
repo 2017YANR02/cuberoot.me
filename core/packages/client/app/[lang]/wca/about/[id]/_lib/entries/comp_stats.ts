@@ -527,11 +527,11 @@ const most_records_at_single_competition: AboutEntry = {
   badgeEn: 'Competition',
   introZh: [
     '一场比赛里,某位选手刷了几个区域纪录?WCA `results` 表两个字段 `regional_single_record` / `regional_average_record` 标记该轮的 single / average 是否破了 NR/CR/WR 中的某一级。把同一人同一场内的所有标记数一遍就是该人在该场的"破纪录数"。',
-    '分 World / Continental / National 三档:World 只算 `WR`;Continental 把所有 CR(含 WR 因为 WR 必同时 ≥ CR)算进去;National 再加 `NR`。每档 top 20(含并列)。',
+    '分 World / Continental / National 三档:World 只算 `WR`;Continental 把所有 CR(含 WR 因为 WR 必同时 ≥ CR)算进去;National 再加 `NR`。可按全球或大洲筛选，地区取选手取得成绩时的所属国家。每个地区、级别分别取前 20（含并列），无数据组合不显示。',
   ],
   introEn: [
     'How many regional records did one person set at a single comp? WCA `results` carries two flags — `regional_single_record` and `regional_average_record` — marking whether that round\'s single/average broke an NR/CR/WR. Sum the flags for each (person, comp) pair to get their record count at that comp.',
-    'Three tiers — World / Continental / National. World counts only `WR`; Continental counts all CRs (WR auto-qualifies since WR ≥ CR); National adds `NR` on top. Top 20 per tier with ties.',
+    'Three tiers — World / Continental / National. World counts only `WR`; Continental counts all CRs (WR auto-qualifies since WR ≥ CR); National adds `NR` on top. Filter worldwide or by continent, using the competitor’s country at the time of the result. Each region and tier gets its own Top 20 with ties; empty combinations are hidden.',
   ],
   stats: [
     { value: '3 档', labelZh: '层级', labelEn: 'Tiers', hintZh: 'World / Continental / National', hintEn: 'World / Continental / National'

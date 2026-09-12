@@ -46,6 +46,17 @@ describe('homepage development cards', () => {
       expect(card.querySelector('.lucide-lock')).toBeNull();
     }
     expect(host.querySelector('#card-teaching')?.getAttribute('href')).toBe(admin ? '/zh/courses' : undefined);
+    const partnership = host.querySelector('#card-partnership');
+    if (admin) {
+      expect(partnership?.getAttribute('href')).toBe('/zh/partnership');
+      expect(partnership?.classList.contains('is-disabled')).toBe(false);
+      const lock = partnership?.parentElement?.querySelector<HTMLButtonElement>('.landing-card-lock');
+      expect(lock?.disabled).toBe(true);
+      expect(lock?.getAttribute('aria-pressed')).toBe('true');
+      expect(lock?.getAttribute('aria-label')).toBe('仅管理员可见');
+    } else {
+      expect(partnership).toBeNull();
+    }
     const interview = host.querySelector('#card-interview');
     if (admin) {
       expect(interview?.getAttribute('href')).toBe('/zh/docs/edit?id=b769490d-292b-4423-8e83-3ada43c1d96b');

@@ -22,3 +22,11 @@ it('reserves the expanded footprint before hover rather than moving the anchor d
   expect(clamp).toContain('actions.right + 5');
   expect(clamp).not.toContain('expanded');
 });
+
+it('applies homepage glass and hover clipping to the surface, not the fixed anchor', () => {
+  const css = readFileSync('app/[lang]/home-background.css', 'utf8');
+  expect(css).not.toMatch(/\.admin-tools\)(?::hover)?/);
+  expect(css).not.toContain('.admin-tools::before');
+  expect(css).toContain('.admin-tools-surface)::before');
+  expect(css).toContain('.admin-tools-surface:hover { position: absolute; }');
+});

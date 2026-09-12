@@ -40,6 +40,14 @@ const SEP = ' — ';
 const SHARE_IMAGE = '/icons/CubeRoot.png';
 
 export const PAGE_META: Record<string, PageMetaEntry> = {
+  'partnership': {
+    title: { zh: '合作提案', en: '合作提案' },
+    description: { zh: 'CubeRoot 项目愿景、产品与赞助合作提案。', en: 'CubeRoot 项目愿景、产品与赞助合作提案。' },
+  },
+  'partnership/talking-points': {
+    title: { zh: '会谈提纲', en: '会谈提纲' },
+    description: { zh: '项目介绍、六个交流切入点、资金请求与常见问题话术。', en: '项目介绍、六个交流切入点、资金请求与常见问题话术。' },
+  },
   // The landing page is the only browser tab that keeps the site name.
   '': {
     title: {

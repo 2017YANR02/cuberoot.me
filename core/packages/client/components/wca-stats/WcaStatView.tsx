@@ -14,7 +14,6 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import WcaEventSelector from '@/components/WcaEventSelector';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from '@/lib/event-constants';
 import { loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { statsUrl } from '@/lib/stats-base';
@@ -23,7 +22,7 @@ import type { Metric as Top10Metric } from '@/lib/top10-axis';
 import type { StatData, StatSection, StatPanel, MetricPanel } from './WcaStatView.types';
 import { getAllPanelsFromMetric, metricIdsWithDataForEvent } from './WcaStatView.cells';
 import {
-  WrByCountryYearView, StatsTable, SectionsView, PanelsView, MetricPanelsView,
+  WrByCountryYearView, StatsTable, SectionsView, PanelsView, MetricPanelsView, RecordSectionsView,
 } from './WcaStatView.views';
 import '../../app/[lang]/wca/_wca_stats.css';
 import { tr } from '@/i18n/tr';
@@ -31,8 +30,8 @@ import '@/i18n/i18n-client';
 
 interface WcaStatViewProps {
   statId: string;
-  /** 'full' = 路由页(.wca-stats-page 暗锁外壳 + h1 + note + 设 document.title);
-   *  'note' = 嵌入(渲染 note 段 + 选择器 + 面板,无 h1,不抢 document.title);
+  /** 'full' = 路由页(.wca-stats-page 暗锁外壳 + h1 + note + 标题由路由 metadata 管理);
+   *  'note' = 嵌入(渲染 note 段 + 选择器 + 面板,无 h1,不改变路由 metadata);
    *  'none' = 嵌入且连 note 也不渲染。 */
   headerMode?: 'full' | 'note' | 'none';
   /** nuqs 键前缀:嵌入宿主页时避免与其 URL 状态撞键(/wca/results 传 'm' → mevent/mtype/mmetric)。 */
@@ -43,13 +42,6 @@ interface WcaStatViewProps {
   /** 插在「项目选择器」与 note 之间的内容。/wca/results 指标视图把顶层「类型」下拉放这,
    *  实现 项目选择器 在 类型下拉 上方。 */
   afterEventSelector?: React.ReactNode | ((availableMetricIds: ReadonlySet<string>) => React.ReactNode);
-}
-
-// useDocumentTitle 必须无条件调用 —— 包成子组件,只在 headerMode='full' 时挂载;
-// 嵌入页(如 /wca/results)不挂载它,免得覆盖宿主页自己的标题。
-function DocTitle({ zh, en }: { zh: string; en: string }) {
-  useDocumentTitle(zh, en);
-  return null;
 }
 
 export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metricId = null, afterEventSelector = null }: WcaStatViewProps) {
@@ -68,8 +60,9 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
   // ?event= ?type= ?metric=(按 urlScope 前缀)走 nuqs(replace,无历史 — 等价于原 hash replaceState)。
   // 单页内的 事件 / 面板 / 指标 选择,深链可恢复,后退不堆历史。(从 #hash 迁来:旧 # 链接失效可接受)
   // 只用 setter 写 URL;读取在数据加载时直接读 window.location.search(一次性深链,不入 effect deps)。
-  const [, setUrlState] = useQueryStates(
-    { [k('event')]: parseAsString, [k('type')]: parseAsString, [k('metric')]: parseAsString },
+  const [urlState, setUrlState] = useQueryStates(
+    { [k('event')]: parseAsString, [k('type')]: parseAsString, [k('metric')]: parseAsString,
+      [k('region')]: parseAsString, [k('level')]: parseAsString },
     { history: 'replace', scroll: false },
   );
 
@@ -143,6 +136,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
 
   const renderMode = useMemo(() => {
     if (!data) return 'empty';
+    if (data.sections?.some(section => section.recordScope)) return 'records';
     if (data.metricPanels && data.metricPanels.length > 0) return 'metricPanels';
     if (data.panels && data.panels.length > 0) return 'panels';
     if (data.sections && data.sections.length > 0) return 'sections';
@@ -192,19 +186,14 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
     }
   }, [availableEvents, selectedEvent, setUrlState, k]);
 
-  const showEventSelector = renderMode !== 'rows' && renderMode !== 'empty' && availableEvents.size >= 2;
+  const showEventSelector = renderMode !== 'records' && renderMode !== 'rows' && renderMode !== 'empty' && availableEvents.size >= 2;
 
   // headerMode='full' = 路由页:.wca-stats-page 自带暗锁 + 页面内边距 + h1。
   // 嵌入页(note/none)宿主已是暗锁的 .wse-page,用轻量壳,免重复暗锁/双层内边距。
   const wrapperClass = headerMode === 'full' ? 'wca-stats-page' : 'wca-stats-embedded';
-  const docTitle = headerMode === 'full'
-    ? <DocTitle zh={data?.titleZh ?? 'WCA 统计'} en={data?.title ?? 'WCA Stats'} />
-    : null;
-
   if (loading) {
     return (
       <div className={wrapperClass}>
-        {docTitle}
         <div className="wca-stats-loading">{tr({ zh: '加载中...', en: 'Loading...'
         })}</div>
       </div>
@@ -214,7 +203,6 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
   if (error || !data) {
     return (
       <div className={wrapperClass}>
-        {docTitle}
         <div className="wca-stats-error">
           <h2>{tr({ zh: '加载失败', en: 'Failed to load'
         })}</h2>
@@ -227,7 +215,6 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
 
   return (
     <div className={wrapperClass}>
-      {docTitle}
       {headerMode === 'full' && (
         <div className="wca-stats-header">
           <h1>{tr({ zh: data.titleZh, en: data.title })}</h1>
@@ -264,6 +251,14 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
       {renderMode === 'rows' && data.rows && !(data.years && data.cumulative) && (
         <StatsTable header={data.header} rows={data.rows} searchTerm={searchTerm} isZh={isZh} />
       )}
+
+      {renderMode === 'records' && data.sections && <RecordSectionsView
+        header={data.header}
+        sections={data.sections}
+        query={{ region: urlState[k('region')], level: urlState[k('level')], event: urlState[k('event')], type: urlState[k('type')] }}
+        onChange={scope => setUrlState({ [k('region')]: scope.region, [k('level')]: scope.level, [k('event')]: scope.event || null, [k('type')]: scope.type })}
+        isZh={isZh}
+      />}
 
       {renderMode === 'sections' && data.sections && (
         <SectionsView

@@ -24,6 +24,7 @@ import {
 import AppLink from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import { Flag } from '@/components/Flag';
+import { CompCell } from '@/components/CompCell/CompCell';
 import { ClearButton } from '@/components/ClearButton';
 import { CompactSelect } from '@/components/CompactSelect';
 import { DateInput } from '@/components/DateInput';
@@ -44,7 +45,6 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { useMembership } from '@/hooks/useMembership';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
-import { localizeCompName } from '@/lib/comp-localize';
 import { fetchCompRounds, type RoundFormat } from '@/lib/comp-wcif';
 import { toWcaEventId } from '@/lib/wca-events';
 import {
@@ -52,7 +52,7 @@ import {
   attemptsPerRound, localizeRound, isBldEvent, truncateCs,
 } from '@/lib/recon-utils';
 import { computeAllStats } from '@/lib/recon-stats';
-import { normalizeIsoDate } from '@/lib/iso-date';
+import { normalizeIsoDate, toLocalIsoDate } from '@/lib/iso-date';
 import { revalidateRecon } from '../revalidate-action';
 import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchScrambles, fetchOptimalScrambles, fetchScrambleGroups, matchRoundType } from '@/lib/wca-results-api';
 import { fetchAttemptPrRank } from '@/lib/recon-attempt-pr-rank';
@@ -234,6 +234,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     regionalAverageRecord: '',
     aoType: '',
   });
+
+  useEffect(() => {
+    if (isEditing || fromId) return;
+    setForm(prev => prev.date ? prev : { ...prev, date: toLocalIsoDate() });
+  }, [isEditing, fromId]);
 
   const [timeInput, setTimeInput] = useState('');
   const [avgInput, setAvgInput] = useState('');
@@ -555,6 +560,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       compWcaId: searchParams?.get('compWcaId') || prev.compWcaId,
       country: searchParams?.get('country') || prev.country,
       round: round || prev.round,
+      groupId: searchParams?.get('groupId') || prev.groupId,
       solveNum: !isNaN(sn) ? sn : prev.solveNum,
       date: dateRaw ? normalizeIsoDate(dateRaw) : prev.date,
       reconer: authUser?.name ?? prev.reconer,
@@ -1824,9 +1830,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     : t('recon.competition')}</span>
                   {form.compWcaId ? (
                     <div className="submit-comp-pill">
-                      <Flag iso2={form.country || ''} />
                       <AppLink href={`/wca/comp/${encodeURIComponent(form.compWcaId)}`} className="submit-comp-name">
-                        {localizeCompName(form.compWcaId || '', form.comp || '', isZh)}
+                        <CompCell compId={form.compWcaId} compName={form.comp} isZh={isZh} date={null} />
                       </AppLink>
                       <ClearButton onClick={clearPickedComp} isZh={isZh} variant="standalone" preserveFocus />
                     </div>
@@ -1848,6 +1853,12 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   )}
                 </div>
               </div>
+
+              {!isEditing && (searchParams?.get('sourceZh') || searchParams?.get('sourceEn')) && (
+                <div className="submit-source-summary">
+                  {tr({ zh: searchParams?.get('sourceZh') || searchParams?.get('sourceEn') || '', en: searchParams?.get('sourceEn') || searchParams?.get('sourceZh') || '' })}
+                </div>
+              )}
 
               {/* 非 WCA(非WCA比赛 / 练习):补国家(选完显示国旗) + 城市,WCA 比赛由所选比赛自动带出 */}
               {form.official !== 'wca' && (

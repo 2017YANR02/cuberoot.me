@@ -2,6 +2,8 @@
   "id": "most_records_at_single_competition",
   "title": "Most records at a single competition",
   "titleZh": "单场比赛最多纪录",
+  "note": "All historical records; region follows the competitor’s country at the time of the result. Higher record levels count toward lower levels.",
+  "noteZh": "统计所有历史纪录；地区按选手取得成绩时的所属国家划分。高级别纪录同时计入较低级别。",
   "header": [
     {
       "key": "records",
@@ -24,23 +26,18 @@
   ],
   "sections": [
     {
-      "title": "World",
-      "titleZh": "World",
+      "title": "World - WR",
+      "titleZh": "World - WR",
       "rows": [
-        [
-          7,
-          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[Melbourne Cube Day 2010](https://www.worldcubeassociation.org/competitions/MelbourneCubeDay2010/results/by_person#2009ZEMD01)"
-        ],
         [
           7,
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
           "[Melbourne Summer 2011](https://www.worldcubeassociation.org/competitions/MelbourneSummer2011/results/by_person#2009ZEMD01)"
         ],
         [
-          6,
+          7,
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[World Championship 2011](https://www.worldcubeassociation.org/competitions/WC2011/results/by_person#2009ZEMD01)"
+          "[Melbourne Cube Day 2010](https://www.worldcubeassociation.org/competitions/MelbourneCubeDay2010/results/by_person#2009ZEMD01)"
         ],
         [
           6,
@@ -48,19 +45,14 @@
           "[World Championship 2017](https://www.worldcubeassociation.org/competitions/WC2017/results/by_person#2009ZEMD01)"
         ],
         [
-          5,
-          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
-          "[Belgian Open 2008](https://www.worldcubeassociation.org/competitions/BelgianOpen2008/results/by_person#2005AKKE01)"
-        ],
-        [
-          5,
-          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
-          "[Caltech Spring 2004](https://www.worldcubeassociation.org/competitions/CaltechSpring2004/results/by_person#2003MAKI01)"
+          6,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[World Championship 2011](https://www.worldcubeassociation.org/competitions/WC2011/results/by_person#2009ZEMD01)"
         ],
         [
           5,
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[Kubaroo Open 2011](https://www.worldcubeassociation.org/competitions/KubarooOpen2011/results/by_person#2009ZEMD01)"
+          "[Euro 2016](https://www.worldcubeassociation.org/competitions/Euro2016/results/by_person#2009ZEMD01)"
         ],
         [
           5,
@@ -70,77 +62,27 @@
         [
           5,
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[Euro 2016](https://www.worldcubeassociation.org/competitions/Euro2016/results/by_person#2009ZEMD01)"
+          "[Kubaroo Open 2011](https://www.worldcubeassociation.org/competitions/KubarooOpen2011/results/by_person#2009ZEMD01)"
         ],
         [
-          4,
-          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
-          "[Swedish Cube Day 2007](https://www.worldcubeassociation.org/competitions/SwedishCubeDay2007/results/by_person#2005AKKE01)"
-        ],
-        [
-          4,
-          "[Hsuan Chang (張璿)](https://www.worldcubeassociation.org/persons/2008CHAN09)",
-          "[Taiwan Winter Open 2009](https://www.worldcubeassociation.org/competitions/TaiwanWinterOpen2009/results/by_person#2008CHAN09)"
-        ],
-        [
-          4,
-          "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
-          "[Polish Nationals 2009](https://www.worldcubeassociation.org/competitions/PolishNationals2009/results/by_person#2006HALC01)"
-        ],
-        [
-          4,
-          "[Jaap Scherphuis](https://www.worldcubeassociation.org/persons/2003SCHE01)",
-          "[German Open 2004](https://www.worldcubeassociation.org/competitions/GermanOpen2004/results/by_person#2003SCHE01)"
-        ],
-        [
-          4,
-          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
-          "[US Nationals 2004](https://www.worldcubeassociation.org/competitions/US2004/results/by_person#2003HARD01)"
-        ],
-        [
-          4,
-          "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
-          "[Euro 2004](https://www.worldcubeassociation.org/competitions/Euro2004/results/by_person#2003POCH01)"
-        ],
-        [
-          4,
-          "[Michael Fung](https://www.worldcubeassociation.org/persons/2005FUNG01)",
-          "[Dutch Open 2006](https://www.worldcubeassociation.org/competitions/DutchOpen2006/results/by_person#2005FUNG01)"
-        ],
-        [
-          4,
-          "[Anssi Vanhala](https://www.worldcubeassociation.org/persons/2005VANH01)",
-          "[SveKub 2006](https://www.worldcubeassociation.org/competitions/Svekub2006/results/by_person#2005VANH01)"
-        ],
-        [
-          4,
+          5,
           "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
-          "[Horace Mann 2005](https://www.worldcubeassociation.org/competitions/HoraceMann2005/results/by_person#2003MAKI01)"
+          "[Caltech Spring 2004](https://www.worldcubeassociation.org/competitions/CaltechSpring2004/results/by_person#2003MAKI01)"
         ],
         [
-          4,
-          "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
-          "[Svekub 2005](https://www.worldcubeassociation.org/competitions/Svekub2005/results/by_person#2004KRIG01)"
-        ],
-        [
-          4,
-          "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
-          "[Czech Open 2007](https://www.worldcubeassociation.org/competitions/CzechOpen2007/results/by_person#2006KUTI01)"
+          5,
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          "[Belgian Open 2008](https://www.worldcubeassociation.org/competitions/BelgianOpen2008/results/by_person#2005AKKE01)"
         ],
         [
           4,
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[Melbourne Winter Open 2011](https://www.worldcubeassociation.org/competitions/MelbourneWinterOpen2011/results/by_person#2009ZEMD01)"
+          "[London Open 2017](https://www.worldcubeassociation.org/competitions/LondonOpen2017/results/by_person#2009ZEMD01)"
         ],
         [
           4,
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[Australian Nationals 2011](https://www.worldcubeassociation.org/competitions/AustralianNationals2011/results/by_person#2009ZEMD01)"
-        ],
-        [
-          4,
-          "[Lin Chen (陈霖)](https://www.worldcubeassociation.org/persons/2010CHEN20)",
-          "[Hangzhou 2012](https://www.worldcubeassociation.org/competitions/HangzhouOpen2012/results/by_person#2010CHEN20)"
+          "[Melbourne Cube Days 2015](https://www.worldcubeassociation.org/competitions/MelbourneCubeDay2015/results/by_person#2009ZEMD01)"
         ],
         [
           4,
@@ -150,7 +92,12 @@
         [
           4,
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[Melbourne Cube Days 2015](https://www.worldcubeassociation.org/competitions/MelbourneCubeDay2015/results/by_person#2009ZEMD01)"
+          "[Australian Nationals 2011](https://www.worldcubeassociation.org/competitions/AustralianNationals2011/results/by_person#2009ZEMD01)"
+        ],
+        [
+          4,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Winter Open 2011](https://www.worldcubeassociation.org/competitions/MelbourneWinterOpen2011/results/by_person#2009ZEMD01)"
         ],
         [
           4,
@@ -159,13 +106,68 @@
         ],
         [
           4,
-          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[London Open 2017](https://www.worldcubeassociation.org/competitions/LondonOpen2017/results/by_person#2009ZEMD01)"
+          "[Lin Chen (陈霖)](https://www.worldcubeassociation.org/persons/2010CHEN20)",
+          "[Hangzhou 2012](https://www.worldcubeassociation.org/competitions/HangzhouOpen2012/results/by_person#2010CHEN20)"
+        ],
+        [
+          4,
+          "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
+          "[Euro 2004](https://www.worldcubeassociation.org/competitions/Euro2004/results/by_person#2003POCH01)"
+        ],
+        [
+          4,
+          "[Anssi Vanhala](https://www.worldcubeassociation.org/persons/2005VANH01)",
+          "[SveKub 2006](https://www.worldcubeassociation.org/competitions/Svekub2006/results/by_person#2005VANH01)"
+        ],
+        [
+          4,
+          "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
+          "[Czech Open 2007](https://www.worldcubeassociation.org/competitions/CzechOpen2007/results/by_person#2006KUTI01)"
+        ],
+        [
+          4,
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "[Horace Mann 2005](https://www.worldcubeassociation.org/competitions/HoraceMann2005/results/by_person#2003MAKI01)"
+        ],
+        [
+          4,
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          "[Swedish Cube Day 2007](https://www.worldcubeassociation.org/competitions/SwedishCubeDay2007/results/by_person#2005AKKE01)"
+        ],
+        [
+          4,
+          "[Michael Fung](https://www.worldcubeassociation.org/persons/2005FUNG01)",
+          "[Dutch Open 2006](https://www.worldcubeassociation.org/competitions/DutchOpen2006/results/by_person#2005FUNG01)"
+        ],
+        [
+          4,
+          "[Jaap Scherphuis](https://www.worldcubeassociation.org/persons/2003SCHE01)",
+          "[German Open 2004](https://www.worldcubeassociation.org/competitions/GermanOpen2004/results/by_person#2003SCHE01)"
+        ],
+        [
+          4,
+          "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
+          "[Polish Nationals 2009](https://www.worldcubeassociation.org/competitions/PolishNationals2009/results/by_person#2006HALC01)"
+        ],
+        [
+          4,
+          "[Gunnar Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+          "[Svekub 2005](https://www.worldcubeassociation.org/competitions/Svekub2005/results/by_person#2004KRIG01)"
+        ],
+        [
+          4,
+          "[Hsuan Chang (張璿)](https://www.worldcubeassociation.org/persons/2008CHAN09)",
+          "[Taiwan Winter Open 2009](https://www.worldcubeassociation.org/competitions/TaiwanWinterOpen2009/results/by_person#2008CHAN09)"
         ],
         [
           4,
           "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-          "[SacCubing IV 2018](https://www.worldcubeassociation.org/competitions/SacCubingIV2018/results/by_person#2012PARK03)"
+          "[Southeast Championship 2022](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2022/results/by_person#2012PARK03)"
+        ],
+        [
+          4,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Houston Winter 2020](https://www.worldcubeassociation.org/competitions/HoustonWinter2020/results/by_person#2012PARK03)"
         ],
         [
           4,
@@ -175,18 +177,24 @@
         [
           4,
           "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-          "[Houston Winter 2020](https://www.worldcubeassociation.org/competitions/HoustonWinter2020/results/by_person#2012PARK03)"
+          "[SacCubing IV 2018](https://www.worldcubeassociation.org/competitions/SacCubingIV2018/results/by_person#2012PARK03)"
         ],
         [
           4,
-          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-          "[Southeast Championship 2022](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2022/results/by_person#2012PARK03)"
+          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
+          "[US Nationals 2004](https://www.worldcubeassociation.org/competitions/US2004/results/by_person#2003HARD01)"
         ]
-      ]
+      ],
+      "recordScope": {
+        "region": "World",
+        "level": "WR",
+        "event": "",
+        "type": "all"
+      }
     },
     {
-      "title": "Continental",
-      "titleZh": "Continental",
+      "title": "World - CR",
+      "titleZh": "World - CR",
       "rows": [
         [
           19,
@@ -196,12 +204,12 @@
         [
           16,
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[Melbourne Summer Open 2010](https://www.worldcubeassociation.org/competitions/MelbourneSummerOpen2010/results/by_person#2009ZEMD01)"
+          "[Australian Nationals 2012](https://www.worldcubeassociation.org/competitions/AustralianNationals2012/results/by_person#2009ZEMD01)"
         ],
         [
           16,
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[Australian Nationals 2012](https://www.worldcubeassociation.org/competitions/AustralianNationals2012/results/by_person#2009ZEMD01)"
+          "[Melbourne Summer Open 2010](https://www.worldcubeassociation.org/competitions/MelbourneSummerOpen2010/results/by_person#2009ZEMD01)"
         ],
         [
           15,
@@ -225,28 +233,8 @@
         ],
         [
           12,
-          "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
-          "[Minas Open 2008](https://www.worldcubeassociation.org/competitions/MinasOpen2008/results/by_person#2007GUIM01)"
-        ],
-        [
-          12,
-          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
-          "[Motor City Open 2009](https://www.worldcubeassociation.org/competitions/MotorCityOpen2009/results/by_person#2007COMP01)"
-        ],
-        [
-          12,
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[New Zealand Champs 2009](https://www.worldcubeassociation.org/competitions/NewZealandChamps2009/results/by_person#2009ZEMD01)"
-        ],
-        [
-          12,
-          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[Australian Nationals 2010](https://www.worldcubeassociation.org/competitions/AustralianNationals2010/results/by_person#2009ZEMD01)"
-        ],
-        [
-          12,
-          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[Asian Championship 2010](https://www.worldcubeassociation.org/competitions/AsianChampionship2010/results/by_person#2009ZEMD01)"
+          "[World Championship 2013](https://www.worldcubeassociation.org/competitions/WC2013/results/by_person#2009ZEMD01)"
         ],
         [
           12,
@@ -256,7 +244,42 @@
         [
           12,
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[World Championship 2013](https://www.worldcubeassociation.org/competitions/WC2013/results/by_person#2009ZEMD01)"
+          "[Asian Championship 2010](https://www.worldcubeassociation.org/competitions/AsianChampionship2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          12,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Australian Nationals 2010](https://www.worldcubeassociation.org/competitions/AustralianNationals2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          12,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[New Zealand Champs 2009](https://www.worldcubeassociation.org/competitions/NewZealandChamps2009/results/by_person#2009ZEMD01)"
+        ],
+        [
+          12,
+          "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
+          "[Minas Open 2008](https://www.worldcubeassociation.org/competitions/MinasOpen2008/results/by_person#2007GUIM01)"
+        ],
+        [
+          12,
+          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
+          "[Motor City Open 2009](https://www.worldcubeassociation.org/competitions/MotorCityOpen2009/results/by_person#2007COMP01)"
+        ],
+        [
+          11,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Australian Nationals 2013](https://www.worldcubeassociation.org/competitions/AustralianNationals2013/results/by_person#2009ZEMD01)"
+        ],
+        [
+          11,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[World Championship 2011](https://www.worldcubeassociation.org/competitions/WC2011/results/by_person#2009ZEMD01)"
+        ],
+        [
+          11,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Winter Open 2010](https://www.worldcubeassociation.org/competitions/MelbourneWinterOpen2010/results/by_person#2009ZEMD01)"
         ],
         [
           11,
@@ -269,29 +292,9 @@
           "[Canadian Open 2009](https://www.worldcubeassociation.org/competitions/CanadianOpen2009/results/by_person#2007COMP01)"
         ],
         [
-          11,
-          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[Melbourne Winter Open 2010](https://www.worldcubeassociation.org/competitions/MelbourneWinterOpen2010/results/by_person#2009ZEMD01)"
-        ],
-        [
-          11,
-          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[World Championship 2011](https://www.worldcubeassociation.org/competitions/WC2011/results/by_person#2009ZEMD01)"
-        ],
-        [
-          11,
-          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[Australian Nationals 2013](https://www.worldcubeassociation.org/competitions/AustralianNationals2013/results/by_person#2009ZEMD01)"
-        ],
-        [
-          10,
-          "[Dene Beardsley](https://www.worldcubeassociation.org/persons/2009BEAR01)",
-          "[Ohio Open 2009](https://www.worldcubeassociation.org/competitions/OhioOpen2009/results/by_person#2009BEAR01)"
-        ],
-        [
           10,
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[New Zealand Champs 2010](https://www.worldcubeassociation.org/competitions/NewZealand2010/results/by_person#2009ZEMD01)"
+          "[Euro 2016](https://www.worldcubeassociation.org/competitions/Euro2016/results/by_person#2009ZEMD01)"
         ],
         [
           10,
@@ -301,13 +304,24 @@
         [
           10,
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "[Euro 2016](https://www.worldcubeassociation.org/competitions/Euro2016/results/by_person#2009ZEMD01)"
+          "[New Zealand Champs 2010](https://www.worldcubeassociation.org/competitions/NewZealand2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          10,
+          "[Dene Beardsley](https://www.worldcubeassociation.org/persons/2009BEAR01)",
+          "[Ohio Open 2009](https://www.worldcubeassociation.org/competitions/OhioOpen2009/results/by_person#2009BEAR01)"
         ]
-      ]
+      ],
+      "recordScope": {
+        "region": "World",
+        "level": "CR",
+        "event": "",
+        "type": "all"
+      }
     },
     {
-      "title": "National",
-      "titleZh": "National",
+      "title": "World - NR",
+      "titleZh": "World - NR",
       "rows": [
         [
           26,
@@ -331,8 +345,8 @@
         ],
         [
           23,
-          "[Ivan Vynnyk (Іван Винник)](https://www.worldcubeassociation.org/persons/2010VYNN01)",
-          "[MPEI Open 2010](https://www.worldcubeassociation.org/competitions/MPEIOpen2010/results/by_person#2010VYNN01)"
+          "[Arnelio Manaca Mola](https://www.worldcubeassociation.org/persons/2023MOLA06)",
+          "[CubingZA Nationals 2025](https://www.worldcubeassociation.org/competitions/CubingZANationals2025/results/by_person#2023MOLA06)"
         ],
         [
           23,
@@ -341,18 +355,8 @@
         ],
         [
           23,
-          "[Arnelio Manaca Mola](https://www.worldcubeassociation.org/persons/2023MOLA06)",
-          "[CubingZA Nationals 2025](https://www.worldcubeassociation.org/competitions/CubingZANationals2025/results/by_person#2023MOLA06)"
-        ],
-        [
-          21,
-          "[Joel Spang](https://www.worldcubeassociation.org/persons/2009SPAN01)",
-          "[Brussels Summer Open 2009](https://www.worldcubeassociation.org/competitions/BrusselsSummerOpen2009/results/by_person#2009SPAN01)"
-        ],
-        [
-          21,
-          "[Conor Baumann](https://www.worldcubeassociation.org/persons/2009BAUM01)",
-          "[Brussels Summer Open 2009](https://www.worldcubeassociation.org/competitions/BrusselsSummerOpen2009/results/by_person#2009BAUM01)"
+          "[Ivan Vynnyk (Іван Винник)](https://www.worldcubeassociation.org/persons/2010VYNN01)",
+          "[MPEI Open 2010](https://www.worldcubeassociation.org/competitions/MPEIOpen2010/results/by_person#2010VYNN01)"
         ],
         [
           21,
@@ -361,13 +365,28 @@
         ],
         [
           21,
-          "[Anup Adhikari](https://www.worldcubeassociation.org/persons/2016ADHI01)",
-          "[Indian Nationals 2017](https://www.worldcubeassociation.org/competitions/IndianNationals2017/results/by_person#2016ADHI01)"
+          "[Conor Baumann](https://www.worldcubeassociation.org/persons/2009BAUM01)",
+          "[Brussels Summer Open 2009](https://www.worldcubeassociation.org/competitions/BrusselsSummerOpen2009/results/by_person#2009BAUM01)"
+        ],
+        [
+          21,
+          "[Joel Spang](https://www.worldcubeassociation.org/persons/2009SPAN01)",
+          "[Brussels Summer Open 2009](https://www.worldcubeassociation.org/competitions/BrusselsSummerOpen2009/results/by_person#2009SPAN01)"
         ],
         [
           21,
           "[Benjamin Chetcuti Cauchi](https://www.worldcubeassociation.org/persons/2022CAUC02)",
           "[Norwegian Championship 2022](https://www.worldcubeassociation.org/competitions/NorwegianChampionship2022/results/by_person#2022CAUC02)"
+        ],
+        [
+          21,
+          "[Anup Adhikari](https://www.worldcubeassociation.org/persons/2016ADHI01)",
+          "[Indian Nationals 2017](https://www.worldcubeassociation.org/competitions/IndianNationals2017/results/by_person#2016ADHI01)"
+        ],
+        [
+          20,
+          "[Andrey Lopez Rodríguez](https://www.worldcubeassociation.org/persons/2017RODR26)",
+          "[Villa Nueva 2017](https://www.worldcubeassociation.org/competitions/VillaNuevaOpen2017/results/by_person#2017RODR26)"
         ],
         [
           20,
@@ -380,19 +399,14 @@
           "[Hessen Open 2012](https://www.worldcubeassociation.org/competitions/HessenOpen2012/results/by_person#2011VAIT01)"
         ],
         [
-          20,
-          "[Andrey Lopez Rodríguez](https://www.worldcubeassociation.org/persons/2017RODR26)",
-          "[Villa Nueva 2017](https://www.worldcubeassociation.org/competitions/VillaNuevaOpen2017/results/by_person#2017RODR26)"
-        ],
-        [
-          19,
-          "[Henrik Buus Aagaard](https://www.worldcubeassociation.org/persons/2006BUUS01)",
-          "[Benelux Open 2008](https://www.worldcubeassociation.org/competitions/BeneluxOpen2008/results/by_person#2006BUUS01)"
-        ],
-        [
           19,
           "[Joshua Shing Shun Li](https://www.worldcubeassociation.org/persons/2007LIJO01)",
           "[Guangdong Open 2008](https://www.worldcubeassociation.org/competitions/GuangdongOpen2008/results/by_person#2007LIJO01)"
+        ],
+        [
+          19,
+          "[Sakib Ibn Rashid Rhivu](https://www.worldcubeassociation.org/persons/2017RHIV01)",
+          "[Cubers East India Open 2017](https://www.worldcubeassociation.org/competitions/CubersEastIndiaOpen2017/results/by_person#2017RHIV01)"
         ],
         [
           19,
@@ -401,8 +415,8 @@
         ],
         [
           19,
-          "[Nurym Kudaibergen](https://www.worldcubeassociation.org/persons/2011KUDA01)",
-          "[Russia Open 2011](https://www.worldcubeassociation.org/competitions/RussiaOpen2011/results/by_person#2011KUDA01)"
+          "[Henrik Buus Aagaard](https://www.worldcubeassociation.org/persons/2006BUUS01)",
+          "[Benelux Open 2008](https://www.worldcubeassociation.org/competitions/BeneluxOpen2008/results/by_person#2006BUUS01)"
         ],
         [
           19,
@@ -411,10 +425,2605 @@
         ],
         [
           19,
+          "[Nurym Kudaibergen](https://www.worldcubeassociation.org/persons/2011KUDA01)",
+          "[Russia Open 2011](https://www.worldcubeassociation.org/competitions/RussiaOpen2011/results/by_person#2011KUDA01)"
+        ]
+      ],
+      "recordScope": {
+        "region": "World",
+        "level": "NR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Africa - CR",
+      "titleZh": "Africa - CR",
+      "rows": [
+        [
+          15,
+          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
+          "[Pleasantville Fall 2007](https://www.worldcubeassociation.org/competitions/PleasantvilleFall2007/results/by_person#2007COMP01)"
+        ],
+        [
+          14,
+          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
+          "[Toronto Open Fall 2007](https://www.worldcubeassociation.org/competitions/TorontoOpenFall2007/results/by_person#2007COMP01)"
+        ],
+        [
+          14,
+          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
+          "[Canadian Open 2007](https://www.worldcubeassociation.org/competitions/CanadianOpen2007/results/by_person#2007COMP01)"
+        ],
+        [
+          12,
+          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
+          "[Motor City Open 2009](https://www.worldcubeassociation.org/competitions/MotorCityOpen2009/results/by_person#2007COMP01)"
+        ],
+        [
+          11,
+          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
+          "[Canadian Open 2009](https://www.worldcubeassociation.org/competitions/CanadianOpen2009/results/by_person#2007COMP01)"
+        ],
+        [
+          9,
+          "[Conor Cronin](https://www.worldcubeassociation.org/persons/2013CRON01)",
+          "[UK Championship 2015](https://www.worldcubeassociation.org/competitions/UKChampionship2015/results/by_person#2013CRON01)"
+        ],
+        [
+          9,
+          "[Conor Cronin](https://www.worldcubeassociation.org/persons/2013CRON01)",
+          "[ABHC 2014](https://www.worldcubeassociation.org/competitions/AugustBank2014/results/by_person#2013CRON01)"
+        ],
+        [
+          9,
+          "[Conor Cronin](https://www.worldcubeassociation.org/persons/2013CRON01)",
+          "[Euro 2014](https://www.worldcubeassociation.org/competitions/Euro2014/results/by_person#2013CRON01)"
+        ],
+        [
+          9,
+          "[Conor Cronin](https://www.worldcubeassociation.org/persons/2013CRON01)",
+          "[Nottingham 2014](https://www.worldcubeassociation.org/competitions/UniversityofNottingham2014/results/by_person#2013CRON01)"
+        ],
+        [
+          8,
+          "[Kamaru-Deen Lawal](https://www.worldcubeassociation.org/persons/2010LAWA01)",
+          "[River Hill Winter 2012](https://www.worldcubeassociation.org/competitions/RiverHillWinter2012/results/by_person#2010LAWA01)"
+        ],
+        [
+          8,
+          "[Daniel Rush](https://www.worldcubeassociation.org/persons/2018RUSH01)",
+          "[Arnold Classic Africa 2022](https://www.worldcubeassociation.org/competitions/ArnoldClassicAfrica2022/results/by_person#2018RUSH01)"
+        ],
+        [
+          8,
+          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
+          "[Niagara Open Summer 2008](https://www.worldcubeassociation.org/competitions/NiagaraOpenSummer2008/results/by_person#2007COMP01)"
+        ],
+        [
+          7,
+          "[Daniel Rush](https://www.worldcubeassociation.org/persons/2018RUSH01)",
+          "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/by_person#2018RUSH01)"
+        ],
+        [
+          7,
+          "[Conor Cronin](https://www.worldcubeassociation.org/persons/2013CRON01)",
+          "[Cuthberts Open 2014](https://www.worldcubeassociation.org/competitions/CuthbertsOpen2014/results/by_person#2013CRON01)"
+        ],
+        [
+          7,
+          "[Jacobus Philip Haupt](https://www.worldcubeassociation.org/persons/2011HAUP01)",
+          "[Vancouver Winter 2011](https://www.worldcubeassociation.org/competitions/VancouverWinter2011/results/by_person#2011HAUP01)"
+        ],
+        [
+          7,
+          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
+          "[canadianCubing Classic 2008](https://www.worldcubeassociation.org/competitions/CanadianCubingClassic2008/results/by_person#2007COMP01)"
+        ],
+        [
+          6,
+          "[Daniel Rush](https://www.worldcubeassociation.org/persons/2018RUSH01)",
+          "[TUD Unscramble Day 2026](https://www.worldcubeassociation.org/competitions/TUDUnscrambleDay2026/results/by_person#2018RUSH01)"
+        ],
+        [
+          6,
+          "[Daniel Rush](https://www.worldcubeassociation.org/persons/2018RUSH01)",
+          "[CubingZA Cape Cubes Autumn 2023](https://www.worldcubeassociation.org/competitions/CubingZACapeCubesAutumn2023/results/by_person#2018RUSH01)"
+        ],
+        [
+          6,
+          "[Conor Cronin](https://www.worldcubeassociation.org/persons/2013CRON01)",
+          "[The Glorious North 2015](https://www.worldcubeassociation.org/competitions/TheGloriousNorth2015/results/by_person#2013CRON01)"
+        ],
+        [
+          6,
+          "[Conor Cronin](https://www.worldcubeassociation.org/persons/2013CRON01)",
+          "[WGC Open 2014](https://www.worldcubeassociation.org/competitions/WelwynGardenCity2014/results/by_person#2013CRON01)"
+        ],
+        [
+          6,
+          "[Conor Cronin](https://www.worldcubeassociation.org/persons/2013CRON01)",
+          "[Guildford Open 2013](https://www.worldcubeassociation.org/competitions/GuildfordOpen2013/results/by_person#2013CRON01)"
+        ]
+      ],
+      "recordScope": {
+        "region": "Africa",
+        "level": "CR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Africa - NR",
+      "titleZh": "Africa - NR",
+      "rows": [
+        [
+          23,
+          "[Arnelio Manaca Mola](https://www.worldcubeassociation.org/persons/2023MOLA06)",
+          "[CubingZA Nationals 2025](https://www.worldcubeassociation.org/competitions/CubingZANationals2025/results/by_person#2023MOLA06)"
+        ],
+        [
+          18,
+          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
+          "[Pleasantville Fall 2007](https://www.worldcubeassociation.org/competitions/PleasantvilleFall2007/results/by_person#2007COMP01)"
+        ],
+        [
+          16,
+          "[Moez Boussarsar](https://www.worldcubeassociation.org/persons/2015BOUS02)",
+          "[Chachya Open 2017](https://www.worldcubeassociation.org/competitions/ChachyaOpen2017/results/by_person#2015BOUS02)"
+        ],
+        [
+          16,
+          "[Damian Peter Shaw](https://www.worldcubeassociation.org/persons/2019SHAW04)",
+          "[Arnold Classic Africa 2019](https://www.worldcubeassociation.org/competitions/ArnoldClassicAfrica2019/results/by_person#2019SHAW04)"
+        ],
+        [
+          15,
+          "[Kamaru-Deen Lawal](https://www.worldcubeassociation.org/persons/2010LAWA01)",
+          "[River Hill Winter 2012](https://www.worldcubeassociation.org/competitions/RiverHillWinter2012/results/by_person#2010LAWA01)"
+        ],
+        [
+          14,
+          "[Chris Tangpi](https://www.worldcubeassociation.org/persons/2024TANG28)",
+          "[Mid-Atlantic Championship 2026](https://www.worldcubeassociation.org/competitions/MidAtlanticChampionship2026/results/by_person#2024TANG28)"
+        ],
+        [
+          14,
+          "[Johan Alex Tabeko Ngankam](https://www.worldcubeassociation.org/persons/2023NGAN02)",
+          "[The Nairobi Open 2023](https://www.worldcubeassociation.org/competitions/TheNairobiOpen2023/results/by_person#2023NGAN02)"
+        ],
+        [
+          14,
+          "[Benjamin Orthner](https://www.worldcubeassociation.org/persons/2017ORTH02)",
+          "[Austrian Open 2019](https://www.worldcubeassociation.org/competitions/AustrianOpen2019/results/by_person#2017ORTH02)"
+        ],
+        [
+          14,
+          "[Arnelio Manaca Mola](https://www.worldcubeassociation.org/persons/2023MOLA06)",
+          "[WCA African Championship 2024](https://www.worldcubeassociation.org/competitions/RubiksWCAAfricanChampionship2024/results/by_person#2023MOLA06)"
+        ],
+        [
+          14,
+          "[Moez Boussarsar](https://www.worldcubeassociation.org/persons/2015BOUS02)",
+          "[Tunisia Autumn Open 2016](https://www.worldcubeassociation.org/competitions/TunisiaAutumnOpen2016/results/by_person#2015BOUS02)"
+        ],
+        [
+          14,
+          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
+          "[Toronto Open Fall 2007](https://www.worldcubeassociation.org/competitions/TorontoOpenFall2007/results/by_person#2007COMP01)"
+        ],
+        [
+          14,
+          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
+          "[Canadian Open 2007](https://www.worldcubeassociation.org/competitions/CanadianOpen2007/results/by_person#2007COMP01)"
+        ],
+        [
+          13,
+          "[Anas Meziani](https://www.worldcubeassociation.org/persons/2015MEZI01)",
+          "[Archena Open 2016](https://www.worldcubeassociation.org/competitions/ArchenaOpen2016/results/by_person#2015MEZI01)"
+        ],
+        [
+          13,
+          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
+          "[Motor City Open 2009](https://www.worldcubeassociation.org/competitions/MotorCityOpen2009/results/by_person#2007COMP01)"
+        ],
+        [
+          13,
+          "[Joshua T. Makuwa](https://www.worldcubeassociation.org/persons/2018MAKU02)",
+          "[Southeast Championship 2023](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2023/results/by_person#2018MAKU02)"
+        ],
+        [
+          11,
+          "[Youssef Mustapha](https://www.worldcubeassociation.org/persons/2018MUST02)",
+          "[Chachya Open Rotary Edition 2018](https://www.worldcubeassociation.org/competitions/ChachyaOpenRotaryEdition2018/results/by_person#2018MUST02)"
+        ],
+        [
+          11,
+          "[Rodrigue Hermanne Rafanambinantsoa](https://www.worldcubeassociation.org/persons/2024RAFA04)",
+          "[Cubing Mada 2024](https://www.worldcubeassociation.org/competitions/CubingMada2024/results/by_person#2024RAFA04)"
+        ],
+        [
+          11,
+          "[Luke Agapitus](https://www.worldcubeassociation.org/persons/2024AGAP01)",
+          "[CubingZA Nationals 2025](https://www.worldcubeassociation.org/competitions/CubingZANationals2025/results/by_person#2024AGAP01)"
+        ],
+        [
+          11,
+          "[Moez Boussarsar](https://www.worldcubeassociation.org/persons/2015BOUS02)",
+          "[Euro 2016](https://www.worldcubeassociation.org/competitions/Euro2016/results/by_person#2015BOUS02)"
+        ],
+        [
+          11,
+          "[Conor Cronin](https://www.worldcubeassociation.org/persons/2013CRON01)",
+          "[Nottingham 2014](https://www.worldcubeassociation.org/competitions/UniversityofNottingham2014/results/by_person#2013CRON01)"
+        ],
+        [
+          11,
+          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
+          "[Canadian Open 2009](https://www.worldcubeassociation.org/competitions/CanadianOpen2009/results/by_person#2007COMP01)"
+        ]
+      ],
+      "recordScope": {
+        "region": "Africa",
+        "level": "NR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Asia - WR",
+      "titleZh": "Asia - WR",
+      "rows": [
+        [
+          5,
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "[Caltech Spring 2004](https://www.worldcubeassociation.org/competitions/CaltechSpring2004/results/by_person#2003MAKI01)"
+        ],
+        [
+          4,
+          "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
+          "[Shanghai Winter is Coming 2016](https://www.worldcubeassociation.org/competitions/ShanghaiWinterisComing2016/results/by_person#2013LINK01)"
+        ],
+        [
+          4,
+          "[Lin Chen (陈霖)](https://www.worldcubeassociation.org/persons/2010CHEN20)",
+          "[Hangzhou 2012](https://www.worldcubeassociation.org/competitions/HangzhouOpen2012/results/by_person#2010CHEN20)"
+        ],
+        [
+          4,
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "[Horace Mann 2005](https://www.worldcubeassociation.org/competitions/HoraceMann2005/results/by_person#2003MAKI01)"
+        ],
+        [
+          4,
+          "[Hsuan Chang (張璿)](https://www.worldcubeassociation.org/persons/2008CHAN09)",
+          "[Taiwan Winter Open 2009](https://www.worldcubeassociation.org/competitions/TaiwanWinterOpen2009/results/by_person#2008CHAN09)"
+        ],
+        [
+          3,
+          "[Lin Chen (陈霖)](https://www.worldcubeassociation.org/persons/2010CHEN20)",
+          "[Hefei Spring 2012](https://www.worldcubeassociation.org/competitions/HefeiSpring2012/results/by_person#2010CHEN20)"
+        ],
+        [
+          3,
+          "[Yu Nakajima (中島悠)](https://www.worldcubeassociation.org/persons/2007NAKA03)",
+          "[Kashiwa Open 2008](https://www.worldcubeassociation.org/competitions/KashiwaOpen2008/results/by_person#2007NAKA03)"
+        ],
+        [
+          3,
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "[Caltech Fall 2004](https://www.worldcubeassociation.org/competitions/CaltechFall2004/results/by_person#2003MAKI01)"
+        ],
+        [
+          3,
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "[Caltech Winter 2004](https://www.worldcubeassociation.org/competitions/CaltechWinter2004/results/by_person#2003MAKI01)"
+        ],
+        [
+          3,
+          "[Yu Da-Hyun (유다현)](https://www.worldcubeassociation.org/persons/2008YUDA01)",
+          "[Asian Championship 2014](https://www.worldcubeassociation.org/competitions/AsianChampionship2014/results/by_person#2008YUDA01)"
+        ],
+        [
+          2,
+          "[Yunhao Lou (娄云皓)](https://www.worldcubeassociation.org/persons/2017LOUY01)",
+          "[Guangdong Open 2021](https://www.worldcubeassociation.org/competitions/GuangdongOpen2021/results/by_person#2017LOUY01)"
+        ],
+        [
+          2,
+          "[Yunhao Lou (娄云皓)](https://www.worldcubeassociation.org/persons/2017LOUY01)",
+          "[Shenzhen Open 2018](https://www.worldcubeassociation.org/competitions/ShenzhenOpen2018/results/by_person#2017LOUY01)"
+        ],
+        [
+          2,
+          "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
+          "[Please Be Quiet Beijing 2018](https://www.worldcubeassociation.org/competitions/PleaseBeQuietBeijing2018/results/by_person#2013LINK01)"
+        ],
+        [
+          2,
+          "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
+          "[Singapore Championship 2018](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2018/results/by_person#2013LINK01)"
+        ],
+        [
+          2,
+          "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
+          "[Beijing Open 2017](https://www.worldcubeassociation.org/competitions/BeijingOpen2017/results/by_person#2013LINK01)"
+        ],
+        [
+          2,
+          "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
+          "[Nanchang Spring 2017](https://www.worldcubeassociation.org/competitions/NanchangSpring2017/results/by_person#2013LINK01)"
+        ],
+        [
+          2,
+          "[Bingliang Li (李炳良)](https://www.worldcubeassociation.org/persons/2008LIBI01)",
+          "[Guangzhou Wushan Open 2014](https://www.worldcubeassociation.org/competitions/GuangzhouWushanOpen2014/results/by_person#2008LIBI01)"
+        ],
+        [
+          2,
+          "[Lin Chen (陈霖)](https://www.worldcubeassociation.org/persons/2010CHEN20)",
+          "[Qingdao Open 2012](https://www.worldcubeassociation.org/competitions/QingdaoOpen2012/results/by_person#2010CHEN20)"
+        ],
+        [
+          2,
+          "[Lin Chen (陈霖)](https://www.worldcubeassociation.org/persons/2010CHEN20)",
+          "[Shanghai Summer 2012](https://www.worldcubeassociation.org/competitions/ShanghaiSummer2012/results/by_person#2010CHEN20)"
+        ],
+        [
+          2,
+          "[Sam Zhixiao Wang (王志骁)](https://www.worldcubeassociation.org/persons/2009WANG19)",
+          "[Shanghai Winter 2011](https://www.worldcubeassociation.org/competitions/ShanghaiWinter2011/results/by_person#2009WANG19)"
+        ],
+        [
+          2,
+          "[Sam Zhixiao Wang (王志骁)](https://www.worldcubeassociation.org/persons/2009WANG19)",
+          "[Guildford Summer Open 2011](https://www.worldcubeassociation.org/competitions/GuildfordSummerOpen2011/results/by_person#2009WANG19)"
+        ],
+        [
+          2,
+          "[Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13)",
+          "[Beijing No Cubes 2010](https://www.worldcubeassociation.org/competitions/BeijingNoCubes2010/results/by_person#2009WANG13)"
+        ],
+        [
+          2,
+          "[Bingliang Li (李炳良)](https://www.worldcubeassociation.org/persons/2008LIBI01)",
+          "[Guangdong Open 2010](https://www.worldcubeassociation.org/competitions/GuangdongOpen2010/results/by_person#2008LIBI01)"
+        ],
+        [
+          2,
+          "[Haiyan Zhuang (庄海燕)](https://www.worldcubeassociation.org/persons/2008ZHUA01)",
+          "[Xi'an Spring 2010](https://www.worldcubeassociation.org/competitions/XianSpring2010/results/by_person#2008ZHUA01)"
+        ],
+        [
+          2,
+          "[Haiyan Zhuang (庄海燕)](https://www.worldcubeassociation.org/persons/2008ZHUA01)",
+          "[Shanghai Winter 2010](https://www.worldcubeassociation.org/competitions/ShanghaiWinter2010/results/by_person#2008ZHUA01)"
+        ],
+        [
+          2,
+          "[Jianwei Zhu (朱剑伟)](https://www.worldcubeassociation.org/persons/2007ZHUJ01)",
+          "[Beijing Summer Open 2009](https://www.worldcubeassociation.org/competitions/BeijingSummerOpen2009/results/by_person#2007ZHUJ01)"
+        ],
+        [
+          2,
+          "[Yu Sajima (佐島優)](https://www.worldcubeassociation.org/persons/2008SAJI01)",
+          "[Kawasaki Open 2010](https://www.worldcubeassociation.org/competitions/KawasakiOpen2010/results/by_person#2008SAJI01)"
+        ],
+        [
+          2,
+          "[Yu Nakajima (中島悠)](https://www.worldcubeassociation.org/persons/2007NAKA03)",
+          "[Osaka Open 2009](https://www.worldcubeassociation.org/competitions/OsakaOpen2009/results/by_person#2007NAKA03)"
+        ],
+        [
+          2,
+          "[Keisuke Hiraya (平谷啓輔)](https://www.worldcubeassociation.org/persons/2007HIRA02)",
+          "[Tokyo Open 2008](https://www.worldcubeassociation.org/competitions/TokyoOpen2008/results/by_person#2007HIRA02)"
+        ],
+        [
+          2,
+          "[Takayuki Ookusa (大艸尊之)](https://www.worldcubeassociation.org/persons/2006OOKU01)",
+          "[Osaka Open 2008](https://www.worldcubeassociation.org/competitions/OsakaOpen2008/results/by_person#2006OOKU01)"
+        ],
+        [
+          2,
+          "[Takayuki Ookusa (大艸尊之)](https://www.worldcubeassociation.org/persons/2006OOKU01)",
+          "[Japan Open 2007](https://www.worldcubeassociation.org/competitions/JapanOpen2007/results/by_person#2006OOKU01)"
+        ],
+        [
+          2,
+          "[Yuki Hayashi (林祐樹)](https://www.worldcubeassociation.org/persons/2005HAYA01)",
+          "[World Championship 2005](https://www.worldcubeassociation.org/competitions/WC2005/results/by_person#2005HAYA01)"
+        ],
+        [
+          2,
+          "[Yuki Hayashi (林祐樹)](https://www.worldcubeassociation.org/persons/2005HAYA01)",
+          "[Kyoto 2005](https://www.worldcubeassociation.org/competitions/Kyoto2005/results/by_person#2005HAYA01)"
+        ],
+        [
+          2,
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "[Caltech Spring 2005](https://www.worldcubeassociation.org/competitions/CaltechSpring2005/results/by_person#2003MAKI01)"
+        ],
+        [
+          2,
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "[Caltech Winter 2005](https://www.worldcubeassociation.org/competitions/CaltechWinter2005/results/by_person#2003MAKI01)"
+        ],
+        [
+          2,
+          "[Masayuki Akimoto (秋元正行)](https://www.worldcubeassociation.org/persons/2003AKIM01)",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003/results/by_person#2003AKIM01)"
+        ],
+        [
+          2,
+          "[Yu Da-Hyun (유다현)](https://www.worldcubeassociation.org/persons/2008YUDA01)",
+          "[Busan Winter 2016](https://www.worldcubeassociation.org/competitions/BusanWinter2016/results/by_person#2008YUDA01)"
+        ],
+        [
+          2,
+          "[Yunho Nam (남윤호)](https://www.worldcubeassociation.org/persons/2014NAMY01)",
+          "[Asian Championship 2014](https://www.worldcubeassociation.org/competitions/AsianChampionship2014/results/by_person#2014NAMY01)"
+        ],
+        [
+          2,
+          "[Chang Jee-Hoon](https://www.worldcubeassociation.org/persons/2007JEEH01)",
+          "[Suwon 2008](https://www.worldcubeassociation.org/competitions/Suwon2008/results/by_person#2007JEEH01)"
+        ],
+        [
+          2,
+          "[JeongMin Yu (유정민)](https://www.worldcubeassociation.org/persons/2007JEON01)",
+          "[KCRC 2007](https://www.worldcubeassociation.org/competitions/KCRC2007/results/by_person#2007JEON01)"
+        ],
+        [
+          2,
+          "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
+          "[UniKL MIAT Cube Open 2026](https://www.worldcubeassociation.org/competitions/UniKLMIATCubeOpen2026/results/by_person#2016HUNG08)"
+        ]
+      ],
+      "recordScope": {
+        "region": "Asia",
+        "level": "WR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Asia - CR",
+      "titleZh": "Asia - CR",
+      "rows": [
+        [
+          8,
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "[Caltech Fall 2004](https://www.worldcubeassociation.org/competitions/CaltechFall2004/results/by_person#2003MAKI01)"
+        ],
+        [
+          7,
+          "[Masayuki Akimoto (秋元正行)](https://www.worldcubeassociation.org/persons/2003AKIM01)",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003/results/by_person#2003AKIM01)"
+        ],
+        [
+          6,
+          "[Bernett Orlando](https://www.worldcubeassociation.org/persons/2006ORLA01)",
+          "[Dutch Open 2006](https://www.worldcubeassociation.org/competitions/DutchOpen2006/results/by_person#2006ORLA01)"
+        ],
+        [
+          6,
+          "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
+          "[WCA World Championship 2019](https://www.worldcubeassociation.org/competitions/WC2019/results/by_person#2013NAHM01)"
+        ],
+        [
+          6,
+          "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
+          "[China Championship 2017](https://www.worldcubeassociation.org/competitions/ChinaChampionship2017/results/by_person#2013NAHM01)"
+        ],
+        [
+          5,
+          "[Lin Chen (陈霖)](https://www.worldcubeassociation.org/persons/2010CHEN20)",
+          "[Hefei Spring 2012](https://www.worldcubeassociation.org/competitions/HefeiSpring2012/results/by_person#2010CHEN20)"
+        ],
+        [
+          5,
+          "[Yu Nakajima (中島悠)](https://www.worldcubeassociation.org/persons/2007NAKA03)",
+          "[Osaka Open 2009](https://www.worldcubeassociation.org/competitions/OsakaOpen2009/results/by_person#2007NAKA03)"
+        ],
+        [
+          5,
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "[Caltech Spring 2004](https://www.worldcubeassociation.org/competitions/CaltechSpring2004/results/by_person#2003MAKI01)"
+        ],
+        [
+          5,
+          "[JeongMin Yu (유정민)](https://www.worldcubeassociation.org/persons/2007JEON01)",
+          "[KCRC 2007](https://www.worldcubeassociation.org/competitions/KCRC2007/results/by_person#2007JEON01)"
+        ],
+        [
+          4,
+          "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
+          "[Shanghai Winter is Coming 2016](https://www.worldcubeassociation.org/competitions/ShanghaiWinterisComing2016/results/by_person#2013LINK01)"
+        ],
+        [
+          4,
+          "[Lin Chen (陈霖)](https://www.worldcubeassociation.org/persons/2010CHEN20)",
+          "[Asian Championship 2016](https://www.worldcubeassociation.org/competitions/AsianChampionship2016/results/by_person#2010CHEN20)"
+        ],
+        [
+          4,
+          "[Lin Chen (陈霖)](https://www.worldcubeassociation.org/persons/2010CHEN20)",
+          "[Hangzhou 2012](https://www.worldcubeassociation.org/competitions/HangzhouOpen2012/results/by_person#2010CHEN20)"
+        ],
+        [
+          4,
+          "[Lin Chen (陈霖)](https://www.worldcubeassociation.org/persons/2010CHEN20)",
+          "[Qingdao Open 2012](https://www.worldcubeassociation.org/competitions/QingdaoOpen2012/results/by_person#2010CHEN20)"
+        ],
+        [
+          4,
+          "[Yumu Tabuchi (田渕雄夢)](https://www.worldcubeassociation.org/persons/2006TABU02)",
+          "[World Championship 2009](https://www.worldcubeassociation.org/competitions/WC2009/results/by_person#2006TABU02)"
+        ],
+        [
+          4,
+          "[Takayuki Ookusa (大艸尊之)](https://www.worldcubeassociation.org/persons/2006OOKU01)",
+          "[Osaka Open 2008](https://www.worldcubeassociation.org/competitions/OsakaOpen2008/results/by_person#2006OOKU01)"
+        ],
+        [
+          4,
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "[Horace Mann 2005](https://www.worldcubeassociation.org/competitions/HoraceMann2005/results/by_person#2003MAKI01)"
+        ],
+        [
+          4,
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "[Caltech Spring 2005](https://www.worldcubeassociation.org/competitions/CaltechSpring2005/results/by_person#2003MAKI01)"
+        ],
+        [
+          4,
+          "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
+          "[Big Time Manila 2023](https://www.worldcubeassociation.org/competitions/BigTimeManila2023/results/by_person#2013NAHM01)"
+        ],
+        [
+          4,
+          "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
+          "[Selangor Ace Cube 2023](https://www.worldcubeassociation.org/competitions/SelangorAceCube2023/results/by_person#2013NAHM01)"
+        ],
+        [
+          4,
+          "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
+          "[Please Big Cubes Korea 2022](https://www.worldcubeassociation.org/competitions/PleaseBigCubesKorea2022/results/by_person#2013NAHM01)"
+        ],
+        [
+          4,
+          "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
+          "[China Championship 2018](https://www.worldcubeassociation.org/competitions/ChinaChampionship2018/results/by_person#2013NAHM01)"
+        ],
+        [
+          4,
+          "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
+          "[China's 10th Anniversary 2017](https://www.worldcubeassociation.org/competitions/China10years2017/results/by_person#2013NAHM01)"
+        ],
+        [
+          4,
+          "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
+          "[World Championship 2017](https://www.worldcubeassociation.org/competitions/WC2017/results/by_person#2013NAHM01)"
+        ],
+        [
+          4,
+          "[Kai-Wen Wang (王楷文)](https://www.worldcubeassociation.org/persons/2015WANG09)",
+          "[Chiayi Open 2022](https://www.worldcubeassociation.org/competitions/ChiayiOpen2022/results/by_person#2015WANG09)"
+        ],
+        [
+          4,
+          "[Hsuan Chang (張璿)](https://www.worldcubeassociation.org/persons/2008CHAN09)",
+          "[Taiwan Winter Open 2009](https://www.worldcubeassociation.org/competitions/TaiwanWinterOpen2009/results/by_person#2008CHAN09)"
+        ]
+      ],
+      "recordScope": {
+        "region": "Asia",
+        "level": "CR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Asia - NR",
+      "titleZh": "Asia - NR",
+      "rows": [
+        [
+          25,
+          "[Shukrullo Ibragimov](https://www.worldcubeassociation.org/persons/2017IBRA05)",
+          "[Tajikistan Open 2019](https://www.worldcubeassociation.org/competitions/TajikistanOpen2019/results/by_person#2017IBRA05)"
+        ],
+        [
+          21,
+          "[Anup Adhikari](https://www.worldcubeassociation.org/persons/2016ADHI01)",
+          "[Indian Nationals 2017](https://www.worldcubeassociation.org/competitions/IndianNationals2017/results/by_person#2016ADHI01)"
+        ],
+        [
+          20,
+          "[Bernett Orlando](https://www.worldcubeassociation.org/persons/2006ORLA01)",
+          "[World Championship 2007](https://www.worldcubeassociation.org/competitions/WC2007/results/by_person#2006ORLA01)"
+        ],
+        [
+          19,
           "[Sakib Ibn Rashid Rhivu](https://www.worldcubeassociation.org/persons/2017RHIV01)",
           "[Cubers East India Open 2017](https://www.worldcubeassociation.org/competitions/CubersEastIndiaOpen2017/results/by_person#2017RHIV01)"
+        ],
+        [
+          19,
+          "[Nurym Kudaibergen](https://www.worldcubeassociation.org/persons/2011KUDA01)",
+          "[MPEI Open 2012](https://www.worldcubeassociation.org/competitions/MPEIOpen2012/results/by_person#2011KUDA01)"
+        ],
+        [
+          19,
+          "[Nurym Kudaibergen](https://www.worldcubeassociation.org/persons/2011KUDA01)",
+          "[Russia Open 2011](https://www.worldcubeassociation.org/competitions/RussiaOpen2011/results/by_person#2011KUDA01)"
+        ],
+        [
+          18,
+          "[Bernett Orlando](https://www.worldcubeassociation.org/persons/2006ORLA01)",
+          "[Dutch Open 2006](https://www.worldcubeassociation.org/competitions/DutchOpen2006/results/by_person#2006ORLA01)"
+        ],
+        [
+          18,
+          "[Zhulu Ke (柯助錄)](https://www.worldcubeassociation.org/persons/2007KEZH01)",
+          "[Guangdong Open 2008](https://www.worldcubeassociation.org/competitions/GuangdongOpen2008/results/by_person#2007KEZH01)"
+        ],
+        [
+          17,
+          "[Nurym Kudaibergen](https://www.worldcubeassociation.org/persons/2011KUDA01)",
+          "[MNW Open 2012](https://www.worldcubeassociation.org/competitions/MNWOpen2012/results/by_person#2011KUDA01)"
+        ],
+        [
+          17,
+          "[Zhulu Ke (柯助錄)](https://www.worldcubeassociation.org/persons/2007KEZH01)",
+          "[Guangdong Open 2007](https://www.worldcubeassociation.org/competitions/GuangdongOpen2007/results/by_person#2007KEZH01)"
+        ],
+        [
+          17,
+          "[Timur Arazmedov](https://www.worldcubeassociation.org/persons/2025ARAZ01)",
+          "[XMUM Cube Open 2026](https://www.worldcubeassociation.org/competitions/XMUMCubeOpen2026/results/by_person#2025ARAZ01)"
+        ],
+        [
+          16,
+          "[Nasir Ali Mohammed Dawood Abdalla](https://www.worldcubeassociation.org/persons/2022ABDA02)",
+          "[JCC Q8speedcubing Nationals 2024](https://www.worldcubeassociation.org/competitions/JCCQ8speedcubingNationals2024/results/by_person#2022ABDA02)"
+        ],
+        [
+          16,
+          "[Zaid Doofesh (زيد دوفش)](https://www.worldcubeassociation.org/persons/2012DOOF02)",
+          "[Jordan Open 2012](https://www.worldcubeassociation.org/competitions/JordanOpen2012/results/by_person#2012DOOF02)"
+        ],
+        [
+          16,
+          "[Teo Kai Xiang](https://www.worldcubeassociation.org/persons/2009XIAN01)",
+          "[Cube Fever 2011](https://www.worldcubeassociation.org/competitions/CubeFever2011/results/by_person#2009XIAN01)"
+        ],
+        [
+          16,
+          "[Kanneti Sae Han (คันธ์เนตี แซ่ห่าน)](https://www.worldcubeassociation.org/persons/2008HANK01)",
+          "[Clermont Open 2008](https://www.worldcubeassociation.org/competitions/ClermontOpen2008/results/by_person#2008HANK01)"
+        ],
+        [
+          16,
+          "[Kanneti Sae Han (คันธ์เนตี แซ่ห่าน)](https://www.worldcubeassociation.org/persons/2008HANK01)",
+          "[Brussels Summer Open 2008](https://www.worldcubeassociation.org/competitions/BrusselsSummerOpen2008/results/by_person#2008HANK01)"
+        ],
+        [
+          15,
+          "[Daniel Adel Alhayki](https://www.worldcubeassociation.org/persons/2018ALHA03)",
+          "[Sej Sejere Sejs 2025](https://www.worldcubeassociation.org/competitions/SejSejereSejs2025/results/by_person#2018ALHA03)"
+        ],
+        [
+          15,
+          "[Daniel Adel Alhayki](https://www.worldcubeassociation.org/persons/2018ALHA03)",
+          "[Dubai Summer Open 2022](https://www.worldcubeassociation.org/competitions/DubaiSummerOpen2022/results/by_person#2018ALHA03)"
+        ],
+        [
+          15,
+          "[Zaid Doofesh (زيد دوفش)](https://www.worldcubeassociation.org/persons/2012DOOF02)",
+          "[Frankfurt Cube Days 2017](https://www.worldcubeassociation.org/competitions/FrankfurtCubeDays2017/results/by_person#2012DOOF02)"
+        ],
+        [
+          15,
+          "[Nurym Kudaibergen](https://www.worldcubeassociation.org/persons/2011KUDA01)",
+          "[Ukraine Open 2012](https://www.worldcubeassociation.org/competitions/UkraineOpen2012/results/by_person#2011KUDA01)"
+        ],
+        [
+          15,
+          "[Teo Kai Xiang](https://www.worldcubeassociation.org/persons/2009XIAN01)",
+          "[Malaysian Open 2010](https://www.worldcubeassociation.org/competitions/MalaysianCubeOpen2010/results/by_person#2009XIAN01)"
         ]
-      ]
+      ],
+      "recordScope": {
+        "region": "Asia",
+        "level": "NR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Europe - WR",
+      "titleZh": "Europe - WR",
+      "rows": [
+        [
+          5,
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          "[Belgian Open 2008](https://www.worldcubeassociation.org/competitions/BelgianOpen2008/results/by_person#2005AKKE01)"
+        ],
+        [
+          4,
+          "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
+          "[Euro 2004](https://www.worldcubeassociation.org/competitions/Euro2004/results/by_person#2003POCH01)"
+        ],
+        [
+          4,
+          "[Anssi Vanhala](https://www.worldcubeassociation.org/persons/2005VANH01)",
+          "[SveKub 2006](https://www.worldcubeassociation.org/competitions/Svekub2006/results/by_person#2005VANH01)"
+        ],
+        [
+          4,
+          "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
+          "[Czech Open 2007](https://www.worldcubeassociation.org/competitions/CzechOpen2007/results/by_person#2006KUTI01)"
+        ],
+        [
+          4,
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          "[Swedish Cube Day 2007](https://www.worldcubeassociation.org/competitions/SwedishCubeDay2007/results/by_person#2005AKKE01)"
+        ],
+        [
+          4,
+          "[Michael Fung](https://www.worldcubeassociation.org/persons/2005FUNG01)",
+          "[Dutch Open 2006](https://www.worldcubeassociation.org/competitions/DutchOpen2006/results/by_person#2005FUNG01)"
+        ],
+        [
+          4,
+          "[Jaap Scherphuis](https://www.worldcubeassociation.org/persons/2003SCHE01)",
+          "[German Open 2004](https://www.worldcubeassociation.org/competitions/GermanOpen2004/results/by_person#2003SCHE01)"
+        ],
+        [
+          4,
+          "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
+          "[Polish Nationals 2009](https://www.worldcubeassociation.org/competitions/PolishNationals2009/results/by_person#2006HALC01)"
+        ],
+        [
+          4,
+          "[Gunnar Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+          "[Svekub 2005](https://www.worldcubeassociation.org/competitions/Svekub2005/results/by_person#2004KRIG01)"
+        ],
+        [
+          3,
+          "[Lars Vandenbergh](https://www.worldcubeassociation.org/persons/2003VAND01)",
+          "[Dutch Open 2004](https://www.worldcubeassociation.org/competitions/DutchOpen2004/results/by_person#2003VAND01)"
+        ],
+        [
+          3,
+          "[Lars Vandenbergh](https://www.worldcubeassociation.org/persons/2003VAND01)",
+          "[Euro 2004](https://www.worldcubeassociation.org/competitions/Euro2004/results/by_person#2003VAND01)"
+        ],
+        [
+          3,
+          "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
+          "[World Championship 2005](https://www.worldcubeassociation.org/competitions/WC2005/results/by_person#2003POCH01)"
+        ],
+        [
+          3,
+          "[Marcell Endrey](https://www.worldcubeassociation.org/persons/2007ENDR01)",
+          "[Zune Open 2012](https://www.worldcubeassociation.org/competitions/ZuneOpen2012/results/by_person#2007ENDR01)"
+        ],
+        [
+          3,
+          "[Bence Barát](https://www.worldcubeassociation.org/persons/2008BARA01)",
+          "[Czech Open 2010](https://www.worldcubeassociation.org/competitions/CzechOpen2010/results/by_person#2008BARA01)"
+        ],
+        [
+          3,
+          "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
+          "[Polish Open 2007](https://www.worldcubeassociation.org/competitions/PolishOpen2007/results/by_person#2006KUTI01)"
+        ],
+        [
+          3,
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          "[Brussels Summer Open 2008](https://www.worldcubeassociation.org/competitions/BrusselsSummerOpen2008/results/by_person#2005AKKE01)"
+        ],
+        [
+          3,
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          "[Dutch Open 2007](https://www.worldcubeassociation.org/competitions/DutchOpen2007/results/by_person#2005AKKE01)"
+        ],
+        [
+          3,
+          "[Jaap Scherphuis](https://www.worldcubeassociation.org/persons/2003SCHE01)",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003/results/by_person#2003SCHE01)"
+        ],
+        [
+          3,
+          "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
+          "[Swierklany Open 2011](https://www.worldcubeassociation.org/competitions/SwierklanyOpen2011/results/by_person#2006HALC01)"
+        ],
+        [
+          3,
+          "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
+          "[Pabianice Open 2010](https://www.worldcubeassociation.org/competitions/PabianiceOpen2010/results/by_person#2006HALC01)"
+        ],
+        [
+          3,
+          "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
+          "[Polish Nationals 2010](https://www.worldcubeassociation.org/competitions/PolishNationals2010/results/by_person#2006HALC01)"
+        ],
+        [
+          3,
+          "[Claes Hedin](https://www.worldcubeassociation.org/persons/2009HEDI01)",
+          "[Norrköping Open 2009](https://www.worldcubeassociation.org/competitions/NorrkopingOpen2009/results/by_person#2009HEDI01)"
+        ],
+        [
+          3,
+          "[David Wesley](https://www.worldcubeassociation.org/persons/2003WESL01)",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003/results/by_person#2003WESL01)"
+        ]
+      ],
+      "recordScope": {
+        "region": "Europe",
+        "level": "WR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Europe - CR",
+      "titleZh": "Europe - CR",
+      "rows": [
+        [
+          6,
+          "[Anssi Vanhala](https://www.worldcubeassociation.org/persons/2005VANH01)",
+          "[SveKub 2006](https://www.worldcubeassociation.org/competitions/Svekub2006/results/by_person#2005VANH01)"
+        ],
+        [
+          6,
+          "[David Wesley](https://www.worldcubeassociation.org/persons/2003WESL01)",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003/results/by_person#2003WESL01)"
+        ],
+        [
+          5,
+          "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
+          "[Czech Open 2007](https://www.worldcubeassociation.org/competitions/CzechOpen2007/results/by_person#2006KUTI01)"
+        ],
+        [
+          5,
+          "[Ciarán Beahan](https://www.worldcubeassociation.org/persons/2012BEAH01)",
+          "[London Open 2019](https://www.worldcubeassociation.org/competitions/LondonOpen2019/results/by_person#2012BEAH01)"
+        ],
+        [
+          5,
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          "[Benelux Open 2009](https://www.worldcubeassociation.org/competitions/BeneluxOpen2009/results/by_person#2005AKKE01)"
+        ],
+        [
+          5,
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          "[Belgian Open 2008](https://www.worldcubeassociation.org/competitions/BelgianOpen2008/results/by_person#2005AKKE01)"
+        ],
+        [
+          5,
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          "[Swedish Cube Day 2007](https://www.worldcubeassociation.org/competitions/SwedishCubeDay2007/results/by_person#2005AKKE01)"
+        ],
+        [
+          5,
+          "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+          "[LLS I Bełżyce 2021](https://www.worldcubeassociation.org/competitions/LLSIBelzyce2021/results/by_person#2016KOLA02)"
+        ],
+        [
+          5,
+          "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
+          "[Polish Nationals 2009](https://www.worldcubeassociation.org/competitions/PolishNationals2009/results/by_person#2006HALC01)"
+        ],
+        [
+          5,
+          "[Gunnar Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+          "[Swedish Open 2005](https://www.worldcubeassociation.org/competitions/SwedishOpen2005/results/by_person#2004KRIG01)"
+        ],
+        [
+          4,
+          "[Lars Vandenbergh](https://www.worldcubeassociation.org/persons/2003VAND01)",
+          "[Dutch Open 2004](https://www.worldcubeassociation.org/competitions/DutchOpen2004/results/by_person#2003VAND01)"
+        ],
+        [
+          4,
+          "[Lars Vandenbergh](https://www.worldcubeassociation.org/persons/2003VAND01)",
+          "[Euro 2004](https://www.worldcubeassociation.org/competitions/Euro2004/results/by_person#2003VAND01)"
+        ],
+        [
+          4,
+          "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
+          "[World Championship 2005](https://www.worldcubeassociation.org/competitions/WC2005/results/by_person#2003POCH01)"
+        ],
+        [
+          4,
+          "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
+          "[Euro 2004](https://www.worldcubeassociation.org/competitions/Euro2004/results/by_person#2003POCH01)"
+        ],
+        [
+          4,
+          "[Anssi Vanhala](https://www.worldcubeassociation.org/persons/2005VANH01)",
+          "[Helsinki Open 2007](https://www.worldcubeassociation.org/competitions/HelsinkiOpen2007/results/by_person#2005VANH01)"
+        ],
+        [
+          4,
+          "[Bence Barát](https://www.worldcubeassociation.org/persons/2008BARA01)",
+          "[Czech Open 2010](https://www.worldcubeassociation.org/competitions/CzechOpen2010/results/by_person#2008BARA01)"
+        ],
+        [
+          4,
+          "[Ciarán Beahan](https://www.worldcubeassociation.org/persons/2012BEAH01)",
+          "[UK Championship 2018](https://www.worldcubeassociation.org/competitions/UKC2018/results/by_person#2012BEAH01)"
+        ],
+        [
+          4,
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          "[Danish Open 2009](https://www.worldcubeassociation.org/competitions/DanishOpen2009/results/by_person#2005AKKE01)"
+        ],
+        [
+          4,
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          "[Dutch Open 2007](https://www.worldcubeassociation.org/competitions/DutchOpen2007/results/by_person#2005AKKE01)"
+        ],
+        [
+          4,
+          "[Michael Fung](https://www.worldcubeassociation.org/persons/2005FUNG01)",
+          "[Dutch Open 2006](https://www.worldcubeassociation.org/competitions/DutchOpen2006/results/by_person#2005FUNG01)"
+        ],
+        [
+          4,
+          "[Jaap Scherphuis](https://www.worldcubeassociation.org/persons/2003SCHE01)",
+          "[German Open 2004](https://www.worldcubeassociation.org/competitions/GermanOpen2004/results/by_person#2003SCHE01)"
+        ],
+        [
+          4,
+          "[Jaap Scherphuis](https://www.worldcubeassociation.org/persons/2003SCHE01)",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003/results/by_person#2003SCHE01)"
+        ],
+        [
+          4,
+          "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+          "[Melbourne Summer 2024](https://www.worldcubeassociation.org/competitions/MelbourneSummer2024/results/by_person#2016KOLA02)"
+        ],
+        [
+          4,
+          "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
+          "[Swierklany Open 2011](https://www.worldcubeassociation.org/competitions/SwierklanyOpen2011/results/by_person#2006HALC01)"
+        ],
+        [
+          4,
+          "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+          "[Kuala Lumpur CC 2026](https://www.worldcubeassociation.org/competitions/KualaLumpurCC2026/results/by_person#2019TARA09)"
+        ],
+        [
+          4,
+          "[Vladislav Shavelskiy](https://www.worldcubeassociation.org/persons/2012SHAV01)",
+          "[CCC End of Summer 2015](https://www.worldcubeassociation.org/competitions/CCCEndofSummer2015/results/by_person#2012SHAV01)"
+        ],
+        [
+          4,
+          "[Gunnar Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+          "[Svekub 2005](https://www.worldcubeassociation.org/competitions/Svekub2005/results/by_person#2004KRIG01)"
+        ]
+      ],
+      "recordScope": {
+        "region": "Europe",
+        "level": "CR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Europe - NR",
+      "titleZh": "Europe - NR",
+      "rows": [
+        [
+          26,
+          "[Benjamin Chetcuti Cauchi](https://www.worldcubeassociation.org/persons/2022CAUC02)",
+          "[Irish Championship 2023](https://www.worldcubeassociation.org/competitions/IrishChampionship2023/results/by_person#2022CAUC02)"
+        ],
+        [
+          25,
+          "[Hilmar Magnusson](https://www.worldcubeassociation.org/persons/2009MAGN02)",
+          "[Norwegian Open 2010](https://www.worldcubeassociation.org/competitions/NorwegianOpen2010/results/by_person#2009MAGN02)"
+        ],
+        [
+          23,
+          "[Ivan Vynnyk (Іван Винник)](https://www.worldcubeassociation.org/persons/2010VYNN01)",
+          "[MPEI Open 2010](https://www.worldcubeassociation.org/competitions/MPEIOpen2010/results/by_person#2010VYNN01)"
+        ],
+        [
+          21,
+          "[Anatoly Kim](https://www.worldcubeassociation.org/persons/2009KIMA01)",
+          "[Russia Open 2010](https://www.worldcubeassociation.org/competitions/RussiaOpen2010/results/by_person#2009KIMA01)"
+        ],
+        [
+          21,
+          "[Conor Baumann](https://www.worldcubeassociation.org/persons/2009BAUM01)",
+          "[Brussels Summer Open 2009](https://www.worldcubeassociation.org/competitions/BrusselsSummerOpen2009/results/by_person#2009BAUM01)"
+        ],
+        [
+          21,
+          "[Joel Spang](https://www.worldcubeassociation.org/persons/2009SPAN01)",
+          "[Brussels Summer Open 2009](https://www.worldcubeassociation.org/competitions/BrusselsSummerOpen2009/results/by_person#2009SPAN01)"
+        ],
+        [
+          21,
+          "[Benjamin Chetcuti Cauchi](https://www.worldcubeassociation.org/persons/2022CAUC02)",
+          "[Norwegian Championship 2022](https://www.worldcubeassociation.org/competitions/NorwegianChampionship2022/results/by_person#2022CAUC02)"
+        ],
+        [
+          20,
+          "[Lukas Vaitkevičius](https://www.worldcubeassociation.org/persons/2011VAIT01)",
+          "[Hessen Open 2012](https://www.worldcubeassociation.org/competitions/HessenOpen2012/results/by_person#2011VAIT01)"
+        ],
+        [
+          19,
+          "[Anatoly Kim](https://www.worldcubeassociation.org/persons/2009KIMA01)",
+          "[MPEI Open 2010](https://www.worldcubeassociation.org/competitions/MPEIOpen2010/results/by_person#2009KIMA01)"
+        ],
+        [
+          19,
+          "[Henrik Buus Aagaard](https://www.worldcubeassociation.org/persons/2006BUUS01)",
+          "[Benelux Open 2008](https://www.worldcubeassociation.org/competitions/BeneluxOpen2008/results/by_person#2006BUUS01)"
+        ],
+        [
+          18,
+          "[Hilmar Magnusson](https://www.worldcubeassociation.org/persons/2009MAGN02)",
+          "[Helsinki Open 2011](https://www.worldcubeassociation.org/competitions/HelsinkiOpen2011/results/by_person#2009MAGN02)"
+        ],
+        [
+          17,
+          "[Toni Beljo](https://www.worldcubeassociation.org/persons/2015BELJ01)",
+          "[Kubkvarna Winter 2019](https://www.worldcubeassociation.org/competitions/KubkvarnaWinter2019/results/by_person#2015BELJ01)"
+        ],
+        [
+          17,
+          "[Gamze Aksahin](https://www.worldcubeassociation.org/persons/2010AKSA01)",
+          "[Lemgo Open 2010](https://www.worldcubeassociation.org/competitions/LemgoOpen2010/results/by_person#2010AKSA01)"
+        ],
+        [
+          16,
+          "[Renato Stopic](https://www.worldcubeassociation.org/persons/2014STOP01)",
+          "[Croatian Open 2014](https://www.worldcubeassociation.org/competitions/CroatianOpen2014/results/by_person#2014STOP01)"
+        ],
+        [
+          16,
+          "[Lars Vandenbergh](https://www.worldcubeassociation.org/persons/2003VAND01)",
+          "[German Open 2004](https://www.worldcubeassociation.org/competitions/GermanOpen2004/results/by_person#2003VAND01)"
+        ],
+        [
+          16,
+          "[Martin Zahradník](https://www.worldcubeassociation.org/persons/2006ZAHR01)",
+          "[Czech Open 2008](https://www.worldcubeassociation.org/competitions/CzechOpen2008/results/by_person#2006ZAHR01)"
+        ],
+        [
+          16,
+          "[Anssi Vanhala](https://www.worldcubeassociation.org/persons/2005VANH01)",
+          "[SveKub 2006](https://www.worldcubeassociation.org/competitions/Svekub2006/results/by_person#2005VANH01)"
+        ],
+        [
+          16,
+          "[Milán Baticz](https://www.worldcubeassociation.org/persons/2005BATI01)",
+          "[Euro 2006](https://www.worldcubeassociation.org/competitions/Euro2006/results/by_person#2005BATI01)"
+        ],
+        [
+          16,
+          "[Ciarán Beahan](https://www.worldcubeassociation.org/persons/2012BEAH01)",
+          "[Oxford Open 2014](https://www.worldcubeassociation.org/competitions/OxfordOpen2014/results/by_person#2012BEAH01)"
+        ],
+        [
+          16,
+          "[Maor Youavian](https://www.worldcubeassociation.org/persons/2010YOUA01)",
+          "[Barcelona Open 2011](https://www.worldcubeassociation.org/competitions/BarcelonaSummerOpen2011/results/by_person#2010YOUA01)"
+        ],
+        [
+          16,
+          "[Simon Westlund](https://www.worldcubeassociation.org/persons/2008WEST02)",
+          "[Helsinki Open 2011](https://www.worldcubeassociation.org/competitions/HelsinkiOpen2011/results/by_person#2008WEST02)"
+        ]
+      ],
+      "recordScope": {
+        "region": "Europe",
+        "level": "NR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "North America - WR",
+      "titleZh": "North America - WR",
+      "rows": [
+        [
+          4,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Southeast Championship 2022](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2022/results/by_person#2012PARK03)"
+        ],
+        [
+          4,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Houston Winter 2020](https://www.worldcubeassociation.org/competitions/HoustonWinter2020/results/by_person#2012PARK03)"
+        ],
+        [
+          4,
+          "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
+          "[MCC Epsilon 2019](https://www.worldcubeassociation.org/competitions/MichiganCubingClubEpsilon2019/results/by_person#2016CHAP04)"
+        ],
+        [
+          4,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[SacCubing IV 2018](https://www.worldcubeassociation.org/competitions/SacCubingIV2018/results/by_person#2012PARK03)"
+        ],
+        [
+          4,
+          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
+          "[US Nationals 2004](https://www.worldcubeassociation.org/competitions/US2004/results/by_person#2003HARD01)"
+        ],
+        [
+          3,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Nub Open Trabuco Hills Fall 2025](https://www.worldcubeassociation.org/competitions/NubOpenTrabucoHillsFall2025/results/by_person#2012PARK03)"
+        ],
+        [
+          3,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[NAC 2024](https://www.worldcubeassociation.org/competitions/NAC2024/results/by_person#2012PARK03)"
+        ],
+        [
+          3,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Marshall Cubing September 2022](https://www.worldcubeassociation.org/competitions/MarshallCubingSeptember2022/results/by_person#2012PARK03)"
+        ],
+        [
+          3,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Bay Area Speedcubin' 29 PM 2022](https://www.worldcubeassociation.org/competitions/BayAreaSpeedcubin29PM2022/results/by_person#2012PARK03)"
+        ],
+        [
+          3,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[CubingUSA Western Champs 2021](https://www.worldcubeassociation.org/competitions/CubingUSAWesternChampionship2021/results/by_person#2012PARK03)"
+        ],
+        [
+          3,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Missoula 2021](https://www.worldcubeassociation.org/competitions/Missoula2021/results/by_person#2012PARK03)"
+        ],
+        [
+          3,
+          "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
+          "[WCA World Championship 2019](https://www.worldcubeassociation.org/competitions/WC2019/results/by_person#2016CHAP04)"
+        ],
+        [
+          3,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[WCA Asian Championship 2018](https://www.worldcubeassociation.org/competitions/AsianChampionship2018/results/by_person#2012PARK03)"
+        ],
+        [
+          3,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[SacCubing III 2018](https://www.worldcubeassociation.org/competitions/SacCubingIII2018/results/by_person#2012PARK03)"
+        ],
+        [
+          3,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Thanks Four The Invite 2018](https://www.worldcubeassociation.org/competitions/ThanksFourTheInvite2018/results/by_person#2012PARK03)"
+        ],
+        [
+          3,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "[Big Cubes Summer 2009](https://www.worldcubeassociation.org/competitions/BigCubesSummer2009/results/by_person#2007COHE01)"
+        ],
+        [
+          3,
+          "[Bob Burton](https://www.worldcubeassociation.org/persons/2003BURT01)",
+          "[Caltech Dallas 2005](https://www.worldcubeassociation.org/competitions/CaltechDallas2005/results/by_person#2003BURT01)"
+        ],
+        [
+          2,
+          "[Louis Cormier](https://www.worldcubeassociation.org/persons/2010CORM02)",
+          "[Euro 2014](https://www.worldcubeassociation.org/competitions/Euro2014/results/by_person#2010CORM02)"
+        ],
+        [
+          2,
+          "[Craig Bouchard](https://www.worldcubeassociation.org/persons/2005BOUC01)",
+          "[Rutgers Fall 2006](https://www.worldcubeassociation.org/competitions/RutgersFall2006/results/by_person#2005BOUC01)"
+        ],
+        [
+          2,
+          "[Craig Bouchard](https://www.worldcubeassociation.org/persons/2005BOUC01)",
+          "[US Nationals 2006](https://www.worldcubeassociation.org/competitions/US2006/results/by_person#2005BOUC01)"
+        ],
+        [
+          2,
+          "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
+          "[New York Multimate PBQ II 2025](https://www.worldcubeassociation.org/competitions/NewYorkMultimatePBQII2025/results/by_person#2016CHAP04)"
+        ],
+        [
+          2,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Western Championship 2024](https://www.worldcubeassociation.org/competitions/WesternChampionship2024/results/by_person#2012PARK03)"
+        ],
+        [
+          2,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Nub Open Yucaipa 2024](https://www.worldcubeassociation.org/competitions/NubOpenYucaipa2024/results/by_person#2012PARK03)"
+        ],
+        [
+          2,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[UCSD Winter 2023](https://www.worldcubeassociation.org/competitions/UCSDWinter2023/results/by_person#2012PARK03)"
+        ],
+        [
+          2,
+          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
+          "[Mid-Atlantic Championship 2023](https://www.worldcubeassociation.org/competitions/MidAtlanticChampionship2023/results/by_person#2015CHER07)"
+        ],
+        [
+          2,
+          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+          "[NAC 2022](https://www.worldcubeassociation.org/competitions/NAC2022/results/by_person#2018KHAN28)"
+        ],
+        [
+          2,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Florida Big & Blind Time 2022](https://www.worldcubeassociation.org/competitions/FloridaBigBlindTime2022/results/by_person#2012PARK03)"
+        ],
+        [
+          2,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Florida Spring B 2022](https://www.worldcubeassociation.org/competitions/FloridaSpringB2022/results/by_person#2012PARK03)"
+        ],
+        [
+          2,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Baton Rouge Winter 2022](https://www.worldcubeassociation.org/competitions/BatonRougeWinter2022/results/by_person#2012PARK03)"
+        ],
+        [
+          2,
+          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
+          "[Florida Fall 2021](https://www.worldcubeassociation.org/competitions/FloridaFall2021/results/by_person#2015CHER07)"
+        ],
+        [
+          2,
+          "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
+          "[CubingUSA Nationals 2019](https://www.worldcubeassociation.org/competitions/CubingUSANationals2019/results/by_person#2016CHAP04)"
+        ],
+        [
+          2,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[WCA World Championship 2019](https://www.worldcubeassociation.org/competitions/WC2019/results/by_person#2012PARK03)"
+        ],
+        [
+          2,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Western Championship 2019](https://www.worldcubeassociation.org/competitions/WesternChampionship2019/results/by_person#2012PARK03)"
+        ],
+        [
+          2,
+          "[Mark Boyanowski](https://www.worldcubeassociation.org/persons/2014BOYA01)",
+          "[Mental Breakdown Minnesota 2019](https://www.worldcubeassociation.org/competitions/MentalBreakdownMinnesota2019/results/by_person#2014BOYA01)"
+        ],
+        [
+          2,
+          "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
+          "[Mental Breakdown Washington 2019](https://www.worldcubeassociation.org/competitions/MentalBreakdownWashington2019/results/by_person#2016CHAP04)"
+        ],
+        [
+          2,
+          "[Jeff Park](https://www.worldcubeassociation.org/persons/2015PARK08)",
+          "[DFW Cubing Fiesta July 2018](https://www.worldcubeassociation.org/competitions/DFWCubingFiestaJuly2018/results/by_person#2015PARK08)"
+        ],
+        [
+          2,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[WCCT Cupertino 2018](https://www.worldcubeassociation.org/competitions/WestCoastCubingTourCupertino2018/results/by_person#2012PARK03)"
+        ],
+        [
+          2,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[WCCT Fresno 2018](https://www.worldcubeassociation.org/competitions/WCCTFresno2018/results/by_person#2012PARK03)"
+        ],
+        [
+          2,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[COpen2 2018](https://www.worldcubeassociation.org/competitions/Cerritos2018/results/by_person#2012PARK03)"
+        ],
+        [
+          2,
+          "[Kevin Hays](https://www.worldcubeassociation.org/persons/2009HAYS01)",
+          "[Heartland Champs 2018](https://www.worldcubeassociation.org/competitions/HeartlandChampionships2018/results/by_person#2009HAYS01)"
+        ],
+        [
+          2,
+          "[Kevin Hays](https://www.worldcubeassociation.org/persons/2009HAYS01)",
+          "[Asian Championship 2016](https://www.worldcubeassociation.org/competitions/AsianChampionship2016/results/by_person#2009HAYS01)"
+        ],
+        [
+          2,
+          "[Drew Brads](https://www.worldcubeassociation.org/persons/2010BRAD01)",
+          "[Lexington Fall 2015](https://www.worldcubeassociation.org/competitions/LexingtonFall2015/results/by_person#2010BRAD01)"
+        ],
+        [
+          2,
+          "[Kevin Hays](https://www.worldcubeassociation.org/persons/2009HAYS01)",
+          "[World Championship 2015](https://www.worldcubeassociation.org/competitions/WC2015/results/by_person#2009HAYS01)"
+        ],
+        [
+          2,
+          "[Rami Sbahi](https://www.worldcubeassociation.org/persons/2011SBAH01)",
+          "[Canadian Open 2015](https://www.worldcubeassociation.org/competitions/CanadianOpen2015/results/by_person#2011SBAH01)"
+        ],
+        [
+          2,
+          "[Evan Liu](https://www.worldcubeassociation.org/persons/2009LIUE01)",
+          "[Xi'an Cherry Blossom 2015](https://www.worldcubeassociation.org/competitions/XianCherryBlossom2015/results/by_person#2009LIUE01)"
+        ],
+        [
+          2,
+          "[Walker Welch](https://www.worldcubeassociation.org/persons/2011WELC01)",
+          "[Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014/results/by_person#2011WELC01)"
+        ],
+        [
+          2,
+          "[Kevin Hays](https://www.worldcubeassociation.org/persons/2009HAYS01)",
+          "[Vancouver Summer 2013](https://www.worldcubeassociation.org/competitions/VancouverOpenSummer2013/results/by_person#2009HAYS01)"
+        ],
+        [
+          2,
+          "[Kevin Hays](https://www.worldcubeassociation.org/persons/2009HAYS01)",
+          "[Couve Cubing 2012](https://www.worldcubeassociation.org/competitions/Couve2012/results/by_person#2009HAYS01)"
+        ],
+        [
+          2,
+          "[Kevin Hays](https://www.worldcubeassociation.org/persons/2009HAYS01)",
+          "[Vancouver Winter 2011](https://www.worldcubeassociation.org/competitions/VancouverWinter2011/results/by_person#2009HAYS01)"
+        ],
+        [
+          2,
+          "[Kevin Hays](https://www.worldcubeassociation.org/persons/2009HAYS01)",
+          "[US Nationals 2011](https://www.worldcubeassociation.org/competitions/USNationals2011/results/by_person#2009HAYS01)"
+        ],
+        [
+          2,
+          "[Michael Gottlieb](https://www.worldcubeassociation.org/persons/2006GOTT01)",
+          "[EPGY Stanford Winter 2009](https://www.worldcubeassociation.org/competitions/EPGYStanfordWinter2009/results/by_person#2006GOTT01)"
+        ],
+        [
+          2,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "[Newark Winter 2009](https://www.worldcubeassociation.org/competitions/NewarkWinter2009/results/by_person#2007COHE01)"
+        ],
+        [
+          2,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "[US Nationals and Open 2008](https://www.worldcubeassociation.org/competitions/USOpen2008/results/by_person#2007COHE01)"
+        ],
+        [
+          2,
+          "[Ryan Patricio](https://www.worldcubeassociation.org/persons/2004PATR01)",
+          "[San Diego Open 2008](https://www.worldcubeassociation.org/competitions/SanDiegoOpen2008/results/by_person#2004PATR01)"
+        ],
+        [
+          2,
+          "[Alexander Yu](https://www.worldcubeassociation.org/persons/2007YUAL01)",
+          "[Princeton Open 2008](https://www.worldcubeassociation.org/competitions/PrincetonOpen2008/results/by_person#2007YUAL01)"
+        ],
+        [
+          2,
+          "[Dan Dzoan](https://www.worldcubeassociation.org/persons/2006DZOA03)",
+          "[Caltech Winter 2007](https://www.worldcubeassociation.org/competitions/CaltechWinter2007/results/by_person#2006DZOA03)"
+        ],
+        [
+          2,
+          "[Frank Morris](https://www.worldcubeassociation.org/persons/2003MORR01)",
+          "[G-Wiz Fall 2006](https://www.worldcubeassociation.org/competitions/GWiz2006/results/by_person#2003MORR01)"
+        ],
+        [
+          2,
+          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
+          "[G-Wiz Fall 2006](https://www.worldcubeassociation.org/competitions/GWiz2006/results/by_person#2003HARD01)"
+        ],
+        [
+          2,
+          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
+          "[US Nationals 2006](https://www.worldcubeassociation.org/competitions/US2006/results/by_person#2003HARD01)"
+        ],
+        [
+          2,
+          "[Ryan Patricio](https://www.worldcubeassociation.org/persons/2004PATR01)",
+          "[Caltech Spring 2006](https://www.worldcubeassociation.org/competitions/CaltechSpring2006/results/by_person#2004PATR01)"
+        ],
+        [
+          2,
+          "[Leyan Lo](https://www.worldcubeassociation.org/persons/2004LOLE01)",
+          "[Chattahoochee 2006](https://www.worldcubeassociation.org/competitions/Chattahoochee2006/results/by_person#2004LOLE01)"
+        ],
+        [
+          2,
+          "[Ryan Patricio](https://www.worldcubeassociation.org/persons/2004PATR01)",
+          "[Caltech Fall 2005](https://www.worldcubeassociation.org/competitions/CaltechFall2005/results/by_person#2004PATR01)"
+        ],
+        [
+          2,
+          "[Tyson Mao (毛台勝)](https://www.worldcubeassociation.org/persons/2004MAOT02)",
+          "[Northern CA 2005](https://www.worldcubeassociation.org/competitions/NorthernCA2005/results/by_person#2004MAOT02)"
+        ],
+        [
+          2,
+          "[Frank Morris](https://www.worldcubeassociation.org/persons/2003MORR01)",
+          "[Caltech Dallas 2005](https://www.worldcubeassociation.org/competitions/CaltechDallas2005/results/by_person#2003MORR01)"
+        ],
+        [
+          2,
+          "[Leyan Lo](https://www.worldcubeassociation.org/persons/2004LOLE01)",
+          "[Caltech Spring 2005](https://www.worldcubeassociation.org/competitions/CaltechSpring2005/results/by_person#2004LOLE01)"
+        ],
+        [
+          2,
+          "[Will Arnold](https://www.worldcubeassociation.org/persons/2005ARNO01)",
+          "[Caltech Spring 2005](https://www.worldcubeassociation.org/competitions/CaltechSpring2005/results/by_person#2005ARNO01)"
+        ],
+        [
+          2,
+          "[Dan Knights](https://www.worldcubeassociation.org/persons/2003KNIG01)",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003/results/by_person#2003KNIG01)"
+        ]
+      ],
+      "recordScope": {
+        "region": "North America",
+        "level": "WR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "North America - CR",
+      "titleZh": "North America - CR",
+      "rows": [
+        [
+          9,
+          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
+          "[US Nationals 2004](https://www.worldcubeassociation.org/competitions/US2004/results/by_person#2003HARD01)"
+        ],
+        [
+          8,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "[Fort Lee Winter 2009](https://www.worldcubeassociation.org/competitions/FortLeeWinter2009/results/by_person#2007COHE01)"
+        ],
+        [
+          7,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "[Ohio Open 2009](https://www.worldcubeassociation.org/competitions/OhioOpen2009/results/by_person#2007COHE01)"
+        ],
+        [
+          6,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Thanks Four The Invite 2018](https://www.worldcubeassociation.org/competitions/ThanksFourTheInvite2018/results/by_person#2012PARK03)"
+        ],
+        [
+          6,
+          "[Kevin Hays](https://www.worldcubeassociation.org/persons/2009HAYS01)",
+          "[World Championship 2013](https://www.worldcubeassociation.org/competitions/WC2013/results/by_person#2009HAYS01)"
+        ],
+        [
+          6,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "[UPenn Spring 2009](https://www.worldcubeassociation.org/competitions/UPennSpring2009/results/by_person#2007COHE01)"
+        ],
+        [
+          6,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "[Da Vinci Science Center 2008](https://www.worldcubeassociation.org/competitions/DaVinciScience2008/results/by_person#2007COHE01)"
+        ],
+        [
+          5,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Houston Winter 2020](https://www.worldcubeassociation.org/competitions/HoustonWinter2020/results/by_person#2012PARK03)"
+        ],
+        [
+          5,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[CubingUSA Nationals 2017](https://www.worldcubeassociation.org/competitions/CubingUSANationals2017/results/by_person#2012PARK03)"
+        ],
+        [
+          5,
+          "[Kevin Hays](https://www.worldcubeassociation.org/persons/2009HAYS01)",
+          "[World Championship 2015](https://www.worldcubeassociation.org/competitions/WC2015/results/by_person#2009HAYS01)"
+        ],
+        [
+          5,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "[Big Cubes Summer 2009](https://www.worldcubeassociation.org/competitions/BigCubesSummer2009/results/by_person#2007COHE01)"
+        ],
+        [
+          5,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "[Newark Winter 2009](https://www.worldcubeassociation.org/competitions/NewarkWinter2009/results/by_person#2007COHE01)"
+        ],
+        [
+          5,
+          "[Frank Morris](https://www.worldcubeassociation.org/persons/2003MORR01)",
+          "[Berkeley Fall 2007](https://www.worldcubeassociation.org/competitions/BerkeleyFall2007/results/by_person#2003MORR01)"
+        ],
+        [
+          5,
+          "[Ryan Patricio](https://www.worldcubeassociation.org/persons/2004PATR01)",
+          "[Caltech Fall 2005](https://www.worldcubeassociation.org/competitions/CaltechFall2005/results/by_person#2004PATR01)"
+        ],
+        [
+          4,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[Southeast Championship 2022](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2022/results/by_person#2012PARK03)"
+        ],
+        [
+          4,
+          "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
+          "[MCC Epsilon 2019](https://www.worldcubeassociation.org/competitions/MichiganCubingClubEpsilon2019/results/by_person#2016CHAP04)"
+        ],
+        [
+          4,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[SacCubing IV 2018](https://www.worldcubeassociation.org/competitions/SacCubingIV2018/results/by_person#2012PARK03)"
+        ],
+        [
+          4,
+          "[Kevin Hays](https://www.worldcubeassociation.org/persons/2009HAYS01)",
+          "[Puget Sound Fall 2017](https://www.worldcubeassociation.org/competitions/PugetSoundFall2017/results/by_person#2009HAYS01)"
+        ],
+        [
+          4,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "[World Championship 2017](https://www.worldcubeassociation.org/competitions/WC2017/results/by_person#2012PARK03)"
+        ],
+        [
+          4,
+          "[Kevin Hays](https://www.worldcubeassociation.org/persons/2009HAYS01)",
+          "[Lexington Summer 2017](https://www.worldcubeassociation.org/competitions/LexingtonSummer2017/results/by_person#2009HAYS01)"
+        ],
+        [
+          4,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "[World Championship 2011](https://www.worldcubeassociation.org/competitions/WC2011/results/by_person#2007COHE01)"
+        ],
+        [
+          4,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "[US Nationals 2011](https://www.worldcubeassociation.org/competitions/USNationals2011/results/by_person#2007COHE01)"
+        ],
+        [
+          4,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "[World Championship 2009](https://www.worldcubeassociation.org/competitions/WC2009/results/by_person#2007COHE01)"
+        ],
+        [
+          4,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "[US Nationals 2009](https://www.worldcubeassociation.org/competitions/USNationals2009/results/by_person#2007COHE01)"
+        ],
+        [
+          4,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "[US Nationals and Open 2008](https://www.worldcubeassociation.org/competitions/USOpen2008/results/by_person#2007COHE01)"
+        ],
+        [
+          4,
+          "[Ryan Patricio](https://www.worldcubeassociation.org/persons/2004PATR01)",
+          "[Caltech Spring 2006](https://www.worldcubeassociation.org/competitions/CaltechSpring2006/results/by_person#2004PATR01)"
+        ],
+        [
+          4,
+          "[Bob Burton](https://www.worldcubeassociation.org/persons/2003BURT01)",
+          "[Dutch Open 2005](https://www.worldcubeassociation.org/competitions/DutchOpen2005/results/by_person#2003BURT01)"
+        ],
+        [
+          4,
+          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
+          "[Caltech Dallas 2005](https://www.worldcubeassociation.org/competitions/CaltechDallas2005/results/by_person#2003HARD01)"
+        ],
+        [
+          4,
+          "[Leyan Lo](https://www.worldcubeassociation.org/persons/2004LOLE01)",
+          "[Caltech Spring 2005](https://www.worldcubeassociation.org/competitions/CaltechSpring2005/results/by_person#2004LOLE01)"
+        ]
+      ],
+      "recordScope": {
+        "region": "North America",
+        "level": "CR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "North America - NR",
+      "titleZh": "North America - NR",
+      "rows": [
+        [
+          24,
+          "[Lucas Jacobs](https://www.worldcubeassociation.org/persons/2018JACO10)",
+          "[Canadian Championship 2019](https://www.worldcubeassociation.org/competitions/CanadianChampionship2019/results/by_person#2018JACO10)"
+        ],
+        [
+          20,
+          "[Andrey Lopez Rodríguez](https://www.worldcubeassociation.org/persons/2017RODR26)",
+          "[Villa Nueva 2017](https://www.worldcubeassociation.org/competitions/VillaNuevaOpen2017/results/by_person#2017RODR26)"
+        ],
+        [
+          17,
+          "[Dylan Rene Centeno Chevez](https://www.worldcubeassociation.org/persons/2015CHEV01)",
+          "[Guatemala Nationals 2017](https://www.worldcubeassociation.org/competitions/GuatemalaNationals2017/results/by_person#2015CHEV01)"
+        ],
+        [
+          17,
+          "[Zeke Sirju](https://www.worldcubeassociation.org/persons/2022SIRJ01)",
+          "[Manchester Spring 2024](https://www.worldcubeassociation.org/competitions/ManchesterSpring2024/results/by_person#2022SIRJ01)"
+        ],
+        [
+          16,
+          "[Fan Derlentz Perceval](https://www.worldcubeassociation.org/persons/2015PERC01)",
+          "[Back 2 Santiago 2017](https://www.worldcubeassociation.org/competitions/Back2Santiago2017/results/by_person#2015PERC01)"
+        ],
+        [
+          15,
+          "[Dylan Rene Centeno Chevez](https://www.worldcubeassociation.org/persons/2015CHEV01)",
+          "[Villa Nueva 2017](https://www.worldcubeassociation.org/competitions/VillaNuevaOpen2017/results/by_person#2015CHEV01)"
+        ],
+        [
+          15,
+          "[Dylan Rene Centeno Chevez](https://www.worldcubeassociation.org/persons/2015CHEV01)",
+          "[La Verapaz 2015](https://www.worldcubeassociation.org/competitions/RubikLaVerapaz2015/results/by_person#2015CHEV01)"
+        ],
+        [
+          15,
+          "[Luis Salvador Batarsé Soto](https://www.worldcubeassociation.org/persons/2013SOTO04)",
+          "[Huehue 2014](https://www.worldcubeassociation.org/competitions/RubikHuehue2014/results/by_person#2013SOTO04)"
+        ],
+        [
+          14,
+          "[Fan Derlentz Perceval](https://www.worldcubeassociation.org/persons/2015PERC01)",
+          "[SD Winter 2018](https://www.worldcubeassociation.org/competitions/SDWinter2018/results/by_person#2015PERC01)"
+        ],
+        [
+          13,
+          "[Anthony Brooks](https://www.worldcubeassociation.org/persons/2008SEAR01)",
+          "[Dallas Open 2009](https://www.worldcubeassociation.org/competitions/DallasOpen2009/results/by_person#2008SEAR01)"
+        ],
+        [
+          13,
+          "[Daniel Escobar](https://www.worldcubeassociation.org/persons/2014ESCO02)",
+          "[Xela 2015](https://www.worldcubeassociation.org/competitions/RubiksXelaOpen2015/results/by_person#2014ESCO02)"
+        ],
+        [
+          13,
+          "[Egdar Castillo](https://www.worldcubeassociation.org/persons/2017CAST48)",
+          "[SE Champ 2018](https://www.worldcubeassociation.org/competitions/SEChamp2018/results/by_person#2017CAST48)"
+        ],
+        [
+          12,
+          "[Sebastián Herrera Pomares](https://www.worldcubeassociation.org/persons/2017POMA02)",
+          "[LatAm Tour - Guatemala 2017](https://www.worldcubeassociation.org/competitions/LatinAmericaCubingTourGuatem2017/results/by_person#2017POMA02)"
+        ],
+        [
+          12,
+          "[Adoni Chaves Artiaga](https://www.worldcubeassociation.org/persons/2017ARTI02)",
+          "[Tecla Rubik 2017](https://www.worldcubeassociation.org/competitions/TeclaRubik2017/results/by_person#2017ARTI02)"
+        ],
+        [
+          12,
+          "[Lucas Jacobs](https://www.worldcubeassociation.org/persons/2018JACO10)",
+          "[Richmond Hill Summer 2019](https://www.worldcubeassociation.org/competitions/RichmondHillSummer2019/results/by_person#2018JACO10)"
+        ],
+        [
+          12,
+          "[Uriel Gayosso Ruiz](https://www.worldcubeassociation.org/persons/2007RUIZ01)",
+          "[Puebla Open 2009](https://www.worldcubeassociation.org/competitions/PueblaOpen2009/results/by_person#2007RUIZ01)"
+        ],
+        [
+          12,
+          "[Dylan Rene Centeno Chevez](https://www.worldcubeassociation.org/persons/2015CHEV01)",
+          "[Mazate Open 2016](https://www.worldcubeassociation.org/competitions/MazateOpen2016/results/by_person#2015CHEV01)"
+        ],
+        [
+          12,
+          "[José Enrique Jiménez](https://www.worldcubeassociation.org/persons/2015JIME10)",
+          "[Guatemala Championship 2017](https://www.worldcubeassociation.org/competitions/GuatemalaChampionship2017/results/by_person#2015JIME10)"
+        ],
+        [
+          11,
+          "[Riya Yeddula](https://www.worldcubeassociation.org/persons/2018YEDD01)",
+          "[Barbados 2025](https://www.worldcubeassociation.org/competitions/Barbados2025/results/by_person#2018YEDD01)"
+        ],
+        [
+          11,
+          "[Anthony Brooks](https://www.worldcubeassociation.org/persons/2008SEAR01)",
+          "[Austin Open 2008](https://www.worldcubeassociation.org/competitions/AustinOpen2008/results/by_person#2008SEAR01)"
+        ],
+        [
+          11,
+          "[Jack Moseley](https://www.worldcubeassociation.org/persons/2007MOSE02)",
+          "[US Nationals and Open 2008](https://www.worldcubeassociation.org/competitions/USOpen2008/results/by_person#2007MOSE02)"
+        ],
+        [
+          11,
+          "[Daniel Orlando Valdes Arzola](https://www.worldcubeassociation.org/persons/2022ARZO01)",
+          "[Efterårscubing i Hvidovre 2024](https://www.worldcubeassociation.org/competitions/EfterarscubingiHvidovre2024/results/by_person#2022ARZO01)"
+        ],
+        [
+          11,
+          "[Dylan Rene Centeno Chevez](https://www.worldcubeassociation.org/persons/2015CHEV01)",
+          "[IGA Rubik 2016](https://www.worldcubeassociation.org/competitions/IGARubik2016/results/by_person#2015CHEV01)"
+        ],
+        [
+          11,
+          "[José Enrique Jiménez](https://www.worldcubeassociation.org/persons/2015JIME10)",
+          "[Rubik Xela Open 2017](https://www.worldcubeassociation.org/competitions/RubikXelaOpen2017/results/by_person#2015JIME10)"
+        ]
+      ],
+      "recordScope": {
+        "region": "North America",
+        "level": "NR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Oceania - WR",
+      "titleZh": "Oceania - WR",
+      "rows": [
+        [
+          7,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Summer 2011](https://www.worldcubeassociation.org/competitions/MelbourneSummer2011/results/by_person#2009ZEMD01)"
+        ],
+        [
+          7,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Cube Day 2010](https://www.worldcubeassociation.org/competitions/MelbourneCubeDay2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          6,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[World Championship 2017](https://www.worldcubeassociation.org/competitions/WC2017/results/by_person#2009ZEMD01)"
+        ],
+        [
+          6,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[World Championship 2011](https://www.worldcubeassociation.org/competitions/WC2011/results/by_person#2009ZEMD01)"
+        ],
+        [
+          5,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Euro 2016](https://www.worldcubeassociation.org/competitions/Euro2016/results/by_person#2009ZEMD01)"
+        ],
+        [
+          5,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Australian Nationals 2012](https://www.worldcubeassociation.org/competitions/AustralianNationals2012/results/by_person#2009ZEMD01)"
+        ],
+        [
+          5,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Kubaroo Open 2011](https://www.worldcubeassociation.org/competitions/KubarooOpen2011/results/by_person#2009ZEMD01)"
+        ],
+        [
+          4,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[London Open 2017](https://www.worldcubeassociation.org/competitions/LondonOpen2017/results/by_person#2009ZEMD01)"
+        ],
+        [
+          4,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Cube Days 2015](https://www.worldcubeassociation.org/competitions/MelbourneCubeDay2015/results/by_person#2009ZEMD01)"
+        ],
+        [
+          4,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Australian Nationals 2013](https://www.worldcubeassociation.org/competitions/AustralianNationals2013/results/by_person#2009ZEMD01)"
+        ],
+        [
+          4,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Australian Nationals 2011](https://www.worldcubeassociation.org/competitions/AustralianNationals2011/results/by_person#2009ZEMD01)"
+        ],
+        [
+          4,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Winter Open 2011](https://www.worldcubeassociation.org/competitions/MelbourneWinterOpen2011/results/by_person#2009ZEMD01)"
+        ],
+        [
+          3,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Malaysia Cube Open 2017](https://www.worldcubeassociation.org/competitions/MalaysiaCubeOpen2017/results/by_person#2009ZEMD01)"
+        ],
+        [
+          3,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[LatAm Tour - Chia 2017](https://www.worldcubeassociation.org/competitions/LatinAmericaCubingTourChia2017/results/by_person#2009ZEMD01)"
+        ],
+        [
+          3,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Adelaide Summer 2017](https://www.worldcubeassociation.org/competitions/AdelaideSummer2017/results/by_person#2009ZEMD01)"
+        ],
+        [
+          3,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[China Championship 2015](https://www.worldcubeassociation.org/competitions/ChinaChampionship2015/results/by_person#2009ZEMD01)"
+        ],
+        [
+          3,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Cube Day 2013](https://www.worldcubeassociation.org/competitions/MelbourneCubeDay2013/results/by_person#2009ZEMD01)"
+        ],
+        [
+          3,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Asian Championship 2010](https://www.worldcubeassociation.org/competitions/AsianChampionship2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          3,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Australian Nationals 2010](https://www.worldcubeassociation.org/competitions/AustralianNationals2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          2,
+          "[Charlie Eggins](https://www.worldcubeassociation.org/persons/2019EGGI02)",
+          "[Cubing at The Cube 2026](https://www.worldcubeassociation.org/competitions/CubingatTheCube2026/results/by_person#2019EGGI02)"
+        ],
+        [
+          2,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[China's 10th Anniversary 2017](https://www.worldcubeassociation.org/competitions/China10years2017/results/by_person#2009ZEMD01)"
+        ],
+        [
+          2,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Sydney Championship 2016](https://www.worldcubeassociation.org/competitions/SydneyChampionship2016/results/by_person#2009ZEMD01)"
+        ],
+        [
+          2,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Cube Days 2016](https://www.worldcubeassociation.org/competitions/MelbourneCubeDays2016/results/by_person#2009ZEMD01)"
+        ],
+        [
+          2,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[World Championship 2015](https://www.worldcubeassociation.org/competitions/WC2015/results/by_person#2009ZEMD01)"
+        ],
+        [
+          2,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[TCG & Friends 2015](https://www.worldcubeassociation.org/competitions/TCGAndFriends2015/results/by_person#2009ZEMD01)"
+        ],
+        [
+          2,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Niddrie 2014](https://www.worldcubeassociation.org/competitions/Niddrie2014/results/by_person#2009ZEMD01)"
+        ],
+        [
+          2,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[US Nationals 2014](https://www.worldcubeassociation.org/competitions/USNationals2014/results/by_person#2009ZEMD01)"
+        ],
+        [
+          2,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Lifestyle Seasons Summer 2014](https://www.worldcubeassociation.org/competitions/LifestyleSeasonsSummer2014/results/by_person#2009ZEMD01)"
+        ],
+        [
+          2,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Summer 2012](https://www.worldcubeassociation.org/competitions/MelbourneSummer2012/results/by_person#2009ZEMD01)"
+        ],
+        [
+          2,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[New Zealand Champs 2010](https://www.worldcubeassociation.org/competitions/NewZealand2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          2,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Summer Open 2010](https://www.worldcubeassociation.org/competitions/MelbourneSummerOpen2010/results/by_person#2009ZEMD01)"
+        ]
+      ],
+      "recordScope": {
+        "region": "Oceania",
+        "level": "WR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Oceania - CR",
+      "titleZh": "Oceania - CR",
+      "rows": [
+        [
+          19,
+          "[Joshua Shing Shun Li](https://www.worldcubeassociation.org/persons/2007LIJO01)",
+          "[Guangdong Open 2008](https://www.worldcubeassociation.org/competitions/GuangdongOpen2008/results/by_person#2007LIJO01)"
+        ],
+        [
+          16,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Australian Nationals 2012](https://www.worldcubeassociation.org/competitions/AustralianNationals2012/results/by_person#2009ZEMD01)"
+        ],
+        [
+          16,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Summer Open 2010](https://www.worldcubeassociation.org/competitions/MelbourneSummerOpen2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          12,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[World Championship 2013](https://www.worldcubeassociation.org/competitions/WC2013/results/by_person#2009ZEMD01)"
+        ],
+        [
+          12,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Cube Day 2010](https://www.worldcubeassociation.org/competitions/MelbourneCubeDay2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          12,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Asian Championship 2010](https://www.worldcubeassociation.org/competitions/AsianChampionship2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          12,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Australian Nationals 2010](https://www.worldcubeassociation.org/competitions/AustralianNationals2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          12,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[New Zealand Champs 2009](https://www.worldcubeassociation.org/competitions/NewZealandChamps2009/results/by_person#2009ZEMD01)"
+        ],
+        [
+          11,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Australian Nationals 2013](https://www.worldcubeassociation.org/competitions/AustralianNationals2013/results/by_person#2009ZEMD01)"
+        ],
+        [
+          11,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[World Championship 2011](https://www.worldcubeassociation.org/competitions/WC2011/results/by_person#2009ZEMD01)"
+        ],
+        [
+          11,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Winter Open 2010](https://www.worldcubeassociation.org/competitions/MelbourneWinterOpen2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          11,
+          "[Joshua Shing Shun Li](https://www.worldcubeassociation.org/persons/2007LIJO01)",
+          "[Guangdong Open 2007](https://www.worldcubeassociation.org/competitions/GuangdongOpen2007/results/by_person#2007LIJO01)"
+        ],
+        [
+          10,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Euro 2016](https://www.worldcubeassociation.org/competitions/Euro2016/results/by_person#2009ZEMD01)"
+        ],
+        [
+          10,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Summer 2011](https://www.worldcubeassociation.org/competitions/MelbourneSummer2011/results/by_person#2009ZEMD01)"
+        ],
+        [
+          10,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[New Zealand Champs 2010](https://www.worldcubeassociation.org/competitions/NewZealand2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          10,
+          "[Dene Beardsley](https://www.worldcubeassociation.org/persons/2009BEAR01)",
+          "[Ohio Open 2009](https://www.worldcubeassociation.org/competitions/OhioOpen2009/results/by_person#2009BEAR01)"
+        ],
+        [
+          9,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Australian Nationals 2011](https://www.worldcubeassociation.org/competitions/AustralianNationals2011/results/by_person#2009ZEMD01)"
+        ],
+        [
+          9,
+          "[Jasmine Lee](https://www.worldcubeassociation.org/persons/2003LEEJ01)",
+          "[Dutch Open 2006](https://www.worldcubeassociation.org/competitions/DutchOpen2006/results/by_person#2003LEEJ01)"
+        ],
+        [
+          8,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[US Nationals 2014](https://www.worldcubeassociation.org/competitions/USNationals2014/results/by_person#2009ZEMD01)"
+        ],
+        [
+          7,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Canberra Autumn 2015](https://www.worldcubeassociation.org/competitions/CanberraAutumn2015/results/by_person#2009ZEMD01)"
+        ],
+        [
+          7,
+          "[Jasmine Lee](https://www.worldcubeassociation.org/persons/2003LEEJ01)",
+          "[UK Open 2006](https://www.worldcubeassociation.org/competitions/UKOpen2006/results/by_person#2003LEEJ01)"
+        ]
+      ],
+      "recordScope": {
+        "region": "Oceania",
+        "level": "CR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Oceania - NR",
+      "titleZh": "Oceania - NR",
+      "rows": [
+        [
+          19,
+          "[Joshua Shing Shun Li](https://www.worldcubeassociation.org/persons/2007LIJO01)",
+          "[Guangdong Open 2008](https://www.worldcubeassociation.org/competitions/GuangdongOpen2008/results/by_person#2007LIJO01)"
+        ],
+        [
+          17,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Summer Open 2010](https://www.worldcubeassociation.org/competitions/MelbourneSummerOpen2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          16,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Australian Nationals 2012](https://www.worldcubeassociation.org/competitions/AustralianNationals2012/results/by_person#2009ZEMD01)"
+        ],
+        [
+          16,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[New Zealand Champs 2009](https://www.worldcubeassociation.org/competitions/NewZealandChamps2009/results/by_person#2009ZEMD01)"
+        ],
+        [
+          14,
+          "[Dene Beardsley](https://www.worldcubeassociation.org/persons/2009BEAR01)",
+          "[EPGY Stanford Winter 2009](https://www.worldcubeassociation.org/competitions/EPGYStanfordWinter2009/results/by_person#2009BEAR01)"
+        ],
+        [
+          12,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[World Championship 2013](https://www.worldcubeassociation.org/competitions/WC2013/results/by_person#2009ZEMD01)"
+        ],
+        [
+          12,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Cube Day 2010](https://www.worldcubeassociation.org/competitions/MelbourneCubeDay2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          12,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Asian Championship 2010](https://www.worldcubeassociation.org/competitions/AsianChampionship2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          12,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Australian Nationals 2010](https://www.worldcubeassociation.org/competitions/AustralianNationals2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          12,
+          "[Dene Beardsley](https://www.worldcubeassociation.org/persons/2009BEAR01)",
+          "[Ohio Open 2009](https://www.worldcubeassociation.org/competitions/OhioOpen2009/results/by_person#2009BEAR01)"
+        ],
+        [
+          11,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Australian Nationals 2013](https://www.worldcubeassociation.org/competitions/AustralianNationals2013/results/by_person#2009ZEMD01)"
+        ],
+        [
+          11,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[World Championship 2011](https://www.worldcubeassociation.org/competitions/WC2011/results/by_person#2009ZEMD01)"
+        ],
+        [
+          11,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Winter Open 2010](https://www.worldcubeassociation.org/competitions/MelbourneWinterOpen2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          11,
+          "[Joshua Shing Shun Li](https://www.worldcubeassociation.org/persons/2007LIJO01)",
+          "[Guangdong Open 2007](https://www.worldcubeassociation.org/competitions/GuangdongOpen2007/results/by_person#2007LIJO01)"
+        ],
+        [
+          11,
+          "[Dene Beardsley](https://www.worldcubeassociation.org/persons/2009BEAR01)",
+          "[San Francisco Open 2009](https://www.worldcubeassociation.org/competitions/SanFranciscoOpen2009/results/by_person#2009BEAR01)"
+        ],
+        [
+          10,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Euro 2016](https://www.worldcubeassociation.org/competitions/Euro2016/results/by_person#2009ZEMD01)"
+        ],
+        [
+          10,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Melbourne Summer 2011](https://www.worldcubeassociation.org/competitions/MelbourneSummer2011/results/by_person#2009ZEMD01)"
+        ],
+        [
+          10,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[New Zealand Champs 2010](https://www.worldcubeassociation.org/competitions/NewZealand2010/results/by_person#2009ZEMD01)"
+        ],
+        [
+          10,
+          "[Joshua Tekwie](https://www.worldcubeassociation.org/persons/2018TEKW02)",
+          "[Brisbane Autumn 2022](https://www.worldcubeassociation.org/competitions/BrisbaneAutumn2022/results/by_person#2018TEKW02)"
+        ],
+        [
+          9,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[US Nationals 2014](https://www.worldcubeassociation.org/competitions/USNationals2014/results/by_person#2009ZEMD01)"
+        ],
+        [
+          9,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "[Australian Nationals 2011](https://www.worldcubeassociation.org/competitions/AustralianNationals2011/results/by_person#2009ZEMD01)"
+        ],
+        [
+          9,
+          "[Jasmine Lee](https://www.worldcubeassociation.org/persons/2003LEEJ01)",
+          "[Dutch Open 2006](https://www.worldcubeassociation.org/competitions/DutchOpen2006/results/by_person#2003LEEJ01)"
+        ],
+        [
+          9,
+          "[Joshua Tekwie](https://www.worldcubeassociation.org/persons/2018TEKW02)",
+          "[Australian Nationals 2023](https://www.worldcubeassociation.org/competitions/AustralianNationals2023/results/by_person#2018TEKW02)"
+        ],
+        [
+          9,
+          "[Joshua Tekwie](https://www.worldcubeassociation.org/persons/2018TEKW02)",
+          "[Queensland Open 2023](https://www.worldcubeassociation.org/competitions/QueenslandOpen2023/results/by_person#2018TEKW02)"
+        ]
+      ],
+      "recordScope": {
+        "region": "Oceania",
+        "level": "NR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "South America - WR",
+      "titleZh": "South America - WR",
+      "rows": [
+        [
+          2,
+          "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
+          "[Di Tella Open v2 2023](https://www.worldcubeassociation.org/competitions/DiTellaOpenv22023/results/by_person#2018LOPE22)"
+        ],
+        [
+          2,
+          "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
+          "[Jaqueca Di Tella 2023](https://www.worldcubeassociation.org/competitions/JaquecaDiTella2023/results/by_person#2018LOPE22)"
+        ],
+        [
+          2,
+          "[Vicenzo Guerino Cecchini](https://www.worldcubeassociation.org/persons/2015CECC01)",
+          "[Schoolmark Open 2018](https://www.worldcubeassociation.org/competitions/SchoolmarkOpen2018/results/by_person#2015CECC01)"
+        ],
+        [
+          2,
+          "[Juan Pablo Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN30)",
+          "[ LatAm Tour - Santiago 2017](https://www.worldcubeassociation.org/competitions/LatAmTourSantiago2017/results/by_person#2013HUAN30)"
+        ],
+        [
+          2,
+          "[Juan Pablo Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN30)",
+          "[Torneo de Speedcubers 2016](https://www.worldcubeassociation.org/competitions/TorneodeSpeedcubers2016/results/by_person#2013HUAN30)"
+        ],
+        [
+          2,
+          "[Juan Pablo Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN30)",
+          "[Lima Rubik 2016](https://www.worldcubeassociation.org/competitions/LimaRubik2016/results/by_person#2013HUAN30)"
+        ],
+        [
+          2,
+          "[Juan Pablo Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN30)",
+          "[US Nationals 2016](https://www.worldcubeassociation.org/competitions/USNationals2016/results/by_person#2013HUAN30)"
+        ],
+        [
+          1,
+          "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
+          "[Buenos Aires Fin de Año 2024](https://www.worldcubeassociation.org/competitions/BuenosAiresFindeAno2024/results/by_person#2018LOPE22)"
+        ],
+        [
+          1,
+          "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
+          "[Di Tella Inspira 2024](https://www.worldcubeassociation.org/competitions/DiTellaInspira2024/results/by_person#2018LOPE22)"
+        ],
+        [
+          1,
+          "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
+          "[Río Cuarto al Cubo 2023](https://www.worldcubeassociation.org/competitions/RioCuartoalCubo2023/results/by_person#2018LOPE22)"
+        ],
+        [
+          1,
+          "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
+          "[Nacionales Argentinas 2023](https://www.worldcubeassociation.org/competitions/NacionalesArgentinas2023/results/by_person#2018LOPE22)"
+        ],
+        [
+          1,
+          "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
+          "[Santa Fe Cubea 2023](https://www.worldcubeassociation.org/competitions/SantaFeCubea2023/results/by_person#2018LOPE22)"
+        ],
+        [
+          1,
+          "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
+          "[Di Tella Open 2023](https://www.worldcubeassociation.org/competitions/DiTellaOpen2023/results/by_person#2018LOPE22)"
+        ],
+        [
+          1,
+          "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
+          "[Buenos Aires Cubea 2022](https://www.worldcubeassociation.org/competitions/BuenosAiresCubea2022/results/by_person#2018LOPE22)"
+        ],
+        [
+          1,
+          "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
+          "[Jaqueca de Florida 2022](https://www.worldcubeassociation.org/competitions/JaquecaDeFlorida2022/results/by_person#2018LOPE22)"
+        ],
+        [
+          1,
+          "[Vicenzo Guerino Cecchini](https://www.worldcubeassociation.org/persons/2015CECC01)",
+          "[Bernô Feet Friendship 2019](https://www.worldcubeassociation.org/competitions/BernoFeetFriendship2019/results/by_person#2015CECC01)"
+        ],
+        [
+          1,
+          "[Anuar Miguel Abib Onofre](https://www.worldcubeassociation.org/persons/2015ONOF01)",
+          "[Capivara 2017](https://www.worldcubeassociation.org/competitions/Capivara2017/results/by_person#2015ONOF01)"
+        ],
+        [
+          1,
+          "[Gabriel Pereira Campanha](https://www.worldcubeassociation.org/persons/2012CAMP03)",
+          "[SESC Santos 2015](https://www.worldcubeassociation.org/competitions/SESCSantos2015/results/by_person#2012CAMP03)"
+        ],
+        [
+          1,
+          "[Gabriel Pereira Campanha](https://www.worldcubeassociation.org/persons/2012CAMP03)",
+          "[Colégio IPÊ 2015](https://www.worldcubeassociation.org/competitions/ColegioIpe2015/results/by_person#2012CAMP03)"
+        ],
+        [
+          1,
+          "[Gabriel Pereira Campanha](https://www.worldcubeassociation.org/persons/2012CAMP03)",
+          "[Nova Odessa Open 2014](https://www.worldcubeassociation.org/competitions/NovaOdessaOpen2014/results/by_person#2012CAMP03)"
+        ],
+        [
+          1,
+          "[Gabriel Pereira Campanha](https://www.worldcubeassociation.org/persons/2012CAMP03)",
+          "[Santo Amaro 2014](https://www.worldcubeassociation.org/competitions/SESCSantoAmaro2014/results/by_person#2012CAMP03)"
+        ],
+        [
+          1,
+          "[Gabriel Pereira Campanha](https://www.worldcubeassociation.org/persons/2012CAMP03)",
+          "[Valeparaibano 2013](https://www.worldcubeassociation.org/competitions/Valeparaibano2013/results/by_person#2012CAMP03)"
+        ],
+        [
+          1,
+          "[Juan Pablo Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN30)",
+          "[Lima Cuberano 2022](https://www.worldcubeassociation.org/competitions/LimaCuberano2022/results/by_person#2013HUAN30)"
+        ],
+        [
+          1,
+          "[Juan Pablo Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN30)",
+          "[La Tienda Cubera Christmas 2019](https://www.worldcubeassociation.org/competitions/LaTiendaCuberaChristmas2019/results/by_person#2013HUAN30)"
+        ],
+        [
+          1,
+          "[Juan Pablo Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN30)",
+          "[Wuxi Open 2019](https://www.worldcubeassociation.org/competitions/WuxiOpen2019/results/by_person#2013HUAN30)"
+        ],
+        [
+          1,
+          "[Juan Pablo Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN30)",
+          "[CubingUSA Nationals 2019](https://www.worldcubeassociation.org/competitions/CubingUSANationals2019/results/by_person#2013HUAN30)"
+        ],
+        [
+          1,
+          "[Juan Pablo Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN30)",
+          "[CubingUSA Nationals 2018](https://www.worldcubeassociation.org/competitions/CubingUSANationals2018/results/by_person#2013HUAN30)"
+        ],
+        [
+          1,
+          "[Juan Pablo Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN30)",
+          "[WCA Euro 2018](https://www.worldcubeassociation.org/competitions/Euro2018/results/by_person#2013HUAN30)"
+        ],
+        [
+          1,
+          "[Gianfranco Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN29)",
+          "[LatAm Tour - Lima 2017](https://www.worldcubeassociation.org/competitions/LatinAmericaCubingTourLima2017/results/by_person#2013HUAN29)"
+        ],
+        [
+          1,
+          "[Juan Pablo Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN30)",
+          "[Rubik Pro 2017](https://www.worldcubeassociation.org/competitions/RubikPro2017/results/by_person#2013HUAN30)"
+        ],
+        [
+          1,
+          "[Gianfranco Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN29)",
+          "[Aventura Cúbica III 2017](https://www.worldcubeassociation.org/competitions/AventuraCubicaIII2017/results/by_person#2013HUAN29)"
+        ],
+        [
+          1,
+          "[Gianfranco Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN29)",
+          "[Torneo Nacional Colombia 2016](https://www.worldcubeassociation.org/competitions/TorneoNacionalColombia2016/results/by_person#2013HUAN29)"
+        ]
+      ],
+      "recordScope": {
+        "region": "South America",
+        "level": "WR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "South America - CR",
+      "titleZh": "South America - CR",
+      "rows": [
+        [
+          13,
+          "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
+          "[São Paulo Open 2009](https://www.worldcubeassociation.org/competitions/SaoPauloOpen2009/results/by_person#2007GUIM01)"
+        ],
+        [
+          12,
+          "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
+          "[Minas Open 2008](https://www.worldcubeassociation.org/competitions/MinasOpen2008/results/by_person#2007GUIM01)"
+        ],
+        [
+          9,
+          "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
+          "[World Championship 2007](https://www.worldcubeassociation.org/competitions/WC2007/results/by_person#2007GUIM01)"
+        ],
+        [
+          8,
+          "[Gabriel Eduardo Núñez Serna](https://www.worldcubeassociation.org/persons/2008NUNE01)",
+          "[French Open 2009](https://www.worldcubeassociation.org/competitions/FrenchOpen2009/results/by_person#2008NUNE01)"
+        ],
+        [
+          8,
+          "[Gabriel Eduardo Núñez Serna](https://www.worldcubeassociation.org/persons/2008NUNE01)",
+          "[Barcelona Open 2008](https://www.worldcubeassociation.org/competitions/BarcelonaOpen2008/results/by_person#2008NUNE01)"
+        ],
+        [
+          8,
+          "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
+          "[Brasília Open 2009](https://www.worldcubeassociation.org/competitions/BrasiliaOpen2009/results/by_person#2007GUIM01)"
+        ],
+        [
+          8,
+          "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
+          "[Brazil Open 2007](https://www.worldcubeassociation.org/competitions/BrazilOpen2007/results/by_person#2007GUIM01)"
+        ],
+        [
+          7,
+          "[Gabriel Eduardo Núñez Serna](https://www.worldcubeassociation.org/persons/2008NUNE01)",
+          "[Madrid Open 2008](https://www.worldcubeassociation.org/competitions/MadridOpen2008/results/by_person#2008NUNE01)"
+        ],
+        [
+          7,
+          "[Gabriel Dechichi Barbar](https://www.worldcubeassociation.org/persons/2009BARB01)",
+          "[Oficina Open 2012](https://www.worldcubeassociation.org/competitions/OficinaOpen2012/results/by_person#2009BARB01)"
+        ],
+        [
+          7,
+          "[Rodrigo Kenji Asato Kobayashi](https://www.worldcubeassociation.org/persons/2009KOBA04)",
+          "[SESC Santos 2010](https://www.worldcubeassociation.org/competitions/SESCSantos2010/results/by_person#2009KOBA04)"
+        ],
+        [
+          7,
+          "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
+          "[ABC Open 2010](https://www.worldcubeassociation.org/competitions/ABCOpen2010/results/by_person#2007GUIM01)"
+        ],
+        [
+          6,
+          "[Gabriel Dechichi Barbar](https://www.worldcubeassociation.org/persons/2009BARB01)",
+          "[Uberlandia Open 2011](https://www.worldcubeassociation.org/competitions/UberlandiaOpen2011/results/by_person#2009BARB01)"
+        ],
+        [
+          6,
+          "[Gabriel Dechichi Barbar](https://www.worldcubeassociation.org/persons/2009BARB01)",
+          "[SESC Santos 2010](https://www.worldcubeassociation.org/competitions/SESCSantos2010/results/by_person#2009BARB01)"
+        ],
+        [
+          6,
+          "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
+          "[Santiago Open 2009](https://www.worldcubeassociation.org/competitions/SantiagoOpen2009/results/by_person#2007GUIM01)"
+        ],
+        [
+          6,
+          "[Matias Macaya](https://www.worldcubeassociation.org/persons/2009MACA01)",
+          "[Santiago Open 2009](https://www.worldcubeassociation.org/competitions/SantiagoOpen2009/results/by_person#2009MACA01)"
+        ],
+        [
+          6,
+          "[Pedro Alejandro Condo Tellez](https://www.worldcubeassociation.org/persons/2015TELL01)",
+          "[WCA Euro 2018](https://www.worldcubeassociation.org/competitions/Euro2018/results/by_person#2015TELL01)"
+        ],
+        [
+          5,
+          "[Gabriel Eduardo Núñez Serna](https://www.worldcubeassociation.org/persons/2008NUNE01)",
+          "[Murcia Open 2009](https://www.worldcubeassociation.org/competitions/MurciaOpen2009/results/by_person#2008NUNE01)"
+        ],
+        [
+          5,
+          "[Pedro Roque](https://www.worldcubeassociation.org/persons/2012ROQU01)",
+          "[Pré-Mundial 2015](https://www.worldcubeassociation.org/competitions/PreMundial2015/results/by_person#2012ROQU01)"
+        ],
+        [
+          5,
+          "[Pedro Roque](https://www.worldcubeassociation.org/persons/2012ROQU01)",
+          "[Brasileiro Inverno 2014](https://www.worldcubeassociation.org/competitions/BrasileiroInverno2014/results/by_person#2012ROQU01)"
+        ],
+        [
+          5,
+          "[Pedro Roque](https://www.worldcubeassociation.org/persons/2012ROQU01)",
+          "[Novo Hamburgo 2013](https://www.worldcubeassociation.org/competitions/NovoHamburgo2013/results/by_person#2012ROQU01)"
+        ],
+        [
+          5,
+          "[Gabriel Dechichi Barbar](https://www.worldcubeassociation.org/persons/2009BARB01)",
+          "[Uberlândia Open 2010](https://www.worldcubeassociation.org/competitions/Uberlandia2010/results/by_person#2009BARB01)"
+        ],
+        [
+          5,
+          "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
+          "[UNESP Open 2009](https://www.worldcubeassociation.org/competitions/UNESPOpen2009/results/by_person#2007GUIM01)"
+        ],
+        [
+          5,
+          "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
+          "[World Championship 2009](https://www.worldcubeassociation.org/competitions/WC2009/results/by_person#2007GUIM01)"
+        ],
+        [
+          5,
+          "[Pedro Alejandro Condo Tellez](https://www.worldcubeassociation.org/persons/2015TELL01)",
+          "[Crazy Cubes Christmas 2017](https://www.worldcubeassociation.org/competitions/CrazyCubesChristmas2017/results/by_person#2015TELL01)"
+        ],
+        [
+          5,
+          "[Pedro Alejandro Condo Tellez](https://www.worldcubeassociation.org/persons/2015TELL01)",
+          "[Campeonato Nacional Perubik 2017](https://www.worldcubeassociation.org/competitions/CampeonatoNacionalPerubik2017/results/by_person#2015TELL01)"
+        ],
+        [
+          5,
+          "[Pedro Alejandro Condo Tellez](https://www.worldcubeassociation.org/persons/2015TELL01)",
+          "[LatAm Tour - Lima 2017](https://www.worldcubeassociation.org/competitions/LatinAmericaCubingTourLima2017/results/by_person#2015TELL01)"
+        ],
+        [
+          5,
+          "[Gianfranco Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN29)",
+          "[TCG & Friends 2015](https://www.worldcubeassociation.org/competitions/TCGAndFriends2015/results/by_person#2013HUAN29)"
+        ]
+      ],
+      "recordScope": {
+        "region": "South America",
+        "level": "CR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "South America - NR",
+      "titleZh": "South America - NR",
+      "rows": [
+        [
+          23,
+          "[Pablo Nicolás Oshiro Mondoñedo](https://www.worldcubeassociation.org/persons/2010MOND01)",
+          "[Castellon Open 2011](https://www.worldcubeassociation.org/competitions/CastellonOpen2011/results/by_person#2010MOND01)"
+        ],
+        [
+          18,
+          "[Gabriel Eduardo Núñez Serna](https://www.worldcubeassociation.org/persons/2008NUNE01)",
+          "[Montpellier Open 2008](https://www.worldcubeassociation.org/competitions/MontpellierOpen2008/results/by_person#2008NUNE01)"
+        ],
+        [
+          18,
+          "[Pablo Nicolás Oshiro Mondoñedo](https://www.worldcubeassociation.org/persons/2010MOND01)",
+          "[Madrid Open Rubik 2010](https://www.worldcubeassociation.org/competitions/MadridOpenRubik2010/results/by_person#2010MOND01)"
+        ],
+        [
+          17,
+          "[Oscar Alberto Ceballos Contreras](https://www.worldcubeassociation.org/persons/2013CONT01)",
+          "[III Torneo Nacional 2013](https://www.worldcubeassociation.org/competitions/ColombiaTercer2013/results/by_person#2013CONT01)"
+        ],
+        [
+          16,
+          "[Gabriel Eduardo Núñez Serna](https://www.worldcubeassociation.org/persons/2008NUNE01)",
+          "[Madrid Open 2008](https://www.worldcubeassociation.org/competitions/MadridOpen2008/results/by_person#2008NUNE01)"
+        ],
+        [
+          16,
+          "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
+          "[Minas Open 2008](https://www.worldcubeassociation.org/competitions/MinasOpen2008/results/by_person#2007GUIM01)"
+        ],
+        [
+          15,
+          "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
+          "[Santiago Open 2009](https://www.worldcubeassociation.org/competitions/SantiagoOpen2009/results/by_person#2007GUIM01)"
+        ],
+        [
+          15,
+          "[Pablo Nicolás Oshiro Mondoñedo](https://www.worldcubeassociation.org/persons/2010MOND01)",
+          "[Montpellier Open 2011](https://www.worldcubeassociation.org/competitions/MontpellierOpen2011/results/by_person#2010MOND01)"
+        ],
+        [
+          13,
+          "[Gabriel Eduardo Núñez Serna](https://www.worldcubeassociation.org/persons/2008NUNE01)",
+          "[Barcelona Open 2008](https://www.worldcubeassociation.org/competitions/BarcelonaOpen2008/results/by_person#2008NUNE01)"
+        ],
+        [
+          13,
+          "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
+          "[São Paulo Open 2009](https://www.worldcubeassociation.org/competitions/SaoPauloOpen2009/results/by_person#2007GUIM01)"
+        ],
+        [
+          13,
+          "[Matias Macaya](https://www.worldcubeassociation.org/persons/2009MACA01)",
+          "[Santiago Open 2009](https://www.worldcubeassociation.org/competitions/SantiagoOpen2009/results/by_person#2009MACA01)"
+        ],
+        [
+          13,
+          "[John Tuquerrez Andrango](https://www.worldcubeassociation.org/persons/2015ANDR07)",
+          "[Albacete Open 2016](https://www.worldcubeassociation.org/competitions/AlbaceteOpen2016/results/by_person#2015ANDR07)"
+        ],
+        [
+          13,
+          "[Pablo Nicolás Oshiro Mondoñedo](https://www.worldcubeassociation.org/persons/2010MOND01)",
+          "[Barcelona Winter Open 2012](https://www.worldcubeassociation.org/competitions/BarcelonaWinterOpen2012/results/by_person#2010MOND01)"
+        ],
+        [
+          13,
+          "[Pablo Nicolás Oshiro Mondoñedo](https://www.worldcubeassociation.org/persons/2010MOND01)",
+          "[Barcelona Open 2010](https://www.worldcubeassociation.org/competitions/BarcelonaOpen2010/results/by_person#2010MOND01)"
+        ],
+        [
+          13,
+          "[Carlos Miguel Parra Gonzalez](https://www.worldcubeassociation.org/persons/2013GONZ07)",
+          "[Venezuela Nationals 2015](https://www.worldcubeassociation.org/competitions/VenezuelaNationals2015/results/by_person#2013GONZ07)"
+        ],
+        [
+          12,
+          "[Gabriel Eduardo Núñez Serna](https://www.worldcubeassociation.org/persons/2008NUNE01)",
+          "[French Open 2009](https://www.worldcubeassociation.org/competitions/FrenchOpen2009/results/by_person#2008NUNE01)"
+        ],
+        [
+          12,
+          "[Matias Macaya](https://www.worldcubeassociation.org/persons/2009MACA01)",
+          "[Chile Open 2010](https://www.worldcubeassociation.org/competitions/ChileOpen2010/results/by_person#2009MACA01)"
+        ],
+        [
+          11,
+          "[Rodrigo Paz Vaca](https://www.worldcubeassociation.org/persons/2015VACA01)",
+          "[Rubikeros Open 2016](https://www.worldcubeassociation.org/competitions/RubikerosOpen2016/results/by_person#2015VACA01)"
+        ],
+        [
+          11,
+          "[Diego Zeballos](https://www.worldcubeassociation.org/persons/2015ZEBA01)",
+          "[Santa Cruz Open 2015](https://www.worldcubeassociation.org/competitions/SantaCruzOpen2015/results/by_person#2015ZEBA01)"
+        ],
+        [
+          11,
+          "[John Tuquerrez Andrango](https://www.worldcubeassociation.org/persons/2015ANDR07)",
+          "[Villanueva Open 2016](https://www.worldcubeassociation.org/competitions/VillanuevaOpen2016/results/by_person#2015ANDR07)"
+        ],
+        [
+          11,
+          "[John Tuquerrez Andrango](https://www.worldcubeassociation.org/persons/2015ANDR07)",
+          "[El Escorial Open 2016](https://www.worldcubeassociation.org/competitions/ElEscorialOpen2016/results/by_person#2015ANDR07)"
+        ],
+        [
+          11,
+          "[Pablo Nicolás Oshiro Mondoñedo](https://www.worldcubeassociation.org/persons/2010MOND01)",
+          "[Basauri Open 2010](https://www.worldcubeassociation.org/competitions/BasauriOpen2010/results/by_person#2010MOND01)"
+        ]
+      ],
+      "recordScope": {
+        "region": "South America",
+        "level": "NR",
+        "event": "",
+        "type": "all"
+      }
     }
   ]
 }
