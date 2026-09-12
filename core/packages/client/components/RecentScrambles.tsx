@@ -18,7 +18,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import AppLink from '@/components/AppLink';
-import { Clapperboard } from 'lucide-react';
 import { buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
@@ -378,7 +377,6 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
         {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
         {scramble.trim() && (
           <AppLink href={`/recon/submit?${reconParams}`} prefetch={false} className="rs-recon-link">
-            <Clapperboard size={16} aria-hidden="true" />
             {tr({ zh: '复盘', en: 'Reconstruct' })}
           </AppLink>
         )}
