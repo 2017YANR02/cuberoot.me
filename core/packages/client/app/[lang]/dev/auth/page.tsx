@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint":"468f85270642cd18ca6eb4719f440e0fa0000467d39c56012d67c5a03df034e3","reason":"微信未知身份新增官方实时手机号授权，独立phoneCode与服务端OpenID/AppID核验；手机号旧号预览并确认expectedUid，未知号码明确创建或复用短期绑定码，双身份在既有pending事务原子绑定。同步微信流程、旧号入口、冲突/拒绝/旧API兼容及本地未发布边界，不更改其他provider、合并数据或注销语义。审查修复了取消/过期回退、浏览器确认失败与切号晚回调，抖音继续沿用既有选择流程。齿轮只由18/32px放大为28/44px，仍跳原signin视图。隐私政策/API清单/发布门禁同步，后台资质额度与真机授权仍待核验，不宣称上线。"}
+{"fingerprint":"97a5e6003dd9611f184bbf4ceac6d60c4f05703eed724139aaa52b7d03b07cd3","reason":"保留已复核的微信实时手机号授权、旧号确认及双身份原子绑定流程。核对上次复核后的 App.tsx 差异仅为打乱点击与设置项移除，系统浏览器、PKCE/state 回跳和会话保存均未改变；AuthTokenRefresher 的会话刷新不变，仅管理员工具栏交互调整。注销清单补登记 user_pets：0236 migration 与 schema 已通过 user_id ON DELETE CASCADE 删除私人领养与养成记录，本次不新增删除路径；补充对应双语注销说明。宠物合并规则及 Apple 撤销授权流程不变；文档复核不代表小程序上传、后台资质或真机验收完成。"}
 */
 
 import type { ReactNode } from 'react';
@@ -221,7 +221,7 @@ export default function AuthFlowPage() {
       </div>
       <aside className="auth-map-boundaries"><h3>{t('注销前一定要知道', 'Before deleting')}</h3><ul>
         <li>{t('有待生效或生效中的自动续费合约：先取消并确认终止。是机构最后一位负责人：先转移归属。不是点注销就自动解约或退钱。', 'Pending or active renewal contract: cancel and confirm termination first. Last organization owner: transfer ownership first. Deletion is not automatic contract cancellation or a refund.')}</li>
-        <li>{t('私有数据按清单删除；公开讨论和公开复盘匿名保留，交易及必要业务审计记录保留。WCA 官方公开成绩不因 CubeRoot 注销消失。', 'Covered private data is deleted; public discussions and public reconstructions are anonymized. Transactions and required business audit records remain. Official public WCA results do not disappear when a CubeRoot account is deleted.')}</li>
+        <li>{t('私有数据按清单删除，包括私人宠物领养与养成记录；公开讨论和公开复盘匿名保留，交易及必要业务审计记录保留。WCA 官方公开成绩不因 CubeRoot 注销消失。', 'Covered private data, including private pet adoptions and care records, is deleted; public discussions and public reconstructions are anonymized. Transactions and required business audit records remain. Official public WCA results do not disappear when a CubeRoot account is deleted.')}</li>
         <li>{t('不能声称远程清空所有手机。App 本地记录、导出备份和其他设备副本需要另外管理；注销的是 CubeRoot 账号，不是 Apple、Google 或微信账号。', 'This does not remotely wipe every phone. Manage local App records, exported backups, and other device copies separately. You delete CubeRoot, not your Apple, Google, or WeChat account.')}</li>
       </ul></aside>
     </section>

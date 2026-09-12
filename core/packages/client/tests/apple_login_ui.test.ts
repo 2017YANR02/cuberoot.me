@@ -18,6 +18,11 @@ vi.mock('@/lib/auth-store', () => ({
   getSessionToken: () => null, applySession: vi.fn(),
 }));
 vi.mock('@/i18n/tr', () => ({ useLang: () => mocks.language, tr: (copy: { en: string; zh: string }) => copy[mocks.language] }));
+// AuthPanel uses the shared useT hook as well as useLang; both must observe the
+// same test locale without depending on the application's I18nProvider setup.
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ i18n: { language: mocks.language } }),
+}));
 
 let root: Root;
 let host: HTMLDivElement;

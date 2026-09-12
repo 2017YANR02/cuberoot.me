@@ -153,6 +153,7 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   user_friendships: '好友关系的三个账号外键都随 app_users 级联删',
   user_blocks: '黑名单关系的双向账号外键都随 app_users 级联删',
   user_wca_friend_contacts: '未注册 WCA 好友条目只属于账号本人,随 app_users 级联删',
+  user_pets: '私人宠物领养与养成数据通过 user_id 外键随 app_users 级联删',
   drive_members: '网盘访问权限随 app_users 级联删',
   drive_nodes: '私有网盘元数据随 app_users 级联删,磁盘实体文件由注销流程清理',
   drive_uploads: '未完成上传随 app_users 级联删,临时文件由注销流程清理',
