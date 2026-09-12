@@ -18,6 +18,7 @@
 //   SNAP_TSV=.tmp/sor-feature/sor_snap.tsv OUT_DIR=jobs/stats-build/output/historical_ranks \
 //     npx tsx src/bin/sor_over_time_build.ts
 
+import { importTransactionStart, refreshTable } from '../pg-refresh.js';
 import { createReadStream, createWriteStream, mkdirSync, writeFileSync, readFileSync, statSync, appendFileSync, existsSync } from 'fs';
 import { createInterface } from 'readline';
 import { resolve, dirname } from 'path';
@@ -422,14 +423,22 @@ async function main() {
   if (existsSync(loadSqlPath)) {
     appendFileSync(loadSqlPath,
       `\n-- ── sor_historical_best(由 sor_over_time_build.ts 追加)──\n` +
+      `${importTransactionStart('sor_historical_schema')}\n` +
       `CREATE TABLE IF NOT EXISTS sor_historical_best (\n` +
       `  wca_id VARCHAR(20) NOT NULL, is_avg BOOLEAN NOT NULL, scope VARCHAR(10) NOT NULL,\n` +
       `  best_rank INTEGER NOT NULL, best_year SMALLINT NOT NULL, best_total INTEGER,\n` +
       `  PRIMARY KEY (wca_id, is_avg, scope)\n);\n` +
-      `ALTER TABLE sor_historical_best ADD COLUMN IF NOT EXISTS best_total INTEGER;\n` + // 旧表补列(CREATE IF NOT EXISTS 不会加列)
-      `BEGIN;\nTRUNCATE sor_historical_best;\n` +
-      `\\copy sor_historical_best (wca_id, is_avg, scope, best_rank, best_year, best_total) FROM 'sor_historical_best.copy.tsv';\n` +
-      `COMMIT;\nANALYZE sor_historical_best;\n`,
+      `DO $$ BEGIN\n` +
+      `  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'sor_historical_best'::regclass AND attname = 'best_total' AND NOT attisdropped) THEN\n` +
+      `    ALTER TABLE sor_historical_best ADD COLUMN best_total INTEGER;\n` +
+      `  END IF;\nEND $$;\nCOMMIT;\n` +
+      `${importTransactionStart('sor_historical_best')}\n` +
+      refreshTable({ table: 'sor_historical_best',
+        columns: ['wca_id', 'is_avg', 'scope', 'best_rank', 'best_year', 'best_total'],
+        keyColumns: ['wca_id', 'is_avg', 'scope'],
+        file: 'sor_historical_best.copy.tsv', expectedRows: bestRows,
+      }) +
+      `\nCOMMIT;\nVACUUM (ANALYZE) sor_historical_best;\n`,
     );
     console.log('[sor] appended sor_historical_best load block to load.sql');
   } else {

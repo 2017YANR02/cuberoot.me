@@ -111,7 +111,7 @@ describe('wca_kinch stats deploy contract', () => {
 
   it('writes and loads the same Kinch TSV', () => {
     expect(builder).toContain("createWriteStream(resolve(outDir, 'wca_kinch.copy.tsv'))");
-    expect(builder).toMatch(/\\copy wca_kinch[^;]+FROM 'wca_kinch\.copy\.tsv'/s);
+    expect(builder).toMatch(/refreshTable\(\{\s*table: 'wca_kinch',[\s\S]*?keyColumns: \['wca_id'\], file: 'wca_kinch\.copy\.tsv'/);
     expect(builder).toContain('country: personCountry.get(pid) ?? a.country');
   });
 
@@ -149,7 +149,7 @@ describe('personal-record streak leaderboard contract', () => {
 
   it('builds, loads, serves, and filters the full leaderboard', () => {
     expect(builder).toContain("createWriteStream(resolve(outDir, 'wca_pr_streaks.copy.tsv'))");
-    expect(builder).toMatch(/\\copy wca_pr_streaks[^;]+FROM 'wca_pr_streaks\.copy\.tsv'/s);
+    expect(builder).toMatch(/refreshTable\(\{\s*table: 'wca_pr_streaks',[\s\S]*?keyColumns: \['wca_id'\], file: 'wca_pr_streaks\.copy\.tsv'/);
     expect(serverRoute).toContain("get('/wca/pr-streaks'");
     expect(serverRoute).toContain("s.country_id = ?");
     expect(serverRoute).toContain('ORDER BY latest_comp.start_date DESC, latest_comp.id DESC');
