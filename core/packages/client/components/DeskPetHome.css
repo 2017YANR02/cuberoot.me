@@ -13,13 +13,13 @@
 .pet-home-message{min-height:24px;margin:0 0 20px;text-align:center;font-size:14px;color:var(--muted-foreground);}
 .pet-home-gain{position:absolute;top:24%;right:20%;display:flex;gap:4px;align-items:center;color:var(--accent);font-weight:750;animation:pet-home-gain 1.8s both;}
 .pet-home-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;gap:8px;}
-.pet-home-actions button{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 2px 10px;border:1px solid var(--border-default);border-radius:18px;background:color-mix(in srgb,var(--card) 72%,transparent);color:var(--foreground);font:inherit;cursor:pointer;transition:transform .2s,background .2s;}
-.pet-home-actions button:hover:not(:disabled){transform:translateY(-4px);background:var(--accent-soft);}
-.pet-home-actions button>span{position:relative;color:var(--accent);display:flex;}
+.pet-home-care-action{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 2px 10px;border:1px solid var(--border-default);border-radius:18px;background:color-mix(in srgb,var(--card) 72%,transparent);color:var(--foreground);font:inherit;cursor:pointer;transition:transform .2s,background .2s;}
+.pet-home-care-action:hover:not(:disabled){transform:translateY(-4px);background:var(--accent-soft);}
+.pet-home-care-action>span{position:relative;color:var(--accent);display:flex;}
 .pet-home-action-done{position:absolute;right:-7px;bottom:-4px;border-radius:50%;background:var(--accent);color:var(--accent-foreground);padding:1px;box-sizing:content-box;}
 .pet-home-actions strong{font-size:13px;font-weight:650;}
 .pet-home-actions small{font-size:9px;color:var(--muted-foreground);white-space:nowrap;}
-.pet-home-actions button:disabled{opacity:.55;cursor:default;}
+.pet-home-care-action:disabled{opacity:.55;cursor:default;}
 .pet-home-details{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:44px 40px;}
 .pet-home-eyebrow{font-size:11px;font-weight:650;letter-spacing:1.8px;color:var(--accent);}
 .pet-home-details h2{font-size:40px;line-height:1.2;letter-spacing:-1.5px;margin:14px 0;}
@@ -46,12 +46,12 @@
 .pet-primary:hover:not(:disabled){transform:translateY(-2px);}
 .pet-primary:disabled{opacity:.55;cursor:wait;}
 .pet-home-error{color:var(--destructive);font-size:12px;}
-.pet-home-error button{border:0;background:transparent;color:inherit;font:inherit;text-decoration:underline;cursor:pointer;padding:8px 0;}
+.pet-home-retry{border:0;background:transparent;color:inherit;font:inherit;text-decoration:underline;cursor:pointer;padding:8px 0;}
 .pet-home-status{display:flex;gap:8px;align-items:center;color:var(--muted-foreground);font-size:13px;}
-.pet-home button:focus-visible,.pet-home a:focus-visible{outline:2px solid var(--ring);outline-offset:4px;}
+.pet-home-stage:focus-visible,.pet-home-care-action:focus-visible,.pet-home-retry:focus-visible,.pet-primary:focus-visible,.pet-home a:focus-visible{outline:2px solid var(--ring);outline-offset:4px;}
 @keyframes pet-home-gain{0%{transform:translateY(12px) scale(.6);opacity:0;}20%,65%{opacity:1;transform:translateY(0) scale(1);}100%{transform:translateY(-18px);opacity:0;}}
 @media(max-width:700px){.pet-home{grid-template-columns:1fr;border-radius:24px;}.pet-home-scene{padding:20px 20px 18px;}.pet-home-stage{height:245px;}.pet-home-details{padding:24px;}.pet-home-details h2{font-size:32px;}.pet-home-intro{margin-bottom:20px;}.pet-home-orbit{width:65%;top:35px;}.pet-home-message{font-size:13px;}.pet-home:not(:has(.pet-home-actions)) .pet-home-details{padding-top:8px;}.pet-home:has(.pet-home-actions) .pet-home-details{border-top:1px solid var(--border-default);}.pet-home-actions small{font-size:8px;}}
-@media(prefers-reduced-motion:reduce){.pet-home-gain{animation:none;}.pet-home button,.pet-home a{transition:none;}}
+@media(prefers-reduced-motion:reduce){.pet-home-gain{animation:none;}.pet-home-stage,.pet-home-care-action,.pet-home-retry,.pet-primary,.pet-home a{transition:none;}}
 
 .pet-level-badge{display:inline-flex;align-items:center;gap:14px;}
 .pet-level-badge>strong{font-size:24px;letter-spacing:-.6px;}
