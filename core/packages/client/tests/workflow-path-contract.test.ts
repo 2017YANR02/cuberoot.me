@@ -460,6 +460,19 @@ describe('deployment workflow path contracts', () => {
     expect(coreBuilds).toContain(solverBuild);
   });
 
+  it('prepares dist-only dependencies through the canonical desktop entrypoints', () => {
+    const desktop = JSON.parse(readFileSync(join(REPO_ROOT, appPath('desktop', 'package.json')), 'utf8'));
+    const tauri = JSON.parse(readFileSync(join(REPO_ROOT, appPath('desktop', 'src-tauri', 'tauri.conf.json')), 'utf8'));
+    expect(desktop.scripts['build:deps']).toBe('pnpm --filter @cuberoot/visualcube build');
+    for (const script of ['dev', 'build', 'typecheck']) {
+      expect(desktop.scripts[script], script).toMatch(/^pnpm run build:deps && /);
+    }
+    expect(tauri.build.beforeBuildCommand).toBe('pnpm build');
+    expect(tauri.build.beforeDevCommand).toBe('pnpm dev');
+    expect(readStepRun('test.yml', 'Test desktop adapter and build native host'))
+      .toContain('pnpm --filter @cuberoot/desktop exec tauri build --no-bundle');
+  });
+
   it('uses the clean client dependency build and non-failing summary channel for pnpm bumps', () => {
     const workflow = readWorkflow('pnpm_bump.yml');
     const verify = readStepRun('pnpm_bump.yml', '拿候选 pnpm 真跑一遍');
