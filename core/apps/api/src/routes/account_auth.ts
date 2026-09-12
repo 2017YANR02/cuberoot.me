@@ -21,10 +21,11 @@ import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { AdminActivityRangeError, resolveAdminActivityRange } from '../utils/admin_activity.js';
 import { checkRateLimit, requireAdmin } from '../utils/recon_helpers.js';
-import { signSession, hasFreshEmailGrant, hasFreshPhonePasswordResetGrant } from '../utils/session.js';
+import { signSession, verifySession, hasFreshEmailGrant, hasFreshPhonePasswordResetGrant } from '../utils/session.js';
+import { beginIdentityLogin, completeIdentityChoice, IdentityChoiceError } from '../utils/identity_choice.js';
 import { captureAccountDevice } from '../utils/account_device.js';
 import {
-  issueCode, verifyCode, loginWithIdentity, addIdentity, removeIdentity, replaceCredentialIdentity,
+  issueCode, verifyCode, loginWithIdentity, IdentityNotFoundError, addIdentity, removeIdentity, replaceCredentialIdentity,
   getIdentities, getUserById, findUserByIdentity, publicUser,
   normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
   normalizeDisplayName, isValidDisplayName, updateDisplayName,
@@ -197,13 +198,48 @@ async function completeAppleLogin(c: Context, intent: 'login' | 'link'): Promise
     }
     return c.json({ ok: true, identities: await getIdentities(uid) });
   }
-  const { user, isNew } = await loginWithIdentity('apple', identity.sub, { name: '' }, identity);
+  const result = await beginIdentityLogin({ provider: 'apple', providerUid: identity.sub, profile: { name: '' }, appleCredential: identity });
+  if ('pending' in result) return c.json(result, 409);
+  const { user, isNew } = result;
   await captureAccountDevice(user.id, c.req.header('User-Agent'));
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   return c.json({ token, user: publicUser(user), isNew });
 }
 accountAuthRoutes.post('/auth/apple', bodyLimit({ maxSize: 4096 }), (c) => completeAppleLogin(c, 'login'));
 accountAuthRoutes.post('/auth/link/apple', bodyLimit({ maxSize: 4096 }), (c) => completeAppleLogin(c, 'link'));
+
+accountAuthRoutes.post('/auth/identity/complete', bodyLimit({ maxSize: 4096 }), async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const limited = authRateLimitResponse(c, { bucket: 'identity-complete', max: 30 });
+  if (limited) return limited;
+  const body = await c.req.json<{ ticket?: unknown; action?: unknown; expectedUid?: unknown }>().catch(() => null);
+  if (!body || typeof body.ticket !== 'string' || (body.action !== 'create' && body.action !== 'link')) {
+    return c.json({ error: 'invalid identity choice' }, 400);
+  }
+  let uid: number | undefined;
+  if (body.action === 'link') {
+    // This endpoint must never accept legacy raw WCA tokens as an existing-account grant.
+    const bearer = c.req.header('Authorization');
+    try { uid = bearer?.startsWith('Bearer ') ? verifySession(bearer.slice(7)).uid : undefined; }
+    catch { return c.json({ error: 'Authentication required' }, 401); }
+    if (!uid) return c.json({ error: 'Authentication required' }, 401);
+    if (body.expectedUid !== uid || await requireAppUserId(c) !== uid) {
+      return c.json({ error: 'account changed; sign in again', code: 'ACCOUNT_CHANGED' }, 409);
+    }
+  }
+  try {
+    const { user, isNew } = await completeIdentityChoice(body.ticket, body.action, uid);
+    await captureAccountDevice(user.id, c.req.header('User-Agent'));
+    const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
+    return c.json({ token, user: publicUser(user), isNew });
+  } catch (error) {
+    if (!(error instanceof IdentityChoiceError)) {
+      console.error('[auth] identity completion failed');
+      return c.json({ error: 'account service unavailable; please retry' }, 503);
+    }
+    return c.json({ code: error.code, error: error.message }, error.code === 'INVALID_IDENTITY_TICKET' ? 401 : 409);
+  }
+});
 
 // ── 国内三方授权页 URL(服务端下发,redirect_uri 固定,state 为服务端签名的自包含 token)──
 // state 内含 provider/intent/exp/签名,回调只从 URL 读回、服务端验签,不依赖浏览器 sessionStorage
@@ -234,9 +270,11 @@ accountAuthRoutes.post('/auth/social/:provider', async (c) => {
   } catch {
     return c.json({ error: `invalid ${provider} code` }, 401);
   }
-  const { user, isNew } = await loginWithIdentity(provider as SocialProvider, g.sub, {
+  const result = await beginIdentityLogin({ provider, providerUid: g.sub, profile: {
     name: g.name || '', avatar: g.avatar ?? null,
-  });
+  } });
+  if ('pending' in result) return c.json(result, 409);
+  const { user, isNew } = result;
   await captureAccountDevice(user.id, c.req.header('User-Agent'));
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   return c.json({ token, user: publicUser(user), isNew });
@@ -309,10 +347,15 @@ accountAuthRoutes.post('/auth/wechat/browser-session/start', async (c) => {
     return c.json({ error: 'wechat miniprogram not configured' }, 503);
   }
 
-  const pending = await issueWechatBrowserSession();
+  const body = await c.req.json<{ existingOnly?: unknown }>().catch(() => ({} as { existingOnly?: unknown }));
+  if (body.existingOnly !== undefined && typeof body.existingOnly !== 'boolean') return c.json({ error: 'invalid login request' }, 400);
+  const existingOnly = body.existingOnly === true;
+  const pending = await issueWechatBrowserSession(existingOnly);
   try {
+    const params = new URLSearchParams({ browserLogin: pending.approval });
+    if (existingOnly) params.set('existingOnly', '1');
     const urlLink = await generateWechatMiniProgramUrlLink(
-      new URLSearchParams({ browserLogin: pending.approval }).toString(),
+      params.toString(),
       Math.floor(Date.now() / 1000) + pending.expiresIn,
     );
     return c.json({ ticket: pending.ticket, urlLink, expiresIn: pending.expiresIn });
@@ -515,12 +558,18 @@ accountAuthRoutes.post('/auth/email/send', async (c) => {
 accountAuthRoutes.post('/auth/email/verify', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const { email, code } = await c.req.json<{ email?: string; code?: string }>().catch(() => ({ email: undefined, code: undefined }));
+  const { email, code, existingOnly } = await c.req.json<{ email?: string; code?: string; existingOnly?: boolean }>().catch(() => ({ email: undefined, code: undefined, existingOnly: undefined }));
   const norm = normalizeEmail(email ?? '');
   if (!isValidEmail(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
   const ok = await verifyCode('email', norm, 'login', code as string);
   if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
-  const { user, isNew } = await loginWithIdentity('email', norm, { name: norm.split('@')[0] });
+  const result = await loginWithIdentity('email', norm, { name: norm.split('@')[0] }, undefined,
+    { createIfMissing: existingOnly !== true }).catch((error: unknown) => {
+      if (error instanceof IdentityNotFoundError) return null;
+      throw error;
+    });
+  if (!result) return c.json({ error: 'account not found' }, 400);
+  const { user, isNew } = result;
   await captureAccountDevice(user.id, c.req.header('User-Agent'));
   // amr=email_code:本次会话已证明邮箱所有权 → 15 分钟内可免旧密码重设密码(忘记密码路径)。
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name, amr: 'email_code' });
@@ -551,7 +600,7 @@ accountAuthRoutes.post('/auth/phone/send', async (c) => {
 accountAuthRoutes.post('/auth/phone/verify', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const { phone, code, purpose: rawPurpose } = await c.req.json<{ phone?: string; code?: string; purpose?: unknown }>().catch(() => ({ phone: undefined, code: undefined, purpose: undefined }));
+  const { phone, code, purpose: rawPurpose, existingOnly } = await c.req.json<{ phone?: string; code?: string; purpose?: unknown; existingOnly?: boolean }>().catch(() => ({ phone: undefined, code: undefined, purpose: undefined, existingOnly: undefined }));
   const norm = normalizePhone(phone ?? '');
   const purpose = parsePhoneCodePurpose(rawPurpose);
   if (!isValidPhone(norm) || !purpose || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
@@ -565,7 +614,13 @@ accountAuthRoutes.post('/auth/phone/verify', async (c) => {
     return c.json({ token, user: publicUser(user) });
   }
   const name = `尾号${norm.slice(-4)}`;
-  const { user, isNew } = await loginWithIdentity('phone', norm, { name });
+  const result = await loginWithIdentity('phone', norm, { name }, undefined,
+    { createIfMissing: existingOnly !== true }).catch((error: unknown) => {
+      if (error instanceof IdentityNotFoundError) return null;
+      throw error;
+    });
+  if (!result) return c.json({ error: 'account not found' }, 400);
+  const { user, isNew } = result;
   await captureAccountDevice(user.id, c.req.header('User-Agent'));
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   return c.json({ token, user: publicUser(user), isNew });
@@ -794,10 +849,12 @@ accountAuthRoutes.post('/auth/google', async (c) => {
   } catch {
     return c.json({ error: 'invalid Google token' }, 401);
   }
-  const { user, isNew } = await loginWithIdentity('google', g.sub, {
+  const result = await beginIdentityLogin({ provider: 'google', providerUid: g.sub, profile: {
     name: g.name || g.email?.split('@')[0] || '',
     avatar: g.picture ?? null,
-  });
+  } });
+  if ('pending' in result) return c.json(result, 409);
+  const { user, isNew } = result;
   await captureAccountDevice(user.id, c.req.header('User-Agent'));
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   return c.json({ token, user: publicUser(user), isNew });

@@ -197,6 +197,20 @@ jobs:
         run: |
           pnpm --filter @cuberoot/client build:deps
 
+      - name: First-time identity choice PostgreSQL 13 regression
+        working-directory: core
+        env:
+          IDENTITY_CHOICE_PG_TEST: '1'
+          DB_HOST: 127.0.0.1
+          DB_PORT: '5432'
+          DB_USER: postgres
+          DB_PASS: postgres
+          DB_NAME: identity_choice_test
+          PGPASSWORD: postgres
+        run: |
+          createdb -h 127.0.0.1 -U postgres identity_choice_test
+          pnpm --filter @cuberoot/server exec vitest run tests/identity_choice_pg.test.ts
+
       - name: Verify stats-build producer contracts
         working-directory: core
         env:

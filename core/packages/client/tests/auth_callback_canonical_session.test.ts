@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { exchangeWcaSession, useAuthStore } from '@/lib/auth-store';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { applySession, useAuthStore } from '@/lib/auth-store';
+import { loginWca } from '@/lib/account-api';
 
 const provisionalUser = {
   wcaId: '2017YANR02',
@@ -23,6 +24,7 @@ function installProvisionalSession() {
 }
 
 describe('WCA callback canonical session', () => {
+  afterEach(() => { vi.unstubAllGlobals(); });
   beforeEach(() => {
     localStorage.clear();
     installProvisionalSession();
@@ -43,12 +45,15 @@ describe('WCA callback canonical session', () => {
       headers: { 'Content-Type': 'application/json' },
     }));
 
-    await expect(exchangeWcaSession('short-lived-wca-token', fetcher)).resolves.toBe(true);
+    vi.stubGlobal('fetch', fetcher);
+    const result = await loginWca('short-lived-wca-token');
+    expect(applySession(result.token, result.user)).toBe(true);
 
     expect(fetcher).toHaveBeenCalledWith(expect.stringContaining('/v1/auth/exchange'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ accessToken: 'short-lived-wca-token' }),
+      signal: expect.any(AbortSignal),
     });
     expect(localStorage.getItem('cuberoot_jwt')).toBe('c'.repeat(20));
     expect(JSON.parse(localStorage.getItem('wca_user') ?? 'null')).toEqual({
@@ -63,7 +68,7 @@ describe('WCA callback canonical session', () => {
     });
   });
 
-  it('keeps the provisional WCA fallback when the exchange response is invalid', async () => {
+  it('does not replace an existing legacy session with an invalid canonical response', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({
       token: 'c'.repeat(20),
       user: { wcaId: '2017YANR02', name: '缺少 uid', avatar: '' },
@@ -72,7 +77,8 @@ describe('WCA callback canonical session', () => {
       headers: { 'Content-Type': 'application/json' },
     }));
 
-    await expect(exchangeWcaSession('short-lived-wca-token', fetcher)).resolves.toBe(false);
+    vi.stubGlobal('fetch', fetcher);
+    await expect(loginWca('short-lived-wca-token')).rejects.toThrow('invalid account session');
 
     expect(localStorage.getItem('cuberoot_jwt')).toBeNull();
     expect(JSON.parse(localStorage.getItem('wca_user') ?? 'null')).toEqual(provisionalUser);

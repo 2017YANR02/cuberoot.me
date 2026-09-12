@@ -88,7 +88,7 @@ describe('Apple API availability and exchange', () => {
   });
 
   it('uses the dedicated Apple endpoints and keeps the session token out of URLs', async () => {
-    const fetcher = vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ url: authorizeUrl }))));
+    const fetcher = vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ url: authorizeUrl, token: 'c'.repeat(20), user: { uid: 42, name: 'Existing', wcaId: '', avatar: '' } }))));
     vi.stubGlobal('fetch', fetcher);
     const { fetchSocialAuthorization, loginSocial, linkSocial } = await import('@/lib/account-api');
     expect(await fetchSocialAuthorization('apple', 'link', 'challenge')).toEqual({ url: authorizeUrl, siteOrigin: undefined });

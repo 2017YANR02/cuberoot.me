@@ -72,6 +72,14 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 
 export const CATALOG: UtilEntry[] = [
   {
+    name: 'identity-choice store',
+    sig: 'useIdentityChoice(): IdentityChoice | null',
+    imp: "import { useIdentityChoice } from '@/lib/identity-choice';",
+    category: 'util', // Store-owned subscription; hooks/ has a separate closed-directory registry.
+    zh: '订阅本标签页短期身份选择；保留首个已验证身份与返回路径。SSR 为 null，创建和绑定授权仍由服务端单次票据决定。',
+    en: 'Subscribe to this tab’s short-lived account choice, retaining the first verified identity and return path. SSR returns null; the server’s single-use ticket still authorizes creation or linking.',
+  },
+  {
     name: 'getOriginalScene', sig: 'getOriginalScene(state: unknown)',
     imp: "import { getOriginalScene } from '@/lib/deskpet-originals';", category: 'util',
     zh: '从统一清单读取原创桌宠的动作、时长和素材。',

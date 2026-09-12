@@ -126,7 +126,7 @@ describe('auth public user ID', () => {
       avatar: 'wca-avatar.png',
       wcaId: '2017YANR02',
       countryIso2: 'CN',
-    });
+    }, undefined, { createIfMissing: false });
     expect(mocks.signSession).toHaveBeenCalledWith({
       uid: 66,
       wcaId: '2017YANR02',

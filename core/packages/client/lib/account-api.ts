@@ -5,9 +5,11 @@ import { apiUrl } from './api-base';
 import { getSessionToken } from './auth-store';
 import { authHeaders, handleApi } from './admin-api';
 import type { WebSession, WebSessionUser } from '@cuberoot/shared/auth/web-session';
+import { decodeWebSession } from '@cuberoot/shared/auth/web-session';
 import type { ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
 import type { AccountBasicProfile } from '@cuberoot/shared/account';
 import { tr } from '@/i18n/tr';
+import { accountChoiceError, existingAccountRequired, getIdentityChoice } from './identity-choice';
 
 export type SessionUser = WebSessionUser;
 export interface SessionResp extends WebSession {
@@ -61,21 +63,25 @@ async function authJson<T>(path: string, init: RequestInit = {}): Promise<{ resp
 }
 
 async function post<T>(path: string, body: unknown, auth = false, signal?: AbortSignal): Promise<T> {
+  const existingIdentity = existingAccountRequired() ? getIdentityChoice()?.ticket : undefined;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (auth) {
     const tok = getSessionToken();
     if (tok) headers.Authorization = `Bearer ${tok}`;
   }
   const { response: res, data } = await authJson<Record<string, unknown>>(path, { method: 'POST', headers, body: JSON.stringify(body), signal });
-  if (!res.ok) throw new Error((data.error as string) || `HTTP ${res.status}`);
+  if (existingIdentity && (getIdentityChoice()?.ticket !== existingIdentity || !existingAccountRequired())) {
+    throw new DOMException('Account choice canceled', 'AbortError');
+  }
+  if (!res.ok) throw accountChoiceError(res.status, data) ?? new Error((data.error as string) || `HTTP ${res.status}`);
   return data as T;
 }
 
 // 登录/注册(合并流程)
 export const sendEmailCode = (email: string) => post<{ ok: true }>('/v1/auth/email/send', { email });
-export const verifyEmailCode = (email: string, code: string) => post<SessionResp>('/v1/auth/email/verify', { email, code });
+export const verifyEmailCode = (email: string, code: string) => postCanonicalSession('/v1/auth/email/verify', { email, code, ...(existingAccountRequired() ? { existingOnly: true } : {}) });
 // 邮箱 + 密码登录(账号已设密码即可,不依赖邮件服务)
-export const loginPassword = (email: string, password: string) => post<SessionResp>('/v1/auth/email/password', { email, password });
+export const loginPassword = (email: string, password: string) => postCanonicalSession('/v1/auth/email/password', { email, password });
 // 设置 / 修改 / 重置密码(登录态)。改密要 currentPassword;刚验证邮箱,或通过专用短信找回流程时可免旧密码。
 export const setPassword = (password: string, currentPassword?: string) =>
   post<{ ok: true; hasPassword: true }>('/v1/auth/password/set', { password, currentPassword }, true);
@@ -230,11 +236,11 @@ export type AvatarChoice =
 export const updateAvatar = (avatar: AvatarChoice) =>
   post<{ ok: true; token: string; user: SessionUser }>('/v1/auth/profile', { avatar }, true);
 export const sendPhoneCode = (phone: string) => post<{ ok: true }>('/v1/auth/phone/send', { phone });
-export const verifyPhoneCode = (phone: string, code: string) => post<SessionResp>('/v1/auth/phone/verify', { phone, code });
+export const verifyPhoneCode = (phone: string, code: string) => postCanonicalSession('/v1/auth/phone/verify', { phone, code, ...(existingAccountRequired() ? { existingOnly: true } : {}) });
 export const sendPhonePasswordResetCode = (phone: string) =>
   post<{ ok: true }>('/v1/auth/phone/send', { phone, purpose: 'password_reset' });
 export const verifyPhonePasswordResetCode = (phone: string, code: string) =>
-  post<SessionResp>('/v1/auth/phone/verify', { phone, code, purpose: 'password_reset' });
+  postCanonicalSession('/v1/auth/phone/verify', { phone, code, purpose: 'password_reset' });
 
 // 绑定(登录态)
 export const linkEmailSend = (email: string) => post<{ ok: true }>('/v1/auth/link/email/send', { email }, true);
@@ -251,7 +257,19 @@ export const linkWca = (accessToken: string) => post<{ ok: true; token?: string;
 export const unlinkIdentity = (provider: string, providerUid?: string) => post<{ ok: true; token?: string; user?: SessionUser; identities: Identity[] }>('/v1/auth/unlink', { provider, providerUid }, true);
 
 // Google(浏览器经墙外中继换来的断言 → 后端离线验签;登录/绑定各一条,同 email/phone 的两段式)
-export const loginGoogle = (assertion: string) => post<SessionResp>('/v1/auth/google', { assertion });
+export const loginGoogle = (assertion: string) => postCanonicalSession('/v1/auth/google', { assertion });
+async function postCanonicalSession(path: string, body: unknown, auth = false, signal?: AbortSignal): Promise<SessionResp> {
+  const response = await post<SessionResp>(path, body, auth, signal);
+  return canonicalSessionResponse(response);
+}
+function canonicalSessionResponse(response: SessionResp): SessionResp {
+  const session = decodeWebSession(response);
+  if (!session) throw new Error('invalid account session');
+  return { ...session, ...(typeof response.isNew === 'boolean' ? { isNew: response.isNew } : {}) };
+}
+export const loginWca = (accessToken: string, signal?: AbortSignal) => postCanonicalSession('/v1/auth/exchange', { accessToken }, false, signal);
+export const completeIdentityChoice = (ticket: string, action: 'create' | 'link', expectedUid?: number, signal?: AbortSignal) =>
+  postCanonicalSession('/v1/auth/identity/complete', { ticket, action, ...(expectedUid === undefined ? {} : { expectedUid }) }, action === 'link', signal);
 export const linkGoogle = (assertion: string) => post<{ ok: true; identities: Identity[] }>('/v1/auth/link/google', { assertion }, true);
 
 // 国内三方(微信/QQ/支付宝):授权码重定向流。浏览器跳授权页 → 回调拿 code → 交后端换身份。
@@ -260,7 +278,7 @@ export const SOCIAL_PROVIDERS: readonly SocialProvider[] = ['wechat', 'qq', 'ali
 export type RedirectAuthProvider = SocialProvider | 'apple';
 export const REDIRECT_AUTH_PROVIDERS: readonly RedirectAuthProvider[] = ['apple', ...SOCIAL_PROVIDERS];
 // 服务端验签 state；Apple 额外验证只在 POST body 传递的浏览器 PKCE verifier。
-export const loginSocial = (provider: RedirectAuthProvider, code: string, state: string, codeVerifier?: string, signal?: AbortSignal) => post<SessionResp>(provider === 'apple' ? '/v1/auth/apple' : `/v1/auth/social/${provider}`, { code, state, ...(provider === 'apple' ? { codeVerifier } : {}) }, false, signal);
+export const loginSocial = (provider: RedirectAuthProvider, code: string, state: string, codeVerifier?: string, signal?: AbortSignal) => postCanonicalSession(provider === 'apple' ? '/v1/auth/apple' : `/v1/auth/social/${provider}`, { code, state, ...(provider === 'apple' ? { codeVerifier } : {}) }, false, signal);
 export const linkSocial = (provider: RedirectAuthProvider, code: string, state: string, codeVerifier?: string, signal?: AbortSignal) => post<{ ok: true; identities: Identity[] }>(provider === 'apple' ? '/v1/auth/link/apple' : `/v1/auth/link/social/${provider}`, { code, state, ...(provider === 'apple' ? { codeVerifier } : {}) }, true, signal);
 /** 服务端下发的授权页 URL(redirect_uri + 签名 state 均由服务端固定,保证与换 code 时一致)。 */
 export async function fetchSocialAuthorization(provider: RedirectAuthProvider, intent: 'login' | 'link', codeChallenge?: string, signal?: AbortSignal): Promise<{ url: string; siteOrigin?: string }> {
@@ -282,7 +300,7 @@ export interface WechatBrowserLoginStart {
 
 export const startWechatBrowserLogin = () => post<WechatBrowserLoginStart>(
   '/v1/auth/wechat/browser-session/start',
-  {},
+  existingAccountRequired() ? { existingOnly: true } : {},
 );
 
 export async function exchangeWechatBrowserLogin(ticket: string): Promise<SessionResp | null> {
@@ -294,7 +312,7 @@ export async function exchangeWechatBrowserLogin(ticket: string): Promise<Sessio
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (res.status === 202 && data.status === 'pending') return null;
   if (!res.ok) throw new Error((data.error as string) || `HTTP ${res.status}`);
-  return data as unknown as SessionResp;
+  return canonicalSessionResponse(data as unknown as SessionResp);
 }
 
 export interface AuthProviders {

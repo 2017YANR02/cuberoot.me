@@ -304,7 +304,7 @@ describe('mini program account page', () => {
       url: string;
     }) => {
       if (options.url.endsWith('/auth/wechat/miniprogram')) {
-        expect(options.data).toEqual({ code: 'login-code', create: true });
+        expect(options.data).toEqual({ code: 'login-code' });
         options.success({
           statusCode: 200,
           data: {
@@ -342,6 +342,28 @@ describe('mini program account page', () => {
     await vi.waitFor(() => expect(exitMiniProgram).toHaveBeenCalledOnce());
     expect(request).toHaveBeenCalledTimes(2);
     expect(page.data.browserLoginPending).toBe(true);
+  });
+
+  it.each([false, true])('never auto-creates on browser entry; existingOnly=%s', async (existingOnly) => {
+    const request = vi.fn((options: { data?: Record<string, unknown>; success(response: unknown): void }) => {
+      expect(options.data).toEqual({ code: 'login-code' });
+      options.success({ statusCode: 409, data: { code: 'WECHAT_ACCOUNT_LINK_REQUIRED', message: 'link required', error: 'link required' } });
+    });
+    const page = await loadPage({
+      getLaunchOptionsSync: normalLaunchOptions,
+      getStorageSync: () => null,
+      login(options: { success(result: { code: string }): void }) { options.success({ code: 'login-code' }); },
+      removeStorageSync: vi.fn(), request, setStorageSync: vi.fn(), showShareMenu: vi.fn(),
+    });
+    page.onLoad({ browserLogin: 'A'.repeat(43), ...(existingOnly ? { existingOnly: '1' } : {}) });
+    await vi.waitFor(() => expect(page.data.loginBusy).toBe(false));
+    expect(request).toHaveBeenCalledOnce();
+    expect(page.data.accountLinkRequired).toBe(!existingOnly);
+    if (existingOnly) {
+      await page.createAccount();
+      expect(request).toHaveBeenCalledOnce();
+      expect(page.data.loginError).toBe('此微信尚未绑定，请返回浏览器，使用原账号的登录方式。');
+    }
   });
 
   it('requires an unknown WeChat identity to link or explicitly create an account', async () => {

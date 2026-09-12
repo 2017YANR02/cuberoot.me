@@ -97,6 +97,7 @@ import { getIp } from './utils/analytics_helpers.js';
 import { warmCnCompZh } from './utils/cn_comp_zh_cache.js';
 import { startPrewarmCron } from './routes/cubing_live.js';
 import { startMonitors } from './monitors/index.js';
+import { startIdentityChoiceCleanup } from './utils/identity_choice.js';
 import { startDouyinOrderSync } from './platform/douyin_order_sync.js';
 import { startMembershipContractSync } from './payment/membership-contract-sync.js';
 
@@ -328,6 +329,7 @@ startPrewarmCron();
 // wca-monitor 推送套件(WCA Live 纪录/PR + 粗饼纪录/比赛 + WCA 比赛)后台 poller.
 // MONITORS_ENABLED!=1 时直接返回(休眠);MONITOR_PUSH_ENABLED!=1 时只 DRY 日志不真推.
 startMonitors();
+startIdentityChoiceCleanup();
 
 // /calendar 日程提醒:每分钟扫一遍「该发提醒了吗」,命中写站内通知(+ 邮件旁路)。
 // 去重靠 calendar_reminder_log 的主键抢占,重启 / 窗口重叠都不会重复发。

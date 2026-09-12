@@ -22,7 +22,8 @@ import { UserIdLabel } from '@/components/UserIdLabel';
 import { Flag } from '@/components/Flag';
 import { CountryInput } from '@/components/CountryInput/CountryInput';
 import { DateInput } from '@/components/DateInput';
-import { AccountPanel, LoginForm, WcaLinkPrompt, DeleteAccountPanel, type SignedIn } from '@/components/AuthPanel';
+import { AccountPanel, LoginForm, IdentityChoicePanel, WcaLinkPrompt, DeleteAccountPanel, type SignedIn } from '@/components/AuthPanel';
+import { getIdentityChoice, useIdentityChoice } from '@/lib/identity-choice';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 import {
@@ -653,6 +654,7 @@ function AdminUserEditor({ userId }: { userId: number }) {
 
 export default function AccountPage() {
   const t = useT();
+  const pendingIdentity = useIdentityChoice();
   const router = useRouter();
   const uiLang: 'zh' | 'en' = useLang() === 'en' ? 'en' : 'zh';
 
@@ -739,7 +741,7 @@ export default function AccountPage() {
     // The system Browser can already hold a canonical website session (for example after
     // returning from WCA/social OAuth). Continue to /auth/mobile immediately so that page
     // can mint the PKCE-bound one-time ticket and deep-link back to the native App.
-    if (isMobileAuth && next.current) {
+    if (isMobileAuth && next.current && !getIdentityChoice()) {
       router.replace(next.current);
       return;
     }
@@ -873,7 +875,14 @@ export default function AccountPage() {
         )}
       </header>
 
-      {mode === 'login' ? (
+      {pendingIdentity ? <IdentityChoicePanel pending={pendingIdentity} firstPartyOnly={mobileAuth && !mobileAuthProvider} onCancel={() => setMode(useAuthStore.getState().user ? 'me' : 'login')} onDone={(info, returnPath) => {
+        const original = new URL(returnPath, window.location.href);
+        if (/^\/(zh\/)?account$/.test(original.pathname)) {
+          next.current = safeNext(new URLSearchParams(original.hash.slice(1)).get('next')) ?? safeNext(original.searchParams.get('next'));
+        } else next.current = returnPath;
+        if (original.searchParams.get('auth') === 'mobile') { leave(); return; }
+        if (info.isNew && !info.hasWca) setMode('onboard'); else leave();
+      }} /> : mode === 'login' ? (
         <div data-mobile-auth-entry>
           {linkProvider === 'apple' ? <p>{t('请先在浏览器中登录与 App 相同的账号，再主动点击绑定 Apple。', 'Sign in to the same account as your app in this browser, then choose Link next to Apple.')}</p> : null}
           <LoginForm firstPartyOnly={mobileAuth && !mobileAuthProvider} onDone={settle} />

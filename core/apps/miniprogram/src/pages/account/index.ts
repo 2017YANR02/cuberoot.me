@@ -114,6 +114,10 @@ const ACCOUNT_COPY = {
     en: 'Website sign-in could not be confirmed. Return to Safari and try again.',
     zh: '未能确认网页登录，请返回 Safari 重试',
   }),
+  existingAccountRequired: tr({
+    en: 'This WeChat account is not linked. Return to your browser and use your existing sign-in method.',
+    zh: '此微信尚未绑定，请返回浏览器，使用原账号的登录方式。',
+  }),
   browserLoginConfirmContent: tr({
     en: 'Safari is requesting access to this CubeRoot account.',
     zh: 'Safari 正在请求登录此魔方根账号',
@@ -227,6 +231,7 @@ interface AccountPageData {
 
 interface AccountPageInstance {
   browserLoginApproval?: string;
+  browserLoginExistingOnly?: boolean;
   data: AccountPageData;
   setData(data: Partial<AccountPageData>): void;
 }
@@ -329,6 +334,10 @@ async function completeMiniProgramLogin(
   createAccount = false,
 ): Promise<void> {
   if (page.data.isTimelineEntry || page.data.loginBusy) return;
+  if (createAccount && page.browserLoginExistingOnly) {
+    page.setData({ loginError: ACCOUNT_COPY.existingAccountRequired });
+    return;
+  }
   if (page.data.requiresAgreement && !page.data.agreementAccepted) {
     page.setData({ loginError: ACCOUNT_COPY.agreementRequired });
     return;
@@ -348,9 +357,11 @@ async function completeMiniProgramLogin(
   } catch (error) {
     page.setData({
       accountLinkRequired: error instanceof ApiError
-        && error.code === 'WECHAT_ACCOUNT_LINK_REQUIRED',
+        && error.code === 'WECHAT_ACCOUNT_LINK_REQUIRED' && !page.browserLoginExistingOnly,
       loginBusy: false,
-      loginError: loginErrorMessage(error),
+      loginError: page.browserLoginExistingOnly && error instanceof ApiError
+        && error.code === 'WECHAT_ACCOUNT_LINK_REQUIRED'
+        ? ACCOUNT_COPY.existingAccountRequired : loginErrorMessage(error),
       loginStorageUnavailable: isSessionStorageError(error),
       browserLoginPending: false,
     });
@@ -396,6 +407,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
       : '';
     if (browserLogin) {
       this.browserLoginApproval = browserLogin;
+      this.browserLoginExistingOnly = options.existingOnly === '1';
       this.setData({ browserLoginPending: true, loginBusy: true, loginError: '' });
       const snapshot = getStoredSessionSnapshot();
       if (snapshot.status === 'available' && snapshot.session) {
@@ -407,7 +419,8 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
           }));
       } else {
         this.setData({ loginBusy: false });
-        void completeMiniProgramLogin(this as unknown as AccountPageInstance, true);
+        // Opening a browser handoff is not consent to create a new account.
+        void completeMiniProgramLogin(this as unknown as AccountPageInstance);
       }
       return;
     }

@@ -26,6 +26,7 @@ beforeEach(() => {
   sessionStorage.clear();
   localStorage.clear();
   mocks.getSessionToken.mockReturnValue(null);
+  mocks.applySession.mockReturnValue(true);
   mocks.loginSocial.mockResolvedValue({ token: 'session-in-body-only', user: { uid: 1, wcaId: null }, isNew: true });
   host = document.createElement('div');
   document.body.append(host);
@@ -45,6 +46,36 @@ async function callback(state: string, storedState?: string, extra = '') {
 }
 
 describe('Apple uses the canonical callback and session', () => {
+  it('preserves Chinese on an unknown identity through the language-neutral callback', async () => {
+    const { AccountChoiceRequired } = await import('@/lib/identity-choice');
+    mocks.loginSocial.mockRejectedValue(new AccountChoiceRequired({ ticket: 'a'.repeat(43), provider: 'apple', expiresInSeconds: 900 }));
+    sessionStorage.setItem('social_oauth_return', '/zh/account?auth=mobile&next=%2Fauth%2Fmobile%3Flang%3Dzh');
+    await callback(loginState, loginState);
+    expect(mocks.replace).toHaveBeenCalledExactlyOnceWith('/zh/account');
+  });
+  it('routes an unknown identity to one choice without installing any session', async () => {
+    const { AccountChoiceRequired, getIdentityChoice } = await import('@/lib/identity-choice');
+    mocks.loginSocial.mockRejectedValue(new AccountChoiceRequired({ ticket: 'a'.repeat(43), provider: 'apple', expiresInSeconds: 900 }));
+    sessionStorage.setItem('social_oauth_return', '/account?auth=mobile&next=%2Fauth%2Fmobile%3FcodeChallenge%3Doriginal');
+    await callback(loginState, loginState);
+    expect(mocks.applySession).not.toHaveBeenCalled();
+    expect(mocks.replace).toHaveBeenCalledExactlyOnceWith('/account');
+    expect(getIdentityChoice()).toMatchObject({ provider: 'apple', stage: 'choose', returnPath: '/account?auth=mobile&next=%2Fauth%2Fmobile%3FcodeChallenge%3Doriginal' });
+    expect(window.location.href).not.toContain('a'.repeat(43));
+  });
+
+  it('returns a known second identity to explicit UID confirmation, not the app handoff', async () => {
+    const { AccountChoiceRequired, getIdentityChoice, rememberIdentityChoice, updateIdentityChoice } = await import('@/lib/identity-choice');
+    rememberIdentityChoice(new AccountChoiceRequired({ ticket: 'a'.repeat(43), provider: 'google', expiresInSeconds: 900 }), '/account?auth=mobile&next=original');
+    updateIdentityChoice('a'.repeat(43), { stage: 'authenticate' });
+    sessionStorage.setItem('social_oauth_return', '/account');
+    mocks.loginSocial.mockResolvedValue({ token: 'known', user: { uid: 42 }, isNew: false });
+    await callback(loginState, loginState);
+    expect(getIdentityChoice()).toMatchObject({ provider: 'google', stage: 'confirm', expectedUid: 42, returnPath: '/account?auth=mobile&next=original' });
+    expect(mocks.replace).toHaveBeenCalledExactlyOnceWith('/account');
+    expect(mocks.linkSocial).not.toHaveBeenCalled();
+  });
+
   it('exchanges once and returns to the original mobile handoff', async () => {
     sessionStorage.setItem('social_oauth_return', '/account?auth=mobile&provider=apple');
     await callback(loginState, loginState);

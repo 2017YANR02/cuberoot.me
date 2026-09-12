@@ -55,7 +55,7 @@ export async function issueMobileSessionTicket(
   return issueTicket(userId, 'mobile', codeChallenge);
 }
 
-export async function issueWechatBrowserSession(): Promise<{
+export async function issueWechatBrowserSession(existingOnly = false): Promise<{
   approval: string;
   expiresIn: number;
   ticket: string;
@@ -67,9 +67,9 @@ export async function issueWechatBrowserSession(): Promise<{
   await query('DELETE FROM auth_web_session_tickets WHERE expires_at <= NOW()');
   await query(
     `INSERT INTO auth_web_session_tickets
-      (ticket_hash, user_id, purpose, code_challenge, expires_at)
-     VALUES (?, NULL, 'wechat_browser', ?, ?)`,
-    [hashTicket(ticket), challengeFromVerifier(approval), expiresAt],
+      (ticket_hash, user_id, purpose, code_challenge, expires_at, existing_only)
+     VALUES (?, NULL, 'wechat_browser', ?, ?, ?)`,
+    [hashTicket(ticket), challengeFromVerifier(approval), expiresAt, existingOnly],
   );
   return { approval, expiresIn: WECHAT_BROWSER_SESSION_TTL_SECONDS, ticket };
 }
@@ -88,8 +88,12 @@ export async function approveWechatBrowserSession(
        AND code_challenge = ?
        AND expires_at > NOW()
        AND (user_id IS NULL OR user_id = ?)
+       AND (NOT existing_only OR EXISTS (
+         SELECT 1 FROM app_users u WHERE u.id = ? AND u.created_at < auth_web_session_tickets.created_at
+           AND u.merged_into_user_id IS NULL
+       ))
      RETURNING user_id`,
-    [userId, challengeFromVerifier(approval), userId],
+    [userId, challengeFromVerifier(approval), userId, userId],
   );
   return Number(rows[0]?.user_id) === userId;
 }
