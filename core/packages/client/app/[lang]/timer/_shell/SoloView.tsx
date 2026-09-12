@@ -69,6 +69,7 @@ import {
   TIMER_MORE_ACTION_COPY,
   TIMER_MANUAL_SCRAMBLE_EMPTY_COPY,
   TIMER_SCRAMBLE_CLICK_TITLE_COPY,
+  TIMER_GESTURE_ACTION_CONTRACTS,
   timerClearCurrentEventConfirmation,
   timerCanHandleAttemptPress,
   timerCanStartAttempt,
@@ -1256,20 +1257,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     })().catch(() => { /* 网络失败静默,下次成绩变更再试 */ });
   }, [solves, event, authUser, settings.autoMarkWcaScramble]);
 
-  // Click-to-copy flash (cstimer-style). Reads the live scramble via ref so the
-  // helper stays stable; shows a brief "已复制" badge.
-  const [scrambleCopied, setScrambleCopied] = useState(false);
-  const copiedTimerRef = useRef<number | null>(null);
-  const copyScrambleFlash = useCallback(() => {
-    const s = scrambleHistRef.current.list[scrambleHistRef.current.idx]?.scramble ?? '';
-    if (!s) return;
-    try { void navigator.clipboard.writeText(formatScrambleForEvent(event, s)); } catch { /* ignore */ }
-    setScrambleCopied(true);
-    if (copiedTimerRef.current) window.clearTimeout(copiedTimerRef.current);
-    copiedTimerRef.current = window.setTimeout(() => setScrambleCopied(false), 1200);
-  }, [event]);
-  useEffect(() => () => { if (copiedTimerRef.current) window.clearTimeout(copiedTimerRef.current); }, []);
-
   const nextScramble = useCallback(() => {
     if (competitionRef.current.enabled) return;
     const cur = scrambleHistRef.current;
@@ -2161,7 +2148,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       return timerGestureActionStates({
         hasLastSolve: solvesRef.current.length > 0,
         hasPreviousScramble: scrambleHistRef.current.idx > 0,
-      }).map((action) => action.enabled);
+      }).map((action) => action.enabled && action.id !== 'copy-scramble');
     },
     fireAction: (direction) => {
       const action = timerGestureActionAt(direction);
@@ -2302,9 +2289,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       'prev-scramble': prevScramble,
       'comment-last': commentLast,
       'delete-last': swipeDeleteLast,
-      'copy-scramble': copyScrambleFlash,
     };
-  }, [nextScramble, prevScramble, changeLastPenalty, lastPenalty, commentLast, swipeDeleteLast, copyScrambleFlash]);
+  }, [nextScramble, prevScramble, changeLastPenalty, lastPenalty, commentLast, swipeDeleteLast]);
 
   // ?replay= is a consume-once deep link: decode it into an ephemeral solve, open
   // the reconstruct modal, then strip the param. nuqs owns it (replace — clearing
@@ -2932,7 +2918,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                       : null;
   const scrambleStatus = scrambleStatusReason ? timerScrambleStatus(scrambleStatusReason) : null;
   const scrambleClickEffect = timerScrambleClickEffect(
-    settings.scrambleClickAction,
+    settings.scrambleClickAction === 'copy' ? 'none' : settings.scrambleClickAction,
     displayScramble.length > 0,
     attemptCanStart,
     scrambleStatus?.retryable === true,
@@ -3095,7 +3081,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           scrambleSlot={
             <TimerScrambleStrip
               compact={settings.compactScramble}
-              copied={scrambleCopied}
               copiedLabel={tr({ zh: '已复制', en: 'Copied' })}
               correctionActive={scrambleGuidance.correctionActive}
               fallback={settings.scrambleSource === 'manual' && manualQueue.length === 0
@@ -3110,9 +3095,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                 label: tr(TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalLabel),
                 title: tr(TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalTitle),
               } : undefined}
-              onActivate={scrambleClickEffect === 'copy'
-                  ? copyScrambleFlash
-                  : scrambleClickEffect === 'next' ? nextScramble : undefined}
+              onActivate={scrambleClickEffect === 'next' ? nextScramble : undefined}
               scramble={scrambleStatus ? '' : displayScramble}
               status={scrambleStatus
                 ? scrambleStatus.retryable
@@ -3351,7 +3334,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       )}
 
       {/* ── Radial gesture wheel (touch press-and-drag, idle/stopped) ── */}
-      <GestureWheel ref={gestureWheelRef} isZh={isZh} />
+      <GestureWheel
+        ref={gestureWheelRef}
+        isZh={isZh}
+        labels={TIMER_GESTURE_ACTION_CONTRACTS
+          .map((action) => action.id === 'copy-scramble' ? '' : tr(action.copy))}
+      />
 
       {/* ── Modals (unchanged) ───────────────────────────────── */}
       {modalSolve && (() => {

@@ -71,6 +71,20 @@ describe('shared scramble click action setting', () => {
     expect(solo).not.toContain('className="scramble-empty-retry"');
   });
 
+  it('removes current-scramble copying from every Web timer mode and legacy copy preferences', () => {
+    const solo = readFileSync('app/[lang]/timer/_shell/SoloView.tsx', 'utf8');
+    const settings = readFileSync('app/[lang]/timer/_components/SettingsPanel.tsx', 'utf8');
+    expect(solo).toContain("settings.scrambleClickAction === 'copy' ? 'none' : settings.scrambleClickAction");
+    expect(solo).toContain("action.enabled && action.id !== 'copy-scramble'");
+    expect(solo).not.toContain("'copy-scramble':");
+    expect(settings).toContain('allowCopy={false}');
+    expect(settings).toContain("value={s.scrambleClickAction === 'copy' ? 'none' : s.scrambleClickAction}");
+    for (const mode of ['SoloView', 'BattleView', 'NetBattleView']) {
+      const source = readFileSync(`app/[lang]/timer/_shell/${mode}.tsx`, 'utf8');
+      expect(source).not.toMatch(/copyScramble|scrambleCopied|点击复制打乱/);
+    }
+  });
+
   it('omits clipboard copying for installed clients while retaining explicit next-scramble selection', () => {
     const onChange = vi.fn();
     act(() => root.render(createElement(TimerScrambleClickActionSetting, {
