@@ -22,6 +22,7 @@ param(
   [switch]$BuildOnly
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'stats_progress.ps1')
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
 try { (Get-Process -Id $PID).PriorityClass = 'BelowNormal' } catch {}
 
@@ -70,7 +71,7 @@ function Ingest-Chunks {
     }
   } finally { $sw.Close() }
   foreach ($c in $chunks) { Remove-Item $c.FullName -Force }
-  Write-Host "  并入 $added 行(来自 $($chunks.Count) 块)-> $out"
+  Write-Prog "正在保存结果"
   return $added
 }
 
@@ -106,12 +107,12 @@ function Update-Monsters {
       if ($want.Contains($l.Substring(0,$i))) { $sw.Write($l); $sw.Write("`n"); $added++ }
     }
   } finally { $sw.Close() }
-  Write-Host "  怪物清单 +$added -> $monf(累计 $($have.Count + $added))"
+  Write-Prog "正在保存难题"
 }
 
 Ingest-Chunks | Out-Null
 Update-Monsters
-if ($BuildOnly) { Write-Host '仅并入,完成。'; exit 0 }
+if ($BuildOnly) { Write-ProgEnd; Write-Host '仅并入,完成。'; exit 0 }
 
 # ---- 已完成 id(out 首列)----
 $done = [Collections.Generic.HashSet[string]]::new()
@@ -132,8 +133,8 @@ foreach ($l in [IO.File]::ReadLines($src)) {
   $total++
   $i = $l.IndexOf(','); if ($i -gt 0 -and -not $done.Contains($l.Substring(0,$i))) { [void]$todo.Add($l) }
 }
-Write-Host "语料 $total 条;已完成 $($done.Count);待解 $($todo.Count)"
-if ($todo.Count -eq 0) { Write-Host '全部已完成。'; exit 0 }
+Write-Prog "SQ1 已处理 $($done.Count)/$total"
+if ($todo.Count -eq 0) { Write-ProgEnd; Write-Host '全部已完成。'; exit 0 }
 
 # ---- 写 chunk 文件 ----
 Get-ChildItem $work -Filter 'chunk_*.txt' -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
@@ -145,7 +146,7 @@ for ($i = 0; $i -lt $todo.Count; $i += $ChunkSize) {
   [IO.File]::WriteAllLines($p, $todo.GetRange($i, $n))
   [void]$chunkPaths.Add($p)
 }
-Write-Host "分 $($chunkPaths.Count) 块(每块 $ChunkSize)。单次载表逐块解算,日志 -> $logf"
+Write-Host "SQ1 待计算 $($todo.Count) 条"
 
 # 全局实时进度:analyzer 每 10 条往**专用进度文件**直写(自己 flush,绕过 PowerShell `2>` 缓冲)
 # [PROG] (已完成base+本进程累计)/总数 + 每块 [DONE](含块名)。**实时看**:
@@ -165,14 +166,14 @@ $env:ANALYZER_STUCK_SECS     = '120'
 
 # ---- 一次喂全部 chunk 文件名 + exit 给 analyzer(单进程单次载表)----
 $stdin = ($chunkPaths -join "`n") + "`nexit`n"
-$stdin | & $exe 2> $logf
-$code = $LASTEXITCODE
+$code = Invoke-StatsAnalyzer -Executable $exe -InputText $stdin -LogPath $logf
 
 # ---- 并入本轮 chunk 输出 + 回捞怪物 ----
 Ingest-Chunks | Out-Null
 Update-Monsters
 
-if ($code -ne 0) { throw "analyzer 退出码 $code(已并入完成块,可重跑本脚本续解剩余)" }
+Write-ProgEnd
+if ($code -ne 0) { throw "SQ1 计算中断，已保存完成部分。详情：$logf" }
 
 # ---- 校验:out 行数(去表头)应 == 语料;怪物 id,M 算已处理,解析失败才是 id,-。----
 $outRows = 0; $mon = 0
@@ -183,5 +184,5 @@ foreach ($l in [IO.File]::ReadLines($out)) {
 $outRows = $outRows - 1
 $bad = 0
 foreach ($l in [IO.File]::ReadLines($out)) { if ($l -match ',-\s*$') { $bad++ } }
-Write-Host "完成:out $outRows 行 / 语料 $total$(if($mon){" ;$mon 怪物(id,M)留 $monf 待单独跑"})$(if($bad){" ;⚠ $bad 行解析失败(id,-)"})"
+Write-Host "SQ1 已处理 $outRows/$total，难题 $mon 条，读取失败 $bad 条"
 if ($outRows -lt $total) { Write-Host "  仍差 $($total - $outRows) 条,重跑本脚本续解。" }

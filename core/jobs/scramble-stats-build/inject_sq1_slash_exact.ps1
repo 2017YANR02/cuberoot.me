@@ -34,6 +34,7 @@ param(
   [switch]$NoMitm
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'stats_progress.ps1')
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
 try { (Get-Process -Id $PID).PriorityClass = 'BelowNormal' } catch {}
 
@@ -62,7 +63,7 @@ $HEADER = 'id,slash_exact,opt_scramble'
 
 # ---- 读 WCA 精确 → wcaMap{W,s,opt} + 歧义 id ----
 function Count-Slashes([string]$s) { return $s.Length - $s.Replace('/','').Length }
-Write-Host "读 $wca …"
+Write-Prog "正在读取 SQ1 结果"
 $wcaMap = @{}
 $ambIds = [Collections.Generic.HashSet[string]]::new()
 $first = $true
@@ -77,7 +78,7 @@ foreach ($l in [IO.File]::ReadLines($wca)) {
   $wcaMap[$id] = @{ W = $W; s = $s; opt = $opt }
   if ($W -eq 2*$s - 1) { [void]$ambIds.Add($id) }
 }
-Write-Host "  WCA 行 $($wcaMap.Count);歧义态(W=2s-1)$($ambIds.Count)"
+Write-Prog "SQ1 待核对 $($ambIds.Count) 条"
 
 # ---- 读 compact 打乱(id -> compact)----
 $compact = @{}
@@ -166,9 +167,9 @@ function Build-Final {
     }
   } finally { $sw.Close() }
   $tot = $nProv+$nEq+$nLess+$nFallback
-  Write-Host "合并 -> $final"
-  Write-Host "  全量 ${tot}: 证明态 $nProv;歧义 t=s $nEq;歧义 t=s-1(真省刀)$nLess;回退上界(怪物)$nFallback"
-  if ($nFallback) { Write-Host "  残留怪物 $nFallback 条(slash_exact 为紧上界),跑 -Split 续解" }
+  Write-ProgEnd
+  Write-Host "SQ1 切刀步数已处理 $tot 条，难题 $nFallback 条"
+
   # meta:前端/build 数据驱动 provisional(残留怪物>0 ⇒ slash 视图仍标"上界、计算中")。
   $meta = @{ ambiguous = $ambIds.Count; eq = $nEq; less = $nLess; fallback = $nFallback; provisional = ($nFallback -gt 0) }
   [IO.File]::WriteAllText("$dir/sq1_slash_meta.json", ($meta | ConvertTo-Json -Compress))
@@ -194,7 +195,7 @@ function Run-DecideT {
     }
   }
   if ($resid.Count -eq 0) { return 0 }
-  Write-Host "decide_t MITM 兜底 $($resid.Count) 条残留怪物(各独立进程,radius ⌊s/2⌋)…"
+  Write-Prog "SQ1 正在复核 $($resid.Count) 条难题"
   $got = 0
   foreach ($line in $resid) {
     $rid = $line.Split(',')[0]; $rs = [int]($line.Split(',')[2])
@@ -205,7 +206,7 @@ function Run-DecideT {
       elseif ($rt -lt $rs) { Write-Warning "decide_t id=$rid t=$rt < s=$rs(史无前例真省刀!留怪物,手动跑 sq1_slash_mitm 全距离取解逆补 opt)" }
     }
   }
-  if ($got -gt 0) { Write-Host "  decide_t 判定 $got 条 t=s"; Write-Out }
+  if ($got -gt 0) { Write-Prog "SQ1 已确认 $got 条"; Write-Out }
   return $got
 }
 
@@ -219,14 +220,14 @@ if ($Split) {
     $isMon = (-not $r) -or ($r.v -eq 'M') -or ($r.v -eq '') -or ($r.v -eq '-')
     if ($isMon -and $compact.ContainsKey($id)) { [void]$todo.Add("$id,$($compact[$id]),$($wcaMap[$id].W)") }
   }
-  Write-Host "Tier2(root-split,$SplitDepth 层,${SplitTimeoutSecs}s/条):怪物待解 $($todo.Count)"
+  Write-Host "SQ1 切刀步数待计算 $($todo.Count) 条"
 } else {
   foreach ($id in $ambIds) {
     if (-not $resolved.ContainsKey($id) -and $compact.ContainsKey($id)) { [void]$todo.Add("$id,$($compact[$id]),$($wcaMap[$id].W)") }
   }
-  Write-Host "Tier1(lite,${TimeoutSecs}s/条):新待解 $($todo.Count)(已解 $($resolved.Count)/$($ambIds.Count))"
+  Write-Host "SQ1 切刀步数待计算 $($todo.Count) 条"
 }
-if ($todo.Count -eq 0) { Write-Host '无 via-wca 新待解。'; Run-DecideT | Out-Null; Build-Final | Out-Null; exit 0 }
+if ($todo.Count -eq 0) { Write-Host '没有新增待计算项。'; Run-DecideT | Out-Null; Build-Final | Out-Null; exit 0 }
 
 # ---- 写 chunk(id,compact,W)----
 Get-ChildItem $work -Filter 'chunk_*.txt' -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
@@ -239,7 +240,7 @@ for ($i = 0; $i -lt $todo.Count; $i += $cs) {
   [void]$chunkPaths.Add($p)
 }
 $to = if ($Split) { $SplitTimeoutSecs } else { $TimeoutSecs }
-Write-Host "分 $($chunkPaths.Count) 块(每块 $cs),超时 ${to}s/条,日志 -> $logf"
+
 
 # ---- 进度 + env ----
 $progf = "$dir/_slash_progress.log"
@@ -254,8 +255,7 @@ if ($Split) { $env:SQ1_SOLVE_PARALLEL = "$SplitDepth" }
 
 # ---- 一次喂全部 chunk 文件名 + exit(单进程,轻量表只建一次)----
 $stdin = ($chunkPaths -join "`n") + "`nexit`n"
-$stdin | & $exe 2> $logf
-$code = $LASTEXITCODE
+$code = Invoke-StatsAnalyzer -Executable $exe -InputText $stdin -LogPath $logf
 
 # ---- ingest 新结果 + 重写 out ----
 Ingest-Dir $work
@@ -271,7 +271,7 @@ foreach ($id in $ambIds) {
   $r = $resolved[$id]
   if (((-not $r) -or ($r.v -eq 'M') -or ($r.v -eq '') -or ($r.v -eq '-')) -and $compact.ContainsKey($id)) { [void]$monLines.Add("$id,$($compact[$id])") }
 }
-if ($monLines.Count -gt 0) { [IO.File]::WriteAllLines($monf, $monLines); Write-Host "怪物 $($monLines.Count) -> $monf" }
+if ($monLines.Count -gt 0) { [IO.File]::WriteAllLines($monf, $monLines); Write-Prog "SQ1 难题剩余 $($monLines.Count) 条" }
 
-if ($code -ne 0) { throw "analyzer 退出码 $code(已并入完成块,可重跑续解剩余)" }
+if ($code -ne 0) { throw "SQ1 计算中断，已保存完成部分。详情：$logf" }
 Build-Final | Out-Null
