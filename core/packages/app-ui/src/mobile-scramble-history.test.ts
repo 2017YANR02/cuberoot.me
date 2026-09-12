@@ -238,7 +238,8 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('&& openOverlay === null');
     expect(app).toContain('<GestureWheel ref={gestureWheelRef}');
     for (const actionId of TIMER_GESTURE_ACTION_IDS) {
-      expect(app).toContain(`'${actionId}':`);
+      if (actionId === 'copy-scramble') expect(app).not.toContain(`'${actionId}':`);
+      else expect(app).toContain(`'${actionId}':`);
     }
     expect(app).toContain('timerKeyDownDecision({');
     expect(app).toContain('timerKeyUpDecision({');
@@ -262,9 +263,8 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('if (canSwitchScramble()) fillScrambleHistoryEntry(currentScrambleEntry);');
     expect(app).toContain('timerScrambleClickEffect(');
     expect(app).toContain('scramble.length > 0');
-    expect(app).toContain("scrambleClickEffect === 'next'");
-    expect(app).toContain('? nextDisplayedScramble');
-    expect(app).toContain("scrambleClickEffect === 'copy' ? copyCurrentScramble : undefined}");
+    expect(app).toContain("scrambleClickEffect === 'next' ? nextDisplayedScramble : undefined");
+    expect(app).not.toContain('copyCurrentScramble');
   });
 
   it('makes fullscreen a real layout/back state instead of a request-only action', () => {

@@ -68,4 +68,39 @@ describe('shared timer complete-readout fitting', () => {
     await resize();
     expect(fit()).toBe(initial);
   });
+
+  it('blocks native readout and scramble menus while preserving pointer input and text fields', async () => {
+    const down = vi.fn();
+    const up = vi.fn();
+    await act(async () => root.render(createElement(TimingSurface, {
+      phase: 'idle', colorClass: '', fontSize: '100px', surfaceRef: createRef<HTMLDivElement>(),
+      digits: createElement(SegmentTime, { text: '1:23.45' }),
+      onPointerDown: down, onPointerUp: up,
+      scrambleSlot: createElement('span', { className: 'scramble-moves' }, 'R U'),
+      children: createElement('textarea', { 'data-no-timer': true }),
+    })));
+    const colon = host.querySelector('.timer-colon')!;
+    const moves = host.querySelector('.scramble-moves')!;
+    const input = host.querySelector('textarea')!;
+    for (const type of ['touchstart', 'selectstart', 'contextmenu']) {
+      for (const target of [colon, moves]) {
+        expect(target.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }))).toBe(false);
+      }
+      expect(input.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }))).toBe(true);
+    }
+    colon.dispatchEvent(new Event('pointerdown', { bubbles: true, cancelable: true }));
+    colon.dispatchEvent(new Event('pointerup', { bubbles: true, cancelable: true }));
+    expect(down).toHaveBeenCalledTimes(1);
+    expect(up).toHaveBeenCalledTimes(1);
+    const stripAction = vi.fn();
+    const strip = moves.parentElement!;
+    strip.setAttribute('data-interactive', 'true');
+    strip.addEventListener('click', stripAction);
+    expect(moves.dispatchEvent(new Event('touchstart', { bubbles: true, cancelable: true }))).toBe(true);
+    moves.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(stripAction).toHaveBeenCalledTimes(1);
+    expect(moves.dispatchEvent(new Event('contextmenu', { bubbles: true, cancelable: true }))).toBe(false);
+    await act(async () => root.render(null));
+    expect(colon.dispatchEvent(new Event('contextmenu', { bubbles: true, cancelable: true }))).toBe(true);
+  });
 });

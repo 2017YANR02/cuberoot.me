@@ -80,6 +80,7 @@ beforeEach(async () => {
   localStorage.clear();
   const data = createTimerStoreData(Date.now(), 'test-session', 'en');
   data.settings = { ...data.settings, event: '333', language: 'en', liveCubeView: '3d',
+    scrambleClickAction: 'copy',
     recordGyro: true, autoRecap: true, bluetoothAutoReady: 'scrambled', inspectionSec: 0,
     showCubePreview: false, wcaUseOptimal: false };
   memory.data = data;
@@ -102,6 +103,45 @@ afterEach(async () => {
 });
 
 describe('installed App GAN lifecycle integration', () => {
+  it.each(['touch', 'mouse'])('keeps legacy copy settings inert and %s digit presses on the real timer', async (pointerType) => {
+    const clipboard = vi.spyOn(host, 'writeClipboardText');
+    const scramble = container.querySelector<HTMLElement>('.scramble-moves')!;
+    const originalScramble = scramble.textContent;
+    await act(async () => scramble.click());
+    expect(clipboard).not.toHaveBeenCalled();
+    expect(scramble.textContent).toBe(originalScramble);
+    expect(scramble.closest('[data-interactive="true"]')).toBeNull();
+    for (const type of ['touchstart', 'selectstart', 'contextmenu']) {
+      expect(scramble.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }))).toBe(false);
+    }
+    const digits = container.querySelector<HTMLElement>('.timer-display-value')!;
+    const pointer = async (type: string, x = 100) => act(async () => {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperties(event, {
+        pointerType: { value: pointerType }, pointerId: { value: 1 }, button: { value: 0 },
+        clientX: { value: x }, clientY: { value: 100 },
+      });
+      digits.dispatchEvent(event);
+    });
+    await pointer('pointerdown');
+    expect(phase).toBe('holding');
+    await pointer('pointermove', 220);
+    expect(container.querySelector('.gesture-wheel.is-visible')).toBeNull();
+    await act(async () => { await new Promise((done) => setTimeout(done, 650)); });
+    expect(phase).toBe('ready');
+    now = 2_000;
+    await pointer('pointerup', 220);
+    expect(phase).toBe('running');
+    now = 2_600;
+    await pointer('pointerdown');
+    await pointer('pointerup');
+    await settle();
+    expect(phase).toBe('stopped');
+    expect(saved()).toHaveLength(1);
+    expect(saved()[0].timeMs).toBe(600);
+    expect(clipboard).not.toHaveBeenCalled();
+  });
+
   it('routes the live cube, first/final turns, recorded gyro, saved recap and full history report', async () => {
     expect(container.querySelector('[aria-label="Live 3D smart-cube state"]')).not.toBeNull();
     await act(async () => move('R', 1_000));

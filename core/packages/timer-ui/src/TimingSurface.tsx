@@ -7,6 +7,7 @@
  */
 
 import {
+  useEffect,
   useLayoutEffect,
   useRef,
   type MouseEvent as ReactMouseEvent,
@@ -61,6 +62,31 @@ export default function TimingSurface({
   const running = phase === 'running';
   const coreRef = useRef<HTMLDivElement>(null);
   const readoutRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    // The digits are a timing control. Cancel native long-press/selection
+    // defaults without swallowing the pointer events used to start/stop.
+    // A native non-passive listener is required to cancel touch defaults.
+    const preventDefault = (event: Event) => {
+      if (!(event.target instanceof Element)) return;
+      const digits = event.target.closest('.timer-display');
+      const moves = event.target.closest('.scramble-moves');
+      if (!digits && !moves) return;
+      // Explicit Web scramble actions still need their synthesized click.
+      if (event.type === 'touchstart' && !digits
+        && moves?.closest('[data-interactive="true"]')) return;
+      event.preventDefault();
+    };
+    surface.addEventListener('touchstart', preventDefault, { passive: false });
+    surface.addEventListener('selectstart', preventDefault);
+    surface.addEventListener('contextmenu', preventDefault);
+    return () => {
+      surface.removeEventListener('touchstart', preventDefault);
+      surface.removeEventListener('selectstart', preventDefault);
+      surface.removeEventListener('contextmenu', preventDefault);
+    };
+  }, [surfaceRef]);
   useLayoutEffect(() => {
     const core = coreRef.current;
     const readout = readoutRef.current;

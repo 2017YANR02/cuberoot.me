@@ -567,8 +567,6 @@ export function App({ host }: { host: InstalledAppHost }) {
   }>>([]);
   const retryingPendingSolveRef = useRef(false);
   const [retryingPendingSolve, setRetryingPendingSolve] = useState(false);
-  const [scrambleCopied, setScrambleCopied] = useState(false);
-  const scrambleCopiedTimerRef = useRef<number | null>(null);
   const [undoToast, setUndoToast] = useState<{ message: string; undo(): void } | null>(null);
   const [historyDetail, setHistoryDetail] = useState<{
     autoFocusComment: boolean;
@@ -3162,30 +3160,6 @@ export function App({ host }: { host: InstalledAppHost }) {
     openHistorySolveDetail(last, true);
   }, [openHistorySolveDetail]);
 
-  const copyCurrentScramble = useCallback(() => {
-    const entry = scrambleHistoryRef.current.list[scrambleHistoryRef.current.idx];
-    if (!entry?.scramble) return;
-    void host.writeClipboardText(formatScrambleForEvent(entry.event, entry.scramble))
-      .then(() => {
-        announce(copy.copiedScramble);
-        setScrambleCopied(true);
-        if (scrambleCopiedTimerRef.current !== null) {
-          window.clearTimeout(scrambleCopiedTimerRef.current);
-        }
-        scrambleCopiedTimerRef.current = window.setTimeout(() => {
-          scrambleCopiedTimerRef.current = null;
-          setScrambleCopied(false);
-        }, 1200);
-      })
-      .catch(() => announce(copy.actionFailed));
-  }, [announce, copy.actionFailed, copy.copiedScramble, host]);
-
-  useEffect(() => () => {
-    if (scrambleCopiedTimerRef.current !== null) {
-      window.clearTimeout(scrambleCopiedTimerRef.current);
-    }
-  }, []);
-
   const copyHistoryScramble = useCallback((solve: Solve) => {
     void host.writeClipboardText(timerHistoryCopyText(solve))
       .then(() => announce(copy.copiedScramble))
@@ -3539,7 +3513,6 @@ export function App({ host }: { host: InstalledAppHost }) {
     'prev-scramble': previousDisplayedScramble,
     'comment-last': commentLastSolve,
     'delete-last': deleteLastSolve,
-    'copy-scramble': copyCurrentScramble,
   };
 
   const { wheelRef: gestureWheelRef } = useGestureWheel({
@@ -3553,7 +3526,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     enabledFor: () => timerGestureActionStates({
       hasLastSolve: solvesRef.current.length > 0,
       hasPreviousScramble: scrambleHistoryRef.current.idx > 0,
-    }).map((action) => action.enabled),
+    }).map((action) => action.enabled && action.id !== 'copy-scramble'),
     fireAction: (direction) => {
       const action = timerGestureActionAt(direction);
       if (action) gestureActionsRef.current[action.id]?.();
@@ -3588,8 +3561,11 @@ export function App({ host }: { host: InstalledAppHost }) {
     );
   }
 
+  // Legacy copy preferences must never make the timing page copy a scramble.
+  const scrambleClickAction = store!.settings.scrambleClickAction === 'copy'
+    ? 'none' : store!.settings.scrambleClickAction;
   const scrambleClickEffect = timerScrambleClickEffect(
-    store!.settings.scrambleClickAction,
+    scrambleClickAction,
     scramble.length > 0,
     scrambleReady,
     scrambleStatus?.retryable === true && currentScrambleEntry !== undefined,
@@ -3913,7 +3889,6 @@ export function App({ host }: { host: InstalledAppHost }) {
                 phase={timer.machine.phase}
                 scrambleSlot={(
                   <TimerScrambleStrip
-                    copied={scrambleCopied}
                     copiedLabel={copy.copied}
                     correctionActive={smartCubeGuidance.correctionActive}
                     fallback={scrambleText}
@@ -3924,9 +3899,8 @@ export function App({ host }: { host: InstalledAppHost }) {
                       label: TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalLabel[language],
                       title: TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalTitle[language],
                     } : undefined}
-                    onActivate={scrambleClickEffect === 'next'
-                      ? nextDisplayedScramble
-                      : scrambleClickEffect === 'copy' ? copyCurrentScramble : undefined}
+                    onActivate={scrambleClickEffect === 'next' ? nextDisplayedScramble : undefined}
+                    title={TIMER_SCRAMBLE_CLICK_TITLE_COPY[scrambleClickEffect][language]}
                     scramble={scrambleReady && scramble.length > 0 ? scrambleText : ''}
                     status={scrambleStatus
                       ? scrambleStatus.retryable && currentScrambleEntry
@@ -3943,7 +3917,6 @@ export function App({ host }: { host: InstalledAppHost }) {
                             message: scrambleStatus.message[language],
                           }
                       : undefined}
-                    title={TIMER_SCRAMBLE_CLICK_TITLE_COPY[scrambleClickEffect][language]}
                     verificationLabels={{
                       copiedCorrection: copy.scrambleCorrectionCopied,
                       correction: copy.scrambleCorrection,
@@ -4645,9 +4618,10 @@ export function App({ host }: { host: InstalledAppHost }) {
                 value={store!.settings}
               />
               <TimerScrambleClickActionSetting
+                allowCopy={false}
                 localize={(value) => value[language]}
                 onChange={(scrambleClickAction) => updateSettings({ scrambleClickAction })}
-                value={store!.settings.scrambleClickAction}
+                value={scrambleClickAction}
               />
             </section>
 

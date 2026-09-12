@@ -18,6 +18,12 @@
 
 本节是移动端工作的进度账本。只有完成实现并取得对应验证证据后才打勾；只完成代码但缺少真机、账号或商店证据的项目保持未勾选，并注明依赖条件。
 
+### 2026-09-12 计时输入防干扰
+
+所有者要求五端 App 按数字只计时、当前打乱不可复制。数字区从共享轮盘触发目标中排除；`TimingSurface` 对数字和打乱正文拦截原生长按/选择菜单。App 不再执行当前打乱复制，旧 `copy` 偏好按 `none` 生效，设置保留 `none/next`。历史和邀请的显式复制仍由原有入口处理。该决定取代早期当前打乱三动作的验收目标，完整计时 parity 仍未完成。
+
+证据：共享输入/设置 3 files / 27 tests、App 真实鼠标/触摸计时及原失败组单独复跑 3 files / 15 tests、设置/来源守卫 2 files / 14 tests 通过；App 全集首次 292 passed / 5 failed，失败的三文件已单独复跑通过；Mobile 宿主 20 tests、Desktop 宿主 2 tests 通过。相关类型检查、Mobile/Desktop/Harmony Web build、Android/iOS Web 资源同步通过。Chrome 152/CDP 在 390px 以真实触摸输入连续两次长按、拖移、松手起表、按下停表，轮盘未出现、剪贴板零写入、选择文本为空、横向溢出为零；独立反例审查无阻断项。Android `assembleDebug`、iOS Simulator `xcodebuild`、Harmony `assembleHap` 与 macOS `tauri build --bundles app --no-sign` 已通过，iOS/HAP/macOS 产物未签名；`hdc list targets` 为 `[Empty]`。各平台新包尚未安装/发布，浏览器证据不替代真机原生菜单验收，Windows 原生构建仍需 Windows 环境。
+
 ### 阶段 0：身份、账号和合规底座
 
 - [x] 发布者采用组织路线；现有公司和营业执照可用于后续组织验证。
