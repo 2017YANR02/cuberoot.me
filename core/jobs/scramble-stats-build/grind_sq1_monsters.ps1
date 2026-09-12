@@ -33,6 +33,7 @@ param(
   [int]$Split = 0
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'stats_progress.ps1')
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
 try { (Get-Process -Id $PID).PriorityClass = 'BelowNormal' } catch {}
 
@@ -136,8 +137,8 @@ foreach ($l in [IO.File]::ReadLines($mon)) {
   if (-not $seen.Add($id)) { continue }
   if ($stillM.Contains($id)) { [void]$todo.Add($l) }
 }
-Write-Host "怪物清单 $($seen.Count) 条;仍待解 $($todo.Count);已解 $($seen.Count - $todo.Count)"
-if ($todo.Count -eq 0) { Write-Host '全部怪物已解 ✓  发布:update_cross_stats.ps1 -Jobs puzzles -Puzzles sq1'; exit 0 }
+Write-Host "SQ1 难题剩余 $($todo.Count) 条"
+if ($todo.Count -eq 0) { Write-Host 'SQ1 难题已全部完成'; exit 0 }
 
 # ---- 写 chunk(小块 ⇒ 慢解也勤落盘可续)----
 Get-ChildItem $work -Filter '*.txt' -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
@@ -153,21 +154,15 @@ $env:ANALYZER_PROGRESS_FILE  = $progf
 $env:ANALYZER_PROGRESS_EVERY = '1'
 $env:ANALYZER_PROGRESS_TOTAL = "$($todo.Count)"
 $env:ANALYZER_PROGRESS_BASE  = '0'
-$modeStr = if ($Split -gt 0) { "并行 root-split(split=$Split,单条吃满 $Threads 核)" } else { "串行 $Threads 线程(跨打乱并行)" }
-Write-Host "分 $($chunkPaths.Count) 块(每块 $ChunkSize)、$modeStr、TT $([math]::Round($TtBudget/1e6))M、超时 $(if($TimeoutSecs){"${TimeoutSecs}s/条"}else{'关(死磕到最优)'})。"
-Write-Host "实时:Get-Content $progf -Wait -Tail 20"
+
 
 # ---- 单次载表、逐块解(13GB 表只载一次)----
 $stdin = ($chunkPaths -join "`n") + "`nexit`n"
-$stdin | & $exe 2> $logf
-$code = $LASTEXITCODE
+$code = Invoke-StatsAnalyzer -Executable $exe -InputText $stdin -LogPath $logf
 
 # ---- 合并本轮结果 ----
 $r = Merge-Results
 $solved = $r[0]; $stillMonster = $r[1]; $maxWca = $r[2]
 $leftNow = $todo.Count - $solved
-Write-Host "本轮:解出 $solved 条$(if($stillMonster){",仍超时 $stillMonster 留 M"});合并回 $out。剩 $leftNow 待解。"
-if ($maxWca -gt 0) { Write-Host "本轮最深 WCA = $maxWca(D_WCA 经验下界候选)。" }
-if ($code -ne 0 -and $TimeoutSecs -eq 0) { Write-Host "⚠ analyzer 退出码 $code(已合并完成的,可重跑续啃)。" }
-if ($leftNow -gt 0) { Write-Host "再跑本脚本续啃(尾巴硬就 -Threads 1 让它独占 TT)。全清后:update_cross_stats.ps1 -Jobs puzzles -Puzzles sq1" }
-else { Write-Host "✓ 怪物全清!发布:update_cross_stats.ps1 -Jobs puzzles -Puzzles sq1" }
+Write-Host "本轮完成 $solved 条，还剩 $leftNow 条"
+if ($code -ne 0 -and $TimeoutSecs -eq 0) { Write-Host "计算中断，已保存完成部分。详情：$logf" }

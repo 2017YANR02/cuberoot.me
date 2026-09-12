@@ -65,29 +65,7 @@ trap {
   exit 1
 }
 
-# ---- 长跑进度: 一行, 不刷屏 ----
-# 用于所有"每 N 条打一行"的子进程(analyzer 的 [PROG]、333opt solve.mjs 的 [done/total])。
-# 真人终端: \r 就地重写同一行(逐行 Write-Host 会刷几百屏)。
-# 非 tty(AI/CI/日志): \r 在日志里是垃圾字符 -> 退回"每 5min 打一行", 免几十分钟静默像卡死。
-$script:progTick = Get-Date
-$script:progOpen = $false   # 当前行是否停在未换行的进度行上(决定 Write-ProgEnd 要不要补换行)
-function Write-Prog {
-  param([string]$Text)
-  if($HumanTerm){
-    Write-Host ("`r  " + $Text.PadRight(64)) -NoNewline
-    $script:progOpen = $true
-    return
-  }
-  $now = Get-Date
-  if(($now - $script:progTick).TotalMinutes -ge 5){
-    Write-Host "  $Text  $($now.ToString('HH:mm:ss'))"
-    $script:progTick = $now
-  }
-}
-# 收尾换行, 后续输出不接在进度行尾。幂等: 没开着进度行就什么都不做(免平白多出空行)。
-function Write-ProgEnd {
-  if($HumanTerm -and $script:progOpen){ Write-Host ''; $script:progOpen = $false }
-}
+. (Join-Path $PSScriptRoot 'stats_progress.ps1')
 
 # ---- 本机算力限额 (全局规则: 重计算最多 7 核 14 线程, 留 1 核给系统; 长跑进程低优先级) ----
 # solver 各 analyzer 走 rayon 全局池 (executor.rs par_iter), 无自建 ThreadPoolBuilder, 故 RAYON_NUM_THREADS 直接钉死线程数。
@@ -1164,7 +1142,7 @@ if($NoPublish){
     if($optChanged){ $parts += '333-optimal' }
     if($puzzleChanged){ $parts += "puzzles: $($Puzzles -join '/')" }
     if($eventsChanged){ $parts += 'recent-events' }
-    git -C $RepoRoot commit -m "chore(scramble-stats): incremental refresh ($($parts -join ', '))"
+    git -C $RepoRoot commit --quiet -m "chore(scramble-stats): incremental refresh ($($parts -join ', '))"
     if($LASTEXITCODE -ne 0){ throw 'git commit 失败' }
     git -C $RepoRoot push origin main
     if($LASTEXITCODE -ne 0){ throw 'git push 失败' }
