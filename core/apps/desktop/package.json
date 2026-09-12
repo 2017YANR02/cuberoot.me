@@ -7,10 +7,11 @@
     "kind": "app"
   },
   "scripts": {
-    "dev": "node ../../scripts/build-cubing-worker.mjs apps/desktop/public/cubing-chunks && vite --host 127.0.0.1 --port 1420",
-    "build": "tsc --noEmit && node ../../scripts/build-cubing-worker.mjs apps/desktop/public/cubing-chunks && vite build",
+    "build:deps": "pnpm --filter @cuberoot/visualcube build",
+    "dev": "pnpm run build:deps && node ../../scripts/build-cubing-worker.mjs apps/desktop/public/cubing-chunks && vite --host 127.0.0.1 --port 1420",
+    "build": "pnpm run build:deps && tsc --noEmit && node ../../scripts/build-cubing-worker.mjs apps/desktop/public/cubing-chunks && vite build",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "pnpm run build:deps && tsc --noEmit",
     "tauri": "tauri",
     "tauri:build": "tauri build"
   },
