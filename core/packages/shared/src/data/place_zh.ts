@@ -10,6 +10,8 @@ export const PLACE_CITY_ZH: Record<string, string> = {
   "AR:misiones": "米西奥内斯省",
   "NL:apeldoorn": "阿珀尔多伦",
   // 手补(重跑 gen 需离线 GeoNames dump,本机暂缺;源已入 scripts/place-tail-zh.json,重跑会归位重排):
+  // Thurles: TUS 中文介绍及中文维基「瑟勒斯」同名。
+  "IE:thurles": "瑟勒斯",
   // 下面三条译名取自 Wikidata zh-hans 标签 / 中文维基条目名,非音译臆造:
   //   Aleksandrów Łódzki = Q664371 zh-hans;Helsingborg = Q25411 zh-hans;
   //   Jhenaidah 无 Wikidata 中文标签,取中文维基「切尼达县」(Q2188750)的地名部分。

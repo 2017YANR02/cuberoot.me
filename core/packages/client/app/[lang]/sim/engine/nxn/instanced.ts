@@ -1,2 +1,2 @@
-export { default } from '@/components/puzzle-models/nxn/instanced';
-export * from '@/components/puzzle-models/nxn/instanced';
+export { default } from '@cuberoot/puzzle-render-core/engine/nxn/instanced';
+export * from '@cuberoot/puzzle-render-core/engine/nxn/instanced';

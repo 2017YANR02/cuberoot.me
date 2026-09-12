@@ -97,7 +97,7 @@ export default function SocialCallbackPage() {
       pendingActions={<div className="auth-callback-status__actions"><button type="button" className="auth-callback-status__retry" onClick={cancel}>{tr({ zh: '取消等待', en: 'Cancel waiting' })}</button></div>}
     >
       <div className="auth-callback-status__actions">
-        <button type="button" className="auth-callback-status__retry" onClick={() => router.replace(returnPath)}>{tr({ zh: '返回账号页面重试', en: 'Return to account and retry' })}</button>
+        <a className="auth-callback-status__retry" href={returnPath}>{tr({ zh: '返回账号页面重试', en: 'Return to account and retry' })}</a>
       </div>
     </AuthCallbackStatus>
   );

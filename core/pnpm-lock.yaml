@@ -522,9 +522,6 @@ importers:
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../shared
-      '@cuberoot/stack-kernel':
-        specifier: workspace:*
-        version: link:../stack-kernel
       '@cuberoot/timer-ui':
         specifier: workspace:*
         version: link:../timer-ui

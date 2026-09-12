@@ -210,6 +210,16 @@
 
 ### 阶段 6：账号、同步和合规闭环
 
+2026-09-11 生产部署证据（不替代真人授权或商店发布）：
+
+- 登录与共享复盘源码已推送为 `83ef9a85d94d122cac059a2610f38fa1cf90c56a`；Deploy Core `34660153874`、Deploy Next `34660153841` 与该 SHA 的 Vercel deployment 均成功。服务器活动 API release 包含同一 SHA；健康接口为 `ok / connected`，最优求解器 warm-up 后 `ready: true`。
+- `0231_auth_apple_token.sql` 已由部署 migration runner 应用，生产 ledger 的 SHA-256 与仓库一致（`62f6c5736058a01ff68f072c094ecc3f37b347c255dcda55a98fc3161012b998`）；两列分别为 `bytea` / `smallint`。Apple 签名私钥和独立 token 加密密钥仅在服务器受控环境保存，配置文件权限 `600`，不进 Git、前端或 App。
+- 公开 `/v1/auth/providers` 已返回 `apple: true`；真实授权接口返回正确 Services ID / HTTPS callback，带有效 state 的取消回调返回 canonical 网站。隔离的未登录 Chrome 实点生产中文账号页「通过 Apple 登录」，到达 Apple 官方「Sign in to Apple Account」并显示 CubeRoot Web Login，无页面异常；未输入个人凭据、未创建或绑定账号。
+- 真实 Apple 首次/再次授权、隐藏邮箱、App 回跳、绑定/解绑、撤销及注销仍待验，以下相关勾选保持未完成。网站部署不会替换手机内已打包代码；本次不是 TestFlight 或 App Store 发布。
+- 此次干净 CI 暴露 Desktop 缺少共享依赖预构建；`18aecdfbb` 只补 `visualcube` 后，干净 CI 进一步暴露它依赖的 `shared/dist` 尚未生成。后续本地修复让 Desktop 的 dev/build/typecheck/test 共用 `puzzle-solvers → shared → visualcube → puzzle-render-core` 构建顺序。独立 `git archive` 目录与离线 frozen install、不复用原工作区 node_modules/dist：旧命令准确复现失败，修复后的 production build、typecheck 与 Desktop 2/2 测试通过；仍未证明 Windows/macOS 原生 CI 已通过。
+- 所有者确认后，本地清理了 14 个旧文件和 client 的冗余 `stack-kernel` 直接依赖。5 个 sim 二级兼容入口先改为直指公开 renderer 出口，再删除中间层，避免 Knip 对 sim 的既有排除漏报断引用；实际共享报告、CSS、NxN 引擎与 renderer 的 `stack-kernel` 依赖均保留。新增入口回归检查、删除后 Knip 和 client typecheck 已通过；清理可从 Git 恢复，不涉及用户成绩、密钥或生产数据。
+- 所有者先暂停 push，随后再次明确授权发布本轮清理与修复。删除后类型检查、Knip、全部 4 条复盘真值和定向回归通过；部署契约仍保留间接依赖 `stack-kernel` 的必要触发路径。后续以精确提交 SHA 的 CI/部署结果补记，不把本地通过写成远端全绿。
+
 - [x] 原生安全会话交接固定为系统浏览器复用网站唯一 `LoginForm`；Account iframe 的邮箱/手机/密码和全部 SSO 交互都委托该 Browser PKCE 流。provider-null 交接只显示第一方凭据，provider-tagged 交接显示 canonical SSO 列表，不另建 Mobile 表单。
 - [ ] 底栏“我的”使用未改写的 `/account` 并完整显示网站当前 provider 集；源码已移除 `auth=mobile`，待 Android 重装、iOS 和全 provider 真实账号验证。
 - [ ] Account iframe、系统浏览器与 Keychain/Keystore 安全会话的登录、退出和注销双向同步完成。源码已接 Browser PKCE→secure session→90 秒 web ticket→iframe、iframe logout/delete→native clear、App logout→iframe clear；不传长期 JWT，不建第二套表单。待部署与 Android/iOS 全 provider E2E；iframe-only 旧会话和外部 Browser 独立 logout 仍未自动衔接。
