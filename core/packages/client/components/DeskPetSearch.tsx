@@ -6,7 +6,8 @@
 // the site-search data layer only loads when the user actually opens search.
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Check, Maximize2, Coffee, Sun, Heart, Home, Sparkles, Shuffle, MessageSquarePlus, Music, Share2 } from 'lucide-react';
+import { Check, Lock, LockOpen, ArrowLeft, ArrowRight, Pencil, Trash2, RotateCcw, Maximize2, Coffee, Sun, Heart, Home, Sparkles, Shuffle, MessageSquarePlus, Music, Share2 } from 'lucide-react';
+import type { DeskPetEntry } from '@cuberoot/shared/deskpet';
 import { CompactSelect } from '@/components/CompactSelect';
 import BoolToggle from '@/components/BoolToggle';
 import HomeLink from '@/components/HomeLink';
@@ -50,7 +51,19 @@ const CSS = `
 .deskpet-character-label{display:flex;flex-direction:column;align-items:center;gap:4px;}
 .deskpet-toolbar .char-btn .compact-select-arrow{display:none;}
 /* anchored-panel: clamped (CompactSelect body portal and visualViewport bounds) */
-.deskpet-character-menu{z-index:100030;}
+.deskpet-character-menu{z-index:100030;width:min(360px,calc(100vw - 16px));}
+.deskpet-character-menu .compact-select-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;}
+.deskpet-character-menu .compact-select-options .compact-select-option{justify-content:center;padding:10px 4px;min-width:0;}
+.deskpet-character-menu .compact-select-options .deskpet-character-option{flex-direction:column;gap:4px;white-space:normal;text-align:center;overflow-wrap:anywhere;}
+.deskpet-character-admin{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0;border-top:1px solid var(--border-default);}
+.deskpet-character-admin button{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;padding:6px;border:0;border-radius:6px;background:var(--muted);color:var(--foreground);font:inherit;cursor:pointer;}
+.deskpet-character-admin button:disabled{opacity:.45;cursor:default;}
+.deskpet-character-admin form{display:flex;flex-wrap:wrap;gap:6px;width:100%;}
+.deskpet-character-admin label{display:flex;flex-direction:column;gap:4px;width:100%;}
+.deskpet-character-admin input{min-width:0;width:100%;padding:6px;background:var(--background);color:var(--foreground);border:1px solid var(--border-default);border-radius:4px;}
+.deskpet-character-status{display:flex;align-items:center;gap:4px;min-height:14px;color:var(--muted-foreground);}
+.deskpet-character-error{color:var(--destructive);font-size:12px;}
+
 .deskpet-character-menu .compact-select-option{padding:6px 10px;}
 .deskpet-character-option{display:flex;align-items:center;gap:10px;white-space:nowrap;min-height:32px;}
 .deskpet-character-thumb{display:flex;align-items:center;justify-content:center;width:32px;height:32px;overflow:hidden;flex:none;}
@@ -98,6 +111,7 @@ export default function DeskPetSearch({
   onClose,
   character,
   characters,
+  catalogAdmin, catalogDisabled, catalogError, onUpdateCatalog,
   size,
   resting,
   onSelectChar,
@@ -113,7 +127,11 @@ export default function DeskPetSearch({
   origin?: { x: number; y: number } | null;
   onClose: () => void;
   character: string;
-  characters: { id: string; label: { zh: string; en: string }; thumb: string; thumbScale?: number }[];
+  characters: (DeskPetEntry & { label: { zh: string; en: string }; thumb: string; thumbScale?: number })[];
+  catalogAdmin: boolean;
+  catalogDisabled: boolean;
+  catalogError: boolean;
+  onUpdateCatalog: (entries: DeskPetEntry[]) => Promise<boolean>;
   size: 's' | 'm' | 'l';
   resting: boolean;
   onSelectChar: (character: string) => void;
@@ -142,6 +160,20 @@ export default function DeskPetSearch({
   const zh = lang === 'zh';
   const t = (z: string, e: string) => (zh ? z : e);
   const currentCharacter = characters.find(item => item.id === character);
+  const [editingName, setEditingName] = useState(false);
+  const [nameZh, setNameZh] = useState('');
+  const [nameEn, setNameEn] = useState('');
+  useEffect(() => { setEditingName(false); }, [character]);
+  const catalogEntries = () => characters.map(({ id, locked, removed, label }) => ({ id, locked, removed, label }));
+  const patchCharacter = (patch: Partial<DeskPetEntry>) => onUpdateCatalog(catalogEntries().map(entry => entry.id === character ? { ...entry, ...patch } : entry));
+  const moveCharacter = (delta: number) => {
+    const entries = catalogEntries();
+    const index = entries.findIndex(entry => entry.id === character);
+    const target = index + delta;
+    if (index < 0 || target < 0 || target >= entries.length) return;
+    [entries[index], entries[target]] = [entries[target], entries[index]];
+    void onUpdateCatalog(entries);
+  };
 
   // Entrance: the box grows from the pet's position out to its centered spot.
   useLayoutEffect(() => {
@@ -323,12 +355,35 @@ export default function DeskPetSearch({
                 <img src={item.thumb} alt="" style={{ transform: `scale(${item.thumbScale ?? 1})` }} />
               </span>
               <span>{tr(item.label)}</span>
-              <Check size={14} className="deskpet-character-check" aria-hidden
-                style={{ visibility: item.id === character ? 'visible' : 'hidden' }} />
+              <span className="deskpet-character-status">
+                <Check size={14} className="deskpet-character-check" aria-hidden
+                  style={{ visibility: item.id === character ? 'visible' : 'hidden' }} />
+                {catalogAdmin && (item.removed ? <Trash2 size={14} aria-label={tr({ zh: '已移除', en: 'Removed' })} /> : item.locked ? <Lock size={14} aria-label={tr({ zh: '仅管理员可见', en: 'Admin only' })} /> : <LockOpen size={14} aria-label={tr({ zh: '已开放', en: 'Public' })} />)}
+              </span>
             </span>,
           }))}
           footer={close => (
             <>
+              {catalogAdmin && currentCharacter && <div className="deskpet-character-admin">
+                <button type="button" disabled={catalogDisabled || currentCharacter.removed} onClick={() => { void patchCharacter({ locked: !currentCharacter.locked }); }}>
+                  {currentCharacter.locked ? <Lock size={14} /> : <LockOpen size={14} />}
+                  {currentCharacter.locked ? tr({ zh: '开放', en: 'Make public' }) : tr({ zh: '锁定', en: 'Lock' })}
+                </button>
+                <button type="button" disabled={catalogDisabled || characters[0]?.id === character} onClick={() => moveCharacter(-1)} aria-label={tr({ zh: '向前移动', en: 'Move earlier' })}><ArrowLeft size={14} /></button>
+                <button type="button" disabled={catalogDisabled || characters.at(-1)?.id === character} onClick={() => moveCharacter(1)} aria-label={tr({ zh: '向后移动', en: 'Move later' })}><ArrowRight size={14} /></button>
+                <button type="button" disabled={catalogDisabled} onClick={() => { setNameZh(currentCharacter.label.zh); setNameEn(currentCharacter.label.en); setEditingName(true); }}><Pencil size={14} />{tr({ zh: '名称', en: 'Name' })}</button>
+                <button type="button" disabled={catalogDisabled} onClick={() => { void patchCharacter({ removed: !currentCharacter.removed, locked: true }); }}>
+                  {currentCharacter.removed ? <RotateCcw size={14} /> : <Trash2 size={14} />}
+                  {currentCharacter.removed ? tr({ zh: '恢复', en: 'Restore' }) : tr({ zh: '移除', en: 'Remove' })}
+                </button>
+                {editingName && <form onSubmit={event => { event.preventDefault(); void patchCharacter({ label: { zh: nameZh.trim(), en: nameEn.trim() } }).then(saved => { if (saved) setEditingName(false); }); }}>
+                  <label>{tr({ zh: '中文名称', en: 'Chinese name' })}<input value={nameZh} maxLength={80} onChange={event => setNameZh(event.target.value)} /></label>
+                  <label>{tr({ zh: '英文名称', en: 'English name' })}<input value={nameEn} maxLength={80} onChange={event => setNameEn(event.target.value)} /></label>
+                  <button type="submit" disabled={catalogDisabled || !nameZh.trim() || !nameEn.trim()}>{tr({ zh: '保存', en: 'Save' })}</button>
+                  <button type="button" onClick={() => setEditingName(false)}>{tr({ zh: '取消', en: 'Cancel' })}</button>
+                </form>}
+                {catalogError && <span className="deskpet-character-error" role="alert">{tr({ zh: '配置加载或保存失败，请重新打开后重试。', en: 'Could not load or save settings. Reopen and retry.' })}</span>}
+              </div>}
               <div className="deskpet-character-gallery">
                 <button type="button" className="compact-select-option" onClick={() => { close(); onOpenPetHome(); }}>
                   <span className="deskpet-character-option"><span className="deskpet-character-thumb" aria-hidden><Home size={18} /></span>

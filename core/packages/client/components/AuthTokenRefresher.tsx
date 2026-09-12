@@ -10,6 +10,7 @@ import { useLiveUrlSuffix } from '@/hooks/useLiveUrlSuffix';
 import { CompactSelect } from './CompactSelect';
 import { useT } from '@/hooks/useT';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
+import { adminEnvironment } from '@/lib/admin-environment';
 import './glass-material.css';
 
 /**
@@ -115,6 +116,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   const admin = ready && !!user && isAdmin();
   const roleTesting = ready && (!!preview || (!!user && canTestRoles()));
   if (!ready || (!admin && !roleTesting)) return null;
+  const environment = adminEnvironment(window.location.hostname, navigator);
   const items = [
     { value: 'superadmin' as const, label: t('超级管理员', 'Super administrator') },
     { value: 'admin' as const, label: t('管理员', 'Administrator') },
@@ -133,6 +135,11 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     finally { setBusy(false); }
   };
   return <aside ref={toolbarRef} className="admin-tools" data-expanded={expanded} aria-label={t('管理工具', 'Admin tools')}
+    onPointerEnter={event => {
+      if (event.pointerType !== 'mouse') return;
+      cancelCollapse();
+      setExpanded(true);
+    }}
     onBlur={event => {
       if (!event.currentTarget.contains(event.relatedTarget as Node | null)
         && !(event.relatedTarget as Element | null)?.closest?.('.admin-tools-role-popup')) collapse();
@@ -182,9 +189,9 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       </AppLink>
       {liveUrlSuffix && <div className="admin-env-switch" role="group" aria-label={t('切换环境', 'Switch environment')}>
         {[
-          { env: 'local', origin: 'http://localhost:3000', label: t('切换到本地', 'Switch to local'), Icon: Laptop },
+          { env: 'local', origin: environment.localOrigin, label: t('切换到本地', 'Switch to local'), Icon: Laptop },
           { env: 'prod', origin: 'https://cuberoot.me', label: t('切换到线上', 'Switch to live'), Icon: Globe },
-        ].filter(({ env }) => env !== (['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname) ? 'local' : 'prod'))
+        ].filter(({ env }) => env !== environment.current)
           .map(({ env, origin, label, Icon }) => <a key={env} className="admin-tool-action" href={origin + liveUrlSuffix}
           title={label} aria-label={label}>
           <Icon size={13} aria-hidden />
