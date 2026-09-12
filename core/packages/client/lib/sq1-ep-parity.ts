@@ -1,4 +1,39 @@
+import { applySq1Scramble, type Sq1State } from '@cuberoot/shared/sq1-notation';
+
 export type Sq1EpParity = 'no-parity' | 'parity';
+
+// Canonical slot -> home-slot permutations, modulo a rotation of the face.
+// Both layer arrays run clockwise when viewed directly at their own face.
+// Thus 0231 solves clockwise (Ua / U+), and its inverse 0312 solves U-.
+const EP_PATTERN_BY_PERMUTATION: Record<string, string> = {
+  '0123': 'Solved', '0321': 'Opp', '0132': 'Adj',
+  '0231': 'Ua', '0312': 'Ub', '1230': 'O+', '3012': 'O-',
+  '1302': 'W', '2301': 'H', '1032': 'Z',
+};
+const SOLVED_SQ1 = applySq1Scramble('').pieces;
+
+/** Classify physical EP state after aligning each layer's corners, not its label. */
+export function classifySq1EpState(state: Sq1State): [string, string] | null {
+  if (state.pieces.length !== 24) return null;
+  const labels: string[] = [];
+  for (const layer of [0, 1]) {
+    const reference = SOLVED_SQ1.slice(layer * 12, layer * 12 + 12);
+    const face = state.pieces.slice(layer * 12, layer * 12 + 12);
+    const cornerIds = new Set(reference.filter((piece, i) => piece === reference[(i + 1) % 12]));
+    const shift = Array.from({ length: 12 }, (_, i) => i).find(offset =>
+      reference.every((piece, i) => !cornerIds.has(piece) || face[(i + offset) % 12] === piece));
+    if (shift === undefined) return null;
+    const edgeSlots = layer === 0 ? [2, 5, 8, 11] : [0, 3, 6, 9];
+    const permutation = edgeSlots.map(i => edgeSlots.findIndex(j => reference[j] === face[(i + shift) % 12]));
+    if (new Set(permutation).size !== 4 || permutation.includes(-1)) return null;
+    const key = Array.from({ length: 4 }, (_, rotation) => permutation.map((_, i) =>
+      (permutation[(i + rotation) % 4] - rotation + 4) % 4).join('')).sort()[0];
+    const label = EP_PATTERN_BY_PERMUTATION[key];
+    if (!label) return null;
+    labels.push(label);
+  }
+  return [labels[0], labels[1]];
+}
 
 /**
  * EP pattern parity by layer. Solved/Ua/Ub/Z/H are even permutations;
