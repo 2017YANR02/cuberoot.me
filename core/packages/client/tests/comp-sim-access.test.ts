@@ -47,8 +47,9 @@ describe('competition practice uses forum eligibility', () => {
       const response = await proxy(new NextRequest(`http://localhost${path}`));
       expect(response.status).toBe(307);
       const target = new URL(response.headers.get('location')!);
-      expect(target.pathname.replace(/\/$/, '')).toBe('/auth/page-access');
-      expect(target.searchParams.get('require')).toBe('forum-profile');
+      expect(target.pathname.replace(/\/$/, '')).toBe(path.startsWith('/zh/') ? '/zh/account' : '/account');
+      expect(target.searchParams.has('require')).toBe(false);
+      expect(target.searchParams.get('next')).toBe(path.split('?')[0]);
       expect(target.searchParams.get('next')).not.toContain('_rsc');
       expect(response.headers.get('Cache-Control')).toBe('private, no-store');
     }
