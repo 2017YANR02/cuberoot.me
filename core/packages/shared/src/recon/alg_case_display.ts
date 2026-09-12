@@ -184,6 +184,9 @@ export function displayAlgCaseName(puzzle: string, set: string, name: string): s
   name = name.replace(/\b(anti[\s_-]*sune|sune)\b/gi, token => /^anti/i.test(token) ? 'S-' : 'S+');
   if (puzzle === '2x2' && /^ls[1-9]$/.test(set)) return display2x2LsName(name);
   if (puzzle === 'sq1' && (set === 'cs' || set === 'csp' || set === 'obl')) return displaySq1CsName(name);
+  // SQ1 EP source Ua (3+) / Ub (3-): clockwise / counterclockwise solving
+  // cycles, viewed directly at each face, including the bottom face.
+  if (puzzle === 'sq1' && set === 'ep') return name.replace(/\bU([ab])\b/gi, (_, variant: string) => variant.toLowerCase() === 'a' ? 'U+' : 'U-');
   if (puzzle === '3x3' && set === 'oll') return displayOllName(name);
   if (puzzle === '3x3' && set === 'pll') return displayPllName(name);
   if (puzzle === '3x3' && set === 'zbll') return displayZbllName(name);

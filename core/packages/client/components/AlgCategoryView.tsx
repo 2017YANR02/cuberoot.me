@@ -1470,6 +1470,14 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               onLabel={tr({ zh: '数字命名', en: 'Numeric names' })}
               ariaLabel={tr({ zh: '切换 SQ1 EP 命名方式', en: 'Switch SQ1 EP naming system' })}
             />
+            <InfoTooltip
+              icon={HelpCircle}
+              iconSize={16}
+              content={tr({
+                zh: 'U+：三棱顺时针还原；U-：三棱逆时针还原。上下层均正对该面观察，底层从底面看。',
+                en: 'U+: solve the three-edge cycle clockwise; U-: counterclockwise. View each face directly, including the bottom face from below.',
+              })}
+            />
             <span className="alg-ep-parity-control">
               <BoolToggle
                 value={sq1EpHasParity}
@@ -1524,7 +1532,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                 {isSq1Ep
                   ? (sq1EpNumericNames
                     ? `${sq1EpNumericLayerName(subgroup) ?? subgroup}.*`
-                    : tr({ zh: `上层 ${subgroup}`, en: `Top ${subgroup}` }))
+                    : tr({ zh: `上层 ${displayAlgCaseName(puzzleParam, set, subgroup)}`, en: `Top ${displayAlgCaseName(puzzleParam, set, subgroup)}` }))
                   : (ollByGroup.get(subgroup)
                     ?? displayAlgCaseName(puzzleParam, set, subgroup)
                     ?? tr({ zh: '其他', en: 'Other' }))}
