@@ -199,6 +199,13 @@ jobs:
 
       - name: Verify stats-build producer contracts
         working-directory: core
+        env:
+          STATS_IMPORT_TEST_PG: '1'
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: cuberoot_test
         run: pnpm --filter @cuberoot/stats-build test
 
       - name: Verify puzzle solvers package

@@ -19,6 +19,7 @@
 //   cd /tmp/wca_import && PGPASSWORD=... psql -U recon_user -h 127.0.0.1 -d cuberoot_db -f load.sql
 
 import mysql from 'mysql2/promise';
+import { historicalRanksLoadSql } from '../historical-ranks-load.js';
 import { createWriteStream, mkdirSync, writeFileSync, readFileSync, statSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -503,48 +504,10 @@ async function main() {
   await conn.end();
 
   // ── 3. 写 load.sql:在 server 端原子替换
-  const loadSql = `-- 由 historical_ranks_build.ts 生成,跑在服务器 PG 上
--- 使用方式: cd <此 SQL 所在目录> && psql -U recon_user -h 127.0.0.1 -d cuberoot_db -f load.sql
-
--- historical_best_ranks 可能比 migration 0018 先被本管道触达 → CREATE IF NOT EXISTS 自足
-CREATE TABLE IF NOT EXISTS historical_best_ranks (
-  wca_id VARCHAR(20) NOT NULL, event_id VARCHAR(20) NOT NULL,
-  s_world_rank INTEGER, s_world_value INTEGER, s_world_year SMALLINT,
-  s_cont_rank INTEGER, s_cont_value INTEGER, s_cont_year SMALLINT,
-  s_country_rank INTEGER, s_country_value INTEGER, s_country_year SMALLINT,
-  a_world_rank INTEGER, a_world_value INTEGER, a_world_year SMALLINT,
-  a_cont_rank INTEGER, a_cont_value INTEGER, a_cont_year SMALLINT,
-  a_country_rank INTEGER, a_country_value INTEGER, a_country_year SMALLINT,
-  PRIMARY KEY (wca_id, event_id)
-);
-
-BEGIN;
-
--- 同事务里清空再灌,失败回滚
-TRUNCATE wca_continents CASCADE;
-TRUNCATE wca_countries  CASCADE;
-TRUNCATE wca_persons    CASCADE;
-TRUNCATE historical_ranks_snapshot;
-TRUNCATE historical_ranks_monthly_snapshot;
-TRUNCATE historical_best_ranks;
-
-\\copy wca_continents (id, name) FROM 'wca_continents.copy.tsv';
-\\copy wca_countries (id, iso2, name, continent_id) FROM 'wca_countries.copy.tsv';
-\\copy wca_persons (wca_id, name, country_id, gender) FROM 'wca_persons.copy.tsv';
-\\copy historical_ranks_snapshot (event_id, year, wca_id, single, average, country_id, single_world_rank, single_country_rank, single_continent_rank, avg_world_rank, avg_country_rank, avg_continent_rank, best_single_comp_id, best_single_date, best_single_attempts, best_average_comp_id, best_average_date, best_average_attempts) FROM 'historical_ranks_snapshot.copy.tsv';
-\\copy historical_ranks_monthly_snapshot (event_id, year, month, wca_id, single, average, country_id, single_world_rank, single_country_rank, single_continent_rank, avg_world_rank, avg_country_rank, avg_continent_rank) FROM 'historical_ranks_monthly_snapshot.copy.tsv';
-\\copy historical_best_ranks (wca_id, event_id, s_world_rank, s_world_value, s_world_year, s_cont_rank, s_cont_value, s_cont_year, s_country_rank, s_country_value, s_country_year, a_world_rank, a_world_value, a_world_year, a_cont_rank, a_cont_value, a_cont_year, a_country_rank, a_country_value, a_country_year) FROM 'historical_best_ranks.copy.tsv';
-
-INSERT INTO meta_historical (key, value, updated_at) VALUES ('last_imported_at', NOW()::TEXT, NOW())
-  ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
-
-COMMIT;
-
-ANALYZE wca_persons;
-ANALYZE historical_ranks_snapshot;
-ANALYZE historical_ranks_monthly_snapshot;
-ANALYZE historical_best_ranks;
-`;
+  const loadSql = historicalRanksLoadSql({
+    continents: continents.length, countries: countries.length, persons: persons.length,
+    year: totalYearRows, month: totalMonthRows, best: totalBestRows,
+  });
   writeFileSync(resolve(outDir, 'load.sql'), loadSql);
 
   // ── 4. 总结
