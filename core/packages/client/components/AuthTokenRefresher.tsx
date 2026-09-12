@@ -211,6 +211,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     {roleTesting &&
       <CompactSelect
         openOnHover
+        dismissOnMouseLeave
         popupClassName="admin-tools-role-popup"
         label={preview ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Drama size={17} aria-hidden />{preview.role === 'user' ? t('普通用户', 'User') : items.find(item => item.value === preview.role)?.label}</span> : <Drama size={17} aria-hidden />}
         ariaLabel={busy ? t('正在切换…', 'Switching…') : t('选择测试角色', 'Choose test role')}
