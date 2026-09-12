@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / WY / bin 0
-# Population in this bin: 346
+# Population in this bin: 353
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3012292035,U F2 R' D2 B' D2 B' F D2 L2 R2 B' R D2 R' U R F L' F' D,W,Slovenian Nationals 2023 (2023-08-25~27),333mbf Final A #1
@@ -12,7 +12,7 @@
 4805786038,F D2 U2 B' D2 F L2 D2 L2 B2 U' B2 L' D2 L B2 L2 B' D' B,Y,New York Multimate PBQ II 2025 (2025-06-13~15),333mbf Final B #2
 50335001,D2 L2 D B2 F2 L2 B2 U F2 D B' L2 F D B R' D' U F U,Y,Indian Cube Challenge 2014 (2014-08-15~17),333oh R1 C #2
 4942521041,U2 L' D2 R' D2 B2 R B2 U R B2 R F R2 D' L' B2 R2 B R',W,Rubik's Irish Championship 2025 (2025-08-15~17),333mbf Final A #1
-57905001,U2 B2 D2 B' R2 F2 R2 U2 L2 F R' D R U F' R D F2 R U2 B' L',Y,Champagne Summer Open 2014 (2014-09-13~14),333bf Final B #2
+5806842001,B2 D B2 R' D2 R2 U' L2 D' F2 D2 R D' B' U' B' L' U,W,Slovenian Nationals 2026 (2026-08-28~30),333 R2 A #1
 68264001,B2 D2 L F2 R B2 L B2 F2 D2 L2 F' R' F2 R2 D B' D2 L,W,Rice University 2014 (2014-10-18),333 R2 A #3
 5018305001,U R' F2 R2 D L F2 L' B' D' B2 U L2 D' L2 D' R2 U2 B2 R2,Y,Sandnes Open 2025 (2025-09-13~14),333 R1 B #4
 3815916001,F L B' L B2 D' R2 U' R2 F2 D2 L' U B R D' F2 U' B,Y,Don't Pop Austin 2024 (2024-06-02),333oh R1 B E1
@@ -84,9 +84,9 @@
 709380001,U2 B2 R' D2 F2 R D2 U2 B2 U' L' U L' B R D' U' L2,Y,Annuntia Open 2018 (2018-02-17~18),333 R1 A #5
 714149001,U F2 R2 U' F2 R2 U B2 R U B R2 D B2 L' F L' B' U,W,Berkeley Winter 2018 (2018-02-24~25),333oh Final A E2
 717488001,F L2 U2 R2 F' U2 B F' U R2 D L' U2 R U2 F2 L D' F2,W,Assen Open 2018 (2018-03-03),333 R2 B #1
-722956039,D2 F L2 D2 R2 D2 B U2 R2 U' B R' B' D U' B' U' L2 R' B2 D',W,CubingUSA Heartland Championship 2018 (2018-03-09~11),333mbf Final B #1
+5780669001,U' F' D' L2 F R2 D2 F' D2 L2 B' D L' U2 R' U L' F R',W,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R1 D #1
 731304001,R2 B D2 F R2 F L2 F' U2 F' U2 L' D U' R' B' U2 L2 B F D',Y,Hubei University Shahu Spring 2018 (2018-03-25),333 R1 F #1
-4717135001,L D' F2 D2 R2 F2 R2 B2 R' D' U L2 R2 U' B' U' B' L' D',W,Put-in-Bay 2025 (2025-05-10),333bf Final B E1
+5810516001,F' D2 B2 L F2 U2 R' B2 F L' B' U' B' F D L F2 D2,Y,Lutzelbourg Open 2026 (2026-08-30),333 R1 B #3
 5235703001,L2 U2 B U2 F2 U2 F' R2 F L2 U2 R' U' F L2 B2 F' L' B L2,Y,Bireh Cubing 2025 (2025-11-27~28),333oh R1 B #2
 838189046,D2 L2 B2 R2 F2 D' F2 R2 F2 U' F R U' L2 D R D' L2 B D2 L B2,Y,Bengaluru Championship 2018 (2018-07-27~29),333mbf Final A #1
 3729724001,R2 D' R D2 B' U' D' B L' R2 F2 L2 U' F2 U D2 B2 U2 R2,W,Georgia April Open 2024 (2024-04-28),333 R1 A #5

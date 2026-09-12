@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / BG / bin 11
-# Population in this bin: 713
+# Population in this bin: 720
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5748135001,U' R L' U R' D R' F2 U2 F2 B R2 D2 L2 U2 R B' L2 F2,B,Persevere in De Pere 2026 (2026-07-11),333oh R1 C E1
@@ -14,8 +14,8 @@
 4336794001,R2 U' B D U2 L2 R2 F2 D2 R U2 R D L2 R2 F R' U F',B,Jay Peak Cubikon 2024 (2024-12-07),333oh Final B #2
 3623833001,D2 R D' L F R B F2 R' F2 U2 L' F2 R U2 B2 D' F' L2,B,Gramedia Cube Open Jakarta 2024 (2024-03-23),333 R1 F #5
 1111798001,L2 U' B2 L2 B2 F2 D L2 U B2 D2 B D' R' F' D' B U2 R' B R',B,Empire State Spring 2019 (2019-04-20~21),333 R1 D E2
-1054086001,R' U F' U2 R2 F2 L B' U L B R2 F2 U2 L2 U2 B2 R' U2 D2 B2,B,Pragyan Cube Open 2019 (2019-03-17),333 R1 D #1
-40350001,F2 R2 B2 L2 D' U F2 D' L2 D2 B' R U2 B' D2 U F D L B U,B,Melaka Open 2014 (2014-07-19~20),333ft Final A #2
+5813984001,D2 U2 L2 B L2 F' R2 B2 L2 U' B' L' F D L' D2 B R' B2,B,Mofunland Speedcubing Singapore 2026 (2026-09-05),333oh R1 B E1
+5806330012,U2 F2 L2 D2 F U2 B' D2 F' L' U R' D B2 L R2 B2 F' U B R2,B,Kārķi Open 2026 (2026-08-26~30),333mbf Final A #2
 2644841001,D2 F D2 U2 R2 B' L2 B2 U2 R B2 D' R D' U' F R D B2 L',B,Cubing USMA 2023 (2023-04-15),333 Final A E2
 2974878001,D2 F2 D' L2 F2 U' L2 F2 L' R D B U' L R U2 B D2 L,B,San Marcos Open 2023 (2023-08-12~13),333 R1 F E1
 3716124001,F2 U2 R2 F' D2 F U2 B2 R2 F' R D L R F' U' F2 U F2 R',B,UNSA Speedcubing Otoño 2024 (2024-04-27~28),333 R2 A E2

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / Y / bin 4
-# Population in this bin: 65
-# Samples listed: 65 (all entries in this bin)
+# Population in this bin: 68
+# Samples listed: 68 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 27905001,D' B U' D2 B' R F2 D2 L U B L' U2 R' B2 U2 B2 D2 R,Y,Back to Piedemonte 2014 (2014-06-15),333 R2 B #2
@@ -70,3 +70,6 @@
 5490428014,L B2 L2 F2 D2 L' D2 R' D2 L' F2 R U' L' B2 L U' B2 L' F,Y,Solving Ferry Fast Rosslare 2026 (2026-03-28~29),333mbf Final A #1
 5589131001,U R' B L' U2 B' L2 R2 U2 B R2 D2 U' B' L R2 B' L' F2,Y,Mumbai Cubing Sprint 2026 (2026-04-25),333 R1 C E2
 5770772021,D2 F U F L2 D' U' F2 L2 D U2 F L2 F R2 D2 L F' L,Y,Big Brain Battières 2026 (2026-08-01~02),333mbf Final A #1
+5776513001,F R2 F2 D2 L2 F2 U2 B L2 D' R2 D B U' F' L D2 F,Y,Zhanjiang Open 2026 (2026-08-09),333 R1 H #5
+5779233001,F' B R' U F2 L' U D L2 U' L2 B2 D R2 U' B2 R2 B L',Y,Davis Big Summer 2026 (2026-08-08~09),333 R1 C #5
+5786929001,U2 L D' B D' F L2 U2 L B' D B D2 L2 B L2 B R2 F' L' F,Y,Norwegian Championship 2026 (2026-08-14~16),333bf R2 A #4

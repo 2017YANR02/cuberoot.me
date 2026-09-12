@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / B / bin 9
-# Population in this bin: 15
-# Samples listed: 15 (all entries in this bin)
+# Population in this bin: 16
+# Samples listed: 16 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 2643001,D2 B2 L2 D2 U2 B2 R' D2 L D2 L2 D B' L2 U2 F' D2 R' B U' L,B,CMI Fiesta Open 2014 (2014-03-21~23),333 R2 C #4
@@ -20,3 +20,4 @@
 5560625001,U B2 U' F2 U2 F R' L' B' L2 F' U' B2 U2 D' F2 R2 F2 B2 U,B,Flaming Mexicali 2026 (2026-04-18),333 R1 B E1
 5664998001,R2 B' R' U L2 U' F' U D' L2 F2 D2 F2 R' U2 B2 U2 L,B,Esplanade Cube Open 2026 (2026-05-23~24),333 R1 F #1
 5704080001,L2 F' B R D L F' U' R2 F2 D2 B R2 D2 F2 D2 B U2 L2 R',B,GAN Southern Championship 2026 (2026-06-11~14),333oh R1 C #4
+5794300001,R' U B L' D2 R' L' B R2 L' F' B2 D' F2 U2 D R2 D',B,Tierrasanta Pizza Party 2026 (2026-08-23),333oh R1 A #4

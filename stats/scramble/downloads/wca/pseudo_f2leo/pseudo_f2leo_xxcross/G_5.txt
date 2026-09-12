@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / G / bin 5
-# Population in this bin: 927
+# Population in this bin: 942
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 2622391001,U2 B U2 F R B2 R2 B U' F2 D' F2 U2 L2 F2 L U2 R U2,G,Abierto de Pascuas 2023 (2023-04-07~08),333 R1 A #4
@@ -78,7 +78,7 @@
 5766444001,U' D F R' B' R2 L2 B D' U2 R2 D2 R F2 L' U2 F2 R B2,G,Pocos Cupos Bogotá XXVIII 2026 (2026-07-25),333 R1 A #4
 351234001,B' D2 R2 D2 R B D2 F2 L' F2 U R2 D F2 U' R2 L2 U2 R2,G,Arnold Classic Asia 2016 (2016-08-20~21),333oh Final A #2
 352696001,U2 B' D L U2 D2 B U D2 L F2 U' D' F2 D B2 U L2 B2 U',G,Singapore 333 Cube Competition 2016 (2016-08-27),333 R1 A E1
-4397510001,F2 L F2 U' F2 D L2 F U L' B U2 F U2 D2 L2 D2 B,G,A Monday in Ashfield 2024 (2024-12-30),333oh R1 B #4
+5787989001,U F L2 U B2 L U D2 L2 F U2 D2 B2 R2 B L2 U2 B' L',G,Road to Nats San Carlos 2026 (2026-08-15),333 Final A #3
 362459001,R2 D2 U2 R2 B R2 F2 U F R2 D2 R D' B2 R' F' R2 U',G,Ha Noi Open 2016 (2016-09-11),333 Final C #4
 375636001,U2 F L2 U2 L2 B L2 U2 R2 D2 R U2 F' R U' R' U2 R2,G,Spanish Championship 2016 (2016-10-07~09),333 R2 C E2
 4884332040,F' D2 B' U2 F' L2 R2 U R' U' B' D L U L R2 U L B R,G,Mini Mental Delft 2025 (2025-07-25),333mbf Final A #2
@@ -115,7 +115,7 @@
 3935532001,F L2 B2 R U F D2 F' U2 D2 R L' U2 B2 L' F2 R' U',G,Edén Bogotá 2024 (2024-07-13),333 Final A #2
 2598282001,L2 B U' F2 D' U2 R2 U' B2 U2 R' B U2 R D B2 U R' B,G,Bobcat Battle 2023 (2023-04-01),333 R1 D E1
 4944442001,D F2 U2 D B U2 R D' R' U B2 D2 L' F2 L' D2 L D2,G,UNICAMP Cube 2025 (2025-08-16),333 R1 A #5
-2380898001,U2 B' D F' D2 L2 F U2 B2 F' D2 U L R U' R' U R2 F2,G,Panama Nationals 2022 (2022-12-17~18),333 R1 C #2
+5820364014,L2 U' F R B2 D' R' D B' R2 U' D F2 U' L2 D' R2 B2 L2 D,G,New York Big and Quiet Championship 2026 (2026-09-05~07),333mbf R1 B #2
 517132001,F R2 F' L2 B R2 B D2 R2 F L2 R' B D L R2 U2 B U' F2,G,Indian Nationals 2017 (2017-05-12~14),333 R1 B E2
 1341023001,F2 U2 B D2 R2 F' R2 U2 B' U2 L R B' R B' U' F' L B2 L2 U',G,Superior Cubing - Thunder Bay 2019 (2019-10-06),333bf Final A #3
 4709091001,U' B L' U2 R2 L2 F' U' R U2 R2 L F2 L' B' R' D,G,Ottawa Spring 2025 (2025-05-03),333 R1 D #2
@@ -192,7 +192,7 @@
 1895793001,B R B2 U2 R F2 L' U2 L2 R' F' R2 U F' D' B2 F2 U2,G,Fast Kids Santa Cruz 2022 (2022-04-23~24),333 R1 C #4
 698366001,R' B2 L D2 R' F' U F L2 D R2 L2 D F2 D F2 L2,G,Pink City Open 2018 (2018-02-03),333 Final B #3
 2408563001,F' L2 B2 D2 F2 D R2 D2 L2 R2 B2 F' D' U' R2 F2 D2 R' D2 U',G,Baton Rouge Winter 2023 (2023-01-07),333oh Final B #4
-3758502001,B' F R2 D2 B' D2 F2 D' F L2 R D B2 U2 R2 F R2 D',G,General Trias Speedcubing Open III 2024 (2024-05-10~12),333 R1 B #5
+5796569015,D F2 U' L2 R2 B' L B U' L F' L' D' U' F2 U,G,Lugano Big & Blind 2026 (2026-08-22~23),333mbf Final A #2
 3755286030,F' D B D' L' U2 R' D' B' L2 U B2 D' R2 U' R2 U2 B2 L' F2,G,Blind Faith Denver 2024 (2024-05-11~12),333mbf Final A #2
 940167001,B2 D F2 R2 U F2 L2 R2 F2 R' B' U F D B' U L2 F2 D,G,UA Open 2018 (2018-11-24),333 R1 C #4
 726281001,B' U2 B2 D2 B D2 F2 U' B' L2 D' F2 L B2 D U2 B F',G,Riga Special 2018 (2018-03-17),333 R1 D #2

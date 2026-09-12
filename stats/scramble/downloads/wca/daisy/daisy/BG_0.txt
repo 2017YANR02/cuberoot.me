@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / BG / bin 0
-# Population in this bin: 300
+# Population in this bin: 307
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4628242006,D' L' F L2 B2 F2 D' F2 D F2 D2 L2 B R2 F2 L' F' L F2 L' F,B,Langenstein City Blind Open 2025 (2025-04-05~06),333mbf Final B #2
@@ -11,10 +11,10 @@
 5320076001,R2 D2 R2 B' D' U' L2 U F2 L2 B2 L' B R2 D2 L2 F2 L,G,Winter in Bishkek 2026 (2026-01-09~10),333 R2 A E1
 5640895001,D2 B2 L' D' B2 L B2 R2 D R2 F' B2 R2 B2 L2 D2 B U2,G,Vienna Frühling 2026 (2026-05-16~17),333 R1 A #1
 143003001,U' D' F' B2 L2 B2 U D R' F U L2 U2 L2 D2 B2 U' R2 F2,B,Brasilia Open 2015 (2015-05-22~24),333oh Final A #3
-5754535019,U L2 U' B2 D2 F2 L2 R' U' B F' U B D' B2 D B2 L2 B R,B,CubingUSA New England Quiet Championship 2026 (2026-07-18),333mbf Final A #1
+5779515001,R' D F' U2 R2 D B' L B2 R2 U2 B2 D2 F' L2 U2 F' D2 F',B,Cubing Acton El Salvador 2026 (2026-08-09),333 R1 A #2
 172166001,D' F2 R2 D' L2 F2 U2 L2 B2 D' L F L U L U' B2 L2 U2 F,B,US Nationals 2015 (2015-07-31~08-02),333oh R1 D E2
 183359001,U2 F D2 B' U2 F R2 F U' B2 U L D R2 B' L F2 U' L2,G,Brain Studio Cube Open 2015 (2015-08-29~30),333 R1 I #2
-5021058001,L' B U' B U2 B D2 L2 B R2 F' D R' B2 D2 B L' U2 F2 L' F2,G,Casorezzo Back to School 2025 (2025-09-13~14),333bf R1 B E1
+5792969001,D' B' D B D2 F2 L' R D2 L' B U2 R U F L' B2 L' F',B,Begastri Open 2026 (2026-08-20~23),333bf R2 B E1
 210674001,D' U2 B2 R2 B2 L2 U F2 R2 U' L R' D2 R F' D2 R B2 F',B,Bugella Open 2015 (2015-10-31~11-01),333 Final A E2
 4760530001,L2 D' U' R2 D F2 U' B' D2 F L' F2 R2 B R B2 R',B,Kanto Spring 2025 (2025-05-31),333oh R1 B #5
 228394001,D2 U2 F' D2 R2 F2 L2 F L' B' U L2 R2 U' B' R2 F L' U2,G,Meguro 3x3 Fest 2015 (2015-12-13),333 R1 C #5
@@ -51,7 +51,7 @@
 5684563001,F2 B L D' F U' B R F D L D2 R' D2 R2 B2 D2 R2 B2,G,Dosson al Cubo 2026 (2026-05-30~31),333 Final A #5
 616255001,D2 B2 U' L2 D2 L2 U F2 D B' F2 L' B2 F' D L' D U2 R' D',G,Suisse Toy Fast Fingers 2017 (2017-10-14~15),333oh Final A E2
 5340899001,L B' D2 L D' L2 F U B R U2 R' D2 L B2 R L F2 B,B,Cube4fun Tylmanowa Winter 2026 (2026-01-24~25),333 R1 B #1
-626022001,U L' F D2 F2 D' L F B' L' B' R2 U B2 D2 B2 L2 U' R2,B,Ho Chi Minh Cube Day 2017 (2017-10-22),333 R2 A #2
+5795706001,U' F2 D' L2 D' R2 B2 F' D2 R2 U F R' U2 F' R2 F' D' F2,G,Xi'an Open 2026 (2026-08-22),333 R1 C #4
 632952001,R2 B2 L B' D R F' B' R' D F R2 U2 F D2 R2 D2 R2 B,B,II CUBIFMA 2017 (2017-10-27~29),333 R1 A #4
 4378259001,F2 R D2 F2 D2 R2 D2 B D' L D' U' B' R' U B2 F2 R,G,Gallop in Kentucky Winter 2024 (2024-12-21),333 R2 B E2
 4408895001,D R2 D2 F' D' L' U2 B2 R' B2 L2 F2 D2 F U2 L2 D2 F2 R',B,Space City Winter TX 2025 (2025-01-04),333 R2 B #1
@@ -73,7 +73,7 @@
 709123001,R2 D2 F2 R F2 L B2 U2 R D F D L' B' R' D R D L,G,Ural Winter 2018 (2018-02-17~18),333ft Final B #2
 711916001,R2 F' D' R' B U B' U2 B2 L D F2 B2 U' B2 U L2 U2 F2 R2 D2,B,Altasierra 2018 (2018-02-24),333 R1 E E2
 714265001,B2 D U F2 R2 U' F2 D' R2 F2 L2 R' F D2 R2 B U R' B2,G,Berkeley Winter 2018 (2018-02-24~25),333 R1 G #5
-717411001,R' U' F U' R2 U' B2 D' F2 U R F L2 B U2 L' D2 R2 F2 R2 U2 R' U' F,G,Desafio de Verão 2018 (2018-03-04),333fm Final A #2
+5791070001,U2 B2 R B2 R2 D2 B2 L' B D' F2 R2 B' R F2 D B2,B,Luzern Sunset Solves 2026 (2026-08-19),333 R1 A #2
 727502001,U F' L F D2 B L B U2 L2 B2 D B2 U2 R2 U R2 B2 R2,B,Bandung Zaman Now 2018 (2018-03-17~18),333 R2 A E2
 5172846001,F D B U B2 U2 L2 U2 F D2 U2 R U' F2 U' R' U B F' L2 U,G,Madrid Norte Open 2025 (2025-11-08~09),333bf Final A #2
 5600148003,U2 F L B U2 F' D R2 B' R2 U2 F' D2 F' U2 F' R' F' R' B' L2,B,DFW Quiet Qualifier 2026 (2026-05-03),333mbf Final A #1
@@ -115,7 +115,7 @@
 1365626001,R2 B2 L2 B' U2 B' U2 B2 L2 U2 R U' F2 U' F2 L U2 R B F2,B,Dnepr Puzzles Fest 2019 (2019-10-19~20),333 R1 A #3
 4404808001,F2 L' U2 L D2 U R' B R' U L B L2 U2 B U2,B,Julekubing 2024 (2024-12-29),333 R1 B #1
 5587936001,U F' D2 R F2 R' B2 F2 R' B2 U2 R2 D' L B' D2 B2 R D' R2,G,Deqing Small & Special 2026 (2026-04-26),333 R1 F #5
-4332251001,R2 B' L2 D2 R2 B2 U L2 B2 D' U F' R2 U' B' R' B2 L2 U,G,Berkeley December Weekday Tricubealon 2024 (2024-12-04),333 R1 D E1
+5819319001,D B D' R2 U2 B2 F2 L2 B2 D' L2 U' L' B F L B D' U2 B,B,Cúcuta Library V2 2026 (2026-09-05),333 R1 C #5
 1484508001,R2 B' D2 L D2 F' R2 L' F' D F R2 D2 F' B U2 L2 B D2 R2,B,Brasília Closing 2019 (2019-12-28~29),333 Final B #1
 4749129001,D2 B' L B2 L' R' F2 U2 F2 R' D U2 B' D' L2 D B,G,Daejeon Spring 2025 (2025-05-25),333 R1 F #2
 4229689001,U2 R B2 U R2 D' B2 R2 B2 L2 R' F' R F2 D U R' D,G,CAU ao Cubo 2024 (2024-10-26~27),333oh R1 B E2

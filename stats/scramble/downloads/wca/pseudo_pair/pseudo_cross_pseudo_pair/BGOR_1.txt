@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / BGOR / bin 1
-# Population in this bin: 688
+# Population in this bin: 696
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3220764001,F L F' R2 B D2 R2 D2 R2 B2 L2 B U L' U L2 D2 L2 B2,R,Broome Open 2023 (2023-11-04),333 Final A #3
@@ -48,7 +48,7 @@
 4171206001,U' F R D' L2 U' B2 D R' U2 F2 R2 U2 B U2 B' L2 F L2 F,R,Pony Open Morelia 2024 (2024-10-05~06),333 R1 C #1
 249289001,F R L D2 F' R' F R U' R L' F' U2 F' B2 L2 B' L2,R,Manchester Open 2016 (2016-01-30~31),333oh R1 C #1
 251788001,F' L2 F2 L2 U2 B' D2 R2 D2 U' B2 U' R' B D R D' F' U2,B,UiO Open 2016 (2016-02-07),333 R2 B E1
-2961777001,D R2 B L2 R2 D2 L2 F L2 U2 F U2 B R' B U R2 B F',B,Quezon City Open 2023 (2023-08-06),333 R1 A E2
+5806539001,R2 D R2 F2 U2 F2 D2 R' B2 L2 U R' F D2 R U L2 B2,O,Kārķi Open 2026 (2026-08-26~30),333oh R1 A #5
 1540202005,D2 B2 L F2 L D2 B2 R B2 R F' R U F R' B' F' L' U' R' B' D2,O,Fontwell Open 2020 (2020-02-08~09),333mbf Final A #1
 1221388001,D F' B' D B L2 U' F2 D2 R2 D' L' F2 D2 R2 L' F2 R',G,WCA World Championship 2019 (2019-07-11~14),333 R1 G #2
 269836001,F U' B' R D2 R' L2 B U' B L' F2 R2 U2 F B' L2 B',G,Kharkiv Special 2016 (2016-03-13),333 R1 D E1
@@ -109,7 +109,7 @@
 1773305001,B2 D' U2 R2 F U2 F' L2 R2 F2 D' B2 D2 R F R' U2 B2,O,Abierto de Navidad 2021 (2021-12-26),333 R1 B #5
 4683273020,F' R' B' U2 R2 F U2 L2 B2 D2 F' R' B F' L D' R B D L2 U2,G,Chichester April 2025 (2025-04-26~27),333mbf Final A #1
 4874782001,R' L2 B2 D' L2 D' B2 F2 U2 R' D' F2 L2 R' B' D2 U2 R2 D,O,UCLA Summer 2025 (2025-07-20),333 R1 B #3
-5352920001,D2 R2 F' R D2 L F2 R2 U2 L' D2 F U' B2 F' U2 R' F R2,R,Claret Open Montevideo 2026 (2026-01-31),333 Final A #1
+5821448001,B' U' B2 D' R L D B2 L U2 F2 R D2 F2 L' U2 D R2 F2 L' F2,B,Florida Championship 2026 (2026-09-05~06),333bf R1 A E2
 5426595001,F2 R U2 R2 F2 U2 L B2 R B2 L2 D F' R2 F' L R U2 L2,G,NZ North Island Championship 2026 (2026-02-27~03-01),333 Final H #3
 652479017,B2 R2 B2 F2 R2 D' L2 R2 F' D' U' R2 F D' F' R D2 U2 F' L,G,WHU Rubik's Cube Days 2017 (2017-11-25~26),333mbf Final A #2
 2775720001,L2 D2 R' B2 D2 L D2 F2 U2 B' L2 R' F D R' U2 R2 B' R',G,Aasee Algorithms 2023 (2023-06-03~04),333bf R1 B #3

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / Y / bin 2
-# Population in this bin: 404
+# Population in this bin: 409
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 13167001,B2 R2 F2 U' B2 F2 D' F2 U F2 U' B' U2 B' D2 F D B2 R U,Y,Velbert Easter Open 2014 (2014-04-18~20),333oh Final A E1
@@ -70,7 +70,7 @@
 660817014,L U2 L F2 R2 F2 D2 R U2 L D B' D L F' U B F2 L2 R2 D,Y,Moscow South-West Open 2015 (2015-09-19~20),333mbf R1 A #1
 4480039001,R D R2 B2 D' U' R' D2 B' F L U2 B' F' L',Y,Central Asian Tour Astana 2025 (2025-02-08~09),333 R2 A #1
 660858003,L R B2 R D2 L' D2 F' U2 F2 R' F D' L F U2 B2 R2 B' L',Y,Waves Cube Challenge 2015 (2015-11-08),333mbf Final A #2
-5474642001,R2 L' F2 R2 D' L D' F2 R' U2 F U2 B' U2 D2 B2 L2 F' U',Y,PUCP Cubing Festival X 2026 (2026-03-21~22),333 Final A #1
+5793714001,R2 B D U2 R2 F2 L D2 B2 D2 L' U L2 U2 B D2 U B',Y,Nats Warm-Up Delmenhorst 2026 (2026-08-22~23),333 R2 A #4
 661142015,B' U2 B D2 B2 U2 R2 U2 L2 B' R' D B2 L R D L2 B' U' L D,Y,ÅF Swedish Cube Open 2016 (2016-10-15~16),333mbf Final A #1
 661211013,U' F2 R2 F2 R2 D R2 U' R2 U R' F U' R U F' R2 F L U L' F',Y,Weifang Winter 2016 (2016-12-11),333mbf Final A #1
 661244039,B F2 L2 D2 B2 U2 B2 L' R2 U L' B D' L' D L D2 F L2 U2,Y,Please Be Quiet Berkeley 2017 (2017-02-04~05),333mbf Final A #3
@@ -189,7 +189,7 @@
 4311551015,B2 U2 R2 B2 F2 D2 U' R2 F2 R' U' B L' U' B' F L2 F' D2 B R',Y,East Bay Big and Blind 2024 (2024-11-24),333mbf Final A #1
 1928180001,R' F U' F D L2 U2 F' U R2 D R2 F2 D' F2 D2 B2 D' L',Y,Tigery Open 2022 (2022-05-21~22),333 R2 B E2
 1941304001,L2 D B2 D L2 D' R2 F R2 L' B2 U2 R2 B2 D2 L B2 R' F2,Y,CK Cubing Party 2022 (2022-05-29),333 Final A #3
-1965608039,D' F2 B R L2 D2 R2 B U R U2 B2 U2 R2 F2 L B2 L2 F2 L' F',Y,UBC Side Events 2022 (2022-06-11),333mbf Final A #1
+5791070001,U2 B2 R B2 R2 D2 B2 L' B D' F2 R2 B' R F2 D B2,Y,Luzern Sunset Solves 2026 (2026-08-19),333 R1 A #2
 5147097001,R2 U2 R2 D' R2 D' F2 D2 R2 B R U' B2 D' L B2 D2 B2 L',Y,Move It Midland 2025 (2025-11-01),333 R1 A E1
 1982851001,R2 L' D F' U2 B L' D L' U' B2 R F2 R' U2 D2 L F2 L U2 L2 U',Y,Boquete Big Cubes 2022 (2022-06-18),333bf Final A E1
 5320314001,D B2 L2 U' D R' F B2 D' R2 U R2 L2 U L' D' B2 L2,Y,Wide Moves & Waterslides CT 2026 (2026-01-10~11),333 R1 C E2

@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / O / bin 2
-# Population in this bin: 830
+# Population in this bin: 844
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5460689001,B2 L2 F' R B2 F2 R B2 L2 R D2 U' L U F2 D2 R B' U',O,URJC Open 2026 (2026-03-21~22),333oh Final C #5
@@ -50,7 +50,7 @@
 3145397001,F2 L2 B D2 F' L2 D2 R2 F L2 B L B D2 L' R2 F' D' B,O,Somerset September 2023 (2023-09-30),333 R2 B #5
 1785360001,L2 F' B' U F' U' B' U L F' U2 R2 U L2 D' F2 U B2,O,Taiwan Open 2022 (2022-01-14~16),333 Final A #2
 5677137001,F' U B2 U' F2 U' F2 U L D U2 L' D2 B F2 L' R2 B2,O,Lets Go Back to Carlow 2026 (2026-05-30~31),333oh R1 B #4
-4173296001,F2 U D2 R2 L2 B2 R D' B2 R2 D' L2 B2 L2 D2 F2 B' D',O,Götalandsmästerskapet 2024 (2024-10-05~06),333 R1 C #3
+5809181001,U' F2 R D' U' R2 D L2 F2 R2 B2 R' F L2 U2 R' D F2 R' B R',O,Mololoa Open 2026 (2026-08-29~30),333bf Final A E2
 2883094001,U' B R' F2 L2 B' L2 D2 B2 F2 D' R' B' R F D2 B' R',O,Guwahati Summer Cube Open 2023 (2023-07-16),333 R1 C #3
 5490225001,D2 U2 L2 F D2 F2 L2 R2 B' L' F L F2 U2 L2 R2 F2 U',O,Solving Ferry Fast Rosslare 2026 (2026-03-28~29),333 R1 B E2
 4176473001,D2 L F' U2 L2 U2 B' F U2 F' L D2 L2 B2 R D2 R2 D2 B' L,O,Chevry Open 2024 (2024-10-05~06),333bf Final A E1
@@ -116,8 +116,8 @@
 4898934002,F2 R2 F2 U2 L U' B2 L U' R B2 R' L B2 R2 U L2 U2,O,Swedish Blind Marathon 2025 (2025-08-02),333mbf Final A #1
 3565179001,B2 F2 U2 L2 R' D2 R2 D2 B2 R U' B2 R2 B L' B L2 R B U,O,Minnesota Newcomer Sunday 2024 (2024-03-03),333 R2 D E2
 4009137001,F2 R F D2 B U' B' D' B2 R2 U' B2 R2 B2 U2 B2 D2 L2,O,Lužice Open 2024 (2024-08-10~11),333 R2 B #5
-4874781001,F' R' F L' D2 L' U2 D2 F' L B L2 F' B2 R2 F' D',O,UCLA Summer 2025 (2025-07-20),333 R1 B #2
-3811873001,F2 R2 F2 L2 R D2 R U2 F R2 B2 F' D' R D2 L2 R' D' L' F',O,Pennsylvania Quiet Championship 2024 (2024-06-01),333bf R1 A #2
+5798978012,F2 L' U F2 D' B2 U F2 L2 U L D' L' U L' U2 L D2,O,Northwest Championship 2026 (2026-08-21~23),333mbf Final A #1
+5819876001,D2 L2 D' B L2 U2 B2 D F B2 U2 R2 B2 L F2 B2 R D2,O,Round Rock Mega Cube Day 2026 (2026-09-05),333 Final A E1
 572458001,D2 R2 D2 U2 L D2 R B2 L D B' F2 D2 B' U' F2 D2 L' F',O,Cubing Knights 2017 (2017-07-29),333 R1 F #5
 583433001,B2 U' L2 D' R2 D2 L2 D' L2 U' F2 R' B' D R2 D' U2 L2,O,German Nationals 2017 (2017-09-01~03),333 R1 A #2
 3989749001,D' U R2 D' L2 F2 L2 U2 R2 L U L' U F2 L' B2 D L2,O,KCKC 5 Fast and Furious 2024 (2024-08-03),333 R1 B E2
@@ -163,7 +163,7 @@
 1640869001,U L D' R2 D F2 U2 L2 D' L' R U2 R2 U L2 R2 B D,O,Shaoxing Morning 2021 (2021-03-27),333 Final A #2
 5462367001,B L2 U2 R L2 F R U R2 F' U2 D2 R2 L2 B2 U2 B U2 R2,O,GLS Gdańsk II 2026 (2026-03-21~22),333 R1 A E2
 1036856001,R2 D2 B2 F2 L' B2 R2 B' D' F2 L D B L' B L' B L,O,EkatCube Spring 2019 (2019-03-02~03),333oh Final B #3
-678393001,L2 F B2 D2 L' B L' D2 R2 B2 U2 D2 R2 B' D2 F2 L2,O,Kharkiv Winter 2017 (2017-12-23~24),333 R1 C #5
+5794559001,L2 D2 L F2 U2 B2 R' U' B' L F' D L' R D R F2 R2,O,York Summer 2026 (2026-08-22~23),333 R2 C #5
 1806936066,R D B2 R D2 B2 U2 R2 B2 L2 B2 U L' U' B' L' F' L B L' F',O,PoliMi Mental Breakdown 2022 (2022-02-12~13),333mbf Final A #2
 2674589001,R' F' R2 B R' L2 B U2 F B2 L' B2 R U2 R B',O,Perth Autumn 2023 (2023-04-29~30),333 R1 G #3
 4577972001,R U2 F2 D2 L' F B D2 R F2 R B2 L' B2 R2 U2 B U2,O,Singapore Newcomers 2025 (2025-03-22),333 R1 E E1
@@ -182,7 +182,7 @@
 1306134005,B2 L2 B2 L F2 R U2 B2 F2 R B L2 R2 U2 R2 U F' L' U2 L' B',O,Tassin-la-Demi-Cube Open 2019 (2019-09-21~22),333mbf Final A #1
 3662451001,U2 B2 D2 R' D2 U2 R' F L' B' L' F2 D2 L' B L F2 U,O,Richmond Rumble 2024 (2024-04-13),333 R1 B #5
 3040277001,D B2 D F2 D' F2 R2 U2 R2 D R2 B2 R' F2 R2 D L' B2 R',O,San Silvestre Cube Masters 2023 (2023-09-02),333 R1 C E1
-4111540001,L2 B' D F' D2 L' D2 R2 U2 L' F U' F D L2 D F',O,Gesté Une Fois 2024 (2024-09-14~15),333oh R1 C E1
+5818373001,R2 U' R' F2 L B2 U2 R2 B2 F2 U L D' U' R2 D' B2,O,VERK XVII 2026 (2026-09-05~06),333oh R1 B E2
 4452243001,F' R U2 L2 D B2 U B2 D2 L2 D' B U B' U' R U' B U,O,Washtenaw Winter 2025 (2025-01-25),333oh Final A #5
 1087872001,B2 L F L' U2 L F2 L' B R D2 R' U2 L D2 F2 L U2,O,Weihai Open 2019 (2019-04-06~07),333 Final A E2
 855086001,L' R' F2 L2 B2 L' D2 B2 D U' B' F' D F D' U B' U,O,IIITDM Cube Open 2018 (2018-08-18),333 R2 A #3

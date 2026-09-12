@@ -1,0 +1,29 @@
+# Scramble samples — first_layer / first_layer / R / bin 5
+# Population in this bin: 22
+# Samples listed: 22 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+133306001,D B R F' L F' D2 B D R L2 F2 B' R2 B' D2 R2 L2 F,R,Toronto Open Spring 2015 (2015-04-25),333oh R1 B #1
+661063152,L2 D F2 U2 F2 R2 B2 D B2 L R D' B' U2 B2 R' U2 R2 U,R,US Nationals 2016 (2016-07-29~31),333mbf Final A #2
+688771001,U2 L' D2 F2 D' B2 U' B' L' F' D2 R' F2 R B2 U2 B2 L2,R,Speed in Colors 2018 (2018-01-19~20),333oh Final A #5
+692240024,L2 B2 U2 R2 F2 D B2 F L' R2 U L2 F2 U2 R2 F2 D B2 U' L' F,R,Please Be Quiet WPI Winter 2018 (2018-01-20),333mbf Final A #2
+699625001,L2 U' B2 U B2 D F2 U2 R B U' L' D L' B' L' D U2,R,SacCubing III 2018 (2018-01-27~28),333 R1 O #4
+721703001,B2 R D2 B2 R2 F2 R' F2 R2 F R2 B D' R' F' L F,R,Chiawana Cubing 2018 (2018-03-10),333 R2 D #4
+815258001,B2 U' F2 U2 B2 U R2 D' B2 L2 F' L' R2 F' R' B' U' L2 D2 F,R,DFW Cubing Fiesta June 2018 (2018-06-30),333 R1 B #5
+936724018,R D2 U2 F2 L' F2 D2 F2 L' U B D' U2 F D R2 U B D' L2 U',R,Silent Swap Open 2018 (2018-11-17~18),333mbf Final A #1
+969268001,R2 D2 F' U2 L2 R2 B' D2 F2 R' F' R D R F' U' B L' B U L2,R,Welcome to 2019 (2018-12-31~2019-01-01),333bf R1 B #3
+1128029001,R2 B2 R2 U2 B' R2 F' U2 B' U L' D' L2 R2 B2 L' U' L R',R,Fraser Valley Spring Open 2019 (2019-05-04),333 R1 H E2
+1247182011,U2 B' U2 B2 U2 R2 F' U2 F2 D2 F2 L' F' U L' D' U' F' D' U L2 U,R,Canadian Championship 2019 (2019-07-26~28),333mbf Final A #3
+1260395001,L U2 L U2 R B2 D' R' B R' F2 L D' L2 D L F,R,Hoogland Open 2019 (2019-08-16~17),333 R1 F E2
+1903683008,B R' F2 U2 F2 U2 R2 D L2 R2 F2 R' D' L' B R2 U2 B2 U' L,R,CubingUSA Heartland Championship 2022 (2022-04-29~05-01),333mbf Final A #1
+1905987001,L' F R2 B' F' D2 B L2 D' B' D2 F' R2 D2 F' R F2 R,R,Rose City 2022 (2022-05-07),333oh R1 A #2
+2343363001,R' D F' R2 B2 U' L2 U' L2 R2 U' B2 D2 R B F2 L B2 L',R,FSUbers 3.0 2022 (2022-12-03),333 R1 A #4
+2917390001,R' F R2 F2 D' B2 U' F2 D L' D U L' U2 F R2 B,R,Willimiehen Kuutiopäivät 2023 (2023-07-22~23),333 R1 B #5
+3095635001,F' R2 D2 L D2 L B2 L R' B2 U L2 B2 R' F' U2 F U',R,Foothills NxNs 2023 (2023-09-23),333 R1 B #5
+3596200001,D R L B L' U2 B U L F U' R2 U D B2 R2 U' R2 L2 F2 L B2,R,Kuopion Kuutiokemut 2024 (2024-03-16~17),333bf Final A E1
+4597345001,D B' R F' R2 F' R2 B R2 U2 R2 D' R B R2 U2 R2 B',R,Double Triple Athens A 2025 (2025-03-22),333 R2 C E1
+5267926001,L B' U2 B U' L2 R' U' L U' F' R' F R2 B' L',R,UNESP Rio Preto Open 2025 (2025-12-13~14),333bf Final B #1
+5396488001,B R' B L2 F2 U' B2 U' R2 D' B' L F2 D2 U' B F' U' B R,R,Cube Camp in Jeju 2026 (2026-02-21~22),333bf Final A #1
+5441764001,R D2 U' R2 B2 D' L2 R2 D F' R2 D2 R' U' F R D2 L' R2,R,Xianju NxN 2026 (2026-03-07),333oh Final A #1

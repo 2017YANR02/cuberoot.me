@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / OR / bin 16
-# Population in this bin: 43
-# Samples listed: 43 (all entries in this bin)
+# Population in this bin: 45
+# Samples listed: 45 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 94846001,B R2 B D2 R2 B F2 D2 B D L R' F L' F2 L' U B2 R' D B R2,O,Austin Cubing Limits 2015 (2015-01-03),333bf Final A #2
@@ -48,3 +48,5 @@
 5645676001,U2 B2 R' D2 U2 B2 L U2 R2 F2 L' D2 B U L' R' F' D B L2 D,O,Las Palmas Ahome 2026 (2026-05-16~17),333 R1 B #1
 5679826001,B2 U' L2 D' U2 F2 R2 U' B L' U L' D2 F2 D' L2 B R U,O,The Last Frontier Spring 2026 (2026-05-30),333 Final A #3
 5769877001,B2 D2 F R2 B2 D2 F' R2 D' R U' L U' L2 B D' L D2 F',O,Tio Pep Cubeja 2026 (2026-08-01~02),333 R1 C #4
+5778816001,R' B' U' B2 L2 D2 F U2 R2 B L2 D L' R' B D2 F D U',O,Ocaña BotijOpen 2026 (2026-08-08~09),333 R1 B #4
+5793221001,F2 R' B2 L' D R2 B' F' L2 B2 R2 B L B' U' R D' F' L,O,Deerfield MA Summer 2026 (2026-08-22),333 R1 B #1

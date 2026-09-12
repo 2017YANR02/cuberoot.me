@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / BGWY / bin 3
-# Population in this bin: 94
-# Samples listed: 94 (all entries in this bin)
+# Population in this bin: 96
+# Samples listed: 96 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,Y,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -99,3 +99,5 @@
 5691926001,B2 F2 U2 F2 L D2 R D' F D2 L2 D F' L2 F2 L U2 B,W,Swisscubing Cup Mental Breakdown I 2026 (2026-06-06~07),333mbf Final B #2
 5693041049,F2 L2 F U2 B L2 R2 F2 R2 L U B' R2 F D U F U R2 B' L2,Y,Brilliant Big & Blind Bravo Orlando 2026 (2026-06-06~07),333mbf Final B #1
 5693421001,D F' U2 B' D2 F' U2 R' U2 B2 F2 U2 R' B D' L2 R' B' L2,Y,Burnaby Cubes Big & Small 2026 (2026-06-07),333bf Final A E2
+5775855001,B L U' L' U D F L U B2 L2 F2 R2 D R2 F2 B L',G,Cubetec UEA II Manaus 2026 (2026-08-08),333 R1 C #1
+5778712006,F' D' F2 U R2 D2 R2 F2 U2 L U' F L' R F2 R' B' F' U B R,G,Ocaña BotijOpen 2026 (2026-08-08~09),333mbf Final A #1

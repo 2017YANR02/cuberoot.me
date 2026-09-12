@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / BGORWY / bin 9
-# Population in this bin: 564
+# Population in this bin: 571
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 1902960043,D2 R2 F2 R2 L' U' B' D' F' D2 R U2 F2 L2 B U2 F2 R2 D2 R2 B R2,B,BrizZon Side Open III 2022 (2022-04-30~05-02),333mbf Final B #3
@@ -61,7 +61,7 @@
 5412760001,R2 U2 B2 R' B2 D2 F' D B' L F D2 F2 D R2 U' F2 L2 B2 D,B,Hurlubik's Cube Mouscron 2026 (2026-02-21~22),333 R1 B #4
 1245092001,R' U' F L2 D2 F2 U2 R2 U2 L2 R D2 R D2 U' F' D' R2 F2 L' B2 U B R' U' F,B,German Nationals 2019 (2019-08-02~04),333fm Final A #2
 4530251001,F R F R2 B' U2 L2 D2 B' U2 B F U2 D' B' F U R' D' R2,B,Cube Against Cancer DFW 2025 (2025-03-01),333 R1 D #5
-344573001,D' F2 L2 D B2 R2 D B' D F R2 B' L B' D R B U,B,Legends of Rubik 2016 (2016-08-05~06),333oh Final A #3
+5818834001,D2 F2 R2 B2 D' L2 D2 F' R D2 B' F2 D' L B' R B F',B,Champagne Open 2026 (2026-09-05~06),333 R1 C #4
 4966195009,B2 U2 R2 B' F2 D2 L R D2 B' L D' U2 L B' F D U L' F',B,Silent Korea Open 2025 (2025-08-23~24),333mbf Final A #1
 2376717001,D2 F2 D2 U' R2 U' F2 B R' U R2 D B2 U B' L' F R B2,B,Rubik's WCA Oceanic Championship 2022 (2022-12-15~18),333oh R1 A #4
 5655892001,B' D2 F' L2 F U2 F' D2 U L' R U2 B2 F U' B2 D L' F2,B,Joinville Open by Mueller 2026 (2026-05-23~24),333 R2 A E1
@@ -102,7 +102,7 @@
 613784001,D2 F2 D' B2 R2 B2 D R2 U R2 U2 L D' R F2 U B D2 F L,B,Newport Fall 2017 (2017-10-07),333 R1 H E1
 614958001,L2 B' L2 F L2 F R2 D2 R' U' L' R2 F U B' R2 D' R B',B,Tathva Cube Open 2017 (2017-10-14),333 R1 F #1
 5460564001,F' U' L U2 L D2 F2 U2 R2 U2 L' D' U F2 L' F' L R B,B,URJC Open 2026 (2026-03-21~22),333 R1 A #2
-1228127001,U' D L' B' D R' U' D' R2 U' F U D2 R2 L2 F2 B2 U R2,B,II Open Carrancubos 2019 (2019-07-20~21),333 R1 C #4
+5788644001,U R' L2 D2 F2 U B2 D U' L F2 R2 F D B' F2 R' D F2,B,Vietnam Championship 2026 (2026-08-14~16),333 R1 F E1
 4529575001,R L' U' R B' U' F' B2 D' R' B2 D2 F R2 B2 U2 F D2 B U2,B,Unicentro Tunja 2025 (2025-03-01),333 R2 A #4
 5663795001,U2 F' R2 F2 D2 U2 F L2 D2 U' L B D2 R D' F' U2 B2 L2 U',B,Le Cube Normand Open 2026 (2026-05-23~25),333 R2 A #2
 1507161001,R' B2 L' B2 F2 R' F2 L2 D2 U2 R' F' U' L U' B' D' B' F' U R',B,Jakarta Open 2020 (2020-01-11~12),333oh R1 C #1
@@ -133,7 +133,7 @@
 3456142001,R' U' L2 F B' U2 L' U' B D L2 U' B2 U' R2 B2 D' R2 L2 D',B,Say Hi to Cubing in Ankara 2024 (2024-01-27~28),333 R1 B #1
 715404001,B2 D2 U L2 R2 B2 R2 D' R2 D' U2 L B R' F U' L U2 B R' D',B,Daksh Open Cube 2018 (2018-02-24),333 Final A #2
 3283088001,F' D2 R2 U2 B2 F' L2 F' D2 U' B F' D L R U' B' F2 R2 F2,B,Annuntia Sunday Open 2023 (2023-11-19),333 R1 C #3
-5063302001,R D L' D' B2 F D2 F' U2 R2 B F2 U F' D L B U2 L2,B,Beveren Saturday Open 2025 (2025-09-27),333 R1 B #1
+5806319001,R2 U' F2 D' B2 L2 D2 U F2 R D2 F2 D' L' B2 D B U' F R,B,Kārķi Open 2026 (2026-08-26~30),333oh Final B #1
 720982001,L2 B2 D2 B2 L' U2 L D2 L F' U' L' D' F' R2 F2 R B U' R2,B,Cult A Way Cube Open 2018 (2018-03-04),333 Final C #5
 724127001,L' F B' L' U D L' B R' U2 B' U2 B2 U' D2 F2 D' F2 B2 D',B,Pucallpa Open 2018 (2018-03-10~11),333 R1 C E2
 727132001,U2 B2 D L2 U' F' B L' U' R D' R2 B2 U R2 B2 L2 U2 L2 U',B,Guildford Open 2018 (2018-03-17~18),333ft R1 B #3
@@ -196,7 +196,7 @@
 5182975001,R' U2 B' U' D' L' F R B2 D' F' U2 F' D2 L2 U2 D2 F U2 L2,B,Singapore Two-Day Nov 2025 (2025-11-15~16),333 Final A #1
 2261742010,F' R2 B' U' R' U2 R' B2 U' R2 L2 B2 R' U2 D2 R2 B2 F' U',B,Mini Mental Breakdown San Diego 2022 (2022-10-23),333mbf Final B #2
 2086453001,U B' R' B' U R2 D' B2 D' F2 R2 D2 B F2 L' R' U2 B U L B',B,Cube Revenge İstanbul 2022 (2022-08-13~14),333bf Final A #3
-1181944001,L2 F' U2 L2 U2 B' R2 B2 U F D B D' F L B' R B2 D',B,Utah's California Gull Extravaganza 2019 (2019-06-15),333 R1 B #1
+5812873001,R' F2 R2 F' L2 F D' L' U F' B' L' U2 D2 R F2 D2 R F2,B,TempoCubing Oruro 2026 (2026-08-29),333 R1 B #5
 5186404001,R' D2 B2 L2 F2 L F2 L D2 L D' U B R F U' R2 B2 F2 U',B,Polish Championship 2025 (2025-11-13~16),333 R1 D E1
 1194371001,U D2 L' D2 F' R L B' U' D B2 L F2 R2 L F2 D2 L U2 R2,B,Bulldog Qualifier 2019 (2019-06-22~23),333 R1 A #1
 4404630001,U L2 B2 L2 B2 D' U F2 U B' F L U R F' R' D L U2 R,B,Weston-super-Mare Winter 2025 (2025-01-04~05),333 Final B #4

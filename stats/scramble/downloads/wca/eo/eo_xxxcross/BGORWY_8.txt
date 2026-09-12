@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / BGORWY / bin 8
-# Population in this bin: 708
+# Population in this bin: 723
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3451814001,L B' U R' B' R U' F L2 B' L2 B2 U2 B2 U2 B' L F,G,Longjum'Open 2024 (2024-01-27~28),333oh R1 A #4
@@ -19,7 +19,7 @@
 92135001,F2 R F2 D2 L' U2 L' R' B2 D2 B R D2 U2 F' R2 B L D U2,O,Huddinge Cube Day 2014 (2014-12-27),333 R2 B #3
 93006001,L2 U' R2 U B2 L2 B2 F2 D2 R2 D' R' B2 U B2 R' F' U2 F' L2 U,G,Cubers Eve 2014 (2014-12-20),333bf Final A E2
 1584462013,B2 U2 F L2 B U2 L2 B D2 L' F U' R F' R2 U' L D' B R2 B' L',O,Copper Country Cubing Winter 2020 (2020-02-29~03-01),333mbf Final A #2
-94983001,B2 D2 L U2 F2 R' B2 R2 U2 B F' U2 R D' L2 B2 L' U F L',R,KAIST Fall 2014 (2014-12-27),333 R1 C #1
+5797052001,L F' U' D2 B' L2 D' L2 U' F R2 D2 R2 F2 U D2 F2,R,Kuala Lumpur Cubing Challenge 2026 (2026-08-22~23),333 R1 F E2
 2818758038,U' F' R' D' F B D F2 D' F L2 B2 U R2 B2 U2 L2 B2 D2 B,O,Side Events Bangalore 2023 (2023-06-24~25),333mbf Final B #2
 103711001,L2 F2 D' U2 B2 D' F' U B' L2 B2 L' B' F U2 B R D',R,Pré-Mundial 2015 (2015-01-23~25),333oh R1 E #2
 105132001,U2 L2 B D2 L2 D2 B2 R B L' B D2 U2 L F D2 F2,G,New Avge Open 2015 (2015-01-31~02-01),333 R2 B #5
@@ -46,7 +46,7 @@
 1663957001,R F L B2 L2 F' L2 R2 F' R F D2 F2 U L F U',B,GA Cubers Return A 2021 (2021-07-10),333oh R1 A E2
 267141001,D' L F' U2 B' D' B' L2 U R2 B' L2 B' L2 F2 D2 L2 D2 F2,B,Roskilde by Vote 2016 (2016-03-13),333 R1 B #4
 269466001,F2 D2 B2 D R2 D2 U' B' U R' B2 L2 R U' L2 D' L2 R,R,Grudziądz Open 2016 (2016-03-19~20),333oh R1 B #3
-4788284001,F' D B2 L' F' L2 U' B2 R D2 B2 U2 F2 R2 F2 L' U F' R',W,Swedish Championship 2025 (2025-06-06~08),333 R2 C #1
+5791977001,F2 L2 B2 R' D' R2 F U2 R' B2 U2 R F2 D2 R B' R2 B',B,Temecula Valley Back To School 2026 (2026-08-22),333 R1 E #2
 4566325019,U' R2 F' L2 B2 D' R2 D' B2 U' F2 R D2 R' B' F2 L U L2 U2,Y,Side & Blind North Andover 2025 (2025-03-15),333mbf Final A #2
 301308001,D' L2 D' U' R2 U F' U L D F2 L2 B' L U' R2 U' F',B,Lyon Megaminx Open 2016 (2016-05-21~22),333 R1 B E2
 3278556001,R2 D2 R' F' U2 L' B' D' R2 D2 R B2 R L' B R D2,G,Berkeley Fall 2023 (2023-11-18),333oh R1 D #1

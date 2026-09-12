@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / W / bin 2
-# Population in this bin: 877
+# Population in this bin: 895
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 1100196001,F R2 F' D2 R2 B' D' F2 R2 D' F' R2 B' D F R2 D',W,SnoCo Feet Fest 2019 (2019-04-13),333 R1 A E1
@@ -105,13 +105,13 @@
 4864631012,D' B' D2 B R2 D2 B' D2 R2 U2 B2 L' U2 R B' F' L' F D2 L B2,W,MBLD Madness in Dobřejovice 2025 (2025-07-12),333mbf Final B #3
 2722408013,U2 L' U2 F2 L' B2 R' D2 B2 L D F2 D2 L D R F2 L' D',W,Let's Qualify Kuwait 2023 (2023-05-19),333mbf Final D #1
 429791001,B2 U F2 D' U2 B2 L2 D' R B2 U L2 F2 D R' D R D2,W,Cubers East India Open 2017 (2017-01-07~08),333 R1 L E2
-3306449002,B L2 B2 D L U2 B' L' U2 R2 D R2 B2 U2 D R2 L2 B' L2 U,W,Kansas Holiday Cube-Off PM 2023 (2023-12-02),333mbf Final A #1
+5792252001,D2 F U' F' D' R2 D2 R2 F' L' D2 R F2 L D2 F2 U2 D2,W,Singapore Augu-Skewb Day 2026 (2026-08-23),333oh R1 C #3
 3758646001,R' U' F R D B2 L' D2 R' F2 L' D2 L2 D' B2 L R F' U' R2 B D2 R' U' F,W,General Trias Speedcubing Open III 2024 (2024-05-10~12),333fm Final A #1
 1824545001,F' U2 D L2 B L2 D' R' B' U2 F D2 R2 B R2 F2 L2 F' D',W,Flatåsen Open 2022 (2022-03-05~06),333 Final A #2
 4748708001,F2 U L2 D' L2 B2 R2 F2 R F L D' U R2 F' D2 B F R',W,Robinson Latkrabang Cubing 2025 (2025-05-24~25),333oh R1 C #1
 1421411019,U2 F R2 F L2 B2 D2 U B2 U' B' R' F U2 B L2 R' D2 L B',W,I Hope It's Solved Edmonton 2 2019 (2019-11-23~24),333mbf Final A #3
 4696619001,F2 B2 U D2 R' U2 D2 L' D2 F R L2 D2 R U2 F2 B2 L',W,Don't Inverloch Up 2025 (2025-05-03~04),333 R1 D #3
-942115001,B' D2 F2 D' F R2 B' R2 F2 U B2 D R2 L2 U2 L2 B2 D',W,MPEI Open 2018 (2018-11-23~25),333oh R1 C #5
+5800777001,U' B2 U R2 B2 L B' R U2 R' F2 R' D2 B2 D2 R2 F2 L2,W,Langenstein Summer 2026 (2026-08-22~23),333oh Final A E1
 4617499001,B U2 D' F' U R2 D B' D2 L2 B' L2 F2 D L2 F' R,W,Astana Spring 2025 (2025-03-29~30),333oh R1 B #2
 1073172001,D2 B' U B' R2 U2 D L2 F2 U L2 F L2 U2 F R2,W,Ibagué Open 2019 (2019-03-31),333 R2 B #3
 1623043001,U R2 U L2 D L2 B2 D' U2 L F2 D L D R2 U B2 U,W,Bursa Fall 2020 (2020-10-31~11-01),333 Final A #1
@@ -124,11 +124,11 @@
 502097001,R2 B2 D F2 U' B2 U2 L2 F' L' B R2 D L' B D' L F U2,W,Faria Brito Open 2017 (2017-04-29~30),333 Final A #3
 5513897044,B2 D2 B2 U2 F2 L2 D2 F2 R2 F' R2 L' D' F U' R F' L D U2 B R',W,Please Don't DNF Kaohsiung 2026 (2026-04-05~06),333mbf R1 A #1
 5109607001,U D2 R2 D' F2 B L2 B2 D' F' U2 B D2 F L2 F B2,W,First Solves at Fisketorvet 2025 (2025-10-19),333 Final K #5
-516559001,B U B2 R2 U2 B2 D' F U F2 L2 U' F2 D' B2 D B2,W,Eretum Open 2017 (2017-05-27~28),333 R1 B E1
+5785303001,R' B U' B' R2 D2 R' B' U' L2 U F2 U2 R2 U L2 F2 U R',W,Kansas Championship 2026 (2026-08-14~16),333 R2 B #4
 1174557053,B2 L D2 F2 R' F2 L F2 R2 B' D B L F' L2 D2 L' U' B2 U' L' F',W,Mental Breakdown Minnesota 2019 (2019-06-08~09),333mbf Final A #1
 980827001,F2 L2 U' B2 D B2 F2 R2 B' U' B R2 B2 D2 L2 R' D' B R,W,Bay Area Speedcubin' 13 2019 (2019-01-13),333 R1 G E1
 2840581001,U' L D2 B2 L D2 B2 L U' B2 D B2 U' F2 R D R,W,Victorian Open 2023 (2023-07-01~02),333oh R1 C #2
-3952955010,R2 D' L' F2 R' D2 F2 L' B D R2 F' U2 F' R D F L2,W,Midlands Mix-up 2024 (2024-07-20~21),333mbf Final B #1
+5782754001,B L2 D R' U2 D2 R' D' R2 D F2 B2 L F2 U2 L2 U2 R,W,Avenida Chile XXXVI 2026 (2026-08-09),333 R1 C #5
 795714001,B2 R B2 F2 R2 B2 R2 D' B2 D R U' B2 L' B' F2 L2,W,Hastings Open 2018 (2018-06-02~03),333 R1 E #4
 2935789001,U2 R B U' F2 L2 F2 R2 D' R2 U' R2 B' D2 L B' D R B',W,Lima Cubinvierno 2023 (2023-07-22~23),333 Final A E1
 5348586035,U2 B' D' U' B2 U F2 D' F2 R2 F U2 R' F' L2 F L2 U2,W,Poulseur Quiet Open 2026 (2026-01-24),333mbf Final B #1
@@ -160,7 +160,7 @@
 4610105001,L' U2 B2 R' U' D' F2 L F2 D L2 D' F2 B2 L2 B2 U2,W,Quezon City Cubing Sides 2025 (2025-03-30),333 R1 C #2
 1109504001,F2 D2 L2 F2 D B2 L2 D' R2 U F' U F' U2 F' L' R' D2 R2,W,Dongguan Spring 2019 (2019-04-21),333 R1 B #3
 1365429001,F2 R2 D' F2 R2 F2 D B2 L B' D2 L2 F L B' F L' F' U2,W,Southern Utah Fall Open 2019 (2019-10-19),333 R1 C #2
-2705043019,R B2 U2 L2 R D2 F D R' B R' U B L2 B F U' L' F,W,Norwegian Championship 2023 (2023-05-05~07),333mbf Final A #1
+5819092001,B D' L' R' U2 F2 L' D2 B2 L' D2 B U' B2 F2 D R2,W,Dois Vizinhos Open 2026 (2026-09-05~06),333 R1 B #4
 1572063001,B2 D2 R2 U' R2 F2 D' R2 B2 U2 B' L' F2 D L' D2 B' R' B,W,General Santos City Open 2020 (2020-02-22~23),333oh Final A E1
 947462032,D' R2 U' F2 U2 L2 B2 U R2 D' F L F' L' R2 B2 U2 R D2 L B',W,No 3x3x3 Diliman 2018 (2018-12-02),333mbf Final A #2
 2170799001,F2 L2 U2 R2 F2 D U2 R B2 L' R U R B2 L B2 R' B,W,Diamond Bar September 2022 (2022-09-17),333 R1 A E2
@@ -195,7 +195,7 @@
 3830591001,B' L' U' L' B R2 D2 B' L D2 L2 D F2 B2 U D R F2,W,Singapore 50 and Counting 2024 (2024-06-08),333oh Final A #1
 4668789018,B D2 F' D B2 U' F2 L2 U2 R2 U' B D2 F' L' D L' F',W,Efficient in Elmsford Spring 2025 (2025-04-20),333mbf Final A #1
 1200691001,B' R2 U2 F' U2 R2 U2 B U2 F U B U B U' B2 F2 R2,W,Jacksonville 2019 (2019-06-29),333 R2 A #5
-769392011,L2 F2 R2 U F2 U2 F2 U B L' R2 D2 B L2 F' L B2 L R2 B R2,W,Beijing Open 2018 (2018-04-30~05-01),333mbf Final A #1
+5788636001,D2 R D' L2 F2 D' L2 F2 D2 U B2 R' U2 L2 D U' L2 R B,W,Vietnam Championship 2026 (2026-08-14~16),333oh R2 D E1
 2626165001,B' D2 B D2 F2 L2 F U2 L2 F' U' R2 U R2 F' U2 B2 L,W,Baztan Open 2023 (2023-04-07~08),333oh R2 B #1
 3570764013,R' F' D2 F L F2 R U2 L R' B2 R' F D2 L D B' R2 D' B R,W,Big and Blind Rīga 2024 (2024-03-09),333mbf Final A #1
 5006060001,B D2 L2 F2 D2 U L2 D' R2 B2 F R2 B D' U2 B2 L2 B,W,Oregon Championship 2025 (2025-09-05~07),333 R1 C E1

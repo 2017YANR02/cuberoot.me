@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / W / bin 2
-# Population in this bin: 410
+# Population in this bin: 420
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3147741001,F R' D B2 R2 D' R' U2 F L2 F2 R D2 L2 U2 F2 L D2 U L,W,Nacionales Uruguayas 2023 (2023-10-06~08),333bf R1 B E1
@@ -12,7 +12,7 @@
 118969001,D B D B' U' L B D B D2 F2 R D2 R' F2 L' B2 D2 B2,W,Melbourne Autumn 2015 (2015-03-22),333oh Final A E2
 125408001,U D2 F2 L' D' F2 L U' R2 B2 L2 U' F2 U2 B2 L2 U L2,W,National Cubing Region Open 2015 (2015-04-11~12),333oh R1 D #5
 4164219001,F' U' D2 R' U F2 L D' U2 R2 B D2 R2 F D2 F' R D',W,Hublife Speedcubing 2024 (2024-09-28~29),333 R1 D #2
-137582001,R2 U2 L2 F' D2 B' D2 L2 D2 L2 F2 R' B D2 B2 U' L' U R B',W,BSTU Open 2015 (2015-05-02~03),333 Final B #2
+5796204001,L U2 B' U R2 B F2 L2 B' U2 B2 L' R2 D B2 L U' L' B' L2,W,Klemzig Kubing Decathlon 2026 (2026-08-22~23),333bf R1 A #4
 139514001,D R2 U B2 R2 U L2 U2 F2 U2 F' R2 B' D F2 R F' R' B2 F',W,Erfurt Open 2015 (2015-05-16~17),333ft Final A #3
 5497207001,L' U R2 L2 B U2 B D R2 U2 R2 L2 B U2 B' L2 R' U B2 L' F2,W,Bucharest Cubing March 2026 (2026-03-28),333bf R1 A E2
 143120001,L2 B2 R' B2 L F2 D2 L B2 D' R' D U F D' R' D U L2,W,I-FiT Open 2015 (2015-05-24),333 R1 B E2
@@ -48,7 +48,7 @@
 462095001,B' U2 L2 B U2 B U2 L2 B' U2 R' U2 B' D' F2 L' D2 F' D2 F',W,Nacionales Uruguayas UCHI 2017 (2017-03-04~05),333 R2 B #4
 3073192001,D2 B' U2 B R2 B' R2 D2 L' D L' F2 R2 U2 B' L' F2 R F2,W,Reno Fall 2023 (2023-09-09),333oh R1 C E1
 3943898001,F U F' U D' R' D' F2 R D2 F2 L2 D2 R2 F2 R' U' L2 U2,W,Ansan Summer 2024 (2024-07-20),333 R1 D #1
-484144001,B2 L2 R2 U R2 U' L2 B2 U' B2 U' L' B2 L2 B L2 D L2 B',W,Shaker Spring 2017 (2017-04-08),333 R2 B E2
+5814534001,R' U2 L2 D2 F U2 B2 L2 R2 D' B D F U2 L' R B' D R,W,Greitieji Miško Kuberiai 2026 (2026-09-05),333 R2 A #3
 5307557060,B2 D2 L' F2 R2 B2 F2 R' F2 U' L' U2 R2 U' B D B2 D2 U' L2,W,Multi Mayhem VA 2026 (2026-01-02~04),333mbf R1 A #2
 490585001,F' D2 U2 R2 B D2 F D' R2 F D' U2 B' L2 B F' L U2,W,Copa Rubik Poligato 2017 (2017-04-15~16),333 R1 D E1
 2687439001,L' F R2 F2 B L' D2 F' L' U F2 U2 D B2 R2 U' R' L2,W,CubingTR 10 Years 2023 (2023-04-29~30),333oh R1 C E2
@@ -77,7 +77,7 @@
 4863791011,F2 D2 F' L2 F L2 R2 D2 B' R D2 L' D L U2 L' F U' B L2 U2,W,Ropaži Mental Breakdown 2025 (2025-07-12~13),333mbf Final A #1
 5153439001,D2 R2 U2 B U2 B2 U' B' L2 B' R D L F2 L' B' R' D,W,Rubik's x TheCubicle CubingUSA All-Stars 2025 (2025-11-01~02),333mbf Final A #2
 2751364001,B2 L B2 F2 U2 L B2 R2 U' B U2 L2 D F' U L F' U R2,W,FECAP Open 2023 (2023-05-27),333 R1 J #2
-661276014,D' F2 D' U' R2 D' F2 U L' D' B2 U L2 R' B' L2 F U R2 B R',W,Les Franqueses Open 2017 (2017-03-11~12),333mbf Final A #1
+5821060001,D R' F2 D2 F' D2 B D2 L2 U2 L2 U B2 U' B F2 U B L2 U',W,Presidente Prudente Open 2026 (2026-09-05~06),333bf Final B #5
 3821203001,U' B2 D' B2 U F2 L2 B2 L2 U2 B' D U L B2 R2 D L U',W,Cube Camp in Nakhon Nayok 2024 (2024-06-01~03),333oh Final A #2
 661504016,B2 L D2 U2 B2 R U2 B2 L D L' U' L F' R2 B2 L F' D2 F2 L' F',W,Polish Open 2017 (2017-09-15~17),333mbf Final A #1
 672259001,B' R F2 U L' U' B' D' F U' R' L2 D' R2 B2 D F2 B2 D2 B2,W,Chouchenn Open 2017 (2017-12-16~17),333oh R1 A E2
@@ -101,7 +101,7 @@
 5750761001,R B U L2 U2 L2 F R2 B D2 U F' L' U B2 D U R2,W,GAN New Zealand Nationals 2026 (2026-07-10~12),333oh R2 A #4
 871051001,R' D' F U2 F' L B D2 L2 B L B2 D2 R2 L' U2 R2 D2 F2,W,Winnipeg Open 2018 (2018-09-02),333 R2 A E1
 5403818001,R U R U2 B2 R2 F' R2 D2 F2 R2 D2 R2 U' R F R U2 B2 R',W,Happy Cubing Honduras 2026 (2026-02-22),333 R1 A #2
-3651201001,D' U2 B2 D B2 L2 B2 L D' U2 R B2 D' R' D' U R F2 L' F2,W,IndalOpen 2024 (2024-04-06~07),333bf Final A E1
+5789955001,U' B' R2 F2 L2 R2 U F2 U2 R2 B' L2 U2 B D U2 B2 R,W,Guangzhou GraDUAL 3x3 II 2026 (2026-08-19),333 R2 D #1
 4262262001,F' U F2 B' L' B D R2 F' L2 U2 D2 F' D2 B D2 U R F,W,Rubik's WCA Asian Championship 2024 (2024-11-01~04),333 R1 I #1
 922023001,L2 R2 F R2 B2 U2 F' L2 R' B U2 F2 U2 F' R' B U' L U',W,Shri Ram Cubing Challenge 2018 (2018-11-03~04),333oh Final A #4
 3005076001,U' F2 D' F U' R' B L2 U' L' F2 U F2 U F2 L2 U2 L2 D2,W,Bring the Heat AZ 2023 (2023-08-20),333 R2 B #5
@@ -134,7 +134,7 @@
 1193110001,D2 U2 B R2 B' D2 F' U2 B U' F' U2 R' D F2 R2 F D U2 F',W,Rhein-Neckar Open 2019 (2019-06-22~23),333oh R1 C E2
 1195390001,R' U' F U F2 R2 U R2 D' R2 F2 D2 F2 U' F' U' B' L B F2 R2 B' R D' R' U' F,W,Nacionales Medellín Explora 2019 (2019-06-22~24),333fm Final A #1
 2636895001,L' U2 F2 D' B2 F2 R2 U B2 R F U2 B' D R U2 L2 F2,W,Cube4fun in Gorlice 2023 (2023-04-15~16),333 Final A #3
-3915193001,L R2 D2 L2 F' R2 B' D2 B' U' L' F L' B' U' B F' U',W,Side Events Bangalore July 2024 (2024-07-06~07),333oh Final A #3
+5799073001,U F' L' B2 U2 L2 F2 U2 L D R' D R2 B F2 L R2 B,W,Northwest Championship 2026 (2026-08-21~23),333oh Final A #2
 1215044001,R2 B2 U L2 D B2 L2 U B2 L2 U' F R F' U L R2 D' F2 R,W,Pirapora 2019 (2019-07-06~07),333 R2 C #5
 1226330001,B' D R' B2 D2 B' D2 R' U2 F L U2 D2 R2 F U2 L2 F U2,W,Longyan Open 2019 (2019-07-21),333 R2 B #5
 1226617032,U2 R2 B2 U F2 U' L2 F2 D2 L F2 U' L' F U2 L2 B2 R2 U' F' D2,W,PBQtah Sandy Summer 2019 (2019-07-20),333mbf Final A #1
@@ -165,9 +165,9 @@
 3788511001,R2 B2 R2 D' R2 U L2 D R2 B2 U F R' D' L2 D B2 U F2,W,Mike's Cubes 2024 (2024-05-26),333 R1 F #3
 4894014001,B' L2 D' U2 B2 R2 D2 U B2 F U' F2 L D F2 U' B D2 R' D,W,Dhaka Side Cubic Quest 2025 (2025-07-25),333bf Final A E1
 3609402001,B2 L2 U2 R B2 F2 R' U2 L' U2 R' F2 D' R B2 D2 F' D' F' D2,W,Baja Spring 2024 (2024-03-23~24),333 R1 C #2
-1754387001,B U L2 U L U2 R L' F U F2 U F2 D F2 D' L2 B2,W,Welcome Back Lévis 2021 (2021-12-05),333oh R1 B #5
+5812202001,R2 F2 U2 B2 F2 R2 U2 R D2 R U' F2 R F D U2 L2 D U,W,Ulanqab Small Cubes 2026 (2026-08-29),333 R1 A #4
 3772088041,F2 D' B2 R U2 L' F' D R' L2 D2 R2 F2 U R2 F2 U2 B2 D' R2 B R,W,SacQuiet Spring 2024 (2024-05-19),333mbf Final A #1
-1806936066,R D B2 R D2 B2 U2 R2 B2 L2 B2 U L' U' B' L' F' L B L' F',W,PoliMi Mental Breakdown 2022 (2022-02-12~13),333mbf Final A #2
+5817916001,B' R' D' B2 U' D2 F B' U2 D' F R U2 B2 U2 R D2 B2,W,Long Island Back to School 2026 (2026-09-05),333 R2 B #4
 1853941001,R' F2 L2 U2 B2 U L2 B2 U' R B2 F' L' D2 L F' D' R B2,W,Ohio State Expo Open 2022 (2022-04-01~03),333 R1 A #5
 1883091031,R D2 R D2 B2 D' B' R' U' B L2 B' R2 B2 U2 L2 D2 B R' U2 B' L',W,Paris Open 2022 (2022-04-16~18),333mbf Final A #1
 1912867001,F' L' F' B R' D F2 B' L' R2 U D2 R2 F2 D2 L2 U F,W,Princeton Spring 2022 (2022-05-07),333 Final A E1

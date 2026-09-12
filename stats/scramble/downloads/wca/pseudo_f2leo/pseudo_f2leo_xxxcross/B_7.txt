@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / B / bin 7
-# Population in this bin: 844
+# Population in this bin: 854
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 1528404001,U F2 L2 D F2 D' L2 U' B2 U2 R2 B U' L2 U L B2 D U' R',B,İzmir Open 2020 (2020-01-25~26),333 R2 A #1
@@ -34,7 +34,7 @@
 1121462001,U2 R2 U' L2 U B2 D' B2 F2 L' F D' F2 L2 D2 U' B2 L' F' R',B,Vorarlberg Open 2019 (2019-04-27~28),333oh R1 C E1
 4310084017,B L F2 U' L2 U R2 U R2 L' B U F U' F L2 D2 B2 L' F',B,Verona Big & Blind 2024 (2024-11-23~24),333mbf Final A #2
 4468412001,F2 R2 D2 L' D2 B2 R' D2 F2 L U2 D B L2 D2 B' D2 B2,B,Cubing on the Plains at Auburn 2025 (2025-02-01),333 R1 E #4
-4555513001,B' L2 D2 U2 B' R2 U' B2 D2 L2 F R' D2 R2 D' R U,B,Chicagoland Newcomers 2025 (2025-03-09),333 R1 E E1
+5791070001,U2 B2 R B2 R2 D2 B2 L' B D' F2 R2 B' R F2 D B2,B,Luzern Sunset Solves 2026 (2026-08-19),333 R1 A #2
 3342260025,F' D2 B' F R2 F' D2 U2 B2 R' U F2 D L2 B' R' U' F U2 B',B,Don't DNF Denton 2023 (2023-12-16),333mbf Final A #1
 5034811002,B2 U L2 U2 B2 D' R2 B2 L B2 D' U R' D F' D2 R' F' D B' L,B,Cube Factory League Brzeziny 2025 (2025-09-20~21),333mbf Final D #1
 185369001,U2 B2 U2 L2 F2 R2 F2 D2 R2 U2 F D' L F' R' F' U' F' R' B' D L B2,B,Belgium Summer 2015 (2015-09-05~06),333bf R1 B #1
@@ -42,7 +42,7 @@
 5663771021,D' L F U2 L2 U' R2 F' U' F R2 D2 B U2 B' D2 R2 F2 R2 D,B,Barby Cube 2026 (2026-05-22~25),333mbf Final A #1
 1080191001,D2 B2 L2 D' R2 U' L2 F2 D R B' D B L2 B2 F' L2 B D,B,Anyang Open 2019 (2019-04-06),333oh R1 C #4
 972365001,U2 L2 D' L2 U R2 D' F' R B' U R2 F D' L2 U',B,Uzbekistan New Year 2019 (2019-01-05~06),333 R1 D #3
-2018573062,D' R2 F2 L2 B2 U2 R U' F R2 B' D2 U2 B L D R' D L2 U2,B,Rubik's WCA European Championship 2022 (2022-07-14~17),333mbf Final B #1
+5809683001,B' L' U2 D F D2 B L B' R L' B2 R' U2 D2 L B2,B,DFW Cubing Summer 2026 (2026-08-29~30),333 R3 B E1
 209985001,U2 B2 F L2 D2 F' L2 U2 F2 U' B' L2 U' B L D' L2 U2 R2,B,Avenues CUBELELO Open 2015 (2015-10-31~11-01),333 R2 D E1
 5736664001,F' U' F U2 R D2 R' F2 D2 R2 U2 F' L' F L' D' B' F2 U,B,Manchester Cubing League - Final 2026 (2026-07-04),333 R2 A E2
 1279013001,D' F B2 L2 U' B' D' L' F' L' F D2 R2 D2 B' R2 D2 F' R2 U2,B,Kursk Open 2019 (2019-08-24~25),333 R2 C #5
@@ -127,7 +127,7 @@
 3526780001,L' F R' D2 U R2 U F2 U' B D B' D U' B2 F' R',B,Arauquita Cubing 2024 (2024-02-18),333oh Final A E2
 2308610022,R2 D L2 B2 D B2 L2 F2 R2 F' R' F R D2 L U L U L2,B,Colorado Sensory Shutdown 2022 (2022-11-19),333mbf Final B #1
 4862988001,L2 U2 F B' D R' U R F2 R' U2 L F2 L' B2 U' B2 U,B,Cubos in Vençon 2025 (2025-07-12~13),333 R2 A E1
-1106371001,U F2 U' F2 R2 D' R2 B2 D2 F' D' R F R F' L2 R2 B',B,Cubing Chitwan 2019 (2019-04-20),333 R1 B #3
+5799998001,D F2 U F2 R2 D2 R2 U' B' L2 U B2 D F2 R D' F' D F',B,Fuzhou Summer 2026 (2026-08-23),333 R1 C #3
 3786071001,B' L' U R2 U2 B' R2 D2 B' L2 U2 D' L' F' D' F L2 D F2,B,SLS Maj 2024 (2024-05-25),333 R1 C #4
 2779220001,D2 B U2 L2 U F2 R2 U R2 U' L2 D R2 U2 B' L B D U L,B,WCC Speedcubing Open 2023 (2023-06-04),333 R2 B #4
 1269572001,F2 U2 B F2 R2 U2 B' L2 U' F L' B' F L' U R F2 U F2,B,Peru Nationals 2019 (2019-08-16~18),333 R1 D #4
@@ -168,7 +168,7 @@
 1499632001,R L B L2 U' D' L F' L2 B R' B' R2 U2 B2 D2 R2 F R2,B,MIT Winter 2020 (2020-01-12),333 R1 D E1
 2808065001,R2 D2 L2 B' R2 F' D2 U2 F2 R2 U' R B' L2 B' L D' F' L D,B,Cocha Cubing I 2023 (2023-06-18),333 R1 A #1
 3067567001,R' D F2 U' L2 U' B2 F2 U B D' F' U' L' B2 D' B F,B,Square-Fun in Bloomsburg 2023 (2023-09-09),333 Final A E1
-2500831001,F' U' L F' U' B2 U2 B L U2 B' L2 F2 R2 F D2 F',B,Ohio State RPAC Cube Clash 2023 (2023-02-18),333 R1 B #3
+5779680001,F' L D' B2 D L2 F2 R2 D2 F' L' R2 B2 L2 D2 L2 F2,B,Toowoomba Carnival of Cubing 2026 (2026-08-08~09),333 R2 B #1
 713067001,R2 F' L2 B2 L2 F L2 B' R B' D2 B2 R B' F L F' D,B,Singapore Cube Championship 2018 (2018-02-24~25),333 R1 E E1
 3147158007,D' F U2 B' D' B' D' F' R B' L D2 R2 B D2 R2 D2 R2 B' L,B,Polish Championship 2023 (2023-10-06~08),333mbf Final A #1
 1384104001,D2 U2 F2 L B2 D2 R' D2 F D2 F2 L2 D' B' R B' L2 R2 U,B,Namangan Open 2019 (2019-11-03),333oh Final B #3
@@ -177,7 +177,7 @@
 3238103001,U' B D R' L2 B U2 D R' F2 R2 F R2 D2 R2 F' R' U2,B,North Carolina Championship 2023 (2023-11-04~05),333oh R1 B E1
 918662001,F' D B2 R2 U B2 U' F D R' U2 F2 U2 R B2 R2 F2 U2 R2,B,Cubing ATMOSphere 2018 (2018-10-27~28),333 R2 B #5
 1926744001,D L2 U L2 D2 F2 U F' R U2 F' U2 L F2 L2 D L' U',B,FSUbers 2.0 2022 (2022-05-21~22),333 R1 B E2
-974530001,U2 D F' U B' R U2 D B R L2 U' B2 D2 B2 U L2 U L2 U,B,Shaastra Cube Open 2019 (2019-01-05~06),333 R1 E #1
+5804898001,L' B2 U2 B2 R' B2 U2 L2 R' D' B' U B' L' D' B' L' B2 L',B,Calgary Fall 2026 (2026-08-29),333 Final A #2
 5005032001,B2 R U' R2 B D2 R2 F2 D2 F R2 B' L B L' D2 B2 R' F2,B,Gniezno Side Open 2025 (2025-08-30~31),333oh Final A #3
 1143035001,D2 B' L2 B U2 B2 D2 F' R B L2 B L2 B2 D U' R F R2,B,Koalafication Melbourne 2019 (2019-05-18~19),333 R1 C #4
 772306001,D F2 R2 U2 F2 D B2 D' U' F' L R2 D' F' D' L D R' U2 L,B,Tribox Open Spring 2018 (2018-05-05),333 R1 E E2

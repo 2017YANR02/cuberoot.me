@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / R / bin 8
-# Population in this bin: 104
-# Samples listed: 104 (all entries in this bin)
+# Population in this bin: 107
+# Samples listed: 107 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -109,3 +109,6 @@
 5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1
 5761702001,F2 D2 U F2 R2 U' F' U' F' D2 R' F2 D B2 F L' B F2,R,Barpeta Cubing Open 2026 (2026-07-26),333oh Final B #3
 5772088001,D' R2 F U' L U2 F2 U2 R U2 L R D' R2 F' L D F' U',R,Saint-Martin Saturday 2026 (2026-08-01),333oh Final B #3
+5779442001,R' D' L' U D2 L' F U2 B2 L2 F2 R' L2 D2 L U' F U' R',R,GreenwoODDs 2026 (2026-08-09),333 R1 A E1
+5784660001,U' D L' F D2 B R B2 L B R2 B2 R2 F2 U2 L D2 R U',R,Dåstrup Diverse 2026 (2026-08-15~16),333oh R1 B E2
+5797473001,F2 D U F2 U' B2 F L' F2 L F2 D' L2 B' F2 U2,R,Nanning Open 2026 (2026-08-23),333 R2 A #5

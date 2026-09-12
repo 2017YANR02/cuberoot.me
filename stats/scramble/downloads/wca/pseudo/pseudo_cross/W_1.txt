@@ -1,15 +1,15 @@
 # Scramble samples — pseudo / pseudo_cross / W / bin 1
-# Population in this bin: 322
+# Population in this bin: 326
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 2478001,R2 B' D2 F' L2 D2 B F2 D R2 U' L B2 U2 L' F' D' F R2,W,Santo Domingo Spring 2014 (2014-03-23),333oh Final A E2
 5352925001,F' R' D F L2 D' L' B' D' B U R2 F L2 F' L2 B2 R2 F,W,Claret Open Montevideo 2026 (2026-01-31),333 Final A E1
 4360539001,U F' R B2 L' D2 F2 L' D' F D' B' R2 U2 R' U F,W,Cube4fun Cubers Eve Żyrardów 2024 (2024-12-14~15),333 R1 B #4
 14361001,D' B2 D' F2 U' R2 F2 U2 R2 F' R B2 U2 F2 L' B' F' U,W,Hsinchu Spring Open 2014 (2014-04-27),333 R1 B E2
-3961791001,R D' F U2 R2 D' R2 B2 D2 U L2 B L' U F D R2 D F',W,Vintage Cubing La Paz 2024 (2024-07-20),333 R1 A #4
+5772703001,B2 D F2 U2 L2 U' R2 F2 L2 B U B' U L' F2 U R' D R,W,Vinnytsia Open 2026 (2026-08-01~02),333 R2 B E2
 4876448001,D' B' U2 F' L U' R B2 U2 R2 B2 U R2 U L U2 R2 F,W,Tokyo Summer 2025 (2025-07-21),333 R1 E #1
 69367001,B' D2 U2 F2 R2 F' U2 F' L F L' D2 B' F D2 L D B U,W,Finnish Championship 2014 (2014-10-18~19),333 Final A E2
 112345001,R2 U B2 D2 L2 B2 D2 F' U' B2 L2 R' D' R2 B2 U2 R U2,W,Dvina 3.0 2015 (2015-02-28~03-01),333 R1 A #5
@@ -39,7 +39,7 @@
 344389001,U F2 D' F2 D' R F L' D2 L' F2 R F2 D2 L' U2 L' B2,W,CEIC Masterda Open 2016 (2016-08-06~07),333oh R1 A #5
 345662001,D2 L2 F2 D' F2 D F2 L B' F' D2 B U2 B' D R2 D2 L2 B' L2,W,Tübingen Open 2016 (2016-08-13~14),333bf R1 A #3
 4240642001,L B' L D' L U2 R2 F' D' R2 B' D2 R2 U2 F2 L2 F2 D2 L2,W,Nayarit Open 2024 (2024-10-26~27),333 Final A #5
-364715001,F2 L' D' L' U2 L2 B2 R U R2 F B2 U' R2 F2 B2 U B2 L2,W,Praxis Open 2016 (2016-09-24),333oh Final A E1
+5790500001,U' R D' F2 L' U2 L2 R B2 D2 L2 D' R U R F' D U,W,Cube en Baie Open 2026 (2026-08-14~16),333 Final A #5
 4620714001,F U2 L U2 R2 U2 R2 U' R2 B2 U' B2 L' F2 D' B R' F2 D',W,Cube Against Cancer Buffalo 2025 (2025-04-05),333 R2 A E2
 4818844001,R' B U' D F B D2 L' D F2 D2 R' D2 L' F2 R2 L' F',W,Prague Summer Opener 2025 (2025-06-21~22),333 R2 C #1
 5163529001,R2 D2 U' F2 D R2 F2 U' B2 R2 B' R U' L R' F' D L2 F' L' F,W,Korum Winter Cube Challenge 2025 (2025-11-01~02),333bf Final A E2
@@ -73,7 +73,7 @@
 615100001,U2 L2 U' L2 U2 B2 D R2 U' B' L' U2 L2 D2 B2 R2 B' L2 F,W,Tathva Cube Open 2017 (2017-10-14),333oh R1 G E2
 5319379001,F2 U' L' D2 L2 B' D' L F' R2 D2 R2 B2 R2 B' D2 F L2 R' D' B R',W,Cubing at The Cube 2026 (2026-01-10~11),333bf R1 A #5
 631360001,D' L' B2 L' D' B L2 D2 B R D R L D2 R D2 R2 D2,W,ChicaGhosts 2017 (2017-10-28),333 R2 D #1
-637059001,F L2 D2 R2 U2 F R2 F U2 B F L B U' R U2 B' L B L' U' L' F,W,Villanueva Open 2017 (2017-11-04~05),333bf Final A #1
+5816874001,B' U' L2 U' L R2 U2 R' B2 R2 D L B R' B' U2 F',W,Mayo Cubing 2026 (2026-09-05~06),333 R2 A #5
 4656240001,D2 F2 U' B2 F2 U B' R2 U L' D L F' L2 R2 U2 R,W,Tocancipá 2025 (2025-04-19),333 R2 A E1
 661085004,U L2 U B2 R2 D' R2 D2 U B D R2 F2 L2 U B' R' F R2 U2 L2 U',W,Singapore 333 Cube Competition 2016 (2016-08-27),333mbf Final A #2
 661402023,R2 B2 F2 D B2 F2 D L2 U' R B' U2 F2 D2 R D' R B L2 B2 L2 U2,W,Beijing Open 2017 (2017-06-24~25),333mbf Final A #1

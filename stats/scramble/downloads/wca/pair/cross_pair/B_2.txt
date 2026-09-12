@@ -1,15 +1,15 @@
 # Scramble samples — pair / cross_pair / B / bin 2
-# Population in this bin: 210
+# Population in this bin: 215
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 55529001,D2 F' U2 F D2 B' U2 R2 F U F2 U' B L' D' F' D U2 L,B,Mogi Open 2014 (2014-08-30~31),333 Final A E2
 60727001,B2 D2 L2 D R2 D B2 D2 B2 R2 B D' B2 F2 U' R B' F' D' R,B,Krakow Cubing Spree 2014 (2014-09-27),333oh Final B E1
 65804001,U' L D' F2 R' F R2 U2 R' U' R F2 R' L2 F2 U2 B2 U2 B2 L',B,Back to 360 2014 (2014-10-11~12),333 Final B #2
 85995001,D2 U R2 B2 U R2 F2 D U2 B2 R D' U2 B2 D' B R2 B' D2,B,Xi'an Winter Open 2014 (2014-12-07),333 Final A #4
-130056001,U2 F' R U D B D R B' U2 D' F2 U' F2 L2 U B2 D2 B2 U2,B,German Open 2015 (2015-04-18~19),333 R1 B #3
+5795973001,F' D2 L F' U' R2 F2 D L2 D2 L2 B L B2 D2 U' L2 R',B,Capelle Chaos B 2026 (2026-08-23),333oh Final B #4
 137365001,F2 L B2 R2 F2 R D2 R2 U2 R' B D R2 U' F D2 U' B D F2,B,Mega Rubik 2015 (2015-05-02~03),333oh Final A #3
 140928001,B2 L2 B' L2 U2 F2 L2 U2 R2 D2 F2 U' F L' D F' D U' F2 L' F2,B,Hong Kong Spring Cube Day 2015 (2015-05-16),333 R1 A #3
 145194001,D R2 B' D F2 U2 L' B2 R' D R B' L2 B' U2 L2 B' U2 L2 B2,B,Hsinchu Spring Open 2015 (2015-05-31),333oh R1 B #1
@@ -17,7 +17,7 @@
 174349001,U' F2 U2 D2 L2 D2 F' U' R' F' D2 R B2 D2 L2 F2 R B2 R U2,B,Pretoria Science Week 2015 (2015-08-08),333 R1 C #3
 191419001,D2 F' D2 L2 F' U2 F D2 B R2 U B2 D' L' D U' L2 B2 L' U F L B,B,Moscow South-West Open 2015 (2015-09-19~20),333bf R2 A #2
 217185001,D2 L' R2 B2 L2 R' D2 U R2 F U F' R D2 U' B2 L2 R',B,RubiKolombia 2015 (2015-11-15),333 R1 C #3
-222837001,B2 L2 D2 F U2 L2 B D2 B' L' R B' L2 D U2 R2 B2 U' R2,B,Minyons de Terrassa Open 2015 (2015-11-28~29),333oh Final B #4
+5821448001,B' U' B2 D' R L D B2 L U2 F2 R D2 F2 L' U2 D R2 F2 L' F2,B,Florida Championship 2026 (2026-09-05~06),333bf R1 A E2
 251788001,F' L2 F2 L2 U2 B' D2 R2 D2 U' B2 U' R' B D R D' F' U2,B,UiO Open 2016 (2016-02-07),333 R2 B E1
 254925001,L D' R' D' L' F' R' L' U2 F U F B R2 U2 B' D2 L2 F2,B,Williams Winter 2016 (2016-02-13),333oh R1 B #1
 260937001,D2 R2 B U2 B' F2 R2 F2 R2 U' B L R2 U' R' F' R2 F2 U,B,Big Apple Cube Clash 2016 (2016-02-27),333oh R2 B #1
@@ -47,7 +47,7 @@
 661290013,L2 U2 F D2 B L2 F' R' F' L2 R' D L R2 U' B2 R2 D' U L' F',B,Unionville Open Spring 2017 (2017-03-18~19),333mbf Final A #1
 661644001,F2 D2 L2 U2 F2 R' D2 R U2 B2 L F' U L2 U L R' U R2 F,B,Dixon Winter 2017 (2017-12-02),333oh Final D E1
 679966001,F2 D2 B2 D2 L2 B2 R2 U' L' D L' D U F U2 F' R' B2 R2,B,Malaysian Cube Championship 2017 (2017-12-30~31),333oh R1 A #4
-684215001,L2 B2 U D' F' D2 F2 L' B U L2 U R2 U' R2 U2 B2 U R2 U',B,Ekeko Rubik 2018 (2018-01-13~14),333oh R1 A #5
+5809223001,L F' D2 R' D' U2 F2 D2 F2 L2 U R' U' F' L F2 R U,B,Brampton Summer 2026 (2026-08-29),333oh Final A #1
 690510001,F2 D B2 D2 U L2 F2 D2 B2 R D2 R' D' U2 F' R' F D',B,SCC Winter 2018 (2018-01-20),333 R1 C #3
 713803001,F2 D2 U B2 U' R2 U' L2 B L' U2 L' R D U2 L' D U2 F',B,Osijek Open 2018 (2018-02-24~25),333 R2 A E1
 720650001,B' D2 L2 R2 B F2 L2 U2 F D R' U2 F R' B U' L' B2 L U',B,Takshashila Cube Open 2018 (2018-03-03),333oh R1 F #1
@@ -118,7 +118,7 @@
 2939534001,D B2 U' L2 U' L2 D F2 L2 R D2 R2 F' U R' F' L F R,B,Maru Cube Day 2023 (2023-07-22~23),333 R2 H #5
 2961777001,D R2 B L2 R2 D2 L2 F L2 U2 F U2 B R' B U R2 B F',B,Quezon City Open 2023 (2023-08-06),333 R1 A E2
 2983802001,R L U' D2 R' B U' F2 R' L' F2 R2 B R2 U2 L2 D2 B2 L' F,B,Couffouleux Open 2023 (2023-08-19~20),333bf Final A #3
-3012547001,U D' B2 U B D2 B L' U2 L2 D2 B2 D2 L F2 R D2 B' D',B,Cubing at Tramsheds Saturday 2023 (2023-08-26),333 Final A #1
+5804944001,B2 U2 B2 R F2 U B L2 D2 L R2 U2 B' D2 R2 F2 B D',B,Calgary Fall 2026 (2026-08-29),333 R2 A #3
 3024184001,B2 L U' L2 R2 F' R2 D2 R2 U2 F' L2 D L2 R2 B D2 L R,B,Berkeley Summer 2023 (2023-08-26),333 R1 E #1
 3025428001,L D F' D R2 B L' U2 F' L D2 R F2 B2 R B2 R' D2 B',B,Stulang Cube Party 2023 (2023-09-02),333 R1 F #4
 3049191001,U' F2 R2 U L2 U' R2 U' L D' L U2 R' F' L' D F L,B,Singapore Mini 2023 (2023-09-09),333 R1 A #5
@@ -170,7 +170,7 @@
 4362556001,R2 F2 R F B2 D F R' B2 R' F2 U2 B2 D2 R2 F2 R2 F2,B,Nub Open Lake Forest 2024 (2024-12-15),333 R1 B E1
 4394247001,F2 L' D2 B2 U L2 B2 R2 U F2 L2 U2 L D2 L D' B F D2,B,Parthenope Winter Open 2024 (2024-12-28~29),333 R1 C #1
 4407630001,R' L2 U2 B2 U' R2 D' R2 B2 D B' L' U2 F L R U B2 R,B,TCG Space lV Santa Anita 2025 (2025-01-04~05),333 R1 C #5
-4431177001,F' B2 U2 L2 B2 R2 U L2 D2 U' L F L' D' R' U2 B2 D U2,B,Puzzles in Pottsville 2025 (2025-01-18),333 R2 A #3
+5797914001,F' D F R D2 L' U' B' L2 D L2 U2 F R2 F R2 U2 L2,B,Mid-Atlantic Speedcubing Championship 2026 (2026-08-14~16),333 R1 F #1
 4477934001,U B2 F2 D U2 B2 F2 L2 D' U L B' L R U' F L' B R U',B,Cebu Big Cubes 2025 (2025-02-08~09),333oh R1 B #2
 5759954001,F2 U2 B2 U' F2 L2 U B2 L' B' F' L D B' D2 F L B2 U' L' F,B,Tokyo BLD Summer 2026 (2026-07-25),333bf Final A E1
 4509776001,D' F D' L2 D B2 F2 U R2 U' B2 F R F U2 R' F U' B',B,LA PRE Pucallpa Speedcubing 2025 (2025-02-22),333 R2 B #4

@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / WY / bin 6
-# Population in this bin: 619
+# Population in this bin: 633
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 1584013001,L2 R2 D2 U' B2 L2 D R2 U' L' B L' U L B' R' D R2 B',W,Hamburg International 2020 (2020-02-29~03-01),333 R1 C #5
@@ -39,14 +39,14 @@
 4464930001,D2 U' B2 L2 D2 B2 L2 R' F' L' R B' U2 L2 F' L B,W,Los Reyes del Cubo Chiclayo III 2025 (2025-01-25~26),333oh R1 B #2
 4170085001,D2 F U' F2 R2 D' F2 L2 D2 L2 B U' B F2 U2 F U R',W,Estonian Championship 2024 (2024-10-04~06),333oh Final A #3
 224751001,L2 U' L2 R2 D U2 R2 U' F2 R2 B' R B2 D B2 F D' F' D2,W,Taipei Open 2015 (2015-12-06),333oh Final A #3
-226620001,F2 D U2 B2 U L2 F2 L' D' B2 F L2 F U L' B2 L2 R',W,New Zealand Nationals 2015 (2015-12-06),333 R1 C #4
+5787062001,F' U2 D' L' B' L2 D' R D2 R2 B2 D2 R U2 F' U2 L' F2,W,Norwegian Championship 2026 (2026-08-14~16),333 Final A E1
 3497590001,U F2 D' B2 F2 L2 F2 R2 D' U2 B2 L' F2 U B' F' R2,W,Going Back to the Gong 2024 (2024-02-10~11),333 R1 F E2
 232933001,D R2 D' B2 D2 F2 L U' R' B2 L' R D L2 R' U R',W,Merry Cubing 2015 (2015-12-20),333 R1 C #3
 3388915001,U2 L2 D F2 D' R2 B2 D2 B2 U R2 U2 B' U R' F' U' R2 D',W,Matale Cubing Year-End 2023 (2023-12-30~31),333 R2 C E1
 5714108001,U R' D' B2 L' F' L2 F' R2 U' F2 U2 F2 L' U2 L2,W,Lavey-Vous les Mains 2026 (2026-06-20~21),333 Final B #5
 4105485063,U2 L U' L2 R2 D' R2 B2 R2 U2 B' L2 D U R2 U2 R D' R2 D,W,SacQuiet Fall 2024 (2024-09-15),333mbf Final A #1
 4567060033,R D F B2 L' U F' R D2 F R2 L2 F B2 D2 F R' B D' L2 U,W,Baja Spring 2025 (2025-03-14~16),333mbf Final A #1
-250137001,R2 F2 D U B2 D L2 U B2 U' R D L' F' U2 F2 L2 D2 R2,W,Mantua Tiny Open 2016 (2016-02-06),333 Final A #3
+5811185001,U' D2 B2 L' D2 L' D2 R' B2 R U B' R D' F D U' F' U2,W,Kewbz UK Championship 2026 (2026-08-28~30),333 R2 C E1
 5512229001,D' F2 U' R2 B2 F2 D B2 U' L2 D R2 L' U2 F U2 R F,W,Arena HCMC Spring 2026 (2026-04-04),333oh Final A #1
 5761433001,D U L2 B2 R2 B2 D F2 U' B2 L F L B L2 F' D2 B,W,Cubing Returns Nagpur 2026 (2026-07-25~26),333oh R1 C E2
 1438007001,B2 F2 U' B2 D' F2 U L2 U2 L2 F2 L F' L B2 L' D U L' R,W,Speed and Music Caracas 2019 (2019-11-30),333oh Final A #5
@@ -109,12 +109,12 @@
 1928097001,B2 D2 L2 B2 D F2 D' B2 F2 D' R2 F U2 L' B' L2 R' B D' L2 B R,W,BC Cubing Springback A 2022 (2022-05-22),333bf Final A E1
 4635102050,U2 B L2 F R2 F' D2 U2 L2 F D U' F2 R D B' L' R D B R',W,Tip of Skåne 2025 (2025-04-12),333mbf Final A #1
 660895002,R2 D2 B2 R2 B2 R2 D F2 U2 L2 D L' U' B L' B R' U F2 D' R B' L,W,Dnepr Super Blind 2016 (2016-01-09~10),333mbf Final A #3
-5191182001,B' D2 F' D' B2 R2 U F2 U2 L2 D2 U L2 F D' B' F' U' L' F L2,W,Cube On in Richardson 2025 (2025-11-15~16),333bf R1 A #3
+5812137001,L2 D2 L2 D R2 U L2 U F2 D L2 B' D2 R' F L2 R',W,KS al Cubo Viña 2026 (2026-08-29),333 R1 C E2
 1908638001,R F2 U' F U D F U B2 L2 U' D2 L2 F2 U F' R2 U2,W,Canberra Autumn 2022 (2022-05-07~08),333 Final A E1
 4558787001,R' B' F' U2 F L2 F L2 D B D' L U' R U L2 R' U' B R',W,Singapore March Classics 2025 (2025-03-15),333bf R1 A #3
 4661525001,B2 D' B2 D R2 U' F2 U F2 R2 U2 L2 R F' R D F2 D2 U',W,UCLA Spring 2025 (2025-04-20),333 R1 C #3
 1926757001,F2 U R2 D U L2 B2 D L B' U2 R' U2 R B2 D U' R2 B2,W,FSUbers 2.0 2022 (2022-05-21~22),333 R2 A E1
-661110014,D2 L2 D F2 U L2 D' F2 L2 D2 B R2 U' R2 U R' D2 U2 F' D2 B' L,W,Yo Rubik 2016 (2016-09-03~04),333mbf Final A #1
+5785675001,U B2 F2 L2 B2 U L2 U' R2 U L2 R' D2 B2 F2 D B' U' R',W,Oakridge Independence Cube Open 2026 (2026-08-15~16),333 R1 E #5
 2948654001,F R F2 R D F2 R' F2 U2 F L2 D2 B U2 D' R2 U',W,Botosani Cubing 2023 (2023-08-05),333 R1 D #2
 661213024,D2 L2 U B2 D2 R2 U L D' B' L' U2 B2 U' R2 D U2 F2 D2,W,Skillcon 2016 (2016-12-17~18),333mbf Final A #1
 5695670001,R2 D2 F2 D2 U' L2 B2 F2 U' L' R' U2 L' D B' F2 D' B',W,Uhseo Osong 2026 (2026-06-13),333 R1 H #1
@@ -172,11 +172,11 @@
 908735001,B L2 D2 F' U2 B2 L2 U2 B2 R2 F D' F L2 D U' F' L' F' R' F2 L' F2,W,Bay Area Speedcubin' 12 2018 (2018-10-21),333bf Final B #2
 938237001,B' R2 U2 R2 F U2 B R2 U2 R2 B2 L' D F2 D B L U2 B2 L2,W,CubingUSA New Jersey Championship 2018 (2018-11-17~18),333oh Final A #2
 944313001,L2 U2 L2 D U2 L2 U' L2 F2 L' D U2 R' F R' D' R U F2 U',W,Luisita Speedcubing Open 2018 (2018-11-24~25),333oh Final A #3
-5290120005,R B2 U D2 F L2 B2 D2 B' L2 D2 R' D2 L' B U2 L' R2 B' L2,W,Please Be Quiet Xi'an 2025 (2025-12-21),333mbf Final A #1
+5810549001,D' F2 L' D2 L2 U2 R' B2 L' F L U F2 R D2 F' D2 B' F L2 U2,W,Lutzelbourg Open 2026 (2026-08-30),333bf R1 B #5
 3795224001,D F2 U2 L2 D' R2 D' L2 B2 U R2 U2 F' R' D' L' U' F2,W,Tutuli 2024 (2024-05-25~26),333oh R2 A E1
 3706905001,F U2 F' D2 F2 U' D B D2 R2 L B2 R2 L D2 R2 F' R2,W,San Diego Big Cub 2024 (2024-04-27),333 R1 A #4
 3115843001,D L2 D' L2 U B2 U R2 B2 L2 B2 D2 F' L' F' R2 B L',W,SSN Cube Sunday 2023 (2023-09-24),333 R1 D E1
-961313001,D2 L2 F2 D2 L2 B2 U R2 U2 B' R D2 U' L2 U2 R' B2 F,W,WCA South American Championship 2018 (2018-12-15~16),333oh R1 C E1
+5809181001,U' F2 R D' U' R2 D L2 F2 R2 B2 R' F L2 U2 R' D F2 R' B R',W,Mololoa Open 2026 (2026-08-29~30),333bf Final A E2
 971487001,U L2 R2 D' L2 B2 L2 U' F D B' R2 B2 U L' F L' D2,W,Gauteng Summer 2019 (2019-01-05),333 Final A E2
 2661897001,R B U2 B' D F2 D2 B2 R2 U' B2 L' U L' D L2 R' F2,W,South Jersey Speedsolving 2023 (2023-04-22),333 R1 C #1
 5012458001,B2 F2 D' F2 U2 R2 B' R' B2 L' R B U2 L D R F2,W,Colorado Cubing Weekend 2025 (2025-09-06~07),333oh R2 B #4

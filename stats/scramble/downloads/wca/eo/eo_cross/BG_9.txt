@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / BG / bin 9
-# Population in this bin: 113
-# Samples listed: 113 (all entries in this bin)
+# Population in this bin: 116
+# Samples listed: 116 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 45709001,U2 R' D2 B2 R' F2 D2 F2 L' R' U2 B' U L' D' U R' U2 F U,B,US Nationals 2014 (2014-08-01~03),333oh R1 B E2
@@ -118,3 +118,6 @@
 5700335001,R F2 R D L2 D' L2 R2 F2 U L2 U B2 U' F L' F' D' F R' B,B,Davis County Showdown 2026 (2026-06-13),333 R1 C #1
 5726850001,B2 F2 U2 L2 D' F2 D2 L R' D F2 L' F L' D B U' B2 U,B,Re-Laois the Cubers 2026 (2026-06-27~28),333 Final A #2
 5748458001,D' U2 R2 D2 B L2 B2 F R2 B2 L F' D R B' U L' U' R' U',B,Stevenage July 2026 (2026-07-11~12),333 R2 C #4
+5778930001,R2 B2 F2 R2 U' B2 L2 B2 F2 D R' F2 D' U F' D2 U' B L R,B,Charlottetown Summer 2026 (2026-08-08),333 R1 B #1
+5793749001,L2 F' D' L2 B2 U L2 B2 D2 R2 D2 F D' L' D B2 R' D' U2 B' L2,B,Nats Warm-Up Delmenhorst 2026 (2026-08-22~23),333bf Final A #5
+5820997001,R' B2 D' L D2 F' R' L' D B' R U D L2 D2 R2 F2 R2 F2,B,Presidente Prudente Open 2026 (2026-09-05~06),333 Final B #3

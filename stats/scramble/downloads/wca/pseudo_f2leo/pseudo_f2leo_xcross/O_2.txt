@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / O / bin 2
-# Population in this bin: 34
-# Samples listed: 34 (all entries in this bin)
+# Population in this bin: 35
+# Samples listed: 35 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 80106001,D2 R' B2 D2 B2 R2 D2 R D R2 B2 L' F L2 U B' L R2 U2,O,Brain Studio Cube Open 2014 (2014-11-15~16),333 R1 M E2
@@ -39,3 +39,4 @@
 5228653001,D B2 D B2 R' L2 F U F2 L2 D' L2 U2 B2 L2 D R2 F2 B,O,Ushuaia 2025 (2025-11-29~30),333 R2 B #2
 5251096001,F2 L U' B L U L' F2 B R' B' D2 R2 D2 L2 F D',O,Rotacube Gaziantep Open 2025 (2025-11-29),333 R1 C #3
 5684386001,B U R2 U2 L' D2 F2 R D B D U2 R' B2 L F2 L' F2 L,O,NUS Clock Clash 2026 (2026-06-06),333oh R1 C #3
+5814539001,B' U' R2 B2 D2 R2 B2 F' R2 F D2 R B2 R U R' B D2 F',O,Greitieji Miško Kuberiai 2026 (2026-09-05),333 R1 B #3

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / W / bin 5
-# Population in this bin: 960
+# Population in this bin: 972
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5195978001,L2 U2 F2 U L2 U' F2 U2 F R' B R F L U' R' U L2,W,Basauri Open 2025 (2025-11-15~16),333 R1 A #4
@@ -34,16 +34,16 @@
 106914001,L B2 D2 R B2 L' U2 L' U2 B' R D' U2 F L' F' L' B' D,W,ULA Rubiks Reloaded 2015 (2015-02-06),333 R2 B E2
 4025550001,R B R2 U' B D R D' R2 D' U2 B U2 R2 B2 D2 L2 B L',W,Huánuco al Cubo 2024 (2024-08-18),333 Final B E2
 1759826001,R D R2 L' U2 D L D' R D2 L2 B2 L2 U' B2 D F L2,W,Basauri Open 2021 (2021-12-11),333 R1 D #5
-116394001,R2 F' B L' U F' R' D' R L' B U' R2 U B2 R2 U' L2 D2,W,Toronto Open Winter 2015 (2015-03-14),333 R2 B #2
+5773765001,F2 R2 U2 B2 D' U' R' U2 R F' L' U L2 U' B F2 D',W,CCPA Open 2026 (2026-08-01),333 R1 A #1
 118969001,D B D B' U' L B D B D2 F2 R D2 R' F2 L' B2 D2 B2,W,Melbourne Autumn 2015 (2015-03-22),333oh Final A E2
 120563001,U2 R2 D B2 D2 R2 U' R2 F2 U2 F D' U B L2 B2 D L' D,W,Tunisia Spring Open 2015 (2015-03-17),333 R1 A #4
 4325994001,B' L B' R2 U' R2 B D2 R2 U' F2 D F2 D' R2 D L' U,W,Minnesota Championship 2024 (2024-11-30~12-01),333 R2 A E2
 3901704001,L' B R' F2 U B2 L2 U2 L2 D2 U' L U' F' D2 R' U2 L' F' L' F',W,Lazarillo Open 2024 (2024-06-29~30),333bf R2 A E2
 137104001,R' U2 R2 D2 F2 L2 F2 R F D2 L2 D' R B2 U L' U' B2 D,W,Santo Domingo Spring 2015 (2015-05-02~03),333 R2 B E1
 4758704001,B2 R2 F2 L2 D2 F' R2 B' D2 B' F' D L F L U L U' R,W,FECAP Open 2025 (2025-05-24),333 R1 H #2
-3265713001,D2 L B2 U' L2 F2 L' F' U2 B' R2 B D2 R2 F L2 F D',W,Don Bosco Cubing 2023 (2023-11-11~12),333 R3 B E1
+5810246001,F L' D2 F U L2 D2 U R2 D L' B R' B' D L2 R2,W,Bay Area Speedcubin' 69 2026 (2026-08-29~30),333oh R1 E E2
 2900278001,L2 U2 L D2 B2 L D B2 U' F' D2 L D L2 F' L2 F',W,Sandnes Summer Fun 2023 (2023-07-19),333 R1 A #5
-1168983001,D' L2 U F2 D' U2 L2 F2 U2 B2 R F R2 U2 L2 U2 F D',W,Wyoming Summer 2019 (2019-06-01),333 Final D #3
+5805089001,U' B2 R F2 R B2 D2 R2 U2 F D' L2 R B' R U' F2 D2 L2 U2,W,Calgary Fall 2026 (2026-08-29),333bf Final B E1
 5359869018,R2 B F2 D2 U B2 D2 F2 R2 U' B L2 B' D' L F R' B U' L2 U,W,Merignac Open CuBeutrois 2026 (2026-01-31~02-01),333mbf Final B #2
 4599132001,F D2 L2 R2 F L2 F' D L' F' D R2 D2 B U2 L2 B2 F',W,Vienna Fasching 2025 (2025-03-22~23),333 Final A E2
 987883001,D2 L F2 L D2 L2 R2 B L D' B F D F L F' U',W,Michigan Cubing Club Alpha 2019 (2019-01-20),333ft Final A #1
@@ -175,7 +175,7 @@
 1592193001,F R2 F2 U' R F' R' B2 L U D2 R L' D2 L2 B2 L2 F2,W,Santo Domingo Winter 2020 (2020-02-29~03-01),333 R1 C #2
 661499005,B2 L' D2 B2 L2 D2 R' D2 L B2 R B U' L2 U' F2 L2 B' R U' F',W,Malang Kuy 2017 (2017-09-16~17),333mbf Final A #1
 1017364001,U B L' B2 D F2 R' B' R2 F L2 D2 R L2 F2 D2 R F2 R,W,Austrian Open 2019 (2019-02-09~10),333oh R1 A #3
-4495571001,D' R F2 U' B2 U' L2 U' F2 L2 D2 R U F D2 U2 F U,W,Cube Against Cancer Edmond 2025 (2025-02-16),333 R2 B #5
+5796204001,L U2 B' U R2 B F2 L2 B' U2 B2 L' R2 D B2 L U' L' B' L2,W,Klemzig Kubing Decathlon 2026 (2026-08-22~23),333bf R1 A #4
 5569642070,D2 F' U2 R2 B2 R D2 R' D2 B2 R2 U2 B' L' D' L2 F' D' L2,W,Langenstein City Blind Open 2026 (2026-04-18~19),333mbf Final A #1
 3888174041,U' B2 R2 B' D2 L2 F2 R2 D F2 D2 L2 U L' D' L' D U' B R2,W,Hari-Hari Horas 2 2024 (2024-06-27),333mbf Final A #2
 774292001,U2 F2 R D2 R' B D' F2 B L B2 U2 B2 D B2 U' L2 U F2,W,Primus Cube Open - May 2018 (2018-05-05~06),333oh Final B E2
@@ -184,7 +184,7 @@
 5706564004,U B2 D2 R B R D2 F2 R' L2 U2 D2 B L2 D2 F L D' L,W,Quiet Prep in Palisades 2026 (2026-06-19),333mbf Final A #1
 3921641001,R2 F2 U R2 B2 U B2 D B D' B U' L F' D' L' R D R,W,Sicily Summer: Arancina Open 2024 (2024-07-06~07),333 R1 C #4
 4273850001,F D' R2 B R2 D2 F2 D2 U2 F R2 U2 D' L' F' U2 L F2 D2 L' F2,W,Swiss Science Open 2024 (2024-11-09~10),333bf Final A E2
-4639262001,B2 L R2 B2 L2 R' D2 B2 U2 F R' U B L' B' R' D U',W,UCD Cube Days 2025 (2025-04-12~13),333 R3 A #3
+5820918006,F' R2 B2 D2 U2 R2 B D2 L' U' B U' R2 F2 L B' U2 R F L B',W,Presidente Prudente Open 2026 (2026-09-05~06),333mbf Final A #2
 3181727001,D2 B2 D2 U2 L U2 R' B2 D2 F L F R D2 B' U R' D U,W,DeKalb Cubing Fall 2023 (2023-10-22),333oh R1 C #4
 2891123001,B R2 U D' B L D2 R B' R2 F2 D2 L2 B2 L2 D' R2 D2 R',W,Canadian Championship 2023 (2023-07-13~16),333oh Final A #5
 2140868001,U B' D' B D F' R D R2 F D2 F R2 D2 F' R2 F U2,W,Danish Championship 2022 (2022-09-02~04),333 R1 D E1

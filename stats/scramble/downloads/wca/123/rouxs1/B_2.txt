@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / B / bin 2
-# Population in this bin: 125
-# Samples listed: 125 (all entries in this bin)
+# Population in this bin: 127
+# Samples listed: 127 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5542001,D' R2 L' F' R2 B2 U B L' U2 F2 L2 U2 F2 B2 U' R2 D' R2 U',B,Swiss Open 2014 (2014-03-29~30),333oh R1 A #2
@@ -130,3 +130,5 @@
 5746008001,L2 D' B R U2 R2 B2 D' F L' F U' L2 U2 R2 B2 U2 D R2 B,B,Odd July Singapore 2026 (2026-07-12),333bf Final A E2
 5752931001,D B D' L2 U2 F R2 F R2 U2 B L2 R B' U R2 U' R2 F2,B,Delhi Summer Showdown 2026 (2026-07-19),333 R1 F #1
 5754239001,B2 D' L F2 D' F2 B L' B' F2 U' B2 U2 F2 R2 U F2 B2 U2,B,Japan Championship 2026 (2026-07-18~19),333oh Final A E1
+5782494001,R U' B' L2 U2 R2 D2 F' D2 F' L R D2 R D L U2,B,Mid-Atlantic Warm-Up 2026 (2026-08-09),333 R1 B #2
+5802972001,L D' L2 B U L2 D2 R F B2 L2 U2 F2 B U2 B' R2 F,B,IALA School Open 2026 (2026-08-23),333 R3 A E1

@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BGOR / bin 2
-# Population in this bin: 779
+# Population in this bin: 792
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3187898001,D2 L2 U2 L' U2 L' U2 L' D2 B2 U B2 F2 R2 F' D F' U,B,Zamiin-Uud Open 2023 (2023-10-21),333 R1 H E1
@@ -97,8 +97,8 @@
 4311551041,B' D F B R2 F2 L B' U2 D2 B U2 R2 D2 B2 U R' F L',R,East Bay Big and Blind 2024 (2024-11-24),333mbf Final A #1
 4804800001,R2 F' D2 U' L2 U2 F2 U2 R2 U' R B2 R2 U2 R' B' R D' B2,G,CubingUSA Southeast Championship 2025 (2025-06-13~15),333 Final A #1
 1349793001,U2 B2 D' L2 F2 U' L2 B2 U' F' R D2 B2 L B' D' B' F L D2 L2 U,R,345 Cube Day Allen 2019 (2019-10-13),333mbf Final A #3
-498017001,F2 D2 L2 F2 L2 D B2 D' U2 F' L D2 B2 F' L2 U2 R' B' D',O,Mountain View Open 2017 (2017-04-29~30),333 R2 A E2
-3459617001,R' D2 L2 F2 U2 F2 R' U2 R U2 D' L' R2 D' F' D B2 L' D',O,Las Tablas Open 2024 (2024-01-27),333 Final A E2
+5809326001,R2 F2 U2 R' B L2 B' R2 D2 F' D2 R U' F2 D F D2 R2,O,Brampton Summer 2026 (2026-08-29),333 R1 E #5
+5797914001,F' D F R D2 L' U' B' L2 D L2 U2 F R2 F R2 U2 L2,B,Mid-Atlantic Speedcubing Championship 2026 (2026-08-14~16),333 R1 F #1
 5089779001,D2 R2 F2 L B2 U2 L U2 L F2 D' L' F2 L2 U2 F D2 U R U,O,Cube4fun in Nowa Sarzyna 2025 (2025-10-12),333 Final A #3
 519364001,B2 L' B2 R' U2 R' F2 L' F2 R2 D B' R D2 F2 L2 D' R F,R,Santa Fe Autumn 2017 (2017-05-27),333 R1 E E2
 2236207001,U B' D' R U L2 D2 F' R' U R2 D2 B2 U2 B2 R2 L U2 R',R,Lake Cubing Szczecinek 2022 (2022-10-15~16),333oh R1 A #5
@@ -162,7 +162,7 @@
 5446292001,D L B' U2 L2 U' B2 F2 D F2 D2 L' D U' L2 B L' U' B',G,Pi Cubing Hvidovre 2026 (2026-03-14~15),333oh R1 B #4
 726277001,D2 U2 B2 U2 F' D2 F R U' B' F' D' R2 F' L2 D' R' U',G,Riga Special 2018 (2018-03-17),333 R1 C #5
 3782731001,B2 F2 L2 D L2 F2 D' B2 D2 L' B' R' B F' R F2 L R' F,B,50th Anniversary in Elverum 2024 (2024-05-18~19),333 R2 A #4
-5660738011,L' D' F2 R2 U L' B2 U' R B L' U2 B2 R' U2 F2 R B L B',B,Ileseum Cube Open 2026 (2026-05-24),333mbf Final A #1
+5775855001,B L U' L' U D F L U B2 L2 F2 R2 D R2 F2 B L',G,Cubetec UEA II Manaus 2026 (2026-08-08),333 R1 C #1
 4972662030,R2 D F2 U R2 D2 L2 R B L2 F L2 F' L' B2 U' L2 D2 U L',O,Rubik's UK Championship 2025 (2025-08-22~24),333mbf Final A #1
 3676305001,R2 U L2 F2 D2 F' B2 L' F2 L2 B' D2 B' U2 F D2 B R' B',R,Goulburn Open 2024 (2024-04-20),333oh Final B #2
 751272001,U L2 D' L2 U' L2 D' B2 L' R F' D2 R' F2 L' B2 U2 B D B R',O,High Wycombe Open 2018 (2018-04-14~15),333bf R1 A E1

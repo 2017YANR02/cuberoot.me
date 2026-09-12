@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / OR / bin 6
-# Population in this bin: 522
+# Population in this bin: 535
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4716333030,F' U' B L B' R L2 F U2 B D F U2 L2 U2 F2 B U2 L',O,UCSD Blind and Big 2025 (2025-05-10),333mbf Final A #1
@@ -13,7 +13,7 @@
 5166645001,U2 D' L2 F D2 B' U F' U' F2 D2 R2 B2 R' D2 L2 F2 L D2 L' F2,O,BrizZon Side Open V 2025 (2025-11-08~09),333bf R2 A E2
 3605435070,B' R2 D' U2 L' F2 L' F2 R' U2 R2 D F2 U R2 F U2 B' L B' L2,R,Supermiya PBQ in Tashkent 2024 (2024-03-16~17),333mbf Final A #3
 2937804001,F' U' B2 U' R2 D2 U' F2 D2 F U2 L' B' F2 D2 B' L B' R2,O,Bangalore Cube Open July 2023 (2023-07-29~30),333 R1 F #4
-55793001,R' F2 R F2 D2 L' U2 F D2 F2 U F2 L D2 L' F' L' U2,R,German Nationals 2014 (2014-09-06~07),333oh R1 B E1
+5800882014,B F D2 B' R2 B2 L2 F' L' U F' L B2 D' R' F2 R2 F' L2 B' L2,O,Rocky Mountain Championship 2026 (2026-08-21~23),333mbf Final B #1
 4325994001,B' L B' R2 U' R2 B D2 R2 U' F2 D F2 D' R2 D L' U,R,Minnesota Championship 2024 (2024-11-30~12-01),333 R2 A E2
 80535001,R F' U2 L2 U D2 R U D' B U' L2 B R2 B' D2 B,O,Plaza de las Américas 2014 (2014-11-15),333oh Final A #1
 2239293001,D2 U2 L B2 U2 F2 D2 F2 L B R D L2 B' U2 B L' U B2 L' F',O,Pão de Queijo Open 2022 (2022-10-15~16),333bf Final A E1
@@ -29,7 +29,7 @@
 3998524025,B' U' F2 R2 D2 B' F2 D2 B2 U2 R2 F' L' F U F D' F U B' L',O,Blind Till Nine in Vietnam 2024 (2024-08-10),333mbf Final A #1
 4902844001,R2 B L U2 R2 B L2 R2 B' D L' D2 F' L B R2 D',O,Beginner Utrecht 2025 (2025-08-03),333 R1 C #5
 138923001,R2 B2 D2 L2 B2 R2 D B2 D2 B L B' L D2 U' R2 U2 L' D2,O,Canberra Autumn 2015 (2015-05-09~10),333oh Final A #3
-1754853001,D2 U F2 D' R2 B2 F2 D R2 B2 R2 L' D2 L' U2 R U2 F D',R,Cubetcha A 2021 (2021-12-04),333oh Final A #2
+5774090001,F L' B2 D R2 D' R2 D2 B2 U2 F2 L U2 L U' F2 D2 R2,R,Egypt National 2026 (2026-07-31~08-01),333 Final A E1
 146617001,U F2 R2 F2 R2 D' F2 D' F2 R2 U R F' D' F2 R D2 U2 B' L',O,Indian Nationals 2015 (2015-05-29~31),333 R3 C E1
 2604292001,L' U' F2 D B2 F2 L2 D R2 F' U F' L' R2 F2 R' F' R2 D',R,Saint John's Scramble 2023 (2023-04-01),333oh R1 C #1
 179549001,F' L2 B D2 F2 U2 B' R U B U2 F D2 F' U' L2 R' B2,R,San Lorenzo Invierno 2015 (2015-08-15~16),333 R1 E #5
@@ -110,7 +110,7 @@
 661332021,D F2 R2 F2 D' R2 F2 U L' D' L2 F' U2 L' D B F L' U' L B,O,German Open 2017 (2017-04-29~30),333mbf Final A #1
 3262915001,B2 R2 U R B2 D U B2 D F2 U2 R' F R F2 D' B D,O,Real Cube II Lima 2023 (2023-11-11~12),333 R1 I #1
 662247001,L' F2 L D2 R' F2 R' B R2 B D2 B2 R' D R2 F2 U' F',O,Vestby Open 2017 (2017-12-08),333 R2 A #2
-669711001,R' U' F U2 B L2 F R2 D2 F2 U R F2 L' F L2 F R F' D R' F R' U' F,O,New Zealand Nationals 2017 (2017-12-08~10),333fm Final A #2
+5776854001,F' U' F' B2 R' U' R D' R2 F B2 L2 U2 F2 B U2 R2 L' F,R,Cube Factory League Brzeziny 2026 (2026-08-08~09),333 Final A #3
 5023008001,B2 U' R' F2 R F2 R F' U2 B U' L2 U R U R,R,ODU Big Blue Open 2025 (2025-09-13),333 R1 B #3
 672310001,F2 L2 F L2 B L2 D2 B L2 D F L U' L B' F R2 F U,R,Rubik Zamora 2017 (2017-12-16~17),333oh R2 A E1
 682432001,D2 F2 L' F D' F R' D' R2 L' U' R2 D2 R2 L' F2 U2 R,R,Tulcan Open 2018 (2018-01-06),333 R1 B #2
@@ -178,7 +178,7 @@
 3028500001,R U' D F L F D B2 L U2 L' B2 R F' R2 D2 R,O,U Cube at UQ Sunday 2023 (2023-09-03),333 R2 A #1
 1175224001,L R2 D2 L R2 U2 B2 R' B' U' B' R2 U L R' F L2 R2,O,Magnit Open 2019 (2019-06-09),333oh Final C #4
 2215414001,U' R' F' B2 D' L' U2 B U' B R2 B2 R2 D2 F' D2 L2 B' U,R,Cool Down with the Cows 2022 (2022-10-08),333 R2 B E2
-4126713001,U2 F' D2 B2 L2 U' B2 R2 U' R2 F2 D L' B' L D2 B2 D2 B',O,Meridiano Cota 2024 (2024-09-22),333 R2 A #2
+5806843001,U R2 U' L2 B2 D U B' D2 B' U L2 F' L2 B' R2 U2 L2 U,R,Slovenian Nationals 2026 (2026-08-28~30),333bf R2 A #1
 1193965001,B' F U2 L2 B2 U2 L' D B2 F L2 U' B2 D' B D2 R2,O,Belgian Solstice 2019 (2019-06-22~23),333 R1 B #5
 1607824001,U' R2 U L U' L2 U2 R F B2 U2 F B2 L2 F' D2 F R2,R,SPB Muffin 2020 (2020-03-14~15),333 R1 D #3
 1216396001,L U2 R' F2 R' F2 U R B' U R2 U R' F2 L U,O,Luzon Championship 2019 (2019-06-22~23),333 R1 C #5

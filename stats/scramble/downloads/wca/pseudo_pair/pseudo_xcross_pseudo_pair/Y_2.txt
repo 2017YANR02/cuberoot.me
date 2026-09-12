@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / Y / bin 2
-# Population in this bin: 54
-# Samples listed: 54 (all entries in this bin)
+# Population in this bin: 55
+# Samples listed: 55 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 33688001,D' L D2 R2 L' D R' B' D L' F D2 R2 B2 U2 B2 D2 B D2,Y,P3 Grand Open 2014 (2014-06-28~29),333 R1 S E2
@@ -59,3 +59,4 @@
 5330592001,D' F2 R2 U L2 B2 D L2 U R' B U' R2 D' U R D2 U F2,Y,UNSA Speedcubing Spring 2026 (2026-01-17),333 R2 A #3
 5393083001,U' F R F' R F U' B' R F' B R' U2 R U2 R2 D2 F2,Y,Cube Against Cancer Brisbane 2026 (2026-02-14~15),333 Final A #1
 5488072020,L' D' B D L' U D L2 D2 L2 U2 B L2 U2 F' L2 F' L' B' L B',Y,Los Heroes Bogotá II 2026 (2026-03-29),333mbf Final A #1
+5810167001,F' U B' U B R L2 F U2 B2 R2 F' U2 B' R2 U2 L2 B' U B R,Y,Bay Area Speedcubin' 69 2026 (2026-08-29~30),333bf R1 E #5

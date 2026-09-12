@@ -1,12 +1,12 @@
 # Scramble samples — pair / xcross_pair / B / bin 4
-# Population in this bin: 292
+# Population in this bin: 296
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 15400001,F2 L2 B2 F2 D' B2 L2 F2 U2 R' U2 R2 F2 D2 L D' B' D2 B',B,Madiun Happy Cubing 2014 (2014-04-27),333 R2 B #2
-4249270001,D2 L2 D L2 U' F2 U L2 F' U' L' F2 L B' F2 U B L2,B,Fires de Girona 2024 (2024-11-01~03),333 R1 C #1
+5791070001,U2 B2 R B2 R2 D2 B2 L' B D' F2 R2 B' R F2 D B2,B,Luzern Sunset Solves 2026 (2026-08-19),333 R1 A #2
 5663772005,U2 R2 D2 F D2 L2 R2 B F R' F' D B2 F2 L2 F' R' U2 B R,B,Barby Cube 2026 (2026-05-22~25),333mbf Final B #1
 26263001,B F2 L2 D2 B2 D2 B' D2 L F' L' B U' B' R' D2 B L2 B,B,Iowa Corn Lovers 2014 (2014-06-07),333 R1 A #3
 4375681001,R U' L2 U F' R' U' D2 F B U2 R2 U2 R2 U2 F U2 B,B,Hangzhou Open 2024 (2024-12-15),333 R2 D #3
@@ -92,7 +92,7 @@
 1015089001,B2 R' F2 R2 B2 D2 L B2 F' L' D2 B' U' B2 D2 F L2 B' L' B',B,Medan Lunar New Year 2019 (2019-02-09~10),333bf Final B E1
 1015333005,B2 R B2 D2 U2 L' F2 R2 U R' D B' F' R D F' U B' D L' F,B,Medan Lunar New Year 2019 (2019-02-09~10),333mbf Final A #3
 1017755001,F2 R B2 U2 R D2 U2 B2 U2 B R2 B2 U' B2 L U F D2 F,B,Fontwell Open 2019 (2019-02-09~10),333 R2 C #4
-1046885001,F2 D2 R2 F U2 B' R2 U2 B' U2 F' L U B2 F' R2 U B R2 B',B,Huehue Open 2019 (2019-03-09~10),333 R2 C #4
+5807715001,U' L' F' R' U' L U' F D2 R2 F2 R' F2 U2 R D2 L U2 F',B,Vijes Al Cubo 2026 (2026-08-30),333 Final A #1
 5280547001,U2 F2 D2 B' F2 R2 B U F' L U L F' U' R2 B2 D',B,Mindanao Championship 2025 (2025-12-14),333 R1 C #2
 5006396023,R B' D L2 F2 D2 B2 U2 R D R D' L2 B' L' D U B R',B,New York Quiet Championship 2025 (2025-09-06~07),333mbf Final A #3
 1105378001,U2 F B2 D' B L U F' U R F' L2 D2 F2 R2 U2 B' L2 F2 U2,B,GLS Cup I 2019 (2019-04-13~14),333oh R2 C #4
@@ -192,7 +192,7 @@
 3289240001,F R2 F2 D F2 U' B' U' B L2 B2 D' B U' L' U2,B,Viña Cubing Fest III 2023 (2023-11-18~19),333oh Final A #3
 3294802001,F R2 F2 L2 U R2 D U B2 L2 R' F' R B' U2 R' D2 R' F',B,2x2 Cube Masters Bogotá 2023 (2023-11-26),333oh Final A #5
 3315260001,R2 U' R' U2 L U2 R B2 R' U F R F' D' F2 R B',B,ZGZ Open 2023 (2023-12-02~03),333 R1 D E2
-3374302046,D R' D' B' L' D2 F B R2 F R' D2 B2 U2 B2 L' D2 B2 L' F',B,Indian Nationals 2023 (2023-12-15~17),333mbf Final A #1
+5774756001,B2 D2 L' F L2 U2 F B2 R L' F2 D2 R' B' R' F',B,Alexandria Summer 2026 (2026-08-03),333 R1 A E1
 3379138001,D L2 B R2 B' F2 U2 B' R B D2 R U' L2 U2 F L' B2,B,Michigan Mini 12 2023 (2023-12-18),333 Final A #1
 3432072001,B U2 B2 L' B2 U2 D F2 L' F' L D2 B2 R' D2 B2 R D2 L',B,Rhode Island Winter 2024 (2024-01-21),333oh R2 B E2
 3451486001,F' L' D2 L2 U2 R' D2 R2 U' F' L F' L U R2 U,B,Folkets Kub Alvesta 2024 (2024-01-27~28),333oh Final A #5

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / WY / bin 4
-# Population in this bin: 851
+# Population in this bin: 866
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4919500001,U2 F' D2 U2 L R D2 L' D2 U2 L U2 F L' F U' L U B L' F2,Y,Penang Be Quiet 2025 (2025-08-09),333bf Final B #3
@@ -27,7 +27,7 @@
 4100343001,U2 R U2 F U2 F2 R2 F' R2 F2 D B D L D' B' R2 D2,Y,Energy Cube Tomaszów Mazowiecki 2024 (2024-09-14~15),333oh Final A #2
 2314475001,F' L' F2 R' F2 B' R2 F' B' D R2 L2 B2 D L2 D F2,Y,Iowa Fall 2022 (2022-11-19),333 R1 C #1
 5511331001,B2 U2 F R2 F' L2 R2 B2 D2 R F' L2 F' L U2 L F' D2,Y,French Championship 2026 (2026-04-04~06),333 R1 E #3
-3298244053,R' B F2 D2 B2 D2 U F2 L2 D L2 B2 L B D2 F' R' F2 D2 B',Y,Mountain View Multi Madness 2023 (2023-11-24~27),333mbf R1 A #1
+5780865001,D R' F2 U2 B' D2 U2 L2 F' L2 D2 U F' L2 F' D' L2 D,W,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R1 I E2
 121981001,D2 F U2 L2 F R2 B D2 F' R2 B2 R' D' U2 L' D B L2 B D,W,Ceará Open 2015 (2015-03-28~29),333bf Final A E1
 2237615001,B2 L2 B' D2 L2 R2 F' R' B U' L B D2 B2 U L F' R2,Y,Koalafication Melbourne 2022 (2022-10-15~16),333 R2 C #1
 5380588001,R2 U' B D2 B2 D2 L2 U2 R U2 R D' R2 U2 F2 D L',W,The Battle of Concord MA 2026 (2026-02-08),333 R1 A #3
@@ -141,7 +141,7 @@
 3669753001,D R2 L D' L' D L2 B F2 R2 U2 R' F2 R' F2 R B2 F R2,W,Mega Chiasso 2024 (2024-04-13~14),333 R2 B #1
 2815289001,L2 U2 B U B' U L2 B2 R2 F R2 U2 L' U2 F2 L' B2,Y,Anand Cube Open 2023 (2023-06-18),333 R1 D #5
 854776001,D B2 D' B2 D2 B2 D' R2 U2 B2 F' R' F' R U2 R B' D2 R',W,Brno Open 2018 (2018-08-11~12),333 R1 A #2
-3300924004,D F' L R2 D2 R2 F' D2 B2 L2 F R' F2 L2 R2 D' R' D' B',Y,Hilliard Hippocampus XI 2023 (2023-11-30),333mbf Final A #1
+5792643001,D' L2 D F2 R F2 R2 B2 R' U2 B2 F' D' F' L B2 L B' R,W,Begastri Open 2026 (2026-08-20~23),333oh R2 A #2
 4587773001,B L' U' D2 F L B U R U2 R2 D2 F2 U2 F2 L2 B' U2 F,W,Tagum City Open 2025 (2025-03-22~23),333 R1 A E1
 613782001,F U' L' U D2 L2 D L U' D2 R2 F' D2 R2 F R2 B' U2 B,W,Newport Fall 2017 (2017-10-07),333 R1 H #4
 5763081001,B2 D2 F U2 R2 B L2 B' D B2 R2 U' B R D' R' D',Y,Middle Georgia Summer Solving 2026 (2026-07-25),333 R2 A E1
@@ -157,7 +157,7 @@
 1191798003,D' L2 U' F2 D2 U B' L2 B2 F2 D2 U' R U R2 D2 L' U2 L' F,W,Medan Farewell 2019 (2019-06-22~24),333mbf Final A #1
 4854239001,B2 L2 U2 L2 D' B D B' F2 R2 B2 U' F2 L2 D F2 L2,W,İstanbul Mid Summer 2025 (2025-07-05~06),333 R1 C #1
 4763691001,L2 U2 B L2 F' U2 R2 D B L' F' D2 L2 R' D F2 R B2 L B,Y,Cubing Heat Raipur 2025 (2025-05-31~06-01),333bf Final B #2
-1204238001,B2 D2 R B' D2 B' U L2 F2 L' F2 U2 L2 D' L2 F2 R2 U2,Y,Downtown Vancouver Summer 2019 (2019-06-29),333 R2 A #3
+5789589001,R U2 R2 F2 L' B2 F2 R' F2 D F' L2 F D B' L2 D B F2,Y,Birzeit Cubing 2026 (2026-08-17~18),333oh R1 B #1
 4628160001,U2 R' D2 L F2 R' B2 R U2 R F' U' F2 L D' F L2 U',Y,Langenstein City Blind Open 2025 (2025-04-05~06),333oh R1 A #5
 1084009001,R F L F2 U R' D' B U L' D L2 D' B2 R2 D R2,Y,8 Wing Limited 2019 (2019-04-06),333oh R1 A E2
 3646818001,L' R2 D' L2 U2 B2 U R2 F2 U2 L2 R' B R' B D2 F2 L D',Y,Cuboss Open 2024 (2024-04-06~07),333oh Final A E1
@@ -190,7 +190,7 @@
 1134482001,D2 B' R L B2 D F' R F B2 R2 B2 L2 U2 F2 L2 D,W,Casal Catalunya Baires Open 2019 (2019-05-03~04),333 R1 B E1
 5477003001,F U' R2 F' R B' L2 F' R' U2 F2 D2 B2 R2 F2 B' U2 L,Y,Wiler Newcomer 2026 (2026-03-28),333 R1 A #2
 795475001,R' D2 F2 U2 L D2 U2 R' F R' B' R' F' R' U' F U R' B2,Y,Get to the Point 2018 (2018-06-03),333 R2 B #3
-1892558001,L' F' R U2 B2 U R2 D L2 D2 F2 B L' R' U L' U B2 U,W,Sarzana Seaside Cubing 2022 (2022-04-23~24),333 R2 B #3
+5797127001,L2 F2 L D2 B U2 F' U2 F2 D2 U2 F' L2 D' L' F' U' B2 L2 R',W,Éire 100 2026 (2026-08-22~23),333 R1 C #2
 2820479001,F2 U F' D2 F U2 F' U2 L2 B2 R2 B' L D L B L2 D' L2,Y,Stevenage June 2023 (2023-06-24~25),333oh Final C #4
 806630001,F2 L2 F2 D' U B D L2 B2 R B2 R B R2 B' D U',Y,Changchun Open 2018 (2018-06-18),333 R1 C #2
 4599955001,B' L' F' D' R2 D2 L2 F2 D2 F' R2 U2 F U' F2 D' U',W,Worlds Warmup Woodinville 2025 (2025-03-29),333oh Final C #5

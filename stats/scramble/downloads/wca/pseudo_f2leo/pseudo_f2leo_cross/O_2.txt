@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / O / bin 2
-# Population in this bin: 422
+# Population in this bin: 428
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5607893001,F2 L2 F2 D B' R2 F D R2 U L2 U' F2 D B D2 R' B',O,Spring Breeze in Burnaby 2026 (2026-05-03),333 Final A #5
@@ -26,7 +26,7 @@
 217365001,R2 B2 D2 L2 R' F2 L F2 D R2 D U F2 R D U' F L,O,Open Cubo Mágico Domus Sapiens 2015 (2015-11-07~08),333oh R1 A #5
 217520001,L' B2 L U2 L' B2 F2 L' B2 R2 D R D2 B F' L2 B' R2 F D,O,Valencia Open 2015 (2015-11-14),333 R2 B E2
 4542216001,F2 U B' R2 B' L2 D2 B' R2 U2 R' U R' U B L B2 F D,O,Pingtung Winter Open 2025 (2025-03-01~02),333 R1 E #5
-2668026008,B2 L F2 L2 F2 U' R2 U2 L2 D R2 U F R' D2 F L F R B2 L2,O,Hilliard Hippocampus IV 2023 (2023-04-27),333mbf Final B #1
+5816700040,L' F2 R B' F2 R2 D2 L2 D2 B2 D2 R U2 R B R2 B U' F L2 U,O,Mayo Cubing 2026 (2026-09-05~06),333mbf Final A #1
 3799754001,B R2 D2 U2 B R2 F' L F D2 B' D L2 U2 R D' L' B,O,Pitt Meadows Spring Open 2024 (2024-05-26),333 R1 C #5
 5696516001,U D F' U D' F2 L D' F' D2 B2 U2 L F2 L' F2 U2 B2 L2,O,Hudson Valley Spring 2026 (2026-06-13),333 R2 A E1
 268905001,R' D2 L U2 L' U2 L D R' U B2 U' L D U2 R2 U2 B',O,Tulip Open 2016 (2016-03-20),333 Final A #1
@@ -53,9 +53,9 @@
 5008742001,R2 D2 B2 F D2 L2 F' R2 F R' F D R D' B' L D2 F2 U2,O,Stevenage September 2025 (2025-09-06~07),333 R2 B #1
 5555474001,L2 D B U R D2 R' B D B F2 L2 U2 B2 U' F2 L2 U R2,O,Puro 3x3 Bulevar Niza Bogotá 2026 (2026-04-19),333oh Final B E2
 464566001,R' B D F B2 U F' U' B' D F U2 D2 F D2 B2 U2 D2,O,Jambi Cube Competition 2017 (2017-03-12),333oh Final B #2
-5060542001,R2 F D2 B F D2 U2 F' R U B2 U2 L2 U' B' L' D' L2,O,UNSA Speedcubing Primavera 2025 (2025-09-27),333 R2 D E2
+5809326001,R2 F2 U2 R' B L2 B' R2 D2 F' D2 R U' F2 D F D2 R2,O,Brampton Summer 2026 (2026-08-29),333 R1 E #5
 5165243001,U L2 B2 R D R2 L' U2 R' D R D2 B U2 F2 D2 F' R2,O,Lakewood Fall 2025 (2025-11-08),333 R1 E #2
-2567591001,U' L' R' D2 R2 U2 F2 U2 L' B2 R U F2 U L U' B2 D',O,Huancayo Summer 2023 (2023-03-18~19),333 R2 A #3
+5775368001,U2 L' D2 L B2 L2 R' B2 R' B' R2 D U R2 F' U' F' D' R',O,Maoming Open 2026 (2026-08-08),333 R1 E E2
 491412001,F' U2 L2 B F2 U2 L2 F R' U' L R B F L' F' R' F L2 B',O,Silent Spring 2017 (2017-04-15),333bf R1 D #1
 4422683001,L F' D2 R D2 R2 B' R2 B L2 F2 R F' R2 U' L2 U' L2 U,O,Uppsalaligan 1: Maple - 2025 (2025-01-16),333bf Final A #3
 498017001,F2 D2 L2 F2 L2 D B2 D' U2 F' L D2 B2 F' L2 U2 R' B' D',O,Mountain View Open 2017 (2017-04-29~30),333 R2 A E2
@@ -121,7 +121,7 @@
 4523376001,L F U' B' U R B U2 L2 F2 R2 L' U2 R F2 U,O,PA-retzel Mania Winter 2025 (2025-02-22~23),333 R1 E #3
 2752673001,B D' B2 L2 U' B2 U' B2 U' R U F U2 F2 U2 F U L',O,Westview Cubing Favorites 2023 (2023-05-27),333oh Final A E1
 907131001,B U2 D2 R U B' R' L F' B' L F2 U F2 U L2 F2 R2 D2,O,Gravitas Cube Open 2018 (2018-10-13~14),333oh Final B #1
-2998360001,L2 B F2 L2 F2 L' R' B2 D2 R' D' R' F' R' D2 B' F' R',O,Regionales Santander 2023 (2023-08-18~19),333 R1 C #2
+5783337001,U' D2 B2 U2 R2 L U' B R2 F D2 B D2 R2 D2 F' R F2 D,O,BC Championship 2026 (2026-08-07~09),333 R2 A #2
 931846001,R2 D' F2 D2 R2 F2 U L2 R2 U F' D B' L2 R D' L R2 U2 B L' F2,O,Idéale Nabeul Open 2018 (2018-11-17~18),333bf Final A #3
 3204574001,B2 D2 L' F' R' L2 F' U B2 U F U' L2 U' B2 D' B2 L2 B2 U2,O,Spooky Solving Idaho 2023 (2023-10-28),333 R1 A #3
 4871720012,U' B2 D' L2 B2 R2 U' B2 D2 L2 R F D2 B' U' R F2 R B' L' B,O,CubingUSA New England Quiet Championship 2025 (2025-07-19),333mbf Final B #2

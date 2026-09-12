@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / O / bin 0
-# Population in this bin: 163
-# Samples listed: 163 (all entries in this bin)
+# Population in this bin: 167
+# Samples listed: 167 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 34240001,B2 L' U2 L F2 U2 L D2 L F2 R' D' F' L' R2 B F L B U,O,Valenzuela City Open 2 2014 (2014-07-05),333 Final B E1
@@ -168,3 +168,7 @@
 5705090001,B U2 L B2 U2 R U2 F2 L' B2 R2 F2 U' R' F' U' R U2 B,O,Rockfort City Cubing Challenge 2026 (2026-06-13~14),333 R1 B #5
 5721588001,B' F2 D2 L F2 U2 B2 L2 F2 L' U L2 U' B' L' U' B2 L' F',O,Cayro Toledo Open 2026 (2026-06-27),333oh Final A E1
 5771086001,D' B' R2 B2 R2 B2 D' U R B L D2 F2 U L2 F L B',O,Hampton Beach Summer 2026 (2026-08-01),333 Final A #4
+5790834001,U' B D2 F2 L' F2 R' F2 U2 R2 B' F' U L' R2 B D' L2 U,O,Beihai Open 2026 (2026-08-22),333 R1 A #1
+5794910001,L2 U L2 B2 F2 D' U2 B2 D R D R F L U' R B2 U' L,O,Ecublens Open 2026 (2026-08-22~23),333 R2 B #1
+5806001001,F2 U2 L F2 U2 R' F2 U2 L2 B2 D B D' L D L D L B',O,Puck Open 2026 (2026-08-29~30),333 Final B E2
+5816580001,B' F U2 R2 B2 U2 R2 U2 R' B D B2 D2 U2 B' R' B' R2 U,O,Bilbao Open 2026 (2026-09-05~06),333oh Final A #5

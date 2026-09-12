@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / R / bin 6
-# Population in this bin: 256
+# Population in this bin: 265
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5416933013,D' F' D2 B D2 B2 F' U2 R2 D U L' R D' R' B' L2 D' R2 B R,R,Hämeenlinna 2026 (2026-02-28~03-01),333mbf Final A #2
@@ -41,8 +41,8 @@
 433596001,U R2 U' F2 U' L2 B2 R2 D F' R2 D2 F' R D2 L' D2 F' D,R,6 Sides of Silesia 2017 (2017-01-14),333oh R2 B E2
 448869001,R' B2 U' F2 U2 R2 F D' L F L U2 R2 D2 R' U2 R' F2,R,Polyhedra Open 2017 (2017-02-18),333 R1 N #5
 456182001,R F2 L' F' D2 L B2 R2 B' L U' D2 F L2 D2 B2 U2 B',R,Puget Sound Winter 2017 (2017-02-25),333 R1 C #1
-499548001,U' L2 U2 R2 U' L2 D' R2 F2 L' F L R2 U2 L2 B' L' D' B' L',R,Please Be Quiet UCLA 2017 (2017-04-29~30),333bf R1 B E2
-501667001,D2 F2 U2 R2 U2 L2 F D2 L2 F2 L2 R B L D' F L' B' L R' U,R,Dunas Open 2017 (2017-05-05~06),333 R1 B #1
+5809683001,B' L' U2 D F D2 B L B' R L' B2 R' U2 D2 L B2,R,DFW Cubing Summer 2026 (2026-08-29~30),333 R3 B E1
+5803887001,B D L2 D2 L D2 R2 B2 R B2 D2 R2 B' U2 F D' U R F2,R,Waihopai Winter 2026 (2026-08-22~23),333 R1 A E1
 524067001,B2 F2 U2 B2 U2 R2 D' R2 U L' U B D' B R2 U2 B' L' D2,R,City of Joy Open 2017 (2017-06-03~04),333oh R1 C E2
 540014001,B L2 D R' F' D' R' U2 D R2 L B2 R2 F2 R' F2 B2 D2 F2,R,6.25 Bay Area 2017 (2017-06-24~25),333 R1 B #1
 551964001,R' F' D2 L2 D R L2 F L F' U' B2 D2 F2 D' L2 D2 R2 D,R,Canadian Open 2017 (2017-07-15~16),333 R1 E #1
@@ -61,7 +61,7 @@
 682432001,D2 F2 L' F D' F R' D' R2 L' U' R2 D2 R2 L' F2 U2 R,R,Tulcan Open 2018 (2018-01-06),333 R1 B #2
 684534001,B' L2 B2 L' D' F U F U' F2 B L2 U2 F2 L2 F' U2 B',R,Etna Open 2018 (2018-01-13~14),333 R1 B #4
 4589723001,L2 F' D' U F2 U' B2 R2 U2 B' U2 L' B D F R D2 B,R,Slow N Steady UMD Spring 2025 (2025-03-23),333 R1 E E2
-695707001,F2 B2 R' F2 B2 L' F2 B R' D F R2 B2 U2 B R2 L2 B R2,R,Udaan Rubik's Cube Open 2018 (2018-01-27~28),333 R2 A #1
+5774090001,F L' B2 D R2 D' R2 D2 B2 U2 F2 L U2 L U' F2 D2 R2,R,Egypt National 2026 (2026-07-31~08-01),333 Final A E1
 696993001,R' D2 F2 R' B2 R' U2 R' F R2 B R B D' F L' D B' U,R,Aventura Cúbica V 2018 (2018-01-27~28),333 Final A #4
 4898552001,D2 F2 U' R2 U' B2 U' L F2 L B F D2 F L' B2 D' R2,R,Boise One-Handed Blitz 2025 (2025-08-02),333oh Final A #1
 726211001,U2 L2 R2 B D2 F2 L2 D2 U' F R' D F' R2 D2 R2 D F R',R,Indian Open 2018 (2018-03-17~18),333 R2 A #4
@@ -72,7 +72,7 @@
 805172001,R U D2 R2 L' B D' R D' R U D F2 L2 D' L2 D F2 L2 U2,R,Rally In The Valley 2018 (2018-06-16),333 R1 E #5
 814227001,F2 D2 R B2 R2 D2 B2 D2 R B2 F' D' U L2 B2 U' B U' F',R,St. John's Spring Open 2018 (2018-06-23),333oh Final C #1
 815034001,L' F' R U2 R' D2 B D F2 B' L2 B2 U' L2 D' B2 D' F2 D2,R,Brisbane Winter 2018 (2018-06-30),333 R1 C #3
-835224001,U' F2 R2 U2 F2 D L2 B2 L B2 R D' L U' L2 F' D L2 R2,R,Uzhgorod Summer 2018 (2018-07-14~15),333 R1 B #2
+5789904001,B' L' B' D2 R U' F R' U D B2 D' R2 U2 D' R2 F' B2,R,Delacuesta PRs 2026 (2026-08-17),333 R1 C #5
 5150972001,B D2 R2 B2 L2 R' D2 R' F' D F2 U' B' U' F L2 B' U2,R,Idaho Championship 2025 (2025-11-01~02),333 R1 C #2
 839680001,F' B R2 L2 D' R' U2 F2 U R U B2 D R2 U' R2 D2 R2,R,Beijing Summer 2018 (2018-07-29),333 Final D E1
 858271001,L' F D L' D R2 D' B2 R2 F D L2 U R2 F2 D' F2 U',R,Ufa Open 2018 (2018-08-18~19),333 R2 C #2
@@ -94,7 +94,7 @@
 5298491001,F2 B D' L' B L' B2 D L D2 L2 B D2 F' U2 R2 F' U',R,Race the Clock MN 2025 (2025-12-27),333 R1 A #4
 1218761001,F2 R' D2 L' D2 F2 L2 F2 R' F L F' L' R2 D R U L R2,R,Huzhou Open 2019 (2019-07-13~14),333 R1 C E2
 1224338001,R B2 R2 B2 D2 R' D2 R2 B2 F R F2 R' D2 L' U' R2 D F',R,Hudson Valley Summer 2019 (2019-07-13),333 R1 B #2
-5503691004,D2 R2 F' R2 U R' U L R2 U2 R2 F2 D2 B R2 U2 F2 L,R,PBQ in Astana 2026 (2026-04-04),333mbf Final A #1
+5800382001,B2 R U2 B D2 R2 D U2 B2 R2 U F U2 F U B' D2 L2,R,Beijing Autumn Begins 2026 (2026-08-22~23),333 R1 A #5
 5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1
 5523211001,F D U2 L' D2 L U2 L U2 L2 D2 B R2 U F R2 U' L2 D,R,Itajai ao Cubo 2026 (2026-04-11~12),333oh R1 A #3
 4468394001,R2 L2 B' L2 U L' U2 R2 F' D F2 R F2 D2 L F2 R2 B2,R,Cubing on the Plains at Auburn 2025 (2025-02-01),333 R1 B E2
@@ -152,7 +152,7 @@
 5115139001,B2 L2 B2 F' D2 R2 B' R B2 F U2 B' R' D2 F U' B' U L,R,SpeedCube Baja Open 2025 (2025-10-17~19),333bf Final A #2
 2945298001,R' B U' D2 B2 F2 L2 D2 F2 D2 R D2 U R' B2 U B L' D',R,mcubes Cube Open 2023 (2023-07-29~30),333 R1 F E2
 2971802001,U B2 D U2 F2 U' L' F L D B U B2 D B F2 D2,R,Burley Summer 2023 (2023-08-12),333 R2 B #5
-3012293023,L B2 R' U2 F L2 D2 F U2 B' U R B' F L2 D2 B L' F2,R,Slovenian Nationals 2023 (2023-08-25~27),333mbf Final B #1
+5806843001,U R2 U' L2 B2 D U B' D2 B' U L2 F' L2 B' R2 U2 L2 U,R,Slovenian Nationals 2026 (2026-08-28~30),333bf R2 A #1
 3147159043,R2 B R' F' U2 B' D B' U2 R' D R2 D' F2 U' B2 D' L2 D' L2 B' L',R,Polish Championship 2023 (2023-10-06~08),333mbf Final A #2
 3149585001,U' D2 B' F D2 B' F2 U B2 L U2 L B2 D F D B2,R,Balkan Open 2023 (2023-10-07~08),333oh R1 C #5
 3180491001,D2 B L2 D2 F2 L2 B D R B2 U2 F2 B2 U' R2 U2 L2 D B2,R,Finnish Championship 2023 (2023-10-20~22),333oh R2 A E1
@@ -161,7 +161,7 @@
 3205912125,U2 B2 D' R2 D B' D2 R F' R' B2 D2 F2 R F2 R D2 L D2 L',R,Please Be Quiet in Astana 2023 (2023-10-28~29),333mbf Final A #3
 5189633001,B' L' U2 F' U' D F' B' L2 F L2 U2 F' L2 D F U2,R,Rudny Open 2025 (2025-11-14~16),333oh Final B #2
 3248418001,U2 F2 R' D2 L R B2 L' B' R U' B D2 B' F U' L' D U,R,Canisius College Weekend 2023 (2023-11-04~05),333oh R2 A #1
-4606347001,L2 U2 L2 U R2 D F2 L' F2 L' F' D F2 L B2 R' B' R2,R,South Dakota Playhouse 2025 (2025-03-29),333oh Final A #2
+5796237001,L2 B2 L2 D2 B2 D B2 D B2 U B L' D2 R B' D B L2,R,Klemzig Kubing Decathlon 2026 (2026-08-22~23),333 R1 A #5
 3278704001,R2 F B2 D2 R2 D' B2 D L D' B2 R2 F2 U2 R' D2 B2 R F2,R,Algorithms on Abercorn 2023 (2023-11-19),333oh R1 A #2
 3299989028,L2 F2 U R B' U R' L' D2 B2 R2 D' L2 U F2 R2 U2 B' L2 B R,R,No Clock in Lužice 2023 (2023-11-25~26),333mbf Final B #2
 5136631001,L2 F2 U R2 D2 F2 D2 U' R' U F U2 L' B' U2 R2 D L,R,Beijing University Cube League 2025 (2025-10-25~26),333 R1 C #2
@@ -179,7 +179,7 @@
 3596200001,D R L B L' U2 B U L F U' R2 U D B2 R2 U' R2 L2 F2 L B2,R,Kuopion Kuutiokemut 2024 (2024-03-16~17),333bf Final A E1
 3605435070,B' R2 D' U2 L' F2 L' F2 R' U2 R2 D F2 U R2 F U2 B' L B' L2,R,Supermiya PBQ in Tashkent 2024 (2024-03-16~17),333mbf Final A #3
 3613517001,B U' F' L' F L2 B U L2 U D F2 U' L2 U2 B2 L D R2,R,Autotalo Anime Adventure IV 2024 (2024-03-23~24),333oh R2 B #4
-3622759023,B2 D' L2 B' L2 B L2 B' D2 B' R2 U L' D2 U' R' D' F D2 L B',R,Silent Korea Spring 2024 (2024-03-30),333mbf Final A #2
+5776854001,F' U' F' B2 R' U' R D' R2 F B2 L2 U2 F2 B U2 R2 L' F,R,Cube Factory League Brzeziny 2026 (2026-08-08~09),333 Final A #3
 3655618002,L' U' R2 B L D L' U2 L2 B2 U' D' R2 B U' B U2 L2 U',R,Deep South Solving Cape Town 2024 (2024-04-06~07),333mbf Final B #2
 3659142001,U R B U L2 B2 D2 L' R2 B2 R2 U' F2 L' D' F' R' D',R,Ho Chi Minh Spring 2024 (2024-04-06~07),333 R1 G E1
 5687674001,R F L' F' L U2 L F2 U R2 L2 F2 D2 L U2 R' B2 D' F',R,Tramsheds IX: June Saturday 2026 (2026-06-06),333oh R1 C #3

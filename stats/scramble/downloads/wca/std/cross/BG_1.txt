@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / BG / bin 1
-# Population in this bin: 188
-# Samples listed: 188 (all entries in this bin)
+# Population in this bin: 197
+# Samples listed: 197 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 57297001,R D B D2 F2 L2 U R2 L' U' F2 D2 B2 L2 D,G,Beijing Autumn 2014 (2014-09-13),333 Final A #2
@@ -193,3 +193,12 @@
 5750550009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A E1
 5750594009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A #2
 5765481001,U' L' B U2 F' R2 B U2 B L2 B2 L D2 F' U2 F' U' L',G,Samgau Almaty 2026 (2026-07-25~26),333 Final A #3
+5774237001,U' D' R2 U2 D F R2 F R' D2 L2 F B D2 F R2 L2 B,G,Multicentro Ibagué 2026 (2026-08-01),333 R2 A #5
+5776240001,L2 D2 R' U2 L' F2 D2 U2 R B2 L D' F' D L' F' R U' R',B,PU Villavicencio III 2026 (2026-08-02),333 Final A E2
+5777111001,B' U B L2 F' U2 L F' D L' R2 F2 L2 F R2 F2 U2 F,G,Bristol August 2026 (2026-08-08~09),333 R2 B #1
+5779879013,U' B2 D F2 R2 U2 R2 F2 U F' R B2 L2 D2 L2 D2 F D,G,Missouri Championship 2026 (2026-08-07~09),333mbf Final A #1
+5780705001,B2 R L2 B D2 B F2 L2 R2 U F L' U' L' R' F R2 F',B,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R2 F #2
+5797914001,F' D F R D2 L' U' B' L2 D L2 U2 F R2 F R2 U2 L2,B,Mid-Atlantic Speedcubing Championship 2026 (2026-08-14~16),333 R1 F #1
+5800777001,U' B2 U R2 B2 L B' R U2 R' F2 R' D2 B2 D2 R2 F2 L2,G,Langenstein Summer 2026 (2026-08-22~23),333oh Final A E1
+5802160001,D L F2 U' F' D2 F2 D2 R2 D2 B' U L2 R B' D2 B2 D2,G,Koszalin Open 2026 (2026-08-22~23),333 R1 B #4
+5818841001,F2 R B2 U2 L R' D2 L2 R B' L2 R B' U' R2 F2 U2 F' D B,B,Champagne Open 2026 (2026-09-05~06),333 R1 A #5

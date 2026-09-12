@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / B / bin 5
-# Population in this bin: 675
+# Population in this bin: 683
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3356759001,D' R L' D' L U2 D' L' F U2 R2 D2 F B2 L2 F' L2 U' F L' F',B,Mexican Championship 2023 (2023-12-14~17),333bf R1 B E1
@@ -79,14 +79,14 @@
 1375490001,D2 F2 L B U' R D R U B2 U2 F2 R2 D2 F' D2 R2 D2 F,B,Macedonian Nationals 2019 (2019-10-26~27),333 R1 B #2
 1332433001,B R2 B F2 U2 B R2 F' L B' D2 L D2 U2 F2 U' L2 B' D',B,Santa Fe Primavera 2019 (2019-09-28~29),333oh R1 D #1
 1368480001,U2 L2 R B2 L U2 L R2 F' U' R U' F' R U2 R2 U' L2,B,SESC Camaquã 2019 (2019-10-19~20),333 R2 C #1
-458762001,B' U' L' F' B' U L2 U2 D2 B L' U' D L2 D R2 F2 R2 D',B,Atlantic Open 2017 (2017-03-04),333 R2 A #5
+5798755013,B' D' F R2 D' L' B2 U' L' D L2 U2 F D2 F D2 B2 L2 F L B2,B,Algorithmes Artistiques Abrésiens 2026 (2026-08-22~23),333mbf Final B #1
 3005406001,B' F2 L U2 R B2 F2 U2 L U' L2 U2 R D2 U L2 B D',B,Taman Anggrek Speedcubing 2023 (2023-08-19~20),333oh Final A #4
 492321001,B2 D2 U' B2 F2 L2 U' R U2 R' B L2 B' U2 F' R2 D' B2,B,Tietomaa Open 2017 (2017-04-22~23),333 R1 A E2
 5571347017,B L2 B2 U2 F' R2 F2 U' R2 B U' B F' L2 R' U' F2 U L',B,Blind League Dobřejovice II: Crownrise 2026 (2026-04-25),333mbf Final B #1
 1485318001,D' F2 D U2 B2 D2 B2 R2 U' F U2 B2 D L' B' L F2 U B,B,PB Smashathon Delhi 2019 (2019-12-30~31),333ft Final A #5
 3545800001,R F D R D2 F' U2 L D' R' F D2 B' D2 B' R2 B2 D2 F2 L2 U,B,Please Be Quiet Taiwan 2024 (2024-02-24~25),333bf R1 C E2
 3705492001,L2 D B2 F2 D U2 R2 B2 F2 L' B' L' D' B' L' F R2 B' U,B,It's About Time Bloomsburg 2024 (2024-04-27),333 R2 C E1
-1225977001,L2 B U2 L2 B U2 B' U R F' L' D2 U R U R' D' L',B,Heze Open 2019 (2019-07-21),333 R2 A #2
+5785260001,B2 R' D2 L' D2 L2 B2 U2 B' R D' R F' R B2 R2 D2 F,B,Kansas Championship 2026 (2026-08-14~16),333oh R2 B #3
 4026459001,F D R2 U2 B L2 U2 F R2 D2 R2 F2 D' B2 L' R2 B2 R2 F2,B,Kumaraguru Cube Open 2024 (2024-08-15~18),333oh R1 A #4
 5523622001,F2 L' D' B2 U2 L' D2 U2 L' R D' L' B L D' B2 F R,B,Pickering Mini Afternoon 2026 (2026-04-12),333 R2 A #1
 1116420001,F2 B2 R F U R2 D2 F U B2 U R2 F' U2 F R2 L2 B,B,Idaho Megacomp 2019 (2019-04-20),333 R1 C E2
@@ -101,7 +101,7 @@
 3230440001,L' B U2 L2 F D2 F' R2 F' U2 L2 D U2 L B D2 F2 U',B,Real Geekcuber Pucallpa 2023 (2023-11-04~05),333oh Final B #4
 620442001,L F U' L2 D L' B2 R2 F2 D L D2 R U2 L2 D2,B,Dnepr Skips 2017 (2017-10-14~15),333 R1 A #4
 4019788001,L2 B' L2 B2 F U2 L2 F2 L2 U2 L' U2 B' D L2 R2 F2 U2 L2,B,Morro Reuter Cubing 2024 (2024-08-17~18),333 R1 A #5
-3285743001,L2 B R2 B D2 U2 L2 B R2 F2 L2 D' F' D2 L U' L F' L2,B,Sleman Skewb Warm-Up 2023 (2023-11-26),333 R1 C #1
+5774756001,B2 D2 L' F L2 U2 F B2 R L' F2 D2 R' B' R' F',B,Alexandria Summer 2026 (2026-08-03),333 R1 A E1
 625229001,D2 F' R D2 R D L' D' L D' R2 U2 F R2 B U2 R2 F2,B,Rubikku Champ 2017 (2017-10-21~22),333 R1 M #4
 628272001,R2 U' R2 D B2 U2 F2 U L2 D B L B R' B L2 R2 F2 R,B,Cubing ATMOSphere 2017 (2017-10-28~29),333 R1 C E1
 631367001,F' D' L2 U B2 U2 D2 B' L2 D R' F2 B L2 F2 B D2 B2 R2,B,ChicaGhosts 2017 (2017-10-28),333 R2 E #1

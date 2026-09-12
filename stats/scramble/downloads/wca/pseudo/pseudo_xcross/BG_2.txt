@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / BG / bin 2
-# Population in this bin: 256
+# Population in this bin: 261
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3733001,U2 R F' L' B2 L F2 R D' F' L2 D2 F2 D2 L' U2 R2 U2,G,Kharkiv Special 2014 (2014-03-22),333ft R1 A #2
@@ -96,7 +96,7 @@
 5053956001,U2 B2 D2 L2 B2 F2 U2 L' F' L2 R U F2 L2 F L2 B R B2,G,Amor y Amistad Aves María 2025 (2025-09-27~28),333oh Final B #4
 5502044001,R' F R' U L B L' D2 R U2 R' D L2 D' B2 R2 L2 D2 L2 B2,G,Tilcara Open 2026 (2026-04-03~04),333 R2 A #3
 1270123001,B L F R2 L' U' B' L2 U' F2 B' L2 D2 F L2 F U2 L2 F,G,Cubing in the 6ix 2019 (2019-08-24),333 R1 B #2
-1279368001,U B R' U2 F D R2 D L' F2 D2 F L2 F2 D2 L2 F' U2 F,G,Shenzhen Cubing 10th Anniversary 2019 (2019-08-24~25),333 R1 A #2
+5785741001,R2 D2 R' F R' U F U' D2 B' F2 L' U2 L2 F2 L F2 U2 L' F2,B,Oakridge Independence Cube Open 2026 (2026-08-15~16),333bf R1 B E2
 1309443001,L2 F2 D2 R2 D2 F' U2 R2 B' L D2 F R B2 U2 L' D2 U' B2,G,UPM Open 2019 (2019-09-21~22),333 R1 B #5
 1333049001,U' R2 D' B2 D2 B U2 L' B' U' B2 U2 R2 U' B2 D2 L2 B2 L2,G,Shandong Open 2019 (2019-10-04~05),333oh R1 B #1
 1476086001,F L B' R2 F2 B R U R2 U2 L' D R2 U F2 R2 U R2,G,Harbin Open 2019 (2019-12-22),333oh Final C #5
@@ -123,8 +123,8 @@
 2058292001,D' B2 U B2 L2 D R2 F2 R' U2 F2 R' D2 F2 U F U2 F L',B,Tashkent Open 2022 (2022-07-30~31),333 R1 A #5
 2066249001,D R2 D' B2 D' B2 D' F2 U2 R F' R' F' D' L R2 F' D2 L',B,Lazarillo Open 2022 (2022-07-30~31),333 R2 A #2
 2074566001,U B' L2 D2 F2 R2 B' L2 R2 B' F' R U' L U' F2 R F' R D,G,George Washington LP 2022 (2022-08-06~07),333 R1 G #3
-5026254001,F2 L2 F2 D L2 U L2 B2 L2 D' R' B2 R' B D L F2 R2 U,G,Fastest Fingers First Pune 2025 (2025-09-14),333 R1 C #1
-2261655001,B U' F2 R U2 R2 U2 R' B2 D' B2 U' F2 R2 U D2 R2 B D,G,Minyons de Terrassa Open 2022 (2022-10-22),333oh R1 B E1
+5777111001,B' U B L2 F' U2 L F' D L' R2 F2 L2 F R2 F2 U2 F,G,Bristol August 2026 (2026-08-08~09),333 R2 B #1
+5813725001,B F2 U2 F2 R2 B L2 F' R' F L D L D B F' U' R,G,Mofunland Speedcubing Singapore 2026 (2026-09-05),333 R3 A #1
 4544550001,B L2 F2 L U B L2 F' R2 D U2 B2 D2 R' B2 R' U2 F2 R B' L',G,Eaubonne Open 2025 (2025-03-01~02),333bf R2 B #1
 2269598036,F2 U L B2 U' F2 B2 D' L2 D2 L2 U2 F2 L D L' U L B,B,Kewbz UK Championship 2022 (2022-10-28~30),333mbf Final A #2
 2336043016,B2 U F U2 F2 D2 R F' R' L2 B' L2 U2 B2 D2 F,G,Silence in Cebu 2022 (2022-11-26),333mbf Final A #1
@@ -186,7 +186,7 @@
 3889367001,U D' R' U2 R U2 R2 U' D2 B R2 U2 F U2 L2 F' U2 L2 B',B,Bucharest Cubing June 2024 (2024-06-22),333 Final A E2
 3915193001,L R2 D2 L2 F' R2 B' D2 B' U' L' F L' B' U' B F' U',G,Side Events Bangalore July 2024 (2024-07-06~07),333oh Final A #3
 3920835001,D B U' L U2 B2 U2 L2 D2 L F2 D2 B' R F U F' L B',B,Katano Milky Way 2024 (2024-07-07),333 Final A #2
-3935469001,B' D' B D L' F B U F B2 R2 B2 D' F2 U2 F2 R2 B2,G,Edén Bogotá 2024 (2024-07-13),333 R1 A #2
+5775855001,B L U' L' U D F L U B2 L2 F2 R2 D R2 F2 B L',G,Cubetec UEA II Manaus 2026 (2026-08-08),333 R1 C #1
 5491191001,F2 R' F' L2 R2 D2 R2 D' B2 D2 F' D' R' B R2 F L2 U2,G,NxNjoyable Sydney Gathering 2026 (2026-03-28~29),333 R1 B #3
 3950986001,R' F' R D' L' F L D R2 D2 R2 B2 R' U2 B2 L' B,B,Czech Open 2024 (2024-07-19~21),333oh R1 A #3
 3954428001,F2 B R' B R U2 F' L' B' U F2 D' F2 D2 L2 D' B2 U2 L',G,Baja Favorites 2024 (2024-07-20~21),333 R1 C E1

@@ -1,0 +1,31 @@
+# Scramble samples — first_layer / first_face / ORWY / bin 9
+# Population in this bin: 24
+# Samples listed: 24 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+139035001,F2 D2 R2 D F2 D' L2 D' B2 D B D R B D' U' B' R D2 B' F',O,UTN Otoño 2015 (2015-05-09),333 R1 C E2
+170747001,B' L F2 B2 U' L' B D2 L2 U L' B' D2 B' U2 R2 D2 L2 D2 B',O,Shantou Open 2015 (2015-08-02),333oh R1 A E2
+322344001,D' U2 B2 L2 U L2 D2 R2 U B D2 U' L' R B' R' F' L' R2 U,O,Bay Area Speedcubin' 9 2016 (2016-06-25~26),333oh Final D #4
+441776001,D L2 U' D' F' L' B D L2 B' U' R U2 D2 L2 U2 D2 L' F2,O,B.O.N.D. Open 2017 (2017-02-04~05),333 R2 B #1
+591706001,U2 B D2 F' D' F' R F' L' B R B2 D2 F2 D2 L2 U2 R2 D F2,O,Kaohsiung Autumn Open 2017 (2017-09-10),333 R2 A #2
+644970001,L2 U' B2 L2 D2 U L2 U2 R' F D' L2 U' R' D2 U' F U' B' F,O,TKK Open 2017 (2017-11-19),333ft Final A #3
+660839015,F2 D2 F' R2 B' F2 U2 F' L2 F2 R B2 R U L' D' R' D2 R2 B2 F' L2 U,O,Spanish Championship 2015 (2015-10-09~11),333mbf Final A #2
+782741010,D' R2 D2 L2 F2 U R2 U2 L2 D2 B R U L2 U F D' B' L F L2 U2,O,Swedish Championship 2018 (2018-05-11~13),333mbf Final A #2
+888589001,R' U' F D2 F' L2 B2 L2 F U2 R2 F' L2 F R' D' U' L U2 L B' R2 B2 D R' U' F,O,Please Be Quiet Belgium 2018 (2018-09-29~30),333fm Final A #2
+1069439011,F2 R2 B2 F' L2 F R2 U2 L2 R2 D' B2 D R U F L' B' R' D U' L2 U',O,Please Be Quiet Tokyo 2019 (2019-03-31),333mbf Final A #1
+1728238001,B2 R2 D R2 F2 R2 D' U L2 B' D2 R' D L' F U B R U L2 U2,O,BrizZon Side Open III 2021 (2021-11-12~14),333bf R2 C E2
+2332031001,B D' L2 B2 U B2 R2 U' F2 B U F D' L' R B' U' R2 F',O,Tbilisi Open 2022 (2022-11-27),333 Final A #2
+2593183001,B' U L2 B R F R L B2 D U2 R2 D2 B D2 R2 F D2 U,O,Bayonne Atoutcubes Open 2023 (2023-03-25~26),333bf Final A #3
+3305281002,L F L2 B' U' L2 D2 F R F2 U2 R' D2 R' U2 B' D' F2 L' F',O,Please Be Solved This Time Joburg 2023 (2023-11-26),333mbf Final A #2
+3654411001,F U2 D F L F2 D B U' B D2 L' B2 L' F2 R' L' F2 D',O,Unicentro Armenia 2024 (2024-04-07),333 Final A E2
+3700097001,F2 D2 R D2 F2 D2 L F2 L B U F R D F' R' U' L F' L,O,Miami Spring 2024 (2024-04-20),333 R1 D #5
+3760890001,F' L' U B L2 D2 F U2 F L2 D2 R' F' R F2 L U' R B',O,Bursa Mother's Day 2024 (2024-05-11~12),333 Final A #1
+4093313001,R2 D' R2 D' U2 L2 U' B2 D2 F2 L' U2 B' F2 U' F2 R' D2 F' D,O,Aliso Niguel Summer 2024 (2024-09-08),333 R1 A #4
+4696749001,B' D' F' L' B R' D F' D L2 B2 U' B2 D' F2 R2 B2 D' R2 D,O,Don't Inverloch Up 2025 (2025-05-03~04),333bf Final A E1
+4745740001,F2 D L2 U' L2 B2 F2 U F2 U' B' D2 F L' U' L' R B L' F',O,Danish Championship 2025 (2025-05-23~25),333oh R1 C #5
+5053833001,D2 B' D2 U2 L' U2 B2 U2 L2 D2 U2 F' D2 B' U F D L' R2 B,O,Amor y Amistad Aves María 2025 (2025-09-27~28),333 Final A E2
+5422385001,R2 U L2 F' U2 B U2 R2 B D2 L U2 R' D2 U' B R' F' U,O,Osijek Open 2026 (2026-02-28~03-01),333oh Final A #3
+5422575001,D2 L U2 F2 L B2 R2 F2 U2 F2 B' U2 B D' F' U2 L F2 U F',O,SRMAP Cube Clash Feb 2026 (2026-02-27~28),333 R2 B #5
+5779583001,F2 R2 U2 R2 D F2 D L2 B2 R' D' L2 F' L U' R B D B' R2,O,Cubing Acton El Salvador 2026 (2026-08-09),333 R1 D #4

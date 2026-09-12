@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / BGOR / bin 0
-# Population in this bin: 616
+# Population in this bin: 627
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4206596001,L' D2 F2 R' D B2 U2 B2 R2 D R U2 B R' D L F,B,Uppsala Open 2024 (2024-10-19~20),333oh Final A #5
@@ -71,7 +71,7 @@
 442812001,U2 L' U' L2 B2 L F L2 B2 R' F' U2 D F2 U2 B2 D R2,R,First Ecuador Open 2017 (2017-02-11),333 R1 G #1
 3982145001,R B R' L2 B' U2 R2 F U2 B2 L U' L2 U' R' F2 L' R,O,Zvornik Summer 2024 (2024-08-03~04),333oh Final A #1
 5119150001,R B2 D' L2 B2 D2 U F2 U R2 B' R2 F2 L' F2 R B' U',O,Please Don't Flip Katipunan 2025 (2025-10-19),333 R1 C #2
-471312001,B L' U2 L F' R B R' B' L2 F2 D' L2 F2 U B2 U' B2,G,SCMU ICT Open 2017 (2017-03-18~19),333oh R1 E #2
+5810695001,U R2 B2 U2 L2 F2 D F2 U F' D' B' F2 R F2 D R2 D2 L,G,Cubithon San José 2026 (2026-08-29),333 R1 C #4
 4272611001,R D2 B U R2 B' R' U2 B L D2 B2 R2 U2 L2 F U2 B2,B,Cubing and Books Caracas 2024 (2024-11-10),333 Final A E2
 1456914001,U2 F2 L2 B2 U R2 U2 L2 F' L' U' L' B' D' F2 L D F' L' U',G,GA Cubers Feet Fest 2019 (2019-12-14),333ft R1 A #3
 4584539001,R2 U2 F2 L2 U2 B2 R' F2 L' B D' U2 L' B' D L2 B2 L2 B',O,Western Ontario Winter 2025 (2025-03-23),333 R2 A #5
@@ -131,7 +131,7 @@
 5623823001,L2 F D2 U2 L' F2 R D2 B2 U2 F' R2 D R2 U2 R D R,B,MoT Cube Open 2026 (2026-05-09~10),333 R1 D #5
 3886437001,B2 L R2 B2 F2 U2 L D2 F2 D2 R' B D U2 R B2 F D' B L,G, Vasconcubos 2024 (2024-06-22~23),333oh Final B E2
 2359097001,B U2 L2 B2 L2 U' B U2 D2 B' U2 R' F2 B2 R' B2 R,G,Oulu Open 2022 (2022-12-10~11),333oh Final A #4
-3424241001,F R2 B L2 U L2 F2 L2 D2 R2 D F2 U R' D B2 D' B2 F,R,Pinoy Big Cubes Open 2024 (2024-01-14),333 Final B #2
+5819319001,D B D' R2 U2 B2 F2 L2 B2 D' L2 U' L' B F L B D' U2 B,B,Cúcuta Library V2 2026 (2026-09-05),333 R1 C #5
 5640895001,D2 B2 L' D' B2 L B2 R2 D R2 F' B2 R2 B2 L2 D2 B U2,G,Vienna Frühling 2026 (2026-05-16~17),333 R1 A #1
 740041001,L D2 L2 B2 U2 F2 R2 B L2 U' L' B' U R' B2 R' U2 L',R,French Championship 2018 (2018-03-31~04-02),333 R2 B E2
 5172846001,F D B U B2 U2 L2 U2 F D2 U2 R U' F2 U' R' U B F' L2 U,G,Madrid Norte Open 2025 (2025-11-08~09),333bf Final A #2
@@ -184,14 +184,14 @@
 1035439004,L2 D' L2 B2 L2 B2 D2 U' B' U' R' F' D B U F' D L' B' R D,R,Myyrmäki Spring Challenge 2019 (2019-03-01~03),333mbf Final A #1
 1791900001,D2 B' U2 L2 R2 U2 L2 R F' L2 R' U' B U2 B L2 F' D B R',R,Zoioff Campinas 2022 (2022-01-22~23),333bf R1 A #3
 1042679001,U2 B2 U2 F R2 F R2 U2 F D2 B R F' D2 U R B U F R2 B',O,Iruña Open 2019 (2019-03-02~03),333bf Final A #2
-1043861007,D U B2 L2 B2 R2 D' L2 F' L F D' R D2 F L' D' B R2 B' L2,B,Saratov Special 2019 (2019-03-09~10),333mbf Final A #2
+5790834001,U' B D2 F2 L' F2 R' F2 U2 R2 B' F' U L' R2 B D' L2 U,O,Beihai Open 2026 (2026-08-22),333 R1 A #1
 4408895001,D R2 D2 F' D' L' U2 B2 R' B2 L2 F2 D2 F U2 L2 D2 F2 R',B,Space City Winter TX 2025 (2025-01-04),333 R2 B #1
 1064797001,U2 R B2 R F2 R2 D2 U' L B2 D R2 F L' F2 D' B2 U,O,GDSY Open 2019 (2019-03-23~24),333oh R1 B #1
 2582634001,F U2 F2 R' U R2 D' L' B' L2 D2 B2 R2 B' U2 F' L' D,O,Hudiksvall Open 2023 (2023-03-25~26),333 R1 A #1
 3588348001,L' D L' D F2 U' F' L' R2 U2 R2 L2 B2 D' L2 B2 U R2 L,G,Puzzlin' Polokwane 2024 (2024-03-15~16),333oh R1 C E1
 1106216001,D U2 R2 F2 D' L2 F2 D' B2 L2 F D2 L2 B L' U2 F' R U' F',O,Upstate Cubing 2019 (2019-04-13),333 Final A #2
 1110452001,L2 R2 D2 F L2 U2 F' U2 B' L B2 L B F U R2 U F L2,R,Kansai Open 2019 (2019-04-20~21),333 R1 E E1
-5666199001,U F' L U2 L U2 B2 D2 B2 D L' R2 D B2 R2 D' U2 B' D,G,West Coast Cubing Western Championship 2026 (2026-05-23~25),333bf R1 A #5
+5806001001,F2 U2 L F2 U2 R' F2 U2 L2 B2 D B D' L D L D L B',O,Puck Open 2026 (2026-08-29~30),333 Final B E2
 1122901001,D2 L2 R2 B' U2 R2 B2 F' L2 R B' F' D B' D U F U F' R',O,CubingUSA Southeast Championship 2019 (2019-04-27~28),333oh Final A #2
 5370861001,D' L D2 U2 R F2 R' D2 R' B2 U' R D' F2 D B D2 L' B' L2,O,Cubing in the Cape Q1 2026 (2026-02-08),333bf Final B #3
 1127734001,F2 L R2 B2 L' B2 U2 R B2 F U L' F2 U L D R B2 R U,O,All is Well Tainan 2019 (2019-05-05),333 R1 D E2

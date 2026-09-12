@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / R / bin 8
-# Population in this bin: 407
+# Population in this bin: 415
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 20355001,U2 L' U2 B2 F2 L' R' U2 R' U F R' B' U2 B D2 B L' F D B R2,R,San Pedro de Macoris Open 2014 (2014-05-18),333bf Final A #3
@@ -21,7 +21,7 @@
 198410001,L2 B D2 U2 B' U2 L2 B2 U' B2 D B' F2 R U' R D' B,R,REC Cube Challenge 2015 (2015-10-02~03),333 R2 B #1
 4208816001,B' D' B F2 D2 F' L2 B R2 U L' B2 F2 R' B' R' U,R,M Moves in Middlebury 2024 (2024-10-19),333 R1 D #3
 207926001,F2 U' D' F R F R D2 B' D2 B2 D L2 U' F2 L2 D,R,Amalthea SCMU Open 2015 (2015-10-24),333 R2 B E1
-209788001,L2 R2 D2 R2 B2 R2 B2 D' U' B U' B R2 U2 R' U L D',R,Avenues CUBELELO Open 2015 (2015-10-31~11-01),333oh Final A #1
+5793909001,F2 L' F2 L2 D2 U' F2 R2 U F U B' F D R' U2 B D B R',R,BrizZon Side Open IV 2026 (2026-08-22~23),333bf R2 E #1
 2980934027,L2 U R2 U F2 D' B2 L2 D' F D L2 B2 L U F U',R,Bucharest Blind 2023 (2023-08-13),333mbf Final A #1
 5330861001,B L B2 R2 B' D2 R2 F' L2 F2 R2 F L2 D' L2 B R2 D R2 F,R,Avenida Chile XXX 2026 (2026-01-18),333 R2 A #5
 3637856001,U' B' U B2 L U2 L' F U B' U R2 L2 D' L2 F2 D2 F2 D2,R,Welcome to Wellington 2024 (2024-03-30),333 R1 A E1
@@ -131,7 +131,7 @@
 1167198001,D L2 D U2 R2 U2 F2 R D' L2 B' L F R2 F2 U2 L' R2,R,Mindanao Championship 2019 (2019-05-31~06-02),333oh Final A #2
 1182041001,F' L' D2 B2 L F2 L2 U B2 U2 D F R2 U2 F2 R2 L2 B,R,Pittsburgh Summer 2019 (2019-06-15~16),333 R1 C E2
 1193956001,F2 D2 L2 R2 U' L2 D' U' L' B2 D2 R U2 R' B D R B U,R,Belgian Solstice 2019 (2019-06-22~23),333 R1 A #3
-5581497001,L D R L F B2 D2 R' B' R L2 D2 F2 R' U2 L' F2 B2 D2,R,Vaquita Morelia 2026 (2026-04-25~26),333oh Final A #2
+5820412001,U2 F2 R B2 R F2 U2 F2 U2 R2 D' F2 D' F2 U2 B D B L,R,New York Big and Quiet Championship 2026 (2026-09-05~07),333bf R1 B #4
 1239507001,R2 U2 B L2 D2 U2 B2 F' R' D R2 U' R2 B D2 B D L U,R,China Championship 2019 (2019-07-26~28),333oh R2 B E1
 4025913001,D2 R U' R' D' F' B2 R' U2 F2 U2 B2 U2 R2 B U2 R2 U2 R',R,İstanbul Small B 2024 (2024-08-18),333 R2 B E1
 1266344001,L2 D2 U2 F2 R' F2 U2 F' R F D' F2 R' U' L B' R',R,Indonesian Championship 2019 (2019-08-16~18),333 Final A #5
@@ -152,7 +152,7 @@
 1552974032,B U2 F U2 F2 U2 F' D2 F' L' B' L' R' U' B2 L U L B2 L2,R,Kiev Super Blind 2020 (2020-02-15~16),333mbf Final A #1
 4274121001,B2 D' R2 U2 R2 U' B2 R' U F D' U B F R' F R2 D2 U,R,Basauri Open 2024 (2024-11-09~10),333 R1 E E2
 5678323001,B L' R2 U F2 U B2 R2 U2 L2 D' F2 L B D2 B2 U2 F2 L,R,Gif-sûr de PR 2026 (2026-05-30~31),333 R1 B #5
-3748535001,F2 R2 D L B' L F L' F2 U2 L D2 L F2 U2 F2 R2 B D' R2 D',R,Perth Autumn 2024 (2024-05-11~12),333bf R1 B #2
+5791098001,R D2 B L2 R2 B D2 B2 U2 F' R2 U' F2 L U2 R2 B2 L',R,Luzern Sunset Solves 2026 (2026-08-19),333 Final A #4
 1597040001,L U2 L R F2 L' U2 R2 U2 F2 U' F U' F' U B2 D2 F U,R,Cube Ala-Eh V 2020 (2020-03-07),333 R1 C #4
 1626466001,U B2 F2 U2 R D2 F2 D' R' B2 D F D B2 R2 D' L2,R,Cubing Cafetalon Recargado 2020 (2020-12-13),333 R1 E #5
 1659478001,L D2 B2 U2 L B2 D2 L' U2 B2 R' D F' U2 B2 R2 U F2 U,R,Bogoroditsk Open 2021 (2021-05-29~30),333 Final A #5
@@ -184,7 +184,7 @@
 5116956001,F U F2 L2 U' R2 U' F2 U F2 B D' B' L2 B2 L2 U2 L' D',R,Utah State University Fall 2025 (2025-10-18),333 R1 A #2
 2308608047,U' F U2 L' F2 D2 B' L2 D2 F' L2 D' U' F D B2 L D' B',R,Colorado Sensory Shutdown 2022 (2022-11-19),333mbf Final A #1
 2308611044,R' U R2 F' D L' D L' B R B2 D' F2 U D2 F2 L2 D' F L2 U2,R,Colorado Sensory Shutdown 2022 (2022-11-19),333mbf Final B #2
-4003966001,R2 F' D' F2 U2 B U2 F' R2 B2 L B L2 U' L' B' U2,R,Autotalo Anime Adventure IX 2024 (2024-08-10~11),333oh Final A #4
+5804558001,L D2 B D' R' F2 L' U2 R2 L2 U R2 L2 D' L2 F2 U' B' U F',R,Catskills Summer 2026 (2026-08-29),333 R1 C #4
 3495240001,L2 F2 R2 B2 F2 D2 F2 U' L' B' R' B' R' U' B D L' B2 R2,R,Cubing in Mount Kisco 2024 (2024-02-10),333 R1 A #4
 2313830001,R' L2 U B' D L' F2 L B U2 F' D2 B L2 U2 B2 U2,R,Bucaramanga Cultural 2022 (2022-11-19),333 R1 B #5
 3664388001,F2 U L2 U' L2 F2 R2 D L2 D R F D F L2 D' U' R' B',R,Fundación de Cuenca Open 2024 (2024-04-13~14),333 R1 A #1

@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / O / bin 8
-# Population in this bin: 968
+# Population in this bin: 984
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 901881019,B2 U2 B2 D2 L2 F2 D R2 F2 U' L' B' L' B' U' B' R2 D F2 L' F' L2,O,Dutch Open 2018 (2018-10-13~14),333mbf Final A #1
@@ -123,7 +123,7 @@
 5634859001,B2 F2 L R D2 U2 F2 U' B' L2 D2 B D' B D' F2 D L2,O,Wuppertaler Würfel Wochenende 2026 (2026-05-16~17),333 Final B E1
 5258074001,R D2 R B2 U B R L2 F2 U2 R2 L2 D' L2 B2 U R2 U B',O,Portugal Championship 2025 (2025-11-29~12-01),333oh R1 C E1
 1043800001,R2 D2 L2 F' D2 R2 U' R U2 R2 B2 D B D L2 B',O,Saratov Special 2019 (2019-03-09~10),333ft Final B #3
-1071154001,F U2 B L2 B2 U2 F D2 R2 D' F R' B2 D2 U F' R' D U' R',O,UNAC Medellín 2019 (2019-03-24~25),333 R1 A #1
+5773724001,L F B2 L D B D2 B2 D' B R U2 L2 U2 R U2 L F2,O,New Braunfels Tube & Twist 2026 (2026-08-02),333 R2 D E1
 532115001,F2 B' D' R L2 U2 L2 F D' L2 F2 R' D2 L B2 R B2 L2 D2,O,Foon Yew Open 2017 (2017-06-11),333 R2 C E2
 535670001,D' F2 D' B R D' F2 R' B' R B L2 U2 D2 B U2 F U2,O,Kvissel Open 2017 (2017-06-17~18),333 R1 A E1
 1545417001,L2 B2 U2 R2 B2 D2 R' B2 D F R D' L F' D F L2 F' U',O,Vedruna Balaguer Open 2020 (2020-02-15~16),333 R2 B E1

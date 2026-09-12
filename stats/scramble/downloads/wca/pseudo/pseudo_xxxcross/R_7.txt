@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / R / bin 7
-# Population in this bin: 883
+# Population in this bin: 891
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3853392001,L' B L' U2 D2 R2 F D' L F' D2 R2 U F2 D F2 D L2,R,Prime Cubing Day Seoul 2024 (2024-06-15),333 R1 E E1
@@ -126,7 +126,7 @@
 2523402001,F2 L' D2 L2 B' L2 U2 B' L2 B' R2 L F' R' U2 R B2 U',R,Cavite Speedcubing Open IV 2023 (2023-02-26),333 R2 B #5
 1151595001,U2 L D2 R2 D2 B2 L' F' D B2 F' L U B L' D U' F,R,LLS II 2019 (2019-05-18),333 R1 C #2
 5571248001,R' U' F U2 F2 R2 B2 U B2 R2 U B2 R D2 U L2 F2 D' U2 B' U' R' U' F,R,Fewest Moves Bogotá XII 2026 (2026-04-25),333fm Final A #2
-2336043016,B2 U F U2 F2 D2 R F' R' L2 B' L2 U2 B2 D2 F,R,Silence in Cebu 2022 (2022-11-26),333mbf Final A #1
+5792112001,R2 U2 F2 D' L2 D' L2 B R D2 U2 F2 R' U B' F2 U R',R,Temecula Valley Back To School 2026 (2026-08-22),333 R1 F E2
 4885580001,L2 U2 L2 D' U2 R2 F2 L D2 F2 L F L F D2 F' D' B,R,Sandnes Summer Fun 2025 (2025-07-25),333 R2 A #3
 622236001,L' F D2 F2 B' R' L D F D2 F' B U2 D2 F' L2 U2,R,Rodeo Plaza Speedcubing 2017 (2017-10-21),333 R1 A E1
 1826143001,L D2 F2 U' R2 F2 U R2 F2 D' R' B' F L' B2 D' F2 U' L' F' L2 U',R,Lyttelton Autumn 2022 (2022-03-05~06),333bf R1 A #2
@@ -184,7 +184,7 @@
 4805695001,D L U' D' L2 F' U R2 U' B' L2 B' R2 B D2 B' R2 B' U',R,SM Manila Speedcubing Warm-Up 2025 (2025-06-14),333oh Final B #3
 1043469001,L' D2 L F2 D2 R2 U2 L D2 F2 U L2 F U' L2 B2 L2 R' B2,R,3x3 Only Calgary 2019 (2019-03-09),333 R2 B E2
 778991001,R2 B2 D' B' D' F2 L' B D' L2 F2 D' L2 U D F2 B2,R,Lower Moreland Spring 2018 (2018-05-12),333 R1 A E1
-4615111001,L2 B' F' D2 R2 U2 R2 U2 B L F R2 B D L' B2 F2,R,Plaza Center Cube Lima V 2025 (2025-03-29~30),333 R1 G #3
+5782975047,D2 F' U2 B' R2 F R2 F' L B' F D' U2 R' B2 U2 R' F' L B R2,R,Kewbz UK Blindfolded Championship 2026 (2026-08-15),333mbf Final A #2
 1232284001,R2 B' L2 B2 L' B R L' U' F2 R' F B D2 B' U2 R2 L2 D2,R,Forum Monsoon Open 2019 (2019-07-20~21),333oh Final B #3
 4715973001,R2 B' R' B2 L' B2 L B2 R B L2 B' L' D' L2 B' L B L' F',R,Granada Open 2025 (2025-05-10~11),333bf R1 B E1
 2234579001,F U2 F L' D B2 U D2 R2 B R2 B' D2 F D2 F2 R2 U' L',R,Beaconhouse Malaysia Cube Open 2022 (2022-10-15),333 R1 A E2

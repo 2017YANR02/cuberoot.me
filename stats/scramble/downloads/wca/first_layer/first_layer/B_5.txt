@@ -1,0 +1,31 @@
+# Scramble samples — first_layer / first_layer / B / bin 5
+# Population in this bin: 24
+# Samples listed: 24 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+13936001,B' L2 F U2 L2 F2 R' F2 U L' U' R2 D2 L2 F R2 L2 B',B,Toronto Open Spring 2014 (2014-04-26),333 R2 A #2
+64566001,D' B2 D2 L2 B2 F2 D F2 D' F2 R2 B' R B' U R' B2 F' L,B,LeanNova Cube Day 2014 (2014-10-11),333oh R1 A #2
+97804001,R' U B D' L' U' B' L2 F U2 R2 L2 U F2 R2 D2 L2 F2 U',B,Shaastra Cube Open 2015 (2015-01-03~04),333oh R1 I E1
+189941001,U2 L2 B2 F2 R B2 L U2 F2 U' F L' F L F L' F' L2 B,B,Brisbane Spring 2015 (2015-09-19),333 R1 F #2
+662769001,D2 B2 D2 U L2 U L2 B2 R' U2 B' L D' L' F2 R B' U2 B,B,Cebu Speedcubing Year End 2017 (2017-12-09),333 R1 B #2
+776793001,U2 F' U2 R2 B L2 B2 D' B R F' U' R' U R' F2 L,B,Hessen Open 2018 (2018-05-12~13),333 R1 C #5
+931716001,R2 U F' U2 R' U D' R F R F2 B' D2 L2 B2 D2 B' L2 F2,B,Smart Cube Fest 2018 (2018-11-09~11),333 R3 A #2
+1328740001,U B2 U' L2 D F2 R2 F2 L2 D2 R2 B U' B R F U2 L' U R' F',B,Santa Barbara Fall 2019 (2019-09-28),333 R2 B E1
+1358749020,U' F2 U' R2 B2 U L2 D2 F2 R' B2 L F' D U' R B2 D' F2 U2 B R2,B,Nordic Championship 2019 (2019-10-17~20),333mbf Final A #1
+1583481001,L' F L2 D' F' L F R F' R2 D2 R U2 D2 L F2 B2 R',B,Siberia Open 2020 (2020-02-29~03-01),333 R2 A #5
+1845219001,U2 F2 U' L' F L F L U L2 U B2 U' B2 D B2 R2 U,B,Montpellier Open 2022 (2022-03-26~27),333oh Final A #5
+2398410001,R D2 R2 B' D2 L2 B2 R2 F' U' R' U R' U2 R' F U2 B,B,Taiwan Championship 2022 (2022-12-16~18),333oh Final A E1
+2851339001,R2 B L2 B U2 F' U2 B U2 R2 U2 F' R' U B L' U2 B D2 U',B,Toros Open 2023 (2023-07-01~02),333 R2 A #4
+3252214001,L U2 B2 U2 F' D' F U' L F2 R2 F R2 L2 B' L2 R,B,The Last Frontier Fall 2023 (2023-11-04),333 R2 B E1
+3814232001,F B' U2 B' D' R2 D' R F' B2 L U2 D B2 R2 U R2,B,Vilafranca Open 2024 (2024-06-01),333 Final A #3
+4060133001,D2 F' D2 F' U2 F' L2 B D2 F' U B' D L D F2 U F' U',B,Brookline Favorites 2024 (2024-08-31),333 R1 D E1
+4178497001,L2 B L2 F U2 B' U2 F L' F' D2 F2 U' F2 L' B F' U',B,Swiss Nationals 2024 (2024-10-04~06),333 R1 A #4
+4344849001,L2 F D' L' B2 R' F2 U2 F B2 L2 F2 D2 L2 D' F2 B2 R' B2,B,Shenzhen Open 2024 (2024-12-07),333 R1 B #1
+4577719001,R2 F2 U F' R' B' R' D' F R2 B D' F2 U2 R2 D2 R2 U2,B,Cartagena Open 2025 (2025-03-22),333 R1 B #5
+5133615001,R2 U' B' D2 F' R2 D2 U2 R2 B R' B2 D' L R' B2 R2 F',B,Rocky Mountain Championship 2025 (2025-10-24~26),333 R1 D #4
+5304280001,L' F' B D' F R F' U2 B2 U2 F2 R2 U2 L' B2 U2 D' B2 D,B,New York Multimate PBQ III 2025 (2025-12-27~28),333bf R1 B #2
+5424489041,L D F' L2 B2 U R2 L B L2 U2 F2 L D2 L B2 D2 B2 L B,B,Richardshhhon 2026 (2026-02-28~03-01),333mbf Final B #3
+5466732001,B' U2 R' B D2 U2 B D F' D L' D R' D' R,B,Arkansas Championship 2026 (2026-03-20~22),333 R1 B #4
+5675989001,L' D2 R' F2 R F2 U2 B' F' L2 U' L' R F D2 R B2 D2,B,Franconia Cube Days 2026 (2026-05-30~31),333 R1 B #3

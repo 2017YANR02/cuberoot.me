@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / WY / bin 3
-# Population in this bin: 425
+# Population in this bin: 435
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 13167001,B2 R2 F2 U' B2 F2 D' F2 U F2 U' B' U2 B' D2 F D B2 R U,Y,Velbert Easter Open 2014 (2014-04-18~20),333oh Final A E1
@@ -13,7 +13,7 @@
 3073275001,L' B2 L U2 D L B2 L' U' R2 F2 U2 R2 D' B2 U',Y,Cranbourne Spring Sunday 2023 (2023-09-10),333 R1 C #5
 5277716001,R2 D2 L2 D' R2 F2 B U F2 U' L2 U L2 B2 U R2 D L,Y,Relámpago Medellín Explora 2025 (2025-12-13~14),333oh R1 B E2
 3219973001,D2 R2 B2 D2 U2 B' L2 U2 L' F' R U2 R' F2 D2 F' D' L',Y,IUT Esonance 2023 (2023-11-03),333 R1 C #1
-5589994001,L2 F2 R' B2 R D2 F' L2 F2 D' B2 D' L2 F2 U2 F2 D',W,III Colatina Open 2026 (2026-04-25),333 R1 A #5
+5791617001,B' R2 U2 L2 U L2 B2 D2 B2 U B U B R2 D' U2 R2,Y,Capelle Chaos A 2026 (2026-08-22),333 Final A E2
 87131001,F2 L2 U2 F2 U2 R2 B F' L D' B2 L R' B' D' L2 D' B' U2,W,Carnegie Mellon Winter 2014 (2014-12-13~14),333 R1 A #3
 4293621001,F B' U' D' L' F2 D B2 D R' U L2 U F2 L2 D2 F2 L2 U,W,Rosario Siempre Estuvo Cerca 2024 (2024-11-17~18),333bf R1 A E2
 1864672001,B2 L' U2 L R B2 D2 U' R2 U' L2 R' U' B2 U' F',W,Saint John's Spring 2022 (2022-04-09),333 R2 A E2
@@ -75,10 +75,10 @@
 651935001,D B2 L2 R2 D2 U' R2 U B' D' B2 R2 F L2 D2 B U B2,Y,Tuscany Open 2017 (2017-11-25),333 R2 C #3
 2014266028,U R2 B2 D2 F2 D L2 D L2 F2 B' L2 D' U F2 D' F' D2 B',Y,Abbotsford Blind Challenge 2022 (2022-07-10),333mbf Final A #1
 660507003,B' F D2 L2 F' D2 B' D2 L B L' U' F U L F2 L B2 F L' F,W,Welcome To Cambridge 2014 (2014-07-12~13),333mbf Final A #1
-660660029,U F2 D' R2 U' L2 D' B2 U R' U' R U B' R2 D2 L' U2 L' F',W,Grudziadz Open 2015 (2015-03-07~08),333mbf Final A #1
+5791284001,B2 D2 U2 L2 B R2 F D2 U2 F D U B R2 U' R' B D,Y,Dragon Cubing XII 2026 (2026-08-22~23),333oh R1 A #4
 660790004,L2 B2 R F2 R B2 U2 B2 R B2 L2 B U F' L' R U' R F2 L2 B R,Y,Helsinki Blind Weekend 2015 (2015-08-15~16),333mbf Final A #2
 3328433001,R2 U' B2 U2 R2 D R2 F D2 U' B U2 F2 L2 U' L' B',W,Spanish Championship 2023 (2023-12-08~10),333 R1 E #5
-660939020,U' F2 R2 B2 F2 D F2 U2 B2 D B' U2 L2 F' R B D R2 B F L2,Y,Indian Open Rubik's Cube 2016 (2016-03-04~06),333mbf Final A #3
+5814348001,U L' U' L U B2 L2 R2 D2 U L D2 F2 L' D F2 U2,Y,KC College Cube Open 2026 (2026-09-05),333 R1 D #1
 5763976001,D F' L2 F R2 D' L F' U B' U2 D2 R2 B2 U2 D2 B D2 F2,W,Thessaloniki Summer Open 2026 (2026-07-25~26),333 R2 A #2
 661142015,B' U2 B D2 B2 U2 R2 U2 L2 B' R' D B2 L R D L2 B' U' L D,Y,ÅF Swedish Cube Open 2016 (2016-10-15~16),333mbf Final A #1
 661146001,L2 R2 B' D2 B' R2 B2 L2 U F2 L2 F' R F R' D2 B L B2,Y,Porto Alegre Open 2016 (2016-10-15~16),333mbf Final A #2
@@ -104,7 +104,7 @@
 3788219001,U2 B R2 U2 F' L2 F2 L2 D2 U' B' U2 R D L' D2 F2 R' U L B',Y,Newcastle Tyneside Spring 2024 (2024-05-25~26),333bf R1 B #1
 758484001,B' R2 F' D2 L2 U2 B R2 B R2 F' D' B U2 R' F R F' U2 B',W,SNZ Southern 2018 (2018-04-21),333bf Final B #2
 2661966001,F2 D2 U' R2 D2 U F' L2 R B R2 B U F' L2 R B2,W,South Jersey Speedsolving 2023 (2023-04-22),333oh Final A #4
-2769104001,U2 L2 B R2 D' R2 F' B' U R B' U' R2 L2 U B2 U L2 U2,W,Nexus Summer Open Bangalore Sunday 2023 (2023-05-28),333 R1 L #4
+5773259001,F' D R2 L2 B U' B U F B2 D2 R2 D2 F D2 F2 B',W,Perth Winter 2026 (2026-08-01~02),333 R1 E E2
 3839487001,R' D F2 U' R2 U' B2 F2 D' B2 L2 D2 R D R' B U' B F',Y,24 Horas em Salvador 2024 (2024-06-08~09),333 Final B #4
 3008732001,F' U2 B' D' L2 F' R F2 R' B' F2 R D2 R' D2 L2 U2,W,Pingtung Summer Open 2023 (2023-08-26~27),333 R2 E E2
 793777001,L2 F2 U L2 D U F' U F R2 D2 U' B' D' L2 U2,Y,Slovakian Cube Day 2018 (2018-05-27),333 Final A #2
@@ -112,7 +112,7 @@
 809372001,L' U2 B2 D2 B2 R2 F2 R B' D2 U' R2 B L' D' U2 F U2 L' B' L',Y,CubingUSA Western Championship 2018 (2018-06-15~17),333bf R1 C E2
 835031031,L2 B2 L2 R2 D U2 F L' D' U R U' B2 F' U B' R2 F L' F',W,WCA European Championship 2018 (2018-07-19~22),333mbf Final A #1
 848934019,F2 D2 B2 U B2 L2 B2 D R2 D F' L2 U' B2 R F2 U B2 D2 U L,Y,Project Radom 2018 (2018-08-04~05),333mbf Final A #1
-852043001,R2 D2 B2 R F2 L B2 L F L2 U2 B' R' B D2 B2 U2,Y,Pakistan Open 2018 (2018-08-11),333 R1 C #5
+5793911013,U L' U2 B' F D2 R2 B R B2 R' D2 U' B2 U' F2 L' F,Y,BrizZon Side Open IV 2026 (2026-08-22~23),333mbf Final A #2
 863994001,B' D2 F' U F2 B R U' F2 R L2 U2 B L2 F2 B' R2 F2,Y,Ark 2018 (2018-08-24~26),333 R2 C E1
 4828902071,D2 F' B2 L2 U' L2 D B2 U' B2 R2 L' F' L' U F L' U2 B' L B2,Y,Worlds Prep in Palisades 2025 (2025-06-20~22),333mbf Final B #1
 3339849001,L D2 R2 F' L2 B U2 F' D2 B' L' B' U B2 F2 L' D B' R2,W,CubingZA Cape Cubes Challenge 2023 (2023-12-09~10),333 R1 B #4
@@ -186,7 +186,7 @@
 1545002017,U2 F2 D L2 D' R2 U2 L2 D' U2 L2 B D2 U R F' R F U' B2 R' D',Y,IIT Roorkee Open 2020 (2020-02-15~16),333mbf Final A #1
 3545221099,U' L' B2 U2 D2 B R F' U L2 F U2 F2 R' D2 L D2 L' B R2,Y,BASC 57 - Big and Blind 2024 (2024-02-25),333mbf Final C #1
 1570079012,L F2 R' U2 R B2 U2 B2 L2 F' L' R B U2 F' D2 B D F2 D' L B',W,PSKG Premiere Cubing 2020 (2020-02-15~16),333mbf Final A #1
-1570928001,L' B2 D2 L' D2 R' F2 L F2 R' D' L2 F2 L B' R2 D U2 F2 R2 B' L',W,Michigan Cubing Club Alpha 2020 (2020-02-22~23),333bf Final A #2
+5784696001,D2 B' U' F' U2 B' D2 B R2 D' L' D2 B' D' L2 B2 F L B',Y,Silent Brasília 2026 (2026-08-15~16),333bf R1 B #2
 4418005001,U R2 U R2 U' R D R2 F2 U2 L2 D2 R2 U2 F' B2 R2 F',W,Binghamton Winter 2025 (2025-01-12),333 Final A #2
 4882403001,B2 D F R2 F R' B' L2 B' R2 L2 D' B2 R2 D2 F2 D' R2 L',W,New Rochelle Night Favorites 2 2025 (2025-07-22),333oh Final A #4
 1607621012,F2 L2 D' L2 U' F2 U' B2 D2 B2 R F' D' B' U B2 U' F R' B' D2 L2 U',W,Cape Town Summer 2020 (2020-03-14~15),333mbf Final A #2

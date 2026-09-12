@@ -1,11 +1,11 @@
 # Scramble samples — pair / xxcross_pair / BGORWY / bin 11
-# Population in this bin: 395
+# Population in this bin: 401
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
-25591001,B2 U' B' R' L' U' D' F2 L F' R2 F2 D' B2 U2 R2 D L2 F2,B,Tianjin University Open 2014 (2014-06-07),333 R1 A #2
+5804645001,F2 R F2 R2 B2 L' R' F L D' B D2 U F2 L U F R',B,Bibliopen IV Cali 2026 (2026-08-29),333 Final A #2
 67947001,R2 F' R2 B D2 U2 L2 B' D2 B U L' D' U2 B' R2 D2 R F' D L',B,DJ Open 2014 (2014-10-18~19),333 R1 O #1
 91407001,F2 R2 B U' D2 F L D R B' U' R2 F' L2 D2 R2 F' L2 F' L2,B,Santiago Open 2014 (2014-12-21),333oh Final A #4
 117091001,D F2 L2 D2 L2 R2 U' L2 F' R2 D' U' L D2 F D' L B R',B,Norwegian Championship 2015 (2015-03-14~15),333 R1 C #2
@@ -15,7 +15,7 @@
 138123001,F R F' U B D2 F2 D2 R U2 F' B2 R2 B2 U F2 B2 D F2 L2,B,Chesapeake Science Point Spring 2015 (2015-05-09),333 R1 A #5
 146873001,B' L2 B2 L2 B' L2 B U2 F2 U F' R' U B' L F U2 F2 L' D' B' L,B,Indian Nationals 2015 (2015-05-29~31),333bf R2 A #1
 4020964001,F2 L B' U D L2 B' L U' L2 U2 D2 B2 R2 L2 B' R2 F' D2 B2,B,Rosemount Big Cubes 2024 (2024-08-18),333 R1 B #4
-155220001,F2 U B2 F2 U' L2 U' F2 D' R D F2 L U' B R' B2 F' R' U2,B,SCMU Juhu Open 2015 (2015-06-28),333 R2 C #5
+5804886001,U' B R2 L' U L2 F' R' B D F R2 B' U2 F' R2 B' U2 F,B,Calgary Fall 2026 (2026-08-29),333 R1 H #1
 163357001,L' F L2 U' R' U2 B D' R' U B U2 F2 D2 F2 D2 R2 B' L2 D2 B',B,TCG & Friends 2015 (2015-07-11~12),333 R1 A #3
 183655001,F R2 B R B D' L U' B R' D' L2 D2 F2 U2 B' R2 F B2 D2 F',B,Brain Studio Cube Open 2015 (2015-08-29~30),333oh R1 A #4
 3143981001,R D' B U' B2 U' B2 L2 R2 D2 U' F2 U' L B L2 F' D L2 D2,B,V-Cube Spiel B 2023 (2023-10-08),333 R2 A E2
@@ -177,7 +177,7 @@
 5415517001,L F' D' F2 L2 D2 L2 D' U' F2 R F L2 U' L' D U' R2 F,B,Gem State Sprint 2026 (2026-02-28),333 R1 A E2
 5613854001,D2 R2 B2 R2 U' L2 F2 D' L2 B L D U' B2 D L' B' L2 R' D2,B,CNSE ao Cubo 2026 (2026-05-09),333 R2 C #2
 2169160001,U' F D' B2 U L' B' D' L2 B2 D' R2 F2 D2 B2 U' R2 F' L',B,Madryn al Cubo II 2022 (2022-09-10),333 R1 A E2
-4083831001,R D' F U' F2 U2 L2 B2 L' F2 D2 L F L R' D2 L2 B' L',B,Around the Clock Israel 2024 (2024-09-05~06),333oh R1 B #5
+5787715001,B2 F2 L B2 R' F2 L2 F L' R2 D U' L B R' F U2 F',B,Cultura Campos do Jordão 2026 (2026-08-15~16),333oh Final A #1
 3292327001,R U' L F2 U F B U F2 L D2 L D2 R' B2 L2 D L2 U2,B,Franconia Winter 2023 (2023-11-25~26),333oh R1 A #2
 2242302001,D2 U2 F' U2 R2 U2 L2 F2 R2 F2 U R' U' L2 D2 B U2 L' D R B R,B,Bagnolo Al Cubo 2022 (2022-10-15~16),333bf Final A #1
 2892685006,R' F' R F2 R' B2 F2 L R' B2 L2 D B2 L2 F D' L U2 F L2 U,B,FLIP Open 2023 (2023-07-14~16),333mbf Final A #1

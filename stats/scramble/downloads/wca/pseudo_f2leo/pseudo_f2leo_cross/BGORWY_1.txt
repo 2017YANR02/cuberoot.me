@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / BGORWY / bin 1
-# Population in this bin: 254
+# Population in this bin: 257
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 29329001,B2 R2 F2 U R2 U B2 U2 B U L2 D' F D2 U' L2 U,O,No Parity Open 2014 (2014-06-21),333 R2 A E2
@@ -111,7 +111,7 @@
 1644525001,L2 D' B' R' B2 U' R2 B2 D2 R2 D' R' B U2 R2 D U' L',O,Xi'an Cherry Blossom AM 2021 (2021-04-11),333 R1 C #2
 1740278001,L B2 D R2 D' B2 U' R2 D B2 R' D U' L2 D' U F2,R,Ramli Mall Bahrain Open 2021 (2021-11-27),333 R1 B #5
 4644420028,R' B L2 F2 L2 B L U' L D' L' D2 F2 R B2 R2 L' B2 R D',Y,Nebraska Championship 2025 (2025-04-11~13),333mbf Final A #1
-1774930001,R' B R' F' U D2 F' U2 F2 L2 D2 L2 U' F2 D2 L2 F D2 L',Y,December Series:  Geelong says So-Long 2021 (2021-12-28~29),333oh R1 A #5
+5816874001,B' U' L2 U' L R2 U2 R' B2 R2 D L B R' B' U2 F',W,Mayo Cubing 2026 (2026-09-05~06),333 R2 A #5
 1781242001,U' B D' U2 F2 L B2 U2 L' R' F L2 U F2 L2 R B2 L,W,Quito Open 2022 (2022-01-15),333 R2 D E1
 1802843001,U L' B2 L R D2 R F2 R2 F' R2 D' B' L' F' U' B2 D' B R2,Y,Dragon Side Open 2022 (2022-02-12~13),333bf R1 C E1
 1858779001,L' F' D2 L U' F' L B' R2 B2 D' B2 U2 B2 L2 D2 R2 D2 R',Y,Slow N Steady Spring 2022 (2022-04-02),333oh Final A E2
@@ -127,7 +127,7 @@
 2166259001,U' R2 D2 L' F2 L D' B R' L2 U2 B2 U2 F2 U' L2 B2 R2 B2,W,Wakefield Autumn 2022 (2022-09-10~11),333 R2 C #1
 2240725001,D2 B' L' R2 B2 L' B2 U2 L B2 L' F' L' R2 B' R' F',R,Guwahati Autumn Open 2022 (2022-10-16),333oh Final A #3
 2254860001,R2 B' D2 F' U2 R2 U2 F2 R F' L2 B' R D' F' D' B2 L2 D2,G,Westfries Open 2022 (2022-10-22~23),333 R1 D #2
-2261655001,B U' F2 R U2 R2 U2 R' B2 D' B2 U' F2 R2 U D2 R2 B D,G,Minyons de Terrassa Open 2022 (2022-10-22),333oh R1 B E1
+5786929001,U2 L D' B D' F L2 U2 L B' D B D2 L2 B L2 B R2 F' L' F,Y,Norwegian Championship 2026 (2026-08-14~16),333bf R2 A #4
 2272478005,D B' U2 B2 L2 F' U2 B R2 D' L2 F2 U R' F R2 D' B2 U L' F,B,Latvian Championship 2022 (2022-10-28~30),333mbf Final A #1
 2388440001,D' R2 U R U2 D R2 B U D2 R2 F' L2 F U2 F L2 R,O,Mor Raipur Cubing Challenge 2022 (2022-12-18),333 R1 D #5
 2416720001,L2 F D2 U2 R2 F' L2 R2 B' F2 D U L U L D' R B' R,W,Uzbekistan New Year 2023 (2023-01-06~08),333oh R1 D #2
@@ -168,7 +168,7 @@
 5569095001,U2 F2 R' F2 D F2 D' R F U B2 D2 F2 R' D2 R' D2 L2 U2,W,Duper Super Davis Spring 2026 (2026-04-19),333 Final H #4
 3516176001,R' U' F U B2 D' L2 U' F2 U2 F2 L' U' L' D B' U' B' F2 U2 R2 U2 R' U' F,O,Love Is Blind Lima 2024 (2024-02-18),333fm Final A #1
 3555905001,D R' D2 U2 B' L2 B' R2 B2 D' F D U' L B' D F2,B,Manduria: Back to Apulia 2024 (2024-03-02~03),333 R2 C E2
-3590416001,B2 R' U2 B2 D2 R2 B2 L2 F' D2 B' D2 L' B U2 L' R,O,Nýliðamót Kubbafélagsins 2024 (2024-03-16),333 R2 C #2
+5817527001,F2 D2 R2 F' R2 B2 D2 F' L U' F L2 U R U' L' R',B,Cube Factory Aleksandrów 2026 (2026-09-05~06),333 R1 B #4
 3591587001,R2 F' U L2 B' D2 B2 D2 B2 R2 B R' D' L' F2 R' F' L',O,Don't Turn SLOw Spring 2024 (2024-03-16),333 Final A #2
 4652389001,F' U2 R2 F U2 F L2 D2 R2 F' L' F2 D L F U L' U' F,R,Shenyang Spring 2025 (2025-04-13),333 R2 B #3
 4728943001,F2 R2 F' L' D2 F' R2 D R F2 L2 F2 U B2 U' D R2 U2,W,Quick 'n Slick Meppel 2025 (2025-05-17~18),333 R1 D #4

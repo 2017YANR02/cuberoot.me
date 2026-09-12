@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGOR / bin 8
-# Population in this bin: 448
+# Population in this bin: 459
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -62,7 +62,7 @@
 3807972001,D R' U' B2 U L2 D' U L2 F2 D' F' D2 B' U' L R' D U',B,Kiama Winter 2024 (2024-06-01),333oh R1 A #3
 427523001,R B' R B R2 D' L F' U' L2 U B' L2 F' U2 F' U2 F2,B,P3 Grand Open - Jan 2017 (2017-01-08),333 R2 D #2
 2864808001,B' U2 L' B R2 D R2 D U' F U' L' U R D2 L2,G,Dragon Cubing 2023 (2023-07-08~09),333 R1 B #3
-5028044001,U2 L' R2 B2 L R' U' L2 R2 F L2 B L B U2 F2 U,O,Athens Never Ending Summer A 2025 (2025-09-13),333 Final A #5
+5796003001,B' L' R2 B' L2 B' R2 B R U2 L2 R2 U' L' F2 D2 B' L2,O,Capelle Chaos B 2026 (2026-08-23),333bf Final B #5
 442484001,D2 B' R2 F2 U2 B L2 U2 F2 D2 L' B R F2 U R2 U' F2 D B' L B',G,Mental Breakdown Germany 2017 (2017-02-11~12),333bf R2 A #3
 442645001,R2 D' B2 D R2 B2 D' U' R2 U2 F U B' F L' B2 L' U R2,R,Rubi-Xtreme Piatra Neamt 2017 (2017-02-11),333 R1 A E2
 3295598001,D' R D L2 D2 L2 F2 L2 B2 R2 D B F2 L2 F D2 R' U,R,Poznań Autumn 2023 (2023-11-25~26),333 Final A E1
@@ -73,7 +73,7 @@
 503600001,F L2 R2 F' L2 B' D2 R2 B L2 U' F2 L' D2 F L' D' B R,G,Tecla Rubik 2017 (2017-05-06),333oh Final C #2
 532115001,F2 B' D' R L2 U2 L2 F D' L2 F2 R' D2 L B2 R B2 L2 D2,O,Foon Yew Open 2017 (2017-06-11),333 R2 C E2
 536054001,D' B2 R' B' D L2 F2 R B U2 F B2 R2 F2 D F2 D' B2 D,G,Latin America Cubing Tour - Cochabamba 2017 (2017-06-17~18),333oh R1 A E2
-5478522001,B2 U B2 L2 U2 L2 B' L2 U2 F2 U' B' R B L F L2 U',R,Potsdam Puzzling 2026 (2026-03-28),333 R1 B #3
+5808706001,D B2 L2 D2 L2 B' D2 B' U' B U2 B' R2 D' L' U2 B R',G,Road to Nats Valencia 2026 (2026-08-30),333 R1 B #4
 5347562001,R2 L F2 R' D F' R2 F' U' L' F R2 B2 D' R2 D' F2 R2 U2,R,Viña Summer 2026 (2026-01-24~25),333 Final A #1
 3875185001,R' F2 D2 R2 B2 D2 R2 B2 U L' D' R D2 R' U L' D2 B F',G,Chilling in Canberra Saturday 2024 (2024-06-22),333 R2 A #3
 5722683001,D2 L2 U2 L2 R2 B' R2 B' R B L' D' F2 R' B D' B D' U2,B,Yukon Solve It Whitehorse 2026 (2026-06-27),333 Final B #1
@@ -83,7 +83,7 @@
 603423001,D2 B2 F2 L2 U B2 R B' U2 L' D2 R2 B2 L R' F R,R,Puget Sound Fall 2017 (2017-09-23),333 R1 F E2
 613267001,D2 F' R2 U2 B2 D2 F R2 B2 U' F' L U' F' R D' F' D' R2,R,NIT Trichy Open 2017 (2017-10-07~08),333 Final B E2
 5709191001,F D L2 U2 F2 L2 D F2 U' F' U R' U' L2 B R2 F U,R,B-Game - Bastardo Open 2026 (2026-06-13~14),333 Final A E2
-3722131001,L' R D2 F2 L D2 L' B' F' U F L R' F' R2 B' F U,R,Luzon Championship 2024 (2024-04-27~28),333 Final A E2
+5784353001,B R' U' B' U2 L' D' R2 B2 L2 F2 U2 F2 R' B2 L U' R F D',B,Pacha Cubing: Jujuy 2026 (2026-08-15~16),333bf Final A #5
 660838040,U B2 D F2 U B2 L2 U' B' F R F' L2 B' U' R2 B2 D R' U' B' L',O,Spanish Championship 2015 (2015-10-09~11),333mbf Final A #1
 660907031,F2 U2 R2 B' D2 F' U2 F' R2 U R2 F' R U' R' U L2 D' F D2 B R',G,Minnesota Winter 2016 (2016-01-23),333mbf Final A #1
 2313460001,F' R' U' R B U' L2 F' B2 D R2 D2 R2 D L2 B,O,Grande Prairie Open 2022 (2022-11-19),333oh Final A #3
@@ -204,4 +204,4 @@
 4252247001,R B L' D B2 L' F R D B U2 B2 D2 L2 D' L2 F2 D,O,Unley Spring 2024 (2024-11-02),333 R1 B #2
 2122767001,U' R U2 F2 U D R' U' L2 B U2 F D2 F' B' U2 R',O,Swisscubing Cup IV 2022 (2022-08-20~21),333 Final A #1
 3732421001,D F' R' U B R2 D R2 U2 F2 U' F2 R' U2 B2 R2 D2 L2,R,Cubicle Day Oxford 2024 (2024-04-28),333 Final A E2
-4728157001,B2 F' L2 F L2 R2 F D2 B U F' U2 R D' B2 U' F D2 F2 R',B,Energy Cube Tomaszów Mazowiecki 2025 (2025-05-17~18),333 R2 A #2
+5807111001,R' D L U2 F2 D B L' D L2 F D2 B2 U2 L2 F D2 B L' F,B,Slovenian Nationals 2026 (2026-08-28~30),333bf R2 A #5

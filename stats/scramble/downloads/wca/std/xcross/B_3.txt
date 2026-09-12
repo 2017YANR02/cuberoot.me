@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / B / bin 3
-# Population in this bin: 134
-# Samples listed: 134 (all entries in this bin)
+# Population in this bin: 136
+# Samples listed: 136 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 17106001,U F2 U' D' F D' L' D L2 F2 D' R2 F2 L2 B2 D2 F2 U2,B,SLS Chorzow 2014 (2014-05-03~04),333oh R1 C #5
@@ -139,3 +139,5 @@
 5590077001,D2 F U2 R' B2 L B2 L2 R' B2 L2 B L D' F R2 U' R',B,III Colatina Open 2026 (2026-04-25),333oh Final A #4
 5624083001,D F2 D U' R B' D' F2 D2 U' L2 B2 D' R D2,B,Bayonne Atoutcubes Open 2026 (2026-05-08~10),333 R1 D #4
 5626382001,R2 F2 U2 L2 F L2 D2 F' D' B2 D' F2 L2 B' F R' B F,B,No Clocks in Greenpoint 2026 (2026-05-09~10),333 R2 B E2
+5784680013,U' L2 D2 R2 D U2 F' U2 F R F R2 F2 R D' F' D' L B,B,Silent Brasília 2026 (2026-08-15~16),333mbf Final A #1
+5795973001,F' D2 L F' U' R2 F2 D L2 D2 L2 B L B2 D2 U' L2 R',B,Capelle Chaos B 2026 (2026-08-23),333oh Final B #4

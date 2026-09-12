@@ -1,15 +1,15 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / O / bin 5
-# Population in this bin: 631
+# Population in this bin: 643
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 1973508001,R B R B2 D2 L' D B' F2 L B2 L2 F2 R' U L F,O,Welcome Back Nepal 2022 (2022-06-17~18),333oh R1 A #2
 7910001,R2 U' B2 U L2 F2 R' B R' F2 U' B D2 U' F L2 R2 U,O,Welwyn Garden City Open 2014 (2014-04-05~06),333bf Final B #3
 4873547001,F2 L' F2 L' F D2 R' F2 L2 U R2 U' L2 F2 D' L2 D' B' L2,O,Doing Time in Moundsville 2025 (2025-07-19),333oh R1 B #2
 2767600001,F' U F U2 D2 L F' U2 F R2 B2 U2 B D2 L2 F U2 R2 D,O,Nexus Summer Open Bangalore Saturday 2023 (2023-05-27),333oh Final A E1
-4556696001,L' F' R2 U2 R2 U L2 U R2 D2 R2 L' B' U2 R' D' B2 R' U,O,Hasselt Saturday Open 2025 (2025-03-08),333 R1 C #3
+5779913001,B R' F R2 B' L2 B' R2 F R2 L D' B L' B D2 F' D2 U2,O,Missouri Championship 2026 (2026-08-07~09),333oh R1 B #1
 3425699001,B' R' F B2 D2 R2 B2 L U2 L2 F2 B' U2 R2 B U' B F2,O,Cubes on the Bayside Winter 2024 (2024-01-14),333 R1 B E2
 5549105001,L2 B R U' L2 D2 F' R2 F L2 B U R2 U B U' L R,O,Wide Bay Cubing 2026 (2026-04-18~19),333 R1 B E1
 36492001,F2 D' L2 F2 D2 F2 D' U2 F2 D L' D' R' U2 B' D' R D' B' U' B R,O,Mariano Melgar 2014 (2014-07-12~13),333bf Final A #2
@@ -40,7 +40,7 @@
 234124001,L' F' D' F' U' D R D2 R2 B2 L2 B R2 B U2 D2 F L2,O,La Paz Open 2015 (2015-12-26),333 R1 D #4
 3820082001,U F2 U' F2 R2 D R2 D2 F D U2 R F' L2 D' R2 D R',O,Tianjin Open 2024 (2024-06-01),333 R2 B #1
 248449001,D R2 B2 L2 F2 U2 L2 F' D' B2 R2 U L' F' L2 U L2 F U',O,Slow N Steady Winter 2016 (2016-01-30),333oh R1 F #1
-251144001,L U' L F2 R' B' L' F B D' F' R2 U2 B2 U' D2 F2 B2 L2,O,Princeton Winter 2016 (2016-02-06),333 R1 A #4
+5812490001,B' R' F2 U' D2 R' D' F' B L' D2 R2 U2 R2 B2 D B2 D,O,Azeméis Open 2026 (2026-08-29~30),333oh R1 B #2
 4825928054,R B F2 D U2 L2 D' B2 F' L2 B' L U2 B' L R' D B L2 U2,O,Philippine Championship 2025 (2025-06-19~22),333mbf Final A #1
 4971948001,L F2 D2 F2 B2 R B' L R2 U B2 D B2 U L2 F2 L2 F',O,Kuala Lumpur Cubing Challenge 2025 (2025-08-23),333 R1 D #5
 4650237001,R2 F L D2 L2 B2 F' L2 R2 F' L2 R2 D B L' U2 L F' U2,O,Brazos Cubing Spring 2025 (2025-04-13),333 R2 A #3
@@ -109,7 +109,7 @@
 660952013,D' F2 U2 L2 U B2 U R' U' R D' B' U' B2 D R2 F2 L' U L' F2,O,Classic San Lorenzo Open 2016 (2016-03-24~26),333mbf Final A #1
 661032008,D F2 L2 U' B2 F2 U' B2 L2 D L' D2 R' D' R F U F2 L2 B2 L B R,O,Archena Open 2016 (2016-07-02~03),333mbf Final B #2
 1356451001,F2 R' F U R F' R U2 F U D2 B2 U' R2 U' R2 B2 U F2 D,O,Reto Chignahuapan 2019 (2019-10-12~13),333 R2 C #3
-3028500001,R U' D F L F D B2 L U2 L' B2 R F' R2 D2 R,O,U Cube at UQ Sunday 2023 (2023-09-03),333 R2 A #1
+5779487001,L2 B U D2 R2 F' L F R2 D2 B' R2 F' U2 F2 B U L' U2,O,GreenwoODDs 2026 (2026-08-09),333oh Final B E2
 3405542001,L2 D' B R' F D2 B2 U' R' B U D' B2 U B2 R2 U L2 U',O,Connecticut Winter 2024 (2024-01-06),333 R1 B E1
 4850869001,R2 L U D' R' F R' L2 D' R2 U2 R2 D2 F R2 F' B' L2 F,O,Rubik's WCA World Championship 2025 (2025-07-03~06),333oh R1 M #3
 661417119,R2 D' L2 B2 R2 F2 D' U F2 U L D B F2 U B D' U' B2 U' L,O,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #1
@@ -140,7 +140,7 @@
 3648937001,D B U' B2 L F2 L F2 D2 L D2 B' F2 U L2 F2 U',O,Iasi Cubing Day 2024 (2024-04-06),333 R1 A #2
 4680143001,B R2 D2 F' D2 R2 F' R2 D' R B2 U' L' B2 R' D B' L,O,Viña Keep Going 2025 (2025-04-26),333 R1 B E1
 3748130001,F' B U' R U2 L D F2 L U2 L2 D R2 D F2 L2 B2 L2 D',O,Mental Breakdown Singapore 2024 (2024-05-12),333bf R1 A #3
-821882001,R' D2 F2 L B2 F2 D2 F2 L' B U' B' L U2 B2 L U L',O,Banyumas Open 2018 (2018-07-07~08),333oh Final A #1
+5806828050,B' L2 U' B2 R D2 L2 R' B2 R2 F L' F' L2 R' D2 U L2 U',O,Slovenian Nationals 2026 (2026-08-28~30),333mbf Final A #1
 2888616001,D2 R2 L B' R2 B U B' U2 B' U' R U2 F2 R2 F2 R2 B2 R',O,Dasmariñas Speedcubing Open 2023 (2023-07-15),333 R1 E #4
 4204146001,U2 L' B2 D2 R' D2 F2 R F' R2 B' L B L U' R2 B2 R2,O,Kalvskinnet Kubing 2024 (2024-10-19~20),333 R2 B #5
 4190145001,D2 L' B2 F2 D2 L B2 L2 D2 R' D R2 U2 R' B2 D B R2 B D,O,Andorran Championship 2024 (2024-10-12~13),333bf R1 A #3

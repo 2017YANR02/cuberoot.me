@@ -1,0 +1,15 @@
+# Scramble samples — first_layer / first_layer / Y / bin 5
+# Population in this bin: 8
+# Samples listed: 8 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+343469001,R' U' F R2 U2 B2 L2 D2 B2 U' R2 F R2 D2 B2 R B2 R2 D' B F D' R' U' F,Y,N8W8 Summer 2016 (2016-08-06~07),333fm Final A #1
+1655432001,U' D F' B' L2 F' U D R U' L2 F2 B2 D B2 L',Y,Welcome Back Kaohsiung 2021 (2021-05-09),333 R2 A #1
+1904205001,F2 L2 B2 L F2 D2 R B2 D L2 R D U F' U B2 U' L2,Y,TCG Nueva Generación 2022 (2022-04-30~05-01),333 R1 C E2
+2660292001,F U F D L F' B U F D' B D L2 F2 L2 D F2 U L2,Y,Bay Area Speedcubin' 44 2023 (2023-04-22),333oh R1 C #3
+4199895001,D2 B2 D2 U R2 D R F' D' U2 F' L D2 U2 B2 F' R2 D,Y,Kitchener Mini Morning 2024 (2024-10-19),333 R1 C #3
+4583900001,R B2 D U B2 D U2 R B' L' F' L' B' U2 B' D R2,Y,Start in Veenendaal 2025 (2025-03-22~23),333 R1 B #3
+5297405024,F U' R D2 R' F2 R B2 D2 L' D L' R' D' B D F2,Y,Taiwan Championship 2025 (2025-12-19~21),333mbf Final A #1
+5771219001,B2 R2 B2 D2 B2 D F L' U' F2 U2 L' R2 F U F' D U2,Y,Cavite Side Events Open 2026 (2026-08-01),333oh Final A #3

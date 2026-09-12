@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / ORWY / bin 1
-# Population in this bin: 8
-# Samples listed: 8 (all entries in this bin)
+# Population in this bin: 9
+# Samples listed: 9 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 67895001,F2 R2 D' F2 R2 D' U2 L2 R D R' D2 R D' L2 D U2 F',Y,DJ Open 2014 (2014-10-18~19),333 R1 G #5
@@ -13,3 +13,4 @@
 4881503001,U' L2 B2 U B2 D' U' R2 U B2 R F2 D L2 R' D' U' R2 U',R,Naucalli Ce 2025 (2025-07-19~20),333 R1 C #5
 5337151001,L2 U' B2 D2 L2 U L2 U2 R D L' D2 L B2 F2 R' D2 L' D,R,Just Judge Jura 2026 (2026-01-17~18),333bf Final A #4
 5467116001,D' F' L2 B2 D B2 R2 D' L2 D' R' B' R' D2 R' D F R2,O,Sumgait Spring Open 2026 (2026-03-19),333 R1 A #4
+5786929001,U2 L D' B D' F L2 U2 L B' D B D2 L2 B L2 B R2 F' L' F,Y,Norwegian Championship 2026 (2026-08-14~16),333bf R2 A #4

@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / ORWY / bin 7
-# Population in this bin: 297
+# Population in this bin: 301
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4049432001,L B D2 L' D L2 B2 U B2 U2 F2 R' U' L B2 F2 U2,R,Telangana Cube Championship 2024 (2024-08-23~25),333oh R1 E E1
@@ -150,7 +150,7 @@
 2305483001,F' U F' U2 B' L2 F D2 U2 L2 U B' L' U2 B2 D2 L2 F2,W,Minerva Open 2022 (2022-11-12),333oh R2 B #1
 2338178001,D' L D2 L' U2 L' B2 L D' L' F2 U2 B2 U2 F' U B' R,W,Ho Chi Minh Open 2022 (2022-11-26~27),333 Final A E1
 5357348001,B L' B2 L R2 D2 U2 B' U2 F' R F' R' B F2 D' U,W,Ekerö Open 2026 (2026-01-31),333 Final A #5
-2497401001,F U2 F' L2 B' L2 F' D B' D2 F D' U2 L R2 B D R2,O,Waterloo Favourites B 2023 (2023-02-19),333oh Final A #3
+5817157001,R' D2 F D2 L2 B F D2 F2 L' F R2 F D B' R2 F2 L' D2,Y,Soorsi 2026 (2026-09-05~06),333 R2 C #5
 2513984008,B2 R2 U2 L2 B' D' L D' F B U' B2 U B2 D' L2 F2 U' B,R,Amore Open 2023 (2023-02-25~26),333mbf Final A #1
 2524367001,D B2 R' F2 D2 F2 R' F' R' U' R2 D B' D L' B2 U',Y,Pretzel Mania 2023 (2023-02-25~26),333 R1 C #5
 2550618001,R2 B' R D' R' D L D2 F2 D' F' L2 F' R2 U2 R2,R,Parthenope Open 2023 (2023-03-11~12),333 R3 A #2
@@ -202,6 +202,6 @@
 3784470049,R' B D' R' L2 U F2 D L2 R B' L2 R' D' F' L' B' L',Y,South Bay Weeknight Brain Freeze 3 2024 (2024-05-22),333mbf Final A #2
 4418162043,L2 U F2 U2 F B R U' B2 L' U2 B2 R' D2 R2 D2 U L F2 L' F2,R,Gem City Airplane Mode Special V OH 2025 (2025-01-12),333mbf Final B #1
 4753269001,F2 R' D2 R' U2 F2 D2 R2 U R2 B' R F' D2 B' D R' U' F,R,North Carolina Championship 2025 (2025-05-24~25),333oh Final A #2
-3840270001,R2 B2 D' B D' B U2 R2 F D B2 L2 B2 D' F',W,CubingUSA Heartland Championship 2024 (2024-06-07~09),333oh Final A #5
+5815668001,U2 L2 F L2 U2 L2 F2 R2 L' B2 D U' B2 D' R' U' L F,W,Seremban Cube Challenge 2026 (2026-09-05),333 R1 B #1
 3844510001,B U' F2 U2 L2 R2 U L' D' B2 L' U' R' F' U2 B2 L,W,Sri Lankan Nationals 2024 (2024-06-07~09),333oh R1 B E2
 3846872001,F2 D' L F2 D F' L2 U' B2 R' U2 B2 R U2 L' B' R2,W,Budapest Summer 2024 (2024-06-08~09),333 R2 A E2

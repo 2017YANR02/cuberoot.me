@@ -1,0 +1,8 @@
+# Scramble samples — first_layer / first_layer / O / bin 4
+# Population in this bin: 1
+# Samples listed: 1 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+590334001,F' D2 B' R2 F2 R2 D2 F2 R2 U F' U' L R D' L U' F' U L2,O,Bulldog Cubing 2017 (2017-09-09),333oh Final A #3

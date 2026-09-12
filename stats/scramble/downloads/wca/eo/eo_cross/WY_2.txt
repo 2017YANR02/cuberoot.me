@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / WY / bin 2
-# Population in this bin: 42
-# Samples listed: 42 (all entries in this bin)
+# Population in this bin: 43
+# Samples listed: 43 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 68271001,U F2 B D' B2 D B D2 B' U R2 D B2 U L2 U' B2 D,Y,Rice University 2014 (2014-10-18),333 R2 B #3
@@ -47,3 +47,4 @@
 5320314001,D B2 L2 U' D R' F B2 D' R2 U R2 L2 U L' D' B2 L2,Y,Wide Moves & Waterslides CT 2026 (2026-01-10~11),333 R1 C E2
 5467116001,D' F' L2 B2 D B2 R2 D' L2 D' R' B' R' D2 R' D F R2,W,Sumgait Spring Open 2026 (2026-03-19),333 R1 A #4
 5760272001,F D2 L2 D U2 L2 F2 U' L D2 R' U R D' U' F U' B,Y,Cube4fun Nowa Sarzyna Summer 2026 (2026-07-25),333 Final A E2
+5792252001,D2 F U' F' D' R2 D2 R2 F' L' D2 R F2 L D2 F2 U2 D2,W,Singapore Augu-Skewb Day 2026 (2026-08-23),333oh R1 C #3

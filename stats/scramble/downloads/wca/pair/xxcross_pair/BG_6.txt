@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / BG / bin 6
-# Population in this bin: 611
+# Population in this bin: 621
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 2376455001,B F L2 U2 B D2 B R' F2 R B R B R' U B2 D R',G,Rubik's WCA Oceanic Championship 2022 (2022-12-15~18),333 R3 A #5
@@ -19,7 +19,7 @@
 136732001,F2 U' R2 F2 U2 F2 R2 U2 L F L2 U2 B2 U2 B L' D' L',B,Hungarian Nationals 2015 (2015-05-02~03),333 R1 B E2
 2828168066,L F B' R D2 L2 U' F2 R' F2 R' L' B2 R2 B2 D2 F L2 D F2 L B,B,Please Be Quiet Evanston 2023 (2023-06-24~25),333mbf Final A #1
 152327001,D2 L2 B2 L2 U' L2 D R2 D' L' B' D L2 R2 F2 U' F2 U,B,Cowboys Summer 2015 (2015-06-13~14),333fm Final A #1
-2528490017,U' B2 F2 D2 L R2 F2 R D2 R2 F2 B D B2 U' F L R2 B' L' B' L2,B,SveKub Super League II: Hässleholm 2023 (2023-03-04~05),333mbf Final A #1
+5791066001,U R2 D B2 D R2 F2 L' B L2 D' U2 L' B D' R' B2 D,B,Luzern Sunset Solves 2026 (2026-08-19),333oh Final B #1
 186052001,U' B2 U' R2 U F2 L2 R2 F2 D' R U L D' B R' D U' F2 D',G,Bandung Open 2015 (2015-09-06),333 Final A #5
 2880026001,L' D R F' R2 U F2 D B2 D2 B2 L2 F' L B L' R F D,G,Back to İstanbul 2023 (2023-07-08~09),333 R2 B #5
 4367726001,U' F2 U' R' D F2 L F' U L' U2 B2 L' D2 L2 U2 L' F2 L2,G,Bulgarian Nationals 2024 (2024-12-14~15),333oh Final A #3
@@ -31,7 +31,7 @@
 5653293001,U2 R' B R2 U2 L2 D2 R2 F2 L2 F' D B2 D' B2 D2 R' F U',G,Christchurch Autumn 2026 (2026-05-23~24),333 R1 C #5
 1985061033,D2 R' D' L2 U F B D' R2 U' R U2 F' R2 L2 F' U2 L2,G,Cambridge Summer Challenge 2022 (2022-06-25),333mbf Final A #2
 222834001,F2 U2 F L2 B' D2 B' L2 F' D2 U2 R F' U' L B' D2 B2,G,Minyons de Terrassa Open 2015 (2015-11-28~29),333oh Final B #1
-2722406003,D' F2 B' U F U2 B' U' R' F' B2 L2 U2 R2 L2 B' U2 B L' F',B,Let's Qualify Kuwait 2023 (2023-05-19),333mbf Final C #1
+5778712006,F' D' F2 U R2 D2 R2 F2 U2 L U' F L' R F2 R' B' F' U B R,G,Ocaña BotijOpen 2026 (2026-08-08~09),333mbf Final A #1
 4414345001,U2 B2 R' F2 R2 F2 R' D2 L' B' F' U' B2 D' R D2 R F,B,Ottawa Mini Winter A 2025 (2025-01-10),333 R2 B #5
 1672994001,B' L' F2 D2 R2 B D2 B L2 R2 B L2 F L' U' F D' L D F',G,WA State Championship 2021 (2021-07-17~18),333oh R1 B #3
 4361280032,R2 U2 F2 R2 U' L2 R B2 D2 F2 U R U F2 D' F2 U2 L2 U',G,Goiânia Xiu 2024 (2024-12-14~15),333mbf Final A #2
@@ -147,7 +147,7 @@
 3280756001,R B R2 B F L2 R2 F' D2 F' U2 L D' U F D' L F D',B,Chocontá 2023 (2023-11-18),333 Final A E2
 853729006,L' F2 D2 U2 L' D2 L R2 F' D F L2 R' F' U F' L B2 F L2 U,B,Mexican Championship 2018 (2018-08-10~12),333mbf Final A #1
 3537029001,D' L F' L2 F' D' F' R' B2 L' B2 D2 L' B2 R B2 D2 B2 R B' L',G,Gran Asociación Open 2024 (2024-02-24~25),333bf Final A E1
-857709011,L2 R2 D2 R2 F U2 F' L' F2 L F2 R' D2 U B2 D L2 F L' F,B,Michigan 2018 (2018-08-10~12),333mbf Final A #1
+5789904001,B' L' B' D2 R U' F R' U D B2 D' R2 U2 D' R2 F' B2,B,Delacuesta PRs 2026 (2026-08-17),333 R1 C #5
 1836796001,D2 R2 U F2 D R2 D R' U' B L B' F' D' U2 F2 U L',G,Dåstrup Sleepover 2022 (2022-03-19~20),333 R2 B #4
 4419931001,F' L2 U' F2 D B2 D R' F R D F D2 L2 R F2 U',B,North Star Cubing Challenge MN 2025 (2025-01-11~12),333 R1 D E2
 2180064001,U R U L2 B2 R2 F2 U' L2 F2 U L' F R' D R B R B,G,Hanoi Open 2022 (2022-09-18),333 Final A #3
@@ -200,7 +200,7 @@
 5585044001,F2 D' F2 U F2 U L2 U' B2 F2 R B F2 U2 L R' F R2 U,B,Redhawk Madness OH 2026 (2026-04-26),333oh R1 B E1
 1232777001,R2 U2 B2 D2 L' R' U2 R2 U' L' D2 F D' U' L R' D' B' D,B,Cubo Uai Belo Horizonte Open 2019 (2019-07-20~21),333 R2 B #4
 1242076001,L2 F2 U2 L2 F L2 F2 U2 B R2 D R D2 F' U2 F' L' D B',G,NxN Tlaxcala 2019 (2019-07-27~28),333 R2 A #1
-4628910066,F D R B' F2 U2 F2 U2 L2 R2 F' L U B2 R2 B' R U2 F L2 U,B,Nevada Quiet Championship 2025 (2025-04-05),333mbf Final A #1
+5799129001,D' L D R B2 R2 U2 F R D F2 D2 L2 B' D2 L2 F' R2 B',B,Northwest Championship 2026 (2026-08-21~23),333 R1 E #2
 4147783001,L2 F' D' L2 D2 U' R2 B2 F' R' B2 F' R F' D2 U F',B,Super Duper San Diego 2024 (2024-09-28~29),333 R2 D #1
 5027360001,U' D2 B2 U2 L2 R U2 D R F2 U L U2 R2 D2 F L',B,La Montagne Open 2025 (2025-09-13~14),333 R2 B E2
 4045041001,D2 L F R F U' R' L2 U L2 D' B2 U L2 F2 B' R2 D,B,Back to School Colorado 2024 (2024-08-24),333 R1 A E1

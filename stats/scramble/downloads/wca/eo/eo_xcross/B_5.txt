@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / B / bin 5
-# Population in this bin: 685
+# Population in this bin: 696
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 558001,L F2 L2 B2 F2 D2 L D2 B U B F' L2 F' L' D' R D2,B,Hessen Open 2014 (2014-03-15~16),333 R1 C E1
@@ -150,7 +150,7 @@
 770131001,B L2 R2 D2 F' D2 R2 B2 R2 B U' R2 U2 B' D R F L F' D2,B,Chengdu Open 2018 (2018-04-29~30),333 R2 B #4
 5191094001,U F' L' R2 U2 F2 U2 F2 R2 D' U' R' U2 F U2 F' U' R2 D,B,Cube On in Richardson 2025 (2025-11-15~16),333 R2 B E1
 1949626062,U2 B D B2 L2 F B U' B D' U2 R2 F' R2 F' D2 R2,B,CubingUSA Northeast Championship 2022 (2022-05-27~30),333mbf Final A #2
-2306700001,R' B2 R2 F2 R F2 D2 R' U' F' U R D2 R B F2 L' B',B,Circle City Supercharged 2022 (2022-11-19),333 R1 B E2
+5816140001,R' L2 D2 U R2 F2 D' U2 R' F2 D U F' U2 L2 R' D L',B,Dębica Cubing Summer 2026 (2026-09-05~06),333 R1 A E1
 3161684001,D B2 U F R' B' D B2 D' R F' R2 B D2 L2 F L2 F,B, Esprit Cube Open Bayonne 2023 (2023-10-14~15),333 R1 B E1
 5432000001,L2 D' B2 U R2 U2 B' L2 B' D2 B' U R' F2 L2 R' F' U',B,Kalvskinnet Kubing 2026 (2026-03-07~08),333oh Final A #4
 5677618020,D R' B R D' U2 B2 L2 U' R B2 R' B2 D R' B' D,B,New York Multimate PBQ V 2026 (2026-05-29~31),333mbf Final B #3

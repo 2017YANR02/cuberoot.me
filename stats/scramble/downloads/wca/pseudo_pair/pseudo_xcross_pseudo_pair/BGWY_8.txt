@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / BGWY / bin 8
-# Population in this bin: 293
+# Population in this bin: 299
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5768603001,B L F' U2 R' U B2 D' B D2 B' D2 R F2 R L2 U2 B2 L B' L2,B,Cubalaya LA 2026 (2026-07-25),333bf Final A #1
@@ -37,7 +37,7 @@
 5080723001,U L' F2 L2 D R2 D2 F2 U L2 D2 F2 B D2 L D2 L2 R F U',B,Seattle Cube Cascade UW 2025 (2025-10-04),333 Final A #1
 402928001,L' F B2 D' B R B2 D2 B U R' U2 L2 F2 L' D2 B2 U2 F2 R2,B,Calgary Limited Fall 2016 (2016-11-26),333bf Final H #1
 4982541001,D U B2 D2 B2 L2 F2 B L' F U' B2 L U' B2 R D2 B F2,B,Geelong Winter 2025 (2025-08-30~31),333 R1 A #5
-4251359009,F' L2 F2 U2 L2 B2 R2 D L2 D2 B' F L U R' B U B' F2,B,Rubik's UK Championship 2024 (2024-11-01~03),333mbf Final A #1
+5778968001,R2 F U2 L' R2 U2 R2 U' B2 L2 D' B L R' D B D' R2 D',B,Charlottetown Summer 2026 (2026-08-08),333 R1 B #3
 465656001,B2 U2 F B U R' D B' U' F D2 B2 R D2 L' U2 R' B2,B,Edward's Rubiks Day 2017 (2017-03-11),333 R1 B #1
 489751001,L2 U2 F2 D' L2 U L2 B' F2 U2 L' U F' R' D B2 L U' R2,B,Novosibirsk Planetarium Open 2017 (2017-04-15~16),333 Final B E1
 494860001,F D2 R2 F L2 F' L2 B' R2 U2 R' F D2 L' D U L' B L2 R',B,OCSEF Open 2017 (2017-04-23),333 R1 E #3
@@ -95,7 +95,7 @@
 1025192001,D2 F R2 D2 R2 B' F2 L R2 U' R B2 D2 F D B L F2 U B' L2,B,UCSD Winter 2019 (2019-02-16~17),333bf R1 A #3
 1027717001,D2 B2 U F2 R2 D2 U R2 U' B2 R' D' L' R' D' R' B F D' L' F',B,CubingUSA Northeast Championship 2019 (2019-02-16~17),333 R2 B #3
 1040097014,R2 U L2 U B2 D2 F2 L2 D2 F2 R F L D R F' L' F U' B' L B' L,B,Carte Blanche Kube Open 2019 (2019-03-02~03),333mbf Final A #1
-1041718001,R2 U' B2 D' B2 F2 L2 D2 F' R2 U F2 D2 R' U' L D U2 B F L' F,B,IIT Kanpur Open 2019 (2019-03-09~10),333bf Final A #1
+5773787001,R D' U2 R B2 L F2 L' R2 B2 F2 R' B' F L' D U F' U' R,B,CCPA Open 2026 (2026-08-01),333 Final A #2
 1054086001,R' U F' U2 R2 F2 L B' U L B R2 F2 U2 L2 U2 B2 R' U2 D2 B2,B,Pragyan Cube Open 2019 (2019-03-17),333 R1 D #1
 1069050001,L2 D' B2 L2 F2 R2 D2 F2 D2 F2 L U B' L B F R B L D' L,B,Mezhdurechensk Open 2019 (2019-03-30),333 R1 C E1
 1086680001,L2 F U2 R2 F U2 B' D2 B' L2 F2 R' U' F L' B R U2 B2 D',B,Martelli Open Otoño 2019 (2019-03-30~31),333 R2 D #4
@@ -105,7 +105,7 @@
 1172376001,U2 B D2 F2 L2 F L2 B' D2 R B' L' U2 R2 B' R2 F D' B' U2 B' L,B,Trondheim Parity Open 2019 (2019-06-07~09),333bf Final A #1
 1177243017,D L2 U' F2 L2 F2 D U' B R' F' R2 U' B F2 R2 U2 F D' R' B' L',B,Swiss Nationals 2019 (2019-06-08~10),333mbf Final A #1
 1181132001,L2 U' L2 R2 D2 F2 R2 D2 L' B2 F D L' U R B D L2 D U B',B,Constanta Summer Open 2019 (2019-06-15~16),333bf Final A #3
-1212259001,R F2 R' F2 D2 B2 F2 L R2 B2 D2 U' R B' L' B' F' R' D B2,B,Bay Area Speedcubin' 18 2019 (2019-07-07),333 R2 A E2
+5785545001,F' B2 R' F2 U2 R2 B2 L2 B2 U2 R2 D' B' U' L F2 R B D B,B,Oakridge Independence Cube Open 2026 (2026-08-15~16),333 R1 A #3
 4715807001,L' U' F' R B' D' L F' U' L' B2 R F2 R2 U2 L2 U' F2,B,Granada Open 2025 (2025-05-10~11),333 R1 A #4
 1278840001,L2 B L2 F2 L2 U2 F D2 L2 R D' L F D' F L' R' B' U' F2,B,Tajikistan Open 2019 (2019-08-24~25),333 R1 A #3
 1290265001,F2 R2 U2 F2 D B2 L2 U' L B' L F U L' R' D' U' L2 U F,B,Swiss Science Open 2019 (2019-09-07~08),333 R1 E #4

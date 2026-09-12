@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / OR / bin 6
-# Population in this bin: 208
+# Population in this bin: 212
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 11317001,D2 F2 U2 R2 F U B U' R' U2 D2 F R2 B' R2 B2 L2 B,R,Nanjing Spring 2014 (2014-04-07),333 R2 A #2
@@ -53,8 +53,8 @@
 733249020,F2 U' B2 U2 L2 B2 F2 D F2 U2 F' D' F U' R2 F2 U' L F L B2,R,Nacionales Uruguayas UCHI 2018 (2018-03-24~25),333mbf Final B #2
 753670001,U2 B2 L2 D' L2 B2 U R2 U R F U2 F R' U' R' F,O,Chanquete Open 2018 (2018-04-14),333 R2 B #1
 760592001,U2 R F2 R U2 L U2 L' B L2 B' L' D R2 D' L D2 B,O,Canberra Autumn 2018 (2018-04-21~22),333oh R2 A #3
-785586006,L2 B F2 R2 B D2 U2 F2 L' D' F R2 B D U2 F2 R D L' B' L',O,Arnold Classic Africa 2018 (2018-05-18~20),333mbf Final A #1
-786434010,U2 B2 R D2 R' D2 U2 R' U2 R' U L' U' L' B2 U' B2 L2,R,YJ Fest 2018 (2018-05-18~20),333mbf Final A #1
+5792252001,D2 F U' F' D' R2 D2 R2 F' L' D2 R F2 L D2 F2 U2 D2,O,Singapore Augu-Skewb Day 2026 (2026-08-23),333oh R1 C #3
+5815523001,F' D2 F R' D F' D F B2 L' D2 L2 B2 R2 F2 L' U',R,Bremium Mega Day 2026 (2026-09-05),333oh Final B #1
 795910001,L2 F2 U' B2 U2 F2 D B2 U B2 L' U L R2 B' U F' U2 R' U',O,Oregon State Favorites 2018 (2018-06-02),333 R1 C #4
 814227001,F2 D2 R B2 R2 D2 B2 D2 R B2 F' D' U L2 B2 U' B U' F',R,St. John's Spring Open 2018 (2018-06-23),333oh Final C #1
 823527001,R B2 U2 R' B2 R' D2 U2 L2 U2 F' L F U2 F' L' D U2,O,Northern Azerbaijan Decathlon 2018 (2018-07-08),333 R1 C #4
@@ -165,7 +165,7 @@
 4359259013,L2 U' F2 U R2 B2 R2 D2 L R B' R U2 B D B R' B2 U' B R',R,Please Be Quiet Kuala Lumpur 2024 (2024-12-14),333mbf Final A #1
 4381056012,F2 L U2 B2 F2 R2 U2 D' L U' R2 D2 B2 U' R' D',O,Bengal Cube Open 2024 (2024-12-20~22),333mbf Final A #1
 4384422001,U' L2 B D2 L' U2 L' U' B U B' U2 D2 R B2 R' D2,R,Yancheng Open 2024 (2024-12-21),333oh R1 A #1
-4427853005,D' F' D2 B2 D F U F L2 B U2 R2 D2 F2 L2 F D2 R U L2 U2,R,SacQuiet Winter 2025 (2025-01-18),333mbf Final A #1
+5774090001,F L' B2 D R2 D' R2 D2 B2 U2 F2 L U2 L U' F2 D2 R2,R,Egypt National 2026 (2026-07-31~08-01),333 Final A E1
 4441195001,R' U2 R' D2 L' D2 F2 D2 R U F2 D' R U B2 U2,O,Utah Ice Cubing 2025 (2025-01-25),333oh R1 A #5
 4471440001,R' U2 F' L2 U2 L F2 L2 D2 R2 B' U2 B L' U2 B2 D' L,O,Davis Weeknight February 2025 (2025-02-07),333 R1 A E1
 4475864001,L F' L2 U2 F2 R2 B2 U2 L' B2 R2 B D F2 R2 B U2 F2,R,Hvidovre NxN 2025 (2025-02-08~09),333 Final B #2
@@ -202,6 +202,6 @@
 5492769077,B L2 B' D L2 U B' U D B' R U2 B2 D2 R2 U' L B2,O,New York Multimate PBQ IV 2026 (2026-03-27~29),333mbf Final B #1
 5626374001,R' B2 U F2 D U L2 D' U2 L2 B2 R B F L2 R B2 L2,O,No Clocks in Greenpoint 2026 (2026-05-09~10),333 R2 A E1
 5556536001,U2 B2 L2 R D2 B2 L2 R2 U2 F D' L2 D2 F U' L D R' D',R,CBA Open Tarija 2026 (2026-04-18),333 R1 A #1
-5574024001,B' D' B' R D F U D2 B2 R2 L U2 R' B2 U2 F L' U2,R,Trondheim Spring 2026 (2026-04-25),333 Final A #4
+5809683001,B' L' U2 D F D2 B L B' R L' B2 R' U2 D2 L B2,R,DFW Cubing Summer 2026 (2026-08-29~30),333 R3 B E1
 5579565001,D R2 F2 U' F2 R2 D2 L D2 F U F U' B F' U' L2,R,GLS Gdańsk III 2026 (2026-04-25~26),333 R2 B #1
 5596414001,F D' R2 B R2 D2 F2 L2 F L2 D' R B' R' U R B L F2,R,Oregon State Spring 2026 (2026-05-02),333 R2 A E2

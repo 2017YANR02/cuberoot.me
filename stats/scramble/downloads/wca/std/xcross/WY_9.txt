@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / WY / bin 9
-# Population in this bin: 298
+# Population in this bin: 302
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5742360001,L B2 R U' R F L F' L2 B' D2 L2 F' R2 F2 D2 R2 L' D' F',W,Rubik's WCA North American Championship 2026 (2026-07-02~05),333 R1 L #4
@@ -20,14 +20,14 @@
 243220001,D2 F' L2 D2 B2 F' L2 B2 D2 L D B' R' F L2 B2 R2 U R' D,W,Ha Noi Cube Day 2016 (2016-01-17),333 Final C #3
 4304187001,D L2 F2 D' F' U' B U R L' F R2 U2 R2 B' U2 B' R2 B2 U2,W,MurgiJoven Open 2024 (2024-11-23~24),333oh Final A #5
 278811001,B' U F' R B2 U L B' D B2 D2 L D2 L F2 R D2 F2 L U2,W,Jeonju Spring 2016 (2016-04-02),333 R1 C #4
-278821001,D F2 D' F' L B2 L2 D B' D2 L B2 D2 R' D2 R' B2 L2 F2 R',W,Jeonju Spring 2016 (2016-04-02),333 R1 D E2
+5820673001,U' B' L' D2 R2 U2 R' B2 U2 F2 U' L U2 B D' F2 L2 U' B,W,Santos Mágico Open 2026 (2026-09-06~07),333 R1 E #1
 280023001,D' R2 D2 L2 D2 F2 U2 B2 U' L' R' B2 R' F' D2 R' B L U F',W,Classic San Lorenzo Open 2016 (2016-03-24~26),333 R1 B E1
 4798522033,R' U2 B' U R2 U2 R2 U2 R2 F2 L' U2 F2 U' F' L' D B2 R' D2 B' L,W,VIC Side State Championship 2025 (2025-06-14~15),333mbf Final A #2
 329633001,B2 L D2 R' B2 L2 D2 L' D' L F D L2 D U' F L' D2 L2 B R,W,Campeonato Nacional Perubik 2016 (2016-07-16~17),333bf Final A #1
 5747340049,L2 D2 L2 F D L F2 D' F2 R B2 U2 R2 D L2 D F2 L2 U2 L2 B' L',W,Poznań Mental Breakdown 2026 (2026-07-04~05),333mbf Final A #2
 5668598001,U' B2 L' F' L U2 B2 U2 R B2 L2 R U' F R2 D2 B' R F',W,Hiroshima Spring 2026 (2026-05-30),333oh Final B E2
 375448001,D2 F' D2 F' L2 U2 R2 F' D2 F2 L' F R U' R D F2 R B' U L,W,Japan Open 2016 (2016-10-09~10),333 R1 C E1
-382451001,R' D2 F2 L2 R' D2 F2 D2 F D2 U' R U2 B2 U2 F U2 B' D,W,Tucuman Open 2016 (2016-10-08~09),333oh Final D #3
+5794429001,D L F D2 B L2 B' R2 D2 B2 U2 L' D' F' L' R' D B U',W,York Summer 2026 (2026-08-22~23),333 Final A #2
 384230001,L2 D' R2 U' R2 U2 R2 U2 F' L' B D2 U F' L' F2 R2 D R,W,Shri Ram Cubing Challenge 2016 (2016-10-22~23),333 R2 D #4
 397297001,U' L2 R2 U' L2 B2 U' L2 B2 D U R B' R2 D2 L U' L2 U' B',W,GeniusCube 2016 (2016-11-05~07),333oh R1 E #4
 423674001,D2 L2 R2 U R2 B2 L2 U B2 L' U' B' L' D L' R' B F U L,W,Rubik's Cube Mumbai Open 2016 (2016-12-23~24),333 R1 L #2
@@ -99,7 +99,7 @@
 1056215001,D2 R F2 L' D2 R' U2 R' D B L' U' R B U2 F' D2 R U2,W,Wolfpack Winter 2019 (2019-03-16),333 R2 A #2
 1065328001,D U2 B2 U F2 U' R2 D R U2 R B' D' B2 U L' F' D' R U',W,Cubing For LLS Summer 2019 (2019-03-24),333ft Final A #3
 1073585001,B R2 F R2 U2 B' D2 L2 F' L F U R' D L2 F' L' B U2 F2,W,Szczytno Open 2019 (2019-03-30),333 R1 C E1
-5521275001,L B2 R2 U' D2 B L B2 D F' R F R2 L2 F2 B' L2 B2 U2 B',W,VERK XIV 2026 (2026-04-11~12),333 R1 B #4
+5785986001,U2 F' R2 B' R2 F R2 F2 U' B2 U R B' F' D2 L2 U R' D,W,Kostelec Skewbing 2026 (2026-08-15~16),333 R2 A #2
 1149099001,D2 F' U2 F D2 R2 D2 U2 B U' L2 R D' B' F' U' L' F,W,Arnold Classic Africa 2019 (2019-05-17~19),333oh R1 C E1
 1181176001,U2 L' U2 B' R' F' L D B U D2 R2 F2 L2 F2 B' R2 U2 B' D2,W,Constanta Summer Open 2019 (2019-06-15~16),333oh R1 A E2
 5679868001,F B R' U' L2 F' R U L2 U2 B2 U2 L U2 R F' B2 D2 B' L2,W,The Last Frontier Spring 2026 (2026-05-30),333bf Final B #3
@@ -187,7 +187,7 @@
 3714112001,B U D2 F' R D' F' D2 L2 B' U2 B2 R2 F2 L' B2 R' B',W,Bay Area Speedcubin' 61 - San Jose 2024 (2024-04-27),333 R1 C #3
 3735448034,L2 D2 B R' F2 U2 B2 R' U2 B2 L F2 L D' F' L' U' L2 R2 F L,W,BrizZon Side Open II 2024 (2024-05-01~05),333mbf Final A #1
 3747110001,D2 U2 L2 F' D2 B' D2 F2 R2 F' L U F2 L2 F U2 L U2 R B',W,Burley Summer 2024 (2024-05-11),333 R1 C E1
-3779895001,F' L' D2 F R' U2 F2 D2 U2 L' U2 B2 R D L2 B' F L' U' R,W,Tramsheds II: May Sunday 2024 (2024-05-19),333 Final A #4
+5795176032,D' B U' F' D2 F2 R2 F L2 R2 F R2 F2 R F D L' B' L U L' F2,W,Morro Reuter Cubing 2026 (2026-08-22~23),333mbf Final A #1
 3802902001,R2 F U' B2 L B U2 B' R' B D2 R2 B2 R2 L2 D2 B R' D',W,Kent Spring 2024 (2024-05-25),333 R2 C E1
 5117450001,R2 D' B2 F D L2 F2 D' F R2 B D2 L' F' U2 R F2,W,Regina Twist 'N Treat 2025 (2025-10-18),333oh Final B E1
 3836295001,L F' B' R' F' L F2 D' L U L D R2 U' L2 D2 R2 D F2,W,Colorado Mountain Tour - Frisco 2024 (2024-06-09),333 R1 D E1

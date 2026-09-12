@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / ORWY / bin 3
-# Population in this bin: 24
-# Samples listed: 24 (all entries in this bin)
+# Population in this bin: 25
+# Samples listed: 25 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,O,LMDL Open 2015 (2015-09-12),333 R1 B #3
@@ -29,3 +29,4 @@
 4468810001,U' L2 F2 R2 F2 D B2 R B' R2 U2 F' L2 R' F2 D' F R,W,CETis 156 Broncos 2025 (2025-02-01~02),333 R1 B #2
 5050275001,D F' B R B' R' L2 D2 R F' B2 L U2 R' U2 L2 F' L',W,LexOpen France 2025 (2025-09-27~28),333bf Final B #2
 5513603001,D2 F U' B R U2 R U' D L2 B2 D' B2 U2 L2 F2 L2 F,Y,DFW Cubing Spring 2026 (2026-03-28~29),333 Final B #1
+5784464001,L' B' U' L2 D F2 D2 F2 U F2 U2 F R' D U L D F' L',O,Dåstrup Diverse 2026 (2026-08-15~16),333oh R1 C #1

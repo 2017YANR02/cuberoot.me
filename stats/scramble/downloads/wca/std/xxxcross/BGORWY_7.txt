@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / BGORWY / bin 7
-# Population in this bin: 443
+# Population in this bin: 447
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5357348001,B L' B2 L R2 D2 U2 B' U2 F' R F' R' B F2 D' U,W,Ekerö Open 2026 (2026-01-31),333 Final A #5
@@ -88,7 +88,7 @@
 2232807027,R2 F' U' L' U' L2 D B' U2 F U2 B2 L' F' U L' B' L2,B,WCC Western Championship 2022 (2022-10-07~09),333mbf Final A #1
 2305483001,F' U F' U2 B' L2 F D2 U2 L2 U B' L' U2 B2 D2 L2 F2,W,Minerva Open 2022 (2022-11-12),333oh R2 B #1
 3017221001,U2 L2 B D' F2 R F2 D' L' U2 L2 U2 F' L2 F B2 U2 D' L,B,WA Open 2023 (2023-08-26~27),333bf Final B E1
-4636081001,L' D F' U' R2 U' L2 R2 U' B2 D' U' R F' D2 U' R B U,W,Solving in Sale 2025 (2025-04-11~13),333 R1 D #2
+5817157001,R' D2 F D2 L2 B F D2 F2 L' F R2 F D B' R2 F2 L' D2,Y,Soorsi 2026 (2026-09-05~06),333 R2 C #5
 665734001,D F' D' F2 D2 F2 D' B2 U F' R B2 R F2 L2 F2 U2 R L2,B,TCG Spring 2017 (2017-12-09),333 R2 C #2
 667364001,U' R2 D2 L2 D' F2 D' R2 B' U2 L' B' U2 R2 B' L2 B R2,Y,MTD Spring 2017 (2017-12-09~10),333oh Final B #2
 682432001,D2 F2 L' F D' F R' D' R2 L' U' R2 D2 R2 L' F2 U2 R,W,Tulcan Open 2018 (2018-01-06),333 R1 B #2
@@ -131,7 +131,7 @@
 984819001,U2 R2 U' L' U2 R U2 R U2 B U2 L2 F L2 U2 L2 F D2,Y,Poções 2019 (2019-01-19~20),333oh Final A E1
 3262236001,D2 R D B R2 B D L2 U2 D2 F' U2 B2 U2 F' D2 U' R,O,Madrid Cundinamarca II 2023 (2023-11-13),333 R2 B E2
 1001259011,D2 U R2 D2 L2 B2 D' L2 F' D B F2 U B2 F2 L' U' B L2 U L' F,B,Kiev Super Blind 2019 (2019-02-02~03),333mbf Final A #3
-1014753001,F' R B' D2 F U' D' B' R2 U F U R2 D' R2 F2 U B2 L2,O,West Branch 2019 (2019-02-10),333 R2 C #3
+5817993001,D' B' L2 F2 U R' D2 L2 B2 U' L' U2 R D2 R2 F2 U2 L,W,Long Island Back to School 2026 (2026-09-05),333 R2 C E2
 1015089001,B2 R' F2 R2 B2 D2 L B2 F' L' D2 B' U' B2 D2 F L2 B' L' B',W,Medan Lunar New Year 2019 (2019-02-09~10),333bf Final B E1
 4014678001,U2 R B D' F2 D F' L D' U2 F' B2 U2 F2 R2 U2 R2 B' U' L2 U,G,Rhein-Neckar Mental Squaredown 2024 (2024-08-17~18),333bf R2 A E1
 1026578001,U2 F2 D2 L2 F2 L2 F D2 F' D2 R' F' D' F D B2 F' L F',G,KSF Ust-Kamenogorsk City 2019 (2019-02-16~17),333oh R1 A #3

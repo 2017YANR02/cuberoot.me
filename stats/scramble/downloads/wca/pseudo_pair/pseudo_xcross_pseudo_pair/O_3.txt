@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / O / bin 3
-# Population in this bin: 662
+# Population in this bin: 677
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 1013692042,F2 U' B2 D2 L2 F2 U R2 D L2 F2 R' F2 L F U' L' B2 U L' F2 D',O,MathSoc Open 2019 (2019-02-09~10),333mbf Final A #1
@@ -18,7 +18,7 @@
 1135300001,F' B' R' D B R2 D R' F' L' D' B2 D' B2 L2 B2 D' F2 D,O,George School Open 2019 (2019-05-11),333 R1 D E2
 2572801012,B' U' F' L B2 R U2 L B2 R' D2 L2 D2 B U2 B' L2 D' L R' B',O,Colorado Brain Freeze 2023 (2023-03-18),333mbf Final A #1
 57548001,F2 R F' B2 R F2 U2 F B2 R D' R' D2 R' L2 D2 F2 L2,O,Aaruush Cube Open 2014 (2014-09-13),333oh R1 D #2
-4529903001,D F2 R' B' D2 F' D2 R2 F D2 U2 L B' R2 D' U2 L2 D',O,Cubing at Iowa State 2025 (2025-03-01),333 R2 A E2
+5784464001,L' B' U' L2 D F2 D2 F2 U F2 U2 F R' D U L D F' L',O,Dåstrup Diverse 2026 (2026-08-15~16),333oh R1 C #1
 1365955001,R D' F R F' L2 F2 R2 D' F B2 U' L2 F2 U2 F2 U B2 L2 D2,O,Kyoto Open 2019 (2019-10-20),333 R1 B E1
 67531001,D2 F2 D2 F D2 R2 D2 F' D2 B' L D L R2 U2 L R B' F' L B R',O,DJ Open 2014 (2014-10-18~19),333bf Final A #3
 74822001,F2 D2 U F2 U L2 D' B2 F2 R2 U2 L' D2 F' L' R2 F' L2 F U',O,Slow n Steady Fall 2014 (2014-11-09),333 R1 B #4
@@ -33,7 +33,7 @@
 1334941001,F2 R2 B2 R2 F2 D2 L D2 U2 L2 F D2 U2 R' F' D2 R2 D' F' R2,O,Oklahoma Fall 2019 (2019-10-05),333 R1 B #5
 125351001,B D' L D' R2 L' F U2 D B2 D2 L2 D2 R2 F2 R B2,O,Lexington Spring 2015 (2015-04-11),333 R2 B #2
 2617494001,L D B' D B' L2 B2 D2 F L2 B2 D' R B R D2 B2 L',O,Bluegrass Bash 2023 (2023-04-02),333 R2 A E2
-1562926001,R D' F L2 D' B' L U' R D B D' B2 R2 D F2 L2 D2 R2,O,Hernando Summer 2020 (2020-02-22~23),333oh R1 A #5
+5784432008,B' R2 U2 F2 D2 B F2 U2 B' L2 R' U' L' B2 F' R' F R U',O,Dåstrup Diverse 2026 (2026-08-15~16),333mbf Final A #1
 3204574001,B2 D2 L' F' R' L2 F' U B2 U F U' L2 U' B2 D' B2 L2 B2 U2,O,Spooky Solving Idaho 2023 (2023-10-28),333 R1 A #3
 2450866001,R U' B2 U' L D' F D' F' U R B2 R' U2 F2 D2 R' U2 R2,O,HASAL İstanbul 2023 (2023-01-28~29),333oh Final A #3
 143789001,B2 R2 F2 D2 L2 U' L2 U R' D' L F2 U' F D' R D2 L D' R D2,O,San Diego Summer Splash 2015 (2015-05-23),333bf Final A #1
@@ -82,7 +82,7 @@
 4381882001,F' R2 B2 R B R B D F U2 L2 U2 B' U2 B' D' B' U B' L2,O,I Hope It's Solved Edmonton 2024 (2024-12-21~22),333bf R1 A #3
 406269001,D2 B F L2 F' D2 F2 L2 D' L' R2 B2 R' D' U2 F2 L2 B2 R,O,Unifor Open 2016 (2016-12-02~03),333ft Final A #1
 3168381024,D U B2 D R2 D' U' R B D L B' L' F' R' U2 F L2 U',O,Kuwaiti Nationals 2023 (2023-10-13~14),333mbf Final B #1
-1175107001,B D L2 F' L U2 D2 L2 D2 R' D' L' U2 R2 D2 B2 R' F2 L2,O,Beijing Summer 2019 (2019-06-07~08),333oh R1 B E1
+5804021001,L' F L F2 L B2 D' R' U' D B2 U R2 D' B2 R D,O,PBQ Žilina 2026 (2026-08-28),333bf Final B E1
 3340186001,U' F2 R2 U' F2 D' R2 F2 R' D2 B2 L' U' B2 R2 F L' F2 U',O,Cubing by Quinns Beach 2023 (2023-12-16),333 R1 A #2
 425447001,B2 R2 U2 R2 D' R2 U L2 F2 R2 B' U R' U L F' R2 U L2 F',O,Shaastra Cube Open 2017 (2016-12-31~2017-01-01),333 R1 B #5
 426449001,L2 B D2 R2 D2 F' D2 U2 F U L D' L B2 L2 U' R B L B2 L B',O,Dutch Winter 2017 (2017-01-06~07),333bf Final A #2
@@ -189,13 +189,13 @@
 923140001,L2 R2 F2 L2 D' F2 U' R2 F2 D2 B F' L' F' R' B U F R' F' L2,O,Respect Kansas 2018 (2018-11-03),333bf Final A #2
 5574606001,L2 D2 U2 B R2 U2 L U B2 L' B L U' R B' F2,O,Blagoevgrad Open 2026 (2026-04-25~26),333 R1 D #5
 924209001,R2 B L2 F R' B' U' F2 R U' D' F' L2 B' R2 D2 R2 L2,O,Almaty Altyn Cube 2018 (2018-11-03~04),333oh Final A E1
-930025001,L2 B2 L2 U' F2 R2 D2 L D' B L D2 L2 D2 L2 B2 L2 B2,O,Trinity Valley Open 2018 (2018-11-10),333 R1 D E1
+5801921001,D R' L' B' D L' B2 D2 B2 L' D2 L2 B' R2 D2 F U',O,Makati Heroes Speedcubing 2026 (2026-08-23),333 R1 C #1
 936651001,B' U' R2 L2 F' B2 D F R' D2 L B2 U2 L' F2 L2 U2 R B2,O,Brugge Open 2018 (2018-11-17~18),333 R1 B #3
 5258071001,U' F2 U2 F2 R2 B' R2 D2 U2 R D' F2 U2 L' F U2 F L2,O,Portugal Championship 2025 (2025-11-29~12-01),333oh R1 C #3
 3784470053,F2 U F2 R2 B2 L2 F2 R' D B' R U' R2 B2 F L B F L B',O,South Bay Weeknight Brain Freeze 3 2024 (2024-05-22),333mbf Final A #2
 4269685001,L2 F' L2 F2 B' L U' F R' F2 D2 F2 B' D2 L2 D2 R2 B U',O,Back to Berlin 2024 (2024-11-09~10),333 Final A E1
 5755963001,B' R L D L' B R2 U' B U R' U2 L D2 F2 D2 L' U2 R2,O,Hillister Cube Hustle 2026 (2026-07-18),333 Final B #5
-4953966001,R B2 U2 L' D2 R' D B' F2 L2 D2 F2 R2 U' R2 U' L2 U' R2,O,South India Cube Championship 2025 (2025-08-14~17),333 R1 A #1
+5791446001,U2 B U2 D' B L B R2 D2 B2 L2 D2 F2 L U2 F2 R2 F U',O,Dragon Cubing XII 2026 (2026-08-22~23),333 R1 B E2
 2313579001,R F L2 D L2 D' L2 B2 F2 U2 L' F R D2 B' R' U2 L' B',O,Bengal Cube Open 2022 (2022-11-19~20),333 R1 C #3
 961294001,R2 F L2 R2 U2 B2 F' U2 F2 U F' R D U' B' R D' R2,O,WCA South American Championship 2018 (2018-12-15~16),333oh R1 A #1
 1454895001,R2 U2 R' B2 F2 R' B2 R2 B2 U' B F U' B' L D L2 D L',O,Speedcub'Eirb Winter Open 2019 (2019-12-14~15),333 R1 C #4

@@ -1,0 +1,18 @@
+# Scramble samples — first_layer / first_face / B / bin 10
+# Population in this bin: 11
+# Samples listed: 11 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+63900001,R2 U2 B' U2 B F' D2 B U2 F D2 L U B D F2 L' R F,B,CCC Autumn Open 2014 (2014-10-04~05),333oh R1 B #5
+363063001,B2 F2 L2 D B2 U' F2 L2 F L' U F' R' D' F' D2 B2 L' U,B,KCubing Summer 2016 (2016-09-10),333 Final A #4
+554877001,F' D B D B2 L' D F' B U' F2 D2 L2 F2 L' U2 R F2 B2 U2,B,Gujarat Cube Days 2017 (2017-07-22~23),333 R1 D #1
+590942001,F2 U' L2 F2 U' F2 R2 U2 L' U' L' D' B2 R' B L' D' U' B U',B,Kursk Open 2017 (2017-09-09~10),333 R2 C #1
+688578001,D B2 L2 B R' D R' U2 F' R U2 R2 D2 B' R2 B2 L2 B2 D2,B,Speed in Colors 2018 (2018-01-19~20),333 R1 F E1
+846483001,R D' B' L' F2 U2 B U F' B R' F2 L B2 L' D2 B2 R' F2 L F2,B,Franconia Open 2018 (2018-08-04~05),333 R1 D #4
+1055058001,D R2 B2 U2 L2 U R2 D' L2 D' B2 L' B F2 R2 U' B' D' R' U2 F,B,Zhuyuangang Open 2019 (2019-03-16~17),333 R2 B #4
+3411337001,R2 D L2 B' U2 L' D2 R' D2 F2 R' U' B2 D' R' U2 B D',B,Choo Choo Cubing A 2024 (2024-01-13),333 R1 B #5
+3523444001,B L2 D R U' L' B R2 U' B R2 D2 F' R2 F2 R2 F R2 U2,B,SAM Center Open 2024 (2024-02-18),333oh Final A #5
+4625595038,U2 L2 D' B2 D U2 B2 R2 D B L' B2 F D R' F2 L' B' L' D2 L,B,Virginia Quiet Open Spring 2025 (2025-04-05),333mbf Final A #1
+5426847001,F2 R D2 L2 F2 U2 R2 B2 U F2 D B' L2 R' B' F2 L U' B2,B,UFBA IX 2026 (2026-02-28),333oh Final A #5

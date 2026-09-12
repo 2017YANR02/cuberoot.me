@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / B / bin 2
-# Population in this bin: 415
+# Population in this bin: 421
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3752773001,R2 D2 B' U2 R2 B' R2 B L B U' L2 U' L' F U2 B' L2 R,B,North Jersey Speedsolving B 2024 (2024-05-12),333 R1 A #2
@@ -80,13 +80,13 @@
 567092001,D B2 U2 F2 D' F2 R2 D2 L2 B D2 L' R D R B2 D' B2 L,B,Coconut Island Open 2017 (2017-08-06),333oh R1 A E2
 5422499001,F' B U' L2 F2 U' F' R L D2 B D2 B2 U2 B' U2 B D2 R B' L,B,BL&D BLD Binningen 2026 (2026-02-28),333bf Final A #5
 575521001,L D' L' F2 R' U2 R U2 F' R D' R' D2 R' U2 F2 R2 F2 R2,B,Cerulean 2017 (2017-08-20),333 R1 E E1
-580915001,U2 R2 D2 B2 U2 F2 R' U2 R D2 R2 D' L F L F' D R B2,B,Penza Summer 2017 (2017-08-26~27),333oh R1 B #4
+5776028001,B R U L2 B2 U2 L2 D' F2 L2 B2 L2 F' D' R' F2 D2 B' F2,B,Pedra Pintada Open 2026 (2026-08-08),333oh Final A #1
 4289152001,R' B2 U2 B2 L D R B' L' B R F' D2 F U2 F2 R2,B,Camuni al Cubo 2024 (2024-11-16~17),333 R1 A E1
 4414937001,R2 U' L' U' R' B2 R' F U L' U B2 D2 R2 U R2 U F2,B,Cube4fun Lublin Winter 2025 (2025-01-11~12),333oh Final A #4
 590218001,D F2 R2 F' D' R F R' U2 L U F2 U2 D R2 F2 D' F2 U2 L2,B,Bulldog Cubing 2017 (2017-09-09),333 R1 B E1
 2699595001,B' R2 U2 F' R2 U2 B' U2 B L2 B' L D' L' D' L2 F' L' D2 U',B,Uppsalaligan 2: Malus Domestica - 2023 (2023-05-08),333 Final B #2
 3815605030,U' B L2 U2 R2 L2 F2 B R U L2 F' R2 B' U2 F' L2 U2 F' B L2 U',B,Glasgow Summer - Scottish Blind Off 2024 (2024-06-01~02),333mbf Final A #2
-3611102001,R2 D' R2 D L2 F2 R2 D B U' F D' B R2 B2 R B' D',B,DFW Minicomp B 2024 (2024-03-23),333 R1 B #2
+5798978031,D2 F D' U2 L' B2 U2 R U2 R' D2 B2 L B' L' B2 D R F2 D' B R,B,Northwest Championship 2026 (2026-08-21~23),333mbf Final A #1
 2604163001,B2 R2 B2 L2 U' B2 L2 D' R2 F' L' U F L U' L U2 R2,B,Saint John's Scramble 2023 (2023-04-01),333 R1 A #5
 632778001,U L2 D2 F2 U L2 B2 D L2 U R2 B D L2 D' U2 R' B U2 F2,B,Atomic Cubing Fall 2017 (2017-11-04),333 R1 C E1
 3710454001,B2 L2 U' B2 U F2 R2 U2 F' D2 F U' B R F2 R' B D' B2,B,Crewe Spring 2024 (2024-04-27~28),333 R2 A #4

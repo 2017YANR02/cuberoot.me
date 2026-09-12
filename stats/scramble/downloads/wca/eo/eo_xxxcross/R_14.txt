@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / R / bin 14
-# Population in this bin: 121
-# Samples listed: 121 (all entries in this bin)
+# Population in this bin: 122
+# Samples listed: 122 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 33813001,U2 D F D2 R U L F' B U' R' L U2 B2 U2 F2 R2 L D2 B2,R,P3 Grand Open 2014 (2014-06-28~29),333oh R1 H E1
@@ -126,3 +126,4 @@
 5668940001,F2 U' B2 L R2 F2 R U2 R2 U2 D L B' D U L' B2 L B',R,Kublördag Jönköping XII - 2026 (2026-05-30),333 Final A #5
 5744027001,F2 U2 F2 D2 B' D2 B' L2 R2 U2 F D' B' F2 R B2 L U' F L',R,Salados en Mexicali 2026 (2026-07-04),333oh Final B #2
 5754262001,L2 U2 R F' U B U2 L2 B' D' F2 R2 B2 R U2 L' F2 B2 R' B,R,Japan Championship 2026 (2026-07-18~19),333bf R1 C E1
+5807622001,F' U L' U L' U2 B2 L' R F2 L' B D U' L F' U F2,R,Rubik's German Nationals 2026 (2026-08-28~30),333 Final A E1

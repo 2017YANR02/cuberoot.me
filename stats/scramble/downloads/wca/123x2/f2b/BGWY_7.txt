@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / BGWY / bin 7
-# Population in this bin: 129
-# Samples listed: 129 (all entries in this bin)
+# Population in this bin: 132
+# Samples listed: 132 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 2686001,F B U2 B' U' R2 B D F' B2 R F2 U2 L2 B' L2 F2 L2,W,CMI Fiesta Open 2014 (2014-03-21~23),333 Final B #5
@@ -134,3 +134,6 @@
 5690000001,D2 L' U' R L D R U2 R2 B2 U2 D2 F D2 R B2 U',G,Napule È Mille Culure 2026 (2026-06-06~07),333 R2 B E1
 5690398022,U' B R B U' F2 L2 D2 B' R2 D R2 L2 F' U2 R2 F L2,Y,Headache in Kode 2026 (2026-06-05~07),333mbf Final A #2
 5749542001,L R2 F' L2 B' F L2 R2 B' U' R D R' B D2 B2 U' R' U2,Y,FLIP Open 2026 (2026-07-11~12),333oh Final C #4
+5794352001,B U' B F D2 B' L2 R2 F U2 L' U' B2 L R D2 L' D U',B,Tierrasanta Pizza Party 2026 (2026-08-23),333oh R1 D E1
+5795830001,L2 B' U' B2 U2 B2 D R2 F2 U R2 D' L R2 F2 D L' B2 R' D',Y,Please Be Quiet Xi'an 2026 (2026-08-23),333bf Final A #4
+5800150001,R2 D F B U L F U' L U F2 L B2 U2 L2 U2 B',Y,Fuzhou Summer 2026 (2026-08-23),333 R1 G E2
