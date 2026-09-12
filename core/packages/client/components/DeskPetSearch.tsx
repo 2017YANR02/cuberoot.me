@@ -16,7 +16,6 @@ import HeaderToggles from '@/components/HeaderToggles';
 import WcaAuth from '@/components/WcaAuth';
 import DonateModal from '@/components/DonateModal';
 import FeedbackModal from '@/components/FeedbackModal';
-import DeskPetGallery from '@/components/DeskPetGallery';
 import { MobilePageShareModal, WeChatPcShareModal } from '@/components/WeChatPcShareModal';
 import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
 import { isAdmin } from '@/lib/auth-store';
@@ -149,7 +148,6 @@ export default function DeskPetSearch({
   const boxRef = useRef<HTMLDivElement>(null);
   const [donateOpen, setDonateOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [galleryOpen, setGalleryOpen] = useState(false);
   const [wechatShareOpen, setWechatShareOpen] = useState(false);
   const [mobileShareHelp, setMobileShareHelp] = useState<'wechat' | 'browser' | null>(null);
   const fbUnread = useFeedbackUnread();
@@ -388,7 +386,7 @@ export default function DeskPetSearch({
               <div className="deskpet-character-gallery">
                 <button type="button" className="compact-select-option" onClick={() => { close(); onOpenPetHome(); }}>
                   <span className="deskpet-character-option"><span className="deskpet-character-thumb" aria-hidden><Home size={18} /></span>
-                    {tr({ zh: '宠物小窝', en: 'Pet home' })}</span>
+                    {tr({ zh: '领养 / 小窝', en: 'Adopt / My pet' })}</span>
                 </button>
               </div>
               <div className="deskpet-character-settings">
@@ -429,7 +427,7 @@ export default function DeskPetSearch({
               <div className="deskpet-character-gallery">
                 <button type="button" className="compact-select-option" onClick={() => {
                   close();
-                  setGalleryOpen(true);
+                  window.location.assign(`${lang === 'zh' ? '/zh' : ''}/pets/gallery?pet=${character}`);
                 }}>
                   <span className="deskpet-character-option">
                     <span className="deskpet-character-thumb" aria-hidden><Sparkles size={18} /></span>
@@ -443,7 +441,6 @@ export default function DeskPetSearch({
       </div>
       {donateOpen && <DonateModal lang={lang} onClose={() => setDonateOpen(false)} />}
       {feedbackOpen && <FeedbackModal lang={lang} onClose={() => setFeedbackOpen(false)} />}
-      {galleryOpen && <DeskPetGallery lang={lang} character={character} characters={characters} onClose={() => setGalleryOpen(false)} />}
       {wechatShareOpen && <WeChatPcShareModal onClose={() => setWechatShareOpen(false)} />}
       {mobileShareHelp && (
         <MobilePageShareModal mode={mobileShareHelp} onClose={() => setMobileShareHelp(null)} />

@@ -60,6 +60,7 @@ import { toLocalIsoDate } from '@/lib/iso-date';
 import { applySession, hasAdminAccess, useAuthStore, safeNext, takeWcaLinkPrompt } from '@/lib/auth-store';
 import { isMiniProgramCommerceRestricted, notifyMiniProgramLogout } from '@/lib/miniprogram-bridge';
 import { tr, useLang } from '@/i18n/tr';
+import PetAccountCard from '@/components/PetAccountCard';
 import './account.css';
 
 function AccountName({ name, wcaId }: { name: string; wcaId?: string | null }) {
@@ -759,6 +760,7 @@ export default function AccountPage() {
   const isAdmin = hasAdminAccess(user);
   const commerceRestricted = isMiniProgramCommerceRestricted();
   const cards = [
+
     ...(wcaId ? [
       {
         key: 'wca',
@@ -933,6 +935,7 @@ export default function AccountPage() {
           ) : (
             <>
               <nav className="account-cards">
+                <PetAccountCard/>
                 {cards.map(({ key, href, icon, title, desc }) => (
                   <AppLink key={key} href={href} className="account-card" prefetch={false}>
                     {icon}

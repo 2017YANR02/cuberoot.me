@@ -128,7 +128,8 @@
       "./data/oll.json": "asset",
       "./data/pll.json": "asset",
       "./data/zbll.json": "asset",
-      "./data/zbls.json": "asset"
+      "./data/zbls.json": "asset",
+      "./deskpet-care": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
@@ -442,7 +443,11 @@
     "./data/oll.json": "./data/oll.json",
     "./data/pll.json": "./data/pll.json",
     "./data/zbll.json": "./data/zbll.json",
-    "./data/zbls.json": "./data/zbls.json"
+    "./data/zbls.json": "./data/zbls.json",
+    "./deskpet-care": {
+      "node": "./dist/deskpet-care.js",
+      "default": "./src/deskpet-care.ts"
+    }
   },
   "scripts": {
     "build": "tsc -b",

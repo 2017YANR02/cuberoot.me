@@ -67,7 +67,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   then add the file stem to this list.
 //   account_auth alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
 //   comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends health historical_ranks pb private_vault
-//   membership membership_subscriptions music nav_sites nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
+//   membership membership_subscriptions music nav_sites pets nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
@@ -842,6 +842,9 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'DELETE', p: '/v1/colpi/words/:id/vote', g: 'login', zh: '撤销投票', en: 'Remove vote' },
   { d: 'content', m: 'GET', p: '/v1/nav/sites', g: 'public', c: 'cdn', zh: '导航站点', en: 'Nav sites' },
   { d: 'content', m: 'GET', p: '/v1/nav/home-order', g: 'public', c: 'cdn', zh: '首页卡片顺序', en: 'Homepage card order' },
+  { d: 'content', m: 'GET', p: '/v1/pets/mine', g: 'login', c: 'no-store', zh: '我的领养宠物', en: 'My adopted pets' },
+  { d: 'content', m: 'POST', p: '/v1/pets/:id/adopt', g: 'login', c: 'no-store', zh: '领养宠物', en: 'Adopt a pet' },
+  { d: 'content', m: 'POST', p: '/v1/pets/:id/care', g: 'login', c: 'no-store', zh: '与领养宠物互动', en: 'Care for an adopted pet' },
   { d: 'content', m: 'GET', p: '/v1/nav/deskpet-catalog', g: 'public', c: 'no-store', zh: '桌宠展示配置', en: 'Pet presentation settings' },
   { d: 'content', m: 'PUT', p: '/v1/nav/deskpet-catalog', g: 'admin', zh: '更新桌宠名称、开放状态及顺序', en: 'Update pet names, visibility and order' },
   { d: 'content', m: 'GET', p: '/v1/nav/home-locks', g: 'public', c: 'no-store', zh: '首页卡片锁定状态', en: 'Homepage card locks' },

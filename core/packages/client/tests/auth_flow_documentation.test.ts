@@ -34,10 +34,12 @@ describe('account flow documentation', () => {
       'B → A', '10 分钟有效', '唯一登录方式不能解绑', '不能承诺两份会员时长自动相加',
       '注销账号 ≠ 取消续费', '无恢复期', '公开讨论和公开复盘匿名保留',
       '登录成功 ≠ 计时记录已云同步', '不是三个账号', '绑定码不是合并码', '陌生凭据先问是否已有账号',
+      '已领养宠物', '亲密度较高', '不把两份经验相加',
     ] : [
       'B → A', 'valid for 10 minutes', 'only sign-in method cannot be removed', 'durations are not guaranteed to add together',
       'delete account ≠ cancel renewal', 'no grace period', 'public discussions and public reconstructions are anonymized',
       'does not mean timer data is cloud-synced', 'not three accounts', 'link code is not a merge code', 'unknown credentials ask whether you have an account',
+      'adopted pets', 'higher bond', 'Experience is not added together',
     ]) expect(html).toContain(text);
     expect(html).not.toContain('<button');
   });

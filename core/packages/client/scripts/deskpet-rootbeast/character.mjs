@@ -189,7 +189,7 @@ export function animateCharacter({ a, part, at, t, plan, options, id, duration, 
     const blinkFrames = [[0, t()]];
     for (const time of duration >= 4 ? [23, 76] : [76]) {
       const expression = plan.face.filter(([at]) => at <= time).at(-1)?.[1];
-      if (['sleep', 'laugh', 'cry', 'yawn'].includes(expression)) continue;
+      if (['sleep', 'laugh', 'cry', 'yawn', 'bite'].includes(expression)) continue;
       blinkFrames.push([time, t()], [time + 6 / duration, t(0,0,0,1,.05)], [time + 16 / duration, t()]);
     }
     const blink = a(`<g data-rig-part="eyelids">${emotion}</g>`, blinkFrames, '0px 0px', 'linear');
@@ -208,6 +208,9 @@ export function animateCharacter({ a, part, at, t, plan, options, id, duration, 
   };
   const mouths = {
     neutral: path('M-17 0Q0 11 17 0', ink, 7),
+    bite: `<g data-feeding-mouth="open">${ellipse(0, 0, 23, 17) + ellipse(0, 9, 13, 5, pink)}</g>`,
+    chew: path('M-17 1Q-5 10 15 2', ink, 7) + path('M-35-3Q-43 5-34 12', ink, 4),
+    chewRight: path('M-15 2Q5 10 17 1', ink, 7) + path('M35-3Q43 5 34 12', ink, 4),
     happy: path('M-24-3Q0 25 24-3', ink, 9),
     laugh: ellipse(0, 3, 31, 25) + ellipse(0, 15, 18, 9, pink),
     cry: ellipse(0, 8, 21, 25) + ellipse(0, 22, 13, 5, pink),
