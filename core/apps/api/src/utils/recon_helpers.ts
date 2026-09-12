@@ -569,6 +569,27 @@ export function buildUpdate(table: string, row: Record<string, unknown>, whereCo
 // 同一选手可合法地有多条占位打乱的复盘(各为不同的把),不能当重复。
 const SCRAMBLE_PLACEHOLDERS = new Set(['?', '??', '???', '-', '--', '.', 'n/a', 'na', 'tbd', 'none', 'unknown']);
 
+/** Match any stored scramble representation, without treating unknown scrambles as a relationship. */
+export function buildSameScrambleQuery(id: string, columns: string): { sql: string; params: unknown[] } {
+  const placeholders = [...SCRAMBLE_PLACEHOLDERS];
+  return {
+    sql: `WITH target AS (
+      SELECT DISTINCT btrim(regexp_replace(s, '\\s+', ' ', 'g')) AS k
+      FROM recons CROSS JOIN LATERAL unnest(ARRAY[optimal_scramble, wca_scramble, scramble]) AS source(s)
+      WHERE id = ? AND visibility = 'public'
+    )
+    SELECT ${columns} FROM recons
+    WHERE recons.id <> ? AND recons.visibility = 'public'
+      AND EXISTS (
+        SELECT 1 FROM unnest(ARRAY[recons.optimal_scramble, recons.wca_scramble, recons.scramble]) AS candidate(s)
+        JOIN target ON btrim(regexp_replace(candidate.s, '\\s+', ' ', 'g')) = target.k
+        WHERE target.k <> '' AND lower(target.k) NOT IN (${placeholders.map(() => '?').join(', ')})
+      )
+    ORDER BY raw_time ASC NULLS LAST, recons.id ASC LIMIT 200`,
+    params: [id, id, ...placeholders],
+  };
+}
+
 /** 是否真打乱(够长 + 非占位符)。真打乱才参与「同选手 + 同打乱」判重。 */
 export function isRealScramble(s: unknown): boolean {
   if (typeof s !== 'string') return false;

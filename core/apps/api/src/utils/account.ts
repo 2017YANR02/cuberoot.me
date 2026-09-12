@@ -27,8 +27,8 @@ export {
 } from '@cuberoot/shared/account';
 
 export type Provider = 'email' | 'phone' | 'wca' | 'apple' | 'google' | 'wechat' | 'douyin' | 'alipay' | 'qq';
-export type Channel = 'email' | 'phone' | 'merge';
-export type CodePurpose = 'login' | 'link' | 'password_reset' | 'account_merge';
+export type Channel = 'email' | 'phone' | 'merge' | 'id_link';
+export type CodePurpose = 'login' | 'link' | 'password_reset' | 'account_merge' | 'identity_link';
 
 export interface AppleIdentityCredential {
   encryptedToken: Buffer;
@@ -125,8 +125,9 @@ export async function issueCode(
   channel: Channel,
   target: string,
   purpose: CodePurpose,
+  run: QueryRunner = query,
 ): Promise<{ code: string } | { error: 'cooldown' }> {
-  const recent = await query<{ created_at: string | Date }>(
+  const recent = await run<{ created_at: string | Date }>(
     'SELECT created_at FROM auth_codes WHERE channel = ? AND target = ? ORDER BY created_at DESC LIMIT 1',
     [channel, target],
   );
@@ -134,14 +135,14 @@ export async function issueCode(
     const age = Date.now() - new Date(recent[0].created_at).getTime();
     if (age < SEND_COOLDOWN_MS) return { error: 'cooldown' };
   }
-  await query(
+  await run(
     'UPDATE auth_codes SET consumed_at = NOW() WHERE channel = ? AND target = ? AND purpose = ? AND consumed_at IS NULL',
     [channel, target, purpose],
   );
   const code = genCode();
   const codeHash = hashCode(channel, target, code);
   const expiresAt = new Date(Date.now() + CODE_TTL_MS).toISOString();
-  await query(
+  await run(
     'INSERT INTO auth_codes (channel, target, purpose, code_hash, expires_at) VALUES (?, ?, ?, ?, ?)',
     [channel, target, purpose, codeHash, expiresAt],
   );
@@ -157,10 +158,11 @@ export async function verifyCode(
   target: string,
   purpose: CodePurpose,
   code: string,
+  options: { transaction?: TransactionSql; consume?: boolean } = {},
 ): Promise<boolean> {
   // 事务 + FOR UPDATE 锁住那张码:把「读 attempts → 判 5 次上限 → 累加」串成一步。
   // 否则并发 verify 会各自读到同一份 attempts=0 全过闸,单码可被猜远超 5 次(TOCTOU 爆破)。
-  return sql.begin(async (tx) => {
+  const run = async (tx: TransactionSql): Promise<boolean> => {
     const rows = await tx`
       SELECT id, code_hash, attempts FROM auth_codes
       WHERE channel = ${channel} AND target = ${target} AND purpose = ${purpose}
@@ -175,12 +177,13 @@ export async function verifyCode(
     }
     const expected = hashCode(channel, target, code);
     if (timingSafeEqualHex(expected, row.code_hash)) {
-      await tx`UPDATE auth_codes SET consumed_at = NOW() WHERE id = ${row.id}`;
+      if (options.consume !== false) await tx`UPDATE auth_codes SET consumed_at = NOW() WHERE id = ${row.id}`;
       return true;
     }
     await tx`UPDATE auth_codes SET attempts = attempts + 1 WHERE id = ${row.id}`;
     return false;
-  }) as Promise<boolean>;
+  };
+  return options.transaction ? run(options.transaction) : sql.begin(run) as Promise<boolean>;
 }
 
 // ── 密码(scrypt:自带随机盐 + 自描述参数串,明文永不落库)──

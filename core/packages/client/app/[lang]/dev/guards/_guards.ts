@@ -205,6 +205,12 @@ export interface CiGuard {
 
 export const CI_GUARDS_UI: CiGuard[] = [
   {
+    id: 'wca-record-filters',
+    test: 'wca-record-filters.test.ts',
+    zh: { title: '纪录统计筛选与数据一致性', desc: '按生成器源码自动发现使用 recordScope、record_scopes 或旧 Continental 分区模式的纪录统计。CI 同源检出其 JSON，逐个验证非空、唯一且可达的筛选组合，并检查地区、级别、项目与类型取值。缺少生成数据也会失败；新数据形态仍需扩展发现规则及语义审查。' },
+    en: { title: 'Record-statistic filters match data', desc: 'Discovers record generators using recordScope, record_scopes or legacy Continental sections. CI checks out the same JSON files and verifies every nonempty, unique, reachable filter bucket and its region, tier, event and type. Missing generated data fails; new data shapes still need discovery and semantic review.' },
+  },
+  {
     id: 'cubing-term-blacklist',
     test: 'i18n-cubing-term-blacklist.test.ts',
     zh: { title: '魔方术语错译', desc: 'AI 写双语文案按通用语感直译魔方黑话(Overwork≠劳累义直译、Commutator≠通用数学直译、Finger Trick≠逐字直译),语法全对但社区不这么说 —— 正确译法依次为「复用 / 换位子 / 指法」。权威译法单一源 = /wiki 的 glossary.json(713 条中英对照);本守卫锁已修正错译的黑名单,发现新错译修完即加入。豁免行内 allow-cubing-term。' },
@@ -314,6 +320,12 @@ export const CI_GUARDS_DRIFT: CiGuard[] = [
     test: 'dev-schema-api-drift.test.ts',
     zh: { title: '/dev/schema + /dev/api 快照漂移', desc: '/dev/schema 的迁移台账须列全 apps/api/migrations 下每个文件;/dev/api 的路由清单须等于 server/src/index.ts 里 app.route(‘/v1’, …) 实际挂载的路由。各自漏一条都红。' },
     en: { title: '/dev/schema + /dev/api snapshot drift', desc: '/dev/schema’s migration ledger must list every file in apps/api/migrations; /dev/api’s manifest must equal the routes actually mounted via app.route(‘/v1’, …) in server/src/index.ts. Missing either turns CI red.' },
+  },
+  {
+    id: 'auth-doc-sync',
+    test: 'auth-doc-sync.test.ts',
+    zh: { title: '/dev/auth 账号流程复核', desc: '登录、身份绑定、合并、注销与跨端回跳源码指纹变化后，必须同步复核流程图。新增、删除及改名同样触发；纯重构需说明流程为何不变。检查不代表真实授权或发布验收。' },
+    en: { title: '/dev/auth account-flow review', desc: 'Changed sign-in, linking, merge, deletion or cross-platform handoff source fingerprints require diagram review, including added, deleted and renamed files. Refactors must explain unchanged behavior. This is not live authorization or release acceptance.' },
   },
   {
     id: 'solvers-fleet-sync',

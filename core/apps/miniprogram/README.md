@@ -42,6 +42,7 @@ $env:WECHAT_MINI_LIB_VERSION='<已确认的稳定版本>'
 $env:WECHAT_MINI_BASIC_INFO_APPROVED='1'
 $env:WECHAT_MINI_FILING_COMPLETED='1'
 $env:WECHAT_MINI_PRIVACY_REVIEWED='1'
+$env:WECHAT_MINI_PHONE_AUTHORIZATION_REVIEWED='1' # 实时手机号权限/额度/隐私声明及真机流程实际核验后设置
 $env:WECHAT_MINI_IOS_REAL_DEVICE_TESTED='1'
 $env:WECHAT_MINI_ANDROID_REAL_DEVICE_TESTED='1'
 $env:WECHAT_MINI_GAN16UI_TESTED='1' # Android 真机完成 GAN 16 ui 全链路回归后设置
@@ -54,4 +55,14 @@ pnpm --filter @cuberoot/miniprogram release:check
 
 `release:check` 会自动运行类型检查和全部小程序回归测试，再检查正式身份、基础库、人工发布确认、凭据扫描、源码与上传产物指纹等发布条件。
 
+非 watch 构建复用 esbuild 标识符压缩（不改属性名）；原生 Page 方法、WXML 事件和网络字段仍保留。开发 watch 保留可读变量名；上传前重新运行 `build`，仍遵守原 512 KiB 总包/128 KiB 单文件预算。
+
 检查器会阻止未确认基础信息、备案、后台隐私指引或双平台真机回归的发布，也会在源码或上传包发现 AppSecret、私钥、新的隐私敏感 API、错误发布身份或异常包体积时直接失败。当前项目预算为总包 512 KiB、单文件 128 KiB，用于尽早发现误打包网站资源，不代表平台极限。确认变量只是防遗忘闸门，不能代替真实操作；每次只在对应事项真实完成后设置。
+
+### 微信手机号实时授权（2026-09-12，本地接入）
+
+- 已绑定 UnionID 仍直接登录。未绑定用户可主动点击 `getRealtimePhoneNumber`；后端用独立 `phoneCode` 与本次 `wx.login` 换得的 OpenID 校验归属，不接受客户端传入的手机号。
+- 已有手机号账号先显示账号并确认；未匹配则明确创建，或复用网站「绑定小程序」的一次性绑定码验证旧号。手机号与微信同一事务绑定，冲突不覆盖、不合并。手机号契约暂为中国大陆；其他号码、拒绝或无能力时保留原有旧号登录入口。
+- 只使用[微信官方实时验证组件](https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/getRealtimePhoneNumber.html)，不回退普通快速验证。平台资质/可用额度需在微信公众平台「接口设置 → 手机号」及「付费管理」核对（以实际后台为准）；不会自动购买额度。
+- 隐私政策已补充主动授权、用途、短期认证资料和删除边界。发布前须在「设置 → 服务内容声明 → 用户隐私保护指引」声明手机号用于登录/账号绑定，并实测 iOS、Android 授权成功、拒绝、匹配旧号确认和冲突恢复。
+- `release:check` 仅为原生账号页放行实时组件，其余页面及普通 `getPhoneNumber` 仍阻断；新增独立 `WECHAT_MINI_PHONE_AUTHORIZATION_REVIEWED` 确认门禁，不能沿用上次无手机号版本的隐私确认。源码实现/构建通过不代表已上传或发布。

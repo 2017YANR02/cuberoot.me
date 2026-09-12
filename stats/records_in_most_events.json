@@ -2,8 +2,8 @@
   "id": "records_in_most_events",
   "title": "Records in the highest number of events",
   "titleZh": "在最多项目中打破纪录",
-  "note": "All historical records are taken into account (i.e. not only the current ones).",
-  "noteZh": "统计所有历史纪录（不仅是当前纪录）。",
+  "note": "All historical records; region follows the competitor’s country at the time of the result. Higher record levels count toward lower levels.",
+  "noteZh": "统计所有历史纪录；地区按选手取得成绩时的所属国家划分。高级别纪录同时计入较低级别。",
   "header": [
     {
       "key": "events",
@@ -26,33 +26,33 @@
   ],
   "sections": [
     {
-      "title": "World",
-      "titleZh": "World",
+      "title": "World - WR",
+      "titleZh": "World - WR",
       "rows": [
         [
           8,
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, 4x4x4 Blindfolded"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, 4x4x4 Blindfolded"
         ],
         [
           7,
           "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
-          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, Clock, Square-1, Magic, Master Magic"
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, Rubik's Clock, Square-1, Rubik's Magic, Master Magic"
         ],
         [
           6,
           "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-          "3x3x3 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed"
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed"
         ],
         [
           6,
           "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
-          "Clock, Megaminx, 5x5x5 Blindfolded, Magic, Master Magic, 3x3x3 Multi-Blind Old Style"
+          "Megaminx, Rubik's Clock, 5x5x5 Blindfolded, Rubik's Magic, Master Magic, Rubik's Cube: Multiple blind old style"
         ],
         [
           5,
           "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, Megaminx"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, Megaminx"
         ],
         [
           5,
@@ -61,18 +61,18 @@
         ],
         [
           4,
+          "[Yu Nakajima (中島悠)](https://www.worldcubeassociation.org/persons/2007NAKA03)",
+          "Rubik's Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          4,
           "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
-          "3x3x3 Cube, 2x2x2 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed"
+          "Rubik's Cube, 2x2x2 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed"
         ],
         [
           4,
           "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-          "3x3x3 Cube, 4x4x4 Cube, 5x5x5 Cube, Pyraminx"
-        ],
-        [
-          4,
-          "[Yu Nakajima (中島悠)](https://www.worldcubeassociation.org/persons/2007NAKA03)",
-          "3x3x3 Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 One-Handed"
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, Pyraminx"
         ],
         [
           4,
@@ -86,17 +86,17 @@
         ],
         [
           3,
-          "[Ron van Bruchem](https://www.worldcubeassociation.org/persons/2003BRUC01)",
-          "3x3x3 Cube, 2x2x2 Cube, 5x5x5 Cube"
-        ],
-        [
-          3,
           "[Yumu Tabuchi (田渕雄夢)](https://www.worldcubeassociation.org/persons/2006TABU02)",
-          "3x3x3 Cube, 4x4x4 Cube, 3x3x3 One-Handed"
+          "Rubik's Cube, 4x4x4 Cube, 3x3x3 One-Handed"
         ],
         [
           3,
-          "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+          "[Ron van Bruchem](https://www.worldcubeassociation.org/persons/2003BRUC01)",
+          "Rubik's Cube, 2x2x2 Cube, 5x5x5 Cube"
+        ],
+        [
+          3,
+          "[Gunnar Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
           "2x2x2 Cube, 3x3x3 One-Handed, Pyraminx"
         ],
         [
@@ -116,59 +116,85 @@
         ],
         [
           3,
-          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
-          "3x3x3 Blindfolded, Clock, 3x3x3 With Feet"
-        ],
-        [
-          3,
           "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
           "3x3x3 Blindfolded, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
         ],
         [
           3,
+          "[Ville Seppänen](https://www.worldcubeassociation.org/persons/2008SEPP01)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          3,
           "[Rafał Guzewicz](https://www.worldcubeassociation.org/persons/2006GUZE01)",
-          "3x3x3 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 Multi-Blind Old Style"
+          "3x3x3 Blindfolded, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          3,
+          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
+          "3x3x3 Blindfolded, Rubik's Clock, 3x3x3 With Feet"
+        ],
+        [
+          3,
+          "[Clément Gallet](https://www.worldcubeassociation.org/persons/2004GALL02)",
+          "3x3x3 Fewest Moves, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          3,
+          "[Jaap Scherphuis](https://www.worldcubeassociation.org/persons/2003SCHE01)",
+          "Rubik's Clock, Rubik's Magic, Master Magic"
+        ],
+        [
+          3,
+          "[Milán Baticz](https://www.worldcubeassociation.org/persons/2005BATI01)",
+          "3x3x3 Multi-Blind, Rubik's Magic, Master Magic"
         ]
-      ]
+      ],
+      "recordScope": {
+        "region": "World",
+        "level": "WR",
+        "event": "",
+        "type": "all"
+      }
     },
     {
-      "title": "Continental",
-      "titleZh": "Continental",
+      "title": "World - CR",
+      "titleZh": "World - CR",
       "rows": [
         [
           16,
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Clock, Megaminx, Pyraminx, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, Magic"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, Rubik's Magic"
         ],
         [
           15,
           "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, 3x3x3 Multi-Blind, Magic, Master Magic"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, 3x3x3 Multi-Blind, Rubik's Magic, Master Magic"
         ],
         [
           15,
           "[Conor Cronin](https://www.worldcubeassociation.org/persons/2013CRON01)",
-          "4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Clock, Megaminx, Pyraminx, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+          "4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
         ],
         [
           14,
           "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Clock, Megaminx, Pyraminx, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 Multi-Blind Old Style"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
         ],
         [
           11,
           "[Gabriel Eduardo Núñez Serna](https://www.worldcubeassociation.org/persons/2008NUNE01)",
-          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, Clock, Megaminx, Pyraminx, Square-1, Magic"
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, Megaminx, Pyraminx, Rubik's Clock, Square-1, Rubik's Magic"
         ],
         [
           10,
           "[Joshua Shing Shun Li](https://www.worldcubeassociation.org/persons/2007LIJO01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Square-1, Magic, Master Magic"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Square-1, Rubik's Magic, Master Magic"
         ],
         [
           9,
           "[Yu Nakajima (中島悠)](https://www.worldcubeassociation.org/persons/2007NAKA03)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Megaminx, 5x5x5 Blindfolded"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Megaminx, 5x5x5 Blindfolded"
         ],
         [
           9,
@@ -178,170 +204,2731 @@
         [
           9,
           "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
-          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Clock, Megaminx, Pyraminx, Square-1"
-        ],
-        [
-          8,
-          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, Megaminx"
-        ],
-        [
-          8,
-          "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, 3x3x3 Multi-Blind, 3x3x3 Multi-Blind Old Style"
-        ],
-        [
-          8,
-          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
-        ],
-        [
-          8,
-          "[Daniel Rush](https://www.worldcubeassociation.org/persons/2018RUSH01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Pyraminx, Square-1"
-        ],
-        [
-          8,
-          "[Dene Beardsley](https://www.worldcubeassociation.org/persons/2009BEAR01)",
-          "3x3x3 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Pyraminx, Square-1, 3x3x3 With Feet"
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Megaminx, Pyraminx, Rubik's Clock, Square-1"
         ],
         [
           8,
           "[Jasmine Lee](https://www.worldcubeassociation.org/persons/2003LEEJ01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed, Clock, Magic, Master Magic"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed, Rubik's Clock, Rubik's Magic, Master Magic"
         ],
         [
           8,
-          "[Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01)",
-          "2x2x2 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Clock, Pyraminx, Skewb, Square-1, 3x3x3 With Feet"
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, Megaminx"
         ],
         [
           8,
-          "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
-          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed, Clock, Square-1, Magic, Master Magic"
+          "[Dene Beardsley](https://www.worldcubeassociation.org/persons/2009BEAR01)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Pyraminx, Square-1, 3x3x3 With Feet"
+        ],
+        [
+          8,
+          "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          8,
+          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          8,
+          "[Daniel Rush](https://www.worldcubeassociation.org/persons/2018RUSH01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Pyraminx, Square-1"
         ],
         [
           8,
           "[Theo Goluboff](https://www.worldcubeassociation.org/persons/2017GOLU01)",
-          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Clock, Pyraminx"
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Pyraminx, Rubik's Clock"
+        ],
+        [
+          8,
+          "[Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01)",
+          "2x2x2 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 With Feet"
+        ],
+        [
+          8,
+          "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed, Rubik's Clock, Square-1, Rubik's Magic, Master Magic"
         ],
         [
           7,
           "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
-          "3x3x3 One-Handed, Clock, Megaminx, 5x5x5 Blindfolded, Magic, Master Magic, 3x3x3 Multi-Blind Old Style"
+          "3x3x3 One-Handed, Megaminx, Rubik's Clock, 5x5x5 Blindfolded, Rubik's Magic, Master Magic, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          6,
+          "[Gabriel Dechichi Barbar](https://www.worldcubeassociation.org/persons/2009BARB01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed, 3x3x3 Multi-Blind"
         ],
         [
           6,
           "[Yumu Tabuchi (田渕雄夢)](https://www.worldcubeassociation.org/persons/2006TABU02)",
-          "3x3x3 Cube, 4x4x4 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, 4x4x4 Blindfolded"
+          "Rubik's Cube, 4x4x4 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, 4x4x4 Blindfolded"
+        ],
+        [
+          6,
+          "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          6,
+          "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Pyraminx"
+        ],
+        [
+          6,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          6,
+          "[Milán Baticz](https://www.worldcubeassociation.org/persons/2005BATI01)",
+          "2x2x2 Cube, 4x4x4 Cube, 3x3x3 One-Handed, 3x3x3 Multi-Blind, Rubik's Magic, Master Magic"
+        ],
+        [
+          6,
+          "[Ruben Grobler](https://www.worldcubeassociation.org/persons/2015GROB02)",
+          "2x2x2 Cube, 4x4x4 Cube, 6x6x6 Cube, 7x7x7 Cube, Pyraminx, 3x3x3 With Feet"
+        ],
+        [
+          6,
+          "[Bernett Orlando](https://www.worldcubeassociation.org/persons/2006ORLA01)",
+          "Megaminx, Pyraminx, Square-1, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
         ]
-      ]
+      ],
+      "recordScope": {
+        "region": "World",
+        "level": "CR",
+        "event": "",
+        "type": "all"
+      }
     },
     {
-      "title": "National",
-      "titleZh": "National",
+      "title": "World - NR",
+      "titleZh": "World - NR",
       "rows": [
         [
           19,
           "[Henrik Buus Aagaard](https://www.worldcubeassociation.org/persons/2006BUUS01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Clock, Megaminx, Pyraminx, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet, Magic, Master Magic, 3x3x3 Multi-Blind Old Style"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet, Rubik's Magic, Master Magic, Rubik's Cube: Multiple blind old style"
         ],
         [
           18,
           "[Antonie Paterakis](https://www.worldcubeassociation.org/persons/2012PATE01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Clock, Megaminx, Pyraminx, Skewb, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet, Magic"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet, Rubik's Magic"
         ],
         [
           18,
           "[Leandro Baltazar](https://www.worldcubeassociation.org/persons/2009BALT02)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Clock, Megaminx, Pyraminx, Skewb, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet, Magic, Master Magic"
-        ],
-        [
-          17,
-          "[Ben Baron](https://www.worldcubeassociation.org/persons/2016BARO04)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Clock, Megaminx, Pyraminx, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
-        ],
-        [
-          17,
-          "[Max Kwok U Sam (郭愉琛)](https://www.worldcubeassociation.org/persons/2018SAMK01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Clock, Megaminx, Pyraminx, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
-        ],
-        [
-          17,
-          "[Bernett Orlando](https://www.worldcubeassociation.org/persons/2006ORLA01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet, Magic, Master Magic, 3x3x3 Multi-Blind Old Style"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet, Rubik's Magic, Master Magic"
         ],
         [
           17,
           "[Anatoly Kim](https://www.worldcubeassociation.org/persons/2009KIMA01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Clock, Megaminx, Pyraminx, Skewb, Square-1, 3x3x3 Multi-Blind, Magic, Master Magic"
-        ],
-        [
-          17,
-          "[Hilmar Magnusson](https://www.worldcubeassociation.org/persons/2009MAGN02)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Clock, Megaminx, Pyraminx, Skewb, Square-1, 3x3x3 With Feet, Magic, Master Magic"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 Multi-Blind, Rubik's Magic, Master Magic"
         ],
         [
           17,
           "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Clock, Megaminx, Pyraminx, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
         ],
         [
           17,
           "[Uku Kruusamägi](https://www.worldcubeassociation.org/persons/2009KRUU01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet, Magic, Master Magic"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet, Rubik's Magic, Master Magic"
         ],
         [
           17,
           "[Firstian Fushada (符逢城)](https://www.worldcubeassociation.org/persons/2015FUSH01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Clock, Megaminx, Pyraminx, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
         ],
         [
-          16,
-          "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Clock, Megaminx, Pyraminx, Square-1, 5x5x5 Blindfolded, Magic, Master Magic, 3x3x3 Multi-Blind Old Style"
+          17,
+          "[Ben Baron](https://www.worldcubeassociation.org/persons/2016BARO04)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
         ],
         [
-          16,
-          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Skewb, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet, Magic"
+          17,
+          "[Bernett Orlando](https://www.worldcubeassociation.org/persons/2006ORLA01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet, Rubik's Magic, Master Magic, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          17,
+          "[Hilmar Magnusson](https://www.worldcubeassociation.org/persons/2009MAGN02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 With Feet, Rubik's Magic, Master Magic"
+        ],
+        [
+          17,
+          "[Max Kwok U Sam (郭愉琛)](https://www.worldcubeassociation.org/persons/2018SAMK01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
         ],
         [
           16,
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Clock, Megaminx, Pyraminx, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, Magic"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, Rubik's Magic"
         ],
         [
           16,
-          "[Matic Omulec](https://www.worldcubeassociation.org/persons/2010OMUL02)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet, Magic, Master Magic"
-        ],
-        [
-          16,
-          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, Magic, Master Magic"
-        ],
-        [
-          16,
-          "[Boriss Benzerruki](https://www.worldcubeassociation.org/persons/2011BENZ01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Clock, Megaminx, Pyraminx, Square-1, 3x3x3 With Feet, Magic, Master Magic"
+          "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 5x5x5 Blindfolded, Rubik's Magic, Master Magic, Rubik's Cube: Multiple blind old style"
         ],
         [
           16,
           "[David Vujasić](https://www.worldcubeassociation.org/persons/2015VUJA01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Clock, Megaminx, Pyraminx, Skewb, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+        ],
+        [
+          16,
+          "[Boriss Benzerruki](https://www.worldcubeassociation.org/persons/2011BENZ01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 3x3x3 With Feet, Rubik's Magic, Master Magic"
+        ],
+        [
+          16,
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Skewb, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet, Rubik's Magic"
+        ],
+        [
+          16,
+          "[Matic Omulec](https://www.worldcubeassociation.org/persons/2010OMUL02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet, Rubik's Magic, Master Magic"
+        ],
+        [
+          16,
+          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, Rubik's Magic, Master Magic"
         ],
         [
           16,
           "[Conor Cronin](https://www.worldcubeassociation.org/persons/2013CRON01)",
-          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Clock, Megaminx, Pyraminx, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
         ],
         [
           15,
           "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
-          "3x3x3 Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Clock, Megaminx, Pyraminx, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 Multi-Blind Old Style"
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          15,
+          "[Farid Mikhailov](https://www.worldcubeassociation.org/persons/2015MIKH04)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Pyraminx, Rubik's Clock, Skewb, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          15,
+          "[Pablo Nicolás Oshiro Mondoñedo](https://www.worldcubeassociation.org/persons/2010MOND01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 3x3x3 With Feet, Rubik's Magic, Master Magic"
+        ],
+        [
+          15,
+          "[Muhammad Saleh Imtiaz](https://www.worldcubeassociation.org/persons/2018IMTI01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 3x3x3 With Feet"
+        ],
+        [
+          15,
+          "[Daniel Wallin](https://www.worldcubeassociation.org/persons/2013WALL03)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, Megaminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+        ],
+        [
+          15,
+          "[Simon Westlund](https://www.worldcubeassociation.org/persons/2008WEST02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 With Feet"
+        ],
+        [
+          15,
+          "[Shukrullo Ibragimov](https://www.worldcubeassociation.org/persons/2017IBRA05)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 With Feet"
+        ],
+        [
+          15,
+          "[Moez Boussarsar](https://www.worldcubeassociation.org/persons/2015BOUS02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 With Feet"
+        ],
+        [
+          15,
+          "[Oscar Alberto Ceballos Contreras](https://www.worldcubeassociation.org/persons/2013CONT01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 Multi-Blind"
+        ],
+        [
+          15,
+          "[Wong Chong Wen (黄崇文)](https://www.worldcubeassociation.org/persons/2014WENW01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
         ]
-      ]
+      ],
+      "recordScope": {
+        "region": "World",
+        "level": "NR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Africa - CR",
+      "titleZh": "Africa - CR",
+      "rows": [
+        [
+          15,
+          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, 3x3x3 Multi-Blind, Rubik's Magic, Master Magic"
+        ],
+        [
+          15,
+          "[Conor Cronin](https://www.worldcubeassociation.org/persons/2013CRON01)",
+          "4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+        ],
+        [
+          9,
+          "[Moez Boussarsar](https://www.worldcubeassociation.org/persons/2015BOUS02)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Pyraminx, Skewb, Square-1"
+        ],
+        [
+          8,
+          "[Daniel Rush](https://www.worldcubeassociation.org/persons/2018RUSH01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Pyraminx, Square-1"
+        ],
+        [
+          6,
+          "[Ruben Grobler](https://www.worldcubeassociation.org/persons/2015GROB02)",
+          "2x2x2 Cube, 4x4x4 Cube, 6x6x6 Cube, 7x7x7 Cube, Pyraminx, 3x3x3 With Feet"
+        ],
+        [
+          4,
+          "[Kamaru-Deen Lawal](https://www.worldcubeassociation.org/persons/2010LAWA01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, Pyraminx"
+        ],
+        [
+          4,
+          "[Hassen Kallala](https://www.worldcubeassociation.org/persons/2016KALL01)",
+          "Rubik's Cube, 4x4x4 Cube, Skewb, Square-1"
+        ],
+        [
+          4,
+          "[Taha Ben Salah](https://www.worldcubeassociation.org/persons/2015SALA03)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          4,
+          "[Dylan Swarts](https://www.worldcubeassociation.org/persons/2017SWAR03)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          3,
+          "[Yassine Bettahar](https://www.worldcubeassociation.org/persons/2016YASS01)",
+          "Rubik's Cube, 4x4x4 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          3,
+          "[Jahziel Dominic Alonzo](https://www.worldcubeassociation.org/persons/2023ALON03)",
+          "2x2x2 Cube, Pyraminx, Skewb"
+        ],
+        [
+          3,
+          "[Ayooluwa Samuel Dada](https://www.worldcubeassociation.org/persons/2019SAMU06)",
+          "5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube"
+        ],
+        [
+          3,
+          "[Ryan Pin Harry](https://www.worldcubeassociation.org/persons/2015HARR01)",
+          "6x6x6 Cube, 7x7x7 Cube, Rubik's Clock"
+        ],
+        [
+          3,
+          "[Pieterjan Joubert](https://www.worldcubeassociation.org/persons/2014JOUB01)",
+          "6x6x6 Cube, 7x7x7 Cube, Megaminx"
+        ],
+        [
+          3,
+          "[Timothy Lawrance](https://www.worldcubeassociation.org/persons/2017LAWR04)",
+          "3x3x3 Fewest Moves, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          2,
+          "[Etienne Amany](https://www.worldcubeassociation.org/persons/2007AMAN01)",
+          "Rubik's Cube, 3x3x3 Blindfolded"
+        ],
+        [
+          2,
+          "[Mohamed Elkhatri](https://www.worldcubeassociation.org/persons/2017ELKH01)",
+          "Rubik's Cube, 4x4x4 Cube"
+        ],
+        [
+          2,
+          "[Jacobus Philip Haupt](https://www.worldcubeassociation.org/persons/2011HAUP01)",
+          "Rubik's Cube, 3x3x3 One-Handed"
+        ],
+        [
+          2,
+          "[Cameron Blumenow](https://www.worldcubeassociation.org/persons/2016BLUM01)",
+          "2x2x2 Cube, 4x4x4 Cube"
+        ],
+        [
+          2,
+          "[Anthony Orji](https://www.worldcubeassociation.org/persons/2008ORJI01)",
+          "4x4x4 Cube, Pyraminx"
+        ],
+        [
+          2,
+          "[Waseem Hoosain](https://www.worldcubeassociation.org/persons/2019HOOS01)",
+          "4x4x4 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          2,
+          "[Badr Ait Belaid](https://www.worldcubeassociation.org/persons/2020BELA01)",
+          "3x3x3 Blindfolded, Pyraminx"
+        ],
+        [
+          2,
+          "[Ehikhuemen Paul](https://www.worldcubeassociation.org/persons/2019PAUL10)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded"
+        ],
+        [
+          2,
+          "[Duncan Hobbs](https://www.worldcubeassociation.org/persons/2019HOBB02)",
+          "3x3x3 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          2,
+          "[Brendan James Gray](https://www.worldcubeassociation.org/persons/2014GRAY03)",
+          "3x3x3 Fewest Moves, Skewb"
+        ],
+        [
+          2,
+          "[Osman Badroodin](https://www.worldcubeassociation.org/persons/2019BADR01)",
+          "3x3x3 One-Handed, Square-1"
+        ],
+        [
+          2,
+          "[Maverick Pearson](https://www.worldcubeassociation.org/persons/2014PEAR02)",
+          "3x3x3 One-Handed, 3x3x3 With Feet"
+        ],
+        [
+          2,
+          "[Micah Willenburgh](https://www.worldcubeassociation.org/persons/2022WILL19)",
+          "Pyraminx, Skewb"
+        ],
+        [
+          2,
+          "[Rafik Eskandar](https://www.worldcubeassociation.org/persons/2019RAGH04)",
+          "Rubik's Clock, Square-1"
+        ],
+        [
+          2,
+          "[Jesse Tipton](https://www.worldcubeassociation.org/persons/2014TIPT01)",
+          "Skewb, 3x3x3 With Feet"
+        ]
+      ],
+      "recordScope": {
+        "region": "Africa",
+        "level": "CR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Africa - NR",
+      "titleZh": "Africa - NR",
+      "rows": [
+        [
+          16,
+          "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, Rubik's Magic, Master Magic"
+        ],
+        [
+          16,
+          "[Conor Cronin](https://www.worldcubeassociation.org/persons/2013CRON01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+        ],
+        [
+          15,
+          "[Moez Boussarsar](https://www.worldcubeassociation.org/persons/2015BOUS02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 With Feet"
+        ],
+        [
+          14,
+          "[Tarek Bazizi](https://www.worldcubeassociation.org/persons/2016BAZI03)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Pyraminx, Rubik's Clock, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+        ],
+        [
+          13,
+          "[Mohamed Ben Driss Chokri](https://www.worldcubeassociation.org/persons/2015CHOK01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+        ],
+        [
+          13,
+          "[Christian Lacle](https://www.worldcubeassociation.org/persons/2018LACL01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Skewb, Square-1"
+        ],
+        [
+          12,
+          "[Rafik Eskandar](https://www.worldcubeassociation.org/persons/2019RAGH04)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1"
+        ],
+        [
+          12,
+          "[Arnelio Manaca Mola](https://www.worldcubeassociation.org/persons/2023MOLA06)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1"
+        ],
+        [
+          12,
+          "[Ayooluwa Samuel Dada](https://www.worldcubeassociation.org/persons/2019SAMU06)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1"
+        ],
+        [
+          12,
+          "[Kiary Roque Russo](https://www.worldcubeassociation.org/persons/2023RUSS11)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1"
+        ],
+        [
+          12,
+          "[Taha Ben Salah](https://www.worldcubeassociation.org/persons/2015SALA03)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Pyraminx, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          11,
+          "[Joshua T. Makuwa](https://www.worldcubeassociation.org/persons/2018MAKU02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Megaminx, Pyraminx, Skewb, Square-1"
+        ],
+        [
+          11,
+          "[Rayan Parmar](https://www.worldcubeassociation.org/persons/2022PARM03)",
+          "4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Megaminx, Rubik's Clock, Skewb, Square-1, 3x3x3 Multi-Blind"
+        ],
+        [
+          10,
+          "[Anas Meziani](https://www.worldcubeassociation.org/persons/2015MEZI01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1"
+        ],
+        [
+          10,
+          "[Slimane Siroukane](https://www.worldcubeassociation.org/persons/2016SLIM01)",
+          "2x2x2 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Megaminx, Rubik's Clock, Skewb, Square-1"
+        ],
+        [
+          9,
+          "[Roger Nataniel Issassa dos Santos](https://www.worldcubeassociation.org/persons/2023SANT32)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, Megaminx, Square-1"
+        ],
+        [
+          9,
+          "[Badr Ait Belaid](https://www.worldcubeassociation.org/persons/2020BELA01)",
+          "Rubik's Cube, 2x2x2 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Pyraminx, Rubik's Clock, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          9,
+          "[Mohamed Elkhatri](https://www.worldcubeassociation.org/persons/2017ELKH01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx"
+        ],
+        [
+          9,
+          "[Daniel Rush](https://www.worldcubeassociation.org/persons/2018RUSH01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Pyraminx, Rubik's Clock, Square-1"
+        ],
+        [
+          8,
+          "[Johan Alex Tabeko Ngankam](https://www.worldcubeassociation.org/persons/2023NGAN02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Megaminx, Skewb"
+        ],
+        [
+          8,
+          "[Zaffery Hammond-Aryee](https://www.worldcubeassociation.org/persons/2022HAMM04)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, Pyraminx, Rubik's Clock, Skewb, Square-1"
+        ],
+        [
+          8,
+          "[Benjamin Orthner](https://www.worldcubeassociation.org/persons/2017ORTH02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed, Megaminx, Pyraminx, Skewb"
+        ],
+        [
+          8,
+          "[Ruben Grobler](https://www.worldcubeassociation.org/persons/2015GROB02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 6x6x6 Cube, 7x7x7 Cube, Pyraminx, Skewb, 3x3x3 With Feet"
+        ],
+        [
+          8,
+          "[Damian Peter Shaw](https://www.worldcubeassociation.org/persons/2019SHAW04)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx"
+        ],
+        [
+          8,
+          "[Lilya Lagzouli](https://www.worldcubeassociation.org/persons/2023LAGZ01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Megaminx, Rubik's Clock, Square-1"
+        ]
+      ],
+      "recordScope": {
+        "region": "Africa",
+        "level": "NR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Asia - WR",
+      "titleZh": "Asia - WR",
+      "rows": [
+        [
+          4,
+          "[Yu Nakajima (中島悠)](https://www.worldcubeassociation.org/persons/2007NAKA03)",
+          "Rubik's Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          4,
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "Rubik's Cube, 2x2x2 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed"
+        ],
+        [
+          3,
+          "[Yumu Tabuchi (田渕雄夢)](https://www.worldcubeassociation.org/persons/2006TABU02)",
+          "Rubik's Cube, 4x4x4 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          3,
+          "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
+          "6x6x6 Cube, 7x7x7 Cube, 3x3x3 With Feet"
+        ],
+        [
+          3,
+          "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          2,
+          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+          "Rubik's Cube, 2x2x2 Cube"
+        ],
+        [
+          2,
+          "[JeongMin Yu (유정민)](https://www.worldcubeassociation.org/persons/2007JEON01)",
+          "Rubik's Cube, 3x3x3 One-Handed"
+        ],
+        [
+          2,
+          "[Shuhei Omura (大村周平)](https://www.worldcubeassociation.org/persons/2007OMUR01)",
+          "4x4x4 Cube, 5x5x5 Cube"
+        ],
+        [
+          2,
+          "[Keisuke Hiraya (平谷啓輔)](https://www.worldcubeassociation.org/persons/2007HIRA02)",
+          "4x4x4 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          2,
+          "[Masayuki Akimoto (秋元正行)](https://www.worldcubeassociation.org/persons/2003AKIM01)",
+          "4x4x4 Cube, 5x5x5 Cube"
+        ],
+        [
+          2,
+          "[Hsuan Chang (張璿)](https://www.worldcubeassociation.org/persons/2008CHAN09)",
+          "5x5x5 Cube, 7x7x7 Cube"
+        ],
+        [
+          2,
+          "[Chester Lian](https://www.worldcubeassociation.org/persons/2009LIAN03)",
+          "5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          2,
+          "[Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13)",
+          "Rubik's Magic, Master Magic"
+        ],
+        [
+          1,
+          "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
+          "Rubik's Cube"
+        ],
+        [
+          1,
+          "[Ruihang Xu (许瑞航)](https://www.worldcubeassociation.org/persons/2017XURU04)",
+          "Rubik's Cube"
+        ],
+        [
+          1,
+          "[Yusheng Du (杜宇生)](https://www.worldcubeassociation.org/persons/2015DUYU01)",
+          "Rubik's Cube"
+        ],
+        [
+          1,
+          "[SeungBeom Cho (조승범)](https://www.worldcubeassociation.org/persons/2012CHOS01)",
+          "Rubik's Cube"
+        ],
+        [
+          1,
+          "[Ziyu Ye (叶梓渝)](https://www.worldcubeassociation.org/persons/2021YEZI01)",
+          "2x2x2 Cube"
+        ],
+        [
+          1,
+          "[Guanbo Wang (王冠博)](https://www.worldcubeassociation.org/persons/2018WANG35)",
+          "2x2x2 Cube"
+        ],
+        [
+          1,
+          "[Haixu Zhang (张海旭)](https://www.worldcubeassociation.org/persons/2008ZHAN06)",
+          "4x4x4 Cube"
+        ],
+        [
+          1,
+          "[Yuki Hayashi (林祐樹)](https://www.worldcubeassociation.org/persons/2005HAYA01)",
+          "4x4x4 Cube"
+        ],
+        [
+          1,
+          "[Han-Cyun Chen (陳翰群)](https://www.worldcubeassociation.org/persons/2008CHEN06)",
+          "4x4x4 Cube"
+        ],
+        [
+          1,
+          "[Takayuki Ookusa (大艸尊之)](https://www.worldcubeassociation.org/persons/2006OOKU01)",
+          "5x5x5 Cube"
+        ],
+        [
+          1,
+          "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
+          "6x6x6 Cube"
+        ],
+        [
+          1,
+          "[Lin Chen (陈霖)](https://www.worldcubeassociation.org/persons/2010CHEN20)",
+          "7x7x7 Cube"
+        ],
+        [
+          1,
+          "[Wong Kin Lok (黃健樂)](https://www.worldcubeassociation.org/persons/2014LOKW01)",
+          "7x7x7 Cube"
+        ],
+        [
+          1,
+          "[Yuhui Xu (许宇辉)](https://www.worldcubeassociation.org/persons/2007XUYU01)",
+          "3x3x3 Blindfolded"
+        ],
+        [
+          1,
+          "[Haiyan Zhuang (庄海燕)](https://www.worldcubeassociation.org/persons/2008ZHUA01)",
+          "3x3x3 Blindfolded"
+        ],
+        [
+          1,
+          "[Danyang Chen (陈丹阳)](https://www.worldcubeassociation.org/persons/2007DANY01)",
+          "3x3x3 Blindfolded"
+        ],
+        [
+          1,
+          "[Kabyanil Talukdar](https://www.worldcubeassociation.org/persons/2013TALU01)",
+          "3x3x3 Blindfolded"
+        ],
+        [
+          1,
+          "[Baiqiang Dong (董百强)](https://www.worldcubeassociation.org/persons/2008DONG06)",
+          "3x3x3 Fewest Moves"
+        ],
+        [
+          1,
+          "[Shuang Chen (陈霜)](https://www.worldcubeassociation.org/persons/2008CHEN27)",
+          "3x3x3 Fewest Moves"
+        ],
+        [
+          1,
+          "[Jibo Zhao (赵吉波)](https://www.worldcubeassociation.org/persons/2010ZHAO11)",
+          "3x3x3 Fewest Moves"
+        ],
+        [
+          1,
+          "[Hong Zhang (张宏)](https://www.worldcubeassociation.org/persons/2008ZHAN13)",
+          "3x3x3 Fewest Moves"
+        ],
+        [
+          1,
+          "[Tomoaki Okayama (岡山友昭)](https://www.worldcubeassociation.org/persons/2009OKAY01)",
+          "3x3x3 Fewest Moves"
+        ],
+        [
+          1,
+          "[Wong Chong Wen (黄崇文)](https://www.worldcubeassociation.org/persons/2014WENW01)",
+          "3x3x3 Fewest Moves"
+        ],
+        [
+          1,
+          "[Zhen Chen (陈震)](https://www.worldcubeassociation.org/persons/2023CHEN30)",
+          "3x3x3 One-Handed"
+        ],
+        [
+          1,
+          "[Haixin Yang (杨海鑫)](https://www.worldcubeassociation.org/persons/2014YANG11)",
+          "3x3x3 One-Handed"
+        ],
+        [
+          1,
+          "[SeungWoon Lee (이승운)](https://www.worldcubeassociation.org/persons/2006SEUN02)",
+          "3x3x3 One-Handed"
+        ],
+        [
+          1,
+          "[Sean Patrick Villanueva](https://www.worldcubeassociation.org/persons/2017VILL41)",
+          "3x3x3 One-Handed"
+        ],
+        [
+          1,
+          "[Piti Pichedpan (ปิติ พิเชษฐพันธ์)](https://www.worldcubeassociation.org/persons/2009PICH01)",
+          "3x3x3 One-Handed"
+        ],
+        [
+          1,
+          "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
+          "Megaminx"
+        ],
+        [
+          1,
+          "[Takumi Yoshida (吉田匠)](https://www.worldcubeassociation.org/persons/2007YOSH01)",
+          "Megaminx"
+        ],
+        [
+          1,
+          "[Yu Da-Hyun (유다현)](https://www.worldcubeassociation.org/persons/2008YUDA01)",
+          "Megaminx"
+        ],
+        [
+          1,
+          "[Tristan Chua Yong](https://www.worldcubeassociation.org/persons/2016YONG02)",
+          "Megaminx"
+        ],
+        [
+          1,
+          "[Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54)",
+          "Pyraminx"
+        ],
+        [
+          1,
+          "[Yulun Wu (吴宇伦)](https://www.worldcubeassociation.org/persons/2010WUYU02)",
+          "Pyraminx"
+        ],
+        [
+          1,
+          "[Yohei Oka (岡要平)](https://www.worldcubeassociation.org/persons/2006OKAY01)",
+          "Pyraminx"
+        ],
+        [
+          1,
+          "[Yunhao Lou (娄云皓)](https://www.worldcubeassociation.org/persons/2017LOUY01)",
+          "Rubik's Clock"
+        ],
+        [
+          1,
+          "[Tairan Zhong (钟泰然)](https://www.worldcubeassociation.org/persons/2013ZHON04)",
+          "Rubik's Clock"
+        ],
+        [
+          1,
+          "[Sam Zhixiao Wang (王志骁)](https://www.worldcubeassociation.org/persons/2009WANG19)",
+          "Rubik's Clock"
+        ],
+        [
+          1,
+          "[Suen Ming Chi (孫銘志)](https://www.worldcubeassociation.org/persons/2017CHIS02)",
+          "Rubik's Clock"
+        ],
+        [
+          1,
+          "[Jonathan Irvin Gunawan](https://www.worldcubeassociation.org/persons/2011GUNA02)",
+          "Rubik's Clock"
+        ],
+        [
+          1,
+          "[Neil Gour](https://www.worldcubeassociation.org/persons/2022GOUR01)",
+          "Rubik's Clock"
+        ],
+        [
+          1,
+          "[Yu Sajima (佐島優)](https://www.worldcubeassociation.org/persons/2008SAJI01)",
+          "Rubik's Clock"
+        ],
+        [
+          1,
+          "[Taki Sugimoto (杉本太暉)](https://www.worldcubeassociation.org/persons/2008SUGI01)",
+          "Rubik's Clock"
+        ],
+        [
+          1,
+          "[Yunho Nam (남윤호)](https://www.worldcubeassociation.org/persons/2014NAMY01)",
+          "Rubik's Clock"
+        ],
+        [
+          1,
+          "[Santosh Tantravahi](https://www.worldcubeassociation.org/persons/2013TANT02)",
+          "Skewb"
+        ],
+        [
+          1,
+          "[Abhishek Sathyanarayanan](https://www.worldcubeassociation.org/persons/2012SATH01)",
+          "Skewb"
+        ],
+        [
+          1,
+          "[Hideki Niina (新名秀樹)](https://www.worldcubeassociation.org/persons/2008NIIN01)",
+          "Skewb"
+        ],
+        [
+          1,
+          "[Mharr Justhinne Ampong](https://www.worldcubeassociation.org/persons/2012AMPO01)",
+          "Skewb"
+        ],
+        [
+          1,
+          "[Lee Chiang (蔣礪)](https://www.worldcubeassociation.org/persons/2013CHIA02)",
+          "Skewb"
+        ],
+        [
+          1,
+          "[Zijia Feng (冯子甲)](https://www.worldcubeassociation.org/persons/2013FENG02)",
+          "Square-1"
+        ],
+        [
+          1,
+          "[Bingliang Li (李炳良)](https://www.worldcubeassociation.org/persons/2008LIBI01)",
+          "Square-1"
+        ],
+        [
+          1,
+          "[Jianwei Zhu (朱剑伟)](https://www.worldcubeassociation.org/persons/2007ZHUJ01)",
+          "Square-1"
+        ],
+        [
+          1,
+          "[Kazuhito Iimura (飯村数人)](https://www.worldcubeassociation.org/persons/2008IIMU01)",
+          "Square-1"
+        ],
+        [
+          1,
+          "[Kang Ji-Jon](https://www.worldcubeassociation.org/persons/2007JIJO01)",
+          "Square-1"
+        ],
+        [
+          1,
+          "[Hill Pong Yong Feng](https://www.worldcubeassociation.org/persons/2017FENG10)",
+          "5x5x5 Blindfolded"
+        ],
+        [
+          1,
+          "[Nevins Chan Pak Hoong (陈百鸿)](https://www.worldcubeassociation.org/persons/2010CHAN20)",
+          "5x5x5 Blindfolded"
+        ],
+        [
+          1,
+          "[Tong Jiang (蒋彤)](https://www.worldcubeassociation.org/persons/2009JIAN03)",
+          "3x3x3 Multi-Blind"
+        ],
+        [
+          1,
+          "[Muhammad Iril Khairul Anam](https://www.worldcubeassociation.org/persons/2009ANAM01)",
+          "3x3x3 Multi-Blind"
+        ],
+        [
+          1,
+          "[Shivam Bansal](https://www.worldcubeassociation.org/persons/2011BANS02)",
+          "3x3x3 Multi-Blind"
+        ],
+        [
+          1,
+          "[Fakhri Raihaan](https://www.worldcubeassociation.org/persons/2010RAIH01)",
+          "3x3x3 With Feet"
+        ],
+        [
+          1,
+          "[Mohammed Aiman Koli](https://www.worldcubeassociation.org/persons/2017KOLI01)",
+          "3x3x3 With Feet"
+        ],
+        [
+          1,
+          "[Yuhei Takagi (高木佑平)](https://www.worldcubeassociation.org/persons/2008TAKA01)",
+          "3x3x3 With Feet"
+        ],
+        [
+          1,
+          "[Jimin Byeon (변지민)](https://www.worldcubeassociation.org/persons/2015BYEO01)",
+          "3x3x3 With Feet"
+        ],
+        [
+          1,
+          "[Yunsu Nam (남윤수)](https://www.worldcubeassociation.org/persons/2008YUNS02)",
+          "3x3x3 With Feet"
+        ],
+        [
+          1,
+          "[Chang Jee-Hoon](https://www.worldcubeassociation.org/persons/2007JEEH01)",
+          "3x3x3 With Feet"
+        ],
+        [
+          1,
+          "[Tang Yiu Chun (鄧耀俊)](https://www.worldcubeassociation.org/persons/2009CHUN07)",
+          "Rubik's Magic"
+        ],
+        [
+          1,
+          "[Lee Chun Hin (李震軒)](https://www.worldcubeassociation.org/persons/2008HINL01)",
+          "Rubik's Magic"
+        ]
+      ],
+      "recordScope": {
+        "region": "Asia",
+        "level": "WR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Asia - CR",
+      "titleZh": "Asia - CR",
+      "rows": [
+        [
+          9,
+          "[Yu Nakajima (中島悠)](https://www.worldcubeassociation.org/persons/2007NAKA03)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Megaminx, 5x5x5 Blindfolded"
+        ],
+        [
+          6,
+          "[Yumu Tabuchi (田渕雄夢)](https://www.worldcubeassociation.org/persons/2006TABU02)",
+          "Rubik's Cube, 4x4x4 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, 4x4x4 Blindfolded"
+        ],
+        [
+          6,
+          "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          6,
+          "[Bernett Orlando](https://www.worldcubeassociation.org/persons/2006ORLA01)",
+          "Megaminx, Pyraminx, Square-1, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          5,
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed"
+        ],
+        [
+          5,
+          "[Asia Konvittayayotin (เอเชีย กรวิทยโยธิน)](https://www.worldcubeassociation.org/persons/2009KONV01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          4,
+          "[Mitsuki Gunji (郡司光貴)](https://www.worldcubeassociation.org/persons/2006GUNJ01)",
+          "Rubik's Cube, 4x4x4 Cube, 3x3x3 One-Handed, Rubik's Clock"
+        ],
+        [
+          4,
+          "[Masayuki Akimoto (秋元正行)](https://www.worldcubeassociation.org/persons/2003AKIM01)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 Blindfolded"
+        ],
+        [
+          4,
+          "[Shuhei Omura (大村周平)](https://www.worldcubeassociation.org/persons/2007OMUR01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          4,
+          "[Kai-Wen Wang (王楷文)](https://www.worldcubeassociation.org/persons/2015WANG09)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          4,
+          "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          3,
+          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+          "Rubik's Cube, 2x2x2 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          3,
+          "[Ruihang Xu (许瑞航)](https://www.worldcubeassociation.org/persons/2017XURU04)",
+          "Rubik's Cube, 4x4x4 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          3,
+          "[SeungBeom Cho (조승범)](https://www.worldcubeassociation.org/persons/2012CHOS01)",
+          "Rubik's Cube, 2x2x2 Cube, Skewb"
+        ],
+        [
+          3,
+          "[Nipat Charoenpholphant (นิพัฒน์ เจริญพลพันธุ์)](https://www.worldcubeassociation.org/persons/2009CHAR03)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube"
+        ],
+        [
+          3,
+          "[Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13)",
+          "2x2x2 Cube, Rubik's Magic, Master Magic"
+        ],
+        [
+          3,
+          "[Tse-Kan Lin (林哲侃)](https://www.worldcubeassociation.org/persons/2008LINT01)",
+          "2x2x2 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves"
+        ],
+        [
+          3,
+          "[Keisuke Hiraya (平谷啓輔)](https://www.worldcubeassociation.org/persons/2007HIRA02)",
+          "4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          3,
+          "[Yi-Fan Wu (吳亦凡)](https://www.worldcubeassociation.org/persons/2010WUIF01)",
+          "4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube"
+        ],
+        [
+          3,
+          "[Yi Seung-Woo (이승우)](https://www.worldcubeassociation.org/persons/2007SEUN04)",
+          "5x5x5 Cube, 6x6x6 Cube, Square-1"
+        ],
+        [
+          3,
+          "[Lin Chen (陈霖)](https://www.worldcubeassociation.org/persons/2010CHEN20)",
+          "6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          3,
+          "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
+          "6x6x6 Cube, 7x7x7 Cube, 3x3x3 With Feet"
+        ],
+        [
+          3,
+          "[Muhammad Iril Khairul Anam](https://www.worldcubeassociation.org/persons/2009ANAM01)",
+          "4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          3,
+          "[Chester Lian](https://www.worldcubeassociation.org/persons/2009LIAN03)",
+          "4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          3,
+          "[Ryosuke Mondo (門戸良介)](https://www.worldcubeassociation.org/persons/2006MOND01)",
+          "5x5x5 Blindfolded, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ]
+      ],
+      "recordScope": {
+        "region": "Asia",
+        "level": "CR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Asia - NR",
+      "titleZh": "Asia - NR",
+      "rows": [
+        [
+          17,
+          "[Firstian Fushada (符逢城)](https://www.worldcubeassociation.org/persons/2015FUSH01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+        ],
+        [
+          17,
+          "[Bernett Orlando](https://www.worldcubeassociation.org/persons/2006ORLA01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet, Rubik's Magic, Master Magic, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          17,
+          "[Max Kwok U Sam (郭愉琛)](https://www.worldcubeassociation.org/persons/2018SAMK01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          15,
+          "[Farid Mikhailov](https://www.worldcubeassociation.org/persons/2015MIKH04)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Pyraminx, Rubik's Clock, Skewb, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          15,
+          "[Muhammad Saleh Imtiaz](https://www.worldcubeassociation.org/persons/2018IMTI01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 3x3x3 With Feet"
+        ],
+        [
+          15,
+          "[Shukrullo Ibragimov](https://www.worldcubeassociation.org/persons/2017IBRA05)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 With Feet"
+        ],
+        [
+          15,
+          "[Wong Chong Wen (黄崇文)](https://www.worldcubeassociation.org/persons/2014WENW01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+        ],
+        [
+          14,
+          "[Daniel Adel Alhayki](https://www.worldcubeassociation.org/persons/2018ALHA03)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1"
+        ],
+        [
+          14,
+          "[Ainesh Sevellaraja](https://www.worldcubeassociation.org/persons/2012SEVE01)",
+          "Rubik's Cube, 2x2x2 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+        ],
+        [
+          14,
+          "[Chia-Wei Lu (呂家維)](https://www.worldcubeassociation.org/persons/2007LUCH01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet, Master Magic, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          14,
+          "[Khaled Al-Hathlool (خالد الهذلول)](https://www.worldcubeassociation.org/persons/2024ALHA03)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          14,
+          "[Zakarya Otair](https://www.worldcubeassociation.org/persons/2021OTAI01)",
+          "4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          13,
+          "[Nurym Kudaibergen](https://www.worldcubeassociation.org/persons/2011KUDA01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, Rubik's Magic, Master Magic"
+        ],
+        [
+          13,
+          "[Chester Lian](https://www.worldcubeassociation.org/persons/2009LIAN03)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Rubik's Clock, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, Master Magic"
+        ],
+        [
+          13,
+          "[Anup Adhikari](https://www.worldcubeassociation.org/persons/2016ADHI01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1"
+        ],
+        [
+          13,
+          "[Teo Kai Xiang](https://www.worldcubeassociation.org/persons/2009XIAN01)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, 3x3x3 With Feet, Rubik's Magic, Master Magic"
+        ],
+        [
+          13,
+          "[Taym Rihawi](https://www.worldcubeassociation.org/persons/2023RIHA01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1"
+        ],
+        [
+          12,
+          "[Sakib Ibn Rashid Rhivu](https://www.worldcubeassociation.org/persons/2017RHIV01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Skewb, 3x3x3 With Feet"
+        ],
+        [
+          12,
+          "[Vincent Hartanto Utomo](https://www.worldcubeassociation.org/persons/2010UTOM01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Pyraminx, Skewb, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          12,
+          "[Zaid Doofesh (زيد دوفش)](https://www.worldcubeassociation.org/persons/2012DOOF02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, Rubik's Magic"
+        ],
+        [
+          12,
+          "[Jong-Ho Jeong (정종호)](https://www.worldcubeassociation.org/persons/2008JONG03)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Skewb, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          12,
+          "[Rami El Mallah](https://www.worldcubeassociation.org/persons/2019MALL01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Megaminx, Pyraminx, Rubik's Clock, Square-1, 3x3x3 Multi-Blind"
+        ],
+        [
+          12,
+          "[Zhulu Ke (柯助錄)](https://www.worldcubeassociation.org/persons/2007KEZH01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, Rubik's Magic, Master Magic"
+        ]
+      ],
+      "recordScope": {
+        "region": "Asia",
+        "level": "NR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Europe - WR",
+      "titleZh": "Europe - WR",
+      "rows": [
+        [
+          7,
+          "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, Rubik's Clock, Square-1, Rubik's Magic, Master Magic"
+        ],
+        [
+          6,
+          "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
+          "Megaminx, Rubik's Clock, 5x5x5 Blindfolded, Rubik's Magic, Master Magic, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          5,
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, Megaminx"
+        ],
+        [
+          4,
+          "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, Pyraminx"
+        ],
+        [
+          4,
+          "[Marcell Endrey](https://www.worldcubeassociation.org/persons/2007ENDR01)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          3,
+          "[Ron van Bruchem](https://www.worldcubeassociation.org/persons/2003BRUC01)",
+          "Rubik's Cube, 2x2x2 Cube, 5x5x5 Cube"
+        ],
+        [
+          3,
+          "[Gunnar Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+          "2x2x2 Cube, 3x3x3 One-Handed, Pyraminx"
+        ],
+        [
+          3,
+          "[Lars Vandenbergh](https://www.worldcubeassociation.org/persons/2003VAND01)",
+          "4x4x4 Cube, 5x5x5 Cube, Square-1"
+        ],
+        [
+          3,
+          "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
+          "5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube"
+        ],
+        [
+          3,
+          "[Ville Seppänen](https://www.worldcubeassociation.org/persons/2008SEPP01)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          3,
+          "[Rafał Guzewicz](https://www.worldcubeassociation.org/persons/2006GUZE01)",
+          "3x3x3 Blindfolded, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          3,
+          "[Clément Gallet](https://www.worldcubeassociation.org/persons/2004GALL02)",
+          "3x3x3 Fewest Moves, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          3,
+          "[Jaap Scherphuis](https://www.worldcubeassociation.org/persons/2003SCHE01)",
+          "Rubik's Clock, Rubik's Magic, Master Magic"
+        ],
+        [
+          3,
+          "[Milán Baticz](https://www.worldcubeassociation.org/persons/2005BATI01)",
+          "3x3x3 Multi-Blind, Rubik's Magic, Master Magic"
+        ],
+        [
+          2,
+          "[Anssi Vanhala](https://www.worldcubeassociation.org/persons/2005VANH01)",
+          "Rubik's Cube, 3x3x3 With Feet"
+        ],
+        [
+          2,
+          "[Edouard Chambon](https://www.worldcubeassociation.org/persons/2004CHAM01)",
+          "Rubik's Cube, 2x2x2 Cube"
+        ],
+        [
+          2,
+          "[Thibaut Jacquinot](https://www.worldcubeassociation.org/persons/2006JACQ01)",
+          "Rubik's Cube, 3x3x3 One-Handed"
+        ],
+        [
+          2,
+          "[Jean Pons](https://www.worldcubeassociation.org/persons/2004PONS01)",
+          "Rubik's Cube, 4x4x4 Cube"
+        ],
+        [
+          2,
+          "[Mats Valk](https://www.worldcubeassociation.org/persons/2007VALK01)",
+          "Rubik's Cube, 4x4x4 Cube"
+        ],
+        [
+          2,
+          "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
+          "Rubik's Cube, 2x2x2 Cube"
+        ],
+        [
+          2,
+          "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)",
+          "2x2x2 Cube, Square-1"
+        ],
+        [
+          2,
+          "[Frédérick Badie](https://www.worldcubeassociation.org/persons/2003BADI01)",
+          "4x4x4 Cube, 5x5x5 Cube"
+        ],
+        [
+          2,
+          "[Giovanni Contardi](https://www.worldcubeassociation.org/persons/2009CONT01)",
+          "4x4x4 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          2,
+          "[Michael Fung](https://www.worldcubeassociation.org/persons/2005FUNG01)",
+          "4x4x4 Cube, Square-1"
+        ],
+        [
+          2,
+          "[David Wesley](https://www.worldcubeassociation.org/persons/2003WESL01)",
+          "4x4x4 Cube, 5x5x5 Cube"
+        ],
+        [
+          2,
+          "[Bence Barát](https://www.worldcubeassociation.org/persons/2008BARA01)",
+          "6x6x6 Cube, 7x7x7 Cube"
+        ],
+        [
+          2,
+          "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+          "6x6x6 Cube, Megaminx"
+        ],
+        [
+          2,
+          "[Claes Hedin](https://www.worldcubeassociation.org/persons/2009HEDI01)",
+          "6x6x6 Cube, 7x7x7 Cube"
+        ],
+        [
+          2,
+          "[Dror Vomberg](https://www.worldcubeassociation.org/persons/2003VOMB01)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded"
+        ],
+        [
+          2,
+          "[Marcin Kowalczyk](https://www.worldcubeassociation.org/persons/2011KOWA01)",
+          "3x3x3 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          2,
+          "[Jan Bentlage](https://www.worldcubeassociation.org/persons/2010BENT01)",
+          "3x3x3 Fewest Moves, Skewb"
+        ],
+        [
+          2,
+          "[Olivér Perge](https://www.worldcubeassociation.org/persons/2007PERG01)",
+          "Rubik's Clock, Rubik's Magic"
+        ],
+        [
+          2,
+          "[Oliver Frost](https://www.worldcubeassociation.org/persons/2012FROS01)",
+          "4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          2,
+          "[Daniel Sheppard](https://www.worldcubeassociation.org/persons/2009SHEP01)",
+          "4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          2,
+          "[Grzegorz Jałocha](https://www.worldcubeassociation.org/persons/2012JALO01)",
+          "4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          2,
+          "[Dennis Strehlau](https://www.worldcubeassociation.org/persons/2007STRE01)",
+          "3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          2,
+          "[Alexander Ooms](https://www.worldcubeassociation.org/persons/2005OOMS01)",
+          "Rubik's Magic, Master Magic"
+        ]
+      ],
+      "recordScope": {
+        "region": "Europe",
+        "level": "WR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Europe - CR",
+      "titleZh": "Europe - CR",
+      "rows": [
+        [
+          8,
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, Megaminx"
+        ],
+        [
+          8,
+          "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed, Rubik's Clock, Square-1, Rubik's Magic, Master Magic"
+        ],
+        [
+          7,
+          "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
+          "3x3x3 One-Handed, Megaminx, Rubik's Clock, 5x5x5 Blindfolded, Rubik's Magic, Master Magic, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          6,
+          "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Pyraminx"
+        ],
+        [
+          6,
+          "[Milán Baticz](https://www.worldcubeassociation.org/persons/2005BATI01)",
+          "2x2x2 Cube, 4x4x4 Cube, 3x3x3 One-Handed, 3x3x3 Multi-Blind, Rubik's Magic, Master Magic"
+        ],
+        [
+          5,
+          "[Mats Valk](https://www.worldcubeassociation.org/persons/2007VALK01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          5,
+          "[Ron van Bruchem](https://www.worldcubeassociation.org/persons/2003BRUC01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, Megaminx"
+        ],
+        [
+          5,
+          "[Rafał Guzewicz](https://www.worldcubeassociation.org/persons/2006GUZE01)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          4,
+          "[Lars Vandenbergh](https://www.worldcubeassociation.org/persons/2003VAND01)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, Square-1"
+        ],
+        [
+          4,
+          "[Sebastian Weyer](https://www.worldcubeassociation.org/persons/2010WEYE02)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube"
+        ],
+        [
+          4,
+          "[David Wesley](https://www.worldcubeassociation.org/persons/2003WESL01)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          4,
+          "[Bence Barát](https://www.worldcubeassociation.org/persons/2008BARA01)",
+          "5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          4,
+          "[Mattia Furlan](https://www.worldcubeassociation.org/persons/2013FURL01)",
+          "5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Megaminx"
+        ],
+        [
+          4,
+          "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
+          "5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Square-1"
+        ],
+        [
+          4,
+          "[Clément Gallet](https://www.worldcubeassociation.org/persons/2004GALL02)",
+          "3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          4,
+          "[Marcell Endrey](https://www.worldcubeassociation.org/persons/2007ENDR01)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          4,
+          "[Jaap Scherphuis](https://www.worldcubeassociation.org/persons/2003SCHE01)",
+          "Pyraminx, Rubik's Clock, Rubik's Magic, Master Magic"
+        ],
+        [
+          4,
+          "[Daniel Sheppard](https://www.worldcubeassociation.org/persons/2009SHEP01)",
+          "Rubik's Clock, Skewb, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          3,
+          "[Cornelius Dieckmann](https://www.worldcubeassociation.org/persons/2009DIEC01)",
+          "Rubik's Cube, 2x2x2 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          3,
+          "[Anssi Vanhala](https://www.worldcubeassociation.org/persons/2005VANH01)",
+          "Rubik's Cube, 3x3x3 One-Handed, 3x3x3 With Feet"
+        ],
+        [
+          3,
+          "[Edouard Chambon](https://www.worldcubeassociation.org/persons/2004CHAM01)",
+          "Rubik's Cube, 2x2x2 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          3,
+          "[Jean Pons](https://www.worldcubeassociation.org/persons/2004PONS01)",
+          "Rubik's Cube, 4x4x4 Cube, 3x3x3 Blindfolded"
+        ],
+        [
+          3,
+          "[Giovanni Contardi](https://www.worldcubeassociation.org/persons/2009CONT01)",
+          "Rubik's Cube, 4x4x4 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          3,
+          "[Michał Pleskowicz](https://www.worldcubeassociation.org/persons/2009PLES01)",
+          "Rubik's Cube, 2x2x2 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          3,
+          "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)",
+          "2x2x2 Cube, 3x3x3 Blindfolded, Square-1"
+        ],
+        [
+          3,
+          "[Gunnar Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+          "2x2x2 Cube, 3x3x3 One-Handed, Pyraminx"
+        ],
+        [
+          3,
+          "[Lucas Wesche](https://www.worldcubeassociation.org/persons/2012WESC01)",
+          "5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube"
+        ],
+        [
+          3,
+          "[Ciarán Beahan](https://www.worldcubeassociation.org/persons/2012BEAH01)",
+          "5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube"
+        ],
+        [
+          3,
+          "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+          "6x6x6 Cube, 7x7x7 Cube, Megaminx"
+        ],
+        [
+          3,
+          "[Henrik Buus Aagaard](https://www.worldcubeassociation.org/persons/2006BUUS01)",
+          "3x3x3 Blindfolded, 3x3x3 With Feet, Rubik's Magic"
+        ],
+        [
+          3,
+          "[Ville Seppänen](https://www.worldcubeassociation.org/persons/2008SEPP01)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          3,
+          "[Oscar Roth Andersen](https://www.worldcubeassociation.org/persons/2008ANDE02)",
+          "Megaminx, Pyraminx, Skewb"
+        ],
+        [
+          3,
+          "[Ezra Hirschi](https://www.worldcubeassociation.org/persons/2019HIRS01)",
+          "4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          3,
+          "[Tim Habermaas](https://www.worldcubeassociation.org/persons/2007HABE01)",
+          "4x4x4 Blindfolded, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ]
+      ],
+      "recordScope": {
+        "region": "Europe",
+        "level": "CR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Europe - NR",
+      "titleZh": "Europe - NR",
+      "rows": [
+        [
+          19,
+          "[Henrik Buus Aagaard](https://www.worldcubeassociation.org/persons/2006BUUS01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet, Rubik's Magic, Master Magic, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          18,
+          "[Antonie Paterakis](https://www.worldcubeassociation.org/persons/2012PATE01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet, Rubik's Magic"
+        ],
+        [
+          18,
+          "[Leandro Baltazar](https://www.worldcubeassociation.org/persons/2009BALT02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet, Rubik's Magic, Master Magic"
+        ],
+        [
+          17,
+          "[Anatoly Kim](https://www.worldcubeassociation.org/persons/2009KIMA01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 Multi-Blind, Rubik's Magic, Master Magic"
+        ],
+        [
+          17,
+          "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          17,
+          "[Uku Kruusamägi](https://www.worldcubeassociation.org/persons/2009KRUU01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet, Rubik's Magic, Master Magic"
+        ],
+        [
+          17,
+          "[Ben Baron](https://www.worldcubeassociation.org/persons/2016BARO04)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          17,
+          "[Hilmar Magnusson](https://www.worldcubeassociation.org/persons/2009MAGN02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 With Feet, Rubik's Magic, Master Magic"
+        ],
+        [
+          16,
+          "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 5x5x5 Blindfolded, Rubik's Magic, Master Magic, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          16,
+          "[David Vujasić](https://www.worldcubeassociation.org/persons/2015VUJA01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+        ],
+        [
+          16,
+          "[Boriss Benzerruki](https://www.worldcubeassociation.org/persons/2011BENZ01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 3x3x3 With Feet, Rubik's Magic, Master Magic"
+        ],
+        [
+          16,
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Skewb, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet, Rubik's Magic"
+        ],
+        [
+          16,
+          "[Matic Omulec](https://www.worldcubeassociation.org/persons/2010OMUL02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet, Rubik's Magic, Master Magic"
+        ],
+        [
+          15,
+          "[Daniel Wallin](https://www.worldcubeassociation.org/persons/2013WALL03)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, Megaminx, Rubik's Clock, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+        ],
+        [
+          15,
+          "[Simon Westlund](https://www.worldcubeassociation.org/persons/2008WEST02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 With Feet"
+        ],
+        [
+          14,
+          "[Vilius Ribinskas](https://www.worldcubeassociation.org/persons/2015RIBI01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Megaminx, Pyraminx, Rubik's Clock, Skewb, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          14,
+          "[Carlo Glod](https://www.worldcubeassociation.org/persons/2017GLOD01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 3x3x3 Multi-Blind"
+        ],
+        [
+          14,
+          "[Mikus Lembergs](https://www.worldcubeassociation.org/persons/2017LEMB02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Rubik's Clock, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          14,
+          "[Martin Fronescu](https://www.worldcubeassociation.org/persons/2013FRON01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 With Feet"
+        ],
+        [
+          14,
+          "[Can Gücüyener](https://www.worldcubeassociation.org/persons/2011GUCU01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, Rubik's Magic, Master Magic"
+        ],
+        [
+          14,
+          "[Clément Gallet](https://www.worldcubeassociation.org/persons/2004GALL02)",
+          "2x2x2 Cube, 4x4x4 Cube, 6x6x6 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Megaminx, Pyraminx, Rubik's Clock, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, Master Magic, Rubik's Cube: Multiple blind old style"
+        ]
+      ],
+      "recordScope": {
+        "region": "Europe",
+        "level": "NR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "North America - WR",
+      "titleZh": "North America - WR",
+      "rows": [
+        [
+          6,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          5,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Square-1"
+        ],
+        [
+          4,
+          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
+          "4x4x4 Cube, 3x3x3 One-Handed, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          3,
+          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
+          "3x3x3 Blindfolded, Rubik's Clock, 3x3x3 With Feet"
+        ],
+        [
+          2,
+          "[Patrick Ponce](https://www.worldcubeassociation.org/persons/2012PONC02)",
+          "Rubik's Cube, 3x3x3 One-Handed"
+        ],
+        [
+          2,
+          "[Lucas Etter](https://www.worldcubeassociation.org/persons/2011ETTE01)",
+          "Rubik's Cube, 2x2x2 Cube"
+        ],
+        [
+          2,
+          "[Leyan Lo](https://www.worldcubeassociation.org/persons/2004LOLE01)",
+          "Rubik's Cube, 3x3x3 Blindfolded"
+        ],
+        [
+          2,
+          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+          "2x2x2 Cube, Skewb"
+        ],
+        [
+          2,
+          "[Rami Sbahi](https://www.worldcubeassociation.org/persons/2011SBAH01)",
+          "2x2x2 Cube, 3x3x3 Fewest Moves"
+        ],
+        [
+          2,
+          "[Vincent Sheu](https://www.worldcubeassociation.org/persons/2006SHEU01)",
+          "2x2x2 Cube, 3x3x3 Fewest Moves"
+        ],
+        [
+          2,
+          "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
+          "2x2x2 Cube, 3x3x3 Multi-Blind"
+        ],
+        [
+          2,
+          "[Frank Morris](https://www.worldcubeassociation.org/persons/2003MORR01)",
+          "4x4x4 Cube, 5x5x5 Cube"
+        ],
+        [
+          2,
+          "[Kevin Hays](https://www.worldcubeassociation.org/persons/2009HAYS01)",
+          "6x6x6 Cube, 7x7x7 Cube"
+        ],
+        [
+          2,
+          "[Gabriel Alejandro Orozco Casillas](https://www.worldcubeassociation.org/persons/2008CASI01)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded"
+        ],
+        [
+          2,
+          "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
+          "3x3x3 Fewest Moves, Square-1"
+        ],
+        [
+          2,
+          "[Cale Schoon](https://www.worldcubeassociation.org/persons/2014SCHO02)",
+          "3x3x3 Fewest Moves, 5x5x5 Blindfolded"
+        ],
+        [
+          2,
+          "[Mark Boyanowski](https://www.worldcubeassociation.org/persons/2014BOYA01)",
+          "3x3x3 Fewest Moves, 3x3x3 Multi-Blind"
+        ],
+        [
+          2,
+          "[Walker Welch](https://www.worldcubeassociation.org/persons/2011WELC01)",
+          "3x3x3 Fewest Moves, Skewb"
+        ],
+        [
+          2,
+          "[Antoine Cantin](https://www.worldcubeassociation.org/persons/2010CANT02)",
+          "3x3x3 One-Handed, Skewb"
+        ],
+        [
+          2,
+          "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
+          "4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          2,
+          "[Craig Bouchard](https://www.worldcubeassociation.org/persons/2005BOUC01)",
+          "Rubik's Magic, Master Magic"
+        ],
+        [
+          2,
+          "[Bob Burton](https://www.worldcubeassociation.org/persons/2003BURT01)",
+          "Rubik's Magic, Master Magic"
+        ]
+      ],
+      "recordScope": {
+        "region": "North America",
+        "level": "WR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "North America - CR",
+      "titleZh": "North America - CR",
+      "rows": [
+        [
+          9,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Megaminx, Pyraminx, Rubik's Clock, Square-1"
+        ],
+        [
+          8,
+          "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          8,
+          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          6,
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          4,
+          "[Rami Sbahi](https://www.worldcubeassociation.org/persons/2011SBAH01)",
+          "2x2x2 Cube, 3x3x3 Fewest Moves, Skewb, 3x3x3 With Feet"
+        ],
+        [
+          4,
+          "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
+          "2x2x2 Cube, 3x3x3 Fewest Moves, Skewb, Square-1"
+        ],
+        [
+          4,
+          "[Michael Gottlieb](https://www.worldcubeassociation.org/persons/2006GOTT01)",
+          "4x4x4 Cube, 7x7x7 Cube, Pyraminx, Rubik's Magic"
+        ],
+        [
+          4,
+          "[Cale Schoon](https://www.worldcubeassociation.org/persons/2014SCHO02)",
+          "3x3x3 Fewest Moves, Skewb, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          4,
+          "[Mark Boyanowski](https://www.worldcubeassociation.org/persons/2014BOYA01)",
+          "3x3x3 Fewest Moves, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          3,
+          "[Bill Wang](https://www.worldcubeassociation.org/persons/2010WANG68)",
+          "Rubik's Cube, 4x4x4 Cube, 4x4x4 Blindfolded"
+        ],
+        [
+          3,
+          "[Anthony Brooks](https://www.worldcubeassociation.org/persons/2008SEAR01)",
+          "Rubik's Cube, Pyraminx, 3x3x3 Multi-Blind"
+        ],
+        [
+          3,
+          "[Andy Tsao](https://www.worldcubeassociation.org/persons/2006TSAO01)",
+          "Rubik's Cube, 4x4x4 Cube, 3x3x3 Multi-Blind"
+        ],
+        [
+          3,
+          "[Dan Dzoan](https://www.worldcubeassociation.org/persons/2006DZOA03)",
+          "Rubik's Cube, 4x4x4 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          3,
+          "[Leyan Lo](https://www.worldcubeassociation.org/persons/2004LOLE01)",
+          "Rubik's Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed"
+        ],
+        [
+          3,
+          "[Derrick Eide](https://www.worldcubeassociation.org/persons/2006EIDE01)",
+          "2x2x2 Cube, Megaminx, Pyraminx"
+        ],
+        [
+          3,
+          "[Patrick Jameson](https://www.worldcubeassociation.org/persons/2007JAME01)",
+          "2x2x2 Cube, 4x4x4 Cube, Rubik's Magic"
+        ],
+        [
+          3,
+          "[Kevin Hays](https://www.worldcubeassociation.org/persons/2009HAYS01)",
+          "5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube"
+        ],
+        [
+          3,
+          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
+          "3x3x3 Blindfolded, Rubik's Clock, 3x3x3 With Feet"
+        ],
+        [
+          3,
+          "[Noa Arthurs](https://www.worldcubeassociation.org/persons/2012ARTH01)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          3,
+          "[Tim Wong](https://www.worldcubeassociation.org/persons/2007WONG02)",
+          "3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 Multi-Blind"
+        ],
+        [
+          3,
+          "[Antoine Cantin](https://www.worldcubeassociation.org/persons/2010CANT02)",
+          "3x3x3 One-Handed, Skewb, 3x3x3 With Feet"
+        ],
+        [
+          3,
+          "[Deven Nadudvari](https://www.worldcubeassociation.org/persons/2008NADU01)",
+          "3x3x3 One-Handed, Pyraminx, Rubik's Clock"
+        ],
+        [
+          3,
+          "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
+          "Rubik's Clock, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          3,
+          "[Bob Burton](https://www.worldcubeassociation.org/persons/2003BURT01)",
+          "Rubik's Clock, Rubik's Magic, Master Magic"
+        ],
+        [
+          3,
+          "[Timothy Sun](https://www.worldcubeassociation.org/persons/2007SUNT01)",
+          "Rubik's Clock, 3x3x3 With Feet, Rubik's Magic"
+        ],
+        [
+          3,
+          "[Mike Hughey](https://www.worldcubeassociation.org/persons/2007HUGH01)",
+          "5x5x5 Blindfolded, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ]
+      ],
+      "recordScope": {
+        "region": "North America",
+        "level": "CR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "North America - NR",
+      "titleZh": "North America - NR",
+      "rows": [
+        [
+          13,
+          "[Fan Derlentz Perceval](https://www.worldcubeassociation.org/persons/2015PERC01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Skewb, Square-1"
+        ],
+        [
+          13,
+          "[Lucas Jacobs](https://www.worldcubeassociation.org/persons/2018JACO10)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 With Feet"
+        ],
+        [
+          13,
+          "[Zeke Sirju](https://www.worldcubeassociation.org/persons/2022SIRJ01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1"
+        ],
+        [
+          13,
+          "[Egdar Castillo](https://www.worldcubeassociation.org/persons/2017CAST48)",
+          "4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Rubik's Clock, Skewb, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+        ],
+        [
+          12,
+          "[Alexis Rodrigo Cazu Mendoza](https://www.worldcubeassociation.org/persons/2014MEND02)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, 3x3x3 With Feet"
+        ],
+        [
+          12,
+          "[Dylan Rene Centeno Chevez](https://www.worldcubeassociation.org/persons/2015CHEV01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb"
+        ],
+        [
+          11,
+          "[Gabriel Barrios](https://www.worldcubeassociation.org/persons/2014BARR02)",
+          "Rubik's Cube, 2x2x2 Cube, 6x6x6 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Pyraminx, Rubik's Clock, Skewb, 4x4x4 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          10,
+          "[Bill Wang](https://www.worldcubeassociation.org/persons/2010WANG68)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, Megaminx, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          10,
+          "[Antoine Cantin](https://www.worldcubeassociation.org/persons/2010CANT02)",
+          "Rubik's Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 With Feet, Rubik's Magic, Master Magic"
+        ],
+        [
+          10,
+          "[Louis Cormier](https://www.worldcubeassociation.org/persons/2010CORM02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, Megaminx, Pyraminx, Skewb, 3x3x3 With Feet"
+        ],
+        [
+          10,
+          "[Luis David Hernández Mejía](https://www.worldcubeassociation.org/persons/2017MEJI03)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Megaminx, Pyraminx, Skewb"
+        ],
+        [
+          10,
+          "[Roberto Icaza Kinloch](https://www.worldcubeassociation.org/persons/2023KINL02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1"
+        ],
+        [
+          10,
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Megaminx, Pyraminx, Rubik's Clock, Square-1"
+        ],
+        [
+          9,
+          "[Eric Limeback](https://www.worldcubeassociation.org/persons/2007LIME01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 3x3x3 Blindfolded, Rubik's Clock, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          9,
+          "[Andrey Lopez Rodríguez](https://www.worldcubeassociation.org/persons/2017RODR26)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Megaminx, Pyraminx"
+        ],
+        [
+          9,
+          "[Adrián Ramírez](https://www.worldcubeassociation.org/persons/2013RAMI02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed"
+        ],
+        [
+          9,
+          "[Jorge Leonardo Sánchez Salazar](https://www.worldcubeassociation.org/persons/2009SALA01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Rubik's Clock"
+        ],
+        [
+          9,
+          "[Uriel Gayosso Ruiz](https://www.worldcubeassociation.org/persons/2007RUIZ01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Square-1, Rubik's Magic, Master Magic"
+        ],
+        [
+          9,
+          "[José Enrique Jiménez](https://www.worldcubeassociation.org/persons/2015JIME10)",
+          "4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, Megaminx, Rubik's Clock, Skewb, Square-1"
+        ],
+        [
+          8,
+          "[Jeremiah E. D. Farley](https://www.worldcubeassociation.org/persons/2025FARL01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed, Megaminx, Pyraminx, Skewb"
+        ],
+        [
+          8,
+          "[Isabella Young](https://www.worldcubeassociation.org/persons/2022YOUN08)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed, Pyraminx, Skewb, Square-1"
+        ],
+        [
+          8,
+          "[Anthony Brooks](https://www.worldcubeassociation.org/persons/2008SEAR01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Pyraminx, Rubik's Clock, 3x3x3 Multi-Blind"
+        ],
+        [
+          8,
+          "[Daniel Orlando Valdes Arzola](https://www.worldcubeassociation.org/persons/2022ARZO01)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1"
+        ],
+        [
+          8,
+          "[Shalóm Melquisedec Batz Rodríguez](https://www.worldcubeassociation.org/persons/2019RODR66)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 3x3x3 One-Handed, Megaminx, Pyraminx"
+        ],
+        [
+          8,
+          "[Daniel Escobar](https://www.worldcubeassociation.org/persons/2014ESCO02)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, Megaminx, Square-1"
+        ],
+        [
+          8,
+          "[Jonah Hinkson](https://www.worldcubeassociation.org/persons/2023HINK02)",
+          "Rubik's Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Pyraminx, Rubik's Clock, Square-1, 3x3x3 Multi-Blind"
+        ],
+        [
+          8,
+          "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          8,
+          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          8,
+          "[Craig Bouchard](https://www.worldcubeassociation.org/persons/2005BOUC01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 Blindfolded, Megaminx, Square-1, Rubik's Magic, Master Magic"
+        ],
+        [
+          8,
+          "[Jack Moseley](https://www.worldcubeassociation.org/persons/2007MOSE02)",
+          "4x4x4 Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Pyraminx, Square-1, 3x3x3 With Feet"
+        ]
+      ],
+      "recordScope": {
+        "region": "North America",
+        "level": "NR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Oceania - WR",
+      "titleZh": "Oceania - WR",
+      "rows": [
+        [
+          8,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, 4x4x4 Blindfolded"
+        ],
+        [
+          2,
+          "[Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01)",
+          "3x3x3 Fewest Moves, Skewb"
+        ],
+        [
+          1,
+          "[Charlie Eggins](https://www.worldcubeassociation.org/persons/2019EGGI02)",
+          "3x3x3 Blindfolded"
+        ],
+        [
+          1,
+          "[Jack Cai](https://www.worldcubeassociation.org/persons/2014CAIJ02)",
+          "3x3x3 Blindfolded"
+        ],
+        [
+          1,
+          "[Sebastian Lee](https://www.worldcubeassociation.org/persons/2021LEES01)",
+          "Pyraminx"
+        ],
+        [
+          1,
+          "[Jasper Murray](https://www.worldcubeassociation.org/persons/2018MURR03)",
+          "Pyraminx"
+        ],
+        [
+          1,
+          "[Lachlan Gibson](https://www.worldcubeassociation.org/persons/2022GIBS04)",
+          "Rubik's Clock"
+        ],
+        [
+          1,
+          "[Andrew Huang](https://www.worldcubeassociation.org/persons/2016HUAN43)",
+          "Skewb"
+        ],
+        [
+          1,
+          "[David Epstein](https://www.worldcubeassociation.org/persons/2016EPST02)",
+          "Square-1"
+        ],
+        [
+          1,
+          "[Zane Carney](https://www.worldcubeassociation.org/persons/2010CARN01)",
+          "3x3x3 Multi-Blind"
+        ]
+      ],
+      "recordScope": {
+        "region": "Oceania",
+        "level": "WR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Oceania - CR",
+      "titleZh": "Oceania - CR",
+      "rows": [
+        [
+          16,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, Rubik's Magic"
+        ],
+        [
+          10,
+          "[Joshua Shing Shun Li](https://www.worldcubeassociation.org/persons/2007LIJO01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Square-1, Rubik's Magic, Master Magic"
+        ],
+        [
+          8,
+          "[Jasmine Lee](https://www.worldcubeassociation.org/persons/2003LEEJ01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed, Rubik's Clock, Rubik's Magic, Master Magic"
+        ],
+        [
+          8,
+          "[Dene Beardsley](https://www.worldcubeassociation.org/persons/2009BEAR01)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Pyraminx, Square-1, 3x3x3 With Feet"
+        ],
+        [
+          8,
+          "[Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01)",
+          "2x2x2 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 With Feet"
+        ],
+        [
+          3,
+          "[Jode Brewster](https://www.worldcubeassociation.org/persons/2016JONE04)",
+          "Rubik's Cube, 2x2x2 Cube, Square-1"
+        ],
+        [
+          3,
+          "[Zane Carney](https://www.worldcubeassociation.org/persons/2010CARN01)",
+          "3x3x3 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          3,
+          "[Tommy Kiprillis](https://www.worldcubeassociation.org/persons/2014KIPR01)",
+          "3x3x3 Fewest Moves, Square-1, 3x3x3 With Feet"
+        ],
+        [
+          3,
+          "[Dwyane Ramos](https://www.worldcubeassociation.org/persons/2019RAMO05)",
+          "3x3x3 One-Handed, Pyraminx, Skewb"
+        ],
+        [
+          3,
+          "[Michael Tripodi](https://www.worldcubeassociation.org/persons/2021TRIP01)",
+          "4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          3,
+          "[Tom Nelson](https://www.worldcubeassociation.org/persons/2013NELS01)",
+          "4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          2,
+          "[Riley Dexter](https://www.worldcubeassociation.org/persons/2016DEXT01)",
+          "Rubik's Cube, Pyraminx"
+        ],
+        [
+          2,
+          "[Connor Johnson](https://www.worldcubeassociation.org/persons/2022JOHN14)",
+          "2x2x2 Cube, Pyraminx"
+        ],
+        [
+          2,
+          "[David Epstein](https://www.worldcubeassociation.org/persons/2016EPST02)",
+          "6x6x6 Cube, Square-1"
+        ],
+        [
+          2,
+          "[Charlie Eggins](https://www.worldcubeassociation.org/persons/2019EGGI02)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded"
+        ],
+        [
+          2,
+          "[Jack Cai](https://www.worldcubeassociation.org/persons/2014CAIJ02)",
+          "3x3x3 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          2,
+          "[Aron Puddy-Mathew](https://www.worldcubeassociation.org/persons/2010PUDD01)",
+          "3x3x3 Blindfolded, Rubik's Clock"
+        ],
+        [
+          2,
+          "[Max Parris](https://www.worldcubeassociation.org/persons/2022PARR10)",
+          "3x3x3 Fewest Moves, Skewb"
+        ],
+        [
+          2,
+          "[Jasper Murray](https://www.worldcubeassociation.org/persons/2018MURR03)",
+          "3x3x3 One-Handed, Pyraminx"
+        ],
+        [
+          2,
+          "[Tim Major](https://www.worldcubeassociation.org/persons/2010MAJO01)",
+          "Pyraminx, Rubik's Clock"
+        ],
+        [
+          2,
+          "[Tomoya Firman](https://www.worldcubeassociation.org/persons/2015FIRM01)",
+          "4x4x4 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          2,
+          "[Jeremy Lu](https://www.worldcubeassociation.org/persons/2010LUJE01)",
+          "Rubik's Magic, Master Magic"
+        ]
+      ],
+      "recordScope": {
+        "region": "Oceania",
+        "level": "CR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "Oceania - NR",
+      "titleZh": "Oceania - NR",
+      "rows": [
+        [
+          16,
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, Rubik's Magic"
+        ],
+        [
+          10,
+          "[Joshua Shing Shun Li](https://www.worldcubeassociation.org/persons/2007LIJO01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Square-1, Rubik's Magic, Master Magic"
+        ],
+        [
+          10,
+          "[Dene Beardsley](https://www.worldcubeassociation.org/persons/2009BEAR01)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Pyraminx, Square-1, 3x3x3 With Feet"
+        ],
+        [
+          10,
+          "[Joshua Tekwie](https://www.worldcubeassociation.org/persons/2018TEKW02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1"
+        ],
+        [
+          8,
+          "[Jasmine Lee](https://www.worldcubeassociation.org/persons/2003LEEJ01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed, Rubik's Clock, Rubik's Magic, Master Magic"
+        ],
+        [
+          8,
+          "[Dwyane Ramos](https://www.worldcubeassociation.org/persons/2019RAMO05)",
+          "Rubik's Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Pyraminx, Skewb, Square-1"
+        ],
+        [
+          8,
+          "[Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01)",
+          "2x2x2 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 With Feet"
+        ],
+        [
+          7,
+          "[Alex Asbery](https://www.worldcubeassociation.org/persons/2013ASBE01)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 With Feet"
+        ],
+        [
+          7,
+          "[Tom Nelson](https://www.worldcubeassociation.org/persons/2013NELS01)",
+          "2x2x2 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+        ],
+        [
+          6,
+          "[Ben Kirby](https://www.worldcubeassociation.org/persons/2017KIRB01)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Pyraminx"
+        ],
+        [
+          5,
+          "[Emir Ali](https://www.worldcubeassociation.org/persons/2024ALIE01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, Megaminx, Pyraminx"
+        ],
+        [
+          5,
+          "[Vincent Stowers](https://www.worldcubeassociation.org/persons/2025STOW03)",
+          "2x2x2 Cube, 4x4x4 Cube, 3x3x3 One-Handed, Pyraminx, Skewb"
+        ],
+        [
+          5,
+          "[James Macdiarmid](https://www.worldcubeassociation.org/persons/2015MACD03)",
+          "5x5x5 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Megaminx, 3x3x3 Multi-Blind"
+        ],
+        [
+          5,
+          "[Aneurin Hunt](https://www.worldcubeassociation.org/persons/2010HUNT02)",
+          "3x3x3 Fewest Moves, Pyraminx, Skewb, Square-1, 3x3x3 With Feet"
+        ],
+        [
+          4,
+          "[Soham Ronav Ram](https://www.worldcubeassociation.org/persons/2023RAMS01)",
+          "Rubik's Cube, 2x2x2 Cube, 3x3x3 One-Handed, Pyraminx"
+        ],
+        [
+          4,
+          "[Jasper Murray](https://www.worldcubeassociation.org/persons/2018MURR03)",
+          "Rubik's Cube, 5x5x5 Cube, 3x3x3 One-Handed, Pyraminx"
+        ],
+        [
+          4,
+          "[Mukund Karthik](https://www.worldcubeassociation.org/persons/2015KART01)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          4,
+          "[Zhaohan Xiong](https://www.worldcubeassociation.org/persons/2010XION01)",
+          "Rubik's Cube, 2x2x2 Cube, 3x3x3 One-Handed, Rubik's Magic"
+        ],
+        [
+          4,
+          "[Alexander Vujcich](https://www.worldcubeassociation.org/persons/2019VUJC01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, Megaminx"
+        ],
+        [
+          4,
+          "[David Lim](https://www.worldcubeassociation.org/persons/2010LIMD01)",
+          "Pyraminx, Rubik's Clock, Rubik's Magic, Master Magic"
+        ]
+      ],
+      "recordScope": {
+        "region": "Oceania",
+        "level": "NR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "South America - WR",
+      "titleZh": "South America - WR",
+      "rows": [
+        [
+          1,
+          "[Gianfranco Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN29)",
+          "3x3x3 Blindfolded"
+        ],
+        [
+          1,
+          "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
+          "Megaminx"
+        ],
+        [
+          1,
+          "[Juan Pablo Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN30)",
+          "Megaminx"
+        ],
+        [
+          1,
+          "[Vicenzo Guerino Cecchini](https://www.worldcubeassociation.org/persons/2015CECC01)",
+          "Square-1"
+        ],
+        [
+          1,
+          "[Anuar Miguel Abib Onofre](https://www.worldcubeassociation.org/persons/2015ONOF01)",
+          "Square-1"
+        ],
+        [
+          1,
+          "[Gabriel Pereira Campanha](https://www.worldcubeassociation.org/persons/2012CAMP03)",
+          "3x3x3 With Feet"
+        ]
+      ],
+      "recordScope": {
+        "region": "South America",
+        "level": "WR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "South America - CR",
+      "titleZh": "South America - CR",
+      "rows": [
+        [
+          14,
+          "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          11,
+          "[Gabriel Eduardo Núñez Serna](https://www.worldcubeassociation.org/persons/2008NUNE01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, Megaminx, Pyraminx, Rubik's Clock, Square-1, Rubik's Magic"
+        ],
+        [
+          8,
+          "[Theo Goluboff](https://www.worldcubeassociation.org/persons/2017GOLU01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Pyraminx, Rubik's Clock"
+        ],
+        [
+          6,
+          "[Gabriel Dechichi Barbar](https://www.worldcubeassociation.org/persons/2009BARB01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed, 3x3x3 Multi-Blind"
+        ],
+        [
+          5,
+          "[Pedro Roque](https://www.worldcubeassociation.org/persons/2012ROQU01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube"
+        ],
+        [
+          5,
+          "[Matias Macaya](https://www.worldcubeassociation.org/persons/2009MACA01)",
+          "4x4x4 Cube, 5x5x5 Cube, 7x7x7 Cube, Rubik's Clock, Rubik's Magic"
+        ],
+        [
+          5,
+          "[Pedro Alejandro Condo Tellez](https://www.worldcubeassociation.org/persons/2015TELL01)",
+          "4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          4,
+          "[Bautista Bonazzola](https://www.worldcubeassociation.org/persons/2014BONA02)",
+          "Rubik's Cube, 4x4x4 Cube, 6x6x6 Cube, Skewb"
+        ],
+        [
+          4,
+          "[Francisco Moraes Mandalozzo](https://www.worldcubeassociation.org/persons/2017MAND13)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube"
+        ],
+        [
+          4,
+          "[Rafael Werneck Cinoto](https://www.worldcubeassociation.org/persons/2007CINO01)",
+          "2x2x2 Cube, 3x3x3 With Feet, Rubik's Magic, Master Magic"
+        ],
+        [
+          4,
+          "[Rodrigo Kenji Asato Kobayashi](https://www.worldcubeassociation.org/persons/2009KOBA04)",
+          "4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube"
+        ],
+        [
+          4,
+          "[Gianfranco Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN29)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          3,
+          "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
+          "Rubik's Cube, 4x4x4 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          3,
+          "[Renan Mondini Cerpe](https://www.worldcubeassociation.org/persons/2007CERP02)",
+          "Rubik's Cube, 2x2x2 Cube, Master Magic"
+        ],
+        [
+          3,
+          "[Claudio Matias Cancino Bruna](https://www.worldcubeassociation.org/persons/2019BRUN02)",
+          "Rubik's Cube, 4x4x4 Cube, 5x5x5 Cube"
+        ],
+        [
+          3,
+          "[Francisco Javier Lemes Sáez](https://www.worldcubeassociation.org/persons/2009SAEZ01)",
+          "Rubik's Cube, 3x3x3 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          3,
+          "[Ernesto Gutiérrez Cuba](https://www.worldcubeassociation.org/persons/2011CUBA02)",
+          "Rubik's Cube, 4x4x4 Cube, 3x3x3 One-Handed"
+        ],
+        [
+          3,
+          "[Gael Augusto Lapeyre](https://www.worldcubeassociation.org/persons/2018LAPE01)",
+          "2x2x2 Cube, Pyraminx, Rubik's Clock"
+        ],
+        [
+          3,
+          "[Manuel Gutman](https://www.worldcubeassociation.org/persons/2017GUTM01)",
+          "3x3x3 Blindfolded, 4x4x4 Blindfolded, 5x5x5 Blindfolded"
+        ],
+        [
+          3,
+          "[Guido Dipietro](https://www.worldcubeassociation.org/persons/2013DIPI01)",
+          "3x3x3 Blindfolded, 3x3x3 Fewest Moves, 4x4x4 Blindfolded"
+        ]
+      ],
+      "recordScope": {
+        "region": "South America",
+        "level": "CR",
+        "event": "",
+        "type": "all"
+      }
+    },
+    {
+      "title": "South America - NR",
+      "titleZh": "South America - NR",
+      "rows": [
+        [
+          15,
+          "[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 4x4x4 Blindfolded, 3x3x3 Multi-Blind, Rubik's Cube: Multiple blind old style"
+        ],
+        [
+          15,
+          "[Pablo Nicolás Oshiro Mondoñedo](https://www.worldcubeassociation.org/persons/2010MOND01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, 3x3x3 With Feet, Rubik's Magic, Master Magic"
+        ],
+        [
+          15,
+          "[Oscar Alberto Ceballos Contreras](https://www.worldcubeassociation.org/persons/2013CONT01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, Square-1, 3x3x3 Multi-Blind"
+        ],
+        [
+          14,
+          "[José Leonardo Chaparro Prieto](https://www.worldcubeassociation.org/persons/2011CHAP01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Skewb, Square-1, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+        ],
+        [
+          13,
+          "[Gabriel Eduardo Núñez Serna](https://www.worldcubeassociation.org/persons/2008NUNE01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1, Rubik's Magic"
+        ],
+        [
+          12,
+          "[Facundo Finola](https://www.worldcubeassociation.org/persons/2012FINO02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Square-1"
+        ],
+        [
+          12,
+          "[Felipe Medel](https://www.worldcubeassociation.org/persons/2015MEDE01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Pyraminx, Rubik's Clock, Skewb, Square-1"
+        ],
+        [
+          11,
+          "[Bautista Bonazzola](https://www.worldcubeassociation.org/persons/2014BONA02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Pyraminx, Skewb, Square-1, 3x3x3 With Feet"
+        ],
+        [
+          11,
+          "[Francisco Hamlin](https://www.worldcubeassociation.org/persons/2012HAML01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, 3x3x3 With Feet"
+        ],
+        [
+          11,
+          "[Matias Macaya](https://www.worldcubeassociation.org/persons/2009MACA01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Rubik's Magic"
+        ],
+        [
+          11,
+          "[Dennis Rosero](https://www.worldcubeassociation.org/persons/2010ROSE03)",
+          "Rubik's Cube, 2x2x2 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, Pyraminx, Rubik's Clock, Square-1, 3x3x3 Multi-Blind, 3x3x3 With Feet, Rubik's Magic, Master Magic"
+        ],
+        [
+          11,
+          "[John Tuquerrez Andrango](https://www.worldcubeassociation.org/persons/2015ANDR07)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Megaminx, Pyraminx, Rubik's Clock, Skewb, 3x3x3 With Feet"
+        ],
+        [
+          10,
+          "[Theo Goluboff](https://www.worldcubeassociation.org/persons/2017GOLU01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Pyraminx, Rubik's Clock, Skewb"
+        ],
+        [
+          10,
+          "[Kenji Julián Cáceres Matsumoto](https://www.worldcubeassociation.org/persons/2022CACE02)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, Pyraminx"
+        ],
+        [
+          10,
+          "[Bruno Lezama](https://www.worldcubeassociation.org/persons/2014LEZA02)",
+          "Rubik's Cube, 2x2x2 Cube, 3x3x3 Fewest Moves, Megaminx, Skewb, Square-1, 4x4x4 Blindfolded, 5x5x5 Blindfolded, 3x3x3 Multi-Blind, 3x3x3 With Feet"
+        ],
+        [
+          9,
+          "[Rodrigo Paz Vaca](https://www.worldcubeassociation.org/persons/2015VACA01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx, Pyraminx, Square-1"
+        ],
+        [
+          9,
+          "[Francisco Moraes Mandalozzo](https://www.worldcubeassociation.org/persons/2017MAND13)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Megaminx, Pyraminx, Rubik's Clock"
+        ],
+        [
+          9,
+          "[Daniel Cano Salgado](https://www.worldcubeassociation.org/persons/2011SALG01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Pyraminx, Rubik's Clock, 3x3x3 With Feet"
+        ],
+        [
+          9,
+          "[Anthony Gerard Álvarez Ludeña](https://www.worldcubeassociation.org/persons/2018LUDE01)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 Blindfolded, 3x3x3 One-Handed, Megaminx, 5x5x5 Blindfolded, 3x3x3 Multi-Blind"
+        ],
+        [
+          9,
+          "[Milko Sebastián Gutiérrez Arroyo](https://www.worldcubeassociation.org/persons/2016ARRO05)",
+          "Rubik's Cube, 2x2x2 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Megaminx, Pyraminx, Skewb"
+        ],
+        [
+          9,
+          "[Bernardo Torres](https://www.worldcubeassociation.org/persons/2015TORR12)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Megaminx, Rubik's Clock"
+        ],
+        [
+          9,
+          "[Carlos Miguel Parra Gonzalez](https://www.worldcubeassociation.org/persons/2013GONZ07)",
+          "Rubik's Cube, 2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 Fewest Moves, 3x3x3 One-Handed, Megaminx"
+        ]
+      ],
+      "recordScope": {
+        "region": "South America",
+        "level": "NR",
+        "event": "",
+        "type": "all"
+      }
     }
   ]
 }

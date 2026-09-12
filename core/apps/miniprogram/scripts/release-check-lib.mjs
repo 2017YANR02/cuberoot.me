@@ -99,6 +99,14 @@ const sensitiveCapabilities = [
     sourcePattern: /open-type\s*=\s*["']getPhoneNumber["']/,
     uploadPattern: /open-type\s*=\s*["']getPhoneNumber["']/,
   },
+  {
+    label: '实时验证手机号',
+    sourcePattern: /open-type\s*=\s*["']getRealtimePhoneNumber["']/,
+    uploadPattern: /open-type\s*=\s*["']getRealtimePhoneNumber["']/,
+    // Quick phone authorization remains blocked: it does not prove real-time possession.
+    sourcePathAllowed: (path) => normalizeAuditPath(path) === 'src/pages/account/index.wxml',
+    uploadPathAllowed: (path) => normalizeAuditPath(path) === 'pages/account/index.wxml',
+  },
 ];
 
 const sensitiveManifestKeys = ['requiredPrivateInfos', 'permission'];
@@ -184,6 +192,11 @@ export const REQUIRED_RELEASE_CONFIRMATIONS = [
     key: 'privacyReviewed',
     env: 'WECHAT_MINI_PRIVACY_REVIEWED',
     failure: '后台用户隐私保护指引尚未确认与实际能力一致；复核并提交后，上传时设置 WECHAT_MINI_PRIVACY_REVIEWED=1。',
+  },
+  {
+    key: 'phoneAuthorizationReviewed',
+    env: 'WECHAT_MINI_PHONE_AUTHORIZATION_REVIEWED',
+    failure: '微信手机号实时验证能力的主体认证、权限与可用额度、后台手机号隐私声明，以及授权/拒绝/旧号确认真机流程尚未核验；完成后才能设置 WECHAT_MINI_PHONE_AUTHORIZATION_REVIEWED=1。',
   },
   {
     key: 'iosRealDeviceTested',

@@ -36,6 +36,10 @@ export const WEB_SESSION_ERROR_CODES = [
   'DOUYIN_UNAVAILABLE',
   'WECHAT_UNIONID_REQUIRED',
   'WECHAT_ACCOUNT_LINK_REQUIRED',
+  'WECHAT_PHONE_REQUIRED',
+  'INVALID_WECHAT_PHONE_CODE',
+  'WECHAT_PHONE_UNAVAILABLE',
+  'WECHAT_PHONE_UNSUPPORTED',
   'INVALID_WEB_SESSION_TICKET',
   'INVALID_MOBILE_SESSION_TICKET',
 ] as const;
@@ -77,6 +81,42 @@ export interface WebSessionUserEnvelope {
 export interface WebSessionTicketEnvelope {
   ticket: string;
   expiresIn: number;
+}
+
+export const IDENTITY_CHOICE_PROVIDERS = [
+  'apple', 'google', 'wechat', 'qq', 'alipay', 'wca', 'email', 'phone', 'douyin',
+] as const;
+
+/** Verified identity awaiting explicit account creation or linking, not a session. */
+export interface PendingIdentity {
+  ticket: string;
+  provider: typeof IDENTITY_CHOICE_PROVIDERS[number];
+  expiresInSeconds: number;
+  /** A server-verified phone match, offered for explicit WeChat linking, never a session. */
+  phoneAccount?: { id: number; displayName: string };
+}
+
+export function decodeIdentityChoicePending(value: unknown): PendingIdentity | null {
+  const envelope = asRecord(value);
+  const pending = asRecord(envelope?.pending);
+  if (envelope?.code !== 'ACCOUNT_CHOICE_REQUIRED' || !pending
+    || !isWebSessionTicket(pending.ticket)
+    || typeof pending.provider !== 'string'
+    || !IDENTITY_CHOICE_PROVIDERS.includes(pending.provider as PendingIdentity['provider'])
+    || typeof pending.expiresInSeconds !== 'number'
+    || !Number.isInteger(pending.expiresInSeconds)
+    || pending.expiresInSeconds <= 0 || pending.expiresInSeconds > 900) return null;
+  let phoneAccount: PendingIdentity['phoneAccount'];
+  if (pending.phoneAccount !== undefined) {
+    const account = asRecord(pending.phoneAccount);
+    if (pending.provider !== 'wechat' || !account || Array.isArray(pending.phoneAccount)
+      || typeof account.id !== 'number' || !Number.isSafeInteger(account.id) || account.id <= 0
+      || typeof account.displayName !== 'string' || account.displayName.length > MAX_DISPLAY_NAME_LENGTH
+      || CONTROL_CHARACTER_PATTERN.test(account.displayName)) return null;
+    phoneAccount = { id: account.id, displayName: account.displayName };
+  }
+  return { ticket: pending.ticket, provider: pending.provider as PendingIdentity['provider'], expiresInSeconds: pending.expiresInSeconds,
+    ...(phoneAccount ? { phoneAccount } : {}) };
 }
 
 export const MOBILE_AUTH_PROVIDERS = [

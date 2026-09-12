@@ -12,6 +12,14 @@ export interface StatSection {
   title: string;
   titleZh?: string;
   rows: unknown[][];
+  recordScope?: RecordScope;
+}
+
+export interface RecordScope {
+  region: string;
+  level: 'WR' | 'CR' | 'NR';
+  event: string;
+  type: 'all' | 'single' | 'average';
 }
 
 export interface StatPanel {

@@ -25,7 +25,7 @@ export const dynamic = 'force-static';
 const BASE = 'https://cuberoot.me';
 
 // Kept OUT (dev/poc/internal pages, no SEO value). Locale-stripped path, exact.
-const EXCLUDE = new Set(['ffmpeg-poc', 'jsonEditor', 'courses', 'search']);
+const EXCLUDE = new Set(['ffmpeg-poc', 'jsonEditor', 'courses', 'search', 'partnership']);
 
 // Dynamic-segment pages worth indexing at a specific value (the scan skips
 // [param] dirs since it can't know which values are valid).
@@ -109,7 +109,7 @@ function scanRoutes(): string[] {
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [...new Set([...scanRoutes(), ...EXTRA])]
-    .filter((r) => !EXCLUDE.has(r))
+    .filter((r) => !EXCLUDE.has(r) && !r.startsWith('partnership/'))
     .sort();
   // Pattern B: English is the BARE URL (no /en prefix); Chinese is /zh/….
   const en = (path: string) => (path ? `${BASE}/${path}` : `${BASE}/`);

@@ -17,6 +17,8 @@
 // 步数最短。同态 ⇒ 各阶段步数 / 难度值不变。仅「打乱长度」视图例外(那按的就是原打乱长度)。
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
+import AppLink from '@/components/AppLink';
+import { buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
@@ -31,7 +33,7 @@ import { VariantSelect } from '@/components/VariantSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
 import { formatDateRangeIso } from '@/lib/wca-date';
-import { eventDisplayName } from '@/lib/wca-events';
+import { eventDisplayName, wcaToReconEvent } from '@/lib/wca-events';
 import './recent_scrambles.css';
 import './scroll_panel.css';
 import { tr } from '@/i18n/tr';
@@ -296,8 +298,23 @@ const analyzerHref = (
   scramble: string,
   target?: { method: string; stage: number } | null,
   color?: ColorLetter,
+  competition?: { ci: string; cn: string },
+  optimal?: boolean,
+  reconQuery?: string,
 ) => {
   const p = new URLSearchParams({ scramble: scramble.trim().replace(/ /g, '_') });
+  if (reconQuery) {
+    const source = new URLSearchParams(reconQuery);
+    for (const key of ['event', 'round', 'groupId', 'solveNum', 'sourceEn', 'sourceZh']) {
+      const value = source.get(key);
+      if (value) p.set(key, value);
+    }
+  }
+  if (competition) {
+    p.set('compWcaId', competition.ci);
+    p.set('comp', competition.cn);
+  }
+  if (optimal) p.set('optimal', '1');
   if (target) {
     if (target.method !== 'std') p.set('method', target.method); // std 是默认 method,省略
     if (target.stage !== 0) p.set('mstage', String(target.stage)); // 0 是默认阶段,省略
@@ -321,7 +338,7 @@ function CompSource({ m, lp, isZh, row }: { m: RecentScrMeta | ScrMeta; lp: stri
 
 // 统一打乱小卡(2 列网格单元):魔方图 + 打乱记号 + 比赛来源,可选左上角底色点。
 // 整卡非单一 <a>(内部「大图 / analyzer / gen」三个并列链接,禁嵌套),与原 hero 同结构。
-function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors, dotTitle, rarity, optimal }: {
+function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors, dotTitle, rarity, optimal, analysis }: {
   event: string;
   scramble: string;
   m?: RecentScrMeta | ScrMeta;
@@ -337,8 +354,23 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
   rarity?: { tag: string; prob: string };
   // 显示的是最优等态打乱(非该场原打乱的记号)→ 悬停说明,免得被当成比赛原打乱。
   optimal?: boolean;
+  analysis?: { variant: string; metric: string; step: number | null; prob?: string };
 }) {
   const dotList = dotColors ?? (color ? [color] : []);
+  const describeSource = (lang: 'zh' | 'en') => {
+    const colors = dotList.map(c => COLOR_NAME[c][lang]).join('/');
+    const condition = [
+      m?.x ? `E${m.n}` : '',
+      colors && `${colors}${{ zh: '底', en: ' base' }[lang]}`,
+      analysis?.variant && variantLabel(analysis.variant, lang === 'zh'),
+      analysis?.metric && stageLabel(analysis.metric, lang === 'zh'),
+      analysis?.step != null ? `${analysis.step} ${{ zh: '步', en: 'moves' }[lang]}` : '',
+    ].filter(Boolean).join(' ');
+    return condition + (analysis?.prob ? `${{ zh: '，概率 ', en: ', probability ' }[lang]}${analysis.prob}` : '');
+  };
+  const reconParams = buildReconSubmitQuery(wcaToReconEvent(m?.e || event), scramble, '', {
+    practice: true, optimal, competition: m, sourceEn: describeSource('en'), sourceZh: describeSource('zh'),
+  });
   return (
     <div className="rs-scard">
       <div className="rs-scard-cube">
@@ -357,12 +389,17 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
           </div>
         )}
         <Link
-          href={analyzerHref(lp, scramble, ssTarget, color)}
+          href={analyzerHref(lp, scramble, ssTarget, color, m, optimal, reconParams)}
           prefetch={false}
           className="rs-scard-scramble"
           title={optimal ? tr({ zh: '最优等态打乱:与该场原打乱同一魔方态,步数最短', en: 'Optimal equivalent scramble — same cube state as the original, fewest moves' }) : undefined}
         >{scramble}</Link>
         {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
+        {scramble.trim() && (
+          <AppLink href={`/recon/submit?${reconParams}`} prefetch={false} className="rs-recon-link">
+            {tr({ zh: '复盘', en: 'Reconstruct' })}
+          </AppLink>
+        )}
       </div>
     </div>
   );
@@ -719,6 +756,7 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
                     dotColors={aggColors.length > 0 ? aggColors : undefined}
                     dotTitle={aggColors.length > 0 ? subsetDotTitle(aggColors, r.color || undefined) : undefined}
                     rarity={{ tag: rarityTag(r.uiVariant, r.metric, r.step, isZh), prob: formatProb(r.p) ?? '' }}
+                    analysis={{ variant: r.uiVariant, metric: r.metric, step: r.step, prob: formatProb(r.p) ?? '' }}
                   />
                 );
               })}
@@ -733,7 +771,7 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
       ) : entries.length > 0 ? (
         <div className="rs-cards scroll-panel scroll-panel--hover-lift">
           {entries.slice(0, 12).map(([id, color]) => (
-            <ScrambleCard key={id} event="333" scramble={data.opt?.[id] ?? data.scr[id] ?? ''} optimal={!!data.opt?.[id]} m={data.meta[id]} lp={lp} isZh={isZh} ssTarget={ssTarget} color={color || undefined} />
+            <ScrambleCard key={id} event="333" scramble={data.opt?.[id] ?? data.scr[id] ?? ''} optimal={!!data.opt?.[id]} m={data.meta[id]} lp={lp} isZh={isZh} ssTarget={ssTarget} color={color || undefined} analysis={{ variant: curVariant, metric: curMetric, step: curStep, prob: prob?.text }} />
           ))}
         </div>
       ) : (
@@ -795,7 +833,7 @@ function RecentEventBody({ event, json, isZh, lp, headExtra }: {
       {ids.length > 0 ? (
         <div className="rs-cards scroll-panel scroll-panel--hover-lift">
           {ids.slice(0, 12).map((id) => (
-            <ScrambleCard key={id} event={event} scramble={scrOf(id)} optimal={!!optOf(id)} m={metaOf(id)} lp={lp} isZh={isZh} />
+            <ScrambleCard key={id} event={event} scramble={scrOf(id)} optimal={!!optOf(id)} m={metaOf(id)} lp={lp} isZh={isZh} analysis={{ variant: '', metric: '', step: curValue }} />
           ))}
         </div>
       ) : null}
