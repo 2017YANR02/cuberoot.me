@@ -57,7 +57,7 @@ describe('canonical Apple account endpoints', () => {
     const response = await request('/auth/apple');
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ token: 'canonical-cuberoot-session', user, isNew: true });
-    expect(mocks.loginWithIdentity).toHaveBeenCalledWith('apple', credential.sub, { name: '' }, credential);
+    expect(mocks.loginWithIdentity).toHaveBeenCalledWith('apple', credential.sub, { name: '' }, credential, { createIfMissing: false });
     expect(mocks.loginWithIdentity.mock.invocationCallOrder[0]).toBeLessThan(mocks.signSession.mock.invocationCallOrder[0]);
     expect(mocks.exchangeAppleCode).toHaveBeenCalledWith('code', 'signed-state', 'login', 'test-verifier', undefined);
   });

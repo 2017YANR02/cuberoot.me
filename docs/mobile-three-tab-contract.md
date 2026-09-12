@@ -77,6 +77,30 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（同一 Tauri 工程�
 - 认证消息必须走 `@cuberoot/shared/mobile-embed`，并复用 `/v1/auth/mobile-session/*` 与 `/v1/auth/web-session/*` 单次票据。长期 JWT 不得进入 URL 或 `postMessage`；不得复制 `LoginForm` 或 import client 私有源码。
 - 新版 Web session 请求和结果必须回显同一个 `requestId`，新版宿主只接受当前 in-flight 的同 ID 结果；网站 decoder 暂时兼容独立发布中的旧 App 无 ID 请求，并向它返回无 ID 结果。签发/交换超时、provider 启动失败和重复点击都必须有界，未完成登录再次打开时复用同一 PKCE pending state，不得让早先回调失效。
 
+#### 统一登录与已有账号选择
+
+2026-09-11 所有者要求所有第三方登录避免无意创建重复账号，界面保持简洁。以下是产品契约，不是上线或真实账号验收证明：
+
+- Google、Apple、微信、支付宝、WCA 及其他已配置第三方身份，已绑定时直接登录；未知身份通过授权后，先不创建站内账号或签发站内会话。
+- 未知身份只显示一个问题「你有 CubeRoot 账号吗？」和两个选择「登录已有账号」「创建新账号」；最多一行说明，不增加每次登录都要经过的向导。
+- 已有账号沿用 canonical `LoginForm` 验证，再显示将要绑定的账号并主动确认。该过程中未知邮箱、手机号或另一第三方身份不得隐式创建账号；取消、过期或网络失败不得自动降级为注册。
+- 不按相同邮箱、昵称、头像或设备自动合并。绑定是增加登录方式，不是合并两个已有账号的会员或业务数据；已有重复账号继续走独立的账号合并功能。
+- 临时授权只用于短期、一次性的创建或绑定确认；不进入 URL、日志或长期浏览器存储。服务端校验目标账号、身份归属和并发核销，网页不能自行决定账号归属。
+- 网站和 App 系统浏览器共用同一 UI；保留原始语言、目标页面和 Mobile PKCE 回跳。微信小程序已有明确创建/绑定选择时不再重复询问，但它是独立运行时，必须分别验收。
+
+对标记录（2026-09-11，官方公开文档；并非声称已登录这些产品逐屏测试）：
+
+| 产品/平台 | 实际文档行为 | 本项目取舍 |
+| --- | --- | --- |
+| [Apple HIG](https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple/) | 建议允许关联已有账号 | 新身份先提供已有账号选择 |
+| [Google Firebase](https://firebase.google.com/docs/auth/web/account-linking) | 多个 provider 可关联同一用户 ID，先登录再绑定 | 复用同一站内账号，不按 provider 建用户体系 |
+| [Auth0](https://auth0.com/docs/manage-users/user-accounts/user-account-linking) | 绑定前应验证双方身份 | 不仅凭邮箱相同就合并 |
+| [Spotify](https://support.spotify.com/us/article/google-login-help/) | 为已有 Spotify 账号增加 Google 登录方式 | 原账号及权益保留 |
+| [Notion](https://www.notion.com/help/log-in-and-out) | 同邮箱可用 Google/Apple 快速登录 | 其邮箱前提不适用于本项目全部 provider，不照搬 |
+| [GitHub](https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/recovering-your-account-if-you-lose-your-2fa-credentials) | 已关联社交账号可以替代口令登录 | 已绑定用户不重复询问 |
+
+该方案是根据上述差异和 CubeRoot 多 provider 现状作出的设计选择，不把“所有大厂都先询问”当成事实。
+
 ### 3.3 iOS Apple 4.8 发布门槛
 
 若纯 `/account` 在 iOS App 内展示 Google、微信等第三方主账号登录，[Apple App Review Guidelines 4.8](https://developer.apple.com/app-store/review/guidelines/#login-services) 要求同时提供满足其隐私条件的等价登录；邮箱/手机方式必须逐项证明满足要求，WCA 也不得未经审核就假定为公民电子身份例外。

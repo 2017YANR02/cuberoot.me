@@ -1,4 +1,4 @@
-import postgres from 'postgres';
+import postgres, { type TransactionSql } from 'postgres';
 
 // PostgreSQL 连接(porsager/postgres)
 // 占位符 ? → $N 在 query() helper 内自动转换,业务 SQL 无需改写。
@@ -48,15 +48,16 @@ export async function query<T = unknown>(
 
 export type QueryRunner = <T = unknown>(text: string, params?: unknown[]) => Promise<T[]>;
 
+export function transactionQuery(tx: TransactionSql): QueryRunner {
+  return async <Row = unknown>(text: string, params: unknown[] = []): Promise<Row[]> => {
+    const rows = await tx.unsafe(rewriteQ(text), params as never[]);
+    return rows as unknown as Row[];
+  };
+}
+
 /** Run existing `?`-placeholder queries on one PostgreSQL transaction/connection. */
 export async function withTransaction<T>(run: (transactionQuery: QueryRunner) => Promise<T>): Promise<T> {
-  return await sql.begin(async (tx) => run(async <Row = unknown>(
-    text: string,
-    params: unknown[] = [],
-  ): Promise<Row[]> => {
-    const rows = await tx.unsafe(rewriteQ(text), params as unknown as never[]);
-    return rows as unknown as Row[];
-  })) as T;
+  return await sql.begin(async (tx) => run(transactionQuery(tx))) as T;
 }
 
 /** 健康检查:ping 数据库 */

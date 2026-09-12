@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { tr } from '@/i18n/tr';
 import { getSessionToken } from '@/lib/auth-store';
+import { getIdentityChoice, identityChoiceEntryPath } from '@/lib/identity-choice';
 import {
   decodeMobileAuthRequest,
   issueMobileAuthTicket,
@@ -26,6 +27,10 @@ export default function MobileAuthPage() {
       return () => { active = false; };
     }
 
+    if (getIdentityChoice()) {
+      window.location.replace(identityChoiceEntryPath());
+      return () => { active = false; };
+    }
     const token = getSessionToken();
     if (!token) {
       window.location.replace(mobileAuthAccountHref(request));

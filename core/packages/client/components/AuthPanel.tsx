@@ -23,11 +23,12 @@ import {
   loginPassword, setPassword as apiSetPassword, removePassword,
   linkEmailSend, linkEmailVerify, linkPhoneSend, linkPhoneVerify,
   unlinkIdentity, fetchIdentities, fetchAuthProviders, loginGoogle, linkGoogle, replaceEmailVerify, replacePhoneVerify,
-  deleteAccount, issueAccountMergeCode, mergeAccount,
+  deleteAccount, issueAccountMergeCode, mergeAccount, completeIdentityChoice,
   type Identity, type AuthProviders, type RedirectAuthProvider,
 } from '@/lib/account-api';
 import { requestGoogleAssertion } from '@/lib/google-auth';
 import { startSocialLogin, isBlockedWebview } from '@/lib/social-auth';
+import { AccountChoiceRequired, clearIdentityChoice, getIdentityChoice, rememberIdentityChoice, updateIdentityChoice, useIdentityChoice, type IdentityChoice } from '@/lib/identity-choice';
 import './auth-panel.css';
 
 const ICON = 16;
@@ -176,6 +177,12 @@ function CodeCells({ value, onChange, disabled }: {
 
 /** 把后端英文错误串 / HTTP 码翻成给用户看的本地化文案;未识别的原样回退。 */
 function authErrorText(raw: string, t: (zh: string, en: string) => string): string {
+  if (raw === 'invalid account session') return t('登录响应无效，请重新登录。', 'The sign-in response was invalid. Sign in again.');
+  if (raw === 'account changed; sign in again') return t('当前账号已更改，请重新登录并确认。', 'Your account changed. Sign in and confirm again.');
+  if (raw === 'identity already linked to another account') return t('这个登录方式已绑定其他账号，请先检查账号状态。', 'This sign-in method is linked to another account. Check your account first.');
+  if (raw === 'identity ticket expired or already used') return t('本次登录已过期或已完成，请先检查账号状态，再重新登录。', 'This sign-in request expired or was already completed. Check your account before signing in again.');
+  if (raw === 'session storage failed' || raw.includes('account choice requires browser storage')) return t('无法保存登录状态，请允许浏览器使用存储后重试。', 'Could not save your session. Allow browser storage and retry.');
+  if (raw === 'account not found') return t('未找到已有账号，请使用原来绑定的登录方式。', 'No existing account found. Use a sign-in method already linked to your account.');
   const m = raw.toLowerCase();
   if (m.includes('too frequent')) return t('操作太频繁,请 60 秒后再试', 'Too many requests — please wait a minute');
   if (m.includes('wrong or expired')) return t('验证码错误或已过期', 'Wrong or expired code');
@@ -207,7 +214,7 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
   if (m.includes('apple authorization requires system browser')) return t('请更新 App 后在系统浏览器中完成 Apple 授权', 'Update the app and complete Apple authorization in the system browser');
   if (m.startsWith('apple linking requires canonical site: ')) return t('请先在以下网站登录已有账号，再绑定 Apple：', 'Sign in to your existing account on this site before linking Apple: ') + raw.slice('Apple linking requires canonical site: '.length);
   if (/invalid (wechat|qq|alipay|google|apple) (code|token|authorization|credential)/.test(m)) return t('第三方登录失败,请重试', 'Third-party sign-in failed — please try again');
-  if (m.includes('apple service unavailable') || m.includes('http 404') || /http 5\d\d/.test(m)) return t('服务暂时不可用,请稍后重试', 'Service temporarily unavailable — please try again');
+  if (m.includes('apple service unavailable') || m.includes('account service unavailable') || m.includes('http 404') || /http 5\d\d/.test(m)) return t('服务暂时不可用,请稍后重试', 'Service temporarily unavailable — please try again');
   return raw;
 }
 
@@ -261,11 +268,11 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
         onDone();
       } else if (mode === 'reset') {
         const r = await verifyPhonePasswordResetCode(target, code);
-        applySession(r.token, r.user);
+        if (!applySession(r.token, r.user)) throw new Error('session storage failed');
         onDone();
       } else {
         const r = channel === 'email' ? await verifyEmailCode(target, code) : await verifyPhoneCode(target, code);
-        applySession(r.token, r.user);
+        if (!applySession(r.token, r.user)) throw new Error('session storage failed');
         onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
       }
     } catch (e) {
@@ -363,7 +370,7 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
     setBusy(true);
     try {
       const r = await verifyEmailCode(email, code);
-      applySession(r.token, r.user);
+      if (!applySession(r.token, r.user)) throw new Error('session storage failed');
       onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
     } catch (e) {
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
@@ -440,7 +447,7 @@ function EmailPasswordFlow({ email, setEmail, onDone, toCode, onForgot }: {
     setBusy(true);
     try {
       const r = await loginPassword(email, pw);
-      applySession(r.token, r.user);
+      if (!applySession(r.token, r.user)) throw new Error('session storage failed');
       onDone();
     } catch (e) {
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
@@ -702,7 +709,83 @@ function RemovePasswordForm({ needCurrent, onDone, onCancel }: {
  * 登录 / 注册表单。`onDone(info)` 在拿到会话后触发 —— /account 用它决定去哪:新注册且没绑 WCA
  * 的先做一步引导,否则回跳 ?next=。
  */
-export function LoginForm({
+export function LoginForm(props: { firstPartyOnly?: boolean; onDone: OnSignedIn }) {
+  const pending = useIdentityChoice();
+  return pending ? <IdentityChoicePanel pending={pending} firstPartyOnly={props.firstPartyOnly} onDone={props.onDone} /> : <LoginFormFields {...props} />;
+}
+
+/** The same credential form is reused without recursively rendering LoginForm. */
+export function IdentityChoicePanel({ pending, firstPartyOnly = false, onDone, onCancel }: {
+  pending: IdentityChoice;
+  firstPartyOnly?: boolean;
+  onDone: (info: SignedIn, returnPath: string) => void;
+  onCancel?: () => void;
+}) {
+  const t = useT();
+  const user = useAuthStore((state) => state.user);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const request = useRef<AbortController | null>(null);
+  const cancel = () => {
+    request.current?.abort();
+    clearIdentityChoice(pending.ticket);
+    onCancel?.();
+  };
+  useEffect(() => {
+    const timer = setTimeout(() => { clearIdentityChoice(pending.ticket); onCancel?.(); }, Math.max(0, pending.expiresAt - Date.now()));
+    return () => { clearTimeout(timer); };
+  }, [pending.ticket, pending.expiresAt, onCancel]);
+  useEffect(() => () => { request.current?.abort(); }, []);
+
+  const authenticated = () => {
+    const uid = useAuthStore.getState().user?.uid;
+    if (uid) updateIdentityChoice(pending.ticket, { stage: 'confirm', expectedUid: uid, otherIdentityRejected: false });
+  };
+  const complete = async (action: 'create' | 'link') => {
+    if (request.current || getIdentityChoice()?.ticket !== pending.ticket) return;
+    const expectedUid = action === 'link' ? pending.expectedUid : undefined;
+    if (action === 'link' && (!expectedUid || useAuthStore.getState().user?.uid !== expectedUid)) return;
+    const controller = new AbortController();
+    request.current = controller; setBusy(true); setError('');
+    try {
+      const result = await completeIdentityChoice(pending.ticket, action, expectedUid, controller.signal);
+      if (controller.signal.aborted || getIdentityChoice()?.ticket !== pending.ticket) return;
+      if (action === 'link' && (useAuthStore.getState().user?.uid !== expectedUid || result.user.uid !== expectedUid)) {
+        throw new Error(t('当前账号已更改，请重新确认。', 'Your account changed. Confirm the account again.'));
+      }
+      if (!applySession(result.token, result.user)) throw new Error(t('无法保存登录状态，请检查浏览器存储后重试。', 'Could not save your session. Check browser storage and retry.'));
+      clearIdentityChoice(pending.ticket);
+      onDone({ isNew: result.isNew, hasWca: !!result.user.wcaId }, pending.returnPath);
+    } catch (cause) {
+      if (!controller.signal.aborted) setError(authErrorText(cause instanceof Error ? cause.message : String(cause), t));
+    } finally {
+      if (request.current === controller) { request.current = null; setBusy(false); }
+    }
+  };
+  const matches = !!pending.expectedUid && user?.uid === pending.expectedUid;
+  const providerMeta = SOCIALS.find((provider) => provider.key === pending.provider);
+  const providerName = providerMeta ? t(providerMeta.name.zh, providerMeta.name.en) : pending.provider === 'wca' ? 'WCA' : 'Google';
+  return <div className="auth-flow">
+    {pending.stage === 'choose' ? <>
+      <h2 className="auth-title">{t('你有 CubeRoot 账号吗？', 'Do you have a CubeRoot account?')}</h2>
+      <p className="auth-hint">{t('保留原账号的会员和资料。', 'Keep your existing membership and profile.')}</p>
+      <button type="button" className="auth-primary" disabled={busy} onClick={() => user?.uid ? authenticated() : updateIdentityChoice(pending.ticket, { stage: 'authenticate' })}>{t('登录已有账号', 'Sign in to an existing account')}</button>
+      <button type="button" className="auth-textbtn" disabled={busy} onClick={() => void complete('create')}>{t('创建新账号', 'Create a new account')}</button>
+    </> : pending.stage === 'authenticate' ? <>
+      {pending.otherIdentityRejected && <p className="auth-error" role="alert">{t('这个登录方式尚未绑定账号，请使用原来绑定的方式。', 'This sign-in method is not linked to an account. Use one already linked to your account.')}</p>}
+      <LoginFormFields firstPartyOnly={firstPartyOnly} onDone={authenticated} />
+    </> : <>
+      <h2 className="auth-title">{t(`绑定 ${providerName}`, `Link ${providerName}`)}</h2>
+      <p className="auth-hint">{matches ? `${user?.name || ''} · ID ${pending.expectedUid}` : t('当前账号已更改，请重新登录要绑定的账号。', 'Your account changed. Sign in to the account you want to link.')}</p>
+      <button type="button" className="auth-primary" disabled={busy || !matches} onClick={() => void complete('link')}>{t('确认绑定', 'Confirm linking')}</button>
+      <button type="button" className="auth-textbtn" disabled={busy} onClick={() => updateIdentityChoice(pending.ticket, { stage: 'authenticate', expectedUid: undefined })}>{t('使用其他账号', 'Use another account')}</button>
+    </>}
+    {error && <p className="auth-error" role="alert">{error}</p>}
+    <button type="button" className="auth-textbtn" disabled={busy} onClick={cancel}>{t('取消', 'Cancel')}</button>
+  </div>;
+}
+
+function LoginFormFields({
   firstPartyOnly = false,
   onDone,
 }: {
@@ -729,6 +812,8 @@ export function LoginForm({
 
   const [gBusy, setGBusy] = useState(false);
   const [gError, setGError] = useState<string | null>(null);
+  const googleMounted = useRef(false);
+  useEffect(() => { googleMounted.current = true; return () => { googleMounted.current = false; }; }, []);
   const handleGoogleLogin = async () => {
     const { googleClientId: clientId, googleRelayUrl: relayUrl } = avail;
     if (!clientId || !relayUrl) return;
@@ -736,10 +821,18 @@ export function LoginForm({
     setGBusy(true);
     try {
       const assertion = await requestGoogleAssertion(clientId, relayUrl);
+      if (!googleMounted.current) return;
       const r = await loginGoogle(assertion);
-      applySession(r.token, r.user);
+      if (!googleMounted.current) return;
+      if (!applySession(r.token, r.user)) throw new Error('session storage failed');
       onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
     } catch (e) {
+      if (!googleMounted.current) return;
+      if (e instanceof AccountChoiceRequired) {
+        try { rememberIdentityChoice(e, window.location.href); }
+        catch (storageError) { setGError(authErrorText(String(storageError), t)); }
+        return;
+      }
       setGError(authErrorText(e instanceof Error ? e.message : String(e), t));
     } finally {
       setGBusy(false);

@@ -71,6 +71,7 @@ describe('web session tickets', () => {
       createHash('sha256').update(pending.ticket).digest('hex'),
       createHash('sha256').update(pending.approval).digest('base64url'),
       expect.any(Date),
+      false,
     ]);
 
     queryMock.mockResolvedValueOnce([{ user_id: 42 }]);
@@ -78,6 +79,7 @@ describe('web session tickets', () => {
     expect(queryMock.mock.calls[2][1]).toEqual([
       42,
       createHash('sha256').update(pending.approval).digest('base64url'),
+      42,
       42,
     ]);
 
@@ -95,6 +97,15 @@ describe('web session tickets', () => {
   it('rejects malformed mobile challenges before touching the database', async () => {
     await expect(issueMobileSessionTicket(42, 'invalid')).rejects.toThrow(RangeError);
     expect(queryMock).not.toHaveBeenCalled();
+  });
+
+  it('persists the existing-only browser intent and enforces it during approval', async () => {
+    queryMock.mockResolvedValue([]);
+    const pending = await issueWechatBrowserSession(true);
+    expect(queryMock.mock.calls[1][1][3]).toBe(true);
+    await expect(approveWechatBrowserSession(pending.approval, 42)).resolves.toBe(false);
+    expect(queryMock.mock.calls[2][0]).toContain('NOT existing_only OR EXISTS');
+    expect(queryMock.mock.calls[2][0]).toContain('u.created_at < auth_web_session_tickets.created_at');
   });
 
   it('rejects malformed tickets before touching the database', async () => {

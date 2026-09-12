@@ -404,7 +404,13 @@ export async function authenticateUser(authHeader: string | undefined): Promise<
     const me = data.me;
     if (!me?.wca_id) return null;
 
+    // Legacy raw WCA tokens may authenticate existing accounts, but must not bypass the
+    // explicit first-account choice enforced by /auth/exchange.
+    const account = await findUserByWcaId(me.wca_id);
+    if (!account) return null;
+
     const user: WcaUser = {
+      uid: account.id,
       wcaId: me.wca_id,
       name: me.name ?? '',
       realWcaId: me.wca_id,

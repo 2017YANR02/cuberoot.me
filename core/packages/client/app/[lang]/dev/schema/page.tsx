@@ -42,6 +42,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'auth_identity_pending', domain: 'account', origin: '0232', purpose: { zh: '首次第三方登录的 15 分钟认证尝试；仅存票据摘要，用户明确创建或绑定后单次核销，不提前创建账号', en: '15-minute first-time provider authentication attempts; ticket hashes only, consumed once after explicit creation or linking without creating an account in advance' } },
   { name: 'platform_organizer_applications', domain: 'platform', origin: '0229', purpose: { zh: '主办方申请、关联组织与平台审批记录', en: 'Organizer applications, linked organizations and platform reviews' } },
   { name: 'platform_competitions', domain: 'platform', origin: '0224', purpose: { zh: '主办组织、报名窗口、抽成及结算配置', en: 'Organizer, registration window, commission and settlement configuration' } },
   { name: 'platform_competition_sessions', domain: 'platform', origin: '0224', purpose: { zh: '监督场次、名额与人员排班', en: 'Supervised session capacity and staff assignment' } },
@@ -183,7 +184,7 @@ const TABLES: Table[] = [
   { name: 'vault_item_access', domain: 'storage', origin: '0192', purpose: { zh: '每条内容对所有者及指定好友分别封装的内容密钥；解除好友时撤销', en: 'Per-item content keys separately wrapped for the owner and selected friends, revoked when friendship ends' } },
   { name: 'auth_identities', domain: 'account', origin: '0064', evolved: [78, 103], purpose: { zh: '账号与外部身份的唯一映射；微信小程序与网站扫码登录共用 UnionID', en: 'Unique account-to-provider identity mappings; Mini Program and website QR sign-in share the Weixin UnionID' } },
   { name: 'auth_codes', domain: 'account', origin: '0064', purpose: { zh: '邮箱与手机登录、绑定使用的短时验证码及核销状态', en: 'Short-lived email and phone verification codes with consumption state' } },
-  { name: 'auth_web_session_tickets', domain: 'account', origin: '0139', evolved: [179, 209], purpose: { zh: '小程序、浏览器与原生 App 跨运行时换取会话的短时单次票据；只存密钥 SHA-256，移动端另绑 PKCE challenge', en: 'Short-lived single-use cross-runtime session tickets for Mini Program, browser, and native App handoffs; hashes only, with mobile tickets additionally bound to a PKCE challenge' } },
+  { name: 'auth_web_session_tickets', domain: 'account', origin: '0139', evolved: [179, 209, 232], purpose: { zh: '小程序、浏览器与原生 App 跨运行时换取会话的短时单次票据；只存密钥 SHA-256，移动端另绑 PKCE challenge，微信已有账号验证由 existing_only 限制新建账号回传', en: 'Short-lived single-use cross-runtime session tickets; hashes only, mobile PKCE binding, and existing_only to prevent a newly created WeChat account from completing existing-account authentication' } },
 
   // ── file storage ───────────────────────────────────────
   { name: 'drive_members', domain: 'storage', origin: '0184', purpose: { zh: '管理员维护的小规模网盘访问白名单；管理员账号无需重复登记', en: 'Admin-managed access list for the small private Drive; admin accounts need no duplicate row' }, cols: [
@@ -758,6 +759,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 229, slug: 'organizer_applications', desc: { zh: '主办方申请关联已有组织或审核后创建组织，明确平台批准后方可办赛。', en: 'Organizer applications reuse existing organizations or create an organization on approval; competition hosting requires explicit platform approval.' } },
   { n: 230, slug: 'forum_bans', desc: { zh: '管理员在帖子页拉黑或解除拉黑账号，保留历史内容。', en: 'Let administrators ban or unban forum accounts from a post while retaining existing content.' } },
   { n: 231, slug: 'auth_apple_token', desc: { zh: '在已有登录身份中加密保存 Apple 撤销凭据与密钥版本，仅供解绑和注销撤销授权，不进入身份列表响应。', en: 'Keep an encrypted Apple revocation credential and key version on the existing identity for unlinking and account deletion; never expose it in identity-list responses.' } },
+  { n: 232, slug: 'auth_identity_pending', desc: { zh: '首次第三方授权后暂存短期认证尝试，明确选择新建或验证已有账号后才事务核销；不按邮箱自动关联。', en: 'Keep short-lived first-time provider attempts until explicit creation or verified account linking, then consume them transactionally; never auto-link by email.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

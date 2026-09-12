@@ -100,6 +100,7 @@ const ENDPOINTS: Ep[] = [
 
   // ---- account (邮箱 / 手机验证码登录 + 多身份绑定) ----
   { d: 'auth', m: 'GET', p: '/v1/auth/providers', g: 'public', zh: '已配置的登录方式(前端隐藏未开放 tab)', en: 'Configured login methods (client hides unavailable tabs)' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/identity/complete', g: 'public', c: 'no-store', zh: '单次核销首次第三方认证票据；新建需明确选择，绑定需当前 Bearer 与确认的账号 UID', en: 'Consume a first-time provider ticket once; creation requires an explicit choice, linking requires the current Bearer and confirmed account UID' },
   { d: 'auth', m: 'GET', p: '/v1/auth/apple/authorize', g: 'public', c: 'no-store', zh: '生成绑定浏览器 PKCE challenge 的授权 URL、签名 state 与规范站点 origin；link 模式要求 Bearer 并绑定当前 uid', en: 'Create a browser-PKCE-bound authorization URL, signed state and canonical origin; link intent requires Bearer and binds the current uid' },
   { d: 'auth', m: 'POST', p: '/v1/auth/apple/callback', g: 'public', c: 'no-store', zh: '接收 Apple form_post 并回到唯一第三方授权回调页，不在 URL 传递会话', en: 'Receive Apple form_post and return to the canonical social callback without a session in the URL' },
   { d: 'auth', m: 'POST', p: '/v1/auth/apple', g: 'public', c: 'no-store', zh: '校验 Apple 授权码、签名与 nonce，登录同一 CubeRoot 账号', en: 'Verify Apple code, signature and nonce, then sign in to the canonical CubeRoot account' },

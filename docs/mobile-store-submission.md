@@ -297,6 +297,8 @@ CubeRoot 走组织账号路线，不把新个人账号的 12 人/14 天要求自
 
 Apple `form_post` 回调通过 303 返回网站既有 `/auth/social/callback`。浏览器交接以 state + S256 challenge/verifier 绑定，再复用已有 App PKCE/一次性票据；不把 verifier 或长期 token 放 URL。身份依据 Apple 验签后的 `sub`，不按邮箱自动合并，也不保存 Apple 邮箱；仅请求 email scope，不请求姓名。refresh token 加密保存在现有 `auth_identities`；解绑/注销前必须验证 Apple revoke 成功，失败保留记录供重试。当前尚无真实 Apple 登录、隐藏邮箱、解绑/注销、外部撤销通知和五端 PKCE E2E 证据；不能提前关闭 Apple 4.8 门槛。
 
+首次身份选择增量（2026-09-11，本地实现）：Google、Apple、微信、QQ、支付宝和 WCA 的网站授权，未知身份先不创建账号，用户明确选择新建或验证已有账号后再确认绑定。`0232_auth_identity_pending` 仅保存短期票据摘要、已验证身份资料及必要的 Apple 加密凭据，认证尝试 15 分钟过期，后台每分钟清理到期记录；成功确认时身份和凭据在同一事务迁入原账号体系。浏览器仅在 sessionStorage 保存短期不透明票据，不把它放入 URL。放弃未完成流程不等于撤销 Apple 授权；既有解绑/注销的 revoke 规则不变。最终隐私披露需包含这段短期认证数据处理；此项不证明个人授权或五端回跳已验收。
+
 2026-09-11 门户配置证据：primary App ID `me.cuberoot.app` 和 Services ID `me.cuberoot.web` 已注册、关联，域名 `cuberoot.me`、`www.cuberoot.me`、`api.cuberoot.me` 与上表 HTTPS return URL 已配置，所有者 Save 后返回列表。先前“没有可用 identifier，无法建 SIWA key”的阻塞已解除；所有者已生成并下载 `.p8`，本机 `openssl pkey -check -noout` 返回 `Key valid`，文件权限设为 `600`。私钥内容和本机路径不记入本文件、不入 Git；仍未证明生产已注入配置、Apple 令牌交换或登录 E2E。IAP 商品/价格/周期决策继续待所有者确认，SIWA 配置不意味着已启动付费商品配置。
 
 同日后续部署证据：源码 `83ef9a85d` 的 Core / Next / Vercel 部署已成功，`0231` 迁移摘要与生产 ledger 一致，服务器 Apple 配置已安全注入，公开 provider 返回 `apple: true`。隔离浏览器已从生产中文登录按钮进入 Apple 官方授权页面，确认显示 CubeRoot Web Login；有效 state 的取消回调也已通过。完整记录见路线图阶段 6。此项仅关闭配置、部署与授权入口检查，不证明个人凭据授权、隐藏邮箱、App 回跳、绑定/解绑或撤销/注销通过；`DRAFT — NOT SUBMISSION READY` 不变。
