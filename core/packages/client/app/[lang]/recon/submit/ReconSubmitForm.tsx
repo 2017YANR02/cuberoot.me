@@ -530,7 +530,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   useEffect(() => {
     if (isEditing || fromId) return;
     const personId = searchParams?.get('personId');
-    if (!personId) return;
+    const hasScramble = !!(searchParams?.get('scramble') || searchParams?.get('optimal') || searchParams?.get('generic'));
+    if (!personId && !hasScramble) return;
     const ev = searchParams?.get('event') || '';
     const round = searchParams?.get('round') || '';
     const solveNumRaw = searchParams?.get('solveNum');
@@ -545,10 +546,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       : undefined;
     setForm(prev => ({
       ...prev,
-      official: seededOfficial ?? prev.official,
+      official: seededOfficial ?? (!personId && hasScramble ? 'practice' : prev.official),
       event: EVENTS.includes(ev) ? ev : prev.event,
       person: searchParams?.get('person') || prev.person,
-      personId,
+      personId: personId || prev.personId,
       personCountry: searchParams?.get('personCountry') || prev.personCountry,
       comp: searchParams?.get('comp') || prev.comp,
       compWcaId: searchParams?.get('compWcaId') || prev.compWcaId,
@@ -855,6 +856,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   // ── Avg auto-fetch ──
   useEffect(() => {
+    if (form.official === 'practice') return;
     if (avgUserTouched) return;
     if (!form.personId || !form.event || !form.round) return;
     if (!form.comp && !form.compWcaId) return;
@@ -946,10 +948,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); setAvgLoading(false); };
-  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, avgUserTouched, isEditing, editId, isZh, personMerged]);
+  }, [form.official, form.personId, form.event, form.comp, form.compWcaId, form.round, avgUserTouched, isEditing, editId, isZh, personMerged]);
 
   // ── Single-time auto-fetch (fills 成绩 + 单次 independently) ──
   useEffect(() => {
+    if (form.official === 'practice') return;
     if (timeUserTouched && singleUserTouched) return;
     if (!form.personId || !form.event || !form.round || form.solveNum == null) return;
     if (!form.comp && !form.compWcaId) return;
@@ -1052,7 +1055,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); setTimeLoading(false); };
-  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, timeUserTouched, singleUserTouched, isEditing, editId, isZh, setField, personMerged]);
+  }, [form.official, form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, timeUserTouched, singleUserTouched, isEditing, editId, isZh, setField, personMerged]);
 
   // ── 非 WCA / 练习:单次由「原始成绩」截断千分位带出(没有 WCA/已录数据可供上面那个自动获取) ──
   useEffect(() => {
@@ -1148,6 +1151,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   // ── Record marker auto-fetch (WCA only) ──
   useEffect(() => {
+    if (form.official !== 'wca') return;
     if (singleRecordUserTouched && averageRecordUserTouched) return;
     if (!form.personId || !form.event || !form.round) return;
     if (!form.compWcaId) return;
@@ -1263,7 +1267,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); setRecordLoading(false); };
-  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, singleRecordUserTouched, averageRecordUserTouched, setField, isZh, personMerged]);
+  }, [form.official, form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, singleRecordUserTouched, averageRecordUserTouched, setField, isZh, personMerged]);
 
   // ── Duplicate detection(同选手 + 同打乱;与后端拒绝口径一致)──
   useEffect(() => {
@@ -1815,7 +1819,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   </select>
                 </label>
                 <div className={`submit-field ${form.compWcaId ? 'submit-field-shrink' : ''}${reusedCls('comp')}`}>
-                  <span className="submit-label">{t('recon.competition')}</span>
+                  <span className="submit-label">{form.official === 'practice' && form.compWcaId
+                    ? tr({ zh: '打乱来源比赛', en: 'Scramble competition' })
+                    : t('recon.competition')}</span>
                   {form.compWcaId ? (
                     <div className="submit-comp-pill">
                       <Flag iso2={form.country || ''} />

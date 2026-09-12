@@ -14,7 +14,7 @@ describe('pickup and putdown durations', () => {
   });
 
   it('counts each attempt once, keeps measured entries and scopes arithmetic means by event', () => {
-    const base = { compWcaId: 'Example2026', event: '3x3', round: '2', solveNum: 1 };
+    const base = { official: 'wca', compWcaId: 'Example2026', event: '3x3', round: '2', solveNum: 1 };
     const records = [
       { ...base, id: 1, pickupTime: 0.2, putdownTime: 0.1 },
       { ...base, id: 2, pickupTime: 0.4, putdownTime: 0.2 },
