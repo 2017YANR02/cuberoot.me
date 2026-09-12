@@ -16,6 +16,13 @@ interface Card {
 
 const CARDS: Card[] = [
   {
+    href: '/dev/auth',
+    glyph: '⇄',
+    accent: 'var(--accent)',
+    zh: { title: '登录与账号绑定', sub: 'Sign-in & account linking', tagline: '看清手机号验证、微信快捷登录与旧账号绑定的关系，区分目标方案和当前实现', meta: '小程序流程图 / 原账号 / 防重复注册' },
+    en: { title: 'Sign-in & account linking', sub: 'One CubeRoot account', tagline: 'Trace phone verification, WeChat sign-in, and existing-account linking, with proposed and implemented flows clearly separated', meta: 'Mini Program flow / existing accounts / explicit registration' },
+  },
+  {
     href: '/dev/architecture',
     glyph: '⛯',
     accent: 'var(--signal-success)',

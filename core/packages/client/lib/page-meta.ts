@@ -304,6 +304,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'dev/algorithms/min2phase': { title: { zh: 'min2phase', en: 'min2phase' } },
   'dev/algorithms/webcodecs': { title: { zh: 'WebCodecs 帧精确解码', en: 'WebCodecs frame-accurate decoding' } },
   'dev/api': { title: { zh: 'API 端点目录', en: 'API reference' } },
+  'dev/auth': {
+    title: { zh: '登录与账号绑定', en: 'Sign-in and account linking' },
+    description: { zh: '用流程图说明微信小程序手机号验证、原账号绑定与后续快捷登录，区分目标方案和当前实现。', en: 'Flowcharts explain phone verification, existing-account linking, and future WeChat sign-in, distinguishing the proposal from the current implementation.' },
+  },
   'dev/architecture': { title: { zh: '架构地图', en: 'Architecture Atlas' } },
   'dev/architecture/decisions': { title: { zh: '技术决策', en: 'Technical Decisions' } },
   'dev/architecture/flow': { title: { zh: '请求流程', en: 'Request Flow' } },
