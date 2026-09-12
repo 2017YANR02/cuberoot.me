@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Megaphone, Sparkles, UserCog, Laptop, Globe, Drama, Settings2 } from 'lucide-react';
+import { Megaphone, Sparkles, UserCog, Laptop, Globe, Drama } from 'lucide-react';
 import { ensureFreshToken, refreshSessionUser, canTestRoles, getRolePreview, startRolePreview, endRolePreview, useAuthUser, isAdmin, type TestRole } from '@/lib/auth-store';
 import AppLink from './AppLink';
 import { openPageNoticeEditor, pageKeyFromPathname } from '@/lib/page-notices-api';
@@ -171,7 +171,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     <button ref={toggleRef} type="button" className="admin-tool-action admin-tools-toggle"
       aria-label={t('管理工具', 'Admin tools')} title={t('管理工具', 'Admin tools')} aria-expanded={expanded}
       onClick={() => { cancelCollapse(); setExpanded(value => !value); }}>
-      <Settings2 size={17} aria-hidden />
+      {environment.current === 'local' ? <Laptop size={17} aria-hidden /> : <Globe size={17} aria-hidden />}
     </button>
     <div ref={actionsRef} className="admin-tools-actions" inert={!expanded}>
     {admin && <>
