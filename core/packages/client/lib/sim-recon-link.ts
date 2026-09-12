@@ -49,13 +49,22 @@ export function simPuzzleForReconEvent(ev: string): string | null {
 }
 
 /** Build the /recon/submit query string from sim state. */
-export function buildReconSubmitQuery(reconEvent: string, scramble: string, solution: string): string {
+export function buildReconSubmitQuery(reconEvent: string, scramble: string, solution: string, options?: {
+  practice?: boolean;
+  optimal?: boolean;
+  competition?: { ci: string; cn: string } | null;
+}): string {
   const params = new URLSearchParams();
   params.set('event', reconEvent);
   const scr = encodeUrlAlg(scramble.trim());
   const sol = encodeUrlAlg(solution.trim());
-  if (scr) params.set('scramble', scr);
+  if (scr) params.set(options?.optimal ? 'optimal' : 'scramble', scr);
   if (sol) params.set('alg', sol);
+  if (options?.practice) params.set('official', 'practice');
+  if (options?.competition) {
+    params.set('compWcaId', options.competition.ci);
+    params.set('comp', options.competition.cn);
+  }
   return params.toString();
 }
 

@@ -18,7 +18,7 @@ export interface ReconAttemptInfo {
 export function buildReconAttemptMap(recons: ReconSolve[]): Map<string, ReconAttemptInfo> {
   const m = new Map<string, ReconAttemptInfo>();
   for (const r of recons) {
-    if (!r.compWcaId || !r.event || !r.round || r.solveNum == null) continue;
+    if (r.official !== 'wca' || !r.compWcaId || !r.event || !r.round || r.solveNum == null) continue;
     const wcaEid = toWcaEventId(r.event);
     const key = `${r.compWcaId}|${wcaEid}|${r.round}|${r.solveNum}`;
     const previous = m.get(key);
@@ -112,7 +112,7 @@ export function computeReconRoundAvg(
 export function buildReconPersonAttemptMap(recons: ReconSolve[]): Map<string, number> {
   const m = new Map<string, number>();
   for (const r of recons) {
-    if (!r.compWcaId || !r.personId || !r.event || !r.round || r.solveNum == null) continue;
+    if (r.official !== 'wca' || !r.compWcaId || !r.personId || !r.event || !r.round || r.solveNum == null) continue;
     const wcaEid = toWcaEventId(r.event);
     m.set(`${r.compWcaId}|${r.personId}|${wcaEid}|${r.round}|${r.solveNum}`, r.id);
   }

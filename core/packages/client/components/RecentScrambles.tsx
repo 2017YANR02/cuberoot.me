@@ -17,6 +17,9 @@
 // 步数最短。同态 ⇒ 各阶段步数 / 难度值不变。仅「打乱长度」视图例外(那按的就是原打乱长度)。
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
+import AppLink from '@/components/AppLink';
+import { Clapperboard } from 'lucide-react';
+import { buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
@@ -31,7 +34,7 @@ import { VariantSelect } from '@/components/VariantSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
 import { formatDateRangeIso } from '@/lib/wca-date';
-import { eventDisplayName } from '@/lib/wca-events';
+import { eventDisplayName, wcaToReconEvent } from '@/lib/wca-events';
 import './recent_scrambles.css';
 import './scroll_panel.css';
 import { tr } from '@/i18n/tr';
@@ -296,8 +299,15 @@ const analyzerHref = (
   scramble: string,
   target?: { method: string; stage: number } | null,
   color?: ColorLetter,
+  competition?: { ci: string; cn: string },
+  optimal?: boolean,
 ) => {
   const p = new URLSearchParams({ scramble: scramble.trim().replace(/ /g, '_') });
+  if (competition) {
+    p.set('compWcaId', competition.ci);
+    p.set('comp', competition.cn);
+  }
+  if (optimal) p.set('optimal', '1');
   if (target) {
     if (target.method !== 'std') p.set('method', target.method); // std 是默认 method,省略
     if (target.stage !== 0) p.set('mstage', String(target.stage)); // 0 是默认阶段,省略
@@ -339,6 +349,9 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
   optimal?: boolean;
 }) {
   const dotList = dotColors ?? (color ? [color] : []);
+  const reconParams = buildReconSubmitQuery(wcaToReconEvent(event), scramble, '', {
+    practice: true, optimal, competition: m,
+  });
   return (
     <div className="rs-scard">
       <div className="rs-scard-cube">
@@ -357,12 +370,18 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
           </div>
         )}
         <Link
-          href={analyzerHref(lp, scramble, ssTarget, color)}
+          href={analyzerHref(lp, scramble, ssTarget, color, m, optimal)}
           prefetch={false}
           className="rs-scard-scramble"
           title={optimal ? tr({ zh: '最优等态打乱:与该场原打乱同一魔方态,步数最短', en: 'Optimal equivalent scramble — same cube state as the original, fewest moves' }) : undefined}
         >{scramble}</Link>
         {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
+        {scramble.trim() && (
+          <AppLink href={`/recon/submit?${reconParams}`} prefetch={false} className="rs-recon-link">
+            <Clapperboard size={16} aria-hidden="true" />
+            {tr({ zh: '复盘', en: 'Reconstruct' })}
+          </AppLink>
+        )}
       </div>
     </div>
   );
