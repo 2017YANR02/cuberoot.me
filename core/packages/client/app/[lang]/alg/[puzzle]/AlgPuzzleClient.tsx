@@ -332,12 +332,12 @@ export default function AlgPuzzleClient() {
         <AlgCard
           href={picking ? undefined : `/alg/${puzzle}/${s.slug}${puzzle === 'sq1' && !sq1BlackTop ? '?black=false' : ''}`}
           onClick={picking ? () => togglePick(s.slug) : undefined}
-          className={picking && picked.includes(s.slug) ? 'is-picked' : undefined}
+          className={[puzzle === 'sq1' && 'alg-card--sq1-set', picking && picked.includes(s.slug) && 'is-picked'].filter(Boolean).join(' ') || undefined}
           thumb={first && (
             /* 每阶最多二十来张、全在首屏附近,本地渲染实测 19 张 26ms —— 图与数量同帧出现,
                不再各自等一次跨域请求。渲染器本来就静态 import 进了 bundle,不额外增体积。
                长 case 网格不能照抄这条,那边走 loading="lazy",见 AlgCategoryView。 */
-            <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={thumbSize} local sq1BlackTop={sq1BlackTop} sq1SideBySide={puzzle === 'sq1'} />
+            <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={puzzle === 'sq1' ? 144 : thumbSize} local sq1BlackTop={sq1BlackTop} sq1SideBySide={puzzle === 'sq1'} />
           )}
           title={title}
         />
