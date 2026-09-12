@@ -13,16 +13,83 @@ function Arrow() {
   return <div className="auth-map-arrow" aria-hidden="true">↓</div>;
 }
 
+/** Ordered documentation steps, not a second authentication implementation. */
+function Steps({ items }: { items: ReactNode[] }) {
+  return <ol className="auth-map-steps">{items.map((item, index) => <li key={index}>
+    {index > 0 && <Arrow />}<FlowNode>{item}</FlowNode>
+  </li>)}</ol>;
+}
+
 export default function AuthFlowPage() {
   const t = useT();
   return <main className="auth-map-page">
     <header className="auth-map-header">
       <AppLink href="/dev" prefetch={false}>Dev</AppLink>
-      <h1>{t('登录与账号绑定', 'Sign-in and account linking')}</h1>
-      <p>{t('手机号用于首次验证，微信用于以后快捷登录；会员和资料始终属于同一个 CubeRoot 账号。', 'Verify a phone number once, then use WeChat for convenient sign-in. Membership and profile belong to one CubeRoot account.')}</p>
+      <h1>{t('账号全流程', 'Account lifecycle')}</h1>
+      <p>{t('一个 CubeRoot 账号，多种登录方式。先看从哪个平台进入，再看登录、绑定、合并和注销各自会做什么。', 'One CubeRoot account, multiple sign-in methods. Start with your platform, then follow sign-in, linking, merging, or deletion.')}</p>
+      <p className="auth-map-note">{t('源码核对：2026-09-11。「源码已实现」不等于所有平台真人测试或商店发布完成；「目标方案」尚未接入。此页不执行账号操作。', 'Source reviewed: 2026-09-11. Implemented in source does not mean real-account testing or store release is complete on every platform. Proposals are not implemented. This page performs no account actions.')}</p>
+      <nav className="auth-map-nav" aria-label={t('账号流程目录', 'Account flow contents')}>
+        <AppLink href="#platforms" prefetch={false}>{t('平台入口', 'Platforms')}</AppLink>
+        <AppLink href="#signin" prefetch={false}>{t('登录 / 注册', 'Sign in / register')}</AppLink>
+        <AppLink href="#mini" prefetch={false}>{t('微信小程序', 'WeChat Mini Program')}</AppLink>
+        <AppLink href="#linking" prefetch={false}>{t('绑定 / 解绑', 'Link / unlink')}</AppLink>
+        <AppLink href="#merge" prefetch={false}>{t('合并账号', 'Merge accounts')}</AppLink>
+        <AppLink href="#exit" prefetch={false}>{t('退出 / 注销', 'Sign out / delete')}</AppLink>
+      </nav>
     </header>
 
-    <section aria-labelledby="mini-flow-title">
+    <section id="platforms" className="auth-map-section" aria-labelledby="platform-title">
+      <h2 id="platform-title">{t('从哪里进入？账号不按平台分家', 'Where do you start? Platforms do not create separate account systems')}</h2>
+      <div className="auth-map-platforms">
+        <article><h3>{t('网站 / PWA', 'Website / PWA')}</h3><p>{t('打开「我的」→ 在网站登录。账号管理也在同一页。', 'Open My account → sign in on the website. Account management uses that same page.')}</p><AppLink href="#signin" prefetch={false}>{t('看网站登录流程 ↓', 'Website sign-in flow ↓')}</AppLink></article>
+        <article><h3>iOS App</h3><p>{t('我的 → 系统浏览器完成网站登录 → 回到 App。凭据存入 Keychain；不是另建 Apple 账号。', 'My account → website sign-in in the system browser → return to the App. The session uses Keychain, not a separate Apple-only account.')}</p><AppLink href="#app-handoff" prefetch={false}>{t('看 App 回跳流程 ↓', 'App handoff flow ↓')}</AppLink></article>
+        <article><h3>Android App</h3><p>{t('与 iOS 复用同一登录流程；由 Android 深链接回，凭据使用 Keystore 保护的存储。', 'Shares the iOS sign-in flow. An Android deep link returns to the App; session storage is protected by Keystore.')}</p><AppLink href="#app-handoff" prefetch={false}>{t('看 App 回跳流程 ↓', 'App handoff flow ↓')}</AppLink></article>
+        <article><h3>{t('微信小程序', 'WeChat Mini Program')}</h3><p>{t('当前：微信身份登录；账号管理打开网站。手机号首次授权是下方单独标出的目标方案。', 'Today: WeChat identity sign-in; account management opens the website. First-time phone authorization is a separate proposal below.')}</p><AppLink href="#mini" prefetch={false}>{t('看当前与目标流程 ↓', 'Current and proposed flows ↓')}</AppLink></article>
+      </div>
+      <details className="auth-map-current"><summary>{t('其他平台：鸿蒙、Windows、macOS、抖音小程序', 'Other platforms: HarmonyOS, Windows, macOS, Douyin Mini Program')}</summary>
+        <p>{t('HarmonyOS NEXT、Windows、macOS 共用 App 产品层和网站账号流程，只替换系统浏览器、深链与安全存储适配；每个平台的真实回跳仍须单独验收。', 'HarmonyOS NEXT, Windows, and macOS share the App product layer and website account flow, with platform browser, deep-link, and secure-storage adapters. Each platform still needs its own real handoff tests.')}</p>
+        <p>{t('抖音小程序当前是独立的抖音身份登录，首次登录会创建账号，不能把微信的 UnionID 或下方手机号方案套过去；不按昵称或手机号自动合并。其首次已有账号选择仍需单独完善。', 'The Douyin Mini Program currently uses a separate Douyin identity flow that creates an account on first sign-in. WeChat UnionID and the phone proposal do not apply. It does not merge by nickname or phone; its first-time existing-account choice still needs separate work.')}</p>
+      </details>
+    </section>
+
+    <section id="signin" className="auth-map-section" aria-labelledby="signin-title">
+      <div className="auth-map-section-heading"><h2 id="signin-title">{t('登录与注册：网站和 App 共用', 'Sign-in and registration: shared by website and App')}</h2><span className="auth-map-status auth-map-implemented">{t('源码已实现 · 可用入口以服务端配置为准', 'Implemented in source · availability depends on server configuration')}</span></div>
+      <figure className="auth-map-figure" aria-labelledby="signin-title">
+        <div className="auth-map-current-paths">
+          <section><h3>{t('邮箱 / 手机号 / 密码', 'Email / phone / password')}</h3><Steps items={[
+            t('选择邮箱或手机号，使用验证码；已设密码也可用密码登录', 'Choose email or phone and verify a code; an existing password is another sign-in option'),
+            t('验证通过 → 已有凭据进入原账号；普通验证码入口支持登录 / 注册一体流程', 'Verification succeeds → an existing credential signs in to its account; the normal code flow combines sign-in and registration'),
+          ]} /><p className="auth-map-note">{t('忘记密码时才走：验证原账号已绑定的邮箱或手机 → 设置新密码。不是每次登录都要重设。', 'Only if you forgot your password: verify the linked email or phone → set a new password. This is not required on every sign-in.')}</p><p className="auth-map-note">{t('密码登录不创建账号。「绑定已有账号」中的验证只认旧号，不会用陌生邮箱、手机号悄悄注册。', 'Password sign-in does not create accounts. Verification inside existing-account linking accepts existing accounts only; an unknown email or phone does not silently register.')}</p></section>
+          <section><h3>{t('第三方登录', 'Provider sign-in')}</h3><Steps items={[
+            t('Google / Apple / 微信 / QQ / 支付宝 / WCA', 'Google / Apple / WeChat / QQ / Alipay / WCA'),
+            t('授权成功 → 服务端识别这一个第三方身份', 'Authorization succeeds → server identifies this provider identity'),
+          ]} /><div className="auth-map-phone-results">
+            <div><p className="auth-map-branch-label">{t('已绑定', 'Already linked')}</p><Arrow /><FlowNode outcome>{t('直接登录原账号，不重复提问', 'Sign in to the existing account without asking again')}</FlowNode></div>
+            <div><p className="auth-map-branch-label">{t('尚未绑定', 'Not linked')}</p><Arrow /><FlowNode>{t('你有 CubeRoot 账号吗？', 'Do you have a CubeRoot account?')}<small>{t('有：登录旧号 → 核对账号 → 确认绑定。没有：明确选择创建新账号。', 'Yes: authenticate the old account → check it → confirm linking. No: explicitly choose to create an account.')}</small></FlowNode></div>
+          </div></section>
+        </div>
+        <figcaption>{t('拒绝授权、取消、过期或网络错误 → 提示并允许重试，不自动变成注册。不按相同邮箱或昵称认定两个身份属于同一个人。', 'Declined authorization, cancellation, expiry, or network failure → explain and allow retry, never silently register. Matching email addresses or nicknames do not establish identity.')}</figcaption>
+      </figure>
+      <section id="app-handoff" aria-labelledby="handoff-title"><h3 id="handoff-title">{t('iOS / 安卓：登录后怎样回到 App？', 'iOS / Android: how do you return after sign-in?')}</h3>
+        <figure className="auth-map-figure" aria-labelledby="handoff-title"><Steps items={[
+          t('App「我的」显示网站唯一账号页 → 点击登录', 'The App My account tab shows the canonical website account page → tap sign in'),
+          t('打开系统浏览器 → 完成上方同一登录 / 已有账号选择流程', 'Open the system browser → complete the same sign-in / existing-account choice above'),
+          t('单次短期票据 + 回跳校验（PKCE / state）→ App 换取并安全保存会话', 'One-time short-lived ticket + handoff validation (PKCE / state) → App exchanges and securely stores the session'),
+          t('再用一次性网页票据恢复「我的」页登录态 → 显示同一个账号', 'A separate one-time web ticket restores sign-in in My account → show the same account'),
+        ]} /><figcaption>{t('浏览器、App 安全存储、内嵌账号页是三个会话容器，不是三个账号。回跳失败时回 App 重试，不重复注册；长期登录凭据不放进网址。', 'The browser, App secure storage, and embedded account page are three session containers, not three accounts. Retry a failed handoff without registering again; long-lived credentials never enter URLs.')}</figcaption></figure>
+      </section>
+      <p className="auth-map-note">{t('登录成功 ≠ 计时记录已云同步。App 的计时记录、备注和设置仍在本机；账号合并也不自动收集各台设备的本地记录。', 'Successful sign-in does not mean timer data is cloud-synced. App solves, notes, and settings remain local; account merging does not gather local records from every device.')}</p>
+    </section>
+
+    <section id="mini" className="auth-map-section" aria-labelledby="mini-current-title">
+      <div className="auth-map-section-heading"><h2 id="mini-current-title">{t('微信小程序：当前流程', 'WeChat Mini Program: current flow')}</h2><span className="auth-map-status auth-map-implemented">{t('源码已实现', 'Implemented in source')}</span></div>
+      <figure className="auth-map-figure" aria-labelledby="mini-current-title"><Steps items={[
+        t('我的 → 阅读并同意协议 → 微信登录', 'Me → read and accept the agreements → WeChat sign-in'),
+        t('服务端验证微信身份（UnionID）；取不到则停止，不另造 OpenID 账号', 'Server verifies the WeChat identity (UnionID); if unavailable, stop rather than create an OpenID account'),
+        t('已绑定 → 原账号登录；未绑定 → 选择绑定已有账号，或明确创建新账号', 'Already linked → sign in; otherwise → choose existing-account linking or explicitly create an account'),
+        t('绑定旧号时打开网站验证并确认 → 回小程序；登录后可打开网站账号管理', 'For existing-account linking, verify and confirm on the website → return to the Mini Program; signed-in users can open website account management'),
+      ]} /></figure>
+      <p className="auth-map-note">{t('小程序不会自动拿到手机号。下面是计划中的简化入口，不是当前已上线行为。', 'The Mini Program does not automatically receive a phone number. The simplified entry below is a proposal, not the current released behavior.')}</p>
       <div className="auth-map-section-heading">
         <h2 id="mini-flow-title">{t('微信小程序：目标流程', 'WeChat Mini Program: proposed flow')}</h2>
         <span className="auth-map-status">{t('设计方案 · 手机号授权尚未接入', 'Proposal · phone authorization not implemented')}</span>
@@ -87,21 +154,81 @@ export default function AuthFlowPage() {
       </ul>
     </aside>
 
-    <details className="auth-map-current">
-      <summary>{t('对照：当前源码已实现什么？', 'Compare: what is implemented in the current source?')}</summary>
-      <p>{t('网站与 App 共用第三方登录流程；小程序目前仍是微信身份登录，没有接入上图的手机号授权。源码具备不代表所有平台真人验收或商店发布完成。', 'Website and App share the provider sign-in flow. The Mini Program still uses WeChat identity sign-in, without the proposed phone authorization. Source implementation does not prove real-account testing or store release.')}</p>
-      <div className="auth-map-stem"><FlowNode>{t('Google / Apple / 微信 / QQ / 支付宝 / WCA 授权成功', 'Google / Apple / WeChat / QQ / Alipay / WCA authorization succeeds')}</FlowNode><Arrow /></div>
+    <section id="linking" className="auth-map-section" aria-labelledby="linking-title">
+      <div className="auth-map-section-heading"><h2 id="linking-title">{t('绑定 / 解绑：还是一个账号，只改登录入口', 'Link / unlink: one account, different ways to sign in')}</h2><span className="auth-map-status auth-map-implemented">{t('源码已实现', 'Implemented in source')}</span></div>
+      <p className="auth-map-note">{t('入口：网站「我的 → 齿轮 → 登录方式」；iOS / 安卓显示同一个账号页，小程序从「账号管理」进入网站。', 'Entry: website My account → settings gear → sign-in methods. iOS / Android display the same account page; Mini Program Account management opens the website.')}</p>
+      <figure className="auth-map-figure" aria-labelledby="linking-title"><div className="auth-map-current-paths">
+        <section><h3>{t('新增登录方式', 'Add a sign-in method')}</h3><Steps items={[
+          t('先登录要保留的 CubeRoot 账号', 'Sign in to the CubeRoot account you want to keep'),
+          t('选择绑定方式 → 验证新邮箱 / 手机号，或完成第三方授权', 'Choose a method → verify the new email / phone, or authorize the provider'),
+          t('归属检查通过 → 新登录方式挂到当前账号，会员不另开一份', 'Ownership checks pass → attach the method to this account, without creating a second membership'),
+        ]} /><p className="auth-map-note">{t('该身份已经属于另一个账号？停止绑定；需要合并时走下一节，不能直接抢绑。', 'Identity already belongs to another account? Stop linking. Use the merge flow if appropriate; never take over the link.')}</p></section>
+        <section><h3>{t('解绑或换绑', 'Unlink or replace')}</h3><Steps items={[
+          t('查看已绑定方式 → 选择解绑，或邮箱 / 手机号的换绑入口', 'Review linked methods → choose unlink, or replace the email / phone'),
+          t('唯一登录方式不能解绑；换绑必须验证新凭据', 'The only sign-in method cannot be removed; replacing it requires verifying the new credential'),
+          t('成功后账号仍保留，只是旧方式不能再登录这个账号', 'The account remains; the removed method no longer signs in to it'),
+        ]} /><p className="auth-map-note">{t('Apple 解绑涉及撤销授权；撤销失败保留绑定供重试，不伪报成功。每个账号各保留一个邮箱和一个手机号。', 'Unlinking Apple requires authorization revocation. A failure keeps the link for retry, rather than reporting success. Each account has at most one email and one phone.')}</p></section>
+      </div><figcaption>{t('App 中需要外部授权的绑定会转系统浏览器，并核对目标账号；浏览器登录了别的号时，不能把身份绑错。', 'App linking that needs external authorization opens the system browser and checks the target account; a different browser account must not receive the link.')}</figcaption></figure>
+    </section>
+
+    <section id="merge" className="auth-map-section" aria-labelledby="merge-title">
+      <div className="auth-map-section-heading"><h2 id="merge-title">{t('合并账号：把已有的 B 并入 A', 'Merge accounts: move existing B into A')}</h2><span className="auth-map-status auth-map-implemented">{t('源码已实现 · 有限制 · 不可撤销', 'Implemented in source · restricted · irreversible')}</span></div>
+      <p className="auth-map-note">{t('适合确实已经有两个账号的人，不是每次登录都要做。入口仍在统一账号页的「登录方式 → 合并账号」。', 'For someone who already has two accounts, not a step on every sign-in. Open Sign-in methods → Merge accounts on the canonical account page.')}</p>
+      <figure className="auth-map-figure" aria-labelledby="merge-title">
+        <div className="auth-map-direction"><span>{t('B · 不再单独使用', 'B · retire separately')}</span><span aria-hidden="true">→</span><strong>{t('A · 保留账号', 'A · keep this account')}</strong></div>
+        <Steps items={[
+          t('① 登录 A → 选择「保留当前账号」→ 生成合并码（10 分钟有效）', '① Sign in to A → Keep this account → generate a merge code (valid for 10 minutes)'),
+          t('② 再登录 B → 选择「合并当前账号」→ 输入 A 的合并码', '② Sign in to B → Merge this account → enter the code from A'),
+          t('③ 核对方向 B → A → 点击「确认合并当前账号」', '③ Check the direction B → A → explicitly confirm the merge'),
+          t('④ 服务端检查两个账号、合并码、凭据冲突和数据迁移条件', '④ Server checks both accounts, the code, credential conflicts, and data migration constraints'),
+        ]} />
+        <div className="auth-map-current-paths auth-map-results">
+          <FlowNode outcome><strong>{t('检查通过 → 一次事务完成', 'Checks pass → one transaction')}</strong><small>{t('受支持的数据和登录方式转入 A，当前会话切到 A；B 不再作为独立账号使用。不能撤销。', 'Supported data and sign-in methods move to A; the current session switches to A. B is retired as a separate account. This cannot be undone.')}</small></FlowNode>
+          <FlowNode><strong>{t('检查失败 → 不迁移账号数据', 'Checks fail → no account data is moved')}</strong><small>{t('提示冲突并停止；处理后可能需要在 A 重新生成合并码，不要反复点确认。', 'Explain the conflict and stop. After resolving it, a new code from A may be required; do not repeatedly submit.')}</small></FlowNode>
+        </div>
+        <figcaption>{t('合并码只能在你自己的两个账号之间使用，不要交给他人。绑定一个新方式 ≠ 合并两个账号。', 'Use the merge code only between your own accounts; do not share it. Linking a new method is not the same as merging two accounts.')}</figcaption>
+      </figure>
+      <details className="auth-map-current"><summary>{t('哪些情况会被拦住？会员怎么处理？', 'What blocks a merge? What happens to membership?')}</summary>
+        <ul className="auth-map-list">
+          <li>{t('两个不同的 WCA ID；双方各有邮箱或手机号；双方密码凭据冲突。', 'Different WCA IDs; both accounts have an email or both have a phone; conflicting password credentials.')}</li>
+          <li>{t('待并入账号有尚未支持迁移的直接关联数据，例如机构或课程关系；数据库唯一键冲突也会整体回滚。', 'The source account has unsupported directly linked data, such as organization or course relationships; database uniqueness conflicts also roll back the entire merge.')}</li>
+          <li>{t('已有会员、订单与续约合约按当前迁移规则处理；冲突会阻止合并，不能承诺两份会员时长自动相加。Apple IAP 尚未接入，不能声称已支持订阅跨账号迁移。', 'Existing memberships, orders, and renewal contracts follow current migration rules. Conflicts block the merge; membership durations are not guaranteed to add together. Apple IAP is not implemented, so subscription transfer is not claimed.')}</li>
+          <li>{t('登录其中一个账号不能证明另一个也属于你；合并需要分别登录两边。原账号无法登录时，先找回，不能跳过验证。', 'Access to one account does not prove ownership of the other. Sign in to both; recover an inaccessible account first rather than bypassing verification.')}</li>
+        </ul>
+      </details>
+    </section>
+
+    <section id="exit" className="auth-map-section" aria-labelledby="exit-title">
+      <h2 id="exit-title">{t('退出登录 ≠ 注销账号 ≠ 取消续费', 'Sign out ≠ delete account ≠ cancel renewal')}</h2>
       <div className="auth-map-current-paths">
-        <FlowNode outcome>{t('身份已绑定 → 直接登录', 'Identity already linked → sign in directly')}</FlowNode>
-        <FlowNode>{t('未知身份 → 登录已有账号并确认绑定，或明确创建新账号', 'Unknown identity → authenticate and confirm linking to an existing account, or explicitly create an account')}<small>{t('确认之前只保存短期认证尝试，不创建账号。', 'Only a short-lived authentication attempt exists before confirmation; no account is created.')}</small></FlowNode>
+        <section aria-labelledby="logout-title"><h3 id="logout-title">{t('退出登录：下次还能回来', 'Sign out: you can return')}</h3><figure className="auth-map-figure" aria-labelledby="logout-title"><Steps items={[
+          t('在当前账号页选择「退出登录」', 'Choose Sign out in the current account page'),
+          t('清理当前会话；App 内账号页与宿主通过消息同步退出', 'Clear the current session; the App account page and host coordinate sign-out through the bridge'),
+          t('账号、会员和服务端资料仍保留 → 下次用已绑定方式登录', 'Account, membership, and server data remain → sign in again with a linked method'),
+        ]} /><figcaption>{t('不等于全设备退出。外部浏览器退出不能主动通知休眠 App；也不会删除本地计时记录或取消续费。', 'Not a global device sign-out. An external browser cannot proactively notify a sleeping App. Signing out does not delete local solves or cancel renewal.')}</figcaption></figure></section>
+        <section aria-labelledby="delete-title"><h3 id="delete-title">{t('注销账号：永久删除，不能恢复', 'Delete account: permanent, no recovery')}</h3><figure className="auth-map-figure" aria-labelledby="delete-title"><Steps items={[
+          t('我的 → 齿轮 → 登录方式 → 底部「注销账号」', 'My account → settings gear → sign-in methods → Delete account at the bottom'),
+          t('阅读删除与保留清单 → 输入页面要求的账号标识；设过密码还须输入当前密码', 'Read what is deleted and retained → type the requested account identifier; enter the current password if one is set'),
+          t('主动确认永久注销 → 服务端检查续约合约、机构归属等条件，并撤销已绑定 Apple 授权', 'Explicitly confirm deletion → server checks renewal contracts, organization ownership, and other constraints, and revokes linked Apple authorization'),
+          t('成功 → 删除站内账号与对应私有数据、解除登录方式；失败 → 展示原因，不宣称已注销', 'Success → delete the site account and covered private data, remove sign-in methods. Failure → show the reason, never claim deletion succeeded'),
+        ]} /><figcaption>{t('源码已实现立即注销、无恢复期。App 与小程序复用网站入口，不另造删除表单；各端真实注销与会话清理仍须分别验收。', 'Source implements immediate deletion with no grace period. App and Mini Program reuse the website entry, not separate deletion forms; real deletion and session cleanup require per-platform testing.')}</figcaption></figure></section>
       </div>
-      <p>{t('小程序现有逻辑：未知微信身份先让用户选择绑定旧号或明确创建；浏览器回小程序确认时，也不会自动同意注册。', 'Current Mini Program: an unknown WeChat identity offers existing-account linking or explicit creation. A browser handoff does not automatically consent to registration.')}</p>
+      <aside className="auth-map-boundaries"><h3>{t('注销前一定要知道', 'Before deleting')}</h3><ul>
+        <li>{t('有待生效或生效中的自动续费合约：先取消并确认终止。是机构最后一位负责人：先转移归属。不是点注销就自动解约或退钱。', 'Pending or active renewal contract: cancel and confirm termination first. Last organization owner: transfer ownership first. Deletion is not automatic contract cancellation or a refund.')}</li>
+        <li>{t('私有数据按清单删除；公开讨论和公开复盘匿名保留，交易及必要业务审计记录保留。WCA 官方公开成绩不因 CubeRoot 注销消失。', 'Covered private data is deleted; public discussions and public reconstructions are anonymized. Transactions and required business audit records remain. Official public WCA results do not disappear when a CubeRoot account is deleted.')}</li>
+        <li>{t('不能声称远程清空所有手机。App 本地记录、导出备份和其他设备副本需要另外管理；注销的是 CubeRoot 账号，不是 Apple、Google 或微信账号。', 'This does not remotely wipe every phone. Manage local App records, exported backups, and other device copies separately. You delete CubeRoot, not your Apple, Google, or WeChat account.')}</li>
+      </ul></aside>
+    </section>
+
+    <details className="auth-map-current">
+      <summary>{t('还需要补什么？', 'What remains to be done?')}</summary>
+      <p>{t('微信手机号授权目标流程、抖音首次已有账号选择、Apple IAP，以及各平台真实登录回跳、绑定、合并、退出和注销矩阵仍须分别实施或验收。不能把这张说明图当成功能完成清单。', 'The WeChat phone proposal, Douyin first-time existing-account choice, Apple IAP, and each platform’s real sign-in handoff, linking, merging, sign-out, and deletion matrix still need implementation or verification. This diagram is not a feature-completion checklist.')}</p>
     </details>
 
     <footer className="auth-map-footer">
       <AppLink href="/dev/api" prefetch={false}>{t('API 目录', 'API reference')}</AppLink>
       <AppLink href="/dev/schema" prefetch={false}>{t('账号数据结构', 'Account schema')}</AppLink>
-      <span>{t('此页只解释流程，不执行真实登录或绑定。', 'This page explains the flow; it does not sign in or link accounts.')}</span>
+      <span>{t('此页只解释流程，不执行登录、绑定、合并或注销。实现事实源：AuthPanel、account_auth、account_merge、account_delete、InstalledAuthClient 与小程序 auth；发布状态以路线图为准。', 'Documentation only: no sign-in, linking, merging, or deletion. Source: AuthPanel, account_auth, account_merge, account_delete, InstalledAuthClient, and Mini Program auth. Release evidence remains in the roadmap.')}</span>
     </footer>
   </main>;
 }

@@ -22,6 +22,26 @@ describe('account flow documentation', () => {
     expect(html).not.toContain('<form');
   });
 
+  it.each(['zh', 'en'])('documents all platforms and the full account lifecycle without overstating support in %s', (lang) => {
+    locale.lang = lang;
+    const html = renderToStaticMarkup(createElement(AuthFlowPage));
+    for (const id of ['platforms', 'signin', 'app-handoff', 'mini', 'linking', 'merge', 'exit']) {
+      expect(html).toContain(`id="${id}"`);
+      expect(html).toContain(`href="#${id}"`);
+    }
+    for (const platform of ['iOS App', 'Android App', 'HarmonyOS', 'Windows', 'macOS']) expect(html).toContain(platform);
+    for (const text of lang === 'zh' ? [
+      'B → A', '10 分钟有效', '唯一登录方式不能解绑', '不能承诺两份会员时长自动相加',
+      '注销账号 ≠ 取消续费', '无恢复期', '公开讨论和公开复盘匿名保留',
+      '登录成功 ≠ 计时记录已云同步', '不是三个账号', '首次登录会创建账号',
+    ] : [
+      'B → A', 'valid for 10 minutes', 'only sign-in method cannot be removed', 'durations are not guaranteed to add together',
+      'delete account ≠ cancel renewal', 'no grace period', 'public discussions and public reconstructions are anonymized',
+      'does not mean timer data is cloud-synced', 'not three accounts', 'creates an account on first sign-in',
+    ]) expect(html).toContain(text);
+    expect(html).not.toContain('<button');
+  });
+
   it('is discoverable from Dev and does not execute an authentication flow', () => {
     const dev = readFileSync(new URL('../app/[lang]/dev/page.tsx', import.meta.url), 'utf8');
     const page = readFileSync(new URL('../app/[lang]/dev/auth/page.tsx', import.meta.url), 'utf8');

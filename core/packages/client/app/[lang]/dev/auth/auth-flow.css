@@ -2,11 +2,26 @@
 .auth-map-header { margin-bottom: 36px; }
 .auth-map-header h1 { font-size: clamp(26px, 4vw, 38px); font-weight: 700; margin: 14px 0; }
 .auth-map-header p { max-width: 760px; line-height: 1.75; color: var(--muted-foreground); }
+.auth-map-nav { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 22px; font-size: 14px; }
+.auth-map-nav a { padding: 8px 0; }
+.auth-map-section { padding: 28px 0; border-top: 1px solid var(--border-default); }
+.auth-map-page [id] { scroll-margin-top: 80px; }
+.auth-map-page h3 { font-size: 16px; font-weight: 650; margin-bottom: 12px; }
+.auth-map-platforms { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 24px 0; }
+.auth-map-platforms article { border: 1px solid var(--border-default); background: var(--card); border-radius: 12px; padding: 18px; font-size: 14px; line-height: 1.75; }
+.auth-map-platforms p { margin-bottom: 12px; color: var(--muted-foreground); }
+.auth-map-steps { list-style: none; padding: 0; margin: 0 auto; max-width: 640px; }
+.auth-map-steps li { min-width: 0; }
+.auth-map-direction { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 16px; padding: 20px; margin-bottom: 20px; background: var(--accent-soft); border-radius: 12px; font-size: 16px; }
+.auth-map-results { margin-top: 24px; }
+.auth-map-list { list-style: disc; padding-left: 20px; font-size: 14px; line-height: 1.8; margin: 16px 0; }
+.auth-map-list li { margin: 8px 0; }
 .auth-map-page a { color: var(--accent); text-underline-offset: 4px; }
 .auth-map-page a:hover { text-decoration: underline; }
 .auth-map-section-heading { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
 .auth-map-page h2 { font-size: 21px; font-weight: 650; }
 .auth-map-status { font-size: 13px; color: var(--signal-warning); }
+.auth-map-implemented { color: var(--signal-success); }
 .auth-map-note { font-size: 13px; line-height: 1.7; color: var(--muted-foreground); margin: 10px 0; }
 .auth-map-figure { margin: 28px 0; }
 .auth-map-stem { max-width: 460px; margin: 0 auto; }
@@ -36,6 +51,7 @@
 .auth-map-footer { border-top: 1px solid var(--border-default); padding-top: 20px; display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; line-height: 1.7; }
 .auth-map-footer span { color: var(--muted-foreground); }
 @media (max-width: 760px) {
+  .auth-map-platforms { grid-template-columns: 1fr 1fr; }
   .auth-map-page { padding: 20px 16px 48px; }
   .auth-map-branches { grid-template-columns: 1fr; gap: 26px; border-top: none; margin-top: 0; }
   .auth-map-branches::before { display: none; }
@@ -44,5 +60,6 @@
   .auth-map-current-paths { grid-template-columns: 1fr; }
 }
 @media (max-width: 380px) {
+  .auth-map-platforms { grid-template-columns: 1fr; }
   .auth-map-phone-results { grid-template-columns: 1fr; gap: 18px; }
 }
