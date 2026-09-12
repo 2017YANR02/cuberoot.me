@@ -362,7 +362,7 @@ export default function DeskPet() {
       const toolbar = document.querySelector('.deskpet-toolbar');
       if (!root || !box || !toolbar || window.innerWidth > 768) return;
       const pet = root.getBoundingClientRect();
-      const admin = root.querySelector('.admin-tools')?.getBoundingClientRect();
+      const admin = root.querySelector('.admin-tools-surface')?.getBoundingClientRect();
       const input = box.getBoundingClientRect(), controls = toolbar.getBoundingClientRect();
       const top = Math.min(input.top, controls.top);
       const bottom = Math.max(pet.bottom, admin?.bottom ?? pet.bottom);
