@@ -3,13 +3,12 @@
 // Gallery and story player, opened from the existing search toolbar.
 
 import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { X, ArrowLeft, ArrowRight, Play, Pause, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Play, Pause, RotateCcw } from 'lucide-react';
 import { PET_GALLERY } from '@/lib/deskpet-gallery';
 import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
 import { ROOTBEAST_COLLECTIONS, ROOTBEAST_SCENES } from '@/lib/deskpet-rootbeast';
 import { ORIGINAL_CHARACTERS, ORIGINAL_COLLECTIONS, ORIGINAL_SCENES } from '@/lib/deskpet-originals';
-import { useModalBackdrop } from '@/hooks/useModalDismiss';
+import AppLink from '@/components/AppLink';
 import { CompactSelect } from '@/components/CompactSelect';
 import { tr } from '@/i18n/tr';
 
@@ -18,9 +17,8 @@ const CSS = `
   justify-content:center;padding:24px 16px;overflow:auto;
   background:color-mix(in srgb, var(--foreground) 45%, transparent);
   backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
-.deskpet-gallery{position:relative;width:min(960px,96vw);max-height:88vh;overflow:auto;
-  background:var(--popover);border:1px solid var(--border-default);border-radius:16px;
-  padding:20px 22px 24px;}
+.deskpet-gallery{position:relative;width:100%;
+  background:transparent;padding:0;}
 .deskpet-gallery-title{margin:0 0 4px;font-size:1.05rem;font-weight:600;color:var(--foreground);text-align:center;}
 .deskpet-gallery h3{margin:18px 0 10px;font-size:.82rem;color:var(--muted-foreground);font-weight:600;}
 .deskpet-gallery-filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:18px 0 12px;}
@@ -29,9 +27,9 @@ const CSS = `
 .deskpet-gallery-pet-thumb img{width:26px;height:26px;object-fit:contain;}
 /* anchored-panel: clamped (CompactSelect body portal and visualViewport bounds) */
 .deskpet-gallery-collection-menu{z-index:100050;}
-.deskpet-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-  column-gap:6px;row-gap:2px;}
-.deskpet-gallery figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:0;padding:0;}
+.deskpet-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));
+  gap:14px;}
+.deskpet-gallery figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:0;padding:0 0 16px;}
 /* square media cell; clips per-group scale (sprites are authored small with motion
    headroom) so a zoomed figure can't bleed onto its caption or neighbours. */
 .deskpet-gallery-media{width:100%;aspect-ratio:1/1;overflow:hidden;display:flex;}
@@ -53,7 +51,8 @@ const CSS = `
 .deskpet-gallery-close{position:absolute;top:10px;right:12px;background:transparent;border:0;cursor:pointer;
   color:var(--muted-foreground);padding:6px;border-radius:8px;display:flex;}
 .deskpet-gallery-close:hover{background:var(--accent-soft);color:var(--foreground);}
-.deskpet-gallery-tile{display:block;width:100%;padding:0;border:0;background:transparent;cursor:pointer;color:inherit;font:inherit;}
+.deskpet-gallery-tile{display:block;width:100%;padding:0;border:1px solid var(--border-default);border-radius:20px;overflow:hidden;background:var(--card);cursor:pointer;color:inherit;font:inherit;transition:transform .2s,border-color .2s;}
+.deskpet-gallery-tile:hover{transform:translateY(-4px);border-color:var(--accent);}
 .deskpet-gallery-tile:hover figcaption{color:var(--accent);}
 .deskpet-gallery button:focus-visible{outline:2px solid var(--ring);outline-offset:3px;}
 .deskpet-story{max-width:600px;margin:0 auto;}
@@ -63,19 +62,19 @@ const CSS = `
 .deskpet-story input{width:100%;accent-color:var(--accent);cursor:pointer;}
 .deskpet-story output{display:block;font-size:.75rem;color:var(--muted-foreground);font-variant-numeric:tabular-nums;}
 .deskpet-story-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:14px 0;}
-.deskpet-story-controls button{display:inline-flex;align-items:center;gap:6px;padding:8px 0;border:0;background:transparent;
-  color:var(--foreground);font:inherit;font-size:.84rem;cursor:pointer;white-space:nowrap;}
+.deskpet-story-controls button,.deskpet-story-controls a{display:inline-flex;align-items:center;gap:6px;padding:8px 0;border:0;background:transparent;
+  color:var(--foreground);font:inherit;font-size:.84rem;cursor:pointer;white-space:nowrap;text-decoration:none;}
 .deskpet-story-controls button:hover{color:var(--accent);}
 .deskpet-story-controls button:disabled{opacity:.4;cursor:default;}
 .deskpet-story-controls .deskpet-story-perform{color:var(--accent);font-weight:600;}
 @media (max-width:480px){
-  .deskpet-gallery-grid{grid-template-columns:repeat(auto-fill,minmax(92px,1fr));}
-  .deskpet-gallery{padding:20px 14px;}
+  .deskpet-gallery-grid{grid-template-columns:repeat(auto-fill,minmax(125px,1fr));}
+  .deskpet-gallery{padding:0;}
 }
 `;
 
-function PlaytimePreview({ scene, onStep, onPerform }: {
-  scene: NonNullable<ReturnType<typeof getDeskPetScene>>; onStep: (delta: number) => void; onPerform: () => void;
+function PlaytimePreview({ scene, onStep }: {
+  scene: NonNullable<ReturnType<typeof getDeskPetScene>>; onStep: (delta: number) => void;
 }) {
   const animations = useRef<Animation[]>([]);
   const [paused, setPaused] = useState(false);
@@ -130,26 +129,23 @@ function PlaytimePreview({ scene, onStep, onPerform }: {
         <button type="button" onClick={() => onStep(1)}>{tr({ zh: '下一个', en: 'Next' })}<ArrowRight size={15} /></button>
       </div>
       <div className="deskpet-story-controls">
-        <button type="button" className="deskpet-story-perform" onClick={onPerform}>
-          <Play size={16} />{tr({ zh: '让桌宠表演', en: 'Play on the pet' })}
-        </button>
+        <AppLink className="deskpet-story-perform" href={`/pets?pet=${scene.character}`} prefetch={false}>
+          <Play size={16} />{tr({ zh: '和它一起玩', en: 'Spend time together' })}
+        </AppLink>
       </div>
     </div>
   );
 }
 
-export default function DeskPetGallery({ lang, character, characters, onClose }: {
-  lang: 'zh' | 'en';
+export default function DeskPetGallery({ character, characters, selected, setSelected, collectionId, setCollectionId }: {
   character: string;
   characters: { id: string; label: { zh: string; en: string }; thumb: string; thumbScale?: number }[];
-  onClose: () => void;
+  selected: string | null;
+  setSelected: (value: string | null) => void;
+  collectionId: string;
+  setCollectionId: (value: string) => void;
 }) {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [selectedPetId, setPetId] = useState(character);
-  const petId = characters.some(item => item.id === selectedPetId) ? selectedPetId : characters[0]?.id;
-  const [collectionId, setCollectionId] = useState('all');
-  const backdropProps = useModalBackdrop(onClose);
-  const panelRef = useRef<HTMLDivElement>(null);
+  const petId = character;
   const isOriginal = ORIGINAL_CHARACTERS.some(item => item.id === petId);
   const collections = petId === 'rootbeast' ? ROOTBEAST_COLLECTIONS : isOriginal ? ORIGINAL_COLLECTIONS : [];
   const collection = collections.find(item => item.id === collectionId);
@@ -159,13 +155,9 @@ export default function DeskPetGallery({ lang, character, characters, onClose }:
     : ROOTBEAST_SCENES;
   const originalScenes = ORIGINAL_SCENES.filter(item => item.character === petId && (!collection || item.collection === collection.id));
   const selectedScene = getDeskPetScene(selected);
-  const scene = selectedScene && characters.some(item => item.id === selectedScene.character) ? selectedScene : undefined;
+  const scene = selectedScene && selectedScene.character === petId && characters.some(item => item.id === selectedScene.character) ? selectedScene : undefined;
   const pet = characters.find(item => item.id === petId) ?? characters[0];
   const groups = PET_GALLERY.filter(group => group.id === pet?.id || (pet?.id === 'clawd' && ['cubing', 'moves'].includes(group.id)));
-  const petLabel = (item: typeof pet) => item && <span className="deskpet-gallery-pet-option">
-    <span className="deskpet-gallery-pet-thumb"><img src={item.thumb} alt="" style={{ transform: `scale(${item.thumbScale ?? 1})` }} /></span>
-    {tr(item.label)}
-  </span>;
   const step = (delta: number) => {
     const scenes = scene?.character === 'rootbeast' ? rootBeastScenes : isOriginal ? originalScenes : PLAYTIME_SCENES;
     if (!scenes.length) return;
@@ -173,56 +165,13 @@ export default function DeskPetGallery({ lang, character, characters, onClose }:
     setSelected(scenes[(index + delta + scenes.length) % scenes.length].state);
   };
 
-  useEffect(() => {
-    const previous = document.activeElement;
-    panelRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      const menu = document.querySelector('.deskpet-gallery-collection-menu');
-      if (e.key === 'Escape') {
-        // The shared select dismisses its portal before this dialog closes.
-        if (menu) return;
-        e.preventDefault(); e.stopImmediatePropagation();
-        if (selected) setSelected(null); else onClose();
-      } else if (e.key === 'Tab') {
-        const items = [
-          ...Array.from(panelRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled)') ?? []),
-          ...Array.from(menu?.querySelectorAll<HTMLElement>('button:not(:disabled)') ?? []),
-        ];
-        const target = e.shiftKey ? items.at(-1) : items[0];
-        if ((e.shiftKey && document.activeElement === items[0]) || (!e.shiftKey && document.activeElement === items.at(-1))) {
-          e.preventDefault(); target?.focus();
-        }
-      }
-    };
-    window.addEventListener('keydown', onKey, true);
-    return () => {
-      window.removeEventListener('keydown', onKey, true);
-      if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
-    };
-  }, [onClose, selected]);
-
-  return createPortal(
-    <div className="deskpet-gallery-overlay" {...backdropProps} role="dialog" aria-modal="true" aria-labelledby="deskpet-gallery-title" lang={lang}>
+  return <div className="deskpet-gallery">
       <style>{CSS}</style>
-      <div className="deskpet-gallery" ref={panelRef} onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="deskpet-gallery-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close' })}>
-          <X size={18} />
-        </button>
-        <h2 className="deskpet-gallery-title" id="deskpet-gallery-title">{tr({ zh: '桌宠图鉴', en: 'Desk-pet Gallery' })}</h2>
         {scene ? <>
           <div className="deskpet-story-controls"><button type="button" onClick={() => setSelected(null)}><ArrowLeft size={15} />{collection ? tr(collection) : tr({ zh: '所有动画', en: 'All animations' })}</button></div>
-          <PlaytimePreview key={scene.state} scene={scene} onStep={step} onPerform={() => {
-            onClose();
-            window.dispatchEvent(new CustomEvent('clawd:state', { detail: scene.state }));
-          }} />
+          <PlaytimePreview key={scene.state} scene={scene} onStep={step} />
         </> : <>
           <div className="deskpet-gallery-filters">
-            <CompactSelect
-              popupClassName="deskpet-gallery-collection-menu"
-              ariaLabel={tr({ zh: '图鉴宠物', en: 'Gallery pet' })}
-              label={petLabel(pet)} value={pet?.id ?? ''} onChange={(id) => { setPetId(id); setCollectionId('all'); }}
-              items={characters.map(item => ({ value: item.id, label: petLabel(item) }))}
-            />
             {collections.length > 0 && <CompactSelect
               popupClassName="deskpet-gallery-collection-menu"
               ariaLabel={tr({ zh: '表情分期', en: 'Sticker collection' })}
@@ -266,7 +215,5 @@ export default function DeskPetGallery({ lang, character, characters, onClose }:
             </div>
           </section>
         ))}</>}
-      </div>
-    </div>, document.body
-  );
+    </div>;
 }

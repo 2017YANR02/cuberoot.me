@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint":"54b1b696806a743e42680b3214fd0093f46350c6dce91bf5bcbd705a75fd0f4f","reason":"复核未知身份先选择旧号或明确创建、独立抖音绑定码、账号合并确认及退出注销边界；微信手机号授权仍是方案，真实跨平台授权与发布仍待验收。本次只增加防陈旧守卫，不改变账号行为。"}
+{"fingerprint":"cbaaebac38fe6391a461822f3f918136d11f75882a381643aab04e394a6f8b4b","reason":"复核账号页新增PetAccountCard传递调用getMyPets/authHeaders及公开catalog，以当前owner隔离响应并过滤未开放宠物；等级由PetLevelBadge复用shared纯规则，AppLink只导航既有宠物页，不改登录链接、会话或回跳。领养与互动按canonical UID隔离；合并新增user_pets迁移，同宠物保留较高亲密度记录及较早领养日期，账号锁防并发遗漏，已同步合并节点并通过独立PG迁移/冲突/回滚验证。未知身份选择、抖音绑定码及注销边界不变；微信手机号授权仍是方案，跨平台真人与发布验收未据此宣称完成。"}
 */
 
 import type { ReactNode } from 'react';
@@ -188,13 +188,14 @@ export default function AuthFlowPage() {
           t('④ 服务端检查两个账号、合并码、凭据冲突和数据迁移条件', '④ Server checks both accounts, the code, credential conflicts, and data migration constraints'),
         ]} />
         <div className="auth-map-current-paths auth-map-results">
-          <FlowNode outcome><strong>{t('检查通过 → 一次事务完成', 'Checks pass → one transaction')}</strong><small>{t('受支持的数据和登录方式转入 A，当前会话切到 A；B 不再作为独立账号使用。不能撤销。', 'Supported data and sign-in methods move to A; the current session switches to A. B is retired as a separate account. This cannot be undone.')}</small></FlowNode>
+          <FlowNode outcome><strong>{t('检查通过 → 一次事务完成', 'Checks pass → one transaction')}</strong><small>{t('受支持的数据、已领养宠物和登录方式转入 A，当前会话切到 A；B 不再作为独立账号使用。不能撤销。', 'Supported data, adopted pets, and sign-in methods move to A; the current session switches to A. B is retired as a separate account. This cannot be undone.')}</small></FlowNode>
           <FlowNode><strong>{t('检查失败 → 不迁移账号数据', 'Checks fail → no account data is moved')}</strong><small>{t('提示冲突并停止；处理后可能需要在 A 重新生成合并码，不要反复点确认。', 'Explain the conflict and stop. After resolving it, a new code from A may be required; do not repeatedly submit.')}</small></FlowNode>
         </div>
         <figcaption>{t('合并码只能在你自己的两个账号之间使用，不要交给他人。绑定一个新方式 ≠ 合并两个账号。', 'Use the merge code only between your own accounts; do not share it. Linking a new method is not the same as merging two accounts.')}</figcaption>
       </figure>
       <details className="auth-map-current"><summary>{t('哪些情况会被拦住？会员怎么处理？', 'What blocks a merge? What happens to membership?')}</summary>
         <ul className="auth-map-list">
+          <li>{t('宠物随账号迁移；同一种宠物保留亲密度较高的一份养成记录与更早的领养日期，亲密度相同则保留 A 的记录，不把两份经验相加。领养、互动与合并共用账号锁，避免并发遗漏。', 'Adopted pets move with the account. For the same pet, keep the care record with the higher bond and the earlier adoption date; equal bonds keep A’s record. Experience is not added together. Adoption, care, and merging share account locks to prevent concurrent omissions.')}</li>
           <li>{t('两个不同的 WCA ID；双方各有邮箱或手机号；双方密码凭据冲突。', 'Different WCA IDs; both accounts have an email or both have a phone; conflicting password credentials.')}</li>
           <li>{t('待并入账号有尚未支持迁移的直接关联数据，例如机构或课程关系；数据库唯一键冲突也会整体回滚。', 'The source account has unsupported directly linked data, such as organization or course relationships; database uniqueness conflicts also roll back the entire merge.')}</li>
           <li>{t('已有会员、订单与续约合约按当前迁移规则处理；冲突会阻止合并，不能承诺两份会员时长自动相加。Apple IAP 尚未接入，不能声称已支持订阅跨账号迁移。', 'Existing memberships, orders, and renewal contracts follow current migration rules. Conflicts block the merge; membership durations are not guaranteed to add together. Apple IAP is not implemented, so subscription transfer is not claimed.')}</li>

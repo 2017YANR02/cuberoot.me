@@ -1,8 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { CARE_ACTIONS, careDay, careFor, careWait, createPetCare, currentCare, readCareBook, serializeCareBook } from '@/lib/deskpet-care';
+import { CARE_ACTIONS, careDay, careFor, careWait, createPetCare, currentCare, readCareBook, serializeCareBook, petLevel } from '@/lib/deskpet-care';
 
-const now = new Date(2026, 8, 9, 12).getTime();
-describe('local pet care', () => {
+const now = Date.UTC(2026, 8, 9, 12);
+describe('shared pet care', () => {
+  it('turns stars into moons and suns at exact permanent XP milestones', () => {
+    expect(petLevel(0).level).toBe(1);
+    expect(petLevel(3).level).toBe(1);
+    expect(petLevel(4).level).toBe(2);
+    expect(petLevel(17).stars).toBe(3);
+    expect(petLevel(18).moons).toBe(1);
+    expect(petLevel(18).stars).toBe(0);
+    expect(petLevel(270).suns).toBe(1);
+    expect(petLevel(270).level).toBe(16);
+    expect(petLevel(NaN).level).toBe(1);
+    expect(petLevel(1000000).level).toBe(64);
+    expect(careDay(Date.parse('2026-09-10T00:00:00Z'))).toBe('2026-9-10');
+    expect(careDay(Date.parse('2026-09-09T23:59:59Z'))).toBe('2026-9-9');
+  });
   it('gives one daily bond per interaction, with immediate care and bounded meters', () => {
     let pet = createPetCare(now);
     for (const action of CARE_ACTIONS) pet = careFor(pet, action, now).pet;
@@ -24,9 +38,9 @@ describe('local pet care', () => {
     expect(careWait(loaded, 'feed', now + 59_999)).toBe(1);
     expect(careFor(loaded, 'feed', now + 60_000).accepted).toBe(true);
   });
-  it('starts a new local day without losing friendship', () => {
+  it('starts a new UTC day without losing friendship', () => {
     const fed = careFor(createPetCare(now), 'feed', now).pet;
-    const tomorrow = new Date(2026, 8, 10, 0, 0, 1).getTime();
+    const tomorrow = Date.UTC(2026, 8, 10, 0, 0, 1);
     expect(currentCare(fed, tomorrow).rewarded).toEqual([]);
     const next = careFor(fed, 'feed', tomorrow).pet;
     expect(next.rewardDay).toBe(careDay(tomorrow));
