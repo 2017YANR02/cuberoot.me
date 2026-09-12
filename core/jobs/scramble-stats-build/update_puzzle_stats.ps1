@@ -24,6 +24,7 @@ param(
   [switch]$RebuildTierB    # 显式重建 TIER B 确定性精确距离表(默认关: 表只依赖魔方几何, 跑一次永久不变, 每次重算纯浪费)。首次生成 / 新接入 TIER B 时才传
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'stats_progress.ps1')
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
 # 算力限额(全局规则: 重计算 ≤14 线程, 低优先级); 调用方可预设 RAYON_NUM_THREADS 覆盖(内存紧用 8)
@@ -75,7 +76,7 @@ function Ensure-ScramblesTsv {
   $zip = Get-ChildItem $CacheDir -Filter 'WCA_export_*.tsv.zip' -ErrorAction Stop |
          Sort-Object Name | Select-Object -Last 1
   if (-not $zip) { throw "Scrambles.tsv 不在 $TsvDir 且 $CacheDir 无 export zip; 先跑一次 update_cross_stats.ps1 取数" }
-  Step "从 $($zip.Name) 抽取 Scrambles.tsv"
+  Step "正在读取打乱数据"
   New-Item -ItemType Directory -Force $TsvDir | Out-Null
   Add-Type -AssemblyName System.IO.Compression.FileSystem
   $z = [IO.Compression.ZipFile]::OpenRead($zip.FullName)
@@ -119,7 +120,7 @@ $needsPuzzleSolvers = $Sampled -or $RebuildTierB -or @($RegPuzzles | Where-Objec
   $_ -eq 'clock' -or $_ -eq '222' -or $_ -eq 'pyraminx'
 }).Count -gt 0
 if ($needsPuzzleSolvers) {
-  Step '构建 @cuberoot/puzzle-solvers Node 产物'
+  Step '正在准备计算工具'
   Push-Location (Join-Path $PkgDir '..\..')
   try {
     pnpm --filter @cuberoot/puzzle-solvers build
@@ -137,7 +138,7 @@ if (-not $BuildOnly) {
     $csv = Join-Path $dir "$name.csv"
 
     # ---- 1. 语料增量抽取 (Scrambles.tsv 按 event 过滤, 跳过已有 id) ----
-    Step "[$name] 语料抽取 (event=$($spec.event))"
+    Step "[$name] 读取打乱"
     $tsv = Ensure-ScramblesTsv
     $known = Load-Ids $txt $false
     Write-Host "  已有语料 $($known.Count) 条"
@@ -164,7 +165,7 @@ if (-not $BuildOnly) {
     Write-Host "  新增 $added 条 -> $txt"
 
     # ---- 2. 增量解算 (txt - csv 的 id 差集, 分块 analyzer + 校验追加) ----
-    Step "[$name] 解算补缺"
+    Step "[$name] 计算新增打乱"
     # analyzer 两种形态, 同一套 CLI 契约(stdin=块文件路径, 产 <块名>_<key>.csv):
     #   exe = Rust 全表查表型 (solver/target/release/*_analyzer.exe)
     #   tsx = TS 求解器 (魔表: 求解器本就是纯 TS, 没有 Rust 版可编)
@@ -183,9 +184,10 @@ if (-not $BuildOnly) {
       $i = $line.IndexOf(',')
       if ($i -gt 0 -and -not $done.Contains($line.Substring(0, $i))) { [void]$todo.Add($line) }
     }
-    Write-Host "  待解 $($todo.Count) 条 (csv 已有 $($done.Count))"
+    Write-Host "  待计算 $($todo.Count) 条，已完成 $($done.Count) 条"
     $chunkIn  = Join-Path $dir "chunk_$name.txt"
     $chunkOut = Join-Path $dir "chunk_${name}_$name.csv"   # executor 输出 = <输入名>_<suffix>.csv
+    Write-Prog "$name 正在计算，共 $($todo.Count) 条"
     for ($i = 0; $i -lt $todo.Count; $i += $ChunkSize) {
       $n = [Math]::Min($ChunkSize, $todo.Count - $i)
       [IO.File]::WriteAllLines($chunkIn, $todo.GetRange($i, $n))
@@ -202,8 +204,10 @@ if (-not $BuildOnly) {
       # master 不存在 *或* 空(被清空重灌)都要保留 chunk 表头,否则 build 报缺列
       $withHeader = (-not (Test-Path $csv)) -or ((Get-Item $csv).Length -eq 0)
       Append-Lines $csv $chunkOut (-not $withHeader)
-      Write-Host "  块 @$i +$n -> $csv"
+      Write-Prog "$name 已完成 $($i + $n)/$($todo.Count)"
     }
+    Write-ProgEnd
+    Write-Host "$name 计算完成"
     foreach ($f in @($chunkIn, $chunkOut)) { if (Test-Path $f) { Remove-Item $f -Force } }
   }
 }
@@ -212,7 +216,7 @@ if (-not $BuildOnly) {
 #   WCA 12c4 最优(Sq1WcaSolver, 需 13GB sq1_wca_jsqfull.bin) + slash 最优(Sq1Solver, 零盘表)。
 #   两 inject 脚本都按 id 跳过已完成 → 只解本次新增打乱; 无新打乱则跳过(不白载 13GB 表); 表缺失则告警跳过。
 if ($Sq1Requested -and -not $BuildOnly) {
-  Step "[sq1] 精确档增量 (WCA 12c4 + slash 最优)"
+  Step "SQ1 计算新增打乱"
   $sq1Dir = Join-Path $PuzzleRoot 'sq1'
   $sq1Txt = Join-Path $sq1Dir 'scrambles.txt'
   $sq1Wca = Join-Path $sq1Dir 'sq1_wca_exact.csv'
@@ -262,7 +266,7 @@ if ($Sq1Requested -and -not $BuildOnly) {
     Write-Warning "  $deltaWca 条新 SQ1 打乱待精确解算, 但 13GB 表缺失/不完整 ($jsqFull) → 跳过 SQ1 精确刷新 (分布暂留旧值)。补表后重跑即增量补上。"
   } else {
     # 3a. 【① 大部分】WCA 12c4 精确(增量, 跳过已完成 id; 单次载表 ~75s)。深态超时 → 记 id,M
-    Write-Host "  $deltaWca 条新打乱 → WCA 12c4 精确 (inject_sq1_wca_exact.ps1)"
+    Write-Host "  SQ1 待计算 $deltaWca 条"
     pwsh (Join-Path $PkgDir 'inject_sq1_wca_exact.ps1')
     if ($LASTEXITCODE -ne 0) { throw 'inject_sq1_wca_exact.ps1 失败' }
 
@@ -272,11 +276,11 @@ if ($Sq1Requested -and -not $BuildOnly) {
     $CountM = { param($p) $n = 0; foreach ($l in [IO.File]::ReadLines($p)) { if ($l.EndsWith(',M')) { $n++ } }; $n }
     $nMon = & $CountM $sq1Wca
     if ($nMon -gt 0) {
-      Write-Host "  $nMon 条新 WCA 怪物 → 升级阶梯啃到全清"
+      Write-Host "  继续处理 $nMon 条难题"
       $ladder = @(
-        @{ desc = '批量 4核/240M TT';        args = @() },
-        @{ desc = '满核 -Split';             args = @('-Split', '2') },
-        @{ desc = '满核 -Split + 300M TT';   args = @('-Split', '2', '-TtBudget', '300000000') }
+        @{ desc = '第 1 轮';        args = @() },
+        @{ desc = '第 2 轮';             args = @('-Split', '2') },
+        @{ desc = '第 3 轮';   args = @('-Split', '2', '-TtBudget', '300000000') }
       )
       foreach ($rung in $ladder) {
         $before = & $CountM $sq1Wca
@@ -285,16 +289,16 @@ if ($Sq1Requested -and -not $BuildOnly) {
         pwsh (Join-Path $PkgDir 'grind_sq1_monsters.ps1') @($rung.args)
         if ($LASTEXITCODE -ne 0) { Write-Warning "    grind 退出码 $LASTEXITCODE(可能检测到并跑的 sq1_analyzer 而拒绝)" }
         $after = & $CountM $sq1Wca
-        if ($after -eq 0) { Write-Host "    ✓ WCA 全清 (0 残留, 全部可证最优)" -ForegroundColor Green; break }
-        if ($after -lt $before) { Write-Host "    啃下 $($before - $after) 条, 升级资源继续 …" -ForegroundColor DarkYellow }
-        else { Write-Host "    本趟无进展, 升级资源重试 …" -ForegroundColor DarkYellow }
+        if ($after -eq 0) { Write-Host "    SQ1 已全部完成" -ForegroundColor Green; break }
+        if ($after -lt $before) { Write-Host "    完成 $($before - $after) 条，继续" -ForegroundColor DarkYellow }
+        else { Write-Host "    本轮未解出，继续尝试" -ForegroundColor DarkYellow }
       }
       $nLeft = & $CountM $sq1Wca
-      if ($nLeft -gt 0) { Write-Warning "  仍剩 $nLeft 条 brutal 怪物(满核+300M TT/10min 仍没啃下, 比 4798824 还硬)→ 真·Tier 2(更大耦合 PDB / 紧凑 open-addressing TT 抬 h)。手动死磕: 'pwsh grind_sq1_monsters.ps1 -Split 2 -TtBudget 300000000 -TimeoutSecs 0'(慎,可能数小时/条),啃完重跑 -Jobs puzzles -Puzzles sq1。" }
+      if ($nLeft -gt 0) { Write-Warning "仍有 $nLeft 条难题，已保留，稍后可继续。" }
     }
 
     # 3c. slash 最优(增量, 只解新歧义态 W=2s-1; 读已解 WCA → 正确判歧义; 深态超时→怪物回退 t=s 上界)
-    Write-Host "  → slash 最优 (inject_sq1_slash_exact.ps1)"
+    Write-Host "  正在计算 SQ1 切刀步数"
     pwsh (Join-Path $PkgDir 'inject_sq1_slash_exact.ps1')
     if ($LASTEXITCODE -ne 0) { throw 'inject_sq1_slash_exact.ps1 失败' }
   }
@@ -307,7 +311,7 @@ if ($Sq1Requested -and -not $BuildOnly) {
 # 全量 44 万条也只 ~1min;金字塔逐条求解 (~1000/s,增量 delta 秒级)。-BuildOnly 也跑 (无新打乱即 no-op)。
 $metricPuzzles = @($Puzzles | Where-Object { $_ -eq '222' -or $_ -eq 'pyraminx' })
 if ($metricPuzzles.Count -gt 0) {
-  Step "按步数度量预算 build_puzzle_metrics ($($metricPuzzles -join ', '))"
+  Step "更新步数统计"
   Push-Location $PkgDir
   try {
     pnpm exec tsx src/build_puzzle_metrics.mts @metricPuzzles
@@ -316,7 +320,7 @@ if ($metricPuzzles.Count -gt 0) {
 }
 
 # ---- 3. 重算 puzzle_distribution.json ----
-Step "build_puzzle_dist (stats/scramble/puzzle_distribution.json)"
+Step "更新步数分布"
 if (Test-Path $ExportDate) { $env:SCRAMBLE_STATS_STAMP = (Get-Content $ExportDate -Raw).Trim() }
 Push-Location $PkgDir
 try {
@@ -335,7 +339,7 @@ $evToBuild = if ($SampledEvents -and $SampledEvents.Count -gt 0) { $SampledEvent
 if (-not $Sampled) {
   Write-Host '  [采样] 非 WCA 项目 TIER C/D 离线采样分布默认停用 (用户要求; 显式 -Sampled 才跑)。' -ForegroundColor DarkGray
 } elseif ($evToBuild.Count -gt 0) {
-  Step "build_puzzle_sampled_dist (TIER C/D 离线采样: $($evToBuild -join ', '))"
+  Step "更新其他项目分布"
   Push-Location $PkgDir
   try {
     foreach ($ev in $evToBuild) {
@@ -355,9 +359,9 @@ if (-not $Sampled) {
 # 目前仅 bic(联体魔方,1,108,800 态,现场 BFS ~6.4s/~510MB)。新接入一个 TIER B = 在此列表加 build 脚本一行。
 $TIER_B_BUILDERS = @('build_bic_table.ts', 'build_sia222_table.ts')   # gz ≤~2MB 的随 stats commit (opt_bic);更大改 scp-only + §3 MANUAL (opt_sia222 ~4MB → 发布到 static, 不进 repo). sia123 builder 在仓(build_sia123_table.ts)但未接入流水线(求解器太慢, 未上线)
 if (-not $RebuildTierB) {
-  Write-Host '  [TIER B] 确定性精确距离表默认跳过 (只依赖魔方几何, 跑一次永久不变; 首次生成 / 新接入用 -RebuildTierB)。' -ForegroundColor DarkGray
+  Write-Host '  完整步数表无需更新。' -ForegroundColor DarkGray
 } elseif ($TIER_B_BUILDERS.Count -gt 0) {
-  Step "TIER B 离线精确距离表 ($($TIER_B_BUILDERS -join ', '))"
+  Step "更新完整步数表"
   Push-Location $PkgDir
   try {
     foreach ($b in $TIER_B_BUILDERS) {

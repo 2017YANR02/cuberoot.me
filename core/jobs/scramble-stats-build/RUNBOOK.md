@@ -75,7 +75,21 @@ pwsh core/jobs/scramble-stats-build/update_cross_stats.ps1
 | GBK 编码报错 | python 已 `reconfigure utf-8`;手动跑前 `$env:PYTHONUTF8=1` |
 | 下载慢/断 | export ~344 MB;脚本按 export_date 缓存到 `incremental/cache/`,重跑跳过已下 |
 
+## 发布前的文件扫描
+
+`publish_scramble_incremental.ps1` 用 SHA1 比较本地文件与上次成功发布的清单，只上传内容变化的文件并删除远端孤儿；这一步是增量发布的变化检测，不是每次必须重新读取全部内容的安全审计。
+
+`scramble_manifest.mjs` 用 Node 原生文件 API、最多 8 个并发任务扫描，缓存文件大小、纳秒修改/变更时间、创建时间和文件标识。未变化文件复用 SHA1，新增或元数据变化的文件重算；损坏缓存回退重算。缓存独立于发布基线，发布失败不推进基线。首次运行建立缓存，以后自动复用；文件生成和发布须串行。
+
+2026-09-11 本机隔离实测 235,940 个文件：无指纹缓存全量读取 19.5 秒，全部命中缓存约 5–6 秒；不含打包和网络上传，也不代表磁盘冷启动耗时。全量结果已逐文件用独立 .NET SHA1 核对，缓存结果与全量清单一致。
+
+在仓库根运行 `pwsh core/jobs/scramble-stats-build/publish_scramble_incremental.ps1 -DryRun` 只扫描并预览差异；加 `-VerifyAll` 忽略缓存重新读取全部文件。不要在已有发布进程运行期间再次调用发布脚本。
+
+本地回归：在 `core/` 运行 `pnpm --filter @cuberoot/scramble-stats-build exec vitest run tests/scramble_manifest.test.mjs`；在仓库根运行 `pwsh -NoProfile -File core/jobs/scramble-stats-build/tests/publish_scramble_manifest.test.ps1`，后者只用隔离目录和模拟进程，不连接远端。
+
 ## 可选:定时
+
+终端进度固定显示，输出到文件时每五分钟记录一次。SQ1 的 Logo 和详细输出保存到原日志，原进度文件继续更新；求解和续跑方式不变。文件检查只显示简短进度及完成用时。输出回归：`pwsh -NoProfile -File core/jobs/scramble-stats-build/tests/stats_progress.test.ps1`（仓库根运行，只用模拟程序）。
 
 用户选了手动一键。若要无人值守,Windows 任务计划程序加一条每周触发:
 `pwsh -NoProfile -File D:\cube\cuberoot.me\core\jobs\scramble-stats-build\update_cross_stats.ps1`
