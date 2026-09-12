@@ -23,7 +23,7 @@ import type { GestureWheelHandle } from './GestureWheel';
 export function shouldIgnoreTimerTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;
   return target.closest(
-    'button, a, input, textarea, select, .scramble-strip, [contenteditable="true"], [data-no-timer]',
+    'button, a, input, textarea, select, .scramble-strip[data-interactive="true"], [contenteditable="true"], [data-no-timer]',
   ) !== null;
 }
 
@@ -115,11 +115,11 @@ export function useGestureWheel(options: UseGestureWheelOptions): {
       gestureHit = -1;
       pointerProfile = timerRadialPointerProfile(event.pointerType);
       downTime = event.timeStamp;
-      // A press beginning on the readout always belongs to timing, even if
-      // the finger drifts. Extra actions remain on the surrounding canvas.
-      const onDigits = event.target instanceof Element
-        && event.target.closest('.timer-display') !== null;
-      const canGesture = !onDigits && current.canGesture();
+      // Digits and the scramble share the same timing-only press lifecycle,
+      // including drift. Extra actions remain on the surrounding canvas.
+      const onTimingText = event.target instanceof Element
+        && event.target.closest('.timer-display, .scramble-strip') !== null;
+      const canGesture = !onTimingText && current.canGesture();
       gestureStart = canGesture ? { x: event.clientX, y: event.clientY } : null;
       if (canGesture) {
         gestureEnabled = current.enabledFor();
