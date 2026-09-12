@@ -115,7 +115,11 @@ export function useGestureWheel(options: UseGestureWheelOptions): {
       gestureHit = -1;
       pointerProfile = timerRadialPointerProfile(event.pointerType);
       downTime = event.timeStamp;
-      const canGesture = current.canGesture();
+      // A press beginning on the readout always belongs to timing, even if
+      // the finger drifts. Extra actions remain on the surrounding canvas.
+      const onDigits = event.target instanceof Element
+        && event.target.closest('.timer-display') !== null;
+      const canGesture = !onDigits && current.canGesture();
       gestureStart = canGesture ? { x: event.clientX, y: event.clientY } : null;
       if (canGesture) {
         gestureEnabled = current.enabledFor();

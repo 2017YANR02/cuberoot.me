@@ -71,6 +71,21 @@ describe('shared scramble click action setting', () => {
     expect(solo).not.toContain('className="scramble-empty-retry"');
   });
 
+  it('omits clipboard copying for installed clients while retaining explicit next-scramble selection', () => {
+    const onChange = vi.fn();
+    act(() => root.render(createElement(TimerScrambleClickActionSetting, {
+      allowCopy: false, localize: (copy) => copy.en, onChange, value: 'none',
+    })));
+    const select = host.querySelector('select')!;
+    expect([...select.options].map((option) => option.value)).toEqual(['none', 'next']);
+    expect(select.value).toBe('none');
+    act(() => {
+      select.value = 'next';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    expect(onChange).toHaveBeenCalledWith('next');
+  });
+
   it('does not expose an empty copy slot as a fake button', () => {
     const activate = vi.fn();
     const effect = timerScrambleClickEffect('copy', false, true, false);
