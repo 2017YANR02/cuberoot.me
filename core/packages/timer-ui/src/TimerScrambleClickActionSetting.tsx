@@ -8,6 +8,7 @@ import {
 import { useId } from 'react';
 
 export interface TimerScrambleClickActionSettingProps {
+  allowCopy?: boolean;
   localize: (copy: TimerSettingCopy) => string;
   onChange: (value: TimerScrambleClickAction) => void;
   value: TimerScrambleClickAction;
@@ -22,6 +23,7 @@ const ACTION_COPY: Record<TimerScrambleClickAction, TimerSettingCopy> = {
 };
 
 export function TimerScrambleClickActionSetting({
+  allowCopy = true,
   localize,
   onChange,
   value,
@@ -38,7 +40,7 @@ export function TimerScrambleClickActionSetting({
           onChange={(event) => onChange(normalizeTimerScrambleClickAction(event.target.value))}
           value={normalizeTimerScrambleClickAction(value)}
         >
-          {TIMER_SCRAMBLE_CLICK_ACTIONS.map((action) => (
+          {TIMER_SCRAMBLE_CLICK_ACTIONS.filter((action) => allowCopy || action !== 'copy').map((action) => (
             <option key={action} value={action}>{localize(ACTION_COPY[action])}</option>
           ))}
         </select>

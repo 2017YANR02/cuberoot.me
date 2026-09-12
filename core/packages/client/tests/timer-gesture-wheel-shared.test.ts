@@ -80,6 +80,8 @@ function HookHarness({
 
   return createElement(Fragment, null,
     createElement('div', { className: 'fixture-surface', ref: surfaceRef },
+      createElement('div', { className: 'timer-display' },
+        createElement('span', { className: 'timer-display-value' }, '0.00')),
       createElement('button', { type: 'button' }, 'host action')),
     createElement(GestureWheel, { isZh: false, ref: wheelRef }),
   );
@@ -240,6 +242,20 @@ describe('shared useGestureWheel pointer lifecycle', () => {
     expect(effects.cancel).toHaveBeenCalledTimes(1);
     expect(effects.fire).toHaveBeenCalledWith(1);
     expect(effects.up).not.toHaveBeenCalled();
+  });
+
+  it.each(['mouse', 'touch'] as const)('keeps %s presses on the digits timing-only even after dragging', (pointerType) => {
+    render();
+    const digits = host.querySelector('.timer-display-value')!;
+    const surface = host.querySelector('.fixture-surface')!;
+    dispatch(digits, 'pointerdown', { pointerType, time: 0, x: 100, y: 100 });
+    dispatch(surface, 'pointermove', { pointerType, time: 700, x: 200, y: 200 });
+    expect(host.querySelector('.gesture-wheel')?.classList.contains('is-visible')).toBe(false);
+    dispatch(surface, 'pointerup', { pointerType, time: 800, x: 200, y: 200 });
+    expect(effects.down).toHaveBeenCalledTimes(1);
+    expect(effects.up).toHaveBeenCalledTimes(1);
+    expect(effects.cancel).not.toHaveBeenCalled();
+    expect(effects.fire).not.toHaveBeenCalled();
   });
 
   it('treats slow touch drift as a planted hold but a long touch drag as a gesture', () => {
