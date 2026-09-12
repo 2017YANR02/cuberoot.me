@@ -24,7 +24,7 @@ export default function PageAccess() {
       void verifyPageRole(token).then((role) => {
         if (!active) return;
         if (role === 'login') {
-          setError(tr({ zh: '请先登录。', en: 'Please sign in.' }));
+          window.location.replace(`${prefix}/account?next=${encodeURIComponent(next)}`);
           return;
         }
         syncPageSessionCookie(token);

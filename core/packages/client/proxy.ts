@@ -163,10 +163,14 @@ export async function proxy(req: NextRequest) {
     const currentTrace = trace = new PageAccessTrace();
     const token = req.cookies.get(PAGE_SESSION_COOKIE)?.value ?? '';
     const compRole = compSim ? await currentTrace.step('auth-me', () => verifyPageRole(token, currentTrace.requestId)) : null;
-    if (compRole === 'user') {
+    if (compRole === 'user' || compRole === 'login') {
       const target = req.nextUrl.clone();
-      target.pathname = (stripLocalePrefix(target.pathname).locale ?? preferredLocale(req)) === 'zh' ? '/zh' : '/';
+      target.searchParams.delete('_rsc');
+      const next = `${target.pathname}${target.search}`;
+      const prefix = (stripLocalePrefix(target.pathname).locale ?? preferredLocale(req)) === 'zh' ? '/zh' : '';
+      target.pathname = compRole === 'login' ? `${prefix}/account` : prefix || '/';
       target.search = '';
+      if (compRole === 'login') target.searchParams.set('next', next);
       const response = NextResponse.redirect(target, 307);
       response.headers.set('Cache-Control', 'private, no-store');
       response.headers.set('X-Request-ID', currentTrace.requestId);
@@ -186,16 +190,14 @@ export async function proxy(req: NextRequest) {
     });
     const locked = homeCardsRequireAdmin(cards, data.locks);
     const adminDenied = locked && !(compRole === 'admin' || await currentTrace.step('auth-me', () => verifyPageAdmin(token, currentTrace.requestId)));
-    const profileDenied = !adminDenied && compRole === 'login';
     let response: NextResponse;
-    if (adminDenied || profileDenied) {
+    if (adminDenied) {
       const target = req.nextUrl.clone();
       target.searchParams.delete('_rsc');
       const next = `${target.pathname}${target.search}`;
       target.pathname = '/auth/page-access';
       target.search = '';
       target.searchParams.set('next', next);
-      if (profileDenied) target.searchParams.set('require', 'forum-profile');
       response = NextResponse.redirect(target, 307);
     } else {
       response = routeLanguage(req);

@@ -218,7 +218,7 @@ export default function CompSimPage() {
     let active = true;
     const redirect = () => {
       const next = window.location.pathname + window.location.search;
-      window.location.replace(`/auth/page-access?require=forum-profile&next=${encodeURIComponent(next)}`);
+      window.location.replace(`${lang === 'zh' ? '/zh' : ''}/account?next=${encodeURIComponent(next)}`);
     };
     void verifyPageRole(getSessionToken()).then((access) => {
       if (!active) return;
