@@ -151,6 +151,10 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: core/pnpm-lock.yaml
 
+      - name: Check out record-statistics fixtures discovered from generators
+        shell: bash
+        run: node core/scripts/list-record-stat-fixtures.mjs | git sparse-checkout add --stdin
+
       - name: Install dependencies
         working-directory: core
         run: pnpm install --frozen-lockfile

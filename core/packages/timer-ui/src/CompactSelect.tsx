@@ -2,6 +2,7 @@
 
 import { ChevronDown } from 'lucide-react';
 import {
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -34,6 +35,8 @@ export interface CompactSelectProps<T extends string | number> {
   dataNoTimer?: boolean;
   /** Mouse hover opens the menu; touch and keyboard keep click activation. */
   openOnHover?: boolean;
+  /** Close immediately outside the trigger/popup, retaining their small crossing gap. */
+  dismissOnMouseLeave?: boolean;
   /** Fixed content below the popup, such as Mobile's bottom navigation. */
   viewportBottomInset?: number;
 }
@@ -68,6 +71,7 @@ export function CompactSelect<T extends string | number>({
   footer,
   dataNoTimer = false,
   openOnHover = false,
+  dismissOnMouseLeave = false,
   viewportBottomInset = 0,
 }: CompactSelectProps<T>) {
   const [open, setOpen] = useState(false);
@@ -76,6 +80,42 @@ export function CompactSelect<T extends string | number>({
   const panelRef = useRef<HTMLDivElement>(null);
   const close = () => setOpen(false);
   usePopoverDismiss(open, close, panelRef, triggerRef);
+
+  useEffect(() => {
+    if (!open || !dismissOnMouseLeave) return;
+    const onMove = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse') return;
+      const trigger = triggerRef.current;
+      const panel = panelRef.current;
+      const target = event.target as Node | null;
+      if (target && (trigger?.contains(target) || panel?.contains(target))) return;
+      if (trigger && panel) {
+        const a = trigger.getBoundingClientRect();
+        const b = panel.getBoundingClientRect();
+        // The popup is a portal separated by PANEL_GAP. Keep only the narrow
+        // vertical crossing corridor interactive, not the surrounding toolbar.
+        const top = b.top >= a.bottom ? a.bottom : b.bottom;
+        const bottom = b.top >= a.bottom ? b.top : a.top;
+        if (event.clientX >= Math.max(a.left, b.left)
+          && event.clientX <= Math.min(a.right, b.right)
+          && event.clientY >= top && event.clientY <= bottom
+          && bottom - top <= PANEL_GAP + 1) return;
+      }
+      setOpen(false);
+    };
+    const onWindowLeave = (event: PointerEvent) => {
+      if (event.pointerType === 'mouse' && !event.relatedTarget) setOpen(false);
+    };
+    const onBlur = () => setOpen(false);
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerout', onWindowLeave);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerout', onWindowLeave);
+      window.removeEventListener('blur', onBlur);
+    };
+  }, [open, dismissOnMouseLeave]);
 
   useLayoutEffect(() => {
     if (!open) {

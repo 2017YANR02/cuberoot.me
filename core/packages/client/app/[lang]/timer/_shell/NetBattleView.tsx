@@ -1001,19 +1001,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     copyTimerRef.current = window.setTimeout(() => setLinkCopied(false), 1200);
   }, [roomInviteUrl]);
 
-  const [scrambleCopied, setScrambleCopied] = useState(false);
-  const copyScramble = useCallback(() => {
-    const r = roomRef.current, id = pidRef.current;
-    if (!r || !id) return;
-    const ev = playerEventOf(r, id);
-    const scr = r.scrambles?.[ev];
-    if (!scr) return;
-    try { void navigator.clipboard.writeText(formatScrambleForEvent(ev, scr)); } catch { /* ignore */ }
-    setScrambleCopied(true);
-    if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current);
-    copyTimerRef.current = window.setTimeout(() => setScrambleCopied(false), 1200);
-  }, []);
-
   // ── 读数呈现(与 Solo 同口径)──────────────────────────────────
   const inspectionLimit = settings.inspectionSec > 0 ? settings.inspectionSec : 15;
   const myPenalty: NetPenalty = myResult?.p ?? 'ok';
@@ -1406,9 +1393,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
               fontScale={settings.scrambleFontScale}
               hint={scrambleHint}
               match={scrambleMatch}
-              onActivate={copyScramble}
               scramble={displayScramble}
-              title={tr({ zh: '点击复制打乱', en: 'Click to copy' })}
               verificationLabels={{
                 copiedCorrection: tr({ zh: '已复制原打乱', en: 'Copied the scramble' }),
                 correction: tr({ zh: '拧回原打乱', en: 'Back to scramble' }),
@@ -1416,9 +1401,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
                 mismatch: tr({ zh: '与打乱不符', en: 'Doesn’t match' }),
                 ready: tr({ zh: '打乱已就绪', en: 'Scrambled' }),
               }}
-            >
-              {scrambleCopied && <span className="net-copied">{tr({ zh: '已复制', en: 'Copied' })}</span>}
-            </TimerScrambleStrip>
+            />
           }
           cornerSlot={settings.showCubePreview && myScr ? (
             <div className="shell-corner-net">

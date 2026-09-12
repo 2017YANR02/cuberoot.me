@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Megaphone, Sparkles, UserCog, Laptop, Globe, Drama, Settings2 } from 'lucide-react';
+import { Megaphone, Sparkles, UserCog, Laptop, Globe, Drama } from 'lucide-react';
 import { ensureFreshToken, refreshSessionUser, canTestRoles, getRolePreview, startRolePreview, endRolePreview, useAuthUser, isAdmin, type TestRole } from '@/lib/auth-store';
 import AppLink from './AppLink';
 import { openPageNoticeEditor, pageKeyFromPathname } from '@/lib/page-notices-api';
@@ -10,6 +10,7 @@ import { useLiveUrlSuffix } from '@/hooks/useLiveUrlSuffix';
 import { CompactSelect } from './CompactSelect';
 import { useT } from '@/hooks/useT';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
+import { adminEnvironment } from '@/lib/admin-environment';
 import './glass-material.css';
 
 /**
@@ -30,10 +31,11 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   const [error, setError] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [actionsWidth, setActionsWidth] = useState(0);
+  const [toggleLeft, setToggleLeft] = useState(0);
   const actionsRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toolbarRef = useRef<HTMLElement>(null);
-  const toggleRef = useRef<HTMLButtonElement>(null);
+  const toggleRef = useRef<HTMLAnchorElement>(null);
   const cancelCollapse = useCallback(() => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
     closeTimer.current = null;
@@ -47,7 +49,13 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   useEffect(() => {
     const actions = actionsRef.current;
     if (!actions) return;
-    const measure = () => setActionsWidth(actions.getBoundingClientRect().width);
+    const measure = () => {
+      setActionsWidth(actions.getBoundingClientRect().width);
+      const toggle = toggleRef.current;
+      if (toggle) {
+        setToggleLeft(toggle.offsetLeft);
+      }
+    };
     const observer = new ResizeObserver(measure);
     observer.observe(actions);
     measure();
@@ -91,13 +99,16 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     const root = toolbar?.parentElement;
     const hit = root?.querySelector('.clawd-deskpet-hit');
     if (!toolbar || !root || !hit) return;
-    // Clamp the whole group, including wrapped role-test text on narrow screens.
+    // Reserve the FULL footprint even while collapsed. Hover must never move
+    // the pet/anchor to make room for the expanding background.
     const clamp = () => {
       const viewportWidth = document.documentElement.getBoundingClientRect().width;
       toolbar.style.maxWidth = `${viewportWidth - 32}px`;
       const rect = toolbar.getBoundingClientRect();
+      const actions = actionsRef.current?.getBoundingClientRect() ?? rect;
       const pet = hit.getBoundingClientRect();
-      const left = Math.min(rect.left, pet.left), right = Math.max(rect.right, pet.right);
+      const left = Math.min(rect.left, actions.left - 5, pet.left);
+      const right = Math.max(rect.right, actions.right + 5, pet.right);
       const top = Math.min(rect.top, pet.top), bottom = Math.max(rect.bottom, pet.bottom);
       const dx = Math.max(16 - left, Math.min(0, viewportWidth - 16 - right));
       const dy = Math.max(16 - top, Math.min(0, window.innerHeight - 16 - bottom));
@@ -105,16 +116,21 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     };
     const resize = new ResizeObserver(clamp);
     resize.observe(toolbar); resize.observe(root);
+    if (actionsRef.current) resize.observe(actionsRef.current);
     const mutation = new MutationObserver(clamp);
     mutation.observe(root, { attributes: true, attributeFilter: ['style', 'class'] });
     window.addEventListener('resize', clamp);
     clamp();
     return () => { resize.disconnect(); mutation.disconnect(); window.removeEventListener('resize', clamp); };
-  }, [ready, user, moveTo, centerX]);
+  }, [ready, user, moveTo, centerX, toggleLeft, actionsWidth]);
   const preview = ready ? getRolePreview() : null;
   const admin = ready && !!user && isAdmin();
   const roleTesting = ready && (!!preview || (!!user && canTestRoles()));
   if (!ready || (!admin && !roleTesting)) return null;
+  const environment = adminEnvironment(window.location.hostname, navigator);
+  const local = environment.current === 'local';
+  const environmentLabel = local ? t('切换到线上', 'Switch to live') : t('切换到本地', 'Switch to local');
+  const environmentHref = (local ? 'https://cuberoot.me' : environment.localOrigin) + liveUrlSuffix;
   const items = [
     { value: 'superadmin' as const, label: t('超级管理员', 'Super administrator') },
     { value: 'admin' as const, label: t('管理员', 'Administrator') },
@@ -133,41 +149,47 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     finally { setBusy(false); }
   };
   return <aside ref={toolbarRef} className="admin-tools" data-expanded={expanded} aria-label={t('管理工具', 'Admin tools')}
+    onPointerEnter={event => {
+      if (event.pointerType !== 'mouse') return;
+      cancelCollapse();
+      setExpanded(true);
+    }}
     onBlur={event => {
       if (!event.currentTarget.contains(event.relatedTarget as Node | null)
         && !(event.relatedTarget as Element | null)?.closest?.('.admin-tools-role-popup')) collapse();
     }}
-    style={{ position: 'absolute', top: '100%', left: `${centerX * 100}%`, transform: 'translateX(-50%)', marginTop: 8, width: expanded ? actionsWidth + 46 : 42, maxWidth: 'calc(100vw - 32px)', pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', flexDirection: 'row-reverse', alignItems: 'center' }}>
+    // This 42px anchor and its icon never animate. Only the separate surface grows.
+    style={{ position: 'absolute', top: '100%', left: `${centerX * 100}%`, transform: 'translateX(-21px)', marginTop: 8, width: 42, pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', alignItems: 'center' }}>
     <style>{`
-      .admin-tools{box-sizing:border-box;padding:4px;border-radius:24px;
+      .admin-tools{box-sizing:border-box;height:42px;}
+      .admin-tools-surface{position:absolute;top:0;height:42px;box-sizing:border-box;border-radius:24px;
         border:1px solid var(--glass-edge);background:var(--glass-background);
         backdrop-filter:var(--glass-filter);-webkit-backdrop-filter:var(--glass-filter);
-        box-shadow:var(--glass-shadow);height:42px;
-        transition:width 420ms cubic-bezier(.22,1,.36,1);}
+        box-shadow:var(--glass-shadow);
+        transition:width 420ms cubic-bezier(.22,1,.36,1),left 420ms cubic-bezier(.22,1,.36,1);}
       .admin-tools .compact-select-trigger{border:0;background:transparent;padding:6px;}
-      .admin-tools .compact-select-trigger:hover{background:transparent;color:var(--accent);}
+      .admin-tools .compact-select-trigger:hover{background:transparent;color:var(--accent);text-decoration:none;}
+      .admin-tools .compact-select-arrow{display:none;}
       .admin-tool-action{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:29px;height:29px;flex-shrink:0;gap:6px;white-space:nowrap;
         border:0;background:transparent;color:inherit;font:inherit;text-decoration:none;padding:6px;cursor:pointer;}
       .admin-tool-action svg{width:17px;height:17px;}
       .admin-tool-action:hover{color:var(--accent);}
       .admin-tools-toggle{width:32px;height:32px;border-radius:50%;}
       .admin-tools-toggle:focus-visible{outline:2px solid var(--ring);outline-offset:2px;}
-      .admin-tools-actions{position:absolute;right:41px;display:flex;align-items:center;gap:8px;width:max-content;max-width:calc(100vw - 78px);min-width:0;
+      .admin-tools-actions{position:absolute;display:flex;align-items:center;gap:8px;width:max-content;max-width:calc(100vw - 42px);min-width:0;}
+      .admin-tools-group{display:contents;}
+      .admin-tools-group > *{
         opacity:0;visibility:hidden;transform:translateX(8px);pointer-events:none;
         transition:opacity 140ms ease,transform 300ms cubic-bezier(.22,1,.36,1),visibility 0s 140ms;}
-      .admin-tools[data-expanded="true"] .admin-tools-actions{opacity:1;visibility:visible;transform:none;pointer-events:auto;
+      .admin-tools[data-expanded="true"] .admin-tools-group > *{opacity:1;visibility:visible;transform:none;pointer-events:auto;
         transition:opacity 220ms ease 100ms,transform 420ms cubic-bezier(.22,1,.36,1),visibility 0s;}
-      .admin-tools-actions .compact-select{min-width:0;}
-      @media(prefers-reduced-motion:reduce){.admin-tools,.admin-tools .admin-tools-actions{transition:none;}}
-      .admin-env-switch{display:inline-flex;align-items:center;gap:8px;}
+      .admin-tools-actions .compact-select{min-width:0;width:fit-content;}
+      @media(prefers-reduced-motion:reduce){.admin-tools-surface,.admin-tools-group > *{transition:none;}}
     `}</style>
-    <button ref={toggleRef} type="button" className="admin-tool-action admin-tools-toggle"
-      aria-label={t('管理工具', 'Admin tools')} title={t('管理工具', 'Admin tools')} aria-expanded={expanded}
-      onClick={() => { cancelCollapse(); setExpanded(value => !value); }}>
-      <Settings2 size={17} aria-hidden />
-    </button>
-    <div ref={actionsRef} className="admin-tools-actions" inert={!expanded}>
-    {admin && <>
+    <span aria-hidden="true" className="admin-tools-surface"
+      style={{ left: expanded ? -toggleLeft : 0, width: expanded ? actionsWidth + 10 : 42 }} />
+    <div ref={actionsRef} className="admin-tools-actions" style={{ left: 5 - toggleLeft }}>
+    {admin && <div className="admin-tools-group" inert={!expanded}>
       <button type="button" className="admin-tool-action" onClick={() => openPageNoticeEditor('page_top')}
         title={t('添加本页通知', 'Add notice for this page')} aria-label={t('添加本页通知', 'Add notice for this page')}>
         <Megaphone size={17} aria-hidden />
@@ -176,23 +198,24 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
         title={t('首页焦点', 'Homepage feature')} aria-label={t('首页焦点', 'Homepage feature')}>
         <Sparkles size={17} aria-hidden />
       </button>}
-      <AppLink href="/admin" className="admin-tool-action" prefetch={false}
+    </div>}
+    <a ref={toggleRef} className="admin-tool-action admin-tools-toggle" href={environmentHref}
+      aria-label={environmentLabel} title={environmentLabel} aria-expanded={expanded}
+      onClick={event => {
+        if (!expanded) { event.preventDefault(); cancelCollapse(); setExpanded(true); }
+      }}>
+      {local ? <Globe size={17} aria-hidden /> : <Laptop size={17} aria-hidden />}
+    </a>
+    <div className="admin-tools-group" inert={!expanded}>
+      {admin && <AppLink href="/admin" className="admin-tool-action" prefetch={false}
         title={t('管理后台', 'Administration')} aria-label={t('管理后台', 'Administration')}>
         <UserCog size={13} aria-hidden />
-      </AppLink>
-      {liveUrlSuffix && <div className="admin-env-switch" role="group" aria-label={t('切换环境', 'Switch environment')}>
-        {[
-          { env: 'local', origin: 'http://localhost:3000', label: t('切换到本地', 'Switch to local'), Icon: Laptop },
-          { env: 'prod', origin: 'https://cuberoot.me', label: t('切换到线上', 'Switch to live'), Icon: Globe },
-        ].filter(({ env }) => env !== (['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname) ? 'local' : 'prod'))
-          .map(({ env, origin, label, Icon }) => <a key={env} className="admin-tool-action" href={origin + liveUrlSuffix}
-          title={label} aria-label={label}>
-          <Icon size={13} aria-hidden />
-        </a>)}
-      </div>}
-    </>}
+      </AppLink>}
     {roleTesting &&
       <CompactSelect
+        variant="plain"
+        openOnHover
+        dismissOnMouseLeave
         popupClassName="admin-tools-role-popup"
         label={preview ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Drama size={17} aria-hidden />{preview.role === 'user' ? t('普通用户', 'User') : items.find(item => item.value === preview.role)?.label}</span> : <Drama size={17} aria-hidden />}
         ariaLabel={busy ? t('正在切换…', 'Switching…') : t('选择测试角色', 'Choose test role')}
@@ -203,6 +226,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       />
     }
     {error && <span role="alert">{t('切换失败，请重试。', 'Switch failed. Please retry.')}</span>}
+    </div>
     </div>
   </aside>;
 }

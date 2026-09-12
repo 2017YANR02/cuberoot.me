@@ -53,7 +53,7 @@ describe('Mobile timer settings parity ledger', () => {
     expect(app).toContain('<TimerTimingSettingsSections');
     expect(app).toContain('<TimerAttemptSplitSettings');
     expect(app).toContain('<TimerAttemptSplitStatus');
-    expect(app).toContain('<TimerScrambleClickActionSetting');
+    expect(app).not.toContain('<TimerScrambleClickActionSetting');
     expect(app).toContain('<TimerScramblePreviewSettings');
     expect(app).toContain('<TimerBooleanSettingRow');
     expect(app).toContain('store!.settings.showCubePreview && scrambleReady');
@@ -71,7 +71,7 @@ describe('Mobile timer settings parity ledger', () => {
     expect(app).toContain('onChange={(autoMarkWcaScramble) => updateSettings({ autoMarkWcaScramble })}');
     expect(app).toContain('value={store!.settings.autoMarkWcaScramble}');
     expect(app).toContain('nextDisplayedScramble');
-    expect(app).toContain('copyCurrentScramble');
+    expect(app).not.toContain('copyCurrentScramble');
     expect(app).toContain('new TimerAttemptSplitRecorder');
     expect(app).toContain('attemptSplitRecorder.markStage');
     expect(app).toContain('attemptSplitRecorder.markMemo');

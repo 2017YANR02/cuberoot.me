@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
+import { transform } from 'esbuild';
 
 import { resolveWorkspacePath } from '../../../scripts/resolve-workspace-path.mjs';
 
@@ -261,6 +262,7 @@ describe('mini program release check', () => {
       basicInfoApproved: true,
       filingCompleted: false,
       privacyReviewed: true,
+      phoneAuthorizationReviewed: false,
       iosRealDeviceTested: true,
       androidRealDeviceTested: false,
       gan16UiTested: false,
@@ -450,6 +452,23 @@ describe('mini program release check', () => {
     ]);
   });
 
+  it('allows real-time phone authorization only in the reviewed account entry and never quick authorization', () => {
+    const realTime = '<button open-type="getRealtimePhoneNumber" />';
+    expect(collectReleaseFailures({ ...validInput,
+      sourceFiles: [{ path: 'src/pages/account/index.wxml', source: realTime }],
+      uploadFiles: [{ path: 'pages/account/index.wxml', source: realTime }],
+    })).toEqual([]);
+    expect(collectReleaseFailures({ ...validInput,
+      sourceFiles: [{ path: 'src/pages/other/index.wxml', source: realTime }],
+    }).some((failure) => failure.includes('实时验证手机号'))).toBe(true);
+    expect(collectReleaseFailures({ ...validInput,
+      sourceFiles: [{ path: 'src/pages/account/index.wxml', source: '<button open-type="getPhoneNumber" />' }],
+    }).some((failure) => failure.includes('手机号能力'))).toBe(true);
+    expect(collectReleaseFailures({ ...validInput,
+      releaseConfirmations: { ...validInput.releaseConfirmations, phoneAuthorizationReviewed: false },
+    }).some((failure) => failure.includes('WECHAT_MINI_PHONE_AUTHORIZATION_REVIEWED'))).toBe(true);
+  });
+
   it('blocks privacy declarations that are outside the current review boundary', () => {
     const failures = collectReleaseFailures({
       ...validInput,
@@ -573,6 +592,22 @@ describe('mini program release check', () => {
       'pages/device/index.js 使用了微信用户资料能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
       'pages/device/index.js 使用了蓝牙能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
     ]);
+  });
+
+  it('keeps release privacy and credential scanning effective on identifier-minified output', async () => {
+    const { code } = await transform(`(() => {
+      const nativePlatformApi = wx;
+      nativePlatformApi.getLocation({});
+      nativePlatformApi.openBluetoothAdapter({});
+      nativePlatformApi.request({ data: { appSecret: 'synthetic-forbidden-test-value' } });
+    })();`, { minifyIdentifiers: true, minifyWhitespace: true, minifySyntax: true, format: 'iife' });
+    expect(code).not.toContain('nativePlatformApi');
+    expect(collectReleaseFailures({ ...validInput, uploadFiles: [{ path: 'pages/fixture/index.js', source: code }] }))
+      .toEqual(expect.arrayContaining([
+        'pages/fixture/index.js 使用了定位能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
+        'pages/fixture/index.js 使用了蓝牙能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
+        'pages/fixture/index.js 包含小程序 AppSecret；小程序源码和上传包禁止保存服务端凭据。',
+      ]));
   });
 
   it('detects destructured privacy-sensitive APIs in source and upload output', () => {

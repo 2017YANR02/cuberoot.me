@@ -63,7 +63,7 @@ export async function getRecon(id: number): Promise<ReconSolve> {
 // 同一打乱串的其它复盘(轻量,只回匹配行)。详情页「相同打乱的复盘」用,
 // 替代旧的「拉全量 /list 再客户端过滤」。
 export async function getSameScramble(id: number): Promise<ReconSolve[]> {
-  return apiGet<ReconSolve[]>(`/${id}/same-scramble`);
+  return apiGet<ReconSolve[]>(`/${id}/same-scramble`, { v: '2' });
 }
 
 // 个人复盘主页:某选手参与的全部 recon(作为选手 / 合作者 / 复盘者 / 添加者)。

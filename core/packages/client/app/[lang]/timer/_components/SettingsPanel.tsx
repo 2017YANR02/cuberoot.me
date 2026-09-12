@@ -59,7 +59,6 @@ import {
 } from '@cuberoot/shared/timer';
 import {
   TimerAttemptSplitSettings,
-  TimerScrambleClickActionSetting,
   TimerScramblePreviewSettings,
   TimerBooleanSettingRow,
   TimerTimingSettingsSections,
@@ -1418,11 +1417,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
               />
             )}
             value={s}
-          />
-          <TimerScrambleClickActionSetting
-            localize={tr}
-            onChange={(scrambleClickAction) => updateSettings({ scrambleClickAction })}
-            value={s.scrambleClickAction}
           />
           <BooleanSettingRow
             id="settings.appearance.hide-all-while-running"

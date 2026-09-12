@@ -3193,7 +3193,7 @@ CREATE INDEX idx_auth_codes_lookup ON auth_codes(channel, target, created_at DES
 -- Unconfirmed OAuth attempts are not accounts. Only ticket digests are persisted.
 CREATE TABLE auth_identity_pending (
   ticket_hash CHAR(64) PRIMARY KEY CHECK (ticket_hash ~ '^[a-f0-9]{64}$'),
-  provider VARCHAR(16) NOT NULL CHECK (provider IN ('apple', 'google', 'wechat', 'qq', 'alipay', 'wca')),
+  provider VARCHAR(16) NOT NULL CHECK (provider IN ('apple', 'google', 'wechat', 'qq', 'alipay', 'wca', 'email', 'phone', 'douyin')),
   provider_uid TEXT NOT NULL CHECK (length(provider_uid) BETWEEN 1 AND 512),
   profile JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(profile) = 'object'),
   apple_refresh_token_encrypted BYTEA,
@@ -8696,3 +8696,19 @@ CREATE TABLE platform_organizer_applications (
 CREATE UNIQUE INDEX platform_organizer_one_pending_user ON platform_organizer_applications(applicant_user_id) WHERE status='pending';
 CREATE UNIQUE INDEX platform_organizer_one_pending_org ON platform_organizer_applications(organization_id) WHERE status='pending' AND organization_id IS NOT NULL;
 CREATE INDEX platform_organizer_review_queue ON platform_organizer_applications(status,created_at);
+
+-- 0235: persistent pet presentation and ordering.
+CREATE TABLE deskpet_catalog (
+  id SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  revision INTEGER NOT NULL DEFAULT 0,
+  entries JSONB NOT NULL DEFAULT '[]'::jsonb CHECK (jsonb_typeof(entries) = 'array')
+);
+INSERT INTO deskpet_catalog (id) VALUES (1);
+
+CREATE TABLE user_pets (
+  user_id BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+  pet_id TEXT NOT NULL CHECK (pet_id ~ '^[a-z][a-z0-9-]{0,79}$'),
+  adopted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  care JSONB NOT NULL CHECK (jsonb_typeof(care) = 'object'),
+  PRIMARY KEY (user_id, pet_id)
+);

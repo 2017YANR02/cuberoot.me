@@ -9,7 +9,7 @@ export default function PrivacyPage() {
   return (
     <main className="privacy-page">
       <h1>{t('CubeRoot 用户协议与隐私政策', 'CubeRoot User Agreement and Privacy Policy')}</h1>
-      <p className="privacy-updated">{t('生效日期:2026-09-11', 'Effective date: September 11, 2026')}</p>
+      <p className="privacy-updated">{t('生效日期:2026-09-12', 'Effective date: September 12, 2026')}</p>
       <p>
         {t(
           '本政策适用于 CubeRoot 官方 Android、iOS App、微信小程序与抖音小程序。App 的核心计时功能可离线且无需登录使用;App 与小程序登录均由你主动选择。',
@@ -78,16 +78,20 @@ export default function PrivacyPage() {
         </li>
         <li>
           {t(
-            '只有在你点击“抖音登录”后,抖音小程序才会将一次性登录凭证发送到 CubeRoot 服务器,由服务器换取抖音 openid。该标识只用于抖音登录;首次使用会创建独立账号,不会按昵称、手机号或其他资料猜测合并已有账号。',
-            'Only after you tap Douyin sign-in does the Douyin Mini Program send a one-time login code to the CubeRoot server, which exchanges it for a Douyin openid. That identifier is used only for Douyin sign-in. First use creates a separate account and never guesses a match from a nickname, phone number, or other profile data.',
+            '只有在你点击“抖音登录”后,抖音小程序才会将一次性登录凭证发送到 CubeRoot 服务器,由服务器换取抖音 openid。未绑定身份需由你明确选择创建账号或验证并绑定原账号,不会按昵称或其他资料猜测合并账号。',
+            'Only after you tap Douyin sign-in does the Douyin Mini Program send a one-time login code to the CubeRoot server, which exchanges it for a Douyin openid. An unlinked identity requires you to explicitly create an account or verify and link an existing one. Accounts are never merged by guessing from names or other profile data.',
           )}
         </li>
         <li>
           {t(
-            '小程序不请求你的微信或抖音昵称、头像或手机号。登录后会在小程序本地保存 CubeRoot 会话凭证和账号资料,用于保持登录状态和显示账号信息。',
-            'The Mini Programs do not request your WeChat or Douyin nickname, avatar, or phone number. After sign-in, the Mini Program stores the CubeRoot session token and account profile locally to maintain the session and show account information.',
+            '小程序不请求你的微信或抖音昵称和头像。微信首次未绑定时,你可以主动选择手机号实时验证授权。服务器向微信验证一次性凭证及所属小程序、当前微信用户,用取得的手机号查找原账号；你确认后才将手机号和微信绑定至同一账号。手机号未匹配时不会自动注册,也不会自动合并两个账号。拒绝或无法授权时可使用其他方式登录原账号,不影响公开工具和普通计时。抖音不请求手机号。',
+            'The Mini Programs do not request your WeChat or Douyin nickname or avatar. For an unlinked WeChat identity, you may choose real-time phone authorization. The server verifies the one-time credential, app and current WeChat user with WeChat, then uses the phone number to find an existing account. Phone and WeChat identities are linked to one account only after confirmation. No match never triggers automatic registration, and two accounts are never merged automatically. If authorization is declined or unavailable, other existing-account sign-in methods remain available; public tools and ordinary timing are unaffected. Douyin does not request a phone number.',
           )}
         </li>
+        <li>{t(
+          '未完成的微信手机号认证资料仅在服务器的短期认证记录中保留,15 分钟过期并定期清理；成功后只在原账号身份表保存必要的手机号与微信标识,直到换绑、解绑或注销按对应流程删除。小程序不持久化手机号授权码或待确认票据；登录后在本地保存 CubeRoot 会话凭证和账号资料,用于保持登录状态。',
+          'Unfinished WeChat phone verification data is held only in short-lived server authentication records, expiring after 15 minutes with periodic cleanup. After completion, necessary phone and WeChat identifiers remain in the existing account identity table until replacement, unlinking or account deletion removes them through the corresponding flow. The Mini Program does not persist phone authorization codes or pending tickets; after sign-in it stores the CubeRoot session token and account profile locally to maintain the session.',
+        )}</li>
         <li>
           {t(
             '小程序原生外壳不包含广告或分析 SDK,也不调用定位、摄像头、麦克风、相册或通讯录权限。只有在你主动进入智能魔方连接页并点击搜索后,才会使用蓝牙发现并连接附近的兼容魔方。',
