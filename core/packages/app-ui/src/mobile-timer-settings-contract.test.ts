@@ -53,8 +53,7 @@ describe('Mobile timer settings parity ledger', () => {
     expect(app).toContain('<TimerTimingSettingsSections');
     expect(app).toContain('<TimerAttemptSplitSettings');
     expect(app).toContain('<TimerAttemptSplitStatus');
-    expect(app).toContain('<TimerScrambleClickActionSetting');
-    expect(app).toContain('allowCopy={false}');
+    expect(app).not.toContain('<TimerScrambleClickActionSetting');
     expect(app).toContain('<TimerScramblePreviewSettings');
     expect(app).toContain('<TimerBooleanSettingRow');
     expect(app).toContain('store!.settings.showCubePreview && scrambleReady');

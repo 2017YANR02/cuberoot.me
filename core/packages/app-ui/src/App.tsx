@@ -204,7 +204,6 @@ import {
   TimerPuzzlePicker,
   TimerPrintController,
   TimerScramble222Config,
-  TimerScrambleClickActionSetting,
   TimerScramblePreviewSettings,
   TimerScrambleStrip,
   TimerWcaScrambleSource,
@@ -3561,11 +3560,8 @@ export function App({ host }: { host: InstalledAppHost }) {
     );
   }
 
-  // Legacy copy preferences must never make the timing page copy a scramble.
-  const scrambleClickAction = store!.settings.scrambleClickAction === 'copy'
-    ? 'none' : store!.settings.scrambleClickAction;
   const scrambleClickEffect = timerScrambleClickEffect(
-    scrambleClickAction,
+    'none', // Scramble presses belong to timing, including legacy click preferences.
     scramble.length > 0,
     scrambleReady,
     scrambleStatus?.retryable === true && currentScrambleEntry !== undefined,
@@ -3899,7 +3895,6 @@ export function App({ host }: { host: InstalledAppHost }) {
                       label: TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalLabel[language],
                       title: TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalTitle[language],
                     } : undefined}
-                    onActivate={scrambleClickEffect === 'next' ? nextDisplayedScramble : undefined}
                     title={TIMER_SCRAMBLE_CLICK_TITLE_COPY[scrambleClickEffect][language]}
                     scramble={scrambleReady && scramble.length > 0 ? scrambleText : ''}
                     status={scrambleStatus
@@ -4616,12 +4611,6 @@ export function App({ host }: { host: InstalledAppHost }) {
                   />
                 )}
                 value={store!.settings}
-              />
-              <TimerScrambleClickActionSetting
-                allowCopy={false}
-                localize={(value) => value[language]}
-                onChange={(scrambleClickAction) => updateSettings({ scrambleClickAction })}
-                value={scrambleClickAction}
               />
             </section>
 

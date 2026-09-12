@@ -98,12 +98,16 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  vi.useRealTimers();
   await act(async () => root.unmount()); container.remove();
   vi.restoreAllMocks(); vi.unstubAllGlobals();
 });
 
 describe('installed App GAN lifecycle integration', () => {
-  it.each(['touch', 'mouse'])('keeps legacy copy settings inert and %s digit presses on the real timer', async (pointerType) => {
+  it.each([
+    ['touch', '.timer-display-value'], ['mouse', '.timer-display-value'],
+    ['touch', '.scramble-moves'], ['mouse', '.scramble-moves'],
+  ])('keeps legacy copy settings inert and %s presses on %s on the real timer', async (pointerType, selector) => {
     const clipboard = vi.spyOn(host, 'writeClipboardText');
     const scramble = container.querySelector<HTMLElement>('.scramble-moves')!;
     const originalScramble = scramble.textContent;
@@ -114,20 +118,22 @@ describe('installed App GAN lifecycle integration', () => {
     for (const type of ['touchstart', 'selectstart', 'contextmenu']) {
       expect(scramble.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }))).toBe(false);
     }
-    const digits = container.querySelector<HTMLElement>('.timer-display-value')!;
+    const timingText = container.querySelector<HTMLElement>(selector)!;
+    // Hold readiness must be deterministic even on a busy build machine.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     const pointer = async (type: string, x = 100) => act(async () => {
       const event = new Event(type, { bubbles: true, cancelable: true });
       Object.defineProperties(event, {
         pointerType: { value: pointerType }, pointerId: { value: 1 }, button: { value: 0 },
         clientX: { value: x }, clientY: { value: 100 },
       });
-      digits.dispatchEvent(event);
+      timingText.dispatchEvent(event);
     });
     await pointer('pointerdown');
     expect(phase).toBe('holding');
     await pointer('pointermove', 220);
     expect(container.querySelector('.gesture-wheel.is-visible')).toBeNull();
-    await act(async () => { await new Promise((done) => setTimeout(done, 650)); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(650); });
     expect(phase).toBe('ready');
     now = 2_000;
     await pointer('pointerup', 220);
@@ -135,6 +141,7 @@ describe('installed App GAN lifecycle integration', () => {
     now = 2_600;
     await pointer('pointerdown');
     await pointer('pointerup');
+    vi.useRealTimers();
     await settle();
     expect(phase).toBe('stopped');
     expect(saved()).toHaveLength(1);
