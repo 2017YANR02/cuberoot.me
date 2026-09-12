@@ -842,6 +842,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'DELETE', p: '/v1/colpi/words/:id/vote', g: 'login', zh: '撤销投票', en: 'Remove vote' },
   { d: 'content', m: 'GET', p: '/v1/nav/sites', g: 'public', c: 'cdn', zh: '导航站点', en: 'Nav sites' },
   { d: 'content', m: 'GET', p: '/v1/nav/home-order', g: 'public', c: 'cdn', zh: '首页卡片顺序', en: 'Homepage card order' },
+  { d: 'content', m: 'GET', p: '/v1/nav/deskpet-catalog', g: 'public', c: 'no-store', zh: '桌宠展示配置', en: 'Pet presentation settings' },
+  { d: 'content', m: 'PUT', p: '/v1/nav/deskpet-catalog', g: 'admin', zh: '更新桌宠名称、开放状态及顺序', en: 'Update pet names, visibility and order' },
   { d: 'content', m: 'GET', p: '/v1/nav/home-locks', g: 'public', c: 'no-store', zh: '首页卡片锁定状态', en: 'Homepage card locks' },
   { d: 'content', m: 'PUT', p: '/v1/nav/home-locks', g: 'admin', zh: '锁定或解锁首页卡片', en: 'Lock or unlock a homepage card' },
   { d: 'content', m: 'PUT', p: '/v1/nav/home-order', g: 'admin', zh: '重排首页卡片', en: 'Reorder homepage cards' },

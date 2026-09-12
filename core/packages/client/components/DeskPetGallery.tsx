@@ -145,7 +145,8 @@ export default function DeskPetGallery({ lang, character, characters, onClose }:
   onClose: () => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
-  const [petId, setPetId] = useState(character);
+  const [selectedPetId, setPetId] = useState(character);
+  const petId = characters.some(item => item.id === selectedPetId) ? selectedPetId : characters[0]?.id;
   const [collectionId, setCollectionId] = useState('all');
   const backdropProps = useModalBackdrop(onClose);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -157,7 +158,8 @@ export default function DeskPetGallery({ lang, character, characters, onClose }:
     ? ROOTBEAST_SCENES.filter(item => rootCollection.sceneIds.includes(item.id))
     : ROOTBEAST_SCENES;
   const originalScenes = ORIGINAL_SCENES.filter(item => item.character === petId && (!collection || item.collection === collection.id));
-  const scene = getDeskPetScene(selected);
+  const selectedScene = getDeskPetScene(selected);
+  const scene = selectedScene && characters.some(item => item.id === selectedScene.character) ? selectedScene : undefined;
   const pet = characters.find(item => item.id === petId) ?? characters[0];
   const groups = PET_GALLERY.filter(group => group.id === pet?.id || (pet?.id === 'clawd' && ['cubing', 'moves'].includes(group.id)));
   const petLabel = (item: typeof pet) => item && <span className="deskpet-gallery-pet-option">
