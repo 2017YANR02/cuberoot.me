@@ -31,7 +31,6 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   const [error, setError] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [actionsWidth, setActionsWidth] = useState(0);
-  const [toggleOffset, setToggleOffset] = useState(0);
   const [toggleLeft, setToggleLeft] = useState(0);
   const actionsRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -55,7 +54,6 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       const toggle = toggleRef.current;
       if (toggle) {
         setToggleLeft(toggle.offsetLeft);
-        setToggleOffset(actions.getBoundingClientRect().width - toggle.offsetLeft - toggle.offsetWidth);
       }
     };
     const observer = new ResizeObserver(measure);
@@ -101,13 +99,16 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     const root = toolbar?.parentElement;
     const hit = root?.querySelector('.clawd-deskpet-hit');
     if (!toolbar || !root || !hit) return;
-    // Clamp the whole group, including wrapped role-test text on narrow screens.
+    // Reserve the FULL footprint even while collapsed. Hover must never move
+    // the pet/anchor to make room for the expanding background.
     const clamp = () => {
       const viewportWidth = document.documentElement.getBoundingClientRect().width;
       toolbar.style.maxWidth = `${viewportWidth - 32}px`;
       const rect = toolbar.getBoundingClientRect();
+      const actions = actionsRef.current?.getBoundingClientRect() ?? rect;
       const pet = hit.getBoundingClientRect();
-      const left = Math.min(rect.left, pet.left), right = Math.max(rect.right, pet.right);
+      const left = Math.min(rect.left, actions.left - 5, pet.left);
+      const right = Math.max(rect.right, actions.right + 5, pet.right);
       const top = Math.min(rect.top, pet.top), bottom = Math.max(rect.bottom, pet.bottom);
       const dx = Math.max(16 - left, Math.min(0, viewportWidth - 16 - right));
       const dy = Math.max(16 - top, Math.min(0, window.innerHeight - 16 - bottom));
@@ -115,12 +116,13 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     };
     const resize = new ResizeObserver(clamp);
     resize.observe(toolbar); resize.observe(root);
+    if (actionsRef.current) resize.observe(actionsRef.current);
     const mutation = new MutationObserver(clamp);
     mutation.observe(root, { attributes: true, attributeFilter: ['style', 'class'] });
     window.addEventListener('resize', clamp);
     clamp();
     return () => { resize.disconnect(); mutation.disconnect(); window.removeEventListener('resize', clamp); };
-  }, [ready, user, moveTo, centerX]);
+  }, [ready, user, moveTo, centerX, toggleLeft, actionsWidth]);
   const preview = ready ? getRolePreview() : null;
   const admin = ready && !!user && isAdmin();
   const roleTesting = ready && (!!preview || (!!user && canTestRoles()));
@@ -156,15 +158,15 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       if (!event.currentTarget.contains(event.relatedTarget as Node | null)
         && !(event.relatedTarget as Element | null)?.closest?.('.admin-tools-role-popup')) collapse();
     }}
-    // Anchor expansion on the environment icon, not the changing toolbar midpoint.
-    // Width, toolbar translation and toggle translation share one easing curve.
-    style={{ position: 'absolute', top: '100%', left: `${centerX * 100}%`, transform: `translateX(${-21 - (expanded ? toggleLeft : 0)}px)`, marginTop: 8, width: expanded ? actionsWidth + 10 : 42, maxWidth: 'calc(100vw - 32px)', pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', alignItems: 'center' }}>
+    // This 42px anchor and its icon never animate. Only the separate surface grows.
+    style={{ position: 'absolute', top: '100%', left: `${centerX * 100}%`, transform: 'translateX(-21px)', marginTop: 8, width: 42, pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', alignItems: 'center' }}>
     <style>{`
-      .admin-tools{box-sizing:border-box;padding:4px;border-radius:24px;
+      .admin-tools{box-sizing:border-box;height:42px;}
+      .admin-tools-surface{position:absolute;top:0;height:42px;box-sizing:border-box;border-radius:24px;
         border:1px solid var(--glass-edge);background:var(--glass-background);
         backdrop-filter:var(--glass-filter);-webkit-backdrop-filter:var(--glass-filter);
-        box-shadow:var(--glass-shadow);height:42px;
-        transition:width 420ms cubic-bezier(.22,1,.36,1),transform 420ms cubic-bezier(.22,1,.36,1);}
+        box-shadow:var(--glass-shadow);
+        transition:width 420ms cubic-bezier(.22,1,.36,1),left 420ms cubic-bezier(.22,1,.36,1);}
       .admin-tools .compact-select-trigger{border:0;background:transparent;padding:6px;}
       .admin-tools .compact-select-trigger:hover{background:transparent;color:var(--accent);}
       .admin-tools .compact-select-arrow{display:none;}
@@ -172,9 +174,9 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
         border:0;background:transparent;color:inherit;font:inherit;text-decoration:none;padding:6px;cursor:pointer;}
       .admin-tool-action svg{width:17px;height:17px;}
       .admin-tool-action:hover{color:var(--accent);}
-      .admin-tools-toggle{width:32px;height:32px;border-radius:50%;transition:transform 420ms cubic-bezier(.22,1,.36,1);}
+      .admin-tools-toggle{width:32px;height:32px;border-radius:50%;}
       .admin-tools-toggle:focus-visible{outline:2px solid var(--ring);outline-offset:2px;}
-      .admin-tools-actions{position:absolute;right:4px;display:flex;align-items:center;gap:8px;width:max-content;max-width:calc(100vw - 42px);min-width:0;}
+      .admin-tools-actions{position:absolute;display:flex;align-items:center;gap:8px;width:max-content;max-width:calc(100vw - 42px);min-width:0;}
       .admin-tools-group{display:contents;}
       .admin-tools-group > *{
         opacity:0;visibility:hidden;transform:translateX(8px);pointer-events:none;
@@ -182,9 +184,11 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       .admin-tools[data-expanded="true"] .admin-tools-group > *{opacity:1;visibility:visible;transform:none;pointer-events:auto;
         transition:opacity 220ms ease 100ms,transform 420ms cubic-bezier(.22,1,.36,1),visibility 0s;}
       .admin-tools-actions .compact-select{min-width:0;}
-      @media(prefers-reduced-motion:reduce){.admin-tools,.admin-tools-toggle,.admin-tools-group > *{transition:none;}}
+      @media(prefers-reduced-motion:reduce){.admin-tools-surface,.admin-tools-group > *{transition:none;}}
     `}</style>
-    <div ref={actionsRef} className="admin-tools-actions">
+    <span aria-hidden="true" className="admin-tools-surface"
+      style={{ left: expanded ? -toggleLeft : 0, width: expanded ? actionsWidth + 10 : 42 }} />
+    <div ref={actionsRef} className="admin-tools-actions" style={{ left: 5 - toggleLeft }}>
     {admin && <div className="admin-tools-group" inert={!expanded}>
       <button type="button" className="admin-tool-action" onClick={() => openPageNoticeEditor('page_top')}
         title={t('添加本页通知', 'Add notice for this page')} aria-label={t('添加本页通知', 'Add notice for this page')}>
@@ -197,7 +201,6 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     </div>}
     <a ref={toggleRef} className="admin-tool-action admin-tools-toggle" href={environmentHref}
       aria-label={environmentLabel} title={environmentLabel} aria-expanded={expanded}
-      style={{ transform: expanded ? undefined : `translateX(${toggleOffset}px)` }}
       onClick={event => {
         if (!expanded) { event.preventDefault(); cancelCollapse(); setExpanded(true); }
       }}>
