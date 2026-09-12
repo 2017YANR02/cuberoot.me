@@ -1,5 +1,26 @@
 [
   {
+    "name": "Foster + Partners: Alibaba Shanghai Campus / Fangfang Tian",
+    "space": true,
+    "url": "https://www.archdaily.com/1020980/alibaba-shanghai-campus-foster-plus-partners",
+    "zh": "2024-09-10 发布的阿里巴巴徐汇滨江 Y 区竣工资料，摄影 Fangfang Tian。实拍用于 Blender 主楼的阶梯形开口、多层连廊、铝框幕墙、露台绿化、Alibaba 招牌与入口线性灯具。仅作本地建模参考，未将照片用于运行贴图；不是官方 BIM，构件、纹理及照明尺寸仍有估算。查阅于 2026-09-12",
+    "en": "Completed Y-campus project published 2024-09-10, photographed by Fangfang Tian. References the Blender building's stepped voids, bridges, aluminum curtain wall, planted terraces, Alibaba lettering and entrance strip lights. Photographs are local modeling references, not runtime textures. This is not official BIM; details, textures and lighting dimensions remain estimated. Accessed 2026-09-12"
+  },
+  {
+    "name": "Alizila: Inside Alibaba's New Shanghai Campus",
+    "space": true,
+    "url": "https://www.alizila.com/podcast/redefining-the-workplace-inside-alibabas-new-shanghai-campus/",
+    "zh": "阿里巴巴官方于 2024-12-11 发布的设计师访谈，用于核对模块化开间、屋顶与立面开口、室外协作空间；不作为测绘尺寸来源。徐汇园区 X、Y、Z 不同片区未混为同一模型。本轮精做 Foster + Partners 设计的 Y 区。查阅于 2026-09-12",
+    "en": "Alibaba's architect interview published 2024-12-11 references modular bays, roof and facade openings and outdoor collaboration spaces, without supplying survey dimensions. The X, Y and Z parcels are kept distinct; this modeling pass develops Foster + Partners' Y campus. Accessed 2026-09-12"
+  },
+  {
+    "name": "高层总部办公建筑生态共享空间设计研究",
+    "space": true,
+    "url": "https://journals.nassg.org/index.php/edc/article/download/7859/pdf",
+    "zh": "魏倩、韩贵红的 2025 年案例研究列出阿里巴巴徐汇滨江 Y 区地上 11 层、约 56 米建筑高度及分层层高，用于模型尺度参考。非竣工测绘；平面定位另据 OSM way/792384120，开间与退台由实拍估算。查阅于 2026-09-12",
+    "en": "The 2025 case study by Wei Qian and Han Guihong documents 11 above-ground storeys, approximately 56 m height and floor heights for the Alibaba Xuhui Y campus. Used for scale, not as an as-built survey. Placement follows OSM way/792384120; bays and setbacks are photo estimates. Accessed 2026-09-12"
+  },
+  {
     "name": "Blender / KhronosGroup glTF-Blender-IO",
     "space": true,
     "url": "https://github.com/KhronosGroup/glTF-Blender-IO",

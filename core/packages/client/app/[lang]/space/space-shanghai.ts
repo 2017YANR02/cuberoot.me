@@ -38,6 +38,8 @@ export const SHANGHAI_VIEWS = {
   nanpuApproach: { zh: '南浦螺旋引桥', en: 'Nanpu spiral approach', camera: [-455, 165, 4560], target: [-150, 30, 4840] },
   lupu: { zh: '卢浦大桥', en: 'Lupu Bridge', camera: [-2550, 175, 7520], target: [-2160, 62, 6930] },
   xuhui: { zh: '徐汇滨江', en: 'Xuhui waterfront', camera: [-2790, 190, 8560], target: [-4040, 100, 9740] },
+  alibaba: { zh: '阿里巴巴园区', en: 'Alibaba campus', camera: [-3828, 100, 9732], target: [-3980, 26, 9594] },
+  alibabaCourt: { zh: '阿里中庭', en: 'Alibaba courtyard', camera: [-3965, 4, 9653], target: [-3980, 13, 9590] },
   // Xujiahui / South Wanping Road, WGS84 OSM way/1442066946 bounds centre.
   xujiahui: { zh: '徐家汇', en: 'Xujiahui', camera: [-5010, 290, 6900], target: [-5375.8, 25, 6478.1] },
   qiantan: { zh: '前滩', en: 'Qiantan', camera: [-4020, 210, 11100], target: [-2520, 155, 10400] },
