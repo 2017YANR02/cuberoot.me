@@ -316,6 +316,12 @@ export const CI_GUARDS_DRIFT: CiGuard[] = [
     en: { title: '/dev/schema + /dev/api snapshot drift', desc: '/dev/schema’s migration ledger must list every file in apps/api/migrations; /dev/api’s manifest must equal the routes actually mounted via app.route(‘/v1’, …) in server/src/index.ts. Missing either turns CI red.' },
   },
   {
+    id: 'auth-doc-sync',
+    test: 'auth-doc-sync.test.ts',
+    zh: { title: '/dev/auth 账号流程复核', desc: '登录、身份绑定、合并、注销与跨端回跳源码指纹变化后，必须同步复核流程图。新增、删除及改名同样触发；纯重构需说明流程为何不变。检查不代表真实授权或发布验收。' },
+    en: { title: '/dev/auth account-flow review', desc: 'Changed sign-in, linking, merge, deletion or cross-platform handoff source fingerprints require diagram review, including added, deleted and renamed files. Refactors must explain unchanged behavior. This is not live authorization or release acceptance.' },
+  },
+  {
     id: 'solvers-fleet-sync',
     test: 'dev-solvers-fleet-sync.test.ts',
     zh: { title: '/dev/solvers 舰队表漂移', desc: '/dev/solvers 的 NONWCA_TS 表必须与 CSTIMER_SOLVABLE_IDS(真实“已可解”集合)完全一致;还没做的 PLANNED 列表不能跟已可解的撞车。' },
