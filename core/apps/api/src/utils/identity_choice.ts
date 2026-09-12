@@ -2,13 +2,16 @@ import crypto from 'node:crypto';
 import type { PendingIdentity } from '@cuberoot/shared/auth/web-session';
 import { sql, transactionQuery } from '../db/connection.js';
 import {
-  addIdentity, getUserById, IdentityNotFoundError, loginWithIdentity, issueCode, verifyCode,
+  addIdentity, findUserByIdentity, getUserById, IdentityNotFoundError, loginWithIdentity, issueCode, verifyCode, isValidPhone,
   type AppleIdentityCredential,
 } from './account.js';
 
 export const IDENTITY_CHOICE_TTL_SECONDS = 15 * 60;
 export type ChoiceProvider = PendingIdentity['provider'];
-type IdentityProfile = Parameters<typeof loginWithIdentity>[2];
+type IdentityProfile = Parameters<typeof loginWithIdentity>[2] & {
+  /** Server-only paired proof; never serialized into the public pending envelope. */
+  wechatPhone?: { phone: string; accountUid: number | null };
+};
 type VerifiedIdentity = {
   provider: ChoiceProvider;
   providerUid: string;
@@ -81,6 +84,28 @@ export async function beginIdentityLogin(identity: VerifiedIdentity) {
   } catch (error) {
     if (!(error instanceof IdentityNotFoundError)) throw new Error('account service unavailable; please retry');
   }
+  return queueIdentityChoice(identity);
+}
+
+/** Both proofs are already checked against WeChat before reaching the account boundary. */
+export async function beginWechatPhoneIdentityLogin(unionid: string, phone: string) {
+  if (!isValidPhone(phone)) throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
+  const [wechatUser, phoneUser] = await Promise.all([
+    findUserByIdentity('wechat', unionid), findUserByIdentity('phone', phone),
+  ]);
+  if (wechatUser) {
+    if (phoneUser && phoneUser.id !== wechatUser.id) throw new IdentityChoiceError('IDENTITY_CONFLICT');
+    // Already-linked identities need no new grant; do not silently add/change their phone.
+    return { user: wechatUser, isNew: false };
+  }
+  const result = await queueIdentityChoice({ provider: 'wechat', providerUid: unionid,
+    profile: { name: '', wechatPhone: { phone, accountUid: phoneUser?.id ?? null } } });
+  return { ...result, pending: { ...result.pending,
+    ...(phoneUser ? { phoneAccount: { id: phoneUser.id, displayName: phoneUser.display_name } } : {}),
+  } };
+}
+
+async function queueIdentityChoice(identity: VerifiedIdentity) {
   const ticket = crypto.randomBytes(32).toString('base64url');
   await sql`INSERT INTO auth_identity_pending (
     ticket_hash, provider, provider_uid, profile, apple_refresh_token_encrypted,
@@ -99,7 +124,7 @@ export async function beginIdentityLogin(identity: VerifiedIdentity) {
 }
 
 /** Consumption and all identity/account/Apple credential writes commit together. */
-export async function completeIdentityChoice(ticket: string, action: 'create' | 'link' | 'link_with_code', expectedUid?: number, linkCode?: string) {
+export async function completeIdentityChoice(ticket: string, action: 'create' | 'link' | 'link_with_code' | 'link_verified_phone', expectedUid?: number, linkCode?: string) {
   if (!/^[A-Za-z0-9_-]{43}$/.test(ticket)) throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
   const parsed = action === 'link_with_code' ? parseIdentityLinkCode(linkCode ?? '') : undefined;
   if (parsed && parsed.uid !== expectedUid) throw new IdentityChoiceError('ACCOUNT_CHANGED');
@@ -110,16 +135,35 @@ export async function completeIdentityChoice(ticket: string, action: 'create' | 
       WHERE ticket_hash = ${ticketHash(ticket)} AND expires_at > NOW() FOR UPDATE`;
     const pending = rows[0] as PendingRow | undefined;
     if (!pending) throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
+    const phoneProof = pending.provider === 'wechat' ? pending.profile.wechatPhone : undefined;
+    if (phoneProof) {
+      if (!isValidPhone(phoneProof.phone)) throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
+      // Different tickets for the same pair serialize before account locks; SQL unique indexes
+      // still defend writes by other identity entry points that do not take these advisory locks.
+      for (const identity of [`phone:${phoneProof.phone}`, `wechat:${pending.provider_uid}`].sort()) {
+        await tx`SELECT pg_advisory_xact_lock(hashtext('wechat-phone-choice'), hashtext(${identity}))`;
+      }
+      const phoneOwner = await findUserByIdentity('phone', phoneProof.phone, transactionQuery(tx));
+      if (action === 'create' && (phoneOwner || phoneProof.accountUid !== null)) throw new IdentityChoiceError('IDENTITY_CONFLICT');
+      if (action === 'link_verified_phone' && (!phoneOwner || phoneOwner.id !== expectedUid
+        || phoneProof.accountUid !== expectedUid)) throw new IdentityChoiceError('ACCOUNT_CHANGED');
+      if (action !== 'create' && phoneOwner && phoneOwner.id !== expectedUid) throw new IdentityChoiceError('IDENTITY_CONFLICT');
+    } else if (action === 'link_verified_phone') throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
     if (action !== 'create') {
       if (!Number.isSafeInteger(expectedUid) || (expectedUid ?? 0) <= 0) throw new IdentityChoiceError('ACCOUNT_CHANGED');
       if (parsed) {
-        if (pending.provider !== 'douyin') throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
+        if (pending.provider !== 'douyin' && !phoneProof) throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
         // A wrong guess must commit its attempt count; do not throw inside this transaction.
         if (!await verifyCode('id_link', String(parsed.uid), 'identity_link', parsed.code, { transaction: tx })) return null;
       }
       const accounts = await tx`SELECT id FROM app_users
         WHERE id = ${expectedUid!} AND merged_into_user_id IS NULL FOR UPDATE`;
       if (!accounts.length) throw new IdentityChoiceError('ACCOUNT_CHANGED');
+      // A concurrent unlink/merge uses the same account lock. Recheck after acquiring it.
+      if (action === 'link_verified_phone') {
+        const owner = await findUserByIdentity('phone', phoneProof!.phone, transactionQuery(tx));
+        if (owner?.id !== expectedUid) throw new IdentityChoiceError('ACCOUNT_CHANGED');
+      }
     }
     const credential = pending.provider === 'apple' ? {
       encryptedToken: pending.apple_refresh_token_encrypted!,
@@ -129,6 +173,8 @@ export async function completeIdentityChoice(ticket: string, action: 'create' | 
     if (action === 'create') {
       result = await loginWithIdentity(pending.provider, pending.provider_uid, pending.profile,
         credential, { transaction: tx });
+      // The confirmed action was creation, not adding a phone to an account linked by a race.
+      if (phoneProof && !result.isNew) throw new IdentityChoiceError('ACCOUNT_CHANGED');
     } else {
       const status = await addIdentity(expectedUid!, pending.provider, pending.provider_uid,
         pending.profile.wcaId, pending.profile.name, pending.profile.avatar,
@@ -138,6 +184,11 @@ export async function completeIdentityChoice(ticket: string, action: 'create' | 
       const user = await getUserById(expectedUid!, transactionQuery(tx));
       if (!user || user.id !== expectedUid) throw new IdentityChoiceError('ACCOUNT_CHANGED');
       result = { user, isNew: false };
+    }
+    if (phoneProof) {
+      const status = await addIdentity(result.user.id, 'phone', phoneProof.phone,
+        undefined, undefined, undefined, undefined, undefined, tx);
+      if (status !== 'ok') throw new IdentityChoiceError(status === 'has-phone' ? 'ACCOUNT_HAS_PHONE' : 'IDENTITY_CONFLICT');
     }
     await tx`DELETE FROM auth_identity_pending WHERE ticket_hash = ${ticketHash(ticket)}`;
     // Linking must not turn an existing session into a password-reset grant.
@@ -154,9 +205,9 @@ export async function previewIdentityLinkCode(ticket: string, linkCode: string) 
   if (!/^[A-Za-z0-9_-]{43}$/.test(ticket)) throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
   const parsed = parseIdentityLinkCode(linkCode);
   const result = await sql.begin(async (tx) => {
-    const pending = await tx`SELECT provider FROM auth_identity_pending
+    const pending = await tx`SELECT provider, profile FROM auth_identity_pending
       WHERE ticket_hash = ${ticketHash(ticket)} AND expires_at > NOW() FOR UPDATE`;
-    if (pending[0]?.provider !== 'douyin') throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
+    if (pending[0]?.provider !== 'douyin' && !(pending[0]?.provider === 'wechat' && pending[0]?.profile?.wechatPhone)) throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
     if (!await verifyCode('id_link', String(parsed.uid), 'identity_link', parsed.code, { transaction: tx, consume: false })) return null;
     const accounts = await tx`SELECT id, display_name FROM app_users
       WHERE id = ${parsed.uid} AND merged_into_user_id IS NULL FOR UPDATE`;

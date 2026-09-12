@@ -9,14 +9,15 @@ vi.mock('@/components/AppLink', () => ({ default: ({ children, prefetch: _prefet
 import AuthFlowPage from '@/app/[lang]/dev/auth/page';
 
 describe('account flow documentation', () => {
-  it.each(['zh', 'en'])('distinguishes the proposal, existing-account escape hatch and current implementation in %s', (lang) => {
+  it.each(['zh', 'en'])('distinguishes local phone integration, existing-account escape hatch and release acceptance in %s', (lang) => {
     locale.lang = lang;
     const html = renderToStaticMarkup(createElement(AuthFlowPage));
     expect(html).toContain('<figure');
     expect(html).toContain('id="existing-account"');
     expect(html).toContain('href="#existing-account"');
     expect(html).toContain('<details');
-    expect(html).toContain(lang === 'zh' ? '手机号授权尚未接入' : 'phone authorization not implemented');
+    expect(html).toContain(lang === 'zh' ? '待后台与真机验收' : 'platform and device acceptance pending');
+    expect(html).toContain(lang === 'zh' ? '手机号实时验证' : 'real-time phone verification');
     expect(html).toContain(lang === 'zh' ? '明确同意注册后' : 'explicit registration consent');
     expect(html).toContain(lang === 'zh' ? '微信和手机号分别属于两个账号' : 'WeChat and phone belong to different accounts');
     expect(html).not.toContain('<form');

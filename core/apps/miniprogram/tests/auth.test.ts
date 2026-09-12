@@ -344,7 +344,7 @@ describe('mini program authentication', () => {
       409,
       'link required',
       'WECHAT_ACCOUNT_LINK_REQUIRED',
-    ))).toContain('已有 CubeRoot 账号请先绑定');
+    ))).toBe('服务端暂未开放手机号授权。可先登录原账号绑定微信，或稍后重试。');
     expect(loginErrorMessage(new ApiError(409, 'unionid'))).toContain('开放平台');
     expect(loginErrorMessage(new ApiError(503, 'secret'))).toContain('服务端');
     expect(loginErrorMessage(new ApiError(429, 'rate limited'))).toContain('过于频繁');

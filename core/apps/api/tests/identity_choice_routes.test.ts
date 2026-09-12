@@ -4,11 +4,12 @@ const mocks = vi.hoisted(() => ({
   begin: vi.fn(), complete: vi.fn(), verifySession: vi.fn(), requireUid: vi.fn(),
   sign: vi.fn(), capture: vi.fn(), login: vi.fn(), verifyCode: vi.fn(), findUser: vi.fn(), douyinExchange: vi.fn(),
   issueLinkCode: vi.fn(), previewLinkCode: vi.fn(), issueCode: vi.fn(),
+  wechatPhoneBegin: vi.fn(), wechatExchange: vi.fn(), wechatPhoneExchange: vi.fn(),
 }));
 vi.mock('../src/db/connection.js', () => ({ query: vi.fn(), sql: {} }));
 vi.mock('../src/utils/identity_choice.js', async (original) => {
   const actual = await original<typeof import('../src/utils/identity_choice.js')>();
-  return { ...actual, beginIdentityLogin: mocks.begin, completeIdentityChoice: mocks.complete,
+  return { ...actual, beginIdentityLogin: mocks.begin, beginWechatPhoneIdentityLogin: mocks.wechatPhoneBegin, completeIdentityChoice: mocks.complete,
     issueIdentityLinkCode: mocks.issueLinkCode, previewIdentityLinkCode: mocks.previewLinkCode };
 });
 vi.mock('../src/utils/account.js', async (original) => {
@@ -27,6 +28,11 @@ vi.mock('../src/utils/douyin_miniprogram.js', async (original) => ({
   ...await original<typeof import('../src/utils/douyin_miniprogram.js')>(),
   douyinMiniProgramConfigured: () => true, exchangeDouyinMiniProgramCode: mocks.douyinExchange,
 }));
+vi.mock('../src/utils/wechat_miniprogram.js', async (original) => ({
+  ...await original<typeof import('../src/utils/wechat_miniprogram.js')>(),
+  wechatMiniProgramConfigured: () => true, exchangeWechatMiniProgramCode: mocks.wechatExchange,
+  exchangeWechatMiniProgramPhoneCode: mocks.wechatPhoneExchange,
+}));
 vi.mock('../src/utils/social_login.js', () => ({
   isSocialProvider: (p: string) => ['wechat', 'qq', 'alipay'].includes(p),
   socialLoginConfigured: () => true, verifySocialState: () => ({ intent: 'login' }),
@@ -36,6 +42,7 @@ import { accountAuthRoutes } from '../src/routes/account_auth.js';
 import { authRoutes } from '../src/routes/auth.js';
 import { IdentityChoiceError } from '../src/utils/identity_choice.js';
 import { IdentityNotFoundError } from '../src/utils/account.js';
+import { WechatMiniProgramError } from '../src/utils/wechat_miniprogram.js';
 const app = new Hono().route('/v1', accountAuthRoutes).route('/v1', authRoutes);
 const ticket = 'A'.repeat(43);
 const user = { id: 42, display_name: 'Target', wca_id: null };
@@ -55,10 +62,70 @@ beforeEach(() => {
   mocks.issueLinkCode.mockResolvedValue({ linkCode: 'L42-123456', expiresInSeconds: 600 });
   mocks.previewLinkCode.mockResolvedValue({ user: { id: 42, displayName: 'Target' } });
   mocks.issueCode.mockResolvedValue({ code: '123456' });
+  mocks.wechatExchange.mockResolvedValue({ openid: 'verified-openid', unionid: 'verified-unionid' });
+  mocks.wechatPhoneExchange.mockResolvedValue('+8613800138000');
+  mocks.wechatPhoneBegin.mockResolvedValue({ ...choice, pending: { ...choice.pending, provider: 'wechat', phoneAccount: { id: 42, displayName: 'Target' } } });
 });
 afterEach(() => vi.unstubAllGlobals());
 
 describe('unified provider account-choice routes', () => {
+  it('exchanges the phone grant with the server-verified openid and only reveals a pending target', async () => {
+    mocks.findUser.mockResolvedValue(null);
+    const response = await post('/auth/wechat/miniprogram', { code: 'wx-code', phoneCode: 'phone-code' });
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ code: 'ACCOUNT_CHOICE_REQUIRED', pending: { provider: 'wechat', phoneAccount: { id: 42 } } });
+    expect(mocks.wechatPhoneExchange).toHaveBeenCalledWith('phone-code', 'verified-openid');
+    expect(mocks.wechatPhoneBegin).toHaveBeenCalledWith('verified-unionid', '+8613800138000');
+    expect(mocks.sign).not.toHaveBeenCalled();
+  });
+
+  it('does not ignore a supplied phone grant when WeChat is already bound to an account', async () => {
+    mocks.findUser.mockResolvedValue(user);
+    mocks.wechatPhoneBegin.mockRejectedValueOnce(new IdentityChoiceError('IDENTITY_CONFLICT'));
+    const response = await post('/auth/wechat/miniprogram', { code: 'wx-code', phoneCode: 'phone-code' });
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ code: 'IDENTITY_CONFLICT' });
+    expect(mocks.sign).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['invalid-phone-code', 401, 'INVALID_WECHAT_PHONE_CODE'], ['unsupported-phone', 400, 'WECHAT_PHONE_UNSUPPORTED'],
+    ['blocked-user', 403, 'ACCOUNT_BLOCKED'], ['rate-limited', 429, 'RATE_LIMITED'],
+    ['invalid-response', 502, 'WECHAT_PHONE_UNAVAILABLE'], ['upstream-unavailable', 502, 'WECHAT_PHONE_UNAVAILABLE'],
+  ] as const)('rejects %s without disclosing upstream secrets', async (kind, status, code) => {
+    mocks.findUser.mockResolvedValue(null);
+    mocks.wechatPhoneExchange.mockRejectedValueOnce(new WechatMiniProgramError(kind, 'SECRET'));
+    const response = await post('/auth/wechat/miniprogram', { code: 'wx-code', phoneCode: 'phone-code' });
+    expect(response.status).toBe(status);
+    expect(await response.json()).toMatchObject({ code });
+    expect(mocks.wechatPhoneBegin).not.toHaveBeenCalled();
+    expect(mocks.sign).not.toHaveBeenCalled();
+  });
+
+  it.each([null, 1, '', ' '.repeat(5), 'x'.repeat(513)])('rejects invalid phoneCode %# before consuming wx.login', async (phoneCode) => {
+    const response = await post('/auth/wechat/miniprogram', { code: 'wx-code', phoneCode });
+    expect(response.status).toBe(400);
+    expect(mocks.wechatExchange).not.toHaveBeenCalled();
+  });
+
+  it.each([null, [], 123, true])('rejects nonobject login payload %# before exchanging credentials', async (body) => {
+    const response = await post('/auth/wechat/miniprogram', body);
+    expect(response.status).toBe(400);
+    expect(mocks.wechatExchange).not.toHaveBeenCalled();
+  });
+
+  it('completes explicit phone target confirmation through the canonical one-use handler', async () => {
+    const response = await post('/auth/identity/complete', { ticket, action: 'link_verified_phone', expectedUid: 42 });
+    expect(response.status).toBe(200);
+    expect(mocks.complete).toHaveBeenCalledWith(ticket, 'link_verified_phone', 42);
+    expect(mocks.verifySession).not.toHaveBeenCalled();
+  });
+
+  it.each([undefined, null, '42', 0, -1, 1.5])('rejects an invalid phone target %# before consumption', async (expectedUid) => {
+    const response = await post('/auth/identity/complete', { ticket, action: 'link_verified_phone', expectedUid });
+    expect(response.status).toBe(400);
+    expect(mocks.complete).not.toHaveBeenCalled();
+  });
   it.each([
     ['apple', '/auth/apple', { code: 'code', state: 'state', codeVerifier: 'verifier' }],
     ['google', '/auth/google', { assertion: 'assertion' }],

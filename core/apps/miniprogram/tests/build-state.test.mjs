@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
+import { runInNewContext } from 'node:vm';
 
 import { build } from 'esbuild';
 import { describe, expect, it } from 'vitest';
@@ -47,6 +48,49 @@ function externalRelayInput(graphInputFiles) {
 }
 
 describe('mini program build graph state', () => {
+  it.each(['wechat', 'douyin'])('minifies local identifiers without changing %s template handlers, data properties, or login payloads', async (target) => {
+    const buildSource = await readFile(resolve(packageRoot, 'scripts/build.mjs'), 'utf8');
+    expect(buildSource).toContain('minifyIdentifiers: !watch');
+    expect(buildSource).not.toMatch(/\bmangleProps\s*:/);
+    const { outputFiles } = await build({ absWorkingDir: packageRoot, bundle: true,
+      entryPoints: ['src/pages/account/index.ts'], format: 'iife', write: false,
+      minifyIdentifiers: true, minifyWhitespace: true, minifySyntax: true,
+      platform: 'browser', target: 'chrome91', define: { __MINI_PROGRAM_TARGET__: JSON.stringify(target) },
+      logLevel: 'silent',
+    });
+    const source = outputFiles[0].text;
+    let page;
+    let storedSession = null;
+    let payload;
+    const api = {
+      getStorageSync(key) { return key === 'cuberoot:session' ? storedSession : ''; },
+      setStorageSync(_key, value) { storedSession = value; },
+      getSystemInfoSync() { return { language: 'en' }; },
+      login(options) { options.success({ code: 'minified-native-login-proof' }); },
+      request(options) {
+        payload = options.data;
+        options.success({ statusCode: 200, data: { token: 'synthetic-test-token-not-a-credential', user: { uid: 42, name: 'Fixture', wcaId: null, avatar: '' } } });
+      },
+    };
+    runInNewContext(source, { wx: api, tt: api, setTimeout, clearTimeout, Page(options) { page = options; } });
+    const template = await readFile(resolve(packageRoot, 'src/pages/account/index.wxml'), 'utf8');
+    const handlers = [...template.matchAll(/bind(?:tap|input|getrealtimephonenumber)="([A-Za-z][A-Za-z0-9]*)"/g)].map((match) => match[1]);
+    expect(handlers).toContain('authorizePhone');
+    for (const handler of handlers) expect(typeof page[handler], handler).toBe('function');
+    expect(page.data.wechatPhoneRequired).toBe(false);
+    expect(page.data.accountCanCreate).toBe(false);
+    expect(page.data.loginRequired).toBe(true);
+    page.setData = function(values) { Object.assign(this.data, values); };
+    page.toggleAgreement();
+    await page.loginWithMiniProgram();
+    expect(payload).toEqual({ code: 'minified-native-login-proof' });
+    expect(storedSession.user.uid).toBe(42);
+    expect(page.data.uidText).toBe('42');
+    expect(page.data.loginRequired).toBe(false);
+    expect(source).not.toMatch(/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/);
+    expect(source).not.toMatch(/\b(?:WECHAT_MINI_APP_SECRET|APP_SECRET|appSecret|app_secret)\b\s*[:=]\s*["'`][^"'`\r\n]+["'`]/i);
+  });
+
   it('derives cross-package inputs from the esbuild metafile', async () => {
     const graphInputFiles = await resolvedSmartCubeGraph();
     const paths = normalizedPaths(graphInputFiles);

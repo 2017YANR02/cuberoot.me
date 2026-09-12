@@ -129,6 +129,8 @@ async function buildProject() {
     metafile: true,
     minifySyntax: !watch,
     minifyWhitespace: !watch,
+    // Only local identifiers: WXML handlers, data keys and native API properties stay intact.
+    minifyIdentifiers: !watch,
     outbase: sourceRoot,
     outdir: compileRoot,
     platform: 'browser',
