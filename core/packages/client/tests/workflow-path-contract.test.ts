@@ -139,7 +139,9 @@ const NEXT_PATHS = [
   repoPath('.node-version'),
   packagePath('client', '**'),
   appPath('web', '**'),
-  ...workspaceDependencyInputs('client'),
+  // The Web renderer consumes stack-kernel through puzzle-render-core now;
+  // moving that import must not remove its versioned WASM from deploy inputs.
+  ...([...workspaceDependencyInputs('client'), ...WORKSPACE_INPUT_OVERRIDES['@cuberoot/stack-kernel']].sort()),
   corePath('package.json'),
   corePath('pnpm-lock.yaml'),
   corePath('pnpm-workspace.yaml'),
@@ -328,6 +330,10 @@ describe('deployment workflow path contracts', () => {
 
   it('keeps the Next deploy boundary aligned with its build and runtime inputs', () => {
     expect(nextPaths).toEqual(NEXT_PATHS);
+    const renderer = JSON.parse(readFileSync(
+      join(REPO_ROOT, packagePath('puzzle-render-core', 'package.json')), 'utf8',
+    ));
+    expect(renderer.dependencies['@cuberoot/stack-kernel']).toBe('workspace:*');
 
     const cases = [
       [packagePath('client', 'app', '[lang]', 'page.tsx'), true],
@@ -463,8 +469,16 @@ describe('deployment workflow path contracts', () => {
   it('prepares dist-only dependencies through the canonical desktop entrypoints', () => {
     const desktop = JSON.parse(readFileSync(join(REPO_ROOT, appPath('desktop', 'package.json')), 'utf8'));
     const tauri = JSON.parse(readFileSync(join(REPO_ROOT, appPath('desktop', 'src-tauri', 'tauri.conf.json')), 'utf8'));
-    expect(desktop.scripts['build:deps']).toBe('pnpm --filter @cuberoot/visualcube build');
-    for (const script of ['dev', 'build', 'typecheck']) {
+    // Visualcube's Node bundle resolves shared's dist exports; render-core
+    // likewise consumes both. A dirty local dist must not hide a broken order.
+    // stack-kernel is intentionally not rebuilt: its WASM/pkg is versioned.
+    expect(desktop.scripts['build:deps'].split(' && ')).toEqual([
+      'pnpm --filter @cuberoot/puzzle-solvers build',
+      'pnpm --filter @cuberoot/shared build',
+      'pnpm --filter @cuberoot/visualcube build',
+      'pnpm --filter @cuberoot/puzzle-render-core build',
+    ]);
+    for (const script of ['dev', 'build', 'typecheck', 'test']) {
       expect(desktop.scripts[script], script).toMatch(/^pnpm run build:deps && /);
     }
     expect(tauri.build.beforeBuildCommand).toBe('pnpm build');
