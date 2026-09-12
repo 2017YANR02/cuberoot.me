@@ -8696,3 +8696,11 @@ CREATE TABLE platform_organizer_applications (
 CREATE UNIQUE INDEX platform_organizer_one_pending_user ON platform_organizer_applications(applicant_user_id) WHERE status='pending';
 CREATE UNIQUE INDEX platform_organizer_one_pending_org ON platform_organizer_applications(organization_id) WHERE status='pending' AND organization_id IS NOT NULL;
 CREATE INDEX platform_organizer_review_queue ON platform_organizer_applications(status,created_at);
+
+-- 0235: persistent pet presentation and ordering.
+CREATE TABLE deskpet_catalog (
+  id SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  revision INTEGER NOT NULL DEFAULT 0,
+  entries JSONB NOT NULL DEFAULT '[]'::jsonb CHECK (jsonb_typeof(entries) = 'array')
+);
+INSERT INTO deskpet_catalog (id) VALUES (1);

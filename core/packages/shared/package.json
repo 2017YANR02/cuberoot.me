@@ -65,6 +65,7 @@
       "./admin": "runtime-neutral",
       "./account": "runtime-neutral",
       "./account-avatar": "runtime-neutral",
+      "./deskpet": "runtime-neutral",
       "./auth/web-session": "runtime-neutral",
       "./mobile-embed": "runtime-neutral",
       "./result-penalty": "runtime-neutral",
@@ -318,6 +319,7 @@
       "default": "./src/account.ts"
     },
     "./account-avatar": "./src/account_avatar.ts",
+    "./deskpet": { "node": "./dist/deskpet.js", "default": "./src/deskpet.ts" },
     "./auth/web-session": {
       "node": "./dist/auth/web_session.js",
       "default": "./src/auth/web_session.ts"
