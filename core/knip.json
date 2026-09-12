@@ -78,7 +78,8 @@
       "entry": ["src/**/*.{mjs,ts}"]
     },
     "{packages/stats-build,jobs/stats-build}": {
-      "entry": ["src/**/*.{mjs,ts}", "scripts/**/*.{mjs,ts}"]
+      "entry": ["src/**/*.{mjs,ts}", "scripts/**/*.{mjs,ts}"],
+      "ignoreBinaries": ["psql"]
     }
   }
 }
