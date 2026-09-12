@@ -4,8 +4,8 @@
 
 <view wx:elif="{{loginRequired}}" class="page account-login-page">
   <text class="eyebrow">ACCOUNT</text>
-  <text class="page-title">{{copy.pageTitle}}</text>
-  <text class="page-intro">{{loginIntro}}</text>
+  <text class="page-title">{{accountLinkCodeMode ? copy.linkExistingAccountLabel : accountLinkRequired ? copy.accountChoiceTitle : copy.pageTitle}}</text>
+  <text class="page-intro">{{accountLinkCodeMode ? copy.linkCodeHint : accountLinkRequired ? copy.accountChoiceNote : loginIntro}}</text>
   <view wx:if="{{requiresAgreement}}" class="account-policy">
     <view class="account-policy-links">
       <button
@@ -39,18 +39,32 @@
     {{loginBusy ? copy.signingInLabel : loginButtonLabel}}
   </button>
   <view wx:elif="{{accountLinkRequired}}" class="account-link-actions">
-    <button
+    <block wx:if="{{accountLinkCodeMode}}">
+      <view class="account-link-code-row">
+        <input class="account-link-code-input" value="{{accountLinkCode}}" placeholder="{{copy.linkCodeLabel}}" aria-label="{{copy.linkCodeLabel}}" maxlength="24" disabled="{{loginBusy}}" bindinput="onLinkCodeInput" />
+        <button wx:if="{{accountLinkCode}}" class="text-button" aria-label="{{copy.clearCodeLabel}}" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="clearLinkCode">×</button>
+      </view>
+      <text wx:if="{{accountLinkTargetId}}" class="account-user-meta">{{accountLinkTargetName}} · CubeRoot ID {{accountLinkTargetId}}</text>
+      <button wx:if="{{accountLinkTargetId}}" class="primary-button account-primary-button" disabled="{{loginBusy || (requiresAgreement && !agreementAccepted)}}" aria-busy="{{loginBusy}}" hover-class="press-feedback" bindtap="confirmLinkCode">{{loginBusy ? copy.signingInLabel : copy.confirmLinkCodeLabel}}</button>
+      <button wx:else class="primary-button account-primary-button" disabled="{{loginBusy || !accountLinkCode}}" aria-busy="{{loginBusy}}" hover-class="press-feedback" bindtap="previewLinkCode">{{copy.previewLinkCodeLabel}}</button>
+      <button class="text-button account-create-button" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="openLinkCodeWebsite">{{copy.openLinkCodeWebsiteLabel}}</button>
+    </block>
+    <button wx:else
       class="primary-button account-primary-button"
       aria-label="{{copy.linkExistingAccountLabel}}"
+      disabled="{{loginBusy || (requiresAgreement && !agreementAccepted)}}"
       hover-class="press-feedback"
       bindtap="linkExistingAccount"
     >{{copy.linkExistingAccountLabel}}</button>
     <button
+      wx:if="{{!accountLinkCodeMode}}"
       class="text-button account-create-button"
       aria-label="{{copy.createAccountLabel}}"
+      disabled="{{loginBusy || (requiresAgreement && !agreementAccepted)}}"
       hover-class="press-feedback"
       bindtap="createAccount"
     >{{copy.createAccountLabel}}</button>
+    <button class="text-button account-create-button" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="cancelIdentityChoice">{{copy.cancelLabel}}</button>
   </view>
   <button
     wx:elif="{{loginStorageUnavailable}}"

@@ -1,14 +1,11 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
+import { decodeIdentityChoicePending, IDENTITY_CHOICE_PROVIDERS, type PendingIdentity } from '@cuberoot/shared/auth/web-session';
+
+export type { PendingIdentity } from '@cuberoot/shared/auth/web-session';
 
 const KEY = 'cuberoot_pending_identity';
-const PROVIDERS = ['apple', 'google', 'wechat', 'qq', 'alipay', 'wca'] as const;
-export interface PendingIdentity {
-  ticket: string;
-  provider: typeof PROVIDERS[number];
-  expiresInSeconds: number;
-}
 export interface IdentityChoice extends Omit<PendingIdentity, 'expiresInSeconds'> {
   expiresAt: number;
   returnPath: string;
@@ -23,13 +20,8 @@ export class AccountChoiceRequired extends Error {
 
 /** Only the server's explicit, validated 409 envelope can start this workflow. */
 export function accountChoiceError(status: number, data: unknown): AccountChoiceRequired | null {
-  if (status !== 409 || !data || typeof data !== 'object') return null;
-  const value = data as { code?: unknown; pending?: Partial<PendingIdentity> };
-  const p = value.pending;
-  if (value.code !== 'ACCOUNT_CHOICE_REQUIRED' || !p || typeof p.ticket !== 'string'
-    || !/^[A-Za-z0-9_-]{43}$/.test(p.ticket) || !PROVIDERS.includes(p.provider!)
-    || !Number.isInteger(p.expiresInSeconds) || p.expiresInSeconds! <= 0 || p.expiresInSeconds! > 900) return null;
-  return new AccountChoiceRequired({ ticket: p.ticket, provider: p.provider!, expiresInSeconds: p.expiresInSeconds! });
+  const pending = status === 409 ? decodeIdentityChoicePending(data) : null;
+  return pending ? new AccountChoiceRequired(pending) : null;
 }
 
 export function identityReturnPath(value: string, currentHref = window.location.href): string {
@@ -55,7 +47,7 @@ export function getIdentityChoice(): IdentityChoice | null {
     cachedRaw = raw; cached = null;
     try {
       const value = JSON.parse(raw ?? 'null') as IdentityChoice | null;
-      if (value && typeof value.ticket === 'string' && /^[A-Za-z0-9_-]{43}$/.test(value.ticket) && PROVIDERS.includes(value.provider)
+      if (value && typeof value.ticket === 'string' && /^[A-Za-z0-9_-]{43}$/.test(value.ticket) && IDENTITY_CHOICE_PROVIDERS.includes(value.provider)
         && Number.isFinite(value.expiresAt) && value.expiresAt <= Date.now() + 900_000
         && typeof value.returnPath === 'string' && value.returnPath === identityReturnPath(value.returnPath)
         && ['choose', 'authenticate', 'confirm'].includes(value.stage)

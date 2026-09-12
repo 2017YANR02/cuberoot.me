@@ -79,6 +79,30 @@ export interface WebSessionTicketEnvelope {
   expiresIn: number;
 }
 
+export const IDENTITY_CHOICE_PROVIDERS = [
+  'apple', 'google', 'wechat', 'qq', 'alipay', 'wca', 'email', 'phone', 'douyin',
+] as const;
+
+/** Verified identity awaiting explicit account creation or linking, not a session. */
+export interface PendingIdentity {
+  ticket: string;
+  provider: typeof IDENTITY_CHOICE_PROVIDERS[number];
+  expiresInSeconds: number;
+}
+
+export function decodeIdentityChoicePending(value: unknown): PendingIdentity | null {
+  const envelope = asRecord(value);
+  const pending = asRecord(envelope?.pending);
+  if (envelope?.code !== 'ACCOUNT_CHOICE_REQUIRED' || !pending
+    || !isWebSessionTicket(pending.ticket)
+    || typeof pending.provider !== 'string'
+    || !IDENTITY_CHOICE_PROVIDERS.includes(pending.provider as PendingIdentity['provider'])
+    || typeof pending.expiresInSeconds !== 'number'
+    || !Number.isInteger(pending.expiresInSeconds)
+    || pending.expiresInSeconds <= 0 || pending.expiresInSeconds > 900) return null;
+  return { ticket: pending.ticket, provider: pending.provider as PendingIdentity['provider'], expiresInSeconds: pending.expiresInSeconds };
+}
+
 export const MOBILE_AUTH_PROVIDERS = [
   'apple',
   'wca',

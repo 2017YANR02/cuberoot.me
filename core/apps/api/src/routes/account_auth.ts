@@ -22,7 +22,7 @@ import { query } from '../db/connection.js';
 import { AdminActivityRangeError, resolveAdminActivityRange } from '../utils/admin_activity.js';
 import { checkRateLimit, requireAdmin } from '../utils/recon_helpers.js';
 import { signSession, verifySession, hasFreshEmailGrant, hasFreshPhonePasswordResetGrant } from '../utils/session.js';
-import { beginIdentityLogin, completeIdentityChoice, IdentityChoiceError } from '../utils/identity_choice.js';
+import { beginIdentityLogin, completeIdentityChoice, IdentityChoiceError, issueIdentityLinkCode, previewIdentityLinkCode } from '../utils/identity_choice.js';
 import { captureAccountDevice } from '../utils/account_device.js';
 import {
   issueCode, verifyCode, loginWithIdentity, IdentityNotFoundError, addIdentity, removeIdentity, replaceCredentialIdentity,
@@ -208,15 +208,57 @@ async function completeAppleLogin(c: Context, intent: 'login' | 'link'): Promise
 accountAuthRoutes.post('/auth/apple', bodyLimit({ maxSize: 4096 }), (c) => completeAppleLogin(c, 'login'));
 accountAuthRoutes.post('/auth/link/apple', bodyLimit({ maxSize: 4096 }), (c) => completeAppleLogin(c, 'link'));
 
+function identityChoiceErrorResponse(c: Context, error: unknown) {
+  if (!(error instanceof IdentityChoiceError)) {
+    console.error('[auth] identity completion failed');
+    return c.json({ error: 'account service unavailable; please retry' }, 503);
+  }
+  return c.json({ code: error.code, error: error.message }, error.code === 'INVALID_IDENTITY_TICKET' ? 401
+    : error.code === 'INVALID_IDENTITY_LINK_CODE' ? 400 : 409);
+}
+
+accountAuthRoutes.post('/auth/identity/link-code', bodyLimit({ maxSize: 4096 }), async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const limited = authRateLimitResponse(c, { bucket: 'identity-link-code', max: 10 });
+  if (limited) return limited;
+  const bearer = c.req.header('Authorization');
+  let uid: number | undefined;
+  try { uid = bearer?.startsWith('Bearer ') ? verifySession(bearer.slice(7)).uid : undefined; }
+  catch { return c.json({ error: 'Authentication required' }, 401); }
+  if (!uid) return c.json({ error: 'Authentication required' }, 401);
+  const body = await c.req.json<{ expectedUid?: unknown }>().catch(() => null);
+  if (body?.expectedUid !== uid || await requireAppUserId(c) !== uid) return c.json({ error: 'account changed; sign in again', code: 'ACCOUNT_CHANGED' }, 409);
+  try {
+    const result = await issueIdentityLinkCode(uid);
+    return 'error' in result ? c.json({ error: 'too frequent' }, 429) : c.json(result);
+  } catch (error) { return identityChoiceErrorResponse(c, error); }
+});
+
+accountAuthRoutes.post('/auth/identity/link-code/preview', bodyLimit({ maxSize: 4096 }), async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const limited = authRateLimitResponse(c, { bucket: 'identity-link-preview', max: 30 });
+  if (limited) return limited;
+  const body = await c.req.json<{ ticket?: unknown; linkCode?: unknown }>().catch(() => null);
+  if (!body || typeof body.ticket !== 'string' || typeof body.linkCode !== 'string') return c.json({ error: 'invalid identity choice' }, 400);
+  try { return c.json(await previewIdentityLinkCode(body.ticket, body.linkCode)); }
+  catch (error) { return identityChoiceErrorResponse(c, error); }
+});
+
 accountAuthRoutes.post('/auth/identity/complete', bodyLimit({ maxSize: 4096 }), async (c) => {
   c.header('Cache-Control', 'no-store');
   const limited = authRateLimitResponse(c, { bucket: 'identity-complete', max: 30 });
   if (limited) return limited;
-  const body = await c.req.json<{ ticket?: unknown; action?: unknown; expectedUid?: unknown }>().catch(() => null);
-  if (!body || typeof body.ticket !== 'string' || (body.action !== 'create' && body.action !== 'link')) {
+  const body = await c.req.json<{ ticket?: unknown; action?: unknown; expectedUid?: unknown; linkCode?: unknown }>().catch(() => null);
+  if (!body || typeof body.ticket !== 'string' || (body.action !== 'create' && body.action !== 'link' && body.action !== 'link_with_code')) {
     return c.json({ error: 'invalid identity choice' }, 400);
   }
   let uid: number | undefined;
+  if (body.action === 'link_with_code') {
+    if (typeof body.linkCode !== 'string' || typeof body.expectedUid !== 'number' || !Number.isSafeInteger(body.expectedUid) || body.expectedUid <= 0) {
+      return c.json({ error: 'invalid identity choice' }, 400);
+    }
+    uid = body.expectedUid;
+  }
   if (body.action === 'link') {
     // This endpoint must never accept legacy raw WCA tokens as an existing-account grant.
     const bearer = c.req.header('Authorization');
@@ -228,16 +270,14 @@ accountAuthRoutes.post('/auth/identity/complete', bodyLimit({ maxSize: 4096 }), 
     }
   }
   try {
-    const { user, isNew } = await completeIdentityChoice(body.ticket, body.action, uid);
+    const { user, isNew, amr } = body.action === 'link_with_code'
+      ? await completeIdentityChoice(body.ticket, body.action, uid, body.linkCode as string)
+      : await completeIdentityChoice(body.ticket, body.action, uid);
     await captureAccountDevice(user.id, c.req.header('User-Agent'));
-    const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
+    const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name, ...(amr ? { amr } : {}) });
     return c.json({ token, user: publicUser(user), isNew });
   } catch (error) {
-    if (!(error instanceof IdentityChoiceError)) {
-      console.error('[auth] identity completion failed');
-      return c.json({ error: 'account service unavailable; please retry' }, 503);
-    }
-    return c.json({ code: error.code, error: error.message }, error.code === 'INVALID_IDENTITY_TICKET' ? 401 : 409);
+    return identityChoiceErrorResponse(c, error);
   }
 });
 
@@ -420,7 +460,9 @@ accountAuthRoutes.post('/auth/douyin/miniprogram', async (c) => {
 
   try {
     const { openid } = await exchangeDouyinMiniProgramCode(code);
-    const { user, isNew } = await loginWithIdentity('douyin', openid, { name: '' });
+    const result = await beginIdentityLogin({ provider: 'douyin', providerUid: openid, profile: { name: '' } });
+    if ('pending' in result) return c.json(result, 409);
+    const { user, isNew } = result;
     await captureAccountDevice(user.id, c.req.header('User-Agent'));
     const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
     const session: WebSession = { token, user: publicUser(user) };
@@ -558,17 +600,25 @@ accountAuthRoutes.post('/auth/email/send', async (c) => {
 accountAuthRoutes.post('/auth/email/verify', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const { email, code, existingOnly } = await c.req.json<{ email?: string; code?: string; existingOnly?: boolean }>().catch(() => ({ email: undefined, code: undefined, existingOnly: undefined }));
+  const body = await c.req.json<{ email?: unknown; code?: unknown; existingOnly?: unknown }>().catch(() => null);
+  const email = body?.email;
+  const code = body?.code;
+  const existingOnly = body?.existingOnly;
+  if (typeof email !== 'string' || typeof code !== 'string') return c.json({ error: 'invalid input' }, 400);
+  if (existingOnly !== undefined && typeof existingOnly !== 'boolean') return c.json({ error: 'invalid input' }, 400);
   const norm = normalizeEmail(email ?? '');
   if (!isValidEmail(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
   const ok = await verifyCode('email', norm, 'login', code as string);
   if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
-  const result = await loginWithIdentity('email', norm, { name: norm.split('@')[0] }, undefined,
-    { createIfMissing: existingOnly !== true }).catch((error: unknown) => {
+  const profile = { name: norm.split('@')[0] };
+  const result = await (existingOnly === true
+    ? loginWithIdentity('email', norm, profile, undefined, { createIfMissing: false })
+    : beginIdentityLogin({ provider: 'email', providerUid: norm, profile })).catch((error: unknown) => {
       if (error instanceof IdentityNotFoundError) return null;
       throw error;
     });
   if (!result) return c.json({ error: 'account not found' }, 400);
+  if ('pending' in result) return c.json(result, 409);
   const { user, isNew } = result;
   await captureAccountDevice(user.id, c.req.header('User-Agent'));
   // amr=email_code:本次会话已证明邮箱所有权 → 15 分钟内可免旧密码重设密码(忘记密码路径)。
@@ -600,7 +650,13 @@ accountAuthRoutes.post('/auth/phone/send', async (c) => {
 accountAuthRoutes.post('/auth/phone/verify', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const { phone, code, purpose: rawPurpose, existingOnly } = await c.req.json<{ phone?: string; code?: string; purpose?: unknown; existingOnly?: boolean }>().catch(() => ({ phone: undefined, code: undefined, purpose: undefined, existingOnly: undefined }));
+  const body = await c.req.json<{ phone?: unknown; code?: unknown; purpose?: unknown; existingOnly?: unknown }>().catch(() => null);
+  const phone = body?.phone;
+  const code = body?.code;
+  const rawPurpose = body?.purpose;
+  const existingOnly = body?.existingOnly;
+  if (typeof phone !== 'string' || typeof code !== 'string') return c.json({ error: 'invalid input' }, 400);
+  if (existingOnly !== undefined && typeof existingOnly !== 'boolean') return c.json({ error: 'invalid input' }, 400);
   const norm = normalizePhone(phone ?? '');
   const purpose = parsePhoneCodePurpose(rawPurpose);
   if (!isValidPhone(norm) || !purpose || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
@@ -614,12 +670,14 @@ accountAuthRoutes.post('/auth/phone/verify', async (c) => {
     return c.json({ token, user: publicUser(user) });
   }
   const name = `尾号${norm.slice(-4)}`;
-  const result = await loginWithIdentity('phone', norm, { name }, undefined,
-    { createIfMissing: existingOnly !== true }).catch((error: unknown) => {
+  const result = await (existingOnly === true
+    ? loginWithIdentity('phone', norm, { name }, undefined, { createIfMissing: false })
+    : beginIdentityLogin({ provider: 'phone', providerUid: norm, profile: { name } })).catch((error: unknown) => {
       if (error instanceof IdentityNotFoundError) return null;
       throw error;
     });
   if (!result) return c.json({ error: 'account not found' }, 400);
+  if ('pending' in result) return c.json(result, 409);
   const { user, isNew } = result;
   await captureAccountDevice(user.id, c.req.header('User-Agent'));
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
@@ -1467,6 +1525,8 @@ accountAuthRoutes.post('/auth/account/merge/code', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   const uid = await requireAppUserId(c);
+  const body = await c.req.json<{ expectedUid?: unknown }>().catch(() => null);
+  if (body?.expectedUid !== uid) return c.json({ error: 'account changed; sign in again', code: 'ACCOUNT_CHANGED' }, 409);
   const result = await issueCode('merge', String(uid), 'account_merge');
   if ('error' in result) return c.json({ error: 'too frequent' }, 429);
   return c.json({ code: `${uid}-${result.code}`, expiresInSeconds: 600 });
@@ -1476,7 +1536,9 @@ accountAuthRoutes.post('/auth/account/merge', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   const sourceUserId = await requireAppUserId(c);
-  const body = await c.req.json<{ code?: unknown }>().catch(() => ({ code: undefined }));
+  const body = await c.req.json<{ code?: unknown; expectedSourceUid?: unknown }>().catch(() => null);
+  // The displayed source account is part of irreversible-merge consent, not just a UI hint.
+  if (body?.expectedSourceUid !== sourceUserId) return c.json({ error: 'account changed; sign in again', code: 'ACCOUNT_CHANGED' }, 409);
   const parsed = parseAccountMergeCode(body.code);
   if (!parsed || parsed.targetUserId === sourceUserId) return c.json({ error: 'invalid merge code' }, 400);
   const verified = await verifyCode('merge', String(parsed.targetUserId), 'account_merge', parsed.code);
