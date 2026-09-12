@@ -1,4 +1,6 @@
 import { Hono } from 'hono';
+import { requestDiagnostics } from './observability/request.js';
+import { startRuntimeDiagnostics } from './observability/runtime.js';
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { apiCors } from './api_cors.js';
@@ -102,6 +104,7 @@ import { startDouyinOrderSync } from './platform/douyin_order_sync.js';
 import { startMembershipContractSync } from './payment/membership-contract-sync.js';
 
 const app = new Hono();
+app.use('*', requestDiagnostics);
 const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 
 // CORS 配置——允许前端跨域请求
@@ -357,4 +360,6 @@ const PORT = Number(process.env.PORT) || 3001;
 const server = serve({ fetch: app.fetch, port: PORT, hostname: '0.0.0.0' }, () => {
   console.log(`Trainer API running on port ${PORT}`);
 });
+const stopRuntimeDiagnostics = startRuntimeDiagnostics();
+server.once('close', () => { void stopRuntimeDiagnostics(); });
 injectWebSocket(server);

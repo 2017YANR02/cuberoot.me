@@ -760,6 +760,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 230, slug: 'forum_bans', desc: { zh: '管理员在帖子页拉黑或解除拉黑账号，保留历史内容。', en: 'Let administrators ban or unban forum accounts from a post while retaining existing content.' } },
   { n: 231, slug: 'auth_apple_token', desc: { zh: '在已有登录身份中加密保存 Apple 撤销凭据与密钥版本，仅供解绑和注销撤销授权，不进入身份列表响应。', en: 'Keep an encrypted Apple revocation credential and key version on the existing identity for unlinking and account deletion; never expose it in identity-list responses.' } },
   { n: 232, slug: 'auth_identity_pending', desc: { zh: '首次第三方授权后暂存短期认证尝试，明确选择新建或验证已有账号后才事务核销；不按邮箱自动关联。', en: 'Keep short-lived first-time provider attempts until explicit creation or verified account linking, then consume them transactionally; never auto-link by email.' } },
+  { n: 233, slug: 'role_preview_complete_profile', desc: { zh: '新增资料完整的普通用户测试身份，复用论坛资料校验，不授予管理员或网盘权限。', en: 'Add an ordinary test persona with a complete profile using forum validation, without administrator or Drive access.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

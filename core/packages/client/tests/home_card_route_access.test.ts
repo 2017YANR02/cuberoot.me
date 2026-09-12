@@ -35,8 +35,8 @@ describe('homepage locks protect document and RSC routes', () => {
       headers: { cookie: `${PAGE_SESSION_COOKIE}=fixture-session` },
     }));
     expect(response.status).toBe(admin ? 200 : 307);
-    expect(fetcher).toHaveBeenLastCalledWith(expect.stringContaining('/v1/auth/me'), expect.objectContaining({
-      headers: { Authorization: 'Bearer fixture-session' }, cache: 'no-store',
+    expect(fetcher).toHaveBeenCalledWith(expect.stringContaining('/v1/auth/me'), expect.objectContaining({
+      headers: expect.objectContaining({ Authorization: 'Bearer fixture-session', 'X-Request-ID': expect.any(String) }), cache: 'no-store',
     }));
   });
   it('rejects forged and expired credentials', async () => {
@@ -46,9 +46,9 @@ describe('homepage locks protect document and RSC routes', () => {
     }))).status).toBe(307);
   });
   it('applies unlocking immediately, including default locks', async () => {
-    mockApi({ platform: false, 'comp-sim': false });
+    mockApi({ platform: false, 'comp-sim': false }, true);
     for (const path of ['/zh/platform/events/online', '/zh/comp-sim']) {
-      expect((await proxy(new NextRequest(`https://cuberoot.me${path}`))).status).toBe(200);
+      expect((await proxy(new NextRequest(`https://cuberoot.me${path}`, { headers: { cookie: `${PAGE_SESSION_COOKIE}=fixture-session` } }))).status).toBe(200);
     }
   });
   it('keeps locked ancestors effective even if the child card is unlocked', async () => {

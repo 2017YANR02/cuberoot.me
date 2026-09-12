@@ -28,7 +28,8 @@ import HeaderToggles from '@/components/HeaderToggles';
 import PersonLink from '@/components/PersonLink';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import Paginator from '@/components/wca-stats/Paginator';
-import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { getSessionToken, useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { verifyPageRole } from '@/lib/page-admin-session';
 import { loadFlagData } from '@/lib/country-flags';
 import type { Comp } from '@/lib/comp-search';
 import { roundTypeName } from '@/lib/comp-schedule';
@@ -210,6 +211,27 @@ function RoundReview({ record }: { record: PracticeRecord }) {
 }
 
 export default function CompSimPage() {
+  const lang = useLang();
+  const user = useAuthUser();
+  const [verifiedUser, setVerifiedUser] = useState<typeof user>(null);
+  useEffect(() => {
+    let active = true;
+    const redirect = () => {
+      const next = window.location.pathname + window.location.search;
+      window.location.replace(`/auth/page-access?require=forum-profile&next=${encodeURIComponent(next)}`);
+    };
+    void verifyPageRole(getSessionToken()).then((access) => {
+      if (!active) return;
+      if (access === 'admin') setVerifiedUser(user);
+      else if (access === 'user') window.location.replace(lang === 'zh' ? '/zh' : '/');
+      else redirect();
+    }).catch(() => { if (active) redirect(); });
+    return () => { active = false; };
+  }, [user, lang]);
+  return user && verifiedUser === user ? <CompSimPractice /> : null;
+}
+
+function CompSimPractice() {
   const isZh = useLang() === 'zh';
   const user = useAuthUser();
   const loginWithWca = useAuthStore((state) => state.loginWithWca);
@@ -1138,8 +1160,8 @@ export default function CompSimPage() {
           <section className="practice-account">
             <p>
               {tr({
-                zh: '无需登录即可训练，记录保存在当前浏览器。',
-                en: 'Practice without signing in. Records stay in this browser.',
+                zh: '训练记录保存在当前浏览器。',
+                en: 'Training records stay in this browser.',
               })}
             </p>
             {!user?.wcaId && (
