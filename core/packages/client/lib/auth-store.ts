@@ -60,7 +60,7 @@ const JWT_KEY = 'cuberoot_jwt';
 const STATE_KEY = 'wca_oauth_state';
 const RETURN_URL_KEY = 'wca_return_url';
 const PREVIEW_KEY = 'cuberoot_role_preview';
-export type TestRole = 'admin' | 'member' | 'user' | 'guest';
+export type TestRole = 'admin' | 'member' | 'user' | 'user-complete' | 'guest';
 interface RolePreview { id: string; role: TestRole; token: string; user: WcaUser | null }
 
 export function getRolePreview(): RolePreview | null {
