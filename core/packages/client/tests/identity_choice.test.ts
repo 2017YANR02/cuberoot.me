@@ -2,6 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccountChoiceRequired, accountChoiceError, clearIdentityChoice, existingAccountRequired, getIdentityChoice, identityReturnPath, rememberIdentityChoice, updateIdentityChoice } from '@/lib/identity-choice';
+import { decodeIdentityChoicePending } from '@cuberoot/shared/auth/web-session';
 import { completeIdentityChoice, issueAccountMergeCode, issueIdentityLinkCode, loginGoogle, mergeAccount, startWechatBrowserLogin, verifyEmailCode, verifyPhoneCode } from '@/lib/account-api';
 
 vi.mock('@/lib/auth-store', () => ({ getSessionToken: () => 'existing-canonical-session' }));
@@ -12,6 +13,18 @@ beforeEach(() => { sessionStorage.clear(); localStorage.clear(); clearIdentityCh
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); clearIdentityChoice(); });
 
 describe('first identity account choice boundary', () => {
+  it('decodes a verified WeChat phone target without leaking extra profile fields', () => {
+    const pending = { ...envelope.pending, provider: 'wechat', phoneAccount: { id: 42, displayName: 'Existing', phone: 'private' } };
+    expect(decodeIdentityChoicePending({ ...envelope, pending })?.phoneAccount).toEqual({ id: 42, displayName: 'Existing' });
+  });
+  it.each([null, [], {}, { id: 0, displayName: 'A' }, { id: '42', displayName: 'A' },
+    { id: 42, displayName: 'bad\nname' }, { id: 42, displayName: 'a'.repeat(201) },
+  ])('rejects malformed verified phone targets (%j)', (phoneAccount) => {
+    expect(decodeIdentityChoicePending({ ...envelope, pending: { ...envelope.pending, provider: 'wechat', phoneAccount } })).toBeNull();
+  });
+  it('does not accept a phone target for other providers', () => {
+    expect(decodeIdentityChoicePending({ ...envelope, pending: { ...envelope.pending, phoneAccount: { id: 42, displayName: '' } } })).toBeNull();
+  });
   it.each(['apple', 'google', 'wechat', 'qq', 'alipay', 'wca', 'email', 'phone', 'douyin'])('accepts only a validated server 409 for %s', (provider) => {
     expect(accountChoiceError(409, { ...envelope, pending: { ...envelope.pending, provider } })).toBeInstanceOf(AccountChoiceRequired);
     expect(accountChoiceError(400, envelope)).toBeNull();

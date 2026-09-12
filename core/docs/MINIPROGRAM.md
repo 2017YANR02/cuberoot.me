@@ -193,7 +193,9 @@ provider = douyin
 provider_uid = openid
 ```
 
-抖音 OpenID 与现有微信、邮箱或 WCA 身份之间没有可验证的自动对应关系，因此首版会创建独立 CubeRoot 账号，不猜测合并。以后只有在用户已登录并明确确认绑定时，才可复用现有账号绑定流程。
+抖音 OpenID 与现有微信、邮箱或 WCA 身份之间没有可验证的自动对应关系：已知身份直接登录，未知身份需明确创建或使用网站原账号生成的绑定码，核对目标后绑定；不猜测合并。
+
+微信手机号实时授权增量（2026-09-12，本地实现，未据此确认发布）：未绑定 UnionID 可通过 `getRealtimePhoneNumber` 获取独立一次性 `phoneCode`；后端同时验证本次登录 OpenID、手机号凭证和 AppID 水印。手机号已有账号先预览并确认，未匹配则明确创建或复用上述绑定码；两个身份在既有 pending 事务中原子绑定，不能静默合并/覆盖。拒绝授权或不支持时继续提供原账号验证；已绑定微信不重复要求手机号。目前复用中国大陆号码契约，不把其他区号转换为 +86。实现与发布前检查见 [小程序 README](../apps/miniprogram/README.md#微信手机号实时授权2026-09-12本地接入)。
 
 原生小程序的 JWT 存在小程序本地存储中，网站登录态由现有 `applySession()` 写入网页 `localStorage`，两者不会自动共享。现在统一走服务端一次性换票：小程序用 Bearer JWT 申请 90 秒单次 ticket，把 ticket 放在 URL fragment 中交给网页；网页原子核销后获得新 JWT 和当前账号资料，再调用网站已有的 `applySession()`。长期 JWT 不进入 URL，服务端只保存 ticket 的 SHA-256。
 
@@ -220,6 +222,7 @@ $env:WECHAT_MINI_SOCKET_DOMAIN_CONFIGURED='1' # 仅在后台配置 wss://api.cub
 $env:WECHAT_MINI_BASIC_INFO_APPROVED='1'
 $env:WECHAT_MINI_FILING_COMPLETED='1'
 $env:WECHAT_MINI_PRIVACY_REVIEWED='1'
+$env:WECHAT_MINI_PHONE_AUTHORIZATION_REVIEWED='1' # 核验实时手机号能力、额度、隐私声明和真机确认后设置
 $env:WECHAT_MINI_IOS_REAL_DEVICE_TESTED='1'
 $env:WECHAT_MINI_ANDROID_REAL_DEVICE_TESTED='1'
 $env:WECHAT_MINI_GAN16UI_TESTED='1' # Android 真机完成 GAN 16 ui 全链路回归后设置
@@ -319,7 +322,8 @@ pnpm --filter @cuberoot/miniprogram release:check
 | 短时单次网页换票 | 登录后打开网页时使用 | 让 `web-view` 复用同一账号，不在 URL 暴露长期会话 |
 | 附近蓝牙设备、智能魔方转动、状态、电量与姿态 | 用户主动点击计时器蓝牙入口后使用 | 连接兼容魔方并把实时事件交给网站计时器；不写入数据库 |
 | IP、浏览器或设备类型等标准请求信息 | 网络请求时可能处理 | 提供服务、安全防护和故障诊断 |
-| 微信昵称、头像、手机号 | 不使用 | 后台不应声明收集 |
+| 微信昵称、头像 | 不使用 | 后台不应声明收集 |
+| 微信手机号（用户主动实时验证授权） | 登录查找原账号、确认后绑定；待确认记录 15 分钟过期，成功后留在原账号身份表 | 后台须声明手机号用于登录及账号绑定；拒绝授权不阻断公开工具，不把本地实现写成后台已完成 |
 | 定位、摄像头、麦克风、相册、通讯录 | 不使用 | 后台不应声明收集 |
 
 ## 9. 迭代记录
@@ -997,7 +1001,7 @@ pnpm --filter @cuberoot/miniprogram release:check
 
 ### 2026-08-16：隐私声明与文字对比度进入发布闸门
 
-- 当前原生壳只在智能魔方连接模块使用蓝牙，不申请用户资料、定位、文件媒体、录音、地址发票、运动数据、剪贴板、相机直播或手机号能力；发布检查同时扫描源码和产物，蓝牙调用只允许出现在已复核的四份传输适配器和连接页产物中。
+- 原生壳在智能魔方连接模块使用蓝牙；2026-09-12 另为原生账号页增加用户主动触发的手机号实时验证，不申请昵称头像、定位、文件媒体、录音、地址发票、运动数据、剪贴板或相机直播。发布检查同时扫描源码和产物，蓝牙与实时手机号仅允许在已复核的适配器/页面出现，普通非实时手机号组件仍阻断。
 - `app.json` 暂不允许出现 `requiredPrivateInfos` 或 `permission`，即使内容为空也会阻止发布，避免后台误报采集范围；以后确需新增原生能力，必须从这条明确边界修改，不得只改配置绕过检查。
 - 原生导航与共享 CSS 的文字颜色统一校验不低于 4.5:1；浅色主色改为更深的同色系，并由结构测试锁定 CSS 与 `theme.json` 同源，后续换色不会让网页壳和微信原生栏逐渐分叉。
 

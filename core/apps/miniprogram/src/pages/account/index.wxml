@@ -4,8 +4,8 @@
 
 <view wx:elif="{{loginRequired}}" class="page account-login-page">
   <text class="eyebrow">ACCOUNT</text>
-  <text class="page-title">{{accountLinkCodeMode ? copy.linkExistingAccountLabel : accountLinkRequired ? copy.accountChoiceTitle : copy.pageTitle}}</text>
-  <text class="page-intro">{{accountLinkCodeMode ? copy.linkCodeHint : accountLinkRequired ? copy.accountChoiceNote : loginIntro}}</text>
+  <text class="page-title">{{wechatPhoneRequired ? copy.phoneTitle : accountLinkCodeMode ? copy.linkExistingAccountLabel : phoneAccountFound ? copy.phoneFoundTitle : accountLinkRequired ? copy.accountChoiceTitle : copy.pageTitle}}</text>
+  <text class="page-intro">{{wechatPhoneRequired ? copy.phoneHint : accountLinkCodeMode ? copy.linkCodeHint : phoneAccountFound ? copy.phoneFoundHint : accountLinkRequired ? copy.accountChoiceNote : loginIntro}}</text>
   <view wx:if="{{requiresAgreement}}" class="account-policy">
     <view class="account-policy-links">
       <button
@@ -27,8 +27,14 @@
       bindtap="toggleAgreement"
     >{{agreementAccepted ? '✓' : '○'}} {{copy.agreementLabel}}</button>
   </view>
+  <view wx:if="{{wechatPhoneRequired && !loginStorageUnavailable}}" class="account-link-actions">
+    <button wx:if="{{wechatPhoneSupported}}" class="primary-button account-primary-button" open-type="getRealtimePhoneNumber" bindtap="beginPhoneAuthorization" bindgetrealtimephonenumber="authorizePhone" disabled="{{loginBusy}}" aria-busy="{{loginBusy}}" hover-class="press-feedback">{{loginBusy ? copy.signingInLabel : copy.phoneAuthorize}}</button>
+    <button class="text-button account-create-button" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="linkExistingAccount">{{copy.phoneOtherLogin}}</button>
+    <button class="text-button account-create-button" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="openPolicy">{{copy.privacyLabel}}</button>
+    <button class="text-button account-create-button" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="cancelIdentityChoice">{{copy.cancelLabel}}</button>
+  </view>
   <button
-    wx:if="{{!loginStorageUnavailable && !accountLinkRequired}}"
+    wx:elif="{{!loginStorageUnavailable && !accountLinkRequired}}"
     class="primary-button account-primary-button"
     aria-busy="{{loginBusy}}"
     aria-label="{{loginBusy ? loginButtonBusyLabel : loginButtonLabel}}"
@@ -38,8 +44,12 @@
   >
     {{loginBusy ? copy.signingInLabel : loginButtonLabel}}
   </button>
-  <view wx:elif="{{accountLinkRequired}}" class="account-link-actions">
-    <block wx:if="{{accountLinkCodeMode}}">
+  <view wx:elif="{{accountLinkRequired && !loginStorageUnavailable}}" class="account-link-actions">
+    <block wx:if="{{phoneAccountFound && !accountLinkCodeMode}}">
+      <text class="account-user-meta">{{accountLinkTargetName}} · CubeRoot ID {{accountLinkTargetId}}</text>
+      <button class="primary-button account-primary-button" disabled="{{loginBusy}}" aria-busy="{{loginBusy}}" hover-class="press-feedback" bindtap="confirmPhoneAccount">{{loginBusy ? copy.signingInLabel : copy.confirmLinkCodeLabel}}</button>
+    </block>
+    <block wx:elif="{{accountLinkCodeMode}}">
       <view class="account-link-code-row">
         <input class="account-link-code-input" value="{{accountLinkCode}}" placeholder="{{copy.linkCodeLabel}}" aria-label="{{copy.linkCodeLabel}}" maxlength="24" disabled="{{loginBusy}}" bindinput="onLinkCodeInput" />
         <button wx:if="{{accountLinkCode}}" class="text-button" aria-label="{{copy.clearCodeLabel}}" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="clearLinkCode">×</button>
@@ -57,7 +67,7 @@
       bindtap="linkExistingAccount"
     >{{copy.linkExistingAccountLabel}}</button>
     <button
-      wx:if="{{!accountLinkCodeMode}}"
+      wx:if="{{accountCanCreate && !accountLinkCodeMode && !phoneAccountFound && !existingOnly}}"
       class="text-button account-create-button"
       aria-label="{{copy.createAccountLabel}}"
       disabled="{{loginBusy || (requiresAgreement && !agreementAccepted)}}"

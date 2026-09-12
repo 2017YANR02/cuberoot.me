@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from '../src/db/connection.js';
-import { beginIdentityLogin, cleanupIdentityChoices, completeIdentityChoice, issueIdentityLinkCode, previewIdentityLinkCode, type ChoiceProvider } from '../src/utils/identity_choice.js';
-import { loginWithIdentity, issueCode } from '../src/utils/account.js';
+import { beginIdentityLogin, beginWechatPhoneIdentityLogin, cleanupIdentityChoices, completeIdentityChoice, issueIdentityLinkCode, previewIdentityLinkCode, type ChoiceProvider } from '../src/utils/identity_choice.js';
+import { loginWithIdentity, issueCode, findUserByIdentity } from '../src/utils/account.js';
 import { approveWechatBrowserSession, issueWechatBrowserSession } from '../src/utils/web_session_ticket.js';
 
 // Explicit dedicated database only. CI/local must create this empty test database, never point at production.
@@ -50,8 +50,126 @@ describe.skipIf(!enabled)('identity choice on real isolated PostgreSQL', () => {
     await sql.unsafe(await readFile(new URL('../migrations/0231_auth_apple_token.sql', import.meta.url), 'utf8'));
     await sql.unsafe(await readFile(new URL('../migrations/0232_auth_identity_pending.sql', import.meta.url), 'utf8'));
     await sql.unsafe(await readFile(new URL('../migrations/0234_auth_identity_choice_providers.sql', import.meta.url), 'utf8'));
+    await sql`CREATE UNIQUE INDEX uq_auth_identity_one_phone ON auth_identities(user_id) WHERE provider = 'phone'`;
   });
   afterAll(async () => { await sql.end(); });
+
+  async function paired(unionid: string, phone: string) {
+    const result = await beginWechatPhoneIdentityLogin(unionid, phone);
+    if (!('pending' in result)) throw new Error('expected paired choice');
+    return result.pending;
+  }
+
+  it('creates one account with both verified identities atomically and consumes the proof once', async () => {
+    const before = await count('app_users');
+    const choice = await paired('paired-new', '+8613800100001');
+    expect(choice.phoneAccount).toBeUndefined();
+    expect(JSON.stringify(choice)).not.toContain('13800100001');
+    const result = await completeIdentityChoice(choice.ticket, 'create');
+    expect(result.isNew).toBe(true);
+    expect(await count('app_users')).toBe(before + 1);
+    expect((await findUserByIdentity('phone', '+8613800100001'))?.id).toBe(result.user.id);
+    expect((await findUserByIdentity('wechat', 'paired-new'))?.id).toBe(result.user.id);
+    await expect(completeIdentityChoice(choice.ticket, 'create')).rejects.toMatchObject({ code: 'INVALID_IDENTITY_TICKET' });
+    expect(await beginWechatPhoneIdentityLogin('paired-new', '+8613800100001')).toMatchObject({ user: { id: result.user.id }, isNew: false });
+  });
+
+  it('only explicitly confirms the verified phone account; it cannot create or select a different target', async () => {
+    const owner = await loginWithIdentity('phone', '+8613800100002', { name: 'Phone owner' });
+    const choice = await paired('paired-old-phone', '+8613800100002');
+    expect(choice.phoneAccount).toEqual({ id: owner.user.id, displayName: 'Phone owner' });
+    await expect(completeIdentityChoice(choice.ticket, 'create')).rejects.toMatchObject({ code: 'IDENTITY_CONFLICT' });
+    await expect(completeIdentityChoice(choice.ticket, 'link_verified_phone', owner.user.id + 99)).rejects.toMatchObject({ code: 'ACCOUNT_CHANGED' });
+    expect(await findUserByIdentity('wechat', 'paired-old-phone')).toBeNull();
+    const result = await completeIdentityChoice(choice.ticket, 'link_verified_phone', owner.user.id);
+    expect(result.user.id).toBe(owner.user.id);
+    expect(result.isNew).toBe(false);
+  });
+
+  it.each(['google', 'phone', 'wechat'] as const)('a plain %s ticket cannot be used as a verified-phone grant', async (provider) => {
+    const choice = await pending(provider, 'no-paired-proof-' + provider);
+    await expect(completeIdentityChoice(choice.pending.ticket, 'link_verified_phone', 1))
+      .rejects.toMatchObject({ code: 'INVALID_IDENTITY_TICKET' });
+  });
+
+  it('a different owner of either identity is a conflict, never an implicit merge', async () => {
+    const wechat = await loginWithIdentity('wechat', 'paired-conflict-wx', { name: '' });
+    const phone = await loginWithIdentity('phone', '+8613800100003', { name: '' });
+    await expect(beginWechatPhoneIdentityLogin('paired-conflict-wx', '+8613800100003'))
+      .rejects.toMatchObject({ code: 'IDENTITY_CONFLICT' });
+    const choice = await paired('paired-conflict-link', '+8613800100003');
+    await expect(completeIdentityChoice(choice.ticket, 'link', wechat.user.id)).rejects.toMatchObject({ code: 'IDENTITY_CONFLICT' });
+    expect((await findUserByIdentity('phone', '+8613800100003'))?.id).toBe(phone.user.id);
+    expect(await findUserByIdentity('wechat', 'paired-conflict-link')).toBeNull();
+  });
+
+  it.each(['moved', 'removed', 'merged'] as const)('rechecks a phone target after it was %s since preview', async (state) => {
+    const suffix = { moved: '4', removed: '5', merged: '6' }[state];
+    const phone = '+861380010000' + suffix;
+    const owner = await loginWithIdentity('phone', phone, { name: '' });
+    const other = await loginWithIdentity('google', 'paired-owner-change-' + state, { name: '' });
+    const choice = await paired('paired-changed-' + state, phone);
+    if (state === 'moved') await sql`UPDATE auth_identities SET user_id = ${other.user.id} WHERE provider = 'phone' AND provider_uid = ${phone}`;
+    if (state === 'removed') await sql`DELETE FROM auth_identities WHERE provider = 'phone' AND provider_uid = ${phone}`;
+    if (state === 'merged') await sql`UPDATE app_users SET merged_into_user_id = ${other.user.id} WHERE id = ${owner.user.id}`;
+    await expect(completeIdentityChoice(choice.ticket, 'link_verified_phone', owner.user.id))
+      .rejects.toMatchObject({ code: 'ACCOUNT_CHANGED' });
+    await expect(completeIdentityChoice(choice.ticket, 'create')).rejects.toMatchObject({ code: 'IDENTITY_CONFLICT' });
+    expect(await findUserByIdentity('wechat', 'paired-changed-' + state)).toBeNull();
+  });
+
+  it('two UnionIDs racing to create with the same phone produce only one account', async () => {
+    const first = await paired('paired-shared-phone-a', '+8613800100007');
+    const second = await paired('paired-shared-phone-b', '+8613800100007');
+    const before = await count('app_users');
+    const results = await Promise.allSettled([completeIdentityChoice(first.ticket, 'create'), completeIdentityChoice(second.ticket, 'create')]);
+    expect(results.map(result => result.status).sort()).toEqual(['fulfilled', 'rejected']);
+    expect(await count('app_users')).toBe(before + 1);
+    expect((await sql`SELECT id FROM auth_identities WHERE provider = 'wechat' AND provider_uid IN ('paired-shared-phone-a', 'paired-shared-phone-b')`).length).toBe(1);
+  });
+
+  it('one UnionID racing with different phones neither changes nor adds the losing phone', async () => {
+    const first = await paired('paired-shared-union', '+8613800100008');
+    const second = await paired('paired-shared-union', '+8613800100009');
+    const before = await count('app_users');
+    const results = await Promise.allSettled([completeIdentityChoice(first.ticket, 'create'), completeIdentityChoice(second.ticket, 'create')]);
+    expect(results.map(result => result.status).sort()).toEqual(['fulfilled', 'rejected']);
+    expect(await count('app_users')).toBe(before + 1);
+    expect((await sql`SELECT id FROM auth_identities WHERE provider = 'phone' AND provider_uid IN ('+8613800100008', '+8613800100009')`).length).toBe(1);
+  });
+
+  it('rolls back the WeChat identity if the selected old account already has a different phone', async () => {
+    const target = await loginWithIdentity('phone', '+8613800100010', { name: '' });
+    const choice = await paired('paired-phone-rollback', '+8613800100011');
+    await expect(completeIdentityChoice(choice.ticket, 'link', target.user.id)).rejects.toMatchObject({ code: 'ACCOUNT_HAS_PHONE' });
+    expect(await findUserByIdentity('wechat', 'paired-phone-rollback')).toBeNull();
+    expect(await findUserByIdentity('phone', '+8613800100011')).toBeNull();
+    expect((await sql`SELECT ticket_hash FROM auth_identity_pending WHERE provider_uid = 'paired-phone-rollback'`).length).toBe(1);
+  });
+
+  it('expired paired tickets cannot create or bind, and no phone is retained as an identity', async () => {
+    const choice = await paired('paired-expired', '+8613800100013');
+    await sql`UPDATE auth_identity_pending SET expires_at = NOW() - INTERVAL '1 second' WHERE provider_uid = 'paired-expired'`;
+    await expect(completeIdentityChoice(choice.ticket, 'create')).rejects.toMatchObject({ code: 'INVALID_IDENTITY_TICKET' });
+    await expect(completeIdentityChoice(choice.ticket, 'link_verified_phone', 1)).rejects.toMatchObject({ code: 'INVALID_IDENTITY_TICKET' });
+    expect(await findUserByIdentity('phone', '+8613800100013')).toBeNull();
+  });
+
+  it('paired proofs support the existing scoped linking code, persist wrong guesses and consume once', async () => {
+    const target = await loginWithIdentity('google', 'paired-code-target', { name: 'Code target' });
+    const choice = await paired('paired-code-wx', '+8613800100012');
+    const issued = await issueIdentityLinkCode(target.user.id);
+    if (!('linkCode' in issued)) throw new Error('expected link code');
+    const wrong = issued.linkCode.slice(0, -1) + (issued.linkCode.endsWith('0') ? '1' : '0');
+    await expect(completeIdentityChoice(choice.ticket, 'link_with_code', target.user.id, wrong)).rejects.toMatchObject({ code: 'INVALID_IDENTITY_LINK_CODE' });
+    const [code] = await sql`SELECT attempts FROM auth_codes WHERE channel = 'id_link' AND target = ${String(target.user.id)}`;
+    expect(code.attempts).toBe(1);
+    expect(await previewIdentityLinkCode(choice.ticket, issued.linkCode)).toEqual({ user: { id: target.user.id, displayName: 'Code target' } });
+    const result = await completeIdentityChoice(choice.ticket, 'link_with_code', target.user.id, issued.linkCode);
+    expect(result.user.id).toBe(target.user.id);
+    expect((await findUserByIdentity('phone', '+8613800100012'))?.id).toBe(target.user.id);
+    await expect(completeIdentityChoice(choice.ticket, 'link_with_code', target.user.id, issued.linkCode)).rejects.toMatchObject({ code: 'INVALID_IDENTITY_TICKET' });
+  });
 
   it('rejects NULL, unsupported and cross-provider Apple credential metadata at the database boundary', async () => {
     for (const keyVersion of [null, 2]) {

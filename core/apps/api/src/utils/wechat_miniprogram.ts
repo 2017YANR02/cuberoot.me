@@ -1,3 +1,5 @@
+import { normalizePhone, isValidPhone } from '@cuberoot/shared/account';
+
 const WECHAT_MINI_APP_ID = process.env.WECHAT_MINI_APP_ID?.trim() ?? '';
 const WECHAT_MINI_APP_SECRET = process.env.WECHAT_MINI_APP_SECRET?.trim() ?? '';
 let accessToken = '';
@@ -6,6 +8,8 @@ let accessTokenRequest: Promise<string> | null = null;
 
 export type WechatMiniProgramErrorCode =
   | 'invalid-code'
+  | 'invalid-phone-code'
+  | 'unsupported-phone'
   | 'rate-limited'
   | 'blocked-user'
   | 'invalid-response'
@@ -120,6 +124,48 @@ async function fetchWechatMiniProgramAccessToken(): Promise<string> {
     return accessToken;
   })().finally(() => { accessTokenRequest = null; });
   return accessTokenRequest;
+}
+
+/** The phone grant is distinct from wx.login. Accept only this app's server-verified phone. */
+export function parseWechatMiniProgramPhone(value: unknown, appId = WECHAT_MINI_APP_ID): string {
+  if (!isRecord(value)) throw new WechatMiniProgramError('invalid-response', 'invalid phone response');
+  if (value.errcode !== 0) {
+    const kind = value.errcode === 40029 || value.errcode === 40163 ? 'invalid-phone-code'
+      : value.errcode === 45011 || value.errcode === 45009 ? 'rate-limited'
+        : value.errcode === 40226 ? 'blocked-user' : 'upstream-unavailable';
+    throw new WechatMiniProgramError(kind, 'wechat phone authorization failed');
+  }
+  const phone = value.phone_info;
+  if (!isRecord(phone) || !isRecord(phone.watermark) || !appId || phone.watermark.appid !== appId
+    || typeof phone.purePhoneNumber !== 'string' || !/^\d+$/.test(phone.purePhoneNumber)
+    || typeof phone.watermark.timestamp !== 'number'
+    || !Number.isFinite(phone.watermark.timestamp)
+    || phone.watermark.timestamp < Date.now() / 1000 - 600
+    || phone.watermark.timestamp > Date.now() / 1000 + 60) {
+    throw new WechatMiniProgramError('invalid-response', 'invalid phone response');
+  }
+  // Match the canonical phone identity namespace. Never coerce a foreign number into +86.
+  if (String(phone.countryCode) !== '86') throw new WechatMiniProgramError('unsupported-phone', 'phone country not supported');
+  const normalized = normalizePhone(`+86${phone.purePhoneNumber}`);
+  if (!isValidPhone(normalized)) throw new WechatMiniProgramError('invalid-response', 'invalid phone response');
+  return normalized;
+}
+
+export async function exchangeWechatMiniProgramPhoneCode(code: string, openid: string): Promise<string> {
+  if (!code || code.length > 512 || !openid) throw new WechatMiniProgramError('invalid-phone-code', 'invalid phone code');
+  try {
+    const token = await fetchWechatMiniProgramAccessToken();
+    const response = await fetch(`https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token=${encodeURIComponent(token)}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, openid }),
+      signal: AbortSignal.timeout(12_000),
+    });
+    if (!response.ok) throw new WechatMiniProgramError('upstream-unavailable', 'wechat phone service unavailable');
+    return parseWechatMiniProgramPhone(await response.json());
+  } catch (error) {
+    if (error instanceof WechatMiniProgramError) throw error;
+    // Fetch error text can contain the access token URL. Never propagate it into logs/responses.
+    throw new WechatMiniProgramError('upstream-unavailable', 'wechat phone service unavailable');
+  }
 }
 
 /** Generate an HTTPS URL Link that opens the released Mini Program account page. */
