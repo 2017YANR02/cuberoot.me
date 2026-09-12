@@ -1,5 +1,27 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-12 恢复迭代：和平饭店入口与环球顶部
+
+用户已恢复建模，并要求先同步远端。已合并远端 `f95b04c164` 的 24 个提交，合并提交为 `abc73044f6`；合并前后两份 Blender 脚本的 WIP 补丁逐字相同。按更新后的依赖清单完成离线安装和 shared 构建，本轮未跑测试全集，未 push，LFS 配置和重资产上传继续暂缓。
+
+### 本轮变化与实拍依据
+
+- 和平饭店：继续对照 [2025-05-03 夜间实拍](https://commons.wikimedia.org/wiki/File:Peace_Hotel_20250503.jpg)，新增中央拱门暖色上扇、深色弧形与放射窗棂，给简化盾饰和叶饰补倒角。candidate04 在网页夜景中形成固定的半边亮、半边暗，缺乏足够实物依据，已否决；candidate05 改为对称上扇。照片是斜拍，不能把反光或视角造成的明暗差直接固定在几何上。颜色、灯光强度、窗棂数量、半径及饰纹仍为估算，尚未重建真实室内或精确纹章。
+- 环球金融中心：对照 [IMA 建成照片](https://www.imae.co.jp/en/works/shanghai-world-financial-center)及其[屋架近景](https://imae.co.jp/wp-content/uploads/2008/01/w_swfc-4.jpg)，candidate11 将 97F I 形框架、圆长梁、立柱及玻璃分格杆独立为浅色涂层材质，和蓝灰幕墙、透射玻璃分开。保留原顶部几何、退台、100F 桥底和既有运行绑定；没有用额外自发光伪造现场照明。材质参数为目测估算，照片拍摄时间未知，不把图片目录年份当作拍摄时间。
+
+### 实际导出与网页复核
+
+- 和平 candidate05：**33 nodes、31 meshes、13,026,572 字节**；[导出报告](../.tmp/png/space-peace-central-arch-20260911/candidate05/candidate-report.json)。临时替换真实 `/zh/space` 中的原 26 个网格，保留其现场材质和灯光属性，新增 5 个细部网格；暖色上扇接入已有昼夜 uniform。实际材质朝向的原 16 项、残块及邻接保护 14 项、上扇 6 项，共 **36 项检查通过**。
+- 最终脚本另导出 candidate06，只纠正材质备注中遗留的“右上半边”描述；[逐项比较报告](../.tmp/png/space-review-20260911/peace06-metadata-only.json)证明 GLB 二进制块完全一致，JSON 仅该备注一处变化，因此沿用 candidate05 的几何与画面证据，没有重复拍图。candidate06 为 **13,026,576 字节**，SHA-256 `53dfbcda03cb4bce157a6582ff627175d6d1e5cb2b1afb30d7568738a87ab489`；[最终导出报告](../.tmp/png/space-peace-central-arch-20260911/candidate06/candidate-report.json)中的脚本哈希与提交前源码一致，源工程未变、未保存正式资产。两份脚本 Python AST 和 LF 检查通过。
+- 已逐张查看和平 candidate05 的[正面日景](../.tmp/png/space-review-20260911/peace05-day.png)、[正面夜景](../.tmp/png/space-review-20260911/peace05-night.png)、[斜侧夜景](../.tmp/png/space-review-20260911/peace05-oblique-night.png)。上部暖色不再固定偏向半边，深色窗棂可见；门下部仍暗，玻璃缺真实透射与室内层次，饰纹仍简化，邻近灯光还需配平，整体视觉未通过。
+- 环球 candidate11：**10 nodes、9 meshes、3,790,972 字节**，SHA-256 `2683bf1f70ecd561395ab4b7f38fdbaf03fdf077bab276f313ed50b73da14eb2`；[导出报告](../.tmp/png/space-swfc-top-20260911/candidate11/candidate-report.json)。原 6 网格及顶部玻璃、桥底两个既有新增网格保留，新涂层独立为第 9 个网格。导出变换检查通过；约 0.0974 mm 是浮点往返误差界，不能作为实物精度。
+- 真实网页临时注入环球 candidate11 后，**60 项射线检查通过**，见[报告](../.tmp/png/space-review-20260911/swfc11-runtime-probes.json)。已查看[室内日景](../.tmp/png/space-review-20260911/swfc11-day.png)、[外部日景](../.tmp/png/space-review-20260911/swfc11-exterior-day.png)、[室内夜景](../.tmp/png/space-review-20260911/swfc11-night.png)：浅色屋架能与蓝色幕墙区分，但玻璃仍偏乳白、细边有锯齿，97F 夜间仍暗，100F 楼面仍为旧不透明材质，整体视觉未通过。
+- [合并网页报告](../.tmp/png/space-review-20260911/web-runtime-report.json)记录两候选、探针和 21:00 状态。当前控制台 **0 errors**，无不可运行 shader；6 条重复导入 Three.js 的 warning 来自临时审查 helper。本轮没有重跑完整城市合同，不能将上一轮 candidate10 的整城通过结论直接用于新候选。
+
+**交付边界：**本轮仍为候选导出和网页临时注入；正式 `shanghai.blend` 及上海 GLB 尚未更新，普通页面刷新不会加载这些候选。源工程指纹保持 `[122841156,1789080267364826700]`，正式 GLB 仍为 310,655,468 字节。脚本与本跟踪入本地 Git；候选、渲染、原工程及重资产不混入普通 Git。
+
+下一轮继续补入口真实玻璃与室内层次、实物饰纹、环球 97F 夜景及 100F 楼面，再做同机位实拍与多角度检查。候选通过后备份正式工程、增量保存、正式导出并验完整城市合同。当前 **1:1 和电影级仍未达标**，下文暂停交接及 candidate03/candidate10 数据均为历史状态。
+
 ## 2026-09-10 暂停交接
 
 用户要求先停止建模迭代，本次只整理进度、验证并提交现有改动；等待用户再次明确恢复后才继续建模。三名子 Agent 已收尾停止。最新和平饭店 candidate03 与环球 candidate10 已完成隔离导出和网页检查，尚未写入正式 `.blend` 或正式上海 GLB；候选、截图与报告留在下文对应的 `.tmp/png/` 目录，临时产物不入 Git。恢复时先处理和平饭店中央入口暖色上扇与饰纹、环球 97F 屋架偏蓝灰及夜间过暗，再进行同机位实拍对照。1:1 和电影级尚未验收，LFS 配置与重资产上传继续暂缓。

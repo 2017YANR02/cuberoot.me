@@ -9,7 +9,7 @@ are review estimates. 439 / 474 / 492 m are documented above-ground anchors;
 the owner's 477.96 m altitude is not the 100F above-ground height.
 
 The CLI exports only this tower to .tmp/png, preserving its world transform and
-the original six runtime mesh identities plus two independent detail materials.
+the original six runtime mesh identities plus three independent detail materials.
 A coordinator may call author() for
 an in-memory full-scene preview. There is intentionally no --apply option.
 References: ../references/swfc-top.md and the audit passed with --audit.
@@ -35,19 +35,21 @@ from pack_gltf import atomic_write
 from facade_rig import export_snapshot
 
 ROOT = Path(__file__).resolve().parents[3]
-OUTPUT = ROOT / '.tmp/png/space-swfc-top-20260910'
-AUDIT = OUTPUT / 'audit/swfc-current-mesh-audit.json'
+OUTPUT = ROOT / '.tmp/png/space-swfc-top-20260911'
+AUDIT = ROOT / '.tmp/png/space-swfc-top-20260910/audit/swfc-current-mesh-audit.json'
 ROOT_ID = 'root/132/1'
-REVISION = 'swfc-top-candidate-20260910'
+REVISION = 'swfc-top-candidate-20260911'
 PROPERTY = 'spaceSwfcTopRevision'
 IDS = {key: ROOT_ID + '/' + str(i)
        for i, key in enumerate(('glass', 'frame', 'light', 'mechanical'))}
 IDS.update(rails='shanghai-landmarks-20260908/' + ROOT_ID + '/SWFC curtain wall mullions and floor rails',
            soffit='shanghai-landmarks-20260908/' + ROOT_ID + '/SWFC aperture soffit battens')
 EXTRA_IDS = {'top_glass': 'swfc-top-20260910/' + ROOT_ID + '/SWFC top glass',
-             'soffit_panels': 'swfc-top-20260910/' + ROOT_ID + '/SWFC soffit panels'}
+             'soffit_panels': 'swfc-top-20260910/' + ROOT_ID + '/SWFC soffit panels',
+             'canopy_coating': 'swfc-top-20260911/' + ROOT_ID + '/SWFC canopy coating'}
 OUTPUT_IDS = {**IDS, **EXTRA_IDS}
 EXTRA_MATERIAL_IDS = {key: 'swfc-top-20260910/material/' + key for key in EXTRA_IDS}
+EXTRA_MATERIAL_IDS['canopy_coating'] = 'swfc-top-20260911/material/canopy_coating'
 HALF = 29.0  # Existing square footprint, not a measured rooftop dimension.
 DIAMOND = HALF * math.sqrt(2)
 HEIGHT, FLOOR_97, FLOOR_100 = 492.0, 439.0, 474.0
@@ -66,6 +68,7 @@ CANOPY_TUBE_DIAMETER = .50
 CANOPY_CUT_HALF_LENGTH = 24.
 CROWN_SLOT_HALF_LENGTH, CROWN_SLOT_HALF_WIDTH, CROWN_SLOT_FLOOR = 34., .45, 490.60
 GLASS_THICKNESS, SOFFIT_PANEL_THICKNESS, SOFFIT_DARK_HALF_WIDTH = .012, .04, .60
+CANOPY_COATING_SRGB, CANOPY_COATING_ROUGHNESS = (.91, .92, .91), .40
 
 
 def box(part, lower, upper):
@@ -385,7 +388,7 @@ def canopy_frame(part, u):
 
 def canopy_details(parts, levels):
     """Static glazing over the photographed fixed framework; opening unknown."""
-    glass, frame = parts['top_glass'], parts['frame']
+    glass, frame = parts['top_glass'], parts['canopy_coating']
     length, width = CANOPY_HALF_LENGTH, CANOPY_HALF_WIDTH
     stations = [-length+i*CANOPY_BAY for i in range(round(2*length/CANOPY_BAY)+1)]
 
@@ -396,8 +399,10 @@ def canopy_details(parts, levels):
     depth = skin_depth(CANOPY_TERRACE, levels)
     terrace = [(-length, -depth), (length, -depth), (length, depth), (-length, depth)]
     for side in (-1, 1):
-        horizontal(frame, clip(terrace, 1, side*width, side > 0), CANOPY_TERRACE)
-        horizontal(frame, clip(plan(CANOPY-.05), 0, side*length, side > 0), CANOPY-.05)
+        # The photograph supports pale painted framing, not repainting the
+        # tower terraces or bridge soffit. Keep those original material roles.
+        horizontal(parts['frame'], clip(terrace, 1, side*width, side > 0), CANOPY_TERRACE)
+        horizontal(parts['frame'], clip(plan(CANOPY-.05), 0, side*length, side > 0), CANOPY-.05)
         frame.beam((-length, side*CANOPY_TUBE_V, CANOPY_TUBE_Z),
                    (length, side*CANOPY_TUBE_V, CANOPY_TUBE_Z),
                    CANOPY_TUBE_DIAMETER, sides=24)
@@ -486,7 +491,7 @@ def crown_details(parts):
 
 
 def build_parts():
-    """Six preserved roles and two independent materials, in diagonal axes."""
+    """Six preserved roles and three independent materials, in diagonal axes."""
     parts = {key: Mesh() for key in OUTPUT_IDS}
     # Include aperture boundaries exactly: no rod or glass face spans the void.
     levels = sorted(set([float(z) for z in range(0, 493, 2)] + [z for z, _ in PROFILE]
@@ -658,14 +663,18 @@ def check_source(root, audit):
 
 def make_top_material(role):
     """Fresh single-purpose PBR material; never inherit tower shader extras."""
+    if role not in EXTRA_IDS:
+        raise ValueError('Unknown independent SWFC material role: '+role)
     glass = role == 'top_glass'
-    material = bpy.data.materials.new('SWFC top glass' if glass else 'SWFC soffit panels')
+    coating = role == 'canopy_coating'
+    material = bpy.data.materials.new(EXTRA_IDS[role].rsplit('/', 1)[1])
     material.use_nodes = True
     material.use_backface_culling = True  # Closed solids already have inner faces.
-    rgb = (.965, .985, .99) if glass else (.82, .835, .83)
+    rgb = (.965, .985, .99) if glass else CANOPY_COATING_SRGB if coating else (.82, .835, .83)
     color = tuple(linear(v) for v in rgb) + (1.,)
     material.diffuse_color = color
-    material.metallic, material.roughness = 0., .12 if glass else .58
+    material.metallic = 0.
+    material.roughness = .12 if glass else CANOPY_COATING_ROUGHNESS if coating else .58
     # Display names may be translated or changed; RNA types/identifiers are stable.
     nodes = material.node_tree.nodes
     node = next((n for n in nodes if n.type == 'BSDF_PRINCIPLED'), None)
@@ -759,7 +768,7 @@ def validate_geometry(parts):
     if min(p[2] for p in all_points) < -.001 or max(p[2] for p in all_points) > HEIGHT+.001:
         raise RuntimeError('Geometry exceeds the preserved 0..492 m height contract')
     tree = BVHTree.FromPolygons(all_points, all_faces, all_triangles=False)
-    # These are real rays against all eight candidate meshes, including detail.
+    # These are real rays against all candidate meshes, including detail.
     for z in (445., 450., 460., 470.):
         for u in (-10., 0., 10.):
             if tree.ray_cast(Vector((u, -60., z)), Vector((0., 1., 0.)), 120.)[0] is not None:
@@ -949,6 +958,11 @@ def author(root, archive, bridge_angle_deg, audit_path=AUDIT):
                                 'transmission': .9, 'roughness': .12, 'ior': 1.45,
                                 'baseColorSRGB': [.965, .985, .99], 'metalness': 0,
                                 'scope': '97F canopy and side panes only; existing 100F floor glass unchanged'},
+                            'canopyCoating': {'baseColorSRGB': list(CANOPY_COATING_SRGB),
+                                'roughness': CANOPY_COATING_ROUGHNESS, 'metalness': 0, 'emission': 0,
+                                'scope': '97F I-section frames, round longitudinal supports, posts and glazing bars only',
+                                'materialMeaning': 'IMA4 shows pale painted framing; numeric reflectance and roughness are unmeasured estimates',
+                                'geometryMeaning': 'Geometry and beam dimensions retained from candidate10; only the material role is separated'},
                             'soffitPanels': {'darkHalfWidth': SOFFIT_DARK_HALF_WIDTH,
                                 'thicknessAboveSoffit': SOFFIT_PANEL_THICKNESS,
                                 'longSeamOffsets': [-2.7, 2.7], 'crossFrameSpacing': 2.5,
@@ -964,12 +978,14 @@ def author(root, archive, bridge_angle_deg, audit_path=AUDIT):
               'preservedPackedImages': len(images), 'sourceAudit': str(audit_path),
               'reference': 'design/space/references/swfc-top.md',
               'photoSupportedDetails': {'canopy': 'IMA4 / KPF P3: shallow pitched fixed frames, round long supports and side glazing',
+                  'canopyCoating': 'IMA4: pale painted I-section framing and round supports remain distinct from blue-tinted glazing; no emission inferred',
                   'soffit': 'IMA4 / KPF P3: two broad pale fields around one narrow dark band, longitudinal and transverse seams; no proof of self-lighting or metal',
                   'crown': 'ArcelorMittal HISTAR p34: recessed long trough and unequal equipment groups'},
               'remaining': ['Surveyed site yaw, top curve and crown/bridge dimensions',
                             'As-built panel arrangement and canopy opening mechanism',
                             'Measured canopy optics and physical pale-panel composition',
-                            '100F floor glass optics: inherited opaque material is unchanged'],
+                            '100F floor glass optics: inherited opaque material is unchanged; the continuous lower soffit still blocks the downward view',
+                            '97F night lighting lacks measured fixture positions and photometry; no lights or emission were added'],
               **geometry}
     root[PROPERTY] = REVISION
     # JSON avoids mixed nested property arrays and keeps the earlier revision
@@ -1122,9 +1138,10 @@ def export_candidate(root, directory):
     nodes = document.get('nodes', [])
     exported = Counter(n.get('extras', {}).get('spaceId') for n in nodes if n.get('extras', {}).get('spaceId'))
     mesh_nodes = [n for n in nodes if 'mesh' in n]
-    if (len(nodes) != 9 or exported != Counter([ROOT_ID, *OUTPUT_IDS.values()])
-            or len(document.get('meshes', [])) != 8 or len(mesh_nodes) != 8
-            or Counter(n['mesh'] for n in mesh_nodes) != Counter(range(8))
+    mesh_count = len(OUTPUT_IDS)
+    if (len(nodes) != mesh_count+1 or exported != Counter([ROOT_ID, *OUTPUT_IDS.values()])
+            or len(document.get('meshes', [])) != mesh_count or len(mesh_nodes) != mesh_count
+            or Counter(n['mesh'] for n in mesh_nodes) != Counter(range(mesh_count))
             or {n['extras']['spaceId'] for n in mesh_nodes} != set(OUTPUT_IDS.values())):
         raise RuntimeError('Candidate GLB lost, duplicated or leaked an identity')
     if any(n.get('extras', {}).get('archivedSpaceId') for n in nodes):
@@ -1146,6 +1163,14 @@ def export_candidate(root, directory):
         if role == 'top_glass' and not math.isclose(material.get('extensions', {}).get(
                 'KHR_materials_transmission', {}).get('transmissionFactor', 0), .9, abs_tol=1e-6):
             raise RuntimeError('Top glass lost native glTF transmission')
+        if role == 'canopy_coating':
+            expected_color = [linear(v) for v in CANOPY_COATING_SRGB] + [1.]
+            actual_color = pbr.get('baseColorFactor', [1., 1., 1., 1.])
+            if (len(actual_color) != 4 or any(not math.isclose(a, b, abs_tol=1e-6)
+                    for a, b in zip(actual_color, expected_color, strict=True))
+                    or not math.isclose(pbr.get('roughnessFactor', 1), CANOPY_COATING_ROUGHNESS, abs_tol=1e-6)
+                    or material.get('extensions', {}).get('KHR_materials_transmission', {}).get('transmissionFactor', 0) != 0):
+                raise RuntimeError('Pale opaque canopy coating did not round-trip its independent material values')
         material_contracts[role] = material
     return {'path': str(target), 'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest(),
             'nodes': len(nodes), 'meshes': len(mesh_nodes), 'newMaterials': material_contracts,
