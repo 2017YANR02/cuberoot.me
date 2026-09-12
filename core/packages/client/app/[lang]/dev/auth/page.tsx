@@ -1,5 +1,9 @@
 'use client';
 
+/* auth-doc-review
+{"fingerprint":"54b1b696806a743e42680b3214fd0093f46350c6dce91bf5bcbd705a75fd0f4f","reason":"复核未知身份先选择旧号或明确创建、独立抖音绑定码、账号合并确认及退出注销边界；微信手机号授权仍是方案，真实跨平台授权与发布仍待验收。本次只增加防陈旧守卫，不改变账号行为。"}
+*/
+
 import type { ReactNode } from 'react';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
@@ -230,6 +234,7 @@ export default function AuthFlowPage() {
       <AppLink href="/dev/api" prefetch={false}>{t('API 目录', 'API reference')}</AppLink>
       <AppLink href="/dev/schema" prefetch={false}>{t('账号数据结构', 'Account schema')}</AppLink>
       <span>{t('此页只解释流程，不执行登录、绑定、合并或注销。实现事实源：AuthPanel、account_auth、account_merge、account_delete、InstalledAuthClient 与小程序 auth；发布状态以路线图为准。', 'Documentation only: no sign-in, linking, merging, or deletion. Source: AuthPanel, account_auth, account_merge, account_delete, InstalledAuthClient, and Mini Program auth. Release evidence remains in the roadmap.')}</span>
+      <span>{t('维护约定：修改账号流程时同步更新此图。源码指纹守卫会检查是否完成文档复核；纯重构须记录流程不变的原因。通过检查不等于已部署或真机验收。', 'Maintenance: update this diagram when account flows change. A source-fingerprint guard requires documentation review; refactors must explain why flows remain unchanged. Passing does not prove deployment or device acceptance.')}</span>
     </footer>
   </main>;
 }

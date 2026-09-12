@@ -149,6 +149,13 @@ pnpm --filter @cuberoot/client lint
 - UI 验证先搜并用 Playwright MCP(可能延迟加载);fixtures 全集别采样。
 - 新路由先 grep 防撞名;路由改名/合并不为旧路径加 redirect。
 
+## 登录系统与流程图同步
+
+- `/dev/auth`（中文 `/zh/dev/auth`）是跨平台账号生命周期说明。修改登录/注册、第三方身份、绑定/解绑、找回密码、会话/回跳、合并或注销时，先读 `core/packages/client/app/[lang]/dev/auth/page.tsx`，同一任务同步流程图及中英文说明；不得把设计方案、已实现、已部署和真机验收混写。
+- `tests/auth-doc-sync.test.ts` 已纳入 client test / CI：对已纳管的登录源码路径与内容计算指纹，新增、删除、改名同样触发，Windows 换行差异不触发。在 `core/` 运行 `node scripts/check-auth-doc-sync.mjs` 可独立检查。
+- 完成流程复核后，用上述命令加 `--fingerprint` **只读取得**新指纹，在流程图源码的 `auth-doc-review` 注释中更新 `fingerprint` 与具体 `reason`。有行为变化必须改相应流程节点；仅重构/样式变化可保留图，但说明核对了哪些流程、为什么不变。禁止只刷新日期、只换指纹或自动生成空泛复核说明来消除失败。
+- 新增不在命名/路径规则内的登录入口或原生适配时，同步守卫范围和覆盖测试；自动检查只能证明源码变化已被确认，不能代替语义审查。继续运行 `auth_flow_documentation.test.ts` 验证平台与生命周期边界。不得为了更新图新增第二套登录实现。
+
 ## 页面标题 / SEO metadata
 
 新增路由或修改标题、SEO metadata、sitemap、hreflang、索引策略或长文结构化数据时使用 `document-title` skill，并必须读取其 [SEO 契约](.agents/skills/document-title/references/seo-metadata.md)；保留静态 metadata 单一来源与 SSG 边界。
