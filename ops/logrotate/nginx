@@ -1,6 +1,13 @@
-/www/wwwlogs/*.log {
+# Mira owns mira.fans logs in its separate policy; never overlap that rule.
+/www/wwwlogs/*cuberoot.me*.log
+/www/wwwlogs/127.0.0.1*.log
+/www/wwwlogs/access.log
+/www/wwwlogs/nginx_error.log
+/www/wwwlogs/tcp-access.log
+/www/wwwlogs/tcp-error.log {
     daily
-    rotate 14
+    rotate 7
+    maxage 7
     missingok
     notifempty
     compress
