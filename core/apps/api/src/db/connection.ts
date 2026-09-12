@@ -1,13 +1,11 @@
 import postgres, { type TransactionSql } from 'postgres';
+import { measureDatabase } from '../observability/request.js';
+import { databaseSettings } from './settings.js';
 
 // PostgreSQL 连接(porsager/postgres)
 // 占位符 ? → $N 在 query() helper 内自动转换,业务 SQL 无需改写。
 const sql = postgres({
-  host: process.env.DB_HOST || '127.0.0.1',
-  port: Number(process.env.DB_PORT) || 5432,
-  user: process.env.DB_USER || 'recon_user',
-  password: process.env.DB_PASS || '',
-  database: process.env.DB_NAME || 'cuberoot_db',
+  ...databaseSettings(),
   max: 10,
   idle_timeout: 60,
   // mariadb 之前对 undefined 视同 null,这里对齐
@@ -42,7 +40,7 @@ export async function query<T = unknown>(
 ): Promise<T[]> {
   // postgres@3 sql.unsafe 接受 ParameterOrJSON<T>[] —— 我们的 helpers 已经把 values 准备好了,
   // 强转 unknown[] 即可。
-  const rows = await sql.unsafe(rewriteQ(text), params as unknown as never[]);
+  const rows = await measureDatabase(() => sql.unsafe(rewriteQ(text), params as unknown as never[]));
   return rows as unknown as T[];
 }
 
@@ -50,7 +48,7 @@ export type QueryRunner = <T = unknown>(text: string, params?: unknown[]) => Pro
 
 export function transactionQuery(tx: TransactionSql): QueryRunner {
   return async <Row = unknown>(text: string, params: unknown[] = []): Promise<Row[]> => {
-    const rows = await tx.unsafe(rewriteQ(text), params as never[]);
+    const rows = await measureDatabase(() => tx.unsafe(rewriteQ(text), params as never[]));
     return rows as unknown as Row[];
   };
 }

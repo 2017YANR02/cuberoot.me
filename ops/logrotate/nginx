@@ -18,3 +18,18 @@
         [ -f /www/server/nginx/logs/nginx.pid ] && kill -USR1 $(cat /www/server/nginx/logs/nginx.pid)
     endscript
 }
+
+# PM2 keeps these file descriptors open. copytruncate avoids restarting the API.
+# maxsize is evaluated when the host's logrotate job runs, not a hard disk quota.
+/root/.pm2/logs/core-api-out.log
+/root/.pm2/logs/core-api-error.log {
+    daily
+    rotate 7
+    maxage 7
+    maxsize 100M
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+}

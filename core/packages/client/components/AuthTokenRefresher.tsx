@@ -120,6 +120,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     { value: 'admin' as const, label: t('管理员', 'Administrator') },
     { value: 'member' as const, label: t('网盘成员', 'Drive member') },
     { value: 'user' as const, label: t('普通用户（无网盘权限）', 'User without Drive access') },
+    { value: 'user-complete' as const, label: t('普通用户（资料完整）', 'User with complete profile') },
     { value: 'guest' as const, label: t('访客', 'Guest') },
   ];
   const run = async (role?: TestRole) => {

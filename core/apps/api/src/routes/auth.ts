@@ -67,7 +67,7 @@ authRoutes.post('/auth/role-preview', async (c) => {
   if (!actor.uid || !isAdminWcaId(actor.realWcaId)) return c.json({ error: 'Super administrator required' }, 403);
   const body = await c.req.json().catch(() => null);
   const role = body?.role;
-  if (!['admin', 'member', 'user', 'guest'].includes(role)) return c.json({ error: 'Invalid test role' }, 400);
+  if (!['admin', 'member', 'user', 'user-complete', 'guest'].includes(role)) return c.json({ error: 'Invalid test role' }, 400);
   const id = randomUUID();
   const uid = await sql.begin(async (tx) => {
     await tx`SELECT id FROM app_users WHERE id = ${actor.uid!} FOR UPDATE`;
@@ -82,6 +82,12 @@ authRoutes.post('/auth/role-preview', async (c) => {
         await tx`INSERT INTO role_preview_profiles (actor_user_id, role, user_id) VALUES (${actor.uid!}, ${role}, ${userId})`;
       }
       await tx`UPDATE app_users SET is_admin = ${role === 'admin'} WHERE id = ${userId}`;
+      // A separate ordinary test account with synthetic saved details, not a new permission tier.
+      if (role === 'user-complete') {
+        await tx`UPDATE app_users SET full_name = 'Profile Test User', birth_date = '2000-01-01',
+          gender = 'undisclosed', country_iso2 = 'CN', region_code = 'GD', city_name = 'Shenzhen'
+          WHERE id = ${userId}`;
+      }
       if (role === 'member') await tx`INSERT INTO drive_members (user_id) VALUES (${userId})
         ON CONFLICT (user_id) DO UPDATE SET enabled = TRUE`;
       else await tx`UPDATE drive_members SET enabled = FALSE WHERE user_id = ${userId}`;

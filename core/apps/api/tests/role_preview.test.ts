@@ -4,6 +4,7 @@ import postgres from 'postgres';
 import jwt from 'jsonwebtoken';
 import { Hono } from 'hono';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { isForumReplyProfileComplete } from '@cuberoot/shared/account';
 
 let sql: ReturnType<typeof postgres>;
 let app: Hono;
@@ -29,9 +30,12 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('role preview (PostgreSQL)', 
     await sql.unsafe(`CREATE TABLE app_users (
       id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, display_name TEXT,
       wca_id TEXT, is_admin BOOLEAN DEFAULT FALSE, show_in_member_list BOOLEAN DEFAULT TRUE,
-      avatar_url TEXT, avatar_source TEXT DEFAULT 'auto', avatar_preset TEXT, merged_into_user_id BIGINT
-    ); CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END $$;`);
-    for (const migration of ['0184_drive', '0189_drive_shares', '0216_drive_member_folders', '0217_role_preview', '0218_drive_compressions']) {
+      avatar_url TEXT, avatar_source TEXT DEFAULT 'auto', avatar_preset TEXT, merged_into_user_id BIGINT,
+      full_name TEXT, birth_date DATE, gender TEXT, country_iso2 TEXT, region_code TEXT, city_name TEXT,
+      forum_banned BOOLEAN DEFAULT FALSE
+    ); CREATE TABLE forum_posts (author_id TEXT, created_at TIMESTAMPTZ);
+    CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END $$;`);
+    for (const migration of ['0184_drive', '0189_drive_shares', '0216_drive_member_folders', '0217_role_preview', '0218_drive_compressions', '0233_role_preview_complete_profile']) {
       await sql.unsafe(await readFile(new URL(`../migrations/${migration}.sql`, import.meta.url), 'utf8'));
     }
     await sql`INSERT INTO app_users (display_name, wca_id, is_admin)
@@ -60,7 +64,8 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('role preview (PostgreSQL)', 
     });
     expect((await request(adminToken, '/auth/role-preview', 'POST', { role: 'admin' })).status).toBe(403);
     expect((await request(rootToken, '/auth/role-preview', 'POST', { role: 'superadmin' })).status).toBe(400);
-    for (const role of ['admin', 'member', 'user', 'guest']) {
+    const ordinaryIds: number[] = [];
+    for (const role of ['admin', 'member', 'user', 'user-complete', 'guest']) {
       const response = await request(rootToken, '/auth/role-preview', 'POST', { role });
       expect(response.status).toBe(200);
       const preview = await response.json();
@@ -77,14 +82,22 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('role preview (PostgreSQL)', 
         expect(me.status).toBe(200);
         expect((await request(preview.token, '/test-cache')).headers.get('Cache-Control')).toBe('no-store');
         const drive = await (await request(preview.token, '/drive')).json();
-        expect(drive.allowed).toBe(role !== 'user');
+        expect(drive.allowed).toBe(role === 'admin' || role === 'member');
+        if (role === 'user' || role === 'user-complete') {
+          ordinaryIds.push(preview.user.uid);
+          const { getAccountBasicProfile } = await import('../src/utils/account.js');
+          const saved = await getAccountBasicProfile(preview.user.uid);
+          expect(saved?.forumProfileExempt).toBe(false);
+          expect(saved?.forumBanned).toBe(false);
+          expect(isForumReplyProfileComplete(saved, '2026-09-11')).toBe(role === 'user-complete');
+        }
         expect(drive.isSuperAdmin ?? false).toBe(false);
         expect((await request(preview.token, '/drive?all=1')).status).not.toBe(200);
         for (const path of ['/auth/refresh', '/auth/role-preview', '/auth/handoff', '/auth/profile']) {
           expect((await request(preview.token, path, 'POST', { role: 'admin' })).status).toBe(403);
         }
         expect((await app.request('/v1/drive', { headers: { Authorization: `Bearer ${preview.token}`, 'X-Admin-Key': 'test' } })).status).toBe(403);
-        if (role !== 'user') {
+        if (role === 'admin' || role === 'member') {
           expect((await request(preview.token, '/drive/folders', 'POST', { name: 'Role test' })).status).toBe(201);
           const [event] = await sql`SELECT method, path FROM role_preview_events WHERE session_id = ${preview.id}`;
           expect(event).toMatchObject({ method: 'POST', path: '/v1/drive/folders' });
@@ -97,9 +110,13 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('role preview (PostgreSQL)', 
         expect(await authenticateUser(`Bearer ${preview.token}`)).toBeNull();
       }
     }
+    expect(new Set(ordinaryIds).size).toBe(2);
+    const completeAgain = await (await request(rootToken, '/auth/role-preview', 'POST', { role: 'user-complete' })).json();
+    expect(completeAgain.user.uid).toBe(ordinaryIds[1]);
+    expect((await request(rootToken, `/auth/role-preview/${completeAgain.id}`, 'DELETE')).status).toBe(200);
     const preview = await (await request(rootToken, '/auth/role-preview', 'POST', { role: 'member' })).json();
     const [{ count }] = await sql`SELECT COUNT(*)::int AS count FROM role_preview_profiles`;
-    expect(count).toBe(3);
+    expect(count).toBe(4);
     await sql`UPDATE role_preview_sessions SET expires_at = NOW() - INTERVAL '1 second' WHERE id = ${preview.id}`;
     expect((await request(preview.token, '/drive')).status).toBe(401);
     expect((await request(rootToken, '/drive?all=1')).status).toBe(200);

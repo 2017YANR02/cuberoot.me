@@ -639,7 +639,7 @@ CREATE TABLE account_last_devices (
 -- ── Internal Drive: approved users, private folders/files, resumable uploads ──
 CREATE TABLE role_preview_profiles (
   actor_user_id BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'member', 'user')),
+  role TEXT NOT NULL CHECK (role IN ('admin', 'member', 'user', 'user-complete')),
   user_id BIGINT NOT NULL UNIQUE REFERENCES app_users(id) ON DELETE CASCADE,
   PRIMARY KEY (actor_user_id, role)
 );
@@ -647,7 +647,7 @@ CREATE TABLE role_preview_sessions (
   id UUID PRIMARY KEY,
   actor_user_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
   user_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'member', 'user', 'guest')),
+  role TEXT NOT NULL CHECK (role IN ('admin', 'member', 'user', 'user-complete', 'guest')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   expires_at TIMESTAMPTZ NOT NULL,
   ended_at TIMESTAMPTZ
