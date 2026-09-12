@@ -65,6 +65,11 @@ html[data-theme=dark] .alg-root {
   gap: 12px;
 }
 .alg-bento .alg-card { width: 100%; }
+/* SQ1 双层横排封面放大；窄屏由卡片宽度约束，外框随 SVG 等比缩小。 */
+.alg-bento .alg-card--sq1-set .puzzle-art {
+  height: auto !important;
+  aspect-ratio: 2 / 1;
+}
 .alg-puzzle-method-intro {
   max-width: 1200px;
   margin: 0 auto;

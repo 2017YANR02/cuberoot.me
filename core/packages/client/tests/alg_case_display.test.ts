@@ -8,6 +8,22 @@ import type { AlgCase } from '@cuberoot/shared';
 import { ALG_CATALOG } from '@cuberoot/shared/alg';
 
 describe('primaryCaseName compact card labels', () => {
+  it('uses face-on solving directions for all SQ1 EP layer-name pairs', () => {
+    const patterns = ['Solved', 'Opp', 'Adj', 'Ua', 'Ub', 'O+', 'O-', 'W', 'H', 'Z'];
+    const labels = ['Solved', 'Opp', 'Adj', 'U+', 'U-', 'O+', 'O-', 'W', 'H', 'Z'];
+    for (const [i, top] of patterns.entries()) {
+      expect(displayAlgCaseName('sq1', 'ep', `Top ${top}`)).toBe(`Top ${labels[i]}`);
+      for (const [j, bottom] of patterns.entries()) {
+        for (const separator of [' / ', ' & ']) {
+          expect(displayAlgCaseName('sq1', 'ep', top + separator + bottom)).toBe(labels[i] + separator + labels[j]);
+        }
+      }
+    }
+    expect(displayAlgCaseName('sq1', 'ep', 'UA / UB')).toBe('U+ / U-');
+    expect(displayAlgCaseName('sq1', 'ep', 'U+ / U-')).toBe('U+ / U-');
+    expect(displayAlgCaseName('sq1', 'pbl', 'Ua / Ub')).toBe('Ua / Ub');
+    expect(displayAlgCaseName('3x3', 'pll', 'Ua')).toBe('U- (Ua)');
+  });
   it('normalizes Sune names across every catalog set', () => {
     for (const [puzzle, sets] of Object.entries(ALG_CATALOG)) {
       for (const { slug } of sets) {
