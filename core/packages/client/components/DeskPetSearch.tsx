@@ -53,7 +53,7 @@ const CSS = `
 /* anchored-panel: clamped (CompactSelect body portal and visualViewport bounds) */
 .deskpet-character-menu{z-index:100030;width:min(360px,calc(100vw - 16px));}
 .deskpet-character-menu .compact-select-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;}
-.deskpet-character-menu .compact-select-options .compact-select-option{justify-content:center;padding:10px 4px;min-width:0;}
+.deskpet-character-menu .compact-select-options .compact-select-option{position:relative;justify-content:center;padding:10px 4px;min-width:0;}
 .deskpet-character-menu .compact-select-options .deskpet-character-option{flex-direction:column;gap:4px;white-space:normal;text-align:center;overflow-wrap:anywhere;}
 .deskpet-character-admin{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0;border-top:1px solid var(--border-default);}
 .deskpet-character-admin button{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;padding:6px;border:0;border-radius:6px;background:var(--muted);color:var(--foreground);font:inherit;cursor:pointer;}
@@ -61,6 +61,7 @@ const CSS = `
 .deskpet-character-admin form{display:flex;flex-wrap:wrap;gap:6px;width:100%;}
 .deskpet-character-admin label{display:flex;flex-direction:column;gap:4px;width:100%;}
 .deskpet-character-admin input{min-width:0;width:100%;padding:6px;background:var(--background);color:var(--foreground);border:1px solid var(--border-default);border-radius:4px;}
+.deskpet-character-lock{position:absolute;top:6px;right:6px;display:flex;}
 .deskpet-character-status{display:flex;align-items:center;gap:4px;min-height:14px;color:var(--muted-foreground);}
 .deskpet-character-error{color:var(--destructive);font-size:12px;}
 
@@ -358,7 +359,7 @@ export default function DeskPetSearch({
               <span className="deskpet-character-status">
                 <Check size={14} className="deskpet-character-check" aria-hidden
                   style={{ visibility: item.id === character ? 'visible' : 'hidden' }} />
-                {catalogAdmin && (item.removed ? <Trash2 size={14} aria-label={tr({ zh: '已移除', en: 'Removed' })} /> : item.locked ? <Lock size={14} aria-label={tr({ zh: '仅管理员可见', en: 'Admin only' })} /> : <LockOpen size={14} aria-label={tr({ zh: '已开放', en: 'Public' })} />)}
+                {catalogAdmin && <span className="deskpet-character-lock">{item.removed ? <Trash2 size={14} aria-label={tr({ zh: '已移除', en: 'Removed' })} /> : item.locked ? <Lock size={14} aria-label={tr({ zh: '仅管理员可见', en: 'Admin only' })} /> : <LockOpen size={14} aria-label={tr({ zh: '已开放', en: 'Public' })} />}</span>}
               </span>
             </span>,
           }))}
