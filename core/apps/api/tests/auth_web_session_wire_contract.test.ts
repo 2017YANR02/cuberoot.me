@@ -254,6 +254,8 @@ describe('auth route wire contracts', () => {
       'douyin',
       'douyin-openid-1',
       { name: '' },
+      undefined,
+      { createIfMissing: false },
     );
   });
 
