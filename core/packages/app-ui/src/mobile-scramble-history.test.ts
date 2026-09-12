@@ -263,7 +263,8 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('if (canSwitchScramble()) fillScrambleHistoryEntry(currentScrambleEntry);');
     expect(app).toContain('timerScrambleClickEffect(');
     expect(app).toContain('scramble.length > 0');
-    expect(app).toContain("scrambleClickEffect === 'next' ? nextDisplayedScramble : undefined");
+    expect(app).not.toContain("onActivate={scrambleClickEffect");
+    expect(app).toMatch(/timerScrambleClickEffect\(\s*'none'/);
     expect(app).not.toContain('copyCurrentScramble');
   });
 

@@ -2918,7 +2918,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                       : null;
   const scrambleStatus = scrambleStatusReason ? timerScrambleStatus(scrambleStatusReason) : null;
   const scrambleClickEffect = timerScrambleClickEffect(
-    settings.scrambleClickAction === 'copy' ? 'none' : settings.scrambleClickAction,
+    'none', // Scramble presses belong to timing, including legacy click preferences.
     displayScramble.length > 0,
     attemptCanStart,
     scrambleStatus?.retryable === true,
@@ -3095,7 +3095,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                 label: tr(TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalLabel),
                 title: tr(TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalTitle),
               } : undefined}
-              onActivate={scrambleClickEffect === 'next' ? nextScramble : undefined}
               scramble={scrambleStatus ? '' : displayScramble}
               status={scrambleStatus
                 ? scrambleStatus.retryable
