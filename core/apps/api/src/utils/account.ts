@@ -12,7 +12,7 @@ import type { AccountBasicProfile, AccountGender } from '@cuberoot/shared/accoun
 import type { AvatarSource, ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
 import type { WebSessionUser } from '@cuberoot/shared/auth/web-session';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
-import { query, sql } from '../db/connection.js';
+import { query, sql, transactionQuery, type QueryRunner } from '../db/connection.js';
 import { JWT_SECRET } from './session.js';
 import { revokeAppleIdentities, type AppleRevocationIdentity } from './apple_login.js';
 
@@ -270,8 +270,8 @@ export async function loginWithPassword(email: string, pw: string): Promise<AppU
 }
 
 // ── 账号 / 身份 ──
-export async function getUserById(id: number): Promise<AppUser | null> {
-  const rows = await query<AppUserRow>(
+export async function getUserById(id: number, run: QueryRunner = query): Promise<AppUser | null> {
+  const rows = await run<AppUserRow>(
     `SELECT canonical.id, canonical.display_name, canonical.avatar_url, canonical.avatar_source,
             canonical.avatar_preset, canonical.wca_id, canonical.is_admin
      FROM app_users requested
@@ -431,8 +431,8 @@ export async function findUserByWcaId(wcaId: string): Promise<AppUser | null> {
   return firstAppUser(rows);
 }
 
-export async function findUserByIdentity(provider: Provider, providerUid: string): Promise<AppUser | null> {
-  const rows = await query<AppUserRow>(
+export async function findUserByIdentity(provider: Provider, providerUid: string, run: QueryRunner = query): Promise<AppUser | null> {
+  const rows = await run<AppUserRow>(
     `SELECT u.id, u.display_name, u.avatar_url, u.avatar_source, u.avatar_preset, u.wca_id, u.is_admin
      FROM auth_identities i JOIN app_users u ON u.id = i.user_id
      WHERE i.provider = ? AND i.provider_uid = ?`,
@@ -449,21 +449,29 @@ export async function findUserByIdentity(provider: Provider, providerUid: string
  * 知道这次到底建没建账号的一方。前端只在 isNew 时才做新人引导(问有没有 WCA ID),
  * 老用户每次登录都被问一遍会很烦。**不进 JWT**:它只描述这一次请求,不是会话属性。
  */
+export class IdentityNotFoundError extends Error {
+  constructor() { super('account not found'); }
+}
+
 export async function loginWithIdentity(
   provider: Provider,
   providerUid: string,
   profile: { name?: string; avatar?: string | null; wcaId?: string | null; countryIso2?: string | null },
   appleCredential?: AppleIdentityCredential,
+  options: { transaction?: TransactionSql; createIfMissing?: boolean } = {},
 ): Promise<{ user: AppUser; isNew: boolean }> {
   assertIdentityCredential(provider, appleCredential);
-  const existing = await findUserByIdentity(provider, providerUid);
+  const run = options.transaction ? transactionQuery(options.transaction) : query;
+  const begin = <T>(work: (tx: TransactionSql) => Promise<T>): Promise<T> =>
+    (options.transaction ? options.transaction.savepoint(work) : sql.begin(work)) as Promise<T>;
+  const existing = await findUserByIdentity(provider, providerUid, run);
   if (existing) {
     if (appleCredential) {
-      await sql.begin((tx) => updateAppleIdentityCredential(tx, existing.id, providerUid, appleCredential));
+      await begin((tx) => updateAppleIdentityCredential(tx, existing.id, providerUid, appleCredential));
     }
     // WCA 姓名是实名认证来源,每次 WCA 登录都刷新;其它来源仍只机会式回填空展示名。
     if (provider === 'wca' || (!existing.display_name && profile.name)) {
-      await query(
+      await run(
         `UPDATE app_users SET
            display_name = CASE WHEN ? = 'wca' THEN ? WHEN display_name = '' THEN ? ELSE display_name END,
            avatar_url = CASE WHEN ? = 'wca' AND avatar_source = 'auto' THEN ? ELSE avatar_url END,
@@ -481,10 +489,11 @@ export async function loginWithIdentity(
         ],
       );
     }
-    return { user: (await getUserById(existing.id)) ?? existing, isNew: false };
+    return { user: (await getUserById(existing.id, run)) ?? existing, isNew: false };
   }
+  if (options.createIfMissing === false) throw new IdentityNotFoundError();
   try {
-    const created = await sql.begin(async (tx) => {
+    const created = await begin(async (tx) => {
       const rows = await tx`
         INSERT INTO app_users (display_name, avatar_url, avatar_source, avatar_preset, wca_id, country_iso2)
         VALUES (
@@ -508,10 +517,10 @@ export async function loginWithIdentity(
   } catch {
     // 并发下另一个请求已创建同一身份(唯一约束触发,事务回滚无孤儿)→ 重查返回。
     // 账号确实是这一瞬间建的,但建它的是另一个请求,本次不认领 isNew(引导只做一次)。
-    const raced = await findUserByIdentity(provider, providerUid);
+    const raced = await findUserByIdentity(provider, providerUid, run);
     if (raced) {
       if (appleCredential) {
-        await sql.begin((tx) => updateAppleIdentityCredential(tx, raced.id, providerUid, appleCredential));
+        await begin((tx) => updateAppleIdentityCredential(tx, raced.id, providerUid, appleCredential));
       }
       return { user: raced, isNew: false };
     }
@@ -540,17 +549,21 @@ export async function addIdentity(
   verifiedAvatarUrl?: string | null,
   verifiedCountryIso2?: string | null,
   appleCredential?: AppleIdentityCredential,
+  transaction?: TransactionSql,
 ): Promise<'ok' | 'conflict' | `has-${SingleProvider}`> {
   assertIdentityCredential(provider, appleCredential);
-  const owner = await findUserByIdentity(provider, providerUid);
+  const run = transaction ? transactionQuery(transaction) : query;
+  const begin = <T>(work: (tx: TransactionSql) => Promise<T>): Promise<T> =>
+    (transaction ? transaction.savepoint(work) : sql.begin(work)) as Promise<T>;
+  const owner = await findUserByIdentity(provider, providerUid, run);
   if (owner) {
     if (owner.id !== userId) return 'conflict';
     if (appleCredential) {
-      await sql.begin((tx) => updateAppleIdentityCredential(tx, userId, providerUid, appleCredential));
+      await begin((tx) => updateAppleIdentityCredential(tx, userId, providerUid, appleCredential));
     }
     // 幂等重绑也要刷新 WCA 官方姓名,不能让旧自定义名继续留在实名账号上。
     if (provider === 'wca' && verifiedDisplayName) {
-      await query(
+      await run(
         `UPDATE app_users SET
            wca_id = ?,
            display_name = ?,
@@ -573,7 +586,7 @@ export async function addIdentity(
     return 'ok';
   }
   try {
-    const status = await sql.begin(async (tx) => {
+    const status = await begin(async (tx) => {
       // Provider credentials and identity ownership must commit together under the account lock.
       if (appleCredential) {
         const accounts = await tx`SELECT id FROM app_users WHERE id = ${userId} AND merged_into_user_id IS NULL FOR UPDATE`;
@@ -620,9 +633,9 @@ export async function addIdentity(
     if (appleCredential) {
       // A concurrent login/link may have won; retry only its exact owner, never swallow storage errors.
       if ((e as { code?: string }).code !== '23505') throw e;
-      const raced = await findUserByIdentity(provider, providerUid);
+      const raced = await findUserByIdentity(provider, providerUid, run);
       if (raced?.id !== userId) return 'conflict';
-      await sql.begin((tx) => updateAppleIdentityCredential(tx, userId, providerUid, appleCredential));
+      await begin((tx) => updateAppleIdentityCredential(tx, userId, providerUid, appleCredential));
       return 'ok';
     }
     // 并发绑第二个邮箱 / 手机时晚到的那条落这里 —— 认约束名还原成准确状态,别混进「已被他人占用」。

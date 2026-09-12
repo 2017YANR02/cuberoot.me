@@ -2417,6 +2417,14 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `需传 lang 与 onClose;未登录显示 WCA 登录引导。`, en: `Takes lang and onClose props; shows a WCA sign-in prompt when logged out.` },
   },
   {
+    name: 'IdentityChoicePanel',
+    import: "import { IdentityChoicePanel } from '@/components/AuthPanel';",
+    category: 'more',
+    zh: `首次第三方身份的页内选择：登录已有账号或创建新账号。已有账号验证复用 LoginForm 的凭据表单，再显示账号并明确确认绑定；网站与 App 登录交接共用，不提前建号、不按邮箱自动关联。`,
+    en: `In-page choice for a first-time provider identity: sign in to an existing account or create an account. Reuses LoginForm credentials, then shows the account for explicit linking confirmation. Shared by website and App handoffs; no premature creation or email-based auto-linking.`,
+    note: { zh: `pending 来自短期 identity-choice store；完成后 onDone(info, returnPath) 延续原路径，取消不创建或绑定账号。`, en: `pending comes from the short-lived identity-choice store; onDone(info, returnPath) resumes the original destination. Cancellation does not create or link an account.` },
+  },
+  {
     name: 'AuthPanel',
     import: "import { LoginForm, AccountPanel } from '@/components/AuthPanel';",
     category: 'more',

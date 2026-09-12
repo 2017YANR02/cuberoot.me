@@ -289,25 +289,6 @@ export function applySession(
   return true;
 }
 
-/**
- * 把 WCA 的短效 access token 换成站内 canonical session，并原子覆盖临时 WCA 会话。
- * 返回 false 表示后端拒绝或响应不符合共享契约；调用方可继续保留短效会话兜底。
- */
-export async function exchangeWcaSession(
-  accessToken: string,
-  fetcher: typeof fetch = fetch,
-): Promise<boolean> {
-  const response = await fetcher(apiUrl('/v1/auth/exchange'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ accessToken }),
-  });
-  if (!response.ok) return false;
-
-  const session = decodeWebSession(await response.json());
-  return session ? applySession(session.token, session.user) : false;
-}
-
 // ── 新人「绑定 WCA」引导的待办标记 ──
 // 注册成功那一刻打标,进 /account 时消费掉(只引导一次)。存在的理由是三方登录那条路:
 // 微信/QQ/支付宝的授权是整页跳走再回来的,回来时人已不在登录表单里,只能靠这个标记把引导接上。

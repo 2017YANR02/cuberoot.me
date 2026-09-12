@@ -11,6 +11,7 @@ import { loginSocial, linkSocial, REDIRECT_AUTH_PROVIDERS, type RedirectAuthProv
 import { consumeAppleState, takeSocialReturnUrl, socialCallbackReturnPath } from '@/lib/social-auth';
 import { tr } from '@/i18n/tr';
 import { AuthCallbackStatus } from '../../_components/AuthCallbackStatus';
+import { AccountChoiceRequired, getIdentityChoice, identityChoiceEntryPath, rememberIdentityChoice, updateIdentityChoice } from '@/lib/identity-choice';
 
 export default function SocialCallbackPage() {
   const router = useRouter();
@@ -68,18 +69,25 @@ export default function SocialCallbackPage() {
       } else {
         const r = await loginSocial(provider, code, state, codeVerifier ?? undefined, signal);
         if (!mounted.current || signal.aborted) return;
-        applySession(r.token, r.user);
+        if (!applySession(r.token, r.user)) throw new Error(tr({ zh: '无法保存登录状态', en: 'Could not save your session' }));
+        const pending = getIdentityChoice();
+        if (pending?.stage === 'authenticate' && r.user.uid) updateIdentityChoice(pending.ticket, { stage: 'confirm', expectedUid: r.user.uid, otherIdentityRejected: false });
         // 刚注册出来的新账号,回到 /account 时补上「你有 WCA ID 吗」那步(表单那条路是在
         // onDone 里直接切过去的,这条路整页跳走过,只能留个标记)。
         if (r.isNew && !r.user.wcaId) markWcaLinkPrompt();
       }
     } catch (e) {
       if (!mounted.current || signal.aborted) return;
+      if (e instanceof AccountChoiceRequired) {
+        try { rememberIdentityChoice(e, target); router.replace(identityChoiceEntryPath()); }
+        catch { setErrorMsg(tr({ zh: '无法保存登录步骤，请允许浏览器使用存储后重试。', en: 'Could not save the sign-in step. Allow browser storage and retry.' })); }
+        return;
+      }
       setErrorMsg(e instanceof Error ? e.message : tr({ zh: '登录失败,请重试', en: 'Login failed, please retry' }));
       return;
     }
 
-    if (mounted.current && !signal.aborted) router.replace(target);
+    if (mounted.current && !signal.aborted) router.replace(getIdentityChoice() ? identityChoiceEntryPath() : target);
   }
 
   function cancel() {

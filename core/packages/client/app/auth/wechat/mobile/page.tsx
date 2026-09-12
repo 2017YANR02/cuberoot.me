@@ -11,12 +11,14 @@ import {
 } from '@/lib/account-api';
 import { takeSocialReturnUrl } from '@/lib/social-auth';
 import { AuthCallbackStatus } from '../../_components/AuthCallbackStatus';
+import { existingAccountRequired, getIdentityChoice, identityChoiceEntryPath, identityReturnPath, updateIdentityChoice } from '@/lib/identity-choice';
 
 const STORAGE_KEY = 'wechat_browser_login';
 const POLL_MS = 1500;
 
 interface PendingLogin extends WechatBrowserLoginStart {
   expiresAt: number;
+  existingOnly?: boolean;
 }
 
 function readPendingLogin(): PendingLogin | null {
@@ -24,7 +26,7 @@ function readPendingLogin(): PendingLogin | null {
     const value = JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? 'null') as Partial<PendingLogin> | null;
     if (!value || !isWebSessionTicket(value.ticket) || typeof value.urlLink !== 'string'
       || !value.urlLink.startsWith('https://') || typeof value.expiresAt !== 'number'
-      || value.expiresAt <= Date.now()) return null;
+      || value.expiresAt <= Date.now() || !!value.existingOnly !== existingAccountRequired()) return null;
     return value as PendingLogin;
   } catch {
     return null;
@@ -42,6 +44,7 @@ export default function WechatMobileAuthPage() {
 
   useEffect(() => {
     let active = true;
+    const identityAtStart = getIdentityChoice();
     let pending = readPendingLogin();
 
     const poll = async () => {
@@ -53,11 +56,20 @@ export default function WechatMobileAuthPage() {
           timer.current = setTimeout(poll, POLL_MS);
           return;
         }
+        if (identityAtStart?.stage === 'authenticate') {
+          const current = getIdentityChoice();
+          if (current?.ticket !== identityAtStart.ticket || current.stage !== 'authenticate') {
+            throw new Error('account choice expired or changed');
+          }
+        }
         if (!applySession(session.token, session.user) || getSessionToken() !== session.token) {
           throw new Error('session persistence failed');
         }
         clearPendingLogin();
-        window.location.replace(takeSocialReturnUrl() || '/');
+        const choice = getIdentityChoice();
+        if (choice?.stage === 'authenticate') updateIdentityChoice(choice.ticket, { stage: 'confirm', expectedUid: session.user.uid, otherIdentityRejected: false });
+        const target = identityReturnPath(takeSocialReturnUrl() || '/');
+        window.location.replace(choice ? identityChoiceEntryPath() : target);
       } catch {
         if (!active) return;
         clearPendingLogin();
@@ -77,7 +89,7 @@ export default function WechatMobileAuthPage() {
             || !Number.isFinite(started.expiresIn) || started.expiresIn <= 0) {
             throw new Error('invalid login start response');
           }
-          pending = { ...started, expiresAt: Date.now() + started.expiresIn * 1000 };
+          pending = { ...started, existingOnly: existingAccountRequired(), expiresAt: Date.now() + started.expiresIn * 1000 };
           try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(pending)); } catch { /* private mode */ }
           void poll();
           window.location.href = started.urlLink;

@@ -12,13 +12,13 @@ import { JWT_SECRET, signSession, verifySession, isRolePreviewActive } from '../
 import { requireAuth } from '../utils/recon_helpers.js';
 import { captureAccountDevice } from '../utils/account_device.js';
 import {
-  loginWithIdentity,
   findUserByWcaId,
   getUserById,
   publicUser,
   isValidCountryIso2,
   normalizeCountryIso2,
 } from '../utils/account.js';
+import { beginIdentityLogin } from '../utils/identity_choice.js';
 
 const WCA_CLIENT_ID = process.env.WCA_CLIENT_ID || '';
 const WCA_CLIENT_SECRET = process.env.WCA_CLIENT_SECRET || '';
@@ -117,6 +117,8 @@ authRoutes.get('/auth/login', (c) => {
 
 // WCA 回调
 authRoutes.get('/auth/callback', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  c.header('Referrer-Policy', 'no-referrer');
   const code = c.req.query('code');
 
   // 用 code 换取 access_token
@@ -177,12 +179,14 @@ authRoutes.get('/auth/callback', async (c) => {
   );
 
   // 建/取内部账号 + wca 身份,签发会话 JWT（365 天）
-  const { user: account } = await loginWithIdentity('wca', wcaId, {
+  const result = await beginIdentityLogin({ provider: 'wca', providerUid: wcaId, profile: {
     name: user.name,
     avatar: user.avatar?.url ?? null,
     wcaId,
     countryIso2: verifiedCountryIso2,
-  });
+  } });
+  if ('pending' in result) return c.json(result, 409);
+  const { user: account } = result;
   await captureAccountDevice(account.id, c.req.header('User-Agent'));
   const jwtToken = signSession({ uid: account.id, wcaId: account.wca_id, name: account.display_name });
 
@@ -218,6 +222,7 @@ authRoutes.get('/auth/me', async (c) => {
 // WCA access_token → 自签 JWT（365 天有效期）
 // NOTE: WCA Implicit Grant 的 token 2 小时过期，用此端点换取长效 JWT
 authRoutes.post('/auth/exchange', async (c) => {
+  c.header('Cache-Control', 'no-store');
   let body: unknown;
   try {
     body = await c.req.json();
@@ -271,12 +276,14 @@ authRoutes.post('/auth/exchange', async (c) => {
     );
 
     // 建/取内部账号 + wca 身份,签发会话 JWT（365 天）
-    const { user: account } = await loginWithIdentity('wca', user.wca_id, {
+    const result = await beginIdentityLogin({ provider: 'wca', providerUid: user.wca_id, profile: {
       name: user.name,
       avatar: user.avatar?.url ?? null,
       wcaId: user.wca_id,
       countryIso2: verifiedCountryIso2,
-    });
+    } });
+    if ('pending' in result) return c.json(result, 409);
+    const { user: account } = result;
     await captureAccountDevice(account.id, c.req.header('User-Agent'));
     const jwtToken = signSession({ uid: account.id, wcaId: account.wca_id, name: account.display_name });
 
