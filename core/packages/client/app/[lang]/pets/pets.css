@@ -1,0 +1,35 @@
+.pets-page{max-width:1080px;margin:0 auto;padding:32px 28px 48px;color:var(--foreground);}
+.pets-header{display:flex;align-items:center;justify-content:space-between;gap:20px;}
+.pets-wordmark{font-weight:750;text-decoration:none;color:var(--foreground);font-size:17px;letter-spacing:-.5px;}
+.pets-wordmark span{color:var(--muted-foreground);font-weight:400;margin-left:6px;}
+.pets-header nav{display:flex;align-items:center;gap:6px;}
+.pets-header nav a,.pets-header nav button{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:30px;padding:10px 14px;background:transparent;color:var(--muted-foreground);font:inherit;font-size:12px;text-decoration:none;cursor:pointer;}
+.pets-header nav [aria-current=page]{background:var(--accent-soft);color:var(--accent);}
+.pets-header nav a:hover,.pets-header nav button:hover{color:var(--accent);}
+.pets-heading{padding:58px 0 34px;}
+.pets-heading>span{font-size:10px;font-weight:650;letter-spacing:2.6px;color:var(--accent);}
+.pets-heading h1{font-size:clamp(26px,3.2vw,38px);line-height:1.35;font-weight:650;letter-spacing:-1.2px;margin:12px 0;}
+.pets-heading p{font-size:14px;color:var(--muted-foreground);margin:0;}
+.pets-meet{margin-top:40px;}
+.pets-section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.pets-section-title h2{font-size:16px;font-weight:600;margin:0;}
+.pets-section-title a{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted-foreground);text-decoration:none;}
+.pets-roster{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:28px;}
+.pets-roster button{display:flex;align-items:center;gap:10px;position:relative;text-align:left;padding:12px;border:1px solid var(--border-default);border-radius:20px;background:var(--card);color:var(--foreground);font:inherit;font-size:13px;cursor:pointer;transition:transform .2s,border-color .2s;}
+.pets-roster button[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft);}
+.pets-roster button:hover{transform:translateY(-3px);border-color:var(--accent);}
+.pets-roster-art{width:50px;height:50px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
+.pets-roster-art img{width:100%;height:100%;object-fit:contain;}
+.pets-roster button>svg{margin-left:auto;flex-shrink:0;color:var(--accent);}
+.pets-footer{display:flex;align-items:center;justify-content:space-between;padding-top:32px;margin-top:28px;border-top:1px solid var(--border-default);color:var(--muted-foreground);font-size:11px;}
+.pets-footer a{display:flex;align-items:center;gap:4px;color:inherit;text-decoration:none;}
+.pets-loading{height:420px;border-radius:32px;background:var(--muted);}
+.pets-empty{padding:80px 24px;text-align:center;color:var(--muted-foreground);}
+.pets-share-fallback{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted-foreground);margin-bottom:20px;}
+.pets-share-fallback input{padding:12px;border:1px solid var(--border-default);border-radius:12px;background:var(--card);color:var(--foreground);width:100%;}
+.pets-page button:focus-visible,.pets-page a:focus-visible{outline:2px solid var(--ring);outline-offset:4px;}
+@media(max-width:700px){.pets-page{padding:22px 18px 36px;}.pets-header{flex-wrap:wrap;gap:18px;}.pets-wordmark{font-size:15px;}.pets-header nav{width:100%;justify-content:space-between;}.pets-header nav a,.pets-header nav button{padding:9px 10px;font-size:11px;}.pets-heading{padding:32px 0 24px;}.pets-roster{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}.pets-roster button{padding:10px;font-size:12px;border-radius:16px;}.pets-roster-art{width:40px;height:40px;}.pets-roster button>svg{width:12px;}.pets-meet{margin-top:28px;}.pets-heading h1{letter-spacing:-.7px;}}
+@media(prefers-reduced-motion:reduce){.pets-page button,.pets-page a{transition:none;}}
+
+/* The page is the pet interaction surface; keep its floating duplicate out of the way. */
+body:has(.pets-page) .clawd-deskpet{display:none;}

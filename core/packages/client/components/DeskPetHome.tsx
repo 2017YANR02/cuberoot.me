@@ -1,146 +1,132 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Apple, Hand, Heart, Moon, Sparkles, Check, Zap } from 'lucide-react';
-import { CompactSelect } from '@/components/CompactSelect';
-import { ClearButton } from '@/components/ClearButton';
-import { useModalDismiss } from '@/hooks/useModalDismiss';
-import { tr } from '@/i18n/tr';
-import { persistItem } from '@/lib/safe-storage';
-import { BOND_STAGES, CARE_ACTIONS, PET_CARE_KEY, careFor, careWait, createPetCare, currentCare,
-  readCareBook, serializeCareBook, type CareAction, type CareBook } from '@/lib/deskpet-care';
+import { Apple, Hand, Heart, Moon, Sparkles, Star, Check, Zap, Loader2 } from 'lucide-react';
+import AppLink from '@/components/AppLink';
+import PetLevelBadge from '@/components/PetLevelBadge';
+import { tr, useLang } from '@/i18n/tr';
+import { useAuthStore } from '@/lib/auth-store';
+import { adoptPet, careForPet, getMyPets, type AdoptedPet } from '@/lib/deskpet-api';
+import { CARE_ACTIONS, careWait, currentCare, petLevel, type CareAction } from '@/lib/deskpet-care';
+import { petCareArt, petCareDuration, type ThemeId } from '@/lib/deskpet-themes';
+import { getRootBeastScene } from '@/lib/deskpet-rootbeast';
 import './DeskPetHome.css';
 
 const ACTIONS = {
-  feed: { icon: Apple, label: { zh: '喂食', en: 'Feed' }, hint: { zh: '饱腹 +25', en: 'Food +25' }, reply: { zh: '吃饱啦，再陪你一会儿！', en: 'All full. Ready to keep you company!' } },
-  pet: { icon: Hand, label: { zh: '摸摸', en: 'Pet' }, hint: { zh: '心情 +18', en: 'Mood +18' }, reply: { zh: '蹭蹭你的手，今天也很喜欢你。', en: 'A little nuzzle, just for you.' } },
-  play: { icon: Sparkles, label: { zh: '玩耍', en: 'Play' }, hint: { zh: '心情 +25', en: 'Mood +25' }, reply: { zh: '一起玩，就是最开心的事！', en: 'Everything is more fun with you!' } },
-  rest: { icon: Moon, label: { zh: '打个盹', en: 'Nap' }, hint: { zh: '活力 +20', en: 'Energy +20' }, reply: { zh: '眯一小会儿，补充一点活力。', en: 'A tiny nap to recharge.' } },
+  feed: { icon: Apple, label: { zh: '喂食', en: 'Feed' }, reply: { zh: '吃饱啦，谢谢你的点心。', en: 'That was delicious. Thank you!' } },
+  pet: { icon: Hand, label: { zh: '摸摸', en: 'Pet' }, reply: { zh: '再摸一下，好不好？', en: 'One more little head scratch?' } },
+  play: { icon: Sparkles, label: { zh: '玩耍', en: 'Play' }, reply: { zh: '和你一起玩，最开心。', en: 'Playing together is my favorite.' } },
+  rest: { icon: Moon, label: { zh: '小睡', en: 'Nap' }, reply: { zh: '眯一会儿，醒来再找你。', en: 'A tiny nap. See you in a moment.' } },
 };
 
-export default function DeskPetHome({ character, characters, animations, durations, onSelectChar, onInteract, onClose }: {
-  character: string;
-  characters: { id: string; label: { zh: string; en: string }; thumb: string }[];
-  animations: Record<CareAction | 'idle', string>;
-  durations: Record<CareAction, number>;
-  onSelectChar: (id: string) => void;
-  onInteract: (action: CareAction) => void;
-  onClose: () => void;
+export default function DeskPetHome({ character, label, locked = false }: {
+  character: ThemeId; label: { zh: string; en: string }; locked?: boolean;
 }) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  const [book, setBook] = useState<CareBook>({});
-  const bookRef = useRef<CareBook>({});
+  const user = useAuthStore(s => s.user);
+  const lang = useLang();
+  const owner = user ? String(user.uid ?? user.wcaId) : '';
+  const [record, setRecord] = useState<{ owner: string; pets: AdoptedPet[] } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   const [now, setNow] = useState(0);
-  const [ready, setReady] = useState(false);
-  const [saved, setSaved] = useState(true);
-  const [reaction, setReaction] = useState<{ action: CareAction; at: number; character: string } | null>(null);
-  const busyUntil = useRef(0);
-  const ids = characters.map(p => p.id).join(',');
-  useModalDismiss(onClose);
+  const [reaction, setReaction] = useState<{ action: CareAction; at: number; src: string; duration: number; gained: boolean; leveled: boolean } | null>(null);
+  const generation = useRef(0);
+  const readVersion = useRef(0);
+  const [reload, setReload] = useState(0);
+  const busy = useRef(false);
+  const selected = record?.owner === owner ? record.pets.find(p => p.id === character) : undefined;
+  const care = selected && currentCare(selected.care, now || selected.care.updatedAt);
+  const rank = petLevel(care?.bond ?? 0);
   useEffect(() => {
-    const node = dialog.current;
-    node?.showModal();
-    return () => node?.close();
-  }, []);
-  useEffect(() => {
+    const g = ++generation.current;
+    busy.current = false; setSaving(false); setReaction(null); setError(''); setLoading(true);
     const load = () => {
-      const at = Date.now();
-      try { bookRef.current = readCareBook(localStorage.getItem(PET_CARE_KEY), ids.split(','), at); }
-      catch { setSaved(false); }
-      setBook(bookRef.current); setNow(at); setReady(true);
+      if (busy.current) return;
+      const read = ++readVersion.current;
+      if (!owner) { setRecord(null); setLoading(false); return; }
+      void getMyPets().then(pets => {
+        if (generation.current === g && readVersion.current === read && !busy.current) { setRecord({ owner, pets }); setError(''); }
+      }).catch(() => { if (generation.current === g && readVersion.current === read) setError(tr({ zh: '暂时没能连上小窝，请重试。', en: 'Could not reach your pet home. Please retry.' })); })
+        .finally(() => { if (generation.current === g && readVersion.current === read) setLoading(false); });
     };
-    load();
-    const sync = (event: StorageEvent) => { if (event.key === PET_CARE_KEY || event.key === null) load(); };
-    window.addEventListener('storage', sync);
+    load(); setNow(Date.now());
     const clock = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => { clearInterval(clock); window.removeEventListener('storage', sync); };
-  }, [ids]);
-  const selected = characters.find(p => p.id === character);
-  const pet = currentCare(book[character] ?? createPetCare(now), now);
-  const active = reaction?.character === character ? reaction : null;
-  const duration = active ? durations[active.action] : 0;
+    window.addEventListener('focus', load);
+    return () => { generation.current++; clearInterval(clock); window.removeEventListener('focus', load); };
+  }, [owner, character, reload]);
   useEffect(() => {
     if (!reaction) return;
-    const timeout = setTimeout(() => setReaction(null), Math.max(0, reaction.at + duration - Date.now()));
-    return () => clearTimeout(timeout);
-  }, [reaction, duration]);
-  const stageIndex = BOND_STAGES.findLastIndex(stage => pet.bond >= stage.at);
-  const stage = BOND_STAGES[stageIndex];
-  const nextStage = BOND_STAGES[stageIndex + 1];
-  const progress = nextStage ? (pet.bond - stage.at) / (nextStage.at - stage.at) : 1;
-
-  const interact = (action: CareAction) => {
-    const at = Date.now();
-    if (!ready || at < busyUntil.current) return;
-    // Preserve other tabs' latest records; storage failures retain session progress.
-    let latest = bookRef.current;
-    if (saved) {
-      try { latest = readCareBook(localStorage.getItem(PET_CARE_KEY), ids.split(','), at); } catch { /* keep session */ }
-    }
-    const result = careFor(latest[character] ?? createPetCare(at), action, at);
-    if (!result.accepted) return;
-    const updated = { ...latest, [character]: result.pet };
-    bookRef.current = updated; setBook(updated); setNow(at);
-    setSaved(persistItem(PET_CARE_KEY, serializeCareBook(updated)));
-    busyUntil.current = at + durations[action];
-    setReaction({ action, at, character });
-    onInteract(action);
+    const timer = setTimeout(() => setReaction(null), Math.max(0,reaction.at+reaction.duration-Date.now()));
+    return () => clearTimeout(timer);
+  }, [reaction]);
+  const update = (pet: AdoptedPet) => setRecord(old => ({ owner, pets: [...(old?.owner === owner ? old.pets.filter(p=>p.id!==pet.id) : []),pet] }));
+  const interact = async (action?: CareAction) => {
+    if (!owner || locked || busy.current || reaction || loading || error || (action && !selected)) return;
+    busy.current = true; readVersion.current++; setSaving(true);
+    const g = generation.current;
+    try {
+      if (!action) {
+        const pet = await adoptPet(character);
+        if (g !== generation.current) return;
+        update(pet); setNow(Date.now());
+        setReaction({ action: 'pet', at: Date.now(), src: petCareArt(character,'pet'), duration: petCareDuration(character,'pet'), gained: false, leveled: false });
+      } else {
+        const result = await careForPet(character, action);
+        if (g !== generation.current) return;
+        update(result.pet); setNow(Date.now());
+        if (result.accepted) {
+          const special = character === 'rootbeast' ? getRootBeastScene(action==='rest' && rank.level>=4 ? 'rootbeast:moon-hug' : action==='play' && rank.level>=16 ? 'rootbeast:dance' : undefined) : undefined;
+          const src = special?.src ?? petCareArt(character,action);
+          setReaction({ action, at: Date.now(), src, duration: special?.durationMs ?? petCareDuration(character,action), gained: result.gained, leveled: petLevel(result.pet.care.bond).level > rank.level });
+        }
+      }
+      window.dispatchEvent(new Event('pets:updated'));
+    } catch { if (g === generation.current) setError(tr({ zh: '这次没有保存成功，请重试。', en: 'Could not save. Please retry.' })); }
+    finally { if (g === generation.current) { busy.current=false; setSaving(false); } }
   };
-
-  return <dialog ref={dialog} className="pet-home" aria-labelledby="pet-home-title"
-    onCancel={event => { event.preventDefault(); onClose(); }}
-    onClick={event => { if (event.target === event.currentTarget) {
-      const r = event.currentTarget.getBoundingClientRect();
-      if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) onClose();
-    } }}>
-    <div className="pet-home-inner">
-      <header className="pet-home-header">
-        <h2 id="pet-home-title">{tr({ zh: '宠物小窝', en: 'Pet home' })}</h2>
-        <ClearButton variant="standalone" onClick={onClose} ariaLabel={tr({ zh: '关闭', en: 'Close' })} />
-      </header>
-      <CompactSelect value={character} onChange={id => { busyUntil.current = 0; setReaction(null); onSelectChar(id); }}
-        ariaLabel={tr({ zh: '小窝里的宠物', en: 'Pet in your home' })} valueText={selected ? tr(selected.label) : ''}
-        label={selected ? tr(selected.label) : ''}
-        items={characters.map(p => ({ value: p.id, label: <span className="pet-home-choice"><img src={p.thumb} alt="" />{tr(p.label)}</span> }))} />
-      <div className="pet-home-stage" data-pet={character}>
-        <img key={`${character}-${active?.at ?? 'idle'}`} src={animations[active?.action ?? 'idle']} alt={selected ? tr(selected.label) : ''} draggable={false} />
-        {active && <span className="pet-home-reaction" key={active.at} aria-hidden>{active.action === 'feed' ? <Apple /> : active.action === 'rest' ? <Moon /> : <Heart />}</span>}
-      </div>
-      <p className="pet-home-message" role="status">{active ? tr(ACTIONS[active.action].reply) : tr({ zh: '在这里，陪你慢慢变熟。', en: 'A little company, a little closer each day.' })}</p>
-      <div className="pet-home-needs">
-        {([
-          { key: 'food', icon: Apple, label: { zh: '饱腹', en: 'Food' } },
-          { key: 'mood', icon: Heart, label: { zh: '心情', en: 'Mood' } },
-          { key: 'energy', icon: Zap, label: { zh: '活力', en: 'Energy' } },
-        ] as const).map(({ key, icon: Icon, label }) => <div key={key}>
-          <span><Icon size={14} />{tr(label)}<b>{Math.round(pet[key])}</b></span>
-          <meter min={0} max={100} value={pet[key]} aria-label={tr(label)} />
-        </div>)}
-      </div>
-      <div className="pet-home-actions">
-        {CARE_ACTIONS.map(action => {
-          const { icon: Icon, label, hint } = ACTIONS[action];
-          const seconds = Math.ceil(careWait(pet, action, now) / 1000);
-          const tired = action === 'play' && pet.energy < 15;
-          return <button type="button" className="pet-home-action" key={action} onClick={() => interact(action)}
-            disabled={!ready || !!active || seconds > 0 || tired}>
-            <Icon size={23} /><strong>{tr(label)}</strong>
-            <small>{seconds ? `${seconds}s` : tired ? tr({ zh: '先休息', en: 'Rest first' }) : tr(hint)}</small>
-          </button>;
-        })}
-      </div>
-      <section className="pet-home-bond" aria-label={tr({ zh: '亲密度', en: 'Friendship' })}>
-        <div className="pet-home-bond-title"><Heart size={17} /><strong>{tr(stage.label)}</strong><span>{pet.bond} {tr({ zh: '亲密度', en: 'bond' })}</span></div>
-        <progress value={progress} max={1} aria-label={tr({ zh: '成长进度', en: 'Friendship progress' })} />
-        <p>{nextStage ? tr({ zh: `再获得 ${nextStage.at - pet.bond} 点，成为「${nextStage.label.zh}」`, en: `${nextStage.at - pet.bond} more to become ${nextStage.label.en.toLowerCase()}` }) : tr({ zh: '已经是最亲密的伙伴啦，继续积攒共同的回忆。', en: 'Best friends already. Keep making memories together.' })}</p>
-        <div className="pet-home-daily"><span>{tr({ zh: '今日陪伴', en: 'Today together' })}</span>
-          {CARE_ACTIONS.map(action => <span key={action} className={pet.rewarded.includes(action) ? 'is-done' : ''} title={tr(ACTIONS[action].label)}>
-            {pet.rewarded.includes(action) ? <Check size={13} /> : <Heart size={13} />}{tr(ACTIONS[action].label)}
-          </span>)}
-        </div>
-        <p>{tr({ zh: '每天每种互动首次获得 1 点亲密度，之后也能继续玩。', en: 'The first of each interaction earns 1 bond daily. Keep playing after that, too.' })}</p>
-      </section>
-      <footer className="pet-home-footer">{saved ? tr({ zh: '进度保存在此浏览器。离开后，亲密度也会保留。', en: 'Saved in this browser. Your friendship stays while you’re away.' }) : tr({ zh: '浏览器未能保存，当前进度只在本次打开期间保留。', en: 'Could not save. Progress is kept only while this home stays open.' })}</footer>
+  const days = selected && now ? Math.max(1, Math.floor((now-new Date(selected.adoptedAt).getTime())/86400000)+1) : 1;
+  const message = reaction ? reaction.leveled ? tr({zh:`升级啦！现在是 Lv.${rank.level}`,en:`Level up! Now Lv.${rank.level}`})
+    : reaction.action==='feed' && now-reaction.at < reaction.duration*.9 ? tr({zh:'咔嚓，慢慢嚼……',en:'Crunch, crunch…'}) : tr(ACTIONS[reaction.action].reply)
+    : selected ? tr({zh:'你来啦。今天想一起做点什么？',en:'You’re here. What shall we do today?'}) : tr({zh:'第一眼见到你，就想跟你回家。',en:'A little friend, ready to come home with you.'});
+  return <section className="pet-home" data-adopted={!!selected} aria-label={tr({zh:'宠物小窝',en:'Pet home'})}>
+    <div className="pet-home-scene">
+      <div className="pet-home-orbit" aria-hidden />
+      <div className="pet-home-scene-top"><span className="pet-home-scene-caption">{selected ? tr({zh:`相伴第 ${days} 天`,en:`Day ${days} together`}) : tr({zh:'等一个属于自己的家',en:'A place to call home'})}</span>{care && <PetLevelBadge bond={care.bond}/>}</div>
+      <button type="button" className="pet-home-stage" data-pet={character} onClick={()=>void interact('pet')}
+        disabled={!selected || !!reaction || saving || locked || loading || !!error} aria-label={tr({zh:'摸摸宠物',en:'Pet your companion'})}>
+        <img key={`${character}-${reaction?.at ?? 'idle'}`} src={reaction?.src ?? petCareArt(character,'idle')} alt={tr(label)} draggable={false} />
+        {reaction?.gained && <span className="pet-home-gain" key={reaction.at}><Star size={16}/>+1</span>}
+      </button>
+      <p className="pet-home-message" role="status">{message}</p>
+      {care && <div className="pet-home-actions">{CARE_ACTIONS.map(action=>{
+        const {icon:Icon,label:actionLabel}=ACTIONS[action];
+        const wait = Math.ceil(careWait(care,action,now)/1000);
+        return <button type="button" key={action} onClick={()=>void interact(action)} disabled={saving || !!reaction || wait>0 || locked || !!error || (action==='play' && care.energy<15)}>
+          <span><Icon size={22}/>{care.rewarded.includes(action) && <Check size={10} className="pet-home-action-done"/>}</span><strong>{tr(actionLabel)}</strong>
+          <small>{wait ? `${wait}s` : care.rewarded.includes(action) ? tr({zh:'再陪一会儿',en:'More time together'}) : '+1 XP'}</small>
+        </button>;
+      })}</div>}
     </div>
-  </dialog>;
+    <div className="pet-home-details">
+      <span className="pet-home-eyebrow">{selected ? tr({zh:'我的伙伴',en:'MY COMPANION'}) : tr({zh:'领养一份小小的陪伴',en:'A LITTLE COMPANY'})}</span>
+      <h2>{tr(label)}</h2>
+      <p className="pet-home-intro">{selected ? tr({zh:'把平凡的一天，变成我们的回忆。',en:'Making ordinary days a little more ours.'}) : tr({zh:'喂一口点心，摸摸小脑袋。从今天起，一起长大。',en:'A little snack. A gentle head scratch. A friendship that grows with you.'})}</p>
+      {care ? <>
+        <div className="pet-home-level"><PetLevelBadge bond={care.bond}/></div>
+        <progress value={rank.progress} max={1} aria-label={tr({zh:'等级进度',en:'Level progress'})}/>
+        <div className="pet-home-progress-label"><span>{rank.next===null ? tr({zh:'满级伙伴',en:'Fully grown friendship'}) : tr({zh:`再 ${rank.next-rank.xp} XP 升级`,en:`${rank.next-rank.xp} XP to next level`})}</span><span>{care.rewarded.length}/4 {tr({zh:'今日陪伴',en:'today'})}</span></div>
+        <div className="pet-home-needs">{([{key:'food',icon:Apple,label:{zh:'饱腹',en:'Food'}},{key:'mood',icon:Heart,label:{zh:'心情',en:'Mood'}},{key:'energy',icon:Zap,label:{zh:'活力',en:'Energy'}}] as const).map(({key,icon:Icon,label:needLabel})=><div key={key}><span><Icon size={15}/>{tr(needLabel)}<b>{Math.round(care[key])}</b></span><meter min={0} max={100} value={care[key]} aria-label={tr(needLabel)}/></div>)}</div>
+        <details className="pet-home-growth"><summary>{tr({zh:'星星，慢慢变成太阳',en:'Little stars become suns'})}</summary>
+          <p>{tr({zh:'每天四种互动各得 1 XP。4 颗星变月亮，4 个月亮变太阳；休息几天也不会掉级。',en:'Each daily interaction earns 1 XP. Four stars make a moon; four moons make a sun. Time away never lowers your level.'})}</p>
+          {character==='rootbeast' && <p>{tr({zh:'Lv.4 解锁抱月小睡 · Lv.16 解锁开心舞步',en:'Lv.4: moon-hug nap · Lv.16: happy dance'})}</p>}
+        </details>
+      </> : loading && owner ? <p className="pet-home-status"><Loader2 size={16}/>{tr({zh:'正在打开小窝…',en:'Opening your home…'})}</p>
+        : locked ? <p>{tr({zh:'这位伙伴还未开放领养。',en:'This companion is not available for adoption yet.'})}</p>
+        : owner ? <button type="button" className="pet-primary" onClick={()=>void interact()} disabled={saving || !!error}>{saving ? <Loader2 size={18}/> : <Heart size={18}/>} {tr({zh:`领养${label.zh}`,en:`Adopt ${label.en}`})}</button>
+        : <AppLink className="pet-primary" href={`/account?next=${encodeURIComponent(`${lang==='zh'?'/zh':''}/pets?pet=${character}`)}`} prefetch={false}><Heart size={18}/>{tr({zh:'登录并领养',en:'Sign in to adopt'})}</AppLink>}
+      {error && <div className="pet-home-error" role="alert"><p>{error}</p><button type="button" onClick={()=>setReload(value=>value+1)}>{tr({zh:'重试',en:'Retry'})}</button></div>}
+      <AppLink className="pet-home-gallery-link" href={`/pets/gallery?pet=${character}`} prefetch={false}><Sparkles size={16}/>{tr({zh:'看看它的更多小表情',en:'Explore its little expressions'})}</AppLink>
+    </div>
+  </section>;
 }

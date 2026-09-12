@@ -34,6 +34,7 @@ const MERGE_OWNED_DIRECT_TABLES = new Set([
   'auth_identities',
   'account_last_devices',
   'auth_web_session_tickets',
+  'user_pets',
   'app_users',
 ]);
 
@@ -123,6 +124,21 @@ export async function mergeAccounts(sourceUserId: number, targetUserId: number):
       }
 
       await rejectUnsupportedDirectData(tx, sourceUserId);
+
+      // Both account rows are locked above; pet writes use that same boundary.
+      // Keep the most-grown care record intact, including its reward/cooldown state.
+      await tx(`
+        INSERT INTO user_pets (user_id, pet_id, adopted_at, care)
+        SELECT ?, pet_id, adopted_at, care FROM user_pets WHERE user_id = ?
+        ON CONFLICT (user_id, pet_id) DO UPDATE SET
+          adopted_at = LEAST(user_pets.adopted_at, EXCLUDED.adopted_at),
+          care = CASE
+            WHEN (EXCLUDED.care->>'bond')::numeric > (user_pets.care->>'bond')::numeric
+              THEN EXCLUDED.care
+            ELSE user_pets.care
+          END
+      `, [targetUserId, sourceUserId]);
+      await tx('DELETE FROM user_pets WHERE user_id = ?', [sourceUserId]);
 
       const finalWcaId = target.wca_id ?? source.wca_id;
       const finalOwnerKey = ownerKey(targetUserId, finalWcaId);

@@ -52,6 +52,7 @@ const TABLES: Table[] = [
   { name: 'platform_competition_settlement_ledger', domain: 'platform', origin: '0226', purpose: { zh: '主办方转账、追回与退款调整的审计台账', en: 'Audited organizer transfers, recoveries and refund adjustments' } },
   { name: 'platform_competition_device_reports', domain: 'platform', origin: '0227', purpose: { zh: '绑定已下发打乱的设备采集场次与辅助证据', en: 'Device runs and supporting evidence bound to issued attempts' } },
   { name: 'sim_mask_layouts', domain: 'alg', origin: '0223', purpose: { zh: '按阶数保存阶段分组顺序与归属', en: 'Stage group order and membership per cube size' }, cols: [{ name: 'cube_size, groups' }] },
+  { name: 'user_pets', domain: 'community', origin: '0236', purpose: { zh: '账号领养与养成进度', en: 'Account adoptions and care progress' }, cols: [{ name: 'user_id' }, { name: 'pet_id' }, { name: 'adopted_at' }, { name: 'care' }] },
   { name: 'deskpet_catalog', domain: 'community', origin: '0235', purpose: { zh: '桌宠名称、开放状态与排序配置', en: 'Pet names, visibility and ordering' }, cols: [{ name: 'id' }, { name: 'revision' }, { name: 'entries', note: { zh: '按稳定 ID 排列的展示配置', en: 'Presentation overrides ordered by stable ID' } }] },
   { name: 'home_card_locks', domain: 'community', origin: '0221', purpose: { zh: '管理员设置的首页卡片锁定覆盖值', en: 'Administrator overrides for homepage card locks' }, cols: [{ name: 'item_id' }, { name: 'locked' }] },
   { name: 'role_preview_profiles', domain: 'account', origin: '0217', purpose: { zh: '超级管理员专用的独立角色测试身份', en: 'Separate role-test identities for superadministrators' } },
@@ -763,6 +764,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 232, slug: 'auth_identity_pending', desc: { zh: '首次第三方授权后暂存短期认证尝试，明确选择新建或验证已有账号后才事务核销；不按邮箱自动关联。', en: 'Keep short-lived first-time provider attempts until explicit creation or verified account linking, then consume them transactionally; never auto-link by email.' } },
   { n: 233, slug: 'role_preview_complete_profile', desc: { zh: '新增资料完整的普通用户测试身份，复用论坛资料校验，不授予管理员或网盘权限。', en: 'Add an ordinary test persona with a complete profile using forum validation, without administrator or Drive access.' } },
   { n: 234, slug: 'auth_identity_choice_providers', desc: { zh: '将邮箱、手机号和抖音纳入既有首次身份确认机制；验证成功不再隐式创建账号。', en: 'Extend existing first-time identity confirmation to email, phone and Douyin; successful verification no longer implicitly creates accounts.' } },
+  { n: 236, slug: 'pet_adoptions', desc: { zh: '账号领养关系与服务端养成存档。', en: 'Account-owned adoptions and server-side pet care.' } },
   { n: 235, slug: 'deskpet_catalog', desc: { zh: '桌宠名称、锁定、移除及排序配置，版本检查避免覆盖他人的修改。', en: 'Pet names, locks, removal and ordering with revision checks to prevent lost updates.' } },
 ];
 
