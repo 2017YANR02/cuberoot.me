@@ -3193,7 +3193,7 @@ CREATE INDEX idx_auth_codes_lookup ON auth_codes(channel, target, created_at DES
 -- Unconfirmed OAuth attempts are not accounts. Only ticket digests are persisted.
 CREATE TABLE auth_identity_pending (
   ticket_hash CHAR(64) PRIMARY KEY CHECK (ticket_hash ~ '^[a-f0-9]{64}$'),
-  provider VARCHAR(16) NOT NULL CHECK (provider IN ('apple', 'google', 'wechat', 'qq', 'alipay', 'wca')),
+  provider VARCHAR(16) NOT NULL CHECK (provider IN ('apple', 'google', 'wechat', 'qq', 'alipay', 'wca', 'email', 'phone', 'douyin')),
   provider_uid TEXT NOT NULL CHECK (length(provider_uid) BETWEEN 1 AND 512),
   profile JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(profile) = 'object'),
   apple_refresh_token_encrypted BYTEA,

@@ -7,6 +7,10 @@ interface AccountPageData {
   accountError: string;
   accountLinkPending: boolean;
   accountLinkRequired: boolean;
+  accountLinkCodeMode: boolean;
+  accountLinkCode: string;
+  accountLinkTargetId: number | null;
+  accountLinkTargetName: string;
   agreementAccepted: boolean;
   contact: {
     details: Array<{
@@ -47,6 +51,12 @@ interface AccountPageData {
 interface AccountPage {
   copyContactValue(event: { currentTarget: { dataset: { value?: unknown } } }): void;
   createAccount(): Promise<void>;
+  cancelIdentityChoice(): void;
+  clearLinkCode(): void;
+  confirmLinkCode(): Promise<void>;
+  previewLinkCode(): Promise<void>;
+  openLinkCodeWebsite(): void;
+  onLinkCodeInput(event: { detail: { value: string } }): void;
   data: AccountPageData;
   linkExistingAccount(): void;
   loginWithMiniProgram(): Promise<void>;
@@ -54,6 +64,7 @@ interface AccountPage {
   onShareAppMessage(): WechatMiniprogram.Page.ICustomShareContent;
   onShareTimeline(): WechatMiniprogram.Page.ICustomTimelineContent;
   onShow(): void;
+  onUnload(): void;
   openAccount(): void;
   openContactWebsite(): void;
   openPolicy(): void;
@@ -87,8 +98,183 @@ function normalLaunchOptions() {
 
 describe('mini program account page', () => {
   afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
     vi.resetModules();
     vi.unstubAllGlobals();
+  });
+
+  async function douyinChoiceFixture(overrides: {
+    preview?: (options: { success(response: unknown): void }) => void;
+    complete?: (options: { success(response: unknown): void }) => void;
+  } = {}) {
+    let storedSession: unknown = null;
+    const ticket = 'p'.repeat(43);
+    const getStorageSync = vi.fn(() => storedSession);
+    const setStorageSync = vi.fn((_key: string, value: unknown) => { storedSession = value; });
+    const navigateTo = vi.fn((options: { complete?(): void }) => options.complete?.());
+    const request = vi.fn((options: { url: string; data?: Record<string, unknown>; header?: Record<string, string>; success(response: unknown): void }) => {
+      if (options.url.endsWith('/auth/douyin/miniprogram')) options.success({ statusCode: 409, data: {
+        code: 'ACCOUNT_CHOICE_REQUIRED', error: 'Choose an account', pending: { ticket, provider: 'douyin', expiresInSeconds: 900 },
+      } });
+      else if (options.url.endsWith('/auth/identity/link-code/preview')) {
+        if (overrides.preview) overrides.preview(options);
+        else options.success({ statusCode: 200, data: { user: { id: 42, displayName: 'Existing member' } } });
+      } else if (options.url.endsWith('/auth/identity/complete')) {
+        if (overrides.complete) overrides.complete(options);
+        else options.success({ statusCode: 200, data: { token: 'c'.repeat(20), user: { uid: 42, name: 'Existing member', wcaId: null, avatar: '' }, isNew: options.data?.action === 'create' } });
+      } else throw new Error(`Unexpected request: ${options.url}`);
+    });
+    const login = vi.fn((options: { success(result: { code: string }): void }) => options.success({ code: 'douyin-proof' }));
+    const page = await loadPage({ getStorageSync, setStorageSync, removeStorageSync: vi.fn(), login, request, navigateTo, showShareMenu: vi.fn() }, 'douyin');
+    page.onLoad(); page.toggleAgreement(); await page.loginWithMiniProgram();
+    return { page, request, login, getStorageSync, setStorageSync, navigateTo, ticket };
+  }
+
+  it('keeps unknown Douyin identity in memory and creates only after the explicit choice', async () => {
+    const { page, request, login, setStorageSync, ticket } = await douyinChoiceFixture();
+    expect(page.data.accountLinkRequired).toBe(true);
+    expect(page.data.loginRequired).toBe(true);
+    expect(page.data.loginBusy).toBe(false);
+    expect(setStorageSync).not.toHaveBeenCalled();
+    expect(JSON.stringify(page.data)).not.toContain(ticket);
+    expect(request.mock.calls[0][0].data).toEqual({ code: 'douyin-proof' });
+    await page.createAccount();
+    expect(login).toHaveBeenCalledOnce();
+    expect(request.mock.calls[1][0].data).toEqual({ ticket, action: 'create' });
+    expect(page.data.loginRequired).toBe(false);
+    expect(page.data.accountLinkRequired).toBe(false);
+    expect(setStorageSync).toHaveBeenCalledOnce();
+  });
+
+  it('does not create or persist anything when an unknown Douyin choice is canceled', async () => {
+    const { page, request, setStorageSync } = await douyinChoiceFixture();
+    page.cancelIdentityChoice(); await page.createAccount();
+    expect(page.data.accountLinkRequired).toBe(false);
+    expect(page.data.loginRequired).toBe(true);
+    expect(request).toHaveBeenCalledOnce(); expect(setStorageSync).not.toHaveBeenCalled();
+  });
+
+  it('previews the old account and requires another explicit click before linking', async () => {
+    const { page, request, setStorageSync, navigateTo, ticket } = await douyinChoiceFixture();
+    page.linkExistingAccount();
+    expect(page.data.accountLinkCodeMode).toBe(true);
+    expect(navigateTo).not.toHaveBeenCalled();
+    page.openLinkCodeWebsite();
+    expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({ url: '/pages/web/index?key=account-link' }));
+    page.onLinkCodeInput({ detail: { value: ' L42-123456 ' } });
+    await page.previewLinkCode();
+    expect(page.data.accountLinkTargetId).toBe(42);
+    expect(page.data.accountLinkTargetName).toBe('Existing member');
+    expect(request).toHaveBeenCalledTimes(2); expect(setStorageSync).not.toHaveBeenCalled();
+    await page.confirmLinkCode();
+    expect(request.mock.calls[2][0].data).toEqual({ ticket, action: 'link_with_code', linkCode: 'L42-123456', expectedUid: 42 });
+    expect(request.mock.calls[2][0].header?.Authorization).toBeUndefined();
+    expect(request.mock.calls.every(([options]) => !options.url.includes(ticket) && !options.url.includes('L42-123456'))).toBe(true);
+    expect(page.data.uidText).toBe('42'); expect(setStorageSync).toHaveBeenCalledOnce();
+  });
+
+  it('invalidates target confirmation whenever the entered binding code changes or clears', async () => {
+    const { page, request } = await douyinChoiceFixture();
+    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: 'L42-123456' } }); await page.previewLinkCode();
+    page.onLinkCodeInput({ detail: { value: 'L99-654321' } });
+    expect(page.data.accountLinkTargetId).toBeNull();
+    await page.confirmLinkCode(); expect(request).toHaveBeenCalledTimes(2);
+    page.clearLinkCode(); expect(page.data.accountLinkCode).toBe(''); expect(page.data.accountLinkTargetName).toBe('');
+  });
+
+  it('rechecks agreement consent before explicit creation', async () => {
+    const { page, request } = await douyinChoiceFixture();
+    page.toggleAgreement(); await page.createAccount();
+    expect(request).toHaveBeenCalledOnce();
+    expect(page.data.loginError).toBe('请先阅读用户协议和隐私政策，并手动确认同意后再登录');
+  });
+
+  it('expires pending Douyin identity without registering or persisting a session', async () => {
+    vi.useFakeTimers();
+    const { page, request, setStorageSync } = await douyinChoiceFixture();
+    await vi.advanceTimersByTimeAsync(900_001); await page.createAccount();
+    expect(page.data.accountLinkRequired).toBe(false);
+    expect(page.data.loginError).toBe('本次登录已过期，请重新开始。');
+    expect(request).toHaveBeenCalledOnce(); expect(setStorageSync).not.toHaveBeenCalled();
+  });
+
+  it('does not persist a late create response after the page is unloaded', async () => {
+    let complete!: (response: unknown) => void;
+    const { page, setStorageSync } = await douyinChoiceFixture({ complete: (options) => { complete = options.success; } });
+    const pending = page.createAccount();
+    expect(page.data.loginBusy).toBe(true);
+    page.onUnload();
+    complete({ statusCode: 200, data: { token: 'c'.repeat(20), user: { uid: 42, name: 'Late', wcaId: null, avatar: '' }, isNew: true } });
+    await pending;
+    expect(setStorageSync).not.toHaveBeenCalled();
+  });
+
+  it('does not let a late ordinary login overwrite a session installed by another flow', async () => {
+    let storedSession: unknown = null;
+    let respond!: (response: unknown) => void;
+    const setStorageSync = vi.fn((_key: string, value: unknown) => { storedSession = value; });
+    const page = await loadPage({
+      getStorageSync: () => storedSession, setStorageSync, removeStorageSync: vi.fn(), showShareMenu: vi.fn(),
+      login(options: { success(result: { code: string }): void }) { options.success({ code: 'old-proof' }); },
+      request(options: { success(response: unknown): void }) { respond = options.success; },
+    });
+    page.onLoad();
+    const pending = page.loginWithMiniProgram();
+    await vi.waitFor(() => expect(respond).toBeDefined());
+    const newerSession = { token: 'b'.repeat(20), user: { uid: 99, name: 'Newer account', wcaId: null, avatar: '' } };
+    storedSession = newerSession;
+    respond({ statusCode: 200, data: { token: 'a'.repeat(20), user: { uid: 42, name: 'Late account', wcaId: null, avatar: '' }, isNew: false } });
+    await pending;
+    expect(setStorageSync).not.toHaveBeenCalled();
+    expect(storedSession).toBe(newerSession);
+    expect(page.data.loginBusy).toBe(false);
+  });
+
+  it('does not persist a pending completion when the original empty session becomes unreadable', async () => {
+    let complete!: (response: unknown) => void;
+    const { page, getStorageSync, setStorageSync } = await douyinChoiceFixture({ complete: (options) => { complete = options.success; } });
+    const pending = page.createAccount();
+    expect(page.data.loginBusy).toBe(true);
+    getStorageSync.mockImplementation(() => { throw new Error('storage unavailable'); });
+    complete({ statusCode: 200, data: { token: 'c'.repeat(20), user: { uid: 42, name: 'Late', wcaId: null, avatar: '' }, isNew: true } });
+    await pending;
+    expect(setStorageSync).not.toHaveBeenCalled();
+    expect(page.data.loginRequired).toBe(true);
+    expect(page.data.loginBusy).toBe(false);
+  });
+
+  it('releases busy after background expiry and ignores the old preview during a new attempt', async () => {
+    const replies: Array<(response: unknown) => void> = [];
+    const { page } = await douyinChoiceFixture({ preview: (options) => { replies.push(options.success); } });
+    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: 'L42-123456' } });
+    const oldPreview = page.previewLinkCode();
+    expect(page.data.loginBusy).toBe(true);
+    const expired = Date.now() + 900_001;
+    vi.spyOn(Date, 'now').mockReturnValue(expired);
+    // Mobile background suspension advances wall time without running timers.
+    page.onShow();
+    expect(page.data.loginBusy).toBe(false);
+    expect(page.data.accountLinkRequired).toBe(false);
+    await page.loginWithMiniProgram();
+    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: 'L55-654321' } });
+    const newPreview = page.previewLinkCode();
+    expect(page.data.loginBusy).toBe(true);
+    replies[0]({ statusCode: 200, data: { user: { id: 42, displayName: 'Old target' } } });
+    await oldPreview;
+    expect(page.data.loginBusy).toBe(true);
+    expect(page.data.accountLinkTargetId).toBeNull();
+    replies[1]({ statusCode: 200, data: { user: { id: 55, displayName: 'New target' } } });
+    await newPreview;
+    expect(page.data.loginBusy).toBe(false);
+    expect(page.data.accountLinkTargetId).toBe(55);
+  });
+
+  it('never installs a completion session for an account different from the preview', async () => {
+    const { page, setStorageSync } = await douyinChoiceFixture({ complete: (options) => options.success({ statusCode: 200, data: { token: 'c'.repeat(20), user: { uid: 99, name: 'Wrong', wcaId: null, avatar: '' } } }) });
+    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: 'L42-123456' } }); await page.previewLinkCode(); await page.confirmLinkCode();
+    expect(page.data.loginRequired).toBe(true); expect(setStorageSync).not.toHaveBeenCalled();
+    expect(page.data.loginError).toBe('账号或绑定状态已改变，请先检查账号后重试。');
   });
 
   it('shows native WeChat login and enables both share targets', async () => {

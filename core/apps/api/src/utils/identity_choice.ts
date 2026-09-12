@@ -1,12 +1,13 @@
 import crypto from 'node:crypto';
+import type { PendingIdentity } from '@cuberoot/shared/auth/web-session';
 import { sql, transactionQuery } from '../db/connection.js';
 import {
-  addIdentity, getUserById, IdentityNotFoundError, loginWithIdentity,
+  addIdentity, getUserById, IdentityNotFoundError, loginWithIdentity, issueCode, verifyCode,
   type AppleIdentityCredential,
 } from './account.js';
 
 export const IDENTITY_CHOICE_TTL_SECONDS = 15 * 60;
-export type ChoiceProvider = 'apple' | 'google' | 'wechat' | 'qq' | 'alipay' | 'wca';
+export type ChoiceProvider = PendingIdentity['provider'];
 type IdentityProfile = Parameters<typeof loginWithIdentity>[2];
 type VerifiedIdentity = {
   provider: ChoiceProvider;
@@ -23,11 +24,32 @@ type PendingRow = {
 };
 
 export class IdentityChoiceError extends Error {
-  constructor(public readonly code: 'INVALID_IDENTITY_TICKET' | 'IDENTITY_CONFLICT' | 'ACCOUNT_CHANGED') {
+  constructor(public readonly code: 'INVALID_IDENTITY_TICKET' | 'INVALID_IDENTITY_LINK_CODE' | 'IDENTITY_CONFLICT' | 'ACCOUNT_CHANGED' | 'ACCOUNT_HAS_EMAIL' | 'ACCOUNT_HAS_PHONE') {
     super(code === 'INVALID_IDENTITY_TICKET' ? 'identity ticket expired or already used'
+      : code === 'INVALID_IDENTITY_LINK_CODE' ? 'wrong or expired account linking code'
+      : code === 'ACCOUNT_HAS_EMAIL' ? 'account already has an email; change it in account settings'
+      : code === 'ACCOUNT_HAS_PHONE' ? 'account already has a phone; change it in account settings'
       : code === 'IDENTITY_CONFLICT' ? 'identity already linked to another account'
         : 'account changed; sign in again');
   }
+}
+
+/** A separately scoped capability: never accepts account-merge codes. */
+function parseIdentityLinkCode(raw: string) {
+  const match = /^L([1-9]\d*)-([0-9]{6})$/.exec(raw.trim());
+  if (!match || !Number.isSafeInteger(Number(match[1]))) throw new IdentityChoiceError('INVALID_IDENTITY_LINK_CODE');
+  return { uid: Number(match[1]), code: match[2] };
+}
+
+export async function issueIdentityLinkCode(uid: number) {
+  return sql.begin(async (tx) => {
+    // Serialize issuance per account across instances without reversing completion's code/account lock order.
+    await tx`SELECT pg_advisory_xact_lock(hashtext('identity-link-code'), hashtext(${String(uid)}))`;
+    const accounts = await tx`SELECT id FROM app_users WHERE id = ${uid} AND merged_into_user_id IS NULL`;
+    if (!accounts.length) throw new IdentityChoiceError('ACCOUNT_CHANGED');
+    const issued = await issueCode('id_link', String(uid), 'identity_link', transactionQuery(tx));
+    return 'error' in issued ? issued : { linkCode: `L${uid}-${issued.code}`, expiresInSeconds: 600 };
+  });
 }
 
 function ticketHash(ticket: string): string {
@@ -51,7 +73,7 @@ export function startIdentityChoiceCleanup(): void {
   setInterval(tick, 60_000).unref();
 }
 
-/** Every website provider uses this gate after verifying its own credential. */
+/** Every login provider uses this gate after verifying its own credential. */
 export async function beginIdentityLogin(identity: VerifiedIdentity) {
   try {
     return await loginWithIdentity(identity.provider, identity.providerUid, identity.profile,
@@ -77,17 +99,24 @@ export async function beginIdentityLogin(identity: VerifiedIdentity) {
 }
 
 /** Consumption and all identity/account/Apple credential writes commit together. */
-export async function completeIdentityChoice(ticket: string, action: 'create' | 'link', expectedUid?: number) {
+export async function completeIdentityChoice(ticket: string, action: 'create' | 'link' | 'link_with_code', expectedUid?: number, linkCode?: string) {
   if (!/^[A-Za-z0-9_-]{43}$/.test(ticket)) throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
-  return await sql.begin(async (tx) => {
+  const parsed = action === 'link_with_code' ? parseIdentityLinkCode(linkCode ?? '') : undefined;
+  if (parsed && parsed.uid !== expectedUid) throw new IdentityChoiceError('ACCOUNT_CHANGED');
+  const result = await sql.begin(async (tx) => {
     // Both actions lock the attempt first, then the account (including raced create → existing login).
     const rows = await tx`SELECT provider, provider_uid, profile, apple_refresh_token_encrypted,
       apple_token_key_version FROM auth_identity_pending
       WHERE ticket_hash = ${ticketHash(ticket)} AND expires_at > NOW() FOR UPDATE`;
     const pending = rows[0] as PendingRow | undefined;
     if (!pending) throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
-    if (action === 'link') {
+    if (action !== 'create') {
       if (!Number.isSafeInteger(expectedUid) || (expectedUid ?? 0) <= 0) throw new IdentityChoiceError('ACCOUNT_CHANGED');
+      if (parsed) {
+        if (pending.provider !== 'douyin') throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
+        // A wrong guess must commit its attempt count; do not throw inside this transaction.
+        if (!await verifyCode('id_link', String(parsed.uid), 'identity_link', parsed.code, { transaction: tx })) return null;
+      }
       const accounts = await tx`SELECT id FROM app_users
         WHERE id = ${expectedUid!} AND merged_into_user_id IS NULL FOR UPDATE`;
       if (!accounts.length) throw new IdentityChoiceError('ACCOUNT_CHANGED');
@@ -104,12 +133,36 @@ export async function completeIdentityChoice(ticket: string, action: 'create' | 
       const status = await addIdentity(expectedUid!, pending.provider, pending.provider_uid,
         pending.profile.wcaId, pending.profile.name, pending.profile.avatar,
         pending.profile.countryIso2, credential, tx);
-      if (status !== 'ok') throw new IdentityChoiceError('IDENTITY_CONFLICT');
+      if (status !== 'ok') throw new IdentityChoiceError(status === 'has-email' ? 'ACCOUNT_HAS_EMAIL'
+        : status === 'has-phone' ? 'ACCOUNT_HAS_PHONE' : 'IDENTITY_CONFLICT');
       const user = await getUserById(expectedUid!, transactionQuery(tx));
       if (!user || user.id !== expectedUid) throw new IdentityChoiceError('ACCOUNT_CHANGED');
       result = { user, isNew: false };
     }
     await tx`DELETE FROM auth_identity_pending WHERE ticket_hash = ${ticketHash(ticket)}`;
-    return result;
+    // Linking must not turn an existing session into a password-reset grant.
+    // Only the explicitly created email account retains the verified-email setup grant.
+    return { ...result, ...(action === 'create' && result.isNew && pending.provider === 'email'
+      ? { amr: 'email_code' as const } : {}) };
   });
+  if (!result) throw new IdentityChoiceError('INVALID_IDENTITY_LINK_CODE');
+  return result;
+}
+
+/** Reveal only the proved target; preview neither creates accounts nor consumes a valid code. */
+export async function previewIdentityLinkCode(ticket: string, linkCode: string) {
+  if (!/^[A-Za-z0-9_-]{43}$/.test(ticket)) throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
+  const parsed = parseIdentityLinkCode(linkCode);
+  const result = await sql.begin(async (tx) => {
+    const pending = await tx`SELECT provider FROM auth_identity_pending
+      WHERE ticket_hash = ${ticketHash(ticket)} AND expires_at > NOW() FOR UPDATE`;
+    if (pending[0]?.provider !== 'douyin') throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
+    if (!await verifyCode('id_link', String(parsed.uid), 'identity_link', parsed.code, { transaction: tx, consume: false })) return null;
+    const accounts = await tx`SELECT id, display_name FROM app_users
+      WHERE id = ${parsed.uid} AND merged_into_user_id IS NULL FOR UPDATE`;
+    if (!accounts.length) throw new IdentityChoiceError('ACCOUNT_CHANGED');
+    return { user: { id: Number(accounts[0].id), displayName: String(accounts[0].display_name) } };
+  });
+  if (!result) throw new IdentityChoiceError('INVALID_IDENTITY_LINK_CODE');
+  return result;
 }

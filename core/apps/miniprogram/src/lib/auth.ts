@@ -4,7 +4,9 @@ import {
   decodeWebSession,
   decodeWebSessionTicketEnvelope,
   decodeWebSessionUserEnvelope,
+  decodeIdentityChoicePending,
   isWebSessionTicket,
+  type PendingIdentity,
   type WebSessionTicketEnvelope,
 } from '@cuberoot/shared/auth/web-session';
 import {
@@ -59,6 +61,7 @@ export class ApiError extends Error {
     public readonly status: number,
     message: string,
     public readonly code: string | null = null,
+    public readonly pending: PendingIdentity | null = null,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -203,6 +206,11 @@ export function requestJson<T>(
               return;
             }
             const authError = decodeWebSessionError(body);
+            const pending = response.statusCode === 409 ? decodeIdentityChoicePending(body) : null;
+            if (body?.code === 'ACCOUNT_CHOICE_REQUIRED' && !pending) {
+              reject(new ApiError(502, 'invalid identity choice response'));
+              return;
+            }
             const platformError = body?.error && typeof body.error === 'object'
               ? body.error as Record<string, unknown> : null;
             reject(new ApiError(
@@ -210,7 +218,9 @@ export function requestJson<T>(
               authError?.message
                 ?? (typeof platformError?.message === 'string' ? platformError.message : undefined)
                 ?? (typeof body?.error === 'string' ? body.error : `HTTP ${response.statusCode}`),
-              authError?.code ?? (typeof platformError?.code === 'string' ? platformError.code : null),
+              pending ? 'ACCOUNT_CHOICE_REQUIRED' : authError?.code
+                ?? (typeof platformError?.code === 'string' ? platformError.code : typeof body?.code === 'string' ? body.code : null),
+              pending,
             ));
           });
         },
@@ -295,17 +305,23 @@ export function clearStoredSession(): boolean {
 }
 
 export async function loginWithMiniProgram(
-  options: { createAccount?: boolean } = {},
+  options: { createAccount?: boolean; isCurrent?: () => boolean } = {},
 ): Promise<LoginResult> {
   const code = await miniProgramLoginCode();
   const response = await requestJson<unknown>(MINI_PROGRAM_LOGIN_ENDPOINT, {
     method: 'POST',
     body: options.createAccount ? { code, create: true } : { code },
   });
+  return saveLoginResponse(response, options.isCurrent);
+}
+
+function saveLoginResponse(response: unknown, isCurrent: () => boolean = () => true, expectedUid?: number): LoginResult {
   const session = decodeWebSession(response);
   if (!session) {
     throw new ApiError(502, 'invalid session response');
   }
+  if (expectedUid !== undefined && session.user.uid !== expectedUid) throw new ApiError(409, 'account changed', 'ACCOUNT_CHANGED');
+  if (!isCurrent()) throw new ApiError(0, 'account choice canceled');
   if (!writeStoredSessionValue(session)) {
     throw new ApiError(STORAGE_ERROR_STATUS, 'session storage unavailable');
   }
@@ -315,6 +331,31 @@ export async function loginWithMiniProgram(
       && typeof response === 'object'
       && (response as Record<string, unknown>).isNew === true,
   };
+}
+
+export interface IdentityLinkTarget { id: number; displayName: string }
+
+export async function previewIdentityLinkCode(ticket: string, linkCode: string): Promise<IdentityLinkTarget> {
+  const response = await requestJson<{ user?: IdentityLinkTarget }>('/auth/identity/link-code/preview', {
+    method: 'POST', body: { ticket, linkCode },
+  });
+  const user = response?.user;
+  if (!user || !Number.isSafeInteger(user.id) || user.id <= 0
+    || typeof user.displayName !== 'string' || user.displayName.length > MAX_DISPLAY_NAME_LENGTH
+    || CONTROL_CHARACTER_PATTERN.test(user.displayName)) throw new ApiError(502, 'invalid account response');
+  return { id: user.id, displayName: user.displayName };
+}
+
+export async function completeMiniProgramIdentity(
+  ticket: string,
+  action: 'create' | 'link_with_code',
+  options: { linkCode?: string; expectedUid?: number; isCurrent: () => boolean },
+): Promise<LoginResult> {
+  const response = await requestJson<unknown>('/auth/identity/complete', {
+    method: 'POST',
+    body: { ticket, action, ...(action === 'link_with_code' ? { linkCode: options.linkCode, expectedUid: options.expectedUid } : {}) },
+  });
+  return saveLoginResponse(response, options.isCurrent, action === 'link_with_code' ? options.expectedUid : undefined);
 }
 
 export async function validateStoredSession(session: SessionData): Promise<SessionData> {
@@ -381,6 +422,10 @@ export function loginErrorMessage(error: unknown): string {
       zh: '此微信尚未绑定。已有 CubeRoot 账号请先绑定；确定没有账号时再创建新账号。',
     });
   }
+  if (error.code === 'ACCOUNT_CHOICE_REQUIRED') return tr({ en: 'Choose an existing account or create a new one.', zh: '请选择登录已有账号或创建新账号。' });
+  if (error.code === 'INVALID_IDENTITY_LINK_CODE') return tr({ en: 'The account linking code is invalid or expired. Get a new code from your account settings.', zh: '账号绑定码无效或已过期，请在原账号设置中重新获取。' });
+  if (error.code === 'INVALID_IDENTITY_TICKET') return tr({ en: 'This sign-in request expired. Start again.', zh: '本次登录已过期，请重新开始。' });
+  if (error.code === 'ACCOUNT_CHANGED' || error.code === 'IDENTITY_CONFLICT') return tr({ en: 'The account or linked identity changed. Check your account and try again.', zh: '账号或绑定状态已改变，请先检查账号后重试。' });
   if (error.code === 'WECHAT_NOT_CONFIGURED' || error.code === 'DOUYIN_NOT_CONFIGURED') {
     return tr({ en: 'The Mini Program secret has not been configured on the server.', zh: '服务端还未配置小程序密钥' });
   }

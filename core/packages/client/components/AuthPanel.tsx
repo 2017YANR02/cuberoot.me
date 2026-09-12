@@ -14,6 +14,7 @@ import type { MobileAuthProvider } from '@cuberoot/shared/auth/web-session';
 import AppLink from '@/components/AppLink';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { PasswordInput } from '@/components/PasswordInput';
+import { ClearButton } from '@/components/ClearButton';
 import { useAuthStore, applySession } from '@/lib/auth-store';
 import { useLang } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
@@ -23,7 +24,7 @@ import {
   loginPassword, setPassword as apiSetPassword, removePassword,
   linkEmailSend, linkEmailVerify, linkPhoneSend, linkPhoneVerify,
   unlinkIdentity, fetchIdentities, fetchAuthProviders, loginGoogle, linkGoogle, replaceEmailVerify, replacePhoneVerify,
-  deleteAccount, issueAccountMergeCode, mergeAccount, completeIdentityChoice,
+  deleteAccount, issueAccountMergeCode, issueIdentityLinkCode, mergeAccount, completeIdentityChoice,
   type Identity, type AuthProviders, type RedirectAuthProvider,
 } from '@/lib/account-api';
 import { requestGoogleAssertion } from '@/lib/google-auth';
@@ -193,8 +194,8 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
   if (m.includes('cancel automatic renewal before deleting account')) return t('请先取消自动续费，确认退订成功后再注销账号。注销账号不会代替微信解约。', 'Cancel automatic renewal and confirm it has ended before deleting your account. Account deletion does not revoke your WeChat payment authorization.');
   if (m.includes('invalid password')) return t('密码至少 8 位', 'Password must be at least 8 characters');
   if (m.includes('not configured')) return t('该登录方式暂未开放', "This sign-in method isn't available yet");
-  if (m.includes('account already has an email')) return t('一个账号只能绑定一个邮箱,请先解绑现有邮箱', 'An account can have only one email — unlink the current one first');
-  if (m.includes('account already has a phone')) return t('一个账号只能绑定一个手机号,请先解绑现有手机号', 'An account can have only one phone number — unlink the current one first');
+  if (m.includes('account already has an email')) return t('原账号已绑定其他邮箱，请在账号设置中更换。', 'Your account already has another email. Change it in account settings.');
+  if (m.includes('account already has a phone')) return t('原账号已绑定其他手机号，请在账号设置中更换。', 'Your account already has another phone number. Change it in account settings.');
   if (m.includes('already linked')) return t('该方式已绑定到另一个账号', 'Already linked to another account');
   if (m.includes('credential_conflict')) return t('两个账号存在重复登录凭据,请先在其中一个账号解绑同类方式或移除密码', 'The accounts have duplicate sign-in credentials. Unlink the duplicate type or remove one password first');
   if (m.includes('wca_conflict')) return t('两个账号绑定了不同的 WCA ID,不能自动合并', 'The accounts have different WCA IDs and cannot be merged automatically');
@@ -226,13 +227,14 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
  *   reset    仅手机找回密码;验证码和登录用途隔离,验证后签出 10 分钟重置授权
  */
 function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' | 'link' | 'replace' | 'reset'; onDone: OnSignedIn }) {
-  const lang = useLang();
-  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
+  const t = useT();
   const [target, setTarget] = useState('');
   const [code, setCode] = useState('');
   const [step, setStep] = useState<'input' | 'code'>('input');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const verification = useRef<AbortController | null>(null);
+  useEffect(() => () => { verification.current?.abort(); }, []);
 
   const label = channel === 'email' ? t('邮箱', 'Email') : t('手机号', 'Phone');
   const placeholder = channel === 'email' ? undefined : t('11 位手机号', '11-digit phone');
@@ -257,28 +259,40 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
   }, [channel, mode, target]);
 
   const verify = useCallback(async () => {
+    if (verification.current) return;
+    const controller = new AbortController();
+    verification.current = controller;
     setError(null);
     setBusy(true);
     try {
       if (mode === 'replace') {
         channel === 'email' ? await replaceEmailVerify(target, code) : await replacePhoneVerify(target, code);
-        onDone();
+        if (!controller.signal.aborted) onDone();
       } else if (mode === 'link') {
         channel === 'email' ? await linkEmailVerify(target, code) : await linkPhoneVerify(target, code);
-        onDone();
+        if (!controller.signal.aborted) onDone();
       } else if (mode === 'reset') {
-        const r = await verifyPhonePasswordResetCode(target, code);
+        const r = await verifyPhonePasswordResetCode(target, code, controller.signal);
+        if (controller.signal.aborted) return;
         if (!applySession(r.token, r.user)) throw new Error('session storage failed');
         onDone();
       } else {
-        const r = channel === 'email' ? await verifyEmailCode(target, code) : await verifyPhoneCode(target, code);
+        const r = channel === 'email' ? await verifyEmailCode(target, code, { signal: controller.signal }) : await verifyPhoneCode(target, code, { signal: controller.signal });
+        if (controller.signal.aborted) return;
         if (!applySession(r.token, r.user)) throw new Error('session storage failed');
         onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
       }
     } catch (e) {
+      if (controller.signal.aborted) return;
+      if (mode === 'login' && e instanceof AccountChoiceRequired) {
+        try { rememberIdentityChoice(e, window.location.href); }
+        catch (storageError) { setError(authErrorText(String(storageError), t)); }
+        return;
+      }
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
     } finally {
-      setBusy(false);
+      if (verification.current === controller) verification.current = null;
+      if (!controller.signal.aborted) setBusy(false);
     }
   }, [channel, mode, target, code, onDone]);
 
@@ -328,7 +342,7 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
             {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
             {mode === 'login' ? t('登录', 'Sign in') : mode === 'replace' ? t('更换', 'Change') : mode === 'reset' ? t('继续', 'Continue') : t('绑定', 'Link')}
           </button>
-          <button className="auth-textbtn" onClick={() => { setStep('input'); setCode(''); setError(null); }}>
+          <button className="auth-textbtn" disabled={busy} onClick={() => { setStep('input'); setCode(''); setError(null); }}>
             {t('改用其它' + label, 'Use another ' + label.toLowerCase())}
           </button>
         </>
@@ -344,12 +358,13 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
 function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
   email: string; setEmail: (v: string) => void; onDone: OnSignedIn; toPassword: () => void; reset?: boolean;
 }) {
-  const lang = useLang();
-  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
+  const t = useT();
   const [code, setCode] = useState('');
   const [step, setStep] = useState<'input' | 'code'>('input');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const verification = useRef<AbortController | null>(null);
+  useEffect(() => () => { verification.current?.abort(); }, []);
 
   const send = useCallback(async () => {
     setError(null);
@@ -366,19 +381,30 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
   }, [email]);
 
   const verify = useCallback(async () => {
+    if (verification.current) return;
+    const controller = new AbortController();
+    verification.current = controller;
     setError(null);
     setBusy(true);
     try {
-      const r = await verifyEmailCode(email, code);
+      const r = await verifyEmailCode(email, code, { existingOnly: reset, signal: controller.signal });
+      if (controller.signal.aborted) return;
       if (!applySession(r.token, r.user)) throw new Error('session storage failed');
       onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
     } catch (e) {
+      if (controller.signal.aborted) return;
+      if (!reset && e instanceof AccountChoiceRequired) {
+        try { rememberIdentityChoice(e, window.location.href); }
+        catch (storageError) { setError(authErrorText(String(storageError), t)); }
+        return;
+      }
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
     } finally {
-      setBusy(false);
+      if (verification.current === controller) verification.current = null;
+      if (!controller.signal.aborted) setBusy(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [email, code, onDone]);
+  }, [email, code, onDone, reset]);
 
   // 满 6 位自动提交;验证失败后 code 不变不会重复触发。
   useEffect(() => {
@@ -396,7 +422,7 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
           {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
           {reset ? t('继续', 'Continue') : t('登录', 'Sign in')}
         </button>
-        <button className="auth-textbtn" onClick={() => { setStep('input'); setCode(''); setError(null); }}>
+        <button className="auth-textbtn" disabled={busy} onClick={() => { setStep('input'); setCode(''); setError(null); }}>
           {t('换邮箱 / 重新发送', 'Change email / resend')}
         </button>
       </div>
@@ -764,7 +790,11 @@ export function IdentityChoicePanel({ pending, firstPartyOnly = false, onDone, o
   };
   const matches = !!pending.expectedUid && user?.uid === pending.expectedUid;
   const providerMeta = SOCIALS.find((provider) => provider.key === pending.provider);
-  const providerName = providerMeta ? t(providerMeta.name.zh, providerMeta.name.en) : pending.provider === 'wca' ? 'WCA' : 'Google';
+  const providerName = providerMeta ? t(providerMeta.name.zh, providerMeta.name.en)
+    : pending.provider === 'email' ? t('邮箱', 'email')
+      : pending.provider === 'phone' ? t('手机号', 'phone number')
+        : pending.provider === 'douyin' ? t('抖音', 'Douyin')
+          : pending.provider === 'wca' ? 'WCA' : 'Google';
   return <div className="auth-flow">
     {pending.stage === 'choose' ? <>
       <h2 className="auth-title">{t('你有 CubeRoot 账号吗？', 'Do you have a CubeRoot account?')}</h2>
@@ -772,6 +802,7 @@ export function IdentityChoicePanel({ pending, firstPartyOnly = false, onDone, o
       <button type="button" className="auth-primary" disabled={busy} onClick={() => user?.uid ? authenticated() : updateIdentityChoice(pending.ticket, { stage: 'authenticate' })}>{t('登录已有账号', 'Sign in to an existing account')}</button>
       <button type="button" className="auth-textbtn" disabled={busy} onClick={() => void complete('create')}>{t('创建新账号', 'Create a new account')}</button>
     </> : pending.stage === 'authenticate' ? <>
+      <p className="auth-hint">{t(`请用原来的登录方式验证账号，再绑定${providerName}。不会创建新账号。`, `Sign in with a method already linked to your account, then link ${providerName}. No new account will be created.`)}</p>
       {pending.otherIdentityRejected && <p className="auth-error" role="alert">{t('这个登录方式尚未绑定账号，请使用原来绑定的方式。', 'This sign-in method is not linked to an account. Use one already linked to your account.')}</p>}
       <LoginFormFields firstPartyOnly={firstPartyOnly} onDone={authenticated} />
     </> : <>
@@ -977,6 +1008,56 @@ const PROVIDER_LABEL: Record<string, { zh: string; en: string }> = {
   douyin: { zh: '抖音', en: 'Douyin' },
 };
 
+/** Only an authenticated account may issue this short-lived proof; it is never an account lookup. */
+function MiniProgramLinkCodePanel() {
+  const t = useT();
+  const uid = useAuthStore((state) => state.user?.uid);
+  const [result, setResult] = useState<{ linkCode: string; expiresAt: number; uid: number; name: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+  const request = useRef<AbortController | null>(null);
+  useEffect(() => {
+    setResult(null); setError(''); setCopied(false); setBusy(false);
+    return () => { request.current?.abort(); request.current = null; };
+  }, [uid]);
+  useEffect(() => {
+    if (!result) return;
+    const timer = setTimeout(() => { setResult(null); setCopied(false); }, Math.max(0, result.expiresAt - Date.now()));
+    return () => clearTimeout(timer);
+  }, [result]);
+  const generate = async () => {
+    if (!uid || request.current) return;
+    const controller = new AbortController(); request.current = controller;
+    setBusy(true); setError(''); setResult(null); setCopied(false);
+    try {
+      const issued = await issueIdentityLinkCode(uid, controller.signal);
+      if (controller.signal.aborted || useAuthStore.getState().user?.uid !== uid) return;
+      setResult({ linkCode: issued.linkCode, expiresAt: Date.now() + issued.expiresInSeconds * 1000, uid, name: useAuthStore.getState().user?.name ?? '' });
+    } catch (cause) {
+      if (!controller.signal.aborted) setError(authErrorText(cause instanceof Error ? cause.message : String(cause), t));
+    } finally {
+      if (request.current === controller) { request.current = null; setBusy(false); }
+    }
+  };
+  return <details className="auth-flow">
+    <summary>{t('绑定抖音小程序到这个账号', 'Link the Douyin mini program to this account')}</summary>
+    <p className="auth-hint">{t(`保留当前账号 ID ${uid ?? ''}。在抖音小程序选择“已有账号”，输入绑定码，再确认绑定。`, `Keep account ID ${uid ?? ''}. Choose “Existing account” in the Douyin mini program, enter this code, then confirm linking.`)}</p>
+    <p className="auth-hint">{t('绑定码有效期 10 分钟，只能使用一次。它不是合并码；不要截图、转发或提供给他人。', 'The code lasts 10 minutes and works once. It is not a merge code. Do not screenshot, forward or share it.')}</p>
+    {result?.uid === uid && result && <>
+      <p className="auth-hint">{result.name} · ID {result.uid}</p>
+      <input className="auth-input" readOnly value={result.linkCode} aria-label={t('抖音小程序绑定码', 'Douyin mini program linking code')} />
+      <button type="button" className="auth-textbtn" onClick={async () => {
+        setError('');
+        try { await navigator.clipboard.writeText(result.linkCode); setCopied(true); }
+        catch { setError(t('无法复制，请选中绑定码手动复制。', 'Could not copy. Select the code and copy it manually.')); }
+      }}>{copied ? t('已复制', 'Copied') : t('复制绑定码', 'Copy linking code')}</button>
+    </>}
+    <button type="button" className="auth-primary" disabled={busy || !uid} onClick={() => void generate()}>{busy ? <Loader2 size={ICON} className="auth-spin" /> : t('生成绑定码', 'Generate linking code')}</button>
+    {error && <p className="auth-error" role="alert">{error}</p>}
+  </details>;
+}
+
 /**
  * 账号面板:已绑定身份 + 绑定新方式 + 解绑 + 设/改密码。只渲染于 /account。
  * 姓名与登出归宿主页头部管(那是页面级信息),这里只管凭据本身。
@@ -1013,7 +1094,18 @@ export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number |
   const [mergeMode, setMergeMode] = useState<'keep' | 'move' | null>(null);
   const [mergeCode, setMergeCode] = useState('');
   const [generatedMergeCode, setGeneratedMergeCode] = useState('');
+  const [mergeCodeExpiresAt, setMergeCodeExpiresAt] = useState(0);
   const [mergeBusy, setMergeBusy] = useState(false);
+  const [confirmMerge, setConfirmMerge] = useState(false);
+  const mergeRequest = useRef(false);
+  const mounted = useRef(false);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  useEffect(() => { setMergeMode(null); setMergeCode(''); setGeneratedMergeCode(''); setConfirmMerge(false); }, [currentUid]);
+  useEffect(() => {
+    if (!mergeCodeExpiresAt) return;
+    const timer = setTimeout(() => setGeneratedMergeCode(''), Math.max(0, mergeCodeExpiresAt - Date.now()));
+    return () => clearTimeout(timer);
+  }, [mergeCodeExpiresAt]);
 
   const reload = useCallback(async () => {
     const requestId = ++identityRequest.current;
@@ -1107,29 +1199,54 @@ export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number |
   };
 
   const generateMergeCode = async () => {
+    if (mergeRequest.current || !currentUid) return;
+    if (useAuthStore.getState().user?.uid !== currentUid) {
+      setGeneratedMergeCode('');
+      setError(t('当前账号已更改，请重新登录并确认。', 'Your account changed. Sign in and confirm again.'));
+      return;
+    }
+    mergeRequest.current = true;
     setError(null);
     setMergeBusy(true);
     try {
-      setGeneratedMergeCode((await issueAccountMergeCode()).code);
+      const issued = await issueAccountMergeCode(currentUid);
+      if (!mounted.current || useAuthStore.getState().user?.uid !== currentUid) return;
+      if (!new RegExp(`^${currentUid}-[0-9]{6}$`).test(issued.code)) {
+        setGeneratedMergeCode('');
+        throw new Error('account changed; sign in again');
+      }
+      setGeneratedMergeCode(issued.code);
+      setMergeCodeExpiresAt(Date.now() + issued.expiresInSeconds * 1000);
     } catch (e) {
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
     } finally {
+      mergeRequest.current = false;
       setMergeBusy(false);
     }
   };
 
   const submitMerge = async () => {
+    if (!confirmMerge || mergeRequest.current || !currentUid) return;
+    if (useAuthStore.getState().user?.uid !== currentUid) {
+      setConfirmMerge(false);
+      setError(t('当前账号已更改，请重新登录并确认。', 'Your account changed. Sign in and confirm again.'));
+      return;
+    }
+    mergeRequest.current = true;
     setError(null);
     setMergeBusy(true);
     try {
-      const result = await mergeAccount(mergeCode.trim());
-      applySession(result.token, result.user);
+      const result = await mergeAccount(mergeCode.trim(), currentUid);
+      if (!mounted.current || useAuthStore.getState().user?.uid !== currentUid) return;
+      if (!applySession(result.token, result.user)) throw new Error('session storage failed');
+      setConfirmMerge(false);
       setMergeMode(null);
       setMergeCode('');
       await reload();
     } catch (e) {
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
     } finally {
+      mergeRequest.current = false;
       setMergeBusy(false);
     }
   };
@@ -1347,12 +1464,14 @@ export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number |
         />
       )}
 
+      <MiniProgramLinkCodePanel />
+
       <div className="auth-linklist">
         <div className="auth-idrow">
           <span className="auth-idicon"><Merge size={ICON} /></span>
           <span className="auth-idprov">{t('合并账号', 'Merge accounts')}</span>
           <div className="auth-idactions">
-            <button type="button" className="auth-link" onClick={() => setMergeMode((mode) => mode ? null : 'keep')}>
+            <button type="button" className="auth-link" disabled={mergeBusy} onClick={() => { setMergeMode((mode) => mode ? null : 'keep'); setConfirmMerge(false); }}>
               {mergeMode ? t('收起', 'Close') : t('打开', 'Open')}
             </button>
           </div>
@@ -1360,13 +1479,15 @@ export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number |
       </div>
       {mergeMode && (
         <div className="auth-flow">
+          <p className="auth-hint">{t(`当前账号：ID ${currentUid ?? ''}`, `Current account: ID ${currentUid ?? ''}`)}</p>
           <p className="auth-hint">
             {t('合并后不能撤销。登录方式和个人数据会进入保留账号；遇到重复或归属不明确的数据会停止,不会改动任何账号。',
               'Merging cannot be undone. Sign-in methods and personal data move to the kept account; conflicts stop the merge without changing either account.')}
           </p>
           <PillToggle
             value={mergeMode === 'keep'}
-            onChange={(keep) => setMergeMode(keep ? 'keep' : 'move')}
+            disabled={mergeBusy}
+            onChange={(keep) => { if (!mergeBusy) { setMergeMode(keep ? 'keep' : 'move'); setConfirmMerge(false); } }}
             onLabel={t('保留当前账号', 'Keep this account')}
             offLabel={t('合并当前账号', 'Merge this account')}
             ariaLabel={t('选择合并方向', 'Choose merge direction')}
@@ -1374,6 +1495,7 @@ export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number |
           {mergeMode === 'keep' ? (
             <>
               <p className="auth-hint">{t('生成合并码,再登录另一个账号输入。合并后保留当前账号。', 'Generate a code, then sign in to the other account and enter it. This account will be kept.')}</p>
+              <p className="auth-hint">{t('合并码有效期 10 分钟，只能使用一次。请勿向他人分享；抖音小程序绑定请使用上面的绑定码。', 'The merge code lasts 10 minutes and works once. Do not share it. To link the Douyin mini program, use the linking code above.')}</p>
               {generatedMergeCode && <input className="auth-input" readOnly value={generatedMergeCode} aria-label={t('合并码', 'Merge code')} />}
               <button type="button" className="auth-primary" disabled={mergeBusy} onClick={() => void generateMergeCode()}>
                 {mergeBusy ? <Loader2 size={ICON} className="auth-spin" /> : t('生成合并码', 'Generate merge code')}
@@ -1382,10 +1504,15 @@ export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number |
           ) : (
             <>
               <p className="auth-hint">{t('输入保留账号生成的合并码。确认后当前账号会并入对方。', 'Enter the code generated by the account you want to keep. This account will be merged into it.')}</p>
-              <input className="auth-input" value={mergeCode} onChange={(event) => setMergeCode(event.target.value)} placeholder="330-123456" autoComplete="off" aria-label={t('合并码', 'Merge code')} />
-              <button type="button" className="auth-primary" disabled={mergeBusy || !mergeCode.trim()} onClick={() => void submitMerge()}>
-                {mergeBusy ? <Loader2 size={ICON} className="auth-spin" /> : t('确认合并当前账号', 'Merge this account')}
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input className="auth-input" style={{ minWidth: 0 }} disabled={mergeBusy} value={mergeCode} onChange={(event) => { setMergeCode(event.target.value); setConfirmMerge(false); }} placeholder="330-123456" autoComplete="off" aria-label={t('合并码', 'Merge code')} />
+                {mergeCode && !mergeBusy && <ClearButton variant="standalone" onClick={() => { setMergeCode(''); setConfirmMerge(false); }} />}
+              </div>
+              {confirmMerge ? <>
+                <p className="auth-error" role="alert">{t(`当前账号 ID ${currentUid ?? ''} 将并入合并码指定的账号。确认后不可撤销。`, `Account ID ${currentUid ?? ''} will be merged into the account specified by the merge code. This cannot be undone.`)}</p>
+                <button type="button" className="auth-primary" disabled={mergeBusy || !mergeCode.trim()} onClick={() => void submitMerge()}>{mergeBusy ? <Loader2 size={ICON} className="auth-spin" /> : t('确认不可撤销的合并', 'Confirm irreversible merge')}</button>
+                <button type="button" className="auth-textbtn" disabled={mergeBusy} onClick={() => setConfirmMerge(false)}>{t('取消', 'Cancel')}</button>
+              </> : <button type="button" className="auth-primary" disabled={mergeBusy || !mergeCode.trim()} onClick={() => setConfirmMerge(true)}>{t('检查合并方向', 'Review merge direction')}</button>}
             </>
           )}
         </div>
