@@ -1,16 +1,17 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 const source = readFileSync(
   new URL('../app/[lang]/timer/_components/SolveModal.tsx', import.meta.url),
   'utf8',
 );
 const reportSource = readFileSync(
-  new URL('../app/[lang]/timer/_components/ReconstructReport.tsx', import.meta.url),
+  workspaceFixturePath('@cuberoot/timer-ui', 'src', 'reconstruct', 'ReconstructReport.tsx'),
   'utf8',
 );
 const reportCss = readFileSync(
-  new URL('../app/[lang]/timer/_components/reconstruct.css', import.meta.url),
+  workspaceFixturePath('@cuberoot/timer-ui', 'src', 'reconstruct', 'reconstruct.css'),
   'utf8',
 );
 

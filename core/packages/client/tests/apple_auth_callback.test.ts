@@ -87,8 +87,9 @@ describe('Apple uses the canonical callback and session', () => {
   it('offers a fresh retry at the initiating account screen without replaying a code', async () => {
     sessionStorage.setItem('social_oauth_return', '/zh/account?view=signin&link_provider=apple&expected_uid=42');
     await callback(linkState, linkState, '&error=access_denied');
-    await act(async () => host.querySelector<HTMLButtonElement>('button')!.click());
-    expect(mocks.replace).toHaveBeenLastCalledWith('/zh/account?view=signin&link_provider=apple&expected_uid=42');
+    expect(host.querySelector<HTMLAnchorElement>('a')?.getAttribute('href'))
+      .toBe('/zh/account?view=signin&link_provider=apple&expected_uid=42');
+    expect(mocks.replace).not.toHaveBeenCalled();
     expect(mocks.linkSocial).not.toHaveBeenCalled();
   });
 
@@ -110,15 +111,15 @@ describe('Apple uses the canonical callback and session', () => {
     sessionStorage.setItem('social_oauth_return', 'https://evil.example/account');
     await callback(loginState, loginState, '&error=attacker-controlled-details');
     expect(host.textContent).not.toContain('attacker-controlled-details');
-    await act(async () => host.querySelector<HTMLButtonElement>('button')!.click());
-    expect(mocks.replace).toHaveBeenCalledWith('/account?view=signin');
+    expect(host.querySelector<HTMLAnchorElement>('a')?.getAttribute('href')).toBe('/account?view=signin');
+    expect(mocks.replace).not.toHaveBeenCalled();
   });
 
   it('offers retry on exchange failure rather than a permanent spinner', async () => {
     mocks.loginSocial.mockRejectedValue(new Error('Request timed out'));
     await callback(loginState, loginState);
     expect(host.textContent).toContain('Request timed out');
-    expect(host.querySelector('button')?.textContent).toContain('retry');
+    expect(host.querySelector('a')?.textContent).toContain('retry');
   });
 
   it('consumes a code only once during StrictMode effect replay', async () => {

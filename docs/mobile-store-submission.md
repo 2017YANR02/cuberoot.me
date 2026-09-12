@@ -299,6 +299,8 @@ Apple `form_post` 回调通过 303 返回网站既有 `/auth/social/callback`。
 
 2026-09-11 门户配置证据：primary App ID `me.cuberoot.app` 和 Services ID `me.cuberoot.web` 已注册、关联，域名 `cuberoot.me`、`www.cuberoot.me`、`api.cuberoot.me` 与上表 HTTPS return URL 已配置，所有者 Save 后返回列表。先前“没有可用 identifier，无法建 SIWA key”的阻塞已解除；所有者已生成并下载 `.p8`，本机 `openssl pkey -check -noout` 返回 `Key valid`，文件权限设为 `600`。私钥内容和本机路径不记入本文件、不入 Git；仍未证明生产已注入配置、Apple 令牌交换或登录 E2E。IAP 商品/价格/周期决策继续待所有者确认，SIWA 配置不意味着已启动付费商品配置。
 
+同日后续部署证据：源码 `83ef9a85d` 的 Core / Next / Vercel 部署已成功，`0231` 迁移摘要与生产 ledger 一致，服务器 Apple 配置已安全注入，公开 provider 返回 `apple: true`。隔离浏览器已从生产中文登录按钮进入 Apple 官方授权页面，确认显示 CubeRoot Web Login；有效 state 的取消回调也已通过。完整记录见路线图阶段 6。此项仅关闭配置、部署与授权入口检查，不证明个人凭据授权、隐藏邮箱、App 回跳、绑定/解绑或撤销/注销通过；`DRAFT — NOT SUBMISSION READY` 不变。
+
 ### 9.3 首发与后续更新
 
 2026-09-11 登录 UI/UX 本地验收补充：网站唯一登录/绑定组件已覆盖 Apple provider 可用性、失败重试、等待取消与卸载/BFCache 恢复；请求时限包含响应体读取。App 的账号管理 Browser 启动有独立期限，旧 web-ticket 不得在登出/换号后恢复旧会话。真实 LoginForm 的中英 × 320/390px × 深浅主题 × 正常/等待/取消/真实 502 错误共 32 格浏览器验证通过，无溢出/截字/页面异常；API 使用隔离响应，未连接 Apple。服务暂不可用错误复用双语提示，不直接显示英文后端错误。这些是组件/协议回归证据，尚未完成真实 Apple 授权、隐藏邮箱、退出/注销及五平台回跳矩阵，不能据此解除 4.8 提交阻塞。

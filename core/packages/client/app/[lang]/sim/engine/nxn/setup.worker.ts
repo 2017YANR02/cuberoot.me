@@ -1,1 +1,1 @@
-import '@/components/puzzle-models/nxn/setup.worker';
+import '@cuberoot/puzzle-render-core/engine/nxn/setup.worker';

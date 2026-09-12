@@ -44,7 +44,6 @@
     "@cuberoot/puzzle-render-core": "workspace:*",
     "@cuberoot/puzzle-solvers": "workspace:*",
     "@cuberoot/shared": "workspace:*",
-    "@cuberoot/stack-kernel": "workspace:*",
     "@cuberoot/timer-ui": "workspace:*",
     "@cuberoot/vendor-sr-puzzlegen": "workspace:*",
     "@cuberoot/visualcube": "workspace:*",

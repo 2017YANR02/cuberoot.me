@@ -1,2 +1,2 @@
-export { default } from '@/components/puzzle-models/nxn/history';
-export * from '@/components/puzzle-models/nxn/history';
+export { default } from '@cuberoot/puzzle-render-core/engine/nxn/history';
+export * from '@cuberoot/puzzle-render-core/engine/nxn/history';
