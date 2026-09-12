@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / Y / bin 10
-# Population in this bin: 100
-# Samples listed: 100 (all entries in this bin)
+# Population in this bin: 103
+# Samples listed: 103 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 82221001,U F2 D2 F2 R2 B2 D B2 F R2 D2 R' B2 U' L' B2 F U2,Y,Johannesburg 2014 (2014-11-23),333 R1 D #5
@@ -105,3 +105,6 @@
 5704485001,F2 L U F B2 L' B L U' D R' F R2 L2 B' L2 F B2 L2,Y,Longmont Open 2026 (2026-06-13),333 R1 B #5
 5737260001,F D R L2 F U2 R2 L' U' B R L2 U' R2 U' B2 L2 F2 D2 B',Y,Lazarillo Salamanca Open 2026 (2026-07-04~05),333bf Final A #1
 5749804001,B' F2 D B2 R2 U F2 D B2 F' U' R' B' D F R F' U' L',Y,Warm Up Lent 2026 (2026-07-10~12),333 R2 C #3
+5793881016,U' L U B' D' R2 L U' R U2 L F2 R' L2 F2 B2 U2 F L D2,Y,BrizZon Side Open IV 2026 (2026-08-22~23),333mbf Final A #1
+5810614001,U' R2 F U2 B U2 F2 R2 D2 L2 D L R B2 D2 B L2 U' L2,Y,Cubithon San José 2026 (2026-08-29),333 R2 B #1
+5815525001,B U2 D2 L' U L' D' U2 B2 L' F2 R2 L D2 R2 L F R' U,Y,Bremium Mega Day 2026 (2026-09-05),333oh R1 A #2

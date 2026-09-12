@@ -1,14 +1,14 @@
 # Scramble samples — eo / eo_cross / BG / bin 3
-# Population in this bin: 417
+# Population in this bin: 420
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 17503001,R U2 R' F U2 F' R2 F2 D2 R' L2 U' L2 U D2 F2 U L2 U2,B,Mumbai Summer Open 2014 (2014-05-03~04),333 R1 C E2
 5161473001,R F R D' F R2 U2 F' D2 B F' L' B F' L' F2 L' B',B,Cubing Comicfest Cali II 2025 (2025-11-01~02),333 R1 A E2
 4871718035,F2 U' B L U' B D R' D2 F2 B2 R2 D' F2 D' L2 D' R' B D',B,CubingUSA New England Quiet Championship 2025 (2025-07-19),333mbf Final A #2
-42769001,L2 U' L2 D' U2 B2 U R2 B2 U' F D L2 D' U F' U' L2 B' L2,G,Taiwan Summer Open 2014 (2014-08-02~03),333bf R1 C E2
+5816550001,U2 F2 D2 F B2 R D2 B2 L' B' R' F2 B2 R2 B2 R2,B,Bilbao Open 2026 (2026-09-05~06),333oh R1 B #4
 4525537001,R2 D2 U2 B' L2 R2 F' R2 U2 F U B F2 U' F R2 D' U2,G,Hurlubiks Cube Mouscron 2025 (2025-02-22~23),333oh R1 B E2
 66342001,U2 F2 R U2 L2 U2 L' B' U2 B F2 U2 F2 L' F' R F2 D,B,Montevideo Open 2014 (2014-10-11),333 R2 B E1
 68271001,U F2 B D' B2 D B D2 B' U R2 D B2 U L2 U' B2 D,G,Rice University 2014 (2014-10-18),333 R2 B #3
@@ -136,7 +136,7 @@
 1151886001,R' D2 R B2 R2 B2 D F2 D L2 F2 R B' U F2 U' F,B,Brooklyn 2019 (2019-05-25),333 Final A E1
 1180736044,L2 U' B2 U' B2 F2 U R U B L F' L U2 B' L2 R2 U L' B' L',B,Please Be Quiet Beijing 2019 (2019-06-15),333mbf Final A #1
 4818058001,B2 D2 R2 B' R2 D2 F U2 L2 B2 L B2 R' F2 R U2 L' D',G,Swisscubing Cup IV 2025 (2025-06-21~22),333 Final B #4
-1209841001,L2 F2 L2 U' L2 B2 D' B2 D2 R2 U' F D' U2 R D2 L2 D B2,G,mcubes Open 2019 (2019-07-06~07),333 Final A #5
+5776240001,L2 D2 R' U2 L' F2 D2 U2 R B2 L D' F' D L' F' R U' R',B,PU Villavicencio III 2026 (2026-08-02),333 Final A E2
 5394858001,D2 L' F U2 D' R2 D' B2 U' L' B' L2 B U2 R2 B' U2 F' L B,B,Falkirk Open 2026 (2026-02-21),333bf Final A #2
 1225230001,U F2 D B2 U' R' F2 D' B' D R U2 F2 R' B2 D2 B2 R U2,G,Nishinomiya Open 2019 (2019-07-20),333 R1 A #2
 1240497001,F U2 R2 D2 L U2 D' B2 L' U' R2 B2 D2 F2 R U2 B2 L U2,B,Ecuador Nationals 2019 (2019-07-27~28),333oh R1 C E2

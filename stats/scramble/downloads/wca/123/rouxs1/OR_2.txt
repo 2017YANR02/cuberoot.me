@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / OR / bin 2
-# Population in this bin: 280
+# Population in this bin: 282
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 13936001,B' L2 F U2 L2 F2 R' F2 U L' U' R2 D2 L2 F R2 L2 B',R,Toronto Open Spring 2014 (2014-04-26),333 R2 A #2
@@ -55,7 +55,7 @@
 620064004,D2 B2 U F2 D' L2 R2 B2 D F' L F D2 R2 U B D L' D B R2,O,Pekanbaru Open 2017 (2017-10-14~15),333mbf Final A #1
 620436001,F' L2 F2 L2 D2 U2 B2 D2 L' B2 D' F' U B' F U' F2 U2 F,O,Dnepr Skips 2017 (2017-10-14~15),333oh Final A #5
 622372001,B2 U2 L B2 L' F2 U2 L R' B D2 L F R' B U B2 R',O,Criciúma Open 2017 (2017-10-20~21),333 R1 B #2
-634365001,U' R' D2 L F2 D2 R2 B R2 B R2 U D2 F2 D' L2 F2 U,O,Fuzhou Autumn 2017 (2017-11-05),333 Final A E1
+5802231001,B2 U2 F D F U' B' L2 D2 B R2 L U2 R' F2 R U',O,Koszalin Open 2026 (2026-08-22~23),333oh R1 A E2
 637626001,U' L2 F2 D' B2 D F2 R' F' U' R2 F R2 F L2 F2 R2 F L2,O,Porto Alegre Open 2017 (2017-11-04~05),333 R2 C #4
 638781001,B2 L U2 B R F' B2 U2 R U' B2 L2 B2 L2 U F2 U L2 D',O,Weston Fall 2017 (2017-11-11),333 R1 B #2
 652536001,R2 U' F2 D B2 U L2 U L' D F L2 D B' F U' F L U',O,WHU Rubik's Cube Days 2017 (2017-11-25~26),333oh R1 A E1

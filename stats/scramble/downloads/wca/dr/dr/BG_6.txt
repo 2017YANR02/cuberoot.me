@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / BG / bin 6
-# Population in this bin: 610
+# Population in this bin: 620
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 17503001,R U2 R' F U2 F' R2 F2 D2 R' L2 U' L2 U D2 F2 U L2 U2,B,Mumbai Summer Open 2014 (2014-05-03~04),333 R1 C E2
@@ -56,7 +56,7 @@
 5034927001,D2 R2 D2 U2 B2 L2 B' U2 F' D2 U2 B2 L' R2 D2 F' L' D' R',B,Corby Autumn 2025 (2025-09-20~21),333 R2 A #1
 2287302001,R F R' F U' R B R2 B L2 B2 D L2 U' F2 U' R2 F2 U,B,Tashkent All Events 2022 (2022-11-04~06),333 R1 A #3
 3485360001,F2 L2 F2 R2 U' B' U B2 D2 L2 B D' F U2 F' L2,B,Cainta Cubing Mania 2024 (2024-02-04),333 R1 B #3
-348477001,R' U' F D R2 D' L2 F2 D2 U B D2 L' U2 F R D2 B2 F L2 U2 F2 R' U' F,B,Michigan 2016 (2016-08-13~14),333fm Final A #1
+5804933001,U2 R2 F R2 D2 R2 F' U2 F2 L D2 L2 B L D,B,Calgary Fall 2026 (2026-08-29),333 R1 H #2
 348713001,L2 B2 U2 B' L2 B' R2 D2 F D2 F' L D2 R2 F L2 U' R' D',B,Xela Open 2016 (2016-08-12~14),333 R1 C #1
 4020401001,B2 F2 U2 R F2 R2 D2 L2 D2 B2 D B L' D2 R' D F L2 F,B,Burgas Summer 2024 (2024-08-17~18),333 R1 C #4
 373092001,L2 D U2 R2 B2 U F2 U' R2 B2 R2 B' F' L' D' L2 F R' U' B',B,I CUBIFMA - Bacabal 2016 (2016-10-07~08),333 Final A E2
@@ -111,7 +111,7 @@
 661393017,U2 R2 D2 F2 D2 F2 L2 F L2 R' D' U2 B' U' L2 U' R B U2 B' D,B,ZUST Open 2017 (2017-06-10~11),333mbf Final A #1
 2722050001,U2 F L2 U2 F' R2 F' R2 F' D2 B D2 R U F' L U2 B,B,Auckland Autumn 2023 (2023-05-13~14),333 R3 A E2
 661419017,R2 F' L2 B2 R2 D2 F' U2 R2 D U2 R' F L B2 L' D2 U2 F' U2 B R2,B,Mantua Summer 2017 (2017-07-08~09),333mbf Final A #1
-661430011,L2 F2 D' L2 U B2 U' F2 L2 R2 U2 L' U' B D F2 L' F' R' F2 D' L B,B,Thailand Championship 2017 (2017-07-15~16),333mbf Final A #1
+5779879003,D2 F2 L U2 L' D2 L F2 L2 B2 L B' R' U' F2 L2 R2 B' L2 B' L2,B,Missouri Championship 2026 (2026-08-07~09),333mbf Final A #1
 4333328001,L2 B D2 R2 F U2 B D2 U2 B R2 D2 R' U B2 R2 U B,B,IMI Bhubaneswar Cube Open 2024 (2024-12-07),333 Final B E1
 682817001,U2 F R2 D2 F2 R2 F U B2 L2 F' D' R2 B D B R' B2,B,Shaastra Cube Open 2018 (2018-01-06~07),333 R1 G #2
 4164263001,B F L2 B2 L2 D2 B L2 U L' B2 D L2 R2 B2 R U' F2 D,B,Hublife Speedcubing 2024 (2024-09-28~29),333 Final A #4
@@ -181,9 +181,9 @@
 1483650001,U2 F' R2 F D2 R2 B F2 D2 R2 B' D' B F L' F2 U',B,Ivanovo Cuber Cup 2019 (2019-12-28~29),333oh R1 C #3
 2017981001,U2 R2 B' U2 B2 L2 F' U2 B2 D2 F' D2 L' F U' L B2 D2,B,Rubik's WCA European Championship 2022 (2022-07-14~17),333 R1 C #5
 1424994001,B2 R2 B2 D R2 D U' L2 B' D' L2 U' B' R B2 U2 L D2 L,B,MPEI Open 2019 (2019-11-22~24),333 R1 C #2
-4524773001,B U2 R2 U2 R2 U2 F D2 F' U2 F2 D2 L D' R' U2 L2 R',B,Spark Melbourne February 2025 (2025-02-22~23),333 R2 E E1
+5780153001,U2 B2 R2 D2 L2 F' L2 D2 U2 F2 U' L2 B2 L B' D U',B,Missouri Championship 2026 (2026-08-07~09),333oh Final A #5
 4800758005,U2 B2 F U2 B2 U2 L2 D2 F D' F L' F D' R' D L B' F2 D',B,Mini Mental Milano IV 2025 (2025-06-15),333mbf Final A #1
-1316145001,B D2 R2 D2 B' U2 F D2 L2 B' R' U R2 D2 R D2 U B2 L' F2,B,Cubing Autumn in Vitebsk 2019 (2019-09-28),333 R1 C E1
+5815109001,R2 L2 B' R2 U' F' D B U2 R2 U2 F2 D' R2 L2 D' R' D,B,State Hunting Calls for Sioux Falls 2026 (2026-09-05),333 Final A E1
 1142486001,L2 U2 F' U2 B R2 B' R2 B D2 F2 U B2 L R2 D R' B',B,Cochabamba Open 2019 (2019-05-12),333ft Final A #2
 4680701019,D2 B' U B L2 R2 D B2 U2 R2 F' D' R2 D2 U' F2 D' L2 U2,B,Please Be Quiet Korea Spring 2025 (2025-04-27),333mbf Final A #2
 1147994001,D B2 D' L2 B2 U2 B2 U R2 U' B2 F' R F2 D2 B' U F2 R2,B,DSK Pune Cube Open 2019 (2019-05-19),333 R1 B E1

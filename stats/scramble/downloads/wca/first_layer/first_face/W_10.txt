@@ -1,0 +1,13 @@
+# Scramble samples — first_layer / first_face / W / bin 10
+# Population in this bin: 6
+# Samples listed: 6 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+58488001,D L D2 B2 D F' B2 U2 R2 D' F D2 F2 R2 U2 B2 D F2 D2 R2,W,PLS Gdańsk 2014 (2014-09-13~14),333oh Final A E2
+4186473001,F R' F2 L D2 F2 R2 U2 B2 F' R' U' F2 R B D' U B2 D,W,Pão de Queijo Uberlândia 2024 (2024-10-12~13),333 Final B E1
+4277251001,F2 L2 D' R2 D F2 D B2 L2 F' U' R' D' U L' D' R' F' R B,W,NCSU Wolfpack 2024 (2024-11-10),333 Final A E1
+5046654013,R' B2 U' D2 F' U2 B2 L2 D2 B2 R D B2 U2 L2 U' B2 F L2,W,Ottawa Blindfolded 2025 (2025-09-27),333mbf Final A #1
+5365713001,D2 F2 U2 F2 L2 F' D2 F2 L2 U R B F L2 R D' F' D2 F2,W,Mini-Tridentum 2026 (2026-01-31~02-01),333oh Final B #5
+5379636001,B2 R2 D L2 F2 U' F2 D' L' D' R' D U F D2 L' U2 F L2,W,Kublördag Jönköping X - 2026 (2026-02-14),333 R1 A #3

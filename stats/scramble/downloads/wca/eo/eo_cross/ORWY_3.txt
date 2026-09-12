@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / ORWY / bin 3
-# Population in this bin: 811
+# Population in this bin: 823
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4486321001,B2 D2 L2 D L2 F2 U' R' B2 D L' U F2 D L' R' D2 B,O,NxNs at Finprov 2025 (2025-02-16),333 R1 B E2
@@ -93,7 +93,7 @@
 415874001,F2 U L2 U2 R2 F2 U' L2 U' R B R B' U' R' B D' B F2,R,Bekasi Cube Days 2016 (2016-12-17~18),333 R2 A #5
 4485602001,D2 U2 L' D2 B2 F2 R' B2 D2 F L' F D' R2 B' D L' R2 D',W,GA Cubers Please Banana Quiet 2025 (2025-02-15),333bf Final B #3
 428343001,U' L U D2 B2 D' L U D' R F2 U2 F2 U' L2 D2 F2,O,Cubelonia 2017 (2017-01-06~08),333 R2 B E2
-2349426001,D2 L2 F2 R2 U2 B D2 B' F' U L' B2 R' U R' B F L' U2,O,TCG Power Up 2022 (2022-12-03~04),333 R2 B #2
+5811952001,U' B2 D' B2 U' B2 L2 R2 U2 F2 R D U2 R' B2 R' U,Y,Shin Kong Cube Open - Taichung 2026 (2026-08-30),333 R1 D #5
 4521554001,L2 B D2 U2 B L2 U2 F L2 F' U' F2 R2 U L2 B F L2,Y,PUCP Cubing Festival IV 2025 (2025-02-22~23),333 R2 F #1
 5461416001,D2 R' U R U R U2 R' B' R B2 R D2 R' L2 F2 L U2 R,Y,Fuentes de Andalucía Open 2026 (2026-03-21~22),333oh Final A #4
 4239465001,R B2 L R2 D2 L' D R2 B2 F2 U' F2 D2 L' D B',W,WonderLand Education West Lafayette Fall 2024 (2024-10-26),333 R2 A #3
@@ -169,7 +169,7 @@
 672273001,F2 D2 B' U2 R2 B' D2 B' R2 D2 R' B' L' F2 D2 L F2 D B,R,Chouchenn Open 2017 (2017-12-16~17),333oh Final A E2
 3442863001,R' D2 B2 U' L2 D' F2 B' L2 U' F L2 B' F2 D' R2,O,Oskemen Open 2024 (2024-01-20~21),333 R1 A #4
 1529891001,B2 U' F2 B R' U' F D2 B U' F' R2 U2 B U2 B R2 B D2,Y,Frisco Liberty Cubing 2020 (2020-02-01),333oh R1 B E2
-4516617001,R2 B2 R' F' L2 B2 R D2 B U2 R2 U2 F2 D2 B2 D B2 R2 B2,O,5 Valles Mexicali 2025 (2025-02-22),333 R1 B #1
+5791617001,B' R2 U2 L2 U L2 B2 D2 B2 U B U B R2 D' U2 R2,Y,Capelle Chaos A 2026 (2026-08-22),333 Final A E2
 1410216001,D F D' F D F' B U' D2 F2 L2 B' D2 L2 B2 D2 F R2,Y,Cubes Masters Zhytomyr 2019 (2019-11-16~17),333 R2 A #2
 681654001,U2 B2 F D2 L2 R2 F' L2 R D2 L F' U F' L' U2 F',Y,Jinhua New Year's Day 2018 (2018-01-01),333 R1 B #3
 4831054001,R2 B' L F' R' U2 L' B' U2 R' F2 R U2 L D2 B2 D2 B U',R,Upper Valley Cube Day 2025 (2025-06-28),333oh Final B E1

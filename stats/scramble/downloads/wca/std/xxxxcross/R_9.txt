@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / R / bin 9
-# Population in this bin: 29
-# Samples listed: 29 (all entries in this bin)
+# Population in this bin: 30
+# Samples listed: 30 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 65785001,F2 R2 D2 R2 D B2 L2 B2 R2 U2 L' U F2 R D F R' U2 B',R,Back to 360 2014 (2014-10-11~12),333 R2 A #4
@@ -34,3 +34,4 @@
 5307558071,B' L2 U2 F2 D' F2 L2 D2 R2 D' R2 D B L F U' R B D R' B R',R,Multi Mayhem VA 2026 (2026-01-02~04),333mbf R1 A #3
 5666017001,D F' R D2 F' L2 R2 U2 L2 B L D B' F L B' D B2,R,West Coast Cubing Western Championship 2026 (2026-05-23~25),333 R2 C #5
 5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1
+5820412001,U2 F2 R B2 R F2 U2 F2 U2 R2 D' F2 D' F2 U2 B D B L,R,New York Big and Quiet Championship 2026 (2026-09-05~07),333bf R1 B #4

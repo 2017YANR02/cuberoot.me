@@ -1,0 +1,11 @@
+# Scramble samples — first_layer / first_face / G / bin 10
+# Population in this bin: 4
+# Samples listed: 4 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+443605001,D L2 D' L2 R2 D B2 U F' D U2 L F' R B L2 U' L U2,G,Vilnius Open 2017 (2017-02-11~12),333 R1 B E1
+625259001,B R2 U2 L' D2 R2 F' B' R' D F U2 L' F2 D2 R2 L U2 B2,G,Rubikku Champ 2017 (2017-10-21~22),333 R2 A E1
+923343012,D2 F2 R2 U' R2 U' F2 U' R2 F2 R' F2 L' F D' L B2 U R' F',G,LA Blind Cube Day 2018 (2018-11-03),333mbf Final B #3
+5383495001,F' L' D2 F2 L' U2 L2 F2 L U' R B' U' L2 D2 L' B2 U' F',G,Kielce Open 2026 (2026-02-14~15),333 R1 A E2

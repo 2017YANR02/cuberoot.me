@@ -1,13 +1,13 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / OR / bin 7
-# Population in this bin: 249
+# Population in this bin: 253
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5099434028,B2 R' D B' D R' U R U' F' R2 U F2 D F2 U2 B2 U D L B,O,Thailand Championship 2025 (2025-10-11~13),333mbf Final A #1
 10700001,L' U2 R' B2 R2 L' B U F' L U2 L2 F D2 F' L2 B' L2 F,O,Inspiria Cube Day 2014 (2014-04-12),333 R1 B E2
-19610001,U2 B2 U2 F' U2 B R2 U2 R2 D L2 B R' U L' F2 D' U2 F2 D2,O,Turkish Ankara Open 2014 (2014-05-10~11),333bf Final A E1
+5792912001,L2 U2 B2 L2 U' L2 D' R2 B U' F2 D' F D' L' D' L' B' R',R,Begastri Open 2026 (2026-08-20~23),333 R1 A E1
 77446001,F2 U' L2 U' B2 U' F2 U' F' R B2 F R U' F2 R D' B2 D,O,PLS Autumn Reda 2014 (2014-11-08~09),333oh R1 B E1
 5447938001,R2 F2 U2 L2 F2 L F2 R B D L F2 U' L D U' L2 F',R,Cube Factory League Rogów 2026 (2026-03-14~15),333 R1 B E1
 111030001,D B D L2 D2 R2 L2 F' L2 F L U2 B2 U B2 R2 F2 D2,R,Osijek Open 2015 (2015-02-21~22),333 R1 B #5
@@ -112,7 +112,7 @@
 1720983001,U' R' U2 L R' B2 R' D2 R2 U' F D L2 D2 R2 B2 U L' D2,R,Missoula 2021 (2021-11-06~07),333oh R1 B E1
 1820076001,B2 L U2 R2 D' L2 B2 U2 B2 R2 U R2 U R' D' U B' L' U',R,UIO 2022 (2022-02-26~27),333 R2 B #2
 5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1
-1923620001,B' L2 U2 B' U2 F R2 F2 R2 D' R2 D2 R' U2 F' U' R' F' L',R,Sherwood Park Spring 2022 (2022-05-21),333 R1 E #5
+5784464001,L' B' U' L2 D F2 D2 F2 U F2 U2 F R' D U L D F' L',O,Dåstrup Diverse 2026 (2026-08-15~16),333oh R1 C #1
 1997666001,R' F' U2 L U' F2 R' B L2 F' U2 F2 L2 B' U2 L2 R' D',O,Petaling Jaya Cubing Comeback 2022 (2022-07-02~03),333 R1 C E1
 4949726001,U B' L' B2 L D2 R2 U F' B2 R' F2 R2 U2 L2 U2 F2 R' B' L',R,Korea Open 2025 (2025-08-15~17),333bf R1 C E2
 2116241001,L2 U L2 D2 L2 R2 F2 R2 U L U' B L F' R B' U' L B2,R,Dublin Open Sunday 2022 (2022-08-21),333 R2 C #5
@@ -184,7 +184,7 @@
 4222888001,L F2 B D R' F2 L F' U B2 R U2 D2 F2 R' D2 R' D F,O,Tarija Speed Fest 2024 (2024-10-19~20),333 R1 C E2
 4239465001,R B2 L R2 D2 L' D R2 B2 F2 U' F2 D2 L' D B',R,WonderLand Education West Lafayette Fall 2024 (2024-10-26),333 R2 A #3
 4798434001,D R U' B2 D' F2 D L2 D2 U2 B2 R' D U2 F U2 R' D' U2 L2 U,O,VIC Side State Championship 2025 (2025-06-14~15),333bf R1 A #1
-4305844001,D2 L' D R2 U B2 F2 U' F' D2 B' D2 U2 R U2,O,Stekt Falukorv Open 2024 (2024-11-23~24),333oh Final A #5
+5804021001,L' F L F2 L B2 D' R' U' D B2 U R2 D' B2 R D,O,PBQ Žilina 2026 (2026-08-28),333bf Final B E1
 5667180001,L2 F D2 F R2 F L2 D2 R' F' U R2 D2 R U' F U2 B,R,Victoria Dockyard Sprint 2026 (2026-05-24),333 R2 A E1
 4329562001,R2 D2 B2 L B' R2 D2 F' L2 F' R F D' R B2 F' U,R,Nova Carapina Challenge 2024 (2024-11-30),333 R1 B #5
 4332530001,D L F' L2 B2 R2 B' D2 R2 F2 L2 F' L D2 B2 R D' U' R' B' L2 U2,R,Greek Nationals 2024 (2024-11-30~12-01),333bf Final A E2

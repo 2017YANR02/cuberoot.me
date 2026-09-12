@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / OR / bin 8
-# Population in this bin: 378
+# Population in this bin: 387
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 14362001,U' D' R' B' L U' D' R2 B U' D2 R2 D2 B2 U F2 D' F2 L2 F2,O,Hsinchu Spring Open 2014 (2014-04-27),333 R2 A #1
@@ -11,7 +11,7 @@
 53561001,B2 F2 U F2 D R2 U B2 L B2 D' L' R D2 F' D' B L U',O,Colombia Nationals 2014 (2014-08-22~24),333oh R1 A #1
 59155001,D' L U2 R' B L2 U' D F' R B D2 L' D2 F2 B2 R' L2,O,Slovakian Open 2014 (2014-09-20~21),333 Final A #1
 69610001,F2 R2 U L B' U' D R' F D B U2 F B D2 L2 B' D2 F R2,O,Cubing V1.0 2014 (2014-10-25),333 R2 B #5
-5374186001,R' U' F U B L' D' R U2 F2 U2 F2 L' U2 B' U2 L2 D' F L2 B R' U' F,O,Glasgow Winter - Scottish Blind Off 2026 (2026-02-07~08),333fm Final A #2
+5777620001,R' U L B' R' U' F U' D' L B U2 L2 B2 U2 L2 F L2 U2,O,Svealandsmästerskapet 2026 (2026-08-07~09),333oh R1 A #3
 3639819001,D' R2 D2 F' L2 U' B2 D U2 L2 B2 U' B' R' F D2 U2 B2 R',O,Xi'an Cherry Blossom 2024 (2024-04-05),333 R1 E E2
 5236347001,R' F' D2 R2 F2 R' F2 L' D2 L2 F2 D' L' U2 L2 U' B' F D',O,UTA al Cubo 2025 (2025-11-29),333 Final A #1
 97443001,B2 F2 R' U2 R' D2 R U2 L' F2 L B L2 R' D R' U' R2 F' L D2,O,Shaastra Cube Open 2015 (2015-01-03~04),333 R1 J #2
@@ -41,7 +41,7 @@
 5542256016,B2 R2 D' F2 R2 U F2 U' B2 D2 L' F2 D B' L2 F2 D' F U R B' L',O,Pocos Cupos Bogotá XXV 2026 (2026-04-15),333mbf Final A #1
 3559486001,D2 R' F' L2 D' B2 U' L2 U' F2 U' F2 R D R2 B' F L U' B2,O,Glasgow Spring 2024 (2024-03-02~03),333 R1 C #2
 421151001,U F2 U F2 L2 U' L2 D2 R2 B2 F' D U' F2 L B R F U2 L2 U',O,GuateMaya Open 2016 (2016-12-21~22),333oh R1 B E1
-5432421001,R2 F2 U F2 U L2 U2 L2 U B2 F' U L' B2 D' L2 B F' D' U2,O,Campeonato de Andalucía 2026 (2026-03-07~08),333 R1 C #5
+5808289001,D' R F' R' B2 R D2 R2 D2 F2 L' D2 F2 B' D' R2 U B F' L',O,Paradise Place Thailand Cube Open 2026 (2026-08-28~30),333oh Final A E2
 442911001,R2 D' U' L2 F2 L2 D B2 L2 F L' U2 F2 R' U' L2 F L' B' D2,O,First Ecuador Open 2017 (2017-02-11),333oh R1 B #2
 4991650073,R' L2 D2 L U L F' L B L2 F' R2 B U2 F B' U' F D' L B,O,West Coast Cubing Western Championship 2025 (2025-08-29~31),333mbf Final A #2
 3952844001,U2 L2 D2 U2 B D2 B U2 B' R' U R' B R' D' L B L R2 U B' L',O,Midlands Mix-up 2024 (2024-07-20~21),333bf R1 A E1
@@ -116,7 +116,7 @@
 4794277001,L U2 B' L F R' U2 L' D R2 D2 R2 L2 U F2 B2 D F' D' B',O,Please Be Quiet Nashville 2025 (2025-05-17),333bf Final B #1
 4375636001,D2 B2 L2 D' L2 F L2 R2 F' L2 B L D' F' U L D R2,O,Hangzhou Open 2024 (2024-12-15),333 R1 F E2
 3241769001,D2 B2 F2 D' L2 D B2 L2 U F2 R' B U' L' U F' L2 D R B,O,Playford Cubing 2023 (2023-11-04~05),333 Final A #5
-1150298001,B2 R U2 L F' D B U B L2 D2 F U2 B2 R2 B' D2 F L2,O,National Capital Region 2019 (2019-05-18~19),333 R3 A #3
+5808863001,F2 R2 U2 F2 R B2 L' R2 B2 D' B L' F2 U' F2 R2 F2 D R' B,O,4x4 Off US-40 IL 2026 (2026-08-29),333 R2 B #4
 1176040001,L B R D' F2 U F' L' B D R2 U2 F2 R2 L2 U' F2 R2 L2 U2,O,High Wycombe Open 2019 (2019-06-08~09),333 R2 C #3
 1221127006,B' D2 F' L2 F D2 B2 D2 R2 F R U' L2 F R2 D2 U R F2 R' D2 B R,O,WCA World Championship 2019 (2019-07-11~14),333mbf Final A #2
 3172777001,B U B F2 U2 L2 R2 B' F' D2 U F' R' D R B D' L U2 B R2,O,Half Turns Hataitai 2023 (2023-10-07),333bf R1 A #1
@@ -135,7 +135,7 @@
 4790637028,R U L' R2 F R2 D2 B2 L2 D2 F L2 D' R' U2 L' U' R2 B' L,O,Swiss Nationals 2025 (2025-06-07~09),333mbf Final A #1
 3586845001,U' F U2 D F2 L B2 R B L2 D2 B2 D2 L F2 L2 U2 F2 D',O,Innova Schools Mosquera 2024 (2024-03-10),333 R2 B #4
 1456602025,R2 B2 R' D2 B2 R F2 L2 R B' U' L2 R2 D B' L2 U F' U L B2,O,Tapiola Winter Open 2019 (2019-12-14~15),333mbf Final A #1
-4169386001,L2 U R' L2 B L U2 B D B2 D2 L2 D2 F' D2 F B R2 B L2 B' L',O,Puerto Real Camaleón Open 2024 (2024-10-05~06),333bf Final A #2
+5785731001,R D' R D2 U2 R D2 R D2 F2 L' U2 B D F L R2 B' D2 F2,O,Oakridge Independence Cube Open 2026 (2026-08-15~16),333 Final A E2
 5513898029,L' U2 R D2 L' F2 U2 R U2 R' F' D F L R' D' U L F D B R2,O,Please Don't DNF Kaohsiung 2026 (2026-04-05~06),333mbf Final A #1
 1500893001,U2 F' R2 U2 B D2 F2 L2 F D' L' R2 B' U' L D' L' F R2 D',O,Bay Area Speedcubin' 23 2020 (2020-01-12),333 Final A #5
 4141238001,R2 U L2 B U' F' L' B2 D' F B2 U2 D2 L' B2 D2 F2 B2,O,Sandnes Open 2024 (2024-09-28~29),333 R1 C #4
@@ -156,7 +156,7 @@
 1876166001,U' L B2 L R B2 R' D2 B' U' F D R' B2 F' R F2 L2,O,Kirkkonummen Kuutionvääntelyt 2022 (2022-04-15~17),333oh Final A E1
 4034103001,R D2 R D F' R L2 U2 L D B' R2 U2 F2 B U2 R2 F2 R2 B,O,Mind Sports Olympiad London 2024 (2024-08-22),333 R1 D #4
 1923589001,L2 R D' R2 B2 U2 F2 D' F L' D' F2 U2 F L D F' L2,O,Sherwood Park Spring 2022 (2022-05-21),333 R1 A #2
-4332240001,R' L2 B2 F U2 B' F D2 U2 L' D' U R D2 B' L' B2 F' R2,O,Berkeley December Weekday Tricubealon 2024 (2024-12-04),333 R1 C #2
+5783546001,F2 U' F U2 F2 L' F2 R' U2 L R2 B U L2 D2 B2 F' U' B',O,BC Championship 2026 (2026-08-07~09),333 R1 E #5
 2001694001,U L2 R2 F2 L2 F R2 B' D2 B F' U2 L2 D R' F' U' B D' R,O,Ibarra UTN Open 2022 (2022-07-02),333 Final A #4
 2005834001,B' R2 B2 D2 L2 R' D2 U2 R' U2 B L2 D F U' B' L U2 R2,O,Warm Up Stockholm 2022 (2022-07-09~10),333 R2 B #2
 2021392001,D' F' R B' D2 R2 D' R2 F2 D U' L2 U L' B U2 L U2 L' R,O,Negros Speedcubing Re-Open 2022 (2022-07-16~17),333 R2 C #4
@@ -189,7 +189,7 @@
 2579493001,F' B' U' L' F' U2 B2 D' F' L' F2 U2 D' L2 U2 D' F2 L,O,Sydney Ultimate Clock Clash 2023 (2023-03-26),333bf Final A #1
 2610697001,U2 F2 D' R U' L D F' R2 B2 U' R2 D' B2 R2 F2 B2 U' B' D',O,Speedsolving Geekcuber 2023 (2023-04-02),333 R1 E E1
 3896126001,F' D2 L R2 D2 B2 D2 F' D2 F2 R2 F2 L' D' F U' F L' B' D',O,It's Sarzana O'Clock 2024 (2024-06-29~30),333 R1 C #4
-5764474001,B D F' D L D R B' F2 U' R2 U D' L2 D2 R2 B2 U2 F' D2 L,O,Maru Cube Day Taiwan 2026 (2026-07-25~26),333bf Final A #3
+5809807001,D2 L2 R B' L2 U2 B R2 B' R2 U2 F' U2 R' B U' L' D' F',O,LA PRE Cubing II Pucallpa 2026 (2026-08-30),333 Final B #2
 2671182001,F' D R' L2 D' L D2 B U F2 L2 F D2 F' B' L2 F' U,O,FSUbers 4.0 2023 (2023-04-29),333 R1 C #3
 3576642001,R' F B2 U' L' F2 R U2 B2 L2 F' D B2 U' F2 L2 D' L2 D2,O,Plaza Center Cube Lima IV 2024 (2024-03-02~03),333oh R1 D #3
 2720833001,L2 F' B2 D L2 D L2 B2 L2 U' B2 R2 L' U F' D F2 R' F D,O,The Blantucky Derby 2023 (2023-05-13),333 R2 A E1

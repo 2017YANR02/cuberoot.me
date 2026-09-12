@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / O / bin 4
-# Population in this bin: 177
-# Samples listed: 177 (all entries in this bin)
+# Population in this bin: 180
+# Samples listed: 180 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 81606001,B' D2 F2 R2 B F' L R B' R' D2 R B2 D2 B2 F R',O,Toronto Open Fall 2014 (2014-11-22),333oh R1 A #3
@@ -182,3 +182,6 @@
 5705141001,R' D R' U2 R2 B' F2 L2 U2 B R2 D' B' U2 B2 R2 B' R,O,Rockfort City Cubing Challenge 2026 (2026-06-13~14),333 R2 A E2
 5716753001,F' U2 B F2 D2 F D2 L2 F2 D R B L2 R B D2 L R2 B' L2 U2,O,Maine Open 2026 (2026-06-19~20),333bf Final A E1
 5752679001,L2 F' U' B' R' B R' F2 U2 F U2 F' U2 F2 U2 F D2 U' R',O,Mountain House Open 2026 (2026-07-18),333 R1 D E1
+5779705001,L F L2 B2 R2 D' R2 D' F2 D U R2 F L F D' U B2 R,O,Toowoomba Carnival of Cubing 2026 (2026-08-08~09),333 R1 B #2
+5806968001,U' L' B' D L2 U2 D' L U F2 U R2 U D' L2 B2 L2 D' L D',O,Slovenian Nationals 2026 (2026-08-28~30),333bf R1 A #3
+5809124001,R2 F2 R F' U2 R F' L' B2 R' D' R2 F2 U2 B2 L2 B2,O,Mololoa Open 2026 (2026-08-29~30),333 R1 B #5

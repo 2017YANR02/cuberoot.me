@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / O / bin 6
-# Population in this bin: 266
+# Population in this bin: 270
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 10959001,R F2 D2 U2 F2 R' U2 B2 R B R U' B2 F' R' D F' D' F,O,Lexington Spring 2014 (2014-04-12),333oh R1 B #4
@@ -29,7 +29,7 @@
 292125001,B2 U2 B2 L D2 R2 F2 U' R2 U2 F2 R' U' F L B' D' R2,O,CCC Spring Open 2016 (2016-04-29~05-01),333oh R1 D #2
 5564013001,F' B2 U2 B2 D2 L' U2 L B R F2 D' L U L F' R2 D2,O,Duper Super Davis Spring 2026 (2026-04-19),333 R2 A E1
 5335445022,B' D2 F2 U2 L2 F U2 F L' B F2 U2 B L' U' B' F L2 D' B,O,Tassie Summer 2026 (2026-01-17~18),333mbf Final A #1
-317590001,L2 F2 D' B2 D R U' B' U' R D F2 U2 L U2 D2 R L,O,Slow N Steady Spring 2016 (2016-06-18~19),333 R2 C #3
+5786526001,R' F U R L2 D R' D' B' D2 B R2 B L2 F D2 F D',O,Woonsocket Cubikon 2026 (2026-08-16),333oh Final B #4
 337020001,U R2 F2 U2 R2 D' R' F U' L2 D L2 U' R2 D' R' D,O,Wirewood Open 2016 (2016-07-24),333oh Final A #4
 401846001,F2 D2 F2 R F2 D2 F2 U2 F L F' U B' D2 U L' R D,O,Maharashtra Championship 2016 (2016-11-13),333 R1 A #4
 416378001,L2 U2 L2 D R2 B2 R2 U' B2 D' B2 F' R2 U B R' B R' F' D' U' B' L2,O,Sydney Championship 2016 (2016-12-17~18),333bf R1 A #2
@@ -124,7 +124,7 @@
 1796536001,B' L2 F R2 F2 D' B2 R2 D2 F2 L' U B F2 U B D2 U,O,Wakefield Open 2022 (2022-01-29~30),333 R1 E #5
 5227601014,R2 D R2 D B2 R2 D2 R B2 D' R2 B D2 F' U R F' L,O,Kyiv Blind Side Autumn 2025 (2025-11-29~30),333mbf Final A #1
 1834974001,F U2 R' B' U2 F' U B2 R2 B' D' R2 B2 U2 D' L2 F',O,Cubing Returns Ghaziabad 2022 (2022-03-19),333oh R2 B E2
-1869406001,R2 F R' F' R' U R U2 F R2 U2 F' D2 R2 F2 U' B L2,O,Cubing Party Xela 2022 (2022-04-10),333 R1 B E1
+5815668001,U2 L2 F L2 U2 L2 F2 R2 L' B2 D U' B2 D' R' U' L F,O,Seremban Cube Challenge 2026 (2026-09-05),333 R1 B #1
 4279953001,D F R' F' R2 L2 D' R2 U' F' R2 F2 R2 F R2 F' U,O,Egypt Fall 2024 (2024-11-09),333 R2 C #5
 1921883001,B L2 U L2 B' L2 B' U2 F2 U2 R2 U L R' F L B2 D2 U',O,San Martin Cubea A 2022 (2022-05-15),333oh Final A E2
 4966877001,B U' R' B2 R2 U' B2 U B2 U2 L B' R' D' F R F2 D,O,Cubing by the Kings OH 2025 (2025-08-24),333 Final A #5

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / O / bin 2
-# Population in this bin: 146
-# Samples listed: 146 (all entries in this bin)
+# Population in this bin: 150
+# Samples listed: 150 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 29329001,B2 R2 F2 U R2 U B2 U2 B U L2 D' F D2 U' L2 U,O,No Parity Open 2014 (2014-06-21),333 R2 A E2
@@ -151,3 +151,7 @@
 5668085001,L U' L' D2 R F2 R2 F2 D' R2 D F2 D R B2 D' R2,O,Welcome Back UPDS 2026 (2026-05-23),333 R1 B #5
 5680664001,R' U2 B2 R2 D2 U2 B2 F' D2 R2 D2 L' D U2 F D' B R' F,O,Oruro Open 10th Anniversary 2026 (2026-05-30~31),333oh Final A E1
 5684386001,B U R2 U2 L' D2 F2 R D B D U2 R' B2 L F2 L' F2 L,O,NUS Clock Clash 2026 (2026-06-06),333oh R1 C #3
+5783337001,U' D2 B2 U2 R2 L U' B R2 F D2 B D2 R2 D2 F' R F2 D,O,BC Championship 2026 (2026-08-07~09),333 R2 A #2
+5803921001,U F' B2 R' D L' U' R2 U' L' U' L2 U' D2 L2 U2 F2 D' F2,O,Waihopai Winter 2026 (2026-08-22~23),333 R1 A E2
+5809326001,R2 F2 U2 R' B L2 B' R2 D2 F' D2 R U' F2 D F D2 R2,O,Brampton Summer 2026 (2026-08-29),333 R1 E #5
+5814539001,B' U' R2 B2 D2 R2 B2 F' R2 F D2 R B2 R U R' B D2 F',O,Greitieji Miško Kuberiai 2026 (2026-09-05),333 R1 B #3

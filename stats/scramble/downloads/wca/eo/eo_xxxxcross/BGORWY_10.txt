@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / BGORWY / bin 10
-# Population in this bin: 240
+# Population in this bin: 244
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 17388001,R B R2 U2 D' B2 D2 R' L' D B D2 F' U2 D2 F' L2 B U2 B2,Y,Apollo Open 2014 (2014-05-04),333oh Final A #4
@@ -60,7 +60,7 @@
 4935387001,L' D2 L' F L R B2 L2 R' U2 R' D' R F U2 F R2 F',G,Brockport Bolt 2025 (2025-08-16),333 R1 A #4
 905200001,U2 B U2 R2 F2 R2 U2 F L' F L F2 L U' B L' F2 U2 B,O,Ukrainian Nationals 2018 (2018-10-12~14),333 R1 B #1
 932397001,R2 D2 F' R2 F' L2 U2 B D2 U2 B R' B U' R2 U2 B' L2 D' F',B,Lower Moreland Fall 2018 (2018-11-10),333 Final A E2
-941214001,R2 U' L2 U F2 D' B2 R2 F2 R B2 U' B2 D L U2 L' F,O,Fuzhou Open 2018 (2018-11-24~25),333 Final A #3
+5796414001,R' D' F2 R' F2 L' D2 F2 D2 B2 L2 B2 D' R2 B' D U B2 D2,W,SolveIt Bahrain 2026 (2026-08-21~22),333 Final A #3
 942768001,U2 R F2 L' B2 L2 B2 R' U2 B2 D2 F L' U R' B2 F R U L,G,Latvian Open 2018 (2018-11-23~25),333ft Final B #4
 5179409001,L B D' B2 R2 U2 R2 D' R2 D L2 B2 D2 B' L U R B' R' U',B, Balam Cubes Bogor Revival 2025 (2025-11-08),333 R1 B #5
 957758001,R2 F2 L' R B2 R' U2 B2 D' U R' D' U2 L2 R' U2 R B' U' L2,R,CubingUSA Georgia Championship 2018 (2018-12-14~16),333bf Final A E2
@@ -200,7 +200,7 @@
 4615073001,B2 D2 B D2 R2 B' D2 B2 F' L' D2 B U2 F' D' F U L F',G,Plaza Center Cube Lima V 2025 (2025-03-29~30),333 R1 A E2
 4619447001,F2 L D2 F L2 D2 F D2 U2 B2 D' B' R2 B F2 D U,B,Middle Georgia Big Cube Showdown 2025 (2025-04-05),333 R1 C #2
 4624457001,D B2 L D2 R2 F U B' R' B U' D R2 B2 D' L2 B2 D2 B2 L' F,O,Nittedal Mental Breakdown Spring 2025 (2025-04-05~06),333bf R2 B #3
-5513180001,F' D2 B2 D' R U2 R' F' R2 F' L2 D2 F' L2 F' D2 F R D2 R2,B,Karnataka Cube Open April 2026 (2026-04-05),333 R1 E E2
+5780230001,D L' F B2 U R' D' L' B2 D R2 U2 F2 L2 D2 F2 L U,R,Missouri Championship 2026 (2026-08-07~09),333 Final A E1
 4626879012,R B2 R F2 R2 D2 R2 D B' L2 D B2 D2 U B L D' L' F,R,New York Multimate PBQ 2025 (2025-04-04~06),333mbf R1 A #2
 4676634001,U B' R D2 R' D' B2 L' D B2 U F2 U2 L2 F2 U2 B2 D' F,Y,Hvidovre No Means 2025 (2025-04-26~27),333oh Final B E2
 4686822001,L' B' L' D B' R' F U L2 U2 F' B U2 L2 U2 B R2 L' B2 L2 U2,O,NxN in Hanoi 2025 (2025-04-26~27),333bf R1 B #2

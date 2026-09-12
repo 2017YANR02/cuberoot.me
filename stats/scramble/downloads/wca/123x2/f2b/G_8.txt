@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / G / bin 8
-# Population in this bin: 446
+# Population in this bin: 452
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3464595001,L D2 R U F D2 L' B2 D2 R L2 B R2 F2 L2 U2 L2 F2 D' L' F2,G,Osório Guri Cubing 2024 (2024-01-26~28),333bf Final A #2
@@ -31,7 +31,7 @@
 226854001,B L2 D2 F' U2 F U2 F D2 R2 F' D' L2 F2 L F2 U' F2 D2 L2,G,Cape Town Open 2015 (2015-12-06~07),333 R1 D E1
 228441001,D2 L2 B2 U2 B2 L' R' U2 L B R2 D L2 R D2 U' B' F2 U R B R,G,Meguro 3x3 Fest 2015 (2015-12-13),333bf R1 A #3
 3641576011,L2 B2 D L2 U' F2 R2 D R2 L' B2 L F' L D R2 F' L' R' B' L2,G,Pocos Cupos Bogotá VIII 2024 (2024-04-06),333mbf Final C #3
-4385686001,L B' D2 F U F2 D' F2 L2 D' R2 B U' L2 F2 U R2 D B',G,Hvidovre Julecubing 2024 (2024-12-28),333bf R1 B #1
+5775220001,F L R2 B2 R U2 R2 U' L' U2 L D B' R2 U2 F2 R,G,Maoming Open 2026 (2026-08-08),333 R1 G #2
 5496331001,F2 R2 L' D B' L' F' R2 D' F2 D2 F2 D' R2 B2 D' B' R' D2,G,Calabria Open 2026 (2026-03-28~29),333 R1 B E2
 256232001,L R2 D2 R B2 L' D2 F2 U2 F' R2 D L' B F2 D L2 F' L2 U,G,Kaskada Open 2016 (2016-02-20~21),333oh R2 B #2
 4018873001,U' L' B2 L' D B' D' R D F2 B2 D' R2 D' L2 F2 R2 L' B' L' F',G,Gem City Airplane Mode Special II OH 2024 (2024-08-18),333bf Final B #2
@@ -127,14 +127,14 @@
 4128210001,R F2 R' F U2 F' L2 B F' L' B' D' L F' L2 R F,G,Tarnovo End Of Summer 2024 (2024-09-21),333 R2 B E1
 5218701036,U D2 B2 R L' F' L B' L U' R U' L2 D R2 U2 L2 U' R2 B',G,Beijing Only 3x3 2025 (2025-11-23),333mbf Final A #1
 975108001,L2 B2 F2 L' B2 R2 D2 U2 F2 R' B' R2 U R' B2 U' R2 D' B2 U,G,Another Bruin Cube Day 2019 (2019-01-12),333 R2 B #4
-4236211001,R2 F2 D2 B' F2 D2 F2 L2 R D B2 D' R F R B2 R2,G,José Félix de Restrepo Vélez 2024 (2024-10-26~27),333 Final A #5
+5808105001,U' B2 U' B2 U' R2 F2 D R2 L' D' L2 R' D F U' R B',G,Paradise Place Thailand Cube Open 2026 (2026-08-28~30),333oh R1 B #3
 3982674001,B L B2 U2 F D F' D2 R2 U2 R' U2 L2 B2 L B2 D2 L,G,Willimiehen Kuutiopäivät 2024 (2024-08-03~04),333oh R1 B E2
 1006203001,B2 U2 F2 D L2 D' B2 L2 D B' F' R D' B R' B' U B' F' U2,G,Polish Speedcubing Tour Biłgoraj 2019 (2019-02-02~03),333oh R1 B #3
 4228990001,D2 L' F' D' F2 L2 F' L2 U2 F R D2 R' D2 U2 L2 D,G,Frankfurt Cube Days 2024 (2024-10-26~27),333oh R1 A #4
 5696209037,B2 R B2 L2 D' B2 U L2 U2 L B2 L' F D' F2 D2 L R D',G,Manchester Cubing League - Third 2026 (2026-06-13),333mbf Final B #1
 5469641006,F' D2 U2 L2 U2 B D2 F' D' R' U2 R' U2 B2 D L' D2 U' F',G,Nada Que Ver Bucaramanga 2026 (2026-03-22),333mbf Final A #1
 4845651001,F' R2 U2 R2 B F2 U2 R2 U' F' D2 R' D' L U F2 L' D F2,G,Czechowice-Dziedzice Open 2025 (2025-07-04~06),333 R2 C #1
-1032313001,D2 F2 R F2 U2 R' F2 R' F2 R B' F L2 D' F D' L U',G,Singapore Cube Championship 2019 (2019-02-23~24),333 R1 B #4
+5775774034,L2 B2 R' D2 U2 L2 B U B D' L' D' B D L' B L B' L2,G,Blind League Dobřejovice IV: Darkveil 2026 (2026-08-08),333mbf Final A #2
 5054051030,L2 F2 U2 L' U2 L F2 R' F D' B' L B D2 U R' D' F U' L2 U,G,SacQuiet Fall 2025 (2025-09-27),333mbf Final A #2
 2711144001,B U' D2 F2 D2 F R2 D2 L2 D2 F' D' L B' D2 B2 L2 R,G,Bay Area Speedcubin' 46 Live - SSF 2023 (2023-05-06),333 R2 B #5
 4816710001,L B' R2 B2 R2 B2 U2 F' R U2 L2 D F D2 L' F' R2 B',G,Tec Cuber CBBA 2025 (2025-06-21~22),333 R1 B #4

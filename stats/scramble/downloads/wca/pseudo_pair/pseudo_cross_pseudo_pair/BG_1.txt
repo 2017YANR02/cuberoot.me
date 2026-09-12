@@ -1,11 +1,11 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / BG / bin 1
-# Population in this bin: 334
+# Population in this bin: 339
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
-22227001,U2 F2 D2 F D2 F' R2 B' R B U' R2 B U' L F2 U B U B',B,Zhejiang University Open 2014 (2014-05-24),333bf Final A #3
+5813464001,F2 U B2 L2 D B2 U2 F2 D' L2 F D' R2 B F' D2 L' R' F' D2,G,Brookline Favorites IV 2026 (2026-08-29),333 Final A E2
 5676699001,R2 D B' L' F2 U' B2 D' F R F2 R U2 L' D2 L2 U' L',B,Fast in Fargo 2026 (2026-05-30),333 R1 C E2
 25223001,D2 L2 R2 B2 F' L2 D2 F2 U2 L U2 F R2 U R F2 D2 F' R',G,National Cubing Region Open 2014 (2014-05-31~06-01),333 R1 O #1
 41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,G,Indian Nationals 2014 (2014-07-25~27),333 R1 A #5
@@ -24,7 +24,7 @@
 4634815001,B' U B R' U R F2 B2 L D2 B' L2 B' R2 U2 R2 U2 L' F2,G,Gliwice Open 2025 (2025-04-12),333bf Final A #3
 179448001,B2 L F2 D2 R D2 L' U2 F2 R F' R B2 F D' R2 B F2 L' U' L2 U2,G,San Lorenzo Invierno 2015 (2015-08-15~16),333bf Final C E2
 200599001,B' R' F' R2 U L2 F' U' F' U2 R' D2 L' D2 L' F2 U2 B2 D2 F2,B,Venezuela Nationals 2015 (2015-10-09~11),333 R1 E #5
-217633001,L2 D' F' D' R D2 R2 F L2 F U R2 U R2 L2 U B2 L2 U,G,Porto Alegre Open 2015 (2015-11-14~15),333oh Final A E1
+5797914001,F' D F R D2 L' U' B' L2 D L2 U2 F R2 F R2 U2 L2,B,Mid-Atlantic Speedcubing Championship 2026 (2026-08-14~16),333 R1 F #1
 4443337001,B R' F L2 B2 U2 R F B2 D2 F' R2 L2 F2 D2 F U' F' U,B,Cube4fun in Tylmanowa 2025 (2025-01-25~26),333oh Final A #4
 4037210001,R U R' B2 U' B' D2 R' F2 B2 D B U2 F' B' L2 F U2,G,Hotel Forum Open 2024 (2024-08-24),333 R1 A #4
 5603707001,F D U2 L U2 L2 F2 R2 U2 R' B F R' B D B' D' B' F',G,Chengdu Welcoming Summer 2026 (2026-05-04),333 R1 G #2
@@ -36,7 +36,7 @@
 269836001,F U' B' R D2 R' L2 B U' B L' F2 R2 U2 F B' L2 B',G,Kharkiv Special 2016 (2016-03-13),333 R1 D E1
 4674384062,B' R2 F2 D L U' L' F2 R' F2 B2 D2 L' U2 L U2 L' D L B,G,Waterloo Blindfolded 2025 (2025-04-26),333mbf Final A #1
 5330115001,L2 F2 U R2 B2 D' U' F D U' L U L2 F' R2 D' B' D',G,Swisscubing Cup I 2026 (2026-01-17~18),333 R2 B #1
-320651001,F' U2 B F U2 F L2 F' L2 R U2 L' B' D B D R' D' R2 B',B,Lexington Summer 2016 (2016-06-25~26),333oh R1 A #4
+5782235001,U2 R L2 U' R2 U' L2 U' F2 U B R' F2 R U' F U' B D,B,Blenkir Junín 2026 (2026-08-08~09),333 R2 C E1
 4430001001,D' B2 D' U2 B2 U' F2 R' D2 L' B R B' D L D2 U' R,G,Aachen Open 2025 (2025-01-18~19),333 R2 B #3
 435421001,F L' U2 L' D' B' L2 F' R2 F' B L F2 U2 L' U2 R,G,Trondheim Winter 2017 (2017-01-21~22),333 R2 B #2
 442353001,L2 B2 U R' U D2 B U2 R' B' R2 F2 D F2 D' R2 F2 R2 U' F2 D2,B,Cube-E-Mania Open 2017 (2017-02-12),333 R1 G E2
@@ -139,7 +139,7 @@
 5367180001,L R2 B2 U2 F2 D2 F2 L2 U' F' U' L' D2 B U2 R2 U F',B,Phitsanulok Chill Big & Sides 2026 (2026-02-07),333 R1 A #4
 4713211001,B2 L2 F2 U' B2 F2 D U R' B R B D U2 B2 R' U F2 R2,B,Móstoles Open 2025 (2025-05-10~11),333oh R1 B #4
 1659660001,L2 B2 R2 L' D R2 D2 R' B R B2 R2 B' L2 B U2 R2 U2 L2,G,Bogoroditsk Open 2021 (2021-05-29~30),333oh R1 D #2
-1685383001,U D R' U R D F B' L' D' F2 D' B2 L2 U2 R2 D' R2,G,Cubes Masters Zhytomyr 2021 (2021-08-07~08),333 R2 B #3
+5821448001,B' U' B2 D' R L D B2 L U2 F2 R D2 F2 L' U2 D R2 F2 L' F2,B,Florida Championship 2026 (2026-09-05~06),333bf R1 A E2
 1705024001,R2 F' U2 R2 F D2 R2 B2 L F2 U2 F D2 L' D' B F' D' F2,B,Sandnes Open 2021 (2021-10-16~17),333oh Final A #1
 4298819001,D2 F2 L2 U L2 F2 D' R2 B2 L F2 D' F D2 R' F' L' D2 R,B,Sydney Spring Saturday 2024 (2024-11-16),333 R1 C #2
 1794246004,L2 F D2 L2 B R2 F2 D2 F R2 U' F' D' U2 F D L' B L2 B' L' F,B,Jordan Nationals 2022 (2022-01-28~29),333mbf Final A #1
@@ -194,7 +194,7 @@
 4501537001,U D2 B U' D2 B' D' L' U2 F2 D' L2 F2 L2 F2 U B2 U L2,G,Campos do Jordão Open 2025 (2025-02-15~16),333 R1 B #5
 3237687001,L2 B L' B2 L D2 L' B D R L U2 F2 R' B2 L D2 F' B2,G,Marikina City ReMINX 2023 (2023-11-05),333 R1 C #3
 3246835001,D2 U2 B L2 F2 L2 F L2 F U2 D' B' U F L U R' F D2 B R',G,Manchester BLD Day 2023 (2023-11-11),333bf R2 B #1
-3252201001,L2 F U D2 B2 R F R2 F2 R F2 L F2 L B2 U2 L2 B R2,G,The Last Frontier Fall 2023 (2023-11-04),333 R1 C E2
+5779879013,U' B2 D F2 R2 U2 R2 F2 U F' R B2 L2 D2 L2 D2 F D,G,Missouri Championship 2026 (2026-08-07~09),333mbf Final A #1
 3295576001,L2 D' F' R' D2 R2 F' L2 D2 B2 R2 L U L D' U B F',G,Poznań Autumn 2023 (2023-11-25~26),333 R2 A #5
 3300927001,D U F2 R2 D L2 B2 U2 L' B2 D U' L U' F' D B2 F' R,B,TCG Space II Santa Anita 2023 (2023-11-25~26),333 R1 A #2
 4687459001,F2 L2 D' F2 L2 D B2 U' R' D U R' D' L' R' F' L R',B,Rome Spring Open 2025 (2025-04-25~27),333oh Final A E1

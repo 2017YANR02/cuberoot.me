@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / W / bin 7
-# Population in this bin: 909
+# Population in this bin: 926
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4542026001,B' R2 D2 B2 F' D2 R2 F' R' F L2 U2 R U F2 U' L',W,Nepali Nationals 2025 (2025-02-27~03-01),333oh R1 A #1
@@ -80,7 +80,7 @@
 5437909034,D' L D F2 U' F2 L2 D2 L2 U' R' U R' F L' F' D' U2 L' F2,W,Glasgow Blind Evening Spring 2026 (2026-03-10),333mbf Final A #1
 306552001,U2 B2 R2 U2 F2 L' U2 R2 F' U' F' D F D2 U2 L2 F' U' R',W,Austin Summer Open 2016 (2016-05-28),333 R2 B #2
 943310018,L' D2 L' B2 L2 F2 U2 F2 D2 R2 D F' U' F' D B F R2 D B R2,W,Malaysia Cube Championship 2018 (2018-11-23~25),333mbf Final A #2
-5351102001,F D2 B' U2 B' D L2 B' R L F2 B2 D2 L' F2 B2 L' F2 R,W,Illini Cubers Winter 2026 (2026-01-29),333 R1 B #2
+5811715001,L' D2 B' L2 D R2 U2 L2 U L' B' D' L U2 B' U' F',W,Twist 'n Turn Hyd Open 2026 (2026-08-29~30),333 R2 A #5
 322741001,D' R2 U2 L2 R2 U F2 D' L' B' F' U R2 B F' U' F' U,W,Berlin Summer Cube Days 2016 (2016-07-02~03),333oh R1 A #3
 3325489057,U' R2 B' U' D R2 B R U L' U2 R2 D2 R2 U' F2 D' L2 B2 D' F2 L2 U,W,New Zealand Nationals 2023 (2023-12-08~10),333mbf Final A #1
 1372783001,D2 F2 R2 D2 R F2 U2 R2 U R D' B2 D L U' B2 D2,W,UK Championship 2019 (2019-10-25~27),333 R1 B E1
@@ -91,7 +91,7 @@
 783785001,L U2 R' B2 D' F2 B R U' R2 D R2 D' L2 U B2 U2 F2 U2,W,North Plainfield Open 2018 (2018-05-19),333oh Final A #2
 5571619001,B2 D' U2 L2 F2 D' B2 L' U B2 U2 F' U2 L' B' L' B' U' B,W,Welcome to Washington D.C. 2026 (2026-04-25),333 R1 B #2
 5000891001,B2 D2 F2 D' B2 U' R2 B L2 B D2 L' U2 B' L' D' B2 U R2,W,Locked in Clocked in Coshocton 2025 (2025-09-06),333oh R1 C E2
-5435236001,U2 R' B' F' D2 L2 B R2 F2 R' F U L U F R U R2,W,Gort-a Go Fast 2026 (2026-03-07~08),333 R1 D #2
+5799960001,R D B R' F' R U' F' R2 F2 B2 R2 D2 B2 L2 U' F2 U' B2 F',W,Fuzhou Summer 2026 (2026-08-23),333oh R1 B #2
 924870001,F' R' D2 F U2 L' B' D' L B' R2 L2 U' F2 D2 R2 U2 L2 F2,W,Parnamirim Open 2018 (2018-11-02~03),333oh R1 B E2
 5700997050,D' F' B2 U' D' R2 U' B' R2 D2 B' D2 L2 B2 R2 B L2 U',W,Redhawk Slow Summer OH 2026 (2026-06-13~14),333mbf Final B #1
 1968946001,D R' B2 L2 D2 R' D2 R U2 B2 D' F' L2 U2 B' U' R B' U2,W,Bluegrass Spring 2022 (2022-06-11),333 R1 D E1

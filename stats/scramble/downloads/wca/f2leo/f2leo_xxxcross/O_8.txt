@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / O / bin 8
-# Population in this bin: 877
+# Population in this bin: 892
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 9064001,R F2 L F2 D2 F2 L' F' L R' F' L B' L U' L2 F D,O,SESC Santo Amaro 2014 (2014-04-05~06),333 R1 B #1
@@ -38,7 +38,7 @@
 4591691001,L' U2 R' U' D B L' B' L B' L B' R2 D2 F' U2 L2,O,Shri Ram Cubing Challenge 2025 (2025-03-22~23),333 R1 D E2
 152327001,D2 L2 B2 L2 U' L2 D R2 D' L' B' D L2 R2 F2 U' F2 U,O,Cowboys Summer 2015 (2015-06-13~14),333fm Final A #1
 154590001,D2 R2 D2 B R2 F2 U2 F' U2 B D2 U' R2 D' F R' U' L2 R U',O,Santarém Open 2015 (2015-06-20),333 R1 A #1
-160661001,U2 R2 B L2 F' L' F U' B' R' B L B2 L' B2 D2 L D2 B2,O,Cube-a-Thon 2015 (2015-07-04),333 Final B #2
+5794476001,R U' R' F2 U R2 F2 R2 L' B U' B2 U R2 U' L2 D2 R2 F',O,York Summer 2026 (2026-08-22~23),333 R2 B #3
 4999557001,B' R U F' U2 L2 B U2 F' L2 B F2 D2 L F2 R U2 L' D' B2,O,Cubing in Venteira 2025 (2025-09-06),333 R1 C E1
 1309234001,F2 R2 U2 L U2 F2 R B2 L D2 R D' L R D' L2 R B2 R,O,Berkeley Summer 2019 (2019-09-21),333 R2 C #5
 1532598001,L2 B' R B' U F2 L D L' F' U2 F2 U F2 D' B2,O,Pingtung Cubing Open 2020 (2020-02-01),333 R2 A #3
@@ -81,9 +81,9 @@
 1321414021,U R2 F2 D2 U2 B L F2 L2 U' B' R' F2 U F2 L' U' L' F',O,Hungarian Open 2019 (2019-09-20~22),333mbf Final A #1
 4126713001,U2 F' D2 B2 L2 U' B2 R2 U' R2 F2 D L' B' L D2 B2 D2 B',O,Meridiano Cota 2024 (2024-09-22),333 R2 A #2
 3698102001,L F' R D2 L2 B2 L2 D F2 D U2 F L B' F' R' F2 D2,O,VIT Cube Open 2024 (2024-04-21),333oh Final B #2
-2674114001,R2 B R2 B2 U2 F L2 U2 F2 D2 U2 L D L2 R U F' R' U,O,Berisso al Cubo 2023 (2023-04-29~30),333 Final A E2
+5812302001,F' L2 D U2 R2 B2 D R2 F2 U' L D' B' L' D F2 D2 B U',O,Verapaz Open 2026 (2026-08-29~30),333 R2 B #1
 328939001,U' R2 B2 U' L2 R2 D B2 L' B U B' R' B D2 R2 B U2 R2,O,Houston Cube Blast 2016 (2016-07-16),333oh Final A #1
-3554500001,B' R B2 R F2 D L2 U2 R2 F2 U F' D2 B' F2 U' B F,O,Nalsar Cube Open 2024 (2024-03-02),333 R1 E E1
+5798540001,L' B R2 F2 U2 L2 F' U2 F' D2 F' D' L2 F' L B2 R2 U2 L' D',O,III Capixaba Challenge 2026 (2026-08-22~23),333oh R1 A #2
 957842001,L D2 B2 D2 R B2 L F2 L2 B2 L' F' D2 U L F' R2 D F,O,CubingUSA Georgia Championship 2018 (2018-12-14~16),333 R2 A #5
 3426239001,F' D2 B' U2 B R U D' R' B' L2 U2 L2 F' L2 B R F2,O,Swisscubing Cup I 2024 (2024-01-13~14),333 R2 A #5
 1687144001,U F R2 U2 L2 D2 B D2 F L' U B' L' R D' L2 F2 D L B R2,O,Offline Schwyz Sunday 2021 (2021-08-15),333bf Final A #1
@@ -128,10 +128,10 @@
 4108531001,F2 U2 B2 D' F D R2 B' D F2 U L2 F2 L2 B2 R B2 L,O,Stevenage Beginners September A 2024 (2024-09-14),333 Final B #1
 628096001,L2 U2 F2 U' F' U2 L D2 F2 D L2 B R2 F B2 R2 D2 F,O,Cubing ATMOSphere 2017 (2017-10-28~29),333oh Final C E1
 984819001,U2 R2 U' L' U2 R U2 R U2 B U2 L2 F L2 U2 L2 F D2,O,Poções 2019 (2019-01-19~20),333oh Final A E1
-635853001,F2 R2 B2 L2 U' F2 D' L2 D L2 B2 F' D2 R F2 R' B F2 D F2,O,USTA Winter Open 2017 (2017-11-04~05),333oh Final B E1
+5773724001,L F B2 L D B D2 B2 D' B R U2 L2 U2 R U2 L F2,O,New Braunfels Tube & Twist 2026 (2026-08-02),333 R2 D E1
 1828201050,F L2 F' U2 F' U2 B L B U B' U' L2 R2 B F D2 U2 B' L',O,Kidderminster - British Blind Off 2022 (2022-03-12~13),333mbf Final B #1
 2755524012,F' U F2 B U2 F' U' D L U' R2 B2 U L2 D L2 F' L2 D',O,Jaqueca Di Tella 2023 (2023-05-27~28),333mbf Final A #1
-3465221001,R' U' F D R2 D2 L U2 F2 U2 L D2 R' D2 U2 F U' F' L' B2 F2 R' U' F,O,DC Winter Open 2024 (2024-01-27~28),333fm Final A #1
+5784680040,R' F2 D2 B' U2 L' D2 L' D2 F2 L' R2 D' B D' L' F L2 U2,O,Silent Brasília 2026 (2026-08-15~16),333mbf Final A #1
 3312260001,B U2 D' L D2 F' D2 L U L2 B U2 B D2 L2 D2 B2 R2,O,Anapoima 2023 (2023-12-03),333oh R1 B #2
 655653001,L2 B' L2 B U2 F2 D2 U2 B' R2 D' R B L' U2 B' D F' U2 L',O,Nancy Open 2017 (2017-11-25~26),333 R2 B #2
 1259040001,U D' R F' R U' R2 F L2 U B L2 U2 F2 D2 R' D2 F2 L',O,Vinnytsia Cube Cup 2019 (2019-08-10~11),333oh R1 A #3

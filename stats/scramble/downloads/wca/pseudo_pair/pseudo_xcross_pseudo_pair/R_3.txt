@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / R / bin 3
-# Population in this bin: 678
+# Population in this bin: 685
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 2568701027,U2 F2 R' D L U F2 U F2 U L2 B2 L' D B2 F' U B L' B' L',R,Di Tella Open 2023 (2023-03-18~19),333mbf Final B #1
@@ -85,7 +85,7 @@
 2530490001,R2 D2 B2 L' D2 L' D R2 F L2 U R2 D2 B L R B2,R,Kirkkonummi Time Trial 2023 (2023-03-03~05),333 Final B #5
 5405304014,L2 B' D2 L2 R2 U L2 D2 F2 D2 F2 B' R' B L D2 B L' F R B R',R,Cork Spring 2026 (2026-02-21~22),333mbf Final A #1
 4724505001,R2 B2 D2 R L' F D' B R2 D' L' B2 D2 B' R2 F B L2,R,Cubo Na Mochila João Monlevade Open 2025 (2025-05-17),333 R1 A E1
-442111001,D R U' B D2 L2 F' B R2 D R U2 D' L2 U2 D B2 U2 F2,R,Taipei Open 2017 (2017-02-11),333 R1 E #4
+5801926001,R U B L2 R2 D2 R2 U2 F' D2 B2 F2 R' B2 F U2 B2 R',R,Makati Heroes Speedcubing 2026 (2026-08-23),333 R1 A #2
 449880001,D F2 U L2 F2 D' L2 D2 L2 R U' L' B' D' R' D2 U' B2 R D,R,Carte Blanche Kube Open 2017 (2017-02-18~19),333oh Final A #4
 4844116001,R F' L2 U' B D2 B' U2 L' U2 D2 L D2 U' L2 F' U2 L2 U',R,Quiet Nivelles 2025 (2025-06-28~29),333bf R1 B #2
 2944682029,B L B2 R' B2 D2 L' R' U2 F L' D' R' F L2 B' F2 U' L' F',R,Big Blind Bucharest 2023 (2023-07-29~30),333mbf Final A #1
@@ -141,11 +141,11 @@
 4668790059,D2 L2 B2 L2 F2 D L' U2 R' D B' U2 L' D2 R' U R2 D L' F,R,Efficient in Elmsford Spring 2025 (2025-04-20),333mbf Final B #1
 2999725001,R U2 L B2 L' D2 U2 L U2 R F2 R' D R2 F R' B F2 D2 F',R,Morro Reuter Cubing 2023 (2023-08-19~20),333 R1 D #1
 672643001,R2 F L D2 L U2 L' D B2 U' F R' B2 D2 B2 L' F2 L B2 D2,R,Liberty Science Center Open 2017 (2017-12-16),333oh R1 D E2
-1372783001,D2 F2 R2 D2 R F2 U2 R2 U R D' B2 D L U' B2 D2,R,UK Championship 2019 (2019-10-25~27),333 R1 B E1
+5812007001,L D' R L2 U2 R' D' R' F R2 F R2 F2 R2 D2 F' U2 D',R,Shin Kong Cube Open - Taichung 2026 (2026-08-30),333 R2 C E2
 3295266001,D2 R F U F2 R2 B2 D2 L2 F2 U2 R2 F U2 L' D' B2 F D,R,QUT Qube Challenge Saturday 2023 (2023-11-25),333 Final A #3
 3785656001,U L2 U2 L2 U F2 U' L2 F D B2 R' D2 F R B U2 B F,R,Kanazawa 2024 (2024-05-25),333 R2 B #1
 689298001,R2 F2 U R2 B2 F2 U2 L R B' D L2 D U' L2 U R D',R,Geethanjali Cube Open 2018 (2018-01-21),333 R1 H #4
-1242609001,F' L2 B2 U2 L2 B' U2 L2 U2 B2 L' F R2 U' R2 B' D2 R' B2 R',R,Unifranz Cubing Fest 2019 (2019-07-27~28),333oh R1 A E2
+5796100002,R D B F U2 F' R2 F L2 D2 U2 R2 D' L2 B L D2 L2 B R D2,R,Klemzig Kubing Decathlon 2026 (2026-08-22~23),333mbf Final A #1
 3910725004,F R U' R F' R2 L' F' B2 R U R2 B2 U F2 U B2 D2 F2 D,R,CubingUSA Northwest Championship 2024 (2024-06-28~30),333mbf Final A #2
 4126175001,L' D2 L' B L' D2 B F2 R D2 L' U2 D2 L2 F2 D L2 B2,R,McMinnville Cubing Fall 2024 (2024-09-21),333oh R1 A #5
 2187310001,R2 U R2 B2 R2 D U R' U R2 D' F U' L B F R B' U2,R,Babylon Summer 2022 (2022-09-18),333oh Final A #5

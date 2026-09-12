@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / OR / bin 2
-# Population in this bin: 838
+# Population in this bin: 848
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 82001,B2 L2 U F2 D2 R2 F2 L2 B R' D U2 R' U2 L2 D2 F U',O,Galeries Dorian Open 2014 (2014-03-15),333oh Final B #2
@@ -76,7 +76,7 @@
 4168114001,B F U2 B2 F' D2 U2 L2 F U R' U R2 F R' D2 L U2,R,Gander 2024 (2024-10-05),333 R1 C E2
 1863333001,D2 R2 D2 B2 D2 L' D2 L B2 R U' L B' L' U L' F2 L,O,Romerike Easter Open 2022 (2022-04-09~10),333 R2 A E1
 4360139001,F R U2 L D2 L2 B2 R' D2 B2 F R2 B' L D2 U2 F' D' B,O,Czech Championship 2024 (2024-12-13~15),333 R1 B #4
-1159792001,B R2 D2 R2 D2 R2 B D2 F2 D' R2 D L R D' U' F R2 F',O,Chien Kuo Cubing Party 2019 (2019-05-26),333 R2 A E2
+5816700040,L' F2 R B' F2 R2 D2 L2 D2 B2 D2 R U2 R B R2 B U' F L2 U,O,Mayo Cubing 2026 (2026-09-05~06),333mbf Final A #1
 981083001,R2 B2 F2 R2 D' L2 U R2 F2 U' B U2 R' B2 D2 R' B2 L2 F' U,O,Florence Winter 2019 (2019-01-12),333 R1 A #4
 4801262001,U L' U2 L' B2 D2 U2 L' B2 U2 L2 D U' R B2 L' D' U',R,Dosson al Cubo 2025 (2025-06-14~15),333 R2 C E1
 5115976001,L F2 D2 R2 F2 L' R' D2 B' L' B' F2 L2 D L' B' D L2 R',R,Cajasan Lagos Open 2025 (2025-10-18),333 Final B E1
@@ -84,7 +84,7 @@
 5053102001,B L U2 L' F' L U D2 L F R2 L2 D2 F2 R2 L2 B' U2 D2,O,Solved Central Alberta 2025 (2025-09-27),333 R1 C #4
 351082001,F2 D2 B2 R U2 L' F2 U2 F2 D2 L2 B D' F2 L' D F R2 B2 L2,O,CCC Summer Open 2016 (2016-08-20~21),333 R2 B E2
 2107454001,U2 L' D F U F' L U2 L' F2 L2 B2 D' R2 B2 D2 L2 B2 D,R,German Nationals 2022 (2022-08-19~21),333 R2 C E1
-3926566001,F2 U' R2 L' B' U' D' F L2 B2 L2 U' R2 D F2 U F' U2 L,O,PIB Itaim Open 2024 (2024-07-13),333 Final A #1
+5775368001,U2 L' D2 L B2 L2 R' B2 R' B' R2 D U R2 F' U' F' D' R',O,Maoming Open 2026 (2026-08-08),333 R1 E E2
 944540001,R D2 U2 L2 U2 B2 R' B2 U L U L' F' U2 L2 U' B' R2 D2 B' L',O,Zibo Open 2018 (2018-12-01),333bf Final B #2
 3382232001,F2 R' B2 L2 B2 R2 B' U R D2 B U' F2 U2 B' L D2,R,Bohol Speedcubing Open 2023 (2023-12-28),333 R1 A #2
 1437119001,B2 R' B U L2 U2 D2 B' U R2 D2 B D2 F' B2 D2 F' L2,R,Sucre Open 2019 (2019-12-01),333 R1 A #4
@@ -151,8 +151,8 @@
 660450025,D2 L2 D' R2 F2 L2 D2 B' D' L' B D2 R' D B2 F2 D2 F U',R,Hefei Spring 2014 (2014-05-01~02),333mbf Final A #1
 4874508001,U' R' D B2 U' L2 D U2 F2 D R B' D R' U F2 U2 F L2,R,BrizZon Side Open III 2025 (2025-07-19~20),333mbf Final B #1
 660575015,B L2 D2 F2 L2 D2 B F U2 L' B' D' R' D' L' U2 B' D' R2 B R,O,II Open Arguedas 2014 (2014-10-24~25),333mbf Final A #1
-660590022,F2 U2 B R2 B R2 B2 R2 D2 B L2 D' B2 F D L' B' R2 U' R2 B R2,R,Rebild Open 2014 (2014-11-08~09),333mbf Final A #3
-660595009,F D2 U2 B L2 U2 B' L' R2 B D' L' U2 L D' R B' R' D',O,Respighi Open 2014 (2014-11-22),333mbf Final A #1
+5815249001,F2 U' F2 R' F' B2 D' R F2 R' L2 B' U2 F2 L2 U2 D2 L',R,Ciudad Blanca Ibarra 2026 (2026-09-05),333 R2 A #5
+5809326001,R2 F2 U2 R' B L2 B' R2 D2 F' D2 R U' F2 D F D2 R2,O,Brampton Summer 2026 (2026-08-29),333 R1 E #5
 4239566001,B2 D2 B2 U2 B L2 U2 B' U R' D R B' L D' B D' U' L2,O,Stockholmsligan 306: Ofrivillig Spion - 2024 (2024-10-31),333 Final B E1
 660707002,U' L2 U F2 R2 B2 D2 L2 F2 U F' L D' F D' L D2 R2 F2 D2 B R,O,Mega Rubik 2015 (2015-05-02~03),333mbf Final A #1
 5075086001,B2 R2 B' R2 F2 L2 F' L2 D' L D R' F' R2 B2 L' D' B' R,O,Axemann Fall 2025 (2025-10-04),333 R1 C E1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / ORWY / bin 7
-# Population in this bin: 478
+# Population in this bin: 486
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 2198244038,B U' D' B2 L B' U B2 D2 F2 L2 U2 L2 B2 U' F2 U' R B,W,Trondheim Mental Breakdown 2022 (2022-09-24~25),333mbf Final A #3
@@ -40,7 +40,7 @@
 328264001,D2 U2 F2 D2 R2 F' R2 F2 U R2 B' D2 L2 B L' U B2 U2,W,Hefei Open 2016 (2016-07-15~17),333 R2 B #3
 4871335001,R' U' R2 F' B' L D' L' U D2 F2 D R2 D L2 D R2 B,R,Tooele Open B 2025 (2025-07-19),333oh R2 A E1
 3648623001,U B U R2 F2 L' U2 R' D' L F2 R' D2 L' B2 R' U2 F',Y,Santa Barbara Cubing 2024 (2024-04-06),333 R2 D #4
-353754001,F D R2 D' B' L' B2 L D2 B D2 R2 L2 F2 B' D2 R2 B D2,O,Slovakian Open 2016 (2016-08-27~28),333oh Final A E2
+5792912001,L2 U2 B2 L2 U' L2 D' R2 B U' F2 D' F D' L' D' L' B' R',R,Begastri Open 2026 (2026-08-20~23),333 R1 A E1
 382437001,R2 D' R2 U' F2 D2 U' L R F2 L2 B D' R' D R D2 L2,R,Tucuman Open 2016 (2016-10-08~09),333oh Final B #3
 3048836001,B2 D2 F2 B' D B2 L D F' L2 U' F2 U2 D' R2 D' L2 B2,W,Champagne Open 2023 (2023-09-02~03),333 Final A E2
 392077001,U2 B2 F' R2 F2 L2 F' D2 F' D' U' F U' L2 D B D' R2,W,Marietta Mystery 2016 (2016-11-05),333ft R1 A E1
@@ -88,7 +88,7 @@
 2220855001,R2 D' F R U R' D2 L' B D' R2 B2 U R2 B2 U' D2 F2 D2,Y,Chippenham Autumn 2022 (2022-10-08~09),333 R3 B E2
 680755001,U2 L F2 L U2 L2 F2 D R F2 U2 F2 U F' U2 F R' B,Y,Happy New Year Cubing Dordrecht 2018 (2018-01-05~06),333oh R1 C E1
 5297743001,D2 F2 D2 B2 U F2 D' R2 B2 F' R' B2 L2 F R' B' D U2 R,R,Plaza Madero Chía VII 2025 (2025-12-27),333 Final B E1
-4351235001,B2 D' R U2 L' F2 U2 R2 U2 R D2 B D' B' U' R F L2 F2,O,Taiwan Championship 2024 (2024-12-06~08),333oh R1 C #1
+5784464001,L' B' U' L2 D F2 D2 F2 U F2 U2 F R' D U L D F' L',O,Dåstrup Diverse 2026 (2026-08-15~16),333oh R1 C #1
 702588001,L2 U2 L2 F L2 U2 B F2 U R' U2 F2 U2 R2 F' U2 L R2,O,CMI Tessellate Cube Open 2018 (2018-02-03~04),333oh R1 F #1
 3436847001,U2 L' B2 U' F D2 B D2 F2 U2 R2 D2 L' U' F2 L2 B' F' D',O,Big N Blind Bangalore Jan 2024 (2024-01-20~21),333 R1 B #4
 4943228001,D2 U L2 U2 B2 D B2 U F R F D' L B2 U L2 R' U B,W,Cube en Baie Open 2025 (2025-08-15~17),333 R1 B #1
@@ -105,7 +105,7 @@
 2725138001,U2 B2 L2 B2 U F2 U' L F U F2 R2 F2 U2 L D U2 B2,Y,Cubing In Creek 2023 (2023-05-20),333oh R1 B #1
 5642895001,D2 B L2 U' F2 R2 F' B R' D R F2 L2 B2 L2 U F2 B2,Y,Hamoye Jinju 2026 (2026-05-16~17),333 R1 D E3
 3877566001,U F R F2 L' F2 R F' U2 D B' R2 D B2 L2 U2 R2,Y,Juhannus 2024 (2024-06-20~23),333oh Final A E2
-3868980001,L2 U2 B2 R D2 U2 R2 U F2 U' F' R2 D R F R' D',R,Gem City Donut DNF 2024 (2024-06-16),333 Final A #1
+5790758001,F' U2 F2 L2 F' R2 U2 R2 B' L2 D R' B U B' L2 D' B2,Y,Cubing School SCZ 2026 (2026-08-15~16),333 R3 B #5
 842557001,B' F' L2 B' F2 D L' B2 F2 R D2 U' B U2 L B',O,VCP Invierno 2018 (2018-07-28),333 R1 C #5
 2060472001,B' L U2 R F2 R D2 R F' U' B U2 L B2 D2 U2 R' F2,Y,Valmiera Open 2022 (2022-07-30),333 R1 B #4
 887276001,L2 F' B2 U R L F2 R U2 B D2 L U2 L B2 R' B2 U2,R,Kew Forest Open 2018 (2018-09-22),333 R2 B E1
@@ -192,7 +192,7 @@
 1690307001,R D B' L D2 R U2 L' R' U2 R F L2 R2 D2 L U' R2,W,Cubing Ekat Open 2021 (2021-09-11~12),333oh Final A E1
 2116055001,F L B D' R2 D' L2 B U2 B2 L' U2 R' U2 D2 R' F2 R B2 D2 L',W,Peru Nationals 2022 (2022-08-19~21),333bf R1 B E2
 5499943001,L U L F' D' B' L R2 B2 D' B2 D2 R2 B2 D B2 L F,O,Altos Placeres 2026 (2026-03-28),333 Final A #5
-5624825001,D2 B R B2 R2 U B2 L2 D' F2 D2 L2 B R2 F2 L U2 L2 F2,R,Cubing at Vivira B 2026 (2026-05-10),333 R1 C E1
+5804021001,L' F L F2 L B2 D' R' U' D B2 U R2 D' B2 R D,O,PBQ Žilina 2026 (2026-08-28),333bf Final B E1
 3151140001,B U R U2 D R2 L' U F2 L F2 L B2 R' D2 L' U2 R2,R,UNSA Speedcubing Primavera 2023 (2023-10-07~08),333 R2 F #2
 1801344001,U B2 R' U' B L' B U L' B D2 B2 U2 D2 R D2 F2 L D2,W,Dontrien Open 2022 (2022-02-05~06),333bf Final A #1
 1820076001,B2 L U2 R2 D' L2 B2 U2 B2 R2 U R2 U R' D' U B' L' U',R,UIO 2022 (2022-02-26~27),333 R2 B #2

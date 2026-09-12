@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / W / bin 5
-# Population in this bin: 648
+# Population in this bin: 656
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 2349420001,F' U2 L F' D' B D' B2 L D2 F L2 D2 L2 D2 F' U L,W,TCG Power Up 2022 (2022-12-03~04),333 R2 A #3
@@ -47,7 +47,7 @@
 4672422001,B' U2 D2 F' L2 B' D B' L' F' L2 B D2 F' B D2 L2 U,W,French Championship 2025 (2025-04-19~21),333 Final A #2
 268778001,U2 F' U2 B D2 B' D2 B U2 B2 U' L2 F' U2 L2 B' L' U' B,W,TCG Welcome 2016 (2016-03-19),333oh R1 A #3
 269509001,D F' U2 R2 B' D2 L2 U' B' R' L2 B2 R2 D' R2 D' B2 R2 F2,W,Grudziądz Open 2016 (2016-03-19~20),333 R1 A #4
-3606314001,R' U' F L2 D' R2 F' D2 F L2 B' R2 F2 D2 F' D2 L' R' U F R D2 F2 R' U' F,W,FMC Colombia III 2024 (2024-03-23),333fm Final A #1
+5796204001,L U2 B' U R2 B F2 L2 B' U2 B2 L' R2 D B2 L U' L' B' L2,W,Klemzig Kubing Decathlon 2026 (2026-08-22~23),333bf R1 A #4
 4417813001,U2 R' D' R' D2 F U2 L2 U2 B R2 B' L' U2 B D2 F' U2 B,W,The Battle of Lexington 2025 (2025-01-11),333 R1 C E1
 3240153022,F' R2 L2 U2 B U L F2 B2 D' F2 D R2 D' B U' L' B R2,W,Bigs & Blinds El Alto 2023 (2023-11-04),333mbf Final A #1
 2764486001,R F' D' R2 D2 U2 B U2 R2 B' U F' R2 U' R2 B F L',W,Runaway Bay May Saturday 2023 (2023-05-27),333oh R1 B #3
@@ -175,7 +175,7 @@
 946420001,D2 B D2 F' R2 B' L2 B D' L2 R F2 L' B2 F L2 U B2,W,Rocky Top 2018 (2018-12-01~02),333oh R1 B E1
 4874508001,U' R' D B2 U' L2 D U2 F2 D R B' D R' U F2 U2 F L2,W,BrizZon Side Open III 2025 (2025-07-19~20),333mbf Final B #1
 1291031021,D U2 L2 B2 F2 D' L2 B2 U' L2 B U R D' R2 B L' B' U B' R' B' L,W,Big n Blind in Bangalore 2019 (2019-08-31~09-02),333mbf Final A #2
-967879001,R' D2 F2 R2 F2 R2 U2 R' D L' D' R2 F L F' R2 B2 L2,W,Sumatra Open 2018 (2018-12-29~30),333 R1 B #5
+5813726001,R' D' L' F' R2 F2 U2 B2 U B2 U' L' B F' D2 B' R B,W,Mofunland Speedcubing Singapore 2026 (2026-09-05),333 Final A #1
 2441079001,F U R' D' F2 U2 L2 B2 R D2 B D2 F U2 R2 F2 B2 U2 R,W,Stevenage January 2023 (2023-01-21~22),333 R3 B #4
 1397625001,U' L D L2 F' R U2 R' F' D F2 R' U2 R2 F2 L' B2 L B2,W,Berkeley Fall 2019 (2019-11-10),333 R1 F #2
 980805001,R2 F D2 F' R2 B2 U2 L' U2 L' B' U R U2 B R U2 R2,W,Bay Area Speedcubin' 13 2019 (2019-01-13),333 R1 D #5
@@ -197,7 +197,7 @@
 2923439001,B' L2 D2 U' L2 D L2 R2 D2 U' R F L2 B' D F' D' F2,W,Bangkok Cube Day Rainy 2023 (2023-07-22~23),333oh R1 A #4
 1140907001,D2 F2 U' R2 B2 R2 B2 D R D R D' U F R2 B2 U' R' U,W,İzmir Spring 2019 (2019-05-11~12),333 R1 B #5
 4307421001,U L2 F2 D2 B2 R2 U' R2 L D' F' R2 F L' R' D' R2 F2,W,Meridiano Mosquera 2024 (2024-11-24),333 R2 A E2
-3908730001,B D2 L2 R' B2 U2 L U2 R B D' U R D2 F2 R2 F2 U',W,Parla Open 2024 (2024-06-29~30),333oh R1 B #5
+5804137001,R2 F B' U2 B' R' U' F2 D2 F2 R B2 R' L' B D2 R' F2,W,Kanto Summer 2026 (2026-08-29),333oh R1 C #2
 3925254001,R' U' F L B F2 R B2 F2 L B2 L F2 L2 B2 D' R B2 U L2 R2 D2 R' U' F,W,Israel FMC Championship 2024 (2024-07-12),333fm Final A #1
 2372744001,L2 D2 F' R2 B D2 F2 R2 B' R2 D2 U2 R' B L D F2 R B L,W,Mental Breakdown Bogotá 2022 (2022-12-17),333bf R1 A #1
 1168983001,D' L2 U F2 D' U2 L2 F2 U2 B2 R F R2 U2 L2 U2 F D',W,Wyoming Summer 2019 (2019-06-01),333 Final D #3

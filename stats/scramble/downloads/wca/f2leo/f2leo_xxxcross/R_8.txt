@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / R / bin 8
-# Population in this bin: 861
+# Population in this bin: 874
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5760304001,B2 D B2 U F2 U B2 L' F2 U L2 F2 D L2 B L F2 D',R,Mental Breakdown Bangkok 2026 (2026-07-25),333bf Final B #5
@@ -47,7 +47,7 @@
 144340001,D2 F2 R2 U2 B2 R' F2 L2 B2 L' D' B2 F' U F L' U' B' U2,R,LSLC Open 2015 (2015-05-30),333 R2 C E1
 4823164001,B2 D R' L2 U' R2 F2 R2 U' F' L2 U F' U2 R' U',R,Yunnan Open 2025 (2025-06-22),333oh R1 A #5
 1270915001,B D2 L F' L F' D' B' L U' F2 R2 F2 R2 D2 B2 L2 D2,R,Speedcubing ESYA 2019 (2019-08-24),333oh Final E #3
-2719519001,U2 F2 L' U2 R U2 L' U2 R2 U B U F2 L' R' D' F' D2 B R,R,Silentia 2 - BLD 2023 (2023-05-14),333bf Final B #3
+5792112001,R2 U2 F2 D' L2 D' L2 B R D2 U2 F2 R' U B' F2 U R',R,Temecula Valley Back To School 2026 (2026-08-22),333 R1 F E2
 5422539042,F R' F D' L U L' B R2 B2 R2 L' B2 L B2 U2 R' U' R2 D,R,BL&D BLD Binningen 2026 (2026-02-28),333mbf Final A #1
 1621324001,U' D2 L' U2 F2 U2 B2 L' D2 B2 F L2 B R U R' B' F U',R,Welcome Back Jönköping 2020 (2020-09-26~27),333 R2 A #3
 855471001,R2 U' F' D R' D2 F' U F' L F R2 B U2 B' R2 L2 D2 F2,R,Zwolle Open 2018 (2018-08-17~18),333 Final A E2
@@ -103,7 +103,7 @@
 1641243001,L2 U' F2 R2 B2 U2 L2 D2 R B D B' D' R' D R2 F R2,R,Sydney Re-Open Saturday 2021 (2021-03-27),333oh R1 B #5
 2444073001,B2 L2 R2 F R2 B' D2 R2 U' L' D2 L2 R2 B2 U2 F R2 U F2,R,Korum Cube Challenge 2023 (2023-01-21~22),333 R1 B #1
 2791171001,U' B' D' F2 L2 U R2 B' D' L B F2 D2 B2 L' U2 L' B2,R,Ohio State Summer Solving 2023 (2023-06-10~11),333 R1 B #5
-416507001,B' L2 D2 L2 R2 F R2 F R2 F2 U L' B U' B' L' U2 F U' F,R,Venezuela Nationals 2016 (2016-12-17~18),333 R2 B #2
+5797052001,L F' U' D2 B' L2 D' L2 U' F R2 D2 R2 F2 U D2 F2,R,Kuala Lumpur Cubing Challenge 2026 (2026-08-22~23),333 R1 F E2
 2258464001,D' L2 U2 B' D2 U2 B' L2 D2 R2 D2 B' R' B R' U F' L2 U L B',R,Reno Fall 2022 (2022-10-22),333bf Final A #2
 5122870001,U L U' D2 B' U F2 D2 B' U' F' B U2 L2 F2 B' L2 B,R,FSUbers 10.0 2025 (2025-10-18),333 R2 A #1
 5485777005,D2 L' B R' B U' B2 F2 D2 F2 U' B2 R' D2 B D R U' B L2 U',R,Maxi Mental Delft 2026 (2026-03-28~29),333mbf Final B #2

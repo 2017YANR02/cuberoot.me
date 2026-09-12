@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BGWY / bin 2
-# Population in this bin: 51
-# Samples listed: 51 (all entries in this bin)
+# Population in this bin: 52
+# Samples listed: 52 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 28543001,D2 R2 D2 B F L2 B U' F' U F' D U' R' D2 R2 F2 U2 L2 U2,G,Bucharest Rubik Summer 2014 (2014-06-15),333bf Final A #1
@@ -56,3 +56,4 @@
 5336111001,B F D2 B R2 U2 L2 B U2 F L' D2 F D2 U F R F2 L',G,Mumbai Cube Fiesta 2026 (2026-01-18),333 R1 D E1
 5422542002,B' R B D' L2 U2 F2 L F' U B2 U D B2 R2 U B2 L2 F L2 U',G,BL&D BLD Binningen 2026 (2026-02-28),333mbf Final B #2
 5513603001,D2 F U' B R U2 R U' D L2 B2 D' B2 U2 L2 F2 L2 F,Y,DFW Cubing Spring 2026 (2026-03-28~29),333 Final B #1
+5775855001,B L U' L' U D F L U B2 L2 F2 R2 D R2 F2 B L',G,Cubetec UEA II Manaus 2026 (2026-08-08),333 R1 C #1

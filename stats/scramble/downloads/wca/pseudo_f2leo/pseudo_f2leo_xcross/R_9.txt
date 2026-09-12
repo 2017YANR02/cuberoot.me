@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / R / bin 9
-# Population in this bin: 370
+# Population in this bin: 376
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4310084009,R' U2 F' R' F' D2 R2 F L2 F R2 L' D U L' B F' U' L' F',R,Verona Big & Blind 2024 (2024-11-23~24),333mbf Final A #2
@@ -150,7 +150,7 @@
 1819098001,F2 L2 D2 L2 U R' D F' L2 D F' L F2 U2 B L' F,R,Hem MariCubik Winter Open 2022 (2022-02-27),333 R1 F #5
 1850762001,D B R' L2 U2 L B' U F R' D' B2 U B2 D' L2 D B2 U,R,Cube4fun League III Lubartów 2022 (2022-03-26~27),333 R1 B #5
 1876339038,F2 D' B' U2 L2 F2 D' U2 R2 D B' L2 D F R' F R2 U L' F,R,Kirkkonummen Kuutionvääntelyt 2022 (2022-04-15~17),333mbf Final A #1
-1904745056,U2 R' L' F2 U F' D' R F' L2 F' U2 F' L2 F2 D2 B U2 R' F L2 U',R,Popular 'n Blind Flen 2022 (2022-04-29~05-01),333mbf Final A #3
+5817542001,R' U L' B' L2 F' D2 B R2 U2 R2 U F2 L R' U B' U2,R,Cube Factory Aleksandrów 2026 (2026-09-05~06),333 R1 C #4
 1953251001,B2 U2 L' B2 D L2 U' B2 U' F2 L2 R F U L2 R2 F' L' D',R,Buccaneer Bonanza 2022 (2022-06-03~04),333 Final A #1
 1953880001,B' U' F2 R' L' F2 D' B R2 U2 F2 B2 D R2 L2 U' B2 D B,R,Almadar International School 2022 (2022-05-27~28),333oh Final A #2
 1966526001,F' R' U R D' L B2 U' R B' U2 L2 F R2 F2 L2 B' R2 D2 B R2,R,Pulmapelipäivät 2022 (2022-06-10~12),333bf Final A E1
@@ -204,4 +204,4 @@
 3818262001,U' F2 L R' B2 L F2 L' B U' F R2 D R2 B L' B' F,R,Sicily Summer: Arancino Open 2024 (2024-06-01~02),333 R1 D E1
 3151111001,F2 D2 R2 B2 L2 B2 F R2 D2 U' L' B' D R' D' B F R D R2,R,UNSA Speedcubing Primavera 2023 (2023-10-07~08),333 R2 B #1
 3161501001,F2 U' R D2 F2 L U D L B U' F' U2 B L2 D2 R2 D2 F' L,R,Empire State Fall Focus 2023 (2023-10-15),333bf R1 A #1
-3172437001,U2 R' F U' F R L F' L2 D2 B2 U' B2 R2 U' F2 D B2 U' F',R,Salonica Autumn Open 2023 (2023-10-14~15),333 R1 B #5
+5782981009,U L2 B' L' D R' F' L2 B2 D' B' R2 U2 F' R2 B' D2 F L2 D2 L2 U,R,Kewbz UK Blindfolded Championship 2026 (2026-08-15),333mbf Final A #3

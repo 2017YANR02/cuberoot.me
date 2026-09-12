@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / B / bin 8
-# Population in this bin: 123
-# Samples listed: 123 (all entries in this bin)
+# Population in this bin: 126
+# Samples listed: 126 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 23678001,D R2 U2 R2 D2 F2 U B2 F2 R U F' D F U' F' D,B,San Diego Summer Splash 2014 (2014-05-24),333oh R1 A E2
@@ -128,3 +128,6 @@
 5556479001,U' B F2 D2 R2 U L2 D U' B2 R' U2 R U' B' R' U B' D2,B,New Providence Spring PM 2026 (2026-04-18),333 R2 B E2
 5721779001,R' B2 D2 B2 D R2 U2 R2 B2 R D F' D' U L2 B' L2 F2 U2 B R2,B,Kublördag Uppsala VI - Summer Special 2026 (2026-06-27),333bf R1 A #2
 5736478001,R2 D' L' U2 D2 L2 F' D' R2 F' L2 U2 B2 L2 U' L2 U D,B,BBQ Ropaži 2026 (2026-07-04),333oh Final B #5
+5791977001,F2 L2 B2 R' D' R2 F U2 R' B2 U2 R F2 D2 R B' R2 B',B,Temecula Valley Back To School 2026 (2026-08-22),333 R1 E #2
+5809683001,B' L' U2 D F D2 B L B' R L' B2 R' U2 D2 L B2,B,DFW Cubing Summer 2026 (2026-08-29~30),333 R3 B E1
+5810055001,L2 F D F U2 D' B L2 F2 U2 D2 R2 D' F D2 B2 D2,B,Bay Area Speedcubin' 69 2026 (2026-08-29~30),333oh R1 D #2

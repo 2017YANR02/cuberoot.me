@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / G / bin 6
-# Population in this bin: 821
+# Population in this bin: 835
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 951223001,L2 U' F2 D' R2 F2 U2 R2 U' B' D R' B D2 B D U2 B2 L2 U2 B' L2,G,GLS Cup Final 2018 (2018-12-01~02),333bf R1 A #2
@@ -179,7 +179,7 @@
 772466001,B L2 D2 R2 F' U2 R2 F U2 R2 U F R D' L' F' U' L' R,G,Cube for Cambodia 2018 (2018-05-06),333oh R1 B E1
 1479307001,U2 R B2 R D2 B2 L2 U' F' R' U B R' B2 U F' U' B,G,Cubers Eve Środa Wielkopolska 2019 (2019-12-21),333 R2 B E2
 5467369001,D2 L U F2 U F' B2 R2 F2 U R B2 R' B2 R2 D2 R F2 R,G,Illasi al Cubo 2026 (2026-03-21~22),333oh Final B #5
-5306446001,L2 U' D2 F L2 F U2 F L2 D2 U2 R B2 L B L R' D' R',G,Weston-super-Mare Winter 2026 (2026-01-03~04),333 R1 A #3
+5816507001,R F2 L' B2 L' U2 B2 L U2 B' R' B2 L' U L B2 D F2 U',G,Bilbao Open 2026 (2026-09-05~06),333 R1 B #3
 2312089001,B F U2 B L2 B2 F2 D2 L2 R' B2 L' D' F2 D2 L' F2 D2 B',G,Weston-super-Mare Autumn 2022 (2022-11-19~20),333 R1 A #3
 788381001,U2 L' R' F2 L U2 R' F R2 U2 B2 R2 D R' B' F D2 B,G,Tea Time Spring 2018 (2018-05-26~27),333 Final A #2
 791576001,F2 U2 L2 U' F2 R2 D L2 F' U B L D2 B' R' U' B2 D2,G,Cubing Sa Nia Ra Jud Open 2018 (2018-05-26),333 R1 A E1

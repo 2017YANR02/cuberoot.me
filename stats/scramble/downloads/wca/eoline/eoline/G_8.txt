@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / G / bin 8
-# Population in this bin: 68
-# Samples listed: 68 (all entries in this bin)
+# Population in this bin: 69
+# Samples listed: 69 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 30696001,F B' D' L U R D R' U2 L F' D2 B2 U2 R2 F' R2 B D2 B,G,São Paulo Open 2014 (2014-06-20~22),333ft R1 A E1
@@ -73,3 +73,4 @@
 5521609041,R2 D' B2 F U B2 L2 B2 L D' U R' B2 F L F2 R2 D,G,BLD Open Fürth 2026 (2026-04-11~12),333mbf Final A #2
 5670401001,B2 D2 R2 B D2 F L2 B' R2 B D2 R B D L F R' F D F U',G,Brilliant Ballarat 2026 (2026-05-30~31),333 R2 A #3
 5724769001,L' D R2 U B2 U2 L2 B2 D U' B2 F' U L' F L2 B D R' U',G,Questem'paire 2026 (2026-06-27~28),333 R2 A E1
+5783649001,D2 B2 U2 B2 R' B2 R' F2 R2 F' L' D' B U2 R D L' D U,G,BC Championship 2026 (2026-08-07~09),333 R2 B E2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / Y / bin 7
-# Population in this bin: 867
+# Population in this bin: 878
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4187118001,D L2 R2 D2 L B2 R F L' D2 R2 D' L B2 R F,Y,Tarazona de la Mancha Open 2024 (2024-10-12~13),333 R2 A E1
@@ -58,7 +58,7 @@
 4464063026,U2 D L2 F' R B2 U2 L U2 D B F2 D B2 D2 B2 L2 D' L2 D',Y,Ljubljana Blind Open 2025 (2025-02-01~02),333mbf Final B #2
 3755281012,L2 U' B2 D2 L2 B2 F2 D B2 F' D' U2 F' R2 D' L' F' U2 B D2 B' L',Y,Blind Faith Denver 2024 (2024-05-11~12),333mbf R1 A #2
 234606001,R2 D2 B2 U' B2 L2 U B D' L2 B2 U' R' D2 L' D2 L2 B,Y,Cubing Mérida 2015 (2015-12-27~28),333 R1 A #2
-898494001,D2 L2 D2 R' U2 L' F2 L2 B L U' R F L B R B2 R D B R',Y,Madison Blind N Stuff 2018 (2018-10-07),333bf R2 A #2
+5817618001,B' L F' U2 B' R2 D B U' L F2 R2 D' L2 D B2 U' R2 U,Y,Cube Factory Aleksandrów 2026 (2026-09-05~06),333oh R2 A E1
 236609001,L' F2 D2 R2 B2 F2 L' U' B2 L' D L' B F' U2 F' L B2,Y,Shenzhen New Year 2016 (2016-01-02),333oh Final A #5
 2476413001,R' U2 R2 U' F2 L2 D' L D B D2 R B2 D' F2 R' D',Y,Cube4fun Double Weekend Wojciechów 2023 (2023-02-05),333 R1 B E2
 1334429001,U' D' L B2 R F2 L B' R2 D2 R U' R2 B2 L2 F2 U D B2,Y,Friki Festival Valledupar 2019 (2019-10-05),333 R1 B #4
@@ -99,11 +99,11 @@
 1188492001,F' L' F' L2 D2 B2 L B R2 F' U B2 D2 R' L U2 L' U2,Y,Arcadia Summer 2019 (2019-06-22),333oh R1 A E2
 2570149001,F' D' L' B L F' D F' R2 F2 U' R2 D2 L2 U' L2 U F2 D,Y,Synocubix 2023 (2023-03-18),333 R1 C #1
 3821615001,L' F L' B2 L2 F R' D' F L2 U' B2 U D' L2 F2 L2 U B,Y,Turnin' in Termonfeckin Sunday 2024 (2024-06-02),333 Final B #4
-382170001,D2 L2 F2 U L2 R2 F2 R2 B U' B L F' L2 R' U2 B' D' B,Y,Porto Alegre Open 2016 (2016-10-15~16),333ft Final A E1
+5805117001,L2 U F' L' D2 B' D L' D2 B' U' F2 B U2 F' D2 F' U2,Y,Calgary Fall 2026 (2026-08-29),333 R1 G E1
 2668612001,U2 D' R' B2 D2 B' U' B2 U' D F' R2 F2 D B2 U B2 U',Y,Markham 3x3x3 Afternoon 2023 (2023-04-29),333 R2 A E2
 4057629001,L' U' B2 U2 L' B' D' L' D L D2 B2 L2 U2 D2 F' U2 L2,Y,Welcome to Bishkek 2024 (2024-08-23~25),333oh R1 A #5
 1068305001,F L2 D2 R' U D2 L B L B2 U' L2 D L2 U' B2 D R2 U',Y,KSF Almaty City 2019 (2019-03-23~24),333oh Final B #4
-5357971001,R D2 L' B2 L2 U2 B L2 D2 F2 U2 R D' L B2 L2 D2 F2 L D',Y,Ilo Speedcubing Summer 2026 (2026-01-31),333bf Final A #1
+5817607001,U F2 R2 D2 F2 D U2 L F' D L2 D2 L D' U' L F2 U,Y,Cube Factory Aleksandrów 2026 (2026-09-05~06),333 R1 A E1
 2980547001,L B R' D' B' U2 B2 R' U F2 R2 L2 F2 U2 B R2 B' U,Y,Hyderabad Cube Open 2023 (2023-08-11~13),333oh R1 A #1
 398066001,U' B2 F2 U R2 U' R U B2 U B' U2 B L B2 R B R',Y,GeniusCube 2016 (2016-11-05~07),333 R3 E #3
 866883001,L B' D B2 L U2 B' R' L2 B2 U2 L2 U' R2 U2 B2 R2 D' L2,Y,Canada's Best in the West 2018 (2018-08-24~26),333oh R1 C #2
@@ -200,7 +200,7 @@
 2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,Y,Pickering D 2023 (2023-03-26),333 R2 B #2
 791450017,L2 F' D2 R2 D2 R2 F' D2 U2 L' D L U F L2 B' F D2 B L' F',Y,Palmerston North 2018 (2018-05-27),333mbf Final A #1
 792695001,U' F2 D F2 D F2 L2 F2 L2 D R B2 R2 D' B D B2 D' R,Y,Bayou Bash 2018 (2018-06-02),333oh R1 A E1
-3806296001,U' B2 D U2 B' L2 B' U2 F' U2 L2 R' U' R' F2 U2 B D2,Y,The New School Medellín 2024 (2024-05-25~26),333 R1 C E1
+5805326001,B2 D U B2 F2 L2 U2 R' D L2 R' D2 B' L' U F2 U2 L2,Y,Isla Cristina Open 2026 (2026-08-29),333 Final A E2
 5719308001,F2 R2 D U B2 D' F' R2 F' U' F R2 U F D B2 L' U',Y,Ulaanbaatar Summer 2026 (2026-06-22),333oh Final B E1
 803933001,L2 F2 L2 U' L2 R2 B2 D' L' D2 U2 R' F' L' B F2 R2 D' L',Y,Indian Nationals 2018 (2018-05-25~27),333oh R1 I #5
 806285001,R' L2 D F R' B2 L U D B2 D' R' F2 U2 F2 R D2 L F2 R2,Y,New Hope Open Spring 2018 (2018-06-16),333 R1 C E1

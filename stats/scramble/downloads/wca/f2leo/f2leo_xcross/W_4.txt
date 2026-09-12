@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / W / bin 4
-# Population in this bin: 418
+# Population in this bin: 425
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 2533429046,U' F2 D R' U' D L F D' U2 F R2 B2 L2 D2 F2 B' R2 U2 D B' L2,W,MBLD in a Madison Meeting Room 2023 (2023-03-04~05),333mbf Final A #2
@@ -127,9 +127,9 @@
 928755001,F' D B L2 D2 B U D F' D' R' F' D2 B' U2 R2 U2 R2,W,Dalhousie Open 2018 (2018-11-10),333 R1 C #5
 936724012,R2 F2 L2 U2 R2 U F2 U' L2 U2 L2 F' L2 F' U2 L U2 B' D' R B R',W,Silent Swap Open 2018 (2018-11-17~18),333mbf Final A #1
 939623001,F2 R' F2 D2 R' F2 R D2 L' R2 F' D R2 F2 U' R2 U2 R2 D L,W,Wuhu Open 2018 (2018-11-24~25),333 R2 D #5
-944249001,R' F2 L2 F2 L F2 R D2 R' D' F L D2 B' D' B U2 L' R2,W,Luisita Speedcubing Open 2018 (2018-11-24~25),333 R2 A #2
+5815668001,U2 L2 F L2 U2 L2 F2 R2 L' B2 D U' B2 D' R' U' L F,W,Seremban Cube Challenge 2026 (2026-09-05),333 R1 B #1
 4749555001,U F2 R2 U' F2 U R' F' R' B D' F L F2 D' B2 U2 R',W,Swisscubing Cup III 2025 (2025-05-24~25),333 Final B #1
-971136001,B2 R2 D' L F2 L' F2 B' U F2 L' F2 B2 L' B2 R2 D2 L D2 F2,W,Southeast Texas Winter 2019 (2019-01-04~05),333 R1 B #4
+5792301001,D F' D L2 U' F U' L' R2 B' D2 B L2 B2 U2 R F2,W,Singapore Augu-Skewb Day 2026 (2026-08-23),333 R2 B #5
 998958001,D L2 F2 D' B2 U B2 U2 R' F' L D R F L' U2 B L2 R2,W,Taipei Peace Open 2019 (2019-01-26~27),333 Final A #5
 1015089001,B2 R' F2 R2 B2 D2 L B2 F' L' D2 B' U' B2 D2 F L2 B' L' B',W,Medan Lunar New Year 2019 (2019-02-09~10),333bf Final B E1
 3460843001,R D2 B' R' B D F' R' F B2 R U2 F2 L' F2 L' F' L2,W,Gort-a Go Fast 2024 (2024-01-27~28),333 R1 D #3
@@ -200,7 +200,7 @@
 2237565001,F R2 U R2 B2 D2 L2 U' B' D R2 D F2 D L D' B',W,Koalafication Melbourne 2022 (2022-10-15~16),333 R1 F E2
 2279861001,R B D2 F L2 B' U2 L2 D2 R' F' R2 D F' R' D' B' R2 F2,W,Cuber Jackets Fall 2022 (2022-10-29),333oh R1 A #2
 2666479001,F' R' D L D2 B2 L F2 R' F2 L B2 U B U' R D2 U' R',W,Twisters in Tulsa 2023 (2023-04-23),333 R2 B #5
-2332029001,L' R2 F' L2 D2 L2 R2 F' L F2 D' F2 D' F R2 B' F,W,Tbilisi Open 2022 (2022-11-27),333 R2 B E2
+5792643001,D' L2 D F2 R F2 R2 B2 R' U2 B2 F' D' F' L B2 L B' R,W,Begastri Open 2026 (2026-08-20~23),333oh R2 A #2
 2398410001,R D2 R2 B' D2 L2 B2 R2 F' U' R' U R' U2 R' F U2 B,W,Taiwan Championship 2022 (2022-12-16~18),333oh Final A E1
 3698392001,U2 D B2 U2 L B' D2 B' D B R2 D' B2 L2 F2 R2 L,W,Nub Open Yucaipa 2024 (2024-04-20),333 R2 A #5
 4251056001,F2 R2 B' L2 D2 B U' R' F' D L F2 R' L2 U2 F2 L2 B2 L' B2 L2 U,W,Rubik's UK Championship 2024 (2024-11-01~03),333bf R1 A #1

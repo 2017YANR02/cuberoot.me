@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / BG / bin 4
-# Population in this bin: 105
-# Samples listed: 105 (all entries in this bin)
+# Population in this bin: 111
+# Samples listed: 111 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 33688001,D' L D2 R2 L' D R' B' D L' F D2 R2 B2 U2 B2 D2 B D2,G,P3 Grand Open 2014 (2014-06-28~29),333 R1 S E2
@@ -110,3 +110,9 @@
 5700996020,B2 U' B2 F2 L2 D U' R D' B' F2 L' R' D U' F' U' F D,B,Redhawk Slow Summer OH 2026 (2026-06-13~14),333mbf Final A #1
 5708060001,U2 B2 R2 D' F' L2 D' B D2 B2 U2 F' L2 D2 B U2 L' B' R2,B,Agoura Summer 2026 (2026-06-20),333 R1 B #2
 5728205001,U' L2 B2 U B2 U' B' D2 F D2 U B' F U B' L2 F2,G,Warm Up Carolina Pride 2026 (2026-06-27~28),333oh R1 B #5
+5773259001,F' D R2 L2 B U' B U F B2 D2 R2 D2 F D2 F2 B',B,Perth Winter 2026 (2026-08-01~02),333 R1 E E2
+5774756001,B2 D2 L' F L2 U2 F B2 R L' F2 D2 R' B' R' F',B,Alexandria Summer 2026 (2026-08-03),333 R1 A E1
+5775855001,B L U' L' U D F L U B2 L2 F2 R2 D R2 F2 B L',G,Cubetec UEA II Manaus 2026 (2026-08-08),333 R1 C #1
+5795973001,F' D2 L F' U' R2 F2 D L2 D2 L2 B L B2 D2 U' L2 R',B,Capelle Chaos B 2026 (2026-08-23),333oh Final B #4
+5798714001,F2 B' U' R B2 R' F' R' F L2 F R2 U2 B U2 B2 L2 D',B,III Capixaba Challenge 2026 (2026-08-22~23),333oh Final A E2
+5820364015,L D2 F2 L2 R2 B R2 U2 L2 D B D B2 L D2 R' F' U B R',B,New York Big and Quiet Championship 2026 (2026-09-05~07),333mbf R1 B #2

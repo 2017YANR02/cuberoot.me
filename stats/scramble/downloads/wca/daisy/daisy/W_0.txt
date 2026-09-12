@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / W / bin 0
-# Population in this bin: 164
-# Samples listed: 164 (all entries in this bin)
+# Population in this bin: 168
+# Samples listed: 168 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 8881001,U' L2 U' L2 B2 U F2 R2 D2 F' D L R B U2 B D B2 D2 L' B,W,BP Cube Day 2014 (2014-04-05),333bf Final A #3
@@ -169,3 +169,7 @@
 5669943001,U2 L2 D' F D2 L2 D F' L U F2 D' R2 U' R2 F2 R2 U2 B2,W,ROC the Cube NY 2026 (2026-05-30),333 R1 A #3
 5732453001,U2 L2 B' R U L2 U' B2 U2 L2 F2 L2 F R2 F' R' B F U' B,W,Mid-Atlantic Quiet Championship 2026 (2026-06-27~28),333bf R2 B #2
 5769100001,B2 L' R2 D2 U2 B2 F R2 B F' R2 U2 D F L2 B2 U2 B' L',W,Elmsford Extravaganza II 2026 (2026-07-28),333oh Final B #5
+5773788001,U' D2 L' F U2 B' D2 L U' D' L' B R2 F L2 F2 D2 B',W,CCPA Open 2026 (2026-08-01),333oh Final A #2
+5777190001,R2 F' L2 U2 B F R2 D B U' R F L2 U2 B F2 R2 D',W,Bristol August 2026 (2026-08-08~09),333oh Final B #3
+5780669001,U' F' D' L2 F R2 D2 F' D2 L2 B' D L' U2 R' U L' F R',W,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R1 D #1
+5806842001,B2 D B2 R' D2 R2 U' L2 D' F2 D2 R D' B' U' B' L' U,W,Slovenian Nationals 2026 (2026-08-28~30),333 R2 A #1

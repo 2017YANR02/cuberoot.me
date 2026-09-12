@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / ORWY / bin 13
-# Population in this bin: 53
-# Samples listed: 53 (all entries in this bin)
+# Population in this bin: 54
+# Samples listed: 54 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 35123001,D2 F2 D R2 U2 B2 U F2 L2 R2 D R' B2 R2 U B' F' U2 R U B2,O,Plentzia Open 2014 (2014-06-28~29),333oh R1 A E1
@@ -58,3 +58,4 @@
 5370136001,L2 F2 R' D2 B2 D2 B2 L' D2 R' D' F' L' D2 U' L2 F2 L' U2 L',O,Alekuben 2026 (2026-02-07~08),333oh Final A E1
 5690730001,D R F2 D2 L2 D2 R2 D' R2 B2 D2 B2 U' R2 F' D' F' R B D2 F2,O,SAJ Águas da Prata 2026 (2026-06-06~07),333 R2 A #4
 5699488001,R' U F' R' D R2 B R' D2 L U2 B2 R' F2 L' U2 L D2 L F',O,Twist 'N Turn Kyiv 2026 (2026-06-14),333 R2 B E2
+5776763001,L' D R' U2 D2 R2 U B D' F R B2 L2 D2 L D2 R' D2 F2 L',O,Cube Factory League Brzeziny 2026 (2026-08-08~09),333 R2 B #1

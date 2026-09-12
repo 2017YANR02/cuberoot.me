@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / BG / bin 10
-# Population in this bin: 870
+# Population in this bin: 880
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4812001,L2 R2 D' U2 R2 F2 D2 B2 F L2 B D2 L D2 L2 D' R' U F' D2 B,B,Dixon Spring 2014 (2014-03-29),333bf Final A E2
@@ -23,7 +23,7 @@
 3298244085,D2 F' L' B2 U2 B2 R2 D R2 D L2 B2 L U' R2 B' D2 L' U' B L2 U',B,Mountain View Multi Madness 2023 (2023-11-24~27),333mbf R1 A #1
 3991794032,B2 U2 R' B2 L2 R U2 L' U' F2 R' D B R' D2 U2 B' R' B' L2,B,Slovak Nationals 2024 (2024-08-02~04),333mbf Final A #1
 4797708001,L' D' L2 U2 B2 F D2 B D2 R' F R2 U L' D' B R' B2,B,Niterói Open 2025 (2025-06-14),333oh R1 A #5
-5013852001,L2 R2 U' B2 R2 B2 D' L D2 R F D B' U' R2 D2 B2 R F2,B,NUS Open 2025 (2025-09-13),333 R2 A #2
+5782971042,D2 R2 F2 U2 F' L2 U2 B U2 B2 R U B D' R F' L2 F2 U' R B' L',B,Kewbz UK Blindfolded Championship 2026 (2026-08-15),333mbf Final B #1
 5103759001,R' D2 B2 L' B2 R' F2 R' D2 B' U' L R' F2 D' B2 D' B' D U,B,Ranst Autumn 2025 (2025-10-11~12),333 R2 A #1
 75308001,F L2 R2 F2 U2 B' F L2 D L' D B2 D R B' U F' D' L',B,Trondheim Fall 2014 (2014-11-08),333 R1 B #3
 4486439001,F2 D R2 D2 B2 U L2 F2 L2 R' B L U R D' L' U' R' B' U2,B,NxNs at Finprov 2025 (2025-02-16),333oh R1 A E2
@@ -72,7 +72,7 @@
 3209178001,D2 R2 L' F D' R U B' L' U' F U2 L D2 L2 U2 F2 R',B,NZ North Island Championship 2023 (2023-10-27~29),333 Final A #5
 1663874001,R B' F2 L' F2 D2 L F2 L' R' U2 R2 D' B' R' D2 B' F U' B,B,GA Cubers Return A 2021 (2021-07-10),333 Final A #2
 2777592001,L2 F2 D2 U2 F R2 D2 B2 D2 R B' U2 F2 U L D R F2 D2,B,Dutch Open 2023 (2023-06-03~04),333 Final A E2
-3904030001,U B2 R D2 B2 F' U2 R2 B' R2 B2 R2 U2 L B R' D U B',B,Gurugram Monsoon Cube Open 2024 (2024-06-29~30),333 R1 C #4
+5773744001,D2 R B U' F B' L D' B' R B2 U2 L2 D R2 D B2 L2 F2,B,New Braunfels Tube & Twist 2026 (2026-08-02),333 R2 B E2
 303851001,R' U' F D2 F2 D2 L2 F2 D F2 L R D' L' D L' B' F' L D L2 D2 R' U' F,B,Big Apple Spring 2016 (2016-05-21),333fm Final A #1
 4583944001,D R U2 L' U D2 R F' L D B' L2 F' D2 B L2 D2 F U,B,Start in Veenendaal 2025 (2025-03-22~23),333 Final A #5
 307115001,D2 L2 U2 R2 D L2 R2 D L' B R2 F U R2 F R D' R2 U',B,Cube For A Cure Spring 2016 (2016-05-29),333oh R1 D #4

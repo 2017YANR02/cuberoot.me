@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / O / bin 6
-# Population in this bin: 722
+# Population in this bin: 731
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 2497001,L' D2 R' D2 R' U2 L B U2 L F' U L' D2 U' B U2,O,CMI Fiesta Open 2014 (2014-03-21~23),333 R1 B #5
@@ -17,7 +17,7 @@
 64421001,D2 F2 R D2 R' F2 L U2 R' F2 L2 B D R2 B2 D' F' R' F,O,Harvard Fall 2014 (2014-10-11),333 R1 B #2
 3869167001,L2 D2 R2 D2 F2 D2 F R2 D2 U F' L F' L R B' D' F U,O,Stockholmsligan 413: Kalle i Kubik - 2024 (2024-06-19),333oh Final A #3
 4954346001,B' D' R D2 B' U' D' R U L2 U L2 U L2 U2 L2 F R B',O,South India Cube Championship 2025 (2025-08-14~17),333bf R1 A E2
-3803905001,L2 U' B' D2 F L2 D2 B' D2 L2 F2 R B' R' U L2 B L2 U',O,Guiyang Open 2024 (2024-05-26),333 R1 D E1
+5802972001,L D' L2 B U L2 D2 R F B2 L2 U2 F2 B U2 B' R2 F,O,IALA School Open 2026 (2026-08-23),333 R3 A E1
 3125889001,L' D F2 R2 F R2 U2 B' R2 U L' R' D2 F' L B R2 B2,O,North Woods 2023 (2023-09-30),333 R1 D #3
 102171001,D2 R2 U L2 B2 U' L2 B2 F2 L' U B U2 L2 R' D U2 F2 R2,O,Speed Cubing Mumbai Unlimited 2015 (2015-01-16~18),333 R1 T E1
 1167783001,D L2 B2 U' R2 B2 R2 D2 F2 L D2 R U F L2 D' B' L B2 D2,O,TCG Fall 2019 (2019-06-01),333 R2 D E1

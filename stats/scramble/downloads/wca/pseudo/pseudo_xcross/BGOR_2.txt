@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / BGOR / bin 2
-# Population in this bin: 537
+# Population in this bin: 546
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3733001,U2 R F' L' B2 L F2 R D' F' L2 D2 F2 D2 L' U2 R2 U2,G,Kharkiv Special 2014 (2014-03-22),333ft R1 A #2
@@ -78,11 +78,11 @@
 5663630001,B' R L' U2 R D2 B' R U2 R2 B2 L2 U F2 B2 R2 U2 L,B,Barby Cube 2026 (2026-05-22~25),333oh Final A E1
 3375663001,L2 F2 R U2 B' U2 B U' D2 R2 L B2 D2 B2 R B' D,R,Paraguay Nationals 2023 (2023-12-17),333oh Final A E2
 495545001,D2 R2 F2 R D2 F2 L' D' L U' L' B' U B R2 F2 U',G,L.P. 3600 Rubik 2017 (2017-04-22),333 Final B #2
-5572466001,D L2 R2 D L2 R2 F2 L2 B' U' B2 D2 L2 B2 D2 L B D2 F',B,Abilene Spring 2026 (2026-04-25),333 R1 D #4
+5775855001,B L U' L' U D F L U B2 L2 F2 R2 D R2 F2 B L',G,Cubetec UEA II Manaus 2026 (2026-08-08),333 R1 C #1
 2432117001,U2 B' D2 L2 B' L2 F2 L2 U' R' D2 B' U' R' D2 B' F2 U' L2,G,Mathsoc Delhi Open 2023 (2023-01-14~15),333 R2 A #5
 5336111001,B F D2 B R2 U2 L2 B U2 F L' D2 F D2 U F R F2 L',G,Mumbai Cube Fiesta 2026 (2026-01-18),333 R1 D E1
 1833536001,D R2 D2 L2 D' L2 B2 U' R2 L' B2 L2 U' L R' D2 B' U' L,R,Kubiat Esther 2022 (2022-03-16~17),333 R2 C E2
-2592027001,U' F2 B2 R' B' D' R' B' D R2 U2 L2 B2 R2 U' L,R,Moksha Cubing 2023 (2023-03-25),333 R1 F E1
+5783764001,R B' R2 F2 D' L2 D' B2 D2 U' R2 L F' R D2 U2 F2 L' R',O,Summer Scramble UW 2026 (2026-08-15),333 R1 E #3
 551547001,R' U' F L D2 L R2 D2 U2 B2 D2 R U2 R' F' L D' F' L R2 D2 F R' B R' U' F,G,BOB 2017 (2017-07-15),333fm Final A #3
 5430066001,F2 L' F2 L2 D2 L2 D' U2 F2 L' U2 L D R F R2 U' F2,O,Back to Downtown Singapore 2026 (2026-03-08),333oh R1 C #5
 3145409001,L2 F U L2 U' F2 D' L2 F2 D2 F L D B R B F' R' U',B,Somerset September 2023 (2023-09-30),333 Final A #3
@@ -153,7 +153,7 @@
 946729001,L' D2 L' U2 R F2 R' B2 L' B F2 D' L2 F L D' L2 B' R2,G,Vancouver Select Winter 2018 (2018-12-02),333oh Final F #1
 2342098001,U2 R' F2 U' D L2 U F' L U' R2 U R2 D' R2 L2 D2 F2 D' B2 F',R,Jerusalem Open 2022 (2022-12-03~04),333 R2 D E2
 3075621048,D' F2 R2 U' F2 D U' F D U2 L2 F2 R2 B' D L U L' U' L2 U,R,SacQuiet Fall 2023 (2023-09-16),333mbf Final A #1
-5491435001,R' U' F D2 B2 U' L2 R2 B2 D' F2 U' F2 B' L' D2 B' F D2 R2 U' R2 B2 R' U' F,R,CubingUSA Southeast FMC Championship 2026 (2026-03-29),333fm Final A #3
+5814539001,B' U' R2 B2 D2 R2 B2 F' R2 F D2 R B2 R U R' B D2 F',O,Greitieji Miško Kuberiai 2026 (2026-09-05),333 R1 B #3
 981083001,R2 B2 F2 R2 D' L2 U R2 F2 U' B U2 R' B2 D2 R' B2 L2 F' U,O,Florence Winter 2019 (2019-01-12),333 R1 A #4
 3392857004,L F L' B' U2 D2 R' F L2 U2 F' U2 R2 D' R2 D B2 L' F',O,Vilnius Winter 2024 (2024-01-06~07),333mbf Final C #1
 3926566001,F2 U' R2 L' B' U' D' F L2 B2 L2 U' R2 D F2 U F' U2 L,O,PIB Itaim Open 2024 (2024-07-13),333 Final A #1
@@ -197,7 +197,7 @@
 5571248001,R' U' F U2 F2 R2 B2 U B2 R2 U B2 R D2 U L2 F2 D' U2 B' U' R' U' F,R,Fewest Moves Bogotá XII 2026 (2026-04-25),333fm Final A #2
 1476086001,F L B' R2 F2 B R U R2 U2 L' D R2 U F2 R2 U R2,G,Harbin Open 2019 (2019-12-22),333oh Final C #5
 1490039001,L' F2 R' B2 L D2 L2 D' L2 U' R2 U F' L2 B R' B R2,B,Xi'an New Year 2020 (2020-01-01),333 Final A #2
-2844763001,B2 D2 L2 R2 F2 D F2 U R D2 U R B' L2 D R' D U2 L',R,Eretum III: WC Warmup 2023 (2023-06-30~07-02),333 R2 A #1
+5778712006,F' D' F2 U R2 D2 R2 F2 U2 L U' F L' R F2 R' B' F' U B R,G,Ocaña BotijOpen 2026 (2026-08-08~09),333mbf Final A #1
 1592215001,B2 U' F2 U' F' B2 D' F' B2 R U L2 U2 L2 U2 B U2 B2,O,Santo Domingo Winter 2020 (2020-02-29~03-01),333 R2 A #3
 2785237001,D2 R2 B' L2 F' R2 B2 D2 B F' U' L' F' D2 L2 B D2 L2 F' U',B,Jogja Fun Speedcubing 2023 (2023-06-03),333 R1 C #5
 1895888001,B R2 B2 R2 F2 D' B2 D F L' B2 L' U' B2 L U' B2 U L B,G,Fast Kids Santa Cruz 2022 (2022-04-23~24),333bf Final A #1

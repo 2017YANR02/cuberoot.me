@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / W / bin 7
-# Population in this bin: 832
+# Population in this bin: 849
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3483929001,D B' D F' U2 B U L F2 R F' L2 U2 B2 U' L2 D' F2 L2,W,Empire State Winter 2024 (2024-02-03~04),333 R1 C #2
@@ -30,7 +30,7 @@
 2215061028,L' B' R F2 D2 B' R2 F2 U2 R2 B2 L U' R U B D R B R2,W,Australian Nationals 2022 (2022-09-30~10-02),333mbf Final A E1
 3547930001,F U B2 D' F2 U2 F' L2 B2 F' U' R U B F' U' R,W,Velilla Open 2024 (2024-03-02~03),333 R1 D #5
 116898001,L2 F' B2 R F2 R U' F L B D2 L U2 L U2 B2 D2 L2 F2 U2,W,Utah Pi Open 2015 (2015-03-14),333oh Final A #3
-2330044001,D B' R2 B' D2 F U2 L2 B2 D B' U2 F2 R' B D2 U' B2 U',W,Oakville Fall A 2022 (2022-11-26),333oh R1 C #3
+5815668001,U2 L2 F L2 U2 L2 F2 R2 L' B2 D U' B2 D' R' U' L F,W,Seremban Cube Challenge 2026 (2026-09-05),333 R1 B #1
 1499776001,U2 F2 R D2 L U2 F2 L2 U2 B' L' U2 R B U' L2 U L B2,W,Colorado Springs Winter 2020 (2020-01-11),333 R1 A #3
 4883205001,U' B2 U2 L D2 L' D2 F2 R B D' L2 R' F D R D L2 B2,W,Sonvico Summer 2025 (2025-07-19~21),333 R1 C #2
 132028001,D' R F2 U F L' U' F2 B2 L D2 L2 D R2 F2 U2 D2,W,Cerbuna Open 2015 (2015-04-18~19),333 R1 C E1
@@ -87,7 +87,7 @@
 3605435169,R2 B' L U2 L' F2 U2 F2 U2 L' D' R' D F R B2 U' L' U2 L B2,W,Supermiya PBQ in Tashkent 2024 (2024-03-16~17),333mbf Final A #3
 3979739001,D R2 B2 R D R D' L2 D2 F' U2 B R2 D2 B2 U2 L D2,W,Rubik's WCA European Championship 2024 (2024-07-25~28),333 R1 B #1
 822471001,F D2 L2 U2 B' R2 U2 B' D2 L B' L R' U2 L2 U' L' F,W,Swisscubing Cup II 2018 (2018-07-07~08),333 Final A E2
-5461584001,R L2 U2 F D2 F' U R B2 U F2 U L2 D B2 D' L D',W,Kanta-Hämeen Kuutionvääntelyt 2026 (2026-03-21~22),333 Final A #4
+5786727001,D' F2 R2 B2 R2 D2 R U2 R2 F L2 R' D' B' L' B F R,W,MnM CaMaNaVa Majors 2026 (2026-08-16),333 R2 B E2
 1284427001,L' R2 D2 L' F2 R U2 F2 L' D2 L' F' L' D' B' U2 L' U' B R F L',W,Croatian Nationals 2019 (2019-08-31~09-01),333bf Final A E1
 402731001,B D2 U2 R2 U2 B R2 U2 B L B' L B2 R' F' L2 F L',W,TJHSST Fall 2016 (2016-11-19),333 R1 D #3
 402993001,R2 U2 B2 F R2 B' R2 U2 F2 D2 U' F2 L D' L B2 R D',W,Calgary Limited Fall 2016 (2016-11-26),333 R1 D #5
@@ -138,7 +138,7 @@
 4718488001,L2 U' D2 L' F' L' U' R2 D' B U2 F' B2 L2 F' B2 R' F,W,It's Sarzana O'Clock 2025 (2025-05-03~04),333oh Final A #3
 791248001,F' U L' F' B2 R2 L' F' U B L' U2 D F2 R2 F2 B2 U',W,Cube Factory League Domaniewice 2018 (2018-05-27),333 R1 D #2
 5721208001,D' F L' D L2 B2 L D' F' U' D' L U2 R' L' U2 B2 L,W,Kublördag Landvetter IV: 2026 (2026-06-27),333 R1 B #1
-3820398001,L2 F2 U2 F2 U2 F2 L2 D2 U' L2 U' L F L' U L' D' F' U2 R,W,Side Events Bangalore June 2024 (2024-06-01~02),333oh R1 B #2
+5799960001,R D B R' F' R U' F' R2 F2 B2 R2 D2 B2 L2 U' F2 U' B2 F',W,Fuzhou Summer 2026 (2026-08-23),333oh R1 B #2
 2571449001,D L' B' R2 F' B2 D' R' F2 U2 D' F2 R2 U' D2 B' L D' L B',W,Speedcubing at Seaworks 2023 (2023-03-18~19),333bf R1 B #1
 636926001,F2 R2 F' U2 F R2 F2 U2 F' R2 D' R D2 B R' B' D R U B2,W,Villanueva Open 2017 (2017-11-04~05),333 Final A E2
 4124779001,R L U B2 R2 D R U2 F2 D2 R2 F2 R2 D' B2 R' U B' R,W,HCMC Cubing Autumn 2024 (2024-09-21~22),333 R2 D #2
@@ -151,7 +151,7 @@
 4457701001,D B' U2 D' R' F B2 U2 R2 L D R F2 L2 U2 L2 B2 R' B R,W,Berkeley January Weekday Tricubealon 2025 (2025-01-31),333bf R1 B E2
 5661276001,L2 F2 U' F2 L2 U' L2 F2 R2 B R' U F' L' F2 R D' B' F2,W,Liuzhou Open 2026 (2026-05-24),333 R2 D E2
 660666012,R2 B U2 B2 F2 U2 B R2 D' F2 U2 L' D2 R U F2 U' R' D' L' F',W,Ural Winter 2015 (2015-03-14~15),333mbf Final A #1
-660755001,F2 D2 U2 F2 U2 R' F2 R2 D' F2 R2 B' U F L2 U' F' L2 B' L2,W,Asturias Open 2015 (2015-07-04~05),333mbf Final A #1
+5785108003,D' L' F L R U2 L F2 U2 F2 R2 F2 R U2 B' U L B L' R U2 L2 U',W,Kansas Championship 2026 (2026-08-14~16),333mbf Final A #1
 5760107001,U B2 U2 R U2 F' U2 R' F' U' F2 B2 D B2 L2 D B2 R2 L,W,Elyu Cube Clash III 2026 (2026-07-18),333 Final A E2
 1411343001,L' U2 B2 L' D2 F2 L2 B2 F D' F' D2 F U R2 F2 L D2 L',W,SnoCo Fall 2019 (2019-11-16),333 R1 A #2
 660851016,D2 R2 D2 F L2 R2 D2 B F' D2 F' L' U2 B U' R B L2 R2 U' L2 U',W,Two days in Vitebsk 2015 (2015-10-31~11-01),333mbf Final A #1

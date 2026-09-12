@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / R / bin 10
-# Population in this bin: 294
+# Population in this bin: 301
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 7768001,R2 B2 R2 U' R2 U' R2 B' R' F D' R2 F2 R' U F' U B' D2,R,German Open 2014 (2014-04-05~06),333bf Final A E2
@@ -114,7 +114,7 @@
 5037480015,D B2 R' F2 L F2 U2 R' F' U2 B2 F' U' B' U' L2 U2 L D',R,Mini Mental Milano VI 2025 (2025-09-20~21),333mbf Final A #2
 1432267001,L2 U2 B2 R' U2 F2 R2 U2 B2 D L2 F U2 R' F' U' R2 D2 B2 D,R,Nacionales Guatemala 2019 (2019-11-22~24),333 R1 B #2
 1460198001,R2 B2 U F2 D2 U2 R2 F2 U2 F' R2 F' D' L' R' D B2 U F2,R,Clact-On Socks Off 2019 (2019-12-14~15),333ft R2 A #1
-1463102001,L2 F2 U2 D2 L U' F2 L2 D2 F' U2 R' U2 D2 B2 L U2,R,FME Open 2019 (2019-12-14~15),333 R1 B E2
+5807069001,B D' R2 F2 D2 U' L2 B2 R2 B' L2 U2 F2 R' D' R D B' L',R,Slovenian Nationals 2026 (2026-08-28~30),333 Final A #4
 1492138001,L' R' B2 U2 L' R2 U2 B2 D2 B2 F D' L2 U F' D' R' D2 U F2,R,Adelaide Summer 2020 (2020-01-11),333oh R1 A E1
 4651323001,L U2 L' B2 D2 R U2 F2 D R2 U' F D R' U' B L' B2,R,Haifa Cubing 2025 (2025-04-15~16),333 R2 D #1
 1500835001,B2 L2 R2 U' L2 R2 B2 U' R2 F2 L U' R' B' L2 U B L2 U B',R,Bay Area Speedcubin' 23 2020 (2020-01-12),333 R1 C #3
@@ -149,7 +149,7 @@
 2711108001,L U D2 F' R U' R U' L2 U R2 D' B2 L2 U2 L B U,R,Bay Area Speedcubin' 46 Live - SSF 2023 (2023-05-06),333 R1 B #4
 2722619001,L2 D2 L2 B D2 R U F2 U R' B R2 B F2 L',R,Mandurah Mayhem 2023 (2023-05-20),333 R1 B E2
 2737146001,R2 F D2 R2 F' D2 B' F' L U' R' F' R' U' R2 F L' D,R,Salt Lake Utah Summer 2023 (2023-05-19~21),333 R2 A #3
-2743679001,U B R D2 L' R B2 L B' D R2 F' U2 B2 L R D' B R',R,Pavillion Cube Open 2023 (2023-05-20~21),333bf Final A E1
+5774603001,L' F U2 B2 D' B2 D R2 D' B2 R2 F' U L' D' U F2 U' R',R,Guangzhou GraDUAL 3x3 I 2026 (2026-08-05),333 R1 H #5
 2775066023,L2 D2 F2 D R2 U R2 F2 R' B2 F U F' U2 R U' L' D2 L' B',R,BrizZon Side Open III 2023 (2023-06-03~04),333mbf Final A #1
 2855896001,L U2 L2 B2 D' U B2 U L' R F2 U R' F' U B R D',R,Bothell Summer 2023 (2023-07-08),333 R1 B E1
 5762036017,U' D' F U2 B L' B' D2 L2 F2 R' F' U2 F' R2 F' D2 L2 D2 L2,R,TroisMaisons Zéro Vision 2026 (2026-07-25~26),333mbf Final B #2
@@ -184,7 +184,7 @@
 3389375001,F L2 F U2 B D2 R2 F2 D2 F' U' F2 L B2 U L2 B' R2 B2 L',R,New Year's in the Dolomites 2023 (2023-12-30~31),333 R2 C #5
 3411898001,U2 F U2 R2 F U2 B' R2 F D2 B' L2 R' B2 F' D F2 D2 L2,R,Ke Solo Lur 2024 (2024-01-13~14),333 R2 A #1
 3452262016,U2 F U' B R2 U R2 F2 U' B2 D' U' R D2 R' D' B D2 B L B,R,Ljubljana Blind Open 2024 (2024-01-27~28),333mbf Final C #1
-3468479001,L2 D L U R' F2 D' L2 U2 F2 U2 D2 R' L' D2 U B' R2,R,CMI Tessellate Cube Open 2024 (2024-01-26~28),333 Final B #5
+5787901001,B R L2 F D2 F' U2 D' F' L D' R2 U L2 F2 R2 L2 U B,R,Cultura Campos do Jordão 2026 (2026-08-15~16),333oh Final B E1
 4755807001,D2 R2 F' U2 F U2 F' R F U' L2 D2 F L' R' F2 R',R,USFA Challenge 2025 (2025-05-24~25),333 R2 C E1
 3478366001,L D2 F U2 D2 R' D B2 D2 R' F2 L2 U2 B L' U' F2,R,MYHM Singapore Championship 2024 (2024-02-02~04),333 Final A E2
 3492724001,U2 L B F' U2 F2 D2 B' D' L2 R2 B2 U' R2 B U2 R',R,HCHS Winter Open 2024 (2024-02-03),333 R1 B #2
@@ -196,7 +196,7 @@
 3605153001,L' F' R2 U2 B2 F2 D B2 R2 L U R2 U R2 U2 R2,R,Brilliant Ballarat 2024 (2024-03-16~17),333 R2 B #5
 3642714001,U2 L B' L' B2 U B' R2 F2 R2 D2 R2 B2 L2 U' B2,R,Bay Area Speedcubin' 60 - Mountain View 2024 (2024-04-06),333 R2 B #5
 3648030001,B D' R2 U' B2 R' D' F' R' F U L2 U' F2 D' R2 D R2,R,Charlottetown Mini 2024 (2024-04-07),333 Final A E2
-3648623001,U B U R2 F2 L' U2 R' D' L F2 R' D2 L' B2 R' U2 F',R,Santa Barbara Cubing 2024 (2024-04-06),333 R2 D #4
+5812284024,U B R' F U' F R2 D' L B L2 U D R2 F2 U2 R2 B2 D L',R,Verapaz Open 2026 (2026-08-29~30),333mbf Final A #1
 5592247019,B U D R' B L B' R B2 R2 U D B2 D B2 L2 U' R2 U' L',R,Only 3x3s in Hyderabad May 2026 (2026-05-02~03),333mbf Final A #1
 4509310001,L2 F' L F2 R' F2 D2 F2 L F2 D2 B' F2 L' U L U B2,R,Al Bireh 2025 (2025-02-20~21),333 R1 A E1
 3767570001,R2 B' R2 D2 L' B2 R' B2 R' U2 F2 U L U2 R F D R',R,50 Years of Cubing - Vallentuna 2024 (2024-05-19),333 R2 A #2

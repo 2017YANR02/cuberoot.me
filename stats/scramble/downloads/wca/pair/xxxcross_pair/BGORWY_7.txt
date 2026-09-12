@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGORWY / bin 7
-# Population in this bin: 57
-# Samples listed: 57 (all entries in this bin)
+# Population in this bin: 58
+# Samples listed: 58 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -62,3 +62,4 @@
 5575666026,L' U2 R2 D' L2 R2 B2 U2 F' U F U2 B L' R' U2 F' U F' L2 U',Y,WCC Western PBQ Championship - Santa Clara 2026 (2026-04-25),333mbf Final A #2
 5661276001,L2 F2 U' F2 L2 U' L2 F2 R2 B R' U F' L' F2 R D' B' F2,W,Liuzhou Open 2026 (2026-05-24),333 R2 D E2
 5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R,Magnolia State Cubing 2026 (2026-05-30),333 R2 B E2
+5817157001,R' D2 F D2 L2 B F D2 F2 L' F R2 F D B' R2 F2 L' D2,Y,Soorsi 2026 (2026-09-05~06),333 R2 C #5

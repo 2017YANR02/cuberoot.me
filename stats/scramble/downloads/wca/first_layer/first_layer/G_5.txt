@@ -1,0 +1,22 @@
+# Scramble samples — first_layer / first_layer / G / bin 5
+# Population in this bin: 15
+# Samples listed: 15 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+245724001,D' B2 U' B2 D2 L2 F2 D F2 R F' R' D2 F2 R' B2 R' D' L',G,Shaastra Cube Open 2016 (2016-01-23~24),333oh R2 H E2
+353321001,U2 B R2 B' R2 F2 D2 F' L2 R2 F' D F' R U' F2 U2 R F L U2 L,G,Pão de Queijo Open 2016 (2016-08-27~28),333bf Final A #3
+661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,G,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2
+833016001,L F2 L' B' L' D' F' B2 R' F D2 B2 L2 F' R2 F' D2 F,G,Baoji Open 2018 (2018-07-21),333 R1 C #3
+939578001,F U2 L2 B2 F' U L2 U R2 D2 L' B L2 B' R2 U2,G,Wuhu Open 2018 (2018-11-24~25),333 R1 C #2
+1132844043,U2 F D2 B' L2 R2 F U2 F2 U2 F' U F' L F' D U F2 L U' L' F,G,Please Be Quiet WPI Spring 2019 (2019-05-04~05),333mbf Final A #1
+2158323001,F U L' D2 R' U' F R L' B2 L U2 D2 F U' B L B R,G,Gdańsk Open 2022 (2022-09-10~11),333bf R1 B E2
+2285257001,F2 U B2 D2 B2 L2 D B2 L U F' L F' D' R2 F2 U2 B R,G,Cubing for Cancer RPV 2022 (2022-11-05),333 R2 B E2
+2432952001,U2 F R2 F' U2 L2 F' D2 F' R2 B2 U' R' F D' B' D2 F' U2,G,Pioneer Valley Cubing A 2023 (2023-01-21),333 R2 C #4
+2795001001,U2 F2 D R F2 R' U L2 F' U2 F' U2 R2 D2 L2 U2 L U2,G,Quintilian Cube-Off 2023 (2023-06-17),333 R1 A #2
+2947968001,L F2 D B2 U' D' B' R U' R2 U' R2 F2 L2 D' F2 R F2,G,Winchester Weeknights IV 2023 (2023-08-02),333 R1 A #2
+3240211001,B R2 D2 L2 D2 B' L' B D' L2 B' L2 D2 B D2 B R' D,G,Basauri Open 2023 (2023-11-03~05),333 Final A #2
+4625803001,B2 R' L' U D' R' U' F' U' R D2 B U2 F D2 F' D2,G,Xi'an Cherry Blossom 2025 (2025-04-04~05),333 R1 G #5
+4898111001,R2 U' B2 R' F2 L D B L' U2 D2 F2 L' D2 L B2 R' U2 L',G,Fort Payne Summer 2025 (2025-08-02),333 R2 B #1
+5745448001,B' R' U F2 L2 D2 L2 F2 D' R' D R' B2 L B D' R',G,No Skewba Diving in Greenport 2026 (2026-07-11),333oh Final B #4

@@ -1,0 +1,41 @@
+# Scramble samples — first_layer / first_face / BGWY / bin 9
+# Population in this bin: 34
+# Samples listed: 34 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+31058001,B2 F2 R2 B2 R2 U' F2 L2 D2 U' L' F R B' L2 D L2 R2 B L2,B,Pune Fall Open 2014 (2014-06-21),333oh R1 D E1
+48036001,R F2 L D2 L' B2 F2 L F2 D2 F R2 B' R U B2 L' D' R' F2 L2 U2,B,Rubik's Cube European Championships 2014 (2014-08-08~10),333bf R1 E #2
+294111001,R' L D L B2 L2 F R' B2 R B' U R2 B2 D L2 D2 F2 B2 U,B,Speed Day Lublin 2016 (2016-04-30),333 R2 A #4
+321917001,L2 U L2 R2 U2 B2 F2 U2 L' B U' F2 U L2 R D F2 L2 B,B,Metro Cubing Fest 2016 (2016-06-25~26),333 R2 A #2
+505493001,L2 D2 R2 B2 D2 F2 R' D2 R' D2 U F2 L B R U2 B L F2,B,Swisscubing Cup III 2017 (2017-05-13),333 Final A #1
+541032001,U R2 L F D B2 R' U2 L U B' U2 R2 D' B2 U2 B2 L2 B2 D,B,Kubus Bali Reborn 2017 (2017-07-02),333 R1 B #2
+597283001,D' R L D B2 U2 D B' U2 F' R2 F2 R' F2 R2 D2 R2 B2 R F2,B,Brisbane Winter 2017 (2017-09-16),333oh Final A E1
+628796001,U' B2 L2 U' R2 F2 L2 R2 U2 L' B F' R2 U' L' R2 U2 F D' R' D2,B,Avenues Rubik's Cube Open 2017 (2017-10-28~29),333bf R1 B #2
+661035004,U' L2 D L2 B2 U' F2 R2 B' F U2 R D F' D2 L' B' D2 L2 D' L' F',B,Asturias Open 2016 (2016-07-02~03),333mbf Final A #1
+716462001,F' U2 F U2 F' U2 B2 U2 L2 D2 L2 R' U2 F' L' B2 R' D' R' B' F2,B,Fruit Salad 2018 (2018-03-03),333 R2 A #1
+874125001,D2 L2 F2 D2 L2 B2 L D2 L2 R' U' R2 U F U' B' F' L R2 F U',B,German Nationals 2018 (2018-09-07~09),333bf R1 B #1
+897039001,U2 R2 U2 F' L2 R2 U2 R' D R2 F L' R B' L2 B' R F,B,Australian Nationals 2018 (2018-10-06~07),333 R1 H #1
+1269652001,D F2 L2 B2 D2 L2 D' F2 U L' R2 D2 B' F R' B F D' L2 U,B,Peru Nationals 2019 (2019-08-16~18),333oh R1 A #2
+1324136045,R2 B' F2 R2 U2 R2 U2 B2 F' L2 U B' R' F' L' D R D2 R2 D2 F' D2,B,Philippine Championship 2019 (2019-09-27~29),333mbf Final A #1
+1353173001,D2 U2 L2 F' U2 L2 F' R2 F2 D' U B R U F' L' D' L2 R,B,KubeKids Vila Velha 2019 (2019-10-12~13),333 R1 F #3
+1541838001,D B2 L2 R2 U' F2 L2 D F2 R' D2 R2 B D' L F' U2 B L2,B,Izhevsk Winter Cube 2020 (2020-02-08~09),333 R1 E E1
+2114409007,U R F B' R U B' L U2 D L2 U2 F2 R2 B2 U' F2 U' B U L' F',B,SacQuiet 2022 (2022-08-21),333mbf Final A #2
+2182698001,U B' R2 B L2 B D2 B' L2 R' B L R2 F' D' F' L B2 D2,B,Richmond Hill 2022 (2022-09-24),333oh Final A #4
+2465349001,L2 B R2 B2 D2 F2 U' B2 D F2 U B2 R' F' D' B' U2 R' U' F,B,LNMIIT Jaipur Cube Open 2023 (2023-01-28~29),333 R1 A #5
+2597228001,D2 F L D' B2 F2 L R2 U2 F2 U2 B2 U' B' L2 U2 L2 B2 L,B,Potomac Spring 2023 (2023-04-01),333 R2 B E1
+2913143001,R2 D' R' U' L B R' D2 B2 R2 D2 R2 F' D2 B' L' F2 L U',B,Voula Summer Open 2023 (2023-07-15~16),333 R2 B E1
+3004238024,D F' R2 B' D R' D F2 R B2 L2 D F2 D2 L2 U' B R B' L2,B,Rubik's WCA World Championship 2023 (2023-08-12~15),333mbf Final A #2
+3525464001,U B' R F' R2 D L' F L2 U' B U L2 B2 D' B2 U2 R2 D2,B,Eastwood Cubing 2024 (2024-02-17~18),333oh R1 C #5
+3785554001,L2 B R2 D R' U L' B' D R B L2 D2 F' L2 D2 F L2 U2 F',B,Esporte por Vitória 2024 (2024-05-19),333 R1 A #4
+3787268001,U' B L D' F2 L2 U2 B2 L' F2 R B D' U2 B2 R' F' U2,B,Only 3x3s in Perth 2024 (2024-05-25),333 R1 B #1
+3944022001,D2 F2 D2 U' B2 L2 D' L' U' L R2 B2 U2 R' U' B' F' U' L,B,Ansan Summer 2024 (2024-07-20),333oh R1 A #2
+4194128001,F R' L2 F' L2 B F U2 L2 D2 R2 B' U' F2 D2 L U R' B2,B,Regionales Santander 2024 (2024-10-12~14),333 R2 B #2
+4438978001,F' U' L2 B2 D' B2 R2 U B2 R2 D' L F' R B L D' R2 F U,B,Unorthodox Blocks Wisconsin 2025 (2025-01-25),333 Final E E1
+4621389007,B D2 F2 L D2 U2 L2 R' F2 L' F' U2 L D' F' U' F' D2 B' L',B,Mallorca Open 2025 (2025-04-05~06),333mbf Final A #1
+4663263001,L' F R2 U' D' L' D2 R' B' U L D2 F2 D L2 D F2 U' F2,B,Franconia XX 2025 (2025-04-18~20),333 Final A E1
+4785693001,L B2 L F' U' R2 U F' R2 D2 R2 U R2 F2 D' L2 B2 U' R F' L2,B,LA Summer Side Events 2025 (2025-06-07),333bf Final A E2
+5300205001,R' F2 U' F' D' F B2 L' D2 F' R F2 L2 B2 L2 U2 R2 U' B2 L',B,Korean Championship 2025 (2025-12-27~28),333bf Final A E1
+5495230001,R' D' F' U2 R B2 L2 U2 B2 R B2 D' R' U B U2 B' R' F',B,Georgia March Open 2026 (2026-03-28),333oh Final B E2
+5608764001,F2 R2 B L' D' F2 U2 F2 D' F2 D' F2 L D' L2 R F2 U L2 B' L',B,UTP Speedcubing Open 2026 (2026-05-02),333bf Final A E1

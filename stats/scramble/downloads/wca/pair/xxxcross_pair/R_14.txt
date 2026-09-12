@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / R / bin 14
-# Population in this bin: 116
-# Samples listed: 116 (all entries in this bin)
+# Population in this bin: 118
+# Samples listed: 118 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 79091001,F' D R2 B2 L' D R' F R' B' U B' R2 F2 B D2 F' U2 L2 F2,R,II Aracaju Open 2014 (2014-11-15~16),333 R2 B E2
@@ -121,3 +121,5 @@
 5520378001,L2 B' D2 U2 F' U2 B' F U2 F R' F U' L D' B' F' L D' B2 L' F,R,Olsztyn Spring Open 2026 (2026-04-11~12),333bf Final A #3
 5635505048,B L' F' R2 F' R L2 F D' B' R' D L2 U F2 D2 L2 D B2 D' L B',R,Zagreb Cubing Series I. 2026 (2026-05-17),333mbf Final A #2
 5691260001,D' R2 B2 U F2 D F2 U' F' U2 L B2 D' U' B D' F2 U' F R B' L2,R,Calgary Please Be Quiet 2026 (2026-06-06),333bf R1 C #5
+5796687001,B2 L D F' U2 R L' U R2 D2 B' D2 R2 B2 R2 F' D' B L',R,Kuala Lumpur Cubing Challenge 2026 (2026-08-22~23),333 R2 D #1
+5819110001,R' F' D2 U2 F R2 D2 F R2 U2 B' D2 L F R2 D' U' L' D B R,R,Dois Vizinhos Open 2026 (2026-09-05~06),333bf Final A #5

@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / W / bin 2
-# Population in this bin: 206
+# Population in this bin: 212
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 47921001,F U2 F D2 F' R2 F L2 F R2 D' L2 R B2 R F2 D' F' U2,W,Rubik's Cube European Championships 2014 (2014-08-08~10),333 R1 O #5
@@ -12,8 +12,8 @@
 149476001,B' L F2 L2 F L2 U2 D B R F' U D' R2 D' L2 D' L2 U2,W,Bratislava No-Cutoff Open 2015 (2015-06-06~07),333 Final A #2
 150879001,D2 R2 D' L2 D F2 D2 R2 B2 U2 L F' U2 R' U' F' L F' U2 L' F',W,Nanchang Open 2015 (2015-06-14),333bf Final A E2
 183539001,D' R2 B2 F2 D B2 D2 U B L U' F2 D2 B2 F R B L U' L B,W,Brain Studio Cube Open 2015 (2015-08-29~30),333bf R1 E #1
-185911001,L' B' R L D' R2 D R2 F' R F' L2 F D2 F B D2 R2 F2,W,Estonian Open 2015 (2015-09-05~06),333 R2 A #1
-207901001,R2 B U F2 U D2 R2 U B U R' B2 R2 F2 R' F2 D2 F2 L,W,Amalthea SCMU Open 2015 (2015-10-24),333 R1 H #2
+5792252001,D2 F U' F' D' R2 D2 R2 F' L' D2 R F2 L D2 F2 U2 D2,W,Singapore Augu-Skewb Day 2026 (2026-08-23),333oh R1 C #3
+5796553004,F R' U2 F D2 F' U2 L2 D2 F2 L' D2 L' R' F' L F U2 B' L2,W,Lugano Big & Blind 2026 (2026-08-22~23),333mbf Final A #1
 208760001,R' F2 R B2 D2 R B2 L F R' F L' D' L2 D' L R U' L2,W,Athens Fall 2015 (2015-10-24),333oh R1 A E1
 250872001,D L2 R2 D R2 D2 F2 D' L2 R' U' F2 R2 U F2 L' R2 B' L,W,Dixon Winter 2016 (2016-02-06),333 R1 C E1
 282590001,U R2 D L2 B2 U2 F2 L R' U2 L U F R2 D U2 B' L,W,Hungarian Nationals 2016 (2016-04-16~17),333 R2 B #4
@@ -46,7 +46,7 @@
 660568018,D' U' F2 D U2 F2 L2 B' R D2 U2 F2 L R2 B2 D L' F2 L,W,Hungarian Open 2014 (2014-10-17~19),333mbf Final A #2
 660647007,L' R F2 R2 B2 F2 R D2 U F2 D L' D' L' R2 B' R' B U' L2 U',W,La Florida Open 2015 (2015-02-28),333mbf Final A #1
 660987006,F2 R2 F2 L' B2 L' D2 L D2 U B2 L F2 R' D' R2 B' L' F2 L B2,W,Big CubingItaly 2016 (2016-05-14~15),333mbf Final A #1
-661085004,U L2 U B2 R2 D' R2 D2 U B D R2 F2 L2 U B' R' F R2 U2 L2 U',W,Singapore 333 Cube Competition 2016 (2016-08-27),333mbf Final A #2
+5790797001,F' R F2 R2 B' U' D' L R2 U R2 D' F2 B2 R2 F2 R2 D2 R' U',W,Cubing School SCZ 2026 (2026-08-15~16),333 R1 D E1
 661210001,F R2 D2 L2 D2 F' L2 R2 D' R D B' F' U R F R U' F2 L2 U2,W,Polish Championship 2016 (2016-12-09~11),333mbf Final A #2
 661270017,U2 F2 R D2 R' B2 L2 D2 U2 B2 R' F' D' L F' L F R F' R2 D2 B' L',W,Nacionales Uruguayas UCHI 2017 (2017-03-04~05),333mbf Final A #1
 661418029,F' U2 F U2 R2 B D2 F' R2 F2 U' B D' B2 L' D2 L' D' U2 L',W,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2
@@ -130,7 +130,7 @@
 3451814001,L B' U R' B' R U' F L2 B' L2 B2 U2 B2 U2 B' L F,W,Longjum'Open 2024 (2024-01-27~28),333oh R1 A #4
 3516176001,R' U' F U B2 D' L2 U' F2 U2 F2 L' U' L' D B' U' B' F2 U2 R2 U2 R' U' F,W,Love Is Blind Lima 2024 (2024-02-18),333fm Final A #1
 3553349001,D2 U L2 D F2 L2 B2 R2 U' R2 L B2 D L F' U' R2 U2 B2 F,W,Castle Mania Niepołomice 2024 (2024-03-02~03),333 R1 D E1
-3573493001,U2 F B2 L2 R' B2 L2 F2 U2 B' R' D' L B' F2 R2 F2 R,W,Reno Spring 2024 (2024-03-09),333 R1 D #3
+5800748001,U F L U2 F' U' F D L U2 L2 U F2 L2 D2 F2 U2 B D2,W,Langenstein Summer 2026 (2026-08-22~23),333 R2 B #5
 3573979001,F' U2 L R2 U2 R B2 L B2 D' L' B' L U R B2 F' U2 R',W,First Solves Herrljunga 2024 (2024-03-09~10),333oh Final B E1
 3623622001,R' B U2 B R2 B2 D2 R2 F D' F' D F2 L D2 F L F2 R,W,Baztan Open 2024 (2024-03-28~30),333oh Final A #4
 3649431001,F R2 B2 R2 U2 B F2 L2 F' R2 U B2 D' F' R' D' L D2 U2 B' L B2,W,Budapest Spring 2024 (2024-04-06~07),333bf Final B #2
@@ -160,7 +160,7 @@
 4280293025,L' F' D L' D2 L' F B' L B2 U' R2 L2 U' R2 D L2 U' B',W,Kubing in Kapiti 2024 (2024-11-09),333mbf Final A #1
 4325994001,B' L B' R2 U' R2 B D2 R2 U' F2 D F2 D' R2 D L' U,W,Minnesota Championship 2024 (2024-11-30~12-01),333 R2 A E2
 4355549001,R2 U F2 D' U' R2 D U' F2 L' D' F U R2 B2 L2 R' U' B',W,Cornhusker Cubing Classic 2024 (2024-12-14),333 Final A E2
-4356573001,U2 R' B2 L' R2 D U' L2 U' R2 F' R' B2 R2 B2 F' L',W,Kirkland Pyra Fest 2024 (2024-12-14),333oh R1 B E1
+5814712001,U' F2 D L2 U' L U2 L U F2 D2 B F' U' B' L2 U,W,Compostela Cubing 2026 (2026-09-05),333 R1 A #4
 4397009084,B L F' U2 F2 R2 U2 B' D2 F' L2 R2 F L' R' F R2 D' R D' B' L,W,Uzbekistan Nationals 2024 (2024-12-27~29),333mbf Final A #1
 4417806001,D' F2 D R L' U' D2 F2 R' L U B L2 D2 F' D2 F R2 B2,W,The Battle of Lexington 2025 (2025-01-11),333 R1 B E1
 4439443001,D' B2 R2 F' U2 F' L2 F U2 L' F R2 F2 D B2 D' B2,W,İstanbul January 2025 (2025-01-18~19),333 R2 C #1
@@ -168,7 +168,7 @@
 4533877019,R2 B R2 B' D2 B R2 B' R' F' D' F D L2 U2 L' U2 L,W,Glasgow Spring - Scottish Blind Off 2025 (2025-03-01~02),333mbf Final A #3
 4538370001,U2 F2 L2 F2 U' F L F B U2 B' D2 L2 U2 L2 B2 U2 D L,W,Bangladesh Cubing Fiesta 2025 (2025-02-27~28),333 Final A #3
 4544991001,L' D' B2 L' D2 L2 R' U2 B2 R D2 B' D' B F U L2 D',W,Villavicencio 2025 (2025-03-08),333 Final B E1
-4558719001,R2 D L F R F2 L' F2 U2 R2 D2 U L F L2 B' R' F',W,Singapore March Classics 2025 (2025-03-15),333 Final A #5
+5790500001,U' R D' F2 L' U2 L2 R B2 D2 L2 D' R U R F' D U,W,Cube en Baie Open 2026 (2026-08-14~16),333 Final A #5
 4634477014,R2 B' U2 R2 B U2 B' F2 U2 B D2 U' L U' F U' R2 B R U' L B',W,Nacionales Chilenas 2025 (2025-02-07~09),333mbf Final A #1
 4636348020,D' F2 D' B2 L2 U L2 D2 U' L B' U2 R D' U' L B' D U' L' F,W,Solving in Sale 2025 (2025-04-11~13),333mbf Final A #1
 4686664001,U B2 U2 R2 L F2 D' L' U' B' D2 R2 B2 R2 D' F2 R2 U' B2,W,NxN in Hanoi 2025 (2025-04-26~27),333 R2 D #5

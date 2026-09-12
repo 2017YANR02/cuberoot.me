@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / B / bin 4
-# Population in this bin: 159
-# Samples listed: 159 (all entries in this bin)
+# Population in this bin: 162
+# Samples listed: 162 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 31993001,B2 D' L2 B2 R2 F2 U' L2 U B' U' B F' R B' L B' F2 L',B,ULA Rubiks 2014 (2014-06-27~28),333 R2 B #2
@@ -164,3 +164,6 @@
 5753833001,D2 R' D F2 R D F' D F D' R2 D' R2 F2 U2 L2 D2,B,South Omaha Scramble 2026 (2026-07-18),333oh R1 A #3
 5760709001,L' D' R F2 U2 B2 L2 U' R2 D F2 U R B' D F U2,B,Temecula Valley Summer 2026 (2026-07-25),333oh R1 B E2
 5769010001,B' F2 D2 U2 R2 D' B2 D' L' U' R' F2 U R' B D2 R' F',B,Elmsford Extravaganza II 2026 (2026-07-28),333oh Final B #1
+5772384001,B U' B D R U2 R' F' R2 F2 R2 D2 B' R' L2 B2 D,B,Silesian Minx Fest 2026 (2026-08-01~04),333oh R1 B #5
+5785733001,U L F' D R2 D' R2 F2 L2 B R2 F' U2 F' L2 B2 L,B,Oakridge Independence Cube Open 2026 (2026-08-15~16),333oh Final A E2
+5803984001,D2 U2 B' F' L2 U2 L R' U L R2 U' L' R U' L D2 B R',B,PBQ Žilina 2026 (2026-08-28),333bf R1 A #3

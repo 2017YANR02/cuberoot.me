@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / R / bin 5
-# Population in this bin: 118
-# Samples listed: 118 (all entries in this bin)
+# Population in this bin: 120
+# Samples listed: 120 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -123,3 +123,5 @@
 5697437027,R2 L U L B' L' U L2 U2 L2 B2 R2 L' U2 B2 L F' L2 D2 B R,R,Side N Blind Narre Warren 2026 (2026-06-13~14),333mbf Final A #2
 5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1
 5760304001,B2 D B2 U F2 U B2 L' F2 U L2 F2 D L2 B L F2 D',R,Mental Breakdown Bangkok 2026 (2026-07-25),333bf Final B #5
+5785543001,U2 B2 R2 B2 L2 D2 L2 U' B2 D2 U R' F R B2 F U' F D',R,Oakridge Independence Cube Open 2026 (2026-08-15~16),333 R1 E #2
+5819911001,R F2 R L2 F U2 B' F' D2 L B R' F U R2 B' L2,R,Round Rock Mega Cube Day 2026 (2026-09-05),333 R1 B E2

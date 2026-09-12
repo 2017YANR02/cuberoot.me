@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / OR / bin 4
-# Population in this bin: 609
+# Population in this bin: 619
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 1537044001,U2 B2 L2 U2 B2 D' R2 U2 R2 U2 F2 R' D' R' U' L2 U L2 F' L2 D,O,Centauros Open 2020 (2020-02-01~02),333oh R2 A E1
@@ -83,7 +83,7 @@
 5486803001,F' L' B2 R B2 L2 U2 L2 R2 F2 D' L R B' R2 F D2 L' B2 L B',R,Casorezzo Spring 2026 (2026-03-28~29),333bf Final A #3
 4791087001,B2 R2 U2 F' U2 B2 F2 R2 D B D' B R F' U2 R' B2,O,Napule È Mille Culure 2025 (2025-06-08),333 R2 A #2
 501667001,D2 F2 U2 R2 U2 L2 F D2 L2 F2 L2 R B L D' F L' B' L R' U,R,Dunas Open 2017 (2017-05-05~06),333 R1 B #1
-3937688019,F2 R D' B2 U' L B L' F2 D F' U2 R2 F2 L2 D2 B D,O,Australian Nationals 2024 (2024-07-12~14),333mbf Final A #1
+5801921001,D R' L' B' D L' B2 D2 B2 L' D2 L2 B' R2 D2 F U',O,Makati Heroes Speedcubing 2026 (2026-08-23),333 R1 C #1
 504344001,D2 R2 D2 R2 U2 B2 U F2 R2 B R2 U' L' B2 U2 L' U2 B2 U F' L,O,Maybe Melrose Spring 2017 (2017-04-29),333bf Final A #2
 504381001,R' D2 F R D' R2 B' R D B' R' U2 D2 L' U2 R' F2 R2 F2 L,O,Maybe Melrose Spring 2017 (2017-04-29),333oh R1 C E1
 513888001,R2 F2 U2 B2 U' L2 B2 R2 B2 D' L2 B' L F2 R2 D' B' F U F' D,R,Oficina Open 2017 (2017-05-20~21),333 R1 C #2
@@ -123,7 +123,7 @@
 661098020,D' B2 U F2 D B2 D' U B F2 U2 L U F' L2 B F D' F L,R,Wirewood 2 2016 (2016-08-28),333mbf Final A #2
 661137001,B2 U2 B2 L2 R B2 L U2 R U2 B' L2 D2 U' L2 R' D' B R2 B' L2 U,O,Vinderup Open 2016 (2016-10-08~09),333mbf Final A #1
 4393147059,D2 B2 L2 B' U F' B' R2 D B2 L2 U L2 F2 U R2 B2 D' R F' L' F',O,Lužice Winter 2024 (2024-12-21~22),333mbf Final A #1
-1194381001,U L2 U L2 U' F2 L2 F2 U B2 F' D' R B2 U' L B' R2 B',R,Bulldog Qualifier 2019 (2019-06-22~23),333 R1 B #4
+5815668001,U2 L2 F L2 U2 L2 F2 R2 L' B2 D U' B2 D' R' U' L F,O,Seremban Cube Challenge 2026 (2026-09-05),333 R1 B #1
 1421848001,L2 B2 D2 U2 R B2 U2 R' D L2 B D' U' F U L D2 B2 D,R,Umnugovi Cube Day 2019 (2019-11-23),333 Final A E2
 5351478001,R L' U F' U F' R2 U R2 F2 L B2 U2 R D2 F2 B2 L2 F,O,Contrarreloj - San Andrés Cholula 2026 (2026-01-24~25),333 Final B E1
 3865456001,U2 B' U2 F' U2 F' U2 R2 B2 D' L2 F' R' U2 B R F L B',R,Wakefield Summer 2024 (2024-06-15~16),333 R2 A #2
@@ -152,7 +152,7 @@
 753670001,U2 B2 L2 D' L2 B2 U R2 U R F U2 F R' U' R' F,O,Chanquete Open 2018 (2018-04-14),333 R2 B #1
 758398001,L2 R' F2 U2 F2 U2 L R2 D2 F D F' U2 B2 L' D' R2 F2 U',O,SNZ Southern 2018 (2018-04-21),333 R2 A #5
 4530440001,D' R2 F2 U' F2 U R2 U2 L B F2 U' B2 U' B' F D2 U2 B' L',R,Manhattan Megaminx Mayhem 2025 (2025-03-01),333bf R1 A E2
-3454043001,R' D2 B L' D R2 L' B' R' B2 U2 R F2 D2 R U2 D2 B2 R' D2,O,Écija Open 2024 (2024-01-27~28),333 R1 B #5
+5806968001,U' L' B' D L2 U2 D' L U F2 U R2 U D' L2 B2 L2 D' L D',O,Slovenian Nationals 2026 (2026-08-28~30),333bf R1 A #3
 3443256001,L2 D R2 D' R2 U' R2 U' R2 L' D L' U2 F L' R B F2 L',R,Partage Summer 2024 (2024-01-20~21),333oh R1 A #1
 3647743001,F R' B U' B2 F2 D L2 B2 D2 B2 U F L F' D2 L' U2 L,O,Lente Spring 2024 (2024-04-07),333oh Final B E2
 1387451001,F2 D U2 B2 D' U' F2 R2 U' R' F2 R B2 F' R2 U B' R2 U',R,CCC Qualification Yakutsk 2019 (2019-11-02~03),333oh R1 B #2
@@ -169,7 +169,7 @@
 4172028001,R2 D2 F2 L2 U2 B2 U' R2 L' B' D U2 F' L' U2 R F L2 U',O,La Paz Masters 2024 (2024-10-05~06),333 R1 D E2
 3648937001,D B U' B2 L F2 L F2 D2 L D2 B' F2 U L2 F2 U',O,Iasi Cubing Day 2024 (2024-04-06),333 R1 A #2
 3899469001,L' D' L R2 U2 F U2 B D2 B D2 F2 L F' R2 U' R' F2 D2,O,Halifax Summer 2024 (2024-06-30),333 R2 A #1
-2550381048,R' D2 R D B2 R F' L U2 D2 R2 U2 B R2 B' U' B' U' L' F',O,Auckland Mind Games 2023 (2023-03-11),333mbf Final A #1
+5777303001,U R' U' D2 B' R2 F2 L2 B2 R2 F' U L F2 U2 L D' B' D,O,Bristol August 2026 (2026-08-08~09),333 Final B E1
 2343594001,F' R F' D2 B2 L2 U2 L2 B' L2 U' F R' F' L2 R2 U' B' U',O,Madrid Norte Open 2022 (2022-12-03~04),333 Final A #4
 4600669001,F2 U' B2 D L2 U2 L2 D R2 F2 L B' D2 B' R2 F D2 F' R' D2,R,Riobamba Open 2025 (2025-03-29),333 Final B #5
 3642947008,D2 B2 D2 F' R2 D2 U2 F2 R D2 B U' F' U' B' L2 B' U' F',R,Please Be Quiet Auckland 2024 (2024-04-07),333mbf Final A #2
@@ -193,7 +193,7 @@
 953342021,R2 D2 R' B2 F2 D2 L D2 L2 B D F D' L' U2 B' F U R' F' L2 U,O,Swisscubing Cup Final 2018 (2018-12-08~09),333mbf Final A #1
 972284032,D L2 U' B2 U2 B2 L2 F2 D B2 L2 R' B2 F D F R2 F2 D' F2 L,R,Speedcubing Camp Minsk 2019 (2019-01-04~06),333mbf Final A #2
 978433001,B' D B' D' F R' F' D2 L U2 B R2 B R2 D2 B R2 D2 R2 D2,O,Ajax Winter 2019 (2019-01-12),333 R2 B E1
-5418691001,R' F2 U F2 D' U' L2 U' F2 U R2 F' R F2 L2 B2 R D R2 B,O,Iowa Winter Cooldown 2026 (2026-02-28),333 R2 B #5
+5796100002,R D B F U2 F' R2 F L2 D2 U2 R2 D' L2 B L D2 L2 B R D2,R,Klemzig Kubing Decathlon 2026 (2026-08-22~23),333mbf Final A #1
 989992001,F2 L2 D2 B2 L2 U2 R2 F' U2 F' L D' L' B F2 U' B2 R B2,O,Istres Open 2019 (2019-01-26~27),333oh R1 A #1
 3737082001,R' U' F R U2 L D2 L B2 F2 R' F D' B U2 L2 F2 L B' R' U' F R' U' F,R,Altiplanic FMC 2024 (2024-05-05),333fm Final A #1
 1312513001,F2 U F2 U' R2 U L2 R2 U L R U F2 R B' U' B2 D' R2,R,Arnold Classic Europe 2019 (2019-09-21~22),333 R1 A #2

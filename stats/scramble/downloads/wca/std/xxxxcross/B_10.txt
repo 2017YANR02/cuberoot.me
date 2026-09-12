@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / B / bin 10
-# Population in this bin: 371
+# Population in this bin: 377
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3270001,D2 R D2 R' F2 D2 F2 R2 F2 R B U' R' U B' U' R2 D F',B,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 S #5
@@ -14,13 +14,13 @@
 5058379001,B2 D' L' F B2 U2 R U R2 U2 F2 U2 R2 F R2 F' D R',B,Plaza Río 2 Open 2025 (2025-09-26~28),333oh R1 C E1
 4631618001,U F2 U F' U2 L2 B' R U2 B D R2 F U2 L2 D2 L2,B,Davis Spring 2025 (2025-04-06),333 R2 B #4
 3340013001,U' D2 F2 L2 F U2 F2 L F2 R D L2 D' F2 L2 B2 R2 F2 D2 L' F',B,CubingZA Cape Cubes Challenge 2023 (2023-12-09~10),333bf Final B #3
-4029608001,F' U' L B2 F R2 B' F2 L2 U2 B2 L B D' L' U' R D L',B,Bündner Open 2024 (2024-08-17~18),333 Final B #2
+5791070001,U2 B2 R B2 R2 D2 B2 L' B D' F2 R2 B' R F2 D B2,B,Luzern Sunset Solves 2026 (2026-08-19),333 R1 A #2
 3186456001,U2 B' U2 B2 D2 F D2 U2 R' B' R' B' R2 U' B2 F2 L R' B',B,Avenida Chile IV Teams 2023 (2023-10-22),333 R2 C #5
 92218001,R D2 U2 L2 R' U2 B2 D2 R' B' L' B F2 L U' B' L' B' F2,B,Idaho Open 2014 (2014-12-27),333 R1 B #2
 123699001,L B R' D F B2 U R L2 B' U R2 D2 R2 D2 F2 D2 B2,B,Michigan Cubing Club Beta 2015 (2015-04-04),333oh Final A E1
-4898928030,D F' B2 R2 B2 F2 D' F2 R2 U R2 U2 L' F U B F' D F' L B,B,Swedish Blind Marathon 2025 (2025-08-02),333mbf R1 A #1
+5781514001,F2 U2 R2 F' L2 U2 F2 R' D L' B' D2 L' D B' F2 L2 B,B,Pavlodar Open 2026 (2026-08-09),333oh Final B #2
 133306001,D B R F' L F' D2 B D R L2 F2 B' R2 B' D2 R2 L2 F,B,Toronto Open Spring 2015 (2015-04-25),333oh R1 B #1
-4441296001,R' D' U L2 F2 U2 B2 D' F2 U2 L F2 R' F' U L2 R2 D F,B,CubingMGL Coldest Capital 2025 (2025-01-25),333 R2 C #1
+5803450001,F' D' U L2 U2 F2 U2 L' D2 U R' B2 F' U2 B D2,B,Israel Championship 2026 (2026-08-25~27),333 R1 H #4
 166720001,R' D' R D2 L' U R' D2 F2 D' R' L U2 F2 R2,B,World Rubik's Cube Championship 2015 (2015-07-17~19),333oh R2 A #3
 5304312028,D' B2 D' F2 R2 D2 U L U' F' L U' B L' U F U2 L2,B,New York Multimate PBQ III 2025 (2025-12-27~28),333mbf R1 A #3
 177827001,F U2 B L2 D2 U2 F' U2 B' U2 L' U' B' D2 R' F D' L R2 F',B,SCMU Freedom Open 2015 (2015-08-15~16),333oh Final D #5
@@ -174,8 +174,8 @@
 1990057001,R2 B L' U' L U R2 F' U F2 D2 L' F2 R2 B2 U2 B2 D2 L' B2 L B2,B,Blind Is Back LA 2022 (2022-06-26),333bf Final B #2
 2128470001,D' L' B' L2 F2 D' B L F L2 B D2 R2 B R2 D2 R2 U' B',B,August Bank Holiday Cheltenham 2022 (2022-08-27~28),333 R1 D #4
 5179409001,L B D' B2 R2 U2 R2 D' R2 D L2 B2 D2 B' L U R B' R' U',B, Balam Cubes Bogor Revival 2025 (2025-11-08),333 R1 B #5
-2179997001,U2 B2 R B' F2 D' U' L2 U B2 D' U' B' R F2 L' F2 L' B',B,Hanoi Open 2022 (2022-09-18),333 R1 E E1
-2264894001,F2 R2 B2 U B2 R2 D R F L' R D L D2 R2 F' D' F,B,Slow N Steady Fall 2022 (2022-10-29),333 R2 B E2
+5809683001,B' L' U2 D F D2 B L B' R L' B2 R' U2 D2 L B2,B,DFW Cubing Summer 2026 (2026-08-29~30),333 R3 B E1
+5802334001,L2 B2 U2 L2 B' F2 R2 B R' B' U2 L' R' D' F2 L' F U L,B,Elmsford Extravaganza III 2026 (2026-08-25),333oh Final A #4
 2280163001,F2 D2 U2 R' F2 R' D2 F2 L2 B2 R D' L2 B' R F2 D B U',B,Ohio State Fall Scarlet 2022 (2022-10-30),333oh Final A #3
 2338118001,L2 U2 F L U R' B D2 R' F B2 L2 F2 U L2 U F',B,Ho Chi Minh Open 2022 (2022-11-26~27),333 R1 F #2
 2342812001,R' L' F D' R F' U' R' U R2 L2 D2 R2 D B2 D R' U,B,Bodocó Open 2022 (2022-12-03~04),333oh Final A #2

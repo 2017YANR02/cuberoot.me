@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BGORWY / bin 4
-# Population in this bin: 466
+# Population in this bin: 473
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5023707001,U2 B U2 L' D' L2 U2 B2 U' R2 U' F R B' D F' D2 F2 L' F',B,Clásico Tlaxcala 2025 (2025-09-13~14),333bf R1 B #3
@@ -67,7 +67,7 @@
 4574758001,B' L2 U2 B D2 F2 U2 F U' R2 D2 B U' L' U B2 U F,Y,Lipovljani Newcomer Day 2025 (2025-03-16),333 R2 A #1
 2357270001,B U D B2 U2 B' R2 B U B2 R2 U' B2 D' R2 L' U F',O,New Zealand Nationals 2022 (2022-12-09~11),333 R1 A #5
 430292001,U2 L2 R2 B' R2 B F U' L U' B L2 B L2 F' R' U B,G,Chișinău Winter 2017 (2017-01-08),333 R2 B #2
-5752054001,F' B U2 R D F' R' D2 R' B' R2 D2 B' R2 D2 F R2 U2 B2,W,Nanchang Summer 2026 (2026-07-18),333 Final A #2
+5785108003,D' L' F L R U2 L F2 U2 F2 R2 F2 R U2 B' U L B L' R U2 L2 U',W,Kansas Championship 2026 (2026-08-14~16),333mbf Final A #1
 466802001,U' R2 B2 U F2 U F2 L2 B2 R2 B' D F' D' U2 B' F2,W,Shanghai Spring 2017 (2017-03-18~19),333 R1 A #4
 489056001,F R2 F L2 R2 B' F' D' L B' R' F R' U R F' U,W,Maxx Open 2017 (2017-04-08),333 Final A #4
 506924001,U2 L2 R' F2 L R B D2 R' B2 L' R2 F' L' R B2 D',O,Santo Domingo Spring 2017 (2017-05-06~07),333oh R1 C #2
@@ -130,7 +130,7 @@
 3687119001,B' R F2 L' U2 L2 R' B2 D F2 R' U' L D2 F2 R F2,B,Cubing at the Y - Stoughton 2024 (2024-04-20),333 R1 E #5
 969927001,D2 F' D2 L2 F U2 F R2 F2 D2 U' B U' R D2 R2 U2 L' U' L,R,Pokhara Cube Open 2019 (2019-01-05),333 R1 B #3
 981958001,B' L2 B2 R2 D2 F R2 B' L2 B2 F' L' B2 R B U' R' U B D,B,Bangkok Open 2019 (2019-01-19~20),333 R1 B #5
-984263001,U2 B' R2 F L2 F2 R2 B' D2 B U2 R' U2 R' D U2 R B' R',Y,Berlin Winter Cubing 2019 (2019-01-19~20),333 R1 C E1
+5791066001,U R2 D B2 D R2 F2 L' B L2 D' U2 L' B D' R' B2 D,R,Luzern Sunset Solves 2026 (2026-08-19),333oh Final B #1
 4973455001,R2 F D2 R' F2 B2 R' D2 B L F2 L2 B2 U2 R B2 U,W,Solve Well in Wellington 2025 (2025-08-23~24),333oh R1 B #2
 3168379006,L B2 F2 U2 R' F2 L2 R U R D2 F L' U' R' D L B R' B',G,Kuwaiti Nationals 2023 (2023-10-13~14),333mbf Final A #1
 3005406001,B' F2 L U2 R B2 F2 U2 L U' L2 U2 R D2 U L2 B D',B,Taman Anggrek Speedcubing 2023 (2023-08-19~20),333oh Final A #4
@@ -192,7 +192,7 @@
 1577026001,F' U2 L2 B' U' B L2 B R U2 D F R2 U2 L2 F' R2 F2,G,Saraswati Open 2020 (2020-02-23),333oh R1 B E2
 1599261010,L' U2 L' U2 B2 U2 B2 F2 L2 F' D' R' U2 B' F' D L' B' L B' L2,Y,Side 'n Blind Forserum 2020 (2020-03-06~08),333mbf Final B #3
 1625517001,L2 F' D F2 D2 B' L' D B2 R2 B2 L U' D2 F L',B,Darwin Open 2020 (2020-12-05),333bf Final A E1
-1628094001,R' U' F U F L F' L2 U L2 U2 L' D' B2 L2 D R2 D' F2 D' R D2 R' U' F,R,New Zealand Nationals 2020 (2020-12-11~13),333fm Final A #3
+5803984001,D2 U2 B' F' L2 U2 L R' U L R2 U' L' R U' L D2 B R',B,PBQ Žilina 2026 (2026-08-28),333bf R1 A #3
 1656522001,B' U' L' B' D2 F2 R2 D' R' B' U2 F2 D2 L2 U2 R2 F U,B,Guilin Open 2021 (2021-05-16),333 R1 H #1
 4283698001,R' F2 R U2 R D2 B2 D2 R2 F L U' R' U F L' D',Y,Arizona Mini 2024 (2024-11-16),333 Final A #5
 1723557001,U2 L' D' R' F L' U2 F U R2 D R2 D R2 D2 F2 R2 D2 R2,W,Seraing Open 2021 (2021-11-13~14),333oh Final B #5
@@ -203,5 +203,5 @@
 1827129001,R B R F' R' D2 R' D2 U2 R' D2 L2 U' R U L' B R F2 L' F2,W,Florida Big & Blind & Time 2022 (2022-03-13),333bf R1 A #1
 1837827001,R' U R' L' U' L' U L F' B' R' U L2 D' L2 U' F2 U',G,Getafe Vuelve 2022 (2022-03-19~20),333oh R1 C #5
 1863333001,D2 R2 D2 B2 D2 L' D2 L B2 R U' L B' L' U L' F2 L,O,Romerike Easter Open 2022 (2022-04-09~10),333 R2 A E1
-5306475001,U' F' U F L F' R' B' U B2 U' D2 L2 B2 U2 F2 D' F2 U2,R,Weston-super-Mare Winter 2026 (2026-01-03~04),333 R2 B #4
+5781104001,R2 F2 R D' L2 F' D' F' D2 F2 D2 F2 L' D2 L U2 R2 U2 B2,G,Rajshahi Cube Open 2026 (2026-08-07),333 R1 B #3
 2818787001,R' L F' D R' F' D' B2 D2 B D2 L2 D2 R2 F R2 U F D',W,Just 3x3: Old Shanghai Edition 2023 (2023-06-24),333 R1 D E2

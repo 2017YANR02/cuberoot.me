@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / W / bin 10
-# Population in this bin: 351
+# Population in this bin: 358
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 37618001,U' B2 D' L F' D' R' U R U' F2 U F2 D L2 F2 U B2 L2 D,W,Welcome To Cambridge 2014 (2014-07-12~13),333oh R1 B #3
@@ -75,7 +75,7 @@
 661145013,B2 R2 B2 R2 B' R2 U2 B L2 D2 F2 R' U' F2 R' F2 D2 F U F2 L' F',W,Porto Alegre Open 2016 (2016-10-15~16),333mbf Final A #1
 5730140001,L' F2 U L' D L U' L2 F' L2 B2 R2 F2 L' B2 R' D R2,W,Hampshire Summer 2026 (2026-06-27~28),333 R2 A E1
 661351020,D2 R2 U B2 U R2 U' R2 B' F' D' R' B U2 L' U' L' B U L,W,Tlaxcala Open Clásico 2017 (2017-05-06~07),333mbf Final A #3
-661504003,L' R2 U2 R' D2 B2 R' D2 U2 L U2 F' U' B2 L D' L' B L2 D' B' L',W,Polish Open 2017 (2017-09-15~17),333mbf Final A #1
+5796414001,R' D' F2 R' F2 L' D2 F2 D2 B2 L2 B2 D' R2 B' D U B2 D2,W,SolveIt Bahrain 2026 (2026-08-21~22),333 Final A #3
 4799920001,U B2 D' R2 F2 L R' F2 R' B2 F2 D' L' F U' F R' D',W,Cube Factory League Justynów 2025 (2025-06-14~15),333 R1 B #4
 4436020001,F' R D2 B2 R' B2 F2 R D2 U2 R D' R2 F' D' F' U F,W,Starting Viña 2025 (2025-01-18~19),333oh R1 B E1
 716704001,B F' U2 R2 F2 L2 F D2 F' L' U2 R' U R2 F' D2 B' L' F2 U',W,GLS Cup I 2018 (2018-03-03~04),333 R1 A E2
@@ -125,7 +125,7 @@
 1279418001,B2 U2 L D2 U2 L' B' L U' F2 D2 L' U L U' L R,W,Shenzhen Cubing 10th Anniversary 2019 (2019-08-24~25),333 R1 K #3
 1287817039,U2 B' D2 R2 F2 D2 B R2 B L U' R B2 L' D2 R' B D' U2 L',W,Wrocław Side Challenge 2019 (2019-08-31~09-01),333mbf Final A #2
 5299735001,U' B2 U2 B2 D L2 D F2 R U' L' U2 B R2 D' R D2 B F2 L2,W,Krungthep Farewell 2025 (2025-12-28),333bf Final A #1
-1353299001,R' B' R D R D' R U D' L U2 L2 U2 L2 D F2 U L2,W,KubeKids Vila Velha 2019 (2019-10-12~13),333oh R1 A #2
+5792795001,L2 D2 B F U2 F R2 F' U' B2 L F' L2 U B' L' F,W,Begastri Open 2026 (2026-08-20~23),333 R2 A #4
 1359853001,L2 B2 F' L2 F2 L2 D2 B2 F' R' F2 L' B' R U' B' U2 L U,W,Spanish Championship 2019 (2019-10-11~13),333oh R2 A #3
 5318058001,F2 U' R D' F2 D2 R2 D2 F D2 U2 L2 B' L' R2 F' R2 B U L',W,Beijing Winter 2026 (2026-01-10~11),333 R1 C E2
 1378446001,B2 L2 D L2 F2 R2 B2 R2 U2 F' D' U' L U' B' F2 D' U' B',W,Cubing Kazakhstan Nationals 2019 (2019-10-26~27),333oh Final E #1
@@ -147,7 +147,7 @@
 1601702001,U' R2 U B2 D F2 U' L2 U' B2 U L B' L R D2 F D B2 D',W,Minnesota Cube Days 2020 (2020-03-07~08),333 R2 A E1
 4450731001,R' D2 U2 F U2 F' L2 U2 D R' U B D' L' F2 D B2 R' B R,W,Sicily Winter 2025 (2025-01-25~26),333bf Final A #2
 4989682001,D U2 B U2 F D2 B' L2 D2 R2 F2 U F' D U2 L U L F R2 B R,W,Slovenian Nationals 2025 (2025-08-29~31),333bf R1 B E2
-1737061001,U2 R2 D R F B U F B U2 B2 U F2 R2 U2 L,W,Babylon Fall 2021 (2021-11-14),333 R2 C #4
+5786941001,R' B2 L' D2 B2 D2 L' R' U F U B F2 L' U2 F2 L,W,Norwegian Championship 2026 (2026-08-14~16),333oh Final A #4
 4237199001,D B2 D' U B2 U' F2 D' B L U' L U' B' U F D L' B,W,Yopal Open 2024 (2024-10-26),333 Final B #1
 1815775001,D R2 B2 D2 R2 B2 R U' L' D B F2 D B' D' B2 L',W,Ixchel 2022 (2022-02-19),333oh R1 A #2
 5113959001,U R' F2 L2 D2 B' R2 F2 L2 R B' F D' B R B2 F' L',W,PUCP Cubing Festival VII 2025 (2025-10-19),333oh R1 A E2
@@ -175,7 +175,7 @@
 2305488001,U' L2 F2 D2 B' L2 B D2 L U' L2 R F L D F2 U2 F2,W,Minerva Open 2022 (2022-11-12),333oh R2 B E1
 2480889001,L F R2 U F U' B' R U2 B2 D2 L U2 L2 U2,W,CMI Tessellate Cube Open 2023 (2023-02-04~05),333oh R2 A #4
 2500831001,F' U' L F' U' B2 U2 B L U2 B' L2 F2 R2 F D2 F',W,Ohio State RPAC Cube Clash 2023 (2023-02-18),333 R1 B #3
-2503429001,F R' L2 U F L' D' B D' B' L' D2 L' B2 U2 D2 R' F2,W,Solo Comeback 2023 (2023-02-25),333 Final A #3
+5803254001,R' F' L' D B2 D' B2 L2 D2 B U B2 F2 U2 L' U2 L2 D B' L,W,Israel Championship 2026 (2026-08-25~27),333bf R1 D #2
 2529137001,D' L D' F2 U' F2 U' L2 R2 F2 R' U2 B' D2 L2 D L2 F2 U2,W,Hong Kong Cube Day 2023 (2023-03-04),333oh R1 C #4
 2600328010,F R2 B' D2 B' D2 B2 U2 L2 U' F D2 U F L B' L' B' U L B2,W,Please Be Quiet Brisbane 2023 (2023-04-01~02),333mbf Final A #2
 4426970001,F B' D R D' F2 R2 D2 R' U2 F' D2 L2 U2 R2 B U2,W,Prescott Winter 2025 (2025-01-18),333 R1 C #4
@@ -191,7 +191,7 @@
 2754305001,L D2 L D2 B2 L2 R' D2 F D' F' L2 B' U' B2 F2 U B',W,Glasgow Spring 2023 (2023-05-26~28),333 R2 A #5
 4430325001,L B2 R2 B R2 L' D R L' B2 U2 F2 D R2 D F2 B2 U2 L2,W,Chichester January 2025 (2025-01-18~19),333 R1 D E1
 4905932001,B2 R D2 B L2 D2 L2 B F U B' D' B D' B2 U F2 L',W,CubingUSA Great Lakes Championship 2025 (2025-08-01~03),333oh R1 B #3
-3875408004,U2 B2 D2 L F2 U' B' L B' D B' D L2 D2 B2 D' L2 B R2,W,Swisscubing Cup Mental Breakdown I 2024 (2024-06-15~16),333mbf Final B #1
+5820671001,B R2 F2 R' F' R2 L' U2 D' B U' B2 D2 F L2 F' U2,W,Santos Mágico Open 2026 (2026-09-06~07),333 R1 D #1
 4603745001,D L2 D' U F2 D' U F' L2 R' U B2 U R' B D R D2,W,Happy Crew CO 2025 (2025-03-29),333 Final B #5
 2942601001,U2 B2 R2 U2 L U2 R' U' R' F' U' R2 B2 R B2 F D2,W,Rionegro al Cubo 2023 (2023-07-29~30),333oh R1 A #5
 2982933001,B' F2 D2 L2 B' D2 R B2 D R D B' U' L2 R U2 F',W,Back to School Utah 2023 (2023-08-19),333 R1 B #3

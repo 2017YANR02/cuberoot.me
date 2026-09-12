@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / ORWY / bin 8
-# Population in this bin: 471
+# Population in this bin: 476
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4311529001,R' U' F U' D' R D2 F2 R F' U B' R2 F B D2 L2 F2 R2 F R' F R' U' F,O,East Bay Big and Blind 2024 (2024-11-24),333fm Final A #2
@@ -12,7 +12,7 @@
 4252247001,R B L' D B2 L' F R D B U2 B2 D2 L2 D' L2 F2 D,O,Unley Spring 2024 (2024-11-02),333 R1 B #2
 2719519001,U2 F2 L' U2 R U2 L' U2 R2 U B U F2 L' R' D' F' D2 B R,R,Silentia 2 - BLD 2023 (2023-05-14),333bf Final B #3
 4241322001,B2 U' R B2 U F' U' D' B2 D F' L2 B2 L2 D2 B' D2 B L2 D',O,Newmarket Side Events 2024 (2024-11-02),333bf R1 B E2
-68670001,D F' L' D2 B D2 R2 D' B' D L2 D R2 L2 F2 U L2 B2 U',R,Hungarian Open 2014 (2014-10-17~19),333 R1 C #4
+5797473001,F2 D U F2 U' B2 F L' F2 L F2 D' L2 B' F2 U2,R,Nanning Open 2026 (2026-08-23),333 R2 A #5
 4693415001,R' D2 B2 R2 D' F2 U F2 U R D2 U2 L' U F' D' B' L',Y,NSW State Championship 2025 (2025-04-26~27),333 R2 A E1
 93588001,F' R F' U B2 U D' B2 R2 L' F2 L2 F2 D R2 U' B2 U2,O,Schleswig Holstein Open 2014 (2014-12-27~28),333oh R1 B #1
 95245001,U' L2 B2 L2 B2 D' F2 U' L2 D2 B2 R U L2 U B U2 L' U' R',R,Milan Winter Open 2015 (2015-01-04),333 Final A #4
@@ -74,7 +74,7 @@
 562345001,F2 B2 R D B R' U2 B' U F R2 D2 F' B2 D2 F' D2,Y,Tambov Summer 2017 (2017-07-29~30),333 R1 A #3
 5384388001,F2 U2 R2 F2 D R2 U' B2 F2 L' F R F L' D2 U B2 F2,W,Cœur de Cube Charantonnay 2026 (2026-02-14~15),333oh Final A E1
 5761702001,F2 D2 U F2 R2 U' F' U' F' D2 R' F2 D B2 F L' B F2,R,Barpeta Cubing Open 2026 (2026-07-26),333oh Final B #3
-4955873001,L2 D U2 R2 F2 R2 B U2 F' L2 R' B' D2 B2 D' R' B R2 F',R,Cubing Kazakhstan Nationals 2025 (2025-08-15~17),333oh R1 A #1
+5780152001,F R B2 U' F' D B L' B' L D' L2 B2 D L D,Y,Missouri Championship 2026 (2026-08-07~09),333bf Final A #5
 590697001,F D B' R L U L2 B U2 R' D R2 U2 L2 U L2 F2 U' F2 B2,R, Raipur Cube Challenge 2017 (2017-09-10),333oh Final A #1
 4992989001,B2 L' D2 L' D' F D' F2 U F B2 U' D2 B2 D2 R2 D2,O,Quangang Morning 2025 (2025-08-31),333 Final C #1
 609972036,R2 D2 B2 D U2 L2 D L2 B2 U2 B D2 R' D' U' B2 L B U2 L D,W,Hefei Open 2017 (2017-10-05~07),333mbf Final A #1

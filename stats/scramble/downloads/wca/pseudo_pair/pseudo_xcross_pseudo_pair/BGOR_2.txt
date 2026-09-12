@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / BGOR / bin 2
-# Population in this bin: 201
+# Population in this bin: 204
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 17474001,D2 B2 L2 B D2 L2 R2 F2 D' L D R U' L2 F U2 F' U',R,Apollo Open 2014 (2014-05-04),333 R2 B E1
@@ -112,9 +112,9 @@
 3077001001,R' B2 R U2 B2 D2 R2 F2 R2 U B' L D' L' B2 L' B L2 D2,B,Banja Luka Cube Day 2023 (2023-09-16),333 R2 B E2
 3133021001,L' B2 D2 R2 F' R2 B F U2 L' F' L2 B' D2 F2 D' F' R2,G,CubingZA Cape Cubes Spring 2023 (2023-09-30~10-01),333oh R1 A #3
 3140532001,R' D' B' U2 F2 R2 F2 U2 F2 U' L2 U' B2 U' R F2 R D',G,Speedcube Battle Vallekas 2023 (2023-09-30~10-01),333 R1 B E2
-3167340001,F' B2 D' L2 D L' F L' R2 F2 R2 B' D2 B' L' F2 U,B,Chengdu Flash Cube Open 2023 (2023-10-15),333 R1 J #2
+5777111001,B' U B L2 F' U2 L F' D L' R2 F2 L2 F R2 F2 U2 F,G,Bristol August 2026 (2026-08-08~09),333 R2 B #1
 3197132001,R' F L2 U' F2 R2 D B2 L2 U2 F' U2 D2 R2 U2 L2 F R U',G,TCG Space Santa Anita 2023 (2023-10-21~22),333 R1 A #1
-3219621026,U' R2 D' L' U2 L' B2 R2 L2 F L' U' R2 L2 D' R2 B2 D' B2 L',B,Ukrainian Nationals 2023 (2023-10-27~29),333mbf Final A #1
+5814539001,B' U' R2 B2 D2 R2 B2 F' R2 F D2 R B2 R U R' B D2 F',O,Greitieji Miško Kuberiai 2026 (2026-09-05),333 R1 B #3
 3237546001,B2 R' U' L2 F' U2 F' U2 L2 F' U' R B' R' F D L2 D',R,Future Park Cubing 2023 (2023-11-04~05),333 R1 E #2
 3296836001,F' U2 F U2 F2 R2 U2 R2 D2 F L D' B2 F D' F' D2 B2 R2,R,Patio Cubik Masters Sábado 2023 (2023-11-25),333 R2 A E2
 3298244053,R' B F2 D2 B2 D2 U F2 L2 D L2 B2 L B D2 F' R' F2 D2 B',R,Mountain View Multi Madness 2023 (2023-11-24~27),333mbf R1 A #1
@@ -194,7 +194,7 @@
 5453935036,F' L' R2 B2 L2 R2 U' F' R' U2 L R B L2 F' L2 U B' L2,G,SCU III: FMC Triple-Scoop 2026 (2026-03-14~15),333mbf Final A #2
 5491435001,R' U' F D2 B2 U' L2 R2 B2 D' F2 U' F2 B' L' D2 B' F D2 R2 U' R2 B2 R' U' F,R,CubingUSA Southeast FMC Championship 2026 (2026-03-29),333fm Final A #3
 5556435001,L' B2 L' U' R' U R B2 L2 U2 R2 U F2 U2 B' U' R2,O,New Providence Spring AM 2026 (2026-04-18),333oh Final A #5
-5569118001,R2 F B2 L2 U' B2 D2 U B2 L2 F' U R' B' U' L' B2 D R2,O,Twist and Turn Ghent 2026 (2026-04-18~19),333 R1 A #2
+5778712006,F' D' F2 U R2 D2 R2 F2 U2 L U' F L' R F2 R' B' F' U B R,G,Ocaña BotijOpen 2026 (2026-08-08~09),333mbf Final A #1
 5571349009,U' L B2 R B2 R' F2 R' D2 B R' D2 R B2 R B2 D' F L B2,G,Blind League Dobřejovice II: Crownrise 2026 (2026-04-25),333mbf Final C #1
 5604508001,F2 U2 L U' R2 F2 D' L2 F2 L' D2 R2 B2 D2 F2 D2 R B U L' F,O,Start of Summer Beijing 2026 (2026-05-01~02),333bf R1 A #1
 5613709001,L' F B U R' B2 R U' F2 L2 B2 R2 U' R2 F U R D,B,CNSE ao Cubo 2026 (2026-05-09),333 R1 A #4

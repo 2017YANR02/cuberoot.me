@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BGWY / bin 3
-# Population in this bin: 28
-# Samples listed: 28 (all entries in this bin)
+# Population in this bin: 29
+# Samples listed: 29 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 80535001,R F' U2 L2 U D2 R U D' B U' L2 B R2 B' D2 B,G,Plaza de las Américas 2014 (2014-11-15),333oh Final A #1
@@ -33,3 +33,4 @@
 5501210001,F' L F D F' D' F L' B' D2 R F' R2 F B2 U2 F L2,B,North Sound Spring 2026 (2026-04-04),333 R2 A #5
 5513603001,D2 F U' B R U2 R U' D L2 B2 D' B2 U2 L2 F2 L2 F,Y,DFW Cubing Spring 2026 (2026-03-28~29),333 Final B #1
 5658195001,B' U' L' F D2 L2 U' L U2 L D2 F D2 R2 F R2 F' D2,B,Future Park Thailand Cube Battle 2026 (2026-05-23~24),333 R1 E #5
+5798714001,F2 B' U' R B2 R' F' R' F L2 F R2 U2 B U2 B2 L2 D',B,III Capixaba Challenge 2026 (2026-08-22~23),333oh Final A E2

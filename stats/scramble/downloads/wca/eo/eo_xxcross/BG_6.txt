@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BG / bin 6
-# Population in this bin: 231
+# Population in this bin: 234
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3270001,D2 R D2 R' F2 D2 F2 R2 F2 R B U' R' U B' U' R2 D F',B,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 S #5
@@ -19,7 +19,7 @@
 270393001,F' B2 L U' R F2 R' L2 D' L B2 L2 B2 R2 L2 D2 F,G,Crazy Cubes Summer 2016 (2016-03-20),333 R2 B #4
 272516001,L2 D2 F' B2 D2 L2 B D2 R' U2 R B2 U2 L D2 F2 L',B,Cilegon Open 2016 (2016-03-26),333 Final A E2
 284789001,L U2 R' F2 D2 F2 U2 B' U2 F2 R' U2 L' U2 L2 U F,G,Argentum Open 2016 (2016-04-09~10),333 Final A #1
-295040001,B2 R' B2 U2 L2 R F2 L B2 D2 R F D F D' B2 U B' F' R,G,Hessen Open 2016 (2016-05-07~08),333oh R2 A #5
+5814348001,U L' U' L U B2 L2 R2 D2 U L D2 F2 L' D F2 U2,B,KC College Cube Open 2026 (2026-09-05),333 R1 D #1
 332178001,B2 D2 F2 U' B2 L2 U' F2 D F' U' L D2 F2 L U' B2 U2 F',B,National Cubing Region Open 2016 (2016-07-23~24),333oh R1 A #1
 332418001,U2 F2 D' L2 F2 U' F' R2 U' B U' B D U2 F' R2 U',B,National Cubing Region Open 2016 (2016-07-23~24),333 R2 I #3
 346665001,B' R2 B' U2 B L2 R2 F2 D F2 U' B2 F D2 F U B2 F',G,Santo Domingo Summer 2016 (2016-08-13~14),333oh R1 A #5
@@ -143,7 +143,7 @@
 3082150001,U B2 L2 R2 D2 R' F2 L R B' D2 F' D L U2 L2 R',G,NCR Favourites 2023 (2023-09-17),333 Final A #2
 3092328001,B L' B' L2 B F' R2 D2 U2 R B L2 F' L B F D F,G,Cube4fun Siedlce Autumn 2023 (2023-09-16~17),333 R1 C E2
 5700997050,D' F' B2 U' D' R2 U' B' R2 D2 B' D2 L2 B2 R2 B L2 U',B,Redhawk Slow Summer OH 2026 (2026-06-13~14),333mbf Final B #1
-3177461001,B' L F2 R' F' L B2 U' B2 D2 L2 F' R2 L2 U2 B' D',B,Tulcan Open 2023 (2023-10-21),333 R1 B #5
+5789904001,B' L' B' D2 R U' F R' U D B2 D' R2 U2 D' R2 F' B2,B,Delacuesta PRs 2026 (2026-08-17),333 R1 C #5
 3179939001,D' R2 B' R2 F L2 B' F D B2 D R U' R D2 R2 D L,G,Roskilde For Alle 2023 (2023-10-20~22),333 Final B #2
 3205912166,L' U' F' L2 R' D2 R D2 U2 R2 B F' L B R B D2 L B,G,Please Be Quiet in Astana 2023 (2023-10-28~29),333mbf Final A #3
 3246354002,D2 R' L B' U' L F2 L2 U' R' F2 B2 R2 B' D2 B R2 L2 B2 D2,G,Romanian National Championship 2023 (2023-11-02~05),333mbf Final A #2

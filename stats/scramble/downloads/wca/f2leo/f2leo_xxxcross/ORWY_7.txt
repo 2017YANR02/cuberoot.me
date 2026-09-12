@@ -1,14 +1,14 @@
 # Scramble samples — f2leo / f2leo_xxxcross / ORWY / bin 7
-# Population in this bin: 271
+# Population in this bin: 275
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,O,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
 7768001,R2 B2 R2 U' R2 U' R2 B' R' F D' R2 F2 R' U F' U B' D2,R,German Open 2014 (2014-04-05~06),333bf Final A E2
 16764001,F2 R B' U' L F2 U2 L F R D' L B2 L2 U2 R' U2 R',Y,Castellon Open 2014 (2014-05-02~03),333 Final A #1
-24600001,D' L' F U R' L2 F2 U' L2 U' B2 L' U2 R B2 L' B2 R' U2,W,Big CubingItaly 2014 (2014-05-31~06-01),333 R1 D #1
+5817157001,R' D2 F D2 L2 B F D2 F2 L' F R2 F D B' R2 F2 L' D2,Y,Soorsi 2026 (2026-09-05~06),333 R2 C #5
 52675001,B' R2 U' R D' R2 U D2 B U B2 D' F2 B2 D2 B2 D L2,O,ABHC 2014 (2014-08-23~25),333oh Final A #1
 4960528001,R2 F' D' B R2 B L2 U2 L2 F D2 F R B' F' U' F2 U2 B2,R,Mandurah Madness 2025 (2025-08-23),333 R1 C E1
 68780001,F2 L2 B' L B L' U' B' R' D2 F2 U2 B2 L U2 R D2 L B2,O,Hungarian Open 2014 (2014-10-17~19),333oh Final A #5
@@ -23,7 +23,7 @@
 208739001,R2 U R2 D F2 D2 U2 R2 B2 F U L2 U R2 U2 B F D L',Y,Athens Fall 2015 (2015-10-24),333 R2 C E1
 218668001,B2 F2 R F2 L' D2 F2 U' F D' L2 B' D2 B' F U B D2,R,Clash Of Cubers Davao 2015 (2015-11-15),333oh Final A E3
 233963001,R2 F' L2 D2 B U2 F' R2 B2 F' R' F U2 B2 D' U2 B2 R2 U',O,Kyushu Open 2015 (2015-12-27),333 R2 A #2
-239354001,D' R2 B2 R2 U' F2 D' F U F L' F U' F D F2 D B2 L2 U2,R,Great Indian Cubeathon 2016 (2016-01-08~10),333bf Final A #1
+5817993001,D' B' L2 F2 U R' D2 L2 B2 U' L' U2 R D2 R2 F2 U2 L,W,Long Island Back to School 2026 (2026-09-05),333 R2 C E2
 267153001,F' D L U L2 D' F2 D2 B2 U' B U2 R2 B L2 F D2 F',R,Roskilde by Vote 2016 (2016-03-13),333 R1 D #2
 5678427001,R' B L2 F2 D2 R' L U' F' U' L' U B2 R2 B2 D F2 U D,R,Gif-sûr de PR 2026 (2026-05-30~31),333oh R1 C #4
 273537001,D' F B2 U2 L U' B' U' L2 F B2 R2 F2 D' B2 U2 D F2 B2 D',O,Indian Nationals 2016 (2016-03-25~27),333oh R2 E E1

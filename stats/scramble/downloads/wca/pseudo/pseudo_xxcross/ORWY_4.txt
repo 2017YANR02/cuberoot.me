@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / ORWY / bin 4
-# Population in this bin: 700
+# Population in this bin: 712
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3493156001,R F2 U2 R2 F2 U2 R2 B U2 B' U R' U2 B2 U2 F2 R2 U' R2,O,Hiroshima Winter 2024 (2024-02-10),333 R1 D E2
@@ -142,7 +142,7 @@
 4416532001,R2 B2 D L2 B2 U' R2 B' D2 B2 F' L F2 U' L2 F' D2 R2,O,Edinburgh Winter 2025 (2025-01-11~12),333 R1 B E1
 5053823001,F D2 F2 B' R' U' R2 F D' B L2 F2 B D2 F2 U2 L2 U2 L2,R,Amor y Amistad Aves María 2025 (2025-09-27~28),333 R2 B #4
 1326405001,D2 L B' L B2 R2 B' D R2 U R B' D2 F' D2 R2 U2 B2 L2 F2,W,Dragon Cubing 2019 (2019-09-28~29),333 R1 B #4
-5659838001,U2 R' F R U' B D' B2 U2 B2 L U' D B2 U' F2 D F2 U2,W,GAN CubingVic 2026 (2026-05-23~24),333 R1 B #3
+5779705001,L F L2 B2 R2 D' R2 D' F2 D U R2 F L F D' U B2 R,O,Toowoomba Carnival of Cubing 2026 (2026-08-08~09),333 R1 B #2
 2801126001,L U2 B2 L2 B U' F' L' B' D' L U D2 L2 U B2 U L2 U,R,Ciu Open 2023 (2023-06-17~18),333oh Final A E1
 4628160001,U2 R' D2 L F2 R' B2 R U2 R F' U' F2 L D' F L2 U',O,Langenstein City Blind Open 2025 (2025-04-05~06),333oh R1 A #5
 660851016,D2 R2 D2 F L2 R2 D2 B F' D2 F' L' U2 B U' R B L2 R2 U' L2 U',O,Two days in Vitebsk 2015 (2015-10-31~11-01),333mbf Final A #1

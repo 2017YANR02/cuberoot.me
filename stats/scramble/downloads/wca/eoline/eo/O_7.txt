@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eo / O / bin 7
-# Population in this bin: 159
-# Samples listed: 159 (all entries in this bin)
+# Population in this bin: 161
+# Samples listed: 161 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 26181001,D2 R2 F2 R2 B2 U' B2 U2 B2 F' R' D B2 L F' U' B' F U R,O,Iowa Corn Lovers 2014 (2014-06-07),333oh Final A #1
@@ -164,3 +164,5 @@
 5634516001,U' L' B2 L2 F B2 D B' F2 D2 F2 B2 L' U2 L B2 U' R F L2,O,Tomelloso Open 2026 (2026-05-16~17),333bf R1 A E1
 5662048001,U2 F' R' U' B2 U2 B2 R2 B2 U' L2 F2 L' R' U B' D2 F' D F',O,The Loveliest Solves on the Plains Auburn 2026 (2026-05-24),333 R1 B #2
 5665301001,D L2 R F2 U' B2 D2 F2 R2 D' R2 U F R' B U L' D F U2,O,Hangzhou Open 2026 (2026-05-23),333 R2 B #3
+5790802001,F R B R D2 B2 D' F2 U F2 L2 U B2 R' F2 D' F' D' L' D',O,Cubing School SCZ 2026 (2026-08-15~16),333oh R1 A E2
+5804461001,L' B' U D R' D' F' L' D F' U2 F2 L2 B' D2 L2 F L2 F,O,Chattogram Cube Mania 2026 (2026-08-29),333 R1 A E2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / G / bin 1
-# Population in this bin: 334
+# Population in this bin: 340
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 16806001,L2 B L2 F2 L2 R2 F' R2 F' D2 F' D R U2 L' B' U2 L' U' F' U2 B R,G,Castellon Open 2014 (2014-05-02~03),333bf Final A #2
@@ -17,7 +17,7 @@
 5193249001,L B D2 L2 D2 B2 U2 B' D2 L2 F2 U' B R B R' B U2 R,G,Omnicon & Cubes TN 2025 (2025-11-15),333 R1 D E1
 5620757001,L2 R2 B' R2 D2 B R2 U2 F2 R D' U2 F2 R F R' U2 B D,G,Welcome Back Hamilton 2026 (2026-05-09~10),333oh R1 B #5
 5344013005,D2 B L2 B2 R2 F' U2 F L2 R2 D2 F' L F R D U2 B' F D L B',G,Steel's Cubes Lima 2026 (2026-01-23~24),333mbf Final A #1
-4508505001,R' U' L2 F2 U2 D R B' D' B' U' R2 B2 U2 L2 D' F2 R',G,Manchester February 2025 (2025-02-22),333oh Final A #5
+5793517001,D2 U2 R' U2 F2 U2 B2 F U2 R' B2 U B' U B' U L' R2,G,Mirecourt Open 2026 (2026-08-22~23),333oh R2 A E1
 4579073001,D' B D2 F2 U2 F2 R2 U F2 R2 U2 B2 L' B' U B2 L' R2,G,Alabama Crimson Cubing Spring 2025 (2025-03-22),333oh Final C #5
 208331001,F2 U2 L2 B' L2 F L2 B2 D2 B' D' L' R B D2 B2 R2 F' R' D' L' F2,G,Saint Petersburg Autumn Open 2015 (2015-10-24~25),333bf Final A #3
 217633001,L2 D' F' D' R D2 R2 F L2 F U R2 U R2 L2 U B2 L2 U,G,Porto Alegre Open 2015 (2015-11-14~15),333oh Final A E1
@@ -45,7 +45,7 @@
 512057001,F2 U2 R B2 U2 R2 B2 L B2 R2 D2 U R B F U R' B' R',G,Bintaro Open 2017 (2017-05-21),333 R1 C #3
 534706001,U2 R2 B2 D L2 F2 U R2 U' F2 U' B' U2 L R2 B' D R B R D2,G,Plentzia Open 2017 (2017-06-17~18),333bf Final A #3
 540452001,D B' D R F' R B2 R F' U B2 U R2 D R2 B2 U2 L2 U2,G,Latin America Cubing Tour - Chía 2017 (2017-06-28~29),333oh R1 F #1
-4731443001,R' U' F U F2 D2 L2 F' D' L' D R' U' F2 D2 L2 F D2 F' B' U2 R' U' F,G,Evanston Qualifier 2025 (2025-05-16~18),333fm Final A #1
+5813464001,F2 U B2 L2 D B2 U2 F2 D' L2 F D' R2 B F' D2 L' R' F' D2,G,Brookline Favorites IV 2026 (2026-08-29),333 Final A E2
 553081001,U' F2 U' F2 U2 R2 U' L' D U2 R F' L R D' F2 U' R' U',G,Southern Championships 2017 (2017-07-15~16),333 R1 G #2
 553521001,F' B2 R' L2 F U' R B' L2 F' B2 U2 R2 D2 L U2 B2 U2,G,Southern Championships 2017 (2017-07-15~16),333oh R1 B #1
 556074001,F2 R2 B R2 D2 R2 B L2 R2 D L2 B2 L F U' R2 B L',G,LTC Cube Fest 2017 (2017-07-22~23),333oh R1 C #5
@@ -95,7 +95,7 @@
 4185127024,B R B2 D2 F2 R F2 L D2 R2 F2 L' F U2 F D2 L' D2 B,G,Taboão Bigs & Blinds 2024 (2024-10-13),333mbf Final C #1
 884924001,U B L U R2 L2 B2 U B2 L D F2 R2 U' L2 D2 L2 B2 D2 F2,G,Swiss Nationals 2018 (2018-09-21~23),333 R1 B #2
 885112001,R' F2 D2 F2 L' U2 F2 L D' B R2 B' U B' F2 U' L2 R',G,Swiss Nationals 2018 (2018-09-21~23),333oh R1 B #1
-4324747001,F L U L2 B2 D F2 D' U2 L2 U B U' F2 R' F' D' B' D',G,Centro Suba Bogotá IV 2024 (2024-12-01),333 R1 D E1
+5779879013,U' B2 D F2 R2 U2 R2 F2 U F' R B2 L2 D2 L2 D2 F D,G,Missouri Championship 2026 (2026-08-07~09),333mbf Final A #1
 3839833001,D' R2 D L' F2 R D2 U2 R2 D2 U B L D2 U L' R' D2,G,Muggiò Summer 2024 (2024-06-08~09),333 Final B #2
 923544001,B U2 L2 U2 B2 L2 B' R2 D2 R2 U' B' D2 U B2 F L' B L F' L B2,G,Italian Championship 2018 (2018-11-02~04),333bf R1 B E2
 937071001,L2 F2 D U B2 U' R2 F R2 F2 R2 D2 U' L' F U2 B R2 F,G,Basauri Open 2018 (2018-11-17~18),333 R2 A E1
@@ -163,7 +163,7 @@
 5765481001,U' L' B U2 F' R2 B U2 B L2 B2 L D2 F' U2 F' U' L',G,Samgau Almaty 2026 (2026-07-25~26),333 Final A #3
 2432117001,U2 B' D2 L2 B' L2 F2 L2 U' R' D2 B' U' R' D2 B' F2 U' L2,G,Mathsoc Delhi Open 2023 (2023-01-14~15),333 R2 A #5
 5543888007,F R D' L2 R2 B2 F' D2 F2 R2 U' F U2 L2 U B' R' U B' L2,G,Please Be Quiet Singapore April 2026 (2026-04-18),333mbf Final A #1
-4340463001,B' D2 B' F R2 B L2 D2 U' R2 B L F2 D F2 L R2 B' L2,G,Na'Guara Metropolis Lara 2024 (2024-12-07),333 Final A E2
+5774237001,U' D' R2 U2 D F R2 F R' D2 L2 F B D2 F R2 L2 B,G,Multicentro Ibagué 2026 (2026-08-01),333 R2 A #5
 4808607001,L2 D U2 L2 F2 U2 F U2 B D2 R' B2 F U2 R' B F' D R',G,Athens Summer Break A 2025 (2025-06-14),333 R1 B E1
 2449917015,U L' U' F2 U B2 U' R2 D B2 F L' F U2 L U2 F2 R D',G,BrizZon Side Open 2023 (2023-01-21~22),333mbf Final A #2
 4121100001,B2 U2 L' D' R' B U2 B R L B2 U2 D2 L' B2 U2 L' U2,G,Slow Down Adelaide 2024 (2024-09-21),333bf R1 A #1
