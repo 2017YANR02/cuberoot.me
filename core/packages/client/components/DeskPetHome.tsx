@@ -102,7 +102,7 @@ export default function DeskPetHome({ character, label, locked = false }: {
       {care && <div className="pet-home-actions">{CARE_ACTIONS.map(action=>{
         const {icon:Icon,label:actionLabel}=ACTIONS[action];
         const wait = Math.ceil(careWait(care,action,now)/1000);
-        return <button type="button" key={action} onClick={()=>void interact(action)} disabled={saving || !!reaction || wait>0 || locked || !!error || (action==='play' && care.energy<15)}>
+        return <button className="pet-home-care-action" type="button" key={action} onClick={()=>void interact(action)} disabled={saving || !!reaction || wait>0 || locked || !!error || (action==='play' && care.energy<15)}>
           <span><Icon size={22}/>{care.rewarded.includes(action) && <Check size={10} className="pet-home-action-done"/>}</span><strong>{tr(actionLabel)}</strong>
           <small>{wait ? `${wait}s` : care.rewarded.includes(action) ? tr({zh:'再陪一会儿',en:'More time together'}) : '+1 XP'}</small>
         </button>;
@@ -125,7 +125,7 @@ export default function DeskPetHome({ character, label, locked = false }: {
         : locked ? <p>{tr({zh:'这位伙伴还未开放领养。',en:'This companion is not available for adoption yet.'})}</p>
         : owner ? <button type="button" className="pet-primary" onClick={()=>void interact()} disabled={saving || !!error}>{saving ? <Loader2 size={18}/> : <Heart size={18}/>} {tr({zh:`领养${label.zh}`,en:`Adopt ${label.en}`})}</button>
         : <AppLink className="pet-primary" href={`/account?next=${encodeURIComponent(`${lang==='zh'?'/zh':''}/pets?pet=${character}`)}`} prefetch={false}><Heart size={18}/>{tr({zh:'登录并领养',en:'Sign in to adopt'})}</AppLink>}
-      {error && <div className="pet-home-error" role="alert"><p>{error}</p><button type="button" onClick={()=>setReload(value=>value+1)}>{tr({zh:'重试',en:'Retry'})}</button></div>}
+      {error && <div className="pet-home-error" role="alert"><p>{error}</p><button className="pet-home-retry" type="button" onClick={()=>setReload(value=>value+1)}>{tr({zh:'重试',en:'Retry'})}</button></div>}
       <AppLink className="pet-home-gallery-link" href={`/pets/gallery?pet=${character}`} prefetch={false}><Sparkles size={16}/>{tr({zh:'看看它的更多小表情',en:'Explore its little expressions'})}</AppLink>
     </div>
   </section>;
