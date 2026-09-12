@@ -122,12 +122,12 @@ describe('mini program web routes', () => {
     }
   });
 
-  it('derives all 59 homepage destinations from the shared ordered catalog', () => {
-    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 4, 6, 12, 17, 12, 3]);
-    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 4, 6, 12, 17, 12, 3]);
-    expect(listWebTools()).toHaveLength(59);
+  it('derives all 60 homepage destinations from the shared ordered catalog', () => {
+    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 4, 6, 12, 18, 12, 3]);
+    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 4, 6, 12, 18, 12, 3]);
+    expect(listWebTools()).toHaveLength(60);
     expect(listWebTools()).toContainEqual(expect.objectContaining({ id: 'gallery', href: '/gallery' }));
-    expect(new Set(listWebTools().map((tool) => tool.id))).toHaveProperty('size', 59);
+    expect(new Set(listWebTools().map((tool) => tool.id))).toHaveProperty('size', 60);
     expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(57);
     expect(resolveWebRoute('paper-odyssey')).toMatchObject({
       path: '/zh/dev/architecture/history?mode=play',
@@ -137,6 +137,8 @@ describe('mini program web routes', () => {
     expect(resolveWebTool('timer')).toMatchObject({ id: 'timer', key: 'timer', action: 'native' });
     expect(resolveWebTool('alg')).toMatchObject({ id: 'alg', key: 'alg', action: 'web' });
     expect(resolveWebTool('github')).toMatchObject({ id: 'github', key: null, action: 'copy' });
+    expect(resolveWebTool('partnership')).toMatchObject({ id: 'partnership', action: 'disabled' });
+    expect(resolveWebRoute('partnership')).toBeNull();
     expect(resolveWebTool('__proto__')).toBeNull();
   });
 
@@ -145,7 +147,7 @@ describe('mini program web routes', () => {
       expect(trackingSource, tool.id).toContain(`| \`${tool.id}\` |`);
     }
     expect(trackingSource).toContain(
-      '共 59 项：网站首页直接渲染它们，工具 tab 通过一个固定白名单路由复用整个首页',
+      '共 60 项：网站首页直接渲染它们，工具 tab 通过一个固定白名单路由复用整个首页',
     );
   });
 
