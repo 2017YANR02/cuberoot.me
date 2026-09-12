@@ -33,9 +33,9 @@ from refine_jin_mao import Mesh
 
 ROOT = Path(__file__).resolve().parents[3]
 SOURCE = ROOT / 'design/space/scenes/shanghai.blend'
-OUTPUT = ROOT / '.tmp/png/space-peace-central-arch-20260910'
+OUTPUT = ROOT / '.tmp/png/space-peace-central-arch-20260911'
 ROOT_ID = hero.IDS['20']
-REVISION = 'peace-central-arch-candidate-20260910'
+REVISION = 'peace-central-arch-candidate-20260911'
 PROPERTY = 'spacePeaceCentralArchRevision'
 REFERENCE = 'https://commons.wikimedia.org/wiki/File:Peace_Hotel_20250503.jpg'
 # Facade coordinates in geographic Blender metres: u = -1367 - Y, v = X + 1328.
@@ -45,6 +45,13 @@ WORLD_FROM_FACADE = Matrix(((0, 1, 0, -1328), (-1, 0, 0, -1367),
 BOTTOM, SPRING, RADIUS, FRONT = .12, 5.8, 2.4, 16.5
 TOP = SPRING + RADIUS
 GLASS_FRONT = 15.60
+FANLIGHT_FRONT = GLASS_FRONT + .008
+FANLIGHT_RADIUS = 2.22
+FANLIGHT_MATERIAL_ID = REVISION + '/fanlight'
+# The dated oblique photo shows warm upper glazing and dark lower doors.
+# Use a symmetric appearance proxy: one photograph does not establish a fixed
+# brighter half, measured interior, transparent glazing, or surveyed light rig.
+FANLIGHT_COLOR = (.24, .115, .035, 1)
 # The existing 8.83 m band is 0.18 m high: its lower face is at 8.74 m.
 PATCH = ((-3.0, 14.80, -.02), (3.0, 17.16, 8.73))
 FIXTURES = ((-5.61, 15.00, -.02), (5.61, 19.50, 6.70))
@@ -239,9 +246,43 @@ def closed_arc(part, *args, **kwargs):
         if (i-start) % 6 >= 2: part.faces[i] = tuple(reversed(part.faces[i]))
 
 
+def beveled_relief(part, profile, back, shoulder, front, scale):
+    """Keep the estimated outline; bevel its relief instead of a flat plate."""
+    center = tuple(sum(p[i] for p in profile)/len(profile) for i in (0, 1))
+    inset = [(center[0]+(u-center[0])*scale, center[1]+(z-center[1])*scale) for u, z in profile]
+    part.face([(u, back, z) for u, z in profile])
+    part.face([(u, front, z) for u, z in reversed(inset)])
+    for i, a in enumerate(profile):
+        j = (i+1) % len(profile); b, c, d = profile[j], inset[j], inset[i]
+        part.face([(a[0], back, a[1]), (a[0], shoulder, a[1]),
+                   (b[0], shoulder, b[1]), (b[0], back, b[1])])
+        part.face([(a[0], shoulder, a[1]), (d[0], front, d[1]),
+                   (c[0], front, c[1]), (b[0], shoulder, b[1])])
+
+
+def fanlight_material(source, illumination):
+    """One private material; the website's existing cityNight shader owns time."""
+    mat = previous.material(source, 'Peace central warm fanlight', metal=0,
+                            roughness=.55, illumination=illumination)
+    mat['spaceMaterialId'] = FANLIGHT_MATERIAL_ID
+    mat['spaceShaderKey'] = 'shanghai-illumination-uniform-v1'
+    mat['spaceIllumination'] = illumination
+    mat['spacePhotoReference'] = REFERENCE
+    mat['spaceAppearanceEstimate'] = 'Symmetric warm upper pane proxy; color and intensity are photographic estimates'
+    node = mat.node_tree.nodes.get('Principled BSDF')
+    if not node or node.inputs['Base Color'].is_linked:
+        raise RuntimeError('Expected untextured old door glazing for the isolated fanlight material')
+    mat.diffuse_color = FANLIGHT_COLOR
+    node.inputs['Base Color'].default_value = FANLIGHT_COLOR
+    # No baked emission: glTF remains dark in daytime and runtime restores the
+    # night uniform. Never brighten material-66, which has unrelated users.
+    node.inputs['Emission Strength'].default_value = 0
+    return mat
+
+
 def build_parts():
     parts = frontages.parts()
-    parts.update(ornament=Mesh(), handles=Mesh())
+    parts.update(ornament=Mesh(), handles=Mesh(), fanlight=Mesh())
     template = frontages.parts()
     windows.arch_window(template, 0, BOTTOM, RADIUS*2, TOP-BOTTOM, 0)
     # Reuse the existing arch profile and curved masonry spandrels. The central
@@ -279,6 +320,25 @@ def build_parts():
     for z in (3.28, SPRING):
         box(parts['metal'], (0, GLASS_FRONT+.035, z), (4.68, .07, .07))
     closed_arc(parts['metal'], 0, SPRING, 2.32, 2.37, GLASS_FRONT, GLASS_FRONT+.07, steps=32)
+    # Real photograph: curved fanlight divisions and dark radial bars. Their
+    # count/radii below remain estimates. The symmetric warm proxy ends behind
+    # the spring rail; no fixed asymmetry is inferred from photographic exposure.
+    profile = [(FANLIGHT_RADIUS*math.cos(math.pi*i/64),
+                 SPRING+FANLIGHT_RADIUS*math.sin(math.pi*i/64)) for i in range(65)]
+    closed_extrude(parts['fanlight'], profile, GLASS_FRONT+.003, FANLIGHT_FRONT)
+    for radius in (.80, 1.65):
+        closed_arc(parts['metal'], 0, SPRING, radius-.020, radius+.020,
+                   GLASS_FRONT+.020, GLASS_FRONT+.050, steps=64)
+    for angle in (30, 60, 120, 150):
+        theta = math.radians(angle)
+        direction, perpendicular = (math.cos(theta), math.sin(theta)), (-math.sin(theta)*.020, math.cos(theta)*.020)
+        a = (direction[0]*.20, SPRING+direction[1]*.20)
+        b = (direction[0]*2.32, SPRING+direction[1]*2.32)
+        rail = [(a[0]-perpendicular[0], a[1]-perpendicular[1]),
+                (b[0]-perpendicular[0], b[1]-perpendicular[1]),
+                (b[0]+perpendicular[0], b[1]+perpendicular[1]),
+                (a[0]+perpendicular[0], a[1]+perpendicular[1])]
+        closed_extrude(parts['metal'], rail, GLASS_FRONT+.020, GLASS_FRONT+.050)
     hero.rectangular_frame(parts['metal'], 0, GLASS_FRONT+.04, 1.70, 2.36, 3.16, .055, .075)
     for u in (-.15, .15):
         box(parts['handles'], (u, GLASS_FRONT+.13, 1.72), (.04, .08, .62))
@@ -286,14 +346,14 @@ def build_parts():
     # leaf count, heraldry, exact contours and all relief depths are unknown.
     shield = [(0, 8.26), (.22, 8.40), (.26, 8.67), (.18, 8.72),
               (-.18, 8.72), (-.26, 8.67), (-.22, 8.40)]
-    closed_extrude(parts['ornament'], shield, 16.49, 16.67)
+    beveled_relief(parts['ornament'], shield, 16.49, 16.64, 16.70, .83)
     for side in (-1, 1):
         for i in range(4):
             u, z = side*(.50+i*.30), 8.35 + .055*i
             leaf = [(u-side*.15,z-.025),(u+side*.08,z-.06),
                     (u+side*.25,z+.22),(u+side*.03,z+.15)]
             if side < 0: leaf.reverse()
-            closed_extrude(parts['ornament'], leaf, 16.49, 16.58)
+            beveled_relief(parts['ornament'], leaf, 16.49, 16.55, 16.60, .72)
     return parts
 
 
@@ -419,9 +479,29 @@ def geometry_check(root, before):
     probes = [(f'clear-{u}-{z}', u, z) for u in (-.65, .65) for z in (2.3, 4.92, 5.60, 6.70, 7.65)]
     hits = ray_snapshot(root, probes)
     for hit in hits:
-        if (hit['position'] is None or abs(hit['position'][1]-GLASS_FRONT) > .025
-                or hit['normal'][1] < .99 or hit['spaceId'] != REUSE['glass']):
+        warm = hit['z'] > SPRING
+        expected_id = REVISION+'/'+ROOT_ID+'/fanlight' if warm else REUSE['glass']
+        expected_v = FANLIGHT_FRONT if warm else GLASS_FRONT
+        if (hit['position'] is None or abs(hit['position'][1]-expected_v) > .002
+                or hit['normal'][1] < .99 or hit['spaceId'] != expected_id):
             raise RuntimeError('Central arch has an obstruction or wrong-facing glazing: '+json.dumps(hit))
+        hit['expectedSpaceId'], hit['expectedFront'] = expected_id, expected_v
+    # Separate checks resolve the new depth ordering: pane -> raised dark bars,
+    # while the outer dark margin remains the original glass material/identity.
+    fan_checks = [('warm-pane', 1.1, 135, 'fanlight', FANLIGHT_FRONT),
+                  ('warm-outer-pane', 1.95, 165, 'fanlight', FANLIGHT_FRONT),
+                  ('warm-opposite-pane', 1.1, 45, 'fanlight', FANLIGHT_FRONT),
+                  ('dark-outer-margin', 2.27, 135, 'glass', GLASS_FRONT),
+                  ('raised-radial-bar', 1.1, 120, 'metal', GLASS_FRONT+.050),
+                  ('raised-curved-bar', .8, 135, 'metal', GLASS_FRONT+.050)]
+    fan_hits = ray_snapshot(root, [(name, radius*math.cos(math.radians(angle)),
+                 SPRING+radius*math.sin(math.radians(angle))) for name, radius, angle, _, _ in fan_checks])
+    for hit, (_, _, _, role, front) in zip(fan_hits, fan_checks):
+        sid = REUSE.get(role, REVISION+'/'+ROOT_ID+'/'+role)
+        if (hit['position'] is None or abs(hit['position'][1]-front) > .002
+                or hit['normal'][1] < .99 or hit['spaceId'] != sid):
+            raise RuntimeError('Fanlight pane/frame depth order failed: '+json.dumps(hit))
+        hit['expectedSpaceId'], hit['expectedFront'] = sid, front
     # Independent candidate02 measurements of the retained wall behind the
     # remnants. Do not derive the expected first hit from the clipping boxes.
     wall_v = {-4.5: 16.219111416, -3.4: 16.241315453,
@@ -438,11 +518,12 @@ def geometry_check(root, before):
     for old, new in zip(before, after):
         if old['position'] is None or old != new:
             raise RuntimeError('Protected facade first surface changed: '+json.dumps({'before': old, 'after': new}))
-    return {'centralRecessRays': hits, 'residueClearanceRays': clearance, 'protectedFacadeRays': after,
+    return {'centralRecessRays': hits, 'fanlightLayerRays': fan_hits,
+            'residueClearanceRays': clearance, 'protectedFacadeRays': after,
             'topologyScope': 'Existing meshes retain outside face/UV records and corner normals quantized to 1e-5. New parts use separate unwelded closed primitives; no watertight whole-building claim.'}
 
 
-def author(root, audit):
+def author(root, audit, fanlight_illumination):
     objects = check_source(root, audit)
     scene = bpy.context.scene
     parts = build_parts()
@@ -470,6 +551,7 @@ def author(root, audit):
                         'trim': objects[ROOT_ID+'/1'].data.materials[0],
                         'metal': objects['peace-riverfront-20260909/'+ROOT_ID+'/metal'].data.materials[0]}
     material_sources['ornament'] = material_sources['trim']
+    material_sources['fanlight'] = fanlight_material(objects[REUSE['glass']].data.materials[0], fanlight_illumination)
     installed, additions = {}, []
     for role, part in parts.items():
         if role in REUSE:
@@ -484,7 +566,8 @@ def author(root, audit):
             obj['space_export'] = True
             for key in ('spaceVisible', 'spaceCastShadow', 'spaceReceiveShadow'): obj[key] = True
             additions.append(obj)
-        installed[role] = {'spaceId': obj['spaceId'], **install_part(obj, part, material)}
+        installed[role] = {'spaceId': obj['spaceId'], 'spaceMaterialId': material.get('spaceMaterialId'),
+                           **install_part(obj, part, material)}
     bpy.context.view_layer.update()
     for obj, (parent, matrix, data, metadata) in before_objects.items():
         if obj.parent != parent or obj.matrix_world != matrix or properties(obj) != metadata:
@@ -495,11 +578,21 @@ def author(root, audit):
         raise RuntimeError('An original mesh datablock changed, risking archived/shared users')
     expected_ids = old_ids + Counter(obj['spaceId'] for obj in additions)
     if expected_ids != Counter(obj.get('spaceId') for obj in scene.objects if obj.get('space_export')):
-        raise RuntimeError('Export identity counts changed beyond the four new arch detail meshes')
+        raise RuntimeError('Export identity counts changed beyond the five new arch detail meshes')
     if (len(archive.objects) != len(targets) or any(obj.get('spaceId') or obj.get('space_export') for obj in archive.objects)):
         raise RuntimeError('Archive identity/export boundary failed')
-    if properties(scene) != old_scene or appearance_snapshot() != appearance or facade_rig.export_snapshot(scene) != rigs:
-        raise RuntimeError('Scene metadata, material, packed texture, or facade lighting changed')
+    current_materials, current_images = appearance_snapshot()
+    old_materials, old_images = appearance
+    new_material = material_sources['fanlight']
+    if (current_images != old_images or set(current_materials)-set(old_materials) != {new_material.name}
+            or any(current_materials.get(name) != record for name, record in old_materials.items())):
+        raise RuntimeError('Existing material/packed texture changed, or unexpected material added')
+    users = [obj for obj in scene.objects if obj.type == 'MESH' and new_material in tuple(obj.data.materials)]
+    if (len(users) != 1 or users[0].get('spaceId') != REVISION+'/'+ROOT_ID+'/fanlight'
+            or sum(mat.get('spaceMaterialId') == FANLIGHT_MATERIAL_ID for mat in bpy.data.materials) != 1):
+        raise RuntimeError('Private fanlight material leaked to another object or duplicated an identity')
+    if properties(scene) != old_scene or facade_rig.export_snapshot(scene) != rigs:
+        raise RuntimeError('Scene metadata or facade lighting changed')
     geometry = geometry_check(root, protected)
     # Change candidate statistics only after proving every original property is
     # intact. verify.ts counts each provenance-bearing bund-stone material use.
@@ -508,12 +601,23 @@ def author(root, audit):
         if mat and mat.get('spaceSurfaceProvenance') and 'bund-stone' in str(mat.get('spaceShaderKey', '')))
     root['spaceFacadeDetail']['stoneMeshes'] = stone_count
     detail = {'revision': REVISION, 'candidateOnly': True, 'reference': REFERENCE,
-        'confirmed': ['Three tall riverfront arches', 'Recessed central portal', 'Stone arch surround and crest with shallow paired relief'],
+        'confirmed': ['Three tall riverfront arches', 'Recessed central portal',
+            'Warm upper fanlight with curved and radial dark divisions in the dated oblique night photograph',
+            'Stone arch surround and crest with shallow paired relief'],
         'estimated': {'allMetricDimensions': True, 'openingWidth': RADIUS*2, 'bottom': BOTTOM,
             'spring': SPRING, 'top': TOP, 'front': FRONT, 'glassFront': GLASS_FRONT,
-            'stoneSurroundWidth': .26, 'crestAndFoliageShapes': 'Simplified silhouettes; no reconstructed heraldry'},
+            'stoneSurroundWidth': .26, 'crestAndFoliageShapes': 'Simplified beveled silhouettes; no reconstructed heraldry',
+            'fanlight': {'shape': 'Symmetric upper semicircle; photographic appearance proxy, not surveyed glazing or interior',
+                'radius': FANLIGHT_RADIUS, 'front': FANLIGHT_FRONT, 'linearBaseColor': FANLIGHT_COLOR[:3],
+                'illumination': fanlight_illumination, 'warmAreaSquareMetres': math.pi*FANLIGHT_RADIUS**2/2,
+                'curvedMullionRadii': [.80, 1.65], 'radialMullionDegrees': [30, 60, 120, 150],
+                'mullionWidth': .04, 'physicalLightPositionUnknown': True}},
         'coordinates': 'u=-1367-worldY; v=worldX+1328; z=worldZ; +v outward',
         'reusedRuntimeIds': REUSE, 'parts': installed, 'cuts': cuts,
+        'newMaterialContract': {'spaceMaterialId': FANLIGHT_MATERIAL_ID,
+            'spaceShaderKey': new_material['spaceShaderKey'], 'spaceIllumination': fanlight_illumination,
+            'baseColorFactor': FANLIGHT_COLOR, 'metallicFactor': 0, 'roughnessFactor': .55,
+            'runtime': 'Restore via ShanghaiCity.restoreBlenderMaterial; cityNight drives the new private material. No constant glTF emission.'},
         'stoneSurfaceCount': {'before': old_stone_count, 'after': stone_count},
         'preservation': {'originalObjects': len(before_objects), 'originalMeshCopies': len(old_meshes),
             'originalMaterialAndImageState': True, 'rigsUnchanged': len(rigs),
@@ -523,6 +627,7 @@ def author(root, audit):
             'protectedFacesAndUV': True, 'protectedCornerNormalsAtFiveDecimals': True,
             'unrelatedObjectDataPointers': True},
         'remaining': ['Survey dimensions', 'Exact crest contours and heraldry', 'Inner door hardware and glazing optics',
+                      'Warm fanlight distribution/color/intensity outside the single oblique photograph',
                       'Day/night/oblique webpage comparison against the dated original'], **geometry}
     root[PROPERTY] = REVISION
     root['spacePeaceCentralArchCandidate'] = json.dumps(detail, separators=(',', ':'))
@@ -565,6 +670,15 @@ def export_candidate(root, directory):
         raise RuntimeError('Candidate GLB lost an identity or leaked a different scene object')
     if any(node.get('extras', {}).get('archivedSpaceId') for node in nodes):
         raise RuntimeError('Candidate GLB contains archives')
+    fan_materials = [mat for mat in doc.get('materials', [])
+                     if mat.get('extras', {}).get('spaceMaterialId') == FANLIGHT_MATERIAL_ID]
+    if len(fan_materials) != 1:
+        raise RuntimeError('Candidate GLB lost or duplicated the private fanlight material')
+    fan = fan_materials[0]
+    if (fan.get('extras', {}).get('spaceShaderKey') != 'shanghai-illumination-uniform-v1'
+            or not isinstance(fan['extras'].get('spaceIllumination'), (int, float))
+            or any(abs(value) > 1e-8 for value in fan.get('emissiveFactor', [0, 0, 0]))):
+        raise RuntimeError('Fanlight export bypassed the existing time-dependent material contract')
     return {'path': str(target), 'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest(),
             'nodes': len(nodes), 'meshes': len(doc.get('meshes', [])),
             'scope': 'Replace existing Peace root only in temporary webpage; source transform retained'}
@@ -575,9 +689,13 @@ def main():
     parser.add_argument('--audit-only', action='store_true', help='Read source; only write temporary JSON, no geometry mutations or GLB')
     parser.add_argument('--audit', type=Path, default=OUTPUT/'source-audit.json')
     parser.add_argument('--label', required=True, help='New single filename label; existing outputs are not replaced')
+    parser.add_argument('--fanlight-illumination', type=float, default=.60,
+                        help='Private upper-pane night strength, 0..1.2; old glass and shared materials stay intact')
     args = parser.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else [])
     if not args.label or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_' for c in args.label):
         parser.error('Label must be a single alphanumeric filename')
+    if not math.isfinite(args.fanlight_illumination) or not 0 <= args.fanlight_illumination <= 1.2:
+        parser.error('Fanlight illumination must be finite and within 0..1.2')
     directory = OUTPUT/args.label
     if directory.exists(): parser.error('Output label exists; choose a new label')
     if not directory.resolve().is_relative_to((ROOT/'.tmp/png').resolve()): parser.error('Output must remain under .tmp/png')
@@ -595,7 +713,7 @@ def main():
         report['audit'] = inventory(root)
     else:
         audit = json.loads(args.audit.read_text(encoding='utf8'))
-        report['candidate'] = author(root, audit)
+        report['candidate'] = author(root, audit, args.fanlight_illumination)
         source_guard.assert_source_unchanged(token)
         report['export'] = export_candidate(root, directory)
     source_guard.assert_source_unchanged(token)
