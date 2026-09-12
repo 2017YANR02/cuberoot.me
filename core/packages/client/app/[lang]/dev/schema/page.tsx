@@ -42,7 +42,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
-  { name: 'auth_identity_pending', domain: 'account', origin: '0232', purpose: { zh: '首次第三方登录的 15 分钟认证尝试；仅存票据摘要，用户明确创建或绑定后单次核销，不提前创建账号', en: '15-minute first-time provider authentication attempts; ticket hashes only, consumed once after explicit creation or linking without creating an account in advance' } },
+  { name: 'auth_identity_pending', domain: 'account', origin: '0232', purpose: { zh: '首次身份认证的 15 分钟尝试；票据只存摘要，另存已验证身份资料及必要加密凭据，明确创建或绑定后单次核销，不提前创建账号', en: '15-minute first-time identity attempts; tickets are hashed, with verified identity data and required encrypted credentials stored separately; consumed once after explicit creation or linking without creating an account in advance' } },
   { name: 'platform_organizer_applications', domain: 'platform', origin: '0229', purpose: { zh: '主办方申请、关联组织与平台审批记录', en: 'Organizer applications, linked organizations and platform reviews' } },
   { name: 'platform_competitions', domain: 'platform', origin: '0224', purpose: { zh: '主办组织、报名窗口、抽成及结算配置', en: 'Organizer, registration window, commission and settlement configuration' } },
   { name: 'platform_competition_sessions', domain: 'platform', origin: '0224', purpose: { zh: '监督场次、名额与人员排班', en: 'Supervised session capacity and staff assignment' } },
@@ -761,6 +761,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 231, slug: 'auth_apple_token', desc: { zh: '在已有登录身份中加密保存 Apple 撤销凭据与密钥版本，仅供解绑和注销撤销授权，不进入身份列表响应。', en: 'Keep an encrypted Apple revocation credential and key version on the existing identity for unlinking and account deletion; never expose it in identity-list responses.' } },
   { n: 232, slug: 'auth_identity_pending', desc: { zh: '首次第三方授权后暂存短期认证尝试，明确选择新建或验证已有账号后才事务核销；不按邮箱自动关联。', en: 'Keep short-lived first-time provider attempts until explicit creation or verified account linking, then consume them transactionally; never auto-link by email.' } },
   { n: 233, slug: 'role_preview_complete_profile', desc: { zh: '新增资料完整的普通用户测试身份，复用论坛资料校验，不授予管理员或网盘权限。', en: 'Add an ordinary test persona with a complete profile using forum validation, without administrator or Drive access.' } },
+  { n: 234, slug: 'auth_identity_choice_providers', desc: { zh: '将邮箱、手机号和抖音纳入既有首次身份确认机制；验证成功不再隐式创建账号。', en: 'Extend existing first-time identity confirmation to email, phone and Douyin; successful verification no longer implicitly creates accounts.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

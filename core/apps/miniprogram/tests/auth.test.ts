@@ -8,6 +8,8 @@ import {
   getStoredSessionSnapshot,
   loginErrorMessage,
   loginWithMiniProgram,
+  completeMiniProgramIdentity,
+  previewIdentityLinkCode,
   validateStoredSession,
 } from '../src/lib/auth';
 
@@ -15,6 +17,50 @@ describe('mini program authentication', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+  });
+
+  it('decodes a verified pending identity without writing a provisional session', async () => {
+    const setStorageSync = vi.fn();
+    const pending = { ticket: 'p'.repeat(43), provider: 'douyin', expiresInSeconds: 900 };
+    vi.stubGlobal('wx', {
+      login(options: { success(value: unknown): void }) { options.success({ code: 'proof' }); },
+      request(options: { success(value: unknown): void }) { options.success({ statusCode: 409, data: { code: 'ACCOUNT_CHOICE_REQUIRED', pending } }); },
+      setStorageSync,
+    });
+    await expect(loginWithMiniProgram()).rejects.toMatchObject({ status: 409, code: 'ACCOUNT_CHOICE_REQUIRED', pending });
+    expect(setStorageSync).not.toHaveBeenCalled();
+  });
+
+  it.each([{ ticket: 'short' }, { provider: 'unknown' }, { expiresInSeconds: 901 }])('rejects malformed pending envelopes (%j)', async (invalid) => {
+    const setStorageSync = vi.fn();
+    vi.stubGlobal('wx', {
+      login(options: { success(value: unknown): void }) { options.success({ code: 'proof' }); },
+      request(options: { success(value: unknown): void }) { options.success({ statusCode: 409, data: { code: 'ACCOUNT_CHOICE_REQUIRED', pending: { ticket: 'p'.repeat(43), provider: 'douyin', expiresInSeconds: 900, ...invalid } } }); },
+      setStorageSync,
+    });
+    await expect(loginWithMiniProgram()).rejects.toMatchObject({ status: 502, pending: null });
+    expect(setStorageSync).not.toHaveBeenCalled();
+  });
+
+  it('keeps preview read-only and sends the confirmation through the canonical completion endpoint', async () => {
+    const setStorageSync = vi.fn();
+    const request = vi.fn((options: { url: string; data: unknown; success(value: unknown): void }) => {
+      options.success({ statusCode: 200, data: options.url.endsWith('/preview')
+        ? { user: { id: 42, displayName: 'Original' } }
+        : { token: 'c'.repeat(20), user: { uid: 42, name: 'Original', wcaId: null, avatar: '' }, isNew: false } });
+    });
+    vi.stubGlobal('wx', { request, setStorageSync });
+    const ticket = 'p'.repeat(43);
+    expect(await previewIdentityLinkCode(ticket, 'L42-123456')).toEqual({ id: 42, displayName: 'Original' });
+    expect(setStorageSync).not.toHaveBeenCalled();
+    await completeMiniProgramIdentity(ticket, 'link_with_code', { linkCode: 'L42-123456', expectedUid: 42, isCurrent: () => true });
+    expect(request.mock.calls[1][0].data).toEqual({ ticket, action: 'link_with_code', linkCode: 'L42-123456', expectedUid: 42 });
+    expect(setStorageSync).toHaveBeenCalledOnce();
+  });
+
+  it('rejects an invalid preview account before presenting it for confirmation', async () => {
+    vi.stubGlobal('wx', { request(options: { success(value: unknown): void }) { options.success({ statusCode: 200, data: { user: { id: 0, displayName: 'Invalid' } } }); } });
+    await expect(previewIdentityLinkCode('p'.repeat(43), 'L42-123456')).rejects.toMatchObject({ status: 502 });
   });
 
   it('treats an absent session as logged out without mutating storage', () => {

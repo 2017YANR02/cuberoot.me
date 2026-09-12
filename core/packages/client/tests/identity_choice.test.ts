@@ -2,7 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccountChoiceRequired, accountChoiceError, clearIdentityChoice, existingAccountRequired, getIdentityChoice, identityReturnPath, rememberIdentityChoice, updateIdentityChoice } from '@/lib/identity-choice';
-import { completeIdentityChoice, loginGoogle, startWechatBrowserLogin, verifyEmailCode, verifyPhoneCode } from '@/lib/account-api';
+import { completeIdentityChoice, issueAccountMergeCode, issueIdentityLinkCode, loginGoogle, mergeAccount, startWechatBrowserLogin, verifyEmailCode, verifyPhoneCode } from '@/lib/account-api';
 
 vi.mock('@/lib/auth-store', () => ({ getSessionToken: () => 'existing-canonical-session' }));
 const ticket = 'a'.repeat(43);
@@ -12,7 +12,7 @@ beforeEach(() => { sessionStorage.clear(); localStorage.clear(); clearIdentityCh
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); clearIdentityChoice(); });
 
 describe('first identity account choice boundary', () => {
-  it.each(['apple', 'google', 'wechat', 'qq', 'alipay', 'wca'])('accepts only a validated server 409 for %s', (provider) => {
+  it.each(['apple', 'google', 'wechat', 'qq', 'alipay', 'wca', 'email', 'phone', 'douyin'])('accepts only a validated server 409 for %s', (provider) => {
     expect(accountChoiceError(409, { ...envelope, pending: { ...envelope.pending, provider } })).toBeInstanceOf(AccountChoiceRequired);
     expect(accountChoiceError(400, envelope)).toBeNull();
   });
@@ -73,6 +73,29 @@ describe('first identity account choice boundary', () => {
     expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer existing-canonical-session');
     await completeIdentityChoice(ticket, 'create');
     expect(fetcher.mock.calls[1][1].headers.Authorization).toBeUndefined();
+  });
+  it('binds linking-code issuance and destructive merging to the confirmed account', async () => {
+    const fetcher = vi.fn().mockImplementation(async () => new Response('{}'));
+    vi.stubGlobal('fetch', fetcher);
+    await issueIdentityLinkCode(42);
+    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ expectedUid: 42 });
+    await mergeAccount('99-123456', 42);
+    expect(JSON.parse(fetcher.mock.calls[1][1].body)).toEqual({ code: '99-123456', expectedSourceUid: 42 });
+    expect(fetcher.mock.calls.every((call) => call[1].headers.Authorization === 'Bearer existing-canonical-session')).toBe(true);
+    await issueAccountMergeCode(42);
+    expect(JSON.parse(fetcher.mock.calls[2][1].body)).toEqual({ expectedUid: 42 });
+  });
+  it('uses existing-only verification for email password recovery without a pending choice', async () => {
+    const fetcher = vi.fn().mockImplementation(async () => new Response(JSON.stringify({ token: 'c'.repeat(20), user: { uid: 42, wcaId: '', name: 'Existing', avatar: '' } })));
+    vi.stubGlobal('fetch', fetcher);
+    await verifyEmailCode('existing@example.test', '123456', { existingOnly: true });
+    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ email: 'existing@example.test', code: '123456', existingOnly: true });
+  });
+  it.each(['email', 'phone'] as const)('propagates verified unknown %s as a choice, not a session', async (provider) => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ ...envelope, pending: { ...envelope.pending, provider } }), { status: 409 })));
+    const request = provider === 'email' ? verifyEmailCode('new@example.test', '123456') : verifyPhoneCode('13800138000', '123456');
+    await expect(request).rejects.toMatchObject({ pending: { provider } });
+    expect(getIdentityChoice()).toBeNull();
   });
   it('rejects completion without a canonical UID instead of installing a legacy-shaped session', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ token: 'c'.repeat(20), user: { wcaId: '', name: 'Missing UID', avatar: '' } }))));

@@ -48,7 +48,7 @@ export default function AuthFlowPage() {
       </div>
       <details className="auth-map-current"><summary>{t('其他平台：鸿蒙、Windows、macOS、抖音小程序', 'Other platforms: HarmonyOS, Windows, macOS, Douyin Mini Program')}</summary>
         <p>{t('HarmonyOS NEXT、Windows、macOS 共用 App 产品层和网站账号流程，只替换系统浏览器、深链与安全存储适配；每个平台的真实回跳仍须单独验收。', 'HarmonyOS NEXT, Windows, and macOS share the App product layer and website account flow, with platform browser, deep-link, and secure-storage adapters. Each platform still needs its own real handoff tests.')}</p>
-        <p>{t('抖音小程序当前是独立的抖音身份登录，首次登录会创建账号，不能把微信的 UnionID 或下方手机号方案套过去；不按昵称或手机号自动合并。其首次已有账号选择仍需单独完善。', 'The Douyin Mini Program currently uses a separate Douyin identity flow that creates an account on first sign-in. WeChat UnionID and the phone proposal do not apply. It does not merge by nickname or phone; its first-time existing-account choice still needs separate work.')}</p>
+        <p>{t('抖音小程序：已绑定身份直接登录；未知身份先选择绑定旧号或明确创建。绑定旧号时，先在网站原账号的登录方式页生成短期「绑定码」，回小程序输入并核对目标账号，再确认绑定。绑定码不是合并码，不会搬迁两个账号的数据。此增量须部署并发布新版小程序后才生效。', 'Douyin Mini Program: linked identities sign in directly; unknown identities choose existing-account linking or explicit creation. Generate a short-lived link code in the existing website account’s sign-in settings, enter it in the Mini Program, check the target account, and confirm. A link code is not a merge code and does not migrate two accounts. This change requires deployment and a new Mini Program release.')}</p>
       </details>
     </section>
 
@@ -58,7 +58,8 @@ export default function AuthFlowPage() {
         <div className="auth-map-current-paths">
           <section><h3>{t('邮箱 / 手机号 / 密码', 'Email / phone / password')}</h3><Steps items={[
             t('选择邮箱或手机号，使用验证码；已设密码也可用密码登录', 'Choose email or phone and verify a code; an existing password is another sign-in option'),
-            t('验证通过 → 已有凭据进入原账号；普通验证码入口支持登录 / 注册一体流程', 'Verification succeeds → an existing credential signs in to its account; the normal code flow combines sign-in and registration'),
+            t('验证通过 → 已有凭据直接进入原账号；陌生凭据先问是否已有账号，不自动注册', 'Verification succeeds → existing credentials sign in directly; unknown credentials ask whether you have an account, without automatic registration'),
+            t('有旧号：验证原账号并确认绑定；没有：明确选择创建新账号', 'Existing account: authenticate and confirm linking. No account: explicitly choose to create one'),
           ]} /><p className="auth-map-note">{t('忘记密码时才走：验证原账号已绑定的邮箱或手机 → 设置新密码。不是每次登录都要重设。', 'Only if you forgot your password: verify the linked email or phone → set a new password. This is not required on every sign-in.')}</p><p className="auth-map-note">{t('密码登录不创建账号。「绑定已有账号」中的验证只认旧号，不会用陌生邮箱、手机号悄悄注册。', 'Password sign-in does not create accounts. Verification inside existing-account linking accepts existing accounts only; an unknown email or phone does not silently register.')}</p></section>
           <section><h3>{t('第三方登录', 'Provider sign-in')}</h3><Steps items={[
             t('Google / Apple / 微信 / QQ / 支付宝 / WCA', 'Google / Apple / WeChat / QQ / Alipay / WCA'),
@@ -179,7 +180,7 @@ export default function AuthFlowPage() {
         <Steps items={[
           t('① 登录 A → 选择「保留当前账号」→ 生成合并码（10 分钟有效）', '① Sign in to A → Keep this account → generate a merge code (valid for 10 minutes)'),
           t('② 再登录 B → 选择「合并当前账号」→ 输入 A 的合并码', '② Sign in to B → Merge this account → enter the code from A'),
-          t('③ 核对方向 B → A → 点击「确认合并当前账号」', '③ Check the direction B → A → explicitly confirm the merge'),
+          t('③ 先检查合并方向 B → A，再在确认画面主动提交；此时目标资料尚未验证，不能只凭码相信对方身份', '③ Review direction B → A, then submit from the confirmation screen. Target details are not yet verified; do not trust someone’s identity from the code alone'),
           t('④ 服务端检查两个账号、合并码、凭据冲突和数据迁移条件', '④ Server checks both accounts, the code, credential conflicts, and data migration constraints'),
         ]} />
         <div className="auth-map-current-paths auth-map-results">
@@ -222,7 +223,7 @@ export default function AuthFlowPage() {
 
     <details className="auth-map-current">
       <summary>{t('还需要补什么？', 'What remains to be done?')}</summary>
-      <p>{t('微信手机号授权目标流程、抖音首次已有账号选择、Apple IAP，以及各平台真实登录回跳、绑定、合并、退出和注销矩阵仍须分别实施或验收。不能把这张说明图当成功能完成清单。', 'The WeChat phone proposal, Douyin first-time existing-account choice, Apple IAP, and each platform’s real sign-in handoff, linking, merging, sign-out, and deletion matrix still need implementation or verification. This diagram is not a feature-completion checklist.')}</p>
+      <p>{t('微信手机号授权目标流程和 Apple IAP 仍待接入。邮箱、手机、抖音的防误注册增量仍须后端部署及相应客户端发布；各平台真人登录回跳、绑定、合并、退出和注销矩阵也须分别验收。不能把这张说明图当成功能完成清单。', 'The WeChat phone proposal and Apple IAP remain unimplemented. Email, phone, and Douyin duplicate-prevention changes still require backend deployment and relevant client releases; real-account handoff, linking, merging, sign-out, and deletion need per-platform acceptance. This diagram is not a completion checklist.')}</p>
     </details>
 
     <footer className="auth-map-footer">

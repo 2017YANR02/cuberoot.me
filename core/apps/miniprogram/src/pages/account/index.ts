@@ -8,13 +8,16 @@ import {
   type ContactDirectDetailId,
   type ContactPlatformId,
 } from '@cuberoot/shared/contact';
+import type { PendingIdentity } from '@cuberoot/shared/auth/web-session';
 import {
   ApiError,
   approveWechatBrowserLogin,
+  completeMiniProgramIdentity,
   getStoredSessionSnapshot,
   isSessionStorageError,
   loginErrorMessage,
   loginWithMiniProgram,
+  previewIdentityLinkCode,
   type SessionData,
 } from '../../lib/auth';
 import { cancelWebsiteNavigation, openWebsitePageOnce } from '../../lib/navigation';
@@ -60,7 +63,18 @@ const ACCOUNT_COPY = {
     zh: '联系页面暂时无法打开，请稍后重试',
   }),
   copiedLabel: tr({ en: 'Copied', zh: '已复制' }),
-  createAccountLabel: tr({ en: 'I do not have an account. Create one', zh: '我没有账号，创建新账号' }),
+  createAccountLabel: tr({ en: 'Create a new account', zh: '创建新账号' }),
+  accountChoiceTitle: tr({ en: 'Do you have a CubeRoot account?', zh: '你有 CubeRoot 账号吗？' }),
+  accountChoiceNote: tr({ en: 'Keep your existing membership and profile.', zh: '保留原账号的会员和资料。' }),
+  cancelLabel: tr({ en: 'Cancel', zh: '取消' }),
+  clearCodeLabel: tr({ en: 'Clear linking code', zh: '清除绑定码' }),
+  linkCodeLabel: tr({ en: 'Douyin mini program linking code', zh: '抖音小程序绑定码' }),
+  linkCodeHint: tr({ en: 'Sign in to your existing account on the website, then generate a Douyin mini program linking code in account settings.', zh: '在网站登录原账号，再到账号设置获取「抖音小程序绑定码」。' }),
+  openLinkCodeWebsiteLabel: tr({ en: 'Open account settings', zh: '打开账号设置' }),
+  previewLinkCodeLabel: tr({ en: 'Check account', zh: '查看绑定账号' }),
+  confirmLinkCodeLabel: tr({ en: 'Link and sign in', zh: '确认绑定并登录' }),
+  linkCodeInvalid: tr({ en: 'Enter the Douyin mini program linking code from your account settings.', zh: '请输入原账号设置中的抖音小程序绑定码。' }),
+  choiceExpired: tr({ en: 'This sign-in request expired. Start again.', zh: '本次登录已过期，请重新开始。' }),
   defaultUser: tr({ en: 'CubeRoot user', zh: 'CubeRoot 用户' }),
   entryCopy: tr({
     en: 'Tap the bottom-right button to open CubeRoot',
@@ -74,11 +88,11 @@ const ACCOUNT_COPY = {
     en: `Sign in with ${providerName}`,
     zh: `${providerName}登录`,
   }),
-  linkExistingAccountLabel: tr({ en: 'Link existing account', zh: '绑定已有账号' }),
+  linkExistingAccountLabel: tr({ en: 'Sign in to an existing account', zh: '登录已有账号' }),
   loginIntro: isDouyinMiniProgram()
     ? tr({
-      en: 'Sign in to use your CubeRoot account. Your first Douyin sign-in creates a separate account; accounts are not merged by nickname or phone number.',
-      zh: '登录后使用 CubeRoot 账号。首次使用抖音登录会创建独立账号，不会按昵称或手机号自动合并。',
+      en: 'Sign in to use your CubeRoot account. If this Douyin account is not linked yet, choose whether to use an existing account or create a new one.',
+      zh: '登录后使用 CubeRoot 账号。抖音尚未绑定时，先选择登录已有账号或创建新账号。',
     })
     : tr({
       en: 'Sign in with the same CubeRoot account you use on the website. If you have already used WeChat there, the same account is recognized automatically.',
@@ -209,6 +223,10 @@ interface AccountPageData {
   accountError: string;
   accountLinkPending: boolean;
   accountLinkRequired: boolean;
+  accountLinkCodeMode: boolean;
+  accountLinkCode: string;
+  accountLinkTargetId: number | null;
+  accountLinkTargetName: string;
   agreementAccepted: boolean;
   contact: typeof CONTACT_VIEW;
   copy: typeof ACCOUNT_COPY;
@@ -234,6 +252,59 @@ interface AccountPageInstance {
   browserLoginExistingOnly?: boolean;
   data: AccountPageData;
   setData(data: Partial<AccountPageData>): void;
+}
+
+type PagePendingIdentity = PendingIdentity & { expiresAt: number };
+const pendingIdentities = new WeakMap<AccountPageInstance, PagePendingIdentity>();
+const disposedPages = new WeakSet<AccountPageInstance>();
+const EMPTY_LINK_CODE = { accountLinkCode: '', accountLinkTargetId: null, accountLinkTargetName: '' };
+
+function clearPendingIdentity(page: AccountPageInstance): void {
+  pendingIdentities.delete(page);
+  page.setData({ ...EMPTY_LINK_CODE, accountLinkRequired: false, accountLinkCodeMode: false, loginBusy: false });
+}
+
+function currentPendingIdentity(page: AccountPageInstance): PagePendingIdentity | null {
+  const pending = pendingIdentities.get(page);
+  if (!pending) return null;
+  if (pending.expiresAt <= Date.now()) {
+    clearPendingIdentity(page);
+    page.setData({ loginError: ACCOUNT_COPY.choiceExpired });
+    return null;
+  }
+  return pending;
+}
+
+async function completePendingIdentity(page: AccountPageInstance, action: 'create' | 'link_with_code'): Promise<void> {
+  if (page.data.loginBusy || page.data.isTimelineEntry) return;
+  const pending = currentPendingIdentity(page);
+  if (!pending) return;
+  if (page.data.requiresAgreement && !page.data.agreementAccepted) {
+    page.setData({ loginError: ACCOUNT_COPY.agreementRequired }); return;
+  }
+  if (action === 'link_with_code' && !page.data.accountLinkTargetId) return;
+  const originalSession = getStoredSessionSnapshot();
+  if (originalSession.status === 'unavailable') { page.setData({ loginError: ACCOUNT_COPY.storageUnavailable }); return; }
+  const linkCode = page.data.accountLinkCode;
+  page.setData({ loginBusy: true, loginError: '' });
+  try {
+    const session = await completeMiniProgramIdentity(pending.ticket, action, {
+      ...(action === 'link_with_code' ? { linkCode, expectedUid: page.data.accountLinkTargetId! } : {}),
+      isCurrent: () => {
+        const currentSession = getStoredSessionSnapshot();
+        return !disposedPages.has(page) && pendingIdentities.get(page) === pending
+          && currentSession.status === 'available'
+          && currentSession.session?.token === originalSession.session?.token;
+      },
+    });
+    clearPendingIdentity(page);
+    page.setData({ ...sessionView(session), loginBusy: false, loginError: '' });
+    resumeRequiredSessionDestination();
+  } catch (error) {
+    if (disposedPages.has(page) || pendingIdentities.get(page) !== pending) return;
+    if (error instanceof ApiError && error.code === 'INVALID_IDENTITY_TICKET') clearPendingIdentity(page);
+    page.setData({ loginBusy: false, loginError: loginErrorMessage(error), accountLinkTargetId: null, accountLinkTargetName: '' });
+  }
 }
 
 const BROWSER_LOGIN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
@@ -334,6 +405,9 @@ async function completeMiniProgramLogin(
   createAccount = false,
 ): Promise<void> {
   if (page.data.isTimelineEntry || page.data.loginBusy) return;
+  if (currentPendingIdentity(page)) {
+    page.setData({ accountLinkRequired: true }); return;
+  }
   if (createAccount && page.browserLoginExistingOnly) {
     page.setData({ loginError: ACCOUNT_COPY.existingAccountRequired });
     return;
@@ -342,9 +416,18 @@ async function completeMiniProgramLogin(
     page.setData({ loginError: ACCOUNT_COPY.agreementRequired });
     return;
   }
+  const originalSession = getStoredSessionSnapshot();
+  if (originalSession.status === 'unavailable') {
+    page.setData({ loginError: ACCOUNT_COPY.storageUnavailable, loginStorageUnavailable: true });
+    return;
+  }
+  const sessionUnchanged = () => {
+    const current = getStoredSessionSnapshot();
+    return current.status === 'available' && current.session?.token === originalSession.session?.token;
+  };
   page.setData({ accountLinkRequired: false, loginBusy: true, loginError: '' });
   try {
-    const session = await loginWithMiniProgram({ createAccount });
+    const session = await loginWithMiniProgram({ createAccount, isCurrent: () => !disposedPages.has(page) && sessionUnchanged() });
     if (await approvePendingBrowserLogin(page, session)) return;
     page.setData({
       ...sessionView(session),
@@ -355,6 +438,19 @@ async function completeMiniProgramLogin(
     });
     resumeRequiredSessionDestination();
   } catch (error) {
+    if (disposedPages.has(page)) return;
+    if (!sessionUnchanged()) {
+      refreshStoredSession(page);
+      page.setData({ loginBusy: false });
+      return;
+    }
+    if (error instanceof ApiError && error.pending?.provider === 'douyin' && isDouyinMiniProgram()) {
+      if (!disposedPages.has(page) && !pendingIdentities.has(page)) {
+        pendingIdentities.set(page, { ...error.pending, expiresAt: Date.now() + error.pending.expiresInSeconds * 1000 });
+        page.setData({ accountLinkRequired: true, accountLinkCodeMode: false, ...EMPTY_LINK_CODE, loginBusy: false, loginError: '', loginStorageUnavailable: false });
+      }
+      return;
+    }
     page.setData({
       accountLinkRequired: error instanceof ApiError
         && error.code === 'WECHAT_ACCOUNT_LINK_REQUIRED' && !page.browserLoginExistingOnly,
@@ -373,6 +469,8 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     accountError: '',
     accountLinkPending: false,
     accountLinkRequired: false,
+    accountLinkCodeMode: false,
+    ...EMPTY_LINK_CODE,
     agreementAccepted: false,
     contact: CONTACT_VIEW,
     copy: ACCOUNT_COPY,
@@ -394,6 +492,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   },
 
   onLoad(options: Record<string, unknown> = {}) {
+    disposedPages.delete(this as unknown as AccountPageInstance);
     if (isTimelineSinglePage()) {
       this.setData({ isTimelineEntry: true });
       return;
@@ -432,6 +531,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     const shouldRetryAccountLink = this.data.accountLinkPending;
     showPublicShareMenu();
     refreshStoredSession(this as unknown as AccountPageInstance);
+    currentPendingIdentity(this as unknown as AccountPageInstance);
     this.setData({
       accountLinkPending: false,
       release: getMiniProgramReleaseView(contactLocale),
@@ -442,6 +542,8 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   },
 
   onUnload() {
+    disposedPages.add(this as unknown as AccountPageInstance);
+    pendingIdentities.delete(this as unknown as AccountPageInstance);
     cancelWebsiteNavigation(this);
   },
 
@@ -458,11 +560,19 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   },
 
   async createAccount() {
+    if (isDouyinMiniProgram()) {
+      await completePendingIdentity(this as unknown as AccountPageInstance, 'create');
+      return;
+    }
     await completeMiniProgramLogin(this as unknown as AccountPageInstance, true);
   },
 
   linkExistingAccount() {
     if (this.data.isTimelineEntry || this.data.loginBusy) return;
+    if (isDouyinMiniProgram()) {
+      if (currentPendingIdentity(this as unknown as AccountPageInstance)) this.setData({ accountLinkCodeMode: true, loginError: '' });
+      return;
+    }
     this.setData({ accountLinkPending: true, loginError: '' });
     openWebsitePageOnce(this, 'account-link', {
       failureMessage: ACCOUNT_COPY.accountLinkFailure,
@@ -471,6 +581,47 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
         loginError: message,
       }),
     });
+  },
+
+  openLinkCodeWebsite() {
+    if (this.data.loginBusy || !currentPendingIdentity(this as unknown as AccountPageInstance)) return;
+    openWebsitePageOnce(this, 'account-link', { failureMessage: ACCOUNT_COPY.accountLinkFailure, onFailure: (message) => this.setData({ loginError: message }) });
+  },
+
+  onLinkCodeInput(event: WechatMiniprogram.Input) {
+    if (this.data.loginBusy) return;
+    this.setData({ accountLinkCode: event.detail.value.trim().toUpperCase(), accountLinkTargetId: null, accountLinkTargetName: '', loginError: '' });
+  },
+
+  clearLinkCode() {
+    if (!this.data.loginBusy) this.setData({ ...EMPTY_LINK_CODE, loginError: '' });
+  },
+
+  async previewLinkCode() {
+    if (this.data.loginBusy) return;
+    const page = this as unknown as AccountPageInstance;
+    const pending = currentPendingIdentity(page);
+    if (!pending) return;
+    const linkCode = this.data.accountLinkCode;
+    if (!/^L[1-9]\d{0,15}-\d{6}$/.test(linkCode)) { this.setData({ loginError: ACCOUNT_COPY.linkCodeInvalid }); return; }
+    this.setData({ loginBusy: true, loginError: '' });
+    try {
+      const target = await previewIdentityLinkCode(pending.ticket, linkCode);
+      if (disposedPages.has(page) || pendingIdentities.get(page) !== pending || this.data.accountLinkCode !== linkCode) return;
+      this.setData({ accountLinkTargetId: target.id, accountLinkTargetName: target.displayName || ACCOUNT_COPY.defaultUser, loginBusy: false });
+    } catch (error) {
+      if (!disposedPages.has(page) && pendingIdentities.get(page) === pending) this.setData({ loginBusy: false, loginError: loginErrorMessage(error) });
+    }
+  },
+
+  async confirmLinkCode() {
+    await completePendingIdentity(this as unknown as AccountPageInstance, 'link_with_code');
+  },
+
+  cancelIdentityChoice() {
+    if (this.data.loginBusy) return;
+    clearPendingIdentity(this as unknown as AccountPageInstance);
+    this.setData({ loginError: '' });
   },
 
   retryMiniProgramSession() {

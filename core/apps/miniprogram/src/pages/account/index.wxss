@@ -37,6 +37,21 @@
   margin-top: 24rpx;
 }
 
+.account-link-code-row {
+  align-items: center;
+  border-bottom: 1px solid var(--cr-line);
+  display: flex;
+  gap: 16rpx;
+  margin-top: 32rpx;
+  padding: 20rpx 0;
+}
+
+.account-link-code-input {
+  flex: 1;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  min-width: 0;
+}
+
 .account-policy {
   margin-top: 24rpx;
 }
