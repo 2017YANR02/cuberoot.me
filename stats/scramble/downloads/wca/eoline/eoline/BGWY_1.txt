@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / BGWY / bin 1
-# Population in this bin: 325
+# Population in this bin: 330
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5606061001,D R2 B' R2 D2 F' D F' R2 L2 U' D R2 D' F2 B2 R2,W,Speedcubing Huánuco 2026 (2026-05-03),333 R1 E #5
@@ -95,7 +95,7 @@
 822699005,R2 U2 L' D2 R' B2 L D L' F2 U2 R' D B2 L' B' F2 L2 U',W,Mental Breakdown Minnesota 2018 (2018-07-07~08),333mbf Final A #2
 845757001,F' D' F' U' B D2 F' B U' F2 D2 R' L' B2 U2 B2 D2 R',Y,Ningxia Open 2018 (2018-08-05),333 R2 B #3
 4667431001,L' U' R B2 D' F2 R2 D R' U F2 R2 D F2 L2 U L' F',Y,Deqing Spring 2025 (2025-04-19),333oh R1 D #4
-870386001,D2 L' F' R2 L U2 F2 L F U2 F L2 F D2 L2 F2 R2,G,Music City Speedsolving 2018 (2018-08-31~09-01),333 R2 A #2
+5791617001,B' R2 U2 L2 U L2 B2 D2 B2 U B U B R2 D' U2 R2,Y,Capelle Chaos A 2026 (2026-08-22),333 Final A E2
 4284674001,L2 F' U2 B' F' L2 D2 L2 B U2 L F2 L' B U2 R B,G,Miami Skewbed 2024 (2024-11-16),333 R1 C #2
 882255014,L2 U2 L2 B' F2 U2 R2 U' B2 D' F' D F' L2 U F' L2 U L2 U',W,Anaheim Fall 2018 (2018-09-15~16),333mbf Final A #2
 897025001,B2 F2 R2 D U2 R2 F2 U F U B2 D F2 D U' B2 U' B',B,Australian Nationals 2018 (2018-10-06~07),333 R1 F #1
@@ -149,10 +149,10 @@
 5328114001,B D' F2 B U D' B' D F2 U' F' B U2 R2 L2 B,W,Ohio State Winter 2026 (2026-01-17),333 Final A #3
 1718017001,B U F2 D' R2 D L2 D' B2 D B' L2 U2 L D2 B2 D2 B2,Y,German Mini Open A 2021 (2021-11-06),333oh R1 D #5
 1754809001,L2 D' U' B2 R2 F2 R2 D' B2 R' D' R2 D L B2 D2 F',Y,Cubetcha A 2021 (2021-12-04),333 R2 A E2
-1761597001,B2 U' R' L B2 R' D' R2 D2 F2 U R2 B2 U' F2 R2 D',W,Richmond Open A 2021 (2021-12-11),333oh R1 B E1
+5786929001,U2 L D' B D' F L2 U2 L B' D B D2 L2 B L2 B R2 F' L' F,Y,Norwegian Championship 2026 (2026-08-14~16),333bf R2 A #4
 1789301008,U B U2 F U' F D F U B2 L2 U2 F2 U' B2 L2 F L2,W,Melbourne Summer 2022 (2022-01-21~23),333mbf Final A #1
 1796552001,B2 U2 B U2 R2 B' F L' B R2 D2 U2 R2 U2 F L',B,Wakefield Open 2022 (2022-01-29~30),333 R1 G E2
-5569643029,D R2 F2 R2 B2 D' U' F2 L2 B D' B R2 F2 U2 F2 D2 B',B,Langenstein City Blind Open 2026 (2026-04-18~19),333mbf Final B #1
+5775774012,U' R' U F2 U2 L U' F2 D2 R L2 U B2 L2 D B2 L2 U2,Y,Blind League Dobřejovice IV: Darkveil 2026 (2026-08-08),333mbf Final A #2
 4630861001,F U2 B F2 R2 D2 F' R2 F' L2 D B2 F' D2 U' B2 U2 F',W,Virginia Always Open Spring 2025 (2025-04-06),333 R1 E #4
 1833526001,U B U' L2 B2 D2 F' U2 B U2 D' F2 D' B R2 F U,B,Kubiat Esther 2022 (2022-03-16~17),333 R2 B #4
 1863449001,R2 U2 R2 U2 B' R2 B' L2 B2 D2 R' B' R F2 R F' L2,G,Romerike Easter Open 2022 (2022-04-09~10),333oh Final A #3
@@ -162,7 +162,7 @@
 2107434001,R B2 L' U2 F2 R' D2 U' R' D B2 U' B2 R' B2 D' F',Y,German Nationals 2022 (2022-08-19~21),333 R1 H E2
 4239465001,R B2 L R2 D2 L' D R2 B2 F2 U' F2 D2 L' D B',W,WonderLand Education West Lafayette Fall 2024 (2024-10-26),333 R2 A #3
 2158151001,D' B D B' U2 R2 F' D R2 B L2 F' U2 B2 U2 L2 D',Y,Gdańsk Open 2022 (2022-09-10~11),333 R1 E E1
-2217939004,F2 R U L F' R B2 L U' D' B L2 D2 B R2 F' D2 F L2 B' L',B,Poznań Mental Breakdown 2022 (2022-10-08~09),333mbf Final B #2
+5798442001,R2 B' D2 U2 B' L' B2 L2 B2 L2 D F' U R2 D U,W,Mid-Atlantic Speedcubing Championship 2026 (2026-08-14~16),333 Final I #4
 2261742062,L' D' L2 F' R2 F' L' B' R2 F2 B2 D' F2 D' B2 D L2 U F2 L2 U2,G,Mini Mental Breakdown San Diego 2022 (2022-10-23),333mbf Final B #2
 2269598036,F2 U L B2 U' F2 B2 D' L2 D2 L2 U2 F2 L D L' U L B,B,Kewbz UK Championship 2022 (2022-10-28~30),333mbf Final A #2
 4734487001,L2 D2 B L2 B2 U2 L2 D2 F D F' D' U' B D' B U L,B,Grove City Weeknight Trios 2025 (2025-05-22),333 R1 C #5

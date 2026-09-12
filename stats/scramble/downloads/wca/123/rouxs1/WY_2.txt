@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / WY / bin 2
-# Population in this bin: 272
+# Population in this bin: 277
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 749001,B' F' L2 B' R2 F' D2 R' D2 F R2 F' D L B' L' R' F2,Y,Bogotá Cúbico 2014 (2014-03-15),333 R1 A #2
@@ -50,7 +50,7 @@
 584742001,R2 U' R2 D' B2 U' B2 U' L' D2 B D' R F D L2 D' R' B2,Y,Rain City Cube Competition 2017 (2017-09-02~03),333 R1 J #2
 601900001,B2 L' U2 B2 R B2 L2 F2 D' U' L' B2 U' L F' D2 B' D,Y,Barby Cube 73 Open Automne 2017 (2017-09-23~24),333oh R2 B #5
 605508001,D2 B D2 U2 B' D2 B2 U' L2 U2 R' B2 R B R2 D' U' F,W,Berkeley Summer 2017 (2017-09-16~17),333oh R1 D E1
-612447001,U2 D2 B2 R' U2 F' U2 D2 B' D' L2 D R2 F2 U D' F2 D',W,Italian Open 2017 (2017-10-07~08),333 R2 A #4
+5780615001,B2 F D2 F' R2 B' L2 R2 F' R F' D F' R' D L2 R' D F,Y,Couffoul'Events 2026 (2026-08-07~09),333oh R1 A E2
 629083001,L' U' D2 B' U' L2 D' R' F2 B' L U2 R2 U2 B2 D2 L' D2,W,San Ramon Cubed 2017 (2017-10-28),333 R1 L E1
 4382879001,U' L' B2 D2 L2 F2 U2 R' F' L2 D' B F D2 F' R B' D2,Y,Franconia Christmas A 2024 (2024-12-20~22),333 R1 A #1
 4674384007,U2 R2 D' F2 U2 B2 D F2 U B R' D' L2 U2 L D' L2 F' U2 B,W,Waterloo Blindfolded 2025 (2025-04-26),333mbf Final A #1
@@ -91,7 +91,7 @@
 5225787001,D2 F' D2 B' F D2 R2 B2 F' D' L' F' D2 L2 U B L2 B U2,Y,Delhi Cube Challenge 2025 (2025-11-29~30),333 R1 A #1
 972284032,D L2 U' B2 U2 B2 L2 F2 D B2 L2 R' B2 F D F R2 F2 D' F2 L,W,Speedcubing Camp Minsk 2019 (2019-01-04~06),333mbf Final A #2
 980866001,B2 L' U2 B2 R D2 L' D2 L' B2 L U L2 R' F' L' B2 D L2 B,W,Bay Area Speedcubin' 13 2019 (2019-01-13),333oh R1 B #3
-5152247001,L B' U2 F2 L2 U2 L B R U2 F2 D' L2 B2 R2 L2 D',W,Pune Twistathon 2025 (2025-11-01~02),333 Final B E2
+5820794001,U2 R2 B D2 B U2 B' F D2 R B' D L' B L' U' R' U2 R',Y,Santos Mágico Open 2026 (2026-09-06~07),333oh Final C #5
 5756324001,U R' B R2 B2 U2 L2 D F2 L2 B2 L' D' F2 R U L' D F',W,Guelaguetza Oaxaca 2026 (2026-07-18~19),333oh R1 B #2
 1036209016,L R2 F2 R U2 R' D2 R U' L2 F U2 B' R2 F' D R D' R2 D,W,Shenzhen 3x3 Days 2019 (2019-03-02~03),333mbf Final A #1
 1056919001,R' D2 R D2 B2 U2 F2 U B' F L' B2 R2 B U F U B,W,Indianapolis Cubes 2019 (2019-03-16),333 R2 C #4
@@ -102,7 +102,7 @@
 1102219021,D2 R U2 R' B2 F2 R F2 U2 F2 R' D' R' F2 R B' L2 R D B' F2 L B',W,Utah's April Surprise 2019 (2019-04-13~14),333mbf Final A #1
 1110521001,R2 D U B2 D B2 F2 D L' B2 R F D L2 R' U F2 D2 F' R' B' L',Y,Kansai Open 2019 (2019-04-20~21),333bf R1 A #1
 1125223001,U L2 D B2 U' L2 U F L B' L2 F' R D L D2 L' R2,W,Chengdu Open 2019 (2019-05-01~02),333oh Final A #5
-1130026001,R2 U L2 U' L2 F2 U' B2 U B L2 B' U R2 B2 L2 U' R' D',Y,Jakarta Mini Open 2019 (2019-05-04~05),333 R2 A #4
+5798755013,B' D' F R2 D' L' B2 U' L' D L2 U2 F D2 F D2 B2 L2 F L B2,Y,Algorithmes Artistiques Abrésiens 2026 (2026-08-22~23),333mbf Final B #1
 1195361001,L U2 B2 L U' L' U' B' L' D L' B2 R' B2 L2 B2 D2 L' D2 R2,W,Nacionales Medellín Explora 2019 (2019-06-22~24),333 R3 B E2
 1211844001,R2 B' R2 B L2 F' L2 F L U2 R2 B D2 F L2 B R2 U' L',Y,Uberlândia Open 2019 (2019-07-06~07),333oh Final A E1
 1216396001,L U2 R' F2 R' F2 U R B' U R2 U R' F2 L U,W,Luzon Championship 2019 (2019-06-22~23),333 R1 C #5

@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / W / bin 6
-# Population in this bin: 239
+# Population in this bin: 243
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5354559001,D' L2 D2 B F2 R2 D2 B' U' R' F' L2 D2 F2 U' R2 D2 L,W,DIA EH Cube for Change Dubai B 2026 (2026-02-01),333 Final A E1
@@ -117,7 +117,7 @@
 5223732001,F D2 L F D2 F2 L2 F R2 F' D L' D2 L' D' B F' R',W,Waterloo Fall 2025 (2025-11-29),333 R2 C E1
 2372744001,L2 D2 F' R2 B D2 F2 R2 B' R2 D2 U2 R' B L D F2 R B L,W,Mental Breakdown Bogotá 2022 (2022-12-17),333bf R1 A #1
 2386807001,U L2 F R2 F L2 D2 B' F U B L2 B D2 R' F2 U2 L',W,Cubing Sunday in SSN 2022 (2022-12-18),333 R1 F #5
-2485840001,B R2 U2 F' U2 B2 F2 U2 F2 L' D2 L' B' F' R2 U' B2 R' B,W,Herrljunga Open 2023 (2023-02-11~12),333oh Final A E2
+5772502001,D R2 B R' B2 D2 F' B' D F D2 F2 L2 F U2 F2 U' L',W,Vinnytsia Open 2026 (2026-08-01~02),333 R2 A #1
 2491053001,F' R' U F B2 R F L2 B' D2 F2 U2 R2 B R2 U2 B' L F,W,Crazy Cubing Centurion 2023 (2023-02-11~12),333 R1 C #1
 2503429001,F R' L2 U F L' D' B D' B' L' D2 L' B2 U2 D2 R' F2,W,Solo Comeback 2023 (2023-02-25),333 Final A #3
 2550381008,B2 U F2 U2 L2 D2 B' D' U B2 F D B' U F2 L' D2 L,W,Auckland Mind Games 2023 (2023-03-11),333mbf Final A #1
@@ -132,7 +132,7 @@
 2677182001,R2 U B2 R2 U B2 D2 B2 U' R2 B R' U F' L2 U2 L' F' L',W,BeCubed Spring 2023 (2023-04-29),333 R1 C #3
 5210421001,D2 F2 D R' U' L2 R2 D F2 L2 D2 R' D' B2 F' L2 B U2,W,Kent Fall 2025 (2025-11-22),333 R2 A #2
 2771823001,R' U' F R2 F U D L2 F' L B2 L2 F' L' F2 R D2 F2 B2 L B2 R' U' F,W,Swiss Nationals 2023 (2023-05-27~29),333fm Final A #3
-2786192001,F2 U B2 U2 F2 L2 R2 U' B2 F' R D2 B' R2 F L U2 R' D2,W,Ankara June 2023 (2023-06-03~04),333oh Final A #2
+5800882002,B2 L' U2 F2 L2 R F2 U2 F' U2 F R2 U' R D2 R B L2 D B' L2,W,Rocky Mountain Championship 2026 (2026-08-21~23),333mbf Final B #1
 2819443001,L' U B2 R2 D' R2 B2 R2 F' R B2 F R U' B' D F L2,W,Wrocław Cubing Holiday 2023 (2023-06-24~25),333oh R1 A #3
 2822639018,L2 D' R F' D L' F' R' D' L R2 U2 B D2 F' B' L2 F' U2 L B',W,Jaqueca a Domicilio Lima 2023 (2023-06-25),333mbf Final A #1
 2839668001,L' F2 L' D2 U2 B2 L2 F2 B D2 U' R F U' F' U2 B2 L2 U2,W,Swisscubing Cup IV 2023 (2023-06-24~25),333bf Final A E2
@@ -178,7 +178,7 @@
 4230218001,U2 B' D2 R2 D2 R2 B U2 F L F U' R2 D R2 F U L F',W,Wichita Speedcubing Fall 2024 (2024-10-26),333 R2 B E2
 5008626001,D' L2 D2 F2 D2 R B2 R' B F' D2 L F2 R2 F' L' D' F2,W,Champagne Open 2025 (2025-09-06~07),333oh R1 B #4
 4325994001,B' L B' R2 U' R2 B D2 R2 U' F2 D F2 D' R2 D L' U,W,Minnesota Championship 2024 (2024-11-30~12-01),333 R2 A E2
-5673878001,U R B2 U F2 R2 F' R2 U2 L2 R2 B2 L R2 U B' D' R' U,W,Sydals Open 2026 (2026-05-30~31),333 Final A #1
+5817002001,D U2 R' B2 F2 U2 F2 R2 B2 L F R' D2 U L B2 L' B2,W,Soorsi 2026 (2026-09-05~06),333 R1 B #1
 4388624001,D R D B F2 R2 F2 R2 F' D' B L' B' R' B L U',W,Bellevue Squan Fest 2 2024 (2024-12-28),333 R2 B #3
 5237147001,D2 L2 B2 D' L2 U' B2 F' R2 U L F' D F D2 U L2 F2,W,Melbourne Cube Days 2025 (2025-11-29~30),333 Final A #4
 4438303001,U F B2 D' B2 D R2 D' B2 L2 B2 L' F2 R U L2 B' U L' F,W,Regreso a Clases Aves María 2025 (2025-01-18~19),333bf Final B E2

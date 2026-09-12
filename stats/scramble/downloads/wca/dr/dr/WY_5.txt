@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / WY / bin 5
-# Population in this bin: 39
-# Samples listed: 39 (all entries in this bin)
+# Population in this bin: 41
+# Samples listed: 41 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 21296001,R2 U' B2 D R2 U L2 D2 B' F' D' U F' U' F2 U2,W,HEM MariCubik Open 2014 (2014-05-18),333 R1 C #3
@@ -44,3 +44,5 @@
 4873912001,F2 U2 B2 U' B2 R2 B2 U L2 U R B R B2 D U R2,W,Campeonato Brasileiro de Cubo Mágico 2025 (2025-07-18~20),333 R1 B #4
 5569643029,D R2 F2 R2 B2 D' U' F2 L2 B D' B R2 F2 U2 F2 D2 B',W,Langenstein City Blind Open 2026 (2026-04-18~19),333mbf Final B #1
 5589125001,D F2 U' F2 L2 U2 L2 U B2 D R2 D R' B' F' U' F',W,Mumbai Cubing Sprint 2026 (2026-04-25),333 R1 C #1
+5801240001,F2 U F2 D' L2 F2 U' R2 F2 U' F2 U2 B' F2 R U2 R U',W,Rocky Mountain Championship 2026 (2026-08-21~23),333oh R1 A E1
+5811384001,D' B' U B2 L2 R2 F2 R2 U' F2 U' F L D R2 B F',W,GAN Twist & Turn in Pasig 2026 (2026-08-30),333 R2 A #2

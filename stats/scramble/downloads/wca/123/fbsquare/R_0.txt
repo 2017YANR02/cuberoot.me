@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / R / bin 0
-# Population in this bin: 818
+# Population in this bin: 826
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5691925006,L D2 L' U2 L D2 L2 B2 U B D U L D2 R' B D B' L B,R,Swisscubing Cup Mental Breakdown I 2026 (2026-06-06~07),333mbf Final B #1
@@ -99,7 +99,7 @@
 399126001,U' L2 U B2 D2 F2 R2 D2 L' F2 L D2 F R' U' R' U B2 U' L2 U',R,Samara Open 2016 (2016-11-12~13),333bf Final A #1
 401596001,F U D' L2 D L' B U2 R' D2 F' U2 B2 U R2 U' B2 L2 U',R,Berkeley Fall 2016 (2016-11-19),333 R1 J E1
 3730357035,U2 D R' D F R' U' D B' R L U' F2 D F2 D B2 D2 L' F2,R,Big & Blind & Clock Vantaa 2024 (2024-05-04),333mbf Final A #1
-408541001,L2 D2 B2 R2 D U2 F2 R2 B2 F L F2 R2 F' L D F,R,Athens Winter 2016 (2016-12-04),333ft R1 A #3
+5809842001,L2 U L2 B' U' R' U F U R' F2 R2 F2 B' D2 F' B2 L2,R,LA PRE Cubing II Pucallpa 2026 (2026-08-30),333 R1 F #3
 5134874001,F L2 D2 R U2 R' B2 F2 U2 R2 D B2 F' U2 L' U' F' L2 U',R,VR Bengaluru Cube Open A 2025 (2025-10-26),333 Final B E1
 3384440001,U L2 F' U' F' L U2 F L' B' R2 F U2 F R2 B L2 U',R,Julekubing 2023 (2023-12-29),333 R1 A #2
 420498001,B2 R U2 B2 F2 L2 F2 L D2 F' D2 R U B2 R U2 L2 D' B,R,Santa Claus Cube Race 2016 (2016-12-17~18),333 R3 B #4

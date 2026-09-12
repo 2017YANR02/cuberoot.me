@@ -1,11 +1,11 @@
 # Scramble samples — f2leo / f2leo_cross / ORWY / bin 2
-# Population in this bin: 584
+# Population in this bin: 595
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
-2305080021,D F' R2 U F2 U2 D F' U' R2 B2 R2 D2 F' U2 L U L B,R,Just Cube Joburg 2022 (2022-11-12~13),333mbf Final A #1
+5809326001,R2 F2 U2 R' B L2 B' R2 D2 F' D2 R U' F2 D F D2 R2,O,Brampton Summer 2026 (2026-08-29),333 R1 E #5
 5144970001,F' D R B F2 L2 F R2 U2 B F L2 U' R B' L2 D F L',R,Pampanga Speedcubing Open 2025 (2025-10-25),333 R2 A #5
 4283051001,B' R U2 R' U R2 U B D' L2 F2 L2 U2 R2 D2 L' U',Y,Lakewood Fall 2024 (2024-11-16),333 R1 C #2
 2781710001,B2 D L2 D' R2 D F2 L2 U B2 U R B2 F D' U2 R U2 L2 F,R,Swedish Championship 2023 (2023-06-03~05),333 R1 C #1
@@ -71,7 +71,7 @@
 2576637001,D' R' B R B U2 F' R D2 R2 U2 F2 L' F2 D2 R' F2 B2,W,Launceston Autumn 2023 (2023-03-25),333 R2 B #5
 4604153001,D' L U2 L B D2 B' R2 B2 F2 U2 R F2 D B U' L2 D,O,Let's Go Carlow 2025 (2025-03-29~30),333 Final A #1
 5210584001,F' U L2 U' B2 L2 U' F2 D2 L D R2 B2 L2 F L D2 U,O,Medvode Open 2025 (2025-11-22~23),333 Final A #4
-3909393030,U R2 D2 L R F2 R D2 B D U' B U L D B2 U2 B',R,Hari-Hari Horas 10 2024 (2024-07-05),333mbf Final D #1
+5803921001,U F' B2 R' D L' U' R2 U' L' U' L2 U' D2 L2 U2 F2 D' F2,O,Waihopai Winter 2026 (2026-08-22~23),333 R1 A E2
 2625954001,L F2 U L U' R' L' F' L2 F' U2 D2 R2 L2 B2 D2 L2 U R2,R,Baztan Open 2023 (2023-04-07~08),333 R2 C E1
 473176001,F2 L2 D2 B U2 B2 R2 U2 L2 F U' L2 D2 L' F2 D2 L D' L2 F,W,Dixon Spring 2017 (2017-03-25),333oh R1 B E2
 488172001,F2 U' L2 B2 U' L2 R2 F2 D B2 R' B2 U2 L D L2 R2 F' D R,O,Helsinki Open 2017 (2017-04-15~16),333oh R1 B #4
@@ -111,7 +111,7 @@
 3681576001,F' U L2 R2 U2 L2 R2 F' L2 D2 F2 U2 R B' R' U B' D F2,W,Middle Georgia Speedsolving 2024 (2024-04-20),333 Final B #1
 665383001,F2 D F2 L2 U F2 L2 U' B2 U2 L R F' L F' L2 R' U',O,Taiwan Championship 2017 (2017-12-08~10),333 R1 D E1
 5365478001,R D L F2 R U2 L2 B' F2 L' B2 U2 R2 B2 D2 L' B2 F' L',W,San Cristóbal 2026 (2026-01-31),333 R1 D #3
-1453887001,F' B2 R' U' B' D' F' R2 U' R F R2 D' B2 U' B2 D2 B2,Y,NEU Open 2019 (2019-12-15),333 R2 A #5
+5821060001,D R' F2 D2 F' D2 B D2 L2 U2 L2 U B2 U' B F2 U B L2 U',W,Presidente Prudente Open 2026 (2026-09-05~06),333bf Final B #5
 680974001,L U' R D2 F U F' U' L U2 B2 R2 B2 D2 R' U2 R2 B2 R',Y,Cusco Speedcubing 2018 (2018-01-06),333 R1 A #1
 683583001,F2 R D2 R' D2 B R2 U B2 U F2 R U2 L D2 B2 R' B2 L2,R,Michigan Cubing Club Alpha 2018 (2018-01-13),333 R1 C #2
 5735370001,F D' R B R2 U F2 D' U' B2 L2 B2 R U R' B D2 L' D L' F',R,Queensland Open 2026 (2026-06-27~28),333bf Final B #2
@@ -171,7 +171,7 @@
 1416316001,F' L F2 D' R' B2 U2 R D B U2 B2 L2 B R2 D2 L2 B R2,R,Xuzhou Winter 2019 (2019-11-24),333 R2 A #4
 5113413001,L2 B' D2 B R D R B2 L2 D2 L F2 L B2 U2 F' U,W,UMBC Fall 2025 (2025-10-18),333 R2 C #5
 1083629001,U2 B D2 R2 B2 L2 B' F2 U2 F2 D' R2 B' L F2 R2 F R2,Y,German Open 2019 (2019-04-06~07),333 R2 C #4
-3502718001,F R' U' R2 B L2 U2 B' L2 B F2 U F D' U2 F D B',O,Triton Tricubealon 2024 (2024-02-11),333oh R2 B #2
+5802462001,L2 U2 B D2 R U2 L' U2 L' B2 R2 D F' D' B2 L2 R F' U2,Y,Cubing Kazakhstan Nationals 2026 (2026-08-21~23),333oh R1 B #1
 4003397001,U2 L2 R D' U' L2 D L2 F2 D R2 U2 R' D2 F' R' F2 R2 F',O,V per Varese 2024 (2024-08-10~11),333oh R1 A #4
 3916564010,B D B' D' L' F' U2 R2 L' F L' B2 R' D2 L' F2 R2 B2 L' D,R,Sommer uden Sol Lejre 2024 (2024-07-06~07),333mbf Final A #1
 1113366001,R2 U' R2 B2 L2 U' B2 L2 U F' U F' U L2 D2 L R2 D2 B2,O,French Championship 2019 (2019-04-20~22),333 R2 A #1
@@ -195,7 +195,7 @@
 1247623001,U R2 B2 U' L2 U' B2 D' R2 B2 L B' R2 B' D F D U',O,Egyptian Championship 2019 (2019-08-03),333oh Final B #2
 1262217001,D L2 F2 D L2 U L2 F2 D L2 U' R D' L R' B' D B2 F2 L2 U B',Y,Vantaa Back to School 2019 (2019-08-17~18),333bf Final A #2
 1273450001,L2 D' B2 D2 F2 D B2 F2 D' L' B D L' D' U' B' D B U,R,Indiana 2019 (2019-08-16~18),333 R2 E E2
-2786266001,R' F2 R2 D2 B L2 D2 L2 F U2 D' F' L R2 U L' D2 B U' B R',O,BLDepok 2023 (2023-06-10),333bf Final A #3
+5820364008,D2 F L D F D' B2 R' B' L2 U2 F' L2 B U2 B D' L' U2 L2,R,New York Big and Quiet Championship 2026 (2026-09-05~07),333mbf R1 B #2
 1284885001,B D2 F R2 B2 R2 U2 R2 D' F' R2 B' F' D U' B' U' L R',W,Kansai Summer 2019 (2019-09-01),333 R1 D #3
 1456647001,D2 F2 D2 B L F L' F' B D' F2 B2 L2 F2 D F2 U L2 U2,R,Indianapolis Cubes Winter 2019 (2019-12-14),333 R1 G #3
 1291035011,B' L2 D2 L2 F D2 B' D2 L2 B' L B' R2 D2 R2 U R' U' B2 L B',O,Big n Blind in Bangalore 2019 (2019-08-31~09-02),333mbf Final B #3

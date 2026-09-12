@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / Y / bin 5
-# Population in this bin: 706
+# Population in this bin: 713
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5047582001,U R2 F D2 B U2 L' R B' L2 B' L' R' B' F2 R',Y,Ephrata Fall 2025 (2025-09-27),333 R2 B E2
@@ -137,7 +137,7 @@
 3061368001,F R' U R D R U' R U R2 L F2 U2 R' U2 L' F2 U2,Y,Cerrado Open 2023 (2023-09-08~10),333 R2 B #2
 687627001,U' B2 U F2 U2 L2 U' L2 B2 R2 B' F2 U' R' F2 R2 U2 F' R' B2,Y,Shanghai Winter 2018 (2018-01-20~21),333 R2 C #1
 694065001,L D2 R D2 F2 L2 R F' R' F D' U' F2 U2 B' U' F2 R2,Y,Belfort Open 2018 (2018-01-27),333oh Final A E2
-2980253001,D' F2 U' F2 R2 D U B' R2 F2 D' B F2 R2 F L B' U',Y,Hyderabad Cube Open 2023 (2023-08-11~13),333 R1 I #1
+5782930001,L2 B U2 R2 D2 R2 B' R2 D' F' D L R' U2 L2 F' R2 B,Y,Ösmo Summer Cubing 2026 (2026-08-15),333 R2 A E1
 2726215001,B L2 B2 U2 B' D2 F' R2 F U' B L2 U B2 R2 D R' D U2,Y,Anzio Open 2023 (2023-05-20~21),333oh Final B #1
 715500001,D' L2 U2 F2 U2 F2 U' F2 L' B2 R U R' D' U2 L R2 U',Y,Dhaka Spring Open 2018 (2018-03-02~03),333 R1 B E2
 5320314001,D B2 L2 U' D R' F B2 D' R2 U R2 L2 U L' D' B2 L2,Y,Wide Moves & Waterslides CT 2026 (2026-01-10~11),333 R1 C E2
@@ -166,7 +166,7 @@
 1172093008,F2 L2 B F U2 R2 B R2 B2 U F D U R' B2 L' D' U L2 D2 B',Y,Tallinn Open 2019 (2019-06-08~09),333mbf Final A #1
 3063643001,U' R2 U' R2 D2 L2 D L2 B2 U L' U B2 R F' U2 F' L' R',Y,Music City Speedsolving Fall 2023 (2023-09-09),333 R2 A #1
 3009049001,U' B U2 B F D2 B2 D2 U F' L2 U' R2 B' R' B2 D' B',Y,Melbourne Cubing for Kids Sunday 2023 (2023-08-27),333 R1 B E2
-846460001,F D2 R L2 U F' U R2 D2 R2 B L2 B2 D2 B2 U2 B R2,Y,Franconia Open 2018 (2018-08-04~05),333 R1 A #2
+5796803001,L D L B2 F2 D' U' B2 L2 D' F' R' B2 R' F D2 L' R,Y,Kuala Lumpur Cubing Challenge 2026 (2026-08-22~23),333 R2 C #3
 4816312001,U2 B2 D2 L' U L' U2 F L2 B L2 U2 D R2 U2 L2 D',Y,DFW Cubing Summer 2025 (2025-06-21~22),333 R2 B #3
 1975749001,B2 R' F2 B R' F R2 F2 U2 F2 L2 D L' D2 R2,Y,Cloverdale Open 2022 (2022-06-18),333 R2 B #4
 4676387001,F2 L F' U F2 B' U2 F U F2 R L2 B2 R2 U2 R' B2,Y,St. John's Spring 2025 (2025-04-26),333 R2 A #5

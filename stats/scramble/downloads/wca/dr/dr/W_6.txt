@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / W / bin 6
-# Population in this bin: 619
+# Population in this bin: 633
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5415001,B2 D U L2 F2 U' B2 F2 R U2 F2 R' U L F2 L2 U2 R F L' F',W,Fénix 2014 (2014-03-29~30),333bf R2 A E1
@@ -45,14 +45,14 @@
 5664732001,L' R' B2 L U2 B2 D2 R' B2 F' D F R B2 D R2 D L,W,CubingUSA Heartland Championship 2026 (2026-05-22~24),333oh R1 B #5
 5280654001,U B' U2 L' U2 R F2 L B2 F2 L R F' U' R2 D F2 L' F L B2,W,Mindanao Championship 2025 (2025-12-14),333bf Final A E1
 4178004001,B2 L2 D2 F D2 R2 F' U' B' D' B' R' F' L F2 U2 L2 R,W,50 Years of Cubing in the Philippines 2024 (2024-10-06),333 R2 A #1
-4906178010,D' B2 D' L2 F2 L2 B2 D B2 R2 D U2 B' D F' U2 F' R' F2 L',W,CubingUSA Great Lakes Championship 2025 (2025-08-01~03),333mbf Final A #1
+5793326001,B2 L D' R D2 F' R' F2 L' D B2 U2 B2 L2 D L2 R D,W,Deerfield MA Summer 2026 (2026-08-22),333 R1 C E1
 250137001,R2 F2 D U B2 D L2 U B2 U' R D L' F' U2 F2 L2 D2 R2,W,Mantua Tiny Open 2016 (2016-02-06),333 Final A #3
 5016292001,L2 F2 U B2 R2 D' B' R2 B2 D F2 L D' L U2,W,Willimiehen Kuutiopäivät 2025 (2025-09-13~14),333 R1 B E2
 2720493001,R L2 F2 U R2 D U2 B2 U2 B R B R' U2 F D2 L2 R',W,Connecticut Spring 2023 (2023-05-13),333 Final A #1
 4378726001,R2 U' B2 F2 L2 B2 U' R2 D' R2 L' U B R2 B' U',W,The Last Game EC 2024 (2024-12-21),333oh Final A #4
 3081751001,R' U L' D F U2 F2 L' U' L2 B2 U2 R2 F2 B' U2 B D',W,Oxente Open 2023 (2023-09-17),333 R1 C #5
-280235001,D F2 D2 F2 L2 B2 L2 U' L2 F R' F L2 F' U B' D U',W,Classic San Lorenzo Open 2016 (2016-03-24~26),333oh R1 C #2
-1584013001,L2 R2 D2 U' B2 L2 D R2 U' L' B L' U L B' R' D R2 B',W,Hamburg International 2020 (2020-02-29~03-01),333 R1 C #5
+5797519001,L2 R2 F2 L2 D2 F L2 D2 F D' L2 F' D2 L' F' D' R F' R',W,Nanning Open 2026 (2026-08-23),333 R2 C E1
+5795830001,L2 B' U' B2 U2 B2 D R2 F2 U R2 D' L R2 F2 D L' B2 R' D',W,Please Be Quiet Xi'an 2026 (2026-08-23),333bf Final A #4
 4446198001,B2 R2 B L2 R2 D2 R2 F2 R2 F R' D L2 B2 F D' L' B' F2 R',W,The Heart of Texas 2025 (2025-01-26),333 R2 B E2
 1217493001,L2 U R2 U' L U R' D R' L' U2 D' F2 L2 B2 L2 D2 L2,W,West Branch Summer 2019 (2019-07-13),333 R1 B #5
 297369001,D' L2 F2 L2 B2 D2 U' F2 R2 D2 L' B' D' L2 B2 F2 U2 R2 F,W,Torneo Nacional Colombia 2016 (2016-05-07~09),333 R1 A #5
@@ -74,7 +74,7 @@
 3943881001,D F' D F' B L' B' D2 L' R2 D' L2 F2 L2 F2 U R' D',W,Ansan Summer 2024 (2024-07-20),333 R1 A #5
 3995909001,R2 D' B2 R2 D2 B2 R U L' D2 U' F2 U2 B2 L' D2,W,CubingUSA Western Championship 2024 (2024-08-02~04),333oh R1 C #4
 4600726001,B2 R2 U' F2 U' L2 U L2 B2 D B' L2 D2 B2 U2 B L F,W,Riobamba Open 2025 (2025-03-29),333oh Final B E1
-466802001,U' R2 B2 U F2 U F2 L2 B2 R2 B' D F' D' U2 B' F2,W,Shanghai Spring 2017 (2017-03-18~19),333 R1 A #4
+5798978012,F2 L' U F2 D' B2 U F2 L2 U L D' L' U L' U2 L D2,W,Northwest Championship 2026 (2026-08-21~23),333mbf Final A #1
 2041413001,U2 L2 D U2 L' D2 B2 L' R2 B2 D2 F L F' D F R' F',W,Cubing Returns Delhi 2022 (2022-07-23~24),333 R1 A #3
 474412001,B2 F2 D2 B2 U R2 U L2 B' U2 B2 D B' R2 B2 R B2,W,Schwandorf Open 2017 (2017-03-25~26),333oh Final A #3
 1609875001,B2 R2 F2 U2 F2 U' R2 D' U2 F2 L2 R' D' L U2 B2 L2 B F2 L' F2 L B',W,Lonely Denmark 2020 (2020-07-11~12),333bf R1 A #2
@@ -148,7 +148,7 @@
 3393089001,R' U' F L2 D' R D' F2 B R2 F' L2 U B R L' B2 R2 L F2 D2 B2 R' U' F,W,Autotalo Anime Adventure I 2024 (2024-01-06~07),333fm Final A #2
 1259300001,F2 D' B2 F2 U' F2 R2 U2 B2 L F' R2 B' F2 D B D' F2 R,W,Vinnytsia Cube Cup 2019 (2019-08-10~11),333 R2 B #4
 5559769001,F D B2 R' U2 F D B U2 F2 U2 F2 R' D2 F2 B2 D' L2,W,Gasteiz Open 2026 (2026-04-18~19),333 R1 C E2
-813181001,U F2 R2 U2 B2 L2 D' L2 R2 B2 D L' D R2 B' D' L',W,Cardinal Bird Fiesta 2018 (2018-06-24),333 R1 E #5
+5810549001,D' F2 L' D2 L2 U2 R' B2 L' F L U F2 R D2 F' D2 B' F L2 U2,W,Lutzelbourg Open 2026 (2026-08-30),333bf R1 B #5
 1466893001,L' R2 U2 R' F2 L B R B L D L R B' D' U' B2,W,Liberty Science Center Open 2019 (2019-12-14),333oh R1 D #5
 3243912001,L2 D F U' B R' U2 F U2 R2 B R2 D2 L2 U2 F L2 R,W,NIT Trichy Cube Open 2023 (2023-11-05),333oh R1 A #4
 2576635001,B2 R2 U L2 D2 L2 B2 D' R2 U' B2 R D' L D L' R2,W,Launceston Autumn 2023 (2023-03-25),333 R2 B #3
@@ -194,7 +194,7 @@
 1897358001,U' B L2 D2 L2 U2 F2 U R' B L' F2 R2 D2 L' U2 F',W,Uşak Open 2022 (2022-04-23~24),333 R1 B #4
 1100196001,F R2 F' D2 R2 B' D' F2 R2 D' F' R2 B' D F R2 D',W,SnoCo Feet Fest 2019 (2019-04-13),333 R1 A E1
 2919883001,L2 F2 R2 D2 R2 U B2 D' R2 D' U' F2 L R2 B' U R2 B' F2,W,Stevenage July 2023 (2023-07-22~23),333 R3 B #5
-1114396001,F' U2 R' F' U2 L' B2 U F U' L F2 B2 R F2 L' D2 B2 L2,W,Villa Carlos Paz Otoño 2019 (2019-04-19~20),333 Final A E2
+5793035001,B2 R2 B' R D2 U2 B F D2 F' L2 R' F U2 F D2 L2 D,W,Begastri Open 2026 (2026-08-20~23),333oh R1 B E2
 1114793001,L2 D' F2 L2 B2 L2 D2 F2 U2 B' R2 D' R U2 R B2 L2 D2 R',W,Bengaluru Cool Down 2019 (2019-04-20~21),333 R1 A #5
 5187104001,L' D2 F2 D2 R' F2 L2 D2 U2 L U' F' R D2 L D R F L',W,South Germany 2025 (2025-11-15~16),333 R2 C #1
 4201278001,L2 D' B2 U' F2 U R2 U' B2 D2 R2 U' B D L' F' L' F2 U',W,Pucallpa al Cubo 2024 (2024-10-19),333 R1 C #1

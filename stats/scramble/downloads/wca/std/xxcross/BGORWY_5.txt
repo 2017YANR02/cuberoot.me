@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / BGORWY / bin 5
-# Population in this bin: 682
+# Population in this bin: 686
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -148,7 +148,7 @@
 5134263001,B R2 D2 R2 B L2 D' F L2 D L2 B2 R' F' R' F2 L2 U',O,ʻAiea Liʻi ʻOkakopa 2025 (2025-10-26),333bf Final B #2
 2585786001,D L2 D2 B2 R' U R' D' L2 B2 D' B2 R2 D2 B2 D',R,Guwahati Spring Cube Open 2023 (2023-03-25),333oh R1 B #1
 4325994001,B' L B' R2 U' R2 B D2 R2 U' F2 D F2 D' R2 D L' U,R,Minnesota Championship 2024 (2024-11-30~12-01),333 R2 A E2
-2172939001,B' R L D2 F' B' U F' R2 F2 L' U2 R' U2 R2 B2 L D L',W,Droitwich Spa Autumn 2022 (2022-09-17~18),333 R2 B #3
+5785543001,U2 B2 R2 B2 L2 D2 L2 U' B2 D2 U R' F R B2 F U' F D',R,Oakridge Independence Cube Open 2026 (2026-08-15~16),333 R1 E #2
 717300001,U D' F2 U' F2 L' U' F' U B U F2 U' R2 D R2 L2 F2 L2,Y,CCS 2018 (2018-03-02~03),333oh R1 A #3
 3670889052,R F' B' D B2 D F' B' D2 L' U F2 D F2 U R2 U' D' L2 U2,G,New Jersey Quiet Championship 2024 (2024-04-14),333mbf Final A #1
 2372945023,R' L2 B' L' D2 R' U2 R' U2 B R D2 F2 L U2 L U2 L B2,R,Ota Blind Winter 2022 (2022-12-18),333mbf Final A #1
@@ -204,4 +204,4 @@
 966188001,R2 D2 L' F2 B D2 B D' F2 B' R2 L' F2 B2 R' D2 R2 U2,R,Mudanjiang Open 2018 (2018-12-22),333oh R1 B #2
 5026287001,U2 B D2 B' R2 B2 R2 B' R' B2 L B' L D L' D2 B' D' L2,Y,Fastest Fingers First Pune 2025 (2025-09-14),333 Final B E1
 4154034001,B R' D L' U2 L D2 B' U' D2 L2 U D' R2 L2 F U,W,Fast Turns Only in Cebu 2024 (2024-09-28~29),333 R2 C #2
-4469824001,B2 U B2 R B2 U2 R2 U2 R U' F' R F' U' L2 B' L,Y,Cubing with the Cougars WV 2025 (2025-02-01~02),333 R2 C #4
+5775855001,B L U' L' U D F L U B2 L2 F2 R2 D R2 F2 B L',G,Cubetec UEA II Manaus 2026 (2026-08-08),333 R1 C #1

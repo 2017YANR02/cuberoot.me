@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / B / bin 9
-# Population in this bin: 382
+# Population in this bin: 388
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4190940001,U L D' R2 F' U2 F' L' F U F2 D2 F2 U R2 D F2 L2 U' R',B,CubingUSA Mid-Atlantic Championship 2024 (2024-10-12~14),333 R1 C E2
@@ -17,7 +17,7 @@
 138140001,F D L' U' B R2 B' U2 R F D' F2 R2 D2 L F2 U2 B2 L D2 R,B,Chesapeake Science Point Spring 2015 (2015-05-09),333 R1 D #1
 4237717001,F D B L' D F2 L2 R2 D F2 L2 D F' D F' L' U R B,B,La Sierra Cundinamarca 2024 (2024-10-27),333 R1 B E1
 176347001,R D2 F2 D2 R B2 R' B2 F2 R D' B U' L' R' F D' B F2 L U2,B,Slovakian Open 2015 (2015-08-14~16),333oh R1 A E2
-5668606020,U' L' F D' R' L B D2 R F2 R U2 L' U2 L F' L2 F' D,B,Hiroshima Spring 2026 (2026-05-30),333mbf Final A #1
+5820364032,L' B D' L U L' F R' B' U' L' F R2 B L2 B2 D2 F' D2 F' D2,B,New York Big and Quiet Championship 2026 (2026-09-05~07),333mbf R1 B #2
 185277001,R2 B2 R L2 F' U' L F D' B' U2 R' B2 L' D2 R' D2 F2 R2 D2,B,Belgium Summer 2015 (2015-09-05~06),333oh R1 B #5
 185368001,F U2 F2 L2 D2 F2 U2 B D2 L B F2 D' L F2 R2 D' U' R D2 B R,B,Belgium Summer 2015 (2015-09-05~06),333bf R1 A E2
 3185430001,B D2 L' B2 R' U2 R' B2 U2 R D L B D2 L F' U' B L,B,Hong Kong Championship 2023 (2023-10-21~22),333oh R1 C E1
@@ -88,7 +88,7 @@
 708092001,L D' R U' R F' D' F2 B' L' U2 L2 F2 D' F2 D B2 R2 L2 U2,B,Halifax Open 2018 (2018-02-17),333 R2 A #5
 3657114001,U' L2 B2 U F2 L2 U' F2 L D2 F D2 F L2 F D U2 L U,B,Sheridan Stampede 2024 (2024-04-06),333 R2 B #4
 709119001,D2 B2 L2 R2 U2 B2 F2 L2 U L D2 U F' L U' B F U R D',B,Ural Winter 2018 (2018-02-17~18),333ft Final A #5
-710917001,U2 F U2 F2 R2 F' R2 F' D2 L R U' R2 B F2 U' F' R2 D' B,B,Irvine Winter 2018 (2018-02-17),333 R1 B #1
+5806270001,F L2 D' B2 F2 U' B2 F2 U B' D F2 R' D U L' B' F' L2,B,Kārķi Open 2026 (2026-08-26~30),333 R2 A #1
 3224374012,U2 L2 B' R2 B' L2 D2 B' R2 B2 U' R' D' B2 L' B L2 U2 R D2 B' L2,B,Tofta Autumn Open 2023 (2023-11-04~05),333mbf Final A #1
 753266001,U2 B' U2 F' R2 F D2 F' U2 F' D L' F2 U L' D L' F' U R' D L,B,CubeIowa 2018 (2018-04-14),333bf Final A #1
 4526223001,F L' F R' U F2 D B2 L2 F2 U' R2 B U L R2 U' F U',B,Sqauckland 2025 (2025-02-22),333 R2 A E2
@@ -116,7 +116,7 @@
 3430970001,D' L2 D' U F2 R2 U B' L R B' R F L' F2 R' U2 F2 D,B,Tacoma Winter Twisters 2024 (2024-01-20),333 Final A #1
 5411029001,R2 D' B2 D' B2 L2 D2 R2 F2 R' B' F' L' F2 U' B R2 D' U' F',B,Brown Cubing Day 2026 (2026-02-21),333oh R1 C E1
 977210001,L2 U2 B2 L F2 L B2 L2 R2 B' D R F' L' U' F2 D' B' D' U',B,KSF Atyrau City 2019 (2019-01-12~13),333oh R1 A E1
-978133001,L U' L' F' U2 D' B' R D' B' R2 U2 B2 L2 D2 F' L2 D2 F2 R2,B,TCG Deluxe 2019 (2019-01-12~13),333 Final B E1
+5793911056,U' B' L2 B L2 U2 B2 F L2 U' F' R' B' R' D' F2 U' B2 L' B R2,B,BrizZon Side Open IV 2026 (2026-08-22~23),333mbf Final A #2
 5685297001,B' L D L2 U R' U B' D F B2 R D2 L F2 R2 L' U2 F2 B,B,Hvidovre Juni 2026 (2026-06-06),333oh Final B #2
 1012727001,L2 U2 F2 L2 B' U2 L2 B' R2 U' L' R U2 R2 D' B F U' L2 F2,B,Haarlem Cubing 2019 (2019-02-10),333 R1 D #5
 4763140001,R2 F2 U' L2 R2 U L2 U L2 R' B D' F' D U2 L' D' R' F U',B,Amrita Cube Open 2025 (2025-05-31~06-01),333oh R1 C #1

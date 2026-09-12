@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / WY / bin 1
-# Population in this bin: 200
-# Samples listed: 200 (all entries in this bin)
+# Population in this bin: 203
+# Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 6462001,U L2 D U2 R2 U R2 B F' L' U F' L R2 B' F' D',W,Rumia Open 2014 (2014-03-29~30),333bf R1 A E2
@@ -11,7 +11,7 @@
 111084001,U R' D R2 U2 B2 R U' B U' D2 F2 D2 F2 R2 B L2 F2 L2,Y,Osijek Open 2015 (2015-02-21~22),333oh R2 B #3
 121981001,D2 F U2 L2 F R2 B D2 F' R2 B2 R' D' U2 L' D B L2 B D,W,Ceará Open 2015 (2015-03-28~29),333bf Final A E1
 133611001,F2 R' U2 F2 R D2 L B F2 L2 F' U' F' L B L' D2 F,Y,Danish Big Cube Open 2015 (2015-04-25~26),333oh Final A #1
-135333001,L' D2 L' R2 F2 L B2 F2 U2 F L' F' L' R U' R' U' B2 R2,W,Doylestown Spring 2015 (2015-04-25),333 R3 A #2
+5786140001,F2 L2 D2 B2 F2 L' D2 F2 R' U2 B' D L' B D' L2 R2 D' R,W,Kostelec Skewbing 2026 (2026-08-15~16),333 R1 A E1
 144259001,F2 D2 F D2 F D2 R2 B' D B U2 L2 U F2 L' U F2 L2 R',Y,Melrose Spring 2015 (2015-05-30),333 Final A #2
 146449001,L' R' F2 D2 R F2 D2 F2 D' B D U2 R F2 D' U2 R B',W,Indian Nationals 2015 (2015-05-29~31),333 R1 L E1
 162400001,U2 L2 F L2 B' D2 L2 R2 B F2 R2 U R' B F D2 L' R2 U2 F U' B R',W,Taiwan Open 2015 (2015-07-11~12),333bf Final A #2
@@ -31,7 +31,7 @@
 322364001,R' U' F D2 B2 L2 R2 F' R2 D2 B' F D B' U L2 D L2 F2 L' B' F2 L2 D R' U' F,Y,Bay Area Speedcubin' 9 2016 (2016-06-25~26),333fm Final A #3
 332197001,L2 B2 D2 B2 U2 L2 D2 R' U2 F L2 R2 U' F' U' F2 U' B2 L,Y,National Cubing Region Open 2016 (2016-07-23~24),333oh R1 C E1
 350677001,F2 R B2 L B2 L2 F2 L D2 L' U' L F L' R D' L' B' D' R',Y,Constanta Rubik Open 2016 (2016-08-20),333 R1 A #3
-359450001,F' D L B2 U' R2 B U' R' F' U2 F' U2 D2 F D2 L2 B2 U2,Y,Swiss Nationals 2016 (2016-09-03~04),333 R2 C #3
+5786929001,U2 L D' B D' F L2 U2 L B' D B D2 L2 B L2 B R2 F' L' F,Y,Norwegian Championship 2026 (2026-08-14~16),333bf R2 A #4
 365324001,L B' D' R2 B L U2 D2 L' B' L D2 R2 B' U2 F' B2 L2 D2,W,VIT Rubik's Cube Challenge 2016 (2016-09-24~25),333oh Final C #2
 373321001,L F2 L' U2 L2 D2 F2 R B2 R U R F2 U R2 F2 U F' D2 U',Y,German Nationals 2016 (2016-10-07~09),333 R2 D #2
 379700001,L2 B2 D2 L' U2 R U2 F2 U2 F' L' B2 F' R2 B2 D' L B R,W,Cubing ATMOSphere 2016 (2016-10-15~16),333oh R1 D E2
@@ -184,7 +184,7 @@
 5033358001,D B L' U B2 D' U' R2 U' R2 B2 R B2 R' D B' L U',Y,SEK-Alborán Almerimar Open 2025 (2025-09-20~21),333 R1 B #3
 5044590001,L2 B2 U2 R2 B' R2 B2 D' L' R' D' L B R' D F' R' B,W,Bucharest Cubing September 2025 (2025-09-20),333oh R1 B #2
 5086006001,R' D' L' D' F2 D' U2 B2 F2 L2 D2 U' F U F R' U2 F2 R,W,Graz Open 2025 (2025-10-04~05),333oh R1 A #3
-5119153001,R F2 U' F2 U L2 R2 B2 F R' F U B D F2 D2 B' R,W,Please Don't Flip Katipunan 2025 (2025-10-19),333 R1 C #5
+5813534001,D2 U2 B2 L2 D2 L2 F D R' B D L' F' L' U2 B2 F' U2,Y,Oberlin Weeknights II 2026 (2026-09-03),333oh Final A E2
 5139137001,R L2 U B U D' B L F2 U B2 R2 B2 D2 B2 D' R U F2,Y,Cuboss Open 2025 (2025-10-25~26),333 R1 D #3
 5161638001,L F2 U2 B' D2 F2 R2 U2 L2 B' D' L2 B' R D2 R' F L2 D',W,Cubing Comicfest Cali II 2025 (2025-11-01~02),333oh Final A #5
 5210415001,U' D R2 U R D2 L' U2 F' L2 F' R2 U' L2 U F2 R2 U,Y,Kent Fall 2025 (2025-11-22),333 R1 D #3

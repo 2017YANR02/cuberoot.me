@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / O / bin 3
-# Population in this bin: 7
-# Samples listed: 7 (all entries in this bin)
+# Population in this bin: 8
+# Samples listed: 8 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,O,LMDL Open 2015 (2015-09-12),333 R1 B #3
@@ -12,3 +12,4 @@
 3115470026,D R U' R' F2 R2 D L D L' B R2 L2 D2 F' L2 B L2 D,O,BMME 3x3 Day 2023 (2023-09-23),333mbf Final B #1
 3283160001,B U F R D R' U D2 L2 D B' R2 U2 B2 U2 B' R2 B' L2 B R2,O,Annuntia Sunday Open 2023 (2023-11-19),333bf Final A #2
 4055124001,R' F U2 L2 R B2 U2 L2 R F2 U L2 F' U2 B' L2 B R' U L2 U,O,CubingUSA New England Championship 2024 (2024-08-23~25),333bf R1 B E2
+5784464001,L' B' U' L2 D F2 D2 F2 U F2 U2 F R' D U L D F' L',O,Dåstrup Diverse 2026 (2026-08-15~16),333oh R1 C #1

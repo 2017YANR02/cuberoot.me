@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / BG / bin 3
-# Population in this bin: 47
-# Samples listed: 47 (all entries in this bin)
+# Population in this bin: 49
+# Samples listed: 49 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 28543001,D2 R2 D2 B F L2 B U' F' U F' D U' R' D2 R2 F2 U2 L2 U2,G,Bucharest Rubik Summer 2014 (2014-06-15),333bf Final A #1
@@ -52,3 +52,5 @@
 5416932006,B2 L2 D R2 U L2 D' U2 B' R2 F2 R' U B' L' U' L2 D L' F,B,Hämeenlinna 2026 (2026-02-28~03-01),333mbf Final A #1
 5483938001,R D2 R' D B2 R2 U R2 B2 L2 B2 L' B L R' B L2 U' F,G,Gorzów Cubing Days 2026 (2026-03-28~29),333oh R1 C #1
 5562422001,F2 U' B' U' B2 U F2 R D2 B' R' B2 L' U2 F2 U2 R U2,G,Xuzhou Zenith 2026 (2026-04-11~12),333 Final L #5
+5775855001,B L U' L' U D F L U B2 L2 F2 R2 D R2 F2 B L',G,Cubetec UEA II Manaus 2026 (2026-08-08),333 R1 C #1
+5778712006,F' D' F2 U R2 D2 R2 F2 U2 L U' F L' R F2 R' B' F' U B R,G,Ocaña BotijOpen 2026 (2026-08-08~09),333mbf Final A #1

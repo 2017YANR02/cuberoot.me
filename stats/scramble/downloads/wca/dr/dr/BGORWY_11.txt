@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / BGORWY / bin 11
-# Population in this bin: 207
+# Population in this bin: 211
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 27465001,U' F' L B' R2 U' F B2 R' B' D B2 U' D' F2 B2 L2 U' L2,B,Mingdao Cube Carnival 2014 (2014-06-15),333oh R2 A #4
@@ -24,7 +24,7 @@
 268724001,D2 R2 U2 F D2 B' F2 D2 F2 D B L' F2 R' F D U' F' U' R2,B,TCG Welcome 2016 (2016-03-19),333 R1 E #3
 279771001,B2 L2 U' B2 D F2 D' F2 D2 L U' L2 B' L' R U R2 F' D' B',B,Cebu Masters 2016 (2016-04-09),333 R2 A E2
 319318001,D2 L F' U D B' D2 B2 R' D' R F2 D2 B2 D2 R D2 L2 B2 D2 L2,B,Indiana 2016 (2016-06-25~26),333 R1 G E2
-329289001,B R2 B D2 R2 D2 U2 F U2 F' R' D' L R B2 U' B' L F' D2 U2,B,Czech Open 2016 (2016-07-19~20),333 Final A #5
+5820321002,R F D2 F2 L2 R U2 L' U2 B2 L' D' L2 F D' U2 R' F' L',B,New York Big and Quiet Championship 2026 (2026-09-05~07),333mbf Final A #1
 353840001,F2 R F2 U2 F2 L' D2 L' B2 F2 L2 B' R F2 U L2 B' U' L' D' U' B R2,B,August Bank Holiday Competition 2016 (2016-08-27~28),333bf Final A #2
 356306001,D F2 R2 D' F2 U' R2 U2 R2 U2 B D L' F2 R' U' F' R D B' L,B,Lima Rubik 2016 (2016-08-27~28),333 R1 C E1
 359453001,L F2 L2 D2 L D2 F2 L2 D2 B' U2 R' F' L F2 L2 D' F L' B',B,Swiss Nationals 2016 (2016-09-03~04),333 R2 C E1
@@ -130,10 +130,10 @@
 3163263001,D F R2 B2 R' F2 R2 D2 L R' F' L' R U L' U2 L' D F',B,Beskid Cubing 2023 (2023-10-14~15),333 R1 D #3
 3274483001,R U B' L' D F U F' R2 B L2 D2 L2 U2 B2 D2 F2 R F' D,B,Don't NxN Tlaxcala 2023 (2023-11-18~19),333 R1 D #4
 3277351001,D F' R2 F2 R' B2 L D2 B2 F2 L' F2 L R' U B' D F D2 R U' L B2,B,Chongqing Open 2023 (2023-11-18),333bf Final A #1
-3283425001,D' L B2 F2 D2 L2 U R2 D R2 D' B F' U' F2 R D' B2 L B,B,Swoop in Again Oxford 2023 (2023-11-19),333oh Final A #5
+5794318001,L2 D2 B D2 F U2 L2 R2 D' R D U' L' F D2 F2 L' R2 B',B,Tierrasanta Pizza Party 2026 (2026-08-23),333oh Final E #4
 3393107001,D2 F' D R B2 L2 B2 F2 U' L2 F2 D U R F U R D B' L',B,Autotalo Anime Adventure I 2024 (2024-01-06~07),333oh R2 A #3
 3437787001,F D2 L2 U R2 U F2 D U B2 R U2 F' D2 L F U2 L F' R,B,Nimble Hands in Noblesville 2024 (2024-01-21),333 R1 B #3
-3510680001,L D' B U L D' F' L B R2 F2 L U2 R D2 B2 L2 B2 R2 D,B,Vienna Fasching 2024 (2024-02-10~11),333 R1 C E2
+5780696001,U' F' D2 R2 F2 R2 F L2 F2 D2 L2 R' D2 B U' F' R' D L' U,B,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R1 B #2
 3518427012,U' R2 U F2 L' U' L2 B' R L2 D2 F D2 F2 U2 F R2 U2 B D B' L,B,Cube With Retention in Denton 2024 (2024-02-17~18),333mbf R1 A #2
 3545287013,U B' R' U2 B2 U' R B' F2 D2 L2 U2 L B2 L' F2 L2 D B2 L',B,Grizz Leap 2024 (2024-02-29),333mbf Final B #1
 5771971001,L D' R' B2 L' U2 R B2 L2 R' D2 U2 B F' R' B2 D B' F' D',B,South Wales Summer 2026 (2026-08-01~02),333 R2 B E1
@@ -187,7 +187,7 @@
 5669152001,F' B' U2 B' L2 U D B' R' D L2 F2 R D2 B2 L D2 R2 F2 B2,B,Waterloo Spring 2026 (2026-05-30),333oh R2 A #1
 5136615006,D L D L R D2 L R2 B2 D2 U2 R2 F' D' U F' L2 B' R' B2 L2 U',B,New Zealand Cubing Decathlon 2025 (2025-10-25~26),333mbf Final A #1
 5141946001,L B' U' D2 L2 U2 F2 L' U2 L U2 R' F U' R B' U L2 D',B,San Antonio Fall 2025 (2025-10-25~26),333 R2 A #5
-5141985001,D2 L F2 U2 L2 U2 B' D U F' L U' B2 U B' R B,B,San Antonio Fall 2025 (2025-10-25~26),333 Final A #2
+5783314001,B' U' R' D B2 R2 D2 B R2 D2 B D2 F' R D' F R U2 L2,B,BC Championship 2026 (2026-08-07~09),333 R1 C #1
 5186583001,R' U' F U R D R2 U' B2 F2 R2 F2 U2 R' B R F' U' L2 D' U2 F R' U' F,B,Polish Championship 2025 (2025-11-13~16),333fm Final A #1
 5247999001,L' R2 D2 U2 F L2 D2 B2 D2 R' U R D U2 F U' R B' L,B,Cube Factory Santa Claus Race Brzeziny 2025 (2025-12-06~07),333oh R2 A E2
 5280173001,R' U' L2 D' F' B L' B2 L U R2 D2 R2 F2 U B2 U2 R2 U' B2 L',B,Master Cube Salvador B 2025 (2025-12-13),333 R1 B #5

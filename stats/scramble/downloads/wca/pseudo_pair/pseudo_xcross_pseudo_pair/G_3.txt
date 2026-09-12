@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / G / bin 3
-# Population in this bin: 721
+# Population in this bin: 726
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 7046001,R B2 R' F R D' B' D' R' U' D L' D2 B2 L D2 F2 B2,G,CSP Open 2014 (2014-03-30),333 R1 A #4
@@ -86,7 +86,7 @@
 401871001,R2 F2 L' B2 L F2 D2 F2 L' U L' D F2 R U2 R2 B' D U2 F,G,Maharashtra Championship 2016 (2016-11-13),333 R1 E #1
 4644259001,U F2 L' B2 L2 F2 R2 D2 F2 R B D2 U' L' D' R2 D F R,G,Nebraska Championship 2025 (2025-04-11~13),333oh R1 A #4
 412649001,B2 R2 U2 B2 D2 R2 F2 U F L2 D' F' D2 R' F2 U R F U B' L2 U',G,Mega Minnesota Winter 2016 (2016-12-10~11),333bf R1 C #2
-413783001,D' F2 R2 D' F L B D2 R' D' R2 B2 U2 F2 L' U2 D2 R,G,Comercio Rubik 2016 (2016-12-10),333 R1 D #4
+5820412001,U2 F2 R B2 R F2 U2 F2 U2 R2 D' F2 D' F2 U2 B D B L,G,New York Big and Quiet Championship 2026 (2026-09-05~07),333bf R1 B #4
 415345001,F' L2 U L2 F2 B U R' F2 U2 D' F2 U2 F2 L2 F2 L2 U',G,Birmingham Open 2016 (2016-12-17~18),333oh R1 C #3
 429833001,L U2 F2 L R F2 D2 R' B U2 R2 F2 U' F2 L B L2 D2 F2,G,Cubers East India Open 2017 (2017-01-07~08),333 R2 C E2
 430292001,U2 L2 R2 B' R2 B F U' L U' B L2 B L2 F' R' U B,G,Chișinău Winter 2017 (2017-01-08),333 R2 B #2

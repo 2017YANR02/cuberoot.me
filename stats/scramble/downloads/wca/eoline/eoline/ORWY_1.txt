@@ -1,14 +1,14 @@
 # Scramble samples — eoline / eoline / ORWY / bin 1
-# Population in this bin: 309
+# Population in this bin: 317
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5677611018,D2 R2 L2 U R B2 U R' L' D B' L' F2 R D2 R U2 L',W,New York Multimate PBQ V 2026 (2026-05-29~31),333mbf R1 B #2
 5668385001,U B2 F2 R2 U' B2 L2 D L' F2 R D' B2 U L2 D L',R,Cubing Tibas 2026 (2026-05-23),333 R1 B #4
 4354268001,U2 F2 D' L D2 B2 L2 B2 R' D2 R' D' U2 R D L2 D,O,Santa Claus Cube Race Mysłowice 2024 (2024-12-14),333oh Final B #5
-4835860001,U2 R F2 D2 B2 D2 L' U' L2 D R F2 D U2 F2 R D,O,Warm Up Seattle 2025 (2025-06-28~29),333 R1 E E1
+5795016001,B2 R D2 U2 R D2 L2 B' R' F' D2 U2 F' L2 B L' B',R,Ecublens Open 2026 (2026-08-22~23),333oh R2 A #4
 67895001,F2 R2 D' F2 R2 D' U2 L2 R D R' D2 R D' L2 D U2 F',Y,DJ Open 2014 (2014-10-18~19),333 R1 G #5
 70083001,L2 F' R F' L' U2 B2 R2 L U F U2 R2 L2 F' R2 U2 B U2,O,Dutch Open 2014 (2014-10-25~26),333 Final A E2
 94472001,U2 R2 B2 L' F2 R B R2 B L' R' B D2 B2 L' R' D2,R,Kyushu Open 2014 (2014-12-28),333 Final A E1
@@ -34,7 +34,7 @@
 278780001,L' U2 R F2 R' F2 L2 D2 R F2 L2 U' F' R' B2 R B2 F' U F',R,Jeonju Spring 2016 (2016-04-02),333oh R1 E #1
 5710536001,D' B2 U2 L D2 R' U2 F2 R' U2 R2 B' R' D' B' D2 F2 U2 B D' L' F2,W,Valdepeñas Open 2026 (2026-06-13~14),333bf R1 A E2
 4898934002,F2 R2 F2 U2 L U' B2 L U' R B2 R' L B2 R2 U L2 U2,W,Swedish Blind Marathon 2025 (2025-08-02),333mbf Final A #1
-295619001,D' F2 R2 B2 R2 D2 U' F2 D' B2 F' R D F' D F D2 L2,Y,Summit City Open 2016 (2016-05-07),333oh Final A #5
+5780713001,F2 U2 F' R D2 R' B2 L' F U2 B R2 F' D2 B2 D,O,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R1 K #2
 5328114001,B D' F2 B U D' B' D F2 U' F' B U2 R2 L2 B,W,Ohio State Winter 2026 (2026-01-17),333 Final A #3
 3414021005,F2 L F2 D' B2 D R2 B2 D U2 B2 L' U2 R' F2 U R B2 L',Y,Pour Gesté J'ai Gâteau 2024 (2024-01-13~14),333mbf Final A #1
 313032001,R' U' F U R2 U' R2 U' B2 L2 U B2 U' F L2 U L' D L U2 B2 D2 L F' R' U' F,W,Cube of Odd Numbers 2016 (2016-06-18~19),333fm Final A #1
@@ -71,7 +71,7 @@
 5085327019,B2 U2 F2 D2 L' B2 L2 F2 U2 L2 F' D2 R' B' L' R2 D2 B L2,R,Cubing for Yuval Israel 2025 (2025-10-08~09),333mbf Final A #1
 5201174001,B' D F2 D' F2 L2 U' B' U' R' B' R2 F2 L2 D' F' R2,W,Drury Summer 2025 (2025-11-15),333oh R1 A #3
 660727037,D' B2 R2 B2 R2 D' B2 F2 D L2 R' F2 U R' U B2 L' F2 L2 U',R,Finnish Open 2015 (2015-06-13~14),333mbf Final A #1
-5430200035,F2 R2 B2 R2 U' B2 L2 D R2 F' D B U' F L2 D2 B' L2,W,Blind Madrid 2026 (2026-03-07),333mbf Final B #1
+5791617001,B' R2 U2 L2 U L2 B2 D2 B2 U B U B R2 D' U2 R2,Y,Capelle Chaos A 2026 (2026-08-22),333 Final A E2
 660987006,F2 R2 F2 L' B2 L' D2 L D2 U B2 L F2 R' D' R2 B' L' F2 L B2,W,Big CubingItaly 2016 (2016-05-14~15),333mbf Final A #1
 661131017,L2 U2 F2 D2 F2 R' B2 R2 B2 U2 L2 B D' L B' R2 F2 L2 R U L,W,German Nationals 2016 (2016-10-07~09),333mbf Final A #1
 661169002,B D2 U2 B L2 R2 F' R' D' R2 U' R U' L F2 R2 B2 L2 U,O,UK Championship 2016 (2016-11-04~06),333mbf Final A #1
@@ -92,7 +92,7 @@
 3642722001,R' B' L2 F2 L2 F D2 F U2 F2 L' U F2 D L D2 L' B U2,R,Bay Area Speedcubin' 60 - Mountain View 2024 (2024-04-06),333 R2 C E1
 786434010,U2 B2 R D2 R' D2 U2 R' U2 R' U L' U' L' B2 U' B2 L2,Y,YJ Fest 2018 (2018-05-18~20),333mbf Final A #1
 787533001,L' B U2 R' B R D2 B' R' F B' R2 L2 D2 B2 R2 B2,R,CubingUSA Great Lakes Championship 2018 (2018-05-18~20),333oh R1 E E1
-809372001,L' U2 B2 D2 B2 R2 F2 R B' D2 U' R2 B L' D' U2 F U2 L' B' L',Y,CubingUSA Western Championship 2018 (2018-06-15~17),333bf R1 C E2
+5804933001,U2 R2 F R2 D2 R2 F' U2 F2 L D2 L2 B L D,R,Calgary Fall 2026 (2026-08-29),333 R1 H #2
 822699005,R2 U2 L' D2 R' B2 L D L' F2 U2 R' D B2 L' B' F2 L2 U',W,Mental Breakdown Minnesota 2018 (2018-07-07~08),333mbf Final A #2
 4299567001,U' R' D F2 R' D2 B2 L D L U2 R2 D B2 R2 B2 D' L2 U2,W,Olsztyn Squared 2024 (2024-11-16),333bf Final A #1
 837618001,D2 F2 U2 F' U2 B D2 R2 F2 U2 L2 R' B R' F D2 R' F2 L2 D,O,Santiago Summer 2018 (2018-07-22),333oh Final C #2
@@ -182,7 +182,7 @@
 4080011001,F2 D2 L2 U2 R' D2 B2 L' R' U2 F R' D R2 B' U B2 D',Y,Gøy på Landet 2024 (2024-09-07),333 Final C #1
 2674623001,L' B' R2 B2 U' L' F' U2 B' R2 U2 F2 U F2 R2 U L',W,Perth Autumn 2023 (2023-04-29~30),333 Final A #2
 4891178001,D2 F U L2 R2 F2 L2 U' B2 D U' B F2 L' R2 U' R2 U,Y,Wiltshire Summer 2025 (2025-07-26~27),333 R1 D E2
-5254123001,U2 R F2 R' D2 R2 B2 R U2 F' R F' L' D2 R' D F' U,W,Plaza Madero Chía VI 2025 (2025-12-07),333 Final B #3
+5798442001,R2 B' D2 U2 B' L' B2 L2 B2 L2 D F' U R2 D U,W,Mid-Atlantic Speedcubing Championship 2026 (2026-08-14~16),333 Final I #4
 2800364001,D2 F' R2 D2 B2 D U2 R2 F2 B' D' F' D F D2 R2 B2,W,Jāņi Kārķos 2023 (2023-06-17),333 R1 A #4
 2812306001,U2 B2 L B2 L R U2 B2 U L R' U' B2 L R' U B2 F',R,Bucharest Cubing B 2023 (2023-06-18),333oh Final B #4
 3944301001,U' L2 D R' D2 F2 D B2 F2 D2 L' U' L2 R2 F2 L' D',O,The Big Cube Melbourne 2024 (2024-07-20),333 R2 B #1

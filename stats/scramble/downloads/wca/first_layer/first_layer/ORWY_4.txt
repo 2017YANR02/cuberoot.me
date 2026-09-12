@@ -1,0 +1,12 @@
+# Scramble samples — first_layer / first_layer / ORWY / bin 4
+# Population in this bin: 5
+# Samples listed: 5 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+408676001,L2 D' R2 F2 D' R2 U2 R2 B2 D' B D2 F D' U2 R' U B F2 L,R,Tunisia Autumn Open 2016 (2016-11-30),333oh Final A E2
+590334001,F' D2 B' R2 F2 R2 D2 F2 R2 U F' U' L R D' L U' F' U L2,O,Bulldog Cubing 2017 (2017-09-09),333oh Final A #3
+972284032,D L2 U' B2 U2 B2 L2 F2 D B2 L2 R' B2 F D F R2 F2 D' F2 L,R,Speedcubing Camp Minsk 2019 (2019-01-04~06),333mbf Final A #2
+1706757001,R' U R B2 U2 R' B D' L2 U2 D' F2 U D' L U' R',Y,Kharkiv Cubefall 2021 (2021-10-23~24),333 R2 A #5
+3586684001,F D2 F2 R F R2 U2 F2 B2 D' F2 U2 R F2 L D2 L',W,San Juan V 2024 (2024-03-09),333 Final B #4

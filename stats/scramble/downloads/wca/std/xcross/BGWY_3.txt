@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BGWY / bin 3
-# Population in this bin: 532
+# Population in this bin: 540
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4701564001,B2 R2 D B R D2 R U2 R2 F L D F' U' R' B2,W,Hessen Mini Open 2025 (2025-05-02),333 Final B #4
@@ -135,7 +135,7 @@
 884341001,B2 D2 F' D2 L2 U2 R2 F' D L F2 U L D U F U' B2 F',B,Stratford-upon-Avon Open 2018 (2018-09-22~23),333oh R2 A #3
 3243093002,R2 F' U2 B2 L2 B R' F' L2 R B F2 L F' U2 L U' B,G,CubingUSA Rocky Mountain Championship 2023 (2023-11-03~05),333mbf Final B #1
 1912920001,F' R' U B2 D F2 L2 F2 U' L' R D2 F' L F D F,B,Princeton Spring 2022 (2022-05-07),333oh Final C #2
-1826406001,R2 F' D2 L' R2 F2 R' B2 R' D2 R2 B' U2 R D' R' D' F,B,Florida Spring B 2022 (2022-03-12),333oh R1 B #5
+5778712006,F' D' F2 U R2 D2 R2 F2 U2 L U' F L' R F2 R' B' F' U B R,G,Ocaña BotijOpen 2026 (2026-08-08~09),333mbf Final A #1
 4737452001,F' U2 L2 U2 B2 L2 B' U2 B' U B' U B' L B2 L' U' R,Y,Assumption Mustang Cubing 2025 (2025-05-24),333oh R1 B #2
 2199162001,L F' D L' D R F2 R2 D' R F2 U2 B2 R' B2 L' B' R,Y,Cubing Returns IISER Kolkata 2022 (2022-09-25),333 R1 B #5
 909976010,D2 L2 R B2 D2 F2 U2 R D' F U F2 D2 B2 U B' D U2 R,B,GLS Cup V 2018 (2018-10-20~21),333mbf Final A #1
@@ -189,7 +189,7 @@
 2106563001,B L' F' B2 D2 R2 F2 U R2 U L' U R2 U' L B' R2 F',Y,Petrinja Cube Day 2022 (2022-08-20),333 R2 A #4
 5735877001,R2 U F2 U F2 U' L2 D L' U' L' D R2 U B F L B',G,Indian Cube Challenge BLR 2026 (2026-06-27~28),333 R2 A #5
 2255004001,R L' F R' U B' L' U L B R U2 L' B2 R B2 R2 D2 L2,B,Westfries Open 2022 (2022-10-22~23),333oh Final A #5
-4315407001,B2 U2 L' D2 R' D2 R B2 L' U B2 U' B F2 U' L D' R2 F2,Y,Texas Championship 2024 (2024-11-22~24),333 R2 A #3
+5784680013,U' L2 D2 R2 D U2 F' U2 F R F R2 F2 R D' F' D' L B,B,Silent Brasília 2026 (2026-08-15~16),333mbf Final A #1
 1279212001,B' D' L2 D R2 F' D L' U D2 L2 F2 R2 F U2 F R2 F L2 F2,Y,Back to School Idaho 2019 (2019-08-24),333oh R1 A #5
 4655326001,F D B2 U' L2 F2 B U L B2 U2 R2 L2 B2 R2 D' B2 F,B,HCMC VNC Warm Up 2025 (2025-04-12~13),333 R2 A #4
 1280759026,F' L2 R2 B L2 F2 R2 B D U2 L D' R U B2 R U' L' U' B' L',W,Xi'an 10th Anniversary 2019 (2019-08-24~25),333mbf Final A #1

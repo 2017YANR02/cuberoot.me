@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / B / bin 3
-# Population in this bin: 346
+# Population in this bin: 351
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 242001,L' U2 F2 L D2 U2 R D2 U' B' R2 D R' B D F' D' B2 D',B,Montréal Open 2014 (2014-03-15),333 R1 A #3
@@ -31,7 +31,7 @@
 3818240001,L2 R2 U2 L2 B' U2 F2 L' U' L2 D' B D2 U L U' F' L',B,Sicily Summer: Arancino Open 2024 (2024-06-01~02),333 R1 A #5
 4188189001,F' R2 B2 L D' R2 L' F2 U' F2 D' F2 B2 D' R2 F U F,B,GA Cuber Jackets Fall 2024 (2024-10-13),333 R2 B #1
 5117341001,D B2 D' L2 D2 R2 U F' U2 B' F2 R' F' D2 L' U2 R F2,B,Regina Twist 'N Treat 2025 (2025-10-18),333 R1 A #2
-3472862001,B' R B' D L B R D2 R2 D2 R2 B' U2 L2 B2 R U,B,Michigan Mini 15 2024 (2024-01-29),333 R2 B #1
+5798714001,F2 B' U' R B2 R' F' R' F L2 F R2 U2 B U2 B2 L2 D',B,III Capixaba Challenge 2026 (2026-08-22~23),333oh Final A E2
 4737195001,F' R F2 R2 B' U2 R2 U2 B D2 F2 D2 R' D B R B F R' U2 L' F',B,Erlangen Open 2025 (2025-05-24),333bf Final A E1
 5391287001,U2 F D' L2 D F2 D' L2 D' B2 R2 U R U2 R' B2 D' F2,B,Stockholmsligan 3: Surskallar - 2026 (2026-02-17),333 Final B E2
 3785405001,L B' R' D2 L F2 L' R2 B2 R D2 B U B2 R D2 R D2 B,B,Stockholmsligan 396: Pengabingen i Fara - 2024 (2024-05-23),333 Final A #5
@@ -73,7 +73,7 @@
 661378053,D2 R2 F U2 B' U2 F' L2 B2 L B2 F2 D B2 U2 B2 R B2 D',B,Classic City Shhhhh 2017 (2017-06-03~04),333mbf Final A #1
 661417084,R D2 R' D2 B2 L2 D2 R F' R' B F2 R2 F' D R' B2 F L' F',B,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #1
 4626879012,R B2 R F2 R2 D2 R2 D B' L2 D B2 D2 U B L D' L' F,B,New York Multimate PBQ 2025 (2025-04-04~06),333mbf R1 A #2
-677051001,R D2 R U2 R2 D2 L B2 F' D2 F' L U2 R2 B2 L B2 D,B,Rubik's Cube Mumbai Open 2017 (2017-12-26~27),333 R1 O E1
+5817527001,F2 D2 R2 F' R2 B2 D2 F' L U' F L2 U R U' L' R',B,Cube Factory Aleksandrów 2026 (2026-09-05~06),333 R1 B #4
 4214128001,F D2 B U F2 D U' L2 F2 U' B' D' R2 B2 D2 F2 D2,B,Valsugana Speedcubing 2024 (2024-10-19~20),333 R1 B #4
 5639064001,R' U L2 R2 B' R2 D2 L2 F2 R D2 F D L D U2 L' R B' L,B,Qualifying Cougars WV 2026 (2026-05-16~17),333bf Final A E1
 5548191001,D L' U2 B' R L' F2 U R' B' D' R2 F2 U2 D L2 U B',B,Solving in Sale 2026 (2026-04-17~19),333 R1 C #2
@@ -185,7 +185,7 @@
 4949726001,U B' L' B2 L D2 R2 U F' B2 R' F2 R2 U2 L2 U2 F2 R' B' L',B,Korea Open 2025 (2025-08-15~17),333bf R1 C E2
 2714273001,D2 U2 R B2 L2 F2 D2 B2 R' F' L2 U L2 F U' L D' R2 F2,B,Colorado Western Slope 2023 (2023-05-13),333 R2 A #3
 4522268001,R' F L2 R' B2 D2 R' D2 R F2 D2 L' D' R D' F' U' F U2,B,Central Asian Tour Tashkent 2025 (2025-02-22~23),333oh R1 B #5
-4603349001,L' D L R' F2 D2 R D2 B2 U' R2 D2 F' D' B R2 U2 B L' F,B,BrizZon Side Open 2025 (2025-03-29~30),333bf R1 B E2
+5784680013,U' L2 D2 R2 D U2 F' U2 F R F R2 F2 R D' F' D' L B,B,Silent Brasília 2026 (2026-08-15~16),333mbf Final A #1
 2725141001,D F U2 B' F2 L2 U2 F' R2 U B U L' D L' D2 L' U,B,Cubing In Creek 2023 (2023-05-20),333oh R1 B #4
 2763704001,D' U R2 U F2 R' B' D2 U R D2 B D2 B2 L' R' F2,B,Solved Central Alberta 2023 (2023-05-27),333oh Final D E1
 2783513001,F' R F' U2 R2 D' F D' F' L2 B R2 U2 R2 D2 R D' L B R',B,Wilmington Warmup 2023 (2023-06-03~04),333bf Final A #2

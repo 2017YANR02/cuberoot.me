@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / WY / bin 6
-# Population in this bin: 215
+# Population in this bin: 219
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 33688001,D' L D2 R2 L' D R' B' D L' F D2 R2 B2 U2 B2 D2 B D2,Y,P3 Grand Open 2014 (2014-06-28~29),333 R1 S E2
@@ -41,14 +41,14 @@
 547387001,D2 F' L2 B R2 D2 L2 U' B2 R2 B U' F' L2 D2 U2 R,W,CubingUSA Nationals 2017 (2017-07-07~09),333oh R2 I #1
 573319001,D' F2 U' B2 D' L2 U' F U' B L2 D2 B L R F' R' F,W,Kota Raja Open 2017 (2017-08-20),333 R1 A E2
 5584382001,B2 D2 U2 R2 B U2 L' D B2 D L2 R F2 D R U,Y,Welcome Guayaquil Open 2026 (2026-04-25),333 R2 A #4
-607294001,U L2 D' U' F2 D' U L' R D B2 R U R U B2 U F,W,Punata Open 2017 (2017-10-01),333oh R1 B #3
+5814348001,U L' U' L U B2 L2 R2 D2 U L D2 F2 L' D F2 U2,Y,KC College Cube Open 2026 (2026-09-05),333 R1 D #1
 608283001,D2 F2 R' B2 L U L' F D2 F2 R' L2 F R2 B L2 F' R2,W,Prague Open 2017 (2017-09-30~10-01),333oh R1 A #4
 615049001,R2 D2 B D2 R2 B R2 B2 U B2 D B U2 R' B R D' R' F' D2 L2 U',W,Tathva Cube Open 2017 (2017-10-14),333bf Final B #3
 630679001,R2 F L2 R2 D2 B U2 B' L2 R F' R' F U2 R' F,W,Villa Open 2017 (2017-10-28~29),333oh R1 A #5
 637301001,D2 U2 F' R2 U2 B R2 F2 D R' B' F' L2 D2 R F2 L F2 R B R2,Y,Minsk Championship 2017 (2017-11-04~05),333bf Final A #3
 660660029,U F2 D' R2 U' L2 D' B2 U R' U' R U B' R2 D2 L' U2 L' F',W,Grudziadz Open 2015 (2015-03-07~08),333mbf Final A #1
 660672005,L2 B2 U2 R D2 B2 F2 L2 B2 U2 B R U F L2 U' B L2 R D' B,Y,Pinoy Speed Cubing Olympics 2015 (2015-03-22),333mbf Final A #1
-660909029,L2 U2 L2 R2 U B2 R2 D2 R' F R U' B' L2 D2 F L2 D R D2,Y,Torneo Aventura Cubica 2016 (2016-01-23~24),333mbf Final A #2
+5796169001,L2 B' D B' U' D' R2 F U L F' L2 U2 B L2 D2 F U L2 U2,W,Klemzig Kubing Decathlon 2026 (2026-08-22~23),333bf R1 A #3
 661130007,R2 D2 L' B2 R' F2 D2 R B2 L2 B U' B' F' L2 F R F2 D2 L,W,Belgorod Open 2016 (2016-10-08~09),333mbf Final A #1
 661210030,D L2 U' L2 D2 B2 U' L' B2 R2 D B U F2 R B' D' L2 U L',W,Polish Championship 2016 (2016-12-09~11),333mbf Final A #2
 682432001,D2 F2 L' F D' F R' D' R2 L' U' R2 D2 R2 L' F2 U2 R,W,Tulcan Open 2018 (2018-01-06),333 R1 B #2
@@ -90,7 +90,7 @@
 1542784001,L2 D2 F R2 F2 U2 F L U2 R' D' R F2 D2 L D F2 L,Y,Severodvinsk Cup 2020 (2020-02-08~09),333 R2 B #4
 1578958001,B2 D2 L U2 L2 B2 F2 U2 B2 F L D F R' F2 R F' R,Y,Leap to Barrie 2020 (2020-02-29),333 R1 A #3
 1589390001,U2 F2 D2 F2 L' B2 L2 D2 L D2 L U' L D' U R2 D F,Y,Dalhousie Leap Year 2020 (2020-02-29),333 R2 A #1
-1643647026,L2 B2 R U' D2 B2 L' D2 L2 R' F2 U2 B' D2 L B' L' F' D' B R,W,Please Be Quiet Brisbane 2021 (2021-04-10),333mbf Final A #1
+5815523001,F' D2 F R' D F' D F B2 L' D2 L2 B2 R2 F2 L' U',W,Bremium Mega Day 2026 (2026-09-05),333oh Final B #1
 1670889001,D' R F D F' U' B D L' U' R2 U B2 R2 D' L2 F2 U' D' L B,Y,Villeneuve-lès-Avignon A 2021 (2021-07-17),333bf Final A #3
 1682873001,F2 D L' D2 B' U2 D2 F' R2 F2 U2 L2 D2 B' D' L',W,Empire State Summer B 2021 (2021-08-01),333oh R2 B #3
 1688962001,U' R2 B2 U2 F2 D' U2 F U' B2 D B2 U L2 F U' R2,Y,Szczytno Open 2021 (2021-08-28),333 R1 F E2
@@ -152,7 +152,7 @@
 3591420001,R' D' L' D' L' U R' D2 L' D' L2 F2 U' F2 U D F2 R2,Y,Vancouver Newcomers Morning 2024 (2024-03-16),333 Final A #3
 3630997001,L U R' D2 F L2 U B L2 F' D2 R2 D2 R2 L' B' R' D',W,New to Sherwood Park 2024 (2024-03-30),333 Final C #2
 3637494001,U' F' D2 R' B' R B U' R2 U R' U' R2 U' B2 D' F2,Y,French Championship 2024 (2024-03-30~04-01),333oh R1 D #3
-3641569019,B F R2 B2 F U2 B F L F2 U' B R2 U' L' U B2 L' F',W,Pocos Cupos Bogotá VIII 2024 (2024-04-06),333mbf Final A #2
+5786929001,U2 L D' B D' F L2 U2 L B' D B D2 L2 B L2 B R2 F' L' F,Y,Norwegian Championship 2026 (2026-08-14~16),333bf R2 A #4
 3702584001,U L2 B U2 B' R2 F R2 D' R U' R D F2 L2 B2 U R',W,Israel Open 2024 (2024-04-24~25),333 Final A E1
 3703853001,F' B L2 D F R L2 B U2 R' F D' L2 U2 F2 L2 D',Y,Itajaí ao Cubo 2024 (2024-04-20~21),333 R1 E #4
 3749785001,R2 B2 U2 B L2 F' D2 L2 B2 L2 F U' R' D' U F D R' D,Y,Cube4fun Low Limits Jarosław 2024 (2024-05-11~12),333oh Final A E2

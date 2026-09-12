@@ -1,15 +1,15 @@
 # Scramble samples — pair / cross_pair / BG / bin 8
-# Population in this bin: 421
+# Population in this bin: 427
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 679001,R2 U2 B2 R2 U B2 D' U' L' D R F2 D' L' B F2 U L' R2,B,Cube Kingdom II 2014 (2014-03-15),333 Final A #5
 4881870001,D2 F2 U' L F U' R' U D' R' L2 D2 B R2 L2 F2 D2 F' R2 B',B,SA State Championship 2025 (2025-07-19~20),333oh R1 B #3
 14248001,F2 L2 D2 R U2 R2 U2 R U2 R' D2 B L' B2 F' D' F' R2 U L' D',B,Israel Championship 2014 (2014-04-16~17),333bf R1 A #2
 5512709001,U' R L F' B2 R2 L2 D' L2 F U2 B' R2 L2 U2 B U2 B U' F2,B,Round Rock Splash & Solve 2026 (2026-04-04),333 R1 E #5
-2833883001,B' D' L D R2 D L2 D' R' F2 L' B2 L B2 D2 L2 U' L2 F L2 U2,B,NexCube Italian Open 2023 (2023-06-24~25),333bf R1 A E1
+5773900001,D' B U' L' D2 F2 R D2 B2 L2 B' L2 R' U L' B L' D',B,Egypt National 2026 (2026-07-31~08-01),333 Final A #1
 4170756001,D2 F D2 B2 D' L U B R B' F2 D' R2 D F2 B2 R2 F2 L2,B,Rubik's German Nationals 2024 (2024-10-04~06),333 R1 B #3
 50436001,B' F2 D2 F' U2 R2 F2 U2 B2 D2 R' B2 U2 B R' U B D' L R' F2,B,Indian Cube Challenge 2014 (2014-08-15~17),333 R1 E E1
 55435001,B' R U' F' D' L F2 D F2 R U2 F R2 U2 B2 D2 L2 B L2,B,Mogi Open 2014 (2014-08-30~31),333oh R1 A #2
@@ -50,7 +50,7 @@
 4864018001,D F' R2 B' U F' R' B2 L' B U2 D B2 D2 L2 F2 L2 D' F',B,Newcastle upon Tyne Summer 2025 (2025-07-12~13),333 R1 B #4
 5016157001,B L' D' L2 U' R L2 B2 U L' F2 L2 F L2 B D2 F D2 B U2,B,Dubai American Academy Open 2025 (2025-09-13),333 R1 A #5
 2550948003,F2 L F2 D' L2 R2 D2 R2 B2 D U2 F2 L' B2 D' R' F L2 U B R,B,Please Be Quiet Joburg 2023 (2023-03-11),333mbf Final A #1
-4805777052,U2 F' L2 F U2 B L' U2 R' D R' U' F L U2 B L F2 L,B,New York Multimate PBQ II 2025 (2025-06-13~15),333mbf R1 A #3
+5779719001,R' F L' F' D F2 L2 U L2 B2 D2 B2 U2 B' F2 L' U' L2 D' F,B,Toowoomba Carnival of Cubing 2026 (2026-08-08~09),333 R1 D #2
 3631334001,L U D B U' R L' D R2 F2 R2 U L2 U2 D' F' D' L' U2,B,Zeer Rangsit Cubing 2024 (2024-03-29~31),333oh R1 C #1
 3924885001,F D R' F2 B' U B' D F2 B2 R F2 U2 L' F2 L2 D2 L D2 F,B,Gem City Airplane Mode VIII OH 2024 (2024-07-11),333bf Final B E2
 417938001,R B2 L B L2 U F' D' F2 B2 L U D F2 U2 B2 D L2 U R2,B,Cubing Complexity 2016 (2016-12-17~18),333 R2 G #2
@@ -89,7 +89,7 @@
 666729001,D' F2 D B2 U' B2 F2 U' F2 R' F' L D' R B2 U L' U2 R',B,Cubing for Life Honduras 2017 (2017-12-09),333oh Final A #1
 2216627001,U' D2 F2 U2 L2 F U2 R2 B' F' R' U R2 F2 U2 B R U' L' F',B,Cubetcha 2022 (2022-10-08),333 R1 C E1
 4835888001,B' D2 F2 D' L2 U2 R2 D U L' B' F' L' U2 R2 D' L F U,B,Warm Up Seattle 2025 (2025-06-28~29),333 R3 A E1
-682806001,F2 U R2 F' L U' R D R2 D R2 L2 B' D2 F2 U2 R2 F' U2 F B,B,Shaastra Cube Open 2018 (2018-01-06~07),333 R1 E #5
+5787478001,R' D L B' L' F2 L' R' U2 R2 B' D R2 B U' B F',B,Patna Cube Challenge 2026 (2026-08-15~16),333 R2 D #1
 3595376026,F2 L2 F L F2 D' R2 D' F2 D' L2 U2 R' F' L' B D' L2 F,B,Primer Aldeilla: Mental Breakdown Open 2024 (2024-03-16~17),333mbf Final A #2
 4762108001,L F2 U D2 L D' F' D2 F2 D2 L2 F2 R2 B U2 L2 F' R' B R',B,Nub Open Mission Viejo Spring 2025 (2025-05-31),333bf Final A E2
 5679068001,R2 B2 U' F2 D2 B2 R2 U L2 R2 F' D2 L B' L2 D' L R' D' U L2 U2,B,La Rochéle Open 2026 (2026-05-30~31),333bf R1 A #1

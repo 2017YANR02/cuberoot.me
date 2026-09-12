@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / Y / bin 1
-# Population in this bin: 40
-# Samples listed: 40 (all entries in this bin)
+# Population in this bin: 41
+# Samples listed: 41 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 67895001,F2 R2 D' F2 R2 D' U2 L2 R D R' D2 R D' L2 D U2 F',Y,DJ Open 2014 (2014-10-18~19),333 R1 G #5
@@ -45,3 +45,4 @@
 5149958034,L' B2 D L2 R2 D' L2 D' F D F2 L' F' R' F2 D B2 D' B2 L2,Y,Furesø 3x3 Frenzy 2025 (2025-11-01~02),333mbf Final A #3
 5393002001,D' B2 R' B2 L2 D2 F R F R2 D F2 U L2 U R2 B2 D2 R2,Y,Melbourne Summer 2026 (2026-01-24~26),333 Final M #2
 5513603001,D2 F U' B R U2 R U' D L2 B2 D' B2 U2 L2 F2 L2 F,Y,DFW Cubing Spring 2026 (2026-03-28~29),333 Final B #1
+5786929001,U2 L D' B D' F L2 U2 L B' D B D2 L2 B L2 B R2 F' L' F,Y,Norwegian Championship 2026 (2026-08-14~16),333bf R2 A #4

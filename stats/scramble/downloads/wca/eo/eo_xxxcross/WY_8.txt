@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / WY / bin 8
-# Population in this bin: 233
+# Population in this bin: 236
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 13215001,B2 L2 D' B2 D F2 D R2 F2 R U L2 U R U,Y,Velbert Easter Open 2014 (2014-04-18~20),333 R2 B #5
@@ -36,7 +36,7 @@
 511853001,D2 U L2 D' B2 D2 F2 D2 F U R U R' B2 U B' F L',W,Bay Area Speedcubin' 10 2017 (2017-05-20),333 R2 A #2
 543121001,D2 B' U2 F R' D' B R F2 R B2 D2 R' U2 L2 F2 D2 B2,W,LETI Open 2017 (2017-07-01~02),333 R2 A E1
 611798001,U2 F2 U' B2 L2 F2 D B2 U' R2 F U2 L F2 D' L' U2 R B2,W,Kharkiv Cube Day 2017 (2017-10-01),333oh Final A E1
-629784001,R' L D F2 L' D' R' B' D2 R' L2 U F2 D F2 U D2 B2 L2 U2,W,Cubetcha 2017 (2017-10-28~29),333 R1 E E2
+5805326001,B2 D U B2 F2 L2 U2 R' D L2 R' D2 B' L' U F2 U2 L2,Y,Isla Cristina Open 2026 (2026-08-29),333 Final A E2
 630788001,L F2 B2 U2 F' R B' D2 L' F2 R2 U2 F2 U2 D B2 D' R2,W,Happy Cubing El Salvador 2017 (2017-10-29),333oh R1 A E1
 653841001,F2 D2 L2 U' F2 D2 F2 D R' U2 R2 B2 D' R U' B D' U2 L,Y,Kansai Big Cube 2017 (2017-11-25~26),333 Final B #3
 661162003,L2 F2 U2 L2 B2 R2 F2 D' F U' R' F R' B R D2 B F L U B' L2,Y,Gdańsk Rubik's Cube Day 2016 (2016-11-05),333mbf Final A #1
@@ -57,10 +57,10 @@
 813191001,R2 F' R U L' F' L D2 R L2 D' F L2 B U2 F' L2 U2,Y,Cardinal Bird Fiesta 2018 (2018-06-24),333 R1 G #1
 816854001,F2 R2 U R2 U F2 D' L F L' U' F' L' D2 B D',Y,Vantaa Open 2018 (2018-06-30~07-01),333oh R2 C #4
 824584001,L2 U2 L F2 L2 D2 L U' L2 F2 R' B2 F2 L' U2 B2 D' B,W,Phoenix Cube Championship 2018 (2018-07-07~08),333oh Final A E1
-826386001,B2 R2 D' U' R2 U' L2 U' R2 B' U2 B2 L2 U R' D2 L' U' B',Y,Adelaide Winter 2018 (2018-07-14),333oh Final A #1
+5783785001,F2 L' F' D2 L' F D' B2 R B2 R2 D B2 R2 U B2 U L2 U',W,Summer Scramble UW 2026 (2026-08-15),333 R1 E #4
 836893032,R' F2 R' D2 B2 R' D2 R F2 L2 B D2 U F2 U' F' L' U F,Y,Colombia Nationals 2018 (2018-07-20~22),333mbf Final A #2
 842325001,U L2 B2 U' R2 U L2 D' B2 L' D2 L' B D' R2 B2 F' D' R2,Y,CubingUSA Nationals 2018 (2018-07-27~29),333 R1 AD E2
-863969001,F2 U2 R2 D' R' F' U2 L2 U' L B2 D' F2 U D2 F2 U2 L2 B2,W,Ark 2018 (2018-08-24~26),333 R1 D #2
+5784302001,R U' F2 D2 L2 F' R U2 D' R2 D' R2 F2 R2 B U2 R2 B,Y,Pacha Cubing: Jujuy 2026 (2026-08-15~16),333oh Final A #3
 870386001,D2 L' F' R2 L U2 F2 L F U2 F L2 F D2 L2 F2 R2,W,Music City Speedsolving 2018 (2018-08-31~09-01),333 R2 A #2
 894615001,D' B' D F B' U F2 U2 B R2 U2 R2 F D2 R2 L2,Y,Hiroshima 2018 (2018-10-07),333 Final A #1
 920254001,B' U2 B2 D2 U2 B' U2 B U' B2 U B U' B F L' F' R2 F L' F2,W,Polish Championship 2018 (2018-10-26~28),333bf R1 B E2

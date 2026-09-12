@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / W / bin 0
-# Population in this bin: 803
+# Population in this bin: 814
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5259667001,D' R D L2 R2 B2 U F2 R2 U2 L2 U' B F2 L' B F' D' R',W,Tashkent Open 2025 (2025-12-06~07),333 Final A #2
@@ -29,7 +29,7 @@
 3413911001,D' B R2 F' U2 B U2 F' L U' L' F R2 U' F R B',W,Ottawa 3x3x3 Winter C 2024 (2024-01-13),333 R1 A E2
 142673001,R2 U L B U' R D' L D R' F' U2 R2 B' D2 F D2 L2,W,Welwyn Garden City 2015 (2015-05-23~24),333oh R1 B #4
 156574001,L2 B2 D' B2 F2 L2 R2 B D' L' F' R2 F' D U L B2 F D L',W,Cannes Open 2015 (2015-06-27~28),333bf Final B E1
-2523375001,L' U2 R F2 L2 D' L2 F B2 R B2 R' L2 U2 L B' D' B2,W,Cavite Speedcubing Open IV 2023 (2023-02-26),333 R1 B E1
+5798453001,B2 L2 F2 L' B R2 U' L2 R' F' D' R F2 L D',W,Mid-Atlantic Speedcubing Championship 2026 (2026-08-14~16),333 Final M #2
 3004238008,R2 F2 D F2 D' R2 F2 D F2 D R' F R D L B D' B D L' F,W,Rubik's WCA World Championship 2023 (2023-08-12~15),333mbf Final A #2
 169900001,L2 B' D' F' R' B2 D' B D' F D2 L2 D2 F2 B U2 R2 F2 L2,W,Moldavian Nationals 2015 (2015-07-25),333oh R1 A #2
 3316109001,U R U' B' R2 D2 B' R2 F U2 B U2 L' B U2 L F' L2,W,Don't Fail Kinsale 2023 (2023-12-02~03),333 R2 C #3
@@ -39,12 +39,12 @@
 3276604001,F2 L2 D R' B2 R' U2 L' B2 L' U' B' L' R2 D2 L F2 D2,W,Princeton Fall 2023 (2023-11-18),333 Final A #2
 3606396001,R D' R' D2 F' B2 D R B' D' B D2 F D2 B D2 B D2 L',W,Salamandra Cartagena 2024 (2024-03-23),333 R2 B #2
 5245532001,L U' F L2 F L U L D F R2 L2 F2 B' D2 L2 U2,W,River Hill Fall 2025 (2025-12-06),333 R2 A E2
-3262236001,D2 R D B R2 B D L2 U2 D2 F' U2 B2 U2 F' D2 U' R,W,Madrid Cundinamarca II 2023 (2023-11-13),333 R2 B E2
+5809098001,L D' F B2 L' U2 F2 R' B2 L2 F' R U2 B' R2 F2 U2 L2,W,Mololoa Open 2026 (2026-08-29~30),333oh R1 C #4
 213170001,D2 R' L' B' U L' U R' D' L B2 D B2 U' R2 D B2 L2 D2,W,Melbourne Cube Days 2015 (2015-11-07~08),333 R1 A #2
 5218773001,F D' L2 U R2 U B' L' R' B' D2 L2 R U' L R2,W,Zacatecas Mexican Qualifier 2025 (2025-11-22~23),333 Final B #4
 2592027001,U' F2 B2 R' B' D' R' B' D R2 U2 L2 B2 R2 U' L,W,Moksha Cubing 2023 (2023-03-25),333 R1 F E1
 5311159001,R D R2 U' B2 R2 B2 D2 R' D2 U' B' L2 R2 U' L' U2 L',W,Cebu New Year Open 2026 (2026-01-03~04),333oh Final B #1
-4183906001,B' L2 R2 F2 D2 U L2 U B L2 F R' D' B' F2 D U2 R2,W,Lloydminster Border Battle 2024 (2024-10-12),333 R1 C E2
+5816922001,F2 U' F2 L' D2 R D U2 F B U2 B' R2 U2 B2 R B' L,W,Mayo Cubing 2026 (2026-09-05~06),333 Final A E1
 228895001,L2 B2 L2 B2 U B2 U' L' D' B' L' B L2 D' B L2 B' D2,W,Plenty o' Parity 2015 (2015-12-12~13),333ft Final B #3
 233235001,B2 R U R' L2 U2 B2 L F' R2 B2 R2 F2 U2 R U2 R2 U2 L B2,W,Sydney Summer 2015 (2015-12-19),333 R1 B #1
 233253001,F' R D L U' D B' R2 F' U2 R U L2 B2 R2 F2 U' F2,W,Sydney Summer 2015 (2015-12-19),333 R1 D #5
@@ -85,7 +85,7 @@
 2935306001,U' F' U2 L2 U L2 U2 B2 D' R2 F' U F2 R' U2 B2 F' U,W,UFBA II 2023 (2023-07-28~29),333oh Final B #1
 1912920001,F' R' U B2 D F2 L2 F2 U' L' R D2 F' L F D F,W,Princeton Spring 2022 (2022-05-07),333oh Final C #2
 2726356017,R2 U2 B R' F' R' L B' U' B2 D F2 R2 D2 R2 B2 L F' L2 B,W,PBQ Green Bay 2023 (2023-05-21),333mbf Final A #2
-455448001,B2 U2 R' B2 D2 L2 F2 U2 R D2 R' U' F2 U2 L2 U B F' R F,W,Delhi Open 2017 (2017-02-25~26),333 R1 M #5
+5801701001,F2 R F U' R2 B2 D2 B2 D2 U' F U B2 F D L D U' L B2,W,Romanian Nationals 2026 (2026-08-21~23),333bf R1 A #4
 3965237001,F L' F' R2 F R2 F U2 R2 B' F R' F2 D' R2 D R B L,W,NZ North Island Championship 2024 (2024-07-19~21),333bf R1 A #3
 458104001,L2 B2 U' B' D B' R' D2 B2 D L2 U2 D2 R' D2 R2 L' B2,W,Bluegrass Spring 2017 (2017-03-04),333oh Final A #2
 2501170001,L' B L2 B2 U2 B2 U2 L F2 D2 U2 F D R B F L' D' B',W,Sant Valentí a Parets 2023 (2023-02-18~19),333 R1 B E2

@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / Y / bin 2
-# Population in this bin: 949
+# Population in this bin: 962
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 866875001,L2 F B' L2 F U2 D2 B U R2 L2 F2 D F2 L2 D R2 F2 D,Y,Canada's Best in the West 2018 (2018-08-24~26),333oh R1 B #1
@@ -58,7 +58,7 @@
 5636064001,F L' F' L2 D' F U' D2 F' D R2 D2 B' R2 F B' U2,Y,GLS Gdańsk IV 2026 (2026-05-16~17),333 R2 C #4
 5512924001,B2 F2 U2 L D2 L2 U2 B2 L F R2 D' L D L F L R2 D,Y,DFW Cubing Spring 2026 (2026-03-28~29),333 R2 A #3
 1827065030,D R D B' D2 U2 B2 R2 U2 F L2 D' F' U R' D U' F2 L B' L,Y,Cambridge Challenge 2022 (2022-03-13),333mbf Final B #2
-2353539001,B2 L F2 U2 L2 D2 L' B2 F2 L2 U R D2 L D' B2 D F D,Y,LoCo Cubing AM 2022 (2022-12-10),333 R1 D #4
+5797111001,D F2 U2 B D2 U2 B2 D2 F2 L2 U' B F R2 U' R2 B' R,Y,Éire 100 2026 (2026-08-22~23),333 Final A #2
 262177001,D' F R2 F U2 F B' D' F' U2 D2 R2 D2 F B U2 B,Y,Resonance V8.0 Cube Open 2016 (2016-03-06),333 R1 D #3
 270393001,F' B2 L U' R F2 R' L2 D' L B2 L2 B2 R2 L2 D2 F,Y,Crazy Cubes Summer 2016 (2016-03-20),333 R2 B #4
 953674001,D2 U2 L' R' D2 L' B2 D2 U2 L F2 U' L R2 D R' U R B2 F',Y,Festival SESC Cubo Mágico 2018 (2018-12-08~09),333 R1 A #2
@@ -97,7 +97,7 @@
 2722663001,U2 B2 L D' R2 B2 D' L2 B2 F2 U2 F' D2 R' D' L2 F' L' R,Y,Mandurah Mayhem 2023 (2023-05-20),333 Final A #2
 413821001,B2 D' R2 D' U2 L2 B2 L2 R B R' D2 F2 U R U' B D B,Y,Comercio Rubik 2016 (2016-12-10),333 Final A E2
 852031001,F2 L2 U' D R' U' L2 B2 R' D' L2 F2 B2 U' L2 U2 F2 R2 U',Y,Pakistan Open 2018 (2018-08-11),333 R1 A E2
-4122341001,D' U' F2 D' L2 D L' R U B2 D' L2 R' D2 B2 U' R',Y,II Teresina Bright Cube 2024 (2024-09-21),333 R2 A E2
+5820346019,F U2 R2 B D2 L2 F' D2 U2 R' B' L2 F' L' B U2 R' U F2 L B',Y,New York Big and Quiet Championship 2026 (2026-09-05~07),333mbf R1 A #2
 4599944001,U F D2 U' L2 U B2 R2 B' D' U2 R2 U2 B U2 F2,Y,Worlds Warmup Woodinville 2025 (2025-03-29),333oh Final B #1
 440344001,L2 F R2 B' D2 F D2 F' L F2 L' D F L F R D2 L B2,Y,Montreal Open Winter 2017 (2017-02-04),333 R1 A E1
 5609925001,F D F' L2 U' D2 B2 D2 R D' L' B U2 F' U2 D2 L2 F' L2,Y,Cooldown Uppsala 2026 (2026-05-09),333oh Final A #1
@@ -115,7 +115,7 @@
 4797435001,D2 L2 U2 F' R2 B2 D2 B2 U F' D F' R2 D' L2 D2 B' D2,Y,Southern Alberta Cubing 2025 (2025-06-14),333 R1 C #5
 4636084001,L U B' L2 B' D2 L2 R2 B R2 F R2 L U R F' U2 F' L2,Y,Solving in Sale 2025 (2025-04-11~13),333 R1 D #5
 4273213001,F R' F2 U2 R' U2 L' F2 U2 L' B' D2 F' L2 B D' B2 D L,Y,Cubing With Cold Hands Whistler 2024 (2024-11-09),333 R1 B E2
-2398392001,F2 L R2 B2 D2 L' D2 L D2 U2 R' D' R' D' F2 L2,Y,Taiwan Championship 2022 (2022-12-16~18),333oh R1 B #2
+5798714001,F2 B' U' R B2 R' F' R' F L2 F R2 U2 B U2 B2 L2 D',Y,III Capixaba Challenge 2026 (2026-08-22~23),333oh Final A E2
 5562017001,D2 B' U R2 B2 U' R2 F2 U' R2 F D2 F L2 F' U L U',Y,1 Shamelin Cube Open 2026 (2026-04-18~19),333 R2 D #4
 1667497001,D L' D U2 B2 L' B2 R' F2 U' L R D U2 R2 U,Y,Lubelska Liga Speedcubingu I Bełżyce 2021 (2021-07-03~04),333oh R1 B #1
 5190619001,U2 R F2 R2 B2 U2 R2 U' L2 D' L' D R' U2 L U2 R',Y,Campeonato do Cerrado ABRACM 2025 (2025-11-14~16),333 R2 A #2
@@ -154,7 +154,7 @@
 655315024,U B2 R2 D F2 D' F2 R' D2 U' B' R' U2 L' R2 D2 B L' R' B' L,Y,APJ BLD Open 2017 (2017-11-25~26),333mbf Final A #3
 656370001,D2 L2 D' L U' L F2 L' D R' L2 D F2 D B2 D' B2,Y,Grand Cube Open 2017 (2017-11-26),333 R1 B #3
 3391971001,L' U L' R2 U' B2 U2 F2 L2 U' B2 D R D2 F2 D2 L R F',Y,Cubing at The Cube 2024 (2024-01-06~07),333 R2 D E1
-1048952001,B2 R2 B2 U2 R D2 B2 L B2 R F R2 D' L B L D U2 R2 B',Y,Chelles Open 2019 (2019-03-09~10),333 R1 A #3
+5789814001,F R2 F R2 F U2 B2 U2 F' U' F U' B U' F U R' B2,Y,Delacuesta PRs 2026 (2026-08-17),333 R1 B #1
 5402636001,F' L2 F2 D2 U F2 R2 U R2 B U F2 D2 L U2 F U2 L2,Y,NxN Nonsense NC 2026 (2026-02-22),333 R1 B E2
 4681066001,R2 U2 F2 L2 R2 D2 U' R2 D' L B2 D2 L2 U F2 U2 R' U,Y,Orange Walk Cube-a-thon 2025 (2025-04-26),333 R1 A #2
 660472005,D2 U2 B2 L2 R' D2 R2 F2 U2 F2 U' L' D' B' L' F D2 B2 F R' B R2,Y,Polish Nationals 2014 (2014-05-31~06-01),333mbf Final A #2

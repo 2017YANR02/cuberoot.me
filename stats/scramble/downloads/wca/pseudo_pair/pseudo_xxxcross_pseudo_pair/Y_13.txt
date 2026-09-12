@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / Y / bin 13
-# Population in this bin: 221
+# Population in this bin: 226
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 31996001,F' B' U F2 U2 F' U2 D R F L2 B2 R' L' D2 L' B2 L F2 B2 L,Y,ULA Rubiks 2014 (2014-06-27~28),333 R2 B #5
@@ -30,7 +30,7 @@
 343339001,R' B2 U2 R2 U2 F2 D2 F2 R' F2 L' D R2 F' L' F' D' F' L D' U,Y,AZCubing Summer 2016 (2016-08-06),333 Final A #3
 361081001,R' L2 D R2 B2 L2 U' B U2 D F D2 R L2 U2 D2 L D2 R',Y,Botosani Rubik Open 2016 (2016-09-10),333 R1 A E2
 369127001,D' R2 B2 D' L2 B2 R2 D' F' D' L U' R D U' R' F' D F2,Y,Krivbass Open 2016 (2016-09-24~25),333oh Final A #3
-401531001,B2 R2 D2 L2 D2 B' L2 R2 U2 F' L D R' B' D2 F U' B2 R B2,Y,Berkeley Fall 2016 (2016-11-19),333 R1 A #4
+5792840001,U' B' L B F D2 B F2 D2 L2 F2 L2 U' L2 F2 R U L2 F,Y,Begastri Open 2026 (2026-08-20~23),333oh R1 C #4
 404212001,L2 R F2 R B2 F2 R D2 F' D R B D2 L' D U F2 R' D2 L' F2,Y,PSKubing 2016 (2016-11-26~27),333bf R1 A #1
 5636063001,R B' F2 R2 D2 U2 B' F2 U2 L2 U' L D B' U' F' D2 U B2 R',Y,GLS Gdańsk IV 2026 (2026-05-16~17),333 R2 C #3
 412333001,F' U2 B' L2 D2 L2 R2 B R D' L' B L2 D U' L' R' F' L2,Y,Mega Minnesota Winter 2016 (2016-12-10~11),333 R1 F #5
@@ -41,7 +41,7 @@
 468810001,D' R2 F D' R U B D' F' R' F' R2 F2 L2 B2 U2 L2 F2 U2,Y,Cartagena UPCT Open 2017 (2017-03-18~19),333oh Final B #2
 488607001,L' U B' D' F' U2 R' B' R' B' U B2 U2 B' D2 F U2 F' R2 U2,Y,Tallinn Open 2017 (2017-04-15),333oh Final A #5
 506931001,L U2 L D2 F2 U2 F2 R2 B' R U2 L2 U' F' D F L2 F' R,Y,Santo Domingo Spring 2017 (2017-05-06~07),333oh Final A #2
-523438001,D L2 D' L2 F2 L2 D' U2 B2 U' L' F' D' R' B L2 U L B2 L2 U2,Y,Nacionales de SpeedCubing 2017 (2017-05-27~29),333oh R1 B E2
+5794677045,F' D2 B' D2 U2 B R2 F2 D2 R2 U R2 F U' L B' D' R' B2 U,Y,Blekinge Open 2026 (2026-08-22~23),333mbf Final A #2
 523521001,U2 B2 L2 R2 U L2 F2 U2 F2 D U B L D U2 B U' F2 L D F',Y,Romanian Rubik Open 2017 (2017-05-27~28),333 Final A E1
 533068001,D' F2 D F2 U' L2 F2 D2 F2 U' F' R2 D U R2 D' L R' U F,Y,Hudson Valley Spring 2017 (2017-06-10),333oh R1 B E2
 542458001,D R2 U R2 B2 R2 D U2 R' B R D F2 L U2 F R D' F' U2,Y,No Stress Solving 2017 (2017-07-02),333 R1 E #4
@@ -94,7 +94,7 @@
 1425461001,U2 R2 U2 B D2 B' R2 B' D' F' U R2 F' L F D' U2 L2 B R',Y,Silent Swap São Paulo 2019 (2019-11-23~24),333bf Final B #2
 1432133001,R2 F2 D2 L B2 F2 R' F2 U2 L U R' F D U' L B2 D2 F' U2,Y,Xiamen Winter 2019 (2019-12-01),333oh Final A E2
 1444093001,U L2 B2 F2 D F2 D L2 B2 U B' L D' L2 R2 B2 R' F' U2 B',Y,QueTalca Open 2019 (2019-12-07),333 R2 A #1
-1448207001,R L D2 F' U B' L' F2 D L B2 D' B2 U' F2 L2 D2 F2 R2 U2 B2,Y,Latvian Open 2019 (2019-12-07~08),333oh Final A E1
+5818743001,R' D' R' F2 D' U F2 R2 F2 D B2 F D' R' U B2 F' D2 U',Y,Champagne Open 2026 (2026-09-05~06),333 R3 A #2
 1453832001,L' D2 F2 U2 R2 F2 U2 L F2 U2 F' U L' B2 D' B L' R2 U' R',Y,NEU Open 2019 (2019-12-15),333 R1 D E1
 5456547001,U2 L2 D2 R' B2 D2 F2 R' U2 L B L U' R' D F2 D2 F' R U2,Y,Penghu Spring Cube Open 2026 (2026-03-14),333 R1 E #1
 1456858001,F L' D' B2 D' F U' L F B2 U' F2 B2 R' F2 U2 R U2 R' F2,Y,GA Cubers Feet Fest 2019 (2019-12-14),333 R1 D #3
@@ -181,7 +181,7 @@
 4489704001,F2 D2 L2 B U2 F R2 U2 L2 F2 D L R U2 R F' D' R U' F,Y,Amore Amorebieta Open 2025 (2025-02-15~16),333oh Final C #3
 4525052001,U' B' D' F2 R B2 R F2 R B2 L' D2 U B2 F U2 R2 D L' F,Y,Wolverine Weekdays 1 Orem 2025 (2025-02-25),333 Final B #4
 4585947001,L D L U' B2 L2 B2 D' F2 U F' D' B U' R' D2 B' L' R,Y,South Luzon Championship 2025 (2025-03-22~23),333 Final A #2
-4628165001,F2 R2 D' F2 D' F2 L2 R2 D2 R' B2 D2 B U F' D L' U R B',Y,Langenstein City Blind Open 2025 (2025-04-05~06),333oh R1 B #3
+5806828037,L' F2 L F L2 F D2 B R2 B' R2 F2 D R U B' F2 L' F D' L',Y,Slovenian Nationals 2026 (2026-08-28~30),333mbf Final A #1
 4694802001,R' U' F L2 U' L R2 B2 D' U' R2 U L' R D' B L' B R B' F' R' U' F,Y,FMC Quezon City 2025 (2025-05-03),333fm Final A #3
 4704301001,L2 F' L' D2 R L2 B D' B2 U B' R2 D2 R2 U2 F2 L2 F L,Y,Vall de Núria 2025 (2025-05-03~04),333 Final B #1
 4705923001,U' B R' D' B2 L F2 D' R2 D' L2 F2 U2 F D2 B' D2 B D2 F2,Y,Cubing Comicfest Cali 2025 (2025-05-02~04),333 R1 F E2

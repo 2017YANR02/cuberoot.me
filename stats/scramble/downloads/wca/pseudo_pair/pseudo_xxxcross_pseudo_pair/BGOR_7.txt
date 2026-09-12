@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / BGOR / bin 7
-# Population in this bin: 505
+# Population in this bin: 515
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5226045001,F2 B2 L' U2 L2 U2 D' B L U' L2 B2 D' F2 D F2 L2 D2 R2 B,G,Guadix Open 2025 (2025-11-29~30),333 R2 C E1
@@ -150,7 +150,7 @@
 5514017001,R' U2 F2 L D' L' F B2 D F2 B2 D' R2 U2 R2 U2 B R' F,G,Otsu Biwako Spring 2026 (2026-04-11),333 R1 B #4
 3607875001,L2 U2 R2 U' R2 D' L' D' R U2 F L U F L F R' U,O,Ajax 3x3x3 Newcomers A 2024 (2024-03-24),333 R1 C #1
 3664645001,F2 B R2 D L F' U' R' D2 L' U2 R U2 B2 L2 D2 R' D L' F2 D',G,Nittedal Mental Breakdown 2024 (2024-04-13~14),333bf Final A E1
-1078508001,R B2 D2 L' F2 L' D2 R2 B2 L' U2 B L2 R2 F' D' L' B U2 F2,B,Rocky Mountain Spring 2019 (2019-03-30),333 R1 F #1
+5808706001,D B2 L2 D2 L2 B' D2 B' U' B U2 B' R2 D' L' U2 B R',G,Road to Nats Valencia 2026 (2026-08-30),333 R1 B #4
 2649971001,B R' B' U2 L2 B2 D L2 D B2 L2 F' D L B2 L2 B2 U2,G,The Legacy Begins 2023 (2023-04-15),333 R2 A #4
 1092089001,R' L' F2 D R D L2 F' L' B' L B2 U2 R2 L2 B2 R2 B2,O,Indian Nationals 2019 (2019-04-11~14),333oh Final A E1
 5564013001,F' B2 U2 B2 D2 L' U2 L B R F2 D' L U L F' R2 D2,O,Duper Super Davis Spring 2026 (2026-04-19),333 R2 A E1
@@ -184,7 +184,7 @@
 4323597001,D2 B' D F B' D R' F2 L B' U' B2 L2 D L2 D2 B2 L2,B,BUAP: Ingenieros Open 2024 (2024-11-30~12-01),333 R1 C #4
 1358238001,U D' R U L' F' D L2 B L B2 L2 D2 F' U2 L2 F' R2 F,O,Nordic Championship 2019 (2019-10-17~20),333 R1 E E1
 1359594001,F' D2 R2 D2 R2 B2 L2 F' R D2 R F' D2 L B' L' F2 U',G,Spanish Championship 2019 (2019-10-11~13),333 R3 A #3
-2345025001,B' L2 F R2 B' D2 F' D2 L2 U L' R F2 L B R' B L' U,G,Grizz Cubing 2022 (2022-12-03~04),333oh Final A #3
+5777179001,U2 B' R2 F R2 U2 B' F' R D F R2 B' D B L' D' F2,B,Bristol August 2026 (2026-08-08~09),333 Final A #3
 3782369001,L B2 R D' R2 D2 B' U2 D2 L U2 L' F2 R2 B2 U2 F2 U' F,O,Zibo Open 2024 (2024-05-19),333 R2 B #2
 3554475001,U' D2 L2 R U2 L F2 D2 B2 U B2 D' L R B' R' F' L,B,Nalsar Cube Open 2024 (2024-03-02),333 R1 B #2
 1428407001,R' U F R' F2 R' U2 D' F' U F2 D2 B U2 F' R2 F' L2 F2 L2,B,III Project Warszawa 2019 (2019-11-23),333 R1 B E2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / ORWY / bin 6
-# Population in this bin: 248
+# Population in this bin: 251
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5024080001,D B U' D2 F' B' R F R' F R' F2 U2 D F2 R2 D,Y,León Open 2025 (2025-09-13~14),333 R1 A E2
@@ -80,7 +80,7 @@
 1282606001,R2 F2 U' L2 F2 L2 B D' B2 R' D' U2 F' D2 B U2 L2 U2,R,HCMC Pro League 2019 (2019-08-25),333oh R1 C #1
 1305159001,B2 L2 D' F2 U F2 R2 B2 U' F2 L' B2 F' U2 R' B2 L U F',O,Singapore MentalMatrix Open 2019 (2019-09-21),333 R1 A #5
 1332274001,B2 D2 U' L2 D' R2 F2 L' B F2 U B' U2 L' D' B' R U,W,Santa Fe Primavera 2019 (2019-09-28~29),333 R1 B E1
-4875470001,U B' D F2 R U2 R' D L2 B2 D' F2 U F2 R2 U' L' B U',Y,Calgary Summer B 2025 (2025-07-20),333 Final C #3
+5804021001,L' F L F2 L B2 D' R' U' D B2 U R2 D' B2 R D,O,PBQ Žilina 2026 (2026-08-28),333bf Final B E1
 1353166001,R' U2 L R2 F2 D2 U L2 D2 F L' F' D L' D B2 D',O,KubeKids Vila Velha 2019 (2019-10-12~13),333 R1 E #3
 1356392001,R' B2 R2 F' R U R U' B2 L' B L2 F R2 L2 F R2 F2 L2,O,Reto Chignahuapan 2019 (2019-10-12~13),333oh R1 D #1
 1372824001,R' F2 L' B2 L' U2 L2 R' U2 B2 U' F' R' D2 R2 D' L' B2 D' L2,R,UK Championship 2019 (2019-10-25~27),333 R1 H #5
@@ -148,7 +148,7 @@
 2984172001,L' F L2 D R2 D' L2 U' L2 U2 R' U' R D2 B2 D B2,Y,Sigulda Open 2023 (2023-08-12~13),333 R1 C #4
 3011662001,D2 R2 B2 D' B2 D2 R2 D' L B2 U2 L B F2 R' D2 R2 D' B' D',R,August Bank Holiday Manchester 2023 (2023-08-26~27),333bf R1 A #3
 3027585001,U' L2 F2 U' R2 U F2 R' D2 R B' F2 U L' B D' U,W,Puerto Rico Open 2023 (2023-09-02),333 Final B #5
-5680669001,U2 L2 U' R2 F2 D2 R2 D R2 F D2 B L F D2 U' B U' R2,O,Oruro Open 10th Anniversary 2026 (2026-05-30~31),333oh Final B #4
+5776327001,R2 L F2 D F B L' U2 L D' L2 F2 L2 U B2 U' B2 U2,W,Shimonoseki Summer 2026 (2026-08-09),333 R1 B E2
 5596304001,U' L2 D L2 D L2 D2 B2 L2 D' R' B' L D2 L' U' L D' L,W,Rahn Education Open 2026 (2026-05-01~03),333oh Final B #2
 3123583001,F' L2 U2 F' L' B R' U' D' L2 B R2 L2 B' D2 F U2 D2 R,O,Kent Autumn 2023 (2023-09-30~10-01),333 R1 E #2
 3154420001,D2 B2 R' D2 U2 L' R B D U' B L F' U2 B2 R2 D U' B R',R,UCSD Extravaganza 2023 (2023-10-07),333bf R1 B E1
@@ -192,7 +192,7 @@
 4385116001,U' B2 L2 R2 U L2 R2 B2 U' R U' R' B' R D' F' L' D F2,W,Bangalore Cube Open 2024 (2024-12-21~22),333oh R1 G #5
 4415265001,U' L' B' L2 D R2 F2 U' F2 U R2 U2 B' D2 B F D' B L,W,Chill Out Trondheim 2025 (2025-01-11~12),333oh R1 B #1
 4428364001,R B2 F2 U2 F2 D' U' F2 U' R' U B' U2 F2 U F' D' F' R2,Y,Ruta Cubera: Orihuela Open 2025 (2025-01-18~19),333 R2 A E1
-4435415001,F' D2 R F' U2 R2 D' B D L' D2 L2 D2 B' L2 F D2 B',W,A Little Fun in Littleton Colorado 2025 (2025-01-18),333 R1 B E1
+5819725001,D2 L' U2 B' D2 R' D' U R' U' R B R2,W,Round Rock Mega Cube Day 2026 (2026-09-05),333 R2 C #1
 4441987001,U2 D2 B2 U D B' U L2 F D2 F D2 B L2 B' U' R D,Y,Franconia Winter 2025 (2025-01-24~25),333 Final B E1
 4452875001,D' R2 D F' R2 B2 L' B2 L B D' F' R2 L2 F' D2 F' U2,R,Battle for Belgrade 2025 (2025-01-25~26),333 R1 A E1
 4495571001,D' R F2 U' B2 U' L2 U' F2 L2 D2 R U F D2 U2 F U,W,Cube Against Cancer Edmond 2025 (2025-02-16),333 R2 B #5

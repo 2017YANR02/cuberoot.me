@@ -1,0 +1,15 @@
+# Scramble samples — first_layer / first_face / R / bin 10
+# Population in this bin: 8
+# Samples listed: 8 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+83102001,R2 D' B2 U' B2 U L2 D' L2 U2 R' D2 B L2 R' B U2 R' F' D' B,R,Franconia Winter 2014 (2014-11-29~30),333oh R1 B #2
+799721001,L2 U' L2 U' B2 U' R2 D R2 U' F L D' B2 L F' D' U R2 F U2,R,Indialantic Open 2018 (2018-06-09),333 R1 D #1
+2472028001,L' B2 F2 L' B2 L D2 B2 D2 R' U' F' D2 F2 L D' B U F2 L',R,Wolfpack Winter 2023 (2023-02-05),333 Final A #1
+2472032001,U R2 U F' U2 D2 F' U D2 F B2 L2 B2 L2 U2 B D R',R,Wolfpack Winter 2023 (2023-02-05),333 Final A #5
+2475817001,R2 D' B2 U F2 D L2 D' R2 F' U' B2 D B' F2 R' B2 U L,R,Garden City Winter 2023 (2023-02-05),333 R1 A #1
+4180785013,F' U2 D2 B' R D L U2 L' U2 F' R2 B R2 F' D2 B R2 F' L,R,Bara Multi-Blind i Borås 2024 (2024-10-12),333mbf Final B #3
+4250067001,D F' U' L F B U F2 D' F2 R2 U2 L2 F D2 F' B' U2 D2 R,R,Hungarian Open 2024 (2024-11-01~03),333 R1 D #3
+5055544001,D L2 B2 D B2 D L F D' R' U B U' L2 F D' B D2,R,Puzzling Pakenham Saturday 2025 (2025-09-27),333oh Final A E2

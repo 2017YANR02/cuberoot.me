@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGWY / bin 4
-# Population in this bin: 227
+# Population in this bin: 234
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 10812001,B2 L R' D2 B2 F D F R D2 L' B L B' U' R,W,Open Cube Project 2014 (2014-04-12),333 Final A E2
@@ -15,7 +15,7 @@
 138386001,R' F B' R2 B2 D' B2 L' B R B' U2 B D2 F' U2 D2 F R2,G,UW Spring 2015 (2015-05-09),333oh Final A #1
 157951001,U2 B2 L' R2 D2 L B2 D2 F' D2 U' B2 R' U2 B2 R' D',B,SoCal Supercomp 2015 (2015-06-27~28),333 R1 D #4
 163135001,B U2 F' U2 F U2 R2 F U2 B' L' D' R' D' B L B' D' L2,Y,FLIP Open 2015 (2015-07-11~12),333oh R1 B #3
-180945001,D2 F' D' B U2 R' U2 R' U2 B2 L F' L2 F2 U2 L2 U2 F',B,Dvina Open 2015 (2015-08-22~23),333oh R2 B #5
+5772384001,B U' B D R U2 R' F' R2 F2 R2 D2 B' R' L2 B2 D,B,Silesian Minx Fest 2026 (2026-08-01~04),333oh R1 B #5
 181452001,U2 L2 F' R2 U2 R2 D2 R2 B' R U' L2 R2 F' D2 L2 B F' L',B,Rubik's Cube Philippine Open 2015 (2015-08-21~23),333 R1 A #5
 188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,G,LMDL Open 2015 (2015-09-12),333 R1 B #3
 260889001,F' U2 B U2 F D2 U2 F U2 F D2 L' R' F' D' U2 L2 R2 U' R2,B,Big Apple Cube Clash 2016 (2016-02-27),333oh R1 D #2
@@ -57,7 +57,7 @@
 779453001,D2 B2 L2 B F' U2 L2 F' R' D F U' B' F' L2 F R2 D U',W,Play Cube 2018 (2018-05-13),333 R1 H #1
 792695001,U' F2 D F2 D F2 L2 F2 L2 D R B2 R2 D' B D B2 D' R,W,Bayou Bash 2018 (2018-06-02),333oh R1 A E1
 793541001,D2 R2 D B2 D2 B2 R2 B2 L2 B' F' L' B U' L' U2 L' D' B' L2 U2 L2 U2,B,Schwandorf Open 2018 (2018-06-02~03),333bf R1 B E2
-809386040,L2 F' D2 F' R2 F' R' F2 L' D' B F R2 F2 D' U' R F L,Y,CubingUSA Western Championship 2018 (2018-06-15~17),333mbf Final B #2
+5798714001,F2 B' U' R B2 R' F' R' F L2 F R2 U2 B U2 B2 L2 D',B,III Capixaba Challenge 2026 (2026-08-22~23),333oh Final A E2
 816854001,F2 R2 U R2 U F2 D' L F L' U' F' L' D2 B D',G,Vantaa Open 2018 (2018-06-30~07-01),333oh R2 C #4
 5675972001,D2 R D R' D2 F' R U L F2 D2 R2 D2 R' B2 D2 L' F2 R,G,Franconia Cube Days 2026 (2026-05-30~31),333oh Final A E2
 836298001,L B' U2 F U2 B2 U R B U' R2 D2 R2 L2 D F2 U' L2 D B2,B,Holy Toledo Summer 2018 (2018-07-21),333 R1 E E2
@@ -74,7 +74,7 @@
 924094001,U2 D' B' L' B' D2 F' U' R' U F R2 F' R2 F2 B' D2 L2 B' U2,Y,Almaty Altyn Cube 2018 (2018-11-03~04),333 R1 C #3
 936038001,U' R2 U' L2 U2 F2 D' B' F' L' D R2 B2 F2 R' D L B2 U2,G,Nanjing Autumn 2018 (2018-11-17~18),333oh R1 A E2
 944546001,U2 L U2 F2 L U2 B D' B F' D2 F R B2 L2 U2 F,B,Zibo Open 2018 (2018-12-01),333oh Final A #3
-970193001,U2 B D2 B' R' D' R' B2 U2 L' B R2 L2 F' U2 F' U2 R2 B2,W,Lights of Reykjavik 2019 (2019-01-04~05),333 Final A #5
+5776513001,F R2 F2 D2 L2 F2 U2 B L2 D' R2 D B U' F' L D2 F,Y,Zhanjiang Open 2026 (2026-08-09),333 R1 H #5
 981958001,B' L2 B2 R2 D2 F R2 B' L2 B2 F' L' B2 R B U' R' U B D,B,Bangkok Open 2019 (2019-01-19~20),333 R1 B #5
 1003723001,B2 L' R2 F2 L D2 L' U2 R' B2 U' L' R' F U2 B L2 D2 B' L' F',B,Bogotá Free Comic Cubing 2019 (2019-02-02~03),333bf Final A #2
 1004836001,D' L' F' R' U L F2 R' U2 L' F2 L2 D' L2 U' B2 L2 U,G,Return to Toronto 2019 (2019-02-02),333 R1 B #3
@@ -133,7 +133,7 @@
 2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,Y,Pickering D 2023 (2023-03-26),333 R2 B #2
 2622391001,U2 B U2 F R B2 R2 B U' F2 D' F2 U2 L2 F2 L U2 R U2,G,Abierto de Pascuas 2023 (2023-04-07~08),333 R1 A #4
 2624066001,U B2 D' F2 R2 F2 D R2 D2 B' D R' U R D' F' L2 R2,G,Eretum 2: Easter Boogaloo 2023 (2023-04-08),333 R1 C #5
-2625719001,U' R B2 R2 F D2 R2 B' L2 U2 R2 D2 U' R D' F D U' L2 F,G,Cubing in the Valley 2023 (2023-04-08),333 R1 A #2
+5796569015,D F2 U' L2 R2 B' L B U' L F' L' D' U' F2 U,G,Lugano Big & Blind 2026 (2026-08-22~23),333mbf Final A #2
 2662300001,B D2 B D2 U2 B U2 F R F2 L2 R' U' B D' F2 L2 D2,G,Guayaco Open 2023 (2023-04-22),333oh Final A E1
 2663432001,D' R2 B2 F2 D' F2 D' F2 U' B2 R D' R' F' D L2 D R F L2 U',G,Cubing on Par B 2023 (2023-04-23),333bf Final A E1
 2723211001,U B D' R F2 D B D F2 L' D2 B2 U2 L2 D2 R' D2 B2 F,Y,Tumba Open 2023 (2023-05-20),333 R1 A #2

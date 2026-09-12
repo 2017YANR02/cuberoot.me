@@ -1,0 +1,9 @@
+# Scramble samples — first_layer / first_layer / R / bin 4
+# Population in this bin: 2
+# Samples listed: 2 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+408676001,L2 D' R2 F2 D' R2 U2 R2 B2 D' B D2 F D' U2 R' U B F2 L,R,Tunisia Autumn Open 2016 (2016-11-30),333oh Final A E2
+972284032,D L2 U' B2 U2 B2 L2 F2 D B2 L2 R' B2 F D F R2 F2 D' F2 L,R,Speedcubing Camp Minsk 2019 (2019-01-04~06),333mbf Final A #2

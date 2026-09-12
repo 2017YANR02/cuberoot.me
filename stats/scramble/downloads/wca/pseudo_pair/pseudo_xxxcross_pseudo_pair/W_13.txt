@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / W / bin 13
-# Population in this bin: 215
+# Population in this bin: 221
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 66347001,R' B2 L F' D L' D2 R' F' R2 F2 D2 R2 U2 F2 L F2 D2 B2 R',W,Montevideo Open 2014 (2014-10-11),333 Final A #4
@@ -18,13 +18,13 @@
 5688020001,R F' L2 R2 B2 L2 U' F2 D B2 D R' D' L D' B D R' B',W,RVA Spring 2026 (2026-05-31),333oh R1 B E1
 5625885001,L2 R U L2 U B2 U' L2 U2 F2 L' F R2 D B U L D2 F',W,BUBT Cube Open 2026 (2026-05-07~08),333 R1 A #4
 285710001,R L' B2 R2 U F' L2 U D R' L2 B L2 D2 F' L2 B2 L2 U2 F',W,KCubing Spring 2016 (2016-04-16),333 R2 B #1
-330357001,L U2 L' U2 B2 L B2 R' U2 B2 R' F L2 R' F2 D U' B' R D2,W,Melrose Summer 2016 (2016-07-23),333 R1 C #3
+5810685001,D' L' U' D2 L' U' R D F U2 B2 L2 F R2 F U2 R' D F,W,Cubithon San José 2026 (2026-08-29),333 R1 B #4
 330581001,F' R D R' L' U F2 B R' F' R2 U L2 U' B2 D' L2 D' B2 U2,W,Atomic Cubing Summer 2016 (2016-07-23),333oh R1 B #4
 349363001,R2 U B' R L F' U2 B' R2 U' L2 D2 R' B2 L D2 R' F2 R',W,Australian Nationals 2016 (2016-08-20~21),333oh R1 C #5
 385674001,F U2 F L2 F U2 B' R2 D' R B2 L2 U' L' R2 U2 F R D,W,Amalthea SCMU Open 2016 (2016-10-23),333 R1 C #4
 406358001,F' B' R' D2 B U2 F2 R' U R2 L2 D2 R2 L2 F2 R2 F U2 L2 F,W,P3 Grand Open 2016 (2016-12-03~04),333 R1 G #1
 419841001,B U B' R' D' F R' L U' B' L2 B2 U2 L2 F2 U2 R2 B2 L,W,Algeria Winter 2016 (2016-12-24),333 Final A E1
-446842001,U B2 D B2 R2 F2 R2 U2 B2 D2 U' L F' U' B F R D L B2 F,W,Just Lviv It 2017 (2017-02-11~12),333oh R1 C #2
+5785310001,D' R' F U' F2 R2 D R2 B2 R2 D U B D2 U2 R U2 B U2 B' L',W,Kansas Championship 2026 (2026-08-14~16),333bf Final A #5
 453802001,R L' D' F2 R2 L2 U2 F D' B' R B' U2 R2 B' D2 L2 F2 D2 B,W,Cuberussia in SPB 2017 (2017-02-25~26),333 R1 D #2
 533251001,B2 L2 F R2 U2 B2 L2 R2 D' L2 R' B R' U2 L B R' B F',W,Kansai Open 2017 (2017-03-19~20),333 R1 B #1
 536985001,B2 U2 F2 U2 F2 R2 F2 L' D2 R F U R2 D' L B2 D' F L' F,W,CVDB Open 2017 (2017-06-24~25),333oh R1 B #5
@@ -119,9 +119,9 @@
 2408111001,D' R' F L U R' D' R F' R B' U' R2 B2 L2 U' B2 D R2,W,Appleby Winter A 2023 (2023-01-07),333 R1 C E2
 2425945001,F2 L U' F' B L' B D R2 U' F2 D' R2 U' R2 B2 D2 F L2 U2,W,Poções 2023 (2023-01-14~15),333 R1 A #3
 2441233001,R2 D' L' R2 B' D2 U2 R2 U2 B L2 D F R' D F2 L' R' F2 L',W,Stevenage January 2023 (2023-01-21~22),333bf R1 A E1
-2467358001,F L' U2 F2 D2 R2 F' D2 U2 R2 B' F' L2 D R' U L U' L2 B',W,A New Year in Hamilton 2023 (2023-01-28~29),333 R1 B #5
+5820331022,F' D F' R F B D2 R U' L2 U' R2 U L2 D' L2 D B2 R D L B,W,New York Big and Quiet Championship 2026 (2026-09-05~07),333mbf R1 B #1
 2471993001,B' R' D2 R' F2 R' B2 R' B2 L2 D2 U' L2 D' L F' U' R' D2 B',W,Wolfpack Winter 2023 (2023-02-05),333 R1 C #1
-2562523001,B2 U' F' U D' R' U2 D B' R' L U D2 B2 U2 D' L2 U B2 L2,W,Bothell Spring Open 2023 (2023-03-17~18),333mbf Final A #1
+5812105001,L2 B2 F2 D2 R2 B2 F2 U R2 U F R' U' L' F2 D' L' D2 L2 B',W,KS al Cubo Viña 2026 (2026-08-29),333 R1 C #5
 2622407001,D F' L2 U2 F2 L U2 R' B2 D2 U' B' D' L' R B2 R' D' R,W,Abierto de Pascuas 2023 (2023-04-07~08),333 R1 C E1
 2632705001,U2 F D2 B' U2 B2 U2 F U B2 L D L2 R' D' L' U2 B F,W,Autotalo All Events 2023 (2023-04-15),333 Final A #1
 2685698001,R' U2 L' U2 F2 L2 R F2 D2 R' U2 F U' B U2 L D' L2 D' R' D,W,Rose City 2023 (2023-05-06),333 R1 B #2
@@ -174,10 +174,10 @@
 4336771001,D R2 F2 L2 U2 F' D2 F U2 B' R2 F R' F U' R2 B' L' R2 D L2,W,Jay Peak Cubikon 2024 (2024-12-07),333 Final B E2
 5759346001,U2 R2 D R2 B2 F2 D B' L' F' R2 F2 L D' L2 R' B2 D L',W,SPAMTown IV MN 2026 (2026-07-25),333oh R1 A #5
 4393148019,L B2 D2 R L U L' U F' B R' B2 D F2 L2 D' L2 D2 B2 L' F,W,Lužice Winter 2024 (2024-12-21~22),333mbf Final B #1
-4406096001,F' B2 L D' L' U D F' B U R U2 D2 R' L2 F2 B2 D2 R,W,Xi'an New Year 2025 (2025-01-04),333 R1 D E2
+5807943001,R2 L F' L' U' R' L U F' U' F2 U' D2 L2 D F2 U2 R',W,Tartan Twist PA 2026 (2026-08-29),333 R1 D E1
 4406149001,F2 D B' R2 U2 L2 F2 D' U B2 L' U2 F D R D' F2 R,W,Xi'an New Year 2025 (2025-01-04),333 R2 C #4
 4407444001,R' F R' D' L U' D' L B2 R2 B R2 U2 F B2 R2 D L' B2,W,Solving in Savannah 2025 (2025-01-04),333 R1 A #1
-4420270038,L' U' R2 F2 U2 R2 U2 L2 R2 F U2 L U' R' D F' D' B' L2,W,North Star Cubing Challenge MN 2025 (2025-01-11~12),333mbf Final A #1
+5802905001,L2 D2 L2 F' U2 F2 D2 F' U2 D' R B D' U R2 F L' F2 D,W,IALA School Open 2026 (2026-08-23),333 Final A #2
 4485673001,D R' D2 F' B' L2 U' F' U2 D' B2 U2 R2 B2 U' F2 L U' B',W,Battle of Alberta 2025 (2025-02-15),333 R2 B E1
 4530454001,R F L B F L2 F U2 B2 D L2 F' D U2 F R' F2 D L' F,W,Manhattan Megaminx Mayhem 2025 (2025-03-01),333bf Final A E1
 4547167001,D L' F' U' B L B2 D' F L2 U L2 U' F2 U D2 R2 F2 L D2,W,Singapore Skewby March 2025 (2025-03-09),333 R2 A #5

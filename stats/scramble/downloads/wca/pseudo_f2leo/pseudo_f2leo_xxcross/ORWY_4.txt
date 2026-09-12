@@ -1,13 +1,13 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / ORWY / bin 4
-# Population in this bin: 315
+# Population in this bin: 320
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3194001,L' U2 L' R2 F2 R D2 F D L' R D' B2 D' F R2 B2 L,W,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 H E1
 4749001,R' B2 L D2 L' B2 F2 L2 U2 B L' B D' U2 L2 B R2 D R2,Y,Dixon Spring 2014 (2014-03-29),333 R1 B #1
-21726001,L F2 R B2 L U2 F2 R B2 R' U' B2 D F D F' L' R' D,Y,Moratalla Open Rubik 2014 (2014-05-17~18),333ft Final A #2
+5806968001,U' L' B' D L2 U2 D' L U F2 U R2 U D' L2 B2 L2 D' L D',O,Slovenian Nationals 2026 (2026-08-28~30),333bf R1 A #3
 32691001,F2 R2 B' U2 R2 F' D2 L2 D2 R2 U' F' R U2 B' D' F' U2 B F2 R2 B R2,R,Thailand Championship 2014 (2014-06-21~22),333bf Final A #3
 4471270018,U' R' B L2 F' R2 F' L2 D' L R2 D' B2 L2 F2 U L2 U2 B R,Y,DFW Mega Mental Breakdown 2025 (2025-02-01~02),333mbf Final B #2
 64163001,B2 D B2 R2 B2 L2 D2 R F R' U' F' L2 D L2 D2 R2 F,Y,Antelope Valley Fall 2014 (2014-10-04),333 R1 C #5
@@ -26,7 +26,7 @@
 193691001,L2 B2 F2 D U2 R2 B2 U2 F2 U R U' R' F' U' R' U2 R D,Y,Cuthberts Open 2015 (2015-09-26~27),333 R2 B #2
 193982001,L' F2 R' B2 L' B2 L U R' B' U2 R B2 F' U2 B' F2 U2,O,Slow n Steady Fall 2015 (2015-09-26),333 R3 A #3
 5218724004,L2 F2 L2 F2 U2 F2 D B2 R' B' D L' U' L2 R' F2 L' F D' L2 U',R,Zacatecas Mexican Qualifier 2025 (2025-11-22~23),333mbf Final A #1
-199054001,F' U2 B' L2 F D2 F2 R2 U2 B' D' U' F U' R F' R,Y,San Martin Open 2015 (2015-10-10),333 R2 B #2
+5776513001,F R2 F2 D2 L2 F2 U2 B L2 D' R2 D B U' F' L D2 F,Y,Zhanjiang Open 2026 (2026-08-09),333 R1 H #5
 209606001,D2 F2 L' R' D2 L R' U B2 L' R' B D' R2 B' D U2,R,Avenues CUBELELO Open 2015 (2015-10-31~11-01),333ft Final A #2
 244736001,L R F2 L' U2 R' B2 U2 R U' F2 U2 B U' R' F2 U' F L,R,Torneo Aventura Cubica 2016 (2016-01-23~24),333 R2 D #5
 3677600001,R' D B2 D2 F' U2 R2 D2 F' L2 B' U R F' D2 L U B2 F2,R,Bozeman Cubing 2024 (2024-04-20),333 R1 C E2
@@ -86,7 +86,7 @@
 5317252001,F' D R F' U B2 D F R D' R2 F R2 B2 R2 L2 D2 R2,R,Super Duper San Diego 2026 (2026-01-09~11),333oh Final A #5
 887276001,L2 F' B2 U R L F2 R U2 B D2 L U2 L B2 R' B2 U2,R,Kew Forest Open 2018 (2018-09-22),333 R2 B E1
 891609001,U' L U B' L2 U B' R' U L' D2 F D2 F2 B' U2 F2 U2,R,China Championship 2018 (2018-10-02~04),333 R1 Q E2
-5240283001,B' L D2 F2 L' F2 L2 R F2 D2 L2 B2 F R' U R' U' F' R2,Y,Clash of Cubers III Davao 2025 (2025-11-30),333 Final A #2
+5809124001,R2 F2 R F' U2 R F' L' B2 R' D' R2 F2 U2 B2 L2 B2,O,Mololoa Open 2026 (2026-08-29~30),333 R1 B #5
 3762755001,D' F2 D2 R2 B' R2 F' R2 F2 D' L2 D F' L' D2 L D2 B2,Y,Kensington May Saturday 2024 (2024-05-11),333 R1 F #1
 935585001,D2 B' D2 B2 R2 B2 R2 B' L F' U2 R F' D2 F' R2 U B' U',Y,Awesome Bruchsal Cubing 2018 (2018-11-17~18),333 R2 B #4
 5511331001,B2 U2 F R2 F' L2 R2 B2 D2 R F' L2 F' L U2 L F' D2,Y,French Championship 2026 (2026-04-04~06),333 R1 E #3
@@ -124,10 +124,10 @@
 4724510001,U' L' B2 U2 L' R2 B2 L' F2 D' L' R2 F2 D F L' R F,Y,Cubo Na Mochila João Monlevade Open 2025 (2025-05-17),333 R1 B #4
 1387058001,L2 R' U2 F2 L2 F2 L2 R B R U' F U B R2 B R' U2 F,O,Kjeller Open 2019 (2019-11-02~03),333 R1 B #5
 5697437027,R2 L U L B' L' U L2 U2 L2 B2 R2 L' U2 B2 L F' L2 D2 B R,R,Side N Blind Narre Warren 2026 (2026-06-13~14),333mbf Final A #2
-1467171001,F2 D F2 D' R2 B2 R D' R2 U2 B2 U' F D' F D2 U,O,Pejaten Village Speedcubing 2019 (2019-12-14),333 R1 A #3
+5791066001,U R2 D B2 D R2 F2 L' B L2 D' U2 L' B D' R' B2 D,R,Luzern Sunset Solves 2026 (2026-08-19),333oh Final B #1
 3698617023,R' D' L2 D2 L2 U2 B L2 B D2 F' L' B2 U2 L2 R2 B2 U L' B',O,Hilliard Hippocampus XIV - Earth Day 2024 (2024-04-22),333mbf Final A #1
 1520523001,F' B' L' D' B U B' R2 U B L2 U F2 U' R2 D2 B2 U F2 U R2,R,Regreso a Clases Bogotá 2020 (2020-01-18~19),333oh Final A #1
-4495002001,L2 U F2 U' B2 L2 U B2 U' L2 F2 L' U2 F' U F' U2 R,Y,Cube n' Chill in Chiang Mai 2025 (2025-02-15~16),333 R2 B #1
+5785108003,D' L' F L R U2 L F2 U2 F2 R2 F2 R U2 B' U L B L' R U2 L2 U',W,Kansas Championship 2026 (2026-08-14~16),333mbf Final A #1
 1545002057,D' F2 D R2 D' U' F2 L2 B D' F' U2 R U R' B2 U' L2 R2 B',O,IIT Roorkee Open 2020 (2020-02-15~16),333mbf Final A #1
 1599261010,L' U2 L' U2 B2 U2 B2 F2 L2 F' D' R' U2 B' F' D L' B' L B' L2,Y,Side 'n Blind Forserum 2020 (2020-03-06~08),333mbf Final B #3
 1628094001,R' U' F U F L F' L2 U L2 U2 L' D' B2 L2 D R2 D' F2 D' R D2 R' U' F,R,New Zealand Nationals 2020 (2020-12-11~13),333fm Final A #3

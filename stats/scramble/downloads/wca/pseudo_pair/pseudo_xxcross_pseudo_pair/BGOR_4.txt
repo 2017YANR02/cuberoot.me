@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGOR / bin 4
-# Population in this bin: 229
+# Population in this bin: 234
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 31993001,B2 D' L2 B2 R2 F2 U' L2 U B' U' B F' R B' L B' F2 L',B,ULA Rubiks 2014 (2014-06-27~28),333 R2 B #2
@@ -30,7 +30,7 @@
 5587689001,U L2 U2 B2 D2 L B2 L U F2 D L' R' B' L D' U' B,B,Odd Day in Hong Kong 2026 (2026-04-26),333 R1 D E1
 383382001,R2 L' F' L2 F2 U2 R B R' D R2 D' B2 U F2 D F2 R2,R,Tathva Cube Open 2016 (2016-10-22~23),333 R1 H #1
 410742001,D F2 L2 D L2 U F2 L2 U L2 B R D' F U L2 U' B2 R2,B,Urdaneta City Fiesta Open 2016 (2016-12-04),333 R1 A #1
-410766001,U2 L U2 R' U2 L2 D2 B2 R2 B D L2 D' B L2 D F' U2,R,Urdaneta City Fiesta Open 2016 (2016-12-04),333 Final B #4
+5796569015,D F2 U' L2 R2 B' L B U' L F' L' D' U' F2 U,G,Lugano Big & Blind 2026 (2026-08-22~23),333mbf Final A #2
 430292001,U2 L2 R2 B' R2 B F U' L U' B L2 B L2 F' R' U B,G,Chișinău Winter 2017 (2017-01-08),333 R2 B #2
 5454636001,L2 R2 U' R2 U L2 D' L2 U F2 D R' D' F' U2 R2 B2 U' L',O,RioMar Kennedy Fortaleza 2026 (2026-03-14~15),333 R1 B #2
 502785001,B2 D L D' R L2 F2 B2 U2 B' R U2 F2 D2 F L2 B R2 F',R,Ural Spring 2017 (2017-05-06~07),333 R2 B #4
@@ -55,7 +55,7 @@
 796714019,F2 D' B2 D' R2 D' U' B2 L' B' F2 L2 B' D L2 B2 L R2 F2 L' F2,O,Please Be Quiet Waterloo 2018 (2018-06-03),333mbf Final A #1
 816854001,F2 R2 U R2 U F2 D' L F L' U' F' L' D2 B D',G,Vantaa Open 2018 (2018-06-30~07-01),333oh R2 C #4
 826306001,L2 D2 B2 R2 B2 F2 U' B2 F D U B' R2 B' U2 B2 U L' R2 D2,O,Wuxi Try to Get a Mean 2018 (2018-07-14~15),333bf R1 A #3
-5769010001,B' F2 D2 U2 R2 D' B2 D' L' U' R' F2 U R' B D2 R' F',B,Elmsford Extravaganza II 2026 (2026-07-28),333oh Final B #1
+5772384001,B U' B D R U2 R' F' R2 F2 R2 D2 B' R' L2 B2 D,B,Silesian Minx Fest 2026 (2026-08-01~04),333oh R1 B #5
 836298001,L B' U2 F U2 B2 U R B U' R2 D2 R2 L2 D F2 U' L2 D B2,B,Holy Toledo Summer 2018 (2018-07-21),333 R1 E E2
 838990001,U D L U2 B2 U' R' U F R' U F2 D' R2 U L2 U2 F2,R,Mariupol Open 2018 (2018-07-27~29),333 R1 E #4
 5586748001,D2 L2 D2 L2 F2 D2 U F' R' D' F D' L2 D U' R' F,O,Bayankhongor Cup 2026 (2026-04-26),333 R1 B #3
@@ -71,7 +71,7 @@
 981958001,B' L2 B2 R2 D2 F R2 B' L2 B2 F' L' B2 R B U' R' U B D,B,Bangkok Open 2019 (2019-01-19~20),333 R1 B #5
 1003723001,B2 L' R2 F2 L D2 L' U2 R' B2 U' L' R' F U2 B L2 D2 B' L' F',B,Bogotá Free Comic Cubing 2019 (2019-02-02~03),333bf Final A #2
 1004836001,D' L' F' R' U L F2 R' U2 L' F2 L2 D' L2 U' B2 L2 U,G,Return to Toronto 2019 (2019-02-02),333 R1 B #3
-1015333005,B2 R B2 D2 U2 L' F2 R2 U R' D B' F' R D F' U B' D L' F,O,Medan Lunar New Year 2019 (2019-02-09~10),333mbf Final A #3
+5798714001,F2 B' U' R B2 R' F' R' F L2 F R2 U2 B U2 B2 L2 D',B,III Capixaba Challenge 2026 (2026-08-22~23),333oh Final A E2
 1036858001,L' D2 F2 R B2 R' B2 R2 D2 R F' L' R' B2 U' R F R' D F',O,EkatCube Spring 2019 (2019-03-02~03),333oh Final B #5
 1037511001,L2 D' F2 R D B' L' U2 L F' U L2 U2 R2 D2 B2 R2 L2,O,Voronezh Open 2019 (2019-03-02~03),333oh R1 A #1
 5006395039,F2 R F2 D2 B2 F2 R B' D2 U R' U' F L' R' B L B',B,New York Quiet Championship 2025 (2025-09-06~07),333mbf Final A #2
@@ -114,7 +114,7 @@
 2325976001,R L' F2 D B' D2 F' R F' L2 F2 B' U2 F L2 F D2 R' U2,G,El CUBO Tour Zacamil 2022 (2022-11-26~27),333 R2 C #3
 2334045001,D2 B2 D' R2 F2 U F2 R F2 L U2 R F' D2 L2 R2 D' F,R,Oakville Fall B 2022 (2022-11-27),333 R1 D #1
 2347163001,F2 U2 B2 D2 R' F2 L2 F R B' L' R' B' D R D L2 U2,B,Rocky Top 2022 (2022-12-03~04),333 R2 A #4
-5691926001,B2 F2 U2 F2 L D2 R D' F D2 L2 D F' L2 F2 L U2 B,G,Swisscubing Cup Mental Breakdown I 2026 (2026-06-06~07),333mbf Final B #2
+5781104001,R2 F2 R D' L2 F' D' F' D2 F2 D2 F2 L' D2 L U2 R2 U2 B2,G,Rajshahi Cube Open 2026 (2026-08-07),333 R1 B #3
 2372945023,R' L2 B' L' D2 R' U2 R' U2 B R D2 F2 L U2 L U2 L B2,R,Ota Blind Winter 2022 (2022-12-18),333mbf Final A #1
 2426560001,L2 F B2 U' B2 U R2 U2 R2 B R' F2 L2 B2 R' U2 R',G,Niner Nation Open 2023 (2023-01-15),333 R2 A #1
 5433363044,D' R' B2 D' L F' U2 B' U2 R' D2 L U2 D2 L F2 R U2 L B,O,BrizZon Side Open II 2026 (2026-03-07~08),333mbf Final A #2
@@ -138,7 +138,7 @@
 3172485001,R U L' D L' D L2 B' R2 U L2 F D2 F2 D2 F' D2 L2,G,Salonica Autumn Open 2023 (2023-10-14~15),333 R2 D #4
 3176263001,F U' F' U B2 L2 R2 F L2 D2 B' L' B F U2 L2 R F,R,Butler Blitz 2023 (2023-10-21),333oh R1 B #4
 3185199001,F' L U L2 U2 F U B' U2 F U2 F2 U2 F U2 R U',B,Hong Kong Championship 2023 (2023-10-21~22),333 R2 A #1
-3243093002,R2 F' U2 B2 L2 B R' F' L2 R B F2 L F' U2 L U' B,G,CubingUSA Rocky Mountain Championship 2023 (2023-11-03~05),333mbf Final B #1
+5819911001,R F2 R L2 F U2 B' F' D2 L B R' F U R2 B' L2,R,Round Rock Mega Cube Day 2026 (2026-09-05),333 R1 B E2
 3252916001,F L2 D R2 B2 D' L2 D B2 D' L2 F L' D' L U B' F' L',O,Burjassot Open 2023 (2023-11-11~12),333 R1 A E1
 3268100001,D' L' U2 B2 U F2 R2 F2 R' F' D' R2 U2 L D2 B L',B,Cubing in Palem 2023 (2023-11-12),333 R1 D E1
 3293353001,U F2 B' R U2 F' L' F L R2 F U2 B2 L2 F2 U2 L2 D,O,Medvode Open 2023 (2023-11-25~26),333 Final A #2

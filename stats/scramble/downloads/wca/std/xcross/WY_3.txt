@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / WY / bin 3
-# Population in this bin: 269
+# Population in this bin: 274
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4933863001,L2 F2 R B2 U2 R B2 L U' L' D2 F' D' F R2 D F2 L2,Y,Visayas Championship 2025 (2025-08-09~10),333 R2 A E1
@@ -15,13 +15,13 @@
 4471270018,U' R' B L2 F' R2 F' L2 D' L R2 D' B2 L2 F2 U L2 U2 B R,Y,DFW Mega Mental Breakdown 2025 (2025-02-01~02),333mbf Final B #2
 5315615001,R2 F2 R2 D2 L2 F R2 B R' B F U' R U2 B D' B2 U' F',W,Rhön Open 2026 (2026-01-10~11),333 R2 C #4
 126820001,D' R2 D2 B2 U L2 F2 D R' F2 U L R' F' D' L F' L' F2,Y,Open Cube Project 2015 (2015-04-11~12),333oh R1 A #1
-136312001,U2 R2 F R2 B L2 F' D2 U' B L D' B L' B2 D2 B2 F U2,W,KubeKings Weekend 2015 (2015-05-02~03),333 Final A E2
+5815702001,B L F L2 D' F L2 D2 B U' B2 R2 U' L2 D R2 L2 D B',W,Seremban Cube Challenge 2026 (2026-09-05),333 Final A #2
 192948001,R B2 D2 L2 D2 R U2 R F2 D2 R2 U' F U L2 R2 F',W,Warsaw Cube Masters 2015 (2015-09-19~20),333 R1 C #3
 203822001,F2 U2 F' R2 F B2 R2 D L2 F L F2 U2 L U2 R2 L' B2,W,Puget Sound Open 2015 (2015-10-17),333 R1 D #3
 213158001,L2 F2 L D2 L U2 B2 U' R' B' L2 B' R U' L U B2 L',W,Montevideo Open 2015 (2015-11-07),333oh Final B #4
 216296001,B D2 F L U D2 R B2 L D2 L B L2 D2 B2 U2 B D2 F,Y,Franconia Winter 2015 (2015-11-14~15),333 R1 A E2
 4333725001,D2 B' U' L B2 L B2 D2 R' D2 F' L' B' U' L' R D2 R',Y,Singapore Freeze 2024 (2024-12-07),333 R2 A #2
-238028001,U L2 F2 B2 L U2 L2 F L' B2 R2 B' L2 U2 R2 L2 B,Y,Music City Winter 2016 (2016-01-02),333 Final B #3
+5785733001,U L F' D R2 D' R2 F2 L2 B R2 F' U2 F' L2 B2 L,Y,Oakridge Independence Cube Open 2026 (2026-08-15~16),333oh Final A E2
 5450363019,F L' F' L B2 U' D' R L' D2 L' U2 B2 R B2 U2 D L D2,W,PBQ NCSU 2026 (2026-03-15),333mbf Final A #1
 283669001,R2 F2 R2 D' F2 D F L B2 R2 L D2 L F2 U2 F2 U2 L,W,Small Cubingitaly 2016 (2016-04-17),333oh R1 B #3
 289840001,B' D2 L2 F2 U2 L2 B' U2 L U' R D2 R2 D L D' U' L U',W,Alpharetta Open 2016 (2016-04-23),333 R3 B #1
@@ -65,7 +65,7 @@
 4701564001,B2 R2 D B R D2 R U2 R2 F L D F' U' R' B2,W,Hessen Mini Open 2025 (2025-05-02),333 Final B #4
 830549001,F B' L B L B' R2 D F' U2 L2 U L2 U' L2 U L2 D2 F2 U2,Y,Ho Chi Minh Open 2018 (2018-07-14~15),333oh Final A #1
 846356008,L' D2 L B2 U2 R U2 L2 U L2 B L D2 L2 B2 R2 U' B' D2 L,W,Batam Open 2018 (2018-08-04~05),333mbf Final A #1
-4324135001,D' L2 F2 U R' D' L' B F2 R F2 R B2 L U2 F D2,W,Barcelona Open 2024 (2024-11-30~12-01),333 R1 E #5
+5792252001,D2 F U' F' D' R2 D2 R2 F' L' D2 R F2 L D2 F2 U2 D2,W,Singapore Augu-Skewb Day 2026 (2026-08-23),333oh R1 C #3
 4605341001,U F U L D2 L' B2 L D2 R U' F2 R2 U' F' R' U' F',Y,Plaza Madero Chía 4 2025 (2025-03-30),333 R2 D #4
 880772021,F' R2 F L2 B L2 B' L2 F2 L2 U' F U L U R' U R U L' F',W,Berkeley Summer 2018 (2018-09-15~16),333mbf Final C #1
 882257012,D2 U2 R' F2 R D2 U2 R' D2 F R2 D' L B' D' B' D2 R2 D' L,Y,Anaheim Fall 2018 (2018-09-15~16),333mbf Final B #2
@@ -175,7 +175,7 @@
 5564461001,R F R' U2 L' F2 R2 B2 R B2 D' L' F' D B L R D2,Y,Racines Cubik de Beutre 2026 (2026-04-18~19),333 R1 B E2
 3451486001,F' L' D2 L2 U2 R' D2 R2 U' F' L F' L U R2 U,Y,Folkets Kub Alvesta 2024 (2024-01-27~28),333oh Final A #5
 3472590001,F R B' R2 B2 R2 D2 U' B2 U F D2 L2 B2 D2 R' B' L2,Y,U24 Tetiana Day 2024 (2024-01-27~28),333 Final B #2
-3541770001,U F R B R U' B2 R2 U2 F2 L' F2 R' U2 F2 D2 L D,Y,Bora Bora Barra Summer 2024 (2024-02-24~25),333 Final A #3
+5787765001,L F U R F' B U2 B L D F2 D' F2 L2 U' D2 R2 L2 F2,Y,Cultura Campos do Jordão 2026 (2026-08-15~16),333oh Final B #2
 4797982028,L' B' U' F' U' R2 F L2 F D F L2 D2 F' R2 U2 B2 L',Y,Perdiendo el Tiempo en Granada 2025 (2025-06-14~15),333mbf Final A #2
 3586684001,F D2 F2 R F R2 U2 F2 B2 D' F2 U2 R F2 L D2 L',W,San Juan V 2024 (2024-03-09),333 Final B #4
 3603772001,F' U' L2 R2 F2 D F2 U2 L D F' R2 F L' B2 D' R2 F,W,Andina Speedcubing 2024 (2024-03-15~16),333 Final A #4

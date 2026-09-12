@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / W / bin 4
-# Population in this bin: 49
-# Samples listed: 49 (all entries in this bin)
+# Population in this bin: 52
+# Samples listed: 52 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5003001,F D2 F' B2 D F B2 D L' D' L' F2 R' F2 L2 D2 B2,W,Tula Open 2014 (2014-03-28~30),333 R1 B #4
@@ -54,3 +54,6 @@
 5392369001,L2 R B2 D2 F' L2 F' L2 F' D2 F2 L' B' F' U' B L' D2 B' L',W,Melbourne Summer 2026 (2026-01-24~26),333bf R1 C #4
 5553778001,U' R U2 R2 U' B2 D B2 F2 L' F D L U B U B' U',W,LA PRE Cubing Pucallpa 2026 (2026-04-18),333 Final B #2
 5591406001,U F2 U' R2 D2 R2 U2 F2 B R2 U F' D2 U' R2 B' F',W,Bull City Big Cubes NC 2026 (2026-05-02),333 R2 A E2
+5792301001,D F' D L2 U' F U' L' R2 B' D2 B L2 B2 U2 R F2,W,Singapore Augu-Skewb Day 2026 (2026-08-23),333 R2 B #5
+5815523001,F' D2 F R' D F' D F B2 L' D2 L2 B2 R2 F2 L' U',W,Bremium Mega Day 2026 (2026-09-05),333oh Final B #1
+5815668001,U2 L2 F L2 U2 L2 F2 R2 L' B2 D U' B2 D' R' U' L F,W,Seremban Cube Challenge 2026 (2026-09-05),333 R1 B #1

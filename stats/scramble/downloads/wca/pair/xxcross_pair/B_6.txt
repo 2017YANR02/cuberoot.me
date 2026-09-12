@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / B / bin 6
-# Population in this bin: 303
+# Population in this bin: 307
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4715653001,B D2 F2 L2 D2 B' F U2 F2 R' U' B' L2 D U' F L B2 U',B,German Open 2025 (2025-05-10~11),333oh Final A E2
@@ -93,7 +93,7 @@
 1007959001,U2 F2 R2 D2 R2 D2 B' R F' L2 U' F2 U' L2 F2 L2 U2 B',B,Dunwoody Day Bash 2019 (2019-02-02),333 R1 E #3
 1017755001,F2 R B2 U2 R D2 U2 B2 U2 B R2 B2 U' B2 L U F D2 F,B,Fontwell Open 2019 (2019-02-09~10),333 R2 C #4
 1034244001,R2 D2 B2 U2 R U2 F2 R2 U2 R U L' U L2 F' D2 B' D2 F' U',B,Randvere Cube Day 2019 (2019-03-02),333oh R2 A #2
-4720773001,L F2 D' R B2 L' B2 R D2 L' R' D' L' B' L2 F' R U',B,UCSD Maybe 2025 (2025-05-11),333oh Final B E1
+5791066001,U R2 D B2 D R2 F2 L' B L2 D' U2 L' B D' R' B2 D,B,Luzern Sunset Solves 2026 (2026-08-19),333oh Final B #1
 1043495001,U' B2 D F2 D' R2 D' F2 L2 R U' F R' B' L D' R B2 R U L' F,B,3x3 Only Calgary 2019 (2019-03-09),333bf R1 A E2
 1084160001,R2 L' U L' D2 F2 U2 R2 F L2 B D B2 L2 F2 L2 U F2 U2,B,Yancheng Spring 2019 (2019-04-06),333 R1 A #3
 5153462001,B2 F2 U R2 D L2 R2 D2 U' L' D L F' D' U' F' D' U',B,Garidech Open 2025 (2025-11-01~02),333 R2 A #2
@@ -167,7 +167,7 @@
 5055244001,B' D2 B D2 F2 R2 D2 R2 F' R D' B2 U' L U2 F' D F2 D',B,Vilniaus Ruduo 2025 (2025-09-27~28),333 Final A #4
 2722406003,D' F2 B' U F U2 B' U' R' F' B2 L2 U2 R2 L2 B' U2 B L' F',B,Let's Qualify Kuwait 2023 (2023-05-19),333mbf Final C #1
 2737146001,R2 F D2 R2 F' D2 B' F' L U' R' F' R' U' R2 F L' D,B,Salt Lake Utah Summer 2023 (2023-05-19~21),333 R2 A #3
-2794813001,L2 B' D2 B' U2 B U2 F L' U' R B F R' D B' F U F2,B,Warwick Cube Day 2023 (2023-06-10),333 R1 A E1
+5799129001,D' L D R B2 R2 U2 F R D F2 D2 L2 B' D2 L2 F' R2 B',B,Northwest Championship 2026 (2026-08-21~23),333 R1 E #2
 2828168066,L F B' R D2 L2 U' F2 R' F2 R' L' B2 R2 B2 D2 F L2 D F2 L B,B,Please Be Quiet Evanston 2023 (2023-06-24~25),333mbf Final A #1
 4931144001,R2 B2 D' U2 B2 U' L2 R B L2 U' L2 D U B' D R F,B,Medellín Explora 2025 (2025-08-09~10),333 R1 B E2
 2928896001,D' U2 B D2 B2 F U2 L D' B' L D2 L' D L2 D',B,Partage Open II 2023 (2023-07-22~23),333oh R2 A #2
@@ -197,7 +197,7 @@
 4992287001,U2 R2 L D' B2 D B R2 U2 F R' U' F2 U L2 U' R2,B,CubingUSA Mid-Atlantic Championship 2025 (2025-08-30~09-01),333 Final A #3
 3588708008,F' U2 F2 D' F2 L2 R2 U2 L2 B2 U2 F R F' L R2 U R U L' F2,B,Manchester MBLD Day 2024 (2024-03-16),333mbf Final B #2
 3591883001,R2 B L' F' R D2 R L2 B U2 B2 U2 R2 D' R2 B2 R2 D,B,San Diego Newcomers 2024 (2024-03-16),333 R1 C #4
-3597478001,R2 F2 R2 D' F D2 L F U' F' L2 U2 B' D R' U2,B,Popayán 2024 (2024-03-17),333 R1 B E2
+5789904001,B' L' B' D2 R U' F R' U D B2 D' R2 U2 D' R2 F' B2,B,Delacuesta PRs 2026 (2026-08-17),333 R1 C #5
 3597841001,L' F' L F' B2 U' R2 D' L2 F2 D2 L D' F' R2 B' U' B,B,Naperville Winter 2024 (2024-03-16),333oh R1 A #5
 4124124001,R U2 L2 D' B2 U' L2 D F2 U' F2 R' F U F R' D2 U' L',B,Cube4fun Wisła Masters 2024 (2024-09-21~22),333 R1 C #4
 4009137001,F2 R F D2 B U' B' D' B2 R2 U' B2 R2 B2 U2 B2 D2 L2,B,Lužice Open 2024 (2024-08-10~11),333 R2 B #5

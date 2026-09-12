@@ -1,0 +1,8 @@
+# Scramble samples — first_layer / first_layer / BGORWY / bin 2
+# Population in this bin: 1
+# Samples listed: 1 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-09-11
+# Columns: id,scramble,bottom_color,competition,round
+
+1391228001,B R' L' U2 R F2 B2 R' D' R2 F B D2 L2 F2 B',G,Caracolí Open 2019 (2019-11-03~04),333ft Final A #4

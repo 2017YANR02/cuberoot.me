@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BGORWY / bin 6
-# Population in this bin: 600
+# Population in this bin: 609
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 1682873001,F2 D L' D2 B' U2 D2 F' R2 F2 U2 L2 D2 B' D' L',W,Empire State Summer B 2021 (2021-08-01),333oh R2 B #3
@@ -36,7 +36,7 @@
 4073507014,U2 B2 U2 L2 D' F' B2 D L F2 L' B2 L B2 R B2 L F' L' F,W,Romanian Breaking Records 2024 (2024-08-30~09-01),333mbf Final A #1
 2235082001,R' B2 L2 U2 R2 D' U' L2 B2 F' U' F' D B2 R' D2 L2 F',B,Fecap Open 2022 (2022-10-08),333 R1 A E2
 2629052001,D2 L U2 F R2 D2 B R2 D B2 D2 L2 D' L2 F2 D' F2 D B2,O,Stockholmsligan Easter Special: The Toffees - 2023 (2023-04-10),333 R1 A #1
-5498389001,U' R2 D2 F L2 D2 U2 B' R2 B' L' D L2 B D' U2 R F2,R,Yancheng Spring Open 2026 (2026-03-29),333 R1 D E1
+5786929001,U2 L D' B D' F L2 U2 L B' D B D2 L2 B L2 B R2 F' L' F,Y,Norwegian Championship 2026 (2026-08-14~16),333bf R2 A #4
 3626792001,F2 U2 D' R2 F U L F2 U' F2 D2 B2 U' B2 U' B2 R2 L',O,Red Stick Spring 2024 (2024-03-30),333 R2 A #3
 2367112001,U' B2 R B2 R2 D B2 D2 R2 D' F2 D F' D U B2 R2 F' D',B,Texarkana Winter 2022 (2022-12-10),333 R1 B #2
 5461419001,D' B2 D R2 U2 B2 L2 F2 U B2 F D' F L' B' F' R' B' R',O,Fuentes de Andalucía Open 2026 (2026-03-21~22),333oh Final A E2
@@ -118,7 +118,7 @@
 4139608001,B2 L U2 L' U2 L D2 L B R2 B2 D2 F D2 L U2,G,Oamaru Open 2024 (2024-09-28~29),333 R2 A #5
 2180201001,B D R2 F2 D' L2 F2 D2 L2 B' L B' R2 F R2 U' L R2,G,Hanoi Open 2022 (2022-09-18),333oh Final E E2
 5066320001,B2 R U2 L2 F' D2 L2 B' R2 D2 F2 R F2 R2 D B F L' R,R,Puerto Real Camaleón Open 2025 (2025-10-04~05),333 R2 B #4
-3298249019,L2 B2 L' D F' L' D L B2 U2 R2 F2 U' L2 D' B R B R',G,Mountain View Multi Madness 2023 (2023-11-24~27),333mbf R1 B #3
+5809683001,B' L' U2 D F D2 B L B' R L' B2 R' U2 D2 L B2,R,DFW Cubing Summer 2026 (2026-08-29~30),333 R3 B E1
 667364001,U' R2 D2 L2 D' F2 D' R2 B' U2 L' B' U2 R2 B' L2 B R2,G,MTD Spring 2017 (2017-12-09~10),333oh Final B #2
 678715001,L2 U2 B2 D2 U' B2 F2 L2 D B' D2 L2 D2 F2 R U F U B,B,Xi'an New Year 2018 (2018-01-01),333 R2 D #3
 680376001,F' U2 B' D2 R2 U2 L2 B' D U2 L2 D2 B D2 B' U B,G,Mauritius Open 2018 (2018-01-06),333 Final A #3
@@ -156,7 +156,7 @@
 885100020,D2 R D2 B2 R2 D2 R B2 D2 B R' B2 D' B2 F2 D' F2 R' D' B R2,W,Swiss Nationals 2018 (2018-09-21~23),333mbf Final A #2
 2550554001,R U2 B' L2 B R2 F U2 L' D2 B2 L D2 F2 L F D U',O,Parthenope Open 2023 (2023-03-11~12),333 R1 A #1
 4813422001,R' U' F R' F' U L' D' U2 B2 D2 R2 F2 L2 U F' U' R B D2 B' R' U' F,R,Mini Mental Milano V 2025 (2025-06-22),333fm R1 A #3
-889134001,R2 F2 R D' R' L2 B D F' U2 R L U2 R D2 F2 L F2 B2 L',O,Princeton Fall 2018 (2018-09-29),333oh Final C #1
+5814348001,U L' U' L U B2 L2 R2 D2 U L D2 F2 L' D F2 U2,B,KC College Cube Open 2026 (2026-09-05),333 R1 D #1
 5624519001,D2 R2 U L2 R2 F2 D2 L2 B' D B D F' L D U' L R',W,Surat Cube Open 2026 (2026-05-10),333 Final A #1
 897025001,B2 F2 R2 D U2 R2 F2 U F U B2 D F2 D U' B2 U' B',G,Australian Nationals 2018 (2018-10-06~07),333 R1 F #1
 898107001,F' R2 U2 B D B' D' R2 L2 D2 B' R2 F R2 L2 F' L2 U2,G,Sicily Open 2018 (2018-10-06~07),333 R2 A #5

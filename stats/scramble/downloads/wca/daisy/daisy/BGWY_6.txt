@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / BGWY / bin 6
-# Population in this bin: 874
+# Population in this bin: 888
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 1498719001,F2 D' F' U L U' F' R U2 B' L2 D2 F2 B2 U B2 U' D' B2 L2,B,GLS Gdynia 2020 (2020-01-04~05),333 R1 F E1
@@ -54,7 +54,7 @@
 197673001,D2 F' L2 F U2 F' R2 B2 F' L' U R D' L U B L B,B,REC Cube Challenge 2015 (2015-10-02~03),333ft R1 B #2
 1466898001,R2 U' F2 D' B2 D2 B2 U' R2 U2 L' R' U' F' L' D' B U L2 U R',B,Liberty Science Center Open 2019 (2019-12-14),333oh R1 E #3
 198640001,B' D2 B F2 L2 R2 F' R2 U2 F D2 L' F' U' R D' B' U2 R' B2,B,SP Open Mini 2015 (2015-10-10),333 Final D E2
-2868442001,B2 D2 L F2 R2 B2 L B2 R' D' U' L' D' F' R' D' R B U B,B,Chiclayanos Independientes 2023 (2023-07-08),333 Final A #5
+5779224001,R U2 L' D F B L U' F2 L' D2 R F2 L' B2 L U F L,B,Davis Big Summer 2026 (2026-08-08~09),333 R1 B #5
 5702666001,D B2 D' U' B2 F2 R2 B L U' R' D' L' B L F U2 L2,B,WCA South American Championship 2026 (2026-06-12~15),333oh R2 A #4
 1203611001,D2 R2 U B2 F2 U2 L2 U B2 L2 U' L' F' U' R' F2 R U L2 R B',B,Swisscubing Cup III 2019 (2019-06-29~30),333 R1 B E2
 2057783001,U B2 D' L' U2 B2 L2 R' D2 F2 R' B F L2 F2 D' L' D2 L2,B,Lužice Open 2022 (2022-07-30~31),333 R2 B E2
@@ -160,7 +160,7 @@
 660478012,R2 B2 L2 D L2 U B2 F2 U L2 U' F' R D' R2 B' L' F' D B D,B,PLS Sopot 2014 (2014-06-21~22),333mbf Final A #1
 2326031001,R' U' F U' R L2 D R2 D' R2 U2 L' R U' L' B' R' F D2 B2 U' R' U' F,B,El CUBO Tour Zacamil 2022 (2022-11-26~27),333fm Final A #1
 3602975001,U2 L B2 F2 R' D2 F2 L' U2 R2 U L' D2 B L' F' D U R D,B,Turnin' Offaly Fast 2024 (2024-03-16~17),333 R2 C E2
-5486459001,R' U' B2 R2 D B2 F2 R2 D U' F L B L' B' R' D U2 B,B,Cervantes Cubea Alcalá 2026 (2026-03-28~29),333 Final A #2
+5776755045,B L' F R B R' U2 L B2 D R2 U' B2 D' F2 R U' L2 U,B,Cube Factory League Brzeziny 2026 (2026-08-08~09),333mbf Final B #1
 2002382001,R' U' D' R L' D' F B U F R' F2 D B2 U F2 D2 R2 B2,B,Romagna Open 2022 (2022-07-02~03),333oh Final A E1
 1991268001,L2 U2 B2 R2 D2 U2 B' F2 L2 R' D B2 L2 U' F R D L' D B',B,Slopeside Solving 2022 (2022-06-25),333 R2 B E1
 1333705001,F2 R' D R2 U' F' L' B' D R' D R2 U B2 D' L2 F2 D2 B2 U2 L2,B,El Progreso Open 2019 (2019-09-29),333oh Final A #3
@@ -176,10 +176,10 @@
 5513099001,D2 R U2 B' L' F' D' F R U' R2 D2 F B2 D2 F' R2 L2 B2,B,DFW Cubing Spring 2026 (2026-03-28~29),333oh R2 B #3
 1285731001,U L2 B2 L2 D2 F2 U B2 U F2 D2 L' B' L2 R U2 F2 R U' R B',B,AZCubing Summer 2019 (2019-08-31),333 R2 C E2
 3512454001,B2 L' B2 L2 D2 L2 D2 L' U R2 B2 F U2 L' B' R' U L' D2,B,Big N Blind Bangalore Feb 2024 (2024-02-17~18),333oh R2 A #1
-2449512024,B2 D R2 B2 D2 F2 D' L2 D' B' D2 B2 L' B F R2 D2 R U' L B,B,Pitic Open 2023 (2023-01-21~22),333mbf Final A #1
+5803140001,B2 L2 D' F2 R2 F2 D' B2 U R' D' L' U2 L2 R' B' L2 U' R',B,Israel Championship 2026 (2026-08-25~27),333oh R2 B #1
 3056591001,U2 F' L B' R' F' L2 B' U2 R' B2 R F2 B2 R B2 U B2 D,B,SveKub Super League VI: Ljusdal 2023 (2023-09-09~10),333oh Final A E2
 684267001,D' L2 D2 B' R2 B2 U L' U R' B' U2 R2 U' F2 R2 D2 F2 D' B2,B,Ekeko Rubik 2018 (2018-01-13~14),333 R1 C #3
-4801748001,U F B R U' B D' L' F2 U' L2 U L2 F2 D' L2 D' L2 D',B,Królowie Speedcubingu Gniezno 2025 (2025-06-07~08),333oh R1 A #2
+5821428001,B' R' U' R' B2 D2 L2 R D2 B2 R' D2 F' L2 D L2 B' L' D2 B R',B,Florida Championship 2026 (2026-09-05~06),333bf R1 B E1
 1949247001,B F2 L2 U' F2 D' R2 D U' F2 L' B2 U2 R F' L' F2 D B2 U' L B,B,CubingUSA Northeast Championship 2022 (2022-05-27~30),333bf R1 B #3
 3168284001,L U R' B2 U F L U' F2 B2 L' F2 L D2 R2 U2 R' U2 F,B,Kuwaiti Nationals 2023 (2023-10-13~14),333oh Final B E2
 702886001,F2 R U2 L F2 U2 F2 R' F2 R2 B L2 F' U2 R U' L' F' R' D',G,Krasnoyarsk Winter Open 2018 (2018-02-03~04),333oh Final A #3

@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / ORWY / bin 3
-# Population in this bin: 542
+# Population in this bin: 552
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4933863001,L2 F2 R B2 U2 R B2 L U' L' D2 F' D' F R2 D F2 L2,Y,Visayas Championship 2025 (2025-08-09~10),333 R2 A E1
@@ -17,7 +17,7 @@
 35066001,D U2 B2 D2 U' R2 D R2 F2 R' D R U' B' D B F2 D B' L',R,Plentzia Open 2014 (2014-06-28~29),333bf Final A E2
 68271001,U F2 B D' B2 D B D2 B' U R2 D B2 U L2 U' B2 D,Y,Rice University 2014 (2014-10-18),333 R2 B #3
 70444001,R2 D' L2 D B' L B2 U' B U L2 U2 B' L2 B2 U2 B2 D2 R2 L2,R,Saint Petersburg Open 2014 (2014-10-25~26),333oh R2 B #1
-4214136001,F' L U2 L D R2 U2 F B2 R L2 D2 R' F2 R' L2 B2 R U,Y,Valsugana Speedcubing 2024 (2024-10-19~20),333 R1 C #5
+5784680013,U' L2 D2 R2 D U2 F' U2 F R F R2 F2 R D' F' D' L B,O,Silent Brasília 2026 (2026-08-15~16),333mbf Final A #1
 3298247079,U R2 D' B2 D F2 D L2 F2 U' F L' U' L R' U2 F U2 R2 B',R,Mountain View Multi Madness 2023 (2023-11-24~27),333mbf R1 B #1
 3768675001,R2 D' R U L2 U2 F2 U F2 U R2 F2 U' B D F2 L B2 U2 L',W,Surabaya Showdown 2024 (2024-05-18~19),333 Final A #1
 105739001,D2 L F L F2 D2 F D' B2 U2 R' D' R2 D' F2 B2 U2 L2,R,San Lorenzo Open 2015 (2015-01-31~02-01),333 R2 A E1
@@ -154,7 +154,7 @@
 1664406001,F B2 D2 R' F2 R' D2 L' R2 U2 L F2 B' L2 U B2 U2 F' L,O,Ankara Summer 2021 (2021-07-10~11),333 R2 C E2
 943901001,R2 F L2 D2 F L2 U2 F' D' L U' B' D L2 B' F R' B2 L',W,Phoenix C3 Open 2018 (2018-12-01),333 R1 C #3
 3460354001,D' F2 D2 B U2 B R2 F' U R' B L' U' B F' L B',R,Istres Open 2024 (2024-01-27~28),333 R1 A E1
-2726355040,U' B2 L2 B2 R2 U2 B2 U' R2 F D R2 D' L R U2 L F2 D L2,Y,PBQ Green Bay 2023 (2023-05-21),333mbf Final A #1
+5815668001,U2 L2 F L2 U2 L2 F2 R2 L' B2 D U' B2 D' R' U' L F,O,Seremban Cube Challenge 2026 (2026-09-05),333 R1 B #1
 970107001,L F2 L' D2 L U' L' B' D R D2 R B2 U2 L F2 B2 R' D2 R2,Y,Narva Winter 2019 (2019-01-05),333 Final A #1
 3436880001,B2 U F' D' R' F D2 R' D R' F U2 F' B' R2 D2 L2 D2,W,Big N Blind Bangalore Jan 2024 (2024-01-20~21),333 R2 C #2
 4894736001,B2 U' D B' R U R F2 D2 F' L2 F2 D2 B2 U D2 R2 L2,O,IALA 2025 (2025-07-27),333 R2 B E1

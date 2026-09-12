@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / BGWY / bin 5
-# Population in this bin: 462
+# Population in this bin: 463
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5695560015,F2 L R' B2 F2 R U2 B2 D B' U2 B2 D' B' L F D F' D2,B,Jog Your Memory Joondalup 2026 (2026-06-13),333mbf Final A #1
@@ -203,5 +203,5 @@
 1850770001,L' D2 R2 F' R U' R' D' L2 F' B' U L2 U R2 D2 R2 L2,W,Cube4fun League III Lubartów 2022 (2022-03-26~27),333 R1 C E1
 3359508001,D2 B' R D2 F D2 R2 D2 L2 B' R2 F' D' R B2 D U B',G,Ticino Winter Open 2023 (2023-12-16~17),333 R2 B #4
 3902472003,F D U2 R2 D L2 B2 L2 D' B' D2 U2 L2 R D U B R' D L2 U,Y,CubingUSA Southeast Championship 2024 (2024-06-28~30),333mbf Final A #1
-2005776001,R2 F2 L D2 L D2 U2 L' D F' D L2 R2 B2 U2 R' D U2 F,Y,Prienai Open 2022 (2022-07-09),333oh Final A E2
+5775855001,B L U' L' U D F L U B2 L2 F2 R2 D R2 F2 B L',G,Cubetec UEA II Manaus 2026 (2026-08-08),333 R1 C #1
 2057741018,L F2 D2 L B2 D2 L' F' R' B2 R2 U' B2 L D B2 L D L2 U,G,CubingUSA Southeast Championship 2022 (2022-07-29~31),333mbf Final C #1

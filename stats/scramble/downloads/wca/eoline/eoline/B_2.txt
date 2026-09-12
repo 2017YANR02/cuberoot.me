@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / B / bin 2
-# Population in this bin: 914
+# Population in this bin: 931
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4298941001,U B' D2 U2 R2 F' L2 B2 R2 U' B2 R2 F2 U2 F L R' U2,B,Sydney Spring Saturday 2024 (2024-11-16),333oh R1 B #5
@@ -32,9 +32,9 @@
 2352936001,B2 L2 B' L2 U2 F2 R2 L F R2 D2 B' F' R D2 R2 B',B,VII CUBIFMA 2022 (2022-11-26~27),333 Final A #5
 120298001,L2 R2 F' L2 D2 B2 L2 R2 F' U2 L F L D U' B L' B D,B,Vrn Spring 2015 (2015-03-21~22),333oh R1 B #3
 893123001,B2 U2 R2 B2 F2 R D2 B2 L2 U L U' L R F' L' B2 L D,B,BarbeCubing Fall 2018 (2018-09-29),333 R1 B #4
-5277209001,U' B' D R' U2 R' F' B' U2 R2 U' R2 D' B2 R2 D' R2 L' D',B,NR Hanukkah B Israel 2025 (2025-12-17),333 R2 D E2
+5780705001,B2 R L2 B D2 B F2 L2 R2 U F L' U' L' R' F R2 F',B,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R2 F #2
 4150971001,F2 L2 U L2 F L B D' B R F2 D2 L2 D2 L' U2 F2 R2 D2 L2 U2,B, Esprit Cube Open Bayonne 2024 (2024-09-28~29),333bf R1 B E1
-4348258001,R2 F' U' B2 R2 U F L B R2 D2 B R2 B' U2 F' U2 D2 B2,B,Concordia Turning Fall 2024 (2024-12-07),333 R1 B #3
+5802782001,D2 L2 B R' L B' L F R2 F' L2 B2 R2 B' U2 L2 D2,B,Cubing Kazakhstan Nationals 2026 (2026-08-21~23),333oh R1 B E2
 5049225001,R D R' D2 R2 U L2 B' R' D2 R2 B2 U D2 L2 D' R2 F' U2,B,Energy Cube Białołęka 2025 (2025-09-27~28),333 R2 B #5
 793777001,L2 F2 U L2 D U F' U F R2 D2 U' B' D' L2 U2,B,Slovakian Cube Day 2018 (2018-05-27),333 Final A #2
 143286001,B2 D2 R F2 R' F2 R2 B' R' F2 L B U2 R B2 R B F',B,Uchi Florida 2015 (2015-05-23~24),333 Final A #5
@@ -105,7 +105,7 @@
 434346001,D2 B2 R2 B L2 B' R2 U2 F2 U R F' L2 D2 B2 F2 U' R2 U',B,Utah Cubing for Charity 2017 (2017-01-21),333 R1 B #5
 5245793001,U F R D2 B U2 F' D2 R2 F2 D R F2 U R2 D2 B2 R,B,Evanston Fall Favorites B 2025 (2025-12-06),333 Final B E2
 4519139001,B D2 F2 L2 F' R2 F2 R2 U' B2 D F U2 F' D2 B' R2 F2,B,Pitic Open 2025 (2025-02-22~23),333 R2 B #1
-437564001,B2 L2 B2 F' D2 B2 R2 U2 L D2 B2 L' D2 B2 D' F' U' F D,B,Frankfurt Cube Days 2017 (2017-01-28~29),333 Final B #3
+5788917001,F L2 U R2 U2 F2 B' L2 U' R2 F2 U2 D' F2 B2 D' R' B L2,B,Korea Open 2026 (2026-08-15~17),333 R3 B #2
 5422381001,U' F L' B2 D2 F' L2 B2 U2 F' L D F2 L2 R2 U R,B,Osijek Open 2026 (2026-02-28~03-01),333oh R1 B E1
 1687002001,L B2 L D2 U2 F2 L' F2 L' F2 R B R D U2 L F' L',B,Offline Schwyz Saturday 2021 (2021-08-14),333 R1 C #4
 5087321001,D2 B2 L2 F' U2 F' U' F L2 U B' L2 D F U2 F2 L2 D,B,Please Be Quiet Waterloo 2025 (2025-10-11),333bf R1 A #2
@@ -121,7 +121,7 @@
 5212486023,L F' R U2 L F2 U2 F2 R2 F L' B' D2 L' D' L F R2 B' L,B,Sudestão ABRACM 2025 (2025-11-21~23),333mbf Final B #1
 1702419001,D F2 D B2 L2 D2 R2 U2 B2 D L D2 B' D2 B' U B U' L' F2,B,Montpellier Open 2021 (2021-10-09~10),333bf R1 B #2
 5383838001,U F' L' R2 U L2 U2 F2 U' R2 B' D B U' L' D' F2 R,B,Velilla Open 2026 (2026-02-14~15),333 R2 C E2
-2057424001,L' B2 L2 F R2 F' D2 B2 F R F' R' F2 D2 B L U2 F2,B,CubingUSA Southeast Championship 2022 (2022-07-29~31),333oh R1 D #4
+5816550001,U2 F2 D2 F B2 R D2 B2 L' B' R' F2 B2 R2 B2 R2,B,Bilbao Open 2026 (2026-09-05~06),333oh R1 B #4
 519007001,R2 D B2 R F' R2 U' L' U' L' F2 U R2 D' R2 B2 L2 B2 U2,B,Indian Nationals 2017 (2017-05-12~14),333oh R1 I E2
 977776001,F2 D' L2 D2 U B2 L2 D' L F2 R B D L2 B' L B2 F2 U,B,Savoie Open 2019 (2019-01-12~13),333 R1 A E2
 522760001,F' D2 U2 F U2 B2 F' L2 F' L2 R' F' D2 U' B' L U' B F,B,Ho Chi Minh Warm Up 2017 (2017-05-28),333 R1 L #4
@@ -137,7 +137,7 @@
 4870288001,L2 D L B2 L' F L' U2 R' U2 L' B' U2 L2 F' R2 F2,B,Rubik's CLuBB de Boulogne-Billancourt 2025 (2025-07-19),333 Final B #4
 5591406001,U F2 U' R2 D2 R2 U2 F2 B R2 U F' D2 U' R2 B' F',B,Bull City Big Cubes NC 2026 (2026-05-02),333 R2 A E2
 1467627001,F D F L U2 B2 L' F2 U2 D2 L B' U2 B U2 L2 U2 F2,B,Mega Minnesota Winter 2019 (2019-12-14~15),333 Final A #5
-2699546001,U' R U' R2 D2 R2 U' B2 R B L2 B' R2 U2 B' R2 L2 B U',B,American School of Bahrain 2023 (2023-05-06),333oh Final A #2
+5808477001,F R2 F2 D2 L' B2 R' D2 U2 B2 D' R' U2 B' U' L' B' U R2,B,Tramsheds X: Winter Saturday 2026 (2026-08-29),333 R1 D E2
 2338935001,L' D2 F2 R' D2 F2 L U2 F2 U F' U' R2 F2 D' B2 D2 L' B',B,Vardagscubing I - Uppsala 2022 (2022-11-28),333oh Final C E1
 2551147046,R B' D' R2 U B2 F2 U2 R2 D' F' D2 R' F2 R U2 B U' B,B,Bishop's Stortford Spring - British Blind Off 2023 (2023-03-11~12),333mbf Final A #2
 4306594001,D L2 U' L2 F' R2 U2 D F2 U R2 U' D2 F2 L2,B,Iceland Open 2024 (2024-11-23~24),333 R1 D E2

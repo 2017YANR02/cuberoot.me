@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / W / bin 6
-# Population in this bin: 63
-# Samples listed: 63 (all entries in this bin)
+# Population in this bin: 65
+# Samples listed: 65 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,W,Indian Nationals 2014 (2014-07-25~27),333 R1 A #5
@@ -68,3 +68,5 @@
 5596304001,U' L2 D L2 D L2 D2 B2 L2 D' R' B' L D2 L' U' L D' L,W,Rahn Education Open 2026 (2026-05-01~03),333oh Final B #2
 5690428014,U' D F U L' F L F R2 L2 U D2 R2 F2 D B2 U D2 B L B',W,Headache in Kode 2026 (2026-06-05~07),333mbf Final B #2
 5748741004,R F' R' U2 L2 U B2 L2 D L2 D' L F' U L' R2 U2 B2 U L',W,Australian Nationals 2026 (2026-07-09~12),333mbf Final A #1
+5776327001,R2 L F2 D F B L' U2 L D' L2 F2 L2 U B2 U' B2 U2,W,Shimonoseki Summer 2026 (2026-08-09),333 R1 B E2
+5819725001,D2 L' U2 B' D2 R' D' U R' U' R B R2,W,Round Rock Mega Cube Day 2026 (2026-09-05),333 R2 C #1

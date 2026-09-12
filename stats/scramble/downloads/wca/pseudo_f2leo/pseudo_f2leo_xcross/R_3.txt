@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / R / bin 3
-# Population in this bin: 368
+# Population in this bin: 375
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 5787001,R L2 F' L' F2 L U F L2 U' D2 B2 L2 B D2 B' U2 F' D2,R,GuateRubik 2014 (2014-03-30),333oh R1 A #3
@@ -20,7 +20,7 @@
 145814001,L2 F2 R2 F' D2 F' L2 D2 U2 B L' F' D' B L R' D' B U L B' L2,R,Jogja Mini Competition 2015 (2015-05-31),333bf Final A E2
 4210563001,D' B2 F2 D F2 D' R2 F L' F2 L R2 U B2 L' D2 L B,R,Vancouver Southlands Sprint 2024 (2024-10-19~20),333 R3 B #3
 5085327010,B' U' F2 L2 U B2 L' F2 B2 D2 L2 U R2 U' R2 U' B L U' B,R,Cubing for Yuval Israel 2025 (2025-10-08~09),333mbf Final A #1
-202207001,F2 D' U2 L2 D2 U B2 U' L' D' U' B' L B' D' L R F' R,R,Cubing ATMOSphere 2015 (2015-10-10~11),333 R2 D #5
+5815523001,F' D2 F R' D F' D F B2 L' D2 L2 B2 R2 F2 L' U',R,Bremium Mega Day 2026 (2026-09-05),333oh Final B #1
 5653592001,F2 R' L' D' F2 R' L' U B2 L U' D' L2 U F2 B2 U B2,R,Hobart Autumn 2026 (2026-05-24),333 R1 D #4
 4872166001,F' U2 R2 F2 D2 L' F2 D2 L' R2 F2 B U' F L2 B F2 D' U,R,Calgary Summer A 2025 (2025-07-19),333 R1 C E1
 216584001,F2 U2 L F' U F R U R' D B2 U2 L' U2 R' L2 U2 B2 L,R,Würfelä im Drachenäscht 2015 (2015-11-13~14),333 Final A #2
@@ -33,7 +33,7 @@
 4495541001,D F2 U2 R2 U' F2 U' R' F2 L' F R' F' D2 R2 D L2 R,R,Cube Against Cancer Edmond 2025 (2025-02-16),333 R1 B #3
 261112001,U2 R2 B D R B L U2 D F' U L B2 R' D2 R B2,R,GLS Cup I 2016 (2016-02-27),333oh Final A #1
 267637001,L' B2 L' D2 L D2 R' U2 B2 L2 U L' D U' B D L2 D2 B' D,R,Nepal Speedcubing 2016 (2016-03-19),333 R2 B #4
-5077496001,U' B L2 R D2 U R2 U2 L2 R U L2 D2 B L F D',R,Kuwaiti Nationals 2025 (2025-10-03~04),333 R1 A E1
+5776755034,F' U' L2 F' R' L U' F D' R F2 R B2 R U2 F2 R2 U2 R' D2 L B2,R,Cube Factory League Brzeziny 2026 (2026-08-08~09),333mbf Final B #1
 285701001,U2 R2 F L2 D2 R2 B2 L' F2 U L2 R2 F D2 U B2 F D,R,KCubing Spring 2016 (2016-04-16),333 R1 D E1
 3677600001,R' D B2 D2 F' U2 R2 D2 F' L2 B' U R F' D2 L U B2 F2,R,Bozeman Cubing 2024 (2024-04-20),333 R1 C E2
 5107471001,B' D' L' D2 R2 D2 R2 B2 R F2 B R2 U' F U2 L R2 B' D',R,Poly Cubed at Pomona 2025 (2025-10-18),333 R1 A #2

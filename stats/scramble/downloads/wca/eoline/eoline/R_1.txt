@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / R / bin 1
-# Population in this bin: 75
-# Samples listed: 75 (all entries in this bin)
+# Population in this bin: 77
+# Samples listed: 77 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 94472001,U2 R2 B2 L' F2 R B R2 B L' R' B D2 B2 L' R' D2,R,Kyushu Open 2014 (2014-12-28),333 Final A E1
@@ -80,3 +80,5 @@
 5668385001,U B2 F2 R2 U' B2 L2 D L' F2 R D' B2 U L2 D L',R,Cubing Tibas 2026 (2026-05-23),333 R1 B #4
 5699272001,U' R' F2 D' L' D R U D2 F2 L' F2 R F2 D2 L B2 D',R,Take Your Time Bergshamra 2026 (2026-06-14),333 R1 B E1
 5704480001,F2 D2 L2 F2 L' F2 R' D2 F2 R' B F' R B' F L' F2 D2,R,Longmont Open 2026 (2026-06-13),333 R1 A E2
+5795016001,B2 R D2 U2 R D2 L2 B' R' F' D2 U2 F' L2 B L' B',R,Ecublens Open 2026 (2026-08-22~23),333oh R2 A #4
+5804933001,U2 R2 F R2 D2 R2 F' U2 F2 L D2 L2 B L D,R,Calgary Fall 2026 (2026-08-29),333 R1 H #2

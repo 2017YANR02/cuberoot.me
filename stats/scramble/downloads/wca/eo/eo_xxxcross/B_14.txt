@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / B / bin 14
-# Population in this bin: 124
-# Samples listed: 124 (all entries in this bin)
+# Population in this bin: 126
+# Samples listed: 126 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 17115001,L2 D R2 U F2 U L2 D2 F2 R D2 F' R' B2 D' B R' D' L' R2,B,SLS Chorzow 2014 (2014-05-03~04),333oh R1 D E2
@@ -129,3 +129,5 @@
 5598794001,U R F2 B' R L2 F2 D' L F R2 F L2 F' L2 F' U2 F' D L2 U2,B,All Rounders Katowice I 2026 (2026-05-01~03),333bf R1 B #3
 5684275001,L' B' R D2 F2 D2 F' L2 D2 B' U2 B' L D' L' B U' B F' U2 B R2,B,Kansai BLD Summer 2026 (2026-06-06),333bf Final A #2
 5737921001,L2 U2 B F' R2 B D2 R2 U2 B2 U' F' L' R' U L' B' L' B' D,B,Åland Open 2026 (2026-07-03~05),333oh R1 A #4
+5804549001,U' L U B' U2 D' L B' R D2 R U2 F2 L' U2 R' F2 D2 F D,B,Catskills Summer 2026 (2026-08-29),333 R1 B #4
+5808501001,F U' R2 L' U F D2 F2 R D2 R2 B2 U D F2 L2 B U2,B,Tramsheds X: Winter Sunday 2026 (2026-08-30),333oh Final D #1

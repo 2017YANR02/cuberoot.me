@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGWY / bin 8
-# Population in this bin: 466
+# Population in this bin: 474
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 2500839001,F2 R2 F2 D2 R B2 F2 R2 D L D2 U2 B' R2 B U2 F' U,B,Ohio State RPAC Cube Clash 2023 (2023-02-18),333 R1 C #4
@@ -80,7 +80,7 @@
 4417815001,L' D2 B U2 F2 D2 F' D F' D' U2 R' U2 D2 R2 U2 F2 D,W,The Battle of Lexington 2025 (2025-01-11),333 R1 D #1
 5456211001,U L' U B2 R2 F2 U L2 B2 U' R' F' U' B2 R' F R' D2,Y,Stockholmsligan 4: Bilar - 2026 (2026-03-19),333 Final A #1
 5283028001,B' U2 R2 B2 U2 L' R2 D2 R' F2 D R' F' L' F' L B F D,G,Turning in Corning 2025 (2025-12-20),333oh Final B #1
-3629184001,D2 R2 D' F2 U2 L' U2 B2 L' D2 R' U2 F R' U2 F' D' B' R',W,Manchester Spring 2024 (2024-03-29~31),333 R2 C #3
+5780152001,F R B2 U' F' D B L' B' L D' L2 B2 D L D,Y,Missouri Championship 2026 (2026-08-07~09),333bf Final A #5
 3179024001,F' R2 F' L' U2 B' L2 U' L' U F2 D2 R2 B2 R2 U F2 U2 R',G,PIB Itaim Open 2023 (2023-10-21),333 Final A #3
 653504001,L2 F' R2 B' L2 B2 U2 F D' R U2 F' R U2 F R2 D2 R' U,W,Bekasi Cube Days 2017 (2017-11-25~26),333 R2 B E1
 2928777001,R' D R' D2 F2 L F L' F B' U' D' L2 B2 U' F2 U B,B,Partage Open II 2023 (2023-07-22~23),333 R1 A #5

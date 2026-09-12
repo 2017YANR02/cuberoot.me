@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / O / bin 2
-# Population in this bin: 133
-# Samples listed: 133 (all entries in this bin)
+# Population in this bin: 137
+# Samples listed: 137 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,O,Indian Nationals 2014 (2014-07-25~27),333 R1 A #5
@@ -138,3 +138,7 @@
 5716213022,D' F' B U2 B' U' R F' R2 F2 U D2 L2 D2 B2 D' R' U' L B,O,Flinders Park Side Events 2026 (2026-06-20~21),333mbf Final A #1
 5761666001,F2 B U2 L' U B U2 R' F2 L2 U' F2 B2 L2 U D2 R' L2,O,Barpeta Cubing Open 2026 (2026-07-26),333 R1 C #1
 5763081001,B2 D2 F U2 R2 B L2 B' D B2 R2 U' B R D' R' D',O,Middle Georgia Summer Solving 2026 (2026-07-25),333 R2 A E1
+5782310001,D' R L' B2 U2 D R' B R2 B2 U R2 U F2 R2 U' R' D,O,Christchurch Winter 2026 (2026-08-08),333 Final B #1
+5783764001,R B' R2 F2 D' L2 D' B2 D2 U' R2 L F' R D2 U2 F2 L' R',O,Summer Scramble UW 2026 (2026-08-15),333 R1 E #3
+5791446001,U2 B U2 D' B L B R2 D2 B2 L2 D2 F2 L U2 F2 R2 F U',O,Dragon Cubing XII 2026 (2026-08-22~23),333 R1 B E2
+5814539001,B' U' R2 B2 D2 R2 B2 F' R2 F D2 R B2 R U R' B D2 F',O,Greitieji Miško Kuberiai 2026 (2026-09-05),333 R1 B #3

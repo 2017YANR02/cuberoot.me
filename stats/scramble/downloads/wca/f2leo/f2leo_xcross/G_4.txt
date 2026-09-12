@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / G / bin 4
-# Population in this bin: 466
+# Population in this bin: 472
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 261001,R' F D L2 F' B U R2 B' R F L2 U L2 U' R2 U2 L2,G,Montréal Open 2014 (2014-03-15),333 R2 B #1
@@ -24,7 +24,7 @@
 129541001,B L2 D2 F' L' F B' U B U' L' D2 R2 B2 U R2 F2 L2 D2,G,REC Cube Open 2015 (2015-03-21),333oh R1 E #4
 132039001,R' L' D' R2 B L B' R' B D' F2 D2 L' B2 L2 F2 U2 R' L,G,Cerbuna Open 2015 (2015-04-18~19),333 R2 B #3
 4631203001,D' B' D2 L2 R2 F' L2 D2 B2 D2 F2 U L F L F' D2 F2,G,Mano Salada Mazatlán 2025 (2025-04-05~06),333 R2 B #3
-3273349001,B' R' F' U2 F' U' R U D2 F2 R2 B2 R2 U2 R' F2 L' U' D2,G,Ekerö Open 2023 (2023-11-19),333oh Final B E1
+5791089001,U B' R U' B' R' L D2 R2 B2 L2 B D2 F U2 D B' D2 L B,G,Luzern Sunset Solves 2026 (2026-08-19),333bf Final B #3
 150358001,R' F' U' D2 B2 R' U' F' L' U2 F R2 L' F2 D2 F2 R' F2 U2,G,Taiwan Cubing League - Taipei 2015 (2015-06-13),333 R2 A #2
 1828566001,B L2 U' L2 B2 R2 B2 D2 R2 F2 D2 L' D' B' F U R' U B R',G,Lima Cuberano 2022 (2022-03-12~13),333 R1 E E1
 5329397001,B' L' B' D2 B L2 D2 B L2 F2 R U' B2 L2 B U2 F' D L',G,Estcubes Open 2026 (2026-01-17~18),333 R2 A #5
@@ -108,7 +108,7 @@
 728987001,F2 D B D2 F B D' F' D B' R U2 B2 U2 F' R2 B' L2,G,Elk Cubing 2018 (2018-03-18),333oh Final C E2
 4991650018,B2 D2 B' R U R2 B' U' D' B D' F2 D R2 D' B2 D' F L2 U2,G,West Coast Cubing Western Championship 2025 (2025-08-29~31),333mbf Final A #2
 748114001,F2 L2 B2 F2 U' B2 D R2 F2 U' R2 F' L F R' D R' B2 L D',G,La Vall d'Uixó Open 2018 (2018-04-07~08),333 R1 A #1
-5259392001,L' F L2 F' L2 D2 B' F' D2 L2 F' L2 F' R F D R F,G,Spanish Championship 2025 (2025-12-06~08),333oh Final A #5
+5792252001,D2 F U' F' D' R2 D2 R2 F' L' D2 R F2 L D2 F2 U2 D2,G,Singapore Augu-Skewb Day 2026 (2026-08-23),333oh R1 C #3
 758404001,L2 U2 L2 U2 F D2 L2 U2 F L' U2 R2 F' U' F L2 B F' L,G,SNZ Southern 2018 (2018-04-21),333 R2 B #4
 4602186001,L2 U2 F R' B2 D' F U D' F' U L D2 R2 U2 D2,G,Silesian Cubing Mysłowice 2025 (2025-03-29~30),333 R1 C #1
 771310001,U2 L2 U F2 U' F2 D' F2 U2 R2 F' R D' L2 B U' B' D' L2,G,Nanjing Spring 2018 (2018-04-30~05-01),333bf Final A #3
@@ -199,7 +199,7 @@
 1677842001,F' D2 B R2 B R2 D2 L2 F' U' R2 F2 L' D L F' R F D,G,Bergen Open 2021 (2021-07-31~08-01),333 R2 B E2
 5284580001,D2 R2 D2 B2 R U2 L U2 L' B R2 B2 R B F2 L2 U2,G,Freezing Fryslân 2025 (2025-12-21),333 Final B #2
 5765696010,D2 F D L2 R2 D2 R2 U F2 D F' L' B R2 D' U' B L D' L2 U2,G,Hawaii Championship 2026 (2026-07-24~26),333mbf Final A #2
-1728229001,F2 U R L' F' L F' D B' R2 L D2 B2 L' F2 R' B2 U' B,G,BrizZon Side Open III 2021 (2021-11-12~14),333bf R2 B #1
+5775855001,B L U' L' U D F L U B2 L2 F2 R2 D R2 F2 B L',G,Cubetec UEA II Manaus 2026 (2026-08-08),333 R1 C #1
 1735256001,U2 R D B2 R U2 L2 U2 F2 D2 R' B2 F U2 B U R2 B2 D',G,Pittsburgh Fall 2021 (2021-11-20~21),333 R2 B #4
 1756083001,D2 R2 F' R D F2 L' F' U2 B D2 F D2 R2 L2 B R D,G,AUA Open 2021 (2021-12-10),333 R1 H E2
 1791900001,D2 B' U2 L2 R2 U2 L2 R F' L2 R' U' B U2 B L2 F' D B R',G,Zoioff Campinas 2022 (2022-01-22~23),333bf R1 A #3

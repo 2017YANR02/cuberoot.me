@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BGOR / bin 2
-# Population in this bin: 601
+# Population in this bin: 612
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 3323001,D B2 D' U2 R2 D' L2 U' R2 U' B R' B2 L B L R2 B F2 R2,R,CMI Fiesta Open 2014 (2014-03-21~23),333oh R2 G #2
@@ -38,14 +38,14 @@
 2625954001,L F2 U L U' R' L' F' L2 F' U2 D2 R2 L2 B2 D2 L2 U R2,R,Baztan Open 2023 (2023-04-07~08),333 R2 C E1
 225701001,U F R' U' F U2 F' U B R U2 L U2 R' D2 L' B2 U2 F2 U2,O,Italian Open 2015 (2015-12-05~07),333 R1 A #3
 5689894001,L U B2 R2 F2 L' D2 L' R D2 B2 U L D2 B' R2 U' L2 D2,B,Tramsheds IX: June Sunday 2026 (2026-06-07),333 Final A #5
-230555001,R2 F U2 R2 F2 U2 B2 D L' D U L' U' L' F' L',B,Dallas Winter 2015 (2015-12-12),333 R1 C #1
+5817527001,F2 D2 R2 F' R2 B2 D2 F' L U' F L2 U R U' L' R',B,Cube Factory Aleksandrów 2026 (2026-09-05~06),333 R1 B #4
 1359862001,D2 F2 D B2 R2 U R2 D' L' R2 D' F R2 D2 L' U B' U2,O,Spanish Championship 2019 (2019-10-11~13),333oh R2 B #5
 3282489001,L' B' D2 L' F L2 U' L' D2 B2 R2 B2 L' F2 R' D' L D',O,Azerbaijan Nationals 2023 (2023-11-18~19),333oh Final B E1
 244552001,L U2 B2 L2 F2 R' D' R F2 D2 U2 R2 U' B' D2 L' F',R,Campeonato Chileno de Verano 2016 (2016-01-23),333 Final D #3
 246200001,F2 D2 R' D2 R F2 L' B2 D2 B2 F' D' B2 F D B L2 B F',R,Shaastra Cube Open 2016 (2016-01-23~24),333 Final G E2
 5327708001,R' D U B2 U L2 R2 D' L2 D2 B U2 F U2 R' F L2 U2 F,O,Naperville Gray Skies 2026 (2026-01-17),333 R2 A #4
 260937001,D2 R2 B U2 B' F2 R2 F2 R2 U' B L R2 U' R' F' R2 F2 U,B,Big Apple Cube Clash 2016 (2016-02-27),333oh R2 B #1
-4354271001,B2 L U2 D F' R' F2 D' B2 R2 F2 B R2 D2 L2 R F' D2,B,Santa Claus Cube Race Mysłowice 2024 (2024-12-14),333oh Final C #1
+5798971001,D F2 L2 D B2 U' B' D' R2 U' L2 R2 B' F2 R D2,G,Aste Nagusia Bilbao Open 2026 (2026-08-24),333 R1 A E2
 268400001,B2 D R2 D2 F2 R2 D R2 F L2 R D L2 R' D2 L F L' R2,B,Cubing Classic 2016 (2016-03-19~20),333 R2 B #1
 3421387001,R F L2 B D2 U2 F U2 B R2 U R' U' L R U' B R' B,R,Bay Area Speedcubin' 55 - San Ramon 2024 (2024-01-14),333oh R1 C E2
 2542554001,D2 F L D2 L2 R2 B' U2 B F2 L' B L' B2 L2 R' D2,G,Turnin' in Termonfeckin Saturday 2023 (2023-03-11),333 Final A #2
@@ -89,7 +89,7 @@
 4791087001,B2 R2 U2 F' U2 B2 F2 R2 D B D' B R F' U2 R' B2,O,Napule È Mille Culure 2025 (2025-06-08),333 R2 A #2
 4331127001,F R2 D' U R2 U2 L2 F L2 U L2 D R' F' R2 B F,B,Nacionales El Salvador 2024 (2024-11-29~12-01),333 R2 A E1
 2499579001,F' D2 R2 U' F2 D' F2 U' F D B L' B' U2 F R' D2 U',O,Lat Krabang Cubing 2023 (2023-02-18~19),333 R1 J #2
-4786031001,D2 R D2 L2 R2 F' D2 B' F2 L2 B' R2 U B2 D2 L' R' D' L',B,Phitsanulok Cube Fest 2025 (2025-06-07~08),333 R1 A E2
+5780705001,B2 R L2 B D2 B F2 L2 R2 U F L' U' L' R' F R2 F',B,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R2 F #2
 534706001,U2 R2 B2 D L2 F2 U R2 U' F2 U' B' U2 L R2 B' D R B R D2,G,Plentzia Open 2017 (2017-06-17~18),333bf Final A #3
 5035182001,D' U' F2 R2 L D' R' D2 U2 B2 D L R D' F U',B,Fitchburg Fall 2025 (2025-09-20),333 R2 A #2
 4693309001,D2 B2 U2 L' U2 R2 D2 U2 R' U' L U' B R D B' L D,R,Pueblo Puzzling 2025 (2025-04-26),333oh Final A #5
@@ -149,7 +149,7 @@
 2585795001,R2 U' R' D2 L' B2 D2 L' D2 L D2 F' R F' D2 L' D' U' R2,G,Guwahati Spring Cube Open 2023 (2023-03-25),333oh Final A #3
 782587001,D R2 D' R2 B2 U2 B2 R F' D L2 D2 R D2 U' B2 L2,O,Swedish Championship 2018 (2018-05-11~13),333 R1 D E1
 1502168001,F R2 D2 L2 B2 D2 B' D2 L2 D' L' F2 U2 L B2 F D F,O,Jharkhand Cube Open 2020 (2020-01-19),333 R2 A #5
-3073618001,L2 U2 B F2 U2 R2 U B' U F D' F U' L2 B U2 B2,G,Brazos Cubing Fall 2023 (2023-09-10),333oh R1 B #5
+5783337001,U' D2 B2 U2 R2 L U' B R2 F D2 B D2 R2 D2 F' R F2 D,O,BC Championship 2026 (2026-08-07~09),333 R2 A #2
 2305080021,D F' R2 U F2 U2 D F' U' R2 B2 R2 D2 F' U2 L U L B,R,Just Cube Joburg 2022 (2022-11-12~13),333mbf Final A #1
 2668026050,U' B L2 D2 F2 D2 R2 B2 L R2 B2 F L R2 U2 B' R U2 B' L,B,Hilliard Hippocampus IV 2023 (2023-04-27),333mbf Final B #1
 2083438001,F2 R' D2 L2 U D2 L B2 U2 R2 D2 R2 B' D2 B' L2 U R2,R,Edén Cubing 2022 (2022-08-06~07),333 R1 F #1

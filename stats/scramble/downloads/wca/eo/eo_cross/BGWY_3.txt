@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / BGWY / bin 3
-# Population in this bin: 827
+# Population in this bin: 840
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 1706763001,D' B2 F2 U L2 D2 L2 B2 D' R U L' D2 L2 D' B L D' L',Y,Kharkiv Cubefall 2021 (2021-10-23~24),333 R2 B #4
@@ -80,7 +80,7 @@
 379911001,U' D L U' F' B D' L D B' U2 L' U2 R2 L F2 L' F2,W,Cubing ATMOSphere 2016 (2016-10-15~16),333 R1 I E2
 1136875001,D2 U F2 D L2 D' L2 B2 L' U' B2 D2 U2 R B' F U B2 L,Y,San Marino Nationals 2019 (2019-05-11~12),333 R2 B E1
 3161715001,U2 B F D2 U2 B' U2 R2 U R2 B2 R' F L D2 R2 F2 L,G, Esprit Cube Open Bayonne 2023 (2023-10-14~15),333 R2 B #2
-1659920001,B' U2 B2 F2 U2 R B2 L' D2 R' F2 L' F' L B R B D F,B,Kurochkino Cubers 2021 (2021-05-30),333 R1 A E1
+5821060001,D R' F2 D2 F' D2 B D2 L2 U2 L2 U B2 U' B F2 U B L2 U',W,Presidente Prudente Open 2026 (2026-09-05~06),333bf Final B #5
 391470001,F2 R2 D2 U' L2 D' B2 D2 R2 F D2 F2 D B U F D2 U',B,Cubetcha 2016 (2016-11-05),333 R2 A #3
 2966977028,B2 D2 F' U2 B R2 U2 F' U L2 F' L' R B' L B' R2 B R D,G,Zoioff Campinas 2023 (2023-08-05~06),333mbf Final A #2
 415828001,U L2 D R2 F2 D2 B2 R2 F' U' B' U L2 F' R D' R2 U F2,W,Bekasi Cube Days 2016 (2016-12-17~18),333 R1 A #1
@@ -144,7 +144,7 @@
 661211013,U' F2 R2 F2 R2 D R2 U' R2 U R' F U' R U F' R2 F L U L' F',Y,Weifang Winter 2016 (2016-12-11),333mbf Final A #1
 1045058001,L2 F2 U2 L D F2 U2 D2 F L' F2 U2 B2 U2 D2 R2 B' U2 R2,B,U.R.A. Spring of Colors 2019 (2019-03-09~10),333oh R1 B #4
 5117341001,D B2 D' L2 D2 R2 U F' U2 B' F2 R' F' D2 L' U2 R F2,B,Regina Twist 'N Treat 2025 (2025-10-18),333 R1 A #2
-5034300009,F' D2 U' R2 B2 D R2 B2 U' L2 B' L' B' L2 B' L' B F' L2 B,W,Boards & Cubes Venteira - Multi Madness 2025 (2025-09-20),333mbf Final B #1
+5791617001,B' R2 U2 L2 U L2 B2 D2 B2 U B U B R2 D' U2 R2,Y,Capelle Chaos A 2026 (2026-08-22),333 Final A E2
 3870650001,B2 R2 B' L' U2 R F D2 F' L2 D F2 D B2 L2 B2 U',G,Shenzhen Nanshan Open 2024 (2024-06-22),333 Final A #4
 2726356011,B2 U' D2 R B D' F' R2 D2 L D2 L' B2 R L2 F2 U2 D2 F2 L B',Y,PBQ Green Bay 2023 (2023-05-21),333mbf Final A #2
 661457096,F' L2 F' L2 F' R2 F U2 L2 U2 B R' F U F2 D2 R2 F R' B2 U' B R2,G,Northwest Championships 2017 (2017-08-11~13),333mbf Final A #1
@@ -165,7 +165,7 @@
 3603642001,D' R' D R2 F2 U R2 D' R D' L2 B2 R F2 U2 B2 L',Y,Open PUCP 2024 (2024-03-16),333oh Final D E2
 693334001,U' B2 L U' R F2 U' R L' B2 D' F2 U' B2 U R2 B2 D',B,Slobozia Winter Open 2018 (2018-01-27),333 R2 A #5
 2619965001,F B D F R2 U2 D' B D' F2 R2 U R2 L2 F2 B2 U2 F2,W,Colégio Asther Open 2023 (2023-04-01),333 R1 C #2
-951948012,L2 B2 R' B2 F2 D2 R D2 L2 F' L D L' D' U2 L D B2 U' R2 D2,B,Big 'n Blind Guangzhou 2018 (2018-12-09),333mbf Final A #2
+5787747001,R2 L B' R B2 R F2 R2 B' D2 F2 B2 R2 L' B2 L2 U2 L,G,Cultura Campos do Jordão 2026 (2026-08-15~16),333 R1 E #1
 5689973001,D' R2 F2 L2 R2 U2 B2 U' B D2 U R B' R2 B' R2 U F' D2,W,Napule È Mille Culure 2026 (2026-06-06~07),333 R1 A E2
 3795021001,R2 B2 L' F2 U2 D' F' R' D L2 D B2 L2 F2 D F2 D L' D,Y,Tutuli 2024 (2024-05-25~26),333 R1 D #1
 2065099001,D2 L2 U' B2 U2 L2 R2 U2 L2 D' B U2 F R2 D2 U2 F U' L' B2,W,Univalle Cubing 2022 (2022-07-29~30),333 R2 C #3

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / Y / bin 1
-# Population in this bin: 322
+# Population in this bin: 326
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 13167001,B2 R2 F2 U' B2 F2 D' F2 U F2 U' B' U2 B' D2 F D B2 R U,Y,Velbert Easter Open 2014 (2014-04-18~20),333oh Final A E1
@@ -95,7 +95,7 @@
 861830001,R' B' U' F' L' U' L' F' B R' D2 R2 B2 D2 F2 L B2 L,Y,SESC Camaquã 2018 (2018-08-18~19),333 R1 C #5
 4067278069,R' L F2 D2 B L' B' L' F2 B2 R' D2 L F2 L U' L' B L B' L2,Y,La La Land 2024 (2024-08-31~09-01),333mbf Final B #1
 884611001,F2 L2 R B2 F2 U2 F2 R' B' R' D2 L D' L2 B2 D F2 D2 R',Y,Cube Factory Częstochowa 2018 (2018-09-15~16),333oh Final A E2
-909725021,L' D2 R2 F2 R F2 L U2 R2 D2 B' L B2 F D' F R U F R2 B' L2,Y,Supreme South Open 2018 (2018-10-13~14),333mbf Final A #1
+5786929001,U2 L D' B D' F L2 U2 L B' D B D2 L2 B L2 B R2 F' L' F,Y,Norwegian Championship 2026 (2026-08-14~16),333bf R2 A #4
 5199608001,U' R B2 F2 U F2 U F2 U L2 U L' U2 B D B' U2 B2 U,Y,Xuzhou Open 2025 (2025-11-16),333 R2 C E1
 4345325001,R2 B2 L2 D2 U' L2 D2 L2 R B2 F R2 F U' B L B' R2 U,Y,Helsinki 2024 (2024-12-07~08),333oh R1 C #3
 914661001,R2 U F2 R2 U R2 U' F U' F' U2 L' D L D R U L',Y,Xi'an Open 2018 (2018-10-27~28),333 R1 F #1
@@ -138,7 +138,7 @@
 1436064001,L2 U2 R' F2 R2 D2 R' B2 F2 R D R2 F2 D2 U' B' U F2 U2 R B R,Y,Nacionales El Salvador 2019 (2019-11-30~12-01),333bf Final A #3
 5700775001,U' F L2 D2 F' R2 F2 U2 B' L F U2 F L2 R' D2 B' U B2 L B',Y,Redhawk Slow Summer OH 2026 (2026-06-13~14),333bf Final B E1
 4934240001,F' D' R2 F2 R B2 R' B2 D2 L2 D' B D' R2 F2 D F L U' L',Y,Ashfield Summer Challenge 2025 (2025-08-09~10),333bf Final A E2
-5033925001,D R' U2 D F2 U F R' U' L' U2 L2 D2 L F2 R D2 B2 D2 B2,Y,NxNything Goes Bloomsburg 2025 (2025-09-20),333 R2 C #3
+5802474001,B' D2 B2 U2 B2 R2 U2 R' F2 B' R2 D2 F D R' F' U' L2 R,Y,Cubing Kazakhstan Nationals 2026 (2026-08-21~23),333oh R2 B #1
 5452611001,R' B2 U' R' B L2 B' U' R2 L2 F2 R2 D L2 D' F2 R D,Y,TJHSST Winter 2026 (2026-03-15),333 R2 A #1
 1638781001,U L' R' B2 R' F2 D2 R2 D2 B D F D' B U2 L' F U2,Y,Showground Showdown 2021 (2021-01-30~31),333 R1 C #5
 4122630032,U' R' D2 B U F' U F U2 L B L2 B2 D' B2 D F2 L2 F2 L,Y,Do You Remember San Diego 2024 (2024-09-21),333mbf Final A #2
@@ -162,7 +162,7 @@
 2060486001,R F2 L U2 L2 R' D2 F2 R U' F2 R2 D F' U' F2 L2 R',Y,Valmiera Open 2022 (2022-07-30),333 R2 A #4
 5461416001,D2 R' U R U R U2 R' B' R B2 R D2 R' L2 F2 L U2 R,Y,Fuentes de Andalucía Open 2026 (2026-03-21~22),333oh Final A #4
 3604053001,D2 U2 R' D2 B2 U2 B2 F' D2 F' R B2 D2 F2 R' U2 R',Y,Laguna Speedcubing Open III 2024 (2024-03-17),333oh Final B E2
-3583505001,L' U' D F B L2 D' B2 R' U2 B2 L U2 R2 U2 B' L' D' F,Y,MnM Caloocan Cubing Fest 2024 (2024-03-10),333 R2 B #1
+5813534001,D2 U2 B2 L2 D2 L2 F D R' B D L' F' L' U2 B2 F' U2,Y,Oberlin Weeknights II 2026 (2026-09-03),333oh Final A E2
 2158808001,D2 B2 F2 L U2 B2 D' B U' L2 F2 D2 B F2 R' U' B',Y,Berkeley Fall 2022 (2022-09-10),333 R1 F #5
 3553361001,L D U F2 R2 U2 R2 D2 U L' D2 B2 U' L U L F D',Y,Castle Mania Niepołomice 2024 (2024-03-02~03),333 R2 B #4
 5511331001,B2 U2 F R2 F' L2 R2 B2 D2 R F' L2 F' L U2 L F' D2,Y,French Championship 2026 (2026-04-04~06),333 R1 E #3

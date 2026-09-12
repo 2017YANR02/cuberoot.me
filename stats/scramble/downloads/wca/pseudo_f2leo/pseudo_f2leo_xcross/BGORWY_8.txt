@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / BGORWY / bin 8
-# Population in this bin: 954
+# Population in this bin: 970
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 2775066004,F R B2 R2 U2 R' F2 D2 U2 B' R U' F D B F2 R F2 U' B',B,BrizZon Side Open III 2023 (2023-06-03~04),333mbf Final A #1
@@ -87,7 +87,7 @@
 1648807001,F2 U2 F D2 B' L2 D2 L2 U2 D R' F U' L2 R' F' L D' F' R,B,Altona Algorithms Attempt 2 2021 (2021-04-17~18),333 R1 C #1
 1748621001,U' L2 U L U2 B2 D2 B2 R D2 B2 U2 B' D U F' D2 L' R2,B,Vestkyst Cubing 2021 (2021-12-03~05),333oh R1 A #2
 3497583001,U B U2 B2 L D2 B2 L U2 L F D' R2 U' L2 F' U' L' B2,B,Going Back to the Gong 2024 (2024-02-10~11),333 R1 E E2
-1247223001,U L2 B2 U2 F2 U B2 U L2 F2 L2 R B' D' L' U' B2 U2 F' L U',B,Canadian Championship 2019 (2019-07-26~28),333oh R3 A E1
+5786227005,F2 U F' B R' U R D R B' R D2 R' F2 B2 R L' B2 L' B' L2,B,Israel PBQ Championship 2026 (2026-08-16),333mbf Final A #1
 339633001,R' D2 L' D2 L F2 R D2 R' D' U B2 F' U2 L F2 U' B' F,B,US Nationals 2016 (2016-07-29~31),333oh R1 M #3
 1861688001,R B R' B L B U' R D F' R2 D R2 U' F2 D' B2 U L2,B,Solving in Sale 2022 (2022-04-09~10),333 R1 C E2
 2794828001,L2 D' R' F' L F' U' D' F D' F B U2 D2 F R2 F D2 F R2,B,Warwick Cube Day 2023 (2023-06-10),333 R1 C E2
@@ -107,14 +107,14 @@
 3417320001,F2 R2 F2 U' L2 U2 B2 U' R2 F2 U2 F D2 L R U2 F D U L2 D,B,Adelaide Summer 2024 (2024-01-13~14),333 R3 B #2
 839611001,B2 L' U2 R' B2 R U2 R B2 R2 F2 U R2 U' B R D U F R',B,Beijing Summer 2018 (2018-07-29),333 R1 D E2
 1294623001,F R' L F' L' B L U R' D R F' B2 R2 F' U2 F' R2 D2,B,Waco Cube Assembly 2019 (2019-09-14),333 R1 A #5
-449936001,F2 R B2 R2 U2 D2 F R' U' B2 D' R2 U2 R2 U2 L2 B U2 R2 D2,B,Carte Blanche Kube Open 2017 (2017-02-18~19),333ft Final D #3
+5797489001,R L2 D2 B' R2 U2 B2 R2 B' F2 L2 U' L' D' B' R' F U2 L F',B,Nanning Open 2026 (2026-08-23),333 R2 C #5
 960839014,L2 F2 U2 B2 F2 L2 R2 U F2 D2 L2 R' B2 F' L2 R B F U' F' D' L',B,WCA South American Championship 2018 (2018-12-15~16),333mbf Final A #1
 5747550001,B2 U' R' L' B' D' L' R2 B U2 F R2 D2 R2 B' U2 D' R2 U',B,Bangkok Cube Festival 2026 (2026-07-11~12),333 R1 B #5
 453050001,R2 U' F2 D2 U2 R2 D2 U2 R' B U F L2 B2 D' L' B L' R2,B,Surabaya Comeback 2017 (2017-02-19),333 R1 D E1
 5339372001,B R' D B U2 B2 D2 F' D2 F' R2 L F2 U F L R' B F',B,Berkshires Cube Day at BART 2026 (2026-01-24),333 R1 A E1
 5019359001,F' B2 U2 L' U2 B2 R2 B2 R2 U F' U2 L2 B L' U' R' D' F',B,Weston-super-Mare Autumn 2025 (2025-09-13~14),333 R2 C #5
 465231001,B2 L2 F2 R2 D2 R2 B D2 L' U F' R D' U2 R' F2 U' B2 D2,B,Howland High Spring 2017 (2017-03-11),333 R1 D #3
-1299971001,B2 U2 L' U2 R U2 R F2 U2 B' D' R2 F2 L' U B U' B2 D' U2,B,Dream One Cube Open 2019 (2019-09-15),333 R1 F #1
+5776137001,B2 D' B L U F' R D' B2 R U D2 R2 B2 U L2 F2 L2 D L,B,PU Villavicencio III 2026 (2026-08-02),333 R2 B #2
 857885001,L2 F D B2 L' U' B' R D' F' L F R2 D2 B2 D2 F' U2 R2 F,B,Michigan 2018 (2018-08-10~12),333 R3 A E2
 2932895001,L' B2 D2 L' U' F2 L2 D2 F2 R2 U' B R' D F U' F2 L U2,B,Sherwood Park Summer 2023 (2023-07-22),333 R1 D #5
 3735449020,D2 R U2 L2 F2 D B2 F2 D U2 L' D R2 F' R' B' U' L U2 L B2,B,BrizZon Side Open II 2024 (2024-05-01~05),333mbf Final A #2
@@ -135,7 +135,7 @@
 547372001,R2 F2 D R2 F2 D2 B2 D B2 U' B R' D' F L' U' B L2 U' L2 D2,B,CubingUSA Nationals 2017 (2017-07-07~09),333oh R2 F E2
 1544071001,D2 U2 R' B2 R F2 U2 F2 R2 U' B' D' F2 R F' U' L D' B' U',B,Cult A Way Cube Open 2020 (2020-02-09),333 R1 G E1
 5751290001,F' U' L2 R2 F R2 F2 D2 L2 B' D' R B2 U F L' D2 R' U',B,Cupika Jakarta Summer 2026 (2026-07-11~12),333oh R1 A E1
-550184001,L D2 L2 D' F R' B L' D L' D2 R2 B' D2 F2 B D2 F2 R2 U2,B,Eden Village Winter 2017 (2017-07-15),333 R1 A #1
+5816225001,B' D R U' R' B' R' F L U2 B2 U2 L' B2 R' B' L' D,B,Dębica Cubing Summer 2026 (2026-09-05~06),333 R1 C E2
 1527447001,U' F2 R2 D2 L2 F2 R2 U R2 U2 B D' R U' L D2 U2 B2 L' B D' L,B,Villa Rosita 2020 (2020-01-25~26),333bf Final A E1
 555885001,U F2 D' R2 D2 L2 U B2 R2 U' F U L2 R' B' U L R D U' R',B,Cool Toons Guadalajara 2017 (2017-07-21~23),333oh R1 B #4
 5377212001,B D' F R F2 B L B2 D' B2 R2 L2 D' R2 U R2 U R' B2 D,B,Speedsolving X Pucallpa 2026 (2026-02-07~08),333 Final B #3

@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / W / bin 8
-# Population in this bin: 685
+# Population in this bin: 697
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 1421414017,B2 R2 B2 U R2 F2 U2 L2 R' U2 F2 D R2 B U' F' D' R D' U L B2,W,I Hope It's Solved Edmonton 2 2019 (2019-11-23~24),333mbf Final B #3
@@ -28,7 +28,7 @@
 3677220001,B2 L F' L2 U2 L2 U2 F2 D' B2 U R' B' U2 L' U2 L2 F D',W,Idaho Spring Speedcubing Spectacular 2024 (2024-04-20),333 R1 A #5
 5545441001,F2 L2 B D' R2 F2 U2 R2 F2 D' B2 L2 U' L R' D F' L B' R2,W,Swift Cubing in Swabia 2026 (2026-04-17~18),333 Final A #2
 152400001,L2 U2 B2 F2 U' L2 U' B2 U2 B U F D' L D2 B' R F L2,W,Cowboys Summer 2015 (2015-06-13~14),333oh R1 A E1
-5374228037,U R2 U R' B' L' U F R D F' B D2 R2 B' L2 B' R2 B L2 U',W,Glasgow Winter - Scottish Blind Off 2026 (2026-02-07~08),333mbf Final A #1
+5797155001,U L R2 F2 D2 L2 F R2 F R2 L' U' F U B' L F' R' D,W,Éire 100 2026 (2026-08-22~23),333 Final A #3
 159631001,B2 D' L2 F2 U F2 D R2 B L R U' B2 D2 F2 R' B F2 R F',W,Medan Open 2015 (2015-07-04~05),333 R1 A #4
 4136275001,D2 L' D' R2 U' F' R U D2 B' L2 F2 D2 L U2 L B2 L' B',W,Mauritian Odyssey 2024 (2024-09-28),333 Final A #4
 5702915008,U' L' R2 D2 L2 D2 F' D2 F L2 F' U2 B2 L U R U R' U B' L2,W,WCA South American Championship 2026 (2026-06-12~15),333mbf Final A #2
@@ -43,13 +43,13 @@
 4339058001,D F2 B R2 F D' L F U2 R2 U L2 F2 U R2 D2 L D',W,River Hill Fall 2024 (2024-12-07),333 R1 C #1
 208482001,F2 D2 B D2 R2 B' D2 F' U2 R' F' R D F U L' R B' U2 B2,W,Saint Petersburg Autumn Open 2015 (2015-10-24~25),333oh R1 B #4
 209178001,F' U' R2 B' U' D L' D2 F R U' D F2 R2 D R2 L2 F2 D,W,Beit Dan Open 2015 (2015-10-24),333oh R1 A #3
-1695988001,D' F' L2 D' B' U2 F2 B2 L F' R L2 B2 U B2 U' B2 D' R2,W,Norrkubing 2021 (2021-10-02~03),333 R2 A #5
+5806453001,F D R' L2 F' D2 L' U2 D L2 U R2 F2 D' L2 R' U L B,W,Kārķi Open 2026 (2026-08-26~30),333 R2 B #3
 4122631053,F2 D F2 L2 R2 F2 L2 U2 F D' R' U' B L2 F' L2 B2 D R F2 L2 U',W,Do You Remember San Diego 2024 (2024-09-21),333mbf Final B #1
 3483919001,B U2 L2 F D2 F D2 B2 R D R2 B2 F L B2 R U R' B',W,Empire State Winter 2024 (2024-02-03~04),333 R1 A E1
 4503798001,R' L2 U L2 R2 U2 F2 U' L2 R2 B U2 R2 D2 L' R2 F' U' B' R2,W,Mumbai Cube Challenge 2025 (2025-02-15~16),333 R1 C #4
 4801868015,B2 R' F2 L B R' U F L U' F2 D' F2 U' L2 U R2 D' L' B' L2 U2,W,Silent Brasília 2025 (2025-06-14~15),333mbf Final A #2
 4334008001,R' F L B D2 L' D2 R2 U2 L U2 B2 U R2 D F' L2 D' L B R2,W,Manchester FMC Day 2024 (2024-12-07),333bf R1 B #1
-1947344001,L2 F2 R U2 F2 R' D2 R F R2 U' R' B R2 U B2 D2 F R',W,SAJ Águas da Prata 2022 (2022-05-28~29),333 R2 A E2
+5800283001,F' U B2 R F' B' D B2 R' D' L' F' R2 F B2 R2 F2,W,Beijing Autumn Begins 2026 (2026-08-22~23),333oh Final A #3
 2500880001,F2 R2 F2 L2 D2 U' R2 B2 R' F2 R' D L R2 F' U R' B' D2,W,Ohio State RPAC Cube Clash 2023 (2023-02-18),333 R3 A #3
 5381146001,B2 R2 U F2 L' D2 U2 B2 D2 L' B2 R U F R B L' R B2,W,Red Deer Favourites 2026 (2026-02-14),333 Final C #1
 4292401001,B2 D L2 F2 L2 B2 D' R2 D L U B' F' U2 R' D L' F2 U,W,Karnataka Cube Championship 2024 (2024-11-16~18),333oh R2 A E1
@@ -79,7 +79,7 @@
 5636990001,R L2 F' U2 L2 B2 L2 F R2 D2 B2 U R' D' F' L2 B' D' L F,W,Weston-super-Mare Spring 2026 (2026-05-16~17),333oh R1 C #3
 429508001,L F R F L D' L2 U' F' U B U2 R2 D2 L2 B2 R2 D' B2,W,Cubers East India Open 2017 (2017-01-07~08),333oh R1 D #4
 3567268001,F2 U' F L2 F2 D2 L2 F2 D2 L2 R' U B F U2 L F R2 U',W,One Day İstanbul A 2024 (2024-03-09),333 R2 B #4
-447211001,F2 U2 B F' U2 F R2 F' R B' L B D' L2 F2 U' L2 F' R2,W,Mishawaka Winter 2017 (2017-02-18),333 R2 B #3
+5800577042,R' F' U2 F2 R2 U L2 F2 D' F' L U2 R D' R2 D L2 D' L2 U2,W,Langenstein Summer 2026 (2026-08-22~23),333mbf Final B #1
 4971339001,B2 R2 L' U2 R B L U2 F' D2 R2 D' L2 F2 L2 D2 F2 L' U',W,Brookhaven Summer 2025 (2025-08-23),333 R1 B #5
 459220001,R2 D2 L D2 L D2 U2 R D2 L2 R' U' F U B L U' R B' R' F2,W,Inquivesta Cube Open 2017 (2017-03-04~05),333 Final B #2
 2621412001,D B2 L2 D' B2 D2 U' B2 L2 R2 D' L B R2 D' U R' F' U L B,W,Richmond Spring 2023 (2023-04-08),333 R1 D #5

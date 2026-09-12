@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / BG / bin 2
-# Population in this bin: 854
+# Population in this bin: 863
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4898413001,D F' B2 U F2 D L2 U' L2 F2 D2 B' F L' R' F U F U' R2,B,Boise One-Handed Blitz 2025 (2025-08-02),333 R1 A #3
@@ -39,7 +39,7 @@
 2947968001,L F2 D B2 U' D' B' R U' R2 U' R2 F2 L2 D' F2 R F2,G,Winchester Weeknights IV 2023 (2023-08-02),333 R1 A #2
 1373292003,D2 U2 L F2 R F2 R D2 U2 R2 U L B2 D2 U2 R' B2 F U F L',B,UK Championship 2019 (2019-10-25~27),333mbf Final A #2
 3605435160,L' U' R2 F' L' B2 D' R2 B2 L U2 B2 R' D2 F2 R' D2 L' F D L,B,Supermiya PBQ in Tashkent 2024 (2024-03-16~17),333mbf Final A #3
-2475143001,D2 B' U' L2 U' B2 L2 U2 L2 U R F2 D' F' U B2 U',B,Franconia Mini Open B 2023 (2023-02-05),333oh Final B E1
+5798971001,D F2 L2 D B2 U' B' D' R2 U' L2 R2 B' F2 R D2,G,Aste Nagusia Bilbao Open 2026 (2026-08-24),333 R1 A E2
 1031817001,B U' F' L U' L2 D' B L' U R U2 R B2 L' F2 U2 D2,G,Newton Speedcubing 2019 (2019-02-24),333 R1 D #2
 4252237002,R' F2 U2 L' F2 U2 R U2 R' B2 R2 B' R' F L2 D2 F U B',G,5BLD in a Madison Fall 2024 (2024-11-02~03),333mbf Final A #2
 751859001,B' L2 B' F2 R2 B R2 D2 U F U' L2 F2 D2 R' B2 L U,B,Saint-Maurice Sunday Open 2018 (2018-04-15),333 R1 B #2
@@ -79,7 +79,7 @@
 307291001,L' D2 F2 R B2 R' U2 R2 B F2 L F2 L2 R B L2 F' D U,G,One Night in Beijing 2016 (2016-05-28~29),333 R1 A #5
 4251056001,F2 R2 B' L2 D2 B U' R' F' D L F2 R' L2 U2 F2 L2 B2 L' B2 L2 U,B,Rubik's UK Championship 2024 (2024-11-01~03),333bf R1 A #1
 3798535001,R L2 U' L2 D2 L U2 D B2 L' F L D2 L B2 U2 R' B2 L' F2,B,SAJ Águas da Prata 2024 (2024-05-25~26),333bf Final B #2
-4234558001,F' L2 B R2 B2 D' F2 D' B2 F2 R' U2 B2 L2 B' L2 D L',G,Santiago del Estero Cubea V2 2024 (2024-10-26~27),333 R1 A #3
+5819642001,U L F2 L' F2 D F' R2 L2 U D2 F U2 B' U2 F D2 L2 B' L2,B,Hefei September Open 2026 (2026-09-05~06),333bf R2 A #1
 3751857001,L2 F L' B2 L B' L' U' R2 U F2 B2 U' D2 L2 U B2 R B2,G,Swisscubing Cup III 2024 (2024-05-04~05),333 R2 B E2
 4829267001,U2 F' L2 U' L D L R2 U2 R2 B2 D' F2 R2 B2 D' R B',G,U.E. 8 de Septiembre 2025 (2025-06-26~27),333 R2 D #1
 2204014001,B' L2 U' B2 U' L2 U F2 U' R2 B' R2 U R2 B D2 R F2 U2,G,Varsha Ritu Cube Open 2022 (2022-09-24~25),333oh R1 D #2

@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / BG / bin 10
-# Population in this bin: 733
+# Population in this bin: 740
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-08-06
+# Generated: 2026-09-11
 # Columns: id,scramble,bottom_color,competition,round
 
 4332297001,F' R2 U2 L2 B' L F D' R2 B' U' L2 D' R2 U D',G,Berkeley December Weekday Tricubealon 2024 (2024-12-04),333oh R1 A #2
@@ -11,7 +11,7 @@
 1503562001,B U2 B' D2 B' R2 F' U2 R' D F' L2 R2 D B2 U R2 B D2,G,Guildford Open 2020 (2020-01-18~19),333 R1 E #3
 19730001,R U L F2 U' R D' R' U F R' D2 B2 L2 F2 R2 L F2 B2,B,Michigan May Madness 2014 (2014-05-10),333 R1 B #4
 4227846001,U2 F2 D F L' F2 L2 D2 B' D' B2 D2 L2 D2 R2 F2 R,G,Lonay Cube 2024 (2024-10-26~27),333 R1 C #1
-25765001,R2 U F' U F' R2 D F2 L F2 L2 D2 R F2 L' D2 L B2,G,Erfurt Open 2014 (2014-06-07~08),333 R2 A #4
+5803450001,F' D' U L2 U2 F2 U2 L' D2 U R' B2 F' U2 B D2,B,Israel Championship 2026 (2026-08-25~27),333 R1 H #4
 5513180001,F' D2 B2 D' R U2 R' F' R2 F' L2 D2 F' L2 F' D2 F R D2 R2,B,Karnataka Cube Open April 2026 (2026-04-05),333 R1 E E2
 4892262001,U R2 F' R' F' U2 D2 R U R2 L2 F2 B2 D' L2 F2 B2 D' L2 U2,G,Edén Bogotá IV 2025 (2025-07-27),333 R1 A E1
 3682689001,B' U2 R2 F' R2 D2 F R' D2 U' R' D' U2 L2 U2 L U' F2,G,German Open 2024 (2024-04-20~21),333oh R1 B #4
@@ -27,7 +27,7 @@
 3562828001,F2 D R2 D' L2 U B L2 R' U L' R' D2 U B' L' U' F,G,Tramsheds I: Newcomer Sunday 2024 (2024-03-03),333 R2 D #4
 97966001,D B2 L2 B2 D' L2 U' L2 D2 L2 U' R' D R2 B R' F' R' B' F2,G,Uppsala Open 2015 (2015-01-10),333oh Final A E2
 123699001,L B R' D F B2 U R L2 B' U R2 D2 R2 D2 F2 D2 B2,B,Michigan Cubing Club Beta 2015 (2015-04-04),333oh Final A E1
-123707001,U2 B R2 U2 F U2 F' L2 B R' D' F2 D' B' R2 D' L B R' B2,G,Michigan Cubing Club Beta 2015 (2015-04-04),333 R1 A E2
+5819612001,L2 U2 R2 B2 L2 B D2 B2 R B2 R D' L D' U2 L2 U2 B',G,Avenida Chile XXXVII 2026 (2026-09-05~06),333oh Final A E2
 127786001,R2 D2 U2 B R2 B2 F' L2 B D2 L' B R' U B' L' F' L' D2,G,Getafe Open 2015 (2015-04-11~12),333 R1 F #5
 131584001,D F2 D F2 D2 U' F2 U R D U' B2 L R2 B L B D2 R,G,Slovenian Open 2015 (2015-04-18~19),333 R2 A #2
 132028001,D' R F2 U F L' U' F2 B2 L D2 L2 D R2 F2 U2 D2,B,Cerbuna Open 2015 (2015-04-18~19),333 R1 C E1
@@ -89,13 +89,13 @@
 4745544001,F2 L B2 R B2 R' F2 L' F2 R' D' B U' B' R D' L B' U F',G,Danish Championship 2025 (2025-05-23~25),333 R1 C #5
 1264673028,D2 L' D2 U2 L F2 D2 F2 D L F D' B F2 R B' F' R F' L2,B,Tchê Math Cube 2019 (2019-08-17),333mbf Final D #1
 4762438001,D R2 B R' L' D R D2 R2 U2 D2 R2 B U2 D2 F' D' R2 F,G,Burley Summer 2025 (2025-05-31),333 Final A #1
-4624715001,B' D2 L2 U' R2 U L2 U L2 F U2 L2 B D B' L B L' R' B R,B,Mike's Cubes Israel 2025 (2025-04-06),333bf R1 A #1
+5809683001,B' L' U2 D F D2 B L B' R L' B2 R' U2 D2 L B2,B,DFW Cubing Summer 2026 (2026-08-29~30),333 R3 B E1
 4448765001,R2 B U' B2 R2 D' R2 F2 D' U' L2 D' F R' D L2 R B' U,B,Dublin Winter Solving 2025 (2025-01-25~26),333oh R1 A #3
 3340013001,U' D2 F2 L2 F U2 F2 L F2 R D L2 D' F2 L2 B2 R2 F2 D2 L' F',B,CubingZA Cape Cubes Challenge 2023 (2023-12-09~10),333bf Final B #3
-4798437001,B2 D R2 U' F2 D' F2 L2 D' U2 F L' B' R F R2 D' F2 U L' F,G,VIC Side State Championship 2025 (2025-06-14~15),333bf R1 A E1
+5791070001,U2 B2 R B2 R2 D2 B2 L' B D' F2 R2 B' R F2 D B2,B,Luzern Sunset Solves 2026 (2026-08-19),333 R1 A #2
 516300001,F2 L B' L F R B' D' R' D2 L2 F' B2 U2 D2 L2 B U2 B' L2,G,IIA Summer Open - May 2017 (2017-05-27~28),333 R1 F #3
 1023865001,D F2 U F' L F' D R2 L2 D L' F2 U2 L B2 L' U2 F2 R2,G,Manchester Open 2019 (2019-02-16~17),333oh Final A #2
-5431108001,F2 L' B2 F D2 F' L2 F D' R2 F2 L2 F U2 L' F' U2,B,DC Hyderabad Open March D 2026 (2026-03-08),333oh Final A #2
+5802334001,L2 B2 U2 L2 B' F2 R2 B R' B' U2 L' R' D' F2 L' F U L,B,Elmsford Extravaganza III 2026 (2026-08-25),333oh Final A #4
 1644814001,L' U2 R2 B2 U' L2 B2 U2 L2 R B U' B R2 D' F' D2 L2 B',G,Xi'an Cherry Blossom PM 2021 (2021-04-11),333 R1 E #3
 2449919003,F2 L2 F2 R2 U' F2 L D' L' R2 D' L2 F D' U2 B2 L' B',G,BrizZon Side Open 2023 (2023-01-21~22),333mbf Final B #2
 3530517001,R U B2 R2 U R' U F2 D' L F R2 F' L2 B D2 F R2,G,Fullerton Winter 2024 (2024-02-24),333 R2 B #3
@@ -171,10 +171,10 @@
 5453764001,D2 R' D2 R2 D2 R B2 F U' F' U F L F' U R D' F,B,Vancouver Mini Afternoon 2026 (2026-03-15),333 R1 B #4
 3309719001,U R F2 R2 F2 U B D2 L' R2 F R2 F' U2 B' D2 F' L,G,Navidad Aves Maria Teams 2023 (2023-12-02~03),333 R2 B E2
 4805443001,F' R2 F U2 L2 D2 F D2 F2 R' B' L U' L R' D2 R2 F' R',B,Summit Summer 2025 (2025-06-15),333 R2 B E1
-3875406008,U' B2 U R2 B2 R2 F2 U' F D2 R B L F2 U2 L D' R2 F' D',B,Swisscubing Cup Mental Breakdown I 2024 (2024-06-15~16),333mbf Final A #1
+5781514001,F2 U2 R2 F' L2 U2 F2 R' D L' B' D2 L' D B' F2 L2 B,B,Pavlodar Open 2026 (2026-08-09),333oh Final B #2
 774366001,F2 U B2 R2 D U B2 D U2 F' D2 B D' U L' B' D' L D2 L' F',B,Primus Cube Open - May 2018 (2018-05-05~06),333bf Final A #3
 781935001,F2 U2 B L2 B R2 D2 F' D2 B2 D' L2 U' R F2 L2 R2 F2 R,G,ZHBIT Open 2018 (2018-05-20),333 R2 A #2
-2761331001,F2 U L' U L' D' L F U2 L2 U F2 L2 F2 L2 F2 U2 R2 B',B,SAJ Águas da Prata 2023 (2023-05-27~28),333 R1 B #5
+5797052001,L F' U' D2 B' L2 D' L2 U' F R2 D2 R2 F2 U D2 F2,B,Kuala Lumpur Cubing Challenge 2026 (2026-08-22~23),333 R1 F E2
 3662499001,L' R2 F2 L U2 L U2 R' U' F2 D' F2 R' F2 U R' B D,B,Richmond Rumble 2024 (2024-04-13),333 Final A #4
 801907001,B2 F2 D' L2 U' L2 D' R2 D R2 B' D2 U' F' L D2 U L B2 F2 U2 B R',G,Tabacundo Open 2018 (2018-06-09),333bf Final A E2
 2391164001,U' L2 U' B2 D' F2 U' F2 L' U2 L2 R' U F' D U' F2 U2 R2,B,Copa Rubik Poligato FPUNA 2022 (2022-12-17),333oh Final B #2
