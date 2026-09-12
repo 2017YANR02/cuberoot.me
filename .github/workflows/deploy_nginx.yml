@@ -112,20 +112,35 @@ jobs:
           set -euo pipefail
           STAGING=/tmp/nginx.logrotate.new
           LIVE=/etc/logrotate.d/nginx
-          BACKUP="${LIVE}.bak-$(date +%s)"
+          # /etc/logrotate.d includes arbitrary filenames, including .bak-*.
+          BACKUP_DIR=/var/backups/cuberoot-logrotate
+          install -d -m 0700 "$BACKUP_DIR"
+          BACKUP=''
           trap 'rm -f -- "$STAGING"' EXIT
 
           test -s "$STAGING"
-          logrotate --debug "$STAGING" >/dev/null 2>&1
+          logrotate --debug "$STAGING"
+          # Retire backups created by the old deployer from the include tree.
+          for legacy in /etc/logrotate.d/nginx.bak-*; do
+            [ -f "$legacy" ] || continue
+            target=$(mktemp "$BACKUP_DIR/legacy.XXXXXXXX")
+            mv -- "$legacy" "$target"
+          done
           if [ -f "$LIVE" ] && cmp -s "$LIVE" "$STAGING"; then
+            logrotate --debug /etc/logrotate.conf
             echo "no-op: logrotate policy already matches"
             exit 0
           fi
 
-          cp "$LIVE" "$BACKUP"
+          HAD_LIVE=0
+          if [ -f "$LIVE" ]; then
+            BACKUP=$(mktemp "$BACKUP_DIR/nginx.XXXXXXXX")
+            cp "$LIVE" "$BACKUP"
+            HAD_LIVE=1
+          fi
           install -m 0644 "$STAGING" "$LIVE"
-          if ! logrotate --debug "$LIVE" >/dev/null 2>&1; then
-            cp "$BACKUP" "$LIVE"
+          if ! logrotate --debug /etc/logrotate.conf; then
+            if [ "$HAD_LIVE" -eq 1 ]; then cp "$BACKUP" "$LIVE"; else rm -f "$LIVE"; fi
             echo "ERROR: logrotate validation failed; restored $BACKUP" >&2
             exit 1
           fi
