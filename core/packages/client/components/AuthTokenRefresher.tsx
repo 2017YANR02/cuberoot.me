@@ -31,6 +31,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   const [error, setError] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [actionsWidth, setActionsWidth] = useState(0);
+  const [toggleOffset, setToggleOffset] = useState(0);
   const actionsRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toolbarRef = useRef<HTMLElement>(null);
@@ -48,7 +49,11 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   useEffect(() => {
     const actions = actionsRef.current;
     if (!actions) return;
-    const measure = () => setActionsWidth(actions.getBoundingClientRect().width);
+    const measure = () => {
+      setActionsWidth(actions.getBoundingClientRect().width);
+      const toggle = toggleRef.current;
+      if (toggle) setToggleOffset(actions.offsetWidth - toggle.offsetLeft - toggle.offsetWidth);
+    };
     const observer = new ResizeObserver(measure);
     observer.observe(actions);
     measure();
@@ -147,7 +152,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       if (!event.currentTarget.contains(event.relatedTarget as Node | null)
         && !(event.relatedTarget as Element | null)?.closest?.('.admin-tools-role-popup')) collapse();
     }}
-    style={{ position: 'absolute', top: '100%', left: `${centerX * 100}%`, transform: 'translateX(-50%)', marginTop: 8, width: expanded ? actionsWidth + 46 : 42, maxWidth: 'calc(100vw - 32px)', pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', flexDirection: 'row-reverse', alignItems: 'center' }}>
+    style={{ position: 'absolute', top: '100%', left: `${centerX * 100}%`, transform: 'translateX(-50%)', marginTop: 8, width: expanded ? actionsWidth + 10 : 42, maxWidth: 'calc(100vw - 32px)', pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', alignItems: 'center' }}>
     <style>{`
       .admin-tools{box-sizing:border-box;padding:4px;border-radius:24px;
         border:1px solid var(--glass-edge);background:var(--glass-background);
@@ -160,25 +165,20 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
         border:0;background:transparent;color:inherit;font:inherit;text-decoration:none;padding:6px;cursor:pointer;}
       .admin-tool-action svg{width:17px;height:17px;}
       .admin-tool-action:hover{color:var(--accent);}
-      .admin-tools-toggle{width:32px;height:32px;border-radius:50%;}
+      .admin-tools-toggle{width:32px;height:32px;border-radius:50%;transition:transform 420ms cubic-bezier(.22,1,.36,1);}
       .admin-tools-toggle:focus-visible{outline:2px solid var(--ring);outline-offset:2px;}
-      .admin-tools-actions{position:absolute;right:41px;display:flex;align-items:center;gap:8px;width:max-content;max-width:calc(100vw - 78px);min-width:0;
+      .admin-tools-actions{position:absolute;right:4px;display:flex;align-items:center;gap:8px;width:max-content;max-width:calc(100vw - 42px);min-width:0;}
+      .admin-tools-group{display:contents;}
+      .admin-tools-group > *{
         opacity:0;visibility:hidden;transform:translateX(8px);pointer-events:none;
         transition:opacity 140ms ease,transform 300ms cubic-bezier(.22,1,.36,1),visibility 0s 140ms;}
-      .admin-tools[data-expanded="true"] .admin-tools-actions{opacity:1;visibility:visible;transform:none;pointer-events:auto;
+      .admin-tools[data-expanded="true"] .admin-tools-group > *{opacity:1;visibility:visible;transform:none;pointer-events:auto;
         transition:opacity 220ms ease 100ms,transform 420ms cubic-bezier(.22,1,.36,1),visibility 0s;}
       .admin-tools-actions .compact-select{min-width:0;}
-      @media(prefers-reduced-motion:reduce){.admin-tools,.admin-tools .admin-tools-actions{transition:none;}}
+      @media(prefers-reduced-motion:reduce){.admin-tools,.admin-tools-toggle,.admin-tools-group > *{transition:none;}}
     `}</style>
-    <a ref={toggleRef} className="admin-tool-action admin-tools-toggle" href={environmentHref}
-      aria-label={environmentLabel} title={environmentLabel} aria-expanded={expanded}
-      onClick={event => {
-        if (!expanded) { event.preventDefault(); cancelCollapse(); setExpanded(true); }
-      }}>
-      {local ? <Globe size={17} aria-hidden /> : <Laptop size={17} aria-hidden />}
-    </a>
-    <div ref={actionsRef} className="admin-tools-actions" inert={!expanded}>
-    {admin && <>
+    <div ref={actionsRef} className="admin-tools-actions">
+    {admin && <div className="admin-tools-group" inert={!expanded}>
       <button type="button" className="admin-tool-action" onClick={() => openPageNoticeEditor('page_top')}
         title={t('添加本页通知', 'Add notice for this page')} aria-label={t('添加本页通知', 'Add notice for this page')}>
         <Megaphone size={17} aria-hidden />
@@ -187,11 +187,20 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
         title={t('首页焦点', 'Homepage feature')} aria-label={t('首页焦点', 'Homepage feature')}>
         <Sparkles size={17} aria-hidden />
       </button>}
-      <AppLink href="/admin" className="admin-tool-action" prefetch={false}
+    </div>}
+    <a ref={toggleRef} className="admin-tool-action admin-tools-toggle" href={environmentHref}
+      aria-label={environmentLabel} title={environmentLabel} aria-expanded={expanded}
+      style={{ transform: expanded ? undefined : `translateX(${toggleOffset}px)` }}
+      onClick={event => {
+        if (!expanded) { event.preventDefault(); cancelCollapse(); setExpanded(true); }
+      }}>
+      {local ? <Globe size={17} aria-hidden /> : <Laptop size={17} aria-hidden />}
+    </a>
+    <div className="admin-tools-group" inert={!expanded}>
+      {admin && <AppLink href="/admin" className="admin-tool-action" prefetch={false}
         title={t('管理后台', 'Administration')} aria-label={t('管理后台', 'Administration')}>
         <UserCog size={13} aria-hidden />
-      </AppLink>
-    </>}
+      </AppLink>}
     {roleTesting &&
       <CompactSelect
         popupClassName="admin-tools-role-popup"
@@ -204,6 +213,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       />
     }
     {error && <span role="alert">{t('切换失败，请重试。', 'Switch failed. Please retry.')}</span>}
+    </div>
     </div>
   </aside>;
 }
