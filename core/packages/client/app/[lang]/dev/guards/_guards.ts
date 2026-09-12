@@ -205,6 +205,12 @@ export interface CiGuard {
 
 export const CI_GUARDS_UI: CiGuard[] = [
   {
+    id: 'wca-record-filters',
+    test: 'wca-record-filters.test.ts',
+    zh: { title: '纪录统计筛选与数据一致性', desc: '按生成器源码自动发现使用 recordScope、record_scopes 或旧 Continental 分区模式的纪录统计。CI 同源检出其 JSON，逐个验证非空、唯一且可达的筛选组合，并检查地区、级别、项目与类型取值。缺少生成数据也会失败；新数据形态仍需扩展发现规则及语义审查。' },
+    en: { title: 'Record-statistic filters match data', desc: 'Discovers record generators using recordScope, record_scopes or legacy Continental sections. CI checks out the same JSON files and verifies every nonempty, unique, reachable filter bucket and its region, tier, event and type. Missing generated data fails; new data shapes still need discovery and semantic review.' },
+  },
+  {
     id: 'cubing-term-blacklist',
     test: 'i18n-cubing-term-blacklist.test.ts',
     zh: { title: '魔方术语错译', desc: 'AI 写双语文案按通用语感直译魔方黑话(Overwork≠劳累义直译、Commutator≠通用数学直译、Finger Trick≠逐字直译),语法全对但社区不这么说 —— 正确译法依次为「复用 / 换位子 / 指法」。权威译法单一源 = /wiki 的 glossary.json(713 条中英对照);本守卫锁已修正错译的黑名单,发现新错译修完即加入。豁免行内 allow-cubing-term。' },

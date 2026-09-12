@@ -15,6 +15,24 @@ function mockApi(locks: Record<string, boolean>, admin = false, status = 200) {
 const cards = SITE_DIRECTORY_GROUPS.flatMap((group) => [...group.entries]).filter((card) => card.internal);
 
 describe('homepage locks protect document and RSC routes', () => {
+  it.each([
+    { token: '', admin: false, status: 200, expected: 307 },
+    { token: 'member', admin: false, status: 200, expected: 307 },
+    { token: 'expired', admin: true, status: 401, expected: 307 },
+    { token: 'admin', admin: true, status: 200, expected: 200 },
+  ])('keeps partnership permanently private for $token', async ({ token, admin, status, expected }) => {
+    mockApi({ partnership: false }, admin, status);
+    for (const prefix of ['/en', '/zh']) {
+      for (const suffix of ['', '/private-child', '/talking-points']) {
+        const response = await proxy(new NextRequest(`https://cuberoot.me${prefix}/partnership${suffix}?_rsc=fixture`, {
+          headers: { cookie: `${PAGE_SESSION_COOKIE}=${token}`, RSC: '1' },
+        }));
+        expect(response.status).toBe(expected);
+        expect(response.headers.get('Cache-Control')).toBe('private, no-store');
+        expect(response.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
+      }
+    }
+  });
   it.each(cards)('protects $id, both languages and descendants', async (card) => {
     mockApi({ [card.id]: true });
     const target = new URL(card.href, 'https://cuberoot.me');

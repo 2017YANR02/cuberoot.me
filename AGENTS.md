@@ -149,6 +149,14 @@ pnpm --filter @cuberoot/client lint
 - UI 验证先搜并用 Playwright MCP(可能延迟加载);fixtures 全集别采样。
 - 新路由先 grep 防撞名;路由改名/合并不为旧路径加 redirect。
 
+## WCA 统计筛选与数据一致性
+
+- 为 WCA 纪录统计新增或修改级别／地区筛选时，必须使用 `WcaStatView` 的 `RecordSectionsView` 与 `selectRecordSection`；生成端通过 `GroupedStatistic` 输出带 `recordScope: { region, level, event, type }` 的分区，参考 `core/jobs/stats-build/src/core/record_scopes.ts` 和三个现有纪录统计。不得单独硬编码一套筛选选项。
+- 筛选选项只来自当前条件下有行数据的分区；不能提供点进去才发现无数据的洲际、地区、项目或类型选项。只支持单次时，不提供平均或重复的“单次与平均”。整项统计未生成与某个组合确实无人达成要分别核实，不得把构建缺失当成无成绩。
+- 先按地区、级别及适用的项目／类型计算排名，再分别截取 Top N；禁止在已经截断的全球榜单上过滤以冒充各洲或各项目完整榜单。世界纪录同时计入相应洲际／国家纪录；地区按选手取得成绩时的所属国家，不按比赛举办地。
+- 新统计必须同时交付生成器和真实生成数据；修改 SQL 仍须遵守 `stats-build` skill 的实库校验要求。`tests/wca-record-filters.test.ts` 自动发现纪录统计并遍历全部生成分区，缺文件、缺筛选元数据、空分区、重复组合或不可达组合均失败。CI 用 `core/scripts/list-record-stat-fixtures.mjs` 同源发现需要检出的 JSON，不维护另一份新统计名单。
+- 改用新数据形态或新渲染入口时，同步扩展上述发现逻辑及测试；自动检查只覆盖已纳管结构，不能代替新统计口径与数据完整性的审查。
+
 ## 登录系统与流程图同步
 
 - `/dev/auth`（中文 `/zh/dev/auth`）是跨平台账号生命周期说明。修改登录/注册、第三方身份、绑定/解绑、找回密码、会话/回跳、合并或注销时，先读 `core/packages/client/app/[lang]/dev/auth/page.tsx`，同一任务同步流程图及中英文说明；不得把设计方案、已实现、已部署和真机验收混写。

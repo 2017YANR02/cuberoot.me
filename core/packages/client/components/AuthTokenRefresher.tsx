@@ -168,7 +168,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
         box-shadow:var(--glass-shadow);
         transition:width 420ms cubic-bezier(.22,1,.36,1),left 420ms cubic-bezier(.22,1,.36,1);}
       .admin-tools .compact-select-trigger{border:0;background:transparent;padding:6px;}
-      .admin-tools .compact-select-trigger:hover{background:transparent;color:var(--accent);}
+      .admin-tools .compact-select-trigger:hover{background:transparent;color:var(--accent);text-decoration:none;}
       .admin-tools .compact-select-arrow{display:none;}
       .admin-tool-action{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:29px;height:29px;flex-shrink:0;gap:6px;white-space:nowrap;
         border:0;background:transparent;color:inherit;font:inherit;text-decoration:none;padding:6px;cursor:pointer;}
@@ -183,7 +183,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
         transition:opacity 140ms ease,transform 300ms cubic-bezier(.22,1,.36,1),visibility 0s 140ms;}
       .admin-tools[data-expanded="true"] .admin-tools-group > *{opacity:1;visibility:visible;transform:none;pointer-events:auto;
         transition:opacity 220ms ease 100ms,transform 420ms cubic-bezier(.22,1,.36,1),visibility 0s;}
-      .admin-tools-actions .compact-select{min-width:0;}
+      .admin-tools-actions .compact-select{min-width:0;width:fit-content;}
       @media(prefers-reduced-motion:reduce){.admin-tools-surface,.admin-tools-group > *{transition:none;}}
     `}</style>
     <span aria-hidden="true" className="admin-tools-surface"
@@ -213,6 +213,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       </AppLink>}
     {roleTesting &&
       <CompactSelect
+        variant="plain"
         openOnHover
         dismissOnMouseLeave
         popupClassName="admin-tools-role-popup"

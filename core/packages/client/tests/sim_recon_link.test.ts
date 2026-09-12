@@ -9,11 +9,16 @@ describe('buildSimQuery', () => {
     const scramble = "L B' U2 R B R' F' R B2 L2 U' R' U' L F' L2";
     const params = new URLSearchParams(buildReconSubmitQuery('3x3', scramble, '', {
       practice: true, optimal: true,
-      competition: { ci: 'NorwegianChampionship2026', cn: 'Norwegian Championship 2026' },
+      competition: { ci: 'NorwegianChampionship2026', cn: 'Norwegian Championship 2026', r: '2', g: 'A', n: 4 },
+      sourceEn: 'EO · Cross · Yellow · 1 move · 1/450k', sourceZh: 'EO · 十字 · 黄 · 1 步 · 1/450k',
     }));
     expect(params.get('official')).toBe('practice');
     expect(params.get('compWcaId')).toBe('NorwegianChampionship2026');
     expect(params.get('comp')).toBe('Norwegian Championship 2026');
+    expect(params.get('round')).toBe('2');
+    expect(params.get('groupId')).toBe('A');
+    expect(params.get('solveNum')).toBe('4');
+    expect(params.get('sourceZh')).toBe('EO · 十字 · 黄 · 1 步 · 1/450k');
     expect(decodeUrlAlg(params.get('optimal')!)).toBe(scramble);
     expect(params.has('scramble')).toBe(false);
     expect(params.has('personId')).toBe(false);
@@ -26,6 +31,17 @@ describe('buildSimQuery', () => {
     expect([...buildReconAttemptMap([official, practice]).values()].map(r => r.id)).toEqual([1]);
     expect([...buildReconPersonAttemptMap([official, practice]).values()]).toEqual([1]);
     expect(buildReconAttemptMap([practice]).size).toBe(0);
+  });
+  it('keeps an extra scramble distinct from the numbered regular attempts', () => {
+    const params = new URLSearchParams(buildReconSubmitQuery('oh', 'R U', '', {
+      practice: true, competition: { ci: 'Test2026', cn: 'Test 2026', r: 'f', g: 'B', n: 1, x: 1 },
+      sourceEn: 'Final, B, E1', sourceZh: '决赛, B, E1',
+    }));
+    expect(params.get('event')).toBe('oh');
+    expect(params.get('round')).toBe('f');
+    expect(params.get('groupId')).toBe('B');
+    expect(params.has('solveNum')).toBe(false);
+    expect(params.get('sourceEn')).toBe('Final, B, E1');
   });
   it('anchors a solution-only reconstruction at the solved endpoint', () => {
     const puzzle = simPuzzleForReconEvent('oh');

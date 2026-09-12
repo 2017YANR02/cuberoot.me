@@ -833,6 +833,13 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'RecordSectionsView',
+    import: "import { RecordSectionsView } from '@/components/wca-stats/WcaStatView.views';",
+    category: 'more',
+    zh: 'WCA 纪录统计共用视图，按地区、纪录级别及适用的项目和类型选择预计算榜单，自动排除无数据组合。URL 状态由页级调用方管理。',
+    en: 'Shared WCA record-statistics view selecting precomputed regional, record-tier and applicable event/type rankings. Excludes empty combinations; the page owns URL state.',
+  },
+  {
     name: 'SiteBackground',
     import: "import SiteBackground, { SiteBackgroundControl } from '@/components/SiteBackground';",
     category: 'more',
