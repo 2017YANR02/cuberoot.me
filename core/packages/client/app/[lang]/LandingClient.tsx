@@ -307,7 +307,8 @@ export default function LandingPage() {
           <Heart size={14} aria-hidden="true" />
         </Link>
         {!user ? (
-          <Link href={`/account${nextQuery(pathname)}`} className="landing-auth-btn is-login" prefetch={false}>
+          <Link href={`/account${nextQuery(pathname)}`} className="landing-auth-btn is-login" prefetch={false}
+            aria-label={tr({ zh: '登录', en: 'Log in' })} title={tr({ zh: '登录', en: 'Log in' })}>
             <LogIn size={16} aria-hidden />
             <span>{tr({ zh: '登录', en: 'Log in' })}</span>
           </Link>

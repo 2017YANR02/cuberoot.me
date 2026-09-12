@@ -49,13 +49,15 @@
     z-index: 5;
     display: flex;
     align-items: center;
+    flex-wrap: nowrap;
     gap: 0.5rem;
 }
 .landing-page .landing-auth .lang-toggle,
 .landing-page .landing-auth .theme-toggle-inline,
 .landing-page .landing-auth-icon {
-    width: 28px;
-    height: 28px;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -66,6 +68,15 @@
     color: var(--muted-foreground);
     text-decoration: none;
     transition: color 0.15s, background 0.15s;
+}
+/* Size only the entry icons, never icons inside the appearance menu. */
+.landing-page .landing-auth .lang-toggle > svg,
+.landing-page .landing-auth .theme-toggle-inline > svg,
+.landing-page .landing-auth-icon > svg,
+.landing-page .landing-auth-btn.is-login > svg {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
 }
 .landing-page .landing-auth .lang-toggle:hover,
 .landing-page .landing-auth .lang-toggle:focus-visible,
@@ -91,6 +102,10 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
 .landing-page .landing-auth-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    flex-shrink: 0;
     gap: 0.45rem;
     padding: 0.4rem 0.85rem;
     border-radius: 999px;
@@ -126,6 +141,8 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
 }
 /* 已登录:仅头像,按钮收成圆形贴合头像(去掉胶囊边框/内边距) */
 .landing-page .landing-auth-btn.is-avatar {
+    width: 44px;
+    height: 44px;
     padding: 0;
     border: none;
     background: transparent;
@@ -135,8 +152,8 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     background: transparent;
 }
 .landing-page .landing-auth-btn.is-avatar .landing-auth-avatar {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border: 1px solid var(--border);
     transition: border-color 0.15s;
 }
@@ -145,8 +162,8 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
 }
 /* 无头像的兜底 User 图标同尺寸圆形 */
 .landing-page .landing-auth-btn.is-avatar > svg {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     padding: 5px;
     border-radius: 999px;
     border: 1px solid var(--border);
@@ -166,7 +183,7 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    min-height: 28px;
+    min-height: 44px;
     font-size: 0.9rem;
     font-weight: 500;
     color: var(--text-sub);
@@ -410,7 +427,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
     /* 品牌与操作区共用一行，通知条存在时也保留自己的顶部空间。 */
     body .landing-page,
     body:has(.page-notice-wrap) .landing-page {
@@ -420,32 +437,29 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     body:has(.page-notice-wrap) .landing-page .landing-auth {
         top: calc(0.5rem + var(--sat));
         right: max(1rem, var(--sar));
-        min-height: 38px;
+        min-height: 44px;
     }
     .landing-page .landing-auth,
     .landing-page .landing-auth .header-toggles {
-        gap: clamp(0px, calc((100vw - 360px) / 8), 8px);
+        gap: clamp(0px, calc((100vw - 288px) / 16), 8px);
     }
     .landing-page .brand-line,
     body:has(.page-notice-wrap) .landing-page .brand-line {
         top: calc(0.5rem + var(--sat));
         left: max(1rem, var(--sal));
-        min-height: 38px;
+        min-height: 44px;
         gap: 0.25rem;
         font-size: 1rem;
         white-space: nowrap;
     }
-}
-
-@media (max-width: 360px) {
-    .landing-page .landing-auth .lang-toggle,
-    .landing-page .landing-auth .theme-toggle-inline,
-    .landing-page .landing-auth-icon {
-        width: 24px;
+    .landing-page .brand-name,
+    .landing-page .landing-auth-btn.is-login > span {
+        display: none;
     }
     .landing-page .landing-auth-btn.is-login {
-        gap: 0.25rem;
-        padding-inline: 0.2rem;
+        width: 44px;
+        gap: 0;
+        padding: 0;
     }
 }
 
