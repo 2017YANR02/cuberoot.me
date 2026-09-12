@@ -34,7 +34,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   const actionsRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toolbarRef = useRef<HTMLElement>(null);
-  const toggleRef = useRef<HTMLButtonElement>(null);
+  const toggleRef = useRef<HTMLAnchorElement>(null);
   const cancelCollapse = useCallback(() => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
     closeTimer.current = null;
@@ -117,6 +117,9 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   const roleTesting = ready && (!!preview || (!!user && canTestRoles()));
   if (!ready || (!admin && !roleTesting)) return null;
   const environment = adminEnvironment(window.location.hostname, navigator);
+  const local = environment.current === 'local';
+  const environmentLabel = local ? t('切换到线上', 'Switch to live') : t('切换到本地', 'Switch to local');
+  const environmentHref = (local ? 'https://cuberoot.me' : environment.localOrigin) + liveUrlSuffix;
   const items = [
     { value: 'superadmin' as const, label: t('超级管理员', 'Super administrator') },
     { value: 'admin' as const, label: t('管理员', 'Administrator') },
@@ -166,13 +169,14 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
         transition:opacity 220ms ease 100ms,transform 420ms cubic-bezier(.22,1,.36,1),visibility 0s;}
       .admin-tools-actions .compact-select{min-width:0;}
       @media(prefers-reduced-motion:reduce){.admin-tools,.admin-tools .admin-tools-actions{transition:none;}}
-      .admin-env-switch{display:inline-flex;align-items:center;gap:8px;}
     `}</style>
-    <button ref={toggleRef} type="button" className="admin-tool-action admin-tools-toggle"
-      aria-label={t('管理工具', 'Admin tools')} title={t('管理工具', 'Admin tools')} aria-expanded={expanded}
-      onClick={() => { cancelCollapse(); setExpanded(value => !value); }}>
-      {environment.current === 'local' ? <Laptop size={17} aria-hidden /> : <Globe size={17} aria-hidden />}
-    </button>
+    <a ref={toggleRef} className="admin-tool-action admin-tools-toggle" href={environmentHref}
+      aria-label={environmentLabel} title={environmentLabel} aria-expanded={expanded}
+      onClick={event => {
+        if (!expanded) { event.preventDefault(); cancelCollapse(); setExpanded(true); }
+      }}>
+      {local ? <Globe size={17} aria-hidden /> : <Laptop size={17} aria-hidden />}
+    </a>
     <div ref={actionsRef} className="admin-tools-actions" inert={!expanded}>
     {admin && <>
       <button type="button" className="admin-tool-action" onClick={() => openPageNoticeEditor('page_top')}
@@ -187,16 +191,6 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
         title={t('管理后台', 'Administration')} aria-label={t('管理后台', 'Administration')}>
         <UserCog size={13} aria-hidden />
       </AppLink>
-      {liveUrlSuffix && <div className="admin-env-switch" role="group" aria-label={t('切换环境', 'Switch environment')}>
-        {[
-          { env: 'local', origin: environment.localOrigin, label: t('切换到本地', 'Switch to local'), Icon: Laptop },
-          { env: 'prod', origin: 'https://cuberoot.me', label: t('切换到线上', 'Switch to live'), Icon: Globe },
-        ].filter(({ env }) => env !== environment.current)
-          .map(({ env, origin, label, Icon }) => <a key={env} className="admin-tool-action" href={origin + liveUrlSuffix}
-          title={label} aria-label={label}>
-          <Icon size={13} aria-hidden />
-        </a>)}
-      </div>}
     </>}
     {roleTesting &&
       <CompactSelect
