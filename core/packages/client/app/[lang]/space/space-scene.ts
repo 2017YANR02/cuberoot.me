@@ -800,7 +800,7 @@ export class SpaceScene {
     this.orbit.cursor.set(0, 0, 0);
     this.orbit.maxPolarAngle = Math.PI / 2 - .025;
     this.currentView = view;
-    const inside = ['interior', 'study', 'bedroom', 'bathroom', 'courtyard', 'garage', 'cinema', 'gym'].includes(view);
+    const inside = ['interior', 'study', 'bedroom', 'bathroom', 'courtyard', 'garage', 'cinema', 'gym', 'alibabaCourt'].includes(view);
     this.scene.backgroundIntensity = 0.12;
     this.orbit.minDistance = inside ? 0.2 : 4;
     const cityView = !!this.city && Object.hasOwn(SHANGHAI_VIEWS, view);
@@ -821,6 +821,8 @@ export class SpaceScene {
     if (view === 'shore') { position.set(32, -1.8, 63); target.set(8, -4.8, 135); }
     if (cityView) {
       const preset = SHANGHAI_VIEWS[view as ShanghaiView]; position.set(...preset.camera); target.set(...preset.target);
+      // Ground-level courtyard presets must be able to look up beneath bridges.
+      if (position.y < target.y) this.orbit.maxPolarAngle = Math.PI - .025;
       if (mobile) position.sub(target).multiplyScalar(1.2).add(target);
     }
     // Metre-scale city shadows are focused on the current district; room views
@@ -828,7 +830,7 @@ export class SpaceScene {
     this.sun.target.position.copy(cityView ? target : new THREE.Vector3(-9, 0, -3));
     // A 4.6 km map cannot retain sub-metre cornices/columns. Close architectural
     // presets focus the existing shadow map; broad city/bridge views keep coverage.
-    const closeArchitecture = cityView && ['hsbc', 'customs', 'peace', 'tomsonGarden', 'commercialBank'].includes(view);
+    const closeArchitecture = cityView && ['hsbc', 'customs', 'peace', 'tomsonGarden', 'commercialBank', 'alibaba', 'alibabaCourt'].includes(view);
     const span = cityView ? view === 'commercialBank' ? 60 : closeArchitecture ? 160 : 2300 : 42;
     Object.assign(this.sun.shadow.camera, { left: -span, right: span, top: span, bottom: -span, near: .5, far: cityView ? 11000 : 180 });
     this.sun.shadow.normalBias = cityView ? view === 'commercialBank' ? .015 : closeArchitecture ? .06 : 1 : .025;
