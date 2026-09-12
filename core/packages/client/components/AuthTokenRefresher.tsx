@@ -32,6 +32,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   const [expanded, setExpanded] = useState(false);
   const [actionsWidth, setActionsWidth] = useState(0);
   const [toggleOffset, setToggleOffset] = useState(0);
+  const [toggleLeft, setToggleLeft] = useState(0);
   const actionsRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toolbarRef = useRef<HTMLElement>(null);
@@ -52,7 +53,10 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     const measure = () => {
       setActionsWidth(actions.getBoundingClientRect().width);
       const toggle = toggleRef.current;
-      if (toggle) setToggleOffset(actions.offsetWidth - toggle.offsetLeft - toggle.offsetWidth);
+      if (toggle) {
+        setToggleLeft(toggle.offsetLeft);
+        setToggleOffset(actions.getBoundingClientRect().width - toggle.offsetLeft - toggle.offsetWidth);
+      }
     };
     const observer = new ResizeObserver(measure);
     observer.observe(actions);
@@ -152,13 +156,15 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       if (!event.currentTarget.contains(event.relatedTarget as Node | null)
         && !(event.relatedTarget as Element | null)?.closest?.('.admin-tools-role-popup')) collapse();
     }}
-    style={{ position: 'absolute', top: '100%', left: `${centerX * 100}%`, transform: 'translateX(-50%)', marginTop: 8, width: expanded ? actionsWidth + 10 : 42, maxWidth: 'calc(100vw - 32px)', pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', alignItems: 'center' }}>
+    // Anchor expansion on the environment icon, not the changing toolbar midpoint.
+    // Width, toolbar translation and toggle translation share one easing curve.
+    style={{ position: 'absolute', top: '100%', left: `${centerX * 100}%`, transform: `translateX(${-21 - (expanded ? toggleLeft : 0)}px)`, marginTop: 8, width: expanded ? actionsWidth + 10 : 42, maxWidth: 'calc(100vw - 32px)', pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', alignItems: 'center' }}>
     <style>{`
       .admin-tools{box-sizing:border-box;padding:4px;border-radius:24px;
         border:1px solid var(--glass-edge);background:var(--glass-background);
         backdrop-filter:var(--glass-filter);-webkit-backdrop-filter:var(--glass-filter);
         box-shadow:var(--glass-shadow);height:42px;
-        transition:width 420ms cubic-bezier(.22,1,.36,1);}
+        transition:width 420ms cubic-bezier(.22,1,.36,1),transform 420ms cubic-bezier(.22,1,.36,1);}
       .admin-tools .compact-select-trigger{border:0;background:transparent;padding:6px;}
       .admin-tools .compact-select-trigger:hover{background:transparent;color:var(--accent);}
       .admin-tools .compact-select-arrow{display:none;}
