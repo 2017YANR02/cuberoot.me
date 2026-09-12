@@ -8,8 +8,8 @@
 #   4. 存当前清单为新基线
 # 首次(无清单)或 -Baseline: 只存清单(假定远端已由一次全量 tar 同步), 不发。
 #
-# 复用现有免密 `ssh root@cuberoot` 通道(不引入 rsync / 不碰服务器地址)。sha1 全扫 ~2-3min(196k 文件),
-# 远小于 35min 全量 tar; 传输从 ~590MB 降到 changed 小包(典型增量 run 仅几十个 comp_steps 文件 + 变动 JSON)。
+# 复用现有免密 `ssh root@cuberoot` 通道(不引入 rsync / 不碰服务器地址)。sha1 全扫耗时随文件数量和磁盘负载变化;
+# 2026-09-11 本机约 23.6 万文件,按扫描中速度估计全程约 25 分钟(非完成实测)。增量发布只传内容变化的文件。
 [CmdletBinding()]
 param(
   [switch]$DryRun,     # 只算 diff 打印 changed/deleted, 不实发
@@ -31,7 +31,7 @@ $bLocal = BashPath $Local
 # ---- 1. 算当前 sha1 清单 (格式: '<sha1>  ./relpath') ----
 $cur = Join-Path $env:TEMP '_scramble_cur_manifest.sha1'
 $curB = BashPath $cur
-Write-Host "[1/4] 算当前 sha1 清单 (find + sha1sum, 196k 文件约 2-3min) ..." -ForegroundColor Cyan
+Write-Host "[1/4] 算当前 sha1 清单 (find + sha1sum, 全量扫描可能需要数十分钟; 此阶段无实时进度, 完成后显示文件数) ..." -ForegroundColor Cyan
 # steps/wca_scramble_steps.csv (~600MB) 是本地灌 PG 的中间产物, 远端无消费方(layout json 才被前端拉), 不发布
 & $bash -c "cd '$bLocal' && find . -type f ! -path './steps/wca_scramble_steps.csv' | LC_ALL=C sort | xargs -d '\n' sha1sum > '$curB'"
 if($LASTEXITCODE -ne 0){ throw 'sha1 清单生成失败' }
