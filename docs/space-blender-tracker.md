@@ -1,5 +1,19 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-12 Y 中庭铺地、排水与绿篱两轮细化
+
+用户恢复继续优化后，从现有规范工程增量编辑，对照 Fangfang Tian 的竣工照片细化 Y 公共中庭；照片来源、发表日期及尺寸估算见[庭院档案](../design/space/references/alibaba-xuhui.md#庭院铺地与种植池增量)。
+
+- 第一轮检查约 1 m 石材分格与 6.6 m 长树池；第二轮按照片尺度关系改为约 **0.75 m 分格、7.5 m 长树池**并加密绿篱。最终补 **8,256 块板面、8 mm 接缝、两条合计 184 m 的排水带、920 道格栅、四处长条树池及 3,136 张枝叶面**；以上为建模计数和估算参数，未经现场测绘。日景、夜景、人眼高度与树池近景均已查看。
+- 新增六个对象、修改三个网格，其余几何及变换摘要保持 `f40ffe85d64904e10d9068a094205fef47da84f46db12ab0cba4c9b58c44cb97`，五组作者灯及导出身份一致。沿用已打包贴图，没有新增纹理或灯池。`refine_alibaba_courtyard.py --round 2 --apply` 已保存标记 `alibaba-courtyard-20260912`，禁止重复应用；[保存报告](../.tmp/png/space-alibaba-courtyard-20260912/saved.json)及同目录 `shanghai-before-courtyard.blend` 保留。
+- 规范工程 **198,832,388 字节**，源指纹 `[198832388,1789282205350288000]`；正式 `batch.ps1 -Asset shanghai` 导出为 **409,721,976 字节**，SHA-256 **`a1c4c7051684e1b9b1dfd28e7742e52a5252b4b9cb674120b68f5dba9339c69c`**。清单 **12,001 个对象、5 组作者灯、14 张纹理**；运行资源比上轮增加 **7,241,320 字节，约 1.80%**。
+- [完整上海运行合同](../.tmp/png/space-alibaba-courtyard-20260912/city-contract.json)为 **`ok=true`、`errors=[]`**：665 网格、216 着色材质、95 组建筑属性、一个时钟、1,200 交通实例、12 艘船及既有建筑、水面和贴图检查通过。
+- 实际 `/zh/space` 刷新后加载上述正式哈希，未注入候选模型；[网页记录](../.tmp/png/space-alibaba-courtyard-20260912/final-web-runtime.json)核对新修订对象、铺地法线、绿篱透明阈值及 Y 日间六灯为零、夜间六灯 850 cd。控制台 **0 errors / 0 warnings**。[最终日景](../.tmp/png/space-alibaba-courtyard-20260912/final-eye-day.png)、[最终夜景](../.tmp/png/space-alibaba-courtyard-20260912/final-eye-night.png)、[树池近景](../.tmp/png/space-alibaba-courtyard-20260912/final-detail-day.png)已逐张查看。
+
+**尚未达到测绘 1:1 或电影级。** 中庭日景偏冷、暗处植物层次不足、窗后室内仍较均匀；下沉庭院、现场招牌、实测灯具与地面材质待补，X 尺寸和 Z 竣工形态仍有缺口。约 410 MB 城市资源还需分区与细节分级；本轮未改布局，未重跑窄屏或真实手机性能验收。
+
+Python 语法、LF、源指纹、清单/GLB 哈希与 `git diff --check` 通过。未修改 TypeScript，未跑 typecheck、测试全集或 Next build。仅本地保存、导出并提交脚本、清单和文档，不 push；LFS 配置与重资产上传仍暂缓。后续继续编辑当前源工程，旧候选指纹已失效。下文为历史快照。
+
 ## 2026-09-12 园区围护与入口细部收尾，按用户要求暂停
 
 完成本轮 X/Y/Z 三次候选复看、规范工程保存及正式导出后停止，不扩展新建筑。来源、日期和估算边界见[园区围护细部档案](../design/space/references/alibaba-xuhui.md#围护结构与入口细部增量)。
