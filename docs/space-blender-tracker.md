@@ -1,5 +1,19 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 100F 筒灯扶手与夜间反射
+
+本轮仅细化环球金融中心 100F 观光厅。实际查看绳手真人与 Gerhard Huber 的室内夜间照片，补中央黑色灯槽、20 盏圆形筒灯外形、两侧共 20 段扶手及 40 个支架，并将宽框架饰面改为抛光金属。照片、摄影者、日期及尺寸估算见[参考档案](../design/space/references/swfc-top.md#2026-09-13-筒灯扶手与夜间实拍)，两个来源链接均已在网页“来源与致谢”确认可见。照片没有作为运行贴图发布。
+
+- 三轮逐图复查：第一轮发现宽柱饰没有室内倒影；第二轮补侧壁与斜顶反射，但对向金属仍黑。曾试 900 cd，玻璃地面过亮且对向柱饰未改善，放弃该值；第三轮回到 120 cd，增加局部环境采样。最终正式资源的[日景](../.tmp/png/space-swfc-lighting-20260913/formal-day.png)、[夜景](../.tmp/png/space-swfc-lighting-20260913/formal-night.png)、[斜视](../.tmp/png/space-swfc-lighting-20260913/formal-oblique.png)、[玻璃带俯视](../.tmp/png/space-swfc-lighting-20260913/formal-floor.png)及[窄屏](../.tmp/png/space-swfc-lighting-20260913/formal-narrow.png)均已实际打开查看。
+- Blender 新增四个导出网格，环球共 18 个导出网格；新建六盏原生 SPOT 代理灯，仍复用网页六灯池。厅内包围盒参与选灯，实测原地朝六个方向看时六灯位置、120 cd 强度保持稳定。灯位、光度及构件细尺寸为照片估算，非测绘值。
+- 保存修订 `swfc-hall-lighting-20260913` 前核对源、脚本、候选哈希并备份。源工程 **200,281,743 字节**，指纹 `[200281743,1789308666180654200]`；[保存报告](../.tmp/png/space-swfc-lighting-20260913/round-03/saved.json)确认其他模型几何、变换、运行 ID 与既有五灯组保留，15 条通道射线、15 处玻璃楼面检查及 3 处净高检查通过。备份为同目录 `shanghai-before-hall-lighting.blend`。
+- 正常 `batch.ps1 -Asset shanghai` 导出完成：**400,900,300 字节**，较上版增加 **570,612 字节**；12,013 objects、6 灯组、14 张共享纹理。SHA-256 为 `782bf7f2488f1a8dcbcd571f738b02b576becd7bbbe0f6e461dba1ffd6ba921e`。[正式 HTTP 响应核对](../.tmp/png/space-swfc-lighting-20260913/formal-http.json)确认 200、实际响应体长度及哈希一致，正式网页未注入候选模型。
+- 七个室内镜面沿用真实三角面并保留玻璃孔洞，斜顶共面部分合并；桌面反射 768、窄屏 384。局部 CubeCamera 采样分辨率为桌面 128、窄屏 64，在进入厅内或时间、天气变化后更新，复用期间不逐帧采六面；远离包围盒 25 m 后关闭本厅镜面并恢复原环境贴图。单点环境反射不是精确的视差校正或多次光线追踪，移动交通也不会逐帧重采。
+- [正式运行记录](../.tmp/png/space-swfc-lighting-20260913/formal-runtime.json)：稳定帧本厅 **7 次**平面反射、环境采样 **0 次**；更新帧另有 **6 次**立方体面采样。远景本厅两者均为 **0**，现有河面仍有 2 次反射。场景渲染最大嵌套深度 2；环境预过滤内部渲染最大深度 3，未见镜面递归链。[窄屏记录](../.tmp/png/space-swfc-lighting-20260913/narrow-runtime.json)验证降分辨率生效，390 × 844 下未横向溢出。这些数据不等于 GPU 帧率或真实手机性能验收。
+- client typecheck 与定向 `space_shanghai.test.ts`、`space_planar_reflections.test.ts` **57 项测试通过**。[整城检查](../.tmp/png/space-swfc-lighting-20260913/city-contract.json)为 `ok=true`、`errors=[]`：684 meshes、217 shader materials、95 building attributes、1 座运行钟、1,200 辆车、12 艘船、24 栋外滩建筑等既有绑定保留。正式桌面及窄屏控制台均 0 错误、0 警告；未运行 Next build 或无关测试全集。
+
+**仍未达标**：夜间镜面柱饰偏暗，实拍中的金属板面波纹、端部展板和低位疏散标识未复原；97F 层间结构及细尺寸仍需核定，反射还有近似。不能宣称 1:1 或电影级完成。整城约 401 MB，分区加载、LOD、压缩及真实移动设备性能仍待做。本轮代码、脚本、清单与文档仅本地提交，不 push；`.blend`、GLB 保存在本地，LFS 配置和资产上传继续暂缓。
+
 ## 2026-09-13 100F 网页镜面反射
 
 将上轮 Blender 100F 镜顶、地面和窗台的室内倒影接回网页。直接从正式 GLB 的 `swfc-skywalk-20260913/interior-mirror` 提取五个向内平面，保留原三角面和玻璃带开孔，使用源材质颜色、粗糙度和物体变换；未重新生成建筑或增加尺寸估计。实现复用已安装的 [Three.js Reflector](https://threejs.org/docs/pages/Reflector.html)，文档于 2026-09-13 查阅，致谢沿用网页已有 Three.js 条目；实景依据仍见[业主资料档案](../design/space/references/swfc-top.md#2026-09-13-100f-观光厅与透明步道)。

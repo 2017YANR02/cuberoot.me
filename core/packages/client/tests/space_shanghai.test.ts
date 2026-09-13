@@ -205,7 +205,7 @@ describe('Shanghai geographic asset and river cruise', () => {
 
   it('rejects malformed authored rigs before using their GPU light parameters', () => {
     const pool = new ShanghaiFacadeLighting(true), root = new THREE.Group();
-    for (const patch of [{ centre: [1, 2] }, { centre: [1, NaN, 3] }, { washTop: -1 }, { washTop: Infinity }, { lamps: [] }, { lamps: null }]) {
+    for (const patch of [{ interiorBounds: null }, { interiorBounds: { min: [0, 0, 0], max: [1, NaN, 1] } }, { interiorBounds: { min: [1, 0, 0], max: [1, 2, 2] } }, { centre: [1, 2] }, { centre: [1, NaN, 3] }, { washTop: -1 }, { washTop: Infinity }, { lamps: [] }, { lamps: null }]) {
       root.userData.facadeLighting = { ...authoredRig(), ...patch };
       expect(() => pool.register(root)).toThrow('Invalid Blender facade');
     }
@@ -214,6 +214,31 @@ describe('Shanghai geographic asset and river cruise', () => {
       const rig = authoredRig(); Object.assign(rig.lamps[0], patch); root.userData.facadeLighting = rig;
       expect(() => pool.register(root)).toThrow('Invalid Blender facade light rig');
     }
+    pool.dispose();
+  });
+
+  it('keeps hall lamps fixed while looking in all directions inside rotated local bounds, then releases outside', () => {
+    const pool = new ShanghaiFacadeLighting(false), root = new THREE.Group();
+    root.position.set(900, 0, -350); root.rotation.y = .75; root.scale.setScalar(1.1);
+    root.userData.facadeLighting = { ...authoredRig(), centre: [0, 475, 0],
+      interiorBounds: { min: [-3, 474, -25], max: [3, 478, 25] } };
+    pool.register(root);
+    const camera = new THREE.PerspectiveCamera();
+    camera.position.copy(root.localToWorld(new THREE.Vector3(1, 476, 12)));
+    const positions: number[][][] = [];
+    for (const axis of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) {
+      camera.lookAt(camera.position.clone().add(new THREE.Vector3(...axis)));
+      settleLights(pool, camera);
+      expect(pool.active.value.toArray()).toEqual([1, 1]);
+      expect(pool.lights.map(l => l.intensity)).toEqual(Array(6).fill(360));
+      positions.push(pool.lights.map(l => l.position.toArray()));
+    }
+    expect(positions.every(p => JSON.stringify(p) === JSON.stringify(positions[0]))).toBe(true);
+    camera.position.copy(root.localToWorld(new THREE.Vector3(0, 479, 12)));
+    camera.lookAt(camera.position.clone().add(new THREE.Vector3(0, 1, 0)));
+    settleLights(pool, camera);
+    expect(pool.active.value.toArray()).toEqual([-1, 0]);
+    expect(pool.lights.map(l => l.intensity)).toEqual(Array(6).fill(0));
     pool.dispose();
   });
 

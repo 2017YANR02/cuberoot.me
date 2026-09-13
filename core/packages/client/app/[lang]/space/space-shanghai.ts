@@ -282,7 +282,11 @@ export class ShanghaiScene {
     }
     const hallMirror = nodes.get('swfc-skywalk-20260913/interior-mirror');
     if (hallMirror instanceof THREE.Mesh && hallMirror.material instanceof THREE.MeshStandardMaterial) {
-      this.interiorMirrors = new BlenderInteriorMirrors(hallMirror, this.narrow);
+      let mirrorPiers: THREE.Mesh | undefined;
+      scene.traverse(o => {
+        if (o instanceof THREE.Mesh && !Array.isArray(o.material) && o.material.userData.spaceSwfcTopMaterialRole === 'pier-cladding') mirrorPiers = o;
+      });
+      this.interiorMirrors = new BlenderInteriorMirrors(hallMirror, this.narrow, mirrorPiers);
     }
     this.traffic = new ShanghaiTraffic(data.roads, this.material.bind(this), this.narrow, traffic);
     this.root.add(this.traffic.root);
@@ -471,6 +475,7 @@ export class ShanghaiScene {
   }
 
   setWeather(weather: Weather, night: number, sunDirection: THREE.Vector3, riverColor: RiverColor = 'huangpu', timeOfDay?: string) {
+    this.interiorMirrors?.invalidateProbe();
     this.night.value = night;
     this.traffic?.setWeather(night, ['drizzle','rain','downpour','thunderstorm','typhoon'].includes(weather) ? 1 : 0);
     if (timeOfDay !== undefined) this.timeOfDay = timeOfDay;

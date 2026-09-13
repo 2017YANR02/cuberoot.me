@@ -194,6 +194,20 @@
     "en": "Completed-building distance and upward photographs reviewed 2026-09-08 for the Blender model's pale silver-blue glazing, horizontal grid, silver spiral seam and sloping crown. Inner crown and strut dimensions remain estimates. Procedural stone micro-surfaces are original work; photographs are not runtime textures. Surveyed 1:1 and cinematic quality remain unverified."
   },
   {
+    "name": "Masato Nawate: SWFC observation hall at night",
+    "space": true,
+    "url": "https://yakei.jp/abroad/shanghai/shanhai-hills-photo.html",
+    "zh": "2026-09-13 对照绳手真人的夜间实拍，补充 100F 中央黑色灯槽、暖色筒灯、窗边扶手与反光柱饰。拍摄日期未列；照片仅作建模参考，未作为网页贴图。灯具间距、扶手尺寸和光度仍为估算。",
+    "en": "Masato Nawate's night photograph, reviewed 2026-09-13, references the 100F black central ceiling channel, warm recessed lamps, window handrails and reflective pier cladding. Capture date is unlisted. The photo is a modeling reference, not a runtime texture; fixture spacing, rail dimensions and photometry remain estimates."
+  },
+  {
+    "name": "Gerhard Huber: SWFC observation deck, April 2012",
+    "space": true,
+    "url": "https://global-geography.org/af/Geography/Asia/China/Pictures/Shanghai_2/Shanghai_World_Financial_Center_-_Observation_Deck_at_Night",
+    "zh": "Gerhard Huber 于 2012 年 4 月拍摄的观光厅夜景，页面标注 CC BY-NC 4.0 + Edu，查阅于 2026-09-13。用于交叉核对筒灯、扶手和折面镜顶；曝光与镜面波纹不能作为实测光度。照片未作为网页贴图，端部标识与精确材料参数尚待细化。",
+    "en": "Gerhard Huber's observation-hall night photograph from April 2012, labeled CC BY-NC 4.0 + Edu and reviewed 2026-09-13, cross-checks the downlights, handrails and folded reflective ceiling. Exposure and panel ripples do not establish measured photometry. The photo is not a runtime texture; end signage and exact material parameters remain pending."
+  },
+  {
     "name": "KPF: Shanghai World Financial Center",
     "space": true,
     "url": "https://www.kpf.com/project/shanghai-world-financial-center",
