@@ -101,7 +101,12 @@ describe('authored interior reflections', () => {
     const source = new THREE.Mesh(hall(), new THREE.MeshStandardMaterial());
     const lining = new THREE.Mesh(new THREE.BoxGeometry(.1, .1, .1), new THREE.MeshStandardMaterial());
     const original = new THREE.Texture(); source.material.envMap = original; source.material.envMapIntensity = .4;
-    const interior = new BlenderInteriorMirrors(source, true, lining), mirror = source.children[0] as Reflector;
+    const fixture = new THREE.MeshStandardMaterial({ envMap: original, envMapIntensity: .7 });
+    const exterior = new THREE.MeshStandardMaterial({ envMap: original, envMapIntensity: .9 });
+    const fixtureDisposed = vi.fn(); fixture.addEventListener('dispose', fixtureDisposed);
+    // Repeated/shared room materials must restore exactly once, while a
+    // building's exterior material must never acquire the indoor cube.
+    const interior = new BlenderInteriorMirrors(source, true, lining, [fixture, fixture, source.material]), mirror = source.children[0] as Reflector;
     const camera = new THREE.PerspectiveCamera(60, 1, .05, 1000);
     camera.position.set(3, 2, 0); camera.lookAt(3, 0, 0); camera.updateMatrixWorld(); source.updateMatrixWorld(true);
     let failAt = 1;
@@ -112,6 +117,8 @@ describe('authored interior reflections', () => {
       // In both stages the sampled cube must differ from the render target.
       expect(source.material.envMap).not.toBe(this.renderTarget.texture);
       expect(lining.material.envMap).not.toBe(this.renderTarget.texture);
+      expect(fixture.envMap).toBe(source.material.envMap);
+      expect(exterior.envMap).toBe(original); expect(exterior.envMapIntensity).toBe(.9);
       expect(source.children.every(o => !o.visible)).toBe(true);
       const target = this.renderTarget;
       target.addEventListener('dispose', () => { disposed.add(target); });
@@ -127,10 +134,12 @@ describe('authored interior reflections', () => {
       interior.update(camera, false); draw(); expect(capture).not.toHaveBeenCalled();
       interior.update(camera); expect(draw).toThrow('capture failed');
       expect(source.material.envMap).toBe(original); expect(mirror.visible).toBe(true);
+      expect(fixture.envMap).toBe(original); expect(fixture.envMapIntensity).toBe(.7);
       failAt = 0; draw(); expect(source.material.envMap).toBe(captures[2].target.texture);
       expect(captures[1].input).toBe(original);
       expect(captures[2].input).toBe(captures[1].target.texture);
       expect(source.material.envMapIntensity).toBe(1);
+      expect(fixture.envMap).toBe(source.material.envMap); expect(fixture.envMapIntensity).toBe(1);
       interior.update(camera); draw(); expect(capture).toHaveBeenCalledTimes(3);
       // Keep the previous completed map while lights fade; recapture just once
       // after settling, even if weather animation is disabled.
@@ -140,15 +149,20 @@ describe('authored interior reflections', () => {
       interior.invalidateProbe(); interior.update(camera); draw(); expect(capture).toHaveBeenCalledTimes(7);
       failAt = 9; interior.invalidateProbe(); interior.update(camera); expect(draw).toThrow('capture failed');
       expect(source.material.envMap).toBe(original); expect(mirror.visible).toBe(true);
+      expect(fixture.envMap).toBe(original); expect(fixture.envMapIntensity).toBe(.7);
       failAt = 0; draw(); expect(capture).toHaveBeenCalledTimes(11);
       camera.position.set(0, 0, 100); interior.update(camera);
       expect(source.material.envMap).toBe(original); expect(source.material.envMapIntensity).toBe(.4);
+      expect(fixture.envMap).toBe(original); expect(fixture.envMapIntensity).toBe(.7);
       camera.position.set(3, 2, 0); camera.updateMatrixWorld(); interior.update(camera); draw();
       expect(capture).toHaveBeenCalledTimes(13);
       expect(new Set(captures.map(c => c.target)).size).toBe(2);
       interior.dispose(); expect(disposed.size).toBe(2); expect(source.material.envMap).toBe(original);
+      expect(fixture.envMap).toBe(original); expect(fixture.envMapIntensity).toBe(.7);
+      expect(fixtureDisposed).not.toHaveBeenCalled();
     } finally {
       capture.mockRestore(); interior.dispose(); original.dispose();
+      fixture.dispose(); exterior.dispose();
       for (const m of [source, lining]) { m.geometry.dispose(); m.material.dispose(); }
     }
   });
