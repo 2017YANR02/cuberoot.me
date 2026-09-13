@@ -92,6 +92,17 @@
 
 `refine_alibaba_envelope.py` 在当前源工程上生成候选，保存前校验源指纹、候选脚本哈希、未编辑对象几何与变换、五组作者灯和导出身份。此次增加 19 个网格、修改 18 个既有对象，没有重新生成整栋。**本批已保存 `spaceAlibabaEnvelopeRevision=alibaba-envelope-20260912`，不得重复应用**；备份、三次审图和保存报告位于 `.tmp/png/space-alibaba-envelope-20260912/`，正式导出及网页结果见跟踪文档最新记录。
 
+## 庭院铺地与种植池增量
+
+2026-09-12 对照 [Foster + Partners 竣工项目](https://www.archdaily.com/1020980/alibaba-shanghai-campus-foster-plus-partners)中的 [中庭铺地正视照片](https://images.adsttc.com/media/images/66df/61ff/7509/0c0b/a1ce/9326/medium_jpg/alibaba-shanghai-campus-foster-plus-partners_9.jpg?1725915665)与 [庭院斜视照片](https://images.adsttc.com/media/images/66df/6201/7509/0c0b/a1ce/9328/medium_jpg/alibaba-shanghai-campus-foster-plus-partners_5.jpg?1725915667)，分别为本地 `reference-2.jpg`、`reference-3.jpg`。摄影 Fangfang Tian，项目页发表于 2024-09-10，照片精确拍摄日期未知。可见细石材分格、深色线性带、长条种植池与低绿篱；现场石材规格、排水构造与植物品种没有测量资料。
+
+- 第一轮采用约 1 m 的石材分格和 6.6 m 长树池；第二轮近景对照调整为约 0.75 m 分格、7.5 m 长树池，并加密绿篱枝叶面。最终模型包含 8,256 块板面、8 mm 接缝及 2 mm 倒角；这些是建模参数，不是现场产品规格。
+- 保留原地面与屋顶铺地对象，替换过大的旧接缝网格；新增板面按公共通道裁切，两条排水带合计 184 m、920 道横向格栅。排水带位置和构造是视觉重建，未取得地下排水图。
+- 只加长四处既有地面树池，宽约 4.455 m；保留树位、树干、树冠和其他屋顶种植，树池仍为开口、种植面低于边沿。新增 3,136 张带透明轮廓的枝叶面形成低绿篱，沿用工程内已打包的 Poly Haven 图集。植物与石材微表面仍为替代资源，没有新增第三方代码、贴图或灯组。
+- 两轮候选已在网页中检查；第二轮逐张查看人眼高度日景、夜景及树池近景。日景中庭仍偏冷、暗部植被层次不足，现场灯具、招牌与完整下沉庭院仍待校准，不记为测绘 1:1 或电影级完成。
+
+`refine_alibaba_courtyard.py` 新增六个对象、修改三个既有网格，保存前核对其他对象的几何及变换、五组作者灯、唯一导出身份、规范工程指纹和候选脚本哈希。**已保存 `spaceAlibabaCourtyardRevision=alibaba-courtyard-20260912`，不得重复应用**；候选、备份和保存报告在 `.tmp/png/space-alibaba-courtyard-20260912/`。正式导出版本和网页证据见跟踪文档最新记录。
+
 ## 后续编辑
 
 `refine_alibaba_campus.py` 是 Y 区首次增量脚本，`refine_alibaba_districts.py` 是 X/Z 首次增量脚本，默认只生成候选；`--apply` 先备份并校验磁盘源未被他人修改，再保存规范工程。工程已有对应修订时拒绝重建，避免覆盖人工编辑。X/Z 脚本还要求 Y 已存在并校验其几何未变。日常继续编辑当前 `design/space/scenes/shanghai.blend`，然后运行 `batch.ps1 -Asset shanghai`；不要回用新增园区之前的整城候选覆盖现有工程。
