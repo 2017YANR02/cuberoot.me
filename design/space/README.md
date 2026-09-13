@@ -80,7 +80,7 @@ pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset italian-original -Pr
 
 源工程和网页 GLB/纹理被 Git 忽略，提交代码不会备份这些重资产。完整备份需同时包含 `design/space/scenes` 与 `client/public/assets/space/blender-v1`；2026-09-08 迁出的 8 份旧 `.blend1` 备份在 `E:/CubeRoot-Assets/space/backups/20260908/`，随后修正预览相机时生成的 `.blend1` 留在原工程旁。E 盘缓存可重建，不能取代 `.blend` 备份。
 
-本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 393,597,788 字节（约 394 MB，2026-09-12 阿里巴巴 X/Y/Z 树冠与树池细化导出），正式发布前仍需分区加载、压缩与移动设备验证。
+本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 402,480,656 字节（约 402 MB，2026-09-12 阿里巴巴 X/Y/Z 围护与入口细部导出），正式发布前仍需分区加载、压缩与移动设备验证。
 
 Blender 和 glTF 插件来源已加入网页的“来源与致谢”，统一数据在 `credits_data.json`；建筑及天气等既有资料见 [来源记录](../../docs/space-sources.md)，迁移状态见 [跟踪文档](../../docs/space-blender-tracker.md)。
 
@@ -89,6 +89,8 @@ Blender 和 glTF 插件来源已加入网页的“来源与致谢”，统一数
 Y/Z 中庭已分别保存 `alibaba-y-court-light-20260912`、`alibaba-z-court-light-20260912`，现有五组 Blender 作者灯，网页共用六盏近景灯；Y 夜间每盏 850 cd，Z 夜间四盏 1,200 cd、两盏 500 cd。`refine_alibaba_courtyard_lighting.py` 是首次增量工具，已有对应灯组时拒绝重跑；后续编辑现有灯具并正常导出。地面和标识配光为网页目测校准，尚非实测光度，远景照明仍需改进。
 
 最新树冠和树池修订为 `alibaba-landscape-20260912`：675 个树冠改用镂空枝叶贴图，79 个树池补内凹种植面，14 个景观对象补尺度 UV 和表面纹理。原始贴图已打包进 `.blend`，来源在网页和园区档案中；树种及材质仍为视觉替代。`refine_alibaba_landscape.py` 已完成首次应用，禁止重跑覆盖当前工程；后续直接编辑现有工程并正常导出。
+
+最新围护细部修订为 `alibaba-envelope-20260912`：X 七栋楼补玻璃后方的空间层次与屋顶机组格栅；Y 补折面包边、板缝、密集檐底格栅及入口五金，并清除原有门口的遮阳条和底座遮挡；Z 补连廊底板缝、滴水边和光伏支架。三次候选已复看，`refine_alibaba_envelope.py --round 2 --apply` 已保存；禁止重新应用，继续编辑当前工程。细部尺寸仍有估算，Z 仍依据 2022 年设计资料，参见[园区档案](references/alibaba-xuhui.md#围护结构与入口细部增量)。
 
 金茂的实拍对照、首次精修脚本和后续编辑边界见[参考档案](references/jin-mao.md)。已有精修标记的工程禁止用首次建模脚本覆盖；日常继续编辑 `.blend` 并导出。
 
