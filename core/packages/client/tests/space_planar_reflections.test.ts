@@ -28,6 +28,15 @@ describe('authored interior reflections', () => {
     const cast = (x: number, y: number, dy: number) => new THREE.Raycaster(new THREE.Vector3(x, y, 0), new THREE.Vector3(0, dy, 0)).intersectObjects(objects);
     expect(cast(0, 1, -1)).toHaveLength(0);
     expect(cast(3, 1, -1)[0].point.y).toBeCloseTo(0, 5);
+    // UV islands must survive extraction: the metal normal map is authored in
+    // Blender, and cannot be reconstructed from the reflection-plane bounds.
+    const source = new THREE.Mesh(geometry);
+    source.updateMatrixWorld();
+    const ray = new THREE.Raycaster(new THREE.Vector3(3.75, 1, 1.25), new THREE.Vector3(0, -1, 0));
+    const extractedUV = ray.intersectObjects(objects)[0].uv!, authoredUV = ray.intersectObject(source)[0].uv!;
+    expect(extractedUV.x).toBeCloseTo(authoredUV.x, 12);
+    expect(extractedUV.y).toBeCloseTo(authoredUV.y, 12);
+    (source.material as THREE.Material).dispose();
     expect(cast(2, 1, 1)[0].point.y).toBeCloseTo(6 + 2 * Math.tan(.2), 5);
     expect([...geometry.getAttribute('position').array]).toEqual(before);
     planes.forEach(p => p.geometry.dispose()); geometry.dispose(); original.dispose();
@@ -37,6 +46,32 @@ describe('authored interior reflections', () => {
     expect(interiorMirrorPlanes(new THREE.BufferGeometry())).toEqual([]);
     const geometry = new THREE.BoxGeometry(.1, .1, .1);
     expect(interiorMirrorPlanes(geometry)).toEqual([]); geometry.dispose();
+  });
+
+  it('preserves distinct finishes when coplanar sheets and piers share a capture', () => {
+    const texture = new THREE.Texture();
+    const a = new THREE.MeshStandardMaterial({ normalMap: texture, roughness: .09, color: 0xdddddd });
+    const b = new THREE.MeshStandardMaterial({ normalMap: texture, roughness: .14, color: 0xbbbbbb });
+    a.normalScale.set(.065, .065); b.normalScale.set(.039, .039);
+    const source = new THREE.Mesh(hall(), a);
+    const parts = [new THREE.PlaneGeometry(4, 6).translate(7, 0, 0).rotateX(Math.PI / 2).rotateZ(.2).translate(0, 6, 0), new THREE.BoxGeometry(.1, .1, .1)];
+    const lining = new THREE.Mesh(mergeGeometries(parts)!, b);
+    parts.forEach(p => p.dispose());
+    const originalUV = [...source.geometry.getAttribute('uv').array];
+    const interior = new BlenderInteriorMirrors(source, false, lining);
+    expect(source.children).toHaveLength(2);
+    const ceiling = source.children.find(o => o.position.y > 1) as THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial>;
+    const finish = ceiling.geometry.getAttribute('mirrorFinish'), color = ceiling.geometry.getAttribute('mirrorColor');
+    expect(finish.getZ(0)).toBeCloseTo(.09);
+    expect(finish.getZ(finish.count - 1)).toBeCloseTo(.14);
+    expect(finish.getX(0)).toBeCloseTo(.065);
+    expect(finish.getX(finish.count - 1)).toBeCloseTo(.039);
+    expect(color.getX(color.count - 1)).toBeCloseTo(b.color.r);
+    expect(ceiling.material.uniforms.metalNormal.value).toBe(texture);
+    expect([...source.geometry.getAttribute('uv').array]).toEqual(originalUV);
+    let disposed = false; texture.addEventListener('dispose', () => { disposed = true; });
+    interior.dispose(); expect(disposed).toBe(false);
+    texture.dispose(); a.dispose(); b.dispose(); source.geometry.dispose(); lining.geometry.dispose();
   });
 
   it('retains window openings and merges coplanar haunches across mesh transforms', () => {
