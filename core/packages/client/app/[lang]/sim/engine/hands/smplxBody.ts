@@ -43,6 +43,8 @@ import { MANO_JOINT_BONES, manoPoseCoeffs } from "./handModelMano";
 import { boneBloodScore } from "./handModelGltf";
 import { bakeBodyTextures, type HandBakedMaps, type WrinkleJoint } from "./bakeHandTexture";
 
+import { BodyAppearance } from "./bodyAppearance";
+
 const U = (SIZE / 64) * HAND_SCALE;
 
 interface OnePieceHandMeta {
@@ -144,6 +146,16 @@ export class SmplxBody extends THREE.Group {
   private readonly toFrame: Record<"R" | "L", THREE.Matrix4>;
   private baked: HandBakedMaps | null = null;
   private baking = false;
+  private disposed = false;
+  private readonly appearance: BodyAppearance;
+
+  setAvatar(src: string, x = 0, y = 0, scale = 1): void { this.appearance.setAvatar(src, x, y, scale); }
+  getHeadView(position: THREE.Vector3, direction: THREE.Vector3): boolean {
+    const head = this.bones[this.named.head];
+    head.getWorldPosition(position);
+    direction.set(0, 0, 1).applyQuaternion(this.getWorldQuaternion(new THREE.Quaternion()));
+    return true;
+  }
 
   constructor(data: SmplxOnePieceData, hands: { R: HandModel; L: HandModel }, skin?: THREE.Material) {
     super();
@@ -377,6 +389,7 @@ export class SmplxBody extends THREE.Group {
       }
       geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     }
+    this.appearance = new BodyAppearance(mesh, this.bones[N.head], new THREE.Vector3().fromArray(J, N.head * 3));
   }
 
   /** 身体前臂全长(rig 单位)—— place 的肘目标 = 腕 + 臂轴向 × 此值。 */
@@ -492,6 +505,10 @@ export class SmplxBody extends THREE.Group {
           L: (this.sync.L.live.bakeWrinkles ?? []) as WrinkleJoint[],
         },
       });
+      if (this.disposed) {
+        maps.albedo.dispose(); maps.bump.dispose(); maps.rough.dispose();
+        return;
+      }
       this.baked = maps;
       this.mat.map = maps.albedo;
       this.mat.bumpMap = maps.bump;
@@ -506,6 +523,9 @@ export class SmplxBody extends THREE.Group {
   }
 
   dispose(): void {
+    this.disposed = true;
+    this.appearance.dispose();
+    this.mesh.skeleton.dispose();
     this.mesh.geometry.dispose();
     if (this.baked) {
       this.baked.albedo.dispose();
