@@ -162,6 +162,7 @@ const URL_KEYS = {
   solveNum: parseAsInteger,
   sourceEn: parseAsString,
   sourceZh: parseAsString,
+  sourceColors: parseAsString,
   howfar: parseAsInteger,
   stage: parseAsStringEnum<Stage>(STAGE_VALUES),
   variant: parseAsStringEnum<Variant>(VARIANT_VALUES),
@@ -308,7 +309,7 @@ function AnalyzePageInner() {
   useEffect(() => { if (preferencesReady) persistItem(WCA_SRC_KEY, JSON.stringify(wcaSrc)); }, [preferencesReady, wcaSrc]);
   const patchWcaSrc = useCallback((patch: Partial<WcaSourceSettings>) => setWcaSrc((p) => ({ ...p, ...patch })), []);
   const [wcaMeta, setWcaMeta] = useState<WcaScrambleMeta | null>(null);
-  const [reconSource, setReconSource] = useState<{ competition: ReconScrambleSource | null; optimal: boolean; sourceEn?: string; sourceZh?: string }>(() => ({
+  const [reconSource, setReconSource] = useState<{ competition: ReconScrambleSource | null; optimal: boolean; sourceEn?: string; sourceZh?: string; sourceColors?: string }>(() => ({
     competition: initUrlRef.current.compWcaId
       ? { ci: initUrlRef.current.compWcaId, cn: initUrlRef.current.comp || initUrlRef.current.compWcaId,
           e: initUrlRef.current.event ?? undefined, r: initUrlRef.current.round ?? undefined, g: initUrlRef.current.groupId ?? undefined, n: initUrlRef.current.solveNum ?? undefined }
@@ -316,6 +317,7 @@ function AnalyzePageInner() {
     optimal: initUrlRef.current.optimal === 1,
     sourceEn: initUrlRef.current.sourceEn ?? undefined,
     sourceZh: initUrlRef.current.sourceZh ?? undefined,
+    sourceColors: initUrlRef.current.sourceColors ?? undefined,
   }));
   useEffect(() => {
     void setUrlState({
@@ -328,6 +330,7 @@ function AnalyzePageInner() {
       solveNum: reconSource.competition?.n ?? null,
       sourceEn: reconSource.sourceEn ?? null,
       sourceZh: reconSource.sourceZh ?? null,
+      sourceColors: reconSource.sourceColors ?? null,
     });
   }, [reconSource, setUrlState]);
   const [wcaLoading, setWcaLoading] = useState(false);
