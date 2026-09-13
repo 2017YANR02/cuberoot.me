@@ -1,5 +1,15 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 金茂裙房入口与拱顶中庭
+
+依据 OSM 裙房及雨棚轮廓，对照 SOM 入口实拍、AS+GG 中庭照片和《Architectural Record》2000 年 1 月号的历史照片，替换原 16 m 高的占位体块。新增弧形高窗、百叶及下方阴影面、裙房门扇与把手、南北入口玻璃雨棚、石柱黑色基座和悬挂遮板，中央改为带圆形主梁、下弦及支撑的玻璃拱廊。摄影署名、来源日期、OSM ID 和估算边界见[参考档案](../design/space/references/jin-mao.md#2026-09-13-裙房入口与拱顶中庭)，网页来源区同步提供双语记录。
+
+- 采用 `round-06` 候选。最后一轮闭合两翼高窗端部，增加拱顶主梁及柱侧支撑，玻璃端墙分格加密，圆窗移到中庭东端。已检查[南入口](../.tmp/png/space-jinmao-podium-20260913/round-06/review-unobstructed/south.png)、[北入口](../.tmp/png/space-jinmao-podium-20260913/round-06/review-unobstructed/north.png)、[西立面](../.tmp/png/space-jinmao-podium-20260913/round-06/review-unobstructed/west-atrium.png)、[室内向西](../.tmp/png/space-jinmao-podium-20260913/round-06/review-unobstructed/interior-west.png)、[室内向东](../.tmp/png/space-jinmao-podium-20260913/round-06/review-unobstructed/interior-east.png)和[鸟瞰](../.tmp/png/space-jinmao-podium-20260913/round-06/review-unobstructed/overview.png)。固定 Cycles 诊断照明，CPU 14 线程，后台运行；[审图报告](../.tmp/png/space-jinmao-podium-20260913/round-06/review-unobstructed/review.json)确认审图未保存源工程。这些图片不代表网页照明。
+- 已保存 `spaceJinMaoPodiumRevision = jin-mao-podium-20260913`，源工程 **268,496,148 字节**，精确指纹 `[268496148,1789341859315025200]`。[保存报告](../.tmp/png/space-jinmao-podium-20260913/round-06/saved.json)核对候选、依赖及源指纹，仅移除共享网格中原裙房的 32 个面，保留其他 4,912 个面的顶点、UV、材质和朝向。新增七个网格，原金茂 51 个网格、其他城市几何、变换、运行 ID 与六组灯保持；旧网格数据和 `round-06/shanghai-before-jinmao-podium.blend` 整城备份保留。一次性脚本拒绝重复应用。
+- 正常导出 **509,874,916 字节**，增加 **9,820,324 字节**；12,026 objects、6 灯组、原 16 张共享纹理。SHA-256 为 `de4b94954d5d3522dce6de95102df253054446a486db35b95062bba8a1dfa927`。[正式检查](../.tmp/png/space-jinmao-podium-20260913/formal-check.json)核对新裙房七个网格、修改后的共享网格与原塔楼 51 个网格的全部属性、索引、材质、纹理字节和本地变换，世界变换误差小于 0.000001 m。Node 中的 Three.js GLTFLoader 加载七个新增网格并确认透明材质；完整 HTTP 下载为 200，长度与哈希一致。
+
+**尚未达到 1:1 或电影级。** 中庭目前只有建筑外壳和楼层边缘，实拍中的扶梯、连桥、吊索、艺术品与灯具尚未建立；圆窗端位及东雨棚构造仍有推断。塔楼底部的平面饰面与真实门厅尚未替换，庭院铺地、水池与绿化继续待办。Playwright 关闭后重连仍为 Transport closed，本轮无网页 WebGL 日夜视觉证据；整城约 510 MB 仍需分区及 LOD。未改 TS/TSX，不跑无关测试或 Next build；仅本地提交脚本、清单、来源和跟踪文档，不 push，重资产和 LFS 上传继续暂缓。
+
 ## 2026-09-13 金茂玻璃金属与夜间亮线
 
 对照 SOM 日景与历史夜景，更新深蓝灰玻璃、银色横杆与层间板、凹槽、塔冠和主要竖向构件的五种材质。减弱横杆夜间补光，突出竖向亮线，并降低塔冠整体补光。PBR 和补光数值仍是照片估算，原图摄影署名、未知拍摄日期和参数见[参考档案](../design/space/references/jin-mao.md#2026-09-13-玻璃金属与夜间亮线)；网页 SOM 来源中英文记录已同步。

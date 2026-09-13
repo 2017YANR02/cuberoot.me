@@ -183,8 +183,22 @@
     "name": "SOM: Jin Mao Tower",
     "space": true,
     "url": "https://www.som.com/projects/jin-mao-tower/",
-    "zh": "设计事务所的实拍用于金茂长塔身、上部退台、凹槽与塔冠对照。Tim Griffith 日景和文件标注 China Jin Mao Group 的夜景用于银色金属、深色玻璃与竖向亮线的材质调整；夜景页面未列单张摄影署名，拍摄日期未知，不代表当前灯光实测。三座超高层为本站独立几何，未导入官方模型；照片未作为运行贴图，尺寸、材质和照明参数仍为估算。查阅于 2026-09-13",
-    "en": "The architect's photographs guide Jin Mao's shaft, upper setbacks, recesses and crown. Tim Griffith's daytime view and a night image whose filename identifies China Jin Mao Group inform silver metal, dark glass and vertical lighting accents. The night image has no individual photographer credit on the page; its capture date is unknown and it is not a current lighting survey. The three supertalls use locally authored geometry, not official models. Photos are not runtime textures; dimensions, PBR values and lighting remain estimated. Accessed 2026-09-13"
+    "zh": "设计事务所的实拍用于金茂长塔身、上部退台、凹槽与塔冠对照。Tim Griffith 日景和文件标注 China Jin Mao Group 的夜景用于银色金属、深色玻璃与竖向亮线；夜景未列单张摄影署名，不代表当前灯光实测。© Nick Merrick | Hedrich Blessing 的入口照片用于裙房百叶、雨棚、石柱和悬挂遮板。拍摄日期未知，照片未作为运行贴图；三座超高层为本站独立几何，尺寸、材质和照明参数仍为估算。查阅于 2026-09-13",
+    "en": "The architect's photographs guide Jin Mao's shaft, setbacks, recesses and crown. Tim Griffith's daytime view and a night image whose filename identifies China Jin Mao Group inform metal, glass and vertical lighting; the latter has no individual photographer credit and is not a current lighting survey. Entrance photographs © Nick Merrick | Hedrich Blessing guide podium louvers, canopies, stone columns and suspended shades. Capture dates are unknown. Photos are not runtime textures; the three supertalls use locally authored geometry with estimated dimensions, materials and lighting. Accessed 2026-09-13"
+  },
+  {
+    "name": "AS+GG: Jin Mao podium and atrium",
+    "space": true,
+    "url": "https://www.smithgill.com/work/jin_mao_tower/",
+    "zh": "六层裙房说明及第三张中庭实拍（© Adrian Smith）用于拱顶、玻璃端墙和内部空间对照。尺寸仍为估算，内部连桥和灯具尚未完成；照片拍摄日期未知，未作为运行贴图。查阅于 2026-09-13",
+    "en": "The six-story podium description and third atrium photograph (© Adrian Smith) guide the vaulted roof, glazed end walls and interior. Dimensions remain estimates; bridges and lighting are unfinished. The capture date is unknown, and the photograph is not a runtime texture. Accessed 2026-09-13"
+  },
+  {
+    "name": "Architectural Record: Jin Mao, January 2000",
+    "space": true,
+    "url": "https://www.usmodernist.org/AR/AR-2000-01.pdf",
+    "zh": "Thomas J. Campanella 的金茂文章（印刷页 82–89）中，第 84、85、87 页用于北入口、连接体和裙房中庭对照。刊期 2000-01，摄影日期未知；历史资料不代表当前装修，照片未作为运行贴图。查阅于 2026-09-13",
+    "en": "Thomas J. Campanella's Jin Mao article (printed pages 82–89), especially pages 84, 85 and 87, references the north entrance, connector and podium atrium. Published January 2000; capture dates are unknown. Historical material does not establish the current fit-out, and photographs are not runtime textures. Accessed 2026-09-13"
   },
   {
     "name": "The Skyscraper Museum: Jin Mao",
