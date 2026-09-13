@@ -1,5 +1,20 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 100F 观光厅三轮细化
+
+对照[业主 100F 平面图](https://www.swfc-shanghai.com/images/common/8-lease/map_100f.png)、[室内照片](https://www.swfc-shanghai.com/images/common/8-lease/pic_140.jpg)和项目册细化环球金融中心。平面图的 **50 × 6.2 m、净高 3–3.85 m** 为租赁厅范围；项目册的 **55 m、三条玻璃地板、地上 474 m** 为观光桥资料，分别处理。访问、下载和审图日期为 2026-09-13，图片拍摄时间及作者未知；来源、哈希和估算边界见[参考档案](../design/space/references/swfc-top.md#2026-09-13-100f-观光厅与透明步道)。
+
+- 首轮分离透射侧窗与楼面，补三条玻璃带、镜面地面和折顶，替换遮挡向下视线的连续桥底板；第二轮将细杆改为照片中可见的宽框架。第二轮凹截面扇形三角化产生伸入走道的错误面，网页和 Cycles 审图发现后，第三轮拆成两个凸截面修正并复查。最终有 **66 块玻璃楼面**；带宽 0.8 m、分格 2.5 m、框架宽 0.72 m、玻璃厚度、桥底构造和光学参数仍为估算。
+- `refine_swfc_skywalk.py` 增量修改五个网格、增加五个网格；原网格数据保留，其他建筑几何和变换、运行对象身份及五组立面灯保持。**15 条走道通畅射线、15 处玻璃楼面及下方无遮挡检查、3 处净高检查**通过；候选 14 个网格的导出身份、变换和局部顶点往返检查通过。几何容差只是导出数值检查，不代表实景测绘精度。
+- [第三轮候选](../.tmp/png/space-swfc-skywalk-20260913/round-03/candidate.json)为 **4,385,992 字节**，SHA-256 `acda680de79c2e07f5b1a4aefcabd9d31e8b7346f96118aed2dcb655e69645cc`。`--apply` 核对源指纹、全部 Python 依赖哈希、候选 GLB 及重建检查一致后备份、保存；[保存报告](../.tmp/png/space-swfc-skywalk-20260913/round-03/saved.json)为 `saved=true`，备份为同目录 `shanghai-before-skywalk.blend`。规范工程 **200,104,448 字节**，指纹 `[200104448,1789303621543268100]`，修订为 `spaceSwfcSkywalkRevision=swfc-skywalk-20260913`。
+- `batch.ps1 -Asset shanghai` 正式导出完成：GLB **400,329,688 字节**，SHA-256 **`51df9d51b5401289f1bc8dc044128fad851d5e9c731ffbf10e91d75315bb246e`**；清单 **12,009 个对象、5 组立面灯、14 张纹理**，比上一轮增加 **593,080 字节，约 0.15%**。[资源核验](../.tmp/png/space-swfc-skywalk-20260913/export-integrity.json)记录 HTTP 200，实际响应体、磁盘文件及清单哈希一致。
+- [完整上海运行检查](../.tmp/png/space-swfc-skywalk-20260913/city-contract.json)为 **`ok=true`、`errors=[]`**：673 网格、216 着色材质、95 组建筑属性、一个时钟、1,200 交通实例、12 艘船及既有外滩 24 栋等检查通过。[正式网页记录](../.tmp/png/space-swfc-skywalk-20260913/formal-web-probes.json)核实新增材质、修订号与顶部 60 项探针通过；检查使用正式模型，未注入候选。
+- 已逐张查看正式导出的 [100F 日景](../.tmp/png/space-swfc-skywalk-20260913/formal-hall-day.png)、[玻璃步道俯视](../.tmp/png/space-swfc-skywalk-20260913/formal-down-day.png)和[外部夜景](../.tmp/png/space-swfc-skywalk-20260913/formal-exterior-night.png)，以及[第三轮 Cycles 日景](../.tmp/png/space-swfc-skywalk-20260913/round-03-cycles-day.png)。清除临时审图脚本并刷新后，正式资源已加载，[控制台](../.tmp/png/space-swfc-skywalk-20260913/formal-console.log) **0 errors / 0 warnings**。
+
+**1:1 与电影级视觉验收仍未通过。** Cycles 能反射厅内结构，网页镜面目前只使用环境反射，白天偏蓝、夜间偏黑；下一步应接回实际室内反射。玻璃向下可见 97F 屋架，但层间结构、桥底开孔和尺寸仍需实物核定；97F 灯具、两端电梯厅、冠部重复窗光及裙楼仍待细化。本轮未根据缺乏光度依据的照片虚构增灯。约 400 MB 整城资源的分区、细节分级与真实手机性能仍未完成，页面布局未改，不重跑窄屏布局验收。
+
+Python 语法、清单 JSON、六个改动文件的 LF 和 `git diff --check` 已通过。本轮仅本地保存、导出及提交脚本、清单和文档；LFS 配置、重资产上传和 push 继续暂缓。未修改 TypeScript，不跑 typecheck、测试全集或 Next build。下文为历史快照。
+
 ## 2026-09-13 环球金融中心顶部候选合入正式工程
 
 从包含最新阿里巴巴园区细部的规范工程重新生成候选，复看日夜画面后保存并正式导出。依据 [KPF 建筑资料](https://www.kpf.com/project/shanghai-world-financial-center)、[IMA 97F 竣工照片](https://www.imae.co.jp/en/works/shanghai-world-financial-center)及业主项目册，将之前候选的对角收削外壳、顶部开口、97F 透射玻璃与浅白色固定屋架合入；来源和估算边界见[顶部档案](../design/space/references/swfc-top.md)。

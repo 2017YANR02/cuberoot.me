@@ -1042,7 +1042,9 @@ def validate_export_geometry(document, raw, expected):
     nodes = document['nodes']
     root_index = next(i for i, n in enumerate(nodes) if n.get('extras', {}).get('spaceId') == ROOT_ID)
     root_node = nodes[root_index]
-    child_indices = [i for i, n in enumerate(nodes) if n.get('extras', {}).get('spaceId') in OUTPUT_IDS.values()]
+    child_indices = [i for i, n in enumerate(nodes)
+                     if n.get('extras', {}).get('spaceId') in expected
+                     and n.get('extras', {}).get('spaceId') != ROOT_ID]
     if (Counter(root_node.get('children', [])) != Counter(child_indices)
             or len(document.get('scenes', [])) != 1 or document.get('scene', 0) != 0
             or document['scenes'][0].get('nodes') != [root_index]):
