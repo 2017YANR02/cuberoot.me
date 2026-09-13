@@ -1,4 +1,4 @@
-"""Disposable SWFC diagonal-envelope candidate; never saves a Blender source.
+"""Review and incrementally apply the SWFC diagonal envelope to current Shanghai.
 
 Run in the current canonical Shanghai file. --bridge-angle-deg is required:
 it is the bridge long-axis angle in root-local Blender XY, measured from +X
@@ -10,8 +10,8 @@ the owner's 477.96 m altitude is not the 100F above-ground height.
 
 The CLI exports only this tower to .tmp/png, preserving its world transform and
 the original six runtime mesh identities plus three independent detail materials.
-A coordinator may call author() for
-an in-memory full-scene preview. There is intentionally no --apply option.
+The default exports an isolated candidate. --apply requires that same candidate,
+source fingerprint, audit and script, and backs up the source before saving.
 References: ../references/swfc-top.md and the audit passed with --audit.
 """
 import argparse
@@ -20,6 +20,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import shutil
 import struct
 import sys
 
@@ -1184,24 +1185,53 @@ def main():
                         help='Root-local Blender XY bridge long-axis yaw from +X towards +Y; base edges are +/-45 degrees')
     parser.add_argument('--audit', type=Path, default=AUDIT)
     parser.add_argument('--label', required=True, help='New single filename label; existing output is never replaced')
+    parser.add_argument('--apply', action='store_true', help='Save the unchanged reviewed candidate to the canonical source')
     args = parser.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else [])
     if not args.label or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_' for c in args.label):
         parser.error('Label must be a single alphanumeric filename')
     directory = OUTPUT / args.label
-    if directory.exists():
+    if directory.exists() and not args.apply:
         parser.error('Preview label already exists; use a new label')
     roots = [o for o in bpy.context.scene.objects if o.get('spaceId') == ROOT_ID]
     if len(roots) != 1:
         raise RuntimeError('Expected one SWFC root')
     token = source_fingerprint()
+    script_hash = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    audit_hash = hashlib.sha256(args.audit.read_bytes()).hexdigest()
+    candidate = None
+    if args.apply:
+        candidate = json.loads((directory / 'candidate-report.json').read_text(encoding='utf8'))
+        if (candidate['sourceFingerprint'] != list(token) or candidate['scriptSha256'] != script_hash
+                or candidate['auditSha256'] != audit_hash or candidate['saved']
+                or candidate['candidate']['bridgeAngleLocalDegrees'] != args.bridge_angle_deg
+                or hashlib.sha256((directory / 'swfc-candidate.glb').read_bytes()).hexdigest()
+                    != candidate['export']['sha256']):
+            raise RuntimeError('Source, script, audit or reviewed candidate changed; generate and review a fresh candidate')
     archive = bpy.data.collections.new('ARCHIVE before '+REVISION+' (not exported)')
     bpy.context.scene.collection.children.link(archive)
     detail = author(roots[0], archive, args.bridge_angle_deg, args.audit)
     assert_source_unchanged(token)
+    if args.apply:
+        if json.loads(json.dumps(detail)) != candidate['candidate']:
+            raise RuntimeError('Rebuilt detail contract differs from the reviewed candidate')
+        backup = directory / 'shanghai-before-swfc.blend'
+        if backup.exists() or (directory / 'saved-report.json').exists():
+            raise RuntimeError('Refusing to overwrite an existing source backup or saved report')
+        shutil.copy2(SOURCE, backup)
+        assert_source_unchanged(token)
+        detail['candidateOnly'] = False
+        roots[0]['spaceSwfcTopCandidate'] = json.dumps(detail, separators=(',', ':'))
+        bpy.context.scene[PROPERTY] = REVISION
+        bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE), compress=True)
+        report = {**candidate, 'saved': True, 'candidate': detail,
+                  'sourceAfter': list(source_fingerprint()), 'backup': str(backup)}
+        atomic_write(directory / 'saved-report.json', (json.dumps(report, indent=2)+'\n').encode('utf8'))
+        print('SWFC_TOP_SAVED '+json.dumps({'saved': True, 'sourceAfter': report['sourceAfter']}), flush=True)
+        return
     exported = export_candidate(roots[0], directory)
     assert_source_unchanged(token)
     report = {'saved': False, 'officialAssetsWritten': False, 'sourceFingerprint': list(token),
-              'candidate': detail, 'export': exported}
+              'scriptSha256': script_hash, 'auditSha256': audit_hash, 'candidate': detail, 'export': exported}
     atomic_write(directory / 'candidate-report.json', (json.dumps(report, indent=2)+'\n').encode('utf8'))
     print('SWFC_TOP_CANDIDATE '+json.dumps(report), flush=True)
 
