@@ -499,12 +499,12 @@ export class ShanghaiScene {
   get lightingTransitioning() { return this.facadeLighting?.transitioning ?? false; }
 
   update(time: number, motion: boolean, camera: THREE.PerspectiveCamera, target: THREE.Vector3) {
-    this.interiorMirrors?.update(camera);
     const dt = this.lastTime ? Math.min(.1, (time - this.lastTime) / 1000) : 0; this.lastTime = time;
     if (motion) this.elapsed += dt;
     if (this.water) this.water.material.uniforms.time.value = this.elapsed * .65;
     this.traffic?.update(this.elapsed);
     const shadowChanged = this.facadeLighting?.update(camera, this.night.value, dt) ?? false;
+    this.interiorMirrors?.update(camera, !this.lightingTransitioning);
     if (!this.route) return shadowChanged;
     const length = this.route.getLength();
     if (this.cruising) {

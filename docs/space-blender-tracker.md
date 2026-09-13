@@ -1,5 +1,17 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 100F 间接倒影与灯光更新
+
+继续对照[绳手真人的观光厅夜间实拍](https://yakei.jp/abroad/shanghai/shanhai-hills-photo.html)，处理镜顶和宽柱饰的暗倒影。浏览器对照确认，原环境采样发生在共享灯池渐亮之前，之后一直缓存该暗环境。现等待当前灯光过渡完成再采样，并复用 [Three.js CubeCamera](https://threejs.org/docs/pages/CubeCamera.html) 做两次独立采样：第二次读取第一次完成的环境，避免读写同一纹理。照片与 Three.js 已有网页来源记录，未将参考照片作为运行贴图。
+
+- 实验依次检查灯光稳定后重新采样、两次采样和三次采样。正式实现采用两次：镜顶和楼面获得更多室内反光，但宽柱饰仍有大块暗部；第三次增加开销而仍未解决该问题，没有合入。实验截图在 `.tmp/png/space-swfc-probe-20260913/`，不是新的 Blender 候选工程。
+- 正式桌面 [运行记录](../.tmp/png/space-swfc-probe-20260913/desktop-runtime.json)确认进入观光厅时六灯均已到 **120 cd**，两次采样均在过渡结束后执行；第二次输入等于第一次输出，输入与当前写入目标不同。使用两个 **128 × 128** cube 目标，总计 **12 个场景面绘制**，只在进入或光照更新后执行；稳定帧与远离时均 **0 次环境采样**。稳定帧另有原来的七个室内平面和两个江面反射，场景渲染嵌套深度最多为 2；这不是整页 GPU 性能或真实手机验收。
+- 正式源码刷新后的[夜景](../.tmp/png/space-swfc-probe-20260913/formal-night.png)、[反向](../.tmp/png/space-swfc-probe-20260913/formal-reverse.png)、[斜视](../.tmp/png/space-swfc-probe-20260913/formal-oblique.png)、[日景](../.tmp/png/space-swfc-probe-20260913/formal-day.png)均已逐张查看。12:00 灯强为零，切回 21:00 后重新采样；远离时关闭七个室内镜面覆盖层。未调整原材质、全局曝光或作者灯强度。
+- **390 × 844** 下重新加载并实际查看[窄屏](../.tmp/png/space-swfc-probe-20260913/formal-narrow.png)，[运行记录](../.tmp/png/space-swfc-probe-20260913/narrow-runtime.json)确认两个 cube 目标均为 **64**、七个平面目标均为 **384**，文档宽 375、无横向溢出。桌面与窄屏 GPU 错误均为 0，[桌面控制台](../.tmp/png/space-swfc-probe-20260913/desktop-console.log)及[窄屏控制台](../.tmp/png/space-swfc-probe-20260913/narrow-console.log)均为 0 errors / 0 warnings。
+- client typecheck 与定向 `space_planar_reflections.test.ts`、`space_shanghai.test.ts` 共 **58 项测试通过**。回归覆盖灯光渐变期间不采样、稳定后更新、读写目标分离、两阶段失败恢复、退出还原原材质和资源释放。未重复 Next build 或无关测试全集。
+
+本轮只修改网页反射，未保存 Blender 或重新导出城市；源工程及 GLB 沿用下节金属饰面版本。**仍未达到 1:1 或电影级。** 两次单点环境采样没有精确视差，也不是递归光线追踪；夜间宽柱饰、端部展板与标识、97F 层间结构、裙楼仍待细化，整城分区加载和真实设备性能仍待完成。代码和文档仅本地提交，不 push；LFS 配置与重资产上传继续暂缓。
+
 ## 2026-09-13 100F 金属板面与细接缝
 
 继续对照绳手真人、Gerhard Huber 的观光厅实拍，细化环球金融中心 100F 镜顶与宽柱饰。第一轮板面变化重复、接缝过宽；第二轮使用 16 种变化的原创法线图块，并将原 50 mm 顶板缝缩到照片估算的 6 mm。最终保存候选与第二轮模型、纹理哈希一致，第三次候选仅同步脚本注释，不计作额外视觉迭代。照片来源、参数估算与许可见[参考档案](../design/space/references/swfc-top.md#2026-09-13-金属饰面细化)，原照片没有作为运行纹理发布。
