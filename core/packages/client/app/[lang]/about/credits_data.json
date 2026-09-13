@@ -166,6 +166,20 @@
     "en": "This crown close-up guides the closely spaced setbacks, V-shaped metal plates, two stages of fins, clad mast and round lamp housings. Dimensions, panel divisions and lamp counts are photo estimates without construction drawings. The capture date is unknown; this is a reference, not a runtime texture. Accessed 2026-09-13"
   },
   {
+    "name": "Permasteelisa: Jin Mao facade photograph",
+    "space": true,
+    "url": "https://www.permasteelisagroup.com/wp-content/uploads/2025/07/Jin-Mao-Tower-Shanghai3.jpg",
+    "zh": "幕墙近景用于金茂的成对铝翼片、层间金属板、三道外置横杆、连接夹板与紧固件。构件截面随各面转向；开间、深度、螺栓尺寸及数量仍为照片估算。拍摄日期未知，照片仅作建模对照，未作为运行贴图。查阅于 2026-09-13",
+    "en": "This curtain-wall close-up guides Jin Mao's paired aluminum fins, metal spandrels, three external rails, connecting plates and fasteners. Member sections turn with each facade. Bay spacing, projections, bolt dimensions and counts remain photo estimates. The capture date is unknown; the photograph is a modeling reference, not a runtime texture. Accessed 2026-09-13"
+  },
+  {
+    "name": "The Skyscraper Museum: SOM Jin Mao section and plans",
+    "space": true,
+    "url": "https://old.skyscraper.org/EXHIBITIONS/CHINA_PROPHECY/jin_mao.php",
+    "zh": "博物馆展示 SOM 提供的金茂剖面、平面和施工照片，用于核对分段轮廓与八角形结构关系。公开剖面图只有 300 × 834 像素，无法可靠读取精确尺寸，不能作为竣工测绘；塔身宽度和统一层高仍待校准。查阅于 2026-09-13",
+    "en": "The museum presents Jin Mao's section, plans and construction photographs courtesy of SOM, informing the tiered silhouette and octagonal structure. The public section image is only 300 by 834 pixels, so precise dimensions cannot be read reliably or treated as an as-built survey. Body widths and the uniform floor-height estimate still need calibration. Accessed 2026-09-13"
+  },
+  {
     "name": "SOM: Jin Mao Tower",
     "space": true,
     "url": "https://www.som.com/projects/jin-mao-tower/",
