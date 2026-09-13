@@ -124,7 +124,7 @@ import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-
 import SkewbNotationGuide from './SkewbNotationGuide';
 import {
   Slider, ValueField, OrbitPad, Toggle, KeymapModal, resetWorldView, mapFrames,
-  DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR, persistPictureFaces,
+  DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR, persistPictureFaces, saveSettings,
   type SimSettings, type SimBoardBg, type SliderUnit,
 } from './SettingDrawer';
 import { KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
@@ -139,6 +139,7 @@ import {
   drawPictureCrop,
   emptyPictureFaces,
   fileToPictureEditSourceDataUrl,
+  fileToPictureFaceDataUrl,
   normalizePictureCrop,
   panPictureCropBy,
   pictureCropGeometry,
@@ -2612,6 +2613,7 @@ export default function PlayerControls({
       </div>
 
       <PuzzleSettings
+        world={world}
         order={order}
         onOrderChange={onOrderChange}
         puzzleKind={puzzleKind}
@@ -3616,10 +3618,12 @@ function PictureCubeEditor({
 }
 
 function PuzzleSettings({
+  world,
   order, onOrderChange, puzzleKind, onPuzzleChange,
   renderer, onRendererChange,
   settings, onSettingsChange, transCore, bgSlot, t,
 }: {
+  world: World | null;
   order: number;
   onOrderChange: (n: number) => void;
   puzzleKind: SimPuzzle;
@@ -3684,7 +3688,71 @@ function PuzzleSettings({
     onSettingsChange({ ...settings, pictureBaseColors });
   }, [onSettingsChange, settings]);
 
-  // 顶面 logo 自定义上传:选「自定义」即开文件选择器,选好降采样存进 customLogo 并切到 'custom'。
+  // 人物头像在本地保存，照片贴图的位置与缩放可对照正脸调整。
+  const avatarFileRef = useRef<HTMLInputElement>(null);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(false);
+  useEffect(() => {
+    if (!world || !avatarPreview) return;
+    if (!settings.hands || !settings.fullBody || !caps.supports.hands) {
+      setAvatarPreview(false);
+      resetWorldView(world, settings);
+      return;
+    }
+    let frame = 0;
+    const focus = () => {
+      const target = world.camera.position.clone(), direction = target.clone();
+      world.scene.updateMatrixWorld(true);
+      if (!world.hands?.getHeadView?.(target, direction)) {
+        frame = requestAnimationFrame(focus);
+        return;
+      }
+      world.camera.position.copy(target).addScaledVector(direction, 3200);
+      world.camera.fov = 35;
+      world.camera.near = 1;
+      world.camera.far = 30000;
+      world.camera.lookAt(target);
+      world.camera.updateProjectionMatrix();
+      world.dirty = true;
+    };
+    frame = requestAnimationFrame(focus);
+    window.addEventListener('resize', focus);
+    return () => { cancelAnimationFrame(frame); window.removeEventListener('resize', focus); };
+  }, [avatarPreview, world, settings, caps.supports.hands]);
+  const [avatarError, setAvatarError] = useState('');
+  const avatarVersion = useRef(0);
+  const latestSettings = useRef({ settings, onSettingsChange });
+  latestSettings.current = { settings, onSettingsChange };
+  useEffect(() => () => { avatarVersion.current++; }, []);
+  const handleAvatarFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    const version = ++avatarVersion.current;
+    setAvatarError('');
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type) || file.size > 10 * 1024 * 1024) {
+      setAvatarError(t('请选择不超过 10 MB 的 JPG、PNG 或 WebP 图片', 'Choose a JPG, PNG or WebP image up to 10 MB'));
+      return;
+    }
+    setAvatarBusy(true);
+    try {
+      const bodyAvatar = await fileToPictureFaceDataUrl(file, 384);
+      if (version !== avatarVersion.current) return;
+      const current = latestSettings.current;
+      const next = { ...current.settings, bodyAvatar, bodyAvatarX: 50, bodyAvatarY: 50, bodyAvatarZoom: 50 };
+      if (!saveSettings(next)) {
+        setAvatarError(t('浏览器存储空间不足，头像未保存', 'Browser storage is full. The face was not saved.'));
+        return;
+      }
+      current.onSettingsChange(next);
+      setAvatarPreview(true);
+    } catch {
+      if (version === avatarVersion.current) setAvatarError(t('无法读取图片，请重新选择', 'Could not read the image. Please choose another.'));
+    } finally {
+      if (version === avatarVersion.current) setAvatarBusy(false);
+    }
+  };
+
   const logoFileRef = useRef<HTMLInputElement>(null);
   const handleLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -3898,6 +3966,34 @@ function PuzzleSettings({
               <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
             )}
           </div>
+          {caps.supports.hands && settings.hands && settings.fullBody && (
+            <div className="sim-person-avatar">
+              <span>{t('人物头像', 'Character face')}</span>
+              {settings.bodyAvatar && <img src={settings.bodyAvatar} alt={t('当前人物头像', 'Current character face')} width={40} height={40} />}
+              <button type="button" disabled={avatarBusy} onClick={() => avatarFileRef.current?.click()}>
+                {avatarBusy ? t('读取中…', 'Loading…') : t('上传头像', 'Upload face')}
+              </button>
+              {settings.bodyAvatar && <button type="button" onClick={() => {
+                avatarVersion.current++; setAvatarBusy(false); setAvatarError('');
+                const next = { ...settings, bodyAvatar: '', bodyAvatarX: 50, bodyAvatarY: 50, bodyAvatarZoom: 50 };
+                if (saveSettings(next)) onSettingsChange(next);
+                else setAvatarError(t('浏览器存储不可用，无法保存更改', 'Browser storage is unavailable. Could not save changes.'));
+              }}>{t('恢复默认头像', 'Reset face')}</button>}
+              <button type="button" aria-pressed={avatarPreview} onClick={() => {
+                if (avatarPreview && world) resetWorldView(world, settings);
+                setAvatarPreview(!avatarPreview);
+              }}>{avatarPreview ? t('结束正脸预览', 'Close face preview') : t('查看正脸', 'Preview face')}</button>
+              <input ref={avatarFileRef} type="file" accept="image/png,image/jpeg,image/webp" hidden aria-label={t('上传人物头像', 'Upload character face')} onChange={handleAvatarFile} />
+              <small>{t('选择脸部居中的正面照片，自动居中裁剪，仅保存在当前浏览器', 'Choose a centered, front-facing photo. Center-cropped and saved only in this browser.')}</small>
+              {settings.bodyAvatar && <div className="sim-person-avatar-adjust">
+                <Slider label={t('头像左右', 'Face horizontal')} value={settings.bodyAvatarX} onChange={v => { setAvatarPreview(true); set('bodyAvatarX', v); }} />
+                <Slider label={t('头像上下', 'Face vertical')} value={settings.bodyAvatarY} onChange={v => { setAvatarPreview(true); set('bodyAvatarY', v); }} />
+                <Slider label={t('头像缩放', 'Face zoom')} value={settings.bodyAvatarZoom} onChange={v => { setAvatarPreview(true); set('bodyAvatarZoom', v); }} />
+                <small>{t('对照正脸预览，调整照片五官与人物眼睛、嘴的位置', 'Use the face preview to align the photo with the character’s eyes and mouth.')}</small>
+              </div>}
+              {avatarError && <small role="alert">{avatarError}</small>}
+            </div>
+          )}
           {/* 调试控件单独成行(用户要求):半转停 / 结构着色 / 骨架线条 / 挖块。组前缀「调试」标一次,
               各控件去掉重复的「调试:」前缀。半转停 / 结构着色 为本站引擎特性,在 cubing.js 渲染的拼图上
               为 no-op(仅存设置);骨架线条为手部 MediaPipe 风格叠加线,仅 3x3 手指开启时有效;

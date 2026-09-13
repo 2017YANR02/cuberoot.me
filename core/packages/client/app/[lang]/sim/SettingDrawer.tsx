@@ -154,6 +154,11 @@ export interface SimSettings {
    *  追手;拉远 Scale 可见全身)。依赖手指开启;资产逐机转换,缺失静默降级。
    *  默认关。 */
   fullBody: boolean;
+  /** Local face photo, never included in shared URLs. */
+  bodyAvatar: string;
+  bodyAvatarX: number;
+  bodyAvatarY: number;
+  bodyAvatarZoom: number;
   /** 手模资产:'default' = 内置 WebXR generic-hand;'mano' = MPI MANO(用户
    *  自持授权,资产逐机由 scripts/convert-mano.py 转换,缺失时运行时自动回退
    *  内置并 console.warn)。默认 'default'。 */
@@ -228,6 +233,10 @@ export const DEFAULT_SETTINGS: SimSettings = {
   liveReduce: true,
   hands: false,
   fullBody: false,
+  bodyAvatar: '',
+  bodyAvatarX: 50,
+  bodyAvatarY: 50,
+  bodyAvatarZoom: 50,
   handsSkeleton: false,
   showNails: true,
   nailColor: '',
@@ -300,7 +309,12 @@ export function loadSettings(): SimSettings {
     if (typeof merged.pictureBaseColors !== 'boolean') merged.pictureBaseColors = false;
     if (typeof merged.pointerTurns !== 'boolean') merged.pointerTurns = true;
     if (typeof merged.hands !== 'boolean') merged.hands = false;
+    for (const key of ['bodyAvatarX', 'bodyAvatarY', 'bodyAvatarZoom'] as const) {
+      if (!Number.isFinite(merged[key])) merged[key] = 50;
+      merged[key] = Math.max(0, Math.min(100, merged[key]));
+    }
     if (typeof merged.fullBody !== 'boolean') merged.fullBody = false;
+    if (typeof merged.bodyAvatar !== 'string' || !/^data:image\/(png|jpeg|webp);base64,/.test(merged.bodyAvatar) || merged.bodyAvatar.length > 600000) merged.bodyAvatar = '';
     // 指甲配色:非法值兜回默认(色值细校验在 paintNailPolish 入口,这里只保类型)。
     if (typeof merged.nailColor !== 'string') merged.nailColor = '';
     if (typeof merged.nailColorTip !== 'string') merged.nailColorTip = '';
@@ -324,10 +338,10 @@ export function loadSettings(): SimSettings {
   }
 }
 
-export function saveSettings(s: SimSettings): void {
-  if (typeof window === 'undefined') return;
+export function saveSettings(s: SimSettings): boolean {
+  if (typeof window === 'undefined') return false;
   const { pictureFaces, ...compactSettings } = s;
-  persistItem(STORAGE_KEY, JSON.stringify(compactSettings));
+  const saved = persistItem(STORAGE_KEY, JSON.stringify(compactSettings));
   // Image payloads are large. Slider / camera updates create a new settings object but
   // preserve this nested reference, so only a real upload/remove rewrites the payload.
   if (pictureFaces !== lastSavedPictureFaces) {
@@ -335,6 +349,7 @@ export function saveSettings(s: SimSettings): void {
   }
   // 黑边的旧单独键已经被 loadSettings 迁进 stickerGap 了(见那边注释),这一刻新值刚落盘 → 收掉。
   try { window.localStorage.removeItem('sim.img.outline'); } catch { /* 无痕模式等,忽略 */ }
+  return saved;
 }
 
 // 把 0~100 → 实际数值。scale 50 = 1.0 (upstream 默认), 范围 0.5 ~ 1.5。
@@ -370,6 +385,7 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   // 手模资产先于开关:切资产要销毁重建 rig,先设好再 syncHands 免得建完又拆。
   world.setHandsWanted(s.hands === true);
   world.setHandsFullBody(s.hands === true && s.fullBody === true);
+  world.setHandsAvatar(s.bodyAvatar, (s.bodyAvatarX - 50) / 100, (s.bodyAvatarY - 50) / 100, 2 ** ((s.bodyAvatarZoom - 50) / 50));
   world.hands?.setSkeletonVisible(s.handsSkeleton === true);
   world.hands?.setNailsVisible(s.showNails !== false);
   // 指甲配色(甲油):'' = 自然甲。rig 内部存最后值,手模晚加载时回放。
