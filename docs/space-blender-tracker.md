@@ -1,5 +1,32 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-12 园区玻璃、室内层次、树冠与 Y 中庭照明四轮细化
+
+继续使用当前 X/Y/Z 工程，对照 Fangfang Tian 的 Y 区竣工照片和 SOM 的 Z 区方案图；来源、发表时间及估算边界仍统一记在[园区档案](../design/space/references/alibaba-xuhui.md)。本轮实际完成四次候选复查、增量保存及最后一次正式导出，没有重新生成整栋覆盖既有编辑。
+
+### 四轮修改与画面结果
+
+- 首轮处理窗面像贴片、树冠成团的问题：Y 区 **496 个外露开间**的简化室内后墙移至玻璃后约 4 m，**2,112 段顶灯**后移，加入 **992 张桌面**及简化座椅、屏幕和局部百叶；三个地块的 **675 个树冠**改为有空隙的折叠叶簇，保留原树位和树干，仅替换六个树冠网格数据，不新增植被贴图或植被绘制对象。室内为依据可见照片补充的视觉层次，不是现场工位复刻。
+- 第二轮解决 Y 玻璃仍偏乳白：粗糙度调整为 **0.012**、透射 **0.98**，启用背面剔除；网页中能看到后方桌面、屏幕与百叶。Z 玻璃透射为 0.94。参数为目测调校，未做现场材质测量。
+- 第三轮解决夜窗一片亮白：Y/Z 室内背景的 `spaceIllumination` 从 0.85 降至 **0.2**，保留原檐底线灯和招牌强度，仍沿用上海昼夜 uniform。实际网页复看后，窗面与灯带有了更明确的亮度层次。
+- 第四轮解决 Y 中庭地面仍偏黑：复用既有庭院灯脚本，在 Y 区增加 **六盏 850 cd** 原生作者灯。21:00 网页能看清通道、树池和长椅；切到 Z 中庭沿用 `1200/1200/1200/1200/500/500`，09:00 六灯均为零。作者灯组由四组增至五组，运行时仍共用 **六盏近景灯**，没有增加灯池。灯位和配光均为估算。
+
+### 保存与实证
+
+- `refine_alibaba_glazing.py` 分三步执行，依次保存 `spaceAlibabaSurfaceRevision`、`spaceAlibabaGlassFinish`、`spaceAlibabaNightBalance`；`refine_alibaba_courtyard_lighting.py --district y` 保存 `spaceAlibabaYCourtLightingRevision=alibaba-y-court-light-20260912`。每步核对候选、源指纹并保留独立备份，已有修订拒绝重跑。
+- [首轮保存报告](../.tmp/png/space-alibaba-refinement-20260912/saved-report.json)、[玻璃保存报告](../.tmp/png/space-alibaba-refinement-20260912/glass-saved-report.json)、[窗光保存报告](../.tmp/png/space-alibaba-refinement-20260912/night-saved-report.json)、[Y 庭院保存报告](../.tmp/png/space-alibaba-refinement-20260912/y-court-light/saved-report.json)均为 `saved=true`。各报告目录保留对应 `shanghai-before-*.blend`。首轮未编辑对象几何摘要保持 `9dc2417cf474da14ee8b14f079685f236db686055ae0ac9a00da48afc53a6ea6`；后续玻璃、窗光、Y 庭院增量的全场几何摘要保持 `6cf00a69932d0386b33a15fa6663280963133694f9b9795048768e259d273ada`。三组外滩灯与原 Z 灯完整保留，运行对象仅增加三个室内材质网格。
+- 最新 `design/space/scenes/shanghai.blend` 为 **164,802,492 字节**，指纹 `[164802492,1789267189608460100]`。`batch.ps1 -Asset shanghai` 完成导出：GLB **411,139,416 字节**，SHA-256 **`53f0f159f56e217b354622cdbe3d3628e5cf3d0ba937e4a12119028c0ddc99ab`**，清单 **11,976 个对象、5 组作者灯、9 张纹理**。比上一轮增加 39,729,896 字节，约 10.7%；叶簇几何使体积增加，尚未完成细节分级和压缩。
+- 正式资产[完整城市合同](../.tmp/png/space-alibaba-refinement-20260912/city-contract.json)为 **`ok=true`、`errors=[]`**：640 网格、216 个昼夜着色材质、95 组建筑属性、一个时钟、1,200 交通实例、12 艘船，以及既有建筑、水面和纹理检查通过。这是运行合同验证，不是实景精度验收。
+- 真实 `/zh/space` 已刷新加载上述哈希，[网页记录](../.tmp/png/space-alibaba-refinement-20260912/final-web-runtime.json)核对最终玻璃参数、Y/Z 夜间灯组切换、Y 白天关灯。最终导出的 [Y 日景](../.tmp/png/space-alibaba-refinement-20260912/y-final-day.png)、[Y 夜景](../.tmp/png/space-alibaba-refinement-20260912/y-final-night.png)、[Z 夜景](../.tmp/png/space-alibaba-refinement-20260912/z-final-night.png)、[全景日景](../.tmp/png/space-alibaba-refinement-20260912/whole-final-day.png)、[全景夜景](../.tmp/png/space-alibaba-refinement-20260912/whole-final-night.png)均已逐张查看，没有用临时浏览器替换结果冒充正式资产。
+- 390 × 844 [窄屏画面](../.tmp/png/space-alibaba-refinement-20260912/whole-final-mobile-scrolled.png)已查看，文档宽 375 px，无横向溢出；原有工具栏较拥挤，未在本轮改布局。页面和城市合同控制台均 **0 errors / 0 warnings**。窄屏无头浏览器不能代表真实手机性能。
+- 两份 Python 脚本语法和 LF、资产 JSON、`git diff --check` 通过；未改 TypeScript，不重跑 typecheck、测试全集或 Next build。
+
+### 下一轮仍需解决
+
+**尚未达到测绘 1:1 或电影级。** 树叶仍偏大且有折面，需实物尺度与材质、远近细节分级；室内、招牌字形、X 精确折线和高度、Z 竣工状态及实拍、下沉庭院、道路和现场灯具配光仍缺依据。整片园区夜景远景和周边街道照明仍不足；411 MB 整城资源的分区、压缩及真实手机性能待完成。
+
+本轮仅本地保存、导出并提交脚本、清单与文档，不 push；LFS 配置和重资产上传继续暂缓。旧和平饭店入口、环球顶部候选仍未合入，其旧源指纹无效，后续须基于当前工程重做增量，不能回写旧整城。下文为历史快照。
+
 ## 2026-09-12 阿里巴巴 X/Y/Z 园区与 Z 中庭灯光已进入本地网页
 
 用户要求三块园区都做。本轮补建南侧 X 区七栋艺岛塔楼、北侧 Z 区及公共空间，保留上一轮 Y 主楼与中庭。X/Y 对照建成照片；Z 依据 SOM 2022 年公布的设计，当前竣工状态未核实，网页明确标为“Z 区方案”。实物依据、来源日期、平面定位和估算边界见[园区档案](../design/space/references/alibaba-xuhui.md)。
