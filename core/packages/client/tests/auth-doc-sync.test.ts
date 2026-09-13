@@ -75,6 +75,7 @@ describe('/dev/auth source-review drift', () => {
     ['@cuberoot/server', 'src/utils/future_oauth.ts'], ['@cuberoot/server', 'migrations/0999_auth_new.sql'],
     ['@cuberoot/server', 'src/utils/password.ts'], ['@cuberoot/server', 'src/utils/credentials.ts'],
     ['@cuberoot/mobile', 'src/native/secure-token.ts'], ['@cuberoot/client', 'proxy.ts'],
+    ['@cuberoot/client', 'lib/page-access-api.ts'], ['@cuberoot/client', 'app/api/page-access/route.ts'],
     ['@cuberoot/client', 'components/AuthPanel.tsx'], ['@cuberoot/client', 'lib/identity-choice.ts'],
     ['@cuberoot/client', 'app/auth/social/callback/page.tsx'], ['@cuberoot/client', 'app/[lang]/account/page.tsx'],
     ['@cuberoot/shared', 'src/auth/web_session.ts'], ['@cuberoot/app-ui', 'src/auth/installed-auth.ts'],

@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "proxy.ts": {
+    "app/api/page-access/route.ts": {
       "regions": ["iad1"]
     }
   }
