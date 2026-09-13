@@ -54,10 +54,25 @@ snapshots can miss shorter events; a stopped process cannot emit its own metrics
 
 ## Vercel page verification placement
 
-`core/packages/client/vercel.json` pins the Node.js `proxy.ts` function to `iad1`.
-The project-level default region alone does not constrain production middleware,
-which otherwise executes in multiple regions before serving cached pages.
-Static assets continue to use the global CDN. Self-hosted Next is unaffected.
+`core/packages/client/vercel.json` pins `/api/page-access` to `iad1`. Production
+Node.js middleware runs globally and calls this regional gateway through the
+existing Vercel-only `cuberoot-me.vercel.app` production alias. The gateway
+performs the original live API request. Using the custom domain here would
+reintroduce the origin connection through its split DNS. Preview middleware and
+self-hosted/dev Next keep calling the original API directly. Static assets
+continue to use the global CDN.
+
+The gateway accepts only fixed `locks` and `session` GET checks. It forwards
+Authorization only for session verification, never forwards cookies, refuses
+upstream redirects, preserves the request UUID, and marks every response
+`private, no-store`. Backend role and lock-state validation remain unchanged.
+The gateway consumes the upstream body within the original five-second
+deadline. It exposes `X-Page-Access-Region` for deployment verification.
+
+A direct `functions["proxy.ts"]` setting passed the published JSON schema but
+was rejected by Vercel CLI 59.11.7 before building. Its Next.js function matcher
+accepts app routes but not the renamed proxy entrypoint. Do not use that
+configuration or assume the project default region constrains middleware.
 
 On 2026-09-13 UTC, production request
 `86fab93b-eb3b-4808-ba4c-5c190905cb2c` failed in `sfo1` after exactly 5000 ms
@@ -80,8 +95,8 @@ regional API connection a prerequisite for otherwise static pages. Keep the
 checks fresh and fail closed; changing region must not introduce stale lock
 caches, skip administrator verification, or raise the timeout.
 
-After a placement change, inspect the deployed `/_middleware` function's region
-and correlate new main-domain requests with the origin. A successful preview
+After a placement change, inspect the deployed `/api/page-access` region and
+correlate new main-domain requests through the gateway with the origin. A successful preview
 alone is insufficient because preview and production middleware placement can
 differ. Recheck anonymous access to permanently locked pages as well as public
 pages in both languages.
