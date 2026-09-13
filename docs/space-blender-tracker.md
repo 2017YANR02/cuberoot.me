@@ -1,5 +1,15 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 金茂塔身收分与上部退台
+
+对照 SOM 街景和三件套仰视照片，将长塔身改为接近平行，上部四段逐段明显收窄，中央凹槽随段宽调整，铝板缝内端跟随下一段边缘。原幕墙细部、塔冠、材质及灯光保留；参数和摄影署名见[参考档案](../design/space/references/jin-mao.md#2026-09-13-塔身收分与上部退台)，网页 SOM 来源的中英文记录已更新。宽度和凹进仍是透视照片估算，不是实测。
+
+- 一份几何候选，先审正面、上部和两侧幕墙，再补[地面仰视](../.tmp/png/space-jinmao-profile-20260913/round-01/ground-full.png)、[背面](../.tmp/png/space-jinmao-profile-20260913/round-01/reverse-full.png)、[近似夜景](../.tmp/png/space-jinmao-profile-20260913/round-01/night-full.png)与[夜间退台](../.tmp/png/space-jinmao-profile-20260913/round-01/night-upper.png)。补充审图确认重建几何与候选一致且未改源文件，见[报告](../.tmp/png/space-jinmao-profile-20260913/round-01/supplemental-review.json)；不将增加视角计作额外几何迭代。夜景为临时 Cycles 照明，不代表网页效果。
+- 已保存 `jin-mao-setbacks-20260913`，[保存报告](../.tmp/png/space-jinmao-profile-20260913/round-01/saved.json)确认仅替换 48 个楼身网格，其他几何、变换、材质分配、运行 ID 及六灯组保持。源工程 **265,241,299 字节**，保存前整城备份位于同目录 `shanghai-before-jinmao-body.blend`；原网格数据保留。增量命令检查前置修订、候选/脚本哈希和源指纹，已有本修订拒绝再应用。
+- 正常导出 **500,053,692 字节**，增加 **12,049,852 字节**；12,019 objects、6 灯组和 16 张纹理保持。[正式检查](../.tmp/png/space-jinmao-profile-20260913/formal-check.json)确认金茂全部 51 个网格的顶点属性、索引、材质和局部变换与候选一致，世界变换误差小于 0.000001 m；安装的 Three.js 加载器在 Node 中成功解析。完整 HTTP 返回 200，长度和 SHA-256 `56bf6a12fb0f416f9416a94ecc68edf8d25835de370b62e6442af078a2bfe9ca` 与磁盘一致。
+
+**尚未达到 1:1 或电影级。** 本轮解决上部过宽与大退台衔接问题，但夜间塔冠仍偏亮、幕墙偏灰，下一步继续玻璃反射、金属和配光，再补裙楼、酒店中庭及观景层。Playwright MCP 本轮仍返回 `Transport closed`，网页视觉与来源入口未现场复查，HTTP 和加载器验证不替代该项。约 500 MB 整城资产仍需分区、LOD 和真实设备性能验证。后台隐藏、低优先级、14 线程；仅本地提交脚本、来源、清单和文档，不 push，LFS 配置与重资产上传继续暂缓。
+
 ## 2026-09-13 金茂幕墙横竖构件与连接件
 
 对照[幕墙承建方的细部实拍](https://www.permasteelisagroup.com/wp-content/uploads/2025/07/Jin-Mao-Tower-Shanghai3.jpg)，补成对竖肋、三道外挑横杆、金属层间板折边、连接板和螺栓，以及退台铝板分缝。[SOM 剖面和平面图的博物馆来源](https://old.skyscraper.org/EXHIBITIONS/CHINA_PROPHECY/jin_mao.php)用于辨认形态，当前 300 × 834 图像不能读取精确尺寸。两个来源均已写入网页来源数据的中英文说明；照片只作参考，未作为运行贴图。
