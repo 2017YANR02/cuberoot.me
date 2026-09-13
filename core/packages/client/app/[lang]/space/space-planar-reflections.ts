@@ -118,7 +118,9 @@ export class BlenderInteriorMirrors {
       mirror.visible = false;
       // Keep the original PBR mesh for distant views and secondary reflections.
       const m = mirror.material as THREE.ShaderMaterial;
-      m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -1;
+      // Only separate coplanar surfaces by depth-buffer units. A slope bias
+      // pulls grazing mirrors in front of physically nearer recessed lamps.
+      m.polygonOffset = true; m.polygonOffsetFactor = 0; m.polygonOffsetUnits = -4;
       m.uniforms.mirrorTexel = { value: new THREE.Vector2(1 / size, 1 / size) };
       m.uniforms.mirrorBlur = { value: source.material.roughness * 12 };
       m.fragmentShader = m.fragmentShader.replace('varying vec4 vUv;', 'varying vec4 vUv; uniform vec2 mirrorTexel; uniform float mirrorBlur;')
