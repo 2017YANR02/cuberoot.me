@@ -1,5 +1,17 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 100F 玻璃下方封板遮蔽
+
+继续对照[业主室内照片](https://www.swfc-shanghai.com/images/common/8-lease/pic_140.jpg)与[绳手真人夜间实拍](https://yakei.jp/abroad/shanghai/shanhai-hills-photo.html)。斜向射线确认，玻璃下方亮条所在位置会命中 Z = 471.64 m 的浅色封板内侧；此前垂直无遮挡检查无法覆盖这些角度。现对原封板进行 Cycles 环境遮蔽烘焙，通过标准 glTF `occlusionTexture` 接入第二套 UV，未改变原饰面颜色、粗糙度、几何、表面 UV 或灯强。来源和估算边界见[参考档案](../design/space/references/swfc-top.md#2026-09-13-封板环境遮蔽)。
+
+- 两轮候选：首轮验证内外侧遮蔽差异；第二轮将未使用的图集区域设为白色，避免黑色空白在远景 mipmap 中压暗外侧。已实际查看[第二轮贴图](../.tmp/png/space-swfc-underfloor-20260913/round-02/occlusion.png)、[内侧诊断图](../.tmp/png/space-swfc-underfloor-20260913/round-02/ao-diagnostic-top.png)和[外侧诊断图](../.tmp/png/space-swfc-underfloor-20260913/round-02/ao-diagnostic-bottom.png)。诊断图仅显示遮蔽，不代表最终网页光照；外侧分格保持，内侧未见明亮大块。
+- 烘焙为 CPU 14 线程、1024 × 1024、32 samples、12 m 遮蔽距离；玻璃未作为不透明遮挡物。206 个上表面和 206 个下表面的中心采样中位值分别约 0.043、0.920。[斜向检查](../.tmp/png/space-swfc-underfloor-20260913/round-02/angle-check.json)的 9 条射线有 3 条命中封板内侧，并验证命中点的 UV 与遮蔽值；其他 6 条未命中该封板。这些数值描述当前近似模型，不是现场光照测量。
+- [候选加载检查](../.tmp/png/space-swfc-underfloor-20260913/round-02/loader-check.json)实际使用浏览器中的 Three.js GLTFLoader，确认 `aoMap.channel = 1`、非颜色纹理、3696 个 UV 顶点、原始色值和 roughness 保持。没有新增网页 Shader 或材质替换逻辑。
+- 已保存修订 `swfc-cavity-occlusion-20260913`，源工程 **201,237,663 字节**，指纹 `[201237663,1789322694970217000]`。[保存报告](../.tmp/png/space-swfc-underfloor-20260913/round-02/saved.json)验证整城几何、变换、运行 ID、其他材质分配及六组灯保持，既有玻璃、通道、净高及端部检查通过。应用复用已检查候选的精确贴图和 UV，保存前保留 `round-02/shanghai-before-cavity-ao.blend` 完整备份；一次性脚本不要重跑 `--apply`。
+- 正常导出 **401,267,636 字节**，较上版增加 **30,228 字节**；12,019 objects、6 灯组、环球根下 24 个对象不变。保留原有 15 张纹理，新增遮蔽 PNG **202,677 字节**。SHA-256 为 `c07863c1cb5c4823886ec2ebdc593defa2a62e668bbdf4e7b41d03fb1258f5f7`。[正式检查](../.tmp/png/space-swfc-underfloor-20260913/formal-check.json)确认目标网格全部导出属性、索引、UV 和纹理字节与候选一致，模型与新纹理的实际 HTTP 响应均为 200，完整长度及哈希匹配。
+
+**最终网页视觉验收待完成。** Playwright MCP 连接关闭；按现有安全启动器启动的无头浏览器无法建立 WebGL2。请求临时调整启动器 GPU 参数的动作被自动审批策略拒绝，本轮保留安全配置，未绕过。因此本轮只完成 Blender 诊断及浏览器加载/HTTP 检查，不能宣称日夜亮条已消除，更不能宣称 1:1 或电影级。遮蔽距离、近似结构与表面参数仍需更多实拍核定；夜间宽柱面、镜顶波纹、97F、电梯厅及裙楼继续待办。未改 TS/TSX，未重复上轮测试或 Next build。脚本、清单和文档仅本地提交，不 push；重资产本地保存，LFS 配置与上传继续暂缓。
+
 ## 2026-09-13 100F 深色楼面与视角反射
 
 对照绳手真人的夜间实拍，原工程的地面与银色顶棚共用金属材质，网页镜面也未区分金属与非金属。现将原网格中的地面分离成独立深色抛光材质，网页根据金属度和观察角度计算反射：正视时减弱，掠射时增强。照片只支持外观区别，不能确定地面材质成分或光学参数，详见[参考档案](../design/space/references/swfc-top.md#2026-09-13-深色楼面与反射)。本轮未改全局曝光或灯强，仍复用七个平面反射与两个环境采样目标。
