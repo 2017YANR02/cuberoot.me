@@ -163,6 +163,21 @@ async function ownerAudioBytes(userId: number): Promise<number> {
   return Number(rows[0]?.total ?? 0);
 }
 
+async function deleteUploadedTrack(c: Context, ownerUserId?: number): Promise<Response> {
+  // Ownership is checked by the DELETE itself, including already-published tracks.
+  const rows = await query<MusicTrackRow>(
+    `DELETE FROM music_tracks WHERE id = ?${ownerUserId === undefined ? '' : ' AND owner_user_id = ?'} RETURNING ${TRACK_SELECT}`,
+    ownerUserId === undefined ? [c.req.param('id')] : [c.req.param('id'), ownerUserId],
+  );
+  if (!rows.length) return c.json({ error: 'Not found' }, 404);
+  for (const key of [rows[0].audio_storage_key, rows[0].cover_storage_key]) {
+    if (!key) continue;
+    const filePath = storedPath(key);
+    if (filePath) await fs.unlink(filePath).catch(() => {});
+  }
+  return c.json({ ok: true });
+}
+
 async function serveAudio(c: Context, headOnly: boolean, attachment: boolean): Promise<Response> {
   if (attachment) await memberIdentity(c);
   const row = await rowById(c.req.param('id'));
@@ -384,6 +399,12 @@ musicRoutes.patch('/music/tracks/:id', async (c) => {
   return c.json({ track: trackJson(rows[0], true) });
 });
 
+musicRoutes.delete('/music/tracks/:id', async (c) => {
+  noStore(c);
+  const { userId } = await memberIdentity(c);
+  return deleteUploadedTrack(c, userId);
+});
+
 musicRoutes.get('/music/tracks/:id/audio', (c) => serveAudio(c, false, false));
 musicRoutes.on('HEAD', '/music/tracks/:id/audio', (c) => serveAudio(c, true, false));
 musicRoutes.get('/music/tracks/:id/download', (c) => serveAudio(c, false, true));
@@ -471,15 +492,5 @@ musicRoutes.patch('/music/admin/tracks/:id', async (c) => {
 musicRoutes.delete('/music/admin/tracks/:id', async (c) => {
   noStore(c);
   await requireAdmin(c);
-  const rows = await query<MusicTrackRow>(
-    `DELETE FROM music_tracks WHERE id = ? RETURNING ${TRACK_SELECT}`,
-    [c.req.param('id')],
-  );
-  if (!rows.length) return c.json({ error: 'Not found' }, 404);
-  for (const key of [rows[0].audio_storage_key, rows[0].cover_storage_key]) {
-    if (!key) continue;
-    const filePath = storedPath(key);
-    if (filePath) await fs.unlink(filePath).catch(() => {});
-  }
-  return c.json({ ok: true });
+  return deleteUploadedTrack(c);
 });

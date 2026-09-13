@@ -9,7 +9,7 @@ import { useMembership } from '@/hooks/useMembership';
 import { tr, useLang } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
 import {
-  deleteAdminMusicStaticTrack, deleteAdminMusicTrack, listAdminMusicTracks,
+  deleteAdminMusicStaticTrack, deleteAdminMusicTrack, deleteMyMusicTrack, listAdminMusicTracks,
   listMusicStaticOverrides, listMyMusicTracks, putMusicTrackCover,
   updateAdminMusicStaticTrack, updateAdminMusicTrack, updateMyMusicTrack,
   type MusicApiTrack, type MusicMetadataDraft, type MusicTrackStatus,
@@ -156,13 +156,14 @@ export default function MusicManagePage() {
   };
 
   const removeUpload = async () => {
-    if (!selected || selected.source !== 'upload' || !isAdmin || !window.confirm(tr({
+    if (!selected || selected.source !== 'upload' || !isMember || busy || !window.confirm(tr({
       zh: `永久删除“${selected.title}”？此操作无法撤销。`,
       en: `Permanently delete “${selected.title}”? This cannot be undone.`,
     }))) return;
     setBusy(true); setError(null);
     try {
-      await deleteAdminMusicTrack(selected.id);
+      if (isAdmin) await deleteAdminMusicTrack(selected.id);
+      else await deleteMyMusicTrack(selected.id);
       const next = tracks.filter((track) => track.id !== selected.id);
       setTracks(next);
       void setSelectedId(next[0]?.id ?? null);
@@ -177,7 +178,7 @@ export default function MusicManagePage() {
       <div>
         <span className="music-kicker">{tr({ zh: 'CUBEROOT 音频', en: 'CUBEROOT AUDIO' })}</span>
         <h1>{isAdmin ? tr({ zh: '审核与管理', en: 'Review & manage' }) : tr({ zh: '我的上传', en: 'My uploads' })}</h1>
-        <p>{isAdmin ? tr({ zh: '管理静态曲库与会员上传内容。', en: 'Manage the library and member uploads.' }) : tr({ zh: '查看审核状态并修改待审核内容。', en: 'Check review status and edit pending uploads.' })}</p>
+        <p>{isAdmin ? tr({ zh: '管理静态曲库与会员上传内容。', en: 'Manage the library and member uploads.' }) : tr({ zh: '查看审核状态、修改待审核内容，或删除自己上传的音乐（包括已发布曲目）。', en: 'Check review status, edit pending uploads, or delete your own music, including published tracks.' })}</p>
         <AppLink href="/music" className="music-credits-link">{tr({ zh: '打开音乐播放器', en: 'Open music player' })}<span aria-hidden="true">→</span></AppLink>
       </div>
       <HeaderToggles />
@@ -213,7 +214,7 @@ export default function MusicManagePage() {
               {saved && <p className="music-form-success" role="status">{tr({ zh: '更改已保存', en: 'Changes saved' })}</p>}
               <div className="music-dialog-actions">
                 {isAdmin && selected.source === 'static' && <button type="button" className={selected.hidden ? 'music-text-button' : 'music-danger-button'} onClick={() => { void toggleStatic(); }} disabled={busy}>{selected.hidden ? <RotateCcw aria-hidden="true" /> : <Trash2 aria-hidden="true" />}{selected.hidden ? tr({ zh: '恢复上架', en: 'Restore' }) : tr({ zh: '从曲库移除', en: 'Remove from library' })}</button>}
-                {isAdmin && selected.source === 'upload' && <button type="button" className="music-danger-button" onClick={() => { void removeUpload(); }} disabled={busy}><Trash2 aria-hidden="true" />{tr({ zh: '永久删除', en: 'Delete permanently' })}</button>}
+                {isMember && selected.source === 'upload' && <button type="button" className="music-danger-button" onClick={() => { void removeUpload(); }} disabled={busy}><Trash2 aria-hidden="true" />{tr({ zh: '永久删除', en: 'Delete permanently' })}</button>}
                 {canEdit && <button type="submit" className="music-primary-button" disabled={busy}>{busy ? tr({ zh: '正在保存…', en: 'Saving…' }) : tr({ zh: '保存更改', en: 'Save changes' })}</button>}
               </div>
             </form>}

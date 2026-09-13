@@ -19,6 +19,8 @@ describe('buildSimQuery', () => {
     expect(params.get('groupId')).toBe('A');
     expect(params.get('solveNum')).toBe('4');
     expect(params.get('sourceZh')).toBe('EO · 十字 · 黄 · 1 步 · 1/450k');
+    const colored = new URLSearchParams(buildReconSubmitQuery('333', scramble, '', { sourceColors: 'WY' }));
+    expect(colored.get('sourceColors')).toBe('WY');
     expect(decodeUrlAlg(params.get('optimal')!)).toBe(scramble);
     expect(params.has('scramble')).toBe(false);
     expect(params.has('personId')).toBe(false);

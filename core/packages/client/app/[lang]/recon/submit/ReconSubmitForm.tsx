@@ -24,6 +24,7 @@ import {
 import AppLink from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import { Flag } from '@/components/Flag';
+import { SubsetSwatch, COLOR_LETTERS, COLOR_NAME } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { ClearButton } from '@/components/ClearButton';
 import { CompactSelect } from '@/components/CompactSelect';
@@ -159,6 +160,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const router = useRouter();
   const params = useParams<{ lang?: string }>();
   const searchParams = useSearchParams();
+  const sourceColors = COLOR_LETTERS.filter(color => searchParams?.get('sourceColors')?.includes(color));
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
 
@@ -1645,8 +1647,18 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     <div className="recon-page submit-page">
       <div className="submit-header">
         <div className="submit-header-top">
-          <div className="detail-header">
+          <div className="detail-header submit-title-row">
             <h1>{isEditing ? t('recon.editRecon') : t('recon.addRecon')}</h1>
+            {!isEditing && (searchParams?.get('sourceZh') || searchParams?.get('sourceEn')) && (
+              <div className="submit-source-summary">
+                {sourceColors.length > 0 && (
+                  <span className="subset-swatch is-static" role="img" aria-label={sourceColors.map(color => tr(COLOR_NAME[color])).join('/')}>
+                    <SubsetSwatch colors={sourceColors} />
+                  </span>
+                )}
+                {tr({ zh: searchParams?.get('sourceZh') || searchParams?.get('sourceEn') || '', en: searchParams?.get('sourceEn') || searchParams?.get('sourceZh') || '' })}
+              </div>
+            )}
           </div>
           {simHref && (
             <Link
@@ -1854,11 +1866,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </div>
               </div>
 
-              {!isEditing && (searchParams?.get('sourceZh') || searchParams?.get('sourceEn')) && (
-                <div className="submit-source-summary">
-                  {tr({ zh: searchParams?.get('sourceZh') || searchParams?.get('sourceEn') || '', en: searchParams?.get('sourceEn') || searchParams?.get('sourceZh') || '' })}
-                </div>
-              )}
+
 
               {/* 非 WCA(非WCA比赛 / 练习):补国家(选完显示国旗) + 城市,WCA 比赛由所选比赛自动带出 */}
               {form.official !== 'wca' && (

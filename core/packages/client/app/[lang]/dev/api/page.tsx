@@ -656,6 +656,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'music', m: 'GET', p: '/v1/music/me/tracks', g: 'login', c: 'no-store', zh: '会员查看自己的投稿和审核状态', en: 'Member submissions and review states' },
   { d: 'music', m: 'POST', p: '/v1/music/tracks', g: 'login', c: 'no-store', zh: '会员以 query 元数据和原始音频流投稿 MP3 / M4A / FLAC / WAV，单文件最大 100 MiB，每账号总计 1 GiB', en: 'Submit query metadata plus a raw MP3, M4A, FLAC, or WAV stream up to 100 MiB each and 1 GiB per account' },
   { d: 'music', m: 'PATCH', p: '/v1/music/tracks/:id', g: 'login', c: 'no-store', zh: '投稿者修改本人待审核音乐元数据与 LRC 歌词', en: 'Edit metadata and LRC lyrics on an owned pending submission' },
+  { d: 'music', m: 'DELETE', p: '/v1/music/tracks/:id', g: 'login', c: 'no-store', zh: '会员删除自己上传的音乐及音频、封面，包括已发布曲目', en: 'Members delete their own uploaded music, audio and cover, including published tracks' },
   { d: 'music', m: 'PUT', p: '/v1/music/tracks/:id/cover', g: 'login', c: 'no-store', zh: '为本人待审核音乐上传 JPEG / PNG / WebP 封面', en: 'Upload a JPEG, PNG, or WebP cover for an owned pending submission' },
   { d: 'music', m: 'GET', p: '/v1/music/tracks/:id/cover', g: 'public', c: 'no-store', zh: '读取已发布封面；投稿者和管理员也可预览待审核封面', en: 'Read a published cover; owners and admins may also preview pending covers' },
   { d: 'music', m: 'HEAD', p: '/v1/music/tracks/:id/cover', g: 'public', c: 'no-store', zh: '读取音乐封面响应头', en: 'Read music-cover response headers' },

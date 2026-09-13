@@ -21,7 +21,7 @@
   flex-wrap: wrap;
 }
 .scroll-diagnostics-heading { justify-content: space-between; }
-.scroll-diagnostics button {
+.scroll-diagnostics-button {
   appearance: none;
   cursor: pointer;
   padding: 6px 10px;
@@ -31,7 +31,7 @@
   color: var(--foreground);
   font: inherit;
 }
-.scroll-diagnostics button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.scroll-diagnostics-button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .scroll-diagnostics p { margin: 10px 0; }
 .scroll-diagnostics-note { color: var(--muted-foreground); font-size: 12px; }
 .scroll-diagnostics.is-recording { width: min(320px, calc(100vw - 24px)); }
