@@ -286,7 +286,14 @@ export class ShanghaiScene {
       scene.traverse(o => {
         if (o instanceof THREE.Mesh && !Array.isArray(o.material) && o.material.userData.spaceSwfcTopMaterialRole === 'pier-cladding') mirrorPiers = o;
       });
-      this.interiorMirrors = new BlenderInteriorMirrors(hallMirror, this.narrow, mirrorPiers);
+      const fixtures = [
+        'swfc-hall-lighting-20260913/handrails', 'swfc-hall-lighting-20260913/lamp-trim',
+        'swfc-hall-ends-20260913/metal', 'swfc-hall-ends-20260913/panels',
+      ].flatMap(id => {
+        const node = nodes.get(id);
+        return node instanceof THREE.Mesh && node.material instanceof THREE.MeshStandardMaterial ? [node.material] : [];
+      });
+      this.interiorMirrors = new BlenderInteriorMirrors(hallMirror, this.narrow, mirrorPiers, fixtures);
     }
     this.traffic = new ShanghaiTraffic(data.roads, this.material.bind(this), this.narrow, traffic);
     this.root.add(this.traffic.root);
