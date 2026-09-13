@@ -42,7 +42,7 @@ Blender 是静态场景的编辑源，Three.js 是网页运行引擎。住宅、
 pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset italian-original -PreviewCamera Bathroom
 ```
 
-住宅相机可用 `Overview`、`"Living room"`、`Study`、`Bedroom`、`Bathroom`、`Courtyard`、`Garage`、`Cinema`、`Gym`；公司工程预置 `Overview`、`"Living room"`、`Study`、`Courtyard`；城市工程预置 `Overview`、`"Jin Mao"`、`"Jin Mao crown"`、`"Alibaba campus"` 和 `"Alibaba courtyard"`。图片和日志输出到 `.tmp/png/space-blender/`。预览不会保存修改源工程，也不会导出网页资源。
+住宅相机可用 `Overview`、`"Living room"`、`Study`、`Bedroom`、`Bathroom`、`Courtyard`、`Garage`、`Cinema`、`Gym`；公司工程预置 `Overview`、`"Living room"`、`Study`、`Courtyard`；城市工程预置 `Overview`、`"Jin Mao"`、`"Jin Mao crown"`，以及园区的 `"Alibaba whole campus"`、`"Alibaba X Art Tower"`、`"Alibaba campus"`、`"Alibaba courtyard"`、`"Alibaba Z campus"`、`"Alibaba Z courtyard"`。图片和日志输出到 `.tmp/png/space-blender/`。预览不会保存修改源工程，也不会导出网页资源。
 
 预览脚本把 `spaceLights` 中的网页面光源转换为临时 Blender Area Light，功率换算用于看清室内，不是现场光度校准。网页反射与专用材质仍需在网页验收，不能用这张 Cycles 图片代表网页画质。
 
@@ -80,11 +80,13 @@ pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset italian-original -Pr
 
 源工程和网页 GLB/纹理被 Git 忽略，提交代码不会备份这些重资产。完整备份需同时包含 `design/space/scenes` 与 `client/public/assets/space/blender-v1`；2026-09-08 迁出的 8 份旧 `.blend1` 备份在 `E:/CubeRoot-Assets/space/backups/20260908/`，随后修正预览相机时生成的 `.blend1` 留在原工程旁。E 盘缓存可重建，不能取代 `.blend` 备份。
 
-本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 330,685,292 字节（约 331 MB，2026-09-12 阿里巴巴园区导出），正式发布前仍需分区加载、压缩与移动设备验证。
+本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 371,409,520 字节（约 371 MB，2026-09-12 阿里巴巴 X/Y/Z 园区及中庭灯光导出），正式发布前仍需分区加载、压缩与移动设备验证。
 
 Blender 和 glTF 插件来源已加入网页的“来源与致谢”，统一数据在 `credits_data.json`；建筑及天气等既有资料见 [来源记录](../../docs/space-sources.md)，迁移状态见 [跟踪文档](../../docs/space-blender-tracker.md)。
 
-阿里巴巴徐汇滨江 Y 区主楼已保存 `alibaba-xuhui-y-20260912` 修订，并正常导出到本地网页；相机入口为“阿里巴巴园区”“阿里中庭”。`refine_alibaba_campus.py` 是首次增量脚本，已有修订时拒绝重建；后续编辑当前 `shanghai.blend`，再运行 `batch.ps1 -Asset shanghai`。实拍、尺寸估算和 X/Z 区待办见[园区参考档案](references/alibaba-xuhui.md)。下文和平饭店与环球金融中心未保存候选仍保持候选状态；其旧源指纹已因园区保存失效，合入前必须以当前工程重新生成增量候选，禁止用旧候选整城覆盖。
+阿里巴巴徐汇滨江 X/Y/Z 三块园区已保存 `alibaba-xuhui-y-20260912` 与 `alibaba-xz-20260912` 修订并导出到本地网页，入口为“阿里园区全景”“X 区艺岛”“Y 区主楼”“Y 区中庭”“Z 区方案”“Z 区中庭”。X/Y 对照建成照片；Z 采用 SOM 2022 年设计资料，尚未核实竣工状态，三块园区仍有估算尺寸。`refine_alibaba_campus.py`、`refine_alibaba_districts.py` 都是首次增量脚本，已有各自修订时拒绝重建；后续编辑当前 `shanghai.blend`，再运行 `batch.ps1 -Asset shanghai`。实拍、来源和待修细部见[园区参考档案](references/alibaba-xuhui.md)。下文和平饭店与环球金融中心未保存候选仍保持候选状态；其旧源指纹已因园区保存失效，合入前必须以当前工程重新生成增量候选，禁止用旧候选整城覆盖。
+
+Z 中庭另保存 `alibaba-z-court-light-20260912`：新增第四组 Blender 作者灯，网页继续共用原有六盏近景灯，不增加灯池。`refine_alibaba_courtyard_lighting.py` 仅用于本次首次增量，已有灯组时拒绝重跑；后续编辑现有灯具并正常导出。地面和标识配光为网页目测校准，尚非实测光度，远景照明仍需改进。
 
 金茂的实拍对照、首次精修脚本和后续编辑边界见[参考档案](references/jin-mao.md)。已有精修标记的工程禁止用首次建模脚本覆盖；日常继续编辑 `.blend` 并导出。
 

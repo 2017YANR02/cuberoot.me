@@ -51,12 +51,15 @@ def export_facade_rigs(scene):
 
 
 def export_snapshot(scene):
-    """Inspect all three rigs without persisting derived lamp metadata."""
+    """Inspect authored rigs without persisting derived lamp metadata."""
     roots = [o for o in scene.objects if o.get('spaceFacadeRig')]
+    ids = [o.get('spaceId') for o in roots]
+    if len(set(ids)) != len(ids) or not {'root/147/4', 'root/147/5', 'root/147/6'}.issubset(ids):
+        raise RuntimeError('Expected unique rig identities and all three existing Bund rigs')
     original = {o: o['facadeLighting'].to_dict() for o in roots}
     try:
-        if export_facade_rigs(scene) != 3:
-            raise RuntimeError('Expected all three existing authored rigs')
+        if export_facade_rigs(scene) != len(roots):
+            raise RuntimeError('Authored light rig count changed during export')
         return {o['spaceId']: o['facadeLighting'].to_dict() for o in roots}
     finally:
         for obj, value in original.items():
