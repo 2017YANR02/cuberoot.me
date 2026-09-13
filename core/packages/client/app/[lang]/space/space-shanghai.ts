@@ -16,6 +16,7 @@ import { applyCommercialFixtures } from './space-shanghai-commercial-bank';
 import { loadSpaceBlender, SPACE_ASSET_SOURCE } from './space-blender';
 import { ShanghaiTraffic } from './space-shanghai-traffic';
 import { ShanghaiFacadeLighting } from './space-shanghai-lighting';
+import { BlenderInteriorMirrors, guardPlanarReflection } from './space-planar-reflections';
 
 type Point = [number, number];
 type Road = ShanghaiRoad;
@@ -80,6 +81,7 @@ export class ShanghaiScene {
   private abort = new AbortController();
   private disposed = false;
   private water?: Reflector & { material: THREE.ShaderMaterial };
+  private interiorMirrors?: BlenderInteriorMirrors;
   private boats?: THREE.InstancedMesh;
   private boatDetails: THREE.InstancedMesh[] = [];
   private traffic?: ShanghaiTraffic;
@@ -278,6 +280,10 @@ export class ShanghaiScene {
       if (typeof m.userData.spaceDepthWrite === 'boolean') m.depthWrite = m.userData.spaceDepthWrite;
       if (m instanceof THREE.MeshStandardMaterial && !m.userData.spaceRuntimeShader) this.restoreBlenderMaterial(m, bankLights);
     }
+    const hallMirror = nodes.get('swfc-skywalk-20260913/interior-mirror');
+    if (hallMirror instanceof THREE.Mesh && hallMirror.material instanceof THREE.MeshStandardMaterial) {
+      this.interiorMirrors = new BlenderInteriorMirrors(hallMirror, this.narrow);
+    }
     this.traffic = new ShanghaiTraffic(data.roads, this.material.bind(this), this.narrow, traffic);
     this.root.add(this.traffic.root);
     this.boats = boats[0] as THREE.InstancedMesh;
@@ -355,6 +361,7 @@ export class ShanghaiScene {
     const m = this.water.material as THREE.ShaderMaterial; m.lights = true; m.fog = true; m.uniforms.normalSampler.value = normals;
     const reflect = this.water.onBeforeRender.bind(this.water);
     this.water.onBeforeRender = (...args) => { m.uniforms.eye.value.setFromMatrixPosition(args[2].matrixWorld); reflect(...args); };
+    guardPlanarReflection(this.water);
     this.water.rotation.x = -Math.PI / 2; this.water.position.y = -.5; this.water.userData.spaceBackdrop = true; m.uniforms.size.value = 48;
     this.root.add(this.water);
   }
@@ -487,6 +494,7 @@ export class ShanghaiScene {
   get lightingTransitioning() { return this.facadeLighting?.transitioning ?? false; }
 
   update(time: number, motion: boolean, camera: THREE.PerspectiveCamera, target: THREE.Vector3) {
+    this.interiorMirrors?.update(camera);
     const dt = this.lastTime ? Math.min(.1, (time - this.lastTime) / 1000) : 0; this.lastTime = time;
     if (motion) this.elapsed += dt;
     if (this.water) this.water.material.uniforms.time.value = this.elapsed * .65;
@@ -514,6 +522,7 @@ export class ShanghaiScene {
 
   dispose() {
     this.disposed = true; this.cruising = false; this.abort.abort(); this.root.removeFromParent();
+    this.interiorMirrors?.dispose();
     this.batches.forEach(b => b.geometries.forEach(g => g.dispose())); this.batches.clear();
     this.root.traverse(o => {
       if (o instanceof THREE.Mesh) { o.geometry.dispose(); for (const m of Array.isArray(o.material) ? o.material : [o.material]) this.materials.add(m); }

@@ -1,5 +1,16 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 100F 网页镜面反射
+
+将上轮 Blender 100F 镜顶、地面和窗台的室内倒影接回网页。直接从正式 GLB 的 `swfc-skywalk-20260913/interior-mirror` 提取五个向内平面，保留原三角面和玻璃带开孔，使用源材质颜色、粗糙度和物体变换；未重新生成建筑或增加尺寸估计。实现复用已安装的 [Three.js Reflector](https://threejs.org/docs/pages/Reflector.html)，文档于 2026-09-13 查阅，致谢沿用网页已有 Three.js 条目；实景依据仍见[业主资料档案](../design/space/references/swfc-top.md#2026-09-13-100f-观光厅与透明步道)。
+
+- 第一轮接回实际反射；第二轮俯视发现镜面相互采样旧倒影、逐渐发黑，改为反射时隐藏其他镜面覆盖层，保留原 PBR 几何作为二次倒影的近似；河面、住宅与观光厅共用递归保护。
+- 第三轮实测发现玻璃透射与主画面重复更新镜面，现按相机和帧复用。[实际网页记录](../.tmp/png/space-swfc-reflections-20260913/final-runtime-check.json)中厅内、斜视、俯视均为 **5 次反射渲染**，修正前为 10 次；远景为 **0 次**，渲染嵌套深度最大为 2。桌面反射分辨率 768，窄屏配置 384，距厅内包围盒 25 m 外回退原材质。记录中的 CPU 提交耗时不代表 GPU 帧率，尚未完成真实手机性能验收。
+- 实际打开并复查[日景](../.tmp/png/space-swfc-reflections-20260913/final-hall-day.png)、[斜视](../.tmp/png/space-swfc-reflections-20260913/final-oblique.png)、[玻璃带俯视](../.tmp/png/space-swfc-reflections-20260913/final-floor.png)与[夜景](../.tmp/png/space-swfc-reflections-20260913/final-night.png)。玻璃带未被镜面覆盖，日景可见框架及窗带倒影，发黑反馈已消除；夜间厅内仍暗，不能当作灯光验收通过。
+- `pnpm --filter @cuberoot/client typecheck` 通过；定向运行 `space_planar_reflections.test.ts` 与 `space_shanghai.test.ts` 共 **54 项通过**，覆盖开孔、斜面、坐标变换、资源释放、相互反射异常恢复与透射/主渲染复用。正式网页[控制台记录](../.tmp/png/space-swfc-reflections-20260913/final-console.log)为 **0 errors / 0 warnings**。本轮不重复整城资产导出、测试全集或 Next build。
+
+**1:1 与电影级视觉验收仍未通过。** 一次反射和粗糙度模糊是实时近似，材质光学参数、灯具光度、层间结构和玻璃带尺寸仍需现场资料核定；两端电梯厅、97F 内部、冠部重复窗光及裙楼待细化，400 MB 整城资产的分区与细节分级也未完成。本轮 `.blend`、GLB 和导出清单未变，继续使用上轮正式 SHA-256 `51df9d51b5401289f1bc8dc044128fad851d5e9c731ffbf10e91d75315bb246e`。代码与跟踪记录仅本地提交；不 push，LFS 配置和重资产上传暂缓。下文为历史快照。
+
 ## 2026-09-13 100F 观光厅三轮细化
 
 对照[业主 100F 平面图](https://www.swfc-shanghai.com/images/common/8-lease/map_100f.png)、[室内照片](https://www.swfc-shanghai.com/images/common/8-lease/pic_140.jpg)和项目册细化环球金融中心。平面图的 **50 × 6.2 m、净高 3–3.85 m** 为租赁厅范围；项目册的 **55 m、三条玻璃地板、地上 474 m** 为观光桥资料，分别处理。访问、下载和审图日期为 2026-09-13，图片拍摄时间及作者未知；来源、哈希和估算边界见[参考档案](../design/space/references/swfc-top.md#2026-09-13-100f-观光厅与透明步道)。
