@@ -104,12 +104,18 @@ describe('authored interior reflections', () => {
     const interior = new BlenderInteriorMirrors(source, true, lining), mirror = source.children[0] as Reflector;
     const camera = new THREE.PerspectiveCamera(60, 1, .05, 1000);
     camera.position.set(3, 2, 0); camera.lookAt(3, 0, 0); camera.updateMatrixWorld(); source.updateMatrixWorld(true);
-    let fail = true, targetDisposed = false;
+    let failAt = 1;
+    const captures: { input: THREE.Texture | null; target: THREE.WebGLCubeRenderTarget }[] = [];
+    const disposed = new Set<THREE.WebGLCubeRenderTarget>();
     const capture = vi.spyOn(THREE.CubeCamera.prototype, 'update').mockImplementation(function (this: THREE.CubeCamera) {
-      expect(source.material.envMap).toBe(original);
+      captures.push({ input: source.material.envMap, target: this.renderTarget });
+      // In both stages the sampled cube must differ from the render target.
+      expect(source.material.envMap).not.toBe(this.renderTarget.texture);
+      expect(lining.material.envMap).not.toBe(this.renderTarget.texture);
       expect(source.children.every(o => !o.visible)).toBe(true);
-      this.renderTarget.addEventListener('dispose', () => { targetDisposed = true; });
-      if (fail) throw new Error('capture failed');
+      const target = this.renderTarget;
+      target.addEventListener('dispose', () => { disposed.add(target); });
+      if (captures.length === failAt) throw new Error('capture failed');
     });
     const renderer = {
       xr: { enabled: false }, shadowMap: { autoUpdate: true }, autoClear: true,
@@ -118,17 +124,29 @@ describe('authored interior reflections', () => {
     } as unknown as THREE.WebGLRenderer;
     const draw = () => mirror.onBeforeRender(renderer, new THREE.Scene(), camera, mirror.geometry, mirror.material as THREE.Material, null!);
     try {
+      interior.update(camera, false); draw(); expect(capture).not.toHaveBeenCalled();
       interior.update(camera); expect(draw).toThrow('capture failed');
       expect(source.material.envMap).toBe(original); expect(mirror.visible).toBe(true);
-      fail = false; draw(); expect(source.material.envMap).not.toBe(original);
+      failAt = 0; draw(); expect(source.material.envMap).toBe(captures[2].target.texture);
+      expect(captures[1].input).toBe(original);
+      expect(captures[2].input).toBe(captures[1].target.texture);
       expect(source.material.envMapIntensity).toBe(1);
-      interior.update(camera); draw(); expect(capture).toHaveBeenCalledTimes(2);
-      interior.invalidateProbe(); interior.update(camera); draw(); expect(capture).toHaveBeenCalledTimes(3);
+      interior.update(camera); draw(); expect(capture).toHaveBeenCalledTimes(3);
+      // Keep the previous completed map while lights fade; recapture just once
+      // after settling, even if weather animation is disabled.
+      interior.update(camera, false); draw(); interior.update(camera, false); draw();
+      expect(capture).toHaveBeenCalledTimes(3);
+      interior.update(camera); draw(); expect(capture).toHaveBeenCalledTimes(5);
+      interior.invalidateProbe(); interior.update(camera); draw(); expect(capture).toHaveBeenCalledTimes(7);
+      failAt = 9; interior.invalidateProbe(); interior.update(camera); expect(draw).toThrow('capture failed');
+      expect(source.material.envMap).toBe(original); expect(mirror.visible).toBe(true);
+      failAt = 0; draw(); expect(capture).toHaveBeenCalledTimes(11);
       camera.position.set(0, 0, 100); interior.update(camera);
       expect(source.material.envMap).toBe(original); expect(source.material.envMapIntensity).toBe(.4);
       camera.position.set(3, 2, 0); camera.updateMatrixWorld(); interior.update(camera); draw();
-      expect(capture).toHaveBeenCalledTimes(4);
-      interior.dispose(); expect(targetDisposed).toBe(true); expect(source.material.envMap).toBe(original);
+      expect(capture).toHaveBeenCalledTimes(13);
+      expect(new Set(captures.map(c => c.target)).size).toBe(2);
+      interior.dispose(); expect(disposed.size).toBe(2); expect(source.material.envMap).toBe(original);
     } finally {
       capture.mockRestore(); interior.dispose(); original.dispose();
       for (const m of [source, lining]) { m.geometry.dispose(); m.material.dispose(); }

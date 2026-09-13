@@ -75,8 +75,10 @@ export class BlenderInteriorMirrors {
   private camera?: THREE.Camera;
   private rendered = new Set<Reflector>();
   private probe?: THREE.CubeCamera;
+  private bounceTarget?: THREE.WebGLCubeRenderTarget;
   private probeMaterials: { material: THREE.MeshStandardMaterial; envMap: THREE.Texture | null; intensity: number }[] = [];
   private probeDirty = true;
+  private lightingReady = true;
   private near = false;
 
   invalidateProbe() { this.probeDirty = true; }
@@ -116,9 +118,10 @@ export class BlenderInteriorMirrors {
         const merged = mergeGeometries([plane.geometry, extra.geometry])!;
         plane.geometry.dispose(); extra.geometry.dispose(); plane.geometry = merged;
       }
-      // A static local capture supplies the second reflection's PBR fallback.
-      // Capturing only on entry/lighting changes avoids six extra passes per frame.
+      // Two independent captures let the PBR fallback receive light reflected
+      // by the room. Cache both across frames; never sample the active target.
       this.probe = new THREE.CubeCamera(.05, 20000, new THREE.WebGLCubeRenderTarget(narrow ? 64 : 128, { type: THREE.HalfFloatType }));
+      this.bounceTarget = this.probe.renderTarget.clone();
       for (const material of new Set([source.material, lining.material])) {
         if (!Array.isArray(material) && (material as THREE.MeshStandardMaterial).isMeshStandardMaterial) {
           const standard = material as THREE.MeshStandardMaterial;
@@ -128,6 +131,7 @@ export class BlenderInteriorMirrors {
     }
     if (planes.length > 8) {
       planes.forEach(p => p.geometry.dispose());
+      this.probe?.renderTarget.dispose(); this.bounceTarget?.dispose();
       throw new Error('Authored interior exceeds eight planar reflection surfaces');
     }
     const size = narrow ? 384 : 768;
@@ -178,7 +182,7 @@ export class BlenderInteriorMirrors {
       mirror.onBeforeRender = (...args) => {
         // Transmission and the main pass share one camera and one mirror image.
         if (args[2] !== this.camera || this.rendered.has(mirror)) return;
-        if (this.probeDirty && !reflecting.has(args[0])) this.captureProbe(args[0], args[1]);
+        if (this.probeDirty && this.lightingReady && !reflecting.has(args[0])) this.captureProbe(args[0], args[1]);
         reflect.apply(mirror, args);
         this.rendered.add(mirror);
       };
@@ -196,6 +200,12 @@ export class BlenderInteriorMirrors {
     this.setProbeMaterials(false); // Never read from the cube target being written.
     this.source.geometry.boundingBox!.getCenter(this.probe.position).applyMatrix4(this.source.matrixWorld);
     try {
+      this.probe.update(renderer, scene);
+      this.setProbeMaterials(true);
+      // Read the completed first cube while writing the other. The second
+      // capture is still a local approximation, not recursive planar tracing.
+      const first = this.probe.renderTarget;
+      this.probe.renderTarget = this.bounceTarget!; this.bounceTarget = first;
       this.probe.update(renderer, scene);
       this.probeDirty = false;
     } finally {
@@ -217,8 +227,12 @@ export class BlenderInteriorMirrors {
     }
   }
 
-  update(camera: THREE.Camera) {
+  update(camera: THREE.Camera, lightingReady = true) {
     this.camera = camera; this.rendered.clear();
+    this.lightingReady = lightingReady;
+    // The shared light pool fades between buildings. Capturing before its
+    // transition completes would leave a dim environment cached indefinitely.
+    if (!lightingReady) this.probeDirty = true;
     if (!this.mirrors.length) return;
     this.source.updateWorldMatrix(true, false);
     this.bounds.copy(this.source.geometry.boundingBox!).applyMatrix4(this.source.matrixWorld);
@@ -232,6 +246,7 @@ export class BlenderInteriorMirrors {
 
   dispose() {
     this.setProbeMaterials(false); this.probe?.renderTarget.dispose(); this.probe = undefined;
+    this.bounceTarget?.dispose(); this.bounceTarget = undefined;
     this.probeMaterials.length = 0;
     for (const mirror of this.mirrors) { mirror.removeFromParent(); mirror.geometry.dispose(); mirror.dispose(); }
     this.mirrors.length = 0; this.rendered.clear(); this.camera = undefined;
