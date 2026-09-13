@@ -1,5 +1,15 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 100F 镜面与筒灯遮挡修正
+
+多角度复查发现，筒灯虽然位于镜顶前方，斜看时仍被镜面覆盖。实际场景射线测得同一视线上的灯面距离约 8.537 m、镜顶约 8.556 m；关闭中央镜面覆盖层后灯面立即恢复。根因是镜面材质的负斜率深度偏移在掠射角下将镜顶错误提前。现改为 `polygonOffsetFactor=0`、`polygonOffsetUnits=-4`，仅分开共面表层，不调整灯光强度或全局曝光。
+
+- [GPU 对照记录](../.tmp/png/space-swfc-lighting-20260913/depth-regression-result.txt)使用实际 `BlenderInteriorMirrors` 材质配置，覆盖两个观察方向、多档距离与视点高度，共 **20 组**可见灯面。无覆盖层对照全部可见；旧斜率配置 **18 组**发生错误遮挡，修正后 **0 组**。近远灯均对齐像素中心采样，排除亚像素覆盖差异；[复现脚本](../.tmp/png/space-swfc-lighting-20260913/depth-regression.mjs)保存在临时证据目录。
+- 正式网页重新加载源码后，已逐张查看[夜景](../.tmp/png/space-swfc-lighting-20260913/fixed-depth-night.png)、[斜视](../.tmp/png/space-swfc-lighting-20260913/fixed-depth-oblique.png)、[反向](../.tmp/png/space-swfc-lighting-20260913/fixed-depth-reverse.png)、[玻璃带俯视](../.tmp/png/space-swfc-lighting-20260913/fixed-depth-floor.png)、[日景](../.tmp/png/space-swfc-lighting-20260913/fixed-depth-day.png)和[窄屏](../.tmp/png/space-swfc-lighting-20260913/fixed-depth-narrow.png)。七个覆盖层均使用新配置，玻璃带开孔保留；390 × 844 视口无横向溢出，反射目标为 384。清除临时 GPU 验证注入并再次刷新后，控制台无错误、警告或页面异常。
+- client typecheck 通过；定向 `space_shanghai.test.ts`、`space_planar_reflections.test.ts` 共 **57 项测试通过**。未重复整城导出、Next build 或无关测试全集。
+
+本轮只改网页深度处理，未改写 `.blend` 或 GLB；源指纹、正式导出哈希沿用下一节。夜间柱饰间接反射仍弱，真实金属板波纹、端部标识、97F 层间结构仍未补齐，**1:1 与电影级验收仍未通过**。代码及文档仅本地提交，不 push；LFS 配置和重资产上传继续暂缓。
+
 ## 2026-09-13 100F 筒灯扶手与夜间反射
 
 本轮仅细化环球金融中心 100F 观光厅。实际查看绳手真人与 Gerhard Huber 的室内夜间照片，补中央黑色灯槽、20 盏圆形筒灯外形、两侧共 20 段扶手及 40 个支架，并将宽框架饰面改为抛光金属。照片、摄影者、日期及尺寸估算见[参考档案](../design/space/references/swfc-top.md#2026-09-13-筒灯扶手与夜间实拍)，两个来源链接均已在网页“来源与致谢”确认可见。照片没有作为运行贴图发布。
