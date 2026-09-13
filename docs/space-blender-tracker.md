@@ -1,5 +1,17 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 100F 金属板面与细接缝
+
+继续对照绳手真人、Gerhard Huber 的观光厅实拍，细化环球金融中心 100F 镜顶与宽柱饰。第一轮板面变化重复、接缝过宽；第二轮使用 16 种变化的原创法线图块，并将原 50 mm 顶板缝缩到照片估算的 6 mm。最终保存候选与第二轮模型、纹理哈希一致，第三次候选仅同步脚本注释，不计作额外视觉迭代。照片来源、参数估算与许可见[参考档案](../design/space/references/swfc-top.md#2026-09-13-金属饰面细化)，原照片没有作为运行纹理发布。
+
+- 原创 1024 × 1024 法线图已打包进 Blender，镜顶和柱饰分别使用 0.065 / 0.039 法线强度、0.09 / 0.14 粗糙度。玻璃带和楼面保持平直。网页提取镜面时保留原 UV、各面的颜色与材质参数，共面构件继续共享反射；实际仍为七个平面，保留上轮筒灯深度修正。波纹反射使用估算 2 m 光学距离的一阶偏移，不是曲面或多次光线追踪。
+- 保存修订 `swfc-metal-finish-20260913`：源工程 **200,876,503 字节**，指纹 `[200876503,1789312902371249600]`。[保存报告](../.tmp/png/space-swfc-metal-20260913/round-03/saved.json)确认源与候选哈希、其他城市几何和变换、运行身份及六组灯保持，15 处玻璃楼面与下方无遮挡、15 条通道射线和净高检查通过；保存前备份为同目录 `shanghai-before-metal-finish.blend`。原始两个网格数据仍保留在工程内供恢复。
+- 正常 `batch.ps1 -Asset shanghai` 导出完成：GLB **400,900,980 字节**，增加 **680 字节**；12,013 objects、6 灯组、15 张共享纹理。SHA-256 为 `ad51eae023bcd3daafaf8860c0864c43129e6e6e9cd1c80194361eb444854a75`。新增外置法线纹理为 **625,965 字节**，SHA-256 `bcd289b3e963c113bd717f8743d84893419991a59ef16e366f0eb8159f88acd8`；[HTTP 检查](../.tmp/png/space-swfc-metal-20260913/texture-http.json)确认响应 200、实际长度与磁盘文件一致。
+- 正式网页加载新模型哈希和新纹理，已实际打开检查[夜景](../.tmp/png/space-swfc-metal-20260913/formal-night.png)、[反向](../.tmp/png/space-swfc-metal-20260913/formal-reverse.png)、[斜视](../.tmp/png/space-swfc-metal-20260913/formal-oblique.png)、[日景](../.tmp/png/space-swfc-metal-20260913/formal-day.png)、[玻璃带俯视](../.tmp/png/space-swfc-metal-20260913/formal-floor.png)和[窄屏](../.tmp/png/space-swfc-metal-20260913/formal-narrow.png)。无候选材质注入，玻璃带开孔与筒灯可见性保留。桌面创建的反射目标为 768；在 390 × 844 下重新加载后，[窄屏运行记录](../.tmp/png/space-swfc-metal-20260913/narrow-runtime.json)确认七个目标均为 384、无横向溢出、GPU 错误为 0。单纯缩小已创建的桌面画布不会重建这些目标；这不是实际手机性能验收。
+- client typecheck 通过；定向 `space_planar_reflections.test.ts` 10 项、`space_shanghai.test.ts` 48 项，共 **58 项通过**。新增检查覆盖 UV 保留、共面不同材质参数与共享纹理生命周期。[整城检查](../.tmp/png/space-swfc-metal-20260913/city-contract.json) `ok=true`、`errors=[]`；[正式控制台](../.tmp/png/space-swfc-metal-20260913/formal-console.log)为 0 errors / 0 warnings。未运行无关测试全集或 Next build。
+
+**1:1 与电影级验收仍未通过。** 夜间柱面仍偏暗，端部展板、低位标识、97F 层间结构和裙楼仍待核定；6 mm 缝宽、材质参数与板面变形均是实拍估算。下一轮优先解决厅内间接反射与端部资料，整城分区加载、LOD 及真实设备性能也仍待做。代码、脚本、清单与文档仅本地提交；不 push，`.blend`、GLB 与纹理本地保留，Git LFS 配置和上传继续暂缓。
+
 ## 2026-09-13 100F 镜面与筒灯遮挡修正
 
 多角度复查发现，筒灯虽然位于镜顶前方，斜看时仍被镜面覆盖。实际场景射线测得同一视线上的灯面距离约 8.537 m、镜顶约 8.556 m；关闭中央镜面覆盖层后灯面立即恢复。根因是镜面材质的负斜率深度偏移在掠射角下将镜顶错误提前。现改为 `polygonOffsetFactor=0`、`polygonOffsetUnits=-4`，仅分开共面表层，不调整灯光强度或全局曝光。

@@ -4,8 +4,8 @@
   "objects": 12013,
   "facadeRigs": 6,
   "blender": "5.2.1 LTS",
-  "sha256": "782bf7f2488f1a8dcbcd571f738b02b576becd7bbbe0f6e461dba1ffd6ba921e",
-  "bytes": 400900300,
+  "sha256": "ad51eae023bcd3daafaf8860c0864c43129e6e6e9cd1c80194361eb444854a75",
+  "bytes": 400900980,
   "textures": [
     "textures/05a642214fbc39bbbee426c2.png",
     "textures/2899c1338a39369d33edc02e.png",
@@ -17,6 +17,7 @@
     "textures/a7897b147a003bb93e05d792.png",
     "textures/a93ce54213c4a98cd01cb5c5.png",
     "textures/aeb34b5cba17e002045f40a2.png",
+    "textures/bcd289b3e963c113bd717f87.png",
     "textures/e85cfb19c4973ab1d2c10a90.png",
     "textures/edd972345e334bfe03093a9c.png",
     "textures/f8eab64613f970d67eabfd47.png",

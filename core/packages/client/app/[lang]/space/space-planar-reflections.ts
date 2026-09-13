@@ -23,13 +23,13 @@ export function guardPlanarReflection(mirror: Reflector, hidden: readonly THREE.
 
 /** Extract inward-facing lining facets, retaining the authored holes. */
 export function interiorMirrorPlanes(geometry: THREE.BufferGeometry, includeWalls = false, minArea = 4) {
-  const position = geometry.getAttribute('position'), index = geometry.index;
+  const position = geometry.getAttribute('position'), index = geometry.index, uv = geometry.getAttribute('uv');
   if (!position || position.count < 3) return [];
   geometry.computeBoundingBox();
   const center = geometry.boundingBox!.getCenter(new THREE.Vector3());
   const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
   const normal = new THREE.Vector3(), edge = new THREE.Vector3();
-  const groups: { plane: THREE.Plane; points: number[]; area: number }[] = [];
+  const groups: { plane: THREE.Plane; points: number[]; uv: number[]; area: number }[] = [];
   const count = index?.count ?? position.count;
   for (let i = 0; i + 2 < count; i += 3) {
     a.fromBufferAttribute(position, index ? index.getX(i) : i);
@@ -43,8 +43,12 @@ export function interiorMirrorPlanes(geometry: THREE.BufferGeometry, includeWall
     // Y-up glTF; omit panel thickness, outward backs and vertical edge strips.
     if ((!includeWalls && Math.abs(normal.y) < .7) || plane.distanceToPoint(center) <= .001) continue;
     let group = groups.find(g => g.plane.normal.dot(normal) > 1 - 1e-6 && Math.abs(g.plane.distanceToPoint(a)) < .002);
-    if (!group) { group = { plane, points: [], area: 0 }; groups.push(group); }
+    if (!group) { group = { plane, points: [], uv: [], area: 0 }; groups.push(group); }
     group.points.push(...a.toArray(), ...b.toArray(), ...c.toArray());
+    for (let j = i; j < i + 3; j++) {
+      const vertex = index ? index.getX(j) : j;
+      group.uv.push(uv?.getX(vertex) ?? 0, uv?.getY(vertex) ?? 0);
+    }
     group.area += area;
   }
   return groups.filter(g => g.area >= minArea).map(g => {
@@ -58,6 +62,7 @@ export function interiorMirrorPlanes(geometry: THREE.BufferGeometry, includeWall
       a.z = 0; a.toArray(g.points, i);
     }
     const part = new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(g.points, 3));
+    part.setAttribute('uv', new THREE.Float32BufferAttribute(g.uv, 2));
     part.computeVertexNormals();
     return { geometry: part, origin, rotation, area: g.area };
   });
@@ -77,17 +82,33 @@ export class BlenderInteriorMirrors {
   invalidateProbe() { this.probeDirty = true; }
 
   constructor(private source: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>, narrow: boolean, lining?: THREE.Mesh) {
-    const planes = interiorMirrorPlanes(source.geometry);
+    const surfaces = (geometry: THREE.BufferGeometry, material: THREE.MeshStandardMaterial, walls = false) =>
+      interiorMirrorPlanes(geometry, walls, walls ? 12 : 4).map(plane => {
+        const count = plane.geometry.getAttribute('position').count;
+        const finish = [], color = [];
+        const uv = plane.geometry.getAttribute('uv');
+        material.normalMap?.updateMatrix();
+        const point = new THREE.Vector2();
+        for (let i = 0; i < count; i++) {
+          finish.push(material.normalMap ? material.normalScale.x : 0, material.normalMap ? material.normalScale.y : 0, material.roughness);
+          color.push(...material.color.toArray());
+          if (material.normalMap) { point.set(uv.getX(i), uv.getY(i)).applyMatrix3(material.normalMap.matrix); uv.setXY(i, point.x, point.y); }
+        }
+        plane.geometry.setAttribute('mirrorFinish', new THREE.Float32BufferAttribute(finish, 3));
+        plane.geometry.setAttribute('mirrorColor', new THREE.Float32BufferAttribute(color, 3));
+        return { ...plane, normalMap: material.normalMap };
+      });
+    const planes = surfaces(source.geometry, source.material);
     if (lining) {
       source.updateWorldMatrix(true, false); lining.updateWorldMatrix(true, false);
       const geometry = lining.geometry.clone().applyMatrix4(new THREE.Matrix4().copy(source.matrixWorld).invert().multiply(lining.matrixWorld));
       // Broad pier faces share two wall planes. Reject the small end caps, then
       // merge coplanar folded haunches into the existing ceiling reflection.
-      const extras = interiorMirrorPlanes(geometry, true, 12);
+      const extras = surfaces(geometry, lining.material as THREE.MeshStandardMaterial, true);
       geometry.dispose();
       for (const extra of extras) {
         const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(extra.rotation);
-        const plane = planes.find(p => new THREE.Vector3(0, 0, 1).applyQuaternion(p.rotation).dot(normal) > 1 - 1e-6 && Math.abs(normal.dot(p.origin.clone().sub(extra.origin))) < .002);
+        const plane = planes.find(p => p.normalMap === extra.normalMap && new THREE.Vector3(0, 0, 1).applyQuaternion(p.rotation).dot(normal) > 1 - 1e-6 && Math.abs(normal.dot(p.origin.clone().sub(extra.origin))) < .002);
         if (!plane) { planes.push(extra); continue; }
         const basis = new THREE.Matrix4().compose(plane.origin, plane.rotation, new THREE.Vector3(1, 1, 1)).invert()
           .multiply(new THREE.Matrix4().compose(extra.origin, extra.rotation, new THREE.Vector3(1, 1, 1)));
@@ -122,15 +143,34 @@ export class BlenderInteriorMirrors {
       // pulls grazing mirrors in front of physically nearer recessed lamps.
       m.polygonOffset = true; m.polygonOffsetFactor = 0; m.polygonOffsetUnits = -4;
       m.uniforms.mirrorTexel = { value: new THREE.Vector2(1 / size, 1 / size) };
-      m.uniforms.mirrorBlur = { value: source.material.roughness * 12 };
-      m.fragmentShader = m.fragmentShader.replace('varying vec4 vUv;', 'varying vec4 vUv; uniform vec2 mirrorTexel; uniform float mirrorBlur;')
+      const varyings = 'varying vec2 metalUv; varying vec3 metalPosition, metalFinish, metalColor;';
+      m.vertexShader = m.vertexShader.replace('varying vec4 vUv;', `varying vec4 vUv; ${varyings} attribute vec3 mirrorFinish, mirrorColor;`)
+        .replace('void main() {', 'void main() { metalUv = uv; metalPosition = position; metalFinish = mirrorFinish; metalColor = mirrorColor;');
+      m.uniforms.metalNormal = { value: plane.normalMap };
+      if (plane.normalMap) m.defines.METAL_NORMAL = '';
+      m.fragmentShader = m.fragmentShader.replace('varying vec4 vUv;', `varying vec4 vUv; ${varyings} uniform vec2 mirrorTexel; uniform sampler2D metalNormal; uniform mat4 textureMatrix;`)
         .replace('vec4 base = texture2DProj( tDiffuse, vUv );', `
-          vec2 uv = vUv.xy / vUv.w;
-          vec2 stepUv = mirrorTexel * mirrorBlur;
+          vec4 projected = vUv;
+          #ifdef METAL_NORMAL
+            vec2 du = dFdx(metalUv), dv = dFdy(metalUv);
+            float determinant = du.x * dv.y - du.y * dv.x;
+            // Collapsed UVs deliberately keep smooth floor tiles undistorted.
+            if (abs(determinant) > 1e-12) {
+              vec3 dx = dFdx(metalPosition), dy = dFdy(metalPosition);
+              vec3 tangent = normalize(dx * dv.y - dy * du.y) * sign(determinant);
+              vec3 bitangent = normalize(dy * du.x - dx * dv.x) * sign(determinant);
+              vec2 slope = (texture2D(metalNormal, metalUv).xy * 2. - 1.) * metalFinish.xy;
+              // First-order planar approximation at an estimated 2 m optical
+              // distance. The perturbation stays in the authored UV basis.
+              projected += textureMatrix * vec4(2. * (tangent * slope.x + bitangent * slope.y), 0.);
+            }
+          #endif
+          vec2 uv = clamp(projected.xy / projected.w, mirrorTexel, vec2(1.) - mirrorTexel);
+          vec2 stepUv = mirrorTexel * metalFinish.z * 12.;
           vec4 base = texture2D(tDiffuse, uv) * .5;
           base += (texture2D(tDiffuse, uv + vec2(stepUv.x, 0.)) + texture2D(tDiffuse, uv - vec2(stepUv.x, 0.))
                  + texture2D(tDiffuse, uv + vec2(0., stepUv.y)) + texture2D(tDiffuse, uv - vec2(0., stepUv.y))) * .125;
-        `).replace('blendOverlay( base.rgb, color )', 'base.rgb * color');
+        `).replace('blendOverlay( base.rgb, color )', 'base.rgb * metalColor');
       // Other overlays contain the main camera's projected textures. Sampling
       // them from a reflected camera causes stale feedback and black cavities.
       guardPlanarReflection(mirror, this.mirrors);
