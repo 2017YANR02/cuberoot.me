@@ -183,8 +183,8 @@
     "name": "SOM: Jin Mao Tower",
     "space": true,
     "url": "https://www.som.com/projects/jin-mao-tower/",
-    "zh": "设计事务所的日夜实拍用于金茂银灰立面、退台与塔冠对照；本轮参照街景及三件套仰视，修正接近平行的长塔身、上部四段退台与中央凹槽。街景署名 Tim Griffith。三座超高层为本站独立几何，未导入官方模型；照片未作为运行贴图，宽度、构件及照明仍为估算。查阅于 2026-09-13",
-    "en": "The architect's day and night photographs inform Jin Mao's silver facade, setbacks and crown. Street and upward views guide this revision of the nearly parallel lower shaft, four upper setbacks and central recesses. The street photograph is credited to Tim Griffith. The three supertalls use locally authored geometry, not official models. Photos are not runtime textures; widths, details and lighting remain estimated. Accessed 2026-09-13"
+    "zh": "设计事务所的实拍用于金茂长塔身、上部退台、凹槽与塔冠对照。Tim Griffith 日景和文件标注 China Jin Mao Group 的夜景用于银色金属、深色玻璃与竖向亮线的材质调整；夜景页面未列单张摄影署名，拍摄日期未知，不代表当前灯光实测。三座超高层为本站独立几何，未导入官方模型；照片未作为运行贴图，尺寸、材质和照明参数仍为估算。查阅于 2026-09-13",
+    "en": "The architect's photographs guide Jin Mao's shaft, upper setbacks, recesses and crown. Tim Griffith's daytime view and a night image whose filename identifies China Jin Mao Group inform silver metal, dark glass and vertical lighting accents. The night image has no individual photographer credit on the page; its capture date is unknown and it is not a current lighting survey. The three supertalls use locally authored geometry, not official models. Photos are not runtime textures; dimensions, PBR values and lighting remain estimated. Accessed 2026-09-13"
   },
   {
     "name": "The Skyscraper Museum: Jin Mao",
