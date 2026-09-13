@@ -226,6 +226,16 @@ ArcelorMittal 第 34 页俯照还显示，冠部最上方有沿长轴延伸的�
 
 日夜候选和正式网页均已复查，证据在 `.tmp/png/space-swfc-optics-20260913/`。玻璃下方亮条和夜间柱面暗部仍未解决，不能据本轮认定材质已经 1:1。下一轮优先取得下方结构与端部的更多实拍，再校准构件尺寸和照明。
 
+## 2026-09-13 封板环境遮蔽
+
+本轮再次查看业主 [100F 室内图](https://www.swfc-shanghai.com/images/common/8-lease/pic_140.jpg)和上节绳手真人夜间实拍；图片拍摄日期未核定，仍只作参考，不用作模型纹理。照片支持透明步道及内外明暗关系，无法确定下方封板厚度、层间结构或光度。现有模型的斜向射线会穿过 Z = 474 m 的地板玻璃，命中 Z = 471.64 m 的不透明封板上表面；本轮不据此擅自删除封板或改变建筑尺寸。
+
+在原几何上用 Blender Cycles 烘焙环境遮蔽，距离暂用 12 m，分辨率 1024、32 samples。内侧与外露底面共用原浅色饰面，仅新增第二套 UV 和非颜色遮蔽贴图；透明地板、侧窗和顶部玻璃不参与不透明遮挡。它只影响环境间接照明，不替代完整 GI、直接光阴影或现场光度校准。
+
+技术实现复用仓库 `probe_facade_bake.py` 的临时焊接 UV 代理及 Blender 自带的 [Khronos glTF-Blender-IO](https://github.com/KhronosGroup/glTF-Blender-IO)。2026-09-13 实际核对本地 Blender 5.2.1 的 `io_scene_gltf2/blender/com/material_helpers.py` 与导出节点搜索代码，使用其 `create_settings_group()` 建立 `glTF Material Output / Occlusion`，导出为标准 `occlusionTexture.texCoord = 1`；Three.js GLTFLoader 实际加载确认映射为 `aoMap.channel = 1`。未另引入第三方天气或渲染框架，网页来源入口沿用已有 Blender/Three.js 致谢。
+
+本地证据目录为 `.tmp/png/space-swfc-underfloor-20260913/`：`round-02/candidate.json`、`angle-check.json`、两张 `ao-diagnostic-*.png`、`loader-check.json`、`saved.json` 及目录下 `formal-check.json`。候选、保存和正式导出数据一致；诊断图不是最终效果图，本轮最终网页日夜视觉复查受 WebGL 不可用限制，仍待完成。
+
 ## 本地证据索引
 
 本轮复用 `.tmp/png/space-lujiazui-audit-20260910/` 已有参考；工作笔记为其中的 `swfc-top-geometry-research.md`。本轮实际打开的文件为：
