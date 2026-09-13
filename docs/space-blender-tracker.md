@@ -1,5 +1,16 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 100F 门框扶手的室内反射
+
+同角度网页对照确认，扶手、灯具收边、端部门框与面板仍使用室外环境，夜里接近纯黑。现将这四种独立室内材质加入既有反射采样，与镜顶、柱饰共同使用厅内环境；共享外墙金属仍使用室外环境。对比[修改前](../.tmp/png/space-swfc-reflection-20260913/before-end-night.png)与[修改后](../.tmp/png/space-swfc-reflection-20260913/after-end-night.png)，门框、扶手已有金属高光和明暗层次。未提高全局曝光或灯强，未增加反射目标或采样次数。
+
+- 重新加载正式源码后，已逐张查看[端部夜景](../.tmp/png/space-swfc-reflection-20260913/formal-end-night.png)、[白天](../.tmp/png/space-swfc-reflection-20260913/formal-end-day.png)、[长廊](../.tmp/png/space-swfc-reflection-20260913/formal-long-night.png)、[反向](../.tmp/png/space-swfc-reflection-20260913/formal-reverse-night.png)和[窄屏](../.tmp/png/space-swfc-reflection-20260913/formal-narrow.png)，正式复查未注入候选材质。
+- [运行记录](../.tmp/png/space-swfc-reflection-20260913/formal-runtime.json)确认六种室内材质绑定已完成的环境采样；21:00 六灯均为 120 cd，12:00 均为零。离开观光厅后六种材质恢复原环境，再次进入重新绑定；共享外墙材质未使用室内环境。继续使用既有两个 128 cube 目标和七个 768 平面目标。
+- 390 × 844 为已创建桌面画布的缩窄检查，无横向溢出；反射目标未重建为移动端尺寸，不计作真实手机性能验收。各视角 GPU 错误均为 0；控制台无错误或页面异常，有一条驱动 Shader 浮点精度警告，记录中保留原文。
+- client typecheck 与定向 `space_planar_reflections.test.ts`、`space_shanghai.test.ts` 共 **58 项测试通过**。回归覆盖新增材质的去重、两阶段采样失败恢复、离开与销毁还原、保留借用材质和室外环境隔离。
+
+本轮只修改网页对 Blender 材质的反射接入，未修改源工程或重新导出，GLB 仍为 **401,235,500 字节**。**1:1 与电影级验收仍未通过**：宽柱面大块暗部、镜顶波纹仍需校准，另一端、电梯厅、97F 层间结构与裙楼仍待补证；整城分区、LOD 和实际设备性能继续待办。代码和文档仅本地提交，不 push；Git LFS 配置及重资产上传继续暂缓。
+
 ## 2026-09-13 100F 端部与疏散灯具
 
 对照 Carsten Ullrich 的 2008-09-11 观光厅实拍，补出环球金融中心 100F 一端的门洞、浅色面板、深色嵌板和金属收边；结合 Gerhard Huber 的 2012 年夜景补低位绿色疏散灯。第一轮图形太方、嵌板缺细框；第二轮改圆头与倾斜肢体，并补细分格。两轮均实际查看网页候选，第二轮保存到正式工程。来源、日期、许可及估算边界见[参考档案](../design/space/references/swfc-top.md#2026-09-13-端部与疏散灯具)，照片未作为运行贴图。

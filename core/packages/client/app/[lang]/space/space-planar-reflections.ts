@@ -83,7 +83,7 @@ export class BlenderInteriorMirrors {
 
   invalidateProbe() { this.probeDirty = true; }
 
-  constructor(private source: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>, narrow: boolean, lining?: THREE.Mesh) {
+  constructor(private source: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>, narrow: boolean, lining?: THREE.Mesh, fixtures: readonly THREE.MeshStandardMaterial[] = []) {
     const surfaces = (geometry: THREE.BufferGeometry, material: THREE.MeshStandardMaterial, walls = false) =>
       interiorMirrorPlanes(geometry, walls, walls ? 12 : 4).map(plane => {
         const count = plane.geometry.getAttribute('position').count;
@@ -122,7 +122,9 @@ export class BlenderInteriorMirrors {
       // by the room. Cache both across frames; never sample the active target.
       this.probe = new THREE.CubeCamera(.05, 20000, new THREE.WebGLCubeRenderTarget(narrow ? 64 : 128, { type: THREE.HalfFloatType }));
       this.bounceTarget = this.probe.renderTarget.clone();
-      for (const material of new Set([source.material, lining.material])) {
+      // Include only materials owned by this room; shared exterior finishes
+      // must retain their outdoor environment when the interior is active.
+      for (const material of new Set([source.material, lining.material, ...fixtures])) {
         if (!Array.isArray(material) && (material as THREE.MeshStandardMaterial).isMeshStandardMaterial) {
           const standard = material as THREE.MeshStandardMaterial;
           this.probeMaterials.push({ material: standard, envMap: standard.envMap, intensity: standard.envMapIntensity });
