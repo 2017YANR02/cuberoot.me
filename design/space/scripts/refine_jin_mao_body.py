@@ -1,7 +1,8 @@
 """Photo-guided Jin Mao facade candidate; preserve the already authored crown.
 
 SOM's museum section/plan diagram and the facade contractor's photographs are
-references, not surveys. Section widths/heights stay at the existing estimates.
+references, not surveys. --setbacks revises the plan after the first body pass;
+the original floor counts and estimated floor heights remain unchanged.
 Default creates an isolated GLB and CPU previews; --apply requires the exact
 reviewed candidate and an unchanged source. No GUI interaction is used.
 """
@@ -30,15 +31,22 @@ REVISION = 'jin-mao-body-20260913'
 PROPERTY = 'spaceJinMaoBodyRevision'
 KEYS = ('glass', 'steel', 'piers', 'recess')
 FLARE = 1.65
+PROFILE_REVISION = 'jin-mao-setbacks-20260913'
+PROFILE_PROPERTY = 'spaceJinMaoSetbackRevision'
+PROFILE_BASELINE = '4ab00a71f9080e87b9538685d094798311384ba8667dff4cfa2957ed7a4c503c'
+# Photo estimates: the long shaft stays nearly parallel; its final four
+# sections step back more strongly into the crown. These are not survey data.
+PROFILE_HALVES = (29.3, 29.1, 28.9, 28.7, 28.5, 28.3, 28.1, 27.9, 24., 20., 16., 12.5)
+PROFILE_FLARES = (1.65,)*8 + (.9, .7, .5, .35)
 
 
-def plan(half):
+def plan(half, recess=1.8):
     """Deeper central recess and chamfered shoulders visible in the aerial view."""
     points = []
     for side in range(4):
         c, s = round(math.cos(side*math.pi/2)), round(math.sin(side*math.pi/2))
         for x, y in [(half*.73, half), (half*.32+.9, half),
-                     (half*.32, half-1.8), (-half*.32, half-1.8),
+                     (half*.32, half-recess), (-half*.32, half-recess),
                      (-half*.32-.9, half), (-half*.73, half)]:
             points.append(Vector((x*c-y*s, x*s+y*c)))
     return points
@@ -86,13 +94,21 @@ def fastener(parts, center, outward):
         parts['steel'].face([back[i],back[j],front[j],front[i]])
 
 
-def body_geometry():
+def body_geometry(setbacks=False):
     result = {}
     bottom = 0.
+    halves = PROFILE_HALVES if setbacks else tuple(29.3-i*.8 for i in range(len(jm.FLOORS)))
+    flares = PROFILE_FLARES if setbacks else (FLARE,)*len(jm.FLOORS)
+    if (len(halves)!=len(jm.FLOORS) or len(flares)!=len(halves)
+            or any(not math.isfinite(h) or h<=crown.BOTTOM_HALF for h in halves)
+            or any(not math.isfinite(f) or f<=0 for f in flares)
+            or any(a<=b for a,b in zip(halves,halves[1:]))):
+        raise RuntimeError('Invalid tier widths or flares')
     for section, floors in enumerate(jm.FLOORS):
         top = bottom+floors*4.04
-        half = 29.3-section*.8
-        lower, upper = plan(half), plan(half+FLARE)
+        half, flare = halves[section], flares[section]
+        recess = half*.13 if setbacks else 1.8
+        lower, upper = plan(half,recess), plan(half+flare,recess)
         parts = {k: jm.Mesh() for k in KEYS}
         parts['glass'].loft(lower, upper, bottom, top)
         # Ground levels have a different stick system; keep their glazing open.
@@ -153,15 +169,17 @@ def body_geometry():
                 def p(h,z):
                     x,y=sign*(h*.32+.48),h+.24
                     return (x*c-y*s,x*s+y*c,z)
-                rail(parts['piers'],p(half,bottom),p(half+FLARE,top+.45),.72,.65,(-s,c,0))
+                rail(parts['piers'],p(half,bottom),p(half+flare,top+.45),.72,.65,(-s,c,0))
         # Roof soffit and aluminum-covered terrace: stronger, separated lip.
-        parts['recess'].loft(plan(half+FLARE+.12),plan(half+FLARE+.12),top-.46,top-.20)
-        parts['steel'].loft(plan(half+FLARE+.28),plan(half+FLARE+.28),top-.20,top,cap=True)
+        parts['recess'].loft(plan(half+flare+.12,recess),plan(half+flare+.12,recess),top-.46,top-.20)
+        parts['steel'].loft(plan(half+flare+.28,recess),plan(half+flare+.28,recess),top-.20,top,cap=True)
         for a,b in zip(upper,upper[1:]+upper[:1]):
             rail(parts['steel'],(*a,top+.12),(*b,top+.12),.16,.34)
         # Sheet joints on exposed terraces; spacing is estimated from photos.
-        outside = plan(half+FLARE+.22)
-        inside = plan(half-.81 if section<len(jm.FLOORS)-1 else crown.BOTTOM_HALF)
+        outside = plan(half+flare+.22,recess)
+        next_half = halves[section+1] if section<len(jm.FLOORS)-1 else crown.BOTTOM_HALF
+        next_recess = next_half*.13 if setbacks else 1.8
+        inside = plan(next_half-.01,next_recess) if setbacks else plan(half-.81 if section<len(jm.FLOORS)-1 else crown.BOTTOM_HALF)
         for i,a in enumerate(outside):
             j=(i+1)%len(outside)
             count=max(1,round((outside[j]-a).length/1.4))
@@ -181,23 +199,30 @@ def main():
     parser.add_argument('--label',required=True)
     parser.add_argument('--apply',action='store_true')
     parser.add_argument('--no-render',action='store_true')
+    parser.add_argument('--setbacks',action='store_true',help='Revise the reviewed body silhouette once')
     args=parser.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else [])
     if not args.label or len(args.label)>64 or any(c not in 'abcdefghijklmnopqrstuvwxyz0123456789-_' for c in args.label):
         parser.error('Use a short lowercase filename label')
     scene=bpy.context.scene
     root=next(o for o in scene.objects if o.get('spaceId')==crown.ROOT_ID)
+    revision = PROFILE_REVISION if args.setbacks else REVISION
+    property_name = PROFILE_PROPERTY if args.setbacks else PROPERTY
     if (Path(bpy.data.filepath).resolve()!=SOURCE.resolve() or scene.get('space_contract')!=2
-            or root.get(crown.PROPERTY)!=crown.REVISION or root.get(PROPERTY) or scene.get(PROPERTY)):
-        raise RuntimeError('Expected canonical source with reviewed crown and no prior body edit')
-    parts=body_geometry()
+            or root.get(crown.PROPERTY)!=crown.REVISION or root.get(property_name) or scene.get(property_name)
+            or (args.setbacks and (root.get(PROPERTY)!=REVISION or scene.get(PROPERTY)!=REVISION))):
+        raise RuntimeError('Expected canonical source at the required preceding revision')
+    parts=body_geometry(args.setbacks)
     targets={name:next(o for o in root.children if o.name==name) for name in parts}
     if len(targets)!=48 or any(o.matrix_basis!=Matrix.Identity(4)
             or o.matrix_parent_inverse!=Matrix.Identity(4) or o.modifiers
             or o.data.shape_keys or len(o.data.materials)!=1 for o in targets.values()):
         raise RuntimeError('Body has artist transforms/modifiers/materials; inspect first')
+    if args.setbacks and geometry_digest(targets.values())!=PROFILE_BASELINE:
+        raise RuntimeError('Reviewed body geometry was edited; inspect before revising its profile')
     token=source_fingerprint()
     hashes={p.name:crown.sha(p) for p in sorted(Path(__file__).parent.glob('*.py'))}
-    directory=OUTPUT/args.label
+    output = jm.ROOT / '.tmp/png/space-jinmao-profile-20260913' if args.setbacks else OUTPUT
+    directory=output/args.label
     candidate=json.loads((directory/'candidate.json').read_text()) if args.apply else None
     if candidate:
         if candidate['sourceBefore']!=list(token) or candidate['scripts']!=hashes or crown.sha(directory/'body.glb')!=candidate['candidateSha256']:
@@ -211,19 +236,22 @@ def main():
     transforms={o:o.matrix_world.copy() for o in original}
     assignments={o:tuple(o.data.materials) for o in original if o.type=='MESH'}
     # Reuse the validated vertex/UV/material replacement from the crown pass.
-    crown.replace_geometry(targets,parts,revision=REVISION)
+    crown.replace_geometry(targets,parts,revision=revision)
     bpy.context.view_layer.update()
     if (geometry_digest(untouched)!=digest or export_snapshot(scene)!=rigs
             or exchange.runtime_id_snapshot(scene)!=ids
             or any(o.matrix_world!=m for o,m in transforms.items())
             or any(tuple(o.data.materials)!=m for o,m in assignments.items())):
         raise RuntimeError('Other geometry, IDs, transforms, materials or rigs changed')
-    report={'revision':REVISION,'sourceBefore':list(token),'scripts':hashes,'saved':False,
+    report={'revision':revision,'sourceBefore':list(token),'scripts':hashes,'saved':False,
             'preservedOtherGeometry':digest,'preservedRigs':list(rigs),
             'geometry':geometry_digest(targets.values()),
             'parts':{name:{'vertices':len(o.data.vertices),'faces':len(o.data.polygons),'id':o['spaceId']} for name,o in targets.items()},
             'estimated':['plan recess depth','terrace flare','member and spandrel dimensions','fastener sizes and counts','terrace sheet joint spacing'],
             'retained':['crown','section floor counts and heights','site transforms','materials and lighting','runtime IDs']}
+    if args.setbacks:
+        report['estimated'] += ['section widths','recess depth as a fraction of section width']
+        report['profile'] = {'halfWidths':list(PROFILE_HALVES),'flares':list(PROFILE_FLARES),'recessRatio':.13}
     assert_source_unchanged(token)
     if args.apply:
         if any(candidate[k]!=v for k,v in report.items()):
@@ -233,7 +261,7 @@ def main():
             raise RuntimeError('Backup already exists')
         shutil.copy2(SOURCE,backup)
         assert_source_unchanged(token)
-        root[PROPERTY]=scene[PROPERTY]=REVISION
+        root[property_name]=scene[property_name]=revision
         bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE),compress=True)
         report.update(saved=True,sourceAfter=list(source_fingerprint()))
     else:
