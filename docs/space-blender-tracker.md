@@ -1,5 +1,15 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 金茂塔冠退台与翼片
+
+对照[幕墙承建方的塔冠实拍](https://www.permasteelisagroup.com/wp-content/uploads/2025/07/Jin-Mao-Tower-Shanghai2.jpg)和俯拍，重做密集退台、V 形金属面、两层翼片、包覆桅杆与圆形灯具外壳。来源和估算范围见[金茂参考档案](../design/space/references/jin-mao.md#2026-09-13-塔冠增量精修)，照片仅作对照，未作为网页贴图；网页来源区新增同一原图的中英文说明。
+
+- 两轮候选均完成后台审图；第二轮加强翼片边框和灯壳，已查看[正面](../.tmp/png/space-jinmao-crown-20260913/round-02/day-crown.png)、[反面](../.tmp/png/space-jinmao-crown-20260913/round-02/day-oblique.png)、[俯视](../.tmp/png/space-jinmao-crown-20260913/round-02/day-aerial.png)、[整栋](../.tmp/png/space-jinmao-crown-20260913/round-02/day-full.png)和[近似夜景](../.tmp/png/space-jinmao-crown-20260913/round-02/night-crown.png)。CPU 14 线程，未占用桌面。
+- 已保存 `jin-mao-crown-20260913`，源工程 **202,224,198 字节**，指纹 `[202224198,1789325071229685900]`。[保存记录](../.tmp/png/space-jinmao-crown-20260913/round-02/saved.json)确认候选、依赖和源指纹一致；仅替换三个塔冠网格的数据，其他模型、变换、材质分配、运行身份和六组灯保持。保存前整城备份在同目录 `shanghai-before-jinmao-crown.blend`；一次性增量脚本拒绝重跑。
+- 正常导出完成：GLB **403,842,028 字节**，增加 **2,574,392 字节**；12,019 objects、6 灯组、原 16 张共享纹理。SHA-256 为 `5c0e63c466fd373ccbd842e9d0bf5da62b598a54a3fbc3fa5f6c78c8e40329de`。[正式检查](../.tmp/png/space-jinmao-crown-20260913/formal-check.json)逐项比较金茂 51 个网格的顶点属性、索引、材质、运行身份和变换；Node.js 中的 Three.js GLTFLoader 加载成功，完整 HTTP 下载为 200、长度和哈希一致。
+
+**尚未达到 1:1 或电影级。** 翼片形状、退台和灯具尺寸仍为照片估算；整栋图显示塔身轮廓过于平直，幕墙横向面板和外挑构件仍需重做。近似夜景仅用于形体检查，正式网页日夜视觉尚待复查，不能用加载成功替代画面验收。脚本、清单、来源和文档仅本地提交，不 push；重资产仍本地保存，LFS 配置与上传暂缓。
+
 ## 2026-09-13 100F 玻璃下方封板遮蔽
 
 继续对照[业主室内照片](https://www.swfc-shanghai.com/images/common/8-lease/pic_140.jpg)与[绳手真人夜间实拍](https://yakei.jp/abroad/shanghai/shanhai-hills-photo.html)。斜向射线确认，玻璃下方亮条所在位置会命中 Z = 471.64 m 的浅色封板内侧；此前垂直无遮挡检查无法覆盖这些角度。现对原封板进行 Cycles 环境遮蔽烘焙，通过标准 glTF `occlusionTexture` 接入第二套 UV，未改变原饰面颜色、粗糙度、几何、表面 UV 或灯强。来源和估算边界见[参考档案](../design/space/references/swfc-top.md#2026-09-13-封板环境遮蔽)。

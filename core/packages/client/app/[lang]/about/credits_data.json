@@ -159,6 +159,13 @@
     "en": "The facade contractor documents Jin Mao Tower's 420.5 m height, 88 storeys, aluminum fins, stainless-steel members and aluminum-clad terraces. Aerial, crown and facade-detail photographs guide the Blender model's tiered curtain wall, horizontal rails, setback members and layered crown fins. Widths, floor heights, member dimensions and lighting remain photo estimates without an as-built survey. Photos are references, not runtime textures. Accessed 2026-09-08"
   },
   {
+    "name": "Permasteelisa: Jin Mao crown photograph",
+    "space": true,
+    "url": "https://www.permasteelisagroup.com/wp-content/uploads/2025/07/Jin-Mao-Tower-Shanghai2.jpg",
+    "zh": "塔冠近景用于校正密集退台、V 形金属面、两层翼片、包覆桅杆和圆形灯具外壳。尺寸、分板和灯具数量按照片估算，未取得施工图；照片拍摄日期未知，仅作对照，未作为运行贴图。查阅于 2026-09-13",
+    "en": "This crown close-up guides the closely spaced setbacks, V-shaped metal plates, two stages of fins, clad mast and round lamp housings. Dimensions, panel divisions and lamp counts are photo estimates without construction drawings. The capture date is unknown; this is a reference, not a runtime texture. Accessed 2026-09-13"
+  },
+  {
     "name": "SOM: Jin Mao Tower",
     "space": true,
     "url": "https://www.som.com/projects/jin-mao-tower/",
