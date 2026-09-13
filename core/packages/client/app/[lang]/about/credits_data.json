@@ -1,5 +1,19 @@
 [
   {
+    "name": "Poly Haven: Tree Small 02 / Rico Cilliers",
+    "space": true,
+    "url": "https://polyhaven.com/a/tree_small_02",
+    "zh": "阿里巴巴 X/Y/Z 园区植被使用 Rico Cilliers 制作的 CC0 枝叶颜色、镂空轮廓、法线和树皮贴图，贴图随 Blender 工程打包并本地导出。保留已有树位，树种仅作视觉替代，未核实为园区实种；树池覆盖层复用树皮作为覆盖物近似。查阅于 2026-09-12",
+    "en": "Alibaba X/Y/Z planting uses Rico Cilliers' CC0 leaf color, cutout, normal and bark textures, packed into Blender and exported locally. Existing tree positions are retained; the species is a visual proxy, not verified campus planting. Recessed beds reuse bark as approximate mulch. Accessed 2026-09-12"
+  },
+  {
+    "name": "Poly Haven: Concrete Floor 02 / Rob Tuytel",
+    "space": true,
+    "url": "https://polyhaven.com/a/concrete_floor_02",
+    "zh": "阿里园区铺地与树池使用 Rob Tuytel 制作的 CC0 法线和粗糙度贴图，以约 2 米重复尺度增加表面细节，保留建筑材质原有底色；不是现场石材扫描。查阅于 2026-09-12",
+    "en": "Alibaba paving and planters use Rob Tuytel's CC0 normal and roughness textures at an approximately 2 m repeat scale, retaining the authored base colors. These are surface proxies, not scans of campus stone. Accessed 2026-09-12"
+  },
+  {
     "name": "上海徐汇: 西岸艺岛 Art Tower",
     "space": true,
     "url": "https://m.thepaper.cn/baijiahao_9917546",
