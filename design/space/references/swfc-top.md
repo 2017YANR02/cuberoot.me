@@ -1,6 +1,21 @@
 # 上海环球金融中心顶部参考核查，2026-09-10
 
-本档案记录 SWFC 顶部的已读原始资料、可用尺度和建模约束。**2026-09-13 已将修订后的顶部和 100F 观光厅保存到正式 `shanghai.blend` 并导出网页 GLB**；三条透明步道、折面镜顶与宽框架已加入。网页室内反射与夜景仍未达标；精确方位及构件尺寸仍有估算，不能把结构检查通过记为测绘 1:1 或电影级复原完成。
+本档案记录 SWFC 顶部的已读原始资料、可用尺度和建模约束。**2026-09-13 已将修订后的顶部和 100F 观光厅保存到正式 `shanghai.blend` 并导出网页 GLB**；三条透明步道、折面镜顶、宽框架、筒灯和窗边扶手已加入。网页室内反射已接入，夜景仍待改善；精确方位及构件尺寸仍有估算，不能把结构检查通过记为测绘 1:1 或电影级复原完成。
+
+## 2026-09-13 筒灯扶手与夜间实拍
+
+以下两张照片于 **2026-09-13** 实际打开、下载并逐图查看，仅作建模参考，未作为网页贴图发布。访问日期不代表拍摄时间或当前开放状态，两条来源均已列入网页“来源与致谢”。
+
+| 来源 | 可辨认细部 | 作者、日期与许可 |
+| --- | --- | --- |
+| [绳手真人：环球金融中心观光厅夜景](https://yakei.jp/abroad/shanghai/shanhai-hills-photo.html)，[实拍大图](https://yakei.jp/abroad/shanghai/photo/shanhai-hills07-1000.jpg) | 中央黑色灯槽内的暖色圆筒灯、宽镜面柱饰、折面斜顶与连续窗边管状扶手；端部还有展板及标识 | 摄影者 Masato Nawate（绳手真人），页面未列单张拍摄日；All Rights Reserved，未获得开放使用许可 |
+| [Gerhard Huber：Observation Deck at Night](https://global-geography.org/af/Geography/Asia/China/Pictures/Shanghai_2/Shanghai_World_Financial_Center_-_Observation_Deck_at_Night)，[实拍大图](https://global-geography.org/attach/Geography/Asia/China/Pictures/Shanghai_2/Shanghai_World_Financial_Center_-_Observation_Deck_at_Night/CS1468_Aussichtsplattform_World_Financialjpg.jpg) | 镜面板波纹、灯槽节奏、窗边扶手支架和低位绿色疏散标识；曝光较亮，不能直接用于标定灯光强度 | Gerhard Huber，拍摄于 **2012 年 4 月**；页面创建于 2018-11-13，与拍摄日不同。页面标注 CC BY-NC 4.0 + Edu |
+
+本地参考图位于 `.tmp/png/space-swfc-lighting-20260913/references/`。本轮按照片识别的形态补 20 盏筒灯、两侧共 20 段扶手和 40 个支架；**20 盏数量、2.5 m 灯距、灯槽宽 0.30 m、扶手高 1.06 m、管径 0.042 m、饰板与灯圈尺寸均为估算**，照片不足以计数全厅或测量细构件。既有业主尺寸 50 × 6.2 m、净高 3–3.85 m 与 55 m 观光桥、474 m 楼面高度继续分别使用。
+
+灯具外形保留在 Blender；六盏网页代理灯每盏 120 cd、Blender 预览 6 W，仅为视觉校准，不代表实测灯数或光度。试过 900 cd，玻璃地面过亮而对向柱饰仍暗，已放弃；最终使用七个平面反射及局部环境采样。镜面板波纹、端部展板与疏散标识仍待补，不捏造照片中不可辨读的文字。
+
+网页实现复用已安装 Three.js 的 [Reflector](https://threejs.org/docs/pages/Reflector.html)、[CubeCamera](https://threejs.org/docs/pages/CubeCamera.html) 与 [WebGLCubeRenderTarget](https://threejs.org/docs/pages/WebGLCubeRenderTarget.html)，官方文档查阅于 2026-09-13；无新增依赖。局部环境贴图按进入、时间或天气变化更新，是单点近似；不等同于逐像素多次反射或精确光度。正式工程、三轮审图和网页验收证据见[跟踪记录](../../../docs/space-blender-tracker.md#2026-09-13-100f-筒灯扶手与夜间反射)。下节保留本轮筒灯扶手细化前的历史状态。
 
 ## 2026-09-13 100F 观光厅与透明步道
 

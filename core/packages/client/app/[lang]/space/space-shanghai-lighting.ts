@@ -3,11 +3,13 @@ import * as THREE from 'three';
 type Crown = { height: number; depth: number; width: number };
 type Triple = [number, number, number];
 type Lamp = { position: Triple; target: Triple; color: Triple; intensity: number; angle: number; penumbra: number; distance: number };
-type FrontageData = { width: number; height: number; crown?: Crown; centre?: Triple; washTop?: number; lamps?: Lamp[] };
+type FrontageData = { width: number; height: number; crown?: Crown; centre?: Triple; washTop?: number; lamps?: Lamp[]; interiorBounds?: { min: Triple; max: Triple } };
 type Frontage = Omit<FrontageData, 'centre'> & { building: THREE.Object3D; centre: THREE.Vector3; id: number };
 
 const triple = (value: unknown): value is Triple => Array.isArray(value) && value.length === 3 && value.every(Number.isFinite);
 function validateRig(data: FrontageData) {
+  const bounds = data.interiorBounds;
+  if (bounds !== undefined && (!bounds || !triple(bounds.min) || !triple(bounds.max) || bounds.min.some((v, i) => v >= bounds.max[i]))) throw new Error('Invalid Blender facade interior bounds');
   if (data.centre !== undefined && !triple(data.centre)) throw new Error('Invalid Blender facade light centre');
   if (data.washTop !== undefined && (!Number.isFinite(data.washTop) || data.washTop < 0)) throw new Error('Invalid Blender facade wash height');
   if (data.lamps === undefined) return;
@@ -30,6 +32,7 @@ export class ShanghaiFacadeLighting {
   private selected: Frontage | undefined;
   private direction = new THREE.Vector3();
   private offset = new THREE.Vector3();
+  private localCamera = new THREE.Vector3();
   private lastNight = -1;
   private initialized = false;
   transitioning = false;
@@ -82,6 +85,15 @@ export class ShanghaiFacadeLighting {
     camera.getWorldDirection(this.direction);
     let selected: Frontage | undefined, best = Infinity;
     for (const frontage of this.frontages) {
+      // Inside an authored hall, turning away from its centre must not switch
+      // off the room. Bounds are local Y-up metres, following the building.
+      const bounds = frontage.interiorBounds;
+      if (bounds) {
+        frontage.building.worldToLocal(this.localCamera.copy(camera.position));
+        if (this.localCamera.toArray().every((v, i) => v >= bounds.min[i] && v <= bounds.max[i])) {
+          selected = frontage; best = -1; break;
+        }
+      }
       this.offset.copy(frontage.centre).sub(camera.position);
       const distance = this.offset.length(), facing = this.offset.normalize().dot(this.direction);
       // Ignore buildings behind the viewer and high-altitude overview cameras.
