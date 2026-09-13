@@ -1,11 +1,11 @@
 {
   "asset": "shanghai",
   "source": "design/space/scenes/shanghai.blend",
-  "objects": 12001,
+  "objects": 12004,
   "facadeRigs": 5,
   "blender": "5.2.1 LTS",
-  "sha256": "a1c4c7051684e1b9b1dfd28e7742e52a5252b4b9cb674120b68f5dba9339c69c",
-  "bytes": 409721976,
+  "sha256": "40e10f928063176557302ba20c0c57942e050f8f8fe250700196e6b2136540d5",
+  "bytes": 399736608,
   "textures": [
     "textures/05a642214fbc39bbbee426c2.png",
     "textures/2899c1338a39369d33edc02e.png",
