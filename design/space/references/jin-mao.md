@@ -7,7 +7,7 @@
 | 来源 | 已检查内容 | 采用范围 |
 | --- | --- | --- |
 | [幕墙承建方 Permasteelisa](https://www.permasteelisagroup.com/historic-project/jin-mao-tower/) | 420.5 米、88 层、铝翼片、不锈钢空心构件和铝板退台；三张俯拍、塔冠、幕墙细部实拍 | 总高、材质类别、横竖构件的层次；宽度和细部尺寸仍按照片估算 |
-| [SOM 建筑师](https://www.som.com/projects/jin-mao-tower/) | 署名 Tim Griffith 的日景及夜景照片 | 银灰色幕墙、分段轮廓、竖向亮线和较亮塔冠；不是现场配光数据 |
+| [SOM 建筑师](https://www.som.com/projects/jin-mao-tower/) | Tim Griffith 日景；夜景原图文件标注 China Jin Mao Group，页面未列单张摄影署名 | 银灰色幕墙、分段轮廓、竖向亮线和较亮塔冠；不是现场配光数据 |
 | [摩天楼博物馆](https://old.skyscraper.org/EXHIBITIONS/BIG_BUILDINGS/CONTENT/jumbos/j_27.htm) | 引述 SOM 的 88 层分段规则 | 延续 `[16,14,12,10,8,7,6,5,4,3,2,1]` 楼层分段 |
 
 承建方的原图：[俯拍](https://www.permasteelisagroup.com/wp-content/uploads/2025/07/Jin-Mao-Tower-Shanghai1.jpg)、[塔冠近景](https://www.permasteelisagroup.com/wp-content/uploads/2025/07/Jin-Mao-Tower-Shanghai2.jpg)、[幕墙细部](https://www.permasteelisagroup.com/wp-content/uploads/2025/07/Jin-Mao-Tower-Shanghai3.jpg)。仅作本地实拍对照，不随网页分发，不用照片包裹建筑。照片拍摄日期未确认，不能据此保证所有现状细节。
@@ -53,3 +53,23 @@
 `refine_jin_mao_body.py --setbacks` 在上一轮幕墙上增量修正：十二段半宽估算为 `[29.3,29.1,28.9,28.7,28.5,28.3,28.1,27.9,24,20,16,12.5] m`，上部四段外挑改为 `[0.9,0.7,0.5,0.35] m`，中央凹进改为各段半宽的 13%。铝板缝的内端随下一段实际宽度调整，保留幕墙构件、楼层分段、标高、塔冠、材质和灯光。上述宽度、凹进和外挑均为透视照片估算，替代前一节相应参数，不是实测尺寸。
 
 已保存修订 `spaceJinMaoSetbackRevision = jin-mao-setbacks-20260913`。只替换原 48 个楼身网格的数据，保存前检查原几何、候选、脚本及源文件未变，并保留整城备份；禁止重复应用。候选正面、背面、仰视、幕墙两侧和上部近景已审图；近似夜景显示塔冠偏亮、幕墙偏灰，仍需校准。裙楼、酒店中庭与观景层尚未补齐，不能据本次轮廓改进认定 1:1 完成。
+
+## 2026-09-13 玻璃金属与夜间亮线
+
+重新对照 SOM 的[日景原图，摄影 Tim Griffith](https://www.som.com/wp-content/uploads/2021/07/jin-mao-tower_1575x900_tim-griffith_02.jpg)与[夜景原图](https://www.som.com/wp-content/uploads/2021/07/jinmao_1400x800_chinajinmaogroup_01.jpg)。夜景文件名标注 China Jin Mao Group，但项目页未列该图的单独摄影署名；不将其归给 Tim Griffith，也不把文件名当作摄影署名。各图拍摄日期未知，历史照片不代表当前灯光实测。查阅于 2026-09-13，原图仅作本地参考，未成为运行贴图；网页 SOM 来源记录同步保留这一边界。
+
+照片支持银色金属与深色玻璃的区别，以及夜间主要竖向构件比横杆更亮。以下 PBR 数值和补光强度均是外观估算，不是材料检测或现场光度数据。颜色为 sRGB 0–255，脚本转成线性颜色后写入 Blender；夜景强度沿用原有随时间控制的 `spaceShaderKey`，不烘入日景自发光。
+
+| 材质角色 | sRGB | 金属度 | 粗糙度 | 网页夜景补光 |
+| --- | --- | --- | --- | --- |
+| 铝制横杆与层间板 | 214,216,216 | 0.82 | 0.26 | 0.025 |
+| 塔冠银色翼片 | 216,212,201 | 0.78 | 0.27 | 1.6 |
+| 阴影凹槽 | 31,39,43 | 0.25 | 0.60 | 0 |
+| 深蓝灰玻璃 | 75,95,109 | 0.34 | 0.20 | 保留原窗格 Shader |
+| 竖向照明构件 | 208,205,197 | 0.74 | 0.25 | 2.4 |
+
+一份材质候选完成同光照、同角度的日景整栋、幕墙细部、夜景整栋与塔冠对照。首次预览发现新建 World 的输出节点未激活，已在临时审图脚本中清空默认节点并显式激活输出，重新渲染修改前后全部八图；旧预览不作为本次照明对比证据。修正预览不是额外材质迭代，也未改正式场景的环境或曝光。正确对照位于 `.tmp/png/space-jinmao-finish-20260913/round-01/review-corrected/`。
+
+`refine_jin_mao_finish.py` 已保存一次性修订 `spaceJinMaoFinishRevision = jin-mao-finish-20260913`，对原 51 个网格分配五份新材质，旧材质保留。候选及依赖哈希、源指纹、整城几何、变换、运行 ID、六组灯和其他网格材质分配均在保存前核对；保存前整城备份为 `round-01/shanghai-before-jinmao-finish.blend`。已有该修订时拒绝再次应用，后续直接编辑当前材质。
+
+深色玻璃与银色构件的层次改善，近似夜景的竖向亮线更突出；塔冠仍使用整材质补光，翼片缺少现场配光和真实环境反射，尚未达到电影级。Cycles 孤立模型未执行网页窗格 Shader，不能代替整城 WebGL 日夜验收；裙楼、酒店中庭与观景层继续待办。

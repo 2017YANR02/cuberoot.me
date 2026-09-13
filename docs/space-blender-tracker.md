@@ -1,5 +1,15 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 金茂玻璃金属与夜间亮线
+
+对照 SOM 日景与历史夜景，更新深蓝灰玻璃、银色横杆与层间板、凹槽、塔冠和主要竖向构件的五种材质。减弱横杆夜间补光，突出竖向亮线，并降低塔冠整体补光。PBR 和补光数值仍是照片估算，原图摄影署名、未知拍摄日期和参数见[参考档案](../design/space/references/jin-mao.md#2026-09-13-玻璃金属与夜间亮线)；网页 SOM 来源中英文记录已同步。
+
+- 一份材质候选完成日景整栋、幕墙细部、夜景整栋和上部四组修改前后对照。初次预览使用了未激活的 World 输出，修正临时审图脚本后已重渲全部八图；仅采用[校正后的整栋日景](../.tmp/png/space-jinmao-finish-20260913/round-01/review-corrected/after-day-full.png)、[幕墙](../.tmp/png/space-jinmao-finish-20260913/round-01/review-corrected/after-day-facade.png)、[整栋夜景](../.tmp/png/space-jinmao-finish-20260913/round-01/review-corrected/after-night-full.png)和[夜间塔冠](../.tmp/png/space-jinmao-finish-20260913/round-01/review-corrected/after-night-upper.png)。修正预览不计为额外材质迭代；CPU 14 线程，未占用桌面。
+- 已保存 `jin-mao-finish-20260913`，[保存报告](../.tmp/png/space-jinmao-finish-20260913/round-01/saved.json)确认整城几何、变换、运行 ID、其他网格材质分配及六组灯保持。源工程 **265,248,452 字节**，旧材质保留；保存前整城备份为同目录 `shanghai-before-jinmao-finish.blend`。一次性脚本校验候选、依赖和源指纹，已有该修订拒绝再应用。
+- 正常导出 **500,054,592 字节**，仅增加 **900 字节**；12,019 objects、6 灯组、16 张纹理不变。SHA-256 为 `d1d27a354bea949a01e9e2b64005b6234902b48368f40d518b2124d361873a18`。[正式检查](../.tmp/png/space-jinmao-finish-20260913/formal-check.json)逐项确认 51 个网格的全部顶点属性、索引、材质和本地变换与候选一致，世界变换差异小于 0.000001 m；Three.js GLTFLoader 在 Node 中加载全部 51 个网格；完整 HTTP 下载为 200，长度和哈希一致。
+
+**尚未达到 1:1 或电影级。** 深色玻璃与金属的层次、夜间竖向亮线已有改善；塔冠仍为整材质补光，实际灯位、环境反射和整城日夜画面仍待验证。Playwright 连接继续返回 Transport closed，关闭后重连仍失败；本轮没有网页 WebGL 视觉证据，Cycles 图片和 Node 加载检查不能替代。裙楼、酒店中庭、观景层、其他沿江建筑以及整城分区和 LOD 继续待办。未改 TS/TSX，不运行无关测试或 Next build；脚本、来源、清单与文档仅本地提交，不 push，重资产继续本地保存，LFS 配置和上传暂缓。
+
 ## 2026-09-13 金茂塔身收分与上部退台
 
 对照 SOM 街景和三件套仰视照片，将长塔身改为接近平行，上部四段逐段明显收窄，中央凹槽随段宽调整，铝板缝内端跟随下一段边缘。原幕墙细部、塔冠、材质及灯光保留；参数和摄影署名见[参考档案](../design/space/references/jin-mao.md#2026-09-13-塔身收分与上部退台)，网页 SOM 来源的中英文记录已更新。宽度和凹进仍是透视照片估算，不是实测。
