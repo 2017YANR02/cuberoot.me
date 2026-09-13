@@ -25,6 +25,8 @@ export const musicRoutes = new Hono();
 
 const MUSIC_STORAGE_DIR = process.env.MUSIC_STORAGE_DIR || path.join(process.cwd(), '.music');
 const MUSIC_TEMP_DIR = path.join(MUSIC_STORAGE_DIR, '.tmp');
+// Same generated library served by the static nginx vhost; never read client/public.
+const MUSIC_LIBRARY_ROOT = process.env.MUSIC_LIBRARY_ROOT || '/www/wwwroot/toolkit/music/library';
 const STORAGE_KEY_RE = /^(audio|covers)\/[0-9a-f-]{36}\.(mp3|m4a|flac|wav|jpg|png|webp)$/;
 const STATIC_TRACK_ID_RE = /^[0-9a-f]{64}$/;
 const TRACK_SELECT = `id, owner_user_id, title, artist, album, genre, lyrics_lrc,
@@ -181,6 +183,33 @@ async function serveAudio(c: Context, headOnly: boolean, attachment: boolean): P
     headOnly,
     filename: row.audio_filename,
     attachment,
+  });
+}
+
+async function serveStaticDownload(c: Context, headOnly: boolean): Promise<Response> {
+  noStore(c);
+  await memberIdentity(c);
+  const id = staticTrackId(c.req.param('id'));
+  const overrides = await query<{ hidden: boolean; title: string | null }>(
+    'SELECT hidden, title FROM music_static_overrides WHERE track_id = ?', [id],
+  );
+  if (overrides[0]?.hidden) return c.json({ error: 'Not found' }, 404);
+  const manifest = JSON.parse(await fs.readFile(path.join(MUSIC_LIBRARY_ROOT, 'manifest.v1.json'), 'utf8')) as {
+    version: number; tracks: { id: string; title: string; src: string }[];
+  };
+  const track = manifest.version === 1 && Array.isArray(manifest.tracks)
+    ? manifest.tracks.find(track => track.id === id) : undefined;
+  // The track id hashes the source; the asset filename hashes the prepared audio.
+  const asset = track && /^\/music\/library\/(tracks\/[0-9a-f]{64}\.(mp3|m4a|flac|wav))$/.exec(track.src);
+  if (!asset) return c.json({ error: 'Not found' }, 404);
+  const filePath = path.join(MUSIC_LIBRARY_ROOT, asset[1]);
+  const stat = await fs.stat(filePath).catch(() => null);
+  if (!stat?.isFile() || stat.size <= 0) return c.json({ error: 'Not found' }, 404);
+  const mime = Object.entries(MUSIC_EXT).find(([, extension]) => extension === asset[2])![0];
+  const title = overrides[0]?.title || track!.title;
+  return storedMusicResponse({
+    filePath, mime, size: stat.size, rangeHeader: c.req.header('range'), headOnly,
+    filename: uploadFilename(`${title}.${asset[2]}`, title, asset[2]), attachment: true,
   });
 }
 
@@ -359,6 +388,8 @@ musicRoutes.get('/music/tracks/:id/audio', (c) => serveAudio(c, false, false));
 musicRoutes.on('HEAD', '/music/tracks/:id/audio', (c) => serveAudio(c, true, false));
 musicRoutes.get('/music/tracks/:id/download', (c) => serveAudio(c, false, true));
 musicRoutes.on('HEAD', '/music/tracks/:id/download', (c) => serveAudio(c, true, true));
+musicRoutes.get('/music/static-tracks/:id/download', (c) => serveStaticDownload(c, false));
+musicRoutes.on('HEAD', '/music/static-tracks/:id/download', (c) => serveStaticDownload(c, true));
 musicRoutes.get('/music/tracks/:id/cover', (c) => serveCover(c, false));
 musicRoutes.on('HEAD', '/music/tracks/:id/cover', (c) => serveCover(c, true));
 
