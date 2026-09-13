@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Reflector } from 'three/addons/objects/Reflector.js';
+import { guardPlanarReflection } from './space-planar-reflections';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -1045,6 +1046,7 @@ export class SpaceRoom {
       try { reflect.apply(mirror, args); }
       finally { hidden.forEach((o, i) => { o.visible = visibility[i]; }); }
     };
+    guardPlanarReflection(mirror);
     parent.add(mirror);
     this.mirrors.push(mirror);
     return mirror;
