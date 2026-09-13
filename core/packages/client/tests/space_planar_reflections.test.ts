@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -37,6 +37,67 @@ describe('authored interior reflections', () => {
     expect(interiorMirrorPlanes(new THREE.BufferGeometry())).toEqual([]);
     const geometry = new THREE.BoxGeometry(.1, .1, .1);
     expect(interiorMirrorPlanes(geometry)).toEqual([]); geometry.dispose();
+  });
+
+  it('retains window openings and merges coplanar haunches across mesh transforms', () => {
+    const source = new THREE.Mesh(hall(), new THREE.MeshStandardMaterial());
+    const parts: THREE.BufferGeometry[] = [];
+    for (const side of [-1, 1]) for (const x of [-4, 4]) {
+      parts.push(new THREE.PlaneGeometry(2, 6).rotateY(side > 0 ? Math.PI : 0).translate(x, 3, side * 3));
+    }
+    parts.push(new THREE.PlaneGeometry(2, 6).translate(6, 0, 0).rotateX(Math.PI / 2).rotateZ(.2).translate(0, 6, 0));
+    const lining = new THREE.Mesh(mergeGeometries(parts)!.translate(-7, 0, 0), new THREE.MeshStandardMaterial());
+    lining.position.x = 7;
+    const parent = new THREE.Group(); parent.position.set(400, 474, 1800); parent.rotation.y = .58;
+    parent.add(source, lining);
+    const before = [...lining.geometry.getAttribute('position').array];
+    const interior = new BlenderInteriorMirrors(source, true, lining);
+    expect(source.children).toHaveLength(4);
+    // Test in the source frame; side windows stay open between broad piers.
+    parent.position.set(0, 0, 0); parent.rotation.set(0, 0, 0); parent.updateMatrixWorld(true);
+    const cast = (x: number) => new THREE.Raycaster(new THREE.Vector3(x, 2, 0), new THREE.Vector3(0, 0, 1)).intersectObjects(source.children);
+    expect(cast(0)).toHaveLength(0); expect(cast(4)[0].point.z).toBeCloseTo(3, 5);
+    expect([...lining.geometry.getAttribute('position').array]).toEqual(before);
+    interior.dispose(); parts.forEach(p => p.dispose());
+    for (const m of [source, lining]) { m.geometry.dispose(); m.material.dispose(); }
+  });
+
+  it('captures a bounded local fallback on entry or lighting changes, without feedback, and restores it on exit', () => {
+    const source = new THREE.Mesh(hall(), new THREE.MeshStandardMaterial());
+    const lining = new THREE.Mesh(new THREE.BoxGeometry(.1, .1, .1), new THREE.MeshStandardMaterial());
+    const original = new THREE.Texture(); source.material.envMap = original; source.material.envMapIntensity = .4;
+    const interior = new BlenderInteriorMirrors(source, true, lining), mirror = source.children[0] as Reflector;
+    const camera = new THREE.PerspectiveCamera(60, 1, .05, 1000);
+    camera.position.set(3, 2, 0); camera.lookAt(3, 0, 0); camera.updateMatrixWorld(); source.updateMatrixWorld(true);
+    let fail = true, targetDisposed = false;
+    const capture = vi.spyOn(THREE.CubeCamera.prototype, 'update').mockImplementation(function (this: THREE.CubeCamera) {
+      expect(source.material.envMap).toBe(original);
+      expect(source.children.every(o => !o.visible)).toBe(true);
+      this.renderTarget.addEventListener('dispose', () => { targetDisposed = true; });
+      if (fail) throw new Error('capture failed');
+    });
+    const renderer = {
+      xr: { enabled: false }, shadowMap: { autoUpdate: true }, autoClear: true,
+      getRenderTarget: () => null, getActiveCubeFace: () => 0, getActiveMipmapLevel: () => 0, setRenderTarget: () => {},
+      state: { buffers: { depth: { setMask: () => {} } } }, render: () => {},
+    } as unknown as THREE.WebGLRenderer;
+    const draw = () => mirror.onBeforeRender(renderer, new THREE.Scene(), camera, mirror.geometry, mirror.material as THREE.Material, null!);
+    try {
+      interior.update(camera); expect(draw).toThrow('capture failed');
+      expect(source.material.envMap).toBe(original); expect(mirror.visible).toBe(true);
+      fail = false; draw(); expect(source.material.envMap).not.toBe(original);
+      expect(source.material.envMapIntensity).toBe(1);
+      interior.update(camera); draw(); expect(capture).toHaveBeenCalledTimes(2);
+      interior.invalidateProbe(); interior.update(camera); draw(); expect(capture).toHaveBeenCalledTimes(3);
+      camera.position.set(0, 0, 100); interior.update(camera);
+      expect(source.material.envMap).toBe(original); expect(source.material.envMapIntensity).toBe(.4);
+      camera.position.set(3, 2, 0); camera.updateMatrixWorld(); interior.update(camera); draw();
+      expect(capture).toHaveBeenCalledTimes(4);
+      interior.dispose(); expect(targetDisposed).toBe(true); expect(source.material.envMap).toBe(original);
+    } finally {
+      capture.mockRestore(); interior.dispose(); original.dispose();
+      for (const m of [source, lining]) { m.geometry.dispose(); m.material.dispose(); }
+    }
   });
 
   it('uses transformed source bounds, preserves the fallback and disposes owned GPU resources', () => {
