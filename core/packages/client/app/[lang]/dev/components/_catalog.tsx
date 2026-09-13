@@ -847,6 +847,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'One site landscape and shared appearance picker, preserving preferences and following the rendered page scheme.',
   },
   {
+    name: 'ScrollDiagnostics',
+    import: "const { openScrollDiagnostics } = await import('@/components/ScrollDiagnostics');",
+    category: 'more',
+    zh: '外观菜单按需加载的滚动诊断工具，限时采集手势和性能线索，支持临时毛玻璃对照与本地报告导出。',
+    en: 'On-demand scroll diagnostics from the appearance menu, with bounded gesture/timing capture, temporary glass comparisons and local report export.',
+  },
+  {
     name: 'SiteGlass',
     import: "import SiteGlass from '@/components/SiteGlass';",
     category: 'more',
