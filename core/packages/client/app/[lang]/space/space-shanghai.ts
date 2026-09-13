@@ -293,7 +293,9 @@ export class ShanghaiScene {
         const node = nodes.get(id);
         return node instanceof THREE.Mesh && node.material instanceof THREE.MeshStandardMaterial ? [node.material] : [];
       });
-      this.interiorMirrors = new BlenderInteriorMirrors(hallMirror, this.narrow, mirrorPiers, fixtures);
+      const floor = nodes.get('swfc-floor-finish-20260913/floor');
+      this.interiorMirrors = new BlenderInteriorMirrors(hallMirror, this.narrow, mirrorPiers, fixtures,
+        floor instanceof THREE.Mesh && floor.material instanceof THREE.MeshStandardMaterial ? floor : undefined);
     }
     this.traffic = new ShanghaiTraffic(data.roads, this.material.bind(this), this.narrow, traffic);
     this.root.add(this.traffic.root);

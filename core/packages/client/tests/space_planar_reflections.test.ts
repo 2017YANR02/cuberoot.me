@@ -50,8 +50,8 @@ describe('authored interior reflections', () => {
 
   it('preserves distinct finishes when coplanar sheets and piers share a capture', () => {
     const texture = new THREE.Texture();
-    const a = new THREE.MeshStandardMaterial({ normalMap: texture, roughness: .09, color: 0xdddddd });
-    const b = new THREE.MeshStandardMaterial({ normalMap: texture, roughness: .14, color: 0xbbbbbb });
+    const a = new THREE.MeshStandardMaterial({ normalMap: texture, roughness: .09, metalness: 1, color: 0xdddddd });
+    const b = new THREE.MeshStandardMaterial({ normalMap: texture, roughness: .14, metalness: .8, color: 0xbbbbbb });
     a.normalScale.set(.065, .065); b.normalScale.set(.039, .039);
     const source = new THREE.Mesh(hall(), a);
     const parts = [new THREE.PlaneGeometry(4, 6).translate(7, 0, 0).rotateX(Math.PI / 2).rotateZ(.2).translate(0, 6, 0), new THREE.BoxGeometry(.1, .1, .1)];
@@ -67,11 +67,37 @@ describe('authored interior reflections', () => {
     expect(finish.getX(0)).toBeCloseTo(.065);
     expect(finish.getX(finish.count - 1)).toBeCloseTo(.039);
     expect(color.getX(color.count - 1)).toBeCloseTo(b.color.r);
+    const metalness = ceiling.geometry.getAttribute('mirrorMetalness');
+    expect(metalness.getX(0)).toBe(1);
+    expect(metalness.getX(metalness.count - 1)).toBeCloseTo(.8);
     expect(ceiling.material.uniforms.metalNormal.value).toBe(texture);
     expect([...source.geometry.getAttribute('uv').array]).toEqual(originalUV);
     let disposed = false; texture.addEventListener('dispose', () => { disposed = true; });
     interior.dispose(); expect(disposed).toBe(false);
     texture.dispose(); a.dispose(); b.dispose(); source.geometry.dispose(); lining.geometry.dispose();
+  });
+
+  it('finds the inward face of a separate thin floor without closing its openings or changing its finish', () => {
+    const source = new THREE.Mesh(hall(), new THREE.MeshStandardMaterial({ metalness: 1 }));
+    const parts = [-3, 3].map(x => new THREE.BoxGeometry(4, .02, 6).translate(x, -1.01, 0));
+    const floor = new THREE.Mesh(mergeGeometries(parts)!.translate(-7, 0, 0), new THREE.MeshStandardMaterial({ metalness: 0, roughness: .1 }));
+    parts.forEach(p => p.dispose()); floor.position.x = 7;
+    // Its own bounds centre is inside the slab, below the walking surface.
+    expect(interiorMirrorPlanes(floor.geometry)).toHaveLength(0);
+    const positions = [...floor.geometry.getAttribute('position').array], uv = [...floor.geometry.getAttribute('uv').array];
+    const interior = new BlenderInteriorMirrors(source, false, undefined, [], floor);
+    expect(source.children).toHaveLength(3);
+    source.updateMatrixWorld(true);
+    const cast = (x: number) => new THREE.Raycaster(new THREE.Vector3(x, -.5, 0), new THREE.Vector3(0, -1, 0)).intersectObjects(source.children);
+    expect(cast(0)).toHaveLength(0);
+    const hit = cast(3)[0]; expect(hit.point.y).toBeCloseTo(-1, 5);
+    const geometry = (hit.object as THREE.Mesh).geometry;
+    expect([...geometry.getAttribute('mirrorMetalness').array].every(v => v === 0)).toBe(true);
+    expect(geometry.getAttribute('mirrorFinish').getZ(0)).toBeCloseTo(.1);
+    expect([...floor.geometry.getAttribute('position').array]).toEqual(positions);
+    expect([...floor.geometry.getAttribute('uv').array]).toEqual(uv);
+    interior.dispose();
+    for (const mesh of [source, floor]) { mesh.geometry.dispose(); mesh.material.dispose(); }
   });
 
   it('retains window openings and merges coplanar haunches across mesh transforms', () => {
@@ -101,12 +127,13 @@ describe('authored interior reflections', () => {
     const source = new THREE.Mesh(hall(), new THREE.MeshStandardMaterial());
     const lining = new THREE.Mesh(new THREE.BoxGeometry(.1, .1, .1), new THREE.MeshStandardMaterial());
     const original = new THREE.Texture(); source.material.envMap = original; source.material.envMapIntensity = .4;
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(.1, .01, .1), new THREE.MeshStandardMaterial({ envMap: original, envMapIntensity: .6 }));
     const fixture = new THREE.MeshStandardMaterial({ envMap: original, envMapIntensity: .7 });
     const exterior = new THREE.MeshStandardMaterial({ envMap: original, envMapIntensity: .9 });
     const fixtureDisposed = vi.fn(); fixture.addEventListener('dispose', fixtureDisposed);
     // Repeated/shared room materials must restore exactly once, while a
     // building's exterior material must never acquire the indoor cube.
-    const interior = new BlenderInteriorMirrors(source, true, lining, [fixture, fixture, source.material]), mirror = source.children[0] as Reflector;
+    const interior = new BlenderInteriorMirrors(source, true, lining, [fixture, fixture, source.material], floor), mirror = source.children[0] as Reflector;
     const camera = new THREE.PerspectiveCamera(60, 1, .05, 1000);
     camera.position.set(3, 2, 0); camera.lookAt(3, 0, 0); camera.updateMatrixWorld(); source.updateMatrixWorld(true);
     let failAt = 1;
@@ -118,6 +145,7 @@ describe('authored interior reflections', () => {
       expect(source.material.envMap).not.toBe(this.renderTarget.texture);
       expect(lining.material.envMap).not.toBe(this.renderTarget.texture);
       expect(fixture.envMap).toBe(source.material.envMap);
+      expect(floor.material.envMap).toBe(source.material.envMap);
       expect(exterior.envMap).toBe(original); expect(exterior.envMapIntensity).toBe(.9);
       expect(source.children.every(o => !o.visible)).toBe(true);
       const target = this.renderTarget;
@@ -135,11 +163,13 @@ describe('authored interior reflections', () => {
       interior.update(camera); expect(draw).toThrow('capture failed');
       expect(source.material.envMap).toBe(original); expect(mirror.visible).toBe(true);
       expect(fixture.envMap).toBe(original); expect(fixture.envMapIntensity).toBe(.7);
+      expect(floor.material.envMap).toBe(original); expect(floor.material.envMapIntensity).toBe(.6);
       failAt = 0; draw(); expect(source.material.envMap).toBe(captures[2].target.texture);
       expect(captures[1].input).toBe(original);
       expect(captures[2].input).toBe(captures[1].target.texture);
       expect(source.material.envMapIntensity).toBe(1);
       expect(fixture.envMap).toBe(source.material.envMap); expect(fixture.envMapIntensity).toBe(1);
+      expect(floor.material.envMap).toBe(source.material.envMap); expect(floor.material.envMapIntensity).toBe(1);
       interior.update(camera); draw(); expect(capture).toHaveBeenCalledTimes(3);
       // Keep the previous completed map while lights fade; recapture just once
       // after settling, even if weather animation is disabled.
@@ -150,20 +180,23 @@ describe('authored interior reflections', () => {
       failAt = 9; interior.invalidateProbe(); interior.update(camera); expect(draw).toThrow('capture failed');
       expect(source.material.envMap).toBe(original); expect(mirror.visible).toBe(true);
       expect(fixture.envMap).toBe(original); expect(fixture.envMapIntensity).toBe(.7);
+      expect(floor.material.envMap).toBe(original); expect(floor.material.envMapIntensity).toBe(.6);
       failAt = 0; draw(); expect(capture).toHaveBeenCalledTimes(11);
       camera.position.set(0, 0, 100); interior.update(camera);
       expect(source.material.envMap).toBe(original); expect(source.material.envMapIntensity).toBe(.4);
       expect(fixture.envMap).toBe(original); expect(fixture.envMapIntensity).toBe(.7);
+      expect(floor.material.envMap).toBe(original); expect(floor.material.envMapIntensity).toBe(.6);
       camera.position.set(3, 2, 0); camera.updateMatrixWorld(); interior.update(camera); draw();
       expect(capture).toHaveBeenCalledTimes(13);
       expect(new Set(captures.map(c => c.target)).size).toBe(2);
       interior.dispose(); expect(disposed.size).toBe(2); expect(source.material.envMap).toBe(original);
       expect(fixture.envMap).toBe(original); expect(fixture.envMapIntensity).toBe(.7);
+      expect(floor.material.envMap).toBe(original); expect(floor.material.envMapIntensity).toBe(.6);
       expect(fixtureDisposed).not.toHaveBeenCalled();
     } finally {
       capture.mockRestore(); interior.dispose(); original.dispose();
       fixture.dispose(); exterior.dispose();
-      for (const m of [source, lining]) { m.geometry.dispose(); m.material.dispose(); }
+      for (const m of [source, lining, floor]) { m.geometry.dispose(); m.material.dispose(); }
     }
   });
 
