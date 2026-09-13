@@ -177,8 +177,9 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
             setOpen(true);
           }
         }}
-        onClick={() => {
-          if (open) closeMenu();
+        onClick={(event) => {
+          // Mouse hover already opens the menu; its following click must keep it open.
+          if (open && event.detail === 0) closeMenu();
           else {
             beginAppearancePreview();
             setOpen(true);

@@ -25,6 +25,18 @@
   gap: 12px;
 }
 
+.submit-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  min-width: 0;
+}
+
+.submit-title-row .submit-source-summary {
+  align-self: center;
+}
+
 .submit-open-sim {
   display: inline-flex;
   align-items: center;
@@ -1089,6 +1101,9 @@
   }
 }
 .submit-source-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   align-self: flex-start;
   width: fit-content;
   max-width: 100%;

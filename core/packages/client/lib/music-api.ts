@@ -133,6 +133,13 @@ export async function deleteAdminMusicTrack(id: string): Promise<void> {
   }));
 }
 
+export async function deleteMyMusicTrack(id: string): Promise<void> {
+  await handleApi<{ ok: true }>(await fetch(apiUrl(`${BASE}/tracks/${encodeURIComponent(id)}`), {
+    method: 'DELETE',
+    headers: authHeaders(false),
+  }));
+}
+
 export async function updateAdminMusicStaticTrack(
   id: string,
   draft: MusicMetadataDraft & { hidden: boolean },
