@@ -1,5 +1,21 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-12 园区围护与入口细部收尾，按用户要求暂停
+
+完成本轮 X/Y/Z 三次候选复看、规范工程保存及正式导出后停止，不扩展新建筑。来源、日期和估算边界见[园区围护细部档案](../design/space/references/alibaba-xuhui.md#围护结构与入口细部增量)。
+
+- X 七栋楼补 **1,759 个玻璃后方办公窗空间**及 **14 个屋顶风机格栅**；Y 补 **496 个开间**的折面包边、板缝及 **43 组、每组 48 条**檐底格栅；四处入口补门框、拉手、闭门器与门槛。第三次候选根据近景检查，清除现有模型 **48 处门口**的遮阳条与底座遮挡；这不是现场门口数量的认定。Z 补 **52 组**檐底板缝与滴水边、**150 组**光伏框架支撑。
+- 新增 **19 个对象**、修改 **18 个对象**，无关几何摘要及五组作者灯保存前比对一致。`refine_alibaba_envelope.py --round 2 --apply` 核对候选、脚本 SHA 和源指纹后保存，修订标记为 `alibaba-envelope-20260912`，禁止重跑覆盖。规范工程 **196,451,679 字节**，指纹 `[196451679,1789280662127112800]`；[保存报告](../.tmp/png/space-alibaba-envelope-20260912/saved.json)及同目录 `shanghai-before-envelope.blend` 保留。
+- `batch.ps1 -Asset shanghai` 正式导出成功：GLB **402,480,656 字节**，SHA-256 **`cbbb38e451cfb568e14271983af21886000028039f5f00ec78232736cb9bdf26`**；清单 **11,995 个对象、5 组作者灯、14 张纹理**，比上轮增加 **8,882,868 字节，约 2.26%**。
+- [完整上海运行合同](../.tmp/png/space-alibaba-envelope-20260912/city-contract.json)为 **`ok=true`、`errors=[]`**：659 网格、216 着色材质、95 组建筑属性、一个时钟、1,200 交通实例、12 艘船及既有建筑、水面和贴图检查通过。
+- 实际 `/zh/space` 刷新后加载上述正式哈希，未注入候选模型；[网页记录](../.tmp/png/space-alibaba-envelope-20260912/final-web-runtime.json)记录 Y 日间六灯为零、夜间六灯 850 cd，Z 夜间 `1200/1200/1200/1200/500/500`，仍复用六灯池。控制台 **0 errors / 0 warnings**。正式导出的 [Y 日景](../.tmp/png/space-alibaba-envelope-20260912/final-y-day.png)、[Y 夜景](../.tmp/png/space-alibaba-envelope-20260912/final-y-night.png)、[Z 夜景](../.tmp/png/space-alibaba-envelope-20260912/final-z-night.png)、[X 日景](../.tmp/png/space-alibaba-envelope-20260912/final-x-day.png)已逐张查看。
+
+**仍未达到测绘 1:1 或电影级。** 窗后室内仍较均匀、暗处树冠层次不足，细部尺寸存在估算；Z 仍依据 2022 年设计资料，未核实竣工形态。约 402 MB 城市资源尚需分区、细节分级与真实移动设备验证。本轮页面布局未改，未重跑窄屏验收。
+
+Python 语法、LF、清单与 GLB 哈希、保存后的源指纹和 `git diff --check` 均通过；未改 TypeScript，未跑 typecheck、测试全集或 Next build。
+
+当前任务收尾后暂停；仅本地提交脚本、清单和文档，不 push，重资产仅保存在本地，LFS 配置与上传继续暂缓。恢复时从当前工程继续增量编辑，不重新生成覆盖；旧和平饭店入口和环球顶部候选尚未合入，旧源指纹已失效。下文为历史快照。
+
 ## 2026-09-12 阿里园区树冠与树池三轮细化
 
 本轮在现有 X/Y/Z 工程上处理粗大叶片、实心树池和缺乏表面细节的铺地，完成三次候选画面对照、正式保存与导出。原始资源及替代材质的限制见[园区参考档案](../design/space/references/alibaba-xuhui.md#树冠与硬质景观材质增量)，两项 Poly Haven 来源已在网页“本页来源与建模说明”展开后核实可见。
