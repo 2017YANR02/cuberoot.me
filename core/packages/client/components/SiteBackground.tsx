@@ -67,13 +67,20 @@ export default function SiteBackground() {
 }
 
 /** The same expanded selector is available in every appearance menu. */
-export function SiteBackgroundControl() {
+export function SiteBackgroundControl({ onDiagnosticsOpen }: { onDiagnosticsOpen?: () => void } = {}) {
   const [choice, selectBackground] = useHomeBackgroundChoice();
+  const [diagnosticsFailed, setDiagnosticsFailed] = useState(false);
   const autoLabel = tr({ zh: '随明暗切换', en: 'Follow light / dark' });
   const noneLabel = tr({ zh: '无背景', en: 'No background' });
   return <div className="site-background-control" role="group" aria-label={tr({ zh: '全站背景', en: 'Site background' })}>
       <div className="appearance-sec-label">{tr({ zh: '全站背景', en: 'Site background' })}</div>
       <div className="site-background-modes">
+        <button type="button" className="site-background-mode" onClick={() => {
+          void import('./ScrollDiagnostics').then(module => {
+            onDiagnosticsOpen?.();
+            module.openScrollDiagnostics();
+          }).catch(() => setDiagnosticsFailed(true));
+        }}>{diagnosticsFailed ? tr({ zh: '重试加载诊断', en: 'Retry loading diagnostics' }) : tr({ zh: '滚动诊断', en: 'Scroll diagnostics' })}</button>
         {([{ value: 'auto', label: autoLabel }, { value: 'none', label: noneLabel }] as const).map(item => (
           <button key={item.value} type="button" role="menuitemradio" aria-checked={choice === item.value}
             className="site-background-mode" onClick={() => selectBackground(item.value)}>
