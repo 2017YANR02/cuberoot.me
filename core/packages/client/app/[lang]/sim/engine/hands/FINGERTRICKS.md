@@ -1,6 +1,6 @@
 # /sim 手部指法规格(FINGERTRICKS)
 
-**单一权威来源**:所有「哪只手、哪根手指、以什么方式做哪一步」的规格记在本文档。
+跨 `/alg`、教程与模拟器的记号含义、富文本/纯文本转换和 AI 编辑规则，统一见 [指法记号契约](../../../../../../../../docs/fingertrick-notation.md)。本文是 `/sim` 动作编排、握姿和几何标定的权威来源；下文 §2 / §7 分别记录模拟器现有写法与完整 FTN 设计，不能视为全部已实现。
 改指法 → 先改这里 → 再改 `handsRig.ts` 的 `classifyHandGesture`(映射)与 `applyHand`(编排)→ 同步 `tests/hands_gestures.test.ts`。
 穿模禁令 / oracle / 标定方法见 memory `project_sim_hands_rig`(不在本文档重复)。
 
@@ -82,7 +82,7 @@ GRIP=1 pnpm --filter @cuberoot/client exec vitest run tests/_pose_probe.test.ts
 |------|------|------|
 | `↑` `↓` `·` | 换握(上手 / 下手 / 回中手),**手别由空白定**(见下) | 占一步,PlayerControls `GRIP_MARKS` |
 | `p` 后缀 | **推法**(push):该步用「指尖推层」指法而非默认拨法 | 紧跟在招式 token 后,如 `U'p`;喂 cubing.js 前剥除,对魔方状态零作用 |
-| `[...]` 注解块 | FTN 指法注解(手指 / 相序 / 路径 / 技法),紧贴招式 token | §7;喂 cubing.js 前整块剥除(§7.3),未实装 |
+| `[...]` 注解块 | FTN 指法注解（手指 / 相序 / 路径 / 技法），紧贴转动 token | §7 完整设计，当前部分实装：仅无空白块 token 和 `R[R2:@C]` / `R[R2:@C>Q]` pin；喂 cubing.js 前剥除整块 |
 
 **换握手别规则(2026-07-10 用户规格)**:记号**紧贴**后续字符(无空格,如 `↑U`)= **右手**;记号后随**空白或串尾**(如 `↑ U`)= **左手**。
 - `↓F` = 右手下手再 F(直达 §4.3 左中右下);`↓ F` = 左手下手再 F。
@@ -93,8 +93,8 @@ GRIP=1 pnpm --filter @cuberoot/client exec vitest run tests/_pose_probe.test.ts
 
 **`p` 记号定义(2026-07-08 本文档发明)**:
 - 语法:招式 token 尾接小写 `p`,与招式之间无空格(`U'p` ✓;`U' p` ✗)。助记:push / 推 / 平推。
-- 当前仅定义 **`U'p`**:R2 推 U'(见 §4.5)。镜像扩展 `Up`(L2,LUB→RUB)保留但未编排。
-- 其它招式带 `p` = 未定义:解析时剥掉后按默认指法播放(不报错),便于向后兼容将来扩展。
+- 推法含义统一见仓库 `docs/fingertrick-notation.md`：`Up`=L2 推 U、`U'p`=R2 推 U'、`Dp`=R4 推 D、`D'p`=L4 推 D'。当前仅 `U'p` 已编排；其余三种已定义但尚待编排。
+- 上述四种之外的转动带 `p` 暂无统一定义；当前解析器剥掉后按默认指法播放（不报错）。已定义但未编排的推法也会回落默认动作，不能据此称为推法已支持。
 - 剥除函数与 `stripGripMarks` 同层处理:invert / mirror / 反推打乱 / recon 手递前都必须剥。
 - `↑↓·` 与 `p` 是 FTN(§7)的糖形式,完整编码语法见 §7.1。
 

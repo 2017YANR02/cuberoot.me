@@ -29,3 +29,4 @@
 
 
 - 人物服饰与头发在 `hands/bodyAppearance.ts` 共用 SMPL-X 骨架并沿边界裁切；头像接 `SimSettings.bodyAvatar*` 与 World 的可选手部能力，保留本地保存、正脸预览、位置/缩放对齐及异步纹理替换释放。
+- 修改指法解析或编排前先读仓库 `docs/fingertrick-notation.md`，保留富文本/纯文本两种表示并区分语义、解析与动画支持；禁止把所有下划线当作推法或把历史双箭头按模拟器空白规则直接转换。
