@@ -1,5 +1,19 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 环球金融中心顶部候选合入正式工程
+
+从包含最新阿里巴巴园区细部的规范工程重新生成候选，复看日夜画面后保存并正式导出。依据 [KPF 建筑资料](https://www.kpf.com/project/shanghai-world-financial-center)、[IMA 97F 竣工照片](https://www.imae.co.jp/en/works/shanghai-world-financial-center)及业主项目册，将之前候选的对角收削外壳、顶部开口、97F 透射玻璃与浅白色固定屋架合入；来源和估算边界见[顶部档案](../design/space/references/swfc-top.md)。
+
+- `refine_swfc_top.py --apply` 核对源指纹、脚本、审计文件、候选 GLB 哈希及重建细部一致后，先备份再保存；禁止覆盖已有备份或重复应用。原六个网格身份保留，新增三个细部网格；其他建筑、变换、已打包图片及五组立面灯的保留检查通过。未覆盖阿里巴巴园区前两轮细化。
+- [保存报告](../.tmp/png/space-swfc-top-20260911/integration-20260913-01/saved-report.json)为 `saved=true`，源工程 **199,904,029 字节**，指纹 `[199904029,1789300896396877800]`。报告中的 `officialAssetsWritten=false` 仅表示保存步骤不导出网页资产；后续独立运行 `batch.ps1 -Asset shanghai` 已成功完成正式导出。
+- 正式 GLB **399,736,608 字节**，SHA-256 **`40e10f928063176557302ba20c0c57942e050f8f8fe250700196e6b2136540d5`**；清单 **12,004 个对象、5 组立面灯、14 张纹理**，比上轮减少 **9,985,368 字节，约 2.44%**。[资源核验](../.tmp/png/space-swfc-integration-20260913/export-integrity.json)记录 HTTP 200，实际响应体与本地 GLB、清单哈希一致。
+- [完整上海运行检查](../.tmp/png/space-swfc-integration-20260913/city-contract-final.json)为 **`ok=true`、`errors=[]`**：668 网格、216 着色材质、95 组建筑属性、一个时钟、1,200 交通实例、12 艘船及既有外滩、三件套、水面和贴图检查通过。第一次复验运行了旧生成的 `verify.js`，未读取已旋转的开口方向；从现有 `verify.ts` 重新构建校验脚本后通过，未修改检查标准。失败记录保留为 `city-contract-stale-bundle-failure.json`。
+- 实际 `/zh/space` 已加载正式新哈希，顶部 **60 项表面探针通过**，见[网页记录](../.tmp/png/space-swfc-integration-20260913/formal-web-probes.json)。[正式日景](../.tmp/png/space-swfc-integration-20260913/formal-day.png)、[97F 屋架日景](../.tmp/png/space-swfc-integration-20260913/formal-canopy-day.png)、[顶部夜景](../.tmp/png/space-swfc-integration-20260913/formal-aperture-night.png)均已逐张打开查看；清除临时审图辅助并刷新后，控制台 **0 errors / 0 warnings**。
+
+**仍未达到测绘 1:1 或电影级。** 100F 玻璃步道仍使用不透明运行材质，连续桥底也阻挡向下视线；下一步需对照业主三条玻璃地板资料核定透视构造。97F 室内、栏杆、扶梯和夜间灯具未补齐，夜景窗光重复，裙楼仍简化。东北—西南方向有文献依据，但精确约 38.19° 方位、梁径、分格、冠部设备及光学参数仍属估算。约 400 MB 城市还需分区与细节分级；本轮未改布局，未重跑手机性能验收。
+
+Python 语法、LF、源指纹、脚本哈希、清单一致性及 `git diff --check` 已通过。本轮仅本地保存、导出及提交脚本、清单、文档；LFS 配置、重资产上传和 push 仍暂缓。未修改 TypeScript，不跑 typecheck、测试全集或 Next build。下文为历史快照，旧源指纹和资产哈希不代表当前版本。
+
 ## 2026-09-12 Y 中庭铺地、排水与绿篱两轮细化
 
 用户恢复继续优化后，从现有规范工程增量编辑，对照 Fangfang Tian 的竣工照片细化 Y 公共中庭；照片来源、发表日期及尺寸估算见[庭院档案](../design/space/references/alibaba-xuhui.md#庭院铺地与种植池增量)。
