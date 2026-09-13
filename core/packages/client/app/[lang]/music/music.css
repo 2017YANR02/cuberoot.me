@@ -7,6 +7,9 @@
   font-family: var(--font-sans);
 }
 
+/* Let the document-level landscape selected in Appearance show through. */
+body[data-site-scenery] .music-page { background: transparent; }
+
 .music-header {
   max-width: 1540px;
   min-height: 44px;
