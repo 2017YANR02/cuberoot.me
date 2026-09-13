@@ -1,5 +1,33 @@
 [
   {
+    "name": "上海徐汇: 西岸艺岛 Art Tower",
+    "space": true,
+    "url": "https://m.thepaper.cn/baijiahao_9917546",
+    "zh": "上海徐汇于 2020-11-09 发布的西岸艺岛实拍，位于龙耀路 8 号。用于 X 区七栋彼此倾斜的子楼、转折轮廓、绕角水平金属线条和入口场地参考。单栋层数、倾角和构件尺寸仍为照片估算；照片未用作运行贴图。查阅于 2026-09-12",
+    "en": "Shanghai Xuhui's built photographs of Art Tower at 8 Longyao Road, published 2020-11-09. References X's seven differently leaning wings, folded silhouettes, continuous horizontal metal fins and entrance site. Storeys, lean angles and component dimensions remain photo estimates; photographs are not runtime textures. Accessed 2026-09-12"
+  },
+  {
+    "name": "SOM: Alibaba Shanghai Campus design",
+    "space": true,
+    "url": "https://www.som.com/news/som-designs-dynamic-user-controlled-headquarters-for-alibabas-shanghai-campus/",
+    "zh": "SOM 于 2022-07-25 发布的阿里巴巴上海园区设计，参考 Z 区错层悬挑、玻璃幕墙、露台、开放中庭、连桥和屋顶花园。这是设计效果图依据，未核实为当前竣工状态，也非官方 BIM；模型尺寸及细节有估算。查阅于 2026-09-12",
+    "en": "SOM's Shanghai campus design published 2022-07-25. References Z's staggered cantilevers, glass facades, terraces, open court, bridges and roof gardens. Based on design renderings, not verified present-day as-built conditions or official BIM; model dimensions and details are estimated. Accessed 2026-09-12"
+  },
+  {
+    "name": "SOM / gooood: Alibaba design images and section",
+    "space": true,
+    "url": "https://www.gooood.cn/som-designs-headquarters-for-alibabas-shanghai-campus.htm",
+    "zh": "2022-07-26 发布、SOM 提供的设计图与剖面，用于 Z 区俯拍轮廓、露台种植、屋顶光伏、悬挑木色底面及中庭 Alibaba 标识。图像仅作本地建模参考，未作为实景照片或运行贴图。查阅于 2026-09-12",
+    "en": "Design images and section supplied by SOM, published 2022-07-26. References Z's aerial massing, terrace planting, rooftop solar panels, timber-colored soffits and courtyard Alibaba lettering. Images are local modeling references, not built photographs or runtime textures. Accessed 2026-09-12"
+  },
+  {
+    "name": "上海市规划和自然资源局: 阿里巴巴上海徐汇项目",
+    "space": true,
+    "url": "https://ghzyj.sh.gov.cn/sj/20221008/f0f0cd851f8c4708835dac11d2dad17c.html",
+    "zh": "2022-08-30 的项目建设资料用于核对 Y 区四至和北侧 Z 区的独立地块关系。模型沿用 OSM 场景坐标定位，并只替换对应旧建筑轮廓；未将早期用地资料当作当前施工完成证明。查阅于 2026-09-12",
+    "en": "Project update dated 2022-08-30 establishes Y's street boundaries and the separate Z parcel to its north. Models retain OSM scene coordinates and replace only matched old footprints. The early planning record is not evidence of present-day construction completion. Accessed 2026-09-12"
+  },
+  {
     "name": "Foster + Partners: Alibaba Shanghai Campus / Fangfang Tian",
     "space": true,
     "url": "https://www.archdaily.com/1020980/alibaba-shanghai-campus-foster-plus-partners",
@@ -10,8 +38,8 @@
     "name": "Alizila: Inside Alibaba's New Shanghai Campus",
     "space": true,
     "url": "https://www.alizila.com/podcast/redefining-the-workplace-inside-alibabas-new-shanghai-campus/",
-    "zh": "阿里巴巴官方于 2024-12-11 发布的设计师访谈，用于核对模块化开间、屋顶与立面开口、室外协作空间；不作为测绘尺寸来源。徐汇园区 X、Y、Z 不同片区未混为同一模型。本轮精做 Foster + Partners 设计的 Y 区。查阅于 2026-09-12",
-    "en": "Alibaba's architect interview published 2024-12-11 references modular bays, roof and facade openings and outdoor collaboration spaces, without supplying survey dimensions. The X, Y and Z parcels are kept distinct; this modeling pass develops Foster + Partners' Y campus. Accessed 2026-09-12"
+    "zh": "阿里巴巴官方于 2024-12-11 发布的设计师访谈，用于核对 Y 区模块化开间、屋顶与立面开口、室外协作空间；不作为测绘尺寸来源。徐汇园区 X、Y、Z 不同片区分别建模。查阅于 2026-09-12",
+    "en": "Alibaba's architect interview published 2024-12-11 references Y's modular bays, roof and facade openings and outdoor collaboration spaces, without supplying survey dimensions. The X, Y and Z parcels are modeled separately. Accessed 2026-09-12"
   },
   {
     "name": "高层总部办公建筑生态共享空间设计研究",
