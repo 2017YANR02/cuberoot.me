@@ -1,5 +1,16 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 金茂幕墙横竖构件与连接件
+
+对照[幕墙承建方的细部实拍](https://www.permasteelisagroup.com/wp-content/uploads/2025/07/Jin-Mao-Tower-Shanghai3.jpg)，补成对竖肋、三道外挑横杆、金属层间板折边、连接板和螺栓，以及退台铝板分缝。[SOM 剖面和平面图的博物馆来源](https://old.skyscraper.org/EXHIBITIONS/CHINA_PROPHECY/jin_mao.php)用于辨认形态，当前 300 × 834 图像不能读取精确尺寸。两个来源均已写入网页来源数据的中英文说明；照片只作参考，未作为运行贴图。
+
+- 三轮候选：第一轮发现侧面竖肋截面未随立面转向，第二轮修正并补连接板、螺栓；第三轮保留螺栓可见正面，省去被遮挡背面和垫圈侧边。候选 GLB 从 137,689,424 降到 **94,196,632 字节**，减少 **31.6%**；四个固定日景视角的 0–255 通道平均绝对差均小于 0.032，见[像素比较](../.tmp/png/space-jinmao-body-20260913/round-03/pixel-comparison.json)。此结论限于这些视角与分辨率，不代表所有距离无差异，也不是网页性能证明。
+- 已逐张查看第三轮[整栋](../.tmp/png/space-jinmao-body-20260913/round-03/day-full.png)、[上部](../.tmp/png/space-jinmao-body-20260913/round-03/day-upper.png)、[幕墙近景](../.tmp/png/space-jinmao-body-20260913/round-03/day-facade.png)、[侧面近景](../.tmp/png/space-jinmao-body-20260913/round-03/day-side.png)，以及保存后的[近似夜景](../.tmp/png/space-jinmao-body-20260913/round-03/night-full.png)与[夜间幕墙](../.tmp/png/space-jinmao-body-20260913/round-03/night-facade.png)。夜间预览采用临时 Cycles 照明，不保存灯光，也不代表网页夜景。源文件未被预览改写，见[复查记录](../.tmp/png/space-jinmao-body-20260913/round-03/night-review.json)。后台低优先级、CPU 14 线程，未占用桌面。
+- 已保存修订 `jin-mao-body-20260913`：源工程 **231,709,123 字节**，原始指纹 `[231709123,1789327798509815400]`。[保存报告](../.tmp/png/space-jinmao-body-20260913/round-03/saved.json)确认只替换 48 个楼身网格，三个塔冠网格、其他城市几何、运行 ID、材质分配、变换及六灯组保持。保存前整城备份在同目录 `shanghai-before-jinmao-body.blend`；旧网格数据继续保留。一次性脚本拒绝重跑覆盖。
+- 正常城市导出为 **488,003,840 字节**，比上一版本增加 **84,161,812 字节**；12,019 objects、6 灯组、原 16 张共享纹理。SHA-256 为 `10f31ed80e5ee5d21a89c6098c64b631a8b0c06a75ac0d2b5f270f01651af6fb`。[正式导出核对](../.tmp/png/space-jinmao-body-20260913/formal-check.json)确认 51 个网格的顶点属性、索引、材质和局部变换与候选一致，世界变换误差低于 0.000001 m；安装的 Three.js 加载器在 Node 中解析全部 51 个网格；本地 HTTP 200、完整长度和 SHA-256 一致。Node 数值解析纳秒时间戳有舍入，精确整数以 Python 保存报告为准。
+
+**1:1 与电影级验收仍未通过。** 整栋复查仍见上部过宽、塔冠交接退台偏大，玻璃缺少真实环境反射，夜间塔冠偏亮。12 段宽度、4.04 m 统一层高、分格、构件尺寸和紧固件数量仍有估算，下一轮先校准整体收分与交接，再处理材质、配光、裙楼和内部空间。网页 WebGL 日夜画面本轮未复查；约 488 MB 整城资源仍需分区、LOD 和真实设备验证。脚本、来源、清单与文档仅本地提交，不 push；`.blend`、GLB 与纹理本地保存，Git LFS 配置和上传继续暂缓。
+
 ## 2026-09-13 金茂塔冠退台与翼片
 
 对照[幕墙承建方的塔冠实拍](https://www.permasteelisagroup.com/wp-content/uploads/2025/07/Jin-Mao-Tower-Shanghai2.jpg)和俯拍，重做密集退台、V 形金属面、两层翼片、包覆桅杆与圆形灯具外壳。来源和估算范围见[金茂参考档案](../design/space/references/jin-mao.md#2026-09-13-塔冠增量精修)，照片仅作对照，未作为网页贴图；网页来源区新增同一原图的中英文说明。

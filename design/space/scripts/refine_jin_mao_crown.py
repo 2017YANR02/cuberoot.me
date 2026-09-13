@@ -131,20 +131,20 @@ def crown_geometry():
     return dict(zip(PARTS,(glass,metal,dark),strict=True))
 
 
-def replace_geometry(targets):
-    parts = crown_geometry()
+def replace_geometry(targets, parts=None, revision=REVISION):
+    parts = crown_geometry() if parts is None else parts
     for key, obj in targets.items():
         part = parts[key]
         old = obj.data
-        data = bpy.data.meshes.new(REVISION+'/'+key)
+        data = bpy.data.meshes.new(revision+'/'+key)
         data.from_pydata(part.vertices,[],part.faces)
         if data.validate(verbose=True):
             raise RuntimeError('Invalid candidate geometry: '+key)
         data.update()
         if any(not math.isfinite(v) for vertex in data.vertices for v in vertex.co):
-            raise RuntimeError('Nonfinite crown vertex')
+            raise RuntimeError('Nonfinite candidate vertex')
         if any(poly.area < 1e-9 for poly in data.polygons):
-            raise RuntimeError('Zero-area crown face')
+            raise RuntimeError('Zero-area candidate face')
         uv = data.uv_layers.new(name='UVMap')
         for loop in data.loops:
             uv.data[loop.index].uv = part.uv[loop.vertex_index]
