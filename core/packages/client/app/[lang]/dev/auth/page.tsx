@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint":"97a5e6003dd9611f184bbf4ceac6d60c4f05703eed724139aaa52b7d03b07cd3","reason":"保留已复核的微信实时手机号授权、旧号确认及双身份原子绑定流程。核对上次复核后的 App.tsx 差异仅为打乱点击与设置项移除，系统浏览器、PKCE/state 回跳和会话保存均未改变；AuthTokenRefresher 的会话刷新不变，仅管理员工具栏交互调整。注销清单补登记 user_pets：0236 migration 与 schema 已通过 user_id ON DELETE CASCADE 删除私人领养与养成记录，本次不新增删除路径；补充对应双语注销说明。宠物合并规则及 Apple 撤销授权流程不变；文档复核不代表小程序上传、后台资质或真机验收完成。"}
+{"fingerprint":"5a0f3ed7e4bec17f17d4d1443ea4ee4dcfe933a6b47f84b7209eafb8bd6bdea5","reason":"复核本次页面权限请求传输调整：Vercel 生产环境的全球 proxy 经固定 iad1 区域入口转发 home-locks 和 auth/me，自有服务器、开发和预览仍直连原 API。锁状态每次实时读取，角色仍由原 auth/me 验证；匿名、过期、普通用户、管理员的回跳及拒绝分支不变，超时或无效锁状态仍返回 503。新增入口只允许两种固定 GET 查询，不接受目标 URL、不转发 Cookie，凭据只随 session 查询发送且所有响应 no-store，因此原登录、绑定、合并和注销流程图保持不变。已将入口和传输工具纳入源码漂移守卫；本次源码复核不代表上线或真机验收完成。"}
 */
 
 import type { ReactNode } from 'react';
