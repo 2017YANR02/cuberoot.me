@@ -218,6 +218,14 @@ ArcelorMittal 第 34 页俯照还显示，冠部最上方有沿长轴延伸的�
 5. 检查 100F 侧面玻璃带、桥底分格和上方冠部的厚度层次；不要用放大的金属条掩盖尺度问题。远景另查轮廓及分格摩尔纹。
 6. 当前顶部与 100F 室内已经保存并正式导出；后续从当前规范工程生成新候选，不重跑旧 `--apply`。网页室内反射已于 2026-09-13 接回，使用现有 [Three.js Reflector](https://threejs.org/docs/pages/Reflector.html) 与 Blender 原三角面；相对镜面使用原 PBR 材质回退，仍是一次反射近似。下一步核定玻璃带下的真实结构，再补两端电梯厅、97F 内部和有实拍依据的灯具；每次分别记录候选、保存、导出与实际网页检查结果。
 
+## 2026-09-13 深色楼面与反射
+
+本轮实际查看[绳手真人的 100F 夜间实拍](https://yakei.jp/abroad/shanghai/shanhai-hills-photo.html)及其[原图](https://yakei.jp/abroad/shanghai/photo/shanhai-hills07-1000.jpg)：可见深色反光楼面与银色金属顶棚的外观区别。拍摄日期未核定，照片仅作参考，不作为网页纹理。原工程两者共用金属材质，现分离原地面网格并保留全部坐标、UV 和玻璃带开孔。
+
+地面采用估算 sRGB `(0.055, 0.061, 0.065)`、metalness `0`、roughness `0.10`，照片不能证明具体石种、镀层或这些光学值。网页沿用 [Three.js 金属度/粗糙度材质约定](https://threejs.org/docs/pages/MeshStandardMaterial.html)，对平面反射增加 Schlick Fresnel 近似；正视非金属反射率暂用 `0.04`。这不是测量值、完整漫反射照明或递归光线追踪。
+
+日夜候选和正式网页均已复查，证据在 `.tmp/png/space-swfc-optics-20260913/`。玻璃下方亮条和夜间柱面暗部仍未解决，不能据本轮认定材质已经 1:1。下一轮优先取得下方结构与端部的更多实拍，再校准构件尺寸和照明。
+
 ## 本地证据索引
 
 本轮复用 `.tmp/png/space-lujiazui-audit-20260910/` 已有参考；工作笔记为其中的 `swfc-top-geometry-research.md`。本轮实际打开的文件为：

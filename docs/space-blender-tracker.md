@@ -1,5 +1,17 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 100F 深色楼面与视角反射
+
+对照绳手真人的夜间实拍，原工程的地面与银色顶棚共用金属材质，网页镜面也未区分金属与非金属。现将原网格中的地面分离成独立深色抛光材质，网页根据金属度和观察角度计算反射：正视时减弱，掠射时增强。照片只支持外观区别，不能确定地面材质成分或光学参数，详见[参考档案](../design/space/references/swfc-top.md#2026-09-13-深色楼面与反射)。本轮未改全局曝光或灯强，仍复用七个平面反射与两个环境采样目标。
+
+- 候选已查看夜间长廊、斜视、俯视与白天四图。正式导出后再查看[长廊](../.tmp/png/space-swfc-optics-20260913/formal-long.png)、[斜视](../.tmp/png/space-swfc-optics-20260913/formal-oblique.png)、[地面](../.tmp/png/space-swfc-optics-20260913/formal-floor.png)、[白天](../.tmp/png/space-swfc-optics-20260913/formal-day.png)、[反向](../.tmp/png/space-swfc-optics-20260913/formal-reverse.png)和[窄屏](../.tmp/png/space-swfc-optics-20260913/formal-narrow.png)。正式检查只设置测试相机，没有注入候选模型或材质。
+- 保存修订 `swfc-floor-finish-20260913`，源工程 **201,034,285 字节**、指纹 `[201034285,1789319957210172800]`。[保存报告](../.tmp/png/space-swfc-optics-20260913/floor-a/saved.json)确认地面 206 面、保留饰面 800 面，分离前后各面的坐标、UV 和绕序完全一致；其他模型、材质分配、运行身份及六组灯保持。既有玻璃带、无遮挡、通道、净高和端部检查通过。原网格数据保留，保存前另有 `floor-a/shanghai-before-floor-finish.blend` 备份；脚本为一次性迁移，后续不要重跑 `--apply`。
+- 正常 `batch.ps1 -Asset shanghai` 导出 **401,237,408 字节**，比上一版增加 **1,908 字节**；12,019 objects、6 灯组、15 张共享纹理。SHA-256 为 `27261e86d5c8bfc4acf6a2ac232f0fb7605b6533acaa504bc1ee15ccd63553d9`。[HTTP 实际下载检查](../.tmp/png/space-swfc-optics-20260913/formal-http.json)确认状态 200、响应体长度和完整哈希一致；不依赖开发服务器未提供的 Content-Length 头。
+- [桌面记录](../.tmp/png/space-swfc-optics-20260913/formal-runtime.json)确认七种室内材质绑定、日夜切换、离开时还原、重入时恢复及共享外墙隔离，七个平面目标为 768、两个 cube 目标为 128；21:00 六灯均为 120 cd，12:00 均为零。[390 × 844 新建页面记录](../.tmp/png/space-swfc-optics-20260913/narrow-runtime.json)确认七个平面目标为 384、两个 cube 目标为 64，无横向溢出；不是缩窄旧桌面画布，也不代表真实手机性能验收。桌面各方向和窄屏 GPU 错误均为 0，控制台均无错误、警告或页面异常。
+- client typecheck 通过；定向 `space_planar_reflections.test.ts`、`space_shanghai.test.ts` 共 **59 项通过**。新增回归覆盖独立薄地面的内侧选择、变换、玻璃开孔和原几何/UV 保留，并将地面纳入采样失败、离开、销毁时的材质还原检查。未重复测试全集或 Next build。
+
+**1:1 与电影级验收仍未通过。** 地面与顶棚的材质区别已改善，但玻璃下方现有构件仍形成过亮条带，夜间宽柱面仍有大块暗部，镜顶波纹需校准；不能通过压暗共享外墙材质来掩盖这些问题。当前镜面为 Fresnel 与有限环境采样近似，不是完整间接光照或递归光线追踪，地面镜面覆盖层也未包含完整的漫反射照明。另一端、电梯厅、97F 层间结构、裙楼、整城分区与 LOD 继续待办。代码、脚本、清单及文档仅本地提交，不 push；重资产本地保存，Git LFS 配置及上传继续暂缓。
+
 ## 2026-09-13 100F 门框扶手的室内反射
 
 同角度网页对照确认，扶手、灯具收边、端部门框与面板仍使用室外环境，夜里接近纯黑。现将这四种独立室内材质加入既有反射采样，与镜顶、柱饰共同使用厅内环境；共享外墙金属仍使用室外环境。对比[修改前](../.tmp/png/space-swfc-reflection-20260913/before-end-night.png)与[修改后](../.tmp/png/space-swfc-reflection-20260913/after-end-night.png)，门框、扶手已有金属高光和明暗层次。未提高全局曝光或灯强，未增加反射目标或采样次数。
