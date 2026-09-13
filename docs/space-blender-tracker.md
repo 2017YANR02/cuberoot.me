@@ -1,5 +1,17 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 100F 端部与疏散灯具
+
+对照 Carsten Ullrich 的 2008-09-11 观光厅实拍，补出环球金融中心 100F 一端的门洞、浅色面板、深色嵌板和金属收边；结合 Gerhard Huber 的 2012 年夜景补低位绿色疏散灯。第一轮图形太方、嵌板缺细框；第二轮改圆头与倾斜肢体，并补细分格。两轮均实际查看网页候选，第二轮保存到正式工程。来源、日期、许可及估算边界见[参考档案](../design/space/references/swfc-top.md#2026-09-13-端部与疏散灯具)，照片未作为运行贴图。
+
+- 新增五个网格，环球共 23 个导出子网格；模型有 10 个低位、1 个门上、1 个悬吊灯具，数量和间距不是现场测绘结论。仅建立一处有照片依据的端部立面，未复制到另一端或猜造后方电梯厅。门洞估算净宽 1.9 m、净高 2.32 m，端部方位仍待确认；疏散图形是简化绘制，未补读不清的文字、方向箭头或广告。
+- 保存修订 `swfc-hall-ends-20260913`，源工程 **201,007,629 字节**、指纹 `[201007629,1789315866833380700]`。[保存报告](../.tmp/png/space-swfc-ends-20260913/candidate-b/saved.json)确认源指纹、全部 Python 依赖和候选哈希一致，原模型几何、材质分配、变换、运行身份和六组灯保持。15 条门洞射线、4 处端板检查以及既有 15 条通道射线、15 处玻璃楼面与下方无遮挡、净高检查通过；保存前备份为同目录 `shanghai-before-hall-ends.blend`。
+- 正常 `batch.ps1 -Asset shanghai` 导出完成：GLB **401,235,500 字节**，增加 **334,520 字节**；12,018 objects、6 灯组、15 张共享纹理。SHA-256 为 `cc8f95f1fe4c805e79e69e34bbbc848ae8c63765e4442f4fc61acb5e8a1ebd77`。[正式运行记录](../.tmp/png/space-swfc-ends-20260913/formal-runtime.json)确认网页请求新哈希、HTTP 200、响应体长度一致，五个新网格和发光材质已加载，未注入候选模型。
+- 正式资源的[端部日景](../.tmp/png/space-swfc-ends-20260913/formal-end-day.png)、[端部夜景](../.tmp/png/space-swfc-ends-20260913/formal-end-night.png)、[反向夜景](../.tmp/png/space-swfc-ends-20260913/formal-reverse-night.png)、[标识近景](../.tmp/png/space-swfc-ends-20260913/formal-sign-day.png)和[窄屏](../.tmp/png/space-swfc-ends-20260913/formal-narrow.png)均已逐张查看。390 × 844 下无横向溢出，GPU 错误为 0，见[窄屏记录](../.tmp/png/space-swfc-ends-20260913/narrow-runtime.json)；未做真实手机性能验收。
+- [整城检查](../.tmp/png/space-swfc-ends-20260913/city-contract.json)为 `ok=true`、`errors=[]`，运行时合批后 689 meshes；[控制台](../.tmp/png/space-swfc-ends-20260913/formal-console.log)为 0 errors / 0 warnings。新增 Ullrich 来源及更新的 Huber 说明均提供中英文，并已在网页实际确认[来源入口](../.tmp/png/space-swfc-ends-20260913/formal-source.png)。本轮没有 TypeScript 逻辑改动，不重复 typecheck、测试全集或 Next build。
+
+**1:1 与电影级验收仍未通过。** 白天端部和标识已可辨认，但夜间柱面、金属收边及端板仍偏暗，镜面波纹也仍需校准；另一端、后方电梯厅、97F 层间结构和裙楼待补资料。约 401 MB 整城资产的分区、LOD 及真实设备性能仍待处理。本轮脚本、清单、来源与文档仅本地提交，不 push；`.blend`、GLB 与纹理本地保留，Git LFS 配置和上传继续暂缓。
+
 ## 2026-09-13 100F 间接倒影与灯光更新
 
 继续对照[绳手真人的观光厅夜间实拍](https://yakei.jp/abroad/shanghai/shanhai-hills-photo.html)，处理镜顶和宽柱饰的暗倒影。浏览器对照确认，原环境采样发生在共享灯池渐亮之前，之后一直缓存该暗环境。现等待当前灯光过渡完成再采样，并复用 [Three.js CubeCamera](https://threejs.org/docs/pages/CubeCamera.html) 做两次独立采样：第二次读取第一次完成的环境，避免读写同一纹理。照片与 Three.js 已有网页来源记录，未将参考照片作为运行贴图。
