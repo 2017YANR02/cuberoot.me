@@ -857,8 +857,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'SiteGlass',
     import: "import SiteGlass from '@/components/SiteGlass';",
     category: 'more',
-    zh: '全站表面共用的光学入口，文字保持清晰，按浏览器能力降级。',
-    en: 'Shared optical engine for site surfaces, with clear content and browser-appropriate fallbacks.',
+    zh: '全站表面共用的光学入口；已有元素用 data-site-surface="panel|popover|heading" 接入统一材质，保留主题和无障碍回退。',
+    en: 'Shared optical engine; existing elements declare data-site-surface="panel|popover|heading" to reuse theme-aware materials and accessibility fallbacks.',
   },
   {
     name: 'CompetitionVideoRoom',

@@ -180,6 +180,8 @@ pnpm --filter @cuberoot/client lint
 
 写任何 CSS 色值前调 `theme-tokens` skill(token 表 + dark-locked 页清单 + color-mix 规则);禁 `#888 #aaa` 等硬码灰阶。
 
+透明背景材质只在 `glass-material.css` 定义，旧样式由 `site-surfaces.css` 适配；新表面复用 `data-site-surface="panel|popover|heading"`，禁页面另造透明度/blur，保留状态色和无障碍回退，详 `theme-tokens` skill。
+
 ## i18n(繁体已移除)
 
 - 全站只 en + zh-Hans。守卫:hook `block-handwritten-trad` + CI `i18n-removal-guard`(含 en/zh key 对齐)。

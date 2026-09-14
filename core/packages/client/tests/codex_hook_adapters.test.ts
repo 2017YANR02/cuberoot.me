@@ -38,6 +38,15 @@ function runAdapter(adapter: string, target: string | string[], payload: object)
 }
 
 describe('Codex hook payload adapters', () => {
+  it('denies duplicate scenery material through the shared write adapter', () => {
+    const patch = '*** Begin Patch\n*** Add File: core/packages/client/app/[lang]/probe/material.css\n+body[data-site-scenery] .menu { background: var(--popover); }\n*** End Patch';
+    const result = runAdapter(WRITE_ADAPTER, join(CORE_ROOT, 'packages/client/scripts/hook-detect-site-material.mjs'), {
+      tool_name: 'apply_patch', tool_input: { command: patch },
+    });
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout).hookSpecificOutput.permissionDecision).toBe('deny');
+  });
+
   it('registers only cross-platform Node hooks', () => {
     const config = JSON.parse(readFileSync(HOOK_CONFIG, 'utf8')) as {
       hooks: Record<string, Array<{ hooks: Array<{ command: string; commandWindows: string }> }>>;

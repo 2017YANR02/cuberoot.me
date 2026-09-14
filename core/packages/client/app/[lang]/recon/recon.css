@@ -167,9 +167,7 @@
 
 /* --- 表格 --- */
 .recon-table-wrap {
-  /* NOTE: 不设 overflow——会困住 thead 的 position: sticky；过宽时由页面横滚 */
-  /* inline-block 让 wrap 收缩到 table 实际宽度,边框严丝合缝包住 table。
-     不用 block(默认 100% 父宽,table 比父窄时右边出空白 / table 比父宽时被切) */
+  /* 收缩到表格宽度；窄屏横滚和吸顶由 sticky-table.css 统一管理。 */
   display: inline-block;
   margin-bottom: 1rem;
   border-radius: 10px;
@@ -212,11 +210,7 @@
 }
 
 .recon-table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: color-mix(in srgb, var(--background) 98%, transparent);
-  backdrop-filter: blur(8px);
+  background: var(--background);
   color: var(--muted-foreground);
   font-weight: 600;
   padding: 10px 6px;

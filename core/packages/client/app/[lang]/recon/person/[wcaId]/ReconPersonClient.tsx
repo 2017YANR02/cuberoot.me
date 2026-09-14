@@ -246,8 +246,8 @@ export default function ReconPersonClient() {
             })}</div>
             </div>
           ) : (
-            <div className="recon-table-wrap">
-              <table className="recon-table">
+            <div className="recon-table-wrap sticky-scroll-mobile">
+              <table className="recon-table sticky-thead">
                 <thead>
                   <tr>
                     <th className="col-event">{tr({ zh: '项目', en: 'Event'

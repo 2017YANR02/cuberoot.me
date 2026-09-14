@@ -76,7 +76,7 @@ const boxStyle: CSSProperties = {
   position: 'fixed', transform: 'translateX(-50%)', zIndex: 200,
   width: `min(${BASE_W}px, calc(100vw - ${2 * MARGIN}px))`,
   padding: 6, display: 'flex', flexDirection: 'column', gap: 2,
-  background: 'var(--popover)', border: '1px solid var(--border-default)', borderRadius: 12,
+  border: '1px solid var(--border-default)', borderRadius: 12,
   boxShadow: '0 12px 32px rgba(0, 0, 0, 0.34)', textAlign: 'left', whiteSpace: 'normal', cursor: 'default',
   maxHeight: 'calc(100vh - 16px)', overflowY: 'auto',
 };
@@ -85,7 +85,6 @@ const closeBarStyle: CSSProperties = {
   position: 'sticky', top: 0, zIndex: 3,
   display: 'flex', justifyContent: 'flex-end',
   margin: '-6px -6px 0', padding: '2px 2px 0',
-  background: 'var(--popover)',
 };
 const closeBtnStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -381,8 +380,8 @@ function AttemptPopoverBody({
   return createPortal(
     <>
       <div style={backdropStyle} onClick={onClose} />
-      <div ref={popRef} style={{ ...boxStyle, top: pos.top, left: pos.left }} role="dialog" onClick={(e) => e.stopPropagation()}>
-        <div style={closeBarStyle}>
+      <div ref={popRef} data-site-surface="popover" style={{ ...boxStyle, top: pos.top, left: pos.left }} role="dialog" onClick={(e) => e.stopPropagation()}>
+        <div data-site-surface="heading" style={closeBarStyle}>
           <button type="button" style={closeBtnStyle} onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close' })}>
             <X size={16} />
           </button>
