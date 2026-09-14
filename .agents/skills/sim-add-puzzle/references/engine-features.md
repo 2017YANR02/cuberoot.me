@@ -27,3 +27,6 @@
 
 - mask 直映(有 canonical id 空间的拼图):贴纸再挂 `userData.stickerKey`(建构标识如 `edge1-2:3`,复原帧、跟块走)→ `tests/_engine_mask_derive.ts` 加共轭派生(引擎置换从场景几何读:层内晶格质心绕轴转、落槽匹配)→ 重生成 `lib/puzzle-image/data/engine-sid-map.json` + `engine-mask.test.ts` 锁表 → SimPage 自动把遮罩烙进伴图镜像。已通:pyra/skewb/mega;NxN 要 posit/instance 身份考证,sq1 缺 id 空间。
 
+
+- 人物服饰与头发在 `hands/bodyAppearance.ts` 共用 SMPL-X 骨架并沿边界裁切；头像接 `SimSettings.bodyAvatar*` 与 World 的可选手部能力，保留本地保存、正脸预览、位置/缩放对齐及异步纹理替换释放。
+- 修改指法解析或编排前先读仓库 `docs/fingertrick-notation.md`，保留富文本/纯文本两种表示并区分语义、解析与动画支持；禁止把所有下划线当作推法或把历史双箭头按模拟器空白规则直接转换。

@@ -34,6 +34,7 @@ html[data-contrast='soft'] .site-scenery img {
 .appearance-menu:has(.site-background-control) {
   position: fixed;
   top: calc(76px + var(--sat));
+  bottom: auto;
   right: max(8px, calc((100vw - 1100px) / 2));
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
@@ -158,6 +159,12 @@ html[data-contrast='soft'] .site-scenery img {
 
 /* A document stacking context keeps the negative scenery above the html canvas.
    Isolation leaves fixed and sticky positioning intact. */
-body[data-site-scenery] { isolation: isolate; background: transparent; }
+body[data-site-scenery] {
+  isolation: isolate;
+  background: transparent;
+  /* Secondary labels remain readable over every scene in either color scheme. */
+  --muted-foreground: color-mix(in srgb, var(--foreground) 72%, var(--background));
+  --faint-foreground: color-mix(in srgb, var(--foreground) 65%, var(--background));
+}
 .site-glass-engine { position: fixed; width: 1px; height: 1px; overflow: hidden; pointer-events: none; clip-path: inset(100%); }
 @media print { .site-scenery, .site-glass-engine { display: none; } }

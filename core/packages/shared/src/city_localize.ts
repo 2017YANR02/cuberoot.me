@@ -63,9 +63,12 @@ const CITY_ZH: Record<string, string> = {
   'Filadelfia': '菲拉德尔菲亚',
   'Frenaros': '弗雷纳罗斯',
   'Manzini': '曼齐尼',
+  'Nuntorp': '农托普',
   'Saint-Quentin-Fallavier': '圣康坦-法拉维耶',
   'Sömmerda': '瑟默达',
+  'Tauragė': '陶拉盖',
   'Valdivia': '瓦尔迪维亚',
+  'Valladolid': '巴利亚多利德',
 };
 
 const GREATER_CN = new Set(['CN', 'HK', 'MO', 'TW']);

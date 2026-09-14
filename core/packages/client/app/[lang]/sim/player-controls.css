@@ -225,7 +225,8 @@
 }
 /* 只命中工具行的直接子按钮(逆 / 清空 / 复制链接 / 镜像);消步的 PillToggle 是
    .sim-toggle 的孙级,用 `>` 排除掉,否则方框/边框会把圆滑钮压扁。 */
-.sim-player-tools > button {
+.sim-player-tools > button,
+.sim-person-avatar > button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -238,7 +239,8 @@
   font-size: 14px;
   cursor: pointer;
 }
-.sim-player-tools > button:hover {
+.sim-player-tools > button:hover,
+.sim-person-avatar > button:hover:not(:disabled) {
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 .sim-player-tools > button.sim-link-copied,
@@ -1275,3 +1277,18 @@
     background: var(--glass-popover-bg);
   }
 }
+
+.sim-person-avatar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 12px;
+}
+.sim-person-avatar img { border-radius: 50%; object-fit: cover; }
+.sim-person-avatar small { flex-basis: 100%; color: var(--muted-foreground); }
+.sim-person-avatar [role='alert'] { color: var(--destructive); }
+
+.sim-person-avatar > button:disabled { opacity: 0.5; cursor: wait; }
+.sim-person-avatar-adjust { display: flex; flex-wrap: wrap; gap: 12px; flex-basis: 100%; }
+.sim-person-avatar-adjust > .sim-slider { flex: 1 1 120px; min-width: 0; }

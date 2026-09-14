@@ -447,6 +447,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
     if (active && this.hands == null && this.handsFactory) {
       this.hands = this.handsFactory();
       this.hands.setFullBody(this.handsFullBodyWanted); // rig 晚于设置到位的回放
+      this.hands.setAvatar?.(this.handsAvatar, ...this.handsAvatarPlacement);
       this.scene.add(this.hands);
     }
     if (this.hands) {
@@ -459,6 +460,16 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
   /** 设置「全身人物」(SimSettings.fullBody 驱动):手 rig 的 SMPL-X 全身随手
    *  出场。意愿常存,rig 晚建时 syncHands 回放;far 包络随之放宽(人体纵深
    *  远超手,见 resize)。 */
+  private handsAvatar = '';
+  private handsAvatarPlacement: [number, number, number] = [0, 0, 1];
+  setHandsAvatar(src: string, x = 0, y = 0, scale = 1): void {
+    if (this.handsAvatar === src && this.handsAvatarPlacement[0] === x && this.handsAvatarPlacement[1] === y && this.handsAvatarPlacement[2] === scale) return;
+    this.handsAvatar = src;
+    this.handsAvatarPlacement = [x, y, scale];
+    this.hands?.setAvatar?.(src, x, y, scale);
+    this.dirty = true;
+  }
+
   private handsFullBodyWanted = false;
   setHandsFullBody(want: boolean): void {
     if (this.handsFullBodyWanted === want) return;

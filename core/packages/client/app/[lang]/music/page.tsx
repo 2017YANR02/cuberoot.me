@@ -274,16 +274,17 @@ export default function MusicPage() {
       : tr({ zh: '单曲循环', en: 'Repeat one' });
 
   const downloadCurrent = async () => {
-    if (!current?.databaseId || downloading) return;
+    if (!current || !isMember || downloading) return;
     setDownloading(true);
     setActionMessage(null);
     setActionError(null);
     try {
-      const blob = await fetchMusicTrackDownload(current.databaseId);
+      const blob = await fetchMusicTrackDownload(current.databaseId || current.id, current.databaseId ? 'uploaded' : 'static');
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
-      anchor.download = current.downloadFilename || current.title;
+      const extension = /\.(mp3|m4a|flac|wav)(?:[?#]|$)/i.exec(current.src)?.[1];
+      anchor.download = current.downloadFilename || `${current.title}${extension ? `.${extension}` : ''}`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
@@ -437,7 +438,7 @@ export default function MusicPage() {
             <p>{current ? (current.artist || tr({ zh: '未知艺术家', en: 'Unknown artist' })) : tr({ zh: '你的 CubeRoot 曲库', en: 'Your CubeRoot library' })}</p>
           </div>
 
-          {current?.databaseId && (
+          {current && (
             <details className="music-current-more"><summary aria-label={tr({ zh: '歌曲选项', en: 'Track options' })}><MoreHorizontal size={22} /></summary>
             <div className="music-current-actions">
               {isMember && (
@@ -451,7 +452,7 @@ export default function MusicPage() {
                   {tr({ zh: '开通会员后下载', en: 'Join to download' })}<span aria-hidden="true">→</span>
                 </AppLink>
               )}
-              {isAdmin && (
+              {isAdmin && current.databaseId && (
                 <>
                   <AppLink href={`/music/manage?track=${encodeURIComponent(current.databaseId)}`} prefetch={false} className="music-text-button">
                     <Pencil aria-hidden="true" />{tr({ zh: '编辑', en: 'Edit' })}

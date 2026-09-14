@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint":"97a5e6003dd9611f184bbf4ceac6d60c4f05703eed724139aaa52b7d03b07cd3","reason":"保留已复核的微信实时手机号授权、旧号确认及双身份原子绑定流程。核对上次复核后的 App.tsx 差异仅为打乱点击与设置项移除，系统浏览器、PKCE/state 回跳和会话保存均未改变；AuthTokenRefresher 的会话刷新不变，仅管理员工具栏交互调整。注销清单补登记 user_pets：0236 migration 与 schema 已通过 user_id ON DELETE CASCADE 删除私人领养与养成记录，本次不新增删除路径；补充对应双语注销说明。宠物合并规则及 Apple 撤销授权流程不变；文档复核不代表小程序上传、后台资质或真机验收完成。"}
+{"fingerprint":"42769168a92c06b50af891ecf74079cf9b8186072ced7a8fd58a0dc5210b4b3c","reason":"按用户要求移除所有首页卡片对应页面的服务端入口校验，同时移除赛前训练的 proxy 与客户端管理员限制；普通页面和训练不再读取锁状态或验证角色，游客使用既有本地训练存储。旧 page-access 回跳入口只校验站内安全目标并打开页面，不再要求管理员登录。已增加中英文公开浏览与账号操作流程，复核登录、注册、第三方绑定、会话保存、合并和注销均不变，后台操作和 API 授权保持原有契约；首页锁仅控制入口展示。此指纹确认源码复核，不代表部署或真机验收。"}
 */
 
 import type { ReactNode } from 'react';
@@ -55,6 +55,16 @@ export default function AuthFlowPage() {
         <p>{t('抖音小程序：已绑定身份直接登录；未知身份先选择绑定旧号或明确创建。绑定旧号时，先在网站原账号的登录方式页生成短期「绑定码」，回小程序输入并核对目标账号，再确认绑定。绑定码不是合并码，不会搬迁两个账号的数据。此增量须部署并发布新版小程序后才生效。', 'Douyin Mini Program: linked identities sign in directly; unknown identities choose existing-account linking or explicit creation. Generate a short-lived link code in the existing website account’s sign-in settings, enter it in the Mini Program, check the target account, and confirm. A link code is not a merge code and does not migrate two accounts. This change requires deployment and a new Mini Program release.')}</p>
       </details>
     </section>
+
+    <aside className="auth-map-boundaries">
+      <h2>{t('公开页面与账号操作', 'Public pages and account actions')}</h2>
+      <Steps items={[
+        t('打开页面 → 直接显示内容，不查询首页卡片锁状态或管理员角色', 'Open a page → show its content without checking homepage card locks or administrator roles'),
+        t('赛前训练 → 游客也可使用，训练记录保存在当前浏览器', 'Competition Practice → guests can train, with practice records saved in this browser'),
+        t('需要账号或管理权限的操作 → 由对应功能与服务端接口校验', 'Actions requiring an account or administrator access → checked by the feature and its server API'),
+      ]} />
+      <p>{t('首页隐藏卡片只影响入口展示，不限制直接访问网址。', 'Hiding a homepage card affects its visibility, not direct URL access.')}</p>
+    </aside>
 
     <section id="signin" className="auth-map-section" aria-labelledby="signin-title">
       <div className="auth-map-section-heading"><h2 id="signin-title">{t('登录与注册：网站和 App 共用', 'Sign-in and registration: shared by website and App')}</h2><span className="auth-map-status auth-map-implemented">{t('源码已实现 · 可用入口以服务端配置为准', 'Implemented in source · availability depends on server configuration')}</span></div>

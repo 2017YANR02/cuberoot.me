@@ -972,6 +972,16 @@ export default class HandsRig extends THREE.Group {
    *  同一块皮,手区逐骨同步活手,见 smplxBody.ts)。 */
   private body: SmplxBody | null = null;
   private bodyWanted = false;
+  private avatarSrc = "";
+  private avatarPlacement: [number, number, number] = [0, 0, 1];
+  setAvatar(src: string, x = 0, y = 0, scale = 1): void {
+    this.avatarSrc = src;
+    this.avatarPlacement = [x, y, scale];
+    this.body?.setAvatar(src, x, y, scale);
+  }
+  getHeadView(position: THREE.Vector3, direction: THREE.Vector3): boolean {
+    return this.body?.getHeadView(position, direction) ?? false;
+  }
   private bodyLoading = false;
 
   private enabled = false;
@@ -1190,6 +1200,7 @@ export default class HandsRig extends THREE.Group {
         body.visible = this.bodyWanted;
         this.add(body);
         this.body = body;
+        body.setAvatar(this.avatarSrc, ...this.avatarPlacement);
         this.bodyLoading = false;
         this.syncLiveSkin();                     // 傀儡接管手区,活手皮肤退场
         // 全身贴图异步烘焙(基肤 + 双手皱纹;烘完热替换,失败留平色可用)
