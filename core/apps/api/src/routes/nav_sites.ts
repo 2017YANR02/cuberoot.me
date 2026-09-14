@@ -12,7 +12,7 @@
  */
 import { Hono } from 'hono';
 import { isDeskPetCatalog, type DeskPetCatalog } from '@cuberoot/shared/deskpet';
-import { SITE_DIRECTORY_GROUPS } from '@cuberoot/shared/site-directory';
+import { HOME_MEMBER_SECTION_IDS, SITE_DIRECTORY_GROUPS } from '@cuberoot/shared/site-directory';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query, withTransaction } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
@@ -161,7 +161,7 @@ navSitesRoutes.put('/nav/home-locks', async (c) => {
   checkRateLimit(getIp(c));
   await requireAdminOrApiKey(c);
   const body = await c.req.json().catch(() => null);
-  if (!body || typeof body.id !== 'string' || ![...HOME_CARD_GROUPS.values()].some((ids) => ids.includes(body.id))) {
+  if (!body || typeof body.id !== 'string' || ![...HOME_CARD_GROUPS.values(), Object.values(HOME_MEMBER_SECTION_IDS)].some((ids) => ids.includes(body.id))) {
     return c.json({ error: 'unknown homepage card' }, 400);
   }
   if (typeof body.locked !== 'boolean') return c.json({ error: 'locked must be boolean' }, 400);
