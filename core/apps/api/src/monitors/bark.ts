@@ -22,9 +22,11 @@ export interface BarkOpts {
 
 /** Bark 推送。门关 / 无 key 时静默吸收(返 true);真发失败返 false 让调用方下轮重试。 */
 export async function sendBark(o: BarkOpts): Promise<boolean> {
+  // Push links use the canonical language-neutral path, retaining deep-link parameters.
+  const url = o.url.replace(/^(https:\/\/cuberoot\.me)\/(?:zh|en)(?=\/|[?#]|$)/, '$1');
   if (!ENABLED || !KEY) {
     console.log('[monitor] DRY (push disabled) would push:', JSON.stringify({
-      title: o.title, body: o.body, url: o.url, group: o.group,
+      title: o.title, body: o.body, url, group: o.group,
     }));
     return true;
   }
@@ -39,7 +41,7 @@ export async function sendBark(o: BarkOpts): Promise<boolean> {
         device_key: KEY,
         title: o.title,
         body: o.body,
-        url: o.url,
+        url,
         group: o.group,
         level: o.level || 'timeSensitive',
         isArchive: '1',

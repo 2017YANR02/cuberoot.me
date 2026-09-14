@@ -1028,11 +1028,84 @@
 
   body[data-site-scenery] .pred-header,
   body[data-site-scenery] .pred-card,
-  body[data-site-scenery] .pred-overview-card {
+  body[data-site-scenery] .pred-overview-card,
+  body[data-site-scenery] .pred-chart {
     background: var(--glass-surface-bg);
     border-color: var(--glass-border);
     box-shadow: var(--glass-shadow);
     -webkit-backdrop-filter: var(--glass-filter);
     backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery] .pred-overview-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+
+  /* Nested content uses a tint without another backdrop filter. */
+  body[data-site-scenery] .pred-toc-btn,
+  body[data-site-scenery] .pred-lang,
+  body[data-site-scenery] .pred-tldr-block,
+  body[data-site-scenery] .pred-tlimit-table th,
+  body[data-site-scenery] .pred-fit-table th,
+  body[data-site-scenery] .pred-forecast th,
+  body[data-site-scenery] .pred-limits th,
+  body[data-site-scenery] .pred-section code,
+  body[data-site-scenery] .pred-event-title-id,
+  body[data-site-scenery] .pred-event-chapter-num,
+  body[data-site-scenery] .pred-333-chapter,
+  body[data-site-scenery] .pred-event-details[open] .pred-event-summary {
+    background: var(--glass-surface-bg);
+  }
+
+  body[data-site-scenery] .pred-tldr-block,
+  body[data-site-scenery] .pred-333-chapter,
+  body[data-site-scenery] .pred-event-details[open],
+  body[data-site-scenery] .pred-event-details[open] .pred-event-summary {
+    border-color: var(--glass-border);
+  }
+
+  body[data-site-scenery] .pred-toc-item:not(.is-active):not(.pred-toc-subpage):hover,
+  body[data-site-scenery] .pred-event-details .pred-event-summary:hover {
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  }
+
+  body[data-site-scenery] .pred-333-deepdive-cta,
+  body[data-site-scenery] .pred-333-inline-cta {
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery] .pred-333-deepdive-cta {
+    background: linear-gradient(135deg,
+      color-mix(in srgb, var(--accent) 12%, transparent), transparent), var(--glass-surface-bg);
+  }
+
+  body[data-site-scenery] .pred-333-inline-cta {
+    background: linear-gradient(135deg,
+      color-mix(in srgb, var(--accent) 14%, transparent),
+      color-mix(in srgb, var(--accent) 6%, transparent)), var(--glass-surface-bg);
+  }
+
+  body[data-site-scenery] .pred-lucky-cta {
+    background: linear-gradient(135deg,
+      color-mix(in srgb, var(--signal-success) 18%, transparent),
+      color-mix(in srgb, var(--signal-success) 4%, transparent)), var(--glass-surface-bg) !important;
+  }
+
+  body[data-site-scenery] .pred-tooltip {
+    background: var(--glass-popover-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+
+  @media (max-width: 920px) {
+    body[data-site-scenery] .pred-sidebar {
+      background: var(--glass-popover-bg);
+      border-color: var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      -webkit-backdrop-filter: var(--glass-filter);
+      backdrop-filter: var(--glass-filter);
+    }
   }
 }
