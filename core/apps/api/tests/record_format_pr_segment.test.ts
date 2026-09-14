@@ -35,6 +35,21 @@ const base = (over: Partial<RecordEvent>): RecordEvent => ({
 const ranks = (m: Record<string, number>): RankFn => (eid, rt, ar) => m[`${eid}|${rt}|${ar}`] ?? null;
 
 describe('reduceSegment PR branch', () => {
+  it.each([false, true])('FWR average precedes PR single regardless of input order (reversed=%s)', (reversed) => {
+    const person = {
+      event_id: '333', person_name: 'Yunzhi Lian (连允之)', person_iso2: 'CN',
+      comp_name: '武汉丹秋赛', comp_name_en: 'Wuhan Crimson Autumn 2026', comp_iso2: 'CN',
+    };
+    const events = [
+      base({ ...person, tag: 'PR', rec_type: 'single', attempt_result: 354, pr_rank: 1 }),
+      base({ ...person, tag: 'FWR', rec_type: 'average', attempt_result: 452 }),
+    ].map(enrich);
+    if (reversed) events.reverse();
+    const out = formatCombinedRecords(events, ranks({ '333|average|452': 10, '333|single|354': 17 }));
+    expect(out.cn).toBe('纪录快讯! 4.52三阶魔方平均女子世界纪录FWR/WR10 连允之🇨🇳| 3.54单次个人纪录PR/WR17 | 武汉丹秋赛🇨🇳');
+    expect(out.en).toBe('BREAKING NEWS! 4.52 3x3 FWR/WR10 Avg Yunzhi Lian🇨🇳| 3.54 PR/WR17 Single | Wuhan Crimson Autumn 2026🇨🇳');
+  });
+
   it('NAR average + non-breaking PR2 single — PR 段写成 PR2,不冒充 NAR', () => {
     const events = [
       base({ tag: 'PR', rec_type: 'single', attempt_result: 3174, pr_rank: 2 }),

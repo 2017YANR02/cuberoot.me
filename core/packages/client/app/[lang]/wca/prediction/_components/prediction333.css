@@ -375,11 +375,23 @@
 @media screen {
   body[data-site-scenery] .pred-recon-card,
   body[data-site-scenery] .pred-pll-card,
-  body[data-site-scenery] .pred-cuber-card {
+  body[data-site-scenery] .pred-cuber-card,
+  body[data-site-scenery] .pred-forecast-col,
+  body[data-site-scenery] .pred-333-pager-link {
     background: var(--glass-surface-bg);
     border-color: var(--glass-border);
     box-shadow: var(--glass-shadow);
     -webkit-backdrop-filter: var(--glass-filter);
     backdrop-filter: var(--glass-filter);
+  }
+
+  body[data-site-scenery] .pred-333-pager-link:hover {
+    border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  }
+
+  body[data-site-scenery] .pred-recon-hw,
+  body[data-site-scenery] .pred-recon-scramble code,
+  body[data-site-scenery] .pred-pll-alg {
+    background: var(--glass-surface-bg);
   }
 }

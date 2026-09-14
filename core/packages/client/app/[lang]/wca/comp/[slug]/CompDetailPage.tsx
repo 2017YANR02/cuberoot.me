@@ -15,6 +15,7 @@ import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
 import { SearchInput } from '@/components/SearchInput';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
+import { useCopy } from '@/hooks/useCopy';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryToIso2, loadFlagData, compFlagIso2 } from '@/lib/country-flags';
@@ -68,6 +69,7 @@ import { expandContinentRecord } from '@/lib/recon-utils';
 import '../comp.css';
 import { tr } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
+import { COMP_RECORD_NEWS } from './record-news';
 
 // 「打乱」tab:把 /scramble/gen 的比赛模式整套内嵌进来。重(WASM 求解器 + 打乱引擎),
 // 懒加载 —— 只有用户点开「打乱」才拉这部分 JS,不拖累比赛页首屏。
@@ -988,7 +990,9 @@ export default function CompDetailPage() {
     [data, fullLoaded, compYear, authoritativeDual, changeMap],
   );
   const compRecords = useMemo(() => (data && fullLoaded ? computeCompRecords(data) : []), [data, fullLoaded]);
-  const hasPodiumTab = podiumGroups.length > 0 || compRecords.length > 0;
+  const recordNews = COMP_RECORD_NEWS[slug] ?? [];
+  const newsCopy = useCopy();
+  const hasPodiumTab = podiumGroups.length > 0 || compRecords.length > 0 || recordNews.length > 0;
   // 全场结束 = 每个项目的决赛(末轮)都 s===1。比「末轮有成绩」严格:决赛进行中(s===2)不算结束。
   const compFinished = useMemo(() => {
     if (!data || data.events.length === 0) return false;
@@ -1836,7 +1840,7 @@ export default function CompDetailPage() {
               className={`comp-view-tab${isPodium ? ' is-active' : ''}`}
               onClick={() => onChangeView('podium')}
             >
-              {compRecords.length > 0
+              {compRecords.length > 0 || recordNews.length > 0
                 ? tr({ zh: '纪录和领奖台', en: 'Records & Podiums'
                 })
                 : tr({ zh: '领奖台', en: 'Podiums'
@@ -1956,6 +1960,44 @@ export default function CompDetailPage() {
           )
         ) : isPodium ? (
           <>
+            {recordNews.length > 0 && (
+              <section className="comp-record-news" aria-labelledby="comp-record-news-heading">
+                <div className="comp-record-news-heading">
+                  <h2 id="comp-record-news-heading" className="comp-pod-section-h">{tr({ zh: '纪录快讯', en: 'Record News' })}</h2>
+                  <button
+                    type="button"
+                    className="comp-modal-copy-btn"
+                    onClick={() => newsCopy.copy(recordNews.map(news => tr(news.message)).join('\n\n'), slug)}
+                    title={tr({ zh: '复制全部纪录快讯', en: 'Copy all record news' })}
+                    aria-label={tr({ zh: '复制全部纪录快讯', en: 'Copy all record news' })}
+                  >
+                    {newsCopy.copiedKey === slug ? <Check size={14} /> : <Copy size={14} />}
+                  </button>
+                </div>
+                <ul className="comp-record-news-list">
+                  {recordNews.map((news, index) => (
+                    <li key={index}>
+                      <Link
+                        className="comp-record-news-link"
+                        href={`/wca/comp/${slug}?view=result&event=${news.event}${news.round ? `&round=${news.round}` : ''}`}
+                        prefetch={false}
+                      >
+                        <EventIcon event={news.event} className="comp-podium-icon" />
+                        <span>
+                          {news.results.map((result, resultIndex) => (
+                            <span className="comp-record-news-result" key={resultIndex}>
+                              {tr(result.text)}{' '}
+                              <span className="comp-record-news-tag"><RecordBadge record={result.tag} />{result.plural && tr({ zh: '', en: 's' })}{result.rank && `/WR${result.rank}`}</span>
+                              {resultIndex === 0 && <> <span className="comp-record-news-person">{displayCuberName(news.person, isZh)}</span></>}
+                            </span>
+                          ))}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
             {compRecords.length > 0 && (
               <>
                 <h2 className="comp-pod-section-h">{tr({ zh: '纪录', en: 'Records'
@@ -1966,11 +2008,10 @@ export default function CompDetailPage() {
                   isZh={isZh}
                   onClickCuber={(n, eventId, roundId) => setModal({ kind: 'round', number: n, eventId, roundId })}
                 />
-                {podiumGroups.length > 0 && (
-                  <h2 className="comp-pod-section-h">{tr({ zh: '领奖台', en: 'Podiums'
-                })}</h2>
-                )}
               </>
+            )}
+            {(recordNews.length > 0 || compRecords.length > 0) && podiumGroups.length > 0 && (
+              <h2 className="comp-pod-section-h">{tr({ zh: '领奖台', en: 'Podiums' })}</h2>
             )}
             <PodiumView
               groups={podiumGroups}

@@ -27,20 +27,137 @@ body[data-site-scenery] :is(
   .alg-card,
   .chx-panel,
   .chx-chain,
+  .chx-tabs,
   .rs-scard,
   .recon-card,
+  .recon-player-backview,
   .rc-card,
   .vcs-card,
+  .pets-roster-option,
+  .deskpet-gallery-tile,
+  .pet-home,
+  .comp-recent-item,
+  .wca-stats-table-wrapper,
   .vc-arrow-builder,
   .vc-api-doc,
   .ns-dist-card,
-  .t10h-controls
-) {
+  .ns-stat-cell,
+  .t10h-controls,
+  .t10h-stage,
+  .t10h-metric-toggle,
+  .t10h-speed,
+  .sor-race-bar,
+  .wcaa-stat,
+  .wcaa-formula,
+  .wcaa-code,
+  .comp-gate-input,
+  .comp-gate-rules
+),
+body[data-site-scenery] .calendar-page :is(.toolbar, .calendar, .view-toggle, .mode-toggle),
+body[data-site-scenery] .deskpet-story .deskpet-story-art {
   background: var(--glass-surface-bg);
-  border-color: var(--glass-border);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
-  box-shadow: var(--glass-shadow);
+}
+
+/* Keep pet selection and hover accents on the shared glass. */
+body[data-site-scenery] .pets-roster-option[aria-pressed='true'] {
+  background: var(--accent-soft);
+}
+
+body[data-site-scenery] .pets-roster-option:is([aria-pressed='true'], :hover),
+body[data-site-scenery] .deskpet-gallery-tile:hover {
+  border-color: var(--accent);
+}
+
+/* Transparent artwork shares the tile's material without an opaque media mat. */
+body[data-site-scenery] .deskpet-gallery section .deskpet-gallery-media {
+  background: transparent;
+}
+
+body[data-site-scenery] .pet-home-scene {
+  background: radial-gradient(ellipse at 50% 48%, var(--accent-soft), transparent 72%);
+}
+
+body[data-site-scenery] .pet-home-care-action {
+  background: var(--glass-surface-bg);
+  border-color: var(--glass-border);
+}
+
+/* The calendar's glass shell supplies the day grid's material. */
+body[data-site-scenery] .calendar-page .day-cell {
+  background: transparent;
+}
+
+body[data-site-scenery] .calendar-page .weekday-header {
+  background: var(--glass-surface-bg);
+}
+
+/* Labels and toolbars share their surrounding panel's material. */
+body[data-site-scenery] .wp-bycomp-group-row > th,
+body[data-site-scenery] .wca-stats-index-toolbar,
+body[data-site-scenery] .calendar-page .event-chips--list-header,
+body[data-site-scenery] .wca-stats-event-selector .event-btn-badge,
+body[data-site-scenery] .calendar-page .event-chip-rounds {
+  background: var(--glass-surface-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
+body[data-site-scenery] .wca-stats-event-selector .event-btn-badge,
+body[data-site-scenery] .calendar-page .event-chip-rounds {
+  color: var(--foreground);
+}
+
+/* These fills have independent hover, selection or category borders. */
+body[data-site-scenery] :is(
+  .wca-stats-section-title:not(:hover),
+  .wca-stats-index-tab:not(.active),
+  .cuber-search-chip,
+  .wp-ms-order,
+  .wp-ms-chip,
+  .wp-ms-tag:not(.wp-ms-tag-medal):not(.wp-ms-tag-record),
+  .sched-subtoggle-btn:not(.is-active),
+  .sched-day-pill:not(.is-active),
+  .iclock-btn,
+  .sim-stage-reset,
+  .ns-dist .scramble-hist-legend-btn:not(:hover),
+  .wr-chart-wrap canvas,
+  .comp-lineage-box:not(.comp-lineage-box-canonical):not(.comp-lineage-box-fast),
+  .ca-step:not(.is-highlight),
+  .gla-step:not(.is-highlight),
+  .pa-step:not(.is-highlight),
+  .wcaa-step:not(.is-highlight)
+),
+body[data-site-scenery] .calendar-page :is(.comp-list-row:not(:hover), .comp-list-empty) {
+  background: var(--glass-surface-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
+body[data-site-scenery] :is(.ca-step, .gla-step, .pa-step).is-highlight {
+  background: var(--accent-soft);
+}
+
+body[data-site-scenery] .comp-lineage-box-canonical {
+  background: color-mix(in srgb, var(--accent) 6%, var(--glass-surface-bg));
+}
+
+body[data-site-scenery] .comp-lineage-box-fast {
+  background: color-mix(in srgb, var(--accent) 12%, var(--glass-surface-bg));
+}
+
+/* Small labels sit on their parent's glass rather than adding another blur. */
+body[data-site-scenery] .wca-stats-section-count,
+body[data-site-scenery] .calendar-page .cl-list-count {
+  background: var(--glass-surface-bg);
+}
+
+/* DistributionChart sets its neutral SVG mat inline; keep plotted colors intact. */
+body[data-site-scenery] .dist-chart-container > svg {
+  background: var(--glass-surface-bg) !important;
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
 }
 
 /* Blur keeps scrolling results from showing through the sticky column labels. */
@@ -63,6 +180,7 @@ body[data-site-scenery] :is(
   .collab-share,
   .comp-picker-popup,
   .country-input-popup,
+  .cr-metro,
   .donate-modal,
   .fb-modal,
   .event-select-popup,
@@ -86,9 +204,11 @@ body[data-site-scenery] :is(
   .t10h-export-card,
   .wca-teacher-dialog,
   .wechat-pc-share-modal,
+  .wr-chart-tooltip,
   .ym-popover-panel,
   .compact-select-popup
 ),
+body[data-site-scenery] .comp-info-past-popover .comp-info-past-panel,
 body[data-site-scenery] .wca-stats-event-selector .event-btn::after,
 body[data-site-scenery] .wca-stats-event-selector .event-btn-remove:not(:hover) {
   background: var(--glass-popover-bg);
@@ -96,6 +216,25 @@ body[data-site-scenery] .wca-stats-event-selector .event-btn-remove:not(:hover) 
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
   box-shadow: var(--glass-shadow);
+}
+
+/* Dialog shells provide the reading layer; inner sections need no opaque mat. */
+body[data-site-scenery] :is(
+  .otd-header,
+  .otd-year-block,
+  .otd-year-header,
+  .otd-loading,
+  .otd-empty,
+  .otd-error,
+  .otd-filter:not(.is-active),
+  .otd-filter-count
+),
+body[data-site-scenery] .calendar-page .modal-record-item,
+body[data-site-scenery] .calendar-page .comp-card-modal .rc-card {
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
 }
 
 /* The warning border is meaningful; only replace the reminder's neutral fill. */
@@ -144,13 +283,16 @@ body[data-site-scenery] :is(
   .region-picker-trigger,
   .date-input__display,
   .pill-toggle:not(.is-on),
+  .t10h-play:not(:hover),
+  .t10h-export-btn:not(:hover),
+  .calendar-page .nav-btn:not(:hover),
+  .calendar-page .nav-today:not(:hover),
+  .calendar-page .comp-filters-btn:not(.is-active):not(:hover),
   .landing-search-input:not(.is-drag-over)
 ) {
   background: var(--glass-surface-bg);
-  border-color: var(--glass-border);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
-  box-shadow: var(--glass-shadow);
 }
 
 /* Search fields inside their glass shell need no second sheet of glass. */

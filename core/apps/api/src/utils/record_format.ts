@@ -500,7 +500,7 @@ function combineSameTag(eventsIn: RecordEvent[], getRank: RankFn): FormattedReco
     const countryCn = COUNTRY_CN_MAP[personIso2] ?? (single.person_country_en || personIso2);
     typeCnLabel = `${countryCn}纪录`; typeEnLabel = 'NR'; displayTag = 'NR';
   } else if (tag === 'PR') {
-    typeCnLabel = '个人纪录'; typeEnLabel = 'PR'; displayTag = 'PR';
+    typeCnLabel = '个人纪录'; typeEnLabel = 'PRs'; displayTag = 'PR';
   } else {
     const crAbbr = resolveCrAbbr(tag, personIso2);
     typeCnLabel = CR_ABBR_CN[crAbbr] ?? '洲际纪录'; typeEnLabel = crAbbr; displayTag = crAbbr;
