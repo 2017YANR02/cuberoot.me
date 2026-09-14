@@ -412,15 +412,15 @@
           16
         ],
         [
+          "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
+          13
+        ],
+        [
           "[János Bereczki](https://www.worldcubeassociation.org/persons/2018BERE01)",
           13
         ],
         [
           "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
-          12
-        ],
-        [
-          "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
           12
         ],
         [
@@ -502,15 +502,15 @@
           17
         ],
         [
+          "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
+          12
+        ],
+        [
           "[János Bereczki](https://www.worldcubeassociation.org/persons/2018BERE01)",
           12
         ],
         [
           "[Vladislav Shavelskiy](https://www.worldcubeassociation.org/persons/2012SHAV01)",
-          11
-        ],
-        [
-          "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
           11
         ],
         [
@@ -545,7 +545,7 @@
         ],
         [
           "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
-          42
+          43
         ],
         [
           "[Charlie Eggins](https://www.worldcubeassociation.org/persons/2019EGGI02)",
@@ -597,7 +597,7 @@
         ],
         [
           "[Yifan Wang (王逸帆)](https://www.worldcubeassociation.org/persons/2017WANY29)",
-          16
+          15
         ],
         [
           "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
@@ -850,11 +850,11 @@
           16
         ],
         [
-          "[Andy Denney](https://www.worldcubeassociation.org/persons/2013DENN01)",
-          15
+          "[Alexei Sinyavin](https://www.worldcubeassociation.org/persons/2016SINY01)",
+          16
         ],
         [
-          "[Alexei Sinyavin](https://www.worldcubeassociation.org/persons/2016SINY01)",
+          "[Andy Denney](https://www.worldcubeassociation.org/persons/2013DENN01)",
           15
         ],
         [
@@ -3075,7 +3075,7 @@
     [
       "2015CHER07",
       "333bf",
-      42
+      43
     ],
     [
       "2015CHER07",
@@ -3245,7 +3245,7 @@
     [
       "2016SINY01",
       "minx",
-      15
+      16
     ],
     [
       "2016HUNG08",
@@ -3270,12 +3270,12 @@
     [
       "2016WUZI04",
       "666",
-      12
+      13
     ],
     [
       "2016WUZI04",
       "777",
-      11
+      12
     ],
     [
       "2016WUZI04",
@@ -3365,7 +3365,7 @@
     [
       "2017WANY29",
       "333bf",
-      16
+      15
     ],
     [
       "2018BERE01",
