@@ -996,7 +996,7 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: '视口懒挂载容器：内容接近可见区域后才挂载并保持，用于避免折叠线下的重组件和数据请求争抢首屏资源。',
     en: 'Viewport-deferred mount container that stays mounted once nearby, keeping below-the-fold components and data requests out of the initial render.',
-    note: { zh: '用 minHeight 防止滚动跳动；依赖原顶层布局时传 unwrapWhenVisible。', en: 'Use minHeight to avoid scroll jumps; pass unwrapWhenVisible when the child must preserve its original top-level layout.' },
+    note: { zh: '用 minHeight 或固定宽高比防止滚动跳动；依赖原顶层布局时传 unwrapWhenVisible；动画可传 unmountWhenHidden 离屏卸载，此时保留容器。', en: 'Use minHeight or a fixed aspect ratio to avoid scroll jumps; unwrapWhenVisible preserves the original top-level layout; unmountWhenHidden releases offscreen animations and keeps the wrapper.' },
   },
   {
     name: 'WcaTeacherCell',
