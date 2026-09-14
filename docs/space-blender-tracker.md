@@ -1,5 +1,15 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 金茂入口雨棚细部与铺地 本轮收尾
+
+继续对照已署名的 SOM 南入口实拍与 Nephilim 圆形入口照片，补三个雨棚的檐口细杆、玻璃下条带遮板、悬挂板分缝及灯具外壳；东入口补两块悬挂遮板与交叉拉杆，三个入口补灰红方形铺地。每座雨棚新增 130 根细杆、26 个梁边灯具；构件合批为七个网格。来源已同步到网页双语来源记录，尺寸、方位和纹样估算边界见[参考档案](../design/space/references/jin-mao.md#2026-09-13-入口雨棚细部与方形铺地)。
+
+- 采用 `round-02`。修正候选报告的元组序列化和临时审图材质节点后，已查看[南入口](../.tmp/png/space-jinmao-entrances-20260913/round-02/review/after-south.png)、[东入口](../.tmp/png/space-jinmao-entrances-20260913/round-02/review/after-east.png)、[北入口](../.tmp/png/space-jinmao-entrances-20260913/round-02/review/after-north.png)、[铺地近景](../.tmp/png/space-jinmao-entrances-20260913/round-02/review/after-paving.png)与[修改前南入口](../.tmp/png/space-jinmao-entrances-20260913/round-02/review/before-south.png)。工具修正不计为额外美术迭代；这些是 Cycles CPU 诊断图，不能代替网页视觉验收。后台低优先级、14 线程，未占用桌面。
+- 已保存 `jin-mao-entrances-20260913`，源工程 **303,993,848 字节**，精确指纹 `[303993848,1789348228381620400]`。[保存报告](../.tmp/png/space-jinmao-entrances-20260913/round-02/saved.json)确认候选、全部 Python 依赖、OSM 数据及源指纹匹配，原整城几何、变换、材质分配、运行身份与六组灯保持。保存前完整备份为同目录 `shanghai-before-jin-mao-entrances-20260913.blend`；一次性脚本拒绝重复应用。
+- 正式 GLB **602,288,668 字节**，增加 **5,678,980 字节**；12,037 objects、6 灯组、原 16 张共享纹理。SHA-256 为 `b4518f57b26a550325884d1f91fd7346f16342d8760e606df9b90a8d8fcfbd37`。[正式检查](../.tmp/png/space-jinmao-entrances-20260913/formal-check.json)核对新增七个网格、旧基部四个网格、裙房七个网格、周边共享网格和原塔楼 51 个网格的全部顶点属性、索引、材质、纹理字节及本地变换，世界变换误差小于 0.000001 m。Node 中的 Three.js GLTFLoader 加载七个新增网格；完整 HTTP 下载状态 200，长度及哈希一致。Node 的纳秒整数有舍入，精确指纹以 Python 保存报告为准。
+
+**按用户“做完当前停下”要求，本轮收尾后暂停，不启动新迭代。整体仍未达到 1:1 或电影级。** 铺地是重复方形近似，东入口位置与拉杆尺寸仍有推断；南北入口后方门厅尚未复刻，石材颗粒、庭院水池及中庭内部仍待完成。灯具只有外壳及沿用时间约定的透镜材质，未新增实体照明灯组或验证现场配光。本轮没有网页 WebGL 日夜审图；约 602 MB 整城资产仍需分区、LOD 和真实设备性能验证。未改 TS/TSX，不运行无关测试或 Next build；仅本地提交脚本、清单、来源与文档，不 push。`.blend`、GLB 与纹理本地保存，Git LFS 配置和上传暂缓。
+
 ## 2026-09-13 金茂塔楼基部与圆形入口
 
 对照 Nephilim 的塔楼基部与入口实拍，新增石材分缝、648 块细方孔格栅、带厚度的圆孔金属遮阳板、成对竖肋，以及圆形金属门框、玻璃分格和下方门扇。入口凹面原蓝色粗分格前补石材饰面。摄影署名、历史照片日期边界与估算尺寸见[参考档案](../design/space/references/jin-mao.md#2026-09-13-塔楼基部与圆形入口)；两个来源同步进入网页来源数据的中英文记录。
