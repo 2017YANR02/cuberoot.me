@@ -14,6 +14,7 @@ import './home-background.css';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import LandingSearch from '@/components/LandingSearch';
+import SearchInput from '@/components/SearchInput';
 import LazyVisible from '@/components/LazyVisible';
 import {
   FOOTER_ENTRIES,
@@ -118,6 +119,16 @@ export default function LandingPage() {
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const [featuredNotice, setFeaturedNotice] = useState<PageNotice | null>(null);
   const [publicMembers, setPublicMembers] = useState<PublicMember[] | null>(null);
+  const [memberQueries, setMemberQueries] = useState({ enterprise: '', individual: '' });
+  const orderedMembers = useMemo(() => [...(publicMembers ?? [])].sort((a, b) => {
+    const aId = /^VIP(\d+)$/.exec(a.vipId ?? '');
+    const bId = /^VIP(\d+)$/.exec(b.vipId ?? '');
+    if (!aId) return bId ? 1 : 0;
+    if (!bId) return -1;
+    const aNumber = BigInt(aId[1]);
+    const bNumber = BigInt(bId[1]);
+    return aNumber < bNumber ? -1 : aNumber > bNumber ? 1 : 0;
+  }), [publicMembers]);
 
   useEffect(() => {
     let active = true;
@@ -411,7 +422,11 @@ export default function LandingPage() {
           const lockId = HOME_MEMBER_SECTION_IDS[section.id];
           const locked = cardLocks[lockId] ?? true;
           if (!isAdmin && (!locksLoaded || locked)) return null;
-          const members = publicMembers?.filter((member) => member.planSlug.startsWith('enterprise_') === section.enterprise) ?? [];
+          const query = memberQueries[section.id].trim().toLowerCase();
+          const sectionMembers = orderedMembers.filter((member) => member.planSlug.startsWith('enterprise_') === section.enterprise);
+          const members = sectionMembers.filter((member) => !query || [
+            member.name, member.wcaId, member.vipId ?? '', member.vipId?.replace(/^VIP0+(\d+)$/, 'VIP$1') ?? '',
+          ].some((value) => value.toLowerCase().includes(query)));
           return (
             <section key={section.id} className="cards-section" aria-labelledby={`${section.id}-members-title`}>
               <div className="section-header">
@@ -420,7 +435,14 @@ export default function LandingPage() {
                   <h2 id={`${section.id}-members-title`} className="section-title-serif">{section.title}</h2>
                   {renderLock(lockId, locked, false, section.title)}
                 </div>
-                {publicMembers && members.length === 0 && <div className="section-sub">{section.empty}</div>}
+                <SearchInput
+                  value={memberQueries[section.id]}
+                  onChange={(value) => setMemberQueries((current) => ({ ...current, [section.id]: value }))}
+                  className="landing-member-search"
+                  placeholder={tr({ zh: '搜索姓名、WCA ID 或 VIP 编号', en: 'Search name, WCA ID or VIP number' })}
+                  ariaLabel={tr({ zh: `搜索${section.title}`, en: `Search ${section.title.toLowerCase()}` })}
+                />
+                {publicMembers && members.length === 0 && <div className="section-sub" role="status">{sectionMembers.length === 0 ? section.empty : tr({ zh: '没有匹配的会员', en: 'No matching members' })}</div>}
               </div>
               {members.length > 0 && (
                 <div className="landing-members">
