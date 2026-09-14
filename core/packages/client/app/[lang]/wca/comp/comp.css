@@ -815,6 +815,17 @@ td.is-pr {
 }
 .comp-records + .comp-pod-section-h { margin-top: 4px; }
 
+.comp-record-news { margin-bottom: 26px; }
+.comp-record-news-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.comp-record-news-heading .comp-pod-section-h { margin: 0; }
+.comp-record-news-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; }
+.comp-record-news-link { display: flex; align-items: baseline; gap: 10px; color: inherit; text-decoration: none; line-height: 1.7; }
+.comp-record-news-link > .comp-podium-icon { flex-shrink: 0; }
+.comp-record-news-link > span { min-width: 0; }
+.comp-record-news-link:hover { color: var(--accent); }
+.comp-record-news-result { display: block; }
+.comp-record-news-tag, .comp-record-news-person { white-space: nowrap; }
+
 /* 预排名「名次和」(多选项目) 表 */
 /* InfoTooltip 在最右的「名次和」列头里:浮层右对齐 + 视口夹宽, 避免冲出右边界 (桌面 + 移动统一) */
 .comp-sor-table .info-tooltip-pop {

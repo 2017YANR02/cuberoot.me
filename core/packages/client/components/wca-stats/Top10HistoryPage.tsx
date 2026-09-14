@@ -8,6 +8,7 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Play, Pause, Download } from 'lucide-react';
 import { Flag } from '@/components/Flag';
+import { CompactSelect } from '@/components/CompactSelect';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -663,21 +664,18 @@ export default function Top10HistoryPage({
             })}
           >{tr({ zh: '按 PB', en: 'PB' })}</button>
         </div>
-        <div className="t10h-speed" role="group" aria-label={tr({ zh: '速度', en: 'Speed' })}>
-          {(playMode === 'time' ? SPEEDS : [1]).map(s => (
-            <button
-              key={s}
-              type="button"
-              className={`t10h-speed-btn${s === speed ? ' active' : ''}`}
-              onClick={() => setSpeed(s)}
-              title={
-                playMode === 'time'
-                  ? (isZh ? `${s} 天/秒` : `${s} days/sec`)
-                  : (isZh ? `${s} PB/秒` : `${s} PB/sec`)
-              }
-            >{playMode === 'time' ? `${s}d/s` : `${s}/s`}</button>
-          ))}
-        </div>
+        <CompactSelect
+          label={playMode === 'time' ? `${speed}d/s` : `${speed}/s`}
+          items={(playMode === 'time' ? SPEEDS : [1]).map(s => ({
+            value: s,
+            label: playMode === 'time'
+              ? tr({ zh: `${s} 天/秒`, en: `${s} days/sec` })
+              : tr({ zh: `${s} PB/秒`, en: `${s} PB/sec` }),
+          }))}
+          value={speed}
+          onChange={setSpeed}
+          ariaLabel={tr({ zh: '播放速度', en: 'Playback speed' })}
+        />
         <button
           type="button"
           className="t10h-export-btn"
