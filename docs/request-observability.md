@@ -52,6 +52,55 @@ These are structured log warnings, not a new external notification service.
 Existing Vercel 5xx alerts remain the external incident signal. Thirty-second
 snapshots can miss shorter events; a stopped process cannot emit its own metrics.
 
+## Vercel page verification placement
+
+`core/packages/client/vercel.json` pins `/api/page-access` to `iad1`. Production
+Node.js middleware runs globally and calls this regional gateway through the
+existing Vercel-only `cuberoot-me.vercel.app` production alias. The gateway
+performs the original live API request. Using the custom domain here would
+reintroduce the origin connection through its split DNS. Preview middleware and
+self-hosted/dev Next keep calling the original API directly. Static assets
+continue to use the global CDN.
+
+The gateway accepts only fixed `locks` and `session` GET checks. It forwards
+Authorization only for session verification, never forwards cookies, refuses
+upstream redirects, preserves the request UUID, and marks every response
+`private, no-store`. Backend role and lock-state validation remain unchanged.
+The gateway consumes the upstream body within the original five-second
+deadline. It exposes `X-Page-Access-Region` for deployment verification.
+
+A direct `functions["proxy.ts"]` setting passed the published JSON schema but
+was rejected by Vercel CLI 59.11.7 before building. Its Next.js function matcher
+accepts app routes but not the renamed proxy entrypoint. Do not use that
+configuration or assume the project default region constrains middleware.
+
+On 2026-09-13 UTC, production request
+`86fab93b-eb3b-4808-ba4c-5c190905cb2c` failed in `sfo1` after exactly 5000 ms
+at `home-locks`, with no upstream HTTP status or matching origin log. Other
+failures occurred in `hkg1` and `sin1`. Successful correlated requests spent
+only 1–3 ms in nginx/API; the concurrent DB snapshots had no blocked sessions.
+
+A separate preview probe compared Node 24 native HTTPS, fixed-IP HTTPS, fetch,
+and fetch with `Connection: close`. In `hkg1`, DNS resolved the correct IPv4
+address in 5 ms, but both fresh HTTPS connections reached their five-second
+deadline before the TCP `connect` event. Both fetch variants also timed out.
+This isolates a connection-path failure before TLS/HTTP, rather than an API
+query, stale keep-alive socket, or DNS lookup. It does not identify which
+network operator dropped the connection. The `iad1` control completed all four
+request variants in six consecutive probe rounds; `sfo1` was intermittent.
+
+The visible regression began with `9fd37b606` on 2026-09-11: page routes began
+checking live homepage locks before serving documents and RSC. This made the
+regional API connection a prerequisite for otherwise static pages. Keep the
+checks fresh and fail closed; changing region must not introduce stale lock
+caches, skip administrator verification, or raise the timeout.
+
+After a placement change, inspect the deployed `/api/page-access` region and
+correlate new main-domain requests through the gateway with the origin. A successful preview
+alone is insufficient because preview and production middleware placement can
+differ. Recheck anonymous access to permanently locked pages as well as public
+pages in both languages.
+
 No new diagnostic log contains IPs, raw URLs/query strings, authorization headers,
 cookies, request/response bodies, SQL text/parameters, or arbitrary error messages.
 Only endpoint categories/templates, validated IDs, static labels and metrics are
