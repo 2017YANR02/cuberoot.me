@@ -395,6 +395,21 @@ export default function MembershipPage() {
         </div>
       )}
 
+      <section className="mem-plan-section" aria-labelledby="renewal-disclosure-title">
+        <h2 id="renewal-disclosure-title" className="mem-plan-section-title">
+          {tr({ zh: '自动续费服务声明', en: 'Auto-renewal disclosure' })}
+        </h2>
+        <p>{tr({ zh: '当前自动续费尚未开放。单次购买的月度、年度会员不会自动扣款，无需退订。以下为自动续费开放后的服务规则。', en: 'Auto-renewal is not available yet. One-time monthly and annual memberships do not auto-charge and require no cancellation. The following rules apply once auto-renewal becomes available.' })}</p>
+        <p>{tr({ zh: '付款与续费：仅在你主动同意协议并在微信确认签约后，才建立扣款授权。首期及后续每期金额、续费周期以签约确认页和微信签约内容为准；续费扣款前会通知金额、预计扣费时间与周期，扣款成功后延长相应会员服务期。', en: 'Payment and renewal: debit authorization is established only after you actively agree to the terms and confirm in WeChat. The first and subsequent charges and billing period are shown on the confirmation and WeChat authorization pages. Renewal notices will state the amount, expected charge time, and period; membership is extended after successful payment.' })}</p>
+        <p>{tr({ zh: '退订路径：会员 → 管理自动续费 → 登录 → 对应签约记录 → 取消自动续费 → 确认取消。可查看当前签约状态，随时申请解除委托代扣；以微信确认的解约结果为准，不以点击按钮作为取消成功。也可在微信支付的对应扣费服务中解除授权。', en: 'To cancel: Membership → Manage auto-renewal → Sign in → Select the authorization → Cancel auto-renewal → Confirm cancellation. View your authorization status and request cancellation at any time. Cancellation is effective only when confirmed by WeChat, not simply when a button is clicked. You may also revoke authorization in the corresponding WeChat Pay debit service.' })}</p>
+        <p>{tr({ zh: '取消后：不再发起后续续费扣款，不收取取消费用；已购买权益保留至已付服务期结束，不会自动退款。若已有扣费处理中、取消结果不明确或取消后仍出现扣费，请联系会员客服核对。关闭页面或退出账号不会取消自动续费。', en: 'After cancellation: no further renewal charges will be initiated and there is no cancellation fee. Paid benefits remain until the paid period ends; cancellation does not automatically issue a refund. Contact membership support for pending charges, uncertain cancellation results, or charges after cancellation. Closing the page or signing out does not cancel auto-renewal.' })}</p>
+        <nav className="mem-service-links" aria-label={tr({ zh: '退订与服务规则', en: 'Cancellation and service rules' })}>
+          <AppLink href="/membership/subscription" prefetch={false}>{tr({ zh: '管理自动续费 / 退订', en: 'Manage / cancel auto-renewal' })}</AppLink>
+          <AppLink href="/membership/renewal-terms" prefetch={false}>{tr({ zh: '查看完整自动续费协议', en: 'Read the full auto-renewal agreement' })}</AppLink>
+          <AppLink href="/contact" prefetch={false}>{tr({ zh: '联系会员客服', en: 'Contact membership support' })}</AppLink>
+        </nav>
+      </section>
+
       <section className="mem-plan-sections" aria-labelledby="planned-benefits-title">
         <div>
           <h2 id="planned-benefits-title" className="mem-plan-section-title">
