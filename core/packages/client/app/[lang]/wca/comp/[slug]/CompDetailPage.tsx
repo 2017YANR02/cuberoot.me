@@ -3337,7 +3337,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
   return (
     <div className="comp-modal-backdrop" {...backdropProps}>
       <div ref={cardRef} className="comp-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
-        <header className="comp-modal-header">
+        <header className="comp-modal-header comp-cuber-modal-header">
           <div className="comp-modal-title">
             <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
             {u.wcaid ? (
@@ -3352,6 +3352,15 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
             ) : (
               <span className="cuber-link-static">{displayCuberName(u.name, isZh)}</span>
             )}
+          </div>
+          <div className="comp-modal-search">
+            <SearchInput
+              value={search}
+              onChange={setSearch}
+              autoFocus
+              type="search"
+              placeholder={tr({ zh: '搜索成绩、轮次或项目', en: 'Search results, rounds or events' })}
+            />
           </div>
           <div className="comp-modal-header-actions">
             <LangToggle soft variant="inline" />
@@ -3369,15 +3378,6 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
             <XIcon size={18} />
           </button>
         </header>
-        <div className="comp-modal-search">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            autoFocus
-            type="search"
-            placeholder={tr({ zh: '搜索成绩、轮次或项目', en: 'Search results, rounds or events' })}
-          />
-        </div>
         <div className="comp-modal-body">
           {groups.length === 0 ? (
             <div className="comp-empty">{tr({ zh: '暂无成绩', en: 'No results'
