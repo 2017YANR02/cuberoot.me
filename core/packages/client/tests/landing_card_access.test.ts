@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
+import type { PublicMember } from '@/lib/membership-api';
 
 const auth = vi.hoisted(() => ({ user: null as { wcaId: string } | null }));
 const lockApi = vi.hoisted(() => ({
@@ -12,7 +13,8 @@ const lockApi = vi.hoisted(() => ({
 }));
 vi.mock('@/lib/home-card-order-api', () => ({ ...lockApi, getHomeCardOrders: async () => ({}), reorderHomeCards: vi.fn() }));
 vi.mock('@/lib/page-notices-api', () => ({ fetchPageNotices: async () => [] }));
-vi.mock('@/lib/membership-api', () => ({ listPublicMembers: async () => [] }));
+const memberApi = vi.hoisted(() => ({ listPublicMembers: vi.fn(async (): Promise<PublicMember[]> => []) }));
+vi.mock('@/lib/membership-api', () => memberApi);
 vi.mock('@/components/LazyVisible', () => ({ default: () => null }));
 vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => auth.user, nextQuery: () => '' }));
 vi.mock('next/dynamic', () => ({ default: () => () => null }));
@@ -124,6 +126,51 @@ describe('homepage development cards', () => {
       expect(section('enterprise')).not.toBeNull();
       expect(section('individual')).toBeNull();
       expect(section('enterprise')!.querySelector('button')).toBeNull();
+    } finally {
+      await act(async () => root.unmount());
+    }
+  });
+  it('orders VIP numbers numerically and filters each member section by name, WCA ID and padded or short VIP ID', async () => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+    auth.user = { wcaId: ADMIN_WCA_IDS[0] };
+    changeAppLanguage('zh');
+    const rows: PublicMember[] = [
+      { wcaId: 'TEN', name: 'Ten', vipId: 'VIP10', planSlug: 'individual_yearly' },
+      { wcaId: 'NONE', name: 'Missing', planSlug: 'individual_yearly' },
+      { wcaId: 'TWO', name: '测试二', vipId: 'VIP000002', planSlug: 'individual_yearly' },
+      { wcaId: 'ONE', name: 'One', vipId: 'VIP000001', planSlug: 'individual_yearly' },
+      { wcaId: 'BIG2', name: 'Large B', vipId: 'VIP9007199254740993', planSlug: 'individual_yearly' },
+      { wcaId: 'BIG1', name: 'Big one', vipId: 'VIP9007199254740992', planSlug: 'individual_yearly' },
+      { wcaId: 'ORG', name: 'Enterprise', vipId: 'VIP3', planSlug: 'enterprise_yearly' },
+      { wcaId: 'INVALID', name: 'Invalid', vipId: 'invalid', planSlug: 'individual_yearly' },
+    ];
+    memberApi.listPublicMembers.mockResolvedValueOnce(rows);
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    const section = (id: string) => host.querySelector(`[aria-labelledby="${id}-members-title"]`)!;
+    const ids = (id: string) => [...section(id).querySelectorAll('.landing-member')].map((link) => link.getAttribute('href')!.split('/').at(-1));
+    const search = async (value: string) => act(async () => {
+      const input = section('individual').querySelector('input')!;
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    try {
+      await act(async () => root.render(createElement(LandingPage)));
+      const expected = ['ONE', 'TWO', 'TEN', 'BIG1', 'BIG2', 'NONE', 'INVALID'];
+      expect(ids('individual')).toEqual(expected);
+      for (const query of ['测试二', 'two', ' vip2 ', 'VIP000002']) {
+        await search(query);
+        expect(ids('individual')).toEqual(['TWO']);
+        expect(ids('enterprise')).toEqual(['ORG']);
+      }
+      await search('no-match');
+      expect(ids('individual')).toEqual([]);
+      expect(section('individual').querySelector('[role="status"]')?.textContent).toBe('没有匹配的会员');
+      await act(async () => section('individual').querySelector<HTMLButtonElement>('[aria-label="清除"]')!.click());
+      expect(ids('individual')).toEqual(expected);
+      await search('  ');
+      expect(ids('individual')).toEqual(expected);
+      expect(rows[0].wcaId).toBe('TEN');
     } finally {
       await act(async () => root.unmount());
     }
