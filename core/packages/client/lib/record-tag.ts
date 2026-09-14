@@ -38,6 +38,7 @@ export interface DayBestSnapshot {
 
 /** 服务端下发的纪录快照:赛前基线 + 同日已达成的最好成绩。 */
 export interface RecordsSnapshot {
+  fwr?: Record<string, number>;
   wr?: Record<string, number>;
   cr?: Record<string, number>;
   nr?: Record<string, number>;
@@ -45,7 +46,7 @@ export interface RecordsSnapshot {
 }
 
 export interface JudgedRecord {
-  tag: 'WR' | 'CR' | 'NR' | '';
+  tag: 'WR' | 'FWR' | 'CR' | 'NR' | '';
   keatoned: KeatonedInfo | null;
   /** 掩掉这条成绩的那几条同日成绩(每个被掩级别一条,按人 + 场去重)。
    *  client 专用附加输出,服务端 judgeByDay 不需要:用来把这些「官方 dump 里还没有」的
@@ -56,6 +57,7 @@ export interface JudgedRecord {
 const NONE: JudgedRecord = { tag: '', keatoned: null, keatonedBy: [] };
 
 interface JudgeUser {
+  gender?: string;
   continentId?: string;
   countryId?: string;
 }
@@ -76,9 +78,12 @@ export function judgeRecordTag(
 ): JudgedRecord {
   if (!snap || !value || value <= 0) return NONE;
   const k = `${eventId}|${isAvg ? '1' : '0'}`;
-  const scopes: { level: 'WR' | 'CR' | 'NR'; baseline?: number; winner?: DayBestEntry }[] = [
+  const scopes: { level: 'WR' | 'FWR' | 'CR' | 'NR'; baseline?: number; winner?: DayBestEntry }[] = [
     { level: 'WR', baseline: snap.wr?.[k], winner: snap.day?.wr?.[k] },
   ];
+  if (user?.gender === 'f') {
+    scopes.push({ level: 'FWR', baseline: snap.fwr?.[k], winner: snap.day?.wr?.[`f|${k}`] });
+  }
   if (user?.continentId) {
     const ck = `${k}|${user.continentId}`;
     scopes.push({ level: 'CR', baseline: snap.cr?.[ck], winner: snap.day?.cr?.[ck] });
@@ -130,6 +135,7 @@ export function refutesTag(
   const k = `${eventId}|${isAvg ? '1' : '0'}`;
   let baseline: number | undefined;
   if (tag === 'WR') baseline = snap.wr?.[k];
+  else if (tag === 'FWR') baseline = snap.fwr?.[k];
   else if (tag === 'NR') baseline = user?.countryId ? snap.nr?.[`${k}|${user.countryId}`] : undefined;
   else if (tag.endsWith('R')) baseline = user?.continentId ? snap.cr?.[`${k}|${user.continentId}`] : undefined;
   if (baseline === undefined) return false;

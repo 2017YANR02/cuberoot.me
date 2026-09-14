@@ -13,6 +13,7 @@ import WebSocket from 'ws';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import type { CompPersonalRecordSlot } from '@cuberoot/shared';
 import { query } from '../db/connection.js';
+import { prepareFemaleRecords } from '../utils/female_records.js';
 import { enrichComp, resolvePersonIso2, emptyDayBest, foldCompIntoDayBest, judgeExternalRecord, type CompRecordsSnapshot, type DayBest, type KeatonedInfo } from '../utils/current_records.js';
 import type { OverlayEntry } from '../utils/wca_live_overlay.js';
 import { getCnCompZh } from '../utils/cn_comp_zh_cache.js';
@@ -25,6 +26,7 @@ export const cubingLiveRoutes = new Hono();
 // ─── 类型 ──────────────────────────────────────────────────────────────────
 
 interface User {
+  gender?: string;
   number: number;
   name: string;
   wcaid: string;
@@ -674,12 +676,23 @@ const ROUND_NAME: Record<string, string> = {
  *  - users[*].countryId / continentId 解析填充
  *  - 现有 results 的空 sr/ar 用 wca_results_flat 当前 MIN 推断填充
  *  - 附加 currentRecords 快照供 client 给 WS 实时推送的成绩做同款推断
- *  非阻塞:无 records 缓存时全部跳过(首请求秒出,fallback 到原行为). */
+ *  女子历史缓存 1 小时,选手性别缓存 24 小时。 */
 async function enrichRecordTags(data: CompData): Promise<void> {
-  const dayBest = await buildDayBest(data);
   // 比赛日:用来判定「上游 tag 已被本场之前的纪录证伪」(refutesTag).拿不到就不动上游 tag.
   const compDate = ymd((await getCompDates(data.slug)).start);
-  const snapshot = enrichComp(data.users, data.resultsByRound, data.events, dayBest, compDate);
+  const fwr = data.type === 'WCA'
+    ? await prepareFemaleRecords(data.users, data.membersByFilter.females, compDate) : {};
+  // Earlier unpublished female results must also lower today's baseline.
+  if (compDate) for (const [date, comps] of dayPool) {
+    if (date >= compDate) continue;
+    for (const day of comps.values()) for (const [key, entry] of day.wr) {
+      if (!key.startsWith('f|')) continue;
+      const k = key.slice(2);
+      if (fwr[k] !== undefined) fwr[k] = Math.min(fwr[k], entry.value);
+    }
+  }
+  const dayBest = await buildDayBest(data);
+  const snapshot = enrichComp(data.users, data.resultsByRound, data.events, dayBest, compDate, fwr);
   if (snapshot) data.currentRecords = snapshot;
 }
 
@@ -1524,7 +1537,6 @@ async function loadFromWcaLive(wcaId: string, onProgress?: ProgressFn, prefetche
     membersByFilter: { females: [], children: [], newcomers: [] },
     fetchedAt: Date.now(),
   };
-  await enrichRecordTags(data);
   await enrichPersonalRecords(data);
   return data;
 }
@@ -1585,7 +1597,6 @@ async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetched
     membersByFilter,
     fetchedAt: Date.now(),
   };
-  await enrichRecordTags(data);
   await enrichPersonalRecords(data);
   return data;
 }
@@ -1802,6 +1813,7 @@ function refreshWcaDb(wcaId: string, cacheKey: string, onProgress?: ProgressFn):
  *  挂里面必漏;而首页纪录一漏就是"比赛页有、首页没有". */
 async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress?: ProgressFn): Promise<CompData> {
   const data = await loadCompInner(wcaId, choice, onProgress);
+  await enrichRecordTags(data);
   try {
     await rememberInferred(data);
   } catch (e) {
@@ -2163,7 +2175,7 @@ export function startPrewarmCron(): void {
 
 // cubing 源走 enrichComp 只产生泛化 CR;wca 源是 WCA REST 的精确 tag(AsR/ER/...)。
 // 两者都收,洲际纪录(刚结束未公示的 wca 源比赛)才不会漏出首页。
-const RECORD_TAGS = new Set(['WR', 'CR', 'NR', 'AsR', 'ER', 'NAR', 'SAR', 'AfR', 'OcR']);
+const RECORD_TAGS = new Set(['WR', 'FWR', 'CR', 'NR', 'AsR', 'ER', 'NAR', 'SAR', 'AfR', 'OcR']);
 const INFERRED_RECENT_WINDOW_DAYS = 10;  // 跟 WCA Live recentRecords 默认窗口对齐
 
 export interface InferredRecord {
@@ -2224,24 +2236,21 @@ function collectInferred(data: CompData, startDate: string | null): InferredReco
   return out;
 }
 
-/** 把一场比赛的推断纪录整条写进池.loadComp 每次返回都调 —— fetchedAt 没变直接跳过.
+/** 把一场比赛的推断纪录整条写进池,loadComp 每次返回都刷新判定。
  *  纳入 cubing(中国比赛跑在 cubing.com,WCA Live 根本没这场)+ wca(WCA REST 已录但
  *  record 未 ratify)+ wca_db(同一场 CN 比赛成绩进 WCA 中央库 → 本地 dump 后,loadComp
  *    不再走 cubing 源而判成 wca_db;但 CN 比赛永远不进 WCA Live recentRecords feed,旧逻辑
  *    排除 wca_db 就把这类纪录漏没了 —— 不是 dump 比 feed 快,是 feed 压根不收 cubing.com 比赛)。
- *  排除 wca_live(本就是 feed 上游,会重复)。record_tag 是"达成时即纪录"的历史 marker
+ *  wca_live 只补 feed 没有的 FWR,避免普通纪录重复。record_tag 是"达成时即纪录"的历史 marker
  *  (被超越后仍保留),靠 10 天窗 + 与 feed dedup 收敛成"近期纪录"。 */
 async function rememberInferred(data: CompData): Promise<void> {
-  if (data.source !== 'cubing' && data.source !== 'wca' && data.source !== 'wca_db') return;
   const sd = await getCompStartDate(data.slug);
   if (!inInferredWindow(sd)) {
     inferredPool.delete(data.slug);
     return;
   }
-  const prev = inferredPool.get(data.slug);
-  if (!prev || prev.fetchedAt !== data.fetchedAt) {
-    inferredPool.set(data.slug, { fetchedAt: data.fetchedAt, date: sd, records: collectInferred(data, sd) });
-  }
+  // Re-adjudication can change tags even when the upstream payload is cached.
+  inferredPool.set(data.slug, { fetchedAt: data.fetchedAt, date: sd, records: collectInferred(data, sd).filter(r => data.source !== 'wca_live' || r.tag === 'FWR') });
   for (const [slug, e] of inferredPool) {
     if (!inInferredWindow(e.date)) inferredPool.delete(slug);
   }
@@ -2254,10 +2263,9 @@ export async function extractInferredRecords(): Promise<InferredRecord[]> {
   for (const e of inferredPool.values()) out.push(...e.records);
   for (const data of cache.values()) {
     if (inferredPool.has(data.slug)) continue;
-    if (data.source !== 'cubing' && data.source !== 'wca' && data.source !== 'wca_db') continue;
     const sd = await getCompStartDate(data.slug);
     if (!inInferredWindow(sd)) continue;
-    out.push(...collectInferred(data, sd));
+    out.push(...collectInferred(data, sd).filter(r => data.source !== 'wca_live' || r.tag === 'FWR'));
   }
   return out;
 }

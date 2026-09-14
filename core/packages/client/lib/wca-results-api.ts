@@ -349,7 +349,7 @@ export async function fetchCubingAttempts(
   }
 }
 
-interface CubingLiveUser { wcaid?: string; countryId?: string; continentId?: string }
+interface CubingLiveUser { gender?: string; wcaid?: string; countryId?: string; continentId?: string }
 interface CubingLiveResult {
   n: number; b?: number; a?: number; pS?: number; pA?: number;
   sr?: string; ar?: string | number;
@@ -366,7 +366,7 @@ const cubingLiveCache = new Map<string, Promise<CubingLiveData | null>>();
 function loadCubingLive(compWcaId: string): Promise<CubingLiveData | null> {
   let p = cubingLiveCache.get(compWcaId);
   if (!p) {
-    p = fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(compWcaId)}`))
+    p = fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(compWcaId)}?v=2`))
       .then(r => r.ok ? r.json() as Promise<CubingLiveData> : null)
       .catch(() => null);
     cubingLiveCache.set(compWcaId, p);

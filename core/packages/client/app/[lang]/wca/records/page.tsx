@@ -97,17 +97,19 @@ function RecordsPageInner() {
   }, [manifest, isZh]);
 
   useEffect(() => {
+    const controller = new AbortController();
     setLoading(true);
     setError(null);
     setBundle(null);
-    fetch(statsUrl(regionUrl(region, gender)))
+    fetch(statsUrl(regionUrl(region, gender)), { signal: controller.signal })
       .then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
-      .then((j: Bundle) => setBundle(j))
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false));
+      .then((j: Bundle) => { if (!controller.signal.aborted) setBundle(j); })
+      .catch(err => { if (!controller.signal.aborted) setError(err.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
   }, [region, gender]);
 
   // 切到性别(女子/男子)纪录时,国家级不存在 → 把残留的国家区域回退到 world
@@ -120,8 +122,9 @@ function RecordsPageInner() {
 
   const visibleRows = useMemo(() => {
     if (!bundle) return [];
-    return event ? bundle.rows.filter(r => r.e === event) : bundle.rows;
-  }, [bundle, event]);
+    const rows = event ? bundle.rows.filter(r => r.e === event) : bundle.rows;
+    return gender === 'f' ? rows.map(r => ({ ...r, l: `F${r.l}` })) : rows;
+  }, [bundle, event, gender]);
 
   const availableEvents = useMemo(() => {
     if (!bundle) return new Set<string>();
@@ -224,9 +227,9 @@ function RecordsPageInner() {
           <ListSelect
             className="records-toolbar-select"
             items={[
-              { value: 'all', label: tr({ zh: '所有', en: 'All' }) },
-              { value: 'm', label: tr({ zh: '男', en: 'Male' }) },
-              { value: 'f', label: tr({ zh: '女', en: 'Female' }) },
+              { value: 'all', label: tr({ zh: '不限性别', en: 'All genders' }) },
+              { value: 'm', label: tr({ zh: '男子', en: 'Male' }) },
+              { value: 'f', label: tr({ zh: '女子', en: 'Female' }) },
             ]}
             value={gender}
             onChange={(v) => update('gender', v === 'all' ? '' : v)}
