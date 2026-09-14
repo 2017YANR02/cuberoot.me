@@ -27,10 +27,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { fillPlatformParams, matchPlatformRoute } from './lib/platform-routes';
-import { homeCardsRequireAdmin, matchingHomeCards, PAGE_SESSION_COOKIE } from './lib/home-card-access';
-import { isCompSimPage, verifyPageAdmin, verifyPageRole } from './lib/page-admin-session';
-import { pageAccessApiUrl } from './lib/page-access-api';
-import { PageAccessTrace } from './lib/page-access-trace';
 
 const SUPPORTED_LOCALES = ['en', 'zh'] as const;
 type Locale = typeof SUPPORTED_LOCALES[number];
@@ -154,68 +150,9 @@ function setSeoLinkHeaders(res: NextResponse, rest: string, locale: Locale) {
   res.headers.append('Link', links.join(', '));
 }
 
-export async function proxy(req: NextRequest) {
-  let trace: PageAccessTrace | undefined;
-  try {
-    const cards = matchingHomeCards(req.nextUrl);
-    const compSim = isCompSimPage(req.nextUrl.pathname);
-    if (!cards.length && !compSim) return routeLanguage(req);
-    const currentTrace = trace = new PageAccessTrace();
-    const token = req.cookies.get(PAGE_SESSION_COOKIE)?.value ?? '';
-    const compRole = compSim ? await currentTrace.step('auth-me', () => verifyPageRole(token, currentTrace.requestId)) : null;
-    if (compRole === 'user' || compRole === 'login') {
-      const target = req.nextUrl.clone();
-      target.searchParams.delete('_rsc');
-      const next = `${target.pathname}${target.search}`;
-      const prefix = (stripLocalePrefix(target.pathname).locale ?? preferredLocale(req)) === 'zh' ? '/zh' : '';
-      target.pathname = compRole === 'login' ? `${prefix}/account` : prefix || '/';
-      target.search = '';
-      if (compRole === 'login') target.searchParams.set('next', next);
-      const response = NextResponse.redirect(target, 307);
-      response.headers.set('Cache-Control', 'private, no-store');
-      response.headers.set('X-Request-ID', currentTrace.requestId);
-      currentTrace.finish();
-      return response;
-    }
-    const data = await currentTrace.step('home-locks', async () => {
-      const upstream = await fetch(pageAccessApiUrl('locks'), {
-        cache: 'no-store', signal: AbortSignal.timeout(5000), headers: { 'X-Request-ID': currentTrace.requestId },
-      });
-      currentTrace.homeLocksStatus = upstream.status;
-      if (!upstream.ok) throw new Error('Lock status unavailable');
-      const data = await upstream.json();
-      if (!data?.locks || typeof data.locks !== 'object' || Array.isArray(data.locks)
-        || Object.values(data.locks).some((value) => typeof value !== 'boolean')) throw new Error('Invalid lock status');
-      return data;
-    });
-    const locked = homeCardsRequireAdmin(cards, data.locks);
-    const adminDenied = locked && !(compRole === 'admin' || await currentTrace.step('auth-me', () => verifyPageAdmin(token, currentTrace.requestId)));
-    let response: NextResponse;
-    if (adminDenied) {
-      const target = req.nextUrl.clone();
-      target.searchParams.delete('_rsc');
-      const next = `${target.pathname}${target.search}`;
-      target.pathname = '/auth/page-access';
-      target.search = '';
-      target.searchParams.set('next', next);
-      response = NextResponse.redirect(target, 307);
-    } else {
-      response = routeLanguage(req);
-    }
-    response.headers.set('Cache-Control', 'private, no-store');
-    if (locked) response.headers.set('X-Robots-Tag', 'noindex, nofollow');
-    response.headers.set('X-Request-ID', currentTrace.requestId);
-    currentTrace.finish();
-    return response;
-  } catch (error) {
-    (trace ??= new PageAccessTrace()).finish(true, error);
-    return new NextResponse('Page access verification unavailable. Please retry.', {
-      status: 503, headers: {
-        'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow', 'Retry-After': '5',
-        ...(trace ? { 'X-Request-ID': trace.requestId } : {}),
-      },
-    });
-  }
+// Homepage card visibility never gates page delivery or adds an API dependency.
+export function proxy(req: NextRequest) {
+  return routeLanguage(req);
 }
 
 function routeLanguage(req: NextRequest) {

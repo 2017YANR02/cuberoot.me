@@ -64,31 +64,13 @@ describe('regional page access gateway', () => {
     expect(response.headers.get('X-Request-ID')).toBe(requestId);
     expect(await response.text()).not.toContain('private-token');
   });
-  it('applies live locks through production middleware and the gateway without recursion or stale grants', async () => {
+  it('is no longer called by production page delivery', async () => {
     vi.stubEnv('VERCEL', '1'); vi.stubEnv('VERCEL_ENV', 'production');
-    let locks: unknown = { timer: false };
-    const calls: string[] = [];
-    vi.stubGlobal('fetch', vi.fn(async (url: string, options: RequestInit) => {
-      calls.push(url);
-      if (url.startsWith('https://cuberoot-me.vercel.app/api/page-access?')) {
-        return GET(new Request(url, options));
-      }
-      expect(url).toBe('https://api.cuberoot.me/v1/nav/home-locks');
-      return Response.json({ locks });
-    }));
-    const input = new NextRequest('https://cuberoot.me/zh/timer');
-    const allowed = await proxy(input);
-    expect(allowed.status).toBe(200);
-    expect(allowed.headers.get('X-Request-ID')).toBeTruthy();
-    locks = { timer: true };
-    const denied = await proxy(input);
-    expect(denied.status).toBe(307);
-    expect(new URL(denied.headers.get('Location')!).pathname).toBe('/auth/page-access');
-    expect(calls).toHaveLength(4);
-    locks = { timer: 'false' };
-    vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect((await proxy(input)).status).toBe(503);
-    expect((await proxy(new NextRequest('https://cuberoot-me.vercel.app/api/page-access?check=locks'))).status).toBe(200);
-    expect(calls).toHaveLength(6);
+    const fetcher = vi.fn(async () => { throw new Error('gateway unavailable'); });
+    vi.stubGlobal('fetch', fetcher);
+    for (const path of ['/zh/timer', '/zh/comp-sim', '/zh/partnership']) {
+      expect((await proxy(new NextRequest(`https://cuberoot.me${path}`))).status).toBe(200);
+    }
+    expect(fetcher).not.toHaveBeenCalled();
   });
 });
