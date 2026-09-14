@@ -34,6 +34,7 @@ export interface CurrentRecords {
 
 /** 发给 client 的 records 快照(仅本场比赛涉及的国家/洲).client 用同样的 key 规则做 lookup. */
 export interface CompRecordsSnapshot {
+  fwr?: Record<string, number>;
   wr: Record<string, number>;  // 全集(项目少,~34 条)
   cr: Record<string, number>;  // 仅本场涉及的洲
   nr: Record<string, number>;  // 仅本场涉及的国家
@@ -220,6 +221,7 @@ export function resolvePersonIso2(region: string, countryId?: string): string {
 }
 
 interface MinimalUser {
+  gender?: string;
   region: string;
   name?: string;
   countryId?: string;
@@ -275,6 +277,8 @@ function stepRecord(
 ): string {
   const k = `${eventId}|${isAvg ? '1' : '0'}`;
   const wrMin = runWr.get(k);
+  const fk = `f|${k}`;
+  const fwrMin = u?.gender === 'f' ? runWr.get(fk) : undefined;
   const crKey = u?.continentId ? `${k}|${u.continentId}` : null;
   const nrKey = u?.countryId ? `${k}|${u.countryId}` : null;
   const crMin = crKey ? runCr.get(crKey) : undefined;
@@ -282,9 +286,11 @@ function stepRecord(
 
   let tag = '';
   if (wrMin !== undefined && value <= wrMin) tag = 'WR';
+  else if (fwrMin !== undefined && value <= fwrMin) tag = 'FWR';
   else if (crMin !== undefined && value <= crMin) tag = 'CR';
   else if (nrMin !== undefined && value <= nrMin) tag = 'NR';
 
+  if (fwrMin !== undefined && value < fwrMin) runWr.set(fk, value);
   if (wrMin !== undefined && value < wrMin) runWr.set(k, value);
   if (crKey && crMin !== undefined && value < crMin) runCr.set(crKey, value);
   if (nrKey && nrMin !== undefined && value < nrMin) runNr.set(nrKey, value);
@@ -309,6 +315,9 @@ function judgeByDay(
   const scopes: { level: string; key: string; baseline: number | undefined; winner: DayBestEntry | undefined }[] = [
     { level: 'WR', key: k, baseline: base.wr.get(k), winner: day.wr.get(k) },
   ];
+  if (u?.gender === 'f') {
+    scopes.push({ level: 'FWR', key: `f|${k}`, baseline: base.wr.get(`f|${k}`), winner: day.wr.get(`f|${k}`) });
+  }
   if (u?.continentId) {
     const ck = `${k}|${u.continentId}`;
     scopes.push({ level: 'CR', key: ck, baseline: base.cr.get(ck), winner: day.cr.get(ck) });
@@ -363,6 +372,7 @@ export function judgeExternalRecord(
 /** 上游 tag(WR / AsR 等洲际 / NR)对应的 scope key + 基线表. */
 function scopeOfTag(tag: string, k: string, u: MinimalUser | undefined, recs: CurrentRecords):
   { value: number | undefined; at: string | undefined } | null {
+  if (tag === 'FWR') return { value: recs.wr.get(`f|${k}`), at: recs.wrAt.get(`f|${k}`) };
   const rank = recordLevelRank(tag);
   if (rank === 0) return { value: recs.wr.get(k), at: recs.wrAt.get(k) };
   if (rank === 1) {
@@ -410,6 +420,7 @@ export function refutesTag(
  *  首页纪录列表排序与下面的降级判定共用这一份. */
 export function recordLevelRank(tag: string): number {
   if (tag === 'WR') return 0;
+  if (tag === 'FWR') return 0.5;
   if (tag === 'CR') return 1;
   if (tag === 'NR') return 2;
   return tag.endsWith('R') ? 1 : 3;
@@ -470,6 +481,7 @@ export function foldCompIntoDayBest(
           if (prev === undefined || value < prev.value) m.set(mk, entry);
         };
         put(day.wr, k);
+        if (person?.gender === 'f') put(day.wr, `f|${k}`);
         if (who?.continentId) put(day.cr, `${k}|${who.continentId}`);
         if (who) put(day.nr, `${k}|${who.countryId}`);
       }
@@ -493,9 +505,16 @@ export function enrichComp(
   events?: MinimalEvent[],
   dayBest?: DayBest | null,
   compDate?: string | null,
+  femaleBaseline: Record<string, number> = {},
 ): CompRecordsSnapshot | null {
-  const recs = peekCurrentRecords();
-  if (!recs) return null;
+  const cachedRecords = peekCurrentRecords();
+  if (!cachedRecords) return null;
+  // Female history is selected as of this competition, independently of today's WR.
+  const recs = { ...cachedRecords, wr: new Map(cachedRecords.wr), wrAt: new Map(cachedRecords.wrAt) };
+  for (const [key, value] of Object.entries(femaleBaseline)) {
+    recs.wr.set(`f|${key}`, value);
+    recs.wrAt.set(`f|${key}`, '0000-01-01');
+  }
 
   const countriesInComp = new Set<string>();
   for (const u of Object.values(users)) {
@@ -547,7 +566,7 @@ export function enrichComp(
             // 兜底(多日赛拿不到轮次日期):沿用赛前基线 + 轮次时序 running-min,只填空不覆盖;
             // 但上游 tag 被赛前就存在的纪录证伪时(过期基线标出来的假 WR)照样清掉.
             const tag = stepRecord(val, eventId, isAvg, u, runWr, runCr, runNr);
-            if (tag && !already) {
+            if (tag && (!already || (tag === 'FWR' && already !== 'WR'))) {
               if (isAvg) lr.ar = tag;
               else lr.sr = tag;
             } else if (!tag && already && refutesTag(already, val, eventId, isAvg, u, recs, compDate, true)) {
@@ -566,7 +585,7 @@ export function enrichComp(
     if (cont) continentsInComp.add(cont);
   }
   const wr: Record<string, number> = {};
-  for (const [k, v] of recs.wr) wr[k] = v;
+  for (const [k, v] of recs.wr) if (!k.startsWith('f|')) wr[k] = v;
   const cr: Record<string, number> = {};
   for (const [k, v] of recs.cr) {
     const continent = k.split('|')[2];
@@ -589,5 +608,5 @@ export function enrichComp(
       if (countriesInComp.has(k.split('|')[2])) day.nr[k] = v;
     }
   }
-  return { wr, cr, nr, day };
+  return { wr, cr, nr, day, fwr: femaleBaseline };
 }

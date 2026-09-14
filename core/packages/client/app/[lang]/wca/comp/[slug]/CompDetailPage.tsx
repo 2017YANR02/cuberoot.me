@@ -89,6 +89,7 @@ async function exportNodeToPng(node: HTMLElement): Promise<string> {
 }
 
 interface User {
+  gender?: string;
   number: number;
   name: string;
   wcaid: string;
@@ -176,12 +177,14 @@ function inferLiveRecordTag(
 // 空 tag 补判、上游 tag 被现存纪录证伪就清掉(过期基线标出来的假 WR).原地改 r.
 function applyLiveRecordTags(r: LiveResult, u: User | undefined, snapshot: CompRecordsSnapshot | undefined): void {
   if (r.b > 0) {
-    if (!r.sr) r.sr = inferLiveRecordTag(r.b, r.e, false, u, snapshot) || r.sr;
+    const inferred = inferLiveRecordTag(r.b, r.e, false, u, snapshot);
+    if (!r.sr || (inferred === 'FWR' && r.sr !== 'WR')) r.sr = inferred || r.sr;
     else if (refutesTag(r.sr, r.b, r.e, false, u, snapshot)) r.sr = '';
   }
   if (r.a > 0) {
     const ar = String(r.ar || '');
-    if (!ar) r.ar = inferLiveRecordTag(r.a, r.e, true, u, snapshot) || r.ar;
+    const inferred = inferLiveRecordTag(r.a, r.e, true, u, snapshot);
+    if (!ar || (inferred === 'FWR' && ar !== 'WR')) r.ar = inferred || r.ar;
     else if (refutesTag(ar, r.a, r.e, true, u, snapshot)) r.ar = '';
   }
 }
@@ -449,6 +452,7 @@ interface CompRecordGroup { ev: EventMeta; rows: CompRecordEntry[]; }
 // 纪录等级排序:世界 → 大洲 → 国家。
 function recordTagRank(tag: string): number {
   if (tag === 'WR') return 0;
+  if (tag === 'FWR') return 0.5;
   if (tag === 'NR') return 2;
   return 1; // 大洲纪录 (AsR / NAR / ER / OcR / SAR / AfR)
 }
@@ -1106,7 +1110,7 @@ export default function CompDetailPage() {
     };
 
     const startSse = () => {
-      const q = sourceParam ? `?source=${encodeURIComponent(sourceParam)}` : '';
+      const q = sourceParam ? `?v=2&source=${encodeURIComponent(sourceParam)}` : '?v=2';
       const url = apiUrl(`/v1/cubing-live-stream/${encodeURIComponent(slug)}${q}`);
       es = new EventSource(url);
       const fallback = () => {
@@ -1155,7 +1159,7 @@ export default function CompDetailPage() {
     if (sourceParam || fresh) {
       startSse();
     } else {
-      const onlyQs = only ? `?only=${encodeURIComponent(only)}` : '';
+      const onlyQs = only ? `?v=2&only=${encodeURIComponent(only)}` : '?v=2';
       fetch(`/api/comp/${encodeURIComponent(slug)}${onlyQs}`, { signal: apiAbort.signal })
         .then(async r => {
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -1191,7 +1195,7 @@ export default function CompDetailPage() {
     if (!slug || !dataReady || fullLoaded || fullReqRef.current) return;
     fullReqRef.current = true;
     const ac = new AbortController();
-    fetch(`/api/comp/${encodeURIComponent(slug)}`, { signal: ac.signal })
+    fetch(`/api/comp/${encodeURIComponent(slug)}?v=2`, { signal: ac.signal })
       .then(r => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((j: CompData) => { setData(j); setFullLoaded(true); })
       .catch(() => { fullReqRef.current = false; });

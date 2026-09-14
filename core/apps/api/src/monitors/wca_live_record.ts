@@ -6,6 +6,8 @@
  * 仅纪录检测路径。关注选手 PR 扫描(scan_pr / watched_ids / pr_cache)是 Phase 4,本文件不实现。
  * 邮件(Python WR 发邮件)整块跳过 —— 邮件是留在 Python 的本地工具,不在本移植范围。
  */
+import { extractInferredRecords } from '../routes/cubing_live.js';
+import { formatInferred } from '../routes/wca_recent_records.js';
 import { sendBark } from './bark.js';
 import { countPushed, getPushedSet, markPushed, type MonitorId } from './state.js';
 import { RECORD_TAGS, NR_COUNTRIES, POLL_INTERVAL_MS, siteCompUrl, isChineseRegion } from './config.js';
@@ -158,7 +160,27 @@ async function recordToEvent(r: RecentRecord): Promise<RecordEvent> {
   };
 }
 
+/** FWR is absent from WCA Live's feed; reuse competition adjudication and persistent dedup. */
+export async function pushFemaleRecords(firstRun: boolean): Promise<void> {
+  if (!RECORD_TAGS.has('WR') && !RECORD_TAGS.has('FWR')) return;
+  const records = (await extractInferredRecords()).filter(r => r.tag === 'FWR');
+  const ids = records.map(r => r.id);
+  if (firstRun) { await markPushed(MONITOR, ids); return; }
+  const pushed = await getPushedSet(MONITOR, ids);
+  for (const r of records) {
+    if (pushed.has(r.id)) continue;
+    const text = await formatInferred(r);
+    const url = `${siteCompUrl(r.compId, r.eventId, null, isChineseRegion(r.personIso2))}&view=result&round=${encodeURIComponent(r.roundId)}`;
+    if (await sendBark({ title: text.cn, body: text.en, url, group: 'WCA Records', sound: 'multiwayinvitation' })) {
+      await markPushed(MONITOR, [r.id]);
+    }
+  }
+}
+
 async function runOnce(): Promise<void> {
+  const firstRun = (await countPushed(MONITOR)) === 0;
+  try { await pushFemaleRecords(firstRun); }
+  catch (e) { console.warn('[wca-live-record] FWR push failed, will retry:', (e as Error).message); }
   const records = await queryRecentRecords();
   if (records === null) return;
 
@@ -174,7 +196,7 @@ async function runOnce(): Promise<void> {
   const ids = filtered.map((r) => r.id);
 
   // 首跑静默吸收当前快照(对齐 Python is_first_run),不推送。
-  if ((await countPushed(MONITOR)) === 0) {
+  if (firstRun) {
     await markPushed(MONITOR, ids);
     console.log(`[wca-live-record] first run, silently absorbed ${ids.length} records`);
     return;

@@ -214,7 +214,7 @@ async function formatRecord(r: RawRecord, tag: string): Promise<{ cn: string; en
 
 /** 中国比赛(cubing.com)推断纪录的格式化 — 走与 WCA Live 同款 format_cli 模板 + getCompMeta.
  *  缓存键 = rec.id(含成绩值/tag),成绩更新自动重算. */
-async function formatInferred(rec: InferredRecord): Promise<{ cn: string; en: string }> {
+export async function formatInferred(rec: InferredRecord): Promise<{ cn: string; en: string }> {
   const personIso2 = rec.personIso2.toUpperCase();
   const meta = await getCompMeta(rec.compId, rec.compNameEn, personIso2);
   return renderCached(rec.id, {
