@@ -17,10 +17,27 @@ export function careForPet(id: string, action: CareAction): Promise<{ pet: Adopt
 }
 
 const PATH = '/v1/nav/deskpet-catalog';
-export async function getDeskPetCatalog(): Promise<DeskPetCatalog> {
-  const value = await handleApi<unknown>(await fetch(apiUrl(PATH), { cache: 'no-store' }));
-  if (!isDeskPetCatalog(value)) throw new Error('Invalid pet catalog');
-  return value;
+let catalogRequest: Promise<DeskPetCatalog> | undefined;
+
+async function fetchDeskPetCatalog(retry = true): Promise<DeskPetCatalog> {
+  const controller = new AbortController();
+  // Bound headers and body reads; retry this public GET once if it stalls.
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const value = await handleApi<unknown>(await fetch(apiUrl(PATH), { cache: 'no-store', signal: controller.signal }));
+    if (!isDeskPetCatalog(value)) throw new Error('Invalid pet catalog');
+    return value;
+  } catch (error) {
+    if (!retry || !controller.signal.aborted) throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+  return fetchDeskPetCatalog(false);
+}
+
+export function getDeskPetCatalog(): Promise<DeskPetCatalog> {
+  // The page and floating pet share pending work, but never cache old visibility settings.
+  return catalogRequest ??= fetchDeskPetCatalog().finally(() => { catalogRequest = undefined; });
 }
 export async function saveDeskPetCatalog(catalog: DeskPetCatalog): Promise<DeskPetCatalog> {
   return handleApi(await fetch(apiUrl(PATH), {
