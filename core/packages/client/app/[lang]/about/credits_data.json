@@ -187,6 +187,20 @@
     "en": "The architect's photographs guide Jin Mao's shaft, setbacks, recesses and crown. Tim Griffith's daytime view and a night image whose filename identifies China Jin Mao Group inform metal, glass and vertical lighting; the latter has no individual photographer credit and is not a current lighting survey. Entrance photographs © Nick Merrick | Hedrich Blessing guide podium louvers, canopies, stone columns and suspended shades. Capture dates are unknown. Photos are not runtime textures; the three supertalls use locally authored geometry with estimated dimensions, materials and lighting. Accessed 2026-09-13"
   },
   {
+    "name": "SKYDB / Nephilim: Jin Mao base detail",
+    "space": true,
+    "url": "https://www.skydb.net/file/678996762/jin-mao-tower-shanghai/",
+    "zh": "Nephilim 的塔楼基部近照用于石材分缝、细方孔格栅、圆孔金属遮阳板与成对竖肋。公开页面未注明拍摄日期，照片只供建模对照，不作为运行贴图；开孔、构件尺寸和重复数量仍为估算。查阅于 2026-09-13",
+    "en": "Nephilim's close-up guides the stone joints, fine square grilles, circular perforations in metal shades and paired vertical fins at the tower base. The public page gives no capture date. The photograph is a modeling reference, not a runtime texture; openings, member dimensions and repetition counts remain estimates. Accessed 2026-09-13"
+  },
+  {
+    "name": "SKYDB / Nephilim: Jin Mao circular entrance",
+    "space": true,
+    "url": "https://www.skydb.net/file/534491510/jin-mao-tower-shanghai/",
+    "zh": "Nephilim 的入口实拍用于圆形金属门框、玻璃分格、下方门扇和周围石材分缝。页面日期为 2005-02-22，日期字段未明确区分拍摄与发布，历史照片不能证明当前装修。入口方位及尺寸仍待核实；照片未作为运行贴图。查阅于 2026-09-13",
+    "en": "Nephilim's entrance photograph guides the circular metal frame, glazing grid, doors below it and jointed stone surround. The page lists 2005-02-22 without distinguishing capture from publication; this historical view does not establish the current fit-out. Entrance orientation and dimensions still need confirmation. The photograph is not a runtime texture. Accessed 2026-09-13"
+  },
+  {
     "name": "AS+GG: Jin Mao podium and atrium",
     "space": true,
     "url": "https://www.smithgill.com/work/jin_mao_tower/",
