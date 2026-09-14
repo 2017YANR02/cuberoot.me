@@ -1,0 +1,100 @@
+.live-guide {
+  width: min(1120px, 100%);
+  margin-inline: auto;
+  padding: 1.5rem max(1.25rem, env(safe-area-inset-left)) 4rem;
+  color: var(--foreground);
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.live-guide-topbar,
+.live-guide-actions,
+.live-guide-copy-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+}
+.live-guide-topbar { justify-content: space-between; }
+.live-guide a { color: var(--accent); text-underline-offset: 0.25em; }
+.live-guide-topbar > a,
+.live-guide-actions a,
+.live-guide-footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  text-decoration: none;
+}
+.live-guide a:hover { text-decoration: underline; }
+.live-guide svg { flex-shrink: 0; }
+.live-guide :is(a, button, summary):focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.live-guide-hero { max-width: 48rem; margin-block: 3.5rem 3rem; }
+.live-guide h1 { margin: 0; font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.2; letter-spacing: -0.035em; font-weight: 750; text-wrap: balance; }
+.live-guide-hero .live-guide-lead { margin-top: 1.5rem; font-size: clamp(1.1rem, 2.3vw, 1.4rem); color: var(--foreground); }
+.live-guide-hero > p { margin-block: 0.85rem; color: var(--muted-foreground); }
+.live-guide-actions { margin-top: 1.3rem; font-size: 0.92rem; }
+.live-guide-layout { display: grid; grid-template-columns: 12rem minmax(0, 1fr); gap: 3rem; }
+.live-guide-sidebar { position: sticky; top: 2rem; align-self: start; display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+.live-guide-sidebar p { margin: 0 0 0.65rem; color: var(--muted-foreground); font-size: 0.85rem; }
+.live-guide-sidebar a { display: flex; align-items: center; min-height: 44px; color: var(--foreground); text-decoration: none; }
+.live-guide-body { min-width: 0; }
+.live-guide-body > section { margin-bottom: 4.5rem; scroll-margin-top: 2rem; }
+.live-guide h2 { margin: 0 0 1.1rem; font-size: 1.7rem; line-height: 1.4; font-weight: 750; }
+.live-guide h3 { margin: 1.6rem 0 0.5rem; font-size: 1.06rem; line-height: 1.5; font-weight: 700; }
+.live-guide h4 { margin: 0; font-size: 1rem; font-weight: 700; }
+.live-guide-body p { margin-block: 0.5rem; }
+.live-guide-intro { color: var(--muted-foreground); }
+.live-guide-skills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem 2rem; }
+.live-guide-skills p { font-size: 0.94rem; }
+.live-guide-practice { color: var(--muted-foreground); }
+.live-guide-practice strong { color: var(--accent); font-weight: 600; }
+.live-guide-journey { padding-left: 1.4rem; margin-block: 1.7rem; }
+.live-guide-journey li { padding-left: 0.5rem; margin-bottom: 1.7rem; }
+.live-guide-journey li::marker { color: var(--accent); font-weight: 700; }
+.live-guide-journey h3 { margin-top: 0; }
+.live-guide blockquote { margin: 0.75rem 0 0; color: var(--muted-foreground); font-size: 0.95rem; }
+.live-guide-body .live-guide-source { margin-top: 1.3rem; color: var(--muted-foreground); font-size: 0.82rem; }
+.live-guide-details { margin-block: 0.75rem; }
+.live-guide summary { width: fit-content; cursor: pointer; min-height: 44px; padding-block: 0.5rem; font-weight: 600; line-height: 1.65; }
+.live-guide summary::marker { color: var(--accent); }
+.live-guide summary:hover { color: var(--accent); }
+.live-guide-details details > p { margin: 0.25rem 0 1.25rem 1rem; }
+.live-guide-checklist { list-style: none; margin-block: 0.75rem; padding: 0; display: grid; gap: 0.85rem; }
+.live-guide-checklist li { display: flex; align-items: baseline; gap: 0.65rem; }
+.live-guide-checklist svg { color: var(--accent); align-self: flex-start; margin-top: 0.35rem; }
+.live-guide-rundown { margin: 1.4rem 0; padding: 0; list-style: none; display: grid; gap: 1.15rem; }
+.live-guide-rundown li { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 1.5rem; }
+.live-guide-time { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 650; white-space: nowrap; }
+.live-guide-rundown p { color: var(--muted-foreground); font-size: 0.94rem; }
+.live-guide-reminder { font-weight: 550; }
+.live-guide-metrics { margin-block: 1.8rem; }
+.live-guide-metrics > div { display: grid; grid-template-columns: minmax(7rem, 0.3fr) minmax(0, 1fr); gap: 1.4rem; margin-block: 1.5rem; }
+.live-guide-metrics dt { font-weight: 700; }
+.live-guide-metrics dd { margin: 0; }
+.live-guide-metrics dd p { margin: 0 0 0.35rem; color: var(--muted-foreground); font-size: 0.91rem; }
+.live-guide-metrics dd .live-guide-formula { color: var(--foreground); }
+.live-guide-copy-row { margin-top: 2rem; }
+.live-guide-copy-row h3 { margin: 0; }
+.live-guide-copy-row button { display: inline-flex; align-items: center; gap: 0.45rem; border: 0; background: transparent; color: var(--accent); padding: 0; min-height: 44px; font: inherit; font-size: 0.9rem; cursor: pointer; }
+.live-guide-template pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 0.9rem; color: var(--muted-foreground); margin-block: 1rem; }
+.live-guide-footer { margin-top: 2rem; }
+.live-guide-mobile-nav { display: none; }
+
+@media (max-width: 800px) {
+  .live-guide-hero { margin-block: 2rem; }
+  .live-guide-layout { display: block; }
+  .live-guide-sidebar { display: none; }
+  .live-guide-mobile-nav { display: block; position: sticky; top: 0; z-index: 20; background: var(--background); margin-bottom: 1.5rem; }
+  .live-guide-mobile-nav summary { display: flex; align-items: center; gap: 0.65rem; min-height: 50px; padding-block: 0.65rem; }
+  .live-guide-mobile-nav summary::-webkit-details-marker { display: none; }
+  .live-guide-mobile-nav details[open] summary svg { transform: rotate(180deg); }
+  .live-guide-mobile-links { display: flex; flex-wrap: wrap; gap: 0 1.25rem; max-height: 50dvh; overflow-y: auto; padding-bottom: 0.5rem; }
+  .live-guide-mobile-links a { display: flex; align-items: center; min-height: 44px; text-decoration: none; }
+  .live-guide-body > section { scroll-margin-top: 70px; margin-bottom: 3.5rem; }
+}
+@media (max-width: 560px) {
+  .live-guide { padding-inline: 1.1rem; }
+  .live-guide-skills { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .live-guide-metrics > div { grid-template-columns: minmax(0, 1fr); gap: 0.4rem; }
+  .live-guide-rundown li { gap: 1rem; }
+}
