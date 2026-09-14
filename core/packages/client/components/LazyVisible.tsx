@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * 懒挂载容器:children 只在容器**首次滚入视口**(或接近视口)后才挂载,挂载后保持。
+ * 懒挂载容器:children 接近视口后才挂载,默认保持;动画可选离屏卸载。
  *
  * 用途:把「分布」区放到求解区下方同一滚动页时,分布里多数非 3x3 项目仍是**浏览器现场
  * 求解采样**(尚未迁到预生成静态 JSON)—— 若首屏就 eager 渲染,每次进页都会现场跑求解,
@@ -18,6 +18,7 @@ export default function LazyVisible({
   minHeight = 320,
   className,
   unwrapWhenVisible = false,
+  unmountWhenHidden = false,
 }: {
   children: ReactNode;
   /** 提前量:容器距视口多远就预挂(默认提前 300px,滚到时已就绪) */
@@ -27,19 +28,23 @@ export default function LazyVisible({
   className?: string;
   /** 挂载后移除占位 wrapper,供依赖既有顶层 margin / selector 的内容使用。 */
   unwrapWhenVisible?: boolean;
+  /** 离屏卸载动画等持续占用资源的内容;此时保留 wrapper 供持续观察。 */
+  unmountWhenHidden?: boolean;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (show) return;
     const el = ref.current;
     if (!el) return;
     // 老浏览器无 IntersectionObserver:直接挂载(失去懒加载但功能不丢)。
     if (typeof IntersectionObserver === 'undefined') { setShow(true); return; }
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
+        const visible = entries.some((e) => e.isIntersecting);
+        if (unmountWhenHidden) {
+          setShow(visible);
+        } else if (visible) {
           setShow(true);
           io.disconnect();
         }
@@ -48,9 +53,9 @@ export default function LazyVisible({
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [show, rootMargin]);
+  }, [rootMargin, unmountWhenHidden]);
 
-  if (show && unwrapWhenVisible) return children;
+  if (show && unwrapWhenVisible && !unmountWhenHidden) return children;
 
   return (
     <div ref={ref} className={className} style={show ? undefined : { minHeight }}>

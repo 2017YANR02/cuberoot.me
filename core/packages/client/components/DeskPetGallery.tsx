@@ -2,7 +2,7 @@
 
 // Gallery and story player, opened from the existing search toolbar.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { ArrowLeft, ArrowRight, Play, Pause, RotateCcw } from 'lucide-react';
 import { PET_GALLERY } from '@/lib/deskpet-gallery';
 import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
@@ -10,6 +10,7 @@ import { ROOTBEAST_COLLECTIONS, ROOTBEAST_SCENES } from '@/lib/deskpet-rootbeast
 import { ORIGINAL_CHARACTERS, ORIGINAL_COLLECTIONS, ORIGINAL_SCENES } from '@/lib/deskpet-originals';
 import AppLink from '@/components/AppLink';
 import { CompactSelect } from '@/components/CompactSelect';
+import LazyVisible from '@/components/LazyVisible';
 import { tr } from '@/i18n/tr';
 
 const CSS = `
@@ -72,6 +73,37 @@ const CSS = `
   .deskpet-gallery{padding:0;}
 }
 `;
+
+function SceneTile({ src, label, posterMs, zoom, onSelect }: {
+  src: string; label: string; posterMs: number; zoom?: CSSProperties; onSelect: () => void;
+}) {
+  const art = useRef<HTMLObjectElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const playback = () => {
+    const playing = button.current?.matches(':hover, :focus-visible')
+      && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    for (const animation of art.current?.contentDocument?.getAnimations() ?? []) {
+      if (playing) animation.play(); else animation.pause();
+    }
+  };
+  return <button ref={button} type="button" className="deskpet-gallery-tile" onClick={onSelect} aria-label={label}
+    onMouseEnter={playback} onMouseLeave={playback} onFocus={playback} onBlur={playback}>
+    <figure>
+      <LazyVisible className="deskpet-gallery-media" minHeight={0} rootMargin="0px" unmountWhenHidden>
+        <object ref={art} type="image/svg+xml" data={src} aria-hidden="true" tabIndex={-1} style={zoom}
+          onLoad={() => {
+            for (const animation of art.current?.contentDocument?.getAnimations() ?? []) {
+              animation.effect?.updateTiming({ delay: 0 });
+              animation.currentTime = posterMs;
+              animation.pause();
+            }
+            playback();
+          }} />
+      </LazyVisible>
+      <figcaption>{label}</figcaption>
+    </figure>
+  </button>;
+}
 
 function PlaytimePreview({ scene, onStep }: {
   scene: NonNullable<ReturnType<typeof getDeskPetScene>>; onStep: (delta: number) => void;
@@ -192,22 +224,22 @@ export default function DeskPetGallery({ character, characters, selected, setSel
                   ? { transform: `scale(${g.scale})`, transformOrigin: g.scaleOrigin || 'center' }
                   : undefined;
                 const src = a.src ?? g.base + a.file + (g.v ? `?v=${g.v}` : '');
-                if (a.state) return (
-                  <button type="button" className="deskpet-gallery-tile" key={a.file}
-                    onClick={() => setSelected(a.state!)} aria-label={tr(a)}>
-                    <figure><div className="deskpet-gallery-media"><img src={src} alt="" loading="lazy" style={zoom} /></div><figcaption>{tr(a)}</figcaption></figure>
-                  </button>
-                );
+                if (a.state) {
+                  const preview = getDeskPetScene(a.state);
+                  return <SceneTile key={a.file} src={src} label={tr(a)} zoom={zoom}
+                    posterMs={preview ? preview.poster * preview.durationMs : 0}
+                    onSelect={() => setSelected(a.state!)} />;
+                }
                 return (
                   <figure key={a.file}>
-                    <div className="deskpet-gallery-media">
+                    <LazyVisible className="deskpet-gallery-media" minHeight={0} rootMargin="0px" unmountWhenHidden>
                       {g.scripted ? (
                         // script-driven SVG: <object> runs its animation; <img> would stay blank
                         <object type="image/svg+xml" data={src} aria-label={tr(a)} style={zoom} />
                       ) : (
                         <img src={src} alt={tr(a)} loading="lazy" style={zoom} />
                       )}
-                    </div>
+                    </LazyVisible>
                     <figcaption>{tr(a)}</figcaption>
                   </figure>
                 );
