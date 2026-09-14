@@ -169,7 +169,7 @@ export default function LblTutorial() {
           {isDaisyStep
             ? daisyDemo
               ? <AlgPlayer key={`daisy-${daisyDemo.scramble}-${daisyDemo.displayAlg}`} puzzle="3x3" set="" engine="sim" orientation="z2"
-                alg={daisyDemo.alg} setup={daisyDemo.setup} autoPlay fillPane moveDurationMs={1500} />
+                alg={daisyDemo.alg} setup={daisyDemo.setup} fillPane moveDurationMs={1500} />
               : <DaisyLoadingState state={daisyLesson.state} onRetry={daisyLesson.retry} />
             : <AlgPlayer key={`${step.id}-${exampleIndex}`} puzzle="3x3" set="" engine="sim" orientation="z2"
               alg={demo.alg} setup={demo.setup} startSolved={demo.startSolved} fillPane moveDurationMs={650} />}
