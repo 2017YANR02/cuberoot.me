@@ -29,7 +29,7 @@ import type { NextRequest } from 'next/server';
 import { fillPlatformParams, matchPlatformRoute } from './lib/platform-routes';
 import { homeCardsRequireAdmin, matchingHomeCards, PAGE_SESSION_COOKIE } from './lib/home-card-access';
 import { isCompSimPage, verifyPageAdmin, verifyPageRole } from './lib/page-admin-session';
-import { apiUrl } from './lib/api-base';
+import { pageAccessApiUrl } from './lib/page-access-api';
 import { PageAccessTrace } from './lib/page-access-trace';
 
 const SUPPORTED_LOCALES = ['en', 'zh'] as const;
@@ -178,7 +178,7 @@ export async function proxy(req: NextRequest) {
       return response;
     }
     const data = await currentTrace.step('home-locks', async () => {
-      const upstream = await fetch(apiUrl('/v1/nav/home-locks'), {
+      const upstream = await fetch(pageAccessApiUrl('locks'), {
         cache: 'no-store', signal: AbortSignal.timeout(5000), headers: { 'X-Request-ID': currentTrace.requestId },
       });
       currentTrace.homeLocksStatus = upstream.status;
