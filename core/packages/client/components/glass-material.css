@@ -1,7 +1,7 @@
 /* One natural material. Resolve tokens locally for palette comparison samples. */
 :root, body, .palette-scope, .contrast-scope {
   --glass-surface-bg: color-mix(in srgb, var(--card) 22%, transparent);
-  --glass-popover-bg: color-mix(in srgb, var(--popover) 68%, transparent);
+  --glass-popover-bg: color-mix(in srgb, var(--popover) 96%, transparent);
   --glass-background: transparent;
   --glass-border: color-mix(in srgb, var(--foreground) 22%, transparent);
   --glass-edge: var(--glass-border);

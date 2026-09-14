@@ -189,6 +189,10 @@ pnpm --filter @cuberoot/client lint
 - 教程项目选择器的 ivy 中文短名固定为「枫叶」,禁加通用品类后缀。
 - 站内违禁词表 `.codex/banned-words.json`(hook `block-banned-words` 写入即拦,`.codex/` 自身豁免);用户说「添加违禁词:x」= 往该表加 `{word,use,why}` 一条。行内豁免注释 `allow-banned-word`。
 
+## 指法记号（公式库 / 教程 / 模拟器）
+
+改指法、`algHtml` 标记含义、指法导入/导出或 AI 公式转换前，先读 [统一指法记号契约](docs/fingertrick-notation.md)。保留富文本和纯文本两种写法，共用语义；删除线表示中指、斜体表示拇指，下划线须结合转动与来源判断，禁全部替换成 `p`。动作编排另读 `core/packages/client/app/[lang]/sim/engine/hands/FINGERTRICKS.md`；严格区分记号规格、解析支持和动画验收。
+
 ## Skill 路由
 
 Skill 路径按 catalog 的 root alias 展开,禁猜路径。

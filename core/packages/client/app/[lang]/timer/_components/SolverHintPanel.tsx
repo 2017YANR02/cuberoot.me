@@ -28,9 +28,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
 import { useQueryState, parseAsBoolean } from 'nuqs';
-import { ChevronRight, X } from 'lucide-react';
+import { ChevronRight, Maximize2, Minimize2, X } from 'lucide-react';
 import { Spinner } from '@/components/Spinner/Spinner';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import StepSolve from './StepSolve';
@@ -119,21 +118,6 @@ function useScrambleSwipe({ onPrevScramble, onNextScramble }: ScrambleNav) {
   return { onPointerDown, onPointerMove, onPointerUp: onPointerEnd, onPointerCancel: onPointerEnd, onClickCapture };
 }
 
-/** 桌面形态二选一:右栏 ↔ 全屏。右栏头部和全屏头部各挂一个,两处都能切回去。 */
-function ModeToggle({ full, onChange }: { full: boolean; onChange: (full: boolean) => void }) {
-  return (
-    <span className="solver-mode-toggle">
-      <PillToggle
-        value={full}
-        onChange={onChange}
-        onLabel={tr({ zh: '全屏', en: 'Full' })}
-        offLabel={tr({ zh: '右栏', en: 'Rail' })}
-        ariaLabel={tr({ zh: '解法面板形态', en: 'Solver panel layout' })}
-      />
-    </span>
-  );
-}
-
 function SolverBody({ scramble, isZh, compact }: Props & { compact: boolean }) {
   return (
     <>
@@ -157,7 +141,17 @@ function SolverSheet({ scramble, isZh, compact, onClose, onDock, onPrevScramble,
     <div className="solver-sheet" data-no-timer role="dialog" aria-modal="true" aria-label={title} {...swipe}>
       <div className="solver-sheet-head">
         <span className="solver-sheet-title">{title}</span>
-        {onDock && <ModeToggle full onChange={(v) => { if (!v) onDock(); }} />}
+        {onDock && (
+          <button
+            type="button"
+            className="solver-layout-action"
+            onClick={onDock}
+            title={tr({ zh: '还原到右侧面板', en: 'Restore to side panel' })}
+          >
+            <Minimize2 size={16} aria-hidden="true" />
+            {tr({ zh: '还原', en: 'Restore' })}
+          </button>
+        )}
         <button
           type="button"
           className="solver-sheet-close"
@@ -210,7 +204,7 @@ export default function SolverHintPanel({
     try { if (localStorage.getItem(LS_FULL) === '1') setFullPref(true); } catch { /* 隐私模式:留右栏 */ }
   }, []);
 
-  // 全屏浮层态 —— 归 URL 管,返回键即关闭。手机点 pill 进,桌面靠头部的形态开关进。
+  // 全屏浮层态 —— 归 URL 管,返回键即关闭。手机点 pill 进,桌面点头部的全屏按钮进。
   const [sheetOpen, setSheetOpen] = useQueryState(
     HINTS_PARAM,
     parseAsBoolean.withDefault(false).withOptions({ history: 'push' }),
@@ -292,12 +286,33 @@ export default function SolverHintPanel({
             aria-expanded={open}
           >
             <span className="solver-panel-title">{title}</span>
-            {/* 桌面的 chevron 描述的是就地折叠,留着。手机上点开的是全屏浮层,原来配了个
-                「放大」图标 —— 顶栏那排控件里只剩文字更干净,去掉。 */}
-            {isDesktopRail && <ChevronRight size={14} className="solver-panel-chevron" />}
+            {/* 收起时箭头留在入口内；展开时移到全屏按钮右侧。 */}
+            {isDesktopRail && !railOpen && <ChevronRight size={14} className="solver-panel-chevron" />}
           </button>
-          {/* 形态自选:留在右栏,或摊到全屏(全屏不压缩排版,3D 魔方与解法列表并排)。 */}
-          {isDesktopRail && railOpen && <ModeToggle full={false} onChange={pickFull} />}
+          {isDesktopRail && railOpen && (
+            <button
+              type="button"
+              className="solver-layout-action"
+              onClick={() => pickFull(true)}
+              aria-haspopup="dialog"
+              aria-label={tr({ zh: '全屏查看解法', en: 'View solutions fullscreen' })}
+              title={tr({ zh: '全屏查看解法', en: 'View solutions fullscreen' })}
+            >
+              <Maximize2 size={16} aria-hidden="true" />
+            </button>
+          )}
+          {isDesktopRail && railOpen && (
+            <button
+              type="button"
+              className="solver-layout-action"
+              onClick={(e) => { toggle(); e.currentTarget.blur(); }}
+              aria-expanded={open}
+              aria-label={tr({ zh: '收起解法面板', en: 'Collapse solutions panel' })}
+              title={tr({ zh: '收起解法面板', en: 'Collapse solutions panel' })}
+            >
+              <ChevronRight size={14} className="solver-panel-chevron" aria-hidden="true" />
+            </button>
+          )}
         </div>
         {railBodyOpen && (
           <div className="solver-panel-body">
@@ -307,7 +322,7 @@ export default function SolverHintPanel({
       </aside>
       {sheetOpen && !resultsPanelOpen && mounted && createPortal(
         // 紧凑排版只给真手机;平板 / 桌面全屏都够宽,摊开排。
-        // 桌面多给一个形态开关(切回右栏 = 关浮层并记住);手机没有右栏,只留 ✕。
+        // 桌面提供还原按钮(切回右栏 = 关浮层并记住);手机没有右栏,只留 ✕。
         <SolverSheet
           scramble={scramble}
           isZh={isZh}

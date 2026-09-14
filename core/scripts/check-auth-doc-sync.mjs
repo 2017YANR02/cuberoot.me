@@ -13,12 +13,14 @@ const ROOTS = [
   'packages/app-ui/src', 'packages/shared/src', 'packages/client/lib',
   'packages/client/components', 'packages/client/app/auth',
   'packages/client/app/[lang]/account', 'packages/client/app/api/google-verify',
+  'packages/client/app/api/page-access',
 ];
 const EXACT = new Set([
   'apps/api/src/db/schema.pg.sql', 'apps/api/src/index.ts',
   'apps/miniprogram/src/lib/navigation.ts', 'apps/miniprogram/src/lib/web-routes.ts',
   'apps/miniprogram/src/pages/web/index.ts',
   'packages/client/components/MobileEmbedBridge.tsx', 'packages/shared/src/mobile_embed.ts',
+  'packages/client/lib/page-access-api.ts',
   'packages/app-ui/src/App.tsx', 'apps/mobile/src/capacitor-host.ts',
   'apps/mobile/src/native/secure-storage.ts', 'apps/desktop/src/tauri-host.ts',
   'apps/desktop/src-tauri/src/lib.rs', 'apps/harmony/src/harmony-host.ts',
@@ -44,6 +46,7 @@ export function isAuthDocSource(path) {
   if (normalized.startsWith('packages/client/app/auth/')
     || normalized.startsWith('packages/client/app/[lang]/account/')
     || normalized.startsWith('packages/client/app/api/google-verify/')
+    || normalized.startsWith('packages/client/app/api/page-access/')
     || normalized.startsWith('apps/miniprogram/src/pages/account/')
     || normalized.startsWith('packages/shared/src/auth/')
     || normalized.startsWith('packages/app-ui/src/auth/')) return true;

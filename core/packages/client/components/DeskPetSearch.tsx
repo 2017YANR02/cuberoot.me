@@ -26,7 +26,7 @@ import { tr } from '@/i18n/tr';
 const CSS = `
 .deskpet-search-backdrop{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:100010;display:flex;
   flex-direction:column;align-items:center;justify-content:flex-end;padding:16px 16px max(12vh,48px);
-  background:color-mix(in srgb, var(--foreground) 38%, transparent);
+  background:color-mix(in srgb, var(--background) 88%, transparent);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
 .deskpet-search-box{width:min(720px,100%);will-change:transform,opacity;}
 .deskpet-search-box .landing-search{margin:0;}
@@ -36,13 +36,13 @@ const CSS = `
 /* Controls render as a bare row of icons (no per-button card/border) — hover only. */
 .deskpet-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
   gap:0;width:min(720px,100%);margin:0;}
-.deskpet-toolbar button,.deskpet-toolbar a{display:flex;align-items:center;gap:6px;border:0;cursor:pointer;
+.deskpet-toolbar button:not(.lang-menu *),.deskpet-toolbar a:not(.lang-menu *){display:flex;align-items:center;gap:6px;border:0;cursor:pointer;
   padding:7px;border-radius:9px;text-decoration:none;
   font:13px/1 ui-sans-serif,system-ui,sans-serif;
   background:transparent;color:var(--foreground);transition:background .15s,color .15s;}
-.deskpet-toolbar button:hover,.deskpet-toolbar a:hover{background:color-mix(in srgb, var(--foreground) 9%, transparent);}
-.deskpet-toolbar button.is-active,.deskpet-toolbar a.is-active{color:var(--accent);}
-.deskpet-toolbar button.is-active:hover,.deskpet-toolbar a.is-active:hover{background:color-mix(in srgb, var(--accent) 12%, transparent);}
+.deskpet-toolbar button:not(.lang-menu *):hover,.deskpet-toolbar a:not(.lang-menu *):hover{background:color-mix(in srgb, var(--foreground) 9%, transparent);}
+.deskpet-toolbar button:not(.lang-menu *).is-active,.deskpet-toolbar a:not(.lang-menu *).is-active{color:var(--accent);}
+.deskpet-toolbar button:not(.lang-menu *).is-active:hover,.deskpet-toolbar a:not(.lang-menu *).is-active:hover{background:color-mix(in srgb, var(--accent) 12%, transparent);}
 .deskpet-toolbar-thumb{width:26px;height:26px;object-fit:contain;}
 .deskpet-toolbar .deskpet-character-select{align-self:center;}
 .deskpet-toolbar .char-btn{position:relative;justify-content:center;width:44px;min-height:54px;padding:6px;}
@@ -96,7 +96,7 @@ const CSS = `
 .deskpet-toolbar .wca-auth-avatar,.deskpet-toolbar .wca-auth-fallback,
 .deskpet-toolbar-thumb{width:20px;height:20px;flex:none;}
 .deskpet-toolbar .header-toggles{gap:0;}
-.deskpet-toolbar .lang-menu{top:auto;bottom:calc(100% + 6px);}
+.deskpet-toolbar .lang-menu:not(.appearance-menu){top:auto;bottom:calc(100% + 6px);}
 @media (max-width:768px){
   .deskpet-toolbar>*{flex:0 0 auto;}
   .deskpet-toolbar .sep{display:none;}

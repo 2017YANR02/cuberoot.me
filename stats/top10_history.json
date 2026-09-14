@@ -6129,6 +6129,11 @@
       "country": "China",
       "iso2": "CN"
     },
+    "2019SHAY01": {
+      "name": "Yinzhi Sha (沙印志)",
+      "country": "China",
+      "iso2": "CN"
+    },
     "2003SWAR02": {
       "name": "Michael Swart",
       "country": "Canada",
@@ -6481,11 +6486,6 @@
     },
     "2017TANG35": {
       "name": "Yu Tang (唐语)",
-      "country": "China",
-      "iso2": "CN"
-    },
-    "2019SHAY01": {
-      "name": "Yinzhi Sha (沙印志)",
       "country": "China",
       "iso2": "CN"
     },
@@ -24614,6 +24614,9 @@
     "ChampagneOpen2026": {
       "name": "Champagne Open 2026"
     },
+    "SantosMagicoOpen2026": {
+      "name": "Santos Mágico Open 2026"
+    },
     "CzechOpen2006": {
       "name": "Czech Open 2006"
     },
@@ -38612,6 +38615,9 @@
     "Soorsi2026": {
       "name": "Soorsi 2026"
     },
+    "BrightonBrawlNY2026": {
+      "name": "Brighton Brawl NY 2026"
+    },
     "ColombiaMetodoGenius2011": {
       "name": "Colombia MetodoGenius 2011"
     },
@@ -38690,6 +38696,9 @@
     "NorthLiberty2019": {
       "name": "North Liberty 2019"
     },
+    "CapivaraSunset2019": {
+      "name": "Capivara Sunset 2019"
+    },
     "SummerKubeVilaVelha2020": {
       "name": "Summer Kube Vila Velha 2020"
     },
@@ -38744,6 +38753,9 @@
     "CubingZANationalChampionship2023": {
       "name": "CubingZA Nationals 2023"
     },
+    "BoraBoraBarraOpen2023": {
+      "name": "Bora Bora Barra Open 2023"
+    },
     "CronosQueretaro2023": {
       "name": "Cronos Querétaro 2023"
     },
@@ -38792,6 +38804,9 @@
     "SandnesWinter2025": {
       "name": "Sandnes Winter 2025"
     },
+    "CamposdoJordaoOpen2025": {
+      "name": "Campos do Jordão Open 2025"
+    },
     "GreenWinter2025": {
       "name": "Green Winter 2025"
     },
@@ -38822,11 +38837,17 @@
     "PortentilIshavet2026": {
       "name": "Porten til Ishavet 2026"
     },
+    "Itapeva2026": {
+      "name": "Itapeva 2026"
+    },
     "ClujCubingSportsFestival2026": {
       "name": "Cluj Cubing Sports Festival 2026"
     },
     "GuangzhouBigCubes2026": {
       "name": "Guangzhou Big Cubes 2026"
+    },
+    "PresidentePrudenteOpen2026": {
+      "name": "Presidente Prudente Open 2026"
     },
     "PinoyBigCubesOpen2009": {
       "name": "Pinoy Big Cubes Open 2009"
@@ -39290,6 +39311,9 @@
     "BangkokCubeFestival2026": {
       "name": "Bangkok Cube Festival 2026"
     },
+    "WuhanGoldenAutumn2026": {
+      "name": "Wuhan Golden Autumn 2026"
+    },
     "NanjingSpring2011": {
       "name": "Nanjing Spring 2011"
     },
@@ -39358,6 +39382,9 @@
     },
     "OmanOpen2023": {
       "name": "Oman Open 2023"
+    },
+    "BioAteneuSantos2023": {
+      "name": "BioAteneu Santos 2023"
     },
     "CubingwiththeCatsSunday2023": {
       "name": "Cubing with the Cats Sun 2023"
@@ -39485,9 +39512,6 @@
     "ConstantaCubeDays2019": {
       "name": "Constanta Cube Days 2019"
     },
-    "CapivaraSunset2019": {
-      "name": "Capivara Sunset 2019"
-    },
     "HamiltonSideEvents2022": {
       "name": "Hamilton Side Events 2022"
     },
@@ -39571,9 +39595,6 @@
     },
     "AstanaOpen2025": {
       "name": "Astana Open 2025"
-    },
-    "Itapeva2026": {
-      "name": "Itapeva 2026"
     },
     "UIUCSpring2026": {
       "name": "UIUC Spring 2026"
@@ -39725,6 +39746,9 @@
     "ZHBITOpen2019": {
       "name": "ZHBIT Open 2019"
     },
+    "HezeOpen2019": {
+      "name": "Heze Open 2019"
+    },
     "Norrkubing2021": {
       "name": "Norrkubing 2021"
     },
@@ -39766,6 +39790,9 @@
     },
     "NacionalesArgentinas2025": {
       "name": "Nacionales Argentinas 2025"
+    },
+    "QuanzhouBigCubes2026": {
+      "name": "Quanzhou Big Cubes 2026"
     },
     "AZCubingBigCubeBrawl2018": {
       "name": "AZCubing Big Cube Brawl 2018"
@@ -40402,9 +40429,6 @@
     },
     "OsijekOpen2026": {
       "name": "Osijek Open 2026"
-    },
-    "QuanzhouBigCubes2026": {
-      "name": "Quanzhou Big Cubes 2026"
     },
     "CubeAgainstCancerBoston2026": {
       "name": "Cube Against Cancer Boston 2026"
@@ -44552,6 +44576,9 @@
     "QueenslandOpen2026": {
       "name": "Queensland Open 2026"
     },
+    "FloridaChampionship2026": {
+      "name": "Florida Championship 2026"
+    },
     "ManchesterMBLDDay2024": {
       "name": "Manchester MBLD Day 2024"
     },
@@ -45845,6 +45872,9 @@
     "KlemzigKubingDecathlon2026": {
       "name": "Klemzig Kubing Decathlon 2026"
     },
+    "ShhherbornSummer2026": {
+      "name": "Shhherborn Summer 2026"
+    },
     "PuyDeDomeOpen2010": {
       "name": "Puy de Dome Open 2010"
     },
@@ -46081,9 +46111,6 @@
     },
     "ICHBCubeRace2019": {
       "name": "ICHB Cube Race 2019"
-    },
-    "HezeOpen2019": {
-      "name": "Heze Open 2019"
     },
     "NingxiaOpen2019": {
       "name": "Ningxia Open 2019"
@@ -46897,9 +46924,6 @@
     },
     "SouthJerseySpeedsolving2023": {
       "name": "South Jersey Speedsolving 2023"
-    },
-    "BoraBoraBarraOpen2023": {
-      "name": "Bora Bora Barra Open 2023"
     },
     "CerradoOpen2023": {
       "name": "Cerrado Open 2023"
@@ -48781,6 +48805,9 @@
     },
     "MirecourtOpen2026": {
       "name": "Mirecourt Open 2026"
+    },
+    "NZCubingintheCapital2026": {
+      "name": "NZ Cubing in the Capital 2026"
     },
     "LETIOpen2017": {
       "name": "LETI Open 2017"

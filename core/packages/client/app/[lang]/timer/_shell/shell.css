@@ -269,9 +269,9 @@
   transition: background 120ms, color 120ms;
 }
 .solver-panel-head:hover { background: var(--shell-hover); color: var(--foreground); }
-/* 头部一行 = 折叠按钮 (+ 桌面右栏展开后的形态开关)。默认 display:contents —— 手机顶栏、
+/* 头部一行 = 折叠按钮 (+ 桌面右栏展开后的全屏按钮)。默认 display:contents —— 手机顶栏、
    桌面收起态的 pill 形态里当它不存在,原有布局一字不改;只有右栏展开态(见 ≥1024 段)
-   才把它变成真的 flex 行,好把开关摆到标题那条分隔线上。 */
+   才把它变成真的 flex 行,好把按钮摆到标题那条分隔线上。 */
 .solver-panel-headrow { display: contents; }
 /* 手机形态:顶栏那排控件里的一员,但不画框 —— 纯文字入口,高度对齐旁边的下拉。
    (桌面那颗仍是 pill:它在右栏里是唯一的可点物,没有边框就读不出可点。) */
@@ -290,15 +290,29 @@
 .solver-panel[data-open='false'] .solver-panel-chevron { transform: rotate(90deg); }
 .solver-panel[data-open='true']  .solver-panel-chevron { transform: rotate(-90deg); }
 .solver-panel-expand { opacity: 0.7; }
-/* 形态开关(右栏 ↔ 全屏,仅桌面渲染):右栏头部和全屏浮层头部各一个,两边都能切回去。
-   全屏 = 同一份内容摊到 .solver-sheet(与手机同一个浮层、同一个 ?hints),窄栏里被迫
-   上下叠的 3D 魔方与解法列表在那儿才排得开。 */
-.solver-mode-toggle {
+/* 窗口操作:右栏提供全屏,全屏浮层提供还原。 */
+.solver-layout-action {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  gap: 6px;
   flex: 0 0 auto;
-  padding: 0 10px;
+  min-height: 32px;
+  margin: 0 8px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
 }
+.solver-layout-action:hover { background: var(--shell-hover); color: var(--foreground); }
+.solver-layout-action:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .solver-panel-body { width: 100%; margin-top: 8px; }
 /* 打乱原文 — 面板/浮层里解法讲的是哪条打乱。同 .scramble-strip 的记号字体,但只做正文
    大小:这里是对照用的参考行,不是要人隔着房间读的主视觉。窄栏放不下就折行。 */
@@ -903,7 +917,9 @@
 /* (a) Timer chrome must sit above the deskpet (z-index:40). The bottom
    sheet / penalty sheet already use 60-62; the persistent chrome rows
    default to auto (below 40), so raise them. */
-.timer-shell .shell-topbar { position: relative; z-index: 41; background: var(--background); }
+/* 顶栏的会话弹窗和菜单须高于两种侧栏 (42)，仍低于全屏浮层 (61+)。
+   顶栏自身建立层叠上下文，只提高内部弹窗的 z-index 无法越过侧栏。 */
+.timer-shell .shell-topbar { position: relative; z-index: 43; background: var(--background); }
 /* stat-rail is an absolute bottom-LEFT overlay (see .shell-stat-rail); the
    bottom-RIGHT deskpet can't overlap it, so it needs no lift/solid bg. */
 @media (min-width: 1024px) {
