@@ -25,7 +25,7 @@ const FIELD_LABEL: Record<string, { zh: string; en: string }> = {
 const boxStyle: CSSProperties = {
   position: 'fixed', transform: 'translateX(-50%)', zIndex: 200,
   width: POP_W, padding: 12, display: 'flex', flexDirection: 'column', gap: 9,
-  background: 'var(--popover)', border: '1px solid var(--border-default)', borderRadius: 11,
+  border: '1px solid var(--border-default)', borderRadius: 11,
   boxShadow: '0 10px 28px rgba(0, 0, 0, 0.32)', textAlign: 'left', whiteSpace: 'normal', cursor: 'default',
   maxHeight: 'calc(100vh - 16px)', overflowY: 'auto',
 };
@@ -114,7 +114,7 @@ export function PendingProposals({ pending, eventId, isAdmin, onModerated }: {
       {open && pos && createPortal(
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 199, background: 'transparent' }} onClick={() => setOpen(false)} />
-          <span ref={popRef} style={{ ...boxStyle, top: pos.top, left: pos.left }} role="dialog" onClick={(e) => e.stopPropagation()}>
+          <span ref={popRef} data-site-surface="popover" style={{ ...boxStyle, top: pos.top, left: pos.left }} role="dialog" onClick={(e) => e.stopPropagation()}>
             {pending.map((c, ci) => {
               const fields = c.fields ?? [];
               return (

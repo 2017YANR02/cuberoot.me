@@ -970,8 +970,8 @@ export default function ReconListPage() {
           )}
 
           {viewMode === 'list' && (
-          <div className="recon-table-wrap">
-            <table className="recon-table">
+          <div className="recon-table-wrap sticky-scroll-mobile">
+            <table className="recon-table sticky-thead">
               <thead>
                 <tr>
                   {COLUMNS.map((col) => {

@@ -1,9 +1,10 @@
 /* 统计表「列头吸顶」共用工具 —— 原选手页 wp-sticky-* 抽出,全站统计表复用,别再各页另写一套。
    用法:外层滚动容器加 .sticky-scroll,<table> 加 .sticky-thead(thead 只写一次,列头自动吸顶)。
+   容器按表格内容收缩、只需窄屏横滚时用 .sticky-scroll-mobile,复用下面的纯 CSS 断点。
    机制:thead th position:sticky top:0 吸到视口顶端(全站无固定顶栏,只有右下角浮钮 → top:0)。
         桌面让容器 overflow:visible,使 thead 以页面为滚动上下文吸顶;窄屏容器横滚 → 关吸顶。
    契约(每张表自备,本工具不管):
-     ① th 必须有不透明背景,否则下方行会透出;各表按自己的表面色设 thead th { background } 。
+     ① 默认表头设主题实底;场景背景下由 site-surfaces.css 统一提供磨砂表头,禁页面另写透明度或 blur;非标准表头标 data-site-surface="heading"。
      ② border-collapse 下吸顶会丢 th 下边框 → 本工具用 box-shadow 补一条下划线,
         颜色取 --sticky-thead-border(各页/各表可设成自己的边框色,默认取通用前景描边)。*/
 .sticky-scroll { overflow: visible; }
@@ -25,6 +26,6 @@
    跟"何时切自滚动"是同一个条件,别在消费者那边另抄一份 767px。桌面 overflow:visible 时
    若同时卡 max-width,内容不裁切照样溢出,会把外框边线顶到表格中间(看着像断竖线)。 */
 @media (max-width: 767px) {
-  .sticky-scroll { overflow-x: auto; max-width: 100%; }
+  .sticky-scroll, .sticky-scroll-mobile { overflow-x: auto; max-width: 100%; }
   .sticky-thead thead th { position: static; box-shadow: none; }
 }

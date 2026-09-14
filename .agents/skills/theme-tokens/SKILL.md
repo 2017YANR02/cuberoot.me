@@ -12,7 +12,7 @@ token 定义在 `core/packages/client/app/globals.css :root`。完整色值表 +
 | 用途 | Token |
 |---|---|
 | 页面主背景 | `var(--background)` |
-| 卡片 / panel 背景 | `var(--card)` 或 `var(--popover)` (浮层) 或 `var(--muted)` (弱化) |
+| 卡片 / panel 背景 | 先查下方全站材质契约；无场景背景时使用 `var(--card)` / `var(--popover)` / `var(--muted)` |
 | 主文字 | `var(--foreground)` |
 | 副信息文字 | `var(--muted-foreground)` |
 | 弱化 / disabled / 占位文字 | `var(--faint-foreground)` |
@@ -50,7 +50,7 @@ background: color-mix(in srgb, var(--accent) 12%, transparent); /* tag 弱化 */
 1. **品牌强调?** → `--accent`
 2. **状态色?** (success/warning/danger/info) → `--signal-success/-warning/-info` / `--destructive`
 3. **文字层级?** → `--foreground` (主) / `--muted-foreground` (副) / `--faint-foreground` (弱)
-4. **面板背景?** → `--card` / `--popover` / `--muted` / `--secondary`
+4. **面板背景?** → 复用全站材质角色；默认主题色用 `--card` / `--popover` / `--muted` / `--secondary`
 5. **边框?** → `--border-default` / `--border-strong` / `--input` / `--ring`
 6. **都不是?** → 多半想多了,选 `--muted-foreground` 或 `--border-default`
 
@@ -68,6 +68,16 @@ background: color-mix(in srgb, var(--accent) 12%, transparent); /* tag 弱化 */
 - 本地 pin token 的组件(如 `.t10h-page`)要 scheme-aware:`html:not([data-palette-scheme=dark]) .xxx { --background:...; }`(别裸 `.xxx{--background}`,否则暗配色被它盖回经典暗)。
 - 想让某 art-directed 页对所有配色免疫:用 `html:root:has(.xxx-page)`(0,2,1)钉 token,outrank 配色块 `:root[data-palette]`(0,2,0)。
 - canvas 不能吃 `var(--token)`:从容器 `getComputedStyle` 解析 token 值(带 fallback),见 `WrHistoryChart.tsx`。
+
+## 全站透明材质
+
+- 唯一材质源 `core/packages/client/components/glass-material.css`；场景开关由 `SiteBackground` 管理 `body[data-site-scenery]`，旧样式集中接入 `site-surfaces.css`。
+- 新面板/菜单/吸顶头在实际表面声明 `data-site-surface="panel|popover|heading"`（选一个值）；复用已有元素，不加包装组件、不标遮罩、不用内联实底盖它。
+- ListSelect、CompactSelect、成绩浮层已接材质；标准表格沿用 `<table className="sticky-thead">`，非标准表头声明 `heading`，禁止页面重复定义玻璃色值、透明度或 blur。
+- 浮层和表头共用 `--glass-popover-bg` + `--glass-filter` 保可读；普通面板用 `--glass-surface-bg`；只在唯一材质源调整浓度。
+- 保留 hover/选中/危险状态、纪录标记、魔方色块和媒体画布；原生 option/optgroup 无法透出页面，保留系统实底。
+- 保留无背景/图片失败时的主题实底，以及不支持 backdrop-filter、减少透明效果、打印的统一回退；内层实底或父级 backdrop-filter 会遮挡场景，须实测。
+- 写入与 CI 共用 `scripts/hook-detect-site-material.mjs`，测试 `tests/site-material-guard.test.ts`；主题四格之外还验 390px、展开菜单、滚动吸顶、无背景及减少透明效果。
 
 ## Light/dark 反盖 (写新 :root token 才用)
 
