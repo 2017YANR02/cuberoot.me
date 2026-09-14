@@ -7,6 +7,7 @@ import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import DeskPetHome from '@/components/DeskPetHome';
 import DeskPetGallery from '@/components/DeskPetGallery';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
 import { getDeskPetCatalog } from '@/lib/deskpet-api';
 import { THEMES, THEME_IDS, type ThemeId } from '@/lib/deskpet-themes';
@@ -28,7 +29,10 @@ export default function PetsPage({ gallery = false }: { gallery?: boolean }) {
   const [shareState,setShareState] = useState<'idle'|'copied'|'failed'>('idle');
   useEffect(()=>{
     let active=true;
-    const load=()=>void getDeskPetCatalog().then(value=>{if(active){setCatalog(current=>!current || value.revision>=current.revision ? value : current);setFailed(false);}}).catch(()=>{if(active){setCatalog(null);setFailed(true);}});
+    const load=()=>{
+      setFailed(false);
+      void getDeskPetCatalog().then(value=>{if(active){setCatalog(current=>!current || value.revision>=current.revision ? value : current);setFailed(false);}}).catch(()=>{if(active)setFailed(true);});
+    };
     load();window.addEventListener('focus',load);
     const timer=window.setInterval(load,60000);
     return ()=>{active=false;clearInterval(timer);window.removeEventListener('focus',load);};
@@ -63,8 +67,8 @@ export default function PetsPage({ gallery = false }: { gallery?: boolean }) {
     <div className="pets-heading"><span>{gallery?tr({zh:'每个小动作，都值得收藏',en:'THE LITTLE THINGS'}):tr({zh:'陪伴，是每天的小事',en:'A FRIEND, EVERY DAY'})}</span><h1>{gallery?tr({zh:'每一个小表情，都有故事。',en:'A little expression. A little story.'}):tr({zh:'让日常，多一点陪伴。',en:'A little friend for everyday life.'})}</h1>
       <p>{gallery?tr({zh:'挑一段喜欢的，送给今天想起的人。',en:'Find a favorite moment. Share it with someone on your mind.'}):tr({zh:'领养、互动、一起长大。',en:'Adopt. Play. Grow together.'})}</p></div>
     {shareState==='failed' && <label className="pets-share-fallback">{tr({zh:'复制这个链接分享',en:'Copy this link to share'})}<input className="pets-share-url" readOnly value={shareUrl} onFocus={e=>e.currentTarget.select()}/></label>}
-    {failed ? <div className="pets-empty" role="alert"><p>{tr({zh:'小伙伴暂时没能赶来。',en:'Our little friends could not load.'})}</p><button className="pet-primary pets-retry-action" onClick={()=>setRetry(v=>v+1)} type="button">{tr({zh:'再试一次',en:'Try again'})}</button></div>
-      : !catalog ? <div className="pets-loading" aria-label={tr({zh:'正在布置小窝',en:'Preparing the pet home'})}/>
+    {failed && !catalog ? <div className="pets-empty" role="alert"><p>{tr({zh:'宠物加载失败，请重试。',en:'Could not load the pets. Please try again.'})}</p><button className="pet-primary pets-retry-action" onClick={()=>setRetry(v=>v+1)} type="button">{tr({zh:'再试一次',en:'Try again'})}</button></div>
+      : !catalog ? <div className="pets-loading" role="status"><Spinner/>{tr({zh:'正在加载宠物…',en:'Loading pets…'})}</div>
       : !pet ? <p className="pets-empty">{tr({zh:'新的小伙伴还在准备中。',en:'New companions are on their way.'})}</p>
       : <>
         {gallery && <div className="pets-roster" aria-label={tr({zh:'选择宠物',en:'Choose a pet'})}>{choices.map(p=><button className="pets-roster-option" type="button" key={p.id} aria-pressed={p.id===pet.id} onClick={()=>{void setPetId(p.id);void setScene(null);void setCollection('all');}}><span className="pets-roster-art"><img src={p.thumb} alt="" style={{transform:`scale(${p.thumbScale??1})`}}/></span><span>{tr(p.label)}</span>{p.locked&&<Lock size={13}/>}</button>)}</div>}
