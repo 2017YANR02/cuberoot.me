@@ -775,4 +775,140 @@ export const LATE_MODELS: Record<keyof typeof LATE_DESIGNS, Build> = {
     const heart=a.mesh(r,new T.DodecahedronGeometry(.8),p.vermilion,[0,3.65,1.35]);heart.rotation.z=.22;
     for(const x of [-1.2,1.2])rod(a,r,[x,1,-2.2],[0,6.6,-1],.055,p.forest);
   },
+  '2026-09-09': (a, r) => {
+    const p = a.palette;
+    // The explorable history is printed as a folded mountain strip leaving an open roller press.
+    for (const x of [-3.5, 3.5]) {
+      fin(a, r, [[-.5,0],[-.5,4.5],[.2,5.2],[.7,4.5],[.7,0]], [x,1,-2], p.forest, .55);
+      slab(a, r, [x,1,-.8], 1.6, 3.2);
+      a.ring(r, .65, .13, [x,4.7,-1.3], p.gold);
+    }
+    for (const y of [3.5, 5.2]) {
+      const roller = a.cylinder(r, .48, 7, [0,y,-1.6], p.paper);
+      roller.rotation.z = Math.PI / 2;
+      for (const x of [-3.8,3.8]) joint(a,r,[x,y,-1.6],.2);
+    }
+    a.line(r, [[3.8,5.2,-1.6],[4.7,5.2,-1.6],[4.7,4.3,-1.6],[5.4,4.3,-1.6]], .11, p.gold);
+    a.box(r,[.65,.3,.35],[5.4,4.3,-1.6],p.vermilion);
+    fin(a,r,[[-3.1,0],[3.1,0],[3.1,-2.3],[-3.1,-2.3]],[0,4.3,-1],p.paper,.16);
+    for (let i=0;i<6;i++) {
+      const x=-2.5+i;
+      fin(a,r,[[-.55,0],[-.2,.7+(i%3)*.3],[.2,.35],[.6,0]],[x,2.8,-.79],i%2?p.jade:p.limestone,.12);
+      a.box(r,[.65,.04,.04],[x,2.4,-.76],p.gold);
+    }
+    for (let i=0;i<5;i++) {
+      const sheet=a.box(r,[6.2,.1,.85],[0,1.4+i*.14,2-i*.66],p.paper);
+      sheet.rotation.x=i%2?.18:-.18;
+      a.line(r,[[-2.8,1.54+i*.14,2-i*.66],[0,1.6+i*.14,2-i*.66],[2.8,1.54+i*.14,2-i*.66]],.025,p.jade);
+    }
+  },
+  '2026-09-10': (a, r) => {
+    const p=a.palette;
+    // Supervised competitions: a sunken square arena, judge's balcony and suspended timing pendulum.
+    slab(a,r,[0,1,-.4],8.8,5.2);
+    for (let i=0;i<3;i++) {
+      for (const side of [-1,1]) a.box(r,[1,.3+i*.28,4.5],[side*(3.6-i*.9),1.2+i*.14,-.4],p.paper);
+    }
+    a.box(r,[2.8,.16,2.8],[0,1.17,.2],p.jade);
+    for (const x of [-.85,.85]) {
+      a.box(r,[.75,.9,.6],[x,1.8,.2],p.paper);
+      a.box(r,[.9,.12,.8],[x,2.32,.2],p.gold);
+    }
+    for (const x of [-3.8,3.8]) rod(a,r,[x,1,-2.6],[x,6.9,-2.6],.14,p.forest);
+    a.box(r,[8.2,.3,.5],[0,6.9,-2.6],p.jade);
+    a.line(r,[[0,6.75,-2.6],[0,5,-2.6],[.65,3.95,-2.6]],.065,p.gold);
+    const weight=a.mesh(r,new T.OctahedronGeometry(.48),p.vermilion,[.65,3.8,-2.6]); weight.scale.y=1.3;
+    a.box(r,[2.1,.22,1.45],[4.3,4,-1.4],p.paper);
+    for (const x of [3.5,5.1]) rod(a,r,[x,1,-1.4],[x,4,-1.4],.11,p.forest);
+    card(a,r,[4.3,4.8,-1.8],1.1,.9,p.jade);
+    for (let i=0;i<6;i++) a.box(r,[1,.18,.45],[4.3,1.1+i*.48,2-i*.54],p.paper);
+    a.line(r,[[3.75,2,2],[3.75,4.9,-1.3],[4.95,4.9,-1.3]],.045,p.gold);
+  },
+  '2026-09-11': (a, r) => {
+    const p=a.palette;
+    // A curled paper fox fills an open carrying basket: adoption, care and a saved companion identity.
+    const basket=a.cylinder(r,3.5,.7,[0,1.4,-.5],p.paper,3.05); basket.scale.z=.65;
+    for(let i=0;i<19;i++) {
+      const t=i/18*Math.PI*2,x=Math.cos(t)*3.15,z=-.5+Math.sin(t)*1.9;
+      rod(a,r,[x,1.1,z],[x*1.09,1.8,z],.055,p.gold);
+    }
+    const body=a.mesh(r,new T.DodecahedronGeometry(1.8),p.vermilion,[-.7,2.8,-.7]); body.scale.set(1.2,.72,.8);
+    const head=a.mesh(r,new T.IcosahedronGeometry(1.15,0),p.paper,[1.2,3.15,.25]); head.scale.set(1,.9,.8);
+    for(const x of [.55,1.9]) {
+      fin(a,r,[[-.4,0],[-.25,1.4],[.45,.2]],[x,3.7,.08],p.vermilion,.38);
+      fin(a,r,[[-.2,.15],[-.15,.9],[.2,.23]],[x,3.7,.49],p.paper,.04);
+      a.line(r,[[x-.15,3.3,1.05],[x,3.22,1.12],[x+.18,3.31,1.05]],.035,p.ink);
+    }
+    const muzzle=a.mesh(r,new T.ConeGeometry(.4,.85,4),p.paper,[1.2,2.96,1.03]); muzzle.rotation.x=Math.PI/2;
+    a.mesh(r,new T.OctahedronGeometry(.12),p.ink,[1.2,2.96,1.47]);
+    const tail=a.line(r,[[-1.9,2.8,-.8],[-2.8,2.4,.4],[-1.9,2.05,1.5],[-.4,2.15,1.6],[.35,2.65,1.3]],.57,p.vermilion);
+    tail.rotation.z=-.03;
+    a.mesh(r,new T.ConeGeometry(.59,1.3,5),p.paper,[.35,2.65,1.3]).rotation.z=-.9;
+    const handle=arc(a,r,3.7,0,Math.PI,[0,2,-1.85],p.jade,.16); handle.scale.y=1.42;
+    rod(a,r,[0,7.2,-1.85],[0,6.55,-1.85],.045,p.gold);
+    card(a,r,[0,6.2,-1.85],.8,.65,p.paper);
+    a.ring(r,.17,.035,[0,6.22,-1.74],p.vermilion);
+  },
+  '2026-09-12': (a, r) => {
+    const p=a.palette;
+    // Partnership notes: two opposing tilted drafting boards share a detailed open worktable.
+    for(const side of [-1,1]) {
+      const board=new T.Group(); board.position.set(side*2.3,3.8,-.6); board.rotation.z=-side*.28; r.add(board);
+      a.box(board,[3.7,3.8,.22],[0,0,0],p.paper);
+      a.box(board,[3.9,.2,.4],[0,-1.85,.1],p.forest);
+      for(let j=0;j<5;j++) a.box(board,[2.8-j*.24,.045,.04],[-.15,1.25-j*.4,.15],p.gold);
+      const clip=a.ring(board,.22,.055,[0,1.85,.12],p.jade); clip.scale.y=.65;
+      for(const dx of [-1.15,1.15]) rod(a,r,[side*2.3+dx,1,-1.6],[side*2.3+dx,4.3,-1.6],.12,p.forest);
+    }
+    a.box(r,[9.6,.28,3.3],[0,2,-.6],p.jade);
+    for(const x of [-4,4]) for(const z of [-1.7,.6]) rod(a,r,[x,1,z],[x,1.85,z],.12,p.forest);
+    fin(a,r,[[-.65,0],[0,1.1],[.65,0],[0,.25]],[0,3.2,.55],p.vermilion,.15);
+    a.line(r,[[-2.4,2.2,1.2],[-1.1,2.4,1.2],[0,3.7,.8],[1.1,2.4,1.2],[2.4,2.2,1.2]],.055,p.gold);
+    for(let i=0;i<4;i++) a.box(r,[1.8,.07,.7],[4.1,2.25+i*.12,.3-i*.08],p.paper);
+    a.line(r,[[-4,2.25,.8],[-3.3,2.25,.8],[-3.3,2.25,0],[-4,2.25,.8]],.05,p.gold);
+  },
+  '2026-09-13': (a, r) => {
+    const p=a.palette;
+    // A cutaway of the SWFC aperture carries a suspended skywalk, exposed trusses and floor panes.
+    for(const side of [-1,1]) {
+      fin(a,r,[[side*4.8,0],[side*3.8,8],[side*2.8,8],[side*3.45,1.2]],[0,1,-2],p.paper,1.7);
+      for(let i=0;i<9;i++) {
+        const y=1.6+i*.75,x=side*(4.35-i*.105);
+        a.box(r,[.6,.035,.035],[x,y,-.25],p.gold);
+      }
+    }
+    a.box(r,[7.7,.45,2],[0,9,-1.15],p.jade);
+    a.box(r,[6.9,.25,2.4],[0,4.1,-1],p.paper);
+    for(let i=0;i<9;i++) {
+      const x=-3.1+i*.78;
+      a.box(r,[.66,.055,1.8],[x,4.26,-1],p.water);
+      rod(a,r,[x,4.35,.18],[x,5.3,.18],.032,p.gold);
+      a.line(r,[[x,4,-2.15],[x+.39,3.4,-2.15],[x+.78,4,-2.15]],.055,p.forest);
+      a.box(r,[.27,.06,.36],[x,8.72,-1],p.gold);
+    }
+    for(const z of [-2.2,.18]) rod(a,r,[-3.5,5.3,z],[3.5,5.3,z],.055,p.gold);
+    for(const x of [-2.9,2.9]) rod(a,r,[x,5.35,-2.2],[x,8.7,-2.2],.045,p.gold);
+    for(let i=0;i<3;i++) slab(a,r,[0,.95+i*.22,-.8],9.8-i*.6,3.7-i*.4);
+  },
+  '2026-09-14': (a, r) => {
+    const p=a.palette;
+    // A fresh statistics import is a punched-card reader, with feeder comb, reading head and output chart.
+    slab(a,r,[0,1,-.7],8.8,4.8);
+    a.box(r,[4.5,2.1,2.8],[-.7,2.2,-.9],p.jade);
+    fin(a,r,[[-2.3,0],[-2.3,1.6],[-1.7,2.25],[1.7,2.25],[2.3,1.6],[2.3,0]],[-.7,3.2,-2.4],p.paper,.5);
+    a.box(r,[3.8,.2,.08],[-.7,4.2,-1.83],p.ink);
+    for(let i=0;i<7;i++) {
+      const cardGroup=new T.Group();cardGroup.position.set(-.7,4.2+i*.23,-1.8+i*.16);cardGroup.rotation.x=-.38;r.add(cardGroup);
+      a.box(cardGroup,[3.4,.14,1.35],[0,0,0],p.paper);
+      for(let j=0;j<6;j++) a.box(cardGroup,[.12,.02,.27],[-1.3+j*.5,.09,(i%3-1)*.35],p.ink);
+    }
+    for(let i=0;i<8;i++) rod(a,r,[-2.4+i*.48,4.5,-2.1],[-2.4+i*.48,6.5,-2.1],.04,p.gold);
+    a.box(r,[1.7,.16,2.8],[3.6,1.6,-.6],p.paper);
+    for(let i=0;i<4;i++) {
+      const h=.55+i*.47;
+      a.box(r,[.3,h,.55],[3.05+i*.4,1.72+h/2,-.8],i%2?p.gold:p.vermilion);
+    }
+    a.line(r,[[1.6,2,-.8],[2.1,2,-.8],[2.3,1.8,-.8],[2.8,1.8,-.8]],.08,p.paper);
+    for(const x of [-1.8,-.7,.4]) a.ring(r,.2,.05,[x,2.65,.55],p.gold);
+  },
 };
