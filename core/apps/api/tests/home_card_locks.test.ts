@@ -54,4 +54,12 @@ it('rejects non-admin writes and malformed or unknown inputs without changing st
   }
   expect(await (await app.request('/v1/nav/home-locks')).json()).toEqual({ locks: { platform: false } });
 });
+it('persists independent member section locks through the existing endpoint', async () => {
+  expect((await put({ id: 'enterprise-members', locked: true }, false)).status).toBe(403);
+  expect((await put({ id: 'enterprise-members', locked: true })).status).toBe(200);
+  expect((await put({ id: 'individual-members', locked: false })).status).toBe(200);
+  expect(await (await app.request('/v1/nav/home-locks')).json()).toEqual({ locks: {
+    platform: false, 'enterprise-members': true, 'individual-members': false,
+  } });
+});
 });

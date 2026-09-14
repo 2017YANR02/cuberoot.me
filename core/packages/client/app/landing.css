@@ -642,6 +642,8 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 .landing-card-lock:hover { color: var(--foreground); }
 .landing-card-lock:disabled { cursor: wait; opacity: 0.5; }
+.landing-member-heading { display: flex; align-items: center; gap: 0.5rem; }
+.landing-member-heading .landing-card-lock { position: static; flex-shrink: 0; }
 .landing-page .landing-card-lock ~ .landing-card .coming-soon-badge { right: 38px; }
 .landing-page .card.is-disabled,
 .landing-page .landing-card.is-disabled {

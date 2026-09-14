@@ -1,6 +1,8 @@
 export type SiteDirectoryPlacement = 'primary' | 'wca' | 'section' | 'footer';
 export type SiteDirectoryTier = 'medium' | 'standard' | 'utility';
 
+export const HOME_MEMBER_SECTION_IDS = { enterprise: 'enterprise-members', individual: 'individual-members' } as const;
+
 export interface SiteDirectoryText {
   en: string;
   zh: string;
