@@ -420,7 +420,7 @@ export default function LandingPage() {
                       {member.avatarUrl
                         ? <img src={member.avatarUrl} alt="" className="landing-member-avatar" />
                         : <User size={24} aria-hidden="true" />}
-                      <span>{displayCuberName(member.name, lang === 'zh')}{member.vipId ? ` ${member.vipId}` : ''}</span>
+                      <span>{displayCuberName(member.name, lang === 'zh')}{member.vipId ? ` ${member.vipId.replace(/^VIP0+(\d+)$/, 'VIP$1')}` : ''}</span>
                     </Link>
                   ))}
                 </div>
