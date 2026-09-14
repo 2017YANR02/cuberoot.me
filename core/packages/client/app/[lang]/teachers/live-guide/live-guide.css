@@ -75,7 +75,7 @@
 .live-guide-metrics dd .live-guide-formula { color: var(--foreground); }
 .live-guide-copy-row { margin-top: 2rem; }
 .live-guide-copy-row h3 { margin: 0; }
-.live-guide-copy-row button { display: inline-flex; align-items: center; gap: 0.45rem; border: 0; background: transparent; color: var(--accent); padding: 0; min-height: 44px; font: inherit; font-size: 0.9rem; cursor: pointer; }
+.live-guide-copy-btn { display: inline-flex; align-items: center; gap: 0.45rem; border: 0; background: transparent; color: var(--accent); padding: 0; min-height: 44px; font: inherit; font-size: 0.9rem; cursor: pointer; }
 .live-guide-template pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 0.9rem; color: var(--muted-foreground); margin-block: 1rem; }
 .live-guide-footer { margin-top: 2rem; }
 .live-guide-mobile-nav { display: none; }
