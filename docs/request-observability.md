@@ -1,7 +1,12 @@
 # Request failure diagnostics
 
-This instrumentation records evidence; it does not change the five-second page
-permission timeout, authorization, retries, cache behavior or business pool size.
+As of 2026-09-13, page delivery no longer queries homepage locks or session roles.
+Homepage locks control card visibility only. Competition Practice is also public,
+including its client UI; guest practice uses its existing local storage flow.
+API authorization and account lifecycle checks are unchanged. The gateway and
+older diagnostic helpers remain for compatibility, but proxy no longer calls them.
+The page-access incident and correlation steps below describe the retired gate;
+API, database and host instrumentation remain active.
 
 ## Correlating a failure
 
@@ -52,7 +57,7 @@ These are structured log warnings, not a new external notification service.
 Existing Vercel 5xx alerts remain the external incident signal. Thirty-second
 snapshots can miss shorter events; a stopped process cannot emit its own metrics.
 
-## Vercel page verification placement
+## Historical Vercel page verification placement
 
 `core/packages/client/vercel.json` pins `/api/page-access` to `iad1`. Production
 Node.js middleware runs globally and calls this regional gateway through the
@@ -91,9 +96,9 @@ request variants in six consecutive probe rounds; `sfo1` was intermittent.
 
 The visible regression began with `9fd37b606` on 2026-09-11: page routes began
 checking live homepage locks before serving documents and RSC. This made the
-regional API connection a prerequisite for otherwise static pages. Keep the
-checks fresh and fail closed; changing region must not introduce stale lock
-caches, skip administrator verification, or raise the timeout.
+regional API connection a prerequisite for otherwise static pages. The regional
+gateway first repaired that path. The subsequent product decision removed the
+page gate entirely, so locks and session verification no longer block page delivery.
 
 After a placement change, inspect the deployed `/api/page-access` region and
 correlate new main-domain requests through the gateway with the origin. A successful preview

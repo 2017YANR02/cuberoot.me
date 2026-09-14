@@ -16,7 +16,7 @@ function mockProfile(value: unknown, status = 200, locked = false, role: 'login'
 }
 afterEach(() => vi.unstubAllGlobals());
 
-describe('competition practice uses forum eligibility', () => {
+describe('forum profile eligibility remains independent from public practice', () => {
   it('requires a verified session and rejects expired sessions', async () => {
     const fetcher = mockProfile(profile, 401);
     expect(await verifyForumPageAccess('')).toBe('login');
@@ -41,41 +41,18 @@ describe('competition practice uses forum eligibility', () => {
     mockProfile(null, 503);
     await expect(verifyForumPageAccess('token')).rejects.toThrow();
   });
-  it('protects bare, localized, trailing-slash, descendant and RSC requests', async () => {
-    mockProfile(profile);
+  it('serves practice for guests and every session without profile or role checks', async () => {
+    const fetcher = vi.fn(async () => { throw new Error('offline'); });
+    vi.stubGlobal('fetch', fetcher);
     for (const path of ['/comp-sim', '/zh/comp-sim', '/en/comp-sim/', '/zh/comp-sim/child', '/comp-sim?_rsc=abc']) {
-      const response = await proxy(new NextRequest(`http://localhost${path}`));
-      expect(response.status).toBe(307);
-      const target = new URL(response.headers.get('location')!);
-      expect(target.pathname.replace(/\/$/, '')).toBe(path.startsWith('/zh/') ? '/zh/account' : '/account');
-      expect(target.searchParams.has('require')).toBe(false);
-      expect(target.searchParams.get('next')).toBe(path.split('?')[0]);
-      expect(target.searchParams.get('next')).not.toContain('_rsc');
-      expect(response.headers.get('Cache-Control')).toBe('private, no-store');
-    }
-  });
-  it('sends signed-in ordinary users home regardless of profile completeness or page lock', async () => {
-    for (const locked of [false, true]) {
-      for (const saved of [profile, { ...profile, fullName: null }]) {
-        mockProfile(saved, 200, locked, 'user');
-        for (const [path, home] of [['/comp-sim', '/'], ['/en/comp-sim/', '/'], ['/zh/comp-sim?next=foo&_rsc=a', '/zh']]) {
-          const response = await proxy(new NextRequest(`http://localhost${path}`, { headers: { cookie: 'cuberoot_page_session=token' } }));
-          expect(response.status).toBe(307);
-          const target = new URL(response.headers.get('location')!);
-          expect(target.pathname.replace(/\/$/, '') || '/').toBe(home);
-          expect(target.search).toBe('');
-          expect(response.headers.get('Cache-Control')).toBe('private, no-store');
-        }
+      for (const token of ['', 'member', 'expired', 'admin']) {
+        const response = await proxy(new NextRequest(`https://cuberoot.me${path}`, {
+          headers: { cookie: `cuberoot_page_session=${token}` },
+        }));
+        expect(response.status).toBe(200);
+        expect(response.headers.get('location')).toBeNull();
       }
     }
-  });
-  it('keeps administrators on the training page even without a complete profile', async () => {
-    for (const locked of [false, true]) {
-      const fetcher = mockProfile(null, 200, locked, 'admin');
-      const response = await proxy(new NextRequest('http://localhost/zh/comp-sim', { headers: { cookie: 'cuberoot_page_session=token' } }));
-      expect(response.status).toBe(200);
-      expect(response.headers.get('location')).toBeNull();
-      expect(fetcher.mock.calls.some(([url]) => url.includes('/auth/profile'))).toBe(false);
-    }
+    expect(fetcher).not.toHaveBeenCalled();
   });
 });
