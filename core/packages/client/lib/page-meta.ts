@@ -750,6 +750,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Cubing tutorials — from a first solve through CFOP and Roux, organised by topic, with diagrams and animations.',
     },
   },
+  'teachers/live-guide': {
+    title: { zh: '直播卖课指南', en: 'Selling Courses Live: A Practical Guide' },
+    description: {
+      zh: '面向魔方老师与培训机构的直播卖课指南：核心技能、观看留存、课程转化、开播流程、现场技巧、学员留存与数据复盘。',
+      en: 'A practical livestream guide for cubing teachers: core skills, viewer retention, course conversion, session planning, live techniques, student retention, and review.',
+    },
+  },
   'teachers/scripts': {
     title: { zh: '直播话术库', en: 'Livestream Script Library' },
     description: {

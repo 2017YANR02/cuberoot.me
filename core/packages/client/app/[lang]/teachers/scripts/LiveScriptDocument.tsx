@@ -24,6 +24,7 @@ export default function LiveScriptDocument({ script }: { script: TeacherLiveScri
         <header className="live-script-topbar">
           <AppLink href="/teachers/scripts" className="live-script-home" prefetch={false}>← {tr({ zh: '直播话术库', en: 'Script library' })}</AppLink>
           <span>{author}</span>
+          <AppLink href="/teachers/live-guide" prefetch={false} className="live-script-home">{tr({ zh: '直播卖课指南', en: 'Livestream teaching & sales guide' })}</AppLink>
         </header>
         <section className="live-script-hero" aria-labelledby="live-script-title">
           <p className="live-script-kicker"><Radio aria-hidden size={16} />{tr({ zh: `约 ${script.durationMinutes} 分钟`, en: `About ${script.durationMinutes} minutes` })}</p>
