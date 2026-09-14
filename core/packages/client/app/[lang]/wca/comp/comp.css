@@ -923,6 +923,21 @@ td.is-pr {
   overflow-x: auto;
   flex: 1;
 }
+.comp-modal-search {
+  margin: 12px 16px 0;
+  min-width: 0;
+}
+.comp-modal-search .search-input {
+  width: 100%;
+}
+.comp-modal-search .search-control {
+  width: 100%;
+  min-width: 0;
+}
+.comp-modal-search-match {
+  background: color-mix(in srgb, var(--signal-warning) 35%, transparent);
+  color: var(--foreground);
+}
 .comp-modal-footer {
   padding: 12px 16px;
   border-top: 1px solid var(--border-default);
