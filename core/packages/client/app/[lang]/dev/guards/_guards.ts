@@ -15,6 +15,15 @@ export interface PairedGuard {
 
 export const PAIRED_GUARDS: PairedGuard[] = [
   {
+    id: 'site-material',
+    scope: 'project',
+    hook: 'hook-detect-site-material.mjs',
+    test: 'site-material-guard.test.ts',
+    baseline: '0',
+    zh: { title: '背景材质统一复用', desc: '玻璃材质参数只在 glass-material.css 定义；场景下的中性色背景和模糊复用共享 token，公共适配放 site-surfaces.css。保留首页无障碍回退和主动开启的诊断参数；独立语义须在声明同一行写 allow-site-material 及理由。Hook 检查完整新增 CSS 规则，CI 用同一扫描器检查全部 CSS；零碎编辑由 CI 兜底。' },
+    en: { title: 'Shared background materials', desc: 'Define glass material parameters only in glass-material.css; scenery fills and blur consume shared tokens, with common adapters in site-surfaces.css. Preserve homepage accessibility fallbacks and opt-in diagnostics; intentional exceptions require an inline allow-site-material reason. The hook checks complete added CSS rules and CI uses the same scanner over all CSS, including partial edits.' },
+  },
+  {
     id: 'modal-dismiss',
     scope: 'project',
     hook: 'hook-detect-modal-dismiss.mjs',

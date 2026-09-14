@@ -1,6 +1,12 @@
 /* Explicit adapters for existing shared surfaces. SiteGlass owns the material
    and accessibility fallbacks. Keep component geometry, media and state colors. */
 
+/* New surfaces declare their role on the existing element, without a wrapper.
+   These defaults also cover scenery disabled or an unavailable scene image. */
+[data-site-surface='panel'] { background: var(--card); }
+[data-site-surface='popover'],
+[data-site-surface='heading'] { background: var(--popover); }
+
 body[data-site-scenery] :is(.wp-page, .vcs-page) {
   background: transparent;
 }
@@ -17,6 +23,7 @@ body[data-site-scenery] .wp-page {
 
 /* Cards and panels that already have a material, never unframed prose or cells. */
 body[data-site-scenery] :is(
+  [data-site-surface='panel'],
   .alg-card,
   .chx-panel,
   .chx-chain,
@@ -36,8 +43,19 @@ body[data-site-scenery] :is(
   box-shadow: var(--glass-shadow);
 }
 
+/* Blur keeps scrolling results from showing through the sticky column labels. */
+body[data-site-scenery] [data-site-surface='heading'],
+body[data-site-scenery] .compact-select-header,
+body[data-site-scenery] :is(.comp-table, .sticky-thead, .wse-table, .fun-stats-table, .wp-pr-table, .wp-lit-table, .recon-table, .bsp-table, .exact-cov-table, .admin-users-table) thead th,
+body[data-site-scenery] .wca-stats-table th {
+  background: var(--glass-popover-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
 /* The shared popover tint keeps overlapping text readable on scenery and photos. */
 body[data-site-scenery] :is(
+  [data-site-surface='popover'],
   .appearance-menu,
   .lang-menu,
   .chx-axis-menu,
@@ -70,7 +88,9 @@ body[data-site-scenery] :is(
   .wechat-pc-share-modal,
   .ym-popover-panel,
   .compact-select-popup
-) {
+),
+body[data-site-scenery] .wca-stats-event-selector .event-btn::after,
+body[data-site-scenery] .wca-stats-event-selector .event-btn-remove:not(:hover) {
   background: var(--glass-popover-bg);
   border-color: var(--glass-border);
   -webkit-backdrop-filter: var(--glass-filter);
@@ -141,9 +161,4 @@ body[data-site-scenery] :is(
   background-color: transparent !important;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
-}
-
-/* Sticky list headings need an opaque reading layer, without another blur. */
-body[data-site-scenery] .compact-select-header {
-  background: var(--popover);
 }

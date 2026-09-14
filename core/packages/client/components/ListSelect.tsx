@@ -124,7 +124,7 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
         <ChevronDown size={14} className="list-select-chevron" />
       </button>
       {open && (
-        <div ref={panelRef} className="list-select-popup">
+        <div ref={panelRef} className="list-select-popup" data-site-surface="popover">
           {searchable && (
             <input
               ref={inputRef}

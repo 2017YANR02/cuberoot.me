@@ -223,6 +223,7 @@ export function CompactSelect<T extends string | number>({
         <div
           ref={panelRef}
           className={['compact-select-popup', popupClassName].filter(Boolean).join(' ')}
+          data-site-surface="popover"
           role="listbox"
           aria-label={ariaLabel}
           data-no-timer={dataNoTimer ? '' : undefined}
