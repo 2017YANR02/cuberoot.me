@@ -1,0 +1,64 @@
+/* Modeless controls: never lock or cover the page's scrolling surface. */
+.scroll-diagnostics {
+  position: fixed;
+  z-index: 2147483000;
+  right: max(12px, calc((100vw - 1100px) / 2));
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  width: min(380px, calc(100vw - 24px));
+  max-height: calc(100dvh - 32px - env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  padding: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--popover);
+  color: var(--foreground);
+  font: 14px/1.5 system-ui, sans-serif;
+}
+.scroll-diagnostics-heading, .scroll-diagnostics-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.scroll-diagnostics-heading { justify-content: space-between; }
+.scroll-diagnostics-button {
+  appearance: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+}
+.scroll-diagnostics-button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.scroll-diagnostics p { margin: 10px 0; }
+.scroll-diagnostics-note { color: var(--muted-foreground); font-size: 12px; }
+.scroll-diagnostics.is-recording { width: min(320px, calc(100vw - 24px)); }
+.scroll-diagnostics.is-recording .scroll-diagnostics-actions { margin-top: 8px; }
+.scroll-diagnostics-result { border-top: 1px solid var(--border-default); margin-top: 12px; }
+.scroll-diagnostics-options {
+  z-index: 2147483001;
+  background: var(--popover) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Temporary A/B modes. Removing the attribute restores the exact cascade. */
+body[data-scroll-diagnostic='lighter'],
+body[data-scroll-diagnostic='lighter'] :is(.palette-scope, .contrast-scope) {
+  --glass-filter: blur(6px) !important;
+  --site-glass-refraction: blur(6px) !important;
+}
+body[data-scroll-diagnostic='no-blur'] *,
+body[data-scroll-diagnostic='no-blur'] *::before,
+body[data-scroll-diagnostic='no-blur'] *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+body[data-scroll-diagnostic='no-image'] .site-scenery { visibility: hidden; }
+/* The measuring controls themselves never add backdrop work. */
+[data-scroll-diagnostic-ui] *, [data-scroll-diagnostic-ui] *::before, [data-scroll-diagnostic-ui] *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}

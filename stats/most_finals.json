@@ -18,7 +18,7 @@
   ],
   "rows": [
     [
-      3198,
+      3205,
       "[Daniel Wallin](https://www.worldcubeassociation.org/persons/2013WALL03)"
     ],
     [
@@ -58,20 +58,20 @@
       "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)"
     ],
     [
+      1850,
+      "[Walker Welch](https://www.worldcubeassociation.org/persons/2011WELC01)"
+    ],
+    [
       1845,
       "[Eduard Esteban García Domínguez](https://www.worldcubeassociation.org/persons/2011EDUA01)"
     ],
     [
-      1845,
-      "[Walker Welch](https://www.worldcubeassociation.org/persons/2011WELC01)"
-    ],
-    [
-      1808,
-      "[Dennis Rosero](https://www.worldcubeassociation.org/persons/2010ROSE03)"
-    ],
-    [
       1807,
       "[Alwin Rölz](https://www.worldcubeassociation.org/persons/2016ROLZ01)"
+    ],
+    [
+      1803,
+      "[Dennis Rosero](https://www.worldcubeassociation.org/persons/2010ROSE03)"
     ],
     [
       1713,
@@ -90,7 +90,7 @@
       "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)"
     ],
     [
-      1556,
+      1561,
       "[Fabio Bini Graciose](https://www.worldcubeassociation.org/persons/2010GRAC02)"
     ],
     [
@@ -98,7 +98,7 @@
       "[Callum Hales-Jepp](https://www.worldcubeassociation.org/persons/2012HALE01)"
     ],
     [
-      1537,
+      1547,
       "[Katie Hull](https://www.worldcubeassociation.org/persons/2010HULL01)"
     ],
     [
@@ -134,12 +134,12 @@
       "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)"
     ],
     [
-      1401,
-      "[Paul Mahvi](https://www.worldcubeassociation.org/persons/2012MAHV01)"
+      1402,
+      "[Ryan Pilat](https://www.worldcubeassociation.org/persons/2016PILA03)"
     ],
     [
-      1395,
-      "[Ryan Pilat](https://www.worldcubeassociation.org/persons/2016PILA03)"
+      1401,
+      "[Paul Mahvi](https://www.worldcubeassociation.org/persons/2012MAHV01)"
     ],
     [
       1394,
@@ -246,19 +246,19 @@
       "[Oliver Fritz](https://www.worldcubeassociation.org/persons/2014FRIT02)"
     ],
     [
-      1128,
-      "[Joshua Feran](https://www.worldcubeassociation.org/persons/2011FERA01)"
+      1132,
+      "[Filip Åström](https://www.worldcubeassociation.org/persons/2023ASTR01)"
     ],
     [
-      1127,
-      "[Filip Åström](https://www.worldcubeassociation.org/persons/2023ASTR01)"
+      1128,
+      "[Joshua Feran](https://www.worldcubeassociation.org/persons/2011FERA01)"
     ],
     [
       1109,
       "[Juliette Sébastien](https://www.worldcubeassociation.org/persons/2014SEBA01)"
     ],
     [
-      1102,
+      1108,
       "[Raymond Goslow](https://www.worldcubeassociation.org/persons/2014GOSL01)"
     ],
     [
@@ -346,6 +346,10 @@
       "[Zeke Mackay](https://www.worldcubeassociation.org/persons/2015MACK06)"
     ],
     [
+      1022,
+      "[Lucas Ichiro Yunomae](https://www.worldcubeassociation.org/persons/2014YUNO01)"
+    ],
+    [
       1018,
       "[Fabio Schwandt](https://www.worldcubeassociation.org/persons/2014SCHW02)"
     ],
@@ -364,10 +368,6 @@
     [
       1012,
       "[Achim Spies](https://www.worldcubeassociation.org/persons/2021SPIE01)"
-    ],
-    [
-      1008,
-      "[Lucas Ichiro Yunomae](https://www.worldcubeassociation.org/persons/2014YUNO01)"
     ],
     [
       997,
@@ -406,16 +406,16 @@
       "[AJ Nicholls](https://www.worldcubeassociation.org/persons/2015NICH04)"
     ],
     [
+      970,
+      "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)"
+    ],
+    [
       967,
       "[Szabolcs Szántai](https://www.worldcubeassociation.org/persons/2016SZAN01)"
     ],
     [
       966,
       "[Valentin Hoffmann](https://www.worldcubeassociation.org/persons/2011HOFF02)"
-    ],
-    [
-      964,
-      "[Livia Kleiner](https://www.worldcubeassociation.org/persons/2013KLEI03)"
     ]
   ]
 }

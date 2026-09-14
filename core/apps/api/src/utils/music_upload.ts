@@ -137,14 +137,14 @@ export function storedMusicResponse(input: {
   if (input.rangeHeader && !range) {
     return new Response(null, {
       status: 416,
-      headers: { 'Content-Range': `bytes */${input.size}`, 'Accept-Ranges': 'bytes' },
+      headers: { 'Content-Range': `bytes */${input.size}`, 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-store' },
     });
   }
   const start = range?.start ?? 0;
   const end = range?.end ?? input.size - 1;
   const headers = new Headers({
     'Accept-Ranges': 'bytes',
-    'Cache-Control': 'public, max-age=300, s-maxage=300',
+    'Cache-Control': input.attachment ? 'private, no-store' : 'public, max-age=300, s-maxage=300',
     'Content-Disposition': contentDisposition(input.attachment ? 'attachment' : 'inline', input.filename),
     'Content-Length': String(end - start + 1),
     'Content-Type': input.mime,

@@ -61,6 +61,7 @@ export function buildReconSubmitQuery(reconEvent: string, scramble: string, solu
   competition?: ReconScrambleSource | null;
   sourceEn?: string;
   sourceZh?: string;
+  sourceColors?: string;
 }): string {
   const params = new URLSearchParams();
   params.set('event', reconEvent);
@@ -79,6 +80,7 @@ export function buildReconSubmitQuery(reconEvent: string, scramble: string, solu
     if (source.n != null && !source.x) params.set('solveNum', String(source.n));
   }
   if (options?.sourceEn) params.set('sourceEn', options.sourceEn);
+  if (options?.sourceColors) params.set('sourceColors', options.sourceColors);
   if (options?.sourceZh) params.set('sourceZh', options.sourceZh);
   return params.toString();
 }

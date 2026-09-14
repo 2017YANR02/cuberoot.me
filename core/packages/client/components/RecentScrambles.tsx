@@ -305,7 +305,7 @@ const analyzerHref = (
   const p = new URLSearchParams({ scramble: scramble.trim().replace(/ /g, '_') });
   if (reconQuery) {
     const source = new URLSearchParams(reconQuery);
-    for (const key of ['event', 'round', 'groupId', 'solveNum', 'sourceEn', 'sourceZh']) {
+    for (const key of ['event', 'round', 'groupId', 'solveNum', 'sourceEn', 'sourceZh', 'sourceColors']) {
       const value = source.get(key);
       if (value) p.set(key, value);
     }
@@ -358,18 +358,16 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
 }) {
   const dotList = dotColors ?? (color ? [color] : []);
   const describeSource = (lang: 'zh' | 'en') => {
-    const colors = dotList.map(c => COLOR_NAME[c][lang]).join('/');
     const condition = [
       m?.x ? `E${m.n}` : '',
-      colors && `${colors}${{ zh: '底', en: ' base' }[lang]}`,
       analysis?.variant && variantLabel(analysis.variant, lang === 'zh'),
       analysis?.metric && stageLabel(analysis.metric, lang === 'zh'),
       analysis?.step != null ? `${analysis.step} ${{ zh: '步', en: 'moves' }[lang]}` : '',
     ].filter(Boolean).join(' ');
-    return condition + (analysis?.prob ? `${{ zh: '，概率 ', en: ', probability ' }[lang]}${analysis.prob}` : '');
+    return condition + (analysis?.prob ? ` · ${analysis.prob}` : '');
   };
   const reconParams = buildReconSubmitQuery(wcaToReconEvent(m?.e || event), scramble, '', {
-    practice: true, optimal, competition: m, sourceEn: describeSource('en'), sourceZh: describeSource('zh'),
+    practice: true, optimal, competition: m, sourceColors: dotList.join(''), sourceEn: describeSource('en'), sourceZh: describeSource('zh'),
   });
   return (
     <div className="rs-scard">
