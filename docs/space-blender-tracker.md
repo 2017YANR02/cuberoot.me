@@ -1,5 +1,15 @@
 # Space Blender 迁移跟踪
 
+## 2026-09-13 金茂塔楼基部与圆形入口
+
+对照 Nephilim 的塔楼基部与入口实拍，新增石材分缝、648 块细方孔格栅、带厚度的圆孔金属遮阳板、成对竖肋，以及圆形金属门框、玻璃分格和下方门扇。入口凹面原蓝色粗分格前补石材饰面。摄影署名、历史照片日期边界与估算尺寸见[参考档案](../design/space/references/jin-mao.md#2026-09-13-塔楼基部与圆形入口)；两个来源同步进入网页来源数据的中英文记录。
+
+- 采用 `round-04`。第二至第三候选调整格栅密度、圆孔边角闭合和入口环框；第四候选补凹面石材，遮换旧蓝色竖条。已查看[整体](../.tmp/png/space-jinmao-base-20260913/round-04/review/after-overview.png)、[基部细部](../.tmp/png/space-jinmao-base-20260913/round-04/review/after-detail.png)和[圆形入口](../.tmp/png/space-jinmao-base-20260913/round-04/review/after-entrance.png)，与[修改前](../.tmp/png/space-jinmao-base-20260913/round-04/review/before-overview.png)及实拍对照。初次候选几何校验失败不计为成功审图；这些 Cycles CPU 诊断图不代表网页照明。后台低优先级、14 线程；[审图报告](../.tmp/png/space-jinmao-base-20260913/round-04/review/review.json)确认未保存源工程。
+- 已保存 `jin-mao-base-20260913`，源工程 **301,867,487 字节**，精确指纹 `[301867487,1789346323179319700]`。[保存报告](../.tmp/png/space-jinmao-base-20260913/round-04/saved.json)确认候选、全部 Python 依赖和源指纹匹配，原整城几何、变换、材质分配、运行身份与六组灯保持。新增四个网格复用裙房材质；保存前保留完整 `round-04/shanghai-before-jinmao-base.blend` 备份。一次性脚本拒绝重复应用。
+- 正常导出为 **596,609,688 字节**，增加 **86,734,772 字节**；12,030 objects、6 灯组、原 16 张共享纹理。SHA-256 为 `5111ff0768b317586a65c2776684c7e04340067fd8f92067914a5775668516ff`。[正式检查](../.tmp/png/space-jinmao-base-20260913/formal-check.json)逐项比较新增四个网格、原裙房七个网格、修改后的周边共享网格和原塔楼 51 个网格的全部顶点属性、索引、材质、纹理字节及本地变换，世界变换误差小于 0.000001 m。Node 中的 Three.js GLTFLoader 加载四个新增网格；完整 HTTP 下载状态 200，长度及哈希一致。Node 的纳秒时间戳存在整数舍入，精确指纹以 Python 保存报告为准。
+
+**尚未达到 1:1 或电影级。** 石材颗粒和粗糙度、雨棚交叉拉杆与灯具、入口铺地及门厅内部仍待补齐。圆形入口暂置东侧凹面，其位置、尺寸及对称饰面均有推断；深色入口玻璃是不透明的外观表面，没有复刻内部。Playwright 连接仍返回 `Transport closed`，本轮没有网页 WebGL 日夜画面证据；加载器和下载校验不能替代视觉验收。整城约 597 MB，新增近景几何尚需分区、LOD 及真实设备性能验证。未改 TS/TSX，不运行无关测试或 Next build；脚本、清单、来源与文档仅本地提交，不 push，重资产本地保存，Git LFS 配置及上传继续暂缓。
+
 ## 2026-09-13 金茂裙房入口与拱顶中庭
 
 依据 OSM 裙房及雨棚轮廓，对照 SOM 入口实拍、AS+GG 中庭照片和《Architectural Record》2000 年 1 月号的历史照片，替换原 16 m 高的占位体块。新增弧形高窗、百叶及下方阴影面、裙房门扇与把手、南北入口玻璃雨棚、石柱黑色基座和悬挂遮板，中央改为带圆形主梁、下弦及支撑的玻璃拱廊。摄影署名、来源日期、OSM ID 和估算边界见[参考档案](../design/space/references/jin-mao.md#2026-09-13-裙房入口与拱顶中庭)，网页来源区同步提供双语记录。
