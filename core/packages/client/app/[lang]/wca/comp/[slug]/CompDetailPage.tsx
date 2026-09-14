@@ -3359,7 +3359,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
               onChange={setSearch}
               autoFocus
               type="search"
-              placeholder={tr({ zh: '搜索成绩、轮次或项目', en: 'Search results, rounds or events' })}
+              placeholder={tr({ zh: '搜索成绩', en: 'Search results' })}
             />
           </div>
           <div className="comp-modal-header-actions">
