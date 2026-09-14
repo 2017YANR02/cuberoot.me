@@ -348,6 +348,9 @@ export function formatRecordMessage(ev: RecordEvent, getRank: RankFn): Formatted
   if (tag === 'WR') {
     cn = `纪录快讯! ${timeStr}${cnEvent}${typeCn}世界纪录WR ${cnName}${personFlag}| ${cnCompLabel}`;
     en = `BREAKING NEWS! ${timeStr} ${enEvent} WR ${tEn} ${enName}${personFlag}| ${enCompLabel}`;
+  } else if (tag === 'FWR') {
+    cn = `纪录快讯! ${timeStr}${cnEvent}${typeCn}女子世界纪录FWR${tiedCn} ${cnName}${personFlag}| ${cnCompLabel}`;
+    en = `BREAKING NEWS! ${timeStr} ${enEvent} FWR${tiedEn} ${tEn} ${enName}${personFlag}| ${enCompLabel}`;
   } else if (tag === 'NR') {
     const countryCn = COUNTRY_CN_MAP[person_iso2] ?? (ev.person_country_en || person_iso2);
     cn = `纪录快讯! ${timeStr}${cnEvent}${typeCn}${countryCn}纪录${personFlag}NR ${cnName} | ${cnCompLabel}`;
@@ -374,7 +377,10 @@ export function formatRecordMessage(ev: RecordEvent, getRank: RankFn): Formatted
     const rank = getRank(event_id, rec_type, attempt_result);
     if (rank) {
       const suffix = `/WR${rank}`;
-      if (tag === 'NR') {
+      if (tag === 'FWR') {
+        cn = replaceFirst(cn, `FWR${tiedCn}`, `FWR${tiedCn}${suffix}`);
+        en = replaceFirst(en, `FWR${tiedEn}`, `FWR${tiedEn}${suffix}`);
+      } else if (tag === 'NR') {
         cn = replaceFirst(cn, 'NR', `NR${suffix}`);
         en = replaceFirst(en, 'NR', `NR${suffix}`);
       } else if (tag === 'PR') {
@@ -404,6 +410,7 @@ function replaceFirst(s: string, search: string, replacement: string): string {
 // tag 优先级:WR > 任一 CR > NR
 function tagPriority(tag: string): number {
   if (tag === 'WR') return 0;
+  if (tag === 'FWR') return 0.5;
   if (tag in CR_ABBR_CN || tag === 'CR') return 1;
   if (tag === 'NR') return 2;
   return 3;
@@ -487,6 +494,8 @@ function combineSameTag(eventsIn: RecordEvent[], getRank: RankFn): FormattedReco
   let displayTag: string;
   if (tag === 'WR') {
     typeCnLabel = '世界纪录'; typeEnLabel = 'WR'; displayTag = 'WR';
+  } else if (tag === 'FWR') {
+    typeCnLabel = '女子世界纪录'; typeEnLabel = 'FWR'; displayTag = 'FWR';
   } else if (tag === 'NR') {
     const countryCn = COUNTRY_CN_MAP[personIso2] ?? (single.person_country_en || personIso2);
     typeCnLabel = `${countryCn}纪录`; typeEnLabel = 'NR'; displayTag = 'NR';
@@ -501,7 +510,7 @@ function combineSameTag(eventsIn: RecordEvent[], getRank: RankFn): FormattedReco
   const rsAEn = rsA ? ` ${rsA}` : '';
 
   let enPrefix: string;
-  if (tag === 'WR') enPrefix = 'BREAKING NEWS!';
+  if (tag === 'WR' || tag === 'FWR') enPrefix = 'BREAKING NEWS!';
   else if (tag === 'PR') enPrefix = 'PR News!';
   else enPrefix = 'Breaking News!';
   const cnPrefix = tag === 'PR' ? 'PR快讯!' : '纪录快讯!';
@@ -556,6 +565,10 @@ function reduceSegmentCn(ev: RecordEvent, getRank: RankFn, includeFlag: boolean)
   const typeCn = ev.rec_type === 'single' ? '单次' : '平均';
 
   if (tag === 'WR') return `${t}${typeCn}世界纪录WR`;
+  if (tag === 'FWR') {
+    const rank = getRank(eventId, ev.rec_type, ev.attempt_result);
+    return `${t}${typeCn}女子世界纪录FWR${rank ? `/WR${rank}` : ''}`;
+  }
   if (tag === 'NR') {
     const countryCn = COUNTRY_CN_MAP[personIso2] ?? (ev.person_country_en || personIso2);
     const rank = getRank(eventId, ev.rec_type, ev.attempt_result);
@@ -585,6 +598,10 @@ function reduceSegmentEn(ev: RecordEvent, getRank: RankFn, includeFlag: boolean)
   const tEn = typeEn(eventId, ev.rec_type);
 
   if (tag === 'WR') return `${t} WR ${tEn}`;
+  if (tag === 'FWR') {
+    const rank = getRank(eventId, ev.rec_type, ev.attempt_result);
+    return `${t} FWR${rank ? `/WR${rank}` : ''} ${tEn}`;
+  }
   if (tag === 'NR') {
     const rank = getRank(eventId, ev.rec_type, ev.attempt_result);
     const suffix = rank ? `/WR${rank}` : '';
