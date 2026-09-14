@@ -101,6 +101,33 @@ describe('homepage development cards', () => {
       lockApi.getHomeCardLocks.mockResolvedValue({});
     }
   });
+  it('locks member sections independently and restores saved visitor visibility', async () => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+    auth.user = { wcaId: ADMIN_WCA_IDS[0] };
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    const section = (id: string) => host.querySelector(`[aria-labelledby="${id}-members-title"]`);
+    const button = (id: string) => section(id)!.querySelector<HTMLButtonElement>('button')!;
+    try {
+      await act(async () => root.render(createElement(LandingPage)));
+      expect(button('enterprise').getAttribute('aria-pressed')).toBe('true');
+      expect(button('individual').getAttribute('aria-pressed')).toBe('true');
+      await act(async () => button('enterprise').click());
+      expect(lockApi.setHomeCardLock).toHaveBeenLastCalledWith('enterprise-members', false);
+      expect(button('enterprise').getAttribute('aria-pressed')).toBe('false');
+      expect(button('individual').getAttribute('aria-pressed')).toBe('true');
+      await act(async () => button('individual').click());
+      expect(lockApi.setHomeCardLock).toHaveBeenLastCalledWith('individual-members', false);
+      auth.user = null;
+      lockApi.getHomeCardLocks.mockResolvedValueOnce({ 'enterprise-members': false, 'individual-members': true });
+      await act(async () => { window.dispatchEvent(new Event('focus')); });
+      expect(section('enterprise')).not.toBeNull();
+      expect(section('individual')).toBeNull();
+      expect(section('enterprise')!.querySelector('button')).toBeNull();
+    } finally {
+      await act(async () => root.unmount());
+    }
+  });
   it.each([null, { wcaId: 'ordinary-user' }])('hides persisted locks without a first-render flash for %j', async (user) => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
     auth.user = user;
@@ -111,11 +138,15 @@ describe('homepage development cards', () => {
     try {
       await act(async () => root.render(createElement(LandingPage)));
       expect(host.querySelector('[id^="card-"]')).toBeNull();
+      expect(host.querySelector('#enterprise-members-title')).toBeNull();
+      expect(host.querySelector('#individual-members-title')).toBeNull();
       await act(async () => resolveLocks({ contests: true, 'online-competitions': true, 'comp-sim': true }));
       for (const id of ['contests', 'online-competitions', 'comp-sim', 'platform', 'teaching-management', 'learning-center']) {
         expect(host.querySelector(`#card-${id}`)).toBeNull();
       }
       expect(host.querySelector('#card-teaching')?.getAttribute('href')).toBe('/zh/courses');
+      expect(host.querySelector('#enterprise-members-title')).toBeNull();
+      expect(host.querySelector('#individual-members-title')).toBeNull();
       lockApi.getHomeCardLocks.mockResolvedValueOnce({ contests: false, 'online-competitions': false, 'comp-sim': false });
       await act(async () => { window.dispatchEvent(new Event('focus')); });
       for (const id of ['contests', 'online-competitions', 'comp-sim']) {

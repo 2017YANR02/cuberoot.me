@@ -58,6 +58,7 @@ import { colorFor, iconFor } from '@/lib/page-notice-visuals';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { listPublicMembers, type PublicMember } from '@/lib/membership-api';
 import { getHomeCardLocks, getHomeCardOrders, reorderHomeCards, setHomeCardLock } from '@/lib/home-card-order-api';
+import { HOME_MEMBER_SECTION_IDS } from '@cuberoot/shared/site-directory';
 
 const ABOUT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'about')!;
 const SUPPORT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'support')!;
@@ -189,6 +190,26 @@ export default function LandingPage() {
       : <User size={16} aria-hidden />
   );
 
+  const renderLock = (id: string, locked: boolean, adminOnly = false, label?: string) => isAdmin && (
+    <button type="button" className="landing-card-lock" aria-pressed={locked}
+      disabled={adminOnly || !locksLoaded || savingLocks.has(id)}
+      title={adminOnly ? tr({ zh: '仅管理员可见', en: 'Administrators only' }) : !locksLoaded ? tr({ zh: '锁定状态尚未加载', en: 'Lock status has not loaded' }) : locked ? tr({ zh: '解锁', en: 'Unlock' }) : tr({ zh: '锁定', en: 'Lock' })}
+      aria-label={adminOnly ? tr({ zh: '仅管理员可见', en: 'Administrators only' }) : locked ? tr({ zh: `解锁${label ?? '卡片'}`, en: `Unlock ${label ?? 'card'}` }) : tr({ zh: `锁定${label ?? '卡片'}`, en: `Lock ${label ?? 'card'}` })}
+      onClick={async () => {
+        setSavingLocks((current) => new Set(current).add(id));
+        try {
+          await setHomeCardLock(id, !locked);
+          setCardLocks((current) => ({ ...current, [id]: !locked }));
+        } catch (error) {
+          alert(tr({ zh: `保存失败：${error instanceof Error ? error.message : String(error)}`, en: `Save failed: ${error instanceof Error ? error.message : String(error)}` }));
+        } finally {
+          setSavingLocks((current) => { const next = new Set(current); next.delete(id); return next; });
+        }
+      }}>
+      {locked ? <Lock size={14} /> : <LockOpen size={14} />}
+    </button>
+  );
+
   const renderCard = (card: CardConfig) => {
     const locked = Boolean(card.adminOnly) || (cardLocks[card.id] ?? Boolean(card.lockedForNonAdmin || card.comingSoon));
     const isLocked = locked && !isAdmin;
@@ -232,25 +253,7 @@ export default function LandingPage() {
     }
     return (
       <SortableCard key={card.id} id={card.id} draggable={isAdmin}>
-        {isAdmin && (
-          <button type="button" className="landing-card-lock" aria-pressed={locked}
-            disabled={card.adminOnly || !locksLoaded || savingLocks.has(card.id)}
-            title={card.adminOnly ? tr({ zh: '仅管理员可见', en: 'Administrators only' }) : !locksLoaded ? tr({ zh: '锁定状态尚未加载', en: 'Lock status has not loaded' }) : locked ? tr({ zh: '解锁卡片', en: 'Unlock card' }) : tr({ zh: '锁定卡片', en: 'Lock card' })}
-            aria-label={card.adminOnly ? tr({ zh: '仅管理员可见', en: 'Administrators only' }) : locked ? tr({ zh: '解锁卡片', en: 'Unlock card' }) : tr({ zh: '锁定卡片', en: 'Lock card' })}
-            onClick={async () => {
-              setSavingLocks((current) => new Set(current).add(card.id));
-              try {
-                await setHomeCardLock(card.id, !locked);
-                setCardLocks((current) => ({ ...current, [card.id]: !locked }));
-              } catch (error) {
-                alert(tr({ zh: `保存失败：${error instanceof Error ? error.message : String(error)}`, en: `Save failed: ${error instanceof Error ? error.message : String(error)}` }));
-              } finally {
-                setSavingLocks((current) => { const next = new Set(current); next.delete(card.id); return next; });
-              }
-            }}>
-            {locked ? <Lock size={14} /> : <LockOpen size={14} />}
-          </button>
-        )}
+        {renderLock(card.id, locked, card.adminOnly)}
         {cardElement}
       </SortableCard>
     );
@@ -405,12 +408,18 @@ export default function LandingPage() {
           { id: 'enterprise', enterprise: true, eyebrow: tr({ zh: '企业', en: 'Enterprise' }), title: tr({ zh: '企业会员', en: 'Enterprise members' }), empty: tr({ zh: '暂无企业会员', en: 'No enterprise members yet' }) },
           { id: 'individual', enterprise: false, eyebrow: tr({ zh: '个人', en: 'Individual' }), title: tr({ zh: '个人会员', en: 'Individual members' }), empty: tr({ zh: '暂无个人会员', en: 'No individual members yet' }) },
         ] as const).map((section) => {
+          const lockId = HOME_MEMBER_SECTION_IDS[section.id];
+          const locked = cardLocks[lockId] ?? true;
+          if (!isAdmin && (!locksLoaded || locked)) return null;
           const members = publicMembers?.filter((member) => member.planSlug.startsWith('enterprise_') === section.enterprise) ?? [];
           return (
             <section key={section.id} className="cards-section" aria-labelledby={`${section.id}-members-title`}>
               <div className="section-header">
                 <div className="section-eyebrow">{section.eyebrow}</div>
-                <h2 id={`${section.id}-members-title`} className="section-title-serif">{section.title}</h2>
+                <div className="landing-member-heading">
+                  <h2 id={`${section.id}-members-title`} className="section-title-serif">{section.title}</h2>
+                  {renderLock(lockId, locked, false, section.title)}
+                </div>
                 {publicMembers && members.length === 0 && <div className="section-sub">{section.empty}</div>}
               </div>
               {members.length > 0 && (
