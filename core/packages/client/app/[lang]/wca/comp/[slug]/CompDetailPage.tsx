@@ -13,6 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download, Calculator } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
+import { SearchInput } from '@/components/SearchInput';
+import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryToIso2, loadFlagData, compFlagIso2 } from '@/lib/country-flags';
@@ -3231,8 +3233,28 @@ interface CuberModalProps {
 }
 
 function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClose }: CuberModalProps) {
+  const [search, setSearch] = useState('');
+  const backdropProps = useModalBackdrop(onClose);
   const [downloadState, setDownloadState] = useState<'idle' | 'busy' | 'error'>('idle');
   const cardRef = useRef<HTMLDivElement>(null);
+  const query = search.trim().toLowerCase();
+  // Literal matching keeps decimal points and other punctuation safe to search.
+  function highlight(value: string | number): ReactNode {
+    const text = String(value);
+    if (!query) return text;
+    const lower = text.toLowerCase();
+    const parts: ReactNode[] = [];
+    let start = 0;
+    let match = lower.indexOf(query);
+    while (match !== -1) {
+      parts.push(text.slice(start, match));
+      parts.push(<mark className="comp-modal-search-match" key={match}>{text.slice(match, match + query.length)}</mark>);
+      start = match + query.length;
+      match = lower.indexOf(query, start);
+    }
+    parts.push(text.slice(start));
+    return parts;
+  }
   const u = data.users[String(number)];
   const rows = useMemo(() => {
     if (!u) return [];
@@ -3278,6 +3300,8 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
     const body = node.querySelector<HTMLElement>('.comp-modal-body');
     const closeBtn = node.querySelector<HTMLElement>('.comp-modal-close');
     const actions = node.querySelector<HTMLElement>('.comp-modal-header-actions');
+    const searchBar = node.querySelector<HTMLElement>('.comp-modal-search');
+    const prevSearchDisplay = searchBar?.style.display ?? '';
     const prevCardMaxHeight = node.style.maxHeight;
     const prevBodyOverflowY = body?.style.overflowY ?? '';
     const prevBodyOverflowX = body?.style.overflowX ?? '';
@@ -3287,6 +3311,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
     if (body) { body.style.overflowY = 'visible'; body.style.overflowX = 'visible'; }
     if (closeBtn) closeBtn.style.display = 'none';
     if (actions) actions.style.display = 'none';
+    if (searchBar) searchBar.style.display = 'none';
     try {
       const dataUrl = await exportNodeToPng(node);
       const a = document.createElement('a');
@@ -3305,11 +3330,12 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
       if (body) { body.style.overflowY = prevBodyOverflowY; body.style.overflowX = prevBodyOverflowX; }
       if (closeBtn) closeBtn.style.display = prevCloseDisplay;
       if (actions) actions.style.display = prevActionsDisplay;
+      if (searchBar) searchBar.style.display = prevSearchDisplay;
     }
   }
 
   return (
-    <div className="comp-modal-backdrop" onClick={onClose}>
+    <div className="comp-modal-backdrop" {...backdropProps}>
       <div ref={cardRef} className="comp-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <header className="comp-modal-header">
           <div className="comp-modal-title">
@@ -3343,6 +3369,15 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
             <XIcon size={18} />
           </button>
         </header>
+        <div className="comp-modal-search">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            autoFocus
+            type="search"
+            placeholder={tr({ zh: '搜索成绩、轮次或项目', en: 'Search results, rounds or events' })}
+          />
+        </div>
         <div className="comp-modal-body">
           {groups.length === 0 ? (
             <div className="comp-empty">{tr({ zh: '暂无成绩', en: 'No results'
@@ -3356,7 +3391,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
               );
               return (
               <div key={g.ev.i} className="comp-modal-group">
-                <h3 className="comp-modal-group-title">{eventDisplayName(g.ev.i, isZh)}</h3>
+                <h3 className="comp-modal-group-title">{highlight(eventDisplayName(g.ev.i, isZh))}</h3>
                 <table className="comp-modal-table">
                   <thead>
                     <tr>
@@ -3391,19 +3426,19 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
                           className="comp-modal-row-clickable"
                           onClick={() => onSelectRound(en.ev.i, en.rd.i)}
                         >
-                          <td>{roundLabel(en.rd.i)}</td>
-                          <td>{place}</td>
+                          <td>{highlight(roundLabel(en.rd.i))}</td>
+                          <td>{highlight(place)}</td>
                           <td>
-                            {formatLive(result.b, result.e, false)}
+                            {highlight(formatLive(result.b, result.e, false))}
                             <ResultRecordBadge tag={result.sr} keatoned={result.sk} iso2={regionToIso2(u.region)} fallback={singleBadge} eventId={result.e} isAvg={false} />
                           </td>
                           <td>
-                            {showAvg ? formatLive(effectiveAvg(result), result.e, true) : ''}
+                            {showAvg ? highlight(formatLive(effectiveAvg(result), result.e, true)) : ''}
                             {showAvg && <ResultRecordBadge tag={String(result.ar || '')} keatoned={result.ak} iso2={regionToIso2(u.region)} fallback={averageBadge} eventId={result.e} isAvg />}
                           </td>
                           {Array.from({ length: attemptCount }).map((_, i) => (
                             <td key={i} className={`td-attempt ${isAo5Bracketed(atts, i) ? 'td-attempt-trimmed' : ''}`}>
-                              {formatLive(atts[i] ?? 0, result.e, false)}
+                              {highlight(formatLive(atts[i] ?? 0, result.e, false))}
                             </td>
                           ))}
                         </tr>
