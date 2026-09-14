@@ -73,7 +73,9 @@
 .admin-users-role > span { font-weight: 500; white-space: nowrap; }
 .admin-users-role-button { width: fit-content; min-height: 30px; padding: 5px 8px; white-space: nowrap; }
 .admin-users-empty { padding: 28px 10px; color: var(--muted-foreground); text-align: center; }
-.admin-users-pagination { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+.admin-users-pagination { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.admin-users-page-jump { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.admin-users-page-number { box-sizing: content-box; width: 5ch; text-align: center; cursor: text; }
 .admin-users-page-button { display: inline-flex; align-items: center; gap: 3px; }
 .admin-users-page-button:disabled { color: var(--faint-foreground); cursor: not-allowed; }
 .admin-users-pagination span { color: var(--muted-foreground); font-size: .78rem; }

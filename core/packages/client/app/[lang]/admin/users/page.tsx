@@ -9,6 +9,7 @@ import { DailyActivityChart, type DailyActivityPoint } from '@/components/DailyA
 import { DateRangeInput } from '@/components/DateRangeInput';
 import { Flag } from '@/components/Flag';
 import { SearchInput } from '@/components/SearchInput';
+import NumberCommitInput from '@/components/NumberCommitInput';
 import SortArrow from '@/components/SortArrow';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
@@ -484,7 +485,21 @@ export default function AdminUsersPage() {
 
             <nav className="admin-users-pagination" aria-label={t('用户列表分页', 'User list pagination')}>
               <button className="admin-users-page-button" type="button" disabled={page <= 1} onClick={() => void setPage(Math.max(1, page - 1))}><ChevronLeft size={15} />{t('上一页', 'Previous')}</button>
-              <span>{t(`第 ${page} / ${totalPages} 页`, `Page ${page} of ${totalPages}`)}</span>
+              <label className="admin-users-page-jump">
+                <span>{t('页码', 'Page')}</span>
+                <NumberCommitInput
+                  className="admin-users-page-button admin-users-page-number"
+                  value={page}
+                  min={1}
+                  max={totalPages}
+                  step={1}
+                  inputMode="numeric"
+                  aria-label={t('跳转页码', 'Go to page')}
+                  title={t('输入页码，按回车跳转', 'Enter a page number and press Enter')}
+                  onCommit={(nextPage) => void setPage(nextPage)}
+                />
+                <span>/ {totalPages}</span>
+              </label>
               <button className="admin-users-page-button" type="button" disabled={page >= totalPages} onClick={() => void setPage(Math.min(totalPages, page + 1))}>{t('下一页', 'Next')}<ChevronRight size={15} /></button>
             </nav>
           </section>
