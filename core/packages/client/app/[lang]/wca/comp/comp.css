@@ -923,8 +923,23 @@ td.is-pr {
   overflow-x: auto;
   flex: 1;
 }
+.comp-cuber-modal-header .comp-modal-title {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  min-width: 0;
+  max-width: 35%;
+}
+.comp-cuber-modal-header .comp-modal-title .comp-flag {
+  flex-shrink: 0;
+}
+.comp-cuber-modal-header .cuber-link-modal,
+.comp-cuber-modal-header .cuber-link-static {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .comp-modal-search {
-  margin: 12px 16px 0;
+  flex: 0 1 220px;
   min-width: 0;
 }
 .comp-modal-search .search-input {
