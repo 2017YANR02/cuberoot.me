@@ -51,7 +51,7 @@ export default function HistoryJourney() {
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [weatherVariation, setWeatherVariation] = useState(0);
   const [motion, setMotion] = useState(!isGame);
-  const [gait, setGait] = useState<HistoryGait>(isGame ? 'glide' : 'walk');
+  const [gait, setGait] = useState<HistoryGait>(isGame ? 'glide' : 'jog');
   const [playScore, setPlayScore] = useState<HistoryPlayScore>(EMPTY_HISTORY_SCORE);
   const [openedSecret, setOpenedSecret] = useState<HistorySecret | null>(null);
   const host = useRef<HTMLDivElement>(null);

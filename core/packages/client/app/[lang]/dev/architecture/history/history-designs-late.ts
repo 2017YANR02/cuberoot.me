@@ -61,4 +61,10 @@ export const LATE_DESIGNS = {
   '2026-08-29': { zh: '十字寻径', en: 'Paths through the cross' },
   '2026-08-30': { zh: '云上续针', en: 'A stitch resumed' },
   '2026-08-31': { zh: '五翼同心', en: 'Five wings, one heart' },
+  '2026-09-09': { zh: '画卷出山', en: 'The landscape printing press' },
+  '2026-09-10': { zh: '赛场有见证', en: 'The witnessed arena' },
+  '2026-09-11': { zh: '小兽归巢', en: 'A companion finds a home' },
+  '2026-09-12': { zh: '两页共一桌', en: 'A table for collaboration' },
+  '2026-09-13': { zh: '云端步廊', en: 'The skywalk in paper' },
+  '2026-09-14': { zh: '新数入册', en: 'The statistics card reader' },
 } as const;

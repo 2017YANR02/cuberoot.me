@@ -179,6 +179,216 @@ export interface TLEntry {
 }
 export const TIMELINE: TLEntry[] = ([
   {
+    "date": "2026-09-13",
+    "tag": "feature",
+    "zh": {
+      "title": "上海场景细化高层建筑内外空间",
+      "body": "环球金融中心观光厅补充玻璃步道、室内灯光与镜面反射，金茂大厦按照片细化塔冠、裙房、中庭与入口。",
+      "expand": "观光厅继续调整地面材质、出口设施和照明切换后的反射；金茂大厦补充幕墙构件、入口雨棚与铺装。场景源码与 Blender 制作记录分别保留，模型制作不等同于所有资产已经发布。"
+    },
+    "en": {
+      "title": "Shanghai refines tower interiors and exteriors",
+      "body": "The SWFC observation hall gains a glass skywalk, interior lighting and mirror reflections. Jin Mao Tower gains photo-referenced crown, podium, atrium and entrance detail.",
+      "expand": "Further work covers floor materials, exit fixtures and reflection updates after lighting transitions, plus Jin Mao facade members, entrance canopy and paving. Scene code and Blender authoring records are tracked separately; authored assets are not all assumed to be published."
+    }
+  },
+  {
+    "date": "2026-09-13",
+    "tag": "feature",
+    "zh": {
+      "title": "比赛练习开放浏览，续费取消入口补齐",
+      "body": "比赛练习移除页面访问门槛，会员页集中说明自动续费与取消方式。",
+      "expand": "自动续费说明列出扣款授权与取消入口；取消仍需用户确认，并以支付平台确认结果为准。管理员工具也可直接跳转指定用户页面。"
+    },
+    "en": {
+      "title": "Open competition practice and clearer renewal controls",
+      "body": "Competition practice removes its page access gate, while membership pages explain automatic renewal and how to cancel it.",
+      "expand": "Renewal disclosures expose the debit authorization and cancellation path. Cancellation still requires user confirmation and takes effect after the payment provider confirms it. Admin tools can also jump directly to a selected user page."
+    }
+  },
+  {
+    "date": "2026-09-12",
+    "tag": "feature",
+    "zh": {
+      "title": "合作介绍与洽谈要点页加入",
+      "body": "/partnership 汇总合作方向，/partnership/talking-points 提供可用于沟通的要点。",
+      "expand": "介绍页与洽谈材料使用独立入口，覆盖教学合作、内容与工具能力，方便按具体合作需求阅读。"
+    },
+    "en": {
+      "title": "Partnership overview and talking points",
+      "body": "/partnership presents collaboration options, with /partnership/talking-points providing discussion notes.",
+      "expand": "Separate entries organize teaching partnerships, content and tool capabilities so readers can use the material relevant to a particular discussion."
+    }
+  },
+  {
+    "date": "2026-09-12",
+    "tag": "feature",
+    "zh": {
+      "title": "WCA 纪录统计统一地区与级别筛选",
+      "body": "最长保持纪录、单场比赛纪录次数和跨项目纪录统计可按有数据的地区与纪录级别查看。",
+      "expand": "生成端先计算各分区的排名，再截取榜单；页面只展示有数据的筛选组合。复盘页同日补充同一打乱的关联记录，方便对照不同解法。"
+    },
+    "en": {
+      "title": "Consistent region and level filters for record statistics",
+      "body": "Longest-standing records, records at one competition and records across events can be explored by populated region and record level.",
+      "expand": "Each section is ranked before its list is truncated, and the UI exposes only combinations with data. Reconstruction pages also add related entries using the same scramble for comparing solutions."
+    }
+  },
+  {
+    "date": "2026-09-12",
+    "tag": "feature",
+    "zh": {
+      "title": "模拟器人物加入服装与面部照片",
+      "body": "模拟器的人物外观可选择服装，并使用自定义面部照片。",
+      "expand": "人物设置复用现有身体与手部渲染能力；外观选择与动作播放在同一模拟器中使用。"
+    },
+    "en": {
+      "title": "Clothing and face photos for simulator characters",
+      "body": "Simulator characters support clothing choices and custom face photos.",
+      "expand": "Appearance settings reuse the existing body and hand renderer and work alongside movement playback in the same simulator."
+    }
+  },
+  {
+    "date": "2026-09-12",
+    "tag": "feature",
+    "zh": {
+      "title": "音乐库补充下载与上传管理",
+      "body": "会员可以下载音乐库中的作品，上传者可以删除自己上传的音乐。",
+      "expand": "播放器沿用同步歌词与全站播放能力，管理页补齐作品删除入口；背景外观也可用于站内页面。"
+    },
+    "en": {
+      "title": "Music downloads and uploader controls",
+      "body": "Members can download library tracks, and uploaders can delete their own music.",
+      "expand": "The player retains synchronized lyrics and site-wide playback, while the management page provides track deletion. Background styling also extends across site pages."
+    }
+  },
+  {
+    "date": "2026-09-11",
+    "tag": "feature",
+    "zh": {
+      "title": "宠物领养与分享图鉴上线",
+      "body": "/pets 可以领养和照顾账号宠物，等级记录随账号保存；/pets/gallery 提供可分享的宠物图鉴。",
+      "expand": "桌宠管理支持调整显示与顺序，手机也能使用管理入口。宠物资料与页面上的陪伴角色共用已有桌宠能力。"
+    },
+    "en": {
+      "title": "Pet adoption and a shareable gallery",
+      "body": "/pets supports account-based pet adoption and care with saved levels, and /pets/gallery provides a shareable pet gallery.",
+      "expand": "Pet management controls visibility and ordering, including on phones. Pet profiles reuse the existing companion system."
+    }
+  },
+  {
+    "date": "2026-09-11",
+    "tag": "feature",
+    "zh": {
+      "title": "跨平台账号生命周期说明页加入",
+      "body": "/dev/auth 用中英文流程图说明登录、注册、身份绑定、合并、找回与注销的关系。",
+      "expand": "第三方首次登录可明确选择新建账号或绑定已有账号；说明页区分网站、小程序与安装客户端。后续账号流程变化需要同步复核图示，9 月 12 日又补充微信已验证手机号关联。"
+    },
+    "en": {
+      "title": "Cross-platform account lifecycle documentation",
+      "body": "/dev/auth explains sign-in, registration, identity linking, merging, recovery and deletion through bilingual flowcharts.",
+      "expand": "First-time provider sign-in explicitly offers creating an account or linking an existing one. The guide separates web, mini-program and installed-client flows, and requires review when those flows change. Verified WeChat phone linking follows on September 12."
+    }
+  },
+  {
+    "date": "2026-09-11",
+    "tag": "feature",
+    "zh": {
+      "title": "智能魔方与打乱分析接入练习复盘",
+      "body": "智能魔方动作记录和打乱分析结果可进入练习复盘，减少再次录入打乱与解法。",
+      "expand": "复盘入口复用现有编辑与保存流程，后续同打乱关联记录便于对照。智能魔方数据链路的实现与具体设备的实机验证分别记录。"
+    },
+    "en": {
+      "title": "Practice reconstructions from smart cubes and analysis",
+      "body": "Smart-cube move records and scramble analysis can feed practice reconstructions, reducing repeated entry of scrambles and solutions.",
+      "expand": "The entry reuses the existing editor and save flow, with related same-scramble records supporting comparison. Implementation of the data path and physical verification of each device remain separate."
+    }
+  },
+  {
+    "date": "2026-09-10",
+    "tag": "feature",
+    "zh": {
+      "title": "线上比赛接入报名与监督流程",
+      "body": "线上比赛入口接入主办方申请、项目报名、监督场次、成绩确认与榜单，并串联订单、退款和结算记录。",
+      "expand": "/platform/events/online 承载实际接口流程，早期预览位于 /platform/events/preview。当前记录为本地联调实现；真实支付、双设备实时视频和智能魔方实机验收仍需分别完成，不据此宣称已开放收费赛事。"
+    },
+    "en": {
+      "title": "Online competition registration and supervision flows",
+      "body": "The online competition entry connects organizer applications, event registration, supervision sessions, result confirmation and standings with orders, refunds and settlement records.",
+      "expand": "/platform/events/online hosts the API-integrated flow; /platform/events/preview retains the early preview. This records local integration. Real payments, two-device live video and physical smart-cube acceptance remain separate checks, so paid events are not described as publicly launched."
+    }
+  },
+  {
+    "date": "2026-09-09",
+    "tag": "feature",
+    "zh": {
+      "title": "历史页展开为可游览纸雕画卷",
+      "body": "每日更新对应山河中的独立场景，可以沿日期行走、跳转阅读，并导出当前画卷的视频。",
+      "expand": "画卷保留完整日历与重要改动列表，中英文共用历史数据。人物行进、地貌、天气和昼夜组合成可交互场景，手机也可拖动画卷与跳转日期。"
+    },
+    "en": {
+      "title": "An explorable paper landscape for project history",
+      "body": "Each daily update becomes its own scene in a landscape that visitors can travel, jump through by date and export as video.",
+      "expand": "The complete calendar and milestone list remain available, with Chinese and English sharing the same history data. Travel, landforms, weather and daylight form an interactive scene, including touch dragging and date navigation."
+    }
+  },
+  {
+    "date": "2026-09-09",
+    "tag": "feature",
+    "zh": {
+      "title": "会员加入续费说明与订阅管理页",
+      "body": "/membership/renewal-terms 说明续费条款，/membership/subscription 展示订阅状态与取消入口。",
+      "expand": "实现补齐续费授权记录与管理流程。续费套餐是否可用仍取决于后台公开状态和支付渠道开通结果，页面与接口实现不代表扣款已通过真实验收。"
+    },
+    "en": {
+      "title": "Renewal terms and subscription management pages",
+      "body": "/membership/renewal-terms explains renewal terms, while /membership/subscription displays subscription status and cancellation controls.",
+      "expand": "The implementation adds authorization records and management flows. Availability still depends on published plans and payment-channel readiness; working pages and APIs do not establish successful real-world charging."
+    }
+  },
+  {
+    "date": "2026-09-09",
+    "tag": "feature",
+    "zh": {
+      "title": "首页加入风景背景与玻璃外观",
+      "body": "外观菜单集中选择风景背景，首页卡片使用统一玻璃材质，并调整手机端标题和操作布局。",
+      "expand": "背景包含随主题变化的整页风景；管理员首页另加入私密面试文档入口，该材料保留原有访问权限。"
+    },
+    "en": {
+      "title": "Scenic backgrounds and glass styling on the homepage",
+      "body": "The appearance menu groups scenic backgrounds, homepage cards share glass styling, and the mobile header aligns branding and actions.",
+      "expand": "Full-page scenery responds to the selected theme. Admins also gain a homepage link to a private interview document with its existing access restrictions."
+    }
+  },
+  {
+    "date": "2026-09-08",
+    "tag": "feature",
+    "zh": {
+      "title": "纳维–斯托克斯双语文章与导读补齐",
+      "body": "/math/navier-stokes 补充双语导读、文章译文与配图，集中解释相关数学背景和阅读线索。",
+      "expand": "数学入口连接完整内容，读者可按章节阅读说明与图示；文章内容与后续研究结论的核验保持区分。"
+    },
+    "en": {
+      "title": "Bilingual Navier–Stokes article and guide",
+      "body": "/math/navier-stokes expands with a bilingual guide, article translation and figures explaining mathematical background and reading context.",
+      "expand": "The math entry links to the complete content, with explanations and illustrations organized by section. Article coverage is distinct from verification of subsequent research conclusions."
+    }
+  },
+  {
+    "date": "2026-09-08",
+    "tag": "feature",
+    "zh": {
+      "title": "课程视频加入快捷键与播放统计",
+      "body": "课程视频补齐播放控制、右键菜单、快捷键说明和播放统计。",
+      "expand": "学员可以用键盘控制视频，并打开帮助查看可用操作；快捷键说明弹窗支持从遮罩关闭。"
+    },
+    "en": {
+      "title": "Lesson video shortcuts and playback statistics",
+      "body": "Lesson videos add playback controls, a context menu, shortcut help and playback statistics.",
+      "expand": "Learners can control video from the keyboard and open help to inspect available actions. The shortcut dialog can be dismissed from its backdrop."
+    }
+  },
+  {
     date: '2026-09-10',
     tag: 'feature',
     zh: {

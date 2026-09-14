@@ -1016,7 +1016,37 @@
   },
   {
     "date": "2026-09-08",
-    "zh": "双语交互式层先法教程上线 + WCA 纪录成就加入里程碑等级 + 三维空间补充沿路车流和滨江灯光 + 公式界面统一播放控制",
-    "en": "The bilingual interactive layer-by-layer tutorial launches + WCA record achievements gain milestone tiers + the 3D space adds road traffic and promenade lighting + algorithm views unify playback controls"
+    "zh": "双语交互式层先法教程上线 + 纳维–斯托克斯文章与导读补齐 + 课程视频加入播放统计和快捷键 + WCA 成就扩充 + 上海建筑接入 Blender 制作流程",
+    "en": "Interactive layer-by-layer lessons launch + Navier–Stokes article and guide expand + lesson videos add playback statistics and shortcuts + WCA achievements expand + Shanghai buildings gain a Blender authoring workflow"
+  },
+  {
+    "date": "2026-09-09",
+    "zh": "历史页加入可游览纸雕画卷与视频导出 + 会员续费管理与续费说明页加入 + 首页加入风景背景与玻璃外观 + 管理员面试文档加入首页入口 + 外滩建筑立面细化",
+    "en": "History gains an explorable paper landscape and video export + membership adds subscription management and renewal terms + the homepage adds scenic backgrounds and glass styling + admins gain a homepage link to an interview document + Bund facades gain detail"
+  },
+  {
+    "date": "2026-09-10",
+    "zh": "山河滑行加入首页 + 线上比赛接入报名、监督与结算流程 + 音乐播放器加入同步歌词导航 + 模拟器阶段支持拖动排序 + 计时器提供非最优打乱选项",
+    "en": "Paper Odyssey joins the homepage + online competitions connect registration, supervision and settlement flows + the music player adds synced lyric navigation + simulator stages support drag reordering + the timer offers non-optimal scrambles"
+  },
+  {
+    "date": "2026-09-11",
+    "zh": "宠物领养与分享图鉴上线 + 跨平台登录流程图补齐 + 第三方登录支持选择新建或绑定账号 + 智能魔方与打乱分析接入练习复盘 + 论坛新增参与资料要求与账号禁言 + 打乱难度数据更新",
+    "en": "Pet adoption and a shareable gallery launch + cross-platform sign-in flowcharts expand + provider sign-in offers account creation or linking + smart cubes and scramble analysis connect to practice reconstructions + the forum adds profile requirements and account bans + scramble difficulty data refreshes"
+  },
+  {
+    "date": "2026-09-12",
+    "zh": "合作介绍与洽谈要点页加入 + WCA 纪录统计统一地区和级别筛选 + 微信手机号支持验证后关联账号 + 模拟器人物支持服装和自定义面部照片 + 音乐上传者可删除作品 + 三维空间补充园区建筑",
+    "en": "Partnership and talking-points pages arrive + WCA record statistics unify region and level filters + verified WeChat phone numbers can link accounts + simulator characters add clothing and custom face photos + music uploaders can delete their tracks + the 3D space adds a campus model"
+  },
+  {
+    "date": "2026-09-13",
+    "zh": "三维空间细化环球金融中心观光厅与金茂大厦 + 比赛练习开放访问 + 会员续费说明补充取消入口 + 管理员可跳转用户页面 + 计时器求解面板交互调整",
+    "en": "The 3D space refines the SWFC observation hall and Jin Mao Tower + competition practice opens for browsing + renewal disclosures add a cancellation path + admins can jump to user pages + timer solver controls improve"
+  },
+  {
+    "date": "2026-09-14",
+    "zh": "刷新 WCA 统计数据",
+    "en": "Refresh WCA statistics"
   }
 ]
