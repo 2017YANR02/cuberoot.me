@@ -7,6 +7,8 @@ export const RIGHT = "R U R' U'";
 export const LEFT = "L' U' L U";
 export const RIGHT_SUNE = "R U R' U R U2 R'";
 export const LEFT_SUNE = "L' U' L U' L' U2 L";
+export const DAISY_CHALLENGE_PROMPT = text('动用你聪明的脑袋，如何拼成这样一朵小花？', 'Put your clever brain to work: how would you make a daisy like this?');
+export const DAISY_HINT_INTRO = text('先观察白棱的位置和白色朝向，再选择对应的处理方法。', 'First inspect where the white edge is and which way the white sticker faces, then choose the matching move.');
 export const LBL_STEPS: Step[] = [
   {
     id: 'structure', title: text('结构与记号', 'Structure and notation'),
