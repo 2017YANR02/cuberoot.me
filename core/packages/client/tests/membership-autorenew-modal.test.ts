@@ -38,6 +38,9 @@ describe('auto-renewal before merchant approval', () => {
     expect(sign.disabled).toBe(true);
     expect(host.querySelector('a[href="/membership/renewal-terms"]')).not.toBeNull();
     expect(host.querySelector('a[href="/membership/subscription"]')).not.toBeNull();
+    expect(host.querySelector('a[href="/membership/subscription"]')?.textContent).toBe('管理自动续费 / 退订');
+    expect(host.textContent).toContain('取消自动续费 → 确认取消，以微信确认结果为准');
+    expect(host.textContent).toContain('已付权益保留到期，取消不会自动退款');
   });
   it('allows closing without consent', async () => {
     const onClose = vi.fn();

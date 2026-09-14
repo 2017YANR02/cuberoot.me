@@ -73,7 +73,10 @@ export default function AutoRenewModal({ price, period, onClose }: Props) {
           {tr({ zh: '微信签约暂未开放', en: 'WeChat authorization unavailable' })}
         </button>
         <p className="mem-autorenew-caption">
-          <AppLink href="/membership/subscription" prefetch={false}>{tr({ zh: '管理自动续费与取消说明', en: 'Manage auto-renewal and cancellation' })}</AppLink>
+          {tr({ zh: '退订：会员 → 管理自动续费 → 对应签约记录 → 取消自动续费 → 确认取消，以微信确认结果为准。已付权益保留到期，取消不会自动退款。', en: 'To cancel: Membership → Manage auto-renewal → Select the authorization → Cancel auto-renewal → Confirm cancellation. WeChat must confirm the result. Paid benefits remain until expiry; cancellation does not automatically issue a refund.' })}
+        </p>
+        <p className="mem-autorenew-caption">
+          <AppLink href="/membership/subscription" prefetch={false}>{tr({ zh: '管理自动续费 / 退订', en: 'Manage / cancel auto-renewal' })}</AppLink>
         </p>
       </section>
     </div>
