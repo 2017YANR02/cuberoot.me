@@ -34,11 +34,10 @@ body:has(.lbl-page) {
 .lbl-daisy-sequence .lbl-alg { margin: 0; color: var(--foreground); }
 .lbl-daisy-scramble { display: flex; flex-direction: column; gap: 4px; margin: 24px 0 0; font-size: .78rem; color: var(--muted-foreground); }
 .lbl-daisy-scramble code { display: block; padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent); border-radius: 12px; color: var(--foreground); font-size: .75rem; line-height: 1.6; overflow-wrap: anywhere; }
-.lbl-daisy-status { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; width: 100%; height: 100%; min-height: 220px; padding: 24px; border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent); border-radius: 28px; background: color-mix(in srgb, var(--card) 64%, transparent); color: var(--muted-foreground); text-align: center; line-height: 1.7; }
-.lbl-daisy-retry { padding: 8px 14px; border: 1px solid var(--border-default); border-radius: 18px; background: color-mix(in srgb, var(--foreground) 5%, transparent); color: var(--foreground); font: inherit; cursor: pointer; }
 .lbl-daisy-challenge { width: 100%; max-width: 440px; padding: 18px; border-radius: 26px; }
 .lbl-daisy-prompt { display: flex; align-items: flex-start; gap: 10px; margin: 0; color: var(--foreground); font-size: 1.02rem; font-weight: 650; line-height: 1.55; }
 .lbl-daisy-prompt svg { flex: 0 0 auto; margin-top: 3px; color: var(--accent); }
+.lbl-daisy-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .lbl-daisy-hint-toggle { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; padding: 9px 14px; border: 1px solid color-mix(in srgb, var(--accent) 46%, var(--border-default)); border-radius: 20px; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); font: inherit; font-size: .85rem; font-weight: 650; cursor: pointer; transition: background .2s, transform .2s; }
 .lbl-daisy-hint-toggle:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); }
 .lbl-daisy-hint-toggle:active { transform: scale(.97); }
@@ -51,15 +50,17 @@ body:has(.lbl-page) {
 .lbl-daisy-hint-card h3 { margin: 0 0 3px; color: var(--foreground); font-size: .76rem; line-height: 1.35; }
 .lbl-daisy-hint-card p { margin: 0 0 5px; color: var(--muted-foreground); font-size: .7rem; line-height: 1.45; }
 .lbl-daisy-hint-card code { color: var(--foreground); font-size: .72rem; overflow-wrap: anywhere; }
-.lbl-daisy-side-status { margin: 24px 0 0; color: var(--muted-foreground); font-size: .85rem; line-height: 1.7; }
 .lbl-help { display: flex; align-items: center; gap: 6px; margin: 0; font-size: .8rem; color: var(--muted-foreground); }
 .lbl-visuals { min-width: 0; align-self: center; }
 .lbl-cases { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .lbl-case { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 10px 4px; border: 1px solid transparent; border-radius: 20px; background: transparent; color: var(--muted-foreground); font: inherit; font-size: .75rem; line-height: 1.4; cursor: pointer; transition: background .2s, transform .2s; }
+.lbl-reference-case { cursor: default; }
 .lbl-case .puzzle-art { max-width: 100%; }
 .lbl-case:hover { background: color-mix(in srgb, var(--foreground) 4%, transparent); }
 .lbl-case[aria-pressed='true'] { color: var(--foreground); }
 .lbl-case:active, .lbl-practice:active { transform: scale(.96); }
+.lbl-reference-case:active { transform: none; }
+.lbl-reference-case code { max-width: 100%; color: var(--foreground); font-size: .7rem; overflow-wrap: anywhere; text-align: center; }
 .lbl-comparison { display: flex; align-items: center; justify-content: center; gap: 20px; margin-top: 24px; color: var(--muted-foreground); }
 .lbl-comparison figure { margin: 0; text-align: center; font-size: .75rem; }
 .lbl-comparison figcaption { margin-top: 6px; }

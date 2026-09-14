@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alg } from 'cubing/alg';
 import { ArrowRight, ChevronLeft, ChevronRight, Lightbulb, Move3d } from 'lucide-react';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
@@ -8,87 +8,40 @@ import BackHome from '@/components/BackHome';
 import Link from '@/components/AppLink';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import { resolvePlayerSetup } from '@/components/AlgPlayer/player-setup';
-import { Spinner } from '@/components/Spinner/Spinner';
 import { VisualCube } from '@/components/VisualCube';
 import { CompactSelect } from '@/components/CompactSelect';
 import JsonLd from '@/components/JsonLd';
-import { normalizeScramble } from '@/lib/cross-solver';
-import { buildDaisyPlayback, resolveDaisyScramble, selectWhiteDaisyFace } from '@/lib/lbl-daisy';
 import { tr, T } from '@/i18n/tr';
-import { DAISY_CHALLENGE_PROMPT, DAISY_HINT_INTRO, LBL_STEPS, type LblExample } from './content';
+import {
+  DAISY_CHALLENGE_PROMPT,
+  DAISY_HINT_INTRO,
+  LBL_LESSON_RUNS,
+  LBL_LESSON_STAGE_IDS,
+  LBL_STEPS,
+  type LblExample,
+  type LblLessonRun,
+  type LblLessonStageId,
+} from './content';
 import './lbl.css';
-
-type DaisyLessonState =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'ready'; scramble: string; setup: string; alg: string; displayAlg: string; length: number }
-  | { status: 'error' };
-
-function useDaisyLesson(enabled: boolean): { state: DaisyLessonState; retry: () => void } {
-  const [state, setState] = useState<DaisyLessonState>({ status: 'idle' });
-  const [retryCount, setRetryCount] = useState(0);
-
-  useEffect(() => {
-    if (!enabled) {
-      setState({ status: 'idle' });
-      return;
-    }
-    let cancelled = false;
-    setState({ status: 'loading' });
-    void (async () => {
-      try {
-        const [{ pooledScramble, randomMoveScrambleNxN }, { getRustCrossPool, poolSizeForDevice }] = await Promise.all([
-          import('@/lib/cubing-scramble'),
-          import('@/lib/rust-cross-pool'),
-        ]);
-        let rawScramble: string | null = null;
-        try {
-          rawScramble = await pooledScramble('333');
-        } catch {
-          // cubing.js's random-state worker can be unavailable in embedded browsers;
-          // the local random-move generator still produces an analyzable 3x3 state.
-        }
-        const scramble = normalizeScramble(resolveDaisyScramble(rawScramble, randomMoveScrambleNxN(3)));
-        if (!scramble) throw new Error('scramble unavailable');
-        const pool = getRustCrossPool('daisy', Math.min(2, poolSizeForDevice()));
-        await pool.ready;
-        const scores = await pool.solveDaisyStage(scramble);
-        const face = selectWhiteDaisyFace(scores);
-        if (face === null) throw new Error('daisy orientation unavailable');
-        const result = await pool.solveDaisyMoves(scramble, face, { extra: 0, cap: 1 });
-        const displayAlg = result.sols[0]?.m ?? '';
-        if (!displayAlg.trim()) throw new Error('daisy solution unavailable');
-        const playback = buildDaisyPlayback(scramble, displayAlg);
-        if (!cancelled) setState({ status: 'ready', scramble, ...playback, length: result.len });
-      } catch (error) {
-        console.warn('[LBL daisy] guided demo unavailable:', error);
-        if (!cancelled) setState({ status: 'error' });
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [enabled, retryCount]);
-
-  return { state, retry: () => setRetryCount(value => value + 1) };
-}
 
 function expandedSetup(alg: string): string {
   return new Alg(alg).expand().toString();
 }
 
-function DaisyLoadingState({ state, onRetry }: { state: DaisyLessonState; onRetry: () => void }) {
-  if (state.status === 'loading') {
-    return <div className="lbl-daisy-status" role="status" aria-live="polite">
-      <Spinner size={18} label={tr({ zh: '正在准备小花演示', en: 'Preparing the daisy demo' })} />
-      <span><T zh="正在生成随机打乱并寻找小花解法…" en="Generating a random scramble and finding a daisy solve…" /></span>
-    </div>;
-  }
-  if (state.status !== 'error') return null;
-  return <div className="lbl-daisy-status" role="alert">
-    <span><T zh="随机演示暂时没有准备好。" en="The random demo is not ready yet." /></span>
-    <button type="button" className="lbl-button lbl-daisy-retry" onClick={onRetry}>
-      <T zh="重新生成" en="Try again" />
-    </button>
-  </div>;
+type LessonFrame = { setup: string; alg: string; stageId: LblLessonStageId | null };
+
+function resolveLessonFrame(run: LblLessonRun, stepId: string): LessonFrame {
+  const stageIndex = LBL_LESSON_STAGE_IDS.findIndex(id => id === stepId);
+  if (stageIndex < 0) return { setup: '', alg: '', stageId: null };
+
+  const stageId = LBL_LESSON_STAGE_IDS[stageIndex];
+  if (!stageId) throw new Error('LBL lesson stage id must exist');
+  const completedStages = LBL_LESSON_STAGE_IDS.slice(0, stageIndex).map(id => run.stages[id]);
+  return {
+    setup: [run.scramble, ...completedStages].filter(Boolean).join(' '),
+    alg: run.stages[stageId],
+    stageId,
+  };
 }
 
 function DaisyHintCases({ examples }: { examples: LblExample[] }) {
@@ -110,13 +63,18 @@ function DaisyHintCases({ examples }: { examples: LblExample[] }) {
   </div>;
 }
 
-function DaisyChallenge({ examples, open, onToggle }: { examples: LblExample[]; open: boolean; onToggle: () => void }) {
+function DaisyChallenge({ examples, open, onToggle, onNextScramble }: { examples: LblExample[]; open: boolean; onToggle: () => void; onNextScramble: () => void }) {
   return <section className="lbl-daisy-challenge lbl-glass" aria-labelledby="lbl-daisy-prompt">
     <p id="lbl-daisy-prompt" className="lbl-daisy-prompt"><Lightbulb size={20} aria-hidden="true" /><span>{tr(DAISY_CHALLENGE_PROMPT)}</span></p>
-    <button type="button" className="lbl-daisy-hint-toggle" aria-expanded={open} aria-controls="lbl-daisy-hints" onClick={onToggle}>
-      <Lightbulb size={16} aria-hidden="true" />
-      <T zh={open ? '收起提示' : '给我一点提示'} en={open ? 'Hide hints' : 'Show me a hint'} />
-    </button>
+    <div className="lbl-daisy-actions">
+      <button type="button" className="lbl-daisy-hint-toggle" onClick={onNextScramble}>
+        <T zh="换一套打乱" en="Try another scramble" />
+      </button>
+      <button type="button" className="lbl-daisy-hint-toggle" aria-expanded={open} aria-controls="lbl-daisy-hints" onClick={onToggle}>
+        <Lightbulb size={16} aria-hidden="true" />
+        <T zh={open ? '收起提示' : '给我一点提示'} en={open ? 'Hide hints' : 'Show me a hint'} />
+      </button>
+    </div>
     {open && <DaisyHintCases examples={examples} />}
   </section>;
 }
@@ -126,23 +84,25 @@ export default function LblTutorial() {
   const stepIndex = Math.max(0, LBL_STEPS.findIndex(s => s.id === stepId));
   const step = LBL_STEPS[stepIndex];
   const isDaisyStep = step.id === 'daisy';
-  const daisyLesson = useDaisyLesson(isDaisyStep);
+  const [lessonIndex, setLessonIndex] = useState(0);
+  const lessonDrawn = useRef(false);
   const [daisyHintOpen, setDaisyHintOpen] = useState(false);
+  useEffect(() => {
+    if (lessonDrawn.current) return;
+    lessonDrawn.current = true;
+    setLessonIndex(Math.floor(Math.random() * LBL_LESSON_RUNS.length));
+  }, []);
   useEffect(() => {
     if (!isDaisyStep) setDaisyHintOpen(false);
   }, [isDaisyStep]);
-  // Keep example selection tied to its step, including browser back/forward navigation.
-  const [selection, setSelection] = useState({ step: '', index: 0 });
-  const exampleIndex = selection.step === step.id ? Math.min(selection.index, step.examples.length - 1) : 0;
-  const demo = step.examples[exampleIndex];
-  const setup = new Alg(resolvePlayerSetup('3x3', demo.alg, demo.setup, demo.startSolved ?? false)).expand().toString();
-  const daisyDemo = isDaisyStep && daisyLesson.state.status === 'ready' ? daisyLesson.state : null;
-  const beforeSetup = daisyDemo ? expandedSetup(daisyDemo.scramble) : setup;
-  const afterSetup = daisyDemo ? expandedSetup(`${daisyDemo.scramble} ${daisyDemo.displayAlg}`) : expandedSetup(`${setup} ${demo.alg}`);
-  const simQuery = daisyDemo
-    ? new URLSearchParams({ puzzle: '3x3', alg: daisyDemo.displayAlg, anchor: 'start', stickeringRot: 'z2', setup: daisyDemo.scramble })
-    : new URLSearchParams({ puzzle: '3x3', alg: demo.alg, anchor: demo.startSolved || demo.setup ? 'start' : 'end', stickeringRot: 'z2' });
-  if (!daisyDemo && demo.setup) simQuery.set('setup', demo.setup);
+  const lesson = LBL_LESSON_RUNS[lessonIndex] ?? LBL_LESSON_RUNS[0];
+  if (!lesson) throw new Error('LBL lesson runs must not be empty');
+  const frame = resolveLessonFrame(lesson, step.id);
+  const beforeSetup = expandedSetup(frame.setup);
+  const afterSetup = frame.alg ? expandedSetup(`${frame.setup} ${frame.alg}`) : beforeSetup;
+  const simQuery = frame.alg
+    ? new URLSearchParams({ puzzle: '3x3', alg: frame.alg, anchor: 'start', stickeringRot: 'z2', setup: frame.setup })
+    : null;
 
   return <main className="lbl-page">
     <header className="lbl-header">
@@ -159,61 +119,53 @@ export default function LblTutorial() {
         onChange={value => { void setStepId(value); }} />
       <button className="lbl-button" type="button" disabled={stepIndex === LBL_STEPS.length - 1} aria-label={tr({ zh: '下一步', en: 'Next step' })} onClick={() => { void setStepId(LBL_STEPS[stepIndex + 1].id); }}><ChevronRight size={18} /></button>
     </nav>
-    <article className="lbl-lesson" key={step.id}>
+    <article className="lbl-lesson" key={`${lessonIndex}-${step.id}`}>
       <div className="lbl-intro">
         <h2>{tr(step.title)}</h2>
         <p className="lbl-goal">{tr(step.goal)}</p>
       </div>
       <div className="lbl-demo">
         <div className="lbl-cube">
-          {isDaisyStep
-            ? daisyDemo
-              ? <AlgPlayer key={`daisy-${daisyDemo.scramble}-${daisyDemo.displayAlg}`} puzzle="3x3" set="" engine="sim" orientation="z2"
-                alg={daisyDemo.alg} setup={daisyDemo.setup} fillPane moveDurationMs={1500} />
-              : <DaisyLoadingState state={daisyLesson.state} onRetry={daisyLesson.retry} />
-            : <AlgPlayer key={`${step.id}-${exampleIndex}`} puzzle="3x3" set="" engine="sim" orientation="z2"
-              alg={demo.alg} setup={demo.setup} startSolved={demo.startSolved} fillPane moveDurationMs={650} />}
+          <AlgPlayer key={`${lessonIndex}-${step.id}`} puzzle="3x3" set="" engine="sim" orientation="z2"
+            alg={frame.alg} setup={frame.setup} fillPane moveDurationMs={isDaisyStep ? 1500 : 650} />
         </div>
-        {daisyDemo
-          ? <div className="lbl-daisy-sequence">
-            <span><T zh="本次小花解法" en="This daisy solve" /></span>
-            <code className="lbl-alg">{daisyDemo.displayAlg}</code>
-          </div>
-          : !isDaisyStep && <code className="lbl-alg">{demo.alg}</code>}
+        {frame.stageId && <div className="lbl-daisy-sequence">
+          <span><T zh="本步解法" en="This step's algorithm" /></span>
+          <code className="lbl-alg">{frame.alg || tr({ zh: '已经是黄色十字，无需操作', en: 'Yellow cross already complete' })}</code>
+        </div>}
         <p className="lbl-help"><Move3d size={16} /><T zh="拖动看视角，播放学动作" en="Drag to explore. Play to learn." /></p>
-        {daisyDemo && <DaisyChallenge examples={step.examples} open={daisyHintOpen} onToggle={() => setDaisyHintOpen(open => !open)} />}
+        {isDaisyStep && <DaisyChallenge examples={step.examples} open={daisyHintOpen}
+          onToggle={() => setDaisyHintOpen(open => !open)}
+          onNextScramble={() => {
+            lessonDrawn.current = true;
+            setLessonIndex(index => (index + 1) % LBL_LESSON_RUNS.length);
+            setDaisyHintOpen(false);
+          }} />}
       </div>
       <aside className="lbl-visuals">
-        {!isDaisyStep && <div className="lbl-cases" role="group" aria-label={tr({ zh: '选择演示情况', en: 'Choose an example' })}>
-          {step.examples.map((e, i) => <button type="button" key={i} className="lbl-button lbl-case" aria-pressed={i === exampleIndex}
-            onClick={() => setSelection({ step: step.id, index: i })}>
+        {!isDaisyStep && <div className="lbl-cases" role="group" aria-label={tr({ zh: '常见情况参考', en: 'Common case references' })}>
+          {step.examples.map(e => <article key={e.title.en} className="lbl-case lbl-reference-case">
             <VisualCube local view="iso" scheme="yogwrb" size={84} setup={new Alg(resolvePlayerSetup('3x3', e.alg, e.setup, e.startSolved ?? false)).expand().toString()} alt={tr(e.title)} />
             <span>{tr(e.title)}</span>
-          </button>)}
+            <code>{e.alg}</code>
+          </article>)}
         </div>}
-        {daisyDemo
+        {frame.stageId
           ? <>
             <div className="lbl-daisy-scramble">
-              <span><T zh="随机打乱" en="Random scramble" /></span>
-              <code>{daisyDemo.scramble}</code>
+              <span><T zh="本次初始打乱" en="Initial scramble for this lesson" /></span>
+              <code>{lesson.scramble}</code>
             </div>
             <div className="lbl-comparison">
-              <figure><VisualCube local view="plan" scheme="yogwrb" size={90} setup={beforeSetup} alt={tr({ zh: '打乱状态', en: 'Scrambled state' })} /><figcaption><T zh="打乱状态" en="Scrambled" /></figcaption></figure>
+              <figure><VisualCube local view="plan" scheme="yogwrb" size={90} setup={beforeSetup} alt={tr({ zh: '本步开始状态', en: 'State before this step' })} /><figcaption><T zh="本步开始" en="Before this step" /></figcaption></figure>
               <ArrowRight size={20} aria-hidden="true" />
-              <figure><VisualCube local view="plan" scheme="yogwrb" size={90} setup={afterSetup} alt={tr({ zh: '小花状态', en: 'Daisy state' })} /><figcaption><T zh="小花状态" en="Daisy" /></figcaption></figure>
+              <figure><VisualCube local view="plan" scheme="yogwrb" size={90} setup={afterSetup} alt={tr({ zh: '本步完成状态', en: 'State after this step' })} /><figcaption><T zh="本步完成" en="After this step" /></figcaption></figure>
             </div>
-            <Link className="lbl-practice lbl-glass" href={`/sim?${simQuery}`} prefetch={false}><T zh="自己试一遍" en="Try it yourself" /><ArrowRight size={16} /></Link>
+            {simQuery && <Link className="lbl-practice lbl-glass" href={`/sim?${simQuery}`} prefetch={false}><T zh="自己试一遍本步" en="Practice this step" /><ArrowRight size={16} /></Link>}
           </>
-          : !isDaisyStep && <>
-            <div className="lbl-comparison">
-              <figure><VisualCube local view="plan" scheme="yogwrb" size={90} setup={beforeSetup} alt={tr({ zh: '转动前', en: 'Before' })} /><figcaption><T zh="转动前" en="Before" /></figcaption></figure>
-              <ArrowRight size={20} aria-hidden="true" />
-              <figure><VisualCube local view="plan" scheme="yogwrb" size={90} setup={afterSetup} alt={tr({ zh: '转动后', en: 'After' })} /><figcaption><T zh="转动后" en="After" /></figcaption></figure>
-            </div>
-            <p className="lbl-hint">{tr(demo.hint)}</p>
-            <Link className="lbl-practice lbl-glass" href={`/sim?${simQuery}`} prefetch={false}><T zh="自由练习" en="Practice" /><ArrowRight size={16} /></Link>
-          </>}
-        {isDaisyStep && !daisyDemo && <p className="lbl-daisy-side-status"><T zh="小花演示准备好后，会在这里显示打乱状态和完成状态。" en="The scramble and finished state will appear here when the daisy demo is ready." /></p>}
+          : <div className="lbl-comparison">
+            <figure><VisualCube local view="plan" scheme="yogwrb" size={90} setup={beforeSetup} alt={tr({ zh: '复原状态', en: 'Solved state' })} /><figcaption><T zh="复原状态" en="Solved state" /></figcaption></figure>
+          </div>}
       </aside>
       <details className="lbl-details">
         <summary><T zh="详细说明" en="More guidance" /></summary>

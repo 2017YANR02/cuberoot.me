@@ -10,6 +10,9 @@ _deploy/
 # Root workspace dependencies
 /node_modules/
 
+# pnpm local content-addressable store; machine-local cache, never commit
+/.pnpm-store/
+
 # 数据库配置（含密码，禁止提交）
 database.yml
 
