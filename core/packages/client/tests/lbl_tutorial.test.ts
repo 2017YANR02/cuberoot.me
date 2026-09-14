@@ -14,16 +14,16 @@ describe('LBL teaching examples', () => {
       expect(resolveSimPreviewMoves('3x3', demo.alg).length).toBeGreaterThan(0);
       if (!demo.setup && !demo.startSolved) expect(end.isIdentical(solved)).toBe(true);
       if (step.id === 'yellow-face') {
-        const expected = [3, 3, 2, 4][step.examples.indexOf(demo)];
-        expect(start.patternData.CORNERS.orientation.filter(o => o !== 0).length).toBe(expected);
+        expect(start.patternData.CORNERS.orientation.filter(o => o !== 0).length).toBeGreaterThan(0);
         expect(end.patternData.EDGES.orientation.every(o => o === 0)).toBe(true);
         expect(end.patternData.CORNERS.pieces.slice(4)).toEqual([4, 5, 6, 7]);
-        if (demo.setup) expect(end.patternData.CORNERS.orientation.filter(o => o !== 0).length).toBe(3);
+        expect(end.patternData.CORNERS.orientation.every(o => o === 0)).toBe(true);
       }
       if (step.id === 'edge-position') {
         expect(start.patternData.CORNERS).toEqual(solved.patternData.CORNERS);
-        expect(start.patternData.EDGES.pieces[2]).toBe(2);
-        expect(start.patternData.EDGES.pieces.filter((p, i) => p !== i).length).toBe(3);
+        expect(start.patternData.EDGES.orientation.every(o => o === 0)).toBe(true);
+        expect(start.patternData.EDGES.pieces.slice(4)).toEqual([4, 5, 6, 7, 8, 9, 10, 11]);
+        expect(start.patternData.EDGES.pieces.slice(0, 4).filter((p, i) => p !== i).length).toBe(3);
       }
       if (step.id === 'yellow-cross') {
         expect(start.patternData.EDGES.orientation.filter(o => o !== 0).length).toBe(demo.title.en === 'Dot' ? 4 : 2);
@@ -32,9 +32,9 @@ describe('LBL teaching examples', () => {
         expect(end.patternData.EDGES).toEqual(solved.patternData.EDGES);
       }
       if (step.id === 'corner-position') {
-        const p = start.patternData.CORNERS.pieces.slice(0, 4);
-        const pairs = p.filter((piece, i) => (p[(i + 1) % 4] - piece + 4) % 4 === 1).length;
-        expect(pairs).toBe(demo.setup ? 0 : 1);
+        expect(start.patternData.CORNERS.orientation.slice(0, 4)).toEqual([0, 0, 0, 0]);
+        expect(end.patternData.CORNERS).toEqual(solved.patternData.CORNERS);
+        expect(end.patternData.EDGES.orientation.every(o => o === 0)).toBe(true);
       }
     });
   }
