@@ -6,7 +6,8 @@
  * "cuber" WebGL engine (the /sim look) except where a puzzle has no cuber recon
  * player yet:
  *   - sq1       → Sq1ReconPlayer
- *   - NxN       → CuberReconPlayer
+ *   - NxN/mirror → CuberReconPlayer (mirror uses shape-shifting geometry)
+ *   - gear      → TweenReconPlayer(gear)
  *   - skewb     → TweenReconPlayer(skewb)     — WCA R/U/L/B notation, engine-verified vs cubing.js
  *   - pyraminx  → TweenReconPlayer(pyraminx)  — WCA U/L/R/B + tips
  *   - fto       → FtoReconPlayer              — shared EIF notation bridge
@@ -30,6 +31,7 @@ import { getPuzzleId } from '@/lib/recon-utils';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
 import { cleanFtoReconAlgForPlayer, cleanReconAlgText } from '@cuberoot/shared/recon-completion';
 import { parseSkewbMoves } from '@/app/[lang]/sim/engine/skewb/skewbState';
+import { parseGearMoves } from '@/app/[lang]/sim/engine/gear/gearState';
 import { parsePyraMoves } from '@/app/[lang]/sim/engine/pyra/pyraState';
 import TwistySection from '@/components/TwistySection';
 import Sq1ReconPlayer from '@/components/Sq1ReconPlayer';
@@ -65,7 +67,7 @@ export default function ReconEnginePlayer({
 }) {
   const puzzleId = getPuzzleId(event);
 
-  if (event === 'sq1') {
+  if (puzzleId === 'square1') {
     return (
       <Sq1ReconPlayer
         scramble={scramble}
@@ -92,13 +94,31 @@ export default function ReconEnginePlayer({
       />
     );
   }
-  if (NXN_RE.test(puzzleId)) {
+  if (NXN_RE.test(puzzleId) || puzzleId === 'mirror' || puzzleId === 'mirror2') {
     return (
       <CuberReconPlayer
         scramble={scramble}
         alg={cleanForPlayer(solution)}
         anchorAtEnd={anchorAtEnd}
-        order={parseInt(puzzleId, 10)}
+        order={puzzleId === 'mirror' ? 3 : puzzleId === 'mirror2' ? 2 : parseInt(puzzleId, 10)}
+        mirror={puzzleId === 'mirror' || puzzleId === 'mirror2'}
+        playerRef={playerRef}
+        fillPane={fillPane}
+        hideControls={hideControls}
+        fullscreenButton={fullscreenButton}
+      />
+    );
+  }
+  if (puzzleId === 'gear') {
+    return (
+      <TweenReconPlayer
+        key="gear"
+        puzzleKind="gear"
+        kind="gear"
+        parseMoves={parseGearMoves}
+        scramble={scramble}
+        alg={cleanForPlayer(solution)}
+        anchorAtEnd={anchorAtEnd}
         playerRef={playerRef}
         fillPane={fillPane}
         hideControls={hideControls}

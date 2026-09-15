@@ -3,6 +3,7 @@
  * NOTE: 管理复盘列表、筛选状态、排序、搜索 (port of client-vite/src/stores/recon_store.ts)
  */
 import { create } from 'zustand';
+import { wcaToReconEvent } from './wca-events';
 import type { ReconSolve } from '@cuberoot/shared';
 import { listRecons } from './recon-api';
 import { loadCachedSolves, saveCachedSolves } from './recon-cache';
@@ -203,7 +204,7 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
 
     // NOTE: 筛选
     if (filters.event) {
-      result = result.filter(s => s.event === filters.event);
+      result = result.filter(s => wcaToReconEvent(s.event) === wcaToReconEvent(filters.event));
     }
     if (filters.method === '__NO_METHOD__') {
       result = result.filter(s => !s.method);
@@ -340,7 +341,7 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
   getAvailableEvents: () => {
     const events = new Set<string>();
     for (const s of get().allSolves) {
-      if (s.event) events.add(s.event);
+      if (s.event) events.add(wcaToReconEvent(s.event));
     }
     return Array.from(events).sort();
   },
