@@ -78,7 +78,7 @@ export function BestComboBody({
     <>
       <div className="sor-pb-rank-line">
         <span className="sor-pb-type">{typeLabel}</span>
-        <span className="sor-pb-rank">{isZh ? `世界第 ${b.rank}` : `World #${b.rank}`}</span>
+        <span className="sor-pb-rank">WR{b.rank}</span>
         {comboCount > 1 && <span className="sor-pb-count">{isZh ? `${comboCount} 种组合并列` : `${comboCount} tied combos`}</span>}
       </div>
       {comboCount > 1 && b.eventCounts && (() => {

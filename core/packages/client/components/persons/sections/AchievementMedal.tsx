@@ -85,14 +85,15 @@ const ART = {
   gold: { light: '#ffe6a6', dark: '#9a4727', rim: '#fff1b5', shape: 'M100 5 119 22 147 13 155 42 182 51 174 79 195 100 175 121 183 149 155 158 147 187 120 178 100 195 80 178 52 187 44 158 17 149 25 120 5 100 25 80 17 51 45 42 53 13 80 22Z' },
 };
 
-export function AchievementMedal({ kind, event, recordCount, achievement }: { kind: AchievementKind; event?: string; recordCount?: number; achievement?: ExplorerAchievement }) {
+export function AchievementMedal({ kind, event, recordCount, achievement, female = false, record: recordOverride }: { kind: AchievementKind; event?: string; recordCount?: number; achievement?: ExplorerAchievement; female?: boolean; record?: string }) {
   const id = useId();
   const paint = (name: string) => `url(#${id}-${name})`;
   const art = ART[kind];
-  const tier = kind.startsWith('historical') ? recordAchievementTier(recordCount) : undefined;
+  const tier = kind === 'wr' || kind.startsWith('historical') ? recordAchievementTier(recordCount) : undefined;
   const explorerIndex = achievement ? (EXPLORER_ACHIEVEMENTS[achievement.kind].tiers as readonly number[]).indexOf(achievement.tier) : 0;
   const rim = tier && tier.count > 1 ? tier.rim : explorerIndex > 0 ? ['#ce925c', '#c7deef', '#ffd27d', '#a9f4ff'][explorerIndex] : art.rim;
-  const record = achievement?.record ?? (kind === 'wr' ? 'WR' : kind.startsWith('historical') ? kind.slice(10) : null);
+  const baseRecord = achievement?.record ?? (kind === 'wr' ? 'WR' : kind.startsWith('historical') ? kind.slice(10) : null);
+  const record = recordOverride ?? (baseRecord && female ? `F${baseRecord}` : baseRecord);
   return (
     <span className={`wp-achievement-medal wp-achievement-art-${kind}`} data-tier={tier?.count ?? achievement?.tier} aria-hidden="true">
       <svg className="wp-achievement-illustration" viewBox="0 0 200 200" fill="none">

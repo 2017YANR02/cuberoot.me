@@ -5,6 +5,25 @@ import { statsUrl } from './stats-base';
 
 export type RecordTop = 'WR' | 'CR' | 'NR';
 
+/** Count each round's single/average once, using its highest displayed record level. */
+export function summarizeCompRecords(results: readonly {
+  e: string; b: number; a: number; sr?: string; ar?: string | number;
+  pS?: number | null; pA?: number | null;
+}[]) {
+  const counts = { WR: 0, FWR: 0, CR: 0, NR: 0, PR: 0 };
+  for (const result of results) {
+    const add = (value: number, tag: string, rank: number | null | undefined) => {
+      if (!Number.isFinite(value) || value <= 0) return;
+      if (tag === 'WR' || tag === 'FWR' || tag === 'NR') counts[tag]++;
+      else if (/^(CR|AfR|AsR|ER|NAR|OcR|SAR)$/.test(tag)) counts.CR++;
+      else if (rank === 1 || tag === 'PR') counts.PR++;
+    };
+    add(result.b, result.sr ?? '', result.pS);
+    if (!['333mbf', '333mbo'].includes(result.e)) add(result.a, String(result.ar ?? ''), result.pA);
+  }
+  return counts;
+}
+
 export interface RecordEntry {
   t: string;    // level 原值 (WR / AfR / AsR / ER / NAR / OcR / SAR / NR)
   k: 's' | 'a'; // single / average

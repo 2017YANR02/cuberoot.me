@@ -3,9 +3,10 @@
 // 「该性别在该区域的历史最快进程(running-best)」:按日期顺序扫该性别该区域的有效成绩,
 // 每次严格刷新即一条纪录行(同日同值并列也记,供「当前」视图显示并列纪录保持者).
 //
-// 输出(只做 world + 6 大洲,跳过国家级 — 稀疏 + 文件膨胀):
+// 输出 world + 6 大洲，以及女子个人纪录索引(含国家级，无逐国家文件):
 //   stats/records/history/gender/<m|f>/world.json
 //   stats/records/history/gender/<m|f>/continent/<slug>.json
+//   stats/records/history/gender/f/persons.json
 // 行形状与 records_build.ts 的 Row 完全同构,前端 RowsTable 直接复用;l 取最高级别
 // (world 刷新→'WR',否则该洲刷新→洲标记 AfR/AsR/ER/NAR/OcR/SAR),洲文件含该洲选手的
 // {WR ∪ 洲纪录} 进程,复刻 records_build 的 continent 切片语义.
@@ -17,7 +18,7 @@ import { fileURLToPath } from 'url';
 import { query, closePool } from '../core/database.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUTPUT_ROOT = resolve(__dirname, '../../../../../stats/records/history/gender');
+const OUTPUT_ROOT = resolve(process.env.RECORDS_GENDER_OUTPUT || resolve(__dirname, '../../../../../stats/records/history/gender'));
 
 const CONTINENT_SLUG: Record<string, string> = {
   '_Africa': 'africa',
@@ -100,6 +101,8 @@ async function main() {
   // 累加器:每性别 world 行 + 每性别每洲行(带 rid,事后补 attempts)
   const worldAcc: Record<Gender, { er: ER; l: string }[]> = { m: [], f: [] };
   const contAcc: Record<Gender, Record<string, { er: ER; l: string }[]>> = { m: {}, f: {} };
+  // Female national progression feeds person awards; reuse the same candidate scan.
+  const femaleNational: { er: ER; l: string }[] = [];
 
   for (const ev of eventIds) {
     const results = await query<any>(
@@ -134,6 +137,7 @@ async function main() {
         if (!rows || rows.length === 0) continue;
         const worldRefresh = progressionRefresh(rows);
         const worldRid = new Set(worldRefresh.map(r => r.rid));
+        const continentalRid = new Map<number, string>();
         for (const er of worldRefresh) worldAcc[g].push({ er, l: 'WR' });
         // 按洲分组算洲进程
         const byCont = new Map<string, ER[]>();
@@ -148,7 +152,20 @@ async function main() {
           const contRefresh = progressionRefresh(crows);
           for (const er of contRefresh) {
             const l = worldRid.has(er.rid) ? 'WR' : marker;
+            continentalRid.set(er.rid, l);
             (contAcc[g][contId] ??= []).push({ er, l });
+          }
+        }
+        if (g === 'f') {
+          const byCountry = new Map<string, ER[]>();
+          for (const r of rows) {
+            if (!continentMarker[r.cont]) continue;
+            const bucket = byCountry.get(r.pc) ?? [];
+            bucket.push(r);
+            byCountry.set(r.pc, bucket);
+          }
+          for (const countryRows of byCountry.values()) for (const er of progressionRefresh(countryRows)) {
+            femaleNational.push({ er, l: worldRid.has(er.rid) ? 'WR' : continentalRid.get(er.rid) ?? 'NR' });
           }
         }
       }
@@ -193,6 +210,18 @@ async function main() {
 
   // ── 写文件 ──
   const today = new Date().toISOString().slice(0, 10);
+  const femalePersons: Record<string, { e: string; t: 's' | 'a'; v: number; l: string; c: string; d: string; currentWorld?: boolean }[]> = {};
+  const worldBest = new Map<string, number>();
+  for (const { er } of worldAcc.f) {
+    const key = `${er.e}:${er.t}`;
+    worldBest.set(key, Math.min(worldBest.get(key) ?? Infinity, er.v));
+  }
+  for (const { er, l } of femaleNational) {
+    (femalePersons[er.p] ??= []).push({ e: er.e, t: er.t, v: er.v, l: `F${l}`, c: er.c, d: er.d,
+      ...(worldBest.get(`${er.e}:${er.t}`) === er.v ? { currentWorld: true } : {}) });
+  }
+  mkdirSync(resolve(OUTPUT_ROOT, 'f'), { recursive: true });
+  writeFileSync(resolve(OUTPUT_ROOT, 'f/persons.json'), JSON.stringify({ updated: today, persons: femalePersons }));
   let fileCount = 0;
   let totalSize = 0;
   for (const g of GENDERS) {

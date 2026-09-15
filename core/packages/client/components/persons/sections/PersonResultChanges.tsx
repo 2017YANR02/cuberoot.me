@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
-import { localizeCompName } from '@/lib/comp-localize';
+import { CompCell } from '@/components/CompCell/CompCell';
 import {
   fetchResultChanges, canonicalRound, formatChangeFieldValue, isApprovedChange,
   type ResultChange,
@@ -74,7 +74,6 @@ function ChangeRow({ c, isZh }: { c: ResultChange; isZh: boolean }) {
   const removed = c.changeType === 'removed';
   const eventId = c.eventId || '333';
   const round = roundLabel(c.roundTypeId);
-  const comp = c.compName ? localizeCompName(c.competitionId ?? '', c.compName, isZh) : (c.competitionId ?? '');
   // 标量字段(成绩 / 名次 / 纪录标记)展开成「标签 + 旧→新」。
   const scalar = SUMMARY_FIELDS
     .map((cfg) => ({ cfg, f: (c.fields ?? []).find((x) => x.field === cfg.field) }))
@@ -97,7 +96,7 @@ function ChangeRow({ c, isZh }: { c: ResultChange; isZh: boolean }) {
       <span className="wp-rc-ctx">
         <span className="wp-rc-event">{eventDisplayName(eventId, isZh)}</span>
         {round && <span className="wp-rc-round">{round}</span>}
-        {comp && <span className="wp-rc-comp">{comp}</span>}
+        {(c.competitionId || c.compName) && <span className="wp-rc-comp"><CompCell compId={c.competitionId ?? ''} compName={c.compName} isZh={isZh} date={null} /></span>}
       </span>
       <span className="wp-rc-vals">
         {removed && c.before ? (

@@ -456,6 +456,7 @@
   color: var(--sites-text-muted);
 }
 .site-editor-row > .site-editor-input,
+.sites-topic-input-wrap > .site-editor-input,
 .site-editor-row > .site-editor-select,
 .site-editor-row > .site-editor-textarea,
 .site-editor-row-2 .site-editor-input {
@@ -520,6 +521,13 @@
   color: #fff;
 }
 .site-editor-save:disabled { opacity: 0.6; cursor: default; }
+
+.sites-topic-manager { margin-block: 12px; }
+.sites-topic-form { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin-bottom: 12px; }
+.sites-topic-form .site-editor-row { width: min(100%, 320px); }
+.sites-topic-input-wrap { position: relative; display: block; }
+.sites-topic-input-wrap input { width: 100%; box-sizing: border-box; padding-right: 32px; }
+.sites-topic-actions { display: inline-flex; align-items: center; gap: 4px; margin-right: 12px; }
 
 /* ── Responsive ─────────────────────────────────────── */
 @media (max-width: 720px) {

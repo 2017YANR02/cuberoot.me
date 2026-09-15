@@ -1,5 +1,6 @@
 // Shared continent globe icon (orthographic projection, rasterized to small webp).
 // Used by RegionPicker (filter dropdown) and RecentRecords (continental-record marker).
+import './continent-icon.css';
 export type ContinentSlug =
   | 'africa' | 'asia' | 'europe' | 'northAmerica' | 'oceania' | 'southAmerica';
 
@@ -15,7 +16,7 @@ export const RECORD_BADGE_CONTINENT: Record<string, ContinentSlug> = {
 
 export function ContinentIcon({ slug, className }: { slug: ContinentSlug; className?: string }) {
   return (
-    <span className={className ?? 'continent-icon'}>
+    <span className={['continent-icon', className].filter(Boolean).join(' ')}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={`/_assets/continent-icons/${slug}.webp`} alt="" width={20} height={20} decoding="async" />
     </span>
