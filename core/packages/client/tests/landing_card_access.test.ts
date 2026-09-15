@@ -52,11 +52,11 @@ describe('homepage development cards', () => {
     const partnership = host.querySelector('#card-partnership');
     if (admin) {
       expect(partnership?.getAttribute('href')).toBe('/zh/partnership');
-      expect(partnership?.classList.contains('is-disabled')).toBe(false);
+      expect(partnership?.classList.contains('is-disabled')).toBe(true);
       const lock = partnership?.parentElement?.querySelector<HTMLButtonElement>('.landing-card-lock');
       expect(lock?.disabled).toBe(true);
       expect(lock?.getAttribute('aria-pressed')).toBe('true');
-      expect(lock?.getAttribute('aria-label')).toBe('仅管理员可见');
+      expect(lock?.getAttribute('aria-label')).toBe('解锁卡片');
     } else {
       expect(partnership).toBeNull();
     }
@@ -80,6 +80,35 @@ describe('homepage development cards', () => {
       expect(adminArea?.querySelector('#individual-members-title')).not.toBeNull();
     } else {
       expect(adminArea).toBeNull();
+    }
+  });
+  it.each(['partnership', 'interview'])('treats %s as a default-locked card that can be unlocked for visitors', async (id) => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+    auth.user = { wcaId: ADMIN_WCA_IDS[0] };
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    const card = () => host.querySelector(`#card-${id}`)!;
+    const button = () => card().parentElement!.querySelector<HTMLButtonElement>('.landing-card-lock')!;
+    try {
+      await act(async () => root.render(createElement(LandingPage)));
+      expect(card().classList.contains('is-disabled')).toBe(true);
+      expect(card().closest('#landing-admin-content')).not.toBeNull();
+      expect(button().disabled).toBe(false);
+      await act(async () => button().click());
+      expect(lockApi.setHomeCardLock).toHaveBeenLastCalledWith(id, false);
+      expect(card().classList.contains('is-disabled')).toBe(false);
+      expect(card().closest('#landing-admin-content')).toBeNull();
+      await act(async () => button().click());
+      expect(lockApi.setHomeCardLock).toHaveBeenLastCalledWith(id, true);
+      expect(card().closest('#landing-admin-content')).not.toBeNull();
+      auth.user = null;
+      lockApi.getHomeCardLocks.mockResolvedValueOnce({ [id]: false });
+      await act(async () => { window.dispatchEvent(new Event('focus')); });
+      expect(card().tagName).toBe('A');
+      expect(host.querySelectorAll(`#card-${id}`)).toHaveLength(1);
+      expect(host.querySelector('#landing-admin-content')).toBeNull();
+    } finally {
+      await act(async () => root.unmount());
     }
   });
   it('saves a lock, preserves the admin link, restores access on unlock and keeps state on save failure', async () => {
