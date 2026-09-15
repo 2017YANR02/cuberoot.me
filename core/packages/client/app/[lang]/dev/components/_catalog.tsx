@@ -1817,6 +1817,13 @@ export const CATALOG: ComponentEntry[] = [
 
   // ── 输入与选择 ──────────────────────────────────────────────────────────
   {
+    name: 'CountryPinButton',
+    import: "import { CountryPinButton } from '@/components/CountryPinButton';",
+    category: 'input',
+    zh: '国家菜单的置顶与取消置顶按钮，与国家选择按钮并列，保持菜单展开。',
+    en: 'Pin/unpin action beside a country option; keeps the menu open without changing selection.',
+  },
+  {
     name: 'CountryInput',
     import: "import { CountryInput } from '@/components/CountryInput/CountryInput';",
     category: 'input',

@@ -21,6 +21,10 @@ import { isAdmin } from '@/lib/auth-store';
 import { firstGlyph } from '@/lib/first-glyph';
 import BackHome from '@/components/BackHome';
 import { ClearButton } from '@/components/ClearButton';
+import { CountryPinButton } from '@/components/CountryPinButton';
+import { usePinnedCountries } from '@/hooks/usePinnedCountries';
+import { partitionPinnedCountries } from '@/lib/pinned-countries';
+import { tr } from '@/i18n/tr';
 import PersonLink from '@/components/PersonLink';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
 import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from '@/lib/event-constants';
@@ -574,11 +578,19 @@ function SitesPageInner() {
     items: methodOptions.map((option) => ({ id: option.id, label: option.label[lang] })),
   }], [methodOptions, lang]);
 
-  const countryPickerGroups = useMemo<readonly PuzzlePickerGroup[]>(() => [{
-    id: 'countries',
-    label: TEXTS.countries[lang],
-    items: countryOptions.map((option) => ({ id: option.id, label: option.label[lang] })),
-  }], [countryOptions, lang]);
+  const [countryPins, toggleCountryPin] = usePinnedCountries();
+  const countryPickerGroups = useMemo<readonly PuzzlePickerGroup[]>(() => {
+    const { pinned, others } = partitionPinnedCountries(countryOptions, countryPins, option => option.id);
+    return [{
+      id: 'pinned-countries',
+      label: tr({ zh: '置顶', en: 'Pinned' }),
+      items: pinned.map(option => ({ id: option.id, label: option.label[lang] })),
+    }, {
+      id: 'countries',
+      label: TEXTS.countries[lang],
+      items: others.map((option) => ({ id: option.id, label: option.label[lang] })),
+    }];
+  }, [countryOptions, countryPins, lang]);
 
   const toggleAlgSet = useCallback((id: string) => {
     if (!algSetOptions.some((option) => option.id === id)) return;
@@ -867,6 +879,7 @@ function SitesPageInner() {
                 <PuzzlePicker
                   isZh={lang === 'zh'}
                   groups={countryPickerGroups}
+                  itemAction={item => <CountryPinButton name={item.label} pinned={countryPins.includes(item.id)} onToggle={() => toggleCountryPin(item.id)} />}
                   placeholderLabel={TEXTS.countries[lang]}
                   showTriggerIcon={false}
                   showItemIcons={false}

@@ -2035,6 +2035,7 @@ function ExamplesPanel({
         {countryItems.length > 1 && (
           <ListSelect
             className="pdv-country-select"
+            pinCountries
             items={countryItems}
             value={filterCountry ?? ''}
             onChange={(v) => onFilterCountry(v || null)}

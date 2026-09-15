@@ -11,6 +11,10 @@ import { CONTINENT_NAMES, CONTINENT_TO_ISO2S, ISO2_TO_CONTINENT, isContinentCode
 import { ClearButton } from '../ClearButton';
 import './country_input.css';
 import { tr } from '@/i18n/tr';
+import { CountryPinButton } from '@/components/CountryPinButton';
+import { usePinnedCountries } from '@/hooks/usePinnedCountries';
+import { partitionPinnedCountries } from '@/lib/pinned-countries';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
 
 interface SharedProps {
   id?: string;
@@ -53,6 +57,9 @@ export function CountryInput(props: CountryInputProps) {
   const [query, setQuery] = useState(() => isMulti ? '' : (props as SingleProps).value);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  usePanelClamp(open, panelRef);
+  const [pins, togglePin] = usePinnedCountries();
   // IME 合成中(中文/日文等拼音输入)为 true:此时不要自动选中,否则会改父 value →
   // 受控 value 回写 → 打断合成,表现为"输入法被吃掉"。合成结束再补跑一次匹配。
   const composingRef = useRef(false);
@@ -78,6 +85,7 @@ export function CountryInput(props: CountryInputProps) {
     }
     return searchCountries(query, { restrictTo: restrictArr ?? undefined, limit: 250 });
   }, [query, restrictArr, isZh]);
+  const { pinned, others } = partitionPinnedCountries(matches, pins, item => item.iso2);
 
   const continentGroups = useMemo(() => {
     if (!isMulti || !restrictArr || query.trim()) return [];
@@ -215,7 +223,7 @@ export function CountryInput(props: CountryInputProps) {
         id={id}
         aria-label={ariaLabel}
         type="text"
-        className={`country-input-field${(showFlag || showFlagMulti) ? ' country-input-field--with-flag' : ''}${selected.length > 0 ? ' country-input-field--with-clear' : ''}`}
+        className={`country-input-field${(showFlag || showFlagMulti) ? ' country-input-field--with-flag' : ''}${selected.length > 0 || query.length > 0 ? ' country-input-field--with-clear' : ''}`}
         value={displayedQuery}
         placeholder={placeholder ?? (allLabel ?? tr({ zh: '搜国家名', en: 'Search country'
                 }))}
@@ -223,10 +231,13 @@ export function CountryInput(props: CountryInputProps) {
         onCompositionStart={() => { composingRef.current = true; }}
         onCompositionEnd={(e) => { composingRef.current = false; handleChange(e.currentTarget.value); }}
         onFocus={() => setOpen(true)}
-        onBlur={handleBlur}
+        onBlur={event => {
+          if (!ref.current?.contains(event.relatedTarget as Node | null)) handleBlur();
+        }}
+        onKeyDown={event => { if (event.key === 'Escape') setOpen(false); }}
         autoComplete="off"
       />
-      {selected.length > 0 && (
+      {(selected.length > 0 || query.length > 0) && (
         <ClearButton
           onClick={() => { setSelected([]); setQuery(''); setOpen(false); }}
           isZh={isZh}
@@ -234,12 +245,16 @@ export function CountryInput(props: CountryInputProps) {
         />
       )}
       {open && (matches.length > 0 || allLabel || continentGroups.length > 0) && (
-        <div className="country-input-popup">
+        <div ref={panelRef} className="country-input-popup" data-site-surface="popover" onKeyDown={event => { if (event.key === 'Escape') setOpen(false); }}>
           {isMulti && selected.length > 0 && (
             <div className="country-input-chips">
               {selected.map(renderChip)}
             </div>
           )}
+          {pinned.length > 0 && <>
+            <div className="country-pin-heading">{tr({ zh: '置顶', en: 'Pinned' })}</div>
+            {pinned.map(renderCountry)}
+          </>}
           {continentGroups.map(({ continent, iso2s }) => {
             const active = selectedContinents.has(continent);
             return (
@@ -267,30 +282,35 @@ export function CountryInput(props: CountryInputProps) {
               <span className="country-input-name">{allLabel}</span>
             </button>
           )}
-          {matches.map(({ iso2 }) => {
-            const cont = ISO2_TO_CONTINENT[iso2.toUpperCase()];
-            const direct = selectedCountrySet.has(iso2.toLowerCase());
-            const viaContinent = !direct && cont && selectedContinents.has(cont);
-            const active = direct || viaContinent;
-            return (
-              <button
-                key={iso2}
-                type="button"
-                className={`country-input-item${active ? ' country-input-item--active' : ''}${viaContinent ? ' country-input-item--via-continent' : ''}`}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => handleCountryClick(iso2)}
-              >
-                <Flag iso2={iso2} className="country-input-flag" />
-                <span className="country-input-name">{countryName(iso2, isZh)}</span>
-                {counts && counts[iso2] !== undefined && (
-                  <span className="country-input-count">({counts[iso2]})</span>
-                )}
-                {isMulti && active && <span className={`country-input-check${viaContinent ? ' country-input-check--partial' : ''}`} aria-hidden>✓</span>}
-              </button>
-            );
-          })}
+          {pinned.length > 0 && others.length > 0 && <div className="country-pin-heading">{tr({ zh: '国家', en: 'Countries' })}</div>}
+          {others.map(renderCountry)}
         </div>
       )}
     </div>
   );
+
+  function renderCountry({ iso2 }: { iso2: string }) {
+    const cont = ISO2_TO_CONTINENT[iso2.toUpperCase()];
+    const direct = selectedCountrySet.has(iso2.toLowerCase());
+    const viaContinent = !direct && cont && selectedContinents.has(cont);
+    const active = direct || viaContinent;
+    return (
+      <div key={iso2} className="country-pin-row">
+        <button
+          type="button"
+          className={`country-input-item${active ? ' country-input-item--active' : ''}${viaContinent ? ' country-input-item--via-continent' : ''}`}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => handleCountryClick(iso2)}
+        >
+          <Flag iso2={iso2} className="country-input-flag" />
+          <span className="country-input-name">{countryName(iso2, isZh)}</span>
+          {counts && counts[iso2] !== undefined && (
+            <span className="country-input-count">({counts[iso2]})</span>
+          )}
+          {isMulti && active && <span className={`country-input-check${viaContinent ? ' country-input-check--partial' : ''}`} aria-hidden>✓</span>}
+        </button>
+        <CountryPinButton name={countryName(iso2, isZh)} pinned={pins.includes(iso2.toLowerCase())} onToggle={() => togglePin(iso2)} />
+      </div>
+    );
+  }
 }

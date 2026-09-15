@@ -1,7 +1,7 @@
 'use client';
 
 // Ported from packages/client-vite/src/components/RegionPicker/RegionPicker.tsx.
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { ContinentIcon, type ContinentSlug } from '@/components/ContinentIcon';
@@ -9,6 +9,11 @@ import { countryName } from '@/lib/country-name';
 import { isContinentCode, type ContinentCode } from '@/lib/continent';
 import './region_picker.css';
 import { tr } from '@/i18n/tr';
+import { ClearButton } from '@/components/ClearButton';
+import { CountryPinButton } from '@/components/CountryPinButton';
+import { usePinnedCountries } from '@/hooks/usePinnedCountries';
+import { partitionPinnedCountries } from '@/lib/pinned-countries';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
 
 interface ContinentInfo {
   slug: ContinentSlug;
@@ -56,12 +61,18 @@ export function RegionPicker(props: RegionPickerProps) {
 
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
+  const [pins, togglePin] = usePinnedCountries();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  usePanelClamp(open, panelRef);
 
   useEffect(() => {
     if (!open) return;
-    const handler = () => setOpen(false);
-    setTimeout(() => document.addEventListener('click', handler, { once: true }), 0);
-    return () => document.removeEventListener('click', handler);
+    const handler = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
   }, [open]);
 
   const allText = allLabel ?? tr({ zh: '全部区域', en: 'All regions'
@@ -142,6 +153,7 @@ export function RegionPicker(props: RegionPickerProps) {
   }, [countries, ql, isZh, q]);
 
   const closeAndClear = () => { setOpen(false); setQ(''); };
+  const { pinned, others } = partitionPinnedCountries(countriesFiltered, pins, iso => iso);
   const selectSingle = (v: string) => {
     if (!isMulti) (props as SingleProps).onChange(v);
     closeAndClear();
@@ -173,6 +185,11 @@ export function RegionPicker(props: RegionPickerProps) {
     if (e.key !== 'Enter') return;
     e.preventDefault();
     if (showWorld) { clearAll(); return; }
+    if (pinned.length > 0) {
+      if (isMulti) { toggleMultiCountry(pinned[0]); closeAndClear(); }
+      else selectSingle(pinned[0]);
+      return;
+    }
     if (continentsFiltered.length > 0) {
       const c = continentsFiltered[0];
       if (isMulti) { toggleMultiContinent(c.code); closeAndClear(); }
@@ -190,16 +207,27 @@ export function RegionPicker(props: RegionPickerProps) {
     isMulti ? selectedContinentCodes.has(c.code) : singleVal === c.slug;
   const isCountryActive = (iso: string) =>
     isMulti ? selectedCountrySet.has(iso.toLowerCase()) : singleVal === iso.toLowerCase();
+  const renderCountry = (iso: string) => (
+    <div key={iso} className="country-pin-row">
+      <button type="button"
+        className={`region-picker-item${isCountryActive(iso) ? ' active' : ''}`}
+        onClick={isMulti ? () => toggleMultiCountry(iso) : () => selectSingle(iso)}>
+        <Flag iso2={iso} spanClassName="country-flag" imgClassName="country-flag-ct" />
+        <span>{countryName(iso, isZh)}</span>
+      </button>
+      <CountryPinButton name={countryName(iso, isZh)} pinned={pins.includes(iso)} onToggle={() => togglePin(iso)} />
+    </div>
+  );
 
   return (
-    <div className={`region-picker${className ? ` ${className}` : ''}`} onClick={(e) => e.stopPropagation()}>
-      <button type="button" className="region-picker-trigger" onClick={() => setOpen(o => !o)}>
+    <div ref={rootRef} className={`region-picker${className ? ` ${className}` : ''}`}>
+      <button type="button" className="region-picker-trigger" aria-expanded={open} onClick={() => setOpen(o => !o)}>
         {triggerIcon}
         <span className="region-picker-label">{triggerLabel}</span>
         <span className="region-picker-caret">▾</span>
       </button>
       {open && (
-        <div className="region-picker-popup">
+        <div ref={panelRef} className="region-picker-popup" data-site-surface="popover" onKeyDown={e => { if (e.key === 'Escape') closeAndClear(); }}>
           <div className="region-picker-search">
             <Search size={14} />
             <input
@@ -210,6 +238,7 @@ export function RegionPicker(props: RegionPickerProps) {
               onKeyDown={handleSearchKeyDown}
               placeholder={searchText}
             />
+            {q && <ClearButton variant="standalone" preserveFocus onClick={() => setQ('')} />}
           </div>
           <div className="region-picker-list">
             {isMulti && multiTokens.length > 0 && !ql && (
@@ -240,6 +269,10 @@ export function RegionPicker(props: RegionPickerProps) {
                 onClick={clearAll}
               >{allText}</button>
             )}
+            {pinned.length > 0 && <>
+              <div className="region-picker-section">{tr({ zh: '置顶', en: 'Pinned' })}</div>
+              {pinned.map(renderCountry)}
+            </>}
             {continentsFiltered.length > 0 && (
               <div className="region-picker-section">{tr({ zh: '大洲', en: 'Continent' })}</div>
             )}
@@ -253,20 +286,11 @@ export function RegionPicker(props: RegionPickerProps) {
                 <span>{tr(c)}</span>
               </button>
             ))}
-            {countriesFiltered.length > 0 && (
+            {others.length > 0 && (
               <div className="region-picker-section">{tr({ zh: '地区', en: 'Region'
             })}</div>
             )}
-            {countriesFiltered.map(iso => (
-              <button
-                key={iso}
-                className={`region-picker-item${isCountryActive(iso) ? ' active' : ''}`}
-                onClick={isMulti ? () => toggleMultiCountry(iso) : () => selectSingle(iso)}
-              >
-                <Flag iso2={iso} spanClassName="country-flag" imgClassName="country-flag-ct" />
-                <span>{countryName(iso, isZh)}</span>
-              </button>
-            ))}
+            {others.map(renderCountry)}
           </div>
         </div>
       )}
