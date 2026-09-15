@@ -87,6 +87,14 @@ export const CATALOG: UtilEntry[] = [
   },
   // ── hooks ─────────────────────────────────
   {
+    name: 'usePinnedCountries',
+    sig: 'usePinnedCountries(): readonly [string[], (iso2: string) => void]',
+    imp: "import { usePinnedCountries } from '@/hooks/usePinnedCountries';",
+    category: 'hook',
+    zh: '国家置顶偏好的统一入口，同步所有国家菜单和标签页，服务端首屏为空列表。',
+    en: 'Shared pinned countries across menus and tabs, with an empty server snapshot.',
+  },
+  {
     name: 'useHomeBackgroundChoice',
     sig: 'useHomeBackgroundChoice(): readonly [HomeBackgroundChoice, (value: HomeBackgroundChoice) => void]',
     imp: "import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';",

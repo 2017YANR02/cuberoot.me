@@ -11,6 +11,9 @@ import { Flag } from '@/components/Flag';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { tr } from '@/i18n/tr';
 import './ListSelect.css';
+import { CountryPinButton } from '@/components/CountryPinButton';
+import { usePinnedCountries } from '@/hooks/usePinnedCountries';
+import { partitionPinnedCountries } from '@/lib/pinned-countries';
 
 export interface ListSelectItem {
   /** 唯一 key,也是 onChange 回传值 */
@@ -32,6 +35,7 @@ export interface ListSelectItem {
 }
 
 interface ListSelectProps {
+  pinCountries?: boolean;
   items: ListSelectItem[];
   value: string;
   onChange: (next: string) => void;
@@ -47,7 +51,8 @@ interface ListSelectProps {
   searchPlaceholder?: string;
 }
 
-export function ListSelect({ items, value, onChange, allLabel, className, searchable, clearable = true, maxVisible, searchPlaceholder }: ListSelectProps) {
+export function ListSelect({ items, value, onChange, allLabel, className, searchable, clearable = true, maxVisible, searchPlaceholder, pinCountries = false }: ListSelectProps) {
+  const [pins, togglePin] = usePinnedCountries();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const ref = useRef<HTMLDivElement>(null);
@@ -82,7 +87,9 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
   }, [items, query, searchable]);
 
   // maxVisible 未传 = 老行为(全渲染)。传了就截断,剩余数量在列表底部提示,靠继续输入收敛。
-  const shown = maxVisible && filtered.length > maxVisible ? filtered.slice(0, maxVisible) : filtered;
+  const { pinned, others } = partitionPinnedCountries(filtered, pinCountries ? pins : [], item => item.country ?? '');
+  const ordered = [...pinned, ...others];
+  const shown = maxVisible && ordered.length > maxVisible ? ordered.slice(0, maxVisible) : ordered;
   const hidden = filtered.length - shown.length;
 
   const select = (next: string) => {
@@ -137,9 +144,8 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
             />
           )}
           <div className="list-select-list">
-            {shown.map(i => (
-              <Fragment key={i.value}>
-                {i.separatorBefore && <div className="list-select-separator" aria-hidden />}
+            {shown.map((i, index) => {
+              const item = (
                 <button
                   type="button"
                   disabled={i.disabled}
@@ -151,8 +157,21 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
                   <span className="list-select-label">{i.label}</span>
                   {i.hint && <span className="list-select-hint">{i.hint}</span>}
                 </button>
-              </Fragment>
-            ))}
+              );
+              return (
+                <Fragment key={i.value}>
+                  {pinned.length > 0 && index === 0 && <div className="country-pin-heading">{tr({ zh: '置顶', en: 'Pinned' })}</div>}
+                  {pinned.length > 0 && index === pinned.length && <div className="country-pin-heading">{tr({ zh: '国家', en: 'Countries' })}</div>}
+                  {i.separatorBefore && <div className="list-select-separator" aria-hidden />}
+                  {pinCountries && i.country && !i.disabled ? (
+                    <div className="country-pin-row">
+                      {item}
+                      <CountryPinButton name={i.label} pinned={pins.includes(i.country.toLowerCase())} onToggle={() => togglePin(i.country!)} />
+                    </div>
+                  ) : item}
+                </Fragment>
+              );
+            })}
             {hidden > 0 && (
               <div className="list-select-more">
                 {tr({ zh: `还有 ${hidden} 项,继续输入以缩小范围`, en: `${hidden} more — keep typing to narrow` })}

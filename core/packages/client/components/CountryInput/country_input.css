@@ -47,12 +47,11 @@
 }
 
 .country-input-popup {
+  /* anchored-panel: clamped (usePanelClamp) */
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  right: 0;
-  /* trigger 比 popup 窄时（移动端 chip 行）允许 popup 撑开，避免国家名被截断成 "亚.."。 */
-  min-width: 240px;
+  width: max-content;
   max-width: min(92vw, 360px);
   max-height: 280px;
   overflow-y: auto;
