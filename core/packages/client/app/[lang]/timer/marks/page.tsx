@@ -180,7 +180,7 @@ function MarksFeed() {
                 <div className="scrmarks-row-top">
                   <CheckCircle2 size={14} className="scrmarks-check" />
                   {m.country && <Flag iso2={m.country} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                  <AppLink href={`/wca/persons/${encodeURIComponent(m.wcaId)}`} className="scrmarks-name">
+                  <AppLink href={`/wca/persons/${encodeURIComponent(m.wcaId)}`} prefetch={false} className="scrmarks-name">
                     {displayCuberName(m.name, isZh) || m.wcaId}
                   </AppLink>
                   {m.timeCs != null && <span className="scrmarks-time">{formatMs(m.timeCs * 10)}</span>}
