@@ -29,6 +29,7 @@ vi.mock('@/lib/theme', () => ({ useEffectiveTheme: () => 'dark' }));
 
 import LandingPage from '@/app/[lang]/LandingClient';
 import { changeAppLanguage } from '@/i18n/i18n-client';
+import { PRIMARY_CARDS, WCA_CARDS, SECTIONS } from '@/lib/landing-sections';
 
 describe('homepage development cards', () => {
   it.each([null, { wcaId: 'ordinary-user' }, { wcaId: ADMIN_WCA_IDS[0] }])('renders access for %j', (user) => {
@@ -67,6 +68,19 @@ describe('homepage development cards', () => {
       expect(interview).toBeNull();
     }
     expect(host.querySelectorAll('.landing-card-lock').length > 0).toBe(admin);
+    const adminArea = host.querySelector('#landing-admin-content');
+    if (admin) {
+      expect(host.querySelector('.landing-page')?.lastElementChild).toBe(adminArea);
+      for (const config of [...PRIMARY_CARDS, ...WCA_CARDS, ...SECTIONS.flatMap((section) => section.cards)]) {
+        const cards = host.querySelectorAll(`#card-${config.id}`);
+        expect(cards).toHaveLength(1);
+        expect(adminArea?.contains(cards[0])).toBe(Boolean(config.adminOnly || config.lockedForNonAdmin || config.comingSoon));
+      }
+      expect(adminArea?.querySelector('#enterprise-members-title')).not.toBeNull();
+      expect(adminArea?.querySelector('#individual-members-title')).not.toBeNull();
+    } else {
+      expect(adminArea).toBeNull();
+    }
   });
   it('saves a lock, preserves the admin link, restores access on unlock and keeps state on save failure', async () => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -79,7 +93,10 @@ describe('homepage development cards', () => {
       await act(async () => root.render(createElement(LandingPage)));
       const card = () => host.querySelector('#card-teaching')!;
       const button = () => card().parentElement!.querySelector<HTMLButtonElement>('.landing-card-lock')!;
+      expect(card().closest('#landing-admin-content')).toBeNull();
       await act(async () => button().click());
+      expect(card().closest('#landing-admin-content')).not.toBeNull();
+      expect(host.querySelectorAll('#card-teaching')).toHaveLength(1);
       expect(lockApi.setHomeCardLock).toHaveBeenLastCalledWith('teaching', true);
       expect(card().classList.contains('is-disabled')).toBe(true);
       expect(card().getAttribute('href')).toBe('/zh/courses');
@@ -88,8 +105,10 @@ describe('homepage development cards', () => {
       await act(async () => button().click());
       expect(alert).toHaveBeenCalled();
       expect(button().getAttribute('aria-pressed')).toBe('true');
+      expect(card().closest('#landing-admin-content')).not.toBeNull();
       await act(async () => button().click());
       expect(card().classList.contains('is-disabled')).toBe(false);
+      expect(card().closest('#landing-admin-content')).toBeNull();
       lockApi.getHomeCardLocks.mockResolvedValue({ teaching: true, platform: false });
       auth.user = null;
       await act(async () => { window.dispatchEvent(new Event('focus')); });
@@ -114,7 +133,11 @@ describe('homepage development cards', () => {
       await act(async () => root.render(createElement(LandingPage)));
       expect(button('enterprise').getAttribute('aria-pressed')).toBe('true');
       expect(button('individual').getAttribute('aria-pressed')).toBe('true');
+      expect(section('enterprise')?.closest('#landing-admin-content')).not.toBeNull();
+      expect(section('individual')?.closest('#landing-admin-content')).not.toBeNull();
       await act(async () => button('enterprise').click());
+      expect(section('enterprise')?.closest('#landing-admin-content')).toBeNull();
+      expect(section('individual')?.closest('#landing-admin-content')).not.toBeNull();
       expect(lockApi.setHomeCardLock).toHaveBeenLastCalledWith('enterprise-members', false);
       expect(button('enterprise').getAttribute('aria-pressed')).toBe('false');
       expect(button('individual').getAttribute('aria-pressed')).toBe('true');

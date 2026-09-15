@@ -221,8 +221,11 @@ export default function LandingPage() {
     </button>
   );
 
+  const isCardLocked = (card: CardConfig) => Boolean(card.adminOnly)
+    || (cardLocks[card.id] ?? Boolean(card.lockedForNonAdmin || card.comingSoon));
+
   const renderCard = (card: CardConfig) => {
-    const locked = Boolean(card.adminOnly) || (cardLocks[card.id] ?? Boolean(card.lockedForNonAdmin || card.comingSoon));
+    const locked = isCardLocked(card);
     const isLocked = locked && !isAdmin;
     const isDevelopment = locked && !card.adminOnly;
     const developmentLabel = locked
@@ -270,14 +273,12 @@ export default function LandingPage() {
     );
   };
 
-  const renderCardGrid = (groupId: string, cards: CardConfig[], className: string) => {
+  const renderCardGrid = (groupId: string, cards: CardConfig[], className: string, adminArea = false) => {
     const orderedCards = applyLandingCardOrder(cards, cardOrders[groupId] ?? []);
-    // Wait for persisted locks before showing visitor cards, avoiding a locked-card flash.
+    // Split the same full group by access; keep all IDs when saving its order.
     const visibleCards = orderedCards.filter((card) => (isAdmin || locksLoaded)
-      && isLandingSearchCardVisible({
-        adminOnly: card.adminOnly,
-        lockedForNonAdmin: cardLocks[card.id] ?? Boolean(card.lockedForNonAdmin || card.comingSoon),
-      }, isAdmin));
+      && (adminArea ? isAdmin && isCardLocked(card) : !isCardLocked(card)));
+    if (visibleCards.length === 0) return null;
     const handleDragEnd = (event: DragEndEvent) => {
       const { active, over } = event;
       if (!isAdmin || !over || active.id === over.id) return;
@@ -294,13 +295,58 @@ export default function LandingPage() {
       });
     };
     return (
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext key={groupId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={visibleCards.map((card) => card.id)} strategy={rectSortingStrategy}>
           <div className={className}>{visibleCards.map(renderCard)}</div>
         </SortableContext>
       </DndContext>
     );
   };
+
+  const renderMemberSections = (adminArea = false) => ([
+    { id: 'enterprise', enterprise: true, eyebrow: tr({ zh: '企业', en: 'Enterprise' }), title: tr({ zh: '企业会员', en: 'Enterprise members' }), empty: tr({ zh: '暂无企业会员', en: 'No enterprise members yet' }) },
+    { id: 'individual', enterprise: false, eyebrow: tr({ zh: '个人', en: 'Individual' }), title: tr({ zh: '个人会员', en: 'Individual members' }), empty: tr({ zh: '暂无个人会员', en: 'No individual members yet' }) },
+  ] as const).map((section) => {
+    const lockId = HOME_MEMBER_SECTION_IDS[section.id];
+    const locked = cardLocks[lockId] ?? true;
+    if ((!isAdmin && !locksLoaded) || (adminArea ? !isAdmin || !locked : locked)) return null;
+    const query = memberQueries[section.id].trim().toLowerCase();
+    const sectionMembers = orderedMembers.filter((member) => member.planSlug.startsWith('enterprise_') === section.enterprise);
+    const members = sectionMembers.filter((member) => !query || [
+      member.name, member.wcaId, member.vipId ?? '', member.vipId?.replace(/^VIP0+(\d+)$/, 'VIP$1') ?? '',
+    ].some((value) => value.toLowerCase().includes(query)));
+    return (
+      <section key={section.id} className="cards-section" aria-labelledby={`${section.id}-members-title`}>
+        <div className="section-header">
+          <div className="section-eyebrow">{section.eyebrow}</div>
+          <div className="landing-member-heading">
+            <h2 id={`${section.id}-members-title`} className="section-title-serif">{section.title}</h2>
+            {renderLock(lockId, locked, false, section.title)}
+          </div>
+          <SearchInput
+            value={memberQueries[section.id]}
+            onChange={(value) => setMemberQueries((current) => ({ ...current, [section.id]: value }))}
+            className="landing-member-search"
+            placeholder={tr({ zh: '搜索姓名、WCA ID 或 VIP 编号', en: 'Search name, WCA ID or VIP number' })}
+            ariaLabel={tr({ zh: `搜索${section.title}`, en: `Search ${section.title.toLowerCase()}` })}
+          />
+          {publicMembers && members.length === 0 && <div className="section-sub" role="status">{sectionMembers.length === 0 ? section.empty : tr({ zh: '没有匹配的会员', en: 'No matching members' })}</div>}
+        </div>
+        {members.length > 0 && (
+          <div className="landing-members">
+            {members.map((member) => (
+              <Link key={member.wcaId} href={`/wca/persons/${member.wcaId}`} className="landing-member" prefetch={false}>
+                {member.avatarUrl
+                  ? <img src={member.avatarUrl} alt="" className="landing-member-avatar" />
+                  : <User size={24} aria-hidden="true" />}
+                <span>{displayCuberName(member.name, lang === 'zh')}{member.vipId ? ` ${member.vipId.replace(/^VIP0+(\d+)$/, 'VIP$1')}` : ''}</span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+    );
+  });
 
   return (
     <div className="landing-page">
@@ -405,60 +451,20 @@ export default function LandingPage() {
       </LazyVisible>
 
       <div className="cards-sections">
-        {SECTIONS.map((sec) => (
-          <section key={sec.id} id={`section-${sec.id}`} className="cards-section">
-            <div className="section-header">
-              <div className="section-eyebrow">{tr(sec.eyebrow)}</div>
-              <h2 className="section-title-serif">{tr(sec.title)}</h2>
-              <div className="section-sub">{tr(sec.sub)}</div>
-            </div>
-            {renderCardGrid(sec.id, sec.cards, 'cards-container')}
-          </section>
-        ))}
-        {([
-          { id: 'enterprise', enterprise: true, eyebrow: tr({ zh: '企业', en: 'Enterprise' }), title: tr({ zh: '企业会员', en: 'Enterprise members' }), empty: tr({ zh: '暂无企业会员', en: 'No enterprise members yet' }) },
-          { id: 'individual', enterprise: false, eyebrow: tr({ zh: '个人', en: 'Individual' }), title: tr({ zh: '个人会员', en: 'Individual members' }), empty: tr({ zh: '暂无个人会员', en: 'No individual members yet' }) },
-        ] as const).map((section) => {
-          const lockId = HOME_MEMBER_SECTION_IDS[section.id];
-          const locked = cardLocks[lockId] ?? true;
-          if (!isAdmin && (!locksLoaded || locked)) return null;
-          const query = memberQueries[section.id].trim().toLowerCase();
-          const sectionMembers = orderedMembers.filter((member) => member.planSlug.startsWith('enterprise_') === section.enterprise);
-          const members = sectionMembers.filter((member) => !query || [
-            member.name, member.wcaId, member.vipId ?? '', member.vipId?.replace(/^VIP0+(\d+)$/, 'VIP$1') ?? '',
-          ].some((value) => value.toLowerCase().includes(query)));
-          return (
-            <section key={section.id} className="cards-section" aria-labelledby={`${section.id}-members-title`}>
+        {SECTIONS.map((sec) => {
+          const grid = renderCardGrid(sec.id, sec.cards, 'cards-container');
+          return grid && (
+            <section key={sec.id} id={`section-${sec.id}`} className="cards-section">
               <div className="section-header">
-                <div className="section-eyebrow">{section.eyebrow}</div>
-                <div className="landing-member-heading">
-                  <h2 id={`${section.id}-members-title`} className="section-title-serif">{section.title}</h2>
-                  {renderLock(lockId, locked, false, section.title)}
-                </div>
-                <SearchInput
-                  value={memberQueries[section.id]}
-                  onChange={(value) => setMemberQueries((current) => ({ ...current, [section.id]: value }))}
-                  className="landing-member-search"
-                  placeholder={tr({ zh: '搜索姓名、WCA ID 或 VIP 编号', en: 'Search name, WCA ID or VIP number' })}
-                  ariaLabel={tr({ zh: `搜索${section.title}`, en: `Search ${section.title.toLowerCase()}` })}
-                />
-                {publicMembers && members.length === 0 && <div className="section-sub" role="status">{sectionMembers.length === 0 ? section.empty : tr({ zh: '没有匹配的会员', en: 'No matching members' })}</div>}
+                <div className="section-eyebrow">{tr(sec.eyebrow)}</div>
+                <h2 className="section-title-serif">{tr(sec.title)}</h2>
+                <div className="section-sub">{tr(sec.sub)}</div>
               </div>
-              {members.length > 0 && (
-                <div className="landing-members">
-                  {members.map((member) => (
-                    <Link key={member.wcaId} href={`/wca/persons/${member.wcaId}`} className="landing-member" prefetch={false}>
-                      {member.avatarUrl
-                        ? <img src={member.avatarUrl} alt="" className="landing-member-avatar" />
-                        : <User size={24} aria-hidden="true" />}
-                      <span>{displayCuberName(member.name, lang === 'zh')}{member.vipId ? ` ${member.vipId.replace(/^VIP0+(\d+)$/, 'VIP$1')}` : ''}</span>
-                    </Link>
-                  ))}
-                </div>
-              )}
+              {grid}
             </section>
           );
         })}
+        {renderMemberSections()}
       </div>
 
       <div className="footer">
@@ -503,6 +509,19 @@ export default function LandingPage() {
             沪公网安备31010902100930号
           </a>
         </div>
+      )}
+      {isAdmin && (
+        <section id="landing-admin-content" className="cards-sections" aria-labelledby="landing-admin-title">
+          <div className="cards-section">
+            <h2 id="landing-admin-title" className="section-title-serif">{tr({ zh: '仅管理员可见', en: 'Administrators only' })}</h2>
+            <div className="cards-container">
+              {renderCardGrid('main', PRIMARY_CARDS, 'landing-admin-card-group', true)}
+              {renderCardGrid('wca', WCA_CARDS, 'landing-admin-card-group', true)}
+              {SECTIONS.map((sec) => renderCardGrid(sec.id, sec.cards, 'landing-admin-card-group', true))}
+            </div>
+          </div>
+          {renderMemberSections(true)}
+        </section>
       )}
     </div>
   );
