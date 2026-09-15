@@ -10,17 +10,49 @@ export function pinnedCountriesKey(user: { uid?: number; wcaId: string } | null)
   return owner ? `${PINNED_COUNTRIES_KEY}:${owner}` : null;
 }
 
-export function resolvePinnedCountries(raw: string | null, wcaCountry: string): string[] {
-  // An explicitly saved empty list must not reinstate a country the user unpinned.
-  return parsePinnedCountries(raw ?? JSON.stringify([wcaCountry]));
+function preferences(raw: string | null, wcaCountry: string): { pins: string[]; excluded: string[] } {
+  try {
+    const value: unknown = JSON.parse(raw ?? 'null');
+    if (Array.isArray(value)) {
+      const pins = parsePinnedCountries(raw!);
+      // Legacy arrays recorded the whole list, including removal of the WCA default.
+      return { pins, excluded: normalize([wcaCountry]).filter(code => !pins.includes(code)) };
+    }
+    if (value && typeof value === 'object' && 'pins' in value && 'excluded' in value) {
+      return { pins: normalize(value.pins), excluded: normalize(value.excluded) };
+    }
+  } catch { /* Invalid storage falls back to available defaults. */ }
+  return { pins: [], excluded: [] };
+}
+
+export function resolvePinnedCountries(raw: string | null, wcaCountry: string, ipCountry = ''): string[] {
+  const { pins, excluded } = preferences(raw, wcaCountry);
+  return normalize([wcaCountry, ipCountry, ...pins]).filter(code => !excluded.includes(code));
+}
+
+export function togglePinnedCountry(raw: string | null, wcaCountry: string, ipCountry: string, iso2: string): string {
+  const prefs = preferences(raw, wcaCountry);
+  const pin = normalize([iso2])[0];
+  if (!pin) return JSON.stringify(prefs);
+  if (resolvePinnedCountries(raw, wcaCountry, ipCountry).includes(pin)) {
+    prefs.pins = prefs.pins.filter(code => code !== pin);
+    prefs.excluded = normalize([...prefs.excluded, pin]);
+  } else {
+    prefs.pins = normalize([...prefs.pins, pin]);
+    prefs.excluded = prefs.excluded.filter(code => code !== pin);
+  }
+  return JSON.stringify(prefs);
+}
+
+function normalize(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.filter((v): v is string => typeof v === 'string')
+    .map(v => v.toLowerCase()).filter(v => Object.hasOwn(countries, v)))];
 }
 
 export function parsePinnedCountries(raw: string): string[] {
   try {
-    const value: unknown = JSON.parse(raw);
-    if (!Array.isArray(value)) return [];
-    return [...new Set(value.filter((v): v is string => typeof v === 'string')
-      .map(v => v.toLowerCase()).filter(v => Object.hasOwn(countries, v)))];
+    return normalize(JSON.parse(raw));
   } catch { return []; }
 }
 

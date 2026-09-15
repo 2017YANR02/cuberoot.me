@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parsePinnedCountries, partitionPinnedCountries, pinnedCountriesKey, resolvePinnedCountries } from '@/lib/pinned-countries';
+import { parsePinnedCountries, partitionPinnedCountries, pinnedCountriesKey, resolvePinnedCountries, togglePinnedCountry } from '@/lib/pinned-countries';
 
 describe('pinned countries', () => {
   it('defaults only unsaved preferences to a valid WCA country', () => {
@@ -17,6 +17,30 @@ describe('pinned countries', () => {
     expect(pinnedCountriesKey({ uid: 42, wcaId: '2017YANR02' })).toBe(key);
     expect(pinnedCountriesKey({ uid: 43, wcaId: '' })).not.toBe(key);
     expect(pinnedCountriesKey({ wcaId: ' 2017yanr02 ' })).toBe('cuberoot-pinned-countries:2017YANR02');
+  });
+
+  it('orders WCA then IP then manual pins, deduplicates defaults and migrates legacy lists', () => {
+    expect(resolvePinnedCountries(null, 'CN', 'US')).toEqual(['cn', 'us']);
+    expect(resolvePinnedCountries(null, 'CN', 'cn')).toEqual(['cn']);
+    expect(resolvePinnedCountries(null, '', 'US')).toEqual(['us']);
+    expect(resolvePinnedCountries(null, '', 'unknown')).toEqual([]);
+    expect(resolvePinnedCountries('["au","cn"]', 'cn', 'us')).toEqual(['cn', 'us', 'au']);
+    expect(resolvePinnedCountries('[]', 'cn', 'us')).toEqual(['us']);
+    expect(resolvePinnedCountries('[]', 'cn', 'cn')).toEqual([]);
+    expect(resolvePinnedCountries('{', 'cn', 'us')).toEqual(['cn', 'us']);
+  });
+
+  it('retains explicit unpins across default changes, reloads and repinning', () => {
+    let raw = togglePinnedCountry(null, 'cn', 'us', 'us');
+    expect(resolvePinnedCountries(raw, 'cn', 'us')).toEqual(['cn']);
+    raw = togglePinnedCountry(raw, 'cn', 'us', 'au');
+    expect(resolvePinnedCountries(raw, 'cn', 'us')).toEqual(['cn', 'au']);
+    expect(resolvePinnedCountries(raw, 'cn', 'de')).toEqual(['cn', 'de', 'au']);
+    raw = togglePinnedCountry(raw, 'cn', 'us', 'cn');
+    expect(resolvePinnedCountries(raw, 'cn', 'us')).toEqual(['au']);
+    raw = togglePinnedCountry(raw, 'cn', 'us', 'us');
+    expect(resolvePinnedCountries(raw, 'cn', 'us')).toEqual(['us', 'au']);
+    expect(resolvePinnedCountries(togglePinnedCountry(raw, 'cn', 'us', 'invalid'), 'cn', 'us')).toEqual(['us', 'au']);
   });
 
   it('recovers from corrupt or non-array storage', () => {
