@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint":"42769168a92c06b50af891ecf74079cf9b8186072ced7a8fd58a0dc5210b4b3c","reason":"按用户要求移除所有首页卡片对应页面的服务端入口校验，同时移除赛前训练的 proxy 与客户端管理员限制；普通页面和训练不再读取锁状态或验证角色，游客使用既有本地训练存储。旧 page-access 回跳入口只校验站内安全目标并打开页面，不再要求管理员登录。已增加中英文公开浏览与账号操作流程，复核登录、注册、第三方绑定、会话保存、合并和注销均不变，后台操作和 API 授权保持原有契约；首页锁仅控制入口展示。此指纹确认源码复核，不代表部署或真机验收。"}
+{"fingerprint":"586a1963e0027dc5d51b58b6f4bae3e39174d9f77a3f3036a590bfd1c82a1ad9","reason":"新增国家菜单图钉的账号入口：游客通过 AppLink 进入既有 account 登录页，next 保留原页面路径、筛选和锚点；所有登录账号均可置顶，无会员或 WCA ID 门槛。置顶偏好在当前浏览器按账号隔离，首次默认使用已有 WCA 选手国家表，明确取消后不恢复，退出登录隐藏偏好并拒绝旧账号回调写入。已同步中英文流程步骤并扩展守卫覆盖图钉、偏好 hook 与存储键规则；复核登录注册、身份绑定、会话保存、合并和注销继续使用既有流程，无后端授权变化。此指纹确认源码复核，不代表部署或真机验收。"}
 */
 
 import type { ReactNode } from 'react';
@@ -62,6 +62,8 @@ export default function AuthFlowPage() {
         t('打开页面 → 直接显示内容，不查询首页卡片锁状态或管理员角色', 'Open a page → show its content without checking homepage card locks or administrator roles'),
         t('赛前训练 → 游客也可使用，训练记录保存在当前浏览器', 'Competition Practice → guests can train, with practice records saved in this browser'),
         t('需要账号或管理权限的操作 → 由对应功能与服务端接口校验', 'Actions requiring an account or administrator access → checked by the feature and its server API'),
+        t('国家菜单图钉 → 游客进入登录页，登录后回到原网址和筛选；任何登录账号都可置顶，无需会员或 WCA ID', 'Country menu pin → guests sign in and return to the original URL and filters; any signed-in account can pin, without membership or a WCA ID'),
+        t('首次使用默认置顶 WCA ID 对应国家；手动置顶按账号保存在当前浏览器，取消后不自动恢复，退出登录不显示个人置顶', 'Start with the country associated with the WCA ID pinned; manual choices are saved per account in this browser, unpinning is retained, and signing out hides personal pins'),
       ]} />
       <p>{t('首页隐藏卡片只影响入口展示，不限制直接访问网址。', 'Hiding a homepage card affects its visibility, not direct URL access.')}</p>
     </aside>
