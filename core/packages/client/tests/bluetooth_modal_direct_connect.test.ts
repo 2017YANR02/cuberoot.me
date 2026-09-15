@@ -79,7 +79,7 @@ describe('BluetoothModal direct connection attempt', () => {
       }));
     });
 
-    expect(host.textContent).toContain('Search & connect');
+    expect(host.textContent).toContain('Connect');
     expect(host.textContent).not.toContain('Bluefy');
   });
 
@@ -149,19 +149,29 @@ describe('BluetoothModal direct connection attempt', () => {
     });
 
     expect(host.textContent).toContain('Connecting…');
-    expect(host.textContent).not.toContain('Supported timing devices');
+    expect(host.textContent).not.toContain('GAN356');
+    expect(host.querySelector('.bt-connected-summary')).not.toBeNull();
+    const reset = Array.from(host.querySelectorAll('button')).find(button => button.textContent?.includes('Reset state'))!;
+    expect(reset.disabled).toBe(true);
+    expect(host.querySelector('.bt-connect-btn')).toBeNull();
 
     await act(async () => {
       rejectAttempt(new BluetoothConnectError('picker', '用户取消选择'));
       await connectAttempt.catch(() => {});
     });
 
-    expect(host.querySelector('[role="alert"]')?.textContent).toContain('choosing the device');
-    expect(host.querySelector('[role="alert"]')?.textContent).toContain('用户取消选择');
-    expect(host.textContent).toContain('Search & connect');
+    const failure = host.querySelector('[role="alert"]')?.textContent ?? '';
+    expect(failure).toContain('This device model is not currently supported');
+    expect(failure).toContain('Only smart 3x3 cubes are supported');
+    for (const model of ['GAN356 i Carry', 'GAN Mini ui FreePlay', 'GAN12 ui FreePlay', 'V10 AI / V11 AI', 'Super WeiLong V2', 'QYSC', 'Tornado V4', 'GoCube / GoCube Edge', 'Rubik’s Connected', 'GiiKER i3']) {
+      expect(failure).toContain(model);
+    }
+    expect(host.querySelectorAll('[role="alert"] ul')).toHaveLength(4);
+    expect(host.textContent).toContain('Retry connection');
   });
 
   it('keeps the essential connected-cube facts and recovery actions', async () => {
+    const resetGyro = vi.fn();
     const connectedCube = {
       ...disconnectedCube,
       status: {
@@ -192,6 +202,7 @@ describe('BluetoothModal direct connection attempt', () => {
       root.render(createElement(BluetoothModal, {
         isZh: false,
         cube: connectedCube,
+        onResetGyro: resetGyro,
         onClose: vi.fn(),
         onConnect: vi.fn(() => Promise.resolve()),
       }));
@@ -204,12 +215,42 @@ describe('BluetoothModal direct connection attempt', () => {
     expect(content).toContain('72%');
     expect(content).toContain('solved');
     expect(content).toContain("R'");
-    expect(content).toContain('4.32s after device selection');
-    expect(content).toContain('advertisement 3');
-    expect(content).toContain('GATT 2.48s');
-    expect(content).toContain('automatically stops the timer');
+    expect(content).not.toContain('Connection diagnostic');
+    expect(content).not.toContain('Out of sync?');
     expect(content).toContain('Reset state');
     expect(content).toContain('Disconnect');
+    const gyroButton = Array.from(host.querySelectorAll('button')).find(button => button.textContent?.includes('Reset gyroscope'))!;
+    await act(async () => gyroButton.click());
+    expect(resetGyro).toHaveBeenCalledOnce();
+    expect(connectedCube.resetState).not.toHaveBeenCalled();
     expect(host.querySelector('button[aria-label="Close"]')).not.toBeNull();
+  });
+
+  it('keeps an idle status dialog compact and offers reconnection without a model list', async () => {
+    const onConnect = vi.fn(async () => {});
+    await act(async () => root.render(createElement(BluetoothModal, {
+      isZh: false, cube: disconnectedCube, onClose: vi.fn(), onConnect,
+    })));
+    expect(host.textContent).not.toContain('GAN356');
+    expect(host.querySelector('[role="status"]')?.textContent).toBe('Not connected');
+    expect(onConnect).not.toHaveBeenCalled();
+    await act(async () => host.querySelector<HTMLButtonElement>('.bt-connect-btn')!.click());
+    expect(onConnect).toHaveBeenCalledOnce();
+  });
+
+  it('switches to the MAC instructions and focuses the input when MY32 requests its address', async () => {
+    const props = { isZh: false, cube: disconnectedCube, onClose: vi.fn(), onConnect: vi.fn(async () => {}) };
+    await act(async () => root.render(createElement(BluetoothModal, props)));
+    await act(async () => root.render(createElement(BluetoothModal, {
+      ...props, macPrompt: { deviceName: 'WCU_MY32_A1B2' },
+    })));
+    expect(host.textContent).toContain('WCU_MY32_A1B2');
+    expect(host.textContent).toContain('chrome://bluetooth-internals/#devices');
+    expect(host.textContent).toContain('edge://bluetooth-internals/#devices');
+    expect(host.textContent).toContain('Name column');
+    expect(host.textContent).toContain('Address');
+    expect(host.textContent).not.toContain('Cube Station');
+    expect(host.querySelector('.bt-connect-btn')).toBeNull();
+    expect(document.activeElement).toBe(host.querySelector('[data-mac-input]'));
   });
 });

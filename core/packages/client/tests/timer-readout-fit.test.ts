@@ -57,6 +57,26 @@ describe('shared timer complete-readout fitting', () => {
     expect(cancelAnimationFrame).toHaveBeenCalledWith(1);
   });
 
+  it('keeps the upper scramble outside the readout and cube stack as its content changes', async () => {
+    const surfaceRef = createRef<HTMLDivElement>();
+    const draw = async (scramble: string) => act(async () => root.render(createElement(TimingSurface, {
+      phase: 'idle', colorClass: '', fontSize: '100px', surfaceRef,
+      digits: '0.00', scrambleAbove: true,
+      scrambleSlot: createElement('div', { 'data-scramble': true }, scramble),
+      cornerSlot: createElement('div', { 'data-cube': true }, 'cube'),
+    })));
+    await draw('R U');
+    const core = host.querySelector('.timing-surface-core');
+    const cube = host.querySelector('[data-cube]');
+    expect(host.querySelector('.timing-surface-scramble-top')?.parentElement).toBe(surfaceRef.current);
+    expect(core?.querySelector('[data-scramble]')).toBeNull();
+    expect(core?.querySelector('[data-cube]')).toBe(cube);
+    await draw('R U '.repeat(100));
+    expect(host.querySelector('.timing-surface-core')).toBe(core);
+    expect(host.querySelector('[data-cube]')).toBe(cube);
+    expect(core?.querySelector('[data-scramble]')).toBeNull();
+  });
+
   it('does not chase fractional font-layout rounding on its own resize notification', async () => {
     await render('48:13.98');
     const initial = fit();

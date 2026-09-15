@@ -194,7 +194,7 @@ import {
 import { formatTargetTime, useSettings, getSettings, updateSettings } from '../_lib/settings';
 import { warmupSound } from '../_lib/sound';
 import { setMetronomeHold } from '@/lib/metronome';
-import { useBluetoothCube } from '../_lib/bluetooth';
+import { mayUseMiniProgramBridge, useBluetoothCube, type ConnectPickOptions } from '../_lib/bluetooth';
 import {
   classifyUnifiedBluetoothDevice,
   requestUnifiedBluetoothDevice,
@@ -2328,6 +2328,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const [bluetoothOpen, setBluetoothOpen] = useState(false);
   const [bluetoothConnectAttempt, setBluetoothConnectAttempt] = useState<Promise<void> | null>(null);
+  const bluetoothRequestIdRef = useRef(0);
   const bluetoothConnectingRef = useRef(false);
   const [bluetoothTimerOpen, setBluetoothTimerOpen] = useState(false);
   const [bluetoothTimerConnectAttempt, setBluetoothTimerConnectAttempt] = useState<Promise<void> | null>(null);
@@ -2342,76 +2343,53 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [bldHelperOpen, setBldHelperOpen] = useState(false);
   const [showCrossSession, setShowCrossSession] = useState(false);
 
-  useEffect(() => {
-    // Defer one task so React Strict Mode can cancel its test mount before any
-    // Bluetooth side effect begins. The real mount then starts exactly once.
-    const timer = window.setTimeout(() => {
-      bluetoothConnectingRef.current = true;
-      const attempt = bluetoothCube.preconnectGrantedDevice().then(() => undefined);
-      setBluetoothConnectAttempt(attempt);
-      void attempt.finally(() => {
-        bluetoothConnectingRef.current = false;
-      }).catch(() => undefined);
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [bluetoothCube.preconnectGrantedDevice]);
-
-  const connectExternalBluetooth = useCallback(() => {
-    if (bluetoothCube.status.connected) {
-      setBluetoothOpen(true);
-      return;
+  const connectFromBluetoothModal = useCallback(async (pick?: ConnectPickOptions) => {
+    if (bluetoothConnectingRef.current) return;
+    bluetoothConnectingRef.current = true;
+    const requestId = ++bluetoothRequestIdRef.current;
+    try {
+      if (pick?.acceptAllDevices) {
+        await bluetoothCube.connect(pick);
+        return;
+      }
+      // Preserve the native mini-program bridge and unsupported-browser advice.
+      if (mayUseMiniProgramBridge()) {
+        await bluetoothCube.connect(pick);
+        return;
+      }
+      const device = await requestUnifiedBluetoothDevice();
+      if (!device || requestId !== bluetoothRequestIdRef.current) return;
+      const kind = await classifyUnifiedBluetoothDevice(device);
+      if (requestId !== bluetoothRequestIdRef.current) {
+        if (device.gatt?.connected) device.gatt.disconnect();
+        return;
+      }
+      if (kind === 'smart-timer') {
+        setBluetoothOpen(false);
+        setBluetoothTimerOpen(true);
+        const attempt = bluetoothTimer.connectDevice(device);
+        setBluetoothTimerConnectAttempt(attempt);
+        await attempt;
+      } else {
+        await bluetoothCube.connectDevice(device);
+      }
+    } finally {
+      bluetoothConnectingRef.current = false;
     }
+  }, [bluetoothCube, bluetoothTimer]);
+
+  // Preserve the user gesture: requestDevice starts in this click handler.
+  const connectExternalBluetooth = useCallback(() => {
     if (bluetoothTimer.status.connected) {
       setBluetoothTimerOpen(true);
       return;
     }
-    if (bluetoothConnectingRef.current) {
-      setBluetoothOpen(true);
-      return;
-    }
-
-    // Exactly one requestDevice() starts from this click. After the user picks
-    // a device, its registry/service signature routes it to the matching
-    // connector without an intermediate in-app device-type menu.
-    bluetoothConnectingRef.current = true;
-    void (async () => {
-      let modalOwner: 'cube' | 'timer' | null = null;
-      try {
-        const device = await requestUnifiedBluetoothDevice();
-        if (!device) return;
-        const kind = await classifyUnifiedBluetoothDevice(device);
-        if (kind === 'smart-timer') {
-          modalOwner = 'timer';
-          setBluetoothTimerOpen(true);
-          const attempt = bluetoothTimer.connectDevice(device);
-          setBluetoothTimerConnectAttempt(attempt);
-          await attempt;
-          return;
-        }
-
-        modalOwner = 'cube';
-        setBluetoothOpen(true);
-        const attempt = bluetoothCube.connectDevice(device);
-        setBluetoothConnectAttempt(attempt);
-        await attempt;
-      } catch (error) {
-        // Connection errors are rendered by the relevant modal. A failure
-        // before classification has no better device-specific owner, so reuse
-        // the mature Bluetooth diagnostics shown by the smart-cube modal.
-        if (modalOwner === null) {
-          const failedAttempt = Promise.reject(error);
-          void failedAttempt.catch(() => undefined);
-          setBluetoothConnectAttempt(failedAttempt);
-          setBluetoothOpen(true);
-        }
-      } finally {
-        bluetoothConnectingRef.current = false;
-      }
-    })();
-  }, [
-    bluetoothCube,
-    bluetoothTimer,
-  ]);
+    setBluetoothOpen(true);
+    if (bluetoothCube.status.connected || bluetoothConnectingRef.current) return;
+    const attempt = connectFromBluetoothModal();
+    setBluetoothConnectAttempt(attempt);
+    void attempt.catch(() => undefined); // The status dialog displays failures.
+  }, [bluetoothTimer.status.connected, bluetoothCube.status.connected, connectFromBluetoothModal]);
 
   const connectStackmat = useCallback(() => {
     setStackmatOpen(true);
@@ -2926,9 +2904,16 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   const bluetoothDialog = bluetoothOpen && (
     <BluetoothModal isZh={isZh} cube={bluetoothCube} connectAttempt={bluetoothConnectAttempt}
+      onResetGyro={() => setCalibrateNonce(n => n + 1)}
       macPrompt={macPrompt} onSubmitMac={mac => resolveMac(mac)} onCancelMac={() => resolveMac(null)}
-      onClose={() => { if (macResolverRef.current) resolveMac(null); setBluetoothOpen(false); setBluetoothConnectAttempt(null); }}
-      onConnect={pick => bluetoothCube.connect(pick)} />
+      onClose={() => {
+        bluetoothRequestIdRef.current++;
+        if (macResolverRef.current) resolveMac(null);
+        if (bluetoothConnectingRef.current) bluetoothCube.disconnect();
+        setBluetoothOpen(false);
+        setBluetoothConnectAttempt(null);
+      }}
+      onConnect={connectFromBluetoothModal} />
   );
 
   if (competition.enabled) return (
@@ -3069,6 +3054,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         {/* 打乱来源配置条 —— 常驻计时读数上方(全项目)。计时中随 surface-chrome 淡出。 */}
         <ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} />
         <TimingSurface
+          scrambleAbove
           phase={timer.phase}
           colorClass={`${colorClass} tf-${settings.timerFont}`.trim()}
           fontSize={fontSize}
