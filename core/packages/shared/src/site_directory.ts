@@ -209,8 +209,8 @@ export const SITE_DIRECTORY_GROUPS = [
       { id: 'live-scripts', href: '/teachers/scripts', internal: true, tier: 'medium', nameKey: 'liveScripts' },
       { id: 'meet', href: '/meet', internal: true, tier: 'medium', nameKey: 'meet' },
       { id: 'documents', href: '/docs', internal: true, tier: 'medium', nameKey: 'documents' },
-      { id: 'partnership', href: '/partnership', internal: true, tier: 'medium', nameKey: 'partnership', adminOnly: true, miniProgramAction: 'disabled', miniProgramNote: { en: 'View on the website with an administrator account.', zh: '请在网站使用管理员账号查看' } },
-      { id: 'interview', href: '/docs/edit?id=b769490d-292b-4423-8e83-3ada43c1d96b', internal: true, tier: 'medium', nameKey: 'interview', adminOnly: true, miniProgramAction: 'disabled', miniProgramNote: { en: '请在网站使用管理员账号查看', zh: '请在网站使用管理员账号查看' } },
+      { id: 'partnership', href: '/partnership', internal: true, tier: 'medium', nameKey: 'partnership', lockedForNonAdmin: true, miniProgramAction: 'disabled', miniProgramNote: { en: 'View on the website with an administrator account.', zh: '请在网站使用管理员账号查看' } },
+      { id: 'interview', href: '/docs/edit?id=b769490d-292b-4423-8e83-3ada43c1d96b', internal: true, tier: 'medium', nameKey: 'interview', lockedForNonAdmin: true, miniProgramAction: 'disabled', miniProgramNote: { en: '请在网站使用管理员账号查看', zh: '请在网站使用管理员账号查看' } },
       { id: 'spreadsheets', href: '/sheets', internal: true, tier: 'medium', nameKey: 'spreadsheets' },
       {
         id: 'alg',
