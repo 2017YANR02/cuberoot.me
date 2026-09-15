@@ -46,7 +46,7 @@ export function refreshTable({ table, columns, keyColumns, file, expectedRows }:
     || new Set(keyColumns).size !== keyColumns.length || keyColumns.some((key) => !columns.includes(key))) {
     throw new Error(`Invalid refresh columns: ${table}`);
   }
-  if (!/^[a-z][a-z0-9_]*\.copy\.tsv$/.test(file)) throw new Error(`Invalid import file: ${file}`);
+  if (!/^[a-z][a-z0-9_]*\.copy\.tsv(?:\.gz)?$/.test(file)) throw new Error(`Invalid import file: ${file}`);
   if (expectedRows !== undefined && (!Number.isSafeInteger(expectedRows) || expectedRows < 0)) {
     throw new Error(`Invalid expected row count: ${table}`);
   }
@@ -73,7 +73,7 @@ END $import_count$;
   return `-- Refresh ${table}: committed readers remain available; unchanged rows stay intact.
 ${stagedCapacityGuard(table, file)}
 CREATE TEMP TABLE ${stage} ON COMMIT DROP AS SELECT ${cols} FROM ${table} WITH NO DATA;
-\\copy ${stage} (${cols}) FROM '${file}';
+\\copy ${stage} (${cols}) FROM ${file.endsWith('.gz') ? `PROGRAM 'gzip -dc -- ${file}'` : `'${file}'`};
 ALTER TABLE ${stage} ADD PRIMARY KEY (${keys});
 ANALYZE ${stage};
 ${countGuard}

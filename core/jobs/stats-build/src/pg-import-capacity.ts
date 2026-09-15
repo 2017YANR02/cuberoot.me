@@ -10,16 +10,19 @@ function identifier(value: string): string {
 }
 
 function sourceFile(value: string): string {
-  if (!/^[a-z0-9_][a-z0-9_.-]*\.tsv$/.test(value)) throw new Error(`Invalid import file: ${value}`);
+  if (!/^[a-z0-9_][a-z0-9_.-]*\.tsv(?:\.gz)?$/.test(value)) throw new Error(`Invalid import file: ${value}`);
   return value;
 }
 
 // df -Pk works on the Linux loader and macOS development machines. The numeric
 // casts fail closed if either command fails or returns unexpected output.
 function diskSnapshot(file?: string): string {
+  const sizeCommand = file && (sourceFile(file).endsWith('.gz')
+    ? `bash -o pipefail -c "gzip -dc -- ${file} | wc -c" || echo invalid`
+    : `wc -c < ${file}`);
   return `\\set import_available_bytes \`LC_ALL=C df -Pk . | awk 'NR == 2 { printf "%.0f", $4 * 1024 }'\`
 SELECT set_config('cuberoot.import_available_bytes', :'import_available_bytes', false);
-${file ? `\\set import_source_bytes \`wc -c < ${sourceFile(file)}\`
+${file ? `\\set import_source_bytes \`${sizeCommand}\`
 SELECT set_config('cuberoot.import_source_bytes', :'import_source_bytes', false);
 ` : ''}`;
 }
