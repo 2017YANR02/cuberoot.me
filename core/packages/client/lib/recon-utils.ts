@@ -235,7 +235,10 @@ export function buildExternalLinks(
   scramble: string,
   alg: string,
 ): { algUrl: string; algSiteName: string; cubedbUrl: string | null } {
-  const puzzle = getPuzzleId(event);
+  const enginePuzzle = getPuzzleId(event);
+  // These local engines have no corresponding Twizzle puzzle ID. Preserve the
+  // existing external notation view; the embedded player uses the real geometry.
+  const puzzle = ['gear', 'mirror', 'mirror2'].includes(enginePuzzle) ? '3x3x3' : enginePuzzle;
   const setupStr = encodeURIComponent(scramble);
   const algStr = encodeURIComponent(alg);
   const isCube = /^\d+x\d+x\d+$/.test(puzzle);
