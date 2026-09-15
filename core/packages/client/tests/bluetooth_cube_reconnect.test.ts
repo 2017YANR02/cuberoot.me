@@ -11,6 +11,7 @@ import {
 } from '@/app/[lang]/timer/_lib/bluetooth';
 import { ganV4Driver } from '@/app/[lang]/timer/_lib/bluetooth/gan_v4';
 import { gocubeDriver } from '@/app/[lang]/timer/_lib/bluetooth/gocube';
+import { moyu32Driver } from '@/app/[lang]/timer/_lib/bluetooth/moyu32';
 import { clearMac, savedMac, saveMac } from '@/app/[lang]/timer/_lib/bluetooth/mac';
 import { applyMoves, solved, toFaceletString } from '@/app/[lang]/timer/_lib/cube/state';
 import { parseScramble } from '@/app/[lang]/timer/_lib/cube/moves';
@@ -85,9 +86,10 @@ describe('smart-cube reconnect ownership', () => {
   let root: Root;
   let cube: BluetoothCubeHandle;
   let events: BluetoothConnectionEvent[];
+  let onNeedMac: ((name: string) => Promise<string | null>) | undefined;
 
   function Harness() {
-    cube = useBluetoothCube({ onConnectionEvent: (event) => events.push(event) });
+    cube = useBluetoothCube({ onConnectionEvent: (event) => events.push(event), onNeedMac });
     return null;
   }
 
@@ -95,6 +97,7 @@ describe('smart-cube reconnect ownership', () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     vi.useFakeTimers();
     events = [];
+    onNeedMac = undefined;
     host = document.createElement('div');
     document.body.appendChild(host);
     root = createRoot(host);
@@ -110,6 +113,54 @@ describe('smart-cube reconnect ownership', () => {
     });
     vi.useRealTimers();
     vi.restoreAllMocks();
+  });
+
+  it.each(['WCU_MY32_A1B2', 'WCU_MY32_AABBCCDDEEFF'])('asks for MY32 MAC once and reuses the validated address: %s', async (name) => {
+    const rig = fakeGattRig('my32');
+    Object.defineProperty(rig.device, 'name', { value: name });
+    clearMac(name);
+    vi.mocked(rig.server.getPrimaryServices).mockResolvedValue([{ uuid: moyu32Driver.service } as BluetoothRemoteGATTService]);
+    const input = deferred<string | null>();
+    onNeedMac = vi.fn(() => input.promise);
+    await act(async () => root.render(createElement(Harness)));
+    const start = vi.spyOn(moyu32Driver, 'start').mockImplementation(async (_server, _move, ctx) => {
+      ctx?.onState?.(SCRAMBLED);
+      return { battery: async () => 80, cleanup: vi.fn() };
+    });
+    let connection!: Promise<void>;
+    await act(async () => {
+      connection = cube.connectDevice(rig.device);
+      await vi.waitFor(() => expect(onNeedMac).toHaveBeenCalledWith(name));
+    });
+    expect(rig.device.watchAdvertisements).not.toHaveBeenCalled();
+    expect(start).not.toHaveBeenCalled();
+    expect(savedMac(name)).toBeNull();
+    await act(async () => { input.resolve('11:22:33:44:55:66'); await connection; });
+    expect(start.mock.calls[0][2]?.mac).toBe('11:22:33:44:55:66');
+    expect(savedMac(name)).toBe('11:22:33:44:55:66');
+    await act(async () => cube.disconnect());
+    await act(async () => { await cube.connectDevice(rig.device); });
+    expect(onNeedMac).toHaveBeenCalledOnce();
+    expect(start.mock.calls[1][2]?.mac).toBe('11:22:33:44:55:66');
+    expect(rig.device.watchAdvertisements).not.toHaveBeenCalled();
+    clearMac(name);
+  });
+
+  it('cancels MY32 connection without saving a MAC or starting its driver', async () => {
+    const rig = fakeGattRig('my32-cancel');
+    Object.defineProperty(rig.device, 'name', { value: 'WCU_MY32_1234' });
+    clearMac(rig.device.name);
+    vi.mocked(rig.server.getPrimaryServices).mockResolvedValue([{ uuid: moyu32Driver.service } as BluetoothRemoteGATTService]);
+    onNeedMac = vi.fn(async () => null);
+    await act(async () => root.render(createElement(Harness)));
+    const start = vi.spyOn(moyu32Driver, 'start');
+    await act(async () => { await cube.connectDevice(rig.device); });
+    expect(onNeedMac).toHaveBeenCalledOnce();
+    expect(start).not.toHaveBeenCalled();
+    expect(rig.device.watchAdvertisements).not.toHaveBeenCalled();
+    expect(cube.status.connected).toBe(false);
+    expect(savedMac(rig.device.name)).toBeNull();
+    expect(rig.disconnect).toHaveBeenCalled();
   });
 
   it('discards an awaited reconnect after manual disconnect', async () => {
