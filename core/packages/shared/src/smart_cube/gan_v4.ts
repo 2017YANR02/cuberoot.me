@@ -7,7 +7,7 @@ import {
   readBits,
   type GyroSink,
 } from './gan_crypto';
-import { GanMoveSync, type TimedMove } from './gan_move_sync';
+import { GanMoveSync, type BufferedMove, type TimedMove } from './gan_move_sync';
 import { decodeCubieFacelets } from './cubie';
 
 export const GAN_V4_SERVICE_UUID = '00000010-0000-fff7-fff6-fff5fff4fff0';
@@ -173,20 +173,26 @@ export function decodeGanV4Frame(
   }
 
   if (mode === 0x01) {
-    const moveCounter = (frame[7] << 8) | frame[6];
-    state.prevMoveLocTime = state.now();
-    const power = readBits(frame, 64, 2);
-    const axis = GAN_V4_AXIS_LOOKUP.indexOf(readBits(frame, 66, 6));
-    if (axis === -1 || power >= 2) { state.badFrames++; return []; }
-    state.badFrames = 0;
-    const face = GAN_V4_FACE_ORDER[axis];
-    const deviceTs = (
-      frame[2]
-      | (frame[3] << 8)
-      | (frame[4] << 16)
-      | (frame[5] << 24)
-    ) >>> 0;
-    return state.sync.push(moveCounter, power === 1 ? `${face}'` : face, deviceTs);
+    // DCTimer-BLE handleV4Move: every 72-bit record has its own 0x01 header,
+    // timestamp and counter. Padding or an incomplete tail is not another turn.
+    const moves: BufferedMove[] = [];
+    let invalid = false;
+    for (let offset = 0; offset + 9 <= frame.length; offset += 9) {
+      if (frame[offset] !== 0x01) break;
+      const power = readBits(frame, offset * 8 + 64, 2);
+      const axis = GAN_V4_AXIS_LOOKUP.indexOf(readBits(frame, offset * 8 + 66, 6));
+      if (axis === -1 || power >= 2) { invalid = true; break; }
+      const face = GAN_V4_FACE_ORDER[axis];
+      moves.push({
+        cnt: (frame[offset + 7] << 8) | frame[offset + 6],
+        mv: power === 1 ? `${face}'` : face,
+        ts: (frame[offset + 2] | (frame[offset + 3] << 8)
+          | (frame[offset + 4] << 16) | (frame[offset + 5] << 24)) >>> 0,
+      });
+    }
+    state.badFrames = invalid ? state.badFrames + 1 : 0;
+    if (moves.length > 0) state.prevMoveLocTime = state.now();
+    return state.sync.pushBatch(moves);
   }
 
   if (mode === 0xd1) {
