@@ -1,3 +1,4 @@
+import { createDeviceStateReset } from './device_reset';
 /**
  * QiYi Smart Cube driver — covers QY-QYSC (Smart Cube) and XMD-TornadoV4-i.
  *
@@ -67,6 +68,8 @@ const QIYI_AXIS_LUT: ReadonlyArray<number> = [4, 1, 3, 0, 2, 5];
 const QIYI_MAGIC = 0xfe;
 const OP_HELLO = 0x02;
 const OP_STATE = 0x03;
+const OP_SYNC = 0x04;
+const SOLVED_STATE = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB';
 
 /** DCTimer-BLE QiyiCubeProtocol: independent CC 10 gyro frame, CRC over
  *  bytes 0..13, signed big-endian ax/ay/az/aw at 6/8/10/12, scaled by 1000.
@@ -250,14 +253,36 @@ export const qiyiDriver: CubeDriver = {
 
     const w = expandKey(QIYI_AES_KEY);
     const decState: DecodeState = { lastTs: 0, battery: null };
+    let resetting = false;
+    let confirmedState: { facelets: string; timestamp: number } | null = null;
+    let pendingStates: Uint8Array[] = [];
+    let calibration: ReturnType<typeof createDeviceStateReset> | null = null;
+    let writeTail: Promise<void> = Promise.resolve();
 
     /** Send a host->cube ECB packet on the cube characteristic. */
-    const send = async (content: ReadonlyArray<number>): Promise<void> => {
+    const send = async (content: ReadonlyArray<number>, beginConfirmation?: () => boolean): Promise<void> => {
       const enc = buildPacket(content, w);
       // Allocate a fresh ArrayBuffer to satisfy strict TS BufferSource typing.
       const ab = new ArrayBuffer(enc.length);
       new Uint8Array(ab).set(enc);
-      await writeGattValue(cubeChar, ab);
+      const task = writeTail.then(() => {
+        if (beginConfirmation && !beginConfirmation()) return;
+        return writeGattValue(cubeChar, ab);
+      });
+      writeTail = task.catch(() => {});
+      await task;
+    };
+
+    const applyState = (msg: Uint8Array) => {
+      const parsed = parseStateMoves(msg, decState.lastTs);
+      decState.lastTs = parsed.lastTs;
+      if (parsed.battery !== null) decState.battery = parsed.battery;
+      // Moves first, state second. The host fires "the cube is solved" off the
+      // move that solved it; handing it the finished state first would make
+      // that edge look like it had already happened and swallow the auto-stop.
+      for (const mv of parsed.moves) onMove(mv.mv, mv.ts);
+      if (parsed.facelets) ctx?.onState?.(parsed.facelets);
+      for (const mv of parsed.futureMoves) onMove(mv.mv, mv.ts, { futureHistory: true });
     };
 
     const onChar = (ev: Event): void => {
@@ -280,20 +305,27 @@ export const qiyiDriver: CubeDriver = {
 
       // Ack opcode + 4 ts bytes for state and hello frames, mirroring cstimer.
       const opcode = msg[2];
+      if (opcode === OP_SYNC) {
+        if (calibration?.waiting && msg.length >= 38) {
+          const facelets = parseQiyiFacelets(msg);
+          if (facelets === SOLVED_STATE) {
+            confirmedState = { facelets, timestamp: new DataView(msg.buffer, msg.byteOffset, msg.byteLength).getUint32(3, false) };
+            calibration.observe(facelets);
+          }
+        }
+        return;
+      }
       if (opcode === OP_HELLO || opcode === OP_STATE) {
         // Fire-and-forget; failures shouldn't lose moves we already parsed.
-        void send(Array.from(msg.subarray(2, 7)));
+        void send(Array.from(msg.subarray(2, 7))).catch(() => {});
       }
 
-      const parsed = parseStateMoves(msg, decState.lastTs);
-      decState.lastTs = parsed.lastTs;
-      if (parsed.battery !== null) decState.battery = parsed.battery;
-      // Moves first, state second. The host fires "the cube is solved" off the
-      // move that solved it; handing it the finished state first would make
-      // that edge look like it had already happened and swallow the auto-stop.
-      for (const mv of parsed.moves) onMove(mv.mv, mv.ts);
-      if (parsed.facelets) ctx?.onState?.(parsed.facelets);
-      for (const mv of parsed.futureMoves) onMove(mv.mv, mv.ts, { futureHistory: true });
+      if (resetting) {
+        if (pendingStates.length >= 128) calibration?.cancel(new Error('Too many states during calibration'));
+        else pendingStates.push(msg.slice());
+        return;
+      }
+      applyState(msg);
     };
 
     cubeChar.addEventListener('characteristicvaluechanged', onChar);
@@ -320,16 +352,46 @@ export const qiyiDriver: CubeDriver = {
       throw error;
     }
 
+    const resetContent = [0x04, 0x17, 0x88, 0x8b, 0x31];
+    for (let i = 0; i < 54; i += 2) {
+      resetContent.push('LRDUFB'.indexOf(SOLVED_STATE[i]) | ('LRDUFB'.indexOf(SOLVED_STATE[i + 1]) << 4));
+    }
+    resetContent.push(0, 0);
+    calibration = createDeviceStateReset({
+      automaticReply: true,
+      sendReset: begin => send(resetContent, begin),
+      prepareSnapshot() {},
+      requestSnapshot: async () => {},
+    });
+    const resetDeviceState = async () => {
+      if (resetting) throw new Error('Device calibration already in progress');
+      resetting = true;
+      confirmedState = null;
+      pendingStates = [];
+      try {
+        await calibration!.run();
+        const snapshot = confirmedState as { facelets: string; timestamp: number } | null;
+        if (!snapshot) throw new Error('Missing confirmed cube state');
+        decState.lastTs = snapshot.timestamp;
+        ctx?.onState?.(snapshot.facelets);
+      } finally {
+        resetting = false;
+        if (!cleaned) for (const msg of pendingStates) applyState(msg);
+        pendingStates = [];
+      }
+    };
+
     let cleaned = false;
     const cleanup = (): void => {
       if (cleaned) return;
       cleaned = true;
+      calibration?.dispose();
       cubeChar.removeEventListener('characteristicvaluechanged', onChar);
       void cubeChar.stopNotifications().catch(() => {});
     };
 
     const battery = async (): Promise<number | null> => decState.battery;
 
-    return { battery, cleanup };
+    return { battery, cleanup, resetDeviceState };
   },
 };
