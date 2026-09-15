@@ -386,6 +386,7 @@ export default function LandingSearch({
         >
           <Plus size={18} strokeWidth={1.75} />
         </button>
+        {/* allow-manual-search: Results update while typing; Enter opens the first result. */}
         <input
           ref={textInputRef}
           type="text"
