@@ -66,7 +66,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
 //   account_auth alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
-//   comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends health historical_ranks pb private_vault
+//   comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends geo health historical_ranks pb private_vault
 //   membership membership_subscriptions music nav_sites pets nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
@@ -951,6 +951,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'system', m: 'POST', p: '/v1/app/boot-diagnostics', g: 'public', c: 'no-store', zh: '匿名上报脱敏的页面启动错误，不保存完整 UA、IP 或账号', en: 'Report a redacted page-startup error without storing raw UA, IP, or account identity' },
   { d: 'system', m: 'GET', p: '/v1/app/boot-diagnostics', g: 'admin', c: 'no-store', zh: '管理员按诊断编号查询最近 90 天的启动错误', en: 'Admin lookup of startup errors from the last 90 days by diagnostic code' },
   { d: 'system', m: 'GET', p: '/v1/health', g: 'public', c: 'no-store', zh: '健康检查', en: 'Health check' },
+  { d: 'system', m: 'GET', p: '/v1/geo/country', g: 'public', c: 'no-store', zh: '当前访客的 IP 国家代码；本地数据库查询，仅返回国家，失败返回 null，禁止共享缓存', en: 'Visitor IP country code from the local database; returns only the country, or null when unavailable; never shared-cached' },
   { d: 'system', m: 'GET', p: '/v1/visualcube.svg', g: 'public', c: 'cdn', zh: '服务端渲染魔方 SVG', en: 'Server-rendered cube SVG' },
 ];
 

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { usePinnedCountries } from '@/hooks/usePinnedCountries';
 import { CountryPinButton } from '@/components/CountryPinButton';
 import { loadFlagData } from '@/lib/country-flags';
+import { loadIpCountry } from '@/lib/ip-country';
 import { changeAppLanguage } from '@/i18n/i18n-client';
 
 const state = vi.hoisted(() => ({
@@ -20,6 +21,7 @@ vi.mock('@/lib/country-flags', () => ({
   loadFlagData: vi.fn(async () => 1),
   personFlagIso2: (id: string) => state.countries.get(id) ?? '',
 }));
+vi.mock('@/lib/ip-country', () => ({ loadIpCountry: vi.fn(async () => '') }));
 vi.mock('next/navigation', () => ({ useParams: () => ({ lang: 'zh' }) }));
 vi.mock('next/link', () => ({
   default: ({ children, prefetch: _prefetch, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { children?: ReactNode; prefetch?: boolean }) => createElement('a', props, children),
@@ -38,6 +40,7 @@ beforeEach(() => {
   state.countries.clear();
   localStorage.clear();
   vi.mocked(loadFlagData).mockReset().mockResolvedValue(1);
+  vi.mocked(loadIpCountry).mockReset().mockResolvedValue('');
   host = document.createElement('div');
   root = createRoot(host);
 });
@@ -83,7 +86,7 @@ it('loads the WCA default asynchronously without overwriting a manual choice or 
   await act(async () => latest[1]('us'));
   state.countries.set('2009ZEMD01', 'au');
   await act(async () => finish());
-  expect(await render()).toEqual(['us']);
+  expect(await render()).toEqual(['au', 'us']);
   state.user = { uid: 105, wcaId: '2010TEST01' };
   expect(await render()).toEqual([]);
   state.user = null;
@@ -91,6 +94,36 @@ it('loads the WCA default asynchronously without overwriting a manual choice or 
   state.countries.set('2010TEST01', 'de');
   await act(async () => finish());
   expect(JSON.parse(host.textContent!)).toEqual([]);
+});
+
+it('shows IP for guests, WCA before IP after login, and restores only IP on logout', async () => {
+  vi.mocked(loadIpCountry).mockResolvedValue('us');
+  expect(await render()).toEqual(['us']);
+  await act(async () => latest[1]('us'));
+  expect(localStorage.length).toBe(0);
+  state.user = { uid: 108, wcaId: '2017YANR02' };
+  state.countries.set('2017YANR02', 'cn');
+  expect(await render()).toEqual(['cn', 'us']);
+  await act(async () => latest[1]('us'));
+  expect(await render()).toEqual(['cn']);
+  state.user = null;
+  expect(await render()).toEqual(['us']);
+  state.user = { uid: 108, wcaId: '2017YANR02' };
+  expect(await render()).toEqual(['cn']);
+  await act(async () => root.unmount());
+  root = createRoot(host);
+  expect(await render()).toEqual(['cn']);
+});
+
+it('merges late IP lookup with manual pins and deduplicates matching WCA country', async () => {
+  let finish = (_country: string) => {};
+  vi.mocked(loadIpCountry).mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+  state.user = { uid: 109, wcaId: '2017YANR02' };
+  state.countries.set('2017YANR02', 'cn');
+  expect(await render()).toEqual(['cn']);
+  await act(async () => latest[1]('au'));
+  await act(async () => finish('cn'));
+  expect(await render()).toEqual(['cn', 'au']);
 });
 
 it('shares account pins between mounted menus and responds to changes from another tab', async () => {

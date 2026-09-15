@@ -14,13 +14,11 @@ export interface IpLocation {
   precision: 'city' | 'country';
 }
 
-interface CacheEntry {
+interface CacheEntry<T> {
   expiresAt: number;
-  value: IpLocation | null;
+  value: T | null;
 }
 
-const cache = new Map<string, CacheEntry>();
-const pending = new Map<string, Promise<IpLocation | null>>();
 const commandWaiters: Array<() => void> = [];
 let activeCommands = 0;
 
@@ -82,26 +80,37 @@ async function lookupIpLocation(ip: string): Promise<IpLocation | null> {
 }
 
 /** Local MMDB lookup only: visitor IPs are never sent to a third-party API. */
-export async function resolveIpLocation(ip: string): Promise<IpLocation | null> {
-  if (!isIP(ip) || ip === '0.0.0.0' || ip === '::') return null;
-  const now = Date.now();
-  const cached = cache.get(ip);
-  if (cached && cached.expiresAt > now) return cached.value;
-  if (cached) cache.delete(ip);
+function cachedIpLookup<T>(lookupValue: (ip: string) => Promise<T | null>) {
+  const cache = new Map<string, CacheEntry<T>>();
+  const pending = new Map<string, Promise<T | null>>();
+  return async (ip: string): Promise<T | null> => {
+    if (!isIP(ip) || ip === '0.0.0.0' || ip === '::') return null;
+    const now = Date.now();
+    const cached = cache.get(ip);
+    if (cached && cached.expiresAt > now) return cached.value;
+    if (cached) cache.delete(ip);
 
-  const existing = pending.get(ip);
-  if (existing) return existing;
+    const existing = pending.get(ip);
+    if (existing) return existing;
 
-  const lookup = lookupIpLocation(ip).then(value => {
-    if (cache.size >= CACHE_MAX_ENTRIES) {
-      const oldest = cache.keys().next().value as string | undefined;
-      if (oldest) cache.delete(oldest);
-    }
-    cache.set(ip, { value, expiresAt: Date.now() + CACHE_TTL_MS });
-    return value;
-  }).finally(() => {
-    pending.delete(ip);
-  });
-  pending.set(ip, lookup);
-  return lookup;
+    const lookup = lookupValue(ip).then(value => {
+      if (cache.size >= CACHE_MAX_ENTRIES) {
+        const oldest = cache.keys().next().value as string | undefined;
+        if (oldest) cache.delete(oldest);
+      }
+      cache.set(ip, { value, expiresAt: Date.now() + CACHE_TTL_MS });
+      return value;
+    }).finally(() => {
+      pending.delete(ip);
+    });
+    pending.set(ip, lookup);
+    return lookup;
+  };
 }
+
+export const resolveIpLocation = cachedIpLookup(lookupIpLocation);
+
+export const resolveIpCountry = cachedIpLookup(async (ip: string) => {
+  const country = await lookupString(ip, ['country', 'iso_code']);
+  return country && /^[A-Z]{2}$/i.test(country) ? country.toLowerCase() : null;
+});

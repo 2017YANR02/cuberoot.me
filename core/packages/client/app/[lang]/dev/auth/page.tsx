@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint":"4d612c2f38f2779d67a314c40e28a9cee0f4cb0fd3356b85d7d3229196dd97e5","reason":"账号主页卡片复用共享拖动手柄与排序规则，顺序在当前浏览器按账号保存；仅对原有可见入口排序，WCA 绑定条件和管理员权限过滤不变。复核 page.tsx 的登录注册回跳、第三方绑定参数续接、设置与注销入口：本次只替换主视图卡片布局，不改会话保存、绑定、合并、退出或注销逻辑，因此现有中英文流程节点保持不变。排序采用固定服务端快照，事件写入前核对当前账号；此复核仅对应本次卡片排序源码，不代表部署或真机验收。"}
+{"fingerprint":"c0ffaf02173a61e959b7bc1fe8c8202825135cda9056bedf531940c1eb772ac6","reason":"国家菜单默认置顶更新为登录后 WCA 国家优先、IP 国家其次并去重；游客或未绑定账号使用 IP 国家。新增公开只读国家查询，复用本地 IP 数据库，只返回国家代码且禁止共享缓存；客户端共享有超时的查询。已同步中英文节点并覆盖国家查询加载器：保留所有登录账号的手动操作、账号隔离、显式取消置顶和旧列表迁移，退出只显示 IP 国家；游客仍走原 AppLink 登录回跳，不更改会话、绑定、合并或注销。复核已提交的账号卡片排序仍只调整原有可见入口，权限过滤与登录生命周期不变。源码和本地测试复核不代表部署或真机验收。"}
 */
 
 import type { ReactNode } from 'react';
@@ -63,7 +63,7 @@ export default function AuthFlowPage() {
         t('赛前训练 → 游客也可使用，训练记录保存在当前浏览器', 'Competition Practice → guests can train, with practice records saved in this browser'),
         t('需要账号或管理权限的操作 → 由对应功能与服务端接口校验', 'Actions requiring an account or administrator access → checked by the feature and its server API'),
         t('国家菜单图钉 → 游客进入登录页，登录后回到原网址和筛选；任何登录账号都可置顶，无需会员或 WCA ID', 'Country menu pin → guests sign in and return to the original URL and filters; any signed-in account can pin, without membership or a WCA ID'),
-        t('首次使用默认置顶 WCA ID 对应国家；手动置顶按账号保存在当前浏览器，取消后不自动恢复，退出登录不显示个人置顶', 'Start with the country associated with the WCA ID pinned; manual choices are saved per account in this browser, unpinning is retained, and signing out hides personal pins'),
+        t('登录后默认依次置顶 WCA 国家、IP 国家，相同国家只显示一次；未绑定 WCA 或未登录时使用 IP 国家。手动设置按账号保存在当前浏览器，取消后不自动恢复；退出登录只保留 IP 国家，定位失败不影响菜单', 'Signed-in defaults are WCA country first, then IP country, without duplicates; without a WCA link or login, use the IP country. Manual choices are saved per account in this browser and unpinning is retained; signing out shows only the IP country, and lookup failure leaves menus usable'),
       ]} />
       <p>{t('首页隐藏卡片只影响入口展示，不限制直接访问网址。', 'Hiding a homepage card affects its visibility, not direct URL access.')}</p>
     </aside>
