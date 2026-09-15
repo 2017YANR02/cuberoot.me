@@ -19,6 +19,7 @@ import {
   Pencil, Trash2,
 } from 'lucide-react';
 import WcaAuth from '@/components/WcaAuth';
+import { SearchInput } from '@/components/SearchInput';
 import { Flag } from '@/components/Flag';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { persistItem } from '@/lib/safe-storage';
@@ -266,6 +267,11 @@ export default function ColpiClient() {
     }));
   };
 
+  useEffect(() => {
+    const q = shouldUppercase(ALPHABET) ? search.trim().toUpperCase() : search.trim();
+    if (isValidPair(q, ALPHABET)) setActivePair(q);
+  }, [ALPHABET, search]);
+
   // Apply all filters once into a derived map; everything (grid cell fill,
   // active-pair list, totals) reads from this so filters stay in sync.
   const filteredByPair: Record<string, ColpiWord[]> = (() => {
@@ -449,15 +455,14 @@ export default function ColpiClient() {
         </div>
 
         <div className="colpi-search">
-          <input
-            className="colpi-search-input"
+          <SearchInput
+            inputClassName="colpi-search-input"
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') onSearch(); }}
+            onChange={setSearch}
             placeholder="LP"
             maxLength={2}
-            aria-label={tr({ zh: '搜索字母对', en: 'Search letter pair'
+            ariaLabel={tr({ zh: '搜索字母对', en: 'Search letter pair'
             })}
           />
           <button className="colpi-search-btn" onClick={onSearch} title={tr({ zh: '搜索', en: 'Search'

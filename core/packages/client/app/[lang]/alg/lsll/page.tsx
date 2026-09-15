@@ -14,7 +14,7 @@ import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
 import { tr, T } from '@/i18n/tr';
-import { ClearButton } from '@/components/ClearButton';
+import { SearchInput } from '@/components/SearchInput';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import AlgCard from '@/components/AlgCard';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -42,7 +42,7 @@ const KIND_ORDER: CategoryKind[] = ['TT', 'CS', 'ES', 'SS'];
 
 export default function LsllHubPage() {
   const [query, setQuery] = useState('');
-  const [result, setResult] = useState<LocateResult | null>(null);
+  const result = useMemo<LocateResult | null>(() => query.trim() ? locateFromScramble(query) : null, [query]);
   const [cls, setCls] = useQueryState(
     'cls',
     parseAsStringEnum(['2', '3']).withDefault('2').withOptions({ history: 'push' }),
@@ -78,8 +78,6 @@ export default function LsllHubPage() {
     }
     return m;
   }, []);
-
-  const locate = () => setResult(locateFromScramble(query));
 
   // 两步模式下顺带报出这条打乱的 ZBLS case(= 第一眼要认的那张图,与公式表无关)。
   const hitPhi = useMemo(() => {
@@ -158,20 +156,15 @@ export default function LsllHubPage() {
       </p>
 
       <div className="lsll-locate">
-        <span className="lsll-locate-field">
-          <input
-            className="lsll-locate-input"
-            value={query}
-            onChange={(e) => { setQuery(e.target.value); setResult(null); }}
-            onKeyDown={(e) => { if (e.key === 'Enter' && query.trim()) locate(); }}
-            placeholder={tr({ zh: '粘贴打乱定位 case,如 R U R\' U\'', en: "Paste a scramble, e.g. R U R' U'" })}
-            spellCheck={false}
-          />
-          {query && <ClearButton onClick={() => { setQuery(''); setResult(null); }} />}
-        </span>
-        <button type="button" className="lsll-locate-btn" disabled={!query.trim()} onClick={locate}>
-          {tr({ zh: '定位', en: 'Locate' })}
-        </button>
+        <SearchInput
+          className="lsll-locate-field"
+          inputClassName="lsll-locate-input"
+          value={query}
+          onChange={setQuery}
+          debounceMs={300}
+          placeholder={tr({ zh: '粘贴打乱定位 case,如 R U R\' U\'', en: "Paste a scramble, e.g. R U R' U'" })}
+          spellCheck={false}
+        />
       </div>
       {result && !result.ok && (
         <div className="lsll-locate-error">
