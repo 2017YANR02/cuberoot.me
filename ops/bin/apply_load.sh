@@ -1,7 +1,7 @@
 #!/bin/bash
 # apply_load.sh — 通用 PG 加载器,由 GH Actions 通过 ssh 触发
 # 用法: MIN_FREE_BYTES=<bytes> apply_load.sh <import_dir> <log_tag>
-# 输入: $IMPORT_DIR/{load.sql, *.copy.tsv}
+# 输入: $IMPORT_DIR/{load.sql, *.copy.tsv, *.copy.tsv.gz}
 # 输出: 按 load.sql 内容替换/插入 PG 表;退出时清空 IMPORT_DIR
 set -euo pipefail
 
@@ -78,9 +78,9 @@ if [ ! -f "$IMPORT_DIR/load.sql" ]; then
   exit 1
 fi
 
-# 预检: 目录下必须有 *.copy.tsv,且任一不能为空(防 scp 漏传 / build 空写)
+# 预检: 目录下必须有 TSV 或 gzip TSV,且任一不能为空(防 scp 漏传 / build 空写)
 shopt -s nullglob
-TSV_FILES=("$IMPORT_DIR"/*.copy.tsv)
+TSV_FILES=("$IMPORT_DIR"/*.copy.tsv "$IMPORT_DIR"/*.copy.tsv.gz)
 if [ ${#TSV_FILES[@]} -eq 0 ]; then
   echo "[$LOG_TAG] no *.copy.tsv in $IMPORT_DIR; abort" >&2
   logger -t "$LOG_TAG" "no *.copy.tsv in $IMPORT_DIR; abort"
