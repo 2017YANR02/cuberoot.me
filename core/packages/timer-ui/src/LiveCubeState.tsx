@@ -187,7 +187,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
 
   // Wait for the first verified opening; never fabricate a solved state.
   if (view === '3d') {
-    if (!renderedMoves) return <span role="status" style={{ lineHeight: 1.5 }}>{tr({ zh: '正在同步魔方状态…', en: 'Syncing cube state…' })}</span>;
+    if (!renderedMoves) return <span aria-busy="true" className="timer-live-cube-3d" style={{ display: 'block' }} />;
     return (
       <div aria-busy={!algAnchored} style={{ height: '100%', position: 'relative', lineHeight: 1.5 }}>
       <Suspense fallback={<Spinner size={16} label={tr({ zh: '加载中', en: 'Loading' })} />}>
@@ -208,7 +208,6 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
         realtime
       />
       </Suspense>
-      {!algAnchored && <span role="status" style={{ position: 'absolute', top: 0, insetInline: 0, textAlign: 'center' }}>{tr({ zh: '正在同步魔方状态…', en: 'Syncing cube state…' })}</span>}
       </div>
     );
   }
