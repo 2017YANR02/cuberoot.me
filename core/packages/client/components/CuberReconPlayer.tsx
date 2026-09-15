@@ -83,11 +83,12 @@ export default function CuberReconPlayer({
       )));
       const cube = world.cube as NxnCube;
       cube.instancedRenderer.setStickering(mask);
-      if (mirror) cube.instancedRenderer.setFaceColors(mirrorFaces());
+      cube.instancedRenderer.setFaceColorOverride(mirror ? mirrorFaces() : null);
       applyPuzzleTransparency(cube, transparent);
       world.dirty = true;
     },
     cleanupPuzzle: (world) => {
+      (world.cube as NxnCube).instancedRenderer?.setFaceColorOverride(null);
       applyPuzzleTransparency(world.cube, false);
     },
     applyPrefix: (world, sc, moves, n) => {
