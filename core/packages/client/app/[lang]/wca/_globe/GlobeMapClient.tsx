@@ -3176,6 +3176,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
 
         <div className="globe-search" ref={searchWrapRef}>
           <Search className="globe-search-icon" size={14} strokeWidth={1.75} />
+          {/* allow-manual-search: Results update while typing; Enter moves the map to the first result. */}
           <input
             className="globe-search-input"
             type="text"

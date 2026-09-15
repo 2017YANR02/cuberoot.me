@@ -15,6 +15,15 @@ export interface PairedGuard {
 
 export const PAIRED_GUARDS: PairedGuard[] = [
   {
+    id: 'manual-search',
+    scope: 'project',
+    hook: 'hook-detect-manual-search.mjs',
+    test: 'manual-search-guard.test.ts',
+    baseline: '0',
+    zh: { title: '搜索随输入更新', desc: '检查可识别搜索框的回车、表单提交和搜索按钮绑定，提示复用 SearchInput 随输入更新。附加导航或重计算须在标签前写 allow-manual-search 及具体理由。Hook 检查补丁应用后的源码，CI 全量复查；静态检查不能证明任意回调确实更新结果，也不覆盖间接绑定。' },
+    en: { title: 'Search as you type', desc: 'Checks Enter, form submission and search-button handlers around recognizable search fields, directing edits to live SearchInput updates. Extra navigation or expensive computation needs an allow-manual-search reason before the tag. The hook checks proposed source and CI scans all source; static checks cannot prove arbitrary callbacks update results or cover indirect wiring.' },
+  },
+  {
     id: 'site-material',
     scope: 'project',
     hook: 'hook-detect-site-material.mjs',

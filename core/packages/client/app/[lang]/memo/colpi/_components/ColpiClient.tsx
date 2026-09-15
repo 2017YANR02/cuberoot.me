@@ -465,6 +465,7 @@ export default function ColpiClient() {
             ariaLabel={tr({ zh: '搜索字母对', en: 'Search letter pair'
             })}
           />
+          {/* allow-manual-search: Valid pairs search automatically; the button also explains invalid input. */}
           <button className="colpi-search-btn" onClick={onSearch} title={tr({ zh: '搜索', en: 'Search'
         })}><Search size={14} /></button>
         </div>

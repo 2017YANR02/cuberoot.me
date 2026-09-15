@@ -38,6 +38,22 @@ function runAdapter(adapter: string, target: string | string[], payload: object)
 }
 
 describe('Codex hook payload adapters', () => {
+  it('passes full search patches directly and preserves deny/fail-open output', () => {
+    const config = JSON.parse(readFileSync(HOOK_CONFIG, 'utf8'));
+    const hook = config.hooks.PreToolUse.find((entry: { matcher: string }) => entry.matcher === 'apply_patch').hooks.find((entry: { command: string }) => entry.command.endsWith('scripts/hook-detect-manual-search.mjs'));
+    expect(hook).toBeDefined();
+    expect(hook.command).not.toContain('adapt-codex-write-payload');
+    const patch = `*** Begin Patch\n*** Add File: core/packages/client/components/SearchProbe.tsx\n+<SearchInput onKeyDown={e => e.key === 'Enter' && search()} />\n*** End Patch`;
+    const result = runProcess(hook.command, [], REPO_ROOT, JSON.stringify({ tool_input: { command: patch } }), true);
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout).hookSpecificOutput.permissionDecision).toBe('deny');
+    for (const input of ['bad JSON', '{}', '{"tool_input":null}']) {
+      const result = runProcess(hook.command, [], CORE_ROOT, input, true);
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe('');
+    }
+  });
+
   it('denies duplicate scenery material through the shared write adapter', () => {
     const patch = '*** Begin Patch\n*** Add File: core/packages/client/app/[lang]/probe/material.css\n+body[data-site-scenery] .menu { background: var(--popover); }\n*** End Patch';
     const result = runAdapter(WRITE_ADAPTER, join(CORE_ROOT, 'packages/client/scripts/hook-detect-site-material.mjs'), {

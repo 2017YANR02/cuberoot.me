@@ -230,6 +230,7 @@ export function RegionPicker(props: RegionPickerProps) {
         <div ref={panelRef} className="region-picker-popup" data-site-surface="popover" onKeyDown={e => { if (e.key === 'Escape') closeAndClear(); }}>
           <div className="region-picker-search">
             <Search size={14} />
+            {/* allow-manual-search: Options filter while typing; Enter selects a matching region. */}
             <input
               autoFocus
               className="region-picker-search-input"
