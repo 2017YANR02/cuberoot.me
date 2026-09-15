@@ -396,7 +396,7 @@ describe('smoothing', () => {
 describe('brand tables', () => {
   it('keeps the Z-up default and the explicitly documented QiYi axis convention', () => {
     for (const [brand, basis] of Object.entries(BRAND_SENSOR_BASIS)) {
-      expect(basis, `${brand} basis`).toBe(brand === 'qiyi' ? 'identity' : 'rotX270');
+      expect(basis, `${brand} basis`).toBe(brand === 'qiyi' || brand === 'moyu32' ? 'identity' : 'rotX270');
     }
   });
 
@@ -414,7 +414,7 @@ describe('brand tables', () => {
     for (const [brand, basis] of Object.entries(BRAND_SENSOR_BASIS)) {
       // DCTimer-BLE preserves CC 10 ax/ay/az; unlike its GAN branch,
       // it does not remap (x,y,z) to (x,z,-y). Do not apply that mapping twice.
-      if (brand === 'qiyi') { expect(basis).toBe('identity'); continue; }
+      if (brand === 'qiyi' || brand === 'moyu32') { expect(basis).toBe('identity'); continue; }
       expect(quatAngleTo(SENSOR_BASES[basis], wanted), `${brand} basis`).toBeLessThan(1e-9);
     }
   });

@@ -970,11 +970,16 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       await reset();
       if (connectionGenerationRef.current !== generation) throw new Error('Cube connection changed');
       moveClockRef.current.reset();
-      resetState();
+      // The driver published the confirmed snapshot and may already have
+      // replayed newer turns. Clear training offsets without overwriting them.
+      hijackRef.current = null;
+      hijackStepRef.current = null;
+      setHijacked(false);
+      publishState(toFaceletString(trackerRef.current.getFaces()));
     } finally {
       if (connectionGenerationRef.current === generation) calibratingRef.current = false;
     }
-  }, [resetState]);
+  }, [publishState]);
 
   const hijackTo = useCallback((target: import('../cube/state').CubeFaces | string, step?: CubeStep): boolean => {
     const raw = toFaceletString(trackerRef.current.getFaces());
