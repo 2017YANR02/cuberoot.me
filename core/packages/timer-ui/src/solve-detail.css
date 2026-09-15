@@ -150,14 +150,14 @@
 .timer-reconstruct-metrics {
   display: grid;
   min-width: 0;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
   margin-bottom: 16px;
 }
 
 .timer-reconstruct-metric {
   min-width: 0;
-  padding: 10px 12px;
+  padding: 6px 8px;
   border: 1px solid var(--border-default);
   border-radius: 6px;
   background: var(--card, var(--shell-chip));
@@ -210,7 +210,6 @@
 }
 
 @media (max-width: 480px) {
-  .timer-reconstruct-metrics { grid-template-columns: 1fr; }
   .timer-reconstruct-metric-num { font-size: 18px; }
 }
 

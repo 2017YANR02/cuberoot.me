@@ -17,7 +17,7 @@
  *             lukeburong/weilong-v10-ai-protocol, whose worked example packet
  *             is reproduced verbatim below as a golden vector.
  *   GAN g3  — no orientation message exists in the protocol; nothing to test.
- *   QiYi    — undocumented; deliberately not implemented (see qiyi.ts TODO).
+ *   QiYi    — CC 10 frames are covered by bluetooth_qiyi_gyro.test.ts.
  *
  * The three brands share one normalisation trap worth stating: GAN's 16-bit
  * components are SIGN-MAGNITUDE, not two's complement, so 0xFFFF is -1.0 and

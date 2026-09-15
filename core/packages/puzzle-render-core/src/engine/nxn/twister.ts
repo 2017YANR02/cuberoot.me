@@ -2,7 +2,7 @@
 import * as THREE from "three";
 import Cube from "./cube";
 import Cubelet from "./cubelet";
-import tweener from "@cuberoot/puzzle-render-core/engine/tweener";
+import tweener, { type Tween } from "@cuberoot/puzzle-render-core/engine/tweener";
 import { timing } from "@cuberoot/puzzle-render-core/engine/tweenTiming";
 import initStackKernel, { apply_rotates as stackKernelApplyRotates, apply_rotates_no_flat as stackKernelApplyRotatesNoFlat } from "@cuberoot/stack-kernel";
 import { ensureWorkerInit, workerApply } from "./setup_worker_client";
@@ -356,6 +356,7 @@ export class TwistNode {
 export default class Twister {
   private cube: Cube;
   private queue: Array<{ action: TwistAction; formulaDurationTicks?: number }> = [];
+  private pauseTween: Tween | undefined;
   private catchingUpRealtime = false;
   // 在 undo / redo 内部 twist 时为 true,避免误清空 redo 栈
   public suppressRedoClear = false;
@@ -397,6 +398,13 @@ export default class Twister {
 
   get length(): number {
     return this.queue.length;
+  }
+
+  /** Cancel owned work without completing moves or notifying other cubes. */
+  dispose(): void {
+    this.queue.length = 0;
+    if (this.pauseTween) tweener.cancel(this.pauseTween);
+    this.pauseTween = undefined;
   }
 
   /** Current formula actions that have not reached their final state yet.
@@ -859,8 +867,9 @@ export default class Twister {
       }
       success = this.cube.lock("a", 1);
       if (success) {
-        tweener.tween(0, 1, formulaDurationTicks * action.times, (value: number) => {
+        this.pauseTween = tweener.tween(0, 1, formulaDurationTicks * action.times, (value: number) => {
           if (value == 1) {
+            this.pauseTween = undefined;
             this.cube.unlock("a", 1);
             this.cube.callback();
             return true;

@@ -394,24 +394,27 @@ describe('smoothing', () => {
 });
 
 describe('brand tables', () => {
-  it('every brand assumes a Z-up IMU', () => {
+  it('keeps the Z-up default and the explicitly documented QiYi axis convention', () => {
     for (const [brand, basis] of Object.entries(BRAND_SENSOR_BASIS)) {
-      expect(basis, `${brand} basis`).toBe('rotX270');
+      expect(basis, `${brand} basis`).toBe(brand === 'qiyi' || brand === 'moyu32' ? 'identity' : 'rotX270');
     }
   });
 
   /**
-   * 表里每一行都必须正好是 `MEASURED_SENSOR_MOUNT` 的逆 —— 换句话说,基表只允许
+   * GAN 装配约定的条目必须正好是 `MEASURED_SENSOR_MOUNT` 的逆 —— 换句话说,基表只允许
    * 记「传感器怎么装在魔方里」这一条硬件事实,不许再夹带别的修正。
    *
    * 这条就是防重犯的那道闸:上一次是把开机航向(一次 90° 偏航)当成装配姿态写进
    * 表里,而且是搭在一个和陀螺仪毫无关系的提交里进来的。有了这条,那种改动当场红。
    * 真要动它,得先动 `MEASURED_SENSOR_MOUNT`,那是个必须写明「在真机上重新量过」
-   * 的改动,不是顺手补一个常量。
+   * 的改动,不是顺手补一个常量。QiYi 使用 DCTimer-BLE 的独立轴向约定。
    */
-  it('every row is exactly the measured mounting inverted — no room for a second correction', () => {
+  it('uses the measured mounting except for QiYi frames already in rendering axes', () => {
     const wanted = quatInverse(MEASURED_SENSOR_MOUNT);
     for (const [brand, basis] of Object.entries(BRAND_SENSOR_BASIS)) {
+      // DCTimer-BLE preserves CC 10 ax/ay/az; unlike its GAN branch,
+      // it does not remap (x,y,z) to (x,z,-y). Do not apply that mapping twice.
+      if (brand === 'qiyi' || brand === 'moyu32') { expect(basis).toBe('identity'); continue; }
       expect(quatAngleTo(SENSOR_BASES[basis], wanted), `${brand} basis`).toBeLessThan(1e-9);
     }
   });
