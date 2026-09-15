@@ -200,11 +200,8 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
         calibrateToken={calibrateToken}
         sensorBasis={sensorBasis}
         mirror={mirror}
-        // 正对 F 面开局,不用等轴视角。这颗魔方是跟着手转的,镜头本身摆成四分之三角
-        // 只会让「屏幕上的姿态 = 手里的姿态」这件事变得难验证:校准前得先看出它歪没歪,
-        // 而歪一点点在等轴透视里读不出来,正对一面时绿格不方就是歪。校准按钮就在下面,
-        // 两者是一件事。回放那颗(PlaybackPanel)不校准,仍旧等轴。
-        view="front"
+        // Match DCTimer-BLE: elevated front with live gyro, three faces without.
+        view="smart"
         // 拧的时候屏幕上要看得见「转了哪一层」,而不是每一手瞬间变成另一个局面。
         // 只在「新日志是老日志 + 几手」时才播,别的情况(重新锚定 / 回填)照旧瞬切。
         animate

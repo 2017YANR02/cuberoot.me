@@ -1675,6 +1675,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, [liveAnchor]);
   const cubeConnected = bluetoothCube.status.connected;
   useEffect(() => {
+    if (!cubeConnected) gyroQuatRef.current = null;
     liveAnchor.setConnection(cubeConnected ? bluetoothCube.status.deviceId || bluetoothCube.status.deviceName || 'cube' : null);
   }, [liveAnchor, cubeConnected, bluetoothCube.status.deviceId, bluetoothCube.status.deviceName]);
   useEffect(() => {
@@ -1747,6 +1748,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           title={tr({ zh: '智能魔方实时状态（每次拧动同步）', en: 'Live smart-cube state (updates per move)' })}
         >
           <LiveCubeState
+            key={bluetoothCube.status.deviceId || bluetoothCube.status.deviceName}
             facelets={bluetoothCube.facelets}
             moves={[...liveMoves]}
             algAnchored={algAnchored}
