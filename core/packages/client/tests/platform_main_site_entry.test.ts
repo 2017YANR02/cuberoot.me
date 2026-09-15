@@ -60,7 +60,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(account).toMatch(/<AppLink href="\/membership" className="account-subscribe" prefetch=\{false\}>/);
     expect(account).toContain("key: 'notifications'");
     expect(account).toContain("href: '/notifications'");
-    expect(account).toMatch(/<AppLink key=\{key\} href=\{href\} className="account-card" prefetch=\{false\}>/);
+    expect(account).toMatch(/<AppLink href=\{href\} className="account-card" prefetch=\{false\}>/);
   });
 
   it('keeps Platform navigation public while the homepage is driven by real role data', () => {
