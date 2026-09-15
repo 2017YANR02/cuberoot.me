@@ -143,7 +143,7 @@ const INLINE_CSS = `
 }
 .scramble-hub-page .scramble-hub-card--symmetry .scramble-hub-art-image {
   max-width: 12rem;
-  max-height: 4.25rem;
+  max-height: 5.75rem;
 }
 .scramble-hub-page .scramble-hub-art-formula,
 .scramble-hub-page .scramble-hub-art-note {

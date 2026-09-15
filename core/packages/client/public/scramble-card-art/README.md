@@ -10,7 +10,7 @@ card labels and navigation remain real text in the page component.
 | `solve.webp` | Image 2: isolate the cube, preserving the white center sticker. |
 | `pattern.webp` | Images 3, 4, 5: one central pattern cube with two smaller companions. |
 | `batch.webp` | Image 1: three different cube nets in a single row. |
-| `symmetry.webp` | Image 6: isolate three rotation/reflection diagrams, omitting tiny screenshot labels. |
+| `symmetry.webp` | Image 6: eighteen rotation/reflection diagrams in six columns and three rows. Native-resolution crops are displayed smaller than the source to avoid enlargement blur; tiny screenshot labels are omitted. |
 | `hardest.webp` | Image 7: the first cube net, paired with its `H* 20` value as real text. |
 | `mcc.webp` | Image 8: the first three action rows and their current costs, omitting the other columns. |
 | `subsolver.webp` | Image 2: a partially colored cube, paired with `U / R / F` as real text. |
