@@ -155,6 +155,29 @@ export class GanMoveSync {
     return this.evict(true);
   }
 
+  /** A complete notification, in wire order. Check gaps only after enqueuing
+   *  all records, so one packet cannot issue overlapping history requests. */
+  pushBatch(moves: BufferedMove[]): TimedMove[] {
+    if (moves.length === 0) return [];
+    this.lastSeenCnt = serial(moves[moves.length - 1].cnt);
+    if (this.prevMoveCnt === -1) return [];
+    // A re-delivered packet may overlap the last applied counter. Its prefix
+    // is already consumed; treating it as a forward gap would wrap by 255.
+    let start = 0;
+    for (let i = moves.length - 1; i >= 0; i--) {
+      if (serial(moves[i].cnt) === this.prevMoveCnt) { start = i + 1; break; }
+    }
+    let added = false;
+    for (let i = start; i < moves.length; i++) {
+      const move = moves[i];
+      const cnt = serial(move.cnt);
+      if (this.buffer.some(pending => pending.cnt === cnt)) continue;
+      this.buffer.push({ ...move, cnt });
+      added = true;
+    }
+    return added ? this.evict(true) : [];
+  }
+
   /**
    * A history reply arrived. `moves` must be in the order the cube sends them
    * (NEWEST first); each is injected only if it fits the missing window.
