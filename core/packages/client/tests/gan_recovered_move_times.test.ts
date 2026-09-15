@@ -27,6 +27,41 @@ function seeded(hooks: GanMoveSyncHooks = {}) {
 }
 
 describe('history-recovered move timestamps', () => {
+  it('estimates trailing turns at request time, not the later reply arrival', () => {
+    let now = 100;
+    const sync = seeded({ now: () => now, requestHistory: () => {} });
+    sync.push(1, 'R', 1000);
+    now = 500;
+    sync.observe(3);
+    sync.requestResync(3);
+    now = 3000;
+    const moves = sync.injectHistory([{ cnt: 3, mv: 'F' }, { cnt: 2, mv: 'U' }]);
+    expect(moves).toEqual([
+      { mv: 'U', ts: 1200, estimatedTime: true },
+      { mv: 'F', ts: 1400, estimatedTime: true },
+    ]);
+  });
+
+  it('does not reuse recovery timing across a reset', () => {
+    let now = 100;
+    const sync = seeded({ now: () => now, requestHistory: () => {} });
+    sync.push(1, 'R', 1000); now = 300; sync.observe(2); sync.requestResync(2);
+    sync.reset(); sync.seed(0); sync.observe(1);
+    expect(sync.injectHistory([{ cnt: 1, mv: 'U' }])).toEqual([{ mv: 'U', ts: undefined }]);
+  });
+
+  it('bounds trailing estimates and rejects a backward local clock', () => {
+    for (const [requestAt, expected] of [[70000, 66535], [50, undefined]] as const) {
+      let now = 100;
+      const sync = seeded({ now: () => now, requestHistory: () => {} });
+      sync.push(1, 'R', 1000);
+      now = requestAt; sync.observe(2); sync.requestResync(2);
+      now = 99999;
+      const [move] = sync.injectHistory([{ cnt: 2, mv: 'U' }]);
+      expect(move.ts).toBe(expected);
+      expect(move.estimatedTime).toBe(expected === undefined ? undefined : true);
+    }
+  });
   it('interpolates a single recovered move to the midpoint of its interval', () => {
     const requested: Array<[number, number]> = [];
     const sync = seeded({ requestHistory: (s, n) => { requested.push([s, n]); } });
