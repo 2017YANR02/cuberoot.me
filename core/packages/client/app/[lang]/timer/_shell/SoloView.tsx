@@ -194,7 +194,7 @@ import {
 import { formatTargetTime, useSettings, getSettings, updateSettings } from '../_lib/settings';
 import { warmupSound } from '../_lib/sound';
 import { setMetronomeHold } from '@/lib/metronome';
-import { mayUseMiniProgramBridge, useBluetoothCube, type ConnectPickOptions } from '../_lib/bluetooth';
+import { mayUseMiniProgramBridge, useBluetoothCube, type ConnectPickOptions, type CubeMoveMetadata } from '../_lib/bluetooth';
 import {
   classifyUnifiedBluetoothDevice,
   requestUnifiedBluetoothDevice,
@@ -1474,7 +1474,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     timer.onPressUp();
     return true;
   }, [smartCubeInputBlocked, timer.cancelArm, timer.onPressUp]);
-  const bluetoothSubscribersRef = useRef<Set<(m: string, ts: number) => void>>(new Set());
+  const bluetoothSubscribersRef = useRef<Set<(m: string, ts: number, metadata?: CubeMoveMetadata) => void>>(new Set());
 
   const [macPrompt, setMacPrompt] = useState<{ deviceName: string; isWrongKey?: boolean } | null>(null);
   const macResolverRef = useRef<((m: string | null) => void) | null>(null);
@@ -1561,7 +1561,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         }
       }
       : undefined,
-    onMove: (move: string, ts: number) => {
+    onMove: (move: string, ts: number, metadata?: CubeMoveMetadata) => {
       // Before the broadcast, deliberately: if this turn starts the clock, the
       // subscribers below have to see it as the solve's first move. They read
       // the phase from `phaseSnapshotRef`, which this sets synchronously —
@@ -1569,7 +1569,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       // two turns of the same batch inside one call stack.
       startFromCubeRef.current(ts);
       for (const sub of bluetoothSubscribersRef.current) {
-        try { sub(move, ts); } catch (err) { console.error('[bt-broadcast]', err); }
+        try { sub(move, ts, metadata); } catch (err) { console.error('[bt-broadcast]', err); }
       }
     },
     onSolved: (atMs) => {
@@ -1833,7 +1833,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   useEffect(() => {
     const subs = bluetoothSubscribersRef.current;
-    const verify = () => {
+    const verify = (_move: string, _ts: number, metadata?: CubeMoveMetadata) => {
+      if (metadata?.futureHistory) return;
       const running = phaseSnapshotRef.current === 'running';
       scrambleGuidanceController.setRunning(running);
       if (running) return;
@@ -1861,11 +1862,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     scrambleGuidanceController.setRunning(timer.phase === 'running');
   }, [scrambleGuidanceController, timer.phase]);
   useLayoutEffect(() => {
-    if (bluetoothCube.facelets) {
+    if (bluetoothCube.facelets && !bluetoothCube.lastMoveMetadata?.futureHistory) {
       scrambleGuidanceController.syncFacelets(bluetoothCube.facelets);
     }
   }, [
     bluetoothCube.facelets,
+    bluetoothCube.lastMoveMetadata,
     cubeConnected,
     currentScrambleEntry.id,
     scramble,
@@ -2880,6 +2882,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const bluetoothDialog = bluetoothOpen && (
     <BluetoothModal isZh={isZh} cube={bluetoothCube} connectAttempt={bluetoothConnectAttempt}
       onResetGyro={() => setCalibrateNonce(n => n + 1)}
+      allowDeviceCalibration={timer.phase === 'idle' || timer.phase === 'stopped'}
       macPrompt={macPrompt} onSubmitMac={mac => resolveMac(mac)} onCancelMac={() => resolveMac(null)}
       onClose={() => {
         bluetoothRequestIdRef.current++;

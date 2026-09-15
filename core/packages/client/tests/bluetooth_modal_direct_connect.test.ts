@@ -60,6 +60,24 @@ describe('BluetoothModal direct connection attempt', () => {
     vi.restoreAllMocks();
   });
 
+  it('requires physical-solved confirmation and an idle timer for device calibration', async () => {
+    const resetDeviceState = vi.fn(async () => {});
+    const resetState = vi.fn();
+    const connected = { ...disconnectedCube, status: { ...disconnectedCube.status, connected: true, brand: 'gan-v4' }, resetDeviceState, resetState } as BluetoothCubeHandle;
+    const props = { isZh: false, cube: connected, onClose: vi.fn(), onConnect: vi.fn(async () => {}) };
+    await act(async () => root.render(createElement(BluetoothModal, props)));
+    const find = (text: string) => Array.from(host.querySelectorAll('button')).find(button => button.textContent?.includes(text))!;
+    expect(find('Calibrate device state').disabled).toBe(true);
+    await act(async () => root.render(createElement(BluetoothModal, { ...props, allowDeviceCalibration: true })));
+    await act(async () => find('Calibrate device state').click());
+    expect(resetDeviceState).not.toHaveBeenCalled();
+    expect(host.textContent).toContain('Solve the physical cube');
+    await act(async () => find('Cube solved, calibrate').click());
+    expect(resetDeviceState).toHaveBeenCalledOnce();
+    expect(resetState).not.toHaveBeenCalled();
+    expect(host.textContent).toContain('Device state calibrated');
+  });
+
   it('offers the native bridge on iOS WeChat instead of sending the user to Bluefy', async () => {
     Object.defineProperty(navigator, 'bluetooth', {
       configurable: true,

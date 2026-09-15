@@ -1,3 +1,4 @@
+import { decodeCubieFacelets } from './cubie';
 import {
   decodeGanGyro,
   decryptFrame,
@@ -142,4 +143,18 @@ export function createGanV2BatteryCommand(): Uint8Array {
 
 export function matchesGanV2Name(name: string | undefined): boolean {
   return /^(GAN|MG|AiCube|Gi)/i.test(name ?? '');
+}
+
+/** DCTimer-BLE v2ResetRequest. */
+export function createGanV2ResetCommand(): Uint8Array {
+  return new Uint8Array([0x0a, 0x05, 0x39, 0x77, 0, 0, 1, 0x23, 0x45, 0x67, 0x89, 0xab, 0, 0, 0, 0, 0, 0, 0, 0]);
+}
+
+/** Validated state reply used to confirm device calibration. */
+export function decodeGanV2Facelets(frame: Uint8Array): string | null {
+  if (frame.length < 16 || (frame[0] >> 4) !== 4) return null;
+  const bit = toBitReader(frame);
+  const corners = Array.from({ length: 7 }, (_, i) => (bit(33 + i * 2, 35 + i * 2) << 3) | bit(12 + i * 3, 15 + i * 3));
+  const edges = Array.from({ length: 11 }, (_, i) => (bit(47 + i * 4, 51 + i * 4) << 1) | bit(91 + i, 92 + i));
+  return decodeCubieFacelets(corners, edges);
 }
