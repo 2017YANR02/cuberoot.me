@@ -12,15 +12,12 @@ import type { ReactNode, AnchorHTMLAttributes, ComponentProps } from 'react';
 
 type Props = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
   children?: ReactNode;
-  // Pass `false` where the link is chrome the user rarely takes (a desk-pet
-  // toolbar icon, a footer): prefetching the landing RSC payload every time
-  // that chrome mounts is a wasted edge request, most often for the page the
-  // user is already on.
+  // Home links appear across the site; only prefetch when explicitly requested.
   prefetch?: ComponentProps<typeof Link>['prefetch'];
 };
 
-export default function HomeLink({ children, ...rest }: Props) {
+export default function HomeLink({ children, prefetch = false, ...rest }: Props) {
   const { i18n } = useTranslation();
   const home = (i18n.language.startsWith('zh') ? '/zh' : '/en');
-  return <Link href={home} {...rest}>{children}</Link>;
+  return <Link href={home} {...rest} prefetch={prefetch}>{children}</Link>;
 }

@@ -275,6 +275,7 @@ export default function WcaStatsIndex() {
                     <Link
                       key={s.id}
                       href={`/wca/${s.id}`}
+                      prefetch={false}
                       className="wca-stat-card"
                     >
                       {StatIcon && <StatIcon size={18} strokeWidth={1.5} />}

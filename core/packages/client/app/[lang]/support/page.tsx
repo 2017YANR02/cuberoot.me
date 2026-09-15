@@ -44,13 +44,13 @@ function PersonAvatar({ name, wcaId, avatarUrl }: { name: string; wcaId?: string
     </span>
   );
   return wcaId
-    ? <AppLink href={`/wca/persons/${wcaId}`} className="sponsor-avatar-link" aria-label={name}>{avatar}</AppLink>
+    ? <AppLink href={`/wca/persons/${wcaId}`} prefetch={false} className="sponsor-avatar-link" aria-label={name}>{avatar}</AppLink>
     : avatar;
 }
 
 function PersonName({ name, wcaId }: { name: string; wcaId?: string }) {
   return wcaId
-    ? <AppLink href={`/wca/persons/${wcaId}`} className="sponsor-name sponsor-name-link">{name}</AppLink>
+    ? <AppLink href={`/wca/persons/${wcaId}`} prefetch={false} className="sponsor-name sponsor-name-link">{name}</AppLink>
     : <span className="sponsor-name">{name}</span>;
 }
 

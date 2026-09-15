@@ -25,7 +25,7 @@ interface AlgCardProps {
 }
 
 export default function AlgCard({
-  thumb, title, sub, href, onClick, prefetch, ariaLabel, tooltip, expand, className,
+  thumb, title, sub, href, onClick, prefetch = false, ariaLabel, tooltip, expand, className,
 }: AlgCardProps) {
   const cls = `alg-card${expand ? ' alg-card--cover' : ''}${className ? ` ${className}` : ''}`;
   const body = (

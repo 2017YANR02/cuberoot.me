@@ -2021,6 +2021,7 @@ export default function SimPage() {
         {!drawMode && !imageMode && reconHref && (
           <AppLink
             href={reconHref}
+            prefetch={false}
             className="sim-open-recon"
             title={t('把当前打乱 / 解法带去发布复盘', 'Take this scramble / solution to a reconstruction')}
           >
