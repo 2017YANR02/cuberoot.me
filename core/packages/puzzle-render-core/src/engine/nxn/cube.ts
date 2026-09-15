@@ -288,6 +288,15 @@ export default class Cube extends THREE.Group {
   /** 释放 GPU 资源 + 清自己内部引用,防 world.cubes[] 切阶累积导致 OOM。
    * 调用后 cube 不可再用 — 调用方应同时从 scene + cubes[] 摘除。 */
   dispose(): void {
+    // Stop only this cube's queued work before clearing group.cube or GPU
+    // resources. Global finish() would execute callbacks and affect live peers.
+    this.twister.dispose();
+    for (const axis of ['x', 'y', 'z']) {
+      for (const group of this.table.groups[axis] ?? []) {
+        group.cancel();
+        group.cubelets.length = 0;
+      }
+    }
     this.instancedRenderer.dispose();
     this.cubelets.clear();
     this.initials.clear();
