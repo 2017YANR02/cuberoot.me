@@ -24,6 +24,8 @@ export interface TimingSurfaceProps {
   digitsRef?: RefObject<HTMLDivElement | null>;
   surfaceRef: RefObject<HTMLDivElement | null>;
   scrambleSlot?: ReactNode;
+  /** Keep the scramble above the centered readout without moving other slots. */
+  scrambleAbove?: boolean;
   cornerSlot?: ReactNode;
   children?: ReactNode;
   digitsCorner?: ReactNode;
@@ -46,6 +48,7 @@ export default function TimingSurface({
   digitsRef,
   surfaceRef,
   scrambleSlot,
+  scrambleAbove = false,
   cornerSlot,
   children,
   digitsCorner,
@@ -94,6 +97,9 @@ export default function TimingSurface({
     let frame: number | null = null;
     const fit = () => {
       frame = null;
+      if (scrambleAbove) {
+        surfaceRef.current?.style.setProperty('--timer-readout-height', `${core.getBoundingClientRect().height}px`);
+      }
       const previous = Number(readout.style.getPropertyValue('--timer-readout-fit')) || 1;
       const measuredWidth = readout.getBoundingClientRect().width;
       const naturalWidth = measuredWidth / previous;
@@ -124,12 +130,12 @@ export default function TimingSurface({
       observer.disconnect();
       if (frame !== null) cancelAnimationFrame(frame);
     };
-  }, []);
+  }, [scrambleAbove]);
   return (
     <div
       ref={surfaceRef}
       aria-label={ariaLabel}
-      className={`timing-surface${running ? ' surface--running' : ''}${className ? ` ${className}` : ''}`}
+      className={`timing-surface${scrambleAbove ? ' timing-surface--scramble-above' : ''}${running ? ' surface--running' : ''}${className ? ` ${className}` : ''}`}
       data-timer-pad={interactive ? '' : undefined}
       onContextMenu={onContextMenu}
       onMouseDown={onMouseDown}
@@ -140,6 +146,7 @@ export default function TimingSurface({
       role={interactive ? 'button' : undefined}
       tabIndex={interactive ? 0 : undefined}
     >
+      {scrambleAbove && scrambleSlot && <div className="timing-surface-scramble timing-surface-scramble-top surface-chrome">{scrambleSlot}</div>}
       <div className="timing-surface-core" ref={coreRef}>
         <div className="timer-display-wrap">
           <div
@@ -153,7 +160,7 @@ export default function TimingSurface({
         </div>
         <div className="timing-surface-sub">
           {children}
-          {scrambleSlot && <div className="timing-surface-scramble surface-chrome">{scrambleSlot}</div>}
+          {!scrambleAbove && scrambleSlot && <div className="timing-surface-scramble surface-chrome">{scrambleSlot}</div>}
           {cornerSlot && <div className="timing-surface-cube surface-chrome">{cornerSlot}</div>}
         </div>
       </div>

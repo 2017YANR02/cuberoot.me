@@ -13,7 +13,6 @@
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import {
   BluetoothConnectError,
-  CONNECT_STAGE_LABEL,
   clientEnvironmentLabel,
   describeError,
   detectBluetoothEnv,
@@ -27,6 +26,7 @@ import { Bluetooth, Check, X, RotateCcw, ExternalLink } from 'lucide-react';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 import { ClearButton } from '@/components/ClearButton';
+import { useModalBackdrop } from '@/hooks/useModalDismiss';
 
 interface Props {
   isZh: boolean;
@@ -49,34 +49,27 @@ interface Props {
   macPrompt?: { deviceName: string; isWrongKey?: boolean } | null;
   onSubmitMac?: (mac: string) => void;
   onCancelMac?: () => void;
+  onResetGyro?: () => void;
 }
 
-/** One supported device. `gyro` means this site can read the cube's
- * orientation and drive the live 3D view; it does not merely mean that the
- * product contains a motion sensor. */
-interface SupportedDevice {
-  zh: string;
-  en: string;
-  gyro?: boolean;
-}
-
-/**
- * This is a consumer-facing list of the 3x3 families/protocols the timer
- * implements. Do not derive it from the deliberately broad Bluetooth name
- * filters: those also see non-smart names and unsupported 2x2/shape-mod
- * products. GATT service UUIDs choose the actual driver after connection.
- */
-const SUPPORTED_CUBES: SupportedDevice[] = [
-  { zh: 'GAN356 i3', en: 'GAN356 i3', gyro: true },
-  { zh: 'GAN356 i Carry / i Carry S / i Carry 2', en: 'GAN356 i Carry / i Carry S / i Carry 2' },
-  { zh: 'GAN Mini ui FreePlay / GAN12 ui / GAN14 ui FreePlay', en: 'GAN Mini ui FreePlay / GAN12 ui / GAN14 ui FreePlay', gyro: true },
-  { zh: 'Monster Go 3Ai', en: 'Monster Go 3Ai' },
-  { zh: '魔域 AI 2023 三阶（MHC / AiCube 协议）', en: 'MoYu AI 2023 3x3 (MHC / AiCube protocol)' },
-  { zh: '魔域 WCU_MY3 协议三阶（如威龙 V10 AI）', en: 'MoYu WCU_MY3-protocol 3x3 (e.g. WeiLong V10 AI)' },
-  { zh: '奇艺 QY SC-S / SC-A / X-Man 风暴 V4 AI', en: 'QiYi QY SC-S / SC-A / X-Man Tornado V4 AI' },
-  { zh: 'GoCube / GoCube Edge 三阶', en: 'GoCube / GoCube Edge 3x3', gyro: true },
-  { zh: 'Rubik’s Connected 三阶', en: 'Rubik’s Connected 3x3' },
-  { zh: 'GiiKER i3 / i3S / 小米米家智能魔方', en: 'GiiKER i3 / i3S / Xiaomi Mi Smart Magic Cube' },
+/** Device groups shown only after a failed connection. */
+const SUPPORTED_CUBE_GROUPS = [
+  { zh: 'GAN 智能：', en: 'GAN smart cubes:', devices: [
+    { zh: 'GAN356 i Carry / i Carry S / i Carry 2 / Monster Go 3Ai', en: 'GAN356 i Carry / i Carry S / i Carry 2 / Monster Go 3Ai', gyro: false },
+    { zh: 'GAN356 i3 / GAN Mini ui FreePlay / GAN12 ui / GAN12 ui FreePlay', en: 'GAN356 i3 / GAN Mini ui FreePlay / GAN12 ui / GAN12 ui FreePlay', gyro: true },
+  ] },
+  { zh: '魔域智能：', en: 'MoYu smart cubes:', devices: [
+    { zh: 'V10 AI / V11 AI / 超级威龙 V2 18周年 AI', en: 'V10 AI / V11 AI / Super WeiLong V2 18th Anniversary AI', gyro: true },
+  ] },
+  { zh: '奇艺智能：', en: 'QiYi smart cubes:', devices: [
+    { zh: 'QYSC', en: 'QYSC', gyro: false },
+    { zh: 'Tornado V4', en: 'Tornado V4', gyro: true },
+  ] },
+  { zh: '其他：', en: 'Other cubes:', devices: [
+    { zh: 'GoCube / GoCube Edge', en: 'GoCube / GoCube Edge', gyro: true },
+    { zh: 'Rubik’s Connected 三阶', en: 'Rubik’s Connected 3x3', gyro: false },
+    { zh: 'GiiKER i3 / i3S / 小米米家智能魔方', en: 'GiiKER i3 / i3S / Xiaomi Mi Smart Magic Cube', gyro: false },
+  ] },
 ];
 
 /** Small inline badge marking a gyro-capable model. Inline rather than a CSS
@@ -93,98 +86,36 @@ const GYRO_TAG_STYLE: CSSProperties = {
   background: 'color-mix(in srgb, var(--accent) 14%, transparent)',
 };
 
-/**
- * What failed, at which step, and what to try next.
- *
- * The detail line is shown verbatim and in mono on purpose. It is whatever the
- * browser threw, and on iOS Bluefy that is a bare native code with no text at
- * all (the report this was built for read only "连接失败：2"). Naming the step
- * turns that same code into something actionable — "2 while opening the GATT
- * connection" is a different problem from "2 while choosing the device" — and
- * makes it worth screenshotting, which is how it will reach us.
- */
-function ConnectFailure({ failure, inBluefy, busy, onShowAllDevices }: {
-  failure: { stage: ConnectStage | null; detail: string };
-  inBluefy: boolean;
-  busy: boolean;
-  onShowAllDevices: () => void;
-}) {
-  const step = failure.stage === null ? null : CONNECT_STAGE_LABEL[failure.stage];
+function ConnectFailure() {
   return (
-    <div className="modal-section bt-warn" style={{ marginTop: 10 }} role="alert">
-      <h3 className="bt-warn-title" style={{ margin: 0 }}>
-        {/* "…这一步" reads as "it got that far and tripped", which is exactly
-            wrong for adapter-asleep: nothing was attempted at all. */}
-        {failure.stage === 'adapter-asleep'
-          ? tr({ zh: '蓝牙还没准备好', en: 'Bluetooth is not ready yet' })
-          : step
-            ? tr({ zh: `连接失败：${step.zh}这一步`, en: `Connection failed while ${step.en}` })
-            : tr({ zh: '连接失败', en: 'Connection failed' })}
-      </h3>
-      <p className="bt-error-detail">{failure.detail}</p>
-      {/* The one failure whose cause we actually know. Say it plainly instead of
-          leaving the user staring at whatever the bridge threw. */}
-      {failure.stage === 'adapter-asleep' && (
-        <p className="bt-retry-hint">
-          {tr({
-            zh: '浏览器报告蓝牙还没就绪，这时候它会拒绝一切搜索。多数情况下再点一次「搜索并连接」就好；还是不行就把手机蓝牙关掉再打开，或者彻底退出浏览器重开。',
-            en: 'The browser reports Bluetooth as not ready, and refuses every scan while that lasts. Tapping “Search & connect” again usually clears it; if not, toggle Bluetooth off and on, or fully quit and reopen the browser.',
-          })}
-        </p>
-      )}
-      {/* Only when the chooser opened and came back empty-handed. Past the
-          picker a device was already chosen, so re-opening it fixes nothing;
-          before it — a sleeping adapter — the browser refuses this search too. */}
-      {failure.stage === 'picker' && (
-        <>
-          <button
-            type="button"
-            className="bt-retry-btn"
-            disabled={busy}
-            onClick={onShowAllDevices}
-          >
-            <Bluetooth size={14} />
-            <span>{tr({ zh: '显示全部蓝牙设备', en: 'Show all Bluetooth devices' })}</span>
-          </button>
-          <p className="bt-retry-hint">
-            {tr({
-              zh: '不带过滤条件重搜一次，列表会长很多，按名字认你的魔方。',
-              en: 'Search again with no filters. The list will be much longer, so find your cube by name.',
-            })}
-          </p>
-        </>
-      )}
-      {inBluefy && (
-        <ul style={{ margin: '10px 0 0', paddingLeft: 18, fontSize: 12, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>
-          <li>{tr({
-            zh: 'iOS「设置 → Bluefy → 蓝牙」要允许，否则一台设备都搜不到。',
-            en: 'iOS Settings → Bluefy → Bluetooth must be allowed, or nothing will be found.',
-          })}</li>
-          <li>{tr({
-            zh: '打开 Bluefy 设置里的 Enable BLE Advertisements —— GAN、魔域 32、奇艺都要从蓝牙广播里取 MAC 才能解密。',
-            en: 'Turn on “Enable BLE Advertisements” in Bluefy’s settings — GAN, MoYu 32 and QiYi all read their MAC out of the advertisement to derive the key.',
-          })}</li>
-          <li>{tr({
-            zh: '魔方同一时刻只接受一个连接：先在其他 App 和 iOS 蓝牙设置里把它断开。',
-            en: 'A cube accepts one connection at a time — disconnect it in other apps and in iOS Bluetooth settings first.',
-          })}</li>
-          <li>{tr({
-            zh: '转一下魔方唤醒它，休眠时它不发广播。',
-            en: 'Turn a face to wake the cube — it stops advertising while asleep.',
-          })}</li>
-        </ul>
-      )}
+    <div className="modal-section bt-warn" role="alert">
+      <h3 className="bt-warn-title">{tr({ zh: '连接的设备型号暂不支持', en: 'This device model is not currently supported' })}</h3>
+      <p>{tr({ zh: '暂只支持智能三阶魔方，二阶和异形智能魔方暂不支持', en: 'Only smart 3x3 cubes are supported. Smart 2x2 and shape-mod cubes are not currently supported.' })}</p>
+      {SUPPORTED_CUBE_GROUPS.map(group => (
+        <div key={group.en}>
+          <strong>{tr(group)}</strong>
+          <ul style={{ margin: '4px 0 10px', paddingLeft: 18, lineHeight: 1.55 }}>
+            {group.devices.map(device => (
+              <li key={device.en}>
+                {tr(device)}
+                {device.gyro && <span style={GYRO_TAG_STYLE}>{tr({ zh: '陀螺仪', en: 'gyro' })}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
   );
 }
 
-export default function BluetoothModal({ cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac }: Props) {
+export default function BluetoothModal({ cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro }: Props) {
   const titleId = useId();
+  const backdropProps = useModalBackdrop(onClose);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsMobile(480);
   const [macInput, setMacInput] = useState('');
   const [macError, setMacError] = useState(false);
-  const [connecting, setConnecting] = useState(false);
+  const [connecting, setConnecting] = useState(Boolean(connectAttempt) && !cube.status.connected);
   const [connectError, setConnectError] = useState<{ stage: ConnectStage | null; detail: string } | null>(null);
 
   const runConnect = async (pick?: ConnectPickOptions): Promise<void> => {
@@ -243,20 +174,17 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
   }, [onClose]);
 
   useEffect(() => {
-    const focusable = dialogRef.current?.querySelector<HTMLElement>(
-      'button, [href], input, select, textarea',
-    );
+    const focusable = dialogRef.current?.querySelector<HTMLElement>(macPrompt
+      ? '[data-mac-input]' : 'button, [href], input, select, textarea');
     focusable?.focus();
-  }, []);
+  }, [macPrompt?.deviceName]);
 
   const clientEnvironment = detectClientEnvironment();
   const env = detectBluetoothEnv();
   const advice = envAdvice(env);
   const miniProgramBridge = mayUseMiniProgramBridge();
   const canConnect = miniProgramBridge || env === 'available' || env === 'available-bluefy';
-  const inBluefy = env === 'available-bluefy';
   const connected = cube.status.connected;
-  const advertisementDiagnostic = cube.advertisementDiagnostic;
 
   const overlayStyle = isMobile ? { padding: 8 } : undefined;
   const modalStyle = isMobile
@@ -275,10 +203,10 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
   } as const;
 
   return (
-    <div className="timer-modal-overlay" style={overlayStyle} onClick={onClose}>
+    <div className="timer-modal-overlay" style={overlayStyle} {...backdropProps}>
       <div
         ref={dialogRef}
-        className={`timer-modal bluetooth-modal${connected ? ' bt-connected-modal' : ''}`}
+        className={`timer-modal bluetooth-modal${!macPrompt && !connectError ? ' bt-connected-modal' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -293,10 +221,10 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
         />
         <h2 id={titleId} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <Bluetooth size={20} />
-          <span>{tr({ zh: '智能魔方', en: 'Smart cube' })}</span>
+          <span>{macPrompt ? tr({ zh: '输入 MAC 地址', en: 'Enter MAC address' }) : tr({ zh: '智能魔方', en: 'Smart cube' })}</span>
         </h2>
 
-        {!macPrompt && !connected && (
+        {!macPrompt && !connected && !canConnect && (
           <p className="bt-tip" style={{ margin: '0 0 10px' }}>
             {tr({ zh: '检测到：', en: 'Detected: ' })}
             <strong style={{ color: 'var(--foreground)' }}>
@@ -307,7 +235,7 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
 
         {macPrompt && (
           <div className="modal-section">
-            <h3 style={{ margin: '0 0 6px' }}>{tr({ zh: '输入魔方 MAC 地址', en: 'Enter cube MAC' })}</h3>
+            <p style={{ margin: '0 0 8px' }}><strong>{macPrompt.deviceName}</strong></p>
             {macPrompt.isWrongKey && (
               <p style={{ fontSize: 12, color: 'var(--signal-warning)', margin: '0 0 8px' }}>
                 {tr({
@@ -316,26 +244,20 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
                 })}
               </p>
             )}
-            <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '0 0 8px' }}>
-              {tr({
-                zh: '没能自动识别这颗魔方的 MAC。GAN、魔域 32 和奇艺都用 MAC 派生解密密钥，所以少了它读不出转动。格式形如 AB:CD:EF:12:34:56。',
-                en: "Couldn't auto-detect this cube's MAC. GAN, MoYu 32 and QiYi all derive their decryption key from it, so turns can't be decoded without it. Format: AB:CD:EF:12:34:56.",
-              })}
+            <p>
+              {tr({ zh: '受 Web 浏览器限制，首次连接需要手动填写魔方的 MAC 地址。连接成功后会记住，下次无需重复输入。', en: 'Your browser cannot provide the cube’s MAC address to this page. Enter it for the first connection; it will be remembered after a successful connection.' })}
             </p>
-            <p style={{ fontSize: 12, color: 'var(--faint-foreground)', margin: '0 0 8px' }}>
-              {tr({
-                zh: '在哪找：GAN 看官方 App「Cube Station」的设备信息；魔域 32 看「WCU CUBE」App；奇艺看「QiYi Cube」App。系统蓝牙设置里通常也能看到。',
-                en: 'Where to look: GAN → Cube Station app, device info. MoYu 32 → WCU CUBE app. QiYi → QiYi Cube app. Your OS Bluetooth settings often show it too.',
-              })}
-            </p>
-            <p style={{ fontSize: 12, color: 'var(--faint-foreground)', margin: '0 0 8px' }}>
-              {tr({
-                zh: '为什么要手输：Web Bluetooth 规范刻意不向网页暴露 MAC 地址（原生 App 则可以直接读到），我们只能先尝试从蓝牙广播里恢复，失败才问你。',
-                en: 'Why we ask: the Web Bluetooth spec deliberately hides MAC addresses from web pages (native apps can just read them). We try to recover it from the BLE advertisement first, and only ask when that fails.',
-              })}
-            </p>
+            <p>{tr({ zh: '在浏览器新标签页的地址栏中打开：', en: 'Open this address in a new browser tab:' })}</p>
+            <ul style={{ paddingLeft: 20, overflowWrap: 'anywhere' }}>
+              <li>Chrome: <code>chrome://bluetooth-internals/#devices</code></li>
+              <li>Edge: <code>edge://bluetooth-internals/#devices</code></li>
+            </ul>
+            <p>{tr({ zh: '在 Name 列找到自己的智能魔方，复制同一行的 Address，粘贴到下方。', en: 'Find your cube in the Name column, copy the Address from that row, and paste it below.' })}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <input
               type="text"
+              data-mac-input
+              aria-label={tr({ zh: '魔方 MAC 地址', en: 'Cube MAC address' })}
               value={macInput}
               onChange={(e) => { setMacInput(e.target.value); setMacError(false); }}
               onKeyDown={(e) => { if (e.key === 'Enter') submitMac(); }}
@@ -345,6 +267,8 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
               autoFocus
               style={{ width: '100%', padding: '8px 10px', fontFamily: 'var(--font-mono)', boxSizing: 'border-box' }}
             />
+              {macInput && <ClearButton onClick={() => { setMacInput(''); setMacError(false); }} ariaLabel={tr({ zh: '清除地址', en: 'Clear address' })} />}
+            </div>
             {macError && (
               <p style={{ fontSize: 12, color: 'var(--destructive)', margin: '6px 0 0' }}>
                 {tr({ zh: '格式不对，应为 6 组两位十六进制，用冒号分隔。', en: 'Invalid format — expected 6 colon-separated hex octets.' })}
@@ -385,82 +309,18 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
           </>
         )}
 
-        {canConnect && inBluefy && !connected && (
-          <div className="modal-section bt-tip" style={{ marginBottom: 8 }}>
-            <p style={{ color: 'var(--signal-success)' }}>
-              <Check size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-              {tr({ zh: '检测到 Bluefy — Web Bluetooth 已启用 ✓', en: 'Bluefy detected — Web Bluetooth ready ✓'
-            })}
-            </p>
-          </div>
-        )}
-
-        {canConnect && !connected && !macPrompt && (
-          <div className="modal-section">
-            <p>{tr({ zh: '点击下方按钮，选择并连接你的智能魔方。', en: 'Click below to choose and connect your smart cube.'
-            })}</p>
-            <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 6 }}>
-              <div style={{ marginBottom: 4 }}>{tr({ zh: '支持的三阶智能魔方（按协议）：', en: 'Supported 3x3 smart cubes (by protocol):'
-            })}</div>
-              <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55 }}>
-                {SUPPORTED_CUBES.map((c) => (
-                  <li key={c.en}>
-                    {tr(c)}
-                    {c.gyro && <span style={GYRO_TAG_STYLE}>{tr({ zh: '陀螺仪', en: 'gyro' })}</span>}
-                  </li>
-                ))}
-              </ul>
-              <p style={{ margin: '5px 0 0' }}>
-                {tr({
-                  zh: '兼容性取决于蓝牙协议和固件。GAN i4、i Carry 4、GAN16 ui、魔域威龙 V11 AI 等新型号可能兼容，但本站尚未实机确认。同名普通版、2×2 和异形智能魔方不支持。「陀螺仪」表示本站可读取姿态。',
-                  en: 'Compatibility depends on the Bluetooth protocol and firmware. New models such as GAN i4, i Carry 4, GAN16 ui, and MoYu WeiLong V11 AI may work but are not yet hardware-verified here. Similarly named non-smart, 2×2, and shape-mod smart cubes are not supported. “Gyro” means this site can read orientation.',
-                })}
-              </p>
-            </div>
-            <button
-              className="bt-connect-btn"
-              style={connectBtnStyle ? { ...connectBtnStyle, marginTop: 10 } : { marginTop: 10 }}
-              disabled={connecting}
-              onClick={() => { void runConnect(); }}
-            >
-              <Bluetooth size={14} />
-              <span>{connecting
-                ? tr({ zh: '连接中…', en: 'Connecting…' })
-                : tr({ zh: '搜索并连接', en: 'Search & connect' })}</span>
-            </button>
-            {advertisementDiagnostic && (
-              <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '8px 0 0' }}>
-                {advertisementDiagnostic.phase === 'advertisement'
-                  ? tr({
-                      zh: `已收到 ${advertisementDiagnostic.eventNumber} 条广播，正在等待完整信息。`,
-                      en: `${advertisementDiagnostic.eventNumber} advertisements received; waiting for complete data.`,
-                    })
-                  : advertisementDiagnostic.phase === 'gatt'
-                    ? tr({ zh: '广播已完成，正在建立蓝牙连接。', en: 'Advertisement complete; establishing the Bluetooth connection.' })
-                    : advertisementDiagnostic.phase === 'discovery'
-                      ? tr({ zh: '蓝牙已连接，正在读取设备服务。', en: 'Bluetooth connected; reading device services.' })
-                      : tr({ zh: '设备服务已识别，正在完成协议握手。', en: 'Device services identified; completing the protocol handshake.' })}
-              </p>
-            )}
-            {connectError && (
-              <ConnectFailure
-                failure={connectError}
-                inBluefy={inBluefy}
-                busy={connecting}
-                onShowAllDevices={() => { void runConnect({ acceptAllDevices: true }); }}
-              />
-            )}
-          </div>
-        )}
-
-        {connected && (
+        {!macPrompt && (
           <>
             <div className="modal-section bt-connected-summary">
               <div className="bt-connected-primary">
-                <strong className="bt-connected-device">{cube.status.deviceName}</strong>
-                <span className={`bt-value bt-connected-state ${cube.solved ? 'ok' : 'unsolved'}`}>
-                  {cube.solved ? <Check size={13} /> : <X size={13} />}
-                  {tr({ zh: `已连接，${cube.solved ? '已还原' : '未还原'}`, en: `Connected, ${cube.solved ? 'solved' : 'unsolved'}` })}
+                <strong className="bt-connected-device">{cube.status.deviceName || tr({ zh: '智能魔方', en: 'Smart cube' })}</strong>
+                <span className={`bt-value bt-connected-state ${connected && cube.solved ? 'ok' : 'unsolved'}`}>
+                  {connected && (cube.solved ? <Check size={13} /> : <X size={13} />)}
+                  <span role="status" aria-live="polite">{connecting
+                    ? tr({ zh: '连接中…', en: 'Connecting…' })
+                    : connected
+                      ? tr({ zh: `已连接，${cube.solved ? '已还原' : '未还原'}`, en: `Connected, ${cube.solved ? 'solved' : 'unsolved'}` })
+                      : connectError ? tr({ zh: '连接失败', en: 'Connection failed' }) : tr({ zh: '未连接', en: 'Not connected' })}</span>
                 </span>
               </div>
               <div className="bt-connected-meta">
@@ -474,43 +334,42 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
                 </span>
                 <span className="bt-connected-fact">
                   <span className="bt-label">{tr({ zh: '协议', en: 'Protocol' })}</span>{' '}
-                  <span className="bt-value">{cube.status.brand}</span>
+                  <span className="bt-value">{connected ? cube.status.brand : '—'}</span>
                 </span>
               </div>
             </div>
-            <p className="modal-section bt-connected-help">
-              {tr({
-                zh: '不同步？还原实物后重置；还原会自动停表。',
-                en: 'Out of sync? Solve, then reset. Solving automatically stops the timer.',
-              })}
-            </p>
-            {advertisementDiagnostic?.phase === 'connected' && advertisementDiagnostic.complete && (
-              <p className="modal-section bt-connected-help">
-                {tr({
-                  zh: `连接诊断：选中设备后共 ${(advertisementDiagnostic.totalElapsedMs / 1000).toFixed(2)}s。广播第 ${advertisementDiagnostic.eventNumber} 条拿到完整信息 ${(advertisementDiagnostic.advertisementMs! / 1000).toFixed(2)}s，GATT ${(advertisementDiagnostic.gattMs! / 1000).toFixed(2)}s，读取服务 ${(advertisementDiagnostic.discoveryMs! / 1000).toFixed(2)}s，协议握手 ${(advertisementDiagnostic.handshakeMs! / 1000).toFixed(2)}s。`,
-                  en: `Connection diagnostic: ${(advertisementDiagnostic.totalElapsedMs / 1000).toFixed(2)}s after device selection. Complete data arrived in advertisement ${advertisementDiagnostic.eventNumber}: advertisement ${(advertisementDiagnostic.advertisementMs! / 1000).toFixed(2)}s, GATT ${(advertisementDiagnostic.gattMs! / 1000).toFixed(2)}s, service discovery ${(advertisementDiagnostic.discoveryMs! / 1000).toFixed(2)}s, protocol handshake ${(advertisementDiagnostic.handshakeMs! / 1000).toFixed(2)}s.`,
-                })}
-              </p>
-            )}
           </>
         )}
 
-        {connected && (
+        {!macPrompt && !connected && !connecting && connectError && <ConnectFailure />}
+        {!macPrompt && !connected && !connecting && canConnect && (
+          <button type="button" className="bt-connect-btn" style={connectBtnStyle} onClick={() => { void runConnect(); }}>
+            <Bluetooth size={14} /> {connectError ? tr({ zh: '重新连接', en: 'Retry connection' }) : tr({ zh: '连接', en: 'Connect' })}
+          </button>
+        )}
+
+        {!macPrompt && (
           <div
             className="modal-actions"
             style={isMobile ? { flexDirection: 'column', alignItems: 'stretch' } : undefined}
           >
-              <button className="modal-action-btn" style={actionBtnStyle} onClick={() => cube.resetState()}>
+              <button className="modal-action-btn" style={actionBtnStyle} disabled={!connected || connecting} onClick={() => cube.resetState()}>
                 <RotateCcw size={14} /> {tr({ zh: '重置状态', en: 'Reset state'
                 })}
               </button>
+              {onResetGyro && (
+                <button type="button" className="modal-action-btn" style={actionBtnStyle}
+                  disabled={!connected || connecting || !cube.status.hasGyro} onClick={onResetGyro}
+                  title={tr({ zh: '按白顶绿前握好魔方，再重置陀螺仪', en: 'Hold white on top and green in front, then reset the gyroscope' })}>
+                  <RotateCcw size={14} /> {tr({ zh: '重置陀螺仪', en: 'Reset gyroscope' })}
+                </button>
+              )}
               <button
                 className="danger modal-action-btn"
                 style={actionBtnStyle}
                 onClick={() => { cube.disconnect(); onClose(); }}
               >
-                {tr({ zh: '断开', en: 'Disconnect'
-                })}
+                {connected ? tr({ zh: '断开', en: 'Disconnect' }) : tr({ zh: '取消', en: 'Cancel' })}
               </button>
           </div>
         )}
