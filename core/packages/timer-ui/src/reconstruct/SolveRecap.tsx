@@ -49,14 +49,13 @@ export default function SolveRecap({
 }: SolveRecapProps) {
   const tr = host.localize;
   return (
-    <section className="shell-recap" aria-label={tr({ zh: '这把的复盘', en: 'This solve' })}>
+    <section className="shell-recap" aria-label={tr({ zh: '计时复盘', en: 'Solve reconstruction' })}>
       <div className="shell-recap-head">
-        <span className="shell-recap-title">{tr({ zh: '这把', en: 'This solve' })}</span>
         <button type="button" className="shell-recap-btn" onClick={onFull}>
           <Maximize2 size={13} />
           {tr({ zh: '整屏', en: 'Full screen' })}
         </button>
-        {/* 工具栏形态:左标题、右关闭。 */}
+        {/* 工具栏形态:整屏入口、右侧关闭。 */}
         <button
           type="button"
           className="shell-recap-x"
