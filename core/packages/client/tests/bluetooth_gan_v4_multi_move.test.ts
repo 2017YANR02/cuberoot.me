@@ -59,7 +59,7 @@ describe('GAN v4 multi-move notifications', () => {
     expect(requestHistory).toHaveBeenCalledExactlyOnceWith(3, 2);
     expect(decodeGanV4Frame(Uint8Array.from(ganV4HistoryFrame(3, [
       { axis: 1, pow: 0 }, { axis: 4, pow: 0 },
-    ])), state)).toEqual([{ mv: 'L', ts: 1050 }, { mv: 'U', ts: 1100 }, { mv: 'F', ts: 1200 }]);
+    ])), state)).toEqual([{ mv: 'L', ts: 1050, estimatedTime: true }, { mv: 'U', ts: 1100 }, { mv: 'F', ts: 1200 }]);
     expect(state.sync.pending).toBe(0);
   });
 

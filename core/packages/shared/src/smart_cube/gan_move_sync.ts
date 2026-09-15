@@ -68,9 +68,11 @@ export interface BufferedMove {
 export interface TimedMove {
   mv: string;
   ts?: number;
+  estimatedTime?: true;
 }
 
 export interface GanMoveSyncHooks {
+  now?: () => number;
   /**
    * Ask the cube to replay `numberOfMoves` moves ending at `startMoveCnt`.
    * The driver owns the actual GATT write (the opcode differs per version).
@@ -95,6 +97,8 @@ export class GanMoveSync {
    * The left-hand end of the interval a run of recovered moves is spread over.
    */
   private lastEmittedTs: number | null = null;
+  private lastEmittedLocalTime: number | null = null;
+  private readonly recoveryEnds: Array<number | undefined> = [];
   private readonly buffer: BufferedMove[] = [];
   private readonly hooks: GanMoveSyncHooks;
 
@@ -126,6 +130,8 @@ export class GanMoveSync {
     this.prevMoveCnt = serial(moveCnt);
     this.lastSeenCnt = serial(moveCnt);
     this.lastEmittedTs = null;
+    this.lastEmittedLocalTime = null;
+    this.recoveryEnds.length = 0;
     this.buffer.length = 0;
   }
 
@@ -139,6 +145,8 @@ export class GanMoveSync {
     this.prevMoveCnt = -1;
     this.lastSeenCnt = -1;
     this.lastEmittedTs = null;
+    this.lastEmittedLocalTime = null;
+    this.recoveryEnds.length = 0;
     this.buffer.length = 0;
   }
 
@@ -186,7 +194,7 @@ export class GanMoveSync {
   injectHistory(moves: BufferedMove[]): TimedMove[] {
     if (this.prevMoveCnt === -1) return [];
     for (const m of moves) this.injectLost({ ...m, cnt: serial(m.cnt) });
-    return this.evict(false);
+    return this.evict(false, this.recoveryEnds.shift());
   }
 
   /**
@@ -213,7 +221,7 @@ export class GanMoveSync {
    * `reqLostMoves` gates the history request so a history REPLY can't trigger
    * another request from inside itself.
    */
-  private evict(reqLostMoves: boolean): TimedMove[] {
+  private evict(reqLostMoves: boolean, recoveryEnd?: number): TimedMove[] {
     const out: TimedMove[] = [];
     while (this.buffer.length > 0) {
       const diff = (this.buffer[0].cnt - this.prevMoveCnt) & 0xff;
@@ -237,7 +245,8 @@ export class GanMoveSync {
     if (this.buffer.length > MAX_PENDING) {
       this.hooks.onWedged?.();
     }
-    this.fillRecoveredTimes(out);
+    this.fillRecoveredTimes(out, recoveryEnd);
+    if (out.length > 0) this.lastEmittedLocalTime = this.hooks.now?.() ?? Date.now();
     return out;
   }
 
@@ -262,10 +271,11 @@ export class GanMoveSync {
    * by even spacing, which for the two or three moves a real dropout costs is
    * the same answer.
    *
-   * Without both ends the moves stay blank: the arrival-time fallback is wrong
-   * but at least it is not an interval we made up out of nothing.
+   * A trailing run uses the local time when recovery was requested, as in
+   * DCTimer-BLE, excluding reply latency. Estimates are explicitly marked.
+   * Without either a device interval or a request-time anchor, leave it blank.
    */
-  private fillRecoveredTimes(out: TimedMove[]): void {
+  private fillRecoveredTimes(out: TimedMove[], recoveryEnd?: number): void {
     let prev = this.lastEmittedTs;
     let i = 0;
     while (i < out.length) {
@@ -277,7 +287,16 @@ export class GanMoveSync {
       // the interval is not an interval at all.
       if (prev !== null && next !== undefined && next > prev) {
         const step = (next - prev) / (j - i + 1);
-        for (let k = i; k < j; k++) out[k].ts = Math.round(prev + step * (k - i + 1));
+        for (let k = i; k < j; k++) {
+          out[k].ts = Math.round(prev + step * (k - i + 1));
+          out[k].estimatedTime = true;
+        }
+      } else if (prev !== null && next === undefined && recoveryEnd !== undefined && recoveryEnd > prev) {
+        const step = (recoveryEnd - prev) / (j - i);
+        for (let k = i; k < j; k++) {
+          out[k].ts = Math.round(prev + step * (k - i + 1));
+          out[k].estimatedTime = true;
+        }
       }
       i = j;
     }
@@ -325,6 +344,14 @@ export class GanMoveSync {
     if (start % 2 === 0) start = (start - 1) & 0xff;
     if (num % 2 === 1) num++;
     num = Math.min(num, start + 1);
+    const now = this.hooks.now?.() ?? Date.now();
+    const elapsed = this.lastEmittedLocalTime === null ? 0 : now - this.lastEmittedLocalTime;
+    const end = this.lastEmittedTs !== null && elapsed > 0
+      ? this.lastEmittedTs + Math.min(0xffff, elapsed) : undefined;
+    // Bounded FIFO mirrors request/reply ordering without retaining a lost
+    // response indefinitely. Missing anchors fall back to unknown timestamps.
+    if (this.recoveryEnds.length === MAX_PENDING) this.recoveryEnds.shift();
+    this.recoveryEnds.push(end);
     this.hooks.requestHistory(start, num);
   }
 }

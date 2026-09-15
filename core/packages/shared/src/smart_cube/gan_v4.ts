@@ -108,6 +108,7 @@ export function createGanV4DecodeState(options: {
 } = {}): GanV4DecodeState {
   return {
     sync: new GanMoveSync({
+      now: options.now,
       requestHistory: options.requestHistory,
       onWedged: options.onWedged,
     }),
@@ -255,6 +256,11 @@ export function createGanV4BatteryCommand(): Uint8Array {
   const frame = command(0xdd, 0x04);
   frame[3] = 0xef;
   return frame;
+}
+
+/** DCTimer-BLE v4ResetRequest: calibrate a physically solved cube. */
+export function createGanV4ResetCommand(): Uint8Array {
+  return new Uint8Array([0xd2, 0x0d, 0x05, 0x39, 0x77, 0, 0, 1, 0x23, 0x45, 0x67, 0x89, 0xab, 0, 0, 0, 0, 0, 0, 0]);
 }
 
 export function createGanV4HistoryCommand(

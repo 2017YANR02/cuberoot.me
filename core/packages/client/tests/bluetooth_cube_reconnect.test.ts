@@ -12,6 +12,8 @@ import {
 import { ganV4Driver } from '@/app/[lang]/timer/_lib/bluetooth/gan_v4';
 import { gocubeDriver } from '@/app/[lang]/timer/_lib/bluetooth/gocube';
 import { moyu32Driver } from '@/app/[lang]/timer/_lib/bluetooth/moyu32';
+import { qiyiDriver } from '@/app/[lang]/timer/_lib/bluetooth/qiyi';
+import type { CubeDriverContext } from '@/app/[lang]/timer/_lib/bluetooth/driver';
 import { clearMac, savedMac, saveMac } from '@/app/[lang]/timer/_lib/bluetooth/mac';
 import { applyMoves, solved, toFaceletString } from '@/app/[lang]/timer/_lib/cube/state';
 import { parseScramble } from '@/app/[lang]/timer/_lib/cube/moves';
@@ -113,6 +115,53 @@ describe('smart-cube reconnect ownership', () => {
     });
     vi.useRealTimers();
     vi.restoreAllMocks();
+  });
+
+  it('does not report a solve when device calibration confirms solved facelets', async () => {
+    const rig = fakeGattRig('calibrate');
+    const onSolved = vi.fn();
+    let current!: BluetoothCubeHandle;
+    function CalibrationHarness() { current = useBluetoothCube({ onSolved }); return null; }
+    await act(async () => root.render(createElement(CalibrationHarness)));
+    vi.spyOn(gocubeDriver, 'start').mockImplementation(async (_server, _move, ctx) => {
+      ctx?.onState?.(SCRAMBLED);
+      return { battery: async () => null, cleanup: vi.fn(), resetDeviceState: async () => {
+        ctx?.onState?.('UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB');
+      } };
+    });
+    await act(async () => { await current.connectDevice(rig.device); });
+    expect(current.solved).toBe(false);
+    await act(async () => { await current.resetDeviceState!(); });
+    expect(current.solved).toBe(true);
+    expect(onSolved).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])('detects QiYi gyro per connection, including samples during start (%s)', async (duringStart) => {
+    const rig = fakeGattRig('qiyi-gyro');
+    Object.defineProperty(rig.device, 'name', { value: 'XMD-TornadoV4-i-1-A1B2' });
+    saveMac(rig.device.name, 'CC:A3:00:00:A1:B2');
+    vi.mocked(rig.server.getPrimaryServices).mockResolvedValue([{ uuid: qiyiDriver.service } as BluetoothRemoteGATTService]);
+    const contexts: CubeDriverContext[] = [];
+    let emitDuringStart = duringStart;
+    vi.spyOn(qiyiDriver, 'start').mockImplementation(async (_server, _move, ctx) => {
+      contexts.push(ctx!);
+      if (emitDuringStart) ctx?.onGyro?.({ w: 1, x: 0, y: 0, z: 0 });
+      return { battery: async () => 80, cleanup: vi.fn() };
+    });
+    await act(async () => { await cube.connectDevice(rig.device); });
+    expect(cube.status.hasGyro).toBe(duringStart);
+    // The harness has no rendering callback; capability detection still works.
+    expect(contexts[0].onGyro).toBeTypeOf('function');
+    await act(async () => contexts[0].onGyro?.({ w: 1, x: 0, y: 0, z: 0 }));
+    expect(cube.status.hasGyro).toBe(true);
+    await act(async () => cube.disconnect());
+    expect(cube.status.hasGyro).toBe(false);
+    emitDuringStart = false;
+    await act(async () => { await cube.connectDevice(rig.device); });
+    expect(cube.status.hasGyro).toBe(false);
+    await act(async () => contexts[0].onGyro?.({ w: 1, x: 0, y: 0, z: 0 }));
+    expect(cube.status.hasGyro).toBe(false);
+    clearMac(rig.device.name);
   });
 
   it.each(['WCU_MY32_A1B2', 'WCU_MY32_AABBCCDDEEFF'])('asks for MY32 MAC once and reuses the validated address: %s', async (name) => {

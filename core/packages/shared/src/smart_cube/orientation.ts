@@ -336,8 +336,10 @@ export const MEASURED_SENSOR_MOUNT: Quat = SENSOR_BASES.rotX90;
  * The composition is fixed; the table goes back to the mounting alone.
  *
  * Still per-brand: every row currently holds the same value because one cube is
- * all that has been measured, and if some brand mounts its IMU differently that
+ * all that has been measured on GAN, and if some brand mounts its IMU differently that
  * one row changes — which is exactly the granularity this table exists for.
+ * QiYi CC 10 is the explicit exception: DCTimer-BLE feeds its ax/ay/az directly
+ * to the renderer, while its GAN decoder maps (x,y,z) to (x,z,-y).
  * What no row may ever hold is a yaw.
  *
  * Keyed by plain string rather than the `CubeBrand` union from ./types on
@@ -349,7 +351,7 @@ export const BRAND_SENSOR_BASIS: Readonly<Record<string, SensorBasisName>> = Obj
   'gan-v3': 'rotX270',  // Z-up IMU
   'gan-v4': 'rotX270',  // the cube MEASURED_SENSOR_MOUNT was measured on
   gocube: 'rotX270',    // Z-up IMU
-  qiyi: 'rotX270',      // Z-up IMU
+  qiyi: 'identity',     // DCTimer-BLE CC 10 frames already use renderer x/y/z axes.
   giiker: 'rotX270',    // Z-up IMU
   moyu: 'rotX270',      // Z-up IMU
   unknown: 'rotX270',   // Z-up IMU

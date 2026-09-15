@@ -23,8 +23,8 @@
  *   [7..33]  27 bytes of facelet nibbles (54 stickers, "LRDUFB" alphabet)
  *   [34]   current move (state opcode only)
  *   [35]   battery percent (state opcode only; also at this offset in hello)
- *   [36..90] history-move slots; current + up to 9 past entries can be read
- *           by walking offset = 91 - 5*i for i = 1..9, each (4 ts, 1 mv)
+ *   [36..90] history-move slots; current + up to 11 history entries can be read
+ *           at offsets 36 + 5*i for i = 0..10, each (4 ts, 1 mv)
  *   [L-2..L-1] CRC-16/MODBUS (little-endian) over msg[0..L-2]
  *
  * Move-byte encoding (1..12):
@@ -38,6 +38,7 @@ import {
   type CubeDriverContext,
   type CubeDriverStartResult,
   type TimedMove,
+  type GyroQuaternion,
 } from './driver';
 import type { CubeBrand } from './types';
 import { crc16Modbus } from './crc';
@@ -66,6 +67,22 @@ const QIYI_AXIS_LUT: ReadonlyArray<number> = [4, 1, 3, 0, 2, 5];
 const QIYI_MAGIC = 0xfe;
 const OP_HELLO = 0x02;
 const OP_STATE = 0x03;
+
+/** DCTimer-BLE QiyiCubeProtocol: independent CC 10 gyro frame, CRC over
+ *  bytes 0..13, signed big-endian ax/ay/az/aw at 6/8/10/12, scaled by 1000.
+ *  Preserve QiYi axes; the shared orientation table uses identity for them. */
+function parseQiyiQuaternion(frame: Uint8Array): GyroQuaternion | null {
+  if (frame.length < 16 || frame[0] !== 0xcc || frame[1] !== 0x10) return null;
+  if (crc16Modbus(frame.subarray(0, 14)) !== (frame[14] | (frame[15] << 8))) return null;
+  const view = new DataView(frame.buffer, frame.byteOffset, frame.byteLength);
+  const x = view.getInt16(6, false) / 1000;
+  const y = view.getInt16(8, false) / 1000;
+  const z = view.getInt16(10, false) / 1000;
+  const w = view.getInt16(12, false) / 1000;
+  const norm = Math.hypot(x, y, z, w);
+  if (!Number.isFinite(norm) || norm < 1e-6) return null;
+  return { x: x / norm, y: y / norm, z: z / norm, w: w / norm };
+}
 
 /* ================================================================== */
 /*  Frame builders & parser                                            */
@@ -165,64 +182,44 @@ const QIYI_TICKS_PER_MS = 1.6;
  * when it happened, a QiYi move recovered from history still knows its own
  * time, so a dropped notification costs us nothing in timing accuracy.
  */
-function parseStateMoves(msg: Uint8Array, prevLastTs: number):
-    { moves: TimedMove[]; lastTs: number; battery: number | null; facelets: string | null } {
-  const opcode = msg[2];
-  const ts = ((msg[3] << 24) | (msg[4] << 16) | (msg[5] << 8) | msg[6]) >>> 0;
-  if (opcode === OP_HELLO) {
-    // Hello carries the cube's own facelets — the state it is in right now,
-    // which is very often NOT solved (the user scrambled before connecting).
-    // Reporting it is what stops the host from assuming a solved cube.
-    const battery = msg.length > 35 ? msg[35] : null;
-    return {
-      moves: [],
-      lastTs: ts,
-      battery: battery !== null && battery <= 100 ? battery : null,
-      facelets: parseQiyiFacelets(msg),
-    };
-  }
-  if (opcode !== OP_STATE) {
-    return { moves: [], lastTs: prevLastTs, battery: null, facelets: null };
-  }
+function parseStateMoves(msg: Uint8Array, prevLastTs: number): {
+  moves: TimedMove[]; futureMoves: TimedMove[]; lastTs: number;
+  battery: number | null; facelets: string | null;
+} {
+  const empty = { moves: [], futureMoves: [], lastTs: prevLastTs, battery: null, facelets: null };
+  if (msg.length < 38 || (msg[2] !== OP_HELLO && msg[2] !== OP_STATE)) return empty;
+  const view = new DataView(msg.buffer, msg.byteOffset, msg.byteLength);
+  const ts = view.getUint32(3, false);
+  if (ts < prevLastTs && msg[2] === OP_HELLO) return empty;
+  const battery = msg[35] <= 100 ? msg[35] : null;
+  if (msg[2] === OP_HELLO) return { ...empty, lastTs: ts, battery, facelets: parseQiyiFacelets(msg) };
 
-  // todoMoves: newest first. Index 0 is the just-happened move.
-  const todo: Array<{ mv: number; ts: number }> = [];
-  if (msg.length > 34) {
-    todo.push({ mv: msg[34], ts });
+  // DCTimer-BLE scans all eleven slots. Slots may be sparse, duplicated or
+  // newer than the facelet snapshot, so reverse-array order is not sufficient.
+  const candidates = [{ mv: msg[34], ts }];
+  for (let i = 0; i < 11; i++) {
+    const off = 36 + 5 * i;
+    if (off + 5 > msg.length - 2) break;
+    candidates.push({ mv: msg[off + 4], ts: view.getUint32(off, false) });
   }
-  // History: walk back through up to 9 historical entries while their
-  // timestamps are strictly newer than what we last saw.
-  for (let i = 1; i < 10; i++) {
-    const off = 91 - 5 * i;
-    if (off + 4 >= msg.length) break;
-    const hisTs = ((msg[off] << 24) | (msg[off + 1] << 16) | (msg[off + 2] << 8) | msg[off + 3]) >>> 0;
-    const hisMv = msg[off + 4];
-    if (hisTs <= prevLastTs || hisMv === 0) break;
-    todo.push({ mv: hisMv, ts: hisTs });
-  }
-
-  // Replay oldest -> newest so the timer sees moves in real order.
+  candidates.sort((a, b) => a.ts - b.ts);
+  const seen = new Set<string>();
   const moves: TimedMove[] = [];
-  for (let i = todo.length - 1; i >= 0; i--) {
-    const mv = todo[i].mv;
-    if (mv < 1 || mv > 12) continue;
-    const axis = QIYI_AXIS_LUT[(mv - 1) >> 1];
-    const power = (mv & 1) !== 0 ? 2 : 0; // cstimer: [0, 2][mv & 1]
-    const formatted = formatMove(axis, power);
-    if (formatted) moves.push({ mv: formatted, ts: Math.trunc(todo[i].ts / QIYI_TICKS_PER_MS) });
+  const futureMoves: TimedMove[] = [];
+  let lastTs = Math.max(prevLastTs, ts);
+  for (const candidate of candidates) {
+    if (candidate.ts <= prevLastTs || candidate.mv < 1 || candidate.mv > 12) continue;
+    const key = `${candidate.ts}:${candidate.mv}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const axis = QIYI_AXIS_LUT[(candidate.mv - 1) >> 1];
+    const mv = formatMove(axis, (candidate.mv & 1) ? 2 : 0);
+    if (!mv) continue;
+    (candidate.ts > ts ? futureMoves : moves).push({ mv, ts: Math.trunc(candidate.ts / QIYI_TICKS_PER_MS) });
+    lastTs = Math.max(lastTs, candidate.ts);
   }
-
-  const battery = msg.length > 35 ? msg[35] : null;
-  return {
-    moves,
-    lastTs: ts,
-    battery: battery !== null && battery <= 100 ? battery : null,
-    // Every state frame carries the cube's own facelets, taken AFTER the move
-    // it reports. cstimer treats this as authoritative whenever it disagrees
-    // with the replayed state (`qiyicube.js:210-218`); so do we — reporting it
-    // on every frame is what makes a dropped move self-heal on the next turn.
-    facelets: parseQiyiFacelets(msg),
-  };
+  // Never rewind a snapshot behind future moves already applied last time.
+  return { moves, futureMoves, lastTs, battery, facelets: ts >= prevLastTs ? parseQiyiFacelets(msg) : null };
 }
 
 /* ================================================================== */
@@ -236,13 +233,7 @@ export const qiyiDriver: CubeDriver = {
   optionalServices: [],
   needsMac: true,
   macAdv: QIYI_MAC_ADV,
-  // TODO(gyro): the Tornado V4 does carry an orientation feed, but NOBODY has
-  // published its layout — cstimer's `qiyicube.js` decodes only opcodes 0x02
-  // (hello) and 0x03 (state change) and has no gyro branch at all, and there
-  // is no third-party write-up the way there is for GAN (afedotov) and MoYu32
-  // (lukeburong). Guessing a byte layout here would produce a plausible-
-  // looking but wrong quaternion that nobody could falsify without hardware,
-  // so `hasGyro` stays unset until someone captures real 0xFF6 traffic.
+  // Gyro capability is detected from valid samples, not the shared QiYi name.
 
   matches(device: BluetoothDevice): boolean {
     const n = (device.name ?? '').trim();
@@ -275,6 +266,12 @@ export const qiyiDriver: CubeDriver = {
       if (!dv || dv.byteLength === 0 || (dv.byteLength % 16) !== 0) return;
       const ct = new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength);
       const pt = aesEcbDecrypt(ct, w);
+      if (pt[0] === 0xcc && pt[1] === 0x10) {
+        const quaternion = parseQiyiQuaternion(pt);
+        if (quaternion) ctx?.onGyro?.(quaternion);
+        // Gyro frames have neither ACK nor moves, facelets, battery or move clock.
+        return;
+      }
       if (pt[0] !== QIYI_MAGIC) return;
       const len = pt[1];
       if (len < 4 || len > pt.length) return;
@@ -296,6 +293,7 @@ export const qiyiDriver: CubeDriver = {
       // that edge look like it had already happened and swallow the auto-stop.
       for (const mv of parsed.moves) onMove(mv.mv, mv.ts);
       if (parsed.facelets) ctx?.onState?.(parsed.facelets);
+      for (const mv of parsed.futureMoves) onMove(mv.mv, mv.ts, { futureHistory: true });
     };
 
     cubeChar.addEventListener('characteristicvaluechanged', onChar);
