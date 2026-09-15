@@ -56,7 +56,7 @@ ${refreshTable({
   table: 'historical_ranks_snapshot',
   columns: ['event_id', 'year', 'wca_id', 'single', 'average', 'country_id', 'single_world_rank', 'single_country_rank', 'single_continent_rank', 'avg_world_rank', 'avg_country_rank', 'avg_continent_rank', 'best_single_comp_id', 'best_single_date', 'best_single_attempts', 'best_average_comp_id', 'best_average_date', 'best_average_attempts'],
   keyColumns: ['event_id', 'year', 'wca_id'],
-  file: 'historical_ranks_snapshot.copy.tsv', expectedRows: counts.year,
+  file: 'historical_ranks_snapshot.copy.tsv.gz', expectedRows: counts.year,
 })}
 
 ${refreshTable({

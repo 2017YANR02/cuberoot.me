@@ -7,6 +7,7 @@
 //   output/historical_ranks/wca_countries.copy.tsv
 //   output/historical_ranks/wca_persons.copy.tsv
 //   output/historical_ranks/historical_ranks_snapshot.copy.tsv          ← 年级,emit 全量
+//   output/historical_ranks/historical_ranks_snapshot.copy.tsv.gz       ← 压缩上传,流式灌库
 //   output/historical_ranks/historical_ranks_monthly_snapshot.copy.tsv  ← 月级,smart-emit (只有更新的 cuber)
 //   output/historical_ranks/load.sql                                    ← server 端 psql -f 灌进 PG
 //
@@ -20,7 +21,9 @@
 
 import mysql from 'mysql2/promise';
 import { historicalRanksLoadSql } from '../historical-ranks-load.js';
-import { createWriteStream, mkdirSync, writeFileSync, readFileSync, statSync } from 'fs';
+import { createReadStream, createWriteStream, mkdirSync, writeFileSync, readFileSync, statSync } from 'fs';
+import { pipeline } from 'node:stream/promises';
+import { createGzip } from 'node:zlib';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
@@ -502,6 +505,10 @@ async function main() {
   await new Promise<void>((res, rej) => bestStream.end((err: unknown) => err ? rej(err) : res()));
 
   await conn.end();
+
+  // Keep plain TSV for the following SOR builder; upload only the compressed
+  // snapshot so the server never stores a second uncompressed copy beside PG.
+  await pipeline(createReadStream(snapPath), createGzip(), createWriteStream(`${snapPath}.gz`));
 
   // ── 3. 写 load.sql:在 server 端原子替换
   const loadSql = historicalRanksLoadSql({

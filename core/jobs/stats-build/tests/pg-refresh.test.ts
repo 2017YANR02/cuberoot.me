@@ -1,8 +1,9 @@
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { gzipSync } from 'node:zlib';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { importTransactionStart, refreshTable } from '../src/pg-refresh.js';
 import { historicalRanksLoadSql } from '../src/historical-ranks-load.js';
@@ -54,7 +55,7 @@ async function run(sql: string, scoped = true) {
 }
 
 async function fixture(name: string, body: string) {
-  await writeFile(join(workDir, name), body);
+  await writeFile(join(workDir, name), name.endsWith('.gz') ? gzipSync(body) : body);
   return name;
 }
 
@@ -217,7 +218,7 @@ describe.skipIf(!enabled)('real PostgreSQL stats imports preserve online reads a
       await fixture('wca_continents.copy.tsv', '_Asia\tAsia\n');
       await fixture('wca_countries.copy.tsv', 'China\tCN\tChina\t_Asia\n');
       await fixture('wca_persons.copy.tsv', '2026TEST01\tOld person\tChina\tm\n');
-      await fixture('historical_ranks_snapshot.copy.tsv', '333\t2026\t2026TEST01\t500\t\\N\tChina\t1\t1\t1\t0\t0\t0\tTest2026\t2026-09-11\t{500,600,700}\t\\N\t\\N\t\\N\n');
+      await fixture('historical_ranks_snapshot.copy.tsv.gz', '333\t2026\t2026TEST01\t500\t\\N\tChina\t1\t1\t1\t0\t0\t0\tTest2026\t2026-09-11\t{500,600,700}\t\\N\t\\N\t\\N\n');
       await fixture('historical_ranks_monthly_snapshot.copy.tsv', '333\t2026\t9\t2026TEST01\t500\t\\N\tChina\t1\t1\t1\t0\t0\t0\n');
       const bestRow = `2026TEST01\t333\t${Array.from({ length: 6 }, () => '1\t500\t2026').join('\t')}\n`;
       await fixture('historical_best_ranks.copy.tsv', bestRow);
@@ -253,6 +254,41 @@ describe.skipIf(!enabled)('real PostgreSQL stats imports preserve online reads a
       await run(`DROP SCHEMA ${artifactSchema} CASCADE;`, false);
     }
   }, 30_000);
+
+  it('streams compressed rows without creating an uncompressed file and measures their expanded size', async () => {
+    const body = '1\tNew name\tA\n3\tNew person\tA\n';
+    const file = await fixture('compressed_people.copy.tsv.gz', body);
+    const sql = refreshTable({ table: 'wca_persons', columns: ['id', 'name', 'country_id'], keyColumns: ['id'], file, expectedRows: 2 });
+    const outcome = await run(`${importTransactionStart('stats_import_test')}\n${sql}\nSELECT 'source_bytes=' || current_setting('cuberoot.import_source_bytes');\nCOMMIT;`);
+    expect(outcome).toContain(`source_bytes=${Buffer.byteLength(body)}`);
+    expect(await readdir(workDir)).not.toContain('compressed_people.copy.tsv');
+    expect(await run('SELECT id,name FROM wca_persons ORDER BY id;')).toBe('1|New name\n3|New person');
+  });
+
+  it.each(['corrupt', 'missing', 'wrong row count'] as const)('rolls back earlier tables when a compressed source is %s', async (kind) => {
+    const file = `compressed_${kind.replaceAll(' ', '_')}.copy.tsv.gz`;
+    if (kind === 'corrupt') await writeFile(join(workDir, file), gzipSync('1\tNew name\tA\n').subarray(0, -5));
+    if (kind === 'wrong row count') await fixture(file, '1\tNew name\tA\n');
+    const countries = refreshTable({ table: 'wca_countries', columns: ['id', 'name'], keyColumns: ['id'], file: await fixture('gzip_country.copy.tsv', 'A\tNew country\n'), expectedRows: 1 });
+    const people = refreshTable({ table: 'wca_persons', columns: ['id', 'name', 'country_id'], keyColumns: ['id'], file, expectedRows: 2 });
+    const outcome = await session().finish(`${importTransactionStart('stats_import_test')}\n${countries}\nUPDATE meta_historical SET value='v2';\n${people}\nCOMMIT;`);
+    expect(outcome.code).not.toBe(0);
+    expect(outcome.error).toContain(kind === 'wrong row count' ? 'expected 2 rows, received 1' : 'invalid input syntax for type numeric');
+    expect(await run(readJoined)).toBe(oldJoined);
+    expect(await run('SELECT value FROM meta_historical;')).toBe('v1');
+  });
+
+  it('keeps the staging reserve based on expanded bytes even for highly compressible input', async () => {
+    const body = `1\t${'A'.repeat(16384)}\tA\n`;
+    const file = await fixture('compressible_people.copy.tsv.gz', body);
+    const sql = refreshTable({ table: 'wca_persons', columns: ['id', 'name', 'country_id'], keyColumns: ['id'], file, expectedRows: 1 });
+    const available = 1024 ** 3 + Math.ceil(Buffer.byteLength(body) * 3.5) - 1;
+    const constrained = sql.replace(/^\\set import_available_bytes .*$/gm, `\\set import_available_bytes ${available}`);
+    const outcome = await session().finish(`${importTransactionStart('stats_import_test')}\n${constrained}\nCOMMIT;`);
+    expect(outcome.code).not.toBe(0);
+    expect(outcome.error).toContain('Insufficient disk space before staging');
+    expect(await run(readJoined)).toBe(oldJoined);
+  });
 
   it('rejects insufficient disk capacity before touching committed rows', async () => {
     const refresh = await refreshPeople();
