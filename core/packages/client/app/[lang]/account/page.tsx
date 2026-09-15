@@ -61,6 +61,7 @@ import { applySession, hasAdminAccess, useAuthStore, safeNext, takeWcaLinkPrompt
 import { isMiniProgramCommerceRestricted, notifyMiniProgramLogout } from '@/lib/miniprogram-bridge';
 import { tr, useLang } from '@/i18n/tr';
 import PetAccountCard from '@/components/PetAccountCard';
+import AccountCardGrid from './AccountCardGrid';
 import './account.css';
 
 function AccountName({ name, wcaId }: { name: string; wcaId?: string | null }) {
@@ -934,18 +935,19 @@ export default function AccountPage() {
             </section>
           ) : (
             <>
-              <nav className="account-cards">
-                <PetAccountCard/>
-                {cards.map(({ key, href, icon, title, desc }) => (
-                  <AppLink key={key} href={href} className="account-card" prefetch={false}>
+              <AccountCardGrid cards={[
+                { id: 'pet', content: <PetAccountCard /> },
+                ...cards.map(({ key, href, icon, title, desc }) => ({
+                  id: key,
+                  content: <AppLink href={href} className="account-card" prefetch={false}>
                     {icon}
                     <div className="account-card-body">
                       <div className="account-card-title">{title}</div>
                       {desc && <div className="account-card-desc">{desc}</div>}
                     </div>
-                  </AppLink>
-                ))}
-              </nav>
+                  </AppLink>,
+                })),
+              ]} />
 
               {/* 公式库校验汇总 —— 组件自己判 admin,非管理员什么都不渲染、也不扫 */}
               <AlgValidationAlert />

@@ -43,16 +43,7 @@ export interface Section {
   cards: CardConfig[];
 }
 
-export function applyLandingCardOrder(cards: CardConfig[], savedIds: readonly string[]): CardConfig[] {
-  const remaining = new Map(cards.map((card) => [card.id, card]));
-  const ordered = savedIds.flatMap((id) => {
-    const card = remaining.get(id);
-    if (!card) return [];
-    remaining.delete(id);
-    return [card];
-  });
-  return [...ordered, ...remaining.values()];
-}
+export { applyCardOrder as applyLandingCardOrder } from './card-order';
 
 interface CardVisual {
   Icon?: LucideIcon;
