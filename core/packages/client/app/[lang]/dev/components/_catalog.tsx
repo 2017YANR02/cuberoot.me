@@ -1820,8 +1820,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'CountryPinButton',
     import: "import { CountryPinButton } from '@/components/CountryPinButton';",
     category: 'input',
-    zh: '国家菜单的置顶与取消置顶按钮，与国家选择按钮并列，保持菜单展开。',
-    en: 'Pin/unpin action beside a country option; keeps the menu open without changing selection.',
+    zh: '国家菜单的置顶与取消置顶按钮；登录后保持菜单展开，游客通过链接进入登录页并保留回跳网址。',
+    en: 'Pin/unpin action that keeps country menus open for signed-in users; guests get a login link preserving the return URL.',
   },
   {
     name: 'CountryInput',

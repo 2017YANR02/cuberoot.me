@@ -1,7 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { parsePinnedCountries, partitionPinnedCountries } from '@/lib/pinned-countries';
+import { parsePinnedCountries, partitionPinnedCountries, pinnedCountriesKey, resolvePinnedCountries } from '@/lib/pinned-countries';
 
 describe('pinned countries', () => {
+  it('defaults only unsaved preferences to a valid WCA country', () => {
+    expect(resolvePinnedCountries(null, 'CN')).toEqual(['cn']);
+    expect(resolvePinnedCountries(null, '')).toEqual([]);
+    expect(resolvePinnedCountries(null, 'invalid')).toEqual([]);
+    expect(resolvePinnedCountries('[]', 'CN')).toEqual([]);
+    expect(resolvePinnedCountries('["au"]', 'CN')).toEqual(['au']);
+  });
+
+  it('isolates accounts and keeps preferences when WCA is linked or unlinked', () => {
+    expect(pinnedCountriesKey(null)).toBeNull();
+    const key = pinnedCountriesKey({ uid: 42, wcaId: '' });
+    expect(key).toBe('cuberoot-pinned-countries:u42');
+    expect(pinnedCountriesKey({ uid: 42, wcaId: '2017YANR02' })).toBe(key);
+    expect(pinnedCountriesKey({ uid: 43, wcaId: '' })).not.toBe(key);
+    expect(pinnedCountriesKey({ wcaId: ' 2017yanr02 ' })).toBe('cuberoot-pinned-countries:2017YANR02');
+  });
+
   it('recovers from corrupt or non-array storage', () => {
     for (const raw of ['', '{', 'null', '{}', '42', '"cn"']) {
       expect(parsePinnedCountries(raw)).toEqual([]);

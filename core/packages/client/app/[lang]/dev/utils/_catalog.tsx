@@ -91,8 +91,8 @@ export const CATALOG: UtilEntry[] = [
     sig: 'usePinnedCountries(): readonly [string[], (iso2: string) => void]',
     imp: "import { usePinnedCountries } from '@/hooks/usePinnedCountries';",
     category: 'hook',
-    zh: '国家置顶偏好的统一入口，同步所有国家菜单和标签页，服务端首屏为空列表。',
-    en: 'Shared pinned countries across menus and tabs, with an empty server snapshot.',
+    zh: '登录账号在当前浏览器共享国家置顶，默认使用 WCA 国家；同步所有国家菜单和标签页，服务端首屏为空列表。',
+    en: 'Per-account country pins shared across menus and tabs in this browser, defaulting to the WCA country, with an empty server snapshot.',
   },
   {
     name: 'useHomeBackgroundChoice',
