@@ -53,6 +53,8 @@ export function usePinnedCountries() {
   const snapshot = useCallback(() => key ? read(key) : null, [key]);
   const raw = useSyncExternalStore(subscribe, snapshot, () => null);
   const country = wcaId ? personFlagIso2(wcaId) : '';
+  // Identity defaults remain available independently of manual menu preferences.
+  const defaultCountries = useMemo(() => resolvePinnedCountries(null, country, ipCountry), [country, ipCountry]);
   const pins = useMemo(() => resolvePinnedCountries(raw, country, ipCountry), [raw, country, ipCountry]);
   const toggleCountry = useCallback((iso2: string) => {
     // Recheck the live session: an event from a previous account must not write its preferences.
@@ -64,5 +66,5 @@ export function usePinnedCountries() {
     else visitValues.set(key, next);
     window.dispatchEvent(new Event(CHANGE_EVENT));
   }, [key, wcaId, ipCountry]);
-  return [pins, toggleCountry] as const;
+  return [pins, toggleCountry, defaultCountries] as const;
 }

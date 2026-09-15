@@ -104,10 +104,16 @@ it('shows IP for guests, WCA before IP after login, and restores only IP on logo
   state.user = { uid: 108, wcaId: '2017YANR02' };
   state.countries.set('2017YANR02', 'cn');
   expect(await render()).toEqual(['cn', 'us']);
+  expect(latest[2]).toEqual(['cn', 'us']);
   await act(async () => latest[1]('us'));
   expect(await render()).toEqual(['cn']);
+  expect(latest[2]).toEqual(['cn', 'us']);
+  await act(async () => latest[1]('au'));
+  expect(latest[2]).toEqual(['cn', 'us']);
+  await act(async () => latest[1]('au'));
   state.user = null;
   expect(await render()).toEqual(['us']);
+  expect(latest[2]).toEqual(['us']);
   state.user = { uid: 108, wcaId: '2017YANR02' };
   expect(await render()).toEqual(['cn']);
   await act(async () => root.unmount());
@@ -124,6 +130,7 @@ it('merges late IP lookup with manual pins and deduplicates matching WCA country
   await act(async () => latest[1]('au'));
   await act(async () => finish('cn'));
   expect(await render()).toEqual(['cn', 'au']);
+  expect(latest[2]).toEqual(['cn']);
 });
 
 it('shares account pins between mounted menus and responds to changes from another tab', async () => {
