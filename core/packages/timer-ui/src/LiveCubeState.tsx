@@ -48,7 +48,7 @@
  * that knows whether it is actually going to be needed. Callers just pass props.
  */
 
-import { lazy, Suspense, useEffect, useMemo, useState, type JSX } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type JSX } from 'react';
 
 import { Spinner } from './Spinner';
 import './live-cube.css';
@@ -109,7 +109,8 @@ export interface LiveCubeStateProps {
   /**
    * False when the state is NOT expressible as `moves` from solved — i.e. the
    * cube was already turned when we started tracking it. The 3D view is
-   * suppressed while this holds rather than drawing a state we made up.
+   * waits for its first verified state, or retains its last verified state
+   * while a new anchor is being computed.
    */
   algAnchored: boolean;
   /**
@@ -134,8 +135,8 @@ export interface LiveCubeStateProps {
   /** Reverse the sense of rotation (handedness fix; calibration cannot do it). */
   mirror?: boolean;
   /**
-   * Which view was selected. A '3d' request falls back to the net only when its
-   * state has no verified move anchor. A failed 3D initialization instead shows
+   * Which view was selected. A '3d' request keeps the renderer during re-anchoring.
+   * A failed 3D initialization instead shows
    * the shared error/retry UI. The owner needs the selected view because it
    * draws the calibrate button, which is meaningless over a flat net — asking
    * for the request instead of the outcome is how that button ended up showing
@@ -165,27 +166,35 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
   const wants3d = mode === '3d';
   const devQuat = useSyntheticQuat(wants3d && enableDevSource);
   const liveQuat = quat ?? devQuat;
+  // A state resync temporarily invalidates the move log. Preserve the last
+  // verified 3D instance until the new opening is ready, rather than switching
+  // renderers (and disposing a cube while it may still be turning).
+  const lastVerifiedMoves = useRef<string[] | null>(null);
+  useEffect(() => {
+    if (algAnchored) lastVerifiedMoves.current = moves;
+  }, [algAnchored, moves]);
+  const renderedMoves = algAnchored ? moves : lastVerifiedMoves.current;
 
   // The single decision, taken once and reported, so the owner draws the
   // calibrate button against what is on screen rather than what was asked for.
   const view: '2d' | 'net' | '3d' | 'q2look' =
-    wants3d && algAnchored ? '3d'
+    wants3d ? '3d'
       : mode === 'q2look' ? 'q2look'
         : mode === '2d' ? '2d' : 'net';
   useEffect(() => {
     onViewChange?.(view);
   }, [view, onViewChange]);
 
-  // 3D is alg-driven, so it can only run while the state is reachable from
-  // solved by replaying `moves`. When it isn't, the flat view takes over — it
-  // reads facelets and is always exact.
+  // Wait for the first verified opening; never fabricate a solved state.
   if (view === '3d') {
+    if (!renderedMoves) return <span role="status" style={{ lineHeight: 1.5 }}>{tr({ zh: '正在同步魔方状态…', en: 'Syncing cube state…' })}</span>;
     return (
+      <div aria-busy={!algAnchored} style={{ height: '100%', position: 'relative', lineHeight: 1.5 }}>
       <Suspense fallback={<Spinner size={16} label={tr({ zh: '加载中', en: 'Loading' })} />}>
       <SimCubeView
         language={language}
         ariaLabel={tr({ zh: '智能魔方实时三维状态', en: 'Live 3D smart-cube state' })}
-        moves={moves}
+        moves={renderedMoves}
         quat={liveQuat}
         quatRef={quatRef}
         calibrateToken={calibrateToken}
@@ -202,6 +211,8 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
         realtime
       />
       </Suspense>
+      {!algAnchored && <span role="status" style={{ position: 'absolute', top: 0, insetInline: 0, textAlign: 'center' }}>{tr({ zh: '正在同步魔方状态…', en: 'Syncing cube state…' })}</span>}
+      </div>
     );
   }
 
