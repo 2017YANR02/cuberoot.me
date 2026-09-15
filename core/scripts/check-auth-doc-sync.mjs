@@ -11,7 +11,7 @@ const ROOTS = [
   'apps/mobile/src', 'apps/desktop/src', 'apps/desktop/src-tauri/src',
   'apps/harmony/src', 'apps/harmony/entry/src/main/ets',
   'packages/app-ui/src', 'packages/shared/src', 'packages/client/lib',
-  'packages/client/components', 'packages/client/app/auth',
+  'packages/client/components', 'packages/client/hooks', 'packages/client/app/auth',
   'packages/client/app/[lang]/account', 'packages/client/app/api/google-verify',
   'packages/client/app/api/page-access',
 ];
@@ -20,6 +20,8 @@ const EXACT = new Set([
   'apps/miniprogram/src/lib/navigation.ts', 'apps/miniprogram/src/lib/web-routes.ts',
   'apps/miniprogram/src/pages/web/index.ts',
   'packages/client/components/MobileEmbedBridge.tsx', 'packages/shared/src/mobile_embed.ts',
+  'packages/client/components/CountryPinButton.tsx', 'packages/client/hooks/usePinnedCountries.ts',
+  'packages/client/lib/pinned-countries.ts',
   'packages/client/lib/page-access-api.ts',
   'packages/app-ui/src/App.tsx', 'apps/mobile/src/capacitor-host.ts',
   'apps/mobile/src/native/secure-storage.ts', 'apps/desktop/src/tauri-host.ts',
