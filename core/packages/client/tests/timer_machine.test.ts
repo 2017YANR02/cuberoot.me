@@ -24,6 +24,25 @@ function apply(
 }
 
 describe('shared timer machine', () => {
+  it('arms a smart cube directly into ready without a manual hold delay', () => {
+    const step = apply(initialTimerMachineState(), { type: 'arm-from-cube', nowMs: 100 });
+    expect(step.state.phase).toBe('ready');
+    expect(step.effects).toEqual([]);
+    expect(step.state.startedAtMs).toBeNull();
+    const started = apply(step.state, { type: 'start-from-cube', nowMs: 500, atMs: 480 });
+    expect(started.state.phase).toBe('running');
+    expect(started.state.startedAtMs).toBe(480);
+    expect(apply(started.state, { type: 'arm-from-cube', nowMs: 600 }).state).toBe(started.state);
+  });
+
+  it('keeps WCA inspection when a smart cube arms and does not restart it', () => {
+    const step = apply(initialTimerMachineState(), { type: 'arm-from-cube', nowMs: 100 }, inspection);
+    expect(step.state.phase).toBe('inspecting');
+    expect(step.effects).toEqual(['inspection-started']);
+    expect(apply(step.state, { type: 'arm-from-cube', nowMs: 500 }, inspection).state).toBe(step.state);
+    const started = apply(step.state, { type: 'start-from-cube', nowMs: 15500 }, inspection);
+    expect(started.state.autoPenalty).toBe('+2');
+  });
   it('runs the hold, ready, start and stop cycle without inspection', () => {
     let state = initialTimerMachineState();
     let step = apply(state, { type: 'press-down', nowMs: 100 });

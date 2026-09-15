@@ -51,7 +51,7 @@ describe('shared TimerScrambleStrip', () => {
     return host.querySelector<HTMLElement>('.scramble-strip')!;
   }
 
-  it('keeps Web classes, font tiers, final-move copy feedback, match chip and suffix slot', () => {
+  it('keeps Web classes, font tiers, copy feedback and match data without status captions', () => {
     const activate = vi.fn();
     const strip = render({
       children: createElement('div', { className: 'scramble-src-row' },
@@ -73,7 +73,7 @@ describe('shared TimerScrambleStrip', () => {
     expect(strip.querySelector('.scramble-copied-tail')?.textContent).toBe('F2');
     expect(strip.querySelector('.scramble-copied-check')?.getAttribute('aria-label')).toBe('Copied');
     expect(strip.querySelector('.scramble-nonopt')?.textContent).toBe('non-optimal');
-    expect(strip.querySelector('.scramble-verify[data-ok="true"]')?.textContent).toBe('Scrambled');
+    expect(strip.querySelector('.scramble-verify')).toBeNull();
     expect(strip.lastElementChild?.className).toBe('scramble-src-row');
     expect(strip.getAttribute('role')).toBeNull();
     expect(text.getAttribute('role')).toBe('button');
@@ -113,9 +113,16 @@ describe('shared TimerScrambleStrip', () => {
     expect(strip.querySelector('.scramble-copied-check')).toBeNull();
     expect([...strip.querySelectorAll<HTMLElement>('.scramble-verify')]
       .map((chip) => [chip.dataset.ok, chip.textContent])).toEqual([
-      ['fix', 'Back to scramble'],
       ['true', 'Copied the scramble'],
     ]);
+  });
+
+  it('retains mismatch state without displaying mismatch wording', () => {
+    const strip = render({ match: false });
+    expect(strip.getAttribute('data-scramble-match')).toBe('off');
+    expect(strip.querySelector('.scramble-moves')?.textContent).toContain("R U R' U' F2");
+    expect(strip.querySelector('.scramble-verify')).toBeNull();
+    expect(strip.textContent).not.toContain(labels.mismatch);
   });
 
   it('keeps WCA provenance, extra numbering and navigation in one non-bubbling row', () => {

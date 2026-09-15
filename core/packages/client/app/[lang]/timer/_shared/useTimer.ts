@@ -41,6 +41,8 @@ export interface TimerHandle {
   stopExternal: (timeMs: number, inspectionMs?: number) => void;
   /** Start an armed attempt from a smart-cube move timestamp. */
   startFromCube: (atMs?: number) => boolean;
+  /** A matched smart-cube scramble skips the manual holding phase. */
+  armFromCube: () => void;
   /** Stop a running attempt at the smart cube's calibrated move timestamp. */
   stopFromCube: (atMs?: number) => boolean;
   /** Cancel an in-progress arm while preserving the last displayed solve. */
@@ -230,6 +232,10 @@ export function useTimer(
     return transition.accepted === true;
   }, [dispatch]);
 
+  const armFromCube = useCallback(() => {
+    dispatch({ type: 'arm-from-cube', nowMs: performance.now() });
+  }, [dispatch]);
+
   const stopFromCube = useCallback((atMs?: number): boolean => {
     const transition = dispatch({
       type: 'stop-from-cube',
@@ -265,6 +271,7 @@ export function useTimer(
     startNow,
     stopExternal,
     startFromCube,
+    armFromCube,
     stopFromCube,
     cancelArm,
   };
