@@ -1396,10 +1396,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
               scramble={displayScramble}
               verificationLabels={{
                 copiedCorrection: tr({ zh: '已复制原打乱', en: 'Copied the scramble' }),
-                correction: tr({ zh: '拧回原打乱', en: 'Back to scramble' }),
-                correctionTitle: tr({ zh: '拧回原打乱', en: 'Back to scramble' }),
-                mismatch: tr({ zh: '与打乱不符', en: 'Doesn’t match' }),
-                ready: tr({ zh: '打乱已就绪', en: 'Scrambled' }),
               }}
             />
           }
