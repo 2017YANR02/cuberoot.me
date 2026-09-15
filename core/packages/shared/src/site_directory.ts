@@ -3,6 +3,13 @@ export type SiteDirectoryTier = 'medium' | 'standard' | 'utility';
 
 export const HOME_MEMBER_SECTION_IDS = { enterprise: 'enterprise-members', individual: 'individual-members' } as const;
 
+// Complete account directory, including entries hidden by account permissions.
+export const ACCOUNT_CARD_GROUP_ID = 'account';
+export const ACCOUNT_CARD_IDS = [
+  'pet', 'wca', 'recon', 'link-wca', 'progress', 'learning-center', 'enterprise',
+  'friends', 'vault', 'notifications', 'users-admin', 'submissions',
+] as const;
+
 export interface SiteDirectoryText {
   en: string;
   zh: string;
