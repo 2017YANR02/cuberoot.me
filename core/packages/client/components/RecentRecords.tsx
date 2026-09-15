@@ -13,6 +13,7 @@ import { eventDisplayName, toWcaEventId } from '@/lib/wca-events';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
+import { usePinnedCountries } from '@/hooks/usePinnedCountries';
 import './recent_records.css';
 import { tr } from '@/i18n/tr';
 
@@ -34,6 +35,23 @@ interface RecentRecord {
 interface ApiResponse {
   fetchedAt: number;
   records: RecentRecord[];
+}
+
+/** Stable within each tier; country priority applies only to national records. */
+export function sortRecentRecords<T extends Pick<RecentRecord, 'tag' | 'countryIso2'>>(
+  records: readonly T[], countries: readonly string[],
+): T[] {
+  const level = (tag: string) => {
+    if (tag === 'WR' || tag === 'FWR') return 0;
+    if (tag === 'CR' || Object.hasOwn(RECORD_BADGE_CONTINENT, tag)) return 1;
+    return tag === 'NR' ? 2 : 3;
+  };
+  const countryRank = (record: T) => {
+    const index = countries.indexOf((record.countryIso2 || '').toLowerCase());
+    return index < 0 ? countries.length : index;
+  };
+  return [...records].sort((a, b) => level(a.tag) - level(b.tag)
+    || (a.tag === 'NR' && b.tag === 'NR' ? countryRank(a) - countryRank(b) : 0));
 }
 
 function stripPrefix(text: string): string {
@@ -115,6 +133,7 @@ function renderFormatted(text: string): React.ReactNode[] {
 // shared scroll panel.
 export function useRecentRecords(isZh: boolean) {
   const [records, setRecords] = useState<RecentRecord[] | null>(null);
+  const [, , defaultCountries] = usePinnedCountries();
 
   useEffect(() => {
     let mounted = true;
@@ -156,10 +175,10 @@ export function useRecentRecords(isZh: boolean) {
   // Keep records that either have server-rendered text or enough structured
   // fields to render a client-side fallback (format_cli timing out → text empty).
   const filled = useMemo(
-    () => (records ?? []).filter(
+    () => sortRecentRecords((records ?? []).filter(
       r => (isZh ? r.formattedCn : r.formattedEn) || (r.eventId && r.attemptResult > 0),
-    ),
-    [records, isZh],
+    ), defaultCountries),
+    [records, isZh, defaultCountries],
   );
 
   return { records, filled };
