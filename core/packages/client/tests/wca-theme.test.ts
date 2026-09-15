@@ -48,7 +48,8 @@ describe('WR canvas appearance updates', () => {
     vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(600);
     ctx = Object.fromEntries(['setTransform', 'beginPath', 'moveTo', 'lineTo', 'stroke', 'fillText', 'closePath', 'fill', 'arc'].map(key => [key, vi.fn()]));
     ctx.createLinearGradient = () => ({ addColorStop: vi.fn() });
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(ctx as CanvasRenderingContext2D);
+    const getContext = ((contextId: string) => contextId === '2d' ? ctx : null) as HTMLCanvasElement['getContext'];
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(getContext);
     host = document.createElement('div');
     document.body.appendChild(host);
     root = createRoot(host);
