@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint":"c0ffaf02173a61e959b7bc1fe8c8202825135cda9056bedf531940c1eb772ac6","reason":"国家菜单默认置顶更新为登录后 WCA 国家优先、IP 国家其次并去重；游客或未绑定账号使用 IP 国家。新增公开只读国家查询，复用本地 IP 数据库，只返回国家代码且禁止共享缓存；客户端共享有超时的查询。已同步中英文节点并覆盖国家查询加载器：保留所有登录账号的手动操作、账号隔离、显式取消置顶和旧列表迁移，退出只显示 IP 国家；游客仍走原 AppLink 登录回跳，不更改会话、绑定、合并或注销。复核已提交的账号卡片排序仍只调整原有可见入口，权限过滤与登录生命周期不变。源码和本地测试复核不代表部署或真机验收。"}
+{"fingerprint":"8ed13a1d8dea81f551a3f0449dcde9f94ef7ea1841313b816748dce9fb263a8b","reason":"账号卡片排序从浏览器个人存储改为管理员配置、所有用户共用，复用首页排序接口和服务端管理员校验；保存完整卡片集合，显示仍按既有账号权限过滤。已核对登录回跳、WCA 绑定、会话恢复、合并、退出与注销入口及国家置顶流程均未改变，因此生命周期图节点保持不变；新增双语说明记录排序管理边界。初始读取失败禁止排序，保存失败回退，并在提交时重新检查管理员身份。本次源码与本地验证不代表生产或真机验收。"}
 */
 
 import type { ReactNode } from 'react';
@@ -31,6 +31,7 @@ export default function AuthFlowPage() {
       <AppLink href="/dev" prefetch={false}>Dev</AppLink>
       <h1>{t('账号全流程', 'Account lifecycle')}</h1>
       <p>{t('一个 CubeRoot 账号，多种登录方式。先看从哪个平台进入，再看登录、绑定、合并和注销各自会做什么。', 'One CubeRoot account, multiple sign-in methods. Start with your platform, then follow sign-in, linking, merging, or deletion.')}</p>
+      <p className="auth-map-note">{t('账号页卡片顺序由管理员拖动设置，所有用户共用；每个账号仍只显示其有权使用的入口。排序不改变登录、绑定或会话。', 'Administrators set the account card order for everyone. Each account still sees only its permitted entries; ordering does not change sign-in, linking, or sessions.')}</p>
       <p className="auth-map-note">{t('源码核对：2026-09-11。「源码已实现」不等于所有平台真人测试或商店发布完成；「目标方案」尚未接入。此页不执行账号操作。', 'Source reviewed: 2026-09-11. Implemented in source does not mean real-account testing or store release is complete on every platform. Proposals are not implemented. This page performs no account actions.')}</p>
       <nav className="auth-map-nav" aria-label={t('账号流程目录', 'Account flow contents')}>
         <AppLink href="#platforms" prefetch={false}>{t('平台入口', 'Platforms')}</AppLink>

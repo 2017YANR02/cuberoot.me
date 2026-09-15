@@ -5,14 +5,14 @@
  *   - PUT    /v1/nav/sites/:id          — admin 编辑
  *   - DELETE /v1/nav/sites/:id          — admin 删
  *   - PUT    /v1/nav/sites/reorder      — admin 重排,body { groupId, ids: number[] }
- *   - GET    /v1/nav/home-order         — 首页各分组卡片顺序
- *   - PUT    /v1/nav/home-order         — admin 重排首页单个分组
+ *   - GET    /v1/nav/home-order         — 首页与账号页各分组卡片顺序
+ *   - PUT    /v1/nav/home-order         — admin 重排首页或账号页分组
  *
  * Schema 见 migrations/0001_nav_sites.sql、0170_nav_sites_github.sql 与 0213_home_card_positions.sql。
  */
 import { Hono } from 'hono';
 import { isDeskPetCatalog, type DeskPetCatalog } from '@cuberoot/shared/deskpet';
-import { HOME_MEMBER_SECTION_IDS, SITE_DIRECTORY_GROUPS } from '@cuberoot/shared/site-directory';
+import { ACCOUNT_CARD_GROUP_ID, ACCOUNT_CARD_IDS, HOME_MEMBER_SECTION_IDS, SITE_DIRECTORY_GROUPS } from '@cuberoot/shared/site-directory';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query, withTransaction } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
@@ -186,12 +186,12 @@ navSitesRoutes.put('/nav/home-order', async (c) => {
   checkRateLimit(getIp(c));
   await requireAdminOrApiKey(c);
 
-  const body = await c.req.json<{ groupId?: unknown; ids?: unknown }>();
-  const { groupId } = body;
+  const body = await c.req.json<{ groupId?: unknown; ids?: unknown }>().catch(() => null);
+  const groupId = body?.groupId;
   if (typeof groupId !== 'string') return c.json({ error: 'groupId required' }, 400);
-  const expected = HOME_CARD_GROUPS.get(groupId);
+  const expected = groupId === ACCOUNT_CARD_GROUP_ID ? ACCOUNT_CARD_IDS : HOME_CARD_GROUPS.get(groupId);
   if (!expected) return c.json({ error: 'unknown homepage group' }, 400);
-  if (!Array.isArray(body.ids) || !body.ids.every((id): id is string => typeof id === 'string')) {
+  if (!body || !Array.isArray(body.ids) || !body.ids.every((id): id is string => typeof id === 'string')) {
     return c.json({ error: 'ids must be string[]' }, 400);
   }
   const ids = body.ids;
