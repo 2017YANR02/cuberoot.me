@@ -1,4 +1,4 @@
-/* Records 页样式 — 对齐 wca_stats_extra.css 深色主题 token */
+/* Records 页样式 — 使用全站主题 token */
 
 .records-page .records-toolbar {
   display: flex;
@@ -20,7 +20,7 @@
 .records-toolbar-row .records-toolbar-select .list-select-popup { min-width: 150px; }
 .records-page .records-toolbar-row .region-picker { min-width: 0; }
 
-/* RegionPicker 颜色变量覆盖 — 默认 light theme,这里改成 wca-stats 深色 */
+/* RegionPicker 颜色变量覆盖 — 映射全站 token，跟随系统或用户主题 */
 .records-page .region-picker {
   --rp-bg: color-mix(in srgb, var(--foreground) 4%, transparent);
   --rp-bg-hover: color-mix(in srgb, var(--foreground) 6%, transparent);
