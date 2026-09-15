@@ -352,6 +352,7 @@ export const BRAND_SENSOR_BASIS: Readonly<Record<string, SensorBasisName>> = Obj
   'gan-v4': 'rotX270',  // the cube MEASURED_SENSOR_MOUNT was measured on
   gocube: 'rotX270',    // Z-up IMU
   qiyi: 'identity',     // DCTimer-BLE CC 10 frames already use renderer x/y/z axes.
+  moyu32: 'identity',   // Decoder already maps wire (w,x,y,z) to (w,x,z,-y).
   giiker: 'rotX270',    // Z-up IMU
   moyu: 'rotX270',      // Z-up IMU
   unknown: 'rotX270',   // Z-up IMU

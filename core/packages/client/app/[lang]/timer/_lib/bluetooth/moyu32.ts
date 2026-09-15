@@ -1,3 +1,4 @@
+import { createDeviceStateReset } from './device_reset';
 /**
  * MoYu32 smart-cube driver — the protocol every currently-sold MoYu smart
  * cube speaks (WeiLong V10 Ai onward). BLE device names look like
@@ -108,6 +109,7 @@ export const MOYU32_IV_BASE = new Uint8Array([
 ]);
 
 /** Message types. */
+const SOLVED_STATE = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB';
 const MSG_INFO = 0xa1;
 const MSG_STATE = 0xa3;
 const MSG_BATTERY = 0xa4;
@@ -377,6 +379,10 @@ export const moyu32Driver: CubeDriver = {
     const expandedKey = expandKey(aesKey);
 
     const decState = createMoyu32State(ctx?.onState);
+    let resetting = false;
+    let confirmedState: { facelets: string; counter: number } | null = null;
+    let pendingMoves: Uint8Array[] = [];
+    let calibration: ReturnType<typeof createDeviceStateReset> | null = null;
     const onGyro = ctx?.onGyro;
     let keyErrorFired = false;
     let batteryWaiters: Array<(v: number | null) => void> = [];
@@ -390,6 +396,21 @@ export const moyu32Driver: CubeDriver = {
       try {
         pt = decryptFrame(ct, expandedKey, aesIv);
       } catch {
+        return;
+      }
+      if (resetting && pt[0] === MSG_STATE) {
+        if (calibration?.waiting && pt.length >= 20) {
+          const facelets = decodeMoyu32Facelets(toBitReader(pt));
+          if (facelets === SOLVED_STATE) {
+            confirmedState = { facelets, counter: pt[19] };
+            calibration.observe(facelets);
+          }
+        }
+        return;
+      }
+      if (resetting && pt[0] === MSG_MOVE) {
+        if (pendingMoves.length >= 128) calibration?.cancel(new Error('Too many turns during calibration'));
+        else pendingMoves.push(pt);
         return;
       }
       const before = decState.battery;
@@ -418,18 +439,23 @@ export const moyu32Driver: CubeDriver = {
       // stay suppressed. Non-fatal; surfaces as "connected but silent".
     }
 
-    const sendCmd = async (req: Uint8Array): Promise<void> => {
-      if (!cmdChar) return;
+    let writeTail: Promise<void> = Promise.resolve();
+    const sendCmd = async (req: Uint8Array, strict = false, beginConfirmation?: () => boolean): Promise<void> => {
+      if (!cmdChar) {
+        if (strict) throw new Error('Device has no write characteristic');
+        return;
+      }
       const enc = encryptFrame(req, expandedKey, aesIv);
       // Detach into a fresh ArrayBuffer-backed Uint8Array — the strict TS lib
       // types narrow `BufferSource` to `Uint8Array<ArrayBuffer>`.
       const buf = new Uint8Array(enc.length);
       buf.set(enc);
-      try {
-        await writeGattValue(cmdChar, buf);
-      } catch {
-        // Ignore — write rejected; the cube may still stream regardless.
-      }
+      const task = writeTail.then(() => {
+        if (beginConfirmation && !beginConfirmation()) return;
+        return writeGattValue(cmdChar!, buf);
+      });
+      writeTail = task.catch(() => {});
+      if (strict) await task; else await task.catch(() => {});
     };
 
     /**
@@ -452,10 +478,45 @@ export const moyu32Driver: CubeDriver = {
       if (onGyro) await setGyro(true);
     }
 
+    // Protocol PR #4: A2 writes solved facelets and automatically returns A3.
+    calibration = createDeviceStateReset({
+      automaticReply: true,
+      sendReset: begin => sendCmd(new Uint8Array([
+        0xa2, 0, 0, 0, 0x24, 0x92, 0x49, 0x49, 0x24, 0x92,
+        0x6d, 0xb6, 0xdb, 0x92, 0x49, 0x24, 0xb6, 0xdb, 0x6d, 0,
+      ]), true, begin),
+      prepareSnapshot() {},
+      requestSnapshot: async () => {},
+    });
+    const resetDeviceState = async () => {
+      if (resetting) throw new Error('Device calibration already in progress');
+      resetting = true;
+      confirmedState = null;
+      pendingMoves = [];
+      try {
+        await calibration!.run();
+        const snapshot = confirmedState as { facelets: string; counter: number } | null;
+        if (!snapshot) throw new Error('Missing confirmed cube state');
+        decState.prevMoveCnt = snapshot.counter;
+        decState.deviceTime = 0;
+        ctx?.onState?.(snapshot.facelets);
+      } finally {
+        // Preserve post-reset turns, but discard notifications at or behind
+        // the confirmed counter. Do not cancel confirmation on a stale MOVE.
+        if (!cleaned) for (const frame of pendingMoves) {
+          const diff = (frame[11] - decState.prevMoveCnt) & 0xff;
+          if (diff === 0 || diff >= 128) continue;
+          for (const move of decodeMoyu32Frame(frame, decState, onGyro)) onMove(move.mv, move.ts);
+        }
+        resetting = false; pendingMoves = [];
+      }
+    };
+
     let cleaned = false;
     const cleanup = (): void => {
       if (cleaned) return;
       cleaned = true;
+      calibration?.dispose();
       // Stop the orientation firehose on the way out, but only if we were the
       // ones who turned it on.
       if (onGyro && cmdChar) void setGyro(false).catch(() => {});
@@ -490,6 +551,6 @@ export const moyu32Driver: CubeDriver = {
       });
     };
 
-    return { battery, cleanup, setGyro };
+    return { battery, cleanup, setGyro, resetDeviceState: cmdChar ? resetDeviceState : undefined };
   },
 };

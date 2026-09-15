@@ -378,14 +378,14 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
             className="modal-actions"
             style={isMobile ? { flexDirection: 'column', alignItems: 'stretch' } : undefined}
           >
-              <button className="modal-action-btn" style={actionBtnStyle} disabled={!connected || connecting || calibrationBusy} onClick={() => cube.resetState()}>
+              <button className="modal-action-btn" style={actionBtnStyle} disabled={!connected || connecting || calibrationBusy || Boolean(cube.resetDeviceState && !allowDeviceCalibration)}
+                onClick={() => {
+                  if (cube.resetDeviceState) { setCalibrationFeedback(null); setConfirmCalibration(true); }
+                  else cube.resetState();
+                }}>
                 <RotateCcw size={14} /> {tr({ zh: '重置状态', en: 'Reset state'
                 })}
               </button>
-              {cube.resetDeviceState && <button type="button" className="modal-action-btn" disabled={!connected || calibrationBusy || !allowDeviceCalibration}
-                onClick={() => { setCalibrationFeedback(null); setConfirmCalibration(true); }}>
-                {tr({ zh: '校准设备状态', en: 'Calibrate device state' })}
-              </button>}
               {onResetGyro && (
                 <button type="button" className="modal-action-btn" style={actionBtnStyle}
                   disabled={!connected || connecting || !cube.status.hasGyro} onClick={onResetGyro}

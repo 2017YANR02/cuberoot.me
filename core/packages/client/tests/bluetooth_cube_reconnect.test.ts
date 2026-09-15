@@ -136,6 +136,26 @@ describe('smart-cube reconnect ownership', () => {
     expect(onSolved).not.toHaveBeenCalled();
   });
 
+  it('preserves a real turn received immediately after device reset confirmation', async () => {
+    const rig = fakeGattRig('calibrate-turn');
+    const onSolved = vi.fn();
+    let current!: BluetoothCubeHandle;
+    function CalibrationHarness() { current = useBluetoothCube({ onSolved }); return null; }
+    await act(async () => root.render(createElement(CalibrationHarness)));
+    vi.spyOn(gocubeDriver, 'start').mockImplementation(async (_server, onMove, ctx) => {
+      ctx?.onState?.(SCRAMBLED);
+      return { battery: async () => null, cleanup: vi.fn(), resetDeviceState: async () => {
+        ctx?.onState?.('UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB');
+        onMove('R', 1000);
+      } };
+    });
+    await act(async () => { await current.connectDevice(rig.device); });
+    await act(async () => { await current.resetDeviceState!(); });
+    expect(current.solved).toBe(false);
+    expect(current.facelets).toBe(toFaceletString(applyMoves(solved(3), 3, parseScramble('R'))));
+    expect(onSolved).not.toHaveBeenCalled();
+  });
+
   it.each([false, true])('detects QiYi gyro per connection, including samples during start (%s)', async (duringStart) => {
     const rig = fakeGattRig('qiyi-gyro');
     Object.defineProperty(rig.device, 'name', { value: 'XMD-TornadoV4-i-1-A1B2' });
