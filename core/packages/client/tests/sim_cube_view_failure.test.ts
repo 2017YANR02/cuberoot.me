@@ -32,6 +32,32 @@ afterEach(async () => {
 });
 
 describe('the single live/replay 3D failure surface', () => {
+  it('retains its 3D instance while an authoritative state is being re-anchored', async () => {
+    const draw = (algAnchored: boolean, moves: string[]) => act(async () => root.render(createElement(LiveCubeState, {
+      mode: '3d', algAnchored, moves, facelets: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
+    })));
+    await draw(true, ['R']);
+    await vi.waitFor(() => expect(host.querySelector('canvas')).not.toBeNull());
+    const canvas = host.querySelector('canvas');
+    await draw(false, []);
+    expect(host.querySelector('canvas')).toBe(canvas);
+    expect(state.dispose).not.toHaveBeenCalled();
+    expect(state.setup).toHaveBeenLastCalledWith('R');
+    await draw(true, ['F', 'U']);
+    expect(host.querySelector('canvas')).toBe(canvas);
+    expect(state.mount).toHaveBeenCalledOnce();
+    expect(state.setup).toHaveBeenLastCalledWith('F U');
+  });
+
+  it('waits for the first verified 3D state without flashing a flat preview', async () => {
+    await act(async () => root.render(createElement(LiveCubeState, {
+      mode: '3d', algAnchored: false, moves: [],
+      facelets: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
+    })));
+    expect(host.querySelector('svg')).toBeNull();
+    expect(host.querySelector('[role="status"]')?.textContent).toBe('Syncing cube state…');
+    expect(state.mount).not.toHaveBeenCalled();
+  });
   it('shows a failure without claiming to draw a cube, then retries the current move log', async () => {
     state.mount.mockImplementationOnce(() => { throw new Error('WebGL unavailable'); });
     await act(async () => root.render(createElement(SimCubeView, { moves: ['R'], language: 'en' })));
