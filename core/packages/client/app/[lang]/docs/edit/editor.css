@@ -80,6 +80,7 @@
 .doc-search-input { width: 150px; padding: 6px 8px; border: 1px solid var(--border-default); border-radius: calc(var(--radius) - 5px); background: transparent; color: var(--foreground); }
 .doc-search-action { padding: 6px 8px; border: 0; border-radius: calc(var(--radius) - 5px); background: var(--muted); color: var(--foreground); white-space: nowrap; cursor: pointer; }
 .doc-search-action:disabled { opacity: .4; cursor: default; }
+.doc-search-input.search-control--with-clear { padding-right: 34px; }
 .doc-mode-notice { display: flex; align-items: center; gap: 7px; width: min(820px, calc(100% - 24px)); margin: 10px auto 0; color: var(--muted-foreground); font-size: .8rem; }
 
 .doc-canvas-row { display: flex; align-items: flex-start; gap: 18px; width: min(1180px, calc(100% - 24px)); margin: 12px auto 0; }

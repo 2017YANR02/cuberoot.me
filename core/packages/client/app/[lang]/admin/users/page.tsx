@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState, useQueryStates } from 'nuqs';
 import { ChevronLeft, ChevronRight, Loader2, Monitor, Search, Smartphone, Tablet } from 'lucide-react';
 import AppLink from '@/components/AppLink';
@@ -139,11 +139,14 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(false);
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
-  const [q, setQ] = useQueryState('q', parseAsString.withDefault(''));
+  const [{ q, page }, setSearch] = useQueryStates({
+    q: parseAsString.withDefault(''),
+    page: parseAsInteger.withDefault(1),
+  });
+  const setPage = (next: number | null) => setSearch({ page: next });
   const [provider, setProvider] = useQueryState(
     'provider', parseAsStringEnum<ProviderFilter>([...PROVIDERS]).withDefault('all'),
   );
-  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
   const [sort, setSort] = useQueryState(
     'sort', parseAsStringEnum<SortKey>(['created', 'name', 'id']).withDefault('created'),
   );
@@ -154,12 +157,10 @@ export default function AdminUsersPage() {
     from: parseAsString.withDefault(''),
     to: parseAsString.withDefault(''),
   });
-  const [queryDraft, setQueryDraft] = useState(q);
   const rangeProblem = activityRangeError(from, to, today);
 
   const isAdmin = hasAdminAccess(user);
   useEffect(() => setMounted(true), []);
-  useEffect(() => setQueryDraft(q), [q]);
 
   useEffect(() => {
     if (!mounted || !isAdmin) return;
@@ -176,7 +177,7 @@ export default function AdminUsersPage() {
     setLoading(true);
     setError(null);
     void fetchAdminUsers({
-      q, provider, page, pageSize: PAGE_SIZE, sort, direction,
+      q: q.trim(), provider, page, pageSize: PAGE_SIZE, sort, direction,
       from: from || undefined,
       to: to || undefined,
     })
@@ -210,10 +211,6 @@ export default function AdminUsersPage() {
   const effectiveTo = to || data?.activity?.to || legacyTo;
   const activePreset = RANGE_PRESETS.find((days) => effectiveTo === today && effectiveFrom === rangeFromDays(days, today));
 
-  const submitSearch = (event: FormEvent) => {
-    event.preventDefault();
-    void Promise.all([setQ(queryDraft.trim() || null), setPage(null)]);
-  };
   const changeSort = (next: SortKey) => {
     if (sort === next) void setDirection(direction === 'asc' ? 'desc' : 'asc');
     else void Promise.all([setSort(next), setDirection(next === 'name' ? 'asc' : 'desc')]);
@@ -373,17 +370,15 @@ export default function AdminUsersPage() {
               <h2 id="admin-users-list-title">{t('用户明细', 'User records')}</h2>
               <span>{t(`共 ${data.pagination.total} 人`, `${data.pagination.total} users`)}</span>
             </div>
-            <form className="admin-users-filters" onSubmit={submitSearch}>
+            <div className="admin-users-filters">
               <div className="admin-users-search">
                 <Search size={15} aria-hidden />
-                <SearchInput value={queryDraft} onChange={(value) => {
-                  setQueryDraft(value);
-                  if (!value) void Promise.all([setQ(null), setPage(null)]);
+                <SearchInput value={q} debounceMs={300} onChange={(value) => {
+                  void setSearch({ q: value || null, page: null });
                 }} inputClassName="admin-users-search-input" className="admin-users-search-control" maxLength={100}
                   placeholder={t('搜索用户名、ID、邮箱、手机或 WCA ID', 'Search name, ID, email, phone, or WCA ID')}
                   ariaLabel={t('搜索用户', 'Search users')} />
               </div>
-              <button type="submit" className="admin-users-submit">{t('搜索', 'Search')}</button>
               <select className="admin-users-filter-select" value={provider} onChange={(event) => { void setProvider(event.target.value as ProviderFilter); void setPage(null); }}
                 aria-label={t('按登录方式筛选', 'Filter by sign-in method')}>
                 {PROVIDERS.map((item) => (
@@ -392,7 +387,7 @@ export default function AdminUsersPage() {
                   </option>
                 ))}
               </select>
-            </form>
+            </div>
 
             <p className="admin-users-table-hint">{t('左右滑动查看完整表格', 'Swipe horizontally to view the full table')}</p>
             <div className="sticky-scroll admin-users-table-scroll">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Check, Copy, Download, KeyRound, Loader2, Lock, Plus, Save, Search, Trash2, UserPlus, X } from 'lucide-react';
+import { Check, Copy, Download, KeyRound, Loader2, Lock, Plus, Save, Trash2, UserPlus, X } from 'lucide-react';
 import BackHome from '@/components/BackHome';
 import BoolToggle from '@/components/BoolToggle';
 import { PasswordInput } from '@/components/PasswordInput';
@@ -62,6 +62,8 @@ export default function VaultPage() {
   const [filter, setFilter] = useState('');
   const [shareQuery, setShareQuery] = useState('');
   const [shareResults, setShareResults] = useState<UserResult[]>([]);
+  const [shareSearchError, setShareSearchError] = useState(false);
+  const [searchingUsers, setSearchingUsers] = useState(false);
   const [failedCount, setFailedCount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -288,21 +290,26 @@ export default function VaultPage() {
     } finally { setBusy(false); }
   };
 
-  const searchUsers = async (event: FormEvent) => {
-    event.preventDefault();
-    if (shareQuery.trim().length < 2) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const data = await handleApi<{ users: UserResult[] }>(await fetch(
-        apiUrl(`/v1/vault/users?q=${encodeURIComponent(shareQuery.trim())}`),
-        { headers: authHeaders(false) },
-      ));
-      setShareResults(data.users);
-    } catch {
-      setError(tr({ zh: '好友搜索失败，请稍后重试。', en: 'Could not search friends. Try again later.' }));
-    } finally { setBusy(false); }
-  };
+  const canSearchUsers = Boolean(user && privateKey && draft && payload?.canManage && draft.ownerUserId === payload.userId);
+  useEffect(() => {
+    setShareResults([]);
+    setShareSearchError(false);
+    setSearchingUsers(false);
+    const query = shareQuery.trim();
+    if (!canSearchUsers || query.length < 2) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      setSearchingUsers(true);
+      void fetch(apiUrl(`/v1/vault/users?q=${encodeURIComponent(query)}`), {
+        headers: authHeaders(false), signal: controller.signal,
+      })
+        .then((response) => handleApi<{ users: UserResult[] }>(response))
+        .then((data) => { if (!controller.signal.aborted) setShareResults(data.users); })
+        .catch(() => { if (!controller.signal.aborted) setShareSearchError(true); })
+        .finally(() => { if (!controller.signal.aborted) setSearchingUsers(false); });
+    }, 300);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [canSearchUsers, draft?.localId, shareQuery]);
 
   if (!mounted) return <main className="vault-page" />;
   if (!user) return (
@@ -413,7 +420,8 @@ export default function VaultPage() {
             <h2>{tr({ zh: '分享给好友', en: 'Share with friends' })}</h2>
             <p>{tr({ zh: '移除并保存，或解除好友后，对方下次打开资料库时将无法再访问；但无法抹除已经看过、复制或截图的内容。', en: 'After removing and saving, or ending the friendship, they cannot reopen the item from the vault. Content already viewed, copied, or captured cannot be erased.' })}</p>
             <div className="vault-share-list">{draft.shares.map((share) => <span className="vault-share" key={share.userId}>{share.name}<small>#{share.userId}</small>{editable && <button type="button" className="vault-share-remove" aria-label={tr({ zh: `移除 ${share.name}`, en: `Remove ${share.name}` })} onClick={() => updateDraft((item) => { item.shares = item.shares.filter((candidate) => candidate.userId !== share.userId); })}><X /></button>}</span>)}{!draft.shares.length && <span className="vault-muted">{tr({ zh: '仅自己', en: 'Only you' })}</span>}</div>
-            {editable && <form className="vault-user-search" onSubmit={searchUsers}><SearchInput value={shareQuery} onChange={setShareQuery} placeholder={tr({ zh: '搜索好友', en: 'Search friends' })} className="vault-share-search" inputClassName="vault-input" /><button type="submit" className="vault-button" disabled={busy || shareQuery.trim().length < 2}><Search />{tr({ zh: '搜索', en: 'Search' })}</button></form>}
+            {editable && <div className="vault-user-search"><SearchInput value={shareQuery} onChange={setShareQuery} placeholder={tr({ zh: '搜索好友', en: 'Search friends' })} className="vault-share-search" inputClassName="vault-input" />{searchingUsers && <Loader2 className="vault-spin" aria-label={tr({ zh: '正在搜索', en: 'Searching' })} />}</div>}
+            {editable && shareSearchError && <p role="alert">{tr({ zh: '好友搜索失败，请稍后重试。', en: 'Could not search friends. Try again later.' })}</p>}
             {editable && shareResults.length > 0 && <div className="vault-user-results">{shareResults.map((result) => {
               const added = draft.shares.some((share) => share.userId === result.userId);
               return <div key={result.userId}><span><strong>{result.name}</strong><small>#{result.userId}{result.wcaId ? `  ${result.wcaId}` : ''}</small></span><button type="button" className="vault-button" disabled={!result.publicKey || added} onClick={() => { if (result.publicKey) updateDraft((item) => { item.shares.push({ userId: result.userId, name: result.name, publicKey: result.publicKey as JsonWebKey }); }); }}><UserPlus />{added ? tr({ zh: '已添加', en: 'Added' }) : result.publicKey ? tr({ zh: '添加', en: 'Add' }) : tr({ zh: '对方尚未启用接收', en: 'Receiving not enabled' })}</button></div>;

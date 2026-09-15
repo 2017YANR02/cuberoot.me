@@ -72,7 +72,7 @@
   align-items: stretch;
 }
 .colpi-search .colpi-search-input {
-  width: 56px;
+  width: 5.5em;
   text-align: center;
   text-transform: uppercase;
   font-size: 14px;
@@ -93,6 +93,8 @@
   align-items: center;
 }
 .colpi-search .colpi-search-btn:hover { background: #dde4ec; }
+
+.colpi-search-input.search-control--with-clear { padding-right: 30px; }
 
 .colpi-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
