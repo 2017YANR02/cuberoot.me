@@ -70,6 +70,7 @@ describe('the single live/replay 3D failure surface', () => {
     const canvas = host.querySelector('canvas');
     await draw(false, []);
     expect(host.querySelector('canvas')).toBe(canvas);
+    expect(host.querySelector('[role="status"]')).toBeNull();
     expect(state.dispose).not.toHaveBeenCalled();
     expect(state.setup).toHaveBeenLastCalledWith('R');
     await draw(true, ['F', 'U']);
@@ -84,7 +85,8 @@ describe('the single live/replay 3D failure surface', () => {
       facelets: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
     })));
     expect(host.querySelector('svg')).toBeNull();
-    expect(host.querySelector('[role="status"]')?.textContent).toBe('Syncing cube state…');
+    expect(host.textContent).toBe('');
+    expect(host.querySelector('.timer-live-cube-3d')?.getAttribute('aria-busy')).toBe('true');
     expect(state.mount).not.toHaveBeenCalled();
   });
   it('shows a failure without claiming to draw a cube, then retries the current move log', async () => {

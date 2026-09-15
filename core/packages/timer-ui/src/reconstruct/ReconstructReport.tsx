@@ -479,12 +479,6 @@ function ReconstructReportBody({
             <dd title={dt.toLocaleString()}>{dt.toLocaleDateString()}</dd>
           </div>
         )}
-        {solve.device && (
-          <div className="rc-summary-cell">
-            <dt>{tr({ zh: '魔方', en: 'Cube' })}</dt>
-            <dd className="rc-summary-cube" title={solve.device.name}>{solve.device.name}</dd>
-          </div>
-        )}
       </dl>
 
       {/* 读完那几个数之后想做的事,一行摆完:再打一遍、把这把发出去、拿到别的
