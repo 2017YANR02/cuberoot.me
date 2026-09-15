@@ -19,6 +19,58 @@ import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js'
 
 export const navSitesRoutes = new Hono();
 
+// Include legacy site tags so the existing site editor and the topic catalog agree.
+const TOPICS_SQL = `SELECT tag FROM nav_topics UNION
+  SELECT jsonb_array_elements_text(tags) AS tag FROM nav_sites`;
+
+navSitesRoutes.get('/nav/topics', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const rows = await query<{ tag: string }>(`${TOPICS_SQL} ORDER BY tag`);
+  return c.json(rows.map((row) => row.tag));
+});
+
+navSitesRoutes.on(['POST', 'PUT', 'DELETE'], '/nav/topics', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  await requireAdminOrApiKey(c);
+  const body = await c.req.json().catch(() => null);
+  const validTag = (value: unknown): value is string => typeof value === 'string'
+    && value === value.trim() && value.length > 0 && value.length <= 160 && !/[,，\r\n]/.test(value);
+  if (!validTag(body?.tag) || (c.req.method === 'PUT' && !validTag(body?.replacement))) {
+    return c.json({ error: 'Topic must contain 1–160 characters without commas or line breaks' }, 400);
+  }
+  const status = await withTransaction(async (tx) => {
+    // Also serialize against site edits while updating every association.
+    await tx('LOCK TABLE nav_topics, nav_sites IN SHARE ROW EXCLUSIVE MODE');
+    const rows = await tx<{ tag: string }>(TOPICS_SQL);
+    const tags = new Set(rows.map((row) => row.tag));
+    if (c.req.method !== 'POST' && !tags.has(body.tag)) return 404;
+    if (c.req.method === 'POST') {
+      if (tags.has(body.tag)) return 409;
+      await tx('INSERT INTO nav_topics (tag) VALUES (?)', [body.tag]);
+    } else if (c.req.method === 'PUT') {
+      if (body.tag === body.replacement) return 200;
+      if (tags.has(body.replacement)) return 409;
+      await tx(`UPDATE nav_sites SET tags = (
+        SELECT jsonb_agg(CASE WHEN value = ? THEN ? ELSE value END ORDER BY ordinal)
+        FROM jsonb_array_elements_text(tags) WITH ORDINALITY AS t(value, ordinal)
+      ) WHERE tags @> jsonb_build_array(?::text)`, [body.tag, body.replacement, body.tag]);
+      await tx('DELETE FROM nav_topics WHERE tag = ?', [body.tag]);
+      await tx('INSERT INTO nav_topics (tag) VALUES (?)', [body.replacement]);
+    } else {
+      await tx(`UPDATE nav_sites SET tags = (
+        SELECT jsonb_agg(value ORDER BY ordinal)
+        FROM jsonb_array_elements_text(tags) WITH ORDINALITY AS t(value, ordinal) WHERE value <> ?
+      ) WHERE tags @> jsonb_build_array(?::text)`, [body.tag, body.tag]);
+      await tx('DELETE FROM nav_topics WHERE tag = ?', [body.tag]);
+    }
+    return 200;
+  });
+  if (status === 404) return c.json({ error: 'Topic not found' }, 404);
+  if (status === 409) return c.json({ error: 'Topic already exists' }, 409);
+  return c.json({ ok: true });
+});
+
 const HOME_CARD_GROUPS: ReadonlyMap<string, readonly string[]> = new Map(
   SITE_DIRECTORY_GROUPS
     .filter((group) => group.placement !== 'footer')

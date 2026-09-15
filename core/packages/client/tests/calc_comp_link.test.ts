@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { calcCompetitionHref, hasEnteredCalcAttempt, wcaAttemptToCalcValue } from '@/lib/calc-link';
 import {
   extractCompetitionCalcAttempts,
+  competitionCalcAveragePR,
   mergeCompetitionCalcAttempts,
 } from '@/lib/calc-competition-source';
 import {
@@ -10,6 +11,20 @@ import {
 } from '@/app/[lang]/calc/_components/stores/calc_store';
 
 describe('calculator competition result links', () => {
+  it('uses the best official or live average of the exact person and event', () => {
+    const data = { users: { 4: { wcaid: '2025LIAN01' }, 7: { wcaid: 'OTHER' } }, resultsByRound: {
+      '333:2': [{ n: 4, a: 489 }], '333:f': [{ n: 4, a: 452 }, { n: 7, a: 390 }],
+      '222:f': [{ n: 4, a: 200 }],
+    } };
+    const lookup = { eventId: '333', roundTypeId: 'f', wcaId: '2025LIAN01', personNumber: 7 };
+    expect(competitionCalcAveragePR(data, lookup, 489)).toBe(452);
+    expect(competitionCalcAveragePR(data, lookup, 440)).toBe(440);
+    expect(competitionCalcAveragePR(data, { ...lookup, wcaId: 'MISSING' }, 489)).toBe(489);
+    expect(competitionCalcAveragePR({}, lookup, -1)).toBe(null);
+    expect(competitionCalcAveragePR({}, lookup, Number.NaN)).toBe(null);
+    expect(competitionCalcAveragePR({}, { ...lookup, eventId: '333fm' }, 2533)).toBe(2533);
+    expect(competitionCalcAveragePR({}, { ...lookup, eventId: '333mbf' }, 12345)).toBe(null);
+  });
   it('carries the exact result row and competition context', () => {
     const href = calcCompetitionHref({
       eventId: 'clock',

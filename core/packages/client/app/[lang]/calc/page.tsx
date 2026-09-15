@@ -32,8 +32,10 @@ import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { roundLabel } from '@/lib/wca-round-meta';
 import { compLinkProps } from '@/lib/comp-link';
+import { fetchWcaPerson } from '@/lib/wca-person-api';
 import {
   extractCompetitionCalcAttempts,
+  competitionCalcAveragePR,
   mergeCompetitionCalcAttempts,
   type CalcCompetitionData,
 } from '@/lib/calc-competition-source';
@@ -221,14 +223,30 @@ export function CalcPage() {
     const requestBaseline = [...(useCalcStore.getState().times[0] ?? [])];
     const controller = new AbortController();
 
+    // Explicit shared targets and edits during the request take priority over automatic PR.
+    let targetEdited = new URLSearchParams(window.location.search).has('target0')
+      || useCalcStore.getState().getTargetAvg(0) > 0;
+    const unsubscribe = useCalcStore.subscribe((state, previous) => {
+      if (state.targetAvgs !== previous.targetAvgs) targetEdited = true;
+    });
+
     void (async () => {
       try {
-        const response = await fetch(
+        const [response, profile] = await Promise.all([fetch(
           `/api/comp/${encodeURIComponent(comp)}?only=${encodeURIComponent(sourceEvent)}`,
           { signal: controller.signal },
-        );
+        ), wcaId ? fetchWcaPerson(wcaId).catch(() => null) : Promise.resolve(null)]);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json() as CalcCompetitionData;
+        if (controller.signal.aborted || useCalcStore.getState().event !== sourceEvent) return;
+        const target = competitionCalcAveragePR(data, {
+          eventId: sourceEvent, roundTypeId: round, wcaId,
+          personNumber: sourceUser ? Number(sourceUser) : null,
+        }, profile?.personal_records[sourceEvent]?.average?.best);
+        if (!targetEdited && target !== null) {
+          useCalcStore.getState().setTargetAvg(0, target);
+          useCalcStore.getState().saveToUrl();
+        }
         const incoming = extractCompetitionCalcAttempts(data, {
           eventId: sourceEvent,
           roundTypeId: round,
@@ -264,7 +282,7 @@ export function CalcPage() {
       }
     })();
 
-    return () => controller.abort();
+    return () => { controller.abort(); unsubscribe(); };
   }, [
     event,
     liveCode,

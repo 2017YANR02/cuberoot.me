@@ -13,9 +13,12 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download, Calculator } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
+import { ContinentIcon, RECORD_BADGE_CONTINENT } from '@/components/ContinentIcon';
+import { summarizeCompRecords } from '@/lib/comp-records';
 import { SearchInput } from '@/components/SearchInput';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { useCopy } from '@/hooks/useCopy';
+import { stripRecordNewsPrefix } from '@/lib/record-news';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryToIso2, loadFlagData, compFlagIso2 } from '@/lib/country-flags';
@@ -1492,6 +1495,14 @@ export default function CompDetailPage() {
   }, [data, currentRound]);
 
   const [pbMap, setPbMap] = useState<Record<string, PbByEvent | null>>({});
+  const recordCounts = useMemo(() => {
+    if (!data || !fullLoaded) return null;
+    return summarizeCompRecords(Object.values(data.resultsByRound).flat().map(result => {
+      const wcaId = data.users[String(result.n)]?.wcaid;
+      const pr = classifyPr(result, wcaId ? pbMap[wcaId] ?? null : null);
+      return { ...result, pS: pr.singleRank, pA: pr.averageRank };
+    }));
+  }, [data, fullLoaded, pbMap]);
 
   // 预热当前轮所有破 PR 成绩的 NR/WR 名次进缓存,使成绩弹窗打开时「秒出」(命中缓存即同步渲染)。
   // 一次 batch 请求;pbMap 到位后重跑以补全需 pb 才能判定的 PR。已缓存项自动跳过。
@@ -1960,6 +1971,9 @@ export default function CompDetailPage() {
           )
         ) : isPodium ? (
           <>
+            {recordCounts && <div className="comp-record-counts" title={tr({ zh: '全场所有轮次，单次与平均分别按最高纪录级别计数', en: 'All rounds; each single and average counts at its highest record level' })}>
+              {Object.entries(recordCounts).map(([tag, count]) => <span key={tag}><RecordBadge record={tag} /> {count}</span>)}
+            </div>}
             {recordNews.length > 0 && (
               <section className="comp-record-news" aria-labelledby="comp-record-news-heading">
                 <div className="comp-record-news-heading">
@@ -1967,7 +1981,10 @@ export default function CompDetailPage() {
                   <button
                     type="button"
                     className="comp-modal-copy-btn"
-                    onClick={() => newsCopy.copy(recordNews.map(news => tr(news.message)).join('\n\n'), slug)}
+                    onClick={() => newsCopy.copy(recordNews.map((news, index) => {
+                      const message = tr(news.message);
+                      return index === 0 ? `${message} | ${compNameTitle}` : stripRecordNewsPrefix(message);
+                    }).join('\n'), slug)}
                     title={tr({ zh: '复制全部纪录快讯', en: 'Copy all record news' })}
                     aria-label={tr({ zh: '复制全部纪录快讯', en: 'Copy all record news' })}
                   >
@@ -1986,9 +2003,10 @@ export default function CompDetailPage() {
                         <span>
                           {news.results.map((result, resultIndex) => (
                             <span className="comp-record-news-result" key={resultIndex}>
+                              {resultIndex > 0 && ' | '}
                               {tr(result.text)}{' '}
-                              <span className="comp-record-news-tag"><RecordBadge record={result.tag} />{result.plural && tr({ zh: '', en: 's' })}{result.rank && `/WR${result.rank}`}</span>
-                              {resultIndex === 0 && <> <span className="comp-record-news-person">{displayCuberName(news.person, isZh)}</span></>}
+                              <span className="comp-record-news-tag">{RECORD_BADGE_CONTINENT[result.tag.replace(/^F/, '')] && <ContinentIcon slug={RECORD_BADGE_CONTINENT[result.tag.replace(/^F/, '')]} />}<RecordBadge record={result.tag} />{result.plural && tr({ zh: '', en: 's' })}{result.rank && `/WR${result.rank}`}</span>
+                              {resultIndex === 0 && <> <span className="comp-record-news-person">{displayCuberName(news.person, isZh)} <Flag iso2={news.country} className="comp-flag" /></span></>}
                             </span>
                           ))}
                         </span>
@@ -2458,15 +2476,8 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                 className={`${cls} comp-row-clickable`}
                 onClick={() => onClickCuber(r.n)}
               >
-                <td className={`td-place${place === 1 ? ' is-gold' : place === 2 ? ' is-silver' : place === 3 ? ' is-bronze' : ''}`}>{place ?? '-'}</td>
-                <td className="td-person">
-                  <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
-                  <span
-                    className="cuber-name"
-                    title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}
-                  >
-                    {cuberName}
-                  </span>
+                <td className={`td-place${place === 1 ? ' is-gold' : place === 2 ? ' is-silver' : place === 3 ? ' is-bronze' : ''}`}>
+                  {place ?? '-'}
                   {calcHref && (
                     <Link
                       href={calcHref}
@@ -2479,6 +2490,15 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                       <Calculator size={13} strokeWidth={1.8} aria-hidden="true" />
                     </Link>
                   )}
+                </td>
+                <td className="td-person">
+                  <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
+                  <span
+                    className="cuber-name"
+                    title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}
+                  >
+                    {cuberName}
+                  </span>
                   {/* 行级编辑铅笔已移除:管理员经点成绩弹窗里的「编辑变更记录…」打开整条变更编辑器。 */}
                 </td>
                 {(() => {

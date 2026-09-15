@@ -689,7 +689,8 @@ td.is-pr {
   justify-content: center;
   width: 22px;
   height: 22px;
-  margin-left: -3px;
+  margin-left: 4px;
+  vertical-align: middle;
   border-radius: 4px;
   color: var(--muted-foreground);
   opacity: 0.58;
@@ -707,19 +708,30 @@ td.is-pr {
   opacity: 1;
 }
 
-/* CN 比赛固定选手列宽 — 容得下 3 个汉字或紧凑外国名 + 旗子,避免少数外国长名撑爆整列 */
-.comp-table-cn .th-person,
+/* 选手列按内容收缩,长名保留省略上限。 */
+.comp-table-cn .th-person { width: auto; }
 .comp-table-cn .td-person {
-  width: 120px;
-  max-width: 120px;
+  width: max-content;
+  max-width: none;
 }
 .comp-table-cn .td-person .cuber-name {
-  flex: 1;
+  flex: 0 1 auto;
+  max-width: 8em;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.comp-table thead th.th-place,
+.comp-table tbody td.td-place,
+.comp-table thead th.th-person,
+.comp-table tbody td.td-person {
+  padding-left: 6px;
+  padding-right: 6px;
+}
+.comp-table thead th.th-avg,
+.comp-table tbody td.td-avg { padding-left: 6px; }
 
 /* 管理员编辑铅笔:绝对定位 + 仅悬停显示,不挤占固定 110px 选手列(否则名字被压成「耿…」)。
    触屏没有 hover 且本就能直接点详细成绩改 → 隐藏铅笔。 */
@@ -815,6 +827,7 @@ td.is-pr {
 }
 .comp-records + .comp-pod-section-h { margin-top: 4px; }
 
+.comp-record-counts { display: flex; align-items: center; gap: 16px; margin: 12px 0 20px; font-size: 14px; white-space: nowrap; }
 .comp-record-news { margin-bottom: 26px; }
 .comp-record-news-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .comp-record-news-heading .comp-pod-section-h { margin: 0; }
@@ -823,7 +836,7 @@ td.is-pr {
 .comp-record-news-link > .comp-podium-icon { flex-shrink: 0; }
 .comp-record-news-link > span { min-width: 0; }
 .comp-record-news-link:hover { color: var(--accent); }
-.comp-record-news-result { display: block; }
+.comp-record-news-result { display: inline; }
 .comp-record-news-tag, .comp-record-news-person { white-space: nowrap; }
 
 /* 预排名「名次和」(多选项目) 表 */

@@ -6,6 +6,7 @@ import { CONTINENT_RECORD_ABBR, ISO2_TO_CONTINENT } from './continent';
 import { toWcaEventId } from './wca-events';
 import { wcaResultRowKey, type WcaResultRow, type WcaCompetition, type ChampionshipPodiumRow } from './wca-person-api';
 import { statsUrl } from './stats-base';
+import { apiUrl } from './api-base';
 
 // One catalog owns the rules shown in the directory and on earned badges.
 export const EXPLORER_ACHIEVEMENTS = {
@@ -326,6 +327,91 @@ export function statExplorerAchievements(kind: 'sweep' | 'calendar' | 'triplets'
 }
 
 export interface RecordHistoryBundle { updated: string; rows: { e: string; t: 's' | 'a'; v: number; l: string; p: string; c: string; d: string }[] }
+
+export interface FemalePersonRecord {
+  e: string; t: 's' | 'a'; v: number; l: string; c: string; d: string;
+  currentWorld?: boolean;
+  live?: boolean;
+  continent?: keyof typeof CONTINENT_RECORD_ABBR;
+}
+
+/** Each result contributes only to its highest achieved record level. */
+export function femaleRecordAchievements(rows: FemalePersonRecord[], nationalComplete = false, countryIso2 = '') {
+  const unique = new Map<string, FemalePersonRecord>();
+  const priority = (marker: string) => marker === 'FWR' ? 3 : marker === 'FNR' ? 1 : 2;
+  for (const row of rows) {
+    if (!(row.v > 0) || !ALL_EVENT_IDS.includes(row.e)
+      || ['333mbf', '333mbo'].includes(row.e) && row.t === 'a'
+      || !/^F(WR|CR|NR|AsR|AfR|ER|NAR|SAR|OcR)$/.test(row.l)) continue;
+    const key = `${row.e}:${row.t}:${row.c}:${row.v}`;
+    const old = unique.get(key);
+    if (!old || priority(row.l) > priority(old.l)
+      || priority(row.l) === priority(old.l) && old.live && !row.live) unique.set(key, row);
+  }
+  const history = new Map<string, { event: string; level: 'WR' | 'CR' | 'NR'; record: string; current: boolean; rows: FemalePersonRecord[] }>();
+  for (const row of unique.values()) {
+    const level = row.l === 'FWR' ? 'WR' : row.l === 'FNR' ? 'NR' : 'CR';
+    if (level === 'NR' && !nationalComplete) continue;
+    const matching = rows.filter(r => r.e === row.e && r.t === row.t && r.c === row.c && r.v === row.v);
+    const explicit = matching.find(r => Object.values(CONTINENT_RECORD_ABBR).some(abbr => r.l === `F${abbr}`));
+    const continent = row.continent ?? matching.find(r => r.continent)?.continent ?? ISO2_TO_CONTINENT[countryIso2.toUpperCase()];
+    const record = level === 'CR' ? explicit?.l ?? (continent ? `F${CONTINENT_RECORD_ABBR[continent]}` : 'FCR') : `F${level}`;
+    const key = `${row.e}:${record}`;
+    const entry = history.get(key) ?? { event: row.e, level, record, current: false, rows: [] };
+    entry.current ||= level === 'WR' && !!row.currentWorld && !CANCELLED_EVENT_IDS.has(row.e);
+    entry.rows.push(row);
+    history.set(key, entry);
+  }
+  return { count: [...unique.values()].filter(row => row.l === 'FWR').length,
+    history: [...history.values()],
+    current: [...unique.values()].filter(row => row.currentWorld && !CANCELLED_EVENT_IDS.has(row.e)) };
+}
+
+export async function fetchFemalePersonRecords(
+  person: { wca_id: string; name: string; country_iso2: string }, signal: AbortSignal,
+): Promise<{ rows: FemalePersonRecord[]; nationalComplete: boolean }> {
+  const root = '/stats/records/history/gender/f';
+  const get = async (url: string) => {
+    const response = await fetch(url, { signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+  };
+  const [history, news] = await Promise.all([
+    get(statsUrl(`${root}/persons.json`)).then((data: { persons: Record<string, FemalePersonRecord[]> }) => ({
+      rows: data.persons[person.wca_id] ?? [], nationalComplete: true,
+      best: new Map(Object.values(data.persons).flat().filter(r => r.currentWorld).map(r => [`${r.e}:${r.t}`, r.v])),
+    }))
+      .catch(async () => {
+        if (signal.aborted) return { rows: [], nationalComplete: false, best: new Map<string, number>() };
+        // Existing complete world/continent feeds remain usable before the new national artifact is published.
+        const feeds = await Promise.all(['world', ...['africa', 'asia', 'europe', 'northAmerica', 'oceania', 'southAmerica'].map(c => `continent/${c}`)]
+          .map(path => get(statsUrl(`${root}/${path}.json`)).catch(() => null))) as (RecordHistoryBundle | null)[];
+        const best = new Map<string, number>();
+        for (const r of feeds[0]?.rows ?? []) best.set(`${r.e}:${r.t}`, Math.min(best.get(`${r.e}:${r.t}`) ?? Infinity, r.v));
+        const continents = [undefined, 'AF', 'AS', 'EU', 'NA', 'OC', 'SA'] as const;
+        return { rows: feeds.flatMap((feed, index) => (feed?.rows ?? []).filter(r => r.p === person.wca_id)
+          .map(r => ({ ...r, l: `F${r.l}`, continent: continents[index], currentWorld: best.get(`${r.e}:${r.t}`) === r.v }))), nationalComplete: false, best };
+      }),
+    get(apiUrl('/v1/wca/recent-records')).catch(() => ({ records: [] })),
+  ]);
+  const recent = news.records as { tag: string; type: string; attemptResult: number; eventId: string; personName: string; countryIso2: string; competitionId: string }[];
+  const candidates = recent.filter(r => r.tag === 'FWR' && r.personName === person.name && r.countryIso2 === person.country_iso2);
+  const competitions = new Map<string, Promise<{ users?: Record<string, { wcaid?: string }>; resultsByRound?: Record<string, { n: number; a?: number; b?: number }[]> }>>();
+  const live = await Promise.all(candidates.map(async r => {
+    let pending = competitions.get(r.competitionId);
+    if (!pending) { pending = get(apiUrl(`/v1/cubing-live/${encodeURIComponent(r.competitionId)}?v=2`)); competitions.set(r.competitionId, pending); }
+    const data = await pending!.catch(() => null);
+    const number = Object.entries(data?.users ?? {}).find(([, u]) => u.wcaid === person.wca_id)?.[0];
+    const type = r.type === 'average' ? 'a' : 's';
+    const verified = number && Object.entries(data?.resultsByRound ?? {}).some(([key, rows]) => key.startsWith(`${r.eventId}:`)
+      && rows.some(row => String(row.n) === number && (type === 'a' ? row.a : row.b) === r.attemptResult));
+    return verified ? { e: r.eventId, t: type, v: r.attemptResult, l: 'FWR', c: r.competitionId, d: '', live: true, currentWorld: true } as FemalePersonRecord : null;
+  }));
+  return { nationalComplete: history.nationalComplete, rows: [...history.rows, ...live.filter((r): r is FemalePersonRecord => r !== null)].map(row => ({ ...row,
+    currentWorld: row.currentWorld && row.v <= (history.best.get(`${row.e}:${row.t}`) ?? Infinity) && !recent.some(r => r.tag === 'FWR' && r.eventId === row.e
+      && (r.type === 'average' ? 'a' : 's') === row.t && r.attemptResult < row.v),
+  })) };
+}
 export function standingRecordAchievements(bundle: RecordHistoryBundle, wcaId: string, record: 'WR' | 'CR'): ExplorerAchievement[] {
   const out = new Map<string, ExplorerAchievement>();
   const groups = new Map<string, RecordHistoryBundle['rows']>();

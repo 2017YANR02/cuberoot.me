@@ -9,6 +9,24 @@ interface CompetitionUser {
 interface CompetitionResult {
   n?: number;
   v?: number[];
+  a?: number;
+}
+
+/** Current PR includes completed live rounds that have not reached the WCA mirror yet. */
+export function competitionCalcAveragePR(
+  data: CalcCompetitionData, lookup: CalcCompetitionLookup, officialAverage?: number,
+): number | null {
+  if (lookup.eventId === '333mbf' || lookup.eventId === '333mbo') return null;
+  const user = Object.entries(data.users ?? {}).find(([key, person]) => lookup.wcaId
+    ? person.wcaid === lookup.wcaId
+    : (person.number ?? Number(key)) === lookup.personNumber);
+  const number = user ? user[1].number ?? Number(user[0]) : null;
+  const averages = [officialAverage, ...Object.entries(data.resultsByRound ?? {})
+    .filter(([key]) => key.startsWith(`${lookup.eventId}:`))
+    .flatMap(([, rows]) => rows.filter(row => number != null && row.n === number).map(row => row.a))]
+    .filter((value): value is number => typeof value === 'number' && Number.isSafeInteger(value) && value > 0);
+  // WCA averages, including FMC, already use the calculator's hundredths unit.
+  return averages.length ? Math.min(...averages) : null;
 }
 
 export interface CalcCompetitionData {
