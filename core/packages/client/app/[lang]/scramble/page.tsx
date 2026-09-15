@@ -9,6 +9,7 @@ import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
+import type { CSSProperties } from 'react';
 
 interface Card {
   to: string;
@@ -45,9 +46,12 @@ export default function ScrambleHubPage() {
             key={c.to}
             href={c.to}
             prefetch={false}
-            className={`scramble-hub-card scramble-hub-card--${c.size}`}
+            className={`scramble-hub-card scramble-hub-card--${c.size} scramble-hub-card--${c.area}`}
             data-site-surface="panel"
-            style={{ gridArea: c.area }}
+            style={{
+              gridArea: c.area,
+              '--scramble-card-art': `url("/scramble-card-art/${c.area}.webp")`,
+            } as CSSProperties}
           >
             <div className="scramble-hub-card-title">{tr(c).title}</div>
           </Link>
@@ -84,6 +88,9 @@ const INLINE_CSS = `
   gap: 0.75rem;
 }
 .scramble-hub-page .scramble-hub-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: flex;
   align-items: flex-end;
   min-width: 0;
@@ -92,6 +99,55 @@ const INLINE_CSS = `
   border-radius: 12px;
   color: var(--foreground);
   text-decoration: none;
+}
+/* Decorative cutouts retain their own alpha; the lower fade leaves room for labels. */
+.scramble-hub-page .scramble-hub-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--scramble-card-art);
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: cover;
+  opacity: 0.46;
+  mask-image: linear-gradient(to bottom, black 25%, transparent 85%);
+}
+.scramble-hub-page .scramble-hub-card--generate::before {
+  background-position: right 0.75rem top 0.75rem;
+  background-size: auto 105%;
+}
+.scramble-hub-page .scramble-hub-card--solve::before {
+  background-position: right 0.75rem top -0.75rem;
+  background-size: auto 125%;
+  opacity: 0.58;
+  mask-image: linear-gradient(120deg, transparent 8%, black 70%);
+}
+.scramble-hub-page .scramble-hub-card--pattern::before {
+  background-position: center 0.75rem;
+  background-size: 100% auto;
+  opacity: 0.58;
+}
+.scramble-hub-page .scramble-hub-card--batch::before {
+  background-position: center 0.75rem;
+  background-size: 92% auto;
+}
+.scramble-hub-page .scramble-hub-card--symmetry::before {
+  background-position: left 0.5rem top 0.5rem;
+  background-size: auto 88%;
+}
+.scramble-hub-page .scramble-hub-card--hardest::before {
+  background-position: center 0.25rem;
+  background-size: 110% auto;
+}
+.scramble-hub-page .scramble-hub-card--mcc::before {
+  background-position: left 0.5rem top 0.5rem;
+  background-size: auto 155%;
+}
+.scramble-hub-page .scramble-hub-card--subsolver::before {
+  background-position: right -0.25rem top -0.25rem;
+  background-size: auto 130%;
 }
 .scramble-hub-page .scramble-hub-card:hover {
   border-color: var(--accent);
