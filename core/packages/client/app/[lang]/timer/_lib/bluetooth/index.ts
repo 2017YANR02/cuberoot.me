@@ -1028,18 +1028,14 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       throw new BluetoothConnectError('discover', `Unrecognised smart cube: ${device.name ?? '(no name)'}`);
     }
 
-    // Resolve a MAC for MAC-keyed drivers: advertisement → saved → device-name
-    // → manual prompt. Persist whatever we settle on. If still unknown the
-    // driver falls back to a zero-MAC and simply won't decode — the UI then
-    // offers a manual-MAC retry.
+    // MY32 requires a user-provided MAC; only reuse a previously validated
+    // cache entry. Other brands retain advertisement/name-based discovery.
     let mac: string | null = null;
     if (driver.needsMac) {
-      mac = normalizeMac(advMac)
+      mac = driver.brand === 'moyu32' ? savedMac(device.name) : normalizeMac(advMac)
         ?? savedMac(device.name)
         ?? parseMacFromName(device.name)
-        // Vendor-documented per-model default derived from the device name
-        // (MoYu32's `WCU_MY32_XXYY` → `CF:30:16:00:XX:YY`). Only brands that
-        // publish such a prefix implement this — it is never an OUI guess.
+        // Brand-specific name fallback, never used for MY32.
         ?? driver.defaultMac?.(device)
         ?? null;
       if (!mac && onNeedMacRef.current) {
@@ -1218,8 +1214,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         ?? nameDriver.defaultMac?.(device)
         ?? null
       : null;
-    const shouldWatchMac = nameDriver === null
-      || (nameDriver.needsMac === true && reusableMac === null);
+    const shouldWatchMac = nameDriver?.brand !== 'moyu32' && (nameDriver === null
+      || (nameDriver.needsMac === true && reusableMac === null));
     setAdvertisementDiagnostic(shouldWatchMac
       ? {
           phase: 'advertisement',
