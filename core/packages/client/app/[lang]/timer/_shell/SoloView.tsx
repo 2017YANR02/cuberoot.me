@@ -3082,13 +3082,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               title={tr(TIMER_SCRAMBLE_CLICK_TITLE_COPY[scrambleClickEffect])}
               verificationLabels={{
                 copiedCorrection: tr({ zh: '已复制原打乱', en: 'Copied the scramble' }),
-                correction: '',
-                correctionTitle: tr({
-                  zh: '拧歪了。这些不是上面那条打乱,而是从魔方现在的状态回到同一个打乱状态的步骤,拧完成绩记的还是原打乱。',
-                  en: 'Off the scramble path. These moves are not the printed scramble — they lead from where the cube is now to the same scrambled state, and the solve still records the original scramble.',
-                }),
-                mismatch: tr({ zh: '与打乱不符', en: 'Doesn’t match' }),
-                ready: '',
               }}
             >
               {/* 「按难度生成」的打乱 + 答案(只在该来源下有 meta 时出现)。 */}
