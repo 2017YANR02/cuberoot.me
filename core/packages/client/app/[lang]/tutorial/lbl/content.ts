@@ -5,8 +5,132 @@ const text = (zh: string, en: string): Text => ({ zh, en });
 const example = (zh: string, en: string, alg: string, hintZh: string, hintEn: string, setup?: string): LblExample => ({ title: text(zh, en), hint: text(hintZh, hintEn), alg, setup });
 export const RIGHT = "R U R' U'";
 export const LEFT = "L' U' L U";
-export const RIGHT_SUNE = "R U R' U R U2 R'";
-export const LEFT_SUNE = "L' U' L U' L' U2 L";
+export const MIDDLE_FRONT_MATCH = "U R U' R' U' F' U F";
+export const MIDDLE_RIGHT_MATCH = "R' F' R U R U' R' F";
+export const YELLOW_CROSS = "F R U R' U' F'";
+export const YELLOW_FACE_FISH = "R' U' R U' R' U2 R";
+export const CORNER_POSITION = "R U R' F' R U R' U' R' F R2 U' R'";
+export const EDGE_POSITION = "M2 U M' U2 M U M2";
+export const DAISY_CHALLENGE_PROMPT = text('动用你聪明的脑袋，如何拼成这样一朵小花？', 'Put your clever brain to work: how would you make a daisy like this?');
+export const DAISY_HINT_INTRO = text('先观察白棱的位置和白色朝向，再选择对应的处理方法。', 'First inspect where the white edge is and which way the white sticker faces, then choose the matching move.');
+export const LBL_LESSON_STAGE_IDS = [
+  'daisy',
+  'cross',
+  'corners',
+  'middle',
+  'yellow-cross',
+  'yellow-face',
+  'corner-position',
+  'edge-position',
+] as const;
+export type LblLessonStageId = typeof LBL_LESSON_STAGE_IDS[number];
+export type LblLessonRun = {
+  scramble: string;
+  stages: Readonly<Record<LblLessonStageId, string>>;
+};
+
+// These source scrambles were generated offline with cubing's standard 3x3 random-state
+// generator. Keep the small pool in the lesson so the selected scramble can stay fixed
+// while the learner moves between steps; the later stage algorithms can be revised
+// independently without adding a server-side solve request.
+// Each `daisy` entry below is the offline `DaisySolverWasm` result for its scramble.
+// Each `cross` entry below is a fixed beginner trace generated and validated offline
+// from that daisy state: align with U, then turn the matching side 180 degrees.
+const repeatAlg = (alg: string, count: number): string => Array.from({ length: count }, () => alg).join(' ');
+type Regrip = '' | 'y' | 'y2' | "y'";
+const regripAlg = (regrip: Regrip, alg: string): string => {
+  const inverse = regrip === 'y' ? "y'" : regrip === "y'" ? 'y' : regrip;
+  return [regrip, alg, inverse].filter(Boolean).join(' ');
+};
+const rightCornerCycle = (regrip: Regrip, count: number): string => regripAlg(regrip, repeatAlg(RIGHT, count));
+export const LBL_LESSON_RUNS: readonly LblLessonRun[] = [
+  {
+    scramble: "U R' B2 U B L' U F' R' U L2 D' L2 B2 R2 B2 D2 F2 L2 R",
+    stages: {
+      daisy: "U F' L' F B R'",
+      cross: 'U L2 F2 R2 B2',
+      corners: [
+        rightCornerCycle("y'", 1),
+        "U'",
+        repeatAlg(RIGHT, 3),
+        "U'",
+        rightCornerCycle("y'", 5),
+        rightCornerCycle('y2', 5),
+      ].join(' '),
+      middle: [
+        regripAlg("y'", MIDDLE_RIGHT_MATCH),
+        regripAlg('y', MIDDLE_RIGHT_MATCH),
+        regripAlg('y2', MIDDLE_RIGHT_MATCH),
+      ].join(' '),
+      'yellow-cross': ["U'", YELLOW_CROSS, YELLOW_CROSS].join(' '),
+      'yellow-face': ['U2', YELLOW_FACE_FISH, "U'", YELLOW_FACE_FISH, 'U2', YELLOW_FACE_FISH].join(' '),
+      'corner-position': ['U', CORNER_POSITION, 'U', CORNER_POSITION].join(' '),
+      'edge-position': ['U', EDGE_POSITION, "U'"].join(' '),
+    },
+  },
+  {
+    scramble: "B R' U' F' L2 F' U' L' D L U2 F' L2 F' R2 B U2 F2 R2 U2 F2",
+    stages: {
+      daisy: 'U2 L2 R F B',
+      cross: "U L2 U' R2 B2 U' F2",
+      corners: [
+        rightCornerCycle('y', 1),
+        'U',
+        repeatAlg(RIGHT, 5),
+        'U2',
+        rightCornerCycle("y'", 1),
+        rightCornerCycle('y2', 1),
+        "U'",
+        rightCornerCycle('y', 5),
+      ].join(' '),
+      middle: [
+        'U2',
+        MIDDLE_RIGHT_MATCH,
+        regripAlg("y'", MIDDLE_FRONT_MATCH),
+        regripAlg('y', MIDDLE_FRONT_MATCH),
+        "U'",
+        regripAlg('y2', MIDDLE_FRONT_MATCH),
+      ].join(' '),
+      'yellow-cross': '',
+      'yellow-face': [YELLOW_FACE_FISH, 'U', YELLOW_FACE_FISH, 'U2', YELLOW_FACE_FISH].join(' '),
+      'corner-position': ['U2', CORNER_POSITION].join(' '),
+      'edge-position': ['U', EDGE_POSITION, "U'"].join(' '),
+    },
+  },
+  {
+    scramble: "L2 D' R' D' R F2 B2 D F D2 R2 D2 B' R2 L2 B2 D2 R2 L U",
+    stages: {
+      daisy: "U D F' B R",
+      cross: "U' R2 U L2 U' B2 U' F2",
+      corners: [
+        'U',
+        repeatAlg(RIGHT, 3),
+        rightCornerCycle('y2', 1),
+        "U'",
+        rightCornerCycle("y'", 5),
+        rightCornerCycle('y', 1),
+        "U'",
+        rightCornerCycle('y2', 5),
+        rightCornerCycle('y', 1),
+      ].join(' '),
+      middle: [
+        regripAlg('y2', MIDDLE_FRONT_MATCH),
+        "U'",
+        MIDDLE_RIGHT_MATCH,
+        'U2',
+        regripAlg("y'", MIDDLE_FRONT_MATCH),
+        "U'",
+        regripAlg('y', MIDDLE_RIGHT_MATCH),
+        'U2',
+        regripAlg('y2', MIDDLE_FRONT_MATCH),
+      ].join(' '),
+      'yellow-cross': ['U2', YELLOW_CROSS, YELLOW_CROSS].join(' '),
+      'yellow-face': ['U', YELLOW_FACE_FISH, "U'", YELLOW_FACE_FISH, 'U2', YELLOW_FACE_FISH].join(' '),
+      'corner-position': ['U', CORNER_POSITION, CORNER_POSITION].join(' '),
+      'edge-position': ["U'", EDGE_POSITION, 'U'].join(' '),
+    },
+  },
+];
 export const LBL_STEPS: Step[] = [
   {
     id: 'structure', title: text('结构与记号', 'Structure and notation'),
@@ -50,75 +174,77 @@ export const LBL_STEPS: Step[] = [
   {
     id: 'corners', title: text('底层（角）', 'First-layer corners'), goal: text('复原白色底层和侧面第一行。', 'Solve the white layer and the bottom row of each side.'),
     paragraphs: [
-      text('找顶层带白色的角，观察另外两种颜色，把它放在对应两个中心之间的上方。白格朝右用右公式，朝左用左公式。', 'Find a white corner in the top layer. Use its other two colors to place it above the slot between the matching centers. Use the right trigger for white facing right, or the left trigger for white facing left.'),
-      text('白格朝上时，把目标槽放在右前方，连续做三遍右公式。若白角已在底层但位置或方向错误，把它放右前方，先做右公式取出，再重新对色插入。', 'If white faces up, put its destination at front-right and perform the right trigger three times. If a corner is trapped incorrectly in the bottom, bring it to front-right, use the right trigger to eject it, then realign and insert.'),
+      text('找顶层带白色的角，观察另外两种颜色，把它放在对应两个中心之间的上方。先转体，把目标槽放到右前下，再把白色角块放到右前上；只用右公式反复插入。', 'Find a white corner in the top layer. Use its other two colors to place it above the matching slot. First rotate the whole cube so the target slot is bottom-front-right, then put the white corner at top-front-right and repeatedly use only the right trigger.'),
+      text('白格朝上时，把目标槽放到右前下，白色角块放到右前上，连续做三遍右公式。白格朝向不同，就选择 R U R\' U\' 或 U R U\' R\' 重复，直到白色贴纸朝下、两侧颜色也对齐。若白角已在底层但位置或方向错误，把它所在的槽转到右前下，先做一次右公式取出，再重新对色插入；已经正确归位的角直接跳过。', 'If white faces up, put the target slot at bottom-front-right, place the white corner at top-front-right, and do the right trigger three times. For another white orientation, repeat either R U R\' U\' or U R U\' R\' until the white sticker faces down and both side colors match. If a white corner is trapped incorrectly in the bottom, rotate its slot to bottom-front-right, use one right trigger to eject it, then realign and insert it; skip a corner that is already solved.'),
     ],
     examples: [
       example('白朝右', 'White faces right', RIGHT, '角的另外两色对齐右前方两个中心。', 'Match the corner’s other colors to the front and right centers.'),
       example('底层白角放右', 'Eject a bottom corner', RIGHT, '先把错误角放在右前下方；本例播放后角被取出，下一次再按顶层情况处理。', 'Place the incorrect corner at bottom-front-right. This demo ejects it; then solve it as a top-layer case.', `${RIGHT} ${RIGHT}`),
-      example('白朝左', 'White faces left', LEFT, '目标槽在左前方，另外两色分别对应前、左中心。', 'The destination is front-left; match the other colors to the front and left centers.'),
-      example('白朝上', 'White faces up', `${RIGHT} ${RIGHT} ${RIGHT}`, '目标槽放右前方，完整做三遍，中途不要转体。', 'Keep the target at front-right and do all three triggers without rotating the cube.'),
+      example('转体到右前', 'Regrip to front-right', `y ${RIGHT} y'`, '先把目标槽转到右前下，仍然只做右公式。', 'Turn the target slot to bottom-front-right, then use only the right trigger.'),
+      example('白朝上', 'White faces up', `${RIGHT} ${RIGHT} ${RIGHT}`, '目标槽放右前下，完整做三遍右公式。', 'Put the target slot at bottom-front-right and do all three right triggers.'),
     ],
   },
   {
     id: 'middle', title: text('中层（棱）', 'Middle-layer edges'), goal: text('把不带黄色的棱放进中层。', 'Insert edges without yellow into the middle layer.'),
     paragraphs: [
-      text('在顶层找不含黄色的棱，让前面的颜色对齐同色中心，形成倒 T。看棱的顶色对应左边还是右边中心，选择相应公式。', 'Find a top-layer edge without yellow. Match its front color with the front center to make an upside-down T. Its top color determines whether it belongs on the left or right.'),
-      text('去右：右手拨、右公式、左转体、左公式。去左：左手拨、左公式、右转体、右公式。中层若卡着错误棱，把它放右前方，做一次去右公式取出，再对色归位。', 'To the right: U, right trigger, y′, left trigger. To the left: U′, left trigger, y, right trigger. If an incorrect edge is stuck in the middle, place it at front-right and eject it with the right insertion, then align and solve it.'),
+      text('在顶层找不含黄色的棱，先让一侧颜色对齐同色中心，形成倒 T。若正面颜色已经匹配，棱块应去右侧，使用第一公式：U R U\' R\' U\' F\' U F。若右侧颜色已经匹配，棱块应去左侧，使用第二公式：R\' F\' R U R U\' R\' F。', 'Find a top-layer edge without yellow and match one side with its center to make an upside-down T. If the front color matches, the edge belongs on the right: use the first sequence, U R U\' R\' U\' F\' U F. If the right color matches, the edge belongs on the left: use the second sequence, R\' F\' R U R U\' R\' F.'),
+      text('用 U、U\' 或 U2 把目标棱放到正确的上层位置；遇到后面或左面的情况，先用 y、y\' 或 y2 转体，再按同样的两套公式处理。中层若卡着错误棱，把它转到右前方，用任意一套公式先取出，再重新对色归位。', 'Use U, U\' or U2 to place the target edge in the correct top-layer position. For a back- or left-side case, first use y, y\' or y2 to regrip, then use the same two sequences. If a wrong edge is stuck in the middle, bring it to front-right, eject it with either sequence, then realign and insert it.'),
     ],
     examples: [
-      example('去右', 'Insert right', `U ${RIGHT} y' ${LEFT}`, '前色对中心，顶色对应右中心。', 'Match the front color; the top color belongs on the right.'),
-      example('中层非黄棱放右', 'Eject a middle edge', `U ${RIGHT} y' ${LEFT}`, '本例从错误中层棱开始；播放后重新找顶层不带黄的棱。', 'This starts with a misplaced middle edge. After playing, find a top edge without yellow again.', `U ${RIGHT} y' ${LEFT}`),
-      example('去左', 'Insert left', `U' ${LEFT} y ${RIGHT}`, '前色对中心，顶色对应左中心。', 'Match the front color; the top color belongs on the left.'),
+      example('正面颜色匹配', 'Front color matches', MIDDLE_FRONT_MATCH, '正面颜色对中心，棱块去右侧。', 'The front color matches its center; insert the edge to the right.'),
+      example('右侧颜色匹配', 'Right-side color matches', MIDDLE_RIGHT_MATCH, '右侧颜色对中心，棱块去左侧。', 'The right-side color matches its center; insert the edge to the left.'),
+      example('转体适配其他方向', 'Regrip for other sides', `y ${MIDDLE_FRONT_MATCH} y'`, '后面、左面的情况先转体，再使用同一套公式。', 'For back- or left-side cases, regrip first, then use the same sequence.'),
     ],
   },
   {
     id: 'yellow-cross', title: text('黄十字（棱色向）', 'Yellow cross'), goal: text('只看顶层四条棱的黄色，不管角块。', 'Look only at the four yellow edge stickers, ignoring the corners.'),
     paragraphs: [
-      text('横线：把两条黄色棱摆成左右横线。三点半：把黄色棱摆在后方和左方。点：四条棱都不朝黄，先做大 F 公式，再观察转成三点半拿方，做小 f 公式。', 'Line: hold the yellow edges left and right. L shape: put the yellow edges at the back and left. Dot: no edge faces yellow up; use the F sequence, then inspect and hold the resulting L correctly before using the f sequence.'),
-      text('大 F：压前层、右公式、提回。小 f：同时压前面两层、右公式、双层提回。已经是黄十字就跳过。合法状态不会只出现一条或三条朝黄的顶棱。', 'F sequence: lower the front, right trigger, restore the front. The f sequence uses the front two layers. Skip if the cross is already formed. A legal state cannot have exactly one or three yellow-up top edges.'),
+      text('先观察顶层黄色棱块：如果是镜像 L，就把两条黄色棱放在左侧和后侧；如果是一字形，就把两条黄色棱摆成左右横线。已经是黄色十字时直接跳过。', 'First inspect the yellow top edges. For the mirrored L, put the two yellow edges at the left and back. For the line, hold the two yellow edges horizontally, left and right. If the yellow cross is already complete, skip this step.'),
+      text('做一遍固定公式：F R U R\' U\' F\'。然后观察黄色面的形状：变成一字形时把一字横放，变成镜像 L 时重新把 L 放到左后方，再做一遍。重复“观察—调整—公式”，直到出现黄色十字。', 'Use the fixed sequence once: F R U R\' U\' F\'. Then inspect the yellow face. If it becomes a line, hold the line horizontally; if it becomes the mirrored L, put the L back at the upper-left of the yellow face. Repeat “inspect, adjust, sequence” until the yellow cross appears.'),
     ],
     examples: [
-      example('横线', 'Line', `F ${RIGHT} F'`, '两条黄色棱左右横放。', 'Hold the two yellow edges horizontally, left and right.'),
-      example('三点半', 'L shape', `f ${RIGHT} f'`, '黄色棱在后和左；f 是前面两层一起转。', 'Yellow edges are at back and left; f turns two layers.'),
-      example('点', 'Dot', `F ${RIGHT} F' f ${RIGHT} f'`, '演示为两段连做；拿真实魔方时，第一段后重新看三点半的位置。', 'The demo combines both sequences; on your cube, inspect the L position after the first sequence.'),
+      example('镜像 L', 'Mirrored L', YELLOW_CROSS, '两条黄色棱在左侧和后侧，做一次后重新观察。', 'Put the yellow edges at the left and back, then inspect again after one sequence.'),
+      example('一字形', 'Line', YELLOW_CROSS, '两条黄色棱左右横放，做一次。', 'Hold the two yellow edges horizontally, left and right, then do one sequence.'),
+      example('重复观察', 'Repeat and inspect', `${YELLOW_CROSS} U ${YELLOW_CROSS}`, '第一遍后重新拿方；一字横放或镜像 L 放左后，再做公式。', 'After the first sequence, regrip: hold the line horizontally or the mirrored L at the upper-left, then repeat.'),
     ],
   },
   {
-    id: 'yellow-face', title: text('黄面（角色向）', 'Yellow face'), goal: text('让四个顶角的黄色都朝上。', 'Turn all four yellow corner stickers upward.'),
+    id: 'yellow-face', title: text('黄面（小鱼公式）', 'Yellow face: fish sequence'), goal: text('让顶面四个角的黄色全部朝上。', 'Turn all four top-layer corner stickers yellow-side up.'),
     paragraphs: [
-      text('数顶面还没有朝黄的角。三个时为鱼形：右鱼把鱼头放左前方，左鱼放右前方。鱼头是唯一黄色朝上的顶角。根据下面动画选择右鱼或左鱼公式。', 'Count corners that are not yellow up. Three means a fish: hold the right Sune’s head at front-left, or the left Sune’s head at front-right. The head is the only yellow-up corner. Match the animation to choose the correct Sune.'),
-      text('两个时转 U，让左手拇指放在前面左上角时碰到黄色；四个时转 U，让这个位置不是黄色，再做右鱼公式。做完重新数角、重新拿方，必要时重复。', 'With two unsolved corners, turn U until a left thumb at the front face’s upper-left corner touches yellow. With four, turn U until that position is not yellow, then do right Sune. Recount and reposition after each sequence; repeat as needed.'),
-      text('黄十字和前两层应一直保留。只有一个顶角方向错误不属于正常转动可达的情况；先检查是否装错或被单独拧角。', 'The yellow cross and first two layers should remain solved. A single twisted corner is not reachable through legal turns; check for a twisted or incorrectly assembled corner.'),
+      text('先找一个黄色没有朝上的顶层角块，把这个角块的黄色贴纸放到左前方，并让黄色贴纸朝向前方。', 'Find a top-layer corner whose yellow sticker is not facing up. Put that yellow sticker at the front-left and face it toward the front.'),
+      text('先做小鱼公式：R\' U\' R U\' R\' U2 R。做完观察顶面，直到出现小鱼。小鱼形状是顶面只有一个黄色角朝上。', 'First use the small-fish sequence: R\' U\' R U\' R\' U2 R. Inspect the top face until the small fish appears. The small-fish pattern has exactly one yellow corner facing up.'),
+      text('出现小鱼后，把“鱼头”（顶面唯一朝上的黄色角）朝向左前方，再做同一个公式。每做完一次，都重新把鱼头朝向左前方并重复公式，直到顶面四个角的黄色全部朝上。黄十字和前两层应保持不变。', 'Once the fish appears, point its “head”—the only yellow corner facing up—toward the front-left and do the same sequence again. After each sequence, put the fish head at the front-left again and repeat until all four top-layer corners are yellow-side up. Keep the yellow cross and first two layers solved.'),
     ],
     examples: [
-      example('右鱼', 'Right Sune', RIGHT_SUNE, '三个角未朝黄，鱼头在左前方；前面右上角是黄色。', 'Three corners are not yellow up. Head at front-left; yellow faces front at upper-right.'),
-      example('左鱼', 'Left Sune', LEFT_SUNE, '三个角未朝黄，鱼头在右前方；前面左上角是黄色。', 'Three corners are not yellow up. Head at front-right; yellow faces front at upper-left.'),
-      example('两角未朝黄', 'Two unsolved corners', RIGHT_SUNE, '左拇指碰黄，做一次右鱼变成鱼形，再重新拿方。', 'Touch yellow with the left thumb; one right Sune makes a fish. Reposition afterward.', `(${LEFT_SUNE} U2 ${RIGHT_SUNE})'`),
-      example('四角未朝黄', 'Four unsolved corners', RIGHT_SUNE, '左拇指不碰黄，先转成鱼形，再选择对应鱼公式。', 'The left thumb does not touch yellow. Make a fish first, then choose the matching Sune.', `(${RIGHT_SUNE} U ${RIGHT_SUNE})'`),
+      example('黄色贴纸放左前', 'Yellow sticker at front-left', YELLOW_FACE_FISH, '未归位角的黄色贴纸朝向前方，并位于左前方。', 'Face the unsolved corner’s yellow sticker toward the front at the front-left.'),
+      example('出现小鱼', 'Small fish appears', YELLOW_FACE_FISH, '小鱼出现后，把鱼头朝向左前方，再做同一个公式。', 'After the small fish appears, point its head toward the front-left and do the same sequence.'),
+      example('重复直到顶面全黄', 'Repeat until the top is yellow', `${YELLOW_FACE_FISH} U ${YELLOW_FACE_FISH} U2 ${YELLOW_FACE_FISH}`, '每次都把鱼头重新朝向左前方，直到顶面全部为黄色。', 'Point the fish head toward the front-left each time until the whole top is yellow.'),
     ],
   },
   {
     id: 'corner-position', title: text('角位置', 'Position the corners'), goal: text('让顶层每个角回到正确的位置。', 'Put every top-layer corner in its correct position.'),
     paragraphs: [
-      text('看四个侧面顶行的两个角：同色的一对叫眼睛。有眼睛就把它放在左侧，做下面的公式；没有眼睛就任选一面先做一次，再找眼睛放左重做。', 'Inspect the two top corner stickers on each side. A matching pair forms headlights. Put headlights on the left and use the sequence below. With no headlights, do it once from any side, then put the new pair on the left and repeat.'),
-      text('原图把它叫作 L 公式。做完转 U 对齐角与侧面中心；四个角都已在正确位置时直接跳过。', 'The source calls this the L algorithm. Afterward, turn U to align the corners with their side centers. Skip this step if all corners are already correctly placed.'),
+      text('观察四个侧面的顶行。一个面两侧的角块颜色一致，像一只眼睛，这就叫“眼”；如果这个面的三个顶行方块颜色一致，也算一只眼。', 'Inspect the top row on each side. Matching colors on the two corner blocks look like an eye; if all three stickers in that top row match, that also counts as an eye.'),
+      text("有眼时把眼放在左边，做公式：R U R' F' R U R' U' R' F R2 U' R'。无眼时任选一面先做一次；出现眼后把眼放在左边，再做同一个公式。", "When there is an eye, put it on the left and use R U R' F' R U R' U' R' F R2 U' R'. With no eye, use the same formula once from any side; when an eye appears, put it on the left and use the formula again."),
+      text('每做完一次都重新观察，按“无眼先做一次、有眼放左边”的方法继续，直到四个顶层角块的位置全部正确。角块归位后，黄色面和前两层应保持不变；顶层侧面的颜色需要时最后用 U 对齐。', 'Inspect again after every sequence. Continue with “use it once with no eye, then put the eye on the left” until all four top-layer corners are in the correct positions. Keep the yellow face and first two layers solved; use U at the end to align the side colors if needed.'),
     ],
     examples: [
-      example('眼放左', 'Headlights on the left', "R U R' F' R U R' U' R' F R2 U' R'", '左侧两个顶角的侧贴纸同色，完整播放后再对齐 U。', 'The left-side top corner stickers match. Complete the sequence, then align U.'),
-      example('无眼', 'No headlights', "R U R' F' R U R' U' R' F R2 U' R'", '先做一次制造眼睛；不是做一次就一定复原。', 'First create headlights; this case is not expected to solve in one pass.', "(R U R' F' R U R' U' R' F R2 U' R' U R U R' F' R U R' U' R' F R2 U' R')'"),
+      example('眼放左', 'Eye on the left', CORNER_POSITION, '一个面两侧的角块颜色一致像一只眼睛；三个顶行方块颜色一致也算眼。把眼放左后做公式。', 'Matching colors on the two corner blocks look like an eye; a full three-sticker top row also counts. Put the eye on the left, then use the sequence.'),
+      example('无眼', 'No eye', CORNER_POSITION, '没有眼时任选一面先做一次；出现眼后把眼放左，再重复同一公式。', 'With no eye, use the sequence once from any side. When an eye appears, put it on the left and repeat the same sequence.'),
+      example('重复直到角块归位', 'Repeat until corners are positioned', `${CORNER_POSITION} U ${CORNER_POSITION}`, '每次重新找眼并放左，直到四个角块的位置都正确。', 'Find the eye and put it on the left again each time until all four corners are positioned.'),
     ],
   },
   {
-    id: 'edge-position', title: text('棱位置', 'Position the edges'), goal: text('完成最后三条或四条棱，复原整颗魔方。', 'Solve the final three or four edges to finish the cube.'),
+    id: 'edge-position', title: text('棱位置', 'Position the edges'), goal: text('完成最后四条棱，复原整颗魔方。', 'Solve the final four edges to finish the cube.'),
     paragraphs: [
-      text('先对齐顶角，寻找顶行三个色块同色的一面，叫作墙。把墙放后面，看前面顶棱应去左还是去右，选择下面的组合。', 'Align the top corners first. Find a side whose three top stickers match: the solved wall. Hold it at the back. Check whether the front top edge belongs on the left or right, then choose the corresponding combination.'),
-      text('前棱去左：右鱼公式、U、左鱼公式，最后 U′ 对齐。前棱去右：左鱼公式、U′、右鱼公式，最后 U 对齐。两次鱼公式之间不要转体，只转指定的 U 或 U′。', 'Front edge goes left: right Sune, U, left Sune, then U′ to align. Front edge goes right: left Sune, U′, right Sune, then U to align. Keep the same grip between the Sunes; make only the indicated U or U′ adjustment.'),
-      text('没有墙时先任选一面，完整做一次任意组合；再把出现的墙放后面重做。最后转 U 对齐四个侧面，检查六面全部复原。', 'With no wall, do either complete combination from any side. Then hold the new wall at the back and solve again. Finish with U alignment if needed, and check all six faces.'),
+      text('最后一步有两种情况：四只眼睛和三只眼睛。先观察四个侧面的顶行，确认眼睛的数量。', 'There are two cases in the last step: four eyes and three eyes. First inspect the top row on all four sides and count the eyes.'),
+      text("三只眼睛时，把中间的眼睛对着自己，然后做公式：M2 U M' U2 M U M2。做一次或者两次；每次做完都重新观察，直到完全复原。", "With three eyes, face the middle eye toward you and use M2 U M' U2 M U M2. Do it once or twice, inspecting the cube after each sequence until it is fully solved."),
+      text('如果有四只眼睛，先做一遍同一个公式，进入三只眼睛的状态；然后按上面的方法，把中间的眼睛对着自己继续做。M2 是中间层 180°，M′ 和 M 是中间层的反、正转，U 是顶层转动。', 'With four eyes, first use the same sequence once to reach the three-eye case. Then follow the method above: face the middle eye toward you and continue. M2 turns the middle layer 180°, M′ and M turn the middle layer in opposite directions, and U turns the top layer.'),
     ],
     examples: [
-      example('右鱼 → U → 左鱼', 'Right Sune → U → left Sune', `${RIGHT_SUNE} U ${LEFT_SUNE} U'`, '墙在后面，前面的顶棱去左边；最后 U′ 对齐。', 'Wall at the back; the front top edge belongs on the left. Finish with U′.'),
-      example('左鱼 → U′ → 右鱼', 'Left Sune → U′ → right Sune', `${LEFT_SUNE} U' ${RIGHT_SUNE} U`, '墙在后面，前面的顶棱去右边；最后 U 对齐。', 'Wall at the back; the front top edge belongs on the right. Finish with U.'),
+      example('四只眼睛', 'Four eyes', EDGE_POSITION, '先做一遍公式，进入三只眼睛状态。', 'Use the sequence once to reach the three-eye case.'),
+      example('三只眼睛', 'Three eyes', EDGE_POSITION, '把中间的眼睛对着自己，做一次或者两次，直到完全复原。', 'Face the middle eye toward you and use the sequence once or twice until solved.'),
+      example('三只眼睛重复', 'Repeat the three-eye case', `${EDGE_POSITION} ${EDGE_POSITION}`, '两次公式之间重新观察；完全复原后停止。', 'Inspect between the two sequences and stop when the cube is fully solved.'),
     ],
   },
 ];
