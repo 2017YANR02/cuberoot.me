@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "ignoreCommand": "git -C ../../.. diff --quiet \"$VERCEL_GIT_PREVIOUS_SHA\" HEAD -- . \":(exclude)docs\" \":(exclude)data/recon_backup\" \":(exclude)stats\" \":(exclude)AGENTS.md\" \":(exclude)README.md\" || exit 1",
   "functions": {
     "app/api/page-access/route.ts": {
       "regions": ["iad1"]

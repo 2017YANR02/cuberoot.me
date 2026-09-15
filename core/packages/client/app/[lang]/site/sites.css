@@ -526,7 +526,7 @@
 .sites-topic-form { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin-bottom: 12px; }
 .sites-topic-form .site-editor-row { width: min(100%, 320px); }
 .sites-topic-input-wrap { position: relative; display: block; }
-.sites-topic-input-wrap input { width: 100%; box-sizing: border-box; padding-right: 32px; }
+.sites-topic-input-wrap > .site-editor-input { width: 100%; box-sizing: border-box; padding-right: 32px; }
 .sites-topic-actions { display: inline-flex; align-items: center; gap: 4px; margin-right: 12px; }
 
 /* ── Responsive ─────────────────────────────────────── */
