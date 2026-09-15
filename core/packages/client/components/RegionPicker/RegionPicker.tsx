@@ -185,15 +185,15 @@ export function RegionPicker(props: RegionPickerProps) {
     if (e.key !== 'Enter') return;
     e.preventDefault();
     if (showWorld) { clearAll(); return; }
-    if (pinned.length > 0) {
-      if (isMulti) { toggleMultiCountry(pinned[0]); closeAndClear(); }
-      else selectSingle(pinned[0]);
-      return;
-    }
     if (continentsFiltered.length > 0) {
       const c = continentsFiltered[0];
       if (isMulti) { toggleMultiContinent(c.code); closeAndClear(); }
       else selectSingle(c.slug);
+      return;
+    }
+    if (pinned.length > 0) {
+      if (isMulti) { toggleMultiCountry(pinned[0]); closeAndClear(); }
+      else selectSingle(pinned[0]);
       return;
     }
     if (countriesFiltered.length > 0) {
@@ -269,10 +269,6 @@ export function RegionPicker(props: RegionPickerProps) {
                 onClick={clearAll}
               >{allText}</button>
             )}
-            {pinned.length > 0 && <>
-              <div className="region-picker-section">{tr({ zh: '置顶', en: 'Pinned' })}</div>
-              {pinned.map(renderCountry)}
-            </>}
             {continentsFiltered.length > 0 && (
               <div className="region-picker-section">{tr({ zh: '大洲', en: 'Continent' })}</div>
             )}
@@ -286,10 +282,11 @@ export function RegionPicker(props: RegionPickerProps) {
                 <span>{tr(c)}</span>
               </button>
             ))}
-            {others.length > 0 && (
+            {countriesFiltered.length > 0 && (
               <div className="region-picker-section">{tr({ zh: '地区', en: 'Region'
             })}</div>
             )}
+            {pinned.map(renderCountry)}
             {others.map(renderCountry)}
           </div>
         </div>

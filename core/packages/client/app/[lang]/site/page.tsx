@@ -24,7 +24,6 @@ import { ClearButton } from '@/components/ClearButton';
 import { CountryPinButton } from '@/components/CountryPinButton';
 import { usePinnedCountries } from '@/hooks/usePinnedCountries';
 import { partitionPinnedCountries } from '@/lib/pinned-countries';
-import { tr } from '@/i18n/tr';
 import PersonLink from '@/components/PersonLink';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
 import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from '@/lib/event-constants';
@@ -582,13 +581,9 @@ function SitesPageInner() {
   const countryPickerGroups = useMemo<readonly PuzzlePickerGroup[]>(() => {
     const { pinned, others } = partitionPinnedCountries(countryOptions, countryPins, option => option.id);
     return [{
-      id: 'pinned-countries',
-      label: tr({ zh: '置顶', en: 'Pinned' }),
-      items: pinned.map(option => ({ id: option.id, label: option.label[lang] })),
-    }, {
       id: 'countries',
       label: TEXTS.countries[lang],
-      items: others.map((option) => ({ id: option.id, label: option.label[lang] })),
+      items: [...pinned, ...others].map((option) => ({ id: option.id, label: option.label[lang] })),
     }];
   }, [countryOptions, countryPins, lang]);
 
