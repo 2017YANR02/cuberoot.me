@@ -476,6 +476,9 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     flex-direction: column;
     gap: 1.25rem;
 }
+.landing-page .landing-admin-card-group {
+    display: contents;
+}
 /* V2 section header: eyebrow + serif title + sub-line */
 .landing-page .section-header {
     display: flex;
