@@ -178,13 +178,13 @@ export function TimerScrambleStrip({
       {liveHint
         ? correctionActive && (
             <>
-              <span
+              {verificationLabels.correction && <span
                 className="scramble-verify"
                 data-ok="fix"
                 title={verificationLabels.correctionTitle}
               >
                 {verificationLabels.correction}
-              </span>
+              </span>}
               {copied && (
                 <span className="scramble-verify" data-ok="true">
                   {verificationLabels.copiedCorrection}
@@ -192,7 +192,7 @@ export function TimerScrambleStrip({
               )}
             </>
           )
-        : match !== null && (
+        : match !== null && (match ? verificationLabels.ready : verificationLabels.mismatch) && (
             <span className="scramble-verify" data-ok={match ? 'true' : 'false'}>
               {match ? verificationLabels.ready : verificationLabels.mismatch}
             </span>

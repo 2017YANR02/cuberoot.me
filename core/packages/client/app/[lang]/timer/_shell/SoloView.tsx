@@ -1453,25 +1453,27 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // ── Bluetooth smart cube ────────────────────────────────────────
   const phaseSnapshotRef = useRef(timer.phase);
   useEffect(() => { phaseSnapshotRef.current = timer.phase; }, [timer.phase]);
+  const smartCubeInputBlocked = useCallback(() => Boolean(bluetoothCubeRef.current?.status.connected || cubeStartedRef.current), []);
   const onPressDown = useCallback((withWarmup = false): boolean => {
     if (competitionRef.current.enabled) return false;
     if (!timerCanHandleAttemptPress(
       phaseSnapshotRef.current,
       attemptCanStartRef.current,
+      smartCubeInputBlocked(),
     )) return false;
     if (withWarmup) warmupSound();
     timer.onPressDown();
     return true;
-  }, [timer.onPressDown]);
+  }, [smartCubeInputBlocked, timer.onPressDown]);
   const onPressUp = useCallback((): boolean => {
-    if (competitionRef.current.enabled) return false;
+    if (competitionRef.current.enabled || smartCubeInputBlocked()) return false;
     if (!attemptCanStartRef.current && phaseSnapshotRef.current !== 'running') {
       timer.cancelArm();
       return false;
     }
     timer.onPressUp();
     return true;
-  }, [timer.cancelArm, timer.onPressUp]);
+  }, [smartCubeInputBlocked, timer.cancelArm, timer.onPressUp]);
   const bluetoothSubscribersRef = useRef<Set<(m: string, ts: number) => void>>(new Set());
 
   const [macPrompt, setMacPrompt] = useState<{ deviceName: string; isWrongKey?: boolean } | null>(null);
@@ -1497,10 +1499,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 时钟相减出来的是垃圾。这里自己记一个本地起点。
   const gyroRecRef = useRef(new GyroRecorder());
   const gyroStartRef = useRef(0);
-  // What the live view actually rendered. LiveCubeState decides — it owns the
-  // phone / no-sample / not-anchored fallbacks — and reports back, because the
-  // calibrate button below must follow the outcome, not the request.
-  const [liveCubeView, setLiveCubeView] = useState<'2d' | 'net' | '3d' | 'q2look'>('net');
 
   /**
    * The first turn of an armed attempt starts the clock — csTimer's behaviour
@@ -1595,18 +1593,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         timer.reset();
         return;
       }
-      // A solve in progress just lost the thing that stops the clock. csTimer
-      // interrupts the attempt here (`timer.js:715` synthesises ESC, which
-      // records a DNF); we tell the user instead. Two reasons: the reconnect
-      // ladder we have and it doesn't often rescues the attempt outright, and
-      // throwing one away cannot be undone — a five-minute BLD attempt killed
-      // by a radio glitch is a worse outcome than any wording. The space bar
-      // still stops the clock, so saying so is a complete answer.
+      // Keep a smart-cube attempt device-driven while reconnecting.
       if (ev.kind === 'disconnected' && phaseSnapshotRef.current === 'running') {
         setInfoToast({
           msg: tr({
-            zh: '智能魔方断开,这一把不会自动停表 —— 按空格自己停',
-            en: 'Smart cube disconnected — this attempt won’t auto-stop; press space to stop it',
+            zh: '智能魔方已断开，正在等待重连；按 Esc 可取消本次计时',
+            en: 'Smart cube disconnected. Wait for reconnection or press Esc to cancel this attempt.',
           }),
         });
         return;
@@ -1666,8 +1658,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // is anchored either at the last moment the cube was SOLVED or at a derived
   // opening (see the anchor effect below), so replaying it from a solved cube
   // reproduces the current state exactly. `algAnchored` says whether that
-  // anchor exists at all — without it the 3D view would be drawing a state
-  // nobody verified, so we stay on the flat one.
+  // anchor exists at all. Re-anchoring keeps the last verified 3D pose visible.
   const [{ moves: liveMoves, algAnchored }, setLiveAnchor] = useState<LiveSmartCubeAnchorSnapshot>({ moves: [], algAnchored: false });
   const liveAnchor = useMemo(() => new LiveSmartCubeAnchor({
     solve: async (state) => {
@@ -1748,7 +1739,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // Both tenants render into `.shell-corner-net-imgbox`, whose height is the
   // `--cube-h` token. Connecting a cube therefore swaps the picture without
   // moving anything below it.
-  const centerCubeSlot = cubeConnected ? (
+  const centerCubeSlot = (cubeConnected || cubeStartedRef.current) ? (
     <div className="shell-corner-net">
       <div className="shell-corner-net-imgbox">
         <div
@@ -1767,34 +1758,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             calibrateToken={calibrateNonce}
             sensorBasis={sensorBasisForBrand(bluetoothCube.status.brand)}
             mirror={mirrorForBrand(bluetoothCube.status.brand)}
-            onViewChange={setLiveCubeView}
           />
         </div>
       </div>
-      {/* Which way the sensor thinks is "up" is unverified for every brand, so
-          the fix is manual: hold the cube upright, tap, and that pose becomes
-          the reference. A real <button> — shouldIgnoreTimerTarget already lets
-          presses on one through without arming the timer.
-
-          Gated on the view that actually rendered, not on the one requested:
-          phones and a state not reachable from solved fall back to the flat
-          net, and there is nothing there to calibrate. Also gated on the cube
-          actually having a gyro — the 3D view no longer needs one, so "3D is
-          on screen" stopped implying "there is an orientation to calibrate",
-          and a button that does nothing is worse than no button. */}
-      {liveCubeView === '3d' && bluetoothCube.status.hasGyro && (
-        <button
-          type="button"
-          className="live-cube-calibrate"
-          onClick={() => setCalibrateNonce(n => n + 1)}
-          title={tr({
-            zh: '把魔方当前朝向设为正面朝上的基准',
-            en: 'Set the cube’s current orientation as the upright reference',
-          })}
-        >
-          {tr({ zh: '校准朝向', en: 'Calibrate' })}
-        </button>
-      )}
     </div>
   ) : settings.showCubePreview ? (
     <div className="shell-corner-net">
@@ -1857,7 +1823,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (!timerSmartCubeStartsAttemptOnTurn(event)) return;
     const ph = phaseSnapshotRef.current;
     if (ph !== 'idle' && ph !== 'stopped') return;
-    onPressDown(true);
+    if (!attemptCanStartRef.current) return;
+    warmupSound();
+    timer.armFromCube();
+    phaseSnapshotRef.current = s.inspectionSec > 0 ? 'inspecting' : 'ready';
   };
 
   useEffect(() => {
@@ -2159,9 +2128,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       if (!getSettings().timingEnabled) return;
       onPressDown(true);
     },
-    onPressCancel: () => { if (!competitionRef.current.enabled) cancelPress(); },
+    onPressCancel: () => { if (!competitionRef.current.enabled && !smartCubeInputBlocked()) cancelPress(); },
     onPressUp: () => { if (!getSettings().timingEnabled) { nextScramble(); return; } onPressUp(); },
-    onArmCancel: () => { if (!competitionRef.current.enabled) cancelArm(); },
+    onArmCancel: () => { if (!competitionRef.current.enabled && !smartCubeInputBlocked()) cancelArm(); },
     ignoreTarget: shouldIgnoreTimerTarget,
   });
 
@@ -2462,7 +2431,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     onReady: () => {
       if (!getSettings().timingEnabled || anyModalOpenRef.current) return;
       const ph = phaseSnapshotRef.current;
-      if (ph === 'idle' || ph === 'inspecting' || ph === 'stopped') onPressDown(true);
+      if (ph === 'idle' || ph === 'stopped') {
+        warmupSound();
+        timer.armFromCube();
+        phaseSnapshotRef.current = getSettings().inspectionSec > 0 ? 'inspecting' : 'ready';
+      }
     },
     onMoveSubscriber: (cb) => {
       const subs = bluetoothSubscribersRef.current;
@@ -3107,13 +3080,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               title={tr(TIMER_SCRAMBLE_CLICK_TITLE_COPY[scrambleClickEffect])}
               verificationLabels={{
                 copiedCorrection: tr({ zh: '已复制原打乱', en: 'Copied the scramble' }),
-                correction: tr({ zh: '拧回原打乱', en: 'Back to scramble' }),
+                correction: '',
                 correctionTitle: tr({
                   zh: '拧歪了。这些不是上面那条打乱,而是从魔方现在的状态回到同一个打乱状态的步骤,拧完成绩记的还是原打乱。',
                   en: 'Off the scramble path. These moves are not the printed scramble — they lead from where the cube is now to the same scrambled state, and the solve still records the original scramble.',
                 }),
                 mismatch: tr({ zh: '与打乱不符', en: 'Doesn’t match' }),
-                ready: tr({ zh: '打乱已就绪', en: 'Scrambled' }),
+                ready: '',
               }}
             >
               {/* 「按难度生成」的打乱 + 答案(只在该来源下有 meta 时出现)。 */}
@@ -3288,7 +3261,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           items={solves.length > 0 ? [
             { value: `${stats.solved}/${stats.count}` },
             { label: 'mean', value: stats.mean },
-            { label: tr({ zh: '最佳', en: 'best' }), value: stats.best },
+            { label: 'best', value: stats.best },
             { label: 'mo3', value: stats.mo3 },
             { label: 'ao5', value: stats.ao5 },
             { label: 'ao12', value: stats.ao12 },
