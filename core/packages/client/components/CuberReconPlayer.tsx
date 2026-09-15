@@ -21,6 +21,7 @@ import { mergeStickeringMaskFns, stickeringMaskFn } from '@/app/[lang]/sim/engin
 import { resolveStageMaskFn } from '@/app/[lang]/sim/engine/nxn/vcStageMask';
 import ReconPlayerBase, { type ReconPlayerAdapter } from '@/components/recon/ReconPlayerBase';
 import { invertAlg } from '@/lib/cube3';
+import { mirrorFaces } from '@/components/puzzle-models/mirror/mirrorGeometry';
 
 /** Whitespace-tokenize an alg into individual moves (matches the form's caret
  *  move-count which splits on /\s+/). */
@@ -82,6 +83,7 @@ export default function CuberReconPlayer({
       )));
       const cube = world.cube as NxnCube;
       cube.instancedRenderer.setStickering(mask);
+      if (mirror) cube.instancedRenderer.setFaceColors(mirrorFaces());
       applyPuzzleTransparency(cube, transparent);
       world.dirty = true;
     },

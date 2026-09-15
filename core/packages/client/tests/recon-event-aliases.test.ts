@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useReconStore } from '@/lib/recon-store';
-import { getCubedbPuzzle, getPuzzleId } from '@/lib/recon-utils';
+import { buildExternalLinks, getCubedbPuzzle, getPuzzleId } from '@/lib/recon-utils';
 import ReconEnginePlayer from '@/components/recon/ReconEnginePlayer';
 import CuberReconPlayer from '@/components/CuberReconPlayer';
 import Sq1ReconPlayer from '@/components/Sq1ReconPlayer';
@@ -51,6 +51,18 @@ describe('recon event aliases', () => {
 });
 
 describe('recon engine dispatch', () => {
+  it.each(['Gear', 'Mirror', 'mirror2'])('keeps %s out of unsupported external puzzle IDs', (event) => {
+    const { algUrl, algSiteName } = buildExternalLinks(event, 'R U', "U' R'");
+    expect(algSiteName).toBe('alg.cubing.net');
+    expect(new URL(algUrl).searchParams.get('puzzle')).toBe('3x3x3');
+  });
+
+  it('preserves gear turn amounts through solution cleaning', () => {
+    const player = ReconEnginePlayer({ event: 'Gear', scramble: '', solution: "R3 U6 F2' // edges" });
+    expect(player.props.alg).toBe("R3 U6 F2'");
+    expect(player.props.parseMoves(player.props.alg)).toHaveLength(3);
+  });
+
   it.each([
     ['SQ1', Sq1ReconPlayer, undefined],
     ['Square-1', Sq1ReconPlayer, undefined],
