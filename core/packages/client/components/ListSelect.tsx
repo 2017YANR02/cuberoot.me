@@ -144,7 +144,7 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
             />
           )}
           <div className="list-select-list">
-            {shown.map((i, index) => {
+            {shown.map(i => {
               const item = (
                 <button
                   type="button"
@@ -160,8 +160,6 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
               );
               return (
                 <Fragment key={i.value}>
-                  {pinned.length > 0 && index === 0 && <div className="country-pin-heading">{tr({ zh: '置顶', en: 'Pinned' })}</div>}
-                  {pinned.length > 0 && index === pinned.length && <div className="country-pin-heading">{tr({ zh: '国家', en: 'Countries' })}</div>}
                   {i.separatorBefore && <div className="list-select-separator" aria-hidden />}
                   {pinCountries && i.country && !i.disabled ? (
                     <div className="country-pin-row">

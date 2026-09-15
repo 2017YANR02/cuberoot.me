@@ -251,10 +251,6 @@ export function CountryInput(props: CountryInputProps) {
               {selected.map(renderChip)}
             </div>
           )}
-          {pinned.length > 0 && <>
-            <div className="country-pin-heading">{tr({ zh: '置顶', en: 'Pinned' })}</div>
-            {pinned.map(renderCountry)}
-          </>}
           {continentGroups.map(({ continent, iso2s }) => {
             const active = selectedContinents.has(continent);
             return (
@@ -282,7 +278,7 @@ export function CountryInput(props: CountryInputProps) {
               <span className="country-input-name">{allLabel}</span>
             </button>
           )}
-          {pinned.length > 0 && others.length > 0 && <div className="country-pin-heading">{tr({ zh: '国家', en: 'Countries' })}</div>}
+          {pinned.map(renderCountry)}
           {others.map(renderCountry)}
         </div>
       )}
