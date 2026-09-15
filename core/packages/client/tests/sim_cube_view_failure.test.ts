@@ -21,7 +21,7 @@ beforeEach(() => {
     return { dispose: () => { state.dispose(); canvas.remove(); }, invalidate() {}, world: {
     puzzleKind: 3,
     scene: { rotation: { set() {} }, updateMatrix() {} },
-    cube: { twister: { setup: state.setup, backlog: 0 }, instancedRenderer: { setStickering() {} } },
+    cube: { quaternion: { set() {} }, updateMatrix() {}, twister: { setup: state.setup, backlog: 0 }, instancedRenderer: { setStickering() {} } },
     } };
   });
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
@@ -32,6 +32,35 @@ afterEach(async () => {
 });
 
 describe('the single live/replay 3D failure surface', () => {
+  it('uses the elevated three-face view without gyro and switches on the first valid sample', async () => {
+    const quatRef: { current: { w: number; x: number; y: number; z: number } | null } = { current: null };
+    await act(async () => root.render(createElement(LiveCubeState, {
+      mode: '3d', algAnchored: true, moves: [], facelets: null, quatRef,
+    })));
+    await vi.waitFor(() => expect(state.mount).toHaveBeenCalledOnce());
+    const options = state.mount.mock.calls[0][0];
+    expect(options.sceneRot).toEqual({ x: Math.atan2(4.1, Math.hypot(4.8, 7.2)), y: -Math.atan2(4.8, 7.2), z: 0 });
+    const world = state.mount.mock.results[0].value.world;
+    const rotate = vi.spyOn(world.scene.rotation, 'set');
+    quatRef.current = { w: 0, x: 0, y: 0, z: 0 };
+    expect(options.onFrame(world, 16)).toBe(false);
+    expect(rotate).not.toHaveBeenCalled();
+    quatRef.current = { w: 1, x: 0, y: 0, z: 0 };
+    options.onFrame(world, 16);
+    expect(rotate).toHaveBeenCalledWith(Math.atan2(4.1, 7.2), 0, 0);
+    expect(state.mount).toHaveBeenCalledOnce();
+    rotate.mockClear();
+    quatRef.current = null;
+    options.onFrame(world, 16);
+    expect(rotate).not.toHaveBeenCalled();
+  });
+
+  it('starts with the elevated front view when a gyro sample is already available', async () => {
+    await act(async () => root.render(createElement(SimCubeView, {
+      view: 'smart', moves: [], quat: { w: 1, x: 0, y: 0, z: 0 },
+    })));
+    expect(state.mount.mock.calls[0][0].sceneRot).toEqual({ x: Math.atan2(4.1, 7.2), y: 0, z: 0 });
+  });
   it('retains its 3D instance while an authoritative state is being re-anchored', async () => {
     const draw = (algAnchored: boolean, moves: string[]) => act(async () => root.render(createElement(LiveCubeState, {
       mode: '3d', algAnchored, moves, facelets: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
