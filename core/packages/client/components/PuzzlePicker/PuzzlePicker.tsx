@@ -73,6 +73,7 @@ interface Props {
   showItemIcons?: boolean;
   /** 菜单分组后的附加控件。 */
   popupFooter?: ReactNode;
+  itemAction?: (item: PuzzlePickerItem) => ReactNode;
   /** 计时表面用:让整个弹层都跳过空格/指针计时手势。 */
   dataNoTimer?: boolean;
 }
@@ -82,7 +83,7 @@ const nameOf = (e: CstimerEvent, isZh: boolean): string => [e.en, e.zh][Number(i
 
 export default function PuzzlePicker({
   isZh = false, selectedEvent, selectedEvents, wcaEvents, availableEvents, onSelect, onToggle, linkFor,
-  groups: suppliedGroups, placeholderLabel, showTriggerIcon = true, showItemIcons = true, popupFooter, dataNoTimer,
+  groups: suppliedGroups, placeholderLabel, showTriggerIcon = true, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
 }: Props) {
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
@@ -229,7 +230,9 @@ export default function PuzzlePicker({
             <div key={group.id} className="pp-group">
               <div className="pp-group-title">{group.label}</div>
               <div className="pp-group-items">
-                {group.items.map(renderItem)}
+                {group.items.map(item => itemAction ? (
+                  <div key={item.id} className="country-pin-row">{renderItem(item)}{itemAction(item)}</div>
+                ) : renderItem(item))}
               </div>
             </div>
           ))}
