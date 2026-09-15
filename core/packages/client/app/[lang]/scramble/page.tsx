@@ -3,7 +3,7 @@
 /**
  * /scramble — 打乱工具入口。
  * 生成和求解为主要入口；花式与跨项目批量求解次之，其余专项工具使用紧凑卡片。
- * 桌面使用六列便当盒，窄屏按相同优先级排列为两列。
+ * 桌面分为两张主卡、两张中卡和四张专业工具卡；窄屏按同一顺序排列为两列。
  */
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
@@ -53,6 +53,16 @@ export default function ScrambleHubPage() {
               '--scramble-card-art': `url("/scramble-card-art/${c.area}.webp")`,
             } as CSSProperties}
           >
+            <span className="scramble-hub-art" aria-hidden="true">
+              <span className="scramble-hub-art-image" />
+              {c.area === 'generate' && (
+                <span className="scramble-hub-art-formula">
+                  {"F B2 R B' U2 R B' U B' R2 U2 D2 F' R2 D2 F U2 B' D2 F' U"}
+                </span>
+              )}
+              {c.area === 'hardest' && <span className="scramble-hub-art-note">H* 20</span>}
+              {c.area === 'subsolver' && <span className="scramble-hub-art-note">U / R / F</span>}
+            </span>
             <div className="scramble-hub-card-title">{tr(c).title}</div>
           </Link>
         ))}
@@ -79,80 +89,83 @@ const INLINE_CSS = `
 }
 .scramble-hub-page .scramble-hub-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  grid-template-rows: minmax(13rem, auto) repeat(2, minmax(5.5rem, auto));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-template-areas:
-    "generate generate generate solve solve solve"
-    "pattern pattern batch batch symmetry hardest"
-    "pattern pattern batch batch mcc subsolver";
+    "generate generate solve solve"
+    "pattern pattern batch batch"
+    "symmetry hardest mcc subsolver";
   gap: 0.75rem;
 }
 .scramble-hub-page .scramble-hub-card {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
+  gap: 1rem;
   min-width: 0;
-  padding: 1rem;
+  padding: 1.25rem;
   border: 1px solid var(--border-default);
   border-radius: 12px;
   color: var(--foreground);
   text-decoration: none;
 }
-/* Decorative cutouts retain their own alpha; the lower fade leaves room for labels. */
-.scramble-hub-page .scramble-hub-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
+/* Illustration and title occupy separate rows; artwork never fades across text. */
+.scramble-hub-page .scramble-hub-art {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 5.75rem;
+  min-width: 0;
   pointer-events: none;
+  user-select: none;
+}
+.scramble-hub-page .scramble-hub-art-image {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
   background-image: var(--scramble-card-art);
   background-repeat: no-repeat;
-  background-position: center top;
-  background-size: cover;
-  opacity: 0.46;
-  mask-image: linear-gradient(to bottom, black 25%, transparent 85%);
+  background-position: center;
+  background-size: contain;
+  opacity: 0.9;
 }
-.scramble-hub-page .scramble-hub-card--generate::before {
-  background-position: right 0.75rem top 0.75rem;
-  background-size: auto 105%;
+.scramble-hub-page .scramble-hub-card--primary .scramble-hub-art {
+  height: 11rem;
 }
-.scramble-hub-page .scramble-hub-card--solve::before {
-  background-position: right 0.75rem top -0.75rem;
-  background-size: auto 125%;
-  opacity: 0.58;
-  mask-image: linear-gradient(120deg, transparent 8%, black 70%);
+.scramble-hub-page .scramble-hub-card--secondary .scramble-hub-art {
+  height: 8rem;
 }
-.scramble-hub-page .scramble-hub-card--pattern::before {
-  background-position: center 0.75rem;
-  background-size: 100% auto;
-  opacity: 0.58;
+.scramble-hub-page .scramble-hub-card--generate .scramble-hub-art-image {
+  max-height: 7rem;
 }
-.scramble-hub-page .scramble-hub-card--batch::before {
-  background-position: center 0.75rem;
-  background-size: 92% auto;
+.scramble-hub-page .scramble-hub-card--batch .scramble-hub-art-image {
+  max-height: 6rem;
 }
-.scramble-hub-page .scramble-hub-card--symmetry::before {
-  background-position: left 0.5rem top 0.5rem;
-  background-size: auto 88%;
+.scramble-hub-page .scramble-hub-card--symmetry .scramble-hub-art-image {
+  max-width: 12rem;
+  max-height: 4.25rem;
 }
-.scramble-hub-page .scramble-hub-card--hardest::before {
-  background-position: center 0.25rem;
-  background-size: 110% auto;
+.scramble-hub-page .scramble-hub-art-formula,
+.scramble-hub-page .scramble-hub-art-note {
+  color: var(--muted-foreground);
+  font-family: ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  text-align: center;
 }
-.scramble-hub-page .scramble-hub-card--mcc::before {
-  background-position: left 0.5rem top 0.5rem;
-  background-size: auto 155%;
+.scramble-hub-page .scramble-hub-art-formula {
+  max-width: 100%;
+  font-size: 0.75rem;
 }
-.scramble-hub-page .scramble-hub-card--subsolver::before {
-  background-position: right -0.25rem top -0.25rem;
-  background-size: auto 130%;
+.scramble-hub-page .scramble-hub-art-note {
+  font-size: 0.8125rem;
 }
-.scramble-hub-page .scramble-hub-card:hover {
+.scramble-hub-page .scramble-hub-card:hover,
+.scramble-hub-page .scramble-hub-card:focus-visible {
   border-color: var(--accent);
 }
-.scramble-hub-page .scramble-hub-card:hover .scramble-hub-card-title {
+.scramble-hub-page .scramble-hub-card:hover .scramble-hub-card-title,
+.scramble-hub-page .scramble-hub-card:focus-visible .scramble-hub-card-title {
   color: var(--accent);
 }
 .scramble-hub-page .scramble-hub-card:focus-visible {
@@ -163,35 +176,34 @@ const INLINE_CSS = `
   transform: translateY(1px);
 }
 .scramble-hub-page .scramble-hub-card-title {
-  font-size: 1rem;
+  margin-top: auto;
+  font-size: 1.125rem;
   font-weight: 600;
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
-.scramble-hub-page .scramble-hub-card--primary {
-  padding: 1.5rem;
-}
 .scramble-hub-page .scramble-hub-card--primary .scramble-hub-card-title {
-  font-size: 2rem;
+  font-size: 1.75rem;
 }
 .scramble-hub-page .scramble-hub-card--secondary .scramble-hub-card-title {
-  font-size: 1.25rem;
+  font-size: 1.375rem;
 }
 @media (max-width: 720px) {
   .scramble-hub-page .scramble-hub-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-rows: none;
     grid-template-areas: none;
-    grid-auto-rows: minmax(5.5rem, auto);
   }
   .scramble-hub-page .scramble-hub-card { grid-area: auto !important; }
-  .scramble-hub-page .scramble-hub-card--primary { min-height: 10rem; }
-  .scramble-hub-page .scramble-hub-card--secondary { min-height: 8rem; }
+  .scramble-hub-page .scramble-hub-card--primary .scramble-hub-art { height: 8rem; }
+  .scramble-hub-page .scramble-hub-card--secondary .scramble-hub-art { height: 6rem; }
+  .scramble-hub-page .scramble-hub-art-formula { display: none; }
 }
 @media (max-width: 480px) {
   .scramble-hub-page { padding: 1rem 0.75rem 2rem; }
   .scramble-hub-page .scramble-hub-header h1 { font-size: 1.5rem; }
-  .scramble-hub-page .scramble-hub-card--primary { padding: 1rem; }
-  .scramble-hub-page .scramble-hub-card--primary .scramble-hub-card-title { font-size: 1.5rem; }
+  .scramble-hub-page .scramble-hub-card { padding: 1rem; }
+  .scramble-hub-page .scramble-hub-card--primary .scramble-hub-card-title { font-size: 1.375rem; }
+  .scramble-hub-page .scramble-hub-card--secondary .scramble-hub-card-title { font-size: 1.125rem; }
 }
 `;
