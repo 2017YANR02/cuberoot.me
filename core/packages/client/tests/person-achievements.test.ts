@@ -59,13 +59,30 @@ it.each([
   expect(recordAchievementTier(count)?.count).toBe(expected);
 });
 
-it('keeps the actual count above the highest tier and only upgrades historical badges', () => {
+it('keeps the actual count above the highest tier on historical and current record badges', () => {
   const html = renderToStaticMarkup(createElement(AchievementMedal, { kind: 'historicalWR', recordCount: 1250, event: '333' }));
   expect(html).toContain('data-tier="200"');
   expect(html).toContain('×1250');
   const current = renderToStaticMarkup(createElement(AchievementMedal, { kind: 'wr', recordCount: 1250 }));
-  expect(current).not.toContain('data-tier');
-  expect(current).not.toContain('×1250');
+  expect(current).toContain('data-tier="200"');
+  expect(current).toContain('×1250');
+});
+
+it('renders one female world badge per event with current status and historical counts', () => {
+  const row = { e: '333', t: 'a' as const, v: 452, l: 'FWR', c: 'Test2026', d: '2026-09-13', currentWorld: true };
+  const html = renderToStaticMarkup(createElement(GrandSlamBadges, {
+    rows: [], wcaId: 'TEST', isZh: false, countryIso2: 'CN',
+    femaleRecords: [row, { ...row, c: 'Earlier2026', v: 480, currentWorld: false }, { ...row, e: '444', currentWorld: false }],
+  }));
+  expect((html.match(/data-kind="wr"/g) ?? []).length).toBe(1);
+  expect(html).toContain('data-kind="wr" data-count="2">3×3');
+  expect((html.match(/data-kind="historicalWR"/g) ?? []).length).toBe(1);
+  expect(html).toContain('data-kind="historicalWR" data-count="1">4×4');
+  expect(html).not.toContain('data-kind="historicalCR"');
+  expect(html).not.toContain('data-kind="historicalNR"');
+  const medal = renderToStaticMarkup(createElement(AchievementMedal, { kind: 'historicalCR', female: true, record: 'FAsR', recordCount: 2 }));
+  expect(medal).toContain('>FAsR<');
+  expect(medal).not.toContain('>FCR<');
 });
 
 const participation = (competition_id: string, event_id = '333', best = 100, live = false): WcaResultRow => ({

@@ -649,7 +649,7 @@ function EventRoundsList({
                         {roundLabel(r.round_type_id)}
                       </Link>
                       {r.live && (
-                        <span className="wp-live-chip" title={t('直播成绩,非官方,待 WCA 官方确认', 'Live result — unofficial, pending WCA')}>
+                        <span className="wp-live-chip" title={t('直播成绩', 'Live result')}>
                           {t('直播', 'LIVE')}
                         </span>
                       )}

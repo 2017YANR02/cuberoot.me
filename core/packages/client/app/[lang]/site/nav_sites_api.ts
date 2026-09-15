@@ -27,7 +27,19 @@ export interface SiteInput {
 }
 
 export async function listSites(): Promise<Site[]> {
-  return handleApi<Site[]>(await fetch(`${BASE}?v=2`));
+  return handleApi<Site[]>(await fetch(`${BASE}?v=3`, { cache: 'no-store' }));
+}
+
+const TOPICS_BASE = API_ORIGIN + '/v1/nav/topics';
+
+export async function listTopics(): Promise<string[]> {
+  return handleApi<string[]>(await fetch(TOPICS_BASE, { cache: 'no-store' }));
+}
+
+export async function saveTopic(method: 'POST' | 'PUT' | 'DELETE', tag: string, replacement?: string): Promise<void> {
+  await handleApi(await fetch(TOPICS_BASE, {
+    method, headers: authHeaders(), body: JSON.stringify({ tag, replacement }),
+  }));
 }
 export async function createSite(body: SiteInput): Promise<Site> {
   return handleApi<Site>(await fetch(BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }));

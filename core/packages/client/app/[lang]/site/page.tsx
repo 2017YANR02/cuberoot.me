@@ -28,7 +28,8 @@ import PersonLink from '@/components/PersonLink';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
 import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from '@/lib/event-constants';
 import { eventDisplayName } from '@/lib/wca-events';
-import { listSites, deleteSite, reorderGroup } from './nav_sites_api';
+import { listSites, listTopics, saveTopic, deleteSite, reorderGroup } from './nav_sites_api';
+import { useT } from '@/hooks/useT';
 import SiteEditor from './SiteEditor';
 import './sites.css';
 
@@ -374,6 +375,7 @@ function SiteRow({ site, lang, admin, reorderable, canMoveUp, canMoveDown, onEdi
 }
 
 function SitesPageInner() {
+  const t = useT();
   const { i18n } = useTranslation();
   const lang: 'en' | 'zh' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   // admin comes from the client-only auth store; gate on mount so SSR and the
@@ -436,6 +438,53 @@ function SitesPageInner() {
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [editing, setEditing] = useState<Site | null>(null);
   const [creating, setCreating] = useState(false);
+  const [topicCatalog, setTopicCatalog] = useState<string[]>([]);
+  const [manageTopics, setManageTopics] = useState(false);
+  const [editingTopic, setEditingTopic] = useState<string | null>(null);
+  const [topicName, setTopicName] = useState('');
+  const [topicBusy, setTopicBusy] = useState(false);
+  const [topicError, setTopicError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    listTopics().then((rows) => { if (!cancelled) setTopicCatalog(rows); })
+      .catch(() => { if (!cancelled) setTopicError(t('话题加载失败，请重试', 'Could not load topics. Please retry.')); });
+    return () => { cancelled = true; };
+  }, [t]);
+
+  const editableTopics = useMemo(() => [...new Set([
+    ...topicCatalog, ...(sites ?? []).flatMap((site) => site.tags ?? []),
+  ])].filter((tag) => !PROJECT_TOPIC_TAGS.has(tag.trim().toLowerCase())
+    && !algSetForTag(tag) && !methodForTag(tag) && !countryForTag(tag)), [topicCatalog, sites]);
+
+  async function mutateTopic(method: 'POST' | 'PUT' | 'DELETE', tag: string, replacement?: string) {
+    if (method === 'DELETE' && !window.confirm(t(
+      `删除话题“${splitLangTag(tag)[lang]}”？关联站点会移除此标签。`,
+      `Delete “${splitLangTag(tag)[lang]}”? This tag will be removed from associated sites.`,
+    ))) return;
+    setTopicBusy(true);
+    setTopicError('');
+    try {
+      await saveTopic(method, tag, replacement);
+      // Update immediately; a failed refresh must not make a successful write look unsaved.
+      const updateTags = (tags: string[]) => method === 'POST' ? [...tags, tag]
+        : tags.flatMap((value) => value !== tag ? [value] : replacement ? [replacement] : []);
+      setTopicCatalog((tags) => updateTags(tags));
+      if (method !== 'POST') {
+        setSites((rows) => rows?.map((site) => ({ ...site, tags: updateTags(site.tags ?? []) })) ?? null);
+        const oldKey = topicKey(splitLangTag(tag)[lang], lang);
+        const selection = selectedTopics.flatMap((value) => topicKey(value, lang) !== oldKey
+          ? [value] : replacement ? [splitLangTag(replacement)[lang]] : []);
+        void setQuery({ topic: selection.length ? selection : null });
+      }
+      setEditingTopic(null);
+      setTopicName('');
+    } catch (error) {
+      setTopicError(error instanceof Error ? error.message : t('保存失败', 'Save failed'));
+    } finally {
+      setTopicBusy(false);
+    }
+  }
 
   useEffect(() => {
     let cancel = false;
@@ -529,8 +578,13 @@ function SitesPageInner() {
         }
       }
     }
+    for (const tag of editableTopics) {
+      const label = splitLangTag(tag)[lang].trim();
+      const key = label.toLocaleLowerCase(lang === 'zh' ? 'zh-Hans' : 'en');
+      if (label && !byLabel.has(key)) byLabel.set(key, { label, count: 0, firstSeen: firstSeen++ });
+    }
     return [...byLabel.values()].sort((a, b) => b.count - a.count || a.firstSeen - b.firstSeen);
-  }, [sites, lang]);
+  }, [sites, lang, editableTopics]);
 
   const toggleTopic = useCallback((label: string) => {
     const key = topicKey(label, lang);
@@ -898,9 +952,42 @@ function SitesPageInner() {
           </div>
         )}
 
-        {sites && topics.length > 0 && (
+        {sites && (topics.length > 0 || admin) && (
           <section className="sites-topics" aria-labelledby="sites-topics-title">
             <h2 id="sites-topics-title">{TEXTS.topics[lang]}</h2>
+            {admin && <button type="button" className="sites-topic" aria-expanded={manageTopics}
+              onClick={() => setManageTopics((value) => !value)}>{t('管理话题', 'Manage topics')}</button>}
+            {admin && manageTopics && <div className="sites-topic-manager">
+              <form className="sites-topic-form" onSubmit={(event) => {
+                event.preventDefault();
+                void mutateTopic(editingTopic === null ? 'POST' : 'PUT', editingTopic ?? topicName.trim(), topicName.trim());
+              }}>
+                <label className="site-editor-row">{t('话题名称（英文 中文）', 'Topic name (English Chinese)')}
+                  <span className="sites-topic-input-wrap">
+                    <input className="site-editor-input" required maxLength={160} value={topicName} disabled={topicBusy}
+                      onChange={(event) => setTopicName(event.target.value)} />
+                    {topicName && !topicBusy && <ClearButton onClick={() => setTopicName('')} />}
+                  </span>
+                </label>
+                <button className="site-editor-save" disabled={topicBusy || !topicName.trim()}>
+                  {editingTopic === null ? t('新增话题', 'Add topic') : t('保存', 'Save')}
+                </button>
+                {editingTopic !== null && <button type="button" className="site-editor-cancel" disabled={topicBusy}
+                  onClick={() => { setEditingTopic(null); setTopicName(''); }}>{t('取消', 'Cancel')}</button>}
+              </form>
+              {topicError && <p role="alert">{topicError}</p>}
+              <div className="sites-topic-list">
+                {editableTopics.map((tag) => <span className="sites-topic-actions" key={tag}>
+                  <span>{splitLangTag(tag)[lang]}</span>
+                  <button type="button" className="sites-add-btn" disabled={topicBusy}
+                    aria-label={`${t('编辑话题', 'Edit topic')} ${splitLangTag(tag)[lang]}`}
+                    onClick={() => { setEditingTopic(tag); setTopicName(tag); }}><Pencil size={14} /></button>
+                  <button type="button" className="sites-add-btn" disabled={topicBusy}
+                    aria-label={`${t('删除话题', 'Delete topic')} ${splitLangTag(tag)[lang]}`}
+                    onClick={() => { void mutateTopic('DELETE', tag); }}><Trash2 size={14} /></button>
+                </span>)}
+              </div>
+            </div>}
             <div className="sites-topic-list">
               {topics.map((topic) => {
                 const active = selectedTopicKeys.has(topicKey(topic.label, lang));

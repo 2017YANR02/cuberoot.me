@@ -478,6 +478,7 @@ const TABLES: Table[] = [
     { name: 'actor_key, actor_name' }, { name: 'title, excerpt, link' }, { name: 'created_at, read_at' },
   ] },
   { name: 'nav_sites', domain: 'community', origin: '0001', evolved: [2, 170], purpose: { zh: '/site 网址导航(group_id 避 SQL 关键字)', en: 'The /site link directory' } },
+  { name: 'nav_topics', domain: 'community', origin: '0237', purpose: { zh: '导航话题，支持无关联站点的话题', en: 'Directory topics, including topics without associated sites' } },
   { name: 'home_card_positions', domain: 'community', origin: '0213', purpose: { zh: '管理员定义的首页各分组卡片顺序', en: 'Admin-defined homepage card order within each directory group' }, cols: [
     { name: 'group_id + item_id (PK)' }, { name: 'position' }, { name: 'updated_at' },
   ] },
@@ -766,6 +767,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 234, slug: 'auth_identity_choice_providers', desc: { zh: '将邮箱、手机号和抖音纳入既有首次身份确认机制；验证成功不再隐式创建账号。', en: 'Extend existing first-time identity confirmation to email, phone and Douyin; successful verification no longer implicitly creates accounts.' } },
   { n: 236, slug: 'pet_adoptions', desc: { zh: '账号领养关系与服务端养成存档。', en: 'Account-owned adoptions and server-side pet care.' } },
   { n: 235, slug: 'deskpet_catalog', desc: { zh: '桌宠名称、锁定、移除及排序配置，版本检查避免覆盖他人的修改。', en: 'Pet names, locks, removal and ordering with revision checks to prevent lost updates.' } },
+  { n: 237, slug: 'nav_topics', desc: { zh: '管理员管理导航话题，同步站点标签。', en: 'Administrator topic management with synchronized site tags.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

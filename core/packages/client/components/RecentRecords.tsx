@@ -1,7 +1,7 @@
 'use client';
 
 // Landing — WCA Live last-10-days WR/CR/NR list (60s sync).
-// Text rendering reuses the server-side Python format_cli template (id-cached).
+// Text rendering reuses the API's Bark formatter (id-cached).
 import { useEffect, useState, useMemo } from 'react';
 import Link from '@/components/AppLink';
 import { Copy, Check } from 'lucide-react';
@@ -14,6 +14,8 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { usePinnedCountries } from '@/hooks/usePinnedCountries';
+import { useCopy } from '@/hooks/useCopy';
+import { stripRecordNewsPrefix } from '@/lib/record-news';
 import './recent_records.css';
 import { tr } from '@/i18n/tr';
 
@@ -54,17 +56,13 @@ export function sortRecentRecords<T extends Pick<RecentRecord, 'tag' | 'countryI
     || (a.tag === 'NR' && b.tag === 'NR' ? countryRank(a) - countryRank(b) : 0));
 }
 
-function stripPrefix(text: string): string {
-  return text.replace(/^(纪录快讯!\s*|BREAKING NEWS!\s*|Breaking News!\s*)/, '');
-}
-
 function shortenEvent(text: string, eventId: string, isZh: boolean): string {
   const short = eventDisplayName(eventId, isZh);
   if (isZh) {
     return text.replace(/^([\d:.,]+)(.+?)(单次|平均)/, (_m, val, _e, type) => `${val} ${short}${type}`);
   }
   return text.replace(
-    /^([\d:.,]+\s)(\S+)(\s(?:WR|CR|NR|AsR|ER|NAR|SAR|OcR|AfR)\b)/,
+    /^([\d:.,]+\s)(\S+)(\s(?:FWR|WR|CR|NR|AsR|ER|NAR|SAR|OcR|AfR)\b)/,
     (_m, prefix, _e, tail) => `${prefix}${short}${tail}`,
   );
 }
@@ -105,7 +103,7 @@ function fallbackText(r: RecentRecord, isZh: boolean): string {
 
 function renderFormatted(text: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
-  const re = /([\u{1F1E6}-\u{1F1FF}])([\u{1F1E6}-\u{1F1FF}])|(WR|CR|NR|AsR|ER|NAR|SAR|OcR|AfR)(?![A-Za-z0-9])/gu;
+  const re = /([\u{1F1E6}-\u{1F1FF}])([\u{1F1E6}-\u{1F1FF}])|(FWR|WR|CR|NR|AsR|ER|NAR|SAR|OcR|AfR)(?![A-Za-z0-9])/gu;
   let lastEnd = 0;
   let key = 0;
   let m: RegExpExecArray | null;
@@ -187,29 +185,26 @@ export function useRecentRecords(isZh: boolean) {
 // Headless list — rendered inside the OngoingComps shared scroll panel (no own
 // header / max-height; the panel owns the title tab and the scrollbar).
 export function RecentRecordsList({ filled, isZh }: { filled: RecentRecord[]; isZh: boolean }) {
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const recordCopy = useCopy();
 
   function handleCopy(r: RecentRecord) {
     const text = (isZh ? r.formattedCn : r.formattedEn) || fallbackText(r, isZh);
     if (!text) return;
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedId(r.id);
-      setTimeout(() => setCopiedId(c => c === r.id ? null : c), 1500);
-    }).catch(() => { /* ignore */ });
+    recordCopy.copy(text, r.id);
   }
 
   return (
     <ul className="recent-records-list">
       {filled.map(r => {
         const text = isZh ? r.formattedCn : r.formattedEn;
-        const copied = copiedId === r.id;
+        const copied = recordCopy.copiedKey === r.id;
         return (
           <li key={r.id} className="recent-records-row">
             <button
               type="button"
               className="recent-records-copy"
               onClick={() => handleCopy(r)}
-              title={(isZh ? (copied ? '已复制' : '复制') : (copied ? 'Copied' : 'Copy'))}
+              title={copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制', en: 'Copy' })}
               aria-label={tr({ zh: '复制', en: 'Copy'
             })}
             >
@@ -217,7 +212,7 @@ export function RecentRecordsList({ filled, isZh }: { filled: RecentRecord[]; is
             </button>
             <Link {...compLinkProps(r.competitionId)} className="recent-records-body">
               {text
-                ? renderFormatted(shortenEvent(stripPrefix(text), r.eventId, isZh))
+                ? renderFormatted(shortenEvent(stripRecordNewsPrefix(text), r.eventId, isZh))
                 : renderFallback(r, isZh)}
             </Link>
           </li>
