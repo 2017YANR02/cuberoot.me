@@ -140,6 +140,18 @@
   background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 .account-card-icon { flex-shrink: 0; color: var(--accent); }
+.account-cards > .sortable-card { min-width: 0; }
+.account-cards .account-card {
+  box-sizing: border-box;
+  height: 100%;
+  padding-top: 32px;
+}
+.account-cards .sortable-card-drag-handle { min-width: 28px; min-height: 28px; }
+.account-cards .account-card-title { overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .account-cards .account-card { flex-wrap: wrap; gap: 8px; }
+  .account-cards .account-card-body { flex-basis: 90px; }
+}
 .account-card-body { flex: 1; min-width: 0; }
 .account-card-title { font-size: 1rem; font-weight: 500; color: var(--foreground); }
 .account-card-desc {
