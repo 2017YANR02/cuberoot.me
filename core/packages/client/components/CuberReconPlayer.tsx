@@ -30,7 +30,7 @@ function tokenize(alg: string): string[] {
 
 export default function CuberReconPlayer({
   scramble, alg, order, fillPane = false, playerRef, hideControls = false, fullscreenButton,
-  backView = true, anchorAtEnd = false, stickering = '', stickeringOrientation = '',
+  backView = true, anchorAtEnd = false, mirror = false, stickering = '', stickeringOrientation = '',
   stickeringMasks, transparent = false, ariaLabel,
 }: {
   scramble: string;
@@ -39,6 +39,8 @@ export default function CuberReconPlayer({
   anchorAtEnd?: boolean;
   /** NxN order (2..7). */
   order: number;
+  /** Use the existing shape-shifting mirror geometry for this order. */
+  mirror?: boolean;
   /** 右上角背面小窗。默认开(复盘流程要它);嵌在窄栏里的小播放器可关掉 —— 小窗按主画布
    *  边长的三成走,300px 见方的画布上它会盖掉小半个魔方。方位字母不受影响,照常画。 */
   backView?: boolean;
@@ -57,18 +59,19 @@ export default function CuberReconPlayer({
   playerRef?: RefObject<any>;
   fullscreenButton?: ReactNode;
 }) {
+  const puzzleKind = mirror ? (order === 2 ? 'mirror2' : 'mirror') : order;
   const adapter: ReconPlayerAdapter<string> = {
     kind: 'nxn-cuber',
     backView,
     faceHints: true,
     deps: [
-      order, anchorAtEnd, stickering, stickeringOrientation,
+      order, mirror, anchorAtEnd, stickering, stickeringOrientation,
       stickeringMasks?.map(({ name, orientation }) => `${name}:${orientation ?? ''}`).join('|') ?? '',
       transparent,
     ],
     parseMoves: tokenize,
     setupPuzzle: (world: World) => {
-      if (world.puzzleKind !== order) world.setPuzzle(order);
+      if (world.puzzleKind !== puzzleKind) world.setPuzzle(puzzleKind);
       if (world.puzzleKind === 'sq1') return;
       const descriptors = stickeringMasks?.length
         ? stickeringMasks
