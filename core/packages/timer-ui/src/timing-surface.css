@@ -97,6 +97,27 @@
   gap: 12px;
 }
 
+/* The Web timer anchors the readout independently of scramble wrapping.
+   Long scrambles scroll inside the upper half; the cube stays below the time. */
+.timing-surface--scramble-above { touch-action: pan-y; }
+.timing-surface--scramble-above .timer-display { touch-action: none; }
+.timing-surface--scramble-above .timing-surface-core { position: relative; }
+.timing-surface--scramble-above .timing-surface-sub {
+  position: absolute;
+  top: 100%;
+  padding-top: 12px;
+}
+.timing-surface--scramble-above .timing-surface-scramble-top {
+  position: absolute;
+  top: 16px;
+  inset-inline: 16px;
+  width: auto;
+  max-height: max(0px, calc(50% - var(--timer-readout-height, 120px) / 2 - 28px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
 .timing-surface .timer-display.holding {
   color: var(--timer-holding, var(--accent));
 }

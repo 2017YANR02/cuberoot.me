@@ -45,6 +45,7 @@ export function createGanV3DecodeState(options: {
 } = {}): GanV3DecodeState {
   return {
     sync: new GanMoveSync({
+      now: options.now,
       requestHistory: options.requestHistory,
       onWedged: options.onWedged,
     }),
@@ -194,4 +195,9 @@ export function createGanV3HistoryCommand(
 
 export function matchesGanV3Name(name: string | undefined): boolean {
   return /^(GAN-?(356|i)|Gi[CSBM3]?-)/i.test(name ?? '');
+}
+
+/** DCTimer-BLE v3ResetRequest. */
+export function createGanV3ResetCommand(): Uint8Array {
+  return new Uint8Array([0x68, 0x05, 0x05, 0x39, 0x77, 0, 0, 1, 0x23, 0x45, 0x67, 0x89, 0xab, 0, 0, 0]);
 }
