@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { persistItem } from '@/lib/safe-storage';
-import { PINNED_COUNTRIES_KEY, parsePinnedCountries, pinnedCountriesKey, resolvePinnedCountries } from '@/lib/pinned-countries';
+import { PINNED_COUNTRIES_KEY, parsePinnedCountries, pinnedCountriesKey, resolvePinnedCountries, togglePinnedCountry } from '@/lib/pinned-countries';
+import { loadIpCountry } from '@/lib/ip-country';
 import { useAuthStore, useAuthUser } from '@/lib/auth-store';
 import { loadFlagData, personFlagIso2 } from '@/lib/country-flags';
 
@@ -36,6 +37,12 @@ export function usePinnedCountries() {
   const key = pinnedCountriesKey(user);
   const wcaId = user?.wcaId.trim().toUpperCase() ?? '';
   const [, setFlagVersion] = useState(0);
+  const [ipCountry, setIpCountry] = useState('');
+  useEffect(() => {
+    let cancelled = false;
+    void loadIpCountry().then(country => { if (!cancelled) setIpCountry(country); });
+    return () => { cancelled = true; };
+  }, []);
   useEffect(() => {
     if (!wcaId) return;
     let cancelled = false;
@@ -46,18 +53,16 @@ export function usePinnedCountries() {
   const snapshot = useCallback(() => key ? read(key) : null, [key]);
   const raw = useSyncExternalStore(subscribe, snapshot, () => null);
   const country = wcaId ? personFlagIso2(wcaId) : '';
-  const pins = useMemo(() => resolvePinnedCountries(raw, country), [raw, country]);
+  const pins = useMemo(() => resolvePinnedCountries(raw, country, ipCountry), [raw, country, ipCountry]);
   const toggleCountry = useCallback((iso2: string) => {
     // Recheck the live session: an event from a previous account must not write its preferences.
     if (!key || pinnedCountriesKey(useAuthStore.getState().user) !== key) return;
     const pin = parsePinnedCountries(JSON.stringify([iso2]))[0];
     if (!pin) return;
-    const current = resolvePinnedCountries(read(key), wcaId ? personFlagIso2(wcaId) : '');
-    const next = JSON.stringify(current.includes(pin)
-      ? current.filter(value => value !== pin) : [...current, pin]);
+    const next = togglePinnedCountry(read(key), wcaId ? personFlagIso2(wcaId) : '', ipCountry, pin);
     if (persistItem(key, next)) visitValues.delete(key);
     else visitValues.set(key, next);
     window.dispatchEvent(new Event(CHANGE_EVENT));
-  }, [key, wcaId]);
+  }, [key, wcaId, ipCountry]);
   return [pins, toggleCountry] as const;
 }

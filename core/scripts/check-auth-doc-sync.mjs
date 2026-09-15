@@ -21,7 +21,7 @@ const EXACT = new Set([
   'apps/miniprogram/src/pages/web/index.ts',
   'packages/client/components/MobileEmbedBridge.tsx', 'packages/shared/src/mobile_embed.ts',
   'packages/client/components/CountryPinButton.tsx', 'packages/client/hooks/usePinnedCountries.ts',
-  'packages/client/lib/pinned-countries.ts',
+  'packages/client/lib/pinned-countries.ts', 'packages/client/lib/ip-country.ts',
   'packages/client/lib/page-access-api.ts',
   'packages/app-ui/src/App.tsx', 'apps/mobile/src/capacitor-host.ts',
   'apps/mobile/src/native/secure-storage.ts', 'apps/desktop/src/tauri-host.ts',

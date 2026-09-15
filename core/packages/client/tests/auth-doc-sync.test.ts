@@ -79,6 +79,7 @@ describe('/dev/auth source-review drift', () => {
     ['@cuberoot/client', 'components/AuthPanel.tsx'], ['@cuberoot/client', 'lib/identity-choice.ts'],
     ['@cuberoot/client', 'components/CountryPinButton.tsx'], ['@cuberoot/client', 'hooks/usePinnedCountries.ts'],
     ['@cuberoot/client', 'lib/pinned-countries.ts'],
+    ['@cuberoot/client', 'lib/ip-country.ts'],
     ['@cuberoot/client', 'app/auth/social/callback/page.tsx'], ['@cuberoot/client', 'app/[lang]/account/page.tsx'],
     ['@cuberoot/shared', 'src/auth/web_session.ts'], ['@cuberoot/app-ui', 'src/auth/installed-auth.ts'],
     ['@cuberoot/mobile', 'src/mobile-auth.ts'], ['@cuberoot/desktop', 'src-tauri/src/lib.rs'],
