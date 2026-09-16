@@ -8,7 +8,8 @@
 .disk-refresh { display: inline-flex; align-items: center; gap: 6px; padding: 8px 0; border: 0; background: transparent; color: var(--accent); cursor: pointer; font: inherit; }
 .disk-refresh:disabled { opacity: .5; cursor: wait; }
 .disk-status, .disk-note { color: var(--muted-foreground); font-size: .8rem; line-height: 1.6; }
-.disk-status { margin: 14px 0; }
+.disk-status { margin: 14px 0; overflow-wrap: anywhere; }
+.disk-scan-progress { display: block; width: min(100%, 360px); height: 6px; accent-color: var(--accent); }
 .disk-warning { color: var(--signal-warning); }
 .disk-list-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; color: var(--muted-foreground); font-size: .75rem; }
 .disk-directory-list { margin: 6px 0 16px; padding: 0; list-style: none; }

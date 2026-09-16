@@ -13,6 +13,7 @@ adminDiskRoutes.get('/admin/disk', async c => {
   try { await resolveDiskPath(path); }
   catch { return c.json({ error: 'Directory unavailable' }, 400); }
   try {
+    await diskScanner.load();
     return c.json({ capacity: await diskCapacity(), ...diskScanner.read(path, refresh === '1') });
   } catch {
     return c.json({ error: 'Disk information unavailable' }, 503);
