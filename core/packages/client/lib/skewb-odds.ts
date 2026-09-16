@@ -336,12 +336,3 @@ export const SKEWB_ODDS: SkewbOdds = {
  * 角块全好的非还原态最少就是 8 步)。
  */
 export const SKEWB_PURE_CENTRE_3CYCLE = { states: 24, moves: 8 } as const;
-
-/**
- * `stats/scramble/puzzle_distribution.json` 里斜转那条 WCA 真题分布的副本 ——
- * 用来和上面的理论条件分布对账。测试直接读那个 JSON 核对,不许两边飘。
- */
-export const SKEWB_WCA_SAMPLE = {
-  sampleCount: 232_437,
-  counts: { 7: 23_795, 8: 92_619, 9: 109_819, 10: 6_200, 11: 4 } as Record<number, number>,
-};

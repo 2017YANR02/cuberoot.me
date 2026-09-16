@@ -1,13 +1,15 @@
 'use client';
 
 /**
- * 斜转的识别概率与首步分布。数字全部来自 `lib/skewb-odds.ts` 的常量,而那份常量由
- * `tests/skewb_odds.test.ts` 每次跑都用全空间枚举重算后逐个断言 —— 本组件只排版。
+ * 斜转的识别概率与首步分布。理论常量由 `tests/skewb_odds.test.ts` 全空间枚举自证;
+ * 真题样本与求解统计页共用 puzzle_distribution.json,不在源码中维护另一份快照。
  */
+import { useEffect, useState } from 'react';
+import { fetchPuzzleDistribution, type PuzzleDistEntry } from '@/lib/puzzle-distribution';
 import Link from '@/components/AppLink';
 import { T, tr } from '@/i18n/tr';
 import { groupDigits } from '@/lib/group-digits';
-import { SKEWB_ODDS, SKEWB_PURE_CENTRE_3CYCLE, SKEWB_WCA_SAMPLE } from '@/lib/skewb-odds';
+import { SKEWB_ODDS, SKEWB_PURE_CENTRE_3CYCLE } from '@/lib/skewb-odds';
 
 const { total, wcaLegal, recognition: rec, centresOnly, steps, lastLayer } = SKEWB_ODDS;
 
@@ -68,11 +70,24 @@ const MAX_STEP = Math.max(...steps.map((s) => s.hist.length - 1));
 const STEP_COLS = Array.from({ length: MAX_STEP + 1 }, (_, i) => i);
 
 export default function SkewbOdds() {
+  const [sample, setSample] = useState<PuzzleDistEntry | null>(null);
+  const [sampleFailed, setSampleFailed] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    fetchPuzzleDistribution().then(data => {
+      if (cancelled) return;
+      const skewb = data.puzzles.skewb;
+      if (skewb?.sample_count > 0) setSample(skewb);
+      else setSampleFailed(true);
+    }).catch(() => { if (!cancelled) setSampleFailed(true); });
+    return () => { cancelled = true; };
+  }, []);
   const wcaWorst = (() => {
+    if (!sample) return 0;
     let worst = 0;
     for (let d = 7; d < SKEWB_ODDS.histogram.length; d++) {
       const theory = SKEWB_ODDS.histogram[d] / wcaLegal;
-      const seen = (SKEWB_WCA_SAMPLE.counts[d] ?? 0) / SKEWB_WCA_SAMPLE.sampleCount;
+      const seen = (sample.dist.counts[d] ?? 0) / sample.sample_count;
       worst = Math.max(worst, Math.abs(theory - seen) * 100);
     }
     return worst;
@@ -99,20 +114,29 @@ export default function SkewbOdds() {
         <T
           zh={<>
             比赛打乱不给 6 步以内就能解开的状态,所以那一档的分母是 {groupDigits(String(wcaLegal))} 而不是全空间。
-            这不是约定俗成:{groupDigits(String(SKEWB_WCA_SAMPLE.sampleCount))} 条 WCA 真题打乱里最短的正是 7 步,
-            而且七到十一步的逐档占比与理论条件分布最大只差 {wcaWorst.toFixed(3)} 个百分点。
+            {sample && <>
+              {groupDigits(String(sample.sample_count))} 条 WCA 真题打乱里最短的是 {sample.dist.min} 步,
+              七到十一步的逐档占比与理论条件分布最大相差 {wcaWorst.toFixed(3)} 个百分点。
+            </>}
             整解的逐步分布在 <Link href="/scramble/stats?tab=difficulty&event=skewb" className="prob-link">求解统计</Link> 里。
           </>}
           en={<>
             Competition scrambles never hand you a state solvable in six moves or fewer, so that row’s
-            denominator is {groupDigits(String(wcaLegal))} rather than the whole space. That is not a convention
-            we assumed: across {groupDigits(String(SKEWB_WCA_SAMPLE.sampleCount))} real WCA scrambles the shortest
-            optimal solution is exactly 7, and the seven-to-eleven shares differ from the theoretical conditional
-            distribution by at most {wcaWorst.toFixed(3)} percentage points. The full depth histogram lives
+            denominator is {groupDigits(String(wcaLegal))} rather than the whole space.
+            {sample && <>
+              {' '}Across {groupDigits(String(sample.sample_count))} real WCA scrambles the shortest
+              optimal solution is {sample.dist.min}, and the seven-to-eleven shares differ from the theoretical
+              conditional distribution by at most {wcaWorst.toFixed(3)} percentage points.
+            </>}
+            {' '}The full depth histogram lives
             in <Link href="/scramble/stats?tab=difficulty&event=skewb" className="prob-link">the solve stats</Link>.
           </>}
         />
       </p>
+
+      {!sample && <p className="prob-note" role="status">{sampleFailed
+        ? tr({ zh: '真题统计暂时无法加载。', en: 'Scramble statistics are temporarily unavailable.' })
+        : tr({ zh: '正在加载真题统计…', en: 'Loading scramble statistics…' })}</p>}
 
       <div className="prob-cols">
         <div>

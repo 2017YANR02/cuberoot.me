@@ -7,8 +7,8 @@
 .training-stats-history { padding: 0; list-style: none; max-height: 260px; overflow: auto; }
 .training-stats-history li { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding-block: 6px; font-size: 0.8rem; border-bottom: 1px solid var(--border-default); }
 .training-stats-actions { margin-top: 12px; font-size: 0.8rem; }
-.training-stats-actions button { appearance: none; font: inherit; padding: 6px 10px; border: 1px solid var(--border-default); border-radius: 6px; background: var(--card); color: var(--foreground); cursor: pointer; }
-.training-stats-actions button:disabled { opacity: 0.5; cursor: default; }
+.training-stats-action { appearance: none; font: inherit; padding: 6px 10px; border: 1px solid var(--border-default); border-radius: 6px; background: var(--card); color: var(--foreground); cursor: pointer; }
+.training-stats-action:disabled { opacity: 0.5; cursor: default; }
 .training-iframe-stats { flex-shrink: 0; max-height: 45dvh; overflow: auto; padding: 8px 16px; }
 .training-iframe-stats > summary { cursor: pointer; }
 .training-manual-practice { padding-bottom: 8px; }
