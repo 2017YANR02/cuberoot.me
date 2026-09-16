@@ -75,7 +75,7 @@ import { ClearButton } from '@/components/ClearButton';
 import ResetDefaultsButton from '@/components/ResetDefaultsButton';
 import { tr } from '@/i18n/tr';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
-import { cutoffPhase, roundAttempts, type RoundFormat } from '@cuberoot/shared/timer';
+import type { RoundFormat } from '@cuberoot/shared/timer';
 import {
   TIMER_ACTIONS,
   bindingsForAction,
@@ -141,7 +141,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
   const categories = TIMER_SETTING_CATEGORY_CONTRACTS.map((category) => ({
     id: category.id,
     label: tr(category.label),
-    description: tr(category.description),
     icon: categoryIcons[category.id],
   }));
   const activeCategoryMeta = categories.find((category) => category.id === activeCategory)!;
@@ -212,12 +211,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
     setRoundCutoffInput(formatTargetTime(s.round.cutoffMs));
     setRoundLimitInput(formatTargetTime(s.round.limitMs));
   }, [s.round.cutoffMs, s.round.limitMs]);
-  // 0 until a cutoff is actually typed in, which would make the hint read
-  // "the first 0 attempts" — fall back to the clamped configured length so the
-  // sentence still describes what will happen once a value lands.
-  const roundAttemptCount = roundAttempts(s.round.format);
-  const roundCutoffPhase = cutoffPhase(s.round, roundAttemptCount)
-    || Math.max(1, Math.min(s.round.cutoffAttempts, roundAttemptCount - 1));
   function commitRoundLimitField(field: 'cutoffMs' | 'limitMs', raw: string): void {
     const parsed = parseTargetTime(raw);
     updateSettings({ round: { ...s.round, [field]: parsed } });
@@ -675,16 +668,12 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
         role="dialog"
         aria-modal="true"
         aria-labelledby="settings-modal-title"
-        aria-describedby="settings-modal-description"
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
       >
         <header className="settings-modal-head">
           <div>
             <h2 id="settings-modal-title">{tr({ zh: '设置', en: 'Settings' })}</h2>
-            <p id="settings-modal-description">
-              {tr({ zh: '更改会立即保存', en: 'Changes are saved automatically' })}
-            </p>
           </div>
           <ClearButton
             variant="standalone"
@@ -731,7 +720,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           <main ref={mainRef} className="settings-main">
             <div className="settings-category-intro">
               <h3>{activeCategoryMeta.label}</h3>
-              <p>{activeCategoryMeta.description}</p>
             </div>
 
             {activeCategory === 'appearance' && (
@@ -853,9 +841,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
               id="settings.scramble.auto-mark-wca"
               value={s.autoMarkWcaScramble}
               onChange={(v) => updateSettings({ autoMarkWcaScramble: v })}
-            >
-              <span className="hint">{tr({ zh: '把成绩记录到该打乱的公开打卡', en: 'Records the result on that scramble’s public marks' })}</span>
-            </BooleanSettingRow>
+            />
           )}
         </SettingsSection>
 
@@ -940,11 +926,9 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
               <option value="zh-female">{tr({ zh: '中文 女声', en: 'Chinese (female)'
             })}</option>
             </select>
-            <span className="hint">{isVoiceAvailable()
-              ? tr({ zh: '念 8 秒 / 12 秒 / 开始（依系统可用音色）', en: 'reads 8s / 12s / go (depends on system voices)'
-                                      })
-              : tr({ zh: '浏览器不支持', en: 'unsupported by browser'
-                                      })}</span>
+            {!isVoiceAvailable() && (
+              <span className="hint">{tr({ zh: '浏览器不支持', en: 'Unsupported by browser' })}</span>
+            )}
           </SettingRow>
         </SettingsSection>
 
@@ -958,10 +942,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
             id="settings.sound.metronome-enabled"
             value={s.metronomeOn}
             onChange={(v) => { updateSettings({ metronomeOn: v }); if (v) warmupSound(); }}
-          >
-            <span className="hint">{tr({ zh: '观察 / 计时阶段播放', en: 'ticks during inspection / solve'
-            })}</span>
-          </BooleanSettingRow>
+          />
           <SettingRow id="settings.sound.metronome-tempo">
             <input
               className="settings-row-control-input"
@@ -987,8 +968,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
             {tapBpmHint !== null && (
               <span className="hint" style={{ fontVariantNumeric: 'tabular-nums' }}>→ {tapBpmHint}</span>
             )}
-            <span className="hint">{tr({ zh: '与桌宠里的悬浮节拍器共用一档速度', en: 'shared with the floating metronome in the desk pet'
-            })}</span>
           </SettingRow>
           <SettingRow id="settings.sound.inspection-beeps">
             <input
@@ -1007,10 +986,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
               {tr({ zh: '试听', en: 'Test'
             })}
             </button>
-            <span className="hint">{tr({
-              zh: `观察到这些秒数各响一声（1..60，独立于 8/12 秒）；当前 ${(s.inspectionBeepAt ?? []).length ? s.inspectionBeepAt.join(' / ') + ' 秒' : '关闭'}`,
-              en: `one beep at each inspection second (1..60, separate from 8/12s); current ${(s.inspectionBeepAt ?? []).length ? s.inspectionBeepAt.join(' / ') + 's' : 'off'}`,
-            })}</span>
           </SettingRow>
         </SettingsSection>
 
@@ -1078,10 +1053,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
             })}
             </button>
           </SettingRow>
-          <Row label="">
-            <span className="hint">{tr({ zh: '相同种子在不同设备打出相同序列；计数会跨刷新保留', en: 'same seed → same sequence across devices; counter persists across reloads'
-            })}</span>
-          </Row>
         </SettingsSection>
 
         <SettingsSection
@@ -1146,8 +1117,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
                 <LogIn size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
                 {settingLabel('settings.data.cloud-sign-in')}
               </button>
-              <span className="hint">{tr({ zh: '用 WCA 账号登录,即可把全部成绩存到云端,在其它设备恢复', en: 'Sign in with WCA to store all solves in the cloud and restore them on other devices'
-            })}</span>
             </Row>
           ) : (
             <>
@@ -1490,10 +1459,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
               <option value="bo3">{tr({ zh: '三次取最好 (bo3)', en: 'Best of 3' })}</option>
               <option value="bo1">{tr({ zh: '一次 (bo1)', en: 'Best of 1' })}</option>
             </select>
-            <span className="hint">{tr({
-              zh: '按真实比赛轮次练习。成绩照常记录，轮次只跟踪最近这一组，不额外存东西',
-              en: 'Practise under real round conditions. Solves are recorded as usual — the round is just the most recent group of them',
-            })}</span>
           </SettingRow>
           <SettingRow id="settings.training.round-cutoff">
             <input
@@ -1506,10 +1471,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
               onKeyDown={(e) => { if (e.key === 'Enter') commitRoundLimitField('cutoffMs', (e.target as HTMLInputElement).value); }}
               style={{ fontFamily: 'ui-monospace, monospace' }}
             />
-            <span className="hint">{tr({
-              zh: `前 ${roundCutoffPhase} 把里至少一把严格快过它，才能继续后面的把数（WCA 9g）`,
-              en: `at least one of the first ${roundCutoffPhase} attempts must be strictly faster to continue (WCA 9g)`,
-            })}</span>
           </SettingRow>
           <SettingRow id="settings.training.round-time-limit">
             <input
@@ -1531,10 +1492,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
                 ariaLabel={settingLabel('settings.training.round-cumulative')}
               />
             </span>
-            <span className="hint">{tr({
-              zh: '每把 = 单把时限（WCA A1a1）；累计 = 整轮共用一份额度（A1a2），用完后剩余把数记 DNS',
-              en: 'per attempt = a limit on each solve (WCA A1a1); cumulative = one budget for the whole round (A1a2) — attempts left once it runs out are DNS',
-            })}</span>
           </SettingRow>
             </>
           )}
@@ -1545,9 +1502,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           activeCategory={activeCategory}
           title={tr({ zh: '快捷键与手势', en: 'Shortcuts and gestures' })}
         >
-          <p className="settings-section-note">
-            {tr({ zh: '在计时区按住并拖动，可呼出操作轮盘', en: 'Press and drag on the timer to open the action wheel' })}
-          </p>
           <div data-setting-id="settings.advanced.keymap">
             <KeymapEditor />
           </div>

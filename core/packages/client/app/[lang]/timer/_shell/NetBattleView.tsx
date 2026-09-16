@@ -1,5 +1,7 @@
 'use client';
 
+import type { CubeMoveMetadata } from '../_lib/bluetooth';
+
 /**
  * NetBattleView — /timer 的「联机对战」模式(?players=net)。
  *
@@ -691,7 +693,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
 
   // hook 只给一个 onMove;订阅者(当前只有自动预备)统一从这里分发,与 Solo 的
   // bluetoothSubscribersRef 同构 —— 以后要加实时魔方/TPS 直接往里加订阅即可。
-  const btSubscribersRef = useRef<Set<(m: string, ts: number) => void>>(new Set());
+  const btSubscribersRef = useRef<Set<(m: string, ts: number, metadata?: CubeMoveMetadata) => void>>(new Set());
 
   /**
    * 预备之后第一下转动即起表(与 Solo 同一条规则,时间取魔方自己的时钟)。
@@ -710,13 +712,13 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   };
 
   const bluetoothCube = useBluetoothCube({
-    onMove: (move, ts) => {
+    onMove: (move, ts, metadata) => {
       // 先起表,后广播:如果这一手就是起表那一手,下面的录制订阅必须已经看到
       // 「在计时」。它读的是 `phaseRef`,而上面那行是同步写的 —— 等 React 重渲染
       // 就会丢掉这一步,而 BLE 可能在同一个调用栈里连给两手。
       startFromCubeRef.current(ts);
       for (const sub of btSubscribersRef.current) {
-        try { sub(move, ts); } catch (e) { console.error('[bt-broadcast]', e); }
+        try { sub(move, ts, metadata); } catch (e) { console.error('[bt-broadcast]', e); }
       }
     },
     // 魔方回到还原态 = 停表,与 Solo 同一条规则。只在真的在计时时停,所以别人回合里
@@ -860,7 +862,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   }, [scrambleTarget, myScr]);
   useEffect(() => {
     const subs = btSubscribersRef.current;
-    const verify = () => {
+    const verify = (_move: string, _ts: number, metadata?: CubeMoveMetadata) => {
+      if (metadata?.futureHistory) return;
       const target = scrambleTargetRef.current;
       if (!target) return;
       // 计时中魔方本来就不该等于打乱了,这时比对没有意义。
@@ -1396,10 +1399,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
               scramble={displayScramble}
               verificationLabels={{
                 copiedCorrection: tr({ zh: '已复制原打乱', en: 'Copied the scramble' }),
-                correction: tr({ zh: '拧回原打乱', en: 'Back to scramble' }),
-                correctionTitle: tr({ zh: '拧回原打乱', en: 'Back to scramble' }),
-                mismatch: tr({ zh: '与打乱不符', en: 'Doesn’t match' }),
-                ready: tr({ zh: '打乱已就绪', en: 'Scrambled' }),
               }}
             />
           }

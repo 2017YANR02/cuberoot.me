@@ -1,3 +1,5 @@
+import { createDeviceStateReset } from './device_reset';
+import { createGanV4ResetCommand } from '@cuberoot/shared/smart-cube/gan-v4';
 /**
  * GAN Smart Cube v4 driver — covers GAN 12 / 13 / 14, Mini Pro, MG / AiCube
  * v4 firmwares that expose the FFF5/FFF6 GATT characteristics under the
@@ -126,8 +128,9 @@ export const ganV4Driver: CubeDriver = {
     // is resolved after we subscribe). The decoder only ever calls these from
     // a notification, long after start() has finished, so a late binding is
     // safe — and it keeps the handshake order identical to cstimer's.
-    let sendCmd: (req: Uint8Array) => Promise<void> = async () => {};
+    let sendCmd: (req: Uint8Array, strict?: boolean) => Promise<void> = async () => {};
 
+    let calibration: ReturnType<typeof createDeviceStateReset> | null = null;
     const decState: MoveDecodeState = createGanV4DecodeState({
       // cstimer's requestMoveHistory: opcode 0xD1 / 0x04, window at [2] / [4].
       requestHistory: (startMoveCnt, numberOfMoves) => {
@@ -141,7 +144,7 @@ export const ganV4Driver: CubeDriver = {
         decState.sync.reset();
         void sendCmd(createGanV4FaceletsCommand());
       },
-      onState: (facelets) => ctx?.onState?.(facelets),
+      onState: (facelets) => { calibration?.observe(facelets); ctx?.onState?.(facelets); },
     });
     let keyErrorFired = false;
     let cleaned = false;
@@ -163,7 +166,10 @@ export const ganV4Driver: CubeDriver = {
         return;
       }
       const moves = decodeGanV4Frame(pt, decState, ctx?.onGyro);
-      for (const mv of moves) onMove(mv.mv, mv.ts);
+      for (const mv of moves) {
+        if (mv.estimatedTime) onMove(mv.mv, mv.ts, { estimatedTime: true });
+        else onMove(mv.mv, mv.ts);
+      }
       if (moves.length > 0) idleStateChecks.afterMoves();
       // Several unrecognised frames in a row ⇒ wrong MAC. Tell the hook once.
       if (!keyErrorFired && decState.badFrames >= 6) {
@@ -189,8 +195,8 @@ export const ganV4Driver: CubeDriver = {
     }
 
     let writeTail: Promise<void> = Promise.resolve();
-    sendCmd = (req: Uint8Array): Promise<void> => {
-      if (!cmdChar) return Promise.resolve();
+    sendCmd = (req: Uint8Array, strict = false): Promise<void> => {
+      if (!cmdChar) return strict ? Promise.reject(new Error('Device has no write characteristic')) : Promise.resolve();
       const enc = cipher.encrypt(req);
       // Detach into a fresh ArrayBuffer-backed Uint8Array — the strict TS
       // lib types narrow `BufferSource` to `Uint8Array<ArrayBuffer>` and our
@@ -199,7 +205,7 @@ export const ganV4Driver: CubeDriver = {
       buf.set(enc);
       const task = writeTail.then(() => writeGattValue(cmdChar!, buf));
       writeTail = task.catch(() => {});
-      return task.catch(() => {});
+      return strict ? task : task.catch(() => {});
     };
 
     if (cmdChar) {
@@ -209,9 +215,16 @@ export const ganV4Driver: CubeDriver = {
       await sendCmd(createGanV4BatteryCommand());
     }
 
+    calibration = createDeviceStateReset({
+      sendReset: () => sendCmd(createGanV4ResetCommand(), true),
+      prepareSnapshot: () => { decState.sync.reset(); },
+      requestSnapshot: () => sendCmd(createGanV4FaceletsCommand(), true),
+    });
+
     const cleanup = (): void => {
       if (cleaned) return;
       cleaned = true;
+      calibration?.dispose();
       idleStateChecks.dispose();
       notifyChar.removeEventListener('characteristicvaluechanged', onChar);
       void notifyChar.stopNotifications().catch(() => {});
@@ -230,6 +243,6 @@ export const ganV4Driver: CubeDriver = {
       }
     };
 
-    return { battery, cleanup };
+    return { battery, cleanup, resetDeviceState: cmdChar ? () => calibration!.run() : undefined };
   },
 };

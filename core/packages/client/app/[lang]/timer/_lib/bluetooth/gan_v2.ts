@@ -1,3 +1,5 @@
+import { createDeviceStateReset } from './device_reset';
+import { createGanV2ResetCommand, decodeGanV2Facelets } from '@cuberoot/shared/smart-cube/gan-v2';
 /**
  * Web Bluetooth transport for GAN's Nordic-UART v2 protocol.
  * Frame parsing, encryption and commands live in @cuberoot/shared so the
@@ -52,6 +54,7 @@ export const ganV2Driver: CubeDriver = {
       ? macStringToBytes(ctx.mac)
       : (nameMac ? macStringToBytes(nameMac) : new Uint8Array(6));
     const cipher = createGanV2Cipher(mac, server.device.name ?? '');
+    let calibration: ReturnType<typeof createDeviceStateReset> | null = null;
     const decodeState = createGanV2DecodeState();
     let keyErrorFired = false;
 
@@ -66,6 +69,10 @@ export const ganV2Driver: CubeDriver = {
         return;
       }
       for (const move of decodeGanV2Frame(frame, decodeState, ctx?.onGyro)) onMove(move);
+      if (calibration?.waiting) {
+        const facelets = decodeGanV2Facelets(frame);
+        if (facelets) { calibration.observe(facelets); ctx?.onState?.(facelets); }
+      }
       if (!keyErrorFired && decodeState.badFrames >= 3) {
         keyErrorFired = true;
         ctx?.onKeyError?.();
@@ -83,14 +90,14 @@ export const ganV2Driver: CubeDriver = {
     }
 
     let writeTail: Promise<void> = Promise.resolve();
-    const sendCommand = (command: Uint8Array): Promise<void> => {
-      if (!commandChar) return Promise.resolve();
+    const sendCommand = (command: Uint8Array, strict = false): Promise<void> => {
+      if (!commandChar) return strict ? Promise.reject(new Error('Device has no write characteristic')) : Promise.resolve();
       const encrypted = cipher.encrypt(command);
       const bytes = new Uint8Array(encrypted.length);
       bytes.set(encrypted);
       const task = writeTail.then(() => writeGattValue(commandChar!, bytes));
       writeTail = task.catch(() => {});
-      return task.catch(() => {});
+      return strict ? task : task.catch(() => {});
     };
 
     if (commandChar) {
@@ -100,9 +107,16 @@ export const ganV2Driver: CubeDriver = {
     }
 
     let cleaned = false;
+    calibration = createDeviceStateReset({
+      sendReset: () => sendCommand(createGanV2ResetCommand(), true),
+      prepareSnapshot: () => { decodeState.prevMoveCnt = -1; decodeState.prevMoves = []; },
+      requestSnapshot: () => sendCommand(createGanV2FaceletsCommand(), true),
+    });
+
     const cleanup = (): void => {
       if (cleaned) return;
       cleaned = true;
+      calibration?.dispose();
       notifyChar.removeEventListener('characteristicvaluechanged', onCharacteristic);
       void notifyChar.stopNotifications().catch(() => {});
     };
@@ -117,6 +131,6 @@ export const ganV2Driver: CubeDriver = {
       }
     };
 
-    return { battery, cleanup };
+    return { battery, cleanup, resetDeviceState: commandChar ? () => calibration!.run() : undefined };
   },
 };

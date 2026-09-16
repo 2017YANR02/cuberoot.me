@@ -16,10 +16,11 @@ export type TimerScrambleHint = SmartCubeScrambleHint;
 
 export interface TimerScrambleVerificationLabels {
   copiedCorrection: string;
-  correction: string;
-  correctionTitle: string;
-  mismatch: string;
-  ready: string;
+  /** Legacy host labels, retained for compatibility but no longer displayed. */
+  correction?: string;
+  correctionTitle?: string;
+  mismatch?: string;
+  ready?: string;
 }
 
 export interface TimerScrambleNonOptimalLabel {
@@ -175,28 +176,11 @@ export function TimerScrambleStrip({
             : fallback}
       </span>
 
-      {liveHint
-        ? correctionActive && (
-            <>
-              <span
-                className="scramble-verify"
-                data-ok="fix"
-                title={verificationLabels.correctionTitle}
-              >
-                {verificationLabels.correction}
-              </span>
-              {copied && (
-                <span className="scramble-verify" data-ok="true">
-                  {verificationLabels.copiedCorrection}
-                </span>
-              )}
-            </>
-          )
-        : match !== null && (
-            <span className="scramble-verify" data-ok={match ? 'true' : 'false'}>
-              {match ? verificationLabels.ready : verificationLabels.mismatch}
-            </span>
-          )}
+      {liveHint && correctionActive && copied && (
+        <span className="scramble-verify" data-ok="true">
+          {verificationLabels.copiedCorrection}
+        </span>
+      )}
 
       {children}
     </div>

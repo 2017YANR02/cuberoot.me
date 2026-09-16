@@ -13,6 +13,10 @@ React SPA（/recon 路由，Zustand 状态管理）
 comp_names_zh.json（英文→中文比赛名映射，CI 每日更新）
 ```
 
+## 项目别名与播放器
+
+历史数据保留原始项目名（例如 `OH` / `oh`、`Pyraminx` / `pyra`、`Skewb` / `skewb`、`SQ1` / `sq1`）。列表在生成项目选项和筛选匹配时统一使用 `wcaToReconEvent`，缓存旧记录也按同一规则读取，无需迁移持久化数据。播放器映射使用同一归一化入口；齿轮使用现有 Gear 引擎，镜面使用现有 NxN 镜面几何。
+
 ## API 接口
 
 基址：`https://api.cuberoot.me/v1/recon/`（Hono RESTful）

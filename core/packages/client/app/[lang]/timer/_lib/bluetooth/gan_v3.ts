@@ -1,3 +1,5 @@
+import { createDeviceStateReset } from './device_reset';
+import { createGanV3ResetCommand } from '@cuberoot/shared/smart-cube/gan-v3';
 /**
  * Web Bluetooth transport for GAN's 8653000a v3 protocol.
  * Shared owns frame parsing, recovery state, crypto and commands; this file
@@ -56,16 +58,17 @@ export const ganV3Driver: CubeDriver = {
 
     let commandChar: BluetoothRemoteGATTCharacteristic | null = null;
     let writeTail: Promise<void> = Promise.resolve();
-    const sendCommand = (command: Uint8Array): Promise<void> => {
-      if (!commandChar) return Promise.resolve();
+    const sendCommand = (command: Uint8Array, strict = false): Promise<void> => {
+      if (!commandChar) return strict ? Promise.reject(new Error('Device has no write characteristic')) : Promise.resolve();
       const encrypted = cipher.encrypt(command);
       const bytes = new Uint8Array(encrypted.length);
       bytes.set(encrypted);
       const task = writeTail.then(() => writeGattValue(commandChar!, bytes));
       writeTail = task.catch(() => {});
-      return task.catch(() => {});
+      return strict ? task : task.catch(() => {});
     };
 
+    let calibration: ReturnType<typeof createDeviceStateReset> | null = null;
     const decodeState = createGanV3DecodeState({
       requestHistory: (startMoveCounter, numberOfMoves) => {
         void sendCommand(createGanV3HistoryCommand(startMoveCounter, numberOfMoves));
@@ -74,7 +77,7 @@ export const ganV3Driver: CubeDriver = {
         decodeState.sync.reset();
         void sendCommand(createGanV3FaceletsCommand());
       },
-      onState: (facelets) => ctx?.onState?.(facelets),
+      onState: (facelets) => { calibration?.observe(facelets); ctx?.onState?.(facelets); },
     });
     let keyErrorFired = false;
     let cleaned = false;
@@ -106,7 +109,10 @@ export const ganV3Driver: CubeDriver = {
         return;
       }
       const moves = decodeGanV3Frame(frame, decodeState);
-      for (const move of moves) onMove(move.mv, move.ts);
+      for (const move of moves) {
+        if (move.estimatedTime) onMove(move.mv, move.ts, { estimatedTime: true });
+        else onMove(move.mv, move.ts);
+      }
       if (moves.length > 0) scheduleIdleStateChecks();
       if (!keyErrorFired && decodeState.badFrames >= 6) {
         keyErrorFired = true;
@@ -128,9 +134,16 @@ export const ganV3Driver: CubeDriver = {
       await sendCommand(createGanV3BatteryCommand());
     }
 
+    calibration = createDeviceStateReset({
+      sendReset: () => sendCommand(createGanV3ResetCommand(), true),
+      prepareSnapshot: () => { decodeState.sync.reset(); },
+      requestSnapshot: () => sendCommand(createGanV3FaceletsCommand(), true),
+    });
+
     const cleanup = (): void => {
       if (cleaned) return;
       cleaned = true;
+      calibration?.dispose();
       clearIdleStateChecks();
       notifyChar.removeEventListener('characteristicvaluechanged', onCharacteristic);
       void notifyChar.stopNotifications().catch(() => {});
@@ -146,6 +159,6 @@ export const ganV3Driver: CubeDriver = {
       }
     };
 
-    return { battery, cleanup };
+    return { battery, cleanup, resetDeviceState: commandChar ? () => calibration!.run() : undefined };
   },
 };

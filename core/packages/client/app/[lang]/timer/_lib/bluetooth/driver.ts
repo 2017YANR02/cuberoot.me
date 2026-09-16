@@ -204,7 +204,16 @@ export interface TimedMove {
   ts?: number;
 }
 
+export interface CubeMoveMetadata {
+  /** Ahead of the accompanying QiYi snapshot; do not count toward scramble arming. */
+  futureHistory?: boolean;
+  /** Timestamp reconstructed from history rather than supplied by the device. */
+  estimatedTime?: boolean;
+}
+
 export interface CubeDriverStartResult {
+  /** Calibrate the physical device state and await its solved-state reply. */
+  resetDeviceState?: () => Promise<void>;
   /** Read the most recent battery level (0..100) or null if unavailable. */
   battery: () => Promise<number | null>;
   /** Tear down notification subscriptions; safe to call multiple times. */
@@ -349,7 +358,7 @@ export interface CubeDriver {
    */
   start(
     server: BluetoothRemoteGATTServer,
-    onMove: (move: string, deviceTs?: number) => void,
+    onMove: (move: string, deviceTs?: number, metadata?: CubeMoveMetadata) => void,
     ctx?: CubeDriverContext,
   ): Promise<CubeDriverStartResult>;
 }

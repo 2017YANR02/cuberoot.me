@@ -1,4 +1,4 @@
-/* NOTE: WCA 统计页样式 — 暗色主题 + 现代表格 */
+/* NOTE: WCA 统计页样式 — 全站主题 + 现代表格 */
 
 /* 项目列：仅 cubing-icon */
 .wca-stats-table .wca-stats-event-icon {
@@ -7,7 +7,7 @@
 }
 
 .wca-stats-page {
-  /* wca-stats 详情子页是 dark-locked:实际锁见 index.css 的 html:has(.wca-stats-page) 块 */
+  /* 统计详情继承全站 token，跟随系统或用户选择的主题 */
   width: fit-content;
   min-width: min(100%, 800px);
   max-width: 100%;
