@@ -23,14 +23,16 @@ export default function AdminDiskPage() {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refresh, setRefresh] = useState(0);
+  const [clock, setClock] = useState(0);
   const forceRefresh = useRef(false);
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (!mounted || !isAdmin) return;
     const controller = new AbortController();
+    const pollingStarted = Date.now();
     let timer: ReturnType<typeof setTimeout>;
-    setReport(null);
+    setReport(previous => previous?.snapshot?.path === path ? previous : null);
     setError(false);
     setLoading(true);
     const poll = async (force: boolean) => {
@@ -42,6 +44,9 @@ export default function AdminDiskPage() {
         const next = await fetchDiskReport(path, force, request.signal);
         if (controller.signal.aborted) return;
         setReport(next);
+        // Stop stale polling after an interrupted scan; retry only reads its status.
+        if ((next.scanning || next.busy) && (Date.now() - pollingStarted > 180_000
+          || (next.progress && Date.now() - Date.parse(next.progress.startedAt) > 150_000))) throw new Error('Scan status timed out');
         setError(false);
         if (next.scanning || next.busy) timer = setTimeout(() => void poll(force && next.busy), 2500);
       } catch {
@@ -58,6 +63,13 @@ export default function AdminDiskPage() {
     return () => { controller.abort(); clearTimeout(timer); };
   }, [mounted, isAdmin, path, refresh]);
 
+  useEffect(() => {
+    if (!report?.scanning || error) return;
+    setClock(Date.now());
+    const timer = setInterval(() => setClock(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [report?.scanning, error]);
+
   if (!mounted) return <main className="admin-hub" />;
   if (!isAdmin) return <main className="admin-hub"><h1>{t('磁盘空间', 'Disk space')}</h1>
     <p className="admin-hub__status">{t('只有管理员可以查看服务器磁盘。', 'Only administrators can view server disk usage.')}</p>
@@ -65,7 +77,8 @@ export default function AdminDiskPage() {
 
   const capacity = report?.capacity;
   const scan = report?.snapshot?.path === path ? report.snapshot : null;
-  const running = loading || !!report?.scanning || !!report?.busy;
+  const running = loading || (!error && (!!report?.scanning || !!report?.busy));
+  const progress = report?.progress;
   const crumbs = path.split('/').filter(Boolean);
   const href = (directory: string) => `/admin/disk?path=${encodeURIComponent(directory)}`;
   const usage = capacity ? percent(capacity.usedBytes, capacity.totalBytes) : '';
@@ -97,14 +110,25 @@ export default function AdminDiskPage() {
         {crumbs.map((part, index) => <span key={index}><ChevronRight size={14} aria-hidden />
           <AppLink href={href(`/${crumbs.slice(0, index + 1).join('/')}`)} prefetch={false}>{part}</AppLink></span>)}
       </nav>
-      <button type="button" className="disk-refresh" disabled={running} onClick={() => { forceRefresh.current = true; setRefresh(value => value + 1); }}>
-        <RefreshCw size={15} aria-hidden />{t('刷新', 'Refresh')}
+      <button type="button" className="disk-refresh" disabled={running} onClick={() => { forceRefresh.current = !error; setRefresh(value => value + 1); }}>
+        <RefreshCw size={15} aria-hidden />{error ? t('重试读取', 'Retry loading') : scan ? t('重新扫描', 'Rescan') : t('扫描目录', 'Scan directory')}
       </button>
     </div>
 
     <div className="disk-status" role="status" aria-live="polite">
-      {running && <p>{report?.busy ? t('另一个目录正在扫描，请稍候…', 'Another directory is being scanned. Please wait…') : t('正在扫描目录…', 'Scanning directory…')}</p>}
+      {loading && <p>{t('正在读取上次结果…', 'Loading saved results…')}</p>}
+      {!error && report?.busy && <p>{t('另一个目录正在扫描，请稍候…', 'Another directory is being scanned. Please wait…')}</p>}
+      {!error && report?.scanning && <>
+        <p>{t('正在扫描目录', 'Scanning directory')}{progress && ` / ${Math.max(0, Math.floor((clock - Date.parse(progress.startedAt)) / 1000))} ${t('秒', 's')}`}</p>
+        <progress className="disk-scan-progress" aria-label={t('正在扫描目录', 'Scanning directory')} />
+        {progress && <p>{t('已检查', 'Checked')} {progress.entries.toLocaleString()} {t('个文件及目录', 'files and directories')}{' / '}{gib(progress.bytes)}
+          <br />{t('当前目录', 'Current directory')}: {progress.currentPath}
+          {clock - Date.parse(progress.updatedAt) > 15_000 && <><br />{t('正在等待磁盘响应…', 'Waiting for the disk to respond…')}</>}
+        </p>}
+      </>}
       {(error || report?.error) && <p className="disk-warning">{t('无法完成读取。请确认目录存在及管理员登录有效，然后重试。', 'Could not finish reading. Check the directory and administrator session, then retry.')}</p>}
+      {report?.saveError && <p className="disk-warning">{t('结果已生成，但未能保存到磁盘。服务重启后可能丢失。', 'Results are available, but could not be saved to disk and may be lost on restart.')}</p>}
+      {!running && !error && !report?.error && !scan && <p>{t('此目录还没有扫描结果。点击“扫描目录”后开始；打开页面不会自动扫描。', 'No saved results for this directory. Select “Scan directory” to start; opening this page does not start a scan.')}</p>}
       {scan && <p>{t('扫描时间', 'Scanned at')}: <time dateTime={scan.scannedAt}>{new Date(scan.scannedAt).toLocaleString()}</time>
         {' / '}{t('当前目录', 'This directory')}: {gib(scan.bytes)}</p>}
       {scan?.partial && <p className="disk-warning">{t('已达到扫描限制，或部分目录无法读取。当前统计不完整，可以进入具体目录再查看。', 'The scan reached its limit or could not read some directories. Totals are incomplete; open a specific directory to explore further.')}</p>}
@@ -126,6 +150,6 @@ export default function AdminDiskPage() {
       {scan.children.length === 0 && <p>{t('没有可展开的子目录。', 'No subdirectories to explore.')}</p>}
     </section>}
     <p className="disk-note">{t('目录按实际占用空间统计，仅扫描根磁盘，不跟随符号链接。总览还包含文件系统开销和已删除但仍被进程占用的文件，因此可能与目录合计不同。', 'Directory totals count allocated space on the root filesystem without following symlinks. The overview also includes filesystem overhead and deleted files still held open, so totals can differ.')}</p>
-    <p className="disk-note">{t('扫描结果缓存 5 分钟，同一目录每分钟最多刷新一次。此页面只读。', 'Scans are cached for 5 minutes. Each directory can be refreshed once per minute. This page is read-only.')}</p>
+    <p className="disk-note">{t('打开页面只读取上次结果，不自动扫描。手动扫描时保留旧结果，完成后保存；同一目录每分钟最多扫描一次。扫描最多持续约 2 分钟，达到限制会显示已有的部分统计。', 'Opening this page only loads saved results. Manual scans keep previous results visible and save new results on completion, at most once per minute per directory. Scans run for about 2 minutes at most and show partial totals if the limit is reached.')}</p>
   </main>;
 }
