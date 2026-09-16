@@ -1,5 +1,6 @@
 // WCA 项目 ID 单一来源——归一化各种短名到 WCA 标准 id（用于 cubing-icons CSS 类）+ 显示名
 
+import { EVENT_DISPLAY_ZH } from '@cuberoot/shared/wca-events';
 import { cstimerEventDisplayName } from './cstimer-scramble';
 import { shapeModDisplayName } from './shape-mod-scramble';
 
@@ -53,17 +54,6 @@ export function wcaToReconEvent(input: string | undefined | null): string {
 }
 
 // NOTE: WCA 标准 id → 显示名
-const DISPLAY_ZH: Record<string, string> = {
-  '333': '三阶', '222': '二阶', '444': '四阶', '555': '五阶', '666': '六阶', '777': '七阶',
-  '333bf': '三盲', '444bf': '四盲', '555bf': '五盲', '333mbf': '多盲',
-  '333oh': '单手', '333fm': '最少步', '333ft': '脚拧',
-  'minx': '五魔', 'pyram': '金字塔', 'clock': '魔表', 'skewb': '斜转', 'sq1': 'SQ1',
-  'magic': '八板', 'mmagic': '十二板', '333mbo': '旧多盲',
-  // 非 WCA(cubing.js twizzleEvents)
-  'fto': 'FTO', 'master_tetraminx': '四阶金字塔', 'kilominx': '二阶五魔', 'ivy': '枫叶', 'redi_cube': 'Redi', 'baby_fto': '二阶 FTO',
-  // 非 WCA cubing.com 自定义项目
-  'funny': '趣味',
-};
 const DISPLAY_EN: Record<string, string> = {
   '333': '3×3', '222': '2×2', '444': '4×4', '555': '5×5', '666': '6×6', '777': '7×7',
   '333bf': '3BLD', '444bf': '4BLD', '555bf': '5BLD', '333mbf': 'MBLD',
@@ -86,7 +76,7 @@ export function eventDisplayName(input: string, isZh: boolean): string {
     const n = m[1];
     return (isZh ? `${n}阶` : `${n}×${n}`);
   }
-  const dict = (isZh ? DISPLAY_ZH : DISPLAY_EN);
+  const dict = (isZh ? EVENT_DISPLAY_ZH : DISPLAY_EN);
   if (dict[id]) return dict[id];
   const cstimerName = cstimerEventDisplayName(id, isZh);
   if (cstimerName) return cstimerName;
@@ -101,7 +91,7 @@ export function eventDisplayName(input: string, isZh: boolean): string {
 // algorithms", and '×' is not the character anyone types. This table overrides
 // ONLY the ids whose written-out name differs; everything else falls through to
 // DISPLAY_EN, so there is still one place that knows how events are named.
-// Chinese needs no equivalent — DISPLAY_ZH already carries the words people use.
+// Chinese needs no equivalent — EVENT_DISPLAY_ZH already carries the words people use.
 const PROSE_EN: Record<string, string> = {
   '333': '3x3', '222': '2x2', '444': '4x4', '555': '5x5', '666': '6x6', '777': '7x7',
   '333bf': '3x3 Blindfolded', '444bf': '4x4 Blindfolded', '555bf': '5x5 Blindfolded',

@@ -103,7 +103,7 @@ function fallbackText(r: RecentRecord, isZh: boolean): string {
 
 function renderFormatted(text: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
-  const re = /([\u{1F1E6}-\u{1F1FF}])([\u{1F1E6}-\u{1F1FF}])|(FWR|WR|CR|NR|AsR|ER|NAR|SAR|OcR|AfR)(?![A-Za-z0-9])/gu;
+  const re = /([\u{1F1E6}-\u{1F1FF}])([\u{1F1E6}-\u{1F1FF}])|(FWR|WR|CR|NR|PR|AsR|ER|NAR|SAR|OcR|AfR)(?![A-Za-z0-9])/gu;
   let lastEnd = 0;
   let key = 0;
   let m: RegExpExecArray | null;

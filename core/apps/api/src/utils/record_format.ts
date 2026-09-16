@@ -21,29 +21,7 @@
 
 // === 项目名映射 ===
 
-export const EVENT_CN_MAP: Record<string, string> = {
-  '3x3x3 Cube': '三阶魔方',
-  '2x2x2 Cube': '二阶魔方',
-  '4x4x4 Cube': '四阶魔方',
-  '5x5x5 Cube': '五阶魔方',
-  '6x6x6 Cube': '六阶魔方',
-  '7x7x7 Cube': '七阶魔方',
-  '3x3x3 Blindfolded': '三盲',
-  '3x3x3 Fewest Moves': '最少步',
-  '3x3x3 One-Handed': '三阶魔方单手',
-  Clock: '魔表',
-  Megaminx: '五魔',
-  Pyraminx: '金字塔魔方',
-  Skewb: '斜转魔方',
-  'Square-1': ' SQ1魔方', // NOTE: prompt 明确要求中文 SQ1 前必须有空格
-  '4x4x4 Blindfolded': '四盲',
-  '5x5x5 Blindfolded': '五盲',
-  '3x3x3 Multi-Blind': '多盲',
-  'Mirror Blocks': '镜面魔方',
-  'Ivy Cube': '三叶魔方',
-  Individual: '个人赛',
-  Team: '团体赛',
-};
+import { EVENT_DISPLAY_ZH } from '@cuberoot/shared/wca-events';
 
 export const EVENT_EN_MAP: Record<string, string> = {
   '3x3x3 Cube': '3x3',
@@ -92,6 +70,13 @@ export const EVENT_NAME_BY_ID: Record<string, string> = {
   individual: 'Individual',
   team: 'Team',
 };
+
+const EXTRA_EVENT_CN: Record<string, string> = { mirror: '镜面', individual: '个人赛', team: '团体赛' };
+export const EVENT_CN_MAP: Record<string, string> = Object.fromEntries(
+  Object.entries(EVENT_NAME_BY_ID).map(([id, name]) => [
+    name, EVENT_DISPLAY_ZH[id] ?? EXTRA_EVENT_CN[id] ?? name,
+  ]),
+);
 
 // === 洲际/国家映射 ===
 
