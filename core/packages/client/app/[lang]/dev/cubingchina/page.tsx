@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { T } from '@/i18n/tr';
 import './cubingchina_intro.css';
 
 /* Self-contained bilingual helper — this page is a standalone /dev umbrella
@@ -67,6 +68,11 @@ const HISTORY: HistoryItem[] = [
     year: <>2026<small>·07</small></>, highlight: true,
     zh: { title: <>仍在活跃, cuberoot.me 收录此页</>, desc: <>仓库最近一次提交在 <strong>2026 年 7 月 16 日</strong>——立项十二年后, 单一 PHP 代码库仍在持续维护。同月 <strong>cuberoot.me</strong> 在 <code>/dev</code> 里写下这一页, 作为同域姊妹站对它的技术侧写。</> },
     en: { title: <>Still active — profiled here by cuberoot.me</>, desc: <>The repo's most recent commit is <strong>16 Jul 2026</strong> — twelve years in, the single PHP codebase is still maintained. The same month, <strong>cuberoot.me</strong> wrote this page under <code>/dev</code> as a sibling site's technical profile of it.</> },
+  },
+  {
+    year: <>2026<small>-09-15</small></>, highlight: true,
+    zh: { title: <>新旧版交接，旧站进入只读模式</>, desc: <>开源仓库在这一天加入只读拦截与新版引导，随后补齐 <code>ArchiveMode.php</code>。当前 <a href="https://cubing.com" target="_blank" rel="noopener">cubing.com</a> 已呈现新版，<a href="https://v1.cubing.com" target="_blank" rel="noopener">v1.cubing.com</a> 保留旧站并展示只读公告。这里记录的是可核实的迁移提交日期，不将其等同于新版首次上线日期。</> },
+    en: { title: <>New-site handover and a read-only legacy site</>, desc: <>The public repository added write restrictions and links to the new site on this date, then supplied <code>ArchiveMode.php</code>. Today, <a href="https://cubing.com" target="_blank" rel="noopener">cubing.com</a> serves the new interface, while <a href="https://v1.cubing.com" target="_blank" rel="noopener">v1.cubing.com</a> retains the old site with a read-only notice. This is the verified migration commit date, not a claim about the new site's first launch.</> },
   },
 ];
 
@@ -448,6 +454,7 @@ export default function CubingChinaIntroPage() {
             <span className="nav-tag"><L zh=": 技术侧写" en=": Profile" /></span>
           </a>
           <ul className="nav-links">
+            <li><a href="#update"><T zh="新版" en="Update" /></a></li>
             <li><a href="#what"><L zh="何为" en="What" /></a></li>
             <li><a href="#history"><L zh="来路" en="History" /></a></li>
             <li><a href="#arch"><L zh="架构" en="Architecture" /></a></li>
@@ -462,7 +469,7 @@ export default function CubingChinaIntroPage() {
         <main id="top">
           {/* Hero */}
           <section className="hero">
-            <div className="hero-tag">// 2010 CCA · 2014 established · WCA China · Yii 1.1 · GPL-2.0 · cubing.com</div>
+            <div className="hero-tag">// Cubing China / September 2026 update / v1 archive</div>
             <h1 className="hero-title">
               <span className="hero-name"><L zh="粗饼网" en="CubingChina" /></span>
               <span className="hero-colon">:</span>
@@ -470,8 +477,8 @@ export default function CubingChinaIntroPage() {
             </h1>
             <p className="hero-sub">
               <L
-                zh={<>中国 WCA 比赛的<strong>报名、日历、成绩、纪录、直播</strong>都在这里。它是<strong>被视为 WCA 认可的中国区官方魔方组织</strong>, 2014 年底成立; 也是一个 <strong>GPL-2.0 开源的 Yii 1.1 PHP 平台</strong>——约 2,626 次提交里 ~94% 出自一个人。<em>不追时髦, 十二年稳稳运转</em>。本页是同域姊妹站 cuberoot.me 对它的技术侧写。</>}
-                en={<>Registration, calendar, results, records and live-streaming for China's WCA competitions all live here. It's the <strong>organization regarded as China's WCA-recognized national cubing body</strong>, established in late 2014, and a <strong>GPL-2.0 open-source Yii 1.1 PHP platform</strong> — ~94% of its roughly 2,626 commits from one person. <em>No fashion-chasing, twelve years of steady operation</em>. This page is sibling site cuberoot.me's technical profile of it.</>}
+                zh={<>中国 WCA 比赛的<strong>报名、日历、成绩、纪录、直播</strong>都在这里。<strong>2026 年 9 月，新版已接过主站入口，旧版转为只读。</strong>本页先补充新版的界面、登录与赛事体验，再保留原有的 <strong>GPL-2.0 开源 PHP / Yii 技术侧写</strong>，记录这套平台走过的路。</>}
+                en={<>Registration, calendar, results, records and live results for China's WCA competitions all live here. <strong>By September 2026, the new site has taken over the main address and the legacy site is read-only.</strong> This page covers the new interface, sign-in options and competition experience first, then preserves the original <strong>GPL-2.0 PHP / Yii technical profile</strong> as a record of the platform's earlier architecture.</>}
               />
             </p>
             <div className="hero-stats">
@@ -481,15 +488,15 @@ export default function CubingChinaIntroPage() {
               </div>
               <div className="stat">
                 <span className="stat-num">GPL<small>-2.0</small></span>
-                <span className="stat-label"><L zh={<>整套代码开源<br /><em>~2.6k commits</em></>} en={<>Whole codebase open<br /><em>~2.6k commits</em></>} /></span>
+                <span className="stat-label"><L zh={<>旧版代码开源<br /><em>2026-07 快照</em></>} en={<>Legacy source license<br /><em>July 2026 snapshot</em></>} /></span>
               </div>
               <div className="stat">
                 <span className="stat-num">94<small>%</small></span>
-                <span className="stat-label"><L zh={<>提交出自一人<br /><em>董百强 · 2008DONG06</em></>} en={<>commits from one dev<br /><em>Baiqiang · 2008DONG06</em></>} /></span>
+                <span className="stat-label"><L zh={<>旧版提交占比<br /><em>2026-07 快照</em></>} en={<>Legacy share, one dev<br /><em>July 2026 snapshot</em></>} /></span>
               </div>
               <div className="stat">
                 <span className="stat-num">Yii<small>1.1</small></span>
-                <span className="stat-label"><L zh={<>PHP 7 · MySQL · Redis<br /><em>蓝绿双 WCA 库</em></>} en={<>PHP 7 · MySQL · Redis<br /><em>blue-green WCA DB</em></>} /></span>
+                <span className="stat-label"><L zh={<>旧版后端架构<br /><em>蓝绿双 WCA 库</em></>} en={<>Legacy backend<br /><em>blue-green WCA DB</em></>} /></span>
               </div>
             </div>
             <div className="hero-cube">
@@ -512,6 +519,50 @@ export default function CubingChinaIntroPage() {
             <div className="scroll-cue">
               <span>scroll</span>
               <svg viewBox="0 0 12 24" width="12" height="24"><path d="M6 0v22M2 18l4 4 4-4" stroke="currentColor" fill="none" strokeWidth="1.5" /></svg>
+            </div>
+          </section>
+
+          <section className="section" id="update">
+            <header className="sec-head">
+              <span className="sec-num">2026-09</span>
+              <h2 className="sec-title"><T zh="新版接棒，旧版留档" en="A new site, a preserved legacy" /></h2>
+              <p className="sec-desc"><T
+                zh={<>这次更新覆盖了首页、赛事浏览、选手资料与登录入口。以下按 <strong>2026-09-16 的公开页面</strong>及旧版仓库 <code>33ceab1e</code> 核对；只介绍已能看到的界面与源码行为，不把入口可见当作报名、支付或账号迁移已验收。</>}
+                en={<>The update spans the home page, competition browsing, competitor profiles and sign-in. These notes were checked against <strong>public pages on 2026-09-16</strong> and legacy commit <code>33ceab1e</code>. They describe visible interfaces and source behavior; registration, payments and account migration were not tested.</>}
+              /></p>
+            </header>
+            <div className="update-list">
+              <article>
+                <h3><T zh="01 主站与旧站有了明确分工" en="01 Separate homes for the new and legacy sites" /></h3>
+                <p><T zh={<>新版继续使用 <a href="https://cubing.com" target="_blank" rel="noopener">cubing.com</a>，页脚可前往 v1；<a href="https://v1.cubing.com" target="_blank" rel="noopener">旧站</a>保留历史页面，并通过公告引导用户到新版办理业务。旧网址仍可浏览，不代表仍能提交报名。</>} en={<>The new site stays at <a href="https://cubing.com" target="_blank" rel="noopener">cubing.com</a>, with a footer link to v1. The <a href="https://v1.cubing.com" target="_blank" rel="noopener">legacy site</a> retains historical pages and directs visitors to the new site for submissions. Browsable old pages do not imply that old registration forms still accept entries.</>} /></p>
+              </article>
+              <article>
+                <h3><T zh="02 首页与比赛筛选重新组织" en="02 A reorganized home page and competition browser" /></h3>
+                <p><T zh={<>顶部提供比赛、选手、新闻的统一搜索入口。首页用横向赛事栏展示近期比赛，下方分列新闻与纪录；比赛卡片直接给出地点、项目数、参赛人数与状态。<a href="https://cubing.com/competition" target="_blank" rel="noopener">比赛列表</a>集中提供年份、类型、省份、项目与文字搜索，并可切换即将举行、报名中、进行中和已结束等状态。</>} en={<>The header offers a shared search entry for competitions, competitors and news. A horizontal strip presents recent competitions above separate news and records sections; cards show location, event and participant counts, and status. The <a href="https://cubing.com/competition" target="_blank" rel="noopener">competition browser</a> brings together year, type, province, event and text filters, with status views for upcoming, registration-open, ongoing and finished competitions.</>} /></p>
+              </article>
+              <article>
+                <h3><T zh="03 比赛详情围绕参赛流程展开" en="03 Competition details follow the participation journey" /></h3>
+                <p><T zh={<>新版详情页把报名入口、剩余名额、分阶段费用、报名与退赛关键时间放在同一条阅读路径上，另设规则、赛程、交通、选手名单等页签。以<a href="https://cubing.com/competition/Beijing-Autumn-Rivalry-2026" target="_blank" rel="noopener">北京金秋争霸赛</a>为例，还能看到入场证入口；具体功能与要求取决于各场比赛。</>} en={<>Competition details bring registration, remaining places, staged fees, and registration and cancellation dates into one reading flow, with tabs for regulations, schedules, travel and competitors. <a href="https://cubing.com/competition/Beijing-Autumn-Rivalry-2026" target="_blank" rel="noopener">Beijing Autumn Rivalry</a> also exposes an entry-ticket section; available features and requirements depend on the competition.</>} /></p>
+              </article>
+              <article>
+                <h3><T zh="04 登录页出现 WCA 登录入口" en="04 WCA sign-in is now visible" /></h3>
+                <p><T zh={<>新版<a href="https://cubing.com/login" target="_blank" rel="noopener">登录页</a>可切换邮箱、手机和 WCA ID，并显示「使用 WCA 登录」入口。原文「没有走 WCA OAuth」描述的是旧版 PHP 实现，不能继续用于概括新版。账号绑定、旧账号迁移和授权完成后的行为，本次未进入登录流程核实。</>} en={<>The new <a href="https://cubing.com/login" target="_blank" rel="noopener">login page</a> offers email, mobile and WCA ID modes, plus “Sign in with WCA.” The original profile's “no WCA OAuth” statement describes the legacy PHP implementation and no longer characterizes the new interface. Account linking, legacy-account migration and post-authorization behavior were not tested.</>} /></p>
+              </article>
+              <article>
+                <h3><T zh="05 选手档案集中呈现成绩与履历" en="05 Competitor profiles bring results and history together" /></h3>
+                <p><T zh={<>新版<a href="https://cubing.com/results/person/2019WANY36" target="_blank" rel="noopener">选手页</a>汇总个人纪录、世界／洲际／国家排名、奖牌、纪录次数与排名总和，提供成绩、地图、比赛等分区以及对比入口。这些是新版当前可见的呈现方式，其中部分能力由旧版延续而来。</>} en={<>The new <a href="https://cubing.com/results/person/2019WANY36" target="_blank" rel="noopener">competitor profile</a> combines personal records, world/continental/national ranks, medals, record counts and sum of ranks, with results, map and competition sections plus a comparison entry. These describe the current presentation; some capabilities carry over from the legacy site.</>} /></p>
+              </article>
+              <article>
+                <h3><T zh="06 工具入口延续办赛场景" en="06 Tools remain close to organizers' needs" /></h3>
+                <p><T zh={<>新版<a href="https://cubing.com/tools/lucky-draw" target="_blank" rel="noopener">抽奖工具</a>支持逐行输入名单，也提供搜索比赛并导入已报名选手的入口。它将现场活动工具与赛事名单连接起来，减少手工整理名单的步骤。</>} en={<>The new <a href="https://cubing.com/tools/lucky-draw" target="_blank" rel="noopener">lucky-draw tool</a> accepts one name per line and offers competition search to import registered competitors. It connects an on-site activity tool with competition rosters, reducing manual list preparation.</>} /></p>
+              </article>
+            </div>
+            <div className="update-notes">
+              <h3><T zh="技术上能确认到哪里？" en="What can we verify about the implementation?" /></h3>
+              <p><T zh={<>新版公开页面包含 <code>#__nuxt</code>、<code>__NUXT_DATA__</code> 与 <code>/_nuxt/</code> 脚本路径，据此可识别其 <strong>Nuxt 前端</strong>。本次查到的公开仓库仍是 PHP / Yii 旧版，不能据此推断新版后端语言、数据库、部署架构或源码许可证，也不据浏览器产物猜测具体框架版本。</>} en={<>The public pages contain <code>#__nuxt</code>, <code>__NUXT_DATA__</code> and <code>/_nuxt/</code> script paths, identifying a <strong>Nuxt front end</strong>. The public repository inspected here still contains the legacy PHP / Yii application. It does not establish the new backend language, database, deployment architecture or source license, and browser artifacts alone do not establish an exact framework version.</>} /></p>
+              <p><T zh={<>旧版迁移则有明确源码证据：<a href="https://github.com/CubingChina/cubingchina/commit/be847f500c4892d9ddce0c5af376e649acd1c709" target="_blank" rel="noopener">只读模式提交</a>在控制器初始化时接入拦截；<a href="https://github.com/CubingChina/cubingchina/blob/33ceab1efd8b7e1d0596cebe7e7af047142ded74/protected/components/ArchiveMode.php" target="_blank" rel="noopener">ArchiveMode.php</a>拒绝登录以外的 POST 请求并返回 403，同时保留旧站登录。这说明迁移包含服务端写入限制，而不只是换了一条公告。</>} en={<>The legacy migration has direct source evidence: the <a href="https://github.com/CubingChina/cubingchina/commit/be847f500c4892d9ddce0c5af376e649acd1c709" target="_blank" rel="noopener">read-only-mode commit</a> adds a guard during controller initialization. <a href="https://github.com/CubingChina/cubingchina/blob/33ceab1efd8b7e1d0596cebe7e7af047142ded74/protected/components/ArchiveMode.php" target="_blank" rel="noopener">ArchiveMode.php</a> rejects non-login POST requests with 403 while retaining legacy login. The migration therefore includes server-side write restrictions as well as a notice.</>} /></p>
+              <h3><T zh="下面保留旧版技术档案" en="The original technical profile continues below" /></h3>
+              <p><T zh={<>以下保留 2026 年 7 月的介绍、架构、开源贡献统计与当时的展望，作为旧版历史快照。PHP / Yii、Vue 2、双 WCA 镜像库与 GPL-2.0 均指该旧版仓库；其中的「当前」「最近提交」及贡献比例按原记录日期理解，新版现状以上方补充为准。</>} en={<>The July 2026 introduction, architecture, contribution statistics and outlook are preserved below as a legacy snapshot. PHP / Yii, Vue 2, the paired WCA mirror databases and GPL-2.0 refer to that repository. References to “current,” “latest commit” and contributor shares retain their original observation date; the update above describes the new site.</>} /></p>
             </div>
           </section>
 
@@ -873,7 +924,7 @@ export default function CubingChinaIntroPage() {
             </div>
             <div className="footer-col footer-sig">
               <div className="footer-logo"><CCLogo /></div>
-              <p className="footer-line"><L zh="中文 / English 双语 · 事实截至 2026-07 · 未考据项已标注" en="Bilingual zh / en · facts as of 2026-07 · unverified items flagged" /></p>
+              <p className="footer-line"><T zh="中文 / English 双语。新版核对于 2026-09-16；旧版档案保留 2026-07 快照。" en="Bilingual zh / en. New site checked on 2026-09-16; legacy profile preserved as a July 2026 snapshot." /></p>
               <p className="footer-line dim"><code>{'// 粗饼 = cubing · 谐音 · 社区通用'}</code></p>
             </div>
           </div>

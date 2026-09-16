@@ -334,7 +334,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'dev/components': { title: { zh: '组件库', en: 'Components' } },
-  'dev/cubingchina': { title: { zh: '粗饼网 CubingChina : 中国 WCA 赛事平台 — Yii 1.1 上的报名 / 直播 / 成绩镜像', en: 'CubingChina : China\'s WCA competition platform — registration, live results and a WCA mirror on Yii 1.1' } },
+  'dev/cubingchina': {
+    title: { zh: '粗饼网 CubingChina：新版体验与旧版技术档案', en: 'CubingChina: New Site and Legacy Architecture' },
+    description: {
+      zh: '记录粗饼网 2026 年 9 月新版的搜索、赛事、选手与登录体验，核对 Nuxt 前端和旧站只读迁移，并保留 PHP / Yii 开源架构档案。',
+      en: 'Explore Cubing China’s September 2026 interface, search, competitions, profiles and sign-in, with verified Nuxt frontend evidence and a preserved PHP / Yii legacy profile.',
+    },
+  },
   'dev/dead-code': { title: { zh: '死代码守卫', en: 'Dead Code Guard' } },
   'dev/fonts': { title: { zh: '字体', en: 'Fonts' } },
   'dev/guards': { title: { zh: '约束守卫', en: 'Guards' } },
