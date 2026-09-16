@@ -160,10 +160,11 @@ async function recordToEvent(r: RecentRecord): Promise<RecordEvent> {
   };
 }
 
-/** FWR is absent from WCA Live's feed; reuse competition adjudication and persistent dedup. */
+/** FWR/NWR are absent from WCA Live's feed; reuse competition adjudication and persistent dedup. */
 export async function pushFemaleRecords(firstRun: boolean): Promise<void> {
-  if (!RECORD_TAGS.has('WR') && !RECORD_TAGS.has('FWR')) return;
-  const records = (await extractInferredRecords()).filter(r => r.tag === 'FWR');
+  if (!RECORD_TAGS.has('WR') && !RECORD_TAGS.has('FWR') && !RECORD_TAGS.has('NWR')) return;
+  const records = (await extractInferredRecords()).filter(r => (r.tag === 'FWR' || r.tag === 'NWR')
+    && (RECORD_TAGS.has('WR') || RECORD_TAGS.has(r.tag)));
   const ids = records.map(r => r.id);
   if (firstRun) { await markPushed(MONITOR, ids); return; }
   const pushed = await getPushedSet(MONITOR, ids);
@@ -180,7 +181,7 @@ export async function pushFemaleRecords(firstRun: boolean): Promise<void> {
 async function runOnce(): Promise<void> {
   const firstRun = (await countPushed(MONITOR)) === 0;
   try { await pushFemaleRecords(firstRun); }
-  catch (e) { console.warn('[wca-live-record] FWR push failed, will retry:', (e as Error).message); }
+  catch (e) { console.warn('[wca-live-record] FWR/NWR push failed, will retry:', (e as Error).message); }
   const records = await queryRecentRecords();
   if (records === null) return;
 

@@ -3,12 +3,48 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { stripRecordNewsPrefix } from '@/lib/record-news';
 import { RecentRecordsList } from '@/components/RecentRecords';
+import { COMP_RECORD_NEWS, competitionRecordNews } from '@/app/[lang]/wca/comp/[slug]/record-news';
+import { formatRecord } from '@/lib/recon-utils';
 
 vi.mock('@/components/AppLink', () => ({
   default: ({ children }: { children: React.ReactNode }) => createElement('a', null, children),
 }));
 
 describe('record news presentation', () => {
+  it('retains both newcomer sources and both metrics, while deduplicating curated news', () => {
+    const records = (['1st-solve', '1st-comp'] as const).flatMap(source => (['single', 'average'] as const).map(type => ({ eventId: '444', roundId: 'f', personNumber: 1, source, type, value: 2763 })));
+    const users = { '1': { name: 'Xuanyi Geng (耿暄一)', region: 'CN' } };
+    const news = competitionRecordNews('WuhanGoldenAutumn2026', records, users, []);
+    expect(news.filter(row => row.event === '444')).toHaveLength(4);
+    expect(news.filter(row => row.newcomerSource === '1st-solve')).toHaveLength(2);
+    expect(news.filter(row => row.newcomerSource === '1st-comp')).toHaveLength(2);
+    expect(news.find(row => row.newcomerSource === '1st-comp' && row.newcomerType === 'average')?.message.zh).toContain('25.81');
+  });
+  it('colors newcomer world records as world records without changing national records', () => {
+    expect(formatRecord('NWR')).toEqual({ text: 'NWR', className: 'record-badge record-wr' });
+    expect(formatRecord('NR')).toEqual({ text: 'NR', className: 'record-badge record-nr' });
+    expect(formatRecord('NWR cancelled')).toEqual({ text: 'NWR', className: 'record-badge record-cancelled' });
+  });
+
+  it.each([true, false])('preserves the newcomer scope and full red NWR badge (zh=%s)', isZh => {
+    const news = COMP_RECORD_NEWS.WuhanGoldenAutumn2026!.find(row => row.event === '444')!;
+    expect(news.message.zh).toContain('（首场比赛）');
+    expect(news.message.en).toContain('(1st competition)');
+    expect(news.results[0].text.zh).toContain('（首场比赛）');
+    expect(news.results[0].text.en).toContain('(1st competition)');
+    const html = renderToStaticMarkup(createElement(RecentRecordsList, {
+      isZh,
+      filled: [{
+        id: 'newcomer-record', tag: 'NWR', type: 'average', eventId: '444',
+        competitionId: 'WuhanGoldenAutumn2026', attemptResult: 2763,
+        personName: news.person, countryIso2: news.country,
+        formattedCn: news.message.zh, formattedEn: news.message.en,
+      }],
+    }));
+    expect(html).toMatch(/class="[^"]*record-wr[^"]*">NWR<\/span>/);
+    expect(html).toContain(isZh ? '（首场比赛）' : '(1st competition)');
+  });
+
   it.each(['纪录快讯!', 'PR快讯!', 'Breaking News!', 'BREAKING NEWS!', 'PR News!', '纪录快讯！'])(
     'strips %s without changing the result, rank or flag', prefix => {
       expect(stripRecordNewsPrefix(`${prefix} 4.52 FWR/WR10 连允之🇨🇳`)).toBe('4.52 FWR/WR10 连允之🇨🇳');

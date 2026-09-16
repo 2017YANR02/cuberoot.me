@@ -1,9 +1,22 @@
 import { eventDisplayName } from '@/lib/wca-events';
+import { formatWcaResult } from '@/lib/wca-format-result';
+import { displayCuberName } from '@/lib/cuber-name-display';
+
+export interface NewcomerRecord {
+  eventId: string;
+  roundId: string;
+  personNumber: number;
+  type: 'single' | 'average';
+  source: '1st-solve' | '1st-comp';
+  value: number;
+}
 
 /** Curated bilingual reports, preserving the rankings at the time of each report. */
 interface RecordNews {
   event: string;
   round?: number;
+  newcomerSource?: NewcomerRecord['source'];
+  newcomerType?: NewcomerRecord['type'];
   person: string;
   country: string;
   /** Bark copy snapshot with the competition suffix removed; keep report-time ranks. */
@@ -28,12 +41,14 @@ export const COMP_RECORD_NEWS: Partial<Record<string, RecordNews[]>> = {
     },
     {
       event: '444', person: 'Xuanyi Geng (耿暄一)', country: 'CN',
+      newcomerSource: '1st-comp',
+      newcomerType: 'average',
       message: {
-        zh: `纪录快讯! 27.63${eventDisplayName('444', true)}平均新人世界纪录NWR 耿暄一🇨🇳| 25.81单次个人纪录PR`,
-        en: 'Breaking News! 27.63 4x4 Newcomer WR Avg Xuanyi Geng🇨🇳| 25.81 PR Single',
+        zh: `纪录快讯! 27.63${eventDisplayName('444', true)}平均新人世界纪录（首场比赛）NWR 耿暄一🇨🇳| 25.81单次个人纪录PR`,
+        en: 'Breaking News! 27.63 4x4 Newcomer WR (1st competition) NWR Avg Xuanyi Geng🇨🇳| 25.81 PR Single',
       },
       results: [
-        { text: { zh: `27.63 ${eventDisplayName('444', true)}平均新人世界纪录`, en: '27.63 4x4 Newcomer WR Avg' }, tag: 'NWR' },
+        { text: { zh: `27.63 ${eventDisplayName('444', true)}平均新人世界纪录（首场比赛）`, en: '27.63 4x4 Newcomer WR Avg (1st competition)' }, tag: 'NWR' },
         { text: { zh: '25.81 单次个人纪录', en: '25.81 Single' }, tag: 'PR' },
       ],
     },
@@ -84,3 +99,33 @@ export const COMP_RECORD_NEWS: Partial<Record<string, RecordNews[]>> = {
     },
   ],
 };
+
+/** Preserve curated copy and append automatic NWRs using the existing news renderer. */
+export function competitionRecordNews(slug: string, records: NewcomerRecord[],
+  users: Record<string, { name: string; region: string; countryId?: string }>,
+  events: { i: string; rs: { i: string }[] }[]): RecordNews[] {
+  const news = [...(COMP_RECORD_NEWS[slug] ?? [])];
+  for (const record of records) {
+    const user = users[String(record.personNumber)];
+    if (!user || !Number.isSafeInteger(record.value) || record.value <= 0) continue;
+    if (news.some(row => row.event === record.eventId && row.newcomerSource === record.source
+      && row.newcomerType === record.type && row.person === user.name)) continue;
+    const value = formatWcaResult(record.value, record.eventId, record.type);
+    const source = { '1st-solve': { zh: '首次还原', en: '1st solve' }, '1st-comp': { zh: '首场比赛', en: '1st competition' } }[record.source];
+    if (!source) continue;
+    const type = { single: { zh: '单次', en: 'Single' }, average: { zh: '平均', en: 'Avg' } }[record.type];
+    if (!type) continue;
+    const text = {
+      zh: `${value} ${eventDisplayName(record.eventId, true)}${type.zh}新人世界纪录（${source.zh}）`,
+      en: `${value} ${eventDisplayName(record.eventId, false)} Newcomer WR ${type.en} (${source.en})`,
+    };
+    const roundIndex = events.find(event => event.i === record.eventId)?.rs.findIndex(round => round.i === record.roundId) ?? -1;
+    news.push({
+      event: record.eventId, round: roundIndex >= 0 ? roundIndex + 1 : undefined,
+      person: user.name, country: user.countryId || user.region, newcomerSource: record.source, newcomerType: record.type,
+      message: { zh: `纪录快讯! ${text.zh} NWR ${displayCuberName(user.name, true)}`, en: `Breaking News! ${text.en} NWR ${displayCuberName(user.name, false)}` },
+      results: [{ text, tag: 'NWR' }],
+    });
+  }
+  return news;
+}

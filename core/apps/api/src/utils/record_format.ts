@@ -22,6 +22,7 @@
 // === 项目名映射 ===
 
 import { EVENT_DISPLAY_ZH } from '@cuberoot/shared/wca-events';
+import type { NewcomerSource } from './newcomer_records.js';
 
 export const EVENT_EN_MAP: Record<string, string> = {
   '3x3x3 Cube': '3x3',
@@ -237,6 +238,7 @@ export function formatTime(centiseconds: number, eventId: string): string {
 
 export interface RecordEvent {
   tag: string;
+  newcomer_source?: NewcomerSource;
   rec_type: string; // 'single' | 'average'
   attempt_result: number;
   event_id: string;
@@ -333,6 +335,14 @@ export function formatRecordMessage(ev: RecordEvent, getRank: RankFn): Formatted
   if (tag === 'WR') {
     cn = `纪录快讯! ${timeStr}${cnEvent}${typeCn}世界纪录WR ${cnName}${personFlag}| ${cnCompLabel}`;
     en = `BREAKING NEWS! ${timeStr} ${enEvent} WR ${tEn} ${enName}${personFlag}| ${enCompLabel}`;
+  } else if (tag === 'NWR') {
+    if (ev.newcomer_source !== '1st-solve' && ev.newcomer_source !== '1st-comp') {
+      throw new Error('NWR requires a newcomer source');
+    }
+    const sourceCn = ev.newcomer_source === '1st-comp' ? '首场比赛' : '首次还原';
+    const sourceEn = ev.newcomer_source === '1st-comp' ? '1st competition' : rec_type === 'average' ? '1st solve: first-round average' : '1st solve';
+    cn = `纪录快讯! ${timeStr}${cnEvent}${typeCn}新人世界纪录（${sourceCn}）NWR ${cnName}${personFlag}| ${cnCompLabel}`;
+    en = `BREAKING NEWS! ${timeStr} ${enEvent} Newcomer WR (${sourceEn}) NWR ${tEn} ${enName}${personFlag}| ${enCompLabel}`;
   } else if (tag === 'FWR') {
     cn = `纪录快讯! ${timeStr}${cnEvent}${typeCn}女子世界纪录FWR${tiedCn} ${cnName}${personFlag}| ${cnCompLabel}`;
     en = `BREAKING NEWS! ${timeStr} ${enEvent} FWR${tiedEn} ${tEn} ${enName}${personFlag}| ${enCompLabel}`;
@@ -362,7 +372,10 @@ export function formatRecordMessage(ev: RecordEvent, getRank: RankFn): Formatted
     const rank = getRank(event_id, rec_type, attempt_result);
     if (rank) {
       const suffix = `/WR${rank}`;
-      if (tag === 'FWR') {
+      if (tag === 'NWR') {
+        cn = replaceFirst(cn, 'NWR', `NWR${suffix}`);
+        en = replaceFirst(en, 'NWR', `NWR${suffix}`);
+      } else if (tag === 'FWR') {
         cn = replaceFirst(cn, `FWR${tiedCn}`, `FWR${tiedCn}${suffix}`);
         en = replaceFirst(en, `FWR${tiedEn}`, `FWR${tiedEn}${suffix}`);
       } else if (tag === 'NR') {
@@ -395,7 +408,7 @@ function replaceFirst(s: string, search: string, replacement: string): string {
 // tag 优先级:WR > 任一 CR > NR
 function tagPriority(tag: string): number {
   if (tag === 'WR') return 0;
-  if (tag === 'FWR') return 0.5;
+  if (tag === 'FWR' || tag === 'NWR') return 0.5;
   if (tag in CR_ABBR_CN || tag === 'CR') return 1;
   if (tag === 'NR') return 2;
   return 3;
@@ -419,6 +432,11 @@ export function formatCombinedRecords(events: RecordEvent[], getRank: RankFn): F
     throw new Error(`formatCombinedRecords expects 1 or 2 events, got ${events.length}`);
   }
   const [e0, e1] = events;
+  // Newcomer scopes must remain explicit even when paired with another record.
+  if (events.some(event => event.tag === 'NWR')) {
+    const formatted = events.map(event => formatRecordMessage(event, getRank));
+    return { cn: formatted.map(event => event.cn).join('\n'), en: formatted.map(event => event.en).join('\n'), url: formatted[0]!.url };
+  }
   if (e0!.tag === e1!.tag) return combineSameTag(events, getRank);
   return combineDiffTag(events, getRank);
 }

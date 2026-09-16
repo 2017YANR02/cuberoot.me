@@ -10,6 +10,7 @@ const records = [
   record('fwr', 'FWR', 'cn'),
   record('oceania', 'OcR', 'au'),
   record('wr', 'WR', 'de'),
+  record('nwr', 'NWR', 'cn'),
   record('wca2', 'NR', 'cn'),
   record('other2', 'NR'),
   record('ip2', 'NR', 'us'),
@@ -19,7 +20,7 @@ describe('homepage record order', () => {
   it('keeps world and continental records ahead of WCA, IP and other national records', () => {
     const original = [...records];
     expect(sortRecentRecords(records, ['cn', 'us']).map(r => r.id)).toEqual([
-      'fwr', 'wr', 'asia', 'oceania', 'wca1', 'wca2', 'ip1', 'ip2', 'other1', 'other2',
+      'fwr', 'wr', 'nwr', 'asia', 'oceania', 'wca1', 'wca2', 'ip1', 'ip2', 'other1', 'other2',
     ]);
     expect(records).toEqual(original);
   });
