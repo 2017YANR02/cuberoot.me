@@ -18,6 +18,7 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         SplashScreen.installSplashScreen(this);
         registerPlugin(TimerPrintPlugin.class);
+        registerPlugin(RecordPushPlugin.class);
         super.onCreate(savedInstanceState);
     }
 

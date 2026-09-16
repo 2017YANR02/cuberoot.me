@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { startRecordPushSweep } from './utils/record_push.js';
 import { requestDiagnostics } from './observability/request.js';
 import { startRuntimeDiagnostics } from './observability/runtime.js';
 import { serve } from '@hono/node-server';
@@ -343,6 +344,7 @@ startIdentityChoiceCleanup();
 // /calendar 日程提醒:每分钟扫一遍「该发提醒了吗」,命中写站内通知(+ 邮件旁路)。
 // 去重靠 calendar_reminder_log 的主键抢占,重启 / 窗口重叠都不会重复发。
 startCalendarReminderSweep();
+startRecordPushSweep();
 
 // 首页「今日公示」数据源:后台轮询 WCA announced_at(独立于监控门控).启动 90s 后首拉,之后每 20min.
 startAnnouncedCompsPoller();

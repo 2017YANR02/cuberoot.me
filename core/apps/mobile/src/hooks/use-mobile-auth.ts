@@ -1,4 +1,5 @@
 import { App as CapacitorApp } from '@capacitor/app';
+import { useCallback, useEffect } from 'react';
 import {
   useInstalledAuth,
   type InstalledAuthPort,
@@ -6,6 +7,7 @@ import {
 } from '@cuberoot/app-ui';
 
 import { nativeMobileAuth } from '../mobile-auth';
+import { recordPush } from '../native/record-push';
 
 const mobileAuthPort: InstalledAuthPort = {
   client: nativeMobileAuth,
@@ -17,5 +19,20 @@ const mobileAuthPort: InstalledAuthPort = {
 };
 
 export function useMobileAuth(language: SupportedLanguage) {
-  return useInstalledAuth(language, mobileAuthPort);
+  const auth = useInstalledAuth(language, mobileAuthPort);
+  useEffect(() => {
+    const push = recordPush;
+    if (!push || auth.loading) return;
+    const sync = () => { void push.sync(auth.session).catch(() => undefined); };
+    sync();
+    const timer = window.setInterval(sync, 30_000);
+    const listener = CapacitorApp.addListener('appStateChange', ({ isActive }) => { if (isActive) sync(); });
+    return () => { window.clearInterval(timer); void listener.then(handle => handle.remove()); };
+  }, [auth.loading, auth.session]);
+  const logout = useCallback(async () => {
+    // Offline revocation stays in secure storage and is retried without retaining the JWT.
+    try { await recordPush?.logout(); } catch { /* SDK stopped; revoke remains pending. */ }
+    await auth.logout();
+  }, [auth.logout]);
+  return { ...auth, logout };
 }

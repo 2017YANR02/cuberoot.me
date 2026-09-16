@@ -36,9 +36,12 @@ if (System.getenv('MOBILE_REQUIRE_RELEASE_SIGNING') == 'true' && !hasUploadSigni
 }
 
 android {
+    buildFeatures { buildConfig true }
     namespace = "me.cuberoot.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
+        manifestPlaceholders.GETUI_APPID = ''
+        buildConfigField 'String', 'GETUI_APP_ID', '""'
         applicationId "me.cuberoot.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
@@ -63,10 +66,16 @@ android {
     }
     buildTypes {
         debug {
+            def pushAppId = System.getenv('GETUI_DEBUG_APP_ID') ?: ''
+            manifestPlaceholders.GETUI_APPID = pushAppId
+            buildConfigField 'String', 'GETUI_APP_ID', groovy.json.JsonOutput.toJson(pushAppId)
             applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
         }
         release {
+            def pushAppId = System.getenv('GETUI_APP_ID') ?: ''
+            manifestPlaceholders.GETUI_APPID = pushAppId
+            buildConfigField 'String', 'GETUI_APP_ID', groovy.json.JsonOutput.toJson(pushAppId)
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             if (hasUploadSigning) signingConfig signingConfigs.upload
@@ -81,6 +90,8 @@ repositories {
 }
 
 dependencies {
+    implementation 'com.getui:gtsdk:3.3.15.0'
+    implementation 'com.getui:gtc:3.3.3.0'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
@@ -95,11 +106,34 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
+// Vendor credentials belong to the matching Android package, never share debug/release IDs.
+def pushVendors = [
+    [artifact: 'com.assist-v3:oppo:3.6.0', keys: ['OPPO_APP_KEY', 'OPPO_APP_SECRET'], extra: ['com.google.code.gson:gson:2.13.2', 'commons-codec:commons-codec:1.18.0', 'androidx.annotation:annotation:1.9.1']],
+    [artifact: 'com.assist-v3:vivo:3.2.0', keys: ['VIVO_APP_ID', 'VIVO_APP_KEY']],
+    [artifact: 'com.getui.opt:xmp:3.3.7', keys: ['XIAOMI_APP_ID', 'XIAOMI_APP_KEY']],
+    [artifact: 'com.getui.opt:mzp:3.3.2', keys: ['MEIZU_APP_ID', 'MEIZU_APP_KEY']],
+    [artifact: 'com.getui.opt:honor:3.6.0', keys: ['HONOR_APP_ID'], extra: ['com.hihonor.mcs:push:7.0.61.303']],
+]
+['debug', 'release'].each { variant ->
+    def prefix = variant == 'debug' ? 'GETUI_DEBUG_' : 'GETUI_'
+    pushVendors.each { vendor ->
+        def values = vendor.keys.collectEntries { key -> [(key): System.getenv(prefix + key) ?: ''] }
+        if (values.values().any { it }) {
+            if (!values.values().every { it } || !System.getenv(prefix + 'APP_ID')) {
+                throw new GradleException("Incomplete ${prefix} vendor push configuration")
+            }
+            android.buildTypes[variant].manifestPlaceholders.putAll(values)
+            dependencies.add(variant + 'Implementation', vendor.artifact)
+            (vendor.extra ?: []).each { artifact -> dependencies.add(variant + 'Implementation', artifact) }
+        }
+    }
+}
+
 try {
     def servicesJSON = file('google-services.json')
     if (servicesJSON.text) {
         apply plugin: 'com.google.gms.google-services'
     }
 } catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+    logger.info("google-services.json not found; optional Google services plugin not applied")
 }

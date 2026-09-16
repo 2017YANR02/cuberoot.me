@@ -19,6 +19,11 @@ apply from: "variables.gradle"
 
 allprojects {
     repositories {
+        maven {
+            url 'https://mvn.getui.com/nexus/content/repositories/releases/'
+            content { includeGroupByRegex 'com\\.getui.*'; includeGroup 'com.assist-v3'; includeGroup 'com.zxid.sdk' }
+        }
+        maven { url 'https://developer.hihonor.com/repo/'; content { includeGroup 'com.hihonor.mcs' } }
         google()
         mavenCentral()
     }

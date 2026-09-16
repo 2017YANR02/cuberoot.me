@@ -42,6 +42,8 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'notification_push_devices', domain: 'account', origin: '0239', purpose: { zh: '已授权的 Android 推送设备和账号绑定', en: 'Consented Android push devices and account bindings' } },
+  { name: 'notification_push_deliveries', domain: 'account', origin: '0239', purpose: { zh: '纪录手机推送队列及服务商接收状态', en: 'Record push queue and provider acceptance status' } },
   { name: 'record_notification_preferences', domain: 'account', origin: '0238', purpose: { zh: '账号共享的纪录订阅筛选；本人纪录自动纳入', en: 'Account-wide record subscriptions; own records are always included' } },
   { name: 'record_notification_snapshots', domain: 'comp', origin: '0238', purpose: { zh: '首次成绩同步静默基线', en: 'Quiet baseline for first competition synchronization' } },
   { name: 'record_notification_events', domain: 'comp', origin: '0238', purpose: { zh: '跨成绩来源去重的纪录事件及待投递状态', en: 'Source-independent record event deduplication and pending delivery' } },
@@ -772,6 +774,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 235, slug: 'deskpet_catalog', desc: { zh: '桌宠名称、锁定、移除及排序配置，版本检查避免覆盖他人的修改。', en: 'Pet names, locks, removal and ordering with revision checks to prevent lost updates.' } },
   { n: 237, slug: 'nav_topics', desc: { zh: '管理员管理导航话题，同步站点标签。', en: 'Administrator topic management with synchronized site tags.' } },
   { n: 238, slug: 'record_notifications', desc: { zh: '纪录订阅、首次同步基线及持久化投递去重。', en: 'Record subscriptions, initial snapshot baselines, and persistent delivery deduplication.' } },
+  { n: 239, slug: 'record_push', desc: { zh: 'Android 推送设备绑定、退出撤销及持久化投递队列。', en: 'Android device bindings, logout revocation, and a durable push queue.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

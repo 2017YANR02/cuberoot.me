@@ -12,6 +12,8 @@ Android and iOS smart-cube access use a thin `@capacitor-community/bluetooth-le`
 
 ## Maintenance rule
 
+Android record notifications use the existing website subscriptions and inbox. The native adapter only handles consent, notification permission, device registration and logout revocation. Setup, credentials and remaining device acceptance are documented in [record-notification-setup.md](../../../docs/record-notification-setup.md). iOS push remains pending; progress is tracked in the roadmap.
+
 Smart-cube live views and complete solve reports use `@cuberoot/timer-ui/LiveCubeState`, `@cuberoot/timer-ui/reconstruct-report`, and `@cuberoot/timer-ui/solve-recap`. The same components are consumed by Web; their geometry/animation comes from the existing `puzzle-render-core` package and pure reconstruction/orientation logic from `shared`. Keep the four smart-cube settings and `useAutoReady` shared as well. Stored solves can contain moves, device metadata, and optional gyro tracks; replay links intentionally include this data when the user shares them. Do not replace this with an iOS-only renderer, report, or account form. Current proof levels and remaining drivers/device tests belong in the roadmap and timer parity tracker.
 
 - The highest-level installed-client contract is `docs/cross-platform-app-contract.md`: Android, iOS, HarmonyOS NEXT, Windows, and macOS are one product backed by shared domain/UI code and thin platform hosts. This package remains the Android/iOS Capacitor host; it must not become a source dependency of the existing Harmony/Desktop apps.

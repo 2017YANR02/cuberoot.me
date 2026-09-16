@@ -8,7 +8,7 @@
 
 > 状态：执行中
 >
-> 更新日期：2026-09-11
+> 更新日期：2026-09-15
 >
 > 目标：以最低长期维护成本，把同一个 CubeRoot 产品发布到 Android、iOS、HarmonyOS NEXT、Windows 和 macOS，并逐步覆盖对应商店和安装渠道。
 >
@@ -22,10 +22,12 @@
 
 - [x] 本地实现 shared 订阅规则、服务端订阅 API 和 canonical `/notifications` 设置：项目、单次/平均、纪录级别、选手所属地区共用一份偏好；绑定 WCA 的本人纪录（含 PR）自动纳入，邮件仍尊重已验证邮箱和总开关。
 - [x] 比赛预热任务复用既有成绩判定与快讯格式，首次快照静默建立基线，后续新成绩按比赛/轮次/选手/成绩去重，复用站内消息及邮件发送入口。首次快照中已有成绩不补发；邮件沿用现有 best-effort 机制，发送失败没有独立重试队列。
-- [ ] Android、iOS、HarmonyOS NEXT 手机系统推送：服务商与厂商通道配置尚待确认，宿主推送 adapter、设备 token 绑定/退出清理、权限拒绝、前后台收取、点击深链和真机验收均未完成；站内消息与邮件不能替代系统推送证据。
+- [x] Android 个推薄宿主与 API 持久化队列本地实现：隐私同意后初始化、通知权限、设备绑定、退出/换号撤销与断网重试；复用原站内纪录通知，队列退避重试，不发送绑定前历史。正式/调试包隔离，配置缺失时禁用发送；过期数据仍清理。
+- [ ] Android 服务商应用、国内厂商通道、生产开关和真实收取：OPPO/vivo/小米/魅族/荣耀已有条件构建入口，真实凭据和各分支验收未完成；华为 Android 仍待 HMS 配置。通知当前打开网站比赛链接，前台/后台/杀进程/点击/权限及账号切换须真机验证。
+- [ ] iOS 按所有者 2026-09-15 指示留待 Mac 上继续；已有开发者会员不等于 APNs 已配置。HarmonyOS NEXT、Windows/macOS 原生通知适配尚未实现，站内消息与邮件不能替代系统推送证据。
 - [ ] 生产迁移、部署和真实收信验收；本轮没有向真实用户发送测试消息。
 
-本地证据：迁移 0238 在 PostgreSQL 13 事务中验证建表、JSONB 与级联删除后回滚；API 通知相关回归、shared build、client/server typecheck 通过；Playwright 使用隔离 API fixture 验证 390px/1280px 设置页、地区选择和保存请求，无页面横向溢出。App 继续复用网站设置页，未新增平台专用订阅表单；本节不代表任何新原生包已构建或发布。
+本地证据：迁移 0238 在 PostgreSQL 13 事务中验证建表、JSONB 与级联删除后回滚；API 通知相关回归、shared build、client/server typecheck 通过；Playwright 使用隔离 API fixture 验证 390px/1280px 设置页、地区选择和保存请求，无页面横向溢出。迁移 0239 在本机 PG13 隔离 schema 中执行真实绑定/撤销路由及队列重试/去重测试；Getui HTTP 使用 mock，未向服务商发送。Mobile 25 tests、app-ui 299 tests、Mobile/API/app-ui/client 类型检查与 Mobile Web build/Android sync 已通过。Android `:app:assembleDebug --max-workers=14` 构建成功；基础 debug 合并 manifest 已确认无电话状态、任务列表、全量应用列表或后台定位权限，明文流量关闭。SDK 编译有上游 D8 stack-map 和原生库 strip 警告；尚未证明 release/R8、16KB 页兼容或真机运行，不代表发布或真机到达；具体配置见 [record-notification-setup.md](record-notification-setup.md)。
 
 ### 2026-09-12 计时输入防干扰
 

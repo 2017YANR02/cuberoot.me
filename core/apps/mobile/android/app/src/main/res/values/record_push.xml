@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="record_push_title">Record notifications</string>
+    <string name="record_push_enable">Enable</string>
+    <string name="record_push_later">Not now</string>
+    <string name="record_push_consent">Notify me about my records and the records I subscribe to. Getui and its bundled ZX ID SDK process identifiers, device and app information, and network information. See the privacy policies for optional data and system permissions. Notifications may appear on the lock screen. Manage subscriptions in My account → Notifications and disable notifications in Android Settings.
+\n\n&lt;a href="https://cuberoot.me/privacy"&gt;CubeRoot privacy policy&lt;/a&gt;  &lt;a href="https://docs.getui.com/privacy/"&gt;Getui privacy policy&lt;/a&gt;</string>
+</resources>
