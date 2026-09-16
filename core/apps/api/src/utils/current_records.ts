@@ -420,7 +420,7 @@ export function refutesTag(
  *  首页纪录列表排序与下面的降级判定共用这一份. */
 export function recordLevelRank(tag: string): number {
   if (tag === 'WR') return 0;
-  if (tag === 'FWR') return 0.5;
+  if (tag === 'FWR' || tag === 'NWR') return 0.5;
   if (tag === 'CR') return 1;
   if (tag === 'NR') return 2;
   return tag.endsWith('R') ? 1 : 3;

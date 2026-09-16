@@ -8,7 +8,9 @@ vi.mock('../src/monitors/config.js', () => ({ RECORD_TAGS: new Set(['WR']), NR_C
 vi.mock('../src/monitors/names.js', () => ({ enrichName: vi.fn() }));
 vi.mock('../src/monitors/poll.js', () => ({ startPoller: vi.fn() }));
 vi.mock('../src/routes/cubing_live.js', () => ({ extractInferredRecords: mocks.records }));
-vi.mock('../src/routes/wca_recent_records.js', () => ({ formatInferred: async () => ({ cn: '4.52 女子世界纪录 FWR 连允之', en: '4.52 FWR Yunzhi Lian' }) }));
+vi.mock('../src/routes/wca_recent_records.js', () => ({ formatInferred: async (record: { tag: string; newcomerSource?: string }) => record.tag === 'NWR'
+  ? { cn: `新人世界纪录（${record.newcomerSource === '1st-comp' ? '首场比赛' : '首次还原'}）NWR`, en: `NWR (${record.newcomerSource})` }
+  : { cn: '4.52 女子世界纪录 FWR 连允之', en: '4.52 FWR Yunzhi Lian' } }));
 vi.mock('../src/routes/wca_format.js', () => ({ formatRecords: vi.fn() }));
 
 beforeEach(() => {
@@ -18,6 +20,16 @@ beforeEach(() => {
   mocks.records.mockResolvedValue([{ id: 'inferred|Wuhan|333|3|average|4|FWR|452', tag: 'FWR', compId: 'WuhanCrimsonAutumn2026', eventId: '333', roundId: '3', personIso2: 'CN' }, { id: 'nr', tag: 'NR' }]);
 });
 describe('FWR Bark delivery', () => {
+  it('delivers both NWR sources independently and deduplicates each successful notification', async () => {
+    const records = ['1st-solve', '1st-comp'].map(source => ({ id: `nwr|${source}`, tag: 'NWR', newcomerSource: source, compId: 'Current2026', eventId: '444', roundId: 'f', personIso2: 'CN' }));
+    mocks.records.mockResolvedValue(records);
+    await pushFemaleRecords(false);
+    expect(mocks.send.mock.calls.map(call => call[0].title)).toEqual(['新人世界纪录（首次还原）NWR', '新人世界纪录（首场比赛）NWR']);
+    expect(mocks.mark.mock.calls.map(call => call[1])).toEqual([['nwr|1st-solve'], ['nwr|1st-comp']]);
+    mocks.pushed.mockResolvedValue(new Set(['nwr|1st-solve', 'nwr|1st-comp']));
+    await pushFemaleRecords(false);
+    expect(mocks.send).toHaveBeenCalledTimes(2);
+  });
   it('sends FWR once and persists its distinct ID', async () => {
     await pushFemaleRecords(false);
     expect(mocks.send).toHaveBeenCalledTimes(1);

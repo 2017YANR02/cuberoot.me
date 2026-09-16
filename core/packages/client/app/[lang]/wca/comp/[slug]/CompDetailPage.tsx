@@ -72,7 +72,7 @@ import { expandContinentRecord } from '@/lib/recon-utils';
 import '../comp.css';
 import { tr } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
-import { COMP_RECORD_NEWS } from './record-news';
+import { competitionRecordNews, type NewcomerRecord } from './record-news';
 
 // 「打乱」tab:把 /scramble/gen 的比赛模式整套内嵌进来。重(WASM 求解器 + 打乱引擎),
 // 懒加载 —— 只有用户点开「打乱」才拉这部分 JS,不拖累比赛页首屏。
@@ -158,6 +158,7 @@ interface CompData {
   fetchedAt: number;
   personalRecords?: Record<string, Record<string, CompPersonalRecordSlot>>;
   currentRecords?: CompRecordsSnapshot;
+  newcomerRecords?: NewcomerRecord[];
   /** 服务端 ?only= 裁过的分片响应:只有当前项目的轮次/选手。见首屏分片加载。 */
   partial?: boolean;
 }
@@ -993,7 +994,8 @@ export default function CompDetailPage() {
     [data, fullLoaded, compYear, authoritativeDual, changeMap],
   );
   const compRecords = useMemo(() => (data && fullLoaded ? computeCompRecords(data) : []), [data, fullLoaded]);
-  const recordNews = COMP_RECORD_NEWS[slug] ?? [];
+  const recordNews = useMemo(() => competitionRecordNews(slug,
+    data && fullLoaded ? data.newcomerRecords ?? [] : [], data?.users ?? {}, data?.events ?? []), [slug, data, fullLoaded]);
   const newsCopy = useCopy();
   const hasPodiumTab = podiumGroups.length > 0 || compRecords.length > 0 || recordNews.length > 0;
   // 全场结束 = 每个项目的决赛(末轮)都 s===1。比「末轮有成绩」严格:决赛进行中(s===2)不算结束。
@@ -1117,7 +1119,7 @@ export default function CompDetailPage() {
     };
 
     const startSse = () => {
-      const q = sourceParam ? `?v=2&source=${encodeURIComponent(sourceParam)}` : '?v=2';
+      const q = sourceParam ? `?v=3&source=${encodeURIComponent(sourceParam)}` : '?v=3';
       const url = apiUrl(`/v1/cubing-live-stream/${encodeURIComponent(slug)}${q}`);
       es = new EventSource(url);
       const fallback = () => {
@@ -1497,12 +1499,13 @@ export default function CompDetailPage() {
   const [pbMap, setPbMap] = useState<Record<string, PbByEvent | null>>({});
   const recordCounts = useMemo(() => {
     if (!data || !fullLoaded) return null;
-    return summarizeCompRecords(Object.values(data.resultsByRound).flat().map(result => {
+    const counts = summarizeCompRecords(Object.values(data.resultsByRound).flat().map(result => {
       const wcaId = data.users[String(result.n)]?.wcaid;
       const pr = classifyPr(result, wcaId ? pbMap[wcaId] ?? null : null);
       return { ...result, pS: pr.singleRank, pA: pr.averageRank };
     }));
-  }, [data, fullLoaded, pbMap]);
+    return { WR: counts.WR, NWR: recordNews.reduce((sum, news) => sum + news.results.filter(result => result.tag === 'NWR').length, 0), FWR: counts.FWR, CR: counts.CR, NR: counts.NR, PR: counts.PR };
+  }, [data, fullLoaded, pbMap, recordNews]);
 
   // 预热当前轮所有破 PR 成绩的 NR/WR 名次进缓存,使成绩弹窗打开时「秒出」(命中缓存即同步渲染)。
   // 一次 batch 请求;pbMap 到位后重跑以补全需 pb 才能判定的 PR。已缓存项自动跳过。
@@ -1971,7 +1974,7 @@ export default function CompDetailPage() {
           )
         ) : isPodium ? (
           <>
-            {recordCounts && Object.values(recordCounts).some(count => count > 0) && <div className="comp-record-counts" title={tr({ zh: '全场所有轮次，单次与平均分别按最高纪录级别计数', en: 'All rounds; each single and average counts at its highest record level' })}>
+            {recordCounts && Object.values(recordCounts).some(count => count > 0) && <div className="comp-record-counts" title={tr({ zh: '全场所有轮次，单次与平均分别按最高纪录级别计数；新人世界纪录按首次还原与首场比赛另计', en: 'All rounds; each single and average counts at its highest record level. Newcomer WRs count separately for first solve and first competition.' })}>
               {Object.entries(recordCounts).filter(([, count]) => count > 0).map(([tag, count]) => <span key={tag}><RecordBadge record={tag} /> {count}</span>)}
             </div>}
             {recordNews.length > 0 && (

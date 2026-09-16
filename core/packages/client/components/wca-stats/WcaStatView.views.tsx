@@ -597,7 +597,7 @@ export function AoxSectionsView({ header, sections, isZh, selectedEvent }: {
   );
 }
 
-export function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent, activePanel, onSetActivePanel, sourceBool }: {
+export function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent, activePanel, onSetActivePanel, sourceBool, activeSource, onSetSource }: {
   sourcePanels: SourcePanel[];
   searchTerm: string;
   isZh: boolean;
@@ -605,8 +605,9 @@ export function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent
   activePanel: number;
   onSetActivePanel: (idx: number, panels: StatPanel[]) => void;
   sourceBool?: { labelEn: string; labelZh: string };
+  activeSource: number;
+  onSetSource: (idx: number) => void;
 }) {
-  const [activeSource, setActiveSource] = useState(0);
   const source = sourcePanels[activeSource];
   // NOTE: sourceBool 且恰为 2 个源时——渲染布尔开关（off=源[0], on=源[1]）替代 tab bar。
   const asBool = !!sourceBool && sourcePanels.length === 2;
@@ -617,14 +618,14 @@ export function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent
         {asBool ? (
           <BoolToggle
             value={activeSource === 1}
-            onChange={on => setActiveSource(on ? 1 : 0)}
+            onChange={on => onSetSource(on ? 1 : 0)}
             label={(isZh ? sourceBool!.labelZh : sourceBool!.labelEn)}
           />
         ) : sourcePanels.map((sp, i) => (
           <button
             key={sp.id}
             className={`wca-stats-tab ${i === activeSource ? 'active' : ''}`}
-            onClick={() => setActiveSource(i)}
+            onClick={() => onSetSource(i)}
           >
             {(isZh ? sp.labelZh : sp.labelEn)}
           </button>
@@ -638,7 +639,7 @@ export function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent
   );
 }
 
-export function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, selectedEvent, availableMetricIds, hideSelector, activeMetric, onSetActiveMetric, onSetActivePanel, activePanel, belowTabs }: {
+export function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, selectedEvent, availableMetricIds, hideSelector, activeMetric, onSetActiveMetric, onSetActivePanel, activePanel, belowTabs, sourceId, onSetSource }: {
   metricPanels: MetricPanel[];
   metricGroups?: MetricGroup[];
   searchTerm: string;
@@ -651,6 +652,8 @@ export function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh,
   onSetActivePanel: (idx: number, panels: StatPanel[]) => void;
   activePanel: number;
   belowTabs?: React.ReactNode;
+  sourceId?: string | null;
+  onSetSource: (id: string) => void;
 }) {
   useEffect(() => {
     const activeId = metricPanels[activeMetric]?.id;
@@ -721,6 +724,11 @@ export function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh,
 
       {metric && metric.sourcePanels ? (
         <SourcePanelsView sourcePanels={metric.sourcePanels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent}
+          activeSource={Math.max(0, metric.sourcePanels.findIndex(s => s.id === `${metric.id}-${sourceId}` || s.id === sourceId))}
+          onSetSource={idx => {
+            const id = metric.sourcePanels![idx].id;
+            onSetSource(id.startsWith(`${metric.id}-`) ? id.slice(metric.id.length + 1) : id);
+          }}
           activePanel={activePanel} onSetActivePanel={onSetActivePanel} sourceBool={metric.sourceBool} />
       ) : metric && metric.panels ? (
         <PanelsView panels={metric.panels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent}
