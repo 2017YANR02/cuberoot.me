@@ -104,6 +104,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'CubeRoot administrator dashboard for registration statistics, sign-in methods, and account records.',
     },
   },
+  'admin/disk': {
+    title: { zh: '磁盘空间', en: 'Disk space' },
+    description: { zh: '管理员查看服务器磁盘容量与目录占用。', en: 'Administrator view of server disk capacity and directory usage.' },
+  },
   'vault': {
     title: { zh: '私密资料库', en: 'Private Vault' },
     description: {
