@@ -1,8 +1,38 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { femaleRecordAchievements, fetchFemalePersonRecords, type FemalePersonRecord } from '@/lib/person-achievements';
+import { femaleRecordAchievements, femaleResultRecordLookup, personResultRecord, fetchFemalePersonRecords, type FemalePersonRecord } from '@/lib/person-achievements';
 
 const row: FemalePersonRecord = { e: '333', t: 'a', v: 452, l: 'FWR', c: 'Test2026', d: '2026-09-13', currentWorld: true };
 afterEach(() => vi.unstubAllGlobals());
+
+const resultRow = { competition_id: row.c, event_id: row.e };
+
+it('matches female result tags by competition, event, type and effective value, including former records', () => {
+  const lookup = femaleResultRecordLookup([{ ...row, currentWorld: false }]);
+  expect(personResultRecord(lookup, resultRow, 'a', 452, null)).toBe('FWR');
+  expect(personResultRecord(lookup, resultRow, 's', 452, null)).toBe(null);
+  expect(personResultRecord(lookup, resultRow, 's', 354, null)).toBe(null);
+  expect(personResultRecord(lookup, resultRow, 'a', 652, null)).toBe(null);
+  expect(personResultRecord(lookup, { ...resultRow, competition_id: 'Other2026' }, 'a', 452, null)).toBe(null);
+  expect(personResultRecord(lookup, { ...resultRow, event_id: '222' }, 'a', 452, null)).toBe(null);
+  expect(personResultRecord(new Map(), resultRow, 'a', 452, null)).toBe(null);
+});
+
+it.each(['NR', 'AsR', 'CR', 'FAsR', 'PR', null])('prefers FWR over %s but preserves overall WR', existing => {
+  const lookup = femaleResultRecordLookup([row, { ...row, l: 'FAsR' }]);
+  expect(personResultRecord(lookup, resultRow, 'a', 452, existing)).toBe('FWR');
+  expect(personResultRecord(lookup, resultRow, 'a', 452, 'WR')).toBe('WR');
+});
+
+it('reuses validated female regional history without promoting partial national or unofficial data', () => {
+  const records = [{ ...row, l: 'FAsR' }, { ...row, t: 's' as const, v: 354, l: 'FNR' },
+    { ...row, e: '333mbf' }, { ...row, v: -1 }, { ...row, v: 500, l: 'PR' }];
+  const partial = femaleResultRecordLookup(records);
+  expect(partial.size).toBe(1);
+  expect(personResultRecord(partial, resultRow, 'a', 452, null)).toBe('FAsR');
+  expect(personResultRecord(partial, resultRow, 'a', 452, 'AsR')).toBe('AsR');
+  expect(personResultRecord(partial, resultRow, 's', 354, null)).toBe(null);
+  expect(personResultRecord(femaleResultRecordLookup(records, true), resultRow, 's', 354, null)).toBe('FNR');
+});
 
 it('merges current world records into event history and keeps former records in other events', () => {
   const result = femaleRecordAchievements([row, { ...row, c: 'Earlier', v: 480, currentWorld: false },

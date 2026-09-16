@@ -369,18 +369,18 @@ export default function HistoryPanel({
 
   // Inline style helpers for the filters panel
   const chipBtn = (active: boolean): React.CSSProperties => ({
-    background: active ? '#2a3d4d' : 'transparent',
-    border: '1px solid ' + (active ? '#4d7a99' : '#333'),
-    color: active ? '#cde' : '#888',
+    background: active ? 'var(--accent-soft)' : 'transparent',
+    border: '1px solid ' + (active ? 'var(--accent)' : 'var(--border-default)'),
+    color: active ? 'var(--accent)' : 'var(--muted-foreground)',
     borderRadius: 4,
     padding: '2px 8px',
     cursor: 'pointer',
     fontSize: 11,
   });
   const inputStyle: React.CSSProperties = {
-    background: '#0e0e11',
-    border: '1px solid #333',
-    color: '#ccc',
+    background: 'var(--background)',
+    border: '1px solid var(--border-default)',
+    color: 'var(--foreground)',
     borderRadius: 4,
     padding: '2px 6px',
     fontSize: 11,
@@ -389,7 +389,7 @@ export default function HistoryPanel({
   };
   const labelStyle: React.CSSProperties = {
     fontSize: 10,
-    color: '#888',
+    color: 'var(--muted-foreground)',
     marginBottom: 2,
     display: 'block',
   };
@@ -408,10 +408,10 @@ export default function HistoryPanel({
             })}
               aria-pressed={visibleCompareMode}
               style={{
-                background: visibleCompareMode ? '#2a3d4d' : 'transparent',
-                border: '1px solid #333',
-                color: visibleCompareMode ? '#cde' : '#888',
-                borderColor: visibleCompareMode ? '#4d7a99' : '#333',
+                background: visibleCompareMode ? 'var(--accent-soft)' : 'transparent',
+                border: '1px solid var(--border-default)',
+                color: visibleCompareMode ? 'var(--accent)' : 'var(--muted-foreground)',
+                borderColor: visibleCompareMode ? 'var(--accent)' : 'var(--border-default)',
                 borderRadius: 4,
                 padding: '2px 6px',
                 cursor: 'pointer',
@@ -433,9 +433,9 @@ export default function HistoryPanel({
             })}
               aria-pressed={selectMode}
               style={{
-                background: selectMode ? '#3d2a2a' : 'transparent',
-                border: '1px solid ' + (selectMode ? '#995a4d' : '#333'),
-                color: selectMode ? '#edc' : '#888',
+                background: selectMode ? 'color-mix(in srgb, var(--destructive) 14%, transparent)' : 'transparent',
+                border: '1px solid ' + (selectMode ? 'var(--destructive)' : 'var(--border-default)'),
+                color: selectMode ? 'var(--destructive)' : 'var(--muted-foreground)',
                 borderRadius: 4,
                 padding: '2px 6px',
                 cursor: 'pointer',
@@ -460,9 +460,9 @@ export default function HistoryPanel({
                 aria-expanded={actionsOpen}
                 aria-label={tr({ zh: '更多操作', en: 'More actions' })}
                 style={{
-                  background: (visibleCompareMode || selectMode) ? '#2a3d4d' : 'transparent',
-                  border: '1px solid ' + ((visibleCompareMode || selectMode) ? '#4d7a99' : '#333'),
-                  color: (visibleCompareMode || selectMode) ? '#cde' : '#aaa',
+                  background: (visibleCompareMode || selectMode) ? 'var(--accent-soft)' : 'transparent',
+                  border: '1px solid ' + ((visibleCompareMode || selectMode) ? 'var(--accent)' : 'var(--border-default)'),
+                  color: (visibleCompareMode || selectMode) ? 'var(--accent)' : 'var(--muted-foreground)',
                   borderRadius: 4,
                   width: 32,
                   height: 32,
@@ -479,18 +479,18 @@ export default function HistoryPanel({
               {actionsOpen && (
                 <div
                   role="menu"
+                  data-site-surface="popover"
                   style={{
                     position: 'absolute',
                     top: '100%',
                     right: 0,
                     marginTop: 4,
                     minWidth: 140,
-                    background: '#1a1a1f',
-                    border: '1px solid #333',
+                    border: '1px solid var(--border-default)',
                     borderRadius: 4,
                     padding: 4,
                     zIndex: 10,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                    boxShadow: 'var(--glass-shadow)',
                   }}
                 >
                   <button
@@ -504,9 +504,9 @@ export default function HistoryPanel({
                       gap: 8,
                       width: '100%',
                       minHeight: 36,
-                      background: visibleCompareMode ? '#2a3d4d' : 'transparent',
+                      background: visibleCompareMode ? 'var(--accent-soft)' : 'transparent',
                       border: 'none',
-                      color: visibleCompareMode ? '#cde' : '#ccc',
+                      color: visibleCompareMode ? 'var(--accent)' : 'var(--foreground)',
                       borderRadius: 3,
                       padding: '8px 10px',
                       cursor: 'pointer',
@@ -529,9 +529,9 @@ export default function HistoryPanel({
                         gap: 8,
                         width: '100%',
                         minHeight: 36,
-                        background: selectMode ? '#3d2a2a' : 'transparent',
+                        background: selectMode ? 'color-mix(in srgb, var(--destructive) 14%, transparent)' : 'transparent',
                         border: 'none',
-                        color: selectMode ? '#edc' : '#ccc',
+                        color: selectMode ? 'var(--destructive)' : 'var(--foreground)',
                         borderRadius: 3,
                         padding: '8px 10px',
                         cursor: 'pointer',
@@ -584,10 +584,10 @@ export default function HistoryPanel({
         )}
       </div>
       <div
+        data-site-surface="panel"
         style={{
           padding: '4px 14px 6px',
-          borderBottom: filtersExpanded ? '1px solid #1f1f23' : 'none',
-          background: '#15151a',
+          borderBottom: filtersExpanded ? '1px solid var(--border-default)' : 'none',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -598,7 +598,7 @@ export default function HistoryPanel({
             style={{
               background: 'transparent',
               border: 'none',
-              color: '#aaa',
+              color: 'var(--muted-foreground)',
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
@@ -614,7 +614,7 @@ export default function HistoryPanel({
             })}
           </button>
           {activeFilterCount > 0 && (
-            <span style={{ fontSize: 11, color: '#cde' }}>
+            <span style={{ fontSize: 11, color: 'var(--accent)' }}>
               {(isZh
                                           ? `${activeFilterCount} 个筛选生效`
                                           : `${activeFilterCount} filter${activeFilterCount === 1 ? '' : 's'} active`)}
@@ -627,8 +627,8 @@ export default function HistoryPanel({
               style={{
                 marginLeft: 'auto',
                 background: 'transparent',
-                border: '1px solid #333',
-                color: '#888',
+                border: '1px solid var(--border-default)',
+                color: 'var(--muted-foreground)',
                 borderRadius: 4,
                 padding: '1px 6px',
                 cursor: 'pointer',
@@ -740,12 +740,12 @@ export default function HistoryPanel({
       )}
       {selectMode && (
         <div
+          data-site-surface="panel"
           style={{
             padding: '6px 14px',
             fontSize: 11,
-            color: '#aaa',
-            borderBottom: '1px solid #1f1f23',
-            background: '#15151a',
+            color: 'var(--muted-foreground)',
+            borderBottom: '1px solid var(--border-default)',
             display: 'flex',
             alignItems: 'center',
             gap: 8,
@@ -762,8 +762,8 @@ export default function HistoryPanel({
             onClick={selectAllVisible}
             style={{
               background: 'transparent',
-              border: '1px solid #444',
-              color: '#cde',
+              border: '1px solid var(--border-strong)',
+              color: 'var(--accent)',
               borderRadius: 4,
               padding: '2px 8px',
               cursor: 'pointer',
@@ -778,8 +778,8 @@ export default function HistoryPanel({
             disabled={bulkSelected.size === 0}
             style={{
               background: 'transparent',
-              border: '1px solid #444',
-              color: bulkSelected.size === 0 ? '#555' : '#aaa',
+              border: '1px solid var(--border-strong)',
+              color: bulkSelected.size === 0 ? 'var(--faint-foreground)' : 'var(--muted-foreground)',
               borderRadius: 4,
               padding: '2px 8px',
               cursor: bulkSelected.size === 0 ? 'not-allowed' : 'pointer',
@@ -810,7 +810,7 @@ export default function HistoryPanel({
                   marginTop: 6,
                   background: 'transparent',
                   border: 'none',
-                  color: '#6aa3c8',
+                  color: 'var(--signal-info)',
                   cursor: 'pointer',
                   fontSize: 12,
                   textDecoration: 'underline',
@@ -902,20 +902,19 @@ export default function HistoryPanel({
         <div
           style={{
             padding: '8px 14px',
-            borderTop: '1px solid #1f1f23',
+            borderTop: '1px solid var(--border-default)',
             display: 'flex',
             gap: 8,
             justifyContent: 'flex-end',
-            background: '#15151a',
-          }}
+            }}
         >
           <button
             type="button"
             onClick={exitSelectMode}
             style={{
               background: 'transparent',
-              border: '1px solid #444',
-              color: '#aaa',
+              border: '1px solid var(--border-strong)',
+              color: 'var(--muted-foreground)',
               borderRadius: 4,
               padding: '4px 10px',
               fontSize: 12,
@@ -929,9 +928,9 @@ export default function HistoryPanel({
             onClick={handleBulkDelete}
             disabled={bulkSelected.size === 0}
             style={{
-              background: bulkSelected.size > 0 ? '#3d2a2a' : '#1a1a1d',
-              border: '1px solid ' + (bulkSelected.size > 0 ? '#995a4d' : '#333'),
-              color: bulkSelected.size > 0 ? '#edc' : '#555',
+              background: bulkSelected.size > 0 ? 'color-mix(in srgb, var(--destructive) 14%, transparent)' : 'var(--muted)',
+              border: '1px solid ' + (bulkSelected.size > 0 ? 'var(--destructive)' : 'var(--border-default)'),
+              color: bulkSelected.size > 0 ? 'var(--destructive)' : 'var(--faint-foreground)',
               borderRadius: 4,
               padding: '4px 10px',
               fontSize: 12,

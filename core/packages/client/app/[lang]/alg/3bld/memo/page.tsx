@@ -1,5 +1,8 @@
 'use client';
 
+import TrainingStatsPanel from '@/components/TrainingStatsPanel';
+import { useTrainingStats } from '@/hooks/useTrainingStats';
+
 // 3BLD 记忆回想训练 (memo recall trainer) — a NEW module merged from the Android
 // app (RememberFragment). No web equivalent. Closed practice loop:
 //
@@ -306,6 +309,15 @@ export default function MemoRecallPage(): JSX.Element {
     const accuracy = totalExpected > 0 ? (correct / totalExpected) * 100 : 0;
     return { detail, correct, totalExpected, accuracy };
   }, [phase, groups, parsedRecall]);
+
+  const statsGroup = `bld-memo:${pieceSet}:${useDistractor ? 'delay' : 'direct'}`;
+  const { record } = useTrainingStats(statsGroup);
+  const recordedMemo = useRef<number | null>(null);
+  useEffect(() => {
+    if (!scored || recordedMemo.current === memoStartRef.current) return;
+    recordedMemo.current = memoStartRef.current;
+    record(scored.detail.every(group => group.cells.every(cell => cell.ok)), memoMs + recallMs);
+  }, [scored, memoMs, recallMs, record]);
 
   const allMathCorrect = useMemo(
     () => mathProblems.every((p, i) => mathInputs[i].trim() !== '' && Number(mathInputs[i]) === p.answer),
@@ -717,6 +729,7 @@ export default function MemoRecallPage(): JSX.Element {
           </div>
         </div>
       )}
+      <TrainingStatsPanel group={statsGroup} />
     </div>
   );
 }

@@ -9,6 +9,7 @@
 // - Mounted-gate: getInitialState() reads localStorage, so we render nothing
 //   until mounted (SSG-first repo).
 
+import TrainingStatsPanel, { TrainingSelfPractice } from '@/components/TrainingStatsPanel';
 import React, { useEffect, useReducer, useRef, useState } from 'react';
 import { Info, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -253,7 +254,13 @@ function RouxTrainer() {
           </div>
         )}
         <div className="roux-main">
+          {state.mode !== 'analyzer' && state.mode !== 'tracking' && <TrainingSelfPractice
+            group={`roux:${state.mode}`}
+            attempt={state.case}
+            disabled={state.case.desc.length === 0}
+          />}
           <ViewForMode mode={state.mode as Mode} state={state} dispatch={dispatch} />
+          {state.mode !== 'analyzer' && state.mode !== 'tracking' && <TrainingStatsPanel group={`roux:${state.mode}`} />}
         </div>
       </div>
 

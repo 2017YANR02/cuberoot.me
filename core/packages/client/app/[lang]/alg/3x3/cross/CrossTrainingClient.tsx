@@ -1,5 +1,8 @@
 'use client';
 
+import TrainingStatsPanel, { TrainingSelfCheck } from '@/components/TrainingStatsPanel';
+import { useTrainingStats } from '@/hooks/useTrainingStats';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import BoolToggle from '@/components/BoolToggle';
@@ -11,7 +14,6 @@ import TrainingSettings, { useTrainingAutoAdvance } from '@/components/TrainingS
 import { SubsetColorPicker, COLOR_NAME, useSubsetSelection, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { tr } from '@/i18n/tr';
 import { applyOrientationPrefix } from '@/lib/cube-orientation';
-import { persistItem } from '@/lib/safe-storage';
 import { useBluetoothCube } from '../../../timer/_lib/bluetooth';
 import { applyScramble, facesEqual, isSolvedFaces, toFaceletString, type CubeFaces } from '../../../timer/_lib/cube/state';
 import { countExecutedHtm } from '../../../timer/_lib/reconstruct/htm';
@@ -43,13 +45,6 @@ interface TrainingResult {
   moves?: number;
 }
 
-interface StatLine {
-  total: number;
-  correct: number;
-  wrong: number;
-}
-
-type StatsStore = Record<string, StatLine>;
 type SmartPhase = 'disconnected' | 'needs-solved' | 'scrambling' | 'solving' | 'result';
 
 interface StageTrainingSnapshot {
@@ -61,8 +56,6 @@ interface StageTrainingSnapshot {
   smartMoves: string[];
 }
 
-const STATS_KEY = 'cuberoot-timer.stage-training.stats.v1';
-const EMPTY_STATS: StatLine = { total: 0, correct: 0, wrong: 0 };
 const SOLVER_FACE_COLOR: ColorLetter[] = ['Y', 'W', 'O', 'R', 'G', 'B'];
 
 const stageName = (stage: StageTrainingStage) => ({
@@ -87,20 +80,6 @@ const styleLabel = (style: StageScrambleStyle, stage: StageTrainingStage) => ({
     en: `God's number (${STAGE_FIXED_LENGTH[stage]})`,
   }),
 })[style];
-
-function loadStats(): StatsStore {
-  if (typeof window === 'undefined') return {};
-  try {
-    const parsed = JSON.parse(localStorage.getItem(STATS_KEY) ?? '{}') as StatsStore;
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveStats(stats: StatsStore): void {
-  persistItem(STATS_KEY, JSON.stringify(stats));
-}
 
 export default function CrossTrainingClient() {
   const { i18n } = useTranslation();
@@ -136,7 +115,6 @@ export default function CrossTrainingClient() {
   const [revealed, setRevealed] = useState(false);
   const [transparent, setTransparent] = useState(true);
   const [result, setResult] = useState<TrainingResult | null>(null);
-  const [stats, setStats] = useState<StatsStore>(loadStats);
   const [smartPhase, setSmartPhase] = useState<SmartPhase>('disconnected');
   const [smartMoveCount, setSmartMoveCount] = useState(0);
   const [smartMoves, setSmartMoves] = useState<string[]>([]);
@@ -162,7 +140,9 @@ export default function CrossTrainingClient() {
   const slotOptions = stageSlotCombos(stage);
   const showSlot = stage !== 'cross' && colors.selectedColors.length === 1;
   const statKey = `${mode === 'smart' ? `smart-${smartMode}` : mode}:${stage}`;
-  const currentStats = stats[statKey] ?? EMPTY_STATS;
+  const { record } = useTrainingStats(statKey);
+  const startedAt = useRef(0);
+  const recordedQuestion = useRef(new WeakSet<StageQuestion>());
   const isSingleColor = colors.selectedColors.length === 1;
   const effectiveGripMode: StageGripMode = isSingleColor ? gripMode : 'standard';
   const gripPrefix = stageGripPrefix(colors.subsetKey, effectiveGripMode);
@@ -198,26 +178,17 @@ export default function CrossTrainingClient() {
   } : null;
 
   const recordResult = useCallback((correct: boolean) => {
-    setStats((previous) => {
-      const current = previous[statKey] ?? EMPTY_STATS;
-      const next = {
-        ...previous,
-        [statKey]: {
-          total: current.total + 1,
-          correct: current.correct + (correct ? 1 : 0),
-          wrong: current.wrong + (correct ? 0 : 1),
-        },
-      };
-      saveStats(next);
-      return next;
-    });
-  }, [statKey]);
+    if (!question || recordedQuestion.current.has(question)) return;
+    recordedQuestion.current.add(question);
+    record(correct, Date.now() - startedAt.current);
+  }, [record, question]);
 
   const restoreSnapshot = useCallback((snapshot: StageTrainingSnapshot) => {
     autoAdvance.cancel();
     requestRef.current++;
     cubeRef.current.clearHijack();
     setQuestion(snapshot.question);
+    startedAt.current = Date.now();
     setLoading(false);
     setError('');
     setRevealed(snapshot.revealed);
@@ -253,6 +224,7 @@ export default function CrossTrainingClient() {
       .then((next) => {
         if (requestRef.current !== request) return;
         setQuestion(next);
+        startedAt.current = Date.now();
         setLoading(false);
       })
       .catch(() => {
@@ -352,6 +324,7 @@ export default function CrossTrainingClient() {
       }
 
       if (phaseRef.current !== 'solving') return;
+      if (movesRef.current.length === 0) startedAt.current = Date.now();
       movesRef.current.push({ m: move, ts: timestamp });
       setSmartMoves(movesRef.current.map(({ m }) => m));
       const moveCount = countExecutedHtm(movesRef.current);
@@ -375,14 +348,6 @@ export default function CrossTrainingClient() {
     setRevealed(true);
     recordResult(correct);
     if (correct) autoAdvance.schedule(nextQuestion);
-  };
-
-  const resetStats = () => {
-    setStats((previous) => {
-      const next = { ...previous, [statKey]: { ...EMPTY_STATS } };
-      saveStats(next);
-      return next;
-    });
   };
 
   const connect = () => {
@@ -430,7 +395,6 @@ export default function CrossTrainingClient() {
           zh: `打乱前只需还原所选底色；以${gripSummary}拿好魔方后执行打乱。`,
           en: `Only the selected base needs to be solved first. Hold the cube ${gripSummary}, then apply the scramble.`,
         });
-  const accuracy = currentStats.total ? Math.round(currentStats.correct / currentStats.total * 100) : 0;
 
   return (
     <main className="cross-training-page">
@@ -509,15 +473,6 @@ export default function CrossTrainingClient() {
           </p>
         )}
 
-        {mode !== 'plan' && (
-          <div className="stage-training-stats" aria-label={tr({ zh: '答题统计', en: 'Answer statistics' })}>
-            <span>{tr({ zh: `共 ${currentStats.total} 题`, en: `${currentStats.total} total` })}</span>
-            <span className="is-correct">{tr({ zh: `对 ${currentStats.correct}`, en: `${currentStats.correct} correct` })}</span>
-            <span className="is-wrong">{tr({ zh: `错 ${currentStats.wrong}`, en: `${currentStats.wrong} wrong` })}</span>
-            <span>{accuracy}%</span>
-            <button type="button" className="stage-training-button stage-training-stats-reset" onClick={resetStats}>{tr({ zh: '重置本组', en: 'Reset group' })}</button>
-          </div>
-        )}
 
         {loading && <div className="stage-training-loading"><Spinner size={18} />{tr({ zh: '正在计算 HTM 最优题目…', en: 'Computing an HTM-optimal question…' })}</div>}
         {!loading && error && (
@@ -550,6 +505,11 @@ export default function CrossTrainingClient() {
 
                 {mode === 'plan' && (
                   <div className="stage-training-answer-area">
+                    <TrainingSelfCheck disabled={result !== null} onResult={(correct) => {
+                      recordResult(correct);
+                      setResult({ correct });
+                      setRevealed(true);
+                    }} />
                     <div className="stage-training-answer">
                       <strong>{tr({ zh: `最优步数：${question.optimal} HTM`, en: `Optimal: ${question.optimal} HTM` })}</strong>
                       {!revealed ? (
@@ -656,6 +616,9 @@ export default function CrossTrainingClient() {
             </div>
           </>
         )}
+        <TrainingStatsPanel group={statKey} description={mode === 'plan'
+          ? tr({ zh: '最优解模式使用自评；查看答案或跳题不会记入统计。', en: 'Optimal-solution practice is self-rated. Revealing or skipping does not count.' })
+          : undefined} />
       </div>
     </main>
   );

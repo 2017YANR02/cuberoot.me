@@ -9,6 +9,7 @@
 //   - timer / checkPB     (centiseconds; per-case PB keyed by displayed alg scramble, AlgT only)
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTrainingStats } from '@/hooks/useTrainingStats';
 import { CATEGORIES, ALL_ALGS, type SkewbAlgCase, type SkewbGroup } from './algs';
 import {
   firstLayerList,
@@ -103,6 +104,9 @@ export interface UseSkewbTrainer {
 
 export function useSkewbTrainer(): UseSkewbTrainer {
   const [mode, setModeState] = useState<SkewbMode>('flt');
+
+  const { record } = useTrainingStats(`skewb:${mode}`);
+  const timerGroupRef = useRef(record);
 
   // ── FLT ──
   const [flt, setFlt] = useState<FltSettings>({
@@ -287,12 +291,14 @@ export function useSkewbTrainer(): UseSkewbTrainer {
 
   // ── timer ──
   const stopTimer = useCallback(() => {
+    if (!intervalRef.current) return;
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
     // final read from wall clock (rAF-free, drift-free centiseconds)
     const finalCs = Math.floor((performance.now() - baseRef.current) / 10);
+    timerGroupRef.current(null, finalCs * 10);
     setTimeCs(finalCs);
     setTimerState('idle');
     // checkPB: AlgT mode only, keyed by the displayed alg scramble string.
@@ -313,12 +319,13 @@ export function useSkewbTrainer(): UseSkewbTrainer {
   const startTimer = useCallback(() => {
     setIsPB(false);
     setTimeCs(0);
+    timerGroupRef.current = record;
     baseRef.current = performance.now();
     setTimerState('running');
     intervalRef.current = setInterval(() => {
       setTimeCs(Math.floor((performance.now() - baseRef.current) / 10));
     }, 10);
-  }, []);
+  }, [record]);
 
   const toggleTimer = useCallback(() => {
     if (timerState === 'running') stopTimer();

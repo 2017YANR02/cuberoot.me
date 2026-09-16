@@ -48,6 +48,7 @@ import {
   caseViewAlg,
   caseViewSetup,
   displayAlg,
+  displayCaseScramble,
   oriAdjustSetup,
   shortOriName,
   type CaseViewAngle,
@@ -524,7 +525,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, edit
             {caseObj.setup && (
               <SetupLine
                 puzzle={puzzle}
-                setup={caseViewSetup(caseObj.setup, effectiveViewAngle)}
+                setup={displayCaseScramble(puzzle, set, caseViewSetup(caseObj.setup, effectiveViewAngle))}
                 sq1NotationMode={sq1NotationMode}
               />
             )}

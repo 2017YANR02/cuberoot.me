@@ -13,6 +13,31 @@
  * 纯字符串操作,不过 cubing.js —— 括号、`=` 标记、`·↑↓` 指法记号都要原样保留。
  */
 
+import { is3x3TopLayerSet } from '@cuberoot/shared/alg';
+import { mergeAdjacentMoves, renderMove, toMoveString, tokenizeMoves } from '@cuberoot/shared/alg-notation';
+
+/**
+ * 顶层打乱的收尾 y 改为同向 U，保留顶面及侧面顶排的逐贴纸位置。
+ * 下两层保持原拿法；这不是完整魔方的等价变换，不能用于解法或播放器 setup。
+ * 只处理末尾连续的 U/y（包括观察角度追加的 U），不碰内部转体或 F2L 换槽。
+ */
+export function displayCaseScramble(puzzle: string, set: string, scramble: string): string {
+  if (!scramble || !is3x3TopLayerSet(puzzle, set)) return scramble;
+  try {
+    const { moves, junk } = tokenizeMoves(toMoveString(scramble));
+    if (junk.length) return scramble;
+    let start = moves.length;
+    while (start > 0 && !moves[start - 1].layer
+      && (moves[start - 1].family === 'U' || moves[start - 1].family === 'y')) start--;
+    if (!moves.slice(start).some(move => move.family === 'y')) return scramble;
+    return mergeAdjacentMoves(moves.map((move, index) => renderMove(
+      index >= start && move.family === 'y' ? { ...move, family: 'U' } : move,
+    )).join(' '));
+  } catch {
+    return scramble;
+  }
+}
+
 /** 末尾的 U / U2 / U' / U2'(可带括号),`Uw`、`u` 不算(它们不是 AUF) */
 const TRAILING_AUF = /[\s(]*\bU(?:2'?|'|)(?![\w'])\s*\)?\s*$/;
 

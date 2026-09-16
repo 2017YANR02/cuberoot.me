@@ -27,6 +27,8 @@ export interface SiteSearchCard {
   nameZh: string;
   sectionTitleEn: string;
   sectionTitleZh: string;
+  /** Additional aliases/descriptions from the page's existing catalog. */
+  keywords?: string;
 }
 
 export interface ToolItem { path: string; zh: string; en: string; }
@@ -476,7 +478,7 @@ export function useSiteSearch(
   const cardMatches = useMemo(() => {
     if (q === '' || tokens.length === 0) return [];
     return cards.filter(c => {
-      const hay = `${c.nameEn}\n${c.nameZh}\n${c.sectionTitleEn}\n${c.sectionTitleZh}`.toLowerCase();
+      const hay = `${c.nameEn}\n${c.nameZh}\n${c.sectionTitleEn}\n${c.sectionTitleZh}\n${c.href}\n${c.keywords ?? ''}`.toLowerCase();
       return allTokensIn(hay, tokens);
     });
   }, [cards, q, tokens]);

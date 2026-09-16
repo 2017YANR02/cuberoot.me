@@ -15,13 +15,15 @@ import { countryName } from '@/lib/country-name';
 import { creatorProfileHrefForWcaId } from '@/lib/creator-profile';
 import { uploadedImageUrl } from '@/lib/image-upload';
 import { getPublicMemberProfile, type PublicMemberProfile } from '@/lib/membership-api';
-import { fetchFemalePersonRecords, femaleRecordAchievements, type FemalePersonRecord } from '@/lib/person-achievements';
+import { femaleRecordAchievements, type FemalePersonRecord } from '@/lib/person-achievements';
 import type { WcaCompetition, WcaPersonProfile, WcaResultRow, WcaFormerIdentity } from '@/lib/wca-person-api';
 import { computePrRank, countPersonalRecords } from '../logic/progress';
 import PersonAchievements from './PersonAchievements';
 
 interface Props {
   profile: WcaPersonProfile;
+  femaleRecords: FemalePersonRecord[];
+  femaleNationalComplete: boolean;
   results: WcaResultRow[] | null;
   comps: WcaCompetition[] | null;
   former?: WcaFormerIdentity[];
@@ -86,6 +88,8 @@ function MemberIntroDialog({ name, profile, closeLabel, onClose }: {
 
 export default function PersonHero({
   profile,
+  femaleRecords,
+  femaleNationalComplete,
   results,
   comps,
   former,
@@ -107,16 +111,6 @@ export default function PersonHero({
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [memberProfile, setMemberProfile] = useState<PublicMemberProfile | null>(null);
   const [memberIntroOpen, setMemberIntroOpen] = useState(false);
-  const [femaleData, setFemaleData] = useState<{ id: string; rows: FemalePersonRecord[]; nationalComplete: boolean } | null>(null);
-  useEffect(() => {
-    if (p.gender !== 'f') return;
-    const controller = new AbortController();
-    fetchFemalePersonRecords(p, controller.signal).then(data => {
-      if (!controller.signal.aborted) setFemaleData({ id: p.wca_id, ...data });
-    }).catch(() => { /* Unavailable record feeds must not block the profile. */ });
-    return () => controller.abort();
-  }, [p.wca_id, p.gender, p.name, p.country_iso2]);
-  const femaleRecords = femaleData?.id === p.wca_id && p.gender === 'f' ? femaleData.rows : [];
   const femaleCount = femaleRecordAchievements(femaleRecords).count;
   useEffect(() => {
     setMemberProfile(null);
@@ -236,7 +230,7 @@ export default function PersonHero({
         </div>
       </div>
 
-      <PersonAchievements wcaId={p.wca_id} isZh={isZh} records={profile.personal_records} results={results} comps={comps} countryIso2={p.country_iso2} femaleRecords={femaleRecords} femaleNationalComplete={femaleData?.id === p.wca_id && femaleData.nationalComplete} />
+      <PersonAchievements wcaId={p.wca_id} isZh={isZh} records={profile.personal_records} results={results} comps={comps} countryIso2={p.country_iso2} femaleRecords={femaleRecords} femaleNationalComplete={femaleNationalComplete} />
 
       {avatarOpen && fullAvatarUrl && (
         <AvatarPreview

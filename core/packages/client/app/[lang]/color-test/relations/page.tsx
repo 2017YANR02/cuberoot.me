@@ -1,6 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import TrainingStatsPanel from '@/components/TrainingStatsPanel';
+import { useTrainingStats } from '@/hooks/useTrainingStats';
+
+import { useEffect, useRef, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -74,6 +77,12 @@ export default function ColorRelationsPage() {
   const [score, setScore] = useState(0);
   const finished = index >= round.length;
   const pair = round[index];
+  const statsGroup = "color:relations";
+  const { record } = useTrainingStats(statsGroup);
+  const startedAt = useRef(0);
+  const recorded = useRef(new Set<number>());
+  useEffect(() => { recorded.current.clear(); }, [round]);
+  useEffect(() => { startedAt.current = Date.now(); }, [round, index]);
 
   const restart = () => {
     setRound(buildColorRound());
@@ -84,6 +93,9 @@ export default function ColorRelationsPage() {
 
   const answer = (relation: ColorRelation) => {
     if (!pair || selected) return;
+    if (recorded.current.has(index)) return;
+    recorded.current.add(index);
+    record(relation === pair.relation, Date.now() - startedAt.current);
     setSelected(relation);
     if (relation === pair.relation) setScore((value) => value + 1);
   };
@@ -177,6 +189,7 @@ export default function ColorRelationsPage() {
       ) : (
         <Result score={score} onRestart={restart} />
       )}
+      <TrainingStatsPanel group={statsGroup} />
     </main>
   );
 }

@@ -72,6 +72,15 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 
 export const CATALOG: UtilEntry[] = [
   {
+    name: 'useTrainingStats',
+    sig: 'useTrainingStats(group: string)',
+    imp: "import { useTrainingStats } from '@/hooks/useTrainingStats';",
+    category: 'hook',
+    zh: '共用训练统计：SSR 固定首屏、按组持久化、旧十字记录兼容、同题去重和存储失败提示。',
+    en: 'Shared training statistics with stable SSR, grouped persistence, legacy Cross compatibility, attempt deduplication and storage failure reporting.',
+    usage: 'const { record } = useTrainingStats("color:relations"); record(true, 1500);',
+  },
+  {
     name: 'identity-choice store',
     sig: 'useIdentityChoice(): IdentityChoice | null',
     imp: "import { useIdentityChoice } from '@/lib/identity-choice';",
