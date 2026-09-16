@@ -124,3 +124,9 @@
   .ntf-item { flex-wrap: wrap; }
   .ntf-when { width: 100%; padding-left: 25px; }
 }
+.ntf-record-prefs { margin: 16px 0 24px; }
+.ntf-record-prefs summary { cursor: pointer; }
+.ntf-record-prefs p { margin: 12px 0; }
+.ntf-record-fields { border: 0; padding: 0; margin: 16px 0 0; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.ntf-record-fields legend { margin-bottom: 12px; }
+.ntf-record-options { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }

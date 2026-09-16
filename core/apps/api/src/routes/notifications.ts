@@ -8,6 +8,8 @@ import { query } from '../db/connection.js';
 import { requireAuth } from '../utils/recon_helpers.js';
 import { rememberLang, verifyUnsubToken } from '../utils/notify.js';
 import { publicUserIdsForOwnerKeys } from '../utils/account.js';
+import { defaultRecordNotificationPreferences, parseRecordNotificationPreferences } from '@cuberoot/shared/record-notifications';
+import { ISO2_TO_CR } from '../utils/record_format.js';
 
 export const notificationRoutes = new Hono();
 
@@ -32,10 +34,10 @@ async function disableEmailNotify(ownerKey: string): Promise<boolean> {
 function unsubPage(ok: boolean): string {
   const title = ok ? '已退订' : '链接无效';
   const zh = ok
-    ? '你不会再收到站内消息的邮件通知了(复盘评论 / 另解、论坛回复)。站内消息(红点)不受影响。'
+    ? '你不会再收到新消息的邮件通知了。消息列表不受影响。'
     : '这个退订链接无效或已失效。';
   const en = ok
-    ? 'You will no longer receive email notifications (recon comments and alternatives, forum replies). In-site notifications are unaffected.'
+    ? 'You will no longer receive email notifications. Your inbox is unaffected.'
     : 'This unsubscribe link is invalid or expired.';
   const back = ok
     ? `<p style="margin:20px 0 0"><a href="https://cuberoot.me/notifications" style="color:#0b7;font-size:14px">想改回来?在「消息」页重新打开 / Re-enable in Notifications</a></p>`
@@ -102,6 +104,35 @@ notificationRoutes.put('/notifications/prefs', async (c) => {
   if (id == null) return c.json({ error: 'Account not found' }, 404);
   await query('UPDATE app_users SET email_notify = ? WHERE id = ?', [body.emailNotify, id]);
   return c.json({ ok: true, emailNotify: body.emailNotify });
+});
+
+notificationRoutes.get('/notifications/records', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const user = await requireAuth(c);
+  const id = await userIdForOwnerKey(user.wcaId);
+  if (id == null) return c.json({ error: 'Account not found' }, 404);
+  const rows = await query<{ wca_id: string | null; preferences: unknown; email_ready: boolean }>(
+    `SELECT u.wca_id, p.preferences, EXISTS (SELECT 1 FROM auth_identities i
+       WHERE i.user_id = u.id AND i.provider = 'email' AND i.verified_at IS NOT NULL) AS email_ready
+     FROM app_users u LEFT JOIN record_notification_preferences p ON p.user_id = u.id WHERE u.id = ?`, [id],
+  );
+  return c.json({ preferences: parseRecordNotificationPreferences(rows[0]?.preferences) ?? defaultRecordNotificationPreferences(),
+    ownWcaId: rows[0]?.wca_id ?? null, emailReady: rows[0]?.email_ready ?? false,
+    countries: Object.keys(ISO2_TO_CR).map(code => code.toLowerCase()) });
+});
+
+notificationRoutes.put('/notifications/records', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const user = await requireAuth(c);
+  const preferences = parseRecordNotificationPreferences(await c.req.json().catch(() => null));
+  if (!preferences || preferences.regions.some(code => /^[a-z]/.test(code) && !ISO2_TO_CR[code.toUpperCase()])) {
+    return c.json({ error: 'Invalid record notification preferences' }, 400);
+  }
+  const id = await userIdForOwnerKey(user.wcaId);
+  if (id == null) return c.json({ error: 'Account not found' }, 404);
+  await query(`INSERT INTO record_notification_preferences (user_id, preferences) VALUES (?, ?)
+    ON CONFLICT (user_id) DO UPDATE SET preferences = EXCLUDED.preferences, updated_at = NOW()`, [id, preferences]);
+  return c.json({ preferences });
 });
 
 interface NotificationRow {

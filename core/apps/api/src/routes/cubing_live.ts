@@ -2009,6 +2009,7 @@ export async function prewarmHotComps(): Promise<void> {
       try {
         const data = await loadComp(wcaId, 'auto');
         await syncPersonLiveResults(data); // 选手页直播成绩写穿:基于返回的 CompData(缓存命中也覆盖)
+        await observeCompetitionRecords(data);
         ok++;
       } catch {
         fail++;
@@ -2066,6 +2067,7 @@ export async function fastPrewarmOngoing(): Promise<void> {
       try {
         const data = await loadComp(wcaId, 'auto');
         await syncPersonLiveResults(data); // 进行中比赛高频(65s)刷新选手页直播成绩
+        await observeCompetitionRecords(data);
       } catch { /* ignore */ }
       await new Promise(r => setTimeout(r, FAST_PREWARM_DELAY_MS));
     }
@@ -2129,16 +2131,16 @@ function inInferredWindow(startDate: string | null): boolean {
   return days <= INFERRED_RECENT_WINDOW_DAYS && days >= -2;
 }
 
-export function collectInferred(data: CompData, startDate: string | null): InferredRecord[] {
+export function collectInferred(data: CompData, startDate: string | null, includePersonalRecords = false): InferredRecord[] {
   const out: InferredRecord[] = [];
   const compNameEn = decodeHtmlEntities(data.name);
   for (const [key, list] of Object.entries(data.resultsByRound)) {
     const roundId = key.slice(key.indexOf(':') + 1);
     for (const r of list) {
-      const sr = typeof r.sr === 'string' ? r.sr : '';
-      const ar = typeof r.ar === 'string' ? r.ar : '';
-      const wantS = r.b > 0 && RECORD_TAGS.has(sr);
-      const wantA = r.a > 0 && RECORD_TAGS.has(ar);
+      const sr = typeof r.sr === 'string' && RECORD_TAGS.has(r.sr) ? r.sr : includePersonalRecords && r.pS === 1 ? 'PR' : '';
+      const ar = typeof r.ar === 'string' && RECORD_TAGS.has(r.ar) ? r.ar : includePersonalRecords && r.pA === 1 ? 'PR' : '';
+      const wantS = r.b > 0 && !!sr;
+      const wantA = r.a > 0 && !!ar;
       if (!wantS && !wantA) continue;
       const u = data.users[String(r.n)];
       if (!u) continue;
@@ -2160,6 +2162,18 @@ export function collectInferred(data: CompData, startDate: string | null): Infer
     }
   }
   return out;
+}
+
+async function observeCompetitionRecords(data: CompData): Promise<void> {
+  try {
+    const date = await getCompStartDate(data.slug);
+    // Unknown/old dates must not become a retrospective notification blast.
+    if (!date || !inInferredWindow(date)) return;
+    const { observeRecordNotifications } = await import('../utils/record_notifications.js');
+    await observeRecordNotifications(data.slug, collectInferred(data, date, true));
+  } catch (error) {
+    console.warn('[record-notifications] observation failed:', (error as Error).message);
+  }
 }
 
 /** 把一场比赛的推断纪录整条写进池,loadComp 每次返回都刷新判定。
