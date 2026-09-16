@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / BGORWY / bin 6
-# Population in this bin: 26
-# Samples listed: 26 (all entries in this bin)
+# Population in this bin: 27
+# Samples listed: 27 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 32670001,F2 L2 U' L2 U2 B2 L2 R2 D' B2 U B' L F D' R' U' L' F',B,Thailand Championship 2014 (2014-06-21~22),333 Final A #3
@@ -31,3 +31,4 @@
 5056382001,R U B' D R2 L' F' U' R D2 L2 D2 B U2 D2 B L2 B R2 F2,B,Rubik's German Nationals 2025 (2025-09-26~28),333oh R2 A E1
 5279942001,R U L' U L2 B' U F L B D' F D2 B' L2 F2 B' D2 B',B,Master Cube Salvador A 2025 (2025-12-12),333 Final A #1
 5574847001,R U' L' F L2 D F2 U' F2 U' B2 U2 F R B D' L2 R' U2,B,Westend Mega NxNxN Berlin 2026 (2026-04-25~26),333 R1 B #1
+5830848001,D2 U2 F2 L2 D2 F L2 R U R F D' L B2 R2 B' R' F,B,Ohio Championship 2026 (2026-09-11~13),333 Final B E1

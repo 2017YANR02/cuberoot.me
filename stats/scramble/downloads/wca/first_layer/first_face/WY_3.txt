@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / WY / bin 3
-# Population in this bin: 119
-# Samples listed: 119 (all entries in this bin)
+# Population in this bin: 120
+# Samples listed: 120 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 103967001,F2 R2 D L2 D L2 B2 D' L F U2 F D B' F2 L B2 U2 L',Y,Happy Sheep Year 2015 (2015-01-24),333 R2 C E2
@@ -124,3 +124,4 @@
 5799938001,U2 R' D' F2 L2 F2 D2 U' F2 D2 R2 B' U2 R' B2 L2 F' L2 B',Y,Fuzhou Summer 2026 (2026-08-23),333 R2 D #1
 5812580001,F' D' L2 U' R2 F2 U L2 F2 D' F D2 U L' F' L F' D2 B',Y,Azeméis Open 2026 (2026-08-29~30),333 Final A #5
 5816992001,R2 F2 D2 F2 D2 U' R2 B' D B' U2 L R2 B' D' F2 U,Y,Soorsi 2026 (2026-09-05~06),333 R2 A #1
+5827406001,F2 L2 F U2 L2 B' D2 U2 B' D B' L2 F' U' F2 D' L D' U,W,Liberty Science Center Fall B 2026 (2026-09-13),333 R1 C #3

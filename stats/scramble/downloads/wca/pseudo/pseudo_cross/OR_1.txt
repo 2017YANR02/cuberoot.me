@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / OR / bin 1
-# Population in this bin: 716
+# Population in this bin: 717
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 4859789001,D R' B2 L2 U' F2 D' U F2 U' R F2 L2 D' B' L' B R' B2,O,Santo Domingo Summer 2025 (2025-07-05~06),333oh R1 B #2
@@ -23,7 +23,7 @@
 5589071001,D R' D2 B F2 U2 L2 U' R2 U' R2 B' U' F2 R D R2,O,Davis Spring Sunset 2026 (2026-05-01),333 Final A #3
 1127111001,R2 F2 L2 B2 D' U2 L2 D B2 D B L2 U F U2 B L F U R2,R,Xiamen Open 2019 (2019-05-04),333 R2 A #1
 5296162001,F D2 F2 L2 R2 D' B2 R2 L U B R' F2 L2 D' B D2 B,O,Zhengzhou Zest 2025 (2025-12-27),333 R1 H #2
-1290093001,F L2 F2 L2 R2 D2 B' D2 B' L R2 B' U' F' L' F' L2 F2 U L B,R,Road to IC - Monterotondo 2019 (2019-09-07~08),333bf R1 B #2
+5830787001,R2 D L2 U' B2 D L' B L2 U L' R' U F2 L' D F2 D',R,Ohio Championship 2026 (2026-09-11~13),333 R1 C #5
 4881503001,U' L2 B2 U B2 D' U' R2 U B2 R F2 D L2 R' D' U' R2 U',R,Naucalli Ce 2025 (2025-07-19~20),333 R1 C #5
 1069988001,F2 D2 R' B2 L R2 U2 L' R' F2 U F L U' F' D' U' L2 R,R,Franconia Spring 2019 (2019-03-30~31),333oh R1 A E2
 163432001,B2 L2 U L2 R2 D L2 D F2 L2 D' L B' D' B2 R2 F L R B L',R,TCG & Friends 2015 (2015-07-11~12),333 R2 D #1

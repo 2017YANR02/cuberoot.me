@@ -2,7 +2,7 @@
 # Population in this bin: 151
 # Samples listed: 151 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 94420001,D R F' B' U2 B2 R U L2 B U R2 B2 U R2 U B2 U2 R2 D,B,Mumbai Open 2014 (2014-12-28~29),333oh R2 C #3

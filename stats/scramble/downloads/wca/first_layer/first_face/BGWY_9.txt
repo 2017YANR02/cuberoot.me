@@ -2,7 +2,7 @@
 # Population in this bin: 34
 # Samples listed: 34 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 31058001,B2 F2 R2 B2 R2 U' F2 L2 D2 U' L' F R B' L2 D L2 R2 B L2,B,Pune Fall Open 2014 (2014-06-21),333oh R1 D E1

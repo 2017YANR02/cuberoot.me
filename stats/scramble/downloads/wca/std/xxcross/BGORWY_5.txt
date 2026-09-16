@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / BGORWY / bin 5
-# Population in this bin: 686
+# Population in this bin: 689
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -31,7 +31,7 @@
 167436001,L2 F2 L2 D U2 R2 D' B2 D2 B2 R' B' F' U L U R' D' R' B',G,ŚLS Sosnowiec 2015 (2015-07-18~19),333oh R1 C #4
 2948654001,F R F2 R D F2 R' F2 U2 F L2 D2 B U2 D' R2 U',Y,Botosani Cubing 2023 (2023-08-05),333 R1 D #2
 5624519001,D2 R2 U L2 R2 F2 D2 L2 B' D B D F' L D U' L R',W,Surat Cube Open 2026 (2026-05-10),333 Final A #1
-1926875001,L2 B L2 U2 B' D2 R2 F2 U2 D' L' F2 R' D' R F U2 L F' L B',O,FSUbers 2.0 2022 (2022-05-21~22),333bf Final B #3
+5823099001,R' B R D' L R2 D' L2 U' F2 U B' F' D B F L' U,W,Ardmore Autumn 2026 (2026-09-12),333 R1 A E2
 189381001,L' F2 D2 L R D2 R' F2 U F L' U B R2 B' L F' L' F2,B,MCC Gamma 2015 (2015-09-13),333oh R1 C #3
 189941001,U2 L2 B2 F2 R B2 L U2 F2 U' F L' F L F L' F' L2 B,R,Brisbane Spring 2015 (2015-09-19),333 R1 F #2
 4710685001,F D2 F' D2 B2 R2 D2 F L B2 F U2 B' R D' R F',O,Aldergrove Clock Fest 2025 (2025-04-19),333 R1 B #1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / WY / bin 4
-# Population in this bin: 349
+# Population in this bin: 350
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 3998525002,F2 R' D2 R' U2 B2 R F2 D2 U R2 U L D2 B' L' R F2 L' B R',W,Blind Till Nine in Vietnam 2024 (2024-08-10),333mbf Final A #2
@@ -40,7 +40,7 @@
 3246355027,R' B2 F2 L2 D L2 B2 U F2 U2 F2 B U2 R F' U2 R D L2 F D',Y,Romanian National Championship 2023 (2023-11-02~05),333mbf Final A #3
 5690429005,D' F2 L2 D2 R' B2 L' F D B D2 F' R2 F2 R2 U2 B2 R2 U2 L2 U',Y,Headache in Kode 2026 (2026-06-05~07),333mbf Final B #3
 332388001,F' U' D2 L2 B' U' L' U R2 L B' L2 D2 L2 F2 D2 B L2 F,W,National Cubing Region Open 2016 (2016-07-23~24),333 R2 E #1
-336889001,U2 B2 U2 R U2 R F2 U' B' R D2 R2 U2 R2 F' U L2 B2,Y,Wirewood Open 2016 (2016-07-24),333 R1 A #3
+5827742001,L' B2 R F2 R B' L2 U2 R2 F R' U L' U' R2 U2,Y,Danish Championship 2026 (2026-09-11~13),333 R1 B #4
 5337256016,B2 D L' F' B D' L' F' L' F U2 B2 D R2 U L2 U2 L2 U,W,Just Judge Jura 2026 (2026-01-17~18),333mbf Final A #1
 353826001,B2 U F2 U' B2 D L2 D' U L' B' D2 L F L D U' B' U' L' F,Y,August Bank Holiday Competition 2016 (2016-08-27~28),333bf R1 A #3
 361222001,L2 B R2 D2 F' U2 B2 F2 L2 D2 U' B' D' B2 L U2 F2 D' F2 R' B' L B2,Y,New York City Summer 2016 (2016-09-10),333bf Final B E2

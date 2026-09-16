@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / B / bin 3
-# Population in this bin: 220
+# Population in this bin: 221
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 17503001,R U2 R' F U2 F' R2 F2 D2 R' L2 U' L2 U D2 F2 U L2 U2,B,Mumbai Summer Open 2014 (2014-05-03~04),333 R1 C E2
@@ -20,7 +20,7 @@
 280064001,L2 D2 R2 U F2 R2 B2 D' L2 D' B L' B L' R U2 B2 U R' U,B,Classic San Lorenzo Open 2016 (2016-03-24~26),333 R2 C #5
 317582001,B2 L2 U' F2 D F2 R2 D2 F2 U B' L2 U2 R2 U' F' D2 L',B,Slow N Steady Spring 2016 (2016-06-18~19),333 R2 B #2
 5285866060,L' F U2 F2 D2 F2 L' B' D2 F D2 F L2 B' D2 F' L B L' F2,B,Please Be Quiet Hefei 2025 (2025-12-21),333mbf Final A #2
-324792001,L F' D2 R' U2 R2 B L' F2 R B2 R' B2 R B2 R2 U2 L,B,Bolivia Nationals 2016 (2016-07-01~03),333 R1 A #3
+5821727001,U' R2 B2 L2 B2 D2 U L2 U' L U R B' L' R' B' D' R2,B,Jogjakarta Happy Solving 2026 (2026-09-05),333 R1 E #3
 360740001,L2 U2 L2 F R2 F R2 U2 B' D2 R U' F D' R F2 U R F',B,Mason Cubing Challenge 2016 (2016-09-10),333 R1 C E2
 370711001,B2 U2 R2 U' L2 F2 R2 U L2 U2 L2 B D L2 R B' L2 F R' F' L',B,Guildford Open 2016 (2016-10-01~02),333 R1 C #2
 380886001,R2 U2 L2 D2 L B' D R2 D L B2 R2 U B2 D B2 R2 B2 U2,B,Rubik's Cube Pune Open 2016 (2016-10-15~16),333 R1 N #4

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / B / bin 4
-# Population in this bin: 449
+# Population in this bin: 450
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 70358001,F' D F' D F2 R' B D R' U2 R2 F L2 B' R2 U2 F2 R2 B2 R2,B,Saint Petersburg Open 2014 (2014-10-25~26),333 R1 A #3
@@ -134,7 +134,7 @@
 5208600001,F2 D' R2 B2 U' B2 F2 D U2 F' R2 D' R2 F R' D R U,B,Mielec Cubing Days 2025 (2025-11-22~23),333oh R1 C E2
 1262173022,D2 L' R D2 R' F2 L' F2 U2 F' D F L' R2 F2 D' R U' B2 L2 U',B,Baia Mare North Open 2019 (2019-08-17~18),333mbf Final A #3
 4103884021,U' L' D' B R2 D2 R2 F' R2 F L2 U2 L' F' L' B R D2 B2 U' B,B,10th Anniversary Cervantes 2024 (2024-09-14~15),333mbf Final A #1
-4585667001,U2 L U2 B2 F2 L D2 L' B2 F2 D' B U' L2 B2 L D2 B U2,B,Catskills Spring 2025 (2025-03-23),333 R2 C E2
+5827488001,F' D F U2 R' L2 U F R2 D2 F2 R D2 R2 U2 B2 D' F2,B,Georgia September Open 2026 (2026-09-08),333 Final B #1
 1289854007,U B2 D F2 L2 B2 D L2 U L2 U2 B F2 U' R B2 L2 B' F2 L,B,Champagne Open 2019 (2019-09-07~08),333mbf Final A #1
 3513451001,R2 U' R2 U' R D2 L U L2 B2 U L2 U D B2 F U L',B,Weekend Cubing C Israel 2024 (2024-02-17),333 R1 C #5
 2919632017,F' U' B2 F2 U2 B2 R U2 R D2 B2 L' F R U R2 U2 R' D2,B,24 Hours in Flen 2023 (2023-07-22~23),333mbf Final B #1

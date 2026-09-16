@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / Y / bin 2
-# Population in this bin: 409
+# Population in this bin: 410
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 13167001,B2 R2 F2 U' B2 F2 D' F2 U F2 U' B' U2 B' D2 F D B2 R U,Y,Velbert Easter Open 2014 (2014-04-18~20),333oh Final A E1
@@ -16,7 +16,7 @@
 141847001,U' F2 B2 R2 U' R F' R U2 L2 B2 L2 B2 U2 D R2 F2 D' F2,Y,Fuzhou Open 2015 (2015-05-24),333 Final A #3
 2880713001,D F2 R' B2 L' F2 B' L B2 R' F2 B2 D B2 U2 B2 L2 U' F2,Y,Viljandi Värk 2023 (2023-07-15),333oh Final B #1
 151329001,B2 D2 B2 R2 D2 R2 D2 B U2 R D' U' F2 D' B' F' L F' L' B2,Y,Hunter Open 2015 (2015-06-13~14),333 R1 C #2
-156825001,B2 D2 L2 U L2 B2 D L2 D2 R2 F R' D U' L' R2 D' B R' F2 D L' F',Y,Dixon Summer 2015 (2015-06-27),333bf Final A #2
+5829611022,F R F2 R2 B' U2 R' D L2 U' F2 U R2 B' U' L' D,Y,Kukulcán Open Quetzaltenango 2026 (2026-09-11~13),333mbf Final A #1
 161723001,F D2 B' D2 L2 B2 F' R2 F2 U' B' L B2 D U2 B2 L' F D2 B' L2 U2,Y,Shenzhen Open 2015 (2015-07-12),333bf Final A E1
 5200675001,F2 L U' L' D' B2 L' F2 L2 B2 U2 F2 D' B2 U B2 D' B' L',Y,Balam Cubes Baywalk Sides 2025 (2025-11-15~16),333oh R2 B E2
 5556383001,F2 U2 R2 F' D2 F2 R2 F U2 L2 U' F D L' R2 D2 B R2 D',Y,New Providence Spring AM 2026 (2026-04-18),333 R1 C #2

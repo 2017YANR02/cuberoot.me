@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / R / bin 7
-# Population in this bin: 891
+# Population in this bin: 894
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 3853392001,L' B L' U2 D2 R2 F D' L F' D2 R2 U F2 D F2 D L2,R,Prime Cubing Day Seoul 2024 (2024-06-15),333 R1 E E1
@@ -139,7 +139,7 @@
 1641243001,L2 U' F2 R2 B2 U2 L2 D2 R B D B' D' R' D R2 F R2,R,Sydney Re-Open Saturday 2021 (2021-03-27),333oh R1 B #5
 927531001,D' B2 L2 D U R2 F2 R2 F2 D F U B2 U B' D2 L2 D' L,R,Maoming Open 2018 (2018-11-11),333oh Final A #4
 4348285001,D' B' L' U' D' F' U R2 D F B' L2 U F2 D2 B2,R,Concordia Turning Fall 2024 (2024-12-07),333 R2 B #2
-660698003,L2 D2 F D2 L2 F L2 B' R D2 L' F2 L R B2 D' F U' B' L2,R,Curitiba Open 2015 (2015-04-25~26),333mbf Final A #2
+5830122001,D F2 U B2 L' B U F' R2 L2 B2 D2 L2 U F2 U' D2 L D,R,Makati Side Events Open 2026 (2026-09-13),333 Final B #4
 3320170001,D F D2 F2 R' D2 L2 D2 F2 L F2 B' R F' R' F L' F',R,Grizzly Hibernating 2023 (2023-12-02),333 R2 A E1
 5313948023,F R2 L' U F L D2 B U F R D B2 U' D' B2 U' L2 B R,R,Dvärsätt Open 2026 (2026-01-10~11),333mbf Final A #1
 4190398001,D2 R2 U2 R' D L' D2 B2 U' D2 F' L2 U2 B2 D2 F R,R,Shin Kong Cube Open - Kaohsiung 2024 (2024-10-12),333 R2 A #3

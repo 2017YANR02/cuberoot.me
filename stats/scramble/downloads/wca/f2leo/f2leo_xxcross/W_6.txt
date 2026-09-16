@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / W / bin 6
-# Population in this bin: 752
+# Population in this bin: 757
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 946420001,D2 B D2 F' R2 B' L2 B D' L2 R F2 L' B2 F L2 U B2,W,Rocky Top 2018 (2018-12-01~02),333oh R1 B E1
@@ -33,7 +33,7 @@
 4734607001,B U' F' D L' F' B D' F2 R' D2 L' U2 L' F2 R U2 L B R2,W,SA Side State Championship 2025 (2025-05-18),333mbf Final A #1
 5428541001,D R U' R B2 F2 L F2 L' U2 L' B' R' F R' B' L F U L2,W,Please Be Quiet Odivelas 2026 (2026-03-07),333bf Final A #3
 149826001,U2 R2 B F U2 B' L F L' B D2 L2 B L B L U',W,Slow n Steady Spring 2015 (2015-06-06),333 R2 B #2
-151347001,D2 L2 U' R2 U R2 U2 B D2 L' B' R B2 L' U F U2 B,W,Hunter Open 2015 (2015-06-13~14),333 R2 B E1
+5826008001,D U' L2 D' U' F2 R' D2 F' R2 B U' R2 U2 B D R',W,Stevenage September 2026 (2026-09-12~13),333 R2 A #1
 5029671001,U R2 F2 L2 F L' F D' L F' U2 D2 L' B2 D2 L' B2,W,NZ Cubing in the Capital 2025 (2025-09-13),333oh R1 A #3
 4545345001,F' R2 B R' U D F2 L F' U B' R2 B R2 U2 R2 F2 U',W,Eugene Cubing Spring 2025 (2025-03-08),333oh Final A #3
 189228001,L2 U R F2 U B2 U2 F2 U F D F2 D2 L' B2 L F2,W,Berkeley Summer 2015 (2015-09-12),333 R1 F E2

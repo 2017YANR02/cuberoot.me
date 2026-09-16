@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / O / bin 3
-# Population in this bin: 368
+# Population in this bin: 369
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 11485001,D2 B' D2 R2 B L2 F2 D2 R2 F' D F' D U L D L B' U2,O,Beijing Spring 2014 (2014-04-19),333 Final A #4
@@ -33,7 +33,7 @@
 5580392001,F' R F B' U L2 F' L2 B D' R2 L2 D' R2 U' R' F,O,Midwest Cubing Classic 2026 (2026-04-26),333 R1 C #2
 313840001,U2 L F2 R' B2 L D2 R U B' D2 U2 R' F' R' U B U2 B,O,Newmarket Open 2016 (2016-06-18),333 R1 C #1
 322754001,D R2 U' B2 F2 D2 B2 U' L2 U2 F R F' U' B2 R B' L,O,Berlin Summer Cube Days 2016 (2016-07-02~03),333oh Final A #2
-329220001,U2 B' F2 R2 F U2 R2 D2 F2 U' B2 F' R2 U2 L B' U' R U B2 L B,O,Czech Open 2016 (2016-07-19~20),333bf Final A #2
+5829061001,U' R' U2 R' L2 U D2 B' D' F' D2 F L2 F L2 B' U2 D2 R',O,Cocha NxN CBBA 2026 (2026-09-12~13),333oh R1 B #4
 4444206025,F L F U2 F' L B' D' L' D U2 L2 D2 F U2 B L2 B' U2 B2 D2,O,Noordhoek Aeroplane Mode 2025 (2025-01-26),333mbf Final A #1
 370487001,D2 L2 B' R2 B' L2 F D' L B' U L B' R' F L2 B' L2,O,Guildford Open 2016 (2016-10-01~02),333oh R1 B #1
 382718001,F2 L2 B2 L2 U F2 U2 R' U2 F' U' R' B2 F U2 B' R U2,O,Great South Open 2016 (2016-10-22),333 R1 A E1

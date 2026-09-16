@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / W / bin 6
-# Population in this bin: 50
-# Samples listed: 50 (all entries in this bin)
+# Population in this bin: 51
+# Samples listed: 51 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,W,Indian Nationals 2014 (2014-07-25~27),333 R1 A #5
@@ -55,3 +55,4 @@
 5748741004,R F' R' U2 L2 U B2 L2 D L2 D' L F' U L' R2 U2 B2 U L',W,Australian Nationals 2026 (2026-07-09~12),333mbf Final A #1
 5776327001,R2 L F2 D F B L' U2 L D' L2 F2 L2 U B2 U' B2 U2,W,Shimonoseki Summer 2026 (2026-08-09),333 R1 B E2
 5819725001,D2 L' U2 B' D2 R' D' U R' U' R B R2,W,Round Rock Mega Cube Day 2026 (2026-09-05),333 R2 C #1
+5823553001,R2 B2 D B2 D R2 D2 U' R2 D2 R' F U B' D B' U F2 U',W,NZ Cubing in the Capital 2026 (2026-09-13),333 Final B #4

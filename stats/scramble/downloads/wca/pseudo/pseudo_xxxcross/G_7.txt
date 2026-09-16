@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / G / bin 7
-# Population in this bin: 937
+# Population in this bin: 938
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 1468868011,B2 D F2 D F2 U B2 U' L2 B2 R U B R2 F2 D2 B2 L' D' B2 U B',G,Bangladesh Cubing Fiesta 2019 (2019-12-19~21),333mbf Final A #1
@@ -86,7 +86,7 @@
 1026578001,U2 F2 D2 L2 F2 L2 F D2 F' D2 R' F' D' F D B2 F' L F',G,KSF Ust-Kamenogorsk City 2019 (2019-02-16~17),333oh R1 A #3
 5330139001,R' U2 L' R' B2 D2 R' F D' B2 D' F L2 R B L D2,G,Swisscubing Cup I 2026 (2026-01-17~18),333 Final B #4
 4801867023,D' U2 B2 F2 L' D2 U2 L R' D2 F' D' R' D' F' D U' L2 B' L,G,Silent Brasília 2025 (2025-06-14~15),333mbf Final A #1
-1381349001,R2 B2 U' L2 D' B2 R2 U' L U B' L' R D R' U L2 U2 L2,G,Gobbler Cube Day Fall 2019 (2019-11-02),333oh Final A #1
+5824617001,B2 U' R' B L' B' D F2 U2 R' D2 L F2 L F2 L2 D2 R2 D2,G,Hong Kong Cube Day 2026 (2026-09-12),333 R1 B E2
 3115861001,F' R F2 R2 F2 L' F2 U2 L U F2 D L' B2 D2 L R' D',G,SSN Cube Sunday 2023 (2023-09-24),333 Final A #3
 3263411001,B2 U R' U2 L' D2 B2 L D2 R F' R2 U' F2 R2 F D' B,G,Green Bay 2023 (2023-11-12),333 Final B #1
 786650001,U2 R2 D2 L2 B' U2 R2 B U2 R' U2 F' L2 B' D' B' L' D B2 R',G,YJ Fest 2018 (2018-05-18~20),333oh R1 B E1

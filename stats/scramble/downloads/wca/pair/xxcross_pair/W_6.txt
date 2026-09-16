@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / W / bin 6
-# Population in this bin: 243
+# Population in this bin: 246
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5354559001,D' L2 D2 B F2 R2 D2 B' U' R' F' L2 D2 F2 U' R2 D2 L,W,DIA EH Cube for Change Dubai B 2026 (2026-02-01),333 Final A E1
@@ -62,7 +62,7 @@
 935249001,B R2 F2 R2 B2 R2 F' D2 B' U2 L' B' D U B U2 L U' F D B' L2,W,Ticino Open 2018 (2018-11-17~18),333bf R1 A E1
 5661276001,L2 F2 U' F2 L2 U' L2 F2 R2 B R' U F' L' F2 R D' B' F2,W,Liuzhou Open 2026 (2026-05-24),333 R2 D E2
 943965001,F' R2 F2 D2 R D' F2 R U' L2 U2 F L2 F D2 B L2 F' U2 F2,W,Østerhøj Christmas by Vote 2018 (2018-12-01),333 R1 B #4
-946420001,D2 B D2 F' R2 B' L2 B D' L2 R F2 L' B2 F L2 U B2,W,Rocky Top 2018 (2018-12-01~02),333oh R1 B E1
+5830603001,U2 F' L2 U2 B' F2 U2 L2 U F' D2 R2 U' B D2 F' R' B2 D,W,Ohio Championship 2026 (2026-09-11~13),333 R3 B #2
 951891001,U2 R' F2 R2 D2 L2 F2 R' D2 B' F' L2 R' F2 L' D' U2 L D2,W,Puget Sound NxNxN 2018 (2018-12-08),333 R2 B #5
 953546001,F' D2 R2 B R2 B' D2 U L B D B' F D' F' U2 L',W,Liberty Science Center Open 2018 (2018-12-08),333oh R1 D E2
 957815001,B' D2 F D2 R2 B2 F D2 U2 L D' F U B2 R' B R U' B L,W,CubingUSA Georgia Championship 2018 (2018-12-14~16),333 R1 A E1
@@ -90,7 +90,7 @@
 1386827001,R B2 R D2 L F2 R2 B2 U2 F' R D R' F' D2 B' D' B2 F',W,Kubekings Villanueva Open 2019 (2019-11-02~03),333 Final A #2
 1402933001,R2 D' B2 R2 F2 L2 D2 U2 F2 R' U L2 F2 D R' F L B2 D2 U,W,No Place For DNF Fall 2019 (2019-11-09),333oh Final A E2
 1433758001,D' U2 B2 D L2 U' L2 R2 B2 F' L' D2 U R' U L2 F D U' F,W,Bremium Winter 2019 (2019-11-30~12-01),333oh Final B #3
-1485764001,U' D' B U F2 U' L B2 L' F2 B2 U' D' R2 D' B2 D' B2 D2 R2,W,Sariki in Moscow 2020 (2020-01-02),333oh R1 C E1
+5821503001,F' L' B' L2 U' F2 R F U F' L D2 R D2 L,W,RUS Mall 2026 (2026-09-06),333 Final A #1
 5297738001,L2 U2 R' U2 F2 L' B2 R U L2 D F' L2 U' R2 B' R' U,W,Plaza Madero Chía VII 2025 (2025-12-27),333 Final B #1
 1532587001,R2 B2 U' B2 D B2 U B2 U2 L' R U2 B L2 U B2 D2 R D',W,Pingtung Cubing Open 2020 (2020-02-01),333 R1 D E1
 1565602013,U F2 D2 B2 D F2 R D' B2 F R' D2 R F R U2 L U B R',W,Mudd Winter 2020 (2020-02-22~23),333mbf Final B #1
@@ -137,7 +137,7 @@
 2822639018,L2 D' R F' D L' F' R' D' L R2 U2 B D2 F' B' L2 F' U2 L B',W,Jaqueca a Domicilio Lima 2023 (2023-06-25),333mbf Final A #1
 2839668001,L' F2 L' D2 U2 B2 L2 F2 B D2 U' R F U' F' U2 B2 L2 U2,W,Swisscubing Cup IV 2023 (2023-06-24~25),333bf Final A E2
 2861826001,U2 F' L' F2 U' R2 U2 R2 U2 B2 D B2 U' R U R B' D' B' F2,W,Cubing Returns Munich B 2023 (2023-07-09),333 R1 C #4
-2873759001,U2 L B2 R' D2 B2 R B D' F' U F2 L2 U B' R2 U B2,W,Jay House of Cubes 2023 (2023-07-09),333 R2 B E2
+5823099001,R' B R D' L R2 D' L2 U' F2 U B' F' D B F L' U,W,Ardmore Autumn 2026 (2026-09-12),333 R1 A E2
 2873773001,R D R' D2 F' L2 U' L D' L' U2 R D2 F2 U2 R2 D2 R' B2,W,Jay House of Cubes 2023 (2023-07-09),333 Final B E2
 2891123001,B R2 U D' B L D2 R B' R2 F2 D2 L2 B2 L2 D' R2 D2 R',W,Canadian Championship 2023 (2023-07-13~16),333oh Final A #5
 2960943001,F2 R U' L U2 L' U F L2 F D2 B D2 F' U2 F' R2 D2 R,W,Burgas Open 2023 (2023-08-05~06),333 R2 C E2

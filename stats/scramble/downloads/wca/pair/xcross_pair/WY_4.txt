@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / WY / bin 4
-# Population in this bin: 628
+# Population in this bin: 629
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5126395001,L' B2 L2 U F L' F' D L R2 F D2 L2 F' B' D2 B2 U2,Y,Hvidovre Liga III 2025 (2025-10-25),333 Final A #1
@@ -45,7 +45,7 @@
 4845627001,R D2 R' F2 U2 R' U2 L2 D' B' U R2 U' F' U' B L2 D2,Y,Czechowice-Dziedzice Open 2025 (2025-07-04~06),333 R1 B #5
 3837529001,B2 L B2 D2 U2 L F2 R2 D' R' B2 F2 U' B' L' B' L' F2,Y,Caloocan Cube Craze 2024 (2024-06-09),333 R1 A #3
 1381349001,R2 B2 U' L2 D' B2 R2 U' L U B' L' R D R' U L2 U2 L2,W,Gobbler Cube Day Fall 2019 (2019-11-02),333oh Final A #1
-3608299001,F2 R2 U' F' L B2 D2 L D' F R U2 D2 L U2 R L2 B2,W,Ajax 3x3x3 Newcomers B 2024 (2024-03-24),333 R1 C #5
+5821503001,F' L' B' L2 U' F2 R F U F' L D2 R D2 L,W,RUS Mall 2026 (2026-09-06),333 Final A #1
 3791972037,B' R2 B2 R2 D B2 F2 R2 U R' B U2 B2 F R2 U L D2 B,Y,Big and Blind Samobor 2024 (2024-05-25~26),333mbf Final A #2
 5562020001,F' R F2 B2 D F D F2 U' B' R2 F2 D2 R' L2 F2 L' B2 D',W,1 Shamelin Cube Open 2026 (2026-04-18~19),333 R2 D E2
 4774604001,F2 R' U2 F D' R' F2 R2 D2 F2 U F2 L2 U' D2 F2 D F L,W,Rheinland-Pfalz Open 2025 (2025-05-30~06-01),333oh Final A E2

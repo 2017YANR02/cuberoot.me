@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / W / bin 2
-# Population in this bin: 143
-# Samples listed: 143 (all entries in this bin)
+# Population in this bin: 144
+# Samples listed: 144 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 28707001,R2 F U F L' U B' R' F2 U2 R U2 R2 F L2 F' B,W,New Albany Open 2014 (2014-06-21),333 R2 A E2
@@ -148,3 +148,4 @@
 5799273001,L2 F2 L' B' L' B2 L2 D L2 F2 D' L2 B L2 F2 B' D2,W,Northwest Championship 2026 (2026-08-21~23),333 R2 D #4
 5816874001,B' U' L2 U' L R2 U2 R' B2 R2 D L B R' B' U2 F',W,Mayo Cubing 2026 (2026-09-05~06),333 R2 A #5
 5821060001,D R' F2 D2 F' D2 B D2 L2 U2 L2 U B2 U' B F2 U B L2 U',W,Presidente Prudente Open 2026 (2026-09-05~06),333bf Final B #5
+5825332001,R2 F R2 B' U2 F' D2 B2 D R2 F U B2 R2 F' D L2 B2,W,Williamsburg Open Fall 2026 (2026-09-12),333 R1 B #4

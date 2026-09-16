@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / Y / bin 13
-# Population in this bin: 226
+# Population in this bin: 227
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 31996001,F' B' U F2 U2 F' U2 D R F L2 B2 R' L' D2 L' B2 L F2 B2 L,Y,ULA Rubiks 2014 (2014-06-27~28),333 R2 B #5
@@ -115,7 +115,7 @@
 1916007001,F' B2 D2 R' D L U' D2 L D2 R2 B' D2 F2 B' L2 F B D2 L2,Y,Carquef'Open 2022 (2022-05-14~15),333 R2 B #3
 1936279001,U2 B R' D2 L2 D2 U2 F D2 B' U2 B' F' L B2 F' D' F2 L D2,Y,Cube4fun League V Zawiercie 2022 (2022-05-21~22),333 R1 E #4
 1966176001,L' B' L2 U2 R2 U2 B' R2 F L2 B2 R' U' B2 D2 R B' L2 B U,Y,Angers ESEOpen 2022 (2022-06-11~12),333 R2 B #1
-1967087001,L' D' F2 R' B2 L2 B2 R2 D2 B2 D2 L' U2 B' F2 D2 R' D F U,Y,Sunset Cubing Santa Cruz 2022 (2022-06-04~05),333 R2 B #2
+5828206001,F R2 B' F2 L U2 F2 U2 F2 L2 F2 R D B R F2 L' R' D' L',Y,Robinson Lifestyle Suvarnabhumi Cube Open 2026 (2026-09-12~13),333 Final A #1
 1987365001,R' D B2 L D2 B2 R U2 L2 R' F2 U' R B L2 R' U2 B' R,Y,WA Open 2022 (2022-06-25~26),333 R1 B #5
 5295629019,B2 L2 D2 B2 F D2 F D2 R2 F2 D F R U' L F D B' F2 R D,Y,Rapid Academy Indonesian Championship 2025 (2025-12-19~21),333mbf Final A #1
 2068559001,F U' F B' D R' B L B2 R2 D F2 R2 U' L2 U2 F' L2 F,Y,AZCubing Summer 2022 (2022-07-30),333oh R1 A E2

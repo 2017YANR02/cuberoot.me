@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / ORWY / bin 2
-# Population in this bin: 550
+# Population in this bin: 551
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 3820216001,F U F2 D L2 R2 U' L2 U' L2 F U2 L2 D' F2 L' D' B U' B',R,Tianjin Open 2024 (2024-06-01),333bf R1 A #2
@@ -188,7 +188,7 @@
 3607701001,L' F D' B D2 R' B2 D2 L' U' L2 B2 U' F2 B2 D' B',O,Hanoi Side Events 2024 (2024-03-24),333 R1 D #2
 1025143001,F2 U2 F L2 B2 D2 B' D R' B2 L' R' D2 U' B L R D,R,UCSD Winter 2019 (2019-02-16~17),333 R1 C #3
 5814178001,R2 B' D2 B2 U2 F2 D F2 D F' L2 R' D U2 B2 L U' B,Y,Hungarian All-Rounder 7 2026 (2026-09-05),333 R1 B E1
-1036209016,L R2 F2 R U2 R' D2 R U' L2 F U2 B' R2 F' D R D' R2 D,W,Shenzhen 3x3 Days 2019 (2019-03-02~03),333mbf Final A #1
+5827932001,D' F2 L2 U2 B2 L2 B' D2 F U2 F D' L F D2 U2 R F' R,W,Danish Championship 2026 (2026-09-11~13),333 R2 C E2
 1052340001,U F2 R2 U' L2 D' U F L2 B F2 D2 B' U R' U' F2,O,Anaadyanta Cube Open 2019 (2019-03-08~09),333oh Final B E1
 5508012001,D2 L2 D' L2 B2 U' L D U R' B R' F' R F' L' F R2,R,MYHM UoSM Final Cube Open 2026 (2026-04-04~05),333oh R1 E E1
 3430081001,U2 D F R F2 U' B' U' R' F' D' L' U2 F2 R B2 R' L' F2,Y,Jesuitinas Txantrea Open 2024 (2024-01-20~21),333 Final A #4

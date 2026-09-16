@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / Y / bin 6
-# Population in this bin: 233
+# Population in this bin: 234
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 27659001,B2 L B2 L D2 R F2 D2 R2 D' F2 R' F2 D' F2 D' B' L2 U,Y,Nottingham Summer 2014 (2014-06-14~15),333oh R1 B #3
@@ -197,7 +197,7 @@
 4805428001,F L2 U2 L' D2 R' D2 F2 U R2 B' R2 F' L2 F R2 F' D',Y,Summit Summer 2025 (2025-06-15),333 R1 C #5
 4806906001,R2 U2 L2 B2 R2 D L2 F2 D U2 F' D2 L' D' B F' D2 U F,Y,Pony Open Morelia 2025 (2025-06-14~15),333 R1 B #3
 4807766001,R2 D B U F D' L' D' L2 B2 R2 U2 F2 L' F2 D' B',Y,Superseis Cubea - Asunción 2025 (2025-06-14),333 R1 A #3
-5678422001,D' F2 U B2 U' F D2 U' R' F2 R2 B L U' L' F2,Y,Gif-sûr de PR 2026 (2026-05-30~31),333oh R1 B E1
+5825904001,U2 L2 D2 L2 U2 B2 L F2 R2 F' D' L' U2 L' B2 L',Y,Arkansas Cube Day 2026 (2026-09-12),333oh Final A #4
 4937847047,F' R2 U' L2 U L2 R2 B2 D B L F2 L D2 B' L' R D' L' B,Y,BrizZon Side Open IV 2025 (2025-08-15~17),333mbf Final B #1
 5043561001,U R' D' B2 R2 B2 U' B2 U' L2 U2 F' R' D B2 R2 B2 L2 U2,Y,Shenyang Autumn 2025 (2025-09-21),333 R1 C #1
 5082147001,U' F' D' L B' F2 R2 U2 B' R2 F' L' B2 R D2 U R D2,Y,II Campos do Jordão Open 2025 (2025-10-04),333 R1 B #5

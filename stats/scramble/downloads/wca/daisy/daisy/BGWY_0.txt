@@ -2,7 +2,7 @@
 # Population in this bin: 659
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 3004850001,U R' U' B2 R B2 R2 D2 L' B2 R F2 U L' B' U L D' R',W,Flex in Lex 2023 (2023-08-19),333 R2 A #3

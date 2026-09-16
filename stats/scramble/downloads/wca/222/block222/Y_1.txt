@@ -1,8 +1,8 @@
 # Scramble samples — 222 / block222 / Y / bin 1
-# Population in this bin: 165
-# Samples listed: 165 (all entries in this bin)
+# Population in this bin: 168
+# Samples listed: 168 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 33876001,L D2 R U2 L F2 L2 U2 B2 D2 F' D U' R2 F L2 F U' R2 D',Y,P3 Grand Open 2014 (2014-06-28~29),333bf Final A E1
@@ -170,3 +170,6 @@
 5743705001,R2 U2 F2 D2 U B D2 R U2 R2 D2 L B' D U F' D2,Y,Izarraizpe Open 2026 (2026-07-04~05),333 R2 C #3
 5760911001,B' D U2 R2 B L2 B2 D2 B' D2 B U R' B U2 L U2 R D',Y,Caminos de Guanajuato - SJI 2026 (2026-07-25),333 Final A #5
 5763081001,B2 D2 F U2 R2 B L2 B' D B2 R2 U' B R D' R' D',Y,Middle Georgia Summer Solving 2026 (2026-07-25),333 R2 A E1
+5821566001,L2 B2 D2 R' B2 D2 B2 F2 U2 L' F R D2 L' U' B2 L,Y,RUS Mall 2026 (2026-09-06),333 Final A #4
+5826413001,L' D2 F2 D2 U2 L2 U B' U B R' U' R F2 U F' U',Y,Cubing Summer Rybnik 2026 (2026-09-12~13),333 R1 A #4
+5829061001,U' R' U2 R' L2 U D2 B' D' F' D2 F L2 F L2 B' U2 D2 R',Y,Cocha NxN CBBA 2026 (2026-09-12~13),333oh R1 B #4

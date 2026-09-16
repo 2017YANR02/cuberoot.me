@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / B / bin 13
-# Population in this bin: 223
+# Population in this bin: 224
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5755551001,L' U F U2 R2 B2 U2 L F2 D2 R' D L2 B' F' L2 D B2 D,B,Rubik's WCA European Championship 2026 (2026-07-16~19),333 R2 D #4
@@ -45,7 +45,7 @@
 522259001,R' D' R2 D2 L' D2 F B U' B2 R' F2 L2 U2 D' F2 U' L2 U' F2,B,Swedish Championship 2017 (2017-05-26~28),333 R1 B #2
 555439001,F2 L2 U2 L2 R2 B2 D F2 U' B2 D F' R D B' L U' F L2 R' D',B,150th Cube Meeting in Brest 2017 (2017-07-22~23),333oh R1 B #2
 576335001,D2 F2 L F2 R2 D2 U2 R2 D2 B2 R2 F U B R' D L' B' L2 D2 F',B,IGA Rubik 2017 (2017-08-19),333 R1 F #2
-595904001,R L' D' B' U R' F' D' B2 L' D L2 F2 U L2 B2 R2 F2 U' B2 D',B,Anders Larsson Memorial 2017 (2017-09-17),333 R2 B #1
+5826147001,F2 U2 B L2 R2 U2 B R2 F2 L' F R B' D' F' D B2 U B2,B,Stevenage September 2026 (2026-09-12~13),333 R2 B #4
 596769001,F R' D' R B U D L' D' B U2 F2 D2 B2 U2 R2 D2 R' D2 R,B,Copa Inova Minas Fapemig 2017 (2017-09-16~17),333 R1 B #4
 636790001,F D2 F2 R' U L' F' U' B' R F2 U' R2 D2 L2 B2 R2 D F2 L2 U',B,Latvian Open 2017 (2017-11-04~05),333 R2 A #4
 638569001,R2 B2 L U2 L2 F2 R U2 R2 F2 R' D' F R D' L' F L B' F',B,KCubing Fall 2017 (2017-11-04),333 Final A #3
