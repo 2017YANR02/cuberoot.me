@@ -1,0 +1,28 @@
+.disk-overview { margin-bottom: 32px; }
+.disk-totals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; margin: 0 0 20px; }
+.disk-totals dt { color: var(--muted-foreground); font-size: .8rem; }
+.disk-totals dd { margin: 5px 0 0; font-size: clamp(1.15rem, 3vw, 1.65rem); font-variant-numeric: tabular-nums; }
+.disk-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.disk-breadcrumbs, .disk-breadcrumbs > span { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.disk-breadcrumbs a { color: var(--accent); overflow-wrap: anywhere; }
+.disk-refresh { display: inline-flex; align-items: center; gap: 6px; padding: 8px 0; border: 0; background: transparent; color: var(--accent); cursor: pointer; font: inherit; }
+.disk-refresh:disabled { opacity: .5; cursor: wait; }
+.disk-status, .disk-note { color: var(--muted-foreground); font-size: .8rem; line-height: 1.6; }
+.disk-status { margin: 14px 0; }
+.disk-warning { color: var(--signal-warning); }
+.disk-list-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; color: var(--muted-foreground); font-size: .75rem; }
+.disk-directory-list { margin: 6px 0 16px; padding: 0; list-style: none; }
+.disk-directory { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; padding: 13px 0; text-decoration: none; color: var(--foreground); }
+.disk-directory:hover { color: var(--accent); }
+.disk-directory-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.disk-directory-name > span { overflow-wrap: anywhere; }
+.disk-directory-name svg { flex-shrink: 0; color: var(--muted-foreground); }
+.disk-directory-size { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.disk-directory-size small { display: inline-block; min-width: 52px; text-align: right; color: var(--muted-foreground); }
+.disk-directory-track { grid-column: 1 / -1; height: 5px; background: var(--border-default); border-radius: 3px; overflow: hidden; }
+.disk-directory-track > span { display: block; height: 100%; background: var(--accent); }
+@media (max-width: 479px) {
+  .disk-totals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .disk-directory { gap: 7px; font-size: .85rem; }
+  .disk-directory-size small { display: block; }
+}

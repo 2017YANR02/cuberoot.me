@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type ComponentType } from 'react';
-import { Crown, HeartHandshake, Inbox, MessageSquare, ShieldCheck, Users, Wrench } from 'lucide-react';
+import { Crown, HardDrive, HeartHandshake, Inbox, MessageSquare, ShieldCheck, Users, Wrench } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { useIsAdmin } from '@/lib/auth-store';
@@ -15,6 +15,7 @@ interface AdminDestination {
 }
 
 const DESTINATIONS: AdminDestination[] = [
+  { href: '/admin/disk', Icon: HardDrive, title: ['磁盘空间', 'Disk space'], description: ['服务器总容量、可用空间与目录占用', 'Server capacity, available space, and directory usage'] },
   { href: '/admin/users', Icon: Users, title: ['用户、增长与权限', 'Users, growth, and access'], description: ['注册趋势、会员新增、账号资料与管理员权限', 'Registration trends, membership joins, account records, and administrator access'] },
   { href: '/membership', Icon: Crown, title: ['会员管理', 'Memberships'], description: ['个人和企业会员、套餐、订单与手动开通', 'Individual and enterprise members, plans, orders, and manual grants'] },
   { href: '/support', Icon: HeartHandshake, title: ['赞助管理', 'Sponsorships'], description: ['赞助记录、新增赞助与认领审核', 'Sponsorship records, new entries, and claim review'] },
