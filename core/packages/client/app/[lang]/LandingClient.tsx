@@ -425,6 +425,11 @@ export default function LandingPage() {
             );
       })()}
 
+      {/* 🔥 每日挑战入口 */}
+      <Link href="/daily-challenge" prefetch={false} className="block text-center bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 rounded-xl mb-6 font-bold text-lg shadow-lg hover:opacity-90 transition-opacity">
+        {tr({ zh: '🔥 每日挑战：全网同题，今日打乱已更新！点击进入', en: '🔥 Daily Challenge: Same scramble for everyone! Click to join' })}
+      </Link>
+      
       {/* 两行 hero 的共同外壳。桌面是 5 + 4 两个独立网格;手机端外壳自己变成 3 列网格、
           两个子网格 display:contents,9 张卡直接排成 3 行 3 个(见 landing.css)。 */}
       <div className="hero-grids">
