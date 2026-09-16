@@ -25,13 +25,15 @@ const EXACT = new Set([
   'packages/client/lib/page-access-api.ts',
   'packages/app-ui/src/App.tsx', 'apps/mobile/src/capacitor-host.ts',
   'apps/mobile/src/native/secure-storage.ts', 'apps/desktop/src/tauri-host.ts',
+  'apps/mobile/src/native/record-push.ts', 'apps/mobile/src/native/record-push-controller.ts',
+  'apps/api/src/routes/notifications.ts', 'apps/api/src/utils/push_device.ts',
   'apps/desktop/src-tauri/src/lib.rs', 'apps/harmony/src/harmony-host.ts',
   'apps/harmony/entry/src/main/ets/bridge/HarmonyBridge.ets',
   'apps/harmony/entry/src/main/ets/bridge/DeepLinkInbox.ets',
   'apps/harmony/entry/src/main/ets/entryability/EntryAbility.ets',
 ]);
 const NATIVE = ['apps/mobile/ios/App/App', 'apps/mobile/android/app/src/main'];
-const NATIVE_NAME = /^(?:AppDelegate\.swift|SceneDelegate\.swift|Info\.plist|AndroidManifest\.xml|MainActivity\.(?:java|kt))$/;
+const NATIVE_NAME = /^(?:AppDelegate\.swift|SceneDelegate\.swift|Info\.plist|AndroidManifest\.xml|MainActivity\.(?:java|kt)|RecordPushPlugin\.java)$/;
 const CONFIG = [
   'packages/client/proxy.ts',
   'apps/desktop/src-tauri/tauri.conf.json', 'apps/desktop/src-tauri/capabilities/default.json',

@@ -27,6 +27,17 @@ const densities = {
   xxxhdpi: 4,
 };
 
+for (const [density, scale] of Object.entries({ ldpi: 0.75, ...densities })) {
+  const notificationDirectory = join(RES, `drawable-${density}`);
+  mkdirSync(notificationDirectory, { recursive: true });
+  const size = Math.round(24 * scale);
+  const alpha = await sharp(darkMarkSvg).resize(size, size).ensureAlpha().extractChannel('alpha').toBuffer();
+  await sharp({ create: { width: size, height: size, channels: 3, background: '#fff' } })
+    .joinChannel(alpha).png().toFile(join(notificationDirectory, 'push_small.png'));
+  await sharp(regularIcon).resize(Math.round(64 * scale), Math.round(64 * scale))
+    .png().toFile(join(notificationDirectory, 'push.png'));
+}
+
 for (const [density, scale] of Object.entries(densities)) {
   const directory = join(RES, `mipmap-${density}`);
   const launcherSize = Math.round(48 * scale);

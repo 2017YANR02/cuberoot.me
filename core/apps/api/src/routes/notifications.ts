@@ -10,8 +10,51 @@ import { rememberLang, verifyUnsubToken } from '../utils/notify.js';
 import { publicUserIdsForOwnerKeys } from '../utils/account.js';
 import { defaultRecordNotificationPreferences, parseRecordNotificationPreferences } from '@cuberoot/shared/record-notifications';
 import { ISO2_TO_CR } from '../utils/record_format.js';
+import { getuiConfig } from '../utils/getui.js';
+import { parsePushDevice } from '../utils/push_device.js';
 
 export const notificationRoutes = new Hono();
+
+notificationRoutes.get('/notifications/push/config', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  await requireAuth(c);
+  return c.json({ enabled: !!getuiConfig(c.req.query('appId') ?? '') });
+});
+
+notificationRoutes.put('/notifications/push/device', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const user = await requireAuth(c);
+  const device = parsePushDevice(await c.req.json().catch(() => null));
+  if (!device) return c.json({ error: 'Invalid push device' }, 400);
+  if (!getuiConfig(device.appId)) return c.json({ error: 'Push is not configured' }, 503);
+  const id = await userIdForOwnerKey(user.wcaId);
+  if (id == null) return c.json({ error: 'Account not found' }, 404);
+  try {
+    const rows = await query(`INSERT INTO notification_push_devices (installation_id, secret_hash, user_id, app_id, client_id)
+      VALUES (?, ?, ?, ?, ?) ON CONFLICT (installation_id) DO UPDATE SET
+        user_id = EXCLUDED.user_id, app_id = EXCLUDED.app_id, client_id = EXCLUDED.client_id,
+        bound_at = CASE WHEN notification_push_devices.user_id = EXCLUDED.user_id
+          THEN notification_push_devices.bound_at ELSE NOW() END, refreshed_at = NOW()
+      WHERE notification_push_devices.secret_hash = EXCLUDED.secret_hash RETURNING installation_id`,
+    [device.installationId, device.secretHash, id, device.appId, device.clientId]);
+    if (!rows.length) return c.json({ error: 'Device binding conflict' }, 409);
+  } catch (error) {
+    if ((error as { code?: string }).code === '23505') return c.json({ error: 'Device binding conflict' }, 409);
+    throw error;
+  }
+  return c.json({ ok: true });
+});
+
+// A device-scoped 256-bit credential permits retrying logout revocation after
+// its account session has already been removed. It grants no read/send access.
+notificationRoutes.delete('/notifications/push/device', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const device = parsePushDevice(await c.req.json().catch(() => null), true);
+  if (!device) return c.json({ error: 'Invalid device credential' }, 400);
+  await query('DELETE FROM notification_push_devices WHERE installation_id = ? AND secret_hash = ?',
+    [device.installationId, device.secretHash]);
+  return c.json({ ok: true });
+});
 
 /** ownerKey(真 wca_id 或 `u<uid>`)→ app_users.id。查不到返回 null。 */
 async function userIdForOwnerKey(key: string): Promise<number | null> {

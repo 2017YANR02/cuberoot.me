@@ -696,6 +696,9 @@ const ENDPOINTS: Ep[] = [
   { d: 'notification', m: 'PUT', p: '/v1/notifications/prefs', g: 'login', zh: '开 / 关邮件通知', en: 'Toggle email notifications' },
   { d: 'notification', m: 'GET', p: '/v1/notifications/records', g: 'login', zh: '纪录订阅、本人 WCA 身份和邮箱就绪状态', en: 'Record subscriptions, linked WCA identity, and email readiness' },
   { d: 'notification', m: 'PUT', p: '/v1/notifications/records', g: 'login', zh: '保存纪录订阅筛选', en: 'Save record subscription filters' },
+  { d: 'notification', m: 'GET', p: '/v1/notifications/push/config', g: 'login', zh: '当前 App 包名的系统推送就绪状态', en: 'System push readiness for the requested app package' },
+  { d: 'notification', m: 'PUT', p: '/v1/notifications/push/device', g: 'login', zh: '将已授权设备绑定到当前账号', en: 'Bind a consented push device to the current account' },
+  { d: 'notification', m: 'DELETE', p: '/v1/notifications/push/device', g: 'public', zh: '凭设备专用撤销密钥解绑，允许退出后离线重试', en: 'Revoke using a device-only credential, including retries after logout' },
   { d: 'notification', m: 'GET', p: '/v1/notifications/unsubscribe', g: 'public', zh: '邮件退订(签名令牌,免登录,回确认页)', en: 'Unsubscribe via signed token (no login, HTML page)' },
   { d: 'notification', m: 'POST', p: '/v1/notifications/unsubscribe', g: 'public', zh: '一键退订(RFC 8058,邮件客户端调)', en: 'One-click unsubscribe (RFC 8058)' },
 

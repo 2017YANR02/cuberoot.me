@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="record_push_title">纪录通知</string>
+    <string name="record_push_enable">同意并启用</string>
+    <string name="record_push_later">暂不</string>
+    <string name="record_push_consent">接收本人纪录和已订阅的纪录通知。个推及其附带的卓信 ID SDK 将处理设备标识、设备与应用信息、网络信息；可选信息与系统授权详见隐私政策。通知可能显示在锁屏上。订阅内容可在「我的 → 消息」调整，系统通知可在 Android 设置中关闭。
+\n\n&lt;a href="https://cuberoot.me/zh/privacy"&gt;CubeRoot 隐私政策&lt;/a&gt;　&lt;a href="https://docs.getui.com/privacy/"&gt;个推隐私政策&lt;/a&gt;</string>
+</resources>

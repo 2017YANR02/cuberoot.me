@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint":"08d2cfe4f39602a99f89e4f2f18e37b860e53b0a4d38196c187a7179b616e587","reason":"首页纪录排序复用 usePinnedCountries 额外返回的 WCA、IP 默认国家列表，仅用于国家纪录内部排序，不读取手动置顶或取消偏好。已核对游客只取 IP、登录后 WCA 优先并去重、退出后移除 WCA，以及图钉登录回跳、按账号保存和会话写入校验均未改变；未修改登录、绑定、合并或注销流程，因此保留现有生命周期图。本次为源码与本地验证，不代表部署或真机验收。"}
+{"fingerprint":"f467f60d55c3d2294baece916405f99805571d9210a025b41dc32eed28e46db4","reason":"Android 登录后新增独立推送隐私和权限门槛、设备绑定；退出与换号先停推并撤销绑定，离线只保留设备撤销凭据重试。注销通过账号外键级联删除设备及投递队列。已同步登录后、退出和注销图节点并覆盖原生推送入口的文档守卫；PKCE、第三方身份绑定与账号合并流程不变。源码及本地测试不代表部署或真机推送验收。"}
 */
 
 import type { ReactNode } from 'react';
@@ -94,6 +94,7 @@ export default function AuthFlowPage() {
           t('打开系统浏览器 → 完成上方同一登录 / 已有账号选择流程', 'Open the system browser → complete the same sign-in / existing-account choice above'),
           t('单次短期票据 + 回跳校验（PKCE / state）→ App 换取并安全保存会话', 'One-time short-lived ticket + handoff validation (PKCE / state) → App exchanges and securely stores the session'),
           t('再用一次性网页票据恢复「我的」页登录态 → 显示同一个账号', 'A separate one-time web ticket restores sign-in in My account → show the same account'),
+          t('Android 纪录推送已配置时 → 单独征求 SDK 隐私同意和系统通知权限 → 绑定当前账号与设备；拒绝不影响登录', 'When Android record push is configured → separately request SDK privacy consent and notification permission → bind this account and device; declining does not affect sign-in'),
         ]} /><figcaption>{t('浏览器、App 安全存储、内嵌账号页是三个会话容器，不是三个账号。回跳失败时回 App 重试，不重复注册；长期登录凭据不放进网址。', 'The browser, App secure storage, and embedded account page are three session containers, not three accounts. Retry a failed handoff without registering again; long-lived credentials never enter URLs.')}</figcaption></figure>
       </section>
       <p className="auth-map-note">{t('登录成功 ≠ 计时记录已云同步。App 的计时记录、备注和设置仍在本机；账号合并也不自动收集各台设备的本地记录。', 'Successful sign-in does not mean timer data is cloud-synced. App solves, notes, and settings remain local; account merging does not gather local records from every device.')}</p>
@@ -222,6 +223,7 @@ export default function AuthFlowPage() {
       <div className="auth-map-current-paths">
         <section aria-labelledby="logout-title"><h3 id="logout-title">{t('退出登录：下次还能回来', 'Sign out: you can return')}</h3><figure className="auth-map-figure" aria-labelledby="logout-title"><Steps items={[
           t('在当前账号页选择「退出登录」', 'Choose Sign out in the current account page'),
+          t('Android 先关闭本机纪录推送，再撤销设备绑定；离线时仅保留设备撤销凭据，联网后重试，旧绑定撤销前不绑定另一个账号', 'Android first stops local record push and revokes its device binding. Offline revocation retains only a device credential and retries online; another account cannot bind until the old binding is revoked'),
           t('清理当前会话；App 内账号页与宿主通过消息同步退出', 'Clear the current session; the App account page and host coordinate sign-out through the bridge'),
           t('账号、会员和服务端资料仍保留 → 下次用已绑定方式登录', 'Account, membership, and server data remain → sign in again with a linked method'),
         ]} /><figcaption>{t('不等于全设备退出。外部浏览器退出不能主动通知休眠 App；也不会删除本地计时记录或取消续费。', 'Not a global device sign-out. An external browser cannot proactively notify a sleeping App. Signing out does not delete local solves or cancel renewal.')}</figcaption></figure></section>
@@ -229,7 +231,7 @@ export default function AuthFlowPage() {
           t('我的 → 齿轮 → 登录方式 → 底部「注销账号」', 'My account → settings gear → sign-in methods → Delete account at the bottom'),
           t('阅读删除与保留清单 → 输入页面要求的账号标识；设过密码还须输入当前密码', 'Read what is deleted and retained → type the requested account identifier; enter the current password if one is set'),
           t('主动确认永久注销 → 服务端检查续约合约、机构归属等条件，并撤销已绑定 Apple 授权', 'Explicitly confirm deletion → server checks renewal contracts, organization ownership, and other constraints, and revokes linked Apple authorization'),
-          t('成功 → 删除站内账号与对应私有数据、解除登录方式；失败 → 展示原因，不宣称已注销', 'Success → delete the site account and covered private data, remove sign-in methods. Failure → show the reason, never claim deletion succeeded'),
+          t('成功 → 删除站内账号与对应私有数据、推送设备绑定和队列、解除登录方式；失败 → 展示原因，不宣称已注销', 'Success → delete the site account, covered private data, push device bindings and queues, and sign-in methods. Failure → show the reason, never claim deletion succeeded'),
         ]} /><figcaption>{t('源码已实现立即注销、无恢复期。App 与小程序复用网站入口，不另造删除表单；各端真实注销与会话清理仍须分别验收。', 'Source implements immediate deletion with no grace period. App and Mini Program reuse the website entry, not separate deletion forms; real deletion and session cleanup require per-platform testing.')}</figcaption></figure></section>
       </div>
       <aside className="auth-map-boundaries"><h3>{t('注销前一定要知道', 'Before deleting')}</h3><ul>
