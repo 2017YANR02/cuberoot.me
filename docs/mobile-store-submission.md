@@ -91,7 +91,7 @@ App 已允许通过系统浏览器创建同一网站账号，并提供 App 内�
 - 旧 release 没有相机、麦克风、通讯录、存储或通知权限；本次 Android 新增 `POST_NOTIFICATIONS`，不能沿用“无通知权限”答案
 - `android:allowBackup="false"`
 
-上述清单记录先前 release 与 BLE 源码变化。2026-09-15 新增个推后，源 manifest 包含网络、通知和既有 BLE 权限；SDK 及条件厂商依赖还会合并权限和组件，必须对最终 AAB 重做清单，不能用旧包报告替代。本次尚无启用真实厂商配置的最终 release 证据。
+2026-09-16 的 [CI Android 构建](https://github.com/2017YANR02/cuberoot.me/actions/runs/35061047653/job/104681244124)（`ab783cbeab`）已完成 APK/AAB 构建和 CI 临时证书签名验证；release APK 清单确认新增 `ACCESS_WIFI_STATE`（网络状态）、`POST_NOTIFICATIONS`（通知）、`com.vivo.notification.permission.BADGE_ICON`（角标）和 `getui.permission.GetuiService.me.cuberoot.app`（推送服务权限）。该次任务在旧权限白名单比对处失败，CI 白名单现同步这四项，继续逐项精确比对，不允许任意 SDK 权限通过。此证据不代表启用真实厂商配置后的最终 AAB 或通知真机验收；条件厂商依赖改变时必须重新扫描最终产物。
 
 ### 4.2 当前运行时依赖
 

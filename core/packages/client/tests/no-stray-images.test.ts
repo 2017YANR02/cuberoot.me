@@ -11,7 +11,7 @@ import { execSync } from 'node:child_process';
 
 const RASTER = /\.(png|jpe?g|webp|gif|bmp|avif)$/i;
 const ANDROID_GENERATED_RESOURCE =
-  /^core\/apps\/mobile\/android\/app\/src\/main\/res\/(?:drawable(?:-land|-port)?-(?:mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/splash|drawable\/splash|drawable(?:-night)?\/splash_icon|mipmap-(?:mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/ic_launcher(?:_foreground|_round)?)\.png$/;
+  /^core\/apps\/mobile\/android\/app\/src\/main\/res\/(?:drawable(?:-land|-port)?-(?:mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/splash|drawable\/splash|drawable(?:-night)?\/splash_icon|drawable-(?:ldpi|mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/push(?:_small)?|mipmap-(?:mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/ic_launcher(?:_foreground|_round)?)\.png$/;
 const IOS_ASSET_CATALOG_RESOURCE =
   /^core\/apps\/mobile\/ios\/App\/App\/Assets\.xcassets\/[^/]+\.(?:appiconset|imageset)\/[^/]+\.(?:png|jpe?g|webp|gif|bmp|avif)$/i;
 const MINIPROGRAM_RUNTIME_ASSET =
