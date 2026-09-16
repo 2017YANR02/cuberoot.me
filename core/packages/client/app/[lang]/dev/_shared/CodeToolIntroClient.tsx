@@ -139,16 +139,16 @@ export default function CodeToolIntroClient({ section = 'stack' }: { section?: T
   const themeVars: CSSProperties = {
     ['--ts' as string]: meta.accent,
     ['--ts-bright' as string]: meta.bright,
-    ['--ts-soft' as string]: `${meta.accent}33`,
-    ['--ts-glow' as string]: `${meta.bright}73`,
+    ['--ts-soft' as string]: `color-mix(in srgb, ${meta.accent} 20%, transparent)`,
+    ['--ts-glow' as string]: `color-mix(in srgb, ${meta.bright} 45%, transparent)`,
   };
 
   return (
     <LangCtx.Provider value={lang}>
       <div ref={rootRef} className="ts-intro-root stack-tool-root" style={themeVars}>
         <div className="grid-bg" />
-        <div className="glow glow-tl" style={{ background: `radial-gradient(circle, ${meta.accent}66 0%, transparent 70%)` }} />
-        <div className="glow glow-br" style={{ background: `radial-gradient(circle, ${meta.accent}55 0%, transparent 70%)`, opacity: 0.25 }} />
+        <div className="glow glow-tl" style={{ background: `radial-gradient(circle, color-mix(in srgb, ${meta.accent} 40%, transparent) 0%, transparent 70%)` }} />
+        <div className="glow glow-br" style={{ background: `radial-gradient(circle, color-mix(in srgb, ${meta.accent} 33.333%, transparent) 0%, transparent 70%)`, opacity: 0.25 }} />
 
         <nav className="nav">
           <Link className="nav-logo" href={base}>

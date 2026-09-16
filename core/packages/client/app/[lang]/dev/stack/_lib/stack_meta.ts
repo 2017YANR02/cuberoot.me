@@ -14,6 +14,9 @@ export interface StackToolMeta {
 }
 
 export const STACK_TOOLS_META: StackToolMeta[] = [
+  { slug: 'ncdu', name: 'ncdu', version: '2.9.2', since: '2007-02', group: 'dev', accent: 'var(--signal-info)', bright: 'color-mix(in srgb, var(--signal-info) 80%, white)', glyph: '▤',
+    zh: { tagline: '在终端里逐层看清磁盘占用', role: '服务器磁盘排查工具。介绍只读扫描、结果快照和网页查看方式；本站磁盘面板使用独立实现。' },
+    en: { tagline: 'Explore disk usage one directory at a time', role: 'A server disk investigation tool. Learn read-only scans, saved snapshots and browser viewing; this site’s disk panel uses a separate implementation.' } },
   { slug: 'react', name: "React", version: '19.2', since: '2013-05', group: 'frontend', accent: '#61DAFB', bright: '#9FE9FE', glyph: "⚛",
     zh: { tagline: "声明式 UI + 组件 + 虚拟 DOM", role: "渲染整站。所有工具页都跑在它的组件树上,Next 只是外面那层框架。" },
     en: { tagline: "Declarative UI, components, virtual DOM", role: "Renders the whole site — every tool page lives inside one React tree, with Next as the frame around it." } },
