@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / WY / bin 6
-# Population in this bin: 633
+# Population in this bin: 636
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 1584013001,L2 R2 D2 U' B2 L2 D R2 U' L' B L' U L B' R' D R2 B',W,Hamburg International 2020 (2020-02-29~03-01),333 R1 C #5
@@ -55,7 +55,7 @@
 4026008001,B2 U F2 D' F2 R2 B2 D' F U R U2 L' D2 F2 U R U',W,Kumaraguru Cube Open 2024 (2024-08-15~18),333 R1 B #3
 3305777001,D2 F2 U' B' U2 B L' B U2 F' U2 L2 F' D B' R2 D',W,Colorado Cold Hands Showdown 2023 (2023-12-02),333 Final A E1
 4486464001,D' B2 D2 B2 L2 D' F2 U F2 R2 F2 D L R2 F' U B R' F',W,Franconia Spring 2025 (2025-02-14~15),333 R1 A #4
-5187104001,L' D2 F2 D2 R' F2 L2 D2 U2 L U' F' R D2 L D R F L',W,South Germany 2025 (2025-11-15~16),333 R2 C #1
+5825332001,R2 F R2 B' U2 F' D2 B2 D R2 F U B2 R2 F' D L2 B2,W,Williamsburg Open Fall 2026 (2026-09-12),333 R1 B #4
 3674312001,B F' R2 U2 F R2 B' U2 L2 D' R2 U' R2 D2 R2 B R U' L',W,Big N Blind Bangalore April 2024 (2024-04-13~14),333oh R1 A E1
 310517001,D' B2 L2 U' B2 U B2 D2 L2 D2 L2 F' L' R2 F2 L2 D' B2 U,W,Łódź Cubing Summer 2016 (2016-06-04~05),333 R2 A #4
 319053001,D' B2 F2 L2 B2 U F2 D' L2 U' R' F2 R' B R' B D B' R',W,West Friesche Open 2016 (2016-06-26),333 R1 B #3
@@ -117,7 +117,7 @@
 5785675001,U B2 F2 L2 B2 U L2 U' R2 U L2 R' D2 B2 F2 D B' U' R',W,Oakridge Independence Cube Open 2026 (2026-08-15~16),333 R1 E #5
 2948654001,F R F2 R D F2 R' F2 U2 F L2 D2 B U2 D' R2 U',W,Botosani Cubing 2023 (2023-08-05),333 R1 D #2
 661213024,D2 L2 U B2 D2 R2 U L D' B' L' U2 B2 U' R2 D U2 F2 D2,W,Skillcon 2016 (2016-12-17~18),333mbf Final A #1
-5695670001,R2 D2 F2 D2 U' L2 B2 F2 U' L' R' U2 L' D B' F2 D' B',W,Uhseo Osong 2026 (2026-06-13),333 R1 H #1
+5827552001,B' R2 U2 B R2 U2 L2 U2 F2 L U L' U B2 F' R' D U R' B,W,Danish Championship 2026 (2026-09-11~13),333mbf Final A #1
 5280654001,U B' U2 L' U2 R F2 L B2 F2 L R F' U' R2 D F2 L' F L B2,W,Mindanao Championship 2025 (2025-12-14),333bf Final A E1
 5019172001,U2 R2 D2 L2 U L2 D B2 L2 R2 D B' D2 U' L' U' L2 F2,W,Friheden Open 2025 (2025-09-14),333 R1 B #3
 661500020,R2 U2 R2 F2 D2 F D2 B' L2 R U2 F D' B R2 U L2 B2 U' B L B',W,Monnem City Cubing 2017 (2017-09-16~17),333mbf Final A #1

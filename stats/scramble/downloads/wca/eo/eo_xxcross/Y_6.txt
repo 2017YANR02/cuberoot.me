@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / Y / bin 6
-# Population in this bin: 109
-# Samples listed: 109 (all entries in this bin)
+# Population in this bin: 110
+# Samples listed: 110 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 33688001,D' L D2 R2 L' D R' B' D L' F D2 R2 B2 U2 B2 D2 B D2,Y,P3 Grand Open 2014 (2014-06-28~29),333 R1 S E2
@@ -114,3 +114,4 @@
 5736461001,D B2 L B2 F2 D2 R' D2 R2 U2 B2 R2 F' U' R' B L2 F2 D' L2 U2,Y,BBQ Ropaži 2026 (2026-07-04),333bf Final B #4
 5786929001,U2 L D' B D' F L2 U2 L B' D B D2 L2 B L2 B R2 F' L' F,Y,Norwegian Championship 2026 (2026-08-14~16),333bf R2 A #4
 5814348001,U L' U' L U B2 L2 R2 D2 U L D2 F2 L' D F2 U2,Y,KC College Cube Open 2026 (2026-09-05),333 R1 D #1
+5829061001,U' R' U2 R' L2 U D2 B' D' F' D2 F L2 F L2 B' U2 D2 R',Y,Cocha NxN CBBA 2026 (2026-09-12~13),333oh R1 B #4

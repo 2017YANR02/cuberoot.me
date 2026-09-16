@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / WY / bin 8
-# Population in this bin: 813
+# Population in this bin: 816
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 969271001,R F2 L' D2 L' U2 B2 D2 U2 R2 B R2 F2 U' R' F U B' R B',W,Welcome to 2019 (2018-12-31~2019-01-01),333bf Final A #1
@@ -174,7 +174,7 @@
 1323237001,B2 U2 B2 R2 D2 L2 D2 L F' R U2 R B D B' L2 F2 R2,Y,Fortitude Sydney 2019 (2019-09-28~29),333 R2 D #4
 1298816001,F2 U' F' L' D' R' F B D' B' L D2 F' D2 F L2 D2 R2 F2 B',Y,Ridge Cubing Fall 2019 (2019-09-14),333 R2 A #5
 1051368001,B2 U2 B2 D R2 D U L2 B' L' D R B U2 B L2 F' R' D B' L',W,CubingUSA Heartland Championship 2019 (2019-03-09~10),333mbf Final B #1
-661329020,R2 D2 F2 R2 D' U2 F2 R' B' L2 U F' R2 D R' U L2 D' F' L',W,KKR Open 2017 (2017-04-29),333mbf Final A #1
+5823343001,R' F U F R2 F2 B R2 U2 R' F2 D2 L U2 F2 U F D,W,Only Odds in Minnesota 2026 (2026-09-12),333 Final A #5
 2370933001,F' D B R2 D2 L' F2 R B2 U2 L' U2 B F R U2 R' B D2,Y,Malaysia Cube Championship 2022 (2022-12-09~11),333 Final A #3
 3664527001,U' F2 L' U2 L U F2 R' F' L2 U2 F' L2 F2 L2 D2 F2 D2 F2,Y,Fundación de Cuenca Open 2024 (2024-04-13~14),333oh R1 B #4
 5519896001,B2 D' R2 B R' D B L2 D2 F2 R' D2 F2 L' F2 B2 U' D2 F2,W,Mielec Cubing Days 2026 (2026-04-11~12),333 R2 B #4

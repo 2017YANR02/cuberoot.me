@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / BGWY / bin 10
-# Population in this bin: 94
-# Samples listed: 94 (all entries in this bin)
+# Population in this bin: 95
+# Samples listed: 95 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 4812001,L2 R2 D' U2 R2 F2 D2 B2 F L2 B D2 L D2 L2 D' R' U F' D2 B,B,Dixon Spring 2014 (2014-03-29),333bf Final A E2
@@ -99,3 +99,4 @@
 5686158001,U R' L2 B' D2 L2 F2 D2 F' R2 D2 R' U B2 F' R D' B' F2 U2,B,Only Cubes in ABQ 2026 (2026-06-06),333 R2 B #2
 5709315001,R' U D F' R' U B R2 B' D B2 D2 B R2 F' D2 L2 D2 L2 B' L2,B,B-Game - Bastardo Open 2026 (2026-06-13~14),333 Final B #5
 5794944001,L2 D L' D B2 F2 D U L2 F2 B R' B2 D R2 U B F',B,Ecublens Open 2026 (2026-08-22~23),333 R1 B #2
+5828260001,D' L D' F2 D F' R L B2 U2 R2 U2 B L2 B' L2 U2 R' F D,B,Robinson Lifestyle Suvarnabhumi Cube Open 2026 (2026-09-12~13),333 R1 A #3

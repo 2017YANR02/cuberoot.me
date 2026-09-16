@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / B / bin 8
-# Population in this bin: 109
-# Samples listed: 109 (all entries in this bin)
+# Population in this bin: 110
+# Samples listed: 110 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5542001,D' R2 L' F' R2 B2 U B L' U2 F2 L2 U2 F2 B2 U' R2 D' R2 U',B,Swiss Open 2014 (2014-03-29~30),333oh R1 A #2
@@ -114,3 +114,4 @@
 5784353001,B R' U' B' U2 L' D' R2 B2 L2 F2 U2 F2 R' B2 L U' R F D',B,Pacha Cubing: Jujuy 2026 (2026-08-15~16),333bf Final A #5
 5791977001,F2 L2 B2 R' D' R2 F U2 R' B2 U2 R F2 D2 R B' R2 B',B,Temecula Valley Back To School 2026 (2026-08-22),333 R1 E #2
 5807111001,R' D L U2 F2 D B L' D L2 F D2 B2 U2 L2 F D2 B L' F,B,Slovenian Nationals 2026 (2026-08-28~30),333bf R2 A #5
+5827742001,L' B2 R F2 R B' L2 U2 R2 F R' U L' U' R2 U2,B,Danish Championship 2026 (2026-09-11~13),333 R1 B #4

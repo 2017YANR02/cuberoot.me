@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / ORWY / bin 2
-# Population in this bin: 801
+# Population in this bin: 807
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 4772900001,R U B' L2 D2 F' D2 U2 R2 F R2 F R D' L' F L F R2 B R2,W,Kewbz Scottish Championship 2025 (2025-05-30~06-01),333bf Final B #2
@@ -127,7 +127,7 @@
 3670940001,D2 U L' B2 F2 D2 L U2 B2 R' F' L' F R2 F2 D' U F2,R,Pasig Summer Sides 2024 (2024-04-14),333oh Final B #2
 936688001,F2 R2 B L2 F2 R2 D2 U2 F' D2 R D' R2 D2 L' B' D F2 R' B2,O,Brugge Open 2018 (2018-11-17~18),333 Final B #5
 660568018,D' U' F2 D U2 F2 L2 B' R D2 U2 F2 L R2 B2 D L' F2 L,W,Hungarian Open 2014 (2014-10-17~19),333mbf Final A #2
-2141344015,R L' F D L B' L U' D2 F2 D' R2 L2 D' R2 U L' D F R' B' L,R,Danish Championship 2022 (2022-09-02~04),333mbf Final A #2
+5830787001,R2 D L2 U' B2 D L' B L2 U L' R' U F2 L' D F2 D',R,Ohio Championship 2026 (2026-09-11~13),333 R1 C #5
 4210563001,D' B2 F2 D F2 D' R2 F L' F2 L R2 U B2 L' D2 L B,R,Vancouver Southlands Sprint 2024 (2024-10-19~20),333 R3 B #3
 4049406001,B L2 U2 F' U2 B' L2 F' D2 L' U' B L' D' B L2 R' F2,R,Telangana Cube Championship 2024 (2024-08-23~25),333oh R1 B #1
 1187225001,R2 U' L2 D B2 U2 F2 U' F' D' U L D' L' U2 B U' L D,Y,Cape Fear Cubing 2019 (2019-06-22),333 R1 C #4

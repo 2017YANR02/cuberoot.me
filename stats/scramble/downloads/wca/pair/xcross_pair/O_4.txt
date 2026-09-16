@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / O / bin 4
-# Population in this bin: 306
+# Population in this bin: 311
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 4987001,F D2 U2 F' D2 R2 B' F' D2 U2 R F' D' L D' R2 U L2 B2 R' B L,O,Tula Open 2014 (2014-03-28~30),333bf R1 B E2
@@ -107,7 +107,7 @@
 1036858001,L' D2 F2 R B2 R' B2 R2 D2 R F' L' R' B2 U' R F R' D F',O,EkatCube Spring 2019 (2019-03-02~03),333oh Final B #5
 1042668001,B2 L2 B2 D R2 B2 U2 L2 B L' R2 F' L2 B2 U' F2 L F2 D R' D',O,Iruña Open 2019 (2019-03-02~03),333bf R1 A #1
 1043071001,L2 D2 F D2 F2 R2 F L2 D B' F R D F' R' B R2 D2 R,O,Binghamton Winter 2019 (2019-03-03),333 R2 B E1
-1056251001,D R L' U D' F' U L' D B' L D2 F2 R D2 L2 F2 L' B2,O,Wolfpack Winter 2019 (2019-03-16),333oh R1 B #3
+5821807001,F R F' B' R2 B R' D2 L2 F D' R2 D R2 U2 R2 B2 D2,O,Jogjakarta Happy Solving 2026 (2026-09-05),333 R1 C E1
 5626374001,R' B2 U F2 D U L2 D' U2 L2 B2 R B F L2 R B2 L2,O,No Clocks in Greenpoint 2026 (2026-05-09~10),333 R2 A E1
 1065344001,B R2 F' L2 B U2 F U' R U2 L' R' F' D2 R B' L2 U2 B' L,O,Speedsolving Huancayo 2019 (2019-03-24),333bf Final A E1
 1068137001,U2 L' D2 F2 R2 U2 F2 L2 U2 R2 D B2 D B F2 D2 U F2 U,O,KSF Almaty City 2019 (2019-03-23~24),333 R1 A #4
@@ -155,7 +155,7 @@
 5121602001,B2 D' L B2 D2 L B2 U2 L' B2 L' F R F2 D' B L D2,O,CdA Cube Clash 2025 (2025-10-18),333 Final A #4
 2299794001,U2 R U' R2 D' F' U' F2 L' U F2 L2 D R2 D2 B2 U F' U',O,Kuutiostoren Kuutiokekkerit 2022 (2022-11-12~13),333 R2 A #3
 5306442018,D' R' U2 D L F D2 R' D' L B' R2 F2 R F2 D2 L' U2 L' F,O,CF Goes Crazy II Brzeziny 2026 (2026-01-02~04),333mbf Final B #1
-2383862001,B2 L' D2 R' U' L' U' D2 F' L D2 F2 D F2 R2 L2 U L2,O,Naperville Winter B 2022 (2022-12-18),333 R2 B #2
+5826632001,D F D2 B2 L2 B2 F2 U2 B2 R' U B' U' R2 B L2 R' F',O,Benicia Open II 2026 (2026-09-12),333 R2 C #2
 2444263001,B' L' B' L' D' R2 F' L2 F2 L2 U2 B2 U' D2 F2 B2 R D',O,Korum Cube Challenge 2023 (2023-01-21~22),333oh Final A E2
 2485034001,L2 U' D2 R L2 U' B R F2 B2 L' B2 R' D2 F2 L' F2 B U2 L2,O,February Fitzroy Fun 2023 (2023-02-11~12),333bf Final A #3
 2485694001,B2 D2 B' U' L2 D2 R2 B L2 U2 F2 R2 L U B' F' U' F' D',O,Herrljunga Open 2023 (2023-02-11~12),333 R1 C #2
@@ -197,7 +197,7 @@
 5521052001,D2 R2 D2 R2 B2 D' B2 U' F2 R2 D B' R' D2 B' R2 U' R B2,O,Algorithms in Archbold 2026 (2026-04-11),333 R1 E #5
 3454043001,R' D2 B L' D R2 L' B' R' B2 U2 R F2 D2 R U2 D2 B2 R' D2,O,Écija Open 2024 (2024-01-27~28),333 R1 B #5
 5418691001,R' F2 U F2 D' U' L2 U' F2 U R2 F' R F2 L2 B2 R D R2 B,O,Iowa Winter Cooldown 2026 (2026-02-28),333 R2 B #5
-4602856001,R F B2 U' R2 L B' R2 F2 U R2 D' R2 B2 L2 B2 R' F',O,First Solves Gothenburg 2025 (2025-03-29~30),333 R1 C #1
+5825224001,B2 L U' B R2 U2 B' R2 D B2 U R2 U D' L2 D' R F2 L,O,CubiKoronel 2026 (2026-09-12),333 Final A #5
 4512995001,F' U L2 U' L2 U' L2 D2 L2 U' B2 R2 U F' U2 R B2 F' U' L2 U',O,Hala February Kuwait 2025 (2025-02-21),333bf Final A #2
 3572567001,B D' B' R L F2 B R2 D2 L U2 D2 F2 R U B U2 R2,O,Cubing in Corinda Sunday 2024 (2024-03-10),333oh R1 B #1
 3597732001,R2 U L' F B2 R' U D F2 U' R2 F' U2 R2 F U2 D2 F,O,Naperville Winter 2024 (2024-03-16),333 R1 B #1

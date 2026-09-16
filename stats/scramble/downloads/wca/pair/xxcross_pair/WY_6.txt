@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / WY / bin 6
-# Population in this bin: 491
+# Population in this bin: 495
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 3261628010,B2 L2 F2 U B2 D2 F2 D' F2 L' U2 R2 U L2 U' B' D L B' L,W,Virginia Championship 2023 (2023-11-10~12),333mbf Final A #1
@@ -131,7 +131,7 @@
 5198631001,F L' F' U2 L R U2 L2 R U2 B L U' F' U2 B',Y,Bowling Green Fall 2025 (2025-11-16),333 R1 D #2
 2839668001,L' F2 L' D2 U2 B2 L2 F2 B D2 U' R F U' F' U2 B2 L2 U2,W,Swisscubing Cup IV 2023 (2023-06-24~25),333bf Final A E2
 4621761001,L2 D' R2 L' D R2 U D B R L2 F2 U' F2 B2 U2 L2 F2,W,Norrland Tour: Kubfors 2025 (2025-04-06),333oh Final A #4
-975766001,U2 R2 D2 F' U2 L2 U B L R2 B' F U2 L R2 F',Y,Almaty Winter Cube 2019 (2019-01-12~13),333oh R1 B E2
+5830603001,U2 F' L2 U2 B' F2 U2 L2 U F' D2 R2 U' B D2 F' R' B2 D,W,Ohio Championship 2026 (2026-09-11~13),333 R3 B #2
 984819001,U2 R2 U' L' U2 R U2 R U2 B U2 L2 F L2 U2 L2 F D2,Y,Poções 2019 (2019-01-19~20),333oh Final A E1
 1001813053,F2 R2 B2 F D2 B2 F R2 D F2 L' B F D B' L' B' L' F' U B R2,Y,Please Be Quiet Utah 2019 (2019-02-02),333mbf Final A #1
 1009748001,R' D F2 U F2 D2 R' U' B' D2 L' B2 D2 R' L2 U2 B2 L2 B2,W,Cool Down Sydney 2019 (2019-02-10),333 R1 E E2
@@ -164,7 +164,7 @@
 1253790001,L R D2 R2 D2 F2 R B2 D2 B U' B' U' B2 D2 L2 D R' U2,W,Constanta Cube Days 2019 (2019-08-10~11),333 R1 C #5
 5052279001,U' R2 D2 L2 U' L2 D F2 U R2 L F' D F D B D L' D',Y,Hello World Oruro 2025 (2025-09-27),333 R1 D #3
 1274048001,U2 B2 R' D2 R B2 U2 R' B' D2 L2 D2 U2 R2 B' U' B U L2 U,Y,Bucharest Blind and Stuff 2019 (2019-08-24~25),333bf Final A #3
-2631920001,R2 U' F L U2 L2 B2 R U2 R' U2 F2 U' R2 F2 L' U B D2,W,Colombo Matrix Open 2023 (2023-04-07~09),333 R1 B E2
+5823099001,R' B R D' L R2 D' L2 U' F2 U B' F' D B F L' U,W,Ardmore Autumn 2026 (2026-09-12),333 R1 A E2
 2524367001,D B2 R' F2 D2 F2 R' F' R' U' R2 D B' D L' B2 U',Y,Pretzel Mania 2023 (2023-02-25~26),333 R1 C #5
 2446522001,F D' B2 L B2 D2 L2 U2 R B' U2 R2 B2 R2 U' B' D2 R2,Y,Bundle Up Broomfield 2023 (2023-01-21),333 R1 B E2
 4459333064,R' L2 F' D' F2 B R D R2 B2 R2 D2 B2 R B2 R D2 L D B L B2,W,Wellington Mind Games 2025 (2025-01-26),333mbf Final A #2

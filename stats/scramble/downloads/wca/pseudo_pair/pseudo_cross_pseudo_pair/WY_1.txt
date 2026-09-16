@@ -1,14 +1,14 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / WY / bin 1
-# Population in this bin: 351
+# Population in this bin: 354
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5640748001,U2 R' U L F B2 R L2 U' F2 R2 L2 D2 R2 L2 F2 B L D,Y,Perth Puzzle Party 2026 (2026-05-16),333 Final A #1
 6462001,U L2 D U2 R2 U R2 B F' L' U F' L R2 B' F' D',W,Rumia Open 2014 (2014-03-29~30),333bf R1 A E2
 14361001,D' B2 D' F2 U' R2 F2 U2 R2 F' R B2 U2 F2 L' B' F' U,W,Hsinchu Spring Open 2014 (2014-04-27),333 R1 B E2
-29347001,D2 L2 B D2 B2 D2 F D2 F' L2 D B' D2 L B2 L' B' L2 U2 F2 D,W,No Parity Open 2014 (2014-06-21),333bf R1 A E1
+5826492001,F U2 F U' R' D' B L2 B2 L2 U2 R2 F D2 R2 L2 F D L',W,Cubing Summer Rybnik 2026 (2026-09-12~13),333oh R1 C #5
 3553361001,L D U F2 R2 U2 R2 D2 U L' D2 B2 U' L U L F D',Y,Castle Mania Niepołomice 2024 (2024-03-02~03),333 R2 B #4
 121316001,F2 D2 R' F2 R2 F2 L B2 U2 R2 U' L F2 U L2 R U2 F' D2 L2,W,AnHui University Open 2015 (2015-03-29),333oh Final A #4
 4674846027,U L2 D' R2 U L2 D' R' D U' R' U B2 D' B D2 B' D' L2,Y,Toronto Blindfolded 2025 (2025-04-26),333mbf Final A #1

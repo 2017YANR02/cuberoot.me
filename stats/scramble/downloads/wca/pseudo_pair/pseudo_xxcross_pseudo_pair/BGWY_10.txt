@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGWY / bin 10
-# Population in this bin: 30
-# Samples listed: 30 (all entries in this bin)
+# Population in this bin: 31
+# Samples listed: 31 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 161650001,B2 U2 F' U2 B' L2 F2 R2 U2 F U F' L' D R B2 L2 B' L' B2 D2 L' F2,B,TCG & Friends Arequipa 2015 (2015-07-08),333bf Final A E1
@@ -35,3 +35,4 @@
 5305314001,L F R F' L2 U D' R2 U2 B' U2 D2 B2 L2 U2 F' U2 R U2 L2,B,Imagination Station A 2026 (2026-01-03),333oh Final A E2
 5358812001,U L' D R2 U2 L2 F2 R' U2 F2 R2 B L' U L2 D L F' L2,B,North Star Cubing Challenge MN 2026 (2026-01-31~02-01),333 R1 B #5
 5686158001,U R' L2 B' D2 L2 F2 D2 F' R2 D2 R' U B2 F' R D' B' F2 U2,B,Only Cubes in ABQ 2026 (2026-06-06),333 R2 B #2
+5822650003,L2 R2 F2 L2 D2 B' L2 B U2 F2 L D' R U R' F' U R D F L' F2,B,Shhherborn Summer 2026 (2026-09-12),333mbf Final A #1

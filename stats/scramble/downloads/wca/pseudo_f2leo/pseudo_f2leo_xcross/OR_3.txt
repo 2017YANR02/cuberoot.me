@@ -1,12 +1,12 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / OR / bin 3
-# Population in this bin: 743
+# Population in this bin: 745
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5787001,R L2 F' L' F2 L U F L2 U' D2 B2 L2 B D2 B' U2 F' D2,R,GuateRubik 2014 (2014-03-30),333oh R1 A #3
-975756001,U2 R2 D B2 D L2 R2 U F2 L2 U' L' U2 R D L2 D2 R' U F',R,Almaty Winter Cube 2019 (2019-01-12~13),333oh R1 A #4
+5829061001,U' R' U2 R' L2 U D2 B' D' F' D2 F L2 F L2 B' U2 D2 R',O,Cocha NxN CBBA 2026 (2026-09-12~13),333oh R1 B #4
 4723539001,F2 D2 F' R2 B R2 D2 L2 D2 B' L2 D' L2 F2 U F R F',O,Ankara May A 2025 (2025-05-10),333 R2 A E2
 4753681001,R U2 B D2 R2 D2 B2 U2 B U B L2 B' L D2 U' R2,R,Let's Cube Long Beach 2025 (2025-05-25),333 R2 C #3
 30928001,F B' R' B D2 R2 U B2 D2 B' D2 R2 U' L2 F2 U F2 D' R2,R,São Paulo Open 2014 (2014-06-20~22),333 Final B #4

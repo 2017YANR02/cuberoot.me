@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / ORWY / bin 7
-# Population in this bin: 486
+# Population in this bin: 489
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 2198244038,B U' D' B2 L B' U B2 D2 F2 L2 U2 L2 B2 U' F2 U' R B,W,Trondheim Mental Breakdown 2022 (2022-09-24~25),333mbf Final A #3
@@ -79,7 +79,7 @@
 5447042001,R' D' L' U2 R D2 U2 R' F2 L' R F L2 U2 R F' U L' B,O,Stevenage March 2026 (2026-03-14~15),333 R1 A #4
 2818757052,R B U R' L' U F' U2 R U2 B2 R L B2 R' B2 U2 L' U' L' F',R,Side Events Bangalore 2023 (2023-06-24~25),333mbf Final B #1
 3657108001,U R F2 R L D L' D F R2 D2 B' D2 L2 D2 B D2 B2,W,Sheridan Stampede 2024 (2024-04-06),333 R2 A #5
-660588009,R2 U2 B F2 D2 L2 F R2 B' D' F2 L' D R2 B' D B2 F' U2 F L2 U2,Y,Rebild Open 2014 (2014-11-08~09),333mbf Final A #1
+5829376001,B' L2 U2 B F2 U2 L2 F L2 R2 F' R F' U' R' B2 R2 F2 U2,W,L'Open de Meaux 2026 (2026-09-12~13),333oh R1 B #5
 2543686001,B2 D2 L2 U B2 L2 F2 U2 R B U' L2 R2 B' D2 F D,R,Nhood Sevilla Open 2023 (2023-03-10~12),333oh R1 C #3
 661308009,B2 R2 U B2 U' L2 U' L2 D2 F L' D' B' U' L2 U' B D' B',W,Iruña Open 2017 (2017-04-08~09),333mbf Final A #1
 661418119,U2 F U2 F2 U2 F L2 U2 L2 F R U' L' B L U2 F D' F U2 L' F,Y,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2

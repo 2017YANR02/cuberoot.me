@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / R / bin 6
-# Population in this bin: 574
+# Population in this bin: 575
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 10957001,U2 L' F2 D2 R2 F2 L' F2 D2 R F L' F2 L2 R' F' R D,R,Lexington Spring 2014 (2014-04-12),333oh R1 B #2
@@ -52,7 +52,7 @@
 2642317001,L2 U' R B2 L2 D2 U2 F2 R' U' R2 B L2 B' D' U2 B D2,R,Cavarzere Cube Days 2023 (2023-04-15~16),333 R1 B #4
 263683001,U2 R2 B2 L' U2 F2 R2 F2 L2 R F2 D F' R D' F2 U2 R2 U2,R,Indian Open Rubik's Cube 2016 (2016-03-04~06),333oh R1 J #1
 267473001,R2 D' F2 L2 F2 D' R2 B' R' D F R B D' L2 U B' R,R,Cube Ala-eh 2016 (2016-03-13),333 Final B #4
-1290788001,L R2 D2 B2 D2 B2 U2 L' D2 F2 D' L B2 R2 F L' D U2,R,Llanocentro Open 2019 (2019-09-08),333 Final A #3
+5823855001,R' D L2 U' F2 R2 B2 R2 D2 U F L2 D' B' D U L U,R,Wuhan Crimson Autumn 2026 (2026-09-13),333 R2 A E2
 269014001,B' D2 B L2 F' L2 F' R2 F' L' D U2 R' D' B R2 B L2 F,R,Romanian Rubik Open 2016 (2016-03-19~20),333oh R2 A #4
 269463001,B2 L' B2 L D2 L2 D2 F2 L2 F' R2 D2 L D R' B2 L R' D2,R,Grudziądz Open 2016 (2016-03-19~20),333oh R1 A E2
 5575666020,U' R2 B' U2 F2 L2 F U2 B' R D2 B2 R2 F' R2 D' B' R' D' B R,R,WCC Western PBQ Championship - Santa Clara 2026 (2026-04-25),333mbf Final A #2

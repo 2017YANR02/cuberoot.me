@@ -2,7 +2,7 @@
 # Population in this bin: 339
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5813464001,F2 U B2 L2 D B2 U2 F2 D' L2 F D' R2 B F' D2 L' R' F' D2,G,Brookline Favorites IV 2026 (2026-08-29),333 Final A E2

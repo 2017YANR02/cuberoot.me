@@ -1,13 +1,13 @@
 # Scramble samples — dr / dr / G / bin 6
-# Population in this bin: 620
+# Population in this bin: 621
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 2351422001,B D' R D2 R' F' B R' B D2 F R2 U2 L2 U2 F' B2 R2 F',G,KSRCT Cube Open 2022 (2022-12-03~04),333oh R1 A #2
 21323001,D2 R2 F2 U2 R D2 L' U2 B R' F R B L2 U' R2 F2 U',G,Kirkkonummi Open 2014 (2014-05-17~18),333oh R1 A #2
-2598374001,B U2 F2 D2 F U2 L2 F L2 B' L2 F U L2 B2 F U' L B',G,Bobcat Battle 2023 (2023-04-01),333oh Final A E2
+5829953001,R2 D2 U2 B D2 B2 D2 F D2 F' R2 U2 R' B' U2 R' F' L2,G,Caminos de Guanajuato - Guanajuato 2026 (2026-09-12),333oh R1 B #4
 27970001,U B2 U R2 D' F2 U' B2 U R F' R' B D' U L U2 R2 F,G,Iceland Open 2014 (2014-06-14),333 Final A #4
 31913001,B2 U2 B2 F2 R2 D2 U B L' U2 L B F L2 F' U2 F2 D,G,ULA Rubiks 2014 (2014-06-27~28),333oh R1 A #4
 1525284016,D2 F2 R U2 F2 L B2 D2 L R F R D' L B U L2 D' B' L B2,G,Washington Championship 2020 (2020-01-24~26),333mbf Final A #2

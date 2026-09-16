@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / BGWY / bin 2
-# Population in this bin: 535
+# Population in this bin: 536
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 749001,B' F' L2 B' R2 F' D2 R' D2 F R2 F' D L B' L' R' F2,Y,Bogotá Cúbico 2014 (2014-03-15),333 R1 A #2
@@ -40,7 +40,7 @@
 1960318001,D B2 L2 R2 D B2 D R2 D B2 D' F D' U2 R' B' D F,W,Cube4fun League VI Jasło 2022 (2022-06-04~05),333oh R1 A #2
 3115040001,L' U' L2 F2 L2 D U2 L2 B R2 B U' L B' U L2 B' L,B,Estonian Open 2023 (2023-09-23~24),333 R1 C #2
 235563001,R2 B2 R2 D R2 D' L' R F2 L2 B' R' B D2 F' R B2,Y,Brain Studio Winter Open 2015 (2015-12-25~27),333 R1 J E1
-273586001,D2 L' D2 R D2 L' F2 R F2 U' F L R F2 L2 U' B2 U L2,G,Indian Nationals 2016 (2016-03-25~27),333oh Final B E1
+5827932001,D' F2 L2 U2 B2 L2 B' D2 F U2 F D' L F D2 U2 R F' R,W,Danish Championship 2026 (2026-09-11~13),333 R2 C E2
 5225787001,D2 F' D2 B' F D2 R2 B2 F' D' L' F' D2 L2 U B L2 B U2,Y,Delhi Cube Challenge 2025 (2025-11-29~30),333 R1 A #1
 5107649048,B2 D L2 F2 D2 B2 U2 R2 B L B2 R' F' D2 F' D' F R2 F' D',Y,Please Be Quiet Reno 2025 (2025-10-18),333mbf Final B #2
 5368086001,L B R2 B' R2 U2 F D R2 U R2 F2 D2 R U B L2,W,GLS Big Cubes Gdańsk 2026 (2026-02-07~08),333 R1 E #4

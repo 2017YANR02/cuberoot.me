@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / ORWY / bin 2
-# Population in this bin: 595
+# Population in this bin: 597
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5809326001,R2 F2 U2 R' B L2 B' R2 D2 F' D2 R U' F2 D F D2 R2,O,Brampton Summer 2026 (2026-08-29),333 R1 E #5

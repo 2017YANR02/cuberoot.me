@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / O / bin 3
-# Population in this bin: 677
+# Population in this bin: 681
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 1013692042,F2 U' B2 D2 L2 F2 U R2 D L2 F2 R' F2 L F U' L' B2 U L' F2 D',O,MathSoc Open 2019 (2019-02-09~10),333mbf Final A #1
@@ -31,7 +31,7 @@
 4730277001,D2 B' D2 L2 F' U2 B' R B L' U2 L U2 F' L' D B2 F',O,Żmigród Open 2025 (2025-05-17~18),333oh Final C #5
 1470009001,B' F' L2 F' D2 L2 D' L' B' U R2 D L2 D' R2 B2 F',O,Alicante Open 2019 (2019-12-21),333oh Final B #1
 1334941001,F2 R2 B2 R2 F2 D2 L D2 U2 L2 F D2 U2 R' F' D2 R2 D' F' R2,O,Oklahoma Fall 2019 (2019-10-05),333 R1 B #5
-125351001,B D' L D' R2 L' F U2 D B2 D2 L2 D2 R2 F2 R B2,O,Lexington Spring 2015 (2015-04-11),333 R2 B #2
+5824061001,R' F' R2 D' F2 R2 F2 U R2 U' F2 L2 U B R2 U' L R' F',O,Nerja Chanquete Open 2026 (2026-09-12~13),333 R2 A E1
 2617494001,L D B' D B' L2 B2 D2 F L2 B2 D' R B R D2 B2 L',O,Bluegrass Bash 2023 (2023-04-02),333 R2 A E2
 5784432008,B' R2 U2 F2 D2 B F2 U2 B' L2 R' U' L' B2 F' R' F R U',O,Dåstrup Diverse 2026 (2026-08-15~16),333mbf Final A #1
 3204574001,B2 D2 L' F' R' L2 F' U B2 U F U' L2 U' B2 D' B2 L2 B2 U2,O,Spooky Solving Idaho 2023 (2023-10-28),333 R1 A #3

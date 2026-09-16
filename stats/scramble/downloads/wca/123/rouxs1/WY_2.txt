@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / WY / bin 2
-# Population in this bin: 277
+# Population in this bin: 278
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 749001,B' F' L2 B' R2 F' D2 R' D2 F R2 F' D L B' L' R' F2,Y,Bogotá Cúbico 2014 (2014-03-15),333 R1 A #2
@@ -52,7 +52,7 @@
 605508001,D2 B D2 U2 B' D2 B2 U' L2 U2 R' B2 R B R2 D' U' F,W,Berkeley Summer 2017 (2017-09-16~17),333oh R1 D E1
 5780615001,B2 F D2 F' R2 B' L2 R2 F' R F' D F' R' D L2 R' D F,Y,Couffoul'Events 2026 (2026-08-07~09),333oh R1 A E2
 629083001,L' U' D2 B' U' L2 D' R' F2 B' L U2 R2 U2 B2 D2 L' D2,W,San Ramon Cubed 2017 (2017-10-28),333 R1 L E1
-4382879001,U' L' B2 D2 L2 F2 U2 R' F' L2 D' B F D2 F' R B' D2,Y,Franconia Christmas A 2024 (2024-12-20~22),333 R1 A #1
+5827932001,D' F2 L2 U2 B2 L2 B' D2 F U2 F D' L F D2 U2 R F' R,W,Danish Championship 2026 (2026-09-11~13),333 R2 C E2
 4674384007,U2 R2 D' F2 U2 B2 D F2 U B R' D' L2 U2 L D' L2 F' U2 B,W,Waterloo Blindfolded 2025 (2025-04-26),333mbf Final A #1
 4399665001,L F' L2 D B' D' L' F L2 U2 F' B2 L2 F2 R F' D' B',Y,Hannukubing Israel 2024 (2024-12-31~2025-01-01),333 R2 A #2
 660731009,U2 F2 L F2 L2 B2 L' B2 R D2 B' L2 F R U R2 D L2 R U' B R2,Y,La Blindqueada 2015 (2015-06-20),333mbf Final A #1

@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / BGORWY / bin 1
-# Population in this bin: 473
+# Population in this bin: 475
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 4152799001,U L2 D' B2 L2 B' D2 F D2 U' B2 U2 B' F D' U2 B,G,Side Events in Nyack 2024 (2024-09-28~29),333oh R1 D #4
@@ -26,7 +26,7 @@
 135928001,L' B2 D2 R U2 B2 R2 B2 F2 R2 D F D' R2 F' U2 R' D F' D' B',W,Nanjing Spring 2015 (2015-05-01~02),333bf R1 A #3
 5710536001,D' B2 U2 L D2 R' U2 F2 R' U2 R2 B' R' D' B' D2 F2 U2 B D' L' F2,W,Valdepeñas Open 2026 (2026-06-13~14),333bf R1 A E2
 2737854001,R2 B2 U2 L2 D2 B' R2 F' R B L2 R U2 R2 F U2 R',G,Hessen Open 2023 (2023-05-20~21),333oh Final A #5
-3339889001,L U' R2 D2 B2 R' B2 U2 F2 D L' U R D2 B2 D L,W,CubingZA Cape Cubes Challenge 2023 (2023-12-09~10),333 R2 C #2
+5825332001,R2 F R2 B' U2 F' D2 B2 D R2 F U B2 R2 F' D L2 B2,W,Williamsburg Open Fall 2026 (2026-09-12),333 R1 B #4
 157311001,F2 U B2 D B2 U' R2 D2 R2 F' D2 U' L2 U2 R B R' D2 R B' L2,B,Akash Open 2015 (2015-06-27~28),333bf Final A #3
 169800001,F2 R F2 D2 F2 L' U2 L F' D2 L' D2 B F2 U2 F2 R,B,CUCEI Open 2015 (2015-07-15~16),333ft Final B #1
 170902001,U R2 F2 U F2 R2 B2 R U' R' F2 L' D2 U' L D2 F2,O,N8W8 Summer 2015 (2015-08-01~02),333fm Final A #2

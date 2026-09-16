@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / BGOR / bin 5
-# Population in this bin: 472
+# Population in this bin: 473
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -43,7 +43,7 @@
 2432356058,D' L2 F2 L2 F2 D2 L F' L2 F' D' L' B' U' F2 L' R' F' D2,B,Mathsoc Delhi Open 2023 (2023-01-14~15),333mbf Final A #1
 5099434028,B2 R' D B' D R' U R U' F' R2 U F2 D F2 U2 B2 U D L B,O,Thailand Championship 2025 (2025-10-11~13),333mbf Final A #1
 2624051001,L2 U2 R2 B F D2 B' L F U2 B2 U' L B2 U' R' D2 B2,B,Eretum 2: Easter Boogaloo 2023 (2023-04-08),333 R1 A #4
-5053823001,F D2 F2 B' R' U' R2 F D' B L2 F2 B D2 F2 U2 L2 U2 L2,R,Amor y Amistad Aves María 2025 (2025-09-27~28),333 R2 B #4
+5821807001,F R F' B' R2 B R' D2 L2 F D' R2 D R2 U2 R2 B2 D2,O,Jogjakarta Happy Solving 2026 (2026-09-05),333 R1 C E1
 4650293001,B D' L2 U F D B' L F2 B2 R' U2 R' F2 D R' B,O,Brazos Cubing Spring 2025 (2025-04-13),333oh R1 B #2
 2268083001,F' R D2 U2 F2 R D2 R' B' R2 F2 U2 R' F L U2 F,R,Slow N Spooky Open 2022 (2022-10-29~30),333 R1 B E1
 4298316001,F R' L2 D R L' B' U F R F' B2 D' F2 D F2 D2 B2 L,B,Los Fuertes V2 Puebla 2024 (2024-11-16~18),333bf Final A #2

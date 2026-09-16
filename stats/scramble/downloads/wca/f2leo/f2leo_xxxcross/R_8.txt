@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / R / bin 8
-# Population in this bin: 874
+# Population in this bin: 875
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5760304001,B2 D B2 U F2 U B2 L' F2 U L2 F2 D L2 B L F2 D',R,Mental Breakdown Bangkok 2026 (2026-07-25),333bf Final B #5

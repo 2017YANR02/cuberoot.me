@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / O / bin 2
-# Population in this bin: 844
+# Population in this bin: 849
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5460689001,B2 L2 F' R B2 F2 R B2 L2 R D2 U' L U F2 D2 R B' U',O,URJC Open 2026 (2026-03-21~22),333oh Final C #5
@@ -145,7 +145,7 @@
 2143565001,U2 R' B2 U2 F2 L2 R' B2 L2 R' D' F D2 R2 B' U' B U L F' L B2,O,Champagne Open 2022 (2022-09-03~04),333bf R1 B E2
 1146896001,D R2 D' L2 D2 F2 R2 B2 L D' R U2 F2 R U',O,Uzbekistan Big Cubes Spring 2019 (2019-05-18~19),333 R1 B #5
 1151886001,R' D2 R B2 R2 B2 D F2 D L2 F2 R B' U F2 U' F,O,Brooklyn 2019 (2019-05-25),333 Final A E1
-4363255001,R2 B2 R' B2 R2 D2 F2 U2 L' F' R U2 B2 D2 F2 L' F D2,O,Rocklin Winter 2024 (2024-12-15),333 R1 B #4
+5830670001,U2 F D2 F2 U2 R' U2 L' D2 F2 L2 B L' B2 L2 D2 F L2,O,Ohio Championship 2026 (2026-09-11~13),333oh R1 C #3
 4122809001,F2 L2 U2 R2 D2 U2 R B2 F2 D2 U' L' B2 U R2 D2 U' L',O,High Five Bloomsburg 2024 (2024-09-21),333 R1 C #4
 5699272001,U' R' F2 D' L' D R U D2 F2 L' F2 R F2 D2 L B2 D',O,Take Your Time Bergshamra 2026 (2026-06-14),333 R1 B E1
 3965045001,B L' B2 L' R F2 R B2 D2 R' U B D2 U2 L2 U' L' F' U,O,NZ North Island Championship 2024 (2024-07-19~21),333 R1 A #2
@@ -197,7 +197,7 @@
 2440429001,U' B' R F2 U2 B' D L' D' F' R2 U' F2 U2 L2 D' L2 U',O,El Carmen de Viboral 2023 (2023-01-21~22),333 R1 B #3
 910890001,D' L2 F2 U2 F2 D U R2 F' R' F' U L R U' F' L' B' R,O,Dornogovi Open 2018 (2018-10-20),333 R1 B #4
 3995602001,U2 B' R U2 F2 R' B2 R F2 U2 L2 F' R2 B2 D2 R' D,O,CubingUSA Western Championship 2024 (2024-08-02~04),333 R1 B #4
-818399001,U' F2 L2 D2 B2 R2 U B2 U' R' D2 F2 L' U R U2 B2 R F',O,Peru Nationals 2018 (2018-06-29~07-01),333 R1 O #5
+5830167001,D U R2 U' R2 F2 D2 F2 L D L' R D2 F2 D' R B,O,Makati Side Events Open 2026 (2026-09-13),333 R1 B E1
 5251807001,F R' L2 F L2 B' F' L2 R' F L2 D2 B D R2,O,Nacionales Argentinas 2025 (2025-12-05~07),333bf R1 A E2
 5417899001,F R2 B' L' F' U2 L' R2 B' L2 U2 D2 F2 R2 F' R2 L B',O,Delhi Cube Open 2026 (2026-02-28~03-01),333 Final A E2
 1289887001,F2 D B2 L2 U2 R2 D L' B2 F' L F D F' D' L R F',O,Road to IC - Monterotondo 2019 (2019-09-07~08),333oh Final B #4

@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / R / bin 2
-# Population in this bin: 200
-# Samples listed: 200 (all entries in this bin)
+# Population in this bin: 202
+# Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 11137001,R U2 B2 L2 U2 L' R' F2 U' R2 D R F U2 L' R U' B F L B,R,Slovenian Open 2014 (2014-04-12~13),333bf Final A #3
@@ -44,7 +44,7 @@
 689286001,D L B R' B' R2 D' F D2 R2 F2 U R2 U F2 U D L2 U,R,Geethanjali Cube Open 2018 (2018-01-21),333 R1 F E1
 689298001,R2 F2 U R2 B2 F2 U2 L R B' D L2 D U' L2 U R D',R,Geethanjali Cube Open 2018 (2018-01-21),333 R1 H #4
 692241089,F2 D2 F2 U F2 L2 D' R2 U L' F2 L' U2 R' B' U' R2 D2 F2 D2 L B,R,Please Be Quiet WPI Winter 2018 (2018-01-20),333mbf Final A #3
-724374001,L2 B' L' D' B2 U2 B U B2 D L2 F U2 B D2 R2 B L2,R,RGIT Cube Open 2018 (2018-03-10),333oh R1 A #4
+5824748001,U2 B2 L' U2 L D F R F R2 D F' L2 F' L2 D2,R,Southport Autumn 2026 (2026-09-12~13),333 Final A #3
 733115001,D' L' D2 L2 D F B2 R2 U F2 U2 F' L2 U2 F2 R2 B' L2 F',R,Lagom är Bäst 2018 (2018-03-26),333 R1 A #2
 767019001,D' R U B D' R B2 L' B' L2 U2 R2 B2 U2 F2 D' L2 F2 U' F2,R,CubingUSA Southern Championship 2018 (2018-04-27~29),333 R1 E E1
 781961001,D2 L2 B2 D2 B' F2 D2 R2 B' U' L2 U R' F D L F2 U2 R2 U,R,ZHBIT Open 2018 (2018-05-20),333oh R1 A E2
@@ -201,7 +201,7 @@
 5508904028,U2 F' D2 F2 U2 B' D2 R2 D F' D2 R D' R F U' R2 D2 L B',R,No Peeking Calgary 2026 (2026-04-04~05),333mbf Final A #2
 5539908001,R2 L F' L' F L D2 B2 L2 D' F2 L2 D2 F' L2 F2,R,NZ South Island Championship 2026 (2026-04-10~12),333 Final A #2
 5545447001,L B2 R' L' D F' D' L D2 B2 D2 F2 B' U2 F' R2 D' F2 D,R,Swift Cubing in Swabia 2026 (2026-04-17~18),333 Final B #1
-5571248001,R' U' F U2 F2 R2 B2 U B2 R2 U B2 R D2 U L2 F2 D' U2 B' U' R' U' F,R,Fewest Moves Bogotá XII 2026 (2026-04-25),333fm Final A #2
+5830787001,R2 D L2 U' B2 D L' B L2 U L' R' U F2 L' D F2 D',R,Ohio Championship 2026 (2026-09-11~13),333 R1 C #5
 5743868001,D' R2 U2 B R2 B' D2 B' F2 R2 U' L2 D2 B' F' L U' L B',R,Michigan Mini 43 2026 (2026-07-07),333 R1 B #3
 5749436001,R F2 U' R' D2 B2 L' F' R2 F2 R' D2 B2 L' U2 L2 F2 U' B,R,Vigo Open 2026 (2026-07-11),333 R1 D E2
 5816695001,L2 U F U' L2 U B' U' R F2 R U2 L2 F2 L' U2 F2 B U,R,Bilbao Open 2026 (2026-09-05~06),333 R1 D E2

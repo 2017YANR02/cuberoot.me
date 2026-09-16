@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BGOR / bin 2
-# Population in this bin: 44
-# Samples listed: 44 (all entries in this bin)
+# Population in this bin: 45
+# Samples listed: 45 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 28543001,D2 R2 D2 B F L2 B U' F' U F' D U' R' D2 R2 F2 U2 L2 U2,G,Bucharest Rubik Summer 2014 (2014-06-15),333bf Final A #1
@@ -49,3 +49,4 @@
 5571248001,R' U' F U2 F2 R2 B2 U B2 R2 U B2 R D2 U L2 F2 D' U2 B' U' R' U' F,R,Fewest Moves Bogotá XII 2026 (2026-04-25),333fm Final A #2
 5763081001,B2 D2 F U2 R2 B L2 B' D B2 R2 U' B R D' R' D',O,Middle Georgia Summer Solving 2026 (2026-07-25),333 R2 A E1
 5775855001,B L U' L' U D F L U B2 L2 F2 R2 D R2 F2 B L',G,Cubetec UEA II Manaus 2026 (2026-08-08),333 R1 C #1
+5821566001,L2 B2 D2 R' B2 D2 B2 F2 U2 L' F R D2 L' U' B2 L,O,RUS Mall 2026 (2026-09-06),333 Final A #4

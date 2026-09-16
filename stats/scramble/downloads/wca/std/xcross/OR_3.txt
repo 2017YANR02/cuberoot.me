@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / OR / bin 3
-# Population in this bin: 291
+# Population in this bin: 292
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 4126175001,L' D2 L' B L' D2 B F2 R D2 L' U2 D2 L2 F2 D L2 B2,R,McMinnville Cubing Fall 2024 (2024-09-21),333oh R1 A #5
@@ -74,7 +74,7 @@
 5555613001,U D L B2 D2 L' U' F L D2 R D2 B2 L' U2 R2 B2 U2 F',R,St. Ansgar 2026 (2026-04-18),333 R1 C #5
 796714019,F2 D' B2 D' R2 D' U' B2 L' B' F2 L2 B' D L2 B2 L R2 F2 L' F2,O,Please Be Quiet Waterloo 2018 (2018-06-03),333mbf Final A #1
 4709694001,R' L U R' B R B2 U' L2 U2 F2 R2 B' U2 F2 B R2 L',R,West Negros Cube Fest 2025 (2025-05-04),333 Final B #5
-4279660001,U' F R2 B' D2 F D2 F2 L F' R2 F2 R2 U' F U R' B',R,Slow N Steady UMD Fall 2024 (2024-11-09~10),333 R1 D #1
+5829061001,U' R' U2 R' L2 U D2 B' D' F' D2 F L2 F L2 B' U2 D2 R',O,Cocha NxN CBBA 2026 (2026-09-12~13),333oh R1 B #4
 826973001,B2 F2 D' F2 U' F2 L2 U' R U' F' U2 B2 F' L' D R F U,R,Linfen Open 2018 (2018-07-08),333 R2 C #2
 4522402001,B2 R2 D L2 U2 R2 U' B2 R2 U L' B R2 F' R F' U R2 F',O,Cincinnati Speed Solving 2025 (2025-02-22),333 R2 A #3
 867642001,F2 D2 R2 B' U2 B L2 U2 B' D2 L2 U L B' U' L B' D R',R,Cubing For LLS Fall 2018 (2018-08-25),333 R1 E E2

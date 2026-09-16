@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / WY / bin 6
-# Population in this bin: 479
+# Population in this bin: 480
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 27659001,B2 L B2 L D2 R F2 D2 R2 D' F2 R' F2 D' F2 D' B' L2 U,Y,Nottingham Summer 2014 (2014-06-14~15),333oh R1 B #3
@@ -123,7 +123,7 @@
 819162021,B2 D' F2 D R2 U' R2 B2 D' U' L B F' R' D U' B L B2 R' B R2,Y,Svetlye Gory Open 2018 (2018-06-29~07-01),333mbf Final A #1
 3480155001,F R' B2 U F2 U2 R2 U' F2 D' B2 U' B' U L2 U B2 L' D B,W,Daegu Cold Winter 2024 (2024-02-03~04),333 R2 A #4
 4746477001,F B2 D2 B D' L' U' D' F2 L' U F U2 L2 B2 U2 B' U2,Y,Entre Ríos Cubea 2025 (2025-05-24~25),333 Final A #4
-4272802001,B2 U2 F2 D U' B2 L R' F U R' D' L',Y,Esportes da Mente Vitória 2024 (2024-11-03),333 R2 A #1
+5825904001,U2 L2 D2 L2 U2 B2 L F2 R2 F' D' L' U2 L' B2 L',Y,Arkansas Cube Day 2026 (2026-09-12),333oh Final A #4
 3691819001,L' F' L' F L B' U' D2 F R2 B2 R2 L2 F U L' U L,Y,Stevenage April 2024 (2024-04-20~21),333 R2 A E2
 4397009046,D' B' U R' F L2 F U2 R' B2 R U2 R' U2 F2 R2 F2 L' U' L B',W,Uzbekistan Nationals 2024 (2024-12-27~29),333mbf Final A #1
 4751484001,R L2 U2 R F2 R2 D' B R2 B2 L2 D F2 U' R2 B L D2,Y,Cyprus Cubing League II 2025 (2025-05-24),333 Final A #3

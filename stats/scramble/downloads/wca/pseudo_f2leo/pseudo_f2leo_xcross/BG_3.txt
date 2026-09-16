@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / BG / bin 3
-# Population in this bin: 705
+# Population in this bin: 711
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 242001,L' U2 F2 L D2 U2 R D2 U' B' R2 D R' B D F' D' B2 D',B,Montréal Open 2014 (2014-03-15),333 R1 A #3
@@ -148,8 +148,8 @@
 3311963001,F R2 L2 U F2 L' B' L' U2 L2 B2 R2 F' U2 B D2 B' U2,B,UNSA Speedcubing Primavera II 2023 (2023-12-02~03),333 R2 B E2
 661493031,B U2 R2 B' U2 F2 U2 F' D2 R2 D L2 B L' B' D B2 D2 R U' R2 D',G,Estonian Open 2017 (2017-09-09),333mbf Final A #1
 663493001,B L2 B D2 R2 D2 B' L2 D' B U2 F2 R U' L2 D2 R' B2 L',B,GLS Final 2017 (2017-12-09~10),333oh Final B E1
-4214351016,L' B' L2 D L D2 R2 D2 F2 R' B2 U L2 U2 B F' U' F' L' F,B,Valsugana Speedcubing 2024 (2024-10-19~20),333mbf Final A #1
-3167340001,F' B2 D' L2 D L' F L' R2 F2 R2 B' D2 B' L' F2 U,B,Chengdu Flash Cube Open 2023 (2023-10-15),333 R1 J #2
+5825504001,F' D R U2 R' U2 B2 R B2 F2 U F' U2 L U2 B2 F' D',G,Villanueva Open 2026 (2026-09-12~13),333oh Final A #4
+5822000001,U D2 L' B' L' U B' D R2 U2 L2 U' L2 F R2 D' R2,B,AXÉzinho 3x3 - Lauro 2026 (2026-09-05),333 R1 E E2
 5307445001,L' B R U2 L D2 R B2 L' D2 R2 U2 F' D B2 F' D' L B R2,G,Lugo Open 2026 (2026-01-03),333bf Final A #1
 3155239001,U2 R D2 B2 L' F2 U2 L D2 B' L B D' B2 R' B F L' U2 L2,B,Ankuram Open Saturday 2023 (2023-10-14),333bf Final B E1
 690158001,B2 L2 D2 F2 R2 D2 U2 F L2 U' F' U L2 D2 L' D B' U2 L F',B,Caribe Challenge 2018 (2018-01-20~21),333 R1 B E2

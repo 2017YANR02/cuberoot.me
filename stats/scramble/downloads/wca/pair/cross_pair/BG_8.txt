@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BG / bin 8
-# Population in this bin: 427
+# Population in this bin: 429
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 679001,R2 U2 B2 R2 U B2 D' U' L' D R F2 D' L' B F2 U L' R2,B,Cube Kingdom II 2014 (2014-03-15),333 Final A #5
@@ -116,7 +116,7 @@
 871234001,B L B U2 L B R' D R U L U2 F' D2 B U2 R2 F2,B,Bilbao Open 2018 (2018-09-01~02),333 R2 A #3
 4044407001,U F2 U B' R2 B R2 B' L2 B2 D2 B D B2 U2 L F R' D' U',B,Cubing Among the Drumheller Dinosaurs 2024 (2024-08-24),333 R2 E #1
 2675017001,R L2 D F B U F2 L' U F2 U D R2 D' R2 B R B,B,Medan Speedcubing Festival 2023 (2023-04-29~30),333oh R1 C E2
-3875407053,R L' F D' F U R L' F2 D L2 F2 R2 B D2 B U2 B' U2 L2 U,B,Swisscubing Cup Mental Breakdown I 2024 (2024-06-15~16),333mbf Final A #2
+5830784001,R2 U L2 D2 U B2 D B2 R' F' D F U L R' F' L2 F2,B,Ohio Championship 2026 (2026-09-11~13),333 R3 B #5
 887065001,F2 L U2 B2 R2 B2 L U2 L F' D2 R' B D' R' U' L R2 U R,B,Montevideo Palace 2018 (2018-09-22),333 R2 B E1
 920688001,U2 B2 L2 B2 U2 R U2 F2 L' U2 L' F' L2 D' R' U' F L R2 B' L2,B,Game Pro Tour 2018 (2018-10-27~28),333 R1 B #3
 936724015,R F2 U2 R2 D2 L D2 R F2 L' D U2 R B D' L' F U2 R U' L2 B R2,B,Silent Swap Open 2018 (2018-11-17~18),333mbf Final A #1

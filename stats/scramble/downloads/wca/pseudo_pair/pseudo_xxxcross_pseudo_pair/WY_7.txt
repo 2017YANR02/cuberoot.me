@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / WY / bin 7
-# Population in this bin: 234
+# Population in this bin: 236
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 1993001,F' D' F2 R2 U F R F2 D R' D' F2 D2 F R2 F2 R2 L2,Y,Zonhoven Open 2014 (2014-03-22~23),333 R1 A #1
@@ -28,7 +28,7 @@
 541574001,L2 U L2 U L2 F2 U2 B' L' B2 L2 F2 D U' F' D R F2 D' B R2,W,Hillcrest Cubing 2017 (2017-07-01),333bf Final A E2
 542645001,U' B2 U B2 R2 F2 U2 L2 R2 D' B' L F' L' R2 F L2 F L2,W,Eger Open 2017 (2017-07-01~02),333 R1 B #2
 552029001,D2 R2 B2 U2 L2 D B2 R F R' D L' B F2 D U2 F2 R2 F2,W,Canadian Open 2017 (2017-07-15~16),333oh R1 C #3
-606390001,D U F2 D B2 D F D' L F' U' F L2 D R B2 F' R2,W,WPI Fall Cube Fest 2017 (2017-10-01),333 R1 A #3
+5829376001,B' L2 U2 B F2 U2 L2 F L2 R2 F' R F' U' R' B2 R2 F2 U2,W,L'Open de Meaux 2026 (2026-09-12~13),333oh R1 B #5
 4899202001,F2 D2 U L2 F2 R F2 U2 L2 U2 R D' U2 R' F R2 F,Y,Nyíregyháza Open 2025 (2025-08-02~03),333 R2 B #3
 609972036,R2 D2 B2 D U2 L2 D L2 B2 U2 B D2 R' D' U' B2 L B U2 L D,W,Hefei Open 2017 (2017-10-05~07),333mbf Final A #1
 643611001,R2 D2 F2 D F2 U F2 L2 D' U' F' R' F2 D F D' F L' B' D,W,Veterans Day Open 2017 (2017-11-11),333 R2 B #1
@@ -89,7 +89,7 @@
 1682876001,R B R U' F2 U L2 D' L' U F2 U2 D R2 U D' B2 D,Y,Empire State Summer B 2021 (2021-08-01),333oh R2 B E1
 1690307001,R D B' L D2 R U2 L' R' U2 R F L2 R2 D2 L U' R2,W,Cubing Ekat Open 2021 (2021-09-11~12),333oh Final A E1
 1791497001,U2 B2 R B2 R D2 R' B2 R2 F' L F' R B' R2 D U2 B2,Y,Tyumen Alpaca 2022 (2022-01-23),333 R1 A #5
-1801344001,U B2 R' U' B L' B U L' B D2 B2 U2 D2 R D2 F2 L D2,W,Dontrien Open 2022 (2022-02-05~06),333bf Final A #1
+5826707001,F2 R L2 U F' D B' D2 R F2 U2 D2 R F2 D' L2 U' B2,W,Benicia Open II 2026 (2026-09-12),333 R2 B #5
 1839992001,B' L2 U2 L2 B' L2 F' R2 U2 L B' L2 U F D U2 R' B D2,Y,Aves María 2022 (2022-03-20~21),333 Final A #5
 1858695001,R D' F' R F2 L2 U R B2 U2 R2 L B2 R F2 D2 B U2,W,Slow N Steady Spring 2022 (2022-04-02),333 Final A #3
 1882653001,F' D' R2 B2 U2 F' L B D2 L D2 B2 L' D2 R' B2 R' B',W,San Diego Spring 2022 (2022-04-16),333 R1 B E2

@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / O / bin 6
-# Population in this bin: 270
+# Population in this bin: 271
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 10959001,R F2 D2 U2 F2 R' U2 B2 R B R U' B2 F' R' D F' D' F,O,Lexington Spring 2014 (2014-04-12),333oh R1 B #4
@@ -54,7 +54,7 @@
 4237398001,R2 D2 R' F2 R2 B R2 D2 F D2 U2 F U2 D L B2 D2 B U' B',O,Ottawa 3x3x3 Fall A 2024 (2024-10-25),333 R1 C #4
 660871020,D2 F2 D2 R2 F2 R2 D' B2 L2 U L D U F' D B' F2 L F R B',O,MPEI Open 2015 (2015-11-27~29),333mbf Final A #1
 4876780001,R' U B2 F2 U' L2 B2 D F' D' F R2 D2 U F2 L F2 R',O,Stevenage July 2025 (2025-07-19~20),333 R1 B #4
-660885025,D' L2 D' U' F2 U R B2 L' R2 U2 F' R2 B' R' U L' F' L' F2,O,Plenty o' Parity 2015 (2015-12-12~13),333mbf Final A #2
+5830167001,D U R2 U' R2 F2 D2 F2 L D L' R D2 F2 D' R B,O,Makati Side Events Open 2026 (2026-09-13),333 R1 B E1
 661332021,D F2 R2 F2 D' R2 F2 U L' D' L2 F' U2 L' D B F L' U' L B,O,German Open 2017 (2017-04-29~30),333mbf Final A #1
 661357029,U2 L2 R' F2 U2 F2 R' D L' U2 L' B' D' U B' L2 D L' B' L2,O,Indian Nationals 2017 (2017-05-12~14),333mbf Final A #1
 662247001,L' F2 L D2 R' F2 R' B R2 B D2 B2 R' D R2 F2 U' F',O,Vestby Open 2017 (2017-12-08),333 R2 A #2

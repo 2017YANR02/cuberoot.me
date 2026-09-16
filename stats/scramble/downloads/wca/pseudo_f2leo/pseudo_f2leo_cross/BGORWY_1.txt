@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / BGORWY / bin 1
-# Population in this bin: 257
+# Population in this bin: 258
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 29329001,B2 R2 F2 U R2 U B2 U2 B U L2 D' F D2 U' L2 U,O,No Parity Open 2014 (2014-06-21),333 R2 A E2
@@ -60,7 +60,7 @@
 661170004,L R U2 B2 L F2 L B2 D' B' D L' D' B U R U R D,R,GeniusCube 2016 (2016-11-05~07),333mbf Final A #1
 4881503001,U' L2 B2 U B2 D' U' R2 U B2 R F2 D L2 R' D' U' R2 U',R,Naucalli Ce 2025 (2025-07-19~20),333 R1 C #5
 5467116001,D' F' L2 B2 D B2 R2 D' L2 D' R' B' R' D2 R' D F R2,O,Sumgait Spring Open 2026 (2026-03-19),333 R1 A #4
-661398010,F2 D' B2 L2 D L2 R' B' U L' U F L U B2 R2 B2 F' L B,R,Plentzia Open 2017 (2017-06-17~18),333mbf Final A #1
+5825332001,R2 F R2 B' U2 F' D2 B2 D R2 F U B2 R2 F' D L2 B2,W,Williamsburg Open Fall 2026 (2026-09-12),333 R1 B #4
 5507697001,R' B2 L D L2 D2 F' U R B2 D2 R2 F' D2 F D2 U' R2,O,MYHM UoSM Final Cube Open 2026 (2026-04-04~05),333 R1 A #4
 661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,G,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2
 662716001,U2 R2 U' R2 U L2 B2 L2 U' L' U' L2 F L' U2 R2 U L2 R2,O,Cebu Speedcubing Year End 2017 (2017-12-09),333oh Final A #5

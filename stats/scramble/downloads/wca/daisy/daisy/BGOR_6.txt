@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / BGOR / bin 6
-# Population in this bin: 858
+# Population in this bin: 860
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 3507517001,R2 B2 D' L2 D' R2 F R2 B' F' U R' F D2 L2 R U B',B,Side Events Bangalore Feb 2024 (2024-02-10~11),333bf Final B #2

@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / W / bin 10
-# Population in this bin: 358
+# Population in this bin: 359
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 37618001,U' B2 D' L F' D' R' U R U' F2 U F2 D L2 F2 U B2 L2 D,W,Welcome To Cambridge 2014 (2014-07-12~13),333oh R1 B #3
@@ -35,7 +35,7 @@
 5197734001,D L D L2 U R2 D F2 U' B R2 U B' F' D B U R2 B R,W,Back to Buchy 2025 (2025-11-15~16),333bf Final A #3
 253455001,L' U2 F' R2 F' R2 F2 R' B2 U F' U2 R2 D2 B' R2 U2,W,Cube Challenge Quark 2016 (2016-02-06~07),333 R2 B #3
 258722001,B L2 F2 L2 B D2 F L2 D2 B' L D B L2 B2 U B2 D2 L2 F2 L B',W,Ignus Open 2016 (2016-02-28),333bf Final B E1
-270429001,D L' F2 U2 R' U2 D' F2 L D' B' U2 F L2 F' U2 F U2,W,Crazy Cubes Summer 2016 (2016-03-20),333oh R1 A #2
+5821503001,F' L' B' L2 U' F2 R F U F' L D2 R D2 L,W,RUS Mall 2026 (2026-09-06),333 Final A #1
 294727001,B' R' D2 F' U' L U D F2 L' F2 D B2 D2 B2 L2 D' L2 B2 U',W,Xi'an Summer 2016 (2016-05-08),333 R1 A #1
 4847008001,U B2 R2 F2 L2 U L2 D2 L F' U2 B R' B L2 U2 B' F' D2,W,Di Tella Despega 2025 (2025-07-06),333oh Final A #3
 299198001,F D2 L' F R2 U' D2 L' U L2 F U2 F2 L2 F' D2 R2 B L2 B',W,Dubai Open 2016 (2016-05-13),333 R1 C #2

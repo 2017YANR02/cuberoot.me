@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / Y / bin 5
-# Population in this bin: 123
-# Samples listed: 123 (all entries in this bin)
+# Population in this bin: 124
+# Samples listed: 124 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,Y,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -128,3 +128,4 @@
 5663771021,D' L F U2 L2 U' R2 F' U' F R2 D2 B U2 B' D2 R2 F2 R2 D,Y,Barby Cube 2026 (2026-05-22~25),333mbf Final A #1
 5690374048,R2 U F U2 L' F2 B2 R' F D' L F2 D2 L2 F2 U' D' L' F,Y,Headache in Kode 2026 (2026-06-05~07),333mbf R1 A #1
 5690390001,R2 B2 F2 L' F2 U2 B2 U' B' U' B R F' L' F D U F L' F,Y,Headache in Kode 2026 (2026-06-05~07),333bf Final A #4
+5821566001,L2 B2 D2 R' B2 D2 B2 F2 U2 L' F R D2 L' U' B2 L,Y,RUS Mall 2026 (2026-09-06),333 Final A #4

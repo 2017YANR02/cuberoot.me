@@ -1,8 +1,8 @@
 # Scramble samples — 222 / block222 / BGORWY / bin 1
-# Population in this bin: 359
+# Population in this bin: 362
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5003001,F D2 F' B2 D F B2 D L' D' L' F2 R' F2 L2 D2 B2,G,Tula Open 2014 (2014-03-28~30),333 R1 B #4
@@ -183,7 +183,7 @@
 2945298001,R' B U' D2 B2 F2 L2 D2 F2 D2 R D2 U R' B2 U B L' D',B,mcubes Cube Open 2023 (2023-07-29~30),333 R1 F E2
 2630488026,D2 F U R2 D2 L D2 R' B2 D2 F2 D2 B' U L2 R U2 R2 U2 L,G,Barby Cube 2023 (2023-04-08~10),333mbf Final A #1
 5568635001,R D' R' U' F' U' B R U2 B D L2 B2 U' L2 U,B,Greenwoods Summer Overtime 2026 (2026-04-19),333 R1 B #3
-5775855001,B L U' L' U D F L U B2 L2 F2 R2 D R2 F2 B L',G,Cubetec UEA II Manaus 2026 (2026-08-08),333 R1 C #1
+5829061001,U' R' U2 R' L2 U D2 B' D' F' D2 F L2 F L2 B' U2 D2 R',B,Cocha NxN CBBA 2026 (2026-09-12~13),333oh R1 B #4
 2676833013,R' L2 B' R2 B2 U F' L2 B2 D' L R2 D2 F' D2 B D2 L2 B R2 B,G,BrizZon Side Open II 2023 (2023-04-29~05-01),333mbf Final B #1
 2688637001,B L B' D2 U2 L U2 R B2 U2 L D B' F' D' B' R2 D2,B,Seoul Spring 2023 (2023-05-07),333 R1 G #5
 2693270001,U2 F2 U' L2 D2 F2 U' R2 B2 F2 U' L' D R U2 R2 F2 U',B,Østervang Open 2023 (2023-05-06~07),333 Final B #5

@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / R / bin 12
-# Population in this bin: 943
+# Population in this bin: 946
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 4628411001,U2 L' F' L2 B D2 B2 F' U2 F' D' B D2 U' L' D2 B L F',R,II Colatina Open 2025 (2025-04-05),333 Final A #5

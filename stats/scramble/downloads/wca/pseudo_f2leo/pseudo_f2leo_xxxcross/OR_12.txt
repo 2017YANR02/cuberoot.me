@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / OR / bin 12
-# Population in this bin: 223
+# Population in this bin: 224
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5741620001,B' U2 F D2 B2 L2 F' R2 F D F2 R2 U' B' D B2 L2 R B' L',O,Wiltshire Summer 2026 (2026-07-04~05),333 R1 A #1
@@ -176,7 +176,7 @@
 5699480001,F2 D' F' R B2 U L U B' D' F' B2 R2 F2 R2 U F2 R2 B2 U2,O,Twist 'N Turn Kyiv 2026 (2026-06-14),333 R2 A E1
 4408883001,F2 B2 R2 U' F2 L' B R F U' R2 U' L2 F2 L2 F2 D' R2 B,O,Space City Winter TX 2025 (2025-01-04),333 R1 E #3
 4418162076,B' U2 R' U L D2 F' D B' U' F' R2 B2 L2 B2 U2 R2 U F2 D L B',O,Gem City Airplane Mode Special V OH 2025 (2025-01-12),333mbf Final B #1
-4430315001,D' F' L D B2 U' B U2 R' D R2 U2 F L2 B2 R2 U2 L2 U,O,Chichester January 2025 (2025-01-18~19),333 R1 C #3
+5828893001,F D2 R U2 L' R' U2 R D2 U' L D R B2 F L B U L2,O,III Nova Carapina Challenge 2026 (2026-09-12~13),333 R1 A E2
 4431073001,D2 B' U2 F2 U L2 D B2 D F2 L2 B2 U R' B U B2 L' B' U2,O,Ameca Nayarit 2025 (2025-01-18~19),333oh R2 B #4
 4435849001,U F' U2 B2 R2 D' L2 R2 D2 F2 R U2 F2 D' L2 D L2 F' L,O,Starting Viña 2025 (2025-01-18~19),333 Final A #1
 4508310001,L F R2 D L' F D' R' D2 L2 F2 D2 L2 F' B' U' F' R',O,D21 Delhi Cube Open B 2025 (2025-02-22),333 Final B #4
