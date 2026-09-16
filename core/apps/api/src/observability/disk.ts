@@ -1,8 +1,7 @@
-import { lstat, opendir, realpath, statfs } from 'node:fs/promises';
+import { lstat, opendir, realpath, statfs, readFile, mkdir, writeFile, rename } from 'node:fs/promises';
 import { posix } from 'node:path';
 import { setTimeout as pause } from 'node:timers/promises';
 
-const CACHE_MS = 5 * 60_000;
 const COOLDOWN_MS = 60_000;
 const BLOCKED = ['/proc', '/sys', '/dev', '/run'];
 
@@ -15,6 +14,14 @@ export interface DirectorySnapshot {
   omittedCount: number;
   partial: boolean;
   scannedAt: string;
+}
+
+export interface DiskProgress {
+  entries: number;
+  bytes: number;
+  currentPath: string;
+  startedAt: string;
+  updatedAt: string;
 }
 
 export function validateDiskPath(path: string): string {
@@ -35,13 +42,16 @@ export async function resolveDiskPath(path: string): Promise<string> {
 
 // Serial metadata reads only: never open file contents or dereference symlinks.
 // Bound work, open directory handles, hard-link bookkeeping and response size.
-export async function scanDiskDirectory(path: string): Promise<DirectorySnapshot> {
+export async function scanDiskDirectory(path: string, onProgress: (progress: DiskProgress) => void = () => {}): Promise<DirectorySnapshot> {
   if (process.platform !== 'linux') throw new Error('Disk scanning requires Linux');
   await resolveDiskPath(path);
   const root = await lstat(path);
   const deadline = Date.now() + 120_000;
   const seen = new Set<number>();
   let count = 0;
+  let allocated = 0;
+  const startedAt = new Date().toISOString();
+  let lastProgress = 0;
   let partial = false;
   let exhausted = false;
   const children: DirectorySnapshot['children'] = [];
@@ -61,6 +71,11 @@ export async function scanDiskDirectory(path: string): Promise<DirectorySnapshot
       }
       let bytes = info.blocks * 512;
       count++;
+      allocated += bytes;
+      if (Date.now() - lastProgress >= 250) {
+        lastProgress = Date.now();
+        onProgress({ entries: count, bytes: allocated, currentPath: info.isDirectory() ? directory : posix.dirname(directory), startedAt, updatedAt: new Date().toISOString() });
+      }
       if (count % 256 === 0) await pause(8);
       if (!info.isDirectory() || info.isSymbolicLink()) return bytes;
       const entries = await opendir(directory);
@@ -103,24 +118,56 @@ export async function diskCapacity() {
   };
 }
 
-type ScanEntry = { snapshot: DirectorySnapshot | null; error: boolean; startedAt: number };
+type ScanEntry = { snapshot: DirectorySnapshot | null; error: boolean; startedAt: number; progress: DiskProgress | null; saveError: boolean };
 
 export class DiskScanner {
   private entries = new Map<string, ScanEntry>();
   private active: string | null = null;
-  constructor(private scan = scanDiskDirectory, private now = Date.now) {}
+  private loaded: Promise<void> | undefined;
+  constructor(private scan = scanDiskDirectory, private now = Date.now, private cacheFile?: string) {}
+
+  load(): Promise<void> {
+    return this.loaded ??= this.loadSaved();
+  }
+
+  private async loadSaved() {
+    if (!this.cacheFile) return;
+    try {
+      const snapshots: DirectorySnapshot[] = JSON.parse(await readFile(this.cacheFile, 'utf8'));
+      if (!Array.isArray(snapshots) || snapshots.length > 64) return;
+      for (const snapshot of snapshots) {
+        validateDiskPath(snapshot.path);
+        if (!Number.isFinite(snapshot.bytes) || snapshot.bytes < 0 || !Array.isArray(snapshot.children)
+          || snapshot.children.length > 200 || !Number.isFinite(Date.parse(snapshot.scannedAt))) continue;
+        this.entries.set(snapshot.path, { snapshot, error: false, startedAt: 0, progress: null, saveError: false });
+      }
+    } catch { /* Missing or damaged saved results never trigger a scan. */ }
+  }
+
+  private async save() {
+    if (!this.cacheFile) return;
+    await mkdir(posix.dirname(this.cacheFile), { recursive: true, mode: 0o700 });
+    const snapshots = [...this.entries.values()].flatMap(entry => entry.snapshot ? [entry.snapshot] : []);
+    const temporary = `${this.cacheFile}.${process.pid}.tmp`;
+    await writeFile(temporary, JSON.stringify(snapshots), { mode: 0o600 });
+    await rename(temporary, this.cacheFile);
+  }
 
   read(path: string, refresh = false) {
     const now = this.now();
     let entry = this.entries.get(path);
-    const due = !entry || (!entry.error && now - entry.startedAt >= CACHE_MS) || refresh;
+    const due = refresh;
     if (due && this.active === null && (!entry || now - entry.startedAt >= COOLDOWN_MS)) {
       if (!entry && this.entries.size >= 64) this.entries.delete(this.entries.keys().next().value!);
-      entry = { snapshot: entry?.snapshot ?? null, error: false, startedAt: now };
+      entry = { snapshot: entry?.snapshot ?? null, error: false, startedAt: now, saveError: false,
+        progress: { entries: 0, bytes: 0, currentPath: path, startedAt: new Date(now).toISOString(), updatedAt: new Date(now).toISOString() } };
       this.entries.set(path, entry);
       this.active = path;
       const target = entry;
-      void this.scan(path).then(snapshot => { target.snapshot = snapshot; })
+      void this.scan(path, progress => { target.progress = progress; }).then(async snapshot => {
+        target.snapshot = snapshot;
+        try { await this.save(); } catch { target.saveError = true; }
+      })
         .catch(() => { target.error = true; })
         .finally(() => { this.active = null; });
     }
@@ -129,9 +176,12 @@ export class DiskScanner {
       scanning: this.active === path,
       busy: due && this.active !== null && this.active !== path,
       error: entry?.error ?? false,
+      saveError: entry?.saveError ?? false,
+      progress: this.active === path ? entry?.progress ?? null : null,
       refreshAfter: entry ? new Date(entry.startedAt + COOLDOWN_MS).toISOString() : null,
     };
   }
 }
 
-export const diskScanner = new DiskScanner();
+// Stable runtime state lives outside immutable releases and the nginx response cache.
+export const diskScanner = new DiskScanner(scanDiskDirectory, Date.now, '/root/core-api/state/admin-disk.json');
