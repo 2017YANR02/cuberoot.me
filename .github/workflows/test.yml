@@ -426,12 +426,16 @@ jobs:
             "android.permission.ACCESS_COARSE_LOCATION' maxSdkVersion='30" \
             "android.permission.ACCESS_FINE_LOCATION' maxSdkVersion='30" \
             'android.permission.ACCESS_NETWORK_STATE' \
+            'android.permission.ACCESS_WIFI_STATE' \
             "android.permission.BLUETOOTH' maxSdkVersion='30" \
             "android.permission.BLUETOOTH_ADMIN' maxSdkVersion='30" \
             'android.permission.BLUETOOTH_CONNECT' \
             'android.permission.BLUETOOTH_SCAN' \
             'android.permission.INTERNET' \
+            'android.permission.POST_NOTIFICATIONS' \
             'android.permission.VIBRATE' \
+            'com.vivo.notification.permission.BADGE_ICON' \
+            'getui.permission.GetuiService.me.cuberoot.app' \
             'me.cuberoot.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION' | sort)
           echo "$permissions"
           if [[ "$permissions" != "$expected_permissions" ]]; then
