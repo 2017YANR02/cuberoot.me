@@ -2111,6 +2111,8 @@ export interface InferredRecord {
   personWcaId: string;   // 可能为空(新人);排名 overlay 按它去重
   personIso2: string;    // 大写
   startDate: string | null;
+  /** Same-round personal record, confirmed by the existing chronological PR ranks. */
+  companionPr?: { type: 'single' | 'average'; attemptResult: number };
 }
 
 // 推断纪录池:比赛 slug → 该场抽出的纪录行.
@@ -2127,7 +2129,7 @@ function inInferredWindow(startDate: string | null): boolean {
   return days <= INFERRED_RECENT_WINDOW_DAYS && days >= -2;
 }
 
-function collectInferred(data: CompData, startDate: string | null): InferredRecord[] {
+export function collectInferred(data: CompData, startDate: string | null): InferredRecord[] {
   const out: InferredRecord[] = [];
   const compNameEn = decodeHtmlEntities(data.name);
   for (const [key, list] of Object.entries(data.resultsByRound)) {
@@ -2145,11 +2147,15 @@ function collectInferred(data: CompData, startDate: string | null): InferredReco
         id: `inferred|${data.slug}|${r.e}|${roundId}|single|${r.n}|${sr}|${r.b}`,
         compId: data.slug, compNameEn, eventId: r.e, roundId, type: 'single',
         tag: sr, attemptResult: r.b, personName: u.name, personWcaId: u.wcaid ?? '', personIso2, startDate,
+        ...(!wantA && !ar && r.a > 0 && r.pA === 1
+          ? { companionPr: { type: 'average' as const, attemptResult: r.a } } : {}),
       });
       if (wantA) out.push({
         id: `inferred|${data.slug}|${r.e}|${roundId}|average|${r.n}|${ar}|${r.a}`,
         compId: data.slug, compNameEn, eventId: r.e, roundId, type: 'average',
         tag: ar, attemptResult: r.a, personName: u.name, personWcaId: u.wcaid ?? '', personIso2, startDate,
+        ...(!wantS && !sr && r.b > 0 && r.pS === 1
+          ? { companionPr: { type: 'single' as const, attemptResult: r.b } } : {}),
       });
     }
   }
