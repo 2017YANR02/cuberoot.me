@@ -5,6 +5,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Link from '@/components/AppLink';
 import { Copy, Check } from 'lucide-react';
+import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { apiUrl } from '@/lib/api-base';
 import { compLinkProps } from '@/lib/comp-link';
 import { Flag } from '@/components/Flag';
@@ -211,6 +212,7 @@ export function RecentRecordsList({ filled, isZh }: { filled: RecentRecord[]; is
               {copied ? <Check size={13} strokeWidth={1.75} /> : <Copy size={13} strokeWidth={1.75} />}
             </button>
             <Link {...compLinkProps(r.competitionId)} className="recent-records-body">
+              <EventIcon event={r.eventId} />{' '}
               {text
                 ? renderFormatted(shortenEvent(stripRecordNewsPrefix(text), r.eventId, isZh))
                 : renderFallback(r, isZh)}
