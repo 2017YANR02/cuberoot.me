@@ -126,6 +126,8 @@ jobs:
             /.githooks/pre-commit
             /stats/all_past_comps.json
             /stats/all_upcoming_comps.json
+            # Validate every gendered country record against its generated manifest and world/continent feeds.
+            /stats/records/history/gender/
             # Achievement tests validate every row in these three complete snapshots.
             /stats/date_match_pr.json
             /stats/tied_podium_results.json

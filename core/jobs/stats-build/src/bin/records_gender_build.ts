@@ -3,13 +3,15 @@
 // 「该性别在该区域的历史最快进程(running-best)」:按日期顺序扫该性别该区域的有效成绩,
 // 每次严格刷新即一条纪录行(同日同值并列也记,供「当前」视图显示并列纪录保持者).
 //
-// 输出 world + 6 大洲，以及女子个人纪录索引(含国家级，无逐国家文件):
+// 输出 world + 6 大洲 + 各性别有纪录的国家，以及女子个人纪录索引:
 //   stats/records/history/gender/<m|f>/world.json
 //   stats/records/history/gender/<m|f>/continent/<slug>.json
+//   stats/records/history/gender/<m|f>/country/<iso2>.json
+//   stats/records/history/gender/manifest.json
 //   stats/records/history/gender/f/persons.json
 // 行形状与 records_build.ts 的 Row 完全同构,前端 RowsTable 直接复用;l 取最高级别
 // (world 刷新→'WR',否则该洲刷新→洲标记 AfR/AsR/ER/NAR/OcR/SAR),洲文件含该洲选手的
-// {WR ∪ 洲纪录} 进程,复刻 records_build 的 continent 切片语义.
+// {WR ∪ 洲纪录} 进程,国家文件含该国选手的 {WR ∪ 洲纪录 ∪ 国家纪录} 进程.
 //
 // 用法:npx tsx src/bin/records_gender_build.ts
 import { writeFileSync, mkdirSync, statSync } from 'fs';
@@ -98,11 +100,10 @@ async function main() {
   const eventIds = events.map((e: any) => String(e.id));
   console.log(`[records-gender] ${persons.length} persons, ${comps.length} comps, ${eventIds.length} events (${Date.now() - t0}ms)`);
 
-  // 累加器:每性别 world 行 + 每性别每洲行(带 rid,事后补 attempts)
+  // 累加器:每性别 world / 洲 / 国家行(带 rid,事后补 attempts)
   const worldAcc: Record<Gender, { er: ER; l: string }[]> = { m: [], f: [] };
   const contAcc: Record<Gender, Record<string, { er: ER; l: string }[]>> = { m: {}, f: {} };
-  // Female national progression feeds person awards; reuse the same candidate scan.
-  const femaleNational: { er: ER; l: string }[] = [];
+  const countryAcc: Record<Gender, Record<string, { er: ER; l: string }[]>> = { m: {}, f: {} };
 
   for (const ev of eventIds) {
     const results = await query<any>(
@@ -156,16 +157,18 @@ async function main() {
             (contAcc[g][contId] ??= []).push({ er, l });
           }
         }
-        if (g === 'f') {
-          const byCountry = new Map<string, ER[]>();
-          for (const r of rows) {
-            if (!continentMarker[r.cont]) continue;
-            const bucket = byCountry.get(r.pc) ?? [];
-            bucket.push(r);
-            byCountry.set(r.pc, bucket);
-          }
-          for (const countryRows of byCountry.values()) for (const er of progressionRefresh(countryRows)) {
-            femaleNational.push({ er, l: worldRid.has(er.rid) ? 'WR' : continentalRid.get(er.rid) ?? 'NR' });
+        const byCountry = new Map<string, ER[]>();
+        for (const r of rows) {
+          if (!continentMarker[r.cont]) continue;
+          const bucket = byCountry.get(r.pc) ?? [];
+          bucket.push(r);
+          byCountry.set(r.pc, bucket);
+        }
+        for (const [iso2, countryRows] of byCountry) {
+          for (const er of progressionRefresh(countryRows)) {
+            (countryAcc[g][iso2] ??= []).push({
+              er, l: worldRid.has(er.rid) ? 'WR' : continentalRid.get(er.rid) ?? 'NR',
+            });
           }
         }
       }
@@ -177,6 +180,7 @@ async function main() {
   for (const g of GENDERS) {
     for (const x of worldAcc[g]) ridSet.add(x.er.rid);
     for (const contId in contAcc[g]) for (const x of contAcc[g][contId]) ridSet.add(x.er.rid);
+    for (const iso2 in countryAcc[g]) for (const x of countryAcc[g][iso2]) ridSet.add(x.er.rid);
   }
   console.log(`[records-gender] ${ridSet.size} distinct record rows, fetching attempts...`);
   const attMap = new Map<number, number[]>();
@@ -216,7 +220,7 @@ async function main() {
     const key = `${er.e}:${er.t}`;
     worldBest.set(key, Math.min(worldBest.get(key) ?? Infinity, er.v));
   }
-  for (const { er, l } of femaleNational) {
+  for (const countryRows of Object.values(countryAcc.f)) for (const { er, l } of countryRows) {
     (femalePersons[er.p] ??= []).push({ e: er.e, t: er.t, v: er.v, l: `F${l}`, c: er.c, d: er.d,
       ...(worldBest.get(`${er.e}:${er.t}`) === er.v ? { currentWorld: true } : {}) });
   }
@@ -224,9 +228,11 @@ async function main() {
   writeFileSync(resolve(OUTPUT_ROOT, 'f/persons.json'), JSON.stringify({ updated: today, persons: femalePersons }));
   let fileCount = 0;
   let totalSize = 0;
+  const manifest: Record<Gender, string[]> = { m: [], f: [] };
   for (const g of GENDERS) {
     const gDir = resolve(OUTPUT_ROOT, g);
     mkdirSync(resolve(gDir, 'continent'), { recursive: true });
+    mkdirSync(resolve(gDir, 'country'), { recursive: true });
 
     const worldRows = worldAcc[g].map(toRow).sort(byDateDescValAsc);
     const worldPath = resolve(gDir, 'world.json');
@@ -240,8 +246,17 @@ async function main() {
       writeFileSync(p, JSON.stringify({ updated: today, rows }));
       fileCount++; totalSize += statSync(p).size;
     }
+    manifest[g] = Object.keys(countryAcc[g]).sort();
+    for (const iso2 of manifest[g]) {
+      const rows = countryAcc[g][iso2].map(toRow).sort(byDateDescValAsc);
+      const p = resolve(gDir, 'country', `${iso2}.json`);
+      writeFileSync(p, JSON.stringify({ updated: today, rows }));
+      fileCount++; totalSize += statSync(p).size;
+    }
     console.log(`[records-gender] ${g}: world ${worldRows.length} rows`);
   }
+
+  writeFileSync(resolve(OUTPUT_ROOT, 'manifest.json'), JSON.stringify({ updated: today, countries: manifest }));
 
   console.log(`[records-gender] wrote ${fileCount} files, ${(totalSize / 1024).toFixed(1)} KB total`);
   console.log(`[records-gender] done in ${((Date.now() - t0) / 1000).toFixed(1)}s`);

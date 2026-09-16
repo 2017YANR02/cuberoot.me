@@ -5,8 +5,8 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import HomeLink from '@/components/HomeLink';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft } from 'lucide-react';
-import WcaEventSelector from '@/components/WcaEventSelector';
+import { ChevronLeft, Mars, Venus } from 'lucide-react';
+import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
 import { EventIcon } from '@/components/EventIcon';
 import { loadFlagData } from '@/lib/country-flags';
 import { statsUrl } from '@/lib/stats-base';
@@ -22,10 +22,7 @@ import {
 import '../_wca_stats_extra.css';
 import '../_records.css';
 import { tr } from '@/i18n/tr';
-import {
-  WcaTeacherNote,
-  useWcaTeachers,
-} from '@/components/WcaTeacherCell';
+import { useWcaTeachers } from '@/components/WcaTeacherCell';
 
 interface Row extends WcaRecordRowsTableRow { cc: string }
 
@@ -35,14 +32,14 @@ const CONTINENT_SLUGS = new Set(['africa', 'asia', 'europe', 'northAmerica', 'oc
 
 function regionUrl(region: string, gender: 'all' | 'm' | 'f'): string {
   if (gender !== 'all') {
-    // 性别(女子/男子)纪录只做 world + 6 大洲,无国家级 → 非洲名归 world 兜底
     const base = `/stats/records/history/gender/${gender}`;
     if (CONTINENT_SLUGS.has(region)) return `${base}/continent/${region}.json`;
-    return `${base}/world.json`;
+    if (region === 'world' || region === '') return `${base}/world.json`;
+    return `${base}/country/${region.toUpperCase()}.json`;
   }
   if (region === 'world' || region === '') return '/stats/records/history/world.json';
   if (CONTINENT_SLUGS.has(region)) return `/stats/records/history/continent/${region}.json`;
-  return `/stats/records/history/country/${region}.json`;
+  return `/stats/records/history/country/${region.toUpperCase()}.json`;
 }
 
 type Show = 'current' | 'history' | 'mixed';
@@ -80,6 +77,7 @@ function RecordsPageInner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [manifest, setManifest] = useState<{ countries: string[] } | null>(null);
+  const [genderManifest, setGenderManifest] = useState<{ countries: Record<'m' | 'f', string[]> } | null>(null);
 
   useEffect(() => { void loadFlagData(); }, []);
 
@@ -88,13 +86,18 @@ function RecordsPageInner() {
       .then(r => r.ok ? r.json() : null)
       .then((j) => { if (j) setManifest({ countries: j.countries }); })
       .catch(() => { /* keep null */ });
+    fetch(statsUrl('/stats/records/history/gender/manifest.json'))
+      .then(r => r.ok ? r.json() : null)
+      .then((j) => { if (j) setGenderManifest({ countries: j.countries }); })
+      .catch(() => { /* keep null */ });
   }, []);
 
   const manifestCountriesSorted = useMemo(() => {
-    if (!manifest) return [];
+    const countries = gender === 'all' ? manifest?.countries : genderManifest?.countries[gender];
+    if (!countries) return [];
     const collator = new Intl.Collator((i18n.language.startsWith('zh') ? 'zh-Hans-CN' : 'en'), { sensitivity: 'base' });
-    return [...manifest.countries].sort((a, b) => collator.compare(countryName(a, isZh), countryName(b, isZh)));
-  }, [manifest, isZh]);
+    return [...countries].sort((a, b) => collator.compare(countryName(a, isZh), countryName(b, isZh)));
+  }, [manifest, genderManifest, gender, isZh, i18n.language]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -112,13 +115,15 @@ function RecordsPageInner() {
     return () => controller.abort();
   }, [region, gender]);
 
-  // 切到性别(女子/男子)纪录时,国家级不存在 → 把残留的国家区域回退到 world
+  // 选中地区在新性别下没有纪录时,回到世界;等待 manifest 加载后再判断深链.
   useEffect(() => {
-    if (gender !== 'all' && region !== 'world' && !CONTINENT_SLUGS.has(region)) {
+    if (gender !== 'all' && genderManifest && region !== 'world'
+      && !CONTINENT_SLUGS.has(region)
+      && !genderManifest.countries[gender].includes(region.toUpperCase())) {
       setQ({ region: null });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gender, region]);
+  }, [gender, genderManifest, region]);
 
   const visibleRows = useMemo(() => {
     if (!bundle) return [];
@@ -130,6 +135,19 @@ function RecordsPageInner() {
     if (!bundle) return new Set<string>();
     return new Set(bundle.rows.map(r => r.e));
   }, [bundle]);
+
+  const eventPickerGroups = useMemo<readonly PuzzlePickerGroup[]>(() => [{
+    id: 'wca',
+    label: tr({ zh: 'WCA 项目', en: 'WCA events' }),
+    items: [
+      { id: '', label: tr({ zh: '全部', en: 'All' }), textLabel: tr({ zh: '全', en: 'All' }) },
+      ...ALL_EVENT_IDS.filter(id => availableEvents.has(id)).map(id => ({
+        id,
+        label: eventDisplayName(id, isZh),
+        iconClass: `event-${id}`,
+      })),
+    ],
+  }], [availableEvents, isZh]);
 
   // 「当前」视图:每个 (项目, 类型) 在该区域的现行纪录 = 历史进程里成绩最好(v 最小)的那行;
   // 并列(同值多人)全列,按日期升序 —— 与 wr_current 当前世界纪录页的并列处理一致。
@@ -194,8 +212,8 @@ function RecordsPageInner() {
         <p className="wse-subtitle">
           {gender !== 'all'
             ? (show === 'current'
-              ? tr({ zh: `${gender === 'f' ? '女子' : '男子'}各项目当前的世界 / 大洲纪录`, en: `Current ${gender === 'f' ? "women's" : "men's"} world / continental record per event` })
-              : tr({ zh: `历史上所有${gender === 'f' ? '女子' : '男子'}世界 / 大洲纪录`, en: `Every ${gender === 'f' ? "women's" : "men's"} world / continental record ever set` }))
+              ? tr({ zh: `${gender === 'f' ? '女子' : '男子'}各项目当前的世界 / 大洲 / 国家纪录`, en: `Current ${gender === 'f' ? "women's" : "men's"} world / continental / national record per event` })
+              : tr({ zh: `历史上所有${gender === 'f' ? '女子' : '男子'}世界 / 大洲 / 国家纪录`, en: `Every ${gender === 'f' ? "women's" : "men's"} world / continental / national record ever set` }))
             : (show === 'current'
               ? tr({ zh: '各项目当前的世界 / 大洲 / 国家纪录', en: 'Current world / continental / national record for each event' })
               : tr({ zh: '历史上所有曾被打破的世界 / 大洲 / 国家纪录', en: 'Every world / continental / national record ever set' }))}
@@ -220,7 +238,7 @@ function RecordsPageInner() {
           <RegionPicker
             value={region}
             isZh={isZh}
-            restrictTo={gender === 'all' ? manifestCountriesSorted : []}
+            restrictTo={manifestCountriesSorted}
             onChange={(v) => update('region', v)}
           />
 
@@ -228,8 +246,8 @@ function RecordsPageInner() {
             className="records-toolbar-select"
             items={[
               { value: 'all', label: tr({ zh: '不限性别', en: 'All genders' }) },
-              { value: 'm', label: tr({ zh: '男子', en: 'Male' }) },
-              { value: 'f', label: tr({ zh: '女子', en: 'Female' }) },
+              { value: 'm', label: tr({ zh: '男子', en: 'Male' }), icon: <Mars size={16} /> },
+              { value: 'f', label: tr({ zh: '女子', en: 'Female' }), icon: <Venus size={16} /> },
             ]}
             value={gender}
             onChange={(v) => update('gender', v === 'all' ? '' : v)}
@@ -238,16 +256,13 @@ function RecordsPageInner() {
           />
         </div>
 
-        <WcaEventSelector
-          availableEvents={availableEvents}
+        <PuzzlePicker
+          groups={eventPickerGroups}
           selectedEvent={event}
           onSelect={(v) => update('event', v)}
           isZh={isZh}
-          allowAll
         />
       </div>
-
-      <WcaTeacherNote />
 
       <div className="wse-table-wrapper sticky-scroll">
         {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...'
