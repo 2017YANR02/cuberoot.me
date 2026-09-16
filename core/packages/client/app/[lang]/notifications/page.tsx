@@ -23,6 +23,7 @@ import {
 } from '@/lib/notifications-api';
 import { refreshNotificationsUnread } from '@/lib/notifications-unread';
 import './notifications.css';
+import RecordPreferences from './_RecordPreferences';
 
 const KIND_ICON: Record<NotificationKind, typeof MessageSquare> = {
   recon_alt: GitBranch,
@@ -35,6 +36,7 @@ const KIND_ICON: Record<NotificationKind, typeof MessageSquare> = {
   forum_approved: CircleCheck,
   forum_rejected: CircleX,
   comp_reg: Plane,
+  wca_record: BellRing,
   document_change: FilePenLine,
   cal_reminder: BellRing,
   cal_invite: CalendarPlus,
@@ -75,6 +77,7 @@ export default function NotificationsPage() {
     forum_approved: t('通过了你的帖子', 'approved your post'),
     forum_rejected: t('驳回了你的帖子', 'declined your post'),
     comp_reg: t('报名了国外比赛', 'registered for an overseas competition'),
+    wca_record: t('纪录快讯', 'Record news'),
     document_change: t('修改了你关注的协作文件', 'updated a collaborative file you follow'),
     cal_reminder: t('日程提醒', 'Event reminder'),
     cal_invite: t('邀请你参加日程', 'invited you to an event'),
@@ -152,6 +155,7 @@ export default function NotificationsPage() {
             </div>
           )}
 
+          <RecordPreferences key={user.uid ?? user.wcaId} />
           {err && <div className="ntf-error">{err}</div>}
           {!items && !err && <div className="ntf-empty">{t('加载中…', 'Loading…')}</div>}
           {items && items.length === 0 && (

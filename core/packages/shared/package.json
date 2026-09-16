@@ -48,6 +48,7 @@
       ".": "react-dom",
       "./nemesizer-format": "runtime-neutral",
       "./wca-events": "runtime-neutral",
+      "./record-notifications": "runtime-neutral",
       "./scramble-length": "runtime-neutral",
       "./comp-schedule": "runtime-neutral",
       "./comp-localize": "runtime-neutral",
@@ -266,6 +267,10 @@
     "./wca-events": {
       "node": "./dist/wca_events.js",
       "default": "./src/wca_events.ts"
+    },
+    "./record-notifications": {
+      "node": "./dist/record_notifications.js",
+      "default": "./src/record_notifications.ts"
     },
     "./scramble-length": {
       "node": "./dist/scramble_length.js",

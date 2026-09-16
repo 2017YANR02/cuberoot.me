@@ -42,6 +42,7 @@ export type NotificationKind =
   | 'forum_thread' | 'forum_reply' | 'forum_report'
   | 'forum_review' | 'forum_approved' | 'forum_rejected'
   | 'comp_reg'
+  | 'wca_record'
   | 'document_change'
   | 'quiz_report' | 'quiz_hidden'
   | 'cal_reminder' | 'cal_invite' | 'cal_rsvp'
@@ -71,6 +72,8 @@ export interface NotifyInput {
   excerpt: string;
   /** 站内相对路径,如 `/recon/2489`、`/forum/t/17`。 */
   link: string;
+  /** Stable source key for repeatable background jobs. */
+  dedupeKey?: string;
 }
 
 const KIND_TEXT: Record<NotificationKind, Record<MailLang, string>> = {
@@ -84,6 +87,7 @@ const KIND_TEXT: Record<NotificationKind, Record<MailLang, string>> = {
   forum_approved: { zh: '通过了你的帖子', en: 'approved your post' },
   forum_rejected: { zh: '驳回了你的帖子', en: 'declined your post' },
   comp_reg: { zh: '报名了国外比赛', en: 'registered for an overseas competition' },
+  wca_record: { zh: '纪录快讯', en: 'Record news' },
   document_change: { zh: '修改了你关注的协作文件', en: 'updated a collaborative file you follow' },
   quiz_report: { zh: '举报了一道社区题', en: 'reported a community quiz question' },
   quiz_hidden: { zh: '下架了你出的题', en: 'took down one of your questions' },
@@ -214,17 +218,21 @@ export async function notify(input: NotifyInput): Promise<void> {
   const excerpt = input.excerpt.slice(0, 500);
   const title = input.title.slice(0, 200);
 
+  const insertedTargets: string[] = [];
   for (const key of targets) {
-    await query(
-      `INSERT INTO notifications (user_key, kind, actor_key, actor_name, title, excerpt, link)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [key, input.kind, actor, input.actorName, title, excerpt, input.link],
+    const inserted = await query<{ id: number }>(
+      `INSERT INTO notifications (user_key, kind, actor_key, actor_name, title, excerpt, link, dedupe_key)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT (user_key, kind, dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING
+       RETURNING id`,
+      [key, input.kind, actor, input.actorName, title, excerpt, input.link, input.dedupeKey ?? null],
     );
+    if (inserted.length) insertedTargets.push(key);
   }
 
   if (!emailConfigured()) return;
   void (async () => {
-    for (const key of targets) {
+    for (const key of insertedTargets) {
       try {
         const target = await mailTargetFor(key);   // 已退订 / 没绑邮箱 → null,不发
         if (!target) continue;

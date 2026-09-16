@@ -13,7 +13,7 @@ const result: Result = {
   i: 8509370, c: 0, n: 4, e: '333', r: 'f', f: 'a',
   b: 354, a: 452, v: [450, 474, 354, 547, 433], sr: '', ar: 'FWR', pS: 1, pA: 1,
 };
-function records(overrides: Partial<Result> = {}) {
+function records(overrides: Partial<Result> = {}, includePersonalRecords = false) {
   const data: CompData = {
     slug: 'WuhanCrimsonAutumn2026', name: 'Wuhan Crimson Autumn 2026', source: 'wca',
     compId: 0, type: 'WCA', events: [], fetchedAt: 0,
@@ -21,10 +21,17 @@ function records(overrides: Partial<Result> = {}) {
     resultsByRound: { '333:f': [{ ...result, ...overrides }] },
     membersByFilter: { females: [4], children: [], newcomers: [] },
   };
-  return collectInferred(data, '2026-09-13');
+  return collectInferred(data, '2026-09-13', includePersonalRecords);
 }
 
 describe('same-round personal record in recent records and Bark', () => {
+  it('includes confirmed standalone PRs only for personal subscriptions', () => {
+    expect(records({ ar: '' })).toEqual([]);
+    expect(records({ ar: '' }, true).map(r => [r.type, r.tag])).toEqual([['single', 'PR'], ['average', 'PR']]);
+    expect(records({ ar: '', pS: 2, pA: undefined }, true)).toEqual([]);
+    expect(records({ ar: '', b: -1, a: 0 }, true)).toEqual([]);
+    expect(records({}, true).map(r => [r.type, r.tag])).toEqual([['single', 'PR'], ['average', 'FWR']]);
+  });
   it('formats the Wuhan final with the single PR before the competition', async () => {
     const [record] = records();
     expect(record.companionPr).toEqual({ type: 'single', attemptResult: 354 });
