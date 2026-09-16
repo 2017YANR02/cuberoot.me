@@ -8,7 +8,7 @@
 // id therefore can't come from useParams (the rendered route is the sentinel);
 // read it from the browser URL client-side instead.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
@@ -36,6 +36,9 @@ import '@/components/persons/persons.css';
 import '@/components/persons/persons-misc.css';
 import '@/components/wca-results/attempts-grid.css';
 import { useT } from "@/hooks/useT";
+import { fetchFemalePersonRecords, femaleResultRecordLookup, type FemalePersonRecord } from '@/lib/person-achievements';
+
+const NO_FEMALE_RECORDS: FemalePersonRecord[] = [];
 
 export default function PersonDetailClient() {
   const pathname = usePathname();
@@ -54,6 +57,20 @@ export default function PersonDetailClient() {
   const t = useT();
 
   const [profile, setProfile] = useState<WcaPersonProfile | null>(null);
+  const [femaleData, setFemaleData] = useState<{ id: string; rows: FemalePersonRecord[]; nationalComplete: boolean } | null>(null);
+  const person = profile?.person;
+  useEffect(() => {
+    if (!person || person.wca_id !== wcaId || person.gender !== 'f') return;
+    const controller = new AbortController();
+    fetchFemalePersonRecords(person, controller.signal).then(data => {
+      if (!controller.signal.aborted) setFemaleData({ id: person.wca_id, ...data });
+    }).catch(() => { /* Unavailable record feeds must not block the profile. */ });
+    return () => controller.abort();
+  }, [wcaId, person?.wca_id, person?.gender, person?.name, person?.country_iso2]);
+  const femaleRecords = femaleData?.id === wcaId && person?.wca_id === wcaId && person.gender === 'f' ? femaleData.rows : NO_FEMALE_RECORDS;
+  const femaleNationalComplete = femaleRecords === femaleData?.rows && femaleData.nationalComplete;
+  const femaleRecordLookup = useMemo(() => femaleResultRecordLookup(femaleRecords, femaleNationalComplete, person?.country_iso2),
+    [femaleRecords, femaleNationalComplete, person?.country_iso2]);
   const [results, setResults] = useState<WcaResultRow[] | null>(null);
   const [comps, setComps] = useState<WcaCompetition[] | null>(null);
   // 直播·非官方成绩(官方尚未收录的近期比赛)— 单独持有,只下发给成绩 tab
@@ -169,6 +186,8 @@ export default function PersonDetailClient() {
       <main className="wp-main">
         <PersonHero
           profile={profile}
+          femaleRecords={femaleRecords}
+          femaleNationalComplete={femaleNationalComplete}
           results={results}
           comps={comps}
           former={former}
@@ -238,7 +257,7 @@ export default function PersonDetailClient() {
             />
             <PersonBestCombos wcaId={profile.person.wca_id} isZh={isZh} inclCancelled={inclCancelled} />
             <PersonResultChanges wcaId={profile.person.wca_id} isZh={isZh} />
-            <PersonTabs profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} />
+            <PersonTabs profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} femaleRecordLookup={femaleRecordLookup} />
           </>
         )}
       </main>

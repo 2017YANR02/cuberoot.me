@@ -1,5 +1,8 @@
 'use client';
 
+import TrainingStatsPanel from '@/components/TrainingStatsPanel';
+import { useTrainingStats } from '@/hooks/useTrainingStats';
+
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import type { AlgPlayerPuzzle } from '@/components/AlgPlayer/player-setup';
@@ -87,6 +90,11 @@ export default function NotationTrainer({
   mode,
 }: NotationTrainerProps) {
   const t = useT();
+  const statsGroup = `notation:${puzzle}:${puzzleOrder ?? ''}:${mode}`;
+  const { record } = useTrainingStats(statsGroup);
+  const statsRecorded = useRef(false);
+  const startedAt = useRef(0);
+  useEffect(() => { startedAt.current = Date.now(); statsRecorded.current = false; }, [statsGroup]);
   const performMoves = useMemo(
     () => moves.filter(option => canPerformOnPuzzle(option.move, puzzle, puzzleOrder)),
     [moves, puzzle, puzzleOrder],
@@ -124,10 +132,14 @@ export default function NotationTrainer({
   }, [feedbackPulse]);
 
   const showFeedback = useCallback((kind: TrainingFeedbackKind) => {
+    if (!statsRecorded.current) {
+      statsRecorded.current = true;
+      record(kind === 'correct', Date.now() - startedAt.current);
+    }
     setFeedback(kind);
     // A fresh object restarts the shared 1.2 s signal after every answer.
     setFeedbackPulse({ kind });
-  }, []);
+  }, [record]);
 
   const labelFor = (option: MoveNotationOption): ReactNode => {
     if (notationStyle === 'standard') return <code>{option.move}</code>;
@@ -148,6 +160,8 @@ export default function NotationTrainer({
       window.clearTimeout(wrongTimerRef.current);
       wrongTimerRef.current = null;
     }
+    statsRecorded.current = false;
+    startedAt.current = Date.now();
     const length = questionMoves.length;
     setTargetIndex(current => {
       if (length <= 1) return 0;
@@ -287,6 +301,7 @@ export default function NotationTrainer({
           </button>
         </div>
       </div>
+      <TrainingStatsPanel group={statsGroup} />
     </section>
   );
 }

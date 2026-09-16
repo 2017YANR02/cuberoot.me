@@ -4,7 +4,7 @@
  * SolverHintPanel — 计时器「解法提示」面板(替代旧 StageSolverModal 弹层)。
  *
  * 同一份内容,两套形态:
- *  · 桌面 (≥1024px):收成主区右侧的常驻可折叠竖栏。展开态记进 localStorage
+ *  · 桌面 (≥1024px):收成主区左侧的常驻可折叠竖栏。展开态记进 localStorage
  *    (默认展开;只有用户手动收起过 '0' 才保持收起)。展开会 next/dynamic 拉 StageSolver
  *    并建池 —— 默认的「标准 · 十字」只下 pt_cross(gz 50KB),XCross 及以上才补 20MB
  *    大表(见 rust-cross-client 的两段式加载)。
@@ -14,9 +14,9 @@
  *    浮层开合走 URL(?hints=1,history push),所以安卓返回键 / 手势返回能关掉它。
  *    浮层 portal 到 body:顶栏是 z-index:41 的层叠上下文,留在里面它的 z-index:62 只在
  *    那一层内部有效,会被外面 z-index:61 的底部抽屉盖住。
- *  · 桌面也可以要全屏:右栏头部的 ⤢ 打开同一个浮层(窄栏里 3D 魔方 + 解法列表被迫上下叠,
- *    全屏才摊得开)。此时右栏内容卸载,避免两份 StageSolver 各解一遍同一条打乱。
- *  · 换题(上/下一条打乱)在两套形态里都能用:右栏形态下计时区还露着,归主区的键盘 +
+ *  · 桌面也可以要全屏:左栏头部的 ⤢ 打开同一个浮层(窄栏里 3D 魔方 + 解法列表被迫上下叠,
+ *    全屏才摊得开)。此时左栏内容卸载,避免两份 StageSolver 各解一遍同一条打乱。
+ *  · 换题(上/下一条打乱)在两套形态里都能用:左栏形态下计时区还露着,归主区的键盘 +
  *    径向手势;全屏浮层盖住了主区,于是键盘走 SoloView 的 hintsOnly 分支放行,手势由
  *    这里的 useScrambleSwipe 接管(横划一下,方向同径向手势:右 = 下一个)。
  *
@@ -47,7 +47,7 @@ const StageSolver = dynamic(() => import('@/components/StageSolver'), {
 });
 
 const LS_KEY = 'timer.solverHints.panelOpen';
-/** 桌面形态选择:'1' = 全屏,其余 = 右栏。用户自己选的,下次进来保持。 */
+/** 桌面形态选择:'1' = 全屏,其余 = 左栏。用户自己选的,下次进来保持。 */
 const LS_FULL = 'timer.solverHints.full';
 
 /** URL param owning the full-screen sheet. Shared by SoloView (which folds
@@ -64,7 +64,7 @@ interface Props {
   onOpen?: () => void;
 }
 
-/** 换题回调。右栏形态下换题归主区(计时面板的径向手势 + 键盘),全屏浮层把整屏盖住了,
+/** 换题回调。左栏形态下换题归主区(计时面板的径向手势 + 键盘),全屏浮层把整屏盖住了,
  *  这两件事得由浮层自己接过来:横划手势在这儿,键盘在 SoloView 的 hintsOnlyRef 分支。 */
 interface ScrambleNav {
   onPrevScramble?: () => void;
@@ -121,7 +121,7 @@ function useScrambleSwipe({ onPrevScramble, onNextScramble }: ScrambleNav) {
 function SolverBody({ scramble, isZh, compact }: Props & { compact: boolean }) {
   return (
     <>
-      {/* 打乱原文。手机上这块是全屏浮层,盖住了计时器自己的打乱条;桌面右栏也够窄,
+      {/* 打乱原文。手机上这块是全屏浮层,盖住了计时器自己的打乱条;桌面左栏也够窄,
           转头去主区对照同样麻烦 —— 解法讲的是哪条打乱,就摆在解法旁边。
           尚未生成打乱(首帧 / 换项目那一刻)时整块不渲染,不留空行。 */}
       {scramble.trim() && <p className="solver-panel-scramble">{scramble}</p>}
@@ -132,7 +132,7 @@ function SolverBody({ scramble, isZh, compact }: Props & { compact: boolean }) {
 }
 
 /** Full-screen sheet. Own component so useModalDismiss's Escape + body-scroll-lock
- *  mount and unmount with the sheet itself. `onDock` 只有桌面传(手机没有右栏可回)。 */
+ *  mount and unmount with the sheet itself. `onDock` 只有桌面传(手机没有左栏可回)。 */
 function SolverSheet({ scramble, isZh, compact, onClose, onDock, onPrevScramble, onNextScramble }: Props & ScrambleNav & { compact: boolean; onClose: () => void; onDock?: () => void }) {
   useModalDismiss(onClose);
   const swipe = useScrambleSwipe({ onPrevScramble, onNextScramble });
@@ -146,7 +146,7 @@ function SolverSheet({ scramble, isZh, compact, onClose, onDock, onPrevScramble,
             type="button"
             className="solver-layout-action"
             onClick={onDock}
-            title={tr({ zh: '还原到右侧面板', en: 'Restore to side panel' })}
+            title={tr({ zh: '还原到左侧面板', en: 'Restore to side panel' })}
           >
             <Minimize2 size={16} aria-hidden="true" />
             {tr({ zh: '还原', en: 'Restore' })}
@@ -177,9 +177,9 @@ export default function SolverHintPanel({
   onNextScramble,
 }: Props & ScrambleNav) {
   const isPhone = useIsMobile(560);
-  const isDesktopRail = !useIsMobile(1023); // ≥1024 时面板是右侧 ~360px 窄栏
+  const isDesktopRail = !useIsMobile(1023); // ≥1024 时面板是左侧 ~360px 窄栏
 
-  // 桌面右栏展开态(SSR 初值恒 false 避免 hydration mismatch,挂载后再同步)。默认展开:
+  // 桌面左栏展开态(SSR 初值恒 false 避免 hydration mismatch,挂载后再同步)。默认展开:
   // 仅当用户此前手动收起过('0')才保持收起,其余情况(无记录 / '1')一律展开。
   const [railOpen, setRailOpen] = useState(false);
   useEffect(() => {
@@ -197,11 +197,11 @@ export default function SolverHintPanel({
   // 求解器池存在;页面 load 完 + 浏览器空闲才动手,省流量 / 慢网自动跳过。细则见 rust-cross-tables。
   useEffect(() => prefetchXCrossTableWhenIdle(), []);
 
-  // 桌面形态偏好(右栏 / 全屏),用户选了就记住:下次进来直接是上次那个形态。
+  // 桌面形态偏好(左栏 / 全屏),用户选了就记住:下次进来直接是上次那个形态。
   // 同 railOpen:SSR 初值恒 false,挂载后再读 localStorage。
   const [fullPref, setFullPref] = useState(false);
   useEffect(() => {
-    try { if (localStorage.getItem(LS_FULL) === '1') setFullPref(true); } catch { /* 隐私模式:留右栏 */ }
+    try { if (localStorage.getItem(LS_FULL) === '1') setFullPref(true); } catch { /* 隐私模式:留左栏 */ }
   }, []);
 
   // 全屏浮层态 —— 归 URL 管,返回键即关闭。手机点 pill 进,桌面点头部的全屏按钮进。
@@ -225,7 +225,7 @@ export default function SolverHintPanel({
     void setSheetOpen(true);
   };
 
-  // 解法栏与成绩 / 图表 / 统计栏共用右侧空间，只保留一个。父页面打开成绩栏时
+  // 窄屏的解法与成绩都是整屏面板，只保留一个。父页面打开成绩栏时
   // 立即隐藏这里的内容，再同步收起内部状态；从浏览器历史恢复解法浮层时则反向
   // 通知父页面关闭成绩栏。
   useEffect(() => {
@@ -243,7 +243,7 @@ export default function SolverHintPanel({
     persistItem(LS_FULL, v ? '1' : '0');
     if (v) openSheet(); else closeSheet();
   };
-  // 上次选的是全屏 → 进页面直接给全屏(每次挂载只自动开一次:之后用户切回右栏、
+  // 上次选的是全屏 → 进页面直接给全屏(每次挂载只自动开一次:之后用户切回左栏、
   // 或用返回手势关掉,都不该被这条效应再拽回全屏)。replace:不往返回栈添一格。
   const autoFullRef = useRef(false);
   useEffect(() => {
@@ -255,7 +255,7 @@ export default function SolverHintPanel({
   }, [isDesktopRail, fullPref, railOpen, sheetOpen, setSheetOpen]);
 
   const open = !resultsPanelOpen && (isDesktopRail ? railOpen : sheetOpen);
-  // 右栏正被全屏浮层顶替:内容卸载(同一条打乱不解两遍),但 data-open 保持,
+  // 左栏正被全屏浮层顶替:内容卸载(同一条打乱不解两遍),但 data-open 保持,
   // 关掉浮层就回到原样的宽栏。
   const railBodyOpen = !resultsPanelOpen && isDesktopRail && railOpen && !sheetOpen;
 
@@ -276,7 +276,7 @@ export default function SolverHintPanel({
   return (
     <>
       <aside className="solver-panel surface-chrome" data-open={open} data-no-timer>
-        {/* display:contents 兜底(见 shell.css):除「桌面右栏已展开」外,头部仍是
+        {/* display:contents 兜底(见 shell.css):除「桌面左栏已展开」外,头部仍是
             单独一颗 pill,加这层不改任何现有形态。 */}
         <div className="solver-panel-headrow">
           <button
@@ -322,12 +322,12 @@ export default function SolverHintPanel({
       </aside>
       {sheetOpen && !resultsPanelOpen && mounted && createPortal(
         // 紧凑排版只给真手机;平板 / 桌面全屏都够宽,摊开排。
-        // 桌面提供还原按钮(切回右栏 = 关浮层并记住);手机没有右栏,只留 ✕。
+        // 桌面提供还原按钮(切回左栏 = 关浮层并记住);手机没有左栏,只留 ✕。
         <SolverSheet
           scramble={scramble}
           isZh={isZh}
           compact={isPhone}
-          // 桌面关掉全屏 = 选回右栏(否则记着的形态与眼前看到的不一致,一刷新又弹回全屏)。
+          // 桌面关掉全屏 = 选回左栏(否则记着的形态与眼前看到的不一致,一刷新又弹回全屏)。
           onClose={isDesktopRail ? () => pickFull(false) : closeSheet}
           onDock={isDesktopRail ? () => pickFull(false) : undefined}
           onPrevScramble={onPrevScramble}

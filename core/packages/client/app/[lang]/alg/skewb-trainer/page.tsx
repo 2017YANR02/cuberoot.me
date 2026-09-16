@@ -1,5 +1,7 @@
 'use client';
 
+import TrainingStatsPanel from '@/components/TrainingStatsPanel';
+
 // SkewbSkills trainer — orchestrator.
 // Port of annikastein.github.io/SkewbPage/SkewbSkills. Three modes
 // (First Layer / L2L Alg / One-Looking) share a timer + keyboard shortcuts.
@@ -198,6 +200,7 @@ export default function SkewbTrainerPage() {
             <span className="sk-kbd">R</span> {tr({ zh: '重置', en: 'reset' })}
           </div>
         </div>
+        <TrainingStatsPanel group={`skewb:${t.mode}`} />
       </div>
     </div>
   );

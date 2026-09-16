@@ -2,7 +2,10 @@
 
 // Numbered read-only list of generated scrambles + copy-all + stats line + busy spinner.
 
-import { useState, type JSX } from 'react';
+import { useEffect, useRef, useState, type JSX } from 'react';
+import { usePathname } from 'next/navigation';
+import TrainingStatsPanel, { TrainingSelfCheck } from '@/components/TrainingStatsPanel';
+import { useTrainingStats } from '@/hooks/useTrainingStats';
 import { Copy, Check } from 'lucide-react';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
@@ -15,6 +18,12 @@ interface ScrambleOutputProps {
 
 export function ScrambleOutput({ scrambles, info, busy }: ScrambleOutputProps): JSX.Element {
   const [copied, setCopied] = useState(false);
+  const path = usePathname().replace(/^\/(?:en|zh)(?=\/)/, '');
+  const group = `bld-drill:${path}`;
+  const { record } = useTrainingStats(group);
+  const [rated, setRated] = useState<Set<number>>(new Set());
+  const recorded = useRef(new Set<number>());
+  useEffect(() => { recorded.current.clear(); setRated(new Set()); }, [scrambles]);
 
   const copyAll = async () => {
     const text = scrambles.join('\n');
@@ -66,11 +75,19 @@ export function ScrambleOutput({ scrambles, info, busy }: ScrambleOutputProps): 
           {scrambles.map((s, i) => (
             <li key={i} className="bld-scramble-item">
               <span className="bld-scramble-idx">{i + 1}.</span>
-              <span className="bld-scramble-text">{s}</span>
+              <span className="bld-scramble-text">{s}
+                <TrainingSelfCheck disabled={busy || rated.has(i)} onResult={correct => {
+                  if (recorded.current.has(i)) return;
+                  recorded.current.add(i);
+                  record(correct);
+                  setRated(new Set(recorded.current));
+                }} />
+              </span>
             </li>
           ))}
         </ol>
       )}
+      <TrainingStatsPanel group={group} />
     </div>
   );
 }

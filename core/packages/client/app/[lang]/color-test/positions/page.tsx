@@ -1,6 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState, type CSSProperties } from 'react';
+import TrainingStatsPanel from '@/components/TrainingStatsPanel';
+import { useTrainingStats } from '@/hooks/useTrainingStats';
+
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { RotateCcw } from 'lucide-react';
 import BackHome from '@/components/BackHome';
 import BoolToggle from '@/components/BoolToggle';
@@ -100,6 +103,12 @@ export default function ColorPositionsPage() {
   const [showColorNames, setShowColorNames] = useState(true);
   const autoAdvance = useTrainingAutoAdvance();
   const question = round[index];
+  const statsGroup = `color:positions:${topFace}`;
+  const { record } = useTrainingStats(statsGroup);
+  const startedAt = useRef(0);
+  const recorded = useRef(new Set<number>());
+  useEffect(() => { recorded.current.clear(); }, [round]);
+  useEffect(() => { startedAt.current = Date.now(); }, [round, index]);
   const selected = answers[index] ?? null;
   const score = answers.reduce((total, answer, answerIndex) => (
     total + (answer === round[answerIndex]?.answer ? 1 : 0)
@@ -121,6 +130,9 @@ export default function ColorPositionsPage() {
 
   const answer = (face: SideFace) => {
     if (!question || selected) return;
+    if (recorded.current.has(index)) return;
+    recorded.current.add(index);
+    record(face === question.answer, Date.now() - startedAt.current);
     setAnswers((current) => {
       const next = [...current];
       next[index] = face;
@@ -271,6 +283,7 @@ export default function ColorPositionsPage() {
           onRestart={restart}
         />
       )}
+      <TrainingStatsPanel group={statsGroup} />
     </main>
   );
 }

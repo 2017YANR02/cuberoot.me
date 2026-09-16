@@ -1,5 +1,8 @@
 'use client';
 
+import TrainingStatsPanel from '@/components/TrainingStatsPanel';
+import { useTrainingStats } from '@/hooks/useTrainingStats';
+
 /**
  * /predict —— 预判训练(Lookahead Challenge)。
  *
@@ -162,6 +165,8 @@ interface PredictSnapshot {
   elapsed: number;
   trainingEventId: string | null;
   submittedTrainingEvent: string | null;
+  statsRecorded: boolean;
+  assisted: boolean;
 }
 
 const clock = (seconds: number): string => {
@@ -207,6 +212,8 @@ function PredictPageInner() {
   const trainingDestinationRef = useRef<ReturnType<typeof parseTrainingAssignmentDestination>>(null);
   const trainingEventIdRef = useRef<string | null>(null);
   const submittedTrainingEventRef = useRef<string | null>(null);
+  const statsRecordedRef = useRef(false);
+  const assistedRef = useRef(false);
   const algElRef = useRef<HTMLTextAreaElement | null>(null);
   /** 出题时读的是 ref 而不是 state:公式每敲一个字都在变,不能每个字换一题。 */
   const algRef = useRef(alg);
@@ -223,6 +230,13 @@ function PredictPageInner() {
   const sources = is333 ? SOURCES : PUZZLE_SOURCES;
   const source = sources.includes(rawSource) ? rawSource : 'random';
   const moveCount = rawMoveCount ?? puzzle.defaultMoveCount;
+  const statsGroup = `predict:${puzzleId}:${is333 ? mode : 'normal'}:${track}:${source}:${moveCount}:${crossEdges}`;
+  const { record } = useTrainingStats(statsGroup);
+  const recordPrediction = useCallback((correct: boolean) => {
+    if (statsRecordedRef.current) return;
+    statsRecordedRef.current = true;
+    record(correct && !assistedRef.current, Date.now() - startedAt.current);
+  }, [record]);
   const puzzlePickerGroups: readonly PuzzlePickerGroup[] = [{
     id: 'puzzles',
     label: tr({ zh: '项目', en: 'Puzzles' }),
@@ -261,6 +275,8 @@ function PredictPageInner() {
     elapsed,
     trainingEventId: trainingEventIdRef.current,
     submittedTrainingEvent: submittedTrainingEventRef.current,
+    statsRecorded: statsRecordedRef.current,
+    assisted: assistedRef.current,
   } : null;
 
   const solved = ch != null && found.length > 0 && found.length === ch.targets.length && found.every(Boolean);
@@ -275,6 +291,7 @@ function PredictPageInner() {
    */
   const seek = useCallback((n: number) => {
     setPlaying(false);
+    if (n > 0) assistedRef.current = true;
     setStep(Math.max(0, Math.min(n, totalSteps)));
   }, [totalSteps]);
 
@@ -293,6 +310,8 @@ function PredictPageInner() {
     setViewResetSeq((seq) => seq + 1);
     setReviewingHistory(snapshot.found.every(Boolean));
     startedAt.current = Date.now() - snapshot.elapsed * 1000;
+    statsRecordedRef.current = snapshot.statsRecorded;
+    assistedRef.current = snapshot.assisted;
     trainingEventIdRef.current = snapshot.trainingEventId;
     submittedTrainingEventRef.current = snapshot.submittedTrainingEvent;
   }, [autoAdvance.cancel]);
@@ -336,6 +355,8 @@ function PredictPageInner() {
     setReviewingHistory(false);
     setViewResetSeq((seq) => seq + 1);
     startedAt.current = Date.now();
+    statsRecordedRef.current = false;
+    assistedRef.current = false;
     trainingEventIdRef.current = createTrainingEvidenceEventId('predict');
     submittedTrainingEventRef.current = null;
   }, [autoAdvance.cancel, puzzle, is333, mode, track, source, moveCount, crossEdges, orientation]);
@@ -427,16 +448,17 @@ function PredictPageInner() {
   const onSticker = useCallback((facelet: number) => {
     if (!ch || found.length === 0 || found.every(Boolean)) return;
     const hit = ch.targets.findIndex((t, i) => !found[i] && t.answerFacelet === facelet);
-    if (hit < 0) { setFeedback({ kind: 'wrong' }); return; }
+    if (hit < 0) { recordPrediction(false); setFeedback({ kind: 'wrong' }); return; }
     // 每次都放一个新对象:连续点对多枚时也要从这一次点击重新计满 1.2 秒。
     setFeedback({ kind: 'correct' });
     const nextFound = found.map((v, i) => (i === hit ? true : v));
     setFound(nextFound);
     if (nextFound.every(Boolean)) {
+      recordPrediction(true);
       submitPredictionTrainingEvidence(true);
       if (!reviewingHistory) autoAdvance.schedule(nextQuestion);
     }
-  }, [autoAdvance, ch, found, nextQuestion, reviewingHistory, submitPredictionTrainingEvidence]);
+  }, [autoAdvance, ch, found, nextQuestion, reviewingHistory, submitPredictionTrainingEvidence, recordPrediction]);
 
   /**
    * 每一格的引擎色标签 = **起点盘面的真实颜色**(按朝向翻译)。
@@ -674,10 +696,11 @@ function PredictPageInner() {
             onTogglePlay={() => {
               if (playing) { setPlaying(false); return; }
               if (step >= totalSteps) setStep(0); // 播完了再按 = 重播
+              assistedRef.current = true;
               setPlaying(true);
             }}
-            onStepForward={() => { setPlaying(false); setStep((s) => Math.min(totalSteps, s + 1)); }}
-            onSkipEnd={() => { setPlaying(false); setStep(totalSteps); }}
+            onStepForward={() => { assistedRef.current = true; setPlaying(false); setStep((s) => Math.min(totalSteps, s + 1)); }}
+            onSkipEnd={() => { assistedRef.current = true; setPlaying(false); setStep(totalSteps); }}
             labels={{
               skipStart: tr({ zh: '回到起点', en: 'Skip to start' }),
               stepBack: tr({ zh: '退一步', en: 'Step back' }),
@@ -761,6 +784,7 @@ function PredictPageInner() {
         </TrainingNavButton>
       </div>
 
+      <TrainingStatsPanel group={statsGroup} />
     </div>
   );
 }

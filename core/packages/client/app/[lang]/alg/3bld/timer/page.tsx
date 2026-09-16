@@ -1,5 +1,8 @@
 'use client';
 
+import TrainingStatsPanel from '@/components/TrainingStatsPanel';
+import { useTrainingStats } from '@/hooks/useTrainingStats';
+
 // 3BLD 练习计时器 (simple BLD timer) — destination of the edge-float "练习计时"
 // handoff. Reads the scramble list written to localStorage by FloatTrainer
 // (BLD_TIMER_SCRAMBLES_KEY), shows the current scramble + a big spacebar-hold /
@@ -42,6 +45,8 @@ interface Solve {
 
 export default function BldTimerPage(): JSX.Element {
 
+  const { record } = useTrainingStats('bld-timer');
+  const recorded = useRef(false);
   const [scrambles, setScrambles] = useState<string[]>([]);
   const [idx, setIdx] = useState(0);
   const [solves, setSolves] = useState<Solve[]>([]);
@@ -99,6 +104,7 @@ export default function BldTimerPage(): JSX.Element {
   const startTimer = useCallback(() => {
     clearHold();
     const t = Date.now();
+    recorded.current = false;
     setStartedAt(t);
     setNow(t);
     setTimerState(RUNNING);
@@ -109,7 +115,10 @@ export default function BldTimerPage(): JSX.Element {
   }, [scrambles.length]);
 
   const stopTimer = useCallback(() => {
+    if (recorded.current) return;
+    recorded.current = true;
     const elapsed = Date.now() - startedAt;
+    record(null, elapsed);
     setLastMs(elapsed);
     setSolves((prev) => [
       ...prev,
@@ -117,7 +126,7 @@ export default function BldTimerPage(): JSX.Element {
     ]);
     setTimerState(STOPPING);
     advance();
-  }, [startedAt, scrambles, idx, advance]);
+  }, [startedAt, scrambles, idx, advance, record]);
 
   const setNotRunning = useCallback(() => {
     clearHold();
@@ -283,6 +292,7 @@ export default function BldTimerPage(): JSX.Element {
           </div>
         </>
       )}
+      <TrainingStatsPanel group="bld-timer" />
     </div>
   );
 }

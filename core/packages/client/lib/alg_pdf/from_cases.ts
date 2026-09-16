@@ -14,6 +14,7 @@ import {
   caseViewAlg,
   caseViewSetup,
   displayAlg,
+  displayCaseScramble,
   oriAdjustSetup,
   shortOriName,
   type CaseViewAngle,
@@ -110,7 +111,7 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
         sub: oriName || (subOf ? subOf(c) : (c.number != null ? `#${c.number}` : undefined)),
         section: o.sectionOf?.(c),
         group: showGroups ? (groupLabel?.(sub) ?? sub ?? undefined) : undefined,
-        setup: setups && setup ? formatScrambleForEvent(puzzle, setup) : undefined,
+        setup: setups && setup ? formatScrambleForEvent(puzzle, displayCaseScramble(puzzle, set, setup)) : undefined,
         algs: picked.map(e => {
           const angled = caseViewAlg(e.alg, o.viewAngle ?? 'default');
           return formatScrambleForEvent(puzzle, rawAlg ? angled : displayAlg(angled));

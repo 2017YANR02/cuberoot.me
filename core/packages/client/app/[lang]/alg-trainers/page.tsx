@@ -1,5 +1,5 @@
 import IframePage from '@/components/IframePage';
 
 export default function Page() {
-  return <IframePage src="/tools/alg_trainers/" title="Alg Trainer" />;
+  return <IframePage trainingGroup="legacy:alg-trainers" src="/tools/alg_trainers/" title="Alg Trainer" />;
 }

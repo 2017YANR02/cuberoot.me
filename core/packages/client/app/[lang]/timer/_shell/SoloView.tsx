@@ -1391,7 +1391,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     submitTimerTrainingEvidence(trainingDestinationRef.current, solve);
     // 拧完了复盘就在这一屏,不用去成绩里找那条刚拧的。只对录到动作流的成绩成立
     // (判据见 shouldAutoRecap),下一把一开始就收起。
-    setRecapId(shouldAutoRecap(solve, { autoRecap: settings.autoRecap }) ? solve.id : null);
+    const showRecap = shouldAutoRecap(solve, { autoRecap: settings.autoRecap });
+    setRecapId(showRecap ? solve.id : null);
+    if (showRecap) setPanelTab(null);
     if (res.autoPenalty === 'DNF') petReact('error');
     nextScramble();
   }, [attemptSplitRecorder, nextScramble, settings.precision, settings.autoRecap]);
@@ -2798,20 +2800,37 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     return null;
   };
 
-  // 解法提示(仅 333)。同一个组件在两处挂点里二选一:桌面进右侧 .shell-rail(展开成竖栏),
+  // 解法提示(仅 333)。同一个组件在两处挂点里二选一:桌面进左侧 .shell-rail(展开成竖栏),
   // 手机进顶栏那一组控件的末尾(点开 = 全屏浮层)。写成一个变量,免得两处各写一遍 props。
   const solverHintPanel = event === '333'
     ? (
         <SolverHintPanel
           scramble={scramble}
           isZh={isZh}
-          resultsPanelOpen={panelTab !== null}
-          onOpen={closeResultsPanel}
+          resultsPanelOpen={!isDesktop && panelTab !== null}
+          onOpen={isDesktop ? undefined : closeResultsPanel}
           onPrevScramble={sheetPrevScramble}
           onNextScramble={sheetNextScramble}
         />
       )
     : null;
+
+  // 桌面复盘占右栏；窄屏仍放在计时区底部。全屏复用同一份成绩详情报告。
+  const solveRecap = recapSolve ? (
+    <SolveRecap
+      key={recapSolve.id}
+      solve={recapSolve}
+      isZh={isZh}
+      history={byEvent[recapSolve.event] ?? []}
+      onFull={() => {
+        const idx = solves.findIndex(s => s.id === recapSolve.id);
+        setModalSolve({ s: recapSolve, idx: idx >= 0 ? idx : solves.length - 1 });
+      }}
+      onDismiss={() => setRecapId(null)}
+      onUseScramble={useScramble}
+      onReconFeedback={(ok) => updateSolve(recapSolve.id, { reconOk: ok })}
+    />
+  ) : null;
 
   const retryDisplayedScramble = () => {
     if (byStepsFailed) {
@@ -2941,7 +2960,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   return (
     <div
-      className={`timer-shell${fullscreen ? ' fullscreen' : ''}${distractionFree ? ' is-solving' : ''}${hideAllUi ? ' hide-ui' : ''}${isDesktop && panelTab ? ' panel-open' : ''}`}
+      className={`timer-shell${fullscreen ? ' fullscreen' : ''}${distractionFree ? ' is-solving' : ''}${hideAllUi ? ' hide-ui' : ''}${isDesktop && (panelTab || recapSolve) ? ' panel-open' : ''}${isDesktop && recapSolve && !panelTab ? ' recap-open' : ''}`}
       data-solving={timer.phase === 'running' ? 'true' : undefined}
     >
       <TimerPrintController
@@ -3000,7 +3019,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               摆在「解法」左边,和来源下拉同一组:难度讲的就是这条打乱怎么来的。
               data-no-timer 得挂在这儿 —— 开关已经不在打乱来源条里,借不到那块的豁免。 */}
           <span className="shell-topbar-diff" data-no-timer ref={setDiffSlot} />
-          {/* 解法提示(手机形态)。桌面同一个组件挂在右侧 .shell-rail 里(见下),
+          {/* 解法提示(手机形态)。桌面同一个组件挂在左侧 .shell-rail 里(见下),
               这里是二选一 —— 两处同时挂就有两个实例抢同一个 ?hints。 */}
           {!isDesktop && solverHintPanel}
           {/* 假魔方是 dev 调试入口,跟当前打乱相关,放在常驻计时控件末尾。 */}
@@ -3187,23 +3206,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           )}
         </TimingSurface>
 
-        {/* 刚拧完那把的复盘 —— 在文档流里,从下面把计时区顶上去,不遮挡也不用点。
-            开下一把即消失(见上面的 phase 副作用)。 */}
-        {recapSolve && (
-          <SolveRecap
-            key={recapSolve.id}
-            solve={recapSolve}
-            isZh={isZh}
-            history={byEvent[recapSolve.event] ?? []}
-            onFull={() => {
-              const idx = solves.findIndex(s => s.id === recapSolve.id);
-              setModalSolve({ s: recapSolve, idx: idx >= 0 ? idx : solves.length - 1 });
-            }}
-            onDismiss={() => setRecapId(null)}
-            onUseScramble={useScramble}
-            onReconFeedback={(ok) => updateSolve(recapSolve.id, { reconOk: ok })}
-          />
-        )}
+        {/* 窄屏保留停表后底部复盘，桌面在右栏展示。 */}
+        {!isDesktop && solveRecap}
 
         {/* Goal pill + trainer subset + solver hints (chrome, fade while solving) */}
         <div className="shell-undersurface surface-chrome">
@@ -3242,8 +3246,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           onMicrophone={connectStackmat}
         />
 
-        {/* 右侧配置栏:解法提示(仅 333,逐阶段最优 + 分步解法)常驻可折叠面板 ——
-            桌面收成主区右侧竖栏。手机上这颗 pill 挂在顶栏(见上),不再落在打乱图下方。
+        {/* 左侧配置栏:解法提示(仅 333,逐阶段最优 + 分步解法)常驻可折叠面板 ——
+            桌面收成主区左侧竖栏。手机上这颗 pill 挂在顶栏(见上),不再落在打乱图下方。
             打乱来源已移到计时读数上方(见 ScrambleSourceBar)。 */}
         <div className="shell-rail" data-no-timer>
           {isDesktop && solverHintPanel}
@@ -3273,6 +3277,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       {/* ── Side panel: desktop dock / 非桌面整屏 ───────────────
           入口是左下角那块统计(见上);底部导航条已撤掉,工具在顶栏 MoreMenu。
           非桌面宽度整屏铺开,关闭走右上角 × 或 Escape。 */}
+      {isDesktop && !panelTab && solveRecap && (
+        <aside className="shell-panel--rail shell-recap-rail" data-site-surface="panel" data-no-timer>
+          {solveRecap}
+        </aside>
+      )}
       {panelTab && (
         <aside className={`shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
           <div className="shell-panel-tabs">

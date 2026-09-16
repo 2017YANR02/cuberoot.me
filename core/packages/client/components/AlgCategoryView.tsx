@@ -68,6 +68,7 @@ import {
   caseViewAlg,
   caseViewSetup,
   displayAlg,
+  displayCaseScramble,
   oriAdjustSetup,
   shortOriName,
   type CaseViewAngle,
@@ -1688,7 +1689,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                           {effectiveView === 'full' && c.setup && (
                             <SetupLine
                               puzzle={puzzleParam}
-                              setup={caseViewSetup(oriAdjustSetup(c.setup, oriIdx), effectiveViewAngle)}
+                              setup={displayCaseScramble(puzzleParam, set, caseViewSetup(oriAdjustSetup(c.setup, oriIdx), effectiveViewAngle))}
                               notationStyle={displayedNotationStyle}
                               sq1NotationMode={sq1NotationMode}
                             />
