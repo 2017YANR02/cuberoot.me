@@ -367,3 +367,5 @@ const server = serve({ fetch: app.fetch, port: PORT, hostname: '0.0.0.0' }, () =
 const stopRuntimeDiagnostics = startRuntimeDiagnostics();
 server.once('close', () => { void stopRuntimeDiagnostics(); });
 injectWebSocket(server);
+import { dailyChallengeRoutes } from './routes/dailyChallenge';
+app.route('/api/daily-challenge', dailyChallengeRoutes);
