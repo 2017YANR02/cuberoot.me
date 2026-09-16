@@ -65,7 +65,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   equals the set mounted via app.route('/v1', …) in apps/api/src/index.ts.
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
-//   account_auth alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
+//   account_auth admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
 //   comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends geo health historical_ranks pb private_vault
 //   membership membership_subscriptions music nav_sites pets nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
@@ -73,6 +73,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'system', m: 'GET', p: '/v1/admin/disk', g: 'admin', c: 'no-store', zh: '根磁盘容量与目录占用；path 选择目录，refresh=1 请求后台刷新', en: 'Root disk capacity and directory usage; path selects a directory, refresh=1 requests a background scan' },
   { d: 'platform', m: 'POST', p: '/v1/platform/organizer-applications', g: 'login', c: 'no-store', zh: '提交主办方申请，可关联已有组织', en: 'Apply to host competitions using a new or existing organization' },
   { d: 'platform', m: 'GET', p: '/v1/platform/organizer-applications/me', g: 'login', c: 'no-store', zh: '读取本人申请与获准办赛的组织', en: 'Read own applications and eligible organizer organizations' },
   { d: 'platform', m: 'GET', p: '/v1/platform/organizer-applications/review-queue', g: 'admin', c: 'no-store', zh: '读取待审核主办方申请', en: 'Read pending organizer applications' },
