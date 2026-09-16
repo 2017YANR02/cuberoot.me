@@ -7,7 +7,7 @@
  */
 import { MOVE_RE } from './alg_notation';
 import { isFtoEifSolved, parseFtoEifAlgorithm } from './fto_notation';
-import { canonicalSq1Alg } from './sq1_notation';
+import { applySq1Move, applySq1Scramble, canonicalSq1Alg, isSq1Solved, parseSq1Tokens, SQ1_TOKEN_RE } from './sq1_notation';
 
 export function validateReconTiming(input: {
   recordType?: unknown; pickupTime?: unknown; putdownTime?: unknown; solution?: unknown;
@@ -340,6 +340,20 @@ export async function checkReconCompletion(input: {
 }): Promise<ReconCompletionResult> {
   const puzzle = reconPuzzleKey(input.event);
   if (!puzzle || !hasRealScramble(input.scramble)) return { status: 'unchecked' };
+
+  if (puzzle === 'square1' && /[xyzXYZ]/.test(`${input.scramble}\n${input.solution}`.replace(/\/\/[^\n]*/g, ' '))) {
+    // Parse fields separately: top-only shorthand on either side must not merge into a pair.
+    const fields = [input.scramble, input.solution].map(text => text.replace(/\/\/[^\n]*/g, ' '));
+    if (fields.some(text => text.replace(new RegExp(SQ1_TOKEN_RE.source, 'g'), '').trim())) return { status: 'invalid' };
+    let state = applySq1Scramble('');
+    for (const move of fields.flatMap(parseSq1Tokens)) {
+      if (move.kind === 'slice' && [0, 12].some(offset =>
+        state.pieces[offset + 5] === state.pieces[offset + 6]
+        || state.pieces[offset + 11] === state.pieces[offset])) return { status: 'invalid' };
+      state = applySq1Move(state, move);
+    }
+    return { status: isSq1Solved(state) ? 'solved' : 'unsolved' };
+  }
 
   if (puzzle === 'fto') {
     const scramble = cleanFtoReconAlgForPlayer(input.scramble);

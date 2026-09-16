@@ -43,7 +43,7 @@ import World from './engine/world';
 import { TwistAction } from './engine/nxn/twister';
 import { timing } from './engine/tweenTiming';
 import tweener from './engine/tweener';
-import { parseSq1Scramble } from './engine/sq1/sq1State';
+import { parseSq1Scramble, type Sq1Move } from './engine/sq1/sq1State';
 import {
   SQUARE_FAMILY_SPECS,
   formatSquareFamilyAlg,
@@ -422,9 +422,9 @@ interface SquarePlaybackCube {
   twister: {
     finish(): void;
     setup(scramble: string): void;
-    twist(move: SquareFamilyMove, fast: boolean, force: boolean): boolean;
+    twist(move: Sq1Move, fast: boolean, force: boolean): boolean;
   };
-  applyMoveInstant(move: SquareFamilyMove): void;
+  applyMoveInstant(move: Sq1Move): void;
 }
 
 function isTwistyPuzzle(p: SimPuzzle): p is 'pyraminx' | 'skewb' | 'megaminx' | 'fto' {
@@ -1291,7 +1291,7 @@ export default function PlayerControls({
   const squareFamilySetupValid = !squareFamilySpec || squareFamilySetupMoves !== null;
   const squareFamilyCanPlay = squareFamilyAlgValid && squareFamilySetupValid;
 
-  const squareActions = useMemo<SquareFamilyMove[]>(() => {
+  const squareActions = useMemo<Sq1Move[]>(() => {
     if (isSq1) return parseSq1Scramble(algDraft);
     if (squareFamilySpec) return squareFamilyAlgMoves ?? [];
     return [];
@@ -1412,9 +1412,9 @@ export default function PlayerControls({
       const squareCube = world.cube as unknown as SquarePlaybackCube;
       squareCube.twister.finish();
       const effSetup = settings.playbackMode === 'algorithm'
-        ? (setupDraft + ' ' + squareFamilyMovesToString(
-          invertSquareFamilyMoves(squareActions, squareFamilySpec ?? undefined),
-        )).trim()
+        ? (setupDraft + ' ' + (isSq1 ? invertSq1Alg(algDraft) : squareFamilyMovesToString(
+          invertSquareFamilyMoves(squareFamilyAlgMoves ?? [], squareFamilySpec ?? undefined),
+        ))).trim()
         : setupDraft;
       // setup() applies the scramble as the base state; layer the first `target`
       // solution moves on top WITHOUT resetting (applyMovesInstant would snap
@@ -1500,7 +1500,7 @@ export default function PlayerControls({
       hands.setGrips(g.R, g.L);
     }
     setStep(target);
-  }, [world, setupDraft, algDraft, nxnItems, squareActions, squareFamilySpec, squareFamilyCanPlay, ivyActions, cornerActions, corner, toEngineText, isSquarePuzzle, isIvy, ivyCanPlay, settings.playbackMode]);
+  }, [world, setupDraft, algDraft, nxnItems, squareActions, squareFamilyAlgMoves, squareFamilySpec, squareFamilyCanPlay, ivyActions, cornerActions, corner, toEngineText, isSquarePuzzle, isSq1, isIvy, ivyCanPlay, settings.playbackMode]);
 
   // Notation guide (engine skewb): play ONE token on the main cube from solved so the
   // user sees which corner a letter turns. It only borrows the cube — setup/alg text is

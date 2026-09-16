@@ -1,5 +1,6 @@
 import {
   applySq1Scramble,
+  applySq1Move,
   canonicalSq1Alg,
   parseSq1Tokens,
   simplifySq1Alg,
@@ -96,11 +97,17 @@ function applySq1PblTokens(
   tokens: readonly Sq1Token[],
   mode: Sq1PblSearchMode,
 ): Sq1State {
+  if (initial.grip || initial.smallSliceFlipped || tokens.some(token => token.kind === 'rotation')) {
+    return tokens.reduce((state, token) =>
+      mode === 'legacy' && token.kind === 'slice' && !isLegacySliceable(state.pieces)
+        ? state : applySq1Move(state, token), initial);
+  }
   let pieces = initial.pieces.slice();
   let scratch = initial.pieces.slice();
   let sliceSolved = initial.sliceSolved;
 
   for (const token of tokens) {
+    if (token.kind === 'rotation') continue;
     if (token.kind === 'slice') {
       if (mode === 'legacy' && !isLegacySliceable(pieces)) continue;
       for (let index = 0; index < 6; index += 1) {
@@ -273,7 +280,7 @@ export function legacyOptimizeSq1PblSequence(sequence: string): string {
 
 function compactForFinder(algorithm: string): string {
   return parseSq1Tokens(algorithm).map((token) =>
-    token.kind === 'slice' ? '/' : `${token.top},${token.bot}`,
+    token.kind === 'slice' ? '/' : token.kind === 'rotation' ? ` ${token.axis}2 ` : `${token.top},${token.bot}`,
   ).join('');
 }
 
