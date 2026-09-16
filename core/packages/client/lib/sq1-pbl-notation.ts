@@ -37,6 +37,10 @@ export function generatedSq1KarnaukhNotation(alg: string): string | null {
   const parts: string[] = [];
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i]!;
+    if (token.kind === 'rotation') {
+      parts.push(`${token.axis}2`);
+      continue;
+    }
     if (token.kind === 'turn') {
       parts.push(SINGLE_TURN_SYMBOLS.get(`${token.top},${token.bot}`) ?? packedTurn(token.top, token.bot));
       continue;

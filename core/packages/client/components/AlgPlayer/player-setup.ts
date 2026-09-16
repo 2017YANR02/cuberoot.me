@@ -23,7 +23,7 @@ export function resolveSimPreviewMoves(puzzle: AlgPlayerPuzzle, alg: string): st
   const normalized = normalizeAlgForTwisty(puzzle, alg);
   if (puzzle === 'sq1') {
     return parseSq1Tokens(normalized).map(token =>
-      token.kind === 'slice' ? '/' : `(${token.top}, ${token.bot})`,
+      token.kind === 'slice' ? '/' : token.kind === 'rotation' ? `${token.axis}2` : `(${token.top}, ${token.bot})`,
     );
   }
   return normalized.split(/\s+/).filter(Boolean);

@@ -52,7 +52,7 @@ export default function Sq1ReconPlayer({
       if (anchorAtEnd) {
         for (let i = moves.length - 1; i >= 0; i--) {
           const move = moves[i];
-          cube.applyMoveInstant(move.kind === 'slice'
+          cube.applyMoveInstant(move.kind !== 'turn'
             ? move
             : { kind: 'turn', top: -move.top, bot: -move.bot });
         }

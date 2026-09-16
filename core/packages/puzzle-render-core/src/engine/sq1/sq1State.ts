@@ -13,14 +13,8 @@
  * truth, `parseSq1Tokens`). Supports `(t,b) / (t,b) / ...`, paren-/comma-/
  * space-optional forms, and `t` single-number shorthand = `(t, 0)`.
  */
-import { parseSq1Tokens, type Sq1Token } from '@cuberoot/shared/sq1-notation';
-
-export interface Sq1State {
-  /** True when the equator slice is in solved orientation (F on +Z, B on -Z). */
-  sliceSolved: boolean;
-  /** 24 piece ids: 12 top + 12 bottom. Corners occupy 2 consecutive slots. */
-  pieces: number[];
-}
+import { applySq1Move, parseSq1Tokens, type Sq1Token, type Sq1State } from '@cuberoot/shared/sq1-notation';
+export { applySq1Move, type Sq1State } from '@cuberoot/shared/sq1-notation';
 
 export type Sq1Move = Sq1Token;
 
@@ -37,26 +31,6 @@ export function parseSq1Scramble(scramble: string): Sq1Move[] {
   return parseSq1Tokens(scramble);
 }
 
-export function applySq1Move(state: Sq1State, move: Sq1Move): Sq1State {
-  if (move.kind === 'slice') {
-    const pieces = state.pieces.slice();
-    for (let i = 0; i < 6; i++) {
-      const c = pieces[i + 12];
-      pieces[i + 12] = pieces[i + 6];
-      pieces[i + 6] = c;
-    }
-    return { pieces, sliceSolved: !state.sliceSolved };
-  }
-  const t = ((-move.top % 12) + 12) % 12;
-  const b = ((-move.bot % 12) + 12) % 12;
-  const next = state.pieces.slice();
-  const oldTop = state.pieces.slice(0, 12);
-  for (let i = 0; i < 12; i++) next[i] = oldTop[(t + i) % 12];
-  const oldBot = state.pieces.slice(12, 24);
-  for (let i = 0; i < 12; i++) next[i + 12] = oldBot[(b + i) % 12];
-  return { pieces: next, sliceSolved: state.sliceSolved };
-}
-
 export function applySq1Scramble(scramble: string): Sq1State {
   let state = solvedSq1();
   for (const m of parseSq1Scramble(scramble)) state = applySq1Move(state, m);
@@ -65,7 +39,7 @@ export function applySq1Scramble(scramble: string): Sq1State {
 
 /** Render a Sq1Move back to canonical string token. */
 export function moveToString(m: Sq1Move): string {
-  return m.kind === 'slice' ? '/' : `(${m.top},${m.bot})`;
+  return m.kind === 'slice' ? '/' : m.kind === 'rotation' ? `${m.axis}2` : `(${m.top},${m.bot})`;
 }
 
 /** Stringify a list of moves, space-separated. */

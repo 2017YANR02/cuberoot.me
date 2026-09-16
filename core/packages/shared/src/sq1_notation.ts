@@ -13,7 +13,8 @@
  * SVG rendering of the state lives client-side in `client/lib/sq1-svg.ts`.
  */
 
-/** Tokenizer regex for sq1 alg. Three branches:
+/** Tokenizer regex for sq1 alg. Rotations precede the numeric branches so their
+ *  `2` cannot become a top-layer turn. The other three branches are:
  *    1. `/`                  slice
  *    2. (t,b) pair           `(1,0)`, `1,0`, `(1 0)`, `1 0`, `10`, `3-3`, ...
  *    3. single t shorthand   `(3)`, `3`, `-3`   → means `(t, 0)` (top-only)
@@ -23,10 +24,11 @@
  *  the next char is `-` or a digit. Sq1 turns are practically [-5, 6] so the
  *  single-digit fallback is unambiguous in real algs.
  *  Groups: 1=`/`, 2,3=pair top/bot, 4=single top (bot implicitly 0). */
-export const SQ1_TOKEN_RE = /(\/)|\(?\s*(-?\d+)\s*(?:,\s*|\s+|(?=-?\d))(-?\d+)\s*\)?|\(?\s*(-?\d+)\s*\)?/g;
+export const SQ1_TOKEN_RE = /[xyzXYZ]2'?|(\/)|\(?\s*(-?\d+)\s*(?:,\s*|\s+|(?=-?\d))(-?\d+)\s*\)?|\(?\s*(-?\d+)\s*\)?/g;
 
 export type Sq1Token =
   | { kind: 'slice' }
+  | { kind: 'rotation'; axis: 'x' | 'y' | 'z' }
   | { kind: 'turn'; top: number; bot: number };
 
 /** Single canonical tokenizer — every sq1 alg consumer should go through here
@@ -38,7 +40,8 @@ export function parseSq1Tokens(alg: string): Sq1Token[] {
   const re = new RegExp(SQ1_TOKEN_RE.source, 'g');
   let m: RegExpExecArray | null;
   while ((m = re.exec(cleaned)) !== null) {
-    if (m[1] === '/') out.push({ kind: 'slice' });
+    if (/^[xyz]/i.test(m[0])) out.push({ kind: 'rotation', axis: m[0][0].toLowerCase() as 'x' | 'y' | 'z' });
+    else if (m[1] === '/') out.push({ kind: 'slice' });
     else if (m[2] !== undefined) out.push({ kind: 'turn', top: parseInt(m[2], 10), bot: parseInt(m[3]!, 10) });
     else out.push({ kind: 'turn', top: parseInt(m[4]!, 10), bot: 0 });
   }
@@ -49,8 +52,8 @@ export function parseSq1Tokens(alg: string): Sq1Token[] {
  *  Output uses canonical `(t,b)` form regardless of input formatting. */
 export function invertSq1Alg(alg: string): string {
   return parseSq1Tokens(alg).reverse().map((tok) =>
-    tok.kind === 'slice' ? '/' : `(${-tok.top},${-tok.bot})`,
-  ).join('');
+    tok.kind === 'slice' ? '/' : tok.kind === 'rotation' ? `${tok.axis}2 ` : `(${-tok.top},${-tok.bot})`,
+  ).join('').trim();
 }
 
 /** Re-emit a sq1 alg in canonical `(t, b) / (t, b) / ...` form.
@@ -58,7 +61,7 @@ export function invertSq1Alg(alg: string): string {
  *  spaces around `/` AND after each comma. Without them: `Unexpected character at index N`. */
 export function canonicalSq1Alg(alg: string): string {
   return parseSq1Tokens(alg).map((tok) =>
-    tok.kind === 'slice' ? '/' : `(${tok.top}, ${tok.bot})`,
+    tok.kind === 'slice' ? '/' : tok.kind === 'rotation' ? `${tok.axis}2` : `(${tok.top}, ${tok.bot})`,
   ).join(' ');
 }
 
@@ -72,13 +75,14 @@ export function compactSq1Alg(alg: string): string {
   const toks = parseSq1Tokens(alg);
   return toks.map((tok, i) => {
     if (tok.kind === 'slice') return '/';
+    if (tok.kind === 'rotation') return ` ${tok.axis}2 `;
     const prev = toks[i - 1];
     const next = toks[i + 1];
     const leftBound = !prev || prev.kind === 'slice';
     const rightBound = !next || next.kind === 'slice';
     if (tok.bot === 0 && leftBound && rightBound) return `${tok.top}`;
     return `${tok.top}${tok.bot}`;
-  }).join('');
+  }).join('').trim().replace(/ +/g, ' ');
 }
 
 /**
@@ -114,7 +118,10 @@ export function simplifySq1Alg(alg: string, format: 'compact' | 'wca' = 'compact
   const stack: Sq1Token[] = [];
   for (const tok of parseSq1Tokens(alg)) {
     const top = stack[stack.length - 1];
-    if (tok.kind === 'slice') {
+    if (tok.kind === 'rotation') {
+      if (top?.kind === 'rotation' && top.axis === tok.axis) stack.pop();
+      else stack.push(tok);
+    } else if (tok.kind === 'slice') {
       if (top && top.kind === 'slice') stack.pop();
       else stack.push(tok);
     } else if (top && top.kind === 'turn') {
@@ -129,7 +136,7 @@ export function simplifySq1Alg(alg: string, format: 'compact' | 'wca' = 'compact
     }
   }
   const canonical = stack.map((tok) =>
-    tok.kind === 'slice' ? '/' : `(${tok.top}, ${tok.bot})`,
+    tok.kind === 'slice' ? '/' : tok.kind === 'rotation' ? `${tok.axis}2` : `(${tok.top}, ${tok.bot})`,
   ).join(' ');
   return format === 'wca' ? canonicalSq1Alg(canonical) : compactSq1Alg(canonical);
 }
@@ -151,6 +158,10 @@ export function displaySq1ForEvent(event: string, scramble: string, compact: boo
 export interface Sq1State {
   sliceSolved: boolean;
   pieces: number[];
+  /** Regrip relative to the physical slot frame: bit 0 swaps U/D, bit 1 swaps R/L. */
+  grip?: number;
+  /** The small middle slab can move after a regrip exposes the left slice. */
+  smallSliceFlipped?: boolean;
 }
 
 /**
@@ -165,29 +176,62 @@ const SOLVED_PIECES: number[] = [
 
 /** Parse + apply a WCA-spec sq1 scramble. Accepts every form parseSq1Tokens does. */
 export function applySq1Scramble(scramble: string): Sq1State {
-  let pieces = SOLVED_PIECES.slice();
-  let sliceSolved = true;
+  let state: Sq1State = { pieces: SOLVED_PIECES.slice(), sliceSolved: true };
   for (const tok of parseSq1Tokens(scramble)) {
-    if (tok.kind === 'slice') {
-      const next = pieces.slice();
-      // Swap [6..11] with [12..17] — same as tnoodle doSlash().
-      for (let i = 0; i < 6; i++) {
-        const c = next[i + 12];
-        next[i + 12] = next[i + 6];
-        next[i + 6] = c;
-      }
-      pieces = next;
-      sliceSolved = !sliceSolved;
-    } else {
-      const t = ((-tok.top % 12) + 12) % 12;
-      const b = ((-tok.bot % 12) + 12) % 12;
-      const next = pieces.slice();
-      const oldTop = pieces.slice(0, 12);
-      for (let i = 0; i < 12; i++) next[i] = oldTop[(t + i) % 12];
-      const oldBot = pieces.slice(12, 24);
-      for (let i = 0; i < 12; i++) next[i + 12] = oldBot[(b + i) % 12];
-      pieces = next;
-    }
+    state = applySq1Move(state, tok);
   }
-  return { pieces, sliceSolved };
+  return state;
+}
+
+/** Apply moves in the physical slot frame; rotations change the user's grip only. */
+export function applySq1Move(state: Sq1State, tok: Sq1Token): Sq1State {
+  if (tok.kind === 'rotation') {
+    const grip = (state.grip ?? 0) ^ (tok.axis === 'x' ? 1 : tok.axis === 'y' ? 2 : 3);
+    const next = { ...state };
+    if (grip) next.grip = grip;
+    else delete next.grip;
+    return next;
+  }
+  let pieces = state.pieces;
+  let sliceSolved = state.sliceSolved;
+  const left = Boolean((state.grip ?? 0) & 2);
+  if (tok.kind === 'slice') {
+    const next = pieces.slice();
+    const topStart = left ? 0 : 6;
+    const botStart = left ? 18 : 12;
+    for (let i = 0; i < 6; i++) {
+      const c = next[i + botStart];
+      next[i + botStart] = next[i + topStart];
+      next[i + topStart] = c;
+    }
+    pieces = next;
+    sliceSolved = !sliceSolved;
+  } else {
+    const flipped = Boolean((state.grip ?? 0) & 1);
+    const t = ((-(flipped ? tok.bot : tok.top) % 12) + 12) % 12;
+    const b = ((-(flipped ? tok.top : tok.bot) % 12) + 12) % 12;
+    const next = pieces.slice();
+    const oldTop = pieces.slice(0, 12);
+    for (let i = 0; i < 12; i++) next[i] = oldTop[(t + i) % 12];
+    const oldBot = pieces.slice(12, 24);
+    for (let i = 0; i < 12; i++) next[i + 12] = oldBot[(b + i) % 12];
+    pieces = next;
+  }
+  const next = { ...state, pieces, sliceSolved };
+  if (tok.kind === 'slice' && left) {
+    if (next.smallSliceFlipped) delete next.smallSliceFlipped;
+    else next.smallSliceFlipped = true;
+  }
+  return next;
+}
+
+/** Solved up to a regrip; both middle slabs flipped also rotate every slot by x2 about the slice axis. */
+export function isSq1Solved(state: Sq1State): boolean {
+  if (!state.sliceSolved) return false;
+  return state.pieces.every((piece, slot) => {
+    const expectedSlot = state.smallSliceFlipped
+      ? slot < 12 ? 12 + (slot + 6) % 12 : (slot - 12 + 6) % 12
+      : slot;
+    return piece === SOLVED_PIECES[expectedSlot];
+  });
 }
