@@ -66,8 +66,10 @@ describe('shared timer solve detail UI', () => {
     expect(document.body.textContent).toContain('Memo / Execution');
     expect(document.body.querySelector('[data-preview]')).not.toBeNull();
     expect(document.body.querySelectorAll('[data-timer-reconstruct-metrics]')).toHaveLength(1);
-    expect(document.body.textContent).toContain('First move');
-    expect(document.body.textContent).toContain('after memo');
+    expect([...document.body.querySelectorAll('.timer-reconstruct-metric')].map(node => node.textContent)).toEqual([
+      '2QTM0.33 tps',
+      '0.55sLongest pause1 × >0.5s',
+    ]);
     expect(document.body.textContent).toContain('0.33 tps');
     expect(document.activeElement).toBe(document.body.querySelector('[data-history-action-id="solve.detail.penalty"]'));
 
@@ -144,8 +146,10 @@ describe('shared timer solve detail UI', () => {
       solve: { ...baseSolve, moves: [{ m: 'R', ts: 4_250 }] },
     })));
     expect(document.body.textContent).toContain('总计');
-    expect(document.body.textContent).toContain('首动延迟');
-    expect(document.body.textContent).toContain('记忆后');
+    expect([...document.body.querySelectorAll('.timer-reconstruct-metric')].map(node => node.textContent)).toEqual([
+      '1QTM0.17 步/秒',
+      '0.00s最长停顿0 × >0.5s',
+    ]);
     expect(document.body.textContent).not.toContain('total');
     expect(document.body.querySelector('[data-history-action-id="solve.detail.move-session"]')).toBeNull();
     expect(document.body.querySelector<HTMLSelectElement>('[data-history-action-id="solve.detail.penalty"]')?.disabled).toBe(true);
