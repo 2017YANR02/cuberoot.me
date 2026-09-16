@@ -9,7 +9,7 @@ export default function PrivacyPage() {
   return (
     <main className="privacy-page">
       <h1>{t('CubeRoot 用户协议与隐私政策', 'CubeRoot User Agreement and Privacy Policy')}</h1>
-      <p className="privacy-updated">{t('生效日期:2026-09-12', 'Effective date: September 12, 2026')}</p>
+      <p className="privacy-updated">{t('生效日期:2026-09-15', 'Effective date: September 15, 2026')}</p>
       <p>
         {t(
           '本政策适用于 CubeRoot 官方 Android、iOS App、微信小程序与抖音小程序。App 的核心计时功能可离线且无需登录使用;App 与小程序登录均由你主动选择。',
@@ -35,7 +35,7 @@ export default function PrivacyPage() {
             'The app automatically downloads public 3×3 competition scrambles from the CubeRoot API and caches at most 50 on the device for up to seven days. Requests do not include your solve times, comments, or settings. The server processes and logs standard request information such as IP address and device or client type to deliver the service, protect it, and diagnose failures.',
           )}
         </li>
-        <li>{t('App 不包含广告或分析 SDK,也不使用摄像头、麦克风或位置数据。Android 11 及以下版本可能按系统要求把蓝牙扫描兼容授权显示为定位权限,但 App 不会读取、推断、保存或上传你的位置。', 'The app contains no advertising or analytics SDK and does not use camera, microphone, or location data. On Android 11 and earlier, the operating system may present the Bluetooth scanning compatibility permission as location access, but the app does not read, infer, store, or upload your location.')}</li>
+        <li>{t('App 不包含广告 SDK，也不使用摄像头或麦克风。Android 11 及以下版本可能按系统要求把蓝牙扫描兼容授权显示为定位权限，计时器不使用扫描结果推断位置。可选的 Android 纪录推送使用下文说明的第三方 SDK。', 'The app contains no advertising SDK and does not use the camera or microphone. On Android 11 and earlier, the system may present Bluetooth scanning compatibility access as a location permission; the timer does not infer location from scan results. Optional Android record notifications use the third-party SDK described below.')}</li>
         <li>
           {t(
             '只有在你点击连接智能魔方后,App 才会请求附近设备或蓝牙权限,扫描并连接你选择的兼容魔方。蓝牙扫描不用于确定或记录位置;拒绝授权不会影响普通计时。',
@@ -49,6 +49,20 @@ export default function PrivacyPage() {
           )}
         </li>
       </ul>
+
+      <h2>{t('纪录订阅与通知', 'Record subscriptions and notifications')}</h2>
+      <p>{t(
+        '纪录订阅在网站与 App 共用，可在「消息」调整项目、单次/平均、纪录级别和地区。绑定 WCA 后，本人纪录自动纳入。邮件通过既有邮件服务发送到已验证邮箱，并尊重邮件总开关。Android 推送仅在服务已配置、你同意推送用途且允许系统通知后启用；拒绝不影响计时和站内消息，可在系统设置关闭通知。',
+        'Record subscriptions are shared by the website and apps. In Notifications you can choose events, single/average, record levels and regions. Records belonging to your linked WCA identity are included automatically. Email uses the existing email service, a verified address and your email switch. Android push starts only when configured, after your consent and system notification permission. Declining does not affect timing or the inbox; system settings let you disable notifications.',
+      )}</p>
+      <p>{t(
+        'Android 使用每日互动股份有限公司的个推消息推送 SDK 及核心组件，配置相应通道时也使用手机厂商推送 SDK，以投递通知并统计投递结果。SDK 会处理推送标识、设备与应用信息、网络信息；具体字段以及可选的设备标识和位置相关信息以个推隐私政策及实际系统授权为准。个推还附带中互智安（北京）科技有限公司的卓信 ID SDK，用于设备识别与安全风控，可能处理设备特征和应用信息。CubeRoot 关闭个推的智能、应景、应急推送和跨应用链路合并扩展。通知正文为公开比赛纪录，可能显示在锁屏上。',
+        'Android uses the Getui push SDK and core component from Daily Interactive Co., Ltd., plus manufacturer push SDKs when those channels are configured, to deliver notifications and report delivery results. The SDK processes push identifiers, device and application information, and network information. Specific fields and optional device identifiers or location-related information depend on Getui’s policy and system permissions. Getui also bundles the ZX ID SDK from Zhonghu Zhian (Beijing) Technology Co., Ltd. for device identification and security checks, which may process device characteristics and application information. CubeRoot disables Getui’s personalized, location-based and emergency push extensions and cross-app link merging. Notification text contains public competition records and may appear on the lock screen.',
+      )} <a href="https://docs.getui.com/privacy/" target="_blank" rel="noopener noreferrer">{t('个推隐私政策', 'Getui privacy policy')}</a>{' '}<a href="https://zxid.mobileservice.cn/privacy" target="_blank" rel="noopener noreferrer">{t('卓信 ID 隐私政策', 'ZX ID privacy policy')}</a></p>
+      <p>{t(
+        '服务器保存账号与设备推送标识的绑定；定期清理连续 30 天未刷新的绑定和 7 天前的投递队列条目。退出此 App 时关闭本机推送并撤销绑定；断网时在安全存储保留仅能撤销该设备的凭据，联网后重试。删除账号会删除设备绑定。已经交给系统或厂商的通知可能仍在队列中。iOS 与其他宿主的系统推送尚未开放。',
+        'The server stores the account-to-push-device binding and periodically removes bindings not refreshed for 30 days and delivery queue entries older than seven days. Signing out stops local push and revokes the binding. Offline, secure storage retains a credential that can only revoke that device, for retry when online. Account deletion removes device bindings. Notifications already handed to the system or manufacturer may remain queued. System push is not yet available on iOS or other hosts.',
+      )}</p>
 
       <h2>{t('App、小程序与账号数据', 'App, Mini Program, and account data')}</h2>
       <ul>

@@ -1,6 +1,6 @@
 # CubeRoot 移动端商店提交资料
 
-最后核对：2026-09-11
+最后核对：2026-09-15（新增纪录通知源码；最终发布包仍待复核）
 适用构建：`@cuberoot/mobile` `0.1.0`，Android `versionCode 1000`
 应用标识：`me.cuberoot.app`
 
@@ -79,7 +79,7 @@ App 已允许通过系统浏览器创建同一网站账号，并提供 App 内�
 
 ## 4. Android 权限与 SDK 清单
 
-### 4.1 最终合并 manifest 实测
+### 4.1 历史 release manifest 与本次增量
 
 - `android.permission.INTERNET`
 - `android.permission.ACCESS_NETWORK_STATE`
@@ -88,10 +88,10 @@ App 已允许通过系统浏览器创建同一网站账号，并提供 App 内�
 - Android 12+：`android.permission.BLUETOOTH_SCAN`（`neverForLocation`）与 `android.permission.BLUETOOTH_CONNECT`，只在用户点击连接智能魔方后请求“附近设备”授权
 - Android 11 及以下兼容：`BLUETOOTH` / `BLUETOOTH_ADMIN`、`ACCESS_COARSE_LOCATION` / `ACCESS_FINE_LOCATION` 均限制为 `maxSdkVersion=30`
 - BLE 硬件声明为 `required=false`；没有 BLE 或不授权的设备仍可使用普通计时器
-- 没有相机、麦克风、通讯录、存储或通知权限；不使用蓝牙扫描推断或记录位置
+- 旧 release 没有相机、麦克风、通讯录、存储或通知权限；本次 Android 新增 `POST_NOTIFICATIONS`，不能沿用“无通知权限”答案
 - `android:allowBackup="false"`
 
-源 manifest 只显式申请 Internet；Network 插件贡献网络状态权限。上述结果来自本地签名 release 构建，上传前要对最终 AAB 再跑同一检查。
+上述清单记录先前 release 与 BLE 源码变化。2026-09-15 新增个推后，源 manifest 包含网络、通知和既有 BLE 权限；SDK 及条件厂商依赖还会合并权限和组件，必须对最终 AAB 重做清单，不能用旧包报告替代。本次尚无启用真实厂商配置的最终 release 证据。
 
 ### 4.2 当前运行时依赖
 
@@ -102,13 +102,18 @@ App 已允许通过系统浏览器创建同一网站账号，并提供 App 内�
 - `@capacitor/haptics`：只在计时器 ready 和停止时提供设备触觉反馈，不读取或上传数据
 - `@capacitor-community/bluetooth-le`：用户主动连接时扫描并连接附近的兼容智能魔方；设备名称/地址用于本机连接与 GAN 密钥派生，转动和状态在本机处理，不上传扫描列表、地址或实时魔方数据
 - `@aparajita/capacitor-secure-storage`：将 CubeRoot 会话保存在 iOS Keychain 或 Android Keystore 保护的加密存储中；禁用 iCloud 同步
+- Android 个推 `gtsdk 3.3.15.0` / `gtc 3.3.3.0`：纪录系统通知；仅客户端/服务端配置齐全且登录、同意 SDK 隐私、允许系统通知后初始化。条件厂商依赖见 [配置说明](record-notification-setup.md)。安全存储另保存设备随机撤销凭据，退出断网时重试，不保留旧 JWT。
 - React / React DOM：本地界面渲染
 - `@cuberoot/shared`：网站与 App 共用的计时数据模型、迁移和打乱逻辑
 - `@cuberoot/timer-ui`：网站与 App 共用的计时界面组件和七段字体
 - `@cuberoot/event-icon`：网站与 App 共用的项目图标资产和渲染组件
 - `@cuberoot/visualcube`：网站与 App 共用的魔方状态 SVG 渲染器
 
-当前没有 Firebase、广告、分析、崩溃上报、推送、支付或第三方用户画像 SDK。Mobile 本身不复制登录表单，也未集成原生第三方身份 SDK；“我的”显示网站实际 provider，凭据交互由系统浏览器中的网站 LoginForm 执行。加入 BLE 和完整 provider surface 后，最终 AAB、Data safety、隐私政策和审核备注必须保持同一说明，不得继续沿用“仅邮箱/手机”或“无蓝牙权限”的旧答案。
+Android 还包含个推传递依赖卓信 ID `3.3.7.58976`（中互智安（北京）科技有限公司），用于设备识别与安全风控，数据范围包含设备特征与应用信息，见[卓信隐私政策](https://zxid.mobileservice.cn/privacy)。CubeRoot 关闭个推智能/应景/应急推送、跨应用链路合并及 IMEI/IMSI/MAC/ICCID/序列号/广告 ID/基站信息采集开关；源码移除电话状态、任务列表、全量应用列表、后台定位权限，禁止 SDK 合并开启明文流量。旧 Android 的 BLE 兼容定位权限仍保留。最终 SDK 实际行为仍须真机验证。
+
+Android 当前已包含第三方推送 SDK，不再宣称“无推送 SDK”。个推提供者为每日互动股份有限公司，数据处理范围包括设备标识、设备/应用和网络信息，可选信息及定位权限见[官方隐私政策](https://docs.getui.com/privacy/)；CubeRoot 不启用广告画像或电子围栏，但不能据此声称第三方 SDK 不处理设备信息。通知使用公开纪录文本和网站比赛链接，可能出现在锁屏。账号与设备绑定、通知偏好、已验证邮箱、撤销/保留规则须同步到最终 Data safety 和隐私声明；iOS 尚未接入该 SDK。
+
+Mobile 不复制登录表单；“我的”显示网站实际 provider，凭据交互由系统浏览器中的网站 LoginForm 执行。最终 AAB、Data safety、隐私政策和审核备注必须与实际 SDK/权限一致。未取得同意前不初始化的源码门槛已实现，仍需最终包冷启动/拒绝权限实测；未配置 SDK AppID 的 debug 包不能作为真实推送验证。官网隐私政策本轮只改本地源码，尚未发布。
 
 ## 5. Google Play 商店文案
 
