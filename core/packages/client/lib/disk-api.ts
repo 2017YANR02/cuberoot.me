@@ -10,6 +10,8 @@ export interface DiskReport {
   scanning: boolean;
   busy: boolean;
   error: boolean;
+  saveError: boolean;
+  progress: { entries: number; bytes: number; currentPath: string; startedAt: string; updatedAt: string } | null;
   refreshAfter: string | null;
 }
 

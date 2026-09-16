@@ -524,7 +524,7 @@ describe('deployment workflow path contracts', () => {
     expect(readStepEnv('deploy_core.yml', 'Deploy server')).toEqual({
       API_DIR: 'core/${{ steps.workspace.outputs.api }}',
     });
-    const enabledBranch = run.match(/if node --env-file=\.env -e '[^']+'; then([\s\S]*?)\n\s*else/)?.[1] ?? '';
+    const enabledBranch = run.match(/if \[ "\$disk_only" != true \] && node --env-file=\.env -e '[^']+'; then([\s\S]*?)\n\s*else/)?.[1] ?? '';
     const provisionArtifact = '$API_DIR/dist/cubeopt/provision.mjs';
     const verifyArtifact = '$API_DIR/dist/cubeopt/verify.mjs';
     const prepareArtifact = '$API_DIR/dist/cubeopt/prepare.mjs';
@@ -558,6 +558,12 @@ describe('deployment workflow path contracts', () => {
     expect(residentReady).toBeGreaterThan(residentReloaded);
     expect(run).toContain('CUBEOPT_WARM_ON_BOOT=0 pm2 reload core-api --update-env');
     expect(run).toContain('CUBEOPT_WARM_ON_BOOT="$cubeopt_warm_on_boot" pm2 reload core-api --update-env');
+    expect(run).toContain('if [ "$disk_only" = true ]; then cubeopt_warm_on_boot=0; fi');
+    expect(run).toContain('if [ "${{ inputs.clear_api_cache }}" = true ]; then');
+    const scope = readStepRun('deploy_core.yml', 'Identify disk dashboard only release');
+    expect(scope).toContain('git diff --name-only "$active_sha" HEAD');
+    expect(scope).toContain('*) allowed=false ;;');
+    expect(scope).toContain('if [ "$allowed" = true ] && [ "$disk_changed" = true ]; then disk_only=true; fi');
     expect(run).toContain('node --env-file=.env -e \'process.exit(process.env.CUBEOPT_SOLVE_ENABLED === "1" ? 0 : 1)\'');
     expect(enabledBranch).toContain('node --env-file=.env "$staging/dist/cubeopt/provision.mjs"');
     expect(enabledBranch).toContain('--env-file /root/core-api/.env');

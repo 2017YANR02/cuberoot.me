@@ -5,6 +5,11 @@ name: Deploy Core
 
 on:
   workflow_dispatch:
+    inputs:
+      clear_api_cache:
+        description: 'Clear nginx API response cache (requires explicit operator approval)'
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
@@ -101,6 +106,32 @@ jobs:
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      # Compare against the active release, so intervening undeployed changes cannot be skipped.
+      - name: Identify disk dashboard only release
+        id: scope
+        run: |
+          active_dist="$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" 'readlink /root/core-api/dist')"
+          active_release="$(basename "$(dirname "$active_dist")")"
+          active_sha="${active_release##*-}"
+          disk_only=false
+          if [[ "$active_sha" =~ ^[0-9a-f]{40}$ ]] && git fetch --no-tags --depth=1 origin "$active_sha"; then
+            changed="$(git diff --name-only "$active_sha" HEAD)"
+            allowed=true
+            disk_changed=false
+            while IFS= read -r path; do
+              case "$path" in
+                core/apps/api/src/observability/disk.ts|core/apps/api/src/routes/admin_disk.ts) disk_changed=true ;;
+                core/apps/api/tests/admin_disk.test.ts|core/packages/client/lib/disk-api.ts|core/packages/client/app/\[lang\]/admin/disk/*|core/packages/client/tests/workflow-path-contract.test.ts|.github/workflows/deploy_core.yml) ;;
+                *) allowed=false ;;
+              esac
+            done <<< "$changed"
+            if [ "$allowed" = true ] && [ "$disk_changed" = true ]; then disk_only=true; fi
+          fi
+          if git log -1 --format=%B | grep -qx 'Disk-dashboard-only: true'; then
+            test "$disk_only" = true || { echo "ERROR: disk-only release includes other changes; refusing production computation"; exit 1; }
+          fi
+          echo "disk_only=$disk_only" >> "$GITHUB_OUTPUT"
 
       - name: Install rsync
         # runner 镜像里 sources.list.d/azure-cli.list、mssql-release.list 签名过期,
@@ -207,15 +238,16 @@ jobs:
           # 因而 quoted/unquoted 的启用值与实际 server 完全一致。
           ssh -T -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
             -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-            "root@${{ secrets.DEPLOY_HOST }}" bash -s -- "$STAGING_RELEASE" <<'CUBEOPT_PREFLIGHT'
+            "root@${{ secrets.DEPLOY_HOST }}" bash -s -- "$STAGING_RELEASE" "${{ steps.scope.outputs.disk_only }}" <<'CUBEOPT_PREFLIGHT'
           set -euo pipefail
           staging="$1"
+          disk_only="$2"
           cd /root/core-api
           if node --env-file=.env -e 'process.exit(process.env.DRIVE_COMPRESSION_ENABLED === "1" ? 0 : 1)'; then
             node --env-file=.env "$staging/dist/drive-video.mjs" --check
             systemd-analyze verify "$staging/cuberoot-drive-compression.service"
           fi
-          if node --env-file=.env -e 'process.exit(process.env.CUBEOPT_SOLVE_ENABLED === "1" ? 0 : 1)'; then
+          if [ "$disk_only" != true ] && node --env-file=.env -e 'process.exit(process.env.CUBEOPT_SOLVE_ENABLED === "1" ? 0 : 1)'; then
             node --env-file=.env "$staging/dist/cubeopt/provision.mjs" \
               --env-file /root/core-api/.env \
               --default-store /root/core-api/artifacts/cubeopt \
@@ -225,7 +257,7 @@ jobs:
               --source-build-command "byte-for-byte migration from legacy production paths"
             node --env-file=.env "$staging/dist/cubeopt/verify.mjs"
           else
-            echo "CubeOpt disabled; artifact preflight skipped"
+            echo "CubeOpt artifact preflight skipped: disabled or disk dashboard only release"
           fi
           CUBEOPT_PREFLIGHT
 
@@ -255,9 +287,10 @@ jobs:
           # health 或 smoke 失败时先切回旧 release，再 reload 旧版本并让任务失败。
           ssh -T -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
             -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-            "root@${{ secrets.DEPLOY_HOST }}" bash -s -- "$RELEASE_ID" <<'REMOTE'
+            "root@${{ secrets.DEPLOY_HOST }}" bash -s -- "$RELEASE_ID" "${{ steps.scope.outputs.disk_only }}" <<'REMOTE'
           set -Eeuo pipefail
           release_id="$1"
+          disk_only="$2"
           case "$release_id" in
             ''|*[!0-9A-Fa-f_-]*) echo "ERROR: invalid release id"; exit 1 ;;
           esac
@@ -271,6 +304,7 @@ jobs:
           legacy_moved=''
           switched=0
           cubeopt_warm_on_boot="$(node --env-file="$root/.env" -p 'process.env.CUBEOPT_SOLVE_ENABLED === "1" && process.env.CUBEOPT_WARM_ON_BOOT === "1" ? "1" : "0"')"
+          if [ "$disk_only" = true ]; then cubeopt_warm_on_boot=0; fi
 
           reload_core_with_cubeopt_warm() {
             CUBEOPT_WARM_ON_BOOT="$cubeopt_warm_on_boot" pm2 reload core-api --update-env 2>/dev/null || \
@@ -379,10 +413,10 @@ jobs:
           done
           test "$healthy" = 1 || { echo "ERROR: core API health check failed"; false; }
 
-          if node --env-file=.env -e 'process.exit(process.env.CUBEOPT_SOLVE_ENABLED === "1" ? 0 : 1)'; then
+          if [ "$disk_only" != true ] && node --env-file=.env -e 'process.exit(process.env.CUBEOPT_SOLVE_ENABLED === "1" ? 0 : 1)'; then
             node --env-file=.env dist/cubeopt/smoke.mjs --boot-timeout-ms 300000 --solve-timeout-ms 180000
           else
-            echo "CubeOpt disabled; production manager smoke skipped"
+            echo "CubeOpt production manager smoke skipped: disabled or disk dashboard only release"
           fi
 
           if [ "$cubeopt_warm_on_boot" = 1 ]; then
@@ -412,7 +446,8 @@ jobs:
           echo "activated release $release_id"
           REMOTE
 
-          # nginx api_cache 24h TTL,server schema/SQL 一改老响应顽固活着 → 部署后清空
-          # (memory: reference_nginx_proxy_cache.md)
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
-            'rm -rf /var/cache/nginx/api/* && nginx -s reload'
+          # Ordinary deployments retain valid cache entries; shape changes use response versioning.
+          if [ "${{ inputs.clear_api_cache }}" = true ]; then
+            ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
+              'rm -rf /var/cache/nginx/api/* && nginx -s reload'
+          fi
