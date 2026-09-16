@@ -21,6 +21,7 @@ const LOADERS: Record<string, () => Promise<{ default: StackTool }>> = {
   'maplibre-gl': () => import('../_tools/maplibre-gl'),
   'monorepo': () => import('../_tools/monorepo'),
   'mysql': () => import('../_tools/mysql'),
+  'ncdu': () => import('../_tools/ncdu'),
   'next-js': () => import('../_tools/next-js'),
   'nginx': () => import('../_tools/nginx'),
   'node': () => import('../_tools/node'),
