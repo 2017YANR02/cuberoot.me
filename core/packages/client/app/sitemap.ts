@@ -25,7 +25,7 @@ export const dynamic = 'force-static';
 const BASE = 'https://cuberoot.me';
 
 // Kept OUT (dev/poc/internal pages, no SEO value). Locale-stripped path, exact.
-const EXCLUDE = new Set(['ffmpeg-poc', 'jsonEditor', 'courses', 'search', 'partnership']);
+const EXCLUDE = new Set(['ffmpeg-poc', 'jsonEditor', 'courses', 'search', 'partnership', 'admin/disk']);
 
 // Dynamic-segment pages worth indexing at a specific value (the scan skips
 // [param] dirs since it can't know which values are valid).
