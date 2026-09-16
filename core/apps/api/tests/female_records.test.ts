@@ -55,7 +55,7 @@ const event: RecordEvent = enrich({ tag: 'FWR', rec_type: 'average', attempt_res
 describe('FWR notification formatting', () => {
   it('keeps FWR and overall WR10 without mislabelling it AsR', () => {
     const result = formatCombinedRecords([event], () => 10);
-    expect(result.cn).toBe('纪录快讯! 4.52三阶魔方平均女子世界纪录FWR/WR10 连允之🇨🇳| 武汉丹秋赛🇨🇳');
+    expect(result.cn).toBe('纪录快讯! 4.52三阶平均女子世界纪录FWR/WR10 连允之🇨🇳| 武汉丹秋赛🇨🇳');
     expect(result.en).toContain('FWR/WR10');
     expect(result.en).not.toContain('AsR');
   });

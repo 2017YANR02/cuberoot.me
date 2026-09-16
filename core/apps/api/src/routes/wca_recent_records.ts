@@ -176,11 +176,11 @@ async function effectiveTag(r: RawRecord): Promise<string | null> {
 
 /** 本地渲染 cn/en(无 spawn / 无联网,见 wca_format.formatRecords),带 id 缓存 + 仅缓存非空结果。
  *  无熔断:本地查 PG + 内存二分,不会卡;偶发异常返空,client 已能降级渲染,下轮重试。 */
-async function renderCached(id: string, event: RecordEvent): Promise<{ cn: string; en: string }> {
+async function renderCached(id: string, events: RecordEvent[]): Promise<{ cn: string; en: string }> {
   const cached = formattedCache.get(id);
   if (cached) return cached;
   try {
-    const r2 = await formatRecords([event]);
+    const r2 = await formatRecords(events);
     const out = { cn: r2.cn, en: r2.en };
     if (out.cn || out.en) formattedCache.set(id, out);  // 仅缓存有效文案,失败下轮重试
     return out;
@@ -196,7 +196,7 @@ async function formatRecord(r: RawRecord, tag: string): Promise<{ cn: string; en
   const compNameEn = r.result.round.competitionEvent.competition.name;
   const personIso2 = (r.result.person.country.iso2 || '').toUpperCase();
   const meta = await getCompMeta(compId, compNameEn, personIso2);
-  return renderCached(`${r.id}|${tag}`, {
+  return renderCached(`${r.id}|${tag}`, [{
     tag,
     rec_type: r.type,
     attempt_result: r.attemptResult,
@@ -209,15 +209,15 @@ async function formatRecord(r: RawRecord, tag: string): Promise<{ cn: string; en
     url: `${SITE_BASE}/wca/comp/${compId}`,
     previous_pr: null,
     pr_rank: null,
-  });
+  }]);
 }
 
 /** 中国比赛(cubing.com)推断纪录的格式化 — 走与 WCA Live 同款 format_cli 模板 + getCompMeta.
- *  缓存键 = rec.id(含成绩值/tag),成绩更新自动重算. */
+ *  缓存键包含主纪录与同轮 PR,补齐/订正成绩后自动重算. */
 export async function formatInferred(rec: InferredRecord): Promise<{ cn: string; en: string }> {
   const personIso2 = rec.personIso2.toUpperCase();
   const meta = await getCompMeta(rec.compId, rec.compNameEn, personIso2);
-  return renderCached(rec.id, {
+  const event: RecordEvent = {
     tag: rec.tag,
     rec_type: rec.type,
     attempt_result: rec.attemptResult,
@@ -230,7 +230,14 @@ export async function formatInferred(rec: InferredRecord): Promise<{ cn: string;
     url: `${SITE_BASE}/wca/comp/${rec.compId}`,
     previous_pr: null,
     pr_rank: null,
+  };
+  const companion = rec.companionPr;
+  const events = [event];
+  if (companion) events.push({
+    ...event, tag: 'PR', rec_type: companion.type,
+    attempt_result: companion.attemptResult, pr_rank: 1,
   });
+  return renderCached(`${rec.id}|${JSON.stringify(companion ?? null)}`, events);
 }
 
 /** 取 cubing.com 中国比赛缓存里的推断纪录,排序 + 截断 + 格式化成 RecentRecord. */

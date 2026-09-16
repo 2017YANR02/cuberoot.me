@@ -46,7 +46,7 @@ describe('reduceSegment PR branch', () => {
     ].map(enrich);
     if (reversed) events.reverse();
     const out = formatCombinedRecords(events, ranks({ '333|average|452': 10, '333|single|354': 17 }));
-    expect(out.cn).toBe('纪录快讯! 4.52三阶魔方平均女子世界纪录FWR/WR10 连允之🇨🇳| 3.54单次个人纪录PR/WR17 | 武汉丹秋赛🇨🇳');
+    expect(out.cn).toBe('纪录快讯! 4.52三阶平均女子世界纪录FWR/WR10 连允之🇨🇳| 3.54单次个人纪录PR/WR17 | 武汉丹秋赛🇨🇳');
     expect(out.en).toBe('BREAKING NEWS! 4.52 3x3 FWR/WR10 Avg Yunzhi Lian🇨🇳| 3.54 PR/WR17 Single | Wuhan Crimson Autumn 2026🇨🇳');
   });
 
@@ -56,7 +56,7 @@ describe('reduceSegment PR branch', () => {
       base({ tag: 'NAR', rec_type: 'average', attempt_result: 3465 }),
     ].map(enrich);
     const out = formatCombinedRecords(events, ranks({ '555|average|3465': 3, '555|single|3174': 6 }));
-    expect(out.cn).toBe('纪录快讯! 34.65五阶魔方平均北美洲纪录NAR/WR3 Max Park🇺🇸| 31.74单次PR2 | 北美魔方锦标赛 2026🇺🇸');
+    expect(out.cn).toBe('纪录快讯! 34.65五阶平均北美洲纪录NAR/WR3 Max Park🇺🇸| 31.74单次PR2 | 北美魔方锦标赛 2026🇺🇸');
     expect(out.en).toBe("Breaking News! 34.65 5x5 NAR/WR3 Avg Max Park🇺🇸| 31.74 PR2 Single | Rubik's North American Championship 2026🇺🇸");
   });
 
@@ -66,7 +66,7 @@ describe('reduceSegment PR branch', () => {
       base({ tag: 'PR', rec_type: 'average', attempt_result: 3465, pr_rank: 1 }),
     ].map(enrich);
     const out = formatCombinedRecords(events, ranks({ '555|single|3174': 6, '555|average|3465': 3 }));
-    expect(out.cn).toBe('纪录快讯! 31.74五阶魔方单次美国纪录🇺🇸NR/WR6 Max Park | 34.65平均个人纪录PR/WR3 | 北美魔方锦标赛 2026🇺🇸');
+    expect(out.cn).toBe('纪录快讯! 31.74五阶单次美国纪录🇺🇸NR/WR6 Max Park | 34.65平均个人纪录PR/WR3 | 北美魔方锦标赛 2026🇺🇸');
     expect(out.en).toBe("Breaking News! 31.74 5x5🇺🇸NR/WR6 Single Max Park | 34.65 PR/WR3 Avg | Rubik's North American Championship 2026🇺🇸");
   });
 

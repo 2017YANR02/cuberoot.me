@@ -26,12 +26,16 @@ describe('record news presentation', () => {
         id: 'female-record', tag: 'FWR', type: 'average', eventId: '333',
         competitionId: 'WuhanCrimsonAutumn2026', attemptResult: 452,
         personName: 'Yunzhi Lian (连允之)', countryIso2: 'CN',
-        formattedCn: '纪录快讯! 4.52三阶魔方平均女子世界纪录FWR/WR10 连允之🇨🇳',
-        formattedEn: 'BREAKING NEWS! 4.52 3x3 FWR/WR10 Avg Yunzhi Lian🇨🇳',
+        formattedCn: '纪录快讯! 4.52三阶平均女子世界纪录FWR/WR10 连允之🇨🇳| 3.54单次个人纪录PR/WR17 | 武汉丹秋魔方赛🇨🇳',
+        formattedEn: 'BREAKING NEWS! 4.52 3x3 FWR/WR10 Avg Yunzhi Lian🇨🇳| 3.54 PR/WR17 Single | Wuhan Crimson Autumn 2026🇨🇳',
       }],
     }));
     expect(html).toMatch(/class="[^"]*record-badge[^"]*">FWR<\/span>/);
     expect(html).toContain('/WR10');
+    expect(html).toMatch(/class="[^"]*record-badge[^"]*">PR<\/span>/);
+    expect(html).toContain('/WR17');
+    expect(html.indexOf('3.54')).toBeLessThan(html.indexOf(isZh ? '武汉丹秋魔方赛' : 'Wuhan Crimson Autumn'));
+    expect(html).not.toContain('三阶魔方');
     expect(html).toContain('fi-cn');
     expect(html).not.toContain('快讯!');
     expect(html).not.toContain('BREAKING NEWS!');
