@@ -58,6 +58,17 @@
 
   ::selection { background: var(--cc); color: #fff; }
 
+/* ============ New-site update ============ */
+.update-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px 48px; }
+.update-list article, .update-notes { min-width: 0; overflow-wrap: anywhere; }
+.update-list h3, .update-notes h3 { margin-bottom: 12px; font-size: 20px; }
+.update-list p, .update-notes p { line-height: 1.85; }
+.update-notes { margin-top: 48px; }
+.update-notes p + p, .update-notes p + h3 { margin-top: 24px; }
+@media (max-width: 720px) {
+  .update-list { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+}
+
 /* ============ Background atmosphere ============ */
 .grid-bg {
   position: fixed; inset: 0;
