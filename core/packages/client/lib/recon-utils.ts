@@ -1,5 +1,6 @@
 // Port from packages/client-vite/src/utils/recon_utils.ts.
 import { ISO2_TO_CONTINENT } from './continent';
+import { wcaToReconEvent } from './wca-events';
 
 // ── Time formatting ──
 
@@ -111,11 +112,11 @@ const PUZZLE_MAP: Record<string, string> = {
   '6x6': '6x6x6', '7x7': '7x7x7', '3bld': '3x3x3', '4bld': '4x4x4',
   '5bld': '5x5x5', oh: '3x3x3', sq1: 'square1',
   pyra: 'pyraminx', mega: 'megaminx', clock: 'clock', skewb: 'skewb',
-  fto: 'fto',
+  fto: 'fto', gear: 'gear', mirror: 'mirror', mirror2: 'mirror2',
 };
 
 export function getPuzzleId(event: string): string {
-  return PUZZLE_MAP[event] ?? '3x3x3';
+  return PUZZLE_MAP[wcaToReconEvent(event)] ?? '3x3x3';
 }
 
 // ── Record class ──
@@ -226,7 +227,7 @@ const CUBEDB_PUZZLE_MAP: Record<string, string> = {
 };
 
 export function getCubedbPuzzle(event: string): string {
-  return CUBEDB_PUZZLE_MAP[event] ?? '3x3x3';
+  return CUBEDB_PUZZLE_MAP[wcaToReconEvent(event)] ?? '3x3x3';
 }
 
 export function buildExternalLinks(
@@ -234,7 +235,10 @@ export function buildExternalLinks(
   scramble: string,
   alg: string,
 ): { algUrl: string; algSiteName: string; cubedbUrl: string | null } {
-  const puzzle = getPuzzleId(event);
+  const enginePuzzle = getPuzzleId(event);
+  // These local engines have no corresponding Twizzle puzzle ID. Preserve the
+  // existing external notation view; the embedded player uses the real geometry.
+  const puzzle = ['gear', 'mirror', 'mirror2'].includes(enginePuzzle) ? '3x3x3' : enginePuzzle;
   const setupStr = encodeURIComponent(scramble);
   const algStr = encodeURIComponent(alg);
   const isCube = /^\d+x\d+x\d+$/.test(puzzle);

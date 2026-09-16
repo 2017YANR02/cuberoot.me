@@ -1,12 +1,4 @@
-/* NOTE: Top 10 History — bar chart race(对齐参考视频:黑底 + X 轴 + 横条) */
-html:not([data-palette-scheme=dark]) .t10h-page {
-  /* 视觉硬码 dark,锁 dark token(dark palette 激活时停止匹配,放行调色) */
-  color-scheme: dark;
-  --background: #171717;
-  --foreground: #ededed;
-  --muted-foreground: #a3a3a3;
-  --faint-foreground: #737373;
-}
+/* NOTE: Top 10 History — bar chart race(全站主题 + X 轴 + 横条) */
 .t10h-page {
   max-width: 1280px;
   margin: 0 auto;
@@ -28,7 +20,7 @@ html:not([data-palette-scheme=dark]) .t10h-page {
   font-size: 15px;
 }
 
-/* ── Toolbar(轻浅 — 控件区,在黑色舞台之外) ── */
+/* ── Toolbar(轻浅 — 控件区,在图表舞台之外) ── */
 .t10h-toolbar {
   display: flex;
   align-items: center;
@@ -91,7 +83,7 @@ html:not([data-palette-scheme=dark]) .t10h-page {
   font-size: 22px;
 }
 
-/* ── Stage:黑色舞台,放 banner + axis + bars ── */
+/* ── Stage:图表舞台,放 banner + axis + bars ── */
 .t10h-stage {
   --rank-w: 64px;
   --row-h: 44px;
@@ -470,7 +462,7 @@ html:not([data-palette-scheme=dark]) .t10h-page {
 }
 .t10h-export-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4d8eff, #66c8ff);
+  background: var(--accent);
   transition: width 0.3s ease-out;
 }
 .t10h-export-msg {

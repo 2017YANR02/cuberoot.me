@@ -50,7 +50,7 @@ describe('shared scramble preview settings UI', () => {
       .map((row) => row.dataset.settingId)).toEqual(TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS);
     expect(host.textContent).toContain('Scramble image');
     expect(host.textContent).toContain('3D cube');
-    expect(host.textContent).toContain('Drag to rotate; off shows the 2D net');
+    expect(host.querySelector('.hint')).toBeNull();
 
     const threeD = host.querySelector<HTMLButtonElement>('[data-control-id="settings.appearance.cube-3d"]')!;
     await act(async () => threeD.click());

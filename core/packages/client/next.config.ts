@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
   // Dev-only: allow the frp tunnel host (dev.cuberoot.me → frp → 127.0.0.1:3000)
   // to hit /_next/* dev assets + HMR. Next 16 dev blocks cross-origin requests to
   // internal resources unless the origin is listed here. Ignored in prod/Vercel.
-  allowedDevOrigins: ["dev.cuberoot.me", "*.cuberoot.me"],
+  allowedDevOrigins: ["dev.cuberoot.me", "*.cuberoot.me","*.huizhi.ink"],
 
   // Tree-shake named exports from large libs that ship a barrel index.
   // three / maplibre-gl / katex re-export hundreds of symbols; importing

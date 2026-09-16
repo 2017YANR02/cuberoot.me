@@ -197,15 +197,16 @@ export function timerCanStartAttempt(context: TimerAttemptStartContext): boolean
 }
 
 /**
- * A press may always stop an already-running attempt, even if the next
+ * Outside smart-cube mode, a press may stop an already-running attempt even if the next
  * scramble became unavailable. Every pre-run phase remains fail-closed behind
  * the same start gate.
  */
 export function timerCanHandleAttemptPress(
   phase: TimerPhase,
   attemptCanStart: boolean,
+  smartCubeActive = false,
 ): boolean {
-  return phase === 'running' || attemptCanStart;
+  return !smartCubeActive && (phase === 'running' || attemptCanStart);
 }
 
 export type TimerKeyboardModalState = 'none' | 'hints-only' | 'blocking';

@@ -129,7 +129,7 @@ function gradeTitle(tr: ReconstructLocalize): string {
 function startLabel(tr: ReconstructLocalize, s: F2lStart): string | null {
   switch (s) {
     case 'paired-top':     return tr({ zh: '顶层组好', en: 'paired on top' });
-    case 'split-top':      return tr({ zh: '顶层拆开', en: 'split on top' });
+    case 'split-top':      return null;
     case 'corner-slotted': return tr({ zh: '角已入槽', en: 'corner in slot' });
     case 'edge-slotted':   return tr({ zh: '棱已入槽', en: 'edge in slot' });
     case 'both-slotted':   return tr({ zh: '角棱都在槽里', en: 'both in slot' });

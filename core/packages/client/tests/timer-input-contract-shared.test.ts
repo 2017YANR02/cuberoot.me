@@ -249,6 +249,13 @@ describe('keyup, phase, and external pointer policy', () => {
     expect(shared.timerCanHandleAttemptPress('running', true)).toBe(true);
   });
 
+  it('blocks manual timing presses in every phase of a smart-cube attempt', () => {
+    for (const phase of ['idle', 'holding', 'ready', 'inspecting', 'running', 'stopped'] as TimerPhase[]) {
+      expect(shared.timerCanHandleAttemptPress(phase, true, true)).toBe(false);
+      expect(shared.timerCanHandleAttemptPress(phase, false, true)).toBe(false);
+    }
+  });
+
   it('owns only an eligible Space release', () => {
     const base = {
       input: key('Space'),

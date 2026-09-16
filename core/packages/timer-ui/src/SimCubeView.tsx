@@ -97,6 +97,23 @@ const STILL_EPS_RAD = 1e-4;
 const LIVE_TURN_TICKS = 7.2; // 120 ms at the engine's nominal 60 Hz.
 const LIVE_QUEUED_TURN_TICKS = 4.8; // 80 ms while catching up.
 
+type CubeView = 'iso' | 'front' | 'smart';
+
+/** DCTimer-BLE cameras look at the origin from (0,4.1,7.2) with gyro,
+ *  or (4.8,4.1,7.2) without. Our fixed camera uses the inverse scene orbit. */
+function sceneRotation(view: CubeView, hasGyro: boolean) {
+  if (view === 'front') return FRONT_SCENE_ROT;
+  if (view === 'iso') return homeSceneRot(3);
+  return hasGyro
+    ? { x: Math.atan2(4.1, 7.2), y: 0, z: 0 }
+    : { x: Math.atan2(4.1, Math.hypot(4.8, 7.2)), y: -Math.atan2(4.8, 7.2), z: 0 };
+}
+
+function hasValidOrientation(q: Quat | null | undefined): q is Quat {
+  return !!q && [q.w, q.x, q.y, q.z].every(Number.isFinite)
+    && Math.hypot(q.w, q.x, q.y, q.z) > 1e-6;
+}
+
 export interface SimCubeViewProps {
   language?: 'en' | 'zh';
   /** Moves since the cube was last known SOLVED — see the note above. */
@@ -166,7 +183,8 @@ export interface SimCubeViewProps {
    * 摆的是 `scene.rotation`(镜头轨道),不是 `cube.quaternion`(魔方自身姿态,陀螺仪
    * 独占的那条通道)—— 两条通道在这个组件里从不互相写。
    */
-  view?: 'iso' | 'front';
+  /** 'smart' uses an elevated front view with gyro, an oblique view without. */
+  view?: CubeView;
   /** Fired once the WebGL context is up and the first cube state is applied. */
   onReady?: () => void;
   /** Screen-reader label. Defaults to the live-mirror wording; the replay
@@ -223,6 +241,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   const sliceFollowUntilRef = useRef(0);
   /** 挂载时读一次(避免先按等轴画一帧);之后的改动走下面的 effect。 */
   const viewRef = useRef(view);
+  const gyroViewActiveRef = useRef(false);
   const basisRef = useRef<SensorBasisName>(sensorBasis);
   const mirrorRef = useRef(mirror);
   const onReadyRef = useRef(onReady);
@@ -278,6 +297,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
       if (cancelled) return;
       const host = hostRef.current;
       if (!host) return;
+      gyroViewActiveRef.current = hasValidOrientation(externalQuatRef.current?.current ?? rawRef.current);
 
       mount = mountSimWorld({
         host,
@@ -285,11 +305,20 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
         interactive: false, // gyro-driven: a pointer Controller would fight it
         faceHints: false,
         pixelRatioCap: 2,
-        // 'iso' 就是引擎构造函数摆好的姿势,不用再写一遍。
-        sceneRot: viewRef.current === 'front' ? FRONT_SCENE_ROT : undefined,
+        sceneRot: sceneRotation(viewRef.current, gyroViewActiveRef.current),
         onFrame: (world: World, dtMs: number): boolean => {
           const raw = externalQuatRef.current?.current ?? rawRef.current;
-          if (!raw) return false;
+          if (!hasValidOrientation(raw)) return false;
+          let cameraChanged = false;
+          if (!gyroViewActiveRef.current) {
+            gyroViewActiveRef.current = true;
+            if (viewRef.current === 'smart') {
+              const rot = sceneRotation('smart', true);
+              world.scene.rotation.set(rot.x, rot.y, rot.z);
+              world.scene.updateMatrix();
+              cameraChanged = true;
+            }
+          }
           if (pendingCalibrationRef.current) {
             referenceRef.current = calibrate(raw);
             pendingCalibrationRef.current = false;
@@ -319,7 +348,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
             : target;
           smoothedRef.current = next;
           const prev = appliedRef.current;
-          if (prev && quatAngleTo(prev, next) <= STILL_EPS_RAD) return false;
+          if (prev && quatAngleTo(prev, next) <= STILL_EPS_RAD) return cameraChanged;
           appliedRef.current = next;
           // three is x,y,z,w; our wire/math order is w-first.
           world.cube.quaternion.set(next.x, next.y, next.z, next.w);
@@ -353,12 +382,12 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     };
   }, [attempt]);
 
-  // 挂载后再换视角(调用方切换 iso ↔ front)。挂载时那一次由 sceneRot 摆好。
+  // Update the viewing angle without remounting the cube or altering its moves.
   useEffect(() => {
     viewRef.current = view;
     const world = mountRef.current?.world;
     if (!ready || !world) return;
-    const rot = view === 'front' ? FRONT_SCENE_ROT : homeSceneRot(world.puzzleKind);
+    const rot = sceneRotation(view, gyroViewActiveRef.current);
     world.scene.rotation.set(rot.x, rot.y, rot.z);
     world.scene.updateMatrix();
     mountRef.current?.invalidate();

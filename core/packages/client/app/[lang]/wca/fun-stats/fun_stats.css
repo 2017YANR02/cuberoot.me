@@ -1,4 +1,4 @@
-/* /wca/fun-stats 趣味统计 —— 颜色一律走 token + color-mix(页面 dark-locked,见 globals html:has(.fun-stats))。 */
+/* /wca/fun-stats 趣味统计 —— 颜色一律走 token + color-mix(继承全站主题)。 */
 
 .fun-stats {
   max-width: 1180px;
