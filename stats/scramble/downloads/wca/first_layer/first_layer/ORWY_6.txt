@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / ORWY / bin 6
-# Population in this bin: 936
+# Population in this bin: 938
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 4772898001,D2 U' F2 U2 F2 R2 F2 L' F D2 F' L2 F U R B' F2 R U' B' L',Y,Kewbz Scottish Championship 2025 (2025-05-30~06-01),333bf Final A E2

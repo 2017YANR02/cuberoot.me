@@ -25,7 +25,7 @@
       "rows": [
         [
           "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-          67
+          68
         ],
         [
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
@@ -311,7 +311,7 @@
         ],
         [
           "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
-          26
+          27
         ],
         [
           "[Ciarán Beahan](https://www.worldcubeassociation.org/persons/2012BEAH01)",
@@ -401,7 +401,7 @@
         ],
         [
           "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
-          19
+          20
         ],
         [
           "[Anyu Zhang (张安宇)](https://www.worldcubeassociation.org/persons/2012ZHAN08)",
@@ -412,15 +412,15 @@
           16
         ],
         [
-          "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
-          13
-        ],
-        [
           "[János Bereczki](https://www.worldcubeassociation.org/persons/2018BERE01)",
           13
         ],
         [
           "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
+          12
+        ],
+        [
+          "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
           12
         ],
         [
@@ -597,7 +597,7 @@
         ],
         [
           "[Yifan Wang (王逸帆)](https://www.worldcubeassociation.org/persons/2017WANY29)",
-          15
+          16
         ],
         [
           "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
@@ -756,15 +756,15 @@
           13
         ],
         [
+          "[Zhen Chen (陈震)](https://www.worldcubeassociation.org/persons/2023CHEN30)",
+          13
+        ],
+        [
           "[Andrey Che](https://www.worldcubeassociation.org/persons/2015CHEA01)",
           12
         ],
         [
           "[Nicholas Archer](https://www.worldcubeassociation.org/persons/2020ARCH01)",
-          12
-        ],
-        [
-          "[Zhen Chen (陈震)](https://www.worldcubeassociation.org/persons/2023CHEN30)",
           12
         ],
         [
@@ -1085,7 +1085,7 @@
         ],
         [
           "[Brayden Wroten](https://www.worldcubeassociation.org/persons/2018WROT01)",
-          9
+          10
         ],
         [
           "[Kaixi Guo (郭铠希)](https://www.worldcubeassociation.org/persons/2023GUOK01)",
@@ -2920,12 +2920,12 @@
     [
       "2013NAHM01",
       "555",
-      26
+      27
     ],
     [
       "2013NAHM01",
       "666",
-      19
+      20
     ],
     [
       "2013NAHM01",
@@ -3270,7 +3270,7 @@
     [
       "2016WUZI04",
       "666",
-      13
+      12
     ],
     [
       "2016WUZI04",
@@ -3365,7 +3365,7 @@
     [
       "2017WANY29",
       "333bf",
-      15
+      16
     ],
     [
       "2018BERE01",
@@ -3376,6 +3376,11 @@
       "2018BERE01",
       "777",
       12
+    ],
+    [
+      "2018WROT01",
+      "skewb",
+      10
     ],
     [
       "2018LOPE22",
@@ -3475,7 +3480,7 @@
     [
       "2019WANY36",
       "333",
-      67
+      68
     ],
     [
       "2019EGGI02",
@@ -3555,7 +3560,7 @@
     [
       "2023CHEN30",
       "333oh",
-      12
+      13
     ],
     [
       "2023GENG02",

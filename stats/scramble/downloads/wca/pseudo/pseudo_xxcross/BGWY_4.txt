@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / BGWY / bin 4
-# Population in this bin: 690
+# Population in this bin: 693
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 1882840001,U2 B2 R2 D U' L2 F2 U F R2 D' R2 B' D' L' U2 F U L,B,Paris Open 2022 (2022-04-16~18),333 R2 C #1
@@ -70,7 +70,7 @@
 2306282001,D' F2 L2 D2 L2 D2 B' L2 F' R2 D2 U2 R' U2 R U' L2 B L2 D,B,Posthaste Potato Solving 2022 (2022-11-19),333oh Final A #2
 5587689001,U L2 U2 B2 D2 L B2 L U F2 D L' R' B' L D' U' B,B,Odd Day in Hong Kong 2026 (2026-04-26),333 R1 D E1
 3168379006,L B2 F2 U2 R' F2 L2 R U R D2 F L' U' R' D L B R' B',G,Kuwaiti Nationals 2023 (2023-10-13~14),333mbf Final A #1
-4366646001,F B2 D B' U2 L U D2 R U2 L2 U2 B2 R U2 R' D2 F2 D L,G,Avenida Chile XVIII 2024 (2024-12-15),333 Final B #5
+5827742001,L' B2 R F2 R B' L2 U2 R2 F R' U L' U' R2 U2,Y,Danish Championship 2026 (2026-09-11~13),333 R1 B #4
 3495339001,R2 F' R' D2 U2 L' D2 F2 B U B F' D U' L' R2 U2,Y,Cubing in Mount Kisco 2024 (2024-02-10),333oh Final B #5
 1940043008,F2 L U' B2 R2 F L2 R2 B F2 D' L' F2 L B L D U B R2,W,Please Be Quiet Colorado 2022 (2022-05-28),333mbf Final A #1
 1251764004,U2 F2 L2 B2 U' B2 U2 F' U B L2 R' F2 D B' R' F D L B2,W,CubingUSA Nationals 2019 (2019-08-01~04),333mbf Final A #2

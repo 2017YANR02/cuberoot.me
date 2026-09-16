@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / O / bin 6
-# Population in this bin: 227
+# Population in this bin: 228
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 12338001,D' B2 L2 F2 R2 F2 U L2 F' L R B' D B D' R' D2 B R2 D,O,Pantheon Cube Open 2014 (2014-04-12),333bf Final E E2
@@ -67,7 +67,7 @@
 5283684003,L' B2 R2 F2 R2 D U F2 U' L2 R2 F L' F' U B D2 L D2 L2 U,O,Uppsala Christmas Special 2025 (2025-12-20),333mbf Final A #2
 1028054001,L2 D2 F2 L2 D U2 B2 U2 L' B' D2 B D L F2 D2 B' L2 F,O,Derby City Open 2019 (2019-02-16),333 R1 D E2
 1035983001,R D' R2 D' L2 B' U2 R' B' R U B2 L U2 F2 R F2 L',O,Cult A Way Cube Open 2019 (2019-03-03),333 Final A #1
-5430066001,F2 L' F2 L2 D2 L2 D' U2 F2 L' U2 L D R F R2 U' F2,O,Back to Downtown Singapore 2026 (2026-03-08),333oh R1 C #5
+5821814001,U2 B' L2 U' B R U2 L' B2 D' L2 U' D' R2 D R2 L2 B' U',O,Jogjakarta Happy Solving 2026 (2026-09-05),333 R1 E E1
 1073157001,D F U2 R2 U D2 B R U2 B' L B2 L2 U' F2 R2 D' B2 D',O,Ibagué Open 2019 (2019-03-31),333 R1 D #2
 1074146006,L2 R2 D R2 B2 U' B2 D U2 R2 F2 R' B U' L R U2 B R' F R D',O,Le Barcarès Mental Breakdown 2019 (2019-03-30~31),333mbf Final A #1
 1135120001,F2 R2 F L2 D2 F2 U2 F R2 F2 L D L2 U' R' F L' U L D,O,Valborg Cubing 2019 (2019-05-03~05),333 R1 C #2

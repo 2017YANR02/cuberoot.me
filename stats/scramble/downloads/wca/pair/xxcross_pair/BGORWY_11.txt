@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / BGORWY / bin 11
-# Population in this bin: 401
+# Population in this bin: 403
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5804645001,F2 R F2 R2 B2 L' R' F L D' B D2 U F2 L U F R',B,Bibliopen IV Cali 2026 (2026-08-29),333 Final A #2

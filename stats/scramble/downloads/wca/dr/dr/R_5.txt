@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / R / bin 5
-# Population in this bin: 56
-# Samples listed: 56 (all entries in this bin)
+# Population in this bin: 57
+# Samples listed: 57 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 86689001,R D2 B' R2 L' D L D' L U' F2 L2 B2 U2 R2 B2 U,R,Vantaa Open 2014 (2014-12-13~14),333 R2 B #4
@@ -61,3 +61,4 @@
 5726809001,L B2 L R' F2 R2 B2 R' U2 R U2 B R' D B2 D',R,Re-Laois the Cubers 2026 (2026-06-27~28),333 R2 A #3
 5807871001,R' B2 R B2 D2 L2 D2 R B2 R B2 R2 B D2 U2 B2 L R',R,Tartan Twist PA 2026 (2026-08-29),333 R1 D #3
 5816550001,U2 F2 D2 F B2 R D2 B2 L' B' R' F2 B2 R2 B2 R2,R,Bilbao Open 2026 (2026-09-05~06),333oh R1 B #4
+5821953001,L F2 L' R2 B2 L' D2 U2 F2 R' B2 F2 D L F2 U L,R,AXÉzinho 3x3 - Lauro 2026 (2026-09-05),333 R1 F #1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / Y / bin 7
-# Population in this bin: 777
+# Population in this bin: 778
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 1993001,F' D' F2 R2 U F R F2 D R' D' F2 D2 F R2 F2 R2 L2,Y,Zonhoven Open 2014 (2014-03-22~23),333 R1 A #1
@@ -68,7 +68,7 @@
 1530747001,D L' D F2 U2 F' U' L2 F L2 F' R2 L2 B2 D2,Y,Dutch Masters 2020 (2020-02-01~02),333 R2 C #5
 984263001,U2 B' R2 F L2 F2 R2 B' D2 B U2 R' U2 R' D U2 R B' R',Y,Berlin Winter Cubing 2019 (2019-01-19~20),333 R1 C E1
 294913001,U B2 R2 D F2 U R2 B2 D2 L D' B U2 R B' L F2 R B' F,Y,Canarias Open 2016 (2016-05-07),333 Final A E2
-299273001,B R2 F L2 R2 F U2 L2 B' L2 F D F2 L' B' R2 F' D L B2,Y,Dubai Open 2016 (2016-05-13),333 R2 C E2
+5828532001,R D F R' B' D2 B' R' D2 R2 U2 F' B2 U2 F' L' U' F',Y,Chau Invierno En Di Tella 2026 (2026-09-12~13),333 Final A #3
 5111442001,B2 U2 F R2 B F2 U2 F2 D L' F U2 R B2 F R' D' U2 R2,Y,Cape Cubes Spring 2025 (2025-10-18~19),333 R2 A #5
 2975110001,D2 R' F' U' F L2 B D2 U2 B F L2 U L D2 R2 B' R2 D2 L B2,Y,San Marcos Open 2023 (2023-08-12~13),333bf R1 A #1
 2893993001,B2 L' B' D' R2 U F2 U' F2 R2 U L B2 U' L R2 F2 L,Y,Delacuesta Open 2023 (2023-07-15),333oh R1 B E2

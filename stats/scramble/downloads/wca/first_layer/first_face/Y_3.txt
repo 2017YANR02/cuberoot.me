@@ -2,7 +2,7 @@
 # Population in this bin: 66
 # Samples listed: 66 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 103967001,F2 R2 D L2 D L2 B2 D' L F U2 F D B' F2 L B2 U2 L',Y,Happy Sheep Year 2015 (2015-01-24),333 R2 C E2

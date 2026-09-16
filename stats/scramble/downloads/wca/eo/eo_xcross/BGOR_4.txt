@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / BGOR / bin 4
-# Population in this bin: 226
+# Population in this bin: 227
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 14808001,F B' U2 B U R' F' D F2 D2 R2 L2 F R2 L2 F' B2 U2 D2,O,Didas Brest 2014 (2014-04-26~27),333ft Final A #1
@@ -129,7 +129,7 @@
 5775855001,B L U' L' U D F L U B2 L2 F2 R2 D R2 F2 B L',G,Cubetec UEA II Manaus 2026 (2026-08-08),333 R1 C #1
 2568701015,D' R' D2 L B2 R' F2 D2 U L R2 D' R U F U2 L' U2 L' F2,B,Di Tella Open 2023 (2023-03-18~19),333mbf Final B #1
 2693270001,U2 F2 U' L2 D2 F2 U' R2 B2 F2 U' L' D R U2 R2 F2 U',R,Østervang Open 2023 (2023-05-06~07),333 Final B #5
-2751347001,B' L U2 B R2 D2 B U2 B D2 U2 B' R F' R2 U' L' F L,R,FECAP Open 2023 (2023-05-27),333 R1 G E1
+5830167001,D U R2 U' R2 F2 D2 F2 L D L' R D2 F2 D' R B,O,Makati Side Events Open 2026 (2026-09-13),333 R1 B E1
 2767739003,R' U' F' U2 F2 R2 B' D F' U2 D2 L' B2 U2 R U2 L F2 L B R,R,Gem City Airplane Mode II 2023 (2023-06-01),333mbf Final A #1
 2769534001,B U L2 F U2 B' D2 R2 F' R2 B U2 R' F2 D' F2 R2 D2 R',G,Singapore AMK CC Cubing A 2023 (2023-06-03),333oh R1 A E2
 2791369034,L B2 R2 L F2 R2 B L F L2 U2 R2 L2 U L2 U2 F' U' L2,R,Ohio State Summer Solving 2023 (2023-06-10~11),333mbf Final A #1

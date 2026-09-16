@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / ORWY / bin 1
-# Population in this bin: 317
+# Population in this bin: 319
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5677611018,D2 R2 L2 U R B2 U R' L' D B' L' F2 R D2 R U2 L',W,New York Multimate PBQ V 2026 (2026-05-29~31),333mbf R1 B #2
@@ -123,7 +123,7 @@
 1200691001,B' R2 U2 F' U2 R2 U2 B U2 F U B U B U' B2 F2 R2,Y,Jacksonville 2019 (2019-06-29),333 R2 A #5
 1201410001,R2 U2 L' F2 L2 B2 R2 D R' D' U' R' U' L B2 L D R',O,Maoming Open 2019 (2019-06-30),333 R1 C #2
 1236793001,F2 U2 F2 U2 F U2 L2 F' U F U' R2 B' L2 B' F2,Y,SSN Cube Open 2019 (2019-07-27~28),333 R1 D #5
-1286207034,L2 U L2 U R2 F2 L2 R2 D L2 D R' U L2 U' L' U F' U2 B F' L2,W,Cubing in Cill Chainnigh 2019 (2019-08-31~09-01),333mbf Final A #1
+5825332001,R2 F R2 B' U2 F' D2 B2 D R2 F U B2 R2 F' D L2 B2,W,Williamsburg Open Fall 2026 (2026-09-12),333 R1 B #4
 1301781001,U2 B2 D L D B' L' F R2 U' R' U2 R' F2 U2 R' D2 R F2,O,Knights Cubing Open 2019 (2019-09-20~21),333 R1 E #3
 1306022001,R2 U' R2 B2 R2 U' R U2 R' D L U2 R' F2 D2 F2 U2,W,Tassin-la-Demi-Cube Open 2019 (2019-09-21~22),333oh R2 A #1
 5704480001,F2 D2 L2 F2 L' F2 R' D2 F2 R' B F' R B' F L' F2 D2,R,Longmont Open 2026 (2026-06-13),333 R1 A E2
@@ -168,7 +168,7 @@
 2217126001,L B U2 R2 F U2 L F2 L R' B2 R B L2 B2 R2,O,Cube4fun League Final Skierniewice 2022 (2022-10-01~02),333 R3 B #5
 2235485001,B2 D2 L B2 L2 F2 L' U2 R F L R' B' U2 L' B R U,R,Swisscubing Cup V 2022 (2022-10-08~09),333oh R1 A #5
 2269598036,F2 U L B2 U' F2 B2 D' L2 D2 L2 U2 F2 L D L' U L B,Y,Kewbz UK Championship 2022 (2022-10-28~30),333mbf Final A #2
-4194257001,B2 D2 R2 B2 L2 U' F2 R2 D U F' U2 B U' R F D' B' R' D' B R,R,Regionales Santander 2024 (2024-10-12~14),333bf Final A #1
+5825259001,F2 B2 U' R2 L2 U' R' U2 D L2 U' F2 D L2 D' R' F2,O,CubiKoronel 2026 (2026-09-12),333 R2 B E2
 2367450024,R D' B2 D' F2 L' B2 R' U L' R2 U L2 F2 L2 F2 U' B2 L,Y,Winter WestSide Events 2022 (2022-12-10~11),333mbf Final A #2
 2447725001,B2 U2 R D U2 F2 L2 F2 L2 U B2 L' D' R' U' L2 R2 U',O,Cube Fiesta Surat 2023 (2023-01-22),333 R1 D E1
 2450435007,D2 F R' F2 R2 B2 D2 L B' R2 B F2 L F R F R' B R,O,Mentallinn 2023 (2023-01-28),333mbf Final A #1

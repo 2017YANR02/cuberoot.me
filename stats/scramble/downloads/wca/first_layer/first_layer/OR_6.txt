@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / OR / bin 6
-# Population in this bin: 458
+# Population in this bin: 459
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 2405783001,U D2 F R2 D L' B2 U' B' L B U2 B R2 L2 F D2 R2 B' L2 U2,O,BrizZon Sylwester Open 2022 (2022-12-31),333bf Final E #1

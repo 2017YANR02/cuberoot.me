@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / OR / bin 2
-# Population in this bin: 287
+# Population in this bin: 288
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 17474001,D2 B2 L2 B D2 L2 R2 F2 D' L D R U' L2 F U2 F' U',R,Apollo Open 2014 (2014-05-04),333 R2 B E1
@@ -127,7 +127,7 @@
 2057740049,R2 U' L2 B2 U2 R2 B2 D F2 L' F2 D R U' B L U' B U2 B R,O,CubingUSA Southeast Championship 2022 (2022-07-29~31),333mbf Final B #1
 4873063040,B2 R' B' L2 D F2 U' B2 U' B2 R' U2 R' U' L R F2 D2 L B2,O,Eat Sleep Cube Repeat Leersum 2025 (2025-07-19~20),333mbf Final A #1
 2090896007,R' L F2 U F2 U2 R D' B U' L R2 U2 L2 F2 U D' R2 U2 L2 U2,R,Melbourne Trilogy Upstairs 2022 (2022-08-13~14),333mbf Final A #2
-4782075001,F2 D F2 L2 D2 B2 F2 D L2 D' L D' F' D' R2 D U2 B F,O,İstanbul May 2025 (2025-05-31~06-01),333 R1 B #1
+5821566001,L2 B2 D2 R' B2 D2 B2 F2 U2 L' F R D2 L' U' B2 L,O,RUS Mall 2026 (2026-09-06),333 Final A #4
 2212760001,L2 U2 F2 L U2 F2 L' U2 L' U' R B2 L B U2 B2 L' B2 F',R,Stevenage Autumn B 2022 (2022-10-01~02),333 R1 B E1
 5205250001,R' B2 L2 D2 R' B2 R' U R2 U R B F D B2 L2 U' R',O,Olimpiadas de la Mente - Santiago 2025 (2025-11-22),333 R1 A #4
 2292290001,B2 L2 D2 R' U' F U F' L' F U2 B2 U2 L2 F L2 F' L2 F2,R,Cubing Kazakhstan Nationals 2022 (2022-11-04~06),333 R1 F #3

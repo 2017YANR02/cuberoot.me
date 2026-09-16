@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / BGOR / bin 8
-# Population in this bin: 328
+# Population in this bin: 329
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 7959001,U D' F' U2 L' U2 R' U2 B U L2 F' U2 L2 B' L2 B' U2 F2,B,Welwyn Garden City Open 2014 (2014-04-05~06),333 R1 C E1
@@ -117,7 +117,7 @@
 1287101001,B2 L2 U' R2 D B2 D U L2 U F2 R F2 D' F D2 R2 D' B D2 R,B,III Barueri Open 2019 (2019-08-31~09-01),333 R1 D #4
 1289561001,L' F2 L' B2 R2 D2 F2 U2 L U2 L' B' R B U' F' D' U L U' R,B,Champagne Open 2019 (2019-09-07~08),333 R1 A #1
 1326411001,U D' L' B2 R F R2 B D' F D2 F' D2 F2 R2 U2 B' R2 U2,B,Dragon Cubing 2019 (2019-09-28~29),333 R1 C #3
-1347082004,L F2 L' D2 R' F2 R B2 D2 R' U' F' U L B R' U L' R' D B L2,B,BSC 10th Anniversary 2019 (2019-10-05~06),333mbf Final A #1
+5826039001,F' L F D2 L' U2 F2 R' U2 F2 R' D L' B L2 F2 D F' U',B,Stevenage September 2026 (2026-09-12~13),333 R1 E #1
 5028895001,R2 U2 R2 D' B2 D L2 R2 U' F' D2 B R U F D L F D2 R,B,Ningbo Autumn 2025 (2025-09-13),333 R2 C E2
 4832165001,B2 U L2 D' F2 U2 L2 U' R' D F U' L' B D' B2 L2 R2 F,B,Arnhem Open 2025 (2025-06-28~29),333 Final A E1
 1495780006,B2 D F2 R2 D L2 U L2 D2 U' B2 L D2 B' D L2 B' R' D' F L B' L',B,Northside Cube Days 2020 (2020-01-11~12),333mbf Final A #2

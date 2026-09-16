@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / B / bin 4
-# Population in this bin: 671
+# Population in this bin: 673
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 3752976001,B2 R2 B D2 B L2 B' L2 F L2 D2 U R B' D R2 F R U F,B,Minnesota Cube Melt 2024 (2024-05-11),333 R1 E #2

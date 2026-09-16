@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / G / bin 4
-# Population in this bin: 472
+# Population in this bin: 475
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 261001,R' F D L2 F' B U R2 B' R F L2 U L2 U' R2 U2 L2,G,Montréal Open 2014 (2014-03-15),333 R2 B #1
@@ -32,7 +32,7 @@
 188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,G,LMDL Open 2015 (2015-09-12),333 R1 B #3
 5240414032,F' L2 U F2 D' B2 L2 U B2 F' L2 D' F2 R' D2 U2 L' U L,G,Please Be Quiet Dhaka 2025 (2025-12-05),333mbf Final A #1
 193676001,D' B2 L2 R2 D L2 D B F2 D R F2 L' B R F2 L2 D F2,G,Cuthberts Open 2015 (2015-09-26~27),333 R1 C #1
-198569001,B2 L2 F2 L R U2 F2 D' U2 F' R2 D' L F' U' F L',G,SP Open Mini 2015 (2015-10-10),333 R1 D E1
+5830729001,B' R B' L' U' L' U2 R' U' R2 D2 L U2 F2 L2 U2 B2 L' U',G,Ohio Championship 2026 (2026-09-11~13),333oh R1 C #4
 4525058001,D L2 B2 D B2 D F2 U' F' U2 F' D2 B2 D' L R2 D' R',G,Wolverine Weekdays 1 Orem 2025 (2025-02-25),333 Final C #3
 2582960001,L D U2 F2 D2 F2 U' L2 R2 F L2 R' F R D' R' F2 D2,G,Everything in Evanston A 2023 (2023-03-25),333 R1 B #5
 4772369001,R' U R2 B' R2 F2 R2 D R2 L F2 R U2 B' L' U R2,G,VIC State Championship 2025 (2025-05-31~06-01),333 R1 C E2

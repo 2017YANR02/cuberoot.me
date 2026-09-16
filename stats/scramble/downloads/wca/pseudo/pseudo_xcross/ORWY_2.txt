@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / ORWY / bin 2
-# Population in this bin: 572
+# Population in this bin: 573
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 261001,R' F D L2 F' B U R2 B' R F L2 U L2 U' R2 U2 L2,W,Montréal Open 2014 (2014-03-15),333 R2 B #1
@@ -196,7 +196,7 @@
 1236791001,R' U2 F2 L2 B2 L U2 F2 R' D2 R F' U2 F2 D' F' L' D' L' B',Y,SSN Cube Open 2019 (2019-07-27~28),333 R1 D #3
 3495339001,R2 F' R' D2 U2 L' D2 F2 B U B F' D U' L' R2 U2,Y,Cubing in Mount Kisco 2024 (2024-02-10),333oh Final B #5
 5055354001,L F' D2 L' B2 D2 R' U2 R F2 B' R' B2 L' B' D2 U B',Y,Vilniaus Ruduo 2025 (2025-09-27~28),333bf Final B E2
-1283952001,U' L2 D F2 R2 B2 L2 R2 B D L R2 D' B' U' F2 D F U,W,San Diego Summer 2019 (2019-08-31),333 Final A #2
+5821566001,L2 B2 D2 R' B2 D2 B2 F2 U2 L' F R D2 L' U' B2 L,O,RUS Mall 2026 (2026-09-06),333 Final A #4
 1293639002,L F2 L' F2 R2 B2 F2 U2 B2 F' D F D' B D U F' U L D',R,Box Hill Big Blind Bonanza 2019 (2019-09-14),333mbf Final A #3
 1299535005,L F2 L' R2 F2 R2 D F' L F' R D2 B R2 D B' D2 B' L,O,Polish Open 2019 (2019-09-13~15),333mbf Final A #1
 2781019020,B' D' F2 R2 B2 U B2 F2 U F2 D' U' R' D L R B R2 D B' L B2,Y,Side N Blind Narre Warren 2023 (2023-06-03~04),333mbf Final A #2

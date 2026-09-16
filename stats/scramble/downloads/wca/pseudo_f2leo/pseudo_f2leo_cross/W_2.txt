@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / W / bin 2
-# Population in this bin: 420
+# Population in this bin: 421
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 3147741001,F R' D B2 R2 D' R' U2 F L2 F2 R D2 L2 U2 F2 L D2 U L,W,Nacionales Uruguayas 2023 (2023-10-06~08),333bf R1 B E1
@@ -106,7 +106,7 @@
 922023001,L2 R2 F R2 B2 U2 F' L2 R' B U2 F2 U2 F' R' B U' L U',W,Shri Ram Cubing Challenge 2018 (2018-11-03~04),333oh Final A #4
 3005076001,U' F2 D' F U' R' B L2 U' L' F2 U F2 U F2 L2 U2 L2 D2,W,Bring the Heat AZ 2023 (2023-08-20),333 R2 B #5
 2800364001,D2 F' R2 D2 B2 D U2 R2 F2 B' D' F' D F D2 R2 B2,W,Jāņi Kārķos 2023 (2023-06-17),333 R1 A #4
-4850135001,U' B' R D2 R2 L U R' D F D L2 D B2 R2 D2 B2 D',W,Rubik's WCA World Championship 2025 (2025-07-03~06),333 R1 I #4
+5822658001,U R' U2 D F R2 F' D2 L R2 F B' R2 B2 U2 B D2 B' U2 B' L,W,Shhherborn Summer 2026 (2026-09-12),333bf Final B #2
 5599614058,F' U D2 R B2 D F' D' L U2 R2 D2 R2 F' L2 F U2 D2 B L,W,Campeonato Mineiro 2026 (2026-05-01~03),333mbf Final B #1
 948984001,U2 B2 L' F U2 L2 U L U R B2 D2 L' F2 D2 R' L F2,W,Bengaluru Winter Open 2018 (2018-12-01~02),333 R2 B E1
 954330014,R' U2 B2 D2 R' D2 B2 L2 U R2 F' D' R2 D' U' R F' D' B' D2,W,Nacionales Argentinas 2018 (2018-12-08~09),333mbf Final C #1

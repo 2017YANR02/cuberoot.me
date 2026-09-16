@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / B / bin 8
-# Population in this bin: 666
+# Population in this bin: 669
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 2023001,U' R' D L D B U' F' R F U2 B2 U2 R2 F2 U B2 L2 U' B2 U',B,Zonhoven Open 2014 (2014-03-22~23),333 R2 B #3
@@ -186,7 +186,7 @@
 3318945001,F2 D' F2 U B2 L2 B2 U2 B2 D' B2 F' D' F2 D L U' F R2 D,B,Capivara 2023 (2023-12-02~03),333 R1 A #2
 2263407001,L D' R2 U R2 U2 F2 R2 B2 R2 F R' D2 B D' R2 U2 L' D',B,Prepa Cbba 2022 (2022-10-22),333 Final A #5
 2079052001,B2 R2 L' D R' F2 B L B R2 L2 U' L2 U L2 B2 D2 R2 B2,B,East Brunswick Open 2022 (2022-07-30),333 R1 B E1
-1333390001,R' U' D B2 R' F' B L' B2 U2 F D2 R2 U' L2 D F2 U F2,B,Shandong Open 2019 (2019-10-04~05),333 R1 E E2
+5830087001,B' L2 F2 L2 D2 B2 U2 F L2 B' L F' D' L' R U F' R F U2,B,Makati Side Events Open 2026 (2026-09-13),333oh Final A #3
 2604304001,F L' U R' U F' U R2 D' B U2 R2 U L2 U F2 B2 R2 U',B,Saint John's Scramble 2023 (2023-04-01),333oh Final A E1
 908285001,L' B2 R2 B2 F2 U2 L' D2 U' B2 D' B2 L D' B F2 L' U' L',B,WIT Open 2018 (2018-10-21),333 R1 E #4
 5151739001,L2 F' U' F D R' F2 L' U' R' D F2 L2 B R2 F R2 L2,B,Eretum IV 2025 (2025-11-02),333 R2 B #3

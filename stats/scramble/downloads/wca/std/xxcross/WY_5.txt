@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / WY / bin 5
-# Population in this bin: 253
+# Population in this bin: 255
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,Y,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -123,7 +123,7 @@
 1990095043,D2 R2 U R' F L D' R' L2 B R2 F R2 L2 F U2 F R2 U' L B2,W,Blind Is Back LA 2022 (2022-06-26),333mbf Final A #1
 2005776001,R2 F2 L D2 L D2 U2 L' D F' D L2 R2 B2 U2 R' D U2 F,Y,Prienai Open 2022 (2022-07-09),333oh Final A E2
 2072365001,F2 U L2 D' L2 D2 L D B D' U2 R D2 R' D' U F2,W,CubingUSA Southern Championship 2022 (2022-07-29~31),333oh R1 B #1
-2172939001,B' R L D2 F' B' U F' R2 F2 L' U2 R' U2 R2 B2 L D L',W,Droitwich Spa Autumn 2022 (2022-09-17~18),333 R2 B #3
+5821566001,L2 B2 D2 R' B2 D2 B2 F2 U2 L' F R D2 L' U' B2 L,Y,RUS Mall 2026 (2026-09-06),333 Final A #4
 5099434028,B2 R' D B' D R' U R U' F' R2 U F2 D F2 U2 B2 U D L B,W,Thailand Championship 2025 (2025-10-11~13),333mbf Final A #1
 5126406001,L' D B' U' F2 R2 U2 L F2 R' F' R' F' L' B2 D2 F2,Y,Hvidovre Liga III 2025 (2025-10-25),333 Final B #5
 2324342001,D' F2 D' L2 R2 B F2 D2 L2 F' L2 R2 D B2 U' L' F U2 B' L' F',Y,Franconia Winter 2022 (2022-11-26~27),333bf Final A #1
@@ -142,7 +142,7 @@
 2810410001,R U' R2 U B' D2 F' B2 L' F' B' R' U2 R U2 B2 D2 R',Y,Vegas Speedcubing Summer 2023 (2023-06-17),333 R1 B E2
 2839668001,L' F2 L' D2 U2 B2 L2 F2 B D2 U' R F U' F' U2 B2 L2 U2,W,Swisscubing Cup IV 2023 (2023-06-24~25),333bf Final A E2
 2893993001,B2 L' B' D' R2 U F2 U' F2 R2 U L B2 U' L R2 F2 L,Y,Delacuesta Open 2023 (2023-07-15),333oh R1 B E2
-2894139001,F2 B L U B R U D R F2 B' R2 U2 B L2 U2 F R2 U2 D2 L2 U,Y,Lebrija 2023 (2023-07-16),333bf Final B #1
+5823099001,R' B R D' L R2 D' L2 U' F2 U B' F' D B F L' U,W,Ardmore Autumn 2026 (2026-09-12),333 R1 A E2
 2948654001,F R F2 R D F2 R' F2 U2 F L2 D2 B U2 D' R2 U',Y,Botosani Cubing 2023 (2023-08-05),333 R1 D #2
 2987761001,B2 L' U2 F2 D2 R U2 R2 B2 U R D' F2 R' U B L B',Y,Araruama Open 2023 (2023-08-19~20),333oh R1 B #4
 3024181001,R' B L F2 R' F2 L2 B2 D2 L2 R' F L U F D' U' F L',Y,Berkeley Summer 2023 (2023-08-26),333 R1 D #5

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / O / bin 5
-# Population in this bin: 722
+# Population in this bin: 723
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5003001,F D2 F' B2 D F B2 D L' D' L' F2 R' F2 L2 D2 B2,O,Tula Open 2014 (2014-03-28~30),333 R1 B #4
@@ -146,7 +146,7 @@
 5396965001,L2 D' R' U B2 D2 L D' L2 D2 F2 L2 B2 U' R2 L2 U B,O,Singapore Championship 2026 (2026-02-20~22),333oh R2 A E1
 719698001,L2 B U2 F' R2 B' R' F U2 R D2 F2 R' F2 R B D,O,Michigan Cubing Club Beta 2018 (2018-03-03~04),333 R2 B #2
 4172496001,F' D2 U2 L2 D2 U2 B L2 B U2 L2 F2 R' F D F R',O,Galerías Bogotá II 2024 (2024-10-06),333 R1 C #4
-4014303058,B' L2 D2 F2 D2 F' U2 B' U2 L2 D' L' F L F D' B L2 B R2,O,BrizZon Side Open III 2024 (2024-08-15~18),333mbf Final A #2
+5828536001,D2 R2 F2 U F2 U' F2 D' L2 B' U B' L2 D' U2 L F D' R',O,Chau Invierno En Di Tella 2026 (2026-09-12~13),333oh R1 B #3
 1134352037,D' F2 U2 L2 B2 U F2 U2 L' D2 F' U2 F U F' R' D2 L R B R,O,Casal Catalunya Baires Open 2019 (2019-05-03~04),333mbf Final A #1
 5747867004,U2 L' D F R' F2 L B2 R' F R2 D2 F2 U2 B' D2 B' L2 B',O,Bigs & MBLD Vila Velha 2026 (2026-07-12),333mbf Final A #2
 5695560015,F2 L R' B2 F2 R U2 B2 D B' U2 B2 D' B' L F D F' D2,O,Jog Your Memory Joondalup 2026 (2026-06-13),333mbf Final A #1

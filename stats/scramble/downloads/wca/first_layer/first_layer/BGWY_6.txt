@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / BGWY / bin 6
-# Population in this bin: 930
+# Population in this bin: 932
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5592455001,L2 F' D' F' B2 L F' D' R U' D F2 D2 F2 L2 D' R2 U',W,Western Sicily Open 2026 (2026-05-01~03),333oh R1 B #3

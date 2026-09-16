@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / Y / bin 0
-# Population in this bin: 849
+# Population in this bin: 851
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 1937346001,U B' U' B' R' D2 B' D2 F' B2 R D2 R U2 B2 U2 R2 B2 R,Y,Ponikva Open 2022 (2022-05-21),333oh R1 A #1
@@ -180,7 +180,7 @@
 1484487001,R B D' R' F2 B L' B' D R2 U2 L2 F' U2 B2 U2 L2 U2 B',Y,Brasília Closing 2019 (2019-12-28~29),333 R2 A #1
 4836284001,B' D L' D R2 D' R2 U' B2 D2 R' B L2 B' R U2 L B2,Y,Cubing in the Cornfields IA 2025 (2025-06-28),333 R1 B #4
 3640776001,F' R' U2 L F' U2 D' R2 B2 U2 L F2 U2 L' U2 B2 D F' R2,Y,Beachside Auckland 2024 (2024-04-06),333 R1 D E1
-1807970038,U' F2 D R F R F' U F' L2 F2 U L2 D2 F2 U2 D F2 U B R2,Y,Tietomaa Open 2022 (2022-02-12~13),333mbf Final A #1
+5829633019,U' L2 U2 B2 R' B2 U2 B2 R F2 B R' U' B' R2 B2 U F U L' F',Y,Kukulcán Open Quetzaltenango 2026 (2026-09-11~13),333mbf Final B #1
 1317426001,B' L2 F2 U2 F2 D2 R2 F R' D2 U' R B' U' L D2 R2 B' F,Y,Economics Lyceum Cube 2019 (2019-09-28~29),333 R1 D #5
 4451791001,U' R2 L F' R U' R' D2 R2 U R2 F' D2 F' D2 F' R2 L2,Y,Avenida Chile XIX 2025 (2025-01-25~26),333 R3 A #5
 5721944001,F' R2 D2 R2 U2 B R2 D2 B' L D L2 B2 D' U' F2 R' U' B',Y,LA Summer Throwdown 2026 (2026-06-27),333oh Final A #3

@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / B / bin 6
-# Population in this bin: 620
+# Population in this bin: 621
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 1875958001,U2 L2 B L2 B2 D2 F' U2 F2 L2 R' U' F2 D B R',B,Kirkkonummen Kuutionvääntelyt 2022 (2022-04-15~17),333 Final A #2
@@ -100,7 +100,7 @@
 5681246001,D F2 D2 U B2 U' R' B' R B' U B' L U2 F R' F2,B,Mada King of Cube 2026 (2026-05-30),333oh Final B #2
 660732005,L U2 R2 D2 L' F2 L F2 L' F2 D2 U' B L' D L' D F' L F R' B',B,Castellon Open 2015 (2015-06-20~21),333mbf Final A #1
 5268040002,F2 U L D2 L2 F2 R' U2 D L D U' L U' L2 U R2 D,B,UNESP Rio Preto Open 2025 (2025-12-13~14),333mbf Final B #1
-1472601001,R2 U2 F' U2 B U2 F' D2 B L' U L' D B2 L' R' D2 L',B,Taiwan Championship 2019 (2019-12-13~15),333 R1 A E1
+5829953001,R2 D2 U2 B D2 B2 D2 F D2 F' R2 U2 R' B' U2 R' F' L2,B,Caminos de Guanajuato - Guanajuato 2026 (2026-09-12),333oh R1 B #4
 1940564001,D2 L2 F2 U2 B' L2 U2 R2 U2 F' D2 R' U2 L B D' R2,B,Country Roads Huntington 2022 (2022-05-28),333 R1 B #1
 1281519001,U2 R2 B U2 F2 R2 B' L2 B L2 F D' U2 L2 R U' R U',B,Ukrainian Nationals 2019 (2019-08-23~25),333 R1 A #1
 1731458001,B' L' F2 B' L' D2 R' B U2 B2 L' U2 D2 F2 D2 L U2 R2 D2 B R,B,Nacionales Fénix Colombia 2021 (2021-11-13~15),333bf Final A E1

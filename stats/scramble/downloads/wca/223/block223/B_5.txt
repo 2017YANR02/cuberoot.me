@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / B / bin 5
-# Population in this bin: 866
+# Population in this bin: 871
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 2992291001,L2 D' L2 D2 U' L2 R' F D2 B2 F' L D' R D L' R B' L2,B,Podolian Open 2023 (2023-08-19~20),333bf Final A E2
@@ -22,7 +22,7 @@
 5692705035,D F2 R' U' F2 D B2 R2 D2 U B D2 R2 B' R2 F2 R B L' F2,B,CubingUSA Great Lakes Championship 2026 (2026-06-05~07),333mbf Final A #1
 1252174001,R2 F R D B L' B' L' B L' D' B2 U' F2 U B2 U R2 F2 B2,B,Puget Sound Summer 2019 (2019-08-10),333oh R1 A E2
 5663771021,D' L F U2 L2 U' R2 F' U' F R2 D2 B U2 B' D2 R2 F2 R2 D,B,Barby Cube 2026 (2026-05-22~25),333mbf Final A #1
-2696059001,R' B L2 F2 R2 D2 F2 D B2 R2 U B' U' B' L B F' L' D,B,National Capital Region B 2023 (2023-05-07),333 R1 D #1
+5822440001,F' R2 D2 F2 R' F2 R D2 F' R2 U' F2 D R2 U' R2 D L2 B2,B,Graz Open 2026 (2026-09-05~06),333 Final C #2
 942549001,L' U' B' R F' R F R' U2 L2 D2 B R2 F' U2 B' R2 U2 B',B,Cariri Open 2018 (2018-11-24~25),333 R2 B E1
 5394382001,D' B2 D2 B U2 R2 B2 D2 L U F2 L2 D' L' B L' D' L2,B,Kanto Winter 2026 (2026-02-21),333 Final A #2
 131051001,D2 B D2 L2 R2 B' R2 F2 D' L' U' B' L2 U B2 L B F R,B,Cape Town 2015 (2015-04-19),333 Final B #3
@@ -174,7 +174,7 @@
 4598992024,B2 D' L' D B U B' D R2 F2 R2 L2 D2 R2 U' R U F' D2,B,Cubolimpiadas Aves María 2025 (2025-03-22~24),333mbf Final A #1
 5304313037,U' F2 U R B' U2 B L2 B F2 U' R' D' L R B2 U',B,New York Multimate PBQ III 2025 (2025-12-27~28),333mbf Final A #1
 661487031,B2 D' F2 L2 U' R2 B2 D L2 U2 B2 R B U' B2 L2 D' U2 B2 L2 B R',B,SCMU 2017 (2017-09-01~03),333mbf Final A #2
-662247001,L' F2 L D2 R' F2 R' B R2 B D2 B2 R' D R2 F2 U' F',B,Vestby Open 2017 (2017-12-08),333 R2 A #2
+5821503001,F' L' B' L2 U' F2 R F U F' L D2 R D2 L,B,RUS Mall 2026 (2026-09-06),333 Final A #1
 4853500001,D R F2 D2 U2 R U2 F R' B2 R2 F U R U' F2,B,Hawaiian Island Tour - Kona 2025 (2025-07-09),333 R2 B #2
 2835301031,R' L' B D' R B D2 B' L2 F B2 U2 R2 L' U2 R,B,Jönköpingsligan Final: Tattoo 2023 (2023-06-27),333mbf Final A #1
 3115422001,U B' D F U' F2 L D' F B2 D2 L B2 L' F2 B2 U',B,BMME 3x3 Day 2023 (2023-09-23),333 R2 B E2

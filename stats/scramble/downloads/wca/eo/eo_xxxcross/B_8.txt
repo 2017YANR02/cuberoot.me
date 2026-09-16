@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / B / bin 8
-# Population in this bin: 126
-# Samples listed: 126 (all entries in this bin)
+# Population in this bin: 129
+# Samples listed: 129 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 23678001,D R2 U2 R2 D2 F2 U B2 F2 R U F' D F U' F' D,B,San Diego Summer Splash 2014 (2014-05-24),333oh R1 A E2
@@ -131,3 +131,6 @@
 5791977001,F2 L2 B2 R' D' R2 F U2 R' B2 U2 R F2 D2 R B' R2 B',B,Temecula Valley Back To School 2026 (2026-08-22),333 R1 E #2
 5809683001,B' L' U2 D F D2 B L B' R L' B2 R' U2 D2 L B2,B,DFW Cubing Summer 2026 (2026-08-29~30),333 R3 B E1
 5810055001,L2 F D F U2 D' B L2 F2 U2 D2 R2 D' F D2 B2 D2,B,Bay Area Speedcubin' 69 2026 (2026-08-29~30),333oh R1 D #2
+5821503001,F' L' B' L2 U' F2 R F U F' L D2 R D2 L,B,RUS Mall 2026 (2026-09-06),333 Final A #1
+5827742001,L' B2 R F2 R B' L2 U2 R2 F R' U L' U' R2 U2,B,Danish Championship 2026 (2026-09-11~13),333 R1 B #4
+5828150001,B' R2 B U F2 R F' R' F' B D B2 R2 D2 B2 L F2 R B2,B,HiLITE Cube Open 2026 (2026-09-12~13),333 R1 F E1

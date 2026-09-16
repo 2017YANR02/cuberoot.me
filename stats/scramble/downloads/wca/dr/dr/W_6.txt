@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / W / bin 6
-# Population in this bin: 633
+# Population in this bin: 636
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5415001,B2 D U L2 F2 U' B2 F2 R U2 F2 R' U L F2 L2 U2 R F L' F',W,Fénix 2014 (2014-03-29~30),333bf R2 A E1
@@ -98,7 +98,7 @@
 1158045001,L2 R2 D2 B2 F2 U B2 U2 B2 U2 R2 B U' B' L2 F2 R' B2 D,W,SacCubing VII 2019 (2019-05-25),333 R2 A E1
 3307831026,B2 R2 U' R2 U' R2 U F2 U' L2 U2 F2 B R B2 R' F D,W,Texas Championship 2023 (2023-12-02~03),333mbf Final A #1
 628272001,R2 U' R2 D B2 U2 F2 U L2 D B L B R' B L2 R2 F2 R,W,Cubing ATMOSphere 2017 (2017-10-28~29),333 R1 C E1
-4251402001,R2 F' D2 F2 U2 B L2 R' F' L' U2 F' U F2 U' L2 F' U',W,Canadian Prairie Championship 2024 (2024-11-02~03),333 R1 F E1
+5826275001,F2 U' R2 D R2 U2 B2 D' L2 U' B2 L' R' B2 R' B F D L' B2,W,Stevenage September 2026 (2026-09-12~13),333 R2 C E2
 1452003001,R2 U' R2 B2 F2 U L2 D R2 B F' L2 D2 B R D2 U L U,W,BA Four 2019 (2019-12-14),333 R1 A #3
 4595511001,R' U' F L B' U L' D' B L U L' F' R' D2 L D2 R' U2 R2 U2 L D' R' U' F,W,Buckeye Big Brain Ohio State 2025 (2025-03-08~09),333fm Final A #3
 3860849001,B' R2 D2 U2 B' D2 B' D2 F2 D' L2 D L' D2 L2 B F2 L' U2 B R,W,Blenkir Wanka Cube 2024 (2024-06-08~09),333bf Final A E1
@@ -110,7 +110,7 @@
 4436024001,D L2 B2 U' L2 D' F2 D2 F2 U' L2 U2 L' B' L2 D U' R,W,Starting Viña 2025 (2025-01-18~19),333oh Final A #3
 5520897001,F2 R2 D R2 B2 L' D L' D' B L' F2 L F2 R U2 F2 L2,W,Getafe Open 2026 (2026-04-11~12),333oh R1 B #4
 3674312001,B F' R2 U2 F R2 B' U2 L2 D' R2 U' R2 D2 R2 B R U' L',W,Big N Blind Bangalore April 2024 (2024-04-13~14),333oh R1 A E1
-660992030,L' U2 R B2 R' U2 B2 L2 F2 D F' R2 F U' L' D' F' R2 D F L B2,W,Canberra Autumn 2016 (2016-05-21~22),333mbf Final A #2
+5827552001,B' R2 U2 B R2 U2 L2 U2 F2 L U L' U B2 F' R' D U R' B,W,Danish Championship 2026 (2026-09-11~13),333mbf Final A #1
 2923051001,R2 U2 B2 R' D2 L' D2 F2 U2 B2 F' R' B U2 L2 R F2 D B,W,Stumptown Speedcubing Summer 2023 (2023-07-22),333 R2 B #1
 3411311001,U' B R2 F2 R' D2 L D2 L2 U2 L' B' R' B' R2 U' L2 F' D,W,Ottawa 3x3x3 Winter B 2024 (2024-01-13),333 R2 B E2
 4655715001,F2 U2 F D2 L F D2 R U L' U F2 U' D L2 D2 L2,W,UCSD Weeknights VI 2025 (2025-04-14),333oh R1 A E1
@@ -162,7 +162,7 @@
 3853216001,D2 F2 U R U L' B R2 U2 L2 D2 L2 B2 R2 F2 B' L F',W,Ōtepoti Big Cubes 2024 (2024-06-15~16),333oh Final A #5
 3362133001,U' R2 U' B2 D' B2 D2 F' D' L R2 B R' D U B2 U' R',W,Pocos Cupos Floridablanca 2023 (2023-12-17),333oh R2 B #4
 2980880030,B2 D2 B2 F2 R2 D R2 U' B2 D' F2 U2 L B' F L R B,W,Hyderabad Cube Open 2023 (2023-08-11~13),333mbf Final B #1
-882403029,D L2 R2 F2 U' B2 D B2 D L' B2 R F2 R2 U L' R B D' B,W,LLS VII Final 2018 (2018-09-15~16),333mbf Final A #1
+5825332001,R2 F R2 B' U2 F' D2 B2 D R2 F U B2 R2 F' D L2 B2,W,Williamsburg Open Fall 2026 (2026-09-12),333 R1 B #4
 2936532028,D B' R' D' L2 F' U' R U D2 L2 B2 L2 F2 L D2 R2 D2,W,Vietnam Championship 2023 (2023-07-14~16),333mbf Final A #1
 887038001,L2 R2 F2 U2 L2 D2 U' R F L' F U2 B D2 B' U F' R,W,Montevideo Palace 2018 (2018-09-22),333 R1 A E2
 888023005,R2 B R2 U2 L2 B L2 R2 U L2 U' L2 R' U2 R' B F D2 L' B' L',W,Xela Open 2018 (2018-09-22~23),333mbf Final A #1

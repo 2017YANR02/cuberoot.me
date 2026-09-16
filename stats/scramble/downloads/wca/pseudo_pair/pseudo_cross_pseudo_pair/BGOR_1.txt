@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / BGOR / bin 1
-# Population in this bin: 696
+# Population in this bin: 697
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 3220764001,F L F' R2 B D2 R2 D2 R2 B2 L2 B U L' U L2 D2 L2 B2,R,Broome Open 2023 (2023-11-04),333 Final A #3
@@ -164,7 +164,7 @@
 1399514001,B' L2 B F2 D2 L2 D2 R2 F' L B F2 U B2 L B D' R D B,R,Barby Cube 2019 (2019-11-09~11),333 R1 B E2
 2233574001,D' B2 R D2 U2 R' U2 L2 F' D' U2 B' R B D2 F U2 F',O,Kubiat HaGalil A 2022 (2022-10-12),333oh Final A #5
 4121100001,B2 U2 L' D' R' B U2 B R L B2 U2 D2 L' B2 U2 L' U2,G,Slow Down Adelaide 2024 (2024-09-21),333bf R1 A #1
-5348585003,L2 U' B L U' L D B D F2 R2 B' U2 F' R2 D2 F2 L2 D2 U' B',G,Poulseur Quiet Open 2026 (2026-01-24),333mbf Final A #1
+5830787001,R2 D L2 U' B2 D L' B L2 U L' R' U F2 L' D F2 D',R,Ohio Championship 2026 (2026-09-11~13),333 R1 C #5
 2114408024,R2 B2 D' F2 R' B' L F2 U F2 U L2 U2 D B2 D2 F2 U' B R2 B R2,O,SacQuiet 2022 (2022-08-21),333mbf Final A #1
 1172297001,D L2 D R2 D2 L2 B2 U2 B2 F2 L' D2 B L2 F U2 R' B' R D',G,Trondheim Parity Open 2019 (2019-06-07~09),333 R1 A #2
 5603707001,F D U2 L U2 L2 F2 R2 U2 R' B F R' B D B' D' B' F',G,Chengdu Welcoming Summer 2026 (2026-05-04),333 R1 G #2

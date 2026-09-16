@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / ORWY / bin 4
-# Population in this bin: 320
+# Population in this bin: 321
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 3194001,L' U2 L' R2 F2 R D2 F D L' R D' B2 D' F R2 B2 L,W,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 H E1
@@ -92,7 +92,7 @@
 5511331001,B2 U2 F R2 F' L2 R2 B2 D2 R F' L2 F' L U2 L F' D2,Y,French Championship 2026 (2026-04-04~06),333 R1 E #3
 984263001,U2 B' R2 F L2 F2 R2 B' D2 B U2 R' U2 R' D U2 R B' R',Y,Berlin Winter Cubing 2019 (2019-01-19~20),333 R1 C E1
 986381001,D' R F2 L' B' L D B2 D' B R' U2 B2 R F2 L' D2 F2,Y,Ha Noi Cube Day 2019 (2019-01-20),333 Final A E1
-1015333005,B2 R B2 D2 U2 L' F2 R2 U R' D B' F' R D F' U B' D L' F,O,Medan Lunar New Year 2019 (2019-02-09~10),333mbf Final A #3
+5827742001,L' B2 R F2 R B' L2 U2 R2 F R' U L' U' R2 U2,Y,Danish Championship 2026 (2026-09-11~13),333 R1 B #4
 1035983001,R D' R2 D' L2 B' U2 R' B' R U B2 L U2 F2 R F2 L',O,Cult A Way Cube Open 2019 (2019-03-03),333 Final A #1
 1036858001,L' D2 F2 R B2 R' B2 R2 D2 R F' L' R' B2 U' R F R' D F',O,EkatCube Spring 2019 (2019-03-02~03),333oh Final B #5
 1037511001,L2 D' F2 R D B' L' U2 L F' U L2 U2 R2 D2 B2 R2 L2,O,Voronezh Open 2019 (2019-03-02~03),333oh R1 A #1
