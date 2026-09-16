@@ -39,7 +39,7 @@ const TURN_FACTOR = 2.13;
 
 /** 一个 token 的规范文本。无分隔符拼接就是打乱串的样子:(1,0)/(-3,3)/(0,-3)/ */
 function tokenText(m: Sq1Token): string {
-  return m.kind === 'slice' ? '/' : `(${m.top},${m.bot})`;
+  return m.kind === 'slice' ? '/' : m.kind === 'rotation' ? ` ${m.axis}2 ` : `(${m.top},${m.bot})`;
 }
 
 /** 物理拖动序列 → 写回打乱框的串(过 shared 消步:层转合并 + 相邻两刀相消)。 */

@@ -249,7 +249,7 @@ export function pickSq1ShapePair<T extends Sq1ShapeTrainingVariant>(
 }
 
 function tokenText(token: Sq1Token): string {
-  return token.kind === 'slice' ? '/' : `(${token.top}, ${token.bot})`;
+  return token.kind === 'slice' ? '/' : token.kind === 'rotation' ? `${token.axis}2` : `(${token.top}, ${token.bot})`;
 }
 
 function parseStrict(text: string): Sq1Token[] | null {

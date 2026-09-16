@@ -31,6 +31,7 @@ export interface Sq1MoveCounts {
 
 /** Per-token cost under each metric. */
 export function sq1TokenCost(tok: Sq1Token): { twist: number; wca: number; face: number } {
+  if (tok.kind === 'rotation') return { twist: 0, wca: 0, face: 0 };
   if (tok.kind === 'slice') return { twist: 1, wca: 1, face: 1 };
   const nonId = tok.top !== 0 || tok.bot !== 0;
   return {
@@ -49,7 +50,7 @@ export function sq1MoveCounts(alg: string): Sq1MoveCounts {
     twist += c.twist; wca += c.wca; face += c.face;
     if (tk.kind === 'slice') {
       slices++;
-    } else {
+    } else if (tk.kind === 'turn') {
       turns++;
       if (tk.top !== 0 || tk.bot !== 0) nonIdentityTurns++;
       if (tk.top !== 0 && tk.bot !== 0) doubleTurns++;

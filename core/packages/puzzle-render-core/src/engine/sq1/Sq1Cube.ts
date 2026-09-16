@@ -19,6 +19,7 @@
  * are the fast paths used for reset/caret-jump.
  */
 import * as THREE from 'three';
+import { isSq1Solved } from '@cuberoot/shared/sq1-notation';
 import {
   buildPieceMesh,
   buildMiddlePair,
@@ -34,7 +35,6 @@ import {
   type Sq1Move,
   solvedSq1,
   applySq1Move,
-  SOLVED_PIECES,
   moveToString,
 } from './sq1State';
 import Sq1Twister from './Sq1Twister';
@@ -112,6 +112,10 @@ export default class Sq1Cube extends THREE.Group implements TweenCube<Sq1Move> {
   /** Snap every piece to its canonical slot pose given the discrete state. */
   applyStateInstant(state: Sq1State): void {
     this.state = state;
+    const grip = state.grip ?? 0;
+    const axis = grip === 1 ? new THREE.Vector3(1, 0, 0)
+      : grip === 2 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, 0, 1);
+    this.quaternion.setFromAxisAngle(axis, grip ? Math.PI : 0);
     const pieceSlot = new Map<number, number>();
     for (let s = 0; s < 24; s++) {
       if (!pieceSlot.has(state.pieces[s])) pieceSlot.set(state.pieces[s], s);
@@ -130,7 +134,9 @@ export default class Sq1Cube extends THREE.Group implements TweenCube<Sq1Move> {
     }
     for (const m of this.middle) {
       m.pivot.position.set(0, 0, 0);
-      if (m.side === 1 && !state.sliceSolved) {
+      const flipped = m.side === -1 ? Boolean(state.smallSliceFlipped)
+        : !state.sliceSolved !== Boolean(state.smallSliceFlipped);
+      if (flipped) {
         m.pivot.quaternion.setFromAxisAngle(SLICE_AXIS, Math.PI);
       } else {
         m.pivot.quaternion.identity();
@@ -151,10 +157,17 @@ export default class Sq1Cube extends THREE.Group implements TweenCube<Sq1Move> {
    *  state 上等价,只是 axis-angle tween 走反弧。 */
   beginMove(move: Sq1Move, sliceDir: 1 | -1 = 1): PieceAnim[] {
     const anims: PieceAnim[] = [];
+    if (move.kind === 'rotation') {
+      const axis = move.axis === 'x' ? new THREE.Vector3(1, 0, 0)
+        : move.axis === 'y' ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, 0, 1);
+      const angle = -Math.PI;
+      return [makeAnim(this, new THREE.Quaternion().setFromAxisAngle(axis, angle), axis, angle)];
+    }
     if (move.kind === 'turn') {
       const Y = new THREE.Vector3(0, 1, 0);
-      const topAngle = -(move.top ?? 0) * (Math.PI / 6);
-      const botAngle = (move.bot ?? 0) * (Math.PI / 6);
+      const flipped = Boolean((this.state.grip ?? 0) & 1);
+      const topAngle = -(flipped ? move.bot : move.top) * (Math.PI / 6);
+      const botAngle = (flipped ? move.top : move.bot) * (Math.PI / 6);
       const topDelta = new THREE.Quaternion().setFromAxisAngle(Y, topAngle);
       const botDelta = new THREE.Quaternion().setFromAxisAngle(Y, botAngle);
       for (const p of this.pieces) {
@@ -167,6 +180,7 @@ export default class Sq1Cube extends THREE.Group implements TweenCube<Sq1Move> {
     } else {
       const sliceAngle = sliceDir * Math.PI;
       const sliceDelta = new THREE.Quaternion().setFromAxisAngle(SLICE_AXIS, sliceAngle);
+      const side = (this.state.grip ?? 0) & 2 ? -1 : 1;
       const probe = new THREE.Vector3();
       for (const p of this.pieces) {
         // pivot.matrix is the piece's transform IN CUBE-LOCAL frame
@@ -176,12 +190,12 @@ export default class Sq1Cube extends THREE.Group implements TweenCube<Sq1Move> {
         const isCorner = isCornerPiece(p.pieceId);
         probe.set(W, 0, isCorner ? -W : 0);
         probe.applyMatrix4(p.pivot.matrix);
-        if (probe.x * W + probe.z * WEDGE_HALF_CHORD > 0.5) {
+        if (side * (probe.x * W + probe.z * WEDGE_HALF_CHORD) > 0.5) {
           anims.push(this._makeAnim(p.pivot, sliceDelta, SLICE_AXIS, sliceAngle));
         }
       }
       for (const m of this.middle) {
-        if (m.side === 1) anims.push(this._makeAnim(m.pivot, sliceDelta, SLICE_AXIS, sliceAngle));
+        if (m.side === side) anims.push(this._makeAnim(m.pivot, sliceDelta, SLICE_AXIS, sliceAngle));
       }
     }
     return anims;
@@ -223,11 +237,7 @@ export default class Sq1Cube extends THREE.Group implements TweenCube<Sq1Move> {
   }
 
   get complete(): boolean {
-    if (!this.state.sliceSolved) return false;
-    for (let i = 0; i < 24; i++) {
-      if (this.state.pieces[i] !== SOLVED_PIECES[i]) return false;
-    }
-    return true;
+    return isSq1Solved(this.state);
   }
 
   dispose(): void {
