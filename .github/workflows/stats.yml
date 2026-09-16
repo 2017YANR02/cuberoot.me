@@ -219,7 +219,7 @@ jobs:
         working-directory: core/${{ steps.workspace.outputs.stats }}
         run: npx tsx src/bin/mbld_avg_records_build.ts
 
-      # 性别(女子/男子)历史纪录进程 — /wca/records 性别下拉数据源(world + 6 大洲)
+      # 性别(女子/男子)历史纪录进程 — /wca/records 性别下拉数据源(world + 6 大洲 + 有纪录的国家)
       - name: Build gendered historical records JSON (women/men)
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/${{ steps.workspace.outputs.stats }}
