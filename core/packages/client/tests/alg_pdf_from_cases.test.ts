@@ -18,6 +18,14 @@ function mkCase(over: Partial<AlgCase> & { name: string }): AlgCase {
 const base = { puzzle: '3x3' as const, set: 'pll', title: 'T', filename: 'f' };
 
 describe('algSheetFromCases', () => {
+  it('顶层打乱文字用 U 收尾，缩略图仍使用完整原状态', () => {
+    const setup = "R U R' U R U2 R' y'";
+    const c = mkCase({ name: 'OLL 26', setup, algs: [[{ alg: "R U2 R' U' R U' R'" }]] });
+    const sheet = algSheetFromCases({ ...base, set: 'oll', cases: [c] });
+    expect(sheet.cases[0].setup).toBe("R U R' U R U2 R' U'");
+    expect(sheet.cases[0].thumb?.setup).toBe(setup);
+  });
+
   it('默认只印前几条公式(库里一张 PLL 挂十几条,全印就是五页纸)', () => {
     const algs = Array.from({ length: 9 }, (_, i) => ({ alg: `R U${i} R'` }));
     const sheet = algSheetFromCases({

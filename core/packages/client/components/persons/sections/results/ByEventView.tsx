@@ -19,6 +19,7 @@ import { formatDateRangeIso } from '@/lib/wca-date';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { compLinkProps } from '@/lib/comp-link';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
+import { personResultRecord } from '@/lib/person-achievements';
 import { computePrRank, countPersonalRecords } from '../../logic/progress';
 import { computeAoxr, aoxrKey } from '../../logic/aoxr';
 import { AoxrValue, aoxrHint } from './AoxrValue';
@@ -60,6 +61,7 @@ import {
 
 interface Props {
   profile: WcaPersonProfile;
+  femaleRecordLookup: ReadonlyMap<string, string>;
   results: WcaResultRow[] | null;
   comps: WcaCompetition[] | null;
   reconLookup: Map<string, ReconAttemptInfo> | null;
@@ -72,7 +74,7 @@ interface Props {
 type SubSub = 'all' | 'trend' | 'distviz';
 type ReconFilter = 'all' | 'recon' | 'timing';
 
-export default function ByEventView({ profile, results, comps, reconLookup, eventId, isZh, showAttemptRanks = true, onToggleAttemptRanks }: Props) {
+export default function ByEventView({ profile, results, comps, reconLookup, eventId, isZh, showAttemptRanks = true, onToggleAttemptRanks, femaleRecordLookup }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   // 3 选一:成绩(轮次表)/ 趋势(成绩+排名两图)/ 分布。
   // 默认落「成绩」—— 打开项目即见结果表,且 #r- 深链锚点所在的表默认已挂载。
@@ -169,6 +171,7 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
       {view === 'all' && (
         <EventRoundsList
           wcaId={profile.person.wca_id}
+          femaleRecordLookup={femaleRecordLookup}
           personName={profile.person.name}
           personCountry={profile.person.country_iso2}
           rows={eventResults}
@@ -191,9 +194,10 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
 // 轮次显示元数据已抽到 utils/wca_round_meta.ts 共用 (ByCompList / 复盘页同场比赛表也用)
 
 function EventRoundsList({
-  wcaId, personName, personCountry, rows, compById, results, comps, eventId, reconLookup, isZh, showAttemptRanks = true, reconFilter,
+  wcaId, personName, personCountry, rows, compById, results, comps, eventId, reconLookup, isZh, showAttemptRanks = true, reconFilter, femaleRecordLookup,
 }: {
   wcaId: string;
+  femaleRecordLookup: ReadonlyMap<string, string>;
   personName?: string | null;
   personCountry?: string;
   rows: WcaResultRow[];
@@ -585,15 +589,12 @@ function EventRoundsList({
             const averageRank = liveInfoReady ? (rank?.averageRank ?? liveRank?.pA ?? null) : null;
             const metricRank = (r.live ? metricData.singleLiveRanks : metricData.singleOfficialRanks).get(rowKey) ?? null;
             // 直播行的区域纪录(NR/WR/CR)与 /wca/comp 结果表同口径,优先于 PR 标志。
-            const singleRecord = r.regional_single_record || (liveRank?.singleTag || null);
+            const baseSingleRecord = r.regional_single_record || (liveRank?.singleTag || null);
             // 多盲非官方平均:WCA 无 regional_average_record,改查站内自算的 WR/大洲/NR 标签。
             const mbldAvgRec = isMbldEvent(eventId)
               ? mbldAvgRecords?.get(mbldAvgRecordKey(wcaId, r.competition_id, eventId, r.round_type_id)) ?? null
               : null;
-            const averageRecord = r.regional_average_record || mbldAvgRec || (liveRank?.averageTag || null);
-            // 「日掩」只在直播/未公示阶段有意义 —— 官方值一出就以官方为准(Reg 9i2 已在其中生效)。
-            const singleKeatoned = r.regional_single_record ? null : (liveRank?.singleKeatoned ?? null);
-            const averageKeatoned = r.regional_average_record ? null : (liveRank?.averageKeatoned ?? null);
+            const baseAverageRecord = r.regional_average_record || mbldAvgRec || (liveRank?.averageTag || null);
             const showComp = !grouped || r.competition_id !== lastCompId;
             lastCompId = r.competition_id;
             // 拆 status:approved 进有效值显示;pending 仅作「待审核」标记(不改官方值)。
@@ -606,6 +607,11 @@ function EventRoundsList({
             // 当前有效值 = WCA 值叠加变更链最新(行内改某次后即时反映)
             const effBest = effectiveFieldValue(chain, 'best', r.best);
             const effAvg = effectiveFieldValue(chain, 'average', effectiveAverage(r, eventId));
+            const singleRecord = personResultRecord(femaleRecordLookup, r, 's', effBest, baseSingleRecord);
+            const averageRecord = personResultRecord(femaleRecordLookup, r, 'a', effAvg, baseAverageRecord);
+            // Official or matched historical records supersede provisional live suppression.
+            const singleKeatoned = r.regional_single_record || singleRecord !== baseSingleRecord ? null : (liveRank?.singleKeatoned ?? null);
+            const averageKeatoned = r.regional_average_record || averageRecord !== baseAverageRecord ? null : (liveRank?.averageKeatoned ?? null);
             const effAttempts = effectiveAttempts(chain, r.attempts);
             // 「#」开 + 该轮有复盘(带 stm/tps)→ 详细成绩下补 STM/TPS 两行,轮次列同步出两行标签。
             const hasReconStats = showAttemptRanks && rowHasReconStats(reconLookup, r.competition_id, eventId, r.round_type_id, effAttempts.length);

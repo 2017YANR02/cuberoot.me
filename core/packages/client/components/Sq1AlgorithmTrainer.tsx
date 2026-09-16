@@ -1,6 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import TrainingStatsPanel, { TrainingSelfCheck } from '@/components/TrainingStatsPanel';
+import { useTrainingStats } from '@/hooks/useTrainingStats';
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { ListSelect } from '@/components/ListSelect';
@@ -67,6 +70,16 @@ export default function Sq1AlgorithmTrainer() {
   const [round, setRound] = useState<Sq1AlgTrainerRound | null>(null);
   const [answerVisible, setAnswerVisible] = useState(false);
   const [error, setError] = useState('');
+  const statsGroup = `sq1-alg:${round?.case.groupId ?? 'all'}`;
+  const { record } = useTrainingStats(statsGroup);
+  const [rated, setRated] = useState(false);
+  const ratedRef = useRef(false);
+  const startedAt = useRef(0);
+  useEffect(() => {
+    startedAt.current = Date.now();
+    ratedRef.current = false;
+    setRated(false);
+  }, [round]);
   const [hydrated, setHydrated] = useState(false);
 
   const generate = useCallback((specificCase?: Sq1AlgTrainerCase) => {
@@ -161,6 +174,13 @@ export default function Sq1AlgorithmTrainer() {
               onChange={setAnswerVisible}
               label={tr({ zh: '显示答案', en: 'Show answer' })}
             />
+            <TrainingSelfCheck disabled={rated} onResult={(correct) => {
+              if (ratedRef.current) return;
+              ratedRef.current = true;
+              record(correct, Date.now() - startedAt.current);
+              setRated(true);
+              setAnswerVisible(true);
+            }} />
             {answerVisible && (
               <div className={styles.answer}>
                 <p><strong>{round.case.name}</strong> <span>{round.case.parity === 'odd' ? tr({ zh: '奇排列', en: 'Odd parity' }) : tr({ zh: '偶排列', en: 'Even parity' })}</span></p>
@@ -228,6 +248,7 @@ export default function Sq1AlgorithmTrainer() {
           ))}
         </div>
       </section>
+      <TrainingStatsPanel group={statsGroup} />
     </div>
   );
 }

@@ -23,6 +23,7 @@ const TAB_KEYS: TabKey[] = ['results', 'records', 'podiums', 'events', 'mileston
 
 interface Props {
   profile: WcaPersonProfile;
+  femaleRecordLookup: ReadonlyMap<string, string>;
   results: WcaResultRow[] | null;
   comps: WcaCompetition[] | null;
   /** 直播·非官方成绩 + 对应比赛元数据(仅成绩 tab 用,不进其它 tab / PR 表) */
@@ -32,7 +33,7 @@ interface Props {
   isZh: boolean;
 }
 
-export default function PersonTabs({ profile, results, comps, liveResults, liveComps, reconLookup, isZh }: Props) {
+export default function PersonTabs({ profile, results, comps, liveResults, liveComps, reconLookup, isZh, femaleRecordLookup }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   // tab 切换 push 进历史 → 后退能在选手页 tab 间返回(nuqs 自动同步,无需手写 popstate)
   const [active, setActive] = useQueryState(
@@ -108,7 +109,7 @@ export default function PersonTabs({ profile, results, comps, liveResults, liveC
       </div>
       <div className="wp-tab-body">
         <Suspense fallback={<div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>}>
-          {effectiveActive === 'results' && <ResultsTab profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} />}
+          {effectiveActive === 'results' && <ResultsTab profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} femaleRecordLookup={femaleRecordLookup} />}
           {effectiveActive === 'records' && <RecordsTab profile={profile} results={results} comps={comps} isZh={isZh} />}
           {effectiveActive === 'podiums' && hasPodiums && <ChampionshipPodiumsTab rows={podiumRows!} isZh={isZh} />}
           {effectiveActive === 'events' && <EventStatsTab results={results} comps={comps} isZh={isZh} />}

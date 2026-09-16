@@ -1035,6 +1035,14 @@ export const CATALOG: ComponentEntry[] = [
     Demo: BoolToggleDemo,
   },
   {
+    name: 'TrainingStatsPanel',
+    import: "import TrainingStatsPanel, { TrainingSelfCheck, TrainingSelfPractice, TrainingManualPractice } from '@/components/TrainingStatsPanel';",
+    category: 'more',
+    zh: '训练累计次数、正确率、用时和最近记录；共用十字原有存储，按分组保留。实体魔方训练可使用 TrainingSelfCheck 自评。',
+    en: 'Persistent grouped training counts, accuracy, times and recent attempts, using the existing Cross storage. TrainingSelfCheck supports physical-cube self-rating.',
+    usage: '<TrainingStatsPanel group="color:relations" />',
+  },
+  {
     name: 'TrainingSettings',
     import: "import TrainingSettings, { useTrainingAutoAdvance } from '@/components/TrainingSettings';",
     category: 'toggle',

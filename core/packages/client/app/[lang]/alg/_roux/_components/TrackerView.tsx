@@ -9,6 +9,7 @@
 // dropped repo-wide). The unused `simBackground` value (upstream computed it but
 // never passed it to CubeSim) is omitted.
 
+import TrainingStatsPanel, { TrainingSelfPractice } from '@/components/TrainingStatsPanel';
 import React from 'react';
 
 import CubeSim from './CubeSim';
@@ -221,6 +222,7 @@ function TrackerView(props: { state: AppState; dispatch: React.Dispatch<Action> 
 
   return (
     <div className="roux-tracker">
+      <TrainingSelfPractice group={`roux:tracking:${state.mode}:${state.moveCount}`} attempt={state.result?.cubeBefore} />
       <div className="roux-tracker-panel">
         <div className="roux-tracker-scramble-row">
           <div className="roux-tracker-section-title">Scramble</div>
@@ -334,6 +336,7 @@ function TrackerView(props: { state: AppState; dispatch: React.Dispatch<Action> 
           </div>
         </div>
       </div>
+      <TrainingStatsPanel group={`roux:tracking:${state.mode}:${state.moveCount}`} />
     </div>
   );
 }

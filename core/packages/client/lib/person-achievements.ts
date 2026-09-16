@@ -367,6 +367,26 @@ export function femaleRecordAchievements(rows: FemalePersonRecord[], nationalCom
     current: [...unique.values()].filter(row => row.currentWorld && !CANCELLED_EVENT_IDS.has(row.e)) };
 }
 
+/** Historical result tags stay attached after a record is broken. Share awards' validation and deduplication. */
+export function femaleResultRecordLookup(rows: FemalePersonRecord[], nationalComplete = false, countryIso2 = '') {
+  const lookup = new Map<string, string>();
+  for (const group of femaleRecordAchievements(rows, nationalComplete, countryIso2).history) {
+    for (const row of group.rows) lookup.set(`${row.c}:${row.e}:${row.t}:${row.v}`, group.record);
+  }
+  return lookup;
+}
+
+export function personResultRecord(
+  lookup: ReadonlyMap<string, string>, row: Pick<WcaResultRow, 'competition_id' | 'event_id'>,
+  type: 's' | 'a', value: number, existing: string | null,
+): string | null {
+  const female = lookup.get(`${row.competition_id}:${row.event_id}:${type}:${value}`);
+  // Same priority as live results: overall WR, then FWR, then overall regional records.
+  if (existing === 'WR') return existing;
+  if (female === 'FWR') return female;
+  return existing || female || null;
+}
+
 export async function fetchFemalePersonRecords(
   person: { wca_id: string; name: string; country_iso2: string }, signal: AbortSignal,
 ): Promise<{ rows: FemalePersonRecord[]; nationalComplete: boolean }> {

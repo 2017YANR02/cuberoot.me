@@ -1,0 +1,392 @@
+[
+  {
+    "set": "oll",
+    "name": "OLL 27",
+    "setup": "R U2' R' U' R U' R'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 26",
+    "setup": "R U R' U R U2' R' y'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 24",
+    "setup": "F R' F' r U R U' r'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 25",
+    "setup": "R' F' r U R U' r' F y'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 23",
+    "setup": "R U2' R D R' U2' R D' R2'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 22",
+    "setup": "R' U2' R2' U R2' U R2' U2' R'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 21",
+    "setup": "R U R' U R U' R' U R U2' R' y'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 28",
+    "setup": "R U R' U' M' U R U' r'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 57",
+    "setup": "r U R' U' M U R U' R'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 45",
+    "setup": "F U R U' R' F'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 33",
+    "setup": "F R' F' R U R U' R'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 5",
+    "setup": "r' U' R U' R' U2' r"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 6",
+    "setup": "r U R' U R U2' r'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 37",
+    "setup": "F R U' R' U R U R' F'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 35",
+    "setup": "R U2' R' F R' F' R2' U2' R'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 46",
+    "setup": "R' U' F R' F' R U R"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 34",
+    "setup": "F U R' U' R' F' R U R2' U' R' y2'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 40",
+    "setup": "R' U' F U R U' R' F' R y'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 39",
+    "setup": "L U F' U' L' U L F L' y'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 10",
+    "setup": "R U2' R' F R' F' R U' R U' R'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 9",
+    "setup": "F U R U' R2' F' R U R U' R' y'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 38",
+    "setup": "F R' F' R U R U R' U' R U' R'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 36",
+    "setup": "F' L F L' U' L' U' L U L' U L y2'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 44",
+    "setup": "f U R U' R' f'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 43",
+    "setup": "f' U' L' U L f"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 32",
+    "setup": "f R' F' R U R U' R' S'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 31",
+    "setup": "R' F R U R' U' F' U R"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 7",
+    "setup": "r U2' R' U' R U' r'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 8",
+    "setup": "r' U2' R U R' U r y2'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 11",
+    "setup": "M U' R U2' R' U' R U' R2' r"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 12",
+    "setup": "F U R U' R' F' U' F U R U' R' F'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 42",
+    "setup": "F U R U' R' F' R' U2' R U R' U R"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 41",
+    "setup": "F U R U' R' F' R U2' R' U' R U' R' y2'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 29",
+    "setup": "M F R' F' R U R U' R' U' M'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 30",
+    "setup": "F U R U2' R' U R U2' R' U' F' y2'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 15",
+    "setup": "r' U' r U' R' U R r' U r"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 16",
+    "setup": "r U r' U R U' R' r U' r'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 13",
+    "setup": "F' U' F r U' r' U r U r'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 14",
+    "setup": "F U F' R' F R U' R' F' R"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 51",
+    "setup": "f U R U' R' U R U' R' f'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 52",
+    "setup": "F R U R' d R' U' R U' R'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 56",
+    "setup": "r U r' R U R' U' R U R' U' r U' r'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 55",
+    "setup": "F R' F' U2' R U R' U R2' U2' R'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 49",
+    "setup": "r' U r2' U' r2' U' r2' U r' y2'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 50",
+    "setup": "r U' r2' U r2' U r2' U' r"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 48",
+    "setup": "F U R U' R' U R U' R' F'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 47",
+    "setup": "F' U' L' U L U' L' U L F"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 54",
+    "setup": "r U2' R' U' R U R' U' R U' r'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 53",
+    "setup": "r' U2' R U R' U' R U R' U r"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 3",
+    "setup": "F U R U' R' F' U f U R U' R' f' y"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 4",
+    "setup": "F U R U' R' F' U' f U R U' R' f' y"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 18",
+    "setup": "r' U2' R U R' U r2' U2' R' U' R U' r'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 2",
+    "setup": "f U R U' R' f' F U R U' R' F'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 19",
+    "setup": "F R' F' R M U R U' R' U' M'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 17",
+    "setup": "F R' F' R U2' F R' F' R U' R U' R'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 1",
+    "setup": "F R' F' R U2' F R' F' R2' U2' R'"
+  },
+  {
+    "set": "oll",
+    "name": "OLL 20",
+    "setup": "r U R' U' M2' U R U' R' U' M'"
+  },
+  {
+    "set": "pll",
+    "name": "Aa",
+    "setup": "x R2' D2' R U R' D2' R U' R x'"
+  },
+  {
+    "set": "pll",
+    "name": "Ab",
+    "setup": "x R' U R' D2' R U' R' D2' R2 x'"
+  },
+  {
+    "set": "pll",
+    "name": "E",
+    "setup": "x' D R U R' D' R U' R' D R U' R' D' R U R' x"
+  },
+  {
+    "set": "pll",
+    "name": "F",
+    "setup": "S' R U' R2' F R U R U' R2' F' R f R' F' R"
+  },
+  {
+    "set": "pll",
+    "name": "Ga",
+    "setup": "f' L' f L2 u L' U L U' L u' L2'"
+  },
+  {
+    "set": "pll",
+    "name": "Gb",
+    "setup": "L2 u L' U L' U' L u' L2' f' L f"
+  },
+  {
+    "set": "pll",
+    "name": "Gc",
+    "setup": "f R f' R2' u' R U' R' U R' u R2"
+  },
+  {
+    "set": "pll",
+    "name": "Gd",
+    "setup": "R2' u' R U' R U R' u R2 f R' f'"
+  },
+  {
+    "set": "pll",
+    "name": "H",
+    "setup": "M2 U' M2 U2' M2 U' M2"
+  },
+  {
+    "set": "pll",
+    "name": "Ja",
+    "setup": "L' U' L2' F L' U' L' U L F' L' U L"
+  },
+  {
+    "set": "pll",
+    "name": "Jb",
+    "setup": "R U R2' F' R U R U' R' F R U' R'"
+  },
+  {
+    "set": "pll",
+    "name": "Na",
+    "setup": "F' R U R' U' R' F R2 F U' R' U' R U F' R'"
+  },
+  {
+    "set": "pll",
+    "name": "Nb",
+    "setup": "F r' F' r U r U' r2' D' F r U r' F' D r"
+  },
+  {
+    "set": "pll",
+    "name": "Ra",
+    "setup": "L2 F' L' U' L' U L F L' U2 L U2' L'"
+  },
+  {
+    "set": "pll",
+    "name": "Rb",
+    "setup": "R2' F R U R U' R' F' R U2' R' U2 R"
+  },
+  {
+    "set": "pll",
+    "name": "T",
+    "setup": "F R U' R' U R U R2' F' R U R U' R'"
+  },
+  {
+    "set": "pll",
+    "name": "Ua",
+    "setup": "R2' U S' U2 S U R2'"
+  },
+  {
+    "set": "pll",
+    "name": "Ub",
+    "setup": "M2' U M U2' M' U M2' U"
+  },
+  {
+    "set": "pll",
+    "name": "V",
+    "setup": "y F' R' F' R U' R U R2' F R d R U' R"
+  },
+  {
+    "set": "pll",
+    "name": "Y",
+    "setup": "F R' F' R U R U' R2' U' R U R f' U' f"
+  },
+  {
+    "set": "pll",
+    "name": "Z",
+    "setup": "M' U' M2 U' M2 U' M' U2' M2"
+  }
+]

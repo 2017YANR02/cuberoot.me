@@ -243,8 +243,8 @@
    A persistent, collapsible StageSolver host (replaces the old modal). SoloView
    mounts it in one of two places: on phones it's the last control in the topbar's
    centre group (next to 人数 / 项目 / 打乱来源) and tapping it opens .solver-sheet
-   (below); on desktop it goes in .shell-rail, an absolute right column, and
-   .shell-main gains matching right padding so the centered timer never sits under
+   (below); on desktop it goes in .shell-rail, an absolute left column, and
+   .shell-main gains matching left padding so the centered timer never sits under
    it. Both forms are just a pill until opened, so the base rule below sizes it as
    an inline control and each mount point takes it from there. */
 .timer-shell { --solver-rail-w: clamp(380px, 31vw, 520px); }
@@ -442,7 +442,7 @@
 
 /* Config rail wrapper (解法提示, desktop only — SoloView puts the phone form in the
    topbar instead). display:contents keeps it out of the layout on phones, where it
-   is empty; desktop turns it into the absolute right column below. */
+   is empty; desktop turns it into the absolute left column below. */
 .shell-rail { display: contents; }
 
 /* Phone / tablet (<1024px): the pill opens a full-screen sheet. It used to expand
@@ -500,44 +500,47 @@
   padding: 10px 12px calc(16px + env(safe-area-inset-bottom));
 }
 
-/* Desktop: the .shell-rail lifts to an absolute column pinned to the right edge
-   of .shell-main (LEFT of the Times/Chart/Tools dock, a separate grid column).
-   All panels collapsed → a slim stack of drawer handles top-right, tucked just
-   below the topbar's 足迹/蓝牙/设置 icons (shell-main sits directly below the
-   topbar in the grid, so top-anchoring here already clears it; the right inset
-   matches the topbar's own right padding so the pills land right under the
-   icon row). Any panel open → the rail expands to a full-height side column and
-   .shell-main gains matching right padding so the centered readout/scramble/cube
-   shift left instead of sitting under it. The two panels (打乱来源 always, 解法
-   提示 on 333) stack vertically; if both are open the rail scrolls. */
+/* Desktop: solutions dock on the left of .shell-main. The right grid column
+   belongs to the latest reconstruction or the Times/Chart/Stats panel.
+   Matching left padding keeps the timer and its bottom controls clear of the rail. */
 @media (min-width: 1024px) {
-  .shell-main { transition: padding-right 160ms ease; }
+  .shell-main {
+    --shell-left-inset: 0px;
+    padding-left: var(--shell-left-inset);
+    transition: padding-left 160ms ease;
+  }
+  .shell-main > .shell-stat-rail {
+    left: calc(var(--shell-left-inset) + max(12px, env(safe-area-inset-left)));
+  }
+  .shell-main > .shell-device-actions { left: calc(50% + var(--shell-left-inset) / 2); }
+  /* 两侧都展开时，为中央计时区保留可用宽度。 */
+  .timer-shell.panel-open { --solver-rail-w: clamp(280px, 25vw, 380px); }
 
   .shell-rail {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: flex-start;
     gap: 8px;
     position: absolute;
     top: 12px;
-    right: max(12px, env(safe-area-inset-right));
+    left: max(12px, env(safe-area-inset-left));
     width: auto;
     max-height: 100%;
     z-index: 42; /* above the deskpet (40), like the docked rail */
   }
   /* :not(.fullscreen) so fullscreen (rail hidden via display:none) doesn't keep a
-     phantom right pad — :has() still matches display:none panels otherwise. */
+     phantom left pad — :has() still matches display:none panels otherwise. */
   .timer-shell:not(.fullscreen):has(.shell-rail .solver-panel[data-open='true']) .shell-main {
-    padding-right: var(--solver-rail-w);
+    --shell-left-inset: var(--solver-rail-w);
   }
   .timer-shell:has(.shell-rail .solver-panel[data-open='true']) .shell-rail {
     top: 0;
-    right: 0;
+    left: 0;
     bottom: 0;
     align-items: stretch;
     gap: 0;
     width: var(--solver-rail-w);
-    border-left: 1px solid var(--shell-divider);
+    border-right: 1px solid var(--shell-divider);
     background: var(--background);
     overflow-y: auto;
   }
@@ -590,9 +593,9 @@
     padding: 10px 12px 16px;
   }
 
-  /* Chevron: collapsed ‹ (points into the rail) → expand, open › → collapse. */
-  .shell-rail .solver-panel[data-open='false'] .solver-panel-chevron { transform: rotate(180deg); }
-  .shell-rail .solver-panel[data-open='true']  .solver-panel-chevron { transform: rotate(0deg); }
+  /* 左栏收起时 › 展开，展开时 ‹ 收回左侧。 */
+  .shell-rail .solver-panel[data-open='false'] .solver-panel-chevron { transform: rotate(0deg); }
+  .shell-rail .solver-panel[data-open='true']  .solver-panel-chevron { transform: rotate(180deg); }
 
   /* The rail is a narrow tall column — stack the 3D player ABOVE the solution
      list (StageSolver's default puts them side-by-side, only collapsing under a
@@ -855,6 +858,17 @@
     height: calc(100dvh - var(--page-notice-h, 0px));
     grid-template-columns: 1fr 360px;
   }
+  .timer-shell.recap-open { grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 480px); }
+  .shell-recap-rail { min-width: 0; min-height: 0; display: flex; }
+  .shell-recap-rail > .shell-recap {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border-top: 0;
+  }
+  /* 报告按侧栏宽度排版，不能沿用宽视口的双列回放。完整表格仍可横向滚动。 */
+  .shell-recap-rail .reconstruct-playback.has-side { grid-template-columns: minmax(0, 1fr); }
+  .shell-recap-rail .reconstruct-stage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .shell-topbar { grid-area: topbar; }
   .shell-main { grid-area: main; }
   .shell-panel--rail {

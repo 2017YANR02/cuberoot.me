@@ -304,3 +304,48 @@ body[data-site-scenery] :is(
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
+
+/* Timer's legacy dock selector has higher specificity than a surface role.
+   Adapt the actual shell so controls and the cube share one reading layer. */
+body[data-site-scenery] .timer-shell:has(.shell-rail .solver-panel[data-open='true']) .shell-rail,
+body[data-site-scenery] .solver-sheet {
+  background: var(--glass-surface-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
+body[data-site-scenery] .timer-shell .shell-topbar,
+body[data-site-scenery] .timer-history-columns-head,
+body[data-site-scenery] .case-stats-table th {
+  background: var(--glass-popover-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
+body[data-site-scenery] :is(
+  .tsession-panel,
+  .timer-history-quick-panel,
+  .timer-history-quick-sheet,
+  .timer-history-compare-modal,
+  .timer-solve-detail-modal
+) {
+  background: var(--glass-popover-bg);
+  border-color: var(--glass-border);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
+/* Nested sections use the existing shell's blur, without another opaque mat. */
+body[data-site-scenery] :is(
+  .tsession-trigger,
+  .reconstruct-playback-main,
+  .reconstruct-playback-side,
+  .reconstruct-stage-cell,
+  .timer-reconstruct-metric,
+  .stsv-mr-cell:not(.is-on)
+) {
+  background: var(--glass-surface-bg);
+}
+body[data-site-scenery] .tsession-trigger:hover:not(:disabled) {
+  background: var(--shell-hover);
+}

@@ -10,6 +10,7 @@
 import { ExternalLink } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { T, type Msg } from '@/i18n/tr';
+import { TrainingManualPractice } from '@/components/TrainingStatsPanel';
 
 interface IframePageProps {
   /** iframe 加载的 URL（如 /tools/solver/ 或独立应用 origin） */
@@ -21,6 +22,8 @@ interface IframePageProps {
   fullAppLabel?: Msg;
   /** 路由已有 server metadata 时关闭客户端标题覆盖 */
   syncDocumentTitle?: boolean;
+  /** Optional host-owned practice log; upstream code remains independently maintained. */
+  trainingGroup?: string;
 }
 
 function IframeDocumentTitle({ title }: { title: string }) {
@@ -35,6 +38,7 @@ export default function IframePage({
   fullAppHref,
   fullAppLabel = { en: 'Open full app', zh: '打开完整应用' },
   syncDocumentTitle = true,
+  trainingGroup,
 }: IframePageProps) {
   return (
     <div style={{
@@ -112,6 +116,10 @@ export default function IframePage({
           }
         }}
       />
+      {trainingGroup && <details className="training-iframe-stats">
+        <summary><T zh="训练统计与记录" en="Training statistics and recording" /></summary>
+        <TrainingManualPractice key={trainingGroup} group={trainingGroup} />
+      </details>}
     </div>
   );
 }

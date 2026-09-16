@@ -24,7 +24,8 @@
       "board  controls"
       "board  moves"
       "board  prompt"
-      "board  actions";
+      "board  actions"
+      "stats  stats";
     align-items: start;
     column-gap: 1.75rem;
   }
@@ -36,6 +37,7 @@
   .predict-prompt { grid-area: prompt; }
   .predict-actions { grid-area: actions; }
   .predict-moves { grid-area: moves; }
+  .predict-page > .training-stats { grid-area: stats; }
   /* 左列自己就有一整列的宽度,别再被 46rem 正文宽的那条 62vh 卡住。宽度收在整列上,
      题板 / 复盘条撑满它 —— 计时器是钉在 .predict-stage 右上角的,列比题板宽它就飘出去了。 */
   .predict-boardcol { width: min(100%, 76vh); margin-inline: auto; }

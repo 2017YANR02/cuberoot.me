@@ -26,7 +26,7 @@ export default function KociembaPage() {
             })}</div>
             <h1 className="algo-page-title">Kociemba 二阶段</h1>
             <p className="algo-page-sub">
-              {tr({ zh: '1992 年 Herbert Kociemba 提出的二阶段算法:先把任意状态降到 G1 = ⟨U, D, L², R², F², B²⟩ 子群,再在 G1 内完成归位。两阶段各自跑 IDA*,共用三种坐标 (CO / EO / UD slice) 的剪枝表。平均 22 步、几乎不会超过 25 步,几十毫秒就能给出一条解 — 直到今天,所有打乱生成器和大多数计时器底下跑的都是它的变体。', en: 'The 1992 two-phase algorithm by Herbert Kociemba: drop any state into the subgroup G1 = ⟨U, D, L², R², F², B²⟩ first, then solve inside G1. Each phase runs its own IDA*, sharing three coordinate prune tables (CO / EO / UD-slice). Average 22 moves, almost never above 25, tens of milliseconds per solve — to this day every scramble generator and most timers ship a descendant of this algorithm under the hood.'
+              {tr({ zh: '1992 年 Herbert Kociemba 提出的二阶段算法:先把任意状态降到 G1 = ⟨U, D, L², R², F², B²⟩ 子群,再在 G1 内完成归位。两阶段各自跑 IDA*,使用各自坐标的剪枝表。解的长度与耗时取决于实现、搜索预算和运行环境,并非固定平均 22 步:LK Forge 的 JavaScript min2phase 测试在 25–40 次随机转动后得到平均约 20.5 步 (HTM),平均求解耗时低于 1 毫秒,不含初始化。', en: 'The 1992 two-phase algorithm by Herbert Kociemba: drop any state into the subgroup G1 = ⟨U, D, L², R², F², B²⟩ first, then solve inside G1. Each phase runs IDA* with pruning tables over its own coordinates. Solution length and runtime depend on the implementation, search budget and environment, rather than a fixed average of 22 moves: LK Forge reports about 20.5 moves (HTM) after 25–40 random turns with its JavaScript min2phase build, averaging under 1 ms per solve excluding initialization.'
             })}
             </p>
           </header>
@@ -45,8 +45,8 @@ export default function KociembaPage() {
             </p>
             <p>
               <L
-                zh={<>1992 年,德国的中学数学老师 <strong>Herbert Kociemba</strong> 把四阶段砍成两阶段,后来在他自己写的 GUI 工具 <em>Cube Explorer</em> 里发布。他的关键洞察是:<strong>Thistlethwaite 的 G1 已经足够特殊</strong> — 一旦进入 G1,剩下的归位完全可以在一个相对小的状态空间里直接搜,不需要继续细分。把中间三层合掉,平均步数从 52 降到 22 左右。</>}
-                en={<>In 1992, German maths schoolteacher <strong>Herbert Kociemba</strong> collapsed the four phases into two and published the result in his own GUI tool, <em>Cube Explorer</em>. His key insight: <strong>Thistlethwaite's G1 is already special enough</strong> — once you reach G1, the remaining puzzle lives in a small enough state space to be searched directly, with no need to subdivide further. Removing the middle stages drops the average from 52 to about 22.</>}
+                zh={<>1992 年,德国的中学数学老师 <strong>Herbert Kociemba</strong> 把四阶段砍成两阶段,后来在他自己写的 GUI 工具 <em>Cube Explorer</em> 里发布。他的关键洞察是:<strong>Thistlethwaite 的 G1 已经足够特殊</strong> — 一旦进入 G1,剩下的归位完全可以在一个相对小的状态空间里直接搜,不需要继续细分。减少中间子群能显著缩短解,实际平均步数还取决于实现与搜索预算。</>}
+                en={<>In 1992, German maths schoolteacher <strong>Herbert Kociemba</strong> collapsed the four phases into two and published the result in his own GUI tool, <em>Cube Explorer</em>. His key insight: <strong>Thistlethwaite's G1 is already special enough</strong> — once you reach G1, the remaining puzzle lives in a small enough state space to be searched directly, with no need to subdivide further. Reducing the intermediate subgroups substantially shortens solutions; the actual mean still depends on the implementation and search budget.</>}
               />
             </p>
             <div className="algo-callout">
@@ -94,8 +94,8 @@ export default function KociembaPage() {
                   <td>Kociemba</td>
                   <td>1992</td>
                   <td className="num">2</td>
-                  <td className="num">~22</td>
-                  <td className="num">≤ 25 (typ.)</td>
+                  <td className="num"><L zh="取决于配置" en="Configuration-dependent" /></td>
+                  <td className="num"><L zh="取决于搜索限制" en="Search-dependent" /></td>
                 </tr>
                 <tr>
                   <td>Rokicki (optimal)</td>
@@ -227,8 +227,8 @@ export default function KociembaPage() {
             </p>
             <p>
               <L
-                zh={<>Phase 1 最优解的分布很集中:平均约 <code>10</code> 步,最大 <code>12</code> 步 — 这是 Kociemba 后来证明的。换句话说,<strong>从任何状态出发,最多 12 步就能进 G1</strong>。这个上界是 Kociemba 算法平均 22 步左右的根本来源。</>}
-                en={<>Phase-1 optimum distance distributes very tightly: about <code>10</code> moves on average, with a proven maximum of <code>12</code>. In other words, <strong>any cube can reach G1 in at most 12 moves</strong>. This bound is the fundamental reason Kociemba averages around 22.</>}
+                zh={<>Phase 1 最优解的分布很集中:平均约 <code>10</code> 步,最大 <code>12</code> 步 — 这是 Kociemba 后来证明的。换句话说,<strong>从任何状态出发,最多 12 步就能进 G1</strong>。这是第一阶段的距离上界,不能据此推出完整解的平均长度。</>}
+                en={<>Phase-1 optimum distance distributes very tightly: about <code>10</code> moves on average, with a proven maximum of <code>12</code>. In other words, <strong>any cube can reach G1 in at most 12 moves</strong>. This bounds the phase-1 distance; it does not determine the mean length of a complete solution.</>}
               />
             </p>
           </section>
@@ -415,48 +415,51 @@ function dfs(s, g, bound, path):
           <section className="algo-section">
             <div className="algo-section-head">
               <span className="algo-section-num">11</span>
-              <h2 className="algo-section-title"><L zh="典型实测数字" en="Typical measured numbers" /></h2>
+              <h2 className="algo-section-title"><L zh="min2phase 实测示例" en="A min2phase benchmark" /></h2>
             </div>
+            <p>
+              <L
+                zh={<>LK Forge 于 2026-09-13 发布了一组 JavaScript min2phase 测试:从还原状态应用带种子的随机转动,每种打乱长度测试 200 个状态,共 1,200 个。下表转录其公开数据;HTM 中一次 90° 或 180° 面转都计为一步。</>}
+                en={<>LK Forge published a JavaScript min2phase benchmark on 2026-09-13: seeded random turns applied to the solved cube, with 200 states at each scramble length and 1,200 in total. The table reproduces its published aggregates. In HTM, a 90° or 180° face turn counts as one move.</>}
+              />
+            </p>
             <table className="algo-table">
               <thead>
                 <tr>
-                  <th><L zh="指标" en="Metric" /></th>
-                  <th className="num"><L zh="经典 Kociemba" en="Classic Kociemba" /></th>
-                  <th className="num"><L zh="min2phase" en="min2phase" /></th>
-                  <th className="num"><L zh="最优 (Rokicki)" en="Optimal (Rokicki)" /></th>
+                  <th className="num"><L zh="随机转动次数" en="Random turns" /></th>
+                  <th className="num"><L zh="平均解长 (HTM)" en="Mean length (HTM)" /></th>
+                  <th className="num"><L zh="样本最大解长" en="Sample max length" /></th>
+                  <th className="num"><L zh="平均求解耗时 (ms)" en="Mean solve time (ms)" /></th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td><L zh="平均步数 (HTM)" en="Avg moves (HTM)" /></td>
-                  <td className="num">~22</td>
-                  <td className="num">~20</td>
-                  <td className="num">~18</td>
-                </tr>
-                <tr>
-                  <td><L zh="最大步数" en="Max moves" /></td>
-                  <td className="num">25</td>
-                  <td className="num">≤ 21</td>
-                  <td className="num">20</td>
-                </tr>
-                <tr>
-                  <td><L zh="平均耗时 (单核 PC)" en="Avg time (single-core PC)" /></td>
-                  <td className="num">~20 ms</td>
-                  <td className="num">~1 ms</td>
-                  <td className="num">seconds–minutes</td>
-                </tr>
-                <tr>
-                  <td><L zh="表大小总和" en="Total table size" /></td>
-                  <td className="num">~10 MB</td>
-                  <td className="num">~80 MB (huge)</td>
-                  <td className="num">huge clusters</td>
-                </tr>
+                {[
+                  [10, 12.4, 21, 0.10],
+                  [15, 19.2, 21, 0.29],
+                  [20, 20.4, 21, 0.50],
+                  [25, 20.5, 21, 0.56],
+                  [30, 20.5, 21, 0.47],
+                  [40, 20.5, 21, 0.46],
+                ].map(([depth, mean, max, time]) => (
+                  <tr key={depth}>
+                    <td className="num">{depth}</td>
+                    <td className="num">{mean.toFixed(1)}</td>
+                    <td className="num">{max}</td>
+                    <td className="num">{time.toFixed(2)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
             <p>
               <L
-                zh={<>本站 <code>/scramble/solver</code>、<code>/timer</code> 的随机状态打乱生成、<code>/recon</code> 的标准化都基于二阶段算法的 TS 实现 — 源码在 <code>packages/client/app/[lang]/timer/_lib/scramble/kociemba/</code>(<code>cube.ts</code> 状态、<code>coords.ts</code> 坐标、<code>movetables.ts</code> + <code>prune.ts</code> 预计算、<code>search.ts</code> IDA* 主循环、<code>kociemba.worker.ts</code> Web Worker 入口)。冷启第一次构表约 100ms,之后每条解平均 1–5ms。</>}
-                en={<>This site's <code>/scramble/solver</code>, the random-state scramble in <code>/timer</code>, and the canonicalisation in <code>/recon</code> all run a TS implementation of the two-phase algorithm — source at <code>packages/client/app/[lang]/timer/_lib/scramble/kociemba/</code> (<code>cube.ts</code> for state, <code>coords.ts</code> for coords, <code>movetables.ts</code> + <code>prune.ts</code> for precomputation, <code>search.ts</code> as the IDA* driver, <code>kociemba.worker.ts</code> as the Web-Worker entry). Cold-start table build ≈ 100 ms, then each solve averages 1–5 ms.</>}
+                zh={<>来源:<a href="https://huggingface.co/datasets/LKForge/rubik-cube-solver-benchmark" target="_blank" rel="noopener noreferrer">LK Forge 测试方法与数据集</a>、<a href="https://huggingface.co/datasets/LKForge/rubik-cube-solver-benchmark/blob/main/data/rubik-benchmark.json" target="_blank" rel="noopener noreferrer">汇总 JSON</a>。该构建将解长限制为 21 步,一次性初始化另耗时 78 ms。这里的亚毫秒数字是各组平均值,不代表每次求解都低于 1 ms,也不是本站求解器的测速结果。</>}
+                en={<>Sources: <a href="https://huggingface.co/datasets/LKForge/rubik-cube-solver-benchmark" target="_blank" rel="noopener noreferrer">LK Forge methodology and dataset</a> and <a href="https://huggingface.co/datasets/LKForge/rubik-cube-solver-benchmark/blob/main/data/rubik-benchmark.json" target="_blank" rel="noopener noreferrer">aggregate JSON</a>. This build caps solutions at 21 moves; one-time initialization took a separate 78 ms. The sub-millisecond figures are group means, not a guarantee for every solve or a measurement of this site's solver.</>}
+              />
+            </p>
+            <p>
+              <L
+                zh={<>这组样本在约 20 次随机转动后出现平台,25–40 次时平均约 20.5 步。这是特定采样方法和求解器配置下的观察,不能证明 20 次随机转动已产生均匀随机状态。公开文件只有汇总值,没有逐次记录、测试脚本或完整运行环境,因此这里作为作者报告的测试结果引用。</>}
+                en={<>These samples plateau after roughly 20 random turns, averaging about 20.5 moves at 25–40 turns. This is an observation for a particular sampler and solver configuration, not proof that 20 random turns produce uniformly random states. The public files contain aggregates, without per-solve records, the benchmark script or a complete runtime environment, so these figures are cited as the author's reported results.</>}
               />
             </p>
           </section>
@@ -469,14 +472,14 @@ function dfs(s, g, bound, path):
             </div>
             <p>
               <L
-                zh={<>2010 年 Tomas Rokicki、Herbert Kociemba、Morley Davidson、John Dethridge 用 35 CPU-年 的 Google 算力证明:三阶魔方任何状态都能 ≤ <strong>20</strong> 步还原(HTM),这就是著名的"上帝之数"。Kociemba 算法本身找不到最优解 — 它平均给出 22 步,但很接近;Rokicki 的最优解算法本质上是 Kociemba 二阶段 + <em>cosets</em> 的大规模并行版本,枚举的对称等价类多到要分布式跑。</>}
-                en={<>In 2010 Tomas Rokicki, Herbert Kociemba, Morley Davidson and John Dethridge used about 35 CPU-years of Google compute to prove that any 3×3 state is solvable in ≤ <strong>20</strong> moves (HTM) — the famous "God's number." Kociemba's own algorithm doesn't return optimal solutions; it averages 22, close but not best. Rokicki's optimal solver is essentially Kociemba's two-phase + <em>cosets</em>, parallelised so heavily that enumerating the symmetry classes needs a cluster.</>}
+                zh={<>2010 年 Tomas Rokicki、Herbert Kociemba、Morley Davidson、John Dethridge 证明三阶魔方的上帝之数为 <strong>20 (HTM)</strong>:每个合法状态都存在不超过 20 步的解,并且有些状态恰好需要 20 步。这是所有状态的<strong>最优解长度的最大值</strong>,不是平均值,也不是任意求解器输出的上限。参见 <a href="https://www.cube20.org/" target="_blank" rel="noopener noreferrer">原始证明项目</a>。</>}
+                en={<>In 2010 Tomas Rokicki, Herbert Kociemba, Morley Davidson and John Dethridge proved that God's number for the 3×3 is <strong>20 (HTM)</strong>: every legal state has a solution of at most 20 moves, and some require exactly 20. This is the <strong>maximum optimal solution length</strong> over all states, not an average or a bound on every solver's output. See the <a href="https://www.cube20.org/" target="_blank" rel="noopener noreferrer">original proof project</a>.</>}
               />
             </p>
             <p>
               <L
-                zh={<><strong>实践含义</strong>:对于打乱生成(WCA 比赛要求 ≥ 17 步且足够随机)、计时器分析、recon 标准化这些场景,Kociemba 给的 20–22 步完全够用 — 没人会为了把每条解短一两步而付十倍延迟。最优解只在<em>研究</em>语境(God's number、特定状态最短证明)里才被需要。</>}
-                en={<><strong>Practical implication</strong>: for scramble generation (WCA requires ≥ 17 moves and enough randomness), timer analysis, recon canonicalisation — Kociemba's 20–22 moves is fine. Nobody trades 10× latency to save 1–2 moves. Optimal solving only matters for <em>research</em> contexts (God's number, specific-state shortest proofs).</>}
+                zh={<>二阶段求解器可以找到最优解,但通常<strong>不保证最优</strong>;输出 21 步或平均 20.5 步都不与上帝之数矛盾。随机转动次数增加后解长趋于稳定,也不是上帝之数为 20 的证明或直接推论。比较求解器时,应在相同状态样本、搜索预算和运行环境下分别测量解长与耗时。参见 <a href="https://kociemba.org/math/imptwophase.htm" target="_blank" rel="noopener noreferrer">Kociemba 的算法说明</a>。</>}
+                en={<>A two-phase solver can find optimal solutions but generally <strong>does not guarantee optimality</strong>; a 21-move result or a mean of 20.5 does not contradict God's number. A plateau as random-turn counts increase is neither a proof nor a direct consequence of God's number being 20. Solver comparisons should measure length and runtime on the same states with matched search budgets and environments. See <a href="https://kociemba.org/math/imptwophase.htm" target="_blank" rel="noopener noreferrer">Kociemba's algorithm notes</a>.</>}
               />
             </p>
           </section>
@@ -496,8 +499,8 @@ function dfs(s, g, bound, path):
               </li>
               <li>
                 <L
-                  zh={<><strong>min2phase</strong> — Shuang Chen (cs0x7f) 的 Java 实现。对称压缩 + huge prune (CornUDSliceFlip / CornEdg) + 交错搜索,把平均步数压到 20、平均耗时压到 1ms。csTimer、TNoodle 用的就是它。详见 <Link href="/dev/algorithms/min2phase">/dev/algorithms/min2phase</Link>。</>}
-                  en={<><strong>min2phase</strong> — Shuang Chen (cs0x7f)'s Java implementation. Symmetry compression + huge prune (CornUDSliceFlip / CornEdg) + interleaved search, pushing the average to 20 moves and 1 ms per solve. csTimer and TNoodle ship it. See <Link href="/dev/algorithms/min2phase">/dev/algorithms/min2phase</Link>.</>}
+                  zh={<><strong>min2phase</strong> — Shuang Chen (cs0x7f) 的 Java 实现。通过对称压缩、剪枝表和搜索优化加速求解;步数与耗时取决于版本、配置和运行环境,上面的测试针对其 JavaScript 移植版。csTimer、TNoodle 用的就是它。详见 <Link href="/dev/algorithms/min2phase">/dev/algorithms/min2phase</Link>。</>}
+                  en={<><strong>min2phase</strong> — Shuang Chen (cs0x7f)'s Java implementation. Symmetry reduction, pruning tables and search optimizations accelerate solving; lengths and timings depend on the version, configuration and environment. The benchmark above uses its JavaScript port. csTimer and TNoodle ship it. See <Link href="/dev/algorithms/min2phase">/dev/algorithms/min2phase</Link>.</>}
                 />
               </li>
               <li>

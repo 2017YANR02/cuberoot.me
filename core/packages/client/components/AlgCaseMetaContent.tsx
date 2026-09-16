@@ -33,6 +33,7 @@ import {
   caseViewAlg,
   caseViewSetup,
   displayAlg,
+  displayCaseScramble,
   type CaseViewAngle,
 } from '@/lib/alg_display';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
@@ -324,7 +325,7 @@ export default function AlgCaseMetaContent({
     : storedScramble;
   const scramble = rawScramble && {
     ...rawScramble,
-    text: caseViewSetup(rawScramble.text, viewAngle),
+    text: displayCaseScramble(puzzle, set, caseViewSetup(rawScramble.text, viewAngle)),
   };
 
   const sym = m.sym ?? {};
@@ -573,7 +574,7 @@ export default function AlgCaseMetaContent({
               <span className="alg-meta-optimal-len">
                 {METRIC_LABEL[metric] ?? metric} <strong>{o.len}</strong>
               </span>
-              {o.scramble && <AlgLine label="" alg={caseViewSetup(o.scramble, viewAngle)} />}
+              {o.scramble && <AlgLine label="" alg={displayCaseScramble(puzzle, set, caseViewSetup(o.scramble, viewAngle))} />}
             </div>
           ))}
         </div>
@@ -583,7 +584,7 @@ export default function AlgCaseMetaContent({
         <div className="alg-meta-section">
           <h3>COEP</h3>
           {m.coep.alg && <AlgLine label={tr({ zh: '公式', en: 'Alg' })} alg={displayAlg(caseViewAlg(m.coep.alg, viewAngle))} />}
-          {m.coep.scramble && <AlgLine label={tr({ zh: '打乱', en: 'Scramble' })} alg={caseViewSetup(m.coep.scramble, viewAngle)} />}
+          {m.coep.scramble && <AlgLine label={tr({ zh: '打乱', en: 'Scramble' })} alg={displayCaseScramble(puzzle, set, caseViewSetup(m.coep.scramble, viewAngle))} />}
         </div>
       )}
 

@@ -19,6 +19,7 @@ const CompsTab = lazy(() => import('../CompsTab'));
 
 interface Props {
   profile: WcaPersonProfile;
+  femaleRecordLookup: ReadonlyMap<string, string>;
   results: WcaResultRow[] | null;
   comps: WcaCompetition[] | null;
   liveResults?: WcaResultRow[] | null;
@@ -29,7 +30,7 @@ interface Props {
 
 type Sub = 'event' | 'comp';
 
-export default function ResultsTab({ profile, results, comps, liveResults, liveComps, reconLookup, isZh }: Props) {
+export default function ResultsTab({ profile, results, comps, liveResults, liveComps, reconLookup, isZh, femaleRecordLookup }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   // 「详细成绩」逐把 PR 名次角标的显示开关(默认开;开关 UI 在各视图「全部成绩」标题右侧)。
   const [showAttemptRanks, setShowAttemptRanks] = useState(true);
@@ -105,6 +106,7 @@ export default function ResultsTab({ profile, results, comps, liveResults, liveC
         {sub === 'event' && (
           <ByEventView
             profile={profile}
+            femaleRecordLookup={femaleRecordLookup}
             results={mResults}
             comps={mComps}
             reconLookup={reconLookup}
@@ -115,7 +117,7 @@ export default function ResultsTab({ profile, results, comps, liveResults, liveC
           />
         )}
         {sub === 'comp' && compView === 'results' && (
-          <ByCompList wcaId={profile.person.wca_id} personName={profile.person.name} personCountry={profile.person.country_iso2} results={mResults} comps={mComps} reconLookup={reconLookup} isZh={isZh} showAttemptRanks={showAttemptRanks} />
+          <ByCompList wcaId={profile.person.wca_id} personName={profile.person.name} personCountry={profile.person.country_iso2} results={mResults} comps={mComps} reconLookup={reconLookup} isZh={isZh} showAttemptRanks={showAttemptRanks} femaleRecordLookup={femaleRecordLookup} />
         )}
         {sub === 'comp' && compView === 'list' && (
           <CompsTab profile={profile} results={mResults} comps={mComps} isZh={isZh} />

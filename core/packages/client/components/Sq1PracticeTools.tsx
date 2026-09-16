@@ -1,5 +1,8 @@
 'use client';
 
+import TrainingStatsPanel, { TrainingSelfPractice } from '@/components/TrainingStatsPanel';
+import { useTrainingStats } from '@/hooks/useTrainingStats';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { loadAlg, type AlgCase } from '@cuberoot/shared';
 import { parseAsInteger, parseAsString, useQueryState } from 'nuqs';
@@ -136,15 +139,23 @@ export function Sq1ParityGame() {
   const [sequence, setSequence] = useState<ColorLetter[]>(['O', 'B', 'R']);
   const [streak, setStreak] = useState(0);
   const [correct, setCorrect] = useState<boolean | null>(null);
+  const { record } = useTrainingStats('sq1-parity');
+  const recorded = useRef(false);
+  const startedAt = useRef(0);
+  useEffect(() => { recorded.current = false; startedAt.current = Date.now(); }, [sequence]);
   const explanation = parityExplanation(sequence);
   const answer = useCallback((odd: boolean) => {
     const isCorrect = ODD_ORDERS.has(sequence.join('')) === odd;
+    if (!recorded.current) {
+      recorded.current = true;
+      record(isCorrect, Date.now() - startedAt.current);
+    }
     setCorrect(isCorrect);
     if (isCorrect) {
       setStreak((value) => value + 1);
       setSequence(randomSequence());
     } else setStreak(0);
-  }, [sequence]);
+  }, [sequence, record]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -178,6 +189,7 @@ export function Sq1ParityGame() {
             en: `Answer: ${ODD_ORDERS.has(sequence.join('')) ? 'odd' : 'even'}. Append ${explanation.missing}; it takes ${explanation.swaps} adjacent swaps to return to O-B-R-G.`,
           })}
     </p>
+    <TrainingStatsPanel group="sq1-parity" />
   </>;
 }
 
@@ -428,6 +440,7 @@ export function Sq1ShapeTrainer() {
   </div>;
 
   return <>
+    <TrainingSelfPractice group="sq1-shape-pair" attempt={current} disabled={!current || generating} />
     <div className={styles.trainerToolbar}>
       <button type="button" className={styles.primary} disabled={!eligibleGroups.length || generating} onClick={() => pick()}>{tr({ zh: '新题', en: 'New scramble' })}</button>
       <BoolToggle value={inspection} onChange={setInspection} label={tr({ zh: '15 秒观察', en: '15-second inspection' })} />
@@ -504,5 +517,6 @@ export function Sq1ShapeTrainer() {
         </details>;
       })}
     </div>
+    <TrainingStatsPanel group="sq1-shape-pair" />
   </>;
 }
