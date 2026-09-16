@@ -27,7 +27,7 @@
 - [ ] iOS 按所有者 2026-09-15 指示留待 Mac 上继续；已有开发者会员不等于 APNs 已配置。HarmonyOS NEXT、Windows/macOS 原生通知适配尚未实现，站内消息与邮件不能替代系统推送证据。
 - [ ] 生产迁移、部署和真实收信验收；本轮没有向真实用户发送测试消息。
 
-本地证据：迁移 0238 在 PostgreSQL 13 事务中验证建表、JSONB 与级联删除后回滚；API 通知相关回归、shared build、client/server typecheck 通过；Playwright 使用隔离 API fixture 验证 390px/1280px 设置页、地区选择和保存请求，无页面横向溢出。迁移 0239 在本机 PG13 隔离 schema 中执行真实绑定/撤销路由及队列重试/去重测试；Getui HTTP 使用 mock，未向服务商发送。Mobile 25 tests、app-ui 299 tests、Mobile/API/app-ui/client 类型检查与 Mobile Web build/Android sync 已通过。Android `:app:assembleDebug --max-workers=14` 构建成功；基础 debug 合并 manifest 已确认无电话状态、任务列表、全量应用列表或后台定位权限，明文流量关闭。SDK 编译有上游 D8 stack-map 和原生库 strip 警告；尚未证明 release/R8、16KB 页兼容或真机运行，不代表发布或真机到达；具体配置见 [record-notification-setup.md](record-notification-setup.md)。
+本地证据：迁移 0238 在 PostgreSQL 13 事务中验证建表、JSONB 与级联删除后回滚；API 通知相关回归、shared build、client/server typecheck 通过；Playwright 使用隔离 API fixture 验证 390px/1280px 设置页、地区选择和保存请求，无页面横向溢出。迁移 0239 在本机 PG13 隔离 schema 中执行真实绑定/撤销路由及队列重试/去重测试；Getui HTTP 使用 mock，未向服务商发送。Mobile 25 tests、app-ui 299 tests、Mobile/API/app-ui/client 类型检查与 Mobile Web build/Android sync 已通过。Android `:app:assembleDebug --max-workers=14` 构建成功；基础 debug 合并 manifest 已确认无电话状态、任务列表、全量应用列表或后台定位权限，明文流量关闭。SDK 编译有上游 D8 stack-map 和原生库 strip 警告；2026-09-16 的 CI（ab783cbeab，run 35061047653）已完成 release APK/AAB 构建和临时证书签名验证，权限白名单需同步四项推送权限；尚未证明 R8、16KB 页兼容、真实厂商配置或真机运行，不代表发布或真机到达；具体配置见 [record-notification-setup.md](record-notification-setup.md)。
 
 ### 2026-09-12 计时输入防干扰
 
