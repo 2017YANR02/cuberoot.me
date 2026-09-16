@@ -1,12 +1,14 @@
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import i18n, { normalizeAppLang } from '@/i18n/i18n-client';
+import type { RecordNotificationPreferences } from '@cuberoot/shared/record-notifications';
 
 export type NotificationKind =
   | 'recon_alt' | 'recon_comment' | 'recon_reply'
   | 'forum_thread' | 'forum_reply' | 'forum_report'
   | 'forum_review' | 'forum_approved' | 'forum_rejected'
   | 'comp_reg'
+  | 'wca_record'
   | 'document_change'
   | 'cal_reminder' | 'cal_invite' | 'cal_rsvp'
   | 'teaching_message'
@@ -76,4 +78,23 @@ export async function setEmailNotifyPref(emailNotify: boolean): Promise<void> {
     body: JSON.stringify({ emailNotify }),
   });
   await handleApi<{ ok: boolean }>(r);
+}
+
+export interface RecordNotifySettings {
+  preferences: RecordNotificationPreferences;
+  ownWcaId: string | null;
+  emailReady: boolean;
+  countries: string[];
+}
+
+export async function fetchRecordNotifySettings(): Promise<RecordNotifySettings> {
+  return handleApi<RecordNotifySettings>(await fetch(apiUrl('/v1/notifications/records'), {
+    headers: authHeaders(false), cache: 'no-store',
+  }));
+}
+
+export async function saveRecordNotifySettings(preferences: RecordNotificationPreferences): Promise<void> {
+  await handleApi(await fetch(apiUrl('/v1/notifications/records'), {
+    method: 'PUT', headers: authHeaders(), body: JSON.stringify(preferences),
+  }));
 }

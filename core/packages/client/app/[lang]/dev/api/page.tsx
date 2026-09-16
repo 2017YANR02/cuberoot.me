@@ -694,6 +694,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'notification', m: 'POST', p: '/v1/notifications/read', g: 'login', zh: '标记已读(不传 ids = 全部)', en: 'Mark read (no ids = all)' },
   { d: 'notification', m: 'GET', p: '/v1/notifications/prefs', g: 'login', zh: '邮件通知开关', en: 'Email-notification preference' },
   { d: 'notification', m: 'PUT', p: '/v1/notifications/prefs', g: 'login', zh: '开 / 关邮件通知', en: 'Toggle email notifications' },
+  { d: 'notification', m: 'GET', p: '/v1/notifications/records', g: 'login', zh: '纪录订阅、本人 WCA 身份和邮箱就绪状态', en: 'Record subscriptions, linked WCA identity, and email readiness' },
+  { d: 'notification', m: 'PUT', p: '/v1/notifications/records', g: 'login', zh: '保存纪录订阅筛选', en: 'Save record subscription filters' },
   { d: 'notification', m: 'GET', p: '/v1/notifications/unsubscribe', g: 'public', zh: '邮件退订(签名令牌,免登录,回确认页)', en: 'Unsubscribe via signed token (no login, HTML page)' },
   { d: 'notification', m: 'POST', p: '/v1/notifications/unsubscribe', g: 'public', zh: '一键退订(RFC 8058,邮件客户端调)', en: 'One-click unsubscribe (RFC 8058)' },
 

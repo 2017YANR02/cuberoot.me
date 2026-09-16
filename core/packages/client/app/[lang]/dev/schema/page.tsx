@@ -42,6 +42,9 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'record_notification_preferences', domain: 'account', origin: '0238', purpose: { zh: '账号共享的纪录订阅筛选；本人纪录自动纳入', en: 'Account-wide record subscriptions; own records are always included' } },
+  { name: 'record_notification_snapshots', domain: 'comp', origin: '0238', purpose: { zh: '首次成绩同步静默基线', en: 'Quiet baseline for first competition synchronization' } },
+  { name: 'record_notification_events', domain: 'comp', origin: '0238', purpose: { zh: '跨成绩来源去重的纪录事件及待投递状态', en: 'Source-independent record event deduplication and pending delivery' } },
   { name: 'auth_identity_pending', domain: 'account', origin: '0232', purpose: { zh: '首次身份认证的 15 分钟尝试；票据只存摘要，另存已验证身份资料及必要加密凭据，明确创建或绑定后单次核销，不提前创建账号', en: '15-minute first-time identity attempts; tickets are hashed, with verified identity data and required encrypted credentials stored separately; consumed once after explicit creation or linking without creating an account in advance' } },
   { name: 'platform_organizer_applications', domain: 'platform', origin: '0229', purpose: { zh: '主办方申请、关联组织与平台审批记录', en: 'Organizer applications, linked organizations and platform reviews' } },
   { name: 'platform_competitions', domain: 'platform', origin: '0224', purpose: { zh: '主办组织、报名窗口、抽成及结算配置', en: 'Organizer, registration window, commission and settlement configuration' } },
@@ -768,6 +771,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 236, slug: 'pet_adoptions', desc: { zh: '账号领养关系与服务端养成存档。', en: 'Account-owned adoptions and server-side pet care.' } },
   { n: 235, slug: 'deskpet_catalog', desc: { zh: '桌宠名称、锁定、移除及排序配置，版本检查避免覆盖他人的修改。', en: 'Pet names, locks, removal and ordering with revision checks to prevent lost updates.' } },
   { n: 237, slug: 'nav_topics', desc: { zh: '管理员管理导航话题，同步站点标签。', en: 'Administrator topic management with synchronized site tags.' } },
+  { n: 238, slug: 'record_notifications', desc: { zh: '纪录订阅、首次同步基线及持久化投递去重。', en: 'Record subscriptions, initial snapshot baselines, and persistent delivery deduplication.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
