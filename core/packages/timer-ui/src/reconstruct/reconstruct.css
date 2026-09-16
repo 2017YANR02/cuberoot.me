@@ -623,9 +623,9 @@
   position: sticky; left: 0; z-index: 1;
   text-align: left !important; font-weight: 500;
   color: var(--muted-foreground); font-size: 12px;
-  background: var(--popover);
+  background: transparent;
 }
-.sa-table thead .sa-rowhead { background: var(--popover); }
+.sa-table thead th { background: transparent; }
 
 .sa-row-strong td, .sa-row-strong .sa-rowhead {
   font-weight: 600; color: var(--foreground);

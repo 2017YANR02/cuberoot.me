@@ -54,18 +54,18 @@ background: color-mix(in srgb, var(--accent) 12%, transparent); /* tag 弱化 */
 5. **边框?** → `--border-default` / `--border-strong` / `--input` / `--ring`
 6. **都不是?** → 多半想多了,选 `--muted-foreground` 或 `--border-default`
 
-## 8 页主题策略 (写 CSS 前先确认是哪类)
+## 页面主题策略 (写 CSS 前先确认是哪类)
 
 | 页 | 模式 | 处理 |
 |---|---|---|
 | `/wca/calendar` `/wb` `/memo/colpi` `/alg` `/trainer` (含 `/trainer/3bld/*`) `/battle` `/recon` `/mosaic` `/site` | 双主题 | 走 :root token,自动 light/dark 翻 |
-| `/wca/*` (含 records/wse/t10h) | **dark-locked + 暗配色放行** | globals.css `html:root:not([data-palette-scheme=dark]):has(.xxx-page)` 压 dark;无配色 / 浅色配色保持经典暗,暗色配色(寒潭/乌金)放行整套上色。**仍不要给它们加 light/dark 反盖**;内容里硬码色一律走 token 否则暗配色不跟 |
+| `/wca/*` 统计页面 (含 records/wse/t10h/fun-stats/result-watch/comp/stats) | 双主题 | 继承全站 token，跟随系统明暗、用户选择与配色预览；禁止重新加页面级暗色锁 |
 | `/calc` | **palette-inert light** | `html:root:has(.calc-page)`(0,2,1 outrank 配色块)钉 light + `--background/--foreground`,所有配色都不渗入(art-directed 奶油纸) |
 
 ### 配色主题 × 锁页(2026-06-16)
 - 选配色 → `<html data-palette=x data-palette-scheme=light|dark>`(scheme 由 lib/theme.ts + theme-bootstrap.ts 写,源在 lib/palettes.ts 的 `scheme` 字段)。
 - 暗锁页用 `:not([data-palette-scheme=dark])` 只放行暗配色(暗页暗配色、低风险);浅配色回退经典暗。新增暗配色自动生效,**无需改 globals.css**。
-- 本地 pin token 的组件(如 `.t10h-page`)要 scheme-aware:`html:not([data-palette-scheme=dark]) .xxx { --background:...; }`(别裸 `.xxx{--background}`,否则暗配色被它盖回经典暗)。
+- 仍保留暗锁的本地 pin token 组件要 scheme-aware:`html:not([data-palette-scheme=dark]) .xxx { --background:...; }`(别裸 `.xxx{--background}`,否则暗配色被它盖回经典暗)。
 - 想让某 art-directed 页对所有配色免疫:用 `html:root:has(.xxx-page)`(0,2,1)钉 token,outrank 配色块 `:root[data-palette]`(0,2,0)。
 - canvas 不能吃 `var(--token)`:从容器 `getComputedStyle` 解析 token 值(带 fallback),见 `WrHistoryChart.tsx`。
 
@@ -103,7 +103,7 @@ html[data-theme=dark] {
 - ❌ 手算 `rgba(255,255,255,0.08)` → 用 `color-mix(in srgb, var(--foreground) 8%, transparent)`
 - ❌ `:where(html:not([data-theme=light]))` 包反盖块 → 直接 `html:not([data-theme=light])`,否则 specificity=0 被 :root 压死
 - ❌ 用 oklch / hsl 写新色 → 全栈 hex
-- ❌ 给 dark-locked 页 (wca-stats 家族) 加 light 反盖 → 它们故意锁 dark(暗配色已自动放行,别手加)
+- ❌ 给 WCA 统计页硬锁 dark 或复制局部 light/dark token → 直接继承全站主题；canvas 同时监听系统变化和根主题属性变化，预览过渡结束时也重绘
 - ❌ legacy 老 token (`--bg-primary --text-primary --accent-glow --border-dark`) 用在新代码 → 留给旧页
 
 ## 测试矩阵 (改主题相关 CSS 必跑 4 cell)

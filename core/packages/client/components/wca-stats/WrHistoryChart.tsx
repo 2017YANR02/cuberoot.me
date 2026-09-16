@@ -243,9 +243,30 @@ export default function WrHistoryChart({ rows, header, isZh: _isZh }: Props) {
 
   useEffect(() => {
     render();
-    const onResize = () => { clearTimeout((window as any)._wrChartResize); (window as any)._wrChartResize = window.setTimeout(render, 200); };
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    // Root attributes also cover palette previews with unchanged light/dark mode.
+    let frame = 0;
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; render(); }); };
+    const root = document.documentElement;
+    const observer = new MutationObserver(schedule);
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ['data-theme', 'data-palette', 'data-palette-scheme', 'data-contrast', 'data-appearance-preview'],
+    });
+    // Registered color tokens animate during previews; repaint their final values.
+    const onTransitionEnd = (event: TransitionEvent) => {
+      if ((event.target === root || event.target === document.body) && event.propertyName.startsWith('--')) schedule();
+    };
+    root.addEventListener('transitionend', onTransitionEnd);
+    const media = matchMedia('(prefers-color-scheme: dark)');
+    media.addEventListener('change', schedule);
+    window.addEventListener('resize', schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      root.removeEventListener('transitionend', onTransitionEnd);
+      media.removeEventListener('change', schedule);
+      window.removeEventListener('resize', schedule);
+    };
   }, [render]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {

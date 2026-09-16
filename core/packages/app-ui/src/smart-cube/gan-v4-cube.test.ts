@@ -62,7 +62,9 @@ describe('GanV4CubeConnection', () => {
     await Promise.resolve();
     expect(cipher.decrypt(fake.writes[4])[0]).toBe(0xd1);
     feed(GAN_V4_FIXTURE.history);
-    expect(onMove.mock.calls).toEqual([['R', 1000], ['R', 1250], ['R', 1500], ['R', undefined]]);
+    // No later live timestamp exists: the tail is estimated at the state/history
+    // request time (1500 + 650), rather than stamped when its reply arrives.
+    expect(onMove.mock.calls).toEqual([['R', 1000], ['R', 1250], ['R', 1500], ['R', 2150]]);
     // A late live frame or repeated history must never apply the physical last turn twice.
     feed(GAN_V4_FIXTURE.moves[3]);
     feed(GAN_V4_FIXTURE.history);

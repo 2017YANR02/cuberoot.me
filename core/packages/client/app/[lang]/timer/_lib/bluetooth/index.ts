@@ -28,7 +28,7 @@
  *   Pass `onGyro` to receive raw scalar-first quaternions from the cube's
  *   sensor. `status.hasGyro` says whether the connected brand's protocol
  *   carries orientation at all — currently GAN gen2, GAN gen4, GoCube and
- *   MoYu32; GAN gen3 has no such message, and QiYi's is undocumented.
+ *   MoYu32; QiYi capability is detected when a valid CC 10 sample arrives.
  *   Samples are RAW: calibration, per-brand axis remap and smoothing all
  *   live in `./orientation.ts`.
  *
@@ -42,7 +42,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { CubeDriver, GyroSink } from './driver';
+import type { CubeDriver, CubeMoveMetadata, GyroSink } from './driver';
 // detectBluetoothEnv re-exported above; the connect() helper uses it
 // indirectly via the env-tagged error and the surrounding consumer.
 import { ganV2Driver } from './gan_v2';
@@ -68,7 +68,7 @@ import {
 } from './miniprogram_bridge';
 
 export type { BluetoothCubeStatus, CubeBrand } from './types';
-export type { CubeDriver, CubeDriverStartResult, GyroSink, GyroQuaternion, GyroVelocity } from './driver';
+export type { CubeDriver, CubeMoveMetadata, CubeDriverStartResult, GyroSink, GyroQuaternion, GyroVelocity } from './driver';
 import { isBluefy } from './env';
 export {
   clientEnvironmentLabel,
@@ -427,6 +427,8 @@ export interface BluetoothCubeHandle {
   disconnect(): void;
   /** Reset internal cube state to "solved" (after the user resets the cube physically). */
   resetState(): void;
+  resetDeviceState?: () => Promise<void>;
+  lastMoveMetadata?: CubeMoveMetadata;
   /**
    * Snapshot of the live cube state, for CFOP stage detection or any other
    * read-only inspection. Returns null when no cube is connected.
@@ -485,7 +487,7 @@ interface UseBluetoothCubeOpts {
   /** Called for each move. `timestamp` is a calibrated `performance.now()`-domain
    * estimate of when the cube made the move. The caller is responsible for
    * re-basing it against any "solve start" reference. */
-  onMove?: (move: string, timestamp: number) => void;
+  onMove?: (move: string, timestamp: number, metadata?: CubeMoveMetadata) => void;
   /** Called when state transitions from unsolved → solved. Move-triggered
    * transitions carry that move's calibrated timestamp; state-only reports do not. */
   onSolved?: (timestamp?: number) => void;
@@ -578,8 +580,14 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   // re-renders without us having to re-subscribe the characteristic. We hand
   // drivers this (never `opts.onGyro`) — and only when the consumer actually
   // wants orientation, because passing it is what makes MoYu32 send its 0xAC
-  // enable command during the handshake.
-  const gyroSink = useRef<GyroSink>((q, v) => { onGyroRef.current?.(q, v); }).current;
+  // enable command during the handshake. QiYi is also observed without a UI
+  // listener so valid samples can establish its runtime gyro capability.
+  const gyroSeenRef = useRef(false);
+  const gyroSink = useRef<GyroSink>((q, v) => {
+    gyroSeenRef.current = true;
+    setStatus(current => current.connected && !current.hasGyro ? { ...current, hasGyro: true } : current);
+    onGyroRef.current?.(q, v);
+  }).current;
 
   // Mutable runtime handles. We can't put these in state because they are
   // not serializable and updating them would re-render the consumer.
@@ -592,6 +600,9 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   const driverRef = useRef<CubeDriver | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
   // Driver-provided orientation switch, when the brand has one (MoYu32).
+  const lastMoveMetadataRef = useRef<CubeMoveMetadata | undefined>(undefined);
+  const resetDeviceRef = useRef<(() => Promise<void>) | null>(null);
+  const calibratingRef = useRef(false);
   const setGyroRef = useRef<((enabled: boolean) => Promise<void>) | null>(null);
   const disconnectListenerRef = useRef<((ev: Event) => void) | null>(null);
   const wasSolvedRef = useRef<boolean>(true);
@@ -645,7 +656,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     if (isSolved && !wasSolvedRef.current) {
       wasSolvedRef.current = true;
       setSolved(true);
-      onSolvedRef.current?.(timestamp);
+      if (!calibratingRef.current) onSolvedRef.current?.(timestamp);
     } else if (!isSolved && wasSolvedRef.current) {
       wasSolvedRef.current = false;
       setSolved(false);
@@ -667,7 +678,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     publishSolved(stepSolved(activeStep(), view), timestamp);
   }, [publishSolved]);
 
-  const handleMove = useCallback((move: string, deviceTs?: number) => {
+  const handleMove = useCallback((move: string, deviceTs?: number, metadata?: CubeMoveMetadata) => {
     // First successfully-decoded move proves the MAC: persist it now. We
     // deliberately don't save before a move lands, to avoid caching a wrong
     // MAC the user typed (which would silently poison every reconnect).
@@ -685,9 +696,13 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     // and notifying first hands them the state as it was one move ago — which
     // is exactly one move short at the instant a scramble is completed, so the
     // check fires "doesn't match the scramble" on a cube that does.
+    lastMoveMetadataRef.current = metadata;
     trackerRef.current.applyMove(move);
     setLastMove(move);
-    onMoveRef.current?.(move, ts);
+    if (!calibratingRef.current) {
+      if (metadata) onMoveRef.current?.(move, ts, metadata);
+      else onMoveRef.current?.(move, ts);
+    }
     // Through `publishState`, NOT the tracker's own opinion of "solved": the
     // tracker knows nothing about a training offset or about stopping on a
     // sub-step, so publishing its verdict here would leave every drill unable
@@ -711,6 +726,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
    * stop the timer.
    */
   const handleCubeState = useCallback((facelets: string) => {
+    lastMoveMetadataRef.current = undefined;
     if (!trackerRef.current.adoptFacelets(facelets)) return;
     // GAN reports an encrypted, validated state during its initial handshake.
     // That proves the MAC just as strongly as a decoded move and lets a user
@@ -802,6 +818,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       // Establish the provisional solved baseline before the driver starts.
       // Some drivers publish their authoritative state during start(); doing
       // this afterwards would overwrite a real scrambled reconnect state.
+      gyroSeenRef.current = false;
       trackerRef.current.reset();
       moveClockRef.current.reset();
       hijackRef.current = null;
@@ -814,14 +831,14 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
 
       // Re-run the driver handshake to resume the move stream. Re-arm the
       // gyro sink too, or orientation would silently die after any drop.
-      started = await driver.start(server, (move, deviceTs) => {
-        if (isCurrentSession()) handleMove(move, deviceTs);
+      started = await driver.start(server, (move, deviceTs, metadata) => {
+        if (isCurrentSession()) handleMove(move, deviceTs, metadata);
       }, {
         mac: macRef.current,
         onState: (nextFacelets) => {
           if (isCurrentSession()) handleCubeState(nextFacelets);
         },
-        onGyro: onGyroRef.current
+        onGyro: (onGyroRef.current || driver.brand === 'qiyi')
           ? ((q, v) => { if (isCurrentSession()) gyroSink(q, v); })
           : undefined,
       });
@@ -831,6 +848,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       }
       cleanupRef.current = started.cleanup;
       setGyroRef.current = started.setGyro ?? null;
+      resetDeviceRef.current = started.resetDeviceState ?? null;
 
       setStatus({
         connected: true,
@@ -838,7 +856,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         battery: null,
         deviceName: prettyDeviceName(device),
         deviceId: device.id,
-        hasGyro: driver.hasGyro === true,
+        hasGyro: driver.hasGyro === true || gyroSeenRef.current,
       });
 
       void started.battery().then(b => {
@@ -905,6 +923,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     cleanupRef.current?.();
     cleanupRef.current = null;
     setGyroRef.current = null;
+    resetDeviceRef.current = null;
+    calibratingRef.current = false;
     const dev = deviceRef.current;
     if (dev) {
       if (disconnectListenerRef.current) {
@@ -938,6 +958,27 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     wasSolvedRef.current = true;
     setSolved(true);
     publishState(toFaceletString(trackerRef.current.getFaces()));
+  }, [publishState]);
+
+  const resetDeviceState = useCallback(async () => {
+    const reset = resetDeviceRef.current;
+    if (!reset || !deviceRef.current?.gatt?.connected) throw new Error('Device calibration unavailable');
+    if (calibratingRef.current) throw new Error('Device calibration already in progress');
+    const generation = connectionGenerationRef.current;
+    calibratingRef.current = true;
+    try {
+      await reset();
+      if (connectionGenerationRef.current !== generation) throw new Error('Cube connection changed');
+      moveClockRef.current.reset();
+      // The driver published the confirmed snapshot and may already have
+      // replayed newer turns. Clear training offsets without overwriting them.
+      hijackRef.current = null;
+      hijackStepRef.current = null;
+      setHijacked(false);
+      publishState(toFaceletString(trackerRef.current.getFaces()));
+    } finally {
+      if (connectionGenerationRef.current === generation) calibratingRef.current = false;
+    }
   }, [publishState]);
 
   const hijackTo = useCallback((target: import('../cube/state').CubeFaces | string, step?: CubeStep): boolean => {
@@ -1028,18 +1069,14 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       throw new BluetoothConnectError('discover', `Unrecognised smart cube: ${device.name ?? '(no name)'}`);
     }
 
-    // Resolve a MAC for MAC-keyed drivers: advertisement → saved → device-name
-    // → manual prompt. Persist whatever we settle on. If still unknown the
-    // driver falls back to a zero-MAC and simply won't decode — the UI then
-    // offers a manual-MAC retry.
+    // MY32 requires a user-provided MAC; only reuse a previously validated
+    // cache entry. Other brands retain advertisement/name-based discovery.
     let mac: string | null = null;
     if (driver.needsMac) {
-      mac = normalizeMac(advMac)
+      mac = driver.brand === 'moyu32' ? savedMac(device.name) : normalizeMac(advMac)
         ?? savedMac(device.name)
         ?? parseMacFromName(device.name)
-        // Vendor-documented per-model default derived from the device name
-        // (MoYu32's `WCU_MY32_XXYY` → `CF:30:16:00:XX:YY`). Only brands that
-        // publish such a prefix implement this — it is never an OUI guess.
+        // Brand-specific name fallback, never used for MY32.
         ?? driver.defaultMac?.(device)
         ?? null;
       if (!mac && onNeedMacRef.current) {
@@ -1109,6 +1146,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       // Establish the fallback baseline before start(). Drivers are allowed to
       // synchronously publish their authoritative state during the handshake;
       // resetting afterwards would incorrectly replace it with solved.
+      gyroSeenRef.current = false;
       trackerRef.current.reset();
       moveClockRef.current.reset();
       hijackRef.current = null;
@@ -1119,8 +1157,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       publishState(toFaceletString(trackerRef.current.getFaces()));
       setLastMove(null);
 
-      const started = await driver!.start(server, (move, deviceTs) => {
-        if (isCurrentSession()) handleMove(move, deviceTs);
+      const started = await driver!.start(server, (move, deviceTs, metadata) => {
+        if (isCurrentSession()) handleMove(move, deviceTs, metadata);
       }, {
         mac: macToUse,
         onKeyError: () => { if (isCurrentSession()) handleKeyError(); },
@@ -1128,8 +1166,9 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
           if (isCurrentSession()) handleCubeState(nextFacelets);
         },
         // Only hand the sink over when a consumer asked for orientation —
-        // that's the signal MoYu32 uses to turn its 0xAB stream on.
-        onGyro: onGyroRef.current
+        // that's the signal MoYu32 uses to turn its 0xAB stream on. QiYi
+        // additionally needs this listener for runtime capability detection.
+        onGyro: (onGyroRef.current || driver!.brand === 'qiyi')
           ? ((q, v) => { if (isCurrentSession()) gyroSink(q, v); })
           : undefined,
       });
@@ -1140,13 +1179,14 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       readyForReconnect = true;
       cleanupRef.current = started.cleanup;
       setGyroRef.current = started.setGyro ?? null;
+      resetDeviceRef.current = started.resetDeviceState ?? null;
       setStatus({
         connected: true,
         brand: driver!.brand,
         battery: null,
         deviceName: prettyDeviceName(device),
         deviceId: device.id,
-        hasGyro: driver!.hasGyro === true,
+        hasGyro: driver!.hasGyro === true || gyroSeenRef.current,
       });
       // Read battery in the background; failures fall back to null silently.
       void started.battery().then(b => {
@@ -1218,8 +1258,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         ?? nameDriver.defaultMac?.(device)
         ?? null
       : null;
-    const shouldWatchMac = nameDriver === null
-      || (nameDriver.needsMac === true && reusableMac === null);
+    const shouldWatchMac = nameDriver?.brand !== 'moyu32' && (nameDriver === null
+      || (nameDriver.needsMac === true && reusableMac === null));
     setAdvertisementDiagnostic(shouldWatchMac
       ? {
           phase: 'advertisement',
@@ -1416,6 +1456,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       cleanupRef.current?.();
       cleanupRef.current = null;
       setGyroRef.current = null;
+      resetDeviceRef.current = null;
+      calibratingRef.current = false;
       const dev = deviceRef.current;
       if (dev) {
         if (disconnectListenerRef.current) {
@@ -1454,6 +1496,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   return {
     status,
     advertisementDiagnostic,
+    lastMoveMetadata: lastMoveMetadataRef.current,
     lastMove,
     solved,
     facelets,
@@ -1462,6 +1505,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     preconnectGrantedDevice,
     disconnect,
     resetState,
+    resetDeviceState: status.connected && resetDeviceRef.current ? resetDeviceState : undefined,
     getFaces,
     setGyro,
     hijackTo,
