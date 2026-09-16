@@ -1971,8 +1971,8 @@ export default function CompDetailPage() {
           )
         ) : isPodium ? (
           <>
-            {recordCounts && <div className="comp-record-counts" title={tr({ zh: '全场所有轮次，单次与平均分别按最高纪录级别计数', en: 'All rounds; each single and average counts at its highest record level' })}>
-              {Object.entries(recordCounts).map(([tag, count]) => <span key={tag}><RecordBadge record={tag} /> {count}</span>)}
+            {recordCounts && Object.values(recordCounts).some(count => count > 0) && <div className="comp-record-counts" title={tr({ zh: '全场所有轮次，单次与平均分别按最高纪录级别计数', en: 'All rounds; each single and average counts at its highest record level' })}>
+              {Object.entries(recordCounts).filter(([, count]) => count > 0).map(([tag, count]) => <span key={tag}><RecordBadge record={tag} /> {count}</span>)}
             </div>}
             {recordNews.length > 0 && (
               <section className="comp-record-news" aria-labelledby="comp-record-news-heading">
