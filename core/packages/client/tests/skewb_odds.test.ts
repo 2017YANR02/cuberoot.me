@@ -12,7 +12,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
-  SKEWB_ODDS, SKEWB_PURE_CENTRE_3CYCLE, SKEWB_TOTAL, SKEWB_WCA_MIN_MOVES, SKEWB_WCA_SAMPLE,
+  SKEWB_ODDS, SKEWB_PURE_CENTRE_3CYCLE, SKEWB_TOTAL, SKEWB_WCA_MIN_MOVES,
   computeSkewbOdds,
 } from '@/lib/skewb-odds';
 
@@ -132,19 +132,17 @@ describe('斜转:WCA 真题印证', () => {
   );
   const wca = JSON.parse(readFileSync(distPath, 'utf8')).puzzles.skewb;
 
-  it('副本与 stats JSON 一致,且真题最短就是 7 步', () => {
-    expect(wca.sample_count).toBe(SKEWB_WCA_SAMPLE.sampleCount);
+  it('真题分布总数自洽,且最短就是 7 步', () => {
+    expect(sum(Object.values(wca.dist.counts) as number[])).toBe(wca.sample_count);
     expect(wca.dist.min).toBe(SKEWB_WCA_MIN_MOVES);
-    for (const [d, n] of Object.entries(wca.dist.counts)) {
-      expect(SKEWB_WCA_SAMPLE.counts[Number(d)], `d=${d}`).toBe(n);
-    }
+    expect(Object.keys(wca.dist.counts).map(Number)).toEqual([7, 8, 9, 10, 11]);
   });
 
   it('真题的逐档占比 ≈ 理论条件分布(最大偏差 < 0.1 个百分点)', () => {
     let worst = 0;
     for (let d = SKEWB_WCA_MIN_MOVES; d < odds.histogram.length; d++) {
       const theory = odds.histogram[d] / odds.wcaLegal;
-      const seen = (SKEWB_WCA_SAMPLE.counts[d] ?? 0) / SKEWB_WCA_SAMPLE.sampleCount;
+      const seen = (wca.dist.counts[d] ?? 0) / wca.sample_count;
       worst = Math.max(worst, Math.abs(theory - seen) * 100);
     }
     expect(worst).toBeLessThan(0.1);

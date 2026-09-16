@@ -38,9 +38,9 @@ export default function TrainingStatsPanel({ group, description }: { group: stri
       {stats.total > 0 && <div className="training-stats-actions">
         {confirmGroup === group ? <>
           <span>{tr({ zh: '清空当前分组的统计？', en: 'Clear statistics for this group?' })}</span>
-          <button type="button" onClick={() => { reset(); setConfirmGroup(null); }}>{tr({ zh: '确认清空', en: 'Confirm reset' })}</button>
-          <button type="button" onClick={() => setConfirmGroup(null)}>{tr({ zh: '取消', en: 'Cancel' })}</button>
-        </> : <button type="button" onClick={() => setConfirmGroup(group)}>{tr({ zh: '重置本组', en: 'Reset group' })}</button>}
+          <button className="training-stats-action" type="button" onClick={() => { reset(); setConfirmGroup(null); }}>{tr({ zh: '确认清空', en: 'Confirm reset' })}</button>
+          <button className="training-stats-action" type="button" onClick={() => setConfirmGroup(null)}>{tr({ zh: '取消', en: 'Cancel' })}</button>
+        </> : <button className="training-stats-action" type="button" onClick={() => setConfirmGroup(group)}>{tr({ zh: '重置本组', en: 'Reset group' })}</button>}
       </div>}
     </section>
   );
@@ -50,8 +50,8 @@ export default function TrainingStatsPanel({ group, description }: { group: stri
 export function TrainingSelfCheck({ onResult, disabled }: { onResult: (correct: boolean) => void; disabled?: boolean }) {
   return <div className="training-stats-actions">
     <span>{tr({ zh: '自评本题', en: 'Rate this attempt' })}</span>
-    <button type="button" disabled={disabled} onClick={() => onResult(true)}>{tr({ zh: '做对了', en: 'Got it right' })}</button>
-    <button type="button" disabled={disabled} onClick={() => onResult(false)}>{tr({ zh: '需要再练', en: 'Needs practice' })}</button>
+    <button className="training-stats-action" type="button" disabled={disabled} onClick={() => onResult(true)}>{tr({ zh: '做对了', en: 'Got it right' })}</button>
+    <button className="training-stats-action" type="button" disabled={disabled} onClick={() => onResult(false)}>{tr({ zh: '需要再练', en: 'Needs practice' })}</button>
   </div>;
 }
 
@@ -88,11 +88,11 @@ export function TrainingManualPractice({ group }: { group: string }) {
         startedAt.current = null;
         setActive(false);
       }} />
-      <div className="training-stats-actions"><button type="button" onClick={() => {
+      <div className="training-stats-actions"><button className="training-stats-action" type="button" onClick={() => {
         startedAt.current = null;
         setActive(false);
       }}>{tr({ zh: '取消本次记录', en: 'Cancel this attempt' })}</button></div>
-    </> : <div className="training-stats-actions"><button type="button" onClick={() => {
+    </> : <div className="training-stats-actions"><button className="training-stats-action" type="button" onClick={() => {
       startedAt.current = Date.now();
       setActive(true);
     }}>{tr({ zh: '开始记录一次练习', en: 'Record a practice attempt' })}</button></div>}
