@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGOR / bin 4
-# Population in this bin: 234
+# Population in this bin: 236
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 31993001,B2 D' L2 B2 R2 F2 U' L2 U B' U' B F' R B' L B' F2 L',B,ULA Rubiks 2014 (2014-06-27~28),333 R2 B #2
@@ -19,7 +19,7 @@
 196741001,U L2 F2 D2 U' R2 D2 B2 F L2 R2 U' L U' L F R,O,Prague Open 2015 (2015-10-03~04),333ft Final A E2
 198425001,L' B2 L U' B R2 B' D2 B2 L D2 F2 B' U2 F R2 F R2 B',O,REC Cube Challenge 2015 (2015-10-02~03),333 R2 D #2
 209606001,D2 F2 L' R' D2 L R' U B2 L' R' B D' R2 B' D U2,R,Avenues CUBELELO Open 2015 (2015-10-31~11-01),333ft Final A #2
-5323360001,F' D2 F' U2 B' F2 U R2 U' R F R' B' R' F' D2 U',G,Try Cubing in St Helens 2026 (2026-01-15),333 R1 A #3
+5822715001,B2 F2 R U2 F2 D2 L2 U L' D2 R2 F D' L2 B U R2 B',G,Utah Speedcubing Speedoff 2026 (2026-09-12),333 R2 C #2
 5358708001,F L2 U2 L2 U2 F2 R F2 D2 R' D L2 F R U F D L' U2,G,Tramsheds VIII: Summer Sides 2026 (2026-02-01),333oh R1 C #3
 256325001,B2 R2 D2 B2 D2 B2 R2 U2 B' U2 F' R' F2 R' B' F U' R' D',O,Kaskada Open 2016 (2016-02-20~21),333ft Final A E1
 260889001,F' U2 B U2 F D2 U2 F U2 F D2 L' R' F' D' U2 L2 R2 U' R2,B,Big Apple Cube Clash 2016 (2016-02-27),333oh R1 D #2
@@ -36,7 +36,7 @@
 502785001,B2 D L D' R L2 F2 B2 U2 B' R U2 F2 D2 F L2 B R2 F',R,Ural Spring 2017 (2017-05-06~07),333 R2 B #4
 522736001,R L U F' L2 U2 B U' F' D L B2 R D2 R' F2 U2 R' F2,R,Ho Chi Minh Warm Up 2017 (2017-05-28),333 R1 I #1
 629738001,R2 F2 R' F' U2 L D R' L2 B2 L2 F2 U2 L2 U' F2,O,Cubetcha 2017 (2017-10-28~29),333oh R2 B #3
-653276001,U2 F R2 D2 R2 B L2 F' D2 U' F2 R2 B L' B2 D B' D R2,G,Weston-super-Mare Open 2017 (2017-11-25~26),333 R1 D #5
+5828436001,B' L2 B' U D F' R' F R' U B' U B2 D R2 D2 F2 U2 F2,B,Chau Invierno En Di Tella 2026 (2026-09-12~13),333oh R1 A #1
 660549021,F U2 L2 D2 B' L2 U' B' U L B D2 L B2 U2 L2 F L B,R,GCC Fall 2014 (2014-09-27),333mbf Final A #1
 660707002,U' L2 U F2 R2 B2 D2 L2 F2 U F' L D' F D' L D2 R2 F2 D2 B R,B,Mega Rubik 2015 (2015-05-02~03),333mbf Final A #1
 660804002,L2 F2 L2 R2 D F2 D2 R2 F R2 U2 R2 B' U' R U2 B2 R' F2 L B,O,Italian Championship 2015 (2015-08-29~30),333mbf Final A #1

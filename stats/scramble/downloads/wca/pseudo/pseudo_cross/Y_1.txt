@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / Y / bin 1
-# Population in this bin: 326
+# Population in this bin: 327
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 13167001,B2 R2 F2 U' B2 F2 D' F2 U F2 U' B' U2 B' D2 F D B2 R U,Y,Velbert Easter Open 2014 (2014-04-18~20),333oh Final A E1
@@ -12,7 +12,7 @@
 57276001,B' L2 F L2 B' U2 R2 F' D2 F' R2 U L' D F2 D2 R' F U2 F',Y,Beijing Autumn 2014 (2014-09-13),333oh Final A #2
 67895001,F2 R2 D' F2 R2 D' U2 L2 R D R' D2 R D' L2 D U2 F',Y,DJ Open 2014 (2014-10-18~19),333 R1 G #5
 107660001,F L2 U2 L2 F' D2 U2 B' U2 R B D' U L F2 D2 R' D2 F L' F,Y,Cube Challenge Quark 2015 (2015-02-07),333bf Final D #1
-133611001,F2 R' U2 F2 R D2 L B F2 L2 F' U' F' L B L' D2 F,Y,Danish Big Cube Open 2015 (2015-04-25~26),333oh Final A #1
+5824123001,L D' F U2 B R2 B2 F R2 U2 R2 U F' L' U' B F' D2 U B R,Y,Take Your Time Sydney 2026 (2026-09-12~13),333bf Final A #1
 135977001,D2 B U2 F2 U2 R2 U2 B L R D' U2 L' U2 B R2 D R U',Y,Nanjing Spring 2015 (2015-05-01~02),333 R2 A E2
 136179001,L2 R' D2 L R F2 L' B2 D2 R' F L' B2 D F2 D B2 R' D2,Y,Vancouver Open Spring 2015 (2015-05-02),333oh R1 A E2
 5507593001,L' D F2 U2 F' U' L2 D2 R' U F U R2 F2 D2 R2 B2 R2 B,Y,Bursins Goes Fast 2026 (2026-04-04~05),333bf Final B E1

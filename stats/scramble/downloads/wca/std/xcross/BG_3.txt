@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BG / bin 3
-# Population in this bin: 271
+# Population in this bin: 272
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 17106001,U F2 U' D' F D' L' D L2 F2 D' R2 F2 L2 B2 D2 F2 U2,B,SLS Chorzow 2014 (2014-05-03~04),333oh R1 C #5
@@ -189,7 +189,7 @@
 3676188021,R2 F2 L2 U2 F' R U L2 D2 R2 B L2 B L2 B D2 B' R' F2 L',B,Kyiv Mental Breakdown April 2024 (2024-04-13~14),333mbf Final A #1
 5609843001,F R' D2 L2 D' L2 B2 U' R2 D2 R2 U' B' R2 D R' F' L F2 D',G,Cooldown Uppsala 2026 (2026-05-09),333 R1 A #3
 3705160001,L U' L2 R2 B2 U2 B U2 B L2 F2 L2 F2 L R2 B U R' B2 R',G,Club De Campo Cubing La Pintana 2024 (2024-04-20),333oh R1 A E1
-3762748001,L' D' F2 R B2 R F2 L' D' L D B' F' D2 R2 D' R2,G,Kensington May Saturday 2024 (2024-05-11),333 R1 E #1
+5823278001,L' F L U L' F2 L U' B' D2 F2 B2 R2 F2 U2 R2 U' F2,B,Only Odds in Minnesota 2026 (2026-09-12),333 R1 E #2
 3788756001,R U2 B2 D2 R2 B2 F L2 B R2 D' L F' L D' F2 U2 F' D' L' F,B,Ishøj Introduktion 2024 (2024-05-25~26),333bf R1 B #1
 4546408001,U' D2 B R F2 B' D2 B2 L2 D' U2 R D2 R2 F2 B2 R',B,Southwest Idaho Newcomers 2025 (2025-03-08),333 R1 B #2
 3952718001,L' D2 R2 D2 R' D2 B2 U2 B' L2 D' B2 F' D2 B U' L D2 U',B,Midlands Mix-up 2024 (2024-07-20~21),333 R1 C E2

@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / R / bin 4
-# Population in this bin: 665
+# Population in this bin: 666
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 6058001,U2 R2 D' L2 R2 F2 R2 D F R' D B D' F U' B U B' L' B R2,R,Telesis ICC Blindfold Open 2014 (2014-03-29~30),333bf R1 B #1

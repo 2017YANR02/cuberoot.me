@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / ORWY / bin 3
-# Population in this bin: 231
+# Population in this bin: 232
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5770627001,F' U F' D2 R B D B D R U2 B2 L2 F2 U2 L' U2 L' D2 B R,Y,Super Side Summer Fürth 2026 (2026-07-31~08-02),333bf R2 B E2
@@ -159,7 +159,7 @@
 4092829001,D R' F R2 L2 B U L2 D L U2 D2 R' B2 R' F2 B2 U2 B2,O,Capiz Cube Craze 2024 (2024-09-08),333oh Final B #5
 4099139001,D2 F2 D2 U' L2 B2 U' R D2 F' U2 F' L U B' R2 B2 R,O,Ambato Open 2024 (2024-09-14),333 Final B #5
 4110347001,R' U2 R2 D' R2 B2 D B2 D B D' B' U2 F R' D2 L B,R,West Coast 4: Göteborg 2024 (2024-09-14~15),333 R1 A E1
-4115603034,F2 L2 B2 L F2 R F2 R' D L' D2 R' U R' B D U2 B L',O,Only Cubes in Wellington 2024 (2024-09-14~15),333mbf Final A #1
+5827406001,F2 L2 F U2 L2 B' D2 U2 B' D B' L2 F' U' F2 D' L D' U,W,Liberty Science Center Fall B 2026 (2026-09-13),333 R1 C #3
 4124724001,D' F2 L2 D2 L2 D' B2 R2 D' F D2 R B2 D' R' F2 R2 U,Y,HCMC Cubing Autumn 2024 (2024-09-21~22),333 R1 D #3
 4130899001,L F2 B R2 F B U B L2 B' D2 B2 L2 B' L2 R F L2 B,O,MarsdeNxN 2024 (2024-09-21~22),333 R1 A #1
 5372912001,U F' B2 D B2 R2 D R2 U2 R2 U F U B F2 R' D L' F',O,Lopes Up AZ 2026 (2026-02-08),333 R2 B #5

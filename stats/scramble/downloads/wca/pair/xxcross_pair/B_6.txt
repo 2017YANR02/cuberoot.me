@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / B / bin 6
-# Population in this bin: 307
+# Population in this bin: 308
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 4715653001,B D2 F2 L2 D2 B' F U2 F2 R' U' B' L2 D U' F L B2 U',B,German Open 2025 (2025-05-10~11),333oh Final A E2
@@ -104,7 +104,7 @@
 1193314001,R2 B D2 F2 L2 B R2 F2 D' L' D U' B2 R2 F' L2 B' L D' L',B,Rhein-Neckar Open 2019 (2019-06-22~23),333bf R1 A #2
 1232777001,R2 U2 B2 D2 L' R' U2 R2 U' L' D2 F D' U' L R' D' B' D,B,Cubo Uai Belo Horizonte Open 2019 (2019-07-20~21),333 R2 B #4
 1265931001,L' F' R' B U' B' R2 F B2 U L U' L2 D' B2 U' B2 R2 U',B,Korean Championship 2019 (2019-08-16~18),333 R1 A E1
-1279013001,D' F B2 L2 U' B' D' L' F' L' F D2 R2 D2 B' R2 D2 F' R2 U2,B,Kursk Open 2019 (2019-08-24~25),333 R2 C #5
+5823278001,L' F L U L' F2 L U' B' D2 F2 B2 R2 F2 U2 R2 U' F2,B,Only Odds in Minnesota 2026 (2026-09-12),333 R1 E #2
 1288475001,D F2 L2 F2 L2 U B2 D' F2 U B L B' L F2 L' D2 U' L2,B,Instituto Guatemalteco Americano 2019 (2019-09-07),333oh R1 E #4
 1332433001,B R2 B F2 U2 B R2 F' L B' D2 L D2 U2 F2 U' L2 B' D',B,Santa Fe Primavera 2019 (2019-09-28~29),333oh R1 D #1
 1333412001,F' L2 R2 F' R2 F L2 D L2 R2 U' R' U R2 U' B L' U2,B,Shandong Open 2019 (2019-10-04~05),333 R1 I #1

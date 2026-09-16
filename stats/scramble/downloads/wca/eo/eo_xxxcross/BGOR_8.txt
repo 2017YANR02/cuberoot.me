@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / BGOR / bin 8
-# Population in this bin: 503
+# Population in this bin: 506
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5773062001,R U' R2 F2 R2 U L2 R2 D2 R2 F' R F L F2 L2 F2 U',G,Perth Winter 2026 (2026-08-01~02),333 Final A #3

@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / BGOR / bin 6
-# Population in this bin: 910
+# Population in this bin: 912
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 7768001,R2 B2 R2 U' R2 U' R2 B' R' F D' R2 F2 R' U F' U B' D2,R,German Open 2014 (2014-04-05~06),333bf Final A E2
@@ -85,7 +85,7 @@
 4612999001,R' U' F R2 D' L2 U' R' D2 F' D' F2 U2 R' F2 L' F2 L F2 L' D2 R' B2 R' U' F,B,Southern Indiana Qualifier 2025 (2025-03-29~30),333fm Final A #2
 2781019037,R B2 L' F' D2 F2 U2 R2 D U2 R2 U2 B' F' R D' L U B,G,Side N Blind Narre Warren 2023 (2023-06-03~04),333mbf Final A #2
 377712001,F2 D' L2 F2 L2 B2 U' R2 U' L2 R B' D2 B2 U2 L B' D B,O,Newport Fall 2016 (2016-10-08),333 R1 C #5
-3586849001,F U L2 D' R U2 R' U' B2 L2 B R2 U2 F2 L2 F' R2 F L' D,B,Innova Schools Mosquera 2024 (2024-03-10),333 Final A #1
+5821814001,U2 B' L2 U' B R U2 L' B2 D' L2 U' D' R2 D R2 L2 B' U',O,Jogjakarta Happy Solving 2026 (2026-09-05),333 R1 E E1
 2135366001,D2 B' L D' B2 U' F2 D' L2 R2 U2 R2 B2 U' B R' D L' R2 B U L B,G,Amman Summertime 2022 (2022-08-27~28),333bf Final A E2
 2718803001,R B2 D' L2 U R2 U F2 U2 F2 L2 R B D R F D B,G,Nikita Kovalchuk Memorial 2023 (2023-05-14),333 R1 A #5
 5244334001,R2 U2 L2 F U2 B' R2 D2 B' U' B' U2 B' F' L' F D' R' F',R,Pakje Open in Lent 2025 (2025-12-06),333 R2 B #5

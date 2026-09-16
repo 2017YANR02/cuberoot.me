@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / WY / bin 4
-# Population in this bin: 866
+# Population in this bin: 870
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 4919500001,U2 F' D2 U2 L R D2 L' D2 U2 L U2 F L' F U' L U B L' F2,Y,Penang Be Quiet 2025 (2025-08-09),333bf Final B #3
@@ -30,7 +30,7 @@
 5780865001,D R' F2 U2 B' D2 U2 L2 F' L2 D2 U F' L2 F' D' L2 D,W,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R1 I E2
 121981001,D2 F U2 L2 F R2 B D2 F' R2 B2 R' D' U2 L' D B L2 B D,W,Ceará Open 2015 (2015-03-28~29),333bf Final A E1
 2237615001,B2 L2 B' D2 L2 R2 F' R' B U' L B D2 B2 U L F' R2,Y,Koalafication Melbourne 2022 (2022-10-15~16),333 R2 C #1
-5380588001,R2 U' B D2 B2 D2 L2 U2 R U2 R D' R2 U2 F2 D L',W,The Battle of Concord MA 2026 (2026-02-08),333 R1 A #3
+5823200001,R' B2 U' F2 L' U2 B U B2 L2 D B2 L2 D B2 D' B2 L',W,Brighton Brawl NY 2026 (2026-09-12),333 Final A E1
 3268100001,D' L' U2 B2 U F2 R2 F2 R' F' D' R2 U2 L D2 B L',W,Cubing in Palem 2023 (2023-11-12),333 R1 D E1
 2000339001,R2 U F2 L2 R D2 B2 D2 R' B L2 B' D U' L' B' L' R2,Y,Don't DNF Dublin 2022 (2022-07-02~03),333 R2 A #4
 5606190001,R' U2 R' F' U L F' L2 U' L2 U' B2 U2 L' F2 D',W,Speedcubing Huánuco 2026 (2026-05-03),333oh Final B #1
@@ -130,7 +130,7 @@
 5184450001,B U2 R2 B D' B2 D R2 D R B2 R' B2 L' U2 R F2 L' U',Y,Penang Cube Masters 2025 (2025-11-15~16),333oh Final D E2
 4905950001,L2 B' U2 R2 F L2 D2 F2 L2 D L B' L' R2 F' L' D2 B,Y,CubingUSA Great Lakes Championship 2025 (2025-08-01~03),333oh R1 D E2
 3714126001,D R D' U' R2 D' U' F2 D F R' F D F2 R2 F2 L',Y,Bay Area Speedcubin' 61 - San Jose 2024 (2024-04-27),333 R1 E #3
-5331479001,F' D' F R' B2 L R D2 L' B2 L' B R2 B' L2 D2 B' D2,W,Arizona Championship 2026 (2026-01-17~18),333 R1 D #5
+5829274001,U' B2 D' B2 F2 D U' B D U2 L' B' R' U' R' U' B2 D',Y,L'Open de Meaux 2026 (2026-09-12~13),333 Final B #2
 5413278053,R' U2 R' B' D' F2 R D' U2 F2 L2 U2 F' R2 B2 R2 F' U2 R2 B R,Y,CF Goes Sideways Brzeziny 2026 (2026-02-21~22),333mbf Final A #2
 4419927001,U L2 B' U B' U' L' B2 L U' L2 B2 U' B2 L2 U2 F2 L2,W,North Star Cubing Challenge MN 2025 (2025-01-11~12),333 R1 D #3
 1967186001,B' R B2 U2 B' R' F' L U' F D2 R2 L2 F' L2 F R2 D2 L2,Y,Sunset Cubing Santa Cruz 2022 (2022-06-04~05),333oh R1 A E2

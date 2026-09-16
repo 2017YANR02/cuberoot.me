@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / ORWY / bin 6
-# Population in this bin: 407
+# Population in this bin: 408
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 2910188001,U L U L2 D R2 B2 D2 B2 L' D L' D2 L D' F,R,Israel Championship 2023 (2023-07-17~20),333 R3 A #4
@@ -78,7 +78,7 @@
 633563002,U2 F2 L' R2 U2 R' B2 L2 R D' F' L D2 B2 L2 D U R' D2 L',O,Shri Ram Cubing Challenge 2017 (2017-11-04~05),333mbf Final A #1
 637301001,D2 U2 F' R2 U2 B R2 F2 D R' B' F' L2 D2 R F2 L F2 R B R2,Y,Minsk Championship 2017 (2017-11-04~05),333bf Final A #3
 650945001,F' D2 B' D2 F' L2 U2 F2 L2 R2 U R' U2 B D2 R U2 B' R',R,Craiova Rubik Open 2017 (2017-11-18),333oh R1 B E2
-651317001,D U B2 D' F2 D U' R' D U2 R' B2 R' D' R' D2 L2 B,O,Cariri Open 2017 (2017-11-18~19),333 Final A #2
+5829061001,U' R' U2 R' L2 U D2 B' D' F' D2 F L2 F L2 B' U2 D2 R',Y,Cocha NxN CBBA 2026 (2026-09-12~13),333oh R1 B #4
 4615524001,F2 R F2 U2 F2 R' F2 D' F D2 F' U R2 D2 U2 R2 U',R,Kristiansand Open 2025 (2025-03-29~30),333 R2 A E2
 660660029,U F2 D' R2 U' L2 D' B2 U R' U' R U B' R2 D2 L' U2 L' F',W,Grudziadz Open 2015 (2015-03-07~08),333mbf Final A #1
 660672005,L2 B2 U2 R D2 B2 F2 L2 B2 U2 B R U F L2 U' B L2 R D' B,Y,Pinoy Speed Cubing Olympics 2015 (2015-03-22),333mbf Final A #1

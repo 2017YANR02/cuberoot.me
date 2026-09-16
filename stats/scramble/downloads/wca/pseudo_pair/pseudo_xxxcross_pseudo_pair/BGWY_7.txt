@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / BGWY / bin 7
-# Population in this bin: 497
+# Population in this bin: 499
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 2255124020,B2 D2 L' R2 D2 B2 L' F2 U F2 U' L2 F' L F' R U2 L B2,B,Westfries Open 2022 (2022-10-22~23),333mbf Final A #1
@@ -70,7 +70,7 @@
 627947001,L2 U2 B' D2 R2 D2 U2 F' R2 D' F D R2 B L B2 U2 B R2,G,UK Championship 2017 (2017-10-27~29),333oh R1 A #4
 643611001,R2 D2 F2 D F2 U F2 L2 D' U' F' R' F2 D F D' F L' B' D,W,Veterans Day Open 2017 (2017-11-11),333 R2 B #1
 4324135001,D' L2 F2 U R' D' L' B F2 R F2 R B2 L U2 F D2,W,Barcelona Open 2024 (2024-11-30~12-01),333 R1 E #5
-3877566001,U F R F2 L' F2 R F' U2 D B' R2 D B2 L2 U2 R2,Y,Juhannus 2024 (2024-06-20~23),333oh Final A E2
+5826707001,F2 R L2 U F' D B' D2 R F2 U2 D2 R F2 D' L2 U' B2,W,Benicia Open II 2026 (2026-09-12),333 R2 B #5
 2364461001,F2 R' U2 R2 F' R2 B D2 L2 F2 L2 F' L' B2 D2 F D2 B' D,G,LoCo Cubing PM 2022 (2022-12-10),333 Final A #5
 661308009,B2 R2 U B2 U' L2 U' L2 D2 F L' D' B' U' L2 U' B D' B',W,Iruña Open 2017 (2017-04-08~09),333mbf Final A #1
 2220844001,R' F L2 R2 U B2 L2 B2 R2 U R2 B' D B R F2 U' L2 U',Y,Chippenham Autumn 2022 (2022-10-08~09),333 R3 A #3

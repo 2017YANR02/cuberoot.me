@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / BG / bin 6
-# Population in this bin: 621
+# Population in this bin: 622
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 2376455001,B F L2 U2 B D2 B R' F2 R B R B R' U B2 D R',G,Rubik's WCA Oceanic Championship 2022 (2022-12-15~18),333 R3 A #5
@@ -193,7 +193,7 @@
 5055244001,B' D2 B D2 F2 R2 D2 R2 F' R D' B2 U' L U2 F' D F2 D',B,Vilniaus Ruduo 2025 (2025-09-27~28),333 Final A #4
 1143003035,B D2 B R2 D2 B R2 U2 F' D B' R2 D' R' U L2 R' D F2 L' F',B,Koalafication Melbourne 2019 (2019-05-18~19),333mbf Final A #1
 2737146001,R2 F D2 R2 F' D2 B' F' L U' R' F' R' U' R2 F L' D,B,Salt Lake Utah Summer 2023 (2023-05-19~21),333 R2 A #3
-1180737005,B' D2 B' U2 F D2 B D' R B D' R' B2 D' U B L2 F2 L2 B' L,B,Please Be Quiet Beijing 2019 (2019-06-15),333mbf Final A #2
+5823278001,L' F L U L' F2 L U' B' D2 F2 B2 R2 F2 U2 R2 U' F2,B,Only Odds in Minnesota 2026 (2026-09-12),333 R1 E #2
 1181772021,U' L2 U' B2 F2 U2 L2 U' F U' B' D2 R2 D2 R' D R' D2 U2 L B,G,Please Be Quiet Toronto 2019 (2019-06-16),333mbf Final A #3
 1182270001,U2 B' U2 F R2 B' R2 D2 U' L2 D' U2 R' U2 B' U B2 R U,G,Parla Open 2019 (2019-06-16),333 R1 D #4
 3669904001,B2 R2 U L' U B2 U2 F2 B' L2 F' B2 R2 U2 L' B U L B,B,Mega Chiasso 2024 (2024-04-13~14),333bf Final B E1

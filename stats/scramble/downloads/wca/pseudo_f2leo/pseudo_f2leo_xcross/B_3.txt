@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / B / bin 3
-# Population in this bin: 351
+# Population in this bin: 355
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 242001,L' U2 F2 L D2 U2 R D2 U' B' R2 D R' B D F' D' B2 D',B,Montréal Open 2014 (2014-03-15),333 R1 A #3
@@ -58,7 +58,7 @@
 590021001,F2 L F D' L U2 D' F2 L' B2 R2 L2 D2 F' L2 D2 F' R2 B2,B,Howland High Fall 2017 (2017-09-09),333 Final A #5
 591218001,U2 R' D2 L' R2 U2 R' F2 D' B2 U' R2 U F R' U F R2,B,Speedcubes Johannesburg 2017 (2017-09-10),333 R2 A #5
 3924887026,D B' R L U' B' U' B D' R' B2 D B2 U' F2 U F2 D2 R2 F' L B,B,Gem City Airplane Mode VIII OH 2024 (2024-07-11),333mbf Final B #1
-4214351016,L' B' L2 D L D2 R2 D2 F2 R' B2 U L2 U2 B F' U' F' L' F,B,Valsugana Speedcubing 2024 (2024-10-19~20),333mbf Final A #1
+5823578001,B2 D' R2 D2 L2 D' B2 U F' L' F2 D' R B' R2 B2 D' R' F2 L' F2,B,NZ Cubing in the Capital 2026 (2026-09-13),333bf R1 B #5
 4404133014,F R2 F U' F2 R' F U2 B' R' D B2 L2 U2 F2 U' B2 D B' L2,B,Viens Voir Gesté 2025 (2025-01-04),333mbf Final B #2
 605311001,L2 D2 F2 R2 U' F' U' D F L' D2 L U2 B2 D2 B2 U2 L2 F2,B,Berkeley Summer 2017 (2017-09-16~17),333 R1 C #5
 4801040001,R2 D' F L2 B U' B' U B2 U' F2 D R' L2 B2 R2,B,Metrópolis Bogotá 2025 (2025-06-15),333 R1 C #1

@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / O / bin 6
-# Population in this bin: 574
+# Population in this bin: 575
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 2769423001,U2 B2 D2 B2 F L2 U2 F' R D' B' R2 D2 F2 U' L U F2 D2,O,Singapore AMK CC Cubing A 2023 (2023-06-03),333 R1 F #1
@@ -151,7 +151,7 @@
 2869198030,F2 D2 F2 R2 B' U2 L2 F' L2 F D' R' F D2 B' U2 L2 R' B' D B' L2,O,Maltby Mega Special 2023 (2023-07-09),333mbf Final A #1
 852589001,R2 D L2 B2 D' F2 L2 B2 L2 D B2 R U' R2 F2 L' U' F2 D,O,Constanta Cube Days 2018 (2018-08-11~12),333 R1 C #1
 2956334001,L' B2 R2 D2 L2 R2 B' U' F2 D' R B2 D' F2 L D' L',O,Landvetter Open 2023 (2023-08-05~06),333 R2 A #3
-858917001,B2 L' U2 R D2 L' D2 R D2 L2 F' L2 U2 B' F' L U2 L D,O,Los Ángeles Invierno 2018 (2018-08-18),333oh R1 A E2
+5823855001,R' D L2 U' F2 R2 B2 R2 D2 U F L2 D' B' D U L U,O,Wuhan Crimson Autumn 2026 (2026-09-13),333 R2 A E2
 3623619001,U2 L D2 R' U2 R B2 L' R2 U2 B2 U B2 F2 U2 F' U' R' B2,O,Baztan Open 2024 (2024-03-28~30),333oh Final A #1
 870386001,D2 L' F' R2 L U2 F2 L F U2 F L2 F D2 L2 F2 R2,O,Music City Speedsolving 2018 (2018-08-31~09-01),333 R2 A #2
 5210956001,F' R' F' L' F2 U2 L2 D B R' F2 L B2 L2 F2 B L',O,November Weekend İstanbul 2025 (2025-11-15~16),333oh Final A #4

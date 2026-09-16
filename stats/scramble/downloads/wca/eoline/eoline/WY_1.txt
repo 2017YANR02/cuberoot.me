@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / WY / bin 1
-# Population in this bin: 166
-# Samples listed: 166 (all entries in this bin)
+# Population in this bin: 167
+# Samples listed: 167 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 64339001,F' D2 F R2 B' D B D' B' D' R2 D2 B L2 D L',Y,Hamilton Spring 2014 (2014-10-05),333oh Final A #2
@@ -171,3 +171,4 @@
 5786929001,U2 L D' B D' F L2 U2 L B' D B D2 L2 B L2 B R2 F' L' F,Y,Norwegian Championship 2026 (2026-08-14~16),333bf R2 A #4
 5791617001,B' R2 U2 L2 U L2 B2 D2 B2 U B U B R2 D' U2 R2,Y,Capelle Chaos A 2026 (2026-08-22),333 Final A E2
 5798442001,R2 B' D2 U2 B' L' B2 L2 B2 L2 D F' U R2 D U,W,Mid-Atlantic Speedcubing Championship 2026 (2026-08-14~16),333 Final I #4
+5825332001,R2 F R2 B' U2 F' D2 B2 D R2 F U B2 R2 F' D L2 B2,W,Williamsburg Open Fall 2026 (2026-09-12),333 R1 B #4

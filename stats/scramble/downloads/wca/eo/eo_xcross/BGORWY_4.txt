@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / BGORWY / bin 4
-# Population in this bin: 326
+# Population in this bin: 327
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 3594698001,R2 B L2 B2 R2 U2 F L2 F' R B L2 B2 L2 B L' U2,R,Delta County Cubing 2024 (2024-03-16),333 Final A #2
@@ -121,7 +121,7 @@
 1307755001,D2 L R' D2 B2 L' D2 F2 D2 B R2 D2 F' U2 R2 D2 L B,G,Grecia Open 2019 (2019-09-21),333 Final A E2
 1349793004,F2 L2 U' F2 R2 D' R2 B U' R' F R' F' U' R' B' R B U2 B R',O,345 Cube Day Allen 2019 (2019-10-13),333mbf Final A #3
 1372783001,D2 F2 R2 D2 R F2 U2 R2 U R D' B2 D L U' B2 D2,G,UK Championship 2019 (2019-10-25~27),333 R1 B E1
-4918303001,L B2 F2 R B2 L R2 B2 U2 D' B' R2 D' U2 L2 R2 U' B2 D2,O,Slovak Championship 2025 (2025-08-01~03),333oh Final A E2
+5830167001,D U R2 U' R2 F2 D2 F2 L D L' R D2 F2 D' R B,O,Makati Side Events Open 2026 (2026-09-13),333 R1 B E1
 5276813001,B2 D2 R F2 U2 L2 F2 L B' R2 B L' R' D2 U' L2 R' U,G,Shin Kong Cube Open - Kaohsiung 2025 (2025-12-14),333 R2 C #4
 1462209001,R2 U2 L2 B' U2 B2 F2 U2 L D F2 U' L2 D' U2 F U L2 U' L B,G,New Zealand Nationals 2019 (2019-12-13~15),333bf R1 B E2
 3590416001,B2 R' U2 B2 D2 R2 B2 L2 F' D2 B' D2 L' B U2 L' R,O,Nýliðamót Kubbafélagsins 2024 (2024-03-16),333 R2 C #2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / B / bin 7
-# Population in this bin: 854
+# Population in this bin: 855
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 1528404001,U F2 L2 D F2 D' L2 U' B2 U2 R2 B U' L2 U L B2 D U' R',B,İzmir Open 2020 (2020-01-25~26),333 R2 A #1
@@ -171,7 +171,7 @@
 5779680001,F' L D' B2 D L2 F2 R2 D2 F' L' R2 B2 L2 D2 L2 F2,B,Toowoomba Carnival of Cubing 2026 (2026-08-08~09),333 R2 B #1
 713067001,R2 F' L2 B2 L2 F L2 B' R B' D2 B2 R B' F L F' D,B,Singapore Cube Championship 2018 (2018-02-24~25),333 R1 E E1
 3147158007,D' F U2 B' D' B' D' F' R B' L D2 R2 B D2 R2 D2 R2 B' L,B,Polish Championship 2023 (2023-10-06~08),333mbf Final A #1
-1384104001,D2 U2 F2 L B2 D2 R' D2 F D2 F2 L2 D' B' R B' L2 R2 U,B,Namangan Open 2019 (2019-11-03),333oh Final B #3
+5828150001,B' R2 B U F2 R F' R' F' B D B2 R2 D2 B2 L F2 R B2,B,HiLITE Cube Open 2026 (2026-09-12~13),333 R1 F E1
 5024247001,B L U2 B2 R' F2 L2 B2 R' F2 U R' F' L' F L F R' U2,B,León Open 2025 (2025-09-13~14),333oh R1 B #3
 734711001,B2 R2 F2 D R2 U2 B2 D' F2 U F R U' F U2 R D2 F L',B,Chak-chak cubing in Kazan 2018 (2018-03-24~25),333oh R1 A E2
 3238103001,U' B D R' L2 B U2 D R' F2 R2 F R2 D2 R2 F' R' U2,B,North Carolina Championship 2023 (2023-11-04~05),333oh R1 B E1

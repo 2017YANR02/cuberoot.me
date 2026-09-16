@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / W / bin 5
-# Population in this bin: 729
+# Population in this bin: 731
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 1663999001,R2 U2 B D2 B' R2 F2 D2 R2 F' U' R2 F' D' F2 R2 B2 L',W,GA Cubers Return A 2021 (2021-07-10),333oh Final B E2
@@ -84,7 +84,7 @@
 401946001,R' D2 R F2 L' D2 R' D' R U' R' F U' R B' U R F2,W,Maharashtra Championship 2016 (2016-11-13),333 R1 O E1
 403320001,U2 F D2 B D2 U2 L2 R D F U2 F' R' D' R' D' U',W,Real Plaza 2016 (2016-11-26),333oh Final A E1
 408447001,R U R D' F R' F U F2 L B2 U' L2 D2 B2 U' L2 U L2 F2,W,PoliMi Open 2016 (2016-12-03~04),333oh Final A E2
-1026588001,B2 U' R2 F2 U' R2 F D' U2 B2 U F2 L2 D F D2 F',W,KSF Ust-Kamenogorsk City 2019 (2019-02-16~17),333oh R1 B E1
+5827059001,U' R2 U2 R2 U2 F' R2 B2 R D L2 R U L' D' F D2 L,W,Alabama Championship 2026 (2026-09-12~13),333 Final B #4
 5677614050,R' B' R2 F' R2 D' B' R2 F' B L' B D2 B D2 F' R2 F' R2 B' L,W,New York Multimate PBQ V 2026 (2026-05-29~31),333mbf Final A #2
 3516176001,R' U' F U B2 D' L2 U' F2 U2 F2 L' U' L' D B' U' B' F2 U2 R2 U2 R' U' F,W,Love Is Blind Lima 2024 (2024-02-18),333fm Final A #1
 5110082001,L' U2 D B2 R B F2 U2 F2 B2 L' D2 R' D2 R2 B2 D2,W,Ensuès Open 2025 (2025-10-18~19),333 R2 C #2

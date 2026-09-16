@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / BGWY / bin 6
-# Population in this bin: 888
+# Population in this bin: 889
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 1498719001,F2 D' F' U L U' F' R U2 B' L2 D2 F2 B2 U B2 U' D' B2 L2,B,GLS Gdynia 2020 (2020-01-04~05),333 R1 F E1

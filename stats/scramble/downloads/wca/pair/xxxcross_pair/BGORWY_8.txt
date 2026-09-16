@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGORWY / bin 8
-# Population in this bin: 703
+# Population in this bin: 705
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 2661804001,F2 D2 L F2 R' D2 L F2 D' U' L' U' L' B2 D L2 F' R2,G,Country Roads Huntington 2023 (2023-04-22),333 Final A #1
@@ -129,7 +129,7 @@
 2068497001,R B2 L2 U2 F2 R B2 L2 D2 R2 U' L B F2 L2 D2 U' R' U' B2,Y,AZCubing Summer 2022 (2022-07-30),333 R2 A #1
 2655130001,U2 L2 B' D2 B2 D2 L2 F' R2 U' F R U' L D2 F' D R2 B,O,Swallow Spring 2023 (2023-04-22),333 R1 B #5
 1328148001,F' B' U2 F L' B' L' U L' F2 B2 R2 U' F2 D F2 U' F2,B,Hyderabad Cube Open 2019 (2019-09-28~29),333 R2 A E2
-3265016001,F' B2 D' L2 F2 L2 F R' D' L2 R' B2 L2 U F D',W,Scarborough Fall A 2023 (2023-11-18),333 R1 A #4
+5823754001,L' D L2 U2 F2 L2 F' R2 F2 U2 B2 U' R B' R' F' R2,O,Wuhan Crimson Autumn 2026 (2026-09-13),333 R2 D #3
 5820336039,L' U' B D F2 L2 F2 R2 U' L2 R2 F U F' D B F U B R,G,New York Big and Quiet Championship 2026 (2026-09-05~07),333mbf Final B #1
 4057629001,L' U' B2 U2 L' B' D' L' D L D2 B2 L2 U2 D2 F' U2 L2,Y,Welcome to Bishkek 2024 (2024-08-23~25),333oh R1 A #5
 5478522001,B2 U B2 L2 U2 L2 B' L2 U2 F2 U' B' R B L F L2 U',R,Potsdam Puzzling 2026 (2026-03-28),333 R1 B #3

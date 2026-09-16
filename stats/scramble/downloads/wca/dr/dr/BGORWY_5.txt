@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / BGORWY / bin 5
-# Population in this bin: 156
-# Samples listed: 156 (all entries in this bin)
+# Population in this bin: 157
+# Samples listed: 157 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 21296001,R2 U' B2 D R2 U L2 D2 B' F' D' U F' U' F2 U2,W,HEM MariCubik Open 2014 (2014-05-18),333 R1 C #3
@@ -161,3 +161,4 @@
 5807871001,R' B2 R B2 D2 L2 D2 R B2 R B2 R2 B D2 U2 B2 L R',O,Tartan Twist PA 2026 (2026-08-29),333 R1 D #3
 5811384001,D' B' U B2 L2 R2 F2 R2 U' F2 U' F L D R2 B F',W,GAN Twist & Turn in Pasig 2026 (2026-08-30),333 R2 A #2
 5816550001,U2 F2 D2 F B2 R D2 B2 L' B' R' F2 B2 R2 B2 R2,O,Bilbao Open 2026 (2026-09-05~06),333oh R1 B #4
+5821953001,L F2 L' R2 B2 L' D2 U2 F2 R' B2 F2 D L F2 U L,O,AXÉzinho 3x3 - Lauro 2026 (2026-09-05),333 R1 F #1

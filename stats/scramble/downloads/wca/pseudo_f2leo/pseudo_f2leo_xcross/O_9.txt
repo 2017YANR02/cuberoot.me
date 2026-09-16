@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / O / bin 9
-# Population in this bin: 330
+# Population in this bin: 333
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5035001,F2 D2 F2 U2 L U2 B2 R' U2 L' F U' B' L' D' L2 F' R2 U' R',O,Tula Open 2014 (2014-03-28~30),333 Final A #1
@@ -28,7 +28,7 @@
 268307001,B2 L' B2 U2 L' D2 L2 R D2 R F' U2 R' B' D' U L F' L2 B U,O,Cubing Classic 2016 (2016-03-19~20),333oh R1 A #2
 4251769001,D F B U F2 L' D' R2 U2 B2 L F2 L B2 D2 R2 D' L2,O,Canadian Prairie Championship 2024 (2024-11-02~03),333oh Final C #1
 312948001,R D R' U L' U2 F D L2 U' D2 B' L2 D2 F U2 R2 F2 R2 D2 B',O,Singapore Cubewerkz Open 2016 (2016-06-18),333oh Final A E2
-4284927001,D' F2 U' D2 R F B U D2 R U2 R2 B2 L' B2 R' B2 R F' B2 L B',O,Cube4fun Bełżyce Autumn 2024 (2024-11-16~17),333bf R1 A #1
+5828518001,F' L B U' R' B D' L2 F R2 F R2 B' L2 U' F' R' F',O,Chau Invierno En Di Tella 2026 (2026-09-12~13),333oh R1 A #3
 5355068001,B L2 D2 L2 D2 F D2 B2 L2 D B L B' U R' D U' L' U' F D,O,BrizZon Side Open 2026 (2026-01-31~02-01),333bf R1 D #1
 3844497001,B' D' F2 U F L2 B D' R' F U2 L2 B2 L2 F' D2 B U2 B L',O,Sri Lankan Nationals 2024 (2024-06-07~09),333oh R1 A #1
 352986001,F2 L' U2 B2 F2 R' F2 R F2 U2 L2 B' U' R' F D' B L D2 U2,O,Mango Rubiks 2016 (2016-08-27),333 R2 A #3

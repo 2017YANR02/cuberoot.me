@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / Y / bin 5
-# Population in this bin: 713
+# Population in this bin: 717
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5047582001,U R2 F D2 B U2 L' R B' L2 B' L' R' B' F2 R',Y,Ephrata Fall 2025 (2025-09-27),333 R2 B E2
@@ -52,7 +52,7 @@
 235625001,D L2 D' B2 L2 D' F2 U' R2 B' D2 U R2 F' R2 D' F' U2,Y,Brain Studio Winter Open 2015 (2015-12-25~27),333 R2 F E1
 1915210001,U R' F2 D2 R2 U2 R2 B D2 B' R' D L2 D2 L2 B' F2 U B' L,Y,GamMa Spring 2022 (2022-05-14~15),333bf R1 A #3
 4093356001,U' R U2 F2 L2 F2 U2 F R B2 D F2 L B2 D' U B,Y,Aliso Niguel Summer 2024 (2024-09-08),333 R2 B #5
-4828902071,D2 F' B2 L2 U' L2 D B2 U' B2 R2 L' F' L' U F L' U2 B' L B2,Y,Worlds Prep in Palisades 2025 (2025-06-20~22),333mbf Final B #1
+5825883001,U' L U2 F2 R D2 F' B2 D2 F2 D2 R' U2 D2 B R' B2,Y,Arkansas Cube Day 2026 (2026-09-12),333 Final A #3
 3676507001,D2 L2 U' B2 U2 B2 R D2 L F2 R B' R2 D' R D U' B',Y,Thornhill Spring 2024 (2024-04-20),333 R2 A #1
 4770850001,R B' U2 R2 U F B2 R' D B2 U R2 D B2 D2 L2 D' B L',Y,Cube More in Taylor 2025 (2025-06-01),333oh Final A E2
 259718001,L2 D2 R F2 D2 R' U2 L' U2 F2 R B D2 B D' L' U F2 U L2,Y,MathSoc Open 2016 (2016-02-27~28),333oh R2 D #3
@@ -175,7 +175,7 @@
 866715001,B' U2 B2 L2 D2 B2 U2 F2 L' B' U' L F D2 B L' R' F' L,Y,Canada's Best in the West 2018 (2018-08-24~26),333 R2 E #2
 869021001,U' L U B L' F L D' F L' B' R' L D2 F2 L' U2 L' B2 R,Y,Croatian Open 2018 (2018-09-01~02),333 R1 C E2
 876707001,F2 R2 F2 U' B2 U' L2 R2 D L2 U B D2 B' R D2 R2 U F' R,Y,Italian Open 2018 (2018-09-08~09),333 R1 D E1
-2331359001,B D R L F' B L' B2 D B2 R L F2 D2 L2 F2 R F2 L,Y,Budapest ReOpen 2022 (2022-11-26~27),333oh R1 B #3
+5830167001,D U R2 U' R2 F2 D2 F2 L D L' R D2 F2 D' R B,Y,Makati Side Events Open 2026 (2026-09-13),333 R1 B E1
 3285137010,U B R2 B L D' R' U' R L2 D' B U2 L2 F R2 D2 F' L' F,Y,Mini-sota 2023 (2023-11-25),333mbf Final A #1
 901889001,F2 R D R' D' F2 U R2 F L2 D B2 U2 D' R2 L2 B2 L2 U',Y,Dutch Open 2018 (2018-10-13~14),333 R1 B #1
 2260299001,U F' L F' D2 L2 U B2 R2 D F2 R2 L F2 R' B D2 R' F2,Y,Prenacionales Huila Crece 2022 (2022-10-22~23),333 R1 C #1

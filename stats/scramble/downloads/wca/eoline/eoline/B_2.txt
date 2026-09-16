@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / B / bin 2
-# Population in this bin: 931
+# Population in this bin: 933
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 4298941001,U B' D2 U2 R2 F' L2 B2 R2 U' B2 R2 F2 U2 F L R' U2,B,Sydney Spring Saturday 2024 (2024-11-16),333oh R1 B #5
@@ -22,7 +22,7 @@
 1247180043,U' F2 R2 U L2 U R2 U' R U2 B' F2 L' F2 R2 B' D2 B2 U' L2 U,B,Canadian Championship 2019 (2019-07-26~28),333mbf Final A #1
 4851460036,L' B2 D L F2 U' L2 U' L2 B2 L2 R' U2 B' F' U' L R2 U' L' F',B,Rubik's WCA World Championship 2025 (2025-07-03~06),333mbf Final A E1
 89138001,U2 R2 F D2 B U2 B2 F' U2 F R B2 D U' R2 U' L2 B2 U' L B,B,Euskadi Open 2014 (2014-12-06~07),333bf Final A #2
-728804001,F L2 R2 B U2 B2 D2 F D2 F D2 R B L' R F' D R' U2,B,Marikina City Open 2018 (2018-03-18),333 R1 B E1
+5822637003,U2 B2 F U L2 R2 U' L2 U2 R2 U R' D' L D' L' R B R' B R,B,Aveiro Blind Qualifier 2026 (2026-09-12),333mbf Final A #1
 2795397025,B' R B U' F' R2 U' B2 D' F2 B U2 F' U2 D2 L2 B R U L2 U,B,Please Be Solved Pickering Evening 2023 (2023-06-17),333mbf Final A #1
 1087698028,R2 D2 L F2 D2 L B2 L2 U2 F L U2 L2 B' D2 B2 F2 L B' L',B,Weihai Open 2019 (2019-04-06~07),333mbf Final A #1
 4799697001,R D L2 B' U2 F D2 U2 F2 R2 F R' B D2 F2 U L' B2,B,Damásio Open 2025 (2025-06-14~15),333 R1 B E1
@@ -147,7 +147,7 @@
 4351441002,R2 B F D2 L2 F D' B L U' L2 D' F L U2 B' U' L B2,B,Taiwan Championship 2024 (2024-12-06~08),333mbf Final A #1
 3288174001,U F2 U2 R2 B U' F L2 B' U' F' B2 U2 R2 F2 R' L' D2,B,Johor Mini 2023 (2023-11-25~26),333oh R1 C E1
 3082225001,U2 F' L2 D F2 D U' B2 L2 F' U2 B' U B2 U2 F' R F2,B,NCR Favourites 2023 (2023-09-17),333oh Final A #4
-591194001,B' U2 R2 F' L2 R2 U2 B' D2 B2 R2 U B R2 F2 D2 L2 F' R B,B,Speedcubes Johannesburg 2017 (2017-09-10),333 R1 A #2
+5830670001,U2 F D2 F2 U2 R' U2 L' D2 F2 L2 B L' B2 L2 D2 F L2,B,Ohio Championship 2026 (2026-09-11~13),333oh R1 C #3
 3332793001,F' R' D2 B' U2 L' D2 F2 L' U2 R2 F' D2 L D' U,B,Astana Open 2023 (2023-12-09~10),333 R2 B #3
 983556001,U2 R2 U2 L U2 L D2 B2 D L B2 R' U2 F2 L2 U',B,Boston University Winter 2019 (2019-01-12~13),333 R1 C E2
 2399560001,D F' B2 D' F2 R2 D B2 D' R2 U' B2 R2 F' U' F' U2 L F,B,Mumbai Winter Open 2022 (2022-12-28),333 R1 D #1

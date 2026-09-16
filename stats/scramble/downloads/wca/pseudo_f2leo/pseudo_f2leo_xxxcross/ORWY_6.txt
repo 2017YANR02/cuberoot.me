@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / ORWY / bin 6
-# Population in this bin: 251
+# Population in this bin: 252
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5024080001,D B U' D2 F' B' R F R' F R' F2 U2 D F2 R2 D,Y,León Open 2025 (2025-09-13~14),333 R1 A E2
@@ -68,7 +68,7 @@
 985467001,L2 B2 D F2 U F2 U B2 U' L' U2 R' F U2 B' U2 R2 D2 F,W,Hendersonville Winter 2019 (2019-01-19~20),333oh Final A E1
 986381001,D' R F2 L' B' L D B2 D' B R' U2 B2 R F2 L' D2 F2,Y,Ha Noi Cube Day 2019 (2019-01-20),333 Final A E1
 1001431001,B2 L' F2 L R B2 D2 B' D2 B L' D2 R U F2 R' B R',O,Just Cube Open 2019 (2019-02-02~03),333 R2 B #4
-1035983001,R D' R2 D' L2 B' U2 R' B' R U B2 L U2 F2 R F2 L',O,Cult A Way Cube Open 2019 (2019-03-03),333 Final A #1
+5823553001,R2 B2 D B2 D R2 D2 U' R2 D2 R' F U B' D B' U F2 U',W,NZ Cubing in the Capital 2026 (2026-09-13),333 Final B #4
 1050870001,F2 B U L U2 B2 U2 D2 B D' F R2 U D' R2 F2 U' B2 D,O,Blue Water Winter 2019 (2019-03-09),333 R1 A #5
 1065348001,U R2 F' D B R' F B2 D B2 L U' B2 L2 U2 R2 U' D2,R,Speedsolving Huancayo 2019 (2019-03-24),333oh R1 A #3
 1097958001,U2 R2 B U2 D' R' U R L2 B D' B2 L2 D2 F' B2 R2 F',Y,Swisscubing Cup II 2019 (2019-04-13~14),333oh Final A #2

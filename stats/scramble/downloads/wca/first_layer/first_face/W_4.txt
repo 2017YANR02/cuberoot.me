@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / W / bin 4
-# Population in this bin: 673
+# Population in this bin: 676
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 4286619001,U' B2 R B' U' D' F' L' D U2 B' L2 D2 F U2 B U2 L,W,Tír Chonaill Cubing 2024 (2024-11-16~17),333 R2 B #2
@@ -72,7 +72,7 @@
 3525316001,U2 R' D F2 D' B2 L2 D R2 U L2 D' R D' L2 R2 F' R' D,W,Eastwood Cubing 2024 (2024-02-17~18),333 R1 D E1
 321281001,L2 D2 F2 D' R2 D B2 U B D' B U2 R2 U L R' U F2 D2,W,GLS Cup III 2016 (2016-06-25),333 R2 B #5
 332388001,F' U' D2 L2 B' U' L' U R2 L B' L2 D2 L2 F2 D2 B L2 F,W,National Cubing Region Open 2016 (2016-07-23~24),333 R2 E #1
-333528001,D' F' L' U2 B' R' B2 D2 F' B2 U' B' U2 R2 L2 B' L2 B' R2,W,Brasileiro 2016 (2016-07-22~24),333 R2 A E2
+5829903001,F D' F R B' U' L' B' L F' U2 L2 F2 R2 B L2 B' U2 D2 L2,W,Caminos de Guanajuato - Guanajuato 2026 (2026-09-12),333 R2 A #2
 4950447001,L2 F2 D R2 U' R D2 R2 F L' B2 D L2 D' R2 U2 L2 U L,W,Virginia Championship 2025 (2025-08-16~17),333 R1 E #1
 1168081001,R2 F2 U2 B2 U' F2 L2 F2 L2 U2 L2 B' U' R D2 R U R2 B2 U',W,CubingUSA Southern Championship 2019 (2019-06-01~02),333 R1 A E2
 347907001,D F2 R2 D' R2 F' D R U2 B' R U' D B2 D L2 U D,W,II ETEC 2016 (2016-08-13),333 Final G E1
@@ -104,7 +104,7 @@
 541095001,U' B' R2 D' F D2 F' R' D2 R L2 B2 D2 F2 U R2 U R2 B2,W,Kubus Bali Reborn 2017 (2017-07-02),333oh Final B #4
 541900001,D F2 L2 D2 B2 D R2 D L' B2 L' F R F U2 L' B' L2 F,W,German Big Cube Open 2017 (2017-07-01~02),333 Final A #2
 1907526002,U L' R2 F2 R2 U L2 D' B2 U2 R B U B2 L2 U2 L' F2 L' B' L',W,Fada Open 2022 (2022-05-07~08),333mbf Final A #1
-2360186001,R' F' D' R' B R' F L D' F2 R2 F2 B2 R2 D2 R' F2 U2 B2,W,Beskidy Side Days 2022 (2022-12-10~11),333oh R1 A #2
+5822650008,L2 U' R2 U F L U' D R2 F B2 L F2 L' U2 D2 L F2 R' B' L,W,Shhherborn Summer 2026 (2026-09-12),333mbf Final A #1
 547273001,D2 F2 D2 R' D2 R F2 L' U B U' L2 U' F2 R D2 F2 R',W,CubingUSA Nationals 2017 (2017-07-07~09),333oh R1 P E1
 4124751001,L' D' R2 D' F2 L2 F2 D' L2 R B2 U2 L' F L2 U L2 D2 U',W,HCMC Cubing Autumn 2024 (2024-09-21~22),333 R1 H #2
 5307560005,D F L B2 R' L' D' R' D2 L D2 F2 R2 U2 B2 U' B U' L' B' L',W,Multi Mayhem VA 2026 (2026-01-02~04),333mbf Final A #2

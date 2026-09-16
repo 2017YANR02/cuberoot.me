@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / R / bin 0
-# Population in this bin: 826
+# Population in this bin: 829
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5691925006,L D2 L' U2 L D2 L2 B2 U B D U L D2 R' B D B' L B,R,Swisscubing Cup Mental Breakdown I 2026 (2026-06-06~07),333mbf Final B #1
@@ -149,7 +149,7 @@
 644416001,D F2 L2 D B2 U2 F2 D' L2 U L B F U L2 F U2 R D2,R,PSKubing 2017 (2017-11-18~19),333oh R1 B #3
 5598381001,B2 R2 F B' R' L' B R' B2 R2 U2 L2 B' U2 R2 U' F,R,Passo Fundo Cubing 2026 (2026-05-02~03),333oh Final A #1
 4937847047,F' R2 U' L2 U L2 R2 B2 D B L F2 L D2 B' L' R D' L' B,R,BrizZon Side Open IV 2025 (2025-08-15~17),333mbf Final B #1
-1915392001,F' D2 F D' L2 U B L2 U B' D2 F2 B2 L' B2 D2 R' B2,R,Starkvegas Spring 2022 (2022-05-14),333 R1 A #2
+5822734001,R' U2 F2 U L B' L' B' L2 F2 L B2 R U2 R2 L2 F' R2,R,Utah Speedcubing Speedoff 2026 (2026-09-12),333 R1 C #3
 3470255001,R' D2 L2 F2 L' F2 D2 R F2 U' L2 F D' L' B2 U L' B' D,R,Bolivia Cubing Tour - SCZ 2024 (2024-01-27~28),333 R1 C #1
 4054707001,R' F L2 B U2 F2 U R2 B2 F2 U2 L2 F U' B' R' B2 D,R,DFW Back to School 2024 (2024-08-25),333 R2 B #2
 660634019,U F2 R F U' R' B2 D2 R' U' R2 D2 L2 U F2 D' R2 F2,R,Pré-Mundial 2015 (2015-01-23~25),333mbf Final A #1

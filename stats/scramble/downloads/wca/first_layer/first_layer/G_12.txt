@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / G / bin 12
-# Population in this bin: 956
+# Population in this bin: 959
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 874682001,B2 L' B2 L B2 U2 L' B2 F2 L F D' B' U R B2 U R2 U' L' D2 L2,G,Happy Cubing Honduras 2018 (2018-09-08),333bf Final A #2

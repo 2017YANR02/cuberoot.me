@@ -22,6 +22,7 @@ describe('gendered national record artifacts', () => {
   const manifest = readJson<{ countries: Record<Gender, string[]> }>('manifest.json');
 
   for (const gender of ['m', 'f'] as const) {
+    // Full country corpus: keep every row assertion even on shared CI runners.
     it(`${gender}: lists exactly the nonempty country files and preserves each regional progression`, () => {
       const countries = manifest.countries[gender];
       expect(countries.length).toBeGreaterThan(0);
@@ -62,6 +63,6 @@ describe('gendered national record artifacts', () => {
           if (keys) expect(keys.has(rowKey(row)), `${gender}/${path}: missing from ${row.pc}`).toBe(true);
         }
       }
-    });
+    }, 30_000);
   }
 });

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / BGWY / bin 8
-# Population in this bin: 487
+# Population in this bin: 490
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5149956021,U R2 B2 U F2 U F2 U' B D F2 U' R2 U2 F2 U' L' U B L,G,Furesø 3x3 Frenzy 2025 (2025-11-01~02),333mbf Final A #1
@@ -51,7 +51,7 @@
 5747438001,F' L' B2 R' F2 U F2 U B U D L2 D' F2 U' F2 B,Y,Bangkok Cube Festival 2026 (2026-07-11~12),333oh R1 C #2
 460042001,D2 L2 U2 B2 L2 B' R2 F2 D2 L2 B2 R' B D' U2 B F2 R B2 L2 F',Y,Speedsolving Huancayo 2017 (2017-03-05),333oh Final A E2
 3735451048,U' D B' R D R2 F R' F' U2 L' F U2 D2 B U2 B2 U2 F' L,Y,BrizZon Side Open II 2024 (2024-05-01~05),333mbf Final B #1
-5558688001,U' F2 L2 D2 B D2 F' U2 L2 B' U2 R2 D B2 F2 L U' B',G,Cube Against Cancer - Orange County 2026 (2026-04-19),333 R1 C #4
+5828150001,B' R2 B U F2 R F' R' F' B D B2 R2 D2 B2 L F2 R B2,B,HiLITE Cube Open 2026 (2026-09-12~13),333 R1 F E1
 5805326001,B2 D U B2 F2 L2 U2 R' D L2 R' D2 B' L' U F2 U2 L2,Y,Isla Cristina Open 2026 (2026-08-29),333 Final A E2
 2524367001,D B2 R' F2 D2 F2 R' F' R' U' R2 D B' D L' B2 U',Y,Pretzel Mania 2023 (2023-02-25~26),333 R1 C #5
 537395001,R2 F2 L' B2 D2 L2 U2 L' B2 D L2 R2 U R' U2 R2 B D B L' F2,G,Beijing Open 2017 (2017-06-24~25),333bf R1 A #3

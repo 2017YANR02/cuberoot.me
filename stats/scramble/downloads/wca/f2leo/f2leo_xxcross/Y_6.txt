@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / Y / bin 6
-# Population in this bin: 820
+# Population in this bin: 822
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5432743001,F2 D L2 D B2 L2 U' B2 L2 U F R B2 R U2 F2 R F,Y,Wiltshire Spring 2026 (2026-03-07~08),333 R2 C E1
@@ -178,7 +178,7 @@
 1142512001,L2 F' R2 F R2 F2 U2 F' L D' U2 B L2 B D2 F2 U' R',Y,AHAU Open 2019 (2019-05-19),333 R1 B #1
 835220001,U2 B D L' D R U2 R' F2 B' U2 R B2 U2 R U2 F2 R2 B2,Y,Uzhgorod Summer 2018 (2018-07-14~15),333 R1 A #5
 3480998001,U B U' F U' F2 L2 B2 D2 F2 D' R' D U' R2 U' B' R,Y,Dębica Cubing Winter 2024 (2024-02-03~04),333 R2 B #4
-3797272001,B F2 D F2 L2 D L2 D U L B L' B R' B F D L,Y,Centro Comercial Panamá Bogotá 2024 (2024-05-25),333 R1 C #5
+5821566001,L2 B2 D2 R' B2 D2 B2 F2 U2 L' F R D2 L' U' B2 L,Y,RUS Mall 2026 (2026-09-06),333 Final A #4
 4935724039,B2 R U2 L2 U2 F2 R U2 L' U F' L R2 B F' R U2 F R U B R,Y,Kooyong Clock Clash 2025 (2025-08-16~17),333mbf Final A #1
 1030206001,U L' F' R2 U F' U R L U F2 D F2 U2 R2 F2 D B2 R2 D2,Y,Villeneuve-lès-Avignon Open 2019 (2019-02-23~24),333 R2 C E2
 5584382001,B2 D2 U2 R2 B U2 L' D B2 D L2 R F2 D R U,Y,Welcome Guayaquil Open 2026 (2026-04-25),333 R2 A #4

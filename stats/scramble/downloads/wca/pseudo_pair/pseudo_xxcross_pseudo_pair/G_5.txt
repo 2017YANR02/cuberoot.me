@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / G / bin 5
-# Population in this bin: 694
+# Population in this bin: 695
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 8961001,L2 F R2 B2 L2 B2 R2 D' F' R' D R2 B' D2 L' F' L F',G,BP Cube Day 2014 (2014-04-05),333oh Final C #1
@@ -104,7 +104,7 @@
 2718803001,R B2 D' L2 U R2 U F2 U2 F2 L2 R B D R F D B,G,Nikita Kovalchuk Memorial 2023 (2023-05-14),333 R1 A #5
 4826664001,R' L' F2 L' F2 D' B' U2 D L2 U2 L2 F2 U F2 L D' L,G,VERK VII 2025 (2025-06-26~27),333 R1 B #5
 3004239012,D2 R' B2 D2 L2 D2 R' D2 F2 D' F2 D B L U2 L F R' D L',G,Rubik's WCA World Championship 2023 (2023-08-12~15),333mbf Final A E1
-4865579001,F' L' B2 D2 B L2 B' L2 B D2 U' B D L B2 D2 L' D' B',G,White Rock's Back to Square-1 2025 (2025-07-12),333 R1 B #1
+5830926001,U R B2 L U' B' L' F2 B2 U' B2 D2 F2 D B2 D F2 L' B,G,Ohio Championship 2026 (2026-09-11~13),333 R1 F E2
 2487706001,F' R2 U2 L2 D F2 D2 L2 U' F2 R' B F L' U' R' B' D2 U',G,TCG Summer Arequipa 2023 (2023-02-11),333 R1 B E2
 4123074001,B L' U' F2 L2 U' F2 R2 D' U' R' D' R U' R B' D U2 R2,G,Pune Unscrambled 2024 (2024-09-21~22),333 Final A E2
 3279295001,F U2 F' L2 D2 R2 B L2 F D L B2 D L2 D L B2 D B',G,Czech Championship 2023 (2023-11-17~19),333oh Final A #2

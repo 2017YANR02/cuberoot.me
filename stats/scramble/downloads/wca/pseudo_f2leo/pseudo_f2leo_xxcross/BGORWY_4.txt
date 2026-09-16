@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BGORWY / bin 4
-# Population in this bin: 473
+# Population in this bin: 475
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 5023707001,U2 B U2 L' D' L2 U2 B2 U' R2 U' F R B' D F' D2 F2 L' F',B,Clásico Tlaxcala 2025 (2025-09-13~14),333bf R1 B #3
@@ -99,7 +99,7 @@
 3185199001,F' L U L2 U2 F U B' U2 F U2 F2 U2 F U2 R U',B,Hong Kong Championship 2023 (2023-10-21~22),333 R2 A #1
 3038810001,B' L B2 D2 L D2 F2 R B2 L' R2 U F R' F' U' B L,G,Bilbao Open 2023 (2023-09-02~03),333 R1 D #1
 781796001,D2 L D2 B2 D2 B2 L2 U2 L' B' U R B2 U' L F2 L R' F',O,Shanghai Love in ECNU 2018 (2018-05-19~20),333 R1 D #1
-790215001,U' D' F' B2 L D' L2 D' B R L2 U2 F2 D' B2 D' R2 U F2,Y,PoliMi Op3n 2018 (2018-05-26),333oh R1 B #4
+5827742001,L' B2 R F2 R B' L2 U2 R2 F R' U L' U' R2 U2,Y,Danish Championship 2026 (2026-09-11~13),333 R1 B #4
 3293353001,U F2 B' R U2 F' L' F L R2 F U2 B2 L2 F2 U2 L2 D,O,Medvode Open 2023 (2023-11-25~26),333 Final A #2
 796714019,F2 D' B2 D' R2 D' U' B2 L' B' F2 L2 B' D L2 B2 L R2 F2 L' F2,O,Please Be Quiet Waterloo 2018 (2018-06-03),333mbf Final A #1
 809386040,L2 F' D2 F' R2 F' R' F2 L' D' B F R2 F2 D' U' R F L,Y,CubingUSA Western Championship 2018 (2018-06-15~17),333mbf Final B #2

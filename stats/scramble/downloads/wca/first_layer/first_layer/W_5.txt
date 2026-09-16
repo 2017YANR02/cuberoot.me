@@ -2,7 +2,7 @@
 # Population in this bin: 15
 # Samples listed: 15 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 763996001,L2 F L' U B2 D L2 U R F L B2 R D2 R L2 B2 R' B2,W,Nipomo Spring 2018 (2018-04-21),333oh R1 B E2

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / B / bin 11
-# Population in this bin: 584
+# Population in this bin: 588
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-11
+# Generated: 2026-09-16
 # Columns: id,scramble,bottom_color,competition,round
 
 4096276001,B' R2 F R2 B' D2 F U R U D2 R2 L2 D R2 U B2 D,B,Laos Championship 2024 (2024-09-14),333oh Final B E2
@@ -114,7 +114,7 @@
 3623916004,F2 R2 F2 L2 D2 F2 D F2 D' L R F' L' R B' L D U L2 B' L,B,Gramedia Cube Open Jakarta 2024 (2024-03-23),333mbf Final A #1
 661619001,D L2 B2 D2 F2 D' R U B U' R' D2 B' R2 D' L D2 U',B,Dixon Winter 2017 (2017-12-02),333oh Final A #2
 4475748001,F2 D' L' D F' D' L U L2 F' R2 D2 L' D2 R F2 R2 B2,B,Brazuca al Cubo I 2025 (2025-02-08),333 R2 A #5
-1482703001,R F L' U' R' F' R2 L2 F' R' F2 U F2 U R2 U2 F2 R2 L2 B2,B,Selangor Cube Open 2019 (2019-12-27~29),333 R1 A #5
+5830860001,L2 B' L2 B' L2 F U2 L2 D2 F2 R U B2 F2 U' R2 D2 F',B,Ohio Championship 2026 (2026-09-11~13),333 R1 D E1
 3225675001,D2 U2 F2 D2 U2 L D2 U2 F2 L' D' F' D2 L' D' U' B L2 R,B,Guwahati Autumn Open 2023 (2023-10-29),333 R1 D #2
 3227592001,D' F2 D2 R2 D F2 L2 D' U' L' F U' F' D' F' R2 D' F',B,Bavarian Open 2023 (2023-11-03~05),333 R3 B E1
 4526224001,D2 F L F' B' U' D' L2 D' B' R2 U2 R' U2 R U2 R' B2,B,Sqauckland 2025 (2025-02-22),333 R2 B #1
@@ -192,7 +192,7 @@
 2636305001,L2 D2 F2 D2 B U2 F' U' L U F' L F' R2 U2 F' L' F,B,Daegu Hot Spring 2023 (2023-04-15~16),333 R1 B E1
 1195444001,U B' U D' L' D' B2 R2 F' L F2 U2 R' F2 U2 B2 U2 B2 R' U2,B,Nacionales Medellín Explora 2019 (2019-06-22~24),333oh R1 A #1
 1195926001,L2 F2 L' B2 R' B2 R D' F' D' B2 L2 U2 B' L R F2 U',B,Santo Domingo Summer 2019 (2019-06-20),333 R2 B #4
-3278651001,F2 U2 B2 R2 U F2 U L2 F D' L' B2 R' D2 U2 L' U2 R2 B',B,Algorithms on Abercorn 2023 (2023-11-19),333 R1 A #5
+5822158001,F2 D' R2 D2 R2 D2 F2 D' F R2 D R' B2 L2 U F L R2,B,Ivanka pri Dunaji Open 2026 (2026-09-05~06),333oh R1 A #4
 1204677001,U' D2 F' R U' F' R D' B' L2 D2 F2 U2 F2 L' U2 D2 L' B2,B,Warm Up Canberra 2019 (2019-07-03),333 R2 B #5
 4111361001,R2 F2 R2 D2 B' D2 F2 L2 D B R F2 D' B' L F D' L,B,Gesté Une Fois 2024 (2024-09-14~15),333 R1 A #4
 5424487021,R' D' U2 L2 D2 L2 F2 R2 B R2 F' R' F' R D' U2 L B2 D2 L' F,B,Richardshhhon 2026 (2026-02-28~03-01),333mbf Final B #1
