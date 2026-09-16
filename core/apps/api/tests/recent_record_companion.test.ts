@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { collectInferred } from '../src/routes/cubing_live';
 import { formatInferred } from '../src/routes/wca_recent_records';
+import { enrich, formatCombinedRecords } from '../src/utils/record_format';
 
 vi.mock('../src/db/connection.js', () => ({ query: vi.fn(async () => []) }));
 vi.mock('../src/routes/wca_stats_extra.js', () => ({
@@ -25,6 +26,31 @@ function records(overrides: Partial<Result> = {}, includePersonalRecords = false
 }
 
 describe('same-round personal record in recent records and Bark', () => {
+  it('keeps source labels when two newcomer records are formatted together', () => {
+    const events = (['1st-solve', '1st-comp'] as const).map(source => enrich({ tag: 'NWR', newcomer_source: source, rec_type: 'average', attempt_result: 2763, event_id: '444', person_name: 'Xuanyi Geng (耿暄一)', person_iso2: 'CN', comp_id: 'WuhanGoldenAutumn2026', comp_name: '武汉金秋赛2026', comp_iso2: 'CN' }));
+    const formatted = formatCombinedRecords(events, () => null);
+    expect(formatted.cn).toContain('（首次还原）NWR');
+    expect(formatted.cn).toContain('（首场比赛）NWR');
+  });
+  it('carries separate NWR source identities from competition data through real bilingual formatting', async () => {
+    const data: CompData = {
+      slug: 'Newcomer2026', name: 'Newcomer 2026', source: 'wca', compId: 0, type: 'WCA', events: [], fetchedAt: 0,
+      users: { '4': { number: 4, name: 'Xuanyi Geng (耿暄一)', wcaid: '2023GENG02', region: 'CN' } },
+      resultsByRound: {}, membersByFilter: { females: [], children: [], newcomers: [] },
+      newcomerRecords: ['1st-solve', '1st-comp'].map(source => ({ eventId: '444', roundId: 'f', personNumber: 4, type: 'average', source, value: 2763 })) as CompData['newcomerRecords'],
+    };
+    const inferred = collectInferred(data, '2026-09-12');
+    expect(new Set(inferred.map(r => r.id)).size).toBe(2);
+    expect(inferred.map(r => r.newcomerSource)).toEqual(['1st-solve', '1st-comp']);
+    const formatted = await Promise.all(inferred.map(formatInferred));
+    expect(formatted[0].cn).toContain('平均新人世界纪录（首次还原）NWR');
+    expect(formatted[0].en).toContain('(1st solve: first-round average)');
+    expect(formatted[1].cn).toContain('平均新人世界纪录（首场比赛）NWR');
+    expect(formatted[1].en).toContain('(1st competition)');
+    data.users['77'] = data.users['4'];
+    data.newcomerRecords = data.newcomerRecords!.map(record => ({ ...record, personNumber: 77, roundId: 'd' }));
+    expect(collectInferred(data, '2026-09-12').map(r => r.id)).toEqual(inferred.map(r => r.id));
+  });
   it('includes confirmed standalone PRs only for personal subscriptions', () => {
     expect(records({ ar: '' })).toEqual([]);
     expect(records({ ar: '' }, true).map(r => [r.type, r.tag])).toEqual([['single', 'PR'], ['average', 'PR']]);

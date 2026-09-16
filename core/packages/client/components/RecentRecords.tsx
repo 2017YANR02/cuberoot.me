@@ -44,7 +44,7 @@ export function sortRecentRecords<T extends Pick<RecentRecord, 'tag' | 'countryI
   records: readonly T[], countries: readonly string[],
 ): T[] {
   const level = (tag: string) => {
-    if (tag === 'WR' || tag === 'FWR') return 0;
+    if (tag === 'WR' || tag === 'FWR' || tag === 'NWR') return 0;
     if (tag === 'CR' || Object.hasOwn(RECORD_BADGE_CONTINENT, tag)) return 1;
     return tag === 'NR' ? 2 : 3;
   };
@@ -62,7 +62,7 @@ function shortenEvent(text: string, eventId: string, isZh: boolean): string {
     return text.replace(/^([\d:.,]+)(.+?)(单次|平均)/, (_m, val, _e, type) => `${val} ${short}${type}`);
   }
   return text.replace(
-    /^([\d:.,]+\s)(\S+)(\s(?:FWR|WR|CR|NR|AsR|ER|NAR|SAR|OcR|AfR)\b)/,
+    /^([\d:.,]+\s)(\S+)(\s(?:FWR|NWR|WR|CR|NR|AsR|ER|NAR|SAR|OcR|AfR)\b)/,
     (_m, prefix, _e, tail) => `${prefix}${short}${tail}`,
   );
 }
@@ -103,7 +103,7 @@ function fallbackText(r: RecentRecord, isZh: boolean): string {
 
 function renderFormatted(text: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
-  const re = /([\u{1F1E6}-\u{1F1FF}])([\u{1F1E6}-\u{1F1FF}])|(FWR|WR|CR|NR|PR|AsR|ER|NAR|SAR|OcR|AfR)(?![A-Za-z0-9])/gu;
+  const re = /([\u{1F1E6}-\u{1F1FF}])([\u{1F1E6}-\u{1F1FF}])|(FWR|NWR|WR|CR|NR|PR|AsR|ER|NAR|SAR|OcR|AfR)(?![A-Za-z0-9])/gu;
   let lastEnd = 0;
   let key = 0;
   let m: RegExpExecArray | null;
@@ -138,7 +138,7 @@ export function useRecentRecords(isZh: boolean) {
     let timer: ReturnType<typeof setInterval> | null = null;
 
     const pull = () => {
-      fetch(apiUrl('/v1/wca/recent-records'))
+      fetch(apiUrl('/v1/wca/recent-records?v=2'))
         .then(r => r.ok ? r.json() as Promise<ApiResponse> : Promise.reject(r.status))
         .then(j => { if (mounted) setRecords(j.records ?? []); })
         .catch(() => { if (mounted && records === null) setRecords([]); });

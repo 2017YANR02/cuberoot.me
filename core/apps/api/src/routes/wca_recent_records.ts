@@ -37,6 +37,7 @@ const INFERRED_CAP = 40;  // 首页一次最多并入多少条中国比赛推断
 
 export interface RecentRecord {
   id: string;
+  newcomerSource?: InferredRecord['newcomerSource'];
   tag: 'WR' | 'CR' | 'NR' | string;
   type: 'single' | 'average' | string;
   attemptResult: number;
@@ -219,6 +220,7 @@ export async function formatInferred(rec: InferredRecord): Promise<{ cn: string;
   const meta = await getCompMeta(rec.compId, rec.compNameEn, personIso2);
   const event: RecordEvent = {
     tag: rec.tag,
+    newcomer_source: rec.newcomerSource,
     rec_type: rec.type,
     attempt_result: rec.attemptResult,
     event_id: rec.eventId,
@@ -253,6 +255,7 @@ async function buildInferredRecords(): Promise<RecentRecord[]> {
     const f = await formatInferred(rec);
     out.push({
       id: rec.id,
+      newcomerSource: rec.newcomerSource,
       tag: rec.tag,
       type: rec.type,
       attemptResult: rec.attemptResult,
@@ -325,7 +328,7 @@ async function fetchOnce(): Promise<void> {
     // Startof…),同一条纪录两源都出时需当成重复去掉。
     // 含 personName:同场同项同成绩可有多人并列破纪录(如 FM 9 人并列 17 步 AsR),
     // 不带选手会把他们误并成一条,首页只剩 1 个。
-    const k = `${r.competitionId.toLowerCase()}|${r.eventId}|${r.type}|${r.attemptResult}|${r.personName.trim().toLowerCase()}`;
+    const k = `${r.competitionId.toLowerCase()}|${r.eventId}|${r.type}|${r.attemptResult}|${r.personName.trim().toLowerCase()}|${r.tag === 'NWR' ? `NWR|${r.newcomerSource}` : ''}`;
     if (seen.has(k)) continue;
     seen.add(k);
     merged.push(r);

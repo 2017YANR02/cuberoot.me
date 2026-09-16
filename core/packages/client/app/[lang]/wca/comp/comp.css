@@ -827,7 +827,7 @@ td.is-pr {
 }
 .comp-records + .comp-pod-section-h { margin-top: 4px; }
 
-.comp-record-counts { display: flex; align-items: center; gap: 16px; margin: 12px 0 20px; font-size: 14px; white-space: nowrap; }
+.comp-record-counts { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 12px 0 20px; font-size: 14px; white-space: nowrap; }
 .comp-record-news { margin-bottom: 26px; }
 .comp-record-news-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .comp-record-news-heading .comp-pod-section-h { margin: 0; }

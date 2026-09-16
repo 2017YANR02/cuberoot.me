@@ -62,7 +62,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
   // 只用 setter 写 URL;读取在数据加载时直接读 window.location.search(一次性深链,不入 effect deps)。
   const [urlState, setUrlState] = useQueryStates(
     { [k('event')]: parseAsString, [k('type')]: parseAsString, [k('metric')]: parseAsString,
-      [k('region')]: parseAsString, [k('level')]: parseAsString },
+      [k('region')]: parseAsString, [k('level')]: parseAsString, [k('source')]: parseAsString },
     { history: 'replace', scroll: false },
   );
 
@@ -95,7 +95,11 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
         const typeId = sp.get(k('type'));
         const metricId = sp.get(k('metric'));
         if (typeId) {
-          const panels = json.panels ?? json.metricPanels?.[0]?.panels ?? [];
+          const metric = json.metricPanels?.find(mp => mp.id === metricId) ?? json.metricPanels?.[0];
+          const sourceId = sp.get(k('source'));
+          const source = metric?.sourcePanels?.find(s => s.id === `${metric.id}-${sourceId}` || s.id === sourceId)
+            ?? metric?.sourcePanels?.[0];
+          const panels = json.panels ?? metric?.panels ?? source?.panels ?? [];
           const idx = panels.findIndex((p: StatPanel) => p.id === typeId);
           if (idx !== -1) setActivePanel(idx);
         }
@@ -121,6 +125,16 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
     setSelectedEvent(ev);
     setUrlState({ [k('event')]: ev || null });
   }, [setUrlState, k]);
+
+  useEffect(() => {
+    const metric = data?.metricPanels?.[activeMetric];
+    const sources = metric?.sourcePanels;
+    if (!metric || !sources?.length) return;
+    const sourceId = urlState[k('source')];
+    if (sources.some(s => s.id === `${metric.id}-${sourceId}` || s.id === sourceId)) return;
+    const id = sources[0].id;
+    void setUrlState({ [k('source')]: id.startsWith(`${metric.id}-`) ? id.slice(metric.id.length + 1) : id });
+  }, [data, activeMetric, urlState, setUrlState, k]);
 
   const handleSetActivePanel = useCallback((idx: number, panels: StatPanel[]) => {
     setActivePanel(idx);
@@ -291,6 +305,8 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
           availableMetricIds={availableMetricIds}
           hideSelector={metricId != null}
           activeMetric={activeMetric}
+          sourceId={urlState[k('source')]}
+          onSetSource={source => { void setUrlState({ [k('source')]: source }); }}
           onSetActiveMetric={(idx) => handleSetActiveMetric(idx, data.metricPanels!)}
           onSetActivePanel={(idx, panels) => handleSetActivePanel(idx, panels)}
           activePanel={activePanel}

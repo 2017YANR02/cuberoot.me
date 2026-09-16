@@ -14,6 +14,7 @@ import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import type { CompPersonalRecordSlot } from '@cuberoot/shared';
 import { query } from '../db/connection.js';
 import { prepareFemaleRecords } from '../utils/female_records.js';
+import { findNewcomerRecords, type NewcomerRecord, type NewcomerSource } from '../utils/newcomer_records.js';
 import { enrichComp, resolvePersonIso2, emptyDayBest, foldCompIntoDayBest, judgeExternalRecord, type CompRecordsSnapshot, type DayBest, type KeatonedInfo } from '../utils/current_records.js';
 import type { OverlayEntry } from '../utils/wca_live_overlay.js';
 import { getCnCompZh } from '../utils/cn_comp_zh_cache.js';
@@ -90,7 +91,7 @@ interface LiveResult {
 
 type SourceId = 'cubing' | 'wca' | 'wca_live' | 'wca_db';
 
-interface CompData {
+export interface CompData {
   slug: string;     // WCA ID (无横杠),规范形态
   cubingSlug?: string; // cubing.com 用的 dash slug;source=wca 时无
   wcaLiveId?: string; // WCA Live 的内部数字 id (用于订阅)
@@ -111,6 +112,7 @@ interface CompData {
   /** cubing / wca_live 路径预填:WR/CR/NR 快照(仅本场涉及国家/洲),
    *  client 拿去给 WS 实时推送的成绩做同样的 tag 推断. */
   currentRecords?: CompRecordsSnapshot;
+  newcomerRecords?: NewcomerRecord[];
   /** ?only= 裁过的分片响应(resultsByRound/users/personalRecords 不全);
    *  client 据此决定要不要再拉一次全量。缓存里存的永远是全量,裁剪只发生在响应阶段. */
   partial?: boolean;
@@ -2113,6 +2115,7 @@ export interface InferredRecord {
   personWcaId: string;   // 可能为空(新人);排名 overlay 按它去重
   personIso2: string;    // 大写
   startDate: string | null;
+  newcomerSource?: NewcomerSource;
   /** Same-round personal record, confirmed by the existing chronological PR ranks. */
   companionPr?: { type: 'single' | 'average'; attemptResult: number };
 }
@@ -2161,6 +2164,18 @@ export function collectInferred(data: CompData, startDate: string | null, includ
       });
     }
   }
+  for (const record of data.newcomerRecords ?? []) {
+    const u = data.users[String(record.personNumber)];
+    if (!u) continue;
+    out.push({
+      // Competitor numbers and round IDs change between live and official sources.
+      id: `inferred|${data.slug}|${record.eventId}|${record.type}|${u.wcaid || u.name}|NWR|${record.source}|${record.value}`,
+      compId: data.slug, compNameEn, eventId: record.eventId, roundId: record.roundId,
+      type: record.type, tag: 'NWR', newcomerSource: record.source, attemptResult: record.value,
+      personName: u.name, personWcaId: u.wcaid ?? '',
+      personIso2: resolvePersonIso2(u.region, u.countryId).toUpperCase(), startDate,
+    });
+  }
   return out;
 }
 
@@ -2185,12 +2200,17 @@ async function observeCompetitionRecords(data: CompData): Promise<void> {
  *  (被超越后仍保留),靠 10 天窗 + 与 feed dedup 收敛成"近期纪录"。 */
 async function rememberInferred(data: CompData): Promise<void> {
   const sd = await getCompStartDate(data.slug);
+  data.newcomerRecords = [];
   if (!inInferredWindow(sd)) {
     inferredPool.delete(data.slug);
     return;
   }
+  if (sd && data.type === 'WCA') {
+    try { data.newcomerRecords = await findNewcomerRecords(data, sd, getCompStartDate); }
+    catch (error) { console.warn('[newcomer-records]', (error as Error).message); }
+  }
   // Re-adjudication can change tags even when the upstream payload is cached.
-  inferredPool.set(data.slug, { fetchedAt: data.fetchedAt, date: sd, records: collectInferred(data, sd).filter(r => data.source !== 'wca_live' || r.tag === 'FWR') });
+  inferredPool.set(data.slug, { fetchedAt: data.fetchedAt, date: sd, records: collectInferred(data, sd).filter(r => data.source !== 'wca_live' || r.tag === 'FWR' || r.tag === 'NWR') });
   for (const [slug, e] of inferredPool) {
     if (!inInferredWindow(e.date)) inferredPool.delete(slug);
   }
@@ -2205,9 +2225,13 @@ export async function extractInferredRecords(): Promise<InferredRecord[]> {
     if (inferredPool.has(data.slug)) continue;
     const sd = await getCompStartDate(data.slug);
     if (!inInferredWindow(sd)) continue;
-    out.push(...collectInferred(data, sd).filter(r => data.source !== 'wca_live' || r.tag === 'FWR'));
+    out.push(...collectInferred(data, sd).filter(r => data.source !== 'wca_live' || r.tag === 'FWR' || r.tag === 'NWR'));
   }
-  return out;
+  return out.filter(r => r.tag !== 'NWR' || !out.some(other => other.tag === 'NWR'
+    && other.id !== r.id && other.eventId === r.eventId && other.type === r.type
+    && other.newcomerSource === r.newcomerSource && other.startDate && r.startDate
+    && other.startDate <= r.startDate
+    && (other.attemptResult < r.attemptResult || (other.startDate < r.startDate && other.attemptResult === r.attemptResult))));
 }
 
 // 推断纪录喂给排名 overlay(/WRn 后缀、rank-for)的形态.

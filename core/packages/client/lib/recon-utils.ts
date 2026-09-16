@@ -126,11 +126,11 @@ export function getRecordClass(val: string): string {
   // Personal-best labels incl. average variants (timer: "PB", "PB AO5", "PB AO12").
   // Treat the whole PB/PR family as a personal record so they share one badge color.
   if (/^P[RB](\s|$)/.test(v)) return 'pr';
-  if (/^[FXU]?W[RB]$|^1STWR$|^RWR$|^YTW[RB]$|^XWR$/.test(v)) return 'wr';
+  if (/^[FXU]?W[RB]$|^1STWR$|^NWR$|^RWR$|^YTW[RB]$|^XWR$/.test(v)) return 'wr';
   if (v === 'WCR') return 'wcr';
   if (v === 'CR') return 'cr';
   if (/(?:AS|E)[RB]$/.test(v) || /^(?:F|YT|X|U)?(?:SAR|SAB|NAR|NAB|OCR|OCB|AFR|AFB|ANR|ANB|ASR|ASB)$/.test(v)) return 'cr';
-  if (/^[FXU]?N[RB]$|^NWR$|^ANR$|^YTN[RB]$/.test(v)) return 'nr';
+  if (/^[FXU]?N[RB]$|^ANR$|^YTN[RB]$/.test(v)) return 'nr';
   if (/[PU]?[RB]$/.test(v) && (v.endsWith('PR') || v.endsWith('PB')
     || v === 'YTPR' || v === 'YTPB' || v === 'UPR' || v === 'UPB')) return 'pr';
   return 'other';
