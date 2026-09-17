@@ -862,7 +862,7 @@ wcaStatsExtraRoutes.get('/wca/person-championship-podiums', async (c) => {
 //   实际被请求过的 (event,type),不预热全项目(服务器 RAM 紧张).
 //
 // 索引:GROUP BY wca_id 的 MIN(value) 走 wrf_main(event_id,is_avg,value,wca_id) Index Only Scan.
-// Cache-Control 同其它端点 1 天(每周才变).
+// 导入标记变化时失效,HTTP 缓存一分钟,不把入库前的排名锁住一天.
 interface RankIndex {
   /** 该 (event,type) 每位上榜选手的个人最佳(centiseconds),升序 */
   values: Int32Array;
@@ -871,6 +871,33 @@ interface RankIndex {
 const RANK_TTL_MS = 24 * 60 * 60_000;
 const rankCache = new Map<string, RankIndex>();
 const rankInflight = new Map<string, Promise<RankIndex | null>>();
+let rankImportVersion: string | undefined;
+let rankVersionCheckedAt = 0;
+let rankVersionInflight: Promise<void> | null = null;
+
+/** The importer updates this existing marker in the same transaction as the results. */
+async function refreshRankImportVersion(): Promise<void> {
+  if (Date.now() - rankVersionCheckedAt < 60_000) return;
+  if (rankVersionInflight) return rankVersionInflight;
+  rankVersionInflight = (async () => {
+    try {
+      const rows = await query<{ value: string }>("SELECT value FROM meta_historical WHERE key = 'wca_stats_extra_imported_at'");
+      const version = rows[0]?.value ?? '';
+      if (rankImportVersion !== undefined && version !== rankImportVersion) {
+        rankCache.clear();
+        overlayBestsCache.clear();
+      }
+      rankImportVersion = version;
+      rankVersionCheckedAt = Date.now();
+    } catch (error) {
+      console.warn('[rank-for] import version unavailable:', (error as Error).message);
+      rankCache.clear();
+      overlayBestsCache.clear();
+      rankVersionCheckedAt = Date.now();
+    } finally { rankVersionInflight = null; }
+  })();
+  return rankVersionInflight;
+}
 
 // scope: 'W' 世界 | `N:<countryId>` 国家 | `K:<continentId>` 大洲.
 // 国家/大洲 scope 懒构建,只缓存被请求过的(用户多半只查自己一个国家 + 一个大洲).
@@ -910,14 +937,16 @@ async function buildRankIndex(event: string, isAvg: boolean, scope: string): Pro
 }
 
 async function getRankIndex(event: string, isAvg: boolean, scope: string): Promise<RankIndex | null> {
+  await refreshRankImportVersion();
   const key = `${event}|${isAvg ? '1' : '0'}|${scope}`;
   const cur = rankCache.get(key);
   if (cur && Date.now() - cur.builtAt < RANK_TTL_MS) return cur;
   const pending = rankInflight.get(key);
-  if (pending) return pending;
+  if (pending) { await pending; return getRankIndex(event, isAvg, scope); }
+  const version = rankImportVersion;
   const p = (async () => {
     const fresh = await buildRankIndex(event, isAvg, scope);
-    if (fresh) rankCache.set(key, fresh);
+    if (fresh && version === rankImportVersion) rankCache.set(key, fresh);
     rankInflight.delete(key);
     return fresh;
   })();
@@ -960,11 +989,13 @@ function lowerBound(arr: Int32Array, target: number): number {
 interface OverlayBests {
   bests: Map<string, number>; // wcaId → 快照个人最佳(centiseconds);缺席 = 该选手快照无成绩
   builtAt: number;
+  ids: Set<string>;
 }
 const overlayBestsCache = new Map<string, OverlayBests>();
+const overlayBestsInflight = new Map<string, Promise<Map<string, number>>>();
 const OVERLAY_BESTS_TTL_MS = 60_000;
 
-/** overlay 候选 = WCA Live 近期纪录 ∪ cubing.com 中国比赛的推断纪录。
+/** overlay 候选 = WCA Live 近期纪录 ∪ 已载入近期比赛的全部有效成绩。
  *  后者压根不在 WCA Live feed 里 —— 2026-07-26 芜湖陈震 6.99 单手平均漏出分母,同日
  *  Crimson 更慢的 7.72 就被算成 WR1。同一选手在 overlayDeltaPure 里按 wcaId 去重,
  *  两源重叠不会重复计数;推断侧失败静默退回纯 feed。 */
@@ -980,17 +1011,21 @@ async function overlayCandidates(event: string, isAvg: boolean): Promise<Overlay
 }
 
 // overlay 涉及选手的快照 PB(全局个人最佳,世界/全国去重共用同一值)。无 overlay 选手 → 空 Map。
-async function overlayPeopleBests(event: string, isAvg: boolean): Promise<Map<string, number>> {
-  const entries = await overlayCandidates(event, isAvg);
+async function overlayPeopleBests(event: string, isAvg: boolean, entries: OverlayEntry[]): Promise<Map<string, number>> {
   if (entries.length === 0) return new Map();
   const key = `${event}|${isAvg ? 1 : 0}`;
   const cur = overlayBestsCache.get(key);
-  if (cur && Date.now() - cur.builtAt < OVERLAY_BESTS_TTL_MS) return cur.bests;
-
   const ids = [...new Set(entries.map((e) => e.wcaId))];
-  const placeholders = ids.map(() => '?').join(', ');
-  const bests = new Map<string, number>();
-  try {
+  if (cur && Date.now() - cur.builtAt < OVERLAY_BESTS_TTL_MS && ids.every(id => cur.ids.has(id))) return cur.bests;
+  const pending = overlayBestsInflight.get(key);
+  if (pending) {
+    await pending;
+    return overlayPeopleBests(event, isAvg, entries);
+  }
+  const version = rankImportVersion;
+  const build = (async () => {
+    const placeholders = ids.map(() => '?').join(', ');
+    const bests = new Map<string, number>();
     const rows = await query<{ wca_id: string; m: number }>(
       `SELECT wca_id, MIN(value)::int AS m FROM wca_results_flat
        WHERE event_id = ? AND is_avg = ? AND value > 0 AND wca_id IN (${placeholders})
@@ -998,12 +1033,12 @@ async function overlayPeopleBests(event: string, isAvg: boolean): Promise<Map<st
       [event, isAvg, ...ids],
     );
     for (const r of rows) bests.set(r.wca_id, Number(r.m));
-  } catch (e) {
-    console.warn(`[rank-overlay] snapshot bests failed ${key}:`, (e as Error).message);
-    // 查失败 → 空 Map:所有 overlay 候选都当「快照未计入」加进去(宁可偏大不偏小,与用户诉求同向)。
-  }
-  overlayBestsCache.set(key, { bests, builtAt: Date.now() });
-  return bests;
+    if (version === rankImportVersion) overlayBestsCache.set(key, { bests, builtAt: Date.now(), ids: new Set(ids) });
+    return bests;
+  })();
+  overlayBestsInflight.set(key, build);
+  try { return await build; }
+  finally { overlayBestsInflight.delete(key); }
 }
 
 /**
@@ -1020,8 +1055,10 @@ async function overlayDelta(
   if (!(value > 0)) return { world: 0, national: 0 };
   const entries = await overlayCandidates(event, isAvg);
   if (entries.length === 0) return { world: 0, national: 0 };
-  const bests = await overlayPeopleBests(event, isAvg);
-  return overlayDeltaPure(entries, bests, value, opts);
+  try {
+    const bests = await overlayPeopleBests(event, isAvg, entries);
+    return overlayDeltaPure(entries, bests, value, opts);
+  } catch { return { world: 0, national: 0 }; }
 }
 
 // 世界排名(Top 100 门控)—— 给 utils/record_format 的纪录文案 /WRn 后缀用.
@@ -1102,7 +1139,7 @@ wcaStatsExtraRoutes.get('/wca/rank-for', async (c) => {
     }
   }
 
-  c.header('Cache-Control', CACHE_HEADER);
+  c.header('Cache-Control', 'public, max-age=60, s-maxage=60');
   return c.json(resp);
 });
 
@@ -1160,7 +1197,7 @@ wcaStatsExtraRoutes.post('/wca/rank-for-batch', async (c) => {
     return out;
   }));
 
-  c.header('Cache-Control', CACHE_HEADER);
+  c.header('Cache-Control', 'no-store');
   return c.json({ results });
 });
 

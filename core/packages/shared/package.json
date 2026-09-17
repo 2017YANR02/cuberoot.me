@@ -351,6 +351,10 @@
       "node": "./dist/recon_slice.js",
       "default": "./src/recon_slice.ts"
     },
+    "./cubing-competitions": {
+      "node": "./dist/cubing_competitions.js",
+      "default": "./src/cubing_competitions.ts"
+    },
     "./cubing-slug": {
       "node": "./dist/cubing_slug.js",
       "default": "./src/cubing_slug.ts"

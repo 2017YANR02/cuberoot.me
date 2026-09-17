@@ -1,6 +1,7 @@
 import { eventDisplayName } from '@/lib/wca-events';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { displayCuberName } from '@/lib/cuber-name-display';
+import { countryToIso2 } from '@/lib/country-flags';
 
 export interface NewcomerRecord {
   eventId: string;
@@ -100,11 +101,40 @@ export const COMP_RECORD_NEWS: Partial<Record<string, RecordNews[]>> = {
   ],
 };
 
-/** Preserve curated copy and append automatic NWRs using the existing news renderer. */
+interface CompetitionRecord {
+  ev: { i: string };
+  res: { n: number };
+  roundId: string;
+  type: 'single' | 'average';
+  tag: string;
+  value: number;
+}
+
+/** Preserve report-time copy and fill every competition from its actual records. */
 export function competitionRecordNews(slug: string, records: NewcomerRecord[],
   users: Record<string, { name: string; region: string; countryId?: string }>,
-  events: { i: string; rs: { i: string }[] }[]): RecordNews[] {
+  events: { i: string; rs: { i: string }[] }[], competitionRecords: CompetitionRecord[] = []): RecordNews[] {
   const news = [...(COMP_RECORD_NEWS[slug] ?? [])];
+  const labels: Record<string, string> = { WR: '世界纪录', FWR: '女子世界纪录', NR: '国家纪录', AsR: '亚洲纪录', ER: '欧洲纪录', NAR: '北美洲纪录', SAR: '南美洲纪录', AfR: '非洲纪录', OcR: '大洋洲纪录', CR: '洲际纪录' };
+  for (const record of competitionRecords) {
+    const user = users[String(record.res.n)];
+    if (!user || !labels[record.tag] || !Number.isSafeInteger(record.value) || record.value <= 0) continue;
+    const value = formatWcaResult(record.value, record.ev.i, record.type);
+    const roundIndex = events.find(event => event.i === record.ev.i)?.rs.findIndex(round => round.i === record.roundId) ?? -1;
+    if (news.some(row => row.event === record.ev.i && row.person === user.name
+      && row.results.some(result => result.tag === record.tag && result.text.en.startsWith(`${value} `)))) continue;
+    const type = { single: { zh: '单次', en: 'Single' }, average: { zh: '平均', en: 'Avg' } }[record.type];
+    const text = {
+      zh: `${value} ${eventDisplayName(record.ev.i, true)}${type.zh}${labels[record.tag]}`,
+      en: `${value} ${eventDisplayName(record.ev.i, false)} ${type.en}`,
+    };
+    news.push({
+      event: record.ev.i, round: roundIndex >= 0 ? roundIndex + 1 : undefined,
+      person: user.name, country: countryToIso2(user.countryId || user.region),
+      message: { zh: `纪录快讯! ${text.zh} ${record.tag} ${displayCuberName(user.name, true)}`, en: `Breaking News! ${text.en} ${record.tag} ${displayCuberName(user.name, false)}` },
+      results: [{ text, tag: record.tag }],
+    });
+  }
   for (const record of records) {
     const user = users[String(record.personNumber)];
     if (!user || !Number.isSafeInteger(record.value) || record.value <= 0) continue;
