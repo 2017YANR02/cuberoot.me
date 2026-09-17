@@ -81,6 +81,10 @@ describe('one public case state for every algorithm set', () => {
     // Exact exception identities are reviewable; accepting extra bad rows or
     // silently dropping source rows cannot turn this test green.
     expect({ total, adjusted, unmatched }).toEqual(expected);
+    // Every set remains printable even when a source alternative is unresolved.
+    const sheet = algSheetFromCases({ puzzle, set: file.set, cases: aligned.cases, title: key, filename: key, allOris: true, maxAlgs: Infinity });
+    expect(sheet.cases).toHaveLength(aligned.cases.reduce((n, c) => n + c.algs.length, 0));
+    expect(sheet.cases.reduce((n, c) => n + c.algs.length, 0)).toBe(total - unmatched.length);
   });
 
   it('S-: renders the missing U in plain text, rich text and PDF; scan rejects the raw mismatch', async () => {
@@ -101,15 +105,16 @@ describe('one public case state for every algorithm set', () => {
     expect(JSON.stringify(raw)).toBe(original);
   });
 
-  it('keeps unresolved owner source rows visible as failures and blocks exporting them', async () => {
+  it('keeps unresolved owner source rows visible as failures and omits them from PDF without blocking valid rows', async () => {
     const oll = loaded.get('3x3/oll')!;
     const t = oll.cases.find(c => c.id === 3929)!;
     expect(caseAlgIssue(t.algs[0][3])).toBeDefined();
     const failures = await scanCases('3x3', 'oll', [t]);
     expect(failures.map(f => f.algIdx)).toEqual([3, 9]);
     expect(failures[1].reason).toContain('Duplicate algorithm');
-    expect(() => algSheetFromCases({ puzzle: '3x3', set: 'oll', cases: [t], title: '', filename: '', maxAlgs: 99 }))
-      .toThrow('Cannot export');
+    const sheet = algSheetFromCases({ puzzle: '3x3', set: 'oll', cases: [t], title: '', filename: '', maxAlgs: 99 });
+    expect(sheet.cases[0].algs).toEqual(t.algs[0].filter(e => !caseAlgIssue(e)).map(e => e.alg));
+    expect(sheet.subtitle).toContain('1 unverified algorithms omitted');
   });
 
   it('does not report all passed when a COEP solution or an optimal scramble differs from the picture', async () => {

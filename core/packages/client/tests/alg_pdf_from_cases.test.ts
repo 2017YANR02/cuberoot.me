@@ -5,6 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import type { AlgCase } from '@cuberoot/shared';
 import { algSheetFromCases, DEFAULT_MAX_ALGS } from '@/lib/alg_pdf/from_cases';
+import { alignCaseEntry, caseAlgIssue } from '@/lib/alg_case_alignment';
 import { sq1EpNumericCaseName, sq1EpNumericGroupName } from '@/lib/sq1-ep-parity';
 
 function mkCase(over: Partial<AlgCase> & { name: string }): AlgCase {
@@ -18,6 +19,30 @@ function mkCase(over: Partial<AlgCase> & { name: string }): AlgCase {
 const base = { puzzle: '3x3' as const, set: 'pll', title: 'T', filename: 'f' };
 
 describe('algSheetFromCases', () => {
+  it('跳过不匹配公式后再截断，保留 case、图和后续有效公式，不修改源数据', async () => {
+    const c = mkCase({ name: 'test', setup: "R'", algs: [[]] });
+    const invalid = await alignCaseEntry('3x3', 'pll', c, { alg: 'U' });
+    expect(caseAlgIssue(invalid)).toBeDefined();
+    c.algs = [[invalid, { alg: 'R' }, { alg: "R U U'" }]];
+    const sheet = algSheetFromCases({ ...base, cases: [c], maxAlgs: 2 });
+    expect(sheet.cases).toHaveLength(1);
+    expect(sheet.cases[0].algs).toEqual(['R', "R U U'"]);
+    expect(sheet.cases[0].thumb?.setup).toBe("R'");
+    expect(sheet.subtitle).toContain('1 unverified algorithms omitted');
+    expect(c.algs[0]).toHaveLength(3);
+
+    const onlyInvalid = algSheetFromCases({ ...base, cases: [c], algFilter: e => !!caseAlgIssue(e) });
+    expect(onlyInvalid.cases).toHaveLength(1);
+    expect(onlyInvalid.cases[0].algs).toEqual([]);
+    expect(onlyInvalid.cases[0].sub).toBe('No verified algs');
+
+    const onlyValid = algSheetFromCases({ ...base, cases: [c], algFilter: e => !caseAlgIssue(e) });
+    expect(onlyValid.subtitle).toBe('1 case');
+    const empty = algSheetFromCases({ ...base, cases: [] });
+    expect(empty.cases).toEqual([]);
+    expect(empty.subtitle).toBe('0 cases');
+  });
+
   it('顶层打乱文字用 U 收尾，缩略图仍使用完整原状态', () => {
     const setup = "R U R' U R U2 R' y'";
     const c = mkCase({ name: 'OLL 26', setup, algs: [[{ alg: "R U2 R' U' R U' R'" }]] });

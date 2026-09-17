@@ -297,8 +297,9 @@ export async function buildAlgSheet({
     doc.setFont(SANS, 'normal');
     doc.setFontSize(SUB_SIZE);
     doc.setTextColor(pal.muted);
-    doc.text(subtitle, PAGE_W / 2, y + SUB_SIZE, { align: 'center' });
-    y += SUB_SIZE + 4;
+    const subtitleLines = doc.splitTextToSize(subtitle, CONTENT_W) as string[];
+    doc.text(subtitleLines, PAGE_W / 2, y + SUB_SIZE, { align: 'center' });
+    y += SUB_SIZE + (subtitleLines.length - 1) * SUB_SIZE * doc.getLineHeightFactor() + 4;
   }
   y += 10;
 
