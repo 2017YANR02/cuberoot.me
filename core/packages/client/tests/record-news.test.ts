@@ -11,6 +11,20 @@ vi.mock('@/components/AppLink', () => ({
 }));
 
 describe('record news presentation', () => {
+  it('generates record news for any competition without a curated entry', () => {
+    const users = { '1': { name: 'Yunzhi Lian (连允之)', region: 'CN' } };
+    const record = { ev: { i: '333' }, res: { n: 1 }, roundId: 'f', type: 'average' as const, tag: 'FWR', value: 427 };
+    for (const slug of ['GuangzhouGraDUAL3x3IV2026', 'FutureCompetition2027']) {
+      const news = competitionRecordNews(slug, [], users, [{ i: '333', rs: [{ i: '1' }, { i: '2' }, { i: 'f' }] }], [record]);
+      expect(news).toHaveLength(1);
+      expect(news[0].results[0].text.zh).toContain('4.27 三阶平均女子世界纪录');
+      expect(news[0].round).toBe(3);
+      expect(news[0].results[0].tag).toBe('FWR');
+    }
+    expect(competitionRecordNews('Invalid', [], users, [], [{ ...record, value: -1 }])).toEqual([]);
+    expect(competitionRecordNews('Invalid', [], users, [], [{ ...record, tag: '1' }])).toEqual([]);
+    expect(competitionRecordNews('WuhanCrimsonAutumn2026', [], users, [], [{ ...record, value: 452 }])).toHaveLength(COMP_RECORD_NEWS.WuhanCrimsonAutumn2026!.length);
+  });
   it('retains both newcomer sources and both metrics, while deduplicating curated news', () => {
     const records = (['1st-solve', '1st-comp'] as const).flatMap(source => (['single', 'average'] as const).map(type => ({ eventId: '444', roundId: 'f', personNumber: 1, source, type, value: 2763 })));
     const users = { '1': { name: 'Xuanyi Geng (耿暄一)', region: 'CN' } };

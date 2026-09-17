@@ -2125,7 +2125,31 @@ export interface InferredRecord {
 // 刚破纪录的比赛随时被挤出去 —— 首页「纪录」列表就会时有时无(2026-07-26 芜湖陈震 6.99
 // 单手平均 WR 从首页消失,而比赛页照样正确,因为那是按需 loadComp 现算的).
 // 按比赛整条覆盖,窗口外才清,不受 L1 淘汰影响.
-const inferredPool = new Map<string, { fetchedAt: number; date: string | null; records: InferredRecord[] }>();
+const inferredPool = new Map<string, { fetchedAt: number; date: string | null; records: InferredRecord[]; ranks: Map<string, OverlayEntry[]> }>();
+
+/** Rankings need every recent valid PB candidate, including untagged personal records. */
+export function collectRankCandidates(data: CompData): Map<string, OverlayEntry[]> {
+  const bests = new Map<string, Map<string, OverlayEntry>>();
+  for (const results of Object.values(data.resultsByRound)) {
+    for (const result of results) {
+      const user = data.users[String(result.n)];
+      if (!user?.wcaid) continue;
+      for (const isAvg of [false, true]) {
+        if (isAvg && ['333mbf', '333mbo'].includes(result.e)) continue;
+        const value = isAvg ? result.a : result.b;
+        if (!Number.isSafeInteger(value) || value <= 0) continue;
+        const key = `${result.e.toLowerCase()}|${isAvg ? 1 : 0}`;
+        let people = bests.get(key);
+        if (!people) { people = new Map(); bests.set(key, people); }
+        const previous = people.get(user.wcaid);
+        if (!previous || value < previous.value) people.set(user.wcaid, {
+          wcaId: user.wcaid, iso2: resolvePersonIso2(user.region, user.countryId).toUpperCase(), compId: data.slug, value,
+        });
+      }
+    }
+  }
+  return new Map([...bests].map(([key, people]) => [key, [...people.values()]]));
+}
 
 /** 比赛开始日落在 [今天-10d, 今天+2d] —— 10 天窗与 WCA Live recentRecords 默认窗口对齐. */
 function inInferredWindow(startDate: string | null): boolean {
@@ -2203,6 +2227,7 @@ async function rememberInferred(data: CompData): Promise<void> {
   data.newcomerRecords = [];
   if (!inInferredWindow(sd)) {
     inferredPool.delete(data.slug);
+    inferredOverlayCache = null;
     return;
   }
   if (sd && data.type === 'WCA') {
@@ -2210,7 +2235,8 @@ async function rememberInferred(data: CompData): Promise<void> {
     catch (error) { console.warn('[newcomer-records]', (error as Error).message); }
   }
   // Re-adjudication can change tags even when the upstream payload is cached.
-  inferredPool.set(data.slug, { fetchedAt: data.fetchedAt, date: sd, records: collectInferred(data, sd).filter(r => data.source !== 'wca_live' || r.tag === 'FWR' || r.tag === 'NWR') });
+  inferredPool.set(data.slug, { fetchedAt: data.fetchedAt, date: sd, records: collectInferred(data, sd).filter(r => data.source !== 'wca_live' || r.tag === 'FWR' || r.tag === 'NWR'), ranks: collectRankCandidates(data) });
+  inferredOverlayCache = null;
   for (const [slug, e] of inferredPool) {
     if (!inInferredWindow(e.date)) inferredPool.delete(slug);
   }
@@ -2234,22 +2260,22 @@ export async function extractInferredRecords(): Promise<InferredRecord[]> {
     && (other.attemptResult < r.attemptResult || (other.startDate < r.startDate && other.attemptResult === r.attemptResult))));
 }
 
-// 推断纪录喂给排名 overlay(/WRn 后缀、rank-for)的形态.
-// wca_live_overlay 的候选只来自 WCA Live feed,而 cubing.com 上的中国比赛压根不在那个 feed 里 ——
-// 陈震 6.99 单手平均没进分母,同日 Crimson 的 7.72 就被算成 WR1(它自己那行还写着"菲律宾纪录").
-// 无 wcaId 的(新人)跳过:去重要按 wcaId 查快照 PB,没有 id 就无从判断快照是否已计入.
+// Rankings use the full recent results, independently of the regional-record news feed.
+// Keep candidates from each competition so excluding the current competition cannot erase an earlier PB.
 const INFERRED_OVERLAY_TTL_MS = 60_000;
 let inferredOverlayCache: { at: number; map: Map<string, OverlayEntry[]> } | null = null;
 
 export async function inferredOverlayEntries(eventId: string, isAvg: boolean): Promise<OverlayEntry[]> {
   if (!inferredOverlayCache || Date.now() - inferredOverlayCache.at >= INFERRED_OVERLAY_TTL_MS) {
     const map = new Map<string, OverlayEntry[]>();
-    for (const rec of await extractInferredRecords()) {
-      if (!rec.personWcaId || !(rec.attemptResult > 0)) continue;
-      const key = `${rec.eventId.toLowerCase()}|${rec.type === 'average' ? 1 : 0}`;
-      let list = map.get(key);
-      if (!list) { list = []; map.set(key, list); }
-      list.push({ wcaId: rec.personWcaId, iso2: rec.personIso2, compId: rec.compId, value: rec.attemptResult });
+    const append = (ranks: Map<string, OverlayEntry[]>) => {
+      for (const [key, entries] of ranks) map.set(key, [...(map.get(key) ?? []), ...entries]);
+    };
+    for (const entry of inferredPool.values()) {
+      if (inInferredWindow(entry.date)) append(entry.ranks);
+    }
+    for (const data of cache.values()) {
+      if (!inferredPool.has(data.slug) && inInferredWindow(await getCompStartDate(data.slug))) append(collectRankCandidates(data));
     }
     inferredOverlayCache = { at: Date.now(), map };
   }
