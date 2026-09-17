@@ -52,6 +52,7 @@
       "./scramble-length": "runtime-neutral",
       "./comp-schedule": "runtime-neutral",
       "./comp-localize": "runtime-neutral",
+      "./cubing-competitions": "runtime-neutral",
       "./city-localize": "runtime-neutral",
       "./competition-index": "runtime-neutral",
       "./alg": "mixed",
