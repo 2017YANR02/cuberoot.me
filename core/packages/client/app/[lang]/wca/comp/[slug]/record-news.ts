@@ -12,6 +12,24 @@ export interface NewcomerRecord {
   value: number;
 }
 
+/** Apply only exact, positive record matches; never change the upstream payload. */
+export function withNewcomerRecords<T extends {
+  e: string; r: string; n: number; b: number; a: number; sr: string; ar: string | number;
+}>(rows: Record<string, T[]>, records: readonly NewcomerRecord[] = []): Record<string, T[]> {
+  if (!records.length) return rows;
+  return Object.fromEntries(Object.entries(rows).map(([key, results]) => [key, results.map(result => {
+    const matches = records.filter(record => record.eventId === result.e && record.roundId === result.r
+      && record.personNumber === result.n && Number.isSafeInteger(record.value) && record.value > 0);
+    const single = matches.some(record => record.type === 'single' && record.value === result.b);
+    const average = matches.some(record => record.type === 'average' && record.value === result.a);
+    if (!single && !average) return result;
+    return { ...result,
+      sr: single && (!result.sr || result.sr === 'PR') ? 'NWR' : result.sr,
+      ar: average && (!result.ar || result.ar === 'PR') ? 'NWR' : result.ar,
+    };
+  })]));
+}
+
 /** Curated bilingual reports, preserving the rankings at the time of each report. */
 interface RecordNews {
   event: string;
