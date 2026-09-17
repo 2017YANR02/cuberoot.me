@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type CSSProperties } from 'react';
-import { Check } from 'lucide-react';
+import { Check, ImageOff } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
 import { HOME_BACKGROUND_ASSETS as ASSET_ROOT, HOME_BACKGROUNDS as SCENES, resolveHomeBackground } from '@/lib/home-backgrounds';
@@ -85,6 +85,7 @@ export function SiteBackgroundControl({ onDiagnosticsOpen }: { onDiagnosticsOpen
           <button key={item.value} type="button" role="menuitemradio" aria-checked={choice === item.value}
             className="site-background-mode" onClick={() => selectBackground(item.value)}>
             <span className="site-background-check">{choice === item.value && <Check size={13} />}</span>
+            {item.value === 'none' && <ImageOff size={14} aria-hidden="true" />}
             {item.label}
           </button>
         ))}
