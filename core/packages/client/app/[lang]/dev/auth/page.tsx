@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint":"553fe00f58c9bfc3e4b4a2a4ea3d8d05c27042ef9f9ca5289419b8f549040d24","reason":"Android 登录后新增独立推送隐私和权限门槛、设备绑定；退出与换号先停推并撤销绑定，离线只保留设备撤销凭据重试。注销通过账号外键级联删除设备及投递队列。本次补登记纪录通知偏好的注销覆盖清单，核对迁移 0238 的 user_id 外键已有 ON DELETE CASCADE；只补守卫登记，不改变注销事务和图中流程。已同步登录后、退出和注销图节点并覆盖原生推送入口的文档守卫；PKCE、第三方身份绑定与账号合并流程不变。源码及本地测试不代表部署或真机推送验收。"}
+{"fingerprint":"98e282361a576b0164f9715c7b8ea74e4f334d1a4f828abfe6011bff7f648f88","reason":"新增所有管理员可分别授权的 ChatGPT 只读 OAuth 流程图：S256 PKCE、单次授权码、短期访问令牌、轮换刷新和主动撤销；每次核对原账号权限，账号合并或降权阻断访问，注销由迁移 0240 外键级联删除授权。角色测试会话复用凭据签发拦截，不能授权 MCP；网站退出仍独立于第三方连接撤销。已扩展守卫覆盖 MCP 传输权限入口与授权表。账号页增加管理入口，管理员统计 SQL 仅提取复用，现有登录、绑定、原生推送和注销事务流程不变。源码及本地验证不代表部署或 ChatGPT 真人连接验收。"}
 */
 
 import type { ReactNode } from 'react';
@@ -246,6 +246,17 @@ export default function AuthFlowPage() {
       <p>{t('微信手机号实时授权已本地接入，仍须后端和网站部署、新版小程序上传、后台能力及隐私声明核验，以及授权成功/拒绝/旧号绑定的真机验收。Apple IAP 仍待接入；各平台真人登录回跳、绑定、合并、退出和注销矩阵须分别验收。不能把这张说明图当成功能完成清单。', 'WeChat real-time phone authorization is locally integrated. Backend and website deployment, a new Mini Program upload, platform capability and privacy checks, and real-device authorization/decline/existing-account linking acceptance are still required. Apple IAP remains unimplemented. Real-account handoff, linking, merging, sign-out and deletion need per-platform acceptance. This diagram is not a completion checklist.')}</p>
     </details>
 
+    <section id="mcp" className="auth-map-section">
+      <h2>{t('ChatGPT 只读授权', 'ChatGPT read-only authorization')}</h2>
+      <Steps items={[
+        t('ChatGPT 发起 OAuth → 校验客户端、回调地址、资源与 S256 PKCE → CubeRoot 管理员登录并明确同意或拒绝；角色测试会话不能授权。', 'ChatGPT starts OAuth → validate client, callback, resource and S256 PKCE → a CubeRoot administrator signs in and explicitly approves or declines; role-preview sessions cannot authorize.'),
+        t('同意后签发 5 分钟单次授权码 → 核对 PKCE 后换取 10 分钟访问令牌和轮换刷新令牌；授权最多 30 天。数据库只存凭据摘要。', 'Approval issues a single-use code valid for 5 minutes → PKCE verification exchanges it for a 10-minute access token and rotating refresh token; the grant lasts at most 30 days. Only credential hashes are stored.'),
+        t('每次调用重查原账号管理员权限，只提供汇总和数值诊断。账号合并或降权后失效；注销通过外键级联删除授权。', 'Every call rechecks the original account’s administrator access and exposes only aggregates and numeric diagnostics. Merging or demotion invalidates access; account deletion cascades to grants.'),
+        t('网站退出不等于撤销 ChatGPT：在账号的只读连接页撤销授权后，访问及刷新令牌立即失效。', 'Website sign-out does not revoke ChatGPT: revoke the grant on the account connection page to invalidate access and refresh tokens immediately.'),
+      ]} />
+      <p>{t('连接页和协议实现属于源码证据；部署成功与 ChatGPT 真人连接须另外验收。', 'The connection page and protocol implementation are source evidence; deployment and a real ChatGPT connection require separate acceptance.')}</p>
+      <AppLink href="/account/mcp" prefetch={false}>{t('管理我的连接', 'Manage my connections')}</AppLink>
+    </section>
     <footer className="auth-map-footer">
       <AppLink href="/dev/api" prefetch={false}>{t('API 目录', 'API reference')}</AppLink>
       <AppLink href="/dev/schema" prefetch={false}>{t('账号数据结构', 'Account schema')}</AppLink>

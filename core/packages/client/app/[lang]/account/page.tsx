@@ -822,6 +822,10 @@ export default function AccountPage() {
     },
     ...(isAdmin ? [
       {
+        key: 'mcp', href: '/account/mcp', icon: <LockKeyhole size={22} className="account-card-icon" />,
+        title: tr({ zh: 'ChatGPT 只读连接', en: 'ChatGPT read-only connection' }),
+      },
+      {
         key: 'users-admin',
         href: '/admin',
         icon: <UserCog size={22} className="account-card-icon" />,

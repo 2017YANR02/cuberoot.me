@@ -71,8 +71,19 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
+//   mcp mcp_oauth
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'system', m: 'POST', p: '/v1/mcp', g: 'admin', c: 'no-store', zh: 'OAuth 授权的只读 MCP 工具；限流、查询超时与调用审计', en: 'OAuth-authorized read-only MCP tools with rate limits, query deadlines and audit logs' },
+  { d: 'auth', m: 'GET', p: '/.well-known/oauth-protected-resource/v1/mcp', g: 'public', c: 'no-store', zh: 'MCP 资源与授权服务器发现', en: 'MCP resource and authorization-server discovery' },
+  { d: 'auth', m: 'GET', p: '/.well-known/oauth-authorization-server', g: 'public', c: 'no-store', zh: 'OAuth 发现与 S256 PKCE 能力', en: 'OAuth discovery and S256 PKCE capabilities' },
+  { d: 'auth', m: 'POST', p: '/v1/mcp/oauth/register', g: 'public', c: 'no-store', zh: '注册限定 ChatGPT 回调的公开客户端', en: 'Register the public client with restricted ChatGPT callbacks' },
+  { d: 'auth', m: 'GET', p: '/v1/mcp/oauth/authorize', g: 'public', c: 'no-store', zh: '验证 OAuth 请求并进入管理员授权页', en: 'Validate OAuth requests and open administrator consent' },
+  { d: 'auth', m: 'POST', p: '/v1/mcp/oauth/consent', g: 'admin', c: 'no-store', zh: '明确同意或拒绝 ChatGPT 只读权限', en: 'Explicitly approve or decline ChatGPT read-only access' },
+  { d: 'auth', m: 'POST', p: '/v1/mcp/oauth/token', g: 'public', c: 'no-store', zh: '核销一次性授权码或轮换刷新令牌', en: 'Consume a one-time authorization code or rotate a refresh token' },
+  { d: 'auth', m: 'POST', p: '/v1/mcp/oauth/revoke', g: 'public', c: 'no-store', zh: '凭 MCP 令牌撤销对应授权', en: 'Revoke a grant using its MCP token' },
+  { d: 'auth', m: 'GET', p: '/v1/mcp/oauth/connections', g: 'admin', c: 'no-store', zh: '本人有效的 MCP 授权', en: 'Own active MCP grants' },
+  { d: 'auth', m: 'POST', p: '/v1/mcp/oauth/connections/revoke', g: 'admin', c: 'no-store', zh: '撤销本人指定的 MCP 授权', en: 'Revoke a specific MCP grant owned by the administrator' },
   { d: 'system', m: 'GET', p: '/v1/admin/disk', g: 'admin', c: 'no-store', zh: '根磁盘容量与目录占用；path 选择目录，refresh=1 请求后台刷新', en: 'Root disk capacity and directory usage; path selects a directory, refresh=1 requests a background scan' },
   { d: 'platform', m: 'POST', p: '/v1/platform/organizer-applications', g: 'login', c: 'no-store', zh: '提交主办方申请，可关联已有组织', en: 'Apply to host competitions using a new or existing organization' },
   { d: 'platform', m: 'GET', p: '/v1/platform/organizer-applications/me', g: 'login', c: 'no-store', zh: '读取本人申请与获准办赛的组织', en: 'Read own applications and eligible organizer organizations' },

@@ -42,6 +42,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'mcp_oauth_grants', domain: 'account', origin: '0240', purpose: { zh: '管理员 MCP 授权、PKCE 绑定及凭据摘要；注销级联删除，合并或降权后失效', en: 'Administrator MCP grants, PKCE bindings and credential hashes; deletion cascades, merging or demotion invalidates access' } },
   { name: 'notification_push_devices', domain: 'account', origin: '0239', purpose: { zh: '已授权的 Android 推送设备和账号绑定', en: 'Consented Android push devices and account bindings' } },
   { name: 'notification_push_deliveries', domain: 'account', origin: '0239', purpose: { zh: '纪录手机推送队列及服务商接收状态', en: 'Record push queue and provider acceptance status' } },
   { name: 'record_notification_preferences', domain: 'account', origin: '0238', purpose: { zh: '账号共享的纪录订阅筛选；本人纪录自动纳入', en: 'Account-wide record subscriptions; own records are always included' } },
@@ -775,6 +776,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 237, slug: 'nav_topics', desc: { zh: '管理员管理导航话题，同步站点标签。', en: 'Administrator topic management with synchronized site tags.' } },
   { n: 238, slug: 'record_notifications', desc: { zh: '纪录订阅、首次同步基线及持久化投递去重。', en: 'Record subscriptions, initial snapshot baselines, and persistent delivery deduplication.' } },
   { n: 239, slug: 'record_push', desc: { zh: 'Android 推送设备绑定、退出撤销及持久化投递队列。', en: 'Android device bindings, logout revocation, and a durable push queue.' } },
+  { n: 240, slug: 'mcp_oauth', desc: { zh: '管理员只读 MCP 的单次授权码、短效访问令牌、刷新轮换与撤销。', en: 'Single-use codes, short-lived access tokens, refresh rotation and revocation for administrator read-only MCP.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

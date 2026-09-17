@@ -1,3 +1,4 @@
+import { registrationReport, membershipSummaryReport } from '../utils/admin_reports.js';
 /**
  * 内部账号认证路由 —— 邮箱/手机验证码登录 + 多身份绑定(WCA / email / phone),挂在 /v1 下。
  *
@@ -1247,34 +1248,8 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
       )) AS users_without_identity
       FROM app_users
       WHERE merged_into_user_id IS NULL`),
-    query<{ day: string; count: number | string }>(`WITH days AS (
-      SELECT generate_series(
-        ?::date,
-        ?::date,
-        INTERVAL '1 day'
-      )::date AS day
-    )
-    SELECT days.day, COUNT(app_users.id) AS count
-    FROM days
-    LEFT JOIN app_users
-      ON app_users.created_at >= days.day AT TIME ZONE 'UTC'
-      AND app_users.created_at < (days.day + 1) AT TIME ZONE 'UTC'
-      AND app_users.merged_into_user_id IS NULL
-    GROUP BY days.day
-    ORDER BY days.day`, [activityRange.from, activityRange.to]),
-    query<{
-      active_personal: number | string;
-      active_enterprise: number | string;
-    }>(`SELECT
-      COUNT(*) FILTER (
-        WHERE (expires_at IS NULL OR expires_at > NOW())
-          AND LEFT(plan_slug, 11) <> 'enterprise_'
-      ) AS active_personal,
-      COUNT(*) FILTER (
-        WHERE (expires_at IS NULL OR expires_at > NOW())
-          AND LEFT(plan_slug, 11) = 'enterprise_'
-      ) AS active_enterprise
-      FROM memberships`),
+    registrationReport(query, activityRange),
+    membershipSummaryReport(query),
     query<{
       day: string;
       personal: number | string;
