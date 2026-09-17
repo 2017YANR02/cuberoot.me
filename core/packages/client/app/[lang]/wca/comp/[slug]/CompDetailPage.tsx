@@ -3457,9 +3457,8 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
             {u.wcaid ? (
               <Link
                 prefetch={false}
-                href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${u.wcaid}`}
+                href={`/wca/persons/${u.wcaid}`}
                 className="cuber-link-modal"
-                onClick={onClose}
               >
                 {displayCuberName(u.name, isZh)}
               </Link>
@@ -3588,6 +3587,7 @@ interface RoundResultModalProps {
 }
 
 function RoundResultModal({ number, eventId, roundId, data, compName, compStartDate, compIso2, isZh, pbMap, changeMap, onShowAll, onClose }: RoundResultModalProps) {
+  const backdropProps = useModalBackdrop(onClose);
   const [copyState, setCopyState] = useState<'idle' | 'copying' | 'done' | 'nothing' | 'error'>('idle');
   const [downloadState, setDownloadState] = useState<'idle' | 'busy' | 'error'>('idle');
   const cardRef = useRef<HTMLDivElement>(null);
@@ -3862,7 +3862,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
   }
 
   return (
-    <div className="comp-modal-backdrop comp-modal-backdrop-2" onClick={onClose}>
+    <div className="comp-modal-backdrop comp-modal-backdrop-2" {...backdropProps}>
       <div ref={cardRef} className="comp-round-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <header className="comp-modal-header">
           <div className="comp-modal-title">
@@ -3870,9 +3870,8 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
             {u.wcaid ? (
               <Link
                 prefetch={false}
-                href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${u.wcaid}`}
+                href={`/wca/persons/${u.wcaid}`}
                 className="cuber-link-modal"
-                onClick={onClose}
               >
                 {displayCuberName(u.name, isZh)}
               </Link>
