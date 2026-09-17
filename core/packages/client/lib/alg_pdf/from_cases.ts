@@ -10,10 +10,10 @@
 import type { AlgCase, AlgEntry, AlgPuzzle } from '@cuberoot/shared';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { primaryCaseName } from '@/lib/alg_case_display';
+import { caseAlgIssue } from '@/lib/alg_case_alignment';
 import {
   caseViewAlg,
   caseViewSetup,
-  displayAlg,
   displayCaseScramble,
   oriAdjustSetup,
   shortOriName,
@@ -47,8 +47,7 @@ export interface FromCasesOptions {
   /** case → PDF 中显示的名字；默认与网页的标准主名一致。 */
   caseLabel?: (c: AlgCase) => string;
   /**
-   * 不剥收尾 AUF。3BLD 换位子那两套**必须**开:818 条里有 229 条真的以 U/U'/U2
-   * 收尾,剥了就是条错公式(见 alg/3bld/comm 页头注)。
+   * @deprecated 所有公式集都保留完整收尾调整；保留此选项以兼容既有调用方。
    */
   rawAlg?: boolean;
   /** 出不出缩略图。默认出;换位子字典 818 张图纯属浪费纸,那边关掉。 */
@@ -82,7 +81,7 @@ export interface FromCasesOptions {
 
 export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
   const {
-    puzzle, set, cases, oriOf, algFilter, groupLabel, rawAlg,
+    puzzle, set, cases, oriOf, algFilter, groupLabel,
     thumbs = true, setups = true, subOf, maxAlgs = DEFAULT_MAX_ALGS,
   } = o;
 
@@ -100,6 +99,9 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
       const allForOri = c.algs[oriIdx] ?? c.algs[0] ?? [];
       const displayAlgs = o.algsFor?.(c, oriIdx) ?? allForOri;
       const picked = (algFilter ? displayAlgs.filter(algFilter) : displayAlgs).slice(0, maxAlgs);
+      if (picked.some(caseAlgIssue)) {
+        throw new Error(`Cannot export algorithms that do not match their case: ${puzzle}/${set} ${c.name}`);
+      }
       // 印出来的打乱跟着视角转 —— 图是按 `oriAdjustSetup` 画的,打乱不跟着就摆不出图上那个态
       const setup = caseViewSetup(oriAdjustSetup(c.setup, oriIdx), o.viewAngle ?? 'default');
       // 图取未筛选的首条 —— 筛选只该影响印出来的公式,不该换掉这张 case 的图
@@ -114,7 +116,7 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
         setup: setups && setup ? formatScrambleForEvent(puzzle, displayCaseScramble(puzzle, set, setup)) : undefined,
         algs: picked.map(e => {
           const angled = caseViewAlg(e.alg, o.viewAngle ?? 'default');
-          return formatScrambleForEvent(puzzle, rawAlg ? angled : displayAlg(angled));
+          return formatScrambleForEvent(puzzle, angled);
         }),
         thumb: thumbs
           ? {

@@ -112,4 +112,16 @@ describe('community alg submission validation', () => {
       raw: "y R U R'",
     })).resolves.toEqual({ ok: true, alg: "y R U R'" });
   });
+
+  it('rejects a parenthesized duplicate before validation or submission', async () => {
+    await expect(prepareCommunityAlgForSubmission({ ...input, existingAlgs: ["(R U R')"] }))
+      .resolves.toEqual({ ok: false, kind: 'duplicate', reason: '' });
+    expect(validateAlgCaseMock).not.toHaveBeenCalled();
+  });
+
+  it('checks the completed formula again after adding AUF', async () => {
+    validateAlgCaseMock.mockResolvedValue({ ok: true, auf: 'U2' });
+    await expect(prepareCommunityAlgForSubmission({ ...input, existingAlgs: ["(R U R') U2"] }))
+      .resolves.toEqual({ ok: false, kind: 'duplicate', reason: '' });
+  });
 });

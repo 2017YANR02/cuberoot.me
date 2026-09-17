@@ -30,6 +30,31 @@
 
 export type MoveKind = 'face' | 'wide' | 'slice' | 'rotation';
 
+/** Equality for library entries: ignore grouping parentheses and layout only.
+ * Keep primes, turn counts, case, commutators and finger notation significant.
+ * Retain the boundary before a group exponent: (R U)2 is not R U2.
+ */
+export function duplicateAlgKey(alg: string): string {
+  return alg
+    // Arrow spacing carries hand information, unlike ordinary move layout.
+    .replace(/([↑↓·])(?=\s|$)/g, '$1\u0001')
+    .replace(/([)）])(?=[0-9'])/g, '$1\u0000')
+    .replace(/[()（）\s]/g, '');
+}
+
+export function findDuplicateAlgs(entries: readonly { alg: string }[]): Array<{ index: number; first: number }> {
+  const seen = new Map<string, number>();
+  const duplicates: Array<{ index: number; first: number }> = [];
+  entries.forEach((entry, index) => {
+    const key = duplicateAlgKey(entry.alg);
+    if (!key) return;
+    const first = seen.get(key);
+    if (first === undefined) seen.set(key, index);
+    else duplicates.push({ index, first });
+  });
+  return duplicates;
+}
+
 export interface ParsedMove {
   /** 逐字原文,如 `3Rw2'` / `r` / `M'` */
   raw: string;

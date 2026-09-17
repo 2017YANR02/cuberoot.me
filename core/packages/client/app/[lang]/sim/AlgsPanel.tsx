@@ -6,7 +6,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ALG_CATALOG, loadAlg, type AlgPuzzle, type AlgFile, type AlgCase } from '@cuberoot/shared';
+import { ALG_CATALOG, type AlgPuzzle, type AlgFile, type AlgCase } from '@cuberoot/shared/alg';
+import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
 import './algs-panel.css';
 import { displayAlg } from '@/lib/alg_display';
 import { useT } from "@/hooks/useT";

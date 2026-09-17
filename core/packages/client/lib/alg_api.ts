@@ -1,3 +1,4 @@
+import { duplicateAware } from './alg_duplicates';
 /**
  * Alg submissions API client — ported from packages/client-vite/src/utils/alg_api.ts.
  * 任何登录用户都能给 (puzzle, set, case_name) 投 alg;作者 + admin 可改/删。
@@ -30,7 +31,7 @@ export async function addSubmission(
     headers: authHeaders(),
     body: JSON.stringify({ alg, notes }),
   });
-  return handleApi<AlgSubmission>(resp);
+  return duplicateAware(handleApi<AlgSubmission>(resp));
 }
 
 /** Edit your own submission (admins can edit anyone's, and admins can also re-target caseName). */
@@ -43,7 +44,7 @@ export async function updateSubmission(
     headers: authHeaders(),
     body: JSON.stringify(fields),
   });
-  return handleApi<AlgSubmission>(resp);
+  return duplicateAware(handleApi<AlgSubmission>(resp));
 }
 
 /** Delete your own submission (admins can delete anyone's). */

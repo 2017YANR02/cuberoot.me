@@ -45,6 +45,8 @@ describe('skewb notation translator', () => {
     expect(translate('B2')).toBe('U2');
     expect(translate("r'")).toBe("R'");
     expect(translate('b2')).toBe('B2');
+    expect(translate("r2'")).toBe("R2'");
+    expect(translate("L2'")).toBe("UL2'");
   });
 
   it('S/H macros expand and recurse (L → UL, rotation-free)', () => {
@@ -90,6 +92,18 @@ describe('skewb notation translator', () => {
 });
 
 describe('skewb alg inverse', () => {
+  it.each([
+    "x R' r B R' B' r2' R' r",
+    "y r' B r' R r R' r2 B",
+    "y' x R r R' z R r' R' r z' r2' R r R'",
+    "S2 H2' r2'",
+  ])('parses inverse doubles and cancels the actual move sequence: %s', async (alg) => {
+    const kp = await puzzles.skewb.kpuzzle();
+    expect(kp.defaultPattern().applyAlg(
+      `${normalizeAlg('skewb', invert(alg))} ${normalizeAlg('skewb', alg)}`,
+    ).patternData).toEqual(kp.defaultPattern().patternData);
+  });
+
   it('keeps cubing.js UR/UL grips intact and round-trips a real Sarah case', async () => {
     const alg = "y x R b' r' R' r z B' r B";
     expect(normalizeAlg('skewb', alg)).toContain('UR');

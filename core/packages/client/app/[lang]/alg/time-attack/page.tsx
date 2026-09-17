@@ -27,11 +27,11 @@ import {
   ALG_CATALOG,
   ALG_PUZZLES,
   getAlgSetMeta,
-  loadAlg,
   type AlgCase,
   type AlgFile,
   type AlgPuzzle,
 } from '@cuberoot/shared';
+import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
 import { CaseThumb } from '@/components/CaseThumb';
 import AppLink from '@/components/AppLink';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';

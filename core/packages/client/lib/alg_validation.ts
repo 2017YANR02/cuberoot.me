@@ -13,7 +13,7 @@
  *
  * LL 公式做完常常差一个顶层转才「整体还原」。那个 U 对魔友没有意义(他自己会转),
  * 所以:**校验只要求「差一个 AUF 之内能还原」**,库里存补齐的完整式(`setup + alg` 精确还原),
- * 显示时 `displayAlg()` 再把它剥掉。补哪个 U 由 `auf` 字段告诉调用方 —— 站长定的规矩。
+ * 显示、复制和动画都保留这个调整，与公共 case 的确定状态一致。补哪个调整由 `auf` 返回。
  *
  * f2l 类反过来:它的判据压根不看顶层,末尾的 U 永远是废动作,照旧拦。
  *
@@ -28,7 +28,7 @@ import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
 import type { AlgPuzzle, AlgSticker } from '@cuberoot/shared';
 import { normalizeAlg } from '@/lib/alg_normalize';
 import { displayAlg } from '@/lib/alg_display';
-import { goalOf, reachesGoal, type AlgGoal } from '@/lib/alg_goals';
+import { CUBE_ORIENTATIONS, goalOf, reachesGoal, type AlgGoal } from '@/lib/alg_goals';
 import { ftoEifState, invertFtoEifAlgorithm, isFtoEifSolved, parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
 import { sq1StateShapes } from '@/lib/sq1-shapes';
 import { traceSq1Algorithm } from '@/lib/sq1-tools';
@@ -154,10 +154,9 @@ export async function validateAlgCase(
       : { ok: false, reason: '执行 setup + alg 后没有还原 FTO' };
   }
   const loader = loadKpuzzle(puzzle);
-  if (!loader) return { ok: true };
-  if (!alg.trim()) return { ok: true };
+  if (!loader) return { ok: false, reason: `未支持的校验项目:${puzzle}` };
 
-  if (goalKind === 'skip') return { ok: true, auf: '' };
+  if (goalKind === 'skip') return { ok: false, reason: '没有可验证的阶段目标' };
 
   let cleanAlg: string;
   let cleanSetup: string;
@@ -230,6 +229,22 @@ export async function validateAlgCase(
   for (const auf of aufCandidates) {
     const p = run(auf);
     if (p && goal(p)) return { ok: true, auf };
+  }
+  // An algorithm can finish in a different grip (for example an initial x'
+  // without a final x). Its original U layer is then no longer the world U
+  // face. Restore the centre frame before trying the finishing adjustment;
+  // testing arbitrary face turns could conceal a wrong source algorithm.
+  if (!options.storedAlg && puzzle === '3x3') {
+    const end = run('');
+    const centers = kp.defaultPattern().patternData.CENTERS?.pieces;
+    if (end && centers) for (const rotation of CUBE_ORIENTATIONS) {
+      if (!rotation) continue;
+      const oriented = end.applyAlg(rotation);
+      if (!oriented.patternData.CENTERS?.pieces.every((piece, i) => piece === centers[i])) continue;
+      for (const u of ['U', 'U2', "U'"]) {
+        if (goal(oriented.applyAlg(u))) return { ok: true, auf: `${rotation} ${u}` };
+      }
+    }
   }
   if (options.storedAlg && goalKind === 'sq1-ep') {
     return {

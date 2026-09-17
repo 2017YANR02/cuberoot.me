@@ -6,6 +6,12 @@ export const OH_HANDS = ['left', 'right'] as const;
 export type OhHand = (typeof OH_HANDS)[number];
 
 const THREE_BY_THREE_OH_HAND_SETS = new Set(['oll', 'pll']);
+const ALIGNED_RIGHT = Symbol('aligned-right-oh');
+type AlignedOhCase = AlgCase & { [ALIGNED_RIGHT]?: Record<number, AlgEntry[]> };
+export function cacheAlignedOhEntries(c: AlgCase, orientation: number, entries: AlgEntry[]): void {
+  const aligned = c as AlignedOhCase;
+  (aligned[ALIGNED_RIGHT] ??= {})[orientation] = entries;
+}
 
 /** Sets whose `oh` source formulas have state-verified M-mirror partners. */
 export function supportsOhHands(puzzle: string, set: string): boolean {
@@ -35,6 +41,8 @@ export function ohAlgsForCase(
   orientation: number,
   hand: OhHand,
 ): AlgEntry[] {
+  const aligned = (c as AlignedOhCase)[ALIGNED_RIGHT]?.[orientation];
+  if (hand === 'right' && aligned) return aligned;
   const source = hand === 'left' ? c : mirrorPartner(c, setCases);
   if (!source) return [];
   const entries = source.algs[orientation] ?? source.algs[0] ?? [];

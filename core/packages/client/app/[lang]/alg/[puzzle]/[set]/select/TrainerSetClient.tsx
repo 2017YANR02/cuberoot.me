@@ -7,7 +7,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Eraser, MousePointer2 } from 'lucide-react';
-import { getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
+import { getAlgSetMeta, type AlgCase } from '@cuberoot/shared/alg';
+import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
 import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';
 import { useTrainerStore, mixSessionId } from '@/lib/trainer-store';
 import {

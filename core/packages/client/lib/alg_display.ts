@@ -15,6 +15,53 @@
 
 import { is3x3TopLayerSet } from '@cuberoot/shared/alg';
 import { mergeAdjacentMoves, renderMove, toMoveString, tokenizeMoves } from '@cuberoot/shared/alg-notation';
+import type { AlgTextEdit } from '@/lib/alg_html';
+
+/** Only U-layer turns: cube order four, Megaminx order five, Pyraminx/FTO order three. */
+export function uTurnOrder(puzzle: string): number | undefined {
+  if (['2x2', '3x3', '4x4', '5x5'].includes(puzzle)) return 4;
+  if (puzzle === 'megaminx') return 5;
+  if (puzzle === 'pyraminx' || puzzle === 'fto') return 3;
+  return undefined;
+}
+
+/** Preserve notation and grouping; reduce adjacent plain U turns without flattening the source. */
+export function adjacentUEdits(alg: string, order: number): AlgTextEdit[] {
+  const tokens = [...alg.matchAll(/(^|[\s(])(U(?:2'?|')?)(?=$|[\s)])/g)].map(m => ({
+    start: m.index! + m[1].length, end: m.index! + m[0].length,
+    amount: (m[2].includes('2') ? 2 : 1) * (m[2].endsWith("'") ? -1 : 1),
+  }));
+  const edits: AlgTextEdit[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const first = tokens[i];
+    let last = first;
+    let amount = first.amount;
+    let count = 1;
+    while (i + 1 < tokens.length && /^\s*$/.test(alg.slice(last.end, tokens[i + 1].start))) {
+      last = tokens[++i]; amount += last.amount; count++;
+    }
+    if (count > 1) {
+      const turn = ((amount % order) + order) % order;
+      const signed = turn > order / 2 ? turn - order : turn;
+      const text = signed === 0 ? '' : `U${Math.abs(signed) === 1 ? '' : Math.abs(signed)}${signed < 0 ? "'" : ''}`;
+      edits.push({ start: first.start, end: last.end, text });
+    }
+  }
+  return edits;
+}
+
+export function applyAlgTextEdits(alg: string, edits: readonly AlgTextEdit[]): string {
+  let out = alg;
+  for (const edit of [...edits].sort((a, b) => b.start - a.start)) {
+    out = out.slice(0, edit.start) + edit.text + out.slice(edit.end);
+  }
+  return out.trim();
+}
+
+export function simplifyAdjacentU(puzzle: string, alg: string): string {
+  const order = uTurnOrder(puzzle);
+  return order ? applyAlgTextEdits(alg, adjacentUEdits(alg, order)) : alg;
+}
 
 /**
  * 顶层打乱的收尾 y 改为同向 U，保留顶面及侧面顶排的逐贴纸位置。
@@ -22,6 +69,7 @@ import { mergeAdjacentMoves, renderMove, toMoveString, tokenizeMoves } from '@cu
  * 只处理末尾连续的 U/y（包括观察角度追加的 U），不碰内部转体或 F2L 换槽。
  */
 export function displayCaseScramble(puzzle: string, set: string, scramble: string): string {
+  scramble = simplifyAdjacentU(puzzle, scramble);
   if (!scramble || !is3x3TopLayerSet(puzzle, set)) return scramble;
   try {
     const { moves, junk } = tokenizeMoves(toMoveString(scramble));
@@ -73,33 +121,23 @@ const CASE_VIEW_SOLUTION_AUF: Record<CaseViewAngle, string> = {
   up: 'U',
 };
 
-const LEADING_U = /^U(2'?|')?(?:\s+|$)/;
-const U_TURNS: Record<string, number> = { U: 1, U2: 2, "U2'": 2, "U'": 3 };
-const TURN_U = ['', 'U', 'U2', "U'"] as const;
 
 /** 摆好 case 后补用户选择的 U 层角度。 */
 export function caseViewSetup(setup: string, angle: CaseViewAngle): string {
   const auf = CASE_VIEW_SETUP_AUF[angle];
   if (!setup || !auf) return setup;
-  return `${setup.trimEnd()} ${auf}`;
+  return simplifyAdjacentU('3x3', `${setup.trimEnd()} ${auf}`);
 }
 
 /**
  * 同一状态转了 U^k 后，解法必须在开头补 U^-k；若原公式也以 U 开头，顺手合并相邻 AUF。
- * 这里只动最开头一个普通 U 层动作，不碰 Uw / u，也不改公式主体与收尾 AUF。
+ * 合并连续的普通 U 层动作，不碰 Uw / u，保留分组和指法记号。
  */
 export function caseViewAlg(alg: string, angle: CaseViewAngle): string {
   const prefix = CASE_VIEW_SOLUTION_AUF[angle];
   if (!alg || !prefix) return alg;
 
-  const trimmed = alg.trimStart();
-  const match = trimmed.match(LEADING_U);
-  const leading = match?.[0]?.trim();
-  if (!match || !leading) return `${prefix} ${trimmed}`;
-
-  const rest = trimmed.slice(match[0].length);
-  const turns = (U_TURNS[prefix] + U_TURNS[leading]) % 4;
-  return [TURN_U[turns], rest].filter(Boolean).join(' ');
+  return simplifyAdjacentU('3x3', `${prefix} ${alg.trimStart()}`);
 }
 
 /**

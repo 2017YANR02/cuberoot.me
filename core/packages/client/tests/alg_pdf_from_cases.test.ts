@@ -36,11 +36,11 @@ describe('algSheetFromCases', () => {
     expect(sheet.cases[0].algs[0]).toBe("R U0 R'");
   });
 
-  it('rawAlg 保留收尾 AUF —— 换位子剥了就是条错公式', () => {
+  it('所有导出保留必要收尾调整，与实际执行一致', () => {
     const c = mkCase({ name: 'AD', algs: [[{ alg: "R U R' U" }]] });
     const stripped = algSheetFromCases({ ...base, cases: [c] });
     const raw = algSheetFromCases({ ...base, cases: [c], rawAlg: true });
-    expect(stripped.cases[0].algs[0]).toBe("R U R'");
+    expect(stripped.cases[0].algs[0]).toBe("R U R' U");
     expect(raw.cases[0].algs[0]).toBe("R U R' U");
   });
 
@@ -174,6 +174,6 @@ describe('algSheetFromCases', () => {
     expect(sheet.cases[0].setup).toBe("R U R' U");
     expect(sheet.cases[0].thumb?.setup).toBe("R U R' U");
     expect(sheet.cases[0].thumb?.alg).toBe("R U R' U");
-    expect(sheet.cases[0].algs).toEqual(["R U R'"]);
+    expect(sheet.cases[0].algs).toEqual(["R U R' U"]);
   });
 });

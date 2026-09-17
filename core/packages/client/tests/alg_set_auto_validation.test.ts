@@ -21,4 +21,10 @@ describe('alg set automatic validation markers', () => {
     expect(source).toContain('title={isAdmin && c.id != null && invalidIds.has(c.id)');
     expect(source).toContain('invalid={isAdmin && c.id != null && trueIdx >= 0');
   });
+
+  it('reloads administrator case details without the public one-hour cache', () => {
+    const detail = readFileSync(new URL('../app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgSubOrCaseClient.tsx', import.meta.url), 'utf8');
+    expect(detail).toContain('loadAlg(puzzle as AlgPuzzle, set, { fresh: isAdmin })');
+    expect(detail).toContain('[puzzle, set, isAdmin]');
+  });
 });

@@ -8,7 +8,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Settings, Copy, Check, QrCode, RotateCcw, X } from 'lucide-react';
-import { ALG_CATALOG, getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
+import { ALG_CATALOG, getAlgSetMeta, type AlgCase } from '@cuberoot/shared/alg';
+import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
 import {
   useTrainerStore, TimerState, trainerPool, trainerScramblesReady, mixSessionId,
   completedRecapCount, readSessionSelection, type TrainerMode,

@@ -269,7 +269,8 @@ describe('CubingApp Roux and Pyraminx port', () => {
 
     const merged = mergeOhCmll(base, source);
     expect(merged.cases[0].algs[0]).toEqual([
-      { alg: 'R U2 R\'', tags: ['oh'] },
+      { alg: 'R U2 R\'' },
+      { alg: 'R U2\' R\'', setup: 'OH SETUP', tags: ['oh'] },
       { alg: 'r U R\'', setup: 'OH SETUP', tags: ['ft', 'oh'] },
     ]);
     expect(base.cases[0].algs[0]).toEqual([{ alg: 'R U2 R\'' }]);
