@@ -8,7 +8,7 @@
 // applyTheme / applyPalette(View Transitions 淡出 + localStorage 持久化)。
 //
 // 没有单独的「经典 / 跟随系统」项:明暗区本身就是经典(无 palette),浅 / 深两项
-// 直接预览经典亮 / 暗三色块,跟配色块同列对齐;勾跟随当前实际明暗。
+// 通过太阳 / 月亮图标选择,选中态跟随当前实际明暗。
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Sun, Moon, Check } from 'lucide-react';
@@ -35,10 +35,6 @@ import BoolToggle from '@/components/BoolToggle';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 
-// 经典配色亮 / 暗的 [背景, 强调, 文字] —— 跟 globals.css 的 :root / [data-theme=dark] 对应。
-const CLASSIC_LIGHT: [string, string, string] = ['#fafafa', '#c15f3c', '#171717'];
-const CLASSIC_DARK: [string, string, string] = ['#171717', '#d97757', '#fafafa'];
-
 function Swatch({ colors }: { colors: [string, string, string] }) {
   return (
     <span className="palette-swatch" aria-hidden="true">
@@ -53,12 +49,9 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
   const t = useT();
   const L = {
     title: t('外观', 'Appearance'),
-    scheme: t('明暗', 'Light / Dark'),
-    palette: t('配色', 'Color'),
     light: t('浅色', 'Light'),
     dark: t('深色', 'Dark'),
     lowContrast: t('低对比度', 'Low contrast'),
-    softenHint: t('降低对比,长时间看更省眼', 'Lower contrast — easier on the eyes'),
     more: t('比较全部', 'Compare all'),
   };
 
@@ -203,37 +196,28 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
           }}
         >
           <div className="appearance-settings">
-            <div className="appearance-sec-label">{L.scheme}</div>
-
-            <button
-              type="button"
-              role="menuitemradio"
-              aria-checked={onScheme && eff === 'dark'}
-              className={`lang-menu-item${onScheme && eff === 'dark' ? ' is-active' : ''}`}
-              onPointerEnter={() => showThemePreview('dark')}
-              onFocus={() => showThemePreview('dark')}
-              onClick={() => pickTheme('dark')}
-            >
-              <span className="lang-menu-check">{onScheme && eff === 'dark' && <Check size={13} />}</span>
-              <Swatch colors={CLASSIC_DARK} />
-              <span>{L.dark}</span>
-            </button>
-
-            <button
-              type="button"
-              role="menuitemradio"
-              aria-checked={onScheme && eff === 'light'}
-              className={`lang-menu-item${onScheme && eff === 'light' ? ' is-active' : ''}`}
-              onPointerEnter={() => showThemePreview('light')}
-              onFocus={() => showThemePreview('light')}
-              onClick={() => pickTheme('light')}
-            >
-              <span className="lang-menu-check">{onScheme && eff === 'light' && <Check size={13} />}</span>
-              <Swatch colors={CLASSIC_LIGHT} />
-              <span>{L.light}</span>
-            </button>
-
-            <div className="appearance-sec-label appearance-sec-div">{L.palette}</div>
+            <div className="appearance-schemes">
+              {(['light', 'dark'] as const).map((choice) => {
+                const Icon = choice === 'light' ? Sun : Moon;
+                const active = onScheme && eff === choice;
+                return (
+                  <button
+                    key={choice}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={active}
+                    aria-label={L[choice]}
+                    title={L[choice]}
+                    className={`lang-menu-item appearance-scheme${active ? ' is-active' : ''}`}
+                    onPointerEnter={() => showThemePreview(choice)}
+                    onFocus={() => showThemePreview(choice)}
+                    onClick={() => pickTheme(choice)}
+                  >
+                    <Icon size={18} aria-hidden="true" />
+                  </button>
+                );
+              })}
+            </div>
 
             {PALETTES.map((p) => {
               const on = p.id === palette;
@@ -262,7 +246,6 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
                 label={L.lowContrast}
               />
             </div>
-            <div className="appearance-hint">{L.softenHint}</div>
           </div>
 
           {<div

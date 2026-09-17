@@ -706,6 +706,25 @@ html[data-appearance-preview] body {
   padding-top: 8px;
   border-top: 1px solid var(--border-default);
 }
+.appearance-schemes {
+  display: flex;
+  gap: 4px;
+  padding: 2px 10px;
+  grid-column: 1 / -1;
+}
+.appearance-scheme {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  justify-content: center;
+}
+.appearance-scheme.is-active {
+  background: var(--accent-soft);
+}
+.appearance-scheme:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
 
 /* 柔和度三档:强度是「一条刻度」,横排 chip 能左右对比,比再堆三行单选清楚。 */
 .appearance-chips {
