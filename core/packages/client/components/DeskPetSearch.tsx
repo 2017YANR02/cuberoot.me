@@ -97,6 +97,11 @@ const CSS = `
 .deskpet-toolbar-thumb{width:20px;height:20px;flex:none;}
 .deskpet-toolbar .header-toggles{gap:0;}
 .deskpet-toolbar .lang-menu:not(.appearance-menu){top:auto;bottom:calc(100% + 6px);}
+/* anchored-panel: safe (search-box anchor, viewport-bounded width and available height) */
+.deskpet-toolbar .appearance-menu:has(.site-background-control){
+  top:auto;bottom:var(--deskpet-appearance-bottom);left:var(--deskpet-appearance-center);right:auto;
+  transform:translateX(-50%);width:min(580px,calc(100% - 32px));
+  max-height:var(--deskpet-appearance-height);}
 @media (max-width:768px){
   .deskpet-toolbar>*{flex:0 0 auto;}
   .deskpet-toolbar .sep{display:none;}
@@ -282,6 +287,25 @@ export default function DeskPetSearch({
       vv.removeEventListener('resize', apply);
       vv.removeEventListener('scroll', apply);
     };
+  }, []);
+
+  useLayoutEffect(() => {
+    const backdrop = backdropRef.current;
+    const box = boxRef.current;
+    if (!backdrop || !box) return;
+    const placeAppearance = () => {
+      // The backdrop's blur makes it the containing block for this fixed menu.
+      backdrop.style.setProperty('--deskpet-appearance-bottom', `${backdrop.clientHeight - box.offsetTop + 8}px`);
+      backdrop.style.setProperty('--deskpet-appearance-center', `${box.offsetLeft + box.offsetWidth / 2}px`);
+      backdrop.style.setProperty('--deskpet-appearance-height', `${Math.max(0, box.offsetTop - 16)}px`);
+    };
+    placeAppearance();
+    const observer = new ResizeObserver(placeAppearance);
+    observer.observe(backdrop);
+    observer.observe(box);
+    const toolbar = backdrop.querySelector('.deskpet-toolbar');
+    if (toolbar) observer.observe(toolbar);
+    return () => observer.disconnect();
   }, []);
 
   return (

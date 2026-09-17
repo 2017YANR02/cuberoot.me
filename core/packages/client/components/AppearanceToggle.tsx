@@ -35,12 +35,10 @@ import BoolToggle from '@/components/BoolToggle';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 
-function Swatch({ colors }: { colors: [string, string, string] }) {
+function Swatch({ color }: { color: string }) {
   return (
     <span className="palette-swatch" aria-hidden="true">
-      {colors.map((c, i) => (
-        <i key={i} style={{ background: c }} />
-      ))}
+      <i style={{ background: color, width: 14, height: 14 }} />
     </span>
   );
 }
@@ -196,7 +194,7 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
           }}
         >
           <div className="appearance-settings">
-            <div className="appearance-schemes">
+            <div className="appearance-schemes" style={{ display: 'flex', flexFlow: 'row nowrap', gap: 0 }}>
               {(['light', 'dark'] as const).map((choice) => {
                 const Icon = choice === 'light' ? Sun : Moon;
                 const active = onScheme && eff === choice;
@@ -209,6 +207,7 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
                     aria-label={L[choice]}
                     title={L[choice]}
                     className={`lang-menu-item appearance-scheme${active ? ' is-active' : ''}`}
+                    style={{ flex: '0 0 32px', width: 32, padding: 0, justifyContent: 'center' }}
                     onPointerEnter={() => showThemePreview(choice)}
                     onFocus={() => showThemePreview(choice)}
                     onClick={() => pickTheme(choice)}
@@ -233,7 +232,7 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
                   onClick={() => pickPalette(p.id)}
                 >
                   <span className="lang-menu-check">{on && <Check size={13} />}</span>
-                  <Swatch colors={p.swatch} />
+                  <Swatch color={p.swatch[1]} />
                   <span>{tr(p)}</span>
                 </button>
               );
