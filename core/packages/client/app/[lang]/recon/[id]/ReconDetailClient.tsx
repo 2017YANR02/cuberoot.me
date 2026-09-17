@@ -1201,7 +1201,7 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                         {hasTiming && <>
                           <span className="same-comp-round-sublabel">{tr({ zh: '起表', en: 'Pickup' })}</span>
                           <span className="same-comp-round-sublabel">{tr({ zh: '拍表', en: 'Putdown' })}</span>
-                          <span className="same-comp-round-sublabel">{tr({ zh: '起拍表', en: 'Pickup + putdown' })}</span>
+                          <span className="same-comp-round-sublabel">{tr({ zh: '起拍', en: 'Pickup + putdown' })}</span>
                         </>}
                       </div>
                     </td>
@@ -1419,7 +1419,7 @@ function SameSessionTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows: 
                         {r.slots.some(s => s?.pickupTime != null || s?.putdownTime != null) && <>
                           <span className="same-comp-round-sublabel">{tr({ zh: '起表', en: 'Pickup' })}</span>
                           <span className="same-comp-round-sublabel">{tr({ zh: '拍表', en: 'Putdown' })}</span>
-                          <span className="same-comp-round-sublabel">{tr({ zh: '起拍表', en: 'Pickup + putdown' })}</span>
+                          <span className="same-comp-round-sublabel">{tr({ zh: '起拍', en: 'Pickup + putdown' })}</span>
                         </>}
                       </div>
                     </td>
