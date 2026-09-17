@@ -10,6 +10,47 @@ export interface CompLinkOpts {
   view?: string;
 }
 
+export interface CompResultLocation { eventId: string; roundId: string; number: number }
+
+export function compResultHref(compId: string, result: CompResultLocation): string {
+  return `/wca/comp/${encodeURIComponent(compId)}/result/${encodeURIComponent(result.eventId)}/${encodeURIComponent(result.roundId)}/${result.number}`;
+}
+
+export function parseCompResultPath(path: string): CompResultLocation | null {
+  const match = /\/comp\/[^/]+\/result\/([a-z0-9]+)\/([a-z0-9]+)\/([1-9]\d*)\/?$/.exec(path);
+  if (!match || !Number.isSafeInteger(Number(match[3]))) return null;
+  return { eventId: match[1], roundId: match[2], number: Number(match[3]) };
+}
+
+/** The news feed has names and values, but not always a round or registration number. */
+export function compRecordHref(record: {
+  competitionId: string; eventId: string; personName: string; type: string; attemptResult: number;
+}): string {
+  const params = new URLSearchParams({ view: 'result', event: record.eventId,
+    record: JSON.stringify([record.personName, record.type, record.attemptResult]) });
+  return `${compHref(record.competitionId)}?${params}`;
+}
+
+export function resolveCompRecord(data: {
+  users: Record<string, { name: string }>;
+  events: { i: string; rs: { i: string }[] }[];
+  resultsByRound: Record<string, { e: string; r: string; n: number; a: number; b: number; v: number[] }[]>;
+}, eventId: string, record: string): CompResultLocation | null {
+  let target: unknown;
+  try { target = JSON.parse(record); } catch { return null; }
+  if (!Array.isArray(target) || target.length !== 3) return null;
+  const [name, type, value] = target;
+  if (typeof name !== 'string' || !['single', 'average'].includes(type)
+    || !Number.isSafeInteger(value) || value <= 0) return null;
+  const event = data.events.find(event => event.i === eventId);
+  for (const round of event?.rs ?? []) {
+    const result = data.resultsByRound[`${eventId}:${round.i}`]?.find(row => data.users[String(row.n)]?.name === name
+      && (type === 'average' ? row.a === value : row.b === value || row.v.includes(value)));
+    if (result) return { eventId, roundId: round.i, number: result.n };
+  }
+  return null;
+}
+
 export function compHref(compId: string, opts?: CompLinkOpts): string {
   let url = `/wca/comp/${compId}`;
   const params: string[] = [];

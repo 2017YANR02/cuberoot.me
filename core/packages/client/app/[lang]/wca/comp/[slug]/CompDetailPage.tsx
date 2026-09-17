@@ -42,7 +42,7 @@ import { localizeCity } from '@/lib/city-localize';
 import { getSimilarComps, type SeriesComp } from '@/lib/comp-series';
 import { getSameCityComps } from '@/lib/comp-city';
 import { onIdle } from '@/lib/on-idle';
-import { compLinkProps } from '@/lib/comp-link';
+import { compLinkProps, compHref, compResultHref, parseCompResultPath, resolveCompRecord } from '@/lib/comp-link';
 import { calcCompetitionHref } from '@/lib/calc-link';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import BoolToggle from '@/components/BoolToggle';
@@ -72,7 +72,7 @@ import { expandContinentRecord } from '@/lib/recon-utils';
 import '../comp.css';
 import { tr } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
-import { competitionRecordNews, type NewcomerRecord } from './record-news';
+import { competitionRecordNews, withNewcomerRecords, type NewcomerRecord } from './record-news';
 
 // 「打乱」tab:把 /scramble/gen 的比赛模式整套内嵌进来。重(WASM 求解器 + 打乱引擎),
 // 懒加载 —— 只有用户点开「打乱」才拉这部分 JS,不拖累比赛页首屏。
@@ -779,9 +779,11 @@ export default function CompDetailPage() {
   // avoiding a hydration mismatch; the effect fills the real slug post-hydration.
   const pathname = usePathname();
   const [rawSlug, setRawSlug] = useState('');
+  const [resultPath, setResultPath] = useState<ReturnType<typeof parseCompResultPath>>(null);
   useEffect(() => {
     const m = window.location.pathname.match(/\/comp\/([^/?#]+)/);
     setRawSlug(m ? decodeURIComponent(m[1]) : '');
+    setResultPath(parseCompResultPath(window.location.pathname));
   }, [pathname]);
   const slug = rawSlug.replace(/-/g, '');
   const router = useRouter();
@@ -804,15 +806,15 @@ export default function CompDetailPage() {
   // URL 状态走 nuqs。导航型(项目 / 轮次 / 视图 / 预排名多选)默认 push,后退可逐步返回;
   // 筛选 / 赛程布局 / 数据源覆盖是过滤/子开关,走 replace 不堆历史。多键联动(项目+轮次)
   // 用各自 setter 同 tick 调用,nuqs 自动合并;需要 replace 写入时传 per-call { history: 'replace' }。
-  const [eventParam, setEventParam] = useQueryState(
+  const [eventQuery, setEventParam] = useQueryState(
     'event',
     parseAsString.withDefault('').withOptions({ history: 'push', scroll: false }),
   );
-  const [roundUrlParam, setRoundUrlParam] = useQueryState(
+  const [roundQuery, setRoundUrlParam] = useQueryState(
     'round',
     parseAsString.withDefault('').withOptions({ history: 'push', scroll: false }),
   );
-  const [explicitView, setExplicitView] = useQueryState(
+  const [viewQuery, setExplicitView] = useQueryState(
     'view',
     parseAsStringEnum<'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar'>(['result', 'psych', 'schedule', 'podium', 'scramble', 'similar']).withOptions({ history: 'push', scroll: false }),
   );
@@ -836,6 +838,10 @@ export default function CompDetailPage() {
     'source',
     parseAsString.withOptions({ history: 'replace', scroll: false }),
   );
+  const [recordParam] = useQueryState('record', parseAsString);
+  const eventParam = resultPath?.eventId ?? eventQuery;
+  const roundUrlParam = resultPath?.roundId ?? roundQuery;
+  const explicitView = resultPath ? 'result' : viewQuery;
 
   useEffect(() => {
     if (rawSlug && rawSlug !== slug) {
@@ -844,7 +850,10 @@ export default function CompDetailPage() {
     }
   }, [rawSlug, slug, router]);
 
-  const [data, setData] = useState<CompData | null>(null);
+  const [rawData, setData] = useState<CompData | null>(null);
+  const data = useMemo(() => rawData ? { ...rawData,
+    resultsByRound: withNewcomerRecords(rawData.resultsByRound, rawData.newcomerRecords),
+  } : null, [rawData]);
   // 首屏分片:URL 已经指明「看成绩」时,先只拉当前项目(?only=<event>,几 KB)把表格渲出来,
   // 完整数据(领奖台 / 预排名 / 纪录 / 选手弹窗要用)随后台请求补齐 —— 大比赛全量 gzip 后
   // 仍有 380KB,跨洋要好几秒。没有 ?view= 的裸链默认视图还取决于全量(结束的比赛默认领奖台),
@@ -884,7 +893,40 @@ export default function CompDetailPage() {
   type ModalState =
     | { kind: 'round'; number: number; eventId: string; roundId: string }
     | { kind: 'all'; number: number };
-  const [modal, setModal] = useState<ModalState | null>(null);
+  const [localModal, setLocalModal] = useState<ModalState | null>(null);
+  const openedResult = useRef(false);
+  const modal = localModal ?? (resultPath ? { kind: 'round' as const, ...resultPath } : null);
+  useEffect(() => { setLocalModal(null); }, [pathname]);
+  const localHref = (href: string) => `${isZh ? '/zh' : ''}${href}`;
+  const setModal = (next: ModalState | null) => {
+    if (next?.kind === 'round') {
+      setLocalModal(null);
+      const href = localHref(compResultHref(slug, next));
+      if (resultPath) router.replace(href, { scroll: false });
+      else {
+        openedResult.current = true;
+        router.push(href, { scroll: false });
+      }
+    } else if (next) {
+      setLocalModal(next);
+    } else {
+      setLocalModal(null);
+      if (resultPath) {
+        if (openedResult.current && window.history.length > 1) {
+          openedResult.current = false;
+          router.back();
+        } else {
+          router.replace(localHref(compHref(slug, { view: 'result', event: resultPath.eventId,
+            round: String(roundTypeIdToNum(data, resultPath.eventId, resultPath.roundId)) })), { scroll: false });
+        }
+      }
+    }
+  };
+  useEffect(() => {
+    if (!recordParam || !data || data.slug !== slug || !fullLoaded) return;
+    const target = resolveCompRecord(data, eventParam, recordParam);
+    if (target) router.replace(`${isZh ? '/zh' : ''}${compResultHref(slug, target)}`, { scroll: false });
+  }, [recordParam, data, slug, fullLoaded, eventParam, isZh, router]);
   const [compInfo, setCompInfo] = useState<CompInfo | null>(null);
   const [compInfoSettled, setCompInfoSettled] = useState(false);
   useEffect(() => {
@@ -1359,7 +1401,7 @@ export default function CompDetailPage() {
   }, [data]);
 
   useEffect(() => {
-    if (!data || !defaultRoundKey) return;
+    if (!data || !defaultRoundKey || resultPath) return;
     // 深链带了项目但没带轮次(如 Bark 推送 ?event=444):只补该项目的默认轮次
     // (最后一个有成绩的轮次,否则末轮),保留指定项目,不要回退到 333 默认轮。
     if (eventParam && !roundParam) {
@@ -1385,7 +1427,7 @@ export default function CompDetailPage() {
 
   // 规范化:老的字母 round_type_id 直链(?round=d)→ 数字轮号,保证 URL 统一显示 1,2,3,4。
   useEffect(() => {
-    if (!data || !eventParam || !roundUrlParam || !roundParam) return;
+    if (!data || !eventParam || !roundUrlParam || !roundParam || resultPath) return;
     const canonical = String(roundTypeIdToNum(data, eventParam, roundParam));
     if (roundUrlParam !== canonical) {
       setRoundUrlParam(canonical, { history: 'replace' });
@@ -2150,7 +2192,6 @@ export default function CompDetailPage() {
           pbMap={pbMap}
           changeMap={changeMap}
           onSelectRound={(eventId, roundId) => {
-            onChangeRound(roundKey(eventId, roundId)); // 同步 event/round 进 URL → 页面背景也切到该轮
             setModal({ kind: 'round', number: modal.number, eventId, roundId });
           }}
           onClose={() => setModal(null)}
@@ -2497,12 +2538,16 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                 </td>
                 <td className="td-person">
                   <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
-                  <span
-                    className="cuber-name"
+                  <Link
+                    href={compResultHref(compId ?? '', { eventId: r.e, roundId: r.r, number: r.n })}
+                    prefetch={false}
+                    onClick={e => e.stopPropagation()}
+                    onNavigate={e => { e.preventDefault(); onClickCuber(r.n); }}
+                    className="cuber-name cuber-link"
                     title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}
                   >
                     {cuberName}
-                  </span>
+                  </Link>
                   {/* 行级编辑铅笔已移除:管理员经点成绩弹窗里的「编辑变更记录…」打开整条变更编辑器。 */}
                 </td>
                 {(() => {
@@ -3579,9 +3624,13 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
     const compIso2 = compFlagIso2(data.slug);
     const url = typeof window !== 'undefined' ? window.location.href : '';
     const events: Array<Record<string, unknown>> = [];
+    const newcomerSource = (type: 'single' | 'average') => data.newcomerRecords?.find(record =>
+      record.eventId === eventId && record.roundId === roundId && record.personNumber === number
+      && record.type === type && record.value === (type === 'single' ? result.b : result.a))?.source;
     if (singleTagForCopy && result.b > 0) {
       events.push({
         tag: singleTagForCopy, rec_type: 'single', attempt_result: result.b,
+        newcomer_source: singleTagForCopy === 'NWR' ? newcomerSource('single') : undefined,
         event_id: result.e, person_name: u.name, person_iso2: personIso2,
         comp_name: compNameZh, comp_name_en: compNameEn, comp_iso2: compIso2,
         url, previous_pr: pb?.[result.e]?.single?.best ?? null, pr_rank: singleRank,
@@ -3590,6 +3639,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
     if (avgTagForCopy && result.a > 0) {
       events.push({
         tag: avgTagForCopy, rec_type: 'average', attempt_result: result.a,
+        newcomer_source: avgTagForCopy === 'NWR' ? newcomerSource('average') : undefined,
         event_id: result.e, person_name: u.name, person_iso2: personIso2,
         comp_name: compNameZh, comp_name_en: compNameEn, comp_iso2: compIso2,
         url, previous_pr: pb?.[result.e]?.average?.best ?? null, pr_rank: averageRank,
@@ -3716,7 +3766,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
         variant="inline"
         iso2={iso2}
       />
-      {!tag && info?.national && <span className="comp-pr-mark-rank">/NR{info.national.rank}</span>}
+      {(!tag || tag === 'NWR') && info?.national && <span className="comp-pr-mark-rank">/NR{info.national.rank}</span>}
       {info?.world && tag.toUpperCase() !== 'WR' && <span className="comp-pr-mark-rank">/WR{info.world.rank}</span>}
     </span>
   );
