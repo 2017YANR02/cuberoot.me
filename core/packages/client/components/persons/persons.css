@@ -113,29 +113,26 @@ html[data-theme=dark] .wp-page {
     display: flex; flex-direction: column; gap: 10px;
 }
 .wp-combos-head {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 12px; flex-wrap: wrap;
+    display: flex; align-items: center;
+    gap: 8px;
 }
 .wp-combos-title {
     margin: 0; font-size: 1rem; font-weight: 600; color: var(--wp-text);
 }
-.wp-combos-sub {
-    margin: 0; font-size: 0.82rem; color: var(--wp-text-sub); max-width: 640px; line-height: 1.5;
-}
 .wp-combos-bodies {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
     margin-top: 2px; align-items: start;
 }
 .wp-combos-bodies .sor-pb {
+    min-width: 0;
     max-width: none;
     padding: 4px 0;
     background: transparent;
     border: none;
     border-radius: 0;
 }
-@media (max-width: 768px) {
-    .wp-combos-bodies { grid-template-columns: 1fr; }
-}
+.wp-combos-bodies .sor-pb-events { flex-wrap: wrap; }
+.wp-combos-bodies .sor-pb-combo { min-width: 0; max-width: 100%; }
 
 /* ── 成绩变更面板(PersonResultChanges)── 仅在该选手有往期成绩变更时渲染 */
 .wp-rc-card {
@@ -182,7 +179,7 @@ html[data-theme=dark] .wp-page {
 }
 
 /* ── Hero ──────────────────────────────────────────────────────────── */
-/* 紧凑横排:头像 | 国旗+姓名+ID | 奖牌与纪录 | (右侧)统计;窄屏统计换行 */
+/* 统计保持单行;窄屏由统计容器横向滚动。 */
 .wp-hero-card {
     background: transparent;
     border: none;
@@ -257,6 +254,11 @@ html[data-theme=dark] .wp-page {
 .wp-hero-collections {
     display: flex; align-items: center; gap: 28px;
 }
+.wp-hero-stats {
+    display: flex; align-items: center; gap: 18px;
+    min-width: 0; max-width: 100%; overflow-x: auto;
+}
+.wp-hero-stats > * { flex-shrink: 0; }
 .wp-hero-collection {
     min-width: max-content;
     text-align: center;
@@ -292,7 +294,7 @@ html[data-theme=dark] .wp-page {
 }
 .wp-hero-collection dd { font-weight: 600; }
 .wp-hero-table {
-    display: flex; align-items: center; flex-wrap: wrap; gap: 32px;
+    display: flex; align-items: center; gap: 18px;
 }
 .wp-hero-rank-controls {
     display: flex; align-items: center; gap: 8px;
@@ -1364,10 +1366,8 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
     .wp-main { padding: 12px 12px 48px; }
     .wp-hero-card { padding: 12px 16px; gap: 10px 20px; }
     .wp-upcoming-card { padding: 0 16px; }
-    .wp-hero-collections { flex-basis: 100%; gap: 24px; }
-    .wp-hero-collection { flex: 1 1 0; min-width: 0; }
-    .wp-hero-collection dl { justify-content: center; flex-wrap: wrap; row-gap: 10px; }
-    .wp-hero-table { margin-left: 0; gap: 24px; }
+    .wp-hero-stats { flex-basis: 100%; gap: 8px; }
+    .wp-hero-collection dl, .wp-hero-table { gap: 8px; }
     .wp-pr-card, .wp-tab-body { padding: 12px; }
     .wp-pb-form-grid { grid-template-columns: 1fr; }
     .wp-pb-inline-main-row { grid-template-columns: 1fr; align-items: stretch; }
@@ -1387,11 +1387,6 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
     .wp-rank { font-size: 0.78rem; }
     .wp-bycomp-table thead th, .wp-bycomp-table tbody td { padding: 6px 6px; }
     .wp-ms-date { flex-basis: 78px; }
-}
-
-@media (max-width: 420px) {
-    .wp-hero-collections { align-items: start; gap: 14px; }
-    .wp-hero-collection dl { column-gap: 10px; }
 }
 
 /* ── 直播·非官方成绩(成绩 tab 内联;官方收录后自动消失)──────────────────── */

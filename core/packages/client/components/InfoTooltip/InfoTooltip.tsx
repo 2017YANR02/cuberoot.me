@@ -6,6 +6,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Info, X, type LucideIcon } from 'lucide-react';
 import { tr } from '@/i18n/tr';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
 import './info_tooltip.css';
 
 interface Props {
@@ -23,6 +24,8 @@ interface Props {
 export function InfoTooltip({ content, iconSize = 11, className, icon: Icon = Info, variant = 'popover' }: Props) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLSpanElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  usePanelClamp(open && variant === 'popover', panelRef);
 
   useEffect(() => {
     if (!open) return;
@@ -66,7 +69,7 @@ export function InfoTooltip({ content, iconSize = 11, className, icon: Icon = In
         </div>
       )}
       {open && variant === 'popover' && (
-        <div className="info-tooltip-pop" role="tooltip">
+        <div ref={panelRef} className="info-tooltip-pop" role="tooltip">
           {content.split('\n').map((line, i) => (
             <div key={i}>{line || ' '}</div>
           ))}
