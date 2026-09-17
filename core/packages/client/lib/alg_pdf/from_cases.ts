@@ -11,6 +11,7 @@ import type { AlgCase, AlgEntry, AlgPuzzle } from '@cuberoot/shared';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { primaryCaseName } from '@/lib/alg_case_display';
 import { caseAlgIssue } from '@/lib/alg_case_alignment';
+import { tr } from '@/i18n/tr';
 import {
   caseViewAlg,
   caseViewSetup,
@@ -90,6 +91,7 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
   const showGroups = groups.size > 1;
 
   const out: AlgPdfCase[] = [];
+  let omitted = 0;
   for (const c of cases) {
     const rawOri = oriOf?.(c) ?? 0;
     const oris = o.allOris
@@ -98,19 +100,25 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
     for (const oriIdx of oris) {
       const allForOri = c.algs[oriIdx] ?? c.algs[0] ?? [];
       const displayAlgs = o.algsFor?.(c, oriIdx) ?? allForOri;
-      const picked = (algFilter ? displayAlgs.filter(algFilter) : displayAlgs).slice(0, maxAlgs);
-      if (picked.some(caseAlgIssue)) {
-        throw new Error(`Cannot export algorithms that do not match their case: ${puzzle}/${set} ${c.name}`);
-      }
+      const filtered = algFilter ? displayAlgs.filter(algFilter) : displayAlgs;
+      // One mismatched alternative must not block the whole sheet. Filter before
+      // the print limit so later verified alternatives can fill its place.
+      const verified = filtered.filter(entry => !caseAlgIssue(entry));
+      omitted += filtered.length - verified.length;
+      const picked = verified.slice(0, maxAlgs);
       // 印出来的打乱跟着视角转 —— 图是按 `oriAdjustSetup` 画的,打乱不跟着就摆不出图上那个态
       const setup = caseViewSetup(oriAdjustSetup(c.setup, oriIdx), o.viewAngle ?? 'default');
       // 图取未筛选的首条 —— 筛选只该影响印出来的公式,不该换掉这张 case 的图
       const firstAlg = caseViewAlg(allForOri[0]?.alg ?? c.standard ?? '', o.viewAngle ?? 'default');
       const sub = c.subgroup || '';
       const oriName = oris.length > 1 ? shortOriName(c.oriNames?.[oriIdx] ?? '') : '';
+      const subLabel = oriName || (subOf ? subOf(c) : (c.number != null ? `#${c.number}` : undefined));
+      const noVerified = filtered.length > 0 && verified.length === 0;
       out.push({
         name: o.caseLabel?.(c) ?? primaryCaseName(puzzle, set, c),
-        sub: oriName || (subOf ? subOf(c) : (c.number != null ? `#${c.number}` : undefined)),
+        sub: noVerified
+          ? [subLabel, tr({ zh: '暂无有效公式', en: 'No verified algs' })].filter(Boolean).join(' / ')
+          : subLabel,
         section: o.sectionOf?.(c),
         group: showGroups ? (groupLabel?.(sub) ?? sub ?? undefined) : undefined,
         setup: setups && setup ? formatScrambleForEvent(puzzle, displayCaseScramble(puzzle, set, setup)) : undefined,
@@ -134,9 +142,13 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
   // 写「4 cases」就成了骗人
   const n = cases.length;
   const count = `${n} ${n === 1 ? 'case' : 'cases'}`;
+  const subtitle = o.sourcePath ? `${count} — cuberoot.me${o.sourcePath}` : count;
   return {
     title: o.title,
-    subtitle: o.sourcePath ? `${count} — cuberoot.me${o.sourcePath}` : count,
+    subtitle: omitted ? `${subtitle}\n${tr({
+      zh: `已跳过 ${omitted} 条未通过校验的公式`,
+      en: `${omitted} unverified algorithms omitted`,
+    })}` : subtitle,
     cases: out,
     filename: o.filename,
     groupPerPage: showGroups && o.groupPerPage,
