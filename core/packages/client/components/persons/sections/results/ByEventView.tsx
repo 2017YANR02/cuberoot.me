@@ -670,7 +670,7 @@ function EventRoundsList({
                     {hasTimingStats && <>
                       <span className="wp-round-sublabel">{tr({ zh: '起表', en: 'Pickup' })}</span>
                       <span className="wp-round-sublabel">{tr({ zh: '拍表', en: 'Putdown' })}</span>
-                      <span className="wp-round-sublabel">{tr({ zh: '起拍表', en: 'Pickup + putdown' })}</span>
+                      <span className="wp-round-sublabel">{tr({ zh: '起拍', en: 'Pickup + putdown' })}</span>
                     </>}
                   </span>
                 </td>
