@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import type { MiddlewareHandler } from 'hono';
 import { routePath } from 'hono/route';
+import { captureDiagnostic } from './diagnostic-buffer.js';
 
 type Trace = { requestId: string; dbCalls: number; dbCallMs: number; dbMaxCallMs: number; dbErrors: number };
 const traces = new AsyncLocalStorage<Trace>();
@@ -18,6 +19,7 @@ export function diagnosticLog(event: string, fields: Record<string, unknown>, wa
   // Callers supply only numeric metrics, static labels and validated IDs.
   // An unavailable log sink must not turn a successful request into a failure.
   try {
+    captureDiagnostic(event, fields);
     const line = JSON.stringify({ event, time: new Date().toISOString(), pid: process.pid, ...fields });
     if (warning) console.warn(line); else console.log(line);
   } catch { /* diagnostics are best effort */ }

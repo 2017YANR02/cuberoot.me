@@ -71,6 +71,8 @@ describe('/dev/auth source-review drift', () => {
   });
   it.each([
     ['@cuberoot/server', 'src/routes/account_auth.ts'], ['@cuberoot/server', 'src/utils/account_merge.ts'],
+    ['@cuberoot/server', 'src/routes/mcp.ts'], ['@cuberoot/server', 'src/routes/mcp_oauth.ts'],
+    ['@cuberoot/client', 'app/[lang]/account/mcp/page.tsx'],
     ['@cuberoot/server', 'src/utils/account_delete.ts'], ['@cuberoot/server', 'src/utils/apple_login.ts'],
     ['@cuberoot/server', 'src/utils/future_oauth.ts'], ['@cuberoot/server', 'migrations/0999_auth_new.sql'],
     ['@cuberoot/server', 'src/utils/password.ts'], ['@cuberoot/server', 'src/utils/credentials.ts'],
