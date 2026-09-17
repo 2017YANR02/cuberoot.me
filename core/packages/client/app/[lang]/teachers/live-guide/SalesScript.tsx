@@ -4,16 +4,9 @@ import { useEffect, useRef } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { useCopy } from '@/hooks/useCopy';
 import { salesScript as script } from './sales-script-data';
+import SalesMindMap from './SalesMindMap';
 
 // 用户指定这份导入讲稿全部使用中文，沿用原指南的双语内容。
-const branches = [
-  { title: '开播准备', items: [{ id: 'sales-setup', title: '首屏、贴片与道具' }, { id: 'sales-checklist', title: '开播前核对清单' }, { id: 'sales-rundown', title: '三十分钟循环安排' }] },
-  { title: '留住观众', items: script.stages.slice(0, 3) },
-  { title: '跟练与信任', items: script.stages.slice(3, 5) },
-  { title: '课程与成交', items: script.stages.slice(5) },
-  { title: '现场调度', items: [{ id: 'sales-return', title: '新人进入后的回拉' }, { id: 'sales-rescue', title: '低互动救场' }, { id: 'sales-interaction', title: '互动密度表' }, { id: 'sales-crew', title: '助播与场控分工' }] },
-  { title: '下播复盘', items: [{ id: 'sales-review', title: '八项指标与调整方向' }] },
-];
 
 export default function SalesScript() {
   const root = useRef<HTMLElement>(null);
@@ -46,15 +39,7 @@ export default function SalesScript() {
     <p className="live-guide-source">根据《魔方课程强节奏直播成交稿》整理。17 节、199 元及老师履历沿用原稿方案，正式使用前核对当期商品页和履历材料；上课、回放、资料与售后按实际服务说明执行。</p>
     <p>读图看主线，点击节点跳到对应内容。口播可直接读，现场提示供主播和助播执行；两遍跟练、读评论与停顿都计入本轮时长。</p>
 
-    <nav className="sales-script-map" aria-label="强节奏直播思维导图">
-      <div className="sales-script-map-root"><strong>一轮直播的成交主线</strong><span>看见问题 → 动手学会一步 → 判断课程是否适合</span></div>
-      <ul className="sales-script-branches">{branches.map(branch => <li key={branch.title}>
-        <details open><summary>{branch.title}</summary><ul>{branch.items.map(item => <li key={item.id}><a href={`#${item.id}`} onClick={() => {
-          const target = document.getElementById(item.id);
-          if (target instanceof HTMLDetailsElement) target.open = true;
-        }}>{item.title.replace(/^第[一二三四五六七八九]段 /, '')}</a></li>)}</ul></details>
-      </li>)}</ul>
-    </nav>
+    <SalesMindMap />
 
     <div className="live-guide-copy-row sales-script-controls">
       <button type="button" className="live-guide-copy-btn" onClick={() => setAll(true)}>展开全部内容</button>
