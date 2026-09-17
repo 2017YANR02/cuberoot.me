@@ -278,7 +278,7 @@ export default function PersonHero({
       </div>
 
       {(resultView === 'pr' || resultView === 'historical') && (
-        <>
+        <div className="wp-hero-stats">
           {collections.length > 0 && (
             <div className="wp-hero-collections">
               {collections.map((collection) => (
@@ -312,7 +312,7 @@ export default function PersonHero({
               )}
             </div>
           )}
-        </>
+        </div>
       )}
     </section>
   );

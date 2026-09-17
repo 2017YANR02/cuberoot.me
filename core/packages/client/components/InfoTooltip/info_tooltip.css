@@ -22,6 +22,7 @@
 }
 
 .info-tooltip-pop {
+    /* anchored-panel: clamped (usePanelClamp in InfoTooltip) */
     position: absolute;
     top: 100%;
     left: 0;
@@ -36,8 +37,7 @@
     text-align: left;
     line-height: 1.5;
     z-index: 100;
-    min-width: 260px;
-    max-width: 360px;
+    width: min(300px, calc(100vw - 32px));
     box-shadow: 0 4px 12px color-mix(in srgb, var(--foreground) 15%, transparent);
     /* 父级 (常 <th>) 带 text-transform/letter-spacing/nowrap,逐项 reset 防止继承 */
     text-transform: none;
@@ -45,15 +45,6 @@
     white-space: normal;
     word-break: break-word;
     overflow-wrap: anywhere;
-}
-
-/* 移动端:popover 太靠右会被裁,自动改成右对齐 */
-@media (max-width: 480px) {
-    .info-tooltip-pop {
-        left: auto;
-        right: 0;
-        max-width: calc(100vw - 32px);
-    }
 }
 
 /* variant="modal":居中弹窗,内容多段(如工具栏合并说明)时比贴边小气泡从容 */
