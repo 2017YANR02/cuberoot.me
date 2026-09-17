@@ -2,6 +2,6 @@
 .mcp-account p { line-height: 1.7; margin: 20px 0; }
 .mcp-account h2 { margin-top: 36px; }
 .mcp-actions, .mcp-connection { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 20px 0; }
-.mcp-account button { appearance: none; border: 0; background: none; color: var(--accent); font: inherit; padding: 8px 0; min-height: 44px; cursor: pointer; text-decoration: underline; }
-.mcp-account button:disabled { color: var(--muted-foreground); cursor: wait; }
-.mcp-account button:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.mcp-action { appearance: none; border: 0; background: none; color: var(--accent); font: inherit; padding: 8px 0; min-height: 44px; cursor: pointer; text-decoration: underline; }
+.mcp-action:disabled { color: var(--muted-foreground); cursor: wait; }
+.mcp-action:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }

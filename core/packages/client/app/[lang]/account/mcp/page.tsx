@@ -63,14 +63,14 @@ export default function McpAccountPage() {
       <AppLink href={`/account?next=${encodeURIComponent(loginNext)}`} prefetch={false}>{t('登录 CubeRoot', 'Sign in to CubeRoot')}</AppLink> : !admin ?
         <p>{t('仅限管理员使用。', 'Administrators only.')}</p> : <>
           {clientId ? <div className="mcp-actions">
-            <button disabled={busy} onClick={() => void consent(true)}>{t('授权 ChatGPT', 'Authorize ChatGPT')}</button>
-            <button disabled={busy} onClick={() => void consent(false)}>{t('拒绝', 'Decline')}</button>
+            <button className="mcp-action" disabled={busy} onClick={() => void consent(true)}>{t('授权 ChatGPT', 'Authorize ChatGPT')}</button>
+            <button className="mcp-action" disabled={busy} onClick={() => void consent(false)}>{t('拒绝', 'Decline')}</button>
           </div> : <p>{t('在 ChatGPT 的应用设置中添加 MCP 地址，并选择 OAuth：', 'Add this MCP URL in ChatGPT app settings and choose OAuth:')}<br /><code>https://api.cuberoot.me/v1/mcp</code></p>}
           <h2>{t('我的连接', 'My connections')}</h2>
           {!connections.length && <p>{t('暂无有效连接。', 'No active connections.')}</p>}
           {connections.map(item => <div className="mcp-connection" key={item.id}>
             <span>ChatGPT<br />{t('到期：', 'Expires: ')}{item.expires_at.slice(0, 10)} UTC</span>
-            <button disabled={busy} onClick={() => void revoke(item.id)}>{t('撤销连接', 'Revoke connection')}</button>
+            <button className="mcp-action" disabled={busy} onClick={() => void revoke(item.id)}>{t('撤销连接', 'Revoke connection')}</button>
           </div>)}
         </>}
     {error && <p role="alert">{t('操作未完成。请刷新后重试；连接已满时，先撤销旧连接。', 'The operation could not be completed. Refresh and retry; revoke an old connection if the limit is reached.')}</p>}
