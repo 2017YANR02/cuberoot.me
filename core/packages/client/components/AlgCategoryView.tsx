@@ -22,7 +22,8 @@ import {
   getAlgSetMeta, ALG_PUZZLES,
   type AlgCase, type AlgEntry, type AlgFile, type AlgPuzzle, type AlgSubmission, type AlgTag,
 } from '@cuberoot/shared';
-import { loadAlg, alignAlgFile, caseAlgIssue } from '@/lib/alg_case_alignment';
+import { loadAlg, alignAlgFile, caseAlgIssue, commonCaseSetup } from '@/lib/alg_case_alignment';
+import { SET_GOAL } from '@/lib/alg_goals';
 import { VisualCube } from '@/components/VisualCube';
 import { CaseThumb } from '@/components/CaseThumb';
 import { EventIcon } from '@/components/EventIcon';
@@ -106,6 +107,7 @@ import {
   OPTIMAL_METRICS,
   availableOptimalMetrics,
   filterCasesByOptimal,
+  optimalLength,
   optimalRange,
   type OptimalComparison,
   type OptimalMetric,
@@ -329,7 +331,7 @@ function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAn
  * 单级 umbrella(ZBLS / VLS:顶层组直接装 case)——没有二级可展,同样是卡片网格(直接链到 case)。
  */
 function SubgroupIndex({
-  puzzle, set, cases, ollByGroup, querySuffix,
+  puzzle, set, cases, ollByGroup, querySuffix, orientation,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -338,6 +340,7 @@ function SubgroupIndex({
   ollByGroup: Map<string, string>;
   isZh: boolean;
   querySuffix?: string;
+  orientation: string;
 }) {
   // 顶层组 → { 代表 case, 组内总数, 二级子组(parts[1] → 代表 case + 计数) }
   const inlineCases = puzzle === '2x2' || (puzzle === '3x3' && set === 'coll');
@@ -403,7 +406,7 @@ function SubgroupIndex({
               /* 组封面一页几十张,窄屏整页能到 10000px 以上(实测 1lll / ollcp)。懒加载在桌面
                  是 no-op(整页都落在 Chrome 的预加载阈值内),手机首屏请求实测能砍掉三到五成。 */
               thumb={useF2lThumb
-                ? <VisualCube setup={sample.setup} algorithm={firstAlg} view="f2l" size={thumbSize} loading="lazy" />
+                ? <VisualCube setup={sample.setup} algorithm={firstAlg} view="f2l" scheme={visualCubeSchemeForOrientation(orientation)} size={thumbSize} loading="lazy" />
                 : useSvStyle
                   ? (
                     <div className="alg-case-cube is-dual">
@@ -415,10 +418,11 @@ function SubgroupIndex({
                         setup={sample.setup}
                         largeSize={svLargeThumbSize}
                         smallSize={svSmallThumbSize}
+                        orientation={orientation}
                       />
                     </div>
                   )
-                  : <VisualCube setup={sample.setup} algorithm={firstAlg} view="oll" size={thumbSize} loading="lazy" hideGreySides />}
+                  : <VisualCube setup={sample.setup} algorithm={firstAlg} view="oll" scheme={visualCubeSchemeForOrientation(orientation, true)} size={thumbSize} loading="lazy" hideGreySides />}
               title={ollName ?? (useF2lThumb ? (dispTop || tr({ zh: '其他', en: 'Other' })) : `${set.toUpperCase()} ${dispTop || tr({ zh: '其他', en: 'Other' })}`)}
               sub={ollName && set !== 'ollcp' ? `${set.toUpperCase()} ${dispTop}` : undefined}
             />
@@ -446,8 +450,8 @@ function SubgroupIndex({
               onClick={() => toggle(topLabel)}
               tooltip={isCollapsed ? tr({ zh: '展开', en: 'Expand' }) : tr({ zh: '收起', en: 'Collapse' })}
               thumb={set === 'ortega-pbl'
-                ? <CaseThumb puzzle={puzzle} set={set} sticker={e.sample.sticker} alg={firstAlg} setup={e.sample.setup} size={thumbSize} />
-                : <VisualCube setup={e.sample.setup} algorithm={firstAlg} view="oll" puzzleSize={puzzle === '2x2' ? 2 : 3} size={thumbSize} hideGreySides />}
+                ? <CaseThumb puzzle={puzzle} set={set} sticker={e.sample.sticker} alg={firstAlg} setup={e.sample.setup} size={thumbSize} orientation={orientation} />
+                : <VisualCube setup={e.sample.setup} algorithm={firstAlg} view="oll" scheme={visualCubeSchemeForOrientation(orientation, true)} puzzleSize={puzzle === '2x2' ? 2 : 3} size={thumbSize} hideGreySides />}
               title={title}
             />}
             {!isCollapsed && (inlineCases
@@ -459,9 +463,9 @@ function SubgroupIndex({
                 <AlgCard
                   key={subLabel}
                   href={inlineCases
-                    ? algCaseDetailHref(puzzle, set, (sample.id != null && caseSlugs.byId.get(sample.id)) || caseSlugBase(set, sample))
+                    ? `${algCaseDetailHref(puzzle, set, (sample.id != null && caseSlugs.byId.get(sample.id)) || caseSlugBase(set, sample))}${querySuffix ?? ''}`
                     : `/alg/${puzzle}/${set}/${subSlug}${querySuffix ?? ''}`}
-                  thumb={<CaseThumb puzzle={puzzle} set={set} sticker={sample.sticker} alg={subFirstAlg} setup={sample.setup} size={thumbSize} mask={pickerMask} loading="lazy" />}
+                  thumb={<CaseThumb puzzle={puzzle} set={set} sticker={sample.sticker} alg={subFirstAlg} setup={sample.setup} size={thumbSize} mask={pickerMask} loading="lazy" orientation={orientation} />}
                   title={inlineCases ? primaryCaseName(puzzle, set, sample) : set === 'zbll' ? displayZbllToken(subLabel) : subLabel}
                 />
               );
@@ -530,6 +534,50 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   // Curated child routes own their server metadata; do not overwrite it after hydration.
   useDocumentTitle(algSetTitle, algSetTitle, !collection);
   const [data, setData] = useState<AlgFile | null>(initialData ?? null);
+  const [computedOptimal, setComputedOptimal] = useState<{
+    file: AlgFile;
+    lengths: ReadonlyMap<AlgCase, number>;
+    failed: boolean;
+  } | null>(null);
+  const computeOptimal = puzzleParam === '2x2' && SET_GOAL[`2x2/${set}`] === 'solve'
+    && !!data?.cases.some(c => optimalLength(c.meta, 'htm') === null);
+  useEffect(() => {
+    if (!data || !computeOptimal) return;
+    // A single worker keeps exact searches off the UI thread. Only the current
+    // set is computed; edits/navigation discard old results and stop the worker.
+    const missing = data.cases.filter(c => optimalLength(c.meta, 'htm') === null);
+    let worker: Worker | undefined;
+    const fail = () => {
+      window.clearTimeout(timeout);
+      setComputedOptimal({ file: data, lengths: new Map(), failed: true });
+      worker?.terminate();
+    };
+    // Low-power devices must not spend indefinitely on optional filter data.
+    const timeout = window.setTimeout(fail, 15_000);
+    try {
+      worker = new Worker(new URL('../lib/alg-222-optimal.worker.ts', import.meta.url), { type: 'module' });
+      worker.onmessage = (event: MessageEvent<(number | null)[]>) => {
+        const lengths = new Map<AlgCase, number>();
+        event.data.forEach((len, i) => {
+          if (len !== null && missing[i]) lengths.set(missing[i], len);
+        });
+        setComputedOptimal({ file: data, lengths, failed: lengths.size !== missing.length });
+        window.clearTimeout(timeout);
+        worker?.terminate();
+      };
+      worker.onerror = fail;
+      worker.postMessage(missing.map(c => commonCaseSetup('2x2', set, c)));
+    } catch {
+      fail();
+    }
+    return () => {
+      window.clearTimeout(timeout);
+      worker?.terminate();
+    };
+  }, [computeOptimal, data, set]);
+  const computedHtm = computeOptimal && computedOptimal?.file === data ? computedOptimal.lengths : undefined;
+  const optimalPending = computeOptimal && computedOptimal?.file !== data;
+  const optimalFailed = computeOptimal && computedOptimal?.file === data && computedOptimal.failed;
   const preferredSnapshots = usePreferredAlgs(state => state.snapshots);
   const loadPreferred = usePreferredAlgs(state => state.load);
   const setPreferred = usePreferredAlgs(state => state.setPreferred);
@@ -588,8 +636,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     'notation',
     parseAsStringEnum<AlgNotationStyle>([...ALG_NOTATION_STYLES]).withDefault('standard'),
   );
-  // 中文面转只适用于中文三阶页。英文页即使保留了 query 偏好，也始终展示标准记号。
-  const displayedNotationStyle: AlgNotationStyle = isZh && puzzleParam === '3x3'
+  // 中文面转适用于中文 NxN 页。英文页即使保留 query 偏好，也展示标准记号。
+  const canChooseNotationStyle = ['2x2', '3x3', '4x4', '5x5'].includes(puzzleParam);
+  const displayedNotationStyle: AlgNotationStyle = isZh && canChooseNotationStyle
     ? notationStyle
     : 'standard';
   const [sq1BlackTop, setSq1BlackTop] = useQueryState(
@@ -639,7 +688,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   // 列表视图(`cards` 只看图 / `full` 公式内联)。语义 + localStorage key 都在
   // AlgViewModeToggle 里,`/alg` 下所有 case 列表页共用同一个偏好。
   const [view, changeView] = useAlgViewMode();
-  // ZBLL 全集有 472 张卡，固定只看图；若沿用用户在子页保存的 full 偏好，会一次铺开全部公式。
+  // 分组页也共用图 / 公式偏好；公式模式直接列出当前范围的情况。
 
   /** 这个 set 里实际出现过的标签 —— 没有就不渲染筛选器 */
   const availableTags = useMemo(() => {
@@ -750,10 +799,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     if (!validPuzzle || !meta) { setError('unknown set'); setData(null); return; }
     let live = true;
     setError(null);
-    // >100 个 case 的非 umbrella set 默认全折(zbll/1lll 走子组页不折)。SQ1
-    // cubeshape 是按 slice 数逐组浏览的例外,169 个 case 仍默认全展开。
+    // 大集合的公式模式可从总览直接展开，预先折叠分组以免同时挂载数千行。
+    // 子组选择器不读折叠状态；SQ1 cubeshape 仍按 slice 数全展开。
     const applyCollapse = (d: AlgFile) => {
-      if (collapseAlgGroupsByDefault(puzzleParam, set, d.cases.length, !!meta.umbrella)) {
+      if (collapseAlgGroupsByDefault(puzzleParam, set, d.cases.length, !!meta.umbrella && !!subgroupParam)) {
         const groups = new Set<string>();
         for (const c of d.cases) groups.add(c.subgroup || '');
         setCollapsedGroups(groups);
@@ -775,7 +824,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       applyCollapse(d);
     }).catch(e => { if (live) setError(String(e)); });
     return () => { live = false; };
-  }, [puzzleParam, set, validPuzzle, meta, isAdmin, initialData]);
+  }, [puzzleParam, set, validPuzzle, meta, isAdmin, initialData, subgroupParam]);
 
   useEffect(() => {
     if (!data || !validPuzzle) return;
@@ -904,13 +953,13 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     [puzzleParam, scopedCases],
   );
 
-  const availableMetrics = useMemo(() => availableOptimalMetrics(scopedCases), [scopedCases]);
+  const availableMetrics = useMemo(() => availableOptimalMetrics(scopedCases, computedHtm), [scopedCases, computedHtm]);
   const resolvedOptimalMetric = availableMetrics.includes(optimalMetric)
     ? optimalMetric
     : availableMetrics[0] ?? optimalMetric;
   const selectedOptimalRange = useMemo(
-    () => availableMetrics.length > 0 ? optimalRange(scopedCases, resolvedOptimalMetric) : null,
-    [availableMetrics.length, resolvedOptimalMetric, scopedCases],
+    () => availableMetrics.length > 0 ? optimalRange(scopedCases, resolvedOptimalMetric, computedHtm) : null,
+    [availableMetrics.length, resolvedOptimalMetric, scopedCases, computedHtm],
   );
   useEffect(() => {
     if (availableMetrics.length > 0 && resolvedOptimalMetric !== optimalMetric) {
@@ -929,7 +978,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     && selectedOptimalRange !== null;
   const showAllCases = canShowAllCases
     && (showAllCasesParam || optimalFilterActive || simplified || zbllDiagramMode !== 'full');
-  const effectiveView = showAllCases || collection?.cardsOnly ? 'cards' : view;
+  const effectiveView = collection?.cardsOnly ? 'cards' : view;
   const canSimplifyRecognition = useMemo(() => {
     if (puzzleParam !== '3x3') return false;
     const sample = scopedCases[0];
@@ -964,6 +1013,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       optimalFilterActive
         ? { metric: resolvedOptimalMetric, comparison: optimalComparison, moves: optimalMoves }
         : null,
+      computedHtm,
     );
     // 选了标签就只留「至少有一条带该标签的公式」的 case —— 否则筛出来一堆空卡片。
     // ⚠ 这个 set 压根没有该标签(书签 / 后退带过来的 `?tag=oh` 落到 f2l 上)⟹ 当没筛 ——
@@ -973,7 +1023,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       return optimallyFiltered.filter(c => hasOhAlgsForHand(c, data.cases, ohHand));
     }
     return optimallyFiltered.filter(c => c.algs.some(ori => ori.some(a => a.tags?.includes(tagFilter))));
-  }, [data, scopedCases, optimalFilterActive, resolvedOptimalMetric, optimalComparison, optimalMoves, effectiveView, tagFilter, availableTags, canChooseOhHand, ohHand]);
+  }, [data, scopedCases, optimalFilterActive, resolvedOptimalMetric, optimalComparison, optimalMoves, effectiveView, tagFilter, availableTags, canChooseOhHand, ohHand, computedHtm]);
 
   const grouped = useMemo(() => {
     const buildGroups = (
@@ -1046,7 +1096,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     return <div className="alg-root"><div className="alg-empty">Unknown set: {puzzleParam}/{set}</div></div>;
   }
 
-  const showSubgroupPicker = !collection && !!meta.umbrella && !subgroupParam && !showAllCases;
+  const showSubgroupPicker = !collection && !!meta.umbrella && !subgroupParam
+    && !showAllCases && !optimalFilterActive && effectiveView === 'cards';
   const headerCaseCount = categoryHeaderCaseCount(
     scopedCases.length,
     visibleCases.length,
@@ -1066,8 +1117,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     }
     return Array.from(map.entries());
   }, [visibleCases, slugLevel, meta.umbrella]);
-  const showSubSubgroupPicker = subSubgroups.length > 1;
-  const canChooseOrientationHere = canChooseOrientation && !showSubgroupPicker && !showSubSubgroupPicker;
+  const showSubSubgroupPicker = subSubgroups.length > 1 && !optimalFilterActive && effectiveView === 'cards';
 
   const rawBackTo = collection?.backHref ?? (slugLevel === 'sub' && subParentSlug
     ? `/alg/${puzzleParam}/${set}/${subParentSlug}`
@@ -1077,6 +1127,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const sq1Query = new URLSearchParams();
   if (puzzleParam === 'sq1' && !sq1BlackTop) sq1Query.set('black', 'false');
   if (puzzleParam === 'sq1' && sq1NotationMode !== 'compact') sq1Query.set('sq1-notation', sq1NotationMode);
+  if (effectiveOrientation !== DEFAULT_ALG_CUBE_ORIENTATION) sq1Query.set('orientation', effectiveOrientation);
   const sq1QuerySuffix = sq1Query.size > 0 ? `?${sq1Query}` : '';
   const backTo = `${rawBackTo}${sq1QuerySuffix}`;
 
@@ -1232,7 +1283,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             </select>
           </label>
         )}
-        {data && canChooseOrientationHere && (
+        {data && canChooseOrientation && (
           <label className="alg-view-angle">
             <span>{tr({ zh: '朝向', en: 'Holding' })}</span>
             <CubeOrientationSelect
@@ -1243,20 +1294,24 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             />
           </label>
         )}
-        {data && !collection && availableMetrics.length > 0 && (!showSubgroupPicker || canShowAllCases) && selectedOptimalRange && (
-          <div className="alg-optimal-filter" role="group" aria-label={tr({ zh: '按最优步数筛选', en: 'Filter by optimal move count' })}>
+        {data && !collection && (
+          <div className="alg-optimal-filter" role="group" aria-label={tr({ zh: '按最优步数筛选', en: 'Filter by optimal move count' })}
+            title={computeOptimal ? tr({ zh: '标准状态的整解最优 HTM，转体不计步', en: 'Optimal full-solve HTM from the standard setup; rotations are free' }) : undefined}>
             <span className="alg-optimal-filter-label">{tr({ zh: '最优', en: 'Optimal' })}</span>
             <select
               className="alg-header-select"
               value={resolvedOptimalMetric}
+              disabled={!selectedOptimalRange}
               onChange={e => setOptimalMetric(e.target.value as OptimalMetric)}
               aria-label={tr({ zh: '步数指标', en: 'Move metric' })}
             >
               {availableMetrics.map(metric => <option key={metric} value={metric}>{metric.toUpperCase()}</option>)}
+              {availableMetrics.length === 0 && <option value={resolvedOptimalMetric}>—</option>}
             </select>
             <select
               className="alg-header-select alg-optimal-comparison"
               value={optimalComparison}
+              disabled={!selectedOptimalRange}
               onChange={e => setOptimalComparison(e.target.value as OptimalComparison)}
               aria-label={tr({ zh: '比较方式', en: 'Comparison' })}
             >
@@ -1267,11 +1322,16 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             <select
               className="alg-header-select"
               value={optimalMoves ?? ''}
+              disabled={!selectedOptimalRange}
               onChange={e => setOptimalMoves(e.target.value ? Number(e.target.value) : null)}
               aria-label={tr({ zh: '最优步数', en: 'Optimal move count' })}
             >
-              <option value="">{tr({ zh: '步数', en: 'Moves' })}</option>
-              {Array.from(
+              <option value="">{selectedOptimalRange
+                ? tr({ zh: '步数', en: 'Moves' })
+                : optimalPending ? tr({ zh: '计算中…', en: 'Computing…' })
+                  : optimalFailed ? tr({ zh: '最优计算未完成', en: 'Optimal calculation incomplete' })
+                    : tr({ zh: '暂无最优数据', en: 'No optimal data' })}</option>
+              {selectedOptimalRange && Array.from(
                 { length: selectedOptimalRange.max - selectedOptimalRange.min + 1 },
                 (_, i) => selectedOptimalRange.min + i,
               ).map(moves => <option key={moves} value={moves}>{moves}</option>)}
@@ -1297,8 +1357,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             onChange={value => void setSq1NotationMode(value)}
           />
         )}
-        {/* 图 / 公式 视图开关(只在真列出 case 的页面;子组选择页没有卡片) */}
-        {data && !showSubgroupPicker && !showSubSubgroupPicker && !showAllCases && !collection?.cardsOnly && (
+        {/* 所有公式集共用图 / 公式开关，公式模式展开当前分组。 */}
+        {data && !collection?.cardsOnly && (
           <AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />
         )}
         {puzzleParam === 'fto' && (
@@ -1322,7 +1382,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             </Link>
           </>
         )}
-        {isZh && data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && puzzleParam === '3x3' && (
+        {isZh && data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && canChooseNotationStyle && (
           <>
             <AlgNotationStyleSelect
               value={notationStyle}
@@ -1454,7 +1514,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     })}</div>}
 
       {data && showSubgroupPicker && (
-        <SubgroupIndex puzzle={puzzleParam as AlgPuzzle} set={set} cases={orderedCases} ollByGroup={ollByGroup} isZh={isZh} querySuffix={sq1QuerySuffix} />
+        <SubgroupIndex puzzle={puzzleParam as AlgPuzzle} set={set} cases={orderedCases} ollByGroup={ollByGroup} isZh={isZh} querySuffix={sq1QuerySuffix} orientation={effectiveOrientation} />
       )}
 
       {data && showSubSubgroupPicker && (() => {
@@ -1471,7 +1531,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   href={`/alg/${puzzleParam}/${set}/${sub2Slug}${sq1QuerySuffix}`}
                   /* 子组卡片一页几十张,窄屏下整页能到 10000px 以上(实测 1lll / ollcp)。
                      懒加载在桌面是 no-op(整页都在 Chrome 阈值内),但手机首屏请求实测能砍掉三到五成。 */
-                  thumb={<CaseThumb puzzle={puzzleParam as AlgPuzzle} set={set} sticker={sample.sticker} alg={firstAlg} setup={sample.setup} size={thumbSize} mask={pickerMask} loading="lazy" />}
+                  thumb={<CaseThumb puzzle={puzzleParam as AlgPuzzle} set={set} sticker={sample.sticker} alg={firstAlg} setup={sample.setup} size={thumbSize} mask={pickerMask} loading="lazy" orientation={effectiveOrientation} />}
                   title={set === 'zbll' ? displayZbllToken(subLabel) : subLabel}
                 />
               );
