@@ -1,16 +1,17 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { persistItem } from '@/lib/safe-storage';
+import { readEffective, type EffectiveTheme } from '@/lib/theme';
 import { HOME_BACKGROUND_KEY, isHomeBackgroundChoice, type HomeBackgroundChoice } from '@/lib/home-backgrounds';
 
 const CHANGE_EVENT = 'home-background-change';
-let visitChoice: HomeBackgroundChoice | null = null;
+const visitChoice: Partial<Record<EffectiveTheme, HomeBackgroundChoice>> = {};
 
-function readChoice(): HomeBackgroundChoice {
-  if (visitChoice !== null) return visitChoice;
+function readChoice(theme: EffectiveTheme): HomeBackgroundChoice {
+  if (visitChoice[theme] !== undefined) return visitChoice[theme];
   try {
-    const saved = localStorage.getItem(HOME_BACKGROUND_KEY);
+    const saved = localStorage.getItem(`${HOME_BACKGROUND_KEY}.${theme}`);
     if (isHomeBackgroundChoice(saved)) return saved;
   } catch { /* Keep working when browser storage is unavailable. */ }
   return 'auto';
@@ -18,8 +19,9 @@ function readChoice(): HomeBackgroundChoice {
 
 function subscribe(notify: () => void) {
   const sync = (event: StorageEvent) => {
-    if (event.key === HOME_BACKGROUND_KEY || event.key === null) {
-      visitChoice = null;
+    if (event.key?.startsWith(HOME_BACKGROUND_KEY) || event.key === null) {
+      delete visitChoice.light;
+      delete visitChoice.dark;
       notify();
     }
   };
@@ -31,14 +33,25 @@ function subscribe(notify: () => void) {
   };
 }
 
-function setChoice(value: HomeBackgroundChoice) {
+function setChoice(theme: EffectiveTheme, value: HomeBackgroundChoice) {
   if (!isHomeBackgroundChoice(value)) return;
-  visitChoice = persistItem(HOME_BACKGROUND_KEY, value) ? null : value;
+  if (persistItem(`${HOME_BACKGROUND_KEY}.${theme}`, value)) delete visitChoice[theme];
+  else visitChoice[theme] = value;
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
-/** One preference across the homepage, gallery and other open tabs. */
-export function useHomeBackgroundChoice() {
-  const choice = useSyncExternalStore(subscribe, readChoice, () => 'auto' as const);
-  return [choice, setChoice] as const;
+/** Shared across pages and tabs, with an independent choice for each color scheme. */
+export function useHomeBackgroundChoice(theme: EffectiveTheme) {
+  const choice = useSyncExternalStore(subscribe, () => readChoice(theme), () => 'auto' as const);
+  useEffect(() => {
+    // Keep the old selection in the saved theme; the other theme starts at its default.
+    try {
+      if (localStorage.getItem(`${HOME_BACKGROUND_KEY}.light`) !== null
+        || localStorage.getItem(`${HOME_BACKGROUND_KEY}.dark`) !== null
+        || visitChoice.light !== undefined || visitChoice.dark !== undefined) return;
+      const saved = localStorage.getItem(HOME_BACKGROUND_KEY);
+      if (isHomeBackgroundChoice(saved)) setChoice(readEffective(), saved);
+    } catch { /* The default remains usable without storage. */ }
+  }, []);
+  return [choice, (value: HomeBackgroundChoice) => setChoice(theme, value)] as const;
 }

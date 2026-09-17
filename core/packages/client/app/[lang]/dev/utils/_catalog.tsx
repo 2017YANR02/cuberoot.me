@@ -105,7 +105,7 @@ export const CATALOG: UtilEntry[] = [
   },
   {
     name: 'useHomeBackgroundChoice',
-    sig: 'useHomeBackgroundChoice(): readonly [HomeBackgroundChoice, (value: HomeBackgroundChoice) => void]',
+    sig: 'useHomeBackgroundChoice(theme: EffectiveTheme): readonly [HomeBackgroundChoice, (value: HomeBackgroundChoice) => void]',
     imp: "import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';",
     category: 'hook',
     zh: '主页背景偏好的唯一读写入口，同步外观画廊、主页菜单与其他标签页，服务端快照固定为自动模式。',

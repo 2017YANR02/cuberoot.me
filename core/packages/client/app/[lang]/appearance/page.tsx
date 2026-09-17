@@ -3,7 +3,7 @@
 // Backgrounds affect the whole site; palette previews keep their local token scope.
 
 import { useEffect, useState } from 'react';
-import { Check, Play, RotateCcw, Expand, SunMoon, ImageOff } from 'lucide-react';
+import { Check, Play, RotateCcw, Expand, ImageOff } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
@@ -36,8 +36,8 @@ const CARDS: Card[] = [
 ];
 
 export default function AppearancePage() {
-  const [background, setBackground] = useHomeBackgroundChoice();
   const effectiveTheme = useEffectiveTheme();
+  const [background, setBackground] = useHomeBackgroundChoice(effectiveTheme);
   const activeScene = resolveHomeBackground(background, effectiveTheme);
   const [current, setCurrent] = useState<string | null>(null);
   const [contrast, setContrast] = useState<ContrastLevel>('normal');
@@ -78,14 +78,11 @@ export default function AppearancePage() {
         </p>
         <div className="ac-background-controls">
           <div className="ac-background-modes" role="group" aria-label={tr({ zh: '背景模式', en: 'Background mode' })}>
-            <button type="button" className="ac-background-mode" aria-pressed={background === 'auto'} onClick={() => setBackground('auto')}>
-              <SunMoon size={16} />{tr({ zh: '随明暗切换', en: 'Follow light / dark' })}
-            </button>
             <button type="button" className="ac-background-mode" aria-pressed={background === 'none'} onClick={() => setBackground('none')}>
               <ImageOff size={16} />{tr({ zh: '无背景', en: 'No background' })}
             </button>
           </div>
-          <p className="ac-background-hint">{tr({ zh: '默认：浅色用雪山初晴，深色用蓝夜远山。', en: 'Default: Snowy Dawn in light mode, Moonlit Peaks in dark mode.' })}</p>
+          <p className="ac-background-hint">{tr({ zh: '浅色和深色分别记住背景。默认使用雪山初晴和蓝夜远山。', en: 'Light and dark modes remember separate backgrounds, defaulting to Snowy Dawn and Moonlit Peaks.' })}</p>
         </div>
         <div className="ac-background-current">
           <span role="status">{tr({ zh: '当前背景：', en: 'Current background: ' })}{activeScene ? tr(activeScene) : tr({ zh: '无背景', en: 'None' })}</span>
@@ -94,9 +91,8 @@ export default function AppearancePage() {
 
         <div className="ac-background-grid">
           {HOME_BACKGROUNDS.map((scene) => {
-            const selected = background === scene.id;
-            const automatic = background === 'auto' && activeScene?.id === scene.id;
-            return <article key={scene.id} className={`ac-background-item${selected || automatic ? ' is-current' : ''}`}>
+            const selected = activeScene?.id === scene.id;
+            return <article key={scene.id} className={`ac-background-item${selected ? ' is-current' : ''}`}>
               <a className="ac-background-image" href={`${HOME_BACKGROUND_ASSETS}/original/${scene.id}.png`} target="_blank" rel="noopener noreferrer"
                 aria-label={tr({ zh: `查看原图：${scene.zh}（新标签页）`, en: `View original: ${scene.en} (new tab)` })}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- Existing compact WebP previews; originals load only on demand. */}
@@ -112,7 +108,7 @@ export default function AppearancePage() {
                   {selected ? tr({ zh: '已应用', en: 'Applied' }) : tr({ zh: '应用背景', en: 'Apply background' })}
                 </button>
               </div>
-              <p className="ac-background-family">{scene.family}{automatic && <span>{tr({ zh: '当前自动', en: 'Auto-selected' })}</span>}</p>
+              <p className="ac-background-family">{scene.family}</p>
               <p className="ac-background-description">{tr(scene.description)}</p>
             </article>;
           })}

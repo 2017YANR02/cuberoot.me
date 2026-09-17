@@ -6,13 +6,14 @@ import { usePathname } from 'next/navigation';
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
 import { HOME_BACKGROUND_ASSETS as ASSET_ROOT, HOME_BACKGROUNDS as SCENES, resolveHomeBackground } from '@/lib/home-backgrounds';
 import { tr } from '@/i18n/tr';
+import { useEffectiveTheme } from '@/lib/theme';
 import './site-background.css';
 
 /** One document-level landscape; preference and assets retain their existing keys. */
 export default function SiteBackground() {
-  const [choice] = useHomeBackgroundChoice();
   const [ready, setReady] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [choice] = useHomeBackgroundChoice(theme);
   const [failedScene, setFailedScene] = useState<string | null>(null);
   const pathname = usePathname();
 
@@ -68,36 +69,34 @@ export default function SiteBackground() {
 
 /** The same expanded selector is available in every appearance menu. */
 export function SiteBackgroundControl({ onDiagnosticsOpen }: { onDiagnosticsOpen?: () => void } = {}) {
-  const [choice, selectBackground] = useHomeBackgroundChoice();
+  const theme = useEffectiveTheme();
+  const [choice, selectBackground] = useHomeBackgroundChoice(theme);
+  const activeScene = resolveHomeBackground(choice, theme);
   const [diagnosticsFailed, setDiagnosticsFailed] = useState(false);
-  const autoLabel = tr({ zh: '随明暗切换', en: 'Follow light / dark' });
   const noneLabel = tr({ zh: '无背景', en: 'No background' });
   return <div className="site-background-control" role="group" aria-label={tr({ zh: '全站背景', en: 'Site background' })}>
-      <div className="appearance-sec-label">{tr({ zh: '全站背景', en: 'Site background' })}</div>
       <div className="site-background-modes">
+        <button type="button" role="menuitemradio" aria-checked={choice === 'none'}
+          className="site-background-mode" onClick={() => selectBackground('none')}>
+          <span className="site-background-check">{choice === 'none' && <Check size={13} />}</span>
+          <ImageOff size={14} aria-hidden="true" />
+          {noneLabel}
+        </button>
         <button type="button" className="site-background-mode" onClick={() => {
           void import('./ScrollDiagnostics').then(module => {
             onDiagnosticsOpen?.();
             module.openScrollDiagnostics();
           }).catch(() => setDiagnosticsFailed(true));
         }}>{diagnosticsFailed ? tr({ zh: '重试加载诊断', en: 'Retry loading diagnostics' }) : tr({ zh: '滚动诊断', en: 'Scroll diagnostics' })}</button>
-        {([{ value: 'auto', label: autoLabel }, { value: 'none', label: noneLabel }] as const).map(item => (
-          <button key={item.value} type="button" role="menuitemradio" aria-checked={choice === item.value}
-            className="site-background-mode" onClick={() => selectBackground(item.value)}>
-            <span className="site-background-check">{choice === item.value && <Check size={13} />}</span>
-            {item.value === 'none' && <ImageOff size={14} aria-hidden="true" />}
-            {item.label}
-          </button>
-        ))}
       </div>
       <div className="site-background-grid">
         {SCENES.map(item => (
-          <button key={item.id} type="button" role="menuitemradio" aria-checked={choice === item.id}
+          <button key={item.id} type="button" role="menuitemradio" aria-checked={activeScene?.id === item.id}
             className="site-background-option" onClick={() => selectBackground(item.id)}>
             {/* eslint-disable-next-line @next/next/no-img-element -- Tiny local WebP thumbnails. */}
             <img src={`${ASSET_ROOT}/${item.id}-thumb.webp`} alt="" width={128} height={72} />
             <span className="site-background-caption"><span>{tr(item)}</span>
-              <span className="site-background-check">{choice === item.id && <Check size={13} />}</span>
+              <span className="site-background-check">{activeScene?.id === item.id && <Check size={13} />}</span>
             </span>
           </button>
         ))}
