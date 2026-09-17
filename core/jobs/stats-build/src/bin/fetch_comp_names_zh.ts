@@ -10,7 +10,7 @@
 //   首次运行约 30 秒（自动检测页数 + WCA API 批量查询）
 //   后续运行使用缓存，约 1 秒
 //
-// 忠实移植自退役 Python scripts/fetch_comp_names_zh.py（逐行翻译，行为一致）。
+// 与在线中文名兜底共用上游解析器;刷新保留已知历史译名。
 import {
   existsSync,
   mkdirSync,
@@ -21,6 +21,7 @@ import {
 } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseCubingCompetitionList, mergeCompetitionNames, type CubingCompetitionName } from '@cuberoot/shared/cubing-competitions';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // bin -> src -> stats-build -> packages -> core -> repo root
@@ -89,12 +90,6 @@ async function fetchUrl(url: string, raw = false): Promise<string | unknown> {
     return raw ? text : (JSON.parse(text) as unknown);
   }
   throw new FetchError(`fetch failed after 3 retries: ${url}`);
-}
-
-/** 从首页 HTML 的分页链接中提取最大 page=N 值。 */
-function detectTotalPages(html: string): number {
-  const pages = [...html.matchAll(/page=(\d+)/g)].map((m) => parseInt(m[1]!, 10));
-  return pages.length ? Math.max(...pages) : 1;
 }
 
 // NOTE: 硬编码映射——cubing.com alias 与 WCA ID 差异过大、规则救不回来的老比赛
@@ -183,16 +178,8 @@ function aliasToWcaIdCandidates(alias: string): string[] {
  * 爬取 cubing.com 比赛列表全部页面（自动检测页数）。
  * 返回 [(alias, zh_name, start_date), ...] —— 保留 alias + 开始日期，供后续匹配用多种策略。
  */
-async function scrapeCubingChina(): Promise<[string, string, string][]> {
-  // NOTE: 一行结构：<td>YYYY-MM-DD[~END]</td><td><a class="comp-type-*" href="...">...</a>...</td>
-  // 跨日 END 三种格式：~DD（同月）/ ~MM-DD（同年跨月）/ ~YYYY-MM-DD（跨年，如 2025-12-31~2026-01-01）
-  // 捕获: (start_date, alias, inner_html)
-  // cubing.com 临近开赛会把 URL 从 /competition/ 切到 /live/，alias 不变 —— 两种都收
-  const rowPattern =
-    /<td>(\d{4}-\d{2}-\d{2})(?:~(?:\d{4}-)?(?:\d{2}-)?\d{2})?<\/td>\s*<td>\s*<a[^>]*class="comp-type-\w+"[^>]*href="https:\/\/cubing\.com\/(?:competition|live)\/([^"?]+)"[^>]*>(.*?)<\/a>/gs;
-  const tagStrip = /<[^>]+>/g;
-
-  const rows: [string, string, string][] = [];
+async function scrapeCubingChina(): Promise<CubingCompetitionName[]> {
+  const rows: CubingCompetitionName[] = [];
   mkdirSync(CACHE_DIR, { recursive: true });
 
   // NOTE: 先抓首页，自动检测总页数
@@ -210,7 +197,7 @@ async function scrapeCubingChina(): Promise<[string, string, string][]> {
     }
   }
 
-  const totalPages = firstHtml ? detectTotalPages(firstHtml) : 1;
+  const totalPages = parseCubingCompetitionList(firstHtml).totalPages;
   console.log(`  自动检测到 ${totalPages} 页`);
 
   for (let page = 1; page <= totalPages; page++) {
@@ -232,19 +219,9 @@ async function scrapeCubingChina(): Promise<[string, string, string][]> {
       source = '网络';
     }
 
-    let count = 0;
-    for (const m of html.matchAll(rowPattern)) {
-      const startDate = m[1]!;
-      const alias = m[2]!;
-      const name = m[3]!.replace(tagStrip, '').trim();
-      // NOTE: 只收 WCA 赛事——中文名里必含 "WCA"（非 WCA 比赛前端不会出现，抓了也是 noise）
-      if (name && !alias.startsWith('?') && name.includes('WCA')) {
-        rows.push([alias, name, startDate]);
-        count++;
-      }
-    }
-
-    console.log(`  [${page}/${totalPages}] ${count} 条 [${source}]`);
+    const parsed = parseCubingCompetitionList(html);
+    rows.push(...parsed.competitions);
+    console.log(`  [${page}/${totalPages}] ${parsed.competitions.length} 条 [${source}]`);
   }
 
   console.log(`[INFO] cubing.com: ${rows.length} 条`);
@@ -403,14 +380,17 @@ async function main(): Promise<void> {
   // 匹配策略：(0) 硬编码 override；(a) alias 候选命中；(b) 按 start_date + country=CN 唯一回退
   const enToZh: Record<string, string> = {};
   let matchedByOverride = 0;
+  let matchedById = 0;
   let matchedByAlias = 0;
   let matchedByDate = 0;
   const unmatchedSamples: [string, string, string][] = [];
-  for (const [alias, zhName, startDate] of rows) {
-    let matchedNames: CompInfo | null = null; // {name, short_name}
+  for (const { alias, name, nameZh: zhName, startDate, wcaCompetitionId } of rows) {
+    if (name) enToZh[name] = zhName;
+    let matchedNames: CompInfo | null = wcaIdToNames[wcaCompetitionId] ?? null;
 
     // (0) 硬编码 override——alias 与 WCA ID 差异大、规则救不回来的老比赛
-    if (alias in ALIAS_TO_WCA_ID_OVERRIDE) {
+    if (matchedNames) matchedById += 1;
+    if (!matchedNames && alias in ALIAS_TO_WCA_ID_OVERRIDE) {
       const wid = ALIAS_TO_WCA_ID_OVERRIDE[alias]!;
       if (wid in wcaIdToNames) {
         matchedNames = wcaIdToNames[wid]!;
@@ -448,10 +428,10 @@ async function main(): Promise<void> {
     }
   }
 
-  const matched = matchedByOverride + matchedByAlias + matchedByDate;
+  const matched = matchedById + matchedByOverride + matchedByAlias + matchedByDate;
   const unmatched = rows.length - matched;
   console.log(
-    `\n[INFO] 匹配成功: ${matched} (override ${matchedByOverride} + alias ${matchedByAlias} + 日期 ${matchedByDate}), 未匹配: ${unmatched}`,
+    `\n[INFO] 匹配成功: ${matched} (WCA ID ${matchedById} + override ${matchedByOverride} + alias ${matchedByAlias} + 日期 ${matchedByDate}), 未匹配: ${unmatched}`,
   );
   if (unmatchedSamples.length) {
     console.log(
@@ -465,11 +445,9 @@ async function main(): Promise<void> {
   // Step 4: 输出 JSON（按英文名排序）
   // NOTE: Python dict(sorted(...)) 按 key 的 Unicode code point 升序排；JS 默认 sort 按 UTF-16
   // code unit 排，对 BMP 字符等价。英文比赛名为 ASCII，完全一致。
-  const sortedKeys = Object.keys(enToZh).sort();
-  const sortedMap: Record<string, string> = {};
-  for (const k of sortedKeys) {
-    sortedMap[k] = enToZh[k]!;
-  }
+  const previous = existsSync(OUTPUT_PATH) ? JSON.parse(readFileSync(OUTPUT_PATH, 'utf-8')) as Record<string, string> : {};
+  const sortedMap = mergeCompetitionNames(previous, enToZh);
+  const sortedKeys = Object.keys(sortedMap);
   writeFileSync(OUTPUT_PATH, JSON.stringify(sortedMap, null, 2), 'utf-8');
 
   const rel = OUTPUT_PATH.slice(ROOT_DIR.length + 1).replace(/\\/g, '/');

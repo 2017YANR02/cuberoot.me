@@ -995,7 +995,8 @@ export default function CompDetailPage() {
   );
   const compRecords = useMemo(() => (data && fullLoaded ? computeCompRecords(data) : []), [data, fullLoaded]);
   const recordNews = useMemo(() => competitionRecordNews(slug,
-    data && fullLoaded ? data.newcomerRecords ?? [] : [], data?.users ?? {}, data?.events ?? []), [slug, data, fullLoaded]);
+    data && fullLoaded ? data.newcomerRecords ?? [] : [], data?.users ?? {}, data?.events ?? [],
+    compRecords.flatMap(group => group.rows)), [slug, data, fullLoaded, compRecords]);
   const newsCopy = useCopy();
   const hasPodiumTab = podiumGroups.length > 0 || compRecords.length > 0 || recordNews.length > 0;
   // 全场结束 = 每个项目的决赛(末轮)都 s===1。比「末轮有成绩」严格:决赛进行中(s===2)不算结束。

@@ -57,11 +57,22 @@ function parseRankResult(v: unknown): RankResult | null {
 }
 
 // ── 模块级缓存:让排名「秒出」──────────────────────────────────────────────
-// 同一会话内,(event,type,value,country) 的名次只查一次.比赛页在轮次成绩加载时
+// 名次缓存一分钟,避免新成绩入库后整个会话仍显示旧排名.比赛页在轮次成绩加载时
 // 用 prefetchRanksForWca 批量预热;成绩弹窗打开时同步读缓存即瞬时显示,未命中才回退单查.
 // 值含义:RankResult=有名次 / null=查过但无(项目不支持/解析失败) / 不存在 key=没查过.
-const rankCache = new Map<string, RankResult | null>();
+const rankCache = new Map<string, { result: RankResult | null; expiresAt: number }>();
 const rankInflight = new Set<string>();
+
+function readRankCache(key: string): RankResult | null | undefined {
+  const cached = rankCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.result;
+  rankCache.delete(key);
+  return undefined;
+}
+
+function cacheRank(key: string, result: RankResult | null): void {
+  rankCache.set(key, { result, expiresAt: Date.now() + 60_000 });
+}
 
 function rankKey(wcaEvent: string, type: string, value: number, country?: string, excludeComp?: string): string {
   return `${wcaEvent}|${type}|${value}|${(country || '').toUpperCase()}|${excludeComp || ''}`;
@@ -97,7 +108,7 @@ export function getCachedRankForWca(
 ): RankResult | null | undefined {
   const n = normRankArgs(wcaEvent, centis, type, country, excludeComp);
   if (!n) return null; // 非法 = 确定无名次,不触发 fetch
-  return rankCache.get(n.key);
+  return readRankCache(n.key);
 }
 
 interface RankQuery { event: string; type: 'single' | 'average'; value: number; country?: string }
@@ -110,7 +121,7 @@ export async function prefetchRanksForWca(items: RankQuery[], excludeComp?: stri
   for (const it of items) {
     const n = normRankArgs(it.event, it.value, it.type, it.country, excludeComp);
     if (!n) continue;
-    if (rankCache.has(n.key) || rankInflight.has(n.key)) continue;
+    if (readRankCache(n.key) !== undefined || rankInflight.has(n.key)) continue;
     rankInflight.add(n.key);
     toFetch.push({ q: it, value: n.value, key: n.key });
   }
@@ -128,7 +139,7 @@ export async function prefetchRanksForWca(items: RankQuery[], excludeComp?: stri
     const data = (await res.json()) as { results?: unknown[] };
     const arr = Array.isArray(data?.results) ? data.results : [];
     toFetch.forEach((t, i) => {
-      rankCache.set(t.key, parseRankResult(arr[i]));
+      cacheRank(t.key, parseRankResult(arr[i]));
       rankInflight.delete(t.key);
     });
   } catch {
@@ -168,16 +179,17 @@ export async function fetchRankForWca(
 ): Promise<RankResult | null> {
   const n = normRankArgs(wcaEvent, centis, type, country, excludeComp);
   if (!n) return null;
-  if (rankCache.has(n.key)) return rankCache.get(n.key) ?? null; // 命中缓存,瞬时
+  const cached = readRankCache(n.key);
+  if (cached !== undefined) return cached;
 
   try {
-    let path = `/v1/wca/rank-for?event=${encodeURIComponent(wcaEvent)}&type=${type}&centis=${n.value}`;
+    let path = `/v1/wca/rank-for?v=2&event=${encodeURIComponent(wcaEvent)}&type=${type}&centis=${n.value}`;
     if (country) path += `&country=${encodeURIComponent(country)}`;
     if (excludeComp) path += `&exclude_comp=${encodeURIComponent(excludeComp)}`;
     const res = await fetch(apiUrl(path));
     if (!res.ok) return null;
     const result = parseRankResult(await res.json());
-    rankCache.set(n.key, result); // 缓存(含 null = 确定无名次),供后续秒出
+    cacheRank(n.key, result);
     return result;
   } catch {
     return null; // 离线 / CORS / 超时 —— 优雅降级,徽章隐藏(不缓存,下次可重试)

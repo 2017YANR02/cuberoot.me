@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { collectInferred } from '../src/routes/cubing_live';
+import { collectInferred, collectRankCandidates } from '../src/routes/cubing_live';
 import { formatInferred } from '../src/routes/wca_recent_records';
 import { enrich, formatCombinedRecords } from '../src/utils/record_format';
+import { overlayDeltaPure } from '../src/utils/wca_live_overlay';
 
 vi.mock('../src/db/connection.js', () => ({ query: vi.fn(async () => []) }));
 vi.mock('../src/routes/wca_stats_extra.js', () => ({
@@ -26,6 +27,20 @@ function records(overrides: Partial<Result> = {}, includePersonalRecords = false
 }
 
 describe('same-round personal record in recent records and Bark', () => {
+  it('includes non-regional PRs in ranking candidates without promoting them to regional news', () => {
+    const data: CompData = {
+      slug: 'WuhanCrimsonAutumn2026', name: 'Wuhan Crimson Autumn 2026', source: 'wca',
+      compId: 0, type: 'WCA', events: [], fetchedAt: 0,
+      users: { '1': { number: 1, name: 'Yi Shen (沈懿)', wcaid: '2026SHEN01', region: 'cn' } },
+      resultsByRound: { '333:1': [{ ...result, n: 1, a: 424, ar: '', sr: '' }], '333:f': [{ ...result, n: 1, a: 484, ar: '', sr: '' }] },
+      membersByFilter: { females: [], children: [], newcomers: [] },
+    };
+    expect(collectInferred(data, '2026-09-13')).toEqual([]);
+    expect(collectRankCandidates(data).get('333|1')?.map(entry => entry.value)).toEqual([424]);
+    const candidates = collectRankCandidates(data).get('333|1')!;
+    expect(3 + overlayDeltaPure(candidates, new Map(), 427).world).toBe(4);
+    expect(4 + overlayDeltaPure(candidates, new Map([['2026SHEN01', 424]]), 427).world).toBe(4);
+  });
   it('keeps source labels when two newcomer records are formatted together', () => {
     const events = (['1st-solve', '1st-comp'] as const).map(source => enrich({ tag: 'NWR', newcomer_source: source, rec_type: 'average', attempt_result: 2763, event_id: '444', person_name: 'Xuanyi Geng (耿暄一)', person_iso2: 'CN', comp_id: 'WuhanGoldenAutumn2026', comp_name: '武汉金秋赛2026', comp_iso2: 'CN' }));
     const formatted = formatCombinedRecords(events, () => null);
