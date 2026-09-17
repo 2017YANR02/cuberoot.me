@@ -7,13 +7,15 @@ import HeaderToggles from '@/components/HeaderToggles';
 import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
 import { chapters, journey, metrics, objections, preparation, retention, reviewTemplate, rundown, skills, techniques } from './guide-data';
+import SalesScript from './SalesScript';
 
 export default function LiveGuidePage() {
   const menuRef = useRef<HTMLDetailsElement>(null);
   const { copy, copied } = useCopy();
-  const links = chapters.map((chapter) => <a key={chapter.id} href={`#${chapter.id}`} onClick={(event) => {
+  const navigation = [...chapters.slice(0, 2), { id: 'sales-script', title: '强节奏直播成交稿' }, ...chapters.slice(2)];
+  const links = navigation.map((chapter) => <a key={chapter.id} href={`#${chapter.id}`} onClick={(event) => {
     if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && menuRef.current) menuRef.current.open = false;
-  }}>{tr(chapter.title)}</a>);
+  }}>{typeof chapter.title === 'string' ? chapter.title : tr(chapter.title)}</a>);
 
   return <main className="live-guide">
     <header className="live-guide-topbar">
@@ -25,6 +27,7 @@ export default function LiveGuidePage() {
       <p className="live-guide-lead">{tr({ zh: '让观众学会一步，看懂学习路线，再决定是否跟你学。', en: 'Help viewers learn one step, see the learning path, and decide whether to study with you.' })}</p>
       <p>{tr({ zh: '面向魔方老师与培训机构。开播前用它准备，直播中按话术执行，下播后用数据和学员反馈改进。', en: 'For cubing teachers and schools: prepare with this guide, present with your script, and improve with session data and student feedback.' })}</p>
       <div className="live-guide-actions">
+        <a href="#sales-script"><BookOpen size={16} aria-hidden />强节奏直播成交稿</a>
         <a href="#rundown"><Check size={16} aria-hidden />{tr({ zh: '开播速查', en: 'Pre-stream quick reference' })}</a>
         <AppLink href="/teachers/scripts/1" prefetch={false}><BookOpen size={16} aria-hidden />{tr({ zh: '查看示例话术', en: 'View the example script' })}</AppLink>
       </div>
@@ -62,6 +65,8 @@ export default function LiveGuidePage() {
           <h3>{tr({ zh: '常见购买顾虑', en: 'Common buying questions' })}</h3>
           <div className="live-guide-details">{objections.map((item) => <details key={item.title.en}><summary>{tr(item.title)}</summary><p>{tr(item.body)}</p></details>)}</div>
         </section>
+
+        <SalesScript />
 
         <section id="rundown" tabIndex={-1}>
           <h2>{tr(chapters[2].title)}</h2>
