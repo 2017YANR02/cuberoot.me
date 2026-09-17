@@ -543,71 +543,8 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgSubOrCaseClient.tsx",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/app/[lang]/alg/[puzzle]/[set]/run/TrainerRunClient.tsx",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/app/[lang]/alg/[puzzle]/[set]/run/TrainerSplitScreen.tsx",
       "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/app/[lang]/alg/[puzzle]/[set]/select/TrainerSetClient.tsx",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/app/[lang]/alg/[puzzle]/AlgPuzzleClient.tsx",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/app/[lang]/alg/3bld/comm/page.tsx",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/app/[lang]/alg/progress/cases/page.tsx",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/app/[lang]/alg/progress/page.tsx",
-      "importKind": "runtime",
       "mechanism": "static-import",
       "sourceKind": "runtime",
       "specifier": "@cuberoot/shared",
@@ -786,24 +723,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/app/[lang]/sim/AlgsPanel.tsx",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/app/[lang]/sq1/cs/name/Sq1ShapeGuideClient.tsx",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/app/[lang]/wca/_globe/GlobeMapClient.tsx",
       "importKind": "runtime",
       "mechanism": "static-import",
@@ -932,15 +851,6 @@
     {
       "file": "packages/client/components/CaseThumb.tsx",
       "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/components/CommunityAlgs.tsx",
-      "importKind": "runtime",
       "mechanism": "static-import",
       "sourceKind": "runtime",
       "specifier": "@cuberoot/shared",
@@ -1209,15 +1119,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/lib/alg_validation_scan.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/lib/alg_validation.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
@@ -1229,15 +1130,6 @@
     {
       "file": "packages/client/lib/alg-mix-saved.ts",
       "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/lib/alg-mix.ts",
-      "importKind": "runtime",
       "mechanism": "static-import",
       "sourceKind": "runtime",
       "specifier": "@cuberoot/shared",
