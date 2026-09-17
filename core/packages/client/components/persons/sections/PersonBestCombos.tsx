@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { fetchPlayerBest } from '@/lib/wca-person-api';
 import { BestComboBody, type PlayerBest } from '@/components/wca-stats/BestComboBody';
 import { tr } from '@/i18n/tr';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 
 // 「废止项」口径受控:唯一开关在 PR 表工具栏(PersonPRTable),状态在 PersonDetailClient,本卡只跟随
 export default function PersonBestCombos({ wcaId, isZh, inclCancelled }: {
@@ -36,11 +37,11 @@ export default function PersonBestCombos({ wcaId, isZh, inclCancelled }: {
     <section className="wp-card wp-combos-card">
       <div className="wp-combos-head">
         <h2 className="wp-combos-title">{tr({ zh: '最优项目组合', en: 'Best event combination' })}</h2>
+        <InfoTooltip iconSize={16} content={tr({
+          zh: `在所有项目子集里,使 TA 名次和最低(世界排名最高,${includeCancelled ? '含废止项' : '仅活跃项'})的组合;缺项以该项目「参赛人数+1」计入。`,
+          en: `The event subset that minimizes their sum of ranks (best world placement, ${includeCancelled ? 'incl. cancelled' : 'active only'}); missing events count as "participants+1".`
+        })} />
       </div>
-      <p className="wp-combos-sub">{tr({
-        zh: `在所有项目子集里,使 TA 名次和最低(世界排名最高,${includeCancelled ? '含废止项' : '仅活跃项'})的组合;缺项以该项目「参赛人数+1」计入。`,
-        en: `The event subset that minimizes their sum of ranks (best world placement, ${includeCancelled ? 'incl. cancelled' : 'active only'}); missing events count as "participants+1".`
-      })}</p>
       <div className="wp-combos-bodies">
         <div className="sor-pb">
           <BestComboBody wcaId={wcaId} pb={pb} type="single" includeCancelled={includeCancelled} isZh={isZh} hrefFor={evs => hrefFor(evs, 'single')} mentionOtherType={false} />

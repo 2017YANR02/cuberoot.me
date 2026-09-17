@@ -18,7 +18,9 @@ export function usePanelClamp(open: boolean, ref: RefObject<HTMLElement | null>)
       el.style.marginLeft = '';
       const left = el.getBoundingClientRect().left; // 出场 scale 动画原点 top left,不影响 left
       const width = el.offsetWidth;                 // layout 宽,不受入场 transform 影响
-      const vw = document.documentElement.clientWidth;
+      // A stable scrollbar gutter can sit inside clientWidth; keep the panel outside it.
+      const root = document.documentElement;
+      const vw = Math.min(root.clientWidth, root.getBoundingClientRect().right);
       const overRight = left + width - (vw - MARGIN);
       const shift = Math.min(Math.max(0, overRight), Math.max(0, left - MARGIN));
       if (shift > 0) el.style.marginLeft = `${-shift}px`;
