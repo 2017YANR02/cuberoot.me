@@ -80,6 +80,59 @@
 .live-guide-footer { margin-top: 2rem; }
 .live-guide-mobile-nav { display: none; }
 
+.live-guide .sales-script-eyebrow { margin-bottom: 0.5rem; color: var(--accent); font-size: 0.85rem; font-weight: 650; }
+#sales-script:focus { outline: none; }
+.sales-script-offer { display: flex; flex-wrap: wrap; gap: 0.3rem 1.25rem; font-weight: 650; }
+.sales-script-map { margin-block: 2rem; }
+.sales-script-map-root { display: flex; flex-direction: column; gap: 0.25rem; }
+.sales-script-map-root strong { color: var(--accent); font-size: 1.15rem; }
+.sales-script-map-root span { color: var(--muted-foreground); font-size: 0.88rem; }
+.sales-script-branches,
+.sales-script-branches ul { list-style: none; padding: 0; margin: 0; }
+.sales-script-branches { margin: 1rem 0 0 0.5rem; border-left: 2px solid var(--border-default); }
+.sales-script-branches > li { position: relative; padding-left: 1.5rem; padding-bottom: 0.65rem; }
+.sales-script-branches > li::before { content: ''; position: absolute; top: 1.35rem; left: 0; width: 1rem; border-top: 2px solid var(--border-default); }
+.sales-script-branches ul { margin-left: 0.4rem; border-left: 1px solid var(--border-default); }
+.sales-script-branches ul li { position: relative; padding-left: 1.25rem; }
+.sales-script-branches ul li::before { content: ''; position: absolute; top: 1.3rem; left: 0; width: 0.75rem; border-top: 1px solid var(--border-default); }
+.sales-script-branches a { display: inline-flex; align-items: center; min-height: 44px; font-size: 0.93rem; text-decoration: none; }
+.sales-script-controls { margin-bottom: 1rem; }
+.sales-script-section { scroll-margin-top: 2rem; margin-block: 0.7rem; }
+.sales-script-section > summary { width: 100%; }
+.sales-script-section > summary :is(h3, h4) { display: inline; margin: 0; font-size: 1.02rem; }
+.sales-script-stage > summary .live-guide-time { display: inline-block; margin-right: 0.9rem; font-size: 0.85rem; }
+.sales-script-section[open] { margin-bottom: 2rem; }
+.sales-script-section > h4,
+.sales-script-question { margin-top: 1.4rem; }
+.sales-script-section > ul:not(.live-guide-checklist) { padding-left: 1.3rem; }
+.live-guide .sales-script-main-title { margin-block: 2.5rem 1rem; font-size: 1.25rem; }
+.sales-script-goal,
+.sales-script-cue { color: var(--muted-foreground); }
+.sales-script-beat { display: grid; grid-template-columns: 4.5em minmax(0, 1fr); gap: 0.7rem; margin-block: 0.8rem; }
+.sales-script-kind { color: var(--muted-foreground); font-size: 0.78rem; padding-top: 0.22rem; }
+.sales-script-beat p { margin: 0; }
+.live-guide .sales-script-subtitle { margin-block: 1.5rem 1rem; }
+.sales-script-cue .sales-script-kind { color: var(--accent); }
+.sales-script-records { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 2rem; list-style: none; padding: 0; margin-block: 1.25rem; }
+.sales-script-records dt { font-weight: 700; }
+.sales-script-records dd { margin: 0; }
+.sales-script-records p { font-size: 0.93rem; }
+.sales-script-records strong { font-weight: 550; }
+
+@media (min-width: 1000px) {
+  .sales-script-branches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 2rem; border-left: 0; }
+  .sales-script-branches > li { border-left: 2px solid var(--border-default); }
+}
+
+@media (max-width: 800px) {
+  .sales-script-section { scroll-margin-top: 75px; }
+}
+@media (max-width: 560px) {
+  .sales-script-records { grid-template-columns: minmax(0, 1fr); }
+  .sales-script-beat { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
+  .sales-script-branches > li { padding-left: 1.1rem; }
+}
+
 @media (max-width: 800px) {
   .live-guide-hero { margin-block: 2rem; }
   .live-guide-layout { display: block; }
