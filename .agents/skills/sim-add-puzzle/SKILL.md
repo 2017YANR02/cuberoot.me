@@ -127,6 +127,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 裸字母 = 玩家从外看的顺时针(= dir −1 / −120°);写反则玩家拖顺时针被记成带 `'`。
 - /sim 是自包含世界(自己的随机打乱 + 拖拽):显示/记录用标准记号,即便 solver(cstimer)记号非标准也别动 `lib/<x>-solver`(它喂 /scramble 打乱/预览/求解,保持 cstimer 一致)。用 WCA/cubing.js 记号,别自造(如 skewb 引擎 8 grip 别记 `UFR/UFL…`,走 cubing.js 全 8 角族 `F/U/B/D/L/R+UL/UR`,WCA 打乱只 `R/U/L/B` 4 角子集;字母↔角按面集对齐 cubing.js,裸=CW 手性通常已对;`face_hints` 标签同步)。记号功能子集(WCA 4 角)可只喂随机打乱,拖拽仍可转全部单元(记扩展 token)。范本 memory [[project_sim_skewb_wca_notation]]。
 - namer(`pickMove`/`<x>MoveToString`)和 /sim 自己的 parser(`parse<X>Moves`)必须成对翻转,否则录下的名字回放成反方向;物理 `beginMove`/`apply<X>Move` 用 dir 不动。
+- 五魔方 R++/D++ 绕相对的 L/U 轴正转 144°，锁定动画有向转角与中间帧，禁仅用互逆还原测试验证方向。
 - involution/对称转(Heli 180°,顺逆终态相同)动画也跟手做两方向:给 move 加 cosmetic `dir?:1|-1`(状态/记号忽略它),`<x>ResolveLive` 把 `score.dir` 烤进 move,`beginMove` 用 `(move.dir ?? sweepDir)*ANGLE` 定扫动符号。
 - alg/打乱输入框坏 token 别 throw(async `jumpToStep` 里 throw = 崩页):token 分类器算 validity(坏则早退、totalSteps=0)+ mirror 高亮层标红(范本 `classifyIvyTokens` + `.sim-player-hl`);strict parser 只留求解器。
 - 改记号约定同步改锁约定的 baseline 测试。

@@ -2,6 +2,60 @@ import { describe, it, expect } from 'vitest';
 import { PgEngineBinding } from '@/app/[lang]/sim/engine/pgBinding';
 import { megaPgBridge } from '@/app/[lang]/sim/engine/mega/megaPgBridge';
 import * as mega from '@/app/[lang]/sim/engine/mega/megaState';
+import MegaminxCube from '@cuberoot/puzzle-render-core/engine/mega/MegaminxCube';
+import { applyAnimFrame } from '@cuberoot/puzzle-render-core/engine/pieceAnim';
+import { Quaternion, Vector3 } from 'three';
+
+describe('Megaminx WCA deep-turn direction', () => {
+  it.each([
+    ['R++', 2, 1], ['R--', 2, -1],
+    ['D++', 0, 1], ['D--', 0, -1],
+  ] as const)('%s follows the WCA direction and preserves its fixed layer', (token, face, sense) => {
+    const cube = new MegaminxCube();
+    try {
+      const [move] = mega.parseMegaMoves(token);
+      const anims = cube.beginMove(move);
+      // The named L/U axis points opposite to the rotating R/D side:
+      // ++ is +144 degrees about that axis, not the shallow L/U clockwise turn.
+      const axis = new Vector3(...mega.FACE_NORMAL[face]).normalize();
+      const angle = sense * 4 * Math.PI / 5;
+      expect(anims).toHaveLength(51);
+      for (const anim of anims) {
+        expect(anim.axis.distanceTo(axis)).toBeCloseTo(0, 12);
+        expect(anim.angle).toBeCloseTo(angle, 12);
+      }
+      const allPivots = [...cube.corners, ...cube.edges, ...cube.centers].map(p => p.pivot);
+      const moving = new Set(anims.map(a => a.pivot));
+      const fixed = allPivots.filter(p => !moving.has(p));
+      expect(fixed).toHaveLength(11);
+      expect(moving.has(cube.centers[face].pivot)).toBe(false);
+      // The front of R++ travels up; the front of D++ travels right.
+      const tangent = axis.clone().cross(new Vector3(0, 0, 1)).multiplyScalar(sense);
+      expect(Math.sign(face === 2 ? tangent.y : tangent.x)).toBe(sense);
+      for (const progress of [0, 0.25, 0.5, 0.75, 1]) {
+        applyAnimFrame(anims, progress);
+        const expected = new Quaternion().setFromAxisAngle(axis, angle * progress);
+        for (const pivot of moving) expect(pivot.quaternion.angleTo(expected)).toBeCloseTo(0, 6);
+        for (const pivot of fixed) expect(pivot.quaternion.angleTo(new Quaternion())).toBe(0);
+      }
+      expect(mega.megaMoveToString(move)).toBe(token);
+      expect(megaPgBridge.stepToMove(megaPgBridge.moveToStep(move))).toEqual(move);
+      cube.reset();
+      cube.applyMovesInstant([move, ...mega.invertMegaMoves([move])]);
+      expect(cube.complete).toBe(true);
+      cube.applyMovesInstant(Array.from({ length: 5 }, () => move));
+      expect(cube.complete).toBe(true);
+    } finally {
+      cube.dispose();
+    }
+  });
+
+  it('keeps shallow turns and empty/unsupported input unchanged', () => {
+    expect(mega.parseMegaMoves("U U'")).toEqual([{ face: 0, dir: 1 }, { face: 0, dir: -1 }]);
+    expect(mega.parseMegaMoves('')).toEqual([]);
+    expect(mega.parseMegaMoves('R+ D+ invalid')).toEqual([]);
+  });
+});
 
 // Canonical megaminx group order, computed (not transcribed): |G| = 30!·20!·2²⁷·3¹⁹.
 const fact = (n: bigint): bigint => { let r = 1n; for (let i = 2n; i <= n; i++) r *= i; return r; };
