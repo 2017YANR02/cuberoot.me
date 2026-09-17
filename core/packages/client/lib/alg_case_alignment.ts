@@ -101,12 +101,35 @@ export async function alignCaseEntry(
       }
     }
     if (!stored.ok) { reason ||= stored.reason ?? ''; continue; }
+    let completedHtml = html ? [prefix, html, suffix].filter(Boolean).join(' ') : undefined;
+    // Imported 2x2 alternatives can carry their own starting grip. Once the
+    // original alignment is verified, prefer a simple AUF of the same move
+    // body over stacking an inverse grip and an AUF in front of that grip.
+    // Never remove internal rotations or accept an unverified replacement.
+    const leadingGrip = puzzle === '2x2' && prefix
+      ? /^\s*(?:[xyz](?:2'?|')?(?:\s+|$))+/.exec(entry.alg)?.[0] : undefined;
+    if (leadingGrip && entry.alg.slice(leadingGrip.length).trim()) {
+      const body = entry.alg.slice(leadingGrip.length);
+      for (const auf of ['', 'U', "U'", 'U2']) {
+        const candidate = [auf, body].filter(Boolean).join(' ');
+        const check = await validateAlgCase(setup, candidate, c.sticker, puzzle, set);
+        if (!check.ok) continue;
+        const compact = [candidate, check.auf].filter(Boolean).join(' ');
+        if (!(await validateStoredAlgCase(setup, compact, c.sticker, puzzle, set)).ok) continue;
+        completed = compact;
+        const htmlGrip = html && /^\s*(?:[xyz](?:2'?|')?(?:\s+|$))+/.exec(algHtmlText(html))?.[0];
+        completedHtml = html && htmlGrip ? [auf,
+          editAlgHtmlText(html, [{ start: 0, end: htmlGrip.length, text: '' }]), check.auf,
+        ].filter(Boolean).join(' ') : undefined;
+        break;
+      }
+    }
     const completedEntry = simplifyEntry(puzzle, {
       ...entry,
       [SOURCE]: sourceCaseEntry(entry),
       setup,
       alg: completed,
-      algHtml: html ? [prefix, html, suffix].filter(Boolean).join(' ') : undefined,
+      algHtml: completedHtml,
       [ISSUE]: undefined,
     } as CheckedEntry);
     // Reduction changes presentation and finger markup, but must preserve the
