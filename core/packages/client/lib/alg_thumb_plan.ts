@@ -185,13 +185,9 @@ export function caseThumbPlan({
   if (puzzle === 'sq1') {
     const normalizedSet = set.toLowerCase();
     const isCubeshape = normalizedSet === 'cs' || normalizedSet === 'csp';
-    // Cube-shape is defined by the solving formula itself. Some imported CS
-    // setups are truncated when the formula starts with a free layer turn, so
-    // deriving the case from the first formula keeps its name, alg and picture
-    // on one source of truth. Other SQ1 stages still need their curated setup.
-    const forward = isCubeshape && alg.trim()
-      ? invertSq1Alg(alg)
-      : setup?.trim() ? setup : invertSq1Alg(alg);
+    // The library resolves historical truncated CS/CSP setups before rendering.
+    // Once supplied, the public state must win over any selected alternative.
+    const forward = setup !== undefined ? setup : invertSq1Alg(alg);
     const hidden = sq1StageHiddenStickerIds(set);
     const renderOptions = {
       ...(hidden ? { mask: { ids: hidden, color: 'transparent' } } : {}),
@@ -228,7 +224,7 @@ export function caseThumbPlan({
   }
 
   if (puzzle === 'fto') {
-    if (sticker.kind === 'raw' && sticker.tag === 'lowcubes-fto' && sticker.attrs.image) {
+    if (setup === undefined && sticker.kind === 'raw' && sticker.tag === 'lowcubes-fto' && sticker.attrs.image) {
       return {
         renderer: 'asset',
         src: `/${sticker.attrs.image.replace(/^\/+/, '')}`,
@@ -260,7 +256,7 @@ export function caseThumbPlan({
   }
 
   if (puzzle === 'megaminx') {
-    if (sticker.kind === 'raw' && sticker.tag === 'lowcubes-megaminx' && sticker.attrs.image) {
+    if (setup === undefined && sticker.kind === 'raw' && sticker.tag === 'lowcubes-megaminx' && sticker.attrs.image) {
       return {
         renderer: 'asset',
         src: `/${sticker.attrs.image.replace(/^\/+/, '')}`,

@@ -17,10 +17,11 @@ import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
-import { ALG_CATALOG, ALG_CATALOG_SECTIONS, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
+import { ALG_CATALOG, ALG_CATALOG_SECTIONS, ALG_PUZZLES, type AlgCase, type AlgPuzzle } from '@cuberoot/shared/alg';
 import AlgPuzzlePicker from '@/components/AlgPuzzlePicker';
 import BackHome from '@/components/BackHome';
 import { CaseThumb } from '@/components/CaseThumb';
+import { commonCaseSetup, loadAlg } from '@/lib/alg_case_alignment';
 import { VisualCube } from '@/components/VisualCube';
 import AlgCard from '@/components/AlgCard';
 import BoolToggle from '@/components/BoolToggle';
@@ -337,7 +338,7 @@ export default function AlgPuzzleClient() {
             /* 每阶最多二十来张、全在首屏附近,本地渲染实测 19 张 26ms —— 图与数量同帧出现,
                不再各自等一次跨域请求。渲染器本来就静态 import 进了 bundle,不额外增体积。
                长 case 网格不能照抄这条,那边走 loading="lazy",见 AlgCategoryView。 */
-            <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={puzzle === 'sq1' ? 144 : thumbSize} local sq1BlackTop={sq1BlackTop} sq1SideBySide={puzzle === 'sq1'} />
+            <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={commonCaseSetup(puzzle, s.slug, first)} size={puzzle === 'sq1' ? 144 : thumbSize} local sq1BlackTop={sq1BlackTop} sq1SideBySide={puzzle === 'sq1'} />
           )}
           title={title}
         />

@@ -695,6 +695,23 @@ html[data-theme=dark] .alg-root {
 .alg-case-cube {
   flex: 0 0 auto;
 }
+.alg-thumb-rotate {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  display: inline-flex;
+  line-height: 0;
+  position: relative;
+  z-index: 3;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.alg-thumb-rotate:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+.alg-thumb-rotate:disabled { cursor: progress; }
 .alg-case-cube.is-dual {
   display: flex;
   align-items: flex-end;

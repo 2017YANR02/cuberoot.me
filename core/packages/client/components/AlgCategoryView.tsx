@@ -19,9 +19,10 @@ import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Penci
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import {
-  loadAlg, getAlgSetMeta, ALG_PUZZLES,
+  getAlgSetMeta, ALG_PUZZLES,
   type AlgCase, type AlgEntry, type AlgFile, type AlgPuzzle, type AlgSubmission, type AlgTag,
 } from '@cuberoot/shared';
+import { loadAlg, alignAlgFile, caseAlgIssue } from '@/lib/alg_case_alignment';
 import { VisualCube } from '@/components/VisualCube';
 import { CaseThumb } from '@/components/CaseThumb';
 import { EventIcon } from '@/components/EventIcon';
@@ -51,7 +52,7 @@ import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
 import { useCopy } from '@/hooks/useCopy';
 import { stm } from '@cuberoot/shared/alg-notation';
 import { listSubmissions } from '@/lib/alg_api';
-import { reorderCases, reorderCaseAlgs } from '@/lib/alg_sets_api';
+import { reorderCases, reorderCaseAlgs, rotateCaseClockwise } from '@/lib/alg_sets_api';
 import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
 import { scanCases } from '@/lib/alg_validation_scan';
 import { caseAnchor, findCaseByHash, algCaseDetailHref, buildCaseSlugMap, caseSlugBase } from '@/lib/alg_case_link';
@@ -67,7 +68,6 @@ import {
   CASE_VIEW_ANGLES,
   caseViewAlg,
   caseViewSetup,
-  displayAlg,
   displayCaseScramble,
   oriAdjustSetup,
   shortOriName,
@@ -137,6 +137,7 @@ function SvThumbImages({
   simplifyRecognition = false,
   viewAngle = 'default',
   orientation = DEFAULT_ALG_CUBE_ORIENTATION,
+  onRotate,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -148,10 +149,12 @@ function SvThumbImages({
   simplifyRecognition?: boolean;
   viewAngle?: CaseViewAngle;
   orientation?: string;
+  onRotate?: () => Promise<void>;
 }) {
   return (
     <>
       <CaseThumb
+        onRotate={onRotate}
         puzzle={puzzle}
         set={set}
         sticker={sticker}
@@ -232,21 +235,23 @@ function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAn
   onPreferredToggle?: () => void;
 }) {
   const { alg, algHtml } = entry;
+  const issue = caseAlgIssue(entry);
+  invalid ||= issue;
   const { copied, copy } = useCopy();
   const [mirrorOpen, setMirrorOpen] = useState(false);
   // 列表只负责显示 / 复制,剥掉收尾 AUF；完整公式的动画统一放到 case 详情页。
   const angledAlg = caseViewAlg(alg, viewAngle);
-  const standardAlgShown = formatScrambleForEvent(puzzle, displayAlg(angledAlg));
+  const standardAlgShown = formatScrambleForEvent(puzzle, angledAlg);
   const algShown = formatAlgNotation(standardAlgShown, notationStyle);
   const sq1Notation = puzzle === 'sq1'
-    ? sq1NotationText(displayAlg(angledAlg), sq1NotationMode, sourceKarnaukh ? entry.note : undefined)
+    ? sq1NotationText(angledAlg, sq1NotationMode, sourceKarnaukh ? entry.note : undefined)
     : null;
   const shownText = sq1Notation ? tr(sq1Notation) : algShown;
   const isKarnaukh = puzzle === 'sq1' && sq1NotationMode === 'karnaukh';
   // 步数要数**屏幕上这一条**。`entry.stm` 是入库值(含收尾 AUF),拿它当徽章就会
   // 出现「显示 10 步、徽章写 11」。
   const shownStm = useMemo(
-    () => (entry.stm == null ? null : stm(displayAlg(angledAlg))),
+    () => (entry.stm == null ? null : stm(angledAlg)),
     [entry.stm, angledAlg],
   );
   return (
@@ -268,9 +273,10 @@ function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAn
             ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
             : algShown}
           {!sourceKarnaukh && entry.note && <span className="alg-alg-note">({tr(entry.note)})</span>}
+          {issue && <span className="alg-alg-note">{tr({ zh: '（原公式与本图不匹配）', en: '(Source algorithm does not match this case)' })}</span>}
         </span>
         {!isKarnaukh && shownStm != null && <span className="alg-alg-len" title="STM">{shownStm}</span>}
-        {mirror && (
+        {mirror && !issue && (
           <button
             type="button"
             className={`alg-mirror-toggle${mirrorOpen ? ' is-on' : ''}`}
@@ -298,6 +304,7 @@ function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAn
           type="button"
           className="alg-alg-copy-btn"
           onClick={(e) => { e.stopPropagation(); copy(shownText); }}
+          disabled={!!issue}
           title="copy"
         >
           {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
@@ -696,6 +703,14 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     });
   };
 
+  const rotateCase = async (c: AlgCase) => {
+    if (!data) return;
+    const next = await rotateCaseClockwise(data, c, effectiveViewAngle);
+    const updated = next.cases.find(x => x.id === c.id)!;
+    setData(d => d ? { ...d, cases: d.cases.map(x => x.id === c.id ? updated : x) } : d);
+    void setViewAngle('default');
+  };
+
   const handleDragEnd = (e: DragEndEvent) => {
     if (!data) return;
     const { active, over } = e;
@@ -733,6 +748,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
 
   useEffect(() => {
     if (!validPuzzle || !meta) { setError('unknown set'); setData(null); return; }
+    let live = true;
     setError(null);
     // >100 个 case 的非 umbrella set 默认全折(zbll/1lll 走子组页不折)。SQ1
     // cubeshape 是按 slice 数逐组浏览的例外,169 个 case 仍默认全展开。
@@ -746,16 +762,19 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       }
     };
     // 哨兵壳分流已经把整份 set 拉好传下来(initialData):非 admin 直接复用,免二次 fetch。
-    if (initialData && !isAdmin) { setData(initialData); applyCollapse(initialData); return; }
     setData(null);
     // admin 必须绕开那 1 小时的 Cache-Control。他刚删掉的那条公式,DB 里确实没了,
     // 但浏览器缓存里那份旧响应还在 —— 而 Ctrl+Shift+R 只绕文档和子资源的缓存,
     // **绕不过页面加载后 JS 自己发的 fetch()**,那一发照样命中旧响应。结果就是:
     // 保存成功、页面也对,一强刷,删掉的公式原地复活。fresh 就是为这个留的口子。
-    loadAlg(puzzleParam, set, { fresh: isAdmin }).then(d => {
+    const pending = initialData && !isAdmin ? alignAlgFile(initialData)
+      : loadAlg(puzzleParam, set, { fresh: isAdmin });
+    pending.then(d => {
+      if (!live) return;
       setData(d);
       applyCollapse(d);
-    }).catch(e => setError(String(e)));
+    }).catch(e => { if (live) setError(String(e)); });
+    return () => { live = false; };
   }, [puzzleParam, set, validPuzzle, meta, isAdmin, initialData]);
 
   useEffect(() => {
@@ -1606,6 +1625,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                                   黄色块上的非黄色贴纸置灰；外围灰色侧环不提供识别信息，直接隐藏。
                                   小图保留立体拿方，但沿用同一遮罩。 */}
                               <SvThumbImages
+                                onRotate={isAdmin && c.id != null && canChooseViewAngle ? () => rotateCase(c) : undefined}
                                 puzzle={puzzleParam as AlgPuzzle}
                                 set={set}
                                 sticker={c.sticker}
@@ -1621,6 +1641,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                           ) : useZbllDualThumb ? (
                             <>
                               <CaseThumb
+                                onRotate={isAdmin && c.id != null && canChooseViewAngle ? () => rotateCase(c) : undefined}
                                 puzzle={puzzleParam as AlgPuzzle}
                                 set={set}
                                 sticker={c.sticker}
@@ -1633,6 +1654,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                                 orientation={effectiveOrientation}
                               />
                               <CaseThumb
+                                onRotate={isAdmin && c.id != null && canChooseViewAngle ? () => rotateCase(c) : undefined}
                                 puzzle={puzzleParam as AlgPuzzle}
                                 set={set}
                                 sticker={c.sticker}
@@ -1646,6 +1668,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                             </>
                           ) : (
                             <CaseThumb
+                                onRotate={isAdmin && c.id != null && canChooseViewAngle ? () => rotateCase(c) : undefined}
                               puzzle={puzzleParam as AlgPuzzle}
                               set={set}
                               sticker={c.sticker}
@@ -1757,6 +1780,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         sticker={c.sticker}
                         setup={c.setup}
                         firstAlg={c.algs[0]?.[0]?.alg}
+                        standardAlgs={c.algs.flat()}
                         submissions={submissionsByCase.get(c.name) ?? []}
                         notationStyle={displayedNotationStyle}
                         viewAngle={effectiveViewAngle}
@@ -1793,12 +1817,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               : undefined
           }
           onClose={() => setEditorState(null)}
-          onSaved={(action) => {
+          onSaved={async (action) => {
             if (!data) return;
             if (action.type === 'add') {
-              setData({ ...data, cases: [...data.cases, action.created] });
+              setData(await alignAlgFile({ ...data, cases: [...data.cases, action.created] }));
             } else if (action.type === 'update') {
-              setData({ ...data, cases: data.cases.map(c => c.id === action.updated.id ? action.updated : c) });
+              setData(await alignAlgFile({ ...data, cases: data.cases.map(c => c.id === action.updated.id ? action.updated : c) }));
               if (action.updated.id != null) clearInvalidFor(action.updated.id);
               // 改的正是选中那张 ⟹ 片段跟着换名字,否则地址栏还挂着旧名(分享出去就是个死链)
               if (selectedId === action.updated.id) {

@@ -1,5 +1,8 @@
 'use client';
 
+import { findDuplicateAlgs } from '@cuberoot/shared/alg-notation';
+import { commonCaseSetup } from '@/lib/alg_case_alignment';
+
 /**
  * Admin-only modal for editing / adding / deleting one alg case.
  *
@@ -14,7 +17,7 @@ import { loadAlg, MIRROR_ALG_SYNC_SETS, requires3x3AlgCaseSetup, type AlgCase, t
 import { mirrorCascadeOnDelete, VIEWS } from '@cuberoot/shared/alg-mirror';
 import { canonicalSq1Alg, formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { createCase, updateCase, deleteCase, type AlgCaseInput } from '@/lib/alg_sets_api';
-import { validateAlgCase, validateStoredAlgCase, setupForCase } from '@/lib/alg_validation';
+import { validateAlgCase, validateStoredAlgCase } from '@/lib/alg_validation';
 import { displayAlg, shortOriName } from '@/lib/alg_display';
 import { primaryCaseName } from '@/lib/alg_case_display';
 import AlgEditor, { type AlgEditorHandle, type AlgEditorMirror, type AlgInvalidMark } from '@/components/AlgEditor';
@@ -239,6 +242,14 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
       }
     }
 
+    const duplicates = algs.flatMap((entries, oi) => findDuplicateAlgs(entries).map(d => ({ oi, ...d })));
+    if (duplicates.length) {
+      const reason = tr({ zh: '重复公式：忽略括号后与已有公式相同', en: 'Duplicate algorithm: identical to an existing algorithm, ignoring parentheses' });
+      setError(reason);
+      algEditorRef.current?.markInvalid(duplicates.map(d => ({ oi: d.oi, ai: editorRowOf?.[d.oi]?.[d.index] ?? d.index, reason })));
+      return;
+    }
+
     // Sticker: parse advanced JSON, default to existing/inferred if empty
     let sticker: AlgSticker;
     try { sticker = JSON.parse(stickerJson) as AlgSticker; }
@@ -281,10 +292,9 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
     try {
       const checks = await Promise.all(
         algs.flatMap((ori, oi) => ori.map((entry, ai) => {
-          const bare = displayAlg(entry.alg);
+          const bare = entry.alg;
           // setup 只描述第 0 个朝向;别的槽位要共轭过去。空 setup 的集合由首条公式反推。
-          const oriSetup = setupForCase(puzzle, body.setup, algs[0]?.[0]?.alg, oi);
-          const entrySetup = entry.setup ?? oriSetup;
+          const entrySetup = commonCaseSetup(puzzle, setSlug, { ...initial, setup: body.setup, algs }, oi);
           return validateAlgCase(entrySetup, bare, sticker, puzzle, setSlug)
             .then(async r => {
               if (!r.ok) return { oi, ai, alg: entry.alg, bare, completed: bare, ...r };
@@ -317,7 +327,12 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
       algEditorRef.current?.markInvalid([]); // 全过了,把上一轮的红标清掉
       body.algs = algs.map((ori, oi) => ori.map((entry, ai) => {
         const c = checks.find(x => x.oi === oi && x.ai === ai)!;
-        return { ...entry, alg: c.completed };
+        const suffix = c.completed.slice(entry.alg.length).trim();
+        return {
+          ...entry, alg: c.completed,
+          algHtml: entry.algHtml && suffix ? `${entry.algHtml} ${suffix}` : entry.algHtml,
+          setup: commonCaseSetup(puzzle, setSlug, { ...initial, setup: body.setup, algs }, oi),
+        };
       }));
     } catch (e) {
       setError(tr({ zh: '校验出错: ', en: 'Validation error: ' }) + (e as Error).message);

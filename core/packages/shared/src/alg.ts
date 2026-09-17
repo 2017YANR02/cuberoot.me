@@ -9,7 +9,7 @@
 
 import { invert as invertSkewb } from './skewb_notation';
 import type { MirrorGen } from './alg_mirror';
-import { canonicalize3x3WideMoves } from './alg_notation';
+import { canonicalize3x3WideMoves, duplicateAlgKey } from './alg_notation';
 
 /** 公式标签。转写自站长 1LLL 表里的 `[oh]` / `[ft]` / `[fmc]` / `[big]` / `[key]`。 */
 export type AlgTag = 'oh' | 'ft' | 'fmc' | 'big' | 'key';
@@ -165,7 +165,12 @@ const OH_CMLL_TARGETS: Readonly<Record<string, string>> = {
   'Antisune Left Bar': 'Anti Sune Left Bar',
 };
 
-const algKey = (entry: AlgEntry) => entry.alg.trim().replace(/\s+/g, ' ').replace(/2'/g, '2');
+const algKey = (entry: AlgEntry) => duplicateAlgKey(entry.alg);
+const mergedOhCmllEntries = new WeakSet<AlgEntry>();
+/** Runtime provenance; an imported OH alternative is still stored in its own set. */
+export function isMergedOhCmllEntry(entry: AlgEntry): boolean {
+  return mergedOhCmllEntries.has(entry);
+}
 
 /** Merge source-only OH CMLL formulas into their canonical CMLL cases. */
 export function mergeOhCmll(base: AlgFile, oneHanded: AlgFile): AlgFile {
@@ -193,11 +198,13 @@ export function mergeOhCmll(base: AlgFile, oneHanded: AlgFile): AlgFile {
         continue;
       }
       targetIndexByAlg.set(key, targetAlgs.length);
-      targetAlgs.push({
+      const imported: AlgEntry = {
         ...entry,
         setup: entry.setup ?? sourceCase.setup,
         tags: [...new Set([...(entry.tags ?? []), 'oh' as const])],
-      });
+      };
+      mergedOhCmllEntries.add(imported);
+      targetAlgs.push(imported);
     }
   }
 

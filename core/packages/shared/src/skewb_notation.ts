@@ -44,7 +44,7 @@
  *   H  → L F' L' F   →  UL F' UL' F
  *   H' → F' L F L'   (= S)
  *
- * Token grammar accepts the standard prime/double suffixes ('/2).
+ * Token grammar accepts prime/double suffixes, including inverse doubles (2').
  */
 
 const SARAH_DIRECT: Record<string, string> = {
@@ -77,14 +77,15 @@ const SARAH_MACRO: Record<string, { plain: string; prime: string; double: string
  * array of output tokens (length ≥ 1). Unknown tokens are passed through.
  */
 function translateToken(tok: string): string[] {
-  const m = /^([A-Za-z])(['2]?)$/.exec(tok);
+  const m = /^([A-Za-z])((?:2)?'?)$/.exec(tok);
   if (!m) return [tok];
   const ch = m[1];
   const suffix = m[2];
 
   if (SARAH_MACRO[ch]) {
     const macro = SARAH_MACRO[ch];
-    const body = suffix === "'" ? macro.prime : suffix === '2' ? macro.double : macro.plain;
+    const body = suffix === "2'" ? `${macro.prime} ${macro.prime}`
+      : suffix === "'" ? macro.prime : suffix === '2' ? macro.double : macro.plain;
     return translate(body).split(/\s+/).filter(Boolean);
   }
 

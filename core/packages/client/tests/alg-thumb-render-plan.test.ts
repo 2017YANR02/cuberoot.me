@@ -14,6 +14,7 @@ import {
   type CaseThumbPlanInput,
 } from '@/lib/alg_thumb_plan';
 import { algCaseSvg } from '@/lib/alg_pdf/case_svg';
+import { commonCaseSetup } from '@/lib/alg_case_alignment';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 
 // guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
@@ -212,9 +213,10 @@ describe('网页与 PDF 共用 case 缩略图渲染计划', () => {
     await expect(algCaseSvg(spec)).resolves.toBe(plan.svg);
   });
 
-  it('所有 LowCubes FTO 阶段都优先使用本地识别图', () => {
+  it('LowCubes FTO 缺少公共状态时保留原识别图', () => {
     const plan = caseThumbPlan({
       ...input('fto', 'tl'),
+      setup: undefined,
       sticker: {
         kind: 'raw',
         tag: 'lowcubes-fto',
@@ -235,9 +237,10 @@ describe('网页与 PDF 共用 case 缩略图渲染计划', () => {
     });
   });
 
-  it('LowCubes Megaminx case 使用本地原图资源', () => {
+  it('LowCubes Megaminx 缺少公共状态时保留原识别图', () => {
     const plan = caseThumbPlan({
       ...input('megaminx', 'full-pll'),
+      setup: undefined,
       sticker: {
         kind: 'raw',
         tag: 'lowcubes-megaminx',
@@ -282,8 +285,11 @@ describe('网页与 PDF 共用 case 缩略图渲染计划', () => {
       staleSetup: '/0,-3/-2,-1/0,2/-1,-2/0,4/1,0',
     },
   ])('CS $name 始终由公式反推形状,不采用截断的 setup', ({ alg, staleSetup }) => {
-    const fromCase = caseThumbPlan({ ...input('sq1', 'cs'), alg, setup: staleSetup });
-    const fromFormula = caseThumbPlan({ ...input('sq1', 'cs'), alg });
+    const setup = commonCaseSetup('sq1', 'cs', {
+      name: '', setup: staleSetup, subgroup: '', sticker: { kind: 'raw', tag: '', attrs: {} }, algs: [[{ alg }]],
+    });
+    const fromCase = caseThumbPlan({ ...input('sq1', 'cs'), alg, setup });
+    const fromFormula = caseThumbPlan({ ...input('sq1', 'cs'), alg, setup: undefined });
     const fromStaleSetup = caseThumbPlan({ ...input('sq1', 'cs'), alg: '', setup: staleSetup });
     expect(fromCase.renderer).toBe('inline-svg');
     expect(fromFormula.renderer).toBe('inline-svg');

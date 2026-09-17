@@ -17,7 +17,8 @@ import Link from '@/components/AppLink';
 import { ArrowLeft, Loader2, Dumbbell } from 'lucide-react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ALG_PUZZLES, loadAlg, type AlgPuzzle, type AlgCase } from '@cuberoot/shared';
+import { ALG_PUZZLES, type AlgPuzzle, type AlgCase } from '@cuberoot/shared/alg';
+import { loadAlg, caseAlgIssue } from '@/lib/alg_case_alignment';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { CaseThumb } from '@/components/CaseThumb';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -325,7 +326,7 @@ export default function AlgProgressCasesPage() {
 function CaseRow({ row, cases }: { row: ProgressCase; cases: AlgCase[] | undefined }) {
   const now = Date.now();
   const c = cases ? findCaseByKey(cases, row.key) : undefined;
-  const alg = c ? (c.algs.flat()[0]?.alg ?? c.standard ?? '') : '';
+  const alg = c?.algs.flat().find(entry => !caseAlgIssue(entry))?.alg ?? '';
   const name = c ? primaryCaseName(row.puzzle, row.set, c) : (row.key.split('|').pop() ?? row.key);
   const virtual = virtualAlgSet(row.puzzle, row.set);
   const href = c

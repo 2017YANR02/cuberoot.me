@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { loadAlg } from '@cuberoot/shared';
+import { loadAlg } from '@/lib/alg_case_alignment';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { CaseThumb } from '@/components/CaseThumb';

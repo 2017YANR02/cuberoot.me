@@ -3,13 +3,14 @@
 /**
  * React adapter for the single case-thumbnail plan in `lib/alg_thumb_plan`.
  */
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import type { AlgPuzzle, AlgSticker } from '@cuberoot/shared';
 import { VisualCube } from '@/components/VisualCube';
 import { PuzzleSVG } from '@/components/PuzzleSVG';
 import { EnginePuzzleSVG } from '@/components/EnginePuzzleSVG';
 import { caseThumbPlan, DEFAULT_ALG_CUBE_ORIENTATION } from '@/lib/alg_thumb_plan';
 import type { CaseViewAngle } from '@/lib/alg_display';
+import { tr } from '@/i18n/tr';
 
 export function CaseThumb({
   puzzle, set, sticker, alg, setup, size = 88, mask: maskOverride, local, loading,
@@ -20,6 +21,7 @@ export function CaseThumb({
   viewAngle = 'default',
   orientation = DEFAULT_ALG_CUBE_ORIENTATION,
   sq1Layer = 'both',
+  onRotate,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -49,7 +51,11 @@ export function CaseThumb({
   orientation?: string;
   /** Crop a Square-1 flat diagram to its top layer while keeping the shape centred. */
   sq1Layer?: 'both' | 'top';
+  /** Admin-only action supplied by the owning case view; save before updating it. */
+  onRotate?: () => Promise<void>;
 }) {
+  const rotating = useRef(false);
+  const [busy, setBusy] = useState(false);
   const plan = useMemo(() => caseThumbPlan({
     puzzle, set, sticker, alg, setup, mask: maskOverride, sq1BlackTop, sq1SideBySide, simplifyRecognition, viewAngle, orientation,
   }), [puzzle, set, sticker, alg, setup, maskOverride, sq1BlackTop, sq1SideBySide, simplifyRecognition, viewAngle, orientation]);
@@ -113,7 +119,23 @@ export function CaseThumb({
     );
   }
 
-  if (!cropTopLayer) return art;
+  if (!cropTopLayer) return onRotate ? (
+    <button type="button" className="alg-thumb-rotate" disabled={busy} aria-busy={busy}
+      title={tr({ zh: '顺时针旋转顶层 90° 并保存', en: 'Rotate the top layer 90° clockwise and save' })}
+      aria-label={tr({ zh: '顺时针旋转顶层 90° 并保存', en: 'Rotate the top layer 90° clockwise and save' })}
+      onPointerDown={event => event.stopPropagation()}
+      onClick={async event => {
+        event.preventDefault(); event.stopPropagation();
+        if (rotating.current) return;
+        rotating.current = true; setBusy(true);
+        try { await onRotate(); }
+        catch (error) {
+          alert(tr({ zh: '旋转保存失败，已保留原朝向：', en: 'Rotation was not saved; the previous orientation is unchanged: ' })
+            + (error instanceof Error ? error.message : String(error)));
+        } finally { rotating.current = false; setBusy(false); }
+      }}
+    >{art}</button>
+  ) : art;
   return (
     <div style={{ width: size, height: size, overflow: 'hidden', lineHeight: 0 }}>
       <div style={{ width: renderSize, height: renderSize, transform: `translateX(-${size / 2}px)` }}>
