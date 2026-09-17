@@ -246,6 +246,7 @@ const nextConfig: NextConfig = {
         // the Function Invocations spike). See wca/comp/[slug]/page.tsx.
         // 负向断言绕开真实静态子页(stats/sources),否则它们也会被吞进哨兵壳
         // (WCA comp id 是 [A-Za-z0-9]+ 且首字母大写年份结尾,不会撞这两个词,但防御性排除)。
+        { source: "/:lang(en|zh)/wca/comp/:slug/result/:event/:round/:person", destination: "/:lang/wca/comp/_" },
         { source: "/:lang(en|zh)/wca/comp/:slug((?!stats$|sources$)[^/]+)", destination: "/:lang/wca/comp/_" },
         // Personal-recon pages: unbounded wcaId space, pure client shell (same latent
         // spike as the comp page above). One static sentinel shell.

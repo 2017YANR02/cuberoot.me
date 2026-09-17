@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { stripRecordNewsPrefix } from '@/lib/record-news';
 import { RecentRecordsList } from '@/components/RecentRecords';
-import { COMP_RECORD_NEWS, competitionRecordNews } from '@/app/[lang]/wca/comp/[slug]/record-news';
+import { COMP_RECORD_NEWS, competitionRecordNews, withNewcomerRecords } from '@/app/[lang]/wca/comp/[slug]/record-news';
 import { formatRecord } from '@/lib/recon-utils';
 
 vi.mock('@/components/AppLink', () => ({
@@ -11,6 +11,20 @@ vi.mock('@/components/AppLink', () => ({
 }));
 
 describe('record news presentation', () => {
+  it('shows Rhys Caskey\'s exact final average NWR without changing his single or other rounds', () => {
+    const row = { e: '444', r: 'f', n: 1, b: 2562, a: 2759, sr: '', ar: '' };
+    const rows = { '444:f': [row, { ...row, n: 2 }, { ...row, a: 2760 }], '444:d': [{ ...row, r: 'd' }] };
+    const record = { eventId: '444', roundId: 'f', personNumber: 1, type: 'average' as const, source: '1st-comp' as const, value: 2759 };
+    const enriched = withNewcomerRecords(rows, [record]);
+    expect(enriched['444:f'].map(r => r.ar)).toEqual(['NWR', '', '']);
+    expect(enriched['444:f'][0].sr).toBe('');
+    expect(enriched['444:d'][0].ar).toBe('');
+    expect(row.ar).toBe('');
+    expect(withNewcomerRecords(rows)).toBe(rows);
+    expect(withNewcomerRecords(rows, [{ ...record, value: -1 }])['444:f'][0].ar).toBe('');
+    expect(withNewcomerRecords(rows, [{ ...record, type: 'single', value: 2562 }])['444:f'][0].sr).toBe('NWR');
+    expect(withNewcomerRecords({ '444:f': [{ ...row, ar: 'WR' }] }, [record])['444:f'][0].ar).toBe('WR');
+  });
   it('generates record news for any competition without a curated entry', () => {
     const users = { '1': { name: 'Yunzhi Lian (连允之)', region: 'CN' } };
     const record = { ev: { i: '333' }, res: { n: 1 }, roundId: 'f', type: 'average' as const, tag: 'FWR', value: 427 };
