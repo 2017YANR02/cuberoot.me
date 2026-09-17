@@ -32,6 +32,30 @@ beforeAll(() => {
 afterAll(() => vi.unstubAllGlobals());
 
 describe('one public case state for every algorithm set', () => {
+  it('uses verified AUF instead of stacking starting grips on EG1 S-1 alternatives', async () => {
+    const file = files.find(f => f.puzzle === '2x2' && f.set === 'eg1')!;
+    const c = file.cases.find(c => c.id === 41)!;
+    const original = JSON.stringify(c);
+    const aligned = await alignAlgFile({ ...file, cases: [c] });
+    expect(aligned.cases[0].algs[0].slice(5).map(e => e.alg)).toEqual([
+      "U' B U' R2 F2 U' F",
+      "U R' F R2 U R' F' U' R U' R' U",
+      "L' U' L U' F' L' U L2 F L' U2",
+      "U L' U L2 F L' F' U' L F' L' U",
+    ]);
+    for (const entry of aligned.cases[0].algs[0]) {
+      expect(caseAlgIssue(entry)).toBeUndefined();
+      expect((await validateStoredAlgCase(c.setup, entry.alg, c.sticker, '2x2', 'eg1')).ok).toBe(true);
+    }
+    const rich = { ...c.algs[0][5], algHtml: "<em>z2</em> y U2 <s>B</s> U' R2 F2 U' F" };
+    const entry = await alignCaseEntry('2x2', 'eg1', c, rich);
+    expect(entry.alg).toBe("U' B U' R2 F2 U' F");
+    expect(algHtmlText(entry.algHtml!)).toBe(entry.alg);
+    expect(entry.algHtml).toContain('<s>B</s>');
+    expect(sourceCaseAlg(entry)).toBe(rich.alg);
+    expect(JSON.stringify(c)).toBe(original);
+  });
+
   it('covers every registered goal and every database set, without sampling', () => {
     expect(files).toHaveLength(71);
     expect(files.reduce((n, f) => n + f.cases.flatMap(c => c.algs.flat()).length, 0)).toBe(24633);
