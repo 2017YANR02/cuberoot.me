@@ -7,18 +7,19 @@ import { HOME_BACKGROUNDS, HOME_BACKGROUND_KEY, isHomeBackgroundChoice, resolveH
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
 import { useEffectiveTheme } from '@/lib/theme';
 
-function Picker() {
-  const [choice, setChoice] = useHomeBackgroundChoice();
-  return createElement('button', { onClick: () => setChoice('07') }, choice);
+function Picker({ theme = 'dark', value = '07' }: { theme?: 'light' | 'dark'; value?: '07' | '08' | 'none' }) {
+  const [choice, setChoice] = useHomeBackgroundChoice(theme);
+  return createElement('button', { onClick: () => setChoice(value) }, choice);
 }
 
 describe('shared homepage background choice', () => {
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
     localStorage.clear();
+    vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
     window.dispatchEvent(new StorageEvent('storage', { key: null }));
   });
-  afterEach(() => { vi.restoreAllMocks(); });
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
   it('accepts every gallery scene and rejects empty, malformed and out-of-range choices', () => {
     expect(HOME_BACKGROUNDS.map(scene => scene.id)).toEqual(['01', '02', '03', '04', '05', '06', '07', '08', '09', '10']);
@@ -78,16 +79,16 @@ describe('shared homepage background choice', () => {
       expect(values()).toEqual(['auto', 'auto']);
       await act(async () => host.querySelector('button')!.click());
       expect(values()).toEqual(['07', '07']);
-      expect(localStorage.getItem(HOME_BACKGROUND_KEY)).toBe('07');
+      expect(localStorage.getItem(`${HOME_BACKGROUND_KEY}.dark`)).toBe('07');
       expect(localStorage.getItem('theme')).toBe('dark');
 
       await act(async () => {
-        localStorage.setItem(HOME_BACKGROUND_KEY, 'none');
-        window.dispatchEvent(new StorageEvent('storage', { key: HOME_BACKGROUND_KEY }));
+        localStorage.setItem(`${HOME_BACKGROUND_KEY}.dark`, 'none');
+        window.dispatchEvent(new StorageEvent('storage', { key: `${HOME_BACKGROUND_KEY}.dark` }));
       });
       expect(values()).toEqual(['none', 'none']);
       await act(async () => {
-        localStorage.removeItem(HOME_BACKGROUND_KEY);
+        localStorage.removeItem(`${HOME_BACKGROUND_KEY}.dark`);
         window.dispatchEvent(new StorageEvent('storage', { key: null }));
       });
       expect(values()).toEqual(['auto', 'auto']);
@@ -95,10 +96,57 @@ describe('shared homepage background choice', () => {
       vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('blocked', 'SecurityError'); });
       await act(async () => host.querySelector('button')!.click());
       expect(values()).toEqual(['07', '07']);
-      expect(localStorage.getItem(HOME_BACKGROUND_KEY)).toBeNull();
+      expect(localStorage.getItem(`${HOME_BACKGROUND_KEY}.dark`)).toBeNull();
     } finally {
+      await act(async () => window.dispatchEvent(new StorageEvent('storage', { key: null })));
       await act(async () => root.unmount());
       host.remove();
+    }
+  });
+
+  it('remembers light, dark and no-background choices independently across theme switches and remounts', async () => {
+    const host = document.createElement('div');
+    let root = createRoot(host);
+    const show = async (theme: 'light' | 'dark', value: '07' | '08' | 'none' = '07') => {
+      await act(async () => root.render(createElement(Picker, { theme, value })));
+    };
+    const choose = async () => { await act(async () => host.querySelector('button')!.click()); };
+    try {
+      await show('light');
+      await choose();
+      await show('dark', '08');
+      expect(host.textContent).toBe('auto');
+      await choose();
+      await show('light', 'none');
+      expect(host.textContent).toBe('07');
+      await choose();
+      await show('dark');
+      expect(host.textContent).toBe('08');
+      await act(async () => root.unmount());
+      root = createRoot(host);
+      await show('light');
+      expect(host.textContent).toBe('none');
+      await show('dark');
+      expect(host.textContent).toBe('08');
+    } finally {
+      await act(async () => root.unmount());
+    }
+  });
+
+  it('migrates the legacy choice only to the saved effective theme', async () => {
+    localStorage.setItem('theme', 'dark');
+    localStorage.setItem(HOME_BACKGROUND_KEY, '08');
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(createElement(Picker, { theme: 'dark' })));
+      expect(host.textContent).toBe('08');
+      await act(async () => root.render(createElement(Picker, { theme: 'light' })));
+      expect(host.textContent).toBe('auto');
+      expect(localStorage.getItem(`${HOME_BACKGROUND_KEY}.dark`)).toBe('08');
+      expect(localStorage.getItem(`${HOME_BACKGROUND_KEY}.light`)).toBeNull();
+    } finally {
+      await act(async () => root.unmount());
     }
   });
 });
