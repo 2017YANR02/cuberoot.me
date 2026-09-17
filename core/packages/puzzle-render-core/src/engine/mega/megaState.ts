@@ -113,7 +113,7 @@ export interface MegaMove {
   dir: 1 | -1;
   /** WCA Pochmann deep turn: rotate every layer except the named face layer by 144°.
    *  `R++/R--` use face L and `D++/D--` use face U, matching puzzle-geometry's
-   *  `2-3L` / `2-3U` mapping. */
+   *  `2-3L` / `2-3U` mapping; ++ reverses the named L/U face's turn (dir -1). */
   deep?: boolean;
 }
 
@@ -200,11 +200,11 @@ export function parseMegaMoves(text: string): MegaMove[] {
   for (const tok of text.trim().split(/\s+/)) {
     if (!tok) continue;
     if (tok === 'R++' || tok === 'R--') {
-      out.push({ face: 2, dir: tok === 'R++' ? 1 : -1, deep: true });
+      out.push({ face: 2, dir: tok === 'R++' ? -1 : 1, deep: true });
       continue;
     }
     if (tok === 'D++' || tok === 'D--') {
-      out.push({ face: 0, dir: tok === 'D++' ? 1 : -1, deep: true });
+      out.push({ face: 0, dir: tok === 'D++' ? -1 : 1, deep: true });
       continue;
     }
     const m = TOKEN_RE.exec(tok);
@@ -218,8 +218,8 @@ export function parseMegaMoves(text: string): MegaMove[] {
 
 /** One move → its canonical token (bare = dir +1, primed = dir −1). Inverse of parse. */
 export function megaMoveToString(m: MegaMove): string {
-  if (m.deep && m.face === 2) return m.dir === 1 ? 'R++' : 'R--';
-  if (m.deep && m.face === 0) return m.dir === 1 ? 'D++' : 'D--';
+  if (m.deep && m.face === 2) return m.dir === -1 ? 'R++' : 'R--';
+  if (m.deep && m.face === 0) return m.dir === -1 ? 'D++' : 'D--';
   return FACE_NAME[m.face] + (m.dir === -1 ? "'" : '');
 }
 
