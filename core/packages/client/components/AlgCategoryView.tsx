@@ -1134,7 +1134,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const dispToken = (slug: string) => {
     const oll = ollByGroup.get(slug.toUpperCase()) ?? ollByGroup.get(slug);
     if (oll) return oll;
-    return set === 'zbll' ? displayZbllToken(slug) : slug.toUpperCase();
+    return set === 'zbll' ? displayZbllToken(slug) : displayAlgCaseName(puzzleParam, set, slug.toUpperCase());
   };
   const subgroupDisplay = (
     slugLevel === 'sub' && subParentSlug && subgroupSlug

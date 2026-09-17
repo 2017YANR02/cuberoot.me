@@ -25,6 +25,7 @@ body[data-site-scenery] .wp-page {
 body[data-site-scenery] :is(
   [data-site-surface='panel'],
   .alg-card,
+  .alg-case-detail-ori-algs,
   .chx-panel,
   .chx-chain,
   .chx-tabs,
@@ -58,6 +59,11 @@ body[data-site-scenery] .deskpet-story .deskpet-story-art {
   background: var(--glass-surface-bg);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
+}
+
+/* Formula rows share their enclosing material; keep hover, selection and errors. */
+body[data-site-scenery] :is(.alg-card, .alg-case-detail-ori-algs) .alg-alg-row:not(:hover):not(.is-expanded):not(.is-invalid) {
+  background: transparent;
 }
 
 /* Keep pet selection and hover accents on the shared glass. */
