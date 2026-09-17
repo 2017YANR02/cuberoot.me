@@ -93,7 +93,7 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('role preview (PostgreSQL)', 
         }
         expect(drive.isSuperAdmin ?? false).toBe(false);
         expect((await request(preview.token, '/drive?all=1')).status).not.toBe(200);
-        for (const path of ['/auth/refresh', '/auth/role-preview', '/auth/handoff', '/auth/profile']) {
+        for (const path of ['/auth/refresh', '/auth/role-preview', '/auth/handoff', '/auth/profile', '/mcp/oauth/consent']) {
           expect((await request(preview.token, path, 'POST', { role: 'admin' })).status).toBe(403);
         }
         expect((await app.request('/v1/drive', { headers: { Authorization: `Bearer ${preview.token}`, 'X-Admin-Key': 'test' } })).status).toBe(403);

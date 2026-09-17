@@ -46,7 +46,7 @@ export const rolePreviewGuard: MiddlewareHandler = async (c, next) => {
   if (!await isRolePreviewActive(payload.previewId, payload.uid)) return c.json({ error: 'Test session ended; exit test mode.' }, 401);
   c.header('Cache-Control', 'no-store');
   // No credential minting, identity linking, account editing or API-key bypass while testing.
-  if (c.req.header('X-Admin-Key') || (c.req.path.startsWith('/v1/auth/')
+  if (c.req.header('X-Admin-Key') || c.req.path.startsWith('/v1/mcp/oauth/') || (c.req.path.startsWith('/v1/auth/')
     && !['/v1/auth/me', '/v1/auth/profile', '/v1/auth/providers', '/v1/auth/identities'].includes(c.req.path))) {
     return c.json({ error: 'Exit test mode before changing authentication or accounts.' }, 403);
   }

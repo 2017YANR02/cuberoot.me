@@ -147,6 +147,7 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   role_preview_profiles: '专用测试身份映射随账号级联删除',
   role_preview_sessions: '角色测试审计保留，实际操作者与测试账号删除时外键置空',
   auth_identities: '身份行,随 app_users 级联删',
+  mcp_oauth_grants: '管理员 MCP 授权通过 user_id 外键随账号级联删除，不迁移到合并后的账号',
   account_last_devices: '账号最近设备摘要是私有支持数据,随 app_users 级联删',
   record_notification_preferences: '纪录通知偏好是账号私有数据,通过 user_id 外键随 app_users 级联删',
   auth_web_session_tickets: '未确认的微信浏览器票据无账号归属，已确认的跨运行时票据随 app_users 级联删',

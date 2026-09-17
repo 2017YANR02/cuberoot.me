@@ -17,6 +17,7 @@ const ROOTS = [
 ];
 const EXACT = new Set([
   'apps/api/src/db/schema.pg.sql', 'apps/api/src/index.ts',
+  'apps/api/src/routes/mcp.ts',
   'apps/miniprogram/src/lib/navigation.ts', 'apps/miniprogram/src/lib/web-routes.ts',
   'apps/miniprogram/src/pages/web/index.ts',
   'packages/client/components/MobileEmbedBridge.tsx', 'packages/shared/src/mobile_embed.ts',
@@ -119,7 +120,7 @@ export function fingerprintAuthSources(entries) {
     // The schema is shared with unrelated domains. Keep every statement referencing
     // canonical account tables, including constraints/indexes and later ALTERs.
     if (path === 'apps/api/src/db/schema.pg.sql') {
-      content = sqlStatements(content).filter(statement => /\b(?:auth_\w+|app_users)\b/i.test(statement)).join('');
+      content = sqlStatements(content).filter(statement => /\b(?:auth_\w+|app_users|mcp_oauth_grants)\b/i.test(statement)).join('');
     }
     // This file also houses the unrelated admin toolbar. Retain imports + refresher;
     // if that explicit boundary disappears, conservatively hash the whole file.

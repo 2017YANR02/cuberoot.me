@@ -52,7 +52,7 @@ describe('member music deletion', () => {
     expect(await response.json()).toEqual({ ok: true });
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(mocks.query).toHaveBeenCalledWith(expect.stringContaining('WHERE id = ? AND owner_user_id = ?'), [id, 7]);
-    expect(mocks.unlink.mock.calls.map(([file]) => file.split('/').slice(-2).join('/'))).toEqual([`audio/${id}.mp3`, `covers/${id}.webp`]);
+    expect(mocks.unlink.mock.calls.map(([file]) => file.replaceAll('\\', '/').split('/').slice(-2).join('/'))).toEqual([`audio/${id}.mp3`, `covers/${id}.webp`]);
     expect((await remove('member')).status).toBe(404);
     expect(mocks.unlink).toHaveBeenCalledTimes(2);
   });
