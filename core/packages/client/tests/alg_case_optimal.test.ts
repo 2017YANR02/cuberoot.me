@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { AlgCase } from '@cuberoot/shared';
+import type { AlgCase } from '@cuberoot/shared/alg';
 import {
   availableOptimalMetrics,
   filterCasesByOptimal,
@@ -32,6 +32,16 @@ const cases = [
 ];
 
 describe('case optimal metrics', () => {
+  it('uses computed HTM only where stored metadata is absent, without mutating cases', () => {
+    const computed = new Map([[cases[0], 11], [cases[2], 7]]);
+    expect(optimalRange(cases, 'htm', computed)).toEqual({ min: 7, max: 10 });
+    expect(availableOptimalMetrics([cases[2]], computed)).toEqual(['htm']);
+    expect(filterCasesByOptimal(cases, { metric: 'htm', comparison: 'lte', moves: 8 }, computed).map(c => c.name)).toEqual(['A', 'C']);
+    expect(filterCasesByOptimal(cases, { metric: 'htm', comparison: 'eq', moves: 7 }, computed).map(c => c.name)).toEqual(['C']);
+    expect(filterCasesByOptimal(cases, { metric: 'htm', comparison: 'gte', moves: 8 }, computed).map(c => c.name)).toEqual(['A', 'B']);
+    expect(cases[2].meta).toBeUndefined();
+  });
+
   it('derives only metrics present in the current scope', () => {
     expect(availableOptimalMetrics(cases)).toEqual(['etm', 'htm', 'qtm', 'atm']);
     expect(optimalRange(cases, 'htm')).toEqual({ min: 8, max: 10 });
