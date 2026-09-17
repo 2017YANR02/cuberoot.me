@@ -10,7 +10,7 @@ import { useEffectiveTheme } from '@/lib/theme';
 import './site-background.css';
 
 /** One document-level landscape; preference and assets retain their existing keys. */
-export default function SiteBackground() {
+export default function SiteBackground({ manageDocument = true }: { manageDocument?: boolean } = {}) {
   const [ready, setReady] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [choice] = useHomeBackgroundChoice(theme);
@@ -53,10 +53,12 @@ export default function SiteBackground() {
   useEffect(() => setFailedScene(null), [choice]);
   const active = ready && !pathname?.startsWith('/auth/') && scene && failedScene !== scene.id;
   useEffect(() => {
+    // Native fullscreen needs its own scenery layer, without owning document state.
+    if (!manageDocument) return;
     if (active) document.body.dataset.siteScenery = scene.id;
     else delete document.body.dataset.siteScenery;
     return () => { delete document.body.dataset.siteScenery; };
-  }, [active, scene]);
+  }, [active, scene, manageDocument]);
 
   // Auth callbacks already show the returning page in their own background iframe.
   if (!active) return null;

@@ -83,19 +83,45 @@
 .live-guide .sales-script-eyebrow { margin-bottom: 0.5rem; color: var(--accent); font-size: 0.85rem; font-weight: 650; }
 #sales-script:focus { outline: none; }
 .sales-script-offer { display: flex; flex-wrap: wrap; gap: 0.3rem 1.25rem; font-weight: 650; }
-.sales-script-map { margin-block: 2rem; }
-.sales-script-map-root { display: flex; flex-direction: column; gap: 0.25rem; }
-.sales-script-map-root strong { color: var(--accent); font-size: 1.15rem; }
-.sales-script-map-root span { color: var(--muted-foreground); font-size: 0.88rem; }
-.sales-script-branches,
-.sales-script-branches ul { list-style: none; padding: 0; margin: 0; }
-.sales-script-branches { margin: 1rem 0 0 0.5rem; border-left: 2px solid var(--border-default); }
-.sales-script-branches > li { position: relative; padding-left: 1.5rem; padding-bottom: 0.65rem; }
-.sales-script-branches > li::before { content: ''; position: absolute; top: 1.35rem; left: 0; width: 1rem; border-top: 2px solid var(--border-default); }
-.sales-script-branches ul { margin-left: 0.4rem; border-left: 1px solid var(--border-default); }
-.sales-script-branches ul li { position: relative; padding-left: 1.25rem; }
-.sales-script-branches ul li::before { content: ''; position: absolute; top: 1.3rem; left: 0; width: 0.75rem; border-top: 1px solid var(--border-default); }
-.sales-script-branches a { display: inline-flex; align-items: center; min-height: 44px; font-size: 0.93rem; text-decoration: none; }
+.sales-mindmap { margin-block: 2rem; }
+.sales-mindmap-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 1.5rem; }
+.sales-mindmap-toolbar > strong { font-size: 1.05rem; }
+.sales-mindmap-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 0.2rem; }
+.sales-mindmap-tools button { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; min-width: 44px; min-height: 44px; border: 0; border-radius: 8px; padding: 0.4rem 0.65rem; background: transparent; color: var(--foreground); font: inherit; font-size: 0.85rem; white-space: nowrap; cursor: pointer; }
+.sales-mindmap-tools button:hover { background: var(--muted); }
+.sales-mindmap-tools button:disabled { opacity: 0.35; cursor: default; }
+.sales-mindmap-tools output { min-width: 3.2em; text-align: center; color: var(--muted-foreground); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.live-guide .sales-mindmap-hint { margin: 0.3rem 0 0.8rem; font-size: 0.8rem; color: var(--muted-foreground); }
+/* 画布透出全站所选背景；节点和文字继续跟随主题色。 */
+.sales-mindmap-canvas { display: block; width: 100%; height: clamp(460px, 58vw, 610px); background: transparent; touch-action: none; user-select: none; cursor: grab; }
+.sales-mindmap-canvas:active { cursor: grabbing; }
+.sales-mindmap-canvas:focus-visible,
+.sales-mindmap-tools button:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.sales-mindmap-amber { --branch-color: var(--signal-warning); }
+.sales-mindmap-green { --branch-color: var(--signal-success); }
+.sales-mindmap-blue { --branch-color: var(--signal-info); }
+.sales-mindmap-coral { --branch-color: var(--signal-danger); }
+.sales-mindmap-purple { --branch-color: color-mix(in srgb, var(--signal-info) 48%, var(--signal-danger)); }
+.sales-mindmap-teal { --branch-color: color-mix(in srgb, var(--signal-success) 65%, var(--signal-info)); }
+.sales-mindmap-trunk,
+.sales-mindmap-twig { fill: none; stroke: var(--branch-color); stroke-linecap: round; }
+.sales-mindmap-trunk { stroke-width: 5; }
+.sales-mindmap-twig { stroke-width: 1.8; }
+.sales-mindmap-topic { fill: color-mix(in srgb, var(--branch-color) 18%, var(--background)); stroke: var(--branch-color); stroke-width: 1.5; }
+.sales-mindmap-topic-label { fill: var(--foreground); font-size: 21px; font-weight: 650; }
+.sales-mindmap-caption { fill: var(--muted-foreground); font-size: 12px; }
+.sales-mindmap-leaf { cursor: pointer; outline: none; }
+.sales-mindmap-hit { fill: transparent; stroke: transparent; stroke-width: 2; }
+.sales-mindmap-leaf:hover .sales-mindmap-hit,
+.sales-mindmap-leaf:focus-visible .sales-mindmap-hit { fill: color-mix(in srgb, var(--branch-color) 10%, transparent); stroke: var(--branch-color); }
+.sales-mindmap-leaf-label { fill: var(--foreground); font-size: 19px; font-weight: 550; }
+.sales-mindmap-note { fill: var(--muted-foreground); font-size: 13px; }
+.sales-mindmap-center rect { fill: var(--primary); }
+.sales-mindmap-center text { fill: var(--primary-foreground); font-size: 26px; font-weight: 650; }
+.sales-mindmap-center .sales-mindmap-center-sub { font-size: 18px; font-weight: 500; }
+.sales-mindmap-center .sales-mindmap-center-note { font-size: 13px; font-weight: 400; }
+.sales-mindmap:fullscreen { display: flex; flex-direction: column; margin: 0; padding: 1.25rem; background: var(--background); color: var(--foreground); }
+.sales-mindmap:fullscreen .sales-mindmap-canvas { flex: 1; min-height: 0; height: 0; border-radius: 0; }
 .sales-script-controls { margin-bottom: 1rem; }
 .sales-script-section { scroll-margin-top: 2rem; margin-block: 0.7rem; }
 .sales-script-section > summary { width: 100%; }
@@ -119,18 +145,14 @@
 .sales-script-records p { font-size: 0.93rem; }
 .sales-script-records strong { font-weight: 550; }
 
-@media (min-width: 1000px) {
-  .sales-script-branches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 2rem; border-left: 0; }
-  .sales-script-branches > li { border-left: 2px solid var(--border-default); }
-}
-
 @media (max-width: 800px) {
   .sales-script-section { scroll-margin-top: 75px; }
 }
 @media (max-width: 560px) {
   .sales-script-records { grid-template-columns: minmax(0, 1fr); }
   .sales-script-beat { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
-  .sales-script-branches > li { padding-left: 1.1rem; }
+  .sales-mindmap-canvas { height: 430px; }
+  .sales-mindmap-tools button { padding-inline: 0.4rem; }
 }
 
 @media (max-width: 800px) {
