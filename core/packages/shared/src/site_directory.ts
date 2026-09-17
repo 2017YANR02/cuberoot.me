@@ -7,7 +7,7 @@ export const HOME_MEMBER_SECTION_IDS = { enterprise: 'enterprise-members', indiv
 export const ACCOUNT_CARD_GROUP_ID = 'account';
 export const ACCOUNT_CARD_IDS = [
   'pet', 'wca', 'recon', 'link-wca', 'progress', 'learning-center', 'enterprise',
-  'friends', 'vault', 'notifications', 'users-admin', 'submissions',
+  'friends', 'vault', 'notifications', 'mcp', 'users-admin', 'submissions',
 ] as const;
 
 export interface SiteDirectoryText {
