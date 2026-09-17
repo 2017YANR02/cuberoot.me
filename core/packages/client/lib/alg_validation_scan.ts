@@ -6,8 +6,13 @@
  *
  * **纯客户端**(cubing.js KPuzzle),后端没有批量校验接口。全库一遍 ≈ 1.6 万条,数秒。
  */
-import { ALG_CATALOG, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
-import { validateStoredAlgCase, setupForCase } from '@/lib/alg_validation';
+import { findDuplicateAlgs } from '@cuberoot/shared/alg-notation';
+import type { AlgCase, AlgPuzzle } from '@cuberoot/shared/alg';
+import { SET_GOAL } from '@/lib/alg_goals';
+import { validateStoredAlgCase } from '@/lib/alg_validation';
+import { loadAlg, commonCaseSetup, caseAlgIssue, caseCoepEntry } from '@/lib/alg_case_alignment';
+import { alignScrambleToSetup } from '@/lib/alg_scramble';
+import { tr } from '@/i18n/tr';
 
 export interface AlgFailure {
   puzzle: AlgPuzzle;
@@ -32,13 +37,34 @@ export interface ScanOpts {
   shouldCancel?: () => boolean;
 }
 
+function metadataEntries(c: AlgCase): Array<{ label: string; alg: string; scramble: boolean }> {
+  const entries = Object.entries(c.meta?.optimal ?? {}).flatMap(([metric, value]) => value.scramble
+    ? [{ label: metric.toUpperCase(), alg: value.scramble, scramble: true }] : []);
+  if (c.meta?.coep?.alg) entries.push({ label: 'COEP', alg: caseCoepEntry(c)?.alg ?? c.meta.coep.alg, scramble: false });
+  if (c.meta?.coep?.scramble) entries.push({ label: 'COEP', alg: c.meta.coep.scramble, scramble: true });
+  return entries;
+}
+
+async function scanMetadata(puzzle: AlgPuzzle, set: string, c: AlgCase): Promise<AlgFailure[]> {
+  const setup = commonCaseSetup(puzzle, set, c);
+  const failures: AlgFailure[] = [];
+  for (const entry of metadataEntries(c)) {
+    const result = entry.scramble
+      ? { ok: alignScrambleToSetup(puzzle, entry.alg, setup) !== null,
+          reason: tr({ zh: '原打乱无法对齐本图', en: 'Source scramble cannot be aligned to this case' }) }
+      : await validateStoredAlgCase(setup, entry.alg, c.sticker, puzzle, set);
+    if (!result.ok) failures.push({ puzzle, set, caseObj: c, oriIdx: 0, algIdx: -1,
+      alg: `${entry.label}: ${entry.alg}`, reason: result.reason ?? 'unknown' });
+  }
+  return failures;
+}
+
 /** 全库的 (puzzle, set) 对。 */
 export function allTargets(): ScanTarget[] {
-  const out: ScanTarget[] = [];
-  for (const pz of Object.keys(ALG_CATALOG) as AlgPuzzle[]) {
-    for (const s of ALG_CATALOG[pz]) out.push({ puzzle: pz, set: s.slug });
-  }
-  return out;
+  return Object.keys(SET_GOAL).map(key => {
+    const [puzzle, set] = key.split('/');
+    return { puzzle: puzzle as AlgPuzzle, set };
+  });
 }
 
 /** 校验**已经加载好**的一批 case(set 页已有 data,别再拉一遍)。 */
@@ -51,16 +77,22 @@ export async function scanCases(
   const out: AlgFailure[] = [];
   for (const c of cases) {
     for (let oi = 0; oi < c.algs.length; oi++) {
-      const setup = setupForCase(puzzle, c.setup, c.algs[0]?.[0]?.alg, oi);
+      const setup = commonCaseSetup(puzzle, set, c, oi);
       for (let ai = 0; ai < c.algs[oi].length; ai++) {
         if (opts.shouldCancel?.()) return out;
         const entry = c.algs[oi][ai];
-        const r = await validateStoredAlgCase(entry.setup ?? setup, entry.alg, c.sticker, puzzle, set);
+        const duplicate = findDuplicateAlgs(c.algs[oi]).find(d => d.index === ai);
+        const issue = duplicate
+          ? tr({ zh: `重复公式：忽略括号后与第 ${duplicate.first + 1} 条相同`, en: `Duplicate algorithm: identical to entry ${duplicate.first + 1}, ignoring parentheses` })
+          : caseAlgIssue(entry);
+        const r = issue ? { ok: false, reason: issue }
+          : await validateStoredAlgCase(setup, entry.alg, c.sticker, puzzle, set);
         if (!r.ok) {
           out.push({ puzzle, set, caseObj: c, oriIdx: oi, algIdx: ai, alg: entry.alg, reason: r.reason ?? 'unknown' });
         }
       }
     }
+    out.push(...await scanMetadata(puzzle, set, c));
   }
   return out;
 }
@@ -75,7 +107,7 @@ export async function scanTargets(targets: ScanTarget[], opts: ScanOpts = {}): P
     // 报告里就会挂着他刚删掉的那条公式,越修越不对。
     const data = await loadAlg(t.puzzle, t.set, { fresh: true });
     loaded.push({ ...t, cases: data.cases });
-    for (const c of data.cases) for (const ori of c.algs) total += ori.length;
+    for (const c of data.cases) total += c.algs.flat().length + metadataEntries(c).length;
   }
   opts.onProgress?.(0, total);
 
@@ -84,11 +116,16 @@ export async function scanTargets(targets: ScanTarget[], opts: ScanOpts = {}): P
   for (const sd of loaded) {
     for (const c of sd.cases) {
       for (let oi = 0; oi < c.algs.length; oi++) {
-        const setup = setupForCase(sd.puzzle, c.setup, c.algs[0]?.[0]?.alg, oi);
+        const setup = commonCaseSetup(sd.puzzle, sd.set, c, oi);
         for (let ai = 0; ai < c.algs[oi].length; ai++) {
           if (opts.shouldCancel?.()) return out;
           const entry = c.algs[oi][ai];
-          const r = await validateStoredAlgCase(entry.setup ?? setup, entry.alg, c.sticker, sd.puzzle, sd.set);
+          const duplicate = findDuplicateAlgs(c.algs[oi]).find(d => d.index === ai);
+          const issue = duplicate
+            ? tr({ zh: `重复公式：忽略括号后与第 ${duplicate.first + 1} 条相同`, en: `Duplicate algorithm: identical to entry ${duplicate.first + 1}, ignoring parentheses` })
+            : caseAlgIssue(entry);
+          const r = issue ? { ok: false, reason: issue }
+            : await validateStoredAlgCase(setup, entry.alg, c.sticker, sd.puzzle, sd.set);
           if (!r.ok) {
             out.push({
               puzzle: sd.puzzle, set: sd.set, caseObj: c,
@@ -99,6 +136,9 @@ export async function scanTargets(targets: ScanTarget[], opts: ScanOpts = {}): P
           if (done % 20 === 0 || done === total) opts.onProgress?.(done, total);
         }
       }
+      out.push(...await scanMetadata(sd.puzzle, sd.set, c));
+      done += metadataEntries(c).length;
+      opts.onProgress?.(done, total);
     }
   }
   opts.onProgress?.(done, total);

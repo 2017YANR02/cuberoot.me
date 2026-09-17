@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { ALG_3X3_TOP_LAYER_SET } from '@cuberoot/shared/alg';
 import { CubeData, parseAlgorithm } from '@cuberoot/visualcube';
 import { normalizeAlg } from '@/lib/alg_normalize';
-import { CASE_VIEW_ANGLES, caseViewSetup, displayCaseScramble } from '@/lib/alg_display';
+import { CASE_VIEW_ANGLES, caseViewSetup, displayCaseScramble, adjacentUEdits, simplifyAdjacentU } from '@/lib/alg_display';
+import { algHtmlText, editAlgHtmlText } from '@/lib/alg_html';
 import fixtures from './fixtures/alg-ll-scramble-setups.json';
 
 const SUNE = "R U R' U R U2 R'";
@@ -19,6 +20,16 @@ function topLayer(alg: string) {
 }
 
 describe('last-layer displayed scrambles', () => {
+  it('reduces consecutive U moves using the puzzle turn order and preserves unaffected finger marks', () => {
+    expect(simplifyAdjacentU('3x3', "U U' R U U U' R' U2 U2")).toBe("R U R'");
+    expect(simplifyAdjacentU('megaminx', 'U2 U2 R')).toBe("U' R");
+    expect(simplifyAdjacentU('pyraminx', 'U U R')).toBe("U' R");
+    expect(simplifyAdjacentU('3x3', "Uw U'p (U R U')2")).toBe("Uw U'p (U R U')2");
+    const html = "U <u>U'</u> <em>R'</em> U' R <s>U'</s> R' <strong>U2'</strong> R";
+    const edited = editAlgHtmlText(html, adjacentUEdits(algHtmlText(html), 4));
+    expect(edited.trim()).toBe("<em>R'</em> U' R <s>U'</s> R' <strong>U2'</strong> R");
+    expect(editAlgHtmlText('<s>U</s> <em>U</em> R', adjacentUEdits('U U R', 4))).toBe('U2 R');
+  });
   it.each([
     [`${SUNE} y`, `${SUNE} U`],
     [`${SUNE} y2`, `${SUNE} U2`],

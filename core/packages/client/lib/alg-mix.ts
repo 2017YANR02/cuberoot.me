@@ -9,7 +9,8 @@
  * 关键约定:合练里的 case 都带 `srcSet`,于是 `caseKey()` 自动带上 set 前缀,
  * 而标记 / 记忆仍按各自 set 落地 —— 合练与单练共用同一份进度。
  */
-import { ALG_CATALOG, getAlgSetMeta, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
+import { ALG_CATALOG, getAlgSetMeta, type AlgCase, type AlgPuzzle } from '@cuberoot/shared/alg';
+import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
 import { tr } from '@/i18n/tr';
 
 /** 合练路由的固定段。真实 set slug 里没有它(ALG_CATALOG 已确认)。 */

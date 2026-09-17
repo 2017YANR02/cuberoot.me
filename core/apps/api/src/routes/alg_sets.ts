@@ -9,6 +9,8 @@
  * 路径前缀 /v1/alg/sets/... 跟现有 /v1/alg/:puzzle/:set/submissions 不冲突。
  */
 import { Hono } from 'hono';
+import { HTTPException } from 'hono/http-exception';
+import { withAlgWrite, assertNoExistingAlg, assertUniqueCaseAlgs } from '../utils/alg_duplicates.js';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
@@ -18,6 +20,10 @@ import { canonicalize3x3WideMoves, startsWithYRotation } from '@cuberoot/shared/
 import { validateRequiredAlgCaseSetup } from '../utils/alg_case_setup.js';
 
 export const algSetsRoutes = new Hono();
+algSetsRoutes.onError((error, c) => {
+  if (error instanceof HTTPException) return c.json({ error: error.message }, error.status);
+  throw error;
+});
 
 interface AlgSetRow {
   puzzle: string;
@@ -126,6 +132,7 @@ async function validateCaseInput(puzzle: string, setSlug: string, body: AlgCaseI
   if (body.standard && body.standard.length > TEXT_MAX) return { error: 'standard too long' };
   if (!body.sticker || typeof body.sticker !== 'object') return { error: 'sticker required (object)' };
   if (!Array.isArray(body.algs)) return { error: 'algs must be array' };
+  assertUniqueCaseAlgs(body.algs);
   const setupError = await validateRequiredAlgCaseSetup(puzzle, setSlug, body.setup);
   if (setupError) return { error: setupError };
   if (is3x3TopLayerSet(puzzle, setSlug)
@@ -257,20 +264,24 @@ algSetsRoutes.post('/alg/sets/:puzzle/:set/cases', async (c) => {
   // postgres@3 自带 jsonb 序列化器 (jsonb 列 / 强 cast 时调 JSON.stringify),
   // 这里直接传对象,driver 单次 stringify 后 PG 解析成 jsonb 对象。
   // 之前手动 JSON.stringify 会被 driver 再编码一次,落地变 jsonb 字符串字面量。
-  const inserted = await query<AlgCaseRow>(
-    `INSERT INTO alg_cases (
-      puzzle, set_slug, position, name, subgroup, setup, standard,
-      sticker, algs, ori_names, trainer_key
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?)
-    RETURNING *`,
-    [
-      puzzle, set, nextPos,
-      body.caseName!.trim(), body.subgroup ?? '', body.setup ?? '', body.standard ?? null,
-      body.sticker, body.algs,
-      body.oriNames ?? null,
-      body.trainerKey ?? null,
-    ],
-  );
+  const inserted = await withAlgWrite(puzzle, set, async query => {
+    await assertNoExistingAlg(query, puzzle, set, body.caseName!.trim(),
+      (body.algs as Array<Array<{ alg: string }>>).flat().map(e => e.alg), { standardWrite: true });
+    return query<AlgCaseRow>(
+      `INSERT INTO alg_cases (
+        puzzle, set_slug, position, name, subgroup, setup, standard,
+        sticker, algs, ori_names, trainer_key
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?)
+      RETURNING *`,
+      [
+        puzzle, set, nextPos,
+        body.caseName!.trim(), body.subgroup ?? '', body.setup ?? '', body.standard ?? null,
+        body.sticker, body.algs,
+        body.oriNames ?? null,
+        body.trainerKey ?? null,
+      ],
+    );
+  });
   // 新 case 还没有镜像伙伴,这一步现在必然是空转 —— 留着是为了建链脚本跑完之后
   // 「新增 case 时顺手把伙伴那边补上」也能自动成立,不用再回来改一次路由。
   await syncMirrorAndLog(puzzle, set, Number(inserted[0].id));
@@ -293,21 +304,25 @@ algSetsRoutes.put('/alg/sets/:puzzle/:set/cases/:id', async (c) => {
   if (v.error) return c.json({ error: v.error }, 400);
 
   // 见 POST 注释:对象直接传给 ?::jsonb,driver 序列化一次就够了
-  const updated = await query<AlgCaseRow>(
-    `UPDATE alg_cases SET
-       name = ?, subgroup = ?, setup = ?, standard = ?,
-       sticker = ?::jsonb, algs = ?::jsonb,
-       ori_names = ?::jsonb, trainer_key = ?
-     WHERE id = ? AND puzzle = ? AND set_slug = ?
-     RETURNING *`,
-    [
-      body.caseName!.trim(), body.subgroup ?? '', body.setup ?? '', body.standard ?? null,
-      body.sticker, body.algs,
-      body.oriNames ?? null,
-      body.trainerKey ?? null,
-      id, puzzle, set,
-    ],
-  );
+  const updated = await withAlgWrite(puzzle, set, async query => {
+    await assertNoExistingAlg(query, puzzle, set, body.caseName!.trim(),
+      (body.algs as Array<Array<{ alg: string }>>).flat().map(e => e.alg), { standardWrite: true });
+    return query<AlgCaseRow>(
+      `UPDATE alg_cases SET
+         name = ?, subgroup = ?, setup = ?, standard = ?,
+         sticker = ?::jsonb, algs = ?::jsonb,
+         ori_names = ?::jsonb, trainer_key = ?
+       WHERE id = ? AND puzzle = ? AND set_slug = ?
+       RETURNING *`,
+      [
+        body.caseName!.trim(), body.subgroup ?? '', body.setup ?? '', body.standard ?? null,
+        body.sticker, body.algs,
+        body.oriNames ?? null,
+        body.trainerKey ?? null,
+        id, puzzle, set,
+      ],
+    );
+  });
   if (updated.length === 0) return c.json({ error: 'Not found' }, 404);
   // 公式改了 → 伙伴那边的自动镜像份重算。case 内拖拽重排走的也是这条 PUT,
   // 所以 §5.5 的「排序传播」不需要单独端点:重算本来就按源顺序排。

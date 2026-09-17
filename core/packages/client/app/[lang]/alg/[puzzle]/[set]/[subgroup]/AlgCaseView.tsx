@@ -1,4 +1,5 @@
 'use client';
+import { alignAlgFile, caseAlgIssue } from '@/lib/alg_case_alignment';
 
 /**
  * 单张 case 的**独立详情页**正文(短链 `/alg/<puzzle>/<set>/<slug>`,如 `/alg/3x3/zbll/ur3`)。
@@ -47,7 +48,6 @@ import {
   CASE_VIEW_ANGLES,
   caseViewAlg,
   caseViewSetup,
-  displayAlg,
   displayCaseScramble,
   oriAdjustSetup,
   shortOriName,
@@ -55,7 +55,7 @@ import {
 } from '@/lib/alg_display';
 import { listSubmissions } from '@/lib/alg_api';
 import { sanitizeAlgHtml } from '@/lib/alg_html';
-import { reorderCaseAlgs } from '@/lib/alg_sets_api';
+import { reorderCaseAlgs, rotateCaseClockwise } from '@/lib/alg_sets_api';
 import { useIsAdmin } from '@/lib/auth-store';
 import { useCopy } from '@/hooks/useCopy';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -108,22 +108,24 @@ function PlayableAlgRow({ entry, puzzle, mirror, ori = 0, viewAngle, sq1Notation
   const [mirrorOpen, setMirrorOpen] = useState(false);
   const { copied, copy } = useCopy();
   const angledAlg = caseViewAlg(entry.alg, viewAngle);
-  const shown = formatScrambleForEvent(puzzle, displayAlg(angledAlg));
+  const issue = caseAlgIssue(entry);
+  const shown = formatScrambleForEvent(puzzle, angledAlg);
   const sq1Notation = puzzle === 'sq1'
-    ? sq1NotationText(displayAlg(angledAlg), sq1NotationMode, sourceKarnaukh ? entry.note : undefined)
+    ? sq1NotationText(angledAlg, sq1NotationMode, sourceKarnaukh ? entry.note : undefined)
     : null;
   const shownText = sq1Notation ? tr(sq1Notation) : shown;
   const isKarnaukh = puzzle === 'sq1' && sq1NotationMode === 'karnaukh';
-  const len = entry.stm == null ? null : stm(displayAlg(angledAlg));
+  const len = entry.stm == null ? null : stm(angledAlg);
   return (
     <>
       <div
         role="button"
         tabIndex={0}
-        className={`alg-alg-row${selected ? ' is-expanded' : ''}`}
+        className={`alg-alg-row${selected ? ' is-expanded' : ''}${issue ? ' is-invalid' : ''}`}
+        aria-disabled={!!issue}
         aria-pressed={selected}
-        onClick={onSelect}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); } }}
+        onClick={() => { if (!issue) onSelect(); }}
+        onKeyDown={(e) => { if (!issue && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelect(); } }}
       >
         <span className={`alg-alg-text${isKarnaukh ? ' is-karnaukh' : ''}`}>
           {sq1Notation
@@ -132,9 +134,10 @@ function PlayableAlgRow({ entry, puzzle, mirror, ori = 0, viewAngle, sq1Notation
             ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(entry.algHtml) }} />
             : shown}
           {!sourceKarnaukh && entry.note && <span className="alg-alg-note">({tr(entry.note)})</span>}
+          {issue && <span className="alg-alg-note">{tr({ zh: '（原公式与本图不匹配）', en: '(Source algorithm does not match this case)' })}</span>}
         </span>
         {!isKarnaukh && len != null && <span className="alg-alg-len" title="STM">{len}</span>}
-        {mirror && (
+        {mirror && !issue && (
           <button
             type="button"
             className={`alg-mirror-toggle${mirrorOpen ? ' is-on' : ''}`}
@@ -145,7 +148,7 @@ function PlayableAlgRow({ entry, puzzle, mirror, ori = 0, viewAngle, sq1Notation
             <FlipHorizontal2 size={14} />
           </button>
         )}
-        <button type="button" className="alg-alg-copy-btn" onClick={(e) => { e.stopPropagation(); copy(shownText); }} title="copy">
+        <button type="button" className="alg-alg-copy-btn" disabled={!!issue} onClick={(e) => { e.stopPropagation(); copy(shownText); }} title="copy">
           {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
         </button>
       </div>
@@ -266,8 +269,9 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, edit
   const byNo = useMemo(() => {
     const map = new Map<number, AlgCase>();
     for (const c of data.cases) if (c.meta?.no != null) map.set(c.meta.no, c);
+    if (caseObj.meta?.no != null) map.set(caseObj.meta.no, caseObj);
     return map;
-  }, [data]);
+  }, [data, caseObj]);
 
   /** 全集唯一 slug 表(生成关联链接 / 社区区都要);和列表页、落地解析同一份算法。 */
   const slugMap = useMemo(() => buildCaseSlugMap(data.cases, set), [data, set]);
@@ -315,6 +319,12 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, edit
   // ── admin:公式顺序可拖(第一条是主推解法)。和 case 列表页同一套 —— 乐观更新,失败回滚,
   //    落库走 reorderCaseAlgs(整条 case PUT,只动 algs)。
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const rotateCurrentCase = isAdmin && caseObj.id != null && canChooseViewAngle ? async () => {
+    const next = await rotateCaseClockwise(data, caseObj, effectiveViewAngle);
+    setCaseObj(next.cases.find(c => c.id === caseObj.id)!);
+    void setViewAngle('default');
+  } : undefined;
+
   const dragAlgs = isAdmin && caseObj.id != null;
   const algDragId = (ori: number, i: number) => `alg-${ori}-${i}`;
   const handleAlgDragEnd = (oriIdx: number) => (e: DragEndEvent) => {
@@ -356,6 +366,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, edit
       sticker={caseObj.sticker}
       setup={caseObj.setup}
       firstAlg={caseObj.algs[0]?.[0]?.alg}
+      standardAlgs={caseObj.algs.flat()}
       submissions={submissions}
       viewAngle={effectiveViewAngle}
       onPatch={(action) => {
@@ -479,6 +490,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, edit
       {m ? (
         <div className="alg-meta-body alg-case-detail-body">
           <AlgCaseMetaContent
+            onRotate={rotateCurrentCase}
             caseObj={caseObj}
             puzzle={puzzle}
             set={set}
@@ -501,7 +513,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, edit
         <div className="alg-case-detail-lean is-paired-player">
           <div className="alg-case-detail-lean-aside">
             <div className="alg-case-detail-lean-thumb">
-              <CaseThumb puzzle={puzzle} set={set} sticker={caseObj.sticker} alg={caseObj.algs[0]?.[0]?.alg || caseObj.setup || ''} setup={caseObj.setup} size={116} sq1BlackTop={sq1BlackTop} viewAngle={effectiveViewAngle} orientation={effectiveOrientation} />
+              <CaseThumb onRotate={rotateCurrentCase} puzzle={puzzle} set={set} sticker={caseObj.sticker} alg={caseObj.algs[0]?.[0]?.alg || caseObj.setup || ''} setup={caseObj.setup} size={116} sq1BlackTop={sq1BlackTop} viewAngle={effectiveViewAngle} orientation={effectiveOrientation} />
             </div>
             {mirror?.card && (
               <div className="alg-mirror-row">
@@ -535,7 +547,9 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, edit
               const orientedSetup = oriAdjustSetup(caseObj.setup, oi);
               const requestedAlgIdx = selectedAlgByOri[oi] ?? 0;
               const selectedAlgIdx = requestedAlgIdx < oriAlgs.length ? requestedAlgIdx : 0;
-              const selectedEntry = oriAlgs[selectedAlgIdx];
+              const candidateEntry = oriAlgs[selectedAlgIdx];
+              const selectedEntry = candidateEntry && !caseAlgIssue(candidateEntry)
+                ? candidateEntry : oriAlgs.find(entry => !caseAlgIssue(entry));
               const playRequest = playRequestByOri[oi] ?? 0;
               const rows = oriAlgs.map((entry, i) => {
                 // setup 必须跟着朝向走 —— 四个槽共用一条原始 setup 时,FL/BL/BR 演的是别的 case
@@ -564,10 +578,10 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, edit
                     {selectedEntry && (
                       <div className="alg-case-detail-ori-player alg-player-list-player">
                         <AlgPlayer
-                          alg={displayAlg(caseViewAlg(selectedEntry.alg, effectiveViewAngle))}
+                          alg={caseViewAlg(selectedEntry.alg, effectiveViewAngle)}
                           puzzle={puzzle}
                           set={set}
-                          setup={caseViewSetup(selectedEntry.setup ?? orientedSetup, effectiveViewAngle)}
+                          setup={caseViewSetup(orientedSetup, effectiveViewAngle)}
                           orientation={effectiveOrientation}
                           size={260}
                           autoPlay={playRequest > 0}
@@ -593,9 +607,9 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, edit
           setSlug={set}
           state={editorState}
           onClose={closeEditor}
-          onSaved={(action) => {
+          onSaved={async (action) => {
             // 'add' 在详情页开不出来(只有编辑入口),真来了也只当没这张的事。
-            if (action.type === 'update') setCaseObj(action.updated);
+            if (action.type === 'update') setCaseObj((await alignAlgFile({ ...data, cases: [action.updated] })).cases[0]);
             else if (action.type === 'delete') setDeleted(true);
           }}
         />

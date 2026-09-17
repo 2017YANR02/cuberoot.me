@@ -11,16 +11,19 @@
  */
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { loadAlg, type AlgFile, type AlgPuzzle } from '@cuberoot/shared';
+import type { AlgFile, AlgPuzzle } from '@cuberoot/shared/alg';
+import { loadAlg } from '@/lib/alg_case_alignment';
 import AlgCategoryView from '@/components/AlgCategoryView';
 import AlgCaseView from './AlgCaseView';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { resolveCaseSlug } from '@/lib/alg_case_link';
 import { tr } from '@/i18n/tr';
+import { useIsAdmin } from '@/lib/auth-store';
 import '../../../alg.css';
 
 export default function AlgSubOrCaseClient() {
   const pathname = usePathname();
+  const isAdmin = useIsAdmin();
   const [route, setRoute] = useState<{ puzzle: string; set: string; slug: string; edit: boolean } | null>(null);
   useEffect(() => {
     const m = window.location.pathname.match(/\/alg\/([^/]+)\/([^/]+)\/([^/?#]+)(?:\/(edit))?\/?$/);
@@ -42,11 +45,11 @@ export default function AlgSubOrCaseClient() {
     setError(false);
     if (!puzzle || !set) return;
     let live = true;
-    loadAlg(puzzle as AlgPuzzle, set)
+    loadAlg(puzzle as AlgPuzzle, set, { fresh: isAdmin })
       .then(d => { if (live) setData(d); })
       .catch(() => { if (live) setError(true); });
     return () => { live = false; };
-  }, [puzzle, set]);
+  }, [puzzle, set, isAdmin]);
 
   if (error) {
     return <div className="alg-root"><div className="alg-empty">{tr({ zh: '加载失败', en: 'Failed to load.' })}</div></div>;

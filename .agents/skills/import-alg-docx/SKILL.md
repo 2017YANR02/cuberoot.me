@@ -12,7 +12,7 @@ description: Use when importing, migrating, or synchronizing curated 3x3 algorit
 3. Run `scripts/extract_alg_docx.py` for machine-readable extraction, then reconcile its output against the rendered pages and record counts in the tracker.
 4. Ignore green text. Interpret a green `->` or `<-` as a cross-cell scramble link, not as a formula.
 5. Map embedded formula icons through `references/import-contract.md`; keep unknown icons unresolved until the user or document identifies them.
-6. Run `scripts/add_formula_setups.mts` to invert every normalized formula into its entry-level `setup`; verify every generated state is the intended case before migration and reconcile any source anomaly against the rendered DOCX.
+6. `scripts/add_formula_setups.mts` can produce diagnostic inverse states, but an algorithm solving its own inverse is not case validation. Validate every entry against the public case setup through `alg_case_alignment.ts`; include verified starting and finishing adjustments in the displayed sequence. Check confirmed relocations in `docs/alg-case-alignment-audit.md` before reimporting, so source-table mistakes cannot overwrite reviewed corrections.
 7. Preserve prime marks on 180-degree turns. Put curated DOCX formulas before existing formulas and remove an existing near-duplicate only after normalizing grouping whitespace and the optional prime after `2`.
 8. Keep the DOCX category and case order. Never substitute the site's previous grouping.
 9. Treat DOCX one-handed formulas as left-handed. Reuse the PLL formula-tag and partner-first left-to-right-hand derivation path to expose right-handed formulas; do not mirror the current case and do not create another mirror implementation.
@@ -27,7 +27,7 @@ description: Use when importing, migrating, or synchronizing curated 3x3 algorit
 
 - Reject missing case numbers, duplicate case numbers, malformed five-number metric rows, unsupported arrows, and formulas left empty after green-text removal.
 - Preserve non-green inline styling as `algHtml` only through the existing safe algorithm-markup contract.
-- Keep the case-level setup for the main thumbnail and use entry-level setups for formula-specific DOCX orientations. Stop on state mismatches by default; when the user explicitly makes the owner DOCX authoritative, preserve only visually confirmed source text and lock the exact exception set in tests and the tracker.
+- The main thumbnail, scramble, solution and player must share the case-level setup. Entry-level inverse setups are source metadata, never an independent starting state or proof that the entry belongs to the case. Preserve unresolved source text and report mismatches; relocate a misplaced entry only after its destination is verified, preserving its tags, markup and source fields. Relocation must not reduce the set's formula count.
 - Build `meta.mirror` from a state-verified M-plane mirror relation. Scramble arrows are unrelated and must not be reused as mirror links.
 - Require OLL mirror numbers to be unique, resolvable, and involutive; self-mirror cases point to themselves.
 - Do not import diagrams when the existing case sticker data already renders the same state.
@@ -36,6 +36,6 @@ description: Use when importing, migrating, or synchronizing curated 3x3 algorit
 ## Resources
 
 - `scripts/extract_alg_docx.py`: extract headings, paired cases, metrics, formulas, styles, icons, and arrow relations into JSON.
-- `scripts/add_formula_setups.mts`: normalize and invert each formula into the entry-level setup consumed by the existing player.
+- `scripts/add_formula_setups.mts`: normalize and invert each formula for source diagnostics; these inverse states must not override the public case in validation or playback.
 - `scripts/build_alg_migration.py`: generate the guarded, idempotent merge migration from extracted JSON and a verified mirror map.
 - `references/import-contract.md`: field, color, icon, ordering, deduplication, and handedness mapping.

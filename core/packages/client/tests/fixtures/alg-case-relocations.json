@@ -1,0 +1,250 @@
+[
+  {
+    "puzzle": "3x3",
+    "set": "oll",
+    "sourceId": 3929,
+    "sourceName": "T",
+    "sourceIndex": 3,
+    "sourceEntry": {
+      "alg": "U x (l B' l' U) (l B l' U') x'",
+      "tags": [
+        "oh"
+      ],
+      "setup": "x U l B' l' U' l B l' x' U'",
+      "source": "cuberoot"
+    },
+    "targetId": 3930,
+    "targetName": "L",
+    "entry": {
+      "alg": "U' x (l B' l' U) (l B l' U') x'",
+      "tags": [
+        "oh"
+      ],
+      "setup": "R' F' r U R U' r' F U'",
+      "source": "cuberoot"
+    }
+  },
+  {
+    "puzzle": "3x3",
+    "set": "oll",
+    "sourceId": 3930,
+    "sourceName": "L",
+    "sourceIndex": 3,
+    "sourceEntry": {
+      "alg": "U x (l B l' U) (l B' l' U') x'",
+      "tags": [
+        "oh"
+      ],
+      "setup": "x U l B l' U' l B' l' x' U'",
+      "source": "cuberoot"
+    },
+    "targetId": 3929,
+    "targetName": "T",
+    "entry": {
+      "alg": "U' x (l B l' U) (l B' l' U') x'",
+      "tags": [
+        "oh"
+      ],
+      "setup": "F R' F' r U R U' r'",
+      "source": "cuberoot"
+    }
+  },
+  {
+    "puzzle": "2x2",
+    "set": "ls3",
+    "sourceId": 7201,
+    "sourceName": "LS-3 Stollery-A 3",
+    "sourceIndex": 2,
+    "sourceEntry": {
+      "alg": "x' R2 U2 R' F' R U' R2",
+      "setup": "R2' U R' F R U2' R2' x"
+    },
+    "targetId": 7237,
+    "targetName": "LS-3 Gun-B 3",
+    "entry": {
+      "alg": "x y2 x' R2 U2 R' F' R U' R2",
+      "setup": "R2' U R' U R U2' R2'"
+    }
+  },
+  {
+    "puzzle": "megaminx",
+    "set": "co",
+    "sourceId": 5561,
+    "sourceName": "CO 9",
+    "sourceIndex": 1,
+    "sourceEntry": {
+      "alg": "y F R U R' U' R U R' U' R U R' U' F'",
+      "altId": "10426"
+    },
+    "targetId": 5562,
+    "targetName": "CO 10",
+    "entry": {
+      "alg": "y F R U R' U' R U R' U' R U R' U' F'",
+      "altId": "10426",
+      "setup": "R U2 R' U' R U R' U' R U' R'"
+    }
+  },
+  {
+    "puzzle": "pyraminx",
+    "set": "l4e",
+    "sourceId": 5627,
+    "sourceName": "Bad Hedge",
+    "sourceIndex": 0,
+    "sourceEntry": {
+      "alg": "R' L R L' U L' U L",
+      "altId": "26514"
+    },
+    "targetId": 8114,
+    "targetName": "Upper Edge Flipped #7",
+    "entry": {
+      "alg": "U R' L R L' U L' U L",
+      "altId": "26514",
+      "setup": "L' U' L U' L R' L' R U'"
+    }
+  },
+  {
+    "puzzle": "pyraminx",
+    "set": "l4e",
+    "sourceId": 5627,
+    "sourceName": "Bad Hedge",
+    "sourceIndex": 2,
+    "sourceEntry": {
+      "alg": "L' U L2 R' L' R2 U' R'",
+      "altId": "26516"
+    },
+    "targetId": 8114,
+    "targetName": "Upper Edge Flipped #7",
+    "entry": {
+      "alg": "U L' U L2 R' L' R2 U' R' U'",
+      "altId": "26516",
+      "setup": "L' U' L U' L R' L' R U'"
+    }
+  },
+  {
+    "puzzle": "pyraminx",
+    "set": "l4e",
+    "sourceId": 5627,
+    "sourceName": "Bad Hedge",
+    "sourceIndex": 3,
+    "sourceEntry": {
+      "alg": "U R' L R L2' U' L U R U' R'",
+      "altId": "26517"
+    },
+    "targetId": 8114,
+    "targetName": "Upper Edge Flipped #7",
+    "entry": {
+      "alg": "U U R' L R L2' U' L U R U' R' U'",
+      "altId": "26517",
+      "setup": "L' U' L U' L R' L' R U'"
+    }
+  },
+  {
+    "puzzle": "skewb",
+    "set": "sarahs-advanced",
+    "sourceId": 5651,
+    "sourceName": "5b",
+    "sourceIndex": 1,
+    "sourceEntry": {
+      "alg": "y z' S z2 S x y2 S",
+      "altId": "26956"
+    },
+    "targetId": 5654,
+    "targetName": "5c",
+    "entry": {
+      "alg": "z y z' S z2 S x y2 S",
+      "altId": "26956",
+      "setup": "S' x y2' S' z2' S' x"
+    }
+  },
+  {
+    "puzzle": "skewb",
+    "set": "sarahs-advanced",
+    "sourceId": 5666,
+    "sourceName": "9a",
+    "sourceIndex": 2,
+    "sourceEntry": {
+      "alg": "y' r' R r B' R B r' R' r R'",
+      "altId": "27004"
+    },
+    "targetId": 5665,
+    "targetName": "8d",
+    "entry": {
+      "alg": "z' y y' r' R r B' R B r' R' r R'",
+      "altId": "27004",
+      "setup": "H' z' S' z' H'"
+    }
+  },
+  {
+    "puzzle": "skewb",
+    "set": "sarahs-advanced",
+    "sourceId": 5679,
+    "sourceName": "13b",
+    "sourceIndex": 2,
+    "sourceEntry": {
+      "alg": "z' S x' y S z2 S",
+      "altId": "26793"
+    },
+    "targetId": 5672,
+    "targetName": "12a",
+    "entry": {
+      "alg": "x2 y2 z' S x' y S z2 S",
+      "altId": "26793",
+      "setup": "S' z2' S' x z S' z'"
+    }
+  },
+  {
+    "puzzle": "skewb",
+    "set": "sarahs-advanced",
+    "sourceId": 5681,
+    "sourceName": "13d",
+    "sourceIndex": 1,
+    "sourceEntry": {
+      "alg": "z' S x' y S z2 S",
+      "altId": "26795"
+    },
+    "targetId": 5672,
+    "targetName": "12a",
+    "entry": {
+      "alg": "x2 y2 z' S x' y S z2 S",
+      "altId": "26795",
+      "setup": "S' z2' S' x z S' z'"
+    }
+  },
+  {
+    "puzzle": "skewb",
+    "set": "sarahs-advanced",
+    "sourceId": 5696,
+    "sourceName": "18f",
+    "sourceIndex": 1,
+    "sourceEntry": {
+      "alg": "z H z' H y' S z2 S",
+      "altId": "27101"
+    },
+    "targetId": 5702,
+    "targetName": "19d",
+    "entry": {
+      "alg": "z z H z' H y' S z2 S",
+      "altId": "27101",
+      "setup": "S' z2' S' y H' z H' z2'"
+    }
+  },
+  {
+    "puzzle": "sq1",
+    "set": "csp",
+    "sourceId": 7708,
+    "sourceName": "Muffin / Barrel (Even)",
+    "sourceIndex": 1,
+    "sourceEntry": {
+      "alg": "/ 2,-3 / -2,0 / 2,0 / -1,0 / -3,0 /",
+      "setup": "/ (3, 0) / (1, 0) / (-2, 0) / (2, 0) / (-2, 3) /",
+      "source": "cubingapp"
+    },
+    "targetId": 7698,
+    "targetName": "Right Fist / Right Fist (Even)",
+    "entry": {
+      "alg": "(2,6) / 2,-3 / -2,0 / 2,0 / -1,0 / -3,0 /",
+      "setup": "/ (3, 0) / (1, 0) / (-2, 0) / (2, 0) / (-2, 0) / (-2, -6)",
+      "source": "cubingapp"
+    }
+  }
+]

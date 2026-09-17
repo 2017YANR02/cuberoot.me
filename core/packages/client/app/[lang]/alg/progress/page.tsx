@@ -13,12 +13,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { ArrowLeft, Flame, Loader2 } from 'lucide-react';
-import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgPuzzle, type AlgCase } from '@cuberoot/shared';
+import { ALG_CATALOG, ALG_PUZZLES, type AlgPuzzle, type AlgCase } from '@cuberoot/shared/alg';
 import { virtualAlgSet, VIRTUAL_ALG_SET_PARAMS } from '@/lib/alg-virtual-sets';
 import { flushSweep, readSweep } from '@/lib/alg-sweep-store';
 import { sweptScopes } from '@/lib/alg-sweep';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { CaseThumb } from '@/components/CaseThumb';
+import { commonCaseSetup, loadAlg } from '@/lib/alg_case_alignment';
 import { eventDisplayName } from '@/lib/wca-events';
 import { useTranslation } from 'react-i18next';
 import { getSessionToken } from '@/lib/auth-store';
@@ -473,7 +474,7 @@ function WeakCards({ recs }: { recs: Record<string, SrsRecs> }) {
                     set={w.set}
                     sticker={c.sticker}
                     alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
-                    setup={c.setup}
+                    setup={commonCaseSetup(w.puzzle, w.set, c)}
                     size={62}
                   />
                 ) : <span className="alg-prog-weak-blank" aria-hidden />}

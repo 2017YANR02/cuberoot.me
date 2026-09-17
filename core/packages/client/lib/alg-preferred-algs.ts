@@ -7,6 +7,7 @@ import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import { getSessionToken } from './auth-store';
 import { persistItem } from './safe-storage';
+import { sourceCaseAlg } from './alg_case_alignment';
 import { isSq1CsTarget, normalizeStoredSq1CsRecord } from './sq1-cs-storage';
 
 export interface PreferredAlgSnapshot {
@@ -24,7 +25,7 @@ const normalizeAlg = (alg: string) => alg.trim().replace(/\s+/g, ' ');
 
 export function preferredAlgRef(entry: AlgEntry): string {
   const altId = entry.altId?.trim();
-  return altId ? `id:${altId}` : `alg:${normalizeAlg(entry.alg)}`;
+  return altId ? `id:${altId}` : `alg:${normalizeAlg(sourceCaseAlg(entry))}`;
 }
 
 export function preferredAlgSlot(c: Pick<AlgCase, 'subgroup' | 'name'>, orientation = 0): string {

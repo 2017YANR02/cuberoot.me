@@ -32,7 +32,7 @@ describe('algorithm player placement', () => {
     const sharedStyles = read('components/AlgPlayer/alg-sim-player.css');
 
     expect(detail).toMatch(/caseObj\.algs\.map\(\(oriAlgs, oi\) => \{[\s\S]*?const orientedSetup = oriAdjustSetup\(caseObj\.setup, oi\);/);
-    expect(detail).toMatch(/className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{displayAlg\(caseViewAlg\(selectedEntry\.alg, effectiveViewAngle\)\)\}[\s\S]*?setup=\{caseViewSetup\(selectedEntry\.setup \?\? orientedSetup, effectiveViewAngle\)\}/);
+    expect(detail).toMatch(/className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{caseViewAlg\(selectedEntry\.alg, effectiveViewAngle\)\}[\s\S]*?setup=\{caseViewSetup\(orientedSetup, effectiveViewAngle\)\}/);
     expect(detail).not.toContain('inlinePlayer');
     expect(detail).toContain('autoPlay={playRequest > 0}');
     expect(detail).toContain('playRequest={playRequest}');
@@ -64,7 +64,7 @@ describe('algorithm player placement', () => {
     expect(beforePlayer).toContain('is-current');
     expect(beforePlayer).toContain('alg-meta-scramble-row');
     expect(beforePlayer).not.toContain('<AlgPlayer');
-    expect(meta).toContain("const selectedAlg = algs.find(a => `${a.key}:${a.originalIndex}` === selectedAlgKey) ?? algs[0]");
+    expect(meta).toContain('?? algs.find(a => !caseAlgIssue(a.entry))');
     expect(meta).toContain('playbackAlg: shown');
     expect(meta).toMatch(/alg-meta-case-player-layout alg-case-detail-ori-main alg-player-list-layout[\s\S]*?className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{selectedAlg\.playbackAlg\}[\s\S]*?alg-meta-case-algs alg-case-detail-ori-algs alg-player-list-options/);
     expect(meta).toContain('selected={selected}');

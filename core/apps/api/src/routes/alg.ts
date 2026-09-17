@@ -7,6 +7,8 @@
  * 表 `alg_submissions` schema 见 server-deploy 文档 / .password.md 旁的迁移说明。
  */
 import { Hono } from 'hono';
+import { HTTPException } from 'hono/http-exception';
+import { withAlgWrite, assertNoExistingAlg } from '../utils/alg_duplicates.js';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
@@ -18,6 +20,10 @@ import { normalizeCaseNameForSet } from '../utils/sq1_cs.js';
 import { publicUserIdsForOwnerKeys } from '../utils/account.js';
 
 export const algRoutes = new Hono();
+algRoutes.onError((error, c) => {
+  if (error instanceof HTTPException) return c.json({ error: error.message }, error.status);
+  throw error;
+});
 
 interface AlgSubmissionRow {
   id: number;
@@ -129,10 +135,13 @@ algRoutes.post('/alg/:puzzle/:set/:case/submit', async (c) => {
   const ruleError = leadingYError(puzzle, setSlug, alg);
   if (ruleError) return c.json({ error: ruleError }, 400);
 
-  const inserted = await query<AlgSubmissionRow>(
-    'INSERT INTO alg_submissions (puzzle, set_slug, case_name, alg, notes, author_id, author_name) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *',
-    [puzzle, setSlug, caseName, alg, notes, user.wcaId, user.name],
-  );
+  const inserted = await withAlgWrite(puzzle, setSlug, async query => {
+    await assertNoExistingAlg(query, puzzle, setSlug, caseName, [alg]);
+    return query<AlgSubmissionRow>(
+      'INSERT INTO alg_submissions (puzzle, set_slug, case_name, alg, notes, author_id, author_name) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *',
+      [puzzle, setSlug, caseName, alg, notes, user.wcaId, user.name],
+    );
+  });
   return c.json((await rowsToJson(inserted))[0]);
 });
 
@@ -170,12 +179,19 @@ algRoutes.put('/alg/submissions/:id', async (c) => {
   if (newCaseName !== null && !newCaseName) return c.json({ error: 'caseName cannot be empty' }, 400);
   if (newCaseName !== null && newCaseName.length > 128) return c.json({ error: 'caseName too long' }, 400);
 
-  if (newCaseName !== null) {
-    await query('UPDATE alg_submissions SET alg = ?, notes = ?, case_name = ? WHERE id = ?', [alg, notes, newCaseName, id]);
-  } else {
-    await query('UPDATE alg_submissions SET alg = ?, notes = ? WHERE id = ?', [alg, notes, id]);
-  }
-  const updated = await query<AlgSubmissionRow>('SELECT * FROM alg_submissions WHERE id = ?', [id]);
+  const updated = await withAlgWrite(rows[0].puzzle, rows[0].set_slug, async query => {
+    // Re-read ownership after acquiring the lock; concurrent edits/deletion cannot bypass it.
+    const current = await query<AlgSubmissionRow>('SELECT * FROM alg_submissions WHERE id = ? FOR UPDATE', [id]);
+    if (!current.length) throw new HTTPException(404, { message: 'Not found' });
+    if (!isAdmin && current[0].author_id !== user.wcaId) throw new HTTPException(403, { message: 'Cannot edit others alg' });
+    await assertNoExistingAlg(query, rows[0].puzzle, rows[0].set_slug, newCaseName ?? current[0].case_name, [alg], { submissionId: id });
+    if (newCaseName !== null) {
+      await query('UPDATE alg_submissions SET alg = ?, notes = ?, case_name = ? WHERE id = ?', [alg, notes, newCaseName, id]);
+    } else {
+      await query('UPDATE alg_submissions SET alg = ?, notes = ? WHERE id = ?', [alg, notes, id]);
+    }
+    return query<AlgSubmissionRow>('SELECT * FROM alg_submissions WHERE id = ?', [id]);
+  });
   return c.json((await rowsToJson(updated))[0]);
 });
 

@@ -42,7 +42,7 @@ import { detectPasteIntent, type PasteIntent } from '@/lib/smart-paste';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import './landing_search.css';
 import { tr } from '@/i18n/tr';
-import { ALG_PUZZLES, loadAlg, type AlgCase } from '@cuberoot/shared/alg';
+import { ALG_PUZZLES, type AlgCase } from '@cuberoot/shared/alg';
 
 // EventIcon inlines all WCA event SVGs (~68KB gzip);only used in recon hits.
 const EventIcon = dynamic(
@@ -66,7 +66,7 @@ function AlgSetResultThumb({ hit }: { hit: AlgSetHit }) {
   useEffect(() => {
     if (!puzzle) return;
     let cancelled = false;
-    void loadAlg(puzzle, hit.setSlug)
+    void import('@/lib/alg_case_alignment').then(({ loadAlg }) => loadAlg(puzzle, hit.setSlug))
       .then(data => { if (!cancelled) setFirstCase(data.cases[0] ?? null); })
       .catch(() => { if (!cancelled) setFirstCase(null); });
     return () => { cancelled = true; };
