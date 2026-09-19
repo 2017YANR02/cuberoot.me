@@ -1,9 +1,3 @@
-.wca-teacher-note {
-  margin: 4px 0 14px;
-  color: var(--muted-foreground);
-  font-size: 0.82rem;
-}
-
 .wca-teacher-cell,
 .wca-teacher-dialog-actions {
   display: flex;
