@@ -40,8 +40,8 @@ export async function GET(
   // 分片与全量各自成条目;上游认不出的 only 会自己回全量,这里只做形状校验。
   const only = new URL(req.url).searchParams.get('only');
   const onlyQs = only && /^(auto|[A-Za-z0-9]+(:[A-Za-z0-9]+)?)$/.test(only)
-    ? `?v=2&only=${encodeURIComponent(only)}`
-    : '?v=2';
+    ? `?v=4&only=${encodeURIComponent(only)}`
+    : '?v=4';
 
   let upstream: Response;
   try {
