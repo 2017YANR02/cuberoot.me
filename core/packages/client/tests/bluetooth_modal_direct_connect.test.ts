@@ -60,7 +60,7 @@ describe('BluetoothModal direct connection attempt', () => {
     vi.restoreAllMocks();
   });
 
-  it('requires physical-solved confirmation and an idle timer for device calibration', async () => {
+  it('resets software state and forwards the reset to a capable device', async () => {
     const resetDeviceState = vi.fn(async () => {});
     const resetState = vi.fn();
     const connected = { ...disconnectedCube, status: { ...disconnectedCube.status, connected: true, brand: 'gan-v4' }, resetDeviceState, resetState } as BluetoothCubeHandle;
@@ -68,14 +68,11 @@ describe('BluetoothModal direct connection attempt', () => {
     await act(async () => root.render(createElement(BluetoothModal, props)));
     const find = (text: string) => Array.from(host.querySelectorAll('button')).find(button => button.textContent?.includes(text))!;
     expect(find('Reset state').disabled).toBe(false);
-    await act(async () => root.render(createElement(BluetoothModal, { ...props, allowDeviceCalibration: true })));
     await act(async () => find('Reset state').click());
-    expect(resetDeviceState).not.toHaveBeenCalled();
-    expect(host.textContent).toContain('Solve the physical cube');
-    await act(async () => find('Cube solved, calibrate').click());
     expect(resetDeviceState).toHaveBeenCalledOnce();
     expect(resetState).not.toHaveBeenCalled();
-    expect(host.textContent).toContain('Device state calibrated');
+    expect(host.textContent).toContain('State reset');
+    expect(host.textContent).not.toContain('calibrate');
   });
 
   it('offers the native bridge on iOS WeChat instead of sending the user to Bluefy', async () => {

@@ -6,6 +6,7 @@ import { ganV4Driver } from '@/app/[lang]/timer/_lib/bluetooth/gan_v4';
 import { createGanV2Cipher } from '@cuberoot/shared/smart-cube/gan-v2';
 import { createGanV3Cipher } from '@cuberoot/shared/smart-cube/gan-v3';
 import { createGanV4Cipher } from '@cuberoot/shared/smart-cube/gan-v4';
+import { applyCubieAlg, cubieStateToWire, cubieToFacelets, solvedCubie } from '@cuberoot/shared/smart-cube/cubie';
 import { makeFakeGatt } from './_fake_gatt';
 import { GAN_V2_READ, GAN_V2_WRITE, GAN_V3_READ, GAN_V3_WRITE, GAN_V4_READ, GAN_V4_WRITE, ganV2FaceletFrame, ganV3FaceletFrame, ganV4FaceletFrame } from './_bt_frame_fixtures';
 
@@ -17,6 +18,26 @@ const versions = [
 ];
 
 describe('GAN device-state calibration', () => {
+  it('publishes the physical GAN v2 state during the initial handshake', async () => {
+    const gatt = makeFakeGatt('GAN12ui', { [ganV2Driver.service]: [GAN_V2_READ, GAN_V2_WRITE] });
+    const cipher = createGanV2Cipher(new Uint8Array([0xab, 0x12, 0x34, 0x56, 0x78, 0x90]));
+    const state = applyCubieAlg(solvedCubie(), 'R U');
+    const wire = cubieStateToWire(state);
+    const onState = vi.fn();
+    const session = await ganV2Driver.start(gatt.asServer, vi.fn(), {
+      mac: 'AB:12:34:56:78:90',
+      onState,
+    });
+    try {
+      const frame = cipher.encrypt(Uint8Array.from(
+        ganV2FaceletFrame(17, wire.corners, wire.edges),
+      ));
+      gatt.char(ganV2Driver.service, GAN_V2_READ).emit(frame);
+      gatt.char(ganV2Driver.service, GAN_V2_READ).emit(frame);
+      expect(onState).toHaveBeenCalledExactlyOnceWith(cubieToFacelets(state));
+    } finally { session.cleanup(); }
+  });
+
   it.each(versions)('sends the DCTimer reset bytes and waits for $driver.brand confirmation', async (v) => {
     const gatt = makeFakeGatt('GAN12ui', { [v.driver.service]: [v.read, v.write] });
     const cipher = v.cipher(new Uint8Array([0xab, 0x12, 0x34, 0x56, 0x78, 0x90]));
