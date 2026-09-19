@@ -116,7 +116,7 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
   const [calibrationFeedback, setCalibrationFeedback] = useState<string | null>(null);
   const backdropProps = useModalBackdrop(onClose, calibrationBusy);
   const calibrateDevice = async () => {
-    if (!allowDeviceCalibration || !cube.resetDeviceState || calibrationBusy) return;
+    if (!cube.resetDeviceState || calibrationBusy) return;
     setCalibrationBusy(true);
     setCalibrationFeedback(null);
     try {
@@ -366,7 +366,7 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
         {connected && !macPrompt && confirmCalibration && (
           <div className="modal-section">
             <p>{tr({ zh: '请先将实物魔方复原，再校准设备内部状态。', en: 'Solve the physical cube before calibrating its internal state.' })}</p>
-            <button type="button" className="modal-action-btn" disabled={calibrationBusy || !allowDeviceCalibration} onClick={() => { void calibrateDevice(); }}>
+            <button type="button" className="modal-action-btn" disabled={calibrationBusy || !cube.resetDeviceState} onClick={() => { void calibrateDevice(); }}>
               {calibrationBusy ? tr({ zh: '正在校准…', en: 'Calibrating…' }) : tr({ zh: '已复原，开始校准', en: 'Cube solved, calibrate' })}
             </button>
             <button type="button" className="modal-action-btn" disabled={calibrationBusy} onClick={() => setConfirmCalibration(false)}>{tr({ zh: '取消', en: 'Cancel' })}</button>
@@ -378,7 +378,7 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
             className="modal-actions"
             style={isMobile ? { flexDirection: 'column', alignItems: 'stretch' } : undefined}
           >
-              <button className="modal-action-btn" style={actionBtnStyle} disabled={!connected || connecting || calibrationBusy || Boolean(cube.resetDeviceState && !allowDeviceCalibration)}
+              <button className="modal-action-btn" style={actionBtnStyle} disabled={!connected || connecting || calibrationBusy}
                 onClick={() => {
                   if (cube.resetDeviceState) { setCalibrationFeedback(null); setConfirmCalibration(true); }
                   else cube.resetState();
