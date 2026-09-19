@@ -6,6 +6,7 @@ import { applyAlg, invariants, isSolved, thistlethwaiteStage, cycleStructure, id
 import { tr } from '@/i18n/tr';
 import Link from '@/components/AppLink';
 import { TwistyMini } from '../TwistyMini';
+import NauruGraphLesson from './NauruGraphLesson';
 import { formatCycle, type FaceLetterChar } from '../gt-helpers';
 import {
   CUBE3_STATES, GOD_DIST_333, GOD_DIST_333_NORMALIZED,
@@ -1225,6 +1226,7 @@ export default function CayleyGraph() {
           <L zh="Cayley 图 — 群的几何" en="The Cayley graph — geometry of a group" />
         </h1>
         <p><Link href="/math/cube-graph#cayley-bridge" prefetch={false}>{tr({ zh: '从可转动的魔方出发：对照贴纸图理解凯莱图', en: 'Start with a turnable cube: compare sticker diagrams and Cayley graphs' })}</Link></p>
+        <p><a href="#nauru">{tr({ zh: '二阶的完整小例子：24 个半转状态与瑙鲁图', en: 'A complete pocket-cube example: 24 half-turn states and the Nauru graph' })}</a></p>
         <h2>{tr({ zh: '先把魔方、状态和图对应起来', en: 'Connecting the physical cube, its states and the graph' })}</h2>
         <p>{tr({ zh: '本节讨论普通三阶：固定中心参考方向，不计中心贴纸的自转。群 G 的元素是合法转动造成的整体置换，以还原态为基准，也可以看成所有可达状态。一个顶点包含完整的角块与棱块位置、朝向；不是一个小方块，也不是一枚贴纸。', en: 'Here the cube is an ordinary 3×3 with a fixed centre frame and unmarked centre orientation. Elements of G are the overall permutations produced by legal turns, identified with reachable states by starting from solved. Each vertex contains every corner and edge position and orientation; it is neither a cubie nor a sticker.' })}</p>
         <p><TeX src={String.raw`|G|=8!\,3^7\,12!\,2^{10}`} />{' = '}{BigInt(CUBE3_STATES).toLocaleString('en-US')}{tr({ zh: '。这个状态数与贴纸图的 54 个位置处于不同层次。54 枚贴纸的完整排列描述一个状态；一次面转同步改变多个位置，但只使状态沿一条凯莱边移动。', en: '. This counts states, whereas 54 counts positions in the sticker diagram. One complete sticker arrangement describes a state. A face turn changes many positions simultaneously but moves the state along just one Cayley edge.' })}</p>
@@ -1246,6 +1248,7 @@ export default function CayleyGraph() {
             />
           </div>
         </div>
+        <NauruGraphLesson />
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 14, color: 'var(--ink)' }}>
           <L zh="14.1  小例子热身 — ⟨R, U⟩ 的部分状态" en="14.1  Warm-up — selected states of ⟨R, U⟩" />
         </h3>
