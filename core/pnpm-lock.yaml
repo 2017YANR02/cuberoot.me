@@ -35,6 +35,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@app-foundation/payments':
+        specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz
+        version: https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz
       '@cuberoot/puzzle-render-core':
         specifier: workspace:*
         version: link:../../packages/puzzle-render-core
@@ -1018,6 +1021,11 @@ packages:
   '@aparajita/capacitor-secure-storage@8.0.0':
     resolution: {integrity: sha512-oYnwSjdIh23aRNgz8982+TmFvQH/2yZkEdw1iIg+H2ziFJoOVELPTc7u6Ez2HwOuDIW5AGqBX75GvrzQ+D70Qg==}
     engines: {node: '>=20.0.0'}
+
+  '@app-foundation/payments@https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz':
+    resolution: {integrity: sha512-zLVBAkpOSzXdtlYduCHTgcNRiQZjqrx0kGKGawLnm7iGzXsJMN+6OOIIePy5MLpXq15AWxFgXI6NgCLjqCRwXw==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz}
+    version: 0.1.0
+    engines: {node: '>=22'}
 
   '@asamuzakjp/css-color@6.0.5':
     resolution: {integrity: sha512-mbhpPMmnw/kwW19aRNmSUl1QzLbdGo1SCuE49BT98MNwqF6zaHb3o2owssFc/PEO/4t2UjqtCNwocuDtJornzA==}
@@ -6138,6 +6146,8 @@ snapshots:
       '@capacitor/core': 8.5.0
       '@capacitor/ios': 8.5.0(@capacitor/core@8.5.0)
       '@capacitor/keyboard': 8.0.5(@capacitor/core@8.5.0)
+
+  '@app-foundation/payments@https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz': {}
 
   '@asamuzakjp/css-color@6.0.5':
     dependencies:

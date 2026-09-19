@@ -25,6 +25,7 @@
     "cubeopt:smoke": "node scripts/smoke-cubeopt-daemon.mjs"
   },
   "dependencies": {
+    "@app-foundation/payments": "https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz",
     "@cuberoot/puzzle-render-core": "workspace:*",
     "@cuberoot/shared": "workspace:*",
     "@cuberoot/vendor-sr-puzzlegen": "workspace:*",
