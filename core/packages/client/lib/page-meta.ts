@@ -463,6 +463,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'God\'s Number — the diameter of the cube group in the half-turn and quarter-turn metrics, how the values 20 and 26 were proved, and the equivalent results for other WCA puzzles.',
     },
   },
+  'math/cube-graph': {
+    title: { zh: '魔方与图论', en: 'Rubik’s Cube & Graph Theory' },
+    description: {
+      zh: '三维魔方与 54 枚贴纸的圆环、扇形图同步演示，探索转动置换、逆元及其与凯莱图的区别。',
+      en: 'An interactive 3D cube with ring and sector maps of its 54 stickers. Explore move permutations, inverses and the distinction from Cayley graphs.',
+    },
+  },
   'math/group': {
     title: { zh: '群论', en: 'Group Theory' },
     description: {

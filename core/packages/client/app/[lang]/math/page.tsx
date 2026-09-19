@@ -23,6 +23,12 @@ interface Card {
 
 const CARDS: Card[] = [
   {
+    to: '/math/cube-graph',
+    Icon: Boxes,
+    zh: { title: '魔方与图论', desc: '三维魔方与 54 枚贴纸的圆环、扇形映射同步转动，理解置换与凯莱图的区别' },
+    en: { title: 'Rubik’s Cube & Graph Theory', desc: 'Turn a cube alongside ring and sector maps of its 54 stickers, and explore permutations and Cayley graphs' },
+  },
+  {
     to: '/math/navier-stokes',
     Icon: Sigma,
     zh: { title: '关于纳维–斯托克斯千禧年大奖难题', desc: 'OpenAI 文章全文中文翻译，含研究过程、同期研究、原图与图注' },
@@ -85,7 +91,7 @@ export default function MathLandingPage() {
       </header>
       <div className="hub-grid">
         {CARDS.map((c) => (
-          <Link key={c.to} href={c.to} className="hub-card">
+          <Link key={c.to} href={c.to} prefetch={false} className="hub-card">
             <c.Icon size={28} />
             <div className="hub-card-title">{tr(c).title}</div>
             <div className="hub-card-desc">{tr(c).desc}</div>
