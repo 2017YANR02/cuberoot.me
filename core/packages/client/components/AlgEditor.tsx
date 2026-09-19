@@ -10,10 +10,22 @@
  * 关键: layout 内部为每行配 stable uid,React key 用 uid 而非数组下标,
  * 否则删中间行后 React 会复用旁边 DOM,AlgInput uncontrolled 内容不刷新 → 视觉错位。
  */
-import { Fragment, useState, useRef, useImperativeHandle, useMemo, forwardRef, useEffect } from 'react';
+import { useState, useRef, useImperativeHandle, useMemo, forwardRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Plus, AlertTriangle } from 'lucide-react';
-import type { AlgEntry } from '@cuberoot/shared';
+import { X, Plus, AlertTriangle, Copy, Check, Pin, FlipHorizontal2 } from 'lucide-react';
+import type { AlgCase, AlgEntry, AlgPuzzle } from '@cuberoot/shared/alg';
+import { stm } from '@cuberoot/shared/alg-notation';
+import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import SortableAlgRow from '@/components/SortableAlgRow';
+import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';
+import { useCopy } from '@/hooks/useCopy';
+import { editedAlgEntry } from '@/lib/alg_editor';
+import { sanitizeAlgHtml } from '@/lib/alg_html';
+import { preferredAlgRef, preferredAlgSlot, usePreferredAlgs } from '@/lib/alg-preferred-algs';
+import { ALG_TAG_LABEL } from '@/lib/alg_tags';
+import { sq1NotationText, type Sq1NotationMode } from '@/lib/sq1-pbl-notation';
+import { canonicalSq1Alg } from '@cuberoot/shared/sq1-notation';
 import { mirrorCascadeOnEdit, VIEWS, type MirrorCascadeEntry } from '@cuberoot/shared/alg-mirror';
 import CubeKeyboardSection from '@/components/CubeKeyboardSection';
 import AlgInput, { type AlgInputHandle } from '@/components/AlgInput';
@@ -51,6 +63,9 @@ interface Props {
   initialValue: AlgEntry[][];
   /** 只格式化输入框的初始显示；未编辑的行保存时仍原样返回，避免无意改写数据库。 */
   formatInitialAlg?: (alg: string) => string;
+  formatInitialHtml?: (html: string) => string;
+  caseContext?: { puzzle: AlgPuzzle; set: string; caseObj: AlgCase; sq1NotationMode?: Sq1NotationMode };
+  renderOrientation?: (rows: React.ReactNode, oi: number) => React.ReactNode;
   /** 开局就标红的行(页面那轮全库校验已经知道谁挂了,不必等用户按一次保存才告诉他)。 */
   initialInvalid?: AlgInvalidMark[];
   oriNames?: string[] | null;
@@ -61,9 +76,9 @@ interface Props {
   /** 伙伴 case 拉不回来的说明。有值就在弹层里明说,不假装「没有连带」。 */
   mirrorError?: string | null;
   /** 当前聚焦行的纯文本和专属 setup —— 父组件用来驱动左侧 AlgPlayer。 */
-  onCurrentAlgChange?: (alg: string, setup?: string) => void;
+  onCurrentAlgChange?: (alg: string, setup?: string, oi?: number) => void;
   /** 聚焦行内 caret 之前的 token 数(光标 sync 用) */
-  onCursorMoveCount?: (n: number) => void;
+  onCursorMoveCount?: (n: number, oi?: number) => void;
 }
 
 /** caret 之前的 token 数(空白拆分,过滤空 token) */
@@ -90,7 +105,30 @@ interface PendingRemoval {
   cascade: MirrorCascadeEntry[];
 }
 
-const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInitialAlg, initialInvalid, oriNames, mirror, mirrorPending, mirrorError, onCurrentAlgChange, onCursorMoveCount }, ref) => {
+function RowActions({ entry, text, oi, context, mirror }: { entry: AlgEntry; text: string; oi: number; context: NonNullable<Props['caseContext']>; mirror?: AlgEditorMirror | null }) {
+  const { copied, copy } = useCopy();
+  const [mirrorOpen, setMirrorOpen] = useState(false);
+  const { puzzle, set, caseObj } = context;
+  const preferred = usePreferredAlgs(state => state.snapshots[`${puzzle}/${set}`]);
+  const setPreferred = usePreferredAlgs(state => state.setPreferred);
+  const slot = preferredAlgSlot(caseObj, oi);
+  const pinned = preferred?.items[slot] === preferredAlgRef(entry);
+  const notation = puzzle === 'sq1' ? sq1NotationText(text, context.sq1NotationMode ?? 'compact', set === 'pbl' && canonicalSq1Alg(text) === canonicalSq1Alg(entry.alg) ? entry.note : undefined) : null;
+  const shownText = notation ? tr(notation) : text;
+  return <>
+    {(entry.tags ?? []).map(tag => <span key={tag} className="alg-alg-note">{ALG_TAG_LABEL[tag]()}</span>)}
+    {entry.note && !(puzzle === 'sq1' && set === 'pbl') && <span className="alg-alg-note">{tr(entry.note)}</span>}
+    {notation && <code className="alg-editor-notation">{shownText}</code>}
+    {puzzle !== 'sq1' && <span className="alg-alg-len" title="STM">{stm(text)}</span>}
+    <button type="button" className="alg-editor-del" aria-pressed={pinned} title={pinned ? tr({ zh: '取消置顶', en: 'Unpin algorithm' }) : tr({ zh: '置顶公式', en: 'Pin algorithm' })}
+      onClick={() => setPreferred(puzzle, set, slot, pinned ? null : preferredAlgRef(entry))}><Pin size={12} fill={pinned ? 'currentColor' : 'none'} /></button>
+    <button type="button" className="alg-editor-del" title={tr({ zh: '复制', en: 'Copy' })} onClick={() => copy(shownText)}>{copied ? <Check size={12} /> : <Copy size={12} />}</button>
+    {hasMirror(puzzle, set) && <button type="button" className="alg-editor-del" aria-expanded={mirrorOpen} title={tr({ zh: '镜像公式', en: 'Mirrored algs' })} onClick={() => setMirrorOpen(open => !open)}><FlipHorizontal2 size={12} /></button>}
+    {mirrorOpen && <div className="alg-editor-mirror"><AlgMirrorPanel alg={text} puzzle={puzzle} mirrorName={mirror?.partner.name ?? null} selfName={mirror?.selfName ?? caseObj.name} ori={oi} /></div>}
+  </>;
+}
+
+const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInitialAlg, formatInitialHtml, caseContext, renderOrientation = rows => rows, initialInvalid, oriNames, mirror, mirrorPending, mirrorError, onCurrentAlgChange, onCursorMoveCount }, ref) => {
   useTranslation(); // subscribe to language changes; text via tr()
   const [layout, setLayout] = useState<Row[][]>(() => {
     const src = initialValue.length === 0
@@ -117,6 +155,16 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
   });
   /** 实时跟踪当前 focused 行的纯文本,给 AlgPlayer 用 */
   const [currentAlg, setCurrentAlg] = useState('');
+  const [editedText, setEditedText] = useState<Record<string, string>>({});
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
+  const loadPreferred = usePreferredAlgs(state => state.load);
+  useEffect(() => { if (caseContext) loadPreferred(caseContext.puzzle, caseContext.set); }, [loadPreferred, caseContext?.puzzle, caseContext?.set]);
+  const initialHtmlOf = (row: Row) => row.algHtml ? sanitizeAlgHtml(formatInitialHtml?.(row.algHtml) ?? row.algHtml) : undefined;
+  const readEntry = (row: Row): AlgEntry => {
+    const { uid: _uid, ...original } = row;
+    const handle = handles.current.get(row.uid);
+    return handle ? editedAlgEntry(original, formatInitialAlg?.(row.alg) ?? row.alg, initialHtmlOf(row), handle.getText(), handle.getHtml()) : original;
+  };
   const keyboardTargetRef = useMemo(
     () => ({ current: focusedUid ? (elements.current.get(focusedUid) ?? null) : null }),
     [focusedUid],
@@ -130,29 +178,18 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
   }, [focusedUid]);
 
   useEffect(() => {
-    const row = layout.flat().find(item => item.uid === focusedUid);
-    onCurrentAlgChange?.(currentAlg, row?.setup);
+    if (!focusedUid) return;
+    const oi = layout.findIndex(rows => rows.some(item => item.uid === focusedUid));
+    const row = layout[oi]?.find(item => item.uid === focusedUid);
+    if (row) onCurrentAlgChange?.(readEntry(row).alg, row.setup, oi);
+    // The input handles hold the draft; currentAlg triggers this after typing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentAlg, focusedUid, layout, onCurrentAlgChange]);
 
   useImperativeHandle(ref, () => ({
     getValue: (): AlgEntry[][] =>
       layout.map(ori =>
-        ori.map(row => {
-          // 这个编辑器只管 alg / algHtml 两个字段。AlgEntry 上其余的东西(altId、ytId、
-          // 以及 1LLL 带来的 tags / source / stm / sqtm)它**不认识,但必须原样带回去** ——
-          // 重建成 `{ alg }` 就等于编一次 case 把它们全抹掉,而且是静默的。
-          const { uid: _uid, ...original } = row;
-          const h = handles.current.get(row.uid);
-          if (!h) return { ...original, alg: '' };
-          const text = h.getText();
-          if (!text) return { ...original, alg: '' };
-          const initialText = formatInitialAlg?.(row.alg) ?? row.alg;
-          if (text === initialText) return original;
-          const { alg: _alg, algHtml: _algHtml, ...rest } = original;
-          const html = h.getHtml();
-          const hasTag = /<(u|s|em|strong|sub|sup)\b/i.test(html);
-          return hasTag ? { ...rest, alg: text, algHtml: html } : { ...rest, alg: text };
-        }),
+        ori.map(readEntry),
       ),
     markInvalid: (marks) => {
       const m = new Map<string, string>();
@@ -162,7 +199,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
       }
       setInvalid(m);
     },
-  }), [formatInitialAlg, layout]);
+  }));
 
   const addAlg = (oi: number) => {
     const newRow: Row = { alg: '', uid: newUid() };
@@ -174,6 +211,8 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
   };
 
   const removeAlg = (oi: number, uid: string) => {
+    const remaining = layout[oi]?.filter(row => row.uid !== uid);
+    if (!remaining?.length) return;
     setLayout(L => {
       const ori = L[oi];
       if (ori.length <= 1) return L;
@@ -182,6 +221,8 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
       return L.map((o, i) => (i === oi ? o.filter(r => r.uid !== uid) : o));
     });
     if (focusedUid === uid) setFocusedUid(null);
+    const next = readEntry(remaining[0]);
+    onCurrentAlgChange?.(next.alg, next.setup, oi);
   };
 
   /**
@@ -191,10 +232,8 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
   const snapshot = (skipUid?: string): AlgEntry[][] =>
     layout.map(ori => ori.flatMap(row => {
       if (row.uid === skipUid) return [];
-      const text = (handles.current.get(row.uid)?.getText() ?? row.alg ?? '').trim();
-      if (!text) return [];
-      const { uid: _uid, alg: _alg, ...rest } = row;
-      return [{ ...rest, alg: text }];
+      const entry = readEntry(row);
+      return entry.alg.trim() ? [entry] : [];
     }));
 
   const [pending, setPending] = useState<PendingRemoval | null>(null);
@@ -238,13 +277,20 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
           {oriNames && oriNames[oi] && (
             <div className="alg-editor-ori-name">{oriNames[oi]}</div>
           )}
+          {renderOrientation(<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={({ active, over }) => {
+            if (!over || active.id === over.id) return;
+            const from = ori.findIndex(row => row.uid === active.id);
+            const to = ori.findIndex(row => row.uid === over.id);
+            if (from < 0 || to < 0) return;
+            setLayout(current => current.map((rows, i) => i === oi ? arrayMove(rows, from, to) : rows));
+          }}><SortableContext items={ori.map(row => row.uid)} strategy={verticalListSortingStrategy}>
           {ori.map(row => {
             const isFocused = focusedUid === row.uid;
             const bad = invalid.get(row.uid);
             const initialText = formatInitialAlg?.(row.alg || '') ?? (row.alg || '');
             return (
-              <Fragment key={row.uid}>
-              <div className={`alg-editor-row${bad ? ' is-invalid' : ''}`}>
+              <SortableAlgRow key={row.uid} id={row.uid} draggable={!!caseContext}>
+              <div data-site-surface="panel" className={`alg-editor-row${bad ? ' is-invalid' : ''}`}>
                 <AlgInput
                   ref={(h: AlgInputHandle | null) => {
                     if (h) {
@@ -260,7 +306,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
                   multiline={false}
                   autoSpace
                   initialText={initialText}
-                  initialHtml={initialText === row.alg ? row.algHtml : undefined}
+                  initialHtml={initialHtmlOf(row)}
                   placeholder={tr({ zh: "如 R U R' U'", en: "e.g. R U R' U'" })}
                   className="alg-editor-input"
                   spellCheck={false}
@@ -271,6 +317,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
                     setFocusedUid(prev => (prev === row.uid ? null : prev));
                   }}
                   onChange={text => {
+                    setEditedText(current => ({ ...current, [row.uid]: text }));
                     if (focusedUid === row.uid) setCurrentAlg(text);
                     // 一动这行就摘掉它的红标 —— 旧的判定已经不作数了,留着只会误导
                     setInvalid(prev => {
@@ -282,7 +329,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
                   }}
                   onCaretChange={(text, caret) => {
                     if (focusedUid !== row.uid) return;
-                    onCursorMoveCount?.(tokenCountBeforeCaret(text, caret));
+                    onCursorMoveCount?.(tokenCountBeforeCaret(text, caret), oi);
                   }}
                   onKeyDown={e => {
                     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -291,6 +338,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
                     }
                   }}
                 />
+                {caseContext && <RowActions entry={row} text={editedText[row.uid] ?? initialText} oi={oi} context={caseContext} mirror={mirror} />}
                 {ori.length > 1 && (
                   <button
                     type="button"
@@ -317,12 +365,13 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
                     onActivate={() => handles.current.get(row.uid)?.focus()}
                   />
                 )}
-              </Fragment>
+              </SortableAlgRow>
             );
           })}
           <button type="button" className="alg-editor-add" onClick={() => addAlg(oi)} tabIndex={-1} title={tr({ zh: '加一条', en: 'Add' })}>
             <Plus size={12} />
           </button>
+          </SortableContext></DndContext>, oi)}
         </div>
       ))}
 

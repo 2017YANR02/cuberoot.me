@@ -1670,14 +1670,14 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         aria-label={cardName}
                       />
                       {isAdmin && c.id != null && (
-                        <button
-                          type="button"
-                          onClick={() => setEditorState({ mode: 'edit', existing: c })}
+                        <Link
+                          href={caseDetailHref(c)}
+                          prefetch={false}
                           className="alg-admin-edit-btn alg-admin-edit-btn-corner"
                           title={tr({ zh: '编辑 case (admin)', en: 'Edit case (admin)' })}
                         >
                           <Pencil size={12} />
-                        </button>
+                        </Link>
                       )}
                       <div className="alg-case-head">
                         <div className={`alg-case-cube${useSvDualThumb || useZbllDualThumb ? ' is-dual' : ''}`}>
@@ -1908,7 +1908,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         <ValidationReportModal
           scope={{ kind: 'set', puzzle: puzzleParam as AlgPuzzle, set }}
           onClose={() => setValidationOpen(false)}
-          onPickCase={(_p, _s, c) => setEditorState({ mode: 'edit', existing: c })}
           refreshKey={validationRefreshKey}
         />
       )}
