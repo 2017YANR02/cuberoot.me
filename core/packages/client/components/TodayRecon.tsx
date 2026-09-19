@@ -43,11 +43,11 @@ export default function TodayRecon({ lang }: Props) {
     };
   }, []);
 
-  if (recons === null) return <div className="today-recon today-recon--loading" aria-hidden="true" />;
+  if (recons === null) return <div className="today-recon today-recon--loading" data-tour="today-replay" aria-hidden="true" />;
   if (recons.length === 0) return null;
 
   return (
-    <div className="today-recon">
+    <div className="today-recon" data-tour="today-replay">
       <div className="tr-head">
         <span className="tr-title">{tr({ zh: '今日复盘', en: 'Recon of the Day'
         })}</span>
