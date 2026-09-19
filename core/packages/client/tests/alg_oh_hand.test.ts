@@ -35,7 +35,7 @@ describe('3x3 OLL/PLL one-handed formulas', () => {
     expect(categorySource).toContain('supportsOhHands(puzzleParam, set)');
   });
   it('在标签菜单中并列左右单，不再渲染额外开关', () => {
-    expect(categorySource).toContain('<option value="oh">{OH_TAG_LABEL.left()}</option>');
+    expect(categorySource).toContain("<option value=\"oh\">{algTagLabel('oh')}</option>");
     expect(categorySource).toContain('<option value={RIGHT_OH_MENU_VALUE}>{OH_TAG_LABEL.right()}</option>');
     expect(categorySource).toContain("setTagParams({ tag: 'oh', hand: 'right' })");
     expect(categorySource).not.toContain('className="alg-oh-hand-toggle"');

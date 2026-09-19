@@ -56,6 +56,7 @@ import { rotateCaseClockwise } from '@/lib/alg_sets_api';
 import { useIsAdmin } from '@/lib/auth-store';
 import { useCopy } from '@/hooks/useCopy';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { algTagLabel } from '@/lib/alg_tags';
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
 import Sq1NotationSelect from '@/components/Sq1NotationSelect';
@@ -134,6 +135,7 @@ function PlayableAlgRow({ entry, puzzle, set, mirror, ori = 0, viewAngle, sq1Not
           {!sourceKarnaukh && entry.note && <span className="alg-alg-note">({tr(entry.note)})</span>}
           {issue && <span className="alg-alg-note">{tr({ zh: '（原公式与本图不匹配）', en: '(Source algorithm does not match this case)' })}</span>}
         </span>
+        {entry.tags?.map(tag => <span key={tag} className="alg-tag">{algTagLabel(tag)}</span>)}
         {!isKarnaukh && len != null && <span className="alg-alg-len" title="STM">{len}</span>}
         {mirror && !issue && (
           <button
@@ -421,9 +423,10 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
           scope={{ kind: 'case', puzzle, set, caseObj }}
           onPickCase={() => editorArea.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
         />
+        {editor && <div className="alg-case-inline-actions">{editor.actions}</div>}
       </div>
 
-      {editor && <div className="alg-case-inline-status">{editor.error}{editor.actions}</div>}
+      {editor?.error && <div className="alg-case-inline-status">{editor.error}</div>}
       {editor && effectiveViewAngle !== 'default' && <p>{tr({ zh: '切回默认角度可编辑公式，未保存的修改会保留。', en: 'Return to the default angle to edit algorithms. Your unsaved changes are kept.' })}</p>}
       <div ref={editorArea}>
       {m ? (
@@ -471,8 +474,8 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                 </Link>
               </div>
             )}
-            {editor?.setup}
-            {caseObj.setup && (
+            {editor && <div hidden={effectiveViewAngle !== 'default'}>{editor.setup}</div>}
+            {(!editor || effectiveViewAngle !== 'default') && caseObj.setup && (
               <SetupLine
                 puzzle={puzzle}
                 setup={displayCaseScramble(puzzle, set, caseViewSetup(caseObj.setup, effectiveViewAngle))}

@@ -23,6 +23,8 @@ export interface CompactSelectProps<T extends string | number> {
   label: ReactNode;
   items: readonly CompactSelectItem<T>[];
   value?: T;
+  /** Multi-selection uses the same menu; onChange toggles the chosen value. */
+  selectedValues?: readonly T[];
   onChange: (value: T) => void;
   ariaLabel: string;
   valueText?: string;
@@ -60,6 +62,7 @@ export function CompactSelect<T extends string | number>({
   label,
   items,
   value,
+  selectedValues,
   onChange,
   ariaLabel,
   valueText,
@@ -225,13 +228,14 @@ export function CompactSelect<T extends string | number>({
           className={['compact-select-popup', popupClassName].filter(Boolean).join(' ')}
           data-site-surface="popover"
           role="listbox"
+          aria-multiselectable={selectedValues ? true : undefined}
           aria-label={ariaLabel}
           data-no-timer={dataNoTimer ? '' : undefined}
           style={panelStyle}
         >
           <div className="compact-select-options">
             {items.map(item => {
-              const active = item.value === value;
+              const active = selectedValues ? selectedValues.includes(item.value) : item.value === value;
               return (
                 <button
                   type="button"

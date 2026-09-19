@@ -64,7 +64,8 @@ import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { sortByCp } from '@/lib/alg_cp_order';
 import { compareAlgGroupLabel, sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
 import { CUBE_ORIENTATIONS, visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
-import { ALG_TAG_LABEL, ALG_TAGS, OH_TAG_LABEL } from '@/lib/alg_tags';
+import { algTagLabel, ALG_TAGS, OH_TAG_LABEL } from '@/lib/alg_tags';
+import AlgTagLabel from '@/components/AlgTagLabel';
 import {
   CASE_VIEW_ANGLES,
   caseViewAlg,
@@ -268,8 +269,8 @@ function AlgRow({ entry, puzzle, set, invalid, mirror, ori = 0, notationStyle, v
         {/* 就是这条过不了校验 —— 卡片红框只说「这张有问题」,不说是哪条 */}
         {invalid && <AlertTriangle size={13} className="alg-alg-invalid-icon" aria-label={invalid} />}
         {entry.tags?.map(t => {
-          const label = t === 'oh' && ohHand ? OH_TAG_LABEL[ohHand]() : ALG_TAG_LABEL[t]();
-          return <span key={t} className={`alg-tag alg-tag-${t}`} title={label}>{label}</span>;
+          const label = t === 'oh' && ohHand === 'right' ? OH_TAG_LABEL.right() : algTagLabel(t);
+          return <span key={t} className={`alg-tag alg-tag-${t}`}><AlgTagLabel tag={t} label={label} hand={ohHand} /></span>;
         })}
         <span className={`alg-alg-text${isKarnaukh ? ' is-karnaukh' : ''}`}>
           {sq1Notation
@@ -1417,11 +1418,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               <option value="all">{tr({ zh: '全部', en: 'All' })}</option>
               {availableTags.map(t => t === 'oh' && canChooseOhHand ? (
                 <Fragment key={t}>
-                  <option value="oh">{OH_TAG_LABEL.left()}</option>
+                  <option value="oh">{algTagLabel('oh')}</option>
                   <option value={RIGHT_OH_MENU_VALUE}>{OH_TAG_LABEL.right()}</option>
                 </Fragment>
               ) : (
-                <option key={t} value={t}>{ALG_TAG_LABEL[t]()}</option>
+                <option key={t} value={t}>{algTagLabel(t)}</option>
               ))}
             </select>
           </>
