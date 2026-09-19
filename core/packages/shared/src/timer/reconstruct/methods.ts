@@ -89,8 +89,8 @@ const ROUX: SolveMethod = {
   en: 'Roux',
   rich: false,
   stages: [
-    { key: 'fb',   zh: '第一块',   en: 'First block',  done: (_f, s) => stepSolved('fb', s) },
-    { key: 'sb',   zh: '第二块',   en: 'Second block', done: (_f, s) => stepSolved('sb', s) },
+    { key: 'fb',   zh: 'FB',       en: 'FB',            done: (_f, s) => stepSolved('fb', s) },
+    { key: 'sb',   zh: 'SB',       en: 'SB',            done: (_f, s) => stepSolved('sb', s) },
     { key: 'cmll', zh: 'CMLL',    en: 'CMLL',         done: (_f, s) => stepSolved('cmll', s) },
     { key: 'lse',  zh: 'LSE',     en: 'LSE',          done: (_f, s) => stepSolved('solved', s) },
   ],
