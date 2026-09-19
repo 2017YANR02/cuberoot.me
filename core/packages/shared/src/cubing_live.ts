@@ -31,7 +31,68 @@ export interface CubingResult {
   attempts: number[];
   regionalSingleRecord?: string;
   regionalAverageRecord?: string;
+  personalSingleRecord?: string;
+  personalAverageRecord?: string;
   competitor: CubingCompetitor;
+}
+
+export interface CubingCompetition {
+  id: number;
+  alias: string;
+  name: string;
+  nameZh: string;
+  type: string;
+  wcaCompetitionId: string;
+  startDate: string;
+  endDate: string | null;
+  live: boolean;
+  status: string;
+  competitorLimit: number;
+  acceptedCount: number;
+  registrationStartTime: string | null;
+  registrationEndTime: string | null;
+  locations: { regionIso2: string; venue: string; venueZh: string; competitorLimit: number }[];
+  events: { eventId: string; roundCount: number; dualRounds?: boolean }[];
+}
+
+/** Equal-date rows have unstable pagination order. Fetch the complete list in one page. */
+export async function fetchCubingCompetitions(): Promise<CubingCompetition[]> {
+  const competitions = new Map<number, CubingCompetition>();
+  let take = 2000;
+  let total = 0;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const response = await fetch(`https://api.cubing.com/competitions?skip=0&take=${take}`, {
+      headers: { accept: 'application/json' }, signal: AbortSignal.timeout(15_000),
+    });
+    if (!response.ok) throw new Error(`cubing.com competitions: HTTP ${response.status}`);
+    const page = await response.json() as { data: CubingCompetition[]; total: number; skip: number; take: number };
+    if (!Array.isArray(page.data) || !Number.isSafeInteger(page.total) || page.total < 0 || page.skip !== 0
+      || (page.total > 0 && !page.data.length)) throw new Error('Invalid cubing.com competition page');
+    total = page.total;
+    if (page.data.length < total && attempt === 0) { take = total; continue; }
+    for (const comp of page.data) {
+      if (!Number.isSafeInteger(comp.id) || !comp.alias || !/^\d{4}-\d{2}-\d{2}$/.test(comp.startDate)
+        || !Array.isArray(comp.events) || !Array.isArray(comp.locations)) throw new Error('Invalid cubing.com competition');
+      competitions.set(comp.id, comp);
+    }
+    break;
+  }
+  if (competitions.size !== total) throw new Error('cubing.com pagination changed during refresh; retry');
+  return [...competitions.values()];
+}
+
+/** Public accepted registrations include newcomers without WCA IDs. */
+export async function fetchCubingCompetitors(slug: string) {
+  const roster = await fetchCubingJson<{ number: number; user: Omit<CubingCompetitor, 'number'>; registrationEvents: { eventId: string }[] }[]>(slug, '/competitors');
+  if (!Array.isArray(roster)) throw new Error('Invalid cubing.com roster');
+  const users: Record<string, ReturnType<typeof cubingUser> & { eventIds: string[] }> = {};
+  for (const entry of roster) {
+    const user = cubingUser({ ...entry.user, number: entry.number });
+    if (!Array.isArray(entry.registrationEvents) || entry.registrationEvents.some(event => !event.eventId)
+      || users[String(user.number)]) throw new Error('Invalid cubing.com registration');
+    users[String(user.number)] = { ...user, eventIds: entry.registrationEvents.map(event => event.eventId) };
+  }
+  return users;
 }
 
 export async function fetchCubingJson<T>(slug: string, path = '', signal?: AbortSignal): Promise<T> {

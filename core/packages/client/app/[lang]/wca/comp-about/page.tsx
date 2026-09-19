@@ -38,8 +38,8 @@ export default function CompAboutPage() {
         <h1 className="ca-title">{t('加载任意比赛', 'Load any competition')}</h1>
         <p className="ca-intro">
           {t(
-            '/wca/comp 是站内的比赛成绩查看入口。输入或搜索一场比赛,就能看到逐轮次、逐选手的成绩,包括 PR 历史排名、选手成绩弹窗、Psych Sheet。已结束的比赛 50-400 毫秒出表,实时比赛走 WebSocket 推送。',
-            '/wca/comp is the competition results viewer. Search or paste a competition id to browse round-by-round results — with historical PR rank, per-person result modal, and Psych Sheet. Past comps render in 50-400ms; ongoing comps stream via WebSocket.'
+            '/wca/comp 是站内的比赛成绩查看入口。输入或搜索一场比赛,就能看到逐轮次、逐选手的成绩,包括 PR 历史排名、选手成绩弹窗、Psych Sheet。已结束的比赛 50-400 毫秒出表,粗饼实时比赛由 SSE 事件触发刷新，轮询补偿断线期间的更新。',
+            '/wca/comp is the competition results viewer. Search or paste a competition id to browse round-by-round results — with historical PR rank, per-person result modal, and Psych Sheet. Past comps render in 50-400ms; Cubing China live results refresh on SSE events, with polling to recover missed updates.'
           )}
         </p>
 
@@ -54,8 +54,8 @@ export default function CompAboutPage() {
         <h2 className="ca-section-title">{t('数据来源', 'Data sources')}</h2>
         <p className="ca-section-intro">
           {t(
-            '四条路径,server 端自动挑最合适的:wca_db(本地 WCA dump 拼装,过去比赛走这条,带历史 PR 排名)/ cubing.com(中国比赛进行中走这条,WebSocket 实时推)/ WCA Live(国外比赛实时官方源)/ WCA REST(已公示但还没在 dump 里的比赛)。静态 snapshot 走的就是 wca_db 路径冻结后的产物。',
-            'Four paths; server picks the best. wca_db (assembled from local WCA dump, used for past comps with historical PR rank) / cubing.com (Chinese ongoing comps via WebSocket) / WCA Live (international ongoing comps) / WCA REST (announced but not yet in dump). The static snapshot is just the wca_db output frozen to disk.'
+            '四条路径,server 端自动挑最合适的:wca_db(本地 WCA dump 拼装,过去比赛走这条,带历史 PR 排名)/ cubing.com(中国比赛进行中走这条,SSE 事件刷新与轮询恢复)/ WCA Live(国外比赛实时官方源)/ WCA REST(已公示但还没在 dump 里的比赛)。静态 snapshot 走的就是 wca_db 路径冻结后的产物。',
+            'Four paths; server picks the best. wca_db (assembled from local WCA dump, used for past comps with historical PR rank) / cubing.com (Chinese ongoing comps via SSE and polling) / WCA Live (international ongoing comps) / WCA REST (announced but not yet in dump). The static snapshot is just the wca_db output frozen to disk.'
           )}
         </p>
 
