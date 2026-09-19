@@ -15,7 +15,7 @@
 
 import { is3x3TopLayerSet } from '@cuberoot/shared/alg';
 import { mergeAdjacentMoves, renderMove, toMoveString, tokenizeMoves } from '@cuberoot/shared/alg-notation';
-import type { AlgTextEdit } from '@/lib/alg_html';
+import { algHtmlText, editAlgHtmlText, type AlgTextEdit } from '@/lib/alg_html';
 
 /** Only U-layer turns: cube order four, Megaminx order five, Pyraminx/FTO order three. */
 export function uTurnOrder(puzzle: string): number | undefined {
@@ -98,6 +98,45 @@ export function displayAlg(alg: string): string {
     if (!next || next === stripped) return stripped;
     stripped = next;
   }
+}
+
+/** Only presentation drops top-layer AUF/y; canonical player and validation input stays intact. */
+function caseAlgDisplayEdits(puzzle: string, set: string, alg: string): AlgTextEdit[] {
+  if (!is3x3TopLayerSet(puzzle, set)) return [];
+  const tokens = [...alg.matchAll(/[()]|[^\s()]+/g)];
+  let end = tokens.length - 1;
+  let adjustments = 0;
+  while (end >= 0) {
+    const token = tokens[end][0];
+    if (token === '(' || token === ')') { end--; continue; }
+    if (!/^[Uy](?:2'?|')?$/.test(token)) break;
+    adjustments++;
+    end--;
+  }
+  if (!adjustments || end < 0) return [];
+  // Retain groups around surviving moves; discard groups containing only AUF/y.
+  // A repetition, commutator, wide turn or x/z at the end stops the scan.
+  const start = tokens[end].index! + tokens[end][0].length;
+  let depth = 0;
+  let closing = '';
+  for (const token of tokens.slice(end + 1)) {
+    if (token[0] === '(') depth++;
+    if (token[0] === ')') {
+      if (depth > 0) depth--;
+      else closing += ')';
+    }
+  }
+  return [{ start, end: alg.length, text: closing }];
+}
+
+export function displayCaseAlg(puzzle: string, set: string, alg: string): string {
+  const edits = caseAlgDisplayEdits(puzzle, set, alg);
+  return edits.length ? applyAlgTextEdits(alg, edits) : alg;
+}
+
+/** Apply the same move edits to rich text without losing finger annotations. */
+export function displayCaseAlgHtml(puzzle: string, set: string, html: string): string {
+  return editAlgHtmlText(html, caseAlgDisplayEdits(puzzle, set, algHtmlText(html)));
 }
 
 /**

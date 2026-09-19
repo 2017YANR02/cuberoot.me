@@ -4,7 +4,7 @@
  * 列表页 / case 详情页 / 3BLD 换位子字典喂进来的都是同一个 `AlgCase` 结构,
  * 差别只在「用哪个视角、剥不剥收尾 AUF、出不出图」这几个开关上,所以换算只此一份。
  *
- * 与屏幕上那张卡片保持一致的几处:公式走 `displayAlg`(剥收尾 AUF)再按拼图重排记号、
+ * 与屏幕上那张卡片保持一致的几处:公式走 `displayCaseAlg`(顶层剥收尾 AUF/y)再按拼图重排记号、
  * 缩略图取**未筛选**的首条公式、setup 跟着视角旋转(`oriAdjustSetup`)。
  */
 import type { AlgCase, AlgEntry, AlgPuzzle } from '@cuberoot/shared';
@@ -16,6 +16,7 @@ import {
   caseViewAlg,
   caseViewSetup,
   displayCaseScramble,
+  displayCaseAlg,
   oriAdjustSetup,
   shortOriName,
   type CaseViewAngle,
@@ -48,7 +49,7 @@ export interface FromCasesOptions {
   /** case → PDF 中显示的名字；默认与网页的标准主名一致。 */
   caseLabel?: (c: AlgCase) => string;
   /**
-   * @deprecated 所有公式集都保留完整收尾调整；保留此选项以兼容既有调用方。
+   * @deprecated 公式按套系统一显示规则；保留此选项以兼容既有调用方。
    */
   rawAlg?: boolean;
   /** 出不出缩略图。默认出;换位子字典 818 张图纯属浪费纸,那边关掉。 */
@@ -124,7 +125,7 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
         setup: setups && setup ? formatScrambleForEvent(puzzle, displayCaseScramble(puzzle, set, setup)) : undefined,
         algs: picked.map(e => {
           const angled = caseViewAlg(e.alg, o.viewAngle ?? 'default');
-          return formatScrambleForEvent(puzzle, angled);
+          return formatScrambleForEvent(puzzle, displayCaseAlg(puzzle, set, angled));
         }),
         thumb: thumbs
           ? {

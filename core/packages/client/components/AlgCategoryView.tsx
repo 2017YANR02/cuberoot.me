@@ -70,6 +70,8 @@ import {
   caseViewAlg,
   caseViewSetup,
   displayCaseScramble,
+  displayCaseAlg,
+  displayCaseAlgHtml,
   oriAdjustSetup,
   shortOriName,
   type CaseViewAngle,
@@ -220,9 +222,10 @@ function SetupLine({ puzzle, setup, notationStyle, sq1NotationMode = 'compact' }
   );
 }
 
-function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAngle, ohHand, sq1NotationMode = 'compact', sourceKarnaukh, preferred = false, onPreferredToggle }: {
+function AlgRow({ entry, puzzle, set, invalid, mirror, ori = 0, notationStyle, viewAngle, ohHand, sq1NotationMode = 'compact', sourceKarnaukh, preferred = false, onPreferredToggle }: {
   entry: AlgEntry;
   puzzle: AlgPuzzle; invalid?: string;
+  set: string;
   /** 有值 = 这个 set 吃镜像系统,行尾出翻转图标;`partner` 是伙伴 case 名(没建链时为 null) */
   mirror?: { partner: string | null; self: string };
   /** 这条公式在第几个视角(0=FR),镜像面板要拿它算落点 */
@@ -242,7 +245,7 @@ function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAn
   const { copied, copy } = useCopy();
   const [mirrorOpen, setMirrorOpen] = useState(false);
   // 列表只负责显示 / 复制,剥掉收尾 AUF；完整公式的动画统一放到 case 详情页。
-  const angledAlg = caseViewAlg(alg, viewAngle);
+  const angledAlg = displayCaseAlg(puzzle, set, caseViewAlg(alg, viewAngle));
   const standardAlgShown = formatScrambleForEvent(puzzle, angledAlg);
   const algShown = formatAlgNotation(standardAlgShown, notationStyle);
   const sq1Notation = puzzle === 'sq1'
@@ -272,7 +275,7 @@ function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAn
           {sq1Notation
             ? shownText
             : algHtml && viewAngle === 'default' && puzzle !== 'sq1' && notationStyle === 'standard'
-            ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
+            ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(displayCaseAlgHtml(puzzle, set, algHtml)) }} />
             : algShown}
           {!sourceKarnaukh && entry.note && <span className="alg-alg-note">({tr(entry.note)})</span>}
           {issue && <span className="alg-alg-note">{tr({ zh: '（原公式与本图不匹配）', en: '(Source algorithm does not match this case)' })}</span>}
@@ -1792,6 +1795,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               <AlgRow
                                 entry={entry}
                                 puzzle={puzzleParam as AlgPuzzle}
+                                set={set}
                                 invalid={isAdmin && c.id != null && trueIdx >= 0 ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
                                 ori={oriIdx}
                                 mirror={mirrorFor(c)}
