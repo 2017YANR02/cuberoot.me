@@ -939,6 +939,53 @@ html[data-theme=dark] .alg-root {
   gap: 4px;
   align-items: center;
 }
+.alg-case-inline-editor [hidden] { display: none !important; }
+.alg-case-inline-editor .alg-editor-ori {
+  padding: 0;
+  border: 0;
+  background: none;
+  margin-top: 12px;
+}
+.alg-case-inline-editor .alg-case-detail-title label { display: flex; min-width: 0; }
+.alg-case-inline-editor .alg-case-detail-title label > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.alg-case-inline-editor .alg-case-detail-title input {
+  field-sizing: content;
+  width: auto;
+  min-width: 3ch;
+  max-width: min(30ch, 65vw);
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-bottom: 1px dashed var(--border-default);
+}
+.alg-case-inline-status { margin: 8px 0 16px; }
+.alg-case-inline-status .alg-admin-modal-foot { padding: 0; border: 0; flex-wrap: wrap; }
+.alg-case-inline-status .alg-admin-modal-error { margin-bottom: 8px; }
+.alg-case-inline-fields.alg-admin-modal-body { margin: 24px 0 0; padding: 0; border: 0; min-width: 0; overflow: visible; }
+.alg-case-inline-editor .alg-admin-setup-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0;
+  min-width: 0;
+}
+.alg-case-inline-editor .alg-admin-setup-label > span,
+.alg-case-inline-editor .alg-admin-algs-label { font-size: 0.78rem; color: var(--muted-foreground); }
+.alg-case-inline-editor .alg-editor-input { min-width: 0; background: none; }
+.alg-case-inline-editor .alg-editor-row { flex-wrap: wrap; }
+.alg-case-inline-editor .alg-editor-row > .alg-editor-input { flex-basis: 65%; }
+.alg-case-inline-editor .alg-alg-sortable { display: block; padding-left: 18px; margin-bottom: 6px; }
+.alg-case-inline-editor .alg-alg-drag-handle { position: absolute; left: 0; top: 8px; }
+.alg-editor-mirror { flex-basis: 100%; min-width: 0; }
+.alg-editor-notation { flex-basis: 100%; overflow-wrap: anywhere; }
+.alg-validation-name:is(button, a) { color: inherit; font: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: start; }
 .alg-editor-input {
   flex: 1;
   min-height: 32px;

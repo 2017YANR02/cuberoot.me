@@ -160,6 +160,9 @@ interface Props {
   /** 详情页的社区公式紧跟主公式列表；训练弹窗不传。 */
   algsAfter?: React.ReactNode;
   onRotate?: () => Promise<void>;
+  editorAlgorithms?: React.ReactNode;
+  setupEditor?: React.ReactNode;
+  editing?: boolean;
 }
 
 export default function AlgCaseMetaContent({
@@ -173,7 +176,7 @@ export default function AlgCaseMetaContent({
   playable = false,
   preserveAlgOrder = false,
   algsAfter,
-  onRotate,
+  onRotate, editorAlgorithms, setupEditor, editing = false,
 }: Props) {
   /**
    * 没有 meta 的集(虚拟集 LSLL、库里还没补元数据的集)一样要能看:空对象兜底后
@@ -454,7 +457,10 @@ export default function AlgCaseMetaContent({
         </div>
       )}
 
+      {setupEditor}
       <div className="alg-meta-case">
+        {editorAlgorithms && <div className="alg-meta-case-player-layout" hidden={!editing}>{editorAlgorithms}{algsAfter}</div>}
+        {!editing && (
         <div className={playable ? 'alg-meta-case-player-layout alg-case-detail-ori-main alg-player-list-layout' : undefined}>
           {playable && selectedAlg && (
             <div className="alg-case-detail-ori-player alg-player-list-player">
@@ -523,7 +529,7 @@ export default function AlgCaseMetaContent({
             }))}
             {algsAfter}
           </div>
-        </div>
+        </div>)}
       </div>
 
       {/* 编号 / 子集 / OLL … 每条都只有几个字符,一行一条右边全是空的 —— 三列铺开(窄了自动退档)。
