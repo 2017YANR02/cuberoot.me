@@ -418,6 +418,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // ── Side panel (desktop rail / 非桌面整屏) ──────────────────────
   const [panelTab, setPanelTab] = useState<PanelTab | null>(null);
+  const [solverOpenRequest, setSolverOpenRequest] = useState(0);
   const [sessionSwitcherOpen, setSessionSwitcherOpen] = useState(false);
   const closeResultsPanel = useCallback(() => setPanelTab(null), []);
   const [chartKind, setChartKind] = useState<ChartKind>('histogram');
@@ -1393,10 +1394,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // (判据见 shouldAutoRecap),下一把一开始就收起。
     const showRecap = shouldAutoRecap(solve, { autoRecap: settings.autoRecap });
     setRecapId(showRecap ? solve.id : null);
-    if (showRecap) setPanelTab(null);
+    const showSolution = settings.autoOpenSolution && Boolean(solve.device && solve.moves?.length);
+    if (showRecap || showSolution) setPanelTab(null);
+    if (showSolution) setSolverOpenRequest((value) => value + 1);
     if (res.autoPenalty === 'DNF') petReact('error');
     nextScramble();
-  }, [attemptSplitRecorder, nextScramble, settings.precision, settings.autoRecap]);
+  }, [attemptSplitRecorder, nextScramble, settings.autoOpenSolution, settings.precision, settings.autoRecap]);
 
   const timer = useTimer(recordSolve, (startedAtMs) => {
     const history = scrambleHistRef.current;
@@ -2809,6 +2812,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         <SolverHintPanel
           scramble={scramble}
           isZh={isZh}
+          autoCollapseOnReady={timer.phase === 'ready' && bluetoothCube.status.connected}
+          autoOpenOnSolve={solverOpenRequest}
           resultsPanelOpen={!isDesktop && panelTab !== null}
           onOpen={isDesktop ? undefined : closeResultsPanel}
           onPrevScramble={sheetPrevScramble}

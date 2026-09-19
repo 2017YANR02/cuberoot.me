@@ -12,7 +12,7 @@ import { useAutoReady as webAutoReady } from '@/app/[lang]/timer/_lib/bluetooth/
 
 describe('one smart-cube settings persistence contract', () => {
   it('supplies the exact Web defaults to new and old installed stores', () => {
-    expect(DEFAULT_TIMER_SMART_CUBE_SETTINGS).toEqual({ bluetoothAutoReady: 'scrambled', liveCubeView: '3d', gyroEnabled: true, recordGyro: true, autoRecap: true });
+    expect(DEFAULT_TIMER_SMART_CUBE_SETTINGS).toEqual({ bluetoothAutoReady: 'scrambled', liveCubeView: '3d', gyroEnabled: true, recordGyro: true, autoRecap: true, autoOpenSolution: true });
     const old = createTimerStoreData(0, 'session');
     for (const key of Object.keys(DEFAULT_TIMER_SMART_CUBE_SETTINGS)) delete (old.settings as unknown as Record<string, unknown>)[key];
     expect(decodeTimerStoreData(old)?.settings).toMatchObject(DEFAULT_TIMER_SMART_CUBE_SETTINGS);
@@ -22,19 +22,21 @@ describe('one smart-cube settings persistence contract', () => {
       for (const gyroEnabled of [false, true]) {
         for (const recordGyro of [false, true]) {
           for (const autoRecap of [false, true]) {
-            it(`round-trips ${bluetoothAutoReady}/${liveCubeView}/view-gyro=${gyroEnabled}/record-gyro=${recordGyro}/recap=${autoRecap}`, () => {
-              const choice = { bluetoothAutoReady, liveCubeView, gyroEnabled, recordGyro, autoRecap };
-              const data = createTimerStoreData(0, 'session');
-              Object.assign(data.settings, choice);
-              expect(parseTimerStoreJson(serializeTimerStoreData(data))?.settings).toMatchObject(choice);
-              expect(normalizeTimerSmartCubeSettings(choice)).toEqual(choice);
-            });
+            for (const autoOpenSolution of [false, true]) {
+              it(`round-trips ${bluetoothAutoReady}/${liveCubeView}/view-gyro=${gyroEnabled}/record-gyro=${recordGyro}/recap=${autoRecap}/solution=${autoOpenSolution}`, () => {
+                const choice = { bluetoothAutoReady, liveCubeView, gyroEnabled, recordGyro, autoRecap, autoOpenSolution };
+                const data = createTimerStoreData(0, 'session');
+                Object.assign(data.settings, choice);
+                expect(parseTimerStoreJson(serializeTimerStoreData(data))?.settings).toMatchObject(choice);
+                expect(normalizeTimerSmartCubeSettings(choice)).toEqual(choice);
+              });
+            }
           }
         }
       }
     }
   }
-  it.each([{ bluetoothAutoReady: 'other' }, { liveCubeView: 'other' }, { gyroEnabled: 'false' }, { recordGyro: 'false' }, { autoRecap: 0 }, { autoRecap: null }])('rejects explicit corrupt imported choices %j', (bad) => {
+  it.each([{ bluetoothAutoReady: 'other' }, { liveCubeView: 'other' }, { gyroEnabled: 'false' }, { recordGyro: 'false' }, { autoRecap: 0 }, { autoRecap: null }, { autoOpenSolution: 0 }, { autoOpenSolution: null }])('rejects explicit corrupt imported choices %j', (bad) => {
     const data = createTimerStoreData(0, 'session');
     Object.assign(data.settings, bad);
     expect(decodeTimerStoreData(data)).toBeNull();
@@ -52,7 +54,7 @@ describe('shared smart-cube controls and auto-ready subscription', () => {
   afterEach(async () => {
     await act(async () => root.unmount()); host.remove(); vi.useRealTimers(); vi.unstubAllGlobals();
   });
-  it.each(['en', 'zh'] as const)('renders all five exact rows and every option, emitting only changed fields (%s)', async (lang) => {
+  it.each(['en', 'zh'] as const)('renders all six exact rows and every option, emitting only changed fields (%s)', async (lang) => {
     const onChange = vi.fn();
     await act(async () => root.render(createElement(TimerSmartCubeSettingsFields, {
       value: DEFAULT_TIMER_SMART_CUBE_SETTINGS, localize: (copy) => copy[lang], onChange,
@@ -70,10 +72,11 @@ describe('shared smart-cube controls and auto-ready subscription', () => {
       await act(async () => { view.value = value; view.dispatchEvent(new Event('change', { bubbles: true })); });
       expect(onChange).toHaveBeenLastCalledWith({ liveCubeView: value });
     }
-    const [viewGyro, recordGyro, recap] = [...host.querySelectorAll('button')];
+    const [viewGyro, recordGyro, recap, solution] = [...host.querySelectorAll('button')];
     await act(async () => viewGyro.click()); expect(onChange).toHaveBeenLastCalledWith({ gyroEnabled: false });
     await act(async () => recordGyro.click()); expect(onChange).toHaveBeenLastCalledWith({ recordGyro: false });
     await act(async () => recap.click()); expect(onChange).toHaveBeenLastCalledWith({ autoRecap: false });
+    await act(async () => solution.click()); expect(onChange).toHaveBeenLastCalledWith({ autoOpenSolution: false });
   });
   it('retains the Web hook as the identical shared implementation', () => { expect(webAutoReady).toBe(useAutoReady); });
 
