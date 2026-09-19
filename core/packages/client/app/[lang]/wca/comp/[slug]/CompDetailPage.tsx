@@ -1164,7 +1164,7 @@ export default function CompDetailPage() {
     };
 
     const startSse = () => {
-      const q = sourceParam ? `?v=3&source=${encodeURIComponent(sourceParam)}` : '?v=3';
+      const q = sourceParam ? `?v=4&source=${encodeURIComponent(sourceParam)}` : '?v=4';
       const url = apiUrl(`/v1/cubing-live-stream/${encodeURIComponent(slug)}${q}`);
       es = new EventSource(url);
       const fallback = () => {
@@ -1213,7 +1213,7 @@ export default function CompDetailPage() {
     if (sourceParam || fresh) {
       startSse();
     } else {
-      const onlyQs = only ? `?v=2&only=${encodeURIComponent(only)}` : '?v=2';
+      const onlyQs = only ? `?v=4&only=${encodeURIComponent(only)}` : '?v=4';
       fetch(`/api/comp/${encodeURIComponent(slug)}${onlyQs}`, { signal: apiAbort.signal })
         .then(async r => {
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -1249,7 +1249,7 @@ export default function CompDetailPage() {
     if (!slug || !dataReady || fullLoaded || fullReqRef.current) return;
     fullReqRef.current = true;
     const ac = new AbortController();
-    fetch(`/api/comp/${encodeURIComponent(slug)}?v=2`, { signal: ac.signal })
+    fetch(`/api/comp/${encodeURIComponent(slug)}?v=4`, { signal: ac.signal })
       .then(r => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((j: CompData) => { setData(j); setFullLoaded(true); })
       .catch(() => { fullReqRef.current = false; });
@@ -1320,25 +1320,20 @@ export default function CompDetailPage() {
   const isWcaLive = data?.source === 'wca_live';
   const isCubing = data?.source === 'cubing';
 
-  const cubingWsRounds = useMemo(() => {
-    if (!isCubing || !data) return [];
-    return data.events.flatMap(event => event.rs
-      .filter(round => round.rn !== 0 || round.s === 2)
-      .map(round => ({ eventId: event.i, roundTypeId: round.i })));
-  }, [isCubing, data?.events]);
+  useEffect(() => {
+    if (isCubing && filterParam === 'children') void setFilterParam(null);
+  }, [isCubing, filterParam, setFilterParam]);
+
   const cubingFocusRound = useMemo(() => {
     if (!isCubing || !data || !eventParam || !roundParam) return null;
-    const roundExists = data.events.some(event => event.i === eventParam
-      && event.rs.some(round => round.i === roundParam));
-    return roundExists ? { eventId: eventParam, roundTypeId: roundParam } : null;
+    const round = data.events.find(event => event.i === eventParam)?.rs.find(round => round.i === roundParam);
+    return round?.liveId ? { eventId: eventParam, roundTypeId: roundParam, roundNumber: Number(round.liveId) } : null;
   }, [isCubing, data?.events, eventParam, roundParam]);
   const cubingWsStatus = useLiveStream({
-    compId: isCubing ? (data?.compId ?? null) : null,
-    rounds: cubingWsRounds,
+    cubingSlug: isCubing ? (data?.cubingSlug ?? null) : null,
     focusRound: cubingFocusRound,
     applyPatch,
   });
-
   // 只跟踪正在看的那一轮,不是全场。WCA Live 那边 subscription 走不通(check_origin
   // 403),useWcaLiveStream 改成轮询 GraphQL query 后,订阅范围直接等于流量:
   // 一场比赛 29 轮批量查会撞 WCA Live 的 complexity 上限(实测 ≤5 轮过、10 轮起报
@@ -1764,8 +1759,7 @@ export default function CompDetailPage() {
     { value: 'all', labelZh: '全部', labelEn: 'All' },
     { value: 'females', labelZh: '女选手', labelEn: 'Females'
     },
-    { value: 'children', labelZh: '儿童组', labelEn: 'Children'
-    },
+    ...(!isCubing ? [{ value: 'children', labelZh: '儿童组', labelEn: 'Children' }] : []),
     { value: 'newcomers', labelZh: '新人组', labelEn: 'New Comers'
     },
   ];
@@ -2459,7 +2453,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
   );
 
   return (
-    <div className="comp-table-wrap">
+    <div className="comp-table-wrap sticky-scroll-mobile">
       <table className={`comp-table${compIso2 === 'cn' && isZh ? ' comp-table-cn' : ''}`}>
         <thead>
           <tr>
@@ -2762,7 +2756,7 @@ function CompRecordsView({ groups, users, isZh, onClickCuber }: CompRecordsViewP
               <EventIcon event={g.ev.i} className="comp-podium-icon" />
               <span>{eventDisplayName(g.ev.i, isZh)}</span>
             </h3>
-            <div className="comp-table-wrap">
+            <div className="comp-table-wrap sticky-scroll-mobile">
               <table className="comp-table">
                 <thead>
                   <tr>
@@ -2862,7 +2856,7 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
   const fixedCols = 3 + (showAvg ? 2 : 1); // place + person + round + best (+ avg)
 
   return (
-    <div className="comp-table-wrap">
+    <div className="comp-table-wrap sticky-scroll-mobile">
       <table className={`comp-table comp-table-dual${compIso2 === 'cn' && isZh ? ' comp-table-cn' : ''}`}>
         <thead>
           <tr>
@@ -3165,7 +3159,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
 
   if (eventIds.length >= 2) {
     return (
-      <div className="comp-table-wrap">
+      <div className="comp-table-wrap sticky-scroll-mobile">
         <table className="comp-table comp-sor-table">
           <thead>
             <tr>
@@ -3222,7 +3216,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
   const rankByN = new Map<number, number>(psychRows.map((r, i) => [r.n, i + 1]));
 
   return (
-    <div className="comp-table-wrap">
+    <div className="comp-table-wrap sticky-scroll-mobile">
       <table className="comp-table">
         {eventId ? (
           <>
@@ -4034,7 +4028,7 @@ function LiveIndicator({ status, source }: { status: WsStatus; isZh: boolean; so
       className={`comp-live-indicator status-${status}`}
       title={source === 'wca_live'
         ? tr({ zh: 'WCA Live 轮次成绩(每 15 秒拉取)', en: 'WCA Live round results (polled every 15s)' })
-        : tr({ zh: 'wss://cubing.com/ws 实时推送', en: 'wss://cubing.com/ws live stream' })}
+        : tr({ zh: '粗饼成绩（每 15 秒更新）', en: 'Cubing China results (updated every 15s)' })}
     >
       <span className="comp-live-dot" />
       {label}

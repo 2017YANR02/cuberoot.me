@@ -5,6 +5,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { applyResultPatch, mergeLiveRoundRows, useLiveStream, type LivePatch, type LiveResultRow } from '@/hooks/useLiveStream';
 
+vi.mock('@/lib/api-base', () => ({ apiUrl: (path: string) => path }));
+
 function resultRow(overrides: Partial<LiveResultRow> = {}): LiveResultRow {
   return {
     i: 7, c: 42, n: 9, e: '333', r: '1', f: 'a',
@@ -45,137 +47,84 @@ describe('applyResultPatch', () => {
   });
 });
 
-class FakeWebSocket {
-  static readonly OPEN = 1;
-  static instances: FakeWebSocket[] = [];
-
-  readyState = 0;
-  sent: string[] = [];
-  onopen: ((event: Event) => void) | null = null;
-  onmessage: ((event: MessageEvent) => void) | null = null;
-  onerror: ((event: Event) => void) | null = null;
-  onclose: ((event: CloseEvent) => void) | null = null;
-
-  constructor(readonly url: string) {
-    FakeWebSocket.instances.push(this);
-  }
-
-  send(value: string) {
-    this.sent.push(value);
-  }
-
-  close() {
-    this.readyState = 3;
-  }
-
-  open() {
-    this.readyState = FakeWebSocket.OPEN;
-    this.onopen?.(new Event('open'));
-  }
-
-  serverClose() {
-    this.readyState = 3;
-    this.onclose?.(new CloseEvent('close'));
-  }
-
-  message(payload: unknown) {
-    this.onmessage?.(new MessageEvent('message', { data: JSON.stringify(payload) }));
-  }
-}
-
-describe('useLiveStream reconnect recovery', () => {
+describe('useLiveStream REST refresh', () => {
   let host: HTMLDivElement;
   let root: Root;
   let patches: LivePatch[];
-
-  beforeEach(async () => {
+  let request: ReturnType<typeof vi.fn>;
+  const snapshot = (roundTypeId = 'f') => ({
+    round: { i: roundTypeId, e: 'clock', s: 1, rn: 1 },
+    users: { '9': { number: 9, name: 'Competitor', wcaid: '', region: 'CN' } },
+    results: [resultRow({ e: 'clock', r: roundTypeId })],
+  });
+  function Probe({ round = 'f', enabled = true }: { round?: string; enabled?: boolean }) {
+    const status = useLiveStream({
+      cubingSlug: enabled ? 'Xian-One-More-Clock-2026' : null,
+      focusRound: { eventId: 'clock', roundTypeId: round, roundNumber: round === 'f' ? 3 : 1 },
+      applyPatch: patch => patches.push(patch),
+    });
+    return createElement('span', null, status);
+  }
+  beforeEach(() => {
     (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     vi.useFakeTimers();
-    vi.stubGlobal('WebSocket', FakeWebSocket);
-    FakeWebSocket.instances = [];
     patches = [];
+    request = vi.fn(async () => ({ ok: true, json: async () => snapshot() }));
+    vi.stubGlobal('fetch', request);
     host = document.createElement('div');
     document.body.appendChild(host);
     root = createRoot(host);
-
-    function Probe() {
-      useLiveStream({
-        compId: 42,
-        rounds: [
-          { eventId: '333', roundTypeId: '1' },
-          { eventId: '333', roundTypeId: '2' },
-        ],
-        focusRound: { eventId: '333', roundTypeId: '1' },
-        applyPatch: patch => patches.push(patch),
-      });
-      return null;
-    }
-
-    await act(async () => root.render(createElement(Probe)));
   });
-
   afterEach(async () => {
     await act(async () => root.unmount());
     host.remove();
     vi.useRealTimers();
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
-
-  it('syncs the focused round initially and resyncs each round after reconnect', async () => {
-    const first = FakeWebSocket.instances[0]!;
-    await act(async () => first.open());
-
-    expect(first.sent.map(value => JSON.parse(value))).toEqual([
-      { type: 'competition', competitionId: 42 },
-      { type: 'result', action: 'fetch', params: { event: '333', round: '1', filter: 'all' } },
-    ]);
-
-    const row: LiveResultRow = {
-      i: 7, c: 42, n: 9, e: '333', r: '1', f: 'a',
-      b: 1000, a: 1200, v: [1000, 1200, 1400], sr: '', ar: '',
-    };
-    first.message({ code: 200, type: 'result.all', data: [row] });
-    expect(patches[0]).toEqual({
-      kind: 'result.all',
-      eventId: '333',
-      roundTypeId: '1',
-      results: [row],
-    });
-    expect(first.sent).toHaveLength(2);
-
-    await act(async () => {
-      first.serverClose();
-      vi.advanceTimersByTime(1000);
-    });
-
-    const second = FakeWebSocket.instances[1]!;
-    await act(async () => second.open());
-    expect(second.sent.slice(0, 2).map(value => JSON.parse(value))).toEqual([
-      { type: 'competition', competitionId: 42 },
-      { type: 'result', action: 'fetch', params: { event: '333', round: '1', filter: 'all' } },
-    ]);
-
-    second.message({ code: 200, type: 'result.all', data: [row] });
-
-    expect(patches[1]).toEqual({
-      kind: 'result.all',
-      eventId: '333',
-      roundTypeId: '1',
-      results: [row],
-    });
-    expect(JSON.parse(second.sent[2]!)).toEqual({
-      type: 'result',
-      action: 'fetch',
-      params: { event: '333', round: '2', filter: 'all' },
-    });
-
-    second.message({ code: 200, type: 'result.all', data: [] });
-    expect(patches[2]).toEqual({
-      kind: 'result.all',
-      eventId: '333',
-      roundTypeId: '2',
-      results: [],
-    });
-    expect(second.sent).toHaveLength(3);
+  it('fetches the final via our API, updates users before scores, and refreshes every 15s', async () => {
+    await act(async () => root.render(createElement(Probe)));
+    expect(request.mock.calls[0][0]).toBe('/v1/cubing-live/Xian-One-More-Clock-2026/round/clock/3?roundTypeId=f&v=4');
+    expect(patches.map(patch => patch.kind)).toEqual(['users', 'round.update', 'result.all']);
+    expect(host.textContent).toBe('open');
+    await act(async () => vi.advanceTimersByTimeAsync(15_000));
+    expect(request).toHaveBeenCalledTimes(2);
+  });
+  it('retries errors without clearing the displayed data', async () => {
+    request.mockRejectedValueOnce(new Error('offline'));
+    await act(async () => root.render(createElement(Probe)));
+    expect(patches).toEqual([]);
+    expect(host.textContent).toBe('error');
+    await act(async () => vi.advanceTimersByTimeAsync(15_000));
+    expect(host.textContent).toBe('open');
+    expect(patches).toHaveLength(3);
+  });
+  it('aborts the previous round and ignores its late response', async () => {
+    let resolve!: (value: unknown) => void;
+    request.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+    await act(async () => root.render(createElement(Probe)));
+    const signal = request.mock.calls[0][1].signal as AbortSignal;
+    request.mockResolvedValue({ ok: true, json: async () => snapshot('1') });
+    await act(async () => root.render(createElement(Probe, { round: '1' })));
+    expect(signal.aborted).toBe(true);
+    await act(async () => resolve({ ok: true, json: async () => snapshot() }));
+    expect(patches.filter(patch => patch.kind === 'result.all').map(patch => patch.roundTypeId)).toEqual(['1']);
+  });
+  it('pauses while hidden and refreshes when visible', async () => {
+    const visible = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    await act(async () => root.render(createElement(Probe)));
+    await act(async () => vi.advanceTimersByTimeAsync(30_000));
+    expect(request).not.toHaveBeenCalled();
+    visible.mockReturnValue('visible');
+    await act(async () => document.dispatchEvent(new Event('visibilitychange')));
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+  it('does not fetch when disabled and rejects mismatched snapshots', async () => {
+    await act(async () => root.render(createElement(Probe, { enabled: false })));
+    expect(request).not.toHaveBeenCalled();
+    request.mockResolvedValue({ ok: true, json: async () => snapshot('1') });
+    await act(async () => root.render(createElement(Probe)));
+    expect(host.textContent).toBe('error');
+    expect(patches).toEqual([]);
   });
 });

@@ -295,6 +295,7 @@ const ENDPOINTS: Ep[] = [
 
   // ---- live ----
   { d: 'live', m: 'GET', p: '/v1/cubing-live/:slug', g: 'public', zh: '比赛实时成绩(L2 缓存)', en: 'Live comp results (L2 cache)' },
+  { d: 'live', m: 'GET', p: '/v1/cubing-live/:slug/round/:event/:round', g: 'public', zh: '粗饼单轮成绩刷新', en: 'Cubing China round refresh' },
   { d: 'live', m: 'GET', p: '/v1/cubing-live-stream/:slug', g: 'public', zh: '实时成绩流(SSE)', en: 'Live result stream (SSE)' },
   { d: 'live', m: 'GET', p: '/v1/cubing-zh/:wcaId', g: 'public', zh: '国内选手中文信息', en: 'CN cuber Chinese info' },
 
