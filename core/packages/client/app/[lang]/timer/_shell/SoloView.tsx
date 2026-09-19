@@ -1747,6 +1747,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       <div className="shell-corner-net-imgbox">
         <div
           className="timer-live-cube"
+          data-no-timer
           title={tr({ zh: '智能魔方实时状态（每次拧动同步）', en: 'Live smart-cube state (updates per move)' })}
         >
           <LiveCubeState

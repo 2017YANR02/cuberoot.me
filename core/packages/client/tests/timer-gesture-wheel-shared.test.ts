@@ -414,6 +414,12 @@ describe('gesture wheel migration, theme, and i18n guards', () => {
     }
   });
 
+  it('keeps the live smart cube outside timer gesture handling', () => {
+    const solo = readFileSync('app/[lang]/timer/_shell/SoloView.tsx', 'utf8');
+
+    expect(solo).toMatch(/<div\s+className="timer-live-cube"\s+data-no-timer/);
+  });
+
   it('keeps labels and thresholds in shared contracts and CSS on canonical tokens', () => {
     const timerUiEntry = new URL(import.meta.resolve('@cuberoot/timer-ui'));
     const component = readFileSync(new URL('./GestureWheel.tsx', timerUiEntry), 'utf8');
