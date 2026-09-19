@@ -271,17 +271,6 @@ export function WcaTeacherColumnHeader({ className }: { className?: string } = {
   );
 }
 
-export function WcaTeacherNote() {
-  return (
-    <p className="wca-teacher-note">
-      {tr({
-        zh: '老师或自学按项目分别登记。有效会员老师可登记自己，有效会员学生可填写本人学习方式；管理员可代填。',
-        en: 'Teachers or self-taught status are registered per event. Active member teachers can add themselves, active member students can set their learning source, and admins can edit on their behalf.',
-      })}
-    </p>
-  );
-}
-
 export function WcaStudentAdder({
   teacherWcaId,
   teacherCountryIso2,

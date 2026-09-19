@@ -1000,7 +1000,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'WcaTeacherCell',
-    import: "import { WcaTeacherCell, WcaTeacherColumnHeader, WcaTeacherNote, useWcaTeachers } from '@/components/WcaTeacherCell';",
+    import: "import { WcaTeacherCell, WcaTeacherColumnHeader, useWcaTeachers } from '@/components/WcaTeacherCell';",
     category: 'more',
     zh: 'WCA 榜单与选手页按项目显示老师：批量读取关系与老师链接，并按有效会员 / 管理员权限提供登记、编辑和撤销入口。',
     en: 'Shows per-event teachers in WCA tables and person pages, with batched relations, profile links, and membership/admin-controlled actions.',
