@@ -339,6 +339,7 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     'bldMemo',
     'showCubePreview',
     'prefer3D',
+    'gyroEnabled',
     'recordGyro',
     'autoRecap',
     'autoMarkWcaScramble',

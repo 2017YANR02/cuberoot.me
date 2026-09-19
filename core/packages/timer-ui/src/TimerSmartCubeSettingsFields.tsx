@@ -35,15 +35,18 @@ const LIVE_VIEW_COPY = {
   '2d': { zh: '立体图', en: 'Isometric' },
 } satisfies Record<TimerSmartCubeSettings['liveCubeView'], TimerSettingCopy>;
 
-/** The website's four production smart-cube rows; hosts only persist patches. */
+/** The shared smart-cube rows; hosts only persist patches. */
 export function TimerSmartCubeSettingsFields({ value, localize, onChange, renderBooleanControl }: TimerSmartCubeSettingsFieldsProps) {
   const settings = normalizeTimerSmartCubeSettings(value);
+  const gyro = field('gyroEnabled');
   const autoReady = field('bluetoothAutoReady');
   const liveView = field('liveCubeView');
   const orientation = field('recordGyro');
   const recap = field('autoRecap');
   return (
     <>
+      <TimerBooleanSettingRow field={gyro} label={localize(gyro.copy)} value={settings.gyroEnabled}
+        onChange={(gyroEnabled) => onChange({ gyroEnabled })} renderBooleanControl={renderBooleanControl} />
       <TimerSettingRow field={autoReady} label={localize(autoReady.copy)}>
         <select className="settings-row-control-select" aria-label={localize(autoReady.copy)} value={settings.bluetoothAutoReady}
           onChange={(event) => onChange({ bluetoothAutoReady: normalizeTimerSmartCubeSettings({ bluetoothAutoReady: event.target.value }).bluetoothAutoReady })}>
