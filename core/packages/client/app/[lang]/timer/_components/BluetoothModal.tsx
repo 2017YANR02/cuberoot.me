@@ -109,7 +109,7 @@ function ConnectFailure() {
   );
 }
 
-export default function BluetoothModal({ cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro, allowDeviceCalibration = false }: Props) {
+export default function BluetoothModal({ cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro }: Props) {
   const titleId = useId();
   const [calibrationBusy, setCalibrationBusy] = useState(false);
   const [confirmCalibration, setConfirmCalibration] = useState(false);
