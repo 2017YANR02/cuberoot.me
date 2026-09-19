@@ -20,7 +20,7 @@ beforeEach(() => {
     host.appendChild(canvas);
     return { dispose: () => { state.dispose(); canvas.remove(); }, invalidate() {}, world: {
     puzzleKind: 3,
-    controller: { turnsLocked: false, dragEmpty: 'orbit', onOrbit: null },
+    controller: { turnsLocked: false, dragEmpty: 'orbit', onOrbit: null, touch: vi.fn(() => true) },
     scene: { rotation: { set() {} }, updateMatrix() {} },
     cube: { quaternion: { set() {} }, updateMatrix() {}, twister: { setup: state.setup, backlog: 0 }, instancedRenderer: { setStickering() {} } },
     } };
@@ -63,6 +63,38 @@ describe('the single live/replay 3D failure surface', () => {
     })));
     expect(state.mount.mock.calls[0][0].sceneRot).toEqual({ x: Math.atan2(4.1, 7.2), y: 0, z: 0 });
   });
+
+  it('bridges desktop pointer dragging to the interactive controller', async () => {
+    await act(async () => root.render(createElement(SimCubeView, {
+      allowViewDrag: true, moves: [],
+    })));
+    await vi.waitFor(() => expect(state.mount).toHaveBeenCalledOnce());
+
+    const view = host.querySelector<HTMLElement>('.timer-live-cube-3d')!;
+    const touch = state.mount.mock.results[0].value.world.controller.touch;
+    const dispatch = (type: string, x: number, y: number) => {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperties(event, {
+        button: { value: 0 },
+        clientX: { value: x },
+        clientY: { value: y },
+        pointerId: { value: 1 },
+        pointerType: { value: 'mouse' },
+        shiftKey: { value: false },
+        altKey: { value: false },
+      });
+      view.dispatchEvent(event);
+    };
+
+    dispatch('pointerdown', 20, 30);
+    dispatch('pointermove', 60, 45);
+    dispatch('pointerup', 60, 45);
+
+    expect(touch.mock.calls.map((call: unknown[]) => (call[0] as { type: string }).type)).toEqual([
+      'mousedown', 'mousemove', 'mouseup',
+    ]);
+  });
+
   it('retains its 3D instance while an authoritative state is being re-anchored', async () => {
     const draw = (algAnchored: boolean, moves: string[]) => act(async () => root.render(createElement(LiveCubeState, {
       mode: '3d', algAnchored, moves, facelets: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
