@@ -49,6 +49,8 @@ import {
   caseViewAlg,
   caseViewSetup,
   displayCaseScramble,
+  displayCaseAlg,
+  displayCaseAlgHtml,
   oriAdjustSetup,
   shortOriName,
   type CaseViewAngle,
@@ -92,8 +94,9 @@ function SetupLine({ puzzle, setup, sq1NotationMode = 'compact' }: {
 }
 
 /** 可播放的公式行:切换同一朝向旁边的共享播放器。 */
-function PlayableAlgRow({ entry, puzzle, mirror, ori = 0, viewAngle, sq1NotationMode = 'compact', sourceKarnaukh, selected, onSelect }: {
+function PlayableAlgRow({ entry, puzzle, set, mirror, ori = 0, viewAngle, sq1NotationMode = 'compact', sourceKarnaukh, selected, onSelect }: {
   entry: AlgEntry; puzzle: AlgPuzzle;
+  set: string;
   /** 有值 = 这个 set 吃镜像系统,行尾出 ⧉;`partner` 是伙伴 case 名(没建链时为 null) */
   mirror?: { partner: string | null; self: string };
   /** 这条公式在第几个视角(0=FR),镜像面板要拿它算落点 */
@@ -107,7 +110,7 @@ function PlayableAlgRow({ entry, puzzle, mirror, ori = 0, viewAngle, sq1Notation
 }) {
   const [mirrorOpen, setMirrorOpen] = useState(false);
   const { copied, copy } = useCopy();
-  const angledAlg = caseViewAlg(entry.alg, viewAngle);
+  const angledAlg = displayCaseAlg(puzzle, set, caseViewAlg(entry.alg, viewAngle));
   const issue = caseAlgIssue(entry);
   const shown = formatScrambleForEvent(puzzle, angledAlg);
   const sq1Notation = puzzle === 'sq1'
@@ -131,7 +134,7 @@ function PlayableAlgRow({ entry, puzzle, mirror, ori = 0, viewAngle, sq1Notation
           {sq1Notation
             ? shownText
             : entry.algHtml && viewAngle === 'default' && puzzle !== 'sq1'
-            ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(entry.algHtml) }} />
+            ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(displayCaseAlgHtml(puzzle, set, entry.algHtml)) }} />
             : shown}
           {!sourceKarnaukh && entry.note && <span className="alg-alg-note">({tr(entry.note)})</span>}
           {issue && <span className="alg-alg-note">{tr({ zh: '（原公式与本图不匹配）', en: '(Source algorithm does not match this case)' })}</span>}
@@ -555,7 +558,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, edit
                 // setup 必须跟着朝向走 —— 四个槽共用一条原始 setup 时,FL/BL/BR 演的是别的 case
                 const row = (
                   <PlayableAlgRow
-                    entry={entry} puzzle={puzzle} ori={oi}
+                    entry={entry} puzzle={puzzle} set={set} ori={oi}
                     mirror={mirror ? { partner: mirror.partner, self: mirror.self } : undefined}
                     viewAngle={effectiveViewAngle}
                     sq1NotationMode={sq1NotationMode}

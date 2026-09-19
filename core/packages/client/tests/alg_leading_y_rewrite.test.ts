@@ -6,7 +6,8 @@ import {
   rewriteLeadingYRotationAsAuf, startsWithYRotation, toMoveString,
 } from '@cuberoot/shared/alg-notation';
 import { validateAlgCase, completeAlgAuf } from '@/lib/alg_validation';
-import { caseViewAlg, caseViewSetup, displayAlg } from '@/lib/alg_display';
+import { caseViewAlg, caseViewSetup, displayAlg, displayCaseAlg, displayCaseAlgHtml } from '@/lib/alg_display';
+import { algHtmlText } from '@/lib/alg_html';
 
 const FACE: AlgSticker = { kind: 'face', us: '', ub: '', uf: '', ul: '', ur: '' };
 const inv = (a: string) => new Alg(a).invert().toString();
@@ -195,6 +196,61 @@ describe('displayAlg', () => {
   it('never strips an alg down to nothing', () => {
     expect(displayAlg('U')).toBe('U');
     expect(displayAlg('')).toBe('');
+  });
+});
+
+describe('top-layer formula presentation', () => {
+  const aPerm = "U x' (R U' R D2) (R' U R D2) R2' x";
+  it.each(['U', "U'", 'U2', "U2'", 'y', "y'", 'y2', "y2'", "U' y U2 y2'"])(
+    'removes trailing %s while preserving the leading AUF and returning x', tail => {
+      expect(displayCaseAlg('3x3', 'pll', `${aPerm} ${tail}`)).toBe(aPerm);
+    },
+  );
+  it.each([
+    ["U x' (R U' R D2) R' U R z' R2 U2' x U' y", "U x' (R U' R D2) R' U R z' R2 U2' x"],
+    ["(R U R' U') y", "(R U R')"],
+    ["((R U R' U') (y U2))", "((R U R'))"],
+    ["R U R' (U y')", "R U R'"],
+    ["(R U)2 U' y", '(R U)2'],
+    ["R y R' x'", "R y R' x'"],
+    ["R U R' z2", "R U R' z2"],
+    ["R U R' Uw", "R U R' Uw"],
+    ["R U R' u'", "R U R' u'"],
+    ["R U R' 2U", "R U R' 2U"],
+    ['U y2', 'U y2'],
+    ['', ''],
+  ])('preserves move and grouping semantics: %s', (input, expected) => {
+    const shown = displayCaseAlg('3x3', 'oll', input);
+    expect(shown).toBe(expected);
+    expect(displayCaseAlg('3x3', 'oll', shown)).toBe(shown);
+    expect(() => new Alg(shown)).not.toThrow();
+  });
+  it('keeps rich annotations on surviving moves and matches the copy text', () => {
+    const html = "(<em>R</em> <u>U</u> <s>R'</s> <u>U'</u>) <strong>y2</strong>";
+    const shown = displayCaseAlgHtml('3x3', 'pll', html);
+    expect(shown).toBe("(<em>R</em> <u>U</u> <s>R'</s>)");
+    expect(algHtmlText(shown)).toBe(displayCaseAlg('3x3', 'pll', algHtmlText(html)));
+  });
+  it('also strips the tail of source notation with an unmatched grouping parenthesis', () => {
+    const source = "U2 R2 U (R' U R' U') (R U' R2 U'D) (R' U R u' U' y";
+    expect(displayCaseAlg('3x3', 'pll', source))
+      .toBe("U2 R2 U (R' U R' U') (R U' R2 U'D) (R' U R u'");
+  });
+  it.each([['3x3', 'f2l'], ['3x3', 'wv'], ['2x2', 'eg1'], ['sq1', 'pbl']])(
+    'leaves non-top-layer %s/%s unchanged', (puzzle, set) => {
+      const source = "R U R' U' y";
+      expect(displayCaseAlg(puzzle, set, source)).toBe(source);
+    },
+  );
+  it('still finishes PLL up to AUF/y with the same top colour', async () => {
+    const solved = (await cube3x3x3.kpuzzle()).defaultPattern();
+    const full = `${aPerm} U' y`;
+    const setup = inv(full);
+    const shown = displayCaseAlg('3x3', 'pll', full);
+    const result = solved.applyAlg(`${setup} ${shown}`);
+    expect(result.patternData.CENTERS.pieces[0]).toBe(solved.patternData.CENTERS.pieces[0]);
+    expect((await validateAlgCase(setup, shown, FACE, '3x3')).ok).toBe(true);
+    expect(solved.applyAlg(`${setup} ${full}`).isIdentical(solved)).toBe(true);
   });
 });
 

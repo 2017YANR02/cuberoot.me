@@ -8,6 +8,18 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path: string) => readFileSync(join(ROOT, path), 'utf8');
 
 describe('algorithm player placement', () => {
+  it('uses the shared top-layer display rule in every formula list, rich text and PDF', () => {
+    for (const path of [
+      'components/AlgCategoryView.tsx',
+      'components/AlgCaseMetaContent.tsx',
+      'app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx',
+    ]) {
+      const source = read(path);
+      expect(source, path).toMatch(/displayCaseAlg\(puzzle, set,/);
+      expect(source, path).toMatch(/displayCaseAlgHtml\(puzzle, set,/);
+    }
+    expect(read('lib/alg_pdf/from_cases.ts')).toContain('displayCaseAlg(puzzle, set, angled)');
+  });
   it('keeps category lists static and plays algs on case detail pages', () => {
     const category = read('components/AlgCategoryView.tsx');
     const detail = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx');
@@ -65,7 +77,8 @@ describe('algorithm player placement', () => {
     expect(beforePlayer).toContain('alg-meta-scramble-row');
     expect(beforePlayer).not.toContain('<AlgPlayer');
     expect(meta).toContain('?? algs.find(a => !caseAlgIssue(a.entry))');
-    expect(meta).toContain('playbackAlg: shown');
+    expect(meta).toContain('const playbackAlg = caseViewAlg(a.alg, viewAngle)');
+    expect(meta).toContain('const shown = displayCaseAlg(puzzle, set, playbackAlg)');
     expect(meta).toMatch(/alg-meta-case-player-layout alg-case-detail-ori-main alg-player-list-layout[\s\S]*?className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{selectedAlg\.playbackAlg\}[\s\S]*?alg-meta-case-algs alg-case-detail-ori-algs alg-player-list-options/);
     expect(meta).toContain('selected={selected}');
     expect(meta).toContain('setSelectedAlgKey(rowKey)');
@@ -84,9 +97,9 @@ describe('algorithm player placement', () => {
     const styles = read('app/[lang]/alg/alg.css');
 
     expect(detail).toContain("import { sanitizeAlgHtml } from '@/lib/alg_html'");
-    expect(detail).toMatch(/entry\.algHtml && viewAngle === 'default' && puzzle !== 'sq1'[\s\S]*?sanitizeAlgHtml\(entry\.algHtml\)/);
+    expect(detail).toMatch(/entry\.algHtml && viewAngle === 'default' && puzzle !== 'sq1'[\s\S]*?sanitizeAlgHtml\(displayCaseAlgHtml\(puzzle, set, entry\.algHtml\)\)/);
     expect(meta).toContain("import { sanitizeAlgHtml } from '@/lib/alg_html'");
-    expect(meta).toMatch(/algHtml=\{viewAngle === 'default' && puzzle !== 'sq1' \? a\.entry\.algHtml : undefined\}/);
+    expect(meta).toMatch(/algHtml=\{viewAngle === 'default' && puzzle !== 'sq1' \? a\.html : undefined\}/);
     expect(meta).toContain('sanitizeAlgHtml(algHtml)');
     expect(styles).toContain('.alg-meta-algline-code u.wavy');
     expect(styles).toContain('.alg-meta-algline-code s');
