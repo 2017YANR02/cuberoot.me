@@ -35,23 +35,24 @@ describe('三阶 HTM 距离分布(单一源)', () => {
     expect(BigInt(GOD_EXACT_TOTAL) + BigInt(GOD_TAIL_TOTAL)).toBe(BigInt(CUBE3_STATES));
   });
 
-  it('cube20.org 的四个估计值加起来比真实尾部大 1.03% —— 是四舍五入,不是数据错', () => {
+  it('cube20.org 的五个估计值加起来比真实尾部大 1.03% —— 是四舍五入,不是数据错', () => {
     const approx = GOD_DIST_333.filter((b) => b.kind === 'approx');
-    expect(approx.map((b) => b.d)).toEqual([16, 17, 18, 19]);
+    expect(approx.map((b) => b.d)).toEqual([16, 17, 18, 19, 20]);
     const sum = approx.reduce((a, b) => a + BigInt(b.count), 0n);
     // 只留两位有效数字的必然结果;超过 2% 就说明有人抄错了某一档
     const overshoot = Number((sum * 10000n) / BigInt(GOD_TAIL_TOTAL)) / 10000;
     expect(overshoot.toFixed(4)).toBe('1.0103');
   });
 
-  it('归一化档 Σ 恰等于 |G|,且只动了 approx 那四档', () => {
+  it('归一化档 Σ 恰等于 |G|,且只动了 approx 那五档', () => {
     const sum = GOD_DIST_333_NORMALIZED.reduce((a, c) => a + BigInt(c), 0n);
     expect(sum).toBe(BigInt(CUBE3_STATES));
     for (const [i, b] of GOD_DIST_333.entries()) {
       if (b.kind !== 'approx') expect(`d=${b.d} ${GOD_DIST_333_NORMALIZED[i]}`).toBe(`d=${b.d} ${b.count}`);
     }
-    // d=20 保持「已找到 490,000,000 个」的原值,没被缩
-    expect(GOD_DIST_333_NORMALIZED[20]).toBe('490000000');
+    // 原始数据保留估计值，归一化只影响占比，不改变显示的原值。
+    expect(GOD_DIST_333[20]).toEqual({ d: 20, count: '490000000', kind: 'approx' });
+    expect(GOD_DIST_333_NORMALIZED[20]).toBe('484977201');
   });
 
   it('E[d] ≈ 17.70 HTM', () => {

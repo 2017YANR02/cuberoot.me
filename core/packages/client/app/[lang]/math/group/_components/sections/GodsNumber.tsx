@@ -36,7 +36,7 @@ function GodsNumberChart() {
         })}
       </div>
       <div className="gt-gn-axis-label">
-        {tr({ zh: '横轴:最短解长度 (HTM)。纵轴:对数刻度的状态数。d ≥ 16 只有两位有效数字(≈),d = 20 是已找到的下界(≥)。', en: 'x: optimal depth (HTM). y: log-scale count of positions. d ≥ 16 is known to two significant figures (≈); d = 20 is a lower bound on what has been found (≥).'
+        {tr({ zh: '横轴:最短解长度 (HTM)。纵轴:对数刻度的状态数。d ≥ 16 只有两位有效数字(≈),d = 20 的约 4.9 亿也是估计(≈)。', en: 'x: optimal depth (HTM). y: log-scale count of positions. d ≥ 16 is known to two significant figures (≈); d = 20 is also an estimate (≈).'
         })}
       </div>
     </>

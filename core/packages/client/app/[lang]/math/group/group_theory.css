@@ -1605,7 +1605,7 @@ html[data-theme=dark] .gt-page { --accent: #D97082; --accent-2: #6B8FCE; --gold:
 }
 .gt-cayley-bfs-row {
   display: grid;
-  grid-template-columns: 60px 1fr 110px;
+  grid-template-columns: 60px minmax(0, 1fr) max-content;
   gap: 12px;
   align-items: center;
   padding: 8px 14px;
@@ -1634,7 +1634,7 @@ html[data-theme=dark] .gt-page { --accent: #D97082; --accent-2: #6B8FCE; --gold:
   text-align: right;
 }
 @media (max-width: 640px) {
-  .gt-cayley-bfs-row { grid-template-columns: 40px 1fr 80px; padding: 6px 10px; font-size: 11px; }
+  .gt-cayley-bfs-row { grid-template-columns: 40px minmax(0, 1fr) max-content; padding: 6px 10px; font-size: 11px; }
 }
 
 /* ── Section nav (per-section sub-page footer) ─────────────────────────── */
