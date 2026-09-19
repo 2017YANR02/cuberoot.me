@@ -25,6 +25,16 @@ it.each([
   ['/zh/math/probability?ticket=secret&tab=oll&%74oken=hidden#wechat_redirect&orbit', '/zh/math/probability?tab=oll#orbit'],
   ['/math?event=333#douyin_redirect&ticket=hidden&table', '/math?event=333#table'],
   ['/wca/person?q=%E8%80%BF&sort=rank', '/wca/person?q=%E8%80%BF&sort=rank'],
+  ['/zh/alg/3bld/lookup?code=AB&mode=edge', '/zh/alg/3bld/lookup?code=AB&mode=edge'],
+  ['/scramble/solver?state=UUUFFF', '/scramble/solver?state=UUUFFF'],
+  ['/zh/dev/auth#mini-title', '/zh/dev/auth#mini-title'],
+  ['/zh/org/example/classes?class=42', '/zh/org/example/classes?class=42'],
+  ['/zh/learn/assignments/42', '/zh/learn/assignments/42'],
+  ['/zh/account?view=signin&ticket=secret', '/zh/account?view=signin'],
+  ['/admin/users', '/admin/users'],
+  ['/recon/submit/42', '/recon/submit/42'],
+  ['/docs/edit?id=42', '/docs/edit?id=42'],
+  ['/zh/%61ccount', '/zh/%61ccount'],
 ])('keeps public state and strips internal parameters: %s', (input, expected) => {
   expect(publicPageSharePath(input)).toBe(expected);
 });
@@ -32,17 +42,17 @@ it.each([
 it.each([
   undefined, null, '', '//evil.test', 'https://evil.test/zh/math', 'https://cuberoot.me.evil.test/math',
   'https://cuberoot.me@evil.test/math', '/\\evil.test', '/zh/auth/miniprogram#ticket=secret',
-  '/zh/account', '/admin/users', '/recon/submit/42', '/docs/edit', '/zh/math/../account',
-  '/zh/math/%2e%2e/account', '/zh/%61ccount', '/zh/%252e%252e/math', '/zh/%2f%2fevil',
+  '/auth/callback?code=secret', '/zh/math/../account',
+  '/zh/math/%2e%2e/account', '/zh/%252e%252e/math', '/zh/%2f%2fevil',
   '/zh/math%3fnext=evil', '/zh/math\n', '/zh/%00math', '/math?%=broken',
-])('rejects unsafe or private destinations: %s', input => {
+])('rejects unsafe destinations and authentication callbacks: %s', input => {
   expect(publicPageSharePath(input)).toBeNull();
 });
 
-it('validates title messages and rejects private destinations', () => {
+it('validates title messages and rejects authentication callbacks', () => {
   expect(decodePageShareMessage({ type: 'cuberoot:page-share', path: '/zh/math#wechat_redirect', title: '  数学\n ' }))
     .toEqual({ type: 'cuberoot:page-share', path: '/zh/math', title: '数学' });
-  expect(decodePageShareMessage({ type: 'cuberoot:page-share', path: '/account', title: 'Account' })).toBeNull();
+  expect(decodePageShareMessage({ type: 'cuberoot:page-share', path: '/auth/callback', title: 'Account' })).toBeNull();
   expect(decodePageShareMessage({ type: 'logout', path: '/math', title: 'Math' })).toBeNull();
 });
 

@@ -572,7 +572,7 @@ export function createWebViewPageOptions(
       return resolveWebRouteShare(this.data.routeKey, options?.webViewUrl ?? sharedDestinations.get(this), shareMetadata.get(this)) ?? {
         imageUrl: WEB_ROUTE_SHARE_IMAGE,
         title: tr({ en: 'CubeRoot', zh: '魔方根CubeRoot' }),
-        path: '/pages/timer/index',
+        path: '/pages/tools/index',
       };
     },
 

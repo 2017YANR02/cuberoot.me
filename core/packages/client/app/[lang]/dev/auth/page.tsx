@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint":"829212baebbac41e5841eceed8ed24822c8728ff5aac7de55d188049297cae12","reason":"复核小程序 web-routes、web-view-page 及微信分享入口：分享接收新增经校验的站内公开文章路径，沿用接收者现有会话和单次网页票据恢复，重试保留该路径；账号、认证及编辑路径不可作为分享目的地，分享过滤票据和令牌。登录、绑定、退出消息处理和固定 tab 的会话门禁未改。已在小程序流程补充文章分享接收步骤；部署及微信真机转发仍待验收。"}
+{"fingerprint":"9127a66e66e90fe9fb34e65dd8098bae3da36379daaeb5699fd56abf8c2bc9ca","reason":"复核全站原生转发及接收：当前 webViewUrl 决定目的地，与初始工具入口无关；课程、机构、账号及编辑页允许分享地址，访问仍使用接收者自己的会话和权限。认证回调不可分享，票据与令牌被过滤，code/state 作为普通页面状态保留，接收时不再让容器标记破坏锚点。登录交换、退出消息、固定 tab 门禁未改；将分享校验、桥接和 web-view 控制器纳入认证文档守卫，流程已同步；尚未发布或完成微信真机转发验收。"}
 */
 
 import type { ReactNode } from 'react';
@@ -162,11 +162,11 @@ export default function AuthFlowPage() {
         <div className="auth-map-stem auth-map-finish"><Arrow /><FlowNode outcome>{t('登录完成：会员、资料仍在同一个账号', 'Signed in: membership and profile stay on one account')}<small>{t('以后进入小程序，走「已绑定」路径。', 'Future visits follow the already-linked path.')}</small></FlowNode></div>
         <figcaption>{t('三条路径是不同情况，不是每个人都要走三遍。登录和绑定完成后才到达底部结果。', 'These are alternative paths, not three steps everyone must repeat. The final result requires successful sign-in and linking.')}</figcaption>
       </figure>
-      <h3>{t('打开别人分享的文章', 'Opening a shared article')}</h3>
+      <h3>{t('打开别人分享的页面', 'Opening a shared page')}</h3>
       <Steps items={[
-        t('分享卡片 → 校验站内公开路径，排除账号、认证和编辑流程，移除票据与令牌', 'Share card → validate a public site path, excluding account, authentication and editing flows and removing tickets and tokens'),
-        t('接收者已登录 → 用接收者自己的单次网页票据同步会话；未登录 → 以游客打开文章', 'Signed-in recipient → sync their own session with a one-time web ticket; otherwise open the article as a guest'),
-        t('打开具体文章并保留语言、筛选和锚点；加载失败重试仍回到该文章', 'Open the specific article with its language, filters and anchor; retries retain that destination'),
+        t('右上角转发 → 读取当前网页地址，保留语言、网址中的筛选和锚点；排除认证回调，移除票据与令牌', 'Native share menu → read the current web address, retaining language, URL filters and anchor; exclude authentication callbacks and remove tickets and tokens'),
+        t('接收者已登录 → 用接收者自己的单次网页票据同步会话；未登录 → 以游客打开页面', 'Signed-in recipient → sync their own session with a one-time web ticket; otherwise open the page as a guest'),
+        t('到达具体页面；课程、机构、账号和编辑页仍检查接收者自己的权限，未保存且不在网址中的内容不随分享传递；重试保留目的地', 'Open the exact page; courses, organizations, account and editing pages still check the recipient’s own permissions. Unsaved content outside the URL is not transferred; retries retain the destination'),
       ]} />
       <p className="auth-map-note">{t('分享不携带发送者的登录态。本地实现仍须发布后验收微信真机转发。', 'Sharing never carries the sender’s session. This local implementation still needs release and real-device WeChat sharing acceptance.')}</p>
     </section>

@@ -167,7 +167,7 @@ describe('mini program web routes', () => {
     expect(listWebToolGroups('not-a-cuberoot-entry')).toEqual([]);
   });
 
-  it('derives share targets from public entries without exposing account routes', () => {
+  it('shares page addresses while keeping authentication actions out of shares', () => {
     expect(resolveAccountPageShare()).toEqual({
       imageUrl: WEB_ROUTE_SHARE_IMAGE,
       title: '魔方根CubeRoot',
@@ -191,8 +191,8 @@ describe('mini program web routes', () => {
     const routeBackedTools = listWebTools().filter((tool) => tool.key !== null);
     expect(routeBackedTools).toHaveLength(57);
     expect(routeBackedTools.every((tool) => resolveWebRouteShare(tool.key) !== null)).toBe(true);
-    expect(resolveWebRouteShare('account')).toBeNull();
-    expect(resolveWebRouteShare('privacy')).toBeNull();
+    expect(resolveWebRouteShare('account')?.path).toBe('/pages/web/index?key=home&path=%2Fzh%2Faccount');
+    expect(resolveWebRouteShare('privacy')?.path).toBe('/pages/web/index?key=home&path=%2Fzh%2Fprivacy');
     expect(resolveWebRouteShare('logout')).toBeNull();
     expect(resolveWebRouteShare('unknown')).toBeNull();
   });

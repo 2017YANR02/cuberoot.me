@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { resolveWebRoute, resolveWebRouteShare } from '../src/lib/web-routes';
+import { readdirSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { resolveWorkspacePath } from '../../../scripts/resolve-workspace-path.mjs';
+import { WEB_ROUTES, resolveWebRoute, resolveWebRouteShare } from '../src/lib/web-routes';
 import { createWebViewPageData, createWebViewPageOptions, markWebRouteFailed, retryWebRoute, type WebViewPageContext } from '../src/lib/web-view-page';
 
 const callbacks = createWebViewPageOptions() as unknown as {
@@ -30,10 +33,10 @@ it('shares article B after entering from A and reopens B with filters and anchor
   expect(share.path).toBe('/pages/web/index?key=home&path=%2Fzh%2Fmath%2Fprobability%3Ftab%3Dpll%23orbit');
   const recipient = context();
   callbacks.onLoad.call(recipient, { key: 'home', path: share.path.split('&path=')[1] });
-  expect(recipient.data.src).toBe('https://cuberoot.me/zh/math/probability?tab=pll#wechat_redirect&orbit');
+  expect(recipient.data.src).toBe('https://cuberoot.me/zh/math/probability?tab=pll#orbit');
   markWebRouteFailed(recipient);
   retryWebRoute(recipient);
-  expect(recipient.data.src).toBe('https://cuberoot.me/zh/math/probability?tab=pll#wechat_redirect&orbit');
+  expect(recipient.data.src).toBe('https://cuberoot.me/zh/math/probability?tab=pll#orbit');
 });
 
 it('never applies stale title metadata to a different current article', () => {
@@ -71,7 +74,7 @@ it.each(['%2F%2Fevil.test', encodeURIComponent('/auth/miniprogram#ticket=secret'
 it('preserves percent-encoded search text instead of decoding the destination twice', () => {
   const path = '/zh/math?q=%E8%80%BF%26x#section';
   const recipient = context(); callbacks.onLoad.call(recipient, { key: 'home', path: encodeURIComponent(path) });
-  expect(recipient.data.src).toBe(`https://cuberoot.me${path.replace('#', '#wechat_redirect&')}`);
+  expect(recipient.data.src).toBe(`https://cuberoot.me${path}`);
 });
 
 it('does not allow shared paths to override private routes or fixed native tabs', () => {
@@ -81,10 +84,51 @@ it('does not allow shared paths to override private routes or fixed native tabs'
   expect(recipient.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
 });
 
-it('never forwards a private current page or an authentication ticket', () => {
+it('never forwards an authentication callback or ticket', () => {
   const sender = context(); callbacks.onLoad.call(sender, { key: 'home' });
   const share = callbacks.onShareAppMessage.call(sender, { webViewUrl: 'https://cuberoot.me/auth/miniprogram#ticket=secret' });
-  expect(share.path).toBe('/pages/timer/index');
+  expect(share.path).toBe('/pages/tools/index');
   expect(resolveWebRouteShare('home', 'https://cuberoot.me/math?ticket=secret#wechat_redirect')?.path)
     .toBe('/pages/web/index?key=home&path=%2Fmath');
+});
+
+// Discover all pages through the workspace inventory, as in web-routes.test.ts.
+// Dynamic IDs are URL fixtures; this verifies transport, not resource existence.
+const websiteRoot = resolve(import.meta.dirname, '../../..', resolveWorkspacePath('@cuberoot/client'));
+const pageRoutes = readdirSync(resolve(websiteRoot, 'app/[lang]'), { recursive: true })
+  .map(file => String(file).replaceAll('\\', '/'))
+  .filter(file => /(?:^|\/)page\.tsx$/.test(file))
+  .map(file => '/' + file.replace(/(?:^|\/)page\.tsx$/, '').split('/')
+    .filter(segment => segment && !segment.startsWith('('))
+    .map(segment => segment.startsWith('[') ? 'example' : segment).join('/'));
+
+it.each(pageRoutes)('round-trips both languages of website route %s through the native share callback', route => {
+  for (const prefix of ['', '/zh']) {
+    const path = `${prefix}${route}?page=2&code=AB&state=UUUFFR&q=%E9%AD%94%E6%96%B9#section`;
+    const sender = context();
+    callbacks.onLoad.call(sender, { key: 'home' });
+    const share = callbacks.onShareAppMessage.call(sender, { webViewUrl: `https://cuberoot.me${path}` });
+    const query = Object.fromEntries(new URLSearchParams(share.path.split('?')[1]));
+    expect(query.path).toBe(path);
+    const recipient = context();
+    callbacks.onLoad.call(recipient, query);
+    expect(recipient.data.src).toBe(`https://cuberoot.me${path}`);
+  }
+});
+
+it.each(Object.keys(WEB_ROUTES))('shares the current page after navigation from the %s entry', key => {
+  const path = '/zh/forum/t/42?page=2#reply-17';
+  const sender = context();
+  callbacks.onLoad.call(sender, { key });
+  const share = callbacks.onShareAppMessage.call(sender, { webViewUrl: `https://cuberoot.me${path}` });
+  expect(share.path).toBe(`/pages/web/index?key=home&path=${encodeURIComponent(path)}`);
+});
+
+it('uses the latest query and anchor even when no title message has arrived', () => {
+  const sender = context();
+  callbacks.onLoad.call(sender, { key: 'home' });
+  for (const path of ['/zh/wca?event=333#results', '/zh/wca?event=222#records', '/zh/wca?event=333#results']) {
+    const share = callbacks.onShareAppMessage.call(sender, { webViewUrl: `https://cuberoot.me${path}` });
+    expect(share.path).toBe(`/pages/web/index?key=home&path=${encodeURIComponent(path)}`);
+  }
 });

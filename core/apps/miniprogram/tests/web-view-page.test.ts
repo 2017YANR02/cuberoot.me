@@ -141,7 +141,7 @@ describe('shared web-view page state', () => {
     });
   });
 
-  it('hides private routes and never forwards their route key', async () => {
+  it('shares account page addresses through the generic entry without forwarding a session', async () => {
     const context = createContext();
     const options = createWebViewPageOptions() as unknown as {
       onLoad(this: WebViewPageContext, query: { key: string }): void;
@@ -151,14 +151,12 @@ describe('shared web-view page state', () => {
     options.onLoad.call(context, { key: 'account' });
     await Promise.resolve();
 
-    expect(hideShareMenu).toHaveBeenCalledWith({
-      menus: ['shareAppMessage', 'shareTimeline'],
-    });
-    expect(showShareMenu).not.toHaveBeenCalled();
+    expect(hideShareMenu).not.toHaveBeenCalled();
+    expect(showShareMenu).toHaveBeenCalledWith({ menus: ['shareAppMessage'] });
     expect(options.onShareAppMessage.call(context)).toEqual({
       imageUrl: '/assets/share-cover.png',
       title: '魔方根CubeRoot',
-      path: '/pages/timer/index',
+      path: '/pages/web/index?key=home&path=%2Fzh%2Faccount',
     });
   });
 
