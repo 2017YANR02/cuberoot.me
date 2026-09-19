@@ -48,6 +48,7 @@ export interface GiikerBleConnection {
 
 export interface ConnectGiikerOptions {
   api?: GiikerBleApi;
+  device?: DiscoveredDevice;
   signal?: BleAbortSignal;
   onBattery?(level: number): void;
   onDisconnect?(message: string): void;
@@ -76,7 +77,10 @@ async function findGiiker(
   lease: BleResourceLease,
   timeoutMs: number,
   signal?: BleAbortSignal,
+  selectedDevice?: DiscoveredDevice,
 ): Promise<DiscoveredDevice> {
+  if (selectedDevice) return selectedDevice;
+
   return new Promise((resolve, reject) => {
     let settled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -266,7 +270,7 @@ export async function connectGiiker(
       });
     }
 
-    const device = await findGiiker(api, lease, scanTimeoutMs, options.signal);
+    const device = await findGiiker(api, lease, scanTimeoutMs, options.signal, options.device);
     connectedDeviceId = device.deviceId;
     try {
       const closeConnection = (): Promise<unknown> => invokeBleCleanupForLease(

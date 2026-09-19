@@ -45,6 +45,7 @@ export interface MoyuBleConnection {
 
 export interface ConnectMoyuOptions {
   api?: MoyuBleApi;
+  device?: DiscoveredDevice;
   signal?: BleAbortSignal;
   onDisconnect?(message: string): void;
   onMove?(move: string): void;
@@ -71,7 +72,10 @@ async function findMoyu(
   lease: BleResourceLease,
   timeoutMs: number,
   signal?: BleAbortSignal,
+  selectedDevice?: DiscoveredDevice,
 ): Promise<DiscoveredDevice> {
+  if (selectedDevice) return selectedDevice;
+
   return new Promise((resolve, reject) => {
     let settled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -243,7 +247,7 @@ export async function connectMoyu(
       });
     }
 
-    const device = await findMoyu(api, lease, scanTimeoutMs, options.signal);
+    const device = await findMoyu(api, lease, scanTimeoutMs, options.signal, options.device);
     connectedDeviceId = device.deviceId;
     try {
       const closeConnection = (): Promise<unknown> => invokeBleCleanupForLease(

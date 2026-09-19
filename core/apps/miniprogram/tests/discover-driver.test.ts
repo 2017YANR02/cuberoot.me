@@ -15,6 +15,9 @@ describe('classifySmartCubeDriver', () => {
     ['GoCube Edge', 'gocube'],
     ["Rubik's Connected", 'gocube'],
     ['MHC Cube', 'moyu'],
+    ['WCU_MY32_12AF', 'moyu32'],
+    ['QY-QYSC-X-12AF', 'qiyi'],
+    ['XMD-TornadoV4-i-X-12AF', 'qiyi'],
     ['Mi Smart Magic Cube', 'giiker'],
     ['Unknown Cube', null],
   ] as const)('maps %s to %s', (name, expected) => {
@@ -31,7 +34,7 @@ describe('classifySmartCubeDriver', () => {
 });
 
 describe('discoverSmartCubeDriver', () => {
-  it('stops discovery and closes the adapter after identifying a cube', async () => {
+  it('collects matching devices, keeps the latest advertisement, and cleans up after scanning', async () => {
     let deviceListener: ((result: { devices: DiscoveredDevice[] }) => void) | null = null;
     const stopBluetoothDevicesDiscovery = vi.fn((options: {
       success?(): void;
@@ -67,7 +70,14 @@ describe('discoverSmartCubeDriver', () => {
     } as unknown as MiniProgramBleApi;
 
     await expect(discoverSmartCubeDriver({ api, scanTimeoutMs: 1_000 }))
-      .resolves.toBe('gan-v4');
+      .resolves.toEqual([{
+        device: {
+          deviceId: 'cube-1',
+          localName: 'GAN16ui_C2AF',
+          name: 'Bluetooth Device',
+        },
+        driver: 'gan-v4',
+      }]);
 
     expect(offBluetoothDeviceFound).toHaveBeenCalledOnce();
     expect(stopBluetoothDevicesDiscovery).toHaveBeenCalledOnce();
