@@ -154,7 +154,7 @@ import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { resolveCaps } from './simCaps';
 import StickeringSelect from './StickeringSelect';
 import SwatchCell, { SwatchPopup } from './SwatchCell';
-import type { PickGrain, CustomTreatment } from './engine/nxn/customStickering';
+import type { PickGrain, CustomTreatment } from '@/components/sim-embed/customStickering';
 import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
 import { flattenAlg, stm, stripGripMarks } from '@cuberoot/shared/alg-notation';
 import {

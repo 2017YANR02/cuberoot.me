@@ -72,6 +72,14 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 
 export const CATALOG: UtilEntry[] = [
   {
+    name: 'pickedSids / customMaskFn',
+    sig: 'pickedSids(cube: Cube, positionIndex: number, worldFace: number, grain: PickGrain): StickerId[]; customMaskFn(order: number, mask: string, pick?: CustomTreatment, rest?: CustomTreatment): StickeringMaskFn | null',
+    imp: "import { pickedSids, customMaskFn } from '@/components/sim-embed/customStickering';",
+    category: 'cube',
+    zh: '将三维命中位置转换为原始贴纸身份，并生成随块移动的高亮遮罩；模拟器和图论页共用。',
+    en: 'Resolve 3D hits to original sticker identities and build piece-following highlight masks, shared by the simulator and graph page.',
+  },
+  {
     name: 'useTrainingStats',
     sig: 'useTrainingStats(group: string)',
     imp: "import { useTrainingStats } from '@/hooks/useTrainingStats';",

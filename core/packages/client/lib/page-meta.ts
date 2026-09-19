@@ -466,8 +466,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'math/cube-graph': {
     title: { zh: '魔方与图论', en: 'Rubik’s Cube & Graph Theory' },
     description: {
-      zh: '三维魔方与 54 枚贴纸的圆环、扇形图同步演示，探索转动置换、逆元及其与凯莱图的区别。',
-      en: 'An interactive 3D cube with ring and sector maps of its 54 stickers. Explore move permutations, inverses and the distinction from Cayley graphs.',
+      zh: '支持一至七阶魔方，三维魔方、圆环和圆盘同步演示 6N² 枚贴纸的置换，探索魔方与凯莱图的关系。',
+      en: 'Explore cubes from 1×1 to 7×7 with synchronized 3D, ring and sector maps of 6N² stickers, and learn how cubes relate to Cayley graphs.',
     },
   },
   'math/group': {

@@ -107,7 +107,7 @@ import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
 import { stickeringMaskFn, type StickeringMaskFn } from './engine/nxn/stickering';
 import {
   CUSTOM_STICKERING, CUSTOM_TREATMENTS, customMaskFn, pickedSids, toggleSids, type PickGrain,
-} from './engine/nxn/customStickering';
+} from '@/components/sim-embed/customStickering';
 import { resolveStageMaskFn, visualcubeMaskForStickering } from './engine/nxn/vcStageMask';
 import { isPresetMask, presetMaskFn } from './engine/nxn/maskConfig';
 import { useSimMasks } from './useSimMasks';
