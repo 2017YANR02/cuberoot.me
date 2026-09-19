@@ -35,9 +35,15 @@ importers:
 
   apps/api:
     dependencies:
+      '@app-foundation/messaging':
+        specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-messaging-0.1.0.tgz
+        version: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-messaging-0.1.0.tgz
       '@app-foundation/payments':
         specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz
         version: https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz
+      '@app-foundation/verification':
+        specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz
+        version: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz
       '@cuberoot/puzzle-render-core':
         specifier: workspace:*
         version: link:../../packages/puzzle-render-core
@@ -1022,8 +1028,18 @@ packages:
     resolution: {integrity: sha512-oYnwSjdIh23aRNgz8982+TmFvQH/2yZkEdw1iIg+H2ziFJoOVELPTc7u6Ez2HwOuDIW5AGqBX75GvrzQ+D70Qg==}
     engines: {node: '>=20.0.0'}
 
+  '@app-foundation/messaging@https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-messaging-0.1.0.tgz':
+    resolution: {integrity: sha512-O0v0KUH5Ha7RCF3ZFdLTLMVh9VE6GIM1EBaBWBnvFMPZE+5VSRHgXd/605l1ZVTodhzcf608iuIkd2TIeKSjXg==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-messaging-0.1.0.tgz}
+    version: 0.1.0
+    engines: {node: '>=22'}
+
   '@app-foundation/payments@https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz':
     resolution: {integrity: sha512-zLVBAkpOSzXdtlYduCHTgcNRiQZjqrx0kGKGawLnm7iGzXsJMN+6OOIIePy5MLpXq15AWxFgXI6NgCLjqCRwXw==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz}
+    version: 0.1.0
+    engines: {node: '>=22'}
+
+  '@app-foundation/verification@https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz':
+    resolution: {integrity: sha512-z/wHi7+xhpQUAyIPgxRsfTiNQ5bP8IUPo8HYr5MA4mnOWEYgdceryQ4LXXAteSgd6sxYhTdoAmeGK9iaecLLpw==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz}
     version: 0.1.0
     engines: {node: '>=22'}
 
@@ -6147,7 +6163,11 @@ snapshots:
       '@capacitor/ios': 8.5.0(@capacitor/core@8.5.0)
       '@capacitor/keyboard': 8.0.5(@capacitor/core@8.5.0)
 
+  '@app-foundation/messaging@https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-messaging-0.1.0.tgz': {}
+
   '@app-foundation/payments@https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz': {}
+
+  '@app-foundation/verification@https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz': {}
 
   '@asamuzakjp/css-color@6.0.5':
     dependencies:
