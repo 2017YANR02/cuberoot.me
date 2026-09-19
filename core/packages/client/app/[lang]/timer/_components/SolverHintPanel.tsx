@@ -61,6 +61,8 @@ interface Props {
   scramble: string;
   isZh: boolean;
   resultsPanelOpen?: boolean;
+  autoCollapseOnReady?: boolean;
+  autoOpenOnSolve?: number;
   onOpen?: () => void;
 }
 
@@ -172,6 +174,8 @@ export default function SolverHintPanel({
   scramble,
   isZh,
   resultsPanelOpen = false,
+  autoCollapseOnReady = false,
+  autoOpenOnSolve = 0,
   onOpen,
   onPrevScramble,
   onNextScramble,
@@ -233,6 +237,22 @@ export default function SolverHintPanel({
     setRailOpen(false);
     if (sheetOpen) closeSheet();
   }, [closeSheet, resultsPanelOpen, sheetOpen]);
+  useEffect(() => {
+    if (!autoCollapseOnReady) return;
+    setRailOpen(false);
+    if (sheetOpen) closeSheet();
+  }, [autoCollapseOnReady, closeSheet, sheetOpen]);
+  useEffect(() => {
+    if (autoOpenOnSolve <= 0) return;
+    if (isDesktopRail) {
+      setRailOpen(true);
+      return;
+    }
+    if (sheetOpen) return;
+    onOpen?.();
+    pushedRef.current = true;
+    void setSheetOpen(true);
+  }, [autoOpenOnSolve, isDesktopRail, onOpen, setSheetOpen, sheetOpen]);
   useEffect(() => {
     if (sheetOpen) onOpen?.();
   }, [onOpen, sheetOpen]);
