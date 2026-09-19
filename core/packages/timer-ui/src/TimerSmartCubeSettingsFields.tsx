@@ -43,6 +43,7 @@ export function TimerSmartCubeSettingsFields({ value, localize, onChange, render
   const liveView = field('liveCubeView');
   const orientation = field('recordGyro');
   const recap = field('autoRecap');
+  const solution = field('autoOpenSolution');
   return (
     <>
       <TimerBooleanSettingRow field={gyro} label={localize(gyro.copy)} value={settings.gyroEnabled}
@@ -63,6 +64,8 @@ export function TimerSmartCubeSettingsFields({ value, localize, onChange, render
         onChange={(recordGyro) => onChange({ recordGyro })} renderBooleanControl={renderBooleanControl} />
       <TimerBooleanSettingRow field={recap} label={localize(recap.copy)} value={settings.autoRecap}
         onChange={(autoRecap) => onChange({ autoRecap })} renderBooleanControl={renderBooleanControl} />
+      <TimerBooleanSettingRow field={solution} label={localize(solution.copy)} value={settings.autoOpenSolution}
+        onChange={(autoOpenSolution) => onChange({ autoOpenSolution })} renderBooleanControl={renderBooleanControl} />
     </>
   );
 }

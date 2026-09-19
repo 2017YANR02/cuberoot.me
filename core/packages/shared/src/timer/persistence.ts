@@ -342,6 +342,7 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     'gyroEnabled',
     'recordGyro',
     'autoRecap',
+    'autoOpenSolution',
     'autoMarkWcaScramble',
   ] as const) {
     if (value[key] !== undefined && typeof value[key] !== 'boolean') return null;

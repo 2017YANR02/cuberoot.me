@@ -187,6 +187,7 @@ export interface TimerSmartCubeSettings {
   gyroEnabled: boolean;
   recordGyro: boolean;
   autoRecap: boolean;
+  autoOpenSolution: boolean;
 }
 
 export const DEFAULT_TIMER_SMART_CUBE_SETTINGS: TimerSmartCubeSettings = {
@@ -195,6 +196,7 @@ export const DEFAULT_TIMER_SMART_CUBE_SETTINGS: TimerSmartCubeSettings = {
   gyroEnabled: true,
   recordGyro: true,
   autoRecap: true,
+  autoOpenSolution: true,
 };
 
 export function normalizeTimerSmartCubeSettings(value: Partial<Record<keyof TimerSmartCubeSettings, unknown>>): TimerSmartCubeSettings {
@@ -206,6 +208,7 @@ export function normalizeTimerSmartCubeSettings(value: Partial<Record<keyof Time
     gyroEnabled: normalizedBoolean(value.gyroEnabled, DEFAULT_TIMER_SMART_CUBE_SETTINGS.gyroEnabled),
     recordGyro: normalizedBoolean(value.recordGyro, DEFAULT_TIMER_SMART_CUBE_SETTINGS.recordGyro),
     autoRecap: normalizedBoolean(value.autoRecap, DEFAULT_TIMER_SMART_CUBE_SETTINGS.autoRecap),
+    autoOpenSolution: normalizedBoolean(value.autoOpenSolution, DEFAULT_TIMER_SMART_CUBE_SETTINGS.autoOpenSolution),
   };
 }
 
@@ -274,6 +277,7 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.smart-cube.live-view', category: 'smart-cube', copy: { en: 'Live cube', zh: '实况魔方' }, storagePath: 'liveCubeView', value: { kind: 'enum', values: TIMER_SMART_CUBE_LIVE_VIEWS }, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-view' },
   { id: 'settings.smart-cube.record-orientation', category: 'smart-cube', copy: { en: 'Record orientation for replay', zh: '记录姿态用于回放' }, storagePath: 'recordGyro', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-record-orientation' },
   { id: 'settings.smart-cube.auto-recap', category: 'smart-cube', copy: { en: 'Open reconstruction after each solve', zh: '结束后自动打开复盘' }, storagePath: 'autoRecap', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-recap' },
+  { id: 'settings.smart-cube.auto-solution', category: 'smart-cube', copy: { en: 'Open solution after each solve', zh: '结束后自动打开解法' }, storagePath: 'autoOpenSolution', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-solution' },
 
   // Scrambles
   { id: 'settings.scramble.optimal', category: 'scramble', copy: { en: 'Optimal scramble', zh: '最优打乱' }, storagePath: 'wcaUseOptimal', value: bool, visibility: 'event-not-222', disabledWhen: 'optimal-unavailable', effect: 'persist-optimal-scramble' },

@@ -44,6 +44,7 @@ const EXPECTED_FIELDS_BY_CATEGORY = {
     'settings.smart-cube.live-view',
     'settings.smart-cube.record-orientation',
     'settings.smart-cube.auto-recap',
+    'settings.smart-cube.auto-solution',
   ],
   scramble: [
     'settings.scramble.optimal',
@@ -139,7 +140,7 @@ describe('canonical timer settings surface manifest', () => {
     ]);
     expect(TIMER_SETTING_CATEGORY_CONTRACTS.map((category) => category.id))
       .toEqual(TIMER_SETTING_CATEGORY_IDS);
-    expect(new Set(TIMER_SETTING_FIELD_IDS).size).toBe(65);
+    expect(new Set(TIMER_SETTING_FIELD_IDS).size).toBe(66);
     expect(TIMER_SETTING_FIELD_IDS).toEqual(Object.values(EXPECTED_FIELDS_BY_CATEGORY).flat());
     for (const category of TIMER_SETTING_CATEGORY_IDS) {
       expect(TIMER_SETTING_FIELD_CONTRACTS
