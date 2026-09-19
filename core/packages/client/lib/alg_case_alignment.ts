@@ -2,7 +2,7 @@ import { loadAlg as loadSourceAlg, isMergedOhCmllEntry, type AlgCase, type AlgEn
 import { duplicateAlgKey } from '@cuberoot/shared/alg-notation';
 import { adjacentUEdits, applyAlgTextEdits, displayCaseScramble, oriAdjustSetup, uTurnOrder } from '@/lib/alg_display';
 import { CUBE_ORIENTATIONS } from '@/lib/alg_goals';
-import { setupForCase, validateAlgCase, validateStoredAlgCase } from '@/lib/alg_validation';
+import { orientCaseSetup, setupForCase, validateAlgCase, validateStoredAlgCase } from '@/lib/alg_validation';
 import { algHtmlText, editAlgHtmlText } from '@/lib/alg_html';
 import { normalizeAlg } from '@/lib/alg_normalize';
 import { tr } from '@/i18n/tr';
@@ -77,6 +77,7 @@ export async function alignCaseEntry(
   puzzle: AlgPuzzle, set: string, c: AlgCase, entry: AlgEntry, ori = 0,
 ): Promise<AlgEntry> {
   const setup = commonCaseSetup(puzzle, set, c, ori);
+  const validation = { fixedOrientation: ['2x2', '3x3', '4x4', '5x5'].includes(puzzle) };
   let html = entry.algHtml;
   if (html) {
     try {
@@ -88,11 +89,11 @@ export async function alignCaseEntry(
   let reason = '';
   for (const prefix of adjustments(puzzle)) {
     const alg = [prefix, entry.alg].filter(Boolean).join(' ');
-    const result = await validateAlgCase(setup, alg, c.sticker, puzzle, set);
+    const result = await validateAlgCase(setup, alg, c.sticker, puzzle, set, validation);
     if (!result.ok) { reason ||= result.reason ?? ''; continue; }
     let suffix = result.auf ?? '';
     let completed = [alg, suffix].filter(Boolean).join(' ');
-    let stored = await validateStoredAlgCase(setup, completed, c.sticker, puzzle, set);
+    let stored = await validateStoredAlgCase(setup, completed, c.sticker, puzzle, set, validation);
     if (!stored.ok && puzzle === 'sq1') {
       for (const tail of adjustments(puzzle)) {
         const candidate = [alg, tail].filter(Boolean).join(' ');
@@ -112,10 +113,10 @@ export async function alignCaseEntry(
       const body = entry.alg.slice(leadingGrip.length);
       for (const auf of ['', 'U', "U'", 'U2']) {
         const candidate = [auf, body].filter(Boolean).join(' ');
-        const check = await validateAlgCase(setup, candidate, c.sticker, puzzle, set);
+        const check = await validateAlgCase(setup, candidate, c.sticker, puzzle, set, validation);
         if (!check.ok) continue;
         const compact = [candidate, check.auf].filter(Boolean).join(' ');
-        if (!(await validateStoredAlgCase(setup, compact, c.sticker, puzzle, set)).ok) continue;
+        if (!(await validateStoredAlgCase(setup, compact, c.sticker, puzzle, set, validation)).ok) continue;
         completed = compact;
         const htmlGrip = html && /^\s*(?:[xyz](?:2'?|')?(?:\s+|$))+/.exec(algHtmlText(html))?.[0];
         completedHtml = html && htmlGrip ? [auf,
@@ -134,7 +135,7 @@ export async function alignCaseEntry(
     } as CheckedEntry);
     // Reduction changes presentation and finger markup, but must preserve the
     // actual puzzle transformation at this case's fixed starting state.
-    if (!(await validateStoredAlgCase(setup, completedEntry.alg, c.sticker, puzzle, set)).ok) {
+    if (!(await validateStoredAlgCase(setup, completedEntry.alg, c.sticker, puzzle, set, validation)).ok) {
       throw new Error(`U reduction changed the solution: ${puzzle}/${set} ${c.name}`);
     }
     return completedEntry;
@@ -163,7 +164,7 @@ async function prepareFile(file: AlgFile): Promise<AlgFile> {
   let checked = 0;
   for (const c of file.cases) {
     if ((c as CheckedCase)[CANONICAL_CASE]) { cases.push(c); continue; }
-    const setup = commonCaseSetup(puzzle, file.set, c);
+    const setup = await orientCaseSetup(puzzle, file.set, commonCaseSetup(puzzle, file.set, c));
     const aligned: CheckedCase = { ...c, setup, algs: [], [CANONICAL_CASE]: true, [SOURCE_CASE]: sourceAlgCase(c) };
     for (let oi = 0; oi < c.algs.length; oi++) {
       const entries: AlgEntry[] = [];

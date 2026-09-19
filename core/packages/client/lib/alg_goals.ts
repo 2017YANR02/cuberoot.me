@@ -388,8 +388,13 @@ function reaches(p: KPattern, kp: KPuzzle, puzzle: string, goal: AlgGoal): boole
 }
 
 /** 目标达成了吗 —— cube 系列容忍 24 个整体转体,其它魔方严格比。 */
-export function reachesGoal(p: KPattern, kp: KPuzzle, puzzle: string, goal: AlgGoal): boolean {
+export function reachesGoal(p: KPattern, kp: KPuzzle, puzzle: string, goal: AlgGoal, fixedOrientation = false): boolean {
   if (goal === 'skip') return true;
+  if (fixedOrientation) {
+    // Keep the stage's own requirements (e.g. Roux may leave the M slice
+    // unfinished), but do not rotate the whole puzzle to satisfy them.
+    return reaches(p, kp, puzzle, goal);
+  }
   if (reaches(p, kp, puzzle, goal)) return true;
   const orientations = CUBE_LIKE.has(puzzle)
     ? CUBE_ORIENTATIONS
