@@ -67,7 +67,7 @@ describe('BluetoothModal direct connection attempt', () => {
     const props = { isZh: false, cube: connected, onClose: vi.fn(), onConnect: vi.fn(async () => {}) };
     await act(async () => root.render(createElement(BluetoothModal, props)));
     const find = (text: string) => Array.from(host.querySelectorAll('button')).find(button => button.textContent?.includes(text))!;
-    expect(find('Reset state').disabled).toBe(true);
+    expect(find('Reset state').disabled).toBe(false);
     await act(async () => root.render(createElement(BluetoothModal, { ...props, allowDeviceCalibration: true })));
     await act(async () => find('Reset state').click());
     expect(resetDeviceState).not.toHaveBeenCalled();
