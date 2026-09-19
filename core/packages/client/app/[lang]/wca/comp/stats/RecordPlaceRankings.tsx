@@ -466,15 +466,13 @@ export function RecordPlaceRankings() {
       ) : (
         <div ref={rankingRef} className="cs-record-ranking">
           <h3 className="sr-only">{viewLabel}</h3>
-          <div className="cs-record-events">
+          <div className="cs-record-controls">
             <WcaEventMultiSelector
               availableEvents={availableEvents}
               selectedEvents={selectedEvents}
               onChange={changeEvents}
               isZh={isZh}
             />
-          </div>
-          <div className="cs-record-controls">
             <ListSelect
               items={RECORD_PLACE_VIEWS.map((value) => ({
                 value,

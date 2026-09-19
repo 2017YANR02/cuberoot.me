@@ -10,7 +10,7 @@
  * 分组,无需改本组件(数据驱动)。
  *
  * 契约:
- *   - selectedEvent:当前选中(命中则触发器高亮,收起态只显示其图标 + 箭头)。
+ *   - selectedEvent:当前选中(命中则触发器高亮,收起态显示所选项目图标与箭头)。
  *   - selectedEvents + onToggle:多选模式,点击项目只切换选中态,弹层保持打开。
  *   - linkFor(id):链接模式,返回 { href, hard? } → 渲染真实 <a>/AppLink(中键/Ctrl 新开;
  *     跨 COEP 边界 hard=原生 <a> 整页加载)。/scramble/solver 用。
@@ -22,7 +22,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useParams } from 'next/navigation';
-import { ChevronDown, Boxes } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import AppLink from '../AppLink';
 import { CubingIcon } from '../EventIcon/EventIcon';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
@@ -130,13 +130,13 @@ export default function PuzzlePicker({
   const selectedItems = groups
     .flatMap((group) => group.items)
     .filter((item) => isMulti ? selectedEvents?.has(item.id) : item.id === selectedEvent);
-  // 单选或仅选一个项目时显示具体图标;多选多个时保留通用项目图标,避免误指其中一个。
-  const selectedItem = selectedItems.length === 1 ? selectedItems[0] : null;
   const hasSelection = selectedItems.length > 0;
+  const showSelectedIcons = showTriggerIcon && showItemIcons && hasSelection && selectedItems.every(item => item.id);
   const placeholder = wcaEvents ? tr({ zh: '项目', en: 'Puzzle' }) : tr({ zh: '更多', en: 'More' });
-  const triggerLabel = selectedItem?.label
-    ?? placeholderLabel
-    ?? (suppliedGroups ? tr({ zh: '项目', en: 'Puzzle' }) : placeholder);
+  const separator = tr({ zh: '、', en: ', ' });
+  const triggerLabel = hasSelection
+    ? selectedItems.map(item => item.label).join(separator)
+    : placeholderLabel ?? (suppliedGroups ? tr({ zh: '项目', en: 'Puzzle' }) : placeholder);
 
   const close = (restoreFocus = false) => {
     setOpen(false);
@@ -219,12 +219,13 @@ export default function PuzzlePicker({
         aria-controls={open ? popupId : undefined}
         onClick={() => setOpen((o) => !o)}
       >
-        {showTriggerIcon && (selectedItem?.id && showItemIcons
-          ? iconFor(selectedItem, true)
-          : <Boxes size={15} className="pp-trigger-icon" />)}
-        {(!selectedItem?.id || !showItemIcons || !showTriggerIcon) && (
-          <span className="pp-trigger-label">{triggerLabel}</span>
-        )}
+        {showSelectedIcons ? (
+          <span className="pp-trigger-selection" aria-hidden="true">
+            {selectedItems.map(item => (
+              <span key={item.id} title={item.label}>{iconFor(item, true)}</span>
+            ))}
+          </span>
+        ) : <span className="pp-trigger-label">{triggerLabel}</span>}
         <ChevronDown size={14} className="pp-trigger-chevron" />
       </button>
       {open && (

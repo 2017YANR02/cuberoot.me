@@ -9,16 +9,15 @@
 
 .records-toolbar-row {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
 }
-/* 视图 / 性别下拉(ListSelect:lucide chevron + 暗色 popup)固定贴合宽,区域选择器吃剩余空间
-   并可压缩(标签 ellipsis 兜底),保证始终一行 */
+/* 项目在首位，控件按内容宽度同行排列，窄屏自然换行。 */
 .records-toolbar-row .records-toolbar-select { flex-shrink: 0; }
 .records-toolbar-row .records-toolbar-select .list-select-trigger { width: auto; }
 .records-toolbar-row .records-toolbar-select .list-select-popup { min-width: 150px; }
-.records-page .records-toolbar-row .region-picker { min-width: 0; }
+.records-page .records-toolbar-row .region-picker { min-width: 0; flex: 0 1 auto; }
 
 /* RegionPicker 颜色变量覆盖 — 映射全站 token，跟随系统或用户主题 */
 .records-page .region-picker {

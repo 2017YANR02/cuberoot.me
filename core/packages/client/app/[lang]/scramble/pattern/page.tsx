@@ -161,29 +161,28 @@ export default function PatternsPage() {
               if (next) setPuzzle(next);
             }}
           />
-        </div>
-
-        <nav className="pat-filters" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            className={`pat-filter${filter === ALL ? ' is-active' : ''}`}
-            onClick={() => setFilter(ALL)}
-          >
-            {t('全部', 'All')}
-          </button>
-          {categories.map((c) => (
+          <nav className="pat-filters" role="tablist">
             <button
-              key={c}
               type="button"
               role="tab"
-              className={`pat-filter${filter === c ? ' is-active' : ''}`}
-              onClick={() => setFilter(c)}
+              className={`pat-filter${filter === ALL ? ' is-active' : ''}`}
+              onClick={() => setFilter(ALL)}
             >
-              {pick(CATEGORY_LABEL[c])}
+              {t('全部', 'All')}
             </button>
-          ))}
-        </nav>
+            {categories.map((c) => (
+              <button
+                key={c}
+                type="button"
+                role="tab"
+                className={`pat-filter${filter === c ? ' is-active' : ''}`}
+                onClick={() => setFilter(c)}
+              >
+                {pick(CATEGORY_LABEL[c])}
+              </button>
+            ))}
+          </nav>
+        </div>
 
         {visiblePatterns.length === 0 ? (
           <div className="pat-empty">{t('暂无图案', 'No patterns yet')}</div>

@@ -202,13 +202,6 @@ export default function CalendarStatsPage() {
       <RecordPlaceRankings />
 
       <div className="cs-toolbar">
-        <CountryInput
-          className="cs-filter"
-          value={country}
-          onChange={setCountry}
-          allLabel={tr({ zh: '所有国家', en: 'All countries'
-        })}
-        />
         <EventSelect
           events={EVENT_LIST}
           value={event}
@@ -216,6 +209,13 @@ export default function CalendarStatsPage() {
           allLabel={tr({ zh: '所有项目', en: 'All events'
         })}
           className="cs-filter"
+        />
+        <CountryInput
+          className="cs-filter"
+          value={country}
+          onChange={setCountry}
+          allLabel={tr({ zh: '所有国家', en: 'All countries'
+        })}
         />
         <div className="cs-summary">
           {(isZh

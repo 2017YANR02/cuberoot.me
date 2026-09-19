@@ -89,15 +89,14 @@ function GrandSlamPageInner() {
         subtitle={{ zh: '单个项目里,某位选手同时获得世锦赛领奖台、所属洲际赛领奖台、所属国家赛领奖台,且打破过该项目 WR,即达成该项目大满贯。默认采用领奖台最佳且最早的比赛。注意:部分世锦赛 / 洲际赛可能同时被算作举办国的国家锦标赛。', en: 'For a single event, a cuber achieves Grand Slam by podium at Worlds + their Continental + their National championship AND having broken WR. Defaults to the best & earliest podium. Note: some World/Continental championships also count as the host country’s nationals.' }}
       />
 
-      <WcaEventSelector
-        availableEvents={EVENTS_SET}
-        selectedEvent={event}
-        onSelect={v => setParam('event', v)}
-        isZh={isZh}
-        allowAll
-      />
-
       <div className="wse-filters">
+        <WcaEventSelector
+          availableEvents={EVENTS_SET}
+          selectedEvent={event}
+          onSelect={v => setParam('event', v)}
+          isZh={isZh}
+          allowAll
+        />
         <div className="wse-filter">
           <label>{tr({ zh: '筛选', en: 'Filter'
         })}</label>

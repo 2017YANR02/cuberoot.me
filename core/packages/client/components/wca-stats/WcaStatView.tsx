@@ -227,17 +227,8 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
     );
   }
 
-  return (
-    <div className={wrapperClass}>
-      {headerMode === 'full' && (
-        <div className="wca-stats-header">
-          <h1>{tr({ zh: data.titleZh, en: data.title })}</h1>
-          {data.note && (
-            <p className="wca-stats-note">{tr({ zh: data.noteZh ?? data.note, en: data.note })}</p>
-          )}
-        </div>
-      )}
-      {/* 项目选择器放最上面;afterEventSelector(/wca/results 的顶层「类型」下拉)紧随其后 → 项目在类型上方 */}
+  const filterControls = showEventSelector || afterEventSelector ? (
+    <>
       {showEventSelector && (
         <WcaEventSelector
           availableEvents={availableEvents}
@@ -249,6 +240,22 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
       {typeof afterEventSelector === 'function'
         ? afterEventSelector(availableMetricIds)
         : afterEventSelector}
+    </>
+  ) : null;
+
+  return (
+    <div className={wrapperClass}>
+      {headerMode === 'full' && (
+        <div className="wca-stats-header">
+          <h1>{tr({ zh: data.titleZh, en: data.title })}</h1>
+          {data.note && (
+            <p className="wca-stats-note">{tr({ zh: data.noteZh ?? data.note, en: data.note })}</p>
+          )}
+        </div>
+      )}
+      {!['sections', 'panels', 'metricPanels'].includes(renderMode) && (showEventSelector || afterEventSelector) && (
+        <div className="wca-stats-tab-bar">{filterControls}</div>
+      )}
       {headerMode === 'note' && data.note && (
         <p className="wca-stats-note wca-stats-embedded-note">{tr({ zh: data.noteZh ?? data.note, en: data.note })}</p>
       )}
@@ -276,6 +283,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
 
       {renderMode === 'sections' && data.sections && (
         <SectionsView
+          leadingControls={filterControls}
           header={data.header}
           sections={data.sections}
           searchTerm={searchTerm}
@@ -286,6 +294,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
 
       {renderMode === 'panels' && data.panels && (
         <PanelsView
+          leadingControls={filterControls}
           panels={data.panels}
           searchTerm={searchTerm}
           isZh={isZh}
@@ -297,6 +306,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
 
       {renderMode === 'metricPanels' && data.metricPanels && (
         <MetricPanelsView
+          leadingControls={filterControls}
           metricPanels={data.metricPanels}
           metricGroups={data.metricGroups}
           searchTerm={searchTerm}

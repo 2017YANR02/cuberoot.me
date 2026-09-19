@@ -222,6 +222,12 @@ function RecordsPageInner() {
 
       <div className="records-toolbar">
         <div className="records-toolbar-row">
+          <PuzzlePicker
+            groups={eventPickerGroups}
+            selectedEvent={event}
+            onSelect={(v) => update('event', v)}
+            isZh={isZh}
+          />
           <ListSelect
             className="records-toolbar-select"
             items={[
@@ -256,12 +262,6 @@ function RecordsPageInner() {
           />
         </div>
 
-        <PuzzlePicker
-          groups={eventPickerGroups}
-          selectedEvent={event}
-          onSelect={(v) => update('event', v)}
-          isZh={isZh}
-        />
       </div>
 
       <div className="wse-table-wrapper sticky-scroll">
