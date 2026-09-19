@@ -240,17 +240,18 @@ describe('mini program app structure', () => {
     expect(pageFiles['../src/pages/share/index.ts']).toBeUndefined();
   });
 
-  it('starts smart-cube discovery on page load without a second search action', () => {
+  it('starts smart-cube scanning on page load and exposes device selection', () => {
     const page = pageFiles['../src/pages/smart-cube/index.ts'];
     const template = pageFiles['../src/pages/smart-cube/index.wxml'];
 
     expect(page).toContain('void startConnection(page);');
     expect(page).toContain('getStoredSessionSnapshot');
     expect(page).toContain('openRequiredSessionLogin');
-    expect(page).toContain('else await smartCubeSession.connectAutomatically();');
-    expect(template).not.toContain('bindtap="connectCube"');
-    expect(template).not.toContain('data-driver=');
-    expect(template).not.toContain('driver-list');
+    expect(page).toContain('else await smartCubeSession.scan();');
+    expect(page).toContain('smartCubeSession.connectDevice(deviceId)');
+    expect(template).toContain('bindtap="selectDevice"');
+    expect(template).toContain('data-device-id="{{item.deviceId}}"');
+    expect(template).toContain('devices.length > 0');
     expect(template).toContain("phase === 'error' || phase === 'disconnected'");
     expect(template).toContain('bindtap="retryConnection"');
   });
