@@ -52,39 +52,69 @@
 
 未进行真实付款、真机 H5 回跳、退款到账、商户产品权限、历史线上订单兼容、完整会员结算故障恢复或生产环境验证。此记录不代表这些阶段已完成。
 
-## 既有会员结算阻塞：生产发布前必须处理
+## 会员结算后续修复：本地完成
 
-以下是此次审阅发现的既有 `membership` 业务问题，不是共享包已经解决的能力，也不是已确认发生过的线上事故。本次仅记录，未修改结算代码。它们阻止将本次依赖切换直接视为可安全部署的完整支付闭环。
+初次提取共享包时记录的两项业务缺口，本轮已在 CubeRoot 自己的后端修复。共享支付库仍不拥有订单或会员数据库；无数据库迁移、历史数据批量更新或生产操作。
 
-### 1. 支付结果没有与本地预期完整匹配
+### 预期付款匹配
 
-源码位置：
+`core/apps/api/src/payment/membership-settlement.ts` 的 `membershipPaymentEvidence` 只接收已经通过 provider 验签/认证的通知或主动查询结果，统一提取支付来源、订单号、交易号、商户身份、整数分金额与币种。`settleMembershipPayment` 随后在订单行锁内核对本地 `provider`、`amount_cents`、`currency`、已有 `provider_txn` 与订单号；错误、缺失或非 pending/paid 状态拒绝结算。已付重复通知也须匹配同一交易，不能用另一个交易号覆盖。
 
-- `core/apps/api/src/routes/membership.ts:622–643`：主动查单取得 `remote.paid` 后调用 `settlePaidOrder`。
-- 同文件 `:677–699`：支付宝通知校验通过后按 `out_trade_no` 调用结算。
-- 同文件 `:703–725`：微信通知校验通过后按 `outTradeNo` 调用结算。
-- 同文件 `:802–817`：`settlePaidOrder` 更新条件仅为订单号及 `status = 'pending'`，没有比较 `amount_cents`、币种、订单 provider、交易号归属或商户快照。
+同一 provider 交易号使用事务 advisory lock 串行检查，拒绝把一个支付流水重复关联到两个会员订单；订单已有绑定支付意图时必须与结果一致。金额从 provider 原始十进制精确转换，不使用 `Math.round` 容错入账。
 
-共享包只知道已配置商户和收到的金额，不知道本地会员订单应收多少。即使通知真实，金额字段合法也不证明它匹配该订单。后续应从本地不可变支付尝试/订单快照加载预期值，先验证 provider、商户/应用、订单号、交易号、币种及整数分金额，再在同一事务内转状态；退款同样跟随原支付身份。需要错金额、错 provider、错币种、错订单、重复/冲突交易号的负面测试，不能只跑付款成功路径。
+路由接入点位于 `core/apps/api/src/routes/membership.ts` 的 `/membership/orders/:no`、四个 `/membership/notify/*` 及 `settlePaidOrder`。支付宝、微信的已验签主动查单继续补偿通知遗漏。Xunhupay 原主动查询路径没有响应认证，本轮停止使用它改变订单/会员状态；已签名成功回调仍可入账，未知 AppID 不再回退到主商户 secret。
 
-### 2. 订单置为已付款与会员权益发放不是原子操作
+Xunhupay 字段按 [官方付款成功回调说明](https://v3.xunhupay.com/doc/api/pay.html) 核对：`trade_order_id` 是本地订单号，`total_fee` 是人民币元金额，`transaction_id` / `open_order_id` 是支付/平台交易号，`appid` 标识支付渠道，`OD` 表示已支付，`hash` 覆盖回调验签。测试使用这些字段生成合成签名；沿原行为优先使用 `transaction_id`，缺失时兼容 `open_order_id`。此核对没有调用真实支付接口。
 
-源码位置：
+### 订单与会员权益原子提交
 
-- `core/apps/api/src/routes/membership.ts:806–815`：先执行 `pending → paid` 更新。
-- 同文件 `:819–831`：随后另查套餐，再调用 `grantMembership`；找不到套餐只记录错误并返回。
-- 同文件 `:229–276`：`grantMembership` 独立查询到期时间并 upsert 会员，没有与订单状态更新共用事务/行锁。
+`settleMembershipPayment` 使用现有 `withTransaction`，在同一个 PostgreSQL 事务内锁订单、核对支付、写入 paid 状态并调用 `grantMembershipInTransaction`。权益写入失败会同时回滚 paid 状态，后续重放可重新完成。套餐行使用共享行锁避免结算期间同时修改。
 
-如果订单更新后进程退出、套餐查询或会员写入失败，重放通知看到订单已为 paid，就不会补发权益。多个独立订单并发延长同一会员时，当前读到期时间再写入的顺序也需要明确锁与幂等规则。
+`grantMembershipInTransaction` 用会员键的事务 advisory lock 覆盖“会员行尚不存在”的首购竞争，并使用单条 upsert 从当前到期时间计算续期；同一会员同时购买两个订单不会丢失一次延长，永久会员不会降级。管理员手动开通也把订单与权益写入放在同一事务，并共用会员锁。
 
-后续应将订单状态、通知/交易去重及权益发放放入同一数据库事务；若采用 outbox/权益任务，必须持久化任务、唯一去重并提供可重试恢复。补充故障注入、通知重放、并发支付/延长和恢复测试；不能因共享包测试通过就跳过这层验收。
+### 实证与复现
+
+新增 `core/apps/api/tests/membership-settlement.test.ts`：33 项通过，其中 7 项纯支付证据校验、26 项真实隔离 PostgreSQL/HTTP 验证。包含错金额、错币种、错 provider、错商户、错订单、绑定交易冲突、同一交易跨订单复用、10 路并发重复回调、同会员并发续期、首购不存在行、手动开通与付款竞争、数据库 trigger 注入故障后整体回滚和重试、永久会员保护、Xunhupay 真实签名格式回调及未认证查询不能入账。
+
+本轮最终验证：
+
+| 验证 | 结果 |
+| --- | --- |
+| 新结算测试 + `membership-plans-contract` + 微信/支付宝/退款适配回归 | 5 个文件、76 项全部通过；数据库用临时 `initdb` 创建的 PostgreSQL 16，未使用应用开发库或生产库。 |
+| `pnpm --filter @cuberoot/server typecheck` | 通过。 |
+| `pnpm audit:boundaries` | 通过，203 项既有边界记录、217 次出现、15 项人工契约。 |
+| 可复现隔离 runner | 完整启动/建库/33 项测试/停止数据库均通过，退出码 0。 |
+| `git diff --check` | 通过。 |
+
+从 `core/` 执行以下命令可独立复现，要求 PATH 有 PostgreSQL 16 的 `initdb`、`pg_ctl`、`createdb` 和 pnpm：
+
+```sh
+node apps/api/scripts/test-membership-settlement.mjs
+```
+
+runner 在 `/tmp/cuberoot-membership-fixture-*` 创建专用数据库实例，随机 loopback 端口、专用 `membership_payment_test` 数据库，不读取应用 DB 配置。测试结束或失败后停止自己的实例，保留测试数据与日志目录供审阅，不删除用户数据。可追加其余测试文件来复现 76 项组合：
+
+```sh
+node apps/api/scripts/test-membership-settlement.mjs tests/membership-plans-contract.test.ts tests/wechat_payment.test.ts tests/alipay_payment.test.ts tests/refund_provider.test.ts
+```
+
+已有 CI 专用 PostgreSQL 可通过 `MEMBERSHIP_TEST_DATABASE_URL` 运行同一测试；测试要求地址为 localhost/127.0.0.1 且数据库名为 `membership_payment_test`，每次创建随机 schema 并在结束后移除该测试 schema。未配置此环境变量时，普通测试只运行 7 项纯规则，26 项 PostgreSQL 测试明确跳过；不能把跳过描述为数据库验收通过。
+
+### 未覆盖的历史与发布边界
+
+- 旧 `membership_orders` 没有不可变 merchant/AppID 快照。当前实现对照订单的 provider/channel 与当前已配置商户，微信 AppID 由共享客户端允许列表核对，不能证明某个历史订单原本属于哪个 AppID。切换商户/AppID 前须清点和处理未完成订单；本轮未补写或猜测历史商户信息。
+- 旧订单也没有套餐 period/period_count 购买快照。金额使用订单自己的 `amount_cents`，但权益周期仍沿用已有行为读取当前套餐，并在结算事务内锁住；购买后、结算前已发生的套餐周期修改不会被本轮恢复。不可变商品/商户快照是后续独立迁移范围。
+- provider 交易复用保护覆盖本次统一结算服务的写入路径；本轮没有新增数据库唯一索引。其他直写 `membership_orders` 的运维脚本不得绕开该服务，历史重复流水应审计后再决定数据库约束迁移。
+- 对历史上已经 paid 但漏发权益的记录，本轮不自动回补：缺少足够的历史幂等凭证，盲目重放可能重复延长，需要单独对账取证。
+- Xunhupay 主动查询补偿保持关闭，直到有经过审核的响应认证实现；签名回调遗漏须通过可信记录对账，不能重启旧的未验签入账路径。
+- 数据库真实事务测试不等于线上验证。真实商户权限、付款、H5 回跳、退款到账、历史线上订单兼容以及部署仍未执行。
 
 ## 后续状态
 
 - [x] 独立公共仓库、精确版本包与来源声明。
-- [x] CubeRoot 本地 consumer 适配及上述隔离验证。
-- [x] 本仓库依赖与锁文件指向固定公开发行文件。
-- [x] 最终发行 URL 安装、匿名下载 SHA-256/锁文件完整性一致，以及 release 依赖下的 40 项测试复核。
-- [ ] 修复会员预期付款匹配及原子权益结算，并完成故障/并发测试。
+- [x] CubeRoot 本地 consumer 适配和固定发行文件安装；40 项适配测试、类型与架构验证。
+- [x] 最终发行 URL 匿名下载 SHA-256 与 lockfile 完整性一致。
+- [x] 本地修复会员预期付款匹配与原子权益结算，33 项新增测试及 76 项组合验证通过。
+- [ ] 历史商户/商品快照、异常账单和历史漏发权益的独立审计与迁移评估。
 - [ ] 获得本次明确发布授权后，再按各服务流程部署和验证。
 - [ ] 独立确认商户产品权限、真实支付、回跳查单及退款到账。
