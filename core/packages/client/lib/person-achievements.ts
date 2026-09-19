@@ -11,7 +11,7 @@ import { apiUrl } from './api-base';
 // One catalog owns the rules shown in the directory and on earned badges.
 export const EXPLORER_ACHIEVEMENTS = {
   reunion: { title: { zh: '久别重逢', en: 'Welcome back' }, tiers: [1], stat: null, description: { zh: '至少三年未正式参赛后，回归的第一场比赛取得有效成绩。DNF 算参赛，DNS 不算。', en: 'Return after at least three years without official participation and record a successful result at your first competition back. DNF counts as participation; DNS does not.' } },
-  thaw: { title: { zh: '尘封纪录再见', en: 'Breaking the ice' }, tiers: [1], stat: null, description: { zh: '打破至少三年前创下的个人最佳单次或平均，追平不算。每个项目一枚徽章。', en: 'Improve a personal-best single or average first set at least three years earlier. Ties do not count. One badge per event.' } },
+  thaw: { title: { zh: '尘封纪录再见', en: 'Breaking the ice' }, tiers: [1], stat: null, description: { zh: '打破至少三年前创下的个人最佳单次或平均，追平不算。所有项目合为一枚徽章，数字表示达标项目数，同一项目只计一次。', en: 'Improve a personal-best single or average first set at least three years earlier. Ties do not count. One badge combines all qualifying events; its count is the number of distinct events.' } },
   twelveMonths: { title: { zh: '十二月拼图', en: 'Twelve-month mosaic' }, tiers: [12], stat: null, description: { zh: '同一自然年的十二个月均正式参赛，按比赛开始月份计算。DNF 计入，DNS 不计。', en: 'Compete officially in every month of one calendar year, using competition start months. DNF counts; DNS does not.' } },
   allInOne: { title: { zh: '一站全能', en: 'All in one' }, tiers: [17], stat: null, description: { zh: '在同一场正式比赛的全部 17 个现役项目取得有效单次成绩。', en: 'Record a successful single in all 17 active events at one official competition.' } },
   together: { title: { zh: '并肩登台', en: 'Side by side' }, tiers: [10, 50, 100, 500], stat: 'most_podiums_together', description: { zh: '与同一选手共同登上项目领奖台至少 10／50／100／500 次。', en: 'Share an event podium with the same person at least 10 / 50 / 100 / 500 times.' } },
@@ -152,7 +152,7 @@ export function personalExplorerAchievements(results: WcaResultRow[], comps: Wca
         personalBests.set(key, current);
       }
     }
-    for (const [event, evidence] of thawed) add('thaw', 1, evidence, { event });
+    add('thaw', thawed.size, [...thawed.values()].flat(), { event: thawed.size === 1 ? [...thawed.keys()][0] : undefined });
   }
   const enteredFinals = participation.filter(r => ['f', 'c'].includes(r.round_type_id));
   add('finals', enteredFinals.length, EXPLORER_ACHIEVEMENTS.finals.tiers.flatMap(n => enteredFinals[n - 1] ? [{ ...ev(enteredFinals[n - 1]), text: String(n) }] : []));
