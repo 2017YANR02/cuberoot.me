@@ -1894,6 +1894,13 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `forwardRef 暴露 AlgEditorHandle.getValue(),配合 AlgInput / CubeKeyboardSection,主要给 admin 公式编辑。`, en: `Exposes AlgEditorHandle.getValue() via forwardRef; pairs with AlgInput / CubeKeyboardSection, mainly for admin alg editing.` },
   },
   {
+    name: 'AlgTagLabel',
+    import: "import AlgTagLabel from '@/components/AlgTagLabel';",
+    category: 'input',
+    zh: '公式标签图标:复用单手、脚拧、最少步、五阶项目图标和键盘图标,单手显示左右标记,自定义标签保留名称。',
+    en: 'Algorithm tag icons reuse event artwork and the keyboard icon, with explicit left/right hand markers and text for custom tags.',
+  },
+  {
     name: 'AlgInput',
     import: "import AlgInput from '@/components/AlgInput';",
     category: 'input',

@@ -966,7 +966,8 @@ html[data-theme=dark] .alg-root {
   border-bottom: 1px dashed var(--border-default);
 }
 .alg-case-inline-status { margin: 8px 0 16px; }
-.alg-case-inline-status .alg-admin-modal-foot { padding: 0; border: 0; flex-wrap: wrap; }
+.alg-case-inline-actions .alg-admin-modal-foot { padding: 0; border: 0; flex-wrap: wrap; }
+.alg-case-inline-actions { max-width: 100%; }
 .alg-case-inline-status .alg-admin-modal-error { margin-bottom: 8px; }
 .alg-case-inline-fields.alg-admin-modal-body { margin: 24px 0 0; padding: 0; border: 0; min-width: 0; overflow: visible; }
 .alg-case-inline-editor .alg-admin-setup-label {
@@ -976,11 +977,13 @@ html[data-theme=dark] .alg-root {
   margin: 12px 0;
   min-width: 0;
 }
-.alg-case-inline-editor .alg-admin-setup-label > span,
+.alg-case-inline-editor .alg-admin-setup-label > span:first-child,
 .alg-case-inline-editor .alg-admin-algs-label { font-size: 0.78rem; color: var(--muted-foreground); }
-.alg-case-inline-editor .alg-editor-input { min-width: 0; background: none; }
-.alg-case-inline-editor .alg-editor-row { flex-wrap: wrap; }
-.alg-case-inline-editor .alg-editor-row > .alg-editor-input { flex-basis: 65%; }
+.alg-case-inline-editor .alg-editor-input { min-width: 0; background: none; border-color: transparent; }
+.alg-case-inline-editor .alg-editor-input:hover { border-color: var(--border-default); }
+.alg-case-inline-editor .alg-editor-input:focus { border-color: var(--accent); }
+.alg-case-inline-editor .alg-editor-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; }
+.alg-case-inline-editor .alg-editor-tools { max-width: 250px; }
 .alg-case-inline-editor .alg-alg-sortable { display: block; padding-left: 18px; margin-bottom: 6px; }
 .alg-case-inline-editor .alg-alg-drag-handle { position: absolute; left: 0; top: 8px; }
 .alg-editor-mirror { flex-basis: 100%; min-width: 0; }
@@ -1575,14 +1578,11 @@ a.alg-community-author:hover {
 /* ── 公式标签 + 步数(1LLL 表带来的:[oh] / [ft] / [fmc] / [big] / [key])──────── */
 .alg-tag {
   flex: none;
-  padding: 1px 5px;
-  border-radius: 4px;
   font-family: var(--font-sans, inherit);
   font-size: 10px;
   font-weight: 600;
   line-height: 1.5;
   color: var(--muted-foreground);
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 /* 照写的 STM。`R4` 是 1 步 —— 它是个真实的物理动作,不折 mod 4(见 shared/alg_notation) */
 .alg-alg-len {
@@ -1939,7 +1939,7 @@ a.alg-community-author:hover {
   min-width: 0;
 }
 .alg-meta-scramble-kind {
-  align-self: flex-start;
+  align-self: center;
   width: fit-content;
   padding: 2px 6px;
   border: 1px solid var(--input);
@@ -1947,6 +1947,37 @@ a.alg-community-author:hover {
   background: var(--background);
   color: var(--foreground);
   font-size: 12px;
+}
+
+.alg-meta-setup-editor {
+  flex: 1;
+  min-width: 0;
+}
+.alg-meta-setup-editor[hidden] { display: none; }
+.alg-case-inline-editor .alg-meta-setup-editor .alg-admin-setup-label { margin: 0; }
+.alg-meta-setup-editor .alg-admin-setup-label > span:first-child {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.alg-case-inline-editor .alg-admin-setup-label .alg-admin-setup-textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: none;
+  border: 1px solid transparent;
+  padding: 4px;
+  color: var(--foreground);
+}
+.alg-case-inline-editor .alg-admin-setup-textarea:hover { border-color: var(--border-default); }
+.alg-case-inline-editor .alg-admin-setup-textarea:focus { border-color: var(--accent); }
+@media (max-width: 479px) {
+  .alg-meta-scramble-row:has(.alg-meta-setup-editor) { flex-wrap: wrap; }
+  .alg-meta-setup-editor { flex-basis: 100%; }
 }
 
 .alg-view-angle {
@@ -2039,6 +2070,7 @@ a.alg-community-author:hover {
 }
 .alg-meta-case-player-layout {
   flex: 1;
+  min-width: 0;
 }
 .alg-meta-algline-len {
   flex: none;
@@ -2325,4 +2357,24 @@ a.alg-community-author:hover {
   body[data-site-scenery] .alg-admin-modal {
     background: var(--glass-popover-bg);
   }
+}
+.alg-editor-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; }
+.alg-editor-tools .alg-editor-del { border-color: transparent; min-width: 28px; min-height: 32px; justify-content: center; }
+.alg-editor-tools .alg-editor-del:hover { color: var(--foreground); background: var(--muted); }
+.alg-editor-tools .alg-editor-remove:hover { color: var(--destructive); }
+.alg-editor-tools .alg-alg-len { margin: 0 4px; }
+.alg-editor-tools .alg-tag-select .compact-select-trigger { min-height: 32px; padding: 4px 6px; }
+.alg-admin-setup-input-row { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.alg-admin-setup-input-row .alg-admin-setup-textarea { flex: 1; min-width: 0; }
+.alg-input-keyboard-toggle { display: inline-flex; flex: none; }
+.alg-input-keyboard-toggle:empty { display: none; }
+.alg-input-keyboard-toggle .vkb-toggle { margin: 0; min-height: 32px; }
+.alg-editor .alg-tag-select, .alg-editor .alg-tag-select .compact-select-trigger { width: fit-content; max-width: 100%; }
+@media (max-width: 600px) {
+  .alg-case-inline-editor .alg-editor-row { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .alg-case-inline-editor .alg-editor-tools { max-width: 100%; }
+  .alg-case-inline-editor .alg-alg-sortable { margin-bottom: 14px; }
+  .alg-editor-tools .alg-editor-del,
+  .alg-editor-tools .alg-tag-select .compact-select-trigger { min-width: 40px; min-height: 40px; }
+  .alg-editor-add { min-height: 40px; min-width: 40px; justify-content: center; }
 }

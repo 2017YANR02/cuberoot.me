@@ -261,6 +261,10 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
         }
         onKeyDown?.(e);
       }}
+      onKeyUp={e => {
+        const el = e.currentTarget;
+        onCaretChange?.(el.textContent ?? '', getTextBeforeCaret(el).length);
+      }}
       onPaste={e => {
         e.preventDefault();
         const text = e.clipboardData.getData('text/plain');

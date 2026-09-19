@@ -3,7 +3,7 @@
  * 列表(AlgCategoryView)和元数据弹窗(AlgCaseMetaModal)共用 —— 弹窗被列表 import,
  * 常量放列表里会绕成循环依赖,所以落在这。语义见 docs/1lll-migration.md。
  */
-import type { AlgTag } from '@cuberoot/shared';
+import type { AlgTag } from '@cuberoot/shared/alg';
 import { tr } from '@/i18n/tr';
 
 export const OH_TAG_LABEL = {
@@ -20,3 +20,7 @@ export const ALG_TAG_LABEL: Record<AlgTag, () => string> = {
 };
 
 export const ALG_TAGS = Object.keys(ALG_TAG_LABEL) as AlgTag[];
+
+export function algTagLabel(id: string): string {
+  return Object.hasOwn(ALG_TAG_LABEL, id) ? ALG_TAG_LABEL[id as AlgTag]() : id;
+}
