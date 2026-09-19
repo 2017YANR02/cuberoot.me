@@ -14,6 +14,7 @@
  *   4. SetAccounting  — 拉公式库对账 + 训练概率速查
  */
 import Link from '@/components/AppLink';
+import PageShareButton from '@/components/PageShareButton';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
@@ -43,6 +44,7 @@ export default function ProbabilityPage() {
           <ArrowLeft size={16} />
           <span>{t('返回 数学', 'Back to Math')}</span>
         </Link>
+        <PageShareButton />
       </header>
 
       <main className="prob-main">

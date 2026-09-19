@@ -136,7 +136,7 @@ function pageDescription(): string {
     || '';
 }
 
-export async function shareCurrentPageToWeChat(scene: WeChatShareScene): Promise<void> {
+export async function shareCurrentPageToWeChat(scene: WeChatShareScene, page: { url: string; title: string }): Promise<void> {
   if (typeof window === 'undefined') throw new WeChatPcShareError('environment');
   if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
     throw new WeChatPcShareError('https');
@@ -145,10 +145,9 @@ export async function shareCurrentPageToWeChat(scene: WeChatShareScene): Promise
   // SDK 先就绪,再签发只能使用一次且 5 分钟过期的 ticket。
   const sdk = await loadSdk();
   const { appId, ticket } = await requestOneTimeTicket();
-  const url = `${window.location.origin}${window.location.pathname}${window.location.search}`;
   const result = await sdk.shareLink({
-    url,
-    txt: document.title || 'CubeRoot',
+    url: page.url,
+    txt: page.title,
     desc: pageDescription(),
     appid: appId,
     thumburl: new URL('/icons/icon-512.png', window.location.origin).href,
